@@ -418,10 +418,14 @@ func (am *Alertmanager) buildReceiverIntegrations(receiver *apimodels.PostableAp
 			n, err = channels.NewSlackNotifier(cfg, tmpl)
 		case "telegram":
 			n, err = channels.NewTelegramNotifier(cfg, tmpl)
+		case "victorops":
+			n, err = channels.NewVictoropsNotifier(cfg, tmpl)
 		case "teams":
 			n, err = channels.NewTeamsNotifier(cfg, tmpl)
 		case "dingding":
 			n, err = channels.NewDingDingNotifier(cfg, tmpl)
+		case "kafka":
+			n, err = channels.NewKafkaNotifier(cfg, tmpl)
 		case "webhook":
 			n, err = channels.NewWebHookNotifier(cfg, tmpl)
 		case "sensugo":
@@ -432,6 +436,10 @@ func (am *Alertmanager) buildReceiverIntegrations(receiver *apimodels.PostableAp
 			n, err = channels.NewAlertmanagerNotifier(cfg, tmpl)
 		case "googlechat":
 			n, err = channels.NewGoogleChatNotifier(cfg, tmpl)
+		case "line":
+			n, err = channels.NewLineNotifier(cfg, tmpl)
+		case "threema":
+			n, err = channels.NewThreemaNotifier(cfg, tmpl)
 		default:
 			return nil, fmt.Errorf("notifier %s is not supported", r.Type)
 		}

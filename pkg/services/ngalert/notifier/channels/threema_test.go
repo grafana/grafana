@@ -2,8 +2,6 @@ package channels
 
 import (
 	"context"
-	"encoding/json"
-	"errors"
 	"net/url"
 	"testing"
 
@@ -18,7 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/alerting"
 )
 
-func TestDingdingNotifier(t *testing.T) {
+func TestThreemaNotifier(t *testing.T) {
 	tmpl := templateForTests(t)
 
 	externalURL, err := url.Parse("http://localhost")
@@ -29,13 +27,17 @@ func TestDingdingNotifier(t *testing.T) {
 		name         string
 		settings     string
 		alerts       []*types.Alert
-		expMsg       map[string]interface{}
+		expMsg       string
 		expInitError error
 		expMsgError  error
 	}{
 		{
-			name:     "Default config with one alert",
-			settings: `{"url": "http://localhost"}`,
+			name: "One alert",
+			settings: `{
+				"gateway_id": "*1234567",
+				"recipient_id": "87654321",
+				"api_secret": "supersecret"
+			}`,
 			alerts: []*types.Alert{
 				{
 					Alert: model.Alert{
@@ -44,22 +46,15 @@ func TestDingdingNotifier(t *testing.T) {
 					},
 				},
 			},
-			expMsg: map[string]interface{}{
-				"msgtype": "link",
-				"link": map[string]interface{}{
-					"messageUrl": "dingtalk://dingtalkclient/page/link?pc_slide=false&url=http%3A%2Flocalhost%2Falerting%2Flist",
-					"text":       "\n**Firing**\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSource: \n\n\n\n\n",
-					"title":      "[FIRING:1]  (val1)",
-				},
-			},
+			expMsg:       "from=%2A1234567&secret=supersecret&text=%E2%9A%A0%EF%B8%8F+%5BFIRING%3A1%5D++%28val1%29%0A%0A%2AMessage%3A%2A%0A%0A%2A%2AFiring%2A%2A%0ALabels%3A%0A+-+alertname+%3D+alert1%0A+-+lbl1+%3D+val1%0AAnnotations%3A%0A+-+ann1+%3D+annv1%0ASource%3A+%0A%0A%0A%0A%0A%0A%2AURL%3A%2A+http%3A%2Flocalhost%2Falerting%2Flist%0A&to=87654321",
 			expInitError: nil,
 			expMsgError:  nil,
 		}, {
-			name: "Custom config with multiple alerts",
+			name: "Multiple alerts",
 			settings: `{
-				"url": "http://localhost",
-				"message": "{{ len .Alerts.Firing }} alerts are firing, {{ len .Alerts.Resolved }} are resolved",
-				"msgType": "actionCard"
+				"gateway_id": "*1234567",
+				"recipient_id": "87654321",
+				"api_secret": "supersecret"
 			}`,
 			alerts: []*types.Alert{
 				{
@@ -74,28 +69,32 @@ func TestDingdingNotifier(t *testing.T) {
 					},
 				},
 			},
-			expMsg: map[string]interface{}{
-				"actionCard": map[string]interface{}{
-					"singleTitle": "More",
-					"singleURL":   "dingtalk://dingtalkclient/page/link?pc_slide=false&url=http%3A%2Flocalhost%2Falerting%2Flist",
-					"text":        "2 alerts are firing, 0 are resolved",
-					"title":       "[FIRING:2]  ",
-				},
-				"msgtype": "actionCard",
-			},
+			expMsg:       "from=%2A1234567&secret=supersecret&text=%E2%9A%A0%EF%B8%8F+%5BFIRING%3A2%5D++%0A%0A%2AMessage%3A%2A%0A%0A%2A%2AFiring%2A%2A%0ALabels%3A%0A+-+alertname+%3D+alert1%0A+-+lbl1+%3D+val1%0AAnnotations%3A%0A+-+ann1+%3D+annv1%0ASource%3A+%0ALabels%3A%0A+-+alertname+%3D+alert1%0A+-+lbl1+%3D+val2%0AAnnotations%3A%0A+-+ann1+%3D+annv2%0ASource%3A+%0A%0A%0A%0A%0A%0A%2AURL%3A%2A+http%3A%2Flocalhost%2Falerting%2Flist%0A&to=87654321",
 			expInitError: nil,
 			expMsgError:  nil,
 		}, {
-			name:         "Error in initing",
-			settings:     `{}`,
-			expInitError: alerting.ValidationError{Reason: "Could not find url property in settings"},
-		}, {
-			name: "Error in building message",
+			name: "Invalid gateway id",
 			settings: `{
-				"url": "http://localhost",
-				"message": "{{ .Status }"
+				"gateway_id": "12345678",
+				"recipient_id": "87654321",
+				"api_secret": "supersecret"
 			}`,
-			expMsgError: errors.New("failed to template DingDing message: template: :1: unexpected \"}\" in operand"),
+			expInitError: alerting.ValidationError{Reason: "Invalid Threema Gateway ID: Must start with a *"},
+		}, {
+			name: "Invalid receipent id",
+			settings: `{
+				"gateway_id": "*1234567",
+				"recipient_id": "8765432",
+				"api_secret": "supersecret"
+			}`,
+			expInitError: alerting.ValidationError{Reason: "Invalid Threema Recipient ID: Must be 8 characters long"},
+		}, {
+			name: "No API secret",
+			settings: `{
+				"gateway_id": "*1234567",
+				"recipient_id": "87654321"
+			}`,
+			expInitError: alerting.ValidationError{Reason: "Could not find Threema API secret in settings"},
 		},
 	}
 
@@ -105,12 +104,12 @@ func TestDingdingNotifier(t *testing.T) {
 			require.NoError(t, err)
 
 			m := &NotificationChannelConfig{
-				Name:     "dingding_testing",
-				Type:     "dingding",
+				Name:     "threema_testing",
+				Type:     "threema",
 				Settings: settingsJSON,
 			}
 
-			pn, err := NewDingDingNotifier(m, tmpl)
+			pn, err := NewThreemaNotifier(m, tmpl)
 			if c.expInitError != nil {
 				require.Error(t, err)
 				require.Equal(t, c.expInitError.Error(), err.Error())
@@ -136,10 +135,7 @@ func TestDingdingNotifier(t *testing.T) {
 			require.NoError(t, err)
 			require.True(t, ok)
 
-			expBody, err := json.Marshal(c.expMsg)
-			require.NoError(t, err)
-
-			require.JSONEq(t, string(expBody), body)
+			require.Equal(t, c.expMsg, body)
 		})
 	}
 }

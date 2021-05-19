@@ -2,8 +2,6 @@ package channels
 
 import (
 	"context"
-	"encoding/json"
-	"errors"
 	"net/url"
 	"testing"
 
@@ -18,7 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/alerting"
 )
 
-func TestDingdingNotifier(t *testing.T) {
+func TestLineNotifier(t *testing.T) {
 	tmpl := templateForTests(t)
 
 	externalURL, err := url.Parse("http://localhost")
@@ -29,13 +27,14 @@ func TestDingdingNotifier(t *testing.T) {
 		name         string
 		settings     string
 		alerts       []*types.Alert
-		expMsg       map[string]interface{}
+		expHeaders   map[string]string
+		expMsg       string
 		expInitError error
 		expMsgError  error
 	}{
 		{
-			name:     "Default config with one alert",
-			settings: `{"url": "http://localhost"}`,
+			name:     "One alert",
+			settings: `{"token": "sometoken"}`,
 			alerts: []*types.Alert{
 				{
 					Alert: model.Alert{
@@ -44,23 +43,16 @@ func TestDingdingNotifier(t *testing.T) {
 					},
 				},
 			},
-			expMsg: map[string]interface{}{
-				"msgtype": "link",
-				"link": map[string]interface{}{
-					"messageUrl": "dingtalk://dingtalkclient/page/link?pc_slide=false&url=http%3A%2Flocalhost%2Falerting%2Flist",
-					"text":       "\n**Firing**\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSource: \n\n\n\n\n",
-					"title":      "[FIRING:1]  (val1)",
-				},
+			expHeaders: map[string]string{
+				"Authorization": "Bearer sometoken",
+				"Content-Type":  "application/x-www-form-urlencoded;charset=UTF-8",
 			},
+			expMsg:       "message=%5BFIRING%3A1%5D++%28val1%29%0Ahttp%3A%2Flocalhost%2Falerting%2Flist%0A%0A%0A%2A%2AFiring%2A%2A%0ALabels%3A%0A+-+alertname+%3D+alert1%0A+-+lbl1+%3D+val1%0AAnnotations%3A%0A+-+ann1+%3D+annv1%0ASource%3A+%0A%0A%0A%0A%0A",
 			expInitError: nil,
 			expMsgError:  nil,
 		}, {
-			name: "Custom config with multiple alerts",
-			settings: `{
-				"url": "http://localhost",
-				"message": "{{ len .Alerts.Firing }} alerts are firing, {{ len .Alerts.Resolved }} are resolved",
-				"msgType": "actionCard"
-			}`,
+			name:     "Multiple alerts",
+			settings: `{"token": "sometoken"}`,
 			alerts: []*types.Alert{
 				{
 					Alert: model.Alert{
@@ -74,28 +66,17 @@ func TestDingdingNotifier(t *testing.T) {
 					},
 				},
 			},
-			expMsg: map[string]interface{}{
-				"actionCard": map[string]interface{}{
-					"singleTitle": "More",
-					"singleURL":   "dingtalk://dingtalkclient/page/link?pc_slide=false&url=http%3A%2Flocalhost%2Falerting%2Flist",
-					"text":        "2 alerts are firing, 0 are resolved",
-					"title":       "[FIRING:2]  ",
-				},
-				"msgtype": "actionCard",
+			expHeaders: map[string]string{
+				"Authorization": "Bearer sometoken",
+				"Content-Type":  "application/x-www-form-urlencoded;charset=UTF-8",
 			},
+			expMsg:       "message=%5BFIRING%3A2%5D++%0Ahttp%3A%2Flocalhost%2Falerting%2Flist%0A%0A%0A%2A%2AFiring%2A%2A%0ALabels%3A%0A+-+alertname+%3D+alert1%0A+-+lbl1+%3D+val1%0AAnnotations%3A%0A+-+ann1+%3D+annv1%0ASource%3A+%0ALabels%3A%0A+-+alertname+%3D+alert1%0A+-+lbl1+%3D+val2%0AAnnotations%3A%0A+-+ann1+%3D+annv2%0ASource%3A+%0A%0A%0A%0A%0A",
 			expInitError: nil,
 			expMsgError:  nil,
 		}, {
-			name:         "Error in initing",
+			name:         "Token missing",
 			settings:     `{}`,
-			expInitError: alerting.ValidationError{Reason: "Could not find url property in settings"},
-		}, {
-			name: "Error in building message",
-			settings: `{
-				"url": "http://localhost",
-				"message": "{{ .Status }"
-			}`,
-			expMsgError: errors.New("failed to template DingDing message: template: :1: unexpected \"}\" in operand"),
+			expInitError: alerting.ValidationError{Reason: "Could not find token in settings"},
 		},
 	}
 
@@ -105,12 +86,12 @@ func TestDingdingNotifier(t *testing.T) {
 			require.NoError(t, err)
 
 			m := &NotificationChannelConfig{
-				Name:     "dingding_testing",
-				Type:     "dingding",
+				Name:     "line_testing",
+				Type:     "line",
 				Settings: settingsJSON,
 			}
 
-			pn, err := NewDingDingNotifier(m, tmpl)
+			pn, err := NewLineNotifier(m, tmpl)
 			if c.expInitError != nil {
 				require.Error(t, err)
 				require.Equal(t, c.expInitError.Error(), err.Error())
@@ -119,8 +100,10 @@ func TestDingdingNotifier(t *testing.T) {
 			require.NoError(t, err)
 
 			body := ""
+			var headers map[string]string
 			bus.AddHandlerCtx("test", func(ctx context.Context, webhook *models.SendWebhookSync) error {
 				body = webhook.Body
+				headers = webhook.HttpHeader
 				return nil
 			})
 
@@ -136,10 +119,8 @@ func TestDingdingNotifier(t *testing.T) {
 			require.NoError(t, err)
 			require.True(t, ok)
 
-			expBody, err := json.Marshal(c.expMsg)
-			require.NoError(t, err)
-
-			require.JSONEq(t, string(expBody), body)
+			require.Equal(t, c.expHeaders, headers)
+			require.Equal(t, c.expMsg, body)
 		})
 	}
 }
