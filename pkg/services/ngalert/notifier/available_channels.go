@@ -636,5 +636,21 @@ func GetAvailableNotifiers() []*alerting.NotifierPlugin {
 				},
 			},
 		},
+		{
+			Type:        "LINE",
+			Name:        "LINE",
+			Description: "Send notifications to LINE notify",
+			Heading:     "LINE notify settings",
+			Options: []alerting.NotifierOption{
+				{
+					Label:        "Token",
+					Element:      alerting.ElementTypeInput,
+					InputType:    alerting.InputTypeText,
+					Placeholder:  "LINE notify token key",
+					PropertyName: "token",
+					Required:     true,
+					Secure:       true,
+				}},
+		},
 	}
 }
