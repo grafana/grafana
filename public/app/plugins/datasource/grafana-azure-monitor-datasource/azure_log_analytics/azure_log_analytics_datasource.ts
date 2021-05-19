@@ -61,7 +61,7 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
 
     return (
       map(response.data.value, (val: any) => {
-        return { text: val.name, value: val.properties.customerId };
+        return { text: val.name, value: val.id };
       }) || []
     );
   }
@@ -218,8 +218,9 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
       return this.getWorkspaces((workspacesQueryWithSub[1] || '').trim());
     }
 
-    return this.getDefaultOrFirstWorkspace().then((workspace: any) => {
-      const queries: any[] = this.buildQuery(query, null, workspace);
+    // TODO: what's this??
+    return this.getDefaultOrFirstWorkspace().then((resourceURI) => {
+      const queries: any[] = this.buildQuery(query, null, resourceURI);
 
       const promises = this.doQueries(queries);
 
@@ -288,8 +289,9 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
       return Promise.resolve(this.defaultOrFirstWorkspace);
     }
 
-    return this.getWorkspaces(this.subscriptionId).then((workspaces: any[]) => {
+    return this.getWorkspaces(this.subscriptionId).then((workspaces) => {
       this.defaultOrFirstWorkspace = workspaces[0].value;
+
       return this.defaultOrFirstWorkspace;
     });
   }
@@ -362,8 +364,8 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     }
 
     return this.getDefaultOrFirstWorkspace()
-      .then((ws: any) => {
-        const url = `${this.baseUrl}/v1/workspaces/${ws}/metadata`;
+      .then((resourceURI) => {
+        const url = `${this.baseUrl}/v1${resourceURI}/metadata`;
 
         return this.doRequest(url);
       })
