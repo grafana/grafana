@@ -803,6 +803,31 @@ var expAvailableChannelJsonOutput = `
     ]
   },
   {
+    "type": "alertmanager",
+    "name": "Alertmanager",
+    "heading": "Alertmanager Settings",
+    "description": "Sends notifications to Alertmanager",
+    "info": "",
+    "options": [
+      {
+        "element": "input",
+        "inputType": "text",
+        "label": "URL",
+        "description": "",
+	"placeholder": "http://localhost:9093",
+        "propertyName": "url",
+        "selectOptions": null,
+        "showWhen": {
+          "field": "",
+          "is": ""
+        },
+        "required": true,
+        "validationRule": "",
+        "secure": false
+      }
+    ]
+  },
+  {
 	"type": "discord",
 	"name": "Discord",
 	"heading": "Discord settings",

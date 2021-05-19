@@ -405,6 +405,22 @@ func GetAvailableNotifiers() []*alerting.NotifierPlugin {
 			},
 		},
 		{
+			Type:        "alertmanager",
+			Name:        "Alertmanager",
+			Description: "Sends notifications to Alertmanager",
+			Heading:     "Alertmanager Settings",
+			Options: []alerting.NotifierOption{
+				{
+					Label:        "URL",
+					Element:      alerting.ElementTypeInput,
+					InputType:    alerting.InputTypeText,
+					Placeholder:  "http://localhost:9093",
+					PropertyName: "url",
+					Required:     true,
+				},
+			},
+		},
+		{
 			Type:        "discord",
 			Name:        "Discord",
 			Heading:     "Discord settings",

@@ -4,13 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/pkg/errors"
 	"net/url"
 	"path"
 	"strconv"
 	"strings"
 
 	gokit_log "github.com/go-kit/kit/log"
-	"github.com/pkg/errors"
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
@@ -26,11 +26,10 @@ import (
 
 type DiscordNotifier struct {
 	old_notifiers.NotifierBase
-	log         log.Logger
-	tmpl        *template.Template
-	Description string
-	Content     string
-	WebhookURL  string
+	log        log.Logger
+	tmpl       *template.Template
+	Content    string
+	WebhookURL string
 }
 
 func NewDiscordNotifier(model *NotificationChannelConfig, t *template.Template) (*DiscordNotifier, error) {
@@ -73,9 +72,6 @@ func (d DiscordNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 	if d.Content != "" {
 		bodyJSON.Set("content", tmpl(d.Content))
 	}
-	if tmplErr != nil {
-		return false, errors.Wrap(tmplErr, "failed to template discord message")
-	}
 
 	footer := map[string]interface{}{
 		"text":     "Grafana v" + setting.BuildVersion,
@@ -85,13 +81,10 @@ func (d DiscordNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 	embed := simplejson.New()
 	embed.Set("title", tmpl(`{{ template "default.title" . }}`))
 	embed.Set("footer", footer)
+	embed.Set("type", "rich")
 
 	color, _ := strconv.ParseInt(strings.TrimLeft(getAlertStatusColor(alerts.Status()), "#"), 16, 0)
 	embed.Set("color", color)
-
-	if d.Description != "" {
-		embed.Set("description", d.Description)
-	}
 
 	u, err := url.Parse(d.tmpl.ExternalURL.String())
 	if err != nil {
@@ -102,6 +95,11 @@ func (d DiscordNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 	embed.Set("url", ruleURL)
 
 	bodyJSON.Set("embeds", []interface{}{embed})
+
+	if tmplErr != nil {
+		return false, errors.Wrap(tmplErr, "failed to template discord message")
+	}
+
 	body, err := json.Marshal(bodyJSON)
 	if err != nil {
 		return false, err

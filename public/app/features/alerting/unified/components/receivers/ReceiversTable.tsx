@@ -9,7 +9,7 @@ import { ReceiversSection } from './ReceiversSection';
 import { makeAMLink } from '../../utils/misc';
 import { GrafanaTheme2 } from '@grafana/data';
 import { css } from '@emotion/css';
-import { isReceiverUsed } from '../../utils/alertmanager-config';
+import { isReceiverUsed } from '../../utils/alertmanager';
 import { useDispatch } from 'react-redux';
 import { deleteReceiverAction } from '../../state/actions';
 
