@@ -147,7 +147,6 @@ class DashboardWatcher {
           }
         }
       }
-      console.log('DashboardEvent EVENT', event);
     },
   };
 
