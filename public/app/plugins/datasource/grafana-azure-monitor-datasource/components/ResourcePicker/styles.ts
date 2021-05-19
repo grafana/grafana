@@ -45,6 +45,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
     textAlign: 'center',
   }),
 
+  spinner: css({
+    marginBottom: 0,
+  }),
+
   nestedEntry: css({
     display: 'flex',
   }),

@@ -1,5 +1,5 @@
 import { cx } from '@emotion/css';
-import { Checkbox, Icon, IconButton, useStyles2, useTheme2 } from '@grafana/ui';
+import { Checkbox, Icon, IconButton, LoadingPlaceholder, useStyles2, useTheme2, FadeTransition } from '@grafana/ui';
 import React, { useCallback, useEffect, useState } from 'react';
 import getStyles from './styles';
 import { EntryType, Row, RowGroup } from './types';
@@ -100,13 +100,13 @@ const NestedRow: React.FC<NestedRowProps> = ({ row, selectedRows, level, request
         />
       )}
 
-      {openStatus === 'loading' && (
+      <FadeTransition visible={openStatus === 'loading'}>
         <tr>
           <td className={cx(styles.cell, styles.loadingCell)} colSpan={3}>
-            Loading...
+            <LoadingPlaceholder text="Loading..." className={styles.spinner} />
           </td>
         </tr>
-      )}
+      </FadeTransition>
     </>
   );
 };
@@ -189,7 +189,7 @@ const NestedEntry: React.FC<NestedEntryProps> = ({
         <EntryIcon entry={entry} isOpen={isOpen} />
       </span>
 
-      <span className={styles.entryContentItem + ' ' + styles.truncated}>{entry.name}</span>
+      <span className={cx(styles.entryContentItem, styles.truncated)}>{entry.name}</span>
     </div>
   );
 };
