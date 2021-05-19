@@ -222,13 +222,9 @@ func (e *AzureResourceGraphDatasource) createRequest(ctx context.Context, dsInfo
 
 func (e *AzureResourceGraphDatasource) getPluginRoute(plugin *plugins.DataSourcePlugin, cloudName string) (
 	*plugins.AppPluginRoute, string, error) {
-	pluginRouteName := "azureresourcegraph"
-
-	switch cloudName {
-	case "chinaazuremonitor":
-		pluginRouteName = "chinaazureresourcegraph"
-	case "govazuremonitor":
-		pluginRouteName = "govazureresourcegraph"
+	pluginRouteName, err := getResourceGraphApiRoute(cloudName)
+	if err != nil {
+		return nil, "", err
 	}
 
 	var argRoute *plugins.AppPluginRoute
