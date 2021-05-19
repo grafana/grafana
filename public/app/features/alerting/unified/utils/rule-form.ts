@@ -1,4 +1,4 @@
-import { DataQuery, getDefaultTimeRange, rangeUtil, RelativeTimeRange } from '@grafana/data';
+import { DataQuery, rangeUtil, RelativeTimeRange } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getNextRefIdChar } from 'app/core/utils/query';
@@ -22,6 +22,7 @@ import { isGrafanaRulesSource } from './datasource';
 import { arrayToRecord, recordToArray } from './misc';
 import { isAlertingRulerRule, isGrafanaRulerRule } from './rules';
 import { parseInterval } from './time';
+import { getDefaultRelativeTimeRange } from '../../../../../../packages/grafana-data';
 
 export const getDefaultFormValues = (): RuleFormValues =>
   Object.freeze({
@@ -140,9 +141,7 @@ export const getDefaultQueries = (): GrafanaQuery[] => {
   if (!dataSource) {
     return [getDefaultExpression('A')];
   }
-
-  const timeRange = getDefaultTimeRange();
-  const relativeTimeRange = rangeUtil.timeRangeToRelative(timeRange);
+  const relativeTimeRange = getDefaultRelativeTimeRange();
 
   return [
     {
