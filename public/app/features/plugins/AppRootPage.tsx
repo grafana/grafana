@@ -1,6 +1,6 @@
 // Libraries
 import React, { Component } from 'react';
-import { AppEvents, AppPlugin, AppPluginMeta, NavModel, PluginType } from '@grafana/data';
+import { AppEvents, AppPlugin, AppPluginMeta, KeyValue, NavModel, PluginType } from '@grafana/data';
 import { createHtmlPortalNode, InPortal, OutPortal, HtmlPortalNode } from 'react-reverse-portal';
 
 import Page from 'app/core/components/Page/Page';
@@ -10,6 +10,7 @@ import { getNotFoundNav, getWarningNav, getExceptionNav } from 'app/core/nav_mod
 import { appEvents } from 'app/core/core';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
+import { locationSearchToObject } from '@grafana/runtime';
 
 interface RouteParams {
   pluginId: string;
@@ -91,7 +92,6 @@ class AppRootPage extends Component<Props, State> {
   };
 
   render() {
-    const { location, queryParams } = this.props;
     const { loading, plugin, nav, portalNode } = this.state;
 
     if (plugin && !plugin.root) {
@@ -105,9 +105,10 @@ class AppRootPage extends Component<Props, State> {
           {plugin && plugin.root && (
             <plugin.root
               meta={plugin.meta}
-              query={queryParams}
-              path={location.pathname}
+              basename={this.props.match.url}
               onNavChanged={this.onNavChanged}
+              query={locationSearchToObject(this.props.location.search) as KeyValue}
+              path={this.props.location.pathname}
             />
           )}
         </InPortal>

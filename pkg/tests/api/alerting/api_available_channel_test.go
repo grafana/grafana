@@ -109,6 +109,47 @@ var expAvailableChannelJsonOutput = `
     ]
   },
   {
+    "type": "kafka",
+    "name": "Kafka REST Proxy",
+    "heading": "Kafka settings",
+    "description": "Sends notifications to Kafka Rest Proxy",
+    "info": "",
+    "options": [
+      {
+        "element": "input",
+        "inputType": "text",
+        "label": "Kafka REST Proxy",
+        "description": "",
+        "placeholder": "http://localhost:8082",
+        "propertyName": "kafkaRestProxy",
+        "selectOptions": null,
+        "showWhen": {
+          "field": "",
+          "is": ""
+        },
+        "required": true,
+        "validationRule": "",
+        "secure": false
+      },
+      {
+        "element": "input",
+        "inputType": "text",
+        "label": "Topic",
+        "description": "",
+        "placeholder": "topic1",
+        "propertyName": "kafkaTopic",
+        "selectOptions": null,
+        "showWhen": {
+          "field": "",
+          "is": ""
+        },
+        "required": true,
+        "validationRule": "",
+        "secure": false
+      }
+    ]
+  },
+  {
     "type": "email",
     "name": "Email",
     "heading": "Email settings",
@@ -277,6 +318,56 @@ var expAvailableChannelJsonOutput = `
         "placeholder": "{{ template \"default.message\" . }}",
         "propertyName": "summary",
         "selectOptions": null,
+        "showWhen": {
+          "field": "",
+          "is": ""
+        },
+        "required": false,
+        "validationRule": "",
+        "secure": false
+      }
+    ]
+  },
+  {
+    "type": "victorops",
+    "name": "VictorOps",
+    "heading": "VictorOps settings",
+    "description": "Sends notifications to VictorOps",
+    "info": "",
+    "options": [
+      {
+        "element": "input",
+        "inputType": "text",
+        "label": "Url",
+        "description": "",
+        "placeholder": "VictorOps url",
+        "propertyName": "url",
+        "selectOptions": null,
+        "showWhen": {
+          "field": "",
+          "is": ""
+        },
+        "required": true,
+        "validationRule": "",
+        "secure": false
+      },
+      {
+        "element": "select",
+        "inputType": "",
+        "label": "Message Type",
+        "description": "",
+        "placeholder": "",
+        "propertyName": "messageType",
+        "selectOptions": [
+          {
+            "value": "CRITICAL",
+            "label": "CRITICAL"
+          },
+          {
+            "value": "WARNING",
+            "label": "WARNING"
+          }
+        ],
         "showWhen": {
           "field": "",
           "is": ""
@@ -1287,6 +1378,88 @@ var expAvailableChannelJsonOutput = `
         "required": true,
         "validationRule": "",
         "secure": false
+      }
+    ]
+  },
+  {
+    "type": "LINE",
+    "name": "LINE",
+    "heading": "LINE notify settings",
+    "description": "Send notifications to LINE notify",
+    "info": "",
+    "options": [
+      {
+        "element": "input",
+        "inputType": "text",
+        "label": "Token",
+        "description": "",
+        "placeholder": "LINE notify token key",
+        "propertyName": "token",
+        "selectOptions": null,
+        "showWhen": {
+          "field": "",
+          "is": ""
+        },
+        "required": true,
+        "validationRule": "",
+        "secure": true
+      }
+    ]
+  },
+  {
+    "type": "threema",
+    "name": "Threema Gateway",
+    "heading": "Threema Gateway settings",
+    "description": "Sends notifications to Threema using the Threema Gateway",
+    "info": "Notifications can be configured for any Threema Gateway ID of type \"Basic\". End-to-End IDs are not currently supported.The Threema Gateway ID can be set up at https://gateway.threema.ch/.",
+    "options": [
+      {
+        "element": "input",
+        "inputType": "text",
+        "label": "Gateway ID",
+        "description": "Your 8 character Threema Gateway ID (starting with a *).",
+        "placeholder": "*3MAGWID",
+        "propertyName": "gateway_id",
+        "selectOptions": null,
+        "showWhen": {
+          "field": "",
+          "is": ""
+        },
+        "required": true,
+        "validationRule": "\\*[0-9A-Z]{7}",
+        "secure": false
+      },
+      {
+        "element": "input",
+        "inputType": "text",
+        "label": "Recipient ID",
+        "description": "The 8 character Threema ID that should receive the alerts.",
+        "placeholder": "YOUR3MID",
+        "propertyName": "recipient_id",
+        "selectOptions": null,
+        "showWhen": {
+          "field": "",
+          "is": ""
+        },
+        "required": true,
+        "validationRule": "[0-9A-Z]{8}",
+        "secure": false
+      },
+      {
+        "element": "input",
+        "inputType": "text",
+        "label": "API Secret",
+        "description": "Your Threema Gateway API secret.",
+        "placeholder": "",
+        "propertyName": "api_secret",
+        "selectOptions": null,
+        "showWhen": {
+          "field": "",
+          "is": ""
+        },
+        "required": true,
+        "validationRule": "",
+        "secure": true
       }
     ]
   }

@@ -2,8 +2,6 @@ package channels
 
 import (
 	"context"
-	"encoding/json"
-	"errors"
 	"net/url"
 	"testing"
 
@@ -18,7 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/alerting"
 )
 
-func TestDingdingNotifier(t *testing.T) {
+func TestVictoropsNotifier(t *testing.T) {
 	tmpl := templateForTests(t)
 
 	externalURL, err := url.Parse("http://localhost")
@@ -29,12 +27,12 @@ func TestDingdingNotifier(t *testing.T) {
 		name         string
 		settings     string
 		alerts       []*types.Alert
-		expMsg       map[string]interface{}
+		expMsg       string
 		expInitError error
 		expMsgError  error
 	}{
 		{
-			name:     "Default config with one alert",
+			name:     "One alert",
 			settings: `{"url": "http://localhost"}`,
 			alerts: []*types.Alert{
 				{
@@ -44,23 +42,19 @@ func TestDingdingNotifier(t *testing.T) {
 					},
 				},
 			},
-			expMsg: map[string]interface{}{
-				"msgtype": "link",
-				"link": map[string]interface{}{
-					"messageUrl": "dingtalk://dingtalkclient/page/link?pc_slide=false&url=http%3A%2Flocalhost%2Falerting%2Flist",
-					"text":       "\n**Firing**\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSource: \n\n\n\n\n",
-					"title":      "[FIRING:1]  (val1)",
-				},
-			},
+			expMsg: `{
+			  "alert_url": "http:/localhost/alerting/list",
+			  "entity_display_name": "[FIRING:1]  (val1)",
+			  "entity_id": "6e3538104c14b583da237e9693b76debbc17f0f8058ef20492e5853096cf8733",
+			  "message_type": "CRITICAL",
+			  "monitoring_tool": "Grafana v",
+			  "state_message": "\n**Firing**\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSource: \n\n\n\n\n"
+			}`,
 			expInitError: nil,
 			expMsgError:  nil,
 		}, {
-			name: "Custom config with multiple alerts",
-			settings: `{
-				"url": "http://localhost",
-				"message": "{{ len .Alerts.Firing }} alerts are firing, {{ len .Alerts.Resolved }} are resolved",
-				"msgType": "actionCard"
-			}`,
+			name:     "Multiple alerts",
+			settings: `{"url": "http://localhost"}`,
 			alerts: []*types.Alert{
 				{
 					Alert: model.Alert{
@@ -74,28 +68,20 @@ func TestDingdingNotifier(t *testing.T) {
 					},
 				},
 			},
-			expMsg: map[string]interface{}{
-				"actionCard": map[string]interface{}{
-					"singleTitle": "More",
-					"singleURL":   "dingtalk://dingtalkclient/page/link?pc_slide=false&url=http%3A%2Flocalhost%2Falerting%2Flist",
-					"text":        "2 alerts are firing, 0 are resolved",
-					"title":       "[FIRING:2]  ",
-				},
-				"msgtype": "actionCard",
-			},
+			expMsg: `{
+			  "alert_url": "http:/localhost/alerting/list",
+			  "entity_display_name": "[FIRING:2]  ",
+			  "entity_id": "6e3538104c14b583da237e9693b76debbc17f0f8058ef20492e5853096cf8733",
+			  "message_type": "CRITICAL",
+			  "monitoring_tool": "Grafana v",
+			  "state_message": "\n**Firing**\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSource: \nLabels:\n - alertname = alert1\n - lbl1 = val2\nAnnotations:\n - ann1 = annv2\nSource: \n\n\n\n\n"
+			}`,
 			expInitError: nil,
 			expMsgError:  nil,
 		}, {
-			name:         "Error in initing",
+			name:         "Error in initing, no URL",
 			settings:     `{}`,
-			expInitError: alerting.ValidationError{Reason: "Could not find url property in settings"},
-		}, {
-			name: "Error in building message",
-			settings: `{
-				"url": "http://localhost",
-				"message": "{{ .Status }"
-			}`,
-			expMsgError: errors.New("failed to template DingDing message: template: :1: unexpected \"}\" in operand"),
+			expInitError: alerting.ValidationError{Reason: "Could not find victorops url property in settings"},
 		},
 	}
 
@@ -105,12 +91,12 @@ func TestDingdingNotifier(t *testing.T) {
 			require.NoError(t, err)
 
 			m := &NotificationChannelConfig{
-				Name:     "dingding_testing",
-				Type:     "dingding",
+				Name:     "victorops_testing",
+				Type:     "victorops",
 				Settings: settingsJSON,
 			}
 
-			pn, err := NewDingDingNotifier(m, tmpl)
+			pn, err := NewVictoropsNotifier(m, tmpl)
 			if c.expInitError != nil {
 				require.Error(t, err)
 				require.Equal(t, c.expInitError.Error(), err.Error())
@@ -136,10 +122,15 @@ func TestDingdingNotifier(t *testing.T) {
 			require.NoError(t, err)
 			require.True(t, ok)
 
-			expBody, err := json.Marshal(c.expMsg)
+			// Remove the non-constant timestamp
+			j, err := simplejson.NewJson([]byte(body))
 			require.NoError(t, err)
+			j.Del("timestamp")
+			b, err := j.MarshalJSON()
+			require.NoError(t, err)
+			body = string(b)
 
-			require.JSONEq(t, string(expBody), body)
+			require.JSONEq(t, c.expMsg, body)
 		})
 	}
 }
