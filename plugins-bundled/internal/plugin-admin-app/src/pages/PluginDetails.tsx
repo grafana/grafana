@@ -13,7 +13,7 @@ import { Page } from 'components/Page';
 import { Loader } from 'components/Loader';
 
 export const PluginDetails = ({ onNavChanged }: AppRootProps) => {
-  onNavChanged(undefined as any);
+  // onNavChanged(undefined as any);
   const { pluginId } = useParams<{ pluginId: string }>();
 
   const [tabs, setTabs] = useState([

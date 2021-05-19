@@ -41,6 +41,7 @@ export const PluginListPage: React.FC<Props> = ({
     loadPlugins();
   }, [loadPlugins]);
 
+  let actionTarget: string | undefined = '_blank';
   const linkButton = {
     href: 'https://grafana.com/plugins?utm_source=grafana_plugin_list',
     title: 'Find more plugins on Grafana.com',
@@ -49,6 +50,7 @@ export const PluginListPage: React.FC<Props> = ({
   if (config.pluginAdminEnabled) {
     linkButton.href = '/a/grafana-plugin-admin-app/';
     linkButton.title = 'Install & manage plugins';
+    actionTarget = undefined;
   }
 
   return (
@@ -60,7 +62,7 @@ export const PluginListPage: React.FC<Props> = ({
             setSearchQuery={(query) => setPluginsSearchQuery(query)}
             linkButton={linkButton}
             placeholder="Search by name, author, description or type"
-            target="_blank"
+            target={actionTarget}
           />
 
           <PluginsErrorsInfo>

@@ -10,7 +10,7 @@ import { Loader } from 'components/Loader';
 import { CatalogTab, getCatalogNavModel } from './nav';
 
 export const Library = ({ meta, onNavChanged, basename }: AppRootProps) => {
-  onNavChanged(getCatalogNavModel(CatalogTab.Library, basename));
+  // onNavChanged(getCatalogNavModel(CatalogTab.Library, basename));
   const { isLoading, items, installedPlugins } = usePlugins();
   const styles = useStyles2(getStyles);
 

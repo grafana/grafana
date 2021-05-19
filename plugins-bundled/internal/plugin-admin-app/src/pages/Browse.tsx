@@ -15,7 +15,7 @@ import { Page } from 'components/Page';
 import { CatalogTab, getCatalogNavModel } from './nav';
 
 export const Browse = ({ meta, onNavChanged, basename }: AppRootProps) => {
-  onNavChanged(getCatalogNavModel(CatalogTab.Browse, basename));
+  // onNavChanged(getCatalogNavModel(CatalogTab.Browse, basename));
 
   const location = useLocation();
   const query = locationSearchToObject(location.search);
