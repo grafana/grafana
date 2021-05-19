@@ -224,12 +224,17 @@ func (e *AzureLogAnalyticsDatasource) createRequest(ctx context.Context, dsInfo 
 	if plugin == nil {
 		return nil, errors.New("unable to find datasource plugin Azure Monitor")
 	}
-	cloudName := dsInfo.JsonData.Get("cloudName").MustString("azuremonitor")
+
+	cloudName, err := getAzureCloud(e.cfg, dsInfo.JsonData)
+	if err != nil {
+		return nil, err
+	}
 
 	logAnalyticsRoute, proxypass, err := e.getPluginRoute(plugin, cloudName)
 	if err != nil {
 		return nil, err
 	}
+
 	pluginproxy.ApplyRoute(ctx, req, proxypass, logAnalyticsRoute, dsInfo, e.cfg)
 
 	return req, nil

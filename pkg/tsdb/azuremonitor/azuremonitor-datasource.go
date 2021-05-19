@@ -234,7 +234,11 @@ func (e *AzureMonitorDatasource) createRequest(ctx context.Context, dsInfo *mode
 		return nil, errors.New("unable to find datasource plugin Azure Monitor")
 	}
 
-	cloudName := dsInfo.JsonData.Get("cloudName").MustString("azuremonitor")
+	cloudName, err := getAzureCloud(e.cfg, dsInfo.JsonData)
+	if err != nil {
+		return nil, err
+	}
+
 	var azureMonitorRoute *plugins.AppPluginRoute
 	for _, route := range plugin.Routes {
 		if route.Path == cloudName {

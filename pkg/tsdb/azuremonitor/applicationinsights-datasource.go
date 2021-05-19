@@ -221,7 +221,11 @@ func (e *ApplicationInsightsDatasource) createRequest(ctx context.Context, dsInf
 		return nil, errors.New("unable to find datasource plugin Azure Application Insights")
 	}
 
-	cloudName := dsInfo.JsonData.Get("cloudName").MustString("azuremonitor")
+	cloudName, err := getAzureCloud(e.cfg, dsInfo.JsonData)
+	if err != nil {
+		return nil, err
+	}
+
 	appInsightsRoute, pluginRouteName, err := e.getPluginRoute(plugin, cloudName)
 	if err != nil {
 		return nil, err
