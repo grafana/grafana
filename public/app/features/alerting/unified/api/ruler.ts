@@ -51,11 +51,16 @@ export async function fetchRulerRulesGroup(
 }
 
 export async function deleteRulerRulesGroup(dataSourceName: string, namespace: string, groupName: string) {
-  return getBackendSrv().delete(
-    `/api/ruler/${getDatasourceAPIId(dataSourceName)}/api/v1/rules/${encodeURIComponent(
-      namespace
-    )}/${encodeURIComponent(groupName)}`
-  );
+  return getBackendSrv()
+    .fetch({
+      url: `/api/ruler/${getDatasourceAPIId(dataSourceName)}/api/v1/rules/${encodeURIComponent(
+        namespace
+      )}/${encodeURIComponent(groupName)}`,
+      method: 'DELETE',
+      showSuccessAlert: false,
+      showErrorAlert: false,
+    })
+    .toPromise();
 }
 
 // false in case ruler is not supported. this is weird, but we'll work on it
