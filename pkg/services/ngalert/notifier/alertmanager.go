@@ -424,6 +424,8 @@ func (am *Alertmanager) buildReceiverIntegrations(receiver *apimodels.PostableAp
 			n, err = channels.NewTeamsNotifier(cfg, tmpl)
 		case "dingding":
 			n, err = channels.NewDingDingNotifier(cfg, tmpl)
+		case "kafka":
+			n, err = channels.NewKafkaNotifier(cfg, tmpl)
 		case "webhook":
 			n, err = channels.NewWebHookNotifier(cfg, tmpl)
 		case "sensugo":
