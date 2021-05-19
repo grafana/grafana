@@ -46,6 +46,7 @@ export function LokiQueryEditor(props: LokiQueryEditorProps) {
       onBlur={onRunQuery}
       history={[]}
       data={data}
+      data-testid={testIds.editor}
       ExtraFieldElement={
         <>
           <LokiOptionFields
@@ -62,3 +63,7 @@ export function LokiQueryEditor(props: LokiQueryEditorProps) {
     />
   );
 }
+
+export const testIds = {
+  editor: 'loki-editor',
+};

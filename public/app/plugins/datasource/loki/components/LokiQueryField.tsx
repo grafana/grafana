@@ -65,6 +65,7 @@ export interface LokiQueryFieldProps extends ExploreQueryFieldProps<LokiDatasour
   history: LokiHistoryItem[];
   ExtraFieldElement?: ReactNode;
   placeholder?: string;
+  'data-testid'?: string;
 }
 
 interface LokiQueryFieldState {
@@ -154,7 +155,10 @@ export class LokiQueryField extends React.PureComponent<LokiQueryFieldProps, Lok
 
     return (
       <>
-        <div className="gf-form-inline gf-form-inline--xs-view-flex-column flex-grow-1">
+        <div
+          className="gf-form-inline gf-form-inline--xs-view-flex-column flex-grow-1"
+          data-testid={this.props['data-testid']}
+        >
           <button
             className="gf-form-label query-keyword pointer"
             onClick={this.onClickChooserButton}

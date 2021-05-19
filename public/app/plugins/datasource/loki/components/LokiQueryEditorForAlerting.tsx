@@ -15,6 +15,11 @@ export function LokiQueryEditorForAlerting(props: LokiQueryEditorProps) {
       history={[]}
       data={data}
       placeholder="Enter a Loki query"
+      data-testid={testIds.editor}
     />
   );
 }
+
+export const testIds = {
+  editor: 'loki-editor-cloud-alerting',
+};
