@@ -12,14 +12,12 @@ import { PluginList } from '../components/PluginList';
 import { SearchField } from '../components/SearchField';
 import { PluginTypeIcon } from '../components/PluginTypeIcon';
 import { usePlugins } from '../hooks/usePlugins';
-import { CatalogAppSettings, Plugin } from '../types';
+import { Plugin } from '../types';
 import { Page } from 'components/Page';
 import { Loader } from 'components/Loader';
 
 export const Discover = ({ meta }: AppRootProps) => {
-  const { includeEnterprise } = meta.jsonData as CatalogAppSettings;
-
-  const { items, isLoading } = usePlugins(includeEnterprise);
+  const { items, isLoading } = usePlugins(false);
   const styles = useStyles2(getStyles);
 
   const onSearch = (q: string) => {

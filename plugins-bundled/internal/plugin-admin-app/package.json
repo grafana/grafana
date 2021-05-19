@@ -1,7 +1,7 @@
 {
-  "name": "@grafana-plugins/catalog-app",
+  "name": "@grafana-plugins/admin-app",
   "version": "8.1.0-pre",
-  "description": "Plugins catalog",
+  "description": "Plugins admin",
   "private": true,
   "repository": {
     "type": "git",

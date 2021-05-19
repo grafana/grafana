@@ -8,7 +8,7 @@ import { Route } from '@grafana/ui';
 import { config } from '@grafana/runtime';
 import { NotEnabled } from 'pages/NotEnabed';
 
-export const MarketplaceRootPage = React.memo(function MarketplaceRootPage(props: AppRootProps) {
+export const CatalogRootPage = React.memo(function CatalogRootPage(props: AppRootProps) {
   if (!config.pluginAdminEnabled) {
     return <NotEnabled {...props} />;
   }

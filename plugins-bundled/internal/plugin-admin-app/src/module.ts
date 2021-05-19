@@ -2,11 +2,11 @@ import { ComponentClass } from 'react';
 
 import { AppPlugin, AppPluginMeta, AppRootProps, PluginConfigPageProps } from '@grafana/data';
 import { Settings } from './config/Settings';
-import { MarketplaceRootPage } from './RootPage';
+import { CatalogRootPage } from './RootPage';
 import { CatalogAppSettings } from './types';
 
 export const plugin = new AppPlugin<CatalogAppSettings>()
-  .setRootPage((MarketplaceRootPage as unknown) as ComponentClass<AppRootProps>)
+  .setRootPage((CatalogRootPage as unknown) as ComponentClass<AppRootProps>)
   .addConfigPage({
     title: 'Settings',
     icon: 'info-circle',

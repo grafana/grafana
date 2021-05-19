@@ -9,7 +9,7 @@ import { SearchField } from '../components/SearchField';
 import { HorizontalGroup } from '../components/HorizontalGroup';
 import { usePlugins } from '../hooks/usePlugins';
 import { useHistory } from '../hooks/useHistory';
-import { CatalogAppSettings, Plugin } from '../types';
+import { Plugin } from '../types';
 import { Page } from 'components/Page';
 import { CatalogTab, getCatalogNavModel } from './nav';
 
@@ -18,13 +18,12 @@ export const Browse = ({ meta, onNavChanged, basename }: AppRootProps) => {
 
   const location = useLocation();
   const query = locationSearchToObject(location.search);
-  const { includeEnterprise } = meta.jsonData as CatalogAppSettings;
 
   const q = query.q as string;
   const filterBy = query.filterBy as string;
   const sortBy = query.sortBy as string;
 
-  const plugins = usePlugins(includeEnterprise);
+  const plugins = usePlugins();
   const history = useHistory();
 
   const onSortByChange = (value: SelectableValue<string>) => {
