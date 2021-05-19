@@ -17,7 +17,7 @@ To examine the details of an exemplar trace:
 
 1. Place your cursor over an exemplar (highlighted star). Depending on your backend trace data source, you will see a blue button with the label `Query with <data source name>`. In the following example, the tracing data source is Tempo. 
 
-{{< docs-imagebox img="/img/docs/basics/exemplar-explore-details.png" class="docs-image--no-shadow" max-width= "750px" caption="Screenshot showing Exemplar details" >}}
+{{< docs-imagebox img="/img/docs/basics/exemplar-details.png" class="docs-image--no-shadow" max-width= "275px" caption="Screenshot showing Exemplar details" >}}
 
 1. Click the **Query with Tempo** option next to the `traceID` property. The trace details, including the spans within the trace are listed in a separate panel on the right.
 
