@@ -70,7 +70,8 @@ type migration struct {
 	sess *xorm.Session
 	mg   *migrator.Migrator
 
-	seenChannelUIDs map[string]struct{}
+	seenChannelUIDs  map[string]struct{}
+	migratedChannels map[*notificationChannel]struct{}
 }
 
 func (m *migration) SQL(dialect migrator.Dialect) string {
@@ -223,10 +224,6 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 			return err
 		}
 
-		// Attach label for routing.
-		n, v := getLabelForRouteMatching(rule.Uid)
-		rule.Labels[n] = v
-
 		if err := m.updateReceiverAndRoute(allChannels, da, rule, &amConfig); err != nil {
 			return err
 		}
@@ -250,6 +247,13 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 		}
 	}
 
+	// Create a separate receiver for all the unmigrated channels.
+	recv, err := m.makeReceiverForUnmigratedChannels(allChannels)
+	if err != nil {
+		return err
+	}
+	amConfig.AlertmanagerConfig.Receivers = append(amConfig.AlertmanagerConfig.Receivers, recv)
+
 	if err := amConfig.EncryptSecureSettings(); err != nil {
 		return err
 	}
@@ -267,26 +271,6 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 	})
 
 	return err
-}
-
-func (m *migration) updateReceiverAndRoute(allChannels map[interface{}]*notificationChannel, da dashAlert, rule *alertRule, amConfig *PostableUserConfig) error {
-	// Create receiver and route for this rule.
-	if allChannels == nil {
-		return nil
-	}
-
-	rule.Labels["alertname"] = da.Name
-	rule.Annotations["message"] = da.Message
-
-	channelIDs := extractChannelIDs(da)
-	recv, route, err := m.makeReceiverAndRoute(rule.Uid, channelIDs, allChannels)
-	if err != nil {
-		return err
-	}
-	amConfig.AlertmanagerConfig.Receivers = append(amConfig.AlertmanagerConfig.Receivers, recv)
-	amConfig.AlertmanagerConfig.Route.Routes = append(amConfig.AlertmanagerConfig.Route.Routes, route)
-
-	return nil
 }
 
 type AlertConfiguration struct {

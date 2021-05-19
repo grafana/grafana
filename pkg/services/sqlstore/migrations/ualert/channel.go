@@ -81,6 +81,38 @@ func (m *migration) getNotificationChannelMap() (map[interface{}]*notificationCh
 	return allChannelsMap, defaultChannel, nil
 }
 
+func (m *migration) updateReceiverAndRoute(allChannels map[interface{}]*notificationChannel, da dashAlert, rule *alertRule, amConfig *PostableUserConfig) error {
+	rule.Labels["alertname"] = da.Name
+	rule.Annotations["message"] = da.Message
+
+	// Create receiver and route for this rule.
+	if allChannels == nil {
+		return nil
+	}
+
+	channelIDs := extractChannelIDs(da)
+	if len(channelIDs) == 0 {
+		// If there are no channels associated, we skip adding any routes,
+		// receivers or labels to rules so that it goes through the default
+		// route.
+		return nil
+	}
+
+	recv, route, err := m.makeReceiverAndRoute(rule.Uid, channelIDs, allChannels)
+	if err != nil {
+		return err
+	}
+
+	// Attach label for routing.
+	n, v := getLabelForRouteMatching(rule.Uid)
+	rule.Labels[n] = v
+
+	amConfig.AlertmanagerConfig.Receivers = append(amConfig.AlertmanagerConfig.Receivers, recv)
+	amConfig.AlertmanagerConfig.Route.Routes = append(amConfig.AlertmanagerConfig.Route.Routes, route)
+
+	return nil
+}
+
 func (m *migration) makeReceiverAndRoute(ruleUid string, channelUids []interface{}, allChannels map[interface{}]*notificationChannel) (*PostableApiReceiver, *Route, error) {
 	receiverName := getMigratedReceiverNameFromRuleUID(ruleUid)
 
@@ -103,6 +135,7 @@ func (m *migration) makeReceiverAndRoute(ruleUid string, channelUids []interface
 			return nil, nil, errors.New("failed to generate UID for notification channel")
 		}
 
+		m.migratedChannels[c] = struct{}{}
 		settings, secureSettings := migrateSettingsToSecureSettings(c.Type, c.Settings, c.SecureSettings)
 		portedChannels = append(portedChannels, &PostableGrafanaReceiver{
 			UID:                   uid,
@@ -126,6 +159,42 @@ func (m *migration) makeReceiverAndRoute(ruleUid string, channelUids []interface
 	}
 
 	return receiver, route, nil
+}
+
+func (m *migration) makeReceiverForUnmigratedChannels(allChannels map[interface{}]*notificationChannel) (*PostableApiReceiver, error) {
+	portedChannels := []*PostableGrafanaReceiver{}
+	receiver := &PostableApiReceiver{
+		Name: "autogen-unlinked-channel-recv",
+	}
+
+	for _, c := range allChannels {
+		_, ok := m.migratedChannels[c]
+		if ok {
+			continue
+		}
+		if c.Type == "hipchat" || c.Type == "sensu" {
+			return nil, fmt.Errorf("discontinued notification channel found: %s", c.Type)
+		}
+
+		uid, ok := m.generateChannelUID()
+		if !ok {
+			return nil, errors.New("failed to generate UID for notification channel")
+		}
+
+		m.migratedChannels[c] = struct{}{}
+		settings, secureSettings := migrateSettingsToSecureSettings(c.Type, c.Settings, c.SecureSettings)
+		portedChannels = append(portedChannels, &PostableGrafanaReceiver{
+			UID:                   uid,
+			Name:                  c.Name,
+			Type:                  c.Type,
+			DisableResolveMessage: c.DisableResolveMessage,
+			Settings:              settings,
+			SecureSettings:        secureSettings,
+		})
+	}
+	receiver.GrafanaManagedReceivers = portedChannels
+
+	return receiver, nil
 }
 
 func (m *migration) generateChannelUID() (string, bool) {
