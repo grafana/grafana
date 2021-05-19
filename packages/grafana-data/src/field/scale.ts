@@ -1,9 +1,8 @@
 import { isNumber } from 'lodash';
 import { GrafanaTheme2 } from '../themes/types';
 import { reduceField, ReducerID } from '../transformations/fieldReducer';
-import { DataFrame, Field, FieldConfig, FieldType, NumericRange, Threshold } from '../types';
+import { Field, FieldConfig, FieldType, NumericRange, Threshold } from '../types';
 import { getFieldColorModeForField } from './fieldColor';
-import { findNumericFieldMinMax } from './fieldOverrides';
 import { getActiveThresholdForValue } from './thresholds';
 
 export interface ColorScaleValue {
