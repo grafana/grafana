@@ -48,7 +48,7 @@ export const PluginListPage: React.FC<Props> = ({
 
   if (config.pluginAdminEnabled) {
     linkButton.href = '/a/grafana-plugin-admin-app/';
-    linkButton.title = 'Manage installed plugins';
+    linkButton.title = 'Install & manage plugins';
   }
 
   return (
