@@ -1223,6 +1223,47 @@ var expAvailableChannelJsonOutput = `
         "secure": false
       }
     ]
+  },
+  {
+	"type": "discord",
+	"name": "Discord",
+	"heading": "Discord settings",
+	"description": "Sends notifications to Discord",
+	"info": "",
+	"options": [
+      {
+		"label": "Message Content",
+		"description": "Mention a group using @ or a user using <@ID> when notifying in a channel",
+		"element": "input",
+		"inputType": "text",
+		"placeholder": "{{ template \"default.message\" . }}",
+		"propertyName": "message",
+		"selectOptions": null,
+		"showWhen": {
+		  "field": "",
+		  "is": ""
+		},
+		"required": false,
+		"validationRule": "",
+		"secure": false
+	  },
+	  {
+		"label": "Webhook URL",
+		"description": "",
+		"element": "input",
+		"inputType": "text",
+		"placeholder": "Discord webhook URL",
+		"propertyName": "url",
+		"selectOptions": null,
+		"showWhen": {
+		  "field": "",
+		  "is": ""
+		},
+		"required": true,
+		"validationRule": "",
+		"secure": false
+	  }
+	]
   }
 ]
 `

@@ -426,6 +426,8 @@ func (am *Alertmanager) buildReceiverIntegrations(receiver *apimodels.PostableAp
 			n, err = channels.NewWebHookNotifier(cfg, tmpl)
 		case "sensugo":
 			n, err = channels.NewSensuGoNotifier(cfg, tmpl)
+		case "discord":
+			n, err = channels.NewDiscordNotifier(cfg, tmpl)
 		case "alertmanager":
 			n, err = channels.NewAlertmanagerNotifier(cfg, tmpl)
 		default:
