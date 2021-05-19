@@ -1,7 +1,5 @@
-import { AppEvents } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { createAsyncThunk } from '@reduxjs/toolkit';
-import { appEvents } from 'app/core/core';
 import {
   AlertmanagerAlert,
   AlertManagerCortexConfig,
@@ -36,7 +34,7 @@ import {
 import { RuleFormType, RuleFormValues } from '../types/rule-form';
 import { getAllRulesSourceNames, GRAFANA_RULES_SOURCE_NAME, isGrafanaRulesSource } from '../utils/datasource';
 import { makeAMLink } from '../utils/misc';
-import { withSerializedError } from '../utils/redux';
+import { withAppEvents, withSerializedError } from '../utils/redux';
 import { formValuesToRulerAlertingRuleDTO, formValuesToRulerGrafanaRuleDTO } from '../utils/rule-form';
 import {
   getRuleIdentifier,
@@ -169,14 +167,21 @@ export function deleteRuleAction(ruleIdentifier: RuleIdentifier): ThunkResult<vo
    * reload ruler rules
    */
   return async (dispatch) => {
-    const ruleWithLocation = await findExistingRule(ruleIdentifier);
-    if (!ruleWithLocation) {
-      throw new Error('Rule not found.');
-    }
-    await deleteRule(ruleWithLocation);
-    // refetch rules for this rules source
-    dispatch(fetchRulerRulesAction(ruleWithLocation.ruleSourceName));
-    dispatch(fetchPromRulesAction(ruleWithLocation.ruleSourceName));
+    withAppEvents(
+      (async () => {
+        const ruleWithLocation = await findExistingRule(ruleIdentifier);
+        if (!ruleWithLocation) {
+          throw new Error('Rule not found.');
+        }
+        await deleteRule(ruleWithLocation);
+        // refetch rules for this rules source
+        dispatch(fetchRulerRulesAction(ruleWithLocation.ruleSourceName));
+        dispatch(fetchPromRulesAction(ruleWithLocation.ruleSourceName));
+      })(),
+      {
+        successMessage: 'Rule deleted.',
+      }
+    );
   };
 }
 
@@ -298,32 +303,35 @@ export const saveRuleFormAction = createAsyncThunk(
     existing?: RuleWithLocation;
     redirectOnSave?: string;
   }): Promise<void> =>
-    withSerializedError(
-      (async () => {
-        const { type } = values;
-        // in case of cloud (cortex/loki)
-        let identifier: RuleIdentifier;
-        if (type === RuleFormType.cloud) {
-          identifier = await saveLotexRule(values, existing);
-          // in case of grafana managed
-        } else if (type === RuleFormType.grafana) {
-          identifier = await saveGrafanaRule(values, existing);
-        } else {
-          throw new Error('Unexpected rule form type');
-        }
-        if (redirectOnSave) {
-          locationService.push(redirectOnSave);
-        } else {
-          // redirect to edit page
-          const newLocation = `/alerting/${encodeURIComponent(stringifyRuleIdentifier(identifier))}/edit`;
-          if (locationService.getLocation().pathname !== newLocation) {
-            locationService.replace(newLocation);
+    withAppEvents(
+      withSerializedError(
+        (async () => {
+          const { type } = values;
+          // in case of system (cortex/loki)
+          let identifier: RuleIdentifier;
+          if (type === RuleFormType.cloud) {
+            identifier = await saveLotexRule(values, existing);
+            // in case of grafana managed
+          } else if (type === RuleFormType.grafana) {
+            identifier = await saveGrafanaRule(values, existing);
+          } else {
+            throw new Error('Unexpected rule form type');
           }
-        }
-        appEvents.emit(AppEvents.alertSuccess, [
-          existing ? `Rule "${values.name}" updated.` : `Rule "${values.name}" saved.`,
-        ]);
-      })()
+          if (redirectOnSave) {
+            locationService.push(redirectOnSave);
+          } else {
+            // redirect to edit page
+            const newLocation = `/alerting/${encodeURIComponent(stringifyRuleIdentifier(identifier))}/edit`;
+            if (locationService.getLocation().pathname !== newLocation) {
+              locationService.replace(newLocation);
+            }
+          }
+        })()
+      ),
+      {
+        successMessage: existing ? `Rule "${values.name}" updated.` : `Rule "${values.name}" saved.`,
+        errorMessage: 'Failed to save rule',
+      }
     )
 );
 
@@ -344,25 +352,27 @@ interface UpdateAlertManagerConfigActionOptions {
 export const updateAlertManagerConfigAction = createAsyncThunk<void, UpdateAlertManagerConfigActionOptions, {}>(
   'unifiedalerting/updateAMConfig',
   ({ alertManagerSourceName, oldConfig, newConfig, successMessage, redirectPath, refetch }, thunkAPI): Promise<void> =>
-    withSerializedError(
-      (async () => {
-        const latestConfig = await fetchAlertManagerConfig(alertManagerSourceName);
-        if (JSON.stringify(latestConfig) !== JSON.stringify(oldConfig)) {
-          throw new Error(
-            'It seems configuration has been recently updated. Please reload page and try again to make sure that recent changes are not overwritten.'
-          );
-        }
-        await updateAlertManagerConfig(alertManagerSourceName, addDefaultsToAlertmanagerConfig(newConfig));
-        if (successMessage) {
-          appEvents?.emit(AppEvents.alertSuccess, [successMessage]);
-        }
-        if (refetch) {
-          await thunkAPI.dispatch(fetchAlertManagerConfigAction(alertManagerSourceName));
-        }
-        if (redirectPath) {
-          locationService.push(makeAMLink(redirectPath, alertManagerSourceName));
-        }
-      })()
+    withAppEvents(
+      withSerializedError(
+        (async () => {
+          const latestConfig = await fetchAlertManagerConfig(alertManagerSourceName);
+          if (JSON.stringify(latestConfig) !== JSON.stringify(oldConfig)) {
+            throw new Error(
+              'It seems configuration has been recently updated. Please reload page and try again to make sure that recent changes are not overwritten.'
+            );
+          }
+          await updateAlertManagerConfig(alertManagerSourceName, addDefaultsToAlertmanagerConfig(newConfig));
+          if (refetch) {
+            await thunkAPI.dispatch(fetchAlertManagerConfigAction(alertManagerSourceName));
+          }
+          if (redirectPath) {
+            locationService.push(makeAMLink(redirectPath, alertManagerSourceName));
+          }
+        })()
+      ),
+      {
+        successMessage,
+      }
     )
 );
 
@@ -374,7 +384,9 @@ export const fetchAmAlertsAction = createAsyncThunk(
 
 export const expireSilenceAction = (alertManagerSourceName: string, silenceId: string): ThunkResult<void> => {
   return async (dispatch) => {
-    await expireSilence(alertManagerSourceName, silenceId);
+    await withAppEvents(expireSilence(alertManagerSourceName, silenceId), {
+      successMessage: 'Silence expired.',
+    });
     dispatch(fetchSilencesAction(alertManagerSourceName));
     dispatch(fetchAmAlertsAction(alertManagerSourceName));
   };
@@ -390,16 +402,18 @@ type UpdateSilenceActionOptions = {
 export const createOrUpdateSilenceAction = createAsyncThunk<void, UpdateSilenceActionOptions, {}>(
   'unifiedalerting/updateSilence',
   ({ alertManagerSourceName, payload, exitOnSave, successMessage }): Promise<void> =>
-    withSerializedError(
-      (async () => {
-        await createOrUpdateSilence(alertManagerSourceName, payload);
-        if (successMessage) {
-          appEvents.emit(AppEvents.alertSuccess, [successMessage]);
-        }
-        if (exitOnSave) {
-          locationService.push('/alerting/silences');
-        }
-      })()
+    withAppEvents(
+      withSerializedError(
+        (async () => {
+          await createOrUpdateSilence(alertManagerSourceName, payload);
+          if (exitOnSave) {
+            locationService.push('/alerting/silences');
+          }
+        })()
+      ),
+      {
+        successMessage,
+      }
     )
 );
 
