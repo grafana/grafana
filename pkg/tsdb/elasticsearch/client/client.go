@@ -31,7 +31,7 @@ var (
 )
 
 var newDatasourceHttpClient = func(httpClientProvider httpclient.Provider, ds *models.DataSource) (*http.Client, error) {
-	return ds.GetHttpClient2(httpClientProvider)
+	return ds.GetHTTPClient(httpClientProvider)
 }
 
 // Client represents a client which can interact with elasticsearch api

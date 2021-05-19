@@ -24,7 +24,7 @@ type tempoExecutor struct {
 func New(httpClientProvider httpclient.Provider) func(*models.DataSource) (plugins.DataPlugin, error) {
 	//nolint: staticcheck // plugins.DataPlugin deprecated
 	return func(dsInfo *models.DataSource) (plugins.DataPlugin, error) {
-		httpClient, err := dsInfo.GetHttpClient2(httpClientProvider)
+		httpClient, err := dsInfo.GetHTTPClient(httpClientProvider)
 		if err != nil {
 			return nil, err
 		}

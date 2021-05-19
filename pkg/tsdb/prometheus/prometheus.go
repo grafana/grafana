@@ -68,7 +68,7 @@ func (transport *prometheusTransport) RoundTrip(req *http.Request) (*http.Respon
 //nolint: staticcheck // plugins.DataPlugin deprecated
 func New(provider httpclient.Provider) func(*models.DataSource) (plugins.DataPlugin, error) {
 	return func(dsInfo *models.DataSource) (plugins.DataPlugin, error) {
-		transport, err := dsInfo.GetHttpTransport2(provider)
+		transport, err := dsInfo.GetHTTPTransport(provider)
 		if err != nil {
 			return nil, err
 		}

@@ -104,7 +104,7 @@ func (proxy *DataSourceProxy) HandleRequest() {
 	proxyErrorLogger := logger.New("userId", proxy.ctx.UserId, "orgId", proxy.ctx.OrgId, "uname", proxy.ctx.Login,
 		"path", proxy.ctx.Req.URL.Path, "remote_addr", proxy.ctx.RemoteAddr(), "referer", proxy.ctx.Req.Referer())
 
-	transport, err := proxy.ds.GetHttpTransport2(proxy.clientProvider)
+	transport, err := proxy.ds.GetHTTPTransport(proxy.clientProvider)
 	if err != nil {
 		proxy.ctx.JsonApiErr(400, "Unable to load TLS certificate", err)
 		return

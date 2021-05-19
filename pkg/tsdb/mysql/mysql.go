@@ -51,7 +51,7 @@ func New(httpClientProvider httpclient.Provider) func(datasource *models.DataSou
 			characterEscape(datasource.Database, "?"),
 		)
 
-		tlsConfig, err := datasource.GetTLSConfig2(httpClientProvider)
+		tlsConfig, err := datasource.GetTLSConfig(httpClientProvider)
 		if err != nil {
 			return nil, err
 		}

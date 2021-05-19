@@ -48,7 +48,7 @@ type AzureMonitorExecutor struct {
 // NewAzureMonitorExecutor initializes a http client
 //nolint: staticcheck // plugins.DataPlugin deprecated
 func (s *Service) NewExecutor(dsInfo *models.DataSource) (plugins.DataPlugin, error) {
-	httpClient, err := dsInfo.GetHttpClient2(s.HTTPClientProvider)
+	httpClient, err := dsInfo.GetHTTPClient(s.HTTPClientProvider)
 	if err != nil {
 		return nil, err
 	}

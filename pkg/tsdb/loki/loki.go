@@ -51,12 +51,12 @@ func (e *LokiExecutor) DataQuery(ctx context.Context, dsInfo *models.DataSource,
 		Results: map[string]plugins.DataQueryResult{},
 	}
 
-	tlsConfig, err := dsInfo.GetTLSConfig2(e.httpClientProvider)
+	tlsConfig, err := dsInfo.GetTLSConfig(e.httpClientProvider)
 	if err != nil {
 		return plugins.DataResponse{}, err
 	}
 
-	transport, err := dsInfo.GetHttpTransport()
+	transport, err := dsInfo.GetHTTPTransport(e.httpClientProvider)
 	if err != nil {
 		return plugins.DataResponse{}, err
 	}

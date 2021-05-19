@@ -97,7 +97,7 @@ func (e *GraphiteExecutor) DataQuery(ctx context.Context, dsInfo *models.DataSou
 		return plugins.DataResponse{}, err
 	}
 
-	httpClient, err := dsInfo.GetHttpClient2(e.httpClientProvider)
+	httpClient, err := dsInfo.GetHTTPClient(e.httpClientProvider)
 	if err != nil {
 		return plugins.DataResponse{}, err
 	}

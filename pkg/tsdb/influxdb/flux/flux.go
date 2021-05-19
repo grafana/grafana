@@ -86,7 +86,7 @@ func runnerFromDataSource(httpClientProvider httpclient.Provider, dsInfo *models
 	}
 
 	opts := influxdb2.DefaultOptions()
-	hc, err := dsInfo.GetHttpClient2(httpClientProvider)
+	hc, err := dsInfo.GetHTTPClient(httpClientProvider)
 	if err != nil {
 		return nil, err
 	}
