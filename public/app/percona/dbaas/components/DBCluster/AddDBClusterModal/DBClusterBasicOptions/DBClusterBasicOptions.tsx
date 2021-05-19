@@ -16,14 +16,15 @@ import { KubernetesOperatorStatus } from '../../../Kubernetes/OperatorStatusItem
 import { SelectableValue } from '@grafana/data';
 import { isOptionEmpty } from '../../DBCluster.utils';
 import { useDatabaseVersions } from './DBClusterBasicOptions.hooks';
+import { CLUSTER_NAME_MAX_LENGTH } from './DBClusterBasicOptions.constants';
 
 export const DBClusterBasicOptions: FC<DBClusterBasicOptionsProps> = ({ kubernetes, form }) => {
-  const { required } = validators;
+  const { required, maxLength } = validators;
   const { change } = form;
   const { kubernetesCluster, databaseType } = form.getState().values;
   const [databaseVersions, setDatabaseVersions] = useState<SelectableValue[]>([]);
   const [loadingDatabaseVersions, setLoadingDatabaseVersions] = useState(false);
-  const onChangeDatabase = useCallback(databaseType => {
+  const onChangeDatabase = useCallback((databaseType) => {
     if (databaseType.value !== Databases.mysql) {
       change(AddDBClusterFields.topology, DBClusterTopology.cluster);
     }
@@ -34,7 +35,7 @@ export const DBClusterBasicOptions: FC<DBClusterBasicOptionsProps> = ({ kubernet
   const kubernetesOptions = getKubernetesOptions(kubernetes);
 
   const [databaseOptions, setDatabaseOptions] = useState(DATABASE_OPTIONS);
-  const onChangeCluster = useCallback(selectedKubernetes => {
+  const onChangeCluster = useCallback((selectedKubernetes) => {
     const { operators } = selectedKubernetes;
     const availableDatabaseOptions: DatabaseOption[] = [];
 
@@ -70,7 +71,7 @@ export const DBClusterBasicOptions: FC<DBClusterBasicOptionsProps> = ({ kubernet
       <TextInputField
         name={AddDBClusterFields.name}
         label={Messages.dbcluster.addModal.fields.clusterName}
-        validators={[required, kubernetesClusterNameValidator]}
+        validators={[required, kubernetesClusterNameValidator, maxLength(CLUSTER_NAME_MAX_LENGTH)]}
       />
       <Field
         dataQa="dbcluster-kubernetes-cluster-field"
