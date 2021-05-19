@@ -89,7 +89,7 @@ func (e *AzureLogAnalyticsDatasource) buildQueries(queries []plugins.DataSubQuer
 			resultFormat = "time_series"
 		}
 
-		// Handle old queries without a Workspace
+		// Handle legacy queries without a Resource
 		var apiURL string
 		if azureLogAnalyticsTarget.Resource != "" {
 			apiURL = fmt.Sprintf("v1%s/query", azureLogAnalyticsTarget.Resource)
