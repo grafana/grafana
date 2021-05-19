@@ -136,6 +136,7 @@ Family: scuemata.#Family & {
 
                     fieldConfig: {
                         defaults: {
+                            ...
                             // The display value for this field.  This supports template variables blank is auto
                             displayName?: string
 
