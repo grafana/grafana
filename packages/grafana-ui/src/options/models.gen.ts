@@ -1,7 +1,7 @@
 // TODO: this should be generated with cue
 
 import { VizLegendOptions, VizTooltipOptions } from '../components';
-import { VizValueFormattingOptions } from './builder/valueFormatting';
+import { VizTextDisplayOptions } from './builder/text';
 
 /**
  * @alpha
@@ -14,6 +14,6 @@ export interface OptionsWithTooltip {
   tooltip: VizTooltipOptions;
 }
 
-export interface OptionsWithValueFormatting {
-  valueFormatting: VizValueFormattingOptions;
+export interface OptionsWithTextFormatting {
+  text?: VizTextDisplayOptions;
 }

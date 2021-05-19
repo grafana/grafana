@@ -15,7 +15,7 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
-  "id": 426,
+  "id": 440,
   "links": [],
   "panels": [
     {
@@ -56,7 +56,7 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 11,
+        "h": 13,
         "w": 24,
         "x": 0,
         "y": 0
@@ -72,13 +72,9 @@
         },
         "orientation": "auto",
         "showValue": "auto",
+        "text": {},
         "tooltip": {
           "mode": "single"
-        },
-        "valueFormatting": {
-          "mode": "auto",
-          "size": 10,
-          "sync": false
         }
       },
       "title": "Plenty od data, automatic value sizing",
@@ -122,10 +118,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 10,
+        "h": 12,
         "w": 24,
         "x": 0,
-        "y": 11
+        "y": 13
       },
       "id": 10,
       "options": {
@@ -138,20 +134,19 @@
         },
         "orientation": "auto",
         "showValue": "auto",
+        "text": {
+          "size": 10,
+          "valueSize": 10
+        },
         "tooltip": {
           "mode": "single"
-        },
-        "valueFormatting": {
-          "mode": "fixed",
-          "size": 10,
-          "sync": false
         }
       },
       "title": "Plenty od data, fixed value sizing",
       "type": "barchart"
     },
     {
-      "datasource": "Bar simple",
+      "datasource": "Charts data",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -168,7 +163,7 @@
               "legend": false,
               "tooltip": false
             },
-            "lineWidth": 1
+            "lineWidth": 0
           },
           "mappings": [],
           "thresholds": {
@@ -183,8 +178,7 @@
                 "value": 80
               }
             ]
-          },
-          "unit": "areaF2"
+          }
         },
         "overrides": []
       },
@@ -192,33 +186,51 @@
         "h": 12,
         "w": 12,
         "x": 0,
-        "y": 21
+        "y": 25
       },
-      "id": 3,
+      "id": 11,
       "options": {
-        "barWidth": 0.97,
-        "groupWidth": 0.7,
+        "barWidth": 1,
+        "groupWidth": 1,
         "legend": {
           "calcs": [],
           "displayMode": "list",
           "placement": "bottom"
         },
-        "orientation": "vertical",
-        "showValue": "always",
-        "tooltip": {
-          "mode": "none"
+        "orientation": "auto",
+        "showValue": "auto",
+        "text": {
+          "size": 10
         },
-        "valueFormatting": {
-          "mode": "auto",
-          "size": 22,
-          "sync": true
+        "tooltip": {
+          "mode": "single"
         }
       },
-      "title": "Auto font size, value always visible",
+      "title": "Auto font size, value auto visible",
+      "transformations": [
+        {
+          "id": "filterByValue",
+          "options": {
+            "filters": [
+              {
+                "config": {
+                  "id": "equal",
+                  "options": {
+                    "value": "uPlot"
+                  }
+                },
+                "fieldName": "lib_name"
+              }
+            ],
+            "match": "all",
+            "type": "include"
+          }
+        }
+      ],
       "type": "barchart"
     },
     {
-      "datasource": "Bar simple",
+      "datasource": "Charts data",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -235,7 +247,7 @@
               "legend": false,
               "tooltip": false
             },
-            "lineWidth": 1
+            "lineWidth": 0
           },
           "mappings": [],
           "thresholds": {
@@ -250,8 +262,7 @@
                 "value": 80
               }
             ]
-          },
-          "unit": "areaF2"
+          }
         },
         "overrides": []
       },
@@ -259,33 +270,51 @@
         "h": 12,
         "w": 12,
         "x": 12,
-        "y": 21
+        "y": 25
       },
-      "id": 6,
+      "id": 12,
       "options": {
-        "barWidth": 0.97,
-        "groupWidth": 0.7,
+        "barWidth": 1,
+        "groupWidth": 1,
         "legend": {
           "calcs": [],
           "displayMode": "list",
           "placement": "bottom"
         },
-        "orientation": "vertical",
+        "orientation": "auto",
         "showValue": "always",
-        "tooltip": {
-          "mode": "none"
+        "text": {
+          "size": 10
         },
-        "valueFormatting": {
-          "mode": "auto",
-          "size": 22,
-          "sync": true
+        "tooltip": {
+          "mode": "single"
         }
       },
       "title": "Auto font size, value always visible",
+      "transformations": [
+        {
+          "id": "filterByValue",
+          "options": {
+            "filters": [
+              {
+                "config": {
+                  "id": "equal",
+                  "options": {
+                    "value": "uPlot"
+                  }
+                },
+                "fieldName": "lib_name"
+              }
+            ],
+            "match": "all",
+            "type": "include"
+          }
+        }
+      ],
       "type": "barchart"
     },
     {
-      "datasource": "Bar simple",
+      "datasource": "Charts data",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -302,7 +331,7 @@
               "legend": false,
               "tooltip": false
             },
-            "lineWidth": 1
+            "lineWidth": 0
           },
           "mappings": [],
           "thresholds": {
@@ -317,8 +346,7 @@
                 "value": 80
               }
             ]
-          },
-          "unit": "areaF2"
+          }
         },
         "overrides": []
       },
@@ -326,12 +354,12 @@
         "h": 12,
         "w": 12,
         "x": 0,
-        "y": 33
+        "y": 37
       },
-      "id": 5,
+      "id": 13,
       "options": {
-        "barWidth": 0.97,
-        "groupWidth": 0.7,
+        "barWidth": 1,
+        "groupWidth": 1,
         "legend": {
           "calcs": [],
           "displayMode": "list",
@@ -339,20 +367,38 @@
         },
         "orientation": "horizontal",
         "showValue": "auto",
-        "tooltip": {
-          "mode": "none"
+        "text": {
+          "size": 10
         },
-        "valueFormatting": {
-          "mode": "auto",
-          "size": 22,
-          "sync": true
+        "tooltip": {
+          "mode": "single"
         }
       },
       "title": "Auto font size, value auto visible",
+      "transformations": [
+        {
+          "id": "filterByValue",
+          "options": {
+            "filters": [
+              {
+                "config": {
+                  "id": "equal",
+                  "options": {
+                    "value": "uPlot"
+                  }
+                },
+                "fieldName": "lib_name"
+              }
+            ],
+            "match": "all",
+            "type": "include"
+          }
+        }
+      ],
       "type": "barchart"
     },
     {
-      "datasource": "Bar simple",
+      "datasource": "Charts data",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -369,7 +415,7 @@
               "legend": false,
               "tooltip": false
             },
-            "lineWidth": 1
+            "lineWidth": 0
           },
           "mappings": [],
           "thresholds": {
@@ -384,8 +430,7 @@
                 "value": 80
               }
             ]
-          },
-          "unit": "areaF2"
+          }
         },
         "overrides": []
       },
@@ -393,12 +438,12 @@
         "h": 12,
         "w": 12,
         "x": 12,
-        "y": 33
+        "y": 37
       },
-      "id": 7,
+      "id": 14,
       "options": {
-        "barWidth": 0.97,
-        "groupWidth": 0.7,
+        "barWidth": 1,
+        "groupWidth": 1,
         "legend": {
           "calcs": [],
           "displayMode": "list",
@@ -406,19 +451,38 @@
         },
         "orientation": "horizontal",
         "showValue": "always",
-        "tooltip": {
-          "mode": "none"
+        "text": {
+          "size": 10
         },
-        "valueFormatting": {
-          "mode": "auto",
-          "size": 22,
-          "sync": true
+        "tooltip": {
+          "mode": "single"
         }
       },
       "title": "Auto font size, value always visible",
+      "transformations": [
+        {
+          "id": "filterByValue",
+          "options": {
+            "filters": [
+              {
+                "config": {
+                  "id": "equal",
+                  "options": {
+                    "value": "uPlot"
+                  }
+                },
+                "fieldName": "lib_name"
+              }
+            ],
+            "match": "all",
+            "type": "include"
+          }
+        }
+      ],
       "type": "barchart"
     }
   ],
+  "refresh": "",
   "schemaVersion": 30,
   "style": "dark",
   "tags": [
@@ -430,12 +494,12 @@
     "list": []
   },
   "time": {
-    "from": "now-6h",
+    "from": "now-5m",
     "to": "now"
   },
   "timepicker": {},
   "timezone": "",
-  "title": "BarChart - label tex sizing",
+  "title": "BarChart - value text sizing",
   "uid": "WFlOM-jM1",
-  "version": 28
+  "version": 21
 }

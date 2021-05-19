@@ -5,7 +5,7 @@ import { TooltipInterpolator } from '@grafana/ui/src/components/uPlot/types';
 import { BarValueVisibility, ScaleDirection, ScaleOrientation } from '@grafana/ui/src/components/uPlot/config';
 import { CartesianCoords2D, GrafanaTheme2 } from '@grafana/data';
 import { calculateFontSize, measureText } from '@grafana/ui';
-import { VizValueFormattingMode, VizValueFormattingOptions } from '@grafana/ui/src/options/builder';
+import { VizTextDisplayOptions } from '@grafana/ui/src/options/builder';
 
 const groupDistr = SPACE_BETWEEN;
 const barDistr = SPACE_BETWEEN;
@@ -26,9 +26,9 @@ export interface BarsOptions {
   xDir: ScaleDirection;
   groupWidth: number;
   barWidth: number;
-  valueFormatting: VizValueFormattingOptions;
   showValue: BarValueVisibility;
   formatValue: (seriesIdx: number, value: any) => string;
+  text?: VizTextDisplayOptions;
   onHover?: (seriesIdx: number, valueIdx: number) => void;
   onLeave?: (seriesIdx: number, valueIdx: number) => void;
 }
@@ -48,9 +48,10 @@ interface LabelDescriptor extends CartesianCoords2D {
  * @internal
  */
 export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
-  const { xOri: ori, xDir: dir, groupWidth, barWidth, formatValue } = opts;
-  let qt: Quadtree;
+  const { xOri: ori, xDir: dir, groupWidth, barWidth, formatValue, showValue } = opts;
+  const hasAutoValueSize = !Boolean(opts.text?.valueSize);
 
+  let qt: Quadtree;
   let labelsSizing: Array<LabelDescriptor | null> = [];
 
   const drawBars: Series.PathBuilder = (u, sidx) => {
@@ -143,9 +144,9 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
             // u.ctx.closePath();
             // u.ctx.stroke();
 
-            let fontSize = opts.valueFormatting?.size ?? VALUE_MIN_FONT_SIZE;
+            let fontSize = opts.text?.valueSize ?? VALUE_MIN_FONT_SIZE;
 
-            if (opts.valueFormatting?.mode === VizValueFormattingMode.Auto) {
+            if (hasAutoValueSize) {
               const size =
                 ori === ScaleOrientation.Horizontal
                   ? calculateFontSize(
@@ -168,7 +169,7 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
             const textMeasurement = measureText(value, fontSize * devicePixelRatio);
             let labelPosition: CartesianCoords2D = { x: labelX, y: labelY };
 
-            // Collect labels sizes
+            // Collect labels szes
             labelsSizing.push({
               formattedValue: value,
               value: dataY[ix]!,
@@ -193,6 +194,7 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
     );
   };
 
+  // uPlot hook to draw the labels on the bar chart
   const draw = (u: uPlot) => {
     let minFontSize = labelsSizing.reduce((min, s) => (s && s.fontSize < min ? s.fontSize : min), Infinity);
 
@@ -208,17 +210,20 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
         continue;
       }
 
-      const fontSize = opts.valueFormatting.mode === VizValueFormattingMode.Auto ? minFontSize : label.fontSize;
+      const fontSize = hasAutoValueSize ? minFontSize : label.fontSize;
 
-      if (opts.showValue === BarValueVisibility.Never) {
+      if (showValue === BarValueVisibility.Never) {
         return;
       }
 
-      if (
-        opts.valueFormatting.mode === VizValueFormattingMode.Auto &&
-        ((ori === ScaleOrientation.Horizontal && label.textWidth > label.barWidth) || minFontSize < VALUE_MIN_FONT_SIZE)
-      ) {
-        return;
+      if (showValue !== BarValueVisibility.Always) {
+        if (
+          hasAutoValueSize &&
+          ((ori === ScaleOrientation.Horizontal && label.textWidth > label.barWidth) ||
+            minFontSize < VALUE_MIN_FONT_SIZE)
+        ) {
+          return;
+        }
       }
 
       // Calculate final labels positions according to unified text size

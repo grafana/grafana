@@ -20,7 +20,7 @@ export interface BarChartProps
   extends BarChartOptions,
     Omit<GraphNGProps, 'prepConfig' | 'propsToDiff' | 'renderLegend' | 'theme'> {}
 
-const propsToDiff: string[] = ['orientation', 'barWidth', 'groupWidth', 'showValue', 'valueFormatting'];
+const propsToDiff: string[] = ['orientation', 'barWidth', 'groupWidth', 'showValue', 'text'];
 
 export const BarChart: React.FC<BarChartProps> = (props) => {
   const theme = useTheme2();
@@ -35,17 +35,7 @@ export const BarChart: React.FC<BarChartProps> = (props) => {
   };
 
   const prepConfig = (alignedFrame: DataFrame, getTimeRange: () => TimeRange) => {
-    const {
-      timeZone,
-      orientation,
-      barWidth,
-      showValue,
-      groupWidth,
-      stacking,
-      legend,
-      tooltip,
-      valueFormatting,
-    } = props;
+    const { timeZone, orientation, barWidth, showValue, groupWidth, stacking, legend, tooltip, text } = props;
 
     return preparePlotConfigBuilder({
       frame: alignedFrame,
@@ -60,7 +50,7 @@ export const BarChart: React.FC<BarChartProps> = (props) => {
       stacking,
       legend,
       tooltip,
-      valueFormatting,
+      text,
     });
   };
 

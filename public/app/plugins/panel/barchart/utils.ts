@@ -46,7 +46,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptions> = ({
   showValue,
   groupWidth,
   barWidth,
-  valueFormatting,
+  text,
 }) => {
   const builder = new UPlotConfigBuilder();
   const defaultValueFormatter = (seriesIdx: number, value: any) =>
@@ -69,7 +69,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptions> = ({
     groupWidth,
     barWidth,
     formatValue,
-    valueFormatting,
+    text,
     showValue,
   };
 

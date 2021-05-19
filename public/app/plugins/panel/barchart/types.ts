@@ -5,7 +5,7 @@ import {
   GraphGradientMode,
   HideableFieldConfig,
   OptionsWithLegend,
-  OptionsWithValueFormatting,
+  OptionsWithTextFormatting,
   OptionsWithTooltip,
   StackingMode,
 } from '@grafana/ui';
@@ -13,7 +13,7 @@ import {
 /**
  * @alpha
  */
-export interface BarChartOptions extends OptionsWithLegend, OptionsWithTooltip, OptionsWithValueFormatting {
+export interface BarChartOptions extends OptionsWithLegend, OptionsWithTooltip, OptionsWithTextFormatting {
   orientation: VizOrientation;
   stacking: StackingMode;
   showValue: BarValueVisibility;
