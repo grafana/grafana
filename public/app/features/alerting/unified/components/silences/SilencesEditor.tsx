@@ -1,5 +1,5 @@
 import { Silence, SilenceCreatePayload } from 'app/plugins/datasource/alertmanager/types';
-import React, { FC, useState } from 'react';
+import React, { FC, useMemo, useState } from 'react';
 import { Button, Field, FieldSet, Input, LinkButton, TextArea, useStyles } from '@grafana/ui';
 import {
   DefaultTimeZone,
@@ -9,6 +9,7 @@ import {
   addDurationToDate,
   dateTime,
   isValidDate,
+  UrlQueryMap,
 } from '@grafana/data';
 import { useDebounce } from 'react-use';
 import { config } from '@grafana/runtime';
@@ -23,13 +24,34 @@ import { css, cx } from '@emotion/css';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { makeAMLink } from '../../utils/misc';
 import { useCleanup } from 'app/core/hooks/useCleanup';
+import { useQueryParams } from 'app/core/hooks/useQueryParams';
+import { parseQueryParamMatchers } from '../../utils/matchers';
 
 interface Props {
   silence?: Silence;
   alertManagerSourceName: string;
 }
 
-const getDefaultFormValues = (silence?: Silence): SilenceFormFields => {
+const defaultsFromQuery = (queryParams: UrlQueryMap): Partial<SilenceFormFields> => {
+  const defaults: Partial<SilenceFormFields> = {};
+
+  const { matchers, comment } = queryParams;
+
+  if (typeof matchers === 'string') {
+    const formMatchers = parseQueryParamMatchers(matchers);
+    if (formMatchers.length) {
+      defaults.matchers = formMatchers;
+    }
+  }
+
+  if (typeof comment === 'string') {
+    defaults.comment = comment;
+  }
+
+  return defaults;
+};
+
+const getDefaultFormValues = (queryParams: UrlQueryMap, silence?: Silence): SilenceFormFields => {
   const now = new Date();
   if (silence) {
     const isExpired = Date.parse(silence.endsAt) < Date.now();
@@ -66,12 +88,15 @@ const getDefaultFormValues = (silence?: Silence): SilenceFormFields => {
       matcherName: '',
       matcherValue: '',
       timeZone: DefaultTimeZone,
+      ...defaultsFromQuery(queryParams),
     };
   }
 };
 
 export const SilencesEditor: FC<Props> = ({ silence, alertManagerSourceName }) => {
-  const formAPI = useForm({ defaultValues: getDefaultFormValues(silence) });
+  const [queryParams] = useQueryParams();
+  const defaultValues = useMemo(() => getDefaultFormValues(queryParams, silence), [silence, queryParams]);
+  const formAPI = useForm({ defaultValues });
   const dispatch = useDispatch();
   const styles = useStyles(getStyles);
 
