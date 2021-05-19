@@ -98,6 +98,7 @@ export type Route = {
   receiver?: string;
   group_by?: string[];
   continue?: boolean;
+  matchers?: string[];
   match?: Record<string, string>;
   match_re?: Record<string, string>;
   group_wait?: string;
@@ -142,10 +143,11 @@ export type AlertmanagerConfig = {
   receivers?: Receiver[];
 };
 
-export type SilenceMatcher = {
+export type Matcher = {
   name: string;
   value: string;
   isRegex: boolean;
+  isEqual: boolean;
 };
 
 export enum SilenceState {
@@ -160,9 +162,16 @@ export enum AlertState {
   Suppressed = 'suppressed',
 }
 
+export enum MatcherOperator {
+  equal = '=',
+  notEqual = '!=',
+  regex = '=~',
+  notRegex = '!~',
+}
+
 export type Silence = {
   id: string;
-  matchers?: SilenceMatcher[];
+  matchers?: Matcher[];
   startsAt: string;
   endsAt: string;
   updatedAt: string;
@@ -175,7 +184,7 @@ export type Silence = {
 
 export type SilenceCreatePayload = {
   id?: string;
-  matchers?: SilenceMatcher[];
+  matchers?: Matcher[];
   startsAt: string;
   endsAt: string;
   createdBy: string;

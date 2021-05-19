@@ -163,12 +163,12 @@ func (e *InsightsAnalyticsDatasource) executeQuery(ctx context.Context, query *I
 		return queryResultError(err)
 	}
 
-	frame, err := LogTableToFrame(t)
+	frame, err := ResponseTableToFrame(t)
 	if err != nil {
 		return queryResultError(err)
 	}
 
-	if query.ResultFormat == "time_series" {
+	if query.ResultFormat == timeSeries {
 		tsSchema := frame.TimeSeriesSchema()
 		if tsSchema.Type == data.TimeSeriesTypeLong {
 			wideFrame, err := data.LongToWide(frame, nil)
@@ -195,14 +195,13 @@ func (e *InsightsAnalyticsDatasource) createRequest(ctx context.Context, dsInfo 
 		return nil, errors.New("unable to find datasource plugin Azure Application Insights")
 	}
 
-	cloudName := dsInfo.JsonData.Get("cloudName").MustString("azuremonitor")
-	appInsightsRoute, pluginRouteName, err := e.getPluginRoute(plugin, cloudName)
+	appInsightsRoute, routeName, err := e.getPluginRoute(plugin)
 	if err != nil {
 		return nil, err
 	}
 
 	appInsightsAppID := dsInfo.JsonData.Get("appInsightsAppId").MustString()
-	proxyPass := fmt.Sprintf("%s/v1/apps/%s", pluginRouteName, appInsightsAppID)
+	proxyPass := fmt.Sprintf("%s/v1/apps/%s", routeName, appInsightsAppID)
 
 	u, err := url.Parse(dsInfo.Url)
 	if err != nil {
@@ -223,21 +222,24 @@ func (e *InsightsAnalyticsDatasource) createRequest(ctx context.Context, dsInfo 
 	return req, nil
 }
 
-func (e *InsightsAnalyticsDatasource) getPluginRoute(plugin *plugins.DataSourcePlugin, cloudName string) (
-	*plugins.AppPluginRoute, string, error) {
-	pluginRouteName := "appinsights"
+func (e *InsightsAnalyticsDatasource) getPluginRoute(plugin *plugins.DataSourcePlugin) (*plugins.AppPluginRoute, string, error) {
+	cloud, err := getAzureCloud(e.cfg, e.dsInfo.JsonData)
+	if err != nil {
+		return nil, "", err
+	}
 
-	if cloudName == "chinaazuremonitor" {
-		pluginRouteName = "chinaappinsights"
+	routeName, err := getAppInsightsApiRoute(cloud)
+	if err != nil {
+		return nil, "", err
 	}
 
 	var pluginRoute *plugins.AppPluginRoute
 	for _, route := range plugin.Routes {
-		if route.Path == pluginRouteName {
+		if route.Path == routeName {
 			pluginRoute = route
 			break
 		}
 	}
 
-	return pluginRoute, pluginRouteName, nil
+	return pluginRoute, routeName, nil
 }
