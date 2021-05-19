@@ -12,7 +12,7 @@ export const plugin = new PanelPlugin<StatusPanelOptions, StatusFieldConfig>(Sta
           byValueSupport: true,
         },
         defaultValue: {
-          mode: FieldColorModeId.PaletteClassic,
+          mode: FieldColorModeId.Thresholds,
         },
       },
     },
@@ -75,5 +75,5 @@ export const plugin = new PanelPlugin<StatusPanelOptions, StatusFieldConfig>(Sta
         },
       });
 
-    addLegendOptions(builder);
+    addLegendOptions(builder, false);
   });

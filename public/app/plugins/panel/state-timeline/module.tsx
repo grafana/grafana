@@ -12,7 +12,7 @@ export const plugin = new PanelPlugin<TimelineOptions, TimelineFieldConfig>(Stat
           byValueSupport: true,
         },
         defaultValue: {
-          mode: FieldColorModeId.PaletteClassic,
+          mode: FieldColorModeId.ContinuousGrYlRd,
         },
       },
     },
@@ -82,5 +82,5 @@ export const plugin = new PanelPlugin<TimelineOptions, TimelineFieldConfig>(Stat
         defaultValue: defaultPanelOptions.rowHeight,
       });
 
-    addLegendOptions(builder);
+    addLegendOptions(builder, false);
   });

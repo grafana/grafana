@@ -24,6 +24,7 @@ export interface TimelineProps extends Omit<GraphNGProps, 'prepConfig' | 'propsT
   showValue: BarValueVisibility;
   alignValue?: TimelineValueAlignment;
   colWidth?: number;
+  legendItems?: VizLegendItem[];
 }
 
 const propsToDiff = ['rowHeight', 'colWidth', 'showValue', 'mergeValues', 'alignValue'];
@@ -45,46 +46,15 @@ export class TimelineChart extends React.Component<TimelineProps> {
   };
 
   renderLegend = (config: UPlotConfigBuilder) => {
-    const { legend, frames } = this.props;
+    const { legend, legendItems } = this.props;
 
-    if (!config || (legend && legend.displayMode === LegendDisplayMode.Hidden)) {
+    if (!config || !legendItems || (legend && legend.displayMode === LegendDisplayMode.Hidden)) {
       return null;
     }
 
-    let stateColors: Map<string, string | undefined> = new Map();
-
-    frames.forEach((frame) => {
-      frame.fields.forEach((field) => {
-        if (field.type !== FieldType.time) {
-          field.values.toArray().forEach((v) => {
-            let state = field.display!(v);
-            stateColors.set(state.text, state.color!);
-          });
-        }
-      });
-    });
-
-    let items: VizLegendItem[] = [];
-
-    stateColors.forEach((color, label) => {
-      if (label.length > 0) {
-        items.push({
-          //getItemKey?: () => string;
-          label: label!,
-          color,
-          yAxis: 1,
-          // disabled?: boolean;
-          // displayValues?: DisplayValue[];
-          //getDisplayValues?: () => DisplayValue[];
-          //fieldIndex?: DataFrameFieldIndex;
-          //data?: T;
-        });
-      }
-    });
-
     return (
       <VizLayout.Legend placement={legend.placement}>
-        <VizLegend placement={legend.placement} items={items} displayMode={legend.displayMode} />
+        <VizLegend placement={legend.placement} items={legendItems} displayMode={legend.displayMode} />
       </VizLayout.Legend>
     );
   };
