@@ -36,7 +36,7 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
 
     const cloud = getAzureCloud(instanceSettings);
     const logAnalyticsRoute = getLogAnalyticsApiRoute(cloud);
-    this.baseUrl = `/${logAnalyticsRoute}/v1/workspaces`;
+    this.baseUrl = `/${logAnalyticsRoute}`;
 
     const managementRoute = getLogAnalyticsManagementApiRoute(cloud);
     this.azureMonitorUrl = `/${managementRoute}/subscriptions`;
@@ -70,7 +70,7 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
   }
 
   async getMetadata(resourceUri: string) {
-    const url = `${this.baseUrl.replace('/workspaces', '')}${resourceUri}/metadata`;
+    const url = `${this.baseUrl}/v1${resourceUri}/metadata`;
 
     const resp = await this.doRequest<AzureLogAnalyticsMetadata>(url);
     if (!resp.ok) {
@@ -244,7 +244,7 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
       'TimeGenerated'
     );
     const querystring = querystringBuilder.generate().uriString;
-    const url = `${this.baseUrl}/${workspace}/query?${querystring}`;
+    const url = `${this.baseUrl}/v1/workspaces/${workspace}/query?${querystring}`;
     const queries: any[] = [];
     queries.push({
       datasourceId: this.id,
@@ -357,7 +357,7 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
 
     return this.getDefaultOrFirstWorkspace()
       .then((ws: any) => {
-        const url = `${this.baseUrl}/${ws}/metadata`;
+        const url = `${this.baseUrl}/v1/workspaces/${ws}/metadata`;
 
         return this.doRequest(url);
       })
