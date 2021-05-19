@@ -6,8 +6,10 @@ import {
   GraphNGProps,
   BarValueVisibility,
   LegendDisplayMode,
-  PlotLegend,
   UPlotConfigBuilder,
+  VizLayout,
+  VizLegend,
+  VizLegendItem,
 } from '@grafana/ui';
 import { DataFrame, FieldType, TimeRange } from '@grafana/data';
 import { preparePlotConfigBuilder } from './utils';
@@ -42,43 +44,51 @@ export class TimelineChart extends React.Component<TimelineProps> {
     });
   };
 
-  // renderLegend = (config: UPlotConfigBuilder) => {
-  //   const { legend, frames } = this.props;
-
-  //   if (!config || (legend && legend.displayMode === LegendDisplayMode.Hidden)) {
-  //     return null;
-  //   }
-
-  //   return <PlotLegend data={frames} config={config} maxHeight="35%" maxWidth="60%" {...legend} />;
-  // };
-
-  //renderLegend = () => <div>Legend</div>;
-
   renderLegend = (config: UPlotConfigBuilder) => {
+    //return <div>Legend</div>;
+
     const { legend, frames } = this.props;
 
     if (!config || (legend && legend.displayMode === LegendDisplayMode.Hidden)) {
       return null;
     }
 
-    let stateColors = {};
+    let stateColors: Map<string, string | undefined> = new Map();
 
     frames.forEach((frame) => {
       frame.fields.forEach((field) => {
         if (field.type !== FieldType.time) {
           field.values.toArray().forEach((v) => {
             let state = field.display!(v);
-            stateColors[state.text] = state.color;
+            stateColors.set(state.color!, state.text);
           });
         }
       });
     });
 
-    console.log(stateColors);
+    let items: VizLegendItem[] = [];
 
-    //return <PlotLegend data={frames} config={config} maxHeight="35%" maxWidth="60%" {...legend} />;
+    stateColors.forEach((label, color) => {
+      if (label!.length > 0) {
+        items.push({
+          //getItemKey?: () => string;
+          label: label!,
+          color,
+          yAxis: 1,
+          // disabled?: boolean;
+          // displayValues?: DisplayValue[];
+          //getDisplayValues?: () => DisplayValue[];
+          //fieldIndex?: DataFrameFieldIndex;
+          //data?: T;
+        });
+      }
+    });
 
-    return <div>Legend</div>;
+    return (
+      <VizLayout.Legend placement="bottom">
+        <VizLegend placement="bottom" items={items} displayMode={LegendDisplayMode.List} />
+      </VizLayout.Legend>
+    );
   };
 
   render() {
