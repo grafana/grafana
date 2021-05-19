@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/pkg/errors"
 	"net/url"
 	"path"
 	"strconv"
@@ -97,7 +96,7 @@ func (d DiscordNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 	bodyJSON.Set("embeds", []interface{}{embed})
 
 	if tmplErr != nil {
-		return false, errors.Wrap(tmplErr, "failed to template discord message")
+		return false, fmt.Errorf("failed to template discord message: %w", tmplErr)
 	}
 
 	body, err := json.Marshal(bodyJSON)
