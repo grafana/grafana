@@ -73,7 +73,7 @@ export const RuleStats: FC<Props> = ({ showInactive, showRecording, group, names
   if (showInactive && calculated[PromAlertingRuleState.Inactive]) {
     statsComponents.push(
       <StateColoredText key="inactive" status="neutral">
-        {calculated[PromAlertingRuleState.Inactive]} inactive
+        {calculated[PromAlertingRuleState.Inactive]} normal
       </StateColoredText>
     );
   }
