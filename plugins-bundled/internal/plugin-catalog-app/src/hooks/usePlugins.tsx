@@ -9,7 +9,7 @@ type PluginsState = {
   installedPlugins: any[];
 };
 
-export const usePlugins = (includeEnterprise = false) => {
+export const usePlugins = () => {
   const [state, setState] = useState<PluginsState>({ isLoading: true, items: [], installedPlugins: [] });
 
   useEffect(() => {
@@ -17,7 +17,7 @@ export const usePlugins = (includeEnterprise = false) => {
       const items = await api.getRemotePlugins();
       const filteredItems = items
         .filter((plugin) => Boolean(plugin.versionSignatureType))
-        .filter((plugin) => includeEnterprise || plugin.status !== 'enterprise')
+        .filter((plugin) => plugin.status !== 'enterprise')
         .filter((plugin) => !status || plugin.status === status);
       const installedPlugins = await api.getInstalledPlugins();
 
@@ -25,7 +25,7 @@ export const usePlugins = (includeEnterprise = false) => {
     };
 
     fetchPluginData();
-  }, [includeEnterprise]);
+  }, []);
 
   return state;
 };

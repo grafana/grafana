@@ -180,11 +180,12 @@ describe('AmRoutes', () => {
     expect(rows).toHaveLength(2);
 
     subroutes.forEach((route, index) => {
-      Object.entries({
-        ...(route.match ?? {}),
-        ...(route.match_re ?? {}),
-      }).forEach(([label, value]) => {
+      Object.entries(route.match ?? {}).forEach(([label, value]) => {
         expect(rows[index]).toHaveTextContent(`${label}=${value}`);
+      });
+
+      Object.entries(route.match_re ?? {}).forEach(([label, value]) => {
+        expect(rows[index]).toHaveTextContent(`${label}=~${value}`);
       });
 
       if (route.group_by) {
