@@ -13,6 +13,7 @@ export interface Props {
   width?: number;
   className?: string;
   disabled?: boolean;
+  addOnBlur?: boolean;
 }
 
 export const TagsInput: FC<Props> = ({
@@ -22,6 +23,7 @@ export const TagsInput: FC<Props> = ({
   width,
   className,
   disabled,
+  addOnBlur,
 }) => {
   const [newTagName, setNewName] = useState('');
   const styles = useStyles(getStyles);
@@ -38,12 +40,18 @@ export const TagsInput: FC<Props> = ({
     onChange(tags?.filter((x) => x !== tagToRemove));
   };
 
-  const onAdd = (event: React.MouseEvent) => {
-    event.preventDefault();
+  const onAdd = (event?: React.MouseEvent) => {
+    event?.preventDefault();
     if (!tags.includes(newTagName)) {
       onChange(tags.concat(newTagName));
     }
     setNewName('');
+  };
+
+  const onBlur = () => {
+    if (addOnBlur && newTagName) {
+      onAdd();
+    }
   };
 
   const onKeyboardAdd = (event: KeyboardEvent) => {
@@ -68,6 +76,7 @@ export const TagsInput: FC<Props> = ({
           onChange={onNameChange}
           value={newTagName}
           onKeyUp={onKeyboardAdd}
+          onBlur={onBlur}
           suffix={
             newTagName.length > 0 && (
               <Button fill="text" className={styles.addButtonStyle} onClick={onAdd} size="md">
