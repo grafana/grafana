@@ -56,7 +56,7 @@ export const BarChart: React.FC<BarChartProps> = (props) => {
 
   return (
     <GraphNG
-      // My hears is bleeding with the clone deep here, but nested options...
+      // My heart is bleeding with the clone deep here, but nested options...
       {...cloneDeep(props)}
       theme={theme}
       frames={props.frames}

@@ -3,6 +3,7 @@ import { PanelOptionsEditorBuilder } from '@grafana/data';
 
 /**
  * Explicit control for visualization text settings
+ * @public
  **/
 export interface VizTextDisplayOptions {
   /* Explicit title text size */
@@ -15,6 +16,7 @@ export interface VizTextDisplayOptions {
  * Adds common text control options to a visualization options
  * @param builder
  * @param withTitle
+ * @public
  */
 export function addTextSizeOptions<T extends OptionsWithTextFormatting>(
   builder: PanelOptionsEditorBuilder<T>,
