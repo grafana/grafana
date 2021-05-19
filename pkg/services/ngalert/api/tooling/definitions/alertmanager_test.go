@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/prometheus/alertmanager/config"
+	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v3"
@@ -562,4 +563,15 @@ func Test_ReceiverMatchesBackend(t *testing.T) {
 			}
 		})
 	}
+}
+
+func Test_Marshaling_Validation(t *testing.T) {
+	jsonEncoded, err := ioutil.ReadFile("alertmanager_test_artifact.json")
+	require.Nil(t, err)
+
+	var tmp GettableUserConfig
+	require.Nil(t, json.Unmarshal(jsonEncoded, &tmp))
+
+	expected := []model.LabelName{"alertname"}
+	require.Equal(t, expected, tmp.AlertmanagerConfig.Config.Route.GroupBy)
 }
