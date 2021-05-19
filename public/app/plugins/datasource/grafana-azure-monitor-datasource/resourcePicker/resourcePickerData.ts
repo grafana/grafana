@@ -1,7 +1,9 @@
+import { DataSourceInstanceSettings } from '@grafana/data';
 import { FetchResponse, getBackendSrv } from '@grafana/runtime';
 import { getLogAnalyticsResourcePickerApiRoute } from '../api/routes';
 import { EntryType, Row, RowGroup } from '../components/ResourcePicker/types';
-import { AzureResourceSummaryItem } from '../types';
+import { getAzureCloud } from '../credentials';
+import { AzureDataSourceJsonData, AzureResourceSummaryItem } from '../types';
 import { SUPPORTED_LOCATIONS, SUPPORTED_RESOURCE_TYPES } from './supportedResources';
 
 const RESOURCE_GRAPH_URL = '/providers/Microsoft.ResourceGraph/resources?api-version=2020-04-01-preview';
@@ -30,9 +32,9 @@ export default class ResourcePickerData {
   private proxyUrl: string;
   private cloud: string;
 
-  constructor(proxyUrl: string, cloud: string) {
-    this.proxyUrl = proxyUrl;
-    this.cloud = cloud;
+  constructor(instanceSettings: DataSourceInstanceSettings<AzureDataSourceJsonData>) {
+    this.proxyUrl = instanceSettings.url!;
+    this.cloud = getAzureCloud(instanceSettings);
   }
 
   async getResourcePickerData() {
