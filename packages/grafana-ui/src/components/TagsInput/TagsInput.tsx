@@ -49,7 +49,7 @@ export const TagsInput: FC<Props> = ({
   };
 
   const onBlur = () => {
-    if (addOnBlur) {
+    if (addOnBlur && newTagName) {
       onAdd();
     }
   };
