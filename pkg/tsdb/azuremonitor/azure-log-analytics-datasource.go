@@ -89,9 +89,13 @@ func (e *AzureLogAnalyticsDatasource) buildQueries(queries []plugins.DataSubQuer
 			resultFormat = timeSeries
 		}
 
-		urlComponents := map[string]string{}
-		urlComponents["workspace"] = azureLogAnalyticsTarget.Workspace
-		apiURL := fmt.Sprintf("%s/query", urlComponents["workspace"])
+		// Handle legacy queries without a Resource
+		var apiURL string
+		if azureLogAnalyticsTarget.Resource != "" {
+			apiURL = fmt.Sprintf("v1%s/query", azureLogAnalyticsTarget.Resource)
+		} else {
+			apiURL = fmt.Sprintf("v1/workspaces/%s/query", azureLogAnalyticsTarget.Workspace)
+		}
 
 		params := url.Values{}
 		rawQuery, err := KqlInterpolate(query, timeRange, azureLogAnalyticsTarget.Query, "TimeGenerated")
