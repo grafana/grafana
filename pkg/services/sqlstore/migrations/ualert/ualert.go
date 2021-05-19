@@ -212,7 +212,7 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 			return err
 		}
 
-		if err := m.updateReceiverAndRoute(allChannels, da, rule, &amConfig); err != nil {
+		if err := m.updateReceiverAndRoute(allChannels, defaultChannels, da, rule, &amConfig); err != nil {
 			return err
 		}
 

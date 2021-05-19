@@ -66,7 +66,7 @@ func (m *migration) getNotificationChannelMap() (map[interface{}]*notificationCh
 	return allChannelsMap, defaultChannels, nil
 }
 
-func (m *migration) updateReceiverAndRoute(allChannels map[interface{}]*notificationChannel, da dashAlert, rule *alertRule, amConfig *PostableUserConfig) error {
+func (m *migration) updateReceiverAndRoute(allChannels map[interface{}]*notificationChannel, defaultChannels []*notificationChannel, da dashAlert, rule *alertRule, amConfig *PostableUserConfig) error {
 	rule.Labels["alertname"] = da.Name
 	rule.Annotations["message"] = da.Message
 
@@ -83,7 +83,7 @@ func (m *migration) updateReceiverAndRoute(allChannels map[interface{}]*notifica
 		return nil
 	}
 
-	recv, route, err := m.makeReceiverAndRoute(rule.Uid, channelIDs, allChannels)
+	recv, route, err := m.makeReceiverAndRoute(rule.Uid, channelIDs, defaultChannels, allChannels)
 	if err != nil {
 		return err
 	}
@@ -98,7 +98,7 @@ func (m *migration) updateReceiverAndRoute(allChannels map[interface{}]*notifica
 	return nil
 }
 
-func (m *migration) makeReceiverAndRoute(ruleUid string, channelUids []interface{}, allChannels map[interface{}]*notificationChannel) (*PostableApiReceiver, *Route, error) {
+func (m *migration) makeReceiverAndRoute(ruleUid string, channelUids []interface{}, defaultChannels []*notificationChannel, allChannels map[interface{}]*notificationChannel) (*PostableApiReceiver, *Route, error) {
 	receiverName := getMigratedReceiverNameFromRuleUID(ruleUid)
 
 	portedChannels := []*PostableGrafanaReceiver{}
@@ -106,18 +106,16 @@ func (m *migration) makeReceiverAndRoute(ruleUid string, channelUids []interface
 		Name: receiverName,
 	}
 
-	for _, n := range channelUids {
-		c, ok := allChannels[n]
-		if !ok {
-			continue
-		}
+	addedChannels := map[*notificationChannel]struct{}{}
+
+	addChannel := func(c *notificationChannel) error {
 		if c.Type == "hipchat" || c.Type == "sensu" {
-			return nil, nil, fmt.Errorf("discontinued notification channel found: %s", c.Type)
+			return fmt.Errorf("discontinued notification channel found: %s", c.Type)
 		}
 
 		uid, ok := m.generateChannelUID()
 		if !ok {
-			return nil, nil, errors.New("failed to generate UID for notification channel")
+			return errors.New("failed to generate UID for notification channel")
 		}
 
 		m.migratedChannels[c] = struct{}{}
@@ -130,7 +128,30 @@ func (m *migration) makeReceiverAndRoute(ruleUid string, channelUids []interface
 			Settings:              settings,
 			SecureSettings:        secureSettings,
 		})
+		addedChannels[c] = struct{}{}
+
+		return nil
 	}
+
+	for _, n := range channelUids {
+		c, ok := allChannels[n]
+		if !ok {
+			continue
+		}
+
+		if err := addChannel(c); err != nil {
+			return nil, nil, err
+		}
+	}
+
+	for _, c := range defaultChannels {
+		if _, ok := addedChannels[c]; !ok {
+			if err := addChannel(c); err != nil {
+				return nil, nil, err
+			}
+		}
+	}
+
 	receiver.GrafanaManagedReceivers = portedChannels
 
 	n, v := getLabelForRouteMatching(ruleUid)
@@ -147,11 +168,11 @@ func (m *migration) makeReceiverAndRoute(ruleUid string, channelUids []interface
 }
 
 func (m *migration) updateDefaultAndUnmigratedChannels(amConfig *PostableUserConfig, allChannels map[interface{}]*notificationChannel, defaultChannels []*notificationChannel) error {
+	// Unmigrated channels.
 	portedChannels := []*PostableGrafanaReceiver{}
 	receiver := &PostableApiReceiver{
 		Name: "autogen-unlinked-channel-recv",
 	}
-
 	for _, c := range allChannels {
 		_, ok := m.migratedChannels[c]
 		if ok {
@@ -178,9 +199,11 @@ func (m *migration) updateDefaultAndUnmigratedChannels(amConfig *PostableUserCon
 		})
 	}
 	receiver.GrafanaManagedReceivers = portedChannels
+	if len(portedChannels) > 0 {
+		amConfig.AlertmanagerConfig.Receivers = append(amConfig.AlertmanagerConfig.Receivers, receiver)
+	}
 
-	amConfig.AlertmanagerConfig.Receivers = append(amConfig.AlertmanagerConfig.Receivers, receiver)
-
+	// Default route and receiver.
 	if len(defaultChannels) == 0 {
 		// Pick one from the migrated channels. Preference to email channel.
 		for c := range m.migratedChannels {
@@ -203,7 +226,7 @@ func (m *migration) updateDefaultAndUnmigratedChannels(amConfig *PostableUserCon
 		}
 	}
 
-	recv, route, err := m.makeReceiverAndRoute("default_route", channelUids, allChannels)
+	recv, route, err := m.makeReceiverAndRoute("default_route", channelUids, defaultChannels, allChannels)
 	if err != nil {
 		return err
 	}
