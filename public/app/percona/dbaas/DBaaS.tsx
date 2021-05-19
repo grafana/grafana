@@ -11,6 +11,7 @@ import PageWrapper from '../shared/components/PageWrapper/PageWrapper';
 import { TechnicalPreview } from '../shared/components/Elements/TechnicalPreview/TechnicalPreview';
 import { TabbedContent, ContentTab } from '../shared/components/Elements/TabbedContent';
 import { FeatureLoader } from '../shared/components/Elements/FeatureLoader';
+import { isKubernetesListUnavailable } from './components/Kubernetes/Kubernetes.utils';
 
 export const DBaaS: FC = () => {
   const styles = useStyles(getStyles);
@@ -35,7 +36,7 @@ export const DBaaS: FC = () => {
       {
         label: Messages.tabs.dbcluster,
         key: TabKeys.dbclusters,
-        disabled: kubernetes.length === 0,
+        disabled: kubernetes.length === 0 || isKubernetesListUnavailable(kubernetes),
         component: <DBCluster key={TabKeys.dbclusters} kubernetes={kubernetes} />,
       },
     ],

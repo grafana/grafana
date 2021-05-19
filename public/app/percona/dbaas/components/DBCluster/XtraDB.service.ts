@@ -39,7 +39,7 @@ const DBCLUSTER_STATUS_MAP = {
 
 export class XtraDBService extends DBClusterService {
   getDBClusters(kubernetes: Kubernetes): Promise<DBClusterPayload> {
-    return apiManagement.post<any, Kubernetes>('/DBaaS/XtraDBClusters/List', kubernetes);
+    return apiManagement.post<any, Kubernetes>('/DBaaS/XtraDBClusters/List', kubernetes, true);
   }
 
   addDBCluster(dbCluster: DBCluster): Promise<void | DBClusterPayload> {
