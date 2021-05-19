@@ -133,9 +133,13 @@ Family: scuemata.#Family & {
 
                     // The values depend on panel type
                     options: {...}
-
+                    libraryPanel?: {
+                        name: string,
+                        uid: string
+                    }
                     fieldConfig: {
                         defaults: {
+                            ...
                             // The display value for this field.  This supports template variables blank is auto
                             displayName?: string
 
