@@ -48,7 +48,6 @@ type PushoverNotifier struct {
 	OKSound          string
 	Upload           bool
 	Message          string
-	Title            string
 	tmpl             *template.Template
 	log              log.Logger
 }
@@ -98,7 +97,6 @@ func NewPushoverNotifier(model *NotificationChannelConfig, t *template.Template)
 		OKSound:          okSound,
 		Upload:           uploadImage,
 		Message:          model.Settings.Get("message").MustString(`{{ template "default.message" .}}`),
-		Title:            model.Settings.Get("title").MustString(`{{ template "default.title" . }}`),
 		tmpl:             t,
 		log:              log.New("alerting.notifier.pushover"),
 	}, nil
@@ -148,7 +146,6 @@ func (pn *PushoverNotifier) genPushoverBody(ctx context.Context, as ...*types.Al
 
 	w := multipart.NewWriter(&b)
 	boundary := getBoundary()
-	fmt.Println(">>>> boundary: ", boundary)
 	if boundary != "" {
 		err = w.SetBoundary(boundary)
 		if err != nil {
