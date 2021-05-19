@@ -1,0 +1,19 @@
+import React from 'react';
+import { LokiQueryField } from './LokiQueryField';
+import { LokiQueryEditorProps } from './types';
+
+export function LokiQueryEditorForAlerting(props: LokiQueryEditorProps) {
+  const { query, data, datasource, onChange, onRunQuery } = props;
+
+  return (
+    <LokiQueryField
+      datasource={datasource}
+      query={query}
+      onChange={onChange}
+      onRunQuery={onRunQuery}
+      onBlur={onRunQuery}
+      history={[]}
+      data={data}
+    />
+  );
+}
