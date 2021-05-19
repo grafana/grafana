@@ -36,7 +36,7 @@ func NewAlertmanagerNotifier(model *NotificationChannelConfig, t *template.Templ
 		uS = strings.TrimSuffix(uS, "/") + "/api/v1/alerts"
 		u, err := url.Parse(uS)
 		if err != nil {
-			return nil, fmt.Errorf("failed to parse URL %q: %w", uS, err)
+			return nil, alerting.ValidationError{Reason: "Invalid url property in settings"}
 		}
 
 		urls = append(urls, u)
@@ -54,9 +54,7 @@ func NewAlertmanagerNotifier(model *NotificationChannelConfig, t *template.Templ
 		urls:              urls,
 		basicAuthUser:     basicAuthUser,
 		basicAuthPassword: basicAuthPassword,
-		message:           model.Settings.Get("message").MustString(`{{ template "default.message" .}}`),
 		logger:            log.New("alerting.notifier.prometheus-alertmanager"),
-		tmpl:              t,
 	}, nil
 }
 
@@ -67,9 +65,7 @@ type AlertmanagerNotifier struct {
 	urls              []*url.URL
 	basicAuthUser     string
 	basicAuthPassword string
-	message           string
 	logger            log.Logger
-	tmpl              *template.Template
 }
 
 // Notify sends alert notifications to Alertmanager.
