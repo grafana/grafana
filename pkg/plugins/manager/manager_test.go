@@ -61,17 +61,71 @@ func TestPluginManager_Init(t *testing.T) {
 		assert.Equal(t, "public/plugins/test-app/img/screenshot2.png", pm.apps["test-app"].Info.Screenshots[1].Path)
 	})
 
-	t.Run("With external back-end plugin lacking signature", func(t *testing.T) {
+	t.Run("With external back-end plugin lacking signature (production)", func(t *testing.T) {
 		pm := createManager(t, func(pm *PluginManager) {
-			pm.Cfg.PluginsPath = "testdata/unsigned"
+			pm.Cfg.PluginsPath = "testdata/unsigned-datasource"
+			pm.Cfg.Env = setting.Prod
 		})
 		err := pm.Init()
 		require.NoError(t, err)
+		const pluginID = "test"
+
+		assert.Equal(t, []error{fmt.Errorf(`plugin '%s' is unsigned`, pluginID)}, pm.scanningErrors)
+		assert.Nil(t, pm.GetDataSource(pluginID))
+		assert.Nil(t, pm.GetPlugin(pluginID))
+	})
+
+	t.Run("With external back-end plugin lacking signature (development)", func(t *testing.T) {
+		pm := createManager(t, func(pm *PluginManager) {
+			pm.Cfg.PluginsPath = "testdata/unsigned-datasource"
+			pm.Cfg.Env = setting.Dev
+		})
+		err := pm.Init()
+		require.NoError(t, err)
+		const pluginID = "test"
+
+		assert.Empty(t, pm.scanningErrors)
+		assert.NotNil(t, pm.GetDataSource(pluginID))
+
+		plugin := pm.GetPlugin(pluginID)
+		assert.NotNil(t, plugin)
+		assert.Equal(t, plugins.PluginSignatureUnsigned, plugin.Signature)
+	})
+
+	t.Run("With external panel plugin lacking signature (production)", func(t *testing.T) {
+		pm := createManager(t, func(pm *PluginManager) {
+			pm.Cfg.PluginsPath = "testdata/unsigned-panel"
+			pm.Cfg.Env = setting.Prod
+		})
+		err := pm.Init()
+		require.NoError(t, err)
+		const pluginID = "test-panel"
+
+		assert.Equal(t, []error{fmt.Errorf(`plugin '%s' is unsigned`, pluginID)}, pm.scanningErrors)
+		assert.Nil(t, pm.panels[pluginID])
+		assert.Nil(t, pm.GetPlugin(pluginID))
+	})
+
+	t.Run("With external panel plugin lacking signature (development)", func(t *testing.T) {
+		pm := createManager(t, func(pm *PluginManager) {
+			pm.Cfg.PluginsPath = "testdata/unsigned-panel"
+			pm.Cfg.Env = setting.Dev
+		})
+		err := pm.Init()
+		require.NoError(t, err)
+		pluginID := "test-panel"
+
+		assert.Empty(t, pm.scanningErrors)
+		assert.NotNil(t, pm.panels[pluginID])
+
+		plugin := pm.GetPlugin(pluginID)
+		assert.NotNil(t, plugin)
+		assert.Equal(t, plugins.PluginSignatureUnsigned, plugin.Signature)
 	})
 
 	t.Run("With external unsigned back-end plugin and configuration disabling signature check of this plugin", func(t *testing.T) {
 		pm := createManager(t, func(pm *PluginManager) {
-			pm.Cfg.PluginsPath = "testdata/unsigned"
+			pm.Cfg.PluginsPath = "testdata/unsigned-datasource"
 			pm.Cfg.PluginsAllowUnsigned = []string{"test"}
 		})
 		err := pm.Init()
@@ -87,7 +141,10 @@ func TestPluginManager_Init(t *testing.T) {
 		err := pm.Init()
 		require.NoError(t, err)
 
-		assert.Equal(t, []error{fmt.Errorf(`plugin "test" has an invalid signature`)}, pm.scanningErrors)
+		const pluginID = "test"
+		assert.Equal(t, []error{fmt.Errorf(`plugin '%s' has an invalid signature`, pluginID)}, pm.scanningErrors)
+		assert.Nil(t, pm.GetDataSource(pluginID))
+		assert.Nil(t, pm.GetPlugin(pluginID))
 	})
 
 	t.Run("With external back-end plugin lacking files listed in manifest", func(t *testing.T) {
@@ -99,7 +156,7 @@ func TestPluginManager_Init(t *testing.T) {
 		err := pm.Init()
 		require.NoError(t, err)
 
-		assert.Equal(t, []error{fmt.Errorf(`plugin "test"'s signature has been modified`)}, pm.scanningErrors)
+		assert.Equal(t, []error{fmt.Errorf(`plugin 'test' has a modified signature`)}, pm.scanningErrors)
 	})
 
 	t.Run("Transform plugins should be ignored when expressions feature is off", func(t *testing.T) {
@@ -221,7 +278,7 @@ func TestPluginManager_Init(t *testing.T) {
 		err := pm.Init()
 		require.NoError(t, err)
 
-		assert.Equal(t, []error{fmt.Errorf(`plugin "test" has an invalid signature`)}, pm.scanningErrors)
+		assert.Equal(t, []error{fmt.Errorf(`plugin 'test' has an invalid signature`)}, pm.scanningErrors)
 		assert.Nil(t, pm.plugins[("test")])
 	})
 
@@ -263,7 +320,7 @@ func TestPluginManager_Init(t *testing.T) {
 		})
 		err := pm.Init()
 		require.NoError(t, err)
-		assert.Equal(t, []error{fmt.Errorf(`plugin "test"'s signature has been modified`)}, pm.scanningErrors)
+		assert.Equal(t, []error{fmt.Errorf(`plugin 'test' has a modified signature`)}, pm.scanningErrors)
 		assert.Nil(t, pm.plugins[("test")])
 	})
 
@@ -279,7 +336,7 @@ func TestPluginManager_Init(t *testing.T) {
 		})
 		err := pm.Init()
 		require.NoError(t, err)
-		assert.Equal(t, []error{fmt.Errorf(`plugin "test"'s signature has been modified`)}, pm.scanningErrors)
+		assert.Equal(t, []error{fmt.Errorf(`plugin 'test' has a modified signature`)}, pm.scanningErrors)
 		assert.Nil(t, pm.plugins[("test")])
 	})
 }
