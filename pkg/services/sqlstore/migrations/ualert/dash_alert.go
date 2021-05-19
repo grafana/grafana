@@ -110,17 +110,17 @@ type oldDash struct {
 
 // slurpDash returns a map of [orgID, dashboardId] -> oldDash.
 func (m *migration) slurpDash() (map[[2]int64]oldDash, error) {
-	dashIDs := []oldDash{}
+	oldDashes := []oldDash{}
 
-	err := m.sess.SQL(`SELECT org_id, id, uid FROM dashboard`).Find(&dashIDs)
+	err := m.sess.SQL(`SELECT org_id, id, uid, data FROM dashboard`).Find(&oldDashes)
 
 	if err != nil {
 		return nil, err
 	}
 
-	idToDash := make(map[[2]int64]oldDash, len(dashIDs))
+	idToDash := make(map[[2]int64]oldDash, len(oldDashes))
 
-	for _, ds := range dashIDs {
+	for _, ds := range oldDashes {
 		idToDash[[2]int64{ds.OrgID, ds.ID}] = ds
 	}
 

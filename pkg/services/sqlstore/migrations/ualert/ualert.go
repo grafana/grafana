@@ -108,11 +108,16 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 
 	if defaultChannel != nil {
 		// Migration for the default route.
-		recv, route, err := m.makeReceiverAndRoute("default_route", []interface{}{defaultChannel.Name}, allChannels)
+		channelUids := []interface{}{defaultChannel.Uid}
+		if defaultChannel.Uid == "" {
+			channelUids = []interface{}{defaultChannel.ID}
+		}
+		recv, route, err := m.makeReceiverAndRoute("default_route", channelUids, allChannels)
 		if err != nil {
 			return err
 		}
 
+		route.Matchers = nil // Don't need matchers for root route.
 		amConfig.AlertmanagerConfig.Receivers = append(amConfig.AlertmanagerConfig.Receivers, recv)
 		amConfig.AlertmanagerConfig.Route = route
 	}

@@ -64,8 +64,18 @@ func (m *migration) getNotificationChannelMap() (map[interface{}]*notificationCh
 	}
 
 	if defaultChannel == nil {
-		// TODO: is this possible?
+		// Select the first one in the slice or any random
+		// email channel if it exists as the default.
 		defaultChannel = &allChannels[0]
+		if defaultChannel.Type != "email" {
+			// Give preference to email channel for default if any exists.
+			for _, c := range allChannelsMap {
+				if c.Type == "email" {
+					defaultChannel = c
+					break
+				}
+			}
+		}
 	}
 
 	return allChannelsMap, defaultChannel, nil
