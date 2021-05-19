@@ -25,6 +25,9 @@ export interface FieldProps extends HTMLAttributes<HTMLDivElement> {
   error?: string | null;
   /** Indicates horizontal layout of the field */
   horizontal?: boolean;
+  /** make validation message overflow horizontally. Prevents pushing out adjacent inline components */
+  validationMessageHorizontalOverflow?: boolean;
+
   className?: string;
 }
 
@@ -46,6 +49,14 @@ export const getFieldStyles = stylesFactory((theme: GrafanaTheme2) => {
     fieldValidationWrapperHorizontal: css`
       flex: 1 1 100%;
     `,
+    validationMessageHorizontalOverflow: css`
+      width: 0;
+      overflow-x: visible;
+
+      & > * {
+        white-space: nowrap;
+      }
+    `,
   };
 });
 
@@ -60,6 +71,7 @@ export const Field: React.FC<FieldProps> = ({
   error,
   children,
   className,
+  validationMessageHorizontalOverflow,
   ...otherProps
 }) => {
   const theme = useTheme2();
@@ -81,14 +93,22 @@ export const Field: React.FC<FieldProps> = ({
       <div>
         {React.cloneElement(children, { invalid, disabled, loading })}
         {invalid && error && !horizontal && (
-          <div className={styles.fieldValidationWrapper}>
+          <div
+            className={cx(styles.fieldValidationWrapper, {
+              [styles.validationMessageHorizontalOverflow]: !!validationMessageHorizontalOverflow,
+            })}
+          >
             <FieldValidationMessage>{error}</FieldValidationMessage>
           </div>
         )}
       </div>
 
       {invalid && error && horizontal && (
-        <div className={cx(styles.fieldValidationWrapper, styles.fieldValidationWrapperHorizontal)}>
+        <div
+          className={cx(styles.fieldValidationWrapper, styles.fieldValidationWrapperHorizontal, {
+            [styles.validationMessageHorizontalOverflow]: !!validationMessageHorizontalOverflow,
+          })}
+        >
           <FieldValidationMessage>{error}</FieldValidationMessage>
         </div>
       )}
