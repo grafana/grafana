@@ -2,10 +2,10 @@ import React from 'react';
 import { AzureMonitorErrorish, AzureMonitorOption, AzureMonitorQuery } from '../../types';
 import Datasource from '../../datasource';
 import { InlineFieldRow } from '@grafana/ui';
-import SubscriptionField from '../SubscriptionField';
-import WorkspaceField from './WorkspaceField';
 import QueryField from './QueryField';
 import FormatAsField from './FormatAsField';
+import ResourceField from './ResourceField';
+import useMigrations from './useMigrations';
 
 interface LogsQueryEditorProps {
   query: AzureMonitorQuery;
@@ -24,18 +24,12 @@ const LogsQueryEditor: React.FC<LogsQueryEditorProps> = ({
   onChange,
   setError,
 }) => {
+  useMigrations(datasource, query, onChange);
+
   return (
     <div data-testid="azure-monitor-logs-query-editor">
       <InlineFieldRow>
-        <SubscriptionField
-          query={query}
-          datasource={datasource}
-          subscriptionId={subscriptionId}
-          variableOptionGroup={variableOptionGroup}
-          onQueryChange={onChange}
-          setError={setError}
-        />
-        <WorkspaceField
+        <ResourceField
           query={query}
           datasource={datasource}
           subscriptionId={subscriptionId}

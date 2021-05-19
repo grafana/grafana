@@ -91,7 +91,10 @@ export interface AzureMetricQuery {
 export interface AzureLogsQuery {
   query: string;
   resultFormat: string;
-  workspace: string;
+  resource?: string;
+
+  /** @deprecated Queries should be migrated to use Resource instead */
+  workspace?: string;
 }
 
 export interface AzureResourceGraphQuery {
@@ -192,4 +195,11 @@ export interface AzureQueryEditorFieldProps {
 
   onQueryChange: (newQuery: AzureMonitorQuery) => void;
   setError: (source: string, error: AzureMonitorErrorish | undefined) => void;
+}
+
+export interface AzureResourceSummaryItem {
+  id: string;
+  name: string;
+  subscriptionName: string;
+  resourceGroupName: string;
 }
