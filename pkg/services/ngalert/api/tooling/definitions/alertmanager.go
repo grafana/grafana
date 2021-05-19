@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"reflect"
 
+	"github.com/pkg/errors"
 	amv2 "github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/alertmanager/config"
 	"gopkg.in/yaml.v3"
@@ -484,10 +485,26 @@ func (c *Config) UnmarshalJSON(b []byte) error {
 		}
 	}
 
-	if c.Route != nil {
-		if err := c.Route.UnmarshalYAML(noopUnmarshal); err != nil {
-			return err
-		}
+	if c.Route == nil {
+		return fmt.Errorf("no routes provided")
+	}
+
+	// Route is a recursive structure that includes validation in the yaml unmarshaler.
+	// Therefore, we'll redirect json -> yaml to utilize these.
+	b, err := yaml.Marshal(c.Route)
+	if err != nil {
+		return errors.Wrap(err, "marshaling route to yaml for validation")
+	}
+	err = yaml.Unmarshal(b, c.Route)
+	if err != nil {
+		return errors.Wrap(err, "unmarshaling route for validations")
+	}
+
+	if len(c.Route.Receiver) == 0 {
+		return fmt.Errorf("root route must specify a default receiver")
+	}
+	if len(c.Route.Match) > 0 || len(c.Route.MatchRE) > 0 {
+		return fmt.Errorf("root route must not have any matchers")
 	}
 
 	for _, r := range c.InhibitRules {
