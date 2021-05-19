@@ -68,7 +68,7 @@ func TestPluginManager_Init(t *testing.T) {
 		})
 		err := pm.Init()
 		require.NoError(t, err)
-		pluginID := "test"
+		const pluginID = "test"
 
 		assert.Equal(t, []error{fmt.Errorf(`plugin '%s' is unsigned`, pluginID)}, pm.scanningErrors)
 		assert.Nil(t, pm.GetDataSource(pluginID))
@@ -82,7 +82,7 @@ func TestPluginManager_Init(t *testing.T) {
 		})
 		err := pm.Init()
 		require.NoError(t, err)
-		pluginID := "test"
+		const pluginID = "test"
 
 		assert.Empty(t, pm.scanningErrors)
 		assert.NotNil(t, pm.GetDataSource(pluginID))
@@ -99,7 +99,7 @@ func TestPluginManager_Init(t *testing.T) {
 		})
 		err := pm.Init()
 		require.NoError(t, err)
-		pluginID := "test-panel"
+		const pluginID = "test-panel"
 
 		assert.Equal(t, []error{fmt.Errorf(`plugin '%s' is unsigned`, pluginID)}, pm.scanningErrors)
 		assert.Nil(t, pm.panels[pluginID])
@@ -141,7 +141,7 @@ func TestPluginManager_Init(t *testing.T) {
 		err := pm.Init()
 		require.NoError(t, err)
 
-		pluginID := "test"
+		const pluginID = "test"
 		assert.Equal(t, []error{fmt.Errorf(`plugin '%s' has an invalid signature`, pluginID)}, pm.scanningErrors)
 		assert.Nil(t, pm.GetDataSource(pluginID))
 		assert.Nil(t, pm.GetPlugin(pluginID))
