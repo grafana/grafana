@@ -67,7 +67,7 @@ export function getDefaultTimeRange(): TimeRange {
  */
 export function getDefaultRelativeTimeRange(): RelativeTimeRange {
   return {
-    from: 21600,
+    from: 600,
     to: 0,
   };
 }

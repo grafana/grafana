@@ -18,6 +18,7 @@ import { DataSourceWithBackend, getTemplateSrv, TemplateSrv } from '@grafana/run
 import InsightsAnalyticsDatasource from './insights_analytics/insights_analytics_datasource';
 import { migrateMetricsDimensionFilters } from './query_ctrl';
 import { map } from 'rxjs/operators';
+import AzureResourceGraphDatasource from './azure_resource_graph/azure_resource_graph_datasource';
 
 export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDataSourceJsonData> {
   azureMonitorDatasource: AzureMonitorDatasource;
@@ -25,6 +26,7 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
   azureLogAnalyticsDatasource: AzureLogAnalyticsDatasource;
   insightsAnalyticsDatasource: InsightsAnalyticsDatasource;
   resourcePickerData: ResourcePickerData;
+  azureResourceGraphDatasource: AzureResourceGraphDatasource;
 
   pseudoDatasource: Record<AzureQueryType, DataSourceWithBackend>;
   optionsKey: Record<AzureQueryType, string>;
@@ -39,12 +41,14 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
     this.azureLogAnalyticsDatasource = new AzureLogAnalyticsDatasource(instanceSettings);
     this.insightsAnalyticsDatasource = new InsightsAnalyticsDatasource(instanceSettings);
     this.resourcePickerData = new ResourcePickerData(instanceSettings.url!, instanceSettings.jsonData.cloudName);
+    this.azureResourceGraphDatasource = new AzureResourceGraphDatasource(instanceSettings);
 
     const pseudoDatasource: any = {};
     pseudoDatasource[AzureQueryType.ApplicationInsights] = this.appInsightsDatasource;
     pseudoDatasource[AzureQueryType.AzureMonitor] = this.azureMonitorDatasource;
     pseudoDatasource[AzureQueryType.InsightsAnalytics] = this.insightsAnalyticsDatasource;
     pseudoDatasource[AzureQueryType.LogAnalytics] = this.azureLogAnalyticsDatasource;
+    pseudoDatasource[AzureQueryType.AzureResourceGraph] = this.azureResourceGraphDatasource;
     this.pseudoDatasource = pseudoDatasource;
 
     const optionsKey: any = {};
@@ -52,6 +56,7 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
     optionsKey[AzureQueryType.AzureMonitor] = 'azureMonitor';
     optionsKey[AzureQueryType.InsightsAnalytics] = 'insightsAnalytics';
     optionsKey[AzureQueryType.LogAnalytics] = 'azureLogAnalytics';
+    optionsKey[AzureQueryType.AzureResourceGraph] = 'azureResourceGraph';
     this.optionsKey = optionsKey;
   }
 

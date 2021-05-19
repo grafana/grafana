@@ -24,6 +24,10 @@
           "color": {
             "mode": "palette-classic"
           },
+          "custom": {
+            "fillOpacity": 70,
+            "lineWidth": 1
+          },
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
@@ -55,7 +59,7 @@
           "displayMode": "list",
           "placement": "bottom"
         },
-        "mode": "changes",
+        "mergeValues": true,
         "rowHeight": 0.9,
         "showValue": "always"
       },
@@ -187,7 +191,7 @@
           "scenarioId": "manual_entry"
         }
       ],
-      "title": "\"State changes\" Mode",
+      "title": "State timeline",
       "type": "state-timeline"
     },
     {
@@ -196,6 +200,10 @@
         "defaults": {
           "color": {
             "mode": "palette-classic"
+          },
+          "custom": {
+            "fillOpacity": 70,
+            "lineWidth": 1
           },
           "mappings": [],
           "thresholds": {
@@ -228,7 +236,7 @@
           "displayMode": "list",
           "placement": "bottom"
         },
-        "mode": "changes",
+        "mergeValues": true,
         "rowHeight": 0.9,
         "showValue": "always"
       },
@@ -252,7 +260,7 @@
           "stringInput": "true,null,false,null,true,false"
         }
       ],
-      "title": "\"State changes\" Mode (strings & booleans)",
+      "title": "State timeline (strings & booleans)",
       "type": "state-timeline"
     },
     {
@@ -261,6 +269,10 @@
         "defaults": {
           "color": {
             "mode": "palette-classic"
+          },
+          "custom": {
+            "fillOpacity": 70,
+            "lineWidth": 1
           },
           "mappings": [],
           "thresholds": {
@@ -296,7 +308,6 @@
           "displayMode": "list",
           "placement": "bottom"
         },
-        "mode": "samples",
         "rowHeight": 0.9,
         "showValue": "always"
       },
@@ -331,14 +342,17 @@
           "stringInput": ""
         }
       ],
-      "title": "Status map view",
+      "title": "Status grid",
       "type": "status-grid"
     }
   ],
   "refresh": false,
-  "schemaVersion": 29,
+  "schemaVersion": 30,
   "style": "dark",
-  "tags": ["gdev", "panel-tests"],
+  "tags": [
+    "gdev",
+    "panel-tests"
+  ],
   "templating": {
     "list": []
   },
@@ -350,5 +364,5 @@
   "timezone": "utc",
   "title": "Timeline Modes",
   "uid": "mIJjFy8Gz",
-  "version": 7
+  "version": 21
 }
