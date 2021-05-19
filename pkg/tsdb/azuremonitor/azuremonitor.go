@@ -13,6 +13,8 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
+const timeSeries = "time_series"
+
 var (
 	azlog           = log.New("tsdb.azuremonitor")
 	legendKeyFormat = regexp.MustCompile(`\{\{\s*(.+?)\s*\}\}`)
@@ -78,6 +80,7 @@ func (e *AzureMonitorExecutor) DataQuery(ctx context.Context, dsInfo *models.Dat
 	var applicationInsightsQueries []plugins.DataSubQuery
 	var azureLogAnalyticsQueries []plugins.DataSubQuery
 	var insightsAnalyticsQueries []plugins.DataSubQuery
+	var azureResourceGraphQueries []plugins.DataSubQuery
 
 	for _, query := range tsdbQuery.Queries {
 		queryType := query.Model.Get("queryType").MustString("")
@@ -91,6 +94,8 @@ func (e *AzureMonitorExecutor) DataQuery(ctx context.Context, dsInfo *models.Dat
 			azureLogAnalyticsQueries = append(azureLogAnalyticsQueries, query)
 		case "Insights Analytics":
 			insightsAnalyticsQueries = append(insightsAnalyticsQueries, query)
+		case "Azure Resource Graph":
+			azureResourceGraphQueries = append(azureResourceGraphQueries, query)
 		default:
 			return plugins.DataResponse{}, fmt.Errorf("alerting not supported for %q", queryType)
 		}
@@ -124,6 +129,12 @@ func (e *AzureMonitorExecutor) DataQuery(ctx context.Context, dsInfo *models.Dat
 		cfg:           e.cfg,
 	}
 
+	argDatasource := &AzureResourceGraphDatasource{
+		httpClient:    e.httpClient,
+		dsInfo:        e.dsInfo,
+		pluginManager: e.pluginManager,
+	}
+
 	azResult, err := azDatasource.executeTimeSeriesQuery(ctx, azureMonitorQueries, *tsdbQuery.TimeRange)
 	if err != nil {
 		return plugins.DataResponse{}, err
@@ -144,6 +155,11 @@ func (e *AzureMonitorExecutor) DataQuery(ctx context.Context, dsInfo *models.Dat
 		return plugins.DataResponse{}, err
 	}
 
+	argResult, err := argDatasource.executeTimeSeriesQuery(ctx, azureResourceGraphQueries, *tsdbQuery.TimeRange)
+	if err != nil {
+		return plugins.DataResponse{}, err
+	}
+
 	for k, v := range aiResult.Results {
 		azResult.Results[k] = v
 	}
@@ -154,6 +170,10 @@ func (e *AzureMonitorExecutor) DataQuery(ctx context.Context, dsInfo *models.Dat
 
 	for k, v := range iaResult.Results {
 		azResult.Results[k] = v
+	}
+
+	for k, v := range argResult.Responses {
+		azResult.Results[k] = plugins.DataQueryResult{Error: v.Error, Dataframes: plugins.NewDecodedDataFrames(v.Frames)}
 	}
 
 	return azResult, nil
