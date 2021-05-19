@@ -135,6 +135,15 @@ func TestPushoverNotifier(t *testing.T) {
 	}
 
 	for _, c := range cases {
+		origGetBoundary := getBoundary
+		boundary := "abcd"
+		getBoundary = func() string {
+			return boundary
+		}
+		t.Cleanup(func() {
+			getBoundary = origGetBoundary
+		})
+
 		t.Run(c.name, func(t *testing.T) {
 			settingsJSON, err := simplejson.NewJson([]byte(c.settings))
 			require.NoError(t, err)
@@ -171,7 +180,7 @@ func TestPushoverNotifier(t *testing.T) {
 			require.NoError(t, err)
 			require.True(t, ok)
 
-			bodyReader := multipart.NewReader(strings.NewReader(body), BOUNDARY)
+			bodyReader := multipart.NewReader(strings.NewReader(body), boundary)
 			for {
 				part, err := bodyReader.NextPart()
 				if part == nil || errors.Is(err, io.EOF) {

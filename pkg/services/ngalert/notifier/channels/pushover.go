@@ -25,8 +25,13 @@ import (
 
 const (
 	PUSHOVERENDPOINT = "https://api.pushover.net/1/messages.json"
-	BOUNDARY         = "abcd"
 )
+
+// getBoundary is used for overriding the behaviour for tests
+// and set a boundary
+var getBoundary = func() string {
+	return ""
+}
 
 // PushoverNotifier is responsible for sending
 // alert notifications to Pushover
@@ -142,10 +147,13 @@ func (pn *PushoverNotifier) genPushoverBody(ctx context.Context, as ...*types.Al
 	tmpl := notify.TmplText(pn.tmpl, data, &tmplErr)
 
 	w := multipart.NewWriter(&b)
-	// set a specific boundary to be used by the tests
-	err = w.SetBoundary(BOUNDARY)
-	if err != nil {
-		return nil, b, err
+	boundary := getBoundary()
+	fmt.Println(">>>> boundary: ", boundary)
+	if boundary != "" {
+		err = w.SetBoundary(boundary)
+		if err != nil {
+			return nil, b, err
+		}
 	}
 
 	// Add the user token
