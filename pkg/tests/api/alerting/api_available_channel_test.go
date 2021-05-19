@@ -1405,6 +1405,63 @@ var expAvailableChannelJsonOutput = `
         "secure": true
       }
     ]
+  },
+  {
+    "type": "threema",
+    "name": "Threema Gateway",
+    "heading": "Threema Gateway settings",
+    "description": "Sends notifications to Threema using the Threema Gateway",
+    "info": "Notifications can be configured for any Threema Gateway ID of type \"Basic\". End-to-End IDs are not currently supported.The Threema Gateway ID can be set up at https://gateway.threema.ch/.",
+    "options": [
+      {
+        "element": "input",
+        "inputType": "text",
+        "label": "Gateway ID",
+        "description": "Your 8 character Threema Gateway ID (starting with a *).",
+        "placeholder": "*3MAGWID",
+        "propertyName": "gateway_id",
+        "selectOptions": null,
+        "showWhen": {
+          "field": "",
+          "is": ""
+        },
+        "required": true,
+        "validationRule": "\\*[0-9A-Z]{7}",
+        "secure": false
+      },
+      {
+        "element": "input",
+        "inputType": "text",
+        "label": "Recipient ID",
+        "description": "The 8 character Threema ID that should receive the alerts.",
+        "placeholder": "YOUR3MID",
+        "propertyName": "recipient_id",
+        "selectOptions": null,
+        "showWhen": {
+          "field": "",
+          "is": ""
+        },
+        "required": true,
+        "validationRule": "[0-9A-Z]{8}",
+        "secure": false
+      },
+      {
+        "element": "input",
+        "inputType": "text",
+        "label": "API Secret",
+        "description": "Your Threema Gateway API secret.",
+        "placeholder": "",
+        "propertyName": "api_secret",
+        "selectOptions": null,
+        "showWhen": {
+          "field": "",
+          "is": ""
+        },
+        "required": true,
+        "validationRule": "",
+        "secure": true
+      }
+    ]
   }
 ]
 `
