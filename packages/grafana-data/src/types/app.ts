@@ -7,6 +7,7 @@ export enum CoreApp {
   Dashboard = 'dashboard',
   Explore = 'explore',
   Unknown = 'unknown',
+  CloudAlerting = 'cloud-alerting',
 }
 
 export interface AppRootProps<T = KeyValue> {
@@ -20,6 +21,18 @@ export interface AppRootProps<T = KeyValue> {
    * Pass the nav model to the container... is there a better way?
    */
   onNavChanged: (nav: NavModel) => void;
+
+  /**
+   * The URL query parameters
+   * @deprecated Use react-router instead
+   */
+  query: KeyValue;
+
+  /**
+   * The URL path to this page
+   * @deprecated Use react-router instead
+   */
+  path: string;
 }
 
 export interface AppPluginMeta<T = KeyValue> extends PluginMeta<T> {

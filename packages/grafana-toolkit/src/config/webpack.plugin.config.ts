@@ -185,6 +185,7 @@ const getBaseWebpackConfig: WebpackConfigurationGetter = async (options) => {
       'react-redux',
       'redux',
       'rxjs',
+      'react-router-dom',
       'd3',
       'angular',
       '@grafana/ui',

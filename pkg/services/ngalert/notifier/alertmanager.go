@@ -412,6 +412,8 @@ func (am *Alertmanager) buildReceiverIntegrations(receiver *apimodels.PostableAp
 			n, err = channels.NewEmailNotifier(cfg, tmpl) // Email notifier already has a default template.
 		case "pagerduty":
 			n, err = channels.NewPagerdutyNotifier(cfg, tmpl)
+		case "pushover":
+			n, err = channels.NewPushoverNotifier(cfg, tmpl)
 		case "slack":
 			n, err = channels.NewSlackNotifier(cfg, tmpl)
 		case "telegram":
@@ -424,6 +426,14 @@ func (am *Alertmanager) buildReceiverIntegrations(receiver *apimodels.PostableAp
 			n, err = channels.NewWebHookNotifier(cfg, tmpl)
 		case "sensugo":
 			n, err = channels.NewSensuGoNotifier(cfg, tmpl)
+		case "discord":
+			n, err = channels.NewDiscordNotifier(cfg, tmpl)
+		case "alertmanager":
+			n, err = channels.NewAlertmanagerNotifier(cfg, tmpl)
+		case "googlechat":
+			n, err = channels.NewGoogleChatNotifier(cfg, tmpl)
+		case "line":
+			n, err = channels.NewLineNotifier(cfg, tmpl)
 		default:
 			return nil, fmt.Errorf("notifier %s is not supported", r.Type)
 		}
