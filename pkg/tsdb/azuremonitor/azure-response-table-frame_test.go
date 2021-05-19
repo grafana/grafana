@@ -114,10 +114,11 @@ func TestLogTableToFrame(t *testing.T) {
 					data.NewField("XReal", nil, []*float64{pointer.Float64(1.797693134862315708145274237317043567981e+308)}),
 					data.NewField("XTimeSpan", nil, []*string{pointer.String("00:00:00.0000001")}),
 					data.NewField("XDecimal", nil, []*float64{pointer.Float64(79228162514264337593543950335)}),
+					data.NewField("XObject", nil, []*string{pointer.String(`"{\"person\": \"Daniel\", \"cats\": 23, \"diagnosis\": \"cat problem\"}"`)}),
 				)
 				frame.Meta = &data.FrameMeta{
 					Custom: &LogAnalyticsMeta{ColumnTypes: []string{"bool", "string", "datetime",
-						"dynamic", "guid", "int", "long", "real", "timespan", "decimal"}},
+						"dynamic", "guid", "int", "long", "real", "timespan", "decimal", "object"}},
 				}
 				return frame
 			},
@@ -142,7 +143,7 @@ func TestLogTableToFrame(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			res := loadLogAnalyticsTestFileWithNumber(t, tt.testFile)
-			frame, err := LogTableToFrame(&res.Tables[0])
+			frame, err := ResponseTableToFrame(&res.Tables[0])
 			require.NoError(t, err)
 
 			if diff := cmp.Diff(tt.expectedFrame(), frame, data.FrameTestCompareOptions()...); diff != "" {
