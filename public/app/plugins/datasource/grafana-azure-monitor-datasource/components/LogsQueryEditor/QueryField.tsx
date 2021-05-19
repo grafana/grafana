@@ -31,27 +31,29 @@ const QueryField: React.FC<AzureQueryEditorFieldProps> = ({ query, datasource, o
   }
 
   useEffect(() => {
-    if (query.azureLogAnalytics.resource) {
-      const promises = [
-        datasource.azureLogAnalyticsDatasource.getKustoSchema(query.azureLogAnalytics.resource),
-        getPromise(),
-      ] as const;
+    if (!query.azureLogAnalytics.resource) {
+      return;
+    }
 
-      // the kusto schema call might fail, but its okay for that to happen silently
-      Promise.all(promises).then(([schema, { monaco, editor }]) => {
-        const languages = (monaco.languages as unknown) as MonacoLanguages;
+    const promises = [
+      datasource.azureLogAnalyticsDatasource.getKustoSchema(query.azureLogAnalytics.resource),
+      getPromise(),
+    ] as const;
 
-        languages.kusto.getKustoWorker().then((kusto) => {
-          const model = editor.getModel();
-          if (!model) {
-            return;
-          }
-          kusto(model.uri).then((worker) => {
-            worker.setSchema(schema, 'https://help.kusto.windows.net', 'Samples');
-          });
+    // the kusto schema call might fail, but its okay for that to happen silently
+    Promise.all(promises).then(([schema, { monaco, editor }]) => {
+      const languages = (monaco.languages as unknown) as MonacoLanguages;
+
+      languages.kusto.getKustoWorker().then((kusto) => {
+        const model = editor.getModel();
+        if (!model) {
+          return;
+        }
+        kusto(model.uri).then((worker) => {
+          worker.setSchema(schema, 'https://help.kusto.windows.net', 'Samples');
         });
       });
-    }
+    });
   }, [datasource.azureLogAnalyticsDatasource, query.azureLogAnalytics.resource]);
 
   const handleEditorMount = useCallback((editor: MonacoEditor, monaco: Monaco) => {

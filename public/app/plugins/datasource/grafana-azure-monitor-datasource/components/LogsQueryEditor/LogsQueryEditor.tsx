@@ -1,10 +1,11 @@
-import React, { useCallback, useEffect } from 'react';
+import React from 'react';
 import { AzureMonitorErrorish, AzureMonitorOption, AzureMonitorQuery } from '../../types';
 import Datasource from '../../datasource';
 import { InlineFieldRow } from '@grafana/ui';
 import QueryField from './QueryField';
 import FormatAsField from './FormatAsField';
 import ResourceField from './ResourceField';
+import useMigrations from './useMigrations';
 
 interface LogsQueryEditorProps {
   query: AzureMonitorQuery;
@@ -23,25 +24,7 @@ const LogsQueryEditor: React.FC<LogsQueryEditorProps> = ({
   onChange,
   setError,
 }) => {
-  const migrateWorkspaceQueriesToResourceQueries = useCallback(async () => {
-    if (query.azureLogAnalytics.workspace !== undefined && !query.azureLogAnalytics.resource) {
-      const resourceURI = await datasource.resourcePickerData.getResourceURIFromWorkspace(
-        query.azureLogAnalytics.workspace
-      );
-      onChange({
-        ...query,
-        azureLogAnalytics: {
-          ...query.azureLogAnalytics,
-          resource: resourceURI,
-          workspace: undefined,
-        },
-      });
-    }
-  }, [datasource, onChange, query]);
-
-  useEffect(() => {
-    migrateWorkspaceQueriesToResourceQueries();
-  }, [query, migrateWorkspaceQueriesToResourceQueries]);
+  useMigrations(datasource, query, onChange);
 
   return (
     <div data-testid="azure-monitor-logs-query-editor">

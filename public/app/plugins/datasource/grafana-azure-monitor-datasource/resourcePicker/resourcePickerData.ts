@@ -95,9 +95,10 @@ export default class ResourcePickerData {
   }
 
   async getResourceURIFromWorkspace(workspace: string) {
-    const { ok, data: response } = await this.makeResourceGraphRequest(`
+    const { ok, data: response } = await this.makeResourceGraphRequest<RawAzureResourceItem[]>(`
       resources
       | where properties['customerId'] == "${workspace}"
+      | project id
     `);
 
     // TODO: figure out desired error handling strategy
@@ -105,7 +106,7 @@ export default class ResourcePickerData {
       throw new Error('unable to fetch resource containers');
     }
 
-    return (response.data[0] as RawAzureResourceItem).id;
+    return response.data[0].id;
   }
 
   formatResourceGroupData(rawData: RawAzureResourceGroupItem[]) {
