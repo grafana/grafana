@@ -92,8 +92,8 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 		return err
 	}
 
-	// [orgID, dashboardId] -> oldDash
-	dashIDMap, err := m.slurpDash()
+	// [orgID, dashboardId] -> dashUID
+	dashIDMap, err := m.slurpDashUIDs()
 	if err != nil {
 		return err
 	}
@@ -128,8 +128,7 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 			return err
 		}
 
-		oda := dashIDMap[[2]int64{da.OrgId, da.DashboardId}]
-		da.DashboardUID = oda.UID
+		da.DashboardUID = dashIDMap[[2]int64{da.OrgId, da.DashboardId}]
 
 		// get dashboard
 		dash := dashboard{}
@@ -228,7 +227,7 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 		n, v := getLabelForRouteMatching(rule.Uid)
 		rule.Labels[n] = v
 
-		if err := m.updateReceiverAndRoute(allChannels, oda, da, rule, &amConfig); err != nil {
+		if err := m.updateReceiverAndRoute(allChannels, da, rule, &amConfig); err != nil {
 			return err
 		}
 
@@ -270,20 +269,17 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 	return err
 }
 
-func (m *migration) updateReceiverAndRoute(allChannels map[interface{}]*notificationChannel, oda oldDash, da dashAlert, rule *alertRule, amConfig *PostableUserConfig) error {
+func (m *migration) updateReceiverAndRoute(allChannels map[interface{}]*notificationChannel, da dashAlert, rule *alertRule, amConfig *PostableUserConfig) error {
 	// Create receiver and route for this rule.
 	if allChannels == nil {
 		return nil
 	}
-	channelUids, ruleName, ruleMessage, err := extractChannelInfoFromDashboard(oda, da.PanelId)
-	if err != nil {
-		return err
-	}
 
-	rule.Labels["alertname"] = ruleName
-	rule.Annotations["message"] = ruleMessage
+	rule.Labels["alertname"] = da.Name
+	rule.Annotations["message"] = da.Message
 
-	recv, route, err := m.makeReceiverAndRoute(rule.Uid, channelUids, allChannels)
+	channelIDs := extractChannelIDs(da)
+	recv, route, err := m.makeReceiverAndRoute(rule.Uid, channelIDs, allChannels)
 	if err != nil {
 		return err
 	}

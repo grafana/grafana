@@ -190,55 +190,21 @@ func getLabelForRouteMatching(ruleUID string) (string, string) {
 	return "rule_uid", ruleUID
 }
 
-func extractChannelInfoFromDashboard(d oldDash, panelId int64) (channelUids []interface{}, ruleName string, ruleMessage string, _ error) {
-	panels, err := d.Data.Get("panels").Array()
-	if err != nil {
-		return nil, "", "", err
-	}
-
-	for _, pi := range panels {
-		p := simplejson.NewFromAny(pi)
-		pid, err := p.Get("id").Int64()
-		if err != nil {
-			return nil, "", "", err
-		}
-
-		if pid != panelId {
+func extractChannelIDs(d dashAlert) (channelUids []interface{}) {
+	// Extracting channel UID/ID.
+	for _, ui := range d.ParsedSettings.Notifications {
+		if ui.UID != "" {
+			channelUids = append(channelUids, ui.UID)
 			continue
 		}
-
-		a := p.Get("alert")
-
-		ruleMessage = a.Get("message").MustString()
-		ruleName = a.Get("name").MustString()
-
-		// Extracting channel UIDs.
-		uids, err := a.Get("notifications").Array()
-		if err != nil {
-			return nil, "", "", err
+		// In certain circumstances, id is used instead of uid.
+		// We add this if there was no uid.
+		if ui.ID > 0 {
+			channelUids = append(channelUids, ui.ID)
 		}
-
-		for _, ui := range uids {
-			u := simplejson.NewFromAny(ui)
-
-			channelUid, err := u.Get("uid").String()
-			if err == nil && channelUid != "" {
-				channelUids = append(channelUids, channelUid)
-				continue
-			}
-
-			// In certain circumstances, id is used instead of uid.
-			// We add this if there was no uid.
-			channelId, err := u.Get("id").Int()
-			if err == nil && channelId > 0 {
-				channelUids = append(channelUids, channelId)
-			}
-		}
-
-		break
 	}
 
-	return channelUids, ruleName, ruleMessage, nil
+	return channelUids
 }
 
 // Below is a snapshot of all the config and supporting functions imported

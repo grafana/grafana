@@ -3,8 +3,6 @@ package ualert
 import (
 	"encoding/json"
 	"time"
-
-	"github.com/grafana/grafana/pkg/components/simplejson"
 )
 
 type dashAlert struct {
@@ -40,7 +38,7 @@ FROM
 // slurpDashAlerts loads all alerts from the alert database table into the
 // the dashAlert type.
 // Additionally it unmarshals the json settings for the alert into the
-// ParsedSettings property of the oldDash alert.
+// ParsedSettings property of the dash alert.
 func (m *migration) slurpDashAlerts() ([]dashAlert, error) {
 	dashAlerts := []dashAlert{}
 	err := m.sess.SQL(slurpDashSQL).Find(&dashAlerts)
@@ -72,7 +70,8 @@ type dashAlertSettings struct {
 // dashAlertNot is the object that represents the Notifications array in
 // dashAlertSettings
 type dashAlertNot struct {
-	UID string `json:"uid"`
+	UID string `json:"uid,omitempty"`
+	ID  int64  `json:"id,omitempty"`
 }
 
 // dashAlertingConditionJSON is like classic.ClassicConditionJSON except that it
@@ -101,28 +100,25 @@ type conditionEvalJSON struct {
 	Type   string    `json:"type"` // e.g. "gt"
 }
 
-type oldDash struct {
-	OrgID int64            `xorm:"org_id"`
-	ID    int64            `xorm:"id"`
-	UID   string           `xorm:"uid"`
-	Data  *simplejson.Json `xorm:"data"`
-}
+// slurpDashUIDs returns a map of [orgID, dashboardId] -> dashUID.
+func (m *migration) slurpDashUIDs() (map[[2]int64]string, error) {
+	dashIDs := []struct {
+		OrgID int64  `xorm:"org_id"`
+		ID    int64  `xorm:"id"`
+		UID   string `xorm:"uid"`
+	}{}
 
-// slurpDash returns a map of [orgID, dashboardId] -> oldDash.
-func (m *migration) slurpDash() (map[[2]int64]oldDash, error) {
-	oldDashes := []oldDash{}
-
-	err := m.sess.SQL(`SELECT org_id, id, uid, data FROM dashboard`).Find(&oldDashes)
+	err := m.sess.SQL(`SELECT org_id, id, uid FROM dashboard`).Find(&dashIDs)
 
 	if err != nil {
 		return nil, err
 	}
 
-	idToDash := make(map[[2]int64]oldDash, len(oldDashes))
+	idToUID := make(map[[2]int64]string, len(dashIDs))
 
-	for _, ds := range oldDashes {
-		idToDash[[2]int64{ds.OrgID, ds.ID}] = ds
+	for _, ds := range dashIDs {
+		idToUID[[2]int64{ds.OrgID, ds.ID}] = ds.UID
 	}
 
-	return idToDash, nil
+	return idToUID, nil
 }
