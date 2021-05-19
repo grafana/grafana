@@ -70,6 +70,7 @@ const RulesFilter = () => {
               prefix={searchIcon}
               onChange={handleQueryStringChange}
               defaultValue={queryString}
+              placeholder="Search"
             />
           </div>
           <div className={styles.rowChild}>

@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, AppEvents } from '@grafana/data';
 import { Alert, Button, Field, Input, LinkButton, useStyles2 } from '@grafana/ui';
 import { useCleanup } from 'app/core/hooks/useCleanup';
 import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
@@ -12,6 +12,7 @@ import { ChannelValues, CommonSettingsComponentType, ReceiverFormValues } from '
 import { makeAMLink } from '../../../utils/misc';
 import { ChannelSubForm } from './ChannelSubForm';
 import { DeletedSubForm } from './fields/DeletedSubform';
+import { appEvents } from 'app/core/core';
 
 interface Props<R extends ChannelValues> {
   config: AlertManagerCortexConfig;
@@ -53,7 +54,7 @@ export function ReceiverForm<R extends ChannelValues>({
 
   useCleanup((state) => state.unifiedAlerting.saveAMConfig);
 
-  const { loading, error } = useUnifiedAlertingSelector((state) => state.saveAMConfig);
+  const { loading } = useUnifiedAlertingSelector((state) => state.saveAMConfig);
 
   const {
     handleSubmit,
@@ -79,6 +80,10 @@ export function ReceiverForm<R extends ChannelValues>({
     });
   };
 
+  const onInvalid = () => {
+    appEvents.emit(AppEvents.alertError, ['There are errors in the form. Please correct them and try again!']);
+  };
+
   return (
     <FormProvider {...formAPI}>
       {!config.alertmanager_config.route && (
@@ -86,13 +91,8 @@ export function ReceiverForm<R extends ChannelValues>({
           Because there is no default policy configured yet, this contact point will automatically be set as default.
         </Alert>
       )}
-      <form onSubmit={handleSubmit(submitCallback)}>
+      <form onSubmit={handleSubmit(submitCallback, onInvalid)}>
         <h4 className={styles.heading}>{initialValues ? 'Update contact point' : 'Create contact point'}</h4>
-        {error && (
-          <Alert severity="error" title="Error saving receiver">
-            {error.message || String(error)}
-          </Alert>
-        )}
         <Field label="Name" invalid={!!errors.name} error={errors.name && errors.name.message}>
           <Input
             id="name"

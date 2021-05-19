@@ -1,6 +1,6 @@
 import { Silence, SilenceCreatePayload } from 'app/plugins/datasource/alertmanager/types';
 import React, { FC, useState } from 'react';
-import { Alert, Button, Field, FieldSet, Input, LinkButton, TextArea, useStyles } from '@grafana/ui';
+import { Button, Field, FieldSet, Input, LinkButton, TextArea, useStyles } from '@grafana/ui';
 import {
   DefaultTimeZone,
   GrafanaTheme,
@@ -75,7 +75,7 @@ export const SilencesEditor: FC<Props> = ({ silence, alertManagerSourceName }) =
   const dispatch = useDispatch();
   const styles = useStyles(getStyles);
 
-  const { loading, error } = useUnifiedAlertingSelector((state) => state.updateSilence);
+  const { loading } = useUnifiedAlertingSelector((state) => state.updateSilence);
 
   useCleanup((state) => state.unifiedAlerting.updateSilence);
 
@@ -138,11 +138,6 @@ export const SilencesEditor: FC<Props> = ({ silence, alertManagerSourceName }) =
     <FormProvider {...formAPI}>
       <form onSubmit={handleSubmit(onSubmit)}>
         <FieldSet label={`${silence ? 'Recreate silence' : 'Create silence'}`}>
-          {error && (
-            <Alert severity="error" title="Error saving silence">
-              {error.message || (error as any)?.data?.message || String(error)}
-            </Alert>
-          )}
           <div className={styles.flexRow}>
             <SilencePeriod />
             <Field

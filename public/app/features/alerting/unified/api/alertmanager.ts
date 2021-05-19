@@ -71,10 +71,15 @@ export async function createOrUpdateSilence(
   alertmanagerSourceName: string,
   payload: SilenceCreatePayload
 ): Promise<Silence> {
-  const result = await getBackendSrv().post(
-    `/api/alertmanager/${getDatasourceAPIId(alertmanagerSourceName)}/api/v2/silences`,
-    payload
-  );
+  const result = await getBackendSrv()
+    .fetch<Silence>({
+      url: `/api/alertmanager/${getDatasourceAPIId(alertmanagerSourceName)}/api/v2/silences`,
+      data: payload,
+      showErrorAlert: false,
+      showSuccessAlert: false,
+      method: 'POST',
+    })
+    .toPromise();
   return result.data;
 }
 
