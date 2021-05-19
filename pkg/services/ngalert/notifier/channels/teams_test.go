@@ -47,8 +47,8 @@ func TestTeamsNotifier(t *testing.T) {
 			expMsg: map[string]interface{}{
 				"@type":      "MessageCard",
 				"@context":   "http://schema.org/extensions",
-				"summary":    "[firing:1]  (val1)",
-				"title":      "[firing:1]  (val1)",
+				"summary":    "[FIRING:1]  (val1)",
+				"title":      "[FIRING:1]  (val1)",
 				"themeColor": "#D63232",
 				"sections": []map[string]interface{}{
 					{
@@ -89,8 +89,8 @@ func TestTeamsNotifier(t *testing.T) {
 			expMsg: map[string]interface{}{
 				"@type":      "MessageCard",
 				"@context":   "http://schema.org/extensions",
-				"summary":    "[firing:2]  ",
-				"title":      "[firing:2]  ",
+				"summary":    "[FIRING:2]  ",
+				"title":      "[FIRING:2]  ",
 				"themeColor": "#D63232",
 				"sections": []map[string]interface{}{
 					{
@@ -128,7 +128,7 @@ func TestTeamsNotifier(t *testing.T) {
 			settingsJSON, err := simplejson.NewJson([]byte(c.settings))
 			require.NoError(t, err)
 
-			m := &models.AlertNotification{
+			m := &NotificationChannelConfig{
 				Name:     "teams_testing",
 				Type:     "teams",
 				Settings: settingsJSON,

@@ -27,12 +27,14 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
     { id: AzureQueryType.LogAnalytics, label: 'Logs' },
     { id: AzureQueryType.ApplicationInsights, label: 'Application Insights' },
     { id: AzureQueryType.InsightsAnalytics, label: 'Insights Analytics' },
+    { id: AzureQueryType.AzureResourceGraph, label: 'Azure Resource Graph' },
   ];
 
   // Query types that have been migrated to React
   reactQueryEditors = [
     AzureQueryType.AzureMonitor,
     AzureQueryType.LogAnalytics,
+    AzureQueryType.AzureResourceGraph,
     // AzureQueryType.ApplicationInsights,
     // AzureQueryType.InsightsAnalytics,
   ];
@@ -44,11 +46,16 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
     refId: string;
     queryType: AzureQueryType;
     subscription: string;
+    subscriptions: string[];
     azureMonitor: AzureMetricQuery;
     azureLogAnalytics: {
       query: string;
       resultFormat: string;
       workspace: string;
+    };
+    azureResourceGraph: {
+      query: string;
+      resultFormat: string;
     };
     appInsights: {
       // metric style query when rawQuery == false
@@ -104,6 +111,9 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
         this.datasource && this.datasource.azureLogAnalyticsDatasource
           ? this.datasource.azureLogAnalyticsDatasource.defaultOrFirstWorkspace
           : '',
+    },
+    azureResourceGraph: {
+      resultFormat: 'table',
     },
     appInsights: {
       metricName: this.defaultDropdownValue,
@@ -325,6 +335,10 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
 
       if (!this.target.subscription && this.subscriptions.length > 0) {
         this.target.subscription = this.subscriptions[0].value;
+      }
+
+      if (!this.target.subscriptions) {
+        this.target.subscriptions = subscriptions.map((sub) => sub.value);
       }
 
       return this.subscriptions;

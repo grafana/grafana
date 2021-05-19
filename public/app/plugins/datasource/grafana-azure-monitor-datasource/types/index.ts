@@ -17,17 +17,20 @@ export enum AzureQueryType {
   ApplicationInsights = 'Application Insights',
   InsightsAnalytics = 'Insights Analytics',
   LogAnalytics = 'Azure Log Analytics',
+  AzureResourceGraph = 'Azure Resource Graph',
 }
 
 export interface AzureMonitorQuery extends DataQuery {
   queryType: AzureQueryType;
   format: string;
   subscription: string;
+  subscriptions: string[];
 
   azureMonitor: AzureMetricQuery;
   azureLogAnalytics: AzureLogsQuery;
   appInsights?: ApplicationInsightsQuery;
   insightsAnalytics: InsightsAnalyticsQuery;
+  azureResourceGraph: AzureResourceGraphQuery;
 }
 
 export type ConcealedSecret = symbol;
@@ -89,6 +92,11 @@ export interface AzureLogsQuery {
   query: string;
   resultFormat: string;
   workspace: string;
+}
+
+export interface AzureResourceGraphQuery {
+  query: string;
+  resultFormat: string;
 }
 
 export interface ApplicationInsightsQuery {

@@ -34,7 +34,7 @@ type SensuNotifier struct {
 }
 
 // NewSensuNotifier is the constructor for the Sensu notifier
-func NewSensuNotifier(model *models.AlertNotification, t *template.Template) (*SensuNotifier, error) {
+func NewSensuNotifier(model *NotificationChannelConfig, t *template.Template) (*SensuNotifier, error) {
 	if model.Settings == nil {
 		return nil, alerting.ValidationError{Reason: "No settings supplied"}
 	}
@@ -48,14 +48,21 @@ func NewSensuNotifier(model *models.AlertNotification, t *template.Template) (*S
 	}
 
 	return &SensuNotifier{
-		NotifierBase: old_notifiers.NewNotifierBase(model),
-		message:      model.Settings.Get("message").MustString(`{{ template "default.message" . }}`),
-		url:          u,
-		user:         model.Settings.Get("username").MustString(),
-		password:     model.DecryptedValue("password", model.Settings.Get("password").MustString()),
-		handler:      model.Settings.Get("handler").MustString(),
-		log:          log.New("alerting.notifier.sensu"),
-		tmpl:         t,
+		NotifierBase: old_notifiers.NewNotifierBase(&models.AlertNotification{
+			Uid:                   model.UID,
+			Name:                  model.Name,
+			Type:                  model.Type,
+			DisableResolveMessage: model.DisableResolveMessage,
+			Settings:              model.Settings,
+			SecureSettings:        model.SecureSettings,
+		}),
+		message:  model.Settings.Get("message").MustString(`{{ template "default.message" . }}`),
+		url:      u,
+		user:     model.Settings.Get("username").MustString(),
+		password: model.DecryptedValue("password", model.Settings.Get("password").MustString()),
+		handler:  model.Settings.Get("handler").MustString(),
+		log:      log.New("alerting.notifier.sensu"),
+		tmpl:     t,
 	}, nil
 }
 
