@@ -92,20 +92,11 @@ text-decoration: underline;
   table[class="body"] .columns {
     table-layout: fixed !important; float: none !important; width: 100% !important; padding-right: 0px !important; padding-left: 0px !important; display: block !important;
   }
-  table[class="body"] .column {
-    table-layout: fixed !important; float: none !important; width: 100% !important; padding-right: 0px !important; padding-left: 0px !important; display: block !important;
-  }
   table[class="body"] table.columns td {
     width: 100% !important;
   }
-  table[class="body"] .columns td.four {
-    width: 33.333333% !important;
-  }
   table[class="body"] .columns td.six {
     width: 50% !important;
-  }
-  table[class="body"] .columns td.eight {
-    width: 66.666666% !important;
   }
   table[class="body"] .columns td.twelve {
     width: 100% !important;
@@ -215,150 +206,127 @@ text-decoration: underline;
 							<td class="mini-centered-text" style="color: #343b41; mso-table-lspace: 0pt; mso-table-rspace: 0pt; word-break: break-word; -webkit-hyphens: auto; -moz-hyphens: auto; hyphens: auto; border-collapse: collapse !important; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; margin: 0; padding: 25px 35px; font: 400 16px/27px 'Helvetica Neue', Helvetica, Arial, sans-serif;" align="center" valign="top">
 								{{Subject .Subject "{{.Title}}"}}
 
+{{ define "alert" }}
+  {{ if gt (len .Annotations.SortedPairs) 0 }}
+      </td></tr><tr style="vertical-align: top; padding: 0;" align="left">
+        <td colspan="2" class="annotations" style="word-break: break-word; -webkit-hyphens: auto; -moz-hyphens: auto; hyphens: auto; border-collapse: collapse !important; color: #222222; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-weight: normal; line-height: 19px; font-size: 14px; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; margin: 0; padding: 24px 0 12px;" align="left" valign="top">
+          {{ range .Annotations.SortedPairs }}
+            <p style="color: #222222; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-weight: normal; line-height: 19px; font-size: 14px; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; margin: 0 0 10px; padding: 0;" align="left">{{ .Name }}: {{ .Value }}</p>
+          {{ end }}
+        </td>
+      </tr>
+  {{ end }}
+  <tr style="vertical-align: top; padding: 0;" align="left">
+    <td valign="top" class="labels-heading" style="word-break: break-word; -webkit-hyphens: auto; -moz-hyphens: auto; hyphens: auto; border-collapse: collapse !important; color: #222222; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-weight: bold; line-height: 19px; font-size: 14px; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; margin: 0; padding: 0;" align="left">Labels:</td>
+    <td style="word-break: break-word; -webkit-hyphens: auto; -moz-hyphens: auto; hyphens: auto; border-collapse: collapse !important; color: #222222; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-weight: normal; line-height: 19px; font-size: 14px; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; margin: 0; padding: 0;" align="left" valign="top">
+      <ul class="labels-list" style="font-size: 14px; vertical-align: top;">
+        {{ range .Labels.SortedPairs }}<li>{{ .Name }}: {{ .Value }}</li>{{ end }}
+      </ul>
+    </td>
+  </tr>
+  <tr style="vertical-align: top; padding: 0;" align="left">
+    <td colspan="2" style="word-break: break-word; -webkit-hyphens: auto; -moz-hyphens: auto; hyphens: auto; border-collapse: collapse !important; color: #222222; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-weight: normal; line-height: 19px; font-size: 14px; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; margin: 0; padding: 0;" align="left" valign="top">
+      {{ if .SilenceURL }}
+        <a href="{{ .SilenceURL }}" class="button" style="color: #464c54; text-decoration: none; background-color: #f1f5f9; border-radius: 2px; display: inline-block; font-size: 12px; font-weight: bold; margin: 0 10px 0 0; padding: 5px 9px; border: 1px solid #c7d0d9;">
+          <img alt="" height="14" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAF1SURBVHgBrZLNTsJAEMf/2wYTPfEI9Q1qvBgjsEl5gB498gj1SDHpEKUckaMn4eiNFyAp4cJN30CPHrn5BV1noTWlFD3oJNuZ3Z39zUcH+A9pUffJpzAoOO/xuvvprZHooYCgLISoa7FyFSCbdOXuApj6M43GUVXWhYZUpKP3k1NZ14+kAOYChleVjnssK/ezKHrLAkQuZWIVKCgKyW+n55cUciZClzLoUPOiqISVlPB+s6ZulnNN/ihG3GfT84jKOwGvMO0krVEewoBoHeTA2glIhRuno7WzkH0Yc633sCz/CoiVshdYRGxGKYSo9ahgHnEPoqzvdxP1b/sEHtgsF2e12ditDD6gPE59XgIO8ytfTlbM1DiTzjk7WQvEYgllZ5fSXeE7vnfTOdkC1GqOBSFO2Mk22JG1TB4l+1VzX/IQgQJpBaHHsB6bA47+rNOHUI1O4A/zw2YWAaaT8UyPNkdcZ6JUs0P+7eouGXuO3WC7j7/KF29iokiLUdaFAAAAAElFTkSuQmCC" class="button-img" width="14" style="outline: none !important; text-decoration: none !important; -ms-interpolation-mode: bicubic; width: 14px; clear: both; display: block; height: 14px; vertical-align: sub; margin: 0 5px 0 0; border: 0 none;" align="left" />
+          Silence
+        </a>
+      {{ end }}
+      {{ if .Annotations.runbook_url }}
+        <a href="{{ .Annotations.runbook_url }}" class="button" style="color: #464c54; text-decoration: none; background-color: #f1f5f9; border-radius: 2px; display: inline-block; font-size: 12px; font-weight: bold; margin: 0 10px 0 0; padding: 5px 9px; border: 1px solid #c7d0d9;">
+          <img class="button-img" alt="" height="14" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAADaSURBVHgBrVNLDoIwFJwq0bjTG+ARvIGeQI/ADdSVARY8oki8jZxEbyDewLUfahttAoEWDM7m9bVvJtN0CrQEyzdENLyjt2RgtoFzjcgl1XTyJw/0T4K8ghmBH8Zz1VhqsaHtVBT7CYwP5KY6tk+xw3k2Kgl0YdmyKrIYvEjB73EqbI+rBC1owMDXGdjws0aqm9MK7Mg7ogE6aInWAqUreLQPanJgdtAgB2YHIgeTuhxUOlBPNcBvKPwFT4RHbnDgLOpNw3EEaxEFblJwIPECZhw8MZAlQkX+C95zCzqWDYrK2AAAAABJRU5ErkJggg==" width="14" style="outline: none !important; text-decoration: none !important; -ms-interpolation-mode: bicubic; width: 14px; clear: both; display: block; height: 14px; vertical-align: sub; margin: 0 5px 0 0; border: 0 none;" align="left" />
+          View Runbook
+        </a>
+      {{ end }}
+      {{ if .DashboardURL}}
+        <a href="{{ .DashboardURL }}" class="button" style="color: #464c54; text-decoration: none; background-color: #f1f5f9; border-radius: 2px; display: inline-block; font-size: 12px; font-weight: bold; margin: 0 10px 0 0; padding: 5px 9px; border: 1px solid #c7d0d9;">
+          <img alt="" height="14" class="button-img" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAE9SURBVHgBrVLNWcMwDH220/bjhEdIR2AC6ASMQEeAU6G9+FLycQojdAUmgE7ACGSEcEybRkj5cUKbnFp9X2JZ8nuypQecaUp+Kxf98BIeJ3cwNxqZDRB89mCTtXuZBvVGwBsCtiUrkYVS8RgHmzeVFB4Lwm9d9Y6XB/EbAhCK7atbbcRfuCjkRNwtt6fs4825RPyli4SkJNA40/wNFCm7cC6sdnnYSdVmQs6Xnla4JjoikDcHmMQYrCSNrI434C7BrA/EXf6Slad0kieY1BPsUKQahcWA5cj7otYTjKG/+/oplQU8oAMx1aKInkbAVL6BJ818ns82wVYHilLnlon4rIOTGeTIWHleB6mq4xfUAfTts1tXPh1YyubfwZGa3HO+K+WWgMeacHBuoOc1m7cr6HSPcvbvpnNhweAS9gdSqGSnoVA2cQAAAABJRU5ErkJggg==" width="14" style="outline: none !important; text-decoration: none !important; -ms-interpolation-mode: bicubic; width: 14px; clear: both; display: block; height: 14px; vertical-align: sub; margin: 0 5px 0 0; border: 0 none;" align="left" />
+          Go to Dashboard
+        </a>
+      {{ end }}
+      {{ if .PanelURL}}
+        <a href="{{ .PanelURL }}" class="button" style="color: #464c54; text-decoration: none; background-color: #f1f5f9; border-radius: 2px; display: inline-block; font-size: 12px; font-weight: bold; margin: 0 10px 0 0; padding: 5px 9px; border: 1px solid #c7d0d9;">
+          <img alt="" class="button-img" height="14" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAE9SURBVHgBrVLNWcMwDH220/bjhEdIR2AC6ASMQEeAU6G9+FLycQojdAUmgE7ACGSEcEybRkj5cUKbnFp9X2JZ8nuypQecaUp+Kxf98BIeJ3cwNxqZDRB89mCTtXuZBvVGwBsCtiUrkYVS8RgHmzeVFB4Lwm9d9Y6XB/EbAhCK7atbbcRfuCjkRNwtt6fs4825RPyli4SkJNA40/wNFCm7cC6sdnnYSdVmQs6Xnla4JjoikDcHmMQYrCSNrI434C7BrA/EXf6Slad0kieY1BPsUKQahcWA5cj7otYTjKG/+/oplQU8oAMx1aKInkbAVL6BJ818ns82wVYHilLnlon4rIOTGeTIWHleB6mq4xfUAfTts1tXPh1YyubfwZGa3HO+K+WWgMeacHBuoOc1m7cr6HSPcvbvpnNhweAS9gdSqGSnoVA2cQAAAABJRU5ErkJggg==" width="14" style="outline: none !important; text-decoration: none !important; -ms-interpolation-mode: bicubic; width: 14px; clear: both; display: block; height: 14px; vertical-align: sub; margin: 0 5px 0 0; border: 0 none;" align="left" />
+            Go to Panel
+          </a>
+      {{ end }}
+      {{ if gt (len .GeneratorURL) 0 }}<a href="{{ .GeneratorURL }}" class="button" style="color: #464c54; text-decoration: none; background-color: #f1f5f9; border-radius: 2px; display: inline-block; font-size: 12px; font-weight: bold; margin: 0 10px 0 0; padding: 5px 9px; border: 1px solid #c7d0d9;">Source</a>{{ end }}
+    </td>
+  </tr>
+  <tr style="vertical-align: top; padding: 0;" align="left">
+    <td colspan="2" style="word-break: break-word; -webkit-hyphens: auto; -moz-hyphens: auto; hyphens: auto; border-collapse: collapse !important; color: #222222; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-weight: normal; line-height: 19px; font-size: 14px; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; margin: 0; padding: 0;" align="left" valign="top">
+      <div style="height: 24px;"></div>
+      <div style="background-color: #c7d0d9; height: 1px;"></div>
+      <div style="height: 24px;"></div>
+    </td>
+  </tr>
+{{ end }}
+
+{{ if gt (len .Message) 0 }}
+ {{ .Message }}
+{{ else }}
+
 
 
 <table class="row" style="border-spacing: 0; border-collapse: collapse; vertical-align: top; text-align: left; width: 100%; position: relative; display: block; padding: 0px;">
   <tr style="vertical-align: top; padding: 0;" align="left">
-    <td class="wrapper last" style="word-break: break-word; -webkit-hyphens: auto; -moz-hyphens: auto; hyphens: auto; border-collapse: collapse !important; position: relative; color: #222222; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-weight: normal; line-height: 19px; font-size: 14px; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; margin: 0; padding: 10px 0px 0px;" align="left" valign="top">
-      <table class="twelve columns" style="border-spacing: 0; border-collapse: collapse; vertical-align: top; text-align: left; width: 580px; margin: 0 auto; padding: 0;">
+    <td class="twelve" style="word-break: break-word; -webkit-hyphens: auto; -moz-hyphens: auto; hyphens: auto; border-collapse: collapse !important; color: #222222; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-weight: normal; line-height: 19px; font-size: 14px; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; margin: 0; padding: 0;" align="left" valign="top">
+      <table style="border-spacing: 0; border-collapse: collapse; vertical-align: top; text-align: left; padding: 0;">
+      {{ if gt (len .Alerts.Firing) 0 }}
         <tr style="vertical-align: top; padding: 0;" align="left">
-          <td class="center" style="word-break: break-word; -webkit-hyphens: auto; -moz-hyphens: auto; hyphens: auto; border-collapse: collapse !important; color: #222222; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-weight: normal; line-height: 19px; font-size: 14px; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; margin: 0; padding: 0px 0px 10px;" align="center" valign="top">
-            {{ if gt (len .Alerts.Firing) 0 }}
-            <h3 style="color: #E6522C; font-weight: bold; font-style: italic; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; line-height: 1.3; word-break: normal; font-size: 22px; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; margin: 10px 0; padding: 0;" align="left">{{.Title}}</h3>
-            {{ else }}
-            <h3 style="font-weight: bold; font-style: italic; color: #222222; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; line-height: 1.3; word-break: normal; font-size: 22px; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; margin: 10px 0; padding: 0;" align="left">{{.Title}}</h3>
-            {{ end }}
+          <td colspan="2" class="section-heading" style="word-break: break-word; -webkit-hyphens: auto; -moz-hyphens: auto; hyphens: auto; border-collapse: collapse !important; color: #2c3235; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-weight: bold; line-height: 19px; font-size: 22px; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; margin: 0; padding: 0 0 32px;" align="left" valign="top">
+            Firing: {{ .Alerts.Firing | len }} alert{{ if gt (len .Alerts.Firing) 1 }}s{{ end }}{{ if gt (len .GroupLabels.SortedPairs) 1 }} for
+            {{ range .GroupLabels.SortedPairs }}
+            {{ .Name }}={{ .Value }}
+            {{ end }}{{ end }}
           </td>
         </tr>
-      </table>
-    </td>
-  </tr>
-</table>
-
-<table class="row" style="border-spacing: 0; border-collapse: collapse; vertical-align: top; text-align: left; width: 100%; position: relative; display: block; padding: 0px;">
-  <tr style="vertical-align: top; padding: 0;" align="left">
-    {{ if gt (len .Alerts.Firing) 0 }}
-    <td class="alert-warning twelve column last" style="word-break: break-word; -webkit-hyphens: auto; -moz-hyphens: auto; hyphens: auto; border-collapse: collapse !important; color: #222222; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-weight: normal; line-height: 19px; font-size: 14px; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; margin: 0; padding: 0 0px 0 0;" align="left" bgcolor="#E6522C" valign="top">
-      {{ .Alerts | len }} alert{{ if gt (len .Alerts) 1 }}s{{ end }} for
-      {{ range .GroupLabels.SortedPairs }}
-      {{ .Name }}={{ .Value }}
-      {{ end }}
-    </td>
-    {{ else }}
-    <td class="alert-good twelve column last" style="word-break: break-word; -webkit-hyphens: auto; -moz-hyphens: auto; hyphens: auto; border-collapse: collapse !important; color: #222222; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-weight: normal; line-height: 19px; font-size: 14px; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; margin: 0; padding: 0 0px 0 0;" align="left" bgcolor="#68B90F" valign="top">
-      {{ .Alerts | len }} alert{{ if gt (len .Alerts) 1 }}s{{ end }} for
-      {{ range .GroupLabels.SortedPairs }}
-      {{ .Name }}={{ .Value }}
-      {{ end }}
-    </td>
-    {{ end }}
-    
-  </tr>
-  <tr style="vertical-align: top; padding: 0;" align="left">
-    <td class="last" style="word-break: break-word; -webkit-hyphens: auto; -moz-hyphens: auto; hyphens: auto; border-collapse: collapse !important; color: #222222; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-weight: normal; line-height: 19px; font-size: 14px; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; margin: 0; padding: 0 0px 0 0;" align="left" valign="top">
-      <table class="twelve columns" style="border-spacing: 0; border-collapse: collapse; vertical-align: top; text-align: left; width: 580px; margin: 0 auto; padding: 0;">
-        {{ if gt (len .Alerts.Firing) 0 }}
-        <tr style="vertical-align: top; padding: 0;" align="left">
-          <td class="twelve last" style="word-break: break-word; -webkit-hyphens: auto; -moz-hyphens: auto; hyphens: auto; border-collapse: collapse !important; width: 100%; color: #222222; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-weight: normal; line-height: 19px; font-size: 14px; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; margin: 0; padding: 0px 0px 10px;" align="left" valign="top">
-            <h5 style="font-weight: bold; color: #222222; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; line-height: 1.3; word-break: normal; font-size: 18px; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; margin: 0; padding: 0;" align="left">({{ .Alerts.Firing | len }}) Firing</h5>
-          </td>
-        </tr>
-        {{ end }}
         {{ range .Alerts.Firing }}
-        <tr style="vertical-align: top; padding: 0;" align="left">
-          <td class="four" style="word-break: break-word; -webkit-hyphens: auto; -moz-hyphens: auto; hyphens: auto; border-collapse: collapse !important; width: 33.333333%; color: #222222; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-weight: normal; line-height: 19px; font-size: 14px; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; margin: 0; padding: 0px 0px 10px;" align="left" valign="top">
-            <h5 style="font-weight: bold; color: #222222; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; line-height: 1.3; word-break: normal; font-size: 18px; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; margin: 0; padding: 0;" align="left">Labels</h5>
-          </td>
-          <td class="eight last" style="word-break: break-word; -webkit-hyphens: auto; -moz-hyphens: auto; hyphens: auto; border-collapse: collapse !important; width: 66.666666%; color: #222222; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-weight: normal; line-height: 19px; font-size: 14px; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; margin: 0; padding: 0px 0px 10px;" align="left" valign="top">
-            {{ if gt (len .Annotations) 0 }}<h5 style="font-weight: bold; color: #222222; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; line-height: 1.3; word-break: normal; font-size: 18px; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; margin: 0; padding: 0;" align="left">Annotations</h5>{{ end }}
-          </td>
-        </tr>
-        <tr style="vertical-align: top; padding: 0;" align="left">
-          <td class="four" style="word-break: break-word; -webkit-hyphens: auto; -moz-hyphens: auto; hyphens: auto; border-collapse: collapse !important; width: 33.333333%; color: #222222; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-weight: normal; line-height: 19px; font-size: 14px; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; margin: 0; padding: 0px 0px 10px;" align="left" valign="top">
-            {{ range .Labels.SortedPairs }}{{ .Name }} = {{ .Value }}<br />{{ end }}
-            <a href="{{ .GeneratorURL }}" style="color: #E67612; text-decoration: none;">Source</a><br />
-          </td>
-          <td class="eight last" style="word-break: break-word; -webkit-hyphens: auto; -moz-hyphens: auto; hyphens: auto; border-collapse: collapse !important; width: 66.666666%; color: #222222; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-weight: normal; line-height: 19px; font-size: 14px; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; margin: 0; padding: 0px 0px 10px;" align="left" valign="top">
-            {{ range .Annotations.SortedPairs }}{{ .Name }} = {{ .Value }}<br />{{ end }}
-          </td>
-        </tr>
+          <tr style="vertical-align: top; padding: 0;" align="left">
+            <td class="status-tag status-firing" width="68" style="word-break: break-word; -webkit-hyphens: auto; -moz-hyphens: auto; hyphens: auto; border-collapse: collapse !important; color: #ffffff; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-weight: normal; line-height: 19px; font-size: 14px; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; width: 68px; margin: 0; padding: 4px 8px;" align="center" bgcolor="#e02f44" valign="top">
+              Firing
+            </td>
+            <td class="alert-label" style="word-break: break-word; -webkit-hyphens: auto; -moz-hyphens: auto; hyphens: auto; border-collapse: collapse !important; color: #222222; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-weight: bold; line-height: 19px; font-size: 16px; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; text-decoration: underline; margin: 0; padding: 0 0 0 12px;" align="left" valign="top">
+              {{ .Labels.alertname }}
+            </td>
+          </tr>
+          {{ template "alert" . }}
         {{ end }}
-
-        {{ if gt (len .Alerts.Resolved) 0 }}
-        {{ if gt (len .Alerts.Firing) 0 }}
+      {{ end }}
+      {{ if gt (len .Alerts.Resolved) 0 }}
         <tr style="vertical-align: top; padding: 0;" align="left">
-          <td class="twelve" style="word-break: break-word; -webkit-hyphens: auto; -moz-hyphens: auto; hyphens: auto; border-collapse: collapse !important; width: 100%; color: #222222; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-weight: normal; line-height: 19px; font-size: 14px; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; margin: 0; padding: 0px 0px 10px;" align="left" valign="top">
-            <br />
-            <hr style="color: #d9d9d9; background-color: #d9d9d9; height: 1px; border: none;" />
-            <br />
+          <td colspan="2" class="section-heading" style="word-break: break-word; -webkit-hyphens: auto; -moz-hyphens: auto; hyphens: auto; border-collapse: collapse !important; color: #2c3235; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-weight: bold; line-height: 19px; font-size: 22px; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; margin: 0; padding: 0 0 32px;" align="left" valign="top">
+            Resolved: {{ .Alerts.Resolved | len }} alert{{ if gt (len .Alerts.Resolved) 1 }}s{{ end }}{{ if gt (len .GroupLabels.SortedPairs) 1 }} for
+            {{ range .GroupLabels.SortedPairs }}
+            {{ .Name }}={{ .Value }}
+            {{ end }}{{ end }}
           </td>
         </tr>
-        {{ end }}
-        <tr style="vertical-align: top; padding: 0;" align="left">
-          <td class="twelve last" style="word-break: break-word; -webkit-hyphens: auto; -moz-hyphens: auto; hyphens: auto; border-collapse: collapse !important; width: 100%; color: #222222; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-weight: normal; line-height: 19px; font-size: 14px; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; margin: 0; padding: 0px 0px 10px;" align="left" valign="top">
-            <h5 style="font-weight: bold; color: #222222; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; line-height: 1.3; word-break: normal; font-size: 18px; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; margin: 0; padding: 0;" align="left">({{ .Alerts.Resolved | len }}) Resolved</h5>
-          </td>
-        </tr>
-        {{ end }}
         {{ range .Alerts.Resolved }}
-        <tr style="vertical-align: top; padding: 0;" align="left">
-          <td class="six" style="word-break: break-word; -webkit-hyphens: auto; -moz-hyphens: auto; hyphens: auto; border-collapse: collapse !important; width: 50%; color: #222222; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-weight: normal; line-height: 19px; font-size: 14px; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; margin: 0; padding: 0px 0px 10px;" align="left" valign="top">
-            <h5 style="font-weight: bold; color: #222222; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; line-height: 1.3; word-break: normal; font-size: 18px; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; margin: 0; padding: 0;" align="left">Labels</h5>
-          </td>
-          <td class="six last" style="word-break: break-word; -webkit-hyphens: auto; -moz-hyphens: auto; hyphens: auto; border-collapse: collapse !important; width: 50%; color: #222222; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-weight: normal; line-height: 19px; font-size: 14px; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; margin: 0; padding: 0px 0px 10px;" align="left" valign="top">
-            {{ if gt (len .Annotations) 0 }}<h5 style="font-weight: bold; color: #222222; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; line-height: 1.3; word-break: normal; font-size: 18px; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; margin: 0; padding: 0;" align="left">Annotations</h5>{{ end }}
-          </td>
-        </tr>
-        <tr style="vertical-align: top; padding: 0;" align="left">
-          <td class="six" style="word-break: break-word; -webkit-hyphens: auto; -moz-hyphens: auto; hyphens: auto; border-collapse: collapse !important; width: 50%; color: #222222; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-weight: normal; line-height: 19px; font-size: 14px; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; margin: 0; padding: 0px 0px 10px;" align="left" valign="top">
-            {{ range .Labels.SortedPairs }}{{ .Name }} = {{ .Value }}<br />{{ end }}
-            <a href="{{ .GeneratorURL }}" style="color: #E67612; text-decoration: none;">Source</a><br />
-          </td>
-          <td class="six last" style="word-break: break-word; -webkit-hyphens: auto; -moz-hyphens: auto; hyphens: auto; border-collapse: collapse !important; width: 50%; color: #222222; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-weight: normal; line-height: 19px; font-size: 14px; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; margin: 0; padding: 0px 0px 10px;" align="left" valign="top">
-            {{ range .Annotations.SortedPairs }}{{ .Name }} = {{ .Value }}<br />{{ end }}
-          </td>
-        </tr>
+          <tr style="vertical-align: top; padding: 0;" align="left">
+            <td class="status-tag status-resolved" width="68" style="word-break: break-word; -webkit-hyphens: auto; -moz-hyphens: auto; hyphens: auto; border-collapse: collapse !important; color: #ffffff; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-weight: normal; line-height: 19px; font-size: 14px; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; width: 68px; margin: 0; padding: 4px 8px;" align="center" bgcolor="#464c54" valign="top">
+              Resolved
+            </td>
+            <td class="alert-label" style="word-break: break-word; -webkit-hyphens: auto; -moz-hyphens: auto; hyphens: auto; border-collapse: collapse !important; color: #222222; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-weight: bold; line-height: 19px; font-size: 16px; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; text-decoration: underline; margin: 0; padding: 0 0 0 12px;" align="left" valign="top">
+              {{ .Labels.alertname }}
+            </td>
+          </tr>
+          {{ template "alert" . }}
         {{ end }}
+      {{ end }}
+      <tr style="vertical-align: top; padding: 0;" align="left">
+        <td colspan="2" style="word-break: break-word; -webkit-hyphens: auto; -moz-hyphens: auto; hyphens: auto; border-collapse: collapse !important; color: #222222; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-weight: normal; line-height: 19px; font-size: 14px; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; margin: 0; padding: 0;" align="left" valign="top">
+          <a href="{{ .AlertPageUrl }}" class="button" style="color: #464c54; text-decoration: none; background-color: #f1f5f9; border-radius: 2px; display: inline-block; font-size: 12px; font-weight: bold; margin: 0 10px 0 0; padding: 5px 9px; border: 1px solid #c7d0d9;">Go to alerts page</a>
+        </td>
+      </tr>
       </table>
-    </td>
-  </tr>
+      </td></tr></table>
+    
+   
 </table>
-
-
-
-<table class="row" style="border-spacing: 0; border-collapse: collapse; vertical-align: top; text-align: left; width: 100%; position: relative; display: block; padding: 0px;">
-  <tr style="vertical-align: top; padding: 0;" align="left">
-    <td class="wrapper last" style="word-break: break-word; -webkit-hyphens: auto; -moz-hyphens: auto; hyphens: auto; border-collapse: collapse !important; position: relative; color: #222222; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-weight: normal; line-height: 19px; font-size: 14px; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; margin: 0; padding: 10px 0px 0px;" align="left" valign="top">
-      <table class="twelve columns" style="border-spacing: 0; border-collapse: collapse; vertical-align: top; text-align: left; width: 580px; margin: 0 auto; padding: 0;">
-        <tr style="vertical-align: top; padding: 0;" align="left">
-          <td class="center six" style="word-break: break-word; -webkit-hyphens: auto; -moz-hyphens: auto; hyphens: auto; border-collapse: collapse !important; width: 50%; color: #222222; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-weight: normal; line-height: 19px; font-size: 14px; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; margin: 0; padding: 0px 0px 10px;" align="center" valign="top">
-            <table class="better-button" align="center" border="0" cellspacing="0" cellpadding="0" style="border-spacing: 0; border-collapse: collapse; vertical-align: top; text-align: left; margin-top: 10px; margin-bottom: 20px; padding: 0;">
-              <tr style="vertical-align: top; padding: 0;" align="left">
-                <td align="center" class="better-button" bgcolor="#ff8f2b" style="word-break: break-word; -webkit-hyphens: auto; -moz-hyphens: auto; hyphens: auto; border-collapse: collapse !important; color: #222222; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-weight: normal; line-height: 19px; font-size: 14px; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; -webkit-border-radius: 2px; -moz-border-radius: 2px; border-radius: 2px; margin: 0; padding: 0px;" valign="top">
-                  <a href="{{.RuleUrl}}" target="_blank" style="color: #FFF; text-decoration: none; -webkit-border-radius: 2px; -moz-border-radius: 2px; border-radius: 2px; display: inline-block; padding: 12px 25px; border: 1px solid #ff8f2b;">View your Alert rule</a>
-                </td>
-              </tr>
-            </table>
-          </td>
-          <td class="center six" style="word-break: break-word; -webkit-hyphens: auto; -moz-hyphens: auto; hyphens: auto; border-collapse: collapse !important; width: 50%; color: #222222; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-weight: normal; line-height: 19px; font-size: 14px; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; margin: 0; padding: 0px 0px 10px;" align="center" valign="top">
-            <table class="better-button" align="center" border="0" cellspacing="0" cellpadding="0" style="border-spacing: 0; border-collapse: collapse; vertical-align: top; text-align: left; margin-top: 10px; margin-bottom: 20px; padding: 0;">
-              <tr style="vertical-align: top; padding: 0;" align="left">
-                <td align="center" class="better-button-alt" bgcolor="#efefef" style="word-break: break-word; -webkit-hyphens: auto; -moz-hyphens: auto; hyphens: auto; border-collapse: collapse !important; color: #222222; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-weight: normal; line-height: 19px; font-size: 14px; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; -webkit-border-radius: 2px; -moz-border-radius: 2px; border-radius: 2px; margin: 0; padding: 0px;" valign="top">
-                  <a href="{{.AlertPageUrl}}" target="_blank" style="color: #ff8f2b; text-decoration: none; -webkit-border-radius: 2px; -moz-border-radius: 2px; border-radius: 2px; display: inline-block; background-color: #EFEFEF; padding: 12px 25px; border: 1px solid #ff8f2b;"> Go to the Alerts page</a>
-                </td>
-              </tr>
-            </table>
-          </td>
-        </tr>
-      </table>
-    </td>
-  </tr>
-</table>
-
-
-
+{{ end }}
 								
-							</td>
+							</center></td>
 						</tr>
 					</table>
 					
@@ -367,7 +335,7 @@ text-decoration: underline;
 							<td class="wrapper last" style="word-break: break-word; -webkit-hyphens: auto; -moz-hyphens: auto; hyphens: auto; border-collapse: collapse !important; position: relative; color: #222222; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-weight: normal; line-height: 19px; font-size: 14px; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; margin: 0; padding: 10px 20px 0px 0px;" align="left" valign="top">
 								<table class="twelve columns center" style="border-spacing: 0; border-collapse: collapse; vertical-align: top; text-align: center; width: 580px; margin: 0 auto; padding: 0;">
 									<tr style="vertical-align: top; padding: 0;" align="left">
-										<td class="twelve" align="center" style="word-break: break-word; -webkit-hyphens: auto; -moz-hyphens: auto; hyphens: auto; border-collapse: collapse !important; width: 100%; color: #222222; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-weight: normal; line-height: 19px; font-size: 14px; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; margin: 0; padding: 0px 0px 10px;" valign="top">
+										<td class="twelve" align="center" style="word-break: break-word; -webkit-hyphens: auto; -moz-hyphens: auto; hyphens: auto; border-collapse: collapse !important; color: #222222; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-weight: normal; line-height: 19px; font-size: 14px; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; margin: 0; padding: 0px 0px 10px;" valign="top">
 											<center style="width: 100%; min-width: 580px;">
 												<p style="font-size: 12px; color: #999999; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-weight: normal; line-height: 19px; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; margin: 0 0 10px; padding: 0;" align="center">
 													Sent by <a href="{{.AppUrl}}" style="color: #E67612; text-decoration: none;">Grafana v{{.BuildVersion}}</a>
@@ -381,9 +349,9 @@ text-decoration: underline;
 							</td>
 						</tr>
 					</table>
-				</center>
-			</td>
-		</tr>
-	</table>
+				
+			
+		
+	
 </body>
 </html>
