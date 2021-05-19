@@ -54,6 +54,8 @@ func init() {
 
 const DataSourceMetricsMiddlewareName = "metrics"
 
+var executeMiddlewareFunc = executeMiddleware
+
 func DataSourceMetricsMiddleware() httpclient.Middleware {
 	return httpclient.NamedMiddlewareFunc(DataSourceMetricsMiddlewareName, func(opts httpclient.Options, next http.RoundTripper) http.RoundTripper {
 		if opts.Labels == nil {
@@ -74,26 +76,30 @@ func DataSourceMetricsMiddleware() httpclient.Middleware {
 
 		datasourceLabel := prometheus.Labels{"datasource": datasourceLabelName}
 
-		return httpclient.RoundTripperFunc(func(r *http.Request) (*http.Response, error) {
-			requestCounter := datasourceRequestCounter.MustCurryWith(datasourceLabel)
-			requestSummary := datasourceRequestSummary.MustCurryWith(datasourceLabel)
-			requestInFlight := datasourceRequestsInFlight.With(datasourceLabel)
-			responseSizeSummary := datasourceResponseSummary.With(datasourceLabel)
+		return executeMiddlewareFunc(next, datasourceLabel)
+	})
+}
 
-			res, err := promhttp.InstrumentRoundTripperDuration(requestSummary,
-				promhttp.InstrumentRoundTripperCounter(requestCounter,
-					promhttp.InstrumentRoundTripperInFlight(requestInFlight, next))).
-				RoundTrip(r)
-			if err != nil {
-				return nil, err
-			}
-			// we avoid measuring contentlength less than zero because it indicates
-			// that the content size is unknown. https://godoc.org/github.com/badu/http#Response
-			if res != nil && res.ContentLength > 0 {
-				responseSizeSummary.Observe(float64(res.ContentLength))
-			}
+func executeMiddleware(next http.RoundTripper, datasourceLabel prometheus.Labels) http.RoundTripper {
+	return httpclient.RoundTripperFunc(func(r *http.Request) (*http.Response, error) {
+		requestCounter := datasourceRequestCounter.MustCurryWith(datasourceLabel)
+		requestSummary := datasourceRequestSummary.MustCurryWith(datasourceLabel)
+		requestInFlight := datasourceRequestsInFlight.With(datasourceLabel)
+		responseSizeSummary := datasourceResponseSummary.With(datasourceLabel)
 
-			return res, nil
-		})
+		res, err := promhttp.InstrumentRoundTripperDuration(requestSummary,
+			promhttp.InstrumentRoundTripperCounter(requestCounter,
+				promhttp.InstrumentRoundTripperInFlight(requestInFlight, next))).
+			RoundTrip(r)
+		if err != nil {
+			return nil, err
+		}
+		// we avoid measuring contentlength less than zero because it indicates
+		// that the content size is unknown. https://godoc.org/github.com/badu/http#Response
+		if res != nil && res.ContentLength > 0 {
+			responseSizeSummary.Observe(float64(res.ContentLength))
+		}
+
+		return res, nil
 	})
 }

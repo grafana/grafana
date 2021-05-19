@@ -10,6 +10,8 @@ import (
 // SigV4MiddlewareName the middleware name used by SigV4Middleware.
 const SigV4MiddlewareName = "sigv4"
 
+var newSigV4Func = sigv4.New
+
 // SigV4Middleware applies AWS Signature Version 4 request signing for the outgoing request.
 func SigV4Middleware() httpclient.Middleware {
 	return httpclient.NamedMiddlewareFunc(SigV4MiddlewareName, func(opts httpclient.Options, next http.RoundTripper) http.RoundTripper {
@@ -17,7 +19,7 @@ func SigV4Middleware() httpclient.Middleware {
 			return next
 		}
 
-		return sigv4.New(
+		return newSigV4Func(
 			&sigv4.Config{
 				Service:       opts.SigV4.Service,
 				AccessKey:     opts.SigV4.AccessKey,
