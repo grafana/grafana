@@ -23,6 +23,12 @@ import { getLogAnalyticsApiRoute, getLogAnalyticsManagementApiRoute } from '../a
 import { AzureLogAnalyticsMetadata } from '../types/logAnalyticsMetadata';
 import { isGUIDish } from '../components/ResourcePicker/utils';
 
+interface AdhocQuery {
+  datasourceId: number;
+  url: string;
+  resultFormat: string;
+}
+
 export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
   AzureMonitorQuery,
   AzureDataSourceJsonData
@@ -208,20 +214,21 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
    * external interface does not support
    */
   metricFindQueryInternal(query: string): Promise<MetricFindValue[]> {
+    // workspaces() - Get workspaces in the default subscription
     const workspacesQuery = query.match(/^workspaces\(\)/i);
     if (workspacesQuery) {
       return this.getWorkspaces(this.subscriptionId);
     }
 
+    // workspaces("abc-def-etc") - Get workspaces a specified subscription
     const workspacesQueryWithSub = query.match(/^workspaces\(["']?([^\)]+?)["']?\)/i);
     if (workspacesQueryWithSub) {
       return this.getWorkspaces((workspacesQueryWithSub[1] || '').trim());
     }
 
-    // TODO: what's this??
+    // Execute the query as KQL to the default or first workspace
     return this.getDefaultOrFirstWorkspace().then((resourceURI) => {
-      const queries: any[] = this.buildQuery(query, null, resourceURI);
-
+      const queries = this.buildQuery(query, null, resourceURI);
       const promises = this.doQueries(queries);
 
       return Promise.all(promises)
@@ -246,20 +253,26 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     }) as Promise<MetricFindValue[]>;
   }
 
-  private buildQuery(query: string, options: any, workspace: any) {
+  private buildQuery(query: string, options: any, workspace: string): AdhocQuery[] {
     const querystringBuilder = new LogAnalyticsQuerystringBuilder(
       getTemplateSrv().replace(query, {}, this.interpolateVariable),
       options,
       'TimeGenerated'
     );
+
     const querystring = querystringBuilder.generate().uriString;
-    const url = `${this.baseUrl}/v1/workspaces/${workspace}/query?${querystring}`;
-    const queries: any[] = [];
-    queries.push({
-      datasourceId: this.id,
-      url: url,
-      resultFormat: 'table',
-    });
+    const url = isGUIDish(workspace)
+      ? `${this.baseUrl}/v1/workspaces/${workspace}/query?${querystring}`
+      : `${this.baseUrl}/v1/${workspace}/query?${querystring}`;
+
+    const queries = [
+      {
+        datasourceId: this.id,
+        url: url,
+        resultFormat: 'table',
+      },
+    ];
+
     return queries;
   }
 
@@ -305,8 +318,7 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
       });
     }
 
-    const queries: any[] = this.buildQuery(options.annotation.rawQuery, options, options.annotation.workspace);
-
+    const queries = this.buildQuery(options.annotation.rawQuery, options, options.annotation.workspace);
     const promises = this.doQueries(queries);
 
     return Promise.all(promises).then((results) => {
@@ -315,7 +327,7 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     });
   }
 
-  doQueries(queries: any[]) {
+  doQueries(queries: AdhocQuery[]) {
     return map(queries, (query) => {
       return this.doRequest(query.url)
         .then((result: any) => {
