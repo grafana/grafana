@@ -224,37 +224,37 @@ func (e *AzureLogAnalyticsDatasource) createRequest(ctx context.Context, dsInfo 
 	if plugin == nil {
 		return nil, errors.New("unable to find datasource plugin Azure Monitor")
 	}
-	cloudName := dsInfo.JsonData.Get("cloudName").MustString("azuremonitor")
 
-	logAnalyticsRoute, proxypass, err := e.getPluginRoute(plugin, cloudName)
+	logAnalyticsRoute, routeName, err := e.getPluginRoute(plugin)
 	if err != nil {
 		return nil, err
 	}
-	pluginproxy.ApplyRoute(ctx, req, proxypass, logAnalyticsRoute, dsInfo, e.cfg)
+
+	pluginproxy.ApplyRoute(ctx, req, routeName, logAnalyticsRoute, dsInfo, e.cfg)
 
 	return req, nil
 }
 
-func (e *AzureLogAnalyticsDatasource) getPluginRoute(plugin *plugins.DataSourcePlugin, cloudName string) (
-	*plugins.AppPluginRoute, string, error) {
-	pluginRouteName := "loganalyticsazure"
-
-	switch cloudName {
-	case "chinaazuremonitor":
-		pluginRouteName = "chinaloganalyticsazure"
-	case "govazuremonitor":
-		pluginRouteName = "govloganalyticsazure"
+func (e *AzureLogAnalyticsDatasource) getPluginRoute(plugin *plugins.DataSourcePlugin) (*plugins.AppPluginRoute, string, error) {
+	cloud, err := getAzureCloud(e.cfg, e.dsInfo.JsonData)
+	if err != nil {
+		return nil, "", err
 	}
 
-	var logAnalyticsRoute *plugins.AppPluginRoute
+	routeName, err := getLogAnalyticsApiRoute(cloud)
+	if err != nil {
+		return nil, "", err
+	}
+
+	var pluginRoute *plugins.AppPluginRoute
 	for _, route := range plugin.Routes {
-		if route.Path == pluginRouteName {
-			logAnalyticsRoute = route
+		if route.Path == routeName {
+			pluginRoute = route
 			break
 		}
 	}
 
-	return logAnalyticsRoute, pluginRouteName, nil
+	return pluginRoute, routeName, nil
 }
 
 // GetPrimaryResultTable returns the first table in the response named "PrimaryResult", or an

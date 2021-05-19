@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/require"
 )
 
@@ -79,7 +80,13 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 }
 
 func TestPluginRoutes(t *testing.T) {
-	datasource := &AzureLogAnalyticsDatasource{}
+	cfg := &setting.Cfg{
+		Azure: setting.AzureSettings{
+			Cloud:                  setting.AzurePublic,
+			ManagedIdentityEnabled: true,
+		},
+	}
+
 	plugin := &plugins.DataSourcePlugin{
 		Routes: []*plugins.AppPluginRoute{
 			{
@@ -111,28 +118,52 @@ func TestPluginRoutes(t *testing.T) {
 
 	tests := []struct {
 		name              string
-		cloudName         string
+		datasource        *AzureLogAnalyticsDatasource
 		expectedProxypass string
 		expectedRouteURL  string
 		Err               require.ErrorAssertionFunc
 	}{
 		{
-			name:              "plugin proxy route for the Azure public cloud",
-			cloudName:         "azuremonitor",
+			name: "plugin proxy route for the Azure public cloud",
+			datasource: &AzureLogAnalyticsDatasource{
+				cfg: cfg,
+				dsInfo: &models.DataSource{
+					JsonData: simplejson.NewFromAny(map[string]interface{}{
+						"azureAuthType": AzureAuthClientSecret,
+						"cloudName":     "azuremonitor",
+					}),
+				},
+			},
 			expectedProxypass: "loganalyticsazure",
 			expectedRouteURL:  "https://api.loganalytics.io/v1/workspaces",
 			Err:               require.NoError,
 		},
 		{
-			name:              "plugin proxy route for the Azure China cloud",
-			cloudName:         "chinaazuremonitor",
+			name: "plugin proxy route for the Azure China cloud",
+			datasource: &AzureLogAnalyticsDatasource{
+				cfg: cfg,
+				dsInfo: &models.DataSource{
+					JsonData: simplejson.NewFromAny(map[string]interface{}{
+						"azureAuthType": AzureAuthClientSecret,
+						"cloudName":     "chinaazuremonitor",
+					}),
+				},
+			},
 			expectedProxypass: "chinaloganalyticsazure",
 			expectedRouteURL:  "https://api.loganalytics.azure.cn/v1/workspaces",
 			Err:               require.NoError,
 		},
 		{
-			name:              "plugin proxy route for the Azure Gov cloud",
-			cloudName:         "govazuremonitor",
+			name: "plugin proxy route for the Azure Gov cloud",
+			datasource: &AzureLogAnalyticsDatasource{
+				cfg: cfg,
+				dsInfo: &models.DataSource{
+					JsonData: simplejson.NewFromAny(map[string]interface{}{
+						"azureAuthType": AzureAuthClientSecret,
+						"cloudName":     "govazuremonitor",
+					}),
+				},
+			},
 			expectedProxypass: "govloganalyticsazure",
 			expectedRouteURL:  "https://api.loganalytics.us/v1/workspaces",
 			Err:               require.NoError,
@@ -141,7 +172,7 @@ func TestPluginRoutes(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			route, proxypass, err := datasource.getPluginRoute(plugin, tt.cloudName)
+			route, proxypass, err := tt.datasource.getPluginRoute(plugin)
 			tt.Err(t, err)
 
 			if diff := cmp.Diff(tt.expectedRouteURL, route.URL, cmpopts.EquateNaNs()); diff != "" {
