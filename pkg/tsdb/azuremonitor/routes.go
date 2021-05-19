@@ -43,3 +43,17 @@ func getAppInsightsApiRoute(azureCloud string) (string, error) {
 		return "", err
 	}
 }
+
+func getResourceGraphApiRoute(azureCloud string) (string, error) {
+	switch azureCloud {
+	case azureMonitorPublic:
+		return "azureresourcegraph", nil
+	case azureMonitorChina:
+		return "chinaazureresourcegraph", nil
+	case azureMonitorUSGovernment:
+		return "govazureresourcegraph", nil
+	default:
+		err := fmt.Errorf("the cloud '%s' not supported", azureCloud)
+		return "", err
+	}
+}
