@@ -192,7 +192,7 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
 
   cleanText(text: string) {
     // RegExp with invisible characters we want to remove - currently only carriage return (newlines are visible)
-    const newText = text.trim().replace(/[\r]/g, '');
+    const newText = text.replace(/[\r]/g, '');
     return newText;
   }
 
