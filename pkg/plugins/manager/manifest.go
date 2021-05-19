@@ -210,13 +210,17 @@ func getPluginSignatureState(log log.Logger, plugin *plugins.PluginBase) (plugin
 					log.Error("Absolute file path is required to provide plugin symlink verification", "file", f)
 					return plugins.PluginSignatureState{}, err
 				}
-				info, err := os.Lstat(fullPath)
+				statInfo, err := os.Stat(fullPath)
+				if err != nil {
+					return plugins.PluginSignatureState{}, err
+				}
+				lstatInfo, err := os.Lstat(fullPath)
 				if err != nil {
 					return plugins.PluginSignatureState{}, err
 				}
 
-				// if we find a symlinked plugin file, ensure that it links to a file within the plugin directory
-				if info.Mode()&os.ModeSymlink == os.ModeSymlink {
+				// if we find a symlinked plugin folder, ensure that it links to a path within the plugin directory
+				if statInfo.IsDir() && lstatInfo.Mode()&os.ModeSymlink == os.ModeSymlink {
 					symlinkPath, err := filepath.EvalSymlinks(fullPath)
 					if err != nil {
 						return plugins.PluginSignatureState{}, err
