@@ -10,6 +10,12 @@ import Datasource from '../datasource';
 export type AzureDataSourceSettings = DataSourceSettings<AzureDataSourceJsonData, AzureDataSourceSecureJsonData>;
 export type AzureDataSourceInstanceSettings = DataSourceInstanceSettings<AzureDataSourceJsonData>;
 
+export interface DatasourceValidationResult {
+  status: 'success' | 'error';
+  message: string;
+  title?: string;
+}
+
 export type AzureResultFormat = 'time_series' | 'table';
 
 export enum AzureQueryType {

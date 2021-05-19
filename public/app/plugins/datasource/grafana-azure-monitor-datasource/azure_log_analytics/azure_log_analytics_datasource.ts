@@ -1,7 +1,13 @@
 import { map } from 'lodash';
 import LogAnalyticsQuerystringBuilder from '../log_analytics/querystring_builder';
 import ResponseParser, { transformMetadataToKustoSchema } from './response_parser';
-import { AzureMonitorQuery, AzureDataSourceJsonData, AzureLogsVariable, AzureQueryType } from '../types';
+import {
+  AzureMonitorQuery,
+  AzureDataSourceJsonData,
+  AzureLogsVariable,
+  AzureQueryType,
+  DatasourceValidationResult,
+} from '../types';
 import {
   DataQueryRequest,
   DataQueryResponse,
@@ -340,8 +346,8 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     }
   }
 
-  testDatasource(): Promise<any> {
-    const validationError = this.isValidConfig();
+  testDatasource(): Promise<DatasourceValidationResult> {
+    const validationError = this.validateDatasource();
     if (validationError) {
       return Promise.resolve(validationError);
     }
@@ -352,7 +358,7 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
 
         return this.doRequest(url);
       })
-      .then((response: any) => {
+      .then<DatasourceValidationResult>((response: any) => {
         if (response.status === 200) {
           return {
             status: 'success',
@@ -395,7 +401,7 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     return message;
   }
 
-  isValidConfig() {
+  private validateDatasource(): DatasourceValidationResult | undefined {
     const authType = getAuthType(this.instanceSettings);
 
     if (authType === 'clientsecret') {
@@ -424,7 +430,7 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     return undefined;
   }
 
-  isValidConfigField(field: string | undefined) {
-    return field && field.length > 0;
+  private isValidConfigField(field: string | undefined): boolean {
+    return typeof field === 'string' && field.length > 0;
   }
 }

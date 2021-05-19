@@ -11,6 +11,7 @@ import {
   AzureQueryType,
   AzureMonitorMetricsMetadataResponse,
   AzureMetricQuery,
+  DatasourceValidationResult,
 } from '../types';
 import {
   DataSourceInstanceSettings,
@@ -458,15 +459,15 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
     });
   }
 
-  testDatasource(): Promise<any> {
-    const validationError = this.isValidConfig();
+  testDatasource(): Promise<DatasourceValidationResult> {
+    const validationError = this.validateDatasource();
     if (validationError) {
       return Promise.resolve(validationError);
     }
 
     const url = `${this.baseUrl}?api-version=2019-03-01`;
     return this.doRequest(url)
-      .then((response: any) => {
+      .then<DatasourceValidationResult>((response: any) => {
         if (response.status === 200) {
           return {
             status: 'success',
@@ -500,7 +501,7 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
       });
   }
 
-  isValidConfig() {
+  private validateDatasource(): DatasourceValidationResult | undefined {
     const authType = getAuthType(this.instanceSettings);
 
     if (authType === 'clientsecret') {
@@ -529,8 +530,8 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
     return undefined;
   }
 
-  isValidConfigField(field?: string) {
-    return field && field.length > 0;
+  private isValidConfigField(field?: string): boolean {
+    return typeof field === 'string' && field.length > 0;
   }
 
   doRequest<T = any>(url: string, maxRetries = 1): Promise<FetchResponse<T>> {

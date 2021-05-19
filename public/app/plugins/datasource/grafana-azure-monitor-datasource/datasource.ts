@@ -2,7 +2,13 @@ import { cloneDeep, upperFirst } from 'lodash';
 import AzureMonitorDatasource from './azure_monitor/azure_monitor_datasource';
 import AppInsightsDatasource from './app_insights/app_insights_datasource';
 import AzureLogAnalyticsDatasource from './azure_log_analytics/azure_log_analytics_datasource';
-import { AzureDataSourceJsonData, AzureMonitorQuery, AzureQueryType, InsightsAnalyticsQuery } from './types';
+import {
+  AzureDataSourceJsonData,
+  AzureMonitorQuery,
+  AzureQueryType,
+  DatasourceValidationResult,
+  InsightsAnalyticsQuery,
+} from './types';
 import {
   DataFrame,
   DataQueryRequest,
@@ -133,8 +139,8 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
     return Promise.resolve([]);
   }
 
-  async testDatasource() {
-    const promises: any[] = [];
+  async testDatasource(): Promise<DatasourceValidationResult> {
+    const promises: Array<Promise<DatasourceValidationResult>> = [];
 
     if (this.azureMonitorDatasource.isConfigured()) {
       promises.push(this.azureMonitorDatasource.testDatasource());
@@ -156,8 +162,8 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
       };
     }
 
-    return Promise.all(promises).then((results) => {
-      let status = 'success';
+    return await Promise.all(promises).then((results) => {
+      let status: 'success' | 'error' = 'success';
       let message = '';
 
       for (let i = 0; i < results.length; i++) {
