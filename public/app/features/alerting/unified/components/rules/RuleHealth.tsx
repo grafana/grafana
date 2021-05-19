@@ -11,21 +11,14 @@ interface Prom {
 export const RuleHealth: FC<Prom> = ({ rule }) => {
   const style = useStyles2(getStyle);
   if (rule.health === 'err' || rule.health === 'error') {
-    console.log('err', rule, rule.lastError);
-    const elm = (
-      <div className={style.warn}>
-        <Icon name="exclamation-triangle" />
-        <span>error</span>
-      </div>
+    return (
+      <Tooltip theme="error" content={rule.lastError || 'No error message provided.'}>
+        <div className={style.warn}>
+          <Icon name="exclamation-triangle" />
+          <span>error</span>
+        </div>
+      </Tooltip>
     );
-    if (rule.lastError) {
-      return (
-        <Tooltip theme="error" content={rule.lastError}>
-          {elm}
-        </Tooltip>
-      );
-    }
-    return elm;
   }
   return <>{rule.health}</>;
 };
