@@ -116,6 +116,7 @@ export class PromQueryEditor extends PureComponent<PromQueryEditorProps, State> 
         onChange={this.onFieldChange}
         history={[]}
         data={data}
+        data-testid={testIds.editor}
         ExtraFieldElement={
           <div className="gf-form-inline">
             <div className="gf-form">
@@ -196,3 +197,7 @@ export class PromQueryEditor extends PureComponent<PromQueryEditorProps, State> 
     );
   }
 }
+
+export const testIds = {
+  editor: 'prom-editor',
+};

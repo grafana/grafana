@@ -78,6 +78,7 @@ interface PromQueryFieldProps extends ExploreQueryFieldProps<PrometheusDatasourc
   history: Array<HistoryItem<PromQuery>>;
   ExtraFieldElement?: ReactNode;
   placeholder?: string;
+  'data-testid'?: string;
 }
 
 interface PromQueryFieldState {
@@ -283,7 +284,10 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
 
     return (
       <>
-        <div className="gf-form-inline gf-form-inline--xs-view-flex-column flex-grow-1">
+        <div
+          className="gf-form-inline gf-form-inline--xs-view-flex-column flex-grow-1"
+          data-testid={this.props['data-testid']}
+        >
           <button
             className="gf-form-label query-keyword pointer"
             onClick={this.onClickChooserButton}

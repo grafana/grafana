@@ -15,6 +15,11 @@ export function PromQueryEditorForAlerting(props: PromQueryEditorProps) {
       range={range}
       data={data}
       placeholder="Enter a PromQL query"
+      data-testid={testIds.editor}
     />
   );
 }
+
+export const testIds = {
+  editor: 'prom-editor-cloud-alerting',
+};
