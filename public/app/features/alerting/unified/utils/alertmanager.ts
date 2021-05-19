@@ -1,4 +1,9 @@
-import { AlertManagerCortexConfig, Route } from 'app/plugins/datasource/alertmanager/types';
+import {
+  AlertManagerCortexConfig,
+  MatcherOperator,
+  Route,
+  SilenceMatcher,
+} from 'app/plugins/datasource/alertmanager/types';
 
 export function addDefaultsToAlertmanagerConfig(config: AlertManagerCortexConfig): AlertManagerCortexConfig {
   // add default receiver if it does not exist
@@ -27,4 +32,18 @@ export function isReceiverUsed(receiver: string, config: AlertManagerCortexConfi
   return (
     (config.alertmanager_config.route && isReceiverUsedInRoute(receiver, config.alertmanager_config.route)) ?? false
   );
+}
+
+export function matcherToOperator(matcher: SilenceMatcher): MatcherOperator {
+  if (matcher.isEqual) {
+    if (matcher.isRegex) {
+      return MatcherOperator.regex;
+    } else {
+      return MatcherOperator.equal;
+    }
+  } else if (matcher.isRegex) {
+    return MatcherOperator.notRegex;
+  } else {
+    return MatcherOperator.notEqual;
+  }
 }

@@ -4,6 +4,7 @@ import { useStyles } from '@grafana/ui';
 import { css } from '@emotion/css';
 import { SilenceMatcher } from 'app/plugins/datasource/alertmanager/types';
 import { AlertLabel } from '../AlertLabel';
+import { matcherToOperator } from '../../utils/alertmanager';
 
 type MatchersProps = { matchers: SilenceMatcher[]; onRemoveLabel?(index: number): void };
 
@@ -21,13 +22,14 @@ export const Matchers = ({ matchers, onRemoveLabel }: MatchersProps) => {
 
   return (
     <div className={styles.wrapper}>
-      {matchers.map(({ name, value, isRegex }: SilenceMatcher, index) => {
+      {matchers.map((matcher, index) => {
+        const { name, value } = matcher;
         return (
           <AlertLabel
             key={`${name}-${value}-${index}`}
             labelKey={name}
             value={value}
-            isRegex={isRegex}
+            operator={matcherToOperator(matcher)}
             onRemoveLabel={!!onRemoveLabel ? () => removeLabel(index) : undefined}
           />
         );
