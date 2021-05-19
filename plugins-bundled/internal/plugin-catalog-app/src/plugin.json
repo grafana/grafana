@@ -54,12 +54,6 @@
       "path": "/a/grafana-plugin-catalog-app/?tab=library",
       "role": "Admin",
       "addToNav": true
-    },
-    {
-      "type": "page",
-      "name": "View plugin",
-      "path": "/a/grafana-plugin-catalog-app?tab=plugin",
-      "role": "Admin"
     }
   ],
   "dependencies": {
