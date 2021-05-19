@@ -2,6 +2,7 @@ package live
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -156,7 +157,7 @@ func (g *GrafanaLive) Init() error {
 	g.contextGetter = newPluginContextGetter(g.PluginContextProvider)
 	packetSender := newPluginPacketSender(node)
 	presenceGetter := newPluginPresenceGetter(node)
-	g.runStreamManager = runstream.NewManager(packetSender, presenceGetter)
+	g.runStreamManager = runstream.NewManager(packetSender, presenceGetter, g.contextGetter)
 
 	// Initialize the main features
 	dash := &features.DashboardHandler{
@@ -283,6 +284,26 @@ func runConcurrentlyIfNeeded(ctx context.Context, semaphore chan struct{}, fn fu
 	return nil
 }
 
+func (g *GrafanaLive) HandleDatasourceDelete(orgID int64, dsUID string) {
+	if g.runStreamManager == nil {
+		return
+	}
+	err := g.runStreamManager.HandleDatasourceDelete(orgID, dsUID)
+	if err != nil {
+		logger.Error("Error handling datasource delete", "error", err)
+	}
+}
+
+func (g *GrafanaLive) HandleDatasourceUpdate(orgID int64, dsUID string) {
+	if g.runStreamManager == nil {
+		return
+	}
+	err := g.runStreamManager.HandleDatasourceUpdate(orgID, dsUID)
+	if err != nil {
+		logger.Error("Error handling datasource update", "error", err)
+	}
+}
+
 func (g *GrafanaLive) handleOnSubscribe(client *centrifuge.Client, e centrifuge.SubscribeEvent) (centrifuge.SubscribeReply, error) {
 	logger.Debug("Client wants to subscribe", "user", client.UserID(), "client", client.ID(), "channel", e.Channel)
 
@@ -306,6 +327,10 @@ func (g *GrafanaLive) handleOnSubscribe(client *centrifuge.Client, e centrifuge.
 
 	handler, addr, err := g.GetChannelHandler(user, channel)
 	if err != nil {
+		if errors.Is(err, live.ErrInvalidChannelID) {
+			logger.Info("Invalid channel ID", "user", client.UserID(), "client", client.ID(), "channel", e.Channel)
+			return centrifuge.SubscribeReply{}, &centrifuge.Error{Code: uint32(http.StatusBadRequest), Message: "invalid channel ID"}
+		}
 		logger.Error("Error getting channel handler", "user", client.UserID(), "client", client.ID(), "channel", e.Channel, "error", err)
 		return centrifuge.SubscribeReply{}, centrifuge.ErrorInternal
 	}
@@ -357,6 +382,10 @@ func (g *GrafanaLive) handleOnPublish(client *centrifuge.Client, e centrifuge.Pu
 
 	handler, addr, err := g.GetChannelHandler(user, channel)
 	if err != nil {
+		if errors.Is(err, live.ErrInvalidChannelID) {
+			logger.Info("Invalid channel ID", "user", client.UserID(), "client", client.ID(), "channel", e.Channel)
+			return centrifuge.PublishReply{}, &centrifuge.Error{Code: uint32(http.StatusBadRequest), Message: "invalid channel ID"}
+		}
 		logger.Error("Error getting channel handler", "user", client.UserID(), "client", client.ID(), "channel", e.Channel, "error", err)
 		return centrifuge.PublishReply{}, centrifuge.ErrorInternal
 	}
@@ -422,9 +451,9 @@ func publishStatusToHTTPError(status backend.PublishStreamStatus) (int, string) 
 // GetChannelHandler gives thread-safe access to the channel.
 func (g *GrafanaLive) GetChannelHandler(user *models.SignedInUser, channel string) (models.ChannelHandler, live.Channel, error) {
 	// Parse the identifier ${scope}/${namespace}/${path}
-	addr := live.ParseChannel(channel)
-	if !addr.IsValid() {
-		return nil, live.Channel{}, fmt.Errorf("invalid channel: %q", channel)
+	addr, err := live.ParseChannel(channel)
+	if err != nil {
+		return nil, live.Channel{}, err
 	}
 
 	g.channelsMu.RLock()
@@ -549,9 +578,9 @@ func (g *GrafanaLive) ClientCount(orgID int64, channel string) (int, error) {
 }
 
 func (g *GrafanaLive) HandleHTTPPublish(ctx *models.ReqContext, cmd dtos.LivePublishCmd) response.Response {
-	addr := live.ParseChannel(cmd.Channel)
-	if !addr.IsValid() {
-		return response.Error(http.StatusBadRequest, "Bad channel address", nil)
+	addr, err := live.ParseChannel(cmd.Channel)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "invalid channel ID", nil)
 	}
 
 	logger.Debug("Publish API cmd", "user", ctx.SignedInUser.UserId, "channel", cmd.Channel)

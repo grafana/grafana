@@ -3,17 +3,15 @@ import React, { PureComponent } from 'react';
 
 // Types
 import { InlineFormLabel, LegacyForms, Select } from '@grafana/ui';
-import { QueryEditorProps, SelectableValue } from '@grafana/data';
-import { PrometheusDatasource } from '../datasource';
-import { PromOptions, PromQuery } from '../types';
+import { SelectableValue } from '@grafana/data';
+import { PromQuery } from '../types';
 
 import PromQueryField from './PromQueryField';
 import PromLink from './PromLink';
 import { PromExemplarField } from './PromExemplarField';
+import { PromQueryEditorProps } from './types';
 
 const { Switch } = LegacyForms;
-
-export type Props = QueryEditorProps<PrometheusDatasource, PromQuery, PromOptions>;
 
 const FORMAT_OPTIONS: Array<SelectableValue<string>> = [
   { label: 'Time series', value: 'time_series' },
@@ -35,11 +33,11 @@ interface State {
   exemplar: boolean;
 }
 
-export class PromQueryEditor extends PureComponent<Props, State> {
+export class PromQueryEditor extends PureComponent<PromQueryEditorProps, State> {
   // Query target to be modified and used for queries
   query: PromQuery;
 
-  constructor(props: Props) {
+  constructor(props: PromQueryEditorProps) {
     super(props);
     // Use default query to prevent undefined input values
     const defaultQuery: Partial<PromQuery> = { expr: '', legendFormat: '', interval: '', exemplar: true };
@@ -118,6 +116,7 @@ export class PromQueryEditor extends PureComponent<Props, State> {
         onChange={this.onFieldChange}
         history={[]}
         data={data}
+        data-testid={testIds.editor}
         ExtraFieldElement={
           <div className="gf-form-inline">
             <div className="gf-form">
@@ -198,3 +197,7 @@ export class PromQueryEditor extends PureComponent<Props, State> {
     );
   }
 }
+
+export const testIds = {
+  editor: 'prom-editor',
+};

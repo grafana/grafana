@@ -633,7 +633,7 @@ func TestAlertRuleCRUD(t *testing.T) {
 						},
 					},
 				},
-				expectedResponse: `{"error":"invalid alert rule: interval (1s) should be divided exactly by scheduler interval: 10s", "message":"failed to update rule group"}`,
+				expectedResponse: `{"error":"invalid alert rule: interval (1s) should be non-zero and divided exactly by scheduler interval: 10s", "message":"failed to update rule group"}`,
 			},
 			{
 				desc:      "alert rule with unknown datasource",
@@ -781,7 +781,7 @@ func TestAlertRuleCRUD(t *testing.T) {
 							},
 						},
 						NoDataState:  apimodels.NoDataState(ngmodels.Alerting),
-						ExecErrState: apimodels.ExecutionErrorState(ngmodels.KeepLastStateErrState),
+						ExecErrState: apimodels.ExecutionErrorState(ngmodels.AlertingErrState),
 					},
 				},
 			},
@@ -911,7 +911,7 @@ func TestAlertRuleCRUD(t *testing.T) {
 						  "namespace_id":1,
 						  "rule_group":"arulegroup",
 						  "no_data_state":"Alerting",
-						  "exec_err_state":"KeepLastState"
+						  "exec_err_state":"Alerting"
 					   }
 					}
 				 ]
@@ -960,7 +960,7 @@ func TestAlertRuleCRUD(t *testing.T) {
 							},
 						},
 						NoDataState:  apimodels.NoDataState(ngmodels.Alerting),
-						ExecErrState: apimodels.ExecutionErrorState(ngmodels.KeepLastStateErrState),
+						ExecErrState: apimodels.ExecutionErrorState(ngmodels.AlertingErrState),
 					},
 				},
 			},
@@ -1044,7 +1044,7 @@ func TestAlertRuleCRUD(t *testing.T) {
 							},
 						},
 						NoDataState:  apimodels.NoDataState(ngmodels.Alerting),
-						ExecErrState: apimodels.ExecutionErrorState(ngmodels.KeepLastStateErrState),
+						ExecErrState: apimodels.ExecutionErrorState(ngmodels.AlertingErrState),
 					},
 				},
 			},
@@ -1135,7 +1135,7 @@ func TestAlertRuleCRUD(t *testing.T) {
 		                  "namespace_id":1,
 		                  "rule_group":"arulegroup",
 		                  "no_data_state":"Alerting",
-		                  "exec_err_state":"KeepLastState"
+		                  "exec_err_state":"Alerting"
 		               }
 		            }
 		         ]
