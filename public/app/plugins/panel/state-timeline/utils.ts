@@ -362,15 +362,9 @@ export function prepareTimelineLegendItems(
   stateColors.forEach((color, label) => {
     if (label.length > 0) {
       items.push({
-        //getItemKey?: () => string;
         label: label!,
         color,
         yAxis: 1,
-        // disabled?: boolean;
-        // displayValues?: DisplayValue[];
-        //getDisplayValues?: () => DisplayValue[];
-        //fieldIndex?: DataFrameFieldIndex;
-        //data?: T;
       });
     }
   });
