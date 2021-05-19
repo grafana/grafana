@@ -240,6 +240,8 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
           } else if (err.error && err.error.data && err.error.data.error) {
             throw { message: err.error.data.error.message };
           }
+
+          throw err;
         });
     }) as Promise<MetricFindValue[]>;
   }
