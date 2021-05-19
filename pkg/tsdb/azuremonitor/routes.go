@@ -52,6 +52,8 @@ func getResourceGraphApiRoute(azureCloud string) (string, error) {
 		return "chinaazureresourcegraph", nil
 	case azureMonitorUSGovernment:
 		return "govazureresourcegraph", nil
+	case azureMonitorGermany:
+		return "germanyazureresourcegraph", nil
 	default:
 		err := fmt.Errorf("the cloud '%s' not supported", azureCloud)
 		return "", err
