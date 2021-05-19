@@ -12,7 +12,7 @@ interface Props {
   namespaces: CombinedRuleNamespace[];
 }
 
-export const SystemOrApplicationRules: FC<Props> = ({ namespaces }) => {
+export const CloudRules: FC<Props> = ({ namespaces }) => {
   const styles = useStyles(getStyles);
   const rules = useUnifiedAlertingSelector((state) => state.promRules);
   const rulesDataSources = useMemo(getRulesDataSources, []);
@@ -25,7 +25,7 @@ export const SystemOrApplicationRules: FC<Props> = ({ namespaces }) => {
   return (
     <section className={styles.wrapper}>
       <div className={styles.sectionHeader}>
-        <h5>System or application</h5>
+        <h5>Cortex / Loki</h5>
         {dataSourcesLoading.length ? (
           <LoadingPlaceholder
             className={styles.loader}

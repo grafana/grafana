@@ -10,7 +10,7 @@ import { Label as PromLabel } from './Label';
 
 // Hard limit on labels to render
 const MAX_LABEL_COUNT = 10000;
-const MAX_VALUE_COUNT = 10000;
+const MAX_VALUE_COUNT = 50000;
 const EMPTY_SELECTOR = '{}';
 const METRIC_LABEL = '__name__';
 export const LAST_USED_LABELS_KEY = 'grafana.datasources.prometheus.browser.labels';
@@ -176,7 +176,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
  *              to create a single, generic component.
  */
 export class UnthemedPrometheusMetricsBrowser extends React.Component<BrowserProps, BrowserState> {
-  state = {
+  state: BrowserState = {
     labels: [] as SelectableLabel[],
     labelSearchTerm: '',
     metricSearchTerm: '',
@@ -231,7 +231,7 @@ export class UnthemedPrometheusMetricsBrowser extends React.Component<BrowserPro
     });
     store.delete(LAST_USED_LABELS_KEY);
     // Get metrics
-    this.fetchValues(METRIC_LABEL);
+    this.fetchValues(METRIC_LABEL, EMPTY_SELECTOR);
   };
 
   onClickLabel = (name: string, value: string | undefined, event: React.MouseEvent<HTMLElement>) => {
@@ -314,7 +314,7 @@ export class UnthemedPrometheusMetricsBrowser extends React.Component<BrowserPro
           this.setState({ error });
         }
         // Get metrics
-        this.fetchValues(METRIC_LABEL);
+        this.fetchValues(METRIC_LABEL, EMPTY_SELECTOR);
         // Auto-select previously selected labels
         const labels: SelectableLabel[] = rawLabels.map((label, i, arr) => ({
           name: label,
@@ -325,7 +325,7 @@ export class UnthemedPrometheusMetricsBrowser extends React.Component<BrowserPro
         this.setState({ labels }, () => {
           this.state.labels.forEach((label) => {
             if (label.selected) {
-              this.fetchValues(label.name);
+              this.fetchValues(label.name, EMPTY_SELECTOR);
             }
           });
         });
@@ -343,7 +343,7 @@ export class UnthemedPrometheusMetricsBrowser extends React.Component<BrowserPro
     if (label.selected) {
       // Refetch values for newly selected label...
       if (!label.values) {
-        this.fetchValues(name);
+        this.fetchValues(name, buildSelector(this.state.labels));
       }
     } else {
       // Only need to facet when deselecting labels
@@ -361,7 +361,7 @@ export class UnthemedPrometheusMetricsBrowser extends React.Component<BrowserPro
       this.setState({ labels }, () => {
         // Get fresh set of values
         this.state.labels.forEach(
-          (label) => (label.selected || label.name === METRIC_LABEL) && this.fetchValues(label.name)
+          (label) => (label.selected || label.name === METRIC_LABEL) && this.fetchValues(label.name, selector)
         );
       });
     } else {
@@ -370,18 +370,23 @@ export class UnthemedPrometheusMetricsBrowser extends React.Component<BrowserPro
     }
   };
 
-  async fetchValues(name: string) {
+  async fetchValues(name: string, selector: string) {
     const { languageProvider } = this.props;
     this.updateLabelState(name, { loading: true }, `Fetching values for ${name}`);
     try {
       let rawValues = await languageProvider.getLabelValues(name);
+      // If selector changed, clear loading state and discard result by returning early
+      if (selector !== buildSelector(this.state.labels)) {
+        this.updateLabelState(name, { loading: false });
+        return;
+      }
       if (rawValues.length > MAX_VALUE_COUNT) {
         const error = `Too many values for ${name} (showing only ${MAX_VALUE_COUNT} of ${rawValues.length})`;
         rawValues = rawValues.slice(0, MAX_VALUE_COUNT);
         this.setState({ error });
       }
       const values: FacettableValue[] = rawValues.map((value) => ({ name: value }));
-      this.updateLabelState(name, { values, loading: false }, '');
+      this.updateLabelState(name, { values, loading: false });
     } catch (error) {
       console.error(error);
     }
@@ -394,6 +399,13 @@ export class UnthemedPrometheusMetricsBrowser extends React.Component<BrowserPro
     }
     try {
       const possibleLabels = await languageProvider.fetchSeriesLabels(selector, true);
+      // If selector changed, clear loading state and discard result by returning early
+      if (selector !== buildSelector(this.state.labels)) {
+        if (lastFacetted) {
+          this.updateLabelState(lastFacetted, { loading: false });
+        }
+        return;
+      }
       if (Object.keys(possibleLabels).length === 0) {
         // Sometimes the backend does not return a valid set
         console.error('No results for label combination, but should not occur.');
@@ -432,7 +444,6 @@ export class UnthemedPrometheusMetricsBrowser extends React.Component<BrowserPro
     // Filter metrics
     let metrics = labels.find((label) => label.name === METRIC_LABEL);
     if (metrics && metricSearchTerm) {
-      // TODO extract from render() and debounce
       metrics = {
         ...metrics,
         values: metrics.values?.filter((value) => value.selected || value.name.includes(metricSearchTerm)),
@@ -442,14 +453,12 @@ export class UnthemedPrometheusMetricsBrowser extends React.Component<BrowserPro
     // Filter labels
     let nonMetricLabels = labels.filter((label) => !label.hidden && label.name !== METRIC_LABEL);
     if (labelSearchTerm) {
-      // TODO extract from render() and debounce
       nonMetricLabels = nonMetricLabels.filter((label) => label.selected || label.name.includes(labelSearchTerm));
     }
 
     // Filter non-metric label values
     let selectedLabels = nonMetricLabels.filter((label) => label.selected && label.values);
     if (valueSearchTerm) {
-      // TODO extract from render() and debounce
       selectedLabels = selectedLabels.map((label) => ({
         ...label,
         values: label.values?.filter((value) => value.selected || value.name.includes(valueSearchTerm)),
