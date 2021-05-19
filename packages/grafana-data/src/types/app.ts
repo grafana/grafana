@@ -7,6 +7,7 @@ export enum CoreApp {
   Dashboard = 'dashboard',
   Explore = 'explore',
   Unknown = 'unknown',
+  CloudAlerting = 'cloud-alerting',
 }
 
 export interface AppRootProps<T = KeyValue> {
