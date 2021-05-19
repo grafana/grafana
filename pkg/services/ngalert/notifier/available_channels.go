@@ -706,5 +706,44 @@ func GetAvailableNotifiers() []*alerting.NotifierPlugin {
 					Secure:       true,
 				}},
 		},
+		{
+			Type:        "threema",
+			Name:        "Threema Gateway",
+			Description: "Sends notifications to Threema using the Threema Gateway",
+			Heading:     "Threema Gateway settings",
+			Info: "Notifications can be configured for any Threema Gateway ID of type \"Basic\". End-to-End IDs are not currently supported." +
+				"The Threema Gateway ID can be set up at https://gateway.threema.ch/.",
+			Options: []alerting.NotifierOption{
+				{
+					Label:          "Gateway ID",
+					Element:        alerting.ElementTypeInput,
+					InputType:      alerting.InputTypeText,
+					Placeholder:    "*3MAGWID",
+					Description:    "Your 8 character Threema Gateway ID (starting with a *).",
+					PropertyName:   "gateway_id",
+					Required:       true,
+					ValidationRule: "\\*[0-9A-Z]{7}",
+				},
+				{
+					Label:          "Recipient ID",
+					Element:        alerting.ElementTypeInput,
+					InputType:      alerting.InputTypeText,
+					Placeholder:    "YOUR3MID",
+					Description:    "The 8 character Threema ID that should receive the alerts.",
+					PropertyName:   "recipient_id",
+					Required:       true,
+					ValidationRule: "[0-9A-Z]{8}",
+				},
+				{
+					Label:        "API Secret",
+					Element:      alerting.ElementTypeInput,
+					InputType:    alerting.InputTypeText,
+					Description:  "Your Threema Gateway API secret.",
+					PropertyName: "api_secret",
+					Required:     true,
+					Secure:       true,
+				},
+			},
+		},
 	}
 }

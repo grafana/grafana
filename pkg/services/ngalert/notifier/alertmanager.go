@@ -438,6 +438,8 @@ func (am *Alertmanager) buildReceiverIntegrations(receiver *apimodels.PostableAp
 			n, err = channels.NewGoogleChatNotifier(cfg, tmpl)
 		case "line":
 			n, err = channels.NewLineNotifier(cfg, tmpl)
+		case "threema":
+			n, err = channels.NewThreemaNotifier(cfg, tmpl)
 		default:
 			return nil, fmt.Errorf("notifier %s is not supported", r.Type)
 		}
