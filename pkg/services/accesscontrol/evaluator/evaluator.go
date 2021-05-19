@@ -5,13 +5,18 @@ import (
 
 	"github.com/gobwas/glob"
 
+	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 // Evaluate evaluates access to the given resource, using provided AccessControl instance.
 // Scopes are evaluated with an `OR` relationship.
 func Evaluate(ctx context.Context, ac accesscontrol.AccessControl, user *models.SignedInUser, action string, scope ...string) (bool, error) {
+	timer := prometheus.NewTimer(metrics.MAccessEvaluationsSummary)
+	defer timer.ObserveDuration()
+	metrics.MAccessEvaluationCount.Inc()
 	userPermissions, err := ac.GetUserPermissions(ctx, user)
 	if err != nil {
 		return false, err
@@ -22,7 +27,8 @@ func Evaluate(ctx context.Context, ac accesscontrol.AccessControl, user *models.
 		return false, nil
 	}
 
-	return evaluateScope(dbScopes, scope...)
+	res, err := evaluateScope(dbScopes, scope...)
+	return res, err
 }
 
 func evaluateScope(dbScopes map[string]struct{}, targetScopes ...string) (bool, error) {

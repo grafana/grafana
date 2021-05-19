@@ -20,7 +20,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/live/database"
-	"github.com/grafana/grafana/pkg/services/live/demultiplexer"
 	"github.com/grafana/grafana/pkg/services/live/features"
 	"github.com/grafana/grafana/pkg/services/live/livecontext"
 	"github.com/grafana/grafana/pkg/services/live/managedstream"
@@ -157,7 +156,7 @@ func (g *GrafanaLive) Init() error {
 	g.contextGetter = newPluginContextGetter(g.PluginContextProvider)
 	packetSender := newPluginPacketSender(node)
 	presenceGetter := newPluginPresenceGetter(node)
-	g.runStreamManager = runstream.NewManager(packetSender, presenceGetter)
+	g.runStreamManager = runstream.NewManager(packetSender, presenceGetter, g.contextGetter)
 
 	// Initialize the main features
 	dash := &features.DashboardHandler{
@@ -282,6 +281,26 @@ func runConcurrentlyIfNeeded(ctx context.Context, semaphore chan struct{}, fn fu
 		fn()
 	}
 	return nil
+}
+
+func (g *GrafanaLive) HandleDatasourceDelete(orgID int64, dsUID string) {
+	if g.runStreamManager == nil {
+		return
+	}
+	err := g.runStreamManager.HandleDatasourceDelete(orgID, dsUID)
+	if err != nil {
+		logger.Error("Error handling datasource delete", "error", err)
+	}
+}
+
+func (g *GrafanaLive) HandleDatasourceUpdate(orgID int64, dsUID string) {
+	if g.runStreamManager == nil {
+		return
+	}
+	err := g.runStreamManager.HandleDatasourceUpdate(orgID, dsUID)
+	if err != nil {
+		logger.Error("Error handling datasource update", "error", err)
+	}
 }
 
 func (g *GrafanaLive) handleOnSubscribe(client *centrifuge.Client, e centrifuge.SubscribeEvent) (centrifuge.SubscribeReply, error) {
@@ -472,8 +491,6 @@ func (g *GrafanaLive) GetChannelHandlerFactory(user *models.SignedInUser, scope 
 		return g.handleDatasourceScope(user, namespace)
 	case live.ScopeStream:
 		return g.handleStreamScope(user, namespace)
-	case live.ScopePush:
-		return g.handlePushScope(user, namespace)
 	default:
 		return nil, fmt.Errorf("invalid scope: %q", scope)
 	}
@@ -509,10 +526,6 @@ func (g *GrafanaLive) handlePluginScope(_ *models.SignedInUser, namespace string
 
 func (g *GrafanaLive) handleStreamScope(u *models.SignedInUser, namespace string) (models.ChannelHandlerFactory, error) {
 	return g.ManagedStreamRunner.GetOrCreateStream(u.OrgId, namespace)
-}
-
-func (g *GrafanaLive) handlePushScope(_ *models.SignedInUser, namespace string) (models.ChannelHandlerFactory, error) {
-	return demultiplexer.New(namespace, g.ManagedStreamRunner), nil
 }
 
 func (g *GrafanaLive) handleDatasourceScope(user *models.SignedInUser, namespace string) (models.ChannelHandlerFactory, error) {

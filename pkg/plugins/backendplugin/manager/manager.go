@@ -47,7 +47,6 @@ func (m *manager) Init() error {
 }
 
 func (m *manager) Run(ctx context.Context) error {
-	m.start(ctx)
 	<-ctx.Done()
 	m.stop(ctx)
 	return ctx.Err()
@@ -96,8 +95,60 @@ func (m *manager) Register(pluginID string, factory backendplugin.PluginFactoryF
 	return nil
 }
 
+// RegisterAndStart registers and starts a backend plugin
+func (m *manager) RegisterAndStart(ctx context.Context, pluginID string, factory backendplugin.PluginFactoryFunc) error {
+	err := m.Register(pluginID, factory)
+	if err != nil {
+		return err
+	}
+
+	p, exists := m.Get(pluginID)
+	if !exists {
+		return fmt.Errorf("backend plugin %s is not registered", pluginID)
+	}
+
+	m.start(ctx, p)
+
+	return nil
+}
+
+// UnregisterAndStop unregisters and stops a backend plugin
+func (m *manager) UnregisterAndStop(ctx context.Context, pluginID string) error {
+	m.logger.Debug("Unregistering backend plugin", "pluginId", pluginID)
+	m.pluginsMu.Lock()
+	defer m.pluginsMu.Unlock()
+
+	p, exists := m.plugins[pluginID]
+	if !exists {
+		return fmt.Errorf("backend plugin %s is not registered", pluginID)
+	}
+
+	m.logger.Debug("Stopping backend plugin process", "pluginId", pluginID)
+	if err := p.Decommission(); err != nil {
+		return err
+	}
+
+	if err := p.Stop(ctx); err != nil {
+		return err
+	}
+
+	delete(m.plugins, pluginID)
+
+	m.logger.Debug("Backend plugin unregistered", "pluginId", pluginID)
+	return nil
+}
+
+func (m *manager) IsRegistered(pluginID string) bool {
+	p, _ := m.Get(pluginID)
+
+	return p != nil && !p.IsDecommissioned()
+}
+
 func (m *manager) Get(pluginID string) (backendplugin.Plugin, bool) {
+	m.pluginsMu.RLock()
 	p, ok := m.plugins[pluginID]
+	m.pluginsMu.RUnlock()
+
 	return p, ok
 }
 
@@ -115,31 +166,27 @@ func (m *manager) getAWSEnvironmentVariables() []string {
 
 //nolint: staticcheck // plugins.DataPlugin deprecated
 func (m *manager) GetDataPlugin(pluginID string) interface{} {
-	plugin := m.plugins[pluginID]
-	if plugin == nil {
+	p, _ := m.Get(pluginID)
+
+	if p == nil {
 		return nil
 	}
 
-	if dataPlugin, ok := plugin.(plugins.DataPlugin); ok {
+	if dataPlugin, ok := p.(plugins.DataPlugin); ok {
 		return dataPlugin
 	}
 
 	return nil
 }
 
-// start starts all managed backend plugins
-func (m *manager) start(ctx context.Context) {
-	m.pluginsMu.RLock()
-	defer m.pluginsMu.RUnlock()
-	for _, p := range m.plugins {
-		if !p.IsManaged() {
-			continue
-		}
+// start starts a managed backend plugin
+func (m *manager) start(ctx context.Context, p backendplugin.Plugin) {
+	if !p.IsManaged() {
+		return
+	}
 
-		if err := startPluginAndRestartKilledProcesses(ctx, p); err != nil {
-			p.Logger().Error("Failed to start plugin", "error", err)
-			continue
-		}
+	if err := startPluginAndRestartKilledProcesses(ctx, p); err != nil {
+		p.Logger().Error("Failed to start plugin", "error", err)
 	}
 }
 
@@ -435,6 +482,11 @@ func restartKilledProcess(ctx context.Context, p backendplugin.Plugin) error {
 			}
 			return nil
 		case <-ticker.C:
+			if p.IsDecommissioned() {
+				p.Logger().Debug("Plugin decommissioned")
+				return nil
+			}
+
 			if !p.Exited() {
 				continue
 			}

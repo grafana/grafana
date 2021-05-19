@@ -1,16 +1,17 @@
 import React, { FC } from 'react';
-import { Button, Field, Input, InlineLabel, useStyles, Checkbox, IconButton } from '@grafana/ui';
-import { GrafanaTheme } from '@grafana/data';
+import { Button, Field, Input, Checkbox, IconButton, useStyles2 } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
 import { css, cx } from '@emotion/css';
 import { useFormContext, useFieldArray } from 'react-hook-form';
 import { SilenceFormFields } from '../../types/silence-form';
+import { Matcher } from 'app/plugins/datasource/alertmanager/types';
 
 interface Props {
   className?: string;
 }
 
 const MatchersField: FC<Props> = ({ className }) => {
-  const styles = useStyles(getStyles);
+  const styles = useStyles2(getStyles);
   const formApi = useFormContext<SilenceFormFields>();
   const {
     register,
@@ -24,6 +25,7 @@ const MatchersField: FC<Props> = ({ className }) => {
         <div>
           <div className={styles.matchers}>
             {matchers.map((matcher, index) => {
+              console.log(matcher);
               return (
                 <div className={styles.row} key={`${matcher.id}`}>
                   <Field
@@ -39,7 +41,6 @@ const MatchersField: FC<Props> = ({ className }) => {
                       placeholder="name"
                     />
                   </Field>
-                  <InlineLabel className={styles.equalSign}>=</InlineLabel>
                   <Field
                     label="Value"
                     invalid={!!errors?.matchers?.[index]?.value}
@@ -53,8 +54,11 @@ const MatchersField: FC<Props> = ({ className }) => {
                       placeholder="value"
                     />
                   </Field>
-                  <Field className={styles.regexCheckbox} label="Regex">
+                  <Field label="Regex">
                     <Checkbox {...register(`matchers.${index}.isRegex` as const)} defaultChecked={matcher.isRegex} />
+                  </Field>
+                  <Field label="Equal">
+                    <Checkbox {...register(`matchers.${index}.isEqual` as const)} defaultChecked={matcher.isEqual} />
                   </Field>
                   {matchers.length > 1 && (
                     <IconButton
@@ -75,7 +79,8 @@ const MatchersField: FC<Props> = ({ className }) => {
             icon="plus"
             variant="secondary"
             onClick={() => {
-              append({ name: '', value: '', isRegex: false });
+              const newMatcher: Matcher = { name: '', value: '', isRegex: false, isEqual: true };
+              append(newMatcher);
             }}
           >
             Add matcher
@@ -86,34 +91,29 @@ const MatchersField: FC<Props> = ({ className }) => {
   );
 };
 
-const getStyles = (theme: GrafanaTheme) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     wrapper: css`
-      margin-top: ${theme.spacing.md};
+      margin-top: ${theme.spacing(2)};
     `,
     row: css`
       display: flex;
+      align-items: flex-start;
       flex-direction: row;
-      align-items: center;
-      background-color: ${theme.colors.bg2};
-      padding: ${theme.spacing.sm} ${theme.spacing.sm} 0 ${theme.spacing.sm};
-    `,
-    equalSign: css`
-      width: 28px;
-      justify-content: center;
-      margin-left: ${theme.spacing.xs};
-      margin-bottom: 0;
-    `,
-    regexCheckbox: css`
-      margin-left: ${theme.spacing.md};
+      background-color: ${theme.colors.background.secondary};
+      padding: ${theme.spacing(1)} ${theme.spacing(1)} 0 ${theme.spacing(1)};
+      & > * + * {
+        margin-left: ${theme.spacing(2)};
+      }
     `,
     removeButton: css`
-      margin-left: ${theme.spacing.sm};
+      margin-left: ${theme.spacing(1)};
+      margin-top: ${theme.spacing(2.5)};
     `,
     matchers: css`
       max-width: 585px;
-      margin: ${theme.spacing.sm} 0;
-      padding-top: ${theme.spacing.xs};
+      margin: ${theme.spacing(1)} 0;
+      padding-top: ${theme.spacing(0.5)};
     `,
   };
 };

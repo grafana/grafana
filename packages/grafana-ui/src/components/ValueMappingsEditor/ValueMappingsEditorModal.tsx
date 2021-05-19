@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { GrafanaTheme2, MappingType, SpecialValueMatch, ValueMapping } from '@grafana/data';
+import { GrafanaTheme2, MappingType, SelectableValue, SpecialValueMatch, ValueMapping } from '@grafana/data';
 import { Button } from '../Button/Button';
 import { Modal } from '../Modal/Modal';
 import { useStyles2 } from '../../themes';
 import { ValueMappingEditRow, ValueMappingEditRowModel } from './ValueMappingEditRow';
 import { DragDropContext, Droppable, DropResult } from 'react-beautiful-dnd';
-import { HorizontalGroup } from '../Layout/Layout';
 import { css } from '@emotion/css';
+import { ValuePicker } from '../ValuePicker/ValuePicker';
 
 export interface Props {
   value: ValueMapping[];
@@ -46,37 +46,33 @@ export function ValueMappingsEditorModal({ value, onChange, onClose }: Props) {
     updateRows(newList);
   };
 
-  const onAddValueMap = () => {
+  const mappingTypes: Array<SelectableValue<MappingType>> = [
+    { label: 'Value', value: MappingType.ValueToText, description: 'Match a specific text value' },
+    { label: 'Range', value: MappingType.RangeToText, description: 'Match a numerical range of values' },
+    { label: 'Special', value: MappingType.SpecialValue, description: 'Match on null, NaN, boolean and empty values' },
+  ];
+
+  const onAddValueMapping = (value: SelectableValue<MappingType>) => {
     updateRows([
       ...rows,
       {
-        type: MappingType.ValueToText,
+        type: value.value!,
         isNew: true,
         result: {},
       },
     ]);
   };
 
-  const onAddRangeMap = () => {
-    updateRows([
-      ...rows,
-      {
-        type: MappingType.RangeToText,
-        isNew: true,
-        result: {},
-      },
-    ]);
-  };
+  const onDuplicateMapping = (index: number) => {
+    const sourceRow = rows[index];
+    const copy = [...rows];
+    copy.splice(index, 0, { ...sourceRow });
 
-  const onAddSpecialValueMap = () => {
-    updateRows([
-      ...rows,
-      {
-        type: MappingType.SpecialValue,
-        specialMatch: SpecialValueMatch.Null,
-        result: {},
-      },
-    ]);
+    for (let i = index; i < rows.length; i++) {
+      copy[i].result.index = i;
+    }
+
+    updateRows(copy);
   };
 
   const onUpdate = () => {
@@ -90,10 +86,11 @@ export function ValueMappingsEditorModal({ value, onChange, onClose }: Props) {
         <thead>
           <tr>
             <th style={{ width: '1%' }}></th>
-            <th style={{ width: '1%' }}>Type</th>
-            <th style={{ width: '40%' }}>Match</th>
-            <th>Display text</th>
-            <th>Color</th>
+            <th style={{ width: '40%', textAlign: 'left' }} colSpan={2}>
+              Condition
+            </th>
+            <th style={{ textAlign: 'left' }}>Display text</th>
+            <th style={{ width: '10%' }}>Color</th>
             <th style={{ width: '1%' }}></th>
           </tr>
         </thead>
@@ -108,6 +105,7 @@ export function ValueMappingsEditorModal({ value, onChange, onClose }: Props) {
                     index={index}
                     onChange={onChangeMapping}
                     onRemove={onRemoveRow}
+                    onDuplicate={onDuplicateMapping}
                   />
                 ))}
                 {provided.placeholder}
@@ -116,17 +114,16 @@ export function ValueMappingsEditorModal({ value, onChange, onClose }: Props) {
           </Droppable>
         </DragDropContext>
       </table>
-      <HorizontalGroup>
-        <Button variant="secondary" icon="plus" onClick={onAddValueMap} data-testid="add value map">
-          Value map
-        </Button>
-        <Button variant="secondary" icon="plus" onClick={onAddRangeMap} data-testid="add range map">
-          Range map
-        </Button>
-        <Button variant="secondary" icon="plus" onClick={onAddSpecialValueMap} data-testid="add special map">
-          Special value map
-        </Button>
-      </HorizontalGroup>
+      <ValuePicker
+        label="Add a new mapping"
+        variant="secondary"
+        size="md"
+        icon="plus"
+        menuPlacement="auto"
+        isFullWidth={false}
+        options={mappingTypes}
+        onChange={onAddValueMapping}
+      />
       <Modal.ButtonRow>
         <Button variant="secondary" fill="outline" onClick={onClose}>
           Cancel
@@ -170,6 +167,11 @@ export function editModelToSaveModel(rows: ValueMappingEditRowModel[]) {
       ...item.result,
       index,
     };
+
+    // Set empty texts to undefined
+    if (!result.text || result.text.trim().length === 0) {
+      result.text = undefined;
+    }
 
     switch (item.type) {
       case MappingType.ValueToText:

@@ -1,5 +1,4 @@
-import { DataFrame, FieldType, MutableDataFrame } from '@grafana/data';
-import { NodeGraphDataFrameFieldNames as Fields } from '@grafana/ui';
+import { DataFrame, FieldType, MutableDataFrame, NodeGraphDataFrameFieldNames as Fields } from '@grafana/data';
 import { Span, TraceResponse } from './types';
 
 interface Node {
@@ -25,9 +24,13 @@ export function createGraphFrames(data: TraceResponse): DataFrame[] {
       { name: Fields.id, type: FieldType.string },
       { name: Fields.title, type: FieldType.string },
       { name: Fields.subTitle, type: FieldType.string },
-      { name: Fields.mainStat, type: FieldType.string },
-      { name: Fields.secondaryStat, type: FieldType.string },
-      { name: Fields.color, type: FieldType.number, config: { color: { mode: 'continuous-GrYlRd' } } },
+      { name: Fields.mainStat, type: FieldType.string, config: { displayName: 'Total time (% of trace)' } },
+      { name: Fields.secondaryStat, type: FieldType.string, config: { displayName: 'Self time (% of total)' } },
+      {
+        name: Fields.color,
+        type: FieldType.number,
+        config: { color: { mode: 'continuous-GrYlRd' }, displayName: 'Self time / Trace duration' },
+      },
     ],
     meta: {
       preferredVisualisationType: 'nodeGraph',
@@ -72,10 +75,10 @@ function convertTraceToGraph(data: TraceResponse): { nodes: Node[]; edges: Edge[
       [Fields.id]: span.spanID,
       [Fields.title]: process?.serviceName ?? '',
       [Fields.subTitle]: span.operationName,
-      [Fields.mainStat]: `total: ${toFixedNoTrailingZeros(span.duration / 1000)}ms (${toFixedNoTrailingZeros(
+      [Fields.mainStat]: `${toFixedNoTrailingZeros(span.duration / 1000)}ms (${toFixedNoTrailingZeros(
         (span.duration / traceDuration) * 100
       )}%)`,
-      [Fields.secondaryStat]: `self: ${toFixedNoTrailingZeros(selfDuration / 1000)}ms (${toFixedNoTrailingZeros(
+      [Fields.secondaryStat]: `${toFixedNoTrailingZeros(selfDuration / 1000)}ms (${toFixedNoTrailingZeros(
         (selfDuration / span.duration) * 100
       )}%)`,
       [Fields.color]: selfDuration / traceDuration,
