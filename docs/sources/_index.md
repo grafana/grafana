@@ -7,6 +7,8 @@ aliases = ["/docs/grafana/v1.1", "/docs/grafana/latest/guides/reference/admin", 
 
 # Grafana documentation
 
+This is documentation for the latest stable release (7.5.x) version of Grafana. For the 8.0 beta documentation, click [here](https://grafana.com/docs/grafana/next/).
+
 ## Installing Grafana
 
 <div class="nav-cards">
