@@ -3,8 +3,6 @@ package grpcplugin
 import (
 	"os/exec"
 
-	datasourceV1 "github.com/grafana/grafana-plugin-model/go/datasource"
-	rendererV1 "github.com/grafana/grafana-plugin-model/go/renderer"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/grpcplugin"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
@@ -12,19 +10,12 @@ import (
 	goplugin "github.com/hashicorp/go-plugin"
 )
 
-const (
-	// DefaultProtocolVersion is the protocol version assumed for legacy clients that don't specify
-	// a particular version or version 1 during their handshake. This is currently the version used
-	// since Grafana launched support for backend plugins.
-	DefaultProtocolVersion = 1
-)
-
 // Handshake is the HandshakeConfig used to configure clients and servers.
 var handshake = goplugin.HandshakeConfig{
 	// The ProtocolVersion is the version that must match between Grafana core
 	// and Grafana plugins. This should be bumped whenever a (breaking) change
 	// happens in one or the other that makes it so that they can't safely communicate.
-	ProtocolVersion: DefaultProtocolVersion,
+	ProtocolVersion: grpcplugin.ProtocolVersion,
 
 	// The magic cookie values should NEVER be changed.
 	MagicCookieKey:   grpcplugin.MagicCookieKey,
@@ -47,16 +38,12 @@ func newClientConfig(executablePath string, env []string, logger log.Logger,
 	}
 }
 
-// LegacyStartFunc callback function called when a plugin with old plugin protocol is started.
-type LegacyStartFunc func(pluginID string, client *LegacyClient, logger log.Logger) error
-
 // StartFunc callback function called when a plugin with current plugin protocol version is started.
 type StartFunc func(pluginID string, client *Client, logger log.Logger) error
 
 // PluginStartFuncs functions called for plugin when started.
 type PluginStartFuncs struct {
-	OnLegacyStart LegacyStartFunc
-	OnStart       StartFunc
+	OnStart StartFunc
 }
 
 // PluginDescriptor is a descriptor used for registering backend plugins.
@@ -86,9 +73,6 @@ func NewBackendPlugin(pluginID, executablePath string, startFns PluginStartFuncs
 		executablePath: executablePath,
 		managed:        true,
 		versionedPlugins: map[int]goplugin.PluginSet{
-			DefaultProtocolVersion: {
-				pluginID: &datasourceV1.DatasourcePluginImpl{},
-			},
 			grpcplugin.ProtocolVersion: getV2PluginSet(),
 		},
 		startFns: startFns,
@@ -102,19 +86,10 @@ func NewRendererPlugin(pluginID, executablePath string, startFns PluginStartFunc
 		executablePath: executablePath,
 		managed:        false,
 		versionedPlugins: map[int]goplugin.PluginSet{
-			DefaultProtocolVersion: {
-				pluginID: &rendererV1.RendererPluginImpl{},
-			},
 			grpcplugin.ProtocolVersion: getV2PluginSet(),
 		},
 		startFns: startFns,
 	})
-}
-
-// LegacyClient client for communicating with a plugin using the v1 plugin protocol.
-type LegacyClient struct {
-	DatasourcePlugin datasourceV1.DatasourcePlugin
-	RendererPlugin   rendererV1.RendererPlugin
 }
 
 // Client client for communicating with a plugin using the current (v2) plugin protocol.

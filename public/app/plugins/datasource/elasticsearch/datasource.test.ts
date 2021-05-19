@@ -936,6 +936,20 @@ describe('enhanceDataFrame', () => {
       },
     });
   });
+
+  it('adds limit to dataframe', () => {
+    const df = new MutableDataFrame({
+      fields: [
+        {
+          name: 'someField',
+          values: new ArrayVector([]),
+        },
+      ],
+    });
+    enhanceDataFrame(df, [], 10);
+
+    expect(df.meta?.limit).toBe(10);
+  });
 });
 
 const createElasticQuery = (): DataQueryRequest<ElasticsearchQuery> => {

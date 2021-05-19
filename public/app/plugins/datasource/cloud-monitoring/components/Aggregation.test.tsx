@@ -1,9 +1,9 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { shallow } from 'enzyme';
-import { Segment } from '@grafana/ui';
-import { Aggregations, Props } from './Aggregations';
-import { ValueTypes, MetricKind } from '../constants';
+import { Select } from '@grafana/ui';
+import { Aggregation, Props } from './Aggregation';
+import { ValueTypes, MetricKind } from '../types';
 import { TemplateSrvStub } from 'test/specs/helpers';
 
 const props: Props = {
@@ -16,16 +16,13 @@ const props: Props = {
   } as any,
   crossSeriesReducer: '',
   groupBys: [],
-  children(renderProps) {
-    return <div />;
-  },
   templateVariableOptions: [],
 };
 
-describe('Aggregations', () => {
+describe('Aggregation', () => {
   it('renders correctly', () => {
-    render(<Aggregations {...props} />);
-    expect(screen.getByTestId('aggregations')).toBeInTheDocument();
+    render(<Aggregation {...props} />);
+    expect(screen.getByTestId('cloud-monitoring-aggregation')).toBeInTheDocument();
   });
 
   describe('options', () => {
@@ -39,8 +36,8 @@ describe('Aggregations', () => {
       };
 
       it('should not have the reduce values', () => {
-        const wrapper = shallow(<Aggregations {...nextProps} />);
-        const { options } = wrapper.find(Segment).props() as any;
+        const wrapper = shallow(<Aggregation {...nextProps} />);
+        const { options } = wrapper.find(Select).props() as any;
         const [, aggGroup] = options;
 
         expect(aggGroup.options.length).toEqual(11);
@@ -60,8 +57,8 @@ describe('Aggregations', () => {
       };
 
       it('should have the reduce values', () => {
-        const wrapper = shallow(<Aggregations {...nextProps} />);
-        const { options } = wrapper.find(Segment).props() as any;
+        const wrapper = shallow(<Aggregation {...nextProps} />);
+        const { options } = wrapper.find(Select).props() as any;
         const [, aggGroup] = options;
 
         expect(aggGroup.options.length).toEqual(11);
