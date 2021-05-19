@@ -17,12 +17,6 @@ exports[`LokiExploreQueryEditor should render component 1`] = `
       queryType="range"
     />
   }
-  absoluteRange={
-    Object {
-      "from": 1577836800000,
-      "to": 1577923200000,
-    }
-  }
   data={
     Object {
       "request": Object {
