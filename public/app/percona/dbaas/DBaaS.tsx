@@ -13,6 +13,7 @@ import { getStyles } from './DBaaS.styles';
 import { TabKeys } from './DBaaS.types';
 import { DBCluster } from './components/DBCluster/DBCluster';
 import { useKubernetes } from './components/Kubernetes/Kubernetes.hooks';
+import { isKubernetesListUnavailable } from './components/Kubernetes/Kubernetes.utils';
 import { KubernetesInventory } from './components/Kubernetes/KubernetesInventory';
 
 export const DBaaS: FC = () => {
@@ -38,7 +39,7 @@ export const DBaaS: FC = () => {
       {
         label: Messages.tabs.dbcluster,
         key: TabKeys.dbclusters,
-        disabled: kubernetes.length === 0,
+        disabled: kubernetes.length === 0 || isKubernetesListUnavailable(kubernetes),
         component: <DBCluster key={TabKeys.dbclusters} kubernetes={kubernetes} />,
       },
     ],
