@@ -15,11 +15,11 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
-  "id": 440,
+  "id": 441,
   "links": [],
   "panels": [
     {
-      "datasource": "Charts data",
+      "datasource": null,
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -77,11 +77,17 @@
           "mode": "single"
         }
       },
+      "targets": [
+        {
+          "refId": "A",
+          "scenarioId": "categorical_data"
+        }
+      ],
       "title": "Plenty od data, automatic value sizing",
       "type": "barchart"
     },
     {
-      "datasource": "Charts data",
+      "datasource": null,
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -142,11 +148,17 @@
           "mode": "single"
         }
       },
+      "targets": [
+        {
+          "refId": "A",
+          "scenarioId": "categorical_data"
+        }
+      ],
       "title": "Plenty od data, fixed value sizing",
       "type": "barchart"
     },
     {
-      "datasource": "Charts data",
+      "datasource": null,
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -206,6 +218,12 @@
           "mode": "single"
         }
       },
+      "targets": [
+        {
+          "refId": "A",
+          "scenarioId": "categorical_data"
+        }
+      ],
       "title": "Auto font size, value auto visible",
       "transformations": [
         {
@@ -216,13 +234,22 @@
                 "config": {
                   "id": "equal",
                   "options": {
-                    "value": "uPlot"
+                    "value": "Bedroom"
                   }
                 },
-                "fieldName": "lib_name"
+                "fieldName": "location"
+              },
+              {
+                "config": {
+                  "id": "equal",
+                  "options": {
+                    "value": "Cellar"
+                  }
+                },
+                "fieldName": "location"
               }
             ],
-            "match": "all",
+            "match": "any",
             "type": "include"
           }
         }
@@ -230,7 +257,7 @@
       "type": "barchart"
     },
     {
-      "datasource": "Charts data",
+      "datasource": null,
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -290,6 +317,12 @@
           "mode": "single"
         }
       },
+      "targets": [
+        {
+          "refId": "A",
+          "scenarioId": "categorical_data"
+        }
+      ],
       "title": "Auto font size, value always visible",
       "transformations": [
         {
@@ -300,13 +333,22 @@
                 "config": {
                   "id": "equal",
                   "options": {
-                    "value": "uPlot"
+                    "value": "Bedroom"
                   }
                 },
-                "fieldName": "lib_name"
+                "fieldName": "location"
+              },
+              {
+                "config": {
+                  "id": "equal",
+                  "options": {
+                    "value": "Cellar"
+                  }
+                },
+                "fieldName": "location"
               }
             ],
-            "match": "all",
+            "match": "any",
             "type": "include"
           }
         }
@@ -314,7 +356,7 @@
       "type": "barchart"
     },
     {
-      "datasource": "Charts data",
+      "datasource": null,
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -374,6 +416,12 @@
           "mode": "single"
         }
       },
+      "targets": [
+        {
+          "refId": "A",
+          "scenarioId": "categorical_data"
+        }
+      ],
       "title": "Auto font size, value auto visible",
       "transformations": [
         {
@@ -384,13 +432,22 @@
                 "config": {
                   "id": "equal",
                   "options": {
-                    "value": "uPlot"
+                    "value": "Bedroom"
                   }
                 },
-                "fieldName": "lib_name"
+                "fieldName": "location"
+              },
+              {
+                "config": {
+                  "id": "equal",
+                  "options": {
+                    "value": "Cellar"
+                  }
+                },
+                "fieldName": "location"
               }
             ],
-            "match": "all",
+            "match": "any",
             "type": "include"
           }
         }
@@ -398,7 +455,7 @@
       "type": "barchart"
     },
     {
-      "datasource": "Charts data",
+      "datasource": null,
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -458,6 +515,12 @@
           "mode": "single"
         }
       },
+      "targets": [
+        {
+          "refId": "A",
+          "scenarioId": "categorical_data"
+        }
+      ],
       "title": "Auto font size, value always visible",
       "transformations": [
         {
@@ -468,13 +531,22 @@
                 "config": {
                   "id": "equal",
                   "options": {
-                    "value": "uPlot"
+                    "value": "Bedroom"
                   }
                 },
-                "fieldName": "lib_name"
+                "fieldName": "location"
+              },
+              {
+                "config": {
+                  "id": "equal",
+                  "options": {
+                    "value": "Cellar"
+                  }
+                },
+                "fieldName": "location"
               }
             ],
-            "match": "all",
+            "match": "any",
             "type": "include"
           }
         }
@@ -501,5 +573,5 @@
   "timezone": "",
   "title": "BarChart - value text sizing",
   "uid": "WFlOM-jM1",
-  "version": 21
+  "version": 9
 }
