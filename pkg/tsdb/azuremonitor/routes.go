@@ -4,13 +4,13 @@ import "fmt"
 
 func getManagementApiRoute(azureCloud string) (string, error) {
 	switch azureCloud {
-	case "azuremonitor":
+	case azureMonitorPublic:
 		return "azuremonitor", nil
-	case "chinaazuremonitor":
+	case azureMonitorChina:
 		return "chinaazuremonitor", nil
-	case "govazuremonitor":
+	case azureMonitorUSGovernment:
 		return "govazuremonitor", nil
-	case "germanyazuremonitor":
+	case azureMonitorGermany:
 		return "germanyazuremonitor", nil
 	default:
 		err := fmt.Errorf("the cloud '%s' not supported", azureCloud)
@@ -20,11 +20,11 @@ func getManagementApiRoute(azureCloud string) (string, error) {
 
 func getLogAnalyticsApiRoute(azureCloud string) (string, error) {
 	switch azureCloud {
-	case "azuremonitor":
+	case azureMonitorPublic:
 		return "loganalyticsazure", nil
-	case "chinaazuremonitor":
+	case azureMonitorChina:
 		return "chinaloganalyticsazure", nil
-	case "govazuremonitor":
+	case azureMonitorUSGovernment:
 		return "govloganalyticsazure", nil
 	default:
 		err := fmt.Errorf("the cloud '%s' not supported", azureCloud)
@@ -34,9 +34,9 @@ func getLogAnalyticsApiRoute(azureCloud string) (string, error) {
 
 func getAppInsightsApiRoute(azureCloud string) (string, error) {
 	switch azureCloud {
-	case "azuremonitor":
+	case azureMonitorPublic:
 		return "appinsights", nil
-	case "chinaazuremonitor":
+	case azureMonitorChina:
 		return "chinaappinsights", nil
 	default:
 		err := fmt.Errorf("the cloud '%s' not supported", azureCloud)

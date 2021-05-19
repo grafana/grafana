@@ -12,6 +12,14 @@ const (
 	AzureAuthClientSecret    = "clientsecret"
 )
 
+// Azure cloud names specific to Azure Monitor
+const (
+	azureMonitorPublic       = "azuremonitor"
+	azureMonitorChina        = "chinaazuremonitor"
+	azureMonitorUSGovernment = "govazuremonitor"
+	azureMonitorGermany      = "germanyazuremonitor"
+)
+
 func getAuthType(cfg *setting.Cfg, pluginData *simplejson.Json) string {
 	if authType := pluginData.Get("azureAuthType").MustString(); authType != "" {
 		return authType
@@ -38,13 +46,13 @@ func getAuthType(cfg *setting.Cfg, pluginData *simplejson.Json) string {
 func getDefaultAzureCloud(cfg *setting.Cfg) (string, error) {
 	switch cfg.Azure.Cloud {
 	case setting.AzurePublic:
-		return "azuremonitor", nil
+		return azureMonitorPublic, nil
 	case setting.AzureChina:
-		return "chinaazuremonitor", nil
+		return azureMonitorChina, nil
 	case setting.AzureUSGovernment:
-		return "govazuremonitor", nil
+		return azureMonitorUSGovernment, nil
 	case setting.AzureGermany:
-		return "germanyazuremonitor", nil
+		return azureMonitorGermany, nil
 	default:
 		err := fmt.Errorf("the cloud '%s' not supported", cfg.Azure.Cloud)
 		return "", err
