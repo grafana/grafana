@@ -1,4 +1,4 @@
-const RESOURCE_URI_REGEX = /\/subscriptions\/(?<subscriptionID>.+)\/resourceGroups\/(?<resourceGroup>.+)\/.+\/(?<resource>[\w-_]+)/;
+const RESOURCE_URI_REGEX = /\/subscriptions\/(?<subscriptionID>.+)\/resourceGroups\/(?<resourceGroup>.+)\/providers.+\/(?<resource>[\w-_]+)/;
 
 export function parseResourceURI(resourceURI: string) {
   const matches = RESOURCE_URI_REGEX.exec(resourceURI);
