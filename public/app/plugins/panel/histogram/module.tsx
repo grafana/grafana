@@ -45,7 +45,7 @@ export const plugin = new PanelPlugin<PanelOptions, PanelFieldConfig>(HistogramP
         showIf: (opts, data) => !originalDataHasHistogram(data),
       });
 
-    commonOptionsBuilder.addTooltipOptions(builder);
+    // commonOptionsBuilder.addTooltipOptions(builder);
     commonOptionsBuilder.addLegendOptions(builder);
   })
   .useFieldConfig({

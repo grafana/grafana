@@ -1,23 +1,15 @@
 import React, { useMemo } from 'react';
-import { PanelProps, buildHistogram, getHistogramFields, applyFieldOverrides } from '@grafana/data';
+import { PanelProps, buildHistogram, getHistogramFields } from '@grafana/data';
 
 import { Histogram } from './Histogram';
 import { PanelOptions } from './models.gen';
-import { TooltipPlugin, useTheme2 } from '@grafana/ui';
+import { useTheme2 } from '@grafana/ui';
 
 type Props = PanelProps<PanelOptions>;
 
 import { histogramFieldsToFrame } from '@grafana/data/src/transformations/transformers/histogram';
 
-export const HistogramPanel: React.FC<Props> = ({
-  data,
-  options,
-  width,
-  height,
-  timeZone,
-  fieldConfig,
-  replaceVariables,
-}) => {
+export const HistogramPanel: React.FC<Props> = ({ data, options, width, height }) => {
   const theme = useTheme2();
 
   const histogram = useMemo(() => {
@@ -35,15 +27,8 @@ export const HistogramPanel: React.FC<Props> = ({
       return undefined;
     }
 
-    // This will manage legend/tooltip color and visibility changes
-    const frame = histogramFieldsToFrame(hist);
-    return applyFieldOverrides({
-      data: [frame], // the frame
-      fieldConfig, // defaults + overrides
-      replaceVariables,
-      theme: theme,
-    })[0];
-  }, [data.series, options, fieldConfig, replaceVariables, theme]);
+    return histogramFieldsToFrame(hist);
+  }, [data.series, options]);
 
   if (!histogram || !histogram.fields.length) {
     return (
@@ -64,7 +49,7 @@ export const HistogramPanel: React.FC<Props> = ({
       alignedFrame={histogram}
     >
       {(config, alignedFrame) => {
-        return <TooltipPlugin data={alignedFrame} config={config} mode={options.tooltip.mode} timeZone={timeZone} />;
+        return null; // <TooltipPlugin data={alignedFrame} config={config} mode={options.tooltip.mode} timeZone={timeZone} />;
       }}
     </Histogram>
   );
