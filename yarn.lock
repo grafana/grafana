@@ -5022,7 +5022,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@percona/platform-core@npm:^0.7.0":
+"@percona/platform-core@npm:^0.7.7":
   version: 0.7.7
   resolution: "@percona/platform-core@npm:0.7.7"
   dependencies:
@@ -19689,7 +19689,7 @@ __metadata:
     "@opentelemetry/api": 1.0.2
     "@opentelemetry/exporter-collector": 0.23.0
     "@opentelemetry/semantic-conventions": 1.0.0
-    "@percona/platform-core": ^0.7.0
+    "@percona/platform-core": ^0.7.7
     "@pmmmwh/react-refresh-webpack-plugin": ^0.5.1
     "@popperjs/core": 2.5.4
     "@react-aria/focus": 3.5.0

@@ -16,9 +16,10 @@ import { KubernetesOperatorStatus } from '../../../Kubernetes/OperatorStatusItem
 import { SelectableValue } from '@grafana/data';
 import { isOptionEmpty } from '../../DBCluster.utils';
 import { useDatabaseVersions } from './DBClusterBasicOptions.hooks';
+import { CLUSTER_NAME_MAX_LENGTH } from './DBClusterBasicOptions.constants';
 
 export const DBClusterBasicOptions: FC<DBClusterBasicOptionsProps> = ({ kubernetes, form }) => {
-  const { required } = validators;
+  const { required, maxLength } = validators;
   const { change } = form;
   const { kubernetesCluster, databaseType } = form.getState().values;
   const [databaseVersions, setDatabaseVersions] = useState<SelectableValue[]>([]);
@@ -76,7 +77,7 @@ export const DBClusterBasicOptions: FC<DBClusterBasicOptionsProps> = ({ kubernet
       <TextInputField
         name={AddDBClusterFields.name}
         label={Messages.dbcluster.addModal.fields.clusterName}
-        validators={[required, kubernetesClusterNameValidator]}
+        validators={[required, kubernetesClusterNameValidator, maxLength(CLUSTER_NAME_MAX_LENGTH)]}
       />
       <Field
         dataQa="dbcluster-kubernetes-cluster-field"

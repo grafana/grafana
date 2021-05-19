@@ -34,7 +34,7 @@ describe('DBClusterBasicOptions::', () => {
         render={({ form }: FormRenderProps) => <DBClusterBasicOptions kubernetes={kubernetesStub} form={form} />}
       />
     );
-    const name = root.find('[data-qa="name-text-input"]');
+    const name = root.find(dataQa('name-text-input'));
 
     expect(name.prop('value')).toEqual('dbcluster');
   });
@@ -51,5 +51,25 @@ describe('DBClusterBasicOptions::', () => {
       Messages.dbcluster.addModal.validationMessages.clusterName
     );
     expect(kubernetesClusterNameValidator(clusterName3)).toEqual(undefined);
+  });
+
+  it('should validate cluster name length', () => {
+    const root = mount(
+      <Form
+        initialValues={{
+          [AddDBClusterFields.name]: 'testname',
+        }}
+        onSubmit={jest.fn()}
+        render={({ form }: FormRenderProps) => <DBClusterBasicOptions kubernetes={kubernetesStub} form={form} />}
+      />
+    );
+
+    root.find(dataQa('name-text-input')).simulate('change', {
+      target: {
+        value: 'testinvalidnamelength',
+      },
+    });
+
+    expect(root.find(dataQa('name-field-error-message')).text().length).toBeGreaterThan(0);
   });
 });
