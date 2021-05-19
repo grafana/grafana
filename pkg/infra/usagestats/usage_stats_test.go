@@ -62,6 +62,7 @@ func TestMetrics(t *testing.T) {
 				AuthTokens:            15,
 				DashboardVersions:     16,
 				Annotations:           17,
+				AlertRules:            18,
 			}
 			getSystemStatsQuery = query
 			return nil
