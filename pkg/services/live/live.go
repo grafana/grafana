@@ -2,6 +2,7 @@ package live
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -574,7 +575,7 @@ func (g *GrafanaLive) ClientCount(orgID int64, channel string) (int, error) {
 func (g *GrafanaLive) HandleHTTPPublish(ctx *models.ReqContext, cmd dtos.LivePublishCmd) response.Response {
 	addr, err := live.ParseChannel(cmd.Channel)
 	if err != nil {
-		if err == live.ErrInvalidChannelID {
+		if errors.Is(err, live.ErrInvalidChannelID) {
 			return response.Error(http.StatusBadRequest, "Bad channel address", err)
 		}
 
