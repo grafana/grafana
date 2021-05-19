@@ -1,11 +1,14 @@
 package ualert
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
+	"time"
+
+	"xorm.io/xorm"
 
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
-	"xorm.io/xorm"
 )
 
 const GENERAL_FOLDER = "General Alerting"
@@ -49,7 +52,10 @@ func AddDashAlertMigration(mg *migrator.Migrator) {
 		if err != nil {
 			mg.Logger.Error("alert migration error: could not clear alert migration for removing data", "error", err)
 		}
-		mg.AddMigration(migTitle, &migration{})
+		mg.AddMigration(migTitle, &migration{
+			seenChannelUIDs:  make(map[string]struct{}),
+			migratedChannels: make(map[*notificationChannel]struct{}),
+		})
 	case !ngEnabled && migrationRun:
 		// Remove the migration entry that creates unified alerting data. This is so when the feature
 		// flag is enabled in the future the migration "move dashboard alerts to unified alerting" will be run again.
@@ -66,6 +72,9 @@ type migration struct {
 	// session and mg are attached for convenience.
 	sess *xorm.Session
 	mg   *migrator.Migrator
+
+	seenChannelUIDs  map[string]struct{}
+	migratedChannels map[*notificationChannel]struct{}
 }
 
 func (m *migration) SQL(dialect migrator.Dialect) string {
@@ -92,6 +101,15 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 	if err != nil {
 		return err
 	}
+
+	// allChannels: channelUID -> channelConfig
+	allChannels, defaultChannels, err := m.getNotificationChannelMap()
+	if err != nil {
+		return err
+	}
+
+	amConfig := PostableUserConfig{}
+	amConfig.AlertmanagerConfig.Route = &Route{}
 
 	for _, da := range dashAlerts {
 		newCond, err := transConditions(*da.ParsedSettings, da.OrgId, dsIDMap)
@@ -194,6 +212,10 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 			return err
 		}
 
+		if err := m.updateReceiverAndRoute(allChannels, defaultChannels, da, rule, &amConfig); err != nil {
+			return err
+		}
+
 		_, err = m.sess.Insert(rule)
 		if err != nil {
 			// TODO better error handling, if constraint
@@ -213,7 +235,37 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 		}
 	}
 
-	return nil
+	// Create a separate receiver for all the unmigrated channels.
+	err = m.updateDefaultAndUnmigratedChannels(&amConfig, allChannels, defaultChannels)
+	if err != nil {
+		return err
+	}
+
+	if err := amConfig.EncryptSecureSettings(); err != nil {
+		return err
+	}
+	rawAmConfig, err := json.Marshal(&amConfig)
+	if err != nil {
+		return err
+	}
+
+	// TODO: should we apply the config here? Because Alertmanager can take upto 1 min to pick it up.
+	_, err = m.sess.Insert(AlertConfiguration{
+		AlertmanagerConfiguration: string(rawAmConfig),
+		// Since we are migration for a snapshot of the code, it is always going to migrate to
+		// the v1 config.
+		ConfigurationVersion: "v1",
+	})
+
+	return err
+}
+
+type AlertConfiguration struct {
+	ID int64 `xorm:"pk autoincr 'id'"`
+
+	AlertmanagerConfiguration string
+	ConfigurationVersion      string
+	CreatedAt                 time.Time `xorm:"created"`
 }
 
 type rmMigration struct {
