@@ -15,10 +15,54 @@ Currently, **it only supports updates on the `auth.saml` section.**
 
 ## Update settings via the API
 
-You can update / remove settings through the [Admin API]({{< relref "../http_api/admin.md#update-settings" >}}).
+You can update settings through the [Admin API]({{< relref "../http_api/admin.md#update-settings" >}}).
 
-It verifies if the given settings updates (or removals) are allowed and valid, persists them into the database and reload
+It verifies if the given settings updates are allowed and valid, persists them into the database and reloads
 Grafana services with no need to restart the instance.
+
+So, the payload of a `PUT` request to the update settings endpoint (`/api/admin/settings`) 
+should contain (either one or both):
+- An `updates` map with a key, and a value per section you want to set.
+- A `removals` list with keys per section you want to set.
+
+For example, if you provide the following `updates`:
+
+```json
+{
+  "auth.saml": {
+    "enabled": "true",
+    "single_logout": "false"
+}
+```
+it would enable SAML and disable single logouts. And, if you provide the following `removals`:
+```json
+{
+  "auth.saml": ["allow_idp_initiated"]
+}
+```
+
+it would remove the key/value setting identified by `allow_idp_initiated` within the `auth.saml`.
+So, the SAML service would be reloaded and that value would be inherited for either (settings `.ini` file,
+environment variable, command line arguments or any other accepted mechanism to provide configuration).
+
+Therefore, the complete HTTP payload would looks like:
+
+```json
+{
+  "updates": {
+    "auth.saml": {
+      "enabled": "true",
+      "single_logout": "false"
+    }
+  },
+  "removals": {
+    "auth.saml": ["allow_idp_initiated"]
+  }
+}
+```
+
+In case any of these settings cannot be overridden nor valid, it would return an error and these settings
+won't be persisted into the database.
 
 ## Background job (high availability set-ups)
 
