@@ -7,7 +7,7 @@ weight = 500
 
 # Settings updates at runtime
 
-> Only available in Grafana Enterprise v8.0+.
+> **Note:** Available in Grafana Enterprise v8.0+.
 
 Settings updates at runtime allows you to update Grafana settings with no need to restart the instance.
 
