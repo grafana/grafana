@@ -464,6 +464,121 @@ func TestAlertAndGroupsQuery(t *testing.T) {
 	}
 }
 
+func TestRulerAccess(t *testing.T) {
+	// Setup Grafana and its Database
+	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
+		EnableFeatureToggles: []string{"ngalert"},
+		EnableQuota:          true,
+		DisableAnonymous:     true,
+		ViewersCanEdit:       true,
+	})
+
+	store := testinfra.SetUpDatabase(t, dir)
+	// override bus to get the GetSignedInUserQuery handler
+	store.Bus = bus.GetBus()
+	grafanaListedAddr := testinfra.StartGrafana(t, dir, path, store)
+
+	// Create the namespace we'll save our alerts to.
+	require.NoError(t, createFolder(t, store, 0, "default"))
+
+	// Create a users to make authenticated requests
+	require.NoError(t, createUser(t, store, models.ROLE_VIEWER, "viewer", "viewer"))
+	require.NoError(t, createUser(t, store, models.ROLE_EDITOR, "editor", "editor"))
+	require.NoError(t, createUser(t, store, models.ROLE_ADMIN, "admin", "admin"))
+
+	// Now, let's try to create some invalid alert rules.
+	testCases := []struct {
+		desc             string
+		url              string
+		expStatus        int
+		expectedResponse string
+	}{
+		{
+			desc:             "un-authenticated request should fail",
+			url:              "http://%s/api/ruler/grafana/api/v1/rules/default",
+			expStatus:        http.StatusUnauthorized,
+			expectedResponse: `{"message": "Unauthorized"}`,
+		},
+		{
+			desc:             "viewer request should fail",
+			url:              "http://viewer:viewer@%s/api/ruler/grafana/api/v1/rules/default",
+			expStatus:        http.StatusForbidden,
+			expectedResponse: `{"error":"user does not have permissions to edit the namespace", "message":"user does not have permissions to edit the namespace"}`,
+		},
+		{
+			desc:             "editor request should succeed",
+			url:              "http://editor:editor@%s/api/ruler/grafana/api/v1/rules/default",
+			expStatus:        http.StatusAccepted,
+			expectedResponse: `{"message":"rule group updated successfully"}`,
+		},
+		{
+			desc:             "admin request should succeed",
+			url:              "http://admin:admin@%s/api/ruler/grafana/api/v1/rules/default",
+			expStatus:        http.StatusAccepted,
+			expectedResponse: `{"message":"rule group updated successfully"}`,
+		},
+	}
+
+	for i, tc := range testCases {
+		t.Run(tc.desc, func(t *testing.T) {
+
+			interval, err := model.ParseDuration("1m")
+			require.NoError(t, err)
+
+			rules := apimodels.PostableRuleGroupConfig{
+				Name: "arulegroup",
+				Rules: []apimodels.PostableExtendedRuleNode{
+					{
+						ApiRuleNode: &apimodels.ApiRuleNode{
+							For:         interval,
+							Labels:      map[string]string{"label1": "val1"},
+							Annotations: map[string]string{"annotation1": "val1"},
+						},
+						// this rule does not explicitly set no data and error states
+						// therefore it should get the default values
+						GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
+							Title:     fmt.Sprintf("AlwaysFiring %d", i),
+							Condition: "A",
+							Data: []ngmodels.AlertQuery{
+								{
+									RefID: "A",
+									RelativeTimeRange: ngmodels.RelativeTimeRange{
+										From: ngmodels.Duration(time.Duration(5) * time.Hour),
+										To:   ngmodels.Duration(time.Duration(3) * time.Hour),
+									},
+									DatasourceUID: "-100",
+									Model: json.RawMessage(`{
+								"type": "math",
+								"expression": "2 + 3 > 1"
+								}`),
+								},
+							},
+						},
+					},
+				},
+			}
+			buf := bytes.Buffer{}
+			enc := json.NewEncoder(&buf)
+			err = enc.Encode(&rules)
+			require.NoError(t, err)
+
+			u := fmt.Sprintf(tc.url, grafanaListedAddr)
+			// nolint:gosec
+			resp, err := http.Post(u, "application/json", &buf)
+			require.NoError(t, err)
+			t.Cleanup(func() {
+				err := resp.Body.Close()
+				require.NoError(t, err)
+			})
+			b, err := ioutil.ReadAll(resp.Body)
+			require.NoError(t, err)
+
+			assert.Equal(t, tc.expStatus, resp.StatusCode)
+			require.JSONEq(t, tc.expectedResponse, string(b))
+		})
+	}
+}
+
 func TestAlertRuleCRUD(t *testing.T) {
 	// Setup Grafana and its Database
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
@@ -478,6 +593,7 @@ func TestAlertRuleCRUD(t *testing.T) {
 	grafanaListedAddr := testinfra.StartGrafana(t, dir, path, store)
 
 	err := createUser(t, store, models.ROLE_EDITOR, "grafana", "password")
+
 	require.NoError(t, err)
 
 	// Create the namespace we'll save our alerts to.
