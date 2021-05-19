@@ -23,7 +23,8 @@ type SelVal = SelectableValue<string>;
 type LoadOptions = (filter: string) => Promise<SelVal[]>;
 
 type Props = {
-  value: string;
+  value?: string;
+  placeholder?: string;
   buttonClassName?: string;
   loadOptions?: LoadOptions;
   // if filterByLoadOptions is false,
@@ -201,6 +202,7 @@ const defaultButtonClass = css({
 });
 
 export const Seg = ({
+  placeholder,
   value,
   buttonClassName,
   loadOptions,
@@ -222,7 +224,7 @@ export const Seg = ({
           setOpen(true);
         }}
       >
-        {value}
+        {value ?? placeholder ?? ''}
       </InlineLabel>
     );
   } else {
@@ -230,7 +232,7 @@ export const Seg = ({
       return (
         <Sel
           isClearable={isClearable ?? false}
-          value={value}
+          value={value ?? ''}
           loadOptions={loadOptions}
           filterByLoadOptions={filterByLoadOptions ?? false}
           allowCustomValue={allowCustomValue}
@@ -246,7 +248,7 @@ export const Seg = ({
     } else {
       return (
         <Inp
-          initialValue={value}
+          initialValue={value ?? ''}
           onChange={(v) => {
             setOpen(false);
             onChange({ value: v, label: v });

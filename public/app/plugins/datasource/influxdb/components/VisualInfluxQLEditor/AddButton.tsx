@@ -12,7 +12,7 @@ type Props = {
 export const AddButton = ({ loadOptions, allowCustomValue, onAdd }: Props): JSX.Element => {
   return (
     <Seg
-      value="+"
+      placeholder="+"
       loadOptions={loadOptions}
       allowCustomValue={allowCustomValue}
       onChange={(v) => {
