@@ -110,7 +110,7 @@ func TestValidateScuemataBasics(t *testing.T) {
 					require.NoError(t, err, "failed to open dashboard file")
 
 					err = validateResources(b, baseLoadPaths, load.BaseDashboardFamily)
-					assert.EqualError(t, err, "failed validation: Family.lineages.0.0.panels.0.fieldConfig.defaults: field mappings not allowed")
+					assert.EqualError(t, err, "failed validation: Family.lineages.0.0.panels.0.type: incomplete value !=\"\"")
 				})
 			}
 
