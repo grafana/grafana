@@ -1,5 +1,5 @@
 import React, { FC, useCallback } from 'react';
-import { Button, Field, FieldArray, InputControl, Label, TextArea, useStyles } from '@grafana/ui';
+import { Button, Field, FieldArray, Input, InputControl, Label, TextArea, useStyles } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
 import { css, cx } from '@emotion/css';
 import { useFormContext } from 'react-hook-form';
@@ -28,53 +28,55 @@ const AnnotationsField: FC = () => {
         {({ fields, append, remove }) => {
           return (
             <div className={styles.flexColumn}>
-              {fields.map((field, index) => (
-                <div key={field.id} className={styles.flexRow}>
-                  <Field
-                    className={styles.field}
-                    invalid={!!errors.annotations?.[index]?.key?.message}
-                    error={errors.annotations?.[index]?.key?.message}
-                  >
-                    <InputControl
-                      name={`annotations[${index}].key`}
-                      render={({ field: { ref, ...field } }) => (
-                        <AnnotationKeyInput {...field} existingKeys={existingKeys(index)} width={18} />
-                      )}
-                      control={control}
-                      rules={{ required: { value: !!annotations[index]?.value, message: 'Required.' } }}
+              {fields.map((field, index) => {
+                const isUrl = annotations[index]?.key?.toLocaleLowerCase().endsWith('url');
+                const ValueInputComponent = isUrl ? Input : TextArea;
+                return (
+                  <div key={field.id} className={styles.flexRow}>
+                    <Field
+                      className={styles.field}
+                      invalid={!!errors.annotations?.[index]?.key?.message}
+                      error={errors.annotations?.[index]?.key?.message}
+                    >
+                      <InputControl
+                        name={`annotations[${index}].key`}
+                        render={({ field: { ref, ...field } }) => (
+                          <AnnotationKeyInput {...field} existingKeys={existingKeys(index)} width={18} />
+                        )}
+                        control={control}
+                        rules={{ required: { value: !!annotations[index]?.value, message: 'Required.' } }}
+                      />
+                    </Field>
+                    <Field
+                      className={cx(styles.flexRowItemMargin, styles.field)}
+                      invalid={!!errors.annotations?.[index]?.value?.message}
+                      error={errors.annotations?.[index]?.value?.message}
+                    >
+                      <ValueInputComponent
+                        className={cx(styles.annotationValueInput, { [styles.textarea]: !isUrl })}
+                        {...register(`annotations[${index}].value`)}
+                        placeholder={isUrl ? 'https://' : `Text`}
+                        defaultValue={field.value}
+                      />
+                    </Field>
+                    <Button
+                      type="button"
+                      className={styles.flexRowItemMargin}
+                      aria-label="delete annotation"
+                      icon="trash-alt"
+                      variant="secondary"
+                      onClick={() => remove(index)}
                     />
-                  </Field>
-                  <Field
-                    className={cx(styles.flexRowItemMargin, styles.field)}
-                    invalid={!!errors.annotations?.[index]?.value?.message}
-                    error={errors.annotations?.[index]?.value?.message}
-                  >
-                    <TextArea
-                      className={styles.annotationTextArea}
-                      {...register(`annotations[${index}].value`, {
-                        required: { value: !!annotations[index]?.key, message: 'Required.' },
-                      })}
-                      placeholder={`value`}
-                      defaultValue={field.value}
-                    />
-                  </Field>
-                  <Button
-                    type="button"
-                    className={styles.flexRowItemMargin}
-                    aria-label="delete annotation"
-                    icon="trash-alt"
-                    variant="secondary"
-                    onClick={() => remove(index)}
-                  />
-                </div>
-              ))}
+                  </div>
+                );
+              })}
               <Button
                 className={styles.addAnnotationsButton}
                 icon="plus-circle"
                 type="button"
                 variant="secondary"
                 onClick={() => {
-                  append({});
+                  append({ key: '', value: '' });
                 }}
               >
                 Add info
@@ -88,14 +90,16 @@ const AnnotationsField: FC = () => {
 };
 
 const getStyles = (theme: GrafanaTheme) => ({
-  annotationTextArea: css`
+  annotationValueInput: css`
     width: 426px;
+  `,
+  textarea: css`
     height: 76px;
   `,
   addAnnotationsButton: css`
     flex-grow: 0;
     align-self: flex-start;
-    margin-left: 124px;
+    margin-left: 148px;
   `,
   flexColumn: css`
     display: flex;

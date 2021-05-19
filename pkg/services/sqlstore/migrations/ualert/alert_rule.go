@@ -189,7 +189,7 @@ func transNoData(s string) (string, error) {
 	case "alerting":
 		return "Alerting", nil
 	case "keep_state":
-		return "KeepLastState", nil
+		return "Alerting", nil
 	}
 	return "", fmt.Errorf("unrecognized No Data setting %v", s)
 }
@@ -198,8 +198,8 @@ func transExecErr(s string) (string, error) {
 	switch s {
 	case "", "alerting":
 		return "Alerting", nil
-	case "KeepLastState":
-		return "KeepLastState", nil
+	case "keep_state":
+		return "Alerting", nil
 	}
 	return "", fmt.Errorf("unrecognized Execution Error setting %v", s)
 }

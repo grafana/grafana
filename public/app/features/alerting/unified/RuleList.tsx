@@ -93,10 +93,10 @@ export const RuleList = withErrorBoundary(
         {(promReqeustErrors.length || rulerRequestErrors.length || grafanaPromError) && (
           <Alert data-testid="cloud-rulessource-errors" title="Errors loading rules" severity="error">
             {grafanaPromError && (
-              <div>Failed to load Grafana threshold rules state: {grafanaPromError.message || 'Unknown error.'}</div>
+              <div>Failed to load Grafana rules state: {grafanaPromError.message || 'Unknown error.'}</div>
             )}
             {grafanaRulerError && (
-              <div>Failed to load Grafana threshold rules config: {grafanaRulerError.message || 'Unknown error.'}</div>
+              <div>Failed to load Grafana rules config: {grafanaRulerError.message || 'Unknown error.'}</div>
             )}
             {promReqeustErrors.map(({ dataSource, error }) => (
               <div key={dataSource.name}>

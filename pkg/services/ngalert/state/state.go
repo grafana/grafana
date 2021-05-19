@@ -87,7 +87,6 @@ func (a *State) resultError(alertRule *ngModels.AlertRule, result eval.Result) *
 	switch alertRule.ExecErrState {
 	case ngModels.AlertingErrState:
 		a.State = eval.Alerting
-	case ngModels.KeepLastStateErrState:
 	}
 	return a
 }
@@ -107,7 +106,6 @@ func (a *State) resultNoData(alertRule *ngModels.AlertRule, result eval.Result) 
 		a.State = eval.Alerting
 	case ngModels.NoData:
 		a.State = eval.NoData
-	case ngModels.KeepLastState:
 	case ngModels.OK:
 		a.State = eval.Normal
 	}
@@ -124,4 +122,18 @@ func (a *State) Equals(b *State) bool {
 		a.EndsAt == b.EndsAt &&
 		a.LastEvaluationTime == b.LastEvaluationTime &&
 		data.Labels(a.Annotations).String() == data.Labels(b.Annotations).String()
+}
+
+func (a *State) TrimResults(alertRule *ngModels.AlertRule) {
+	numBuckets := 2 * (int64(alertRule.For.Seconds()) / alertRule.IntervalSeconds)
+	if numBuckets == 0 {
+		numBuckets = 10 // keep at least 10 evaluations in the event For is set to 0
+	}
+
+	if len(a.Results) < int(numBuckets) {
+		return
+	}
+	newResults := make([]Evaluation, numBuckets)
+	copy(newResults, a.Results[len(a.Results)-int(numBuckets):])
+	a.Results = newResults
 }
