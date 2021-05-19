@@ -1,10 +1,10 @@
-import React, { FC, useCallback, useMemo, useState } from 'react';
-import { noop } from 'lodash';
-import { CoreApp, DataQuery } from '@grafana/data';
-import { getDataSourceSrv } from '@grafana/runtime';
-import { useAsync } from 'react-use';
+import React, { FC, useCallback, useEffect, useMemo, useState } from 'react';
+import { CoreApp, DataQuery, getDefaultTimeRange, getTimeZone } from '@grafana/data';
+import { createQueryRunner, getDataSourceSrv } from '@grafana/runtime';
+import { useAsync, useObservable } from 'react-use';
 import { PromQuery } from 'app/plugins/datasource/prometheus/types';
 import { LokiQuery } from 'app/plugins/datasource/loki/types';
+import { VizWrapper } from './VizWrapper';
 
 interface Props {
   value?: string;
@@ -15,6 +15,13 @@ interface Props {
 export const ExpressionEditor: FC<Props> = ({ value, onChange, dataSourceName }) => {
   const { mapToValue, mapToQuery } = useQueryMappers(dataSourceName);
   const [query, setQuery] = useState(mapToQuery({ refId: 'A', hide: false }, value));
+  const runner = useMemo(() => createQueryRunner(), []);
+  const data = useObservable(runner.get());
+
+  useEffect(() => {
+    return () => runner.destroy();
+  }, [runner]);
+
   const { error, loading, value: dataSource } = useAsync(() => {
     return getDataSourceSrv().get(dataSourceName);
   }, [dataSourceName]);
@@ -39,14 +46,27 @@ export const ExpressionEditor: FC<Props> = ({ value, onChange, dataSourceName })
   const QueryEditor = dataSource?.components?.QueryEditor;
 
   return (
-    <QueryEditor
-      query={query}
-      queries={[query]}
-      app={CoreApp.CloudAlerting}
-      onChange={onChangeQuery}
-      onRunQuery={noop}
-      datasource={dataSource}
-    />
+    <>
+      <QueryEditor
+        query={query}
+        queries={[query]}
+        app={CoreApp.CloudAlerting}
+        onChange={onChangeQuery}
+        onRunQuery={() => {
+          runner.run({
+            timeRange: getDefaultTimeRange(),
+            minInterval: null,
+            maxDataPoints: 1000,
+            timezone: getTimeZone(),
+            queries: [query],
+            datasource: dataSource,
+            app: CoreApp.CloudAlerting,
+          });
+        }}
+        datasource={dataSource}
+      />
+      {data && <VizWrapper data={data} defaultPanel="table" />}
+    </>
   );
 };
 
