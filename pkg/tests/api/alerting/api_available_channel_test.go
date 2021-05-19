@@ -109,6 +109,47 @@ var expAvailableChannelJsonOutput = `
     ]
   },
   {
+    "type": "kafka",
+    "name": "Kafka REST Proxy",
+    "heading": "Kafka settings",
+    "description": "Sends notifications to Kafka Rest Proxy",
+    "info": "",
+    "options": [
+      {
+        "element": "input",
+        "inputType": "text",
+        "label": "Kafka REST Proxy",
+        "description": "",
+        "placeholder": "http://localhost:8082",
+        "propertyName": "kafkaRestProxy",
+        "selectOptions": null,
+        "showWhen": {
+          "field": "",
+          "is": ""
+        },
+        "required": true,
+        "validationRule": "",
+        "secure": false
+      },
+      {
+        "element": "input",
+        "inputType": "text",
+        "label": "Topic",
+        "description": "",
+        "placeholder": "topic1",
+        "propertyName": "kafkaTopic",
+        "selectOptions": null,
+        "showWhen": {
+          "field": "",
+          "is": ""
+        },
+        "required": true,
+        "validationRule": "",
+        "secure": false
+      }
+    ]
+  },
+  {
     "type": "email",
     "name": "Email",
     "heading": "Email settings",
