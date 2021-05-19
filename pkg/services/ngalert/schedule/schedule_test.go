@@ -129,8 +129,6 @@ func TestAlertingTicker(t *testing.T) {
 	t.Cleanup(registry.ClearOverrides)
 
 	alerts := make([]*models.AlertRule, 0)
-	// create alert rule with zero interval (should never run)
-	alerts = append(alerts, tests.CreateTestAlertRule(t, dbstore, 0))
 
 	// create alert rule with one second interval
 	alerts = append(alerts, tests.CreateTestAlertRule(t, dbstore, 1))
@@ -166,7 +164,7 @@ func TestAlertingTicker(t *testing.T) {
 	}()
 	runtime.Gosched()
 
-	expectedAlertRulesEvaluated := []models.AlertRuleKey{alerts[1].GetKey()}
+	expectedAlertRulesEvaluated := []models.AlertRuleKey{alerts[0].GetKey()}
 	t.Run(fmt.Sprintf("on 1st tick alert rules: %s should be evaluated", concatenate(expectedAlertRulesEvaluated)), func(t *testing.T) {
 		tick := advanceClock(t, mockedClock)
 		assertEvalRun(t, evalAppliedCh, tick, expectedAlertRulesEvaluated...)
@@ -174,10 +172,10 @@ func TestAlertingTicker(t *testing.T) {
 
 	// change alert rule interval to three seconds
 	var threeSecInterval int64 = 3
-	alerts[0] = tests.UpdateTestAlertRuleIntervalSeconds(t, dbstore, alerts[0], threeSecInterval)
-	t.Logf("alert rule: %v interval reset to: %d", alerts[0].GetKey(), threeSecInterval)
+	alerts = append(alerts, tests.CreateTestAlertRule(t, dbstore, threeSecInterval))
+	t.Logf("alert rule: %v added with interval: %d", alerts[1].GetKey(), threeSecInterval)
 
-	expectedAlertRulesEvaluated = []models.AlertRuleKey{alerts[1].GetKey()}
+	expectedAlertRulesEvaluated = []models.AlertRuleKey{alerts[0].GetKey()}
 	t.Run(fmt.Sprintf("on 2nd tick alert rule: %s should be evaluated", concatenate(expectedAlertRulesEvaluated)), func(t *testing.T) {
 		tick := advanceClock(t, mockedClock)
 		assertEvalRun(t, evalAppliedCh, tick, expectedAlertRulesEvaluated...)
@@ -189,13 +187,13 @@ func TestAlertingTicker(t *testing.T) {
 		assertEvalRun(t, evalAppliedCh, tick, expectedAlertRulesEvaluated...)
 	})
 
-	expectedAlertRulesEvaluated = []models.AlertRuleKey{alerts[1].GetKey()}
+	expectedAlertRulesEvaluated = []models.AlertRuleKey{alerts[0].GetKey()}
 	t.Run(fmt.Sprintf("on 4th tick alert rules: %s should be evaluated", concatenate(expectedAlertRulesEvaluated)), func(t *testing.T) {
 		tick := advanceClock(t, mockedClock)
 		assertEvalRun(t, evalAppliedCh, tick, expectedAlertRulesEvaluated...)
 	})
 
-	err := dbstore.DeleteAlertRuleByUID(alerts[1].OrgID, alerts[1].UID)
+	err := dbstore.DeleteAlertRuleByUID(alerts[0].OrgID, alerts[0].UID)
 	require.NoError(t, err)
 	t.Logf("alert rule: %v deleted", alerts[1].GetKey())
 
@@ -204,12 +202,12 @@ func TestAlertingTicker(t *testing.T) {
 		tick := advanceClock(t, mockedClock)
 		assertEvalRun(t, evalAppliedCh, tick, expectedAlertRulesEvaluated...)
 	})
-	expectedAlertRulesStopped := []models.AlertRuleKey{alerts[1].GetKey()}
+	expectedAlertRulesStopped := []models.AlertRuleKey{alerts[0].GetKey()}
 	t.Run(fmt.Sprintf("on 5th tick alert rules: %s should be stopped", concatenate(expectedAlertRulesStopped)), func(t *testing.T) {
 		assertStopRun(t, stopAppliedCh, expectedAlertRulesStopped...)
 	})
 
-	expectedAlertRulesEvaluated = []models.AlertRuleKey{alerts[0].GetKey()}
+	expectedAlertRulesEvaluated = []models.AlertRuleKey{alerts[1].GetKey()}
 	t.Run(fmt.Sprintf("on 6th tick alert rules: %s should be evaluated", concatenate(expectedAlertRulesEvaluated)), func(t *testing.T) {
 		tick := advanceClock(t, mockedClock)
 		assertEvalRun(t, evalAppliedCh, tick, expectedAlertRulesEvaluated...)
