@@ -12,10 +12,18 @@ const durationMap: { [key in Required<keyof Duration>]: string[] } = {
   seconds: ['s', 'S', 'seconds'],
 };
 
-export function intervalToAbbreviatedDurationString(interval: Interval): string {
+/**
+ * intervalToAbbreviatedDurationString convers interval to readable duration string
+ *
+ * @param interval - interval to convert
+ * @param includeSeconds - optional, default true. If false, will not include seconds unless interval is less than 1 minute
+ *
+ * @public
+ */
+export function intervalToAbbreviatedDurationString(interval: Interval, includeSeconds = true): string {
   const duration = intervalToDuration(interval);
   return (Object.entries(duration) as Array<[keyof Duration, number | undefined]>).reduce((str, [unit, value]) => {
-    if (value && value !== 0) {
+    if (value && value !== 0 && !(unit === 'seconds' && !includeSeconds && str)) {
       const padding = str !== '' ? ' ' : '';
       return str + `${padding}${value}${durationMap[unit][0]}`;
     }
