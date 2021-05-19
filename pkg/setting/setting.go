@@ -257,7 +257,7 @@ type Cfg struct {
 	PluginSettings           PluginSettings
 	PluginsAllowUnsigned     []string
 	PluginCatalogURL         string
-	PluginCatalogEnabled     bool
+	PluginAdminEnabled       bool
 	DisableSanitizeHtml      bool
 	EnterpriseLicensePath    string
 
@@ -891,7 +891,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 		cfg.PluginsAllowUnsigned = append(cfg.PluginsAllowUnsigned, plug)
 	}
 	cfg.PluginCatalogURL = pluginsSection.Key("plugin_catalog_url").MustString("https://grafana.com/grafana/plugins/")
-	cfg.PluginCatalogEnabled = pluginsSection.Key("plugin_catalog_enabled").MustBool(false)
+	cfg.PluginAdminEnabled = pluginsSection.Key("plugin_admin_enabled").MustBool(false)
 
 	// Read and populate feature toggles list
 	featureTogglesSection := iniFile.Section("feature_toggles")

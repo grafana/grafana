@@ -9,7 +9,7 @@ import { config } from '@grafana/runtime';
 import { NotEnabled } from 'pages/NotEnabed';
 
 export const MarketplaceRootPage = React.memo(function MarketplaceRootPage(props: AppRootProps) {
-  if (!config.pluginCatalogEnabled) {
+  if (!config.pluginAdminEnabled) {
     return <NotEnabled {...props} />;
   }
 
