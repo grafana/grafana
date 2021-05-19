@@ -1,15 +1,15 @@
 import { CombinedRuleNamespace } from 'app/types/unified-alerting';
 import React, { FC, useMemo } from 'react';
 import { isCloudRulesSource, isGrafanaRulesSource } from '../../utils/datasource';
-import { SystemOrApplicationRules } from './SystemOrApplicationRules';
-import { ThresholdRules } from './ThresholdRules';
+import { CloudRules } from './CloudRules';
+import { GrafanaRules } from './GrafanaRules';
 
 interface Props {
   namespaces: CombinedRuleNamespace[];
 }
 
 export const RuleListGroupView: FC<Props> = ({ namespaces }) => {
-  const [thresholdNamespaces, systemNamespaces] = useMemo(() => {
+  const [grafanaNamespaces, cloudNamespaces] = useMemo(() => {
     const sorted = namespaces
       .map((namespace) => ({
         ...namespace,
@@ -24,8 +24,8 @@ export const RuleListGroupView: FC<Props> = ({ namespaces }) => {
 
   return (
     <>
-      <ThresholdRules namespaces={thresholdNamespaces} />
-      <SystemOrApplicationRules namespaces={systemNamespaces} />
+      <GrafanaRules namespaces={grafanaNamespaces} />
+      <CloudRules namespaces={cloudNamespaces} />
     </>
   );
 };

@@ -13,6 +13,7 @@ import { QueryEditorRow } from '../../query/components/QueryEditorRow';
 import { VizWrapper } from '../unified/components/rule-editor/VizWrapper';
 import { isExpressionQuery } from '../../expressions/guards';
 import { GrafanaQuery } from 'app/types/unified-alerting-dto';
+import { cloneDeep } from 'lodash';
 
 interface Props {
   data: PanelData;
@@ -66,7 +67,7 @@ export const AlertingQueryWrapper: FC<Props> = ({
         index={index}
         key={query.refId}
         data={data}
-        query={query.model}
+        query={cloneDeep(query.model)}
         onChange={(query) => onChangeQuery(query, index)}
         onRemoveQuery={onRemoveQuery}
         onAddQuery={onDuplicateQuery}
