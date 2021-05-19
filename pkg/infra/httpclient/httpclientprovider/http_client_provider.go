@@ -8,6 +8,8 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
+var newProviderFunc = sdkhttpclient.NewProvider
+
 // New creates a new HTTP client provider with pre-configured middlewares.
 func New(cfg *setting.Cfg) httpclient.Provider {
 	userAgent := fmt.Sprintf("Grafana/%s", cfg.BuildVersion)
@@ -22,7 +24,7 @@ func New(cfg *setting.Cfg) httpclient.Provider {
 		middlewares = append(middlewares, SigV4Middleware())
 	}
 
-	return sdkhttpclient.NewProvider(sdkhttpclient.ProviderOptions{
+	return newProviderFunc(sdkhttpclient.ProviderOptions{
 		Middlewares: middlewares,
 	})
 }
