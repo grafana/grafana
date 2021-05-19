@@ -596,5 +596,29 @@ func GetAvailableNotifiers() []*alerting.NotifierPlugin {
 				},
 			},
 		},
+		{
+			Type:        "discord",
+			Name:        "Discord",
+			Heading:     "Discord settings",
+			Description: "Sends notifications to Discord",
+			Options: []alerting.NotifierOption{
+				{
+					Label:        "Message Content",
+					Description:  "Mention a group using @ or a user using <@ID> when notifying in a channel",
+					Element:      alerting.ElementTypeInput,
+					InputType:    alerting.InputTypeText,
+					Placeholder:  `{{ template "default.message" . }}`,
+					PropertyName: "message",
+				},
+				{
+					Label:        "Webhook URL",
+					Element:      alerting.ElementTypeInput,
+					InputType:    alerting.InputTypeText,
+					Placeholder:  "Discord webhook URL",
+					PropertyName: "url",
+					Required:     true,
+				},
+			},
+		},
 	}
 }
