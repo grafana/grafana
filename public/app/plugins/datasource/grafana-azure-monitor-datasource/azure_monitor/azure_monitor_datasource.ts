@@ -11,6 +11,7 @@ import {
   AzureQueryType,
   AzureMonitorMetricsMetadataResponse,
   AzureMetricQuery,
+  DatasourceValidationResult,
 } from '../types';
 import {
   DataSourceInstanceSettings,
@@ -25,7 +26,7 @@ import { from, Observable } from 'rxjs';
 import { mergeMap } from 'rxjs/operators';
 
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { getAzureCloud } from '../credentials';
+import { getAuthType, getAzureCloud } from '../credentials';
 import { getManagementApiRoute } from '../api/routes';
 
 const defaultDropdownValue = 'select';
@@ -458,24 +459,15 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
     });
   }
 
-  testDatasource(): Promise<any> {
-    if (!this.isValidConfigField(this.instanceSettings.jsonData.tenantId)) {
-      return Promise.resolve({
-        status: 'error',
-        message: 'The Tenant Id field is required.',
-      });
-    }
-
-    if (!this.isValidConfigField(this.instanceSettings.jsonData.clientId)) {
-      return Promise.resolve({
-        status: 'error',
-        message: 'The Client Id field is required.',
-      });
+  testDatasource(): Promise<DatasourceValidationResult> {
+    const validationError = this.validateDatasource();
+    if (validationError) {
+      return Promise.resolve(validationError);
     }
 
     const url = `${this.baseUrl}?api-version=2019-03-01`;
     return this.doRequest(url)
-      .then((response: any) => {
+      .then<DatasourceValidationResult>((response: any) => {
         if (response.status === 200) {
           return {
             status: 'success',
@@ -509,8 +501,37 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
       });
   }
 
-  isValidConfigField(field?: string) {
-    return field && field.length > 0;
+  private validateDatasource(): DatasourceValidationResult | undefined {
+    const authType = getAuthType(this.instanceSettings);
+
+    if (authType === 'clientsecret') {
+      if (!this.isValidConfigField(this.instanceSettings.jsonData.tenantId)) {
+        return {
+          status: 'error',
+          message: 'The Tenant Id field is required.',
+        };
+      }
+
+      if (!this.isValidConfigField(this.instanceSettings.jsonData.clientId)) {
+        return {
+          status: 'error',
+          message: 'The Client Id field is required.',
+        };
+      }
+    }
+
+    if (!this.isValidConfigField(this.subscriptionId)) {
+      return {
+        status: 'error',
+        message: 'The Subscription Id field is required.',
+      };
+    }
+
+    return undefined;
+  }
+
+  private isValidConfigField(field?: string): boolean {
+    return typeof field === 'string' && field.length > 0;
   }
 
   doRequest<T = any>(url: string, maxRetries = 1): Promise<FetchResponse<T>> {

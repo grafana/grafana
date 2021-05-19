@@ -1,5 +1,6 @@
 import React, { FunctionComponent, useMemo } from 'react';
 import { SelectableValue } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { AzureCredentialsForm } from './AzureCredentialsForm';
 import { AzureDataSourceSettings, AzureCredentials } from '../types';
 import { getCredentials, updateCredentials, isLogAnalyticsSameAs } from '../credentials';
@@ -50,8 +51,9 @@ export const MonitorConfig: FunctionComponent<Props> = (props: Props) => {
 
   return (
     <>
-      <h3 className="page-heading">Azure Monitor Metrics Details</h3>
+      <h3 className="page-heading">Authentication</h3>
       <AzureCredentialsForm
+        managedIdentityEnabled={config.azure.managedIdentityEnabled}
         credentials={credentials}
         defaultSubscription={subscriptionId}
         azureCloudOptions={azureClouds}

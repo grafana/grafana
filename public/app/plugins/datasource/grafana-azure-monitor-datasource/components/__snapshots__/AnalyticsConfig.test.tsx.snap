@@ -5,7 +5,7 @@ exports[`Render should disable log analytics credentials form 1`] = `
   <h3
     className="page-heading"
   >
-    Azure Monitor Logs Details
+    Azure Monitor Logs
   </h3>
   <Switch
     checked={true}
@@ -89,7 +89,7 @@ exports[`Render should enable azure log analytics load workspaces button 1`] = `
   <h3
     className="page-heading"
   >
-    Azure Monitor Logs Details
+    Azure Monitor Logs
   </h3>
   <Switch
     checked={false}
@@ -99,6 +99,7 @@ exports[`Render should enable azure log analytics load workspaces button 1`] = `
   <AzureCredentialsForm
     credentials={
       Object {
+        "authType": "clientsecret",
         "azureCloud": "azuremonitor",
         "clientId": "44693801-6ee6-49de-9b2d-9106972f9572",
         "clientSecret": undefined,
@@ -107,6 +108,7 @@ exports[`Render should enable azure log analytics load workspaces button 1`] = `
     }
     defaultSubscription="e3fe4fde-ad5e-4d60-9974-e2f3562ffdf2"
     getSubscriptions={[MockFunction]}
+    managedIdentityEnabled={false}
     onCredentialsChange={[Function]}
     onDefaultSubscriptionChange={[Function]}
   />
@@ -186,7 +188,7 @@ exports[`Render should render component 1`] = `
   <h3
     className="page-heading"
   >
-    Azure Monitor Logs Details
+    Azure Monitor Logs
   </h3>
   <Switch
     checked={false}
@@ -196,6 +198,7 @@ exports[`Render should render component 1`] = `
   <AzureCredentialsForm
     credentials={
       Object {
+        "authType": "clientsecret",
         "azureCloud": "azuremonitor",
         "clientId": undefined,
         "clientSecret": undefined,
@@ -203,6 +206,7 @@ exports[`Render should render component 1`] = `
       }
     }
     getSubscriptions={[MockFunction]}
+    managedIdentityEnabled={false}
     onCredentialsChange={[Function]}
     onDefaultSubscriptionChange={[Function]}
   />

@@ -4,7 +4,9 @@ import AzureCredentialsForm, { Props } from './AzureCredentialsForm';
 
 const setup = (propsFunc?: (props: Props) => Props) => {
   let props: Props = {
+    managedIdentityEnabled: false,
     credentials: {
+      authType: 'clientsecret',
       azureCloud: 'azuremonitor',
       tenantId: 'e7f3f661-a933-3h3f-0294-31c4f962ec48',
       clientId: '34509fad-c0r9-45df-9e25-f1ee34af6900',
@@ -39,6 +41,7 @@ describe('Render', () => {
     const wrapper = setup((props) => ({
       ...props,
       credentials: {
+        authType: 'clientsecret',
         azureCloud: 'azuremonitor',
         tenantId: 'e7f3f661-a933-3h3f-0294-31c4f962ec48',
         clientId: '34509fad-c0r9-45df-9e25-f1ee34af6900',
@@ -52,6 +55,7 @@ describe('Render', () => {
     const wrapper = setup((props) => ({
       ...props,
       credentials: {
+        authType: 'clientsecret',
         azureCloud: 'azuremonitor',
         tenantId: 'e7f3f661-a933-3h3f-0294-31c4f962ec48',
         clientId: '34509fad-c0r9-45df-9e25-f1ee34af6900',
