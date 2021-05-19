@@ -234,20 +234,12 @@ func (e *AzureMonitorDatasource) createRequest(ctx context.Context, dsInfo *mode
 		return nil, errors.New("unable to find datasource plugin Azure Monitor")
 	}
 
-	cloudName, err := getAzureCloud(e.cfg, dsInfo.JsonData)
+	azureMonitorRoute, routeName, err := e.getPluginRoute(plugin)
 	if err != nil {
 		return nil, err
 	}
 
-	var azureMonitorRoute *plugins.AppPluginRoute
-	for _, route := range plugin.Routes {
-		if route.Path == cloudName {
-			azureMonitorRoute = route
-			break
-		}
-	}
-
-	proxyPass := fmt.Sprintf("%s/subscriptions", cloudName)
+	proxyPass := fmt.Sprintf("%s/subscriptions", routeName)
 
 	u, err := url.Parse(dsInfo.Url)
 	if err != nil {
@@ -267,6 +259,28 @@ func (e *AzureMonitorDatasource) createRequest(ctx context.Context, dsInfo *mode
 	pluginproxy.ApplyRoute(ctx, req, proxyPass, azureMonitorRoute, dsInfo, e.cfg)
 
 	return req, nil
+}
+
+func (e *AzureMonitorDatasource) getPluginRoute(plugin *plugins.DataSourcePlugin) (*plugins.AppPluginRoute, string, error) {
+	cloud, err := getAzureCloud(e.cfg, e.dsInfo.JsonData)
+	if err != nil {
+		return nil, "", err
+	}
+
+	routeName, err := getManagementApiRoute(cloud)
+	if err != nil {
+		return nil, "", err
+	}
+
+	var pluginRoute *plugins.AppPluginRoute
+	for _, route := range plugin.Routes {
+		if route.Path == routeName {
+			pluginRoute = route
+			break
+		}
+	}
+
+	return pluginRoute, routeName, nil
 }
 
 func (e *AzureMonitorDatasource) unmarshalResponse(res *http.Response) (AzureMonitorResponse, error) {
