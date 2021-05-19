@@ -21,6 +21,7 @@ import { mergeMap } from 'rxjs/operators';
 import { getAuthType, getAzureCloud } from '../credentials';
 import { getLogAnalyticsApiRoute, getLogAnalyticsManagementApiRoute } from '../api/routes';
 import { AzureLogAnalyticsMetadata } from '../types/logAnalyticsMetadata';
+import { isGUIDish } from '../components/ResourcePicker/utils';
 
 export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
   AzureMonitorQuery,
@@ -95,16 +96,15 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     const item = target.azureLogAnalytics;
 
     const templateSrv = getTemplateSrv();
+    const resource = templateSrv.replace(item.resource, scopedVars);
     let workspace = templateSrv.replace(item.workspace, scopedVars);
 
-    if (!workspace && this.defaultOrFirstWorkspace) {
+    if (!workspace && !resource && this.defaultOrFirstWorkspace) {
       workspace = this.defaultOrFirstWorkspace;
     }
 
     const subscriptionId = templateSrv.replace(target.subscription || this.subscriptionId, scopedVars);
     const query = templateSrv.replace(item.query, scopedVars, this.interpolateVariable);
-
-    const resource = templateSrv.replace(item.resource, scopedVars);
 
     return {
       refId: target.refId,
@@ -356,7 +356,7 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     }
   }
 
-  // TODO: update to be resource-centric
+  // TODO: update to be completely resource-centric
   testDatasource(): Promise<DatasourceValidationResult> {
     const validationError = this.validateDatasource();
     if (validationError) {
@@ -364,8 +364,10 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     }
 
     return this.getDefaultOrFirstWorkspace()
-      .then((resourceURI) => {
-        const url = `${this.baseUrl}/v1${resourceURI}/metadata`;
+      .then((resourceOrWorkspace) => {
+        const url = isGUIDish(resourceOrWorkspace)
+          ? `${this.baseUrl}/v1/workspaces/${resourceOrWorkspace}/metadata`
+          : `${this.baseUrl}/v1${resourceOrWorkspace}/metadata`;
 
         return this.doRequest(url);
       })

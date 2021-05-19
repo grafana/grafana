@@ -10,3 +10,7 @@ export function parseResourceURI(resourceURI: string) {
   const { subscriptionID, resourceGroup, resource } = matches.groups;
   return { subscriptionID, resourceGroup, resource };
 }
+
+export function isGUIDish(input: string) {
+  return !!input.match(/^[A-Z0-9]+/i);
+}
