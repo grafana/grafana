@@ -51,7 +51,7 @@ require (
 	github.com/gosimple/slug v1.9.0
 	github.com/grafana/grafana-aws-sdk v0.4.0
 	github.com/grafana/grafana-live-sdk v0.0.6
-	github.com/grafana/grafana-plugin-sdk-go v0.98.0
+	github.com/grafana/grafana-plugin-sdk-go v0.99.0
 	github.com/grafana/loki v1.6.2-0.20210510132741-f408e05ad426
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/hashicorp/go-hclog v0.16.0
@@ -115,5 +115,3 @@ require (
 	xorm.io/core v0.7.3
 	xorm.io/xorm v0.8.2
 )
-
-replace github.com/grafana/grafana-plugin-sdk-go => github.com/grafana/grafana-plugin-sdk-go v0.98.2-0.20210519154358-a75848a3f51d
