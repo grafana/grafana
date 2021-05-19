@@ -311,6 +311,33 @@ func Test_ApiAlertingConfig_Marshaling(t *testing.T) {
 			},
 			err: true,
 		},
+		{
+			desc: "failure graf nested route duplicate group by labels",
+			input: PostableApiAlertingConfig{
+				Config: Config{
+					Route: &config.Route{
+						Receiver: "graf",
+						Routes: []*config.Route{
+							{
+								Receiver:   "graf",
+								GroupByStr: []string{"foo", "bar", "foo"},
+							},
+						},
+					},
+				},
+				Receivers: []*PostableApiReceiver{
+					{
+						Receiver: config.Receiver{
+							Name: "graf",
+						},
+						PostableGrafanaReceivers: PostableGrafanaReceivers{
+							GrafanaManagedReceivers: []*PostableGrafanaReceiver{{}},
+						},
+					},
+				},
+			},
+			err: true,
+		},
 	} {
 		t.Run(tc.desc, func(t *testing.T) {
 			encoded, err := json.Marshal(tc.input)
