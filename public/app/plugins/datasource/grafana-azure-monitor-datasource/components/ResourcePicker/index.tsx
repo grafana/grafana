@@ -100,7 +100,7 @@ const ResourcePicker = ({ resourcePickerData, resourceURI, onApply, onCancel }: 
       />
 
       <div className={styles.selectionFooter}>
-        {hasSelection && (
+        {internalSelected && (
           <>
             <Space v={2} />
             <h5>Selection</h5>
