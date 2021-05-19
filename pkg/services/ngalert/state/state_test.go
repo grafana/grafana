@@ -18,33 +18,33 @@ func TestNeedsSending(t *testing.T) {
 		testState   *State
 	}{
 		{
-			name:        "state: alerting and LastSent before LastEvaluationTime + ResendDelay",
+			name:        "state: alerting and LastSentAt before LastEvaluationTime + ResendDelay",
 			resendDelay: 1 * time.Minute,
 			expected:    true,
 			testState: &State{
 				State:              eval.Alerting,
 				LastEvaluationTime: evaluationTime,
-				LastSent:           evaluationTime.Add(-2 * time.Minute),
+				LastSentAt:         evaluationTime.Add(-2 * time.Minute),
 			},
 		},
 		{
-			name:        "state: alerting and LastSent after LastEvaluationTime + ResendDelay",
+			name:        "state: alerting and LastSentAt after LastEvaluationTime + ResendDelay",
 			resendDelay: 1 * time.Minute,
 			expected:    false,
 			testState: &State{
 				State:              eval.Alerting,
 				LastEvaluationTime: evaluationTime,
-				LastSent:           evaluationTime,
+				LastSentAt:         evaluationTime,
 			},
 		},
 		{
-			name:        "state: alerting and LastSend equals LastEvaluationTime + ResendDelay",
+			name:        "state: alerting and LastSentAt equals LastEvaluationTime + ResendDelay",
 			resendDelay: 1 * time.Minute,
 			expected:    true,
 			testState: &State{
 				State:              eval.Alerting,
 				LastEvaluationTime: evaluationTime,
-				LastSent:           evaluationTime.Add(-1 * time.Minute),
+				LastSentAt:         evaluationTime.Add(-1 * time.Minute),
 			},
 		},
 		{
@@ -62,7 +62,7 @@ func TestNeedsSending(t *testing.T) {
 			testState: &State{
 				State:              eval.Alerting,
 				LastEvaluationTime: evaluationTime,
-				LastSent:           evaluationTime,
+				LastSentAt:         evaluationTime,
 			},
 		},
 	}

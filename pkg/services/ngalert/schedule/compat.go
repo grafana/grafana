@@ -28,7 +28,7 @@ func FromAlertStateToPostableAlerts(firingStates []*state.State, stateManager *s
 					Labels: models.LabelSet(nL),
 				},
 			})
-			alertState.LastSent = ts
+			alertState.LastSentAt = ts
 			sentAlerts = append(sentAlerts, alertState)
 		}
 	}

@@ -18,7 +18,7 @@ type State struct {
 	EndsAt             time.Time
 	LastEvaluationTime time.Time
 	EvaluationDuration time.Duration
-	LastSent           time.Time
+	LastSentAt         time.Time
 	Annotations        map[string]string
 	Labels             data.Labels
 	Error              error
@@ -117,13 +117,10 @@ func (a *State) NeedsSending(resendDelay time.Duration) bool {
 	if a.State != eval.Alerting {
 		return false
 	}
-	if a.EndsAt.After(a.LastSent) {
-		return true
-	}
 
-	// if LastSent is before or equal to LastEvaluationTime + resendDelay, send again
-	return a.LastSent.Add(resendDelay).Before(a.LastEvaluationTime) ||
-		a.LastSent.Add(resendDelay).Equal(a.LastEvaluationTime)
+	// if LastSentAt is before or equal to LastEvaluationTime + resendDelay, send again
+	return a.LastSentAt.Add(resendDelay).Before(a.LastEvaluationTime) ||
+		a.LastSentAt.Add(resendDelay).Equal(a.LastEvaluationTime)
 }
 
 func (a *State) Equals(b *State) bool {
