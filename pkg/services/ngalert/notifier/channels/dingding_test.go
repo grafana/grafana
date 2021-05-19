@@ -95,7 +95,7 @@ func TestDingdingNotifier(t *testing.T) {
 				"url": "http://localhost",
 				"message": "{{ .Status }"
 			}`,
-			expMsgError: errors.New("failed to template dingding message: template: :1: unexpected \"}\" in operand"),
+			expMsgError: errors.New("failed to template DingDing message: template: :1: unexpected \"}\" in operand"),
 		},
 	}
 

@@ -175,6 +175,9 @@ var (
 	// StatsTotalAnnotations is a metric of total number of annotations stored in Grafana.
 	StatsTotalAnnotations prometheus.Gauge
 
+	// StatsTotalAlertRules is a metric of total number of alert rules stored in Grafana.
+	StatsTotalAlertRules prometheus.Gauge
+
 	// StatsTotalDashboardVersions is a metric of total number of dashboard versions stored in Grafana.
 	StatsTotalDashboardVersions prometheus.Gauge
 
@@ -518,6 +521,12 @@ func init() {
 	StatsTotalAnnotations = prometheus.NewGauge(prometheus.GaugeOpts{
 		Name:      "stat_totals_annotations",
 		Help:      "total amount of annotations in the database",
+		Namespace: ExporterName,
+	})
+
+	StatsTotalAlertRules = prometheus.NewGauge(prometheus.GaugeOpts{
+		Name:      "stat_totals_alert_rules",
+		Help:      "total amount of alert rules in the database",
 		Namespace: ExporterName,
 	})
 
