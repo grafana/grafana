@@ -28,11 +28,11 @@ export const SignUp: FC<LoginFormProps> = ({ changeMode, getSettings }) => {
   const CheckboxLabel: FC = () => (
     <span data-qa="sign-up-agreement-checkbox-label" className={styles.checkboxLabel}>
       {`${Messages.agreementFirstPart} `}
-      <LinkButton className={styles.link} variant="link" href={TERMS_OF_SERVICE_URL}>
+      <LinkButton className={styles.link} target="_blank" variant="link" href={TERMS_OF_SERVICE_URL}>
         {Messages.termsOfService}
       </LinkButton>
       {` ${Messages.agreementSecondPart} `}
-      <LinkButton className={styles.link} variant="link" href={PRIVACY_POLICY_URL}>
+      <LinkButton className={styles.link} target="_blank" variant="link" href={PRIVACY_POLICY_URL}>
         {Messages.privacyPolicy}
       </LinkButton>
     </span>
