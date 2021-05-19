@@ -48,7 +48,7 @@ export class TimelineChart extends React.Component<TimelineProps> {
   renderLegend = (config: UPlotConfigBuilder) => {
     const { legend, legendItems } = this.props;
 
-    if (!config || !legendItems || (legend && legend.displayMode === LegendDisplayMode.Hidden)) {
+    if (!(config && legendItems && legend && legend.displayMode === LegendDisplayMode.Hidden)) {
       return null;
     }
 
