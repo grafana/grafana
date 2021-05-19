@@ -13,7 +13,6 @@ dashboards, creating users and updating data sources.
 
 ## Supported HTTP APIs
 
-
 - [Authentication API]({{< relref "auth.md" >}})
 - [Dashboard API]({{< relref "dashboard.md" >}})
 - [Dashboard Versions API]({{< relref "dashboard_versions.md" >}})
@@ -40,6 +39,5 @@ dashboards, creating users and updating data sources.
 - [External Group Sync API]({{< relref "external_group_sync.md" >}})
 - [License API]({{< relref "licensing.md" >}})
 - [Reporting API]({{< relref "reporting.md" >}})
-- [Settings API]({{< relref "settings.md" >}})
 
 

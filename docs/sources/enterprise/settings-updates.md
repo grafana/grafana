@@ -15,7 +15,7 @@ Currently, **it only supports updates on the `auth.saml` section.**
 
 ## Update settings via the API
 
-You can update / remove settings through the [Settings API]({{< relref "../http_api/settings.md#update--remove-database-settings" >}}).
+You can update / remove settings through the [Admin API]({{< relref "../http_api/admin.md#update-settings" >}}).
 
 It verifies if the given settings updates (or removals) are allowed and valid, persists them into the database and reload
 Grafana services with no need to restart the instance.
