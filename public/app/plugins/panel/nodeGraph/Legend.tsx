@@ -12,6 +12,11 @@ function getStyles() {
       label: LegendItem;
       flex-grow: 0;
     `,
+
+    legend: css`
+      label: Legend;
+      pointer-events: all;
+    `,
   };
 }
 
@@ -41,6 +46,7 @@ export const Legend = function Legend(props: Props) {
 
   return (
     <VizLegend<ItemData>
+      className={styles.legend}
       displayMode={LegendDisplayMode.List}
       placement={'bottom'}
       items={colorItems}
