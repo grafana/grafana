@@ -603,7 +603,7 @@ func TestDeleteFolderWithRules(t *testing.T) {
 
 	createRule(t, grafanaListedAddr, "default", "editor", "editor")
 
-	// check rule is created
+	// First, let's have an editor create a rule within the folder/namespace.
 	{
 		u := fmt.Sprintf("http://editor:editor@%s/api/ruler/grafana/api/v1/rules", grafanaListedAddr)
 		// nolint:gosec
@@ -678,7 +678,7 @@ func TestDeleteFolderWithRules(t *testing.T) {
 		assert.JSONEq(t, expectedGetRulesResponseBody, string(b))
 	}
 
-	// delete folder
+	// Next, the editor can delete the folder.
 	{
 		u := fmt.Sprintf("http://editor:editor@%s/api/folders/%s", grafanaListedAddr, namespaceUID)
 		req, err := http.NewRequest(http.MethodDelete, u, nil)
@@ -696,7 +696,7 @@ func TestDeleteFolderWithRules(t *testing.T) {
 		require.JSONEq(t, `{"id":1,"message":"Folder default deleted","title":"default"}`, string(b))
 	}
 
-	// check alert rule is deleted
+	// Finally, we ensure the rules were deleted.
 	{
 		u := fmt.Sprintf("http://editor:editor@%s/api/ruler/grafana/api/v1/rules", grafanaListedAddr)
 		// nolint:gosec
