@@ -159,5 +159,41 @@ describe('InfluxQueryBuilder', () => {
       const query = builder.buildExploreQuery('RETENTION POLICIES');
       expect(query).toBe('SHOW RETENTION POLICIES on "site"');
     });
+
+    it('should handle tag-value=number-ish when getting measurements', () => {
+      const builder = new InfluxQueryBuilder(
+        { measurement: undefined, tags: [{ key: 'app', value: '42', operator: '==' }] },
+        undefined
+      );
+      const query = builder.buildExploreQuery('MEASUREMENTS');
+      expect(query).toBe(`SHOW MEASUREMENTS WHERE "app" == 42 LIMIT 100`);
+    });
+
+    it('should handle tag-value=number-ish getting tag-keys', () => {
+      const builder = new InfluxQueryBuilder(
+        { measurement: undefined, tags: [{ key: 'app', value: '42', operator: '==' }] },
+        undefined
+      );
+      const query = builder.buildExploreQuery('TAG_KEYS');
+      expect(query).toBe(`SHOW TAG KEYS WHERE "app" == 42`);
+    });
+
+    it('should handle tag-value=emptry-string when getting measurements', () => {
+      const builder = new InfluxQueryBuilder(
+        { measurement: undefined, tags: [{ key: 'app', value: '', operator: '==' }] },
+        undefined
+      );
+      const query = builder.buildExploreQuery('MEASUREMENTS');
+      expect(query).toBe(`SHOW MEASUREMENTS WHERE "app" == '' LIMIT 100`);
+    });
+
+    it('should handle tag-value=emptry-string when getting tag-keys', () => {
+      const builder = new InfluxQueryBuilder(
+        { measurement: undefined, tags: [{ key: 'app', value: '', operator: '==' }] },
+        undefined
+      );
+      const query = builder.buildExploreQuery('TAG_KEYS');
+      expect(query).toBe(`SHOW TAG KEYS WHERE "app" == ''`);
+    });
   });
 });
