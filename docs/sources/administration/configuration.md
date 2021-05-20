@@ -1471,16 +1471,17 @@ Set to `true` if you want to test alpha plugins that are not yet ready for gener
 
 Enter a comma-separated list of plugin identifiers to identify plugins that are allowed to be loaded even if they lack a valid signature.
 
-### catalog_url
-
-Custom install/learn more URL for enterprise plugins. Defaults to https://grafana.com/grafana/plugins/.
-
-### catalog_app_enabled
+### plugin_admin_enabled
 
 
-Available to Grafana administrators only, the plugin catalog app is set to `false` by default. Set it to `true` to enable the app.
+Available to Grafana administrators only, the plugin admin app is set to `false` by default. Set it to `true` to enable the app.
 
 For more information, refer to [Plugin catalog]({{< relref "../plugins/catalog.md" >}}).
+
+
+### plugin_catalog_url
+
+Custom install/learn more URL for enterprise plugins. Defaults to https://grafana.com/grafana/plugins/.
 
 <hr>
 
