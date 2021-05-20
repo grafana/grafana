@@ -20,6 +20,7 @@ const (
 	base64BinaryDataType       = "base64Binary"
 	datetimeRFC339DataType     = "dateTime:RFC3339"
 	datetimeRFC339DataTypeNano = "dateTime:RFC3339Nano"
+	// based on the documentation there should also be "dateTime:number" but i have never seen it yet.
 )
 
 type columnInfo struct {
