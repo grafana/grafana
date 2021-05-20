@@ -11,8 +11,8 @@ import (
 func TestPredefinedRoles(t *testing.T) {
 	for name, r := range PredefinedRoles {
 		assert.Truef(t,
-			strings.HasPrefix(name, "grafana:roles:"),
-			"expected all predefined roles to be prefixed by 'grafana:roles:', found role '%s'", name,
+			strings.HasPrefix(name, "fixed:"),
+			"expected all predefined roles to be prefixed by 'fixed:', found role '%s'", name,
 		)
 		assert.Equal(t, name, r.Name)
 		assert.NotZero(t, r.Version)

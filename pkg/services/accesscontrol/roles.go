@@ -155,16 +155,16 @@ var PredefinedRoles = map[string]RoleDTO{
 }
 
 const (
-	usersAdminEdit = "grafana:roles:users:admin:edit"
-	usersAdminRead = "grafana:roles:users:admin:read"
+	usersAdminEdit = "fixed:users:admin:edit"
+	usersAdminRead = "fixed:users:admin:read"
 
-	usersOrgEdit = "grafana:roles:users:org:edit"
-	usersOrgRead = "grafana:roles:users:org:read"
+	usersOrgEdit = "fixed:users:org:edit"
+	usersOrgRead = "fixed:users:org:read"
 
-	ldapAdminEdit = "grafana:roles:ldap:admin:edit"
-	ldapAdminRead = "grafana:roles:ldap:admin:read"
+	ldapAdminEdit = "fixed:ldap:admin:edit"
+	ldapAdminRead = "fixed:ldap:admin:read"
 
-	provisioningAdmin = "grafana:roles:provisioning:admin"
+	provisioningAdmin = "fixed:provisioning:admin"
 )
 
 // PredefinedRoleGrants specifies which organization roles are assigned
