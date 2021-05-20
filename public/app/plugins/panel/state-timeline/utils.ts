@@ -318,15 +318,14 @@ export function prepareTimelineLegendItems(
   }
 
   const items: VizLegendItem[] = [];
-  const first = fields[0].config;
-  const colorMode = first.color?.mode ?? FieldColorModeId.Fixed;
+  const fieldConfig = fields[0].config;
+  const colorMode = fieldConfig.color?.mode ?? FieldColorModeId.Fixed;
+  const thresholds = fieldConfig.thresholds;
 
   // If thresholds are enabled show each step in the legend
-  if (colorMode === FieldColorModeId.Thresholds && first.thresholds?.steps) {
-    const steps = first.thresholds.steps;
-    const disp = getValueFormat(
-      first.thresholds.mode === ThresholdsMode.Percentage ? 'percent' : first.unit ?? 'fixed'
-    );
+  if (colorMode === FieldColorModeId.Thresholds && thresholds?.steps && thresholds.steps.length > 1) {
+    const steps = thresholds.steps;
+    const disp = getValueFormat(thresholds.mode === ThresholdsMode.Percentage ? 'percent' : fieldConfig.unit ?? '');
 
     const fmt = (v: number) => formattedValueToString(disp(v));
 
