@@ -89,6 +89,7 @@ export const DataLinksInlineEditor: React.FC<DataLinksInlineEditorProps> = ({
         <Modal
           title="Edit link"
           isOpen={true}
+          closeOnBackdropClick={false}
           onDismiss={() => {
             onDataLinkCancel(editIndex);
           }}
