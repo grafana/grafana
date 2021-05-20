@@ -26,7 +26,11 @@ export const StateTimelinePanel: React.FC<TimelinePanelProps> = ({
     options.mergeValues,
   ]);
 
-  const legendItems = useMemo(() => prepareTimelineLegendItems(frames, options.legend), [frames, options.legend]);
+  const legendItems = useMemo(() => prepareTimelineLegendItems(frames, options.legend, theme), [
+    frames,
+    options.legend,
+    theme,
+  ]);
 
   if (!frames || warn) {
     return (

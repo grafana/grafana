@@ -24,7 +24,11 @@ export const StatusGridPanel: React.FC<TimelinePanelProps> = ({
 
   const { frames, warn } = useMemo(() => prepareTimelineFields(data?.series, false), [data]);
 
-  const legendItems = useMemo(() => prepareTimelineLegendItems(frames, options.legend), [frames, options.legend]);
+  const legendItems = useMemo(() => prepareTimelineLegendItems(frames, options.legend, theme), [
+    frames,
+    options.legend,
+    theme,
+  ]);
 
   if (!frames || warn) {
     return (
