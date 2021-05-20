@@ -148,6 +148,7 @@ const FeatureListing: React.FC = () => {
           <Item title="DataDog" />
           <Item title="AppDynamics" />
           <Item title="Amazon Timestream" />
+          <Item title="SAP HANA®" />
         </List>
       </Item>
     </List>
