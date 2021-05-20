@@ -186,7 +186,6 @@ You can now configure generic OAuth with strict parsing of the `role_attribute_p
 Support for Singlestat panel has been discontinued. When you upgrade to version 8.0, all existing Singlestat panels automatically becomes Stat panels.
 Stat panel is available as plugin.
 
-
 ## Enterprise features
 
 These features are included in the Grafana Enterprise edition.
