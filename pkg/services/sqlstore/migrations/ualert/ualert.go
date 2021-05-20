@@ -117,7 +117,14 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 			return err
 		}
 
-		da.DashboardUID = dashIDMap[[2]int64{da.OrgId, da.DashboardId}]
+		dashboardUID, ok := dashIDMap[[2]int64{da.OrgId, da.DashboardId}]
+		if !ok {
+			return MigrationError{
+				Err:     fmt.Errorf("no UID for dashboard with ID %d under organisation %d", da.DashboardId, da.OrgId),
+				AlertId: da.Id,
+			}
+		}
+		da.DashboardUID = dashboardUID
 
 		// get dashboard
 		dash := dashboard{}
@@ -130,7 +137,7 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 		}
 		if !exists {
 			return MigrationError{
-				Err:     fmt.Errorf("dashboard with UID %v under organisation %d not found: %w", da.DashboardUID, da.OrgId, err),
+				Err:     fmt.Errorf("dashboard with UID %v (ID: %d) under organisation %d not found", da.DashboardUID, da.Id, da.OrgId),
 				AlertId: da.Id,
 			}
 		}
