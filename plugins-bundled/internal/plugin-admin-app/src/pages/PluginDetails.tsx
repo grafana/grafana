@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { css } from '@emotion/css';
 
 import { AppRootProps, GrafanaTheme2 } from '@grafana/data';
@@ -13,13 +13,13 @@ import { Page } from 'components/Page';
 import { Loader } from 'components/Loader';
 
 export const PluginDetails = ({ onNavChanged }: AppRootProps) => {
-  // onNavChanged(undefined as any);
   const { pluginId } = useParams<{ pluginId: string }>();
 
   const [tabs, setTabs] = useState([
     { label: 'Overview', active: true },
     { label: 'Version history', active: false },
   ]);
+
   const { isLoading, local, remote, remoteVersions } = usePlugin(pluginId);
   const styles = useStyles2(getStyles);
 
@@ -28,6 +28,10 @@ export const PluginDetails = ({ onNavChanged }: AppRootProps) => {
   const version = local?.info?.version || remote?.version;
   const links = (local?.info?.links || remote?.json?.info?.links) ?? [];
   const downloads = remote?.downloads;
+
+  useEffect(() => {
+    onNavChanged(undefined as any);
+  }, [onNavChanged]);
 
   if (isLoading) {
     return <Loader />;
