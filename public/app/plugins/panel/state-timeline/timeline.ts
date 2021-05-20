@@ -233,7 +233,7 @@ export function getConfig(opts: TimelineCoreOptions) {
                   yOff,
                   left,
                   round(yOff + y0),
-                  right - left,
+                  right - left - 1,
                   round(height),
                   strokeWidth,
                   iy,
