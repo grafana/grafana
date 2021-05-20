@@ -10,8 +10,6 @@ import { getNotFoundNav, getWarningNav, getExceptionNav } from 'app/core/nav_mod
 import { appEvents } from 'app/core/core';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
-import { locationSearchToObject } from '@grafana/runtime';
-
 interface RouteParams {
   pluginId: string;
 }
@@ -88,6 +86,7 @@ class AppRootPage extends Component<Props, State> {
   }
 
   onNavChanged = (nav: NavModel) => {
+    console.log('NAV CHANGED!!!', nav);
     this.setState({ nav });
   };
 
@@ -107,7 +106,7 @@ class AppRootPage extends Component<Props, State> {
               meta={plugin.meta}
               basename={this.props.match.url}
               onNavChanged={this.onNavChanged}
-              query={locationSearchToObject(this.props.location.search) as KeyValue}
+              query={this.props.queryParams as KeyValue}
               path={this.props.location.pathname}
             />
           )}

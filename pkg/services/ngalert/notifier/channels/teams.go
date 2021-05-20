@@ -3,7 +3,6 @@ package channels
 import (
 	"context"
 	"encoding/json"
-	"path"
 
 	gokit_log "github.com/go-kit/kit/log"
 	"github.com/pkg/errors"
@@ -61,6 +60,11 @@ func (tn *TeamsNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 	var tmplErr error
 	tmpl := notify.TmplText(tn.tmpl, data, &tmplErr)
 
+	ruleURL, err := joinUrlPath(tn.tmpl.ExternalURL.String(), "/alerting/list")
+	if err != nil {
+		return false, err
+	}
+
 	title := tmpl(`{{ template "default.title" . }}`)
 	body := map[string]interface{}{
 		"@type":    "MessageCard",
@@ -84,7 +88,7 @@ func (tn *TeamsNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 				"targets": []map[string]interface{}{
 					{
 						"os":  "default",
-						"uri": path.Join(tn.tmpl.ExternalURL.String(), "/alerting/list"),
+						"uri": ruleURL,
 					},
 				},
 			},
