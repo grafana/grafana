@@ -13,9 +13,9 @@ func isGeneralFolder(folderID int64) bool {
 func (l *LibraryElementService) requireSupportedElementKind(kindAsInt int64) error {
 	kind := models.LibraryElementKind(kindAsInt)
 	switch kind {
-	case models.Panel:
+	case models.PanelElement:
 		return nil
-	case models.Variable:
+	case models.VariableElement:
 		return nil
 	default:
 		return errLibraryElementUnSupportedElementKind

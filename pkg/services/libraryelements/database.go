@@ -41,9 +41,9 @@ func syncFieldsWithModel(libraryElement *LibraryElement) error {
 		return err
 	}
 
-	if models.LibraryElementKind(libraryElement.Kind) == models.Panel {
+	if models.LibraryElementKind(libraryElement.Kind) == models.PanelElement {
 		model["title"] = libraryElement.Name
-	} else if models.LibraryElementKind(libraryElement.Kind) == models.Variable {
+	} else if models.LibraryElementKind(libraryElement.Kind) == models.VariableElement {
 		model["name"] = libraryElement.Name
 	}
 	if model["type"] != nil {

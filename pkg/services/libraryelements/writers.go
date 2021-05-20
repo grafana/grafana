@@ -39,7 +39,7 @@ func writePerPageSQL(query searchLibraryElementsQuery, sqlStore *sqlstore.SQLSto
 }
 
 func writeKindSQL(query searchLibraryElementsQuery, builder *sqlstore.SQLBuilder) {
-	if models.LibraryElementKind(query.kind) == models.Panel || models.LibraryElementKind(query.kind) == models.Variable {
+	if models.LibraryElementKind(query.kind) == models.PanelElement || models.LibraryElementKind(query.kind) == models.VariableElement {
 		builder.Write(" AND le.kind = ?", query.kind)
 	}
 }

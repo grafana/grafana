@@ -126,7 +126,7 @@ type libraryElementsSearchResult struct {
 }
 
 func getCreatePanelCommand(folderID int64, name string) CreateLibraryElementCommand {
-	command := getCreateCommandWithModel(folderID, name, models.Panel, []byte(`
+	command := getCreateCommandWithModel(folderID, name, models.PanelElement, []byte(`
 			{
 			  "datasource": "${DS_GDEV-TESTDATA}",
 			  "id": 1,
@@ -140,7 +140,7 @@ func getCreatePanelCommand(folderID int64, name string) CreateLibraryElementComm
 }
 
 func getCreateVariableCommand(folderID int64, name string) CreateLibraryElementCommand {
-	command := getCreateCommandWithModel(folderID, name, models.Variable, []byte(`
+	command := getCreateCommandWithModel(folderID, name, models.VariableElement, []byte(`
 			{
 			  "datasource": "${DS_GDEV-TESTDATA}",
 			  "name": "query0",

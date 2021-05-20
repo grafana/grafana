@@ -1,8 +1,11 @@
 package models
 
+// LibraryElementKind is used for the kind of library element
 type LibraryElementKind int
 
 const (
-	Panel LibraryElementKind = iota + 1
-	Variable
+	// PanelElement is used for library elements that are of the Panel kind
+	PanelElement LibraryElementKind = iota + 1
+	// VariableElement is used for library elements that are of the Variable kind
+	VariableElement
 )
