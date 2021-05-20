@@ -99,12 +99,17 @@ func (on *OpsgenieNotifier) Notify(ctx context.Context, as ...*types.Alert) (boo
 		return false, fmt.Errorf("build Opsgenie message: %w", err)
 	}
 
+	if url == "" {
+		// Resolved alert with no auto close.
+		// Hence skip sending anything.
+		return true, nil
+	}
+
 	body, err := json.Marshal(bodyJSON)
 	if err != nil {
 		return false, fmt.Errorf("marshal json: %w", err)
 	}
 
-	on.log.Info("Notifying Opsgenie")
 	cmd := &models.SendWebhookSync{
 		Url:        url,
 		Body:       string(body),
@@ -128,6 +133,24 @@ func (on *OpsgenieNotifier) buildOpsgenieMessage(ctx context.Context, alerts mod
 		return nil, "", err
 	}
 
+	var (
+		alias    = key.Hash()
+		bodyJSON = simplejson.New()
+		details  = simplejson.New()
+	)
+
+	if alerts.Status() == model.AlertResolved {
+		// For resolved notification, we only need the source.
+		// Don't need to run other templates.
+		if on.AutoClose {
+			bodyJSON := simplejson.New()
+			bodyJSON.Set("source", "Grafana")
+			apiURL = fmt.Sprintf("%s/%s/close?identifierType=alias", on.APIUrl, alias)
+			return bodyJSON, apiURL, nil
+		}
+		return nil, "", nil
+	}
+
 	u, err := url.Parse(on.tmpl.ExternalURL.String())
 	if err != nil {
 		return nil, "", fmt.Errorf("failed to parse external URL: %w", err)
@@ -148,10 +171,10 @@ func (on *OpsgenieNotifier) buildOpsgenieMessage(ctx context.Context, alerts mod
 		tmpl(`{{ template "default.message" . }}`),
 	)
 
-	annotations := make(map[string]string)
 	var priority string
 
 	// In the new alerting system we've moved away from the grafana-tags. Instead, annotations on the rule itself should be used.
+	annotations := make(map[string]string, len(data.CommonAnnotations))
 	for k, v := range data.CommonAnnotations {
 		annotations[k] = tmpl(v)
 
@@ -162,45 +185,32 @@ func (on *OpsgenieNotifier) buildOpsgenieMessage(ctx context.Context, alerts mod
 		}
 	}
 
-	var (
-		alias    = key.Hash()
-		bodyJSON = simplejson.New()
-		details  = simplejson.New()
-		tags     = make([]string, 0, len(annotations))
-	)
-	switch alerts.Status() {
-	case model.AlertResolved:
-		if on.AutoClose {
-			bodyJSON.Set("source", "Grafana")
-			apiURL = fmt.Sprintf("%s/%s/close?identifierType=alias", on.APIUrl, alias)
-		}
-	default:
-		bodyJSON.Set("message", title)
-		bodyJSON.Set("source", "Grafana")
-		bodyJSON.Set("alias", alias)
-		bodyJSON.Set("description", description)
-		details.Set("url", ruleURL)
+	bodyJSON.Set("message", title)
+	bodyJSON.Set("source", "Grafana")
+	bodyJSON.Set("alias", alias)
+	bodyJSON.Set("description", description)
+	details.Set("url", ruleURL)
 
-		if on.sendDetails() {
-			for k, v := range annotations {
-				details.Set(k, v)
-			}
+	if on.sendDetails() {
+		for k, v := range annotations {
+			details.Set(k, v)
 		}
-
-		if on.sendTags() {
-			for k, v := range annotations {
-				tags = append(tags, fmt.Sprintf("%s:%s", k, v))
-			}
-		}
-
-		if priority != "" && on.OverridePriority {
-			bodyJSON.Set("priority", priority)
-		}
-
-		bodyJSON.Set("tags", tags)
-		bodyJSON.Set("details", details)
-		apiURL = on.APIUrl
 	}
+
+	tags := make([]string, 0, len(annotations))
+	if on.sendTags() {
+		for k, v := range annotations {
+			tags = append(tags, fmt.Sprintf("%s:%s", k, v))
+		}
+	}
+
+	if priority != "" && on.OverridePriority {
+		bodyJSON.Set("priority", priority)
+	}
+
+	bodyJSON.Set("tags", tags)
+	bodyJSON.Set("details", details)
+	apiURL = on.APIUrl
 
 	if tmplErr != nil {
 		return nil, "", fmt.Errorf("failed to template Opsgenie message: %w", tmplErr)

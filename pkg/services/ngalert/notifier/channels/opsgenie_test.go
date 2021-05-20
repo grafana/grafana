@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/url"
 	"testing"
+	"time"
 
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/types"
@@ -136,7 +137,21 @@ func TestOpsgenieNotifier(t *testing.T) {
 			}`,
 			expInitError: nil,
 			expMsgError:  nil,
-		}, {
+		},
+		{
+			name:     "Resolved is not sent when auto close is false",
+			settings: `{"apiKey": "abcdefgh0123456789", "autoClose": false}`,
+			alerts: []*types.Alert{
+				{
+					Alert: model.Alert{
+						Labels:      model.LabelSet{"alertname": "alert1", "lbl1": "val1"},
+						Annotations: model.LabelSet{"ann1": "annv1"},
+						EndsAt:      time.Now().Add(-1 * time.Minute),
+					},
+				},
+			},
+		},
+		{
 			name:         "Error when incorrect settings",
 			settings:     `{}`,
 			expInitError: alerting.ValidationError{Reason: "Could not find api key property in settings"},
@@ -162,7 +177,7 @@ func TestOpsgenieNotifier(t *testing.T) {
 			}
 			require.NoError(t, err)
 
-			body := ""
+			body := "<not-sent>"
 			bus.AddHandlerCtx("test", func(ctx context.Context, webhook *models.SendWebhookSync) error {
 				body = webhook.Body
 				return nil
@@ -179,7 +194,13 @@ func TestOpsgenieNotifier(t *testing.T) {
 			}
 			require.True(t, ok)
 			require.NoError(t, err)
-			require.JSONEq(t, c.expMsg, body)
+
+			if c.expMsg == "" {
+				// No notification was expected.
+				require.Equal(t, "<not-sent>", body)
+			} else {
+				require.JSONEq(t, c.expMsg, body)
+			}
 		})
 	}
 }
