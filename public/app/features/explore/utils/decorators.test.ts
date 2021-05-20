@@ -367,6 +367,7 @@ describe('decorateWithLogsResult', () => {
                   drawStyle: 'bars',
                   lineColor: '#8e8e8e',
                   fillColor: '#8e8e8e',
+                  pointColor: '#8e8e8e',
                   lineWidth: 0,
                   fillOpacity: 100,
                   stacking: { mode: 'normal', group: 'A' },
