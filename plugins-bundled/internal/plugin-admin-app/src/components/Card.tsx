@@ -35,7 +35,7 @@ export const Card = ({ href, text, image, layout = 'vertical' }: Props) => {
 
 const getCardStyles = (theme: GrafanaTheme2) => ({
   root: css`
-    background-color: ${theme.colors.background.primary};
+    background-color: ${theme.colors.background.secondary};
     border-radius: ${theme.shape.borderRadius()};
     cursor: pointer;
     height: 100%;

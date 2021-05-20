@@ -1,16 +1,21 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { css } from '@emotion/css';
-import { GrafanaTheme2 } from '@grafana/data';
+import { AppRootProps, GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 import { PLUGIN_ROOT } from '../constants';
 import { PluginList } from '../components/PluginList';
 import { usePlugins } from '../hooks/usePlugins';
 import { Page } from 'components/Page';
 import { Loader } from 'components/Loader';
+import { CatalogTab, getCatalogNavModel } from './nav';
 
-export const Library = () => {
+export const Library = ({ meta, onNavChanged, basename }: AppRootProps) => {
   const { isLoading, items, installedPlugins } = usePlugins();
   const styles = useStyles2(getStyles);
+
+  useEffect(() => {
+    onNavChanged(getCatalogNavModel(CatalogTab.Browse, basename));
+  }, [onNavChanged, basename]);
 
   const filteredPlugins = items.filter((plugin) => !!installedPlugins.find((_) => _.id === plugin.slug));
 
@@ -26,7 +31,7 @@ export const Library = () => {
       ) : (
         <p>
           You haven&#39;t installed any plugins. Browse the{' '}
-          <a className={styles.link} href={`${PLUGIN_ROOT}/?tab=browse&sortBy=popularity`}>
+          <a className={styles.link} href={`${PLUGIN_ROOT}/browse?sortBy=popularity`}>
             catalog
           </a>{' '}
           for plugins to install.

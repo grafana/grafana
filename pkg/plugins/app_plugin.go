@@ -84,11 +84,6 @@ func (app *AppPlugin) InitApp(panels map[string]*PanelPlugin, dataSources map[st
 	cfg *setting.Cfg) []*PluginStaticRoute {
 	staticRoutes := app.InitFrontendPlugin(cfg)
 
-	// force enable bundled catalog app
-	if app.Id == "grafana-plugin-catalog-app" && cfg.CatalogAppEnabled {
-		app.AutoEnabled = true
-	}
-
 	// check if we have child panels
 	for _, panel := range panels {
 		if strings.HasPrefix(panel.PluginDir, app.PluginDir) {

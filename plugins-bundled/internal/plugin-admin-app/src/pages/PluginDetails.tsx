@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { css } from '@emotion/css';
 
 import { AppRootProps, GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, TabsBar, TabContent, Tab, Icon } from '@grafana/ui';
+import { useParams } from 'react-router-dom';
 
 import { VersionList } from '../components/VersionList';
 import { InstallControls } from '../components/InstallControls';
@@ -11,13 +12,15 @@ import { usePlugin } from '../hooks/usePlugins';
 import { Page } from 'components/Page';
 import { Loader } from 'components/Loader';
 
-export const PluginDetails = ({ query }: AppRootProps) => {
-  const { slug } = query;
+export const PluginDetails = ({ onNavChanged }: AppRootProps) => {
+  const { pluginId } = useParams<{ pluginId: string }>();
+
   const [tabs, setTabs] = useState([
     { label: 'Overview', active: true },
     { label: 'Version history', active: false },
   ]);
-  const { isLoading, local, remote, remoteVersions } = usePlugin(slug);
+
+  const { isLoading, local, remote, remoteVersions } = usePlugin(pluginId);
   const styles = useStyles2(getStyles);
 
   const description = remote?.description;
@@ -25,6 +28,10 @@ export const PluginDetails = ({ query }: AppRootProps) => {
   const version = local?.info?.version || remote?.version;
   const links = (local?.info?.links || remote?.json?.info?.links) ?? [];
   const downloads = remote?.downloads;
+
+  useEffect(() => {
+    onNavChanged(undefined as any);
+  }, [onNavChanged]);
 
   if (isLoading) {
     return <Loader />;
@@ -34,7 +41,7 @@ export const PluginDetails = ({ query }: AppRootProps) => {
     <Page>
       <div className={styles.headerContainer}>
         <img
-          src={`${GRAFANA_API_ROOT}/plugins/${slug}/versions/${remote?.version}/logos/small`}
+          src={`${GRAFANA_API_ROOT}/plugins/${pluginId}/versions/${remote?.version}/logos/small`}
           className={css`
             object-fit: cover;
             width: 100%;
@@ -45,7 +52,7 @@ export const PluginDetails = ({ query }: AppRootProps) => {
         <div className={styles.headerWrapper}>
           <h1>{remote?.name}</h1>
           <div className={styles.headerLinks}>
-            <a className={styles.headerOrgName} href={`${PLUGIN_ROOT}?tab=org&orgSlug=${remote?.orgSlug}`}>
+            <a className={styles.headerOrgName} href={`${PLUGIN_ROOT}`}>
               {remote?.orgName}
             </a>
             {links.map((link: any) => (
@@ -62,7 +69,7 @@ export const PluginDetails = ({ query }: AppRootProps) => {
             {version && <span>{version}</span>}
           </div>
           <p>{description}</p>
-          {remote && <InstallControls localPlugin={local} remotePlugin={remote} slug={slug} />}
+          {remote && <InstallControls localPlugin={local} remotePlugin={remote} />}
         </div>
       </div>
       <TabsBar>

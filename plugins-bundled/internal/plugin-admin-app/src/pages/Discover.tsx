@@ -1,8 +1,9 @@
 import React from 'react';
 import { cx, css } from '@emotion/css';
 
-import { dateTimeParse, GrafanaTheme2 } from '@grafana/data';
+import { dateTimeParse, AppRootProps, GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, Legend, LinkButton } from '@grafana/ui';
+import { locationService } from '@grafana/runtime';
 
 import { PLUGIN_ROOT } from '../constants';
 import { Card } from '../components/Card';
@@ -11,18 +12,19 @@ import { PluginList } from '../components/PluginList';
 import { SearchField } from '../components/SearchField';
 import { PluginTypeIcon } from '../components/PluginTypeIcon';
 import { usePlugins } from '../hooks/usePlugins';
-import { useHistory } from '../hooks/useHistory';
 import { Plugin } from '../types';
 import { Page } from 'components/Page';
 import { Loader } from 'components/Loader';
 
-export const Discover = () => {
+export const Discover = ({ meta }: AppRootProps) => {
   const { items, isLoading } = usePlugins();
-  const history = useHistory();
   const styles = useStyles2(getStyles);
 
   const onSearch = (q: string) => {
-    history.push({ query: { q, tab: 'browse' } });
+    locationService.push({
+      pathname: `${PLUGIN_ROOT}/browse`,
+      search: `?q=${q}`,
+    });
   };
 
   const featuredPlugins = items.filter((_) => _.featured > 0);
@@ -56,14 +58,14 @@ export const Discover = () => {
       {/* Most popular */}
       <div className={styles.legendContainer}>
         <Legend className={styles.legend}>Most popular</Legend>
-        <LinkButton href={`${PLUGIN_ROOT}?tab=browse&sortBy=popularity`}>See more</LinkButton>
+        <LinkButton href={`${PLUGIN_ROOT}/browse?sortBy=popularity`}>See more</LinkButton>
       </div>
       <PluginList plugins={mostPopular.slice(0, 5)} />
 
       {/* Recently added */}
       <div className={styles.legendContainer}>
         <Legend className={styles.legend}>Recently added</Legend>
-        <LinkButton href={`${PLUGIN_ROOT}?tab=browse&sortBy=published'`}>See more</LinkButton>
+        <LinkButton href={`${PLUGIN_ROOT}/browse?sortBy=published'`}>See more</LinkButton>
       </div>
       <PluginList plugins={recentlyAdded.slice(0, 5)} />
 
@@ -72,19 +74,19 @@ export const Discover = () => {
       <Grid>
         <Card
           layout="horizontal"
-          href={`${PLUGIN_ROOT}?tab=browse&filterBy=panel`}
+          href={`${PLUGIN_ROOT}/browse?filterBy=panel`}
           image={<PluginTypeIcon typeCode="panel" size={18} />}
           text={<span className={styles.typeLegend}>&nbsp;Panels</span>}
         />
         <Card
           layout="horizontal"
-          href={`${PLUGIN_ROOT}?tab=browse&filterBy=datasource`}
+          href={`${PLUGIN_ROOT}/browse?filterBy=datasource`}
           image={<PluginTypeIcon typeCode="datasource" size={18} />}
           text={<span className={styles.typeLegend}>&nbsp;Data sources</span>}
         />
         <Card
           layout="horizontal"
-          href={`${PLUGIN_ROOT}?tab=browse&filterBy=app`}
+          href={`${PLUGIN_ROOT}/browse?filterBy=app`}
           image={<PluginTypeIcon typeCode="app" size={18} />}
           text={<span className={styles.typeLegend}>&nbsp;Apps</span>}
         />
