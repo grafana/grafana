@@ -5,7 +5,7 @@ let lastUpdate = Date.now();
  */
 export const perf = {
   budget: 1,
-  threshold: 1.05, // trial and error appears about right
+  threshold: 1.5, // trial and error appears about right
   ok: true,
   last: lastUpdate,
 };
