@@ -487,7 +487,7 @@ func TestRulerAccess(t *testing.T) {
 	require.NoError(t, createUser(t, store, models.ROLE_EDITOR, "editor", "editor"))
 	require.NoError(t, createUser(t, store, models.ROLE_ADMIN, "admin", "admin"))
 
-	// Now, let's try to create some invalid alert rules.
+	// Now, let's test the access policies.
 	testCases := []struct {
 		desc             string
 		url              string
