@@ -10,7 +10,6 @@ import (
 	"net"
 	"net/http"
 	"net/url"
-	"path"
 	"regexp"
 	"strings"
 	"time"
@@ -251,6 +250,11 @@ func (sn *SlackNotifier) buildSlackMessage(ctx context.Context, as []*types.Aler
 	var tmplErr error
 	tmpl := notify.TmplText(sn.tmpl, data, &tmplErr)
 
+	ruleURL, err := joinUrlPath(sn.tmpl.ExternalURL.String(), "/alerting/list")
+	if err != nil {
+		return nil, err
+	}
+
 	req := &slackMessage{
 		Channel:   tmpl(sn.Recipient),
 		Username:  tmpl(sn.Username),
@@ -264,7 +268,7 @@ func (sn *SlackNotifier) buildSlackMessage(ctx context.Context, as []*types.Aler
 				Footer:     "Grafana v" + setting.BuildVersion,
 				FooterIcon: FooterIconURL,
 				Ts:         time.Now().Unix(),
-				TitleLink:  path.Join(sn.tmpl.ExternalURL.String(), "/alerting/list"),
+				TitleLink:  ruleURL,
 				Text:       tmpl(sn.Text),
 				Fields:     nil, // TODO. Should be a config.
 			},

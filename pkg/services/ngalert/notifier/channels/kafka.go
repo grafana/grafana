@@ -3,7 +3,6 @@ package channels
 import (
 	"context"
 	"fmt"
-	"path"
 
 	gokit_log "github.com/go-kit/kit/log"
 	"github.com/prometheus/alertmanager/notify"
@@ -76,7 +75,12 @@ func (kn *KafkaNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 	bodyJSON.Set("description", tmpl(`{{ template "default.title" . }}`))
 	bodyJSON.Set("client", "Grafana")
 	bodyJSON.Set("details", tmpl(`{{ template "default.message" . }}`))
-	bodyJSON.Set("client_url", path.Join(kn.tmpl.ExternalURL.String(), "/alerting/list"))
+
+	ruleURL, err := joinUrlPath(kn.tmpl.ExternalURL.String(), "/alerting/list")
+	if err != nil {
+		return false, err
+	}
+	bodyJSON.Set("client_url", ruleURL)
 
 	groupKey, err := notify.ExtractGroupKey(ctx)
 	if err != nil {
