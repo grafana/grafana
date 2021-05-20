@@ -89,9 +89,13 @@ func (e *AzureLogAnalyticsDatasource) buildQueries(queries []plugins.DataSubQuer
 			resultFormat = timeSeries
 		}
 
-		urlComponents := map[string]string{}
-		urlComponents["workspace"] = azureLogAnalyticsTarget.Workspace
-		apiURL := fmt.Sprintf("%s/query", urlComponents["workspace"])
+		// Handle legacy queries without a Resource
+		var apiURL string
+		if azureLogAnalyticsTarget.Resource != "" {
+			apiURL = fmt.Sprintf("v1%s/query", azureLogAnalyticsTarget.Resource)
+		} else {
+			apiURL = fmt.Sprintf("v1/workspaces/%s/query", azureLogAnalyticsTarget.Workspace)
+		}
 
 		params := url.Values{}
 		rawQuery, err := KqlInterpolate(query, timeRange, azureLogAnalyticsTarget.Query, "TimeGenerated")
@@ -217,44 +221,43 @@ func (e *AzureLogAnalyticsDatasource) createRequest(ctx context.Context, dsInfo 
 	}
 
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("User-Agent", fmt.Sprintf("Grafana/%s", setting.BuildVersion))
 
 	// find plugin
 	plugin := e.pluginManager.GetDataSource(dsInfo.Type)
 	if plugin == nil {
 		return nil, errors.New("unable to find datasource plugin Azure Monitor")
 	}
-	cloudName := dsInfo.JsonData.Get("cloudName").MustString("azuremonitor")
 
-	logAnalyticsRoute, proxypass, err := e.getPluginRoute(plugin, cloudName)
+	logAnalyticsRoute, routeName, err := e.getPluginRoute(plugin)
 	if err != nil {
 		return nil, err
 	}
-	pluginproxy.ApplyRoute(ctx, req, proxypass, logAnalyticsRoute, dsInfo, e.cfg)
+
+	pluginproxy.ApplyRoute(ctx, req, routeName, logAnalyticsRoute, dsInfo, e.cfg)
 
 	return req, nil
 }
 
-func (e *AzureLogAnalyticsDatasource) getPluginRoute(plugin *plugins.DataSourcePlugin, cloudName string) (
-	*plugins.AppPluginRoute, string, error) {
-	pluginRouteName := "loganalyticsazure"
-
-	switch cloudName {
-	case "chinaazuremonitor":
-		pluginRouteName = "chinaloganalyticsazure"
-	case "govazuremonitor":
-		pluginRouteName = "govloganalyticsazure"
+func (e *AzureLogAnalyticsDatasource) getPluginRoute(plugin *plugins.DataSourcePlugin) (*plugins.AppPluginRoute, string, error) {
+	cloud, err := getAzureCloud(e.cfg, e.dsInfo.JsonData)
+	if err != nil {
+		return nil, "", err
 	}
 
-	var logAnalyticsRoute *plugins.AppPluginRoute
+	routeName, err := getLogAnalyticsApiRoute(cloud)
+	if err != nil {
+		return nil, "", err
+	}
+
+	var pluginRoute *plugins.AppPluginRoute
 	for _, route := range plugin.Routes {
-		if route.Path == pluginRouteName {
-			logAnalyticsRoute = route
+		if route.Path == routeName {
+			pluginRoute = route
 			break
 		}
 	}
 
-	return logAnalyticsRoute, pluginRouteName, nil
+	return pluginRoute, routeName, nil
 }
 
 // GetPrimaryResultTable returns the first table in the response named "PrimaryResult", or an
