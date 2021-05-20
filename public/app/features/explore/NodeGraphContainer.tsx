@@ -53,7 +53,7 @@ export function UnconnectedNodeGraphContainer(props: Props & ConnectedProps<type
       isOpen={withTraceView ? open : true}
       onToggle={withTraceView ? () => setOpen(!open) : undefined}
     >
-      <div style={{ height: short ? 500 : 600 }}>
+      <div style={{ height: withTraceView ? 500 : 600 }}>
         <NodeGraph dataFrames={dataFrames} getLinks={getLinks} />
       </div>
     </Collapse>
