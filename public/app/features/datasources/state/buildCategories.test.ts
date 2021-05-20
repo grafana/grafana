@@ -51,6 +51,6 @@ describe('buildCategories', () => {
 
   it('should add enterprise phantom plugins', () => {
     expect(categories[3].title).toBe('Enterprise plugins');
-    expect(categories[3].plugins.length).toBe(10);
+    expect(categories[3].plugins.length).toBe(11);
   });
 });
