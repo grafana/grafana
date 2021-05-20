@@ -25,7 +25,6 @@ import {
 } from '@grafana/ui';
 import { TimelineCoreOptions, getConfig } from './timeline';
 import { AxisPlacement, ScaleDirection, ScaleOrientation } from '@grafana/ui/src/components/uPlot/config';
-import { measureText } from '@grafana/ui/src/utils/measureText';
 import { TimelineFieldConfig, TimelineOptions } from './types';
 
 const defaultConfig: TimelineFieldConfig = {
@@ -79,14 +78,6 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<TimelineOptions> = ({
 
     return FALLBACK_COLOR;
   };
-
-  const yAxisWidth =
-    frame.fields.reduce((maxWidth, field) => {
-      return Math.max(
-        maxWidth,
-        measureText(getFieldDisplayName(field, frame), Math.round(10 * devicePixelRatio)).width
-      );
-    }, 0) + 24;
 
   const opts: TimelineCoreOptions = {
     // should expose in panel config
@@ -154,7 +145,6 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<TimelineOptions> = ({
     values: coreConfig.yValues,
     grid: false,
     ticks: false,
-    size: yAxisWidth,
     gap: 16,
     theme,
   });
