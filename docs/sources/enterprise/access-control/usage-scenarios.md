@@ -14,7 +14,7 @@ Before you get started, make sure to [enable fine-grained access control]({{< re
 ## Check all built-in role assignments
 
 You can use the [Fine-grained access control HTTP API]({{< relref "../../http_api/access_control.md#get-all-built-in-role-assignments" >}}) to see all available built-in role assignments. 
-The response contains a mapping between one of the organization roles (`Viewer`, `Editor`, `Admin`) or `Grafana Admin` to the custom or predefined roles.
+The response contains a mapping between one of the organization roles (`Viewer`, `Editor`, `Admin`) or `Grafana Admin` to the custom or fixed roles.
 
 Example request:
 ```
@@ -203,7 +203,7 @@ In order to create reports, you would need to have `reports.admin:write` permiss
 
 If you want your users who have `Viewer` organization role to create reports, you have two options:
 
-1. First option is to create a built-in role assignment and map `fixed:reporting:admin:edit` predefined role to the `Viewer` built-in role. Note that `fixed:reporting:admin:edit` predefined role allows doing more than creating reports. Refer to [predefined roles]({{< relref "./roles.md#predefined-roles" >}}) for full list of permission assignments.
+1. First option is to create a built-in role assignment and map `fixed:reporting:admin:edit` fixed role to the `Viewer` built-in role. Note that `fixed:reporting:admin:edit` fixed role allows doing more than creating reports. Refer to [fixed roles]({{< relref "./roles.md#fixed-roles" >}}) for full list of permission assignments.
 1. Second option is to [create a custom role]({{< ref "#create-your-custom-role" >}}) with `reports.admin:write` permission, and create a built-in role assignment for `Viewer` organization role.
 
 ## Prevent Grafana Admin from creating and inviting users
@@ -213,14 +213,14 @@ In order to create users, you would need to have `users:create` permission. By d
 If you want to prevent Grafana Admin from creating users, you can do the following:
 
 1. [Check all built-in role assignments]({{< ref "#check-all-built-in-role-assignments" >}}) to see what built-in role assignments are available.  
-1. From built-in role assignments, find the role which gives `users:create` permission. Refer to [predefined roles]({{< relref "./roles.md#predefined-roles" >}}) for full list of permission assignments. 
+1. From built-in role assignments, find the role which gives `users:create` permission. Refer to [fixed roles]({{< relref "./roles.md#fixed-roles" >}}) for full list of permission assignments. 
 1. Remove the built-in role assignment by using an [Fine-grained access control HTTP API]({{< relref "../../http_api/access_control.md" >}}) or by using [Grafana provisioning]({{< relref "./provisioning" >}}).
 
 ## Allow Editors to create new custom roles
 
 By default, Grafana Server Admin is the only user who can create and manage custom roles. If you want your users to do the same, you have two options:
 
-1. First option is to create a built-in role assignment and map `fixed:permissions:admin:edit` and `fixed:permissions:admin:read` predefined roles to the `Editor` built-in role.
+1. First option is to create a built-in role assignment and map `fixed:permissions:admin:edit` and `fixed:permissions:admin:read` fixed roles to the `Editor` built-in role.
 1. Second option is to [create a custom role]({{< ref "#create-your-custom-role" >}}) with `roles.builtin:add` and `roles:write` permissions, and create a built-in role assignment for `Editor` organization role.
 
 Note that in any scenario, your `Editor` would be able to create and manage roles only with the permissions they have, or with a subset of them. 

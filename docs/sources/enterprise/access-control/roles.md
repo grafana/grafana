@@ -1,7 +1,7 @@
 +++
 title = "Roles"
 description = "Understand roles in fine-grained access control"
-keywords = ["grafana", "fine-grained-access-control", "roles", "predefined-roles", "built-in-role-assignments", "permissions", "enterprise"]
+keywords = ["grafana", "fine-grained-access-control", "roles", "fixed-roles", "built-in-role-assignments", "permissions", "enterprise"]
 weight = 105
 +++
 
@@ -10,7 +10,7 @@ weight = 105
 A role represents set of permissions that allow you to perform specific actions on Grafana resources. Refer to [Permissions]({{< relref "./permissions.md" >}}) to understand how permissions work.
 
 There are two types of roles:
-- [Predefined roles]({{< relref "./roles.md#predefined-roles" >}}), which provide granular access for specific resources within Grafana and are managed by the Grafana itself.
+- [Fixed roles]({{< relref "./roles.md#fixed-roles" >}}), which provide granular access for specific resources within Grafana and are managed by the Grafana itself.
 - [Custom roles]({{< relref "./roles.md#custom-roles.md" >}}), which provide granular access based on the user specified set of permissions.
 
 You can use [Fine-grained access control API]({{< relref "../../http_api/access_control.md" >}}) to list available roles and permissions.
@@ -19,14 +19,14 @@ You can use [Fine-grained access control API]({{< relref "../../http_api/access_
 
 A role can be either _global_ or _organization local_. _Global_ roles are not mapped to any specific organization and can be reused across multiple organizations, whereas _organization local_ roles are only available for that specific organization.
 
-## Predefined roles
+## Fixed roles
 
-Predefined roles provide convenience and guarantee of consistent behaviour by combining relevant [permissions]({{< relref "./permissions.md" >}}) together. Predefined roles are created and updated by the Grafana, during the startup.
-There are few basic rules for predefined roles:
+Fixed roles provide convenience and guarantee of consistent behaviour by combining relevant [permissions]({{< relref "./permissions.md" >}}) together. Fixed roles are created and updated by Grafana during startup.
+There are few basic rules for fixed roles:
 
-- All predefined roles are _global_ by default
-- All predefined roles have a `fixed:` prefix. 
-- You can’t change or delete a predefined role.
+- All fixed roles are _global_.
+- All fixed roles have a `fixed:` prefix. 
+- You can’t change or delete a fixed role.
 
 Role name | Permissions | Description
 --- | --- | ---
@@ -52,7 +52,7 @@ To create, update or delete a custom role, you can use the [Fine-grained access 
 A role's name is intended as a human friendly identifier for the role, helping administrators understand the purpose of a role. The name cannot be longer than 190 characters, and we recommend using ASCII characters.
 Role names must be unique within an organization.
 
-Roles with names prefixed by `fixed:` are predefined roles created by Grafana and cannot be created or modified by users.
+Roles with names prefixed by `fixed:` are fixed roles created by Grafana and cannot be created or modified by users.
 
 ##### Role version
 
@@ -79,7 +79,7 @@ Note that you won't be able to create, update or delete a custom role with permi
 
 ## Built-in role assignments
 
-To control what your users can access or not, you can assign or unassign [Custom roles]({{< ref "#custom-roles" >}}) or [Predefined roles]({{< ref "#predefined-roles" >}}) to the existing [Organization roles]({{< relref "../../permissions/organization_roles.md" >}}) or to [Grafana Server Admin]({{< relref "../../permissions/_index.md#grafana-server-admin-role" >}})  role. 
+To control what your users can access or not, you can assign or unassign [Custom roles]({{< ref "#custom-roles" >}}) or [Fixed roles]({{< ref "#fixed-roles" >}}) to the existing [Organization roles]({{< relref "../../permissions/organization_roles.md" >}}) or to [Grafana Server Admin]({{< relref "../../permissions/_index.md#grafana-server-admin-role" >}})  role. 
 These assignments are called built-in role assignments.
 
 During startup, Grafana will create default assignments for you. When you make any changes to the built-on role assignments, Grafana will take them into account and won’t overwrite during next start.

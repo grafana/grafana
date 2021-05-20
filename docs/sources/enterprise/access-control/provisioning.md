@@ -41,15 +41,15 @@ Note that it is only possibly to provision [organization local]({{< relref "./ro
 
 ## Manage default built-in role assignments
 
-During the startup, Grafana creates [default built-in role assignments]({{< relref "./roles#default-built-in-role-assignments" >}}) with [predefined roles]({{< relref "./roles#predefined-roles" >}}). You can remove and add back later those assignments by using provisioning.
+During the startup, Grafana creates [default built-in role assignments]({{< relref "./roles#default-built-in-role-assignments" >}}) with [fixed roles]({{< relref "./roles#fixed-roles" >}}). You can remove and add back later those assignments by using provisioning.
 
 ### Remove default assignment
 
-To remove default built-in role assignment, you can use `removeDefaultAssignments` element in the configuration file. You would need to provide built-in role name and predefined role name.
+To remove default built-in role assignment, you can use `removeDefaultAssignments` element in the configuration file. You would need to provide built-in role name and fixed role name.
 
 ### Add back default assignment
 
-To add back default built-in role assignment, you can use `addDefaultAssignments` element in the configuration file. You would need to provide built-in role name and predefined role name.
+To add back default built-in role assignment, you can use `addDefaultAssignments` element in the configuration file. You would need to provide built-in role name and fixed role name.
 
 ## Example of a role configuration file
 
@@ -61,14 +61,14 @@ apiVersion: 1
 removeDefaultAssignments:
   # <string>, must be one of the Organization roles (`Viewer`, `Editor`, `Admin`) or `Grafana Admin`
   - builtInRole: "Grafana Admin"
-    # <string>, must be one of the existing predefined roles
+    # <string>, must be one of the existing fixed roles
     predefinedRole: "fixed:permissions:admin"
 
 # list of default built-in role assignments that should be added back
 addDefaultAssignments:
   # <string>, must be one of the Organization roles (`Viewer`, `Editor`, `Admin`) or `Grafana Admin`
   - builtInRole: "Admin"
-    # <string>, must be one of the existing predefined roles
+    # <string>, must be one of the existing fixed roles
     predefinedRole: "fixed:reporting:admin:read"
     
 # list of roles that should be deleted

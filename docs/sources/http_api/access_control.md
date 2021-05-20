@@ -176,7 +176,7 @@ Code | Description
 
 `POST /api/access-control/roles`
 
-Creates a new custom role and maps given permissions to that role. Note that roles with the same prefix as [Predefined Roles]({{< relref "../enterprise/access-control/roles.md" >}}) can't be created.
+Creates a new custom role and maps given permissions to that role. Note that roles with the same prefix as [Fixed Roles]({{< relref "../enterprise/access-control/roles.md" >}}) can't be created.
 
 #### Required permissions
 
