@@ -11,8 +11,7 @@ weight = 170
 The Grafana backend exposes an HTTP API, the same API is used by the frontend to do everything from saving
 dashboards, creating users and updating data sources.
 
-## Supported HTTP APIs
-
+## HTTP APIs
 
 - [Authentication API]({{< relref "auth.md" >}})
 - [Dashboard API]({{< relref "dashboard.md" >}})
@@ -34,11 +33,12 @@ dashboards, creating users and updating data sources.
 - [Preferences API]({{< relref "preferences.md" >}})
 - [Other API]({{< relref "other.md" >}})
 
-### Grafana Enterprise HTTP APIs
+## Grafana Enterprise HTTP APIs
+
+Grafana Enterprise includes all of the Grafana OSS APIs as well as those that follow:
 
 - [Data Source Permissions API]({{< relref "datasource_permissions.md" >}})
 - [External Group Sync API]({{< relref "external_group_sync.md" >}})
 - [License API]({{< relref "licensing.md" >}})
 - [Reporting API]({{< relref "reporting.md" >}})
-
 
