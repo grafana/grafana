@@ -444,7 +444,7 @@ func (i *Installer) selectVersion(plugin *Plugin, version string) (*Version, err
 
 	if len(ver.Version) == 0 {
 		i.log.Debugf("Requested plugin version %s v%s not found but potential fallback version '%s' was found",
-			plugin.ID, version, latestForArch)
+			plugin.ID, version, latestForArch.Version)
 		return nil, ErrVersionNotFound{
 			PluginID:         plugin.ID,
 			RequestedVersion: version,
@@ -454,7 +454,7 @@ func (i *Installer) selectVersion(plugin *Plugin, version string) (*Version, err
 
 	if !supportsCurrentArch(&ver) {
 		i.log.Debugf("Requested plugin version %s v%s not found but potential fallback version '%s' was found",
-			plugin.ID, version, latestForArch)
+			plugin.ID, version, latestForArch.Version)
 		return nil, ErrVersionUnsupported{
 			PluginID:         plugin.ID,
 			RequestedVersion: version,
