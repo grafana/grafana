@@ -3,10 +3,6 @@ package channels
 import (
 	"context"
 	"encoding/json"
-	"fmt"
-	"net/url"
-	"path"
-
 	gokit_log "github.com/go-kit/kit/log"
 	"github.com/pkg/errors"
 	"github.com/prometheus/alertmanager/notify"
@@ -63,11 +59,10 @@ func (tn *TeamsNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 	var tmplErr error
 	tmpl := notify.TmplText(tn.tmpl, data, &tmplErr)
 
-	u, err := url.Parse(tn.tmpl.ExternalURL.String())
+	ruleURL, err := joinUrlPath(tn.tmpl.ExternalURL.String(), "/alerting/list")
 	if err != nil {
-		return false, fmt.Errorf("failed to parse external URL: %w", err)
+		return false, err
 	}
-	u.Path = path.Join(u.Path, "/alerting/list")
 
 	title := tmpl(`{{ template "default.title" . }}`)
 	body := map[string]interface{}{
@@ -92,7 +87,7 @@ func (tn *TeamsNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 				"targets": []map[string]interface{}{
 					{
 						"os":  "default",
-						"uri": u.String(),
+						"uri": ruleURL,
 					},
 				},
 			},

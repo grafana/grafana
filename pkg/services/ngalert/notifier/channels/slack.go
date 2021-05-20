@@ -10,7 +10,6 @@ import (
 	"net"
 	"net/http"
 	"net/url"
-	"path"
 	"regexp"
 	"strings"
 	"time"
@@ -251,11 +250,10 @@ func (sn *SlackNotifier) buildSlackMessage(ctx context.Context, as []*types.Aler
 	var tmplErr error
 	tmpl := notify.TmplText(sn.tmpl, data, &tmplErr)
 
-	u, err := url.Parse(sn.tmpl.ExternalURL.String())
+	ruleURL, err := joinUrlPath(sn.tmpl.ExternalURL.String(), "/alerting/list")
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse external URL: %w", err)
+		return nil, err
 	}
-	u.Path = path.Join(u.Path, "/alerting/list")
 
 	req := &slackMessage{
 		Channel:   tmpl(sn.Recipient),
@@ -270,7 +268,7 @@ func (sn *SlackNotifier) buildSlackMessage(ctx context.Context, as []*types.Aler
 				Footer:     "Grafana v" + setting.BuildVersion,
 				FooterIcon: FooterIconURL,
 				Ts:         time.Now().Unix(),
-				TitleLink:  u.String(),
+				TitleLink:  ruleURL,
 				Text:       tmpl(sn.Text),
 				Fields:     nil, // TODO. Should be a config.
 			},
