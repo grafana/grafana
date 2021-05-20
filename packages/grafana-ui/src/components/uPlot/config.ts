@@ -1,5 +1,6 @@
 import { SelectableValue } from '@grafana/data';
 import { ScaleDistribution } from './models.gen';
+import { Series } from 'uplot';
 
 /**
  * @alpha
@@ -232,6 +233,7 @@ export interface GraphFieldConfig
   drawStyle?: DrawStyle;
   gradientMode?: GraphGradientMode;
   thresholdsStyle?: GraphThresholdsStyleConfig;
+  pathBuilder?: Series.PathBuilder;
 }
 
 /**

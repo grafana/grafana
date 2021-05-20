@@ -18,7 +18,6 @@ import { getFieldLinksForExplore } from './utils/links';
 interface LogsContainerProps {
   exploreId: ExploreId;
   scanRange?: RawTimeRange;
-  width: number;
   syncedTimes: boolean;
   onClickFilterLabel?: (key: string, value: string) => void;
   onClickFilterOutLabel?: (key: string, value: string) => void;
@@ -74,7 +73,6 @@ export class LogsContainer extends PureComponent<PropsFromRedux & LogsContainerP
       visibleRange,
       scanning,
       range,
-      width,
       isLive,
       exploreId,
     } = this.props;
@@ -131,7 +129,6 @@ export class LogsContainer extends PureComponent<PropsFromRedux & LogsContainerP
               scanning={scanning}
               scanRange={range.raw}
               showContextToggle={this.showContextToggle}
-              width={width}
               getRowContext={this.getLogRowContext}
               getFieldLinks={this.getFieldLinks}
             />

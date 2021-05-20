@@ -1,5 +1,4 @@
 import { Labels } from './data';
-import { GraphSeriesXY } from './graph';
 import { DataFrame } from './dataFrame';
 import { AbsoluteTimeRange } from './time';
 import { DataQuery } from './datasource';
@@ -84,7 +83,7 @@ export interface LogsModel {
   hasUniqueLabels: boolean;
   meta?: LogsMetaItem[];
   rows: LogRowModel[];
-  series?: GraphSeriesXY[];
+  series?: DataFrame[];
   visibleRange?: AbsoluteTimeRange;
   queries?: DataQuery[];
 }

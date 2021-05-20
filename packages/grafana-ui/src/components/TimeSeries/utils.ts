@@ -184,6 +184,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
       spanNulls: customConfig.spanNulls || false,
       show: !customConfig.hideFrom?.viz,
       gradientMode: customConfig.gradientMode,
+      pathBuilder: customConfig.pathBuilder,
       thresholds: config.thresholds,
 
       // The following properties are not used in the uPlot config, but are utilized as transport for legend config

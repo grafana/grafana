@@ -6,7 +6,14 @@ import { connect } from 'react-redux';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import memoizeOne from 'memoize-one';
 import { selectors } from '@grafana/e2e-selectors';
-import { ErrorBoundaryAlert, stylesFactory, withTheme, CustomScrollbar } from '@grafana/ui';
+import {
+  ErrorBoundaryAlert,
+  stylesFactory,
+  withTheme,
+  CustomScrollbar,
+  Collapse,
+  TooltipDisplayMode,
+} from '@grafana/ui';
 import {
   AbsoluteTimeRange,
   DataQuery,
@@ -222,19 +229,21 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     );
   }
 
-  renderGraphPanel(width: number) {
+  renderGraphPanel() {
     const { graphResult, absoluteRange, timeZone, splitOpen, queryResponse, loading } = this.props;
     return (
-      <ExploreGraphNGPanel
-        data={graphResult!}
-        width={width}
-        absoluteRange={absoluteRange}
-        timeZone={timeZone}
-        onUpdateTimeRange={this.onUpdateTimeRange}
-        annotations={queryResponse.annotations}
-        splitOpenFn={splitOpen}
-        isLoading={loading}
-      />
+      <Collapse label="Graph" loading={loading} isOpen>
+        <ExploreGraphNGPanel
+          data={graphResult!}
+          height={400}
+          tooltipDisplayMode={TooltipDisplayMode.Single}
+          absoluteRange={absoluteRange}
+          timeZone={timeZone}
+          onUpdateTimeRange={this.onUpdateTimeRange}
+          annotations={queryResponse.annotations}
+          splitOpenFn={splitOpen}
+        />
+      </Collapse>
     );
   }
 
@@ -250,11 +259,10 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     );
   }
 
-  renderLogsPanel(width: number) {
+  renderLogsPanel() {
     const { exploreId, syncedTimes } = this.props;
     return (
       <LogsContainer
-        width={width}
         exploreId={exploreId}
         syncedTimes={syncedTimes}
         onClickFilterLabel={this.onClickFilterLabel}
@@ -349,10 +357,10 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
                       {showPanels && (
                         <>
                           {showMetrics && graphResult && (
-                            <ErrorBoundaryAlert>{this.renderGraphPanel(width)}</ErrorBoundaryAlert>
+                            <ErrorBoundaryAlert>{this.renderGraphPanel()}</ErrorBoundaryAlert>
                           )}
                           {showTable && <ErrorBoundaryAlert>{this.renderTablePanel(width)}</ErrorBoundaryAlert>}
-                          {showLogs && <ErrorBoundaryAlert>{this.renderLogsPanel(width)}</ErrorBoundaryAlert>}
+                          {showLogs && <ErrorBoundaryAlert>{this.renderLogsPanel()}</ErrorBoundaryAlert>}
                           {showNodeGraph && <ErrorBoundaryAlert>{this.renderNodeGraphPanel()}</ErrorBoundaryAlert>}
                           {showTrace && <ErrorBoundaryAlert>{this.renderTraceViewPanel()}</ErrorBoundaryAlert>}
                         </>
