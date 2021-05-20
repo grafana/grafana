@@ -710,8 +710,7 @@ func TestDeleteFolderWithRules(t *testing.T) {
 		require.NoError(t, err)
 
 		assert.Equal(t, 202, resp.StatusCode)
-		expectedGetRulesResponseBody := fmt.Sprintf(`{}`)
-		assert.JSONEq(t, expectedGetRulesResponseBody, string(b))
+		assert.JSONEq(t, "{}", string(b))
 	}
 }
 
