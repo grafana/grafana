@@ -331,23 +331,23 @@ A list of cookies that are stripped from the outgoing data source and alerting r
 
 > **Note:** Available in Grafana Enterprise v7.5 and later versions.
 
-When query caching is enabled, Grafana temporarily stores the results of data source queries and serves cached responses to similar requests.
+When query caching is enabled, Grafana can temporarily store the results of data source queries and serve cached responses to similar requests.
 
 ### backend
 
-The caching backend to use when storing cached queries. Options: memory
-
-> **Note:** This setting enables the caching feature, and does not enable query caching for any data source. To enable query caching for a data source, refer to the data source’s configuration page.
+The caching backend to use when storing cached queries. Options: `memory`, `redis`, and `memcached`.
 
 ### enabled
 
-Setting 'enabled' to true enables query caching for data sources with configured caching.
+Setting 'enabled' to `true` allows users to configure query caching for data sources.
 
-This value is enabled by default.
+This value is `true` by default.
+
+> **Note:** This setting enables the caching feature, but it does not turn on query caching for any data source. To turn on query caching for a data source, update the setting on the data source configuration page. For more information, refer to the [query caching docs]({{< relref "./query-caching.md#enable-and-configure-query-caching" >}}).
 
 ### ttl
 
-The default TTL (time to live) if no other TTL is available.
+_Time to live_ (TTL) is the time that a query result is stored in the caching system before it is deleted or refreshed. This setting defines the time to live for query caching, when TTL is not configured in data source settings. The default value is `5m` (5 minutes).
 
 ## [caching.memory]
 

@@ -1,6 +1,6 @@
 import React, { FormEvent, useState } from 'react';
 import { Button, Icon, Input, Label, RadioButtonGroup, useStyles } from '@grafana/ui';
-import { DataSourceInstanceSettings, GrafanaTheme } from '@grafana/data';
+import { DataSourceInstanceSettings, GrafanaTheme, SelectableValue } from '@grafana/data';
 import { css, cx } from '@emotion/css';
 import { debounce } from 'lodash';
 
@@ -8,6 +8,20 @@ import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { getFiltersFromUrlParams } from '../../utils/misc';
 import { DataSourcePicker } from '@grafana/runtime';
+import { alertStateToReadable } from '../../utils/rules';
+
+const ViewOptions: SelectableValue[] = [
+  {
+    icon: 'folder',
+    label: 'Groups',
+    value: 'group',
+  },
+  {
+    icon: 'heart-rate',
+    label: 'State',
+    value: 'state',
+  },
+];
 
 const RulesFilter = () => {
   const [queryParams, setQueryParams] = useQueryParams();
@@ -19,7 +33,10 @@ const RulesFilter = () => {
   const { dataSource, alertState, queryString } = getFiltersFromUrlParams(queryParams);
 
   const styles = useStyles(getStyles);
-  const stateOptions = Object.entries(PromAlertingRuleState).map(([key, value]) => ({ label: key, value }));
+  const stateOptions = Object.entries(PromAlertingRuleState).map(([key, value]) => ({
+    label: alertStateToReadable(value),
+    value,
+  }));
 
   const handleDataSourceChange = (dataSourceValue: DataSourceInstanceSettings) => {
     setQueryParams({ dataSource: dataSourceValue.name });
@@ -32,6 +49,10 @@ const RulesFilter = () => {
 
   const handleAlertStateChange = (value: string) => {
     setQueryParams({ alertState: value });
+  };
+
+  const handleViewChange = (view: string) => {
+    setQueryParams({ view });
   };
 
   const handleClearFiltersClick = () => {
@@ -66,10 +87,20 @@ const RulesFilter = () => {
               prefix={searchIcon}
               onChange={handleQueryStringChange}
               defaultValue={queryString}
+              placeholder="Search"
             />
           </div>
           <div className={styles.rowChild}>
+            <Label>State</Label>
             <RadioButtonGroup options={stateOptions} value={alertState} onChange={handleAlertStateChange} />
+          </div>
+          <div className={styles.rowChild}>
+            <Label>View as</Label>
+            <RadioButtonGroup
+              options={ViewOptions}
+              value={queryParams['view'] || 'group'}
+              onChange={handleViewChange}
+            />
           </div>
         </div>
         {(dataSource || alertState || queryString) && (

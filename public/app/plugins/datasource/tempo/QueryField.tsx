@@ -50,10 +50,8 @@ export class TempoQueryField extends React.PureComponent<Props, State> {
   };
 
   render() {
-    const { query, onChange, range } = this.props;
+    const { query, onChange } = this.props;
     const { linkedDatasource } = this.state;
-
-    const absoluteTimeRange = { from: range!.from!.valueOf(), to: range!.to!.valueOf() }; // Range here is never optional
 
     return (
       <>
@@ -87,7 +85,6 @@ export class TempoQueryField extends React.PureComponent<Props, State> {
               onRunQuery={this.onRunLinkedQuery}
               query={this.linkedQuery as any}
               history={[]}
-              absoluteRange={absoluteTimeRange}
             />
           </>
         )}

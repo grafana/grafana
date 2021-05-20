@@ -81,6 +81,7 @@ var (
 	DataProxyTLSHandshakeTimeout   int
 	DataProxyExpectContinueTimeout int
 	DataProxyMaxIdleConns          int
+	DataProxyMaxIdleConnsPerHost   int
 	DataProxyKeepAlive             int
 	DataProxyIdleConnTimeout       int
 	StaticRootPath                 string
@@ -256,8 +257,8 @@ type Cfg struct {
 	PluginsAppsSkipVerifyTLS bool
 	PluginSettings           PluginSettings
 	PluginsAllowUnsigned     []string
-	MarketplaceURL           string
-	MarketplaceAppEnabled    bool
+	PluginCatalogURL         string
+	PluginAdminEnabled       bool
 	DisableSanitizeHtml      bool
 	EnterpriseLicensePath    string
 
@@ -399,9 +400,11 @@ func (cfg Cfg) IsDatabaseMetricsEnabled() bool {
 	return cfg.FeatureToggles["database_metrics"]
 }
 
-// IsHTTPRequestHistogramEnabled returns whether the http_request_histogram feature is enabled.
-func (cfg Cfg) IsHTTPRequestHistogramEnabled() bool {
-	return cfg.FeatureToggles["http_request_histogram"]
+// IsHTTPRequestHistogramDisabled returns whether the request historgrams is disabled.
+// This feature toggle will be removed in Grafana 8.x but gives the operator
+// some graceperiod to update all the monitoring tools.
+func (cfg Cfg) IsHTTPRequestHistogramDisabled() bool {
+	return cfg.FeatureToggles["disable_http_request_histogram"]
 }
 
 type CommandLineArgs struct {
@@ -825,6 +828,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	DataProxyTLSHandshakeTimeout = dataproxy.Key("tls_handshake_timeout_seconds").MustInt(10)
 	DataProxyExpectContinueTimeout = dataproxy.Key("expect_continue_timeout_seconds").MustInt(1)
 	DataProxyMaxIdleConns = dataproxy.Key("max_idle_connections").MustInt(100)
+	DataProxyMaxIdleConnsPerHost = dataproxy.Key("max_idle_connections_per_host").MustInt(2)
 	DataProxyIdleConnTimeout = dataproxy.Key("idle_conn_timeout_seconds").MustInt(90)
 	cfg.SendUserHeader = dataproxy.Key("send_user_header").MustBool(false)
 
@@ -888,8 +892,8 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 		plug = strings.TrimSpace(plug)
 		cfg.PluginsAllowUnsigned = append(cfg.PluginsAllowUnsigned, plug)
 	}
-	cfg.MarketplaceURL = pluginsSection.Key("marketplace_url").MustString("https://grafana.com/grafana/plugins/")
-	cfg.MarketplaceAppEnabled = pluginsSection.Key("marketplace_app_enabled").MustBool(false)
+	cfg.PluginCatalogURL = pluginsSection.Key("plugin_catalog_url").MustString("https://grafana.com/grafana/plugins/")
+	cfg.PluginAdminEnabled = pluginsSection.Key("plugin_admin_enabled").MustBool(false)
 
 	// Read and populate feature toggles list
 	featureTogglesSection := iniFile.Section("feature_toggles")

@@ -203,7 +203,7 @@ func (st DBstore) UpsertAlertRules(rules []UpsertRule) error {
 			var parentVersion int64
 			switch r.Existing {
 			case nil: // new rule
-				uid, err := generateNewAlertRuleUID(sess, r.New.OrgID)
+				uid, err := GenerateNewAlertRuleUID(sess, r.New.OrgID, r.New.Title)
 				if err != nil {
 					return fmt.Errorf("failed to generate UID for alert rule %q: %w", r.New.Title, err)
 				}
@@ -411,7 +411,10 @@ func (st DBstore) GetAlertRulesForScheduling(query *ngmodels.ListAlertRulesQuery
 	})
 }
 
-func generateNewAlertRuleUID(sess *sqlstore.DBSession, orgID int64) (string, error) {
+// GenerateNewAlertRuleUID generates a unique UID for a rule.
+// This is set as a variable so that the tests can override it.
+// The ruleTitle is only used by the mocked functions.
+var GenerateNewAlertRuleUID = func(sess *sqlstore.DBSession, orgID int64, ruleTitle string) (string, error) {
 	for i := 0; i < 3; i++ {
 		uid := util.GenerateShortUID()
 
@@ -438,8 +441,8 @@ func (st DBstore) validateAlertRule(alertRule ngmodels.AlertRule) error {
 		return fmt.Errorf("%w: title is empty", ngmodels.ErrAlertRuleFailedValidation)
 	}
 
-	if alertRule.IntervalSeconds%int64(st.BaseInterval.Seconds()) != 0 {
-		return fmt.Errorf("%w: interval (%v) should be divided exactly by scheduler interval: %v", ngmodels.ErrAlertRuleFailedValidation, time.Duration(alertRule.IntervalSeconds)*time.Second, st.BaseInterval)
+	if alertRule.IntervalSeconds%int64(st.BaseInterval.Seconds()) != 0 || alertRule.IntervalSeconds <= 0 {
+		return fmt.Errorf("%w: interval (%v) should be non-zero and divided exactly by scheduler interval: %v", ngmodels.ErrAlertRuleFailedValidation, time.Duration(alertRule.IntervalSeconds)*time.Second, st.BaseInterval)
 	}
 
 	// enfore max name length in SQLite

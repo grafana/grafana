@@ -689,7 +689,7 @@ describe('applyRawFieldOverrides', () => {
       percent: expect.any(Number),
       prefix: undefined,
       suffix: undefined,
-      text: '0',
+      text: 'False',
     });
 
     expect(getDisplayValue(frames, frameIndex, 4)).toEqual({
