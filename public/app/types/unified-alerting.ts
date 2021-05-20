@@ -18,7 +18,6 @@ export type Alert = {
   state: PromAlertingRuleState | GrafanaAlertState;
   value: string;
 };
-
 interface RuleBase {
   health: string;
   name: string;

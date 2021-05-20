@@ -47,7 +47,7 @@ func TestDingdingNotifier(t *testing.T) {
 			expMsg: map[string]interface{}{
 				"msgtype": "link",
 				"link": map[string]interface{}{
-					"messageUrl": "dingtalk://dingtalkclient/page/link?pc_slide=false&url=http%3A%2Flocalhost%2Falerting%2Flist",
+					"messageUrl": "dingtalk://dingtalkclient/page/link?pc_slide=false&url=http%3A%2F%2Flocalhost%2Falerting%2Flist",
 					"text":       "\n**Firing**\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSource: \n\n\n\n\n",
 					"title":      "[FIRING:1]  (val1)",
 				},
@@ -77,7 +77,7 @@ func TestDingdingNotifier(t *testing.T) {
 			expMsg: map[string]interface{}{
 				"actionCard": map[string]interface{}{
 					"singleTitle": "More",
-					"singleURL":   "dingtalk://dingtalkclient/page/link?pc_slide=false&url=http%3A%2Flocalhost%2Falerting%2Flist",
+					"singleURL":   "dingtalk://dingtalkclient/page/link?pc_slide=false&url=http%3A%2F%2Flocalhost%2Falerting%2Flist",
 					"text":        "2 alerts are firing, 0 are resolved",
 					"title":       "[FIRING:2]  ",
 				},
@@ -95,7 +95,7 @@ func TestDingdingNotifier(t *testing.T) {
 				"url": "http://localhost",
 				"message": "{{ .Status }"
 			}`,
-			expMsgError: errors.New("failed to template dingding message: template: :1: unexpected \"}\" in operand"),
+			expMsgError: errors.New("failed to template DingDing message: template: :1: unexpected \"}\" in operand"),
 		},
 	}
 

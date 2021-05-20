@@ -56,7 +56,7 @@ func TestSlackNotifier(t *testing.T) {
 				Attachments: []attachment{
 					{
 						Title:      "[FIRING:1]  (val1)",
-						TitleLink:  "http:/localhost/alerting/list",
+						TitleLink:  "http://localhost/alerting/list",
 						Text:       "\n**Firing**\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSource: \n\n\n\n\n",
 						Fallback:   "[FIRING:1]  (val1)",
 						Fields:     nil,
@@ -92,7 +92,7 @@ func TestSlackNotifier(t *testing.T) {
 				Attachments: []attachment{
 					{
 						Title:      "[FIRING:1]  (val1)",
-						TitleLink:  "http:/localhost/alerting/list",
+						TitleLink:  "http://localhost/alerting/list",
 						Text:       "\n**Firing**\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSource: \n\n\n\n\n",
 						Fallback:   "[FIRING:1]  (val1)",
 						Fields:     nil,
@@ -135,7 +135,7 @@ func TestSlackNotifier(t *testing.T) {
 				Attachments: []attachment{
 					{
 						Title:      "2 firing, 0 resolved",
-						TitleLink:  "http:/localhost/alerting/list",
+						TitleLink:  "http://localhost/alerting/list",
 						Text:       "\n**Firing**\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSource: \nLabels:\n - alertname = alert1\n - lbl1 = val2\nAnnotations:\n - ann1 = annv2\nSource: \n\n\n\n\n",
 						Fallback:   "2 firing, 0 resolved",
 						Fields:     nil,

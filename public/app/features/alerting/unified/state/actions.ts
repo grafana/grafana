@@ -45,7 +45,7 @@ import {
   ruleWithLocationToRuleIdentifier,
   stringifyRuleIdentifier,
 } from '../utils/rules';
-import { addDefaultsToAlertmanagerConfig } from '../utils/alertmanager-config';
+import { addDefaultsToAlertmanagerConfig } from '../utils/alertmanager';
 import { backendSrv } from 'app/core/services/backend_srv';
 
 export const fetchPromRulesAction = createAsyncThunk(
