@@ -138,7 +138,10 @@ type logJSONQuery struct {
 	AzureLogAnalytics struct {
 		Query        string `json:"query"`
 		ResultFormat string `json:"resultFormat"`
-		Workspace    string `json:"workspace"`
+		Resource     string `json:"resource"`
+
+		// Deprecated: Queries should be migrated to use Resource instead
+		Workspace string `json:"workspace"`
 	} `json:"azureLogAnalytics"`
 }
 
