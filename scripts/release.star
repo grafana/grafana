@@ -67,11 +67,14 @@ def get_steps(edition, ver_mode):
     should_publish = ver_mode in ('release', 'test-release',)
     should_upload = should_publish or ver_mode in ('release-branch',)
     include_enterprise2 = edition == 'enterprise'
+    tries = None
+    if should_publish:
+        tries = 5
 
     steps = [
         codespell_step(),
         shellcheck_step(),
-        test_backend_step(edition=edition, publish=should_publish, tries=5),
+        test_backend_step(edition=edition, tries=tries),
         lint_backend_step(edition=edition),
         test_frontend_step(),
         build_backend_step(edition=edition, ver_mode=ver_mode),
