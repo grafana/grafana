@@ -285,7 +285,6 @@ func TestAMConfigAccess(t *testing.T) {
 				// Fetch Request
 				resp, err := client.Do(req)
 				if err != nil {
-					fmt.Println(err)
 					return
 				}
 				t.Cleanup(func() {
@@ -386,7 +385,8 @@ func TestAlertAndGroupsQuery(t *testing.T) {
 	// Now, let's test the endpoint with some alerts.
 	{
 		// Create the namespace we'll save our alerts to.
-		require.NoError(t, createFolder(t, store, 0, "default"))
+		_, err := createFolder(t, store, 0, "default")
+		require.NoError(t, err)
 	}
 
 	// Create an alert that will fire as quickly as possible
@@ -479,7 +479,8 @@ func TestRulerAccess(t *testing.T) {
 	grafanaListedAddr := testinfra.StartGrafana(t, dir, path, store)
 
 	// Create the namespace we'll save our alerts to.
-	require.NoError(t, createFolder(t, store, 0, "default"))
+	_, err := createFolder(t, store, 0, "default")
+	require.NoError(t, err)
 
 	// Create a users to make authenticated requests
 	require.NoError(t, createUser(t, store, models.ROLE_VIEWER, "viewer", "viewer"))
@@ -579,6 +580,141 @@ func TestRulerAccess(t *testing.T) {
 	}
 }
 
+func TestDeleteFolderWithRules(t *testing.T) {
+	// Setup Grafana and its Database
+	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
+		EnableFeatureToggles: []string{"ngalert"},
+		EnableQuota:          true,
+		DisableAnonymous:     true,
+		ViewersCanEdit:       true,
+	})
+
+	store := testinfra.SetUpDatabase(t, dir)
+	// override bus to get the GetSignedInUserQuery handler
+	store.Bus = bus.GetBus()
+	grafanaListedAddr := testinfra.StartGrafana(t, dir, path, store)
+
+	// Create the namespace we'll save our alerts to.
+	namespaceUID, err := createFolder(t, store, 0, "default")
+	require.NoError(t, err)
+
+	require.NoError(t, createUser(t, store, models.ROLE_VIEWER, "viewer", "viewer"))
+	require.NoError(t, createUser(t, store, models.ROLE_EDITOR, "editor", "editor"))
+
+	createRule(t, grafanaListedAddr, "default", "editor", "editor")
+
+	// check rule is created
+	{
+		u := fmt.Sprintf("http://editor:editor@%s/api/ruler/grafana/api/v1/rules", grafanaListedAddr)
+		// nolint:gosec
+		resp, err := http.Get(u)
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			err := resp.Body.Close()
+			require.NoError(t, err)
+		})
+		b, err := ioutil.ReadAll(resp.Body)
+		require.NoError(t, err)
+
+		assert.Equal(t, 202, resp.StatusCode)
+
+		re := regexp.MustCompile(`"uid":"([\w|-]+)"`)
+		b = re.ReplaceAll(b, []byte(`"uid":""`))
+		re = regexp.MustCompile(`"updated":"(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z)"`)
+		b = re.ReplaceAll(b, []byte(`"updated":"2021-05-19T19:47:55Z"`))
+
+		expectedGetRulesResponseBody := fmt.Sprintf(`{
+			"default": [
+				{
+					"name": "arulegroup",
+					"interval": "1m",
+					"rules": [
+						{
+							"expr": "",
+							"for": "2m",
+							"labels": {
+								"label1": "val1"
+							},
+							"annotations": {
+								"annotation1": "val1"
+							},
+							"grafana_alert": {
+								"id": 1,
+								"orgId": 1,
+								"title": "rule under folder default",
+								"condition": "A",
+								"data": [
+									{
+										"refId": "A",
+										"queryType": "",
+										"relativeTimeRange": {
+											"from": 18000,
+											"to": 10800
+										},
+										"datasourceUid": "-100",
+										"model": {
+											"expression": "2 + 3 > 1",
+											"intervalMs": 1000,
+											"maxDataPoints": 43200,
+											"type": "math"
+										}
+									}
+								],
+								"updated": "2021-05-19T19:47:55Z",
+								"intervalSeconds": 60,
+								"version": 1,
+								"uid": "",
+								"namespace_uid": %q,
+								"namespace_id": 1,
+								"rule_group": "arulegroup",
+								"no_data_state": "NoData",
+								"exec_err_state": "Alerting"
+							}
+						}
+					]
+				}
+			]
+		}`, namespaceUID)
+		assert.JSONEq(t, expectedGetRulesResponseBody, string(b))
+	}
+
+	// delete folder
+	{
+		u := fmt.Sprintf("http://editor:editor@%s/api/folders/%s", grafanaListedAddr, namespaceUID)
+		req, err := http.NewRequest(http.MethodDelete, u, nil)
+		require.NoError(t, err)
+		client := &http.Client{}
+		resp, err := client.Do(req)
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			err := resp.Body.Close()
+			require.NoError(t, err)
+		})
+		b, err := ioutil.ReadAll(resp.Body)
+		require.NoError(t, err)
+		require.Equal(t, 200, resp.StatusCode)
+		require.JSONEq(t, `{"id":1,"message":"Folder default deleted","title":"default"}`, string(b))
+	}
+
+	// check alert rule is deleted
+	{
+		u := fmt.Sprintf("http://editor:editor@%s/api/ruler/grafana/api/v1/rules", grafanaListedAddr)
+		// nolint:gosec
+		resp, err := http.Get(u)
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			err := resp.Body.Close()
+			require.NoError(t, err)
+		})
+		b, err := ioutil.ReadAll(resp.Body)
+		require.NoError(t, err)
+
+		assert.Equal(t, 202, resp.StatusCode)
+		expectedGetRulesResponseBody := fmt.Sprintf(`{}`)
+		assert.JSONEq(t, expectedGetRulesResponseBody, string(b))
+	}
+}
+
 func TestAlertRuleCRUD(t *testing.T) {
 	// Setup Grafana and its Database
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
@@ -597,7 +733,8 @@ func TestAlertRuleCRUD(t *testing.T) {
 	require.NoError(t, err)
 
 	// Create the namespace we'll save our alerts to.
-	require.NoError(t, createFolder(t, store, 0, "default"))
+	_, err = createFolder(t, store, 0, "default")
+	require.NoError(t, err)
 
 	interval, err := model.ParseDuration("1m")
 	require.NoError(t, err)
@@ -1313,7 +1450,8 @@ func TestQuota(t *testing.T) {
 	grafanaListedAddr := testinfra.StartGrafana(t, dir, path, store)
 
 	// Create the namespace we'll save our alerts to.
-	require.NoError(t, createFolder(t, store, 0, "default"))
+	_, err := createFolder(t, store, 0, "default")
+	require.NoError(t, err)
 
 	// Create a user to make authenticated requests
 	require.NoError(t, createUser(t, store, models.ROLE_EDITOR, "grafana", "password"))
@@ -1414,7 +1552,8 @@ func TestEval(t *testing.T) {
 	require.NoError(t, createUser(t, store, models.ROLE_EDITOR, "grafana", "password"))
 
 	// Create the namespace we'll save our alerts to.
-	require.NoError(t, createFolder(t, store, 0, "default"))
+	_, err := createFolder(t, store, 0, "default")
+	require.NoError(t, err)
 
 	// test eval conditions
 	testCases := []struct {
@@ -1757,7 +1896,7 @@ func TestEval(t *testing.T) {
 
 // createFolder creates a folder for storing our alerts under. Grafana uses folders as a replacement for alert namespaces to match its permission model.
 // We use the dashboard command using IsFolder = true to tell it's a folder, it takes the dashboard as the name of the folder.
-func createFolder(t *testing.T, store *sqlstore.SQLStore, folderID int64, folderName string) error {
+func createFolder(t *testing.T, store *sqlstore.SQLStore, folderID int64, folderName string) (string, error) {
 	t.Helper()
 
 	cmd := models.SaveDashboardCommand{
@@ -1768,9 +1907,13 @@ func createFolder(t *testing.T, store *sqlstore.SQLStore, folderID int64, folder
 			"title": folderName,
 		}),
 	}
-	_, err := store.SaveDashboard(cmd)
+	f, err := store.SaveDashboard(cmd)
 
-	return err
+	if err != nil {
+		return "", err
+	}
+
+	return f.Uid, nil
 }
 
 // rulesNamespaceWithoutVariableValues takes a apimodels.NamespaceConfigResponse JSON-based input and makes the dynamic fields static e.g. uid, dates, etc.
