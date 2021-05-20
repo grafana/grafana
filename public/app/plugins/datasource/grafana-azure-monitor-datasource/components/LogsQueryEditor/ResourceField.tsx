@@ -1,4 +1,6 @@
-import { Button, Icon, Modal } from '@grafana/ui';
+import { css } from '@emotion/css';
+import { GrafanaTheme2 } from '@grafana/data';
+import { Button, Icon, Modal, useStyles2 } from '@grafana/ui';
 import React, { useCallback, useEffect, useState } from 'react';
 import { AzureQueryEditorFieldProps, AzureResourceSummaryItem } from '../../types';
 import { Field } from '../Field';
@@ -22,13 +24,14 @@ function parseResourceDetails(resourceURI: string) {
 }
 
 const ResourceField: React.FC<AzureQueryEditorFieldProps> = ({ query, datasource, onQueryChange }) => {
+  const styles = useStyles2(getStyles);
   const { resource } = query.azureLogAnalytics;
 
   const [resourceComponents, setResourceComponents] = useState(parseResourceDetails(resource ?? ''));
   const [pickerIsOpen, setPickerIsOpen] = useState(false);
 
   useEffect(() => {
-    if (resource) {
+    if (resource && parseResourceDetails(resource)) {
       datasource.resourcePickerData.getResource(resource).then(setResourceComponents);
     } else {
       setResourceComponents(undefined);
@@ -59,7 +62,7 @@ const ResourceField: React.FC<AzureQueryEditorFieldProps> = ({ query, datasource
 
   return (
     <>
-      <Modal title="Select a resource" isOpen={pickerIsOpen} onDismiss={closePicker}>
+      <Modal className={styles.modal} title="Select a resource" isOpen={pickerIsOpen} onDismiss={closePicker}>
         <ResourcePicker
           resourcePickerData={datasource.resourcePickerData}
           resourceURI={query.azureLogAnalytics.resource!}
@@ -105,3 +108,9 @@ const Separator = () => (
 );
 
 export default ResourceField;
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  modal: css({
+    width: theme.breakpoints.values.lg,
+  }),
+});
