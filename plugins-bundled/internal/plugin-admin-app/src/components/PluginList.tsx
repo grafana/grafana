@@ -23,7 +23,7 @@ export const PluginList = ({ plugins }: Props) => {
         return (
           <Card
             key={`${orgName}-${name}-${typeCode}`}
-            href={`${PLUGIN_ROOT}?tab=plugin&slug=${slug}`}
+            href={`${PLUGIN_ROOT}/plugin/${slug}`}
             image={
               <img
                 src={`https://grafana.com/api/plugins/${slug}/versions/${version}/logos/small`}
