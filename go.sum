@@ -927,8 +927,8 @@ github.com/grafana/grafana-plugin-sdk-go v0.79.0/go.mod h1:NvxLzGkVhnoBKwzkst6CF
 github.com/grafana/grafana-plugin-sdk-go v0.91.0/go.mod h1:Ot3k7nY7P6DXmUsDgKvNB7oG1v7PRyTdmnYVoS554bU=
 github.com/grafana/grafana-plugin-sdk-go v0.99.0 h1:pEmoSSYw7VsF+rhRgG4z+azE3eLwznomxVg9Ezppqzo=
 github.com/grafana/grafana-plugin-sdk-go v0.99.0/go.mod h1:D7x3ah+1d4phNXpbnOaxa/osSaZlwh9/ZUnGGzegRbk=
-github.com/grafana/loki v1.6.2-0.20210510132741-f408e05ad426 h1:fVUMdXAjiHsx71Twl/oie1OLDH+dxL7+mBdQK/H2Wgs=
-github.com/grafana/loki v1.6.2-0.20210510132741-f408e05ad426/go.mod h1:IfQ9BWq2sVAk3iKB4Pahz6QNTs5D4WpfJj/AY8xzmNw=
+github.com/grafana/loki v1.6.2-0.20210520072447-15d417efe103 h1:qCmofFVwQR9QnsinstVqI1NPLMVl33jNCnOCXEAVn6E=
+github.com/grafana/loki v1.6.2-0.20210520072447-15d417efe103/go.mod h1:GHIsn+EohCChsdu5YouNZewqLeV9L2FNw4DEJU3P9qE=
 github.com/gregjones/httpcache v0.0.0-20180305231024-9cad4c3443a7/go.mod h1:FecbI9+v66THATjSRHfNgh1IVFe/9kFxbXtjV0ctIMA=
 github.com/grpc-ecosystem/go-grpc-middleware v1.0.0/go.mod h1:FiyG127CGDf3tlThmgyCl78X/SZQqEOJBCDaAfeWzPs=
 github.com/grpc-ecosystem/go-grpc-middleware v1.0.1-0.20190118093823-f849b5445de4/go.mod h1:FiyG127CGDf3tlThmgyCl78X/SZQqEOJBCDaAfeWzPs=
