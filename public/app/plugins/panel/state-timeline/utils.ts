@@ -10,8 +10,18 @@ import {
   FALLBACK_COLOR,
   FieldType,
   ArrayVector,
+  FieldColorModeId,
+  getValueFormat,
+  ThresholdsMode,
 } from '@grafana/data';
-import { UPlotConfigBuilder, FIXED_UNIT, SeriesVisibilityChangeMode, UPlotConfigPrepFn } from '@grafana/ui';
+import {
+  UPlotConfigBuilder,
+  FIXED_UNIT,
+  SeriesVisibilityChangeMode,
+  UPlotConfigPrepFn,
+  VizLegendOptions,
+  VizLegendItem,
+} from '@grafana/ui';
 import { TimelineCoreOptions, getConfig } from './timeline';
 import { AxisPlacement, ScaleDirection, ScaleOrientation } from '@grafana/ui/src/components/uPlot/config';
 import { measureText } from '@grafana/ui/src/utils/measureText';
@@ -290,4 +300,78 @@ export function prepareTimelineFields(
     return { warn: 'No graphable fields' };
   }
   return { frames };
+}
+
+export function prepareTimelineLegendItems(
+  frames: DataFrame[] | undefined,
+  options: VizLegendOptions
+): VizLegendItem[] | undefined {
+  if (!frames || options.displayMode === 'hidden') {
+    return undefined;
+  }
+
+  const fields = allNonTimeFields(frames);
+  if (!fields.length) {
+    return undefined;
+  }
+
+  const items: VizLegendItem[] = [];
+  const first = fields[0].config;
+  const colorMode = first.color?.mode ?? FieldColorModeId.Fixed;
+
+  // If thresholds are enabled show each step in the legend
+  if (colorMode === FieldColorModeId.Thresholds && first.thresholds?.steps) {
+    const steps = first.thresholds.steps;
+    const disp = getValueFormat(
+      first.thresholds.mode === ThresholdsMode.Percentage ? 'percent' : first.unit ?? 'fixed'
+    );
+    const fmt = (v: number) => formattedValueToString(disp(v));
+    for (let i = 1; i <= steps.length; i++) {
+      const step = steps[i - 1];
+      items.push({
+        label: i === 1 ? `< ${fmt(steps[i].value)}` : `${fmt(step.value)}+`,
+        color: step.color,
+        yAxis: 1,
+      });
+    }
+    return items;
+  }
+
+  // If thresholds are enabled show each step in the legend
+  if (colorMode.startsWith('continuous')) {
+    return undefined; // eventually a color bar
+  }
+
+  let stateColors: Map<string, string | undefined> = new Map();
+
+  fields.forEach((field) => {
+    field.values.toArray().forEach((v) => {
+      let state = field.display!(v);
+      stateColors.set(state.text, state.color!);
+    });
+  });
+
+  stateColors.forEach((color, label) => {
+    if (label.length > 0) {
+      items.push({
+        label: label!,
+        color,
+        yAxis: 1,
+      });
+    }
+  });
+
+  return items;
+}
+
+function allNonTimeFields(frames: DataFrame[]): Field[] {
+  const fields: Field[] = [];
+  for (const frame of frames) {
+    for (const field of frame.fields) {
+      if (field.type !== FieldType.time) {
+        fields.push(field);
+      }
+    }
+  }
+  return fields;
 }

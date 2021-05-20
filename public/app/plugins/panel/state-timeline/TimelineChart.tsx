@@ -1,5 +1,16 @@
 import React from 'react';
-import { PanelContext, PanelContextRoot, GraphNG, GraphNGProps, BarValueVisibility } from '@grafana/ui';
+import {
+  PanelContext,
+  PanelContextRoot,
+  GraphNG,
+  GraphNGProps,
+  BarValueVisibility,
+  LegendDisplayMode,
+  UPlotConfigBuilder,
+  VizLayout,
+  VizLegend,
+  VizLegendItem,
+} from '@grafana/ui';
 import { DataFrame, FieldType, TimeRange } from '@grafana/data';
 import { preparePlotConfigBuilder } from './utils';
 import { TimelineMode, TimelineValueAlignment } from './types';
@@ -13,6 +24,7 @@ export interface TimelineProps extends Omit<GraphNGProps, 'prepConfig' | 'propsT
   showValue: BarValueVisibility;
   alignValue?: TimelineValueAlignment;
   colWidth?: number;
+  legendItems?: VizLegendItem[];
 }
 
 const propsToDiff = ['rowHeight', 'colWidth', 'showValue', 'mergeValues', 'alignValue'];
@@ -33,7 +45,19 @@ export class TimelineChart extends React.Component<TimelineProps> {
     });
   };
 
-  renderLegend = () => null;
+  renderLegend = (config: UPlotConfigBuilder) => {
+    const { legend, legendItems } = this.props;
+
+    if (!config || !legendItems || !legend || legend.displayMode === LegendDisplayMode.Hidden) {
+      return null;
+    }
+
+    return (
+      <VizLayout.Legend placement={legend.placement}>
+        <VizLegend placement={legend.placement} items={legendItems} displayMode={legend.displayMode} />
+      </VizLayout.Legend>
+    );
+  };
 
   render() {
     return (

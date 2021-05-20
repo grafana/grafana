@@ -15,6 +15,7 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
+  "id": 329,
   "links": [],
   "panels": [
     {
@@ -53,6 +54,7 @@
       },
       "id": 8,
       "options": {
+        "alignValue": "left",
         "colWidth": 0.9,
         "legend": {
           "calcs": [],
@@ -230,6 +232,7 @@
       },
       "id": 9,
       "options": {
+        "alignValue": "left",
         "colWidth": 0.9,
         "legend": {
           "calcs": [],
@@ -268,7 +271,7 @@
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "palette-classic"
+            "mode": "thresholds"
           },
           "custom": {
             "fillOpacity": 70,
@@ -276,11 +279,15 @@
           },
           "mappings": [],
           "thresholds": {
-            "mode": "absolute",
+            "mode": "percentage",
             "steps": [
               {
                 "color": "green",
                 "value": null
+              },
+              {
+                "color": "#EAB839",
+                "value": 60
               },
               {
                 "color": "red",
@@ -364,5 +371,5 @@
   "timezone": "utc",
   "title": "Timeline Modes",
   "uid": "mIJjFy8Gz",
-  "version": 21
+  "version": 12
 }

@@ -2,6 +2,7 @@ import { FieldColorModeId, FieldConfigProperty, PanelPlugin } from '@grafana/dat
 import { StatusGridPanel } from './StatusGridPanel';
 import { StatusPanelOptions, StatusFieldConfig, defaultStatusFieldConfig } from './types';
 import { BarValueVisibility } from '@grafana/ui';
+import { addLegendOptions } from '@grafana/ui/src/options/builder';
 
 export const plugin = new PanelPlugin<StatusPanelOptions, StatusFieldConfig>(StatusGridPanel)
   .useFieldConfig({
@@ -11,7 +12,7 @@ export const plugin = new PanelPlugin<StatusPanelOptions, StatusFieldConfig>(Sta
           byValueSupport: true,
         },
         defaultValue: {
-          mode: FieldColorModeId.PaletteClassic,
+          mode: FieldColorModeId.Thresholds,
         },
       },
     },
@@ -74,5 +75,5 @@ export const plugin = new PanelPlugin<StatusPanelOptions, StatusFieldConfig>(Sta
         },
       });
 
-    //addLegendOptions(builder);
+    addLegendOptions(builder, false);
   });

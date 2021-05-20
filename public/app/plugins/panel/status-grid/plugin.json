@@ -3,7 +3,7 @@
   "name": "Status grid",
   "id": "status-grid",
 
-  "state": "alpha",
+  "state": "beta",
 
   "info": {
     "description": "Periodic status history",
