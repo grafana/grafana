@@ -3,6 +3,7 @@ package channels
 import (
 	"context"
 	"encoding/json"
+
 	gokit_log "github.com/go-kit/kit/log"
 	"github.com/pkg/errors"
 	"github.com/prometheus/alertmanager/notify"
