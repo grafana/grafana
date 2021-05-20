@@ -1,5 +1,6 @@
 +++
 draft = "true"
+description = "A topic to collect my thoughts and plans for Grafana 8.0. Can delete after that."
 +++
 
 Task: Add panel
@@ -34,25 +35,17 @@ TOC
 # General
 Add a panel
 Panel editor
-
-# Work with your metrics
 Queries
 - Share query results
-- Mixed data source queries
-Expressions
+- Mixed data source queries (not yet written)
+Expressions (beta)
 Transformations
 Inspect a panel
-
-# Adjust appearance
-
 Panel options
 Visualization-specific settings (Visualizations)
 Thresholds
 Value mappings
 Data links (can be for all fields or one)
-
-Visualizations > specific options
-
 Overrides
 
 
