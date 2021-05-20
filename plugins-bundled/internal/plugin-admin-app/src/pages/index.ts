@@ -3,7 +3,6 @@ import { AppRootProps } from '@grafana/data';
 import { Discover } from './Discover';
 import { Browse } from './Browse';
 import { PluginDetails } from './PluginDetails';
-import { OrgDetails } from './OrgDetails';
 import { Library } from './Library';
 
 export type PageDefinition = {
@@ -37,11 +36,5 @@ export const pages: PageDefinition[] = [
     icon: 'file-alt',
     id: 'plugin',
     text: 'Plugin',
-  },
-  {
-    component: OrgDetails,
-    icon: 'file-alt',
-    id: 'org',
-    text: 'Organization',
   },
 ];

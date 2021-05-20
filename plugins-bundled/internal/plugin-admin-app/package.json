@@ -1,7 +1,7 @@
 {
-  "name": "@grafana-plugins/catalog-app",
+  "name": "@grafana-plugins/admin-app",
   "version": "8.1.0-pre",
-  "description": "Plugins catalog",
+  "description": "Plugins admin",
   "private": true,
   "repository": {
     "type": "git",
@@ -18,9 +18,7 @@
     "@grafana/data": "8.1.0-pre",
     "@grafana/runtime": "8.1.0-pre",
     "@grafana/toolkit": "8.1.0-pre",
-    "@grafana/ui": "8.1.0-pre",
-    "@types/semver": "^7.3.4",
-    "semver": "^7.3.4"
+    "@grafana/ui": "8.1.0-pre"
   },
   "volta": {
     "node": "12.16.2"
