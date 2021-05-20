@@ -107,6 +107,10 @@ export default class ResourcePickerData {
       throw new Error('unable to fetch resource containers');
     }
 
+    if (!response.data.length) {
+      throw new Error('unable to find resource for workspace ' + workspace);
+    }
+
     return response.data[0].id;
   }
 

@@ -28,7 +28,7 @@ const ResourceField: React.FC<AzureQueryEditorFieldProps> = ({ query, datasource
   const [pickerIsOpen, setPickerIsOpen] = useState(false);
 
   useEffect(() => {
-    if (resource) {
+    if (resource && parseResourceDetails(resource)) {
       datasource.resourcePickerData.getResource(resource).then(setResourceComponents);
     } else {
       setResourceComponents(undefined);
