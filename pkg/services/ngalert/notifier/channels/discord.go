@@ -26,6 +26,7 @@ type DiscordNotifier struct {
 	log        log.Logger
 	tmpl       *template.Template
 	Content    string
+	AvatarURL  string
 	WebhookURL string
 }
 
@@ -33,6 +34,8 @@ func NewDiscordNotifier(model *NotificationChannelConfig, t *template.Template) 
 	if model.Settings == nil {
 		return nil, alerting.ValidationError{Reason: "No Settings Supplied"}
 	}
+
+	avatarURL := model.Settings.Get("avatar_url").MustString()
 
 	discordURL := model.Settings.Get("url").MustString()
 	if discordURL == "" {
@@ -51,6 +54,7 @@ func NewDiscordNotifier(model *NotificationChannelConfig, t *template.Template) 
 			SecureSettings:        model.SecureSettings,
 		}),
 		Content:    content,
+		AvatarURL:  avatarURL,
 		WebhookURL: discordURL,
 		log:        log.New("alerting.notifier.discord"),
 		tmpl:       t,
@@ -68,6 +72,10 @@ func (d DiscordNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 	tmpl := notify.TmplText(d.tmpl, data, &tmplErr)
 	if d.Content != "" {
 		bodyJSON.Set("content", tmpl(d.Content))
+	}
+
+	if d.AvatarURL != "" {
+		bodyJSON.Set("avatar_url", tmpl(d.AvatarURL))
 	}
 
 	footer := map[string]interface{}{
