@@ -462,7 +462,7 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
       });
       errorMetaAdded = true;
     }
-    
+
     if (refId && !queriesVisited[refId]) {
       if (totalBytesKey && series.meta?.stats) {
         const byteStat = series.meta.stats.find((stat) => stat.displayName === totalBytesKey);
@@ -470,7 +470,7 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
           totalBytes += byteStat.value;
         }
       }
-      
+
       queriesVisited[refId] = true;
     }
   }
