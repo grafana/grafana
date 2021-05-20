@@ -147,6 +147,7 @@ export function makeDataFramesForLogs(sortedRows: LogRowModel[], bucketSize: num
       pathBuilder: uPlot.paths.bars!({ align: 0, size: [0.9, 5] }),
       drawStyle: DrawStyle.Bars,
       lineColor: series.color,
+      pointColor: series.color,
       fillColor: series.color,
       lineWidth: 0,
       fillOpacity: 100,
