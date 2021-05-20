@@ -476,3 +476,24 @@ securityresources
     portalLink=properties.links.azurePortal
 | summarize numberOfResources=count(resourceId) by tostring(recommendationName), tostring(recommendationState)
 ```
+### Azure Resource Graph macros
+
+To make writing queries easier there are several Grafana macros that can be used in the where clause of a query:
+
+- `$__timeFilter()` - Expands to
+  `timestamp ≥ datetime(2018-06-05T18:09:58.907Z) and`
+  `timestamp ≤ datetime(2018-06-05T20:09:58.907Z)` where the from and to datetimes are from the Grafana time picker.
+
+- `$__timeFilter(datetimeColumn)` - Expands to
+  `datetimeColumn ≥ datetime(2018-06-05T18:09:58.907Z) and`
+  `datetimeColumn ≤ datetime(2018-06-05T20:09:58.907Z)` where the from and to datetimes are from the Grafana time picker.
+
+- `$__timeFrom()` - Returns the From datetime from the Grafana picker. Example: `datetime(2018-06-05T18:09:58.907Z)`.
+
+- `$__timeTo()` - Returns the From datetime from the Grafana picker. Example: `datetime(2018-06-05T20:09:58.907Z)`.
+
+- `$__escapeMulti($myVar)` - is to be used with multi-value template variables that contain illegal characters. If `$myVar` has the following two values as a string `'\\grafana-vm\Network(eth0)\Total','\\hello!'`, then it expands to: `@'\\grafana-vm\Network(eth0)\Total', @'\\hello!'`. If using single value variables there is no need for this macro, simply escape the variable inline instead - `@'\$myVar'`.
+
+- `$__contains(colName, $myVar)` - is to be used with multi-value template variables. If `$myVar` has the value `'value1','value2'`, it expands to: `colName in ('value1','value2')`.
+
+  If using the `All` option, then check the `Include All Option` checkbox and in the `Custom all value` field type in the following value: `all`. If `$myVar` has value `all` then the macro will instead expand to `1 == 1`. For template variables with a lot of options, this will increase the query performance by not building a large "where..in" clause.
