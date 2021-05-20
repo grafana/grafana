@@ -74,14 +74,15 @@ export const AlertingQueryWrapper: FC<Props> = ({
         onRunQuery={onRunQueries}
         queries={queries}
         renderHeaderExtras={() => renderTimePicker(query, index)}
+        visualization={data ? <VizWrapper data={data} defaultPanel={isExpression ? 'table' : 'timeseries'} /> : null}
       />
-      {data && <VizWrapper data={data} defaultPanel={isExpression ? 'table' : 'timeseries'} />}
     </div>
   );
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
   wrapper: css`
+    label: AlertingQueryWrapper;
     margin-bottom: ${theme.spacing(1)};
     border: 1px solid ${theme.colors.border.medium};
     border-radius: ${theme.shape.borderRadius(1)};

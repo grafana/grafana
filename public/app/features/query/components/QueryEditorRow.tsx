@@ -42,6 +42,7 @@ interface Props {
   onRemoveQuery: (query: DataQuery) => void;
   onChange: (query: DataQuery) => void;
   onRunQuery: () => void;
+  visualization?: ReactNode;
 }
 
 interface State {
@@ -321,7 +322,7 @@ export class QueryEditorRow extends PureComponent<Props, State> {
   };
 
   render() {
-    const { query, id, index } = this.props;
+    const { query, id, index, visualization } = this.props;
     const { datasource, showingHelp } = this.state;
     const isDisabled = query.hide;
 
@@ -359,6 +360,7 @@ export class QueryEditorRow extends PureComponent<Props, State> {
               )}
               {editor}
             </ErrorBoundaryAlert>
+            {visualization}
           </div>
         </QueryOperationRow>
       </div>
