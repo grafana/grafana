@@ -156,6 +156,12 @@ function getEnterprisePhantomPlugins(): DataSourcePluginMeta[] {
       name: 'AppDynamics',
       imgUrl: 'public/img/plugins/appdynamics.svg',
     }),
+    getPhantomPlugin({
+      id: 'grafana-saphana-datasource',
+      description: 'SAP HANA® integration and data source',
+      name: 'SAP HANA®',
+      imgUrl: 'public/img/plugins/sap_hana.png',
+    }),
   ];
 }
 
@@ -203,7 +209,7 @@ function getPhantomPlugin(options: GetPhantomPluginOptions): DataSourcePluginMet
       author: { name: 'Grafana Labs' },
       links: [
         {
-          url: config.catalogUrl + options.id,
+          url: config.pluginCatalogURL + options.id,
           name: 'Install now',
         },
       ],
