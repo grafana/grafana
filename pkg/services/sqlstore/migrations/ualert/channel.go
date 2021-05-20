@@ -204,19 +204,6 @@ func (m *migration) updateDefaultAndUnmigratedChannels(amConfig *PostableUserCon
 	}
 
 	// Default route and receiver.
-	if len(defaultChannels) == 0 {
-		// Pick one from the migrated channels. Preference to email channel.
-		for c := range m.migratedChannels {
-			if len(defaultChannels) == 0 {
-				defaultChannels = append(defaultChannels, c)
-			}
-			if c.Type == "email" {
-				defaultChannels[0] = c
-				break
-			}
-		}
-	}
-
 	var channelUids = []interface{}{}
 	for _, c := range defaultChannels {
 		if c.Uid == "" {
