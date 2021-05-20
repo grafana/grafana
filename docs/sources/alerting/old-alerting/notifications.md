@@ -229,7 +229,7 @@ Setting | Description
 ---------- | -----------
 Webhook URL | Discord webhook URL.
 Message Content | Mention a group using @ or a user using <@ID> when notifying in a channel.
-Avatar URL | Optionally provide a URL to an image to use as the avatar for the bot's message.
+Avatar URL | Optionally, provide a URL to an image to use as the avatar for the bot's message.
 
 Alternatively, you may use the [Slack](#slack) notifier by appending `/slack` to a Discord webhook URL.
 
