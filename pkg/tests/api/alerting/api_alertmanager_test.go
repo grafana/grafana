@@ -522,7 +522,6 @@ func TestRulerAccess(t *testing.T) {
 
 	for i, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
-
 			interval, err := model.ParseDuration("1m")
 			require.NoError(t, err)
 
