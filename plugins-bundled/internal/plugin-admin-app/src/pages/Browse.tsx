@@ -1,7 +1,9 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { css } from '@emotion/css';
 import { AppRootProps, SelectableValue, dateTimeParse } from '@grafana/data';
 import { Field, LoadingPlaceholder, Select } from '@grafana/ui';
+import { useLocation } from 'react-router-dom';
+import { locationSearchToObject } from '@grafana/runtime';
 
 import { PluginList } from '../components/PluginList';
 import { SearchField } from '../components/SearchField';
@@ -10,12 +12,22 @@ import { usePlugins } from '../hooks/usePlugins';
 import { useHistory } from '../hooks/useHistory';
 import { Plugin } from '../types';
 import { Page } from 'components/Page';
+import { CatalogTab, getCatalogNavModel } from './nav';
 
-export const Browse = ({ query }: AppRootProps) => {
-  const { q, filterBy, sortBy } = query;
+export const Browse = ({ meta, onNavChanged, basename }: AppRootProps) => {
+  const location = useLocation();
+  const query = locationSearchToObject(location.search);
+
+  const q = query.q as string;
+  const filterBy = query.filterBy as string;
+  const sortBy = query.sortBy as string;
 
   const plugins = usePlugins();
   const history = useHistory();
+
+  useEffect(() => {
+    onNavChanged(getCatalogNavModel(CatalogTab.Browse, basename));
+  }, [onNavChanged, basename]);
 
   const onSortByChange = (value: SelectableValue<string>) => {
     history.push({ query: { sortBy: value.value } });
