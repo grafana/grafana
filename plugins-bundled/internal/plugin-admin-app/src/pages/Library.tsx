@@ -31,7 +31,7 @@ export const Library = ({ meta, onNavChanged, basename }: AppRootProps) => {
       ) : (
         <p>
           You haven&#39;t installed any plugins. Browse the{' '}
-          <a className={styles.link} href={`${PLUGIN_ROOT}/?tab=browse&sortBy=popularity`}>
+          <a className={styles.link} href={`${PLUGIN_ROOT}/browse?sortBy=popularity`}>
             catalog
           </a>{' '}
           for plugins to install.

@@ -52,7 +52,7 @@ export const PluginDetails = ({ onNavChanged }: AppRootProps) => {
         <div className={styles.headerWrapper}>
           <h1>{remote?.name}</h1>
           <div className={styles.headerLinks}>
-            <a className={styles.headerOrgName} href={`${PLUGIN_ROOT}?tab=org&orgSlug=${remote?.orgSlug}`}>
+            <a className={styles.headerOrgName} href={`${PLUGIN_ROOT}`}>
               {remote?.orgName}
             </a>
             {links.map((link: any) => (
