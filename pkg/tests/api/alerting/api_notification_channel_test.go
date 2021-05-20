@@ -57,7 +57,8 @@ func TestNotificationChannels(t *testing.T) {
 
 	{
 		// Create the namespace we'll save our alerts to.
-		require.NoError(t, createFolder(t, s, 0, "default"))
+		_, err := createFolder(t, s, 0, "default")
+		require.NoError(t, err)
 
 		// Post the alertmanager config.
 		u := fmt.Sprintf("http://grafana:password@%s/api/alertmanager/grafana/config/api/v1/alerts", grafanaListedAddr)

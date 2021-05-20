@@ -34,16 +34,18 @@ func TestAlertRulePermissions(t *testing.T) {
 	require.NoError(t, createUser(t, store, models.ROLE_EDITOR, "grafana", "password"))
 
 	// Create the namespace we'll save our alerts to.
-	require.NoError(t, createFolder(t, store, 0, "folder1"))
+	_, err := createFolder(t, store, 0, "folder1")
+	require.NoError(t, err)
 
+	_, err = createFolder(t, store, 0, "folder2")
 	// Create the namespace we'll save our alerts to.
-	require.NoError(t, createFolder(t, store, 0, "folder2"))
+	require.NoError(t, err)
 
 	// Create rule under folder1
-	createRule(t, grafanaListedAddr, "folder1")
+	createRule(t, grafanaListedAddr, "folder1", "grafana", "password")
 
 	// Create rule under folder2
-	createRule(t, grafanaListedAddr, "folder2")
+	createRule(t, grafanaListedAddr, "folder2", "grafana", "password")
 
 	// With the rules created, let's make sure that rule definitions are stored.
 	{
@@ -240,7 +242,7 @@ func TestAlertRulePermissions(t *testing.T) {
 	}
 }
 
-func createRule(t *testing.T, grafanaListedAddr string, folder string) {
+func createRule(t *testing.T, grafanaListedAddr string, folder string, user, password string) {
 	t.Helper()
 
 	interval, err := model.ParseDuration("1m")
@@ -282,7 +284,7 @@ func createRule(t *testing.T, grafanaListedAddr string, folder string) {
 	err = enc.Encode(&rules)
 	require.NoError(t, err)
 
-	u := fmt.Sprintf("http://grafana:password@%s/api/ruler/grafana/api/v1/rules/%s", grafanaListedAddr, folder)
+	u := fmt.Sprintf("http://%s:%s@%s/api/ruler/grafana/api/v1/rules/%s", user, password, grafanaListedAddr, folder)
 	// nolint:gosec
 	resp, err := http.Post(u, "application/json", &buf)
 	require.NoError(t, err)

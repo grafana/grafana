@@ -9,6 +9,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/log"
+
 	gokit_log "github.com/go-kit/kit/log"
 	"github.com/go-openapi/strfmt"
 	"github.com/prometheus/alertmanager/api/v2/models"
@@ -42,6 +44,7 @@ func setupAMTest(t *testing.T) *Alertmanager {
 		BaseInterval:           10 * time.Second,
 		DefaultIntervalSeconds: 60,
 		SQLStore:               sqlStore,
+		Logger:                 log.New("alertmanager-test"),
 	}
 
 	am, err := New(cfg, store, m)

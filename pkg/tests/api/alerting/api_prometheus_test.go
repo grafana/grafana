@@ -30,7 +30,8 @@ func TestPrometheusRules(t *testing.T) {
 	grafanaListedAddr := testinfra.StartGrafana(t, dir, path, store)
 
 	// Create the namespace under default organisation (orgID = 1) where we'll save our alerts to.
-	require.NoError(t, createFolder(t, store, 0, "default"))
+	_, err := createFolder(t, store, 0, "default")
+	require.NoError(t, err)
 
 	// Create a user to make authenticated requests
 	require.NoError(t, createUser(t, store, models.ROLE_EDITOR, "grafana", "password"))
