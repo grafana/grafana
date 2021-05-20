@@ -17,8 +17,8 @@ function renderTagCondition(tag: { operator: any; value: string; condition: any;
     }
   }
 
-  // quote value unless regex or number
-  if (operator !== '=~' && operator !== '!~' && isNaN(+value)) {
+  // quote value unless regex or number, or if empty-string
+  if (value === '' || (operator !== '=~' && operator !== '!~' && isNaN(+value))) {
     value = "'" + value + "'";
   }
 
