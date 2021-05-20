@@ -203,16 +203,17 @@ export function buildHistogram(frames: DataFrame[], options?: HistogramTransform
   }
 
   const bucketMin = {
+    ...counts[0],
     name: histogramFrameBucketMinFieldName,
     values: new ArrayVector(joinedHists[0]),
     type: FieldType.number,
-    config: {},
+    state: undefined,
   };
   const bucketMax = {
+    ...bucketMin,
     name: histogramFrameBucketMaxFieldName,
     values: new ArrayVector(joinedHists[0].map((v) => v + bucketSize!)),
-    type: FieldType.number,
-    config: {},
+    state: undefined,
   };
 
   if (options?.combine) {
@@ -227,6 +228,8 @@ export function buildHistogram(frames: DataFrame[], options?: HistogramTransform
         ...counts[0],
         name: 'Count',
         values: new ArrayVector(vals),
+        type: FieldType.number,
+        state: undefined,
       },
     ];
   } else {

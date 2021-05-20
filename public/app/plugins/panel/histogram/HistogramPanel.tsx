@@ -26,6 +26,7 @@ export const HistogramPanel: React.FC<Props> = ({ data, options, width, height }
     if (!hist) {
       return undefined;
     }
+
     return histogramFieldsToFrame(hist);
   }, [data.series, options]);
 
@@ -41,11 +42,15 @@ export const HistogramPanel: React.FC<Props> = ({ data, options, width, height }
     <Histogram
       options={options}
       theme={theme}
-      legend={null as any} // TODO!
+      legend={options.legend}
       structureRev={data.structureRev}
       width={width}
       height={height}
       alignedFrame={histogram}
-    />
+    >
+      {(config, alignedFrame) => {
+        return null; // <TooltipPlugin data={alignedFrame} config={config} mode={options.tooltip.mode} timeZone={timeZone} />;
+      }}
+    </Histogram>
   );
 };

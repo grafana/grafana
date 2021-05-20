@@ -3,11 +3,18 @@
 // It is currenty hand written but will serve as the target for cuetsy
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-import { GraphGradientMode } from '@grafana/ui';
+import {
+  GraphGradientMode,
+  HideableFieldConfig,
+  LegendDisplayMode,
+  OptionsWithLegend,
+  OptionsWithTooltip,
+  TooltipDisplayMode,
+} from '@grafana/ui';
 
 export const modelVersion = Object.freeze([1, 0]);
 
-export interface PanelOptions {
+export interface PanelOptions extends OptionsWithLegend, OptionsWithTooltip {
   bucketSize?: number;
   bucketOffset?: number;
   combine?: boolean;
@@ -15,12 +22,20 @@ export interface PanelOptions {
 
 export const defaultPanelOptions: PanelOptions = {
   bucketOffset: 0,
+  legend: {
+    displayMode: LegendDisplayMode.List,
+    placement: 'bottom',
+    calcs: [],
+  },
+  tooltip: {
+    mode: TooltipDisplayMode.Multi,
+  },
 };
 
 /**
  * @alpha
  */
-export interface PanelFieldConfig {
+export interface PanelFieldConfig extends HideableFieldConfig {
   lineWidth?: number; // 0
   fillOpacity?: number; // 100
   gradientMode?: GraphGradientMode;
