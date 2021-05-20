@@ -25,7 +25,6 @@ import {
   rangeUtil,
   sortInAscendingOrder,
   textUtil,
-  TimeZone,
   toDataFrame,
 } from '@grafana/data';
 import { getThemeColor } from 'app/core/utils/colors';
@@ -90,7 +89,7 @@ export function filterLogLevels(logRows: LogRowModel[], hiddenLogLevels: Set<Log
   });
 }
 
-export function makeDataFramesForLogs(sortedRows: LogRowModel[], bucketSize: number, timeZone: TimeZone): DataFrame[] {
+export function makeDataFramesForLogs(sortedRows: LogRowModel[], bucketSize: number): DataFrame[] {
   // currently interval is rangeMs / resolution, which is too low for showing series as bars.
   // Should be solved higher up the chain when executing queries & interval calculated and not here but this is a temporary fix.
 
@@ -174,7 +173,6 @@ function isLogsData(series: DataFrame) {
 export function dataFrameToLogsModel(
   dataFrame: DataFrame[],
   intervalMs: number | undefined,
-  timeZone: TimeZone,
   absoluteRange?: AbsoluteTimeRange,
   queries?: DataQuery[]
 ): LogsModel {
@@ -191,7 +189,7 @@ export function dataFrameToLogsModel(
         absoluteRange
       );
       logsModel.visibleRange = visibleRange;
-      logsModel.series = makeDataFramesForLogs(sortedRows, bucketSize, timeZone);
+      logsModel.series = makeDataFramesForLogs(sortedRows, bucketSize);
 
       if (logsModel.meta) {
         logsModel.meta = adjustMetaInfo(logsModel, visibleRangeMs, requestedRangeMs);

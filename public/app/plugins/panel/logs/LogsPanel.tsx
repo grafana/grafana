@@ -20,7 +20,7 @@ export const LogsPanel: React.FunctionComponent<LogsPanelProps> = ({
     );
   }
 
-  const newResults = data ? dataFrameToLogsModel(data.series, data.request?.intervalMs, timeZone) : null;
+  const newResults = data ? dataFrameToLogsModel(data.series, data.request?.intervalMs) : null;
   const logRows = newResults?.rows || [];
   const deduplicatedRows = dedupLogRows(logRows, dedupStrategy);
 

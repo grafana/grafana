@@ -208,7 +208,7 @@ const emptyLogsModel: any = {
 
 describe('dataFrameToLogsModel', () => {
   it('given empty series should return empty logs model', () => {
-    expect(dataFrameToLogsModel([] as DataFrame[], 0, 'utc')).toMatchObject(emptyLogsModel);
+    expect(dataFrameToLogsModel([] as DataFrame[], 0)).toMatchObject(emptyLogsModel);
   });
 
   it('given series without correct series name should return empty logs model', () => {
@@ -217,7 +217,7 @@ describe('dataFrameToLogsModel', () => {
         fields: [],
       }),
     ];
-    expect(dataFrameToLogsModel(series, 0, 'utc')).toMatchObject(emptyLogsModel);
+    expect(dataFrameToLogsModel(series, 0)).toMatchObject(emptyLogsModel);
   });
 
   it('given series without a time field should return empty logs model', () => {
@@ -232,7 +232,7 @@ describe('dataFrameToLogsModel', () => {
         ],
       }),
     ];
-    expect(dataFrameToLogsModel(series, 0, 'utc')).toMatchObject(emptyLogsModel);
+    expect(dataFrameToLogsModel(series, 0)).toMatchObject(emptyLogsModel);
   });
 
   it('given series without a string field should return empty logs model', () => {
@@ -247,7 +247,7 @@ describe('dataFrameToLogsModel', () => {
         ],
       }),
     ];
-    expect(dataFrameToLogsModel(series, 0, 'utc')).toMatchObject(emptyLogsModel);
+    expect(dataFrameToLogsModel(series, 0)).toMatchObject(emptyLogsModel);
   });
 
   it('given one series should return expected logs model', () => {
@@ -282,7 +282,7 @@ describe('dataFrameToLogsModel', () => {
         },
       }),
     ];
-    const logsModel = dataFrameToLogsModel(series, 1, 'utc');
+    const logsModel = dataFrameToLogsModel(series, 1);
     expect(logsModel.hasUniqueLabels).toBeFalsy();
     expect(logsModel.rows).toHaveLength(2);
     expect(logsModel.rows).toMatchObject([
@@ -352,7 +352,7 @@ describe('dataFrameToLogsModel', () => {
         },
       }),
     ];
-    const logsModel = dataFrameToLogsModel(series, 1, 'utc');
+    const logsModel = dataFrameToLogsModel(series, 1);
     expect(logsModel.hasUniqueLabels).toBeFalsy();
     expect(logsModel.rows).toHaveLength(2);
     expect(logsModel.rows).toMatchObject([
@@ -413,7 +413,7 @@ describe('dataFrameToLogsModel', () => {
         ],
       }),
     ];
-    const logsModel = dataFrameToLogsModel(series, 1, 'utc');
+    const logsModel = dataFrameToLogsModel(series, 1);
     expect(logsModel.rows).toHaveLength(1);
     expect(logsModel.rows).toMatchObject([
       {
@@ -477,7 +477,7 @@ describe('dataFrameToLogsModel', () => {
         ],
       }),
     ];
-    const logsModel = dataFrameToLogsModel(series, 1, 'utc');
+    const logsModel = dataFrameToLogsModel(series, 1);
     expect(logsModel.hasUniqueLabels).toBeTruthy();
     expect(logsModel.rows).toHaveLength(3);
     expect(logsModel.rows).toMatchObject([
@@ -587,7 +587,7 @@ describe('dataFrameToLogsModel', () => {
         ],
       }),
     ];
-    const logsModel = dataFrameToLogsModel(series, 1, 'utc');
+    const logsModel = dataFrameToLogsModel(series, 1);
     expect(logsModel.hasUniqueLabels).toBeTruthy();
     expect(logsModel.rows).toHaveLength(4);
     expect(logsModel.rows).toMatchObject([
@@ -650,7 +650,7 @@ describe('dataFrameToLogsModel', () => {
         },
       }),
     ];
-    const logsModel = dataFrameToLogsModel(series, 1, 'utc', { from: 1556270591353, to: 1556289770991 });
+    const logsModel = dataFrameToLogsModel(series, 1, { from: 1556270591353, to: 1556289770991 });
     expect(logsModel.meta).toHaveLength(2);
     expect(logsModel.meta![0]).toMatchObject({
       label: 'Common labels',
@@ -682,7 +682,7 @@ describe('dataFrameToLogsModel', () => {
         ],
       }),
     ];
-    const logsModel = dataFrameToLogsModel(series, 1, 'utc');
+    const logsModel = dataFrameToLogsModel(series, 1);
     expect(logsModel.rows[0].uid).toBe('0');
   });
 });
@@ -754,7 +754,7 @@ describe('logSeriesToLogsModel', () => {
       }),
     ];
 
-    const logsModel = dataFrameToLogsModel(logSeries, 0, 'utc');
+    const logsModel = dataFrameToLogsModel(logSeries, 0);
     expect(logsModel.meta).toMatchObject([
       { kind: 2, label: 'Common labels', value: { foo: 'bar', level: 'dbug' } },
       { kind: 0, label: LIMIT_LABEL, value: 2000 },
@@ -808,7 +808,7 @@ describe('logSeriesToLogsModel', () => {
       }),
     ];
 
-    const logsModel = dataFrameToLogsModel(logSeries, 0, 'utc');
+    const logsModel = dataFrameToLogsModel(logSeries, 0);
     expect(logsModel.rows).toHaveLength(3);
     expect(logsModel.rows).toMatchObject([
       {
