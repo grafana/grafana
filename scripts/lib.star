@@ -434,7 +434,7 @@ def build_plugins_step(edition, sign=False):
         ],
     }
 
-def test_backend_step(edition, publish=None, tries=None):
+def test_backend_step(edition, tries=None):
     test_backend_cmd = './bin/grabpl test-backend --edition {}'.format(edition)
     integration_tests_cmd = './bin/grabpl integration-tests --edition {}'.format(edition)
     if tries:

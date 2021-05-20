@@ -87,7 +87,7 @@ def get_steps(edition, ver_mode):
     if include_enterprise2:
         edition2 = 'enterprise2'
         steps.extend([
-            test_backend_step(edition=edition2, publish=should_publish, tries=5),
+            test_backend_step(edition=edition2, tries=5),
             lint_backend_step(edition=edition2),
             build_backend_step(edition=edition2, ver_mode=ver_mode, variants=['linux-x64']),
         ])
