@@ -222,8 +222,8 @@ In DingTalk PC Client:
 
 ### Discord
 
-To set up Discord, you need to create a Discord channel webhook. You can follow
-[Intro to Webhooks](https://support.discord.com/hc/en-us/articles/228383668-Intro-to-Webhooks) for a guide to do that.
+To set up Discord, you must create a Discord channel webhook. For instructions on how to create the channel, refer to 
+[Intro to Webhooks](https://support.discord.com/hc/en-us/articles/228383668-Intro-to-Webhooks) f.
 
 Setting | Description
 ---------- | -----------
