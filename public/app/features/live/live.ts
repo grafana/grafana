@@ -95,12 +95,10 @@ export class CentrifugeSrv implements GrafanaLiveSrv {
   //----------------------------------------------------------
 
   onConnect = (context: any) => {
-    console.log('CONNECT', context);
     this.connectionState.next(true);
   };
 
   onDisconnect = (context: any) => {
-    console.log('onDisconnect', context);
     this.connectionState.next(false);
   };
 
