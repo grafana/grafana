@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"regexp"
 
+	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -35,8 +36,9 @@ func ProvideService(pluginManager plugins.Manager) *Service {
 }
 
 type Service struct {
-	PluginManager plugins.Manager
-	Cfg           *setting.Cfg `inject:""`
+	PluginManager      plugins.Manager
+	HTTPClientProvider httpclient.Provider `inject:""`
+	Cfg                *setting.Cfg        `inject:""`
 }
 
 func (s *Service) Init() error {
@@ -54,7 +56,7 @@ type AzureMonitorExecutor struct {
 // NewAzureMonitorExecutor initializes a http client
 //nolint: staticcheck // plugins.DataPlugin deprecated
 func (s *Service) NewExecutor(dsInfo *models.DataSource) (plugins.DataPlugin, error) {
-	httpClient, err := dsInfo.GetHttpClient()
+	httpClient, err := dsInfo.GetHTTPClient(s.HTTPClientProvider)
 	if err != nil {
 		return nil, err
 	}

@@ -255,6 +255,7 @@
     "file-saver": "2.0.2",
     "history": "4.10.1",
     "hoist-non-react-statics": "3.3.2",
+    "immer": "8.0.1",
     "immutable": "3.8.2",
     "is-hotkey": "0.1.6",
     "jquery": "3.5.1",

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
@@ -56,6 +57,7 @@ type Service struct {
 	CloudMonitoringService *cloudmonitoring.Service
 	AzureMonitorService    *azuremonitor.Service
 	PluginManager          plugins.Manager
+	HTTPClientProvider     httpclient.Provider `inject:""`
 
 	//nolint: staticcheck // plugins.DataPlugin deprecated
 	registry map[string]func(*models.DataSource) (plugins.DataPlugin, error)

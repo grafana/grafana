@@ -9,6 +9,7 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"path"
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -109,4 +110,15 @@ var sendHTTPRequest = func(ctx context.Context, url *url.URL, cfg httpCfg, logge
 
 	logger.Debug("Sending HTTP request succeeded", "url", request.URL.String(), "statusCode", resp.Status)
 	return respBody, nil
+}
+
+func joinUrlPath(base, additionalPath string) (string, error) {
+	u, err := url.Parse(base)
+	if err != nil {
+		return "", fmt.Errorf("failed to parse URL: %w", err)
+	}
+
+	u.Path = path.Join(u.Path, additionalPath)
+
+	return u.String(), nil
 }

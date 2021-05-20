@@ -105,11 +105,11 @@
       "tokenAuth": {
         "scopes": ["https://management.azure.com/.default"],
         "params": {
-          "azure_auth_type": "{{.JsonData.azureAuthType}}",
+          "azure_auth_type": "{{.JsonData.azureAuthType | orEmpty}}",
           "azure_cloud": "AzureCloud",
-          "tenant_id": "{{.JsonData.tenantId}}",
-          "client_id": "{{.JsonData.clientId}}",
-          "client_secret": "{{.SecureJsonData.clientSecret}}"
+          "tenant_id": "{{.JsonData.tenantId | orEmpty}}",
+          "client_id": "{{.JsonData.clientId | orEmpty}}",
+          "client_secret": "{{.SecureJsonData.clientSecret | orEmpty}}"
         }
       },
       "headers": [{ "name": "x-ms-app", "content": "Grafana" }]
@@ -122,11 +122,11 @@
       "tokenAuth": {
         "scopes": ["https://management.chinacloudapi.cn/.default"],
         "params": {
-          "azure_auth_type": "{{.JsonData.azureAuthType}}",
+          "azure_auth_type": "{{.JsonData.azureAuthType | orEmpty}}",
           "azure_cloud": "AzureChinaCloud",
-          "tenant_id": "{{.JsonData.tenantId}}",
-          "client_id": "{{.JsonData.clientId}}",
-          "client_secret": "{{.SecureJsonData.clientSecret}}"
+          "tenant_id": "{{.JsonData.tenantId | orEmpty}}",
+          "client_id": "{{.JsonData.clientId | orEmpty}}",
+          "client_secret": "{{.SecureJsonData.clientSecret | orEmpty}}"
         }
       },
       "headers": [{ "name": "x-ms-app", "content": "Grafana" }]
@@ -139,11 +139,11 @@
       "tokenAuth": {
         "scopes": ["https://management.usgovcloudapi.net/.default"],
         "params": {
-          "azure_auth_type": "{{.JsonData.azureAuthType}}",
+          "azure_auth_type": "{{.JsonData.azureAuthType | orEmpty}}",
           "azure_cloud": "AzureUSGovernment",
-          "tenant_id": "{{.JsonData.tenantId}}",
-          "client_id": "{{.JsonData.clientId}}",
-          "client_secret": "{{.SecureJsonData.clientSecret}}"
+          "tenant_id": "{{.JsonData.tenantId | orEmpty}}",
+          "client_id": "{{.JsonData.clientId | orEmpty}}",
+          "client_secret": "{{.SecureJsonData.clientSecret | orEmpty}}"
         }
       },
       "headers": [{ "name": "x-ms-app", "content": "Grafana" }]
@@ -156,11 +156,11 @@
       "tokenAuth": {
         "scopes": ["https://management.microsoftazure.de/.default"],
         "params": {
-          "azure_auth_type": "{{.JsonData.azureAuthType}}",
+          "azure_auth_type": "{{.JsonData.azureAuthType | orEmpty}}",
           "azure_cloud": "AzureGermanCloud",
-          "tenant_id": "{{.JsonData.tenantId}}",
-          "client_id": "{{.JsonData.clientId}}",
-          "client_secret": "{{.SecureJsonData.clientSecret}}"
+          "tenant_id": "{{.JsonData.tenantId | orEmpty}}",
+          "client_id": "{{.JsonData.clientId | orEmpty}}",
+          "client_secret": "{{.SecureJsonData.clientSecret | orEmpty}}"
         }
       },
       "headers": [{ "name": "x-ms-app", "content": "Grafana" }]
@@ -182,6 +182,57 @@
         { "name": "X-API-Key", "content": "{{.SecureJsonData.appInsightsApiKey}}" },
         { "name": "x-ms-app", "content": "Grafana" }
       ]
+    },
+    {
+      "path": "loganalytics-resourcepickerdata",
+      "method": "POST",
+      "url": "https://management.azure.com",
+      "authType": "azure",
+      "tokenAuth": {
+        "scopes": ["https://management.azure.com/.default"],
+        "params": {
+          "azure_auth_type": "{{.JsonData.azureAuthType | orEmpty}}",
+          "azure_cloud": "AzureCloud",
+          "tenant_id": "{{.JsonData.logAnalyticsTenantId | orEmpty}}",
+          "client_id": "{{.JsonData.logAnalyticsClientId | orEmpty}}",
+          "client_secret": "{{.SecureJsonData.logAnalyticsClientSecret | orEmpty}}"
+        }
+      },
+      "headers": [{ "name": "x-ms-app", "content": "Grafana" }]
+    },
+    {
+      "path": "loganalytics-resourcepickerdata-china",
+      "method": "POST",
+      "url": "https://management.chinacloudapi.cn",
+      "authType": "azure",
+      "tokenAuth": {
+        "scopes": ["https://management.chinacloudapi.cn/.default"],
+        "params": {
+          "azure_auth_type": "{{.JsonData.azureAuthType | orEmpty}}",
+          "azure_cloud": "AzureChinaCloud",
+          "tenant_id": "{{.JsonData.logAnalyticsTenantId | orEmpty}}",
+          "client_id": "{{.JsonData.logAnalyticsClientId | orEmpty}}",
+          "client_secret": "{{.SecureJsonData.logAnalyticsClientSecret | orEmpty}}"
+        }
+      },
+      "headers": [{ "name": "x-ms-app", "content": "Grafana" }]
+    },
+    {
+      "path": "loganalytics-resourcepickerdata-gov",
+      "method": "POST",
+      "url": "https://management.usgovcloudapi.net",
+      "authType": "azure",
+      "tokenAuth": {
+        "scopes": ["https://management.usgovcloudapi.net/.default"],
+        "params": {
+          "azure_auth_type": "{{.JsonData.azureAuthType | orEmpty}}",
+          "azure_cloud": "AzureUSGovernment",
+          "tenant_id": "{{.JsonData.logAnalyticsTenantId | orEmpty}}",
+          "client_id": "{{.JsonData.logAnalyticsClientId | orEmpty}}",
+          "client_secret": "{{.SecureJsonData.logAnalyticsClientSecret | orEmpty}}"
+        }
+      },
+      "headers": [{ "name": "x-ms-app", "content": "Grafana" }]
     },
     {
       "path": "workspacesloganalytics",
@@ -237,7 +288,7 @@
     {
       "path": "loganalyticsazure",
       "method": "GET",
-      "url": "https://api.loganalytics.io/v1/workspaces",
+      "url": "https://api.loganalytics.io/",
       "authType": "azure",
       "tokenAuth": {
         "scopes": ["https://api.loganalytics.io/.default"],
@@ -257,7 +308,7 @@
     {
       "path": "chinaloganalyticsazure",
       "method": "GET",
-      "url": "https://api.loganalytics.azure.cn/v1/workspaces",
+      "url": "https://api.loganalytics.azure.cn/",
       "authType": "azure",
       "tokenAuth": {
         "scopes": ["https://api.loganalytics.azure.cn/.default"],
@@ -277,7 +328,7 @@
     {
       "path": "govloganalyticsazure",
       "method": "GET",
-      "url": "https://api.loganalytics.us/v1/workspaces",
+      "url": "https://api.loganalytics.us/",
       "authType": "azure",
       "tokenAuth": {
         "scopes": ["https://api.loganalytics.us/.default"],

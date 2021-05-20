@@ -58,6 +58,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: flex;
     align-items: flex-end;
     justify-content: space-between;
+    pointer-events: none;
   `,
   legend: css`
     label: legend;

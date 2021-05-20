@@ -1,9 +1,109 @@
 package notifier
 
-import "github.com/grafana/grafana/pkg/services/alerting"
+import (
+	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels"
+)
 
 // GetAvailableNotifiers returns the metadata of all the notification channels that can be configured.
 func GetAvailableNotifiers() []*alerting.NotifierPlugin {
+	pushoverSoundOptions := []alerting.SelectOption{
+		{
+			Value: "default",
+			Label: "Default",
+		},
+		{
+			Value: "pushover",
+			Label: "Pushover",
+		}, {
+			Value: "bike",
+			Label: "Bike",
+		}, {
+			Value: "bugle",
+			Label: "Bugle",
+		}, {
+			Value: "cashregister",
+			Label: "Cashregister",
+		}, {
+			Value: "classical",
+			Label: "Classical",
+		}, {
+			Value: "cosmic",
+			Label: "Cosmic",
+		}, {
+			Value: "falling",
+			Label: "Falling",
+		}, {
+			Value: "gamelan",
+			Label: "Gamelan",
+		}, {
+			Value: "incoming",
+			Label: "Incoming",
+		}, {
+			Value: "intermission",
+			Label: "Intermission",
+		}, {
+			Value: "magic",
+			Label: "Magic",
+		}, {
+			Value: "mechanical",
+			Label: "Mechanical",
+		}, {
+			Value: "pianobar",
+			Label: "Pianobar",
+		}, {
+			Value: "siren",
+			Label: "Siren",
+		}, {
+			Value: "spacealarm",
+			Label: "Spacealarm",
+		}, {
+			Value: "tugboat",
+			Label: "Tugboat",
+		}, {
+			Value: "alien",
+			Label: "Alien",
+		}, {
+			Value: "climb",
+			Label: "Climb",
+		}, {
+			Value: "persistent",
+			Label: "Persistent",
+		}, {
+			Value: "echo",
+			Label: "Echo",
+		}, {
+			Value: "updown",
+			Label: "Updown",
+		}, {
+			Value: "none",
+			Label: "None",
+		},
+	}
+
+	pushoverPriorityOptions := []alerting.SelectOption{
+		{
+			Value: "2",
+			Label: "Emergency",
+		},
+		{
+			Value: "1",
+			Label: "High",
+		},
+		{
+			Value: "0",
+			Label: "Normal",
+		},
+		{
+			Value: "-1",
+			Label: "Low",
+		},
+		{
+			Value: "-2",
+			Label: "Lowest",
+		},
+	}
+
 	return []*alerting.NotifierPlugin{
 		{
 			Type:        "dingding",
@@ -38,6 +138,30 @@ func GetAvailableNotifiers() []*alerting.NotifierPlugin {
 					Element:      alerting.ElementTypeTextArea,
 					Placeholder:  `{{ template "default.message" . }}`,
 					PropertyName: "message",
+				},
+			},
+		},
+		{
+			Type:        "kafka",
+			Name:        "Kafka REST Proxy",
+			Description: "Sends notifications to Kafka Rest Proxy",
+			Heading:     "Kafka settings",
+			Options: []alerting.NotifierOption{
+				{
+					Label:        "Kafka REST Proxy",
+					Element:      alerting.ElementTypeInput,
+					InputType:    alerting.InputTypeText,
+					Placeholder:  "http://localhost:8082",
+					PropertyName: "kafkaRestProxy",
+					Required:     true,
+				},
+				{
+					Label:        "Topic",
+					Element:      alerting.ElementTypeInput,
+					InputType:    alerting.InputTypeText,
+					Placeholder:  "topic1",
+					PropertyName: "kafkaTopic",
+					Required:     true,
 				},
 			},
 		},
@@ -134,6 +258,115 @@ func GetAvailableNotifiers() []*alerting.NotifierPlugin {
 					Element:      alerting.ElementTypeTextArea,
 					Placeholder:  `{{ template "default.message" . }}`,
 					PropertyName: "summary",
+				},
+			},
+		},
+		{
+			Type:        "victorops",
+			Name:        "VictorOps",
+			Description: "Sends notifications to VictorOps",
+			Heading:     "VictorOps settings",
+			Options: []alerting.NotifierOption{
+				{
+					Label:        "Url",
+					Element:      alerting.ElementTypeInput,
+					InputType:    alerting.InputTypeText,
+					Placeholder:  "VictorOps url",
+					PropertyName: "url",
+					Required:     true,
+				},
+				{ // New in 8.0.
+					Label:        "Message Type",
+					Element:      alerting.ElementTypeSelect,
+					PropertyName: "messageType",
+					SelectOptions: []alerting.SelectOption{
+						{
+							Value: "CRITICAL",
+							Label: "CRITICAL"},
+						{
+							Value: "WARNING",
+							Label: "WARNING",
+						},
+					},
+				},
+			},
+		},
+		{
+			Type:        "pushover",
+			Name:        "Pushover",
+			Description: "Sends HTTP POST request to the Pushover API",
+			Heading:     "Pushover settings",
+			Options: []alerting.NotifierOption{
+				{
+					Label:        "API Token",
+					Element:      alerting.ElementTypeInput,
+					InputType:    alerting.InputTypeText,
+					Placeholder:  "Application token",
+					PropertyName: "apiToken",
+					Required:     true,
+					Secure:       true,
+				},
+				{
+					Label:        "User key(s)",
+					Element:      alerting.ElementTypeInput,
+					InputType:    alerting.InputTypeText,
+					Placeholder:  "comma-separated list",
+					PropertyName: "userKey",
+					Required:     true,
+					Secure:       true,
+				},
+				{
+					Label:        "Device(s) (optional)",
+					Element:      alerting.ElementTypeInput,
+					InputType:    alerting.InputTypeText,
+					Placeholder:  "comma-separated list; leave empty to send to all devices",
+					PropertyName: "device",
+				},
+				{
+					Label:         "Alerting priority",
+					Element:       alerting.ElementTypeSelect,
+					SelectOptions: pushoverPriorityOptions,
+					PropertyName:  "priority",
+				},
+				{
+					Label:         "OK priority",
+					Element:       alerting.ElementTypeSelect,
+					SelectOptions: pushoverPriorityOptions,
+					PropertyName:  "okPriority",
+				},
+				{
+					Description:  "How often (in seconds) the Pushover servers will send the same alerting or OK notification to the user.",
+					Label:        "Retry (Only used for Emergency Priority)",
+					Element:      alerting.ElementTypeInput,
+					InputType:    alerting.InputTypeText,
+					Placeholder:  "minimum 30 seconds",
+					PropertyName: "retry",
+				},
+				{
+					Description:  "How many seconds the alerting or OK notification will continue to be retried.",
+					Label:        "Expire (Only used for Emergency Priority)",
+					Element:      alerting.ElementTypeInput,
+					InputType:    alerting.InputTypeText,
+					Placeholder:  "maximum 86400 seconds",
+					PropertyName: "expire",
+				},
+				{
+					Label:         "Alerting sound",
+					Element:       alerting.ElementTypeSelect,
+					SelectOptions: pushoverSoundOptions,
+					PropertyName:  "sound",
+				},
+				{
+					Label:         "OK sound",
+					Element:       alerting.ElementTypeSelect,
+					SelectOptions: pushoverSoundOptions,
+					PropertyName:  "okSound",
+				},
+				{ // New in 8.0.
+					Label:        "Message",
+					Element:      alerting.ElementTypeTextArea,
+					Placeholder:  `{{ template "default.message" . }}`,
+					PropertyName: "message",
 				},
 			},
 		},
@@ -417,6 +650,157 @@ func GetAvailableNotifiers() []*alerting.NotifierPlugin {
 					Placeholder:  "http://localhost:9093",
 					PropertyName: "url",
 					Required:     true,
+				},
+			},
+		},
+		{
+			Type:        "discord",
+			Name:        "Discord",
+			Heading:     "Discord settings",
+			Description: "Sends notifications to Discord",
+			Options: []alerting.NotifierOption{
+				{
+					Label:        "Message Content",
+					Description:  "Mention a group using @ or a user using <@ID> when notifying in a channel",
+					Element:      alerting.ElementTypeInput,
+					InputType:    alerting.InputTypeText,
+					Placeholder:  `{{ template "default.message" . }}`,
+					PropertyName: "message",
+				},
+				{
+					Label:        "Webhook URL",
+					Element:      alerting.ElementTypeInput,
+					InputType:    alerting.InputTypeText,
+					Placeholder:  "Discord webhook URL",
+					PropertyName: "url",
+					Required:     true,
+				},
+			},
+		},
+		{
+			Type:        "googlechat",
+			Name:        "Google Hangouts Chat",
+			Description: "Sends notifications to Google Hangouts Chat via webhooks based on the official JSON message format",
+			Heading:     "Google Hangouts Chat settings",
+			Options: []alerting.NotifierOption{
+				{
+					Label:        "Url",
+					Element:      alerting.ElementTypeInput,
+					InputType:    alerting.InputTypeText,
+					Placeholder:  "Google Hangouts Chat incoming webhook url",
+					PropertyName: "url",
+					Required:     true,
+				},
+			},
+		},
+		{
+			Type:        "LINE",
+			Name:        "LINE",
+			Description: "Send notifications to LINE notify",
+			Heading:     "LINE notify settings",
+			Options: []alerting.NotifierOption{
+				{
+					Label:        "Token",
+					Element:      alerting.ElementTypeInput,
+					InputType:    alerting.InputTypeText,
+					Placeholder:  "LINE notify token key",
+					PropertyName: "token",
+					Required:     true,
+					Secure:       true,
+				}},
+		},
+		{
+			Type:        "threema",
+			Name:        "Threema Gateway",
+			Description: "Sends notifications to Threema using the Threema Gateway",
+			Heading:     "Threema Gateway settings",
+			Info: "Notifications can be configured for any Threema Gateway ID of type \"Basic\". End-to-End IDs are not currently supported." +
+				"The Threema Gateway ID can be set up at https://gateway.threema.ch/.",
+			Options: []alerting.NotifierOption{
+				{
+					Label:          "Gateway ID",
+					Element:        alerting.ElementTypeInput,
+					InputType:      alerting.InputTypeText,
+					Placeholder:    "*3MAGWID",
+					Description:    "Your 8 character Threema Gateway ID (starting with a *).",
+					PropertyName:   "gateway_id",
+					Required:       true,
+					ValidationRule: "\\*[0-9A-Z]{7}",
+				},
+				{
+					Label:          "Recipient ID",
+					Element:        alerting.ElementTypeInput,
+					InputType:      alerting.InputTypeText,
+					Placeholder:    "YOUR3MID",
+					Description:    "The 8 character Threema ID that should receive the alerts.",
+					PropertyName:   "recipient_id",
+					Required:       true,
+					ValidationRule: "[0-9A-Z]{8}",
+				},
+				{
+					Label:        "API Secret",
+					Element:      alerting.ElementTypeInput,
+					InputType:    alerting.InputTypeText,
+					Description:  "Your Threema Gateway API secret.",
+					PropertyName: "api_secret",
+					Required:     true,
+					Secure:       true,
+				},
+			},
+		},
+		{
+			Type:        "opsgenie",
+			Name:        "OpsGenie",
+			Description: "Sends notifications to OpsGenie",
+			Heading:     "OpsGenie settings",
+			Options: []alerting.NotifierOption{
+				{
+					Label:        "API Key",
+					Element:      alerting.ElementTypeInput,
+					InputType:    alerting.InputTypeText,
+					Placeholder:  "OpsGenie API Key",
+					PropertyName: "apiKey",
+					Required:     true,
+					Secure:       true,
+				},
+				{
+					Label:        "Alert API Url",
+					Element:      alerting.ElementTypeInput,
+					InputType:    alerting.InputTypeText,
+					Placeholder:  "https://api.opsgenie.com/v2/alerts",
+					PropertyName: "apiUrl",
+					Required:     true,
+				},
+				{
+					Label:        "Auto close incidents",
+					Element:      alerting.ElementTypeCheckbox,
+					Description:  "Automatically close alerts in OpsGenie once the alert goes back to ok.",
+					PropertyName: "autoClose",
+				}, {
+					Label:        "Override priority",
+					Element:      alerting.ElementTypeCheckbox,
+					Description:  "Allow the alert priority to be set using the og_priority annotation",
+					PropertyName: "overridePriority",
+				},
+				{
+					Label:   "Send notification tags as",
+					Element: alerting.ElementTypeSelect,
+					SelectOptions: []alerting.SelectOption{
+						{
+							Value: channels.OpsgenieSendTags,
+							Label: "Tags",
+						},
+						{
+							Value: channels.OpsgenieSendDetails,
+							Label: "Extra Properties",
+						},
+						{
+							Value: channels.OpsgenieSendBoth,
+							Label: "Tags & Extra Properties",
+						},
+					},
+					Description:  "Send the common annotations to Opsgenie as either Extra Properties, Tags or both",
+					PropertyName: "sendTagsAs",
 				},
 			},
 		},
