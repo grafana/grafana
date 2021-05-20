@@ -43,7 +43,7 @@ func TestVictoropsNotifier(t *testing.T) {
 				},
 			},
 			expMsg: `{
-			  "alert_url": "http:/localhost/alerting/list",
+			  "alert_url": "http://localhost/alerting/list",
 			  "entity_display_name": "[FIRING:1]  (val1)",
 			  "entity_id": "6e3538104c14b583da237e9693b76debbc17f0f8058ef20492e5853096cf8733",
 			  "message_type": "CRITICAL",
@@ -69,7 +69,7 @@ func TestVictoropsNotifier(t *testing.T) {
 				},
 			},
 			expMsg: `{
-			  "alert_url": "http:/localhost/alerting/list",
+			  "alert_url": "http://localhost/alerting/list",
 			  "entity_display_name": "[FIRING:2]  ",
 			  "entity_id": "6e3538104c14b583da237e9693b76debbc17f0f8058ef20492e5853096cf8733",
 			  "message_type": "CRITICAL",

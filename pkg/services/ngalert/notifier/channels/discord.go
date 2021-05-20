@@ -4,8 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"net/url"
-	"path"
 	"strconv"
 	"strings"
 
@@ -85,12 +83,10 @@ func (d DiscordNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 	color, _ := strconv.ParseInt(strings.TrimLeft(getAlertStatusColor(alerts.Status()), "#"), 16, 0)
 	embed.Set("color", color)
 
-	u, err := url.Parse(d.tmpl.ExternalURL.String())
+	ruleURL, err := joinUrlPath(d.tmpl.ExternalURL.String(), "/alerting/list")
 	if err != nil {
-		return false, fmt.Errorf("failed to parse external URL: %w", err)
+		return false, err
 	}
-	u.Path = path.Join(u.Path, "/alerting/list")
-	ruleURL := u.String()
 	embed.Set("url", ruleURL)
 
 	bodyJSON.Set("embeds", []interface{}{embed})

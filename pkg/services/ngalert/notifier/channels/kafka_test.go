@@ -52,7 +52,7 @@ func TestKafkaNotifier(t *testing.T) {
 					  "value": {
 						"alert_state": "alerting",
 						"client": "Grafana",
-						"client_url": "http:/localhost/alerting/list",
+						"client_url": "http://localhost/alerting/list",
 						"description": "[FIRING:1]  (val1)",
 						"details": "\n**Firing**\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSource: \n\n\n\n\n",
 						"incident_key": "6e3538104c14b583da237e9693b76debbc17f0f8058ef20492e5853096cf8733"
@@ -88,7 +88,7 @@ func TestKafkaNotifier(t *testing.T) {
 					  "value": {
 						"alert_state": "alerting",
 						"client": "Grafana",
-						"client_url": "http:/localhost/alerting/list",
+						"client_url": "http://localhost/alerting/list",
 						"description": "[FIRING:2]  ",
 						"details": "\n**Firing**\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSource: \nLabels:\n - alertname = alert1\n - lbl1 = val2\nAnnotations:\n - ann1 = annv2\nSource: \n\n\n\n\n",
 						"incident_key": "6e3538104c14b583da237e9693b76debbc17f0f8058ef20492e5853096cf8733"

@@ -5,8 +5,6 @@ import (
 	"context"
 	"fmt"
 	"mime/multipart"
-	"net/url"
-	"path"
 	"strconv"
 
 	gokit_log "github.com/go-kit/kit/log"
@@ -130,12 +128,10 @@ func (pn *PushoverNotifier) SendResolved() bool {
 func (pn *PushoverNotifier) genPushoverBody(ctx context.Context, as ...*types.Alert) (map[string]string, bytes.Buffer, error) {
 	var b bytes.Buffer
 
-	u, err := url.Parse(pn.tmpl.ExternalURL.String())
+	ruleURL, err := joinUrlPath(pn.tmpl.ExternalURL.String(), "/alerting/list")
 	if err != nil {
-		return nil, b, fmt.Errorf("failed to parse ")
+		return nil, b, err
 	}
-	u.Path = path.Join(u.Path, "/alerting/list")
-	ruleURL := u.String()
 
 	alerts := types.Alerts(as...)
 

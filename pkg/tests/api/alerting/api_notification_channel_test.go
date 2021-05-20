@@ -749,7 +749,7 @@ var expNotifications = map[string][]string{
 		  "attachments": [
 			{
 			  "title": "Integration Test [FIRING:1] SlackAlert1 (UID_SlackAlert1)",
-			  "title_link": "http:/localhost:3000/alerting/list",
+			  "title_link": "http://localhost:3000/alerting/list",
 			  "text": "Integration Test ",
 			  "fallback": "Integration Test [FIRING:1] SlackAlert1 (UID_SlackAlert1)",
 			  "footer": "Grafana v",
@@ -776,7 +776,7 @@ var expNotifications = map[string][]string{
 		  "attachments": [
 			{
 			  "title": "[FIRING:1] SlackAlert2 (UID_SlackAlert2)",
-			  "title_link": "http:/localhost:3000/alerting/list",
+			  "title_link": "http://localhost:3000/alerting/list",
 			  "text": "\n**Firing**\nLabels:\n - alertname = SlackAlert2\n - __alert_rule_uid__ = UID_SlackAlert2\nAnnotations:\nSource: \n\n\n\n\n",
 			  "fallback": "[FIRING:1] SlackAlert2 (UID_SlackAlert2)",
 			  "footer": "Grafana v",
@@ -829,7 +829,7 @@ var expNotifications = map[string][]string{
 	"dingding_recv/dingding_test": {
 		`{
 		  "link": {
-			"messageUrl": "dingtalk://dingtalkclient/page/link?pc_slide=false&url=http%3A%2Flocalhost%3A3000%2Falerting%2Flist",
+			"messageUrl": "dingtalk://dingtalkclient/page/link?pc_slide=false&url=http%3A%2F%2Flocalhost%3A3000%2Falerting%2Flist",
 			"text": "\n**Firing**\nLabels:\n - alertname = DingDingAlert\n - __alert_rule_uid__ = UID_DingDingAlert\nAnnotations:\nSource: \n\n\n\n\n",
 			"title": "[FIRING:1] DingDingAlert (UID_DingDingAlert)"
 		  },
@@ -848,7 +848,7 @@ var expNotifications = map[string][]string{
 			  "targets": [
 				{
 				  "os": "default",
-				  "uri": "http:/localhost:3000/alerting/list"
+				  "uri": "http://localhost:3000/alerting/list"
 				}
 			  ]
 			}

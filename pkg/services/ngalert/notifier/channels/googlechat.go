@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"path"
 	"time"
 
 	gokit_log "github.com/go-kit/kit/log"
@@ -69,6 +68,10 @@ func (gcn *GoogleChatNotifier) Notify(ctx context.Context, as ...*types.Alert) (
 		})
 	}
 
+	ruleURL, err := joinUrlPath(gcn.tmpl.ExternalURL.String(), "/alerting/list")
+	if err != nil {
+		return false, err
+	}
 	// Add a button widget (link to Grafana).
 	widgets = append(widgets, buttonWidget{
 		Buttons: []button{
@@ -77,7 +80,7 @@ func (gcn *GoogleChatNotifier) Notify(ctx context.Context, as ...*types.Alert) (
 					Text: "OPEN IN GRAFANA",
 					OnClick: onClick{
 						OpenLink: openLink{
-							URL: path.Join(gcn.tmpl.ExternalURL.String(), "/alerting/list"),
+							URL: ruleURL,
 						},
 					},
 				},

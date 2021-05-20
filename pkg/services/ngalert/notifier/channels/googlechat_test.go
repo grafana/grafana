@@ -68,7 +68,7 @@ func TestGoogleChatNotifier(t *testing.T) {
 													Text: "OPEN IN GRAFANA",
 													OnClick: onClick{
 														OpenLink: openLink{
-															URL: "http:/localhost/alerting/list",
+															URL: "http://localhost/alerting/list",
 														},
 													},
 												},
@@ -128,7 +128,7 @@ func TestGoogleChatNotifier(t *testing.T) {
 													Text: "OPEN IN GRAFANA",
 													OnClick: onClick{
 														OpenLink: openLink{
-															URL: "http:/localhost/alerting/list",
+															URL: "http://localhost/alerting/list",
 														},
 													},
 												},
