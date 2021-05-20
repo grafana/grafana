@@ -1,4 +1,5 @@
 import {
+  ArrayVector,
   DataFrame,
   FieldType,
   LogLevel,
@@ -303,6 +304,22 @@ describe('dataFrameToLogsModel', () => {
     ]);
 
     expect(logsModel.series).toHaveLength(2);
+    expect(logsModel.series).toMatchObject([
+      {
+        name: 'info',
+        fields: [
+          { type: 'time', values: new ArrayVector([1556270891000, 1556289770000]) },
+          { type: 'number', values: new ArrayVector([1, 0]) },
+        ],
+      },
+      {
+        name: 'error',
+        fields: [
+          { type: 'time', values: new ArrayVector([1556289770000]) },
+          { type: 'number', values: new ArrayVector([1]) },
+        ],
+      },
+    ]);
     expect(logsModel.meta).toHaveLength(2);
     expect(logsModel.meta![0]).toMatchObject({
       label: 'Common labels',
@@ -502,6 +519,22 @@ describe('dataFrameToLogsModel', () => {
     ]);
 
     expect(logsModel.series).toHaveLength(2);
+    expect(logsModel.series).toMatchObject([
+      {
+        name: 'error',
+        fields: [
+          { type: 'time', values: new ArrayVector([0, 1000, 2000]) },
+          { type: 'number', values: new ArrayVector([1, 0, 1]) },
+        ],
+      },
+      {
+        name: 'debug',
+        fields: [
+          { type: 'time', values: new ArrayVector([1000, 2000]) },
+          { type: 'number', values: new ArrayVector([1, 0]) },
+        ],
+      },
+    ]);
     expect(logsModel.meta).toHaveLength(1);
     expect(logsModel.meta![0]).toMatchObject({
       label: 'Common labels',
