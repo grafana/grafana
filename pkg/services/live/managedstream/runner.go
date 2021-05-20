@@ -209,7 +209,7 @@ func (s *ManagedStream) Push(orgID int64, path string, frame *data.Frame, unstab
 
 	if stringInSlice(remoteWriteStreams, s.id) {
 		// Use remote write for a stream.
-		remoteWriteData, err := remotewrite.Serialize(frame)
+		remoteWriteData, err := remotewrite.SerializeLabelsColumn(frame)
 		if err != nil {
 			logger.Error("Error serializing to remote write format", "error", err)
 		} else {
