@@ -658,6 +658,8 @@ func initMetricVars() {
 		StatsTotalDashboardVersions,
 		StatsTotalAnnotations,
 		MAccessEvaluationCount,
+		StatsTotalLibraryPanels,
+		StatsTotalLibraryVariables,
 	)
 }
 
