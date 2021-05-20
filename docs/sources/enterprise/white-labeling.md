@@ -3,7 +3,7 @@ title = "White labeling"
 description = "Change the look of Grafana to match your corporate brand"
 keywords = ["grafana", "white-labeling", "enterprise"]
 aliases = ["/docs/grafana/latest/enterprise/white-labeling/"]
-weight = 700
+weight = 1300
 +++
 
 # White labeling

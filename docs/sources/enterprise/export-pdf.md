@@ -2,7 +2,7 @@
 title = "Export dashboard as PDF"
 description = ""
 keywords = ["grafana", "export", "pdf", "share"]
-weight = 900
+weight = 1400
 +++
 
 # Export dashboard as PDF

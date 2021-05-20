@@ -2,7 +2,7 @@
 title = "Auditing"
 description = "Auditing"
 keywords = ["grafana", "auditing", "audit", "logs"]
-weight = 700
+weight = 1100
 +++
 
 # Auditing

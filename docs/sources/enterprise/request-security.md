@@ -2,7 +2,7 @@
 title = "Request security"
 description = "Grafana Enterprise request security"
 keywords = ["grafana", "security", "enterprise"]
-weight = 110
+weight = 400
 +++
 
 # Request security

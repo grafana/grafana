@@ -3,7 +3,7 @@ title = "Reporting"
 description = ""
 keywords = ["grafana", "reporting"]
 aliases = ["/docs/grafana/latest/administration/reports"]
-weight = 400
+weight = 800
 +++
 
 # Reporting
@@ -11,6 +11,9 @@ weight = 400
 Reporting allows you to automatically generate PDFs from any of your dashboards and have Grafana email them to interested parties on a schedule.
 
 > Only available in Grafana Enterprise v6.4+.
+ 
+> If you have [Fine-grained access Control]({{< relref "../enterprise/access-control/_index.md" >}}) enabled, for some actions you would need to have relevant permissions.
+Refer to specific guides to understand what permissions are required.
 
 {{< docs-imagebox img="/img/docs/enterprise/reports_list.png" max-width="500px" class="docs-image--no-shadow" >}}
 
@@ -21,9 +24,13 @@ Any changes you make to a dashboard used in a report are reflected the next time
 - SMTP must be configured for reports to be sent. Refer to [SMTP]({{< relref "../administration/configuration.md#smtp" >}}) in [Configuration]({{< relref "../administration/configuration.md" >}}) for more information.
 - The Image Renderer plugin must be installed or the remote rendering service must be set up. Refer to [Image rendering]({{< relref "../administration/image_rendering.md" >}}) for more information.
 
+## Access control
+
+When [Fine-grained access control]({{< relref "../enterprise/access-control/_index.md" >}}) is enabled, you need to have the relevant [Permissions]({{< relref "../enterprise/access-control/permissions.md" >}}) to create and manage reports.
+
 ## Create or update a report
 
-Currently only Organization Admins can create reports.
+Only organization admins can create reports by default. You can customize who can create reports with [fine-grained access control]({{< relref "../enterprise/access-control/_index.md" >}}).
 
 1. Click on the reports icon in the side menu. The Reports tab allows you to view, create, and update your reports.
 1. Enter report information. All fields are required unless otherwise indicated.
