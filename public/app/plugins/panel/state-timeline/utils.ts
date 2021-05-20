@@ -328,16 +328,8 @@ export function prepareTimelineLegendItems(
     const fmt = (v: number) => formattedValueToString(disp(v));
     for (let i = 1; i <= steps.length; i++) {
       const step = steps[i - 1];
-      let label = 'xxx';
-      if (i === 1) {
-        label = `< ${fmt(steps[i].value)}`;
-      } else if (i === steps.length) {
-        label = `> ${fmt(step.value)}`;
-      } else {
-        label = `${fmt(step.value)} - ${fmt(steps[i].value)}`;
-      }
       items.push({
-        label,
+        label: i === 1 ? `< ${fmt(steps[i].value)}` : `${fmt(step.value)}+`,
         color: step.color,
         yAxis: 1,
       });
