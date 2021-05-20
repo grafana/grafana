@@ -9,3 +9,5 @@ const (
 	// VariableElement is used for library elements that are of the Variable kind
 	VariableElement
 )
+
+const LibraryElementConnectionTableName = "library_element_connection"
