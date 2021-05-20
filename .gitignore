@@ -63,7 +63,6 @@ public/css/*.min.css
 conf/custom.ini
 /conf/provisioning/**/custom.yaml
 /conf/provisioning/**/dev.yaml
-/conf/provisioning/access-control/
 /conf/ldap_dev.toml
 /conf/ldap_freeipa.toml
 profile.cov
