@@ -56,7 +56,7 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/datasources/", reqOrgAdmin, hs.Index)
 	r.Get("/datasources/new", reqOrgAdmin, hs.Index)
 	r.Get("/datasources/edit/*", reqOrgAdmin, hs.Index)
-	r.Get("/org/users", authorize(reqOrgAdmin, accesscontrol.ActionOrgUsersRead, accesscontrol.ScopeOrgCurrentUsersAll), hs.Index)
+	r.Get("/org/users", authorize(reqOrgAdmin, accesscontrol.ActionOrgUsersRead, accesscontrol.ScopeUsersAll), hs.Index)
 	r.Get("/org/users/new", reqOrgAdmin, hs.Index)
 	r.Get("/org/users/invite", authorize(reqOrgAdmin, accesscontrol.ActionUsersCreate), hs.Index)
 	r.Get("/org/teams", reqCanAccessTeams, hs.Index)
@@ -66,7 +66,7 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/configuration", reqGrafanaAdmin, hs.Index)
 	r.Get("/admin", reqGrafanaAdmin, hs.Index)
 	r.Get("/admin/settings", reqGrafanaAdmin, hs.Index)
-	r.Get("/admin/users", authorize(reqGrafanaAdmin, accesscontrol.ActionUsersRead, accesscontrol.ScopeUsersAll), hs.Index)
+	r.Get("/admin/users", authorize(reqGrafanaAdmin, accesscontrol.ActionUsersRead, accesscontrol.ScopeGlobalUsersAll), hs.Index)
 	r.Get("/admin/users/create", authorize(reqGrafanaAdmin, accesscontrol.ActionUsersCreate), hs.Index)
 	r.Get("/admin/users/edit/:id", authorize(reqGrafanaAdmin, accesscontrol.ActionUsersRead), hs.Index)
 	r.Get("/admin/orgs", reqGrafanaAdmin, hs.Index)
@@ -101,8 +101,8 @@ func (hs *HTTPServer) registerRoutes() {
 
 	r.Get("/playlists/", reqSignedIn, hs.Index)
 	r.Get("/playlists/*", reqSignedIn, hs.Index)
-	r.Get("/alerting/", reqEditorRole, hs.Index)
-	r.Get("/alerting/*", reqEditorRole, hs.Index)
+	r.Get("/alerting/", reqSignedIn, hs.Index)
+	r.Get("/alerting/*", reqSignedIn, hs.Index)
 
 	// sign up
 	r.Get("/verify", hs.Index)
@@ -160,14 +160,14 @@ func (hs *HTTPServer) registerRoutes() {
 
 		// users (admin permission required)
 		apiRoute.Group("/users", func(usersRoute routing.RouteRegister) {
-			const userIDScope = `users:{{ index . ":id" }}`
-			usersRoute.Get("/", authorize(reqGrafanaAdmin, accesscontrol.ActionUsersRead, accesscontrol.ScopeUsersAll), routing.Wrap(SearchUsers))
-			usersRoute.Get("/search", authorize(reqGrafanaAdmin, accesscontrol.ActionUsersRead, accesscontrol.ScopeUsersAll), routing.Wrap(SearchUsersWithPaging))
+			const userIDScope = `global:users:{{ index . ":id" }}`
+			usersRoute.Get("/", authorize(reqGrafanaAdmin, accesscontrol.ActionUsersRead, accesscontrol.ScopeGlobalUsersAll), routing.Wrap(SearchUsers))
+			usersRoute.Get("/search", authorize(reqGrafanaAdmin, accesscontrol.ActionUsersRead, accesscontrol.ScopeGlobalUsersAll), routing.Wrap(SearchUsersWithPaging))
 			usersRoute.Get("/:id", authorize(reqGrafanaAdmin, accesscontrol.ActionUsersRead, userIDScope), routing.Wrap(GetUserByID))
 			usersRoute.Get("/:id/teams", authorize(reqGrafanaAdmin, accesscontrol.ActionUsersTeamRead, userIDScope), routing.Wrap(GetUserTeams))
 			usersRoute.Get("/:id/orgs", authorize(reqGrafanaAdmin, accesscontrol.ActionUsersRead, userIDScope), routing.Wrap(GetUserOrgList))
 			// query parameters /users/lookup?loginOrEmail=admin@example.com
-			usersRoute.Get("/lookup", authorize(reqGrafanaAdmin, accesscontrol.ActionUsersRead, accesscontrol.ScopeUsersAll), routing.Wrap(GetUserByLoginOrEmail))
+			usersRoute.Get("/lookup", authorize(reqGrafanaAdmin, accesscontrol.ActionUsersRead, accesscontrol.ScopeGlobalUsersAll), routing.Wrap(GetUserByLoginOrEmail))
 			usersRoute.Put("/:id", authorize(reqGrafanaAdmin, accesscontrol.ActionUsersWrite, userIDScope), bind(models.UpdateUserCommand{}), routing.Wrap(UpdateUser))
 			usersRoute.Post("/:id/using/:orgId", authorize(reqGrafanaAdmin, accesscontrol.ActionUsersWrite, userIDScope), routing.Wrap(UpdateUserActiveOrg))
 		})
@@ -199,13 +199,14 @@ func (hs *HTTPServer) registerRoutes() {
 
 		// current org
 		apiRoute.Group("/org", func(orgRoute routing.RouteRegister) {
-			const orgScope = `org:current/users:{{ index . ":userId" }}`
+			const usersScope = `users:{{ index . ":userId" }}`
 			orgRoute.Put("/", reqOrgAdmin, bind(dtos.UpdateOrgForm{}), routing.Wrap(UpdateOrgCurrent))
 			orgRoute.Put("/address", reqOrgAdmin, bind(dtos.UpdateOrgAddressForm{}), routing.Wrap(UpdateOrgAddressCurrent))
-			orgRoute.Get("/users", authorize(reqOrgAdmin, accesscontrol.ActionOrgUsersRead, accesscontrol.ScopeOrgCurrentUsersAll), routing.Wrap(hs.GetOrgUsersForCurrentOrg))
-			orgRoute.Post("/users", authorize(reqOrgAdmin, accesscontrol.ActionOrgUsersAdd, accesscontrol.ScopeOrgCurrentUsersAll), quota("user"), bind(models.AddOrgUserCommand{}), routing.Wrap(AddOrgUserToCurrentOrg))
-			orgRoute.Patch("/users/:userId", authorize(reqOrgAdmin, accesscontrol.ActionOrgUsersRoleUpdate, orgScope), bind(models.UpdateOrgUserCommand{}), routing.Wrap(UpdateOrgUserForCurrentOrg))
-			orgRoute.Delete("/users/:userId", authorize(reqOrgAdmin, accesscontrol.ActionOrgUsersRemove, orgScope), routing.Wrap(RemoveOrgUserForCurrentOrg))
+			orgRoute.Get("/users", authorize(reqOrgAdmin, accesscontrol.ActionOrgUsersRead, accesscontrol.ScopeUsersAll), routing.Wrap(hs.GetOrgUsersForCurrentOrg))
+			orgRoute.Get("/users/search", authorize(reqOrgAdmin, accesscontrol.ActionOrgUsersRead, accesscontrol.ScopeUsersAll), routing.Wrap(hs.SearchOrgUsersWithPaging))
+			orgRoute.Post("/users", authorize(reqOrgAdmin, accesscontrol.ActionOrgUsersAdd, accesscontrol.ScopeUsersAll), quota("user"), bind(models.AddOrgUserCommand{}), routing.Wrap(AddOrgUserToCurrentOrg))
+			orgRoute.Patch("/users/:userId", authorize(reqOrgAdmin, accesscontrol.ActionOrgUsersRoleUpdate, usersScope), bind(models.UpdateOrgUserCommand{}), routing.Wrap(UpdateOrgUserForCurrentOrg))
+			orgRoute.Delete("/users/:userId", authorize(reqOrgAdmin, accesscontrol.ActionOrgUsersRemove, usersScope), routing.Wrap(RemoveOrgUserForCurrentOrg))
 
 			// invites
 			orgRoute.Get("/invites", authorize(reqOrgAdmin, accesscontrol.ActionUsersCreate), routing.Wrap(GetPendingOrgInvites))
@@ -230,16 +231,15 @@ func (hs *HTTPServer) registerRoutes() {
 
 		// orgs (admin routes)
 		apiRoute.Group("/orgs/:orgId", func(orgsRoute routing.RouteRegister) {
-			const orgScope = `org:{{ index . ":orgId" }}/users:*`
-			const orgUsersScope = `org:{{ index . ":orgId" }}/users:{{ index . ":userId" }}`
+			const usersScope = `users:{{ index . ":userId" }}`
 			orgsRoute.Get("/", reqGrafanaAdmin, routing.Wrap(GetOrgByID))
 			orgsRoute.Put("/", reqGrafanaAdmin, bind(dtos.UpdateOrgForm{}), routing.Wrap(UpdateOrg))
 			orgsRoute.Put("/address", reqGrafanaAdmin, bind(dtos.UpdateOrgAddressForm{}), routing.Wrap(UpdateOrgAddress))
 			orgsRoute.Delete("/", reqGrafanaAdmin, routing.Wrap(DeleteOrgByID))
-			orgsRoute.Get("/users", authorize(reqGrafanaAdmin, accesscontrol.ActionOrgUsersRead, orgScope), routing.Wrap(hs.GetOrgUsers))
-			orgsRoute.Post("/users", authorize(reqGrafanaAdmin, accesscontrol.ActionOrgUsersAdd, orgScope), bind(models.AddOrgUserCommand{}), routing.Wrap(AddOrgUser))
-			orgsRoute.Patch("/users/:userId", authorize(reqGrafanaAdmin, accesscontrol.ActionOrgUsersRoleUpdate, orgUsersScope), bind(models.UpdateOrgUserCommand{}), routing.Wrap(UpdateOrgUser))
-			orgsRoute.Delete("/users/:userId", authorize(reqGrafanaAdmin, accesscontrol.ActionOrgUsersRemove, orgUsersScope), routing.Wrap(RemoveOrgUser))
+			orgsRoute.Get("/users", authorize(reqGrafanaAdmin, accesscontrol.ActionOrgUsersRead, accesscontrol.ScopeUsersAll), routing.Wrap(hs.GetOrgUsers))
+			orgsRoute.Post("/users", authorize(reqGrafanaAdmin, accesscontrol.ActionOrgUsersAdd, accesscontrol.ScopeUsersAll), bind(models.AddOrgUserCommand{}), routing.Wrap(AddOrgUser))
+			orgsRoute.Patch("/users/:userId", authorize(reqGrafanaAdmin, accesscontrol.ActionOrgUsersRoleUpdate, usersScope), bind(models.UpdateOrgUserCommand{}), routing.Wrap(UpdateOrgUser))
+			orgsRoute.Delete("/users/:userId", authorize(reqGrafanaAdmin, accesscontrol.ActionOrgUsersRemove, usersScope), routing.Wrap(RemoveOrgUser))
 			orgsRoute.Get("/quotas", reqGrafanaAdmin, routing.Wrap(GetOrgQuotas))
 			orgsRoute.Put("/quotas/:target", reqGrafanaAdmin, bind(models.UpdateOrgQuotaCmd{}), routing.Wrap(UpdateOrgQuota))
 		})
@@ -265,10 +265,10 @@ func (hs *HTTPServer) registerRoutes() {
 		apiRoute.Group("/datasources", func(datasourceRoute routing.RouteRegister) {
 			datasourceRoute.Get("/", routing.Wrap(hs.GetDataSources))
 			datasourceRoute.Post("/", quota("data_source"), bind(models.AddDataSourceCommand{}), routing.Wrap(AddDataSource))
-			datasourceRoute.Put("/:id", bind(models.UpdateDataSourceCommand{}), routing.Wrap(UpdateDataSource))
-			datasourceRoute.Delete("/:id", routing.Wrap(DeleteDataSourceById))
-			datasourceRoute.Delete("/uid/:uid", routing.Wrap(DeleteDataSourceByUID))
-			datasourceRoute.Delete("/name/:name", routing.Wrap(DeleteDataSourceByName))
+			datasourceRoute.Put("/:id", bind(models.UpdateDataSourceCommand{}), routing.Wrap(hs.UpdateDataSource))
+			datasourceRoute.Delete("/:id", routing.Wrap(hs.DeleteDataSourceById))
+			datasourceRoute.Delete("/uid/:uid", routing.Wrap(hs.DeleteDataSourceByUID))
+			datasourceRoute.Delete("/name/:name", routing.Wrap(hs.DeleteDataSourceByName))
 			datasourceRoute.Get("/:id", routing.Wrap(GetDataSourceById))
 			datasourceRoute.Get("/uid/:uid", routing.Wrap(GetDataSourceByUID))
 			datasourceRoute.Get("/name/:name", routing.Wrap(GetDataSourceByName))
@@ -282,7 +282,14 @@ func (hs *HTTPServer) registerRoutes() {
 		apiRoute.Get("/plugins/:pluginId/health", routing.Wrap(hs.CheckHealth))
 		apiRoute.Any("/plugins/:pluginId/resources", hs.CallResource)
 		apiRoute.Any("/plugins/:pluginId/resources/*", hs.CallResource)
-		apiRoute.Any("/plugins/errors", routing.Wrap(hs.GetPluginErrorsList))
+		apiRoute.Get("/plugins/errors", routing.Wrap(hs.GetPluginErrorsList))
+
+		if hs.Cfg.PluginAdminEnabled {
+			apiRoute.Group("/plugins", func(pluginRoute routing.RouteRegister) {
+				pluginRoute.Post("/:pluginId/install", bind(dtos.InstallPluginCommand{}), routing.Wrap(hs.InstallPlugin))
+				pluginRoute.Post("/:pluginId/uninstall", routing.Wrap(hs.UninstallPlugin))
+			}, reqGrafanaAdmin)
+		}
 
 		apiRoute.Group("/plugins", func(pluginRoute routing.RouteRegister) {
 			pluginRoute.Get("/:pluginId/dashboards/", routing.Wrap(hs.GetPluginDashboards))
@@ -324,6 +331,7 @@ func (hs *HTTPServer) registerRoutes() {
 			dashboardRoute.Delete("/db/:slug", routing.Wrap(hs.DeleteDashboardBySlug))
 
 			dashboardRoute.Post("/calculate-diff", bind(dtos.CalculateDiffOptions{}), routing.Wrap(CalculateDashboardDiff))
+			dashboardRoute.Post("/trim", bind(models.TrimDashboardCommand{}), routing.Wrap(hs.TrimDashboard))
 
 			dashboardRoute.Post("/db", bind(models.SaveDashboardCommand{}), routing.Wrap(hs.PostDashboard))
 			dashboardRoute.Get("/home", routing.Wrap(hs.GetHomeDashboard))
@@ -378,7 +386,9 @@ func (hs *HTTPServer) registerRoutes() {
 			alertsRoute.Get("/states-for-dashboard", routing.Wrap(GetAlertStatesForDashboard))
 		})
 
-		apiRoute.Get("/alert-notifiers", reqEditorRole, routing.Wrap(GetAlertNotifiers))
+		apiRoute.Get("/alert-notifiers", reqEditorRole, routing.Wrap(
+			GetAlertNotifiers(hs.Alertmanager != nil && hs.Cfg.IsNgAlertEnabled())),
+		)
 
 		apiRoute.Group("/alert-notifications", func(alertNotifications routing.RouteRegister) {
 			alertNotifications.Get("/", routing.Wrap(GetAlertNotifications))
@@ -410,21 +420,19 @@ func (hs *HTTPServer) registerRoutes() {
 
 		apiRoute.Post("/frontend-metrics", bind(metrics.PostFrontendMetricsCommand{}), routing.Wrap(hs.PostFrontendMetrics))
 
-		if hs.Live.IsEnabled() {
-			apiRoute.Group("/live", func(liveRoute routing.RouteRegister) {
-				// the channel path is in the name
-				liveRoute.Post("/publish", bind(dtos.LivePublishCmd{}), routing.Wrap(hs.Live.HandleHTTPPublish))
+		apiRoute.Group("/live", func(liveRoute routing.RouteRegister) {
+			// the channel path is in the name
+			liveRoute.Post("/publish", bind(dtos.LivePublishCmd{}), routing.Wrap(hs.Live.HandleHTTPPublish))
 
-				// POST influx line protocol
-				liveRoute.Post("/push/:streamId", hs.LivePushGateway.Handle)
+			// POST influx line protocol
+			liveRoute.Post("/push/:streamId", hs.LivePushGateway.Handle)
 
-				// List available streams and fields
-				liveRoute.Get("/list", routing.Wrap(hs.Live.HandleListHTTP))
+			// List available streams and fields
+			liveRoute.Get("/list", routing.Wrap(hs.Live.HandleListHTTP))
 
-				// Some channels may have info
-				liveRoute.Get("/info/*", routing.Wrap(hs.Live.HandleInfoHTTP))
-			})
-		}
+			// Some channels may have info
+			liveRoute.Get("/info/*", routing.Wrap(hs.Live.HandleInfoHTTP))
+		})
 
 		// short urls
 		apiRoute.Post("/short-urls", bind(dtos.CreateShortURLCmd{}), routing.Wrap(hs.createShortURL))
@@ -448,7 +456,7 @@ func (hs *HTTPServer) registerRoutes() {
 
 	// Administering users
 	r.Group("/api/admin/users", func(adminUserRoute routing.RouteRegister) {
-		const userIDScope = `users:{{ index . ":id" }}`
+		const userIDScope = `global:users:{{ index . ":id" }}`
 		adminUserRoute.Post("/", authorize(reqGrafanaAdmin, accesscontrol.ActionUsersCreate), bind(dtos.AdminCreateUserForm{}), routing.Wrap(hs.AdminCreateUser))
 		adminUserRoute.Put("/:id/password", authorize(reqGrafanaAdmin, accesscontrol.ActionUsersPasswordUpdate, userIDScope), bind(dtos.AdminUpdateUserPasswordForm{}), routing.Wrap(AdminUpdateUserPassword))
 		adminUserRoute.Put("/:id/permissions", authorize(reqGrafanaAdmin, accesscontrol.ActionUsersPermissionsUpdate, userIDScope), bind(dtos.AdminUpdateUserPermissionsForm{}), routing.Wrap(hs.AdminUpdateUserPermissions))

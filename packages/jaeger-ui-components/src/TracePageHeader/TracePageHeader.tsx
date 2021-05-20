@@ -100,7 +100,7 @@ const getStyles = createStyle((theme: Theme) => {
       font-size: 1.7em;
       line-height: 1em;
       margin: 0 0 0 0.5em;
-      padding: 0.5em 0;
+      padding-bottom: 0.5em;
     `,
     TracePageHeaderTitleCollapsible: css`
       label: TracePageHeaderTitleCollapsible;

@@ -3,7 +3,7 @@ import {
   BusEventBase,
   BusEventWithPayload,
   eventFactory,
-  GrafanaThemeV2,
+  GrafanaTheme2,
   TimeRange,
 } from '@grafana/data';
 import { IconName } from '@grafana/ui';
@@ -152,7 +152,7 @@ export class RenderEvent extends BusEventBase {
   static type = 'render';
 }
 
-export class ThemeChangedEvent extends BusEventWithPayload<GrafanaThemeV2> {
+export class ThemeChangedEvent extends BusEventWithPayload<GrafanaTheme2> {
   static type = 'theme-changed';
 }
 
@@ -172,6 +172,9 @@ export class RemovePanelEvent extends BusEventWithPayload<number> {
   static type = 'remove-panel';
 }
 
+/**
+ * @deprecated use ShowModalReactEvent instead that has this capability built in
+ */
 export class ShowModalEvent extends BusEventWithPayload<ShowModalPayload> {
   static type = 'show-modal';
 }
@@ -184,6 +187,9 @@ export class ShowModalReactEvent extends BusEventWithPayload<ShowModalReactPaylo
   static type = 'show-react-modal';
 }
 
+/**
+ * @deprecated use ShowModalReactEvent instead that has this capability built in
+ */
 export class HideModalEvent extends BusEventBase {
   static type = 'hide-modal';
 }

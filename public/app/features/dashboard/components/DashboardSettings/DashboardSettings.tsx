@@ -14,7 +14,7 @@ import { AnnotationsSettings } from './AnnotationsSettings';
 import { LinksSettings } from './LinksSettings';
 import { VersionsSettings } from './VersionsSettings';
 import { JsonEditorSettings } from './JsonEditorSettings';
-import { GrafanaTheme } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 
 export interface Props {
@@ -27,7 +27,6 @@ export interface SettingsPage {
   title: string;
   icon: IconName;
   render: () => React.ReactNode;
-  fullWidth?: boolean;
 }
 
 export class DashboardSettings extends PureComponent<Props> {
@@ -99,7 +98,6 @@ export class DashboardSettings extends PureComponent<Props> {
       title: 'JSON Model',
       id: 'dashboard_json',
       icon: 'arrow',
-      fullWidth: true,
       render: () => <JsonEditorSettings dashboard={dashboard} />,
     });
 
@@ -145,7 +143,7 @@ export class DashboardSettings extends PureComponent<Props> {
     const currentPage = pages.find((page) => page.id === editview) ?? pages[0];
     const canSaveAs = contextSrv.hasEditPermissionInFolders;
     const canSave = dashboard.meta.canSave;
-    const styles = getStyles(config.theme);
+    const styles = getStyles(config.theme2);
 
     return (
       <div className="dashboard-settings">
@@ -172,9 +170,7 @@ export class DashboardSettings extends PureComponent<Props> {
                   )}
                 </div>
               </aside>
-              <div className={currentPage.fullWidth ? styles.settingsContentFullWidth : styles.settingsContent}>
-                {currentPage.render()}
-              </div>
+              <div className={styles.settingsContent}>{currentPage.render()}</div>
             </div>
           </div>
         </CustomScrollbar>
@@ -183,30 +179,22 @@ export class DashboardSettings extends PureComponent<Props> {
   }
 }
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => ({
+const getStyles = stylesFactory((theme: GrafanaTheme2) => ({
   scrollInner: css`
     min-width: 100%;
-    min-height: 100%;
+    display: flex;
   `,
   settingsWrapper: css`
-    background: ${theme.colors.bg1};
+    margin: ${theme.spacing(2)};
     display: flex;
-    min-height: 100%;
-    width: 100%;
+    flex-grow: 1;
   `,
   settingsContent: css`
     flex-grow: 1;
-    min-width: 0;
     height: 100%;
     padding: 32px;
-    max-width: 1100px;
-  `,
-  settingsContentFullWidth: css`
-    flex-grow: 1;
-    height: 100%;
-    padding: 32px;
-    min-width: 600px;
-    width: 100%;
-    height: 100%;
+    border: 1px solid ${theme.colors.border.weak};
+    background: ${theme.colors.background.primary};
+    border-radius: ${theme.shape.borderRadius()};
   `,
 }));

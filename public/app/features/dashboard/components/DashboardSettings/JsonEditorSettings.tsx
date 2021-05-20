@@ -5,7 +5,7 @@ import { Button, CodeEditor, HorizontalGroup, useStyles2 } from '@grafana/ui';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { getDashboardSrv } from '../../services/DashboardSrv';
 import { DashboardModel } from '../../state/DashboardModel';
-import { GrafanaThemeV2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 
 interface Props {
   dashboard: DashboardModel;
@@ -26,7 +26,7 @@ export const JsonEditorSettings: React.FC<Props> = ({ dashboard }) => {
   const styles = useStyles2(getStyles);
 
   return (
-    <>
+    <div>
       <h3 className="dashboard-settings__header">JSON Model</h3>
       <div className="dashboard-settings__subheader">
         The JSON model below is the data structure that defines the dashboard. This includes dashboard settings, panel
@@ -53,11 +53,11 @@ export const JsonEditorSettings: React.FC<Props> = ({ dashboard }) => {
           <Button onClick={onClick}>Save changes</Button>
         </HorizontalGroup>
       )}
-    </>
+    </div>
   );
 };
 
-const getStyles = (theme: GrafanaThemeV2) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   editWrapper: css`
     height: calc(100vh - 250px);
     margin-bottom: 10px;

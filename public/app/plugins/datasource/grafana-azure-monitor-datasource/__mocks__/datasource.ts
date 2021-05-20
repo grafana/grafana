@@ -30,6 +30,15 @@ export default function createMockDatasource() {
       supportedTimeGrains: [],
       dimensions: [],
     }),
+
+    azureLogAnalyticsDatasource: {
+      getKustoSchema: () => Promise.resolve(),
+    },
+    resourcePickerData: {
+      getResourcePickerData: () => ({}),
+      getResourcesForResourceGroup: () => ({}),
+      getResourceURIFromWorkspace: () => '',
+    },
   };
 
   const mockDatasource = _mockDatasource as Datasource;

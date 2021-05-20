@@ -19,8 +19,7 @@ import (
 )
 
 func TestWebhookNotifier(t *testing.T) {
-	tmpl, err := template.FromGlobs("templates/default.tmpl")
-	require.NoError(t, err)
+	tmpl := templateForTests(t)
 
 	externalURL, err := url.Parse("http://localhost")
 	require.NoError(t, err)
@@ -176,7 +175,7 @@ func TestWebhookNotifier(t *testing.T) {
 			settingsJSON, err := simplejson.NewJson([]byte(c.settings))
 			require.NoError(t, err)
 
-			m := &models.AlertNotification{
+			m := &NotificationChannelConfig{
 				Name:     "webhook_testing",
 				Type:     "webhook",
 				Settings: settingsJSON,

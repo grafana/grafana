@@ -1,12 +1,13 @@
 import React, { HTMLProps } from 'react';
 import { css, cx } from '@emotion/css';
-import { GrafanaThemeV2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { Icon } from '../Icon/Icon';
 import { IconName } from '../../types';
 import { stylesFactory, useTheme2 } from '../../themes';
 import { Counter } from './Counter';
+import { getFocusStyles } from '../../themes/mixins';
 
 export interface TabProps extends HTMLProps<HTMLAnchorElement> {
   label: string;
@@ -52,7 +53,7 @@ export const Tab = React.forwardRef<HTMLAnchorElement, TabProps>(
 
 Tab.displayName = 'Tab';
 
-const getTabStyles = stylesFactory((theme: GrafanaThemeV2) => {
+const getTabStyles = stylesFactory((theme: GrafanaTheme2) => {
   return {
     item: css`
       list-style: none;
@@ -62,15 +63,14 @@ const getTabStyles = stylesFactory((theme: GrafanaThemeV2) => {
     link: css`
       color: ${theme.colors.text.secondary};
       padding: ${theme.spacing(1.5, 2, 1)};
-
+      display: block;
+      height: 100%;
       svg {
         margin-right: ${theme.spacing(1)};
       }
 
-      a {
-        display: block;
-        height: 100%;
-        color: ${theme.colors.text.secondary};
+      &:focus-visible {
++        ${getFocusStyles(theme)}
       }
     `,
     notActive: css`

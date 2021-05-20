@@ -1,25 +1,27 @@
-import { GrafanaThemeV2, SelectableValue } from '@grafana/data';
+import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { NotifierDTO } from 'app/types';
 import React, { useEffect, useMemo, useState } from 'react';
 import { css } from '@emotion/css';
 import { Alert, Button, Field, InputControl, Select, useStyles2 } from '@grafana/ui';
-import { useFormContext, FieldError, NestDataObject } from 'react-hook-form';
+import { useFormContext, FieldErrors } from 'react-hook-form';
 import { ChannelValues, CommonSettingsComponentType } from '../../../types/receiver-form';
 import { ChannelOptions } from './ChannelOptions';
 import { CollapsibleSection } from './CollapsibleSection';
 
 interface Props<R> {
+  defaultValues: R;
   pathPrefix: string;
   notifiers: NotifierDTO[];
   onDuplicate: () => void;
   commonSettingsComponent: CommonSettingsComponentType;
 
   secureFields?: Record<string, boolean>;
-  errors?: NestDataObject<R, FieldError>;
+  errors?: FieldErrors<R>;
   onDelete?: () => void;
 }
 
 export function ChannelSubForm<R extends ChannelValues>({
+  defaultValues,
   pathPrefix,
   onDuplicate,
   onDelete,
@@ -30,16 +32,12 @@ export function ChannelSubForm<R extends ChannelValues>({
 }: Props<R>): JSX.Element {
   const styles = useStyles2(getStyles);
   const name = (fieldName: string) => `${pathPrefix}${fieldName}`;
-  const { control, watch, register, unregister } = useFormContext();
-  const selectedType = watch(name('type'));
+  const { control, watch, register } = useFormContext();
+  const selectedType = watch(name('type')) ?? defaultValues.type; // nope, setting "default" does not work at all.
 
-  // keep the __id field registered so it's always passed to submit
   useEffect(() => {
-    register({ name: `${pathPrefix}__id` });
-    return () => {
-      unregister(`${pathPrefix}__id`);
-    };
-  });
+    register(`${pathPrefix}.__id`);
+  }, [register, pathPrefix]);
 
   const [_secureFields, setSecureFields] = useState(secureFields ?? {});
 
@@ -53,10 +51,12 @@ export function ChannelSubForm<R extends ChannelValues>({
 
   const typeOptions = useMemo(
     (): SelectableValue[] =>
-      notifiers.map(({ name, type }) => ({
-        label: name,
-        value: type,
-      })),
+      notifiers
+        .map(({ name, type }) => ({
+          label: name,
+          value: type,
+        }))
+        .sort((a, b) => a.label.localeCompare(b.label)),
     [notifiers]
   );
 
@@ -67,18 +67,18 @@ export function ChannelSubForm<R extends ChannelValues>({
   const optionalOptions = notifier?.options.filter((o) => !o.required);
 
   return (
-    <div className={styles.wrapper}>
+    <div className={styles.wrapper} data-testid="item-container">
       <div className={styles.topRow}>
         <div>
-          <Field label="Contact point type">
+          <Field label="Contact point type" data-testid={`${pathPrefix}type`}>
             <InputControl
               name={name('type')}
-              as={Select}
-              width={37}
-              options={typeOptions}
+              defaultValue={defaultValues.type}
+              render={({ field: { ref, onChange, ...field } }) => (
+                <Select {...field} width={37} options={typeOptions} onChange={(value) => onChange(value?.value)} />
+              )}
               control={control}
               rules={{ required: true }}
-              onChange={(values) => values[0]?.value}
             />
           </Field>
         </div>
@@ -87,7 +87,14 @@ export function ChannelSubForm<R extends ChannelValues>({
             Duplicate
           </Button>
           {onDelete && (
-            <Button size="xs" variant="secondary" type="button" onClick={() => onDelete()} icon="trash-alt">
+            <Button
+              data-testid={`${pathPrefix}delete-button`}
+              size="xs"
+              variant="secondary"
+              type="button"
+              onClick={() => onDelete()}
+              icon="trash-alt"
+            >
               Delete
             </Button>
           )}
@@ -96,6 +103,7 @@ export function ChannelSubForm<R extends ChannelValues>({
       {notifier && (
         <div className={styles.innerContent}>
           <ChannelOptions<R>
+            defaultValues={defaultValues}
             selectedChannelOptions={mandatoryOptions?.length ? mandatoryOptions! : optionalOptions!}
             secureFields={_secureFields}
             errors={errors}
@@ -110,6 +118,7 @@ export function ChannelSubForm<R extends ChannelValues>({
                 </Alert>
               )}
               <ChannelOptions<R>
+                defaultValues={defaultValues}
                 selectedChannelOptions={optionalOptions!}
                 secureFields={_secureFields}
                 onResetSecureField={onResetSecureField}
@@ -127,7 +136,7 @@ export function ChannelSubForm<R extends ChannelValues>({
   );
 }
 
-const getStyles = (theme: GrafanaThemeV2) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   buttons: css`
     & > * + * {
       margin-left: ${theme.spacing(1)};

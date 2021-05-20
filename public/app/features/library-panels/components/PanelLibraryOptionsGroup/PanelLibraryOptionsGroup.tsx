@@ -1,14 +1,14 @@
 import React, { FC, useCallback, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { css } from '@emotion/css';
-import { GrafanaThemeV2, PanelPluginMeta } from '@grafana/data';
+import { GrafanaTheme2, PanelPluginMeta } from '@grafana/data';
 import { Button, useStyles2, VerticalGroup } from '@grafana/ui';
 
 import { PanelModel } from 'app/features/dashboard/state';
 import { AddLibraryPanelModal } from '../AddLibraryPanelModal/AddLibraryPanelModal';
 import { LibraryPanelsView } from '../LibraryPanelsView/LibraryPanelsView';
 import { PanelOptionsChangedEvent, PanelQueriesChangedEvent } from 'app/types/events';
-import { LibraryPanelDTO } from '../../types';
+import { LibraryElementDTO } from '../../types';
 import { toPanelModelLibraryPanel } from '../../utils';
 import { changePanelPlugin } from 'app/features/dashboard/state/actions';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
@@ -23,7 +23,7 @@ interface Props {
 export const PanelLibraryOptionsGroup: FC<Props> = ({ panel, searchQuery }) => {
   const styles = useStyles2(getStyles);
   const [showingAddPanelModal, setShowingAddPanelModal] = useState(false);
-  const [changeToPanel, setChangeToPanel] = useState<LibraryPanelDTO | undefined>(undefined);
+  const [changeToPanel, setChangeToPanel] = useState<LibraryElementDTO | undefined>(undefined);
   const [panelFilter, setPanelFilter] = useState<string[]>([]);
   const onPanelFilterChange = useCallback(
     (plugins: PanelPluginMeta[]) => {
@@ -63,7 +63,7 @@ export const PanelLibraryOptionsGroup: FC<Props> = ({ panel, searchQuery }) => {
     setShowingAddPanelModal(true);
   };
 
-  const onChangeLibraryPanel = (panel: LibraryPanelDTO) => {
+  const onChangeLibraryPanel = (panel: LibraryElementDTO) => {
     setChangeToPanel(panel);
   };
 
@@ -76,7 +76,7 @@ export const PanelLibraryOptionsGroup: FC<Props> = ({ panel, searchQuery }) => {
       {!panel.libraryPanel && (
         <VerticalGroup align="center">
           <Button icon="plus" onClick={onAddToPanelLibrary} variant="secondary" fullWidth>
-            Add current panel to library
+            Create new library panel
           </Button>
         </VerticalGroup>
       )}
@@ -109,7 +109,7 @@ export const PanelLibraryOptionsGroup: FC<Props> = ({ panel, searchQuery }) => {
   );
 };
 
-const getStyles = (theme: GrafanaThemeV2) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     libraryPanelsView: css`
       width: 100%;

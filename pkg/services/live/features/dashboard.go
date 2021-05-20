@@ -102,27 +102,27 @@ func (h *DashboardHandler) OnPublish(ctx context.Context, user *models.SignedInU
 		event := dashboardEvent{}
 		err := json.Unmarshal(e.Data, &event)
 		if err != nil || event.UID != parts[1] {
-			return models.PublishReply{}, backend.SubscribeStreamStatusNotFound, fmt.Errorf("bad request")
+			return models.PublishReply{}, backend.PublishStreamStatusNotFound, fmt.Errorf("bad request")
 		}
 		if event.Action != EDITING_STARTED {
 			// just ignore the event
-			return models.PublishReply{}, backend.SubscribeStreamStatusNotFound, fmt.Errorf("ignore???")
+			return models.PublishReply{}, backend.PublishStreamStatusNotFound, fmt.Errorf("ignore???")
 		}
 		query := models.GetDashboardQuery{Uid: parts[1], OrgId: user.OrgId}
 		if err := bus.Dispatch(&query); err != nil {
 			logger.Error("Unknown dashboard", "query", query)
-			return models.PublishReply{}, backend.SubscribeStreamStatusNotFound, nil
+			return models.PublishReply{}, backend.PublishStreamStatusNotFound, nil
 		}
 
 		guardian := guardian.New(query.Result.Id, user.OrgId, user)
 		canEdit, err := guardian.CanEdit()
 		if err != nil {
-			return models.PublishReply{}, backend.SubscribeStreamStatusNotFound, fmt.Errorf("internal error")
+			return models.PublishReply{}, backend.PublishStreamStatusNotFound, fmt.Errorf("internal error")
 		}
 
 		// Ignore edit events if the user can not edit
 		if !canEdit {
-			return models.PublishReply{}, backend.SubscribeStreamStatusNotFound, nil // NOOP
+			return models.PublishReply{}, backend.PublishStreamStatusNotFound, nil // NOOP
 		}
 
 		// Tell everyone who is editing
@@ -130,16 +130,16 @@ func (h *DashboardHandler) OnPublish(ctx context.Context, user *models.SignedInU
 
 		msg, err := json.Marshal(event)
 		if err != nil {
-			return models.PublishReply{}, backend.SubscribeStreamStatusNotFound, fmt.Errorf("internal error")
+			return models.PublishReply{}, backend.PublishStreamStatusNotFound, fmt.Errorf("internal error")
 		}
 		return models.PublishReply{Data: msg}, backend.PublishStreamStatusOK, nil
 	}
 
-	return models.PublishReply{}, backend.SubscribeStreamStatusNotFound, nil
+	return models.PublishReply{}, backend.PublishStreamStatusNotFound, nil
 }
 
 // DashboardSaved should broadcast to the appropriate stream
-func (h *DashboardHandler) publish(event dashboardEvent) error {
+func (h *DashboardHandler) publish(orgID int64, event dashboardEvent) error {
 	msg, err := json.Marshal(event)
 	if err != nil {
 		return err
@@ -147,19 +147,19 @@ func (h *DashboardHandler) publish(event dashboardEvent) error {
 
 	// Only broadcast non-error events
 	if event.Error == "" {
-		err = h.Publisher("grafana/dashboard/uid/"+event.UID, msg)
+		err = h.Publisher(orgID, "grafana/dashboard/uid/"+event.UID, msg)
 		if err != nil {
 			return err
 		}
 	}
 
 	// Send everything to the gitops channel
-	return h.Publisher(GITOPS_CHANNEL, msg)
+	return h.Publisher(orgID, GITOPS_CHANNEL, msg)
 }
 
 // DashboardSaved will broadcast to all connected dashboards
-func (h *DashboardHandler) DashboardSaved(user *models.UserDisplayDTO, message string, dashboard *models.Dashboard, err error) error {
-	if err != nil && !h.HasGitOpsObserver() {
+func (h *DashboardHandler) DashboardSaved(orgID int64, user *models.UserDisplayDTO, message string, dashboard *models.Dashboard, err error) error {
+	if err != nil && !h.HasGitOpsObserver(orgID) {
 		return nil // only broadcast if it was OK
 	}
 
@@ -175,12 +175,12 @@ func (h *DashboardHandler) DashboardSaved(user *models.UserDisplayDTO, message s
 		msg.Error = err.Error()
 	}
 
-	return h.publish(msg)
+	return h.publish(orgID, msg)
 }
 
 // DashboardDeleted will broadcast to all connected dashboards
-func (h *DashboardHandler) DashboardDeleted(user *models.UserDisplayDTO, uid string) error {
-	return h.publish(dashboardEvent{
+func (h *DashboardHandler) DashboardDeleted(orgID int64, user *models.UserDisplayDTO, uid string) error {
+	return h.publish(orgID, dashboardEvent{
 		UID:    uid,
 		Action: ACTION_DELETED,
 		User:   user,
@@ -188,8 +188,8 @@ func (h *DashboardHandler) DashboardDeleted(user *models.UserDisplayDTO, uid str
 }
 
 // HasGitOpsObserver will return true if anyone is listening to the `gitops` channel
-func (h *DashboardHandler) HasGitOpsObserver() bool {
-	count, err := h.ClientCount(GITOPS_CHANNEL)
+func (h *DashboardHandler) HasGitOpsObserver(orgID int64) bool {
+	count, err := h.ClientCount(orgID, GITOPS_CHANNEL)
 	if err != nil {
 		logger.Error("error getting client count", "error", err)
 		return false

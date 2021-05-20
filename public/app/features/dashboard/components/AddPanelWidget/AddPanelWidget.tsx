@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { connect, MapDispatchToProps } from 'react-redux';
 import { css, cx, keyframes } from '@emotion/css';
 import { chain, cloneDeep, defaults, find, sortBy } from 'lodash';
 import tinycolor from 'tinycolor2';
@@ -12,10 +13,12 @@ import store from 'app/core/store';
 import { addPanel } from 'app/features/dashboard/state/reducers';
 import { DashboardModel, PanelModel } from '../../state';
 import { LS_PANEL_COPY_KEY } from 'app/core/constants';
-import { LibraryPanelDTO } from '../../../library-panels/types';
+import { LibraryElementDTO } from '../../../library-panels/types';
 import { toPanelModelLibraryPanel } from '../../../library-panels/utils';
-import { LibraryPanelsSearch } from '../../../library-panels/components/LibraryPanelsSearch/LibraryPanelsSearch';
-import { connect, MapDispatchToProps } from 'react-redux';
+import {
+  LibraryPanelsSearch,
+  LibraryPanelsSearchVariant,
+} from '../../../library-panels/components/LibraryPanelsSearch/LibraryPanelsSearch';
 
 export type PanelPluginInfo = { id: any; defaults: { gridPos: { w: any; h: any }; title: any } };
 
@@ -69,7 +72,7 @@ export const AddPanelWidgetUnconnected: React.FC<Props> = ({ panel, dashboard })
     const { gridPos } = panel;
 
     const newPanel: Partial<PanelModel> = {
-      type: 'graph',
+      type: 'timeseries',
       title: 'Panel Title',
       gridPos: { x: gridPos.x, y: gridPos.y, w: gridPos.w, h: gridPos.h },
     };
@@ -105,7 +108,7 @@ export const AddPanelWidgetUnconnected: React.FC<Props> = ({ panel, dashboard })
     dashboard.removePanel(panel);
   };
 
-  const onAddLibraryPanel = (panelInfo: LibraryPanelDTO) => {
+  const onAddLibraryPanel = (panelInfo: LibraryElementDTO) => {
     const { gridPos } = panel;
 
     const newPanel: PanelModel = {
@@ -138,7 +141,7 @@ export const AddPanelWidgetUnconnected: React.FC<Props> = ({ panel, dashboard })
         {addPanelView ? 'Add panel from panel library' : 'Add panel'}
       </AddPanelWidgetHandle>
       {addPanelView ? (
-        <LibraryPanelsSearch onClick={onAddLibraryPanel} perPage={3} />
+        <LibraryPanelsSearch onClick={onAddLibraryPanel} variant={LibraryPanelsSearchVariant.Tight} showPanelFilter />
       ) : (
         <div className={styles.actionsWrapper}>
           <div className={styles.actionsRow}>
@@ -151,22 +154,18 @@ export const AddPanelWidgetUnconnected: React.FC<Props> = ({ panel, dashboard })
               Add a new row
             </div>
           </div>
-          {(config.featureToggles.panelLibrary || copiedPanelPlugins.length === 1) && (
-            <div className={styles.actionsRow}>
-              {config.featureToggles.panelLibrary && (
-                <div onClick={() => setAddPanelView(true)}>
-                  <Icon name="book-open" size="xl" />
-                  Add a panel from the panel library
-                </div>
-              )}
-              {copiedPanelPlugins.length === 1 && (
-                <div onClick={() => onPasteCopiedPanel(copiedPanelPlugins[0])}>
-                  <Icon name="clipboard-alt" size="xl" />
-                  Paste panel from clipboard
-                </div>
-              )}
+          <div className={styles.actionsRow}>
+            <div onClick={() => setAddPanelView(true)}>
+              <Icon name="book-open" size="xl" />
+              Add a panel from the panel library
             </div>
-          )}
+            {copiedPanelPlugins.length === 1 && (
+              <div onClick={() => onPasteCopiedPanel(copiedPanelPlugins[0])}>
+                <Icon name="clipboard-alt" size="xl" />
+                Paste panel from clipboard
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>

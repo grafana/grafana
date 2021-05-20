@@ -9,18 +9,9 @@ export const GrafanaCommonChannelSettings: FC<CommonSettingsComponentProps> = ({
     <div className={className}>
       <Field>
         <Checkbox
-          name={`${pathPrefix}disableResolveMessage`}
-          ref={register()}
+          {...register(`${pathPrefix}disableResolveMessage`)}
           label="Disable resolved message"
           description="Disable the resolve message [OK] that is sent when alerting state returns to false"
-        />
-      </Field>
-      <Field>
-        <Checkbox
-          name={`${pathPrefix}sendReminder`}
-          ref={register()}
-          label="Send reminders"
-          description="Send additional notifications for triggered alerts"
         />
       </Field>
     </div>

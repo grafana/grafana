@@ -5,10 +5,10 @@ keywords = ["grafana", "configuration", "documentation", "oauth"]
 weight = 500
 +++
 
-# Generic OAuth Authentication
+# Generic OAuth authentication
 
 You can configure many different OAuth2 authentication services with Grafana using the generic OAuth2 feature. Examples:
-- [Generic OAuth Authentication](#generic-oauth-authentication)
+- [Generic OAuth authentication](#generic-oauth-authentication)
   - [Set up OAuth2 with Auth0](#set-up-oauth2-with-auth0)
   - [Set up OAuth2 with Bitbucket](#set-up-oauth2-with-bitbucket)
   - [Set up OAuth2 with Centrify](#set-up-oauth2-with-centrify)
@@ -29,6 +29,7 @@ enabled = true
 client_id = YOUR_APP_CLIENT_ID
 client_secret = YOUR_APP_CLIENT_SECRET
 scopes =
+empty_scopes = false
 auth_url =
 token_url =
 api_url =
@@ -49,6 +50,8 @@ You can also specify the SSL/TLS configuration used by the client.
 
 `tls_skip_verify_insecure` controls whether a client verifies the server's certificate chain and host name. If it is true, then SSL/TLS accepts any certificate presented by the server and any host name in that certificate. _You should only use this for testing_, because this mode leaves SSL/TLS susceptible to man-in-the-middle attacks.
 
+Set `empty_scopes` to true to use an empty scope during authentication. By default, Grafana uses `user:email` as scope.
+
 Grafana will attempt to determine the user's e-mail address by querying the OAuth provider as described below in the following order until an e-mail address is found:
 
 1. Check for the presence of an e-mail address via the `email` field encoded in the OAuth `id_token` parameter.
@@ -60,13 +63,9 @@ Grafana will attempt to determine the user's e-mail address by querying the OAut
 
 Grafana will also attempt to do role mapping through OAuth as described below.
 
-> Only available in Grafana v6.5+.
-
 Check for the presence of a role using the [JMESPath](http://jmespath.org/examples.html) specified via the `role_attribute_path` configuration option. The JSON used for the path lookup is the HTTP response obtained from querying the UserInfo endpoint specified via the `api_url` configuration option. The result after evaluating the `role_attribute_path` JMESPath expression needs to be a valid Grafana role, i.e. `Viewer`, `Editor` or `Admin`.
 
 See [JMESPath examples](#jmespath-examples) for more information.
-
-> Only available in Grafana v7.2+.
 
 Customize user login using `login_attribute_path` configuration option. Order of operations is as follows:
 

@@ -4,9 +4,9 @@ import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelect
 import { fetchRulerRulesAction } from '../../state/actions';
 import { RuleFormValues } from '../../types/rule-form';
 import { useFormContext } from 'react-hook-form';
-import { SelectableValue } from '@grafana/data';
+import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { SelectWithAdd } from './SelectWIthAdd';
-import { Field, InputControl } from '@grafana/ui';
+import { Field, InputControl, useStyles2 } from '@grafana/ui';
 import { css } from '@emotion/css';
 
 interface Props {
@@ -14,7 +14,14 @@ interface Props {
 }
 
 export const GroupAndNamespaceFields: FC<Props> = ({ dataSourceName }) => {
-  const { control, watch, errors, setValue } = useFormContext<RuleFormValues>();
+  const {
+    control,
+    watch,
+    formState: { errors },
+    setValue,
+  } = useFormContext<RuleFormValues>();
+
+  const style = useStyles2(getStyle);
 
   const [customGroup, setCustomGroup] = useState(false);
 
@@ -41,45 +48,58 @@ export const GroupAndNamespaceFields: FC<Props> = ({ dataSourceName }) => {
   );
 
   return (
-    <>
+    <div className={style.flexRow}>
       <Field label="Namespace" error={errors.namespace?.message} invalid={!!errors.namespace?.message}>
         <InputControl
-          as={SelectWithAdd}
-          className={inputStyle}
+          render={({ field: { onChange, ref, ...field } }) => (
+            <SelectWithAdd
+              {...field}
+              className={style.input}
+              onChange={(value) => {
+                setValue('group', ''); //reset if namespace changes
+                onChange(value);
+              }}
+              onCustomChange={(custom: boolean) => {
+                custom && setCustomGroup(true);
+              }}
+              options={namespaceOptions}
+              width={42}
+            />
+          )}
           name="namespace"
-          options={namespaceOptions}
           control={control}
-          width={42}
           rules={{
             required: { value: true, message: 'Required.' },
-          }}
-          onChange={(values) => {
-            setValue('group', ''); //reset if namespace changes
-            return values[0];
-          }}
-          onCustomChange={(custom: boolean) => {
-            custom && setCustomGroup(true);
           }}
         />
       </Field>
       <Field label="Group" error={errors.group?.message} invalid={!!errors.group?.message}>
         <InputControl
-          as={SelectWithAdd}
+          render={({ field: { ref, ...field } }) => (
+            <SelectWithAdd {...field} options={groupOptions} width={42} custom={customGroup} className={style.input} />
+          )}
           name="group"
-          className={inputStyle}
-          options={groupOptions}
-          width={42}
-          custom={customGroup}
           control={control}
           rules={{
             required: { value: true, message: 'Required.' },
           }}
         />
       </Field>
-    </>
+    </div>
   );
 };
 
-const inputStyle = css`
-  width: 330px;
-`;
+const getStyle = (theme: GrafanaTheme2) => ({
+  flexRow: css`
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+
+    & > * + * {
+      margin-left: ${theme.spacing(3)};
+    }
+  `,
+  input: css`
+    width: 330px !important;
+  `,
+});

@@ -5,7 +5,7 @@ exports[`Render should disable insights api key input 1`] = `
   <h3
     className="page-heading"
   >
-    Azure Application Insights Details
+    Azure Application Insights
   </h3>
   <div
     className="gf-form-group"
@@ -73,7 +73,7 @@ exports[`Render should enable insights api key input 1`] = `
   <h3
     className="page-heading"
   >
-    Azure Application Insights Details
+    Azure Application Insights
   </h3>
   <div
     className="gf-form-group"
@@ -130,7 +130,7 @@ exports[`Render should render component 1`] = `
   <h3
     className="page-heading"
   >
-    Azure Application Insights Details
+    Azure Application Insights
   </h3>
   <div
     className="gf-form-group"

@@ -13,9 +13,6 @@ exports[`Render should render component 1`] = `
       value=""
     />
   </div>
-  <div
-    className="page-action-bar__spacer"
-  />
   <LinkButton
     href="some/url"
     target="_blank"

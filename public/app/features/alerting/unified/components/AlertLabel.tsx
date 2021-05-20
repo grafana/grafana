@@ -1,18 +1,21 @@
 import React, { FC } from 'react';
-import { useStyles } from '@grafana/ui';
+import { IconButton, useStyles } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
 import { css } from '@emotion/css';
 
 interface Props {
   labelKey: string;
   value: string;
-  isRegex?: boolean;
+  operator?: string;
+  onRemoveLabel?: () => void;
 }
 
-export const AlertLabel: FC<Props> = ({ labelKey, value, isRegex = false }) => (
+export const AlertLabel: FC<Props> = ({ labelKey, value, operator = '=', onRemoveLabel }) => (
   <div className={useStyles(getStyles)}>
-    {labelKey}={isRegex && '~'}
+    {labelKey}
+    {operator}
     {value}
+    {!!onRemoveLabel && <IconButton name="times" size="xs" onClick={onRemoveLabel} />}
   </div>
 );
 

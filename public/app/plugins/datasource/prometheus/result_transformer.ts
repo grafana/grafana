@@ -149,7 +149,7 @@ function getDataLinks(options: ExemplarTraceIdDestination): DataLink[] {
       title: `Query with ${dsSettings?.name}`,
       url: '',
       internal: {
-        query: { query: '${__value.raw}', queryType: 'getTrace' },
+        query: { query: '${__value.raw}', queryType: 'traceId' },
         datasourceUid: options.datasourceUid,
         datasourceName: dsSettings?.name ?? 'Data source not found',
       },

@@ -1,5 +1,5 @@
 // Libraries
-import React, { PureComponent } from 'react';
+import React, { PureComponent, ReactNode } from 'react';
 import classNames from 'classnames';
 import { has, cloneDeep } from 'lodash';
 // Utils & Services
@@ -19,7 +19,7 @@ import {
   TimeRange,
   toLegacyResponseData,
 } from '@grafana/data';
-import { QueryEditorRowTitle } from './QueryEditorRowTitle';
+import { QueryEditorRowHeader } from './QueryEditorRowHeader';
 import {
   QueryOperationRow,
   QueryOperationRowRenderProps,
@@ -33,12 +33,12 @@ interface Props {
   data: PanelData;
   query: DataQuery;
   queries: DataQuery[];
-  dsSettings: DataSourceInstanceSettings;
   id: string;
   index: number;
-  timeRange?: TimeRange;
-  onChangeTimeRange?: (timeRange: TimeRange) => void;
-  onAddQuery: (query?: DataQuery) => void;
+  dataSource: DataSourceInstanceSettings;
+  onChangeDataSource?: (dsSettings: DataSourceInstanceSettings) => void;
+  renderHeaderExtras?: () => ReactNode;
+  onAddQuery: (query: DataQuery) => void;
   onRemoveQuery: (query: DataQuery) => void;
   onChange: (query: DataQuery) => void;
   onRunQuery: () => void;
@@ -55,7 +55,7 @@ interface State {
 
 export class QueryEditorRow extends PureComponent<Props, State> {
   element: HTMLElement | null = null;
-  angularScope: AngularQueryComponentScope | null;
+  angularScope: AngularQueryComponentScope | null = null;
   angularQueryEditor: AngularComponent | null = null;
 
   state: State = {
@@ -111,7 +111,7 @@ export class QueryEditorRow extends PureComponent<Props, State> {
   }
 
   getQueryDataSourceIdentifier(): string | null | undefined {
-    const { query, dsSettings } = this.props;
+    const { query, dataSource: dsSettings } = this.props;
     return query.datasource ?? dsSettings.name;
   }
 
@@ -302,23 +302,20 @@ export class QueryEditorRow extends PureComponent<Props, State> {
     );
   };
 
-  renderTitle = (props: QueryOperationRowRenderProps) => {
-    const { query, dsSettings, onChange, queries, onChangeTimeRange, timeRange } = this.props;
-    const { datasource } = this.state;
-    const isDisabled = query.hide;
+  renderHeader = (props: QueryOperationRowRenderProps) => {
+    const { query, dataSource, onChangeDataSource, onChange, queries, renderHeaderExtras } = this.props;
 
     return (
-      <QueryEditorRowTitle
+      <QueryEditorRowHeader
         query={query}
         queries={queries}
-        onTimeRangeChange={onChangeTimeRange}
-        timeRange={timeRange}
-        inMixedMode={dsSettings.meta.mixed}
-        dataSourceName={datasource!.name}
-        disabled={isDisabled}
+        onChangeDataSource={onChangeDataSource}
+        dataSource={dataSource}
+        disabled={query.hide}
         onClick={(e) => this.onToggleEditMode(e, props)}
         onChange={onChange}
         collapsedText={!props.isOpen ? this.renderCollapsedText() : null}
+        renderExtras={renderHeaderExtras}
       />
     );
   };
@@ -346,7 +343,7 @@ export class QueryEditorRow extends PureComponent<Props, State> {
           id={id}
           draggable={true}
           index={index}
-          headerElement={this.renderTitle}
+          headerElement={this.renderHeader}
           actions={this.renderActions}
           onOpen={this.onOpen}
         >

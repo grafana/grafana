@@ -1,19 +1,25 @@
 import React, { PureComponent } from 'react';
 import { css } from '@emotion/css';
-import { DataSourceApi, GrafanaTheme } from '@grafana/data';
+import {
+  DataQuery,
+  getDefaultRelativeTimeRange,
+  GrafanaTheme2,
+  LoadingState,
+  PanelData,
+  RelativeTimeRange,
+} from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Button, HorizontalGroup, Icon, stylesFactory, Tooltip } from '@grafana/ui';
-import { config, getDataSourceSrv } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
 import { AlertingQueryRows } from './AlertingQueryRows';
-import {
-  expressionDatasource,
-  ExpressionDatasourceID,
-  ExpressionDatasourceUID,
-} from '../../expressions/ExpressionDatasource';
+import { dataSource as expressionDatasource, ExpressionDatasourceUID } from '../../expressions/ExpressionDatasource';
 import { getNextRefIdChar } from 'app/core/utils/query';
 import { defaultCondition } from '../../expressions/utils/expressionTypes';
 import { ExpressionQueryType } from '../../expressions/types';
-import { GrafanaQuery, GrafanaQueryModel } from 'app/types/unified-alerting-dto';
+import { GrafanaQuery } from 'app/types/unified-alerting-dto';
+import { AlertingQueryRunner } from '../state/AlertingQueryRunner';
+import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
+import { isExpressionQuery } from 'app/features/expressions/guards';
 
 interface Props {
   value?: GrafanaQuery[];
@@ -21,59 +27,72 @@ interface Props {
 }
 
 interface State {
-  defaultDataSource?: DataSourceApi;
+  panelDataByRefId: Record<string, PanelData>;
 }
 export class AlertingQueryEditor extends PureComponent<Props, State> {
+  private runner: AlertingQueryRunner;
+
   constructor(props: Props) {
     super(props);
-    this.state = {};
+    this.state = { panelDataByRefId: {} };
+    this.runner = new AlertingQueryRunner();
   }
 
-  async componentDidMount() {
-    try {
-      const defaultDataSource = await getDataSourceSrv().get();
-      this.setState({ defaultDataSource });
-    } catch (error) {
-      console.error(error);
-    }
+  componentDidMount() {
+    this.runner.get().subscribe((data) => {
+      this.setState({ panelDataByRefId: data });
+    });
   }
 
-  onRunQueries = () => {};
+  componentWillUnmount() {
+    this.runner.destroy();
+  }
+
+  onRunQueries = () => {
+    const { value = [] } = this.props;
+    this.runner.run(value);
+  };
+
+  onCancelQueries = () => {
+    this.runner.cancel();
+  };
 
   onDuplicateQuery = (query: GrafanaQuery) => {
     const { onChange, value = [] } = this.props;
-    onChange([...value, query]);
+    onChange(addQuery(value, query));
   };
 
   onNewAlertingQuery = () => {
     const { onChange, value = [] } = this.props;
-    const { defaultDataSource } = this.state;
+    const defaultDataSource = getDatasourceSrv().getInstanceSettings('default');
 
     if (!defaultDataSource) {
       return;
     }
 
-    const alertingQuery: GrafanaQueryModel = {
-      refId: '',
-      datasourceUid: defaultDataSource.uid,
-      datasource: defaultDataSource.name,
-    };
-
-    onChange(addQuery(value, alertingQuery));
+    onChange(
+      addQuery(value, {
+        datasourceUid: defaultDataSource.uid,
+        model: {
+          refId: '',
+          datasource: defaultDataSource.name,
+        },
+      })
+    );
   };
 
   onNewExpressionQuery = () => {
     const { onChange, value = [] } = this.props;
-    const expressionQuery: GrafanaQueryModel = {
-      ...expressionDatasource.newQuery({
-        type: ExpressionQueryType.classic,
-        conditions: [defaultCondition],
-      }),
-      datasourceUid: ExpressionDatasourceUID,
-      datasource: ExpressionDatasourceID,
-    };
 
-    onChange(addQuery(value, expressionQuery));
+    onChange(
+      addQuery(value, {
+        datasourceUid: ExpressionDatasourceUID,
+        model: expressionDatasource.newQuery({
+          type: ExpressionQueryType.classic,
+          conditions: [defaultCondition],
+        }),
+      })
+    );
   };
 
   renderAddQueryRow(styles: ReturnType<typeof getStyles>) {
@@ -106,59 +125,99 @@ export class AlertingQueryEditor extends PureComponent<Props, State> {
     );
   }
 
+  isRunning() {
+    const data = Object.values(this.state.panelDataByRefId).find((d) => Boolean(d));
+    return data?.state === LoadingState.Loading;
+  }
+
+  renderRunQueryButton() {
+    const isRunning = this.isRunning();
+    const styles = getStyles(config.theme2);
+
+    if (isRunning) {
+      return (
+        <div className={styles.runWrapper}>
+          <Button icon="fa fa-spinner" type="button" variant="destructive" onClick={this.onCancelQueries}>
+            Cancel
+          </Button>
+        </div>
+      );
+    }
+
+    return (
+      <div className={styles.runWrapper}>
+        <Button icon="sync" type="button" onClick={this.onRunQueries}>
+          Run queries
+        </Button>
+      </div>
+    );
+  }
+
   render() {
     const { value = [] } = this.props;
-    const styles = getStyles(config.theme);
+    const { panelDataByRefId } = this.state;
+    const styles = getStyles(config.theme2);
+
     return (
       <div className={styles.container}>
         <AlertingQueryRows
+          data={panelDataByRefId}
           queries={value}
           onQueriesChange={this.props.onChange}
           onDuplicateQuery={this.onDuplicateQuery}
           onRunQueries={this.onRunQueries}
         />
         {this.renderAddQueryRow(styles)}
+        {this.renderRunQueryButton()}
       </div>
     );
   }
 }
 
-const addQuery = (queries: GrafanaQuery[], model: GrafanaQueryModel): GrafanaQuery[] => {
+const addQuery = (
+  queries: GrafanaQuery[],
+  queryToAdd: Pick<GrafanaQuery, 'model' | 'datasourceUid'>
+): GrafanaQuery[] => {
   const refId = getNextRefIdChar(queries);
 
   const query: GrafanaQuery = {
+    ...queryToAdd,
     refId,
     queryType: '',
     model: {
-      ...model,
+      ...queryToAdd.model,
       hide: false,
-      refId: refId,
+      refId,
     },
-    relativeTimeRange: {
-      from: 21600,
-      to: 0,
-    },
+    relativeTimeRange: defaultTimeRange(queryToAdd.model),
   };
 
   return [...queries, query];
 };
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => {
+const defaultTimeRange = (model: DataQuery): RelativeTimeRange | undefined => {
+  if (isExpressionQuery(model)) {
+    return;
+  }
+
+  return getDefaultRelativeTimeRange();
+};
+
+const getStyles = stylesFactory((theme: GrafanaTheme2) => {
   return {
     container: css`
-      background-color: ${theme.colors.panelBg};
+      background-color: ${theme.colors.background.primary};
       height: 100%;
     `,
-    refreshWrapper: css`
-      display: flex;
-      justify-content: flex-end;
+    runWrapper: css`
+      margin-top: ${theme.spacing(1)};
     `,
     editorWrapper: css`
-      border: 1px solid ${theme.colors.panelBorder};
-      border-radius: ${theme.border.radius.md};
+      border: 1px solid ${theme.colors.border.medium};
+      border-radius: ${theme.shape.borderRadius()};
     `,
     expressionButton: css`
-      margin-right: ${theme.spacing.sm};
+      margin-right: ${theme.spacing(0.5)};
     `,
   };
 });

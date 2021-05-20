@@ -6,22 +6,27 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
+	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngModels "github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
 type Manager struct {
-	cache *cache
-	quit  chan struct{}
-	Log   log.Logger
+	cache       *cache
+	quit        chan struct{}
+	ResendDelay time.Duration
+	Log         log.Logger
+	metrics     *metrics.Metrics
 }
 
-func NewManager(logger log.Logger) *Manager {
+func NewManager(logger log.Logger, metrics *metrics.Metrics) *Manager {
 	manager := &Manager{
-		cache: newCache(),
-		quit:  make(chan struct{}),
-		Log:   logger,
+		cache:       newCache(logger, metrics),
+		quit:        make(chan struct{}),
+		ResendDelay: 1 * time.Minute, // TODO: make this configurable
+		Log:         logger,
+		metrics:     metrics,
 	}
-	go manager.cleanUp()
+	go manager.recordMetrics()
 	return manager
 }
 
@@ -37,13 +42,18 @@ func (st *Manager) set(entry *State) {
 	st.cache.set(entry)
 }
 
-func (st *Manager) Get(id string) (*State, error) {
-	return st.cache.get(id)
+func (st *Manager) Get(orgID int64, alertRuleUID, stateId string) (*State, error) {
+	return st.cache.get(orgID, alertRuleUID, stateId)
 }
 
-//Used to ensure a clean cache on startup
+// ResetCache is used to ensure a clean cache on startup.
 func (st *Manager) ResetCache() {
 	st.cache.reset()
+}
+
+// RemoveByRuleUID deletes all entries in the state manager that match the given rule UID.
+func (st *Manager) RemoveByRuleUID(orgID int64, ruleUID string) {
+	st.cache.removeByRuleUID(orgID, ruleUID)
 }
 
 func (st *Manager) ProcessEvalResults(alertRule *ngModels.AlertRule, results eval.Results) []*State {
@@ -57,7 +67,6 @@ func (st *Manager) ProcessEvalResults(alertRule *ngModels.AlertRule, results eva
 	return states
 }
 
-//TODO: When calculating if an alert should not be firing anymore, we should take into account the re-send delay if any. We don't want to send every firing alert every time, we should have a fixed delay across all alerts to avoid saturating the notification system
 //Set the current state based on evaluation results
 func (st *Manager) setNextState(alertRule *ngModels.AlertRule, result eval.Result) *State {
 	currentState := st.getOrCreate(alertRule, result)
@@ -65,9 +74,11 @@ func (st *Manager) setNextState(alertRule *ngModels.AlertRule, result eval.Resul
 	currentState.LastEvaluationTime = result.EvaluatedAt
 	currentState.EvaluationDuration = result.EvaluationDuration
 	currentState.Results = append(currentState.Results, Evaluation{
-		EvaluationTime:  result.EvaluatedAt,
-		EvaluationState: result.State,
+		EvaluationTime:   result.EvaluatedAt,
+		EvaluationState:  result.State,
+		EvaluationString: result.EvaluationString,
 	})
+	currentState.TrimResults(alertRule)
 
 	st.Log.Debug("setting alert state", "uid", alertRule.UID)
 	switch result.State {
@@ -86,24 +97,26 @@ func (st *Manager) setNextState(alertRule *ngModels.AlertRule, result eval.Resul
 	return currentState
 }
 
-func (st *Manager) GetAll() []*State {
-	return st.cache.getAll()
+func (st *Manager) GetAll(orgID int64) []*State {
+	return st.cache.getAll(orgID)
 }
 
-func (st *Manager) GetStatesByRuleUID() map[string][]*State {
-	return st.cache.getStatesByRuleUID()
+func (st *Manager) GetStatesForRuleUID(orgID int64, alertRuleUID string) []*State {
+	return st.cache.getStatesForRuleUID(orgID, alertRuleUID)
 }
 
-func (st *Manager) cleanUp() {
-	ticker := time.NewTicker(time.Duration(60) * time.Minute)
-	st.Log.Debug("starting cleanup process", "intervalMinutes", 60)
+func (st *Manager) recordMetrics() {
+	// TODO: parameterize?
+	// Setting to a reasonable default scrape interval for Prometheus.
+	dur := time.Duration(15) * time.Second
+	ticker := time.NewTicker(dur)
 	for {
 		select {
 		case <-ticker.C:
-			st.Log.Info("trimming alert state cache", "now", time.Now())
-			st.cache.trim()
+			st.Log.Info("recording state cache metrics", "now", time.Now())
+			st.cache.recordMetrics()
 		case <-st.quit:
-			st.Log.Debug("stopping cleanup process", "now", time.Now())
+			st.Log.Debug("stopping state cache metrics recording", "now", time.Now())
 			ticker.Stop()
 			return
 		}

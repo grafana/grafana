@@ -1,4 +1,4 @@
-import { dateTimeFormat, GrafanaTheme, systemDateFormats, TimeZone } from '@grafana/data';
+import { dateTimeFormat, GrafanaTheme2, isBooleanUnit, systemDateFormats, TimeZone } from '@grafana/data';
 import uPlot, { Axis } from 'uplot';
 import { PlotConfigBuilder } from '../types';
 import { measureText } from '../../../utils/measureText';
@@ -7,7 +7,7 @@ import { optMinMax } from './UPlotScaleBuilder';
 
 export interface AxisProps {
   scaleKey: string;
-  theme: GrafanaTheme;
+  theme: GrafanaTheme2;
   label?: string;
   show?: boolean;
   size?: number | null;
@@ -16,6 +16,7 @@ export interface AxisProps {
   grid?: boolean;
   ticks?: boolean;
   formatValue?: (v: any) => string;
+  incrs?: Axis.Incrs;
   splits?: Axis.Splits;
   values?: any;
   isTime?: boolean;
@@ -34,7 +35,7 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
   }
 
   getConfig(): Axis {
-    const {
+    let {
       scaleKey,
       label,
       show = true,
@@ -50,14 +51,18 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
       theme,
     } = this.props;
 
-    const font = `12px ${theme.typography.fontFamily.sansSerif}`;
+    const font = `12px ${theme.typography.fontFamily}`;
 
     const gridColor = theme.isDark ? 'rgba(240, 250, 255, 0.09)' : 'rgba(0, 10, 23, 0.09)';
+
+    if (isBooleanUnit(scaleKey)) {
+      splits = [0, 1];
+    }
 
     let config: Axis = {
       scale: scaleKey,
       show,
-      stroke: theme.colors.text,
+      stroke: theme.colors.text.primary,
       side: getUPlotSideFromAxis(placement),
       font,
       labelFont: font,
@@ -88,7 +93,7 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
     } else if (isTime) {
       config.values = formatTime;
     } else if (formatValue) {
-      config.values = (u: uPlot, vals: any[]) => vals.map((v) => formatValue(v));
+      config.values = (u: uPlot, vals: any[]) => vals.map(formatValue!);
     }
 
     // store timezone

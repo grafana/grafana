@@ -10,7 +10,7 @@ weight = 700
 We recommend that you upgrade Grafana often to stay up to date with the latest fixes and enhancements.
 In order to make this a reality, Grafana upgrades are backward compatible and the upgrade process is simple and quick.
 
-Upgrading is generally safe (between many minor and one major version) and dashboards and graphs will look the same. There may be minor breaking changes in some edge cases, which are outlined in the [Release Notes](https://community.grafana.com/c/releases) and [Changelog](https://github.com/grafana/grafana/blob/master/CHANGELOG.md)
+Upgrading is generally safe (between many minor and one major version) and dashboards and graphs will look the same. There may be minor breaking changes in some edge cases, which are outlined in the [Release Notes](https://community.grafana.com/c/releases) and [Changelog](https://github.com/grafana/grafana/blob/main/CHANGELOG.md)
 
 ## Backup
 
@@ -243,7 +243,7 @@ A global minimum dashboard refresh interval is now enforced and defaults to 5 se
 
 ### Backend plugins
 
-Grafana now requires backend plugins to be signed. If a backend plugin is not signed Grafana will not load/start it. This is an additional security measure to make sure backend plugin binaries and files haven't been tampered with.  All Grafana Labs authored backend plugins, including Enterprise plugins, are now signed. It's possible to allow unsigned plugins using a configuration setting, but is something we strongly advise against doing. For more information about this setting, refer to [allow loading unsigned plugins]({{< relref "../administration/#allow-loading-unsigned-plugins" >}}).
+Grafana now requires backend plugins to be signed. If a backend plugin is not signed Grafana will not load/start it. This is an additional security measure to make sure backend plugin binaries and files haven't been tampered with.  All Grafana Labs authored backend plugins, including Enterprise plugins, are now signed. It's possible to allow unsigned plugins using a configuration setting, but is something we strongly advise against doing. For more information about this setting, refer to [allow loading unsigned plugins]({{< relref "../administration/#allow_loading_unsigned_plugins" >}}).
 
 ### Cookie path
 
@@ -320,3 +320,9 @@ The Grafana Docker images use the `root` group instead of the `grafana` group. T
 The VictorOps alert notifier now accepts a `severity` tag, in a similar vein to the PagerDuty alert notifier. The possible values are outlined in the [VictorOps docs](https://help.victorops.com/knowledge-base/incident-fields-glossary/).
 
 For example, if you want an alert to be `INFO`-level in VictorOps, create a tag `severity=info` (case-insensitive) in your alert.
+
+## Upgrading to v8.0
+
+### Plugins
+
+Grafana now requires all plugins to be signed. If a plugin is not signed Grafana will not load/start it. This is an additional security measure to make sure plugin files and binaries haven't been tampered with. All Grafana Labs authored plugins, including Enterprise plugins, are now signed. It's possible to allow unsigned plugins using a configuration setting, but is something we strongly advise against doing. For more information about this setting, refer to [allow loading unsigned plugins]({{< relref "../administration/#allow_loading_unsigned_plugins" >}}).

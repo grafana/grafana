@@ -203,7 +203,7 @@ describe('ElasticDatasource', function (this: any) {
     async function setupDataSource(jsonData?: Partial<ElasticsearchOptions>) {
       jsonData = {
         interval: 'Daily',
-        esVersion: 2,
+        esVersion: '2.0.0',
         timeField: '@timestamp',
         ...(jsonData || {}),
       };
@@ -935,6 +935,20 @@ describe('enhanceDataFrame', () => {
         datasourceUid: 'dsUid',
       },
     });
+  });
+
+  it('adds limit to dataframe', () => {
+    const df = new MutableDataFrame({
+      fields: [
+        {
+          name: 'someField',
+          values: new ArrayVector([]),
+        },
+      ],
+    });
+    enhanceDataFrame(df, [], 10);
+
+    expect(df.meta?.limit).toBe(10);
   });
 });
 

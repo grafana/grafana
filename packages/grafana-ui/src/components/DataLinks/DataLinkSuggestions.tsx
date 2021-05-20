@@ -1,4 +1,4 @@
-import { VariableSuggestion, GrafanaThemeV2 } from '@grafana/data';
+import { VariableSuggestion, GrafanaTheme2 } from '@grafana/data';
 import { css, cx } from '@emotion/css';
 import { groupBy, capitalize } from 'lodash';
 import React, { useRef, useMemo } from 'react';
@@ -7,13 +7,14 @@ import { List } from '../index';
 import { useStyles2 } from '../../themes';
 
 interface DataLinkSuggestionsProps {
+  activeRef?: React.RefObject<HTMLDivElement>;
   suggestions: VariableSuggestion[];
   activeIndex: number;
   onSuggestionSelect: (suggestion: VariableSuggestion) => void;
   onClose?: () => void;
 }
 
-const getStyles = (theme: GrafanaThemeV2) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     list: css`
       border-bottom: 1px solid ${theme.colors.border.weak};
@@ -23,9 +24,7 @@ const getStyles = (theme: GrafanaThemeV2) => {
     `,
     wrapper: css`
       background: ${theme.colors.background.primary};
-      z-index: 1;
       width: 250px;
-      box-shadow: 0 5px 10px 0 ${theme.shadows.z1};
     `,
     item: css`
       background: none;
@@ -100,10 +99,11 @@ DataLinkSuggestions.displayName = 'DataLinkSuggestions';
 interface DataLinkSuggestionsListProps extends DataLinkSuggestionsProps {
   label: string;
   activeIndexOffset: number;
+  activeRef?: React.RefObject<HTMLDivElement>;
 }
 
 const DataLinkSuggestionsList: React.FC<DataLinkSuggestionsListProps> = React.memo(
-  ({ activeIndex, activeIndexOffset, label, onClose, onSuggestionSelect, suggestions }) => {
+  ({ activeIndex, activeIndexOffset, label, onClose, onSuggestionSelect, suggestions, activeRef: selectedRef }) => {
     const styles = useStyles2(getStyles);
 
     return (
@@ -112,9 +112,11 @@ const DataLinkSuggestionsList: React.FC<DataLinkSuggestionsListProps> = React.me
           className={styles.list}
           items={suggestions}
           renderItem={(item, index) => {
+            const isActive = index + activeIndexOffset === activeIndex;
             return (
               <div
-                className={cx(styles.item, index + activeIndexOffset === activeIndex && styles.activeItem)}
+                className={cx(styles.item, isActive && styles.activeItem)}
+                ref={isActive ? selectedRef : undefined}
                 onClick={() => {
                   onSuggestionSelect(item);
                 }}

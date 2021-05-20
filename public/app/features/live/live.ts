@@ -6,6 +6,7 @@ import {
   config,
   LiveDataStreamOptions,
   toDataQueryError,
+  getBackendSrv,
 } from '@grafana/runtime';
 import { BehaviorSubject, Observable, of } from 'rxjs';
 import {
@@ -24,6 +25,7 @@ import {
   dataFrameToJSON,
   isLiveChannelMessageEvent,
   isLiveChannelStatusEvent,
+  toLiveChannelId,
 } from '@grafana/data';
 import { CentrifugeLiveChannel, getErrorChannel } from './channel';
 import {
@@ -49,15 +51,18 @@ export class CentrifugeSrv implements GrafanaLiveSrv {
   readonly connectionState: BehaviorSubject<boolean>;
   readonly connectionBlocker: Promise<void>;
   readonly scopes: Record<LiveChannelScope, GrafanaLiveScope>;
+  private orgId: number;
 
   constructor() {
-    // build live url replacing scheme in appUrl.
-    const liveUrl = `${config.appUrl}live/ws`.replace(/^(http)(s)?:\/\//, 'ws$2://');
+    const baseURL = window.location.origin.replace('http', 'ws');
+    const liveUrl = `${baseURL}${config.appSubUrl}/api/live/ws`;
+    this.orgId = (window as any).grafanaBootData.user.orgId;
     this.centrifuge = new Centrifuge(liveUrl, {
       debug: true,
     });
     this.centrifuge.setConnectData({
       sessionId,
+      orgId: this.orgId,
     });
     this.centrifuge.connect(); // do connection
     this.connectionState = new BehaviorSubject<boolean>(this.centrifuge.isConnected());
@@ -90,12 +95,10 @@ export class CentrifugeSrv implements GrafanaLiveSrv {
   //----------------------------------------------------------
 
   onConnect = (context: any) => {
-    console.log('CONNECT', context);
     this.connectionState.next(true);
   };
 
   onDisconnect = (context: any) => {
-    console.log('onDisconnect', context);
     this.connectionState.next(false);
   };
 
@@ -108,7 +111,7 @@ export class CentrifugeSrv implements GrafanaLiveSrv {
    * channel will be returned with an error state indicated in its status
    */
   getChannel<TMessage>(addr: LiveChannelAddress): CentrifugeLiveChannel<TMessage> {
-    const id = `${addr.scope}/${addr.namespace}/${addr.path}`;
+    const id = `${this.orgId}/${addr.scope}/${addr.namespace}/${addr.path}`;
     let channel = this.open.get(id);
     if (channel != null) {
       return channel;
@@ -209,23 +212,11 @@ export class CentrifugeSrv implements GrafanaLiveSrv {
 
     return new Observable<DataQueryResponse>((subscriber) => {
       const channel = this.getChannel(options.addr);
+      const key = options.key ?? `xstr/${streamCounter++}`;
       let data: StreamingDataFrame | undefined = undefined;
       let filtered: DataFrame | undefined = undefined;
-      let state = LoadingState.Loading;
-      let { key } = options;
+      let state = LoadingState.Streaming;
       let last = perf.last;
-      if (options.frame) {
-        const msg = dataFrameToJSON(options.frame);
-        data = new StreamingDataFrame(msg, options.buffer);
-        state = LoadingState.Streaming;
-      }
-      if (channel.lastMessageWithSchema && !data) {
-        data = new StreamingDataFrame(channel.lastMessageWithSchema, options.buffer);
-      }
-
-      if (!key) {
-        key = `xstr/${streamCounter++}`;
-      }
 
       const process = (msg: DataFrameJSON) => {
         if (!data) {
@@ -256,6 +247,12 @@ export class CentrifugeSrv implements GrafanaLiveSrv {
           last = perf.last;
         }
       };
+
+      if (options.frame) {
+        process(dataFrameToJSON(options.frame));
+      } else if (channel.lastMessageWithSchema) {
+        process(channel.lastMessageWithSchema);
+      }
 
       const sub = channel.getStream().subscribe({
         error: (err: any) => {
@@ -312,6 +309,18 @@ export class CentrifugeSrv implements GrafanaLiveSrv {
    */
   getPresence(address: LiveChannelAddress): Promise<LiveChannelPresenceStatus> {
     return this.getChannel(address).getPresence();
+  }
+
+  /**
+   * Publish into a channel
+   *
+   * @alpha -- experimental
+   */
+  publish(address: LiveChannelAddress, data: any): Promise<any> {
+    return getBackendSrv().post(`api/live/publish`, {
+      channel: toLiveChannelId(address), // orgId is from user
+      data,
+    });
   }
 }
 

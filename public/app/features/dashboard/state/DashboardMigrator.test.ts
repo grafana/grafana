@@ -3,7 +3,7 @@ import { DashboardModel } from '../state/DashboardModel';
 import { PanelModel } from '../state/PanelModel';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN } from 'app/core/constants';
 import { expect } from 'test/lib/common';
-import { DataLinkBuiltInVars } from '@grafana/data';
+import { DataLinkBuiltInVars, MappingType } from '@grafana/data';
 import { VariableHide } from '../../variables/types';
 import { config } from 'app/core/config';
 import { getPanelPlugin } from 'app/features/plugins/__mocks__/pluginMocks';
@@ -162,7 +162,7 @@ describe('DashboardModel', () => {
     });
 
     it('dashboard schema version should be set to latest', () => {
-      expect(model.schemaVersion).toBe(28);
+      expect(model.schemaVersion).toBe(30);
     });
 
     it('graph thresholds should be migrated', () => {
@@ -923,6 +923,323 @@ describe('DashboardModel', () => {
         datasource: null,
         allFormat: '',
       });
+    });
+  });
+
+  describe('when migrating variable refresh to on dashboard load', () => {
+    let model: DashboardModel;
+
+    beforeEach(() => {
+      model = new DashboardModel({
+        templating: {
+          list: [
+            {
+              type: 'query',
+              name: 'variable_with_never_refresh_with_options',
+              options: [{ text: 'A', value: 'A' }],
+              refresh: 0,
+            },
+            {
+              type: 'query',
+              name: 'variable_with_never_refresh_without_options',
+              options: [],
+              refresh: 0,
+            },
+            {
+              type: 'query',
+              name: 'variable_with_dashboard_refresh_with_options',
+              options: [{ text: 'A', value: 'A' }],
+              refresh: 1,
+            },
+            {
+              type: 'query',
+              name: 'variable_with_dashboard_refresh_without_options',
+              options: [],
+              refresh: 1,
+            },
+            {
+              type: 'query',
+              name: 'variable_with_timerange_refresh_with_options',
+              options: [{ text: 'A', value: 'A' }],
+              refresh: 2,
+            },
+            {
+              type: 'query',
+              name: 'variable_with_timerange_refresh_without_options',
+              options: [],
+              refresh: 2,
+            },
+            {
+              type: 'query',
+              name: 'variable_with_no_refresh_with_options',
+              options: [{ text: 'A', value: 'A' }],
+            },
+            {
+              type: 'query',
+              name: 'variable_with_no_refresh_without_options',
+              options: [],
+            },
+            {
+              type: 'query',
+              name: 'variable_with_unknown_refresh_with_options',
+              options: [{ text: 'A', value: 'A' }],
+              refresh: 2001,
+            },
+            {
+              type: 'query',
+              name: 'variable_with_unknown_refresh_without_options',
+              options: [],
+              refresh: 2001,
+            },
+            {
+              type: 'custom',
+              name: 'custom',
+              options: [{ text: 'custom', value: 'custom' }],
+            },
+            {
+              type: 'textbox',
+              name: 'textbox',
+              options: [{ text: 'Hello', value: 'World' }],
+            },
+            {
+              type: 'datasource',
+              name: 'datasource',
+              options: [{ text: 'ds', value: 'ds' }], // fake example doesn't exist
+            },
+            {
+              type: 'interval',
+              name: 'interval',
+              options: [{ text: '1m', value: '1m' }],
+            },
+          ],
+        },
+      });
+    });
+
+    it('should have 11 variables after migration', () => {
+      expect(model.templating.list.length).toBe(14);
+    });
+
+    it('should not affect custom variable types', () => {
+      const custom = model.templating.list[10];
+      expect(custom.type).toEqual('custom');
+      expect(custom.options).toEqual([{ text: 'custom', value: 'custom' }]);
+    });
+
+    it('should not affect textbox variable types', () => {
+      const textbox = model.templating.list[11];
+      expect(textbox.type).toEqual('textbox');
+      expect(textbox.options).toEqual([{ text: 'Hello', value: 'World' }]);
+    });
+
+    it('should not affect datasource variable types', () => {
+      const datasource = model.templating.list[12];
+      expect(datasource.type).toEqual('datasource');
+      expect(datasource.options).toEqual([{ text: 'ds', value: 'ds' }]);
+    });
+
+    it('should not affect interval variable types', () => {
+      const interval = model.templating.list[13];
+      expect(interval.type).toEqual('interval');
+      expect(interval.options).toEqual([{ text: '1m', value: '1m' }]);
+    });
+
+    it('should removed options from all query variables', () => {
+      const queryVariables = model.templating.list.filter((v) => v.type === 'query');
+      expect(queryVariables).toHaveLength(10);
+      const noOfOptions = queryVariables.reduce((all, variable) => all + variable.options.length, 0);
+      expect(noOfOptions).toBe(0);
+    });
+
+    it('should set the refresh prop to on dashboard load for all query variables that have never or unknown', () => {
+      expect(model.templating.list[0].refresh).toBe(1);
+      expect(model.templating.list[1].refresh).toBe(1);
+      expect(model.templating.list[2].refresh).toBe(1);
+      expect(model.templating.list[3].refresh).toBe(1);
+      expect(model.templating.list[4].refresh).toBe(2);
+      expect(model.templating.list[5].refresh).toBe(2);
+      expect(model.templating.list[6].refresh).toBe(1);
+      expect(model.templating.list[7].refresh).toBe(1);
+      expect(model.templating.list[8].refresh).toBe(1);
+      expect(model.templating.list[9].refresh).toBe(1);
+      expect(model.templating.list[10].refresh).toBeUndefined();
+      expect(model.templating.list[11].refresh).toBeUndefined();
+      expect(model.templating.list[12].refresh).toBeUndefined();
+      expect(model.templating.list[13].refresh).toBeUndefined();
+    });
+  });
+
+  describe('when migrating old value mapping model', () => {
+    let model: DashboardModel;
+
+    beforeEach(() => {
+      model = new DashboardModel({
+        panels: [
+          {
+            id: 1,
+            type: 'timeseries',
+            fieldConfig: {
+              defaults: {
+                thresholds: {
+                  mode: 'absolute',
+                  steps: [
+                    {
+                      color: 'green',
+                      value: null,
+                    },
+                    {
+                      color: 'red',
+                      value: 80,
+                    },
+                  ],
+                },
+                mappings: [
+                  {
+                    id: 0,
+                    text: '1',
+                    type: 1,
+                    value: 'up',
+                  },
+                  {
+                    id: 1,
+                    text: 'BAD',
+                    type: 1,
+                    value: 'down',
+                  },
+                  {
+                    from: '0',
+                    id: 2,
+                    text: 'below 30',
+                    to: '30',
+                    type: 2,
+                  },
+                  {
+                    from: '30',
+                    id: 3,
+                    text: '100',
+                    to: '100',
+                    type: 2,
+                  },
+                  {
+                    type: 1,
+                    value: 'null',
+                    text: 'it is null',
+                  },
+                ],
+              },
+              overrides: [
+                {
+                  matcher: { id: 'byName', options: 'D-series' },
+                  properties: [
+                    {
+                      id: 'mappings',
+                      value: [
+                        {
+                          id: 0,
+                          text: 'OverrideText',
+                          type: 1,
+                          value: 'up',
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          },
+        ],
+      });
+    });
+
+    it('should migrate value mapping model', () => {
+      expect(model.panels[0].fieldConfig.defaults.mappings).toEqual([
+        {
+          type: MappingType.ValueToText,
+          options: {
+            down: { text: 'BAD', color: undefined },
+            up: { text: '1', color: 'green' },
+          },
+        },
+        {
+          type: MappingType.RangeToText,
+          options: {
+            from: 0,
+            to: 30,
+            result: { text: 'below 30' },
+          },
+        },
+        {
+          type: MappingType.RangeToText,
+          options: {
+            from: 30,
+            to: 100,
+            result: { text: '100', color: 'red' },
+          },
+        },
+        {
+          type: MappingType.SpecialValue,
+          options: {
+            match: 'null',
+            result: { text: 'it is null', color: undefined },
+          },
+        },
+      ]);
+
+      expect(model.panels[0].fieldConfig.overrides).toEqual([
+        {
+          matcher: { id: 'byName', options: 'D-series' },
+          properties: [
+            {
+              id: 'mappings',
+              value: [
+                {
+                  type: MappingType.ValueToText,
+                  options: {
+                    up: { text: 'OverrideText' },
+                  },
+                },
+              ],
+            },
+          ],
+        },
+      ]);
+    });
+  });
+
+  describe('when migrating tooltipOptions to tooltip', () => {
+    it('should rename options.tooltipOptions to options.tooltip', () => {
+      const model = new DashboardModel({
+        panels: [
+          {
+            type: 'timeseries',
+            legend: true,
+            options: {
+              tooltipOptions: { mode: 'multi' },
+            },
+          },
+          {
+            type: 'xychart',
+            legend: true,
+            options: {
+              tooltipOptions: { mode: 'single' },
+            },
+          },
+        ],
+      });
+      expect(model.panels[0].options).toMatchInlineSnapshot(`
+        Object {
+          "tooltip": Object {
+            "mode": "multi",
+          },
+        }
+      `);
+      expect(model.panels[1].options).toMatchInlineSnapshot(`
+        Object {
+          "tooltip": Object {
+            "mode": "single",
+          },
+        }
+      `);
     });
   });
 });

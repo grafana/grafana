@@ -15,14 +15,13 @@ import {
   takeWhile,
   tap,
 } from 'rxjs/operators';
-import { getBackendSrv, getGrafanaLiveSrv, toDataQueryResponse } from '@grafana/runtime';
+import { getBackendSrv, getGrafanaLiveSrv, toDataQueryResponse, DataSourceWithBackend } from '@grafana/runtime';
 import { RowContextOptions } from '@grafana/ui/src/components/Logs/LogRowContextProvider';
 import {
   DataFrame,
   DataQueryErrorType,
   DataQueryRequest,
   DataQueryResponse,
-  DataSourceApi,
   DataSourceInstanceSettings,
   dateMath,
   LiveChannelEvent,
@@ -65,7 +64,6 @@ import { CloudWatchLanguageProvider } from './language_provider';
 import { VariableWithMultiSupport } from 'app/features/variables/types';
 import { AwsUrl, encodeUrl } from './aws_url';
 import { increasingInterval } from './utils/rxjs/increasingInterval';
-import config from 'app/core/config';
 
 const DS_QUERY_ENDPOINT = '/api/ds/query';
 
@@ -89,7 +87,7 @@ const displayCustomError = (title: string, message: string) =>
 
 export const MAX_ATTEMPTS = 5;
 
-export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWatchJsonData> {
+export class CloudWatchDatasource extends DataSourceWithBackend<CloudWatchQuery, CloudWatchJsonData> {
   proxyUrl: any;
   defaultRegion: any;
   datasourceName: string;
@@ -128,11 +126,8 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
 
     const dataQueryResponses: Array<Observable<DataQueryResponse>> = [];
     if (logQueries.length > 0) {
-      if (config.featureToggles.live) {
-        dataQueryResponses.push(this.handleLiveLogQueries(logQueries, options));
-      } else {
-        dataQueryResponses.push(this.handleLogQueries(logQueries, options));
-      }
+      dataQueryResponses.push(this.handleLiveLogQueries(logQueries, options));
+      //  dataQueryResponses.push(this.handleLogQueries(logQueries, options));
     }
 
     if (metricsQueries.length > 0) {

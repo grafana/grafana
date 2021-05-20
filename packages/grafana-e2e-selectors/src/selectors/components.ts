@@ -1,4 +1,10 @@
 export const Components = {
+  TimePicker: {
+    openButton: 'TimePicker Open Button',
+    fromField: 'TimePicker from field',
+    toField: 'TimePicker to field',
+    applyTimeRange: 'TimePicker submit button',
+  },
   DataSource: {
     TestData: {
       QueryTab: {
@@ -11,6 +17,16 @@ export const Components = {
         spread: 'TestData spread',
         startValue: 'TestData start value',
       },
+    },
+    Jaeger: {
+      traceIDInput: 'Trace ID',
+    },
+    Prometheus: {
+      configPage: {
+        exemplarsAddButton: 'Add exemplar config button',
+        internalLinkSwitch: 'Internal link switch',
+      },
+      exemplarMarker: 'Exemplar marker',
     },
   },
   Menu: {
@@ -41,10 +57,19 @@ export const Components = {
       BarGauge: {
         value: 'Bar gauge value',
       },
+      PieChart: {
+        svgSlice: 'Pie Chart Slice',
+      },
       Text: {
         container: () => '.markdown-html',
       },
+      Table: {
+        header: 'table header',
+      },
     },
+  },
+  VizLegend: {
+    seriesName: (name: string) => `VizLegend series ${name}`,
   },
   Drawer: {
     General: {
@@ -68,8 +93,10 @@ export const Components = {
     DataPane: {
       content: 'Panel editor data pane content',
     },
+    applyButton: 'panel editor apply',
     toggleVizPicker: 'toggle-viz-picker',
     toggleVizOptions: 'toggle-viz-options',
+    toggleTableView: 'toggle-table-view',
   },
   PanelInspector: {
     Data: {
@@ -93,6 +120,7 @@ export const Components = {
   },
   RefreshPicker: {
     runButton: 'RefreshPicker run button',
+    intervalButton: 'RefreshPicker interval button',
   },
   QueryTab: {
     content: 'Query editor tab content',
@@ -168,7 +196,7 @@ export const Components = {
   },
   QueryField: { container: 'Query field' },
   ValuePicker: {
-    button: 'Value picker add button',
+    button: (name: string) => `Value picker button ${name}`,
     select: (name: string) => `Value picker select ${name}`,
   },
   Search: {
@@ -188,5 +216,8 @@ export const Components = {
   },
   DataLinksContextMenu: {
     singleLink: 'Data link',
+  },
+  CodeEditor: {
+    container: 'Code editor container',
   },
 };

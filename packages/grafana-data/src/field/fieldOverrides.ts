@@ -9,7 +9,6 @@ import {
   FieldConfigPropertyItem,
   FieldOverrideContext,
   FieldType,
-  GrafanaTheme,
   InterpolateFunction,
   LinkModel,
   NumericRange,
@@ -151,23 +150,6 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
         }
       }
 
-      // Some units have an implied range
-      if (config.unit === 'percent') {
-        if (!isNumber(config.min)) {
-          config.min = 0;
-        }
-        if (!isNumber(config.max)) {
-          config.max = 100;
-        }
-      } else if (config.unit === 'percentunit') {
-        if (!isNumber(config.min)) {
-          config.min = 0;
-        }
-        if (!isNumber(config.max)) {
-          config.max = 1;
-        }
-      }
-
       // Set the Min/Max value automatically
       let range: NumericRange | undefined = undefined;
       if (field.type === FieldType.number) {
@@ -206,10 +188,13 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
       });
 
       // Attach data links supplier
-      newField.getLinks = getLinksSupplier(newFrame, newField, fieldScopedVars, context.replaceVariables, {
-        theme: options.theme,
-        timeZone: options.timeZone,
-      });
+      newField.getLinks = getLinksSupplier(
+        newFrame,
+        newField,
+        fieldScopedVars,
+        context.replaceVariables,
+        options.timeZone
+      );
 
       return newField;
     });
@@ -324,10 +309,7 @@ export const getLinksSupplier = (
   field: Field,
   fieldScopedVars: ScopedVars,
   replaceVariables: InterpolateFunction,
-  options: {
-    theme: GrafanaTheme;
-    timeZone?: TimeZone;
-  }
+  timeZone?: TimeZone
 ) => (config: ValueLinkConfig): Array<LinkModel<Field>> => {
   if (!field.config.links || field.config.links.length === 0) {
     return [];
@@ -342,13 +324,19 @@ export const getLinksSupplier = (
 
     // We are not displaying reduction result
     if (config.valueRowIndex !== undefined && !isNaN(config.valueRowIndex)) {
-      const fieldsProxy = getFieldDisplayValuesProxy(frame, config.valueRowIndex, options);
+      const fieldsProxy = getFieldDisplayValuesProxy({
+        frame,
+        rowIndex: config.valueRowIndex,
+        timeZone: timeZone,
+      });
+
       valueVars = {
         raw: field.values.get(config.valueRowIndex),
         numeric: fieldsProxy[field.name].numeric,
         text: fieldsProxy[field.name].text,
         time: timeField ? timeField.values.get(config.valueRowIndex) : undefined,
       };
+
       dataFrameVars = {
         __data: {
           value: {
