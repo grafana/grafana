@@ -10,7 +10,6 @@ import (
 	"net"
 	"net/http"
 	"net/url"
-	"path"
 	"regexp"
 	"strings"
 	"time"
@@ -54,7 +53,7 @@ var reRecipient *regexp.Regexp = regexp.MustCompile("^((@[a-z0-9][a-zA-Z0-9._-]*
 var SlackAPIEndpoint = "https://slack.com/api/chat.postMessage"
 
 // NewSlackNotifier is the constructor for the Slack notifier
-func NewSlackNotifier(model *models.AlertNotification, t *template.Template) (*SlackNotifier, error) {
+func NewSlackNotifier(model *NotificationChannelConfig, t *template.Template) (*SlackNotifier, error) {
 	if model.Settings == nil {
 		return nil, alerting.ValidationError{Reason: "No Settings Supplied"}
 	}
@@ -112,7 +111,13 @@ func NewSlackNotifier(model *models.AlertNotification, t *template.Template) (*S
 	}
 
 	return &SlackNotifier{
-		NotifierBase:   old_notifiers.NewNotifierBase(model),
+		NotifierBase: old_notifiers.NewNotifierBase(&models.AlertNotification{
+			Uid:                   model.UID,
+			Name:                  model.Name,
+			Type:                  model.Type,
+			DisableResolveMessage: model.DisableResolveMessage,
+			Settings:              model.Settings,
+		}),
 		URL:            apiURL,
 		Recipient:      recipient,
 		MentionUsers:   mentionUsers,
@@ -245,6 +250,11 @@ func (sn *SlackNotifier) buildSlackMessage(ctx context.Context, as []*types.Aler
 	var tmplErr error
 	tmpl := notify.TmplText(sn.tmpl, data, &tmplErr)
 
+	ruleURL, err := joinUrlPath(sn.tmpl.ExternalURL.String(), "/alerting/list")
+	if err != nil {
+		return nil, err
+	}
+
 	req := &slackMessage{
 		Channel:   tmpl(sn.Recipient),
 		Username:  tmpl(sn.Username),
@@ -258,7 +268,7 @@ func (sn *SlackNotifier) buildSlackMessage(ctx context.Context, as []*types.Aler
 				Footer:     "Grafana v" + setting.BuildVersion,
 				FooterIcon: FooterIconURL,
 				Ts:         time.Now().Unix(),
-				TitleLink:  path.Join(sn.tmpl.ExternalURL.String(), "/alerting/list"),
+				TitleLink:  ruleURL,
 				Text:       tmpl(sn.Text),
 				Fields:     nil, // TODO. Should be a config.
 			},

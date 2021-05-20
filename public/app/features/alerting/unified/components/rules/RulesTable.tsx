@@ -1,7 +1,6 @@
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 import React, { FC, Fragment, useState } from 'react';
-import { isAlertingRule, isRecordingRule } from '../../utils/rules';
 import { CollapseToggle } from '../CollapseToggle';
 import { css, cx } from '@emotion/css';
 import { RuleDetails } from './RuleDetails';
@@ -9,12 +8,15 @@ import { getAlertTableStyles } from '../../styles/table';
 import { isCloudRulesSource } from '../../utils/datasource';
 import { useHasRuler } from '../../hooks/useHasRuler';
 import { CombinedRule } from 'app/types/unified-alerting';
-import { AlertStateTag } from './AlertStateTag';
+import { Annotation } from '../../utils/constants';
+import { RuleState } from './RuleState';
+import { RuleHealth } from './RuleHealth';
 
 interface Props {
   rules: CombinedRule[];
   showGuidelines?: boolean;
   showGroupColumn?: boolean;
+  showSummaryColumn?: boolean;
   emptyMessage?: string;
   className?: string;
 }
@@ -25,6 +27,7 @@ export const RulesTable: FC<Props> = ({
   showGuidelines = false,
   emptyMessage = 'No rules found.',
   showGroupColumn = false,
+  showSummaryColumn = false,
 }) => {
   const hasRuler = useHasRuler();
 
@@ -49,10 +52,10 @@ export const RulesTable: FC<Props> = ({
       <table className={tableStyles.table} data-testid="rules-table">
         <colgroup>
           <col className={tableStyles.colExpand} />
-          <col className={styles.colState} />
+          <col className={styles.state} />
           <col />
           <col />
-          <col />
+          {showSummaryColumn && <col />}
           {showGroupColumn && <col />}
         </colgroup>
         <thead>
@@ -62,8 +65,9 @@ export const RulesTable: FC<Props> = ({
             </th>
             <th>State</th>
             <th>Name</th>
+            <th>Health</th>
+            {showSummaryColumn && <th>Summary</th>}
             {showGroupColumn && <th>Group</th>}
-            <th>Status</th>
           </tr>
         </thead>
         <tbody>
@@ -79,11 +83,16 @@ export const RulesTable: FC<Props> = ({
               seenKeys.push(key);
               const isExpanded = expandedKeys.includes(key);
               const { promRule, rulerRule } = rule;
-              const statuses = [
-                promRule?.health,
-                hasRuler(rulesSource) && promRule && !rulerRule ? 'deleting' : '',
-                hasRuler(rulesSource) && rulerRule && !promRule ? 'creating' : '',
-              ].filter((x) => !!x);
+              const isDeleting = !!(hasRuler(rulesSource) && promRule && !rulerRule);
+              const isCreating = !!(hasRuler(rulesSource) && rulerRule && !promRule);
+
+              let detailsColspan = 3;
+              if (showGroupColumn) {
+                detailsColspan += 1;
+              }
+              if (showSummaryColumn) {
+                detailsColspan += 1;
+              }
               return (
                 <Fragment key={key}>
                   <tr className={ruleIdx % 2 === 0 ? tableStyles.evenRow : undefined}>
@@ -103,19 +112,14 @@ export const RulesTable: FC<Props> = ({
                       />
                     </td>
                     <td>
-                      {promRule && isAlertingRule(promRule) ? (
-                        <AlertStateTag state={promRule.state} />
-                      ) : promRule && isRecordingRule(promRule) ? (
-                        'Recording rule'
-                      ) : (
-                        'n/a'
-                      )}
+                      <RuleState rule={rule} isDeleting={isDeleting} isCreating={isCreating} />
                     </td>
                     <td>{rule.name}</td>
+                    <td>{promRule && <RuleHealth rule={promRule} />}</td>
+                    {showSummaryColumn && <td>{rule.annotations[Annotation.summary] ?? ''}</td>}
                     {showGroupColumn && (
                       <td>{isCloudRulesSource(rulesSource) ? `${namespace.name} > ${group.name}` : namespace.name}</td>
                     )}
-                    <td>{statuses.join(', ') || 'n/a'}</td>
                   </tr>
                   {isExpanded && (
                     <tr className={ruleIdx % 2 === 0 ? tableStyles.evenRow : undefined}>
@@ -124,7 +128,7 @@ export const RulesTable: FC<Props> = ({
                           <div className={cx(styles.ruleContentGuideline, styles.guideline)} />
                         )}
                       </td>
-                      <td colSpan={showGroupColumn ? 4 : 3}>
+                      <td colSpan={detailsColspan}>
                         <RuleDetails rulesSource={rulesSource} rule={rule} />
                       </td>
                     </tr>
@@ -172,9 +176,6 @@ export const getStyles = (theme: GrafanaTheme2) => ({
   evenRow: css`
     background-color: ${theme.colors.background.primary};
   `,
-  colState: css`
-    width: 110px;
-  `,
   relative: css`
     position: relative;
   `,
@@ -200,5 +201,8 @@ export const getStyles = (theme: GrafanaTheme2) => ({
   headerGuideline: css`
     top: -24px;
     bottom: 0;
+  `,
+  state: css`
+    width: 110px;
   `,
 });

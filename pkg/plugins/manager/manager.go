@@ -454,7 +454,11 @@ func (pm *PluginManager) scan(pluginDir string, requireSigned bool) error {
 	}
 
 	if len(scanner.errors) > 0 {
-		pm.log.Warn("Some plugin scanning errors were found", "errors", scanner.errors)
+		var errStr []string
+		for _, err := range scanner.errors {
+			errStr = append(errStr, err.Error())
+		}
+		pm.log.Warn("Some plugin scanning errors were found", "errors", strings.Join(errStr, ", "))
 		pm.scanningErrors = scanner.errors
 	}
 
@@ -623,9 +627,7 @@ func (s *PluginScanner) validateSignature(plugin *plugins.PluginBase) *plugins.P
 			"state", plugin.Signature)
 	}
 
-	// For the time being, we choose to only require back-end plugins to be signed
-	// NOTE: the state is calculated again when setting metadata on the object
-	if !plugin.Backend || !s.requireSigned {
+	if !s.requireSigned {
 		return nil
 	}
 
@@ -633,28 +635,28 @@ func (s *PluginScanner) validateSignature(plugin *plugins.PluginBase) *plugins.P
 	case plugins.PluginSignatureUnsigned:
 		if allowed := s.allowUnsigned(plugin); !allowed {
 			s.log.Debug("Plugin is unsigned", "id", plugin.Id)
-			s.errors = append(s.errors, fmt.Errorf("plugin %q is unsigned", plugin.Id))
+			s.errors = append(s.errors, fmt.Errorf("plugin '%s' is unsigned", plugin.Id))
 			return &plugins.PluginError{
 				ErrorCode: signatureMissing,
 			}
 		}
-		s.log.Warn("Running an unsigned backend plugin", "pluginID", plugin.Id, "pluginDir",
+		s.log.Warn("Running an unsigned plugin", "pluginID", plugin.Id, "pluginDir",
 			plugin.PluginDir)
 		return nil
 	case plugins.PluginSignatureInvalid:
-		s.log.Debug("Plugin %q has an invalid signature", plugin.Id)
-		s.errors = append(s.errors, fmt.Errorf("plugin %q has an invalid signature", plugin.Id))
+		s.log.Debug("Plugin '%s' has an invalid signature", plugin.Id)
+		s.errors = append(s.errors, fmt.Errorf("plugin '%s' has an invalid signature", plugin.Id))
 		return &plugins.PluginError{
 			ErrorCode: signatureInvalid,
 		}
 	case plugins.PluginSignatureModified:
-		s.log.Debug("Plugin %q has a modified signature", plugin.Id)
-		s.errors = append(s.errors, fmt.Errorf("plugin %q's signature has been modified", plugin.Id))
+		s.log.Debug("Plugin '%s' has a modified signature", plugin.Id)
+		s.errors = append(s.errors, fmt.Errorf("plugin '%s' has a modified signature", plugin.Id))
 		return &plugins.PluginError{
 			ErrorCode: signatureModified,
 		}
 	default:
-		panic(fmt.Sprintf("Plugin %q has unrecognized plugin signature state %q", plugin.Id, plugin.Signature))
+		panic(fmt.Sprintf("Plugin '%s' has an unrecognized plugin signature state '%s'", plugin.Id, plugin.Signature))
 	}
 }
 

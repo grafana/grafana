@@ -27,7 +27,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/securejsondata"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/logging"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
@@ -397,12 +396,10 @@ func (am *Alertmanager) buildReceiverIntegrations(receiver *apimodels.PostableAp
 			secureSettings[k] = d
 		}
 		var (
-			cfg = &models.AlertNotification{
-				Uid:                   r.Uid,
+			cfg = &channels.NotificationChannelConfig{
+				UID:                   r.UID,
 				Name:                  r.Name,
 				Type:                  r.Type,
-				IsDefault:             r.IsDefault,
-				SendReminder:          r.SendReminder,
 				DisableResolveMessage: r.DisableResolveMessage,
 				Settings:              r.Settings,
 				SecureSettings:        secureSettings,
@@ -415,16 +412,36 @@ func (am *Alertmanager) buildReceiverIntegrations(receiver *apimodels.PostableAp
 			n, err = channels.NewEmailNotifier(cfg, tmpl) // Email notifier already has a default template.
 		case "pagerduty":
 			n, err = channels.NewPagerdutyNotifier(cfg, tmpl)
+		case "pushover":
+			n, err = channels.NewPushoverNotifier(cfg, tmpl)
 		case "slack":
 			n, err = channels.NewSlackNotifier(cfg, tmpl)
 		case "telegram":
 			n, err = channels.NewTelegramNotifier(cfg, tmpl)
+		case "victorops":
+			n, err = channels.NewVictoropsNotifier(cfg, tmpl)
 		case "teams":
 			n, err = channels.NewTeamsNotifier(cfg, tmpl)
 		case "dingding":
 			n, err = channels.NewDingDingNotifier(cfg, tmpl)
+		case "kafka":
+			n, err = channels.NewKafkaNotifier(cfg, tmpl)
 		case "webhook":
 			n, err = channels.NewWebHookNotifier(cfg, tmpl)
+		case "sensugo":
+			n, err = channels.NewSensuGoNotifier(cfg, tmpl)
+		case "discord":
+			n, err = channels.NewDiscordNotifier(cfg, tmpl)
+		case "alertmanager":
+			n, err = channels.NewAlertmanagerNotifier(cfg, tmpl)
+		case "googlechat":
+			n, err = channels.NewGoogleChatNotifier(cfg, tmpl)
+		case "line":
+			n, err = channels.NewLineNotifier(cfg, tmpl)
+		case "threema":
+			n, err = channels.NewThreemaNotifier(cfg, tmpl)
+		case "opsgenie":
+			n, err = channels.NewOpsgenieNotifier(cfg, tmpl)
 		default:
 			return nil, fmt.Errorf("notifier %s is not supported", r.Type)
 		}

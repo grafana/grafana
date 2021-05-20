@@ -5,7 +5,7 @@ import { css } from '@emotion/css';
 import React, { FC } from 'react';
 
 type Props = {
-  status: PromAlertingRuleState;
+  status: PromAlertingRuleState | 'neutral';
 };
 
 export const StateColoredText: FC<Props> = ({ children, status }) => {
@@ -23,5 +23,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
   [PromAlertingRuleState.Firing]: css`
     color: ${theme.colors.error.text};
+  `,
+  neutral: css`
+    color: ${theme.colors.text.secondary};
   `,
 });

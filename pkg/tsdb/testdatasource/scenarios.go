@@ -39,6 +39,7 @@ const (
 	serverError500Query               queryType = "server_error_500"
 	logsQuery                         queryType = "logs"
 	nodeGraphQuery                    queryType = "node_graph"
+	categoricalDataQuery              queryType = "categorical_data"
 )
 
 type queryType string
@@ -186,6 +187,12 @@ Timestamps will line up evenly on timeStepSeconds (For example, 60 seconds means
 	p.registerScenario(&Scenario{
 		ID:   string(nodeGraphQuery),
 		Name: "Node Graph",
+	})
+
+	p.registerScenario(&Scenario{
+		ID:      string(categoricalDataQuery),
+		Name:    "Categorical Data",
+		handler: p.handleCategoricalDataScenario,
 	})
 
 	p.queryMux.HandleFunc("", p.handleFallbackScenario)
@@ -680,6 +687,27 @@ func (p *testDataPlugin) handleLogsScenario(ctx context.Context, req *backend.Qu
 			to -= q.Interval.Milliseconds()
 		}
 
+		respD := resp.Responses[q.RefID]
+		respD.Frames = append(respD.Frames, frame)
+		resp.Responses[q.RefID] = respD
+	}
+
+	return resp, nil
+}
+
+func (p *testDataPlugin) handleCategoricalDataScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	resp := backend.NewQueryDataResponse()
+	for _, q := range req.Queries {
+		frame := data.NewFrame(q.RefID,
+			data.NewField("location", nil, []string{}),
+			data.NewField("temperature", nil, []int64{}),
+			data.NewField("humidity", nil, []int64{}),
+			data.NewField("pressure", nil, []int64{}),
+		)
+
+		for i := 0; i < len(houseLocations); i++ {
+			frame.AppendRow(houseLocations[i], rand.Int63n(40+40)-40, rand.Int63n(100), rand.Int63n(1020-900)+900)
+		}
 		respD := resp.Responses[q.RefID]
 		respD.Frames = append(respD.Frames, frame)
 		resp.Responses[q.RefID] = respD

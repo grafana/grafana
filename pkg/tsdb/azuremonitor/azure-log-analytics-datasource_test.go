@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/require"
 )
 
@@ -39,9 +40,9 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 					Model: simplejson.NewFromAny(map[string]interface{}{
 						"queryType": "Azure Log Analytics",
 						"azureLogAnalytics": map[string]interface{}{
-							"workspace":    "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+							"resource":     "/subscriptions/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/resourceGroups/cloud-datasources/providers/Microsoft.OperationalInsights/workspaces/AppInsightsTestDataWorkspace",
 							"query":        "query=Perf | where $__timeFilter() | where $__contains(Computer, 'comp1','comp2') | summarize avg(CounterValue) by bin(TimeGenerated, $__interval), Computer",
-							"resultFormat": "time_series",
+							"resultFormat": timeSeries,
 						},
 					}),
 					RefID: "A",
@@ -50,12 +51,51 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 			azureLogAnalyticsQueries: []*AzureLogAnalyticsQuery{
 				{
 					RefID:        "A",
-					ResultFormat: "time_series",
-					URL:          "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/query",
+					ResultFormat: timeSeries,
+					URL:          "v1/subscriptions/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/resourceGroups/cloud-datasources/providers/Microsoft.OperationalInsights/workspaces/AppInsightsTestDataWorkspace/query",
 					Model: simplejson.NewFromAny(map[string]interface{}{
 						"azureLogAnalytics": map[string]interface{}{
 							"query":        "query=Perf | where $__timeFilter() | where $__contains(Computer, 'comp1','comp2') | summarize avg(CounterValue) by bin(TimeGenerated, $__interval), Computer",
-							"resultFormat": "time_series",
+							"resultFormat": timeSeries,
+							"workspace":    "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+						},
+					}),
+					Params: url.Values{"query": {"query=Perf | where ['TimeGenerated'] >= datetime('2018-03-15T13:00:00Z') and ['TimeGenerated'] <= datetime('2018-03-15T13:34:00Z') | where ['Computer'] in ('comp1','comp2') | summarize avg(CounterValue) by bin(TimeGenerated, 34000ms), Computer"}},
+					Target: "query=query%3DPerf+%7C+where+%5B%27TimeGenerated%27%5D+%3E%3D+datetime%28%272018-03-15T13%3A00%3A00Z%27%29+and+%5B%27TimeGenerated%27%5D+%3C%3D+datetime%28%272018-03-15T13%3A34%3A00Z%27%29+%7C+where+%5B%27Computer%27%5D+in+%28%27comp1%27%2C%27comp2%27%29+%7C+summarize+avg%28CounterValue%29+by+bin%28TimeGenerated%2C+34000ms%29%2C+Computer",
+				},
+			},
+			Err: require.NoError,
+		}, {
+			name: "Legacy workspace queries should use workspace query endpoint",
+			timeRange: plugins.DataTimeRange{
+				From: fmt.Sprintf("%v", fromStart.Unix()*1000),
+				To:   fmt.Sprintf("%v", fromStart.Add(34*time.Minute).Unix()*1000),
+			},
+			queryModel: []plugins.DataSubQuery{
+				{
+					DataSource: &models.DataSource{
+						JsonData: simplejson.NewFromAny(map[string]interface{}{}),
+					},
+					Model: simplejson.NewFromAny(map[string]interface{}{
+						"queryType": "Azure Log Analytics",
+						"azureLogAnalytics": map[string]interface{}{
+							"workspace":    "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+							"query":        "query=Perf | where $__timeFilter() | where $__contains(Computer, 'comp1','comp2') | summarize avg(CounterValue) by bin(TimeGenerated, $__interval), Computer",
+							"resultFormat": timeSeries,
+						},
+					}),
+					RefID: "A",
+				},
+			},
+			azureLogAnalyticsQueries: []*AzureLogAnalyticsQuery{
+				{
+					RefID:        "A",
+					ResultFormat: timeSeries,
+					URL:          "v1/workspaces/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/query",
+					Model: simplejson.NewFromAny(map[string]interface{}{
+						"azureLogAnalytics": map[string]interface{}{
+							"query":        "query=Perf | where $__timeFilter() | where $__contains(Computer, 'comp1','comp2') | summarize avg(CounterValue) by bin(TimeGenerated, $__interval), Computer",
+							"resultFormat": timeSeries,
 							"workspace":    "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
 						},
 					}),
@@ -79,13 +119,19 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 }
 
 func TestPluginRoutes(t *testing.T) {
-	datasource := &AzureLogAnalyticsDatasource{}
+	cfg := &setting.Cfg{
+		Azure: setting.AzureSettings{
+			Cloud:                  setting.AzurePublic,
+			ManagedIdentityEnabled: true,
+		},
+	}
+
 	plugin := &plugins.DataSourcePlugin{
 		Routes: []*plugins.AppPluginRoute{
 			{
 				Path:   "loganalyticsazure",
 				Method: "GET",
-				URL:    "https://api.loganalytics.io/v1/workspaces",
+				URL:    "https://api.loganalytics.io/",
 				Headers: []plugins.AppPluginRouteHeader{
 					{Name: "x-ms-app", Content: "Grafana"},
 				},
@@ -93,7 +139,7 @@ func TestPluginRoutes(t *testing.T) {
 			{
 				Path:   "chinaloganalyticsazure",
 				Method: "GET",
-				URL:    "https://api.loganalytics.azure.cn/v1/workspaces",
+				URL:    "https://api.loganalytics.azure.cn/",
 				Headers: []plugins.AppPluginRouteHeader{
 					{Name: "x-ms-app", Content: "Grafana"},
 				},
@@ -101,7 +147,7 @@ func TestPluginRoutes(t *testing.T) {
 			{
 				Path:   "govloganalyticsazure",
 				Method: "GET",
-				URL:    "https://api.loganalytics.us/v1/workspaces",
+				URL:    "https://api.loganalytics.us/",
 				Headers: []plugins.AppPluginRouteHeader{
 					{Name: "x-ms-app", Content: "Grafana"},
 				},
@@ -111,37 +157,61 @@ func TestPluginRoutes(t *testing.T) {
 
 	tests := []struct {
 		name              string
-		cloudName         string
+		datasource        *AzureLogAnalyticsDatasource
 		expectedProxypass string
 		expectedRouteURL  string
 		Err               require.ErrorAssertionFunc
 	}{
 		{
-			name:              "plugin proxy route for the Azure public cloud",
-			cloudName:         "azuremonitor",
+			name: "plugin proxy route for the Azure public cloud",
+			datasource: &AzureLogAnalyticsDatasource{
+				cfg: cfg,
+				dsInfo: &models.DataSource{
+					JsonData: simplejson.NewFromAny(map[string]interface{}{
+						"azureAuthType": AzureAuthClientSecret,
+						"cloudName":     "azuremonitor",
+					}),
+				},
+			},
 			expectedProxypass: "loganalyticsazure",
-			expectedRouteURL:  "https://api.loganalytics.io/v1/workspaces",
+			expectedRouteURL:  "https://api.loganalytics.io/",
 			Err:               require.NoError,
 		},
 		{
-			name:              "plugin proxy route for the Azure China cloud",
-			cloudName:         "chinaazuremonitor",
+			name: "plugin proxy route for the Azure China cloud",
+			datasource: &AzureLogAnalyticsDatasource{
+				cfg: cfg,
+				dsInfo: &models.DataSource{
+					JsonData: simplejson.NewFromAny(map[string]interface{}{
+						"azureAuthType": AzureAuthClientSecret,
+						"cloudName":     "chinaazuremonitor",
+					}),
+				},
+			},
 			expectedProxypass: "chinaloganalyticsazure",
-			expectedRouteURL:  "https://api.loganalytics.azure.cn/v1/workspaces",
+			expectedRouteURL:  "https://api.loganalytics.azure.cn/",
 			Err:               require.NoError,
 		},
 		{
-			name:              "plugin proxy route for the Azure Gov cloud",
-			cloudName:         "govazuremonitor",
+			name: "plugin proxy route for the Azure Gov cloud",
+			datasource: &AzureLogAnalyticsDatasource{
+				cfg: cfg,
+				dsInfo: &models.DataSource{
+					JsonData: simplejson.NewFromAny(map[string]interface{}{
+						"azureAuthType": AzureAuthClientSecret,
+						"cloudName":     "govazuremonitor",
+					}),
+				},
+			},
 			expectedProxypass: "govloganalyticsazure",
-			expectedRouteURL:  "https://api.loganalytics.us/v1/workspaces",
+			expectedRouteURL:  "https://api.loganalytics.us/",
 			Err:               require.NoError,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			route, proxypass, err := datasource.getPluginRoute(plugin, tt.cloudName)
+			route, proxypass, err := tt.datasource.getPluginRoute(plugin)
 			tt.Err(t, err)
 
 			if diff := cmp.Diff(tt.expectedRouteURL, route.URL, cmpopts.EquateNaNs()); diff != "" {

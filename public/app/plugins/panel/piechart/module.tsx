@@ -33,8 +33,6 @@ export const plugin = new PanelPlugin<PieChartOptions>(PieChartPanel)
         description: 'Choose a reducer function / calculation',
         editor: standardEditorsRegistry.get('stats-picker').editor as any,
         defaultValue: [ReducerID.lastNotNull],
-        // Hides it when all values mode is on
-        showIf: (currentConfig) => currentConfig.reduceOptions.values === false,
       })
       .addRadio({
         name: 'Piechart type',

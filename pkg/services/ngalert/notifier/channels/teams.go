@@ -3,7 +3,6 @@ package channels
 import (
 	"context"
 	"encoding/json"
-	"path"
 
 	gokit_log "github.com/go-kit/kit/log"
 	"github.com/pkg/errors"
@@ -30,7 +29,7 @@ type TeamsNotifier struct {
 }
 
 // NewTeamsNotifier is the constructor for Teams notifier.
-func NewTeamsNotifier(model *models.AlertNotification, t *template.Template) (*TeamsNotifier, error) {
+func NewTeamsNotifier(model *NotificationChannelConfig, t *template.Template) (*TeamsNotifier, error) {
 	if model.Settings == nil {
 		return nil, alerting.ValidationError{Reason: "No Settings Supplied"}
 	}
@@ -41,11 +40,17 @@ func NewTeamsNotifier(model *models.AlertNotification, t *template.Template) (*T
 	}
 
 	return &TeamsNotifier{
-		NotifierBase: old_notifiers.NewNotifierBase(model),
-		URL:          u,
-		Message:      model.Settings.Get("message").MustString(`{{ template "default.message" .}}`),
-		log:          log.New("alerting.notifier.teams"),
-		tmpl:         t,
+		NotifierBase: old_notifiers.NewNotifierBase(&models.AlertNotification{
+			Uid:                   model.UID,
+			Name:                  model.Name,
+			Type:                  model.Type,
+			DisableResolveMessage: model.DisableResolveMessage,
+			Settings:              model.Settings,
+		}),
+		URL:     u,
+		Message: model.Settings.Get("message").MustString(`{{ template "default.message" .}}`),
+		log:     log.New("alerting.notifier.teams"),
+		tmpl:    t,
 	}, nil
 }
 
@@ -54,6 +59,11 @@ func (tn *TeamsNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 	data := notify.GetTemplateData(ctx, tn.tmpl, as, gokit_log.NewLogfmtLogger(logging.NewWrapper(tn.log)))
 	var tmplErr error
 	tmpl := notify.TmplText(tn.tmpl, data, &tmplErr)
+
+	ruleURL, err := joinUrlPath(tn.tmpl.ExternalURL.String(), "/alerting/list")
+	if err != nil {
+		return false, err
+	}
 
 	title := tmpl(`{{ template "default.title" . }}`)
 	body := map[string]interface{}{
@@ -78,7 +88,7 @@ func (tn *TeamsNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 				"targets": []map[string]interface{}{
 					{
 						"os":  "default",
-						"uri": path.Join(tn.tmpl.ExternalURL.String(), "/alerting/list"),
+						"uri": ruleURL,
 					},
 				},
 			},

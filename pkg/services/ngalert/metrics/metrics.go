@@ -81,7 +81,7 @@ func NewMetrics(r prometheus.Registerer) *Metrics {
 		}),
 		// TODO: once rule groups support multiple rules, consider partitioning
 		// on rule group as well as tenant, similar to loki|cortex.
-		EvalTotal: prometheus.NewCounterVec(
+		EvalTotal: promauto.With(r).NewCounterVec(
 			prometheus.CounterOpts{
 				Namespace: "grafana",
 				Subsystem: "alerting",
@@ -92,7 +92,7 @@ func NewMetrics(r prometheus.Registerer) *Metrics {
 		),
 		// TODO: once rule groups support multiple rules, consider partitioning
 		// on rule group as well as tenant, similar to loki|cortex.
-		EvalFailures: prometheus.NewCounterVec(
+		EvalFailures: promauto.With(r).NewCounterVec(
 			prometheus.CounterOpts{
 				Namespace: "grafana",
 				Subsystem: "alerting",
@@ -101,10 +101,11 @@ func NewMetrics(r prometheus.Registerer) *Metrics {
 			},
 			[]string{"user"},
 		),
-		EvalDuration: prometheus.NewSummaryVec(
+		EvalDuration: promauto.With(r).NewSummaryVec(
 			prometheus.SummaryOpts{
 				Namespace:  "grafana",
 				Subsystem:  "alerting",
+				Name:       "rule_evaluation_duration_seconds",
 				Help:       "The duration for a rule to execute.",
 				Objectives: map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001},
 			},
@@ -112,7 +113,7 @@ func NewMetrics(r prometheus.Registerer) *Metrics {
 		),
 		// TODO: once rule groups support multiple rules, consider partitioning
 		// on rule group as well as tenant, similar to loki|cortex.
-		GroupRules: prometheus.NewGaugeVec(
+		GroupRules: promauto.With(r).NewGaugeVec(
 			prometheus.GaugeOpts{
 				Namespace: "grafana",
 				Subsystem: "alerting",

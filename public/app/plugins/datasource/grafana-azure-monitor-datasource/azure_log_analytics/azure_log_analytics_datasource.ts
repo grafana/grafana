@@ -1,7 +1,13 @@
 import { map } from 'lodash';
 import LogAnalyticsQuerystringBuilder from '../log_analytics/querystring_builder';
 import ResponseParser, { transformMetadataToKustoSchema } from './response_parser';
-import { AzureMonitorQuery, AzureDataSourceJsonData, AzureLogsVariable, AzureQueryType } from '../types';
+import {
+  AzureMonitorQuery,
+  AzureDataSourceJsonData,
+  AzureLogsVariable,
+  AzureQueryType,
+  DatasourceValidationResult,
+} from '../types';
 import {
   DataQueryRequest,
   DataQueryResponse,
@@ -12,7 +18,7 @@ import {
 import { getBackendSrv, getTemplateSrv, DataSourceWithBackend, FetchResponse } from '@grafana/runtime';
 import { Observable, from } from 'rxjs';
 import { mergeMap } from 'rxjs/operators';
-import { getAzureCloud } from '../credentials';
+import { getAuthType, getAzureCloud } from '../credentials';
 import { getLogAnalyticsApiRoute, getLogAnalyticsManagementApiRoute } from '../api/routes';
 import { AzureLogAnalyticsMetadata } from '../types/logAnalyticsMetadata';
 
@@ -69,10 +75,10 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     return this.doRequest(workspaceListUrl, true);
   }
 
-  async getMetadata(workspace: string) {
-    const url = `${this.baseUrl}/${getTemplateSrv().replace(workspace, {})}/metadata`;
-    const resp = await this.doRequest<AzureLogAnalyticsMetadata>(url);
+  async getMetadata(resourceUri: string) {
+    const url = `${this.baseUrl}/v1${resourceUri}/metadata`;
 
+    const resp = await this.doRequest<AzureLogAnalyticsMetadata>(url);
     if (!resp.ok) {
       throw new Error('Unable to get metadata for workspace');
     }
@@ -80,9 +86,9 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     return resp.data;
   }
 
-  async getKustoSchema(workspace: string) {
-    const metadata = await this.getMetadata(workspace);
-    return transformMetadataToKustoSchema(metadata, workspace);
+  async getKustoSchema(resourceUri: string) {
+    const metadata = await this.getMetadata(resourceUri);
+    return transformMetadataToKustoSchema(metadata, resourceUri);
   }
 
   applyTemplateVariables(target: AzureMonitorQuery, scopedVars: ScopedVars): Record<string, any> {
@@ -98,6 +104,8 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     const subscriptionId = templateSrv.replace(target.subscription || this.subscriptionId, scopedVars);
     const query = templateSrv.replace(item.query, scopedVars, this.interpolateVariable);
 
+    const resource = templateSrv.replace(item.resource, scopedVars);
+
     return {
       refId: target.refId,
       format: target.format,
@@ -106,6 +114,9 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
       azureLogAnalytics: {
         resultFormat: item.resultFormat,
         query: query,
+        resource,
+
+        // TODO: Workspace is deprecated and should be migrated to Resources
         workspace: workspace,
       },
     };
@@ -165,6 +176,9 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
   }
 
   async getWorkspaceDetails(workspaceId: string) {
+    if (!this.subscriptionId) {
+      return {};
+    }
     const response = await this.getWorkspaceList(this.subscriptionId);
 
     const details = response.data.value.find((o: any) => {
@@ -236,7 +250,7 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
       'TimeGenerated'
     );
     const querystring = querystringBuilder.generate().uriString;
-    const url = `${this.baseUrl}/${workspace}/query?${querystring}`;
+    const url = `${this.baseUrl}/v1/workspaces/${workspace}/query?${querystring}`;
     const queries: any[] = [];
     queries.push({
       datasourceId: this.id,
@@ -340,19 +354,20 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     }
   }
 
-  testDatasource(): Promise<any> {
-    const validationError = this.isValidConfig();
+  // TODO: update to be resource-centric
+  testDatasource(): Promise<DatasourceValidationResult> {
+    const validationError = this.validateDatasource();
     if (validationError) {
       return Promise.resolve(validationError);
     }
 
     return this.getDefaultOrFirstWorkspace()
       .then((ws: any) => {
-        const url = `${this.baseUrl}/${ws}/metadata`;
+        const url = `${this.baseUrl}/v1/workspaces/${ws}/metadata`;
 
         return this.doRequest(url);
       })
-      .then((response: any) => {
+      .then<DatasourceValidationResult>((response: any) => {
         if (response.status === 200) {
           return {
             status: 'success',
@@ -395,36 +410,36 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     return message;
   }
 
-  isValidConfig() {
-    if (this.instanceSettings.jsonData.azureLogAnalyticsSameAs) {
-      return undefined;
+  private validateDatasource(): DatasourceValidationResult | undefined {
+    const authType = getAuthType(this.instanceSettings);
+
+    if (authType === 'clientsecret') {
+      if (!this.isValidConfigField(this.instanceSettings.jsonData.logAnalyticsTenantId)) {
+        return {
+          status: 'error',
+          message: 'The Tenant Id field is required.',
+        };
+      }
+
+      if (!this.isValidConfigField(this.instanceSettings.jsonData.logAnalyticsClientId)) {
+        return {
+          status: 'error',
+          message: 'The Client Id field is required.',
+        };
+      }
     }
 
-    if (!this.isValidConfigField(this.instanceSettings.jsonData.logAnalyticsSubscriptionId)) {
+    if (!this.isValidConfigField(this.subscriptionId)) {
       return {
         status: 'error',
         message: 'The Subscription Id field is required.',
       };
     }
 
-    if (!this.isValidConfigField(this.instanceSettings.jsonData.logAnalyticsTenantId)) {
-      return {
-        status: 'error',
-        message: 'The Tenant Id field is required.',
-      };
-    }
-
-    if (!this.isValidConfigField(this.instanceSettings.jsonData.logAnalyticsClientId)) {
-      return {
-        status: 'error',
-        message: 'The Client Id field is required.',
-      };
-    }
-
     return undefined;
   }
 
-  isValidConfigField(field: string | undefined) {
-    return field && field.length > 0;
+  private isValidConfigField(field: string | undefined): boolean {
+    return typeof field === 'string' && field.length > 0;
   }
 }
