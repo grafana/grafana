@@ -378,6 +378,9 @@ func (st DBstore) GetNamespaceByTitle(namespace string, orgID int64, user *model
 	if withCanSave {
 		g := guardian.New(folder.Id, orgID, user)
 		if canSave, err := g.CanSave(); err != nil || !canSave {
+			if err != nil {
+				st.Logger.Error("checking can save permission has failed", "userId", user.UserId, "username", user.Login, "namespace", namespace, "orgId", orgID, "error", err)
+			}
 			return nil, ngmodels.ErrCannotEditNamespace
 		}
 	}
