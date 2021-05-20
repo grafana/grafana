@@ -62,14 +62,14 @@ removeDefaultAssignments:
   # <string>, must be one of the Organization roles (`Viewer`, `Editor`, `Admin`) or `Grafana Admin`
   - builtInRole: "Grafana Admin"
     # <string>, must be one of the existing predefined roles
-    predefinedRole: "grafana:roles:permissions:admin"
+    predefinedRole: "fixed:permissions:admin"
 
 # list of default built-in role assignments that should be added back
 addDefaultAssignments:
   # <string>, must be one of the Organization roles (`Viewer`, `Editor`, `Admin`) or `Grafana Admin`
   - builtInRole: "Admin"
     # <string>, must be one of the existing predefined roles
-    predefinedRole: "grafana:roles:reporting:admin:read"
+    predefinedRole: "fixed:reporting:admin:read"
     
 # list of roles that should be deleted
 deleteRoles:
@@ -127,7 +127,7 @@ A basic set of validation rules are applied to the input `yaml` files.
 ### Roles
 
 - `name` must not be empty
-- `name` must not have `grafana:roles:` prefix. 
+- `name` must not have `fixed:` prefix. 
 
 ### Built-in role assignments
 
