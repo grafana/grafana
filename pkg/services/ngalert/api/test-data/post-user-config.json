@@ -17,7 +17,6 @@
                 "name": "grafana_managed",
                 "grafana_managed_receiver_configs": [
                     {
-                        "uid": "alertmanager UID",
                         "name": "an alert manager receiver",
                         "type": "prometheus-alertmanager",
                         "isDefault": false,
@@ -37,7 +36,6 @@
                         }
                     },
                     {
-                        "uid": "dingding UID",
                         "name": "a dingding receiver",
                         "type": "dingding",
                         "isDefault": false,
@@ -55,7 +53,6 @@
                         "secureSettings": {}
                     },
                     {
-                        "uid": "discord UID",
                         "name": "a discord receiver",
                         "type": "discord",
                         "isDefault": false,
@@ -73,7 +70,6 @@
                         "secureSettings": {}
                     },
                     {
-                        "uid": "email UID",
                         "name": "an email receiver",
                         "type": "email",
                         "isDefault": false,
@@ -91,7 +87,6 @@
                         "secureSettings": {}
                     },
                     {
-                        "uid": "googlechatReceiver UID",
                         "name": "a googlechat receiver",
                         "type": "googlechat",
                         "isDefault": false,
@@ -108,7 +103,6 @@
                         "secureSettings": {}
                     },
                     {
-                        "uid": "hipchat UID",
                         "name": "a hipchat receiver",
                         "type": "hipchat",
                         "isDefault": false,
@@ -127,7 +121,6 @@
                         "secureSettings": {}
                     },
                     {
-                        "uid": "kafka UID",
                         "name": "a kafka receiver",
                         "type": "kafka",
                         "isDefault": false,
@@ -145,7 +138,6 @@
                         "secureSettings": {}
                     },
                     {
-                        "uid": "line UID",
                         "name": "a line receiver",
                         "type": "line",
                         "isDefault": false,
@@ -158,7 +150,6 @@
                         }
                     },
                     {
-                        "uid": "opsgenie UID",
                         "name": "a opsgenie receiver",
                         "type": "opsgenie",
                         "isDefault": false,
@@ -171,7 +162,6 @@
                         }
                     },
                     {
-                        "uid": "pagerduty UID",
                         "name": "a pagerduty receiver",
                         "type": "pagerduty",
                         "isDefault": false,
@@ -189,7 +179,6 @@
                         }
                     },
                     {
-                        "uid": "pushover UID",
                         "name": "a pushover receiver",
                         "type": "pushover",
                         "isDefault": false,
@@ -217,7 +206,6 @@
                         }
                     },
                     {
-                        "uid": "sensu UID",
                         "name": "a sensu receiver",
                         "type": "sensu",
                         "isDefault": false,
@@ -237,7 +225,6 @@
                         "secureSettings": {}
                     },
                     {
-                        "uid": "sensugo UID",
                         "name": "a sensugo receiver",
                         "type": "sensugo",
                         "isDefault": false,
@@ -260,7 +247,6 @@
                         }
                     },
                     {
-                        "uid": "slack UID",
                         "name": "a slack receiver",
                         "type": "slack",
                         "isDefault": false,
@@ -285,7 +271,6 @@
                         }
                     },
                     {
-                        "uid": "teams UID",
                         "name": "a teams receiver",
                         "type": "teams",
                         "isDefault": false,
@@ -302,7 +287,6 @@
                         "secureSettings": {}
                     },
                     {
-                        "uid": "telegram UID",
                         "name": "a telegram receiver",
                         "type": "telegram",
                         "isDefault": false,
@@ -321,7 +305,6 @@
                         }
                     },
                     {
-                        "uid": "threema UID",
                         "name": "a threema receiver",
                         "type": "threema",
                         "isDefault": false,
@@ -341,7 +324,6 @@
                         }
                     },
                     {
-                        "uid": "victorops UID",
                         "name": "a victorops receiver",
                         "type": "victorops",
                         "isDefault": false,
@@ -358,7 +340,6 @@
                         "secureSettings": {}
                     },
                     {
-                        "uid": "webhook UID",
                         "name": "a webhook receiver",
                         "type": "webhook",
                         "isDefault": false,
