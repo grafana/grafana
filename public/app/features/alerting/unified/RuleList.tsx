@@ -1,5 +1,5 @@
 import { DataSourceInstanceSettings, GrafanaTheme, urlUtil } from '@grafana/data';
-import { useStyles, ButtonGroup, ToolbarButton, Alert, LinkButton, withErrorBoundary } from '@grafana/ui';
+import { useStyles, Alert, LinkButton, withErrorBoundary } from '@grafana/ui';
 import { SerializedError } from '@reduxjs/toolkit';
 import React, { useEffect, useMemo } from 'react';
 import { useDispatch } from 'react-redux';
@@ -19,6 +19,7 @@ import { RuleListStateView } from './components/rules/RuleListStateView';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { useLocation } from 'react-router-dom';
 import { contextSrv } from 'app/core/services/context_srv';
+import { RuleStats } from './components/rules/RuleStats';
 
 const VIEWS = {
   groups: RuleListGroupView,
@@ -117,18 +118,7 @@ export const RuleList = withErrorBoundary(
             <RulesFilter />
             <div className={styles.break} />
             <div className={styles.buttonsContainer}>
-              <ButtonGroup>
-                <a href={urlUtil.renderUrl('alerting/list', { ...queryParams, view: 'group' })}>
-                  <ToolbarButton variant={view === 'groups' ? 'active' : 'default'} icon="folder">
-                    Groups
-                  </ToolbarButton>
-                </a>
-                <a href={urlUtil.renderUrl('alerting/list', { ...queryParams, view: 'state' })}>
-                  <ToolbarButton variant={view === 'state' ? 'active' : 'default'} icon="heart-rate">
-                    State
-                  </ToolbarButton>
-                </a>
-              </ButtonGroup>
+              <RuleStats showInactive={true} showRecording={true} namespaces={filteredNamespaces} />
               <div />
               {(contextSrv.hasEditPermissionInFolders || contextSrv.isEditor) && (
                 <LinkButton

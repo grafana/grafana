@@ -7,6 +7,7 @@ import { Icon } from '../Icon/Icon';
 import { IconName } from '../../types';
 import { stylesFactory, useTheme2 } from '../../themes';
 import { Counter } from './Counter';
+import { getFocusStyles } from '../../themes/mixins';
 
 export interface TabProps extends HTMLProps<HTMLAnchorElement> {
   label: string;
@@ -62,15 +63,14 @@ const getTabStyles = stylesFactory((theme: GrafanaTheme2) => {
     link: css`
       color: ${theme.colors.text.secondary};
       padding: ${theme.spacing(1.5, 2, 1)};
-
+      display: block;
+      height: 100%;
       svg {
         margin-right: ${theme.spacing(1)};
       }
 
-      a {
-        display: block;
-        height: 100%;
-        color: ${theme.colors.text.secondary};
+      &:focus-visible {
++        ${getFocusStyles(theme)}
       }
     `,
     notActive: css`

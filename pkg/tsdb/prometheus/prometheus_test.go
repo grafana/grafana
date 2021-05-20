@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	p "github.com/prometheus/common/model"
@@ -21,7 +22,7 @@ func TestPrometheus(t *testing.T) {
 	dsInfo := &models.DataSource{
 		JsonData: json,
 	}
-	plug, err := NewExecutor(dsInfo)
+	plug, err := New(httpclient.NewProvider())(dsInfo)
 	require.NoError(t, err)
 	executor := plug.(*PrometheusExecutor)
 
