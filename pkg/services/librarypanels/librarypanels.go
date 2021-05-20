@@ -18,6 +18,7 @@ type Service interface {
 	LoadLibraryPanelsForDashboard(c *models.ReqContext, dash *models.Dashboard) error
 	CleanLibraryPanelsForDashboard(dash *models.Dashboard) error
 	ConnectLibraryPanelsForDashboard(c *models.ReqContext, dash *models.Dashboard) error
+	ImportDashboard(c *models.ReqContext, dashboard *simplejson.Json, importedID int64) error
 }
 
 // LibraryPanelService is the service for the Panel Library feature.
@@ -166,7 +167,7 @@ func (lps *LibraryPanelService) CleanLibraryPanelsForDashboard(dash *models.Dash
 // ConnectLibraryPanelsForDashboard loops through all panels in dashboard JSON and connects any library panels to the dashboard.
 func (lps *LibraryPanelService) ConnectLibraryPanelsForDashboard(c *models.ReqContext, dash *models.Dashboard) error {
 	panels := dash.Data.Get("panels").MustArray()
-	var libraryPanels []string
+	libraryPanels := make(map[string]string)
 	for _, panel := range panels {
 		panelAsJSON := simplejson.NewFromAny(panel)
 		libraryPanel := panelAsJSON.Get("libraryPanel")
@@ -179,8 +180,24 @@ func (lps *LibraryPanelService) ConnectLibraryPanelsForDashboard(c *models.ReqCo
 		if len(uid) == 0 {
 			return errLibraryPanelHeaderUIDMissing
 		}
-		libraryPanels = append(libraryPanels, uid)
+		_, exists := libraryPanels[uid]
+		if !exists {
+			libraryPanels[uid] = uid
+		}
 	}
 
-	return lps.LibraryElementService.ConnectElementsToDashboard(c, libraryPanels, dash.Id)
+	elementUIDs := make([]string, 0, len(libraryPanels))
+	for libraryPanel := range libraryPanels {
+		elementUIDs = append(elementUIDs, libraryPanel)
+	}
+
+	return lps.LibraryElementService.ConnectElementsToDashboard(c, elementUIDs, dash.Id)
+}
+
+// ImportDashboard loops through all panels in dashboard JSON and connects any library panels to the dashboard.
+func (lps *LibraryPanelService) ImportDashboard(c *models.ReqContext, dashboard *simplejson.Json, importedID int64) error {
+	dash := models.NewDashboardFromJson(dashboard)
+	dash.Id = importedID
+
+	return lps.ConnectLibraryPanelsForDashboard(c, dash)
 }
