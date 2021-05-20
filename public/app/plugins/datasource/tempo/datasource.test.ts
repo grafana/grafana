@@ -52,8 +52,8 @@ describe('Tempo data source', () => {
       { name: 'id', values: ['4322526419282105830'] },
       { name: 'title', values: ['service'] },
       { name: 'subTitle', values: ['store.validateQueryTimeRange'] },
-      { name: 'mainStat', values: ['total: 14.98ms (100%)'] },
-      { name: 'secondaryStat', values: ['self: 14.98ms (100%)'] },
+      { name: 'mainStat', values: ['14.98ms (100%)'] },
+      { name: 'secondaryStat', values: ['14.98ms (100%)'] },
       { name: 'color', values: [1.000007560204647] },
     ]);
 
