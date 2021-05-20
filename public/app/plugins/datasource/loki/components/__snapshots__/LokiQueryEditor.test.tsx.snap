@@ -43,12 +43,7 @@ exports[`Render LokiQueryEditor with legend should render 1`] = `
       </div>
     </React.Fragment>
   }
-  absoluteRange={
-    Object {
-      "from": 1577836800000,
-      "to": 1577923200000,
-    }
-  }
+  data-testid="loki-editor"
   datasource={Object {}}
   history={Array []}
   onBlur={[MockFunction]}
@@ -107,12 +102,7 @@ exports[`Render LokiQueryEditor with legend should update timerange 1`] = `
       </div>
     </React.Fragment>
   }
-  absoluteRange={
-    Object {
-      "from": 1546300800000,
-      "to": 1577923200000,
-    }
-  }
+  data-testid="loki-editor"
   datasource={Object {}}
   history={Array []}
   onBlur={[MockFunction]}

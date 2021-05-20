@@ -3,7 +3,7 @@
   "name": "State timeline",
   "id": "state-timeline",
 
-  "state": "alpha",
+  "state": "beta",
 
   "info": {
     "description": "State changes and durations",
