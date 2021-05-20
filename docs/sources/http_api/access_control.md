@@ -375,10 +375,9 @@ roles:delete | permissions:delegate
 ```http
 DELETE /api/access-control/roles/jZrmlLCGka?force=true
 Accept: application/json
-Content-Type: application/json
 ```
 
-Query params:
+#### Query parameters
 
 Param | Type | Required | Description
 --- | --- | --- | ---
@@ -537,9 +536,9 @@ Code | Description
 
 ### Remove a built-in role assignment
 
-`DELETE /api/access-control/builtin-roles`
+`DELETE /api/access-control/builtin-roles/:builtinRole/roles/:roleUID`
 
-Deletes a built-in role assignment.
+Deletes a built-in role assignment (for one of _Viewer_, _Editor_, _Admin_, or _Grafana Admin_) to the role with the provided UID.
 
 #### Required permissions
 
@@ -553,22 +552,14 @@ roles.builtin:remove | permissions:delegate
 #### Example request
 
 ```http
-DELETE /api/access-control/builtin-roles
+DELETE /api/access-control/builtin-roles/Grafana%20Admin/roles/LPMGN99Mk?global=false
 Accept: application/json
-Content-Type: application/json
-
-{
-    "roleUid": "LPMGN99Mk",
-    "builtinRole": "Grafana Admin",
-    "global": false
-}
 ```
-#### JSON body schema
 
-Field Name | Date Type | Required | Description
+#### Query parameters
+
+Param | Type | Required | Description
 --- | --- | --- | ---
-roleUid | string | Yes | UID of the role.
-builtinRole | boolean | Yes | Can be one of `Viewer`, `Editor`, `Admin` or `Grafana Admin`. 
 global | boolean | No | A flag indicating if the assignment is global or not. If set to `false`, the default org ID of the authenticated user will be used from the request to remove assignment. Refer to the [Built-in role assignments]({{< relref "../enterprise/access-control/roles.md#built-in-role-assignments" >}}) for more information.
 
 #### Example response
