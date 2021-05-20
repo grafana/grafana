@@ -42,6 +42,9 @@ export class TimelineChart extends React.Component<TimelineProps> {
       getTimeRange,
       eventBus,
       ...this.props,
+
+      // When there is only one row, use the full space
+      rowHeight: alignedFrame.fields.length > 2 ? this.props.rowHeight : 1,
     });
   };
 
