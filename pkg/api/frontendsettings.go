@@ -129,10 +129,14 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 		return nil, err
 	}
 
+	hasPluginManagerApp := false
 	pluginsToPreload := []string{}
 	for _, app := range enabledPlugins.Apps {
 		if app.Preload {
 			pluginsToPreload = append(pluginsToPreload, app.Module)
+		}
+		if app.Id == "grafana-plugin-admin-app" {
+			hasPluginManagerApp = true
 		}
 	}
 
@@ -242,7 +246,8 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 		"rendererAvailable":       hs.RenderService.IsAvailable(),
 		"http2Enabled":            hs.Cfg.Protocol == setting.HTTP2Scheme,
 		"sentry":                  hs.Cfg.Sentry,
-		"catalogUrl":              hs.Cfg.CatalogURL,
+		"pluginCatalogURL":        hs.Cfg.PluginCatalogURL,
+		"pluginAdminEnabled":      c.HasUserRole(models.ROLE_ADMIN) && hs.Cfg.PluginAdminEnabled && hasPluginManagerApp,
 		"expressionsEnabled":      hs.Cfg.ExpressionsEnabled,
 		"awsAllowedAuthProviders": hs.Cfg.AWSAllowedAuthProviders,
 		"awsAssumeRoleEnabled":    hs.Cfg.AWSAssumeRoleEnabled,
