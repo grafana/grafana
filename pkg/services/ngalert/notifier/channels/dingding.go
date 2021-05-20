@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/url"
-	"path"
 
 	gokit_log "github.com/go-kit/kit/log"
 	"github.com/prometheus/alertmanager/notify"
@@ -65,9 +64,14 @@ type DingDingNotifier struct {
 func (dd *DingDingNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
 	dd.log.Info("Sending dingding")
 
+	ruleURL, err := joinUrlPath(dd.tmpl.ExternalURL.String(), "/alerting/list")
+	if err != nil {
+		return false, err
+	}
+
 	q := url.Values{
 		"pc_slide": {"false"},
-		"url":      {path.Join(dd.tmpl.ExternalURL.String(), "/alerting/list")},
+		"url":      {ruleURL},
 	}
 
 	// Use special link to auto open the message url outside of Dingding
