@@ -13,6 +13,7 @@ import {
   FieldColorModeId,
   getValueFormat,
   ThresholdsMode,
+  GrafanaTheme2,
 } from '@grafana/data';
 import {
   UPlotConfigBuilder,
@@ -304,7 +305,8 @@ export function prepareTimelineFields(
 
 export function prepareTimelineLegendItems(
   frames: DataFrame[] | undefined,
-  options: VizLegendOptions
+  options: VizLegendOptions,
+  theme: GrafanaTheme2
 ): VizLegendItem[] | undefined {
   if (!frames || options.displayMode === 'hidden') {
     return undefined;
@@ -325,15 +327,18 @@ export function prepareTimelineLegendItems(
     const disp = getValueFormat(
       first.thresholds.mode === ThresholdsMode.Percentage ? 'percent' : first.unit ?? 'fixed'
     );
+
     const fmt = (v: number) => formattedValueToString(disp(v));
+
     for (let i = 1; i <= steps.length; i++) {
       const step = steps[i - 1];
       items.push({
         label: i === 1 ? `< ${fmt(steps[i].value)}` : `${fmt(step.value)}+`,
-        color: step.color,
+        color: theme.visualization.getColorByName(step.color),
         yAxis: 1,
       });
     }
+
     return items;
   }
 
@@ -355,7 +360,7 @@ export function prepareTimelineLegendItems(
     if (label.length > 0) {
       items.push({
         label: label!,
-        color,
+        color: theme.visualization.getColorByName(color ?? FALLBACK_COLOR),
         yAxis: 1,
       });
     }
