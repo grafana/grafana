@@ -755,8 +755,8 @@ steps:
   image: grafana/build-container:1.4.1
   commands:
   - "[ $(grep FocusConvey -R pkg | wc -l) -eq \"0\" ] || exit 1"
-  - ./bin/grabpl test-backend --edition oss
-  - ./bin/grabpl integration-tests --edition oss
+  - ./bin/grabpl test-backend --edition oss --tries 5
+  - ./bin/grabpl integration-tests --edition oss --tries 5
   depends_on:
   - initialize
 
@@ -1130,8 +1130,8 @@ steps:
   image: grafana/build-container:1.4.1
   commands:
   - "[ $(grep FocusConvey -R pkg | wc -l) -eq \"0\" ] || exit 1"
-  - ./bin/grabpl test-backend --edition enterprise
-  - ./bin/grabpl integration-tests --edition enterprise
+  - ./bin/grabpl test-backend --edition enterprise --tries 5
+  - ./bin/grabpl integration-tests --edition enterprise --tries 5
   depends_on:
   - initialize
 
@@ -1196,8 +1196,8 @@ steps:
   image: grafana/build-container:1.4.1
   commands:
   - "[ $(grep FocusConvey -R pkg | wc -l) -eq \"0\" ] || exit 1"
-  - ./bin/grabpl test-backend --edition enterprise2
-  - ./bin/grabpl integration-tests --edition enterprise2
+  - ./bin/grabpl test-backend --edition enterprise2 --tries 5
+  - ./bin/grabpl integration-tests --edition enterprise2 --tries 5
   depends_on:
   - initialize
 
@@ -1710,8 +1710,8 @@ steps:
   image: grafana/build-container:1.4.1
   commands:
   - "[ $(grep FocusConvey -R pkg | wc -l) -eq \"0\" ] || exit 1"
-  - ./bin/grabpl test-backend --edition oss
-  - ./bin/grabpl integration-tests --edition oss
+  - ./bin/grabpl test-backend --edition oss --tries 5
+  - ./bin/grabpl integration-tests --edition oss --tries 5
   depends_on:
   - initialize
 
@@ -2074,8 +2074,8 @@ steps:
   image: grafana/build-container:1.4.1
   commands:
   - "[ $(grep FocusConvey -R pkg | wc -l) -eq \"0\" ] || exit 1"
-  - ./bin/grabpl test-backend --edition enterprise
-  - ./bin/grabpl integration-tests --edition enterprise
+  - ./bin/grabpl test-backend --edition enterprise --tries 5
+  - ./bin/grabpl integration-tests --edition enterprise --tries 5
   depends_on:
   - initialize
 
@@ -2140,8 +2140,8 @@ steps:
   image: grafana/build-container:1.4.1
   commands:
   - "[ $(grep FocusConvey -R pkg | wc -l) -eq \"0\" ] || exit 1"
-  - ./bin/grabpl test-backend --edition enterprise2
-  - ./bin/grabpl integration-tests --edition enterprise2
+  - ./bin/grabpl test-backend --edition enterprise2 --tries 5
+  - ./bin/grabpl integration-tests --edition enterprise2 --tries 5
   depends_on:
   - initialize
 
