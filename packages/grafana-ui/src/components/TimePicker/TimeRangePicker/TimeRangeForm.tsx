@@ -73,6 +73,10 @@ export const TimeRangeForm: React.FC<Props> = (props) => {
       const raw: RawTimeRange = { from: from.value, to: to.value };
       const timeRange = rangeUtil.convertRawToRange(raw, timeZone);
 
+      if (!timeRange.from.isBefore(timeRange.to)) {
+        return;
+      }
+
       onApplyFromProps(timeRange);
     },
     [from.invalid, from.value, onApplyFromProps, timeZone, to.invalid, to.value]
