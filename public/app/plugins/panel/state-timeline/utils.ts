@@ -25,7 +25,6 @@ import {
 } from '@grafana/ui';
 import { TimelineCoreOptions, getConfig } from './timeline';
 import { AxisPlacement, ScaleDirection, ScaleOrientation } from '@grafana/ui/src/components/uPlot/config';
-import { measureText } from '@grafana/ui/src/utils/measureText';
 import { TimelineFieldConfig, TimelineOptions } from './types';
 
 const defaultConfig: TimelineFieldConfig = {
@@ -79,14 +78,6 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<TimelineOptions> = ({
 
     return FALLBACK_COLOR;
   };
-
-  const yAxisWidth =
-    frame.fields.reduce((maxWidth, field) => {
-      return Math.max(
-        maxWidth,
-        measureText(getFieldDisplayName(field, frame), Math.round(10 * devicePixelRatio)).width
-      );
-    }, 0) + 24;
 
   const opts: TimelineCoreOptions = {
     // should expose in panel config
@@ -154,7 +145,6 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<TimelineOptions> = ({
     values: coreConfig.yValues,
     grid: false,
     ticks: false,
-    size: yAxisWidth,
     gap: 16,
     theme,
   });
@@ -318,15 +308,14 @@ export function prepareTimelineLegendItems(
   }
 
   const items: VizLegendItem[] = [];
-  const first = fields[0].config;
-  const colorMode = first.color?.mode ?? FieldColorModeId.Fixed;
+  const fieldConfig = fields[0].config;
+  const colorMode = fieldConfig.color?.mode ?? FieldColorModeId.Fixed;
+  const thresholds = fieldConfig.thresholds;
 
   // If thresholds are enabled show each step in the legend
-  if (colorMode === FieldColorModeId.Thresholds && first.thresholds?.steps) {
-    const steps = first.thresholds.steps;
-    const disp = getValueFormat(
-      first.thresholds.mode === ThresholdsMode.Percentage ? 'percent' : first.unit ?? 'fixed'
-    );
+  if (colorMode === FieldColorModeId.Thresholds && thresholds?.steps && thresholds.steps.length > 1) {
+    const steps = thresholds.steps;
+    const disp = getValueFormat(thresholds.mode === ThresholdsMode.Percentage ? 'percent' : fieldConfig.unit ?? '');
 
     const fmt = (v: number) => formattedValueToString(disp(v));
 
