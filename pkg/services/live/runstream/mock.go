@@ -37,7 +37,7 @@ func (m *MockStreamPacketSender) EXPECT() *MockStreamPacketSenderMockRecorder {
 }
 
 // Send mocks base method.
-func (m *MockStreamPacketSender) Send(arg0 string, arg1 *backend.StreamPacket) error {
+func (m *MockStreamPacketSender) Send(arg0 string, arg1 []byte) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Send", arg0, arg1)
 	ret0, _ := ret[0].(error)
@@ -112,7 +112,7 @@ func (m *MockStreamRunner) EXPECT() *MockStreamRunnerMockRecorder {
 }
 
 // RunStream mocks base method.
-func (m *MockStreamRunner) RunStream(arg0 context.Context, arg1 *backend.RunStreamRequest, arg2 backend.StreamPacketSender) error {
+func (m *MockStreamRunner) RunStream(arg0 context.Context, arg1 *backend.RunStreamRequest, arg2 backend.StreamSender) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "RunStream", arg0, arg1, arg2)
 	ret0, _ := ret[0].(error)

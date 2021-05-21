@@ -84,12 +84,10 @@ func TestStreamManager_SubmitStream_Send(t *testing.T) {
 	mockStreamRunner := NewMockStreamRunner(mockCtrl)
 	mockStreamRunner.EXPECT().RunStream(
 		gomock.Any(), gomock.Any(), gomock.Any(),
-	).DoAndReturn(func(ctx context.Context, req *backend.RunStreamRequest, sender backend.StreamPacketSender) error {
+	).DoAndReturn(func(ctx context.Context, req *backend.RunStreamRequest, sender backend.StreamSender) error {
 		require.Equal(t, "test", req.Path)
 		close(startedCh)
-		err := sender.Send(&backend.StreamPacket{
-			Data: []byte("test"),
-		})
+		err := sender.SendJSON([]byte("test"))
 		require.NoError(t, err)
 		<-ctx.Done()
 		close(doneCh)
@@ -142,12 +140,10 @@ func TestStreamManager_SubmitStream_DifferentOrgID(t *testing.T) {
 	mockStreamRunner1 := NewMockStreamRunner(mockCtrl)
 	mockStreamRunner1.EXPECT().RunStream(
 		gomock.Any(), gomock.Any(), gomock.Any(),
-	).DoAndReturn(func(ctx context.Context, req *backend.RunStreamRequest, sender backend.StreamPacketSender) error {
+	).DoAndReturn(func(ctx context.Context, req *backend.RunStreamRequest, sender backend.StreamSender) error {
 		require.Equal(t, "test", req.Path)
 		close(startedCh1)
-		err := sender.Send(&backend.StreamPacket{
-			Data: []byte("test"),
-		})
+		err := sender.SendJSON([]byte("test"))
 		require.NoError(t, err)
 		<-ctx.Done()
 		close(doneCh1)
@@ -157,12 +153,10 @@ func TestStreamManager_SubmitStream_DifferentOrgID(t *testing.T) {
 	mockStreamRunner2 := NewMockStreamRunner(mockCtrl)
 	mockStreamRunner2.EXPECT().RunStream(
 		gomock.Any(), gomock.Any(), gomock.Any(),
-	).DoAndReturn(func(ctx context.Context, req *backend.RunStreamRequest, sender backend.StreamPacketSender) error {
+	).DoAndReturn(func(ctx context.Context, req *backend.RunStreamRequest, sender backend.StreamSender) error {
 		require.Equal(t, "test", req.Path)
 		close(startedCh2)
-		err := sender.Send(&backend.StreamPacket{
-			Data: []byte("test"),
-		})
+		err := sender.SendJSON([]byte("test"))
 		require.NoError(t, err)
 		<-ctx.Done()
 		close(doneCh2)
@@ -218,7 +212,7 @@ func TestStreamManager_SubmitStream_CloseNoSubscribers(t *testing.T) {
 	mockPresenceGetter.EXPECT().GetNumSubscribers("1/test").Return(0, nil).Times(3)
 
 	mockStreamRunner := NewMockStreamRunner(mockCtrl)
-	mockStreamRunner.EXPECT().RunStream(gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(func(ctx context.Context, req *backend.RunStreamRequest, sender backend.StreamPacketSender) error {
+	mockStreamRunner.EXPECT().RunStream(gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(func(ctx context.Context, req *backend.RunStreamRequest, sender backend.StreamSender) error {
 		close(startedCh)
 		<-ctx.Done()
 		close(doneCh)
@@ -271,7 +265,7 @@ func TestStreamManager_SubmitStream_ErrorRestartsRunStream(t *testing.T) {
 	mockStreamRunner := NewMockStreamRunner(mockCtrl)
 	mockStreamRunner.EXPECT().RunStream(
 		gomock.Any(), gomock.Any(), gomock.Any(),
-	).DoAndReturn(func(ctx context.Context, req *backend.RunStreamRequest, sender backend.StreamPacketSender) error {
+	).DoAndReturn(func(ctx context.Context, req *backend.RunStreamRequest, sender backend.StreamSender) error {
 		if currentErrors >= numErrors {
 			return nil
 		}
@@ -309,7 +303,7 @@ func TestStreamManager_SubmitStream_NilErrorStopsRunStream(t *testing.T) {
 	mockStreamRunner := NewMockStreamRunner(mockCtrl)
 	mockStreamRunner.EXPECT().RunStream(
 		gomock.Any(), gomock.Any(), gomock.Any(),
-	).DoAndReturn(func(ctx context.Context, req *backend.RunStreamRequest, sender backend.StreamPacketSender) error {
+	).DoAndReturn(func(ctx context.Context, req *backend.RunStreamRequest, sender backend.StreamSender) error {
 		return nil
 	}).Times(1)
 
@@ -359,7 +353,7 @@ func TestStreamManager_HandleDatasourceUpdate(t *testing.T) {
 	mockStreamRunner := NewMockStreamRunner(mockCtrl)
 	mockStreamRunner.EXPECT().RunStream(
 		gomock.Any(), gomock.Any(), gomock.Any(),
-	).DoAndReturn(func(ctx context.Context, req *backend.RunStreamRequest, sender backend.StreamPacketSender) error {
+	).DoAndReturn(func(ctx context.Context, req *backend.RunStreamRequest, sender backend.StreamSender) error {
 		if isFirstCall {
 			// first RunStream will wait till context done.
 			isFirstCall = false
@@ -422,7 +416,7 @@ func TestStreamManager_HandleDatasourceDelete(t *testing.T) {
 	mockStreamRunner := NewMockStreamRunner(mockCtrl)
 	mockStreamRunner.EXPECT().RunStream(
 		gomock.Any(), gomock.Any(), gomock.Any(),
-	).DoAndReturn(func(ctx context.Context, req *backend.RunStreamRequest, sender backend.StreamPacketSender) error {
+	).DoAndReturn(func(ctx context.Context, req *backend.RunStreamRequest, sender backend.StreamSender) error {
 		close(doneCh)
 		<-ctx.Done()
 		return ctx.Err()
