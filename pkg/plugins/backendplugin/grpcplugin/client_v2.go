@@ -194,7 +194,7 @@ func (c *clientV2) PublishStream(ctx context.Context, req *backend.PublishStream
 	return backend.FromProto().PublishStreamResponse(protoResp), nil
 }
 
-func (c *clientV2) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender backend.StreamSender) error {
+func (c *clientV2) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
 	if c.StreamClient == nil {
 		return backendplugin.ErrMethodNotImplemented
 	}

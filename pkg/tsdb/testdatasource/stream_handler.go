@@ -49,7 +49,7 @@ func (p *testStreamHandler) PublishStream(_ context.Context, req *backend.Publis
 	}, nil
 }
 
-func (p *testStreamHandler) RunStream(ctx context.Context, request *backend.RunStreamRequest, sender backend.StreamSender) error {
+func (p *testStreamHandler) RunStream(ctx context.Context, request *backend.RunStreamRequest, sender *backend.StreamSender) error {
 	p.logger.Debug("New stream call", "path", request.Path)
 	var conf testStreamConfig
 	switch request.Path {
@@ -77,7 +77,7 @@ type testStreamConfig struct {
 	Drop     float64
 }
 
-func (p *testStreamHandler) runTestStream(ctx context.Context, path string, conf testStreamConfig, sender backend.StreamSender) error {
+func (p *testStreamHandler) runTestStream(ctx context.Context, path string, conf testStreamConfig, sender *backend.StreamSender) error {
 	spread := 50.0
 	walker := rand.Float64() * 100
 

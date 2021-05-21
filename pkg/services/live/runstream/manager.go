@@ -8,8 +8,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/grafana/grafana-plugin-sdk-go/data"
-
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 
@@ -20,9 +18,9 @@ var (
 	logger = log.New("live.runstream")
 )
 
-//go:generate mockgen -destination=mock.go -package=runstream github.com/grafana/grafana/pkg/services/live/runstream StreamPacketSender,PresenceGetter,StreamRunner,PluginContextGetter
+//go:generate mockgen -destination=mock.go -package=runstream github.com/grafana/grafana/pkg/services/live/runstream ChannelSender,PresenceGetter,StreamRunner,PluginContextGetter
 
-type StreamPacketSender interface {
+type ChannelSender interface {
 	Send(channel string, data []byte) error
 }
 
@@ -35,47 +33,16 @@ type PresenceGetter interface {
 }
 
 type StreamRunner interface {
-	RunStream(ctx context.Context, request *backend.RunStreamRequest, sender backend.StreamSender) error
+	RunStream(ctx context.Context, request *backend.RunStreamRequest, sender *backend.StreamSender) error
 }
 
-type streamSender struct {
-	channel      string
-	packetSender StreamPacketSender
+type packetSender struct {
+	channelSender ChannelSender
+	channel       string
 }
 
-func newStreamSender(channel string, packetSender StreamPacketSender) *streamSender {
-	return &streamSender{
-		channel:      channel,
-		packetSender: packetSender,
-	}
-}
-
-func (p *streamSender) SendFrame(frame *data.Frame) error {
-	frameJSON, err := data.FrameToJSON(frame, true, true)
-	if err != nil {
-		return err
-	}
-	return p.packetSender.Send(p.channel, frameJSON)
-}
-
-func (p *streamSender) SendFrameSchema(frame *data.Frame) error {
-	frameJSON, err := data.FrameToJSON(frame, true, false)
-	if err != nil {
-		return err
-	}
-	return p.packetSender.Send(p.channel, frameJSON)
-}
-
-func (p *streamSender) SendFrameData(frame *data.Frame) error {
-	frameJSON, err := data.FrameToJSON(frame, false, true)
-	if err != nil {
-		return err
-	}
-	return p.packetSender.Send(p.channel, frameJSON)
-}
-
-func (p *streamSender) SendJSON(data []byte) error {
-	return p.packetSender.Send(p.channel, data)
+func (p *packetSender) Send(packet *backend.StreamPacket) error {
+	return p.channelSender.Send(p.channel, packet.Data)
 }
 
 // Manager manages streams from Grafana to plugins (i.e. RunStream method).
@@ -86,7 +53,7 @@ type Manager struct {
 	datasourceStreams       map[string]map[string]struct{}
 	presenceGetter          PresenceGetter
 	pluginContextGetter     PluginContextGetter
-	packetSender            StreamPacketSender
+	channelSender           ChannelSender
 	registerCh              chan submitRequest
 	closedCh                chan struct{}
 	checkInterval           time.Duration
@@ -112,11 +79,11 @@ const (
 )
 
 // NewManager creates new Manager.
-func NewManager(packetSender StreamPacketSender, presenceGetter PresenceGetter, pluginContextGetter PluginContextGetter, opts ...ManagerOption) *Manager {
+func NewManager(channelSender ChannelSender, presenceGetter PresenceGetter, pluginContextGetter PluginContextGetter, opts ...ManagerOption) *Manager {
 	sm := &Manager{
 		streams:                 make(map[string]streamContext),
 		datasourceStreams:       map[string]map[string]struct{}{},
-		packetSender:            packetSender,
+		channelSender:           channelSender,
 		presenceGetter:          presenceGetter,
 		pluginContextGetter:     pluginContextGetter,
 		registerCh:              make(chan submitRequest),
@@ -334,7 +301,7 @@ func (s *Manager) runStream(ctx context.Context, cancelFn func(), sr streamReque
 				PluginContext: pluginCtx,
 				Path:          sr.Path,
 			},
-			newStreamSender(sr.Channel, s.packetSender),
+			backend.NewStreamSender(&packetSender{channelSender: s.channelSender, channel: sr.Channel}),
 		)
 		if err != nil {
 			if errors.Is(ctx.Err(), context.Canceled) {
