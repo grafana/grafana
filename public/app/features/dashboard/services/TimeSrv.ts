@@ -56,6 +56,10 @@ export class TimeSrv {
 
     this.initTimeFromUrl();
     this.parseTime();
+
+    // remember time at load so we can go back to it
+    this.timeAtLoad = cloneDeep(this.time);
+
     const range = rangeUtil.convertRawToRange(this.time, this.dashboard ? this.dashboard.getTimezone() : undefined);
 
     if (range.to.isBefore(range.from)) {
@@ -67,9 +71,6 @@ export class TimeSrv {
         false
       );
     }
-
-    // remember time at load so we can go back to it
-    this.timeAtLoad = cloneDeep(this.time);
 
     if (this.refresh) {
       this.setAutoRefresh(this.refresh);
