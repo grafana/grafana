@@ -29,7 +29,7 @@ func TestManagedStream_GetLastPacket_UnstableSchema(t *testing.T) {
 	c := NewManagedStream("a", publisher.publish)
 	_, ok := c.getLastPacket(orgID, "test")
 	require.False(t, ok)
-	err := c.Push(orgID, "test", data.NewFrame("hello"), true)
+	err := c.Push(orgID, "test", data.NewFrame("hello"))
 	require.NoError(t, err)
 
 	_, ok = c.getLastPacket(orgID, "test")
@@ -43,7 +43,7 @@ func TestManagedStream_GetLastPacket(t *testing.T) {
 	c := NewManagedStream("a", publisher.publish)
 	_, ok := c.getLastPacket(orgID, "test")
 	require.False(t, ok)
-	err := c.Push(orgID, "test", data.NewFrame("hello"), false)
+	err := c.Push(orgID, "test", data.NewFrame("hello"))
 	require.NoError(t, err)
 
 	s, ok := c.getLastPacket(orgID, "test")

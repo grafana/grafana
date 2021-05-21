@@ -57,7 +57,6 @@ func (g *Gateway) Handle(ctx *models.ReqContext) {
 	// TODO Grafana 8: decide which formats to use or keep all.
 	urlValues := ctx.Req.URL.Query()
 	frameFormat := pushurl.FrameFormatFromValues(urlValues)
-	unstableSchema := pushurl.UnstableSchemaFromValues(urlValues)
 
 	body, err := ctx.Req.Body().Bytes()
 	if err != nil {
@@ -69,7 +68,6 @@ func (g *Gateway) Handle(ctx *models.ReqContext) {
 		"protocol", "http",
 		"streamId", streamID,
 		"bodyLength", len(body),
-		"unstableSchema", unstableSchema,
 		"frameFormat", frameFormat,
 	)
 
@@ -88,7 +86,7 @@ func (g *Gateway) Handle(ctx *models.ReqContext) {
 	// interval = "1s" vs flush_interval = "5s"
 
 	for _, mf := range metricFrames {
-		err := stream.Push(ctx.SignedInUser.OrgId, mf.Key(), mf.Frame(), unstableSchema)
+		err := stream.Push(ctx.SignedInUser.OrgId, mf.Key(), mf.Frame())
 		if err != nil {
 			ctx.Resp.WriteHeader(http.StatusInternalServerError)
 			return
