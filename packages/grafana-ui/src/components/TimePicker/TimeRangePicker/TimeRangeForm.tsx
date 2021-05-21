@@ -21,7 +21,7 @@ import { useStyles2 } from '../../../themes/ThemeContext';
 const getStyles = () => {
   return {
     saveRangeContainer: css`
-      margin-top: 15px;
+      margin-top: 16px;
     `,
     withRightMargin: css`
       margin-right: 10px;
