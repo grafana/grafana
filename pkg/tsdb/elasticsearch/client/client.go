@@ -100,6 +100,7 @@ var NewClient = func(ctx context.Context, httpClientProvider httpclient.Provider
 
 	return &baseClientImpl{
 		ctx:       ctx,
+		httpClientProvider: httpClientProvider,
 		ds:        ds,
 		version:   version,
 		timeField: timeField,
