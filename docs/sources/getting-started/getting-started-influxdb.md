@@ -25,7 +25,7 @@ If you chose to use InfluxDB Cloud, then you should [download and install the In
 
 ## Step 4. Get data into InfluxDB
 
-If you downloaded and installed InfluxDB on your local machine, then use the [Quick Start][https://docs.influxdata.com/influxdb/v2.0/write-data/#quick-start-for-influxdb-oss] feature to visualize InfluxDB metrics.
+If you downloaded and installed InfluxDB on your local machine, then use the [Quick Start](https://docs.influxdata.com/influxdb/v2.0/write-data/#quick-start-for-influxdb-oss) feature to visualize InfluxDB metrics.
 
 If you are using the cloud account, then the wizards will guide you through the initial process. For more information, refer to [Configure Telegraf](https://docs.influxdata.com/influxdb/cloud/write-data/no-code/use-telegraf/#configure-telegraf).
 
