@@ -1,7 +1,6 @@
 package managedstream
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"sync"
@@ -70,13 +69,8 @@ type ManagedStream struct {
 	mu        sync.RWMutex
 	id        string
 	start     time.Time
-	last      map[int64]map[string]managedStreamLastMsg
+	last      map[int64]map[string]data.FrameJSON
 	publisher models.ChannelPublisher
-}
-
-type managedStreamLastMsg struct {
-	schema json.RawMessage
-	full   json.RawMessage
 }
 
 // NewManagedStream creates new ManagedStream.
@@ -84,7 +78,7 @@ func NewManagedStream(id string, publisher models.ChannelPublisher) *ManagedStre
 	return &ManagedStream{
 		id:        id,
 		start:     time.Now(),
-		last:      map[int64]map[string]managedStreamLastMsg{},
+		last:      map[int64]map[string]data.FrameJSON{},
 		publisher: publisher,
 	}
 }
@@ -112,38 +106,27 @@ func (s *ManagedStream) ListChannels(orgID int64, prefix string) []util.DynMap {
 // unstableSchema flag can be set to disable schema caching for a path.
 func (s *ManagedStream) Push(orgID int64, path string, frame *data.Frame) error {
 	// Keep schema + data for last packet.
-	msg := managedStreamLastMsg{}
-	js, err := data.FrameToJSON(frame, true, true)
+	msg, err := data.FrameToJSON(frame, data.WithSchemaAndData)
 	if err != nil {
 		logger.Error("Error marshaling frame with data", "error", err)
 		return err
 	}
-	msg.full = js
-
-	js, err = data.FrameToJSON(frame, true, false)
-	if err != nil {
-		logger.Error("Error marshaling frame Schema", "error", err)
-		return err
-	}
-	msg.schema = js
 
 	s.mu.Lock()
 	if _, ok := s.last[orgID]; !ok {
-		s.last[orgID] = map[string]managedStreamLastMsg{}
+		s.last[orgID] = map[string]data.FrameJSON{}
 	}
 	last, exists := s.last[orgID][path]
 	s.last[orgID][path] = msg
 	s.mu.Unlock()
 
-	// When the schema has not changed, just send the data
-	sendBytes := msg.full
-	if exists && bytes.Equal(msg.schema, last.schema) {
-		sendBytes, err = data.FrameToJSON(frame, false, true)
-		if err != nil {
-			logger.Error("Error marshaling Frame to JSON", "error", err)
-			return err
-		}
+	send := data.WithSchemaAndData
+	if exists && last.SameSchema(&msg) {
+		send = data.WithData
 	}
+
+	// When the schema has not changed, just send the data
+	sendBytes := msg.Bytes(send)
 
 	// The channel this will be posted into.
 	channel := live.Channel{Scope: live.ScopeStream, Namespace: s.id, Path: path}.String()
@@ -151,7 +134,7 @@ func (s *ManagedStream) Push(orgID int64, path string, frame *data.Frame) error 
 	return s.publisher(orgID, channel, sendBytes)
 }
 
-// getLastPacket retrieves schema for a channel.
+// getLastPacket retrieves last packet channel.
 func (s *ManagedStream) getLastPacket(orgId int64, path string) (json.RawMessage, bool) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
@@ -159,8 +142,11 @@ func (s *ManagedStream) getLastPacket(orgId int64, path string) (json.RawMessage
 	if !ok {
 		return nil, false
 	}
-	info, ok := s.last[orgId][path]
-	return info.full, ok && info.full != nil
+	msg, ok := s.last[orgId][path]
+	if ok {
+		return msg.Bytes(data.WithSchemaAndData), ok
+	}
+	return nil, ok
 }
 
 func (s *ManagedStream) GetHandlerForPath(_ string) (models.ChannelHandler, error) {
