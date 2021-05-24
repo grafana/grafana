@@ -22,8 +22,6 @@ export class DashboardRow extends React.Component<DashboardRowProps, any> {
     this.state = {
       collapsed: this.props.panel.collapsed,
     };
-
-    this.props.dashboard.on(RefreshEvent, this.onVariableUpdated);
   }
 
   componentDidMount() {
