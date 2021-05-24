@@ -1,6 +1,6 @@
 import { FetchResponse, getBackendSrv } from '@grafana/runtime';
 import { getLogAnalyticsResourcePickerApiRoute } from '../api/routes';
-import { EntryType, Row, RowGroup } from '../components/ResourcePicker/types';
+import { ResourceRowType, ResourceRow, ResourceRowGroup } from '../components/ResourcePicker/types';
 import { getAzureCloud } from '../credentials';
 import { AzureDataSourceInstanceSettings, AzureResourceSummaryItem } from '../types';
 import { SUPPORTED_LOCATIONS, SUPPORTED_RESOURCE_TYPES } from './supportedResources';
@@ -8,10 +8,11 @@ import { SUPPORTED_LOCATIONS, SUPPORTED_RESOURCE_TYPES } from './supportedResour
 const RESOURCE_GRAPH_URL = '/providers/Microsoft.ResourceGraph/resources?api-version=2020-04-01-preview';
 
 interface RawAzureResourceGroupItem {
-  subscriptionId: string;
+  subscriptionURI: string;
   subscriptionName: string;
-  resourceGroup: string;
-  resourceGroupId: string;
+
+  resourceGroupURI: string;
+  resourceGroupName: string;
 }
 
 interface RawAzureResourceItem {
@@ -37,14 +38,30 @@ export default class ResourcePickerData {
   }
 
   async getResourcePickerData() {
-    const { ok, data: response } = await this.makeResourceGraphRequest<RawAzureResourceGroupItem[]>(
-      `resources
-      | join kind=leftouter (ResourceContainers | where type=='microsoft.resources/subscriptions' | project subscriptionName=name, subscriptionId, resourceGroupId=id) on subscriptionId
-      | where type in (${SUPPORTED_RESOURCE_TYPES})
-      | summarize count() by resourceGroup, subscriptionName, resourceGroupId, subscriptionId
-      | order by resourceGroup asc
-      `
-    );
+    const query = `
+      resources
+        // Put subscription details on each row
+        | join kind=leftouter (
+          ResourceContainers
+            | where type == 'microsoft.resources/subscriptions'
+            | project subscriptionName=name, subscriptionURI=id, subscriptionId
+          ) on subscriptionId
+
+        // Put resource group details on each row
+        | join kind=leftouter (
+          ResourceContainers
+            | where type == 'microsoft.resources/subscriptions/resourcegroups'
+            | project resourceGroupURI=id, resourceGroupName=name, resourceGroup
+          ) on resourceGroup
+
+        | where type in (${SUPPORTED_RESOURCE_TYPES})
+
+        // Get only unique resource groups and subscriptions. Also acts like a project
+        | summarize count() by resourceGroupName, resourceGroupURI, subscriptionName, subscriptionURI
+        | order by subscriptionURI asc
+    `;
+
+    const { ok, data: response } = await this.makeResourceGraphRequest<RawAzureResourceGroupItem[]>(query);
 
     // TODO: figure out desired error handling strategy
     if (!ok) {
@@ -54,7 +71,7 @@ export default class ResourcePickerData {
     return this.formatResourceGroupData(response.data);
   }
 
-  async getResourcesForResourceGroup(resourceGroup: Row) {
+  async getResourcesForResourceGroup(resourceGroup: ResourceRow) {
     const { ok, data: response } = await this.makeResourceGraphRequest<RawAzureResourceItem[]>(`
       resources
       | where resourceGroup == "${resourceGroup.name.toLowerCase()}"
@@ -115,54 +132,52 @@ export default class ResourcePickerData {
   }
 
   formatResourceGroupData(rawData: RawAzureResourceGroupItem[]) {
-    const formatedSubscriptionsAndResourceGroups: RowGroup = {};
+    // Subscriptions goes into the top level array
+    const rows: ResourceRowGroup = [];
 
-    rawData.forEach((resourceGroup) => {
-      // if the subscription doesn't exist yet, create it
-      if (!formatedSubscriptionsAndResourceGroups[resourceGroup.subscriptionId]) {
-        formatedSubscriptionsAndResourceGroups[resourceGroup.subscriptionId] = {
-          name: resourceGroup.subscriptionName,
-          id: resourceGroup.subscriptionId,
-          subscriptionId: resourceGroup.subscriptionId,
-          typeLabel: 'Subscription',
-          type: EntryType.Collection,
-          children: {},
-        };
-      }
-
-      // add the resource group to the subscription
-      // store by resourcegroupname not id to match resource uri
-      (formatedSubscriptionsAndResourceGroups[resourceGroup.subscriptionId].children as RowGroup)[
-        resourceGroup.resourceGroup
-      ] = {
-        name: resourceGroup.resourceGroup,
-        id: resourceGroup.resourceGroupId,
-        subscriptionId: resourceGroup.subscriptionId,
-        type: EntryType.SubCollection,
+    // Array of all the resource groups, with subscription data on each row
+    for (const row of rawData) {
+      const resourceGroupRow: ResourceRow = {
+        name: row.resourceGroupName,
+        id: row.resourceGroupURI,
+        type: ResourceRowType.ResourceGroup,
         typeLabel: 'Resource Group',
-        children: {},
+        children: [],
       };
-    });
 
-    return formatedSubscriptionsAndResourceGroups;
+      const subscription = rows.find((v) => v.id === row.subscriptionURI);
+
+      if (subscription) {
+        if (!subscription.children) {
+          subscription.children = [];
+        }
+
+        subscription.children.push(resourceGroupRow);
+      } else {
+        const newSubscriptionRow = {
+          name: row.subscriptionName,
+          id: row.subscriptionURI,
+          typeLabel: 'Subscription',
+          type: ResourceRowType.Subscription,
+          children: [resourceGroupRow],
+        };
+
+        rows.push(newSubscriptionRow);
+      }
+    }
+
+    return rows;
   }
 
-  formatResourceGroupChildren(rawData: RawAzureResourceItem[]) {
-    const children: RowGroup = {};
-
-    rawData.forEach((item: RawAzureResourceItem) => {
-      children[item.id] = {
-        name: item.name,
-        id: item.id,
-        subscriptionId: item.id,
-        resourceGroupName: item.resourceGroup,
-        type: EntryType.Resource,
-        typeLabel: item.type, // TODO: these types can be quite long, we may wish to format them more
-        location: item.location, // TODO: we may wish to format these locations, by default they are written as 'northeurope' rather than a more human readable "North Europe"
-      };
-    });
-
-    return children;
+  formatResourceGroupChildren(rawData: RawAzureResourceItem[]): ResourceRowGroup {
+    return rawData.map((item) => ({
+      name: item.name,
+      id: item.id,
+      resourceGroupName: item.resourceGroup,
+      type: ResourceRowType.Resource,
+      typeLabel: item.type, // TODO: these types can be quite long, we may wish to format them more
+      location: item.location, // TODO: we may wish to format these locations, by default they are written as 'northeurope' rather than a more human readable "North Europe"
+    }));
   }
 
   async makeResourceGraphRequest<T = unknown>(
