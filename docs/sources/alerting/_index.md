@@ -22,7 +22,7 @@ You can perform the following tasks for alerts:
 - [Create an alert rule]({{< relref "create-alerts.md" >}})
 - [View existing alert rules and their current state]({{< relref "view-alerts.md" >}})
 - [Test alert rules and troubleshoot]({{< relref "troubleshoot-alerts.md" >}})
-- [Add or edit an alert notification channel]({{< relref "notifications.md" >}})
+- [Add or edit an alert contact point]({{< relref "notifications.md" >}})
 
 ## Clustering
 
