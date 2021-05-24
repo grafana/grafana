@@ -78,7 +78,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     this.withCredentials = instanceSettings.withCredentials;
     this.interval = instanceSettings.jsonData.timeInterval || '15s';
     this.queryTimeout = instanceSettings.jsonData.queryTimeout;
-    this.httpMethod = instanceSettings.jsonData.httpMethod || 'GET';
+    this.httpMethod = instanceSettings.jsonData.httpMethod || 'POST';
     this.directUrl = instanceSettings.jsonData.directUrl;
     this.exemplarTraceIdDestinations = instanceSettings.jsonData.exemplarTraceIdDestinations;
     this.ruleMappings = {};

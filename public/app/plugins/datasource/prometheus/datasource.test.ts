@@ -144,9 +144,14 @@ describe('PrometheusDatasource', () => {
         interval: '60s',
       } as any);
       expect(fetchMock.mock.calls.length).toBe(1);
-      expect(fetchMock.mock.calls[0][0].url).toBe(
-        'proxied/api/v1/query_range?query=test%7Bjob%3D%22testjob%22%7D&start=60&end=180&step=60&customQuery=123'
-      );
+      expect(fetchMock.mock.calls[0][0].url).toBe('proxied/api/v1/query_range');
+      expect(fetchMock.mock.calls[0][0].data).toEqual({
+        customQuery: '123',
+        end: 180,
+        query: 'test{job="testjob"}',
+        start: 60,
+        step: 60,
+      });
     });
   });
 

@@ -21,14 +21,12 @@ export const PromSettings = (props: Props) => {
   const { options, onOptionsChange } = props;
 
   /**
-   * We want to change the default httpMethod to 'POST' for all of the new Prometheus data sources instances (no url) added in 7.5+.
-   * We are explicitly adding httpMethod, as previously it could be undefined and defaulted to 'GET'.
-   * Undefined httpMethod is still going to be considered 'GET' for backward compatibility reasons, but if users open data
-   * source settings it is going to be set to 'GET' explicitly and it will be selected in httpMethod dropdown as 'GET'.
+   * We want to change the default httpMethod to 'POST' for all Prometheus data sources instances.
+   * We are explicitly adding httpMethod, as previously it could be undefined, just so it is more predictable for users.
    * */
 
   if (!options.jsonData.httpMethod) {
-    options.url ? (options.jsonData.httpMethod = 'GET') : (options.jsonData.httpMethod = 'POST');
+    options.jsonData.httpMethod = 'POST';
   }
 
   return (
