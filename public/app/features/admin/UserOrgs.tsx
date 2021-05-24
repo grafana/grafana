@@ -84,7 +84,7 @@ const getOrgRowStyles = stylesFactory((theme: GrafanaTheme) => {
 interface OrgRowProps extends Themeable {
   org: UserOrg;
   onOrgRemove: (orgId: number) => void;
-  onOrgRoleChange: (orgId: number, newRole: string) => void;
+  onOrgRoleChange: (orgId: number, newRole: OrgRole) => void;
 }
 
 interface OrgRowState {
@@ -203,7 +203,7 @@ export class AddToOrgModal extends PureComponent<AddToOrgModalProps, AddToOrgMod
   };
 
   onOrgSelect = (org: OrgSelectItem) => {
-    this.setState({ selectedOrg: { ...org } });
+    this.setState({ selectedOrg: org.value! });
   };
 
   onOrgRoleChange = (newRole: OrgRole) => {

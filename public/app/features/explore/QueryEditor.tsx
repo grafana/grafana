@@ -21,7 +21,7 @@ interface QueryEditorProps {
 
 export default class QueryEditor extends PureComponent<QueryEditorProps, any> {
   element: any;
-  component: AngularComponent;
+  component?: AngularComponent;
   angularScope: any;
 
   async componentDidMount() {

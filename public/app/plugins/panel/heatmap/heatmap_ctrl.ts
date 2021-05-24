@@ -164,10 +164,6 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
   }
 
   onRender() {
-    if (!this.range || !this.series) {
-      return;
-    }
-
     if (this.panel.dataFormat === 'tsbuckets') {
       this.convertHistogramToHeatmapData();
     } else {
@@ -176,6 +172,10 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
   }
 
   convertTimeSeriesToHeatmapData() {
+    if (!this.range || !this.series) {
+      return;
+    }
+
     let xBucketSize, yBucketSize, bucketsData, heatmapStats;
     const logBase = this.panel.yAxis.logBase;
 
@@ -235,6 +235,10 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
   }
 
   convertHistogramToHeatmapData() {
+    if (!this.range || !this.series) {
+      return;
+    }
+
     const panelDatasource = this.getPanelDataSourceType();
     let xBucketSize, yBucketSize, bucketsData, tsBuckets;
 

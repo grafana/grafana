@@ -161,7 +161,7 @@ export class HeatmapRenderer {
     const ticks = this.chartWidth / DEFAULT_X_TICK_SIZE_PX;
     const format = graphTimeFormat(ticks, this.timeRange.from.valueOf(), this.timeRange.to.valueOf());
     const timeZone = this.ctrl.dashboard.getTimezone();
-    const formatter = (date: Date) =>
+    const formatter = (date: d3.AxisDomain) =>
       dateTimeFormat(date.valueOf(), {
         format: format,
         timeZone: timeZone,
@@ -340,8 +340,8 @@ export class HeatmapRenderer {
     this.ctrl.decimals = decimals;
 
     const tickValueFormatter = this.tickValueFormatter.bind(this);
-    function tickFormatter(valIndex: string) {
-      let valueFormatted = tsBuckets[valIndex];
+    function tickFormatter(valIndex: d3.AxisDomain) {
+      let valueFormatted = tsBuckets[valIndex.valueOf()];
       if (!isNaN(toNumber(valueFormatted)) && valueFormatted !== '') {
         // Try to format numeric tick labels
         valueFormatted = tickValueFormatter(decimals)(toNumber(valueFormatted));

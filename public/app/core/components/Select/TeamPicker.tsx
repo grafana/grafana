@@ -1,14 +1,10 @@
 import React, { Component } from 'react';
 import { debounce, isNil } from 'lodash';
 import { AsyncSelect } from '@grafana/ui';
+import { SelectableValue } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 
-export interface Team {
-  id: number;
-  label: string;
-  name: string;
-  avatarUrl: string;
-}
+export type Team = SelectableValue<{ id: number; name: string; avatarUrl: string }>;
 
 export interface Props {
   onSelected: (team: Team) => void;

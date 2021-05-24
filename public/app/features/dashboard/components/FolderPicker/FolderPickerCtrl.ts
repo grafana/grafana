@@ -13,7 +13,7 @@ import { createFolder } from 'app/features/manage-dashboards/state/actions';
 export class FolderPickerCtrl {
   declare initialTitle: string;
   initialFolderId?: number;
-  labelClass: string;
+  labelClass?: string;
   onChange: any;
   onLoad: any;
   onCreateFolder: any;
@@ -35,7 +35,7 @@ export class FolderPickerCtrl {
   constructor(private validationSrv: ValidationSrv, private contextSrv: ContextSrv, private $scope: IScope) {
     this.isEditor = this.contextSrv.isEditor;
 
-    if (!this.labelClass) {
+    if (this.labelClass === undefined) {
       this.labelClass = 'width-7';
     }
 

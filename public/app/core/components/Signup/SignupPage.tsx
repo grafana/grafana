@@ -1,5 +1,5 @@
 import React, { FC } from 'react';
-import { Form, Field, Input, Button, HorizontalGroup, LinkButton } from '@grafana/ui';
+import { Form, Field, Input, Button, HorizontalGroup, LinkButton, FormAPI } from '@grafana/ui';
 import { getConfig } from 'app/core/config';
 import { getBackendSrv } from '@grafana/runtime';
 import appEvents from 'app/core/app_events';
@@ -60,7 +60,7 @@ export const SignupPage: FC<Props> = (props) => {
     <LoginLayout>
       <InnerBox>
         <Form defaultValues={defaultValues} onSubmit={onSubmit}>
-          {({ errors, register, getValues }) => (
+          {({ errors, register, getValues }: FormAPI<SignupDTO>) => (
             <>
               <Field label="Your name">
                 <Input {...register('name')} placeholder="(optional)" />

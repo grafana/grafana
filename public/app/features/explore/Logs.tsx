@@ -80,8 +80,8 @@ interface State {
 }
 
 export class UnthemedLogs extends PureComponent<Props, State> {
-  flipOrderTimer: NodeJS.Timeout;
-  cancelFlippingTimer: NodeJS.Timeout;
+  flipOrderTimer?: NodeJS.Timeout;
+  cancelFlippingTimer?: NodeJS.Timeout;
   topLogsRef = createRef<HTMLDivElement>();
 
   state: State = {
@@ -97,8 +97,13 @@ export class UnthemedLogs extends PureComponent<Props, State> {
   };
 
   componentWillUnmount() {
-    clearTimeout(this.flipOrderTimer);
-    clearTimeout(this.cancelFlippingTimer);
+    if (this.flipOrderTimer) {
+      clearTimeout(this.flipOrderTimer);
+    }
+
+    if (this.cancelFlippingTimer) {
+      clearTimeout(this.cancelFlippingTimer);
+    }
   }
 
   onChangeLogsSortOrder = () => {
