@@ -598,40 +598,7 @@ func getErrorFromElasticResponse(response *es.SearchResponse) plugins.DataQueryR
 	return result
 }
 
-func aggregateValuesBy(method string, values []float64) float64 {
-	switch method {
-	case "max":
-		var current float64
-		for _, v := range values {
-			if current < v {
-				current = v
-			}
-		}
-		return current
-	case "min":
-		var current float64
-		for _, v := range values {
-			if current == 0 {
-				current = v
-			}
-			if current > v {
-				current = v
-			}
-		}
-		return current
-	case "sum":
-		var sum float64 = 0
-		for _, v := range values {
-			sum += v
-		}
-		return sum
-	default:
-		return aggregateValuesBy("sum", values) / float64(len(values))
-	}
-}
-
-func processTopMetricValues(stats *simplejson.Json, metric *MetricAgg, field string) float64 {
-	var metricValues []float64
+func processTopMetricValues(stats *simplejson.Json, metric *MetricAgg, field string) null.Float {
 	for _, _stat := range stats.MustArray() {
 		stat := _stat.(map[string]interface{})
 		_metrics, hasMetrics := stat["metrics"]
@@ -639,17 +606,11 @@ func processTopMetricValues(stats *simplejson.Json, metric *MetricAgg, field str
 			metrics := _metrics.(map[string]interface{})
 			_metricValue, hasMetricValue := metrics[field]
 			if hasMetricValue && _metricValue != nil {
-				metricValue := _metricValue.(float64)
-				metricValues = append(metricValues, metricValue)
+				return null.FloatFrom(_metricValue.(float64))
 			}
 		}
 	}
-	aggregateByMethod, hasAggregateByMethod := metric.Settings.MustMap()["aggregateBy"]
-	method := "avg"
-	if hasAggregateByMethod {
-		method = aggregateByMethod.(string)
-	}
-	return aggregateValuesBy(method, metricValues)
+	return null.NewFloat(0, false)
 }
 
 func processTopMetrics(metric *MetricAgg, esAgg *simplejson.Json, props map[string]string) plugins.DataTimeSeriesSlice {
@@ -670,18 +631,13 @@ func processTopMetrics(metric *MetricAgg, esAgg *simplejson.Json, props map[stri
 				stats := bucket.GetPath(metric.ID, "top")
 				aggregatedValue := processTopMetricValues(stats, metric, metricField)
 				key := castToNullFloat(bucket.Get("key"))
-				newSeries.Points = append(newSeries.Points, plugins.DataTimePoint{null.FloatFrom(aggregatedValue), key})
+				newSeries.Points = append(newSeries.Points, plugins.DataTimePoint{aggregatedValue, key})
 			}
 
 			for k, v := range props {
 				newSeries.Tags[k] = v
 			}
-			aggregateBy, hasAggregateBy := metric.Settings.MustMap()["aggregateBy"]
-			if hasAggregateBy {
-				newSeries.Tags["metric"] = aggregateBy.(string)
-			} else {
-				newSeries.Tags["metric"] = "avg"
-			}
+			newSeries.Tags["metric"] = "top_metrics"
 			newSeries.Tags["field"] = metricField
 			series = append(series, newSeries)
 		}

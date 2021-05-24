@@ -3,20 +3,10 @@ import React, { FunctionComponent } from 'react';
 import { useDispatch } from '../../../../hooks/useStatelessReducer';
 import { TopMetrics } from '../aggregations';
 import { changeMetricSetting } from '../state/actions';
-import { SettingField } from './SettingField';
 import { orderOptions } from '../../BucketAggregationsEditor/utils';
-import { range } from 'lodash';
 import { useFields } from 'app/plugins/datasource/elasticsearch/hooks/useFields';
 import { css } from '@emotion/css';
 import { SelectableValue } from '@grafana/data';
-
-const aggregateByOptions = [
-  { value: 'avg', label: 'Average' },
-  { value: 'sum', label: 'Sum' },
-  { value: 'max', label: 'Max' },
-  { value: 'min', label: 'Min' },
-  { value: 'concat', label: 'Concatenate' },
-];
 
 interface Props {
   metric: TopMetrics;
@@ -26,7 +16,7 @@ const toMultiSelectValue = (value: string): SelectableValue<string> => ({ value,
 
 export const TopMetricsSettingsEditor: FunctionComponent<Props> = ({ metric }) => {
   const dispatch = useDispatch();
-  const getOrderByOptions = useFields(['number', 'date', 'boolean']);
+  const getOrderByOptions = useFields('number');
   const getMetricsOptions = useFields(metric.type);
 
   return (
@@ -74,23 +64,6 @@ export const TopMetricsSettingsEditor: FunctionComponent<Props> = ({ metric }) =
           value={metric.settings?.orderBy}
         />
       </InlineField>
-      <InlineField label="Size" labelWidth={16}>
-        <Select
-          onChange={(e) => dispatch(changeMetricSetting(metric, 'size', e.value))}
-          options={range(0, 10).map((value) => ({ value: `${value + 1}`, label: `${value + 1}` }))}
-          value={metric.settings?.size}
-        />
-      </InlineField>
-      <InlineField label="Aggregate by" labelWidth={16}>
-        <Select
-          onChange={(e) => dispatch(changeMetricSetting(metric, 'aggregateBy', e.value))}
-          options={aggregateByOptions}
-          value={metric.settings?.aggregateBy}
-        />
-      </InlineField>
-      {metric.settings?.aggregateBy === 'concat' && (
-        <SettingField label="Separator" metric={metric} settingName="separator" />
-      )}
     </>
   );
 };

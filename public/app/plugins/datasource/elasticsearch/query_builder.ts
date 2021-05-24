@@ -387,7 +387,7 @@ export class ElasticQueryBuilder {
           case 'top_metrics':
             metricAgg = {
               metrics: metric.settings?.metrics?.map((field) => ({ field })),
-              size: metric.settings?.size,
+              size: 1,
             };
 
             if (metric.settings?.orderBy) {

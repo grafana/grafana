@@ -1,19 +1,4 @@
-import {
-  clone,
-  filter,
-  find,
-  identity,
-  isArray,
-  keys,
-  map,
-  uniq,
-  values as _values,
-  isNumber,
-  max,
-  mean,
-  min,
-  sum,
-} from 'lodash';
+import { clone, filter, find, identity, isArray, keys, map, uniq, values as _values } from 'lodash';
 import flatten from 'app/core/utils/flatten';
 import * as queryDef from './query_def';
 import TableModel from 'app/core/table_model';
@@ -32,25 +17,6 @@ import {
 } from './components/QueryEditor/MetricAggregationsEditor/aggregations';
 import { describeMetric, getScriptValue } from './utils';
 import { metricAggregationConfig } from './components/QueryEditor/MetricAggregationsEditor/utils';
-
-function aggValues(method: string, values: Array<number | null | string>, separator = ' ') {
-  const nonNullValues = values.filter(isNumber) as number[];
-  if (nonNullValues.length === 0) {
-    return null;
-  }
-  switch (method) {
-    case 'sum':
-      return sum(nonNullValues);
-    case 'min':
-      return min(nonNullValues);
-    case 'max':
-      return max(nonNullValues);
-    case 'avg':
-      return mean(nonNullValues);
-    default:
-      return values.join(separator);
-  }
-}
 
 const HIGHLIGHT_TAGS_EXP = `${queryDef.highlightTags.pre}([^@]+)${queryDef.highlightTags.post}`;
 type TopMetricMetric = Record<string, number>;
@@ -148,7 +114,7 @@ export class ElasticResponse {
             for (const metricField of metric.settings?.metrics) {
               newSeries = {
                 datapoints: [],
-                metric: metric.settings.aggregateBy,
+                metric: metric.type,
                 props: props,
                 refId: target.refId,
                 field: metricField,
@@ -162,10 +128,7 @@ export class ElasticResponse {
                   }
                   return null;
                 });
-                const point = [
-                  aggValues(metric.settings?.aggregateBy ?? 'avg', values, metric.settings?.separator),
-                  bucket.key,
-                ];
+                const point = [values[values.length - 1], bucket.key];
                 newSeries.datapoints.push(point);
               }
               seriesList.push(newSeries);

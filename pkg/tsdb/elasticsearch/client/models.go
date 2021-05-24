@@ -285,15 +285,10 @@ func (a *MetricAggregation) MarshalJSON() ([]byte, error) {
 		root := map[string]interface{}{}
 		var rootMetrics []map[string]string
 
-		size, hasSize := a.Settings["size"]
 		order, hasOrder := a.Settings["order"]
 		orderBy, hasOrderBy := a.Settings["orderBy"]
 
-		if hasSize {
-			root["size"] = size
-		} else {
-			root["size"] = "1"
-		}
+		root["size"] = "1"
 
 		_metrics, hasMetrics := a.Settings["metrics"].([]interface{})
 		if hasMetrics {

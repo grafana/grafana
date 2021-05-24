@@ -444,8 +444,6 @@ describe('ElasticQueryBuilder', () => {
               settings: {
                 order: 'desc',
                 orderBy: '@timestamp',
-                aggregateBy: 'sum',
-                size: '2',
                 metrics: ['@value'],
               },
             },
@@ -463,7 +461,7 @@ describe('ElasticQueryBuilder', () => {
         expect(firstLevel.aggs['2'].top_metrics.metrics.length).toBe(1);
         expect(firstLevel.aggs['2'].top_metrics.metrics).toEqual([{ field: '@value' }]);
         expect(firstLevel.aggs['2'].top_metrics.sort).toEqual([{ '@timestamp': 'desc' }]);
-        expect(firstLevel.aggs['2'].top_metrics.size).toBe('2');
+        expect(firstLevel.aggs['2'].top_metrics.size).toBe(1);
       });
 
       it('with derivative', () => {

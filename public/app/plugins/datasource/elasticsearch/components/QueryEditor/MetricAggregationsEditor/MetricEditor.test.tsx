@@ -84,7 +84,7 @@ describe('Metric Editor', () => {
   });
 
   describe('Top Metrics Aggregation', () => {
-    const setupTopMetricsScreen = (esVersion: number, xpack: boolean) => {
+    const setupTopMetricsScreen = (esVersion: string, xpack: boolean) => {
       const query: ElasticsearchQuery = {
         refId: 'A',
         query: '',
@@ -114,17 +114,17 @@ describe('Metric Editor', () => {
     };
 
     it('Should include top metrics aggregation when esVersion is 77 and X-Pack is enabled', () => {
-      setupTopMetricsScreen(77, true);
+      setupTopMetricsScreen('7.7.0', true);
       expect(screen.getByText('Top Metrics')).toBeInTheDocument();
     });
 
     it('Should NOT include top metrics aggregation where esVersion is 77 and X-Pack is disabled', () => {
-      setupTopMetricsScreen(77, false);
+      setupTopMetricsScreen('7.7.0', false);
       expect(screen.queryByText('Top Metrics')).toBe(null);
     });
 
     it('Should NOT include top metrics aggregation when esVersion is 70 and X-Pack is enabled', () => {
-      setupTopMetricsScreen(70, true);
+      setupTopMetricsScreen('7.0.0', true);
       expect(screen.queryByText('Top Metrics')).toBe(null);
     });
   });

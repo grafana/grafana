@@ -288,9 +288,6 @@ export interface TopMetrics extends BaseMetricAggregation {
   settings?: {
     order?: string;
     orderBy?: string;
-    size?: string;
-    aggregateBy?: string;
-    separator?: string;
     metrics?: string[];
   };
 }

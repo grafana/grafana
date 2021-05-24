@@ -395,7 +395,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
 
   testDatasource() {
     // validate that the index exist and has date field
-    return this.getFields(['date'])
+    return this.getFields('date')
       .pipe(
         mergeMap((dateFields) => {
           const timeField: any = find(dateFields, { text: this.timeField });

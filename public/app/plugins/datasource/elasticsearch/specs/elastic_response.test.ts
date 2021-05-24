@@ -614,8 +614,6 @@ describe('ElasticResponse', () => {
               settings: {
                 order: 'top',
                 orderBy: '@timestamp',
-                size: '2',
-                aggregateBy: 'sum',
                 metrics: ['@value', '@anotherValue'],
               },
               id: '1',
@@ -634,20 +632,14 @@ describe('ElasticResponse', () => {
                     key: new Date('2021-01-01T00:00:00.000Z').valueOf(),
                     key_as_string: '2021-01-01T00:00:00.000Z',
                     '1': {
-                      top: [
-                        { sort: ['2021-01-01T00:00:00.000Z'], metrics: { '@value': 1, '@anotherValue': 2 } },
-                        { sort: ['2021-01-01T00:00:00.000Z'], metrics: { '@value': 1, '@anotherValue': 2 } },
-                      ],
+                      top: [{ sort: ['2021-01-01T00:00:00.000Z'], metrics: { '@value': 1, '@anotherValue': 2 } }],
                     },
                   },
                   {
                     key: new Date('2021-01-01T00:00:10.000Z').valueOf(),
                     key_as_string: '2021-01-01T00:00:10.000Z',
                     '1': {
-                      top: [
-                        { sort: ['2021-01-01T00:00:10.000Z'], metrics: { '@value': 1, '@anotherValue': 2 } },
-                        { sort: ['2021-01-01T00:00:10.000Z'], metrics: { '@value': 1, '@anotherValue': 2 } },
-                      ],
+                      top: [{ sort: ['2021-01-01T00:00:10.000Z'], metrics: { '@value': 1, '@anotherValue': 2 } }],
                     },
                   },
                 ],
@@ -666,16 +658,16 @@ describe('ElasticResponse', () => {
       expect(firstSeries.target).toBe('Sum @value');
       expect(firstSeries.datapoints.length).toBe(2);
       expect(firstSeries.datapoints).toEqual([
-        [2, new Date('2021-01-01T00:00:00.000Z').valueOf()],
-        [2, new Date('2021-01-01T00:00:10.000Z').valueOf()],
+        [1, new Date('2021-01-01T00:00:00.000Z').valueOf()],
+        [1, new Date('2021-01-01T00:00:10.000Z').valueOf()],
       ]);
 
       const secondSeries = result.data[1];
       expect(secondSeries.target).toBe('Sum @anotherValue');
       expect(secondSeries.datapoints.length).toBe(2);
       expect(secondSeries.datapoints).toEqual([
-        [4, new Date('2021-01-01T00:00:00.000Z').valueOf()],
-        [4, new Date('2021-01-01T00:00:10.000Z').valueOf()],
+        [2, new Date('2021-01-01T00:00:00.000Z').valueOf()],
+        [2, new Date('2021-01-01T00:00:10.000Z').valueOf()],
       ]);
     });
   });
