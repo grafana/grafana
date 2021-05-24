@@ -27,13 +27,8 @@ import { ExploreId, QueryOptions } from 'app/types/explore';
 import { getTimeZone } from 'app/features/profile/state/selectors';
 import { getShiftedTimeRange } from 'app/core/utils/timePicker';
 import { notifyApp } from '../../../core/actions';
-import { preProcessPanelData, runRequest } from '../../query/state/runRequest';
-import {
-  decorateWithFrameTypeMetadata,
-  decorateWithGraphResult,
-  decorateWithLogsResult,
-  decorateWithTableResult,
-} from '../utils/decorators';
+import { runRequest } from '../../query/state/runRequest';
+import { decorateData } from '../utils/decorators';
 import { createErrorNotification } from '../../../core/copy/appNotification';
 import { richHistoryUpdatedAction, stateSave } from './main';
 import { AnyAction, createAction, PayloadAction } from '@reduxjs/toolkit';
@@ -336,13 +331,7 @@ export const runQueries = (exploreId: ExploreId, options?: { replaceUrl?: boolea
     // If we have results saved in cache, we are going to use those results instead of running queries
     if (cachedValue) {
       newQuerySub = of(cachedValue)
-        .pipe(
-          map((data: PanelData) => preProcessPanelData(data, queryResponse)),
-          map(decorateWithFrameTypeMetadata),
-          map(decorateWithGraphResult),
-          map(decorateWithLogsResult({ absoluteRange, refreshInterval, queries })),
-          mergeMap(decorateWithTableResult)
-        )
+        .pipe(mergeMap((data: PanelData) => decorateData(data, queryResponse, absoluteRange, refreshInterval, queries)))
         .subscribe((data) => {
           if (!data.error) {
             dispatch(stateSave());
@@ -396,11 +385,7 @@ export const runQueries = (exploreId: ExploreId, options?: { replaceUrl?: boolea
           // rendering. In case this is optimized this can be tweaked, but also it should be only as fast as user
           // actually can see what is happening.
           live ? throttleTime(500) : identity,
-          map((data: PanelData) => preProcessPanelData(data, queryResponse)),
-          map(decorateWithFrameTypeMetadata),
-          map(decorateWithGraphResult),
-          map(decorateWithLogsResult({ absoluteRange, refreshInterval, queries })),
-          mergeMap(decorateWithTableResult)
+          mergeMap((data: PanelData) => decorateData(data, queryResponse, absoluteRange, refreshInterval, queries))
         )
         .subscribe(
           (data) => {
