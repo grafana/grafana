@@ -698,6 +698,8 @@ describe('logSeriesToLogsModel', () => {
         meta: {
           searchWords: ['test'],
           limit: 1000,
+          stats: [{ displayName: 'Summary: total bytes processed', value: 97048, unit: 'decbytes' }],
+          custom: { lokiQueryStatKey: 'Summary: total bytes processed' },
           preferredVisualisationType: 'logs',
         },
       },
@@ -705,7 +707,10 @@ describe('logSeriesToLogsModel', () => {
 
     const metaData = {
       hasUniqueLabels: false,
-      meta: [{ label: LIMIT_LABEL, value: 1000, kind: 0 }],
+      meta: [
+        { label: LIMIT_LABEL, value: 1000, kind: 0 },
+        { label: 'Total bytes processed', value: '97.0  kB', kind: 1 },
+      ],
       rows: [],
     };
 
@@ -739,6 +744,8 @@ describe('logSeriesToLogsModel', () => {
         meta: {
           searchWords: ['test'],
           limit: 1000,
+          stats: [{ displayName: 'Summary: total bytes processed', value: 97048, unit: 'decbytes' }],
+          custom: { lokiQueryStatKey: 'Summary: total bytes processed' },
           preferredVisualisationType: 'logs',
         },
       }),
@@ -749,6 +756,8 @@ describe('logSeriesToLogsModel', () => {
         meta: {
           searchWords: ['test'],
           limit: 1000,
+          stats: [{ displayName: 'Summary: total bytes processed', value: 97048, unit: 'decbytes' }],
+          custom: { lokiQueryStatKey: 'Summary: total bytes processed' },
           preferredVisualisationType: 'logs',
         },
       }),
@@ -758,6 +767,7 @@ describe('logSeriesToLogsModel', () => {
     expect(logsModel.meta).toMatchObject([
       { kind: 2, label: 'Common labels', value: { foo: 'bar', level: 'dbug' } },
       { kind: 0, label: LIMIT_LABEL, value: 2000 },
+      { kind: 1, label: 'Total bytes processed', value: '194  kB' },
     ]);
     expect(logsModel.rows).toHaveLength(3);
     expect(logsModel.rows).toMatchObject([
