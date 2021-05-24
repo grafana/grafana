@@ -94,7 +94,7 @@ func (h *databaseQueryWrapper) instrument(ctx context.Context, status string, qu
 		histogram.Observe(elapsed.Seconds())
 	}
 
-	span, ctx := opentracing.StartSpanFromContext(ctx, "database query")
+	span, _ := opentracing.StartSpanFromContext(ctx, "database query")
 	defer span.Finish()
 
 	span.LogFields(
