@@ -106,7 +106,7 @@ func (s *ManagedStream) ListChannels(orgID int64, prefix string) []util.DynMap {
 // unstableSchema flag can be set to disable schema caching for a path.
 func (s *ManagedStream) Push(orgID int64, path string, frame *data.Frame) error {
 	// Keep schema + data for last packet.
-	msg, err := data.FrameToJSON(frame, data.WithSchemaAndData)
+	msg, err := data.FrameToJSON(frame)
 	if err != nil {
 		logger.Error("Error marshaling frame with data", "error", err)
 		return err
@@ -120,13 +120,13 @@ func (s *ManagedStream) Push(orgID int64, path string, frame *data.Frame) error 
 	s.last[orgID][path] = msg
 	s.mu.Unlock()
 
-	send := data.WithSchemaAndData
+	include := data.IncludeAll
 	if exists && last.SameSchema(&msg) {
-		send = data.WithData
+		include = data.IncludeDataOnly
 	}
 
 	// When the schema has not changed, just send the data
-	sendBytes := msg.Bytes(send)
+	sendBytes := msg.Bytes(include)
 
 	// The channel this will be posted into.
 	channel := live.Channel{Scope: live.ScopeStream, Namespace: s.id, Path: path}.String()
@@ -144,7 +144,7 @@ func (s *ManagedStream) getLastPacket(orgId int64, path string) (json.RawMessage
 	}
 	msg, ok := s.last[orgId][path]
 	if ok {
-		return msg.Bytes(data.WithSchemaAndData), ok
+		return msg.Body(), ok
 	}
 	return nil, ok
 }

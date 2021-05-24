@@ -2,6 +2,7 @@ package testdatasource
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"testing"
 	"time"
@@ -278,7 +279,7 @@ func TestReadCSV(t *testing.T) {
 	require.NoError(t, err)
 
 	frame := data.NewFrame("", fBool, fBool2, fNum, fStr)
-	out, err := data.FrameToJSON(frame, true, true)
+	out, err := json.Marshal(frame)
 	require.NoError(t, err)
 
 	// require.Equal(t, "", string(out))

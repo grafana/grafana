@@ -14,8 +14,9 @@ import (
 )
 
 type testStreamHandler struct {
-	logger log.Logger
-	frame  *data.Frame
+	logger    log.Logger
+	frame     *data.Frame
+	frameJson data.FrameJSON
 }
 
 func newTestStreamHandler(logger log.Logger) *testStreamHandler {
@@ -25,21 +26,19 @@ func newTestStreamHandler(logger log.Logger) *testStreamHandler {
 		data.NewField("Min", nil, make([]float64, 1)),
 		data.NewField("Max", nil, make([]float64, 1)),
 	)
+	frameJson, _ := data.FrameToJSON(frame)
 	return &testStreamHandler{
-		frame:  frame,
-		logger: logger,
+		frame:     frame,
+		logger:    logger,
+		frameJson: frameJson,
 	}
 }
 
 func (p *testStreamHandler) SubscribeStream(_ context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
-	schema, err := data.FrameToJSON(p.frame, true, false)
-	if err != nil {
-		return nil, err
-	}
 	p.logger.Debug("Allowing access to stream", "path", req.Path, "user", req.PluginContext.User)
 	return &backend.SubscribeStreamResponse{
 		Status: backend.SubscribeStreamStatusOK,
-		Data:   schema,
+		Data:   p.frameJson.Bytes(data.IncludeSchemaOnly),
 	}, nil
 }
 
@@ -102,14 +101,14 @@ func (p *testStreamHandler) runTestStream(ctx context.Context, path string, conf
 			p.frame.Fields[2].Set(0, walker-((rand.Float64()*spread)+0.01)) // Min
 			p.frame.Fields[3].Set(0, walker+((rand.Float64()*spread)+0.01)) // Max
 
-			bytes, err := data.FrameToJSON(p.frame, false, true)
+			err := p.frameJson.SetData(p.frame)
 			if err != nil {
 				logger.Warn("unable to marshal line", "error", err)
 				continue
 			}
 
 			packet := &backend.StreamPacket{
-				Data: bytes,
+				Data: p.frameJson.Bytes(data.IncludeDataOnly),
 			}
 			if err := sender.Send(packet); err != nil {
 				return err
