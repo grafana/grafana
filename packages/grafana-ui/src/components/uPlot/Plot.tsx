@@ -4,6 +4,8 @@ import { PlotContext, PlotContextType } from './context';
 import { DEFAULT_PLOT_CONFIG } from './utils';
 import { PlotProps } from './types';
 
+const CANVAS_POLL_DELAY = 300;
+
 function sameDims(prevProps: PlotProps, nextProps: PlotProps) {
   return nextProps.width === prevProps.width && nextProps.height === prevProps.height;
 }
@@ -27,6 +29,7 @@ type UPlotChartState = {
  * Exposes context for uPlot instance access
  */
 export class UPlotChart extends React.Component<PlotProps, UPlotChartState> {
+  private canvasPollTs: number = performance.now();
   plotContainer = createRef<HTMLDivElement>();
   plotCanvasBBox = createRef<DOMRect>();
 
@@ -36,7 +39,19 @@ export class UPlotChart extends React.Component<PlotProps, UPlotChartState> {
     this.state = {
       ctx: {
         plot: null,
-        getCanvasBoundingBox: () => this.plotCanvasBBox.current,
+        getCanvasBoundingBox: () => {
+          // If cursor sync enabled poll canvas bbox once per CANVAS_POLL_DELAY
+          if (this.props.config.hasSync() && performance.now() - this.canvasPollTs > CANVAS_POLL_DELAY) {
+            let canvas = this.plotContainer.current?.querySelector<HTMLDivElement>('.u-over');
+            if (!canvas) {
+              return null;
+            }
+
+            (this.plotCanvasBBox as MutableRefObject<any>).current = canvas.getBoundingClientRect();
+            this.canvasPollTs = performance.now();
+          }
+          return this.plotCanvasBBox.current;
+        },
       },
     };
   }
@@ -56,6 +71,7 @@ export class UPlotChart extends React.Component<PlotProps, UPlotChartState> {
         return;
       }
       (this.plotCanvasBBox as MutableRefObject<any>).current = canvas.getBoundingClientRect();
+      this.canvasPollTs = performance.now();
     });
 
     const config: Options = {

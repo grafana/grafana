@@ -1,4 +1,4 @@
-import React, { useEffect, useLayoutEffect, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Portal } from '../../Portal/Portal';
 import { usePlotContext } from '../context';
 import {
@@ -35,6 +35,7 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
   ...otherProps
 }) => {
   const theme = useTheme2();
+  const mousePosition = useRef<CartesianCoords2D>({ x: 0, y: 0 });
   const plotCtx = usePlotContext();
   const [focusedSeriesIdx, setFocusedSeriesIdx] = useState<number | null>(null);
   const [focusedPointIdx, setFocusedPointIdx] = useState<number | null>(null);
@@ -51,15 +52,21 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
     const plotMouseLeave = () => {
       setCoords(null);
     };
+    const trackMousePosition = (e: MouseEvent) => {
+      mousePosition.current = { x: e.clientX, y: e.clientY };
+    };
 
     if (plotCtx && plotCtx.plot) {
       plotCtx.plot.root.querySelector('.u-over')!.addEventListener('mouseleave', plotMouseLeave);
     }
 
+    document.addEventListener('mousemove', trackMousePosition);
+
     return () => {
       if (plotCtx && plotCtx.plot) {
         plotCtx.plot.root.querySelector('.u-over')!.removeEventListener('mouseleave', plotMouseLeave);
       }
+      document.removeEventListener('mousemove', trackMousePosition);
     };
   }, [plotCtx.plot?.root, setCoords]);
 
@@ -71,6 +78,12 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
         config.tooltipInterpolator!(setFocusedSeriesIdx, setFocusedPointIdx, (clear) => {
           if (clear) {
             setCoords(null);
+            return;
+          }
+
+          // If cursor sync not enabled, position tooltip relatively to mouse position
+          if (!config.hasSync()) {
+            setCoords(mousePosition.current);
             return;
           }
 
@@ -88,20 +101,24 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
     } else {
       // default series/datapoint idx retireval
       config.addHook('setCursor', (u) => {
+        setFocusedPointIdx(u.cursor.idx === undefined ? u.posToIdx(u.cursor.left || 0) : u.cursor.idx);
+        // If cursor sync not enabled, position tooltip relatively to mouse position
+        if (!config.hasSync()) {
+          setCoords(mousePosition.current);
+          return;
+        }
+
         const bbox = plotCtx.getCanvasBoundingBox();
         if (!bbox) {
           return;
         }
 
         const { x, y } = positionTooltip(u, bbox);
-
         if (x !== undefined && y !== undefined) {
           setCoords({ x, y });
         } else {
           setCoords(null);
         }
-
-        setFocusedPointIdx(u.cursor.idx === undefined ? u.posToIdx(u.cursor.left || 0) : u.cursor.idx);
       });
 
       config.addHook('setSeries', (_, idx) => {
