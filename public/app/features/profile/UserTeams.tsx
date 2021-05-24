@@ -5,14 +5,9 @@ import { LoadingPlaceholder } from '@grafana/ui';
 export interface Props {
   teams: Team[];
   isLoading: boolean;
-  loadTeams: () => void;
 }
 
 export class UserTeams extends PureComponent<Props> {
-  componentDidMount() {
-    this.props.loadTeams();
-  }
-
   render() {
     const { isLoading, teams } = this.props;
 

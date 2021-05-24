@@ -1,8 +1,8 @@
 import React, { FC } from 'react';
-import { Button, Tooltip, Icon, Form, Input, Field, FieldSet } from '@grafana/ui';
+import { Button, Field, FieldSet, Form, Icon, Input, Tooltip } from '@grafana/ui';
 import { UserDTO } from 'app/types';
 import config from 'app/core/config';
-import { ProfileUpdateFields } from 'app/core/utils/UserProvider';
+import { ProfileUpdateFields } from './types';
 
 export interface Props {
   user: UserDTO;

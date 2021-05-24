@@ -1,75 +1,107 @@
-import React, { FC } from 'react';
-import { connect } from 'react-redux';
+import React from 'react';
+import { useAsync } from 'react-use';
+import { connect, ConnectedProps } from 'react-redux';
 import { hot } from 'react-hot-loader';
-import { LoadingPlaceholder, VerticalGroup } from '@grafana/ui';
-import { config } from '@grafana/runtime';
 import { NavModel } from '@grafana/data';
-import { UserProvider, UserAPI, LoadingStates } from 'app/core/utils/UserProvider';
-import { getNavModel } from 'app/core/selectors/navModel';
-import { UserDTO, Team, UserOrg, UserSession, StoreState } from 'app/types';
-import { SharedPreferences } from 'app/core/components/SharedPreferences/SharedPreferences';
-import Page from 'app/core/components/Page/Page';
-import { UserTeams } from './UserTeams';
-import { UserSessions } from './UserSessions';
-import { UserOrganizations } from './UserOrganizations';
-import { UserProfileEditForm } from './UserProfileEditForm';
+import { VerticalGroup } from '@grafana/ui';
 
-export interface Props {
+import { getNavModel } from 'app/core/selectors/navModel';
+import { StoreState } from 'app/types';
+import Page from 'app/core/components/Page/Page';
+import {
+  changeUserOrg,
+  loadOrgs,
+  loadSessions,
+  loadTeams,
+  loadUser,
+  revokeUserSession,
+  updateUserProfile,
+} from './state/actions';
+import UserProfileEditForm from './UserProfileEditForm';
+import SharedPreferences from 'app/core/components/SharedPreferences/SharedPreferences';
+import { UserTeams } from './UserTeams';
+import UserOrganizations from './UserOrganizations';
+import UserSessions from './UserSessions';
+
+export interface OwnProps {
   navModel: NavModel;
 }
 
-export const UserProfileEdit: FC<Props> = ({ navModel }) => (
-  <Page navModel={navModel}>
-    <UserProvider userId={config.bootData.user.id}>
-      {(
-        api: UserAPI,
-        states: LoadingStates,
-        teams: Team[],
-        orgs: UserOrg[],
-        sessions: UserSession[],
-        user?: UserDTO
-      ) => {
-        return (
-          <Page.Contents>
-            {states.loadUser ? (
-              <LoadingPlaceholder text="Loading user profile..." />
-            ) : (
-              <VerticalGroup spacing="md">
-                <UserProfileEditForm
-                  updateProfile={api.updateUserProfile}
-                  isSavingUser={states.updateUserProfile}
-                  user={user!}
-                />
-
-                <SharedPreferences resourceUri="user" />
-                <UserTeams isLoading={states.loadTeams} loadTeams={api.loadTeams} teams={teams} />
-                <UserOrganizations
-                  isLoading={states.loadOrgs}
-                  setUserOrg={api.setUserOrg}
-                  loadOrgs={api.loadOrgs}
-                  orgs={orgs}
-                  user={user!}
-                />
-                <UserSessions
-                  isLoading={states.loadSessions}
-                  loadSessions={api.loadSessions}
-                  revokeUserSession={api.revokeUserSession}
-                  sessions={sessions}
-                  user={user!}
-                />
-              </VerticalGroup>
-            )}
-          </Page.Contents>
-        );
-      }}
-    </UserProvider>
-  </Page>
-);
-
 function mapStateToProps(state: StoreState) {
+  const userState = state.user;
+  const { user, teams, orgs, sessions, loadingTeams, loadingOrgs, loadingUser, loadingSessions, updating } = userState;
   return {
     navModel: getNavModel(state.navIndex, 'profile-settings'),
+    loadingOrgs,
+    loadingSessions,
+    loadingTeams,
+    loadingUser,
+    orgs,
+    sessions,
+    teams,
+    updating,
+    user,
   };
 }
 
-export default hot(module)(connect(mapStateToProps, null)(UserProfileEdit));
+const mapDispatchToProps = {
+  loadUser,
+  loadTeams,
+  loadOrgs,
+  loadSessions,
+  revokeUserSession,
+  changeUserOrg,
+  updateUserProfile,
+};
+
+const connector = connect(mapStateToProps, mapDispatchToProps);
+
+type Props = OwnProps & ConnectedProps<typeof connector>;
+
+export function UserProfileEdit({
+  navModel,
+  loadingOrgs,
+  loadingSessions,
+  loadingTeams,
+  loadingUser,
+  loadUser,
+  loadTeams,
+  loadOrgs,
+  loadSessions,
+  orgs,
+  sessions,
+  teams,
+  updating,
+  user,
+  revokeUserSession,
+  changeUserOrg,
+  updateUserProfile,
+}: Props) {
+  useAsync(async () => {
+    await loadUser();
+    loadTeams();
+    loadOrgs();
+    loadSessions();
+  }, []);
+
+  return (
+    <Page navModel={navModel}>
+      <Page.Contents isLoading={loadingUser || !Boolean(user)}>
+        <VerticalGroup spacing="md">
+          <UserProfileEditForm updateProfile={updateUserProfile} isSavingUser={updating} user={user!} />
+          <SharedPreferences resourceUri="user" />
+          <UserTeams isLoading={loadingTeams} teams={teams} />
+          <UserOrganizations isLoading={loadingOrgs} setUserOrg={changeUserOrg} orgs={orgs} user={user!} />
+          <UserSessions
+            isLoading={loadingSessions}
+            revokeUserSession={revokeUserSession}
+            sessions={sessions}
+            user={user!}
+          />
+        </VerticalGroup>
+      </Page.Contents>
+    </Page>
+  );
+}
+
+export default hot(module)(connector(UserProfileEdit));

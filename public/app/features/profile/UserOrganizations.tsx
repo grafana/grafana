@@ -1,20 +1,15 @@
 import React, { PureComponent } from 'react';
 import { UserDTO, UserOrg } from 'app/types';
-import { LoadingPlaceholder, Button } from '@grafana/ui';
+import { Button, LoadingPlaceholder } from '@grafana/ui';
 
 export interface Props {
   user: UserDTO;
   orgs: UserOrg[];
   isLoading: boolean;
-  loadOrgs: () => void;
   setUserOrg: (org: UserOrg) => void;
 }
 
 export class UserOrganizations extends PureComponent<Props> {
-  componentDidMount() {
-    this.props.loadOrgs();
-  }
-
   render() {
     const { isLoading, orgs, user } = this.props;
 
