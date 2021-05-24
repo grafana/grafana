@@ -90,7 +90,6 @@ func (h *databaseQueryWrapper) instrument(ctx context.Context, status string, qu
 		histogram.(prometheus.ExemplarObserver).ObserveWithExemplar(
 			elapsed.Seconds(), prometheus.Labels{"traceID": traceID},
 		)
-
 	} else {
 		histogram.Observe(elapsed.Seconds())
 	}
