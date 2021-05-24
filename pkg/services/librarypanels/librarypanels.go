@@ -76,7 +76,7 @@ func (lps *LibraryPanelService) LoadLibraryPanelsForDashboard(c *models.ReqConte
 			continue
 		}
 
-		if libraryelements.LibraryElementKind(elementInDB.Kind) != libraryelements.Panel {
+		if models.LibraryElementKind(elementInDB.Kind) != models.PanelElement {
 			continue
 		}
 

@@ -22,7 +22,7 @@ SELECT DISTINCT
 	, u1.email AS created_by_email
 	, u2.login AS updated_by_name
 	, u2.email AS updated_by_email
-	, (SELECT COUNT(connection_id) FROM ` + connectionTableName + ` WHERE element_id = le.id AND kind=1) AS connected_dashboards`
+	, (SELECT COUNT(connection_id) FROM ` + models.LibraryElementConnectionTableName + ` WHERE element_id = le.id AND kind=1) AS connected_dashboards`
 )
 
 func getFromLibraryElementDTOWithMeta(dialect migrator.Dialect) string {
@@ -41,9 +41,9 @@ func syncFieldsWithModel(libraryElement *LibraryElement) error {
 		return err
 	}
 
-	if LibraryElementKind(libraryElement.Kind) == Panel {
+	if models.LibraryElementKind(libraryElement.Kind) == models.PanelElement {
 		model["title"] = libraryElement.Name
-	} else if LibraryElementKind(libraryElement.Kind) == Variable {
+	} else if models.LibraryElementKind(libraryElement.Kind) == models.VariableElement {
 		model["name"] = libraryElement.Name
 	}
 	if model["type"] != nil {
@@ -520,7 +520,7 @@ func (l *LibraryElementService) getConnections(c *models.ReqContext, uid string)
 		var libraryElementConnections []libraryElementConnectionWithMeta
 		builder := sqlstore.SQLBuilder{}
 		builder.Write("SELECT lec.*, u1.login AS created_by_name, u1.email AS created_by_email")
-		builder.Write(" FROM " + connectionTableName + " AS lec")
+		builder.Write(" FROM " + models.LibraryElementConnectionTableName + " AS lec")
 		builder.Write(" LEFT JOIN " + l.SQLStore.Dialect.Quote("user") + " AS u1 ON lec.created_by = u1.id")
 		builder.Write(" INNER JOIN dashboard AS dashboard on lec.connection_id = dashboard.id")
 		builder.Write(` WHERE lec.element_id=?`, element.ID)
@@ -562,7 +562,7 @@ func (l *LibraryElementService) getElementsForDashboardID(c *models.ReqContext, 
 			", coalesce(dashboard.uid, '') AS folder_uid" +
 			getFromLibraryElementDTOWithMeta(l.SQLStore.Dialect) +
 			" LEFT JOIN dashboard AS dashboard ON dashboard.id = le.folder_id" +
-			" INNER JOIN " + connectionTableName + " AS lce ON lce.element_id = le.id AND lce.kind=1 AND lce.connection_id=?"
+			" INNER JOIN " + models.LibraryElementConnectionTableName + " AS lce ON lce.element_id = le.id AND lce.kind=1 AND lce.connection_id=?"
 		sess := session.SQL(sql, dashboardID)
 		err := sess.Find(&libraryElements)
 		if err != nil {
@@ -610,7 +610,7 @@ func (l *LibraryElementService) getElementsForDashboardID(c *models.ReqContext, 
 // connectElementsToDashboardID adds connections for all elements Library Elements in a Dashboard.
 func (l *LibraryElementService) connectElementsToDashboardID(c *models.ReqContext, elementUIDs []string, dashboardID int64) error {
 	err := l.SQLStore.WithTransactionalDbSession(c.Context.Req.Context(), func(session *sqlstore.DBSession) error {
-		_, err := session.Exec("DELETE FROM "+connectionTableName+" WHERE kind=1 AND connection_id=?", dashboardID)
+		_, err := session.Exec("DELETE FROM "+models.LibraryElementConnectionTableName+" WHERE kind=1 AND connection_id=?", dashboardID)
 		if err != nil {
 			return err
 		}
@@ -646,7 +646,7 @@ func (l *LibraryElementService) connectElementsToDashboardID(c *models.ReqContex
 // disconnectElementsFromDashboardID deletes connections for all Library Elements in a Dashboard.
 func (l *LibraryElementService) disconnectElementsFromDashboardID(c *models.ReqContext, dashboardID int64) error {
 	return l.SQLStore.WithTransactionalDbSession(c.Context.Req.Context(), func(session *sqlstore.DBSession) error {
-		_, err := session.Exec("DELETE FROM "+connectionTableName+" WHERE kind=1 AND connection_id=?", dashboardID)
+		_, err := session.Exec("DELETE FROM "+models.LibraryElementConnectionTableName+" WHERE kind=1 AND connection_id=?", dashboardID)
 		if err != nil {
 			return err
 		}
@@ -676,7 +676,7 @@ func (l *LibraryElementService) deleteLibraryElementsInFolderUID(c *models.ReqCo
 			ConnectionID int64 `xorm:"connection_id"`
 		}
 		sql := "SELECT lec.connection_id FROM library_element AS le"
-		sql += " INNER JOIN " + connectionTableName + " AS lec on le.id = lec.element_id"
+		sql += " INNER JOIN " + models.LibraryElementConnectionTableName + " AS lec on le.id = lec.element_id"
 		sql += " WHERE le.folder_id=? AND le.org_id=?"
 		err = session.SQL(sql, folderID, c.SignedInUser.OrgId).Find(&connectionIDs)
 		if err != nil {
@@ -694,7 +694,7 @@ func (l *LibraryElementService) deleteLibraryElementsInFolderUID(c *models.ReqCo
 			return err
 		}
 		for _, elementID := range elementIDs {
-			_, err := session.Exec("DELETE FROM "+connectionTableName+" WHERE element_id=?", elementID.ID)
+			_, err := session.Exec("DELETE FROM "+models.LibraryElementConnectionTableName+" WHERE element_id=?", elementID.ID)
 			if err != nil {
 				return err
 			}

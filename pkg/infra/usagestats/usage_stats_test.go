@@ -63,6 +63,8 @@ func TestMetrics(t *testing.T) {
 				DashboardVersions:     16,
 				Annotations:           17,
 				AlertRules:            18,
+				LibraryPanels:         19,
+				LibraryVariables:      20,
 			}
 			getSystemStatsQuery = query
 			return nil
@@ -313,6 +315,8 @@ func TestMetrics(t *testing.T) {
 			assert.Equal(t, 16, metrics.Get("stats.dashboard_versions.count").MustInt())
 			assert.Equal(t, 17, metrics.Get("stats.annotations.count").MustInt())
 			assert.Equal(t, 18, metrics.Get("stats.alert_rules.count").MustInt())
+			assert.Equal(t, 19, metrics.Get("stats.library_panels.count").MustInt())
+			assert.Equal(t, 20, metrics.Get("stats.library_variables.count").MustInt())
 
 			assert.Equal(t, 9, metrics.Get("stats.ds."+models.DS_ES+".count").MustInt())
 			assert.Equal(t, 10, metrics.Get("stats.ds."+models.DS_PROMETHEUS+".count").MustInt())

@@ -185,6 +185,12 @@ var (
 	grafanaBuildVersion *prometheus.GaugeVec
 
 	grafanaPluginBuildInfoDesc *prometheus.GaugeVec
+
+	// StatsTotalLibraryPanels is a metric of total number of library panels stored in Grafana.
+	StatsTotalLibraryPanels prometheus.Gauge
+
+	// StatsTotalLibraryVariables is a metric of total number of library variables stored in Grafana.
+	StatsTotalLibraryVariables prometheus.Gauge
 )
 
 func init() {
@@ -547,6 +553,18 @@ func init() {
 		Help:      "number of evaluation calls",
 		Namespace: ExporterName,
 	})
+
+	StatsTotalLibraryPanels = prometheus.NewGauge(prometheus.GaugeOpts{
+		Name:      "stat_totals_library_panels",
+		Help:      "total amount of library panels in the database",
+		Namespace: ExporterName,
+	})
+
+	StatsTotalLibraryVariables = prometheus.NewGauge(prometheus.GaugeOpts{
+		Name:      "stat_totals_library_variables",
+		Help:      "total amount of library variables in the database",
+		Namespace: ExporterName,
+	})
 }
 
 // SetBuildInformation sets the build information for this binary
@@ -640,6 +658,8 @@ func initMetricVars() {
 		StatsTotalDashboardVersions,
 		StatsTotalAnnotations,
 		MAccessEvaluationCount,
+		StatsTotalLibraryPanels,
+		StatsTotalLibraryVariables,
 	)
 }
 

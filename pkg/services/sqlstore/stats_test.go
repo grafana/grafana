@@ -24,6 +24,8 @@ func TestStatsDataAccess(t *testing.T) {
 		assert.Equal(t, 0, query.Result.Editors)
 		assert.Equal(t, 0, query.Result.Viewers)
 		assert.Equal(t, 3, query.Result.Admins)
+		assert.Equal(t, int64(0), query.Result.LibraryPanels)
+		assert.Equal(t, int64(0), query.Result.LibraryVariables)
 	})
 
 	t.Run("Get system user count stats should not results in error", func(t *testing.T) {

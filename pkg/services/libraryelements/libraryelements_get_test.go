@@ -35,7 +35,7 @@ func TestGetLibraryElement(t *testing.T) {
 						FolderID:    1,
 						UID:         res.Result.UID,
 						Name:        "Text - Library Panel",
-						Kind:        int64(Panel),
+						Kind:        int64(models.PanelElement),
 						Type:        "text",
 						Description: "A description",
 						Model: map[string]interface{}{
@@ -130,7 +130,7 @@ func TestGetLibraryElement(t *testing.T) {
 						FolderID:    1,
 						UID:         res.Result.UID,
 						Name:        "Text - Library Panel",
-						Kind:        int64(Panel),
+						Kind:        int64(models.PanelElement),
 						Type:        "text",
 						Description: "A description",
 						Model: map[string]interface{}{

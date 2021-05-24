@@ -40,6 +40,7 @@ func AddMigrations(mg *Migrator) {
 	addShortURLMigrations(mg)
 	ualert.AddTablesMigrations(mg)
 	ualert.AddDashAlertMigration(mg)
+	addLibraryElementsMigrations(mg)
 }
 
 func addMigrationLogMigrations(mg *Migrator) {
