@@ -37,6 +37,7 @@ const defaultInitialState = {
         label: 'Off',
         value: 0,
       },
+      cache: [],
     },
   },
 };
