@@ -106,7 +106,7 @@ const SelSingleLoad = ({ loadOptions, allowCustomValue, onChange, onClose }: Sel
   return (
     <div className={selectClass}>
       <Select
-        noOptionsMessage={loadState.loading ? 'Loading options...' : 'No options found'}
+        isLoading={loadState.loading}
         formatCreateLabel={formatCreateLabel}
         autoFocus
         isOpen
