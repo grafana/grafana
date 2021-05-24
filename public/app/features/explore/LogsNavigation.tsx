@@ -1,29 +1,24 @@
 import React, { memo, useState, useEffect, useRef } from 'react';
-import classNames from 'classnames';
 import { isEqual } from 'lodash';
 import { css } from 'emotion';
-import {
-  LogsSortOrder,
-  AbsoluteTimeRange,
-  dateTimeFormat,
-  systemDateFormats,
-  TimeZone,
-  DataQuery,
-  GrafanaTheme,
-} from '@grafana/data';
-import { Button, Icon, Spinner, useTheme, stylesFactory, CustomScrollbar } from '@grafana/ui';
+import { LogsSortOrder, AbsoluteTimeRange, TimeZone, DataQuery, GrafanaTheme } from '@grafana/data';
+import { Button, Icon, Spinner, useTheme, stylesFactory } from '@grafana/ui';
+import { LogsNavigationPages } from './LogsNavigationPages';
 
 type Props = {
   absoluteRange: AbsoluteTimeRange;
   timeZone: TimeZone;
   queries: DataQuery[];
   loading: boolean;
-  visibleRange?: AbsoluteTimeRange;
+  visibleRange: AbsoluteTimeRange;
   logsSortOrder?: LogsSortOrder | null;
   onChangeTime: (range: AbsoluteTimeRange) => void;
+  scrollToTopLogs: () => void;
+  addResultsToCache: () => void;
+  clearCache: () => void;
 };
 
-type LogsPage = {
+export type LogsPage = {
   logsRange: AbsoluteTimeRange;
   queryRange: AbsoluteTimeRange;
 };
@@ -34,8 +29,11 @@ function LogsNavigation({
   timeZone,
   loading,
   onChangeTime,
-  visibleRange = absoluteRange,
-  queries = [],
+  scrollToTopLogs,
+  visibleRange,
+  queries,
+  clearCache,
+  addResultsToCache,
 }: Props) {
   const [pages, setPages] = useState<LogsPage[]>([]);
   const [currentPageIndex, setCurrentPageIndex] = useState(0);
@@ -47,12 +45,19 @@ function LogsNavigation({
   // e.g. if last 5 min selected, always run 5 min range
   const rangeSpanRef = useRef(0);
 
+  const oldestLogsFirst = logsSortOrder === LogsSortOrder.Ascending;
+  const onFirstPage = currentPageIndex === 0;
+  const onLastPage = currentPageIndex === pages.length - 1;
+  const theme = useTheme();
+  const styles = getStyles(theme, oldestLogsFirst, loading);
+
   // Main effect to set pages and index
   useEffect(() => {
     const newPage = { logsRange: visibleRange, queryRange: absoluteRange };
     let newPages: LogsPage[] = [];
     // We want to start new pagination if queries change or if absolute range is different than expected
     if (!isEqual(expectedRangeRef.current, absoluteRange) || !isEqual(expectedQueriesRef.current, queries)) {
+      clearCache();
       setPages([newPage]);
       setCurrentPageIndex(0);
       expectedQueriesRef.current = queries;
@@ -72,7 +77,14 @@ function LogsNavigation({
       const index = newPages.findIndex((page) => page.queryRange.to === absoluteRange.to);
       setCurrentPageIndex(index);
     }
-  }, [visibleRange, absoluteRange, logsSortOrder, queries]);
+    addResultsToCache();
+  }, [visibleRange, absoluteRange, logsSortOrder, queries, clearCache, addResultsToCache]);
+
+  useEffect(() => {
+    return () => clearCache();
+    // We can't enforce the eslint rule here because we only want to run when component unmounts.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const changeTime = ({ from, to }: AbsoluteTimeRange) => {
     expectedRangeRef.current = { from, to };
@@ -86,85 +98,78 @@ function LogsNavigation({
     return a.queryRange.to > b.queryRange.to ? -1 : 1;
   };
 
-  const formatTime = (time: number) => {
-    return `${dateTimeFormat(time, {
-      format: systemDateFormats.interval.second,
-      timeZone: timeZone,
-    })}`;
-  };
+  const olderLogsButton = (
+    <Button
+      data-testid="olderLogsButton"
+      className={styles.navButton}
+      variant="secondary"
+      onClick={() => {
+        //If we are not on the last page, use next page's range
+        if (!onLastPage) {
+          changeTime({
+            from: pages[currentPageIndex + 1].queryRange.from,
+            to: pages[currentPageIndex + 1].queryRange.to,
+          });
+        } else {
+          //If we are on the last page, create new range
+          changeTime({ from: visibleRange.from - rangeSpanRef.current, to: visibleRange.from });
+        }
+      }}
+      disabled={loading}
+    >
+      <div className={styles.navButtonContent}>
+        {loading ? <Spinner /> : <Icon name={oldestLogsFirst ? 'angle-up' : 'angle-down'} size="lg" />}
+        Older logs
+      </div>
+    </Button>
+  );
 
-  const createPageContent = (page: LogsPage, index: number) => {
-    if (currentPageIndex === index && loading) {
-      return <Spinner />;
-    }
-    const topContent = formatTime(oldestLogsFirst ? page.logsRange.from : page.logsRange.to);
-    const bottomContent = formatTime(oldestLogsFirst ? page.logsRange.to : page.logsRange.from);
-    return `${topContent} — ${bottomContent}`;
-  };
+  const newerLogsButton = (
+    <Button
+      data-testid="newerLogsButton"
+      className={styles.navButton}
+      variant="secondary"
+      onClick={() => {
+        //If we are not on the first page, use previous page's range
+        if (!onFirstPage) {
+          changeTime({
+            from: pages[currentPageIndex - 1].queryRange.from,
+            to: pages[currentPageIndex - 1].queryRange.to,
+          });
+        }
+        //If we are on the first page, button is disabled and we do nothing
+      }}
+      disabled={loading || onFirstPage}
+    >
+      <div className={styles.navButtonContent}>
+        {loading && <Spinner />}
+        {onFirstPage || loading ? null : <Icon name={oldestLogsFirst ? 'angle-down' : 'angle-up'} size="lg" />}
+        {onFirstPage ? 'Start of range' : 'Newer logs'}
+      </div>
+    </Button>
+  );
 
-  const oldestLogsFirst = logsSortOrder === LogsSortOrder.Ascending;
-  const theme = useTheme();
-  const styles = getStyles(theme, oldestLogsFirst, loading);
   return (
     <div className={styles.navContainer}>
-      {/*
-       * We are going to have 2 buttons - on the top and bottom - Oldest and Newest.
-       * Therefore I have at the moment duplicated the same code, but in the future iteration, it ill be updated
-       */}
-      {oldestLogsFirst && (
-        <Button
-          data-testid="fetchLogsTop"
-          className={styles.navButton}
-          variant="secondary"
-          onClick={() => {
-            // the range is based on initally selected range
-            changeTime({ from: visibleRange.from - rangeSpanRef.current, to: visibleRange.from });
-          }}
-          disabled={loading}
-        >
-          <div className={styles.navButtonContent}>
-            {loading ? <Spinner /> : <Icon name="angle-up" size="lg" />}
-            Older logs
-          </div>
-        </Button>
-      )}
-      <CustomScrollbar autoHide>
-        <div className={styles.pagesWrapper}>
-          <div className={styles.pagesContainer}>
-            {pages.map((page: LogsPage, index) => (
-              <div
-                className={styles.page}
-                key={page.queryRange.to}
-                onClick={() => !loading && changeTime({ from: page.queryRange.from, to: page.queryRange.to })}
-              >
-                <div className={classNames(styles.line, { selectedBg: currentPageIndex === index })} />
-                <div className={classNames(styles.time, { selectedText: currentPageIndex === index })}>
-                  {createPageContent(page, index)}
-                </div>
-              </div>
-            ))}
-          </div>
-          <div className={styles.filler}></div>
-        </div>
-      </CustomScrollbar>
-
-      {!oldestLogsFirst && (
-        <Button
-          data-testid="fetchLogsBottom"
-          className={styles.navButton}
-          variant="secondary"
-          onClick={() => {
-            // the range is based on initally selected range
-            changeTime({ from: visibleRange.from - rangeSpanRef.current, to: visibleRange.from });
-          }}
-          disabled={loading}
-        >
-          <div className={styles.navButtonContent}>
-            Older logs
-            {loading ? <Spinner /> : <Icon name="angle-down" size="lg" />}
-          </div>
-        </Button>
-      )}
+      {oldestLogsFirst ? olderLogsButton : newerLogsButton}
+      <LogsNavigationPages
+        pages={pages}
+        currentPageIndex={currentPageIndex}
+        oldestLogsFirst={oldestLogsFirst}
+        timeZone={timeZone}
+        loading={loading}
+        changeTime={changeTime}
+      />
+      {oldestLogsFirst ? newerLogsButton : olderLogsButton}
+      <Button
+        data-testid="scrollToTop"
+        className={styles.scrollToTopButton}
+        variant="secondary"
+        onClick={scrollToTopLogs}
+        title="Scroll to top"
+      >
+        <Icon name="arrow-up" size="lg" />
+      </Button>
     </div>
   );
 }
@@ -178,6 +183,9 @@ const getStyles = stylesFactory((theme: GrafanaTheme, oldestLogsFirst: boolean, 
       display: flex;
       flex-direction: column;
       justify-content: ${oldestLogsFirst ? 'flex-start' : 'space-between'};
+      position: sticky;
+      top: ${theme.spacing.md};
+      right: 0;
     `,
     navButton: css`
       width: 58px;
@@ -197,55 +205,14 @@ const getStyles = stylesFactory((theme: GrafanaTheme, oldestLogsFirst: boolean, 
       height: 100%;
       white-space: normal;
     `,
-    pagesWrapper: css`
-      height: 100%;
-      padding-left: ${theme.spacing.xs};
+    scrollToTopButton: css`
+      width: 40px;
+      height: 40px;
       display: flex;
       flex-direction: column;
-      overflow-y: scroll;
-    `,
-    pagesContainer: css`
-      display: flex;
-      padding: 0;
-      flex-direction: column;
-    `,
-    page: css`
-      display: flex;
-      margin: ${theme.spacing.md} 0;
-      cursor: ${loading ? 'auto' : 'pointer'};
-      white-space: normal;
-      .selectedBg {
-        background: ${theme.colors.bgBlue2};
-      }
-      .selectedText {
-        color: ${theme.colors.bgBlue2};
-      }
-    `,
-    line: css`
-      width: 3px;
-      height: 100%;
+      justify-content: center;
       align-items: center;
-      background: ${theme.colors.textWeak};
-    `,
-    time: css`
-      width: 60px;
-      min-height: 80px;
-      font-size: ${theme.typography.size.sm};
-      padding-left: ${theme.spacing.xs};
-      display: flex;
-      align-items: center;
-    `,
-    filler: css`
-      height: inherit;
-      background: repeating-linear-gradient(
-        135deg,
-        ${theme.colors.bg1},
-        ${theme.colors.bg1} 5px,
-        ${theme.colors.bg2} 5px,
-        ${theme.colors.bg2} 15px
-      );
-      width: 3px;
-      margin-bottom: 8px;
+      margin-top: ${theme.spacing.sm};
     `,
   };
 });

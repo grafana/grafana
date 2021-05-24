@@ -7,19 +7,16 @@ import (
 	"testing"
 
 	"github.com/prometheus/alertmanager/notify"
-	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 )
 
 func TestTelegramNotifier(t *testing.T) {
-	tmpl, err := template.FromGlobs("templates/default.tmpl")
-	require.NoError(t, err)
+	tmpl := templateForTests(t)
 
 	externalURL, err := url.Parse("http://localhost")
 	require.NoError(t, err)
@@ -103,7 +100,7 @@ func TestTelegramNotifier(t *testing.T) {
 			settingsJSON, err := simplejson.NewJson([]byte(c.settings))
 			require.NoError(t, err)
 
-			m := &models.AlertNotification{
+			m := &NotificationChannelConfig{
 				Name:     "telegram_testing",
 				Type:     "telegram",
 				Settings: settingsJSON,

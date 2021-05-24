@@ -155,7 +155,8 @@ export function outerJoinDataFrames(options: JoinOptions): DataFrame | undefined
         }
 
         // Support the standard graph span nulls field config
-        nullModesFrame.push(field.config.custom?.spanNulls === true ? NULL_REMOVE : NULL_EXPAND);
+        let spanNulls = field.config.custom?.spanNulls;
+        nullModesFrame.push(spanNulls === true ? NULL_REMOVE : spanNulls === -1 ? NULL_RETAIN : NULL_EXPAND);
 
         let labels = field.labels ?? {};
         if (frame.name) {
@@ -216,7 +217,7 @@ export function outerJoinDataFrames(options: JoinOptions): DataFrame | undefined
 //--------------------------------------------------------------------------------
 
 // Copied from uplot
-type AlignedData = [number[], ...Array<Array<number | null>>];
+export type AlignedData = [number[], ...Array<Array<number | null>>];
 
 // nullModes
 const NULL_REMOVE = 0; // nulls are converted to undefined (e.g. for spanGaps: true)
@@ -245,7 +246,7 @@ function nullExpand(yVals: Array<number | null>, nullIdxs: number[], alignedLen:
 }
 
 // nullModes is a tables-matched array indicating how to treat nulls in each series
-function join(tables: AlignedData[], nullModes: number[][]) {
+export function join(tables: AlignedData[], nullModes?: number[][]) {
   const xVals = new Set<number>();
 
   for (let ti = 0; ti < tables.length; ti++) {
@@ -285,7 +286,7 @@ function join(tables: AlignedData[], nullModes: number[][]) {
         let yVal = ys[i];
         let alignedIdx = xIdxs.get(xs[i]);
 
-        if (yVal == null) {
+        if (yVal === null) {
           if (nullMode !== NULL_REMOVE) {
             yVals[alignedIdx] = yVal;
 

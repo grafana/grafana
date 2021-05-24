@@ -127,6 +127,7 @@ export interface DataSourcePluginMeta<T extends KeyValue = {}> extends PluginMet
   sort?: number;
   streaming?: boolean;
   unlicensed?: boolean;
+  isBackend?: boolean;
 }
 
 interface PluginMetaQueryOptions {
@@ -366,6 +367,7 @@ export interface QueryEditorProps<
   exploreId?: any;
   history?: HistoryItem[];
   queries?: DataQuery[];
+  app?: CoreApp;
 }
 
 // TODO: not really needed but used as type in some data sources and in DataQueryRequest
@@ -546,6 +548,7 @@ export interface DataSourceJsonData {
  */
 export interface DataSourceSettings<T extends DataSourceJsonData = DataSourceJsonData, S = {}> {
   id: number;
+  uid: string;
   orgId: number;
   name: string;
   typeLogoUrl: string;

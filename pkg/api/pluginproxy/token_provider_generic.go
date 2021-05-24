@@ -29,7 +29,7 @@ type genericAccessTokenProvider struct {
 	datasourceId      int64
 	datasourceVersion int
 	route             *plugins.AppPluginRoute
-	data              templateData
+	authParams        *plugins.JwtTokenAuth
 }
 
 type jwtToken struct {
@@ -69,12 +69,12 @@ func (token *jwtToken) UnmarshalJSON(b []byte) error {
 }
 
 func newGenericAccessTokenProvider(ds *models.DataSource, pluginRoute *plugins.AppPluginRoute,
-	data templateData) *genericAccessTokenProvider {
+	authParams *plugins.JwtTokenAuth) *genericAccessTokenProvider {
 	return &genericAccessTokenProvider{
 		datasourceId:      ds.Id,
 		datasourceVersion: ds.Version,
 		route:             pluginRoute,
-		data:              data,
+		authParams:        authParams,
 	}
 }
 
@@ -88,21 +88,14 @@ func (provider *genericAccessTokenProvider) getAccessToken() (string, error) {
 		}
 	}
 
-	urlInterpolated, err := interpolateString(provider.route.TokenAuth.Url, provider.data)
-	if err != nil {
-		return "", err
-	}
+	tokenUrl := provider.authParams.Url
 
 	params := make(url.Values)
-	for key, value := range provider.route.TokenAuth.Params {
-		interpolatedParam, err := interpolateString(value, provider.data)
-		if err != nil {
-			return "", err
-		}
-		params.Add(key, interpolatedParam)
+	for key, value := range provider.authParams.Params {
+		params.Add(key, value)
 	}
 
-	getTokenReq, err := http.NewRequest("POST", urlInterpolated, bytes.NewBufferString(params.Encode()))
+	getTokenReq, err := http.NewRequest("POST", tokenUrl, bytes.NewBufferString(params.Encode()))
 	if err != nil {
 		return "", err
 	}

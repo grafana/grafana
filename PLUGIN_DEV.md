@@ -17,7 +17,7 @@ for built-in plugins and everything internal. External plugins still use systemj
 set of Grafana components they can import. Plugins can depend on libs like lodash & moment and internal components 
 like before using the same import paths. However since everything in Grafana is no longer accessible, a few plugins could encounter issues when importing a Grafana dependency. 
 
-[List of exposed components plugins can import/require](https://github.com/grafana/grafana/blob/master/public/app/features/plugins/plugin_loader.ts#L48)
+[List of exposed components plugins can import/require](https://github.com/grafana/grafana/blob/main/public/app/features/plugins/plugin_loader.ts#L48)
 
 If you think we missed exposing a crucial lib or Grafana component let us know by opening an issue.  
 

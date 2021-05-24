@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"regexp"
 	"strings"
 	"testing"
 	"time"
@@ -25,6 +26,282 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 )
+
+func TestAMConfigAccess(t *testing.T) {
+	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
+		EnableFeatureToggles: []string{"ngalert"},
+		DisableAnonymous:     true,
+	})
+
+	store := testinfra.SetUpDatabase(t, dir)
+	// override bus to get the GetSignedInUserQuery handler
+	store.Bus = bus.GetBus()
+	grafanaListedAddr := testinfra.StartGrafana(t, dir, path, store)
+
+	// Create a users to make authenticated requests
+	require.NoError(t, createUser(t, store, models.ROLE_VIEWER, "viewer", "viewer"))
+	require.NoError(t, createUser(t, store, models.ROLE_EDITOR, "editor", "editor"))
+	require.NoError(t, createUser(t, store, models.ROLE_ADMIN, "admin", "admin"))
+
+	type testCase struct {
+		desc      string
+		url       string
+		expStatus int
+		expBody   string
+	}
+
+	t.Run("when creating alertmanager configuration", func(t *testing.T) {
+		body := `
+		{
+			"alertmanager_config": {
+				"route": {
+					"receiver": "grafana-default-email"
+				},
+				"receivers": [{
+					"name": "grafana-default-email",
+					"grafana_managed_receiver_configs": [{
+						"uid": "",
+						"name": "email receiver",
+						"type": "email",
+						"isDefault": true,
+						"settings": {
+							"addresses": "<example@email.com>"
+						}
+					}]
+				}]
+			}
+		}
+		`
+
+		testCases := []testCase{
+			{
+				desc:      "un-authenticated request should fail",
+				url:       "http://%s/api/alertmanager/grafana/config/api/v1/alerts",
+				expStatus: http.StatusUnauthorized,
+				expBody:   `{"message": "Unauthorized"}`,
+			},
+			{
+				desc:      "viewer request should fail",
+				url:       "http://viewer:viewer@%s/api/alertmanager/grafana/config/api/v1/alerts",
+				expStatus: http.StatusForbidden,
+				expBody:   `{"message": "Permission denied"}`,
+			},
+			{
+				desc:      "editor request should succeed",
+				url:       "http://editor:editor@%s/api/alertmanager/grafana/config/api/v1/alerts",
+				expStatus: http.StatusAccepted,
+				expBody:   `{"message":"configuration created"}`,
+			},
+			{
+				desc:      "admin request should succeed",
+				url:       "http://admin:admin@%s/api/alertmanager/grafana/config/api/v1/alerts",
+				expStatus: http.StatusAccepted,
+				expBody:   `{"message":"configuration created"}`,
+			},
+		}
+
+		for _, tc := range testCases {
+			t.Run(tc.desc, func(t *testing.T) {
+				url := fmt.Sprintf(tc.url, grafanaListedAddr)
+				buf := bytes.NewReader([]byte(body))
+				// nolint:gosec
+				resp, err := http.Post(url, "application/json", buf)
+				t.Cleanup(func() {
+					require.NoError(t, resp.Body.Close())
+				})
+				require.NoError(t, err)
+				require.Equal(t, tc.expStatus, resp.StatusCode)
+				b, err := ioutil.ReadAll(resp.Body)
+				require.NoError(t, err)
+				require.JSONEq(t, tc.expBody, string(b))
+			})
+		}
+	})
+
+	t.Run("when creating silence", func(t *testing.T) {
+		body := `
+		{
+			"comment": "string",
+			"createdBy": "string",
+			"endsAt": "2023-03-31T14:17:04.419Z",
+			"matchers": [
+			  {
+				"isRegex": true,
+				"name": "string",
+				"value": "string"
+			  }
+			],
+			"startsAt": "2021-03-31T13:17:04.419Z"
+		  }
+		`
+
+		testCases := []testCase{
+			{
+				desc:      "un-authenticated request should fail",
+				url:       "http://%s/api/alertmanager/grafana/config/api/v2/silences",
+				expStatus: http.StatusUnauthorized,
+				expBody:   `{"message": "Unauthorized"}`,
+			},
+			{
+				desc:      "viewer request should fail",
+				url:       "http://viewer:viewer@%s/api/alertmanager/grafana/api/v2/silences",
+				expStatus: http.StatusForbidden,
+				expBody:   `{"message": "Permission denied"}`,
+			},
+			{
+				desc:      "editor request should succeed",
+				url:       "http://editor:editor@%s/api/alertmanager/grafana/api/v2/silences",
+				expStatus: http.StatusAccepted,
+				expBody:   `{"id": "0", "message":"silence created"}`,
+			},
+			{
+				desc:      "admin request should succeed",
+				url:       "http://admin:admin@%s/api/alertmanager/grafana/api/v2/silences",
+				expStatus: http.StatusAccepted,
+				expBody:   `{"id": "0", "message":"silence created"}`,
+			},
+		}
+
+		for _, tc := range testCases {
+			t.Run(tc.desc, func(t *testing.T) {
+				url := fmt.Sprintf(tc.url, grafanaListedAddr)
+				buf := bytes.NewReader([]byte(body))
+				// nolint:gosec
+				resp, err := http.Post(url, "application/json", buf)
+				t.Cleanup(func() {
+					require.NoError(t, resp.Body.Close())
+				})
+				require.NoError(t, err)
+				require.Equal(t, tc.expStatus, resp.StatusCode)
+				b, err := ioutil.ReadAll(resp.Body)
+				require.NoError(t, err)
+				if tc.expStatus == http.StatusAccepted {
+					re := regexp.MustCompile(`"id":"([\w|-]+)"`)
+					b = re.ReplaceAll(b, []byte(`"id":"0"`))
+				}
+				require.JSONEq(t, tc.expBody, string(b))
+			})
+		}
+	})
+
+	var blob []byte
+	t.Run("when getting silences", func(t *testing.T) {
+		testCases := []testCase{
+			{
+				desc:      "un-authenticated request should fail",
+				url:       "http://%s/api/alertmanager/grafana/api/v2/silences",
+				expStatus: http.StatusUnauthorized,
+				expBody:   `{"message": "Unauthorized"}`,
+			},
+			{
+				desc:      "viewer request should succeed",
+				url:       "http://viewer:viewer@%s/api/alertmanager/grafana/api/v2/silences",
+				expStatus: http.StatusOK,
+			},
+			{
+				desc:      "editor request should succeed",
+				url:       "http://editor:editor@%s/api/alertmanager/grafana/api/v2/silences",
+				expStatus: http.StatusOK,
+			},
+			{
+				desc:      "admin request should succeed",
+				url:       "http://admin:admin@%s/api/alertmanager/grafana/api/v2/silences",
+				expStatus: http.StatusOK,
+			},
+		}
+
+		for _, tc := range testCases {
+			t.Run(tc.desc, func(t *testing.T) {
+				url := fmt.Sprintf(tc.url, grafanaListedAddr)
+				// nolint:gosec
+				resp, err := http.Get(url)
+				t.Cleanup(func() {
+					require.NoError(t, resp.Body.Close())
+				})
+				require.NoError(t, err)
+				require.Equal(t, tc.expStatus, resp.StatusCode)
+				require.NoError(t, err)
+				if tc.expStatus == http.StatusOK {
+					b, err := ioutil.ReadAll(resp.Body)
+					require.NoError(t, err)
+					blob = b
+				}
+			})
+		}
+	})
+
+	var silences apimodels.GettableSilences
+	err := json.Unmarshal(blob, &silences)
+	require.NoError(t, err)
+	assert.Len(t, silences, 2)
+	silenceIDs := make([]string, 0, len(silences))
+	for _, s := range silences {
+		silenceIDs = append(silenceIDs, *s.ID)
+	}
+
+	unconsumedSilenceIdx := 0
+	t.Run("when deleting a silence", func(t *testing.T) {
+		testCases := []testCase{
+			{
+				desc:      "un-authenticated request should fail",
+				url:       "http://%s/api/alertmanager/grafana/api/v2/silence/%s",
+				expStatus: http.StatusUnauthorized,
+				expBody:   `{"message": "Unauthorized"}`,
+			},
+			{
+				desc:      "viewer request should fail",
+				url:       "http://viewer:viewer@%s/api/alertmanager/grafana/api/v2/silence/%s",
+				expStatus: http.StatusForbidden,
+				expBody:   `{"message": "Permission denied"}`,
+			},
+			{
+				desc:      "editor request should succeed",
+				url:       "http://editor:editor@%s/api/alertmanager/grafana/api/v2/silence/%s",
+				expStatus: http.StatusOK,
+				expBody:   `{"message": "silence deleted"}`,
+			},
+			{
+				desc:      "admin request should succeed",
+				url:       "http://admin:admin@%s/api/alertmanager/grafana/api/v2/silence/%s",
+				expStatus: http.StatusOK,
+				expBody:   `{"message": "silence deleted"}`,
+			},
+		}
+
+		for _, tc := range testCases {
+			t.Run(tc.desc, func(t *testing.T) {
+				url := fmt.Sprintf(tc.url, grafanaListedAddr, silenceIDs[unconsumedSilenceIdx])
+
+				// Create client
+				client := &http.Client{}
+
+				// Create request
+				req, err := http.NewRequest("DELETE", url, nil)
+				if err != nil {
+					fmt.Println(err)
+					return
+				}
+
+				// Fetch Request
+				resp, err := client.Do(req)
+				if err != nil {
+					return
+				}
+				t.Cleanup(func() {
+					require.NoError(t, resp.Body.Close())
+				})
+				require.NoError(t, err)
+				require.Equal(t, tc.expStatus, resp.StatusCode)
+				b, err := ioutil.ReadAll(resp.Body)
+				require.NoError(t, err)
+				if tc.expStatus == http.StatusOK {
+					unconsumedSilenceIdx++
+				}
+				require.JSONEq(t, tc.expBody, string(b))
+			})
+		}
+	})
+}
 
 func TestAlertAndGroupsQuery(t *testing.T) {
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
@@ -108,7 +385,8 @@ func TestAlertAndGroupsQuery(t *testing.T) {
 	// Now, let's test the endpoint with some alerts.
 	{
 		// Create the namespace we'll save our alerts to.
-		require.NoError(t, createFolder(t, store, 0, "default"))
+		_, err := createFolder(t, store, 0, "default")
+		require.NoError(t, err)
 	}
 
 	// Create an alert that will fire as quickly as possible
@@ -186,6 +464,255 @@ func TestAlertAndGroupsQuery(t *testing.T) {
 	}
 }
 
+func TestRulerAccess(t *testing.T) {
+	// Setup Grafana and its Database
+	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
+		EnableFeatureToggles: []string{"ngalert"},
+		EnableQuota:          true,
+		DisableAnonymous:     true,
+		ViewersCanEdit:       true,
+	})
+
+	store := testinfra.SetUpDatabase(t, dir)
+	// override bus to get the GetSignedInUserQuery handler
+	store.Bus = bus.GetBus()
+	grafanaListedAddr := testinfra.StartGrafana(t, dir, path, store)
+
+	// Create the namespace we'll save our alerts to.
+	_, err := createFolder(t, store, 0, "default")
+	require.NoError(t, err)
+
+	// Create a users to make authenticated requests
+	require.NoError(t, createUser(t, store, models.ROLE_VIEWER, "viewer", "viewer"))
+	require.NoError(t, createUser(t, store, models.ROLE_EDITOR, "editor", "editor"))
+	require.NoError(t, createUser(t, store, models.ROLE_ADMIN, "admin", "admin"))
+
+	// Now, let's test the access policies.
+	testCases := []struct {
+		desc             string
+		url              string
+		expStatus        int
+		expectedResponse string
+	}{
+		{
+			desc:             "un-authenticated request should fail",
+			url:              "http://%s/api/ruler/grafana/api/v1/rules/default",
+			expStatus:        http.StatusUnauthorized,
+			expectedResponse: `{"message": "Unauthorized"}`,
+		},
+		{
+			desc:             "viewer request should fail",
+			url:              "http://viewer:viewer@%s/api/ruler/grafana/api/v1/rules/default",
+			expStatus:        http.StatusForbidden,
+			expectedResponse: `{"error":"user does not have permissions to edit the namespace", "message":"user does not have permissions to edit the namespace"}`,
+		},
+		{
+			desc:             "editor request should succeed",
+			url:              "http://editor:editor@%s/api/ruler/grafana/api/v1/rules/default",
+			expStatus:        http.StatusAccepted,
+			expectedResponse: `{"message":"rule group updated successfully"}`,
+		},
+		{
+			desc:             "admin request should succeed",
+			url:              "http://admin:admin@%s/api/ruler/grafana/api/v1/rules/default",
+			expStatus:        http.StatusAccepted,
+			expectedResponse: `{"message":"rule group updated successfully"}`,
+		},
+	}
+
+	for i, tc := range testCases {
+		t.Run(tc.desc, func(t *testing.T) {
+			interval, err := model.ParseDuration("1m")
+			require.NoError(t, err)
+
+			rules := apimodels.PostableRuleGroupConfig{
+				Name: "arulegroup",
+				Rules: []apimodels.PostableExtendedRuleNode{
+					{
+						ApiRuleNode: &apimodels.ApiRuleNode{
+							For:         interval,
+							Labels:      map[string]string{"label1": "val1"},
+							Annotations: map[string]string{"annotation1": "val1"},
+						},
+						// this rule does not explicitly set no data and error states
+						// therefore it should get the default values
+						GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
+							Title:     fmt.Sprintf("AlwaysFiring %d", i),
+							Condition: "A",
+							Data: []ngmodels.AlertQuery{
+								{
+									RefID: "A",
+									RelativeTimeRange: ngmodels.RelativeTimeRange{
+										From: ngmodels.Duration(time.Duration(5) * time.Hour),
+										To:   ngmodels.Duration(time.Duration(3) * time.Hour),
+									},
+									DatasourceUID: "-100",
+									Model: json.RawMessage(`{
+								"type": "math",
+								"expression": "2 + 3 > 1"
+								}`),
+								},
+							},
+						},
+					},
+				},
+			}
+			buf := bytes.Buffer{}
+			enc := json.NewEncoder(&buf)
+			err = enc.Encode(&rules)
+			require.NoError(t, err)
+
+			u := fmt.Sprintf(tc.url, grafanaListedAddr)
+			// nolint:gosec
+			resp, err := http.Post(u, "application/json", &buf)
+			require.NoError(t, err)
+			t.Cleanup(func() {
+				err := resp.Body.Close()
+				require.NoError(t, err)
+			})
+			b, err := ioutil.ReadAll(resp.Body)
+			require.NoError(t, err)
+
+			assert.Equal(t, tc.expStatus, resp.StatusCode)
+			require.JSONEq(t, tc.expectedResponse, string(b))
+		})
+	}
+}
+
+func TestDeleteFolderWithRules(t *testing.T) {
+	// Setup Grafana and its Database
+	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
+		EnableFeatureToggles: []string{"ngalert"},
+		EnableQuota:          true,
+		DisableAnonymous:     true,
+		ViewersCanEdit:       true,
+	})
+
+	store := testinfra.SetUpDatabase(t, dir)
+	// override bus to get the GetSignedInUserQuery handler
+	store.Bus = bus.GetBus()
+	grafanaListedAddr := testinfra.StartGrafana(t, dir, path, store)
+
+	// Create the namespace we'll save our alerts to.
+	namespaceUID, err := createFolder(t, store, 0, "default")
+	require.NoError(t, err)
+
+	require.NoError(t, createUser(t, store, models.ROLE_VIEWER, "viewer", "viewer"))
+	require.NoError(t, createUser(t, store, models.ROLE_EDITOR, "editor", "editor"))
+
+	createRule(t, grafanaListedAddr, "default", "editor", "editor")
+
+	// First, let's have an editor create a rule within the folder/namespace.
+	{
+		u := fmt.Sprintf("http://editor:editor@%s/api/ruler/grafana/api/v1/rules", grafanaListedAddr)
+		// nolint:gosec
+		resp, err := http.Get(u)
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			err := resp.Body.Close()
+			require.NoError(t, err)
+		})
+		b, err := ioutil.ReadAll(resp.Body)
+		require.NoError(t, err)
+
+		assert.Equal(t, 202, resp.StatusCode)
+
+		re := regexp.MustCompile(`"uid":"([\w|-]+)"`)
+		b = re.ReplaceAll(b, []byte(`"uid":""`))
+		re = regexp.MustCompile(`"updated":"(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z)"`)
+		b = re.ReplaceAll(b, []byte(`"updated":"2021-05-19T19:47:55Z"`))
+
+		expectedGetRulesResponseBody := fmt.Sprintf(`{
+			"default": [
+				{
+					"name": "arulegroup",
+					"interval": "1m",
+					"rules": [
+						{
+							"expr": "",
+							"for": "2m",
+							"labels": {
+								"label1": "val1"
+							},
+							"annotations": {
+								"annotation1": "val1"
+							},
+							"grafana_alert": {
+								"id": 1,
+								"orgId": 1,
+								"title": "rule under folder default",
+								"condition": "A",
+								"data": [
+									{
+										"refId": "A",
+										"queryType": "",
+										"relativeTimeRange": {
+											"from": 18000,
+											"to": 10800
+										},
+										"datasourceUid": "-100",
+										"model": {
+											"expression": "2 + 3 > 1",
+											"intervalMs": 1000,
+											"maxDataPoints": 43200,
+											"type": "math"
+										}
+									}
+								],
+								"updated": "2021-05-19T19:47:55Z",
+								"intervalSeconds": 60,
+								"version": 1,
+								"uid": "",
+								"namespace_uid": %q,
+								"namespace_id": 1,
+								"rule_group": "arulegroup",
+								"no_data_state": "NoData",
+								"exec_err_state": "Alerting"
+							}
+						}
+					]
+				}
+			]
+		}`, namespaceUID)
+		assert.JSONEq(t, expectedGetRulesResponseBody, string(b))
+	}
+
+	// Next, the editor can delete the folder.
+	{
+		u := fmt.Sprintf("http://editor:editor@%s/api/folders/%s", grafanaListedAddr, namespaceUID)
+		req, err := http.NewRequest(http.MethodDelete, u, nil)
+		require.NoError(t, err)
+		client := &http.Client{}
+		resp, err := client.Do(req)
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			err := resp.Body.Close()
+			require.NoError(t, err)
+		})
+		b, err := ioutil.ReadAll(resp.Body)
+		require.NoError(t, err)
+		require.Equal(t, 200, resp.StatusCode)
+		require.JSONEq(t, `{"id":1,"message":"Folder default deleted","title":"default"}`, string(b))
+	}
+
+	// Finally, we ensure the rules were deleted.
+	{
+		u := fmt.Sprintf("http://editor:editor@%s/api/ruler/grafana/api/v1/rules", grafanaListedAddr)
+		// nolint:gosec
+		resp, err := http.Get(u)
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			err := resp.Body.Close()
+			require.NoError(t, err)
+		})
+		b, err := ioutil.ReadAll(resp.Body)
+		require.NoError(t, err)
+
+		assert.Equal(t, 202, resp.StatusCode)
+		assert.JSONEq(t, "{}", string(b))
+	}
+}
+
 func TestAlertRuleCRUD(t *testing.T) {
 	// Setup Grafana and its Database
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
@@ -200,10 +727,12 @@ func TestAlertRuleCRUD(t *testing.T) {
 	grafanaListedAddr := testinfra.StartGrafana(t, dir, path, store)
 
 	err := createUser(t, store, models.ROLE_EDITOR, "grafana", "password")
+
 	require.NoError(t, err)
 
 	// Create the namespace we'll save our alerts to.
-	require.NoError(t, createFolder(t, store, 0, "default"))
+	_, err = createFolder(t, store, 0, "default")
+	require.NoError(t, err)
 
 	interval, err := model.ParseDuration("1m")
 	require.NoError(t, err)
@@ -355,7 +884,7 @@ func TestAlertRuleCRUD(t *testing.T) {
 						},
 					},
 				},
-				expectedResponse: `{"error":"invalid alert rule: interval (1s) should be divided exactly by scheduler interval: 10s", "message":"failed to update rule group"}`,
+				expectedResponse: `{"error":"invalid alert rule: interval (1s) should be non-zero and divided exactly by scheduler interval: 10s", "message":"failed to update rule group"}`,
 			},
 			{
 				desc:      "alert rule with unknown datasource",
@@ -503,7 +1032,7 @@ func TestAlertRuleCRUD(t *testing.T) {
 							},
 						},
 						NoDataState:  apimodels.NoDataState(ngmodels.Alerting),
-						ExecErrState: apimodels.ExecutionErrorState(ngmodels.KeepLastStateErrState),
+						ExecErrState: apimodels.ExecutionErrorState(ngmodels.AlertingErrState),
 					},
 				},
 			},
@@ -585,7 +1114,7 @@ func TestAlertRuleCRUD(t *testing.T) {
 								"model":{
 								   "expression":"2 + 3 \u003e 1",
 								   "intervalMs":1000,
-								   "maxDataPoints":100,
+								   "maxDataPoints":43200,
 								   "type":"math"
 								}
 							 }
@@ -620,7 +1149,7 @@ func TestAlertRuleCRUD(t *testing.T) {
 								"model":{
 								   "expression":"2 + 3 \u003e 1",
 								   "intervalMs":1000,
-								   "maxDataPoints":100,
+								   "maxDataPoints":43200,
 								   "type":"math"
 								}
 							 }
@@ -633,7 +1162,7 @@ func TestAlertRuleCRUD(t *testing.T) {
 						  "namespace_id":1,
 						  "rule_group":"arulegroup",
 						  "no_data_state":"Alerting",
-						  "exec_err_state":"KeepLastState"
+						  "exec_err_state":"Alerting"
 					   }
 					}
 				 ]
@@ -682,7 +1211,7 @@ func TestAlertRuleCRUD(t *testing.T) {
 							},
 						},
 						NoDataState:  apimodels.NoDataState(ngmodels.Alerting),
-						ExecErrState: apimodels.ExecutionErrorState(ngmodels.KeepLastStateErrState),
+						ExecErrState: apimodels.ExecutionErrorState(ngmodels.AlertingErrState),
 					},
 				},
 			},
@@ -766,7 +1295,7 @@ func TestAlertRuleCRUD(t *testing.T) {
 							},
 						},
 						NoDataState:  apimodels.NoDataState(ngmodels.Alerting),
-						ExecErrState: apimodels.ExecutionErrorState(ngmodels.KeepLastStateErrState),
+						ExecErrState: apimodels.ExecutionErrorState(ngmodels.AlertingErrState),
 					},
 				},
 			},
@@ -844,7 +1373,7 @@ func TestAlertRuleCRUD(t *testing.T) {
 								"model":{
 		                           "expression":"2 + 3 \u003C 1",
 		                           "intervalMs":1000,
-		                           "maxDataPoints":100,
+		                           "maxDataPoints":43200,
 		                           "type":"math"
 		                        }
 		                     }
@@ -857,7 +1386,7 @@ func TestAlertRuleCRUD(t *testing.T) {
 		                  "namespace_id":1,
 		                  "rule_group":"arulegroup",
 		                  "no_data_state":"Alerting",
-		                  "exec_err_state":"KeepLastState"
+		                  "exec_err_state":"Alerting"
 		               }
 		            }
 		         ]
@@ -919,7 +1448,8 @@ func TestQuota(t *testing.T) {
 	grafanaListedAddr := testinfra.StartGrafana(t, dir, path, store)
 
 	// Create the namespace we'll save our alerts to.
-	require.NoError(t, createFolder(t, store, 0, "default"))
+	_, err := createFolder(t, store, 0, "default")
+	require.NoError(t, err)
 
 	// Create a user to make authenticated requests
 	require.NoError(t, createUser(t, store, models.ROLE_EDITOR, "grafana", "password"))
@@ -1020,7 +1550,8 @@ func TestEval(t *testing.T) {
 	require.NoError(t, createUser(t, store, models.ROLE_EDITOR, "grafana", "password"))
 
 	// Create the namespace we'll save our alerts to.
-	require.NoError(t, createFolder(t, store, 0, "default"))
+	_, err := createFolder(t, store, 0, "default")
+	require.NoError(t, err)
 
 	// test eval conditions
 	testCases := []struct {
@@ -1363,7 +1894,7 @@ func TestEval(t *testing.T) {
 
 // createFolder creates a folder for storing our alerts under. Grafana uses folders as a replacement for alert namespaces to match its permission model.
 // We use the dashboard command using IsFolder = true to tell it's a folder, it takes the dashboard as the name of the folder.
-func createFolder(t *testing.T, store *sqlstore.SQLStore, folderID int64, folderName string) error {
+func createFolder(t *testing.T, store *sqlstore.SQLStore, folderID int64, folderName string) (string, error) {
 	t.Helper()
 
 	cmd := models.SaveDashboardCommand{
@@ -1374,9 +1905,13 @@ func createFolder(t *testing.T, store *sqlstore.SQLStore, folderID int64, folder
 			"title": folderName,
 		}),
 	}
-	_, err := store.SaveDashboard(cmd)
+	f, err := store.SaveDashboard(cmd)
 
-	return err
+	if err != nil {
+		return "", err
+	}
+
+	return f.Uid, nil
 }
 
 // rulesNamespaceWithoutVariableValues takes a apimodels.NamespaceConfigResponse JSON-based input and makes the dynamic fields static e.g. uid, dates, etc.

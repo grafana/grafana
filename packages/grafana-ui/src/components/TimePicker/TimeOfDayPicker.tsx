@@ -2,7 +2,7 @@ import React, { FC } from 'react';
 import RcTimePicker from 'rc-time-picker';
 import { css, cx } from '@emotion/css';
 import { dateTime, DateTime, dateTimeAsMoment, GrafanaTheme } from '@grafana/data';
-import { useTheme, Icon } from '../../index';
+import { Icon, useStyles } from '../../index';
 import { stylesFactory } from '../../themes';
 import { inputSizes } from '../Forms/commonStyles';
 import { FormInputSize } from '../Forms/types';
@@ -14,7 +14,47 @@ export interface Props {
   showHour?: boolean;
   minuteStep?: number;
   size?: FormInputSize;
+  disabled?: boolean;
 }
+
+export const TimeOfDayPicker: FC<Props> = ({
+  minuteStep = 1,
+  showHour = true,
+  onChange,
+  value,
+  size = 'auto',
+  disabled,
+}) => {
+  const styles = useStyles(getStyles);
+
+  return (
+    <RcTimePicker
+      className={cx(inputSizes()[size], styles.input)}
+      popupClassName={styles.picker}
+      defaultValue={dateTimeAsMoment()}
+      onChange={(value: any) => onChange(dateTime(value))}
+      allowEmpty={false}
+      showSecond={false}
+      value={dateTimeAsMoment(value)}
+      showHour={showHour}
+      minuteStep={minuteStep}
+      inputIcon={<Caret wrapperStyle={styles.caretWrapper} />}
+      disabled={disabled}
+    />
+  );
+};
+
+interface CaretProps {
+  wrapperStyle?: string;
+}
+
+const Caret: FC<CaretProps> = ({ wrapperStyle = '' }) => {
+  return (
+    <div className={wrapperStyle}>
+      <Icon name="angle-down" />
+    </div>
+  );
+};
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   const bgColor = theme.colors.formInputBg;
@@ -79,40 +119,16 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
         &:focus {
           ${focusCss(theme)}
         }
+
+        &:disabled {
+          background-color: ${theme.colors.formInputBgDisabled};
+          color: ${theme.colors.formInputDisabledText};
+          border: 1px solid ${theme.colors.formInputBgDisabled};
+          &:focus {
+            box-shadow: none;
+          }
+        }
       }
     `,
   };
 });
-
-export const TimeOfDayPicker: FC<Props> = ({ minuteStep = 1, showHour = true, onChange, value, size = 'auto' }) => {
-  const theme = useTheme();
-  const styles = getStyles(theme);
-  return (
-    <div>
-      <RcTimePicker
-        className={cx(inputSizes()[size], styles.input)}
-        popupClassName={styles.picker}
-        defaultValue={dateTimeAsMoment()}
-        onChange={(value: any) => onChange(dateTime(value))}
-        allowEmpty={false}
-        showSecond={false}
-        value={dateTimeAsMoment(value)}
-        showHour={showHour}
-        minuteStep={minuteStep}
-        inputIcon={<Caret wrapperStyle={styles.caretWrapper} />}
-      />
-    </div>
-  );
-};
-
-interface CaretProps {
-  wrapperStyle?: string;
-}
-
-const Caret: FC<CaretProps> = ({ wrapperStyle = '' }) => {
-  return (
-    <div className={wrapperStyle}>
-      <Icon name="angle-down" />
-    </div>
-  );
-};

@@ -37,7 +37,7 @@ RUN if [ `arch` = "x86_64" ]; then \
         -O /tmp/glibc-2.30-r0.apk && \
       wget https://github.com/sgerrand/alpine-pkg-glibc/releases/download/2.30-r0/glibc-bin-2.30-r0.apk \
         -O /tmp/glibc-bin-2.30-r0.apk && \
-      apk add --allow-untrusted /tmp/glibc-2.30-r0.apk /tmp/glibc-bin-2.30-r0.apk && \
+      apk add --no-cache --allow-untrusted /tmp/glibc-2.30-r0.apk /tmp/glibc-bin-2.30-r0.apk && \
       rm -f /tmp/glibc-2.30-r0.apk && \
       rm -f /tmp/glibc-bin-2.30-r0.apk && \
       rm -f /lib/ld-linux-x86-64.so.2 && \
@@ -57,6 +57,7 @@ RUN export GF_GID_NAME=$(getent group $GF_GID | cut -d':' -f1) && \
              "$GF_PATHS_PROVISIONING/dashboards" \
              "$GF_PATHS_PROVISIONING/notifiers" \
              "$GF_PATHS_PROVISIONING/plugins" \
+             "$GF_PATHS_PROVISIONING/access-control" \
              "$GF_PATHS_LOGS" \
              "$GF_PATHS_PLUGINS" \
              "$GF_PATHS_DATA" && \

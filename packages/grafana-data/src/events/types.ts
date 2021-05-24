@@ -17,6 +17,7 @@ export interface BusEvent {
 export abstract class BusEventBase implements BusEvent {
   readonly type: string;
   readonly payload?: any;
+  readonly origin?: EventBus;
 
   constructor() {
     //@ts-ignore

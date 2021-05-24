@@ -3,8 +3,8 @@ package store
 import (
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
-
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
@@ -14,19 +14,11 @@ var TimeNow = time.Now
 // AlertDefinitionMaxTitleLength is the maximum length of the alert definition title
 const AlertDefinitionMaxTitleLength = 190
 
-// Store is the interface for persisting alert definitions and instances
-type Store interface {
-	GetAlertInstance(*models.GetAlertInstanceQuery) error
-	ListAlertInstances(*models.ListAlertInstancesQuery) error
-	SaveAlertInstance(*models.SaveAlertInstanceCommand) error
-	FetchOrgIds(cmd *models.FetchUniqueOrgIdsQuery) error
-}
-
 // AlertingStore is the database interface used by the Alertmanager service.
 type AlertingStore interface {
 	GetLatestAlertmanagerConfiguration(*models.GetLatestAlertmanagerConfigurationQuery) error
-	GetAlertmanagerConfiguration(*models.GetAlertmanagerConfigurationQuery) error
 	SaveAlertmanagerConfiguration(*models.SaveAlertmanagerConfigurationCmd) error
+	SaveAlertmanagerConfigurationWithCallback(*models.SaveAlertmanagerConfigurationCmd, SaveCallback) error
 }
 
 // DBstore stores the alert definitions and instances in the database.
@@ -35,5 +27,6 @@ type DBstore struct {
 	BaseInterval time.Duration
 	// default alert definiiton interval
 	DefaultIntervalSeconds int64
-	SQLStore               *sqlstore.SQLStore `inject:""`
+	SQLStore               *sqlstore.SQLStore
+	Logger                 log.Logger
 }

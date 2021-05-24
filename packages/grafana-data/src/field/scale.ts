@@ -14,6 +14,10 @@ export interface ColorScaleValue {
 export type ScaleCalculator = (value: number) => ColorScaleValue;
 
 export function getScaleCalculator(field: Field, theme: GrafanaTheme2): ScaleCalculator {
+  if (field.type === FieldType.boolean) {
+    return getBooleanScaleCalculator(field, theme);
+  }
+
   const mode = getFieldColorModeForField(field);
   const getColor = mode.getCalculator(field, theme);
   const info = field.state?.range ?? getMinMaxAndDelta(field);
@@ -32,6 +36,31 @@ export function getScaleCalculator(field: Field, theme: GrafanaTheme2): ScaleCal
       threshold,
       color: getColor(value, percent, threshold),
     };
+  };
+}
+
+function getBooleanScaleCalculator(field: Field, theme: GrafanaTheme2): ScaleCalculator {
+  const trueValue: ColorScaleValue = {
+    color: theme.visualization.getColorByName('green'),
+    percent: 1,
+    threshold: (undefined as unknown) as Threshold,
+  };
+
+  const falseValue: ColorScaleValue = {
+    color: theme.visualization.getColorByName('red'),
+    percent: 0,
+    threshold: (undefined as unknown) as Threshold,
+  };
+
+  const mode = getFieldColorModeForField(field);
+  if (mode.isContinuous && mode.getColors) {
+    const colors = mode.getColors(theme);
+    trueValue.color = colors[colors.length - 1];
+    falseValue.color = colors[0];
+  }
+
+  return (value: number) => {
+    return Boolean(value) ? trueValue : falseValue;
   };
 }
 

@@ -25,7 +25,7 @@ const LabelsField: FC<Props> = ({ className }) => {
           return (
             <>
               <div className={styles.flexRow}>
-                <InlineLabel width={15}>Labels</InlineLabel>
+                <InlineLabel width={18}>Labels</InlineLabel>
                 <div className={styles.flexColumn}>
                   {fields.map((field, index) => {
                     return (
@@ -128,7 +128,7 @@ const getStyles = (theme: GrafanaTheme) => {
       margin-left: ${theme.spacing.xs};
     `,
     labelInput: css`
-      width: 207px;
+      width: 183px;
       margin-bottom: ${theme.spacing.sm};
       & + & {
         margin-left: ${theme.spacing.sm};

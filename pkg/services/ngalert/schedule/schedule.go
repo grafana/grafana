@@ -8,6 +8,7 @@ import (
 
 	"github.com/benbjohnson/clock"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"golang.org/x/sync/errgroup"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -39,7 +40,6 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRul
 	sch.log.Debug("alert rule routine started", "key", key)
 
 	evalRunning := false
-	var start, end time.Time
 	var attempt int64
 	var alertRule *models.AlertRule
 	for {
@@ -50,7 +50,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRul
 			}
 
 			evaluate := func(attempt int64) error {
-				start = timeNow()
+				start := timeNow()
 
 				// fetch latest alert rule version
 				if alertRule == nil || alertRule.Version < ctx.version {
@@ -70,8 +70,16 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRul
 					Data:      alertRule.Data,
 				}
 				results, err := sch.evaluator.ConditionEval(&condition, ctx.now, sch.dataService)
-				end = timeNow()
+				var (
+					end    = timeNow()
+					tenant = fmt.Sprint(alertRule.OrgID)
+					dur    = end.Sub(start).Seconds()
+				)
+
+				sch.metrics.EvalTotal.WithLabelValues(tenant).Inc()
+				sch.metrics.EvalDuration.WithLabelValues(tenant).Observe(dur)
 				if err != nil {
+					sch.metrics.EvalFailures.WithLabelValues(tenant).Inc()
 					// consider saving alert instance on error
 					sch.log.Error("failed to evaluate alert rule", "title", alertRule.Title,
 						"key", key, "attempt", attempt, "now", ctx.now, "duration", end.Sub(start), "error", err)
@@ -80,7 +88,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRul
 
 				processedStates := stateManager.ProcessEvalResults(alertRule, results)
 				sch.saveAlertStates(processedStates)
-				alerts := FromAlertStateToPostableAlerts(processedStates)
+				alerts := FromAlertStateToPostableAlerts(processedStates, stateManager)
 				sch.log.Debug("sending alerts to notifier", "count", len(alerts.PostableAlerts), "alerts", alerts.PostableAlerts)
 				err = sch.sendAlerts(alerts)
 				if err != nil {
@@ -153,6 +161,7 @@ type schedule struct {
 	dataService *tsdb.Service
 
 	notifier Notifier
+	metrics  *metrics.Metrics
 }
 
 // SchedulerCfg is the scheduler configuration.
@@ -167,6 +176,7 @@ type SchedulerCfg struct {
 	RuleStore       store.RuleStore
 	InstanceStore   store.InstanceStore
 	Notifier        Notifier
+	Metrics         *metrics.Metrics
 }
 
 // NewScheduler returns a new schedule.
@@ -186,6 +196,7 @@ func NewScheduler(cfg SchedulerCfg, dataService *tsdb.Service) *schedule {
 		instanceStore:   cfg.InstanceStore,
 		dataService:     dataService,
 		notifier:        cfg.Notifier,
+		metrics:         cfg.Metrics,
 	}
 	return &sch
 }
@@ -305,16 +316,19 @@ func (sch *schedule) Ticker(grafanaCtx context.Context, stateManager *state.Mana
 				sch.registry.del(key)
 			}
 		case <-grafanaCtx.Done():
-			err := dispatcherGroup.Wait()
-			orgIdsCmd := models.FetchUniqueOrgIdsQuery{}
-			if err := sch.instanceStore.FetchOrgIds(&orgIdsCmd); err != nil {
+			waitErr := dispatcherGroup.Wait()
+
+			orgIds, err := sch.instanceStore.FetchOrgIds()
+			if err != nil {
 				sch.log.Error("unable to fetch orgIds", "msg", err.Error())
 			}
-			for _, v := range orgIdsCmd.Result {
-				sch.saveAlertStates(stateManager.GetAll(v.DefinitionOrgID))
+
+			for _, v := range orgIds {
+				sch.saveAlertStates(stateManager.GetAll(v))
 			}
+
 			stateManager.Close()
-			return err
+			return waitErr
 		}
 	}
 }
@@ -346,16 +360,16 @@ func (sch *schedule) WarmStateCache(st *state.Manager) {
 	sch.log.Info("warming cache for startup")
 	st.ResetCache()
 
-	orgIdsCmd := models.FetchUniqueOrgIdsQuery{}
-	if err := sch.instanceStore.FetchOrgIds(&orgIdsCmd); err != nil {
+	orgIds, err := sch.instanceStore.FetchOrgIds()
+	if err != nil {
 		sch.log.Error("unable to fetch orgIds", "msg", err.Error())
 	}
 
 	var states []*state.State
-	for _, orgIdResult := range orgIdsCmd.Result {
+	for _, orgId := range orgIds {
 		// Get Rules
 		ruleCmd := models.ListAlertRulesQuery{
-			OrgID: orgIdResult.DefinitionOrgID,
+			OrgID: orgId,
 		}
 		if err := sch.ruleStore.GetOrgAlertRules(&ruleCmd); err != nil {
 			sch.log.Error("unable to fetch previous state", "msg", err.Error())
@@ -368,16 +382,16 @@ func (sch *schedule) WarmStateCache(st *state.Manager) {
 
 		// Get Instances
 		cmd := models.ListAlertInstancesQuery{
-			RuleOrgID: orgIdResult.DefinitionOrgID,
+			RuleOrgID: orgId,
 		}
 		if err := sch.instanceStore.ListAlertInstances(&cmd); err != nil {
 			sch.log.Error("unable to fetch previous state", "msg", err.Error())
 		}
 
 		for _, entry := range cmd.Result {
-			ruleForEntry, ok := ruleByUID[entry.RuleDefinitionUID]
+			ruleForEntry, ok := ruleByUID[entry.RuleUID]
 			if !ok {
-				sch.log.Error("rule not found for instance, ignoring", "rule", entry.RuleDefinitionUID)
+				sch.log.Error("rule not found for instance, ignoring", "rule", entry.RuleUID)
 				continue
 			}
 
@@ -387,7 +401,7 @@ func (sch *schedule) WarmStateCache(st *state.Manager) {
 				sch.log.Error("error getting cacheId for entry", "msg", err.Error())
 			}
 			stateForEntry := &state.State{
-				AlertRuleUID:       entry.RuleDefinitionUID,
+				AlertRuleUID:       entry.RuleUID,
 				OrgID:              entry.RuleOrgID,
 				CacheId:            cacheId,
 				Labels:             lbs,

@@ -62,6 +62,9 @@ func TestMetrics(t *testing.T) {
 				AuthTokens:            15,
 				DashboardVersions:     16,
 				Annotations:           17,
+				AlertRules:            18,
+				LibraryPanels:         19,
+				LibraryVariables:      20,
 			}
 			getSystemStatsQuery = query
 			return nil
@@ -311,6 +314,9 @@ func TestMetrics(t *testing.T) {
 			assert.Equal(t, 5, metrics.Get("stats.avg_auth_token_per_user.count").MustInt())
 			assert.Equal(t, 16, metrics.Get("stats.dashboard_versions.count").MustInt())
 			assert.Equal(t, 17, metrics.Get("stats.annotations.count").MustInt())
+			assert.Equal(t, 18, metrics.Get("stats.alert_rules.count").MustInt())
+			assert.Equal(t, 19, metrics.Get("stats.library_panels.count").MustInt())
+			assert.Equal(t, 20, metrics.Get("stats.library_variables.count").MustInt())
 
 			assert.Equal(t, 9, metrics.Get("stats.ds."+models.DS_ES+".count").MustInt())
 			assert.Equal(t, 10, metrics.Get("stats.ds."+models.DS_PROMETHEUS+".count").MustInt())
@@ -549,15 +555,15 @@ type fakePluginManager struct {
 	panels      map[string]*plugins.PanelPlugin
 }
 
-func (pm fakePluginManager) DataSourceCount() int {
+func (pm *fakePluginManager) DataSourceCount() int {
 	return len(pm.dataSources)
 }
 
-func (pm fakePluginManager) GetDataSource(id string) *plugins.DataSourcePlugin {
+func (pm *fakePluginManager) GetDataSource(id string) *plugins.DataSourcePlugin {
 	return pm.dataSources[id]
 }
 
-func (pm fakePluginManager) PanelCount() int {
+func (pm *fakePluginManager) PanelCount() int {
 	return len(pm.panels)
 }
 

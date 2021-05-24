@@ -1,6 +1,8 @@
 import uPlot, { Scale, Range } from 'uplot';
 import { PlotConfigBuilder } from '../types';
-import { ScaleDistribution, ScaleOrientation, ScaleDirection } from '../config';
+import { ScaleOrientation, ScaleDirection } from '../config';
+import { ScaleDistribution } from '../models.gen';
+import { isBooleanUnit } from '@grafana/data';
 
 export interface ScaleProps {
   scaleKey: string;
@@ -22,27 +24,17 @@ export class UPlotScaleBuilder extends PlotConfigBuilder<ScaleProps, Scale> {
     this.props.max = optMinMax('max', this.props.max, props.max);
   }
 
-  getConfig() {
-    const {
-      isTime,
-      scaleKey,
-      min: hardMin,
-      max: hardMax,
-      softMin,
-      softMax,
-      range,
-      direction,
-      orientation,
-    } = this.props;
+  getConfig(): Scale {
+    let { isTime, scaleKey, min: hardMin, max: hardMax, softMin, softMax, range, direction, orientation } = this.props;
     const distribution = !isTime
       ? {
           distr:
-            this.props.distribution === ScaleDistribution.Logarithmic
+            this.props.distribution === ScaleDistribution.Log
               ? 3
               : this.props.distribution === ScaleDistribution.Ordinal
               ? 2
               : 1,
-          log: this.props.distribution === ScaleDistribution.Logarithmic ? this.props.log || 2 : undefined,
+          log: this.props.distribution === ScaleDistribution.Log ? this.props.log || 2 : undefined,
         }
       : {};
 
@@ -93,10 +85,16 @@ export class UPlotScaleBuilder extends PlotConfigBuilder<ScaleProps, Scale> {
       return minMax;
     };
 
+    let auto = !isTime && !(hardMinOnly && hardMaxOnly);
+    if (isBooleanUnit(scaleKey)) {
+      auto = false;
+      range = [0, 1];
+    }
+
     return {
       [scaleKey]: {
         time: isTime,
-        auto: !isTime && !(hardMinOnly && hardMaxOnly),
+        auto,
         range: range ?? rangeFn,
         dir: direction,
         ori: orientation,

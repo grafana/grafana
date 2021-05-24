@@ -126,23 +126,29 @@ describe('PrometheusDatasource', () => {
     });
   });
 
-  describe('When using customQueryParams', () => {
+  describe('customQueryParams', () => {
     const promDs = new PrometheusDatasource(
       { ...instanceSettings, jsonData: { customQueryParameters: 'customQuery=123' } as any },
       templateSrvStub as any,
       timeSrvStub as any
     );
+
+    const target = { expr: 'test{job="testjob"}', format: 'time_series', refId: '' };
+    function makeQuery(target: PromQuery) {
+      return {
+        range: { from: time({ seconds: 63 }), to: time({ seconds: 183 }) },
+        targets: [target],
+        interval: '60s',
+      } as any;
+    }
     it('added to metadata request', () => {
       promDs.metadataRequest('/foo');
       expect(fetchMock.mock.calls.length).toBe(1);
       expect(fetchMock.mock.calls[0][0].url).toBe('proxied/foo?customQuery=123');
     });
-    it('added to query', () => {
-      promDs.query({
-        range: { from: time({ seconds: 63 }), to: time({ seconds: 183 }) },
-        targets: [{ expr: 'test{job="testjob"}', format: 'time_series' }],
-        interval: '60s',
-      } as any);
+
+    it('adds params to timeseries query', () => {
+      promDs.query(makeQuery(target));
       expect(fetchMock.mock.calls.length).toBe(1);
       expect(fetchMock.mock.calls[0][0].url).toBe('proxied/api/v1/query_range');
       expect(fetchMock.mock.calls[0][0].data).toEqual({
@@ -152,6 +158,19 @@ describe('PrometheusDatasource', () => {
         start: 60,
         step: 60,
       });
+    });
+    it('adds params to exemplars query', () => {
+      promDs.query(makeQuery({ ...target, exemplar: true }));
+      // We do also range query for single exemplars target
+      expect(fetchMock.mock.calls.length).toBe(2);
+      expect(fetchMock.mock.calls[0][0].url).toContain('&customQuery=123');
+      expect(fetchMock.mock.calls[1][0].url).toContain('&customQuery=123');
+    });
+
+    it('adds params to instant query', () => {
+      promDs.query(makeQuery({ ...target, instant: true }));
+      expect(fetchMock.mock.calls.length).toBe(1);
+      expect(fetchMock.mock.calls[0][0].url).toContain('&customQuery=123');
     });
   });
 
@@ -1732,6 +1751,7 @@ describe('prepareTargets', () => {
       const target: PromQuery = {
         refId: 'A',
         expr: 'up',
+        requestId: '2A',
       };
 
       const { queries, activeTargets, panelId, end, start } = getPrepareTargetsContext(target);
@@ -1790,6 +1810,7 @@ describe('prepareTargets', () => {
           expr: 'up',
           range: true,
           instant: true,
+          requestId: '2A',
         };
 
         const { queries, activeTargets, panelId, end, start } = getPrepareTargetsContext(target, CoreApp.Explore);
@@ -1847,6 +1868,7 @@ describe('prepareTargets', () => {
           expr: 'up',
           instant: true,
           range: false,
+          requestId: '2A',
         };
 
         const { queries, activeTargets, panelId, end, start } = getPrepareTargetsContext(target, CoreApp.Explore);
@@ -1879,6 +1901,7 @@ describe('prepareTargets', () => {
         expr: 'up',
         range: true,
         instant: false,
+        requestId: '2A',
       };
 
       const { queries, activeTargets, panelId, end, start } = getPrepareTargetsContext(target, CoreApp.Explore);

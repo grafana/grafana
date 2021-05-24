@@ -5,13 +5,14 @@ import { SeriesIcon } from './SeriesIcon';
 
 interface Props {
   seriesName: string;
-  color: string;
+  color?: string;
+  gradient?: string;
 }
 
 /**
  * @internal
  */
-export const VizLegendSeriesIcon: React.FunctionComponent<Props> = ({ seriesName, color }) => {
+export const VizLegendSeriesIcon: React.FunctionComponent<Props> = ({ seriesName, color, gradient }) => {
   const { onSeriesColorChange } = usePanelContext();
   const onChange = useCallback(
     (color: string) => {
@@ -20,7 +21,7 @@ export const VizLegendSeriesIcon: React.FunctionComponent<Props> = ({ seriesName
     [seriesName, onSeriesColorChange]
   );
 
-  if (seriesName && onSeriesColorChange) {
+  if (seriesName && onSeriesColorChange && color) {
     return (
       <SeriesColorPicker color={color} onChange={onChange} enableNamedColors>
         {({ ref, showColorPicker, hideColorPicker }) => (
@@ -35,7 +36,7 @@ export const VizLegendSeriesIcon: React.FunctionComponent<Props> = ({ seriesName
       </SeriesColorPicker>
     );
   }
-  return <SeriesIcon color={color} />;
+  return <SeriesIcon color={color} gradient={gradient} />;
 };
 
 VizLegendSeriesIcon.displayName = 'VizLegendSeriesIcon';
