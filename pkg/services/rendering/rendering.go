@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+	"sync/atomic"
 
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
@@ -46,7 +47,7 @@ type RenderingService struct {
 	renderAction    renderFunc
 	renderCSVAction renderCSVFunc
 	domain          string
-	inProgressCount int
+	inProgressCount int32
 
 	Cfg                *setting.Cfg             `inject:""`
 	RemoteCacheService *remotecache.RemoteCache `inject:""`
@@ -154,7 +155,7 @@ func (rs *RenderingService) Render(ctx context.Context, opts Opts) (*RenderResul
 }
 
 func (rs *RenderingService) render(ctx context.Context, opts Opts) (*RenderResult, error) {
-	if rs.inProgressCount > opts.ConcurrentLimit {
+	if atomic.LoadInt32(&rs.inProgressCount) > int32(opts.ConcurrentLimit) {
 		return &RenderResult{
 			FilePath: filepath.Join(setting.HomePath, "public/img/rendering_limit.png"),
 		}, nil
@@ -179,12 +180,10 @@ func (rs *RenderingService) render(ctx context.Context, opts Opts) (*RenderResul
 	defer rs.deleteRenderKey(renderKey)
 
 	defer func() {
-		rs.inProgressCount--
-		metrics.MRenderingQueue.Set(float64(rs.inProgressCount))
+		metrics.MRenderingQueue.Set(float64(atomic.AddInt32(&rs.inProgressCount, -1)))
 	}()
 
-	rs.inProgressCount++
-	metrics.MRenderingQueue.Set(float64(rs.inProgressCount))
+	metrics.MRenderingQueue.Set(float64(atomic.AddInt32(&rs.inProgressCount, 1)))
 	return rs.renderAction(ctx, renderKey, opts)
 }
 
