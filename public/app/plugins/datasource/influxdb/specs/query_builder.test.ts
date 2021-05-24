@@ -56,13 +56,13 @@ describe('InfluxQueryBuilder', () => {
     it('should have WITH MEASUREMENT in measurement query for non-empty query with no tags', () => {
       const builder = new InfluxQueryBuilder({ measurement: '', tags: [] });
       const query = builder.buildExploreQuery('MEASUREMENTS', undefined, 'something');
-      expect(query).toBe('SHOW MEASUREMENTS WITH MEASUREMENT =~ /something/ LIMIT 100');
+      expect(query).toBe('SHOW MEASUREMENTS WITH MEASUREMENT =~ /(?i)something/ LIMIT 100');
     });
 
     it('should escape the regex value in measurement query', () => {
       const builder = new InfluxQueryBuilder({ measurement: '', tags: [] });
       const query = builder.buildExploreQuery('MEASUREMENTS', undefined, 'abc/edf/');
-      expect(query).toBe('SHOW MEASUREMENTS WITH MEASUREMENT =~ /abc\\/edf\\// LIMIT 100');
+      expect(query).toBe('SHOW MEASUREMENTS WITH MEASUREMENT =~ /(?i)abc\\/edf\\// LIMIT 100');
     });
 
     it('should have WITH MEASUREMENT WHERE in measurement query for non-empty query with tags', () => {
@@ -71,7 +71,7 @@ describe('InfluxQueryBuilder', () => {
         tags: [{ key: 'app', value: 'email' }],
       });
       const query = builder.buildExploreQuery('MEASUREMENTS', undefined, 'something');
-      expect(query).toBe('SHOW MEASUREMENTS WITH MEASUREMENT =~ /something/ WHERE "app" = \'email\' LIMIT 100');
+      expect(query).toBe('SHOW MEASUREMENTS WITH MEASUREMENT =~ /(?i)something/ WHERE "app" = \'email\' LIMIT 100');
     });
 
     it('should have where condition in measurement query for query with tags', () => {
