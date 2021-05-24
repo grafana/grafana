@@ -100,8 +100,7 @@ func (h *databaseQueryWrapper) instrument(ctx context.Context, status string, qu
 
 	span.LogFields(
 		ol.String("query", query),
-		ol.String("status", status),
-		ol.Float64("elapsed", float64(elapsed.Seconds())))
+		ol.String("status", status))
 
 	if err != nil {
 		span.LogFields(ol.String("error", err.Error()))
