@@ -182,7 +182,8 @@ func (c *clientSecretCredential) getCredential() (azcore.TokenCredential, error)
 		defer c.credLock.Unlock()
 
 		var err error
-		credential, err = azidentity.NewClientSecretCredential(c.tenantId, c.clientId, c.clientSecret, nil)
+		options := &azidentity.ClientSecretCredentialOptions{AuthorityHost: c.authority}
+		credential, err = azidentity.NewClientSecretCredential(c.tenantId, c.clientId, c.clientSecret, options)
 		if err != nil {
 			return nil, err
 		}
