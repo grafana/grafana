@@ -1,6 +1,6 @@
 import { AzureGraphResponse, RawAzureResourceGroupItem, RawAzureResourceItem } from '../types';
 
-export const getARGResourceContainersResponse = (): AzureGraphResponse<RawAzureResourceGroupItem[]> => ({
+export const createMockARGResourceContainersResponse = (): AzureGraphResponse<RawAzureResourceGroupItem[]> => ({
   data: [
     {
       subscriptionURI: '/subscriptions/abc-123',
@@ -39,7 +39,7 @@ export const getARGResourceContainersResponse = (): AzureGraphResponse<RawAzureR
   ],
 });
 
-export const getARGResourcesResponse = (): AzureGraphResponse<RawAzureResourceItem[]> => ({
+export const createARGResourcesResponse = (): AzureGraphResponse<RawAzureResourceItem[]> => ({
   data: [
     {
       id: '/subscription/def-456/resourceGroups/dev/providers/Microsoft.Compute/virtualMachines/web-server',

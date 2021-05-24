@@ -4,37 +4,19 @@ import { createFetchResponse } from 'test/helpers/createFetchResponse';
 import { backendSrv } from 'app/core/services/backend_srv';
 
 import ResourcePickerData from './resourcePickerData';
-import { AzureDataSourceInstanceSettings } from '../types';
-import { DataSourcePluginMeta } from '@grafana/data';
-import { getARGResourceContainersResponse, getARGResourcesResponse } from '../__mocks__/argResourcePickerResponse';
+import {
+  createMockARGResourceContainersResponse,
+  createARGResourcesResponse,
+} from '../__mocks__/argResourcePickerResponse';
 import { ResourceRowType } from '../components/ResourcePicker/types';
+import { createMockInstanceSetttings } from '../__mocks__/instanceSettings';
 
 jest.mock('@grafana/runtime', () => ({
   ...((jest.requireActual('@grafana/runtime') as unknown) as object),
   getBackendSrv: () => backendSrv,
 }));
 
-const instanceSettings: AzureDataSourceInstanceSettings = {
-  url: '/ds/1',
-  id: 1,
-  uid: 'abc',
-  type: 'azuremonitor',
-  meta: {} as DataSourcePluginMeta,
-  name: 'azure',
-
-  jsonData: {
-    cloudName: 'azuremonitor',
-    azureAuthType: 'clientsecret',
-
-    // monitor
-    tenantId: 'abc-123',
-    clientId: 'def-456',
-    subscriptionId: 'ghi-789',
-
-    // logs
-    azureLogAnalyticsSameAs: true,
-  },
-};
+const instanceSettings = createMockInstanceSetttings();
 
 describe('AzureMonitor resourcePickerData', () => {
   describe('getResourcePickerData', () => {
@@ -43,7 +25,7 @@ describe('AzureMonitor resourcePickerData', () => {
     beforeEach(() => {
       fetchMock = jest.spyOn(backendSrv, 'fetch');
       fetchMock.mockImplementation(() => {
-        const data = getARGResourceContainersResponse();
+        const data = createMockARGResourceContainersResponse();
         return of(createFetchResponse(data));
       });
     });
@@ -98,7 +80,7 @@ describe('AzureMonitor resourcePickerData', () => {
     beforeEach(() => {
       fetchMock = jest.spyOn(backendSrv, 'fetch');
       fetchMock.mockImplementation(() => {
-        const data = getARGResourcesResponse();
+        const data = createARGResourcesResponse();
         return of(createFetchResponse(data));
       });
     });
