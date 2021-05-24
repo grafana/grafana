@@ -275,7 +275,7 @@ describe('reducer', () => {
             ...defaultInitialState.explore[ExploreId.left],
             queryResponse: {
               series: [{ name: 'test name' }] as DataFrame[],
-              state: LoadingState.Loading,
+              state: LoadingState.Done,
             } as PanelData,
             absoluteRange: { from: 1621348027000, to: 1621348050000 },
             cache: [
