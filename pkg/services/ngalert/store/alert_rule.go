@@ -368,16 +368,19 @@ func (st DBstore) GetRuleGroupAlertRules(query *ngmodels.ListRuleGroupAlertRules
 }
 
 // GetNamespaceByTitle is a handler for retrieving a namespace by its title. Alerting rules follow a Grafana folder-like structure which we call namespaces.
-func (st DBstore) GetNamespaceByTitle(namespace string, orgID int64, user *models.SignedInUser, withEdit bool) (*models.Folder, error) {
+func (st DBstore) GetNamespaceByTitle(namespace string, orgID int64, user *models.SignedInUser, withCanSave bool) (*models.Folder, error) {
 	s := dashboards.NewFolderService(orgID, user, st.SQLStore)
 	folder, err := s.GetFolderByTitle(namespace)
 	if err != nil {
 		return nil, err
 	}
 
-	if withEdit {
+	if withCanSave {
 		g := guardian.New(folder.Id, orgID, user)
-		if canAdmin, err := g.CanEdit(); err != nil || !canAdmin {
+		if canSave, err := g.CanSave(); err != nil || !canSave {
+			if err != nil {
+				st.Logger.Error("checking can save permission has failed", "userId", user.UserId, "username", user.Login, "namespace", namespace, "orgId", orgID, "error", err)
+			}
 			return nil, ngmodels.ErrCannotEditNamespace
 		}
 	}
