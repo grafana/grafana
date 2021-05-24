@@ -281,7 +281,7 @@ describe('reducer', () => {
             cache: [
               {
                 key: 'from=1621348027000&to=1621348050000',
-                value: { series: [{ name: 'old test name' }], state: 'Done' },
+                value: { series: [{ name: 'old test name' }], state: LoadingState.Done },
               },
             ],
           },
