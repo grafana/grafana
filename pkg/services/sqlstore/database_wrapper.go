@@ -81,7 +81,7 @@ func (h *databaseQueryWrapper) After(ctx context.Context, query string, args ...
 func (h *databaseQueryWrapper) instrument(ctx context.Context, status string, query string, err error) {
 	begin := ctx.Value(databaseQueryWrapperKey{}).(time.Time)
 	elapsed := time.Since(begin)
-	//databaseQueryHistogram.WithLabelValues(status).Observe(elapsed.Seconds())
+
 	histogram := databaseQueryHistogram.WithLabelValues(status)
 	if traceID, ok := cw.ExtractSampledTraceID(ctx); ok {
 		// Need to type-convert the Observer to an
