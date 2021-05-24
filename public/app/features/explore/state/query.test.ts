@@ -250,7 +250,7 @@ describe('reducer', () => {
       ]);
     });
 
-    it('should not add response to cache if response is stil loading', async () => {
+    it('should not add response to cache if response is still loading', async () => {
       const store = configureStore({
         ...(defaultInitialState as any),
         explore: {
