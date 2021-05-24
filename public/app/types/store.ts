@@ -1,7 +1,7 @@
 import { ThunkAction, ThunkDispatch as GenericThunkDispatch } from 'redux-thunk';
 import { PayloadAction } from '@reduxjs/toolkit';
 import { NavIndex } from '@grafana/data';
-import { AlertDefinitionState, AlertRulesState, NotificationChannelState } from './alerting';
+import { AlertRulesState, NotificationChannelState } from './alerting';
 import { UnifiedAlertingState } from '../features/alerting/unified/state/reducers';
 import { TeamsState, TeamState } from './teams';
 import { FolderState } from './folders';
@@ -41,7 +41,6 @@ export interface StoreState {
   templating: TemplatingState;
   importDashboard: ImportDashboardState;
   notificationChannel: NotificationChannelState;
-  alertDefinition: AlertDefinitionState;
   unifiedAlerting: UnifiedAlertingState;
 }
 

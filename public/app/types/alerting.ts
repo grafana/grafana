@@ -1,5 +1,4 @@
-import { DataFrame, DataQuery, PanelData, SelectableValue, TimeRange } from '@grafana/data';
-import { ExpressionQuery } from '../features/expressions/types';
+import { SelectableValue } from '@grafana/data';
 
 export interface AlertRuleDTO {
   id: number;
@@ -153,42 +152,6 @@ export interface AlertNotification {
   name: string;
   id: number;
   type: string;
-}
-
-export interface AlertDefinitionState {
-  uiState: AlertDefinitionUiState;
-  alertDefinition: AlertDefinition;
-  data: PanelData[];
-  alertDefinitions: AlertDefinition[];
-  getInstances: () => DataFrame[];
-}
-
-export interface AlertDefinition {
-  id: number;
-  uid: string;
-  title: string;
-  description: string;
-  condition: string;
-  data: any[];
-  intervalSeconds: number;
-}
-
-export interface AlertDefinitionDTO extends AlertDefinition {
-  queryType: string;
-  refId: string;
-  relativeTimeRange: TimeRange;
-  orgId: number;
-  updated: string;
-  version: number;
-}
-
-export interface AlertDefinitionQueryModel {
-  model: DataQuery | ExpressionQuery;
-}
-
-export interface AlertDefinitionUiState {
-  rightPaneSize: number;
-  topPaneSize: number;
 }
 
 export interface AnnotationItemDTO {
