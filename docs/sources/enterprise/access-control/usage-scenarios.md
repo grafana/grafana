@@ -199,12 +199,12 @@ Example response:
 
 ## Allow Viewers to create reports
 
-In order to create reports, you would need to have `reports.admin:write` permission. By default, Grafana Admin's or organization Admin can create reports as there is a [built-in role assignment]({{< relref "./roles#built-in-role-assignments" >}}) which comes with `reports.admin:write` permission.
+In order to create reports, you would need to have `reports.admin:create` permission. By default, an organization admin can create reports as there is a [built-in role assignment]({{< relref "./roles#built-in-role-assignments" >}}) which comes with `reports.admin:create` permission.
 
 If you want your users who have `Viewer` organization role to create reports, you have two options:
 
 1. First option is to create a built-in role assignment and map `grafana:roles:reporting:admin:edit` predefined role to the `Viewer` built-in role. Note that `grafana:roles:reporting:admin:edit` predefined role allows doing more than creating reports. Refer to [predefined roles]({{< relref "./roles.md#predefined-roles" >}}) for full list of permission assignments.
-1. Second option is to [create a custom role]({{< ref "#create-your-custom-role" >}}) with `reports.admin:write` permission, and create a built-in role assignment for `Viewer` organization role.
+1. Second option is to [create a custom role]({{< ref "#create-your-custom-role" >}}) with `reports.admin:create` permission, and create a built-in role assignment for `Viewer` organization role.
 
 ## Prevent Grafana Admin from creating and inviting users
 
