@@ -1,11 +1,11 @@
 import $ from 'jquery';
-import React, { MouseEvent, PureComponent } from 'react';
+import React, { PureComponent } from 'react';
 import { css } from 'emotion';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
 import { locationService } from '@grafana/runtime';
 import { selectors } from '@grafana/e2e-selectors';
-import { CustomScrollbar, stylesFactory, Themeable2, withTheme2 } from '@grafana/ui';
+import { CustomScrollbar, ScrollbarPosition, stylesFactory, Themeable2, withTheme2 } from '@grafana/ui';
 
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { Branding } from 'app/core/components/Branding/Branding';
@@ -241,9 +241,8 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
     $('body').toggleClass('panel-in-fullscreen', isFullscreen);
   }
 
-  setScrollTop = (e: MouseEvent<HTMLElement>): void => {
-    const target = e.target as HTMLElement;
-    this.setState({ scrollTop: target.scrollTop, updateScrollTop: undefined });
+  setScrollTop = ({ scrollTop }: ScrollbarPosition): void => {
+    this.setState({ scrollTop, updateScrollTop: undefined });
   };
 
   onAddPanel = () => {
