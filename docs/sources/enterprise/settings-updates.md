@@ -23,7 +23,7 @@ Grafana services with no need to restart the instance.
 So, the payload of a `PUT` request to the update settings endpoint (`/api/admin/settings`) 
 should contain (either one or both):
 - An `updates` map with a key, and a value per section you want to set.
-- A `removals` list with keys per section you want to set.
+- A `removals` list with keys per section you want to unset.
 
 For example, if you provide the following `updates`:
 
