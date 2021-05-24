@@ -1,4 +1,4 @@
-import { map, mergeMap, throttleTime } from 'rxjs/operators';
+import { mergeMap, throttleTime } from 'rxjs/operators';
 import { identity, Unsubscribable, of } from 'rxjs';
 import {
   DataQuery,
