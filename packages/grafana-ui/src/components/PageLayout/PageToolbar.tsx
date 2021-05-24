@@ -60,16 +60,17 @@ export const PageToolbar: FC<Props> = React.memo(
           </div>
         )}
         {onGoBack && (
-          <IconButton
-            className={styles.pageIcon}
-            name="arrow-left"
-            tooltip="Go back (Esc)"
-            tooltipPlacement="bottom"
-            size="xxl"
-            surface="dashboard"
-            aria-label={selectors.components.BackButton.backArrow}
-            onClick={onGoBack}
-          />
+          <div className={styles.pageIcon}>
+            <IconButton
+              name="arrow-left"
+              tooltip="Go back (Esc)"
+              tooltipPlacement="bottom"
+              size="xxl"
+              surface="dashboard"
+              aria-label={selectors.components.BackButton.backArrow}
+              onClick={onGoBack}
+            />
+          </div>
         )}
         {parent && onClickParent && (
           <button onClick={onClickParent} className={cx(styles.titleText, styles.parentLink)}>
@@ -127,6 +128,7 @@ const getStyles = (theme: GrafanaTheme2) => {
 
   return {
     toolbar: css`
+      align-items: center;
       background: ${theme.colors.background.canvas};
       display: flex;
       flex-wrap: wrap;
@@ -139,8 +141,8 @@ const getStyles = (theme: GrafanaTheme2) => {
     pageIcon: css`
       display: none;
       @media ${styleMixins.mediaUp(theme.v1.breakpoints.md)} {
-        align-items: center;
         display: flex;
+        align-items: center;
       }
     `,
     titleWrapper: css`
