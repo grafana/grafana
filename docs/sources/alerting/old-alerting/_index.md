@@ -1,7 +1,7 @@
 +++
-title = "Alerts"
+title = "Old Grafana Alerts"
 aliases = ["/docs/grafana/latest/alerting/rules/", "/docs/grafana/latest/alerting/metrics/"]
-weight = 110
+weight = 114
 +++
 
 # Alerts overview
@@ -19,10 +19,10 @@ Alerts have four main components:
 
 You can perform the following tasks for alerts:
 
-- [Create an alert rule]({{< relref "./old-alerting/create-alerts.md" >}})
-- [View existing alert rules and their current state]({{< relref "./old-alerting/view-alerts.md" >}})
-- [Test alert rules and troubleshoot]({{< relref "./old-alerting/troubleshoot-alerts.md" >}})
-- [Add or edit an alert contact point]({{< relref "./old-alerting/notifications.md" >}})
+- [Create an alert rule]({{< relref "create-alerts.md" >}})
+- [View existing alert rules and their current state]({{< relref "view-alerts.md" >}})
+- [Test alert rules and troubleshoot]({{< relref "troubleshoot-alerts.md" >}})
+- [Add or edit an alert contact point]({{< relref "notifications.md" >}})
 
 ## Clustering
 
@@ -35,11 +35,11 @@ Grafana managed alerts are evaluated by the Grafana backend. Rule evaluations ar
 Alert rules can only query backend data sources with alerting enabled:
 - builtin or developed and maintained by grafana: `Graphite`, `Prometheus`, `Loki`, `InfluxDB`, `Elasticsearch`,
 `Google Cloud Monitoring`, `Cloudwatch`, `Azure Monitor`, `MySQL`, `PostgreSQL`, `MSSQL`, `OpenTSDB`, `Oracle`, and `Azure Data Explorer`
-- any community backend data sources with alerting enabled (`backend` and `alerting` properties are set in the [plugin.json]({{< relref "../developers/plugins/metadata.md" >}}))
+- any community backend data sources with alerting enabled (`backend` and `alerting` properties are set in the [plugin.json]({{< relref "../../developers/plugins/metadata.md" >}}))
 
 ## Metrics from the alert engine
 
-The alert engine publishes some internal metrics about itself. You can read more about how Grafana publishes [internal metrics]({{< relref "../administration/view-server/internal-metrics.md" >}}).
+The alert engine publishes some internal metrics about itself. You can read more about how Grafana publishes [internal metrics]({{< relref "../../administration/view-server/internal-metrics.md" >}}).
 
 Metric Name | Type | Description
 ---------- | ----------- | ----------
