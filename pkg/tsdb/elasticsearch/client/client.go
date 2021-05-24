@@ -63,6 +63,8 @@ func coerceVersion(v *simplejson.Json) (*semver.Version, error) {
 			return semver.NewVersion("6.0.0")
 		case 70:
 			return semver.NewVersion("7.0.0")
+		case 77:
+			return semver.NewVersion("7.7.0")
 		default:
 			return nil, fmt.Errorf("elasticsearch version=%d is not supported", versionNumber)
 		}

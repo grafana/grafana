@@ -154,7 +154,7 @@ func TestNewClient(t *testing.T) {
 
 		c, err := NewClient(context.Background(), ds, plugins.DataTimeRange{})
 		require.NoError(t, err)
-		assert.Equal(t, 77, c.GetVersion())
+		assert.Equal(t, "7.7.0", c.GetVersion().String())
 	})
 }
 
