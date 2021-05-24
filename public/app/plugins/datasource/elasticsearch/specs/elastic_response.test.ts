@@ -655,7 +655,7 @@ describe('ElasticResponse', () => {
       expect(result.data.length).toBe(2);
 
       const firstSeries = result.data[0];
-      expect(firstSeries.target).toBe('Sum @value');
+      expect(firstSeries.target).toBe('Top Metrics @value');
       expect(firstSeries.datapoints.length).toBe(2);
       expect(firstSeries.datapoints).toEqual([
         [1, new Date('2021-01-01T00:00:00.000Z').valueOf()],
@@ -663,7 +663,7 @@ describe('ElasticResponse', () => {
       ]);
 
       const secondSeries = result.data[1];
-      expect(secondSeries.target).toBe('Sum @anotherValue');
+      expect(secondSeries.target).toBe('Top Metrics @anotherValue');
       expect(secondSeries.datapoints.length).toBe(2);
       expect(secondSeries.datapoints).toEqual([
         [2, new Date('2021-01-01T00:00:00.000Z').valueOf()],
