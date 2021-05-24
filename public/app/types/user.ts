@@ -1,5 +1,4 @@
-import { TimeZone } from '@grafana/data';
-import { OrgRole, Team } from '.';
+import { OrgRole } from '.';
 
 export interface OrgUser {
   avatarUrl: string;
@@ -67,20 +66,6 @@ export interface UsersState {
   externalUserMngLinkName: string;
   externalUserMngInfo: string;
   hasFetched: boolean;
-}
-
-export interface UserState {
-  orgId: number;
-  timeZone: TimeZone;
-  user?: UserDTO;
-  teams: Team[];
-  orgs: UserOrg[];
-  sessions: UserSession[];
-  loadingUser: boolean;
-  loadingTeams: boolean;
-  loadingOrgs: boolean;
-  loadingSessions: boolean;
-  updating: boolean;
 }
 
 export interface UserSession {

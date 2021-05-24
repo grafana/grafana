@@ -2,18 +2,32 @@ import { isEmpty, isString, set } from 'lodash';
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { dateTimeFormat, dateTimeFormatTimeAgo, TimeZone } from '@grafana/data';
 
-import { Team, ThunkResult, UserDTO, UserOrg, UserSession, UserState } from 'app/types';
+import { Team, ThunkResult, UserDTO, UserOrg, UserSession } from 'app/types';
 import config from 'app/core/config';
 import { contextSrv } from 'app/core/core';
+
+export interface UserState {
+  orgId: number;
+  timeZone: TimeZone;
+  user?: UserDTO;
+  teams: Team[];
+  orgs: UserOrg[];
+  sessions: UserSession[];
+  userIsLoading: boolean;
+  teamsAreLoading: boolean;
+  orgsAreLoading: boolean;
+  sessionsAreLoading: boolean;
+  isUpdating: boolean;
+}
 
 export const initialUserState: UserState = {
   orgId: config.bootData.user.orgId,
   timeZone: config.bootData.user.timezone,
-  loadingOrgs: false,
-  loadingSessions: false,
-  loadingTeams: false,
-  loadingUser: false,
-  updating: false,
+  orgsAreLoading: false,
+  sessionsAreLoading: false,
+  teamsAreLoading: false,
+  userIsLoading: false,
+  isUpdating: false,
   orgs: [],
   sessions: [],
   teams: [],
@@ -27,31 +41,31 @@ export const slice = createSlice({
       state.timeZone = action.payload.timeZone;
     },
     setUpdating: (state, action: PayloadAction<{ updating: boolean }>) => {
-      state.updating = action.payload.updating;
+      state.isUpdating = action.payload.updating;
     },
     initLoadUser: (state, action: PayloadAction<undefined>) => {
-      state.loadingUser = true;
+      state.userIsLoading = true;
     },
     userLoaded: (state, action: PayloadAction<{ user: UserDTO }>) => {
       state.user = action.payload.user;
-      state.loadingUser = false;
+      state.userIsLoading = false;
     },
     initLoadTeams: (state, action: PayloadAction<undefined>) => {
-      state.loadingTeams = true;
+      state.teamsAreLoading = true;
     },
     teamsLoaded: (state, action: PayloadAction<{ teams: Team[] }>) => {
       state.teams = action.payload.teams;
-      state.loadingTeams = false;
+      state.teamsAreLoading = false;
     },
     initLoadOrgs: (state, action: PayloadAction<undefined>) => {
-      state.loadingOrgs = true;
+      state.orgsAreLoading = true;
     },
     orgsLoaded: (state, action: PayloadAction<{ orgs: UserOrg[] }>) => {
       state.orgs = action.payload.orgs;
-      state.loadingOrgs = false;
+      state.orgsAreLoading = false;
     },
     initLoadSessions: (state, action: PayloadAction<undefined>) => {
-      state.loadingSessions = true;
+      state.sessionsAreLoading = true;
     },
     sessionsLoaded: (state, action: PayloadAction<{ sessions: UserSession[] }>) => {
       const sorted = action.payload.sessions.sort((a, b) => Number(b.isActive) - Number(a.isActive)); // Show active sessions first
@@ -67,13 +81,13 @@ export const slice = createSlice({
         osVersion: session.osVersion,
         device: session.device,
       }));
-      state.loadingSessions = false;
+      state.sessionsAreLoading = false;
     },
     userSessionRevoked: (state, action: PayloadAction<{ tokenId: number }>) => {
       state.sessions = state.sessions.filter((session: UserSession) => {
         return session.id !== action.payload.tokenId;
       });
-      state.updating = false;
+      state.isUpdating = false;
     },
   },
 });

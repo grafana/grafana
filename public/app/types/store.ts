@@ -8,7 +8,7 @@ import { FolderState } from './folders';
 import { DashboardState } from './dashboard';
 import { DataSourceSettingsState, DataSourcesState } from './datasources';
 import { ExploreState } from './explore';
-import { UserAdminState, UserListAdminState, UsersState, UserState } from './user';
+import { UserAdminState, UserListAdminState, UsersState } from './user';
 import { OrganizationState } from './organization';
 import { AppNotificationsState } from './appNotifications';
 import { PluginsState } from './plugins';
@@ -17,6 +17,7 @@ import { PanelEditorState } from '../features/dashboard/components/PanelEditor/s
 import { ApiKeysState } from './apiKeys';
 import { TemplatingState } from '../features/variables/state/reducers';
 import { ImportDashboardState } from '../features/manage-dashboards/state/reducers';
+import { UserState } from 'app/features/profile/state/reducers';
 
 export interface StoreState {
   navIndex: NavIndex;

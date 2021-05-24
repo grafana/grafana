@@ -1,5 +1,5 @@
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
-import { OrgRole, TeamPermissionLevel, UserState } from '../../../types';
+import { OrgRole, TeamPermissionLevel } from '../../../types';
 import {
   initialUserState,
   orgsLoaded,
@@ -10,6 +10,7 @@ import {
   userLoaded,
   userReducer,
   userSessionRevoked,
+  UserState,
 } from './reducers';
 
 describe('userReducer', () => {
@@ -25,16 +26,16 @@ describe('userReducer', () => {
   describe('when setUpdating is dispatched', () => {
     it('then state should be correct', () => {
       reducerTester<UserState>()
-        .givenReducer(userReducer, { ...initialUserState, updating: false })
+        .givenReducer(userReducer, { ...initialUserState, isUpdating: false })
         .whenActionIsDispatched(setUpdating({ updating: true }))
-        .thenStateShouldEqual({ ...initialUserState, updating: true });
+        .thenStateShouldEqual({ ...initialUserState, isUpdating: true });
     });
   });
 
   describe('when userLoaded is dispatched', () => {
     it('then state should be correct', () => {
       reducerTester<UserState>()
-        .givenReducer(userReducer, { ...initialUserState, loadingUser: true })
+        .givenReducer(userReducer, { ...initialUserState, userIsLoading: true })
         .whenActionIsDispatched(
           userLoaded({
             user: {
@@ -49,7 +50,7 @@ describe('userReducer', () => {
         )
         .thenStateShouldEqual({
           ...initialUserState,
-          loadingUser: false,
+          userIsLoading: false,
           user: {
             id: 2021,
             email: 'test@test.com',
@@ -65,7 +66,7 @@ describe('userReducer', () => {
   describe('when teamsLoaded is dispatched', () => {
     it('then state should be correct', () => {
       reducerTester<UserState>()
-        .givenReducer(userReducer, { ...initialUserState, loadingTeams: true })
+        .givenReducer(userReducer, { ...initialUserState, teamsAreLoading: true })
         .whenActionIsDispatched(
           teamsLoaded({
             teams: [
@@ -82,7 +83,7 @@ describe('userReducer', () => {
         )
         .thenStateShouldEqual({
           ...initialUserState,
-          loadingTeams: false,
+          teamsAreLoading: false,
           teams: [
             {
               id: 1,
@@ -100,7 +101,7 @@ describe('userReducer', () => {
   describe('when orgsLoaded is dispatched', () => {
     it('then state should be correct', () => {
       reducerTester<UserState>()
-        .givenReducer(userReducer, { ...initialUserState, loadingOrgs: true })
+        .givenReducer(userReducer, { ...initialUserState, orgsAreLoading: true })
         .whenActionIsDispatched(
           orgsLoaded({
             orgs: [{ orgId: 1, name: 'Main', role: OrgRole.Viewer }],
@@ -108,7 +109,7 @@ describe('userReducer', () => {
         )
         .thenStateShouldEqual({
           ...initialUserState,
-          loadingOrgs: false,
+          orgsAreLoading: false,
           orgs: [{ orgId: 1, name: 'Main', role: OrgRole.Viewer }],
         });
     });
@@ -117,7 +118,7 @@ describe('userReducer', () => {
   describe('when sessionsLoaded is dispatched', () => {
     it('then state should be correct', () => {
       reducerTester<UserState>()
-        .givenReducer(userReducer, { ...initialUserState, loadingSessions: true })
+        .givenReducer(userReducer, { ...initialUserState, sessionsAreLoading: true })
         .whenActionIsDispatched(
           sessionsLoaded({
             sessions: [
@@ -138,7 +139,7 @@ describe('userReducer', () => {
         )
         .thenStateShouldEqual({
           ...initialUserState,
-          loadingSessions: false,
+          sessionsAreLoading: false,
           sessions: [
             {
               id: 1,

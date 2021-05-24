@@ -24,6 +24,15 @@ export function changePassword(payload: ChangePasswordFields): ThunkResult<void>
   };
 }
 
+export function initUserProfilePage(): ThunkResult<void> {
+  return async function (dispatch) {
+    await dispatch(loadUser());
+    dispatch(loadTeams());
+    dispatch(loadOrgs());
+    dispatch(loadSessions());
+  };
+}
+
 export function loadUser(): ThunkResult<void> {
   return async function (dispatch) {
     dispatch(initLoadUser());
@@ -32,7 +41,7 @@ export function loadUser(): ThunkResult<void> {
   };
 }
 
-export function loadTeams(): ThunkResult<void> {
+function loadTeams(): ThunkResult<void> {
   return async function (dispatch) {
     dispatch(initLoadTeams());
     const teams = await api.loadTeams();
@@ -40,7 +49,7 @@ export function loadTeams(): ThunkResult<void> {
   };
 }
 
-export function loadOrgs(): ThunkResult<void> {
+function loadOrgs(): ThunkResult<void> {
   return async function (dispatch) {
     dispatch(initLoadOrgs());
     const orgs = await api.loadOrgs();
@@ -48,7 +57,7 @@ export function loadOrgs(): ThunkResult<void> {
   };
 }
 
-export function loadSessions(): ThunkResult<void> {
+function loadSessions(): ThunkResult<void> {
   return async function (dispatch) {
     dispatch(initLoadSessions());
     const sessions = await api.loadSessions();

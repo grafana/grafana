@@ -8,15 +8,7 @@ import { VerticalGroup } from '@grafana/ui';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { StoreState } from 'app/types';
 import Page from 'app/core/components/Page/Page';
-import {
-  changeUserOrg,
-  loadOrgs,
-  loadSessions,
-  loadTeams,
-  loadUser,
-  revokeUserSession,
-  updateUserProfile,
-} from './state/actions';
+import { changeUserOrg, initUserProfilePage, revokeUserSession, updateUserProfile } from './state/actions';
 import UserProfileEditForm from './UserProfileEditForm';
 import SharedPreferences from 'app/core/components/SharedPreferences/SharedPreferences';
 import { UserTeams } from './UserTeams';
@@ -29,26 +21,33 @@ export interface OwnProps {
 
 function mapStateToProps(state: StoreState) {
   const userState = state.user;
-  const { user, teams, orgs, sessions, loadingTeams, loadingOrgs, loadingUser, loadingSessions, updating } = userState;
+  const {
+    user,
+    teams,
+    orgs,
+    sessions,
+    teamsAreLoading,
+    orgsAreLoading,
+    userIsLoading,
+    sessionsAreLoading,
+    isUpdating,
+  } = userState;
   return {
     navModel: getNavModel(state.navIndex, 'profile-settings'),
-    loadingOrgs,
-    loadingSessions,
-    loadingTeams,
-    loadingUser,
+    orgsAreLoading,
+    sessionsAreLoading,
+    teamsAreLoading,
+    userIsLoading,
     orgs,
     sessions,
     teams,
-    updating,
+    isUpdating,
     user,
   };
 }
 
 const mapDispatchToProps = {
-  loadUser,
-  loadTeams,
-  loadOrgs,
-  loadSessions,
+  initUserProfilePage,
   revokeUserSession,
   changeUserOrg,
   updateUserProfile,
@@ -60,44 +59,33 @@ type Props = OwnProps & ConnectedProps<typeof connector>;
 
 export function UserProfileEdit({
   navModel,
-  loadingOrgs,
-  loadingSessions,
-  loadingTeams,
-  loadingUser,
-  loadUser,
-  loadTeams,
-  loadOrgs,
-  loadSessions,
+  orgsAreLoading,
+  sessionsAreLoading,
+  teamsAreLoading,
+  userIsLoading,
+  initUserProfilePage,
   orgs,
   sessions,
   teams,
-  updating,
+  isUpdating,
   user,
   revokeUserSession,
   changeUserOrg,
   updateUserProfile,
 }: Props) {
   useAsync(async () => {
-    await loadUser();
-    loadTeams();
-    loadOrgs();
-    loadSessions();
+    await initUserProfilePage();
   }, []);
 
   return (
     <Page navModel={navModel}>
-      <Page.Contents isLoading={loadingUser || !Boolean(user)}>
+      <Page.Contents isLoading={userIsLoading || !Boolean(user)}>
         <VerticalGroup spacing="md">
-          <UserProfileEditForm updateProfile={updateUserProfile} isSavingUser={updating} user={user!} />
+          <UserProfileEditForm updateProfile={updateUserProfile} isSavingUser={isUpdating} user={user!} />
           <SharedPreferences resourceUri="user" />
-          <UserTeams isLoading={loadingTeams} teams={teams} />
-          <UserOrganizations isLoading={loadingOrgs} setUserOrg={changeUserOrg} orgs={orgs} user={user!} />
-          <UserSessions
-            isLoading={loadingSessions}
-            revokeUserSession={revokeUserSession}
-            sessions={sessions}
-            user={user!}
-          />
+          <UserTeams isLoading={teamsAreLoading} teams={teams} />
+          <UserOrganizations isLoading={orgsAreLoading} setUserOrg={changeUserOrg} orgs={orgs} user={user!} />
+          <UserSessions isLoading={sessionsAreLoading} revokeUserSession={revokeUserSession} sessions={sessions} />
         </VerticalGroup>
       </Page.Contents>
     </Page>
