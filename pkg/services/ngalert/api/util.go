@@ -228,8 +228,11 @@ func conditionEval(c *models.ReqContext, cmd ngmodels.EvalAlertConditionCommand,
 		return response.Error(http.StatusBadRequest, "Failed to evaluate conditions", err)
 	}
 
-	frame := evalResults.AsDataFrame()
+	return streamEvalResultsAsDataFrame(evalResults)
+}
 
+func streamEvalResultsAsDataFrame(xs eval.Results) response.StreamingResponse {
+	frame := xs.AsDataFrame()
 	return response.JSONStreaming(http.StatusOK, util.DynMap{
 		"instances": []*data.Frame{&frame},
 	})
