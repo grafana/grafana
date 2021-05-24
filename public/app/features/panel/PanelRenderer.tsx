@@ -45,24 +45,26 @@ export function PanelRenderer<P extends object = any, F extends object = any>(pr
   const PanelComponent = plugin.panel;
 
   return (
-    <PanelComponent
-      id={1}
-      data={dataWithOverrides}
-      title={title}
-      timeRange={dataWithOverrides.timeRange}
-      timeZone={timeZone}
-      options={optionsWithDefaults!.options}
-      fieldConfig={fieldConfig}
-      transparent={false}
-      width={width}
-      height={height}
-      renderCounter={0}
-      replaceVariables={(str: string) => str}
-      onOptionsChange={onOptionsChange}
-      onFieldConfigChange={setFieldConfig}
-      onChangeTimeRange={onChangeTimeRange}
-      eventBus={appEvents}
-    />
+    <div style={{ width: `${width}px`, height: `${height}px` }}>
+      <PanelComponent
+        id={1}
+        data={dataWithOverrides}
+        title={title}
+        timeRange={dataWithOverrides.timeRange}
+        timeZone={timeZone}
+        options={optionsWithDefaults!.options}
+        fieldConfig={fieldConfig}
+        transparent={false}
+        width={width}
+        height={height}
+        renderCounter={0}
+        replaceVariables={(str: string) => str}
+        onOptionsChange={onOptionsChange}
+        onFieldConfigChange={setFieldConfig}
+        onChangeTimeRange={onChangeTimeRange}
+        eventBus={appEvents}
+      />
+    </div>
   );
 }
 

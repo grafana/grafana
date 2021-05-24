@@ -1,3 +1,4 @@
+import { dataFrameFromJSON, DataFrameJSON, getDefaultTimeRange, LoadingState } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 import {
   CloudPreviewRuleRequest,
@@ -7,7 +8,7 @@ import {
   PreviewRuleRequest,
   PreviewRuleResponse,
 } from '../types/preview';
-import { getDatasourceAPIId } from '../utils/datasource';
+import { RuleFormType } from '../types/rule-form';
 
 export async function previewAlertRule(request: PreviewRuleRequest): Promise<PreviewRuleResponse> {
   if (isCloudPreviewRequest(request)) {
@@ -18,10 +19,12 @@ export async function previewAlertRule(request: PreviewRuleRequest): Promise<Pre
     return previewGrafanaAlertRule(request);
   }
 
-  throw new Error('');
+  throw new Error('unsupported preview rule request');
 }
 
-type GrafanaPreviewRuleResponse = {};
+type GrafanaPreviewRuleResponse = {
+  instances: DataFrameJSON[];
+};
 
 async function previewGrafanaAlertRule(request: GrafanaPreviewRuleRequest): Promise<PreviewRuleResponse> {
   const { data } = await getBackendSrv()
@@ -32,25 +35,16 @@ async function previewGrafanaAlertRule(request: GrafanaPreviewRuleRequest): Prom
     })
     .toPromise();
 
-  console.log('grafana repsonse', data);
-
-  return data;
+  return {
+    ruleType: RuleFormType.grafana,
+    data: {
+      state: LoadingState.Done,
+      series: data.instances.map(dataFrameFromJSON),
+      timeRange: getDefaultTimeRange(),
+    },
+  };
 }
 
-type CloudPreviewRuleResponse = {};
-
 async function previewCloudAlertRule(request: CloudPreviewRuleRequest): Promise<PreviewRuleResponse> {
-  const { dataSourceName, expr } = request;
-
-  const { data } = await getBackendSrv()
-    .fetch<CloudPreviewRuleResponse>({
-      method: 'POST',
-      url: `/api/v1/rule/test/${getDatasourceAPIId(dataSourceName)}`,
-      data: { expr },
-    })
-    .toPromise();
-
-  console.log('cloud repsonse', data);
-
-  return data;
+  throw new Error('preview for cloud alerting rules is not implemented');
 }

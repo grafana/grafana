@@ -1,0 +1,61 @@
+import React from 'react';
+import { css } from '@emotion/css';
+import AutoSizer from 'react-virtualized-auto-sizer';
+import { useStyles2 } from '@grafana/ui';
+import { PanelRenderer } from '@grafana/runtime';
+import { GrafanaTheme2, LoadingState } from '@grafana/data';
+import { PreviewRuleResponse } from '../../types/preview';
+import { RuleFormType } from '../../types/rule-form';
+
+type Props = {
+  preview: PreviewRuleResponse | undefined;
+};
+
+export function PreviewRuleResult(props: Props): React.ReactElement | null {
+  const { preview } = props;
+  const styles = useStyles2(getStyles);
+
+  if (!preview) {
+    return null;
+  }
+
+  const { data, ruleType } = preview;
+
+  if (data.state === LoadingState.Loading) {
+    return <div>Loading preview...</div>;
+  }
+
+  if (data.state === LoadingState.Error) {
+    return <div>{data.error ?? 'Failed to preview alert rule'}</div>;
+  }
+
+  return (
+    <div className={styles.container}>
+      <span>
+        Preview based on the result of running the query, for this moment.{' '}
+        {ruleType === RuleFormType.grafana ? 'Configuration for `no data` and `error handling` is not applied.' : null}
+      </span>
+      <div className={styles.table}>
+        <AutoSizer>
+          {({ width, height }) => <PanelRenderer title="" width={width} height={height} pluginId="table" data={data} />}
+        </AutoSizer>
+      </div>
+    </div>
+  );
+}
+
+function getStyles(theme: GrafanaTheme2) {
+  return {
+    container: css`
+      margin: ${theme.spacing(2)} 0;
+    `,
+    table: css`
+      flex: 1 1 auto;
+      height: 130px;
+      margin-top: ${theme.spacing(2)};
+      border: 1px solid ${theme.colors.border.medium};
+      border-radius: ${theme.shape.borderRadius(1)};
+      padding-bottom: ${theme.spacing(1)};
+    `,
+  };
+}
