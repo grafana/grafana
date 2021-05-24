@@ -442,6 +442,8 @@ func (am *Alertmanager) buildReceiverIntegrations(receiver *apimodels.PostableAp
 			n, err = channels.NewThreemaNotifier(cfg, tmpl)
 		case "opsgenie":
 			n, err = channels.NewOpsgenieNotifier(cfg, tmpl)
+		case "prometheus-alertmanager":
+			n, err = channels.NewAlertmanagerNotifier(cfg, tmpl)
 		default:
 			return nil, fmt.Errorf("notifier %s is not supported", r.Type)
 		}

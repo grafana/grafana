@@ -1291,7 +1291,7 @@ var expAvailableChannelJsonOutput = `
     ]
   },
   {
-    "type": "alertmanager",
+    "type": "prometheus-alertmanager",
     "name": "Alertmanager",
     "heading": "Alertmanager Settings",
     "description": "Sends notifications to Alertmanager",
@@ -1312,6 +1312,38 @@ var expAvailableChannelJsonOutput = `
         "required": true,
         "validationRule": "",
         "secure": false
+      },
+      {
+        "element": "input",
+        "inputType": "text",
+        "label": "Basic Auth User",
+        "description": "",
+	"placeholder": "",
+        "propertyName": "basicAuthUser",
+        "selectOptions": null,
+        "showWhen": {
+          "field": "",
+          "is": ""
+        },
+        "required": false,
+        "validationRule": "",
+        "secure": false
+      },
+      {
+        "element": "input",
+        "inputType": "password",
+        "label": "Basic Auth Password",
+        "description": "",
+	"placeholder": "",
+        "propertyName": "basicAuthPassword",
+        "selectOptions": null,
+        "showWhen": {
+          "field": "",
+          "is": ""
+        },
+        "required": false,
+        "validationRule": "",
+        "secure": true
       }
     ]
   },
