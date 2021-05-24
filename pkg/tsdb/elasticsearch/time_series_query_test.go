@@ -937,87 +937,76 @@ func TestSettingsCasting(t *testing.T) {
 	t.Run("Inline Script", func(t *testing.T) {
 		t.Run("Correctly handles scripts for ES < 5.6", func(t *testing.T) {
 			c := newFakeClient("5.0.0")
-
-			for key := range scriptableAggType {
-				t.Run("Inline Script", func(t *testing.T) {
-					_, err := executeTsdbQuery(c, `{
-						"timeField": "@timestamp",
-						"bucketAggs": [
-							{ "type": "date_histogram", "field": "@timestamp", "id": "2" }
-						],
-						"metrics": [
-							{
-								"id": "1",
-								"type": "`+key+`",
-								"settings": {
-									"script": "my_script"
-								}
-							},
-							{
-								"id": "3",
-								"type": "`+key+`",
-								"settings": {
-									"script": {
-										"inline": "my_script"
-									}
-								}
+			_, err := executeTsdbQuery(c, `{
+				"timeField": "@timestamp",
+				"bucketAggs": [
+					{ "type": "date_histogram", "field": "@timestamp", "id": "2" }
+				],
+				"metrics": [
+					{
+						"id": "1",
+						"type": "avg",
+						"settings": {
+							"script": "my_script"
+						}
+					},
+					{
+						"id": "3",
+						"type": "avg",
+						"settings": {
+							"script": {
+								"inline": "my_script"
 							}
-						]
-					}`, from, to, 15*time.Second)
+						}
+					}
+				]
+			}`, from, to, 15*time.Second)
 
-					assert.Nil(t, err)
-					sr := c.multisearchRequests[0].Requests[0]
+			assert.Nil(t, err)
+			sr := c.multisearchRequests[0].Requests[0]
 
-					newFormatAggSettings := sr.Aggs[0].Aggregation.Aggs[0].Aggregation.Aggregation.(*es.MetricAggregation).Settings
-					oldFormatAggSettings := sr.Aggs[0].Aggregation.Aggs[1].Aggregation.Aggregation.(*es.MetricAggregation).Settings
+			newFormatAggSettings := sr.Aggs[0].Aggregation.Aggs[0].Aggregation.Aggregation.(*es.MetricAggregation).Settings
+			oldFormatAggSettings := sr.Aggs[0].Aggregation.Aggs[1].Aggregation.Aggregation.(*es.MetricAggregation).Settings
 
-					assert.Equal(t, map[string]interface{}{"inline": "my_script"}, newFormatAggSettings["script"])
-					assert.Equal(t, map[string]interface{}{"inline": "my_script"}, oldFormatAggSettings["script"])
-				})
-			}
+			assert.Equal(t, map[string]interface{}{"inline": "my_script"}, newFormatAggSettings["script"])
+			assert.Equal(t, map[string]interface{}{"inline": "my_script"}, oldFormatAggSettings["script"])
 		})
 
 		t.Run("Correctly handles scripts for ES >= 5.6", func(t *testing.T) {
 			c := newFakeClient("5.6.0")
-
-			for key := range scriptableAggType {
-				fmt.Println(key)
-				t.Run("Inline Script", func(t *testing.T) {
-					_, err := executeTsdbQuery(c, `{
-						"timeField": "@timestamp",
-						"bucketAggs": [
-							{ "type": "date_histogram", "field": "@timestamp", "id": "2" }
-						],
-						"metrics": [
-							{
-								"id": "1",
-								"type": "`+key+`",
-								"settings": {
-									"script": "my_script"
-								}
-							},
-							{ 
-								"id": "3",
-								"type": "`+key+`",
-								"settings": {
-									"script": {
-										"inline": "my_script"
-									}
-								}
+			_, err := executeTsdbQuery(c, `{
+				"timeField": "@timestamp",
+				"bucketAggs": [
+					{ "type": "date_histogram", "field": "@timestamp", "id": "2" }
+				],
+				"metrics": [
+					{
+						"id": "1",
+						"type": "avg",
+						"settings": {
+							"script": "my_script"
+						}
+					},
+					{ 
+						"id": "3",
+						"type": "avg",
+						"settings": {
+							"script": {
+								"inline": "my_script"
 							}
-						]
-					}`, from, to, 15*time.Second)
+						}
+					}
+				]
+			}`, from, to, 15*time.Second)
 
-					assert.Nil(t, err)
-					sr := c.multisearchRequests[0].Requests[0]
+			assert.Nil(t, err)
+			sr := c.multisearchRequests[0].Requests[0]
 
-					newFormatAggSettings := sr.Aggs[0].Aggregation.Aggs[0].Aggregation.Aggregation.(*es.MetricAggregation).Settings
-					oldFormatAggSettings := sr.Aggs[0].Aggregation.Aggs[1].Aggregation.Aggregation.(*es.MetricAggregation).Settings
+			newFormatAggSettings := sr.Aggs[0].Aggregation.Aggs[0].Aggregation.Aggregation.(*es.MetricAggregation).Settings
+			oldFormatAggSettings := sr.Aggs[0].Aggregation.Aggs[1].Aggregation.Aggregation.(*es.MetricAggregation).Settings
 
-					assert.Equal(t, "my_script", newFormatAggSettings["script"])
-					assert.Equal(t, "my_script", oldFormatAggSettings["script"])
-				})
-			}
+			assert.Equal(t, "my_script", newFormatAggSettings["script"])
+			assert.Equal(t, "my_script", oldFormatAggSettings["script"])
 		})
 	})
 }
