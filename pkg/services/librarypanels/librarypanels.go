@@ -18,7 +18,6 @@ type Service interface {
 	LoadLibraryPanelsForDashboard(c *models.ReqContext, dash *models.Dashboard) error
 	CleanLibraryPanelsForDashboard(dash *models.Dashboard) error
 	ConnectLibraryPanelsForDashboard(c *models.ReqContext, dash *models.Dashboard) error
-	ImportDashboard(c *models.ReqContext, dashboard *simplejson.Json, importedID int64) error
 }
 
 // LibraryPanelService is the service for the Panel Library feature.
@@ -76,7 +75,7 @@ func (lps *LibraryPanelService) LoadLibraryPanelsForDashboard(c *models.ReqConte
 			continue
 		}
 
-		if libraryelements.LibraryElementKind(elementInDB.Kind) != libraryelements.Panel {
+		if models.LibraryElementKind(elementInDB.Kind) != models.PanelElement {
 			continue
 		}
 
@@ -192,12 +191,4 @@ func (lps *LibraryPanelService) ConnectLibraryPanelsForDashboard(c *models.ReqCo
 	}
 
 	return lps.LibraryElementService.ConnectElementsToDashboard(c, elementUIDs, dash.Id)
-}
-
-// ImportDashboard loops through all panels in dashboard JSON and connects any library panels to the dashboard.
-func (lps *LibraryPanelService) ImportDashboard(c *models.ReqContext, dashboard *simplejson.Json, importedID int64) error {
-	dash := models.NewDashboardFromJson(dashboard)
-	dash.Id = importedID
-
-	return lps.ConnectLibraryPanelsForDashboard(c, dash)
 }

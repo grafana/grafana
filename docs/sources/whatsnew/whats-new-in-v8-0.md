@@ -181,6 +181,11 @@ You can now configure generic OAuth with empty scopes. This allows OAuth Identit
 
 You can now configure generic OAuth with strict parsing of the `role_attribute_path`. By default, if  th `role_attribute_path` property does not return a role, then the user is assigned the `Viewer` role. You can disable the role assignment by setting `role_attribute_strict = true`. It denies user access if no role or an invalid role is returned.
 
+####  Singlestat panel deprecated
+
+Support for Singlestat panel has been discontinued. When you upgrade to version 8.0, all existing Singlestat panels automatically becomes Stat panels.
+Stat panel is available as plugin.
+
 ## Enterprise features
 
 These features are included in the Grafana Enterprise edition.
