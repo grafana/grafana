@@ -175,6 +175,9 @@ var (
 	// StatsTotalAnnotations is a metric of total number of annotations stored in Grafana.
 	StatsTotalAnnotations prometheus.Gauge
 
+	// StatsTotalAlertRules is a metric of total number of alert rules stored in Grafana.
+	StatsTotalAlertRules prometheus.Gauge
+
 	// StatsTotalDashboardVersions is a metric of total number of dashboard versions stored in Grafana.
 	StatsTotalDashboardVersions prometheus.Gauge
 
@@ -182,6 +185,12 @@ var (
 	grafanaBuildVersion *prometheus.GaugeVec
 
 	grafanaPluginBuildInfoDesc *prometheus.GaugeVec
+
+	// StatsTotalLibraryPanels is a metric of total number of library panels stored in Grafana.
+	StatsTotalLibraryPanels prometheus.Gauge
+
+	// StatsTotalLibraryVariables is a metric of total number of library variables stored in Grafana.
+	StatsTotalLibraryVariables prometheus.Gauge
 )
 
 func init() {
@@ -521,6 +530,12 @@ func init() {
 		Namespace: ExporterName,
 	})
 
+	StatsTotalAlertRules = prometheus.NewGauge(prometheus.GaugeOpts{
+		Name:      "stat_totals_alert_rules",
+		Help:      "total amount of alert rules in the database",
+		Namespace: ExporterName,
+	})
+
 	MAccessPermissionsSummary = prometheus.NewHistogram(prometheus.HistogramOpts{
 		Name:    "access_permissions_duration",
 		Help:    "Histogram for the runtime of permissions check function.",
@@ -536,6 +551,18 @@ func init() {
 	MAccessEvaluationCount = prometheus.NewCounter(prometheus.CounterOpts{
 		Name:      "access_evaluation_count",
 		Help:      "number of evaluation calls",
+		Namespace: ExporterName,
+	})
+
+	StatsTotalLibraryPanels = prometheus.NewGauge(prometheus.GaugeOpts{
+		Name:      "stat_totals_library_panels",
+		Help:      "total amount of library panels in the database",
+		Namespace: ExporterName,
+	})
+
+	StatsTotalLibraryVariables = prometheus.NewGauge(prometheus.GaugeOpts{
+		Name:      "stat_totals_library_variables",
+		Help:      "total amount of library variables in the database",
 		Namespace: ExporterName,
 	})
 }
@@ -631,6 +658,8 @@ func initMetricVars() {
 		StatsTotalDashboardVersions,
 		StatsTotalAnnotations,
 		MAccessEvaluationCount,
+		StatsTotalLibraryPanels,
+		StatsTotalLibraryVariables,
 	)
 }
 

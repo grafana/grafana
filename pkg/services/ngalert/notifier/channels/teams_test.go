@@ -61,7 +61,7 @@ func TestTeamsNotifier(t *testing.T) {
 						"@context": "http://schema.org",
 						"@type":    "OpenUri",
 						"name":     "View Rule",
-						"targets":  []map[string]interface{}{{"os": "default", "uri": "http:/localhost/alerting/list"}},
+						"targets":  []map[string]interface{}{{"os": "default", "uri": "http://localhost/alerting/list"}},
 					},
 				},
 			},
@@ -103,7 +103,7 @@ func TestTeamsNotifier(t *testing.T) {
 						"@context": "http://schema.org",
 						"@type":    "OpenUri",
 						"name":     "View Rule",
-						"targets":  []map[string]interface{}{{"os": "default", "uri": "http:/localhost/alerting/list"}},
+						"targets":  []map[string]interface{}{{"os": "default", "uri": "http://localhost/alerting/list"}},
 					},
 				},
 			},
@@ -128,7 +128,7 @@ func TestTeamsNotifier(t *testing.T) {
 			settingsJSON, err := simplejson.NewJson([]byte(c.settings))
 			require.NoError(t, err)
 
-			m := &models.AlertNotification{
+			m := &NotificationChannelConfig{
 				Name:     "teams_testing",
 				Type:     "teams",
 				Settings: settingsJSON,

@@ -1,11 +1,12 @@
 import React, { ChangeEvent, FunctionComponent, useEffect, useReducer, useState } from 'react';
 import { SelectableValue } from '@grafana/data';
 import { InlineFormLabel, LegacyForms, Button } from '@grafana/ui';
-import { AzureCredentials } from '../types';
+import { AzureAuthType, AzureCredentials } from '../types';
 import { isCredentialsComplete } from '../credentials';
 const { Select, Input } = LegacyForms;
 
 export interface Props {
+  managedIdentityEnabled: boolean;
   credentials: AzureCredentials;
   defaultSubscription?: string;
   azureCloudOptions?: SelectableValue[];
@@ -13,6 +14,17 @@ export interface Props {
   onDefaultSubscriptionChange?: (subscriptionId: string | undefined) => void;
   getSubscriptions?: () => Promise<SelectableValue[]>;
 }
+
+const authTypeOptions: Array<SelectableValue<AzureAuthType>> = [
+  {
+    value: 'msi',
+    label: 'Managed Identity',
+  },
+  {
+    value: 'clientsecret',
+    label: 'App Registration',
+  },
+];
 
 export const AzureCredentialsForm: FunctionComponent<Props> = (props: Props) => {
   const {
@@ -61,8 +73,18 @@ export const AzureCredentialsForm: FunctionComponent<Props> = (props: Props) => 
     }
   };
 
-  const onAzureCloudChange = (selected: SelectableValue<string>) => {
+  const onAuthTypeChange = (selected: SelectableValue<AzureAuthType>) => {
     if (onCredentialsChange) {
+      const updated: AzureCredentials = {
+        ...credentials,
+        authType: selected.value || 'msi',
+      };
+      onCredentialsChange(updated);
+    }
+  };
+
+  const onAzureCloudChange = (selected: SelectableValue<string>) => {
+    if (onCredentialsChange && credentials.authType === 'clientsecret') {
       const updated: AzureCredentials = {
         ...credentials,
         azureCloud: selected.value,
@@ -72,7 +94,7 @@ export const AzureCredentialsForm: FunctionComponent<Props> = (props: Props) => 
   };
 
   const onTenantIdChange = (event: ChangeEvent<HTMLInputElement>) => {
-    if (onCredentialsChange) {
+    if (onCredentialsChange && credentials.authType === 'clientsecret') {
       const updated: AzureCredentials = {
         ...credentials,
         tenantId: event.target.value,
@@ -82,7 +104,7 @@ export const AzureCredentialsForm: FunctionComponent<Props> = (props: Props) => 
   };
 
   const onClientIdChange = (event: ChangeEvent<HTMLInputElement>) => {
-    if (onCredentialsChange) {
+    if (onCredentialsChange && credentials.authType === 'clientsecret') {
       const updated: AzureCredentials = {
         ...credentials,
         clientId: event.target.value,
@@ -92,7 +114,7 @@ export const AzureCredentialsForm: FunctionComponent<Props> = (props: Props) => 
   };
 
   const onClientSecretChange = (event: ChangeEvent<HTMLInputElement>) => {
-    if (onCredentialsChange) {
+    if (onCredentialsChange && credentials.authType === 'clientsecret') {
       const updated: AzureCredentials = {
         ...credentials,
         clientSecret: event.target.value,
@@ -102,7 +124,7 @@ export const AzureCredentialsForm: FunctionComponent<Props> = (props: Props) => 
   };
 
   const onClientSecretReset = () => {
-    if (onCredentialsChange) {
+    if (onCredentialsChange && credentials.authType === 'clientsecret') {
       const updated: AzureCredentials = {
         ...credentials,
         clientSecret: '',
@@ -118,111 +140,128 @@ export const AzureCredentialsForm: FunctionComponent<Props> = (props: Props) => 
   };
 
   return (
-    <>
-      <div className="gf-form-group">
-        {azureCloudOptions && (
-          <div className="gf-form-inline">
-            <div className="gf-form">
-              <InlineFormLabel className="width-12" tooltip="Choose an Azure Cloud.">
-                Azure Cloud
-              </InlineFormLabel>
-              <Select
-                className="width-15"
-                value={azureCloudOptions.find((opt) => opt.value === credentials.azureCloud)}
-                options={azureCloudOptions}
-                onChange={onAzureCloudChange}
-              />
-            </div>
-          </div>
-        )}
+    <div className="gf-form-group">
+      {props.managedIdentityEnabled && (
         <div className="gf-form-inline">
           <div className="gf-form">
-            <InlineFormLabel className="width-12">Directory (tenant) ID</InlineFormLabel>
-            <div className="width-15">
-              <Input
-                className="width-30"
-                placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
-                value={credentials.tenantId || ''}
-                onChange={onTenantIdChange}
-              />
-            </div>
+            <InlineFormLabel className="width-12" tooltip="Choose the type of authentication to Azure services">
+              Authentication
+            </InlineFormLabel>
+            <Select
+              className="width-15"
+              value={authTypeOptions.find((opt) => opt.value === credentials.authType)}
+              options={authTypeOptions}
+              onChange={onAuthTypeChange}
+            />
           </div>
         </div>
-        <div className="gf-form-inline">
-          <div className="gf-form">
-            <InlineFormLabel className="width-12">Application (client) ID</InlineFormLabel>
-            <div className="width-15">
-              <Input
-                className="width-30"
-                placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
-                value={credentials.clientId || ''}
-                onChange={onClientIdChange}
-              />
-            </div>
-          </div>
-        </div>
-        {typeof credentials.clientSecret === 'symbol' ? (
-          <div className="gf-form-inline">
-            <div className="gf-form">
-              <InlineFormLabel className="width-12">Client Secret</InlineFormLabel>
-              <Input className="width-25" placeholder="configured" disabled={true} />
-            </div>
-            <div className="gf-form">
-              <div className="max-width-30 gf-form-inline">
-                <Button variant="secondary" type="button" onClick={onClientSecretReset}>
-                  reset
-                </Button>
+      )}
+      {credentials.authType === 'clientsecret' && (
+        <>
+          {azureCloudOptions && (
+            <div className="gf-form-inline">
+              <div className="gf-form">
+                <InlineFormLabel className="width-12" tooltip="Choose an Azure Cloud">
+                  Azure Cloud
+                </InlineFormLabel>
+                <Select
+                  className="width-15"
+                  value={azureCloudOptions.find((opt) => opt.value === credentials.azureCloud)}
+                  options={azureCloudOptions}
+                  onChange={onAzureCloudChange}
+                />
               </div>
             </div>
-          </div>
-        ) : (
+          )}
           <div className="gf-form-inline">
             <div className="gf-form">
-              <InlineFormLabel className="width-12">Client Secret</InlineFormLabel>
+              <InlineFormLabel className="width-12">Directory (tenant) ID</InlineFormLabel>
               <div className="width-15">
                 <Input
                   className="width-30"
                   placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
-                  value={credentials.clientSecret || ''}
-                  onChange={onClientSecretChange}
+                  value={credentials.tenantId || ''}
+                  onChange={onTenantIdChange}
                 />
               </div>
             </div>
           </div>
-        )}
-        {getSubscriptions && onDefaultSubscriptionChange && (
-          <>
-            <div className="gf-form-inline">
-              <div className="gf-form">
-                <InlineFormLabel className="width-12">Default Subscription</InlineFormLabel>
-                <div className="width-25">
-                  <Select
-                    value={subscriptions.find((opt) => opt.value === defaultSubscription)}
-                    options={subscriptions}
-                    onChange={onSubscriptionChange}
-                  />
-                </div>
+          <div className="gf-form-inline">
+            <div className="gf-form">
+              <InlineFormLabel className="width-12">Application (client) ID</InlineFormLabel>
+              <div className="width-15">
+                <Input
+                  className="width-30"
+                  placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
+                  value={credentials.clientId || ''}
+                  onChange={onClientIdChange}
+                />
               </div>
             </div>
+          </div>
+          {typeof credentials.clientSecret === 'symbol' ? (
             <div className="gf-form-inline">
               <div className="gf-form">
+                <InlineFormLabel className="width-12">Client Secret</InlineFormLabel>
+                <Input className="width-25" placeholder="configured" disabled={true} />
+              </div>
+              <div className="gf-form">
                 <div className="max-width-30 gf-form-inline">
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    type="button"
-                    onClick={onLoadSubscriptions}
-                    disabled={!hasRequiredFields}
-                  >
-                    Load Subscriptions
+                  <Button variant="secondary" type="button" onClick={onClientSecretReset}>
+                    reset
                   </Button>
                 </div>
               </div>
             </div>
-          </>
-        )}
-      </div>
-    </>
+          ) : (
+            <div className="gf-form-inline">
+              <div className="gf-form">
+                <InlineFormLabel className="width-12">Client Secret</InlineFormLabel>
+                <div className="width-15">
+                  <Input
+                    className="width-30"
+                    placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
+                    value={credentials.clientSecret || ''}
+                    onChange={onClientSecretChange}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+        </>
+      )}
+      {getSubscriptions && onDefaultSubscriptionChange && (
+        <>
+          <div className="gf-form-inline">
+            <div className="gf-form">
+              <InlineFormLabel className="width-12">Default Subscription</InlineFormLabel>
+              <div className="width-25">
+                <Select
+                  value={subscriptions.find((opt) => opt.value === defaultSubscription)}
+                  options={subscriptions}
+                  onChange={onSubscriptionChange}
+                />
+              </div>
+            </div>
+          </div>
+          <div className="gf-form-inline">
+            <div className="gf-form">
+              <div className="max-width-30 gf-form-inline">
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  type="button"
+                  onClick={onLoadSubscriptions}
+                  disabled={!hasRequiredFields}
+                >
+                  Load Subscriptions
+                </Button>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+    </div>
   );
 };
 

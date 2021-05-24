@@ -102,27 +102,27 @@ func (h *DashboardHandler) OnPublish(ctx context.Context, user *models.SignedInU
 		event := dashboardEvent{}
 		err := json.Unmarshal(e.Data, &event)
 		if err != nil || event.UID != parts[1] {
-			return models.PublishReply{}, backend.SubscribeStreamStatusNotFound, fmt.Errorf("bad request")
+			return models.PublishReply{}, backend.PublishStreamStatusNotFound, fmt.Errorf("bad request")
 		}
 		if event.Action != EDITING_STARTED {
 			// just ignore the event
-			return models.PublishReply{}, backend.SubscribeStreamStatusNotFound, fmt.Errorf("ignore???")
+			return models.PublishReply{}, backend.PublishStreamStatusNotFound, fmt.Errorf("ignore???")
 		}
 		query := models.GetDashboardQuery{Uid: parts[1], OrgId: user.OrgId}
 		if err := bus.Dispatch(&query); err != nil {
 			logger.Error("Unknown dashboard", "query", query)
-			return models.PublishReply{}, backend.SubscribeStreamStatusNotFound, nil
+			return models.PublishReply{}, backend.PublishStreamStatusNotFound, nil
 		}
 
 		guardian := guardian.New(query.Result.Id, user.OrgId, user)
 		canEdit, err := guardian.CanEdit()
 		if err != nil {
-			return models.PublishReply{}, backend.SubscribeStreamStatusNotFound, fmt.Errorf("internal error")
+			return models.PublishReply{}, backend.PublishStreamStatusNotFound, fmt.Errorf("internal error")
 		}
 
 		// Ignore edit events if the user can not edit
 		if !canEdit {
-			return models.PublishReply{}, backend.SubscribeStreamStatusNotFound, nil // NOOP
+			return models.PublishReply{}, backend.PublishStreamStatusNotFound, nil // NOOP
 		}
 
 		// Tell everyone who is editing
@@ -130,12 +130,12 @@ func (h *DashboardHandler) OnPublish(ctx context.Context, user *models.SignedInU
 
 		msg, err := json.Marshal(event)
 		if err != nil {
-			return models.PublishReply{}, backend.SubscribeStreamStatusNotFound, fmt.Errorf("internal error")
+			return models.PublishReply{}, backend.PublishStreamStatusNotFound, fmt.Errorf("internal error")
 		}
 		return models.PublishReply{Data: msg}, backend.PublishStreamStatusOK, nil
 	}
 
-	return models.PublishReply{}, backend.SubscribeStreamStatusNotFound, nil
+	return models.PublishReply{}, backend.PublishStreamStatusNotFound, nil
 }
 
 // DashboardSaved should broadcast to the appropriate stream

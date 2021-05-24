@@ -69,6 +69,7 @@ func (ng *AlertNG) Init() error {
 		BaseInterval:           baseInterval,
 		DefaultIntervalSeconds: defaultIntervalSeconds,
 		SQLStore:               ng.SQLStore,
+		Logger:                 ng.Log,
 	}
 
 	var err error
@@ -109,7 +110,7 @@ func (ng *AlertNG) Init() error {
 	return nil
 }
 
-// Run starts the scheduler
+// Run starts the scheduler.
 func (ng *AlertNG) Run(ctx context.Context) error {
 	ng.Log.Debug("ngalert starting")
 	ng.schedule.WarmStateCache(ng.stateManager)
