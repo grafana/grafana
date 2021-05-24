@@ -1348,10 +1348,6 @@ func (m *mockLibraryPanelService) ConnectLibraryPanelsForDashboard(c *models.Req
 	return nil
 }
 
-func (m *mockLibraryPanelService) ImportDashboard(c *models.ReqContext, dashboard *simplejson.Json, importedID int64) error {
-	return nil
-}
-
 type mockLibraryElementService struct {
 }
 
