@@ -38,6 +38,18 @@ export const StatusGridPanel: React.FC<TimelinePanelProps> = ({
     );
   }
 
+  // Status grid requires some space between values
+  if (frames[0].length > width / 2) {
+    return (
+      <div className="panel-empty">
+        <p>
+          Too many points to visualize properly. <br />
+          Update the query to return fewer points. <br />({frames[0].length} points recieved)
+        </p>
+      </div>
+    );
+  }
+
   return (
     <TimelineChart
       theme={theme}

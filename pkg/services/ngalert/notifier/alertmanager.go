@@ -440,6 +440,8 @@ func (am *Alertmanager) buildReceiverIntegrations(receiver *apimodels.PostableAp
 			n, err = channels.NewLineNotifier(cfg, tmpl)
 		case "threema":
 			n, err = channels.NewThreemaNotifier(cfg, tmpl)
+		case "opsgenie":
+			n, err = channels.NewOpsgenieNotifier(cfg, tmpl)
 		default:
 			return nil, fmt.Errorf("notifier %s is not supported", r.Type)
 		}

@@ -21,6 +21,13 @@ import { mergeMap } from 'rxjs/operators';
 import { getAuthType, getAzureCloud } from '../credentials';
 import { getLogAnalyticsApiRoute, getLogAnalyticsManagementApiRoute } from '../api/routes';
 import { AzureLogAnalyticsMetadata } from '../types/logAnalyticsMetadata';
+import { isGUIDish } from '../components/ResourcePicker/utils';
+
+interface AdhocQuery {
+  datasourceId: number;
+  url: string;
+  resultFormat: string;
+}
 
 export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
   AzureMonitorQuery,
@@ -61,7 +68,7 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
 
     return (
       map(response.data.value, (val: any) => {
-        return { text: val.name, value: val.properties.customerId };
+        return { text: val.name, value: val.id };
       }) || []
     );
   }
@@ -95,16 +102,15 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     const item = target.azureLogAnalytics;
 
     const templateSrv = getTemplateSrv();
+    const resource = templateSrv.replace(item.resource, scopedVars);
     let workspace = templateSrv.replace(item.workspace, scopedVars);
 
-    if (!workspace && this.defaultOrFirstWorkspace) {
+    if (!workspace && !resource && this.defaultOrFirstWorkspace) {
       workspace = this.defaultOrFirstWorkspace;
     }
 
     const subscriptionId = templateSrv.replace(target.subscription || this.subscriptionId, scopedVars);
     const query = templateSrv.replace(item.query, scopedVars, this.interpolateVariable);
-
-    const resource = templateSrv.replace(item.resource, scopedVars);
 
     return {
       refId: target.refId,
@@ -208,19 +214,21 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
    * external interface does not support
    */
   metricFindQueryInternal(query: string): Promise<MetricFindValue[]> {
+    // workspaces() - Get workspaces in the default subscription
     const workspacesQuery = query.match(/^workspaces\(\)/i);
     if (workspacesQuery) {
       return this.getWorkspaces(this.subscriptionId);
     }
 
+    // workspaces("abc-def-etc") - Get workspaces a specified subscription
     const workspacesQueryWithSub = query.match(/^workspaces\(["']?([^\)]+?)["']?\)/i);
     if (workspacesQueryWithSub) {
       return this.getWorkspaces((workspacesQueryWithSub[1] || '').trim());
     }
 
-    return this.getDefaultOrFirstWorkspace().then((workspace: any) => {
-      const queries: any[] = this.buildQuery(query, null, workspace);
-
+    // Execute the query as KQL to the default or first workspace
+    return this.getDefaultOrFirstWorkspace().then((resourceURI) => {
+      const queries = this.buildQuery(query, null, resourceURI);
       const promises = this.doQueries(queries);
 
       return Promise.all(promises)
@@ -239,24 +247,32 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
           } else if (err.error && err.error.data && err.error.data.error) {
             throw { message: err.error.data.error.message };
           }
+
+          throw err;
         });
     }) as Promise<MetricFindValue[]>;
   }
 
-  private buildQuery(query: string, options: any, workspace: any) {
+  private buildQuery(query: string, options: any, workspace: string): AdhocQuery[] {
     const querystringBuilder = new LogAnalyticsQuerystringBuilder(
       getTemplateSrv().replace(query, {}, this.interpolateVariable),
       options,
       'TimeGenerated'
     );
+
     const querystring = querystringBuilder.generate().uriString;
-    const url = `${this.baseUrl}/v1/workspaces/${workspace}/query?${querystring}`;
-    const queries: any[] = [];
-    queries.push({
-      datasourceId: this.id,
-      url: url,
-      resultFormat: 'table',
-    });
+    const url = isGUIDish(workspace)
+      ? `${this.baseUrl}/v1/workspaces/${workspace}/query?${querystring}`
+      : `${this.baseUrl}/v1/${workspace}/query?${querystring}`;
+
+    const queries = [
+      {
+        datasourceId: this.id,
+        url: url,
+        resultFormat: 'table',
+      },
+    ];
+
     return queries;
   }
 
@@ -288,8 +304,9 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
       return Promise.resolve(this.defaultOrFirstWorkspace);
     }
 
-    return this.getWorkspaces(this.subscriptionId).then((workspaces: any[]) => {
+    return this.getWorkspaces(this.subscriptionId).then((workspaces) => {
       this.defaultOrFirstWorkspace = workspaces[0].value;
+
       return this.defaultOrFirstWorkspace;
     });
   }
@@ -301,8 +318,7 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
       });
     }
 
-    const queries: any[] = this.buildQuery(options.annotation.rawQuery, options, options.annotation.workspace);
-
+    const queries = this.buildQuery(options.annotation.rawQuery, options, options.annotation.workspace);
     const promises = this.doQueries(queries);
 
     return Promise.all(promises).then((results) => {
@@ -311,7 +327,7 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     });
   }
 
-  doQueries(queries: any[]) {
+  doQueries(queries: AdhocQuery[]) {
     return map(queries, (query) => {
       return this.doRequest(query.url)
         .then((result: any) => {
@@ -354,7 +370,7 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     }
   }
 
-  // TODO: update to be resource-centric
+  // TODO: update to be completely resource-centric
   testDatasource(): Promise<DatasourceValidationResult> {
     const validationError = this.validateDatasource();
     if (validationError) {
@@ -362,8 +378,10 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     }
 
     return this.getDefaultOrFirstWorkspace()
-      .then((ws: any) => {
-        const url = `${this.baseUrl}/v1/workspaces/${ws}/metadata`;
+      .then((resourceOrWorkspace) => {
+        const url = isGUIDish(resourceOrWorkspace)
+          ? `${this.baseUrl}/v1/workspaces/${resourceOrWorkspace}/metadata`
+          : `${this.baseUrl}/v1${resourceOrWorkspace}/metadata`;
 
         return this.doRequest(url);
       })

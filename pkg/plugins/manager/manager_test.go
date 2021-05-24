@@ -533,8 +533,8 @@ func verifyBundledPluginCatalogue(t *testing.T, pm *PluginManager) {
 	t.Helper()
 
 	bundledPlugins := map[string]string{
-		"input":                      "input-datasource",
-		"grafana-plugin-catalog-app": "plugin-catalog-app",
+		"input":                    "input-datasource",
+		"grafana-plugin-admin-app": "plugin-admin-app",
 	}
 
 	for pluginID, pluginDir := range bundledPlugins {
@@ -547,7 +547,7 @@ func verifyBundledPluginCatalogue(t *testing.T, pm *PluginManager) {
 	}
 
 	assert.NotNil(t, pm.dataSources["input"])
-	assert.NotNil(t, pm.apps["grafana-plugin-catalog-app"])
+	assert.NotNil(t, pm.apps["grafana-plugin-admin-app"])
 }
 
 type fakeBackendPluginManager struct {
