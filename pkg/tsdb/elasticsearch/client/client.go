@@ -99,12 +99,13 @@ var NewClient = func(ctx context.Context, httpClientProvider httpclient.Provider
 	clientLog.Info("Creating new client", "version", version.String(), "timeField", timeField, "indices", strings.Join(indices, ", "))
 
 	return &baseClientImpl{
-		ctx:       ctx,
-		ds:        ds,
-		version:   version,
-		timeField: timeField,
-		indices:   indices,
-		timeRange: timeRange,
+		ctx:                ctx,
+		httpClientProvider: httpClientProvider,
+		ds:                 ds,
+		version:            version,
+		timeField:          timeField,
+		indices:            indices,
+		timeRange:          timeRange,
 	}, nil
 }
 
