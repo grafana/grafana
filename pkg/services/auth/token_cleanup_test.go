@@ -19,7 +19,7 @@ func TestUserAuthTokenCleanup(t *testing.T) {
 
 		insertToken := func(token string, prev string, createdAt, rotatedAt int64) {
 			ut := userAuthToken{AuthToken: token, PrevAuthToken: prev, CreatedAt: createdAt, RotatedAt: rotatedAt, UserAgent: "", ClientIp: ""}
-			_, err := ctx.sqlstore.NewSession().Insert(&ut)
+			_, err := ctx.sqlstore.NewSession(context.Background()).Insert(&ut)
 			So(err, ShouldBeNil)
 		}
 

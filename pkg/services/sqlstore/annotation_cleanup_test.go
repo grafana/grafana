@@ -129,7 +129,7 @@ func TestOldAnnotationsAreDeletedFirst(t *testing.T) {
 		Created:     time.Now().AddDate(-10, 0, -10).UnixNano() / int64(time.Millisecond),
 	}
 
-	session := fakeSQL.NewSession()
+	session := fakeSQL.NewSession(context.Background())
 	defer session.Close()
 
 	_, err := session.Insert(a)
@@ -159,7 +159,7 @@ func TestOldAnnotationsAreDeletedFirst(t *testing.T) {
 func assertAnnotationCount(t *testing.T, fakeSQL *SQLStore, sql string, expectedCount int64) {
 	t.Helper()
 
-	session := fakeSQL.NewSession()
+	session := fakeSQL.NewSession(context.Background())
 	defer session.Close()
 	count, err := session.Where(sql).Count(&annotations.Item{})
 	require.NoError(t, err)
@@ -169,7 +169,7 @@ func assertAnnotationCount(t *testing.T, fakeSQL *SQLStore, sql string, expected
 func assertAnnotationTagCount(t *testing.T, fakeSQL *SQLStore, expectedCount int64) {
 	t.Helper()
 
-	session := fakeSQL.NewSession()
+	session := fakeSQL.NewSession(context.Background())
 	defer session.Close()
 
 	count, err := session.SQL("select count(*) from annotation_tag").Count()
@@ -211,12 +211,12 @@ func createTestAnnotations(t *testing.T, sqlstore *SQLStore, expectedCount int, 
 			a.Created = cutoffDate.AddDate(-10, 0, -10).UnixNano() / int64(time.Millisecond)
 		}
 
-		_, err := sqlstore.NewSession().Insert(a)
+		_, err := sqlstore.NewSession(context.Background()).Insert(a)
 		require.NoError(t, err, "should be able to save annotation", err)
 
 		// mimick the SQL annotation Save logic by writing records to the annotation_tag table
 		// we need to ensure they get deleted when we clean up annotations
-		sess := sqlstore.NewSession()
+		sess := sqlstore.NewSession(context.Background())
 		for tagID := range []int{1, 2} {
 			_, err = sess.Exec("INSERT INTO annotation_tag (annotation_id, tag_id) VALUES(?,?)", a.Id, tagID)
 			require.NoError(t, err, "should be able to save annotation tag ID", err)
