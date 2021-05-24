@@ -11,14 +11,14 @@ export const createMockARGResourceContainersResponse = (): AzureGraphResponse<Ra
 
     {
       subscriptionURI: '/subscription/def-456',
-      subscriptionName: 'Primary Subscription',
+      subscriptionName: 'Dev Subscription',
       resourceGroupURI: '/subscription/def-456/resourceGroups/dev',
       resourceGroupName: 'Development',
     },
 
     {
       subscriptionURI: '/subscription/def-456',
-      subscriptionName: 'Primary Subscription',
+      subscriptionName: 'Dev Subscription',
       resourceGroupURI: '/subscription/def-456/resourceGroups/test',
       resourceGroupName: 'Test',
     },
@@ -32,7 +32,7 @@ export const createMockARGResourceContainersResponse = (): AzureGraphResponse<Ra
 
     {
       subscriptionURI: '/subscription/def-456',
-      subscriptionName: 'Primary Subscription',
+      subscriptionName: 'Dev Subscription',
       resourceGroupURI: '/subscription/def-456/resourceGroups/qa',
       resourceGroupName: 'QA',
     },

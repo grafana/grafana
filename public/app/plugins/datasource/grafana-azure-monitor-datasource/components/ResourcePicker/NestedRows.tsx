@@ -171,10 +171,13 @@ const NestedEntry: React.FC<NestedEntryProps> = ({
     [entry, onSelectedChange]
   );
 
+  const checkboxId = `checkbox_${entry.id}`;
+
   return (
     <div className={styles.nestedEntry} style={{ marginLeft: level * (3 * theme.spacing.gridSize) }}>
       {/* When groups are selectable, I *think* we will want to show a 2-wide space instead
             of the collapse button for leaf rows that have no children to get them to align */}
+
       <span className={styles.entryContentItem}>
         {hasChildren && (
           <IconButton
@@ -182,17 +185,22 @@ const NestedEntry: React.FC<NestedEntryProps> = ({
             name={isOpen ? 'angle-down' : 'angle-right'}
             aria-label={isOpen ? 'Collapse' : 'Expand'}
             onClick={handleToggleCollapse}
+            id={entry.id}
           />
         )}
 
-        {isSelectable && <Checkbox onChange={handleSelectedChanged} disabled={isDisabled} value={isSelected} />}
+        {isSelectable && (
+          <Checkbox id={checkboxId} onChange={handleSelectedChanged} disabled={isDisabled} value={isSelected} />
+        )}
       </span>
 
       <span className={styles.entryContentItem}>
         <EntryIcon entry={entry} isOpen={isOpen} />
       </span>
 
-      <span className={cx(styles.entryContentItem, styles.truncated)}>{entry.name}</span>
+      <label htmlFor={checkboxId} className={cx(styles.entryContentItem, styles.truncated)}>
+        {entry.name}
+      </label>
     </div>
   );
 };
