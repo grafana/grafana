@@ -21,23 +21,12 @@ export interface OwnProps {
 
 function mapStateToProps(state: StoreState) {
   const userState = state.user;
-  const {
-    user,
-    teams,
-    orgs,
-    sessions,
-    teamsAreLoading,
-    orgsAreLoading,
-    userIsLoading,
-    sessionsAreLoading,
-    isUpdating,
-  } = userState;
+  const { user, teams, orgs, sessions, teamsAreLoading, orgsAreLoading, sessionsAreLoading, isUpdating } = userState;
   return {
     navModel: getNavModel(state.navIndex, 'profile-settings'),
     orgsAreLoading,
     sessionsAreLoading,
     teamsAreLoading,
-    userIsLoading,
     orgs,
     sessions,
     teams,
@@ -62,7 +51,6 @@ export function UserProfileEdit({
   orgsAreLoading,
   sessionsAreLoading,
   teamsAreLoading,
-  userIsLoading,
   initUserProfilePage,
   orgs,
   sessions,
@@ -79,14 +67,16 @@ export function UserProfileEdit({
 
   return (
     <Page navModel={navModel}>
-      <Page.Contents isLoading={userIsLoading || !Boolean(user)}>
-        <VerticalGroup spacing="md">
-          <UserProfileEditForm updateProfile={updateUserProfile} isSavingUser={isUpdating} user={user!} />
-          <SharedPreferences resourceUri="user" />
-          <UserTeams isLoading={teamsAreLoading} teams={teams} />
-          <UserOrganizations isLoading={orgsAreLoading} setUserOrg={changeUserOrg} orgs={orgs} user={user!} />
-          <UserSessions isLoading={sessionsAreLoading} revokeUserSession={revokeUserSession} sessions={sessions} />
-        </VerticalGroup>
+      <Page.Contents isLoading={!Boolean(user)}>
+        {user ? (
+          <VerticalGroup spacing="md">
+            <UserProfileEditForm updateProfile={updateUserProfile} isSavingUser={isUpdating} user={user} />
+            <SharedPreferences resourceUri="user" />
+            <UserTeams isLoading={teamsAreLoading} teams={teams} />
+            <UserOrganizations isLoading={orgsAreLoading} setUserOrg={changeUserOrg} orgs={orgs} user={user} />
+            <UserSessions isLoading={sessionsAreLoading} revokeUserSession={revokeUserSession} sessions={sessions} />
+          </VerticalGroup>
+        ) : null}
       </Page.Contents>
     </Page>
   );

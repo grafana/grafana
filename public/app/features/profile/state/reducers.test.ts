@@ -35,7 +35,7 @@ describe('userReducer', () => {
   describe('when userLoaded is dispatched', () => {
     it('then state should be correct', () => {
       reducerTester<UserState>()
-        .givenReducer(userReducer, { ...initialUserState, userIsLoading: true })
+        .givenReducer(userReducer, { ...initialUserState, user: null })
         .whenActionIsDispatched(
           userLoaded({
             user: {
@@ -50,7 +50,6 @@ describe('userReducer', () => {
         )
         .thenStateShouldEqual({
           ...initialUserState,
-          userIsLoading: false,
           user: {
             id: 2021,
             email: 'test@test.com',

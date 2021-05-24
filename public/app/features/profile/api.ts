@@ -4,7 +4,11 @@ import { ChangePasswordFields, ProfileUpdateFields } from './types';
 import { Team, UserDTO, UserOrg, UserSession } from '../../types';
 
 async function changePassword(payload: ChangePasswordFields): Promise<void> {
-  await getBackendSrv().put('/api/user/password', payload);
+  try {
+    await getBackendSrv().put('/api/user/password', payload);
+  } catch (err) {
+    console.error(err);
+  }
 }
 
 async function loadUser(): Promise<UserDTO> {

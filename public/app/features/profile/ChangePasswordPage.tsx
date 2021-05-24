@@ -15,10 +15,9 @@ export interface OwnProps {
 
 function mapStateToProps(state: StoreState) {
   const userState = state.user;
-  const { userIsLoading, isUpdating, user } = userState;
+  const { isUpdating, user } = userState;
   return {
     navModel: getNavModel(state.navIndex, `change-password`),
-    userIsLoading,
     isUpdating,
     user,
   };
@@ -33,16 +32,20 @@ const connector = connect(mapStateToProps, mapDispatchToProps);
 
 type Props = OwnProps & ConnectedProps<typeof connector>;
 
-export function ChangePasswordPage({ navModel, loadUser, userIsLoading, isUpdating, user, changePassword }: Props) {
+export function ChangePasswordPage({ navModel, loadUser, isUpdating, user, changePassword }: Props) {
   useAsync(async () => {
     await loadUser();
   }, []);
 
   return (
     <Page navModel={navModel}>
-      <Page.Contents isLoading={userIsLoading || !Boolean(user)}>
-        <h3 className="page-heading">Change Your Password</h3>
-        <ChangePasswordForm user={user!} onChangePassword={changePassword} isSaving={isUpdating} />
+      <Page.Contents isLoading={!Boolean(user)}>
+        {user ? (
+          <>
+            <h3 className="page-heading">Change Your Password</h3>
+            <ChangePasswordForm user={user} onChangePassword={changePassword} isSaving={isUpdating} />
+          </>
+        ) : null}
       </Page.Contents>
     </Page>
   );

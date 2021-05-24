@@ -9,11 +9,10 @@ import { contextSrv } from 'app/core/core';
 export interface UserState {
   orgId: number;
   timeZone: TimeZone;
-  user?: UserDTO;
+  user: UserDTO | null;
   teams: Team[];
   orgs: UserOrg[];
   sessions: UserSession[];
-  userIsLoading: boolean;
   teamsAreLoading: boolean;
   orgsAreLoading: boolean;
   sessionsAreLoading: boolean;
@@ -26,11 +25,11 @@ export const initialUserState: UserState = {
   orgsAreLoading: false,
   sessionsAreLoading: false,
   teamsAreLoading: false,
-  userIsLoading: false,
   isUpdating: false,
   orgs: [],
   sessions: [],
   teams: [],
+  user: null,
 };
 
 export const slice = createSlice({
@@ -44,11 +43,10 @@ export const slice = createSlice({
       state.isUpdating = action.payload.updating;
     },
     initLoadUser: (state, action: PayloadAction<undefined>) => {
-      state.userIsLoading = true;
+      state.user = null;
     },
     userLoaded: (state, action: PayloadAction<{ user: UserDTO }>) => {
       state.user = action.payload.user;
-      state.userIsLoading = false;
     },
     initLoadTeams: (state, action: PayloadAction<undefined>) => {
       state.teamsAreLoading = true;
