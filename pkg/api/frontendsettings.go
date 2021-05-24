@@ -285,16 +285,18 @@ func getPanelSort(id string) int {
 		sort = 10
 	case "status-grid":
 		sort = 11
-	case "graph":
+	case "histogram":
 		sort = 12
-	case "text":
+	case "graph":
 		sort = 13
-	case "alertlist":
+	case "text":
 		sort = 14
-	case "dashlist":
+	case "alertlist":
 		sort = 15
-	case "news":
+	case "dashlist":
 		sort = 16
+	case "news":
+		sort = 17
 	}
 	return sort
 }
