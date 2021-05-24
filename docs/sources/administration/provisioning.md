@@ -575,3 +575,9 @@ The following sections detail the supported settings and secure settings for eac
 | Name |
 | ---- |
 | url  |
+
+## Grafana Enterprise
+
+Grafana Enterprise supports provisioning for the following resources:
+
+- [Access Control Provisioning]({{< relref "../enterprise/access-control/provisioning.md" >}})

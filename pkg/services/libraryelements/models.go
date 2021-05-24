@@ -6,13 +6,6 @@ import (
 	"time"
 )
 
-type LibraryElementKind int
-
-const (
-	Panel LibraryElementKind = iota + 1
-	Variable
-)
-
 type LibraryConnectionKind int
 
 const (

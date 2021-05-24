@@ -72,6 +72,8 @@ func (uss *UsageStatsService) GetUsageReport(ctx context.Context) (UsageReport, 
 	metrics["stats.dashboard_versions.count"] = statsQuery.Result.DashboardVersions
 	metrics["stats.annotations.count"] = statsQuery.Result.Annotations
 	metrics["stats.alert_rules.count"] = statsQuery.Result.AlertRules
+	metrics["stats.library_panels.count"] = statsQuery.Result.LibraryPanels
+	metrics["stats.library_variables.count"] = statsQuery.Result.LibraryVariables
 	validLicCount := 0
 	if uss.License.HasValidLicense() {
 		validLicCount = 1
@@ -317,6 +319,8 @@ func (uss *UsageStatsService) updateTotalStats() {
 	metrics.StatsTotalDashboardVersions.Set(float64(statsQuery.Result.DashboardVersions))
 	metrics.StatsTotalAnnotations.Set(float64(statsQuery.Result.Annotations))
 	metrics.StatsTotalAlertRules.Set(float64(statsQuery.Result.AlertRules))
+	metrics.StatsTotalLibraryPanels.Set(float64(statsQuery.Result.LibraryPanels))
+	metrics.StatsTotalLibraryVariables.Set(float64(statsQuery.Result.LibraryVariables))
 
 	dsStats := models.GetDataSourceStatsQuery{}
 	if err := uss.Bus.Dispatch(&dsStats); err != nil {
