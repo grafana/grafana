@@ -3,4 +3,5 @@
     ports:
       - '3011:3011'
     environment:
-      ORIGIN_SERVER: 'http://host.docker.internal:9090/'
+      ORIGIN_SERVER: ${ORIGIN_SERVER}
+      SLEEP_DURATION: ${SLEEP_DURATION}
