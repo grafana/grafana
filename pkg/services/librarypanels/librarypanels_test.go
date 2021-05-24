@@ -493,7 +493,7 @@ func TestConnectLibraryPanelsForDashboard(t *testing.T) {
 			  "description": "Unused description"
 			}
 		`),
-				Kind: int64(libraryelements.Panel),
+				Kind: int64(models.PanelElement),
 			})
 			require.NoError(t, err)
 			dashJSON := map[string]interface{}{
@@ -783,7 +783,7 @@ func scenarioWithLibraryPanel(t *testing.T, desc string, fn func(t *testing.T, s
 			  "description": "A description"
 			}
 		`),
-			Kind: int64(libraryelements.Panel),
+			Kind: int64(models.PanelElement),
 		}
 		resp, err := sc.elementService.CreateElement(sc.reqContext, command)
 		require.NoError(t, err)
