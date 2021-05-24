@@ -22,29 +22,56 @@ These features are included in the Grafana open source edition.
 
 Library panels allow users to build panels that can be used in multiple dashboards. Any updates made to that shared panel will then automatically be applied to all the dashboards that have that panel.
 
-### Timeline panel
+### Real-time streaming
 
-Shows discrete status or state transitions of something over time. For example daily uptime or multi-sensor and digital I/O status.
+Data sources can now send real-time updates to dashboards over a websocket connection.  This can be used with the [MQTT data source](https://github.com/grafana/mqtt-datasource).
 
-### Bar chart panel
+In addition to data source integration, events can be sent to dashboards by posting metrics to the new live endpoint: `/api/live/push endpoint`.
 
-New visualization that allows categorical data display. Following the new panel architecture supports field config and overrides, common tooltip, and legend options.
+These metrics will be broadcast to all dashboards connected to that stream endpoint.
 
-### Time series panel updates
+### Bar chart visualization (beta)
 
-The Time series is out of beta!  We are removing the `Beta`tag and graduating the Time series panel to a stable state.
+The Bar chart panel is a new visualization that allows categorical data display.
+
+### State timeline visualization (beta)
+
+This new visualization is designed to display state changes and durations.
+
+### Status grid visualization (beta)
+
+This new visualization is designed to display periodic status history.
+
+### Histogram visualization (beta)
+
+This release introduces a new histogram panel visualization.
+
+### Time series visualization updates
+
+The Time series is out of beta!  We are removing the `Beta` tag and graduating the Time series visualization to a stable state.
+
 - **Time series** is now the default visualization option, replacing the **Graph (old)**.
 - The Time series panel now supports stacking. For more information, refer to [Graph stacked time series]({{< relref "../panels/visualizations/time-series/graph-time-series-stacking.md" >}}).
 - You can now add alerts in the Time series panel, just like the old Graph panel.
 - We added support for a shared crosshair and a tooltip that’s now smarter when it comes to data display in the tooltip.
 - Various performance improvements.
 
+[Time series panel]({{< relref "../panels/visualizations/time-series/_index.md" >}}) topics have been updated as a result of these changes.
+
+### Pie chart visualization updates
+
+The Pie chart is out of beta!  We are removing the `Beta` tag and graduating the Pie chart visualization to a stable state.
+
 ### Panel editor updates
+
+Lots of panel editor improvements, heavily informed by user research and community feedback.
 
 - All options are now shown in a single pane.
 - You can now search panel options.
 - Value mapping has been completely redesigned.
 - New **Table view** option is always available.
+
+The [Panels]({{< relref "../panels/_index.md" >}}) section has been updated to reflect these changes.
 
 ### Look and feel update
 
