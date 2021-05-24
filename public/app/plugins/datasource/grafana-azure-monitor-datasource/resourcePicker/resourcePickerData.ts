@@ -2,31 +2,16 @@ import { FetchResponse, getBackendSrv } from '@grafana/runtime';
 import { getLogAnalyticsResourcePickerApiRoute } from '../api/routes';
 import { ResourceRowType, ResourceRow, ResourceRowGroup } from '../components/ResourcePicker/types';
 import { getAzureCloud } from '../credentials';
-import { AzureDataSourceInstanceSettings, AzureResourceSummaryItem } from '../types';
+import {
+  AzureDataSourceInstanceSettings,
+  AzureGraphResponse,
+  AzureResourceSummaryItem,
+  RawAzureResourceGroupItem,
+  RawAzureResourceItem,
+} from '../types';
 import { SUPPORTED_LOCATIONS, SUPPORTED_RESOURCE_TYPES } from './supportedResources';
 
 const RESOURCE_GRAPH_URL = '/providers/Microsoft.ResourceGraph/resources?api-version=2020-04-01-preview';
-
-interface RawAzureResourceGroupItem {
-  subscriptionURI: string;
-  subscriptionName: string;
-
-  resourceGroupURI: string;
-  resourceGroupName: string;
-}
-
-interface RawAzureResourceItem {
-  id: string;
-  name: string;
-  subscriptionId: string;
-  resourceGroup: string;
-  type: string;
-  location: string;
-}
-
-interface AzureGraphResponse<T = unknown> {
-  data: T;
-}
 
 export default class ResourcePickerData {
   private proxyUrl: string;
@@ -68,13 +53,13 @@ export default class ResourcePickerData {
       throw new Error('unable to fetch resource containers');
     }
 
-    return this.formatResourceGroupData(response.data);
+    return formatResourceGroupData(response.data);
   }
 
   async getResourcesForResourceGroup(resourceGroup: ResourceRow) {
     const { ok, data: response } = await this.makeResourceGraphRequest<RawAzureResourceItem[]>(`
       resources
-      | where resourceGroup == "${resourceGroup.name.toLowerCase()}"
+      | where id hasprefix "${resourceGroup.id}"
       | where type in (${SUPPORTED_RESOURCE_TYPES}) and location in (${SUPPORTED_LOCATIONS})
     `);
 
@@ -83,7 +68,7 @@ export default class ResourcePickerData {
       throw new Error('unable to fetch resource containers');
     }
 
-    return this.formatResourceGroupChildren(response.data);
+    return formatResourceGroupChildren(response.data);
   }
 
   async getResource(resourceURI: string) {
@@ -131,55 +116,6 @@ export default class ResourcePickerData {
     return response.data[0].id;
   }
 
-  formatResourceGroupData(rawData: RawAzureResourceGroupItem[]) {
-    // Subscriptions goes into the top level array
-    const rows: ResourceRowGroup = [];
-
-    // Array of all the resource groups, with subscription data on each row
-    for (const row of rawData) {
-      const resourceGroupRow: ResourceRow = {
-        name: row.resourceGroupName,
-        id: row.resourceGroupURI,
-        type: ResourceRowType.ResourceGroup,
-        typeLabel: 'Resource Group',
-        children: [],
-      };
-
-      const subscription = rows.find((v) => v.id === row.subscriptionURI);
-
-      if (subscription) {
-        if (!subscription.children) {
-          subscription.children = [];
-        }
-
-        subscription.children.push(resourceGroupRow);
-      } else {
-        const newSubscriptionRow = {
-          name: row.subscriptionName,
-          id: row.subscriptionURI,
-          typeLabel: 'Subscription',
-          type: ResourceRowType.Subscription,
-          children: [resourceGroupRow],
-        };
-
-        rows.push(newSubscriptionRow);
-      }
-    }
-
-    return rows;
-  }
-
-  formatResourceGroupChildren(rawData: RawAzureResourceItem[]): ResourceRowGroup {
-    return rawData.map((item) => ({
-      name: item.name,
-      id: item.id,
-      resourceGroupName: item.resourceGroup,
-      type: ResourceRowType.Resource,
-      typeLabel: item.type, // TODO: these types can be quite long, we may wish to format them more
-      location: item.location, // TODO: we may wish to format these locations, by default they are written as 'northeurope' rather than a more human readable "North Europe"
-    }));
-  }
-
   async makeResourceGraphRequest<T = unknown>(
     query: string,
     maxRetries = 1
@@ -205,4 +141,53 @@ export default class ResourcePickerData {
       throw error;
     }
   }
+}
+
+function formatResourceGroupData(rawData: RawAzureResourceGroupItem[]) {
+  // Subscriptions goes into the top level array
+  const rows: ResourceRowGroup = [];
+
+  // Array of all the resource groups, with subscription data on each row
+  for (const row of rawData) {
+    const resourceGroupRow: ResourceRow = {
+      name: row.resourceGroupName,
+      id: row.resourceGroupURI,
+      type: ResourceRowType.ResourceGroup,
+      typeLabel: 'Resource Group',
+      children: [],
+    };
+
+    const subscription = rows.find((v) => v.id === row.subscriptionURI);
+
+    if (subscription) {
+      if (!subscription.children) {
+        subscription.children = [];
+      }
+
+      subscription.children.push(resourceGroupRow);
+    } else {
+      const newSubscriptionRow = {
+        name: row.subscriptionName,
+        id: row.subscriptionURI,
+        typeLabel: 'Subscription',
+        type: ResourceRowType.Subscription,
+        children: [resourceGroupRow],
+      };
+
+      rows.push(newSubscriptionRow);
+    }
+  }
+
+  return rows;
+}
+
+function formatResourceGroupChildren(rawData: RawAzureResourceItem[]): ResourceRowGroup {
+  return rawData.map((item) => ({
+    name: item.name,
+    id: item.id,
+    resourceGroupName: item.resourceGroup,
+    type: ResourceRowType.Resource,
+    typeLabel: item.type, // TODO: these types can be quite long, we may wish to format them more
+    location: item.location, // TODO: we may wish to format these locations, by default they are written as 'northeurope' rather than a more human readable "North Europe"
+  }));
 }
