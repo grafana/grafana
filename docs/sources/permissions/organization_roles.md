@@ -7,6 +7,8 @@ weight = 100
 
 # Organization roles
 
+> Refer to [Fine-grained access Control]({{< relref "../enterprise/access-control/_index.md" >}}) in Grafana Enterprise for managing Organization roles with fine-grained permissions.
+
 Users can belong to one or more organizations. A user's organization membership is tied to a role that defines what the user is allowed to do in that organization. Grafana supports multiple _organizations_ in order to support a wide variety of deployment models, including using a single Grafana instance to provide service to multiple potentially untrusted organizations.
 
 In most cases, Grafana is deployed with a single organization.
@@ -35,6 +37,8 @@ The table below compares what each role can do. Read the sections below for more
 | Change organizations settings   |  x  |    |    |
 | Change team settings   |  x  |    |    |
 | Configure app plugins   |  x  |    |    |
+
+If you are running Grafana Enterprise, you can grant and revoke access by using fine-grained roles and permissions, refer to [Fine-grained access Control]({{< relref "../enterprise/access-control/_index.md" >}}) for more information.
 
 ## Organization admin role
 
