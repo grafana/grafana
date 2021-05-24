@@ -15,7 +15,7 @@ Refer to [Add a data source]({{< relref "add-a-data-source.md" >}}) for instruct
 
 >**Note:** Currently only [Cortex Alertmanager](https://cortexmetrics.io/docs/proposals/scalable-alertmanager/) is supported.
 
->**Note:** It is presently in alpha and not accessible unles alpha plugins are [enabled in Grafana settings](https://grafana.com/docs/grafana/latest/administration/configuration/#enable_alpha).
+>**Note:** It is presently in alpha and not accessible unless alpha plugins are [enabled in Grafana settings](https://grafana.com/docs/grafana/latest/administration/configuration/#enable_alpha).
 
 ## Provision the Alertmanager data source
 
