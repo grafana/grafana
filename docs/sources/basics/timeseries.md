@@ -1,5 +1,5 @@
 +++
-title = "Time series"
+title = "Intro to time series"
 description = "Introduction to time series"
 keywords = ["grafana", "intro", "guide", "concepts", "timeseries"]
 weight = 400
