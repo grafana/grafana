@@ -192,12 +192,6 @@ Timestamps will line up evenly on timeStepSeconds (For example, 60 seconds means
 	})
 
 	p.registerScenario(&Scenario{
-		ID:      string(categoricalDataQuery),
-		Name:    "Categorical Data",
-		handler: p.handleCategoricalDataScenario,
-	})
-
-	p.registerScenario(&Scenario{
 		ID:      string(csvFileQueryType),
 		Name:    "CSV File",
 		handler: p.handleCsvData,

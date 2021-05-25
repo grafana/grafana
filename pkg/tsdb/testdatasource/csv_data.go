@@ -5,7 +5,6 @@ import (
 	"encoding/csv"
 	"fmt"
 	"io"
-	"math/rand"
 	"os"
 	"path"
 	"regexp"
@@ -16,27 +15,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 )
-
-func (p *testDataPlugin) handleCategoricalDataScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	resp := backend.NewQueryDataResponse()
-	for _, q := range req.Queries {
-		frame := data.NewFrame(q.RefID,
-			data.NewField("location", nil, []string{}),
-			data.NewField("temperature", nil, []int64{}),
-			data.NewField("humidity", nil, []int64{}),
-			data.NewField("pressure", nil, []int64{}),
-		)
-
-		for i := 0; i < len(houseLocations); i++ {
-			frame.AppendRow(houseLocations[i], rand.Int63n(40+40)-40, rand.Int63n(100), rand.Int63n(1020-900)+900)
-		}
-		respD := resp.Responses[q.RefID]
-		respD.Frames = append(respD.Frames, frame)
-		resp.Responses[q.RefID] = respD
-	}
-
-	return resp, nil
-}
 
 func (p *testDataPlugin) handleCsvContent(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	resp := backend.NewQueryDataResponse()
