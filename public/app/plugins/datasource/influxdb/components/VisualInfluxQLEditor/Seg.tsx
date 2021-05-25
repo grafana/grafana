@@ -106,6 +106,7 @@ const SelSingleLoad = ({ loadOptions, allowCustomValue, onChange, onClose }: Sel
   return (
     <div className={selectClass}>
       <Select
+        isLoading={loadState.loading}
         formatCreateLabel={formatCreateLabel}
         autoFocus
         isOpen
@@ -176,11 +177,9 @@ export const Seg = ({
   const [isOpen, setOpen] = useState(false);
   if (!isOpen) {
     const className = cx(defaultButtonClass, buttonClassName);
-    // this should not be a label, this should be a button,
-    // but this is what is used inside a Segment, and i just
-    // want the same look
     return (
       <InlineLabel
+        as="button"
         className={className}
         onClick={() => {
           setOpen(true);
