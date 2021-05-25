@@ -343,7 +343,7 @@ func setBuildEnv() {
 		os.Setenv("GOARCH", goarch)
 	}
 	if goarch == "386" {
-		os.Setenv("GO386", "387")
+		os.Setenv("GO386", "softfloat")
 	}
 	if cgo {
 		os.Setenv("CGO_ENABLED", "1")
