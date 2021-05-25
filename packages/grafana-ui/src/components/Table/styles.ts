@@ -22,6 +22,7 @@ export const getTableStyles = (theme: GrafanaTheme2) => {
       display: flex;
       align-items: center;
       border-right: 1px solid ${borderColor};
+      text-decoration: inherit;
 
       ${color ? `color: ${color};` : ''};
       ${background ? `background: ${background};` : ''};
