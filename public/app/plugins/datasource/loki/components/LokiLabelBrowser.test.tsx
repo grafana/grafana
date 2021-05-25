@@ -141,7 +141,7 @@ describe('LokiLabelBrowser', () => {
     render(<UnthemedLokiLabelBrowser {...props} />);
     // Selecting label2
     const label2 = await screen.findByRole('option', { name: /label2/, selected: false });
-    expect(screen.queryByRole('list')).not.toBeInTheDocument();
+    expect(screen.queryByRole('list', { name: /Values/ })).not.toBeInTheDocument();
     userEvent.click(label2);
     expect(screen.queryByRole('option', { name: /label2/, selected: true })).toBeInTheDocument();
     // List of values for label2 appears
@@ -172,6 +172,28 @@ describe('LokiLabelBrowser', () => {
     await screen.findByRole('option', { name: 'value2-1', selected: true });
     await screen.findByRole('option', { name: 'value2-2', selected: false });
     expect(screen.queryByLabelText('selector')).toHaveTextContent('{label2="value2-1"}');
+  });
+
+  it('allows label selection from multiple labels', async () => {
+    const props = setupProps();
+    render(<UnthemedLokiLabelBrowser {...props} />);
+
+    // Selecting label2
+    const label2 = await screen.findByRole('option', { name: /label2/, selected: false });
+    userEvent.click(label2);
+    // List of values for label2 appears
+    expect(await screen.findAllByRole('list')).toHaveLength(1);
+    expect(screen.queryByLabelText('selector')).toHaveTextContent('{}');
+    // Selecting label1, list for its values appears
+    const label1 = await screen.findByRole('option', { name: /label1/, selected: false });
+    userEvent.click(label1);
+    await screen.findByLabelText('Values for label1');
+    expect(await screen.findAllByRole('list')).toHaveLength(2);
+    // Selecting value2-1 of label2
+    const value2 = await screen.findByRole('option', { name: 'value2-1', selected: false });
+    userEvent.click(value2);
+    await screen.findByText('{label2="value2-1"}');
+
     // Selecting value from label1 for combined selector
     const value1 = await screen.findByRole('option', { name: 'value1-2', selected: false });
     userEvent.click(value1);
@@ -183,6 +205,28 @@ describe('LokiLabelBrowser', () => {
     await screen.findByRole('option', { name: /label1/, selected: false });
     expect(await screen.findAllByRole('list')).toHaveLength(1);
     expect(screen.queryByLabelText('selector')).toHaveTextContent('{label2="value2-1"}');
+  });
+
+  it('allows clearing the label selection', async () => {
+    const props = setupProps();
+    render(<UnthemedLokiLabelBrowser {...props} />);
+
+    // Selecting label2
+    const label2 = await screen.findByRole('option', { name: /label2/, selected: false });
+    userEvent.click(label2);
+    // List of values for label2 appears
+    expect(await screen.findAllByRole('list')).toHaveLength(1);
+    expect(screen.queryByLabelText('selector')).toHaveTextContent('{}');
+    // Selecting label1, list for its values appears
+    const label1 = await screen.findByRole('option', { name: /label1/, selected: false });
+    userEvent.click(label1);
+    await screen.findByLabelText('Values for label1');
+    expect(await screen.findAllByRole('list')).toHaveLength(2);
+    // Selecting value2-1 of label2
+    const value2 = await screen.findByRole('option', { name: 'value2-1', selected: false });
+    userEvent.click(value2);
+    await screen.findByText('{label2="value2-1"}');
+
     // Clear selector
     const clearBtn = screen.getByLabelText('Selector clear button');
     userEvent.click(clearBtn);

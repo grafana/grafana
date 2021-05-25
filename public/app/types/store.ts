@@ -1,7 +1,7 @@
 import { ThunkAction, ThunkDispatch as GenericThunkDispatch } from 'redux-thunk';
 import { PayloadAction } from '@reduxjs/toolkit';
 import { NavIndex } from '@grafana/data';
-import { AlertDefinitionState, AlertRulesState, NotificationChannelState } from './alerting';
+import { AlertRulesState, NotificationChannelState } from './alerting';
 import { UnifiedAlertingState } from '../features/alerting/unified/state/reducers';
 import { TeamsState, TeamState } from './teams';
 import { FolderState } from './folders';
@@ -12,7 +12,6 @@ import { UserAdminState, UserListAdminState, UsersState, UserState } from './use
 import { OrganizationState } from './organization';
 import { AppNotificationsState } from './appNotifications';
 import { PluginsState } from './plugins';
-import { ApplicationState } from './application';
 import { LdapState } from './ldap';
 import { PanelEditorState } from '../features/dashboard/components/PanelEditor/state/reducers';
 import { ApiKeysState } from './apiKeys';
@@ -35,7 +34,6 @@ export interface StoreState {
   appNotifications: AppNotificationsState;
   user: UserState;
   plugins: PluginsState;
-  application: ApplicationState;
   ldap: LdapState;
   apiKeys: ApiKeysState;
   userAdmin: UserAdminState;
@@ -43,7 +41,6 @@ export interface StoreState {
   templating: TemplatingState;
   importDashboard: ImportDashboardState;
   notificationChannel: NotificationChannelState;
-  alertDefinition: AlertDefinitionState;
   unifiedAlerting: UnifiedAlertingState;
 }
 

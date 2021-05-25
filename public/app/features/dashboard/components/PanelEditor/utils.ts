@@ -9,12 +9,15 @@ export function calculatePanelSize(mode: DisplayMode, width: number, height: num
   if (mode === DisplayMode.Fill) {
     return { width, height };
   }
-  const colWidth = (window.innerWidth - GRID_CELL_VMARGIN * 4) / GRID_COLUMN_COUNT;
+  const panelPadding = 8 * 6;
+  const sidebarWidth = 60;
+
+  const colWidth = (window.innerWidth - sidebarWidth - GRID_CELL_VMARGIN * 4) / GRID_COLUMN_COUNT;
   const pWidth = colWidth * panel.gridPos.w;
-  const pHeight = GRID_CELL_HEIGHT * panel.gridPos.h;
+  const pHeight = GRID_CELL_HEIGHT * panel.gridPos.h + panelPadding;
   const scale = Math.min(width / pWidth, height / pHeight);
 
-  if (mode === DisplayMode.Exact && pWidth <= width && pHeight <= height) {
+  if (pWidth <= width && pHeight <= height) {
     return {
       width: pWidth,
       height: pHeight,

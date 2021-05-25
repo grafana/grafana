@@ -1,11 +1,13 @@
-import { anySeriesWithTimeField, DashboardCursorSync, Field, PanelProps } from '@grafana/data';
+import { DashboardCursorSync, Field, PanelProps } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { TooltipDisplayMode, usePanelContext, TimeSeries, TooltipPlugin, ZoomPlugin } from '@grafana/ui';
 import { getFieldLinksForExplore } from 'app/features/explore/utils/links';
-import React from 'react';
+import React, { useMemo } from 'react';
 import { AnnotationsPlugin } from './plugins/AnnotationsPlugin';
 import { ContextMenuPlugin } from './plugins/ContextMenuPlugin';
 import { ExemplarsPlugin } from './plugins/ExemplarsPlugin';
 import { TimeSeriesOptions } from './types';
+import { prepareGraphableFields } from './utils';
 
 interface TimeSeriesPanelProps extends PanelProps<TimeSeriesOptions> {}
 
@@ -25,25 +27,19 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
     return getFieldLinksForExplore({ field, rowIndex, range: timeRange });
   };
 
-  if (!data || !data.series?.length) {
-    return (
-      <div className="panel-empty">
-        <p>No data found in response</p>
-      </div>
-    );
-  }
+  const { frames, warn } = useMemo(() => prepareGraphableFields(data?.series, config.theme2), [data]);
 
-  if (!anySeriesWithTimeField(data.series)) {
+  if (!frames || warn) {
     return (
       <div className="panel-empty">
-        <p>Missing time field in the data</p>
+        <p>{warn ?? 'No data found in response'}</p>
       </div>
     );
   }
 
   return (
     <TimeSeries
-      frames={data.series}
+      frames={frames}
       structureRev={data.structureRev}
       timeRange={timeRange}
       timeZone={timeZone}

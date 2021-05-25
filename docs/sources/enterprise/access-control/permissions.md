@@ -13,14 +13,11 @@ To grant permissions to a user, create built-in role assignments. A built-in rol
 
 To learn more about which permissions are used for which resources, refer to [Resources with fine-grained permissions]({{< relref "./_index.md#resources-with-fine-grained-permissions" >}}).
 
-### Action
+action
+: The specific action on a resource defines what a user is allowed to perform if they have permission with the relevant action assigned to it.
 
-When evaluating a decision for access, a user is allowed to perform a specific _action_ on a resource if they have a permission with the relevant action assigned to it.
-
-### Scope
-
-_scope_ describes where an action can be performed. For example, you can grant a user access to read a specific user profile, by associating a permission with scope `users:<userId>` to the relevant role.
-You can also combine multiple scopes if necessary, by using `/` as a delimiter. 
+scope
+: The scope describes where an action can be performed, such as reading a specific user profile. In such case, a permission is associated with the scope `users:<userId>` to the relevant role. Also, you can combine multiple scopes by using the `/` delimiter.
 
 ## Action definitions
 

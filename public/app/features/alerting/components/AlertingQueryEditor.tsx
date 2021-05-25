@@ -155,11 +155,13 @@ export class AlertingQueryEditor extends PureComponent<Props, State> {
 
   render() {
     const { value = [] } = this.props;
+    const { panelDataByRefId } = this.state;
     const styles = getStyles(config.theme2);
 
     return (
       <div className={styles.container}>
         <AlertingQueryRows
+          data={panelDataByRefId}
           queries={value}
           onQueriesChange={this.props.onChange}
           onDuplicateQuery={this.onDuplicateQuery}
@@ -197,6 +199,7 @@ const defaultTimeRange = (model: DataQuery): RelativeTimeRange | undefined => {
   if (isExpressionQuery(model)) {
     return;
   }
+
   return getDefaultRelativeTimeRange();
 };
 

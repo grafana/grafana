@@ -8,6 +8,7 @@ import {
   FieldArray,
   Form,
   HorizontalGroup,
+  IconButton,
   Input,
   InputControl,
   MultiSelect,
@@ -48,27 +49,28 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, 
       {({ control, register, errors, setValue }) => (
         <>
           {/* @ts-ignore-check: react-hook-form made me do this */}
+          <input type="hidden" {...register('id')} />
+          {/* @ts-ignore-check: react-hook-form made me do this */}
           <FieldArray name="matchers" control={control}>
-            {({ fields, append }) => (
+            {({ fields, append, remove }) => (
               <>
-                <div>Matchers</div>
+                <div>Matching labels</div>
                 <div className={styles.matchersContainer}>
                   {fields.map((field, index) => {
                     const localPath = `matchers[${index}]`;
-
                     return (
-                      <HorizontalGroup key={field.id}>
+                      <HorizontalGroup key={field.id} align="flex-start">
                         <Field
                           label="Label"
-                          invalid={!!errors.matchers?.[index]?.label}
-                          error={errors.matchers?.[index]?.label?.message}
+                          invalid={!!errors.matchers?.[index]?.name}
+                          error={errors.matchers?.[index]?.name?.message}
                         >
                           <Input
-                            {...register(`${localPath}.label`, { required: 'Field is required' })}
-                            defaultValue={field.label}
+                            {...register(`${localPath}.name`, { required: 'Field is required' })}
+                            defaultValue={field.name}
+                            placeholder="label"
                           />
                         </Field>
-                        <span>=</span>
                         <Field
                           label="Value"
                           invalid={!!errors.matchers?.[index]?.value}
@@ -77,11 +79,23 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, 
                           <Input
                             {...register(`${localPath}.value`, { required: 'Field is required' })}
                             defaultValue={field.value}
+                            placeholder="value"
                           />
                         </Field>
                         <Field className={styles.matcherRegexField} label="Regex">
                           <Checkbox {...register(`${localPath}.isRegex`)} defaultChecked={field.isRegex} />
                         </Field>
+                        <Field className={styles.matcherRegexField} label="Equal">
+                          <Checkbox {...register(`${localPath}.isEqual`)} defaultChecked={field.isEqual} />
+                        </Field>
+                        <IconButton
+                          className={styles.removeButton}
+                          tooltip="Remove matcher"
+                          name={'trash-alt'}
+                          onClick={() => remove(index)}
+                        >
+                          Remove
+                        </IconButton>
                       </HorizontalGroup>
                     );
                   })}
@@ -285,6 +299,10 @@ const getStyles = (theme: GrafanaTheme2) => {
     `,
     nestedPolicies: css`
       margin-top: ${commonSpacing};
+    `,
+    removeButton: css`
+      margin-left: ${theme.spacing(1)};
+      margin-top: ${theme.spacing(2.5)};
     `,
     buttonGroup: css`
       margin: ${theme.spacing(6)} 0 ${commonSpacing};

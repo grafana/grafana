@@ -62,14 +62,14 @@ removeDefaultAssignments:
   # <string>, must be one of the Organization roles (`Viewer`, `Editor`, `Admin`) or `Grafana Admin`
   - builtInRole: "Grafana Admin"
     # <string>, must be one of the existing fixed roles
-    predefinedRole: "fixed:permissions:admin"
+    fixedRole: "fixed:permissions:admin"
 
 # list of default built-in role assignments that should be added back
 addDefaultAssignments:
   # <string>, must be one of the Organization roles (`Viewer`, `Editor`, `Admin`) or `Grafana Admin`
   - builtInRole: "Admin"
     # <string>, must be one of the existing fixed roles
-    predefinedRole: "fixed:reporting:admin:read"
+    fixedRole: "fixed:reporting:admin:read"
     
 # list of roles that should be deleted
 deleteRoles:

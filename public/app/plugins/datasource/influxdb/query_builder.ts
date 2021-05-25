@@ -17,8 +17,8 @@ function renderTagCondition(tag: { operator: any; value: string; condition: any;
     }
   }
 
-  // quote value unless regex or number
-  if (operator !== '=~' && operator !== '!~' && isNaN(+value)) {
+  // quote value unless regex or number, or if empty-string
+  if (value === '' || (operator !== '=~' && operator !== '!~' && isNaN(+value))) {
     value = "'" + value + "'";
   }
 
@@ -44,7 +44,8 @@ export class InfluxQueryBuilder {
     } else if (type === 'MEASUREMENTS') {
       query = 'SHOW MEASUREMENTS';
       if (withMeasurementFilter) {
-        query += ' WITH MEASUREMENT =~ /' + kbn.regexEscape(withMeasurementFilter) + '/';
+        // we do a case-insensitive regex-based lookup
+        query += ' WITH MEASUREMENT =~ /(?i)' + kbn.regexEscape(withMeasurementFilter) + '/';
       }
     } else if (type === 'FIELDS') {
       measurement = this.target.measurement;

@@ -8,6 +8,8 @@ import (
 	"time"
 
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/common/model"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -36,7 +38,11 @@ func SetupTestEnv(t *testing.T, baseIntervalSeconds int64) *store.DBstore {
 
 	err := ng.Init()
 	require.NoError(t, err)
-	return &store.DBstore{SQLStore: ng.SQLStore, BaseInterval: time.Duration(baseIntervalSeconds) * time.Second}
+	return &store.DBstore{
+		SQLStore:     ng.SQLStore,
+		BaseInterval: time.Duration(baseIntervalSeconds) * time.Second,
+		Logger:       log.New("ngalert-test"),
+	}
 }
 
 func overrideAlertNGInRegistry(t *testing.T, cfg *setting.Cfg) ngalert.AlertNG {
@@ -44,6 +50,7 @@ func overrideAlertNGInRegistry(t *testing.T, cfg *setting.Cfg) ngalert.AlertNG {
 		Cfg:           cfg,
 		RouteRegister: routing.NewRouteRegister(),
 		Log:           log.New("ngalert-test"),
+		Metrics:       metrics.NewMetrics(prometheus.NewRegistry()),
 	}
 
 	// hook for initialising the service after the Cfg is populated

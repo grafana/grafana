@@ -10,7 +10,6 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/grafana/grafana/pkg/infra/fs"
 	"github.com/grafana/grafana/pkg/models"
@@ -66,8 +65,6 @@ func StartGrafana(t *testing.T, grafDir, cfgPath string, sqlStore *sqlstore.SQLS
 		}
 	}()
 	t.Cleanup(func() {
-		ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
-		defer cancel()
 		if err := server.Shutdown(ctx, "test cleanup"); err != nil {
 			t.Error("Timed out waiting on server to shut down")
 		}
@@ -202,6 +199,11 @@ func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 	_, err = anonSect.NewKey("enabled", "true")
 	require.NoError(t, err)
 
+	alertingSect, err := cfg.NewSection("alerting")
+	require.NoError(t, err)
+	_, err = alertingSect.NewKey("notification_timeout_seconds", "1")
+	require.NoError(t, err)
+
 	for _, o := range opts {
 		if o.EnableCSP {
 			securitySect, err := cfg.NewSection("security")
@@ -231,10 +233,16 @@ func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 			_, err = anonSect.NewKey("enabled", "false")
 			require.NoError(t, err)
 		}
-		if o.MarketplaceAppEnabled {
+		if o.PluginAdminEnabled {
 			anonSect, err := cfg.NewSection("plugins")
 			require.NoError(t, err)
-			_, err = anonSect.NewKey("marketplace_app_enabled", "true")
+			_, err = anonSect.NewKey("plugin_admin_enabled", "true")
+			require.NoError(t, err)
+		}
+		if o.ViewersCanEdit {
+			usersSection, err := cfg.NewSection("users")
+			require.NoError(t, err)
+			_, err = usersSection.NewKey("viewers_can_edit", "true")
 			require.NoError(t, err)
 		}
 	}
@@ -250,10 +258,12 @@ func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 }
 
 type GrafanaOpts struct {
-	EnableCSP             bool
-	EnableFeatureToggles  []string
-	AnonymousUserRole     models.RoleType
-	EnableQuota           bool
-	DisableAnonymous      bool
-	MarketplaceAppEnabled bool
+	EnableCSP            bool
+	EnableFeatureToggles []string
+	AnonymousUserRole    models.RoleType
+	EnableQuota          bool
+	DisableAnonymous     bool
+	CatalogAppEnabled    bool
+	ViewersCanEdit       bool
+	PluginAdminEnabled   bool
 }
