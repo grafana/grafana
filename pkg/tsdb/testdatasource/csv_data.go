@@ -78,7 +78,7 @@ func (p *testDataPlugin) loadCsvFile(fileName string) (*data.Frame, error) {
 		return nil, fmt.Errorf("invalid csv file name: %q", fileName)
 	}
 
-	filePath := path.Join(p.Cfg.StaticRootPath, "testdata", fileName)
+	filePath := filepath.Join(p.Cfg.StaticRootPath, "testdata", fileName)
 	fileReader, err := os.Open(filePath)
 	if err != nil {
 		return nil, fmt.Errorf("failed open file %v", err)
