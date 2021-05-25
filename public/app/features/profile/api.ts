@@ -11,20 +11,20 @@ async function changePassword(payload: ChangePasswordFields): Promise<void> {
   }
 }
 
-async function loadUser(): Promise<UserDTO> {
-  return await getBackendSrv().get('/api/user');
+function loadUser(): Promise<UserDTO> {
+  return getBackendSrv().get('/api/user');
 }
 
-async function loadTeams(): Promise<Team[]> {
-  return await getBackendSrv().get('/api/user/teams');
+function loadTeams(): Promise<Team[]> {
+  return getBackendSrv().get('/api/user/teams');
 }
 
-async function loadOrgs(): Promise<UserOrg[]> {
-  return await getBackendSrv().get('/api/user/orgs');
+function loadOrgs(): Promise<UserOrg[]> {
+  return getBackendSrv().get('/api/user/orgs');
 }
 
-async function loadSessions(): Promise<UserSession[]> {
-  return await getBackendSrv().get('/api/user/auth-tokens');
+function loadSessions(): Promise<UserSession[]> {
+  return getBackendSrv().get('/api/user/auth-tokens');
 }
 
 async function revokeUserSession(tokenId: number): Promise<void> {

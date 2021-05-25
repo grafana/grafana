@@ -1,13 +1,14 @@
 import React from 'react';
+import { useMount } from 'react-use';
 import { hot } from 'react-hot-loader';
 import { connect, ConnectedProps } from 'react-redux';
-import { StoreState } from 'app/types';
 import { NavModel } from '@grafana/data';
+
+import { StoreState } from 'app/types';
 import { getNavModel } from 'app/core/selectors/navModel';
 import Page from 'app/core/components/Page/Page';
 import { ChangePasswordForm } from './ChangePasswordForm';
 import { changePassword, loadUser } from './state/actions';
-import { useAsync } from 'react-use';
 
 export interface OwnProps {
   navModel: NavModel;
@@ -33,9 +34,7 @@ const connector = connect(mapStateToProps, mapDispatchToProps);
 type Props = OwnProps & ConnectedProps<typeof connector>;
 
 export function ChangePasswordPage({ navModel, loadUser, isUpdating, user, changePassword }: Props) {
-  useAsync(async () => {
-    await loadUser();
-  }, []);
+  useMount(() => loadUser());
 
   return (
     <Page navModel={navModel}>

@@ -1,6 +1,6 @@
 import React from 'react';
-import { useAsync } from 'react-use';
 import { connect, ConnectedProps } from 'react-redux';
+import { useMount } from 'react-use';
 import { hot } from 'react-hot-loader';
 import { NavModel } from '@grafana/data';
 import { VerticalGroup } from '@grafana/ui';
@@ -61,13 +61,11 @@ export function UserProfileEditPage({
   changeUserOrg,
   updateUserProfile,
 }: Props) {
-  useAsync(async () => {
-    await initUserProfilePage();
-  }, []);
+  useMount(() => initUserProfilePage());
 
   return (
     <Page navModel={navModel}>
-      <Page.Contents isLoading={!Boolean(user)}>
+      <Page.Contents isLoading={!user}>
         {user ? (
           <VerticalGroup spacing="md">
             <UserProfileEditForm updateProfile={updateUserProfile} isSavingUser={isUpdating} user={user} />
