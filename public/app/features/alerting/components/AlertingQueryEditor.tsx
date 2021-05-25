@@ -31,11 +31,13 @@ interface State {
 }
 export class AlertingQueryEditor extends PureComponent<Props, State> {
   private runner: AlertingQueryRunner;
+  private queries: GrafanaQuery[];
 
   constructor(props: Props) {
     super(props);
     this.state = { panelDataByRefId: {} };
     this.runner = new AlertingQueryRunner();
+    this.queries = props.value ?? [];
   }
 
   componentDidMount() {
@@ -49,29 +51,34 @@ export class AlertingQueryEditor extends PureComponent<Props, State> {
   }
 
   onRunQueries = () => {
-    const { value = [] } = this.props;
-    this.runner.run(value);
+    const { queries } = this;
+    this.runner.run(queries);
   };
 
   onCancelQueries = () => {
     this.runner.cancel();
   };
 
+  onChangeQueries = (queries: GrafanaQuery[]) => {
+    this.queries = queries;
+    this.props.onChange(queries);
+  };
+
   onDuplicateQuery = (query: GrafanaQuery) => {
-    const { onChange, value = [] } = this.props;
-    onChange(addQuery(value, query));
+    const { queries } = this;
+    this.onChangeQueries(addQuery(queries, query));
   };
 
   onNewAlertingQuery = () => {
-    const { onChange, value = [] } = this.props;
+    const { queries } = this;
     const defaultDataSource = getDatasourceSrv().getInstanceSettings('default');
 
     if (!defaultDataSource) {
       return;
     }
 
-    onChange(
-      addQuery(value, {
+    this.onChangeQueries(
+      addQuery(queries, {
         datasourceUid: defaultDataSource.uid,
         model: {
           refId: '',
@@ -82,10 +89,10 @@ export class AlertingQueryEditor extends PureComponent<Props, State> {
   };
 
   onNewExpressionQuery = () => {
-    const { onChange, value = [] } = this.props;
+    const { queries } = this;
 
-    onChange(
-      addQuery(value, {
+    this.onChangeQueries(
+      addQuery(queries, {
         datasourceUid: ExpressionDatasourceUID,
         model: expressionDatasource.newQuery({
           type: ExpressionQueryType.classic,
@@ -163,7 +170,7 @@ export class AlertingQueryEditor extends PureComponent<Props, State> {
         <AlertingQueryRows
           data={panelDataByRefId}
           queries={value}
-          onQueriesChange={this.props.onChange}
+          onQueriesChange={this.onChangeQueries}
           onDuplicateQuery={this.onDuplicateQuery}
           onRunQueries={this.onRunQueries}
         />
