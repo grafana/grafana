@@ -43,6 +43,8 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
       lineWidth,
       lineStyle,
       barAlignment,
+      barWidthFactor,
+      barMaxWidth,
       showPoints,
       pointColor,
       pointSize,
@@ -70,7 +72,13 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
         lineConfig.dash = lineStyle.dash ?? [10, 10];
       }
       lineConfig.paths = (self: uPlot, seriesIdx: number, idx0: number, idx1: number) => {
-        let pathsBuilder = mapDrawStyleToPathBuilder(drawStyle, lineInterpolation, barAlignment);
+        let pathsBuilder = mapDrawStyleToPathBuilder(
+          drawStyle,
+          lineInterpolation,
+          barAlignment,
+          barWidthFactor,
+          barMaxWidth
+        );
         return pathsBuilder(self, seriesIdx, idx0, idx1);
       };
     }
@@ -165,13 +173,13 @@ let builders: PathBuilders | undefined = undefined;
 function mapDrawStyleToPathBuilder(
   style: DrawStyle,
   lineInterpolation?: LineInterpolation,
-  barAlignment?: BarAlignment
+  barAlignment?: BarAlignment,
+  barWidthFactor = 0.6,
+  barMaxWidth = Infinity
 ): Series.PathBuilder {
   if (!builders) {
     // This should be global static, but Jest initalization was failing so we lazy load to avoid the issue
     const pathBuilders = uPlot.paths;
-    const barWidthFactor = 0.6;
-    const barMaxWidth = Infinity;
 
     builders = {
       linear: pathBuilders.linear!(),

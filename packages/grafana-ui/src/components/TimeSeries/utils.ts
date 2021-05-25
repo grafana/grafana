@@ -179,12 +179,13 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
       lineInterpolation: customConfig.lineInterpolation,
       lineStyle: customConfig.lineStyle,
       barAlignment: customConfig.barAlignment,
+      barWidthFactor: customConfig.barWidthFactor,
+      barMaxWidth: customConfig.barMaxWidth,
       pointSize: customConfig.pointSize,
       pointColor: customConfig.pointColor ?? seriesColor,
       spanNulls: customConfig.spanNulls || false,
       show: !customConfig.hideFrom?.viz,
       gradientMode: customConfig.gradientMode,
-      pathBuilder: customConfig.pathBuilder,
       thresholds: config.thresholds,
 
       // The following properties are not used in the uPlot config, but are utilized as transport for legend config

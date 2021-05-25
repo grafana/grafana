@@ -1,3 +1,5 @@
+import { DrawStyle, StackingMode } from '@grafana/ui';
+
 jest.mock('@grafana/data/src/datetime/formatter', () => ({
   dateTimeFormat: () => 'format() jest mocked',
   dateTimeFormatTimeAgo: (ts: any) => 'fromNow() jest mocked',
@@ -363,14 +365,16 @@ describe('decorateWithLogsResult', () => {
                 decimals: 0,
                 unit: undefined,
                 custom: {
-                  pathBuilder: expect.any(Function),
-                  drawStyle: 'bars',
+                  drawStyle: DrawStyle.Bars,
+                  barAlignment: 0,
+                  barMaxWidth: 5,
+                  barWidthFactor: 0.9,
                   lineColor: '#8e8e8e',
                   fillColor: '#8e8e8e',
                   pointColor: '#8e8e8e',
                   lineWidth: 0,
                   fillOpacity: 100,
-                  stacking: { mode: 'normal', group: 'A' },
+                  stacking: { mode: StackingMode.Normal, group: 'A' },
                 },
               },
             },

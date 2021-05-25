@@ -1,5 +1,5 @@
 import { size } from 'lodash';
-import { ansicolor, colors, DrawStyle, StackingMode } from '@grafana/ui';
+import { ansicolor, BarAlignment, colors, DrawStyle, StackingMode } from '@grafana/ui';
 
 import {
   AbsoluteTimeRange,
@@ -29,8 +29,6 @@ import {
 } from '@grafana/data';
 import { getThemeColor } from 'app/core/utils/colors';
 import { SIPrefix } from '@grafana/data/src/valueFormats/symbolFormatters';
-
-import uPlot from 'uplot';
 
 export const LIMIT_LABEL = 'Line limit';
 
@@ -145,8 +143,10 @@ export function makeDataFramesForLogs(sortedRows: LogRowModel[], bucketSize: num
     data.fields[valueField.index].config.decimals = 0;
 
     data.fields[valueField.index].config.custom = {
-      pathBuilder: uPlot.paths.bars!({ align: 0, size: [0.9, 5] }),
       drawStyle: DrawStyle.Bars,
+      barAlignment: BarAlignment.Center,
+      barWidthFactor: 0.9,
+      barMaxWidth: 5,
       lineColor: series.color,
       pointColor: series.color,
       fillColor: series.color,
