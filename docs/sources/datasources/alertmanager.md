@@ -15,13 +15,13 @@ Refer to [Add a data source]({{< relref "add-a-data-source.md" >}}) for instruct
 
 >**Note:** Currently only [Cortex implementation of Prometheus alertmanager](https://cortexmetrics.io/docs/proposals/scalable-alertmanager/) is supported. 
 
->**Note:** It is presently in alpha and not accessible unless alpha plugins are [enabled in Grafana settings](https://grafana.com/docs/grafana/latest/administration/configuration/#enable_alpha).
+It is presently in alpha and not accessible unless [alpha plugins are enabled in Grafana settings](https://grafana.com/docs/grafana/latest/administration/configuration/#enable_alpha).
 
 ## Provision the Alertmanager data source
 
-You can configure data sources using config files with Grafana's provisioning system. Read more about how it works and all the settings you can set for data sources on the [provisioning docs page]({{< relref "../administration/provisioning/#datasources" >}}).
+You can configure the Alertmanager data sources using config files with Grafana's provisioning system. For more information on how it works and the settings available, refer to the [provisioning docs page]({{< relref "../administration/provisioning/#datasources" >}}).
 
-Here is an example for provisioning this datasource:
+Here is an example for provisioning the Alertmanager data source:
 
 ```yaml
 apiVersion: 1
