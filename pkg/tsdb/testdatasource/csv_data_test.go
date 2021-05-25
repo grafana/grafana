@@ -44,6 +44,8 @@ func TestCSVFileScenario(t *testing.T) {
 		for _, name := range files {
 			t.Run("Should load CSV: "+name, func(t *testing.T) {
 				filePath := filepath.Join("testdata", name+".csv")
+				// Can ignore gosec G304 here, because this is a constant defined above
+				// nolint:gosec
 				fileReader, err := os.Open(filePath)
 				require.NoError(t, err)
 
