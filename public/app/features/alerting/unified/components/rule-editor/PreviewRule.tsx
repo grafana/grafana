@@ -1,36 +1,22 @@
 import React, { useCallback, useState } from 'react';
 import { css } from '@emotion/css';
 import { useFormContext } from 'react-hook-form';
+import { takeWhile } from 'rxjs/operators';
+import { useMountedState } from 'react-use';
 import { Button, HorizontalGroup, useStyles2 } from '@grafana/ui';
-import { dateTimeFormatISO, getDefaultTimeRange, GrafanaTheme2, LoadingState } from '@grafana/data';
+import { dateTimeFormatISO, GrafanaTheme2, LoadingState } from '@grafana/data';
 import { RuleFormType } from '../../types/rule-form';
 import { PreviewRuleRequest, PreviewRuleResponse } from '../../types/preview';
 import { previewAlertRule } from '../../api/preview';
 import { PreviewRuleResult } from './PreviewRuleResult';
-import { toDataQueryError } from '@grafana/runtime';
 
 const fields: string[] = ['type', 'dataSourceName', 'condition', 'queries', 'expression'];
 
 export function PreviewRule(): React.ReactElement | null {
-  const [preview, setPreview] = useState<PreviewRuleResponse | undefined>();
   const styles = useStyles2(getStyles);
+  const [preview, onPreview] = usePreview();
   const { getValues } = useFormContext();
   const [type] = getValues(fields);
-
-  const onPreview = useCallback(async () => {
-    const values = getValues(fields);
-
-    try {
-      const request = createPreviewRequest(values);
-      setPreview(emptyPreview(LoadingState.Loading, values));
-      const response = await previewAlertRule(request);
-      setPreview(response);
-    } catch (error) {
-      const errorPreview = emptyPreview(LoadingState.Error, values);
-      errorPreview.data.error = toDataQueryError(error);
-      setPreview(errorPreview);
-    }
-  }, [getValues]);
 
   if (type === RuleFormType.cloud) {
     return null;
@@ -48,17 +34,26 @@ export function PreviewRule(): React.ReactElement | null {
   );
 }
 
-function emptyPreview(state: LoadingState, values: any[]): PreviewRuleResponse {
-  const [type] = values;
+function usePreview(): [PreviewRuleResponse | undefined, () => void] {
+  const [preview, setPreview] = useState<PreviewRuleResponse | undefined>();
+  const { getValues } = useFormContext();
+  const isMounted = useMountedState();
 
-  return {
-    ruleType: type,
-    data: {
-      state,
-      series: [],
-      timeRange: getDefaultTimeRange(),
-    },
-  };
+  const onPreview = useCallback(() => {
+    const values = getValues(fields);
+    const request = createPreviewRequest(values);
+
+    previewAlertRule(request)
+      .pipe(takeWhile((response) => !isCompleted(response), true))
+      .subscribe((response) => {
+        if (!isMounted()) {
+          return;
+        }
+        setPreview(response);
+      });
+  }, [getValues, isMounted]);
+
+  return [preview, onPreview];
 }
 
 function createPreviewRequest(values: any[]): PreviewRuleRequest {
@@ -82,6 +77,16 @@ function createPreviewRequest(values: any[]): PreviewRuleRequest {
 
     default:
       throw new Error(`Alert type ${type} not supported by preview.`);
+  }
+}
+
+function isCompleted(response: PreviewRuleResponse): boolean {
+  switch (response.data.state) {
+    case LoadingState.Done:
+    case LoadingState.Error:
+      return true;
+    default:
+      return false;
   }
 }
 

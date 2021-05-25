@@ -1,5 +1,14 @@
-import { dataFrameFromJSON, DataFrameJSON, getDefaultTimeRange, LoadingState } from '@grafana/data';
-import { getBackendSrv } from '@grafana/runtime';
+import {
+  dataFrameFromJSON,
+  DataFrameJSON,
+  getDefaultTimeRange,
+  LoadingState,
+  PanelData,
+  withLoadingIndicator,
+} from '@grafana/data';
+import { getBackendSrv, toDataQueryError } from '@grafana/runtime';
+import { Observable, of } from 'rxjs';
+import { catchError, map, share } from 'rxjs/operators';
 import {
   CloudPreviewRuleRequest,
   GrafanaPreviewRuleRequest,
@@ -10,7 +19,7 @@ import {
 } from '../types/preview';
 import { RuleFormType } from '../types/rule-form';
 
-export async function previewAlertRule(request: PreviewRuleRequest): Promise<PreviewRuleResponse> {
+export function previewAlertRule(request: PreviewRuleRequest): Observable<PreviewRuleResponse> {
   if (isCloudPreviewRequest(request)) {
     return previewCloudAlertRule(request);
   }
@@ -26,25 +35,49 @@ type GrafanaPreviewRuleResponse = {
   instances: DataFrameJSON[];
 };
 
-async function previewGrafanaAlertRule(request: GrafanaPreviewRuleRequest): Promise<PreviewRuleResponse> {
-  const { data } = await getBackendSrv()
-    .fetch<GrafanaPreviewRuleResponse>({
-      method: 'POST',
-      url: `/api/v1/rule/test/grafana`,
-      data: request,
-    })
-    .toPromise();
+function previewGrafanaAlertRule(request: GrafanaPreviewRuleRequest): Observable<PreviewRuleResponse> {
+  const type = RuleFormType.grafana;
 
+  return withLoadingIndicator({
+    whileLoading: createResponse(type),
+    source: getBackendSrv()
+      .fetch<GrafanaPreviewRuleResponse>({
+        method: 'POST',
+        url: `/api/v1/rule/test/grafana`,
+        data: request,
+      })
+      .pipe(
+        map(({ data }) => {
+          return createResponse(type, {
+            state: LoadingState.Done,
+            series: data.instances.map(dataFrameFromJSON),
+          });
+        }),
+        catchError((error: Error) => {
+          return of(
+            createResponse(type, {
+              state: LoadingState.Error,
+              error: toDataQueryError(error),
+            })
+          );
+        }),
+        share()
+      ),
+  });
+}
+
+function createResponse(ruleType: RuleFormType, data: Partial<PanelData> = {}): PreviewRuleResponse {
   return {
-    ruleType: RuleFormType.grafana,
+    ruleType,
     data: {
-      state: LoadingState.Done,
-      series: data.instances.map(dataFrameFromJSON),
+      state: LoadingState.Loading,
+      series: [],
       timeRange: getDefaultTimeRange(),
+      ...data,
     },
   };
 }
 
-async function previewCloudAlertRule(request: CloudPreviewRuleRequest): Promise<PreviewRuleResponse> {
+function previewCloudAlertRule(request: CloudPreviewRuleRequest): Observable<PreviewRuleResponse> {
   throw new Error('preview for cloud alerting rules is not implemented');
 }
