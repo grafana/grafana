@@ -3,7 +3,7 @@ import { css } from '@emotion/css';
 import { gt, satisfies } from 'semver';
 
 import { config } from '@grafana/runtime';
-import { Button, HorizontalGroup, Icon, useStyles2 } from '@grafana/ui';
+import { Button, HorizontalGroup, Icon, LinkButton, useStyles2 } from '@grafana/ui';
 import { AppEvents, GrafanaTheme2, OrgRole } from '@grafana/data';
 
 import { Metadata, Plugin } from '../types';
@@ -25,6 +25,8 @@ export const InstallControls = ({ localPlugin, remotePlugin }: Props) => {
   const [shouldUpdate, setShouldUpdate] = useState(
     remotePlugin?.version && localPlugin?.info.version && gt(remotePlugin?.version!, localPlugin?.info.version!)
   );
+  const isRemoteManaged = config.pluginAdminRemoteManageEnabled;
+  const remoteManageLink = getRemoteManageLink(remotePlugin);
 
   const styles = useStyles2(getStyles);
 
@@ -93,14 +95,26 @@ export const InstallControls = ({ localPlugin, remotePlugin }: Props) => {
   if (isInstalled) {
     return (
       <HorizontalGroup height="auto">
-        {shouldUpdate && (
-          <Button disabled={loading || !hasPermission} onClick={onUpdate}>
-            {loading ? 'Updating' : 'Update'}
+        {shouldUpdate &&
+          (isRemoteManaged ? (
+            <LinkButton disabled={!hasPermission} href={remoteManageLink} target="_blank" rel="noopener noreferrer">
+              {'Update via grafana.com'}
+            </LinkButton>
+          ) : (
+            <Button disabled={loading || !hasPermission} onClick={onUpdate}>
+              {loading ? 'Updating' : 'Update'}
+            </Button>
+          ))}
+
+        {isRemoteManaged ? (
+          <LinkButton disabled={!hasPermission} href={remoteManageLink} target="_blank" rel="noopener noreferrer">
+            {'Uninstall via grafana.com'}
+          </LinkButton>
+        ) : (
+          <Button variant="destructive" disabled={loading || !hasPermission} onClick={onUninstall}>
+            {loading && !shouldUpdate ? 'Uninstalling' : 'Uninstall'}
           </Button>
         )}
-        <Button variant="destructive" disabled={loading || !hasPermission} onClick={onUninstall}>
-          {loading && !shouldUpdate ? 'Uninstalling' : 'Uninstall'}
-        </Button>
         {!hasPermission && <div className={styles.message}>You need admin privileges to manage this plugin.</div>}
       </HorizontalGroup>
     );
@@ -117,13 +131,27 @@ export const InstallControls = ({ localPlugin, remotePlugin }: Props) => {
 
   return (
     <HorizontalGroup height="auto">
-      <Button disabled={loading || !hasPermission} onClick={onInstall}>
-        {loading ? 'Installing' : 'Install'}
-      </Button>
+      {isRemoteManaged ? (
+        <LinkButton disabled={!hasPermission} href={remoteManageLink} target="_blank" rel="noopener noreferrer">
+          {'Install via grafana.com'}
+        </LinkButton>
+      ) : (
+        <Button disabled={loading || !hasPermission} onClick={onInstall}>
+          {loading ? 'Installing' : 'Install'}
+        </Button>
+      )}
       {!hasPermission && <div className={styles.message}>You need admin privileges to install this plugin.</div>}
     </HorizontalGroup>
   );
 };
+
+function getRemoteManageLink(plugin: Plugin): string {
+  const catalogURL = config.pluginCatalogURL;
+  if (catalogURL.endsWith('/')) {
+    return `${catalogURL}${plugin.slug}`;
+  }
+  return `${catalogURL}/${plugin.slug}`;
+}
 
 export const getStyles = (theme: GrafanaTheme2) => {
   return {
