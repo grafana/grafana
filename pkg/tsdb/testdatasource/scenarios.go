@@ -39,7 +39,6 @@ const (
 	serverError500Query               queryType = "server_error_500"
 	logsQuery                         queryType = "logs"
 	nodeGraphQuery                    queryType = "node_graph"
-	categoricalDataQuery              queryType = "categorical_data"
 	csvFileQueryType                  queryType = "csv_file"
 	csvContentQueryType               queryType = "csv_content"
 )
