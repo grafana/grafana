@@ -127,3 +127,28 @@ export function getQueryHints(query: string, series?: any[], datasource?: Promet
 
   return hints;
 }
+
+export function getInitHints(datasource?: PrometheusDatasource): QueryHint[] {
+  const hints = [];
+  if (!datasource) {
+    return [];
+  }
+
+  // Hint if using Loki as Prometheus data source
+  if (datasource.directUrl.includes('/loki') && !datasource.languageProvider.metrics.length) {
+    hints.push({
+      label: `Using Loki as Prometheus data source is no longer supported and might stop working. Please use Loki data source for your Loki instance.`,
+      type: 'INFO',
+    });
+  }
+
+  // Hint for big disabled lookups
+  if (datasource.lookupsDisabled) {
+    hints.push({
+      label: `Labels and metrics lookup was disabled in data source settings.`,
+      type: 'INFO',
+    });
+  }
+
+  return hints;
+}
