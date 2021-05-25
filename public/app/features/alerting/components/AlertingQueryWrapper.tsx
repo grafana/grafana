@@ -75,6 +75,7 @@ export const AlertingQueryWrapper: FC<Props> = ({
         queries={queries}
         renderHeaderExtras={() => renderTimePicker(query, index)}
         visualization={data ? <VizWrapper data={data} defaultPanel={isExpression ? 'table' : 'timeseries'} /> : null}
+        hideDisableQuery={true}
       />
     </div>
   );
