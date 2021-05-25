@@ -75,7 +75,7 @@ func (p *testDataPlugin) loadCsvFile(fileName string) (*data.Frame, error) {
 	validFileName := regexp.MustCompile(`([\w_]+)\.csv`)
 
 	if !validFileName.MatchString(fileName) {
-		return nil, fmt.Errorf("invalid csv file name")
+		return nil, fmt.Errorf("invalid csv file name: %q", fileName)
 	}
 
 	filePath := path.Join(p.Cfg.StaticRootPath, "testdata", fileName)
