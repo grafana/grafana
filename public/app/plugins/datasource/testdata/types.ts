@@ -27,6 +27,8 @@ export interface TestDataQuery extends DataQuery {
   levelColumn?: boolean;
   channel?: string; // for grafana live
   nodes?: NodesQuery;
+  csvFileName?: string;
+  csvFileContent?: string;
 }
 
 export interface NodesQuery {
