@@ -23,7 +23,7 @@ export class UserTeams extends PureComponent<Props> {
       <div>
         <h3 className="page-sub-heading">Teams</h3>
         <div className="gf-form-group">
-          <table className="filter-table form-inline">
+          <table className="filter-table form-inline" aria-label="User teams table">
             <thead>
               <tr>
                 <th />

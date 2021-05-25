@@ -44,9 +44,9 @@ const mapDispatchToProps = {
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
 
-type Props = OwnProps & ConnectedProps<typeof connector>;
+export type Props = OwnProps & ConnectedProps<typeof connector>;
 
-export function UserProfileEdit({
+export function UserProfileEditPage({
   navModel,
   orgsAreLoading,
   sessionsAreLoading,
@@ -82,4 +82,4 @@ export function UserProfileEdit({
   );
 }
 
-export default hot(module)(connector(UserProfileEdit));
+export default hot(module)(connector(UserProfileEditPage));

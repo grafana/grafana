@@ -25,7 +25,7 @@ export class UserOrganizations extends PureComponent<Props> {
       <div>
         <h3 className="page-sub-heading">Organizations</h3>
         <div className="gf-form-group">
-          <table className="filter-table form-inline">
+          <table className="filter-table form-inline" aria-label="User organizations table">
             <thead>
               <tr>
                 <th>Name</th>

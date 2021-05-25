@@ -25,6 +25,7 @@ export const UserProfileEditForm: FC<Props> = ({ user, isSavingUser, updateProfi
             <Field label="Name" invalid={!!errors.name} error="Name is required" disabled={disableLoginForm}>
               <Input
                 {...register('name', { required: true })}
+                id="edit-user-profile-name"
                 placeholder="Name"
                 defaultValue={user.name}
                 suffix={<InputSuffix />}
@@ -33,16 +34,23 @@ export const UserProfileEditForm: FC<Props> = ({ user, isSavingUser, updateProfi
             <Field label="Email" invalid={!!errors.email} error="Email is required" disabled={disableLoginForm}>
               <Input
                 {...register('email', { required: true })}
+                id="edit-user-profile-email"
                 placeholder="Email"
                 defaultValue={user.email}
                 suffix={<InputSuffix />}
               />
             </Field>
             <Field label="Username" disabled={disableLoginForm}>
-              <Input {...register('login')} defaultValue={user.login} placeholder="Username" suffix={<InputSuffix />} />
+              <Input
+                {...register('login')}
+                id="edit-user-profile-username"
+                defaultValue={user.login}
+                placeholder="Username"
+                suffix={<InputSuffix />}
+              />
             </Field>
             <div className="gf-form-button-row">
-              <Button variant="primary" disabled={isSavingUser}>
+              <Button variant="primary" disabled={isSavingUser} aria-label="Edit user profile save button">
                 Save
               </Button>
             </div>
