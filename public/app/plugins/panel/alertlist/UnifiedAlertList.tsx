@@ -1,64 +1,95 @@
-import React, { useState } from 'react';
-import { sortBy } from 'lodash';
+import React, { useEffect, useMemo } from 'react';
+// import { sortBy } from 'lodash';
+import { useDispatch } from 'react-redux';
 import { GrafanaTheme, GrafanaTheme2, intervalToAbbreviatedDurationString, PanelProps } from '@grafana/data';
-import { CustomScrollbar, useStyles, useStyles2 } from '@grafana/ui';
+import { CustomScrollbar, LoadingPlaceholder, useStyles, useStyles2 } from '@grafana/ui';
 import { css, cx } from '@emotion/css';
-import { useAsync } from 'react-use';
-import alertDef from 'app/features/alerting/state/alertDef';
-import { AlertListOptions, ShowOption, SortOrder } from './types';
 
-import { fetchAllRules } from 'app/features/alerting/unified/api/prometheus';
+// import alertDef from 'app/features/alerting/state/alertDef';
+// import { AlertListOptions, SortOrder } from './types';
+import { AlertListOptions } from './types';
+
 import { flattenRules, alertStateToState } from 'app/features/alerting/unified/utils/rules';
 import { PromRuleWithLocation } from 'app/types/unified-alerting';
+import { fetchAllPromRulesAction } from 'app/features/alerting/unified/state/actions';
+import { useUnifiedAlertingSelector } from 'app/features/alerting/unified/hooks/useUnifiedAlertingSelector';
+import { getAllRulesSourceNames } from 'app/features/alerting/unified/utils/datasource';
+
+const ALERT_LIST_POLL_INTERVAL_MS = 60000;
 
 export function UnifiedAlertList(props: PanelProps<AlertListOptions>) {
-  const [noAlertsMessage, setNoAlertsMessage] = useState('');
+  const dispatch = useDispatch();
+  const rulesDataSourceNames = useMemo(getAllRulesSourceNames, []);
 
-  const currentAlertState = useAsync(async () => {
-    if (props.options.showOptions !== ShowOption.Current) {
-      return;
-    }
+  useEffect(() => {
+    dispatch(fetchAllPromRulesAction());
+    const interval = setInterval(() => dispatch(fetchAllPromRulesAction()), ALERT_LIST_POLL_INTERVAL_MS);
+    return () => {
+      clearInterval(interval);
+    };
+  }, [dispatch]);
 
-    const promRules = await fetchAllRules();
-    const flatRules = flattenRules(promRules);
+  const promRulesRequests = useUnifiedAlertingSelector((state) => state.promRules);
 
-    let currentAlerts = sortAlerts(props.options.sortOrder, flatRules);
+  const dispatched = rulesDataSourceNames.some((name) => promRulesRequests[name]?.dispatched);
+  const loading = rulesDataSourceNames.some((name) => promRulesRequests[name]?.loading);
+  const haveResults = rulesDataSourceNames.some(
+    (name) => promRulesRequests[name]?.result?.length && !promRulesRequests[name]?.error
+  );
 
-    if (currentAlerts.length > props.options.maxItems) {
-      currentAlerts = currentAlerts.slice(0, props.options.maxItems);
-    }
-    setNoAlertsMessage(currentAlerts.length === 0 ? 'No alerts' : '');
+  // const currentAlertState = useAsync(async () => {
+  //   if (props.options.showOptions !== ShowOption.Current) {
+  //     return;
+  //   }
 
-    return currentAlerts;
-  }, [
-    props.options.showOptions,
-    props.options.stateFilter.alerting,
-    props.options.stateFilter.execution_error,
-    props.options.stateFilter.no_data,
-    props.options.stateFilter.ok,
-    props.options.stateFilter.paused,
-    props.options.stateFilter.pending,
-    props.options.maxItems,
-    props.options.tags,
-    props.options.dashboardAlerts,
-    props.options.dashboardTitle,
-    props.options.folderId,
-    props.options.alertName,
-    props.options.sortOrder,
-  ]);
+  //   const promRules = await fetchAllRules();
+  //   const flatRules = flattenRules(promRules);
+
+  //   let currentAlerts = sortAlerts(props.options.sortOrder, flatRules);
+
+  //   if (currentAlerts.length > props.options.maxItems) {
+  //     currentAlerts = currentAlerts.slice(0, props.options.maxItems);
+  //   }
+  //   setNoAlertsMessage(currentAlerts.length === 0 ? 'No alerts' : '');
+
+  //   return currentAlerts;
+  // }, [
+  //   props.options.showOptions,
+  //   props.options.stateFilter.alerting,
+  //   props.options.stateFilter.execution_error,
+  //   props.options.stateFilter.no_data,
+  //   props.options.stateFilter.ok,
+  //   props.options.stateFilter.paused,
+  //   props.options.stateFilter.pending,
+  //   props.options.maxItems,
+  //   props.options.tags,
+  //   props.options.dashboardAlerts,
+  //   props.options.dashboardTitle,
+  //   props.options.folderId,
+  //   props.options.alertName,
+  //   props.options.sortOrder,
+  // ]);
 
   const styles = useStyles(getStyles);
   const stateStyle = useStyles2(getStateTagStyles);
 
+  const rules = haveResults
+    ? Object.values(promRulesRequests).flatMap(({ result }) => {
+        return flattenRules(result || []);
+      })
+    : [];
+
+  const noAlertsMessage = rules.length ? '' : 'No alerts';
+
   return (
     <CustomScrollbar autoHeightMin="100%" autoHeightMax="100%">
       <div className={styles.container}>
+        {dispatched && loading && !haveResults && <LoadingPlaceholder text="Loading..." />}
         {noAlertsMessage && <div className={styles.noAlertsMessage}>{noAlertsMessage}</div>}
         <section>
           <ol className={styles.alertRuleList}>
-            {!currentAlertState.loading &&
-              currentAlertState.value &&
-              currentAlertState.value!.map((rule, index) => (
+            {haveResults &&
+              rules.map((rule, index) => (
                 <li
                   className={styles.alertRuleItem}
                   key={`alert-${rule.namespaceName}-${rule.groupName}-${rule.name}-${index}`}
@@ -95,24 +126,24 @@ export function UnifiedAlertList(props: PanelProps<AlertListOptions>) {
   );
 }
 
-function sortAlerts(sortOrder: SortOrder, rules: PromRuleWithLocation[]) {
-  if (sortOrder === SortOrder.Importance) {
-    // @ts-ignore
-    return sortBy(rules, (a) => alertDef.alertStateSortScore[a.state || a.newState]);
-  }
-  // else if (sortOrder === SortOrder.TimeAsc) {
-  //   return sortBy(alerts, (a) => new Date(a.newStateDate || a.time));
-  // } else if (sortOrder === SortOrder.TimeDesc) {
-  //   return sortBy(alerts, (a) => new Date(a.newStateDate || a.time)).reverse();
-  // }
+// function sortRules(sortOrder: SortOrder, rules: PromRuleWithLocation[]) {
+//   if (sortOrder === SortOrder.Importance) {
+//     // @ts-ignore
+//     return sortBy(rules, (a) => alertDef.alertStateSortScore[a.state || a.newState]);
+//   }
+//   // else if (sortOrder === SortOrder.TimeAsc) {
+//   //   return sortBy(alerts, (a) => new Date(a.newStateDate || a.time));
+//   // } else if (sortOrder === SortOrder.TimeDesc) {
+//   //   return sortBy(alerts, (a) => new Date(a.newStateDate || a.time)).reverse();
+//   // }
 
-  const result = sortBy(rules, (a) => a.name.toLowerCase());
-  if (sortOrder === SortOrder.AlphaDesc) {
-    result.reverse();
-  }
+//   const result = sortBy(rules, (a) => a.name.toLowerCase());
+//   if (sortOrder === SortOrder.AlphaDesc) {
+//     result.reverse();
+//   }
 
-  return result;
-}
+//   return result;
+// }
 
 function findEarliestAlertInstance(alerts: PromRuleWithLocation['alerts']) {
   let date = Date.now();
