@@ -44,6 +44,7 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
     "refresh": "25s"
   },
   "folderId": 0,
+  "folderUid": "l3KqBxCMz",
   "message": "Made changes to xyz",
   "overwrite": false
 }
@@ -55,6 +56,7 @@ JSON Body schema:
 - **dashboard.id** – id = null to create a new dashboard.
 - **dashboard.uid** – Optional unique identifier when creating a dashboard. uid = null will generate a new uid.
 - **folderId** – The id of the folder to save the dashboard in.
+- **folderUid** – The uid of the folder to save the dashboard in.
 - **overwrite** – Set to true if you want to overwrite existing dashboard with newer version, same dashboard title in folder or same dashboard uid.
 - **message** - Set a commit message for the version history.
 - **refresh** - Set the dashboard refresh interval. If this is lower than [the minimum refresh interval]({{< relref "../administration/configuration.md#min_refresh_interval">}}), then Grafana will ignore it and will enforce the minimum refresh interval.
