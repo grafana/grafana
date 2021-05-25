@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { GrafanaTheme2, intervalToAbbreviatedDurationString } from '@grafana/data';
 import { HorizontalGroup, Spinner, useStyles2 } from '@grafana/ui';
 import { CombinedRule } from 'app/types/unified-alerting';
-import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
+import { GrafanaAlertState, PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 import React, { FC, useMemo } from 'react';
 import { isAlertingRule, isRecordingRule } from '../../utils/rules';
 import { AlertStateTag } from './AlertStateTag';
@@ -27,7 +27,7 @@ export const RuleState: FC<Props> = ({ rule, isDeleting, isCreating }) => {
     ) {
       // find earliest alert
       const firstActiveAt = promRule.alerts.reduce((prev, alert) => {
-        if (alert.activeAt) {
+        if (alert.activeAt && alert.state !== GrafanaAlertState.Normal) {
           const activeAt = new Date(alert.activeAt);
           if (prev === null || prev.getTime() > activeAt.getTime()) {
             return activeAt;
@@ -36,7 +36,7 @@ export const RuleState: FC<Props> = ({ rule, isDeleting, isCreating }) => {
         return prev;
       }, null as Date | null);
 
-      // caclulate time elapsed from earliest alert
+      // calculate time elapsed from earliest alert
       if (firstActiveAt) {
         return (
           <span title={String(firstActiveAt)} className={style.for}>
