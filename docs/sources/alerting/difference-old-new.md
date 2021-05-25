@@ -1,5 +1,5 @@
 +++
-title = "Whats New with Unified Alerts"
+title = "What's New with Unified Alerts"
 description = "What's New with Unified Alerts"
 keywords = ["grafana", "alerting", "guide"]
 weight = 112
