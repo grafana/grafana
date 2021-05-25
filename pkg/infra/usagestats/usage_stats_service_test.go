@@ -16,9 +16,9 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestUsageStatsService_GetConcurrentUsersStats(t *testing.T) {
+func TestService_GetConcurrentUsersStats(t *testing.T) {
 	sqlStore := sqlstore.InitTestDB(t)
-	uss := &UsageStatsService{
+	uss := &Service{
 		Bus:      bus.New(),
 		SQLStore: sqlStore,
 		License:  &licensing.OSSLicensingService{},

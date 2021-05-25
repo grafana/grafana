@@ -26,7 +26,7 @@ type UsageReport struct {
 	Packaging       string                 `json:"packaging"`
 }
 
-func (uss *UsageStatsService) GetUsageReport(ctx context.Context) (UsageReport, error) {
+func (uss *Service) GetUsageReport(ctx context.Context) (UsageReport, error) {
 	version := strings.ReplaceAll(uss.Cfg.BuildVersion, ".", "_")
 
 	metrics := map[string]interface{}{}
@@ -239,7 +239,7 @@ func (uss *UsageStatsService) GetUsageReport(ctx context.Context) (UsageReport, 
 	return report, nil
 }
 
-func (uss *UsageStatsService) registerExternalMetrics(metrics map[string]interface{}) {
+func (uss *Service) registerExternalMetrics(metrics map[string]interface{}) {
 	for name, fn := range uss.externalMetrics {
 		result, err := fn()
 		if err != nil {
@@ -250,11 +250,11 @@ func (uss *UsageStatsService) registerExternalMetrics(metrics map[string]interfa
 	}
 }
 
-func (uss *UsageStatsService) RegisterMetric(name string, fn MetricFunc) {
+func (uss *Service) RegisterMetric(name string, fn MetricFunc) {
 	uss.externalMetrics[name] = fn
 }
 
-func (uss *UsageStatsService) sendUsageStats(ctx context.Context) error {
+func (uss *Service) sendUsageStats(ctx context.Context) error {
 	if !uss.Cfg.ReportingEnabled {
 		return nil
 	}
@@ -293,7 +293,7 @@ var sendUsageStats = func(data *bytes.Buffer) {
 	}()
 }
 
-func (uss *UsageStatsService) updateTotalStats() {
+func (uss *Service) updateTotalStats() {
 	if !uss.Cfg.MetricsEndpointEnabled || uss.Cfg.MetricsEndpointDisableTotalStats {
 		return
 	}
@@ -333,7 +333,7 @@ func (uss *UsageStatsService) updateTotalStats() {
 	}
 }
 
-func (uss *UsageStatsService) shouldBeReported(dsType string) bool {
+func (uss *Service) shouldBeReported(dsType string) bool {
 	ds := uss.PluginManager.GetDataSource(dsType)
 	if ds == nil {
 		return false
