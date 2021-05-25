@@ -1,4 +1,4 @@
-import { DataFrame, DataFrameView, getColorForTheme, TimeZone } from '@grafana/data';
+import { DataFrame, DataFrameFieldIndex, DataFrameView, getColorForTheme, TimeZone } from '@grafana/data';
 import { EventsCanvas, UPlotConfigBuilder, usePlotContext, useTheme } from '@grafana/ui';
 import React, { useCallback, useEffect, useLayoutEffect, useRef } from 'react';
 import { AnnotationMarker } from './AnnotationMarker';
@@ -65,9 +65,9 @@ export const AnnotationsPlugin: React.FC<AnnotationsPluginProps> = ({ annotation
   }, [config, theme]);
 
   const mapAnnotationToXYCoords = useCallback(
-    (frame: DataFrame, index: number) => {
+    (frame: DataFrame, dataFrameFieldIndex: DataFrameFieldIndex) => {
       const view = new DataFrameView<AnnotationsDataFrameViewDTO>(frame);
-      const annotation = view.get(index);
+      const annotation = view.get(dataFrameFieldIndex.fieldIndex);
       const plotInstance = plotCtx.plot;
       if (!annotation.time || !plotInstance) {
         return undefined;
@@ -82,9 +82,9 @@ export const AnnotationsPlugin: React.FC<AnnotationsPluginProps> = ({ annotation
   );
 
   const renderMarker = useCallback(
-    (frame: DataFrame, index: number) => {
+    (frame: DataFrame, dataFrameFieldIndex: DataFrameFieldIndex) => {
       const view = new DataFrameView<AnnotationsDataFrameViewDTO>(frame);
-      const annotation = view.get(index);
+      const annotation = view.get(dataFrameFieldIndex.fieldIndex);
       return <AnnotationMarker annotation={annotation} timeZone={timeZone} />;
     },
     [timeZone]

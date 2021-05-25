@@ -1,5 +1,6 @@
 import {
   DataFrame,
+  DataFrameFieldIndex,
   Field,
   LinkModel,
   TimeZone,
@@ -21,7 +22,7 @@ export const ExemplarsPlugin: React.FC<ExemplarsPluginProps> = ({ exemplars, tim
   const plotCtx = usePlotContext();
 
   const mapExemplarToXYCoords = useCallback(
-    (dataFrame: DataFrame, index: number) => {
+    (dataFrame: DataFrame, dataFrameFieldIndex: DataFrameFieldIndex) => {
       const plotInstance = plotCtx.plot;
       const time = dataFrame.fields.find((f) => f.name === TIME_SERIES_TIME_FIELD_NAME);
       const value = dataFrame.fields.find((f) => f.name === TIME_SERIES_VALUE_FIELD_NAME);
@@ -37,7 +38,7 @@ export const ExemplarsPlugin: React.FC<ExemplarsPluginProps> = ({ exemplars, tim
       const yMin = plotInstance.scales[yScale].min;
       const yMax = plotInstance.scales[yScale].max;
 
-      let y = value.values.get(index);
+      let y = value.values.get(dataFrameFieldIndex.fieldIndex);
       // To not to show exemplars outside of the graph we set the y value to min if it is smaller and max if it is bigger than the size of the graph
       if (yMin != null && y < yMin) {
         y = yMin;
@@ -48,7 +49,7 @@ export const ExemplarsPlugin: React.FC<ExemplarsPluginProps> = ({ exemplars, tim
       }
 
       return {
-        x: plotInstance.valToPos(time.values.get(index), 'x'),
+        x: plotInstance.valToPos(time.values.get(dataFrameFieldIndex.fieldIndex), 'x'),
         y: plotInstance.valToPos(y, yScale),
       };
     },
@@ -56,10 +57,18 @@ export const ExemplarsPlugin: React.FC<ExemplarsPluginProps> = ({ exemplars, tim
   );
 
   const renderMarker = useCallback(
-    (dataFrame: DataFrame, index: number) => {
-      return <ExemplarMarker timeZone={timeZone} getFieldLinks={getFieldLinks} dataFrame={dataFrame} index={index} />;
+    (dataFrame: DataFrame, dataFrameFieldIndex: DataFrameFieldIndex) => {
+      return (
+        <ExemplarMarker
+          timeZone={timeZone}
+          getFieldLinks={getFieldLinks}
+          dataFrame={dataFrame}
+          dataFrameFieldIndex={dataFrameFieldIndex}
+          config={config}
+        />
+      );
     },
-    [timeZone, getFieldLinks]
+    [config, timeZone, getFieldLinks]
   );
 
   return (
