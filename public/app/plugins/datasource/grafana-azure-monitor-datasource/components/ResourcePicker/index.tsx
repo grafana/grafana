@@ -36,7 +36,7 @@ const ResourcePicker = ({
 
   const rows = useMemo(() => {
     const templateVariableRow = resourcePickerData.transformVariablesToRow(templateVariables);
-    return [...azureRows, templateVariableRow];
+    return templateVariables.length ? [...azureRows, templateVariableRow] : azureRows;
   }, [resourcePickerData, azureRows, templateVariables]);
 
   // Map the selected item into an array of rows
@@ -48,8 +48,9 @@ const ResourcePicker = ({
   // Request resources for a expanded resource group
   const requestNestedRows = useCallback(
     async (resourceGroup: ResourceRow) => {
-      // If we already have children, we don't need to re-fetch them
-      if (resourceGroup.children?.length) {
+      // If we already have children, we don't need to re-fetch them. Also abort if we're expanding the special
+      // template variable group, though that shouldn't happen in practice
+      if (resourceGroup.children?.length || resourceGroup.id === ResourcePickerData.templateVariableGroupID) {
         return;
       }
 
