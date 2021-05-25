@@ -35,7 +35,7 @@ export function UnconnectedNodeGraphContainer(props: Props & ConnectedProps<type
   const [open, setOpen] = useState(false);
   const countWarning =
     withTraceView && nodes[0]?.length > 1000 ? (
-      <span className={styles.warningText}> Graph contains {nodes[0].length} nodes. Rendering may be slow</span>
+      <span className={styles.warningText}> ({nodes[0].length} nodes, can be slow to load)</span>
     ) : (
       ''
     );
