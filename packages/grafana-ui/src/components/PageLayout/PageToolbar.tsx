@@ -133,7 +133,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: flex;
       flex-wrap: wrap;
       justify-content: flex-end;
-      padding: ${theme.spacing(1, 2, 1)};
+      padding: ${theme.spacing(1.5, 2)};
     `,
     spacer: css`
       flex-grow: 1;
