@@ -19,10 +19,12 @@ const conditionTypes = [{ text: 'Query', value: 'query' }];
 
 const alertStateSortScore = {
   alerting: 1,
+  firing: 1,
   no_data: 2,
   pending: 3,
   ok: 4,
   paused: 5,
+  inactive: 5,
 };
 
 export enum EvalFunction {

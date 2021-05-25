@@ -17,12 +17,14 @@ import {
   RecordingRule,
   Rule,
   RuleIdentifier,
+  RuleNamespace,
   RuleWithLocation,
 } from 'app/types/unified-alerting';
 import { AsyncRequestState } from './redux';
 import { RULER_NOT_SUPPORTED_MSG } from './constants';
 import { hash } from './misc';
 import { capitalize } from 'lodash';
+import { State } from '../components/StateTag';
 
 export function isAlertingRule(rule: Rule): rule is AlertingRule {
   return rule.type === PromRuleType.Alerting;
@@ -142,3 +144,34 @@ export function alertStateToReadable(state: PromAlertingRuleState | GrafanaAlert
   }
   return capitalize(state);
 }
+
+export type FlatRule = {
+  dataSourceName: string;
+  namespaceName: string;
+  groupName: string;
+} & AlertingRule;
+
+export const flattenRules = (rules: RuleNamespace[]) => {
+  return rules.reduce((acc, { dataSourceName, name: namespaceName, groups }) => {
+    groups.forEach(({ name: groupName, rules }) => {
+      rules.forEach((rule) => {
+        if (rule.type !== 'recording' && (rule.state === 'firing' || rule.state === 'pending')) {
+          const ruleToAdd = { dataSourceName, namespaceName, groupName, ...rule };
+          acc.push(ruleToAdd);
+        }
+      });
+    });
+    return acc;
+  }, [] as FlatRule[]);
+};
+
+export const alertStateToState: Record<PromAlertingRuleState | GrafanaAlertState, State> = {
+  [PromAlertingRuleState.Inactive]: 'good',
+  [PromAlertingRuleState.Firing]: 'bad',
+  [PromAlertingRuleState.Pending]: 'warning',
+  [GrafanaAlertState.Alerting]: 'bad',
+  [GrafanaAlertState.Error]: 'bad',
+  [GrafanaAlertState.NoData]: 'info',
+  [GrafanaAlertState.Normal]: 'good',
+  [GrafanaAlertState.Pending]: 'warning',
+};
