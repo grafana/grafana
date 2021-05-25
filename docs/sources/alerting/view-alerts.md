@@ -12,14 +12,14 @@ In the Grafana side bar, hover your cursor over the Alerting (bell) icon and the
 
 ## Group view
 
-![Grouped alert rule view](/img/docs/alerting/rule-list-group-view-8-0.png 'Screenshot of grouped alert rule view')
+![Grouped alert rule view](/img/docs/alerting/unified/rule-list-group-view-8-0.png 'Screenshot of grouped alert rule view')
 
 
 Group view shows Grafana alert rules grouped by folder and Loki or Prometheus alert rules grouped by namespace + group. This is the default rule list view, intended to be used for managing rules. You can expand each group to view a list of rules in this group. Each rule can be expanded to view it's details, action buttons and any alerts spawned by this rule, and each alert can be further expanded to view it's details.
 
 ## State view
 
-![Alert rule state view](/img/docs/alerting/rule-list-state-view-8-0.png 'Screenshot of alert rule state view')
+![Alert rule state view](/img/docs/alerting/unified/rule-list-state-view-8-0.png 'Screenshot of alert rule state view')
 
 State view shows alert rules grouped by state. Use this view to get an overview of which rules are in what state. Each rule can be expanded to view it's details, action buttons and any alerts spawned by this rule, and each alert can be further expanded to view it's details.
 
@@ -32,7 +32,7 @@ You can use filter controls to view only alert rules that match specific criteri
 
 ## Rule details
 
-![Alert rule details](/img/docs/alerting/rule-details-8-0.png 'Screenshot of alert rule details')
+![Alert rule details](/img/docs/alerting/unified/rule-details-8-0.png 'Screenshot of alert rule details')
 
 A rule row will show rule state, health and summary annotation the rule has one. Rule row can be expanded to reveal rule labels, all annotations, datasources this rule queries and list of alerts spawned from this rule.
 
