@@ -40,7 +40,8 @@ const (
 	logsQuery                         queryType = "logs"
 	nodeGraphQuery                    queryType = "node_graph"
 	categoricalDataQuery              queryType = "categorical_data"
-	csvDataQueryType                  queryType = "csv_data"
+	csvFileQueryType                  queryType = "csv_file"
+	csvContentQueryType               queryType = "csv_content"
 )
 
 type queryType string
@@ -197,9 +198,15 @@ Timestamps will line up evenly on timeStepSeconds (For example, 60 seconds means
 	})
 
 	p.registerScenario(&Scenario{
-		ID:      string(csvDataQueryType),
-		Name:    "CSV Data",
+		ID:      string(csvFileQueryType),
+		Name:    "CSV File",
 		handler: p.handleCsvData,
+	})
+
+	p.registerScenario(&Scenario{
+		ID:      string(csvContentQueryType),
+		Name:    "CSV Content",
+		handler: p.handleCsvContent,
 	})
 
 	p.queryMux.HandleFunc("", p.handleFallbackScenario)

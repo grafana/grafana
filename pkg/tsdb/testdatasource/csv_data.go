@@ -38,6 +38,33 @@ func (p *testDataPlugin) handleCategoricalDataScenario(ctx context.Context, req 
 	return resp, nil
 }
 
+func (p *testDataPlugin) handleCsvContent(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	resp := backend.NewQueryDataResponse()
+
+	for _, q := range req.Queries {
+		model, err := simplejson.NewJson(q.JSON)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse query json %v", err)
+		}
+
+		csvContent := model.Get("csvContent").MustString()
+		alias := model.Get("alias").MustString(q.RefID)
+
+		frame, err := p.loadCsvContent(strings.NewReader(csvContent), alias)
+
+		if err != nil {
+			return nil, err
+		}
+
+		respD := resp.Responses[q.RefID]
+		respD.Frames = append(respD.Frames, frame)
+		resp.Responses[q.RefID] = respD
+	}
+
+	return resp, nil
+
+}
+
 func (p *testDataPlugin) handleCsvData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	resp := backend.NewQueryDataResponse()
 
@@ -76,14 +103,17 @@ func (p *testDataPlugin) loadCsvFile(fileName string) (*data.Frame, error) {
 
 	filePath := path.Join(p.Cfg.StaticRootPath, "testdata", fileName)
 	fileReader, err := os.Open(filePath)
+	if err != nil {
+		return nil, fmt.Errorf("failed open file %v", err)
+	}
 
 	defer fileReader.Close()
 
-	if err != nil {
-		return nil, fmt.Errorf("failed to open csv file, %v", err)
-	}
+	return p.loadCsvContent(fileReader, fileName)
+}
 
-	reader := csv.NewReader(fileReader)
+func (p *testDataPlugin) loadCsvContent(ioReader io.Reader, name string) (*data.Frame, error) {
+	reader := csv.NewReader(ioReader)
 
 	// Read the header records
 	headerFields, err := reader.Read()
@@ -120,7 +150,7 @@ func (p *testDataPlugin) loadCsvFile(fileName string) (*data.Frame, error) {
 		fields = append(fields, field)
 	}
 
-	frame := data.NewFrame(fileName, fields...)
+	frame := data.NewFrame(name, fields...)
 	return frame, nil
 }
 

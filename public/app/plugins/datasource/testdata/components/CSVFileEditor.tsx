@@ -3,12 +3,12 @@ import { InlineField, InlineFieldRow, Select } from '@grafana/ui';
 import { SelectableValue } from '@grafana/data';
 import { EditorProps } from '../QueryEditor';
 
-export const CSVTestDataEditor = ({ onChange, query }: EditorProps) => {
+export const CSVFileEditor = ({ onChange, query }: EditorProps) => {
   const onChangeFileName = ({ value }: SelectableValue<string>) => {
     onChange({ ...query, csvFileName: value });
   };
 
-  const files = ['population_by_state'].map((name) => ({ label: name, value: name }));
+  const files = ['population_by_state.csv', 'city_stats.csv'].map((name) => ({ label: name, value: name }));
 
   return (
     <InlineFieldRow>

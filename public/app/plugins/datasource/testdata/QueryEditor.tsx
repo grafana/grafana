@@ -17,7 +17,8 @@ import { defaultCSVWaveQuery, defaultPulseQuery, defaultQuery } from './constant
 import { GrafanaLiveEditor } from './components/GrafanaLiveEditor';
 import { NodeGraphEditor } from './components/NodeGraphEditor';
 import { defaultStreamQuery } from './runStreams';
-import { CSVTestDataEditor } from './components/CSVTestDataEditor';
+import { CSVFileEditor } from './components/CSVFileEditor';
+import { CSVContentEditor } from './components/CSVContentEditor';
 
 const showLabelsFor = ['random_walk', 'predictable_pulse'];
 const endpoints = [
@@ -210,7 +211,8 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
       {scenarioId === 'random_walk' && <RandomWalkEditor onChange={onInputChange} query={query} />}
       {scenarioId === 'streaming_client' && <StreamingClientEditor onChange={onStreamClientChange} query={query} />}
       {scenarioId === 'live' && <GrafanaLiveEditor onChange={onUpdate} query={query} />}
-      {scenarioId === 'csv_file' && <CSVTestDataEditor onChange={onUpdate} query={query} />}
+      {scenarioId === 'csv_file' && <CSVFileEditor onChange={onUpdate} query={query} />}
+      {scenarioId === 'csv_content' && <CSVContentEditor onChange={onUpdate} query={query} />}
       {scenarioId === 'logs' && (
         <InlineFieldRow>
           <InlineField label="Lines" labelWidth={14}>

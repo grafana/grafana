@@ -28,7 +28,7 @@ export interface TestDataQuery extends DataQuery {
   channel?: string; // for grafana live
   nodes?: NodesQuery;
   csvFileName?: string;
-  csvFileContent?: string;
+  csvContent?: string;
 }
 
 export interface NodesQuery {
