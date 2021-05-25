@@ -32,7 +32,7 @@ func newTestStreamHandler(logger log.Logger) *testStreamHandler {
 
 func (p *testStreamHandler) SubscribeStream(_ context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
 	p.logger.Debug("Allowing access to stream", "path", req.Path, "user", req.PluginContext.User)
-	initialData, err := backend.FrameSchemaInitialData(p.frame)
+	initialData, err := backend.NewInitialFrame(p.frame, data.IncludeSchemaOnly)
 	if err != nil {
 		return nil, err
 	}
@@ -100,7 +100,7 @@ func (p *testStreamHandler) runTestStream(ctx context.Context, path string, conf
 			p.frame.Fields[1].Set(0, walker)                                // Value
 			p.frame.Fields[2].Set(0, walker-((rand.Float64()*spread)+0.01)) // Min
 			p.frame.Fields[3].Set(0, walker+((rand.Float64()*spread)+0.01)) // Max
-			if err := sender.SendFrameData(p.frame); err != nil {
+			if err := sender.SendFrame(p.frame, data.IncludeDataOnly); err != nil {
 				return err
 			}
 		}
