@@ -14,8 +14,8 @@ replace k8s.io/client-go => k8s.io/client-go v0.18.8
 require (
 	cloud.google.com/go/storage v1.14.0
 	cuelang.org/go v0.3.2
-	github.com/Azure/azure-sdk-for-go/sdk/azcore v0.16.0
-	github.com/Azure/azure-sdk-for-go/sdk/azidentity v0.8.0
+	github.com/Azure/azure-sdk-for-go/sdk/azcore v0.16.1
+	github.com/Azure/azure-sdk-for-go/sdk/azidentity v0.9.1
 	github.com/BurntSushi/toml v0.3.1
 	github.com/Masterminds/semver v1.5.0
 	github.com/VividCortex/mysqlerr v0.0.0-20170204212430-6c6b55f8796f
@@ -62,6 +62,7 @@ require (
 	github.com/jmespath/go-jmespath v0.4.0
 	github.com/json-iterator/go v1.1.11
 	github.com/jung-kurt/gofpdf v1.16.2
+	github.com/laher/mergefs v0.1.1
 	github.com/lib/pq v1.10.0
 	github.com/linkedin/goavro/v2 v2.10.0
 	github.com/magefile/mage v1.11.0
@@ -93,10 +94,10 @@ require (
 	go.opentelemetry.io/collector v0.25.0
 	golang.org/x/crypto v0.0.0-20210513164829-c07d793c2f9a
 	golang.org/x/exp v0.0.0-20210220032938-85be41e4509f // indirect
-	golang.org/x/net v0.0.0-20210510120150-4163338589ed
+	golang.org/x/net v0.0.0-20210521195947-fe42d452be8f
 	golang.org/x/oauth2 v0.0.0-20210413134643-5e61552d6c78
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
-	golang.org/x/sys v0.0.0-20210514084401-e8d321eab015 // indirect
+	golang.org/x/sys v0.0.0-20210521203332-0cec03c779c1 // indirect
 	golang.org/x/time v0.0.0-20210220033141-f8bda1e9f3ba
 	golang.org/x/tools v0.1.0
 	gonum.org/v1/gonum v0.9.1
