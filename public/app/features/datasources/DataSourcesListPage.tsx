@@ -1,36 +1,39 @@
 // Libraries
-import React, { PureComponent } from 'react';
+import React, { PureComponent, ComponentProps } from 'react';
 import { connect } from 'react-redux';
-import { hot } from 'react-hot-loader';
 // Components
 import Page from 'app/core/components/Page/Page';
 import PageActionBar from 'app/core/components/PageActionBar/PageActionBar';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
-import DataSourcesList from './DataSourcesList';
+import { DataSourcesList } from './DataSourcesList';
 // Types
 import { DataSourceSettings, NavModel } from '@grafana/data';
-import { IconName } from '@grafana/ui';
+import { ConfirmModal } from '@grafana/ui';
 import { StoreState } from 'app/types';
 // Actions
-import { loadDataSources } from './state/actions';
+import { loadDataSources, deleteDataSource } from './state/actions';
 import { getNavModel } from 'app/core/selectors/navModel';
 
-import { getDataSources, getDataSourcesCount, getDataSourcesSearchQuery } from './state/selectors';
+import { getDataSources, getDataSourcesSearchQuery } from './state/selectors';
 import { setDataSourcesSearchQuery } from './state/reducers';
 
 export interface Props {
   navModel: NavModel;
   dataSources: DataSourceSettings[];
-  dataSourcesCount: number;
   searchQuery: string;
   hasFetched: boolean;
   loadDataSources: typeof loadDataSources;
+  deleteDataSource: typeof deleteDataSource;
   setDataSourcesSearchQuery: typeof setDataSourcesSearchQuery;
 }
 
-const emptyListModel = {
+interface State {
+  deleting?: number;
+}
+
+const emptyListModel: ComponentProps<typeof EmptyListCTA> = {
   title: 'No data sources defined',
-  buttonIcon: 'database' as IconName,
+  buttonIcon: 'database',
   buttonLink: 'datasources/new',
   buttonTitle: 'Add data source',
   proTip: 'You can also define data sources through configuration files.',
@@ -39,34 +42,62 @@ const emptyListModel = {
   proTipTarget: '_blank',
 };
 
-export class DataSourcesListPage extends PureComponent<Props> {
+const linkButton: ComponentProps<typeof PageActionBar>['linkButton'] = {
+  href: 'datasources/new',
+  title: 'Add data source',
+};
+
+export class DataSourcesListPage extends PureComponent<Props, State> {
+  state: State = {
+    deleting: undefined,
+  };
+
   componentDidMount() {
     this.props.loadDataSources();
   }
 
-  render() {
-    const { dataSources, dataSourcesCount, navModel, searchQuery, setDataSourcesSearchQuery, hasFetched } = this.props;
+  onDeleteClicked = (id: number) => {
+    this.setState({ deleting: id });
+  };
 
-    const linkButton = {
-      href: 'datasources/new',
-      title: 'Add data source',
-    };
+  closeConfirmModal = () => {
+    this.setState({ deleting: undefined });
+  };
+
+  deleteDataSource = () => {
+    this.props.deleteDataSource(this.state.deleting, true);
+    this.closeConfirmModal();
+  };
+
+  render() {
+    const { dataSources, navModel, searchQuery, setDataSourcesSearchQuery, hasFetched } = this.props;
 
     return (
       <Page navModel={navModel}>
         <Page.Contents isLoading={!hasFetched}>
           <>
-            {hasFetched && dataSourcesCount === 0 && <EmptyListCTA {...emptyListModel} />}
-            {hasFetched &&
-              dataSourcesCount > 0 && [
+            {dataSources.length === 0 ? (
+              <EmptyListCTA {...emptyListModel} />
+            ) : (
+              [
                 <PageActionBar
                   searchQuery={searchQuery}
-                  setSearchQuery={(query) => setDataSourcesSearchQuery(query)}
+                  setSearchQuery={setDataSourcesSearchQuery}
                   linkButton={linkButton}
                   key="action-bar"
                 />,
-                <DataSourcesList dataSources={dataSources} key="list" />,
-              ]}
+                <DataSourcesList dataSources={dataSources} key="list" onDeleteClick={this.onDeleteClicked} />,
+                <ConfirmModal
+                  key="confirm-modal"
+                  isOpen={this.state.deleting !== undefined}
+                  title="Delete Data Source"
+                  body="Are you sure you want to remove this data source?"
+                  confirmText="Yes"
+                  onConfirm={this.deleteDataSource}
+                  onDismiss={this.closeConfirmModal}
+                />,
+              ]
+            )}
           </>
         </Page.Contents>
       </Page>
@@ -78,7 +109,6 @@ function mapStateToProps(state: StoreState) {
   return {
     navModel: getNavModel(state.navIndex, 'datasources'),
     dataSources: getDataSources(state.dataSources),
-    dataSourcesCount: getDataSourcesCount(state.dataSources),
     searchQuery: getDataSourcesSearchQuery(state.dataSources),
     hasFetched: state.dataSources.hasFetched,
   };
@@ -86,7 +116,8 @@ function mapStateToProps(state: StoreState) {
 
 const mapDispatchToProps = {
   loadDataSources,
+  deleteDataSource,
   setDataSourcesSearchQuery,
 };
 
-export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(DataSourcesListPage));
+export default connect(mapStateToProps, mapDispatchToProps)(DataSourcesListPage);

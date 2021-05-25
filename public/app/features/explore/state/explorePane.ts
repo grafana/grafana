@@ -93,7 +93,7 @@ export function changeSize(
  */
 export function initializeExplore(
   exploreId: ExploreId,
-  datasourceNameOrUid: string,
+  datasourceNameOrUid: string | undefined,
   queries: DataQuery[],
   range: TimeRange,
   containerWidth: number,

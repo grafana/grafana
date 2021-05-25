@@ -218,14 +218,18 @@ export function updateDataSource(dataSource: DataSourceSettings): ThunkResult<vo
   };
 }
 
-export function deleteDataSource(): ThunkResult<void> {
+export function deleteDataSource(id?: number, fetch = false): ThunkResult<void> {
   return async (dispatch, getStore) => {
-    const dataSource = getStore().dataSources.dataSource;
+    id = id || getStore().dataSources.dataSource.id;
 
-    await getBackendSrv().delete(`/api/datasources/${dataSource.id}`);
+    await getBackendSrv().delete(`/api/datasources/${id}`);
     await updateFrontendSettings();
 
     locationService.push('/datasources');
+
+    if (fetch) {
+      return dispatch(loadDataSources());
+    }
   };
 }
 
