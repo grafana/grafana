@@ -203,7 +203,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     {
       path: '/profile',
       component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "UserProfileEdit" */ 'app/features/profile/UserProfileEdit')
+        () => import(/* webpackChunkName: "UserProfileEditPage" */ 'app/features/profile/UserProfileEditPage')
       ),
     },
     {

@@ -25,6 +25,7 @@ import userEvent from '@testing-library/user-event';
 import { splitOpen } from './state/main';
 import { Route, Router } from 'react-router-dom';
 import { GrafanaRoute } from 'app/core/navigation/GrafanaRoute';
+import { initialUserState } from '../profile/state/reducers';
 
 type Mock = jest.Mock;
 
@@ -293,6 +294,7 @@ function setup(options?: SetupOptions): { datasources: { [name: string]: DataSou
 
   const store = configureStore();
   store.getState().user = {
+    ...initialUserState,
     orgId: 1,
     timeZone: 'utc',
   };
