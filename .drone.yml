@@ -3433,6 +3433,32 @@ depends_on:
 - enterprise-windows-release-branch
 
 ---
+kind: pipeline
+type: docker
+name: scan-docker-image
+
+platform:
+  os: linux
+  arch: amd64
+
+steps:
+- name: scan_docker_image_unkown/low/medium_vulnerabilities
+  image: aquasec/trivy:0.18.3
+  commands:
+  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/grafana:latest
+
+- name: scan_docker_image_high/critical_vulnerabilities
+  image: aquasec/trivy:0.18.3
+  commands:
+  - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/grafana:latest
+
+trigger:
+  event:
+  - cron
+  cron:
+  - nightly
+
+---
 kind: secret
 name: dockerconfigjson
 
