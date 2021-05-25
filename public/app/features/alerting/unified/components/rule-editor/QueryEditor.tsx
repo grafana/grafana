@@ -11,13 +11,16 @@ import {
 import { selectors } from '@grafana/e2e-selectors';
 import { Button, HorizontalGroup, Icon, stylesFactory, Tooltip } from '@grafana/ui';
 import { config } from '@grafana/runtime';
-import { AlertingQueryRows } from './AlertingQueryRows';
-import { dataSource as expressionDatasource, ExpressionDatasourceUID } from '../../expressions/ExpressionDatasource';
+import { QueryRows } from './QueryRows';
+import {
+  dataSource as expressionDatasource,
+  ExpressionDatasourceUID,
+} from 'app/features/expressions/ExpressionDatasource';
 import { getNextRefIdChar } from 'app/core/utils/query';
-import { defaultCondition } from '../../expressions/utils/expressionTypes';
-import { ExpressionQueryType } from '../../expressions/types';
+import { defaultCondition } from 'app/features/expressions/utils/expressionTypes';
+import { ExpressionQueryType } from 'app/features/expressions/types';
 import { GrafanaQuery } from 'app/types/unified-alerting-dto';
-import { AlertingQueryRunner } from '../state/AlertingQueryRunner';
+import { AlertingQueryRunner } from '../../state/AlertingQueryRunner';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { isExpressionQuery } from 'app/features/expressions/guards';
 
@@ -29,7 +32,7 @@ interface Props {
 interface State {
   panelDataByRefId: Record<string, PanelData>;
 }
-export class AlertingQueryEditor extends PureComponent<Props, State> {
+export class QueryEditor extends PureComponent<Props, State> {
   private runner: AlertingQueryRunner;
 
   constructor(props: Props) {
@@ -160,7 +163,7 @@ export class AlertingQueryEditor extends PureComponent<Props, State> {
 
     return (
       <div className={styles.container}>
-        <AlertingQueryRows
+        <QueryRows
           data={panelDataByRefId}
           queries={value}
           onQueriesChange={this.props.onChange}
