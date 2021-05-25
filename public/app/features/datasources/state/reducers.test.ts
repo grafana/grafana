@@ -12,14 +12,13 @@ import {
   initialDataSourceSettingsState,
   initialState,
   setDataSourceName,
-  setDataSourcesLayoutMode,
   setDataSourcesSearchQuery,
   setDataSourceTypeSearchQuery,
   setIsDefault,
 } from './reducers';
 import { getMockDataSource, getMockDataSources } from '../__mocks__/dataSourcesMocks';
 import { DataSourceSettingsState, DataSourcesState } from 'app/types';
-import { PluginMeta, PluginMetaInfo, PluginType, LayoutModes } from '@grafana/data';
+import { PluginMeta, PluginMetaInfo, PluginType } from '@grafana/data';
 import { GenericDataSourcePlugin } from '../settings/PluginSettings';
 
 const mockPlugin = () =>
@@ -65,17 +64,6 @@ describe('dataSourcesReducer', () => {
         .givenReducer(dataSourcesReducer, initialState)
         .whenActionIsDispatched(setDataSourcesSearchQuery('some query'))
         .thenStateShouldEqual({ ...initialState, searchQuery: 'some query' });
-    });
-  });
-
-  describe('when setDataSourcesLayoutMode is dispatched', () => {
-    it('then state should be correct', () => {
-      const layoutMode: LayoutModes = LayoutModes.Grid;
-
-      reducerTester<DataSourcesState>()
-        .givenReducer(dataSourcesReducer, initialState)
-        .whenActionIsDispatched(setDataSourcesLayoutMode(layoutMode))
-        .thenStateShouldEqual({ ...initialState, layoutMode: LayoutModes.Grid });
     });
   });
 

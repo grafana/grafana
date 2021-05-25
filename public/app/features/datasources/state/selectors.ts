@@ -33,5 +33,4 @@ export const getDataSourceMeta = (state: DataSourcesState, type: string): DataSo
 };
 
 export const getDataSourcesSearchQuery = (state: DataSourcesState) => state.searchQuery;
-export const getDataSourcesLayoutMode = (state: DataSourcesState) => state.layoutMode;
 export const getDataSourcesCount = (state: DataSourcesState) => state.dataSourcesCount;

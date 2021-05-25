@@ -1,4 +1,4 @@
-import { DataSourcePluginMeta, DataSourceSettings, LayoutMode } from '@grafana/data';
+import { DataSourcePluginMeta, DataSourceSettings } from '@grafana/data';
 import { GenericDataSourcePlugin } from 'app/features/datasources/settings/PluginSettings';
 import { HealthCheckResultDetails } from '@grafana/runtime/src/utils/DataSourceWithBackend';
 
@@ -6,7 +6,6 @@ export interface DataSourcesState {
   dataSources: DataSourceSettings[];
   searchQuery: string;
   dataSourceTypeSearchQuery: string;
-  layoutMode: LayoutMode;
   dataSourcesCount: number;
   dataSource: DataSourceSettings;
   dataSourceMeta: DataSourcePluginMeta;

@@ -2,16 +2,15 @@
 import React, { FC } from 'react';
 
 // Types
-import { DataSourceSettings, LayoutMode } from '@grafana/data';
+import { DataSourceSettings } from '@grafana/data';
 import { Card, Tag, useStyles } from '@grafana/ui';
 import { css } from '@emotion/css';
 
 export interface Props {
   dataSources: DataSourceSettings[];
-  layoutMode: LayoutMode;
 }
 
-export const DataSourcesList: FC<Props> = ({ dataSources, layoutMode }) => {
+export const DataSourcesList: FC<Props> = ({ dataSources }) => {
   const styles = useStyles(getStyles);
 
   return (

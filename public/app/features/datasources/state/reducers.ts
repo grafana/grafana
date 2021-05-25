@@ -1,5 +1,5 @@
 import { AnyAction, createAction } from '@reduxjs/toolkit';
-import { DataSourcePluginMeta, DataSourceSettings, LayoutMode, LayoutModes } from '@grafana/data';
+import { DataSourcePluginMeta, DataSourceSettings } from '@grafana/data';
 
 import { DataSourcesState, DataSourceSettingsState, TestingStatus } from 'app/types';
 import { DataSourceTypesLoadedPayload } from './actions';
@@ -10,7 +10,6 @@ export const initialState: DataSourcesState = {
   plugins: [],
   categories: [],
   dataSource: {} as DataSourceSettings,
-  layoutMode: LayoutModes.List,
   searchQuery: '',
   dataSourcesCount: 0,
   dataSourceTypeSearchQuery: '',
@@ -27,7 +26,6 @@ export const dataSourcePluginsLoaded = createAction<DataSourceTypesLoadedPayload
   'dataSources/dataSourcePluginsLoaded'
 );
 export const setDataSourcesSearchQuery = createAction<string>('dataSources/setDataSourcesSearchQuery');
-export const setDataSourcesLayoutMode = createAction<LayoutMode>('dataSources/setDataSourcesLayoutMode');
 export const setDataSourceTypeSearchQuery = createAction<string>('dataSources/setDataSourceTypeSearchQuery');
 export const setDataSourceName = createAction<string>('dataSources/setDataSourceName');
 export const setIsDefault = createAction<boolean>('dataSources/setIsDefault');
@@ -53,10 +51,6 @@ export const dataSourcesReducer = (state: DataSourcesState = initialState, actio
 
   if (setDataSourcesSearchQuery.match(action)) {
     return { ...state, searchQuery: action.payload };
-  }
-
-  if (setDataSourcesLayoutMode.match(action)) {
-    return { ...state, layoutMode: action.payload };
   }
 
   if (dataSourcePluginsLoad.match(action)) {
