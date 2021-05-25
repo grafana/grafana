@@ -343,48 +343,6 @@ func (p *testDataPlugin) handleManualEntryScenario(ctx context.Context, req *bac
 	return resp, nil
 }
 
-func csvToFieldValues(stringInput string) (*data.Field, error) {
-	parts := strings.Split(strings.ReplaceAll(stringInput, " ", ""), ",")
-	if len(parts) < 1 {
-		return nil, fmt.Errorf("csv must have at least one value")
-	}
-
-	first := strings.ToUpper(parts[0])
-	if first == "T" || first == "F" || first == "TRUE" || first == "FALSE" {
-		field := data.NewFieldFromFieldType(data.FieldTypeNullableBool, len(parts))
-		for idx, strVal := range parts {
-			strVal = strings.ToUpper(strVal)
-			if strVal == "NULL" || strVal == "" {
-				continue
-			}
-			field.SetConcrete(idx, strVal == "T" || strVal == "TRUE")
-		}
-		return field, nil
-	}
-
-	// If we can not parse the first value as a number, assume strings
-	_, err := strconv.ParseFloat(first, 64)
-	if err != nil {
-		field := data.NewFieldFromFieldType(data.FieldTypeNullableString, len(parts))
-		for idx, strVal := range parts {
-			if strVal == "null" || strVal == "" {
-				continue
-			}
-			field.SetConcrete(idx, strVal)
-		}
-		return field, nil
-	}
-
-	// Set any valid numbers
-	field := data.NewFieldFromFieldType(data.FieldTypeNullableFloat64, len(parts))
-	for idx, strVal := range parts {
-		if val, err := strconv.ParseFloat(strVal, 64); err == nil {
-			field.SetConcrete(idx, val)
-		}
-	}
-	return field, nil
-}
-
 func (p *testDataPlugin) handleCSVMetricValuesScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	resp := backend.NewQueryDataResponse()
 
@@ -396,7 +354,7 @@ func (p *testDataPlugin) handleCSVMetricValuesScenario(ctx context.Context, req 
 
 		stringInput := model.Get("stringInput").MustString()
 
-		valueField, err := csvToFieldValues(stringInput)
+		valueField, err := csvLineToField(stringInput)
 		if err != nil {
 			return nil, err
 		}

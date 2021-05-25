@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"path"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
@@ -120,32 +120,72 @@ func (p *testDataPlugin) loadCsvContent(ioReader io.Reader, name string) (*data.
 		}
 	}
 
+	longest := 0
 	for fieldIndex, rawValues := range fieldRawValues {
 		fieldName := fieldNames[fieldIndex]
-		parsedValues := parseRawStringValues(rawValues)
-		field := data.NewField(fieldName, nil, parsedValues)
-		fields = append(fields, field)
+		field, err := csvValuesToField(rawValues)
+		if err == nil {
+			field.Name = fieldName
+			fields = append(fields, field)
+			if field.Len() > longest {
+				longest = field.Len()
+			}
+		}
+	}
+
+	// Make all fields the same length
+	for _, field := range fields {
+		delta := field.Len() - longest
+		if delta > 0 {
+			field.Extend(delta)
+		}
 	}
 
 	frame := data.NewFrame(name, fields...)
 	return frame, nil
 }
 
-func parseRawStringValues(values []string) interface{} {
-	numericValues := []float64{}
+func csvLineToField(stringInput string) (*data.Field, error) {
+	return csvValuesToField(strings.Split(strings.ReplaceAll(stringInput, " ", ""), ","))
+}
 
-	for _, value := range values {
-		numericValue, err := strconv.ParseFloat(value, 64)
-		if err == nil {
-			numericValues = append(numericValues, numericValue)
-		} else {
-			fmt.Printf("Error reading %v %v", numericValue, err)
+func csvValuesToField(parts []string) (*data.Field, error) {
+	if len(parts) < 1 {
+		return nil, fmt.Errorf("csv must have at least one value")
+	}
+
+	first := strings.ToUpper(parts[0])
+	if first == "T" || first == "F" || first == "TRUE" || first == "FALSE" {
+		field := data.NewFieldFromFieldType(data.FieldTypeNullableBool, len(parts))
+		for idx, strVal := range parts {
+			strVal = strings.ToUpper(strVal)
+			if strVal == "NULL" || strVal == "" {
+				continue
+			}
+			field.SetConcrete(idx, strVal == "T" || strVal == "TRUE")
+		}
+		return field, nil
+	}
+
+	// If we can not parse the first value as a number, assume strings
+	_, err := strconv.ParseFloat(first, 64)
+	if err != nil {
+		field := data.NewFieldFromFieldType(data.FieldTypeNullableString, len(parts))
+		for idx, strVal := range parts {
+			if strVal == "null" || strVal == "" {
+				continue
+			}
+			field.SetConcrete(idx, strVal)
+		}
+		return field, nil
+	}
+
+	// Set any valid numbers
+	field := data.NewFieldFromFieldType(data.FieldTypeNullableFloat64, len(parts))
+	for idx, strVal := range parts {
+		if val, err := strconv.ParseFloat(strVal, 64); err == nil {
+			field.SetConcrete(idx, val)
 		}
 	}
-
-	if len(values) == len(numericValues) {
-		return numericValues
-	}
-
-	return values
+	return field, nil
 }

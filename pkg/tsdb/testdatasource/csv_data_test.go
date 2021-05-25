@@ -27,8 +27,8 @@ func TestCSVFileScenario(t *testing.T) {
 
 			require.Equal(t, "State", frame.Fields[0].Name)
 			require.Equal(t, "2020", frame.Fields[1].Name)
-			require.Equal(t, data.FieldTypeString, frame.Fields[0].Type())
-			require.Equal(t, data.FieldTypeFloat64, frame.Fields[1].Type())
+			require.Equal(t, data.FieldTypeNullableString, frame.Fields[0].Type())
+			require.Equal(t, data.FieldTypeNullableFloat64, frame.Fields[1].Type())
 			require.GreaterOrEqual(t, frame.Fields[0].Len(), 2)
 
 			val, ok := frame.Fields[1].ConcreteAt(0)
@@ -42,4 +42,39 @@ func TestCSVFileScenario(t *testing.T) {
 		})
 
 	})
+}
+
+func TestReadCSV(t *testing.T) {
+	fBool, err := csvLineToField("T, F,F,T  ,")
+	require.NoError(t, err)
+
+	fBool2, err := csvLineToField("true,false,T,F,F")
+	require.NoError(t, err)
+
+	fNum, err := csvLineToField("1,2,,4,5")
+	require.NoError(t, err)
+
+	fStr, err := csvLineToField("a,b,,,c")
+	require.NoError(t, err)
+
+	frame := data.NewFrame("", fBool, fBool2, fNum, fStr)
+	frameToJSON, err := data.FrameToJSON(frame)
+	require.NoError(t, err)
+	out := frameToJSON.Bytes(data.IncludeAll)
+
+	// require.Equal(t, "", string(out))
+
+	require.JSONEq(t, `{"schema":{
+		"fields":[
+			{"type":"boolean","typeInfo":{"frame":"bool","nullable":true}},
+			{"type":"boolean","typeInfo":{"frame":"bool","nullable":true}},
+			{"type":"number","typeInfo":{"frame":"float64","nullable":true}},
+			{"type":"string","typeInfo":{"frame":"string","nullable":true}}
+		]},"data":{
+			"values":[
+				[true,false,false,true,null],
+				[true,false,true,false,false],
+				[1,2,null,4,5],
+				["a","b",null,null,"c"]
+		]}}`, string(out))
 }
