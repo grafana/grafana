@@ -16,7 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 )
 
-func (p *testDataPlugin) handleCsvContent(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+func (p *testDataPlugin) handleCsvContentScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	resp := backend.NewQueryDataResponse()
 
 	for _, q := range req.Queries {
@@ -43,7 +43,7 @@ func (p *testDataPlugin) handleCsvContent(ctx context.Context, req *backend.Quer
 
 }
 
-func (p *testDataPlugin) handleCsvData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+func (p *testDataPlugin) handleCsvFileScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	resp := backend.NewQueryDataResponse()
 
 	for _, q := range req.Queries {

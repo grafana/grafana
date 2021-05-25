@@ -194,13 +194,13 @@ Timestamps will line up evenly on timeStepSeconds (For example, 60 seconds means
 	p.registerScenario(&Scenario{
 		ID:      string(csvFileQueryType),
 		Name:    "CSV File",
-		handler: p.handleCsvData,
+		handler: p.handleCsvFileScenario,
 	})
 
 	p.registerScenario(&Scenario{
 		ID:      string(csvContentQueryType),
 		Name:    "CSV Content",
-		handler: p.handleCsvContent,
+		handler: p.handleCsvContentScenario,
 	})
 
 	p.queryMux.HandleFunc("", p.handleFallbackScenario)
