@@ -160,30 +160,25 @@ interface PathBuilders {
   barsBefore: Series.PathBuilder;
 }
 
-let builders: PathBuilders | undefined = undefined;
+const pathBuilders = uPlot.paths;
+const barWidthFactor = 0.6;
+const barMaxWidth = Infinity;
+
+const builders: PathBuilders = {
+  linear: pathBuilders.linear!(),
+  smooth: pathBuilders.spline!(),
+  stepBefore: pathBuilders.stepped!({ align: -1 }),
+  stepAfter: pathBuilders.stepped!({ align: 1 }),
+  bars: pathBuilders.bars!({ size: [barWidthFactor, barMaxWidth] }),
+  barsBefore: pathBuilders.bars!({ size: [barWidthFactor, barMaxWidth], align: -1 }),
+  barsAfter: pathBuilders.bars!({ size: [barWidthFactor, barMaxWidth], align: 1 }),
+};
 
 function mapDrawStyleToPathBuilder(
   style: DrawStyle,
   lineInterpolation?: LineInterpolation,
   barAlignment?: BarAlignment
 ): Series.PathBuilder {
-  if (!builders) {
-    // This should be global static, but Jest initalization was failing so we lazy load to avoid the issue
-    const pathBuilders = uPlot.paths;
-    const barWidthFactor = 0.6;
-    const barMaxWidth = Infinity;
-
-    builders = {
-      linear: pathBuilders.linear!(),
-      smooth: pathBuilders.spline!(),
-      stepBefore: pathBuilders.stepped!({ align: -1 }),
-      stepAfter: pathBuilders.stepped!({ align: 1 }),
-      bars: pathBuilders.bars!({ size: [barWidthFactor, barMaxWidth] }),
-      barsBefore: pathBuilders.bars!({ size: [barWidthFactor, barMaxWidth], align: -1 }),
-      barsAfter: pathBuilders.bars!({ size: [barWidthFactor, barMaxWidth], align: 1 }),
-    };
-  }
-
   if (style === DrawStyle.Bars) {
     if (barAlignment === BarAlignment.After) {
       return builders.barsAfter;
