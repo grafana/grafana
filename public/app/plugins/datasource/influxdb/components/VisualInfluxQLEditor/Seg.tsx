@@ -106,6 +106,7 @@ const SelSingleLoad = ({ loadOptions, allowCustomValue, onChange, onClose }: Sel
   return (
     <div className={selectClass}>
       <Select
+        isLoading={loadState.loading}
         formatCreateLabel={formatCreateLabel}
         autoFocus
         isOpen
