@@ -112,7 +112,7 @@ func (p *testDataPlugin) loadCsvContent(ioReader io.Reader, name string) (*data.
 		if err == io.EOF {
 			break // reached end of the file
 		} else if err != nil {
-			return nil, fmt.Errorf("failed read line %v", err)
+			return nil, fmt.Errorf("failed to read line: %v", err)
 		}
 
 		for fieldIndex, value := range lineValues {
