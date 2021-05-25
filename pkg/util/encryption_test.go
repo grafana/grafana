@@ -1,6 +1,7 @@
 package util
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -26,5 +27,10 @@ func TestEncryption(t *testing.T) {
 		require.NoError(t, err)
 
 		assert.Equal(t, []byte("grafana"), decrypted)
+	})
+
+	t.Run("decrypting empty payload should not fail", func(t *testing.T) {
+		_, err := Decrypt([]byte(""), "1234")
+		require.Error(t, err, fmt.Errorf("unable to compute salt"))
 	})
 }

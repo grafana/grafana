@@ -17,7 +17,7 @@ const saltLength = 8
 // Decrypt decrypts a payload with a given secret.
 func Decrypt(payload []byte, secret string) ([]byte, error) {
 	if len(payload) < saltLength {
-		return nil, fmt.Errorf("payload is shorter than salt")
+		return nil, fmt.Errorf("unable to compute salt")
 	}
 	salt := payload[:saltLength]
 	key, err := encryptionKeyToBytes(secret, string(salt))
