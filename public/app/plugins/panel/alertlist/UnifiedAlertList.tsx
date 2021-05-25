@@ -8,7 +8,8 @@ import alertDef from 'app/features/alerting/state/alertDef';
 import { AlertListOptions, ShowOption, SortOrder } from './types';
 
 import { fetchAllRules } from 'app/features/alerting/unified/api/prometheus';
-import { flattenRules, FlatRule, alertStateToState } from 'app/features/alerting/unified/utils/rules';
+import { flattenRules, alertStateToState } from 'app/features/alerting/unified/utils/rules';
+import { PromRuleWithLocation } from 'app/types/unified-alerting';
 
 export function UnifiedAlertList(props: PanelProps<AlertListOptions>) {
   const [noAlertsMessage, setNoAlertsMessage] = useState('');
@@ -18,8 +19,8 @@ export function UnifiedAlertList(props: PanelProps<AlertListOptions>) {
       return;
     }
 
-    const alertsFromProm = await fetchAllRules();
-    const flatRules = flattenRules(alertsFromProm);
+    const promRules = await fetchAllRules();
+    const flatRules = flattenRules(promRules);
 
     let currentAlerts = sortAlerts(props.options.sortOrder, flatRules);
 
@@ -57,32 +58,32 @@ export function UnifiedAlertList(props: PanelProps<AlertListOptions>) {
           <ol className={styles.alertRuleList}>
             {!currentAlertState.loading &&
               currentAlertState.value &&
-              currentAlertState.value!.map((alert, index) => (
+              currentAlertState.value!.map((rule, index) => (
                 <li
                   className={styles.alertRuleItem}
-                  key={`alert-${alert.namespaceName}-${alert.groupName}-${alert.name}-${index}`}
+                  key={`alert-${rule.namespaceName}-${rule.groupName}-${rule.name}-${index}`}
                 >
-                  <div className={cx(stateStyle[alertStateToState[alert.state]], stateStyle.common)}>
-                    <span>{alert.state}</span>
+                  <div className={cx(stateStyle[alertStateToState[rule.state]], stateStyle.common)}>
+                    <span>{rule.state}</span>
                   </div>
                   <div className={styles.instanceDetails}>
-                    <div className={styles.alertName} title={alert.name}>
-                      {alert.name}
+                    <div className={styles.alertName} title={rule.name}>
+                      {rule.name}
                     </div>
                     <div className={styles.alertDuration}>
-                      <span className={stateStyle[`${alertStateToState[alert.state]}Text` as const]}>
-                        {alert.state.toUpperCase()}
+                      <span className={stateStyle[`${alertStateToState[rule.state]}Text` as const]}>
+                        {rule.state.toUpperCase()}
                       </span>{' '}
                       for{' '}
                       <span>
                         {intervalToAbbreviatedDurationString({
-                          start: findEarliestAlertInstance(alert.alerts),
+                          start: findEarliestAlertInstance(rule.alerts),
                           end: Date.now(),
                         })}
                       </span>
                     </div>
                     <div className={styles.alertRuleItemText}>
-                      <span>{`${alert.alerts.length} instances`}</span>
+                      <span>{`${rule.alerts.length} instances`}</span>
                     </div>
                   </div>
                 </li>
@@ -94,10 +95,10 @@ export function UnifiedAlertList(props: PanelProps<AlertListOptions>) {
   );
 }
 
-function sortAlerts(sortOrder: SortOrder, alerts: FlatRule[]) {
+function sortAlerts(sortOrder: SortOrder, rules: PromRuleWithLocation[]) {
   if (sortOrder === SortOrder.Importance) {
     // @ts-ignore
-    return sortBy(alerts, (a) => alertDef.alertStateSortScore[a.state || a.newState]);
+    return sortBy(rules, (a) => alertDef.alertStateSortScore[a.state || a.newState]);
   }
   // else if (sortOrder === SortOrder.TimeAsc) {
   //   return sortBy(alerts, (a) => new Date(a.newStateDate || a.time));
@@ -105,7 +106,7 @@ function sortAlerts(sortOrder: SortOrder, alerts: FlatRule[]) {
   //   return sortBy(alerts, (a) => new Date(a.newStateDate || a.time)).reverse();
   // }
 
-  const result = sortBy(alerts, (a) => a.name.toLowerCase());
+  const result = sortBy(rules, (a) => a.name.toLowerCase());
   if (sortOrder === SortOrder.AlphaDesc) {
     result.reverse();
   }
@@ -113,7 +114,7 @@ function sortAlerts(sortOrder: SortOrder, alerts: FlatRule[]) {
   return result;
 }
 
-function findEarliestAlertInstance(alerts: FlatRule['alerts']) {
+function findEarliestAlertInstance(alerts: PromRuleWithLocation['alerts']) {
   let date = Date.now();
   alerts.forEach(({ activeAt }) => {
     const activeAtMs = Date.parse(activeAt);

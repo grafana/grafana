@@ -14,6 +14,7 @@ import {
   AlertingRule,
   CloudRuleIdentifier,
   GrafanaRuleIdentifier,
+  PromRuleWithLocation,
   RecordingRule,
   Rule,
   RuleIdentifier,
@@ -145,12 +146,6 @@ export function alertStateToReadable(state: PromAlertingRuleState | GrafanaAlert
   return capitalize(state);
 }
 
-export type FlatRule = {
-  dataSourceName: string;
-  namespaceName: string;
-  groupName: string;
-} & AlertingRule;
-
 export const flattenRules = (rules: RuleNamespace[]) => {
   return rules.reduce((acc, { dataSourceName, name: namespaceName, groups }) => {
     groups.forEach(({ name: groupName, rules }) => {
@@ -162,7 +157,7 @@ export const flattenRules = (rules: RuleNamespace[]) => {
       });
     });
     return acc;
-  }, [] as FlatRule[]);
+  }, [] as PromRuleWithLocation[]);
 };
 
 export const alertStateToState: Record<PromAlertingRuleState | GrafanaAlertState, State> = {
