@@ -244,6 +244,6 @@ Documentation was updated to reflect these changes.
 
 For multi-search requests, we now use the correct application/x-ndjson content type instead of the incorrect application/json. Although this should be transparent to most of the users, if you are running Elasticsearch behind a proxy, then be sure that your proxy correctly handles requests with this content type.
 
-### Prometheus: Change default http method to POST
+### Prometheus: Update default HTTP method to POST for existing data sources
 
 The default HTTP method for Prometheus data source is now POST, previously it was GET. The POST APIs are there since January 2018 (Prometheus 2.1.0) and they have fewer limitations than the GET APIs. Users with Prometheus instance with version < 2.1.0 that use the default HTTP method should update their HTTP method to GET.
