@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
+	"strings"
 
 	cortex_util "github.com/cortexproject/cortex/pkg/util"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
@@ -88,10 +89,12 @@ func instantQueryResults(resp instantQueryResponse) (eval.Results, error) {
 	switch resp.Data.ResultType {
 	case parser.ValueTypeScalar:
 		return eval.Results{{
-			Instance:         map[string]string{},
-			State:            eval.Alerting,
-			EvaluatedAt:      cortex_util.TimeFromMillis(resp.Data.scalar.T),
-			EvaluationString: fmt.Sprint(resp.Data.scalar.V),
+			Instance:    map[string]string{},
+			State:       eval.Alerting,
+			EvaluatedAt: cortex_util.TimeFromMillis(resp.Data.scalar.T),
+			EvaluationString: extractEvalStringFromProm(sample{
+				Value: resp.Data.scalar,
+			}),
 		}}, nil
 	case parser.ValueTypeVector:
 		results := make(eval.Results, 0, len(resp.Data.vector))
@@ -100,7 +103,7 @@ func instantQueryResults(resp instantQueryResponse) (eval.Results, error) {
 				Instance:         s.Metric.Map(),
 				State:            eval.Alerting,
 				EvaluatedAt:      cortex_util.TimeFromMillis(s.Value.T),
-				EvaluationString: fmt.Sprint(s.Value.V),
+				EvaluationString: extractEvalStringFromProm(s),
 			})
 		}
 		return results, nil
@@ -125,4 +128,18 @@ func instantQueryResultsExtractor(b []byte) (interface{}, error) {
 	return util.DynMap{
 		"instances": []*data.Frame{&frame},
 	}, nil
+}
+
+// extractEvalStringFromProm is intended to mimic the functionality used in ngalert/eval
+func extractEvalStringFromProm(s sample) string {
+	var sb strings.Builder
+	sb.WriteString("[ ")
+	var ls string
+	if len(s.Metric) > 0 {
+		ls = s.Metric.String()
+	}
+	sb.WriteString(fmt.Sprintf("labels={%s} ", ls))
+	sb.WriteString(fmt.Sprintf("value=%v ", fmt.Sprintf("%v", s.Value.V)))
+	sb.WriteString("]")
+	return sb.String()
 }
