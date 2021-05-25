@@ -688,6 +688,12 @@ func GetAvailableNotifiers() []*alerting.NotifierPlugin {
 					PropertyName: "url",
 					Required:     true,
 				},
+				{
+					Label:        "Avatar URL",
+					Element:      alerting.ElementTypeInput,
+					InputType:    alerting.InputTypeText,
+					PropertyName: "avatar_url",
+				},
 			},
 		},
 		{

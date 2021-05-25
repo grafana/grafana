@@ -1385,6 +1385,22 @@ var expAvailableChannelJsonOutput = `
 		"required": true,
 		"validationRule": "",
 		"secure": false
+	  },
+	  {
+		"label": "Avatar URL",
+		"description": "",
+		"element": "input",
+		"inputType": "text",
+		"placeholder": "",
+		"propertyName": "avatar_url",
+		"selectOptions": null,
+		"showWhen": {
+		  "field": "",
+		  "is": ""
+		},
+		"required": false,
+		"validationRule": "",
+		"secure": false
 	  }
 	]
   },
