@@ -1,0 +1,100 @@
++++
+title = "Configuration"
+description = "Grafana Live configuration guide"
+keywords = ["Grafana", "live", "guide", "websocket"]
+weight = 120
++++
+
+# Grafana Live configuration guide
+
+## Max number of connections
+
+Grafana Live uses persistent connections (WebSocket at the moment) to deliver real-time updates to clients. You may need to tune your server infrastructure a bit. Here we collect some advices to help you scale Grafana Live to handle more connections. 
+
+### WebSocket
+
+Grafana Live uses WebSocket protocol to deliver real-time updates to a frontend application. WebSocket is a persistent connection which starts with HTTP Upgrade request and then switches to a TCP mode where WebSocket frames can travel in both directions between a client and a server.
+
+Each logged-in user opens a WebSocket connection – one per browser tab.
+
+Introducing a persistent connection leads to some things Grafana users should be aware of.
+
+### Resource usage
+
+Each persistent connection will cost some memory on a server. Typically this should be about 50KB per connection at this moment. Thus a server with 1GB RAM is expected to handle about 20k connections max. Each active connection will consume additional CPU resources since client and server send PING/PONG frames to each other to maintain a connection.
+
+And of course it will cost additional CPU as soon as you are using streaming functionality. The exact resource usage is hard to estimate since it heavily depends on Grafana usage pattern.
+
+### Open file limit
+
+Each WebSocket connection will cost a file descriptor on a server machine where Grafana runs. Most operating systems has a quite low default limit for the maximum number of descriptors that process can open.
+
+To look the current limit on Unix:
+
+```
+ulimit -n
+```
+
+On a Linux system you can also check out the current limits for a running process with:
+
+```
+cat /proc/<PROCESS_PID>/limits
+```
+
+The open files limit shows approximately how many user connections your server can currently handle.
+
+This limit can be increased – see for example [these instructions](https://docs.riak.com/riak/kv/2.2.3/using/performance/open-files-limit.1.html).
+
+### Ephemeral port exhaustion
+
+Ephemeral ports exhaustion problem can happen between your load balancer and your Grafana server. I.e. only if you load balance connections between different Grafana instances. If users connect directly to a single Grafana server instance you likely come across this issue.
+
+The problem arises due to the fact that each TCP connection uniquely identified in the OS by the 4-part-tuple:
+
+```
+source ip | source port | destination ip | destination port
+```
+
+On load balancer/server boundary you are limited in 65536 possible variants by default. But actually due to some OS limits and sockets in TIME_WAIT state the number is even less.
+
+In order to eliminate a problem you can:
+
+* Increase the ephemeral port range by tuning `ip_local_port_range` kernel option
+* Deploy more Grafana server instances to load balance across
+* Deploy more load balancer instances
+* Use virtual network interfaces
+
+### WebSocket and proxies
+
+Not all proxies can transparently proxy WebSocket connections by default. For example, if you are using Nginx before Grafana you need to configure WebSocket proxy like this:
+
+```
+http {
+    map $http_upgrade $connection_upgrade {
+        default upgrade;
+        '' close;
+    }
+ 
+    upstream grafana {
+        server 127.0.0.1:3000;
+    }
+ 
+    server {
+        listen 8000;
+
+        location / {
+            proxy_pass http://grafana;
+            proxy_http_version 1.1;
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection $connection_upgrade;
+            proxy_set_header Host $host;
+        }
+    }
+}
+```
+
+See [more information on Nginx web site](https://www.nginx.com/blog/websocket-nginx/). Refer to your load balancer/reverse proxy documentation to find out more information on dealing with WebSocket connections.
+
+Some corporate proxies can remove headers required to properly establish WebSocket connection. In this case you should tune intermediate proxies to not remove required headers. But the better way may me using Grafana with TLS. In this case WebSocket connection will also inherit TLS and thus must fully resolve proxy problem.
+
+Proxies like Nginx and Envoy have default limits on maximum number of connections which can be established. Make sure you have a reasonable limit for max number of incoming and outgoing connections in your proxy configuration.
