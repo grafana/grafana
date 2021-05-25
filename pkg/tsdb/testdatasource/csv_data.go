@@ -95,7 +95,7 @@ func (p *testDataPlugin) loadCsvContent(ioReader io.Reader, name string) (*data.
 	// Read the header records
 	headerFields, err := reader.Read()
 	if err != nil {
-		return nil, fmt.Errorf("failed read header line %v", err)
+		return nil, fmt.Errorf("failed to read header line: %v", err)
 	}
 
 	fields := []*data.Field{}
