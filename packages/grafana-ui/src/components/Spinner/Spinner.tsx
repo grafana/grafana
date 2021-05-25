@@ -23,6 +23,10 @@ export type Props = {
   inline?: boolean;
   size?: number;
 };
+
+/**
+ * @public
+ */
 export const Spinner: FC<Props> = (props: Props) => {
   const { className, inline = false, iconClassName, style, size = 16 } = props;
   const styles = getStyles(size, inline);
