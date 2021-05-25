@@ -32,7 +32,8 @@ New visualization that allows categorical data display. Following the new panel 
 
 ### Time series panel updates
 
-The Time series is out of beta!  We are removing the `Beta`tag and graduating the Time series panel to a stable state.
+The Time series is out of beta! We are removing the `Beta`tag and graduating the Time series panel to a stable state.
+
 - **Time series** is now the default visualization option, replacing the **Graph (old)**.
 - The Time series panel now supports stacking. For more information, refer to [Graph stacked time series]({{< relref "../panels/visualizations/time-series/graph-time-series-stacking.md" >}}).
 - You can now add alerts in the Time series panel, just like the old Graph panel.
@@ -88,7 +89,7 @@ Grafana 8.0 includes many performance enhancements.
 
 #### Initial startup and load performance
 
-We reduced the Grafana initial download size massively, approximately 40%. This means that on slower or mobile connections, the initial login page or home dashboard will load much faster. 
+We reduced the Grafana initial download size massively, approximately 40%. This means that on slower or mobile connections, the initial login page or home dashboard will load much faster.
 
 All panels that have migrated from Flot to uPlot will also render two to three times faster because the library is much more efficient. Right now, this includes the Time series, Stat, Timeline, Histogram, and Barchart panel visualizations.
 
@@ -179,7 +180,7 @@ You can now configure generic OAuth with empty scopes. This allows OAuth Identit
 
 ##### Added OAuth support for strict parsing of role_attribute_path
 
-You can now configure generic OAuth with strict parsing of the `role_attribute_path`. By default, if  th `role_attribute_path` property does not return a role, then the user is assigned the `Viewer` role. You can disable the role assignment by setting `role_attribute_strict = true`. It denies user access if no role or an invalid role is returned.
+You can now configure generic OAuth with strict parsing of the `role_attribute_path`. By default, if the `role_attribute_path` property does not return a role, then the user is assigned the `Viewer` role. You can disable the role assignment by setting `role_attribute_strict = true`. It denies user access if no role or an invalid role is returned.
 
 ## Enterprise features
 
@@ -211,3 +212,7 @@ Documentation was updated to reflect these changes.
 ### Elasticsearch: Use application/x-ndjson content type for multi-search requests
 
 For multi-search requests, we now use the correct application/x-ndjson content type instead of the incorrect application/json. Although this should be transparent to most of the users, if you are running Elasticsearch behind a proxy, then be sure that your proxy correctly handles requests with this content type.
+
+### Prometheus: Update default HTTP method to POST for existing data sources
+
+The default HTTP method for Prometheus data source is now POST, previously it was GET. The POST APIs are there since January 2018 (Prometheus 2.1.0) and they have fewer limitations than the GET APIs. Users with Prometheus instance with version < 2.1.0 that use the default HTTP method should update their HTTP method to GET.
