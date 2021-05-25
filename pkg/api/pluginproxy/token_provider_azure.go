@@ -5,8 +5,6 @@ import (
 	"crypto/sha256"
 	"fmt"
 	"strings"
-	"sync"
-	"sync/atomic"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
@@ -107,9 +105,8 @@ func (provider *azureAccessTokenProvider) resolveAuthorityHost(cloudName string)
 }
 
 type managedIdentityCredential struct {
-	clientId  string
-	credLock  sync.Mutex
-	credValue atomic.Value // of azcore.TokenCredential
+	clientId   string
+	credential azcore.TokenCredential
 }
 
 func (c *managedIdentityCredential) GetCacheKey() string {
@@ -120,32 +117,17 @@ func (c *managedIdentityCredential) GetCacheKey() string {
 	return fmt.Sprintf("azure|msi|%s", clientId)
 }
 
-func (c *managedIdentityCredential) getCredential() (azcore.TokenCredential, error) {
-	credential := c.credValue.Load()
-
-	if credential == nil {
-		c.credLock.Lock()
-		defer c.credLock.Unlock()
-
-		var err error
-		credential, err = azidentity.NewManagedIdentityCredential(c.clientId, nil)
-		if err != nil {
-			return nil, err
-		}
-
-		c.credValue.Store(credential)
+func (c *managedIdentityCredential) Init() error {
+	if credential, err := azidentity.NewManagedIdentityCredential(c.clientId, nil); err != nil {
+		return err
+	} else {
+		c.credential = credential
+		return nil
 	}
-
-	return credential.(azcore.TokenCredential), nil
 }
 
 func (c *managedIdentityCredential) GetAccessToken(ctx context.Context, scopes []string) (*AccessToken, error) {
-	credential, err := c.getCredential()
-	if err != nil {
-		return nil, err
-	}
-
-	accessToken, err := credential.GetToken(ctx, azcore.TokenRequestOptions{Scopes: scopes})
+	accessToken, err := c.credential.GetToken(ctx, azcore.TokenRequestOptions{Scopes: scopes})
 	if err != nil {
 		return nil, err
 	}
@@ -158,41 +140,25 @@ type clientSecretCredential struct {
 	tenantId     string
 	clientId     string
 	clientSecret string
-	credLock     sync.Mutex
-	credValue    atomic.Value // of azcore.TokenCredential
+	credential   azcore.TokenCredential
 }
 
 func (c *clientSecretCredential) GetCacheKey() string {
 	return fmt.Sprintf("azure|clientsecret|%s|%s|%s|%s", c.authority, c.tenantId, c.clientId, hashSecret(c.clientSecret))
 }
 
-func (c *clientSecretCredential) getCredential() (azcore.TokenCredential, error) {
-	credential := c.credValue.Load()
-
-	if credential == nil {
-		c.credLock.Lock()
-		defer c.credLock.Unlock()
-
-		var err error
-		options := &azidentity.ClientSecretCredentialOptions{AuthorityHost: c.authority}
-		credential, err = azidentity.NewClientSecretCredential(c.tenantId, c.clientId, c.clientSecret, options)
-		if err != nil {
-			return nil, err
-		}
-
-		c.credValue.Store(credential)
+func (c *clientSecretCredential) Init() error {
+	options := &azidentity.ClientSecretCredentialOptions{AuthorityHost: c.authority}
+	if credential, err := azidentity.NewClientSecretCredential(c.tenantId, c.clientId, c.clientSecret, options); err != nil {
+		return err
+	} else {
+		c.credential = credential
+		return nil
 	}
-
-	return credential.(azcore.TokenCredential), nil
 }
 
 func (c *clientSecretCredential) GetAccessToken(ctx context.Context, scopes []string) (*AccessToken, error) {
-	credential, err := c.getCredential()
-	if err != nil {
-		return nil, err
-	}
-
-	accessToken, err := credential.GetToken(ctx, azcore.TokenRequestOptions{Scopes: scopes})
+	accessToken, err := c.credential.GetToken(ctx, azcore.TokenRequestOptions{Scopes: scopes})
 	if err != nil {
 		return nil, err
 	}
