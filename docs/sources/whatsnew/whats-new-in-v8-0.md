@@ -246,4 +246,4 @@ For multi-search requests, we now use the correct application/x-ndjson content t
 
 ### Prometheus: Change default http method to POST
 
-The default http method for Prometheus data source was changed from GET to POST. The POST APIs are there since January 2018 (Prometheus 2.1.0) and they have less limitations than the GET APIs. Users with Prometheus instance with version < 2.1.0 that use default http method should update their http method to GET.
+The default HTTP method for Prometheus data source is now POST, previously it was GET. The POST APIs are there since January 2018 (Prometheus 2.1.0) and they have fewer limitations than the GET APIs. Users with Prometheus instance with version < 2.1.0 that use the default HTTP method should update their HTTP method to GET.
