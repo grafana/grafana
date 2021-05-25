@@ -42,9 +42,6 @@ export const slice = createSlice({
     setUpdating: (state, action: PayloadAction<{ updating: boolean }>) => {
       state.isUpdating = action.payload.updating;
     },
-    initLoadUser: (state, action: PayloadAction<undefined>) => {
-      state.user = null;
-    },
     userLoaded: (state, action: PayloadAction<{ user: UserDTO }>) => {
       state.user = action.payload.user;
     },
@@ -107,7 +104,6 @@ export const {
   orgsLoaded,
   initLoadTeams,
   teamsLoaded,
-  initLoadUser,
   userLoaded,
   userSessionRevoked,
   initLoadSessions,

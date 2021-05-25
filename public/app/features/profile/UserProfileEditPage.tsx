@@ -66,15 +66,13 @@ export function UserProfileEditPage({
   return (
     <Page navModel={navModel}>
       <Page.Contents isLoading={!user}>
-        {user ? (
-          <VerticalGroup spacing="md">
-            <UserProfileEditForm updateProfile={updateUserProfile} isSavingUser={isUpdating} user={user} />
-            <SharedPreferences resourceUri="user" />
-            <UserTeams isLoading={teamsAreLoading} teams={teams} />
-            <UserOrganizations isLoading={orgsAreLoading} setUserOrg={changeUserOrg} orgs={orgs} user={user} />
-            <UserSessions isLoading={sessionsAreLoading} revokeUserSession={revokeUserSession} sessions={sessions} />
-          </VerticalGroup>
-        ) : null}
+        <VerticalGroup spacing="md">
+          <UserProfileEditForm updateProfile={updateUserProfile} isSavingUser={isUpdating} user={user} />
+          <SharedPreferences resourceUri="user" />
+          <UserTeams isLoading={teamsAreLoading} teams={teams} />
+          <UserOrganizations isLoading={orgsAreLoading} setUserOrg={changeUserOrg} orgs={orgs} user={user} />
+          <UserSessions isLoading={sessionsAreLoading} revokeUserSession={revokeUserSession} sessions={sessions} />
+        </VerticalGroup>
       </Page.Contents>
     </Page>
   );

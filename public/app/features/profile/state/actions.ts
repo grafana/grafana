@@ -6,7 +6,6 @@ import {
   initLoadOrgs,
   initLoadSessions,
   initLoadTeams,
-  initLoadUser,
   orgsLoaded,
   sessionsLoaded,
   setUpdating,
@@ -35,7 +34,6 @@ export function initUserProfilePage(): ThunkResult<void> {
 
 export function loadUser(): ThunkResult<void> {
   return async function (dispatch) {
-    dispatch(initLoadUser());
     const user = await api.loadUser();
     dispatch(userLoaded({ user }));
   };

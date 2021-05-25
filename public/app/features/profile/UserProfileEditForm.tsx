@@ -5,7 +5,7 @@ import config from 'app/core/config';
 import { ProfileUpdateFields } from './types';
 
 export interface Props {
-  user: UserDTO;
+  user: UserDTO | null;
   isSavingUser: boolean;
   updateProfile: (payload: ProfileUpdateFields) => void;
 }
@@ -27,7 +27,7 @@ export const UserProfileEditForm: FC<Props> = ({ user, isSavingUser, updateProfi
                 {...register('name', { required: true })}
                 id="edit-user-profile-name"
                 placeholder="Name"
-                defaultValue={user.name}
+                defaultValue={user?.name ?? ''}
                 suffix={<InputSuffix />}
               />
             </Field>
@@ -36,7 +36,7 @@ export const UserProfileEditForm: FC<Props> = ({ user, isSavingUser, updateProfi
                 {...register('email', { required: true })}
                 id="edit-user-profile-email"
                 placeholder="Email"
-                defaultValue={user.email}
+                defaultValue={user?.email ?? ''}
                 suffix={<InputSuffix />}
               />
             </Field>
@@ -44,7 +44,7 @@ export const UserProfileEditForm: FC<Props> = ({ user, isSavingUser, updateProfi
               <Input
                 {...register('login')}
                 id="edit-user-profile-username"
-                defaultValue={user.login}
+                defaultValue={user?.login ?? ''}
                 placeholder="Username"
                 suffix={<InputSuffix />}
               />
