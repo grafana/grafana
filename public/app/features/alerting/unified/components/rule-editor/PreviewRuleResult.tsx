@@ -30,7 +30,7 @@ export function PreviewRuleResult(props: Props): React.ReactElement | null {
   }
 
   if (data.state === LoadingState.Error) {
-    return <div>{data.error ?? 'Failed to preview alert rule'}</div>;
+    return <div className={styles.container}>{data.error ?? 'Failed to preview alert rule'}</div>;
   }
 
   return (
