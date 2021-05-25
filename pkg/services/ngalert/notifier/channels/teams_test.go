@@ -8,7 +8,6 @@ import (
 	"testing"
 
 	"github.com/prometheus/alertmanager/notify"
-	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
@@ -20,8 +19,7 @@ import (
 )
 
 func TestTeamsNotifier(t *testing.T) {
-	tmpl, err := template.FromGlobs("templates/default.tmpl")
-	require.NoError(t, err)
+	tmpl := templateForTests(t)
 
 	externalURL, err := url.Parse("http://localhost")
 	require.NoError(t, err)
@@ -49,8 +47,8 @@ func TestTeamsNotifier(t *testing.T) {
 			expMsg: map[string]interface{}{
 				"@type":      "MessageCard",
 				"@context":   "http://schema.org/extensions",
-				"summary":    "[firing:1]  (val1)",
-				"title":      "[firing:1]  (val1)",
+				"summary":    "[FIRING:1]  (val1)",
+				"title":      "[FIRING:1]  (val1)",
 				"themeColor": "#D63232",
 				"sections": []map[string]interface{}{
 					{
@@ -63,7 +61,7 @@ func TestTeamsNotifier(t *testing.T) {
 						"@context": "http://schema.org",
 						"@type":    "OpenUri",
 						"name":     "View Rule",
-						"targets":  []map[string]interface{}{{"os": "default", "uri": "http:/localhost/alerting/list"}},
+						"targets":  []map[string]interface{}{{"os": "default", "uri": "http://localhost/alerting/list"}},
 					},
 				},
 			},
@@ -91,8 +89,8 @@ func TestTeamsNotifier(t *testing.T) {
 			expMsg: map[string]interface{}{
 				"@type":      "MessageCard",
 				"@context":   "http://schema.org/extensions",
-				"summary":    "[firing:2]  ",
-				"title":      "[firing:2]  ",
+				"summary":    "[FIRING:2]  ",
+				"title":      "[FIRING:2]  ",
 				"themeColor": "#D63232",
 				"sections": []map[string]interface{}{
 					{
@@ -105,7 +103,7 @@ func TestTeamsNotifier(t *testing.T) {
 						"@context": "http://schema.org",
 						"@type":    "OpenUri",
 						"name":     "View Rule",
-						"targets":  []map[string]interface{}{{"os": "default", "uri": "http:/localhost/alerting/list"}},
+						"targets":  []map[string]interface{}{{"os": "default", "uri": "http://localhost/alerting/list"}},
 					},
 				},
 			},
@@ -130,7 +128,7 @@ func TestTeamsNotifier(t *testing.T) {
 			settingsJSON, err := simplejson.NewJson([]byte(c.settings))
 			require.NoError(t, err)
 
-			m := &models.AlertNotification{
+			m := &NotificationChannelConfig{
 				Name:     "teams_testing",
 				Type:     "teams",
 				Settings: settingsJSON,

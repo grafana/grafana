@@ -1,11 +1,19 @@
-import { PlotConfig } from '../types';
+import uPlot, { Cursor, Band, Hooks, Select } from 'uplot';
+import { defaultsDeep } from 'lodash';
+import { PlotConfig, TooltipInterpolator } from '../types';
 import { ScaleProps, UPlotScaleBuilder } from './UPlotScaleBuilder';
 import { SeriesProps, UPlotSeriesBuilder } from './UPlotSeriesBuilder';
 import { AxisProps, UPlotAxisBuilder } from './UPlotAxisBuilder';
 import { AxisPlacement } from '../config';
-import uPlot, { Cursor, Band, Hooks, Select } from 'uplot';
-import { defaultsDeep } from 'lodash';
-import { DefaultTimeZone, getTimeZoneInfo, TimeZone } from '@grafana/data';
+import {
+  DataFrame,
+  DefaultTimeZone,
+  EventBus,
+  getTimeZoneInfo,
+  GrafanaTheme2,
+  TimeRange,
+  TimeZone,
+} from '@grafana/data';
 import { pluginLog } from '../utils';
 import { getThresholdsDrawHook, UPlotThresholdOptions } from './UPlotThresholds';
 
@@ -23,6 +31,11 @@ export class UPlotConfigBuilder {
   private tz: string | undefined = undefined;
   // to prevent more than one threshold per scale
   private thresholds: Record<string, UPlotThresholdOptions> = {};
+  /**
+   * Custom handler for closest datapoint and series lookup. Technicaly returns uPlots setCursor hook
+   * that sets tooltips state.
+   */
+  tooltipInterpolator: TooltipInterpolator | undefined = undefined;
 
   constructor(timeZone: TimeZone = DefaultTimeZone) {
     this.tz = getTimeZoneInfo(timeZone, Date.now())?.ianaName;
@@ -94,6 +107,7 @@ export class UPlotConfigBuilder {
   setStacking(enabled = true) {
     this.isStacking = enabled;
   }
+
   addSeries(props: SeriesProps) {
     this.series.push(new UPlotSeriesBuilder(props));
   }
@@ -114,6 +128,10 @@ export class UPlotConfigBuilder {
 
   addBand(band: Band) {
     this.bands.push(band);
+  }
+
+  setTooltipInterpolator(interpolator: TooltipInterpolator) {
+    this.tooltipInterpolator = interpolator;
   }
 
   getConfig() {
@@ -196,3 +214,15 @@ export class UPlotConfigBuilder {
     return this.tz ? uPlot.tzDate(date, this.tz) : date;
   };
 }
+
+/** @alpha */
+type UPlotConfigPrepOpts<T extends Record<string, any> = {}> = {
+  frame: DataFrame;
+  theme: GrafanaTheme2;
+  timeZone: TimeZone;
+  getTimeRange: () => TimeRange;
+  eventBus: EventBus;
+} & T;
+
+/** @alpha */
+export type UPlotConfigPrepFn<T extends {} = {}> = (opts: UPlotConfigPrepOpts<T>) => UPlotConfigBuilder;

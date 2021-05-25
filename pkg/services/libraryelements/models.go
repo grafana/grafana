@@ -6,13 +6,6 @@ import (
 	"time"
 )
 
-type LibraryElementKind int
-
-const (
-	Panel LibraryElementKind = iota + 1
-	Variable
-)
-
 type LibraryConnectionKind int
 
 const (
@@ -55,15 +48,15 @@ type LibraryElementWithMeta struct {
 	Created time.Time
 	Updated time.Time
 
-	FolderName     string
-	FolderUID      string `xorm:"folder_uid"`
-	Connections    int64
-	CreatedBy      int64
-	UpdatedBy      int64
-	CreatedByName  string
-	CreatedByEmail string
-	UpdatedByName  string
-	UpdatedByEmail string
+	FolderName          string
+	FolderUID           string `xorm:"folder_uid"`
+	ConnectedDashboards int64
+	CreatedBy           int64
+	UpdatedBy           int64
+	CreatedByName       string
+	CreatedByEmail      string
+	UpdatedByName       string
+	UpdatedByEmail      string
 }
 
 // LibraryElementDTO is the frontend DTO for entities.
@@ -91,9 +84,9 @@ type LibraryElementSearchResult struct {
 
 // LibraryElementDTOMeta is the meta information for LibraryElementDTO.
 type LibraryElementDTOMeta struct {
-	FolderName  string `json:"folderName"`
-	FolderUID   string `json:"folderUid"`
-	Connections int64  `json:"connections"`
+	FolderName          string `json:"folderName"`
+	FolderUID           string `json:"folderUid"`
+	ConnectedDashboards int64  `json:"connectedDashboards"`
 
 	Created time.Time `json:"created"`
 	Updated time.Time `json:"updated"`
@@ -111,24 +104,24 @@ type LibraryElementDTOMetaUser struct {
 
 // libraryElementConnection is the model for library element connections.
 type libraryElementConnection struct {
-	ID               int64 `xorm:"pk autoincr 'id'"`
-	LibraryElementID int64 `xorm:"library_element_id"`
-	ConnectionKind   int64 `xorm:"connection_kind"`
-	ConnectionID     int64 `xorm:"connection_id"`
-	Created          time.Time
-	CreatedBy        int64
+	ID           int64 `xorm:"pk autoincr 'id'"`
+	ElementID    int64 `xorm:"element_id"`
+	Kind         int64 `xorm:"kind"`
+	ConnectionID int64 `xorm:"connection_id"`
+	Created      time.Time
+	CreatedBy    int64
 }
 
 // libraryElementConnectionWithMeta is the model for library element connections with meta.
 type libraryElementConnectionWithMeta struct {
-	ID               int64 `xorm:"pk autoincr 'id'"`
-	LibraryElementID int64 `xorm:"library_element_id"`
-	ConnectionKind   int64 `xorm:"connection_kind"`
-	ConnectionID     int64 `xorm:"connection_id"`
-	Created          time.Time
-	CreatedBy        int64
-	CreatedByName    string
-	CreatedByEmail   string
+	ID             int64 `xorm:"pk autoincr 'id'"`
+	ElementID      int64 `xorm:"element_id"`
+	Kind           int64 `xorm:"kind"`
+	ConnectionID   int64 `xorm:"connection_id"`
+	Created        time.Time
+	CreatedBy      int64
+	CreatedByName  string
+	CreatedByEmail string
 }
 
 // LibraryElementConnectionDTO is the frontend DTO for element connections.

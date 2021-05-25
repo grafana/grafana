@@ -78,9 +78,11 @@ var (
 	// HTTP server options
 	DataProxyLogging               bool
 	DataProxyTimeout               int
+	DataProxyDialTimeout           int
 	DataProxyTLSHandshakeTimeout   int
 	DataProxyExpectContinueTimeout int
 	DataProxyMaxIdleConns          int
+	DataProxyMaxIdleConnsPerHost   int
 	DataProxyKeepAlive             int
 	DataProxyIdleConnTimeout       int
 	StaticRootPath                 string
@@ -228,6 +230,7 @@ type Cfg struct {
 
 	// Rendering
 	ImagesDir                      string
+	CSVsDir                        string
 	RendererUrl                    string
 	RendererCallbackUrl            string
 	RendererConcurrentRequestLimit int
@@ -255,7 +258,8 @@ type Cfg struct {
 	PluginsAppsSkipVerifyTLS bool
 	PluginSettings           PluginSettings
 	PluginsAllowUnsigned     []string
-	MarketplaceURL           string
+	PluginCatalogURL         string
+	PluginAdminEnabled       bool
 	DisableSanitizeHtml      bool
 	EnterpriseLicensePath    string
 
@@ -283,6 +287,9 @@ type Cfg struct {
 	AWSAllowedAuthProviders []string
 	AWSAssumeRoleEnabled    bool
 	AWSListMetricsPageLimit int
+
+	// Azure Cloud settings
+	Azure AzureSettings
 
 	// Auth proxy settings
 	AuthProxyEnabled          bool
@@ -394,14 +401,11 @@ func (cfg Cfg) IsDatabaseMetricsEnabled() bool {
 	return cfg.FeatureToggles["database_metrics"]
 }
 
-// IsHTTPRequestHistogramEnabled returns whether the http_request_histogram feature is enabled.
-func (cfg Cfg) IsHTTPRequestHistogramEnabled() bool {
-	return cfg.FeatureToggles["http_request_histogram"]
-}
-
-// IsPanelLibraryEnabled returns whether the panel library feature is enabled.
-func (cfg Cfg) IsPanelLibraryEnabled() bool {
-	return cfg.FeatureToggles["panelLibrary"]
+// IsHTTPRequestHistogramDisabled returns whether the request historgrams is disabled.
+// This feature toggle will be removed in Grafana 8.x but gives the operator
+// some graceperiod to update all the monitoring tools.
+func (cfg Cfg) IsHTTPRequestHistogramDisabled() bool {
+	return cfg.FeatureToggles["disable_http_request_histogram"]
 }
 
 type CommandLineArgs struct {
@@ -820,11 +824,13 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	// read data proxy settings
 	dataproxy := iniFile.Section("dataproxy")
 	DataProxyLogging = dataproxy.Key("logging").MustBool(false)
-	DataProxyTimeout = dataproxy.Key("timeout").MustInt(30)
+	DataProxyTimeout = dataproxy.Key("timeout").MustInt(10)
+	DataProxyDialTimeout = dataproxy.Key("dialTimeout").MustInt(30)
 	DataProxyKeepAlive = dataproxy.Key("keep_alive_seconds").MustInt(30)
 	DataProxyTLSHandshakeTimeout = dataproxy.Key("tls_handshake_timeout_seconds").MustInt(10)
 	DataProxyExpectContinueTimeout = dataproxy.Key("expect_continue_timeout_seconds").MustInt(1)
 	DataProxyMaxIdleConns = dataproxy.Key("max_idle_connections").MustInt(100)
+	DataProxyMaxIdleConnsPerHost = dataproxy.Key("max_idle_connections_per_host").MustInt(2)
 	DataProxyIdleConnTimeout = dataproxy.Key("idle_conn_timeout_seconds").MustInt(90)
 	cfg.SendUserHeader = dataproxy.Key("send_user_header").MustBool(false)
 
@@ -888,7 +894,8 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 		plug = strings.TrimSpace(plug)
 		cfg.PluginsAllowUnsigned = append(cfg.PluginsAllowUnsigned, plug)
 	}
-	cfg.MarketplaceURL = pluginsSection.Key("marketplace_url").MustString("https://grafana.com/grafana/plugins/")
+	cfg.PluginCatalogURL = pluginsSection.Key("plugin_catalog_url").MustString("https://grafana.com/grafana/plugins/")
+	cfg.PluginAdminEnabled = pluginsSection.Key("plugin_admin_enabled").MustBool(false)
 
 	// Read and populate feature toggles list
 	featureTogglesSection := iniFile.Section("feature_toggles")
@@ -905,6 +912,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 
 	cfg.readLDAPConfig()
 	cfg.handleAWSConfig()
+	cfg.readAzureSettings()
 	cfg.readSessionConfig()
 	cfg.readSmtpSettings()
 	cfg.readQuotaSettings()
@@ -1298,6 +1306,7 @@ func readRenderingSettings(iniFile *ini.File, cfg *Cfg) error {
 
 	cfg.RendererConcurrentRequestLimit = renderSec.Key("concurrent_render_request_limit").MustInt(30)
 	cfg.ImagesDir = filepath.Join(cfg.DataPath, "png")
+	cfg.CSVsDir = filepath.Join(cfg.DataPath, "csv")
 
 	return nil
 }

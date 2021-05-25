@@ -1,8 +1,8 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import debouncePromise from 'debounce-promise';
 import { cx, css } from '@emotion/css';
 import { SelectableValue } from '@grafana/data';
-import { useClickAway, useAsyncFn } from 'react-use';
+import { useAsyncFn } from 'react-use';
 import { InlineLabel, Select, AsyncSelect, Input } from '@grafana/ui';
 import { useShadowedState } from '../useShadowedState';
 
@@ -58,10 +58,13 @@ type SelReloadProps = {
   allowCustomValue?: boolean;
 };
 
-const SelReload = ({ loadOptions, allowCustomValue, onChange, onClose }: SelReloadProps): JSX.Element => {
-  const ref = useRef<HTMLDivElement | null>(null);
-  useClickAway(ref, onClose);
+// when a custom value is written into a select-box,
+// by default the new value is prefixed with "Create:",
+// and that sounds confusing because here we do not create
+// anything. we change this to just be the entered string.
+const formatCreateLabel = (v: string) => v;
 
+const SelReload = ({ loadOptions, allowCustomValue, onChange, onClose }: SelReloadProps): JSX.Element => {
   // here we rely on the fact that writing text into the <AsyncSelect/>
   // does not cause a re-render of the current react component.
   // this way there is only a single render-call,
@@ -71,11 +74,13 @@ const SelReload = ({ loadOptions, allowCustomValue, onChange, onClose }: SelRelo
   // and probably have an useEffect
   const debouncedLoadOptions = debouncePromise(loadOptions, 1000, { leading: true });
   return (
-    <div ref={ref} className={selectClass}>
+    <div className={selectClass}>
       <AsyncSelect
+        formatCreateLabel={formatCreateLabel}
         defaultOptions
         autoFocus
         isOpen
+        onCloseMenu={onClose}
         allowCustomValue={allowCustomValue}
         loadOptions={debouncedLoadOptions}
         onChange={onChange}
@@ -92,19 +97,20 @@ type SelSingleLoadProps = {
 };
 
 const SelSingleLoad = ({ loadOptions, allowCustomValue, onChange, onClose }: SelSingleLoadProps): JSX.Element => {
-  const ref = useRef<HTMLDivElement | null>(null);
   const [loadState, doLoad] = useAsyncFn(loadOptions, [loadOptions]);
-  useClickAway(ref, onClose);
 
   useEffect(() => {
     doLoad();
   }, [doLoad, loadOptions]);
 
   return (
-    <div ref={ref} className={selectClass}>
+    <div className={selectClass}>
       <Select
+        isLoading={loadState.loading}
+        formatCreateLabel={formatCreateLabel}
         autoFocus
         isOpen
+        onCloseMenu={onClose}
         allowCustomValue={allowCustomValue}
         options={loadState.value ?? []}
         onChange={onChange}
@@ -171,11 +177,9 @@ export const Seg = ({
   const [isOpen, setOpen] = useState(false);
   if (!isOpen) {
     const className = cx(defaultButtonClass, buttonClassName);
-    // this should not be a label, this should be a button,
-    // but this is what is used inside a Segment, and i just
-    // want the same look
     return (
       <InlineLabel
+        as="button"
         className={className}
         onClick={() => {
           setOpen(true);

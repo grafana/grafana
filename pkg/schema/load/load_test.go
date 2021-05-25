@@ -51,7 +51,7 @@ func TestDashboardValidity(t *testing.T) {
 	// TODO FIXME remove this once we actually have dashboard schema filled in
 	// enough that the tests pass, lol
 	t.Skip()
-	validdir := os.DirFS(filepath.Join("testdata", "artifacts", "dashboards", "basic"))
+	validdir := os.DirFS(filepath.Join("testdata", "artifacts", "dashboards"))
 
 	dash, err := BaseDashboardFamily(p)
 	require.NoError(t, err, "error while loading base dashboard scuemata")
@@ -122,4 +122,25 @@ func TestPanelValidity(t *testing.T) {
 
 		return nil
 	}))
+}
+
+func TestCueErrorWrapper(t *testing.T) {
+	t.Run("Testing scuemata validity with valid cue schemas", func(t *testing.T) {
+		tempDir := os.DirFS(filepath.Join("testdata", "malformed_cue"))
+
+		var baseLoadPaths = BaseLoadPaths{
+			BaseCueFS:       tempDir,
+			DistPluginCueFS: GetDefaultLoadPaths().DistPluginCueFS,
+		}
+
+		_, err := BaseDashboardFamily(baseLoadPaths)
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "in file")
+		require.Contains(t, err.Error(), "on line")
+
+		_, err = DistDashboardFamily(baseLoadPaths)
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "in file")
+		require.Contains(t, err.Error(), "on line")
+	})
 }

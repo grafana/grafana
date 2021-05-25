@@ -4,6 +4,7 @@ import (
 	"archive/zip"
 	"bufio"
 	"bytes"
+	"context"
 	"crypto/sha256"
 	"crypto/tls"
 	"encoding/json"
@@ -40,8 +41,8 @@ const (
 )
 
 var (
-	ErrNotFoundError = errors.New("404 not found error")
-	reGitBuild       = regexp.MustCompile("^[a-zA-Z0-9_.-]*/")
+	ErrPluginNotFound = errors.New("plugin not found")
+	reGitBuild        = regexp.MustCompile("^[a-zA-Z0-9_.-]*/")
 )
 
 type BadRequestError struct {
@@ -56,6 +57,26 @@ func (e *BadRequestError) Error() string {
 	return e.Status
 }
 
+type ErrVersionUnsupported struct {
+	PluginID         string
+	RequestedVersion string
+	SystemInfo       string
+}
+
+func (e ErrVersionUnsupported) Error() string {
+	return fmt.Sprintf("%s v%s is not supported on your system (%s)", e.PluginID, e.RequestedVersion, e.SystemInfo)
+}
+
+type ErrVersionNotFound struct {
+	PluginID         string
+	RequestedVersion string
+	SystemInfo       string
+}
+
+func (e ErrVersionNotFound) Error() string {
+	return fmt.Sprintf("%s v%s either does not exist or is not supported on your system (%s)", e.PluginID, e.RequestedVersion, e.SystemInfo)
+}
+
 func New(skipTLSVerify bool, grafanaVersion string, logger plugins.PluginInstallerLogger) *Installer {
 	return &Installer{
 		httpClient:          makeHttpClient(skipTLSVerify, 10*time.Second),
@@ -67,7 +88,7 @@ func New(skipTLSVerify bool, grafanaVersion string, logger plugins.PluginInstall
 
 // Install downloads the plugin code as a zip file from specified URL
 // and then extracts the zip into the provided plugins directory.
-func (i *Installer) Install(pluginID, version, pluginsDir, pluginZipURL, pluginRepoURL string) error {
+func (i *Installer) Install(ctx context.Context, pluginID, version, pluginsDir, pluginZipURL, pluginRepoURL string) error {
 	isInternal := false
 
 	var checksum string
@@ -84,7 +105,7 @@ func (i *Installer) Install(pluginID, version, pluginsDir, pluginZipURL, pluginR
 			return err
 		}
 
-		v, err := selectVersion(&plugin, version)
+		v, err := i.selectVersion(&plugin, version)
 		if err != nil {
 			return err
 		}
@@ -140,13 +161,13 @@ func (i *Installer) Install(pluginID, version, pluginsDir, pluginZipURL, pluginR
 
 	res, _ := toPluginDTO(pluginsDir, pluginID)
 
-	i.log.Successf("Installed %s v%s successfully", res.ID, res.Info.Version)
+	i.log.Successf("Downloaded %s v%s zip successfully", res.ID, res.Info.Version)
 
 	// download dependency plugins
 	for _, dep := range res.Dependencies.Plugins {
 		i.log.Infof("Fetching %s dependencies...", res.ID)
-		if err := i.Install(dep.ID, normalizeVersion(dep.Version), pluginsDir, "", pluginRepoURL); err != nil {
-			return errutil.Wrapf(err, "failed to install plugin '%s'", dep.ID)
+		if err := i.Install(ctx, dep.ID, normalizeVersion(dep.Version), pluginsDir, "", pluginRepoURL); err != nil {
+			return errutil.Wrapf(err, "failed to install plugin %s", dep.ID)
 		}
 	}
 
@@ -154,7 +175,7 @@ func (i *Installer) Install(pluginID, version, pluginsDir, pluginZipURL, pluginR
 }
 
 // Uninstall removes the specified plugin from the provided plugins directory.
-func (i *Installer) Uninstall(pluginID, pluginPath string) error {
+func (i *Installer) Uninstall(ctx context.Context, pluginID, pluginPath string) error {
 	pluginDir := filepath.Join(pluginPath, pluginID)
 
 	// verify it's a plugin directory
@@ -253,10 +274,9 @@ func (i *Installer) getPluginMetadataFromPluginRepo(pluginID, pluginRepoURL stri
 	i.log.Debugf("Fetching metadata for plugin \"%s\" from repo %s", pluginID, pluginRepoURL)
 	body, err := i.sendRequestGetBytes(pluginRepoURL, "repo", pluginID)
 	if err != nil {
-		if errors.Is(err, ErrNotFoundError) {
-			return Plugin{},
-				fmt.Errorf("failed to find plugin \"%s\" in plugin repository. Please check if plugin ID is correct",
-					pluginID)
+		if errors.Is(err, ErrPluginNotFound) {
+			i.log.Errorf("failed to find plugin '%s' in plugin repository. Please check if plugin ID is correct", pluginID)
+			return Plugin{}, err
 		}
 		return Plugin{}, errutil.Wrap("Failed to send request", err)
 	}
@@ -335,7 +355,7 @@ func (i *Installer) createRequest(URL string, subPaths ...string) (*http.Request
 
 func (i *Installer) handleResponse(res *http.Response) (io.ReadCloser, error) {
 	if res.StatusCode == 404 {
-		return nil, ErrNotFoundError
+		return nil, ErrPluginNotFound
 	}
 
 	if res.StatusCode/100 != 2 && res.StatusCode/100 != 4 {
@@ -400,12 +420,16 @@ func normalizeVersion(version string) string {
 // selectVersion returns latest version if none is specified or the specified version. If the version string is not
 // matched to existing version it errors out. It also errors out if version that is matched is not available for current
 // os and platform. It expects plugin.Versions to be sorted so the newest version is first.
-func selectVersion(plugin *Plugin, version string) (*Version, error) {
+func (i *Installer) selectVersion(plugin *Plugin, version string) (*Version, error) {
 	var ver Version
 
 	latestForArch := latestSupportedVersion(plugin)
 	if latestForArch == nil {
-		return nil, fmt.Errorf("%s is not supported on your architecture and OS", plugin.ID)
+		return nil, ErrVersionUnsupported{
+			PluginID:         plugin.ID,
+			RequestedVersion: version,
+			SystemInfo:       i.fullSystemInfoString(),
+		}
 	}
 
 	if version == "" {
@@ -419,17 +443,30 @@ func selectVersion(plugin *Plugin, version string) (*Version, error) {
 	}
 
 	if len(ver.Version) == 0 {
-		return nil, fmt.Errorf("could not find a version %s for %s. The latest suitable version is %s",
-			version, plugin.ID, latestForArch.Version)
+		i.log.Debugf("Requested plugin version %s v%s not found but potential fallback version '%s' was found",
+			plugin.ID, version, latestForArch.Version)
+		return nil, ErrVersionNotFound{
+			PluginID:         plugin.ID,
+			RequestedVersion: version,
+			SystemInfo:       i.fullSystemInfoString(),
+		}
 	}
 
 	if !supportsCurrentArch(&ver) {
-		return nil, fmt.Errorf(
-			"the version you requested is not supported on your architecture and OS, latest suitable version is %s",
-			latestForArch.Version)
+		i.log.Debugf("Requested plugin version %s v%s not found but potential fallback version '%s' was found",
+			plugin.ID, version, latestForArch.Version)
+		return nil, ErrVersionUnsupported{
+			PluginID:         plugin.ID,
+			RequestedVersion: version,
+			SystemInfo:       i.fullSystemInfoString(),
+		}
 	}
 
 	return &ver, nil
+}
+
+func (i *Installer) fullSystemInfoString() string {
+	return fmt.Sprintf("Grafana v%s %s", i.grafanaVersion, osAndArchString())
 }
 
 func osAndArchString() string {

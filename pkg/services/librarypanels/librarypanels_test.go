@@ -493,7 +493,7 @@ func TestConnectLibraryPanelsForDashboard(t *testing.T) {
 			  "description": "Unused description"
 			}
 		`),
-				Kind: int64(libraryelements.Panel),
+				Kind: int64(models.PanelElement),
 			})
 			require.NoError(t, err)
 			dashJSON := map[string]interface{}{
@@ -589,47 +589,10 @@ type libraryPanelResult struct {
 	Result libraryPanel `json:"result"`
 }
 
-func overrideLibraryServicesInRegistry(cfg *setting.Cfg) (*LibraryPanelService, *libraryelements.LibraryElementService) {
-	les := libraryelements.LibraryElementService{
-		SQLStore: nil,
-		Cfg:      cfg,
-	}
-
-	elementsOverride := func(d registry.Descriptor) (*registry.Descriptor, bool) {
-		descriptor := registry.Descriptor{
-			Name:     "LibraryElementService",
-			Instance: &les,
-		}
-
-		return &descriptor, true
-	}
-
-	registry.RegisterOverride(elementsOverride)
-
-	lps := LibraryPanelService{
-		SQLStore:              nil,
-		Cfg:                   cfg,
-		LibraryElementService: &les,
-	}
-
-	panelsOverride := func(d registry.Descriptor) (*registry.Descriptor, bool) {
-		descriptor := registry.Descriptor{
-			Name:     "LibraryPanelService",
-			Instance: &lps,
-		}
-
-		return &descriptor, true
-	}
-
-	registry.RegisterOverride(panelsOverride)
-
-	return &lps, &les
-}
-
 type scenarioContext struct {
 	ctx            *macaron.Context
-	service        *LibraryPanelService
-	elementService *libraryelements.LibraryElementService
+	service        Service
+	elementService libraryelements.Service
 	reqContext     *models.ReqContext
 	user           models.SignedInUser
 	folder         *models.Folder
@@ -720,7 +683,7 @@ func scenarioWithLibraryPanel(t *testing.T, desc string, fn func(t *testing.T, s
 			  "description": "A description"
 			}
 		`),
-			Kind: int64(libraryelements.Panel),
+			Kind: int64(models.PanelElement),
 		}
 		resp, err := sc.elementService.CreateElement(sc.reqContext, command)
 		require.NoError(t, err)
@@ -758,20 +721,19 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 		ctx := macaron.Context{
 			Req: macaron.Request{Request: &http.Request{}},
 		}
+		cfg := setting.NewCfg()
 		orgID := int64(1)
 		role := models.ROLE_ADMIN
-
-		cfg := setting.NewCfg()
-		// Everything in this service is behind the feature toggle "panelLibrary"
-		cfg.FeatureToggles = map[string]bool{"panelLibrary": true}
-		// Because the LibraryPanelService is behind a feature toggle, we need to override the service in the registry
-		// with a Cfg that contains the feature toggle so migrations are run properly
-		service, elementService := overrideLibraryServicesInRegistry(cfg)
-
-		// We need to assign SQLStore after the override and migrations are done
 		sqlStore := sqlstore.InitTestDB(t)
-		elementService.SQLStore = sqlStore
-		service.SQLStore = sqlStore
+		elementService := libraryelements.LibraryElementService{
+			Cfg:      cfg,
+			SQLStore: sqlStore,
+		}
+		service := LibraryPanelService{
+			Cfg:                   cfg,
+			SQLStore:              sqlStore,
+			LibraryElementService: &elementService,
+		}
 
 		user := models.SignedInUser{
 			UserId:     1,
@@ -797,8 +759,8 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 		sc := scenarioContext{
 			user:           user,
 			ctx:            &ctx,
-			service:        service,
-			elementService: elementService,
+			service:        &service,
+			elementService: &elementService,
 			sqlStore:       sqlStore,
 			reqContext: &models.ReqContext{
 				Context:      &ctx,

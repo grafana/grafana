@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React from 'react';
 import { DataFrame, DisplayValue, fieldReducers, getFieldDisplayName, reduceField } from '@grafana/data';
 import { UPlotConfigBuilder } from './config/UPlotConfigBuilder';
 import { VizLegendItem } from '../VizLegend/types';
@@ -6,42 +6,22 @@ import { VizLegendOptions } from '../VizLegend/models.gen';
 import { AxisPlacement } from './config';
 import { VizLayout, VizLayoutLegendProps } from '../VizLayout/VizLayout';
 import { VizLegend } from '../VizLegend/VizLegend';
-import { GraphNGLegendEvent } from '..';
-import { mapMouseEventToMode } from '../VizLegend/utils';
 
 const defaultFormatter = (v: any) => (v == null ? '-' : v.toFixed(1));
 
 interface PlotLegendProps extends VizLegendOptions, Omit<VizLayoutLegendProps, 'children'> {
   data: DataFrame[];
   config: UPlotConfigBuilder;
-  onLegendClick?: (event: GraphNGLegendEvent) => void;
 }
 
 export const PlotLegend: React.FC<PlotLegendProps> = ({
   data,
   config,
-  onLegendClick,
   placement,
   calcs,
   displayMode,
   ...vizLayoutLegendProps
 }) => {
-  const onLegendLabelClick = useCallback(
-    (legend: VizLegendItem, event: React.MouseEvent) => {
-      const { fieldIndex } = legend;
-
-      if (!onLegendClick || !fieldIndex) {
-        return;
-      }
-
-      onLegendClick({
-        fieldIndex,
-        mode: mapMouseEventToMode(event),
-      });
-    },
-    [onLegendClick]
-  );
-
   const legendItems = config
     .getSeries()
     .map<VizLegendItem | undefined>((s) => {
@@ -92,12 +72,7 @@ export const PlotLegend: React.FC<PlotLegendProps> = ({
 
   return (
     <VizLayout.Legend placement={placement} {...vizLayoutLegendProps}>
-      <VizLegend
-        onLabelClick={onLegendLabelClick}
-        placement={placement}
-        items={legendItems}
-        displayMode={displayMode}
-      />
+      <VizLegend placement={placement} items={legendItems} displayMode={displayMode} />
     </VizLayout.Legend>
   );
 };

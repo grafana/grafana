@@ -1,10 +1,11 @@
-import React from 'react';
-import { Badge, NodeGraph, Collapse } from '@grafana/ui';
+import React, { useState } from 'react';
+import { Badge, Collapse } from '@grafana/ui';
 import { DataFrame, TimeRange } from '@grafana/data';
 import { ExploreId, StoreState } from '../../types';
 import { splitOpen } from './state/main';
 import { connect, ConnectedProps } from 'react-redux';
 import { useLinks } from './utils/links';
+import { NodeGraph } from '../../plugins/panel/nodeGraph';
 
 interface Props {
   // Edges and Nodes are separate frames
@@ -18,19 +19,23 @@ export function UnconnectedNodeGraphContainer(props: Props & ConnectedProps<type
   const { dataFrames, range, splitOpen, short } = props;
   const getLinks = useLinks(range, splitOpen);
 
+  const [open, setOpen] = useState(true);
+
   return (
-    <div style={{ height: short ? 300 : 600 }}>
-      <Collapse
-        label={
-          <span>
-            Node graph <Badge text={'Beta'} color={'blue'} icon={'rocket'} tooltip={'This visualization is in beta'} />
-          </span>
-        }
-        isOpen
-      >
+    <Collapse
+      label={
+        <span>
+          Node graph <Badge text={'Beta'} color={'blue'} icon={'rocket'} tooltip={'This visualization is in beta'} />
+        </span>
+      }
+      collapsible={short}
+      isOpen={short ? open : true}
+      onToggle={short ? () => setOpen(!open) : undefined}
+    >
+      <div style={{ height: short ? 300 : 600 }}>
         <NodeGraph dataFrames={dataFrames} getLinks={getLinks} />
-      </Collapse>
-    </div>
+      </div>
+    </Collapse>
   );
 }
 

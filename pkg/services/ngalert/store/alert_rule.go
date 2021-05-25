@@ -80,7 +80,7 @@ func (st DBstore) DeleteAlertRuleByUID(orgID int64, ruleUID string) error {
 			return err
 		}
 
-		_, err = sess.Exec("DELETE FROM alert_instance WHERE def_org_id = ? AND def_uid = ?", orgID, ruleUID)
+		_, err = sess.Exec("DELETE FROM alert_instance WHERE rule_org_id = ? AND rule_uid = ?", orgID, ruleUID)
 		if err != nil {
 			return err
 		}
@@ -109,7 +109,7 @@ func (st DBstore) DeleteNamespaceAlertRules(orgID int64, namespaceUID string) ([
 			return err
 		}
 
-		if _, err := sess.Exec(`DELETE FROM alert_instance WHERE def_org_id = ? AND def_uid NOT IN (
+		if _, err := sess.Exec(`DELETE FROM alert_instance WHERE rule_org_id = ? AND rule_uid NOT IN (
 			SELECT uid FROM alert_rule where org_id = ?
 		)`, orgID, orgID); err != nil {
 			return err
@@ -146,7 +146,7 @@ func (st DBstore) DeleteRuleGroupAlertRules(orgID int64, namespaceUID string, ru
 			return err
 		}
 
-		if _, err := sess.Exec(`DELETE FROM alert_instance WHERE def_org_id = ? AND def_uid NOT IN (
+		if _, err := sess.Exec(`DELETE FROM alert_instance WHERE rule_org_id = ? AND rule_uid NOT IN (
 			SELECT uid FROM alert_rule where org_id = ?
 		)`, orgID, orgID); err != nil {
 			return err
@@ -161,7 +161,7 @@ func (st DBstore) DeleteRuleGroupAlertRules(orgID int64, namespaceUID string, ru
 // DeleteAlertInstanceByRuleUID is a handler for deleting alert instances by alert rule UID when a rule has been updated
 func (st DBstore) DeleteAlertInstancesByRuleUID(orgID int64, ruleUID string) error {
 	return st.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		_, err := sess.Exec("DELETE FROM alert_instance WHERE def_org_id = ? AND def_uid = ?", orgID, ruleUID)
+		_, err := sess.Exec("DELETE FROM alert_instance WHERE rule_org_id = ? AND rule_uid = ?", orgID, ruleUID)
 		if err != nil {
 			return err
 		}
@@ -203,7 +203,7 @@ func (st DBstore) UpsertAlertRules(rules []UpsertRule) error {
 			var parentVersion int64
 			switch r.Existing {
 			case nil: // new rule
-				uid, err := generateNewAlertRuleUID(sess, r.New.OrgID)
+				uid, err := GenerateNewAlertRuleUID(sess, r.New.OrgID, r.New.Title)
 				if err != nil {
 					return fmt.Errorf("failed to generate UID for alert rule %q: %w", r.New.Title, err)
 				}
@@ -368,16 +368,19 @@ func (st DBstore) GetRuleGroupAlertRules(query *ngmodels.ListRuleGroupAlertRules
 }
 
 // GetNamespaceByTitle is a handler for retrieving a namespace by its title. Alerting rules follow a Grafana folder-like structure which we call namespaces.
-func (st DBstore) GetNamespaceByTitle(namespace string, orgID int64, user *models.SignedInUser, withEdit bool) (*models.Folder, error) {
+func (st DBstore) GetNamespaceByTitle(namespace string, orgID int64, user *models.SignedInUser, withCanSave bool) (*models.Folder, error) {
 	s := dashboards.NewFolderService(orgID, user, st.SQLStore)
 	folder, err := s.GetFolderByTitle(namespace)
 	if err != nil {
 		return nil, err
 	}
 
-	if withEdit {
+	if withCanSave {
 		g := guardian.New(folder.Id, orgID, user)
-		if canAdmin, err := g.CanEdit(); err != nil || !canAdmin {
+		if canSave, err := g.CanSave(); err != nil || !canSave {
+			if err != nil {
+				st.Logger.Error("checking can save permission has failed", "userId", user.UserId, "username", user.Login, "namespace", namespace, "orgId", orgID, "error", err)
+			}
 			return nil, ngmodels.ErrCannotEditNamespace
 		}
 	}
@@ -411,7 +414,10 @@ func (st DBstore) GetAlertRulesForScheduling(query *ngmodels.ListAlertRulesQuery
 	})
 }
 
-func generateNewAlertRuleUID(sess *sqlstore.DBSession, orgID int64) (string, error) {
+// GenerateNewAlertRuleUID generates a unique UID for a rule.
+// This is set as a variable so that the tests can override it.
+// The ruleTitle is only used by the mocked functions.
+var GenerateNewAlertRuleUID = func(sess *sqlstore.DBSession, orgID int64, ruleTitle string) (string, error) {
 	for i := 0; i < 3; i++ {
 		uid := util.GenerateShortUID()
 
@@ -438,8 +444,8 @@ func (st DBstore) validateAlertRule(alertRule ngmodels.AlertRule) error {
 		return fmt.Errorf("%w: title is empty", ngmodels.ErrAlertRuleFailedValidation)
 	}
 
-	if alertRule.IntervalSeconds%int64(st.BaseInterval.Seconds()) != 0 {
-		return fmt.Errorf("%w: interval (%v) should be divided exactly by scheduler interval: %v", ngmodels.ErrAlertRuleFailedValidation, time.Duration(alertRule.IntervalSeconds)*time.Second, st.BaseInterval)
+	if alertRule.IntervalSeconds%int64(st.BaseInterval.Seconds()) != 0 || alertRule.IntervalSeconds <= 0 {
+		return fmt.Errorf("%w: interval (%v) should be non-zero and divided exactly by scheduler interval: %v", ngmodels.ErrAlertRuleFailedValidation, time.Duration(alertRule.IntervalSeconds)*time.Second, st.BaseInterval)
 	}
 
 	// enfore max name length in SQLite

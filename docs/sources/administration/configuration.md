@@ -418,6 +418,10 @@ The length of time that Grafana will wait for a datasource’s first response he
 
 The maximum number of idle connections that Grafana will maintain. Default is `100`. For more details check the [Transport.MaxIdleConns](https://golang.org/pkg/net/http/#Transport.MaxIdleConns) documentation.
 
+### max_idle_connections_per_host
+
+The maximum number of idle connections per host that Grafana will maintain. Default is `2`. For more details check the [Transport.MaxIdleConnsPerHost](https://golang.org/pkg/net/http/#Transport.MaxIdleConnsPerHost) documentation.
+
 ### idle_conn_timeout_seconds
 
 The length of time that Grafana maintains idle connections before closing them. Default is `90` seconds. For more details check the [Transport.IdleConnTimeout](https://golang.org/pkg/net/http/#Transport.IdleConnTimeout) documentation.
@@ -806,6 +810,31 @@ If this option is disabled, the **Assume Role** and the **External Id** field ar
 Use the [List Metrics API](https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_ListMetrics.html) option to load metrics for custom namespaces in the CloudWatch data source. By default, the page limit is 500.
 
 <hr />
+
+## [azure]
+
+Grafana supports additional integration with Azure services when hosted in the Azure Cloud.
+
+### cloud
+
+Azure cloud environment where Grafana is hosted:
+
+| Azure Cloud                                      | Value                  |
+| ------------------------------------------------ | ---------------------- |
+| Microsoft Azure public cloud                     | AzureCloud (*default*) |
+| Microsoft Chinese national cloud                 | AzureChinaCloud        |
+| US Government cloud                              | AzureUSGovernment      |
+| Microsoft German national cloud ("Black Forest") | AzureGermanCloud       |
+
+### managed_identity_enabled
+
+Specifies whether Grafana hosted in Azure service with Managed Identity configured (e.g. Azure Virtual Machines instance). Disabled by default, needs to be explicitly enabled.
+
+### managed_identity_client_id
+
+The client ID to use for user-assigned managed identity.
+
+Should be set for user-assigned identity and should be empty for system-assigned identity.
 
 ## [auth.jwt]
 
@@ -1442,9 +1471,17 @@ Set to `true` if you want to test alpha plugins that are not yet ready for gener
 
 Enter a comma-separated list of plugin identifiers to identify plugins that are allowed to be loaded even if they lack a valid signature.
 
-### marketplace_url
+### plugin_admin_enabled
 
-Custom install/learn more url for enterprise plugins. Defaults to https://grafana.com/grafana/plugins/.
+
+Available to Grafana administrators only, the plugin admin app is set to `false` by default. Set it to `true` to enable the app.
+
+For more information, refer to [Plugin catalog]({{< relref "../plugins/catalog.md" >}}).
+
+
+### plugin_catalog_url
+
+Custom install/learn more URL for enterprise plugins. Defaults to https://grafana.com/grafana/plugins/.
 
 <hr>
 

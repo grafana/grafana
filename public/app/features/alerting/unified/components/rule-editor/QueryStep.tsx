@@ -4,7 +4,7 @@ import { Field, InputControl } from '@grafana/ui';
 import { ExpressionEditor } from './ExpressionEditor';
 import { RuleEditorSection } from './RuleEditorSection';
 import { RuleFormType, RuleFormValues } from '../../types/rule-form';
-import { AlertingQueryEditor } from '../../../components/AlertingQueryEditor';
+import { QueryEditor } from './QueryEditor';
 
 export const QueryStep: FC = () => {
   const {
@@ -16,7 +16,7 @@ export const QueryStep: FC = () => {
   const dataSourceName = watch('dataSourceName');
   return (
     <RuleEditorSection stepNo={2} title="Create a query to be alerted on">
-      {type === RuleFormType.system && dataSourceName && (
+      {type === RuleFormType.cloud && dataSourceName && (
         <Field error={errors.expression?.message} invalid={!!errors.expression?.message}>
           <InputControl
             name="expression"
@@ -28,14 +28,14 @@ export const QueryStep: FC = () => {
           />
         </Field>
       )}
-      {type === RuleFormType.threshold && (
+      {type === RuleFormType.grafana && (
         <Field
           invalid={!!errors.queries}
           error={(!!errors.queries && 'Must provide at least one valid query.') || undefined}
         >
           <InputControl
             name="queries"
-            render={({ field: { ref, ...field } }) => <AlertingQueryEditor {...field} />}
+            render={({ field: { ref, ...field } }) => <QueryEditor {...field} />}
             control={control}
             rules={{
               validate: (queries) => Array.isArray(queries) && !!queries.length,

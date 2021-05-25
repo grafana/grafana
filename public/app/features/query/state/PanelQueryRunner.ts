@@ -98,6 +98,7 @@ export class PanelQueryRunner {
 
           // If the shape is the same, we can skip field overrides
           if (
+            data.state === LoadingState.Streaming &&
             processFields &&
             processedCount > 0 &&
             lastData.length &&
@@ -114,7 +115,12 @@ export class PanelQueryRunner {
                   fields: frame.fields.map((field, fieldIndex) => ({
                     ...field,
                     values: data.series[frameIndex].fields[fieldIndex].values,
-                    state: {},
+                    state: {
+                      ...field.state,
+                      calcs: undefined,
+                      // add global range calculation here? (not optimal for streaming)
+                      range: undefined,
+                    },
                   })),
                 })),
               };

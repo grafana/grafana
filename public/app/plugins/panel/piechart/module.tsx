@@ -33,8 +33,6 @@ export const plugin = new PanelPlugin<PieChartOptions>(PieChartPanel)
         description: 'Choose a reducer function / calculation',
         editor: standardEditorsRegistry.get('stats-picker').editor as any,
         defaultValue: [ReducerID.lastNotNull],
-        // Hides it when all values mode is on
-        showIf: (currentConfig) => currentConfig.reduceOptions.values === false,
       })
       .addRadio({
         name: 'Piechart type',
@@ -59,21 +57,9 @@ export const plugin = new PanelPlugin<PieChartOptions>(PieChartPanel)
             { value: PieChartLabels.Value, label: 'Value' },
           ],
         },
-      })
-      .addRadio({
-        name: 'Tooltip mode',
-        path: 'tooltip.mode',
-        description: '',
-        defaultValue: 'single',
-        settings: {
-          options: [
-            { value: 'single', label: 'Single' },
-            { value: 'multi', label: 'All' },
-            { value: 'none', label: 'Hidden' },
-          ],
-        },
       });
 
+    commonOptionsBuilder.addTooltipOptions(builder);
     commonOptionsBuilder.addLegendOptions(builder, false);
 
     builder.addMultiSelect({

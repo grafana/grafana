@@ -8,12 +8,29 @@ import { Input } from '../Input/Input';
 
 export interface Props {
   placeholder?: string;
+  /** Array of selected tags */
   tags?: string[];
   onChange: (tags: string[]) => void;
   width?: number;
+  className?: string;
+  /** Toggle disabled state */
+  disabled?: boolean;
+  /** Enable adding new tags when input loses focus */
+  addOnBlur?: boolean;
+  /** Toggle invalid state */
+  invalid?: boolean;
 }
 
-export const TagsInput: FC<Props> = ({ placeholder = 'New tag (enter key to add)', tags = [], onChange, width }) => {
+export const TagsInput: FC<Props> = ({
+  placeholder = 'New tag (enter key to add)',
+  tags = [],
+  onChange,
+  width,
+  className,
+  disabled,
+  addOnBlur,
+  invalid,
+}) => {
   const [newTagName, setNewName] = useState('');
   const styles = useStyles(getStyles);
   const theme = useTheme2();
@@ -23,13 +40,24 @@ export const TagsInput: FC<Props> = ({ placeholder = 'New tag (enter key to add)
   };
 
   const onRemove = (tagToRemove: string) => {
+    if (disabled) {
+      return;
+    }
     onChange(tags?.filter((x) => x !== tagToRemove));
   };
 
-  const onAdd = (event: React.MouseEvent) => {
-    event.preventDefault();
-    onChange(tags.concat(newTagName));
+  const onAdd = (event?: React.MouseEvent) => {
+    event?.preventDefault();
+    if (!tags.includes(newTagName)) {
+      onChange(tags.concat(newTagName));
+    }
     setNewName('');
+  };
+
+  const onBlur = () => {
+    if (addOnBlur && newTagName) {
+      onAdd();
+    }
   };
 
   const onKeyboardAdd = (event: KeyboardEvent) => {
@@ -41,33 +69,37 @@ export const TagsInput: FC<Props> = ({ placeholder = 'New tag (enter key to add)
   };
 
   return (
-    <div className={cx(styles.wrapper, width ? css({ width: theme.spacing(width) }) : '')}>
+    <div className={cx(styles.wrapper, className, width ? css({ width: theme.spacing(width) }) : '')}>
       <div className={tags?.length ? styles.tags : undefined}>
         {tags?.map((tag: string, index: number) => {
           return <TagItem key={`${tag}-${index}`} name={tag} onRemove={onRemove} />;
         })}
       </div>
-
-      <Input
-        placeholder={placeholder}
-        onChange={onNameChange}
-        value={newTagName}
-        onKeyUp={onKeyboardAdd}
-        suffix={
-          newTagName.length > 0 && (
-            <Button fill="text" className={styles.addButtonStyle} onClick={onAdd} size="md">
-              Add
-            </Button>
-          )
-        }
-      />
+      <div>
+        <Input
+          disabled={disabled}
+          placeholder={placeholder}
+          onChange={onNameChange}
+          value={newTagName}
+          onKeyUp={onKeyboardAdd}
+          onBlur={onBlur}
+          invalid={invalid}
+          suffix={
+            newTagName.length > 0 && (
+              <Button fill="text" className={styles.addButtonStyle} onClick={onAdd} size="md">
+                Add
+              </Button>
+            )
+          }
+        />
+      </div>
     </div>
   );
 };
 
 const getStyles = (theme: GrafanaTheme) => ({
   wrapper: css`
-    height: ${theme.spacing.formInputHeight}px;
+    min-height: ${theme.spacing.formInputHeight}px;
     align-items: center;
     display: flex;
     flex-wrap: wrap;
