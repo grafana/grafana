@@ -58,8 +58,9 @@ const getClusters = async (kubernetes: Kubernetes[], databaseType: Databases): P
   const dbClusterService = newDBClusterService(databaseType);
   const kubernetesByOperator = kubernetes.filter(kubernetesCluster => {
     const operator = OPERATORS[databaseType] as Operators;
+    const operatorStatus = kubernetesCluster.operators[operator].status;
 
-    return kubernetesCluster.operators[operator].status === KubernetesOperatorStatus.ok;
+    return operatorStatus === KubernetesOperatorStatus.ok || operatorStatus === KubernetesOperatorStatus.unsupported;
   });
   const requests = kubernetesByOperator.map(dbClusterService.getDBClusters);
   const results = await processPromiseResults(requests);
