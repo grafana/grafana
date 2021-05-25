@@ -5,14 +5,14 @@ import { useStyles2 } from '@grafana/ui';
 
 import NestedRows from './NestedRows';
 import getStyles from './styles';
-import { Row, RowGroup } from './types';
+import { ResourceRow, ResourceRowGroup } from './types';
 
 interface NestedResourceTableProps {
-  rows: RowGroup;
-  selectedRows: RowGroup;
+  rows: ResourceRowGroup;
+  selectedRows: ResourceRowGroup;
   noHeader?: boolean;
-  requestNestedRows: (row: Row) => Promise<void>;
-  onRowSelectedChange: (row: Row, selected: boolean) => void;
+  requestNestedRows: (row: ResourceRow) => Promise<void>;
+  onRowSelectedChange: (row: ResourceRow, selected: boolean) => void;
 }
 
 const NestedResourceTable: React.FC<NestedResourceTableProps> = ({

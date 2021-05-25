@@ -48,7 +48,7 @@ const SilencesTable: FC<Props> = ({ silences, alertManagerAlerts, alertManagerSo
               <tr>
                 <th />
                 <th>State</th>
-                <th>Matchers</th>
+                <th>Matching labels</th>
                 <th>Alerts</th>
                 <th>Schedule</th>
                 {contextSrv.isEditor && <th>Action</th>}
