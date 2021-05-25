@@ -1,3 +1,3 @@
-import { UserState } from 'app/types';
+import { UserState } from './reducers';
 
 export const getTimeZone = (state: UserState) => state.timeZone;
