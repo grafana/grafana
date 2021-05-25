@@ -80,6 +80,7 @@ func TestGetIntervalFrom(t *testing.T) {
 		{"45s", nil, `{"interval": "45s"}`, time.Second * 15, time.Second * 45},
 		{"45", nil, `{"interval": "45"}`, time.Second * 15, time.Second * 45},
 		{"2m", nil, `{"interval": "2m"}`, time.Second * 15, time.Minute * 2},
+		{"20000ms", nil, `{"intervalMs": 20000}`, time.Second * 15, time.Second * 20},
 	}
 
 	for _, tc := range testCases {
