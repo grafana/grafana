@@ -7,9 +7,22 @@ weight = 120
 
 # Grafana Live configuration guide
 
+Grafana Live is enabled by default, but as of Grafana v8 it has a strict default for maximum number of connections per Grafana server instance. 
+
 ## Max number of connections
 
 Grafana Live uses persistent connections (WebSocket at the moment) to deliver real-time updates to clients. You may need to tune your server infrastructure a bit. Here we collect some advices to help you scale Grafana Live to handle more connections. 
+
+For this reason the number of maximum connections users can establish with Grafana is limited to 100:
+
+```
+[live]
+# max_connections to Grafana Live WebSocket endpoint per Grafana server instance. See Grafana Live docs if you are
+# going to make it higher than default 100 since this can require some OS and infrastructure tuning.
+max_connections = 100
+```
+
+Before making this limit higher make sure your server and infrastructure allow handling more connections. Below we collected a number of common problems which could happen when managing persistent connections, in particular WebSocket connections.
 
 ### WebSocket
 
@@ -21,9 +34,9 @@ Introducing a persistent connection leads to some things Grafana users should be
 
 ### Resource usage
 
-Each persistent connection will cost some memory on a server. Typically this should be about 50KB per connection at this moment. Thus a server with 1GB RAM is expected to handle about 20k connections max. Each active connection will consume additional CPU resources since client and server send PING/PONG frames to each other to maintain a connection.
+Each persistent connection will cost some memory on a server. Typically, this should be about 50 KB per connection at this moment. Thus a server with 1 GB RAM is expected to handle about 20k connections max. Each active connection will consume additional CPU resources since client and server send PING/PONG frames to each other to maintain a connection.
 
-And of course it will cost additional CPU as soon as you are using streaming functionality. The exact resource usage is hard to estimate since it heavily depends on Grafana usage pattern.
+And of course it will cost additional CPU as soon as you are using streaming functionality. The exact CPU resource usage is hard to estimate since it heavily depends on Grafana Live usage pattern.
 
 ### Open file limit
 
@@ -47,7 +60,7 @@ This limit can be increased – see for example [these instructions](https://doc
 
 ### Ephemeral port exhaustion
 
-Ephemeral ports exhaustion problem can happen between your load balancer and your Grafana server. I.e. only if you load balance connections between different Grafana instances. If users connect directly to a single Grafana server instance you likely come across this issue.
+Ephemeral ports exhaustion problem can happen between your load balancer and your Grafana server. I.e. when you load balance requests/connections between different Grafana instances. If users connect directly to a single Grafana server instance you should not come across this issue.
 
 The problem arises due to the fact that each TCP connection uniquely identified in the OS by the 4-part-tuple:
 
@@ -55,7 +68,7 @@ The problem arises due to the fact that each TCP connection uniquely identified 
 source ip | source port | destination ip | destination port
 ```
 
-On load balancer/server boundary you are limited in 65536 possible variants by default. But actually due to some OS limits and sockets in TIME_WAIT state the number is even less.
+On load balancer/server boundary you are limited in 65536 possible variants by default. But actually due to some OS limits (for example on Unix available ports defined in `ip_local_port_range` sysctl parameter) and sockets in TIME_WAIT state the number is even less.
 
 In order to eliminate a problem you can:
 

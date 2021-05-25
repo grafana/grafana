@@ -11,7 +11,7 @@ Let's look at current Grafana Live capabilities.
 
 ## Dashboard change notifications 
 
-???
+Starting from Grafana v8 as soon as someone changes dashboard layout it automatically updated on other devices connected to Grafana Live.
 
 ## Data streaming from plugins
 
@@ -22,6 +22,8 @@ For datasource plugin channels Grafana uses `ds` scope. Namespace in the case of
 I.e. datasource channel looks like `ds/<DATASOURCE_UID>/<CUSTOM_PATH>`.
 
 See a tutorial about building a streaming datasource backend plugin for more details.
+
+The basic streaming example included into Grafana core – it streams frames with some generated data to a panel. To look at it create a new panel, point it to `-- Grafana --` datasource, then choose `Live Measurements` and select `plugin/testdata/random-20Hz-stream` channel. 
 
 ## Data streaming from Telegraf
 
