@@ -92,7 +92,7 @@ const ResourceLabel = ({ resource, datasource }: ResourceLabelProps) => {
   }, [datasource.resourcePickerData, resource]);
 
   if (!resource) {
-    return 'Select a resource';
+    return <>Select a resource</>;
   }
 
   if (resourceComponents) {
@@ -107,7 +107,7 @@ const ResourceLabel = ({ resource, datasource }: ResourceLabelProps) => {
     );
   }
 
-  return resource;
+  return <>{resource}</>;
 };
 
 interface FormattedResourceProps {
