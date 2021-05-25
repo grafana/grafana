@@ -9,3 +9,4 @@ weight = 113
 
 
 
+- [View alert rules and their current state]({{< relref "./rule-list.md" >}})
