@@ -66,7 +66,9 @@ export function UnifiedAlertList(props: PanelProps<AlertListOptions>) {
                     <span>{alert.state}</span>
                   </div>
                   <div className={styles.instanceDetails}>
-                    <div className={styles.alertName}>{alert.name}</div>
+                    <div className={styles.alertName} title={alert.name}>
+                      {alert.name}
+                    </div>
                     <div className={styles.alertDuration}>
                       <span className={stateStyle[`${alertStateToState[alert.state]}Text` as const]}>
                         {alert.state.toUpperCase()}
@@ -156,6 +158,9 @@ const getStyles = (theme: GrafanaTheme) => ({
   alertName: css`
     font-size: ${theme.typography.size.md};
     font-weight: ${theme.typography.weight.bold};
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   `,
   alertDuration: css`
     font-size: ${theme.typography.size.sm};
@@ -187,8 +192,9 @@ const getStyles = (theme: GrafanaTheme) => ({
     margin-right: ${theme.spacing.xs};
   `,
   instanceDetails: css`
-    display: flex;
-    flex-direction: column;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   `,
 });
 
