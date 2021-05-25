@@ -11,6 +11,8 @@ import { ReceiversTable } from './ReceiversTable';
 import { fetchGrafanaNotifiersAction } from '../../state/actions';
 import { NotifierDTO, NotifierType } from 'app/types';
 import { byRole } from 'testing-library-selector';
+import { Router } from 'react-router-dom';
+import { locationService } from '@grafana/runtime';
 
 const renderReceieversTable = async (receivers: Receiver[], notifiers: NotifierDTO[]) => {
   const config: AlertManagerCortexConfig = {
@@ -25,20 +27,19 @@ const renderReceieversTable = async (receivers: Receiver[], notifiers: NotifierD
 
   return render(
     <Provider store={store}>
-      <ReceiversTable config={config} alertManagerName="alertmanager-1" />
+      <Router history={locationService.getHistory()}>
+        <ReceiversTable config={config} alertManagerName="alertmanager-1" />
+      </Router>
     </Provider>
   );
 };
 
 const mockGrafanaReceiver = (type: string): GrafanaManagedReceiverConfig => ({
   type,
-  id: 2,
-  frequency: 1,
   disableResolveMessage: false,
   secureFields: {},
   settings: {},
-  sendReminder: false,
-  uid: '2',
+  name: type,
 });
 
 const mockNotifier = (type: NotifierType, name: string): NotifierDTO => ({

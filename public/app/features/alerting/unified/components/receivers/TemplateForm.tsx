@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { GrafanaThemeV2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { Alert, Button, Field, Input, LinkButton, TextArea, useStyles2 } from '@grafana/ui';
 import { useCleanup } from 'app/core/hooks/useCleanup';
 import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
@@ -64,15 +64,27 @@ export const TemplateForm: FC<Props> = ({ existing, alertManagerSourceName, conf
         templates,
       },
     };
-    dispatch(updateAlertManagerConfigAction({ alertManagerSourceName, newConfig, oldConfig: config }));
+    dispatch(
+      updateAlertManagerConfigAction({
+        alertManagerSourceName,
+        newConfig,
+        oldConfig: config,
+        successMessage: 'Template saved.',
+        redirectPath: '/alerting/notifications',
+      })
+    );
   };
 
-  const { handleSubmit, register, errors } = useForm<Values>({
+  const {
+    handleSubmit,
+    register,
+    formState: { errors },
+  } = useForm<Values>({
     mode: 'onSubmit',
     defaultValues: existing ?? defaults,
   });
 
-  const validateNameIsUnique: Validate = (name: string) => {
+  const validateNameIsUnique: Validate<string> = (name: string) => {
     return !config.template_files[name] || existing?.name === name
       ? true
       : 'Another template with this name already exists.';
@@ -88,13 +100,12 @@ export const TemplateForm: FC<Props> = ({ existing, alertManagerSourceName, conf
       )}
       <Field label="Template name" error={errors?.name?.message} invalid={!!errors.name?.message}>
         <Input
-          width={42}
-          autoFocus={true}
-          ref={register({
+          {...register('name', {
             required: { value: true, message: 'Required.' },
             validate: { nameIsUnique: validateNameIsUnique },
           })}
-          name="name"
+          width={42}
+          autoFocus={true}
         />
       </Field>
       <Field
@@ -125,9 +136,8 @@ export const TemplateForm: FC<Props> = ({ existing, alertManagerSourceName, conf
         invalid={!!errors.content?.message}
       >
         <TextArea
+          {...register('content', { required: { value: true, message: 'Required.' } })}
           className={styles.textarea}
-          ref={register({ required: { value: true, message: 'Required.' } })}
-          name="content"
           rows={12}
         />
       </Field>
@@ -143,6 +153,7 @@ export const TemplateForm: FC<Props> = ({ existing, alertManagerSourceName, conf
           href={makeAMLink('alerting/notifications', alertManagerSourceName)}
           variant="secondary"
           type="button"
+          fill="outline"
         >
           Cancel
         </LinkButton>
@@ -151,7 +162,7 @@ export const TemplateForm: FC<Props> = ({ existing, alertManagerSourceName, conf
   );
 };
 
-const getStyles = (theme: GrafanaThemeV2) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   externalLink: css`
     color: ${theme.colors.text.secondary};
     text-decoration: underline;

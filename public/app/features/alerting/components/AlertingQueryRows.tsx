@@ -1,10 +1,17 @@
-import React, { PureComponent } from 'react';
+import React, { PureComponent, ReactNode } from 'react';
 import { DragDropContext, Droppable, DropResult } from 'react-beautiful-dnd';
-import { DataQuery, DataSourceApi, DataSourceInstanceSettings, rangeUtil, PanelData, TimeRange } from '@grafana/data';
+import {
+  DataQuery,
+  DataSourceInstanceSettings,
+  getDefaultRelativeTimeRange,
+  PanelData,
+  RelativeTimeRange,
+} from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { QueryEditorRow } from 'app/features/query/components/QueryEditorRow';
 import { isExpressionQuery } from 'app/features/expressions/guards';
 import { GrafanaQuery } from 'app/types/unified-alerting-dto';
+import { RelativeTimeRangePicker } from '@grafana/ui';
 
 interface Props {
   // The query configuration
@@ -18,44 +25,79 @@ interface Props {
 
 interface State {
   dataPerQuery: Record<string, PanelData>;
-  defaultDataSource: DataSourceApi;
 }
 
 export class AlertingQueryRows extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props);
-    this.state = { dataPerQuery: {}, defaultDataSource: {} as DataSourceApi };
-  }
-
-  async componentDidMount() {
-    const defaultDataSource = await getDataSourceSrv().get();
-    this.setState({ defaultDataSource });
+    this.state = { dataPerQuery: {} };
   }
 
   onRemoveQuery = (query: DataQuery) => {
     this.props.onQueriesChange(this.props.queries.filter((item) => item.model !== query));
   };
 
-  onChangeTimeRange(timeRange: TimeRange, index: number) {
+  onChangeTimeRange(timeRange: RelativeTimeRange, index: number) {
     const { queries, onQueriesChange } = this.props;
     onQueriesChange(
       queries.map((item, itemIndex) => {
-        if (itemIndex === index) {
-          return { ...item, relativeTimeRange: rangeUtil.timeRangeToRelative(timeRange) };
+        if (itemIndex !== index) {
+          return item;
         }
-        return item;
+        return {
+          ...item,
+          relativeTimeRange: timeRange,
+        };
+      })
+    );
+  }
+
+  onChangeDataSource(settings: DataSourceInstanceSettings, index: number) {
+    const { queries, onQueriesChange } = this.props;
+
+    onQueriesChange(
+      queries.map((item, itemIndex) => {
+        if (itemIndex !== index) {
+          return item;
+        }
+
+        const previous = getDataSourceSrv().getInstanceSettings(item.datasourceUid);
+
+        if (previous?.type === settings.uid) {
+          return {
+            ...item,
+            datasourceUid: settings.uid,
+          };
+        }
+
+        const { refId, hide } = item.model;
+
+        return {
+          ...item,
+          datasourceUid: settings.uid,
+          model: { refId, hide },
+        };
       })
     );
   }
 
   onChangeQuery(query: DataQuery, index: number) {
     const { queries, onQueriesChange } = this.props;
+
     onQueriesChange(
       queries.map((item, itemIndex) => {
-        if (itemIndex === index) {
-          return { ...item, model: { ...item.model, ...query, datasource: query.datasource! } };
+        if (itemIndex !== index) {
+          return item;
         }
-        return item;
+        return {
+          ...item,
+          refId: query.refId,
+          model: {
+            ...item.model,
+            ...query,
+            datasource: query.datasource!,
+          },
+        };
       })
     );
   }
@@ -79,14 +121,15 @@ export class AlertingQueryRows extends PureComponent<Props, State> {
     onQueriesChange(update);
   };
 
-  getDataSourceSettings = (query: DataQuery): DataSourceInstanceSettings | undefined => {
-    const { defaultDataSource } = this.state;
+  onDuplicateQuery = (query: DataQuery, source: GrafanaQuery): void => {
+    this.props.onDuplicateQuery({
+      ...source,
+      model: query,
+    });
+  };
 
-    if (isExpressionQuery(query)) {
-      return getDataSourceSrv().getInstanceSettings(defaultDataSource.name);
-    }
-
-    return getDataSourceSrv().getInstanceSettings(query.datasource);
+  getDataSourceSettings = (query: GrafanaQuery): DataSourceInstanceSettings | undefined => {
+    return getDataSourceSrv().getInstanceSettings(query.datasourceUid);
   };
 
   render() {
@@ -108,25 +151,21 @@ export class AlertingQueryRows extends PureComponent<Props, State> {
 
                   return (
                     <QueryEditorRow
-                      dsSettings={{ ...dsSettings, meta: { ...dsSettings.meta, mixed: true } }}
+                      dataSource={dsSettings}
+                      onChangeDataSource={
+                        !isExpressionQuery(query.model)
+                          ? (settings) => this.onChangeDataSource(settings, index)
+                          : undefined
+                      }
                       id={query.refId}
                       index={index}
                       key={query.refId}
                       data={data}
                       query={query.model}
                       onChange={(query) => this.onChangeQuery(query, index)}
-                      timeRange={
-                        !isExpressionQuery(query.model)
-                          ? rangeUtil.relativeToTimeRange(query.relativeTimeRange)
-                          : undefined
-                      }
-                      onChangeTimeRange={
-                        !isExpressionQuery(query.model)
-                          ? (timeRange) => this.onChangeTimeRange(timeRange, index)
-                          : undefined
-                      }
+                      renderHeaderExtras={() => this.renderTimePicker(query, index)}
                       onRemoveQuery={this.onRemoveQuery}
-                      onAddQuery={this.props.onDuplicateQuery}
+                      onAddQuery={(duplicate) => this.onDuplicateQuery(duplicate, query)}
                       onRunQuery={this.props.onRunQueries}
                       queries={queries}
                     />
@@ -138,6 +177,19 @@ export class AlertingQueryRows extends PureComponent<Props, State> {
           }}
         </Droppable>
       </DragDropContext>
+    );
+  }
+
+  renderTimePicker(query: GrafanaQuery, index: number): ReactNode {
+    if (isExpressionQuery(query.model)) {
+      return null;
+    }
+
+    return (
+      <RelativeTimeRangePicker
+        timeRange={query.relativeTimeRange ?? getDefaultRelativeTimeRange()}
+        onChange={(range) => this.onChangeTimeRange(range, index)}
+      />
     );
   }
 }

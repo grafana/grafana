@@ -29,6 +29,7 @@ type ApplicationInsightsDatasource struct {
 	httpClient    *http.Client
 	dsInfo        *models.DataSource
 	pluginManager plugins.Manager
+	cfg           *setting.Cfg
 }
 
 // ApplicationInsightsQuery is the model that holds the information
@@ -243,7 +244,7 @@ func (e *ApplicationInsightsDatasource) createRequest(ctx context.Context, dsInf
 
 	req.Header.Set("User-Agent", fmt.Sprintf("Grafana/%s", setting.BuildVersion))
 
-	pluginproxy.ApplyRoute(ctx, req, proxyPass, appInsightsRoute, dsInfo)
+	pluginproxy.ApplyRoute(ctx, req, proxyPass, appInsightsRoute, dsInfo, e.cfg)
 
 	return req, nil
 }

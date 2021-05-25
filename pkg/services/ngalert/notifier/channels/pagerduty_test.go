@@ -9,7 +9,6 @@ import (
 	"testing"
 
 	"github.com/prometheus/alertmanager/notify"
-	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
@@ -21,8 +20,7 @@ import (
 )
 
 func TestPagerdutyNotifier(t *testing.T) {
-	tmpl, err := template.FromGlobs("templates/default.tmpl")
-	require.NoError(t, err)
+	tmpl := templateForTests(t)
 
 	externalURL, err := url.Parse("http://localhost")
 	require.NoError(t, err)
@@ -53,15 +51,15 @@ func TestPagerdutyNotifier(t *testing.T) {
 			expMsg: &pagerDutyMessage{
 				RoutingKey:  "abcdefgh0123456789",
 				DedupKey:    "6e3538104c14b583da237e9693b76debbc17f0f8058ef20492e5853096cf8733",
-				Description: "[firing:1]  (val1)",
+				Description: "[FIRING:1]  (val1)",
 				EventAction: "trigger",
 				Payload: &pagerDutyPayload{
 					Summary:   "[FIRING:1]  (val1)",
 					Source:    hostname,
 					Severity:  "critical",
-					Class:     "todo_class",
+					Class:     "default",
 					Component: "Grafana",
-					Group:     "todo_group",
+					Group:     "default",
 					CustomDetails: map[string]string{
 						"firing":       "Labels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSource: \n",
 						"num_firing":   "1",
@@ -100,7 +98,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 			expMsg: &pagerDutyMessage{
 				RoutingKey:  "abcdefgh0123456789",
 				DedupKey:    "6e3538104c14b583da237e9693b76debbc17f0f8058ef20492e5853096cf8733",
-				Description: "[firing:2]  ",
+				Description: "[FIRING:2]  ",
 				EventAction: "trigger",
 				Payload: &pagerDutyPayload{
 					Summary:   "[FIRING:2]  ",

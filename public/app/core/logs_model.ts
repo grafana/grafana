@@ -30,8 +30,10 @@ import {
   AbsoluteTimeRange,
   sortInAscendingOrder,
   rangeUtil,
+  DataQuery,
 } from '@grafana/data';
 import { getThemeColor } from 'app/core/utils/colors';
+import { config } from '@grafana/runtime';
 
 export const LIMIT_LABEL = 'Line limit';
 
@@ -146,6 +148,7 @@ export function makeSeriesForLogs(sortedRows: LogRowModel[], bucketSize: number,
     timeField.display = getDisplayProcessor({
       field: timeField,
       timeZone,
+      theme: config.theme2,
     });
 
     const valueField = fieldCache.getFirstFieldOfType(FieldType.number)!;
@@ -155,7 +158,7 @@ export function makeSeriesForLogs(sortedRows: LogRowModel[], bucketSize: number,
     };
 
     valueField.name = series.alias;
-    const fieldDisplayProcessor = getDisplayProcessor({ field: valueField, timeZone });
+    const fieldDisplayProcessor = getDisplayProcessor({ field: valueField, timeZone, theme: config.theme2 });
     valueField.display = (value: any) => ({ ...fieldDisplayProcessor(value), color: series.color });
 
     const points = getFlotPairs({
@@ -200,7 +203,8 @@ export function dataFrameToLogsModel(
   dataFrame: DataFrame[],
   intervalMs: number | undefined,
   timeZone: TimeZone,
-  absoluteRange?: AbsoluteTimeRange
+  absoluteRange?: AbsoluteTimeRange,
+  queries?: DataQuery[]
 ): LogsModel {
   const { logSeries } = separateLogsAndMetrics(dataFrame);
   const logsModel = logSeriesToLogsModel(logSeries);
@@ -223,6 +227,7 @@ export function dataFrameToLogsModel(
     } else {
       logsModel.series = [];
     }
+    logsModel.queries = queries;
     return logsModel;
   }
 
@@ -231,6 +236,7 @@ export function dataFrameToLogsModel(
     rows: [],
     meta: [],
     series: [],
+    queries,
   };
 }
 
@@ -473,7 +479,7 @@ function adjustMetaInfo(logsModel: LogsModel, visibleRangeMs?: number, requested
   let logsModelMeta = [...logsModel.meta!];
 
   const limitIndex = logsModelMeta.findIndex((meta) => meta.label === LIMIT_LABEL);
-  const limit = limitIndex && logsModelMeta[limitIndex]?.value;
+  const limit = limitIndex >= 0 && logsModelMeta[limitIndex]?.value;
 
   if (limit && limit > 0) {
     let metaLimitValue;

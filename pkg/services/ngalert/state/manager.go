@@ -1,25 +1,29 @@
 package state
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
+	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngModels "github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
 type Manager struct {
-	cache *cache
-	quit  chan struct{}
-	Log   log.Logger
+	cache   *cache
+	quit    chan struct{}
+	Log     log.Logger
+	metrics *metrics.Metrics
 }
 
-func NewManager(logger log.Logger) *Manager {
+func NewManager(logger log.Logger, metrics *metrics.Metrics) *Manager {
 	manager := &Manager{
-		cache: newCache(),
-		quit:  make(chan struct{}),
-		Log:   logger,
+		cache:   newCache(logger, metrics),
+		quit:    make(chan struct{}),
+		Log:     logger,
+		metrics: metrics,
 	}
 	go manager.cleanUp()
 	return manager
@@ -37,13 +41,18 @@ func (st *Manager) set(entry *State) {
 	st.cache.set(entry)
 }
 
-func (st *Manager) Get(id string) (*State, error) {
-	return st.cache.get(id)
+func (st *Manager) Get(orgID int64, alertRuleUID, stateId string) (*State, error) {
+	return st.cache.get(orgID, alertRuleUID, stateId)
 }
 
-//Used to ensure a clean cache on startup
+// ResetCache is used to ensure a clean cache on startup.
 func (st *Manager) ResetCache() {
 	st.cache.reset()
+}
+
+// RemoveByRuleUID deletes all entries in the state manager that match the given rule UID.
+func (st *Manager) RemoveByRuleUID(orgID int64, ruleUID string) {
+	st.cache.removeByRuleUID(orgID, ruleUID)
 }
 
 func (st *Manager) ProcessEvalResults(alertRule *ngModels.AlertRule, results eval.Results) []*State {
@@ -86,17 +95,20 @@ func (st *Manager) setNextState(alertRule *ngModels.AlertRule, result eval.Resul
 	return currentState
 }
 
-func (st *Manager) GetAll() []*State {
-	return st.cache.getAll()
+func (st *Manager) GetAll(orgID int64) []*State {
+	return st.cache.getAll(orgID)
 }
 
-func (st *Manager) GetStatesByRuleUID() map[string][]*State {
-	return st.cache.getStatesByRuleUID()
+func (st *Manager) GetStatesForRuleUID(orgID int64, alertRuleUID string) []*State {
+	return st.cache.getStatesForRuleUID(orgID, alertRuleUID)
 }
 
 func (st *Manager) cleanUp() {
-	ticker := time.NewTicker(time.Duration(60) * time.Minute)
-	st.Log.Debug("starting cleanup process", "intervalMinutes", 60)
+	// TODO: parameterize?
+	// Setting to a reasonable default scrape interval for Prometheus.
+	dur := time.Duration(15) * time.Second
+	ticker := time.NewTicker(dur)
+	st.Log.Debug("starting cleanup process", "dur", fmt.Sprint(dur))
 	for {
 		select {
 		case <-ticker.C:

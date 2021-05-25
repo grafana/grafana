@@ -19,7 +19,7 @@ export const TutorialCard: FC<Props> = ({ card }) => {
       <div className={cardContent}>
         <div className={styles.type}>{card.type}</div>
         <div className={styles.heading}>{card.done ? 'complete' : card.heading}</div>
-        <h4>{card.title}</h4>
+        <h4 className={styles.cardTitle}>{card.title}</h4>
         <div className={styles.info}>{card.info}</div>
         <Icon className={iconStyle(theme, card.done)} name={card.icon} size="xxl" />
       </div>
@@ -37,7 +37,6 @@ const handleTutorialClick = (event: MouseEvent<HTMLAnchorElement>, card: Tutoria
 };
 
 const getStyles = stylesFactory((theme: GrafanaTheme, complete: boolean) => {
-  const textColor = `${complete ? theme.palette.blue95 : '#FFB357'}`;
   return {
     card: css`
       ${cardStyle(theme, complete)}
@@ -53,13 +52,16 @@ const getStyles = stylesFactory((theme: GrafanaTheme, complete: boolean) => {
       }
     `,
     type: css`
-      color: ${textColor};
+      color: ${theme.colors.textBlue};
       text-transform: uppercase;
     `,
     heading: css`
       text-transform: uppercase;
-      color: ${textColor};
+      color: ${theme.colors.textBlue};
       margin-bottom: ${theme.spacing.sm};
+    `,
+    cardTitle: css`
+      margin-bottom: ${theme.spacing.md};
     `,
     info: css`
       margin-bottom: ${theme.spacing.md};

@@ -8,11 +8,16 @@ import { AnnotationKeyInput } from './AnnotationKeyInput';
 
 const AnnotationsField: FC = () => {
   const styles = useStyles(getStyles);
-  const { control, register, watch, errors } = useFormContext<RuleFormValues>();
-  const annotations = watch('annotations');
+  const {
+    control,
+    register,
+    watch,
+    formState: { errors },
+  } = useFormContext();
+  const annotations = watch('annotations') as RuleFormValues['annotations'];
 
   const existingKeys = useCallback(
-    (index: number): string[] => annotations.filter((_, idx) => idx !== index).map(({ key }) => key),
+    (index: number): string[] => annotations.filter((_, idx: number) => idx !== index).map(({ key }) => key),
     [annotations]
   );
 
@@ -24,17 +29,17 @@ const AnnotationsField: FC = () => {
           return (
             <div className={styles.flexColumn}>
               {fields.map((field, index) => (
-                <div key={`${field.annotationKey}-${index}`} className={styles.flexRow}>
+                <div key={field.id} className={styles.flexRow}>
                   <Field
                     className={styles.field}
                     invalid={!!errors.annotations?.[index]?.key?.message}
                     error={errors.annotations?.[index]?.key?.message}
                   >
                     <InputControl
-                      as={AnnotationKeyInput}
-                      width={15}
                       name={`annotations[${index}].key`}
-                      existingKeys={existingKeys(index)}
+                      render={({ field: { ref, ...field } }) => (
+                        <AnnotationKeyInput {...field} existingKeys={existingKeys(index)} width={18} />
+                      )}
                       control={control}
                       rules={{ required: { value: !!annotations[index]?.value, message: 'Required.' } }}
                     />
@@ -45,9 +50,10 @@ const AnnotationsField: FC = () => {
                     error={errors.annotations?.[index]?.value?.message}
                   >
                     <TextArea
-                      name={`annotations[${index}].value`}
                       className={styles.annotationTextArea}
-                      ref={register({ required: { value: !!annotations[index]?.key, message: 'Required.' } })}
+                      {...register(`annotations[${index}].value`, {
+                        required: { value: !!annotations[index]?.key, message: 'Required.' },
+                      })}
                       placeholder={`value`}
                       defaultValue={field.value}
                     />
@@ -83,7 +89,7 @@ const AnnotationsField: FC = () => {
 
 const getStyles = (theme: GrafanaTheme) => ({
   annotationTextArea: css`
-    width: 450px;
+    width: 426px;
     height: 76px;
   `,
   addAnnotationsButton: css`

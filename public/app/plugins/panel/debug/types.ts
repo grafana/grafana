@@ -11,6 +11,7 @@ export type UpdateCounters = {
 export enum DebugMode {
   Render = 'render',
   Events = 'events',
+  Cursor = 'cursor',
 }
 
 export interface DebugPanelOptions {

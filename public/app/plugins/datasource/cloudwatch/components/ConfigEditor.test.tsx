@@ -22,6 +22,7 @@ const setup = (propOverrides?: object) => {
   const props: Props = {
     options: {
       id: 1,
+      uid: 'z',
       orgId: 1,
       typeLogoUrl: '',
       name: 'CloudWatch',

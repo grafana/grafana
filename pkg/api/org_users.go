@@ -157,6 +157,47 @@ func (hs *HTTPServer) getOrgUsersHelper(query *models.GetOrgUsersQuery, signedIn
 	return filteredUsers, nil
 }
 
+// SearchOrgUsersWithPaging is an HTTP handler to search for org users with paging.
+// GET /api/org/users/search
+func (hs *HTTPServer) SearchOrgUsersWithPaging(c *models.ReqContext) response.Response {
+	perPage := c.QueryInt("perpage")
+	if perPage <= 0 {
+		perPage = 1000
+	}
+	page := c.QueryInt("page")
+
+	if page < 1 {
+		page = 1
+	}
+
+	query := &models.SearchOrgUsersQuery{
+		OrgID: c.OrgId,
+		Query: c.Query("query"),
+		Limit: perPage,
+		Page:  page,
+	}
+
+	if err := hs.SQLStore.SearchOrgUsers(query); err != nil {
+		return response.Error(500, "Failed to get users for current organization", err)
+	}
+
+	filteredUsers := make([]*models.OrgUserDTO, 0, len(query.Result.OrgUsers))
+	for _, user := range query.Result.OrgUsers {
+		if dtos.IsHiddenUser(user.Login, c.SignedInUser, hs.Cfg) {
+			continue
+		}
+		user.AvatarUrl = dtos.GetGravatarUrl(user.Email)
+
+		filteredUsers = append(filteredUsers, user)
+	}
+
+	query.Result.OrgUsers = filteredUsers
+	query.Result.Page = page
+	query.Result.PerPage = perPage
+
+	return response.JSON(200, query.Result)
+}
+
 // PATCH /api/org/users/:userId
 func UpdateOrgUserForCurrentOrg(c *models.ReqContext, cmd models.UpdateOrgUserCommand) response.Response {
 	cmd.OrgId = c.OrgId
@@ -175,7 +216,6 @@ func updateOrgUserHelper(cmd models.UpdateOrgUserCommand) response.Response {
 	if !cmd.Role.IsValid() {
 		return response.Error(400, "Invalid role specified", nil)
 	}
-
 	if err := bus.Dispatch(&cmd); err != nil {
 		if errors.Is(err, models.ErrLastOrgAdmin) {
 			return response.Error(400, "Cannot change role so that there is no organization admin left", nil)

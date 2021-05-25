@@ -68,14 +68,12 @@ export type WebhookConfig = {
 };
 
 export type GrafanaManagedReceiverConfig = {
-  id?: number;
-  frequency: number;
   disableResolveMessage: boolean;
-  secureFields: Record<string, unknown>;
+  secureFields?: Record<string, boolean>;
+  secureSettings?: Record<string, unknown>;
   settings: Record<string, unknown>;
-  sendReminder: boolean;
   type: string;
-  uid: string;
+  name: string;
   updated?: string;
   created?: string;
 };
@@ -103,7 +101,7 @@ export type Route = {
   match_re?: Record<string, string>;
   group_wait?: string;
   group_interval?: string;
-  repeat_itnerval?: string;
+  repeat_interval?: string;
   routes?: Route[];
 };
 

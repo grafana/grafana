@@ -6,8 +6,8 @@ import {
   ALL_VARIABLE_TEXT,
   ALL_VARIABLE_VALUE,
   getInstanceState,
-  VariablePayload,
   initialVariablesState,
+  VariablePayload,
   VariablesState,
 } from '../state/types';
 
@@ -45,11 +45,9 @@ export const dataSourceVariableSlice = createSlice({
           continue;
         }
 
-        if (regex && !regex.exec(source.name)) {
-          continue;
+        if (isValid(source, regex)) {
+          options.push({ text: source.name, value: source.name, selected: false });
         }
-
-        options.push({ text: source.name, value: source.name, selected: false });
 
         if (source.isDefault) {
           options.push({ text: 'default', value: 'default', selected: false });
@@ -68,6 +66,14 @@ export const dataSourceVariableSlice = createSlice({
     },
   },
 });
+
+function isValid(source: DataSourceInstanceSettings, regex?: RegExp) {
+  if (!regex) {
+    return true;
+  }
+
+  return regex && regex.exec(source.name);
+}
 
 export const dataSourceVariableReducer = dataSourceVariableSlice.reducer;
 export const { createDataSourceOptions } = dataSourceVariableSlice.actions;

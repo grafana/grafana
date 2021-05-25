@@ -1,7 +1,7 @@
 import { css } from '@emotion/react';
-import { GrafanaThemeV2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 
-export function getAgularPanelStyles(theme: GrafanaThemeV2) {
+export function getAgularPanelStyles(theme: GrafanaTheme2) {
   return css`
     .panel-options-group {
       border-bottom: 1px solid ${theme.colors.border.weak};

@@ -7,21 +7,20 @@ import { useStyles } from '../../themes';
 import { GrafanaTheme } from '@grafana/data';
 import { VizLegendListItem } from './VizLegendListItem';
 
-export interface Props extends VizLegendBaseProps {}
+export interface Props<T> extends VizLegendBaseProps<T> {}
 
 /**
  * @internal
  */
-export const VizLegendList: React.FunctionComponent<Props> = ({
+export const VizLegendList = <T extends unknown>({
   items,
   itemRenderer,
-  onSeriesColorChange,
-  onLabelClick,
   onLabelMouseEnter,
   onLabelMouseOut,
+  onLabelClick,
   placement,
   className,
-}) => {
+}: Props<T>) => {
   const styles = useStyles(getStyles);
 
   if (!itemRenderer) {
@@ -30,18 +29,17 @@ export const VizLegendList: React.FunctionComponent<Props> = ({
       <VizLegendListItem
         item={item}
         onLabelClick={onLabelClick}
-        onSeriesColorChange={onSeriesColorChange}
         onLabelMouseEnter={onLabelMouseEnter}
         onLabelMouseOut={onLabelMouseOut}
       />
     );
   }
 
-  const getItemKey = (item: VizLegendItem) => `${item.getItemKey ? item.getItemKey() : item.label}`;
+  const getItemKey = (item: VizLegendItem<T>) => `${item.getItemKey ? item.getItemKey() : item.label}`;
 
   switch (placement) {
     case 'right': {
-      const renderItem = (item: VizLegendItem, index: number) => {
+      const renderItem = (item: VizLegendItem<T>, index: number) => {
         return <span className={styles.itemRight}>{itemRenderer!(item, index)}</span>;
       };
 
@@ -53,7 +51,7 @@ export const VizLegendList: React.FunctionComponent<Props> = ({
     }
     case 'bottom':
     default: {
-      const renderItem = (item: VizLegendItem, index: number) => {
+      const renderItem = (item: VizLegendItem<T>, index: number) => {
         return <span className={styles.itemBottom}>{itemRenderer!(item, index)}</span>;
       };
 

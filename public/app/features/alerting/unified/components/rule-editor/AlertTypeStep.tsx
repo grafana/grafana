@@ -6,10 +6,11 @@ import { css } from '@emotion/css';
 import { RuleEditorSection } from './RuleEditorSection';
 import { useFormContext } from 'react-hook-form';
 import { RuleFormType, RuleFormValues } from '../../types/rule-form';
-import { DataSourcePicker, DataSourcePickerProps } from '@grafana/runtime';
+import { DataSourcePicker } from '@grafana/runtime';
 import { useRulesSourcesWithRuler } from '../../hooks/useRuleSourcesWithRuler';
 import { RuleFolderPicker } from './RuleFolderPicker';
 import { GroupAndNamespaceFields } from './GroupAndNamespaceFields';
+import { contextSrv } from 'app/core/services/context_srv';
 
 const alertTypeOptions: SelectableValue[] = [
   {
@@ -17,12 +18,15 @@ const alertTypeOptions: SelectableValue[] = [
     value: RuleFormType.threshold,
     description: 'Metric alert based on a defined threshold',
   },
-  {
+];
+
+if (contextSrv.isEditor) {
+  alertTypeOptions.push({
     label: 'System or application',
     value: RuleFormType.system,
     description: 'Alert based on a system or application behavior. Based on Prometheus.',
-  },
-];
+  });
+}
 
 interface Props {
   editingExistingRule: boolean;
@@ -31,7 +35,13 @@ interface Props {
 export const AlertTypeStep: FC<Props> = ({ editingExistingRule }) => {
   const styles = useStyles(getStyles);
 
-  const { register, control, watch, errors, setValue } = useFormContext<RuleFormValues>();
+  const {
+    register,
+    control,
+    watch,
+    formState: { errors },
+    setValue,
+  } = useFormContext<RuleFormValues & { location?: string }>();
 
   const ruleFormType = watch('type');
   const dataSourceName = watch('dataSourceName');
@@ -61,9 +71,8 @@ export const AlertTypeStep: FC<Props> = ({ editingExistingRule }) => {
         invalid={!!errors.name?.message}
       >
         <Input
+          {...register('name', { required: { value: true, message: 'Must enter an alert name' } })}
           autoFocus={true}
-          ref={register({ required: { value: true, message: 'Must enter an alert name' } })}
-          name="name"
         />
       </Field>
       <div className={styles.flexRow}>
@@ -75,24 +84,28 @@ export const AlertTypeStep: FC<Props> = ({ editingExistingRule }) => {
           invalid={!!errors.type?.message}
         >
           <InputControl
-            as={Select}
+            render={({ field: { onChange, ref, ...field } }) => (
+              <Select
+                {...field}
+                options={alertTypeOptions}
+                onChange={(v: SelectableValue) => {
+                  const value = v?.value;
+                  // when switching to system alerts, null out data source selection if it's not a rules source with ruler
+                  if (
+                    value === RuleFormType.system &&
+                    dataSourceName &&
+                    !rulesSourcesWithRuler.find(({ name }) => name === dataSourceName)
+                  ) {
+                    setValue('dataSourceName', null);
+                  }
+                  onChange(value);
+                }}
+              />
+            )}
             name="type"
-            options={alertTypeOptions}
             control={control}
             rules={{
               required: { value: true, message: 'Please select alert type' },
-            }}
-            onChange={(values: SelectableValue[]) => {
-              const value = values[0]?.value;
-              // when switching to system alerts, null out data source selection if it's not a rules source with ruler
-              if (
-                value === RuleFormType.system &&
-                dataSourceName &&
-                !rulesSourcesWithRuler.find(({ name }) => name === dataSourceName)
-              ) {
-                setValue('dataSourceName', null);
-              }
-              return value;
             }}
           />
         </Field>
@@ -104,20 +117,24 @@ export const AlertTypeStep: FC<Props> = ({ editingExistingRule }) => {
             invalid={!!errors.dataSourceName?.message}
           >
             <InputControl
-              as={(DataSourcePicker as unknown) as React.ComponentType<Omit<DataSourcePickerProps, 'current'>>}
-              valueName="current"
-              filter={dataSourceFilter}
+              render={({ field: { onChange, ref, value, ...field } }) => (
+                <DataSourcePicker
+                  {...field}
+                  current={value}
+                  filter={dataSourceFilter}
+                  noDefault
+                  alerting
+                  onChange={(ds: DataSourceInstanceSettings) => {
+                    // reset location if switching data sources, as different rules source will have different groups and namespaces
+                    setValue('location', undefined);
+                    onChange(ds?.name ?? null);
+                  }}
+                />
+              )}
               name="dataSourceName"
-              noDefault={true}
               control={control}
-              alerting={true}
               rules={{
                 required: { value: true, message: 'Please select a data source' },
-              }}
-              onChange={(ds: DataSourceInstanceSettings[]) => {
-                // reset location if switching data sources, as differnet rules source will have different groups and namespaces
-                setValue('location', undefined);
-                return ds[0]?.name ?? null;
               }}
             />
           </Field>
@@ -134,10 +151,10 @@ export const AlertTypeStep: FC<Props> = ({ editingExistingRule }) => {
           invalid={!!errors.folder?.message}
         >
           <InputControl
-            as={RuleFolderPicker}
+            render={({ field: { ref, ...field } }) => (
+              <RuleFolderPicker {...field} enableCreateNew={true} enableReset={true} />
+            )}
             name="folder"
-            enableCreateNew={true}
-            enableReset={true}
             rules={{
               required: { value: true, message: 'Please select a folder' },
             }}

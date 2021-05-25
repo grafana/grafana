@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
-import { GrafanaThemeV2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { stylesFactory } from '../../themes';
 
-export const getModalStyles = stylesFactory((theme: GrafanaThemeV2) => {
+export const getModalStyles = stylesFactory((theme: GrafanaTheme2) => {
   const borderRadius = theme.shape.borderRadius(1);
 
   return {
@@ -68,9 +68,7 @@ export const getModalStyles = stylesFactory((theme: GrafanaThemeV2) => {
     `,
     modalContent: css`
       padding: ${theme.spacing(3)};
-      overflow: auto;
       width: 100%;
-      max-height: calc(90vh - ${theme.spacing(4)});
     `,
     modalButtonRow: css`
       padding-top: ${theme.spacing(3)};

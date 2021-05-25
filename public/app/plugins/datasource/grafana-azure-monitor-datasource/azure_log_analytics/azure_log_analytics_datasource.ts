@@ -1,6 +1,6 @@
 import { map } from 'lodash';
 import LogAnalyticsQuerystringBuilder from '../log_analytics/querystring_builder';
-import ResponseParser from './response_parser';
+import ResponseParser, { transformMetadataToKustoSchema } from './response_parser';
 import { AzureMonitorQuery, AzureDataSourceJsonData, AzureLogsVariable, AzureQueryType } from '../types';
 import {
   DataQueryRequest,
@@ -9,9 +9,12 @@ import {
   DataSourceInstanceSettings,
   MetricFindValue,
 } from '@grafana/data';
-import { getBackendSrv, getTemplateSrv, DataSourceWithBackend } from '@grafana/runtime';
+import { getBackendSrv, getTemplateSrv, DataSourceWithBackend, FetchResponse } from '@grafana/runtime';
 import { Observable, from } from 'rxjs';
 import { mergeMap } from 'rxjs/operators';
+import { getAzureCloud } from '../credentials';
+import { getLogAnalyticsApiRoute, getLogAnalyticsManagementApiRoute } from '../api/routes';
+import { AzureLogAnalyticsMetadata } from '../types/logAnalyticsMetadata';
 
 export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
   AzureMonitorQuery,
@@ -21,11 +24,6 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
   baseUrl: string;
   applicationId: string;
 
-  /**
-   * @deprecated
-   * TODO: Which one of these values should be used? Was there a migration?
-   * */
-  logAnalyticsSubscriptionId: string;
   subscriptionId: string;
 
   azureMonitorUrl: string;
@@ -36,56 +34,20 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     super(instanceSettings);
     this.cache = new Map();
 
-    switch (this.instanceSettings.jsonData.cloudName) {
-      case 'govazuremonitor': // Azure US Government
-        this.baseUrl = '/govloganalyticsazure';
-        break;
-      case 'germanyazuremonitor': // Azure Germany
-        break;
-      case 'chinaazuremonitor': // Azure China
-        this.baseUrl = '/chinaloganalyticsazure';
-        break;
-      default:
-        // Azure Global
-        this.baseUrl = '/loganalyticsazure';
-    }
+    const cloud = getAzureCloud(instanceSettings);
+    const logAnalyticsRoute = getLogAnalyticsApiRoute(cloud);
+    this.baseUrl = `/${logAnalyticsRoute}`;
+
+    const managementRoute = getLogAnalyticsManagementApiRoute(cloud);
+    this.azureMonitorUrl = `/${managementRoute}/subscriptions`;
 
     this.url = instanceSettings.url || '';
+    this.subscriptionId = this.instanceSettings.jsonData.logAnalyticsSubscriptionId || '';
     this.defaultOrFirstWorkspace = this.instanceSettings.jsonData.logAnalyticsDefaultWorkspace || '';
-
-    this.setWorkspaceUrl();
   }
 
   isConfigured(): boolean {
-    return (
-      (!!this.instanceSettings.jsonData.logAnalyticsSubscriptionId &&
-        this.instanceSettings.jsonData.logAnalyticsSubscriptionId.length > 0) ||
-      !!this.instanceSettings.jsonData.azureLogAnalyticsSameAs
-    );
-  }
-
-  setWorkspaceUrl() {
-    if (!!this.instanceSettings.jsonData.subscriptionId || !!this.instanceSettings.jsonData.azureLogAnalyticsSameAs) {
-      this.subscriptionId = this.instanceSettings.jsonData.subscriptionId;
-      const azureCloud = this.instanceSettings.jsonData.cloudName || 'azuremonitor';
-      this.azureMonitorUrl = `/${azureCloud}/subscriptions`;
-    } else {
-      this.subscriptionId = this.instanceSettings.jsonData.logAnalyticsSubscriptionId || '';
-
-      switch (this.instanceSettings.jsonData.cloudName) {
-        case 'govazuremonitor': // Azure US Government
-          this.azureMonitorUrl = `/govworkspacesloganalytics/subscriptions`;
-          break;
-        case 'germanyazuremonitor': // Azure Germany
-          break;
-        case 'chinaazuremonitor': // Azure China
-          this.azureMonitorUrl = `/chinaworkspacesloganalytics/subscriptions`;
-          break;
-        default:
-          // Azure Global
-          this.azureMonitorUrl = `/workspacesloganalytics/subscriptions`;
-      }
-    }
+    return !!this.subscriptionId && this.subscriptionId.length > 0;
   }
 
   async getWorkspaces(subscription: string): Promise<AzureLogsVariable[]> {
@@ -107,15 +69,20 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     return this.doRequest(workspaceListUrl, true);
   }
 
-  getSchema(workspace: string) {
-    if (!workspace) {
-      return Promise.resolve();
-    }
+  async getMetadata(workspace: string) {
     const url = `${this.baseUrl}/${getTemplateSrv().replace(workspace, {})}/metadata`;
+    const resp = await this.doRequest<AzureLogAnalyticsMetadata>(url);
 
-    return this.doRequest(url).then((response: any) => {
-      return new ResponseParser(response.data).parseSchemaResult();
-    });
+    if (!resp.ok) {
+      throw new Error('Unable to get metadata for workspace');
+    }
+
+    return resp.data;
+  }
+
+  async getKustoSchema(workspace: string) {
+    const metadata = await this.getMetadata(workspace);
+    return transformMetadataToKustoSchema(metadata, workspace);
   }
 
   applyTemplateVariables(target: AzureMonitorQuery, scopedVars: ScopedVars): Record<string, any> {
@@ -348,7 +315,7 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     });
   }
 
-  async doRequest(url: string, useCache = false, maxRetries = 1): Promise<any> {
+  async doRequest<T = any>(url: string, useCache = false, maxRetries = 1): Promise<FetchResponse<T>> {
     try {
       if (useCache && this.cache.has(url)) {
         return this.cache.get(url);
