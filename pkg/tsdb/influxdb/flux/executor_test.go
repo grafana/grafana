@@ -204,8 +204,12 @@ func TestBuckets(t *testing.T) {
 	verifyGoldenResponse(t, "buckets")
 }
 
-func TestBooleanGrouping(t *testing.T) {
-	verifyGoldenResponse(t, "boolean")
+func TestBooleanTagGrouping(t *testing.T) {
+	verifyGoldenResponse(t, "boolean_tag")
+}
+
+func TestBooleanData(t *testing.T) {
+	verifyGoldenResponse(t, "boolean_data")
 }
 
 func TestGoldenFiles(t *testing.T) {

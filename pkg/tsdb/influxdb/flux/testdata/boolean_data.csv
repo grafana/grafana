@@ -1,0 +1,9 @@
+#group,false,false,true,true,false,false,true,true,true
+#datatype,string,long,dateTime:RFC3339,dateTime:RFC3339,dateTime:RFC3339,boolean,string,string,string
+#default,_result,,,,,,,,
+,result,table,_start,_stop,_time,_value,_field,_measurement,direction
+,,0,2021-05-20T08:36:26.7Z,2021-05-20T09:36:26.7Z,2021-05-20T09:35:39.6Z,true,exitcode,x,left
+,,0,2021-05-20T08:36:26.7Z,2021-05-20T09:36:26.7Z,2021-05-20T09:35:43.0Z,false,exitcode,x,left
+,,1,2021-05-20T08:36:26.7Z,2021-05-20T09:36:26.7Z,2021-05-20T09:35:47.3Z,false,exitcode,x,right
+,,1,2021-05-20T08:36:26.7Z,2021-05-20T09:36:26.7Z,2021-05-20T09:35:49.6Z,true,exitcode,x,right
+
