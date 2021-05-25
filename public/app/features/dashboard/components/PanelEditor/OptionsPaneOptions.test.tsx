@@ -1,5 +1,5 @@
 import React from 'react';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import {
   FieldConfigSource,
   LoadingState,
@@ -210,5 +210,28 @@ describe('OptionsPaneOptions', () => {
     expect(
       screen.queryByLabelText(selectors.components.ValuePicker.button('Add field override'))
     ).not.toBeInTheDocument();
+  });
+
+  it('should allow standard properties extension', async () => {
+    const scenario = new OptionsPaneOptionsTestScenario();
+
+    scenario.plugin = getPanelPlugin({
+      id: 'TestPanel',
+    }).useFieldConfig({
+      useCustomConfig: (b) => {
+        b.addBooleanSwitch({
+          name: 'CustomThresholdOption',
+          path: 'CustomThresholdOption',
+          category: ['Thresholds'],
+        });
+      },
+    });
+
+    scenario.render();
+
+    const thresholdsSection = screen.getByLabelText(selectors.components.OptionsGroup.group('Thresholds'));
+    expect(
+      within(thresholdsSection).getByLabelText(OptionsPaneSelector.fieldLabel('Thresholds CustomThresholdOption'))
+    ).toBeInTheDocument();
   });
 });

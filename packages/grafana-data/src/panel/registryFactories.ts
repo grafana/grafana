@@ -1,6 +1,6 @@
 import { FieldConfigOptionsRegistry } from '../field/FieldConfigOptionsRegistry';
 import { standardFieldConfigEditorRegistry } from '../field/standardFieldConfigEditorRegistry';
-import { FieldConfigProperty } from '../types/fieldOverrides';
+import { FieldConfigProperty, FieldConfigPropertyItem } from '../types/fieldOverrides';
 import { FieldConfigEditorBuilder } from '../utils/OptionsUIBuilders';
 import { SetFieldConfigOptionsArgs } from './PanelPlugin';
 
@@ -16,6 +16,8 @@ export function createFieldConfigRegistry<TFieldConfigOptions>(
   pluginName: string
 ): FieldConfigOptionsRegistry {
   const registry = new FieldConfigOptionsRegistry();
+  const standardConfigs = standardFieldConfigEditorRegistry.list();
+  const standardOptionsExtensions: Record<string, FieldConfigPropertyItem[]> = {};
 
   // Add custom options
   if (config.useCustomConfig) {
@@ -28,11 +30,18 @@ export function createFieldConfigRegistry<TFieldConfigOptions>(
       // problem is id (registry index) is used as property path
       // so sort of need a property path on the FieldPropertyEditorItem
       customProp.id = 'custom.' + customProp.id;
-      registry.register(customProp);
+
+      if (isStandardConfigExtension(customProp, standardConfigs)) {
+        const currentExtensions = standardOptionsExtensions[customProp.category![0]] ?? [];
+        currentExtensions.push(customProp);
+        standardOptionsExtensions[customProp.category![0]] = currentExtensions;
+      } else {
+        registry.register(customProp);
+      }
     }
   }
 
-  for (let fieldConfigProp of standardFieldConfigEditorRegistry.list()) {
+  for (let fieldConfigProp of standardConfigs) {
     if (config.disableStandardOptions) {
       const isDisabled = config.disableStandardOptions.indexOf(fieldConfigProp.id as FieldConfigProperty) > -1;
       if (isDisabled) {
@@ -58,7 +67,19 @@ export function createFieldConfigRegistry<TFieldConfigOptions>(
     }
 
     registry.register(fieldConfigProp);
+
+    if (fieldConfigProp.category && standardOptionsExtensions[fieldConfigProp.category[0]]) {
+      for (let extensionProperty of standardOptionsExtensions[fieldConfigProp.category[0]]) {
+        registry.register(extensionProperty);
+      }
+    }
   }
 
   return registry;
+}
+
+function isStandardConfigExtension(property: FieldConfigPropertyItem, standardProperties: FieldConfigPropertyItem[]) {
+  return Boolean(
+    standardProperties.find((p) => property.category && p.category && property.category[0] === p.category[0])
+  );
 }
