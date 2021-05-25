@@ -3,7 +3,6 @@ package pluginproxy
 import (
 	"context"
 	"crypto/sha256"
-	"errors"
 	"fmt"
 	"strings"
 	"sync"
@@ -145,13 +144,6 @@ func (c *managedIdentityCredential) GetAccessToken(ctx context.Context, scopes [
 	if err != nil {
 		return nil, err
 	}
-
-	// Implementation of ManagedIdentityCredential doesn't support scopes, converting to resource
-	if len(scopes) == 0 {
-		return nil, errors.New("scopes not provided")
-	}
-	resource := strings.TrimSuffix(scopes[0], "/.default")
-	scopes = []string{resource}
 
 	accessToken, err := credential.GetToken(ctx, azcore.TokenRequestOptions{Scopes: scopes})
 	if err != nil {
