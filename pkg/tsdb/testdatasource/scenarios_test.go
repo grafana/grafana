@@ -278,8 +278,9 @@ func TestReadCSV(t *testing.T) {
 	require.NoError(t, err)
 
 	frame := data.NewFrame("", fBool, fBool2, fNum, fStr)
-	out, err := data.FrameToJSON(frame, true, true)
+	frameToJSON, err := data.FrameToJSON(frame)
 	require.NoError(t, err)
+	out := frameToJSON.Bytes(data.IncludeAll)
 
 	// require.Equal(t, "", string(out))
 

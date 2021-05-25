@@ -106,11 +106,12 @@ func (s *ManagedStream) ListChannels(orgID int64, prefix string) []util.DynMap {
 // unstableSchema flag can be set to disable schema caching for a path.
 func (s *ManagedStream) Push(orgID int64, path string, frame *data.Frame, unstableSchema bool) error {
 	// Keep schema + data for last packet.
-	frameJSON, err := data.FrameToJSON(frame, true, true)
+	frameJSONWrapper, err := data.FrameToJSON(frame)
 	if err != nil {
 		logger.Error("Error marshaling frame with Schema", "error", err)
 		return err
 	}
+	frameJSON := frameJSONWrapper.Bytes(data.IncludeAll)
 
 	if !unstableSchema {
 		// If schema is stable we can safely cache it, and only send values if
@@ -128,11 +129,12 @@ func (s *ManagedStream) Push(orgID int64, path string, frame *data.Frame, unstab
 		// frame to keep Schema JSON and Values JSON in frame object
 		// to avoid encoding twice.
 		if exists {
-			frameJSON, err = data.FrameToJSON(frame, false, true)
+			frameJSONWrapper, err = data.FrameToJSON(frame)
 			if err != nil {
 				logger.Error("Error marshaling Frame to JSON", "error", err)
 				return err
 			}
+			frameJSON = frameJSONWrapper.Bytes(data.IncludeDataOnly)
 		}
 	} else {
 		// For unstable schema we always need to send everything to a connection.
