@@ -79,6 +79,9 @@ export const Advanced: FC<AdvancedProps> = ({
       technicalPreviewLegend,
       technicalPreviewDescription,
       technicalPreviewLinkText,
+      backupLabel,
+      backupLink,
+      backupTooltip,
     },
     tooltipLinkText,
   } = Messages;
@@ -274,8 +277,7 @@ export const Advanced: FC<AdvancedProps> = ({
                 dataQa="advanced-dbaas"
                 component={SwitchRow}
               />
-              {/* TODO remove comment when feature is ready to come out */}
-              {/* <Field
+              <Field
                 name="backup"
                 type="checkbox"
                 label={backupLabel}
@@ -283,10 +285,9 @@ export const Advanced: FC<AdvancedProps> = ({
                 tooltipLinkText={tooltipLinkText}
                 link={backupLink}
                 className={cx({ [styles.switchDisabled]: !values.backup })}
-                disabled={!values.backup}
                 dataQa="advanced-backup"
                 component={SwitchRow}
-              /> */}
+              />
               <Field
                 name="alerting"
                 type="checkbox"
