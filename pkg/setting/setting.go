@@ -378,6 +378,10 @@ type Cfg struct {
 	ExpressionsEnabled bool
 
 	ImageUploadProvider string
+
+	// LiveMaxConnections is a maximum number of WebSocket connections to
+	// Grafana Live ws endpoint (per Grafana server instance).
+	LiveMaxConnections int
 }
 
 // IsLiveConfigEnabled returns true if live should be able to save configs to SQL tables
@@ -951,6 +955,10 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	cfg.readDateFormats()
 	cfg.readSentryConfig()
 
+	if err := cfg.readLiveSettings(iniFile); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -1420,4 +1428,10 @@ func (cfg *Cfg) GetContentDeliveryURL(prefix string) string {
 func (cfg *Cfg) readDataSourcesSettings() {
 	datasources := cfg.Raw.Section("datasources")
 	cfg.DataSourceLimit = datasources.Key("datasource_limit").MustInt(5000)
+}
+
+func (cfg *Cfg) readLiveSettings(iniFile *ini.File) error {
+	section := iniFile.Section("live")
+	cfg.LiveMaxConnections = int(section.Key("max_connections").MustUint(100))
+	return nil
 }
