@@ -29,7 +29,7 @@ export const DBCluster: FC<DBClusterProps> = ({ kubernetes }) => {
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [logsModalVisible, setLogsModalVisible] = useState(false);
   const [selectedCluster, setSelectedCluster] = useState<Cluster>();
-  const [dbClusters, getDBClusters, loading] = useDBClusters(kubernetes);
+  const [dbClusters, getDBClusters, setLoading, loading] = useDBClusters(kubernetes);
   const [settings, setSettings] = useState<Settings>();
   const [settingsLoading, setSettingsLoading] = useState(true);
 
@@ -122,6 +122,7 @@ export const DBCluster: FC<DBClusterProps> = ({ kubernetes }) => {
       <DeleteDBClusterModal
         isVisible={deleteModalVisible}
         setVisible={setDeleteModalVisible}
+        setLoading={setLoading}
         onClusterDeleted={getDBClusters}
         selectedCluster={selectedCluster}
       />
