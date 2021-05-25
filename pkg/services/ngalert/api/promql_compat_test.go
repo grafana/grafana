@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func Test_instantQueryExtractor(t *testing.T) {
+func Test_instantQueryMarshaling(t *testing.T) {
 	for _, tc := range []struct {
 		desc      string
 		in        string

@@ -6,11 +6,14 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/cortexproject/cortex/pkg/util"
+	cortex_util "github.com/cortexproject/cortex/pkg/util"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/prometheus/prometheus/pkg/labels"
 	"github.com/prometheus/prometheus/promql"
 	"github.com/prometheus/prometheus/promql/parser"
+
+	"github.com/grafana/grafana/pkg/util"
 )
 
 type instantQueryResponse struct {
@@ -69,7 +72,6 @@ func (d *queryData) UnmarshalJSON(b []byte) error {
 	default:
 		return fmt.Errorf("unexpected response type: %s", d.ResultType)
 	}
-	return nil
 }
 
 type sample struct {
@@ -88,20 +90,39 @@ func instantQueryResults(resp instantQueryResponse) (eval.Results, error) {
 		return eval.Results{{
 			Instance:         map[string]string{},
 			State:            eval.Alerting,
-			EvaluatedAt:      util.TimeFromMillis(resp.Data.scalar.T),
+			EvaluatedAt:      cortex_util.TimeFromMillis(resp.Data.scalar.T),
 			EvaluationString: fmt.Sprint(resp.Data.scalar.V),
-		}}
+		}}, nil
 	case parser.ValueTypeVector:
 		results := make(eval.Results, 0, len(resp.Data.vector))
 		for _, s := range resp.Data.vector {
 			results = append(results, eval.Result{
 				Instance:         s.Metric.Map(),
 				State:            eval.Alerting,
-				EvaluatedAt:      util.TimeFromMillis(s.Value.T),
+				EvaluatedAt:      cortex_util.TimeFromMillis(s.Value.T),
 				EvaluationString: fmt.Sprint(s.Value.V),
 			})
 		}
+		return results, nil
 	default:
-		return nil, fmt.Errorf("unexpected response type: %s", d.ResultType)
+		return nil, fmt.Errorf("unexpected response type: %s", resp.Data.ResultType)
 	}
+}
+
+func instantQueryResultsExtractor(b []byte) (interface{}, error) {
+	var resp instantQueryResponse
+	err := json.Unmarshal(b, &resp)
+	if err != nil {
+		return nil, err
+	}
+
+	res, err := instantQueryResults(resp)
+	if err != nil {
+		return nil, err
+	}
+	frame := res.AsDataFrame()
+
+	return util.DynMap{
+		"instances": []*data.Frame{&frame},
+	}, nil
 }
