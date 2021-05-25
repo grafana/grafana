@@ -6,6 +6,8 @@ import { DBClusterService } from './DBCluster.service';
 
 export type AddDBClusterAction = (dbCluster: DBCluster) => void;
 export type GetDBClustersAction = () => void;
+export type SetDBClustersLoadingAction = (loading: boolean) => void;
+export type ManageDBClusters = [DBCluster[], GetDBClustersAction, SetDBClustersLoadingAction, boolean];
 
 export interface DBClusterProps {
   kubernetes: Kubernetes[];

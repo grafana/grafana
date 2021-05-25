@@ -10,6 +10,7 @@ import { newDBClusterService } from '../DBCluster.utils';
 export const DeleteDBClusterModal: FC<DeleteDBClusterModalProps> = ({
   isVisible,
   setVisible,
+  setLoading,
   onClusterDeleted,
   selectedCluster,
 }) => {
@@ -23,12 +24,14 @@ export const DeleteDBClusterModal: FC<DeleteDBClusterModalProps> = ({
     }
 
     try {
+      setLoading(true);
+      setVisible(false);
       const dbClusterService = newDBClusterService(selectedCluster?.databaseType);
 
       await dbClusterService.deleteDBClusters(selectedCluster);
-      setVisible(false);
       onClusterDeleted();
     } catch (e) {
+      setLoading(false);
       logger.error(e);
     }
   }, [selectedCluster]);
