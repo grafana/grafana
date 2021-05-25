@@ -504,16 +504,6 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 		Children:     []*dtos.NavLink{},
 	})
 
-	// 	if c.OrgRole == models.ROLE_ADMIN {
-	// 		navTree = append(navTree, &dtos.NavLink{
-	// 			Text:       "Backup Management",
-	// 			Id:         "backup",
-	// 			Url:        setting.AppSubUrl + "/backup",
-	// 			Icon:       "history",
-	// 			SortWeight: dtos.WeightBackup,
-	// 		})
-	// 	}
-
 	return navTree, nil
 }
 
