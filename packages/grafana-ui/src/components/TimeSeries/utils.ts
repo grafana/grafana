@@ -224,12 +224,10 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
   let cursor: Partial<uPlot.Cursor> = {
     // this scans left and right from cursor position to find nearest data index with value != null
     // TODO: do we want to only scan past undefined values, but halt at explicit null values?
-    dataIdx: (self, seriesIdx, hoveredIdx) => {
+    dataIdx: (self, seriesIdx, hoveredIdx, cursorXVal) => {
       let seriesData = self.data[seriesIdx];
 
       if (seriesData[hoveredIdx] == null) {
-        let cursorXVal = self.posToVal(self.cursor.left!, 'x');
-
         let nonNullLft = hoveredIdx,
           nonNullRgt = hoveredIdx,
           i;
