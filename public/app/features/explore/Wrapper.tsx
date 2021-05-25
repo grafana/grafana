@@ -6,13 +6,32 @@ import { lastSavedUrl, resetExploreAction, richHistoryUpdatedAction } from './st
 import { getRichHistory } from '../../core/utils/richHistory';
 import { ExplorePaneContainer } from './ExplorePaneContainer';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
+import { NavModel } from '@grafana/data';
+import { Branding } from '../../core/components/Branding/Branding';
 
-interface WrapperProps extends GrafanaRouteComponentProps<{}, ExploreQueryParams> {
+// Libraries
+import { getNavModel, getTitleFromNavModel } from '../../core/selectors/navModel';
+
+// Types
+import { StoreState } from 'app/types';
+
+export interface WrapperProps extends GrafanaRouteComponentProps<{}, ExploreQueryParams> {
   resetExploreAction: typeof resetExploreAction;
   richHistoryUpdatedAction: typeof richHistoryUpdatedAction;
+  navModel: NavModel;
 }
 
 export class Wrapper extends Component<WrapperProps> {
+  updatePageDocumentTitle(navModel: NavModel) {
+    // update document title
+    if (navModel) {
+      const title = getTitleFromNavModel(navModel);
+      document.title = title ? `${title} - ${Branding.AppTitle}` : Branding.AppTitle;
+    } else {
+      document.title = Branding.AppTitle;
+    }
+  }
+
   componentWillUnmount() {
     this.props.resetExploreAction({});
   }
@@ -23,6 +42,7 @@ export class Wrapper extends Component<WrapperProps> {
 
     const richHistory = getRichHistory();
     this.props.richHistoryUpdatedAction({ richHistory });
+    this.updatePageDocumentTitle(this.props.navModel);
   }
 
   render() {
@@ -46,9 +66,15 @@ export class Wrapper extends Component<WrapperProps> {
   }
 }
 
+function mapStateToProps(state: StoreState) {
+  return {
+    navModel: getNavModel(state.navIndex, 'explore'),
+  };
+}
+
 const mapDispatchToProps = {
   resetExploreAction,
   richHistoryUpdatedAction,
 };
 
-export default connect(null, mapDispatchToProps)(Wrapper);
+export default connect(mapStateToProps, mapDispatchToProps)(Wrapper);

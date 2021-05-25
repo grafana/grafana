@@ -252,6 +252,12 @@ describe('Wrapper', () => {
     await screen.findByText(`elastic Editor input: error`);
     await screen.findByText(`loki Editor input: { label="value"}`);
   });
+
+  it('changes the document title of the explore page', async () => {
+    setup({ datasources: [] });
+    await waitFor(() => expect(document.querySelector('head')).toMatchSnapshot());
+    await waitFor(() => expect(document.title).toEqual('Explore: Explore - Grafana'));
+  });
 });
 
 type DatasourceSetup = { settings: DataSourceInstanceSettings; api: DataSourceApi };
@@ -295,6 +301,16 @@ function setup(options?: SetupOptions): { datasources: { [name: string]: DataSou
   store.getState().user = {
     orgId: 1,
     timeZone: 'utc',
+  };
+
+  store.getState().navIndex = {
+    explore: {
+      id: 'explore',
+      text: 'Explore',
+      subTitle: 'Explore your data',
+      icon: 'compass',
+      url: '/explore',
+    },
   };
 
   locationService.push({ pathname: '/explore' });
