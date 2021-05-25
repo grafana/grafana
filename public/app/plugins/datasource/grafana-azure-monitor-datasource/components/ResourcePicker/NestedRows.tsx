@@ -2,14 +2,15 @@ import { cx } from '@emotion/css';
 import { Checkbox, Icon, IconButton, LoadingPlaceholder, useStyles2, useTheme2, FadeTransition } from '@grafana/ui';
 import React, { useCallback, useEffect, useState } from 'react';
 import getStyles from './styles';
-import { EntryType, Row, RowGroup } from './types';
+import { ResourceRowType, ResourceRow, ResourceRowGroup } from './types';
+import { findRow } from './utils';
 
 interface NestedRowsProps {
-  rows: RowGroup;
+  rows: ResourceRowGroup;
   level: number;
-  selectedRows: RowGroup;
-  requestNestedRows: (row: Row) => Promise<void>;
-  onRowSelectedChange: (row: Row, selected: boolean) => void;
+  selectedRows: ResourceRowGroup;
+  requestNestedRows: (row: ResourceRow) => Promise<void>;
+  onRowSelectedChange: (row: ResourceRow, selected: boolean) => void;
 }
 
 const NestedRows: React.FC<NestedRowsProps> = ({
@@ -20,10 +21,10 @@ const NestedRows: React.FC<NestedRowsProps> = ({
   onRowSelectedChange,
 }) => (
   <>
-    {Object.keys(rows).map((rowId) => (
+    {rows.map((row) => (
       <NestedRow
-        key={rowId}
-        row={rows[rowId]}
+        key={row.id}
+        row={row}
         selectedRows={selectedRows}
         level={level}
         requestNestedRows={requestNestedRows}
@@ -34,39 +35,41 @@ const NestedRows: React.FC<NestedRowsProps> = ({
 );
 
 interface NestedRowProps {
-  row: Row;
+  row: ResourceRow;
   level: number;
-  selectedRows: RowGroup;
-  requestNestedRows: (row: Row) => Promise<void>;
-  onRowSelectedChange: (row: Row, selected: boolean) => void;
+  selectedRows: ResourceRowGroup;
+  requestNestedRows: (row: ResourceRow) => Promise<void>;
+  onRowSelectedChange: (row: ResourceRow, selected: boolean) => void;
 }
 
 const NestedRow: React.FC<NestedRowProps> = ({ row, selectedRows, level, requestNestedRows, onRowSelectedChange }) => {
   const styles = useStyles2(getStyles);
+  const initialOpenStatus = row.type === ResourceRowType.Subscription ? 'open' : 'closed';
+  const [rowStatus, setRowStatus] = useState<'open' | 'closed' | 'loading'>(initialOpenStatus);
 
-  const isSelected = !!selectedRows[row.id];
-  const isDisabled = Object.keys(selectedRows).length > 0 && !isSelected;
-  const initialOpenStatus = row.type === EntryType.Collection ? 'open' : 'closed';
-  const [openStatus, setOpenStatus] = useState<'open' | 'closed' | 'loading'>(initialOpenStatus);
-  const isOpen = openStatus === 'open';
+  const isSelected = !!selectedRows.find((v) => v.id === row.id);
+  const isDisabled = selectedRows.length > 0 && !isSelected;
+  const isOpen = rowStatus === 'open';
 
   const onRowToggleCollapse = async () => {
-    if (openStatus === 'open') {
-      setOpenStatus('closed');
+    if (rowStatus === 'open') {
+      setRowStatus('closed');
       return;
     }
-    setOpenStatus('loading');
+    setRowStatus('loading');
     await requestNestedRows(row);
-    setOpenStatus('open');
+    setRowStatus('open');
   };
 
   // opens the resource group on load of component if there was a previously saved selection
   useEffect(() => {
-    const selectedRow = Object.keys(selectedRows).map((rowId) => selectedRows[rowId])[0];
-    const isSelectedResourceGroup =
-      selectedRow && selectedRow.resourceGroupName && row.name === selectedRow.resourceGroupName;
-    if (isSelectedResourceGroup) {
-      setOpenStatus('open');
+    // Assuming we don't have multi-select yet
+    const selectedRow = selectedRows[0];
+
+    const containsChild = selectedRow && !!findRow(row.children ?? [], selectedRow.id);
+
+    if (containsChild) {
+      setRowStatus('open');
     }
   }, [selectedRows, row]);
 
@@ -100,7 +103,7 @@ const NestedRow: React.FC<NestedRowProps> = ({ row, selectedRows, level, request
         />
       )}
 
-      <FadeTransition visible={openStatus === 'loading'}>
+      <FadeTransition visible={rowStatus === 'loading'}>
         <tr>
           <td className={cx(styles.cell, styles.loadingCell)} colSpan={3}>
             <LoadingPlaceholder text="Loading..." className={styles.spinner} />
@@ -112,19 +115,19 @@ const NestedRow: React.FC<NestedRowProps> = ({ row, selectedRows, level, request
 };
 
 interface EntryIconProps {
-  entry: Row;
+  entry: ResourceRow;
   isOpen: boolean;
 }
 
 const EntryIcon: React.FC<EntryIconProps> = ({ isOpen, entry: { type } }) => {
   switch (type) {
-    case EntryType.Collection:
+    case ResourceRowType.Subscription:
       return <Icon name="layer-group" />;
 
-    case EntryType.SubCollection:
+    case ResourceRowType.ResourceGroup:
       return <Icon name={isOpen ? 'folder-open' : 'folder'} />;
 
-    case EntryType.Resource:
+    case ResourceRowType.Resource:
       return <Icon name="cube" />;
 
     default:
@@ -134,12 +137,12 @@ const EntryIcon: React.FC<EntryIconProps> = ({ isOpen, entry: { type } }) => {
 
 interface NestedEntryProps {
   level: number;
-  entry: Row;
+  entry: ResourceRow;
   isSelected: boolean;
   isOpen: boolean;
   isDisabled: boolean;
-  onToggleCollapse: (row: Row) => void;
-  onSelectedChange: (row: Row, selected: boolean) => void;
+  onToggleCollapse: (row: ResourceRow) => void;
+  onSelectedChange: (row: ResourceRow, selected: boolean) => void;
 }
 
 const NestedEntry: React.FC<NestedEntryProps> = ({
@@ -154,7 +157,7 @@ const NestedEntry: React.FC<NestedEntryProps> = ({
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
   const hasChildren = !!entry.children;
-  const isSelectable = entry.type === EntryType.Resource;
+  const isSelectable = entry.type === ResourceRowType.Resource;
 
   const handleToggleCollapse = useCallback(() => {
     onToggleCollapse(entry);
@@ -168,10 +171,13 @@ const NestedEntry: React.FC<NestedEntryProps> = ({
     [entry, onSelectedChange]
   );
 
+  const checkboxId = `checkbox_${entry.id}`;
+
   return (
     <div className={styles.nestedEntry} style={{ marginLeft: level * (3 * theme.spacing.gridSize) }}>
       {/* When groups are selectable, I *think* we will want to show a 2-wide space instead
             of the collapse button for leaf rows that have no children to get them to align */}
+
       <span className={styles.entryContentItem}>
         {hasChildren && (
           <IconButton
@@ -179,17 +185,22 @@ const NestedEntry: React.FC<NestedEntryProps> = ({
             name={isOpen ? 'angle-down' : 'angle-right'}
             aria-label={isOpen ? 'Collapse' : 'Expand'}
             onClick={handleToggleCollapse}
+            id={entry.id}
           />
         )}
 
-        {isSelectable && <Checkbox onChange={handleSelectedChanged} disabled={isDisabled} value={isSelected} />}
+        {isSelectable && (
+          <Checkbox id={checkboxId} onChange={handleSelectedChanged} disabled={isDisabled} value={isSelected} />
+        )}
       </span>
 
       <span className={styles.entryContentItem}>
         <EntryIcon entry={entry} isOpen={isOpen} />
       </span>
 
-      <span className={cx(styles.entryContentItem, styles.truncated)}>{entry.name}</span>
+      <label htmlFor={checkboxId} className={cx(styles.entryContentItem, styles.truncated)}>
+        {entry.name}
+      </label>
     </div>
   );
 };
