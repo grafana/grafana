@@ -155,7 +155,20 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
     const { datasource, query, data } = this.props;
 
     if (!data || data.series.length === 0) {
-      this.setState({ hint: null });
+      /**
+       *  We are deprectating support for Loki as Prometheus data source in 8.0. If url includes "loki" and no metrics were found, we assume
+       *  that user is using Loki as Prometheus data source. To inform user, we are adding informational hint.
+       * */
+      if (datasource.directUrl.includes('/loki') && !datasource.languageProvider.metrics.length) {
+        this.setState({
+          hint: {
+            label: `Using Loki as Prometheus data source is no longer supported. Please use Loki data source for your Loki instance.`,
+            type: 'INFO',
+          },
+        });
+      } else {
+        this.setState({ hint: null });
+      }
       return;
     }
 
