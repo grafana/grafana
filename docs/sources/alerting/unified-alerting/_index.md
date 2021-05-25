@@ -1,8 +1,11 @@
 +++
-title = "Alerts"
+title = "Unified Alerts"
 aliases = ["/docs/grafana/latest/alerting/rules/", "/docs/grafana/latest/alerting/metrics/"]
-weight = 110
+weight = 113
 +++
 
-# Alerts v2.0 overview
+# Unified alerts
+
+
+
 

@@ -5,6 +5,7 @@ import (
 	"sort"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 )
 
@@ -15,6 +16,7 @@ type AccessToken struct {
 
 type TokenCredential interface {
 	GetCacheKey() string
+	Init() error
 	GetAccessToken(ctx context.Context, scopes []string) (*AccessToken, error)
 }
 
@@ -31,7 +33,10 @@ type tokenCacheImpl struct {
 }
 type credentialCacheEntry struct {
 	credential TokenCredential
-	cache      sync.Map // of *scopesCacheEntry
+
+	credInit  uint32
+	credMutex sync.Mutex
+	cache     sync.Map // of *scopesCacheEntry
 }
 
 type scopesCacheEntry struct {
@@ -44,31 +49,67 @@ type scopesCacheEntry struct {
 }
 
 func (c *tokenCacheImpl) GetAccessToken(ctx context.Context, credential TokenCredential, scopes []string) (string, error) {
+	return c.getEntryFor(credential).getAccessToken(ctx, scopes)
+}
+
+func (c *tokenCacheImpl) getEntryFor(credential TokenCredential) *credentialCacheEntry {
 	var entry interface{}
 	var ok bool
 
-	credentialKey := credential.GetCacheKey()
-	scopesKey := getKeyForScopes(scopes)
+	key := credential.GetCacheKey()
 
-	if entry, ok = c.cache.Load(credentialKey); !ok {
-		entry, _ = c.cache.LoadOrStore(credentialKey, &credentialCacheEntry{
+	if entry, ok = c.cache.Load(key); !ok {
+		entry, _ = c.cache.LoadOrStore(key, &credentialCacheEntry{
 			credential: credential,
 		})
 	}
 
-	credentialEntry := entry.(*credentialCacheEntry)
+	return entry.(*credentialCacheEntry)
+}
 
-	if entry, ok = credentialEntry.cache.Load(scopesKey); !ok {
-		entry, _ = credentialEntry.cache.LoadOrStore(scopesKey, &scopesCacheEntry{
-			credential: credentialEntry.credential,
+func (c *credentialCacheEntry) getAccessToken(ctx context.Context, scopes []string) (string, error) {
+	err := c.ensureInitialized()
+	if err != nil {
+		return "", err
+	}
+
+	return c.getEntryFor(scopes).getAccessToken(ctx)
+}
+
+func (c *credentialCacheEntry) ensureInitialized() error {
+	if atomic.LoadUint32(&c.credInit) == 0 {
+		c.credMutex.Lock()
+		defer c.credMutex.Unlock()
+
+		if c.credInit == 0 {
+			// Initialize credential
+			err := c.credential.Init()
+			if err != nil {
+				return err
+			}
+
+			atomic.StoreUint32(&c.credInit, 1)
+		}
+	}
+
+	return nil
+}
+
+func (c *credentialCacheEntry) getEntryFor(scopes []string) *scopesCacheEntry {
+	var entry interface{}
+	var ok bool
+
+	key := getKeyForScopes(scopes)
+
+	if entry, ok = c.cache.Load(key); !ok {
+		entry, _ = c.cache.LoadOrStore(key, &scopesCacheEntry{
+			credential: c.credential,
 			scopes:     scopes,
 			cond:       sync.NewCond(&sync.Mutex{}),
 		})
 	}
 
-	scopesEntry := entry.(*scopesCacheEntry)
-
-	return scopesEntry.getAccessToken(ctx)
+	return entry.(*scopesCacheEntry)
 }
 
 func (c *scopesCacheEntry) getAccessToken(ctx context.Context) (string, error) {

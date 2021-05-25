@@ -63,8 +63,16 @@ func TestManager(t *testing.T) {
 				})
 
 				t.Run("Should provide expected host environment variables", func(t *testing.T) {
-					require.Len(t, ctx.env, 4)
-					require.EqualValues(t, []string{"GF_VERSION=7.0.0", "GF_EDITION=Open Source", fmt.Sprintf("%s=true", awsds.AssumeRoleEnabledEnvVarKeyName), fmt.Sprintf("%s=keys,credentials", awsds.AllowedAuthProvidersEnvVarKeyName)}, ctx.env)
+					require.Len(t, ctx.env, 7)
+					require.EqualValues(t, []string{
+						"GF_VERSION=7.0.0",
+						"GF_EDITION=Open Source",
+						fmt.Sprintf("%s=true", awsds.AssumeRoleEnabledEnvVarKeyName),
+						fmt.Sprintf("%s=keys,credentials", awsds.AllowedAuthProvidersEnvVarKeyName),
+						"AZURE_CLOUD=AzureCloud",
+						"AZURE_MANAGED_IDENTITY_CLIENT_ID=client-id",
+						"AZURE_MANAGED_IDENTITY_ENABLED=true"},
+						ctx.env)
 				})
 
 				t.Run("When manager runs should start and stop plugin", func(t *testing.T) {
@@ -282,8 +290,18 @@ func TestManager(t *testing.T) {
 			require.NoError(t, err)
 
 			t.Run("Should provide expected host environment variables", func(t *testing.T) {
-				require.Len(t, ctx.env, 6)
-				require.EqualValues(t, []string{"GF_VERSION=7.0.0", "GF_EDITION=Enterprise", "GF_ENTERPRISE_LICENSE_PATH=/license.txt", "GF_ENTERPRISE_LICENSE_TEXT=testtoken", fmt.Sprintf("%s=true", awsds.AssumeRoleEnabledEnvVarKeyName), fmt.Sprintf("%s=keys,credentials", awsds.AllowedAuthProvidersEnvVarKeyName)}, ctx.env)
+				require.Len(t, ctx.env, 9)
+				require.EqualValues(t, []string{
+					"GF_VERSION=7.0.0",
+					"GF_EDITION=Enterprise",
+					"GF_ENTERPRISE_LICENSE_PATH=/license.txt",
+					"GF_ENTERPRISE_LICENSE_TEXT=testtoken",
+					fmt.Sprintf("%s=true", awsds.AssumeRoleEnabledEnvVarKeyName),
+					fmt.Sprintf("%s=keys,credentials", awsds.AllowedAuthProvidersEnvVarKeyName),
+					"AZURE_CLOUD=AzureCloud",
+					"AZURE_MANAGED_IDENTITY_CLIENT_ID=client-id",
+					"AZURE_MANAGED_IDENTITY_ENABLED=true"},
+					ctx.env)
 			})
 		})
 	})
@@ -303,6 +321,10 @@ func newManagerScenario(t *testing.T, managed bool, fn func(t *testing.T, ctx *m
 	cfg := setting.NewCfg()
 	cfg.AWSAllowedAuthProviders = []string{"keys", "credentials"}
 	cfg.AWSAssumeRoleEnabled = true
+
+	cfg.Azure.ManagedIdentityEnabled = true
+	cfg.Azure.Cloud = "AzureCloud"
+	cfg.Azure.ManagedIdentityClientId = "client-id"
 
 	license := &testLicensingService{}
 	validator := &testPluginRequestValidator{}
@@ -435,7 +457,7 @@ func (tp *testPlugin) PublishStream(ctx context.Context, request *backend.Publis
 	return nil, backendplugin.ErrMethodNotImplemented
 }
 
-func (tp *testPlugin) RunStream(ctx context.Context, request *backend.RunStreamRequest, sender backend.StreamPacketSender) error {
+func (tp *testPlugin) RunStream(ctx context.Context, request *backend.RunStreamRequest, sender *backend.StreamSender) error {
 	return backendplugin.ErrMethodNotImplemented
 }
 
