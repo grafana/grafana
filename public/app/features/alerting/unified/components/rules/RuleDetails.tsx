@@ -24,7 +24,7 @@ export const RuleDetails: FC<Props> = ({ rule, rulesSource }) => {
 
   const { promRule } = rule;
 
-  const annotations = Object.entries(rule.annotations);
+  const annotations = Object.entries(rule.annotations).filter(([_, value]) => !!value.trim());
 
   const dataSources: Array<{ name: string; icon?: string }> = useMemo(() => {
     if (isCloudRulesSource(rulesSource)) {
