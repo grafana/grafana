@@ -22,7 +22,7 @@ func (p *testDataPlugin) handleCsvContentScenario(ctx context.Context, req *back
 	for _, q := range req.Queries {
 		model, err := simplejson.NewJson(q.JSON)
 		if err != nil {
-			return nil, fmt.Errorf("failed to parse query json %v", err)
+			return nil, fmt.Errorf("failed to parse query json: %v", err)
 		}
 
 		csvContent := model.Get("csvContent").MustString()
