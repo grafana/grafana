@@ -167,25 +167,31 @@ func csvValuesToField(parts []string) (*data.Field, error) {
 		return field, nil
 	}
 
-	// If we can not parse the first value as a number, assume strings
-	_, err := strconv.ParseFloat(first, 64)
-	if err != nil {
-		field := data.NewFieldFromFieldType(data.FieldTypeNullableString, len(parts))
-		for idx, strVal := range parts {
-			if strVal == "null" || strVal == "" {
-				continue
-			}
-			field.SetConcrete(idx, strVal)
+	// Try parsing values as numbers
+	ok := true
+	field := data.NewFieldFromFieldType(data.FieldTypeNullableFloat64, len(parts))
+	for idx, strVal := range parts {
+		if strVal == "null" || strVal == "" {
+			continue
 		}
+		val, err := strconv.ParseFloat(strVal, 64)
+		if err != nil {
+			ok = false
+			break
+		}
+		field.SetConcrete(idx, val)
+	}
+	if ok {
 		return field, nil
 	}
 
-	// Set any valid numbers
-	field := data.NewFieldFromFieldType(data.FieldTypeNullableFloat64, len(parts))
+	// Replace empty strings with null
+	field = data.NewFieldFromFieldType(data.FieldTypeNullableString, len(parts))
 	for idx, strVal := range parts {
-		if val, err := strconv.ParseFloat(strVal, 64); err == nil {
-			field.SetConcrete(idx, val)
+		if strVal == "null" || strVal == "" {
+			continue
 		}
+		field.SetConcrete(idx, strVal)
 	}
 	return field, nil
 }

@@ -1,9 +1,13 @@
 package testdatasource
 
 import (
+	"os"
+	"path/filepath"
 	"testing"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/require"
 )
@@ -35,6 +39,29 @@ func TestCSVFileScenario(t *testing.T) {
 			require.True(t, ok)
 			require.Equal(t, float64(39368078), val)
 		})
+
+		files := []string{"simple", "mixed"}
+		for _, name := range files {
+			t.Run("Should load CSV: "+name, func(t *testing.T) {
+				filePath := filepath.Join("testdata", name+".csv")
+				fileReader, err := os.Open(filePath)
+				require.NoError(t, err)
+
+				defer fileReader.Close()
+
+				frame, err := p.loadCsvContent(fileReader, name)
+				require.NoError(t, err)
+				require.NotNil(t, frame)
+
+				dr := &backend.DataResponse{
+					Frames: data.Frames{frame},
+				}
+				err = experimental.CheckGoldenDataResponse(
+					filepath.Join("testdata", name+".golden.txt"), dr, true,
+				)
+				require.NoError(t, err)
+			})
+		}
 
 		t.Run("Should not allow non file name chars", func(t *testing.T) {
 			_, err := p.loadCsvFile("../population_by_state.csv")
