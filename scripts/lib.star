@@ -1081,3 +1081,21 @@ def validate_scuemata():
             './bin/linux-amd64/grafana-cli cue validate-schema',
         ],
     }
+
+def scan_docker_image_unkown_low_medium_vulnerabilities_step(image, tag):
+    return {
+        'name': 'scan-docker-image-unkown-low-medium-vulnerabilities',
+        'image': 'aquasec/trivy:0.18.3',
+        'commands': [
+            'trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM ' + image + ':' + tag,
+        ],
+    }
+
+def scan_docker_image_high_critical_vulnerabilities(image, tag):
+    return {
+        'name': 'scan-docker-image-high-critical-vulnerabilities',
+        'image': 'aquasec/trivy:0.18.3',
+        'commands': [
+            'trivy --exit-code 1 --severity HIGH,CRITICAL ' + image + ':' + tag,
+        ],
+    }
