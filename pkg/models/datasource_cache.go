@@ -76,6 +76,7 @@ func (ds *DataSource) HTTPClientOptions() sdkhttpclient.Options {
 	opts := sdkhttpclient.Options{
 		Timeouts: &sdkhttpclient.TimeoutOptions{
 			Timeout:               ds.getTimeout(),
+			DialTimeout:           time.Duration(setting.DataProxyDialTimeout) * time.Second,
 			KeepAlive:             time.Duration(setting.DataProxyKeepAlive) * time.Second,
 			TLSHandshakeTimeout:   time.Duration(setting.DataProxyTLSHandshakeTimeout) * time.Second,
 			ExpectContinueTimeout: time.Duration(setting.DataProxyExpectContinueTimeout) * time.Second,
