@@ -12,12 +12,14 @@ import (
 func main() {
 	origin := os.Getenv("ORIGIN_SERVER")
 	if origin == "" {
-		origin = "http://localhost:9090/"
+		// it is never not-set, the default is in the `.env` file
+		log.Fatalf("missing env-variable ORIGIN_SERVER")
 	}
 
 	sleepDurationStr := os.Getenv("SLEEP_DURATION")
 	if sleepDurationStr == "" {
-		sleepDurationStr = "60s"
+		// it is never not-set, the default is in the `.env` file
+		log.Fatalf("missing env-variable SLEEP_DURATION")
 	}
 
 	sleep, err := time.ParseDuration(sleepDurationStr)
