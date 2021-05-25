@@ -1,3 +1,5 @@
+import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
+
 export enum SortOrder {
   AlphaAsc = 1,
   AlphaDesc,
@@ -28,4 +30,14 @@ export interface AlertListOptions {
     pending: boolean;
   };
   folderId: number;
+}
+
+export interface UnifiedAlertlistOptions {
+  maxItems: number;
+  sortOrder: SortOrder;
+  dashboardAlerts: boolean;
+  alertName: string;
+  stateFilter: {
+    [K in PromAlertingRuleState]: boolean;
+  };
 }

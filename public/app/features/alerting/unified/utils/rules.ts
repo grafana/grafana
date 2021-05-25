@@ -150,7 +150,7 @@ export const flattenRules = (rules: RuleNamespace[]) => {
   return rules.reduce((acc, { dataSourceName, name: namespaceName, groups }) => {
     groups.forEach(({ name: groupName, rules }) => {
       rules.forEach((rule) => {
-        if (rule.type !== 'recording' && (rule.state === 'firing' || rule.state === 'pending')) {
+        if (rule.type !== 'recording') {
           const ruleToAdd = { dataSourceName, namespaceName, groupName, ...rule };
           acc.push(ruleToAdd);
         }
@@ -170,3 +170,18 @@ export const alertStateToState: Record<PromAlertingRuleState | GrafanaAlertState
   [GrafanaAlertState.Normal]: 'good',
   [GrafanaAlertState.Pending]: 'warning',
 };
+
+export function getFirstActiveAt(promRule: AlertingRule | PromRuleWithLocation) {
+  if (!promRule.alerts) {
+    return null;
+  }
+  return promRule.alerts.reduce((prev, alert) => {
+    if (alert.activeAt && alert.state !== GrafanaAlertState.Normal) {
+      const activeAt = new Date(alert.activeAt);
+      if (prev === null || prev.getTime() > activeAt.getTime()) {
+        return activeAt;
+      }
+    }
+    return prev;
+  }, null as Date | null);
+}
