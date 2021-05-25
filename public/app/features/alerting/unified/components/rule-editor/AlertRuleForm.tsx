@@ -66,8 +66,14 @@ export const AlertRuleForm: FC<Props> = ({ existing }) => {
         values: {
           ...defaultValues,
           ...values,
-          annotations: values.annotations?.filter(({ key, value }) => !!key && !!value) ?? [],
-          labels: values.labels?.filter(({ key }) => !!key) ?? [],
+          annotations:
+            values.annotations
+              ?.map(({ key, value }) => ({ key: key.trim(), value: value.trim() }))
+              .filter(({ key, value }) => !!key && !!value) ?? [],
+          labels:
+            values.labels
+              ?.map(({ key, value }) => ({ key: key.trim(), value: value.trim() }))
+              .filter(({ key }) => !!key) ?? [],
         },
         existing,
         redirectOnSave: exitOnSave ? returnTo : undefined,
