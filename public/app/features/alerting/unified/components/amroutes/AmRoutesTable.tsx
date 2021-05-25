@@ -65,7 +65,7 @@ export const AmRoutesTable: FC<AmRoutesTableProps> = ({ isAddMode, onCancelAdd, 
   const cols: RouteTableColumnProps[] = [
     {
       id: 'matchingCriteria',
-      label: 'Matching criteria',
+      label: 'Matching labels',
       // eslint-disable-next-line react/display-name
       renderCell: (item) => <Matchers matchers={item.data.matchers} />,
       size: 10,
