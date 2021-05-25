@@ -3,7 +3,7 @@ import RCCascader from 'rc-cascader';
 import React from 'react';
 import PromQlLanguageProvider from '../language_provider';
 import PromQueryField from './PromQueryField';
-import { DataSourceInstanceSettings, PanelData } from '@grafana/data';
+import { DataSourceInstanceSettings, PanelData, LoadingState, DataFrame } from '@grafana/data';
 import { PromOptions } from '../types';
 import { render, screen } from '@testing-library/react';
 
@@ -105,7 +105,12 @@ describe('PromQueryField', () => {
         onRunQuery={() => {}}
         onChange={() => {}}
         history={[]}
-        data={{ series: ([1, 2] as unknown) as PanelData }}
+        data={
+          {
+            series: [{ name: 'test name' }] as DataFrame[],
+            state: LoadingState.Done,
+          } as PanelData
+        }
       />
     );
     expect(screen.getByText('Query hint')).toBeInTheDocument();
