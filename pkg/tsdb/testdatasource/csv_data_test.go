@@ -40,6 +40,5 @@ func TestCSVFileScenario(t *testing.T) {
 			_, err := p.loadCsvFile("../population_by_state.csv")
 			require.Error(t, err)
 		})
-
 	})
 }

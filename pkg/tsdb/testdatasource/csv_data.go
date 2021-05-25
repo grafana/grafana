@@ -3,10 +3,11 @@ package testdatasource
 import (
 	"context"
 	"encoding/csv"
+	"errors"
 	"fmt"
 	"io"
 	"os"
-	"path"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
@@ -39,7 +40,6 @@ func (p *testDataPlugin) handleCsvContentScenario(ctx context.Context, req *back
 	}
 
 	return resp, nil
-
 }
 
 func (p *testDataPlugin) handleCsvFileScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
@@ -79,12 +79,17 @@ func (p *testDataPlugin) loadCsvFile(fileName string) (*data.Frame, error) {
 	}
 
 	filePath := filepath.Join(p.Cfg.StaticRootPath, "testdata", fileName)
-	fileReader, err := os.Open(filePath)
+	fileReader, err := os.Open(filepath.Clean(filePath))
 	if err != nil {
 		return nil, fmt.Errorf("failed open file: %v", err)
 	}
 
-	defer fileReader.Close()
+	defer func() {
+		err = fileReader.Close()
+		if err != nil {
+			p.logger.Error("Failed to close file", "error", err)
+		}
+	}()
 
 	return p.loadCsvContent(fileReader, fileName)
 }
@@ -109,7 +114,7 @@ func (p *testDataPlugin) loadCsvContent(ioReader io.Reader, name string) (*data.
 
 	for {
 		lineValues, err := reader.Read()
-		if err == io.EOF {
+		if errors.Is(err, io.EOF) {
 			break // reached end of the file
 		} else if err != nil {
 			return nil, fmt.Errorf("failed to read line: %v", err)
@@ -138,8 +143,6 @@ func parseRawStringValues(values []string) interface{} {
 		numericValue, err := strconv.ParseFloat(value, 64)
 		if err == nil {
 			numericValues = append(numericValues, numericValue)
-		} else {
-			fmt.Printf("Error reading %v %v", numericValue, err)
 		}
 	}
 
