@@ -81,7 +81,7 @@ func (p *testDataPlugin) loadCsvFile(fileName string) (*data.Frame, error) {
 	filePath := filepath.Join(p.Cfg.StaticRootPath, "testdata", fileName)
 	fileReader, err := os.Open(filePath)
 	if err != nil {
-		return nil, fmt.Errorf("failed open file %v", err)
+		return nil, fmt.Errorf("failed open file: %v", err)
 	}
 
 	defer fileReader.Close()
