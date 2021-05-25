@@ -42,6 +42,8 @@ func AddCSPHeader(cfg *setting.Cfg, logger log.Logger) macaron.Handler {
 
 		nonce := base64.RawStdEncoding.EncodeToString(buf[:])
 		val := strings.ReplaceAll(cfg.CSPTemplate, "$NONCE", fmt.Sprintf("'nonce-%s'", nonce))
+		val = strings.ReplaceAll(val, "$DOMAIN", cfg.Domain)
+		val = strings.ReplaceAll(val, "$PORT", cfg.HTTPPort)
 		w.Header().Set("Content-Security-Policy", val)
 		ctx.RequestNonce = nonce
 		logger.Debug("Successfully generated CSP nonce", "nonce", nonce)
