@@ -4,5 +4,8 @@ aliases = ["/docs/grafana/latest/alerting/rules/", "/docs/grafana/latest/alertin
 weight = 113
 +++
 
-# Alerts v2.0 overview
+# Unified alerts
+
+
+
 

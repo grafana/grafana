@@ -4,7 +4,7 @@ aliases = ["/docs/grafana/latest/alerting/rules/", "/docs/grafana/latest/alertin
 weight = 114
 +++
 
-# Alerts overview
+# Old Grafana alerts
 
 Alerts allow you to know about problems in your systems moments after they occur. Robust and actionable alerts help you identify and resolve issues quickly, minimizing disruption to your services.
 
