@@ -27,9 +27,9 @@ import (
 // This is to ensure that the interface contract is held by the implementation
 func Test_InterfaceContractValidity(t *testing.T) {
 	newUsageStats := func() UsageStats {
-		return &Service{}
+		return &UsageStatsService{}
 	}
-	v, ok := newUsageStats().(*Service)
+	v, ok := newUsageStats().(*UsageStatsService)
 
 	assert.NotNil(t, v)
 	assert.True(t, ok)
@@ -548,7 +548,7 @@ func (pm *fakePluginManager) PanelCount() int {
 	return len(pm.panels)
 }
 
-func setupSomeDataSourcePlugins(t *testing.T, uss *Service) {
+func setupSomeDataSourcePlugins(t *testing.T, uss *UsageStatsService) {
 	t.Helper()
 
 	uss.PluginManager = &fakePluginManager{
@@ -591,10 +591,10 @@ type httpResp struct {
 	err            error
 }
 
-func createService(t *testing.T, cfg setting.Cfg) *Service {
+func createService(t *testing.T, cfg setting.Cfg) *UsageStatsService {
 	t.Helper()
 
-	return &Service{
+	return &UsageStatsService{
 		Bus:                bus.New(),
 		Cfg:                &cfg,
 		SQLStore:           sqlstore.InitTestDB(t),

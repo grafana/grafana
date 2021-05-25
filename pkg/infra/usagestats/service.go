@@ -6,20 +6,21 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 var metricsLogger = log.New("metrics")
 
 func init() {
-	registry.RegisterService(&Service{
+	registry.RegisterService(&UsageStatsService{
 		log:             log.New("infra.usagestats"),
 		externalMetrics: make([]MetricsFunc, 0),
 	})
@@ -32,7 +33,7 @@ type UsageStats interface {
 
 type MetricsFunc func() (map[string]interface{}, error)
 
-type Service struct {
+type UsageStatsService struct {
 	Cfg                *setting.Cfg               `inject:""`
 	Bus                bus.Bus                    `inject:""`
 	SQLStore           *sqlstore.SQLStore         `inject:""`
@@ -47,12 +48,12 @@ type Service struct {
 	concurrentUserStatsCache memoConcurrentUserStats
 }
 
-func (uss *Service) Init() error {
+func (uss *UsageStatsService) Init() error {
 	uss.oauthProviders = social.GetOAuthProviders(uss.Cfg)
 	return nil
 }
 
-func (uss *Service) Run(ctx context.Context) error {
+func (uss *UsageStatsService) Run(ctx context.Context) error {
 	uss.updateTotalStats()
 
 	sendReportTicker := time.NewTicker(time.Hour * 24)
@@ -82,7 +83,7 @@ type memoConcurrentUserStats struct {
 
 const concurrentUserStatsCacheLifetime = time.Hour
 
-func (uss *Service) GetConcurrentUsersStats(ctx context.Context) (*concurrentUsersStats, error) {
+func (uss *UsageStatsService) GetConcurrentUsersStats(ctx context.Context) (*concurrentUsersStats, error) {
 	memoizationPeriod := time.Now().Add(-concurrentUserStatsCacheLifetime)
 	if !uss.concurrentUserStatsCache.memoized.Before(memoizationPeriod) {
 		return uss.concurrentUserStatsCache.stats, nil
