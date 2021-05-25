@@ -22,7 +22,11 @@ export function PreviewRuleResult(props: Props): React.ReactElement | null {
   const { data, ruleType } = preview;
 
   if (data.state === LoadingState.Loading) {
-    return <div>Loading preview...</div>;
+    return (
+      <div className={styles.container}>
+        <span>Loading preview...</span>
+      </div>
+    );
   }
 
   if (data.state === LoadingState.Error) {
@@ -37,7 +41,11 @@ export function PreviewRuleResult(props: Props): React.ReactElement | null {
       </span>
       <div className={styles.table}>
         <AutoSizer>
-          {({ width, height }) => <PanelRenderer title="" width={width} height={height} pluginId="table" data={data} />}
+          {({ width, height }) => (
+            <div style={{ width: `${width}px`, height: `${height}px` }}>
+              <PanelRenderer title="" width={width} height={height} pluginId="table" data={data} />
+            </div>
+          )}
         </AutoSizer>
       </div>
     </div>
