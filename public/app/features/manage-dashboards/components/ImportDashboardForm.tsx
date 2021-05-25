@@ -15,7 +15,7 @@ import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { DashboardInput, DashboardInputs, DataSourceInput, ImportDashboardDTO } from '../state/reducers';
 import { validateTitle, validateUid } from '../utils/validation';
 
-interface Props extends Omit<FormAPI<ImportDashboardDTO>, 'formState' | 'setValue'> {
+interface Props extends Pick<FormAPI<ImportDashboardDTO>, 'register' | 'errors' | 'control' | 'getValues' | 'watch'> {
   uidReset: boolean;
   inputs: DashboardInputs;
   initialFolderId: number;
