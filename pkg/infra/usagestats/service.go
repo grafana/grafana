@@ -16,21 +16,21 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-var metricsLogger log.Logger = log.New("metrics")
+var metricsLogger = log.New("metrics")
 
 func init() {
 	registry.RegisterService(&Service{
 		log:             log.New("infra.usagestats"),
-		externalMetrics: make(map[string]MetricFunc),
+		externalMetrics: make([]MetricsFunc, 0),
 	})
 }
 
 type UsageStats interface {
-	GetUsageReport(ctx context.Context) (UsageReport, error)
-	RegisterMetric(name string, fn MetricFunc)
+	GetUsageReport(context.Context) (UsageReport, error)
+	RegisterMetricFunc(MetricsFunc)
 }
 
-type MetricFunc func() (interface{}, error)
+type MetricsFunc func() (map[string]interface{}, error)
 
 type Service struct {
 	Cfg                *setting.Cfg               `inject:""`
@@ -43,7 +43,7 @@ type Service struct {
 	log log.Logger
 
 	oauthProviders           map[string]bool
-	externalMetrics          map[string]MetricFunc
+	externalMetrics          []MetricsFunc
 	concurrentUserStatsCache memoConcurrentUserStats
 }
 

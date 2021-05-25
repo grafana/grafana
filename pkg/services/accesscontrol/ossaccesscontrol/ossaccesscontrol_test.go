@@ -23,7 +23,7 @@ func setupTestEnv(t testing.TB) *OSSAccessControlService {
 
 	ac := OSSAccessControlService{
 		Cfg:        cfg,
-		UsageStats: &usageStatsMock{metricFuncs: make(map[string]usagestats.MetricFunc)},
+		UsageStats: &usageStatsMock{metricFuncs: make(map[string]usagestats.MetricsFunc)},
 		Log:        log.New("accesscontrol-test"),
 	}
 
@@ -34,10 +34,10 @@ func setupTestEnv(t testing.TB) *OSSAccessControlService {
 
 type usageStatsMock struct {
 	t           *testing.T
-	metricFuncs map[string]usagestats.MetricFunc
+	metricFuncs map[string]usagestats.MetricsFunc
 }
 
-func (usm *usageStatsMock) RegisterMetric(name string, fn usagestats.MetricFunc) {
+func (usm *usageStatsMock) RegisterMetricFunc(name string, fn usagestats.MetricsFunc) {
 	usm.metricFuncs[name] = fn
 }
 
@@ -146,7 +146,7 @@ func TestUsageMetrics(t *testing.T) {
 
 			s := &OSSAccessControlService{
 				Cfg:        cfg,
-				UsageStats: &usageStatsMock{t: t, metricFuncs: make(map[string]usagestats.MetricFunc)},
+				UsageStats: &usageStatsMock{t: t, metricFuncs: make(map[string]usagestats.MetricsFunc)},
 				Log:        log.New("accesscontrol-test"),
 			}
 
