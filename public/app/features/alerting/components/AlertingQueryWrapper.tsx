@@ -1,5 +1,6 @@
-import React, { FC, ReactNode } from 'react';
+import React, { FC, ReactNode, useState } from 'react';
 import { css } from '@emotion/css';
+import { cloneDeep } from 'lodash';
 import {
   DataQuery,
   DataSourceInstanceSettings,
@@ -12,8 +13,8 @@ import { useStyles2, RelativeTimeRangePicker } from '@grafana/ui';
 import { QueryEditorRow } from '../../query/components/QueryEditorRow';
 import { VizWrapper } from '../unified/components/rule-editor/VizWrapper';
 import { isExpressionQuery } from '../../expressions/guards';
+import { TABLE, TIMESERIES } from '../unified/utils/constants';
 import { GrafanaQuery } from 'app/types/unified-alerting-dto';
-import { cloneDeep } from 'lodash';
 
 interface Props {
   data: PanelData;
@@ -28,6 +29,8 @@ interface Props {
   onRunQueries: () => void;
   index: number;
 }
+
+export type SupportedPanelPlugins = 'timeseries' | 'table' | 'stat';
 
 export const AlertingQueryWrapper: FC<Props> = ({
   data,
@@ -44,6 +47,7 @@ export const AlertingQueryWrapper: FC<Props> = ({
 }) => {
   const styles = useStyles2(getStyles);
   const isExpression = isExpressionQuery(query.model);
+  const [pluginId, changePluginId] = useState<SupportedPanelPlugins>(isExpression ? TABLE : TIMESERIES);
 
   const renderTimePicker = (query: GrafanaQuery, index: number): ReactNode => {
     if (isExpressionQuery(query.model) || !onChangeTimeRange) {
@@ -74,7 +78,7 @@ export const AlertingQueryWrapper: FC<Props> = ({
         onRunQuery={onRunQueries}
         queries={queries}
         renderHeaderExtras={() => renderTimePicker(query, index)}
-        visualization={data ? <VizWrapper data={data} defaultPanel={isExpression ? 'table' : 'timeseries'} /> : null}
+        visualization={data ? <VizWrapper data={data} changePanel={changePluginId} currentPanel={pluginId} /> : null}
         hideDisableQuery={true}
       />
     </div>
