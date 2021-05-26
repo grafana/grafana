@@ -68,7 +68,7 @@ export function buildNavModel(dataSource: DataSourceSettings, plugin: GenericDat
       id: `datasource-cache-${dataSource.id}`,
       text: 'Cache',
       url: `datasources/edit/${dataSource.id}/cache`,
-      hideFromTabs: !pluginMeta.isBackend,
+      hideFromTabs: !pluginMeta.isBackend || !config.caching.enabled,
     });
   }
 

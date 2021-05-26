@@ -83,6 +83,9 @@ export class GrafanaBootConfig implements GrafanaConfig {
   azure: AzureSettings = {
     managedIdentityEnabled: false,
   };
+  caching = {
+    enabled: false,
+  };
 
   constructor(options: GrafanaBootConfig) {
     const mode = options.bootData.user.lightTheme ? 'light' : 'dark';
