@@ -29,7 +29,7 @@ def cronjobs(edition):
     ]
 
 def scan_docker_image_unkown_low_medium_vulnerabilities_step(edition):
-    tags=['latest','main','latest-ubuntu','main-ubuntu']
+    tags=['latest', 'main', 'latest-ubuntu', 'main-ubuntu']
     commands=[]
     for t in tags:
         commands.append('trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/{}:{}'.format(edition,t))
@@ -50,4 +50,3 @@ def scan_docker_image_high_critical_vulnerabilities_step(edition):
         'image': 'aquasec/trivy:0.18.3',
         'commands': commands,
     }
-
