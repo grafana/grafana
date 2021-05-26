@@ -75,7 +75,7 @@ export const ContextMenuPlugin: React.FC<ContextMenuPluginProps> = ({
     };
 
     config.addHook('init', (u) => {
-      const canvas = u.root.querySelector<HTMLDivElement>('.u-over');
+      const canvas = u.over;
       plotCanvas.current = canvas || undefined;
       plotCanvas.current?.addEventListener('mousedown', onMouseCapture);
       plotCanvas.current?.addEventListener('mouseleave', () => {});
