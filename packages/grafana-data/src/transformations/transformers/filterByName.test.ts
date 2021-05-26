@@ -20,18 +20,21 @@ describe('filterByName transformer', () => {
     mockTransformationsRegistry([filterFieldsByNameTransformer, filterFieldsTransformer]);
   });
 
-  it('returns original series if no options provided', () => {
+  it('returns original series if no options provided', async () => {
     const cfg = {
       id: DataTransformerID.filterFields,
       options: {},
     };
 
-    const filtered = transformDataFrame([cfg], [seriesWithNamesToMatch])[0];
-    expect(filtered.fields.length).toBe(4);
+    await expect(transformDataFrame([cfg], [seriesWithNamesToMatch])).toEmitValuesWith((received) => {
+      const data = received[0];
+      const filtered = data[0];
+      expect(filtered.fields.length).toBe(4);
+    });
   });
 
   describe('respects', () => {
-    it('inclusion by pattern', () => {
+    it('inclusion by pattern', async () => {
       const cfg = {
         id: DataTransformerID.filterFieldsByName,
         options: {
@@ -41,12 +44,15 @@ describe('filterByName transformer', () => {
         },
       };
 
-      const filtered = transformDataFrame([cfg], [seriesWithNamesToMatch])[0];
-      expect(filtered.fields.length).toBe(2);
-      expect(filtered.fields[0].name).toBe('startsWithA');
+      await expect(transformDataFrame([cfg], [seriesWithNamesToMatch])).toEmitValuesWith((received) => {
+        const data = received[0];
+        const filtered = data[0];
+        expect(filtered.fields.length).toBe(2);
+        expect(filtered.fields[0].name).toBe('startsWithA');
+      });
     });
 
-    it('exclusion by pattern', () => {
+    it('exclusion by pattern', async () => {
       const cfg = {
         id: DataTransformerID.filterFieldsByName,
         options: {
@@ -56,12 +62,15 @@ describe('filterByName transformer', () => {
         },
       };
 
-      const filtered = transformDataFrame([cfg], [seriesWithNamesToMatch])[0];
-      expect(filtered.fields.length).toBe(2);
-      expect(filtered.fields[0].name).toBe('B');
+      await expect(transformDataFrame([cfg], [seriesWithNamesToMatch])).toEmitValuesWith((received) => {
+        const data = received[0];
+        const filtered = data[0];
+        expect(filtered.fields.length).toBe(2);
+        expect(filtered.fields[0].name).toBe('B');
+      });
     });
 
-    it('inclusion and exclusion by pattern', () => {
+    it('inclusion and exclusion by pattern', async () => {
       const cfg = {
         id: DataTransformerID.filterFieldsByName,
         options: {
@@ -70,12 +79,15 @@ describe('filterByName transformer', () => {
         },
       };
 
-      const filtered = transformDataFrame([cfg], [seriesWithNamesToMatch])[0];
-      expect(filtered.fields.length).toBe(1);
-      expect(filtered.fields[0].name).toBe('B');
+      await expect(transformDataFrame([cfg], [seriesWithNamesToMatch])).toEmitValuesWith((received) => {
+        const data = received[0];
+        const filtered = data[0];
+        expect(filtered.fields.length).toBe(1);
+        expect(filtered.fields[0].name).toBe('B');
+      });
     });
 
-    it('inclusion by names', () => {
+    it('inclusion by names', async () => {
       const cfg = {
         id: DataTransformerID.filterFieldsByName,
         options: {
@@ -85,12 +97,15 @@ describe('filterByName transformer', () => {
         },
       };
 
-      const filtered = transformDataFrame([cfg], [seriesWithNamesToMatch])[0];
-      expect(filtered.fields.length).toBe(2);
-      expect(filtered.fields[0].name).toBe('startsWithA');
+      await expect(transformDataFrame([cfg], [seriesWithNamesToMatch])).toEmitValuesWith((received) => {
+        const data = received[0];
+        const filtered = data[0];
+        expect(filtered.fields.length).toBe(2);
+        expect(filtered.fields[0].name).toBe('startsWithA');
+      });
     });
 
-    it('exclusion by names', () => {
+    it('exclusion by names', async () => {
       const cfg = {
         id: DataTransformerID.filterFieldsByName,
         options: {
@@ -100,12 +115,15 @@ describe('filterByName transformer', () => {
         },
       };
 
-      const filtered = transformDataFrame([cfg], [seriesWithNamesToMatch])[0];
-      expect(filtered.fields.length).toBe(2);
-      expect(filtered.fields[0].name).toBe('B');
+      await expect(transformDataFrame([cfg], [seriesWithNamesToMatch])).toEmitValuesWith((received) => {
+        const data = received[0];
+        const filtered = data[0];
+        expect(filtered.fields.length).toBe(2);
+        expect(filtered.fields[0].name).toBe('B');
+      });
     });
 
-    it('inclusion and exclusion by names', () => {
+    it('inclusion and exclusion by names', async () => {
       const cfg = {
         id: DataTransformerID.filterFieldsByName,
         options: {
@@ -114,12 +132,15 @@ describe('filterByName transformer', () => {
         },
       };
 
-      const filtered = transformDataFrame([cfg], [seriesWithNamesToMatch])[0];
-      expect(filtered.fields.length).toBe(1);
-      expect(filtered.fields[0].name).toBe('B');
+      await expect(transformDataFrame([cfg], [seriesWithNamesToMatch])).toEmitValuesWith((received) => {
+        const data = received[0];
+        const filtered = data[0];
+        expect(filtered.fields.length).toBe(1);
+        expect(filtered.fields[0].name).toBe('B');
+      });
     });
 
-    it('inclusion by both', () => {
+    it('inclusion by both', async () => {
       const cfg = {
         id: DataTransformerID.filterFieldsByName,
         options: {
@@ -130,12 +151,15 @@ describe('filterByName transformer', () => {
         },
       };
 
-      const filtered = transformDataFrame([cfg], [seriesWithNamesToMatch])[0];
-      expect(filtered.fields.length).toBe(2);
-      expect(filtered.fields[0].name).toBe('startsWithA');
+      await expect(transformDataFrame([cfg], [seriesWithNamesToMatch])).toEmitValuesWith((received) => {
+        const data = received[0];
+        const filtered = data[0];
+        expect(filtered.fields.length).toBe(2);
+        expect(filtered.fields[0].name).toBe('startsWithA');
+      });
     });
 
-    it('exclusion by both', () => {
+    it('exclusion by both', async () => {
       const cfg = {
         id: DataTransformerID.filterFieldsByName,
         options: {
@@ -146,12 +170,15 @@ describe('filterByName transformer', () => {
         },
       };
 
-      const filtered = transformDataFrame([cfg], [seriesWithNamesToMatch])[0];
-      expect(filtered.fields.length).toBe(2);
-      expect(filtered.fields[0].name).toBe('B');
+      await expect(transformDataFrame([cfg], [seriesWithNamesToMatch])).toEmitValuesWith((received) => {
+        const data = received[0];
+        const filtered = data[0];
+        expect(filtered.fields.length).toBe(2);
+        expect(filtered.fields[0].name).toBe('B');
+      });
     });
 
-    it('inclusion and exclusion by both', () => {
+    it('inclusion and exclusion by both', async () => {
       const cfg = {
         id: DataTransformerID.filterFieldsByName,
         options: {
@@ -160,9 +187,12 @@ describe('filterByName transformer', () => {
         },
       };
 
-      const filtered = transformDataFrame([cfg], [seriesWithNamesToMatch])[0];
-      expect(filtered.fields.length).toBe(1);
-      expect(filtered.fields[0].name).toBe('B');
+      await expect(transformDataFrame([cfg], [seriesWithNamesToMatch])).toEmitValuesWith((received) => {
+        const data = received[0];
+        const filtered = data[0];
+        expect(filtered.fields.length).toBe(1);
+        expect(filtered.fields[0].name).toBe('B');
+      });
     });
   });
 });

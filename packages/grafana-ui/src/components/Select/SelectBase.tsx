@@ -1,15 +1,12 @@
 import React, { useCallback } from 'react';
-// @ts-ignore
-import { default as ReactSelect } from '@torkelo/react-select';
-// @ts-ignore
-import Creatable from '@torkelo/react-select/creatable';
-// @ts-ignore
-import { default as ReactAsyncSelect } from '@torkelo/react-select/async';
-// @ts-ignore
-import { default as AsyncCreatable } from '@torkelo/react-select/async-creatable';
+import { default as ReactSelect } from 'react-select';
+import Creatable from 'react-select/creatable';
+import { default as ReactAsyncSelect } from 'react-select/async';
+import { default as AsyncCreatable } from 'react-select/async-creatable';
 
 import { Icon } from '../Icon/Icon';
-import { css, cx } from 'emotion';
+import { Spinner } from '../Spinner/Spinner';
+import { css, cx } from '@emotion/css';
 import resetSelectStyles from './resetSelectStyles';
 import { SelectMenu, SelectMenuOptions } from './SelectMenu';
 import { IndicatorsContainer } from './IndicatorsContainer';
@@ -19,9 +16,9 @@ import { DropdownIndicator } from './DropdownIndicator';
 import { SelectOptionGroup } from './SelectOptionGroup';
 import { SingleValue } from './SingleValue';
 import { MultiValueContainer, MultiValueRemove } from './MultiValue';
-import { useTheme } from '../../themes';
+import { useTheme2 } from '../../themes';
 import { getSelectStyles } from './getSelectStyles';
-import { cleanValue } from './utils';
+import { cleanValue, findSelectedValue } from './utils';
 import { SelectBaseProps, SelectValue } from './types';
 
 interface ExtraValuesIndicatorProps {
@@ -89,6 +86,7 @@ const CustomControl = (props: any) => {
 
 export function SelectBase<T>({
   allowCustomValue = false,
+  'aria-label': ariaLabel,
   autoFocus = false,
   backspaceRemovesValue = true,
   cacheOptions,
@@ -105,16 +103,19 @@ export function SelectBase<T>({
   inputValue,
   invalid,
   isClearable = false,
+  id,
   isLoading = false,
   isMulti = false,
+  inputId,
   isOpen,
   isOptionDisabled,
   isSearchable = true,
   loadOptions,
   loadingMessage = 'Loading options...',
   maxMenuHeight = 300,
+  minMenuHeight,
   maxVisibleValues,
-  menuPlacement = 'auto',
+  menuPlacement = 'bottom',
   menuPosition,
   noOptionsMessage = 'No options found',
   onBlur,
@@ -134,7 +135,7 @@ export function SelectBase<T>({
   value,
   width,
 }: SelectBaseProps<T>) {
-  const theme = useTheme();
+  const theme = useTheme2();
   const styles = getSelectStyles(theme);
   const onChangeWithEmpty = useCallback(
     (value: SelectValue<T>) => {
@@ -143,12 +144,14 @@ export function SelectBase<T>({
       }
       onChange(value);
     },
-    [isMulti, value, onChange]
+    [isMulti, onChange]
   );
-  let ReactSelectComponent: ReactSelect | Creatable = ReactSelect;
+
+  let ReactSelectComponent = ReactSelect;
+
   const creatableProps: any = {};
   let asyncSelectProps: any = {};
-  let selectedValue = [];
+  let selectedValue;
   if (isMulti && loadOptions) {
     selectedValue = value as any;
   } else {
@@ -156,11 +159,7 @@ export function SelectBase<T>({
     // we are selecting the corresponding value from the options
     if (isMulti && value && Array.isArray(value) && !loadOptions) {
       // @ts-ignore
-      selectedValue = value.map(v => {
-        return options.filter(o => {
-          return v === o.value || o.value === v.value;
-        })[0];
-      });
+      selectedValue = value.map((v) => findSelectedValue(v.value ?? v, options));
     } else if (loadOptions) {
       const hasValue = defaultValue || value;
       selectedValue = hasValue ? [hasValue] : [];
@@ -170,6 +169,7 @@ export function SelectBase<T>({
   }
 
   const commonSelectProps = {
+    'aria-label': ariaLabel,
     autoFocus,
     backspaceRemovesValue,
     captureMenuScroll: false,
@@ -183,13 +183,16 @@ export function SelectBase<T>({
     inputValue,
     invalid,
     isClearable,
+    id,
     // Passing isDisabled as react-select accepts this prop
     isDisabled: disabled,
     isLoading,
     isMulti,
+    inputId,
     isOptionDisabled,
     isSearchable,
     maxMenuHeight,
+    minMenuHeight,
     maxVisibleValues,
     menuIsOpen: isOpen,
     menuPlacement,
@@ -208,18 +211,18 @@ export function SelectBase<T>({
     renderControl,
     showAllSelectedWhenOpen,
     tabSelectsValue,
-    value: isMulti ? selectedValue : selectedValue[0],
+    value: isMulti ? selectedValue : selectedValue?.[0],
   };
 
   if (allowCustomValue) {
-    ReactSelectComponent = Creatable;
+    ReactSelectComponent = Creatable as any;
     creatableProps.formatCreateLabel = formatCreateLabel ?? ((input: string) => `Create: ${input}`);
     creatableProps.onCreateOption = onCreateOption;
   }
 
   // Instead of having AsyncSelect, as a separate component we render ReactAsyncSelect
   if (loadOptions) {
-    ReactSelectComponent = allowCustomValue ? AsyncCreatable : ReactAsyncSelect;
+    ReactSelectComponent = (allowCustomValue ? AsyncCreatable : ReactAsyncSelect) as any;
     asyncSelectProps = {
       loadOptions,
       cacheOptions,
@@ -234,26 +237,29 @@ export function SelectBase<T>({
           MenuList: SelectMenu,
           Group: SelectOptionGroup,
           ValueContainer,
-          Placeholder: (props: any) => (
-            <div
-              {...props.innerProps}
-              className={cx(
-                css(props.getStyles('placeholder', props)),
-                css`
-                  display: inline-block;
-                  color: ${theme.colors.formInputPlaceholderText};
-                  position: absolute;
-                  top: 50%;
-                  transform: translateY(-50%);
-                  box-sizing: border-box;
-                  line-height: 1;
-                `
-              )}
-            >
-              {props.children}
-            </div>
-          ),
-          IndicatorsContainer: (props: any) => {
+          Placeholder(props: any) {
+            return (
+              <div
+                {...props.innerProps}
+                className={cx(
+                  css(props.getStyles('placeholder', props)),
+                  css`
+                    display: inline-block;
+                    color: ${theme.colors.text.disabled};
+                    position: absolute;
+                    top: 50%;
+                    transform: translateY(-50%);
+                    box-sizing: border-box;
+                    line-height: 1;
+                    white-space: nowrap;
+                  `
+                )}
+              >
+                {props.children}
+              </div>
+            );
+          },
+          IndicatorsContainer(props: any) {
             const { selectProps } = props;
             const { value, showAllSelectedWhenOpen, maxVisibleValues, menuIsOpen } = selectProps;
 
@@ -270,20 +276,22 @@ export function SelectBase<T>({
                   menuIsOpen,
                 })
               );
-              return <IndicatorsContainer {...props} children={indicatorChildren} />;
+              return <IndicatorsContainer {...props}>{indicatorChildren}</IndicatorsContainer>;
             }
 
             return <IndicatorsContainer {...props} />;
           },
-          IndicatorSeparator: () => <></>,
+          IndicatorSeparator() {
+            return <></>;
+          },
           Control: CustomControl,
           Option: SelectMenuOptions,
-          ClearIndicator: (props: any) => {
+          ClearIndicator(props: any) {
             const { clearValue } = props;
             return (
               <Icon
                 name="times"
-                onMouseDown={e => {
+                onMouseDown={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
                   clearValue();
@@ -291,21 +299,25 @@ export function SelectBase<T>({
               />
             );
           },
-          LoadingIndicator: (props: any) => {
-            return <Icon className="fa-spin" name="fa fa-spinner" />;
+          LoadingIndicator(props: any) {
+            return <Spinner inline={true} />;
           },
-          LoadingMessage: (props: any) => {
+          LoadingMessage(props: any) {
             return <div className={styles.loadingMessage}>{loadingMessage}</div>;
           },
-          NoOptionsMessage: (props: any) => {
+          NoOptionsMessage(props: any) {
             return (
               <div className={styles.loadingMessage} aria-label="No options provided">
                 {noOptionsMessage}
               </div>
             );
           },
-          DropdownIndicator: (props: any) => <DropdownIndicator isOpen={props.selectProps.menuIsOpen} />,
-          SingleValue: SingleValue,
+          DropdownIndicator(props: any) {
+            return <DropdownIndicator isOpen={props.selectProps.menuIsOpen} />;
+          },
+          SingleValue(props: any) {
+            return <SingleValue {...props} disabled={disabled} />;
+          },
           MultiValueContainer: MultiValueContainer,
           MultiValueRemove: MultiValueRemove,
           ...components,

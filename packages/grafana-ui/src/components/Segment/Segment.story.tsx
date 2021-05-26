@@ -34,7 +34,7 @@ export const ArrayOptions = () => {
       <Segment
         value={value}
         options={options}
-        onChange={item => {
+        onChange={(item) => {
           setValue(item);
           action('Segment value changed')(item.value);
         }}
@@ -72,7 +72,7 @@ export const ArrayOptionsWithPlaceholder = () => {
         value={value}
         options={options}
         placeholder="Enter a value"
-        onChange={item => {
+        onChange={(item) => {
           setValue(item);
           action('Segment value changed')(item.value);
         }}
@@ -88,7 +88,7 @@ export const GroupedArrayOptions = () => {
       <Segment
         value={value}
         options={groupedOptions}
-        onChange={item => {
+        onChange={(item) => {
           setValue(item);
           action('Segment value changed')(item.value);
         }}
@@ -122,6 +122,24 @@ export const CustomLabelField = () => {
     <SegmentFrame options={options}>
       <Segment
         Component={<CustomLabelComponent value={value} />}
+        options={groupedOptions}
+        onChange={({ value }) => {
+          setValue(value);
+          action('Segment value changed')(value);
+        }}
+      />
+    </SegmentFrame>
+  );
+};
+
+export const HtmlAttributes = () => {
+  const [value, setValue] = useState<any>(options[0]);
+  return (
+    <SegmentFrame options={options}>
+      <Segment
+        data-testid="segment-test"
+        id="segment-id"
+        value={value}
         options={groupedOptions}
         onChange={({ value }) => {
           setValue(value);

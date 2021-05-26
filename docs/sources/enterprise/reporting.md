@@ -2,11 +2,8 @@
 title = "Reporting"
 description = ""
 keywords = ["grafana", "reporting"]
-type = "docs"
 aliases = ["/docs/grafana/latest/administration/reports"]
-[menu.docs]
-parent = "enterprise"
-weight = 400
+weight = 800
 +++
 
 # Reporting
@@ -14,6 +11,9 @@ weight = 400
 Reporting allows you to automatically generate PDFs from any of your dashboards and have Grafana email them to interested parties on a schedule.
 
 > Only available in Grafana Enterprise v6.4+.
+ 
+> If you have [Fine-grained access Control]({{< relref "../enterprise/access-control/_index.md" >}}) enabled, for some actions you would need to have relevant permissions.
+Refer to specific guides to understand what permissions are required.
 
 {{< docs-imagebox img="/img/docs/enterprise/reports_list.png" max-width="500px" class="docs-image--no-shadow" >}}
 
@@ -21,29 +21,34 @@ Any changes you make to a dashboard used in a report are reflected the next time
 
 ## Requirements
 
-* SMTP must be configured for reports to be sent. Refer to [SMTP]({{< relref "../administration/configuration.md#smtp" >}}) in [Configuration]({{< relref "../administration/configuration.md" >}}) for more information.
-* The Image Renderer plugin must be installed or the remote rendering service must be set up. Refer to [Image rendering]({{< relref "../administration/image_rendering.md" >}}) for more information.
+- SMTP must be configured for reports to be sent. Refer to [SMTP]({{< relref "../administration/configuration.md#smtp" >}}) in [Configuration]({{< relref "../administration/configuration.md" >}}) for more information.
+- The Image Renderer plugin must be installed or the remote rendering service must be set up. Refer to [Image rendering]({{< relref "../administration/image_rendering.md" >}}) for more information.
+
+## Access control
+
+When [Fine-grained access control]({{< relref "../enterprise/access-control/_index.md" >}}) is enabled, you need to have the relevant [Permissions]({{< relref "../enterprise/access-control/permissions.md" >}}) to create and manage reports.
 
 ## Create or update a report
 
-Currently only Organization Admins can create reports.
+Only organization admins can create reports by default. You can customize who can create reports with [fine-grained access control]({{< relref "../enterprise/access-control/_index.md" >}}).
 
 1. Click on the reports icon in the side menu. The Reports tab allows you to view, create, and update your reports.
 1. Enter report information. All fields are required unless otherwise indicated.
-   * **Name -** Name of the report as you want it to appear in the Reports list.
-   * **Source dashboard -** Select the dashboard to generate the report from.
-   * **Recipients -** Enter the emails of the people or teams that you want to receive the report.
-   * **Reply to -** (optional) The address that will appear in the **Reply to** field of the email. 
-   * **Message -** (optional) Message body in the email with the report.
-   * **Time range -** (optional) Use custom time range for the report. For more information check [Report time range]({{< relref "#report-time-range" >}}).
-1. **Preview PDF**to make sure the report appears as you expect. Update if necessary.
+   - **Name -** Name of the report as you want it to appear in the Reports list.
+   - **Source dashboard -** Select the dashboard to generate the report from.
+   - **Recipients -** Enter the emails of the people or teams that you want to receive the report, separated by semicolons.
+   - **Reply to -** (optional) The address that will appear in the **Reply to** field of the email.
+   - **Message -** (optional) Message body in the email with the report.
+   - **Link back to the source dashboard -** Include a link to the dashboard from within the report email. 
+   - **Time range -** (optional) Use custom time range for the report. For more information check [Report time range]({{< relref "#report-time-range" >}}).
+1. **Preview PDF** to make sure the report appears as you expect. Update if necessary.
 1. Enter scheduling information. Options vary depending on the frequency you select.
-1. Select the orientation option for generated report: **Portrait** or **Landscape**.  
-1. Select the layout option for generated report: **Simple** or **Grid**.  
+1. Select the orientation option for generated report: **Portrait** or **Landscape**.
+1. Select the layout option for generated report: **Simple** or **Grid**.
 1. **Save** the report.
 1. **Send test email** to verify that the whole configuration is working as expected.
 
-{{< docs-imagebox img="/img/docs/enterprise/reports_create_new.png" max-width="500px" class="docs-image--no-shadow" >}}
+{{< docs-imagebox img="/img/docs/enterprise/reports-create-new-8.0.png" max-width="500px" class="docs-image--no-shadow" >}}
 
 ### Layout and orientation
 
@@ -66,23 +71,23 @@ All scheduling indicates when the reporting service will start rendering the das
 
 Hourly reports are generated once per hour. All fields are required.
 
-* **At minute -** The number of minutes after full hour when the report should be generated.
-* **Time zone -** Time zone to determine the offset of the full hour. Does not currently change the time in the rendered report. 
+- **At minute -** The number of minutes after full hour when the report should be generated.
+- **Time zone -** Time zone to determine the offset of the full hour. Does not currently change the time in the rendered report.
 
 #### Daily
 
 Daily reports are generated once per day. All fields are required.
 
-* **Time -** Time the report is sent, in 24-hour format.
-* **Time zone -** Time zone for the **Time** field.
+- **Time -** Time the report is sent, in 24-hour format.
+- **Time zone -** Time zone for the **Time** field.
 
 #### Weekly
 
 Weekly reports are generated once per week. All fields are required.
 
-* **Day -** Weekday which the report should be sent on.
-* **Time -** Time the report is sent, in 24-hour format.
-* **Time zone -** Time zone for the **Time** field.
+- **Day -** Weekday which the report should be sent on.
+- **Time -** Time the report is sent, in 24-hour format.
+- **Time zone -** Time zone for the **Time** field.
 
 #### Monthly
 
@@ -90,9 +95,9 @@ Weekly reports are generated once per week. All fields are required.
 
 Monthly reports are generated once per month. All fields are required.
 
-* **Day in month -** Day of the month when the report should be sent. You can select `last` for reports that should go out on the last day of the month.
-* **Time -** Time the report is sent, in 24-hour format.
-* **Time zone -** Time zone for the **Time** field.
+- **Day in month -** Day of the month when the report should be sent. You can select `last` for reports that should go out on the last day of the month.
+- **Time -** Time the report is sent, in 24-hour format.
+- **Time zone -** Time zone for the **Time** field.
 
 #### Never
 
@@ -121,7 +126,9 @@ You can send reports programmatically with the [send report]({{< relref "../http
 
 When generating reports, each panel renders separately before being collected in a PDF. The per panel rendering timeout and number of concurrently rendered panels can be configured.
 
-To modify the panels' clarity you can set a scale factor for the rendered images. A higher scale factor is more legible but will increase the file size of the generated PDF.
+To make a panel more legible, you can set a scale factor for the rendered images. However, a higher scale factor increases the file size of the generated PDF.
+
+You can also specify custom fonts that support different Unicode scripts. The DejaVu font is the default used for PDF rendering.
 
 These options are available in the [configuration]({{< relref "../administration/configuration.md">}}) file.
 
@@ -134,6 +141,14 @@ concurrent_render_limit = 4
 # Set the scale factor for rendering images. 2 is enough for monitor resolutions
 # 4 would be better for printed material. Setting a higher value affects performance and memory
 image_scale_factor = 2
+# Path to the directory containing font files
+fonts_path =
+# Name of the TrueType font file with regular style
+font_regular = DejaVuSansCondensed.ttf
+# Name of the TrueType font file with bold style
+font_bold = DejaVuSansCondensed-Bold.ttf
+# Name of the TrueType font file with italic style
+font_italic = DejaVuSansCondensed-Oblique.ttf
 ```
 
 ## Report time range
@@ -141,12 +156,18 @@ image_scale_factor = 2
 > Setting custom report time range is available in Grafana Enterprise v7.2+.
 
 By default, reports use the saved time range of the dashboard. Changing the time range of the report can be done by:
-- Saving a modified time range to the dashboard. 
+- Saving a modified time range to the dashboard.
 - Setting a time range via **Time range** field in the report form. If specified, then this custom time range overrides the one from the report's dashboard.
 
 The page header of the report displays the time range for the dashboard's data queries. Dashboards set to use the browser's time zone will use the time zone on the Grafana server.
 
-If the time zone is set differently between your Grafana server and its remote image renderer, then the time ranges in the report might be different between the page header and the time axes in the panels. We advise always setting the time zone to UTC for dashboards when using a remote renderer to avoid this. 
+If the time zone is set differently between your Grafana server and its remote image renderer, then the time ranges in the report might be different between the page header and the time axes in the panels. We advise always setting the time zone to UTC for dashboards when using a remote renderer to avoid this.
+
+## Choose template variables
+
+> ** Note:** Available in Grafana Enterprise version 7.5+ (behind `reportVariables` feature flag).
+
+You can configure report-specific template variables for the dashboard on the report page. The variables that you select will override the variables from the dashboard, and they are used when rendering a PDF file of the report. For detailed information about using template variables, refer to the [Templates and variables]({{< relref "../variables/_index.md" >}}) section. 
 
 ## Reports settings
 
@@ -154,7 +175,7 @@ If the time zone is set differently between your Grafana server and its remote i
 
 You can configure organization-wide report settings in the **Settings** tab on the **Reporting** page. Settings are applied to all the reports for current organization.
 
-You can customize the branding options.  
+You can customize the branding options.
 
 Report branding:
 **Company logo URL** - Company logo displayed in the report PDF. Defaults to the Grafana logo.
@@ -163,8 +184,8 @@ Email branding:
 - **Company logo URL** - Company logo displayed in the report PDF. Defaults to the Grafana logo.
 - **Email footer** - Toggle to enable report email footer. Select **Sent by** or **None**.
 - **Footer link text** - Text for the link in the report email footer. Defaults to "Grafana".
-- **Footer link URL** - Link for the report email footer.  
-  
+- **Footer link URL** - Link for the report email footer.
+
 {{< docs-imagebox img="/img/docs/enterprise/reports_settings.png" max-width="500px" class="docs-image--no-shadow" >}}
 
 ## Troubleshoot reporting

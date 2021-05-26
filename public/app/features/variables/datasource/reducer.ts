@@ -1,26 +1,23 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { DataSourceVariableModel, VariableHide, VariableOption, VariableRefresh } from '../types';
+import { DataSourceInstanceSettings } from '@grafana/data';
+
+import { DataSourceVariableModel, initialVariableModelState, VariableOption, VariableRefresh } from '../types';
 import {
   ALL_VARIABLE_TEXT,
   ALL_VARIABLE_VALUE,
   getInstanceState,
-  NEW_VARIABLE_ID,
+  initialVariablesState,
   VariablePayload,
+  VariablesState,
 } from '../state/types';
-import { initialVariablesState, VariablesState } from '../state/variablesReducer';
-import { DataSourceSelectItem } from '@grafana/data';
 
 export interface DataSourceVariableEditorState {
   dataSourceTypes: Array<{ text: string; value: string }>;
 }
 
 export const initialDataSourceVariableModelState: DataSourceVariableModel = {
-  id: NEW_VARIABLE_ID,
-  global: false,
+  ...initialVariableModelState,
   type: 'datasource',
-  name: '',
-  hide: VariableHide.dontHide,
-  label: '',
   current: {} as VariableOption,
   regex: '',
   options: [],
@@ -28,9 +25,6 @@ export const initialDataSourceVariableModelState: DataSourceVariableModel = {
   multi: false,
   includeAll: false,
   refresh: VariableRefresh.onDashboardLoad,
-  skipUrlSync: false,
-  index: -1,
-  initLock: null,
 };
 
 export const dataSourceVariableSlice = createSlice({
@@ -39,7 +33,7 @@ export const dataSourceVariableSlice = createSlice({
   reducers: {
     createDataSourceOptions: (
       state: VariablesState,
-      action: PayloadAction<VariablePayload<{ sources: DataSourceSelectItem[]; regex: RegExp | undefined }>>
+      action: PayloadAction<VariablePayload<{ sources: DataSourceInstanceSettings[]; regex: RegExp | undefined }>>
     ) => {
       const { sources, regex } = action.payload.data;
       const options: VariableOption[] = [];
@@ -51,11 +45,13 @@ export const dataSourceVariableSlice = createSlice({
           continue;
         }
 
-        if (regex && !regex.exec(source.name)) {
-          continue;
+        if (isValid(source, regex)) {
+          options.push({ text: source.name, value: source.name, selected: false });
         }
 
-        options.push({ text: source.name, value: source.name, selected: false });
+        if (source.isDefault) {
+          options.push({ text: 'default', value: 'default', selected: false });
+        }
       }
 
       if (options.length === 0) {
@@ -70,6 +66,14 @@ export const dataSourceVariableSlice = createSlice({
     },
   },
 });
+
+function isValid(source: DataSourceInstanceSettings, regex?: RegExp) {
+  if (!regex) {
+    return true;
+  }
+
+  return regex && regex.exec(source.name);
+}
 
 export const dataSourceVariableReducer = dataSourceVariableSlice.reducer;
 export const { createDataSourceOptions } = dataSourceVariableSlice.actions;

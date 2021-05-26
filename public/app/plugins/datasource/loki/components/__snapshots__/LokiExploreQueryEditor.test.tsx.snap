@@ -1,15 +1,20 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`LokiExploreQueryEditor should render component 1`] = `
-<Component
+<LokiQueryField
   ExtraFieldElement={
-    <Memo(LokiExploreExtraField)
-      label="Line limit"
-      min={0}
-      onChangeFunc={[Function]}
-      onKeyDownFunc={[Function]}
-      type="number"
-      value="0"
+    <LokiOptionFields
+      lineLimitValue="0"
+      onChange={[MockFunction]}
+      onRunQuery={[MockFunction]}
+      query={
+        Object {
+          "expr": "",
+          "maxLines": 0,
+          "refId": "A",
+        }
+      }
+      queryType="range"
     />
   }
   data={
@@ -48,13 +53,16 @@ exports[`LokiExploreQueryEditor should render component 1`] = `
   }
   datasource={
     Object {
+      "getTimeRangeParams": [Function],
       "languageProvider": LokiLanguageProvider {
-        "addLabelValuesToOptions": [Function],
         "cleanText": [Function],
         "datasource": [Circular],
+        "fetchSeries": [Function],
         "fetchSeriesLabels": [Function],
         "getBeginningCompletionItems": [Function],
+        "getPipeCompletionItem": [Function],
         "getTermCompletionItems": [Function],
+        "labelFetchTs": 0,
         "labelKeys": Array [],
         "labelsCache": LRUCache {
           Symbol(max): 10,
@@ -72,7 +80,7 @@ exports[`LokiExploreQueryEditor should render component 1`] = `
           },
           Symbol(length): 0,
         },
-        "logLabelFetchTs": 0,
+        "lookupsDisabled": false,
         "request": [Function],
         "seriesCache": LRUCache {
           Symbol(max): 10,
@@ -91,6 +99,7 @@ exports[`LokiExploreQueryEditor should render component 1`] = `
           Symbol(length): 0,
         },
         "start": [Function],
+        "started": false,
       },
       "metadataRequest": [Function],
     }
@@ -104,16 +113,6 @@ exports[`LokiExploreQueryEditor should render component 1`] = `
       "expr": "",
       "maxLines": 0,
       "refId": "A",
-    }
-  }
-  range={
-    Object {
-      "from": "2020-01-01T00:00:00.000Z",
-      "raw": Object {
-        "from": "2020-01-01T00:00:00.000Z",
-        "to": "2020-01-02T00:00:00.000Z",
-      },
-      "to": "2020-01-02T00:00:00.000Z",
     }
   }
 />

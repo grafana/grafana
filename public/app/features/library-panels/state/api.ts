@@ -1,0 +1,104 @@
+import {
+  LibraryElementConnectionDTO,
+  LibraryElementDTO,
+  LibraryElementKind,
+  LibraryElementsSearchResult,
+  PanelModelWithLibraryPanel,
+} from '../types';
+import { DashboardSearchHit } from '../../search/types';
+import { getBackendSrv } from '../../../core/services/backend_srv';
+
+export interface GetLibraryPanelsOptions {
+  searchString?: string;
+  perPage?: number;
+  page?: number;
+  excludeUid?: string;
+  sortDirection?: string;
+  typeFilter?: string[];
+  folderFilter?: string[];
+}
+
+export async function getLibraryPanels({
+  searchString = '',
+  perPage = 100,
+  page = 1,
+  excludeUid = '',
+  sortDirection = '',
+  typeFilter = [],
+  folderFilter = [],
+}: GetLibraryPanelsOptions = {}): Promise<LibraryElementsSearchResult> {
+  const params = new URLSearchParams();
+  params.append('searchString', searchString);
+  params.append('sortDirection', sortDirection);
+  params.append('typeFilter', typeFilter.join(','));
+  params.append('folderFilter', folderFilter.join(','));
+  params.append('excludeUid', excludeUid);
+  params.append('perPage', perPage.toString(10));
+  params.append('page', page.toString(10));
+  params.append('kind', LibraryElementKind.Panel.toString(10));
+
+  const { result } = await getBackendSrv().get<{ result: LibraryElementsSearchResult }>(
+    `/api/library-elements?${params.toString()}`
+  );
+  return result;
+}
+
+export async function getLibraryPanel(uid: string): Promise<LibraryElementDTO> {
+  const { result } = await getBackendSrv().get(`/api/library-elements/${uid}`);
+  return result;
+}
+
+export async function getLibraryPanelByName(name: string): Promise<LibraryElementDTO[]> {
+  const { result } = await getBackendSrv().get<{ result: LibraryElementDTO[] }>(`/api/library-elements/name/${name}`);
+  return result;
+}
+
+export async function addLibraryPanel(
+  panelSaveModel: PanelModelWithLibraryPanel,
+  folderId: number
+): Promise<LibraryElementDTO> {
+  const { result } = await getBackendSrv().post(`/api/library-elements`, {
+    folderId,
+    name: panelSaveModel.title,
+    model: panelSaveModel,
+    kind: LibraryElementKind.Panel,
+  });
+  return result;
+}
+
+export async function updateLibraryPanel(
+  panelSaveModel: PanelModelWithLibraryPanel,
+  folderId: number
+): Promise<LibraryElementDTO> {
+  const { result } = await getBackendSrv().patch(`/api/library-elements/${panelSaveModel.libraryPanel.uid}`, {
+    folderId,
+    name: panelSaveModel.title,
+    model: panelSaveModel,
+    version: panelSaveModel.libraryPanel.version,
+    kind: LibraryElementKind.Panel,
+  });
+  return result;
+}
+
+export function deleteLibraryPanel(uid: string): Promise<{ message: string }> {
+  return getBackendSrv().delete(`/api/library-elements/${uid}`);
+}
+
+export async function getLibraryPanelConnectedDashboards(
+  libraryPanelUid: string
+): Promise<LibraryElementConnectionDTO[]> {
+  const { result } = await getBackendSrv().get<{ result: LibraryElementConnectionDTO[] }>(
+    `/api/library-elements/${libraryPanelUid}/connections`
+  );
+  return result;
+}
+
+export async function getConnectedDashboards(uid: string): Promise<DashboardSearchHit[]> {
+  const connections = await getLibraryPanelConnectedDashboards(uid);
+  if (connections.length === 0) {
+    return [];
+  }
+
+  const searchHits = await getBackendSrv().search({ dashboardIds: connections.map((c) => c.connectionId) });
+  return searchHits;
+}

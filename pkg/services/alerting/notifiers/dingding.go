@@ -119,14 +119,14 @@ func (dd *DingDingNotifier) genBody(evalContext *alerting.EvalContext, messageUR
 	}
 
 	for i, match := range evalContext.EvalMatches {
-		message += fmt.Sprintf("\\n%2d. %s: %s", i+1, match.Metric, match.Value)
+		message += fmt.Sprintf("\n%2d. %s: %s", i+1, match.Metric, match.Value)
 	}
 
 	var bodyMsg map[string]interface{}
 	if dd.MsgType == "actionCard" {
 		// Embed the pic into the markdown directly because actionCard doesn't have a picUrl field
 		if dd.NeedsImage() && picURL != "" {
-			message = "![](" + picURL + ")\\n\\n" + message
+			message = "![](" + picURL + ")\n\n" + message
 		}
 
 		bodyMsg = map[string]interface{}{

@@ -1,14 +1,17 @@
 import React from 'react';
+import { DataSourceSettings } from '@grafana/data';
 
 import { DataSourceHttpSettings } from './DataSourceHttpSettings';
-import { DataSourceSettings } from '@grafana/data';
 import { UseState } from '../../utils/storybook/UseState';
+import mdx from './DataSourceHttpSettings.mdx';
 
 const settingsMock: DataSourceSettings<any, any> = {
   id: 4,
   orgId: 1,
+  uid: 'x',
   name: 'gdev-influxdb',
   type: 'influxdb',
+  typeName: 'Influxdb',
   typeLogoUrl: '',
   access: 'direct',
   url: 'http://localhost:8086',
@@ -24,6 +27,7 @@ const settingsMock: DataSourceSettings<any, any> = {
     timeInterval: '15s',
     httpMode: 'GET',
     keepCookies: ['cookie1', 'cookie2'],
+    serverName: '',
   },
   secureJsonData: {
     password: true,
@@ -35,6 +39,11 @@ const settingsMock: DataSourceSettings<any, any> = {
 export default {
   title: 'Data Source/DataSourceHttpSettings',
   component: DataSourceHttpSettings,
+  parameters: {
+    docs: {
+      page: mdx,
+    },
+  },
 };
 
 export const basic = () => {

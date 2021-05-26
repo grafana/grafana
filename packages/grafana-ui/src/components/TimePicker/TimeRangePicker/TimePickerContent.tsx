@@ -1,56 +1,50 @@
-import { GrafanaTheme, isDateTime, TimeOption, TimeRange, TimeZone } from '@grafana/data';
-import { css, cx } from 'emotion';
-import React, { memo, useState } from 'react';
+import { GrafanaTheme2, isDateTime, rangeUtil, RawTimeRange, TimeOption, TimeRange, TimeZone } from '@grafana/data';
+import { css, cx } from '@emotion/css';
+import React, { memo, useMemo, useState } from 'react';
 import { useMedia } from 'react-use';
-import { stylesFactory, useTheme } from '../../../themes';
+import { stylesFactory, useTheme2 } from '../../../themes';
 import { CustomScrollbar } from '../../CustomScrollbar/CustomScrollbar';
 import { Icon } from '../../Icon/Icon';
-import { mapRangeToTimeOption } from './mapper';
+import { mapOptionToTimeRange, mapRangeToTimeOption } from './mapper';
 import { TimePickerTitle } from './TimePickerTitle';
 import { TimeRangeForm } from './TimeRangeForm';
 import { TimeRangeList } from './TimeRangeList';
 import { TimePickerFooter } from './TimePickerFooter';
 
-const getStyles = stylesFactory((theme: GrafanaTheme, isReversed) => {
-  const containerBorder = theme.isDark ? theme.palette.dark9 : theme.palette.gray5;
-
+const getStyles = stylesFactory((theme: GrafanaTheme2, isReversed, hideQuickRanges, isContainerTall) => {
   return {
     container: css`
-      background: ${theme.colors.bodyBg};
-      box-shadow: 0px 0px 20px ${theme.colors.dropdownShadow};
+      background: ${theme.colors.background.primary};
+      box-shadow: ${theme.shadows.z3};
       position: absolute;
-      z-index: ${theme.zIndex.modal};
+      z-index: ${theme.zIndex.dropdown};
       width: 546px;
       top: 116%;
       border-radius: 2px;
-      border: 1px solid ${containerBorder};
-      right: ${isReversed ? 'unset' : 0};
+      border: 1px solid ${theme.colors.border.weak};
+      ${isReversed ? 'left' : 'right'}: 0;
 
-      @media only screen and (max-width: ${theme.breakpoints.lg}) {
+      @media only screen and (max-width: ${theme.breakpoints.values.lg}px) {
         width: 262px;
       }
     `,
     body: css`
       display: flex;
-      height: 381px;
+      height: ${isContainerTall ? '381px' : '217px'};
     `,
     leftSide: css`
       display: flex;
       flex-direction: column;
-      border-right: ${isReversed ? 'none' : `1px solid ${theme.colors.border1}`};
-      width: 60%;
+      border-right: ${isReversed ? 'none' : `1px solid ${theme.colors.border.weak}`};
+      width: ${!hideQuickRanges ? '60%' : '100%'};
       overflow: hidden;
       order: ${isReversed ? 1 : 0};
-
-      @media only screen and (max-width: ${theme.breakpoints.lg}) {
-        display: none;
-      }
     `,
     rightSide: css`
       width: 40% !important;
-      border-right: ${isReversed ? `1px solid ${theme.colors.border1}` : 'none'};
+      border-right: ${isReversed ? `1px solid ${theme.colors.border.weak}` : 'none'};
 
-      @media only screen and (max-width: ${theme.breakpoints.lg}) {
+      @media only screen and (max-width: ${theme.breakpoints.values.lg}px) {
         width: 100% !important;
       }
     `,
@@ -60,22 +54,18 @@ const getStyles = stylesFactory((theme: GrafanaTheme, isReversed) => {
   };
 });
 
-const getNarrowScreenStyles = stylesFactory((theme: GrafanaTheme) => {
-  const formBackground = theme.isDark ? theme.palette.gray15 : theme.palette.gray98;
-
+const getNarrowScreenStyles = stylesFactory((theme: GrafanaTheme2) => {
   return {
     header: css`
       display: flex;
       flex-direction: row;
       justify-content: space-between;
       align-items: center;
-      border-bottom: 1px solid ${theme.colors.border1};
+      border-bottom: 1px solid ${theme.colors.border.weak};
       padding: 7px 9px 7px 9px;
     `,
     body: css`
-      border-bottom: 1px solid ${theme.colors.border1};
-      background: ${formBackground};
-      box-shadow: inset 0px 2px 2px ${theme.colors.dropdownShadow};
+      border-bottom: 1px solid ${theme.colors.border.weak};
     `,
     form: css`
       padding: 7px 9px 7px 9px;
@@ -83,12 +73,12 @@ const getNarrowScreenStyles = stylesFactory((theme: GrafanaTheme) => {
   };
 });
 
-const getFullScreenStyles = stylesFactory((theme: GrafanaTheme) => {
+const getFullScreenStyles = stylesFactory((theme: GrafanaTheme2, hideQuickRanges?: boolean) => {
   return {
     container: css`
       padding-top: 9px;
       padding-left: 11px;
-      padding-right: 20%;
+      padding-right: ${!hideQuickRanges ? '20%' : '11px'};
     `,
     title: css`
       margin-bottom: 11px;
@@ -98,16 +88,14 @@ const getFullScreenStyles = stylesFactory((theme: GrafanaTheme) => {
       display: flex;
       flex-direction: column;
       justify-content: flex-end;
+      padding-top: ${theme.spacing(1)};
     `,
   };
 });
 
-const getEmptyListStyles = stylesFactory((theme: GrafanaTheme) => {
-  const formBackground = theme.isDark ? theme.palette.gray15 : theme.palette.gray98;
-
+const getEmptyListStyles = stylesFactory((theme: GrafanaTheme2) => {
   return {
     container: css`
-      background-color: ${formBackground};
       padding: 12px;
       margin: 12px;
 
@@ -117,7 +105,7 @@ const getEmptyListStyles = stylesFactory((theme: GrafanaTheme) => {
       }
     `,
     link: css`
-      color: ${theme.colors.linkExternal};
+      color: ${theme.colors.text.link};
     `,
   };
 });
@@ -135,100 +123,125 @@ interface Props {
   hideTimeZone?: boolean;
   /** Reverse the order of relative and absolute range pickers. Used to left align the picker in forms */
   isReversed?: boolean;
+  hideQuickRanges?: boolean;
 }
 
-interface PropsWithScreenSize extends Props {
+export interface PropsWithScreenSize extends Props {
   isFullscreen: boolean;
 }
 
 interface FormProps extends Omit<Props, 'history'> {
-  visible: boolean;
   historyOptions?: TimeOption[];
 }
 
-export const TimePickerContentWithScreenSize: React.FC<PropsWithScreenSize> = props => {
-  const theme = useTheme();
-  const styles = getStyles(theme, props.isReversed);
-  const historyOptions = mapToHistoryOptions(props.history, props.timeZone);
-  const { quickOptions = [], otherOptions = [], isFullscreen } = props;
+export const TimePickerContentWithScreenSize: React.FC<PropsWithScreenSize> = (props) => {
+  const {
+    quickOptions = [],
+    otherOptions = [],
+    isReversed,
+    isFullscreen,
+    hideQuickRanges,
+    timeZone,
+    value,
+    onChange,
+    history,
+    showHistory,
+    className,
+    hideTimeZone,
+    onChangeTimeZone,
+  } = props;
+  const isHistoryEmpty = !history?.length;
+  const isContainerTall =
+    (isFullscreen && showHistory) || (!isFullscreen && ((showHistory && !isHistoryEmpty) || !hideQuickRanges));
+  const theme = useTheme2();
+  const styles = getStyles(theme, isReversed, hideQuickRanges, isContainerTall);
+  const historyOptions = mapToHistoryOptions(history, timeZone);
+  const timeOption = useTimeOption(value.raw, otherOptions, quickOptions);
+
+  const onChangeTimeOption = (timeOption: TimeOption) => {
+    return onChange(mapOptionToTimeRange(timeOption));
+  };
 
   return (
-    <div className={cx(styles.container, props.className)}>
+    <div className={cx(styles.container, className)}>
       <div className={styles.body}>
-        <div className={styles.leftSide}>
-          <FullScreenForm {...props} visible={isFullscreen} historyOptions={historyOptions} />
-        </div>
-        <CustomScrollbar className={styles.rightSide}>
-          <NarrowScreenForm {...props} visible={!isFullscreen} historyOptions={historyOptions} />
-          <TimeRangeList
-            title="Relative time ranges"
-            options={quickOptions}
-            onSelect={props.onChange}
-            value={props.value}
-            timeZone={props.timeZone}
-          />
-          <div className={styles.spacing} />
-          <TimeRangeList
-            title="Other quick ranges"
-            options={otherOptions}
-            onSelect={props.onChange}
-            value={props.value}
-            timeZone={props.timeZone}
-          />
-        </CustomScrollbar>
+        {isFullscreen && (
+          <div className={styles.leftSide}>
+            <FullScreenForm {...props} historyOptions={historyOptions} />
+          </div>
+        )}
+        {(!isFullscreen || !hideQuickRanges) && (
+          <CustomScrollbar className={styles.rightSide}>
+            {!isFullscreen && <NarrowScreenForm {...props} historyOptions={historyOptions} />}
+            {!hideQuickRanges && (
+              <>
+                <TimeRangeList
+                  title="Relative time ranges"
+                  options={quickOptions}
+                  onChange={onChangeTimeOption}
+                  value={timeOption}
+                />
+                <div className={styles.spacing} />
+                <TimeRangeList
+                  title="Other quick ranges"
+                  options={otherOptions}
+                  onChange={onChangeTimeOption}
+                  value={timeOption}
+                />
+              </>
+            )}
+          </CustomScrollbar>
+        )}
       </div>
-      {!props.hideTimeZone && isFullscreen && (
-        <TimePickerFooter timeZone={props.timeZone} onChangeTimeZone={props.onChangeTimeZone} />
-      )}
+      {!hideTimeZone && isFullscreen && <TimePickerFooter timeZone={timeZone} onChangeTimeZone={onChangeTimeZone} />}
     </div>
   );
 };
 
-export const TimePickerContent: React.FC<Props> = props => {
-  const theme = useTheme();
-  const isFullscreen = useMedia(`(min-width: ${theme.breakpoints.lg})`);
+export const TimePickerContent: React.FC<Props> = (props) => {
+  const theme = useTheme2();
+  const isFullscreen = useMedia(`(min-width: ${theme.breakpoints.values.lg}px)`);
 
   return <TimePickerContentWithScreenSize {...props} isFullscreen={isFullscreen} />;
 };
 
-const NarrowScreenForm: React.FC<FormProps> = props => {
-  if (!props.visible) {
-    return null;
-  }
-
-  const theme = useTheme();
+const NarrowScreenForm: React.FC<FormProps> = (props) => {
+  const { value, hideQuickRanges, onChange, timeZone, historyOptions = [], showHistory } = props;
+  const theme = useTheme2();
   const styles = getNarrowScreenStyles(theme);
-  const isAbsolute = isDateTime(props.value.raw.from) || isDateTime(props.value.raw.to);
-  const [collapsed, setCollapsed] = useState(isAbsolute);
+  const isAbsolute = isDateTime(value.raw.from) || isDateTime(value.raw.to);
+  const [collapsedFlag, setCollapsedFlag] = useState(!isAbsolute);
+  const collapsed = hideQuickRanges ? false : collapsedFlag;
+
+  const onChangeTimeOption = (timeOption: TimeOption) => {
+    return onChange(mapOptionToTimeRange(timeOption));
+  };
 
   return (
     <>
       <div
         aria-label="TimePicker absolute time range"
         className={styles.header}
-        onClick={() => setCollapsed(!collapsed)}
+        onClick={() => {
+          if (!hideQuickRanges) {
+            setCollapsedFlag(!collapsed);
+          }
+        }}
       >
         <TimePickerTitle>Absolute time range</TimePickerTitle>
-        {<Icon name={collapsed ? 'angle-up' : 'angle-down'} />}
+        {!hideQuickRanges && <Icon name={!collapsed ? 'angle-up' : 'angle-down'} />}
       </div>
-      {collapsed && (
+      {!collapsed && (
         <div className={styles.body}>
           <div className={styles.form}>
-            <TimeRangeForm
-              value={props.value}
-              onApply={props.onChange}
-              timeZone={props.timeZone}
-              isFullscreen={false}
-            />
+            <TimeRangeForm value={value} onApply={onChange} timeZone={timeZone} isFullscreen={false} />
           </div>
-          {props.showHistory && (
+          {showHistory && (
             <TimeRangeList
               title="Recently used absolute ranges"
-              options={props.historyOptions || []}
-              onSelect={props.onChange}
-              value={props.value}
+              options={historyOptions}
+              onChange={onChangeTimeOption}
               placeholderEmpty={null}
-              timeZone={props.timeZone}
             />
           )}
         </div>
@@ -237,13 +250,13 @@ const NarrowScreenForm: React.FC<FormProps> = props => {
   );
 };
 
-const FullScreenForm: React.FC<FormProps> = props => {
-  if (!props.visible) {
-    return null;
-  }
-
-  const theme = useTheme();
-  const styles = getFullScreenStyles(theme);
+const FullScreenForm: React.FC<FormProps> = (props) => {
+  const { onChange } = props;
+  const theme = useTheme2();
+  const styles = getFullScreenStyles(theme, props.hideQuickRanges);
+  const onChangeTimeOption = (timeOption: TimeOption) => {
+    return onChange(mapOptionToTimeRange(timeOption));
+  };
 
   return (
     <>
@@ -264,10 +277,8 @@ const FullScreenForm: React.FC<FormProps> = props => {
           <TimeRangeList
             title="Recently used absolute ranges"
             options={props.historyOptions || []}
-            onSelect={props.onChange}
-            value={props.value}
+            onChange={onChangeTimeOption}
             placeholderEmpty={<EmptyRecentList />}
-            timeZone={props.timeZone}
           />
         </div>
       )}
@@ -276,15 +287,15 @@ const FullScreenForm: React.FC<FormProps> = props => {
 };
 
 const EmptyRecentList = memo(() => {
-  const theme = useTheme();
+  const theme = useTheme2();
   const styles = getEmptyListStyles(theme);
 
   return (
     <div className={styles.container}>
       <div>
         <span>
-          It looks like you haven't used this timer picker before. As soon as you enter some time intervals, recently
-          used intervals will appear here.
+          It looks like you haven&apos;t used this time picker before. As soon as you enter some time intervals,
+          recently used intervals will appear here.
         </span>
       </div>
       <div>
@@ -305,5 +316,28 @@ function mapToHistoryOptions(ranges?: TimeRange[], timeZone?: TimeZone): TimeOpt
   if (!Array.isArray(ranges) || ranges.length === 0) {
     return [];
   }
-  return ranges.slice(ranges.length - 4).map(range => mapRangeToTimeOption(range, timeZone));
+  return ranges.slice(ranges.length - 4).map((range) => mapRangeToTimeOption(range, timeZone));
 }
+
+EmptyRecentList.displayName = 'EmptyRecentList';
+
+const useTimeOption = (
+  raw: RawTimeRange,
+  quickOptions: TimeOption[],
+  otherOptions: TimeOption[]
+): TimeOption | undefined => {
+  return useMemo(() => {
+    if (!rangeUtil.isRelativeTimeRange(raw)) {
+      return;
+    }
+    const quickOption = quickOptions.find((option) => {
+      return option.from === raw.from && option.to === raw.to;
+    });
+    if (quickOption) {
+      return quickOption;
+    }
+    return otherOptions.find((option) => {
+      return option.from === raw.from && option.to === raw.to;
+    });
+  }, [raw, otherOptions, quickOptions]);
+};

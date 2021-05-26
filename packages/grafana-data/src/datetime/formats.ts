@@ -88,7 +88,7 @@ export function localTimeFormat(
   locale?: string | string[] | null,
   fallback?: string
 ): string {
-  if (!window.Intl) {
+  if (missingIntlDateTimeFormatSupport()) {
     return fallback ?? DEFAULT_SYSTEM_DATE_FORMAT;
   }
 
@@ -111,7 +111,11 @@ export function localTimeFormat(
     timeZoneName: 'Z',
   };
 
-  return parts.map(part => mapping[part.type] || part.value).join('');
+  return parts.map((part) => mapping[part.type] || part.value).join('');
 }
 
 export const systemDateFormats = new SystemDateFormatsState();
+
+const missingIntlDateTimeFormatSupport = (): boolean => {
+  return !('DateTimeFormat' in Intl) || !('formatToParts' in Intl.DateTimeFormat.prototype);
+};

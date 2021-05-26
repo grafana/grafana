@@ -130,7 +130,7 @@ type WrappedWithThemeComponent<Props> = React.ComponentType<Omit<Props, 'theme'>
 export const withTheme = <Props extends { theme: Theme }, Statics extends {} = {}>(
   Component: React.ComponentType<Props>
 ): WrappedWithThemeComponent<Props> => {
-  let WithTheme: React.ComponentType<Omit<Props, 'theme'>> = props => {
+  let WithTheme: React.ComponentType<Omit<Props, 'theme'>> = (props) => {
     return (
       <ThemeConsumer>
         {(theme: Theme) => {

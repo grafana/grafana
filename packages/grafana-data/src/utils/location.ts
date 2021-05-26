@@ -1,10 +1,10 @@
 import { GrafanaConfig, RawTimeRange, ScopedVars } from '../types';
-import { urlUtil } from './url';
+import { UrlQueryMap, urlUtil } from './url';
 import { textUtil } from '../text';
 
-let grafanaConfig: () => GrafanaConfig;
+let grafanaConfig: GrafanaConfig = { appSubUrl: '' } as any;
 let getTimeRangeUrlParams: () => RawTimeRange;
-let getVariablesUrlParams: (params?: Record<string, any>, scopedVars?: ScopedVars) => string;
+let getVariablesUrlParams: (scopedVars?: ScopedVars) => UrlQueryMap;
 
 /**
  *
@@ -12,12 +12,18 @@ let getVariablesUrlParams: (params?: Record<string, any>, scopedVars?: ScopedVar
  * @internal
  */
 const stripBaseFromUrl = (url: string): string => {
-  const appSubUrl = grafanaConfig ? grafanaConfig().appSubUrl : '';
+  const appSubUrl = grafanaConfig.appSubUrl ?? '';
   const stripExtraChars = appSubUrl.endsWith('/') ? 1 : 0;
-  const urlWithoutBase =
-    url.length > 0 && url.indexOf(appSubUrl) === 0 ? url.slice(appSubUrl.length - stripExtraChars) : url;
+  const isAbsoluteUrl = url.startsWith('http');
+  let segmentToStrip = appSubUrl;
 
-  return urlWithoutBase;
+  if (isAbsoluteUrl || !url.startsWith('/')) {
+    segmentToStrip = `${window.location.origin}${appSubUrl}`;
+  }
+
+  return url.length > 0 && url.indexOf(segmentToStrip) !== -1
+    ? url.slice(segmentToStrip.length - stripExtraChars)
+    : url;
 };
 
 /**
@@ -27,29 +33,29 @@ const stripBaseFromUrl = (url: string): string => {
  */
 const assureBaseUrl = (url: string): string => {
   if (url.startsWith('/')) {
-    return `${grafanaConfig ? grafanaConfig().appSubUrl : ''}${stripBaseFromUrl(url)}`;
+    return `${grafanaConfig.appSubUrl}${stripBaseFromUrl(url)}`;
   }
   return url;
 };
 
 interface LocationUtilDependencies {
-  getConfig: () => GrafanaConfig;
+  config: GrafanaConfig;
   getTimeRangeForUrl: () => RawTimeRange;
-  buildParamsFromVariables: (params: any, scopedVars?: ScopedVars) => string;
+  getVariablesUrlParams: (scopedVars?: ScopedVars) => UrlQueryMap;
 }
 
 export const locationUtil = {
   /**
    *
    * @param getConfig
-   * @param buildParamsFromVariables
+   * @param getAllVariableValuesForUrl
    * @param getTimeRangeForUrl
    * @internal
    */
-  initialize: ({ getConfig, buildParamsFromVariables, getTimeRangeForUrl }: LocationUtilDependencies) => {
-    grafanaConfig = getConfig;
-    getTimeRangeUrlParams = getTimeRangeForUrl;
-    getVariablesUrlParams = buildParamsFromVariables;
+  initialize: (dependencies: LocationUtilDependencies) => {
+    grafanaConfig = dependencies.config;
+    getTimeRangeUrlParams = dependencies.getTimeRangeForUrl;
+    getVariablesUrlParams = dependencies.getVariablesUrlParams;
   },
   stripBaseFromUrl,
   assureBaseUrl,
@@ -63,11 +69,10 @@ export const locationUtil = {
     if (!getVariablesUrlParams) {
       return null;
     }
-    const params = {};
-    getVariablesUrlParams(params, scopedVars);
+    const params = getVariablesUrlParams(scopedVars);
     return urlUtil.toUrlParams(params);
   },
   processUrl: (url: string) => {
-    return grafanaConfig().disableSanitizeHtml ? url : textUtil.sanitizeUrl(url);
+    return grafanaConfig.disableSanitizeHtml ? url : textUtil.sanitizeUrl(url);
   },
 };

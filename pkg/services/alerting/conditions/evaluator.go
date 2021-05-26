@@ -35,12 +35,12 @@ type thresholdEvaluator struct {
 func newThresholdEvaluator(typ string, model *simplejson.Json) (*thresholdEvaluator, error) {
 	params := model.Get("params").MustArray()
 	if len(params) == 0 || params[0] == nil {
-		return nil, fmt.Errorf("Evaluator '%v' is missing the threshold parameter", HumanThresholdType(typ))
+		return nil, fmt.Errorf("evaluator '%v' is missing the threshold parameter", HumanThresholdType(typ))
 	}
 
 	firstParam, ok := params[0].(json.Number)
 	if !ok {
-		return nil, fmt.Errorf("Evaluator has invalid parameter")
+		return nil, fmt.Errorf("evaluator has invalid parameter")
 	}
 
 	defaultEval := &thresholdEvaluator{Type: typ}
@@ -113,7 +113,7 @@ func (e *rangedEvaluator) Eval(reducedValue null.Float) bool {
 func NewAlertEvaluator(model *simplejson.Json) (AlertEvaluator, error) {
 	typ := model.Get("type").MustString()
 	if typ == "" {
-		return nil, fmt.Errorf("Evaluator missing type property")
+		return nil, fmt.Errorf("evaluator missing type property")
 	}
 
 	if inSlice(typ, defaultTypes) {
@@ -128,7 +128,7 @@ func NewAlertEvaluator(model *simplejson.Json) (AlertEvaluator, error) {
 		return &noValueEvaluator{}, nil
 	}
 
-	return nil, fmt.Errorf("Evaluator invalid evaluator type: %s", typ)
+	return nil, fmt.Errorf("evaluator invalid evaluator type: %s", typ)
 }
 
 func inSlice(a string, list []string) bool {

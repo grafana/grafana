@@ -56,7 +56,7 @@ func (s *SocialAzureAD) UserInfo(_ *http.Client, token *oauth2.Token) (*BasicUse
 
 	groups := extractGroups(claims)
 	if !s.IsGroupMember(groups) {
-		return nil, ErrMissingGroupMembership
+		return nil, errMissingGroupMembership
 	}
 
 	return &BasicUserInfo{

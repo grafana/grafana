@@ -1,5 +1,5 @@
-import { appendTransformer } from './transformers/append';
 import { reduceTransformer } from './transformers/reduce';
+import { concatenateTransformer } from './transformers/concat';
 import { calculateFieldTransformer } from './transformers/calculateField';
 import { filterFieldsTransformer, filterFramesTransformer } from './transformers/filter';
 import { filterFieldsByNameTransformer } from './transformers/filterByName';
@@ -13,7 +13,11 @@ import { renameFieldsTransformer } from './transformers/rename';
 import { labelsToFieldsTransformer } from './transformers/labelsToFields';
 import { ensureColumnsTransformer } from './transformers/ensureColumns';
 import { groupByTransformer } from './transformers/groupBy';
+import { sortByTransformer } from './transformers/sortBy';
 import { mergeTransformer } from './transformers/merge';
+import { renameByRegexTransformer } from './transformers/renameByRegex';
+import { filterByValueTransformer } from './transformers/filterByValue';
+import { histogramTransformer } from './transformers/histogram';
 
 export const standardTransformers = {
   noopTransformer,
@@ -21,10 +25,11 @@ export const standardTransformers = {
   filterFieldsByNameTransformer,
   filterFramesTransformer,
   filterFramesByRefIdTransformer,
+  filterByValueTransformer,
   orderFieldsTransformer,
   organizeFieldsTransformer,
-  appendTransformer,
   reduceTransformer,
+  concatenateTransformer,
   calculateFieldTransformer,
   seriesToColumnsTransformer,
   seriesToRowsTransformer,
@@ -32,5 +37,8 @@ export const standardTransformers = {
   labelsToFieldsTransformer,
   ensureColumnsTransformer,
   groupByTransformer,
+  sortByTransformer,
   mergeTransformer,
+  renameByRegexTransformer,
+  histogramTransformer,
 };

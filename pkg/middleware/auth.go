@@ -1,36 +1,23 @@
 package middleware
 
 import (
+	"errors"
 	"net/url"
+	"regexp"
 	"strconv"
 	"strings"
 
 	macaron "gopkg.in/macaron.v1"
 
+	"github.com/grafana/grafana/pkg/middleware/cookies"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 type AuthOptions struct {
 	ReqGrafanaAdmin bool
 	ReqSignedIn     bool
-}
-
-func getApiKey(c *models.ReqContext) string {
-	header := c.Req.Header.Get("Authorization")
-	parts := strings.SplitN(header, " ", 2)
-	if len(parts) == 2 && parts[0] == "Bearer" {
-		key := parts[1]
-		return key
-	}
-
-	username, password, err := util.DecodeBasicAuthHeader(header)
-	if err == nil && username == "api_key" {
-		return password
-	}
-
-	return ""
+	ReqNoAnonynmous bool
 }
 
 func accessForbidden(c *models.ReqContext) {
@@ -48,21 +35,42 @@ func notAuthorized(c *models.ReqContext) {
 		return
 	}
 
+	writeRedirectCookie(c)
+	c.Redirect(setting.AppSubUrl + "/login")
+}
+
+func tokenRevoked(c *models.ReqContext, err *models.TokenRevokedError) {
+	if c.IsApiRequest() {
+		c.JSON(401, map[string]interface{}{
+			"message": "Token revoked",
+			"error": map[string]interface{}{
+				"id":                    "ERR_TOKEN_REVOKED",
+				"maxConcurrentSessions": err.MaxConcurrentSessions,
+			},
+		})
+		return
+	}
+
+	writeRedirectCookie(c)
+	c.Redirect(setting.AppSubUrl + "/login")
+}
+
+func writeRedirectCookie(c *models.ReqContext) {
 	redirectTo := c.Req.RequestURI
 	if setting.AppSubUrl != "" && !strings.HasPrefix(redirectTo, setting.AppSubUrl) {
 		redirectTo = setting.AppSubUrl + c.Req.RequestURI
 	}
 
-	// remove forceLogin query param if it exists
-	if parsed, err := url.ParseRequestURI(redirectTo); err == nil {
-		params := parsed.Query()
-		params.Del("forceLogin")
-		parsed.RawQuery = params.Encode()
-		WriteCookie(c.Resp, "redirect_to", url.QueryEscape(parsed.String()), 0, newCookieOptions)
-	} else {
-		c.Logger.Debug("Failed parsing request URI; redirect cookie will not be set", "redirectTo", redirectTo, "error", err)
-	}
-	c.Redirect(setting.AppSubUrl + "/login")
+	// remove any forceLogin=true params
+	redirectTo = removeForceLoginParams(redirectTo)
+
+	cookies.WriteCookie(c.Resp, "redirect_to", url.QueryEscape(redirectTo), 0, nil)
+}
+
+var forceLoginParamsRegexp = regexp.MustCompile(`&?forceLogin=true`)
+
+func removeForceLoginParams(str string) string {
+	return forceLoginParamsRegexp.ReplaceAllString(str, "")
 }
 
 func EnsureEditorOrViewerCanEdit(c *models.ReqContext) {
@@ -90,13 +98,26 @@ func Auth(options *AuthOptions) macaron.Handler {
 	return func(c *models.ReqContext) {
 		forceLogin := false
 		if c.AllowAnonymous {
-			forceLoginParam, err := strconv.ParseBool(c.Req.URL.Query().Get("forceLogin"))
-			if err == nil {
-				forceLogin = forceLoginParam
+			forceLogin = shouldForceLogin(c)
+			if !forceLogin {
+				orgIDValue := c.Req.URL.Query().Get("orgId")
+				orgID, err := strconv.ParseInt(orgIDValue, 10, 64)
+				if err == nil && orgID > 0 && orgID != c.OrgId {
+					forceLogin = true
+				}
 			}
 		}
-		requireLogin := !c.AllowAnonymous || forceLogin
+
+		requireLogin := !c.AllowAnonymous || forceLogin || options.ReqNoAnonynmous
+
 		if !c.IsSignedIn && options.ReqSignedIn && requireLogin {
+			lookupTokenErr, hasTokenErr := c.Data["lookupTokenErr"].(error)
+			var revokedErr *models.TokenRevokedError
+			if hasTokenErr && errors.As(lookupTokenErr, &revokedErr) {
+				tokenRevoked(c, revokedErr)
+				return
+			}
+
 			notAuthorized(c)
 			return
 		}
@@ -125,15 +146,40 @@ func AdminOrFeatureEnabled(enabled bool) macaron.Handler {
 	}
 }
 
-func SnapshotPublicModeOrSignedIn() macaron.Handler {
+// SnapshotPublicModeOrSignedIn creates a middleware that allows access
+// if snapshot public mode is enabled or if user is signed in.
+func SnapshotPublicModeOrSignedIn(cfg *setting.Cfg) macaron.Handler {
 	return func(c *models.ReqContext) {
-		if setting.SnapshotPublicMode {
+		if cfg.SnapshotPublicMode {
 			return
 		}
 
-		_, err := c.Invoke(ReqSignedIn)
-		if err != nil {
-			c.JsonApiErr(500, "Failed to invoke required signed in middleware", err)
+		if !c.IsSignedIn {
+			notAuthorized(c)
+			return
 		}
 	}
+}
+
+// NoAuth creates a middleware that doesn't require any authentication.
+// If forceLogin param is set it will redirect the user to the login page.
+func NoAuth() macaron.Handler {
+	return func(c *models.ReqContext) {
+		if shouldForceLogin(c) {
+			notAuthorized(c)
+			return
+		}
+	}
+}
+
+// shouldForceLogin checks if user should be enforced to login.
+// Returns true if forceLogin parameter is set.
+func shouldForceLogin(c *models.ReqContext) bool {
+	forceLogin := false
+	forceLoginParam, err := strconv.ParseBool(c.Req.URL.Query().Get("forceLogin"))
+	if err == nil {
+		forceLogin = forceLoginParam
+	}
+
+	return forceLogin
 }

@@ -1,30 +1,11 @@
 import React from 'react';
 import { Graph } from '@grafana/ui';
-import Chart from '../Chart';
-import { dateTime, ArrayVector, FieldType, GraphSeriesXY, FieldColorMode } from '@grafana/data';
-import { select } from '@storybook/addon-knobs';
+import { dateTime, ArrayVector, FieldType, GraphSeriesXY, FieldColorModeId } from '@grafana/data';
+import { Story } from '@storybook/react';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
-import { TooltipContentProps } from '../Chart/Tooltip';
+import { VizTooltip, TooltipDisplayMode, VizTooltipContentProps } from '../VizTooltip';
 import { JSONFormatter } from '../JSONFormatter/JSONFormatter';
-
-export default {
-  title: 'Visualizations/Graph',
-  component: Graph,
-  decorators: [withCenteredStory],
-};
-
-const getKnobs = () => {
-  return {
-    tooltipMode: select(
-      'Tooltip mode',
-      {
-        multi: 'multi',
-        single: 'single',
-      },
-      'single'
-    ),
-  };
-};
+import { GraphProps } from './Graph';
 
 const series: GraphSeriesXY[] = [
   {
@@ -49,7 +30,7 @@ const series: GraphSeriesXY[] = [
       values: new ArrayVector([10, 20, 10]),
       config: {
         color: {
-          mode: FieldColorMode.Fixed,
+          mode: FieldColorModeId.Fixed,
           fixedColor: 'red',
         },
       },
@@ -83,7 +64,7 @@ const series: GraphSeriesXY[] = [
       values: new ArrayVector([20, 30, 40]),
       config: {
         color: {
-          mode: FieldColorMode.Fixed,
+          mode: FieldColorModeId.Fixed,
           fixedColor: 'blue',
         },
       },
@@ -95,29 +76,51 @@ const series: GraphSeriesXY[] = [
   },
 ];
 
-export const withTooltip = () => {
-  const { tooltipMode } = getKnobs();
-  return (
-    <Graph
-      height={300}
-      width={600}
-      series={series}
-      timeRange={{
+export default {
+  title: 'Visualizations/Graph',
+  component: Graph,
+  decorators: [withCenteredStory],
+  parameters: {
+    knobs: {
+      disable: true,
+    },
+    controls: {
+      exclude: ['className', 'series', 'timeRange', 'ariaLabel'],
+    },
+  },
+  args: {
+    series: series,
+    height: 300,
+    width: 600,
+    timeRange: {
+      from: dateTime(1546372800000),
+      to: dateTime(1546380000000),
+      raw: {
         from: dateTime(1546372800000),
         to: dateTime(1546380000000),
-        raw: {
-          from: dateTime(1546372800000),
-          to: dateTime(1546380000000),
-        },
-      }}
-      timeZone="browser"
-    >
-      <Chart.Tooltip mode={tooltipMode} />
+      },
+    },
+    timeZone: 'browser',
+    tooltipMode: 'single',
+  },
+  argTypes: {
+    tooltipMode: { control: { type: 'radio', options: ['multi', 'single'] } },
+    timeZone: { control: { type: 'radio', options: ['browser', 'utc'] } },
+    width: { control: { type: 'range', min: 200, max: 800 } },
+    height: { control: { type: 'range', min: 200, max: 800 } },
+    lineWidth: { control: { type: 'range', min: 1, max: 10 } },
+  },
+};
+
+export const WithTooltip: Story<GraphProps & { tooltipMode: TooltipDisplayMode }> = ({ tooltipMode, ...args }) => {
+  return (
+    <Graph {...args}>
+      <VizTooltip mode={tooltipMode} />
     </Graph>
   );
 };
 
-const CustomGraphTooltip: React.FC<TooltipContentProps> = ({ activeDimensions }) => {
+const CustomGraphTooltip = ({ activeDimensions }: VizTooltipContentProps) => {
   return (
     <div style={{ height: '200px' }}>
       <div>Showing currently active active dimensions:</div>
@@ -126,24 +129,13 @@ const CustomGraphTooltip: React.FC<TooltipContentProps> = ({ activeDimensions })
   );
 };
 
-export const withCustomTooltip = () => {
-  const { tooltipMode } = getKnobs();
+export const WithCustomTooltip: Story<GraphProps & { tooltipMode: TooltipDisplayMode }> = ({
+  tooltipMode,
+  ...args
+}) => {
   return (
-    <Graph
-      height={300}
-      width={600}
-      series={series}
-      timeRange={{
-        from: dateTime(1546372800000),
-        to: dateTime(1546380000000),
-        raw: {
-          from: dateTime(1546372800000),
-          to: dateTime(1546380000000),
-        },
-      }}
-      timeZone="browser"
-    >
-      <Chart.Tooltip mode={tooltipMode} tooltipComponent={CustomGraphTooltip} />
+    <Graph {...args}>
+      <VizTooltip mode={tooltipMode} tooltipComponent={CustomGraphTooltip} />
     </Graph>
   );
 };

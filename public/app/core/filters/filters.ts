@@ -1,7 +1,7 @@
-import _ from 'lodash';
+import { isArray, isNull, isObject, isUndefined } from 'lodash';
 import angular from 'angular';
 import coreModule from '../core_module';
-import { TemplateSrv } from 'app/features/templating/template_srv';
+import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 import { dateTime } from '@grafana/data';
 
 coreModule.filter('stringSort', () => {
@@ -12,7 +12,7 @@ coreModule.filter('stringSort', () => {
 
 coreModule.filter('slice', () => {
   return (arr: any[], start: any, end: any) => {
-    if (!_.isUndefined(arr)) {
+    if (!isUndefined(arr)) {
       return arr.slice(start, end);
     }
     return arr;
@@ -21,10 +21,10 @@ coreModule.filter('slice', () => {
 
 coreModule.filter('stringify', () => {
   return (arr: any[]) => {
-    if (_.isObject(arr) && !_.isArray(arr)) {
+    if (isObject(arr) && !isArray(arr)) {
       return angular.toJson(arr);
     } else {
-      return _.isNull(arr) ? null : arr.toString();
+      return isNull(arr) ? null : arr.toString();
     }
   };
 });
@@ -39,8 +39,7 @@ coreModule.filter('moment', () => {
   };
 });
 
-/** @ngInject */
-function interpolateTemplateVars(templateSrv: TemplateSrv) {
+function interpolateTemplateVars(templateSrv: TemplateSrv = getTemplateSrv()) {
   const filterFunc: any = (text: string, scope: any) => {
     let scopedVars;
     if (scope.ctrl) {

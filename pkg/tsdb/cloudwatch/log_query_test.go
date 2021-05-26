@@ -12,9 +12,9 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-//***
+// ***
 // LogQuery tests
-//***
+// ***
 
 func TestLogsResultsToDataframes(t *testing.T) {
 	fakeCloudwatchResponse := &cloudwatchlogs.GetQueryResultsOutput{

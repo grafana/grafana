@@ -1,7 +1,7 @@
 // Libraries
 import React, { PureComponent } from 'react';
 import classNames from 'classnames';
-import { Unsubscribable } from 'rxjs';
+import { Subscription } from 'rxjs';
 import { connect, MapDispatchToProps, MapStateToProps } from 'react-redux';
 // Components
 import { PanelHeader } from './PanelHeader/PanelHeader';
@@ -13,8 +13,7 @@ import config from 'app/core/config';
 // Types
 import { DashboardModel, PanelModel } from '../state';
 import { StoreState } from 'app/types';
-import { DefaultTimeRange, LoadingState, PanelData, PanelEvents, PanelPlugin } from '@grafana/data';
-import { updateLocation } from 'app/core/actions';
+import { getDefaultTimeRange, LoadingState, PanelData, PanelPlugin } from '@grafana/data';
 import { PANEL_BORDER } from 'app/core/constants';
 import { selectors } from '@grafana/e2e-selectors';
 
@@ -35,7 +34,6 @@ interface ConnectedProps {
 
 interface DispatchProps {
   setPanelAngularComponent: typeof setPanelAngularComponent;
-  updateLocation: typeof updateLocation;
 }
 
 export type Props = OwnProps & ConnectedProps & DispatchProps;
@@ -43,7 +41,6 @@ export type Props = OwnProps & ConnectedProps & DispatchProps;
 export interface State {
   data: PanelData;
   errorMessage?: string;
-  alertState?: string;
 }
 
 interface AngularScopeProps {
@@ -59,7 +56,7 @@ export class PanelChromeAngularUnconnected extends PureComponent<Props, State> {
   element: HTMLElement | null = null;
   timeSrv: TimeSrv = getTimeSrv();
   scopeProps?: AngularScopeProps;
-  querySubscription: Unsubscribable;
+  subs = new Subscription();
 
   constructor(props: Props) {
     super(props);
@@ -67,7 +64,7 @@ export class PanelChromeAngularUnconnected extends PureComponent<Props, State> {
       data: {
         state: LoadingState.NotStarted,
         series: [],
-        timeRange: DefaultTimeRange,
+        timeRange: getDefaultTimeRange(),
       },
     };
   }
@@ -80,34 +77,12 @@ export class PanelChromeAngularUnconnected extends PureComponent<Props, State> {
     const queryRunner = panel.getQueryRunner();
 
     // we are not displaying any of this data so no need for transforms or field config
-    this.querySubscription = queryRunner.getData({ withTransforms: false, withFieldConfig: false }).subscribe({
-      next: (data: PanelData) => this.onPanelDataUpdate(data),
-    });
+    this.subs.add(
+      queryRunner.getData({ withTransforms: false, withFieldConfig: false }).subscribe({
+        next: (data: PanelData) => this.onPanelDataUpdate(data),
+      })
+    );
   }
-
-  subscribeToRenderEvent() {
-    // Subscribe to render event, this is as far as I know only needed for changes to title & transparent
-    // These changes are modified in the model and only way to communicate that change is via this event
-    // Need to find another solution for this in tthe future (panel title in redux?)
-    this.props.panel.events.on(PanelEvents.render, this.onPanelRenderEvent);
-  }
-
-  onPanelRenderEvent = (payload?: any) => {
-    const { alertState } = this.state;
-
-    if (payload && payload.alertState && this.props.panel.alert) {
-      this.setState({ alertState: payload.alertState });
-    } else if (payload && payload.alertState && !this.props.panel.alert) {
-      // when user deletes alert in panel editor the source panel needs to refresh as this is in the mutable state and
-      // will not automatically re render
-      this.setState({ alertState: undefined });
-    } else if (payload && alertState) {
-      this.setState({ alertState: undefined });
-    } else {
-      // only needed for detecting title updates right now fix before 7.0
-      this.forceUpdate();
-    }
-  };
 
   onPanelDataUpdate(data: PanelData) {
     let errorMessage: string | undefined;
@@ -126,12 +101,7 @@ export class PanelChromeAngularUnconnected extends PureComponent<Props, State> {
 
   componentWillUnmount() {
     this.cleanUpAngularPanel();
-
-    if (this.querySubscription) {
-      this.querySubscription.unsubscribe();
-    }
-
-    this.props.panel.events.off(PanelEvents.render, this.onPanelRenderEvent);
+    this.subs.unsubscribe();
   }
 
   componentDidUpdate(prevProps: Props, prevState: State) {
@@ -146,7 +116,7 @@ export class PanelChromeAngularUnconnected extends PureComponent<Props, State> {
       if (this.scopeProps) {
         this.scopeProps.size.height = this.getInnerPanelHeight();
         this.scopeProps.size.width = this.getInnerPanelWidth();
-        panel.events.emit(PanelEvents.panelSizeChanged);
+        panel.render();
       }
     }
   }
@@ -189,9 +159,6 @@ export class PanelChromeAngularUnconnected extends PureComponent<Props, State> {
       panelId: panel.id,
       angularComponent: loader.load(this.element, this.scopeProps, template),
     });
-
-    // need to to this every time we load an angular as all events are unsubscribed when panel is destroyed
-    this.subscribeToRenderEvent();
   }
 
   cleanUpAngularPanel() {
@@ -222,9 +189,11 @@ export class PanelChromeAngularUnconnected extends PureComponent<Props, State> {
   }
 
   render() {
-    const { dashboard, panel, isViewing, isEditing, plugin, angularComponent, updateLocation } = this.props;
-    const { errorMessage, data, alertState } = this.state;
+    const { dashboard, panel, isViewing, isEditing, plugin } = this.props;
+    const { errorMessage, data } = this.state;
     const { transparent } = panel;
+
+    let alertState = config.featureToggles.ngalert ? undefined : data.alertState?.state;
 
     const containerClassNames = classNames({
       'panel-container': true,
@@ -247,18 +216,15 @@ export class PanelChromeAngularUnconnected extends PureComponent<Props, State> {
           dashboard={dashboard}
           title={panel.title}
           description={panel.description}
-          scopedVars={panel.scopedVars}
-          angularComponent={angularComponent}
           links={panel.links}
           error={errorMessage}
           isViewing={isViewing}
           isEditing={isEditing}
           data={data}
-          updateLocation={updateLocation}
           alertState={alertState}
         />
         <div className={panelContentClassNames}>
-          <div ref={element => (this.element = element)} className="panel-height-helper" />
+          <div ref={(element) => (this.element = element)} className="panel-height-helper" />
         </div>
       </div>
     );
@@ -271,6 +237,6 @@ const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (
   };
 };
 
-const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = { setPanelAngularComponent, updateLocation };
+const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = { setPanelAngularComponent };
 
 export const PanelChromeAngular = connect(mapStateToProps, mapDispatchToProps)(PanelChromeAngularUnconnected);

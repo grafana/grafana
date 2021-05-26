@@ -1,31 +1,37 @@
-import _ from 'lodash';
+import { map as _map } from 'lodash';
+import { of } from 'rxjs';
+import { catchError, map, mapTo } from 'rxjs/operators';
+import { getBackendSrv, DataSourceWithBackend, FetchResponse, BackendDataSourceResponse } from '@grafana/runtime';
+import { DataSourceInstanceSettings, ScopedVars, MetricFindValue, AnnotationEvent } from '@grafana/data';
+import MySQLQueryModel from 'app/plugins/datasource/mysql/mysql_query_model';
 import ResponseParser from './response_parser';
-import MysqlQuery from 'app/plugins/datasource/mysql/mysql_query';
-import { getBackendSrv } from '@grafana/runtime';
-import { ScopedVars } from '@grafana/data';
-import { TemplateSrv } from 'app/features/templating/template_srv';
-import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
-//Types
-import { MysqlQueryForInterpolation } from './types';
+import { MysqlQueryForInterpolation, MySQLOptions, MySQLQuery } from './types';
+import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 import { getSearchFilterScopedVar } from '../../../features/variables/utils';
+import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
-export class MysqlDatasource {
+export class MysqlDatasource extends DataSourceWithBackend<MySQLQuery, MySQLOptions> {
   id: any;
   name: any;
   responseParser: ResponseParser;
-  queryModel: MysqlQuery;
+  queryModel: MySQLQueryModel;
   interval: string;
 
-  /** @ngInject */
-  constructor(instanceSettings: any, private templateSrv: TemplateSrv, private timeSrv: TimeSrv) {
+  constructor(
+    instanceSettings: DataSourceInstanceSettings<MySQLOptions>,
+    private readonly templateSrv: TemplateSrv = getTemplateSrv(),
+    private readonly timeSrv: TimeSrv = getTimeSrv()
+  ) {
+    super(instanceSettings);
     this.name = instanceSettings.name;
     this.id = instanceSettings.id;
     this.responseParser = new ResponseParser();
-    this.queryModel = new MysqlQuery({});
-    this.interval = (instanceSettings.jsonData || {}).timeInterval || '1m';
+    this.queryModel = new MySQLQueryModel({});
+    const settingsData = instanceSettings.jsonData || ({} as MySQLOptions);
+    this.interval = settingsData.timeInterval || '1m';
   }
 
-  interpolateVariable = (value: string, variable: any) => {
+  interpolateVariable = (value: string | string[] | number, variable: any) => {
     if (typeof value === 'string') {
       if (variable.multi || variable.includeAll) {
         const result = this.queryModel.quoteLiteral(value);
@@ -39,7 +45,7 @@ export class MysqlDatasource {
       return value;
     }
 
-    const quotedValues = _.map(value, (v: any) => {
+    const quotedValues = _map(value, (v: any) => {
       return this.queryModel.quoteLiteral(v);
     });
     return quotedValues.join(',');
@@ -51,7 +57,7 @@ export class MysqlDatasource {
   ): MysqlQueryForInterpolation[] {
     let expandedQueries = queries;
     if (queries && queries.length > 0) {
-      expandedQueries = queries.map(query => {
+      expandedQueries = queries.map((query) => {
         const expandedQuery = {
           ...query,
           datasource: this.name,
@@ -64,40 +70,24 @@ export class MysqlDatasource {
     return expandedQueries;
   }
 
-  query(options: any) {
-    const queries = _.filter(options.targets, target => {
-      return target.hide !== true;
-    }).map(target => {
-      const queryModel = new MysqlQuery(target, this.templateSrv, options.scopedVars);
-
-      return {
-        refId: target.refId,
-        intervalMs: options.intervalMs,
-        maxDataPoints: options.maxDataPoints,
-        datasourceId: this.id,
-        rawSql: queryModel.render(this.interpolateVariable as any),
-        format: target.format,
-      };
-    });
-
-    if (queries.length === 0) {
-      return Promise.resolve({ data: [] });
+  filterQuery(query: MySQLQuery): boolean {
+    if (query.hide) {
+      return false;
     }
-
-    return getBackendSrv()
-      .datasourceRequest({
-        url: '/api/tsdb/query',
-        method: 'POST',
-        data: {
-          from: options.range.from.valueOf().toString(),
-          to: options.range.to.valueOf().toString(),
-          queries: queries,
-        },
-      })
-      .then(this.responseParser.processQueryResult);
+    return true;
   }
 
-  annotationQuery(options: any) {
+  applyTemplateVariables(target: MySQLQuery, scopedVars: ScopedVars): Record<string, any> {
+    const queryModel = new MySQLQueryModel(target, this.templateSrv, scopedVars);
+    return {
+      refId: target.refId,
+      datasourceId: this.id,
+      rawSql: queryModel.render(this.interpolateVariable as any),
+      format: target.format,
+    };
+  }
+
+  async annotationQuery(options: any): Promise<AnnotationEvent[]> {
     if (!options.annotation.rawQuery) {
       return Promise.reject({
         message: 'Query missing in annotation definition',
@@ -112,19 +102,26 @@ export class MysqlDatasource {
     };
 
     return getBackendSrv()
-      .datasourceRequest({
-        url: '/api/tsdb/query',
+      .fetch<BackendDataSourceResponse>({
+        url: '/api/ds/query',
         method: 'POST',
         data: {
           from: options.range.from.valueOf().toString(),
           to: options.range.to.valueOf().toString(),
           queries: [query],
         },
+        requestId: options.annotation.name,
       })
-      .then((data: any) => this.responseParser.transformAnnotationResponse(options, data));
+      .pipe(
+        map(
+          async (res: FetchResponse<BackendDataSourceResponse>) =>
+            await this.responseParser.transformAnnotationResponse(options, res.data)
+        )
+      )
+      .toPromise();
   }
 
-  metricFindQuery(query: string, optionalOptions: any) {
+  metricFindQuery(query: string, optionalOptions: any): Promise<MetricFindValue[]> {
     let refId = 'tempvar';
     if (optionalOptions && optionalOptions.variable && optionalOptions.variable.name) {
       refId = optionalOptions.variable.name;
@@ -144,32 +141,30 @@ export class MysqlDatasource {
     };
 
     const range = this.timeSrv.timeRange();
-    const data = {
-      queries: [interpolatedQuery],
-      from: range.from.valueOf().toString(),
-      to: range.to.valueOf().toString(),
-    };
-
-    if (optionalOptions && optionalOptions.range && optionalOptions.range.from) {
-      data['from'] = optionalOptions.range.from.valueOf().toString();
-    }
-    if (optionalOptions && optionalOptions.range && optionalOptions.range.to) {
-      data['to'] = optionalOptions.range.to.valueOf().toString();
-    }
 
     return getBackendSrv()
-      .datasourceRequest({
-        url: '/api/tsdb/query',
+      .fetch<BackendDataSourceResponse>({
+        url: '/api/ds/query',
         method: 'POST',
-        data: data,
+        data: {
+          from: range.from.valueOf().toString(),
+          to: range.to.valueOf().toString(),
+          queries: [interpolatedQuery],
+        },
+        requestId: refId,
       })
-      .then((data: any) => this.responseParser.parseMetricFindQueryResult(refId, data));
+      .pipe(
+        map((rsp) => {
+          return this.responseParser.transformMetricFindResponse(rsp);
+        })
+      )
+      .toPromise();
   }
 
-  testDatasource() {
+  testDatasource(): Promise<any> {
     return getBackendSrv()
-      .datasourceRequest({
-        url: '/api/tsdb/query',
+      .fetch({
+        url: '/api/ds/query',
         method: 'POST',
         data: {
           from: '5m',
@@ -186,17 +181,18 @@ export class MysqlDatasource {
           ],
         },
       })
-      .then((res: any) => {
-        return { status: 'success', message: 'Database Connection OK' };
-      })
-      .catch((err: any) => {
-        console.error(err);
-        if (err.data && err.data.message) {
-          return { status: 'error', message: err.data.message };
-        } else {
-          return { status: 'error', message: err.status };
-        }
-      });
+      .pipe(
+        mapTo({ status: 'success', message: 'Database Connection OK' }),
+        catchError((err) => {
+          console.error(err);
+          if (err.data && err.data.message) {
+            return of({ status: 'error', message: err.data.message });
+          } else {
+            return of({ status: 'error', message: err.status });
+          }
+        })
+      )
+      .toPromise();
   }
 
   targetContainsTemplate(target: any) {
@@ -205,7 +201,7 @@ export class MysqlDatasource {
     if (target.rawQuery) {
       rawSql = target.rawSql;
     } else {
-      const query = new MysqlQuery(target);
+      const query = new MySQLQueryModel(target);
       rawSql = query.buildQuery();
     }
 

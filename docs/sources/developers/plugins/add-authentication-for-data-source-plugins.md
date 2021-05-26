@@ -1,18 +1,17 @@
 +++
 title = "Add authentication for data source plugins"
-type = "docs"
-aliases = ["/docs/grafana/latest/plugins/developing/auth-for-datasources/",  "/docs/grafana/latest/developers/plugins/authentication/"]
+aliases = ["/docs/grafana/latest/plugins/developing/auth-for-datasources/", "/docs/grafana/next/developers/plugins/authentication/"]
 +++
 
 # Add authentication for data source plugins
 
-This page explains how to use the Grafana data source proxy to authenticate against an third-party API from a data source plugin.
+This page explains how to use the Grafana data source proxy to authenticate against a third-party API from a data source plugin.
 
 When a user saves a password or any other sensitive data as a data source option, Grafana encrypts the data and stores it in the Grafana database. Any encrypted data source options can only be decrypted on the Grafana server. This means that any data source that makes authenticated queries needs to request the decrypted data to be sent to the browser.
 
 To minimize the amount of sensitive information sent to and from the browser, data source plugins can use the Grafana _data source proxy_. When using the data source proxy, any requests containing sensitive information go through the Grafana server. No sensitive data is sent to the browser after the data is saved.
 
-Some data sources, like [Prometheus](https://grafana.com/docs/grafana/latest/features/datasources/prometheus/) and [InfluxDB](https://grafana.com/docs/grafana/latest/features/datasources/influxdb/), allow users to configure whether to use the data source proxy, through a setting called _access modes_.
+Some data sources, like [Prometheus]({{< relref "../../datasources/prometheus.md" >}}) and [InfluxDB]({{< relref "../../datasources/influxdb" >}}), allow users to configure whether to use the data source proxy, through a setting called _access modes_.
 
 ## Add a proxy route to your plugin
 
@@ -128,6 +127,23 @@ To add URL parameters to proxied requests, use the `urlParams` property.
         "content": "{{ .SecureJsonData.apiKey }}"
       }
     ]
+  }
+]
+```
+
+### Set body content
+
+To set the body content and length of proxied requests, use the `body` property.
+
+```json
+"routes": [
+  {
+    "path": "example",
+    "url": "http://api.example.com",
+    "body": {
+      "username": "{{ .JsonData.username }}",
+      "password": "{{ .SecureJsonData.password }}"
+    }
   }
 ]
 ```

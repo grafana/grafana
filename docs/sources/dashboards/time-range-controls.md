@@ -2,10 +2,6 @@
 title = "Time range controls"
 keywords = ["grafana", "dashboard", "documentation", "time range"]
 aliases = ["/docs/grafana/latest/reference/timerange/"]
-type = "docs"
-[menu.docs]
-name = "Time range controls"
-parent = "dashboards"
 weight = 7
 +++
 
@@ -30,8 +26,12 @@ Here are some examples:
 | Last 5 minutes         | `now-5m`   | `now`      |
 | The day so far         | `now/d`    | `now`      |
 | This week              | `now/w`    | `now/w`    |
-| Week to date           | `now/w`    | `now`      |
+| This week so far       | `now/w`    | `now`      |
+| This month             | `now/M`    | `now/M`    |
+| This month so far      | `now/M`    | `now`      |
 | Previous Month         | `now-1M/M` | `now-1M/M` |
+| This year so far       | `now/Y`    | `now`      |
+| This Year              | `now/Y`    | `now/Y     |
 
 ## Common time range controls
 
@@ -87,7 +87,7 @@ Click and drag to select the time range in the visualization that you want to vi
 
 ### Refresh dashboard
 
-Click the **Refresh dashboard** icon to immediately run every query on the dashboard and refresh the visualizations.
+Click the **Refresh dashboard** icon to immediately run every query on the dashboard and refresh the visualizations. Grafana cancels any pending requests when a new refresh is triggered.
 
 By default, Grafana does not automatically refresh the dashboard. Queries run on their own schedule according to the panel settings. However, if you want to regularly refresh the dashboard, then click the down arrow next to the **Refresh dashboard** icon and then select a refresh interval.
 

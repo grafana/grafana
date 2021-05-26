@@ -8,7 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-var ErrInvalidApiKey = errors.New("Invalid Api Key")
+var ErrInvalidApiKey = errors.New("invalid API key")
 
 type KeyGenResult struct {
 	HashedKey    string

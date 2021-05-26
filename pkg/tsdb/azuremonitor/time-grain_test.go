@@ -3,69 +3,54 @@ package azuremonitor
 import (
 	"testing"
 
-	. "github.com/smartystreets/goconvey/convey"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
-func TestTimeGrain(t *testing.T) {
-	Convey("TimeGrain", t, func() {
-		tgc := &TimeGrain{}
+func TestTimeGrain_createISO8601Duration(t *testing.T) {
+	tg := &TimeGrain{}
 
-		Convey("create ISO 8601 Duration", func() {
-			Convey("when given a time unit smaller than a day", func() {
-				minuteKbnDuration := tgc.createISO8601Duration(1, "m")
-				hourKbnDuration := tgc.createISO8601Duration(2, "h")
-				minuteDuration := tgc.createISO8601Duration(1, "minute")
-				hourDuration := tgc.createISO8601Duration(2, "hour")
+	testCases := []struct {
+		name     string
+		value    int
+		unit     string
+		expected string
+	}{
+		{"1m", 1, "m", "PT1M"},
+		{"1minute", 1, "minute", "PT1M"},
+		{"2h", 2, "h", "PT2H"},
+		{"2hour", 2, "hour", "PT2H"},
+		{"1d", 1, "d", "P1D"},
+		{"2day", 2, "day", "P2D"},
+	}
 
-				Convey("should convert it to a time duration", func() {
-					So(minuteKbnDuration, ShouldEqual, "PT1M")
-					So(hourKbnDuration, ShouldEqual, "PT2H")
-
-					So(minuteDuration, ShouldEqual, "PT1M")
-					So(hourDuration, ShouldEqual, "PT2H")
-				})
-			})
-
-			Convey("when given the day time unit", func() {
-				kbnDuration := tgc.createISO8601Duration(1, "d")
-				duration := tgc.createISO8601Duration(2, "day")
-
-				Convey("should convert it to a date duration", func() {
-					So(kbnDuration, ShouldEqual, "P1D")
-					So(duration, ShouldEqual, "P2D")
-				})
-			})
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			d := tg.createISO8601Duration(tc.value, tc.unit)
+			assert.Equal(t, tc.expected, d)
 		})
+	}
+}
 
-		Convey("create ISO 8601 Duration from Grafana interval in milliseconds", func() {
-			Convey("and interval is less than a minute", func() {
-				durationMS, err := tgc.createISO8601DurationFromIntervalMS(100)
-				So(err, ShouldBeNil)
+func TestTimeGrain_createISO8601DurationFromIntervalMS(t *testing.T) {
+	tg := &TimeGrain{}
 
-				durationS, err := tgc.createISO8601DurationFromIntervalMS(59999)
-				So(err, ShouldBeNil)
+	testCases := []struct {
+		name     string
+		interval int64
+		expected string
+	}{
+		{"100", 100, "PT1M"},
+		{"59999", 59999, "PT1M"},
+		{"600000", 600000, "PT10M"},
+		{"172800000", 172800000, "P2D"},
+	}
 
-				Convey("should be rounded up to a minute as is the minimum interval for Azure Monitor", func() {
-					So(durationMS, ShouldEqual, "PT1M")
-					So(durationS, ShouldEqual, "PT1M")
-				})
-			})
-
-			Convey("and interval is more than a minute", func() {
-				intervals := map[string]int64{
-					"10m": 600000,
-					"2d":  172800000,
-				}
-				durationM, err := tgc.createISO8601DurationFromIntervalMS(intervals["10m"])
-				So(err, ShouldBeNil)
-				durationD, err := tgc.createISO8601DurationFromIntervalMS(intervals["2d"])
-				So(err, ShouldBeNil)
-
-				Convey("should be rounded up to a minute as is the minimum interval for Azure Monitor", func() {
-					So(durationM, ShouldEqual, "PT10M")
-					So(durationD, ShouldEqual, "P2D")
-				})
-			})
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			d, err := tg.createISO8601DurationFromIntervalMS(tc.interval)
+			require.NoError(t, err)
+			assert.Equal(t, tc.expected, d)
 		})
-	})
+	}
 }

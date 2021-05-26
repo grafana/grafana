@@ -4,6 +4,8 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/components/securedata"
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -26,8 +28,8 @@ func DeleteExpiredSnapshots(cmd *models.DeleteExpiredSnapshotsCommand) error {
 			return nil
 		}
 
-		deleteExpiredSql := "DELETE FROM dashboard_snapshot WHERE expires < ?"
-		expiredResponse, err := sess.Exec(deleteExpiredSql, time.Now())
+		deleteExpiredSQL := "DELETE FROM dashboard_snapshot WHERE expires < ?"
+		expiredResponse, err := sess.Exec(deleteExpiredSQL, time.Now())
 		if err != nil {
 			return err
 		}
@@ -45,22 +47,32 @@ func CreateDashboardSnapshot(cmd *models.CreateDashboardSnapshotCommand) error {
 			expires = time.Now().Add(time.Second * time.Duration(cmd.Expires))
 		}
 
-		snapshot := &models.DashboardSnapshot{
-			Name:              cmd.Name,
-			Key:               cmd.Key,
-			DeleteKey:         cmd.DeleteKey,
-			OrgId:             cmd.OrgId,
-			UserId:            cmd.UserId,
-			External:          cmd.External,
-			ExternalUrl:       cmd.ExternalUrl,
-			ExternalDeleteUrl: cmd.ExternalDeleteUrl,
-			Dashboard:         cmd.Dashboard,
-			Expires:           expires,
-			Created:           time.Now(),
-			Updated:           time.Now(),
+		marshalledData, err := cmd.Dashboard.Encode()
+		if err != nil {
+			return err
 		}
 
-		_, err := sess.Insert(snapshot)
+		encryptedDashboard, err := securedata.Encrypt(marshalledData)
+		if err != nil {
+			return err
+		}
+
+		snapshot := &models.DashboardSnapshot{
+			Name:               cmd.Name,
+			Key:                cmd.Key,
+			DeleteKey:          cmd.DeleteKey,
+			OrgId:              cmd.OrgId,
+			UserId:             cmd.UserId,
+			External:           cmd.External,
+			ExternalUrl:        cmd.ExternalUrl,
+			ExternalDeleteUrl:  cmd.ExternalDeleteUrl,
+			Dashboard:          simplejson.New(),
+			DashboardEncrypted: encryptedDashboard,
+			Expires:            expires,
+			Created:            time.Now(),
+			Updated:            time.Now(),
+		}
+		_, err = sess.Insert(snapshot)
 		cmd.Result = snapshot
 
 		return err
@@ -69,8 +81,8 @@ func CreateDashboardSnapshot(cmd *models.CreateDashboardSnapshotCommand) error {
 
 func DeleteDashboardSnapshot(cmd *models.DeleteDashboardSnapshotCommand) error {
 	return inTransaction(func(sess *DBSession) error {
-		var rawSql = "DELETE FROM dashboard_snapshot WHERE delete_key=?"
-		_, err := sess.Exec(rawSql, cmd.DeleteKey)
+		var rawSQL = "DELETE FROM dashboard_snapshot WHERE delete_key=?"
+		_, err := sess.Exec(rawSQL, cmd.DeleteKey)
 		return err
 	})
 }
@@ -94,7 +106,10 @@ func GetDashboardSnapshot(query *models.GetDashboardSnapshotQuery) error {
 func SearchDashboardSnapshots(query *models.GetDashboardSnapshotsQuery) error {
 	var snapshots = make(models.DashboardSnapshotsList, 0)
 
-	sess := x.Limit(query.Limit)
+	sess := x.NewSession()
+	if query.Limit > 0 {
+		sess.Limit(query.Limit)
+	}
 	sess.Table("dashboard_snapshot")
 
 	if query.Name != "" {

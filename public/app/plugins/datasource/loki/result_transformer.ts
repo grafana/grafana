@@ -1,5 +1,5 @@
-import _ from 'lodash';
-import md5 from 'md5';
+import { capitalize, groupBy, isEmpty } from 'lodash';
+import { v5 as uuidv5 } from 'uuid';
 import { of } from 'rxjs';
 
 import {
@@ -19,7 +19,7 @@ import {
   ScopedVars,
 } from '@grafana/data';
 
-import templateSrv from 'app/features/templating/template_srv';
+import { getTemplateSrv, getDataSourceSrv } from '@grafana/runtime';
 import TableModel from 'app/core/table_model';
 import { formatQuery, getHighlighterExpressionsFromQuery } from './query_utils';
 import {
@@ -38,6 +38,8 @@ import {
   LokiStats,
 } from './types';
 
+const UUID_NAMESPACE = '6ec946da-0f49-47a8-983a-1d76d17e7c92';
+
 /**
  * Transforms LokiStreamResult structure into a dataFrame. Used when doing standard queries and newer version of Loki.
  */
@@ -53,12 +55,15 @@ export function lokiStreamResultToDataFrame(stream: LokiStreamResult, reverse?: 
   const lines = new ArrayVector<string>([]);
   const uids = new ArrayVector<string>([]);
 
+  // We need to store and track all used uids to ensure that uids are unique
+  const usedUids: { string?: number } = {};
+
   for (const [ts, line] of stream.values) {
     // num ns epoch in string, we convert it to iso string here so it matches old format
     times.add(new Date(parseInt(ts.substr(0, ts.length - 6), 10)).toISOString());
     timesNs.add(ts);
     lines.add(line);
-    uids.add(createUid(ts, labelsString, line));
+    uids.add(createUid(ts, labelsString, line, usedUids, refId));
   }
 
   return constructDataFrame(times, timesNs, lines, uids, labels, reverse, refId);
@@ -121,6 +126,16 @@ export function appendResponseToBufferedData(response: LokiTailResponse, data: M
     }
   }
 
+  const tsField = data.fields[0];
+  const tsNsField = data.fields[1];
+  const lineField = data.fields[2];
+  const labelsField = data.fields[3];
+  const idField = data.fields[4];
+
+  // We are comparing used ids only within the received stream. This could be a problem if the same line + labels + nanosecond timestamp came in 2 separate batches.
+  // As this is very unlikely, and the result would only affect live-tailing css animation we have decided to not compare all received uids from data param as this would slow down processing.
+  const usedUids: { string?: number } = {};
+
   for (const stream of streams) {
     // Find unique labels
     const unique = findUniqueLabels(stream.stream, baseLabels);
@@ -131,17 +146,36 @@ export function appendResponseToBufferedData(response: LokiTailResponse, data: M
 
     // Add each line
     for (const [ts, line] of stream.values) {
-      data.values.ts.add(new Date(parseInt(ts.substr(0, ts.length - 6), 10)).toISOString());
-      data.values.tsNs.add(ts);
-      data.values.line.add(line);
-      data.values.labels.add(unique);
-      data.values.id.add(createUid(ts, allLabelsString, line));
+      tsField.values.add(new Date(parseInt(ts.substr(0, ts.length - 6), 10)).toISOString());
+      tsNsField.values.add(ts);
+      lineField.values.add(line);
+      labelsField.values.add(unique);
+      idField.values.add(createUid(ts, allLabelsString, line, usedUids, data.refId));
     }
   }
 }
 
-function createUid(ts: string, labelsString: string, line: string): string {
-  return md5(`${ts}_${labelsString}_${line}`);
+function createUid(ts: string, labelsString: string, line: string, usedUids: any, refId?: string): string {
+  // Generate id as hashed nanosecond timestamp, labels and line (this does not have to be unique)
+  let id = uuidv5(`${ts}_${labelsString}_${line}`, UUID_NAMESPACE);
+
+  // Check if generated id is unique
+  // If not and we've already used it, append it's count after it
+  if (id in usedUids) {
+    // Increase the count
+    const newCount = usedUids[id] + 1;
+    usedUids[id] = newCount;
+    // Append count to generated id to make it unique
+    id = `${id}_${newCount}`;
+  } else {
+    // If id is unique and wasn't used, add it to usedUids and start count at 0
+    usedUids[id] = 0;
+  }
+  // Return unique id
+  if (refId) {
+    return `${id}_${refId}`;
+  }
+  return id;
 }
 
 function lokiMatrixToTimeSeries(matrixResult: LokiMatrixResult, options: TransformerOptions): TimeSeries {
@@ -156,7 +190,10 @@ function lokiMatrixToTimeSeries(matrixResult: LokiMatrixResult, options: Transfo
   };
 }
 
-function lokiPointsToTimeseriesPoints(data: Array<[number, string]>, options: TransformerOptions): TimeSeriesValue[][] {
+export function lokiPointsToTimeseriesPoints(
+  data: Array<[number, string]>,
+  options: TransformerOptions
+): TimeSeriesValue[][] {
   const stepMs = options.step * 1000;
   const datapoints: TimeSeriesValue[][] = [];
 
@@ -170,7 +207,7 @@ function lokiPointsToTimeseriesPoints(data: Array<[number, string]>, options: Tr
 
     const timestamp = time * 1000;
     for (let t = baseTimestampMs; t < timestamp; t += stepMs) {
-      datapoints.push([0, t]);
+      datapoints.push([null, t]);
     }
 
     baseTimestampMs = timestamp + stepMs;
@@ -179,7 +216,7 @@ function lokiPointsToTimeseriesPoints(data: Array<[number, string]>, options: Tr
 
   const endTimestamp = options.end / 1e6;
   for (let t = baseTimestampMs; t <= endTimestamp; t += stepMs) {
-    datapoints.push([0, t]);
+    datapoints.push([null, t]);
   }
 
   return datapoints;
@@ -208,12 +245,12 @@ export function lokiResultsToTableModel(
   table.meta = meta;
   table.columns = [
     { text: 'Time', type: FieldType.time },
-    ...sortedLabels.map(label => ({ text: label, filterable: true })),
+    ...sortedLabels.map((label) => ({ text: label, filterable: true, type: FieldType.string })),
     { text: resultCount > 1 || valueWithRefId ? `Value #${refId}` : 'Value', type: FieldType.number },
   ];
 
   // Populate rows, set value to empty string when label not present.
-  lokiResults.forEach(series => {
+  lokiResults.forEach((series) => {
     const newSeries: LokiMatrixResult = {
       metric: series.metric,
       values: (series as LokiVectorResult).value
@@ -231,7 +268,7 @@ export function lokiResultsToTableModel(
       table.rows.push(
         ...newSeries.values.map(([a, b]) => [
           a * 1000,
-          ...sortedLabels.map(label => newSeries.metric[label] || ''),
+          ...sortedLabels.map((label) => newSeries.metric[label] || ''),
           parseFloat(b),
         ])
       );
@@ -243,9 +280,9 @@ export function lokiResultsToTableModel(
 
 export function createMetricLabel(labelData: { [key: string]: string }, options?: TransformerOptions) {
   let label =
-    options === undefined || _.isEmpty(options.legendFormat)
+    options === undefined || isEmpty(options.legendFormat)
       ? getOriginalMetricName(labelData)
-      : renderTemplate(templateSrv.replace(options.legendFormat ?? '', options.scopedVars), labelData);
+      : renderTemplate(getTemplateSrv().replace(options.legendFormat ?? '', options.scopedVars), labelData);
 
   if (!label && options) {
     label = options.query;
@@ -262,13 +299,13 @@ function getOriginalMetricName(labelData: { [key: string]: string }) {
   const metricName = labelData.__name__ || '';
   delete labelData.__name__;
   const labelPart = Object.entries(labelData)
-    .map(label => `${label[0]}="${label[1]}"`)
+    .map((label) => `${label[0]}="${label[1]}"`)
     .join(',');
   return `${metricName}{${labelPart}}`;
 }
 
 export function decamelize(s: string): string {
-  return s.replace(/[A-Z]/g, m => ` ${m.toLowerCase()}`);
+  return s.replace(/[A-Z]/g, (m) => ` ${m.toLowerCase()}`);
 }
 
 // Turn loki stats { metric: value } into meta stat { title: metric, value: value }
@@ -291,7 +328,7 @@ function lokiStatsToMetaStat(stats: LokiStats | undefined): QueryResultMetaStat[
       } else if (/bytes/i.test(label)) {
         unit = 'decbytes';
       }
-      const title = `${_.capitalize(section)}: ${decamelize(label)}`;
+      const title = `${capitalize(section)}: ${decamelize(label)}`;
       result.push({ displayName: title, value, unit });
     }
   }
@@ -299,7 +336,7 @@ function lokiStatsToMetaStat(stats: LokiStats | undefined): QueryResultMetaStat[
   return result;
 }
 
-export function lokiStreamsToDataframes(
+export function lokiStreamsToDataFrames(
   response: LokiStreamResponse,
   target: { refId: string; expr?: string },
   limit: number,
@@ -321,9 +358,13 @@ export function lokiStreamsToDataframes(
     preferredVisualisationType: 'logs',
   };
 
-  const series: DataFrame[] = data.map(stream => {
-    const dataFrame = lokiStreamResultToDataFrame(stream, reverse);
+  const series: DataFrame[] = data.map((stream) => {
+    const dataFrame = lokiStreamResultToDataFrame(stream, reverse, target.refId);
     enhanceDataFrame(dataFrame, config);
+
+    if (meta.custom && dataFrame.fields.some((f) => f.labels && Object.keys(f.labels).some((l) => l === '__error__'))) {
+      meta.custom.error = 'Error when parsing some of the logs';
+    }
 
     return {
       ...dataFrame,
@@ -358,7 +399,7 @@ export const enhanceDataFrame = (dataFrame: DataFrame, config: LokiOptions | nul
   if (!derivedFields.length) {
     return;
   }
-  const derivedFieldsGrouped = _.groupBy(derivedFields, 'name');
+  const derivedFieldsGrouped = groupBy(derivedFields, 'name');
 
   const newFields = Object.values(derivedFieldsGrouped).map(fieldFromDerivedFieldConfig);
 
@@ -377,9 +418,13 @@ export const enhanceDataFrame = (dataFrame: DataFrame, config: LokiOptions | nul
  * Transform derivedField config into dataframe field with config that contains link.
  */
 function fieldFromDerivedFieldConfig(derivedFieldConfigs: DerivedFieldConfig[]): Field<any, ArrayVector> {
+  const dataSourceSrv = getDataSourceSrv();
+
   const dataLinks = derivedFieldConfigs.reduce((acc, derivedFieldConfig) => {
     // Having field.datasourceUid means it is an internal link.
     if (derivedFieldConfig.datasourceUid) {
+      const dsSettings = dataSourceSrv.getInstanceSettings(derivedFieldConfig.datasourceUid);
+
       acc.push({
         // Will be filled out later
         title: '',
@@ -388,6 +433,7 @@ function fieldFromDerivedFieldConfig(derivedFieldConfigs: DerivedFieldConfig[]):
         internal: {
           query: { query: derivedFieldConfig.url },
           datasourceUid: derivedFieldConfig.datasourceUid,
+          datasourceName: dsSettings?.name ?? 'Data source not found',
         },
       });
     } else if (derivedFieldConfig.url) {
@@ -439,11 +485,11 @@ export function rangeQueryResponseToTimeSeries(
 
   switch (response.data.resultType) {
     case LokiResultType.Vector:
-      return response.data.result.map(vecResult =>
+      return response.data.result.map((vecResult) =>
         lokiMatrixToTimeSeries({ metric: vecResult.metric, values: [vecResult.value] }, transformerOptions)
       );
     case LokiResultType.Matrix:
-      return response.data.result.map(matrixResult => lokiMatrixToTimeSeries(matrixResult, transformerOptions));
+      return response.data.result.map((matrixResult) => lokiMatrixToTimeSeries(matrixResult, transformerOptions));
     default:
       return [];
   }
@@ -462,7 +508,7 @@ export function processRangeQueryResponse(
   switch (response.data.resultType) {
     case LokiResultType.Stream:
       return of({
-        data: lokiStreamsToDataframes(response as LokiStreamResponse, target, limit, config, reverse),
+        data: lokiStreamsToDataFrames(response as LokiStreamResponse, target, limit, config, reverse),
         key: `${target.refId}_log`,
       });
 

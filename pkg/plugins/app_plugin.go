@@ -1,26 +1,28 @@
 package plugins
 
 import (
+	"context"
 	"encoding/json"
+	"path/filepath"
 	"strings"
 
 	"github.com/gosimple/slug"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin/grpcplugin"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util/errutil"
 )
-
-type AppPluginCss struct {
-	Light string `json:"light"`
-	Dark  string `json:"dark"`
-}
 
 type AppPlugin struct {
 	FrontendPluginBase
-	Routes []*AppPluginRoute `json:"routes"`
+	Routes      []*AppPluginRoute `json:"routes"`
+	AutoEnabled bool              `json:"autoEnabled"`
 
 	FoundChildPlugins []*PluginInclude `json:"-"`
 	Pinned            bool             `json:"-"`
+
+	Executable string `json:"executable,omitempty"`
 }
 
 // AppPluginRoute describes a plugin route that is defined in
@@ -32,8 +34,10 @@ type AppPluginRoute struct {
 	URL          string                   `json:"url"`
 	URLParams    []AppPluginRouteURLParam `json:"urlParams"`
 	Headers      []AppPluginRouteHeader   `json:"headers"`
+	AuthType     string                   `json:"authType"`
 	TokenAuth    *JwtTokenAuth            `json:"tokenAuth"`
 	JwtTokenAuth *JwtTokenAuth            `json:"jwtTokenAuth"`
+	Body         json.RawMessage          `json:"body"`
 }
 
 // AppPluginRouteHeader describes an HTTP header that is forwarded with
@@ -58,26 +62,32 @@ type JwtTokenAuth struct {
 	Params map[string]string `json:"params"`
 }
 
-func (app *AppPlugin) Load(decoder *json.Decoder, pluginDir string, backendPluginManager backendplugin.Manager) error {
+func (app *AppPlugin) Load(decoder *json.Decoder, base *PluginBase, backendPluginManager backendplugin.Manager) (
+	interface{}, error) {
 	if err := decoder.Decode(app); err != nil {
-		return err
+		return nil, err
 	}
 
-	if err := app.registerPlugin(pluginDir); err != nil {
-		return err
+	if app.Backend {
+		cmd := ComposePluginStartCommand(app.Executable)
+		fullpath := filepath.Join(base.PluginDir, cmd)
+		factory := grpcplugin.NewBackendPlugin(app.Id, fullpath, grpcplugin.PluginStartFuncs{})
+		if err := backendPluginManager.RegisterAndStart(context.Background(), app.Id, factory); err != nil {
+			return nil, errutil.Wrapf(err, "failed to register backend plugin")
+		}
 	}
 
-	Apps[app.Id] = app
-	return nil
+	return app, nil
 }
 
-func (app *AppPlugin) initApp() {
-	app.initFrontendPlugin()
+func (app *AppPlugin) InitApp(panels map[string]*PanelPlugin, dataSources map[string]*DataSourcePlugin,
+	cfg *setting.Cfg) []*PluginStaticRoute {
+	staticRoutes := app.InitFrontendPlugin(cfg)
 
 	// check if we have child panels
-	for _, panel := range Panels {
+	for _, panel := range panels {
 		if strings.HasPrefix(panel.PluginDir, app.PluginDir) {
-			panel.setPathsBasedOnApp(app)
+			panel.setPathsBasedOnApp(app, cfg)
 			app.FoundChildPlugins = append(app.FoundChildPlugins, &PluginInclude{
 				Name: panel.Name,
 				Id:   panel.Id,
@@ -87,9 +97,9 @@ func (app *AppPlugin) initApp() {
 	}
 
 	// check if we have child datasources
-	for _, ds := range DataSources {
+	for _, ds := range dataSources {
 		if strings.HasPrefix(ds.PluginDir, app.PluginDir) {
-			ds.setPathsBasedOnApp(app)
+			ds.setPathsBasedOnApp(app, cfg)
 			app.FoundChildPlugins = append(app.FoundChildPlugins, &PluginInclude{
 				Name: ds.Name,
 				Id:   ds.Id,
@@ -104,10 +114,12 @@ func (app *AppPlugin) initApp() {
 			include.Slug = slug.Make(include.Name)
 		}
 		if include.Type == "page" && include.DefaultNav {
-			app.DefaultNavUrl = setting.AppSubUrl + "/plugins/" + app.Id + "/page/" + include.Slug
+			app.DefaultNavUrl = cfg.AppSubURL + "/plugins/" + app.Id + "/page/" + include.Slug
 		}
 		if include.Type == "dashboard" && include.DefaultNav {
-			app.DefaultNavUrl = setting.AppSubUrl + "/dashboard/db/" + include.Slug
+			app.DefaultNavUrl = cfg.AppSubURL + "/dashboard/db/" + include.Slug
 		}
 	}
+
+	return staticRoutes
 }

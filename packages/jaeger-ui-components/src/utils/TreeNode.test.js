@@ -119,7 +119,7 @@ it('find() should return the found item for a function', () => {
   treeRoot.addChild(11);
   treeRoot.addChild(12);
 
-  expect(treeRoot.find(value => value === 6)).toEqual(secondChildNode);
+  expect(treeRoot.find((value) => value === 6)).toEqual(secondChildNode);
   expect(treeRoot.find(12)).toEqual(new TreeNode(12));
 });
 
@@ -183,7 +183,7 @@ it('find() should return null for none found', () => {
   treeRoot.addChild(12);
 
   expect(treeRoot.find(13)).toBe(null);
-  expect(treeRoot.find(value => value === 'foo')).toBe(null);
+  expect(treeRoot.find((value) => value === 'foo')).toBe(null);
 });
 
 it('getPath() should return the path to the node', () => {
@@ -262,7 +262,7 @@ it('walk() should iterate over every item once in the right order', () => {
 
   let i = 0;
 
-  treeRoot.walk(value => expect(value).toBe(++i));
+  treeRoot.walk((value) => expect(value).toBe(++i));
 });
 
 it('walk() should iterate over every item and compute the right deep on each node', () => {

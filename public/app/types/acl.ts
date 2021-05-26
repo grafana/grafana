@@ -77,7 +77,7 @@ export enum AclTarget {
 
 export interface AclTargetInfo {
   value: AclTarget;
-  text: string;
+  label: string;
 }
 
 export const dataSourceAclLevels = [
@@ -85,10 +85,10 @@ export const dataSourceAclLevels = [
 ];
 
 export const dashboardAclTargets: AclTargetInfo[] = [
-  { value: AclTarget.Team, text: 'Team' },
-  { value: AclTarget.User, text: 'User' },
-  { value: AclTarget.Viewer, text: 'Everyone With Viewer Role' },
-  { value: AclTarget.Editor, text: 'Everyone With Editor Role' },
+  { value: AclTarget.Team, label: 'Team' },
+  { value: AclTarget.User, label: 'User' },
+  { value: AclTarget.Viewer, label: 'Everyone With Viewer Role' },
+  { value: AclTarget.Editor, label: 'Everyone With Editor Role' },
 ];
 
 export const dashboardPermissionLevels: DashboardPermissionInfo[] = [

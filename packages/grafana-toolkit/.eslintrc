@@ -1,5 +1,14 @@
 {
   "rules": {
     "no-restricted-imports": ["error", { "patterns": ["@grafana/runtime"] }]
-  }
+  },
+  "overrides": [
+    {
+      "files": ["./**/*.{ts,tsx}"],
+      "rules": {
+        "react-hooks/rules-of-hooks": "off",
+        "react-hooks/exhaustive-deps": "off"
+      }
+    }
+  ]
 }

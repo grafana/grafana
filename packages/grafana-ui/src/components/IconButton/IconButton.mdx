@@ -1,0 +1,12 @@
+import { Meta, Story, Preview, Props } from '@storybook/addon-docs/blocks';
+import { IconButton } from './IconButton';
+
+<Meta title="MDX|IconButton" component={IconButton} />
+
+# IconButton
+
+This component looks like just an icon but behaves like a button. It fulfils an action when you click it and has hover and focus states. You can choose which icon size you would like to use. Watch out for where you place this icon, as the hover effect needs to be adjusted with the `surface` prop depending on where it is used.
+
+`IconButton` is best used when an actual button would look out of place, for example when you want to place a solitary clickable icon next to text. An example where an `IconButton` is used in Grafana is the top left back arrow in the panel edit mode.
+
+<Props of={IconButton} />

@@ -1,11 +1,10 @@
 +++
 title = "Add support for variables in plugins"
-type = "docs"
 +++
 
 # Add support for variables in plugins
 
-Variables are placeholders for values, and can be used to create things like templated queries and dashboard or panel links. For more information on variables, refer to [Templates and variables]({{< relref "../../variables/templates-and-variables.md" >}}).
+Variables are placeholders for values, and can be used to create things like templated queries and dashboard or panel links. For more information on variables, refer to [Templates and variables]({{< relref "../../variables/_index.md" >}}).
 
 This guide explains how to leverage template variables in your panel plugins and data source plugins.
 
@@ -61,7 +60,7 @@ For data sources, you need to use the [getTemplateSrv]({{< relref "../../package
 
 ## Format multi-value variables
 
-When a user selects multiple values for variable, the value of the interpolated variable depends on the [variable format](https://grafana.com/docs/grafana/latest/variables/advanced-variable-format-options/).
+When a user selects multiple values for variable, the value of the interpolated variable depends on the [variable format](https://grafana.com/docs/grafana/next/variables/advanced-variable-format-options/).
 
 A data source can define the default format option when no format is specified by adding a third argument to the interpolation function.
 
@@ -77,7 +76,7 @@ Now, when users write `$service`, the query looks like this:
 SELECT * FROM services WHERE id IN (admin,auth,billing)
 ```
 
-For more information on the available variable formats, refer to [Advanced variable format options](https://grafana.com/docs/grafana/latest/variables/advanced-variable-format-options/).
+For more information on the available variable formats, refer to [Advanced variable format options]({{< relref "../../variables/advanced-variable-format-options.md" >}}).
 
 ## Set a variable from your plugin
 

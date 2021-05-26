@@ -2,7 +2,6 @@
 title = "Bar gauge panel"
 description = "Bar gauge panel docs"
 keywords = ["grafana", "bar", "bar gauge"]
-type = "docs"
 aliases =["/docs/grafana/latest/features/panels/bar_gauge/"]
 weight = 200
 +++
@@ -18,8 +17,9 @@ This panel can show one or more bar gauges depending on how many series, rows, o
 ## Data and field options
 
 Bar gauge visualizations allow you to apply:
-- [Data transformations]({{< relref "../transformations.md" >}})
-- [Field configuration options and overrides]({{< relref "../field-configuration-options.md" >}})
+
+- [Data transformations]({{< relref "../transformations/_index.md" >}})
+- [Field options and overrides]({{< relref "../field-options/_index.md" >}})
 - [Thresholds]({{< relref "../thresholds.md" >}})
 
 ## Display options

@@ -1,9 +1,6 @@
 +++
 title = "Linking"
-type = "docs"
-[menu.docs]
-identifier = "linking"
-weight = 100
+weight = 120
 +++
 
 # Linking overview
@@ -30,3 +27,4 @@ You can control the time range of a panel or dashboard by providing following qu
 - `from` - defines lower limit of the time range, specified in ms epoch
 - `to` - defines upper limit of the time range, specified in ms epoch
 - `time` and `time.window` - defines a time range from `time-time.window/2` to `time+time.window/2`. Both params should be specified in ms. For example `?time=1500000000000&time.window=10000` will result in 10s time range from 1499999995000 to 1500000005000
+

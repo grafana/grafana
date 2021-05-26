@@ -19,7 +19,7 @@ import CanvasSpanGraph from './CanvasSpanGraph';
 import TickLabels from './TickLabels';
 import ViewingLayer from './ViewingLayer';
 import { TUpdateViewRangeTimeFunction, ViewRange, ViewRangeTimeUpdate } from '../..';
-import { TraceSpan, Trace } from '@grafana/data';
+import { TraceSpan, Trace } from '../../types/trace';
 import { ubPb2, ubPx2, ubRelative } from '../../uberUtilityStyles';
 
 const DEFAULT_HEIGHT = 60;
@@ -68,7 +68,7 @@ export default class SpanGraph extends React.PureComponent<SpanGraphProps, SpanG
     };
   }
 
-  componentWillReceiveProps(nextProps: SpanGraphProps) {
+  UNSAFE_componentWillReceiveProps(nextProps: SpanGraphProps) {
     const { trace } = nextProps;
     if (this.props.trace !== trace) {
       this.setState({

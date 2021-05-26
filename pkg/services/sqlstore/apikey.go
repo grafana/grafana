@@ -28,11 +28,24 @@ func GetApiKeys(query *models.GetApiKeysQuery) error {
 }
 
 func DeleteApiKeyCtx(ctx context.Context, cmd *models.DeleteApiKeyCommand) error {
-	return withDbSession(ctx, func(sess *DBSession) error {
-		var rawSql = "DELETE FROM api_key WHERE id=? and org_id=?"
-		_, err := sess.Exec(rawSql, cmd.Id, cmd.OrgId)
-		return err
+	return withDbSession(ctx, x, func(sess *DBSession) error {
+		return deleteAPIKey(sess, cmd.Id, cmd.OrgId)
 	})
+}
+
+func deleteAPIKey(sess *DBSession, id, orgID int64) error {
+	rawSQL := "DELETE FROM api_key WHERE id=? and org_id=?"
+	result, err := sess.Exec(rawSQL, id, orgID)
+	if err != nil {
+		return err
+	}
+	n, err := result.RowsAffected()
+	if err != nil {
+		return err
+	} else if n == 0 {
+		return models.ErrApiKeyNotFound
+	}
+	return nil
 }
 
 func AddApiKey(cmd *models.AddApiKeyCommand) error {

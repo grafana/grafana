@@ -9,7 +9,7 @@ const webpackOptions = {
   module: {
     rules: [
       {
-        include: modulePath => {
+        include: (modulePath) => {
           if (!anyNodeModules.test(modulePath)) {
             // Is a file within the project
             return true;

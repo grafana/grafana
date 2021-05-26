@@ -8,7 +8,6 @@ import (
 )
 
 type AlertStateType string
-type AlertSeverityType string
 type NoDataOption string
 type ExecutionErrorOption string
 
@@ -34,7 +33,7 @@ const (
 )
 
 var (
-	ErrCannotChangeStateOnPausedAlert = fmt.Errorf("Cannot change state on pause alert")
+	ErrCannotChangeStateOnPausedAlert = fmt.Errorf("cannot change state on pause alert")
 	ErrRequiresNewState               = fmt.Errorf("update alert state requires a new state")
 )
 
@@ -71,9 +70,9 @@ type Alert struct {
 	PanelId        int64
 	Name           string
 	Message        string
-	Severity       string //Unused
+	Severity       string // Unused
 	State          AlertStateType
-	Handler        int64 //Unused
+	Handler        int64 // Unused
 	Silenced       bool
 	ExecutionError string
 	Frequency      int64
@@ -89,21 +88,17 @@ type Alert struct {
 	Settings *simplejson.Json
 }
 
-func (alert *Alert) ValidToSave() bool {
-	return alert.DashboardId != 0 && alert.OrgId != 0 && alert.PanelId != 0
+func (a *Alert) ValidToSave() bool {
+	return a.DashboardId != 0 && a.OrgId != 0 && a.PanelId != 0
 }
 
-func (alert *Alert) ShouldUpdateState(newState AlertStateType) bool {
-	return alert.State != newState
-}
-
-func (this *Alert) ContainsUpdates(other *Alert) bool {
+func (a *Alert) ContainsUpdates(other *Alert) bool {
 	result := false
-	result = result || this.Name != other.Name
-	result = result || this.Message != other.Message
+	result = result || a.Name != other.Name
+	result = result || a.Message != other.Message
 
-	if this.Settings != nil && other.Settings != nil {
-		json1, err1 := this.Settings.Encode()
+	if a.Settings != nil && other.Settings != nil {
+		json1, err1 := a.Settings.Encode()
 		json2, err2 := other.Settings.Encode()
 
 		if err1 != nil || err2 != nil {
@@ -113,14 +108,14 @@ func (this *Alert) ContainsUpdates(other *Alert) bool {
 		result = result || string(json1) != string(json2)
 	}
 
-	//don't compare .State! That would be insane.
+	// don't compare .State! That would be insane.
 	return result
 }
 
-func (alert *Alert) GetTagsFromSettings() []*Tag {
+func (a *Alert) GetTagsFromSettings() []*Tag {
 	tags := []*Tag{}
-	if alert.Settings != nil {
-		if data, ok := alert.Settings.CheckGet("alertRuleTags"); ok {
+	if a.Settings != nil {
+		if data, ok := a.Settings.CheckGet("alertRuleTags"); ok {
 			for tagNameString, tagValue := range data.MustMap() {
 				// MustMap() already guarantees the return of a `map[string]interface{}`.
 				// Therefore we only need to verify that tagValue is a String.
@@ -130,24 +125,6 @@ func (alert *Alert) GetTagsFromSettings() []*Tag {
 		}
 	}
 	return tags
-}
-
-type AlertingClusterInfo struct {
-	ServerId       string
-	ClusterSize    int
-	UptimePosition int
-}
-
-type HeartBeat struct {
-	Id       int64
-	ServerId string
-	Updated  time.Time
-	Created  time.Time
-}
-
-type HeartBeatCommand struct {
-	ServerId string
-	Result   AlertingClusterInfo
 }
 
 type SaveAlertsCommand struct {
@@ -180,7 +157,7 @@ type SetAlertStateCommand struct {
 	Result Alert
 }
 
-//Queries
+// Queries
 type GetAlertsQuery struct {
 	OrgId        int64
 	State        []string
@@ -231,19 +208,4 @@ type AlertStateInfoDTO struct {
 	PanelId      int64          `json:"panelId"`
 	State        AlertStateType `json:"state"`
 	NewStateDate time.Time      `json:"newStateDate"`
-}
-
-// "Internal" commands
-
-type UpdateDashboardAlertsCommand struct {
-	OrgId     int64
-	Dashboard *Dashboard
-	User      *SignedInUser
-}
-
-type ValidateDashboardAlertsCommand struct {
-	UserId    int64
-	OrgId     int64
-	Dashboard *Dashboard
-	User      *SignedInUser
 }

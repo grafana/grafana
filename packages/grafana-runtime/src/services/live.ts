@@ -1,60 +1,81 @@
+import {
+  DataFrame,
+  DataQueryResponse,
+  LiveChannelAddress,
+  LiveChannelConfig,
+  LiveChannelEvent,
+  LiveChannelPresenceStatus,
+  StreamingFrameOptions,
+} from '@grafana/data';
 import { Observable } from 'rxjs';
 
 /**
- * @experimental
+ * @alpha -- experimental
  */
-export interface ChannelHandler<T = any> {
-  /**
-   * Process the raw message from the server before broadcasting it
-   * to all subscribeers on this channel
-   */
-  onPublish(msg: any): T;
+export interface LiveDataFilter {
+  fields?: string[];
 }
 
-// export interface SubscriptionEvents {
-//   publish?: (ctx: PublicationContext) => void;
-//   join?: (ctx: JoinLeaveContext) => void;
-//   leave?: (ctx: JoinLeaveContext) => void;
-//   subscribe?: (ctx: SubscribeSuccessContext) => void;
-//   error?: (ctx: SubscribeErrorContext) => void;
-//   unsubscribe?: (ctx: UnsubscribeContext) => void;
-// }
+/**
+ * @alpha
+ */
+export interface LiveDataStreamOptions {
+  addr: LiveChannelAddress;
+  frame?: DataFrame; // initial results
+  key?: string;
+  buffer?: StreamingFrameOptions;
+  filter?: LiveDataFilter;
+}
 
 /**
- * @experimental
+ * @alpha -- experimental
  */
 export interface GrafanaLiveSrv {
   /**
-   * Is the server currently connected
-   */
-  isConnected(): boolean;
-
-  /**
-   * Listen for changes to the connection state
+   * Listen for changes to the main service
    */
   getConnectionState(): Observable<boolean>;
 
   /**
-   * Configure a channel with the given setup
+   * Get a channel.  If the scope, namespace, or path is invalid, a shutdown
+   * channel will be returned with an error state indicated in its status.
+   *
+   * This is a singleton instance that stays active until explicitly shutdown.
+   * Multiple requests for this channel will return the same object until
+   * the channel is shutdown
    */
-  initChannel<T>(channel: string, handler: ChannelHandler<T>): void;
+  getChannelInfo(address: LiveChannelAddress): Promise<LiveChannelConfig>;
 
   /**
-   * Subscribe to activity on a given channel
+   * Watch for messages in a channel
    */
-  getChannelStream<T>(channel: string): Observable<T>;
+  getStream<T>(address: LiveChannelAddress): Observable<LiveChannelEvent<T>>;
 
   /**
-   * Send data to a channel.  This feature is disabled for most channels and will return an error
+   * Connect to a channel and return results as DataFrames
    */
-  publish<T>(channel: string, data: any): Promise<T>;
+  getDataStream(options: LiveDataStreamOptions): Observable<DataQueryResponse>;
+
+  /**
+   * For channels that support presence, this will request the current state from the server.
+   *
+   * Join and leave messages will be sent to the open stream
+   */
+  getPresence(address: LiveChannelAddress): Promise<LiveChannelPresenceStatus>;
+
+  /**
+   * Publish into a channel
+   *
+   * @alpha -- experimental
+   */
+  publish(address: LiveChannelAddress, data: any): Promise<any>;
 }
 
 let singletonInstance: GrafanaLiveSrv;
 
 /**
  * Used during startup by Grafana to set the GrafanaLiveSrv so it is available
- * via the the {@link getGrafanaLiveSrv} to the rest of the application.
+ * via the {@link getGrafanaLiveSrv} to the rest of the application.
  *
  * @internal
  */
@@ -63,10 +84,9 @@ export const setGrafanaLiveSrv = (instance: GrafanaLiveSrv) => {
 };
 
 /**
- * Used to retrieve the {@link GrafanaLiveSrv} that allows you to subscribe to
+ * Used to retrieve the GrafanaLiveSrv that allows you to subscribe to
  * server side events and streams
  *
- * @experimental
- * @public
+ * @alpha -- experimental
  */
 export const getGrafanaLiveSrv = (): GrafanaLiveSrv => singletonInstance;

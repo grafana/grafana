@@ -1,17 +1,11 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { IntervalVariableModel, VariableHide, VariableOption, VariableRefresh } from '../types';
-import { getInstanceState, NEW_VARIABLE_ID, VariablePayload } from '../state/types';
-import { initialVariablesState, VariablesState } from '../state/variablesReducer';
-import _ from 'lodash';
+import { initialVariableModelState, IntervalVariableModel, VariableOption, VariableRefresh } from '../types';
+import { getInstanceState, VariablePayload, initialVariablesState, VariablesState } from '../state/types';
+import { map } from 'lodash';
 
 export const initialIntervalVariableModelState: IntervalVariableModel = {
-  id: NEW_VARIABLE_ID,
-  global: false,
+  ...initialVariableModelState,
   type: 'interval',
-  name: '',
-  label: '',
-  hide: VariableHide.dontHide,
-  skipUrlSync: false,
   auto_count: 30,
   auto_min: '10s',
   options: [],
@@ -19,8 +13,6 @@ export const initialIntervalVariableModelState: IntervalVariableModel = {
   query: '1m,10m,30m,1h,6h,12h,1d,7d,14d,30d',
   refresh: VariableRefresh.onTimeRangeChanged,
   current: {} as VariableOption,
-  index: -1,
-  initLock: null,
 };
 
 export const intervalVariableSlice = createSlice({
@@ -29,7 +21,7 @@ export const intervalVariableSlice = createSlice({
   reducers: {
     createIntervalOptions: (state: VariablesState, action: PayloadAction<VariablePayload>) => {
       const instanceState = getInstanceState<IntervalVariableModel>(state, action.payload.id);
-      const options: VariableOption[] = _.map(instanceState.query.match(/(["'])(.*?)\1|\w+/g), text => {
+      const options: VariableOption[] = map(instanceState.query.match(/(["'])(.*?)\1|\w+/g), (text) => {
         text = text.replace(/["']+/g, '');
         return { text: text.trim(), value: text.trim(), selected: false };
       });

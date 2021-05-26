@@ -56,14 +56,14 @@ func (ns *NotificationService) Init() error {
 		"Subject": subjectTemplateFunc,
 	})
 
-	templatePattern := filepath.Join(setting.StaticRootPath, ns.Cfg.Smtp.TemplatesPattern)
+	templatePattern := filepath.Join(ns.Cfg.StaticRootPath, ns.Cfg.Smtp.TemplatesPattern)
 	_, err := mailTemplates.ParseGlob(templatePattern)
 	if err != nil {
 		return err
 	}
 
 	if !util.IsEmail(ns.Cfg.Smtp.FromAddress) {
-		return errors.New("Invalid email address for SMTP from_address config")
+		return errors.New("invalid email address for SMTP from_address config")
 	}
 
 	if setting.EmailCodeValidMinutes == 0 {
@@ -83,7 +83,7 @@ func (ns *NotificationService) Run(ctx context.Context) error {
 				ns.log.Error("Failed to send webrequest ", "error", err)
 			}
 		case msg := <-ns.mailQueue:
-			num, err := ns.send(msg)
+			num, err := ns.Send(msg)
 			tos := strings.Join(msg.To, "; ")
 			info := ""
 			if err != nil {
@@ -133,7 +133,7 @@ func (ns *NotificationService) sendEmailCommandHandlerSync(ctx context.Context, 
 		return err
 	}
 
-	_, err = ns.send(message)
+	_, err = ns.Send(message)
 	return err
 }
 

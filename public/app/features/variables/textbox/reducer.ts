@@ -1,22 +1,15 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
-import { TextBoxVariableModel, VariableHide, VariableOption } from '../types';
-import { getInstanceState, NEW_VARIABLE_ID, VariablePayload } from '../state/types';
-import { initialVariablesState, VariablesState } from '../state/variablesReducer';
+import { initialVariableModelState, TextBoxVariableModel, VariableOption } from '../types';
+import { getInstanceState, VariablePayload, initialVariablesState, VariablesState } from '../state/types';
 
 export const initialTextBoxVariableModelState: TextBoxVariableModel = {
-  id: NEW_VARIABLE_ID,
-  global: false,
-  index: -1,
+  ...initialVariableModelState,
   type: 'textbox',
-  name: '',
-  label: '',
-  hide: VariableHide.dontHide,
   query: '',
   current: {} as VariableOption,
   options: [],
-  skipUrlSync: false,
-  initLock: null,
+  originalQuery: null,
 };
 
 export const textBoxVariableSlice = createSlice({

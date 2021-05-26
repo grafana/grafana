@@ -1,10 +1,13 @@
-import React, { useRef, useState } from 'react';
-import { cx, css } from 'emotion';
+import React, { HTMLProps, useRef, useState } from 'react';
+import { cx, css } from '@emotion/css';
 import useClickAway from 'react-use/lib/useClickAway';
 import { measureText } from '../../utils/measureText';
 import { useExpandableLabel, SegmentProps } from '.';
+import { getSegmentStyles } from './styles';
+import { InlineLabel } from '../Forms/InlineLabel';
+import { useStyles } from '../../themes';
 
-export interface SegmentInputProps<T> extends SegmentProps<T> {
+export interface SegmentInputProps<T> extends SegmentProps<T>, Omit<HTMLProps<HTMLInputElement>, 'value' | 'onChange'> {
   value: string | number;
   onChange: (text: string | number) => void;
   autofocus?: boolean;
@@ -18,12 +21,15 @@ export function SegmentInput<T>({
   Component,
   className,
   placeholder,
+  disabled,
   autofocus = false,
+  ...rest
 }: React.PropsWithChildren<SegmentInputProps<T>>) {
   const ref = useRef<HTMLInputElement>(null);
   const [value, setValue] = useState<number | string>(initialValue);
   const [inputWidth, setInputWidth] = useState<number>(measureText((initialValue || '').toString(), FONT_SIZE).width);
   const [Label, , expanded, setExpanded] = useExpandableLabel(autofocus);
+  const styles = useStyles(getSegmentStyles);
 
   useClickAway(ref, () => {
     setExpanded(false);
@@ -33,11 +39,21 @@ export function SegmentInput<T>({
   if (!expanded) {
     return (
       <Label
+        disabled={disabled}
         Component={
           Component || (
-            <a className={cx('gf-form-label', 'query-part', !value && placeholder && 'query-placeholder', className)}>
+            <InlineLabel
+              className={cx(
+                styles.segment,
+                {
+                  [styles.queryPlaceholder]: placeholder !== undefined && !value,
+                  [styles.disabled]: disabled,
+                },
+                className
+              )}
+            >
               {initialValue || placeholder}
-            </a>
+            </InlineLabel>
           )
         }
       />
@@ -50,11 +66,12 @@ export function SegmentInput<T>({
 
   return (
     <input
+      {...rest}
       ref={ref}
       autoFocus
       className={cx(`gf-form gf-form-input`, inputWidthStyle)}
       value={value}
-      onChange={item => {
+      onChange={(item) => {
         const { width } = measureText(item.target.value, FONT_SIZE);
         setInputWidth(width);
         setValue(item.target.value);
@@ -63,7 +80,7 @@ export function SegmentInput<T>({
         setExpanded(false);
         onChange(value);
       }}
-      onKeyDown={e => {
+      onKeyDown={(e) => {
         if ([13, 27].includes(e.keyCode)) {
           setExpanded(false);
           onChange(value);

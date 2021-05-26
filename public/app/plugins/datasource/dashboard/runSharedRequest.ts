@@ -1,8 +1,15 @@
 import { Observable } from 'rxjs';
-import { QueryRunnerOptions } from 'app/features/dashboard/state/PanelQueryRunner';
+import { QueryRunnerOptions } from 'app/features/query/state/PanelQueryRunner';
 import { DashboardQuery, SHARED_DASHBODARD_QUERY } from './types';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
-import { LoadingState, DefaultTimeRange, DataQuery, PanelData, DataSourceApi } from '@grafana/data';
+import {
+  DataQuery,
+  DataQueryRequest,
+  DataSourceApi,
+  getDefaultTimeRange,
+  LoadingState,
+  PanelData,
+} from '@grafana/data';
 
 export function isSharedDashboardQuery(datasource: string | DataSourceApi | null) {
   if (!datasource) {
@@ -17,7 +24,7 @@ export function isSharedDashboardQuery(datasource: string | DataSourceApi | null
 }
 
 export function runSharedRequest(options: QueryRunnerOptions): Observable<PanelData> {
-  return new Observable<PanelData>(subscriber => {
+  return new Observable<PanelData>((subscriber) => {
     const dashboard = getDashboardSrv().getCurrent();
     const listenToPanelId = getPanelIdFromQuery(options.queries);
 
@@ -26,8 +33,7 @@ export function runSharedRequest(options: QueryRunnerOptions): Observable<PanelD
       return undefined;
     }
 
-    const currentPanel = dashboard.getPanelById(options.panelId)!;
-    const listenToPanel = dashboard.getPanelById(listenToPanelId);
+    const listenToPanel = dashboard?.getPanelById(listenToPanelId);
 
     if (!listenToPanel) {
       subscriber.next(getQueryError('Unknown Panel: ' + listenToPanelId));
@@ -43,7 +49,7 @@ export function runSharedRequest(options: QueryRunnerOptions): Observable<PanelD
 
     // If we are in fullscreen the other panel will not execute any queries
     // So we have to trigger it from here
-    if (currentPanel.isViewing || currentPanel.isEditing) {
+    if (!listenToPanel.isInView) {
       const { datasource, targets } = listenToPanel;
       const modified = {
         ...options,
@@ -71,7 +77,8 @@ function getQueryError(msg: string): PanelData {
   return {
     state: LoadingState.Error,
     series: [],
+    request: {} as DataQueryRequest,
     error: { message: msg },
-    timeRange: DefaultTimeRange,
+    timeRange: getDefaultTimeRange(),
   };
 }

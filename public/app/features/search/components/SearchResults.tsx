@@ -1,5 +1,5 @@
 import React, { FC } from 'react';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { FixedSizeList } from 'react-window';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { GrafanaTheme } from '@grafana/data';
@@ -37,13 +37,13 @@ export const SearchResults: FC<Props> = ({
   const renderFolders = () => {
     return (
       <div className={styles.wrapper}>
-        {results.map(section => {
+        {results.map((section) => {
           return (
             <div aria-label={sectionLabel} className={styles.section} key={section.id || section.title}>
               <SectionHeader onSectionClick={onToggleSection} {...{ onToggleChecked, editable, section }} />
               {section.expanded && (
                 <div aria-label={itemsLabel} className={styles.sectionItems}>
-                  {section.items.map(item => (
+                  {section.items.map((item) => (
                     <SearchItem key={item.id} {...itemProps} item={item} />
                   ))}
                 </div>

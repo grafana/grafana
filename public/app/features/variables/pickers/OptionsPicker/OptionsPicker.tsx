@@ -1,160 +1,110 @@
-import React, { PureComponent } from 'react';
-import { connect, MapDispatchToProps, MapStateToProps } from 'react-redux';
-import { StoreState } from 'app/types';
+import React, { ComponentType, PureComponent } from 'react';
+import { connect, ConnectedProps } from 'react-redux';
 import { ClickOutsideWrapper } from '@grafana/ui';
-import { VariableLink } from '../shared/VariableLink';
+import { LoadingState } from '@grafana/data';
+
+import { StoreState } from 'app/types';
 import { VariableInput } from '../shared/VariableInput';
-import { commitChangesToVariable, filterOrSearchOptions, navigateOptions, toggleAndFetchTag } from './actions';
-import { OptionsPickerState, showOptions, toggleAllOptions, toggleOption } from './reducer';
-import { VariableOption, VariableTag, VariableWithMultiSupport, VariableWithOptions } from '../../types';
+import { commitChangesToVariable, filterOrSearchOptions, navigateOptions, openOptions } from './actions';
+import { OptionsPickerState, toggleAllOptions, toggleOption } from './reducer';
+import { VariableOption, VariableWithMultiSupport, VariableWithOptions } from '../../types';
 import { VariableOptions } from '../shared/VariableOptions';
-import { isQuery } from '../../guard';
+import { isMulti } from '../../guard';
 import { VariablePickerProps } from '../types';
+import { formatVariableLabel } from '../../shared/formatVariable';
+import { toVariableIdentifier } from '../../state/types';
+import { getVariableQueryRunner } from '../../query/VariableQueryRunner';
+import { VariableLink } from '../shared/VariableLink';
 
-interface OwnProps extends VariablePickerProps<VariableWithMultiSupport> {}
-
-interface ConnectedProps {
-  picker: OptionsPickerState;
-}
-
-interface DispatchProps {
-  showOptions: typeof showOptions;
-  commitChangesToVariable: typeof commitChangesToVariable;
-  toggleAllOptions: typeof toggleAllOptions;
-  toggleOption: typeof toggleOption;
-  toggleAndFetchTag: typeof toggleAndFetchTag;
-  filterOrSearchOptions: typeof filterOrSearchOptions;
-  navigateOptions: typeof navigateOptions;
-}
-
-type Props = OwnProps & ConnectedProps & DispatchProps;
-
-export class OptionsPickerUnconnected extends PureComponent<Props> {
-  onShowOptions = () => this.props.showOptions(this.props.variable);
-  onHideOptions = () => this.props.commitChangesToVariable();
-
-  onToggleOption = (option: VariableOption, clearOthers: boolean) => {
-    const toggleFunc = this.props.variable.multi ? this.onToggleMultiValueVariable : this.onToggleSingleValueVariable;
-    toggleFunc(option, clearOthers);
+export const optionPickerFactory = <Model extends VariableWithOptions | VariableWithMultiSupport>(): ComponentType<
+  VariablePickerProps<Model>
+> => {
+  const mapDispatchToProps = {
+    openOptions,
+    commitChangesToVariable,
+    filterOrSearchOptions,
+    toggleAllOptions,
+    toggleOption,
+    navigateOptions,
   };
 
-  onToggleSingleValueVariable = (option: VariableOption, clearOthers: boolean) => {
-    this.props.toggleOption({ option, clearOthers, forceSelect: false });
-    this.onHideOptions();
-  };
-
-  onToggleMultiValueVariable = (option: VariableOption, clearOthers: boolean) => {
-    this.props.toggleOption({ option, clearOthers, forceSelect: false });
-  };
-
-  render() {
-    const { variable, picker } = this.props;
-    const showOptions = picker.id === variable.id;
-
-    return (
-      <div className="variable-link-wrapper">
-        {this.renderLink(showOptions, variable)}
-        {this.renderOptions(showOptions, picker)}
-      </div>
-    );
-  }
-
-  renderLink(showOptions: boolean, variable: VariableWithMultiSupport) {
-    if (showOptions) {
-      return null;
-    }
-
-    const linkText = getLinkText(variable);
-    const tags = getSelectedTags(variable);
-
-    return <VariableLink text={linkText} tags={tags} onClick={this.onShowOptions} />;
-  }
-
-  renderOptions(showOptions: boolean, picker: OptionsPickerState) {
-    if (!showOptions) {
-      return null;
-    }
-
-    return (
-      <ClickOutsideWrapper onClick={this.onHideOptions}>
-        <VariableInput
-          value={picker.queryValue}
-          onChange={this.props.filterOrSearchOptions}
-          onNavigate={this.props.navigateOptions}
-        />
-        <VariableOptions
-          values={picker.options}
-          onToggle={this.onToggleOption}
-          onToggleAll={this.props.toggleAllOptions}
-          onToggleTag={this.props.toggleAndFetchTag}
-          highlightIndex={picker.highlightIndex}
-          multi={picker.multi}
-          tags={picker.tags}
-          selectedValues={picker.selectedValues}
-        />
-      </ClickOutsideWrapper>
-    );
-  }
-}
-
-const getSelectedTags = (variable: VariableWithOptions): VariableTag[] => {
-  if (!isQuery(variable) || !Array.isArray(variable.tags)) {
-    return [];
-  }
-  return variable.tags.filter(t => t.selected);
-};
-
-const getLinkText = (variable: VariableWithOptions) => {
-  const { current, options } = variable;
-
-  if (!current.tags || current.tags.length === 0) {
-    if (Array.isArray(current.text)) {
-      return current.text.join(' + ');
-    }
-    return current.text;
-  }
-
-  // filer out values that are in selected tags
-  const selectedAndNotInTag = options.filter(option => {
-    if (!option.selected) {
-      return false;
-    }
-
-    if (!current || !current.tags || !current.tags.length) {
-      return false;
-    }
-
-    for (let i = 0; i < current.tags.length; i++) {
-      const tag = current.tags[i];
-      const foundIndex = tag?.values?.findIndex(v => v === option.value);
-      if (foundIndex && foundIndex !== -1) {
-        return false;
-      }
-    }
-    return true;
+  const mapStateToProps = (state: StoreState) => ({
+    picker: state.templating.optionsPicker,
   });
 
-  // convert values to text
-  const currentTexts = selectedAndNotInTag.map(s => s.text);
+  const connector = connect(mapStateToProps, mapDispatchToProps);
 
-  // join texts
-  const newLinkText = currentTexts.join(' + ');
-  return newLinkText.length > 0 ? `${newLinkText} + ` : newLinkText;
+  interface OwnProps extends VariablePickerProps<Model> {}
+
+  type Props = OwnProps & ConnectedProps<typeof connector>;
+
+  class OptionsPickerUnconnected extends PureComponent<Props> {
+    onShowOptions = () =>
+      this.props.openOptions(toVariableIdentifier(this.props.variable), this.props.onVariableChange);
+    onHideOptions = () => this.props.commitChangesToVariable(this.props.onVariableChange);
+
+    onToggleOption = (option: VariableOption, clearOthers: boolean) => {
+      const toggleFunc =
+        isMulti(this.props.variable) && this.props.variable.multi
+          ? this.onToggleMultiValueVariable
+          : this.onToggleSingleValueVariable;
+      toggleFunc(option, clearOthers);
+    };
+
+    onToggleSingleValueVariable = (option: VariableOption, clearOthers: boolean) => {
+      this.props.toggleOption({ option, clearOthers, forceSelect: false });
+      this.onHideOptions();
+    };
+
+    onToggleMultiValueVariable = (option: VariableOption, clearOthers: boolean) => {
+      this.props.toggleOption({ option, clearOthers, forceSelect: false });
+    };
+
+    render() {
+      const { variable, picker } = this.props;
+      const showOptions = picker.id === variable.id;
+
+      return (
+        <div className="variable-link-wrapper">
+          {showOptions ? this.renderOptions(picker) : this.renderLink(variable)}
+        </div>
+      );
+    }
+
+    renderLink(variable: VariableWithOptions) {
+      const linkText = formatVariableLabel(variable);
+      const loading = variable.state === LoadingState.Loading;
+
+      return <VariableLink text={linkText} onClick={this.onShowOptions} loading={loading} onCancel={this.onCancel} />;
+    }
+
+    onCancel = () => {
+      getVariableQueryRunner().cancelRequest(toVariableIdentifier(this.props.variable));
+    };
+
+    renderOptions(picker: OptionsPickerState) {
+      return (
+        <ClickOutsideWrapper onClick={this.onHideOptions}>
+          <VariableInput
+            value={picker.queryValue}
+            onChange={this.props.filterOrSearchOptions}
+            onNavigate={this.props.navigateOptions}
+          />
+          <VariableOptions
+            values={picker.options}
+            onToggle={this.onToggleOption}
+            onToggleAll={this.props.toggleAllOptions}
+            highlightIndex={picker.highlightIndex}
+            multi={picker.multi}
+            selectedValues={picker.selectedValues}
+          />
+        </ClickOutsideWrapper>
+      );
+    }
+  }
+
+  const OptionsPicker = connector(OptionsPickerUnconnected);
+  OptionsPicker.displayName = 'OptionsPicker';
+
+  return OptionsPicker;
 };
-
-const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
-  showOptions,
-  commitChangesToVariable,
-  filterOrSearchOptions,
-  toggleAllOptions,
-  toggleOption,
-  toggleAndFetchTag,
-  navigateOptions,
-};
-
-const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = state => ({
-  picker: state.templating.optionsPicker,
-});
-
-export const OptionsPicker = connect(mapStateToProps, mapDispatchToProps)(OptionsPickerUnconnected);
-OptionsPicker.displayName = 'OptionsPicker';

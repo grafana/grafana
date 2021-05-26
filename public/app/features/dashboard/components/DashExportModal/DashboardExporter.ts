@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import { defaults, each, sortBy } from 'lodash';
 
 import config from 'app/core/config';
 import { DashboardModel } from '../../state/DashboardModel';
@@ -75,7 +75,7 @@ export class DashboardExporter {
       promises.push(
         getDataSourceSrv()
           .get(datasource)
-          .then(ds => {
+          .then((ds) => {
             if (ds.meta?.builtIn) {
               return;
             }
@@ -109,7 +109,7 @@ export class DashboardExporter {
     };
 
     const processPanel = (panel: PanelModel) => {
-      if (panel.datasource !== undefined) {
+      if (panel.datasource !== undefined && panel.datasource !== null) {
         templateizeDatasourceUsage(panel);
       }
 
@@ -170,7 +170,7 @@ export class DashboardExporter {
 
     return Promise.all(promises)
       .then(() => {
-        _.each(datasources, (value: any) => {
+        each(datasources, (value: any) => {
           inputs.push(value);
         });
 
@@ -182,28 +182,29 @@ export class DashboardExporter {
               name: refName,
               type: 'constant',
               label: variable.label || variable.name,
-              value: variable.current.value,
+              value: variable.query,
               description: '',
             });
             // update current and option
             variable.query = '${' + refName + '}';
-            variable.options[0] = variable.current = {
+            variable.current = {
               value: variable.query,
               text: variable.query,
               selected: false,
             };
+            variable.options = [variable.current];
           }
         }
 
         // make inputs and requires a top thing
         const newObj: { [key: string]: {} } = {};
         newObj['__inputs'] = inputs;
-        newObj['__requires'] = _.sortBy(requires, ['id']);
+        newObj['__requires'] = sortBy(requires, ['id']);
 
-        _.defaults(newObj, saveModel);
+        defaults(newObj, saveModel);
         return newObj;
       })
-      .catch(err => {
+      .catch((err) => {
         console.error('Export failed:', err);
         return {
           error: err,

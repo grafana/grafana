@@ -1,52 +1,29 @@
-export enum FieldColorMode {
+/**
+ * @public
+ */
+export enum FieldColorModeId {
   Thresholds = 'thresholds',
-  Scheme = 'scheme',
+  PaletteClassic = 'palette-classic',
+  PaletteSaturated = 'palette-saturated',
+  ContinuousGrYlRd = 'continuous-GrYlRd',
   Fixed = 'fixed',
 }
 
+/**
+ * @public
+ */
 export interface FieldColor {
-  mode: FieldColorMode;
-  schemeName?: ColorScheme;
+  /** The main color scheme mode */
+  mode: FieldColorModeId | string;
+  /** Stores the fixed color value if mode is fixed */
   fixedColor?: string;
+  /** Some visualizations need to know how to assign a series color from by value color schemes */
+  seriesBy?: FieldColorSeriesByMode;
 }
 
-// https://github.com/d3/d3-scale-chromatic
-export enum ColorScheme {
-  BrBG = 'BrBG',
-  PRGn = 'PRGn',
-  PiYG = 'PiYG',
-  PuOr = 'PuOr',
-  RdBu = 'RdBu',
-  RdGy = 'RdGy',
-  RdYlBu = 'RdYlBu',
-  RdYlGn = 'RdYlGn',
-  Spectral = 'Spectral',
-  BuGn = 'BuGn',
-  BuPu = 'BuPu',
-  GnBu = 'GnBu',
-  OrRd = 'OrRd',
-  PuBuGn = 'PuBuGn',
-  PuBu = 'PuBu',
-  PuRd = 'PuRd',
-  RdPu = 'RdPu',
-  YlGnBu = 'YlGnBu',
-  YlGn = 'YlGn',
-  YlOrBr = 'YlOrBr',
-  YlOrRd = 'YlOrRd',
-  Blues = 'Blues',
-  Greens = 'Greens',
-  Greys = 'Greys',
-  Purples = 'Purples',
-  Reds = 'Reds',
-  Oranges = 'Oranges',
+/**
+ * @beta
+ */
+export type FieldColorSeriesByMode = 'min' | 'max' | 'last';
 
-  // interpolateCubehelix
-  // interpolateRainbow,
-  // interpolateWarm
-  // interpolateCool
-  // interpolateSinebow
-  // interpolateViridis
-  // interpolateMagma
-  // interpolateInferno
-  // interpolatePlasma
-}
+export const FALLBACK_COLOR = 'gray';

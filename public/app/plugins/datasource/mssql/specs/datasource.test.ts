@@ -1,10 +1,12 @@
-import { MssqlDatasource } from '../datasource';
-import { TimeSrvStub } from 'test/specs/helpers';
+import { of } from 'rxjs';
+import { dataFrameToJSON, dateTime, MetricFindValue, MutableDataFrame } from '@grafana/data';
 
-import { dateTime } from '@grafana/data';
+import { MssqlDatasource } from '../datasource';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { backendSrv } from 'app/core/services/backend_srv';
-import { initialCustomVariableModelState } from '../../../../features/variables/custom/reducer'; // will use the version in __mocks__
+import { initialCustomVariableModelState } from '../../../../features/variables/custom/reducer';
+import { createFetchResponse } from 'test/helpers/createFetchResponse';
+import { TimeSrvStub } from 'test/specs/helpers';
 
 jest.mock('@grafana/runtime', () => ({
   ...((jest.requireActual('@grafana/runtime') as unknown) as object),
@@ -13,7 +15,7 @@ jest.mock('@grafana/runtime', () => ({
 
 describe('MSSQLDatasource', () => {
   const templateSrv: TemplateSrv = new TemplateSrv();
-  const datasourceRequestMock = jest.spyOn(backendSrv, 'datasourceRequest');
+  const fetchMock = jest.spyOn(backendSrv, 'fetch');
 
   const ctx: any = {
     timeSrv: new TimeSrvStub(),
@@ -45,23 +47,23 @@ describe('MSSQLDatasource', () => {
     const response = {
       results: {
         MyAnno: {
-          refId: annotationName,
-          tables: [
-            {
-              columns: [{ text: 'time' }, { text: 'text' }, { text: 'tags' }],
-              rows: [
-                [1521545610656, 'some text', 'TagA,TagB'],
-                [1521546251185, 'some text2', ' TagB , TagC'],
-                [1521546501378, 'some text3'],
-              ],
-            },
+          frames: [
+            dataFrameToJSON(
+              new MutableDataFrame({
+                fields: [
+                  { name: 'time', values: [1521545610656, 1521546251185, 1521546501378] },
+                  { name: 'text', values: ['some text', 'some text2', 'some text3'] },
+                  { name: 'tags', values: ['TagA,TagB', ' TagB , TagC', null] },
+                ],
+              })
+            ),
           ],
         },
       },
     };
 
     beforeEach(() => {
-      datasourceRequestMock.mockImplementation((options: any) => Promise.resolve({ data: response, status: 200 }));
+      fetchMock.mockImplementation(() => of(createFetchResponse(response)));
 
       return ctx.ds.annotationQuery(options).then((data: any) => {
         results = data;
@@ -83,33 +85,29 @@ describe('MSSQLDatasource', () => {
   });
 
   describe('When performing metricFindQuery', () => {
-    let results: any;
+    let results: MetricFindValue[];
     const query = 'select * from atable';
     const response = {
       results: {
         tempvar: {
-          meta: {
-            rowCount: 3,
-          },
-          refId: 'tempvar',
-          tables: [
-            {
-              columns: [{ text: 'title' }, { text: 'text' }],
-              rows: [
-                ['aTitle', 'some text'],
-                ['aTitle2', 'some text2'],
-                ['aTitle3', 'some text3'],
-              ],
-            },
+          frames: [
+            dataFrameToJSON(
+              new MutableDataFrame({
+                fields: [
+                  { name: 'title', values: ['aTitle', 'aTitle2', 'aTitle3'] },
+                  { name: 'text', values: ['some text', 'some text2', 'some text3'] },
+                ],
+              })
+            ),
           ],
         },
       },
     };
 
     beforeEach(() => {
-      datasourceRequestMock.mockImplementation((options: any) => Promise.resolve({ data: response, status: 200 }));
+      fetchMock.mockImplementation(() => of(createFetchResponse(response)));
 
-      return ctx.ds.metricFindQuery(query).then((data: any) => {
+      return ctx.ds.metricFindQuery(query).then((data: MetricFindValue[]) => {
         results = data;
       });
     });
@@ -127,26 +125,22 @@ describe('MSSQLDatasource', () => {
     const response = {
       results: {
         tempvar: {
-          meta: {
-            rowCount: 3,
-          },
-          refId: 'tempvar',
-          tables: [
-            {
-              columns: [{ text: '__value' }, { text: '__text' }],
-              rows: [
-                ['value1', 'aTitle'],
-                ['value2', 'aTitle2'],
-                ['value3', 'aTitle3'],
-              ],
-            },
+          frames: [
+            dataFrameToJSON(
+              new MutableDataFrame({
+                fields: [
+                  { name: '__value', values: ['value1', 'value2', 'value3'] },
+                  { name: '__text', values: ['aTitle', 'aTitle2', 'aTitle3'] },
+                ],
+              })
+            ),
           ],
         },
       },
     };
 
     beforeEach(() => {
-      datasourceRequestMock.mockImplementation((options: any) => Promise.resolve({ data: response, status: 200 }));
+      fetchMock.mockImplementation(() => of(createFetchResponse(response)));
 
       return ctx.ds.metricFindQuery(query).then((data: any) => {
         results = data;
@@ -168,26 +162,22 @@ describe('MSSQLDatasource', () => {
     const response = {
       results: {
         tempvar: {
-          meta: {
-            rowCount: 3,
-          },
-          refId: 'tempvar',
-          tables: [
-            {
-              columns: [{ text: '__text' }, { text: '__value' }],
-              rows: [
-                ['aTitle', 'same'],
-                ['aTitle', 'same'],
-                ['aTitle', 'diff'],
-              ],
-            },
+          frames: [
+            dataFrameToJSON(
+              new MutableDataFrame({
+                fields: [
+                  { name: '__text', values: ['aTitle', 'aTitle', 'aTitle'] },
+                  { name: '__value', values: ['same', 'same', 'diff'] },
+                ],
+              })
+            ),
           ],
         },
       },
     };
 
     beforeEach(() => {
-      datasourceRequestMock.mockImplementation((options: any) => Promise.resolve({ data: response, status: 200 }));
+      fetchMock.mockImplementation(() => of(createFetchResponse(response)));
       return ctx.ds.metricFindQuery(query).then((data: any) => {
         results = data;
       });
@@ -201,20 +191,16 @@ describe('MSSQLDatasource', () => {
   });
 
   describe('When performing metricFindQuery', () => {
-    let results: any;
     const query = 'select * from atable';
     const response = {
       results: {
         tempvar: {
-          meta: {
-            rowCount: 1,
-          },
-          refId: 'tempvar',
-          tables: [
-            {
-              columns: [{ text: 'title' }],
-              rows: [['aTitle']],
-            },
+          frames: [
+            dataFrameToJSON(
+              new MutableDataFrame({
+                fields: [{ name: 'test', values: ['aTitle'] }],
+              })
+            ),
           ],
         },
       },
@@ -226,20 +212,17 @@ describe('MSSQLDatasource', () => {
 
     beforeEach(() => {
       ctx.timeSrv.setTime(time);
+      fetchMock.mockImplementation(() => of(createFetchResponse(response)));
 
-      datasourceRequestMock.mockImplementation((options: any) => {
-        results = options.data;
-        return Promise.resolve({ data: response, status: 200 });
-      });
-
-      return ctx.ds.metricFindQuery(query);
+      return ctx.ds.metricFindQuery(query, { range: time });
     });
 
     it('should pass timerange to datasourceRequest', () => {
-      expect(results.from).toBe(time.from.valueOf().toString());
-      expect(results.to).toBe(time.to.valueOf().toString());
-      expect(results.queries.length).toBe(1);
-      expect(results.queries[0].rawSql).toBe(query);
+      expect(fetchMock).toBeCalledTimes(1);
+      expect(fetchMock.mock.calls[0][0].data.from).toBe(time.from.valueOf().toString());
+      expect(fetchMock.mock.calls[0][0].data.to).toBe(time.to.valueOf().toString());
+      expect(fetchMock.mock.calls[0][0].data.queries.length).toBe(1);
+      expect(fetchMock.mock.calls[0][0].data.queries[0].rawSql).toBe(query);
     });
   });
 

@@ -1,9 +1,16 @@
 package setting
 
+import (
+	"time"
+
+	"gopkg.in/ini.v1"
+)
+
 type DateFormats struct {
 	FullDate         string              `json:"fullDate"`
 	UseBrowserLocale bool                `json:"useBrowserLocale"`
 	Interval         DateFormatIntervals `json:"interval"`
+	DefaultTimezone  string              `json:"defaultTimezone"`
 }
 
 type DateFormatIntervals struct {
@@ -13,6 +20,22 @@ type DateFormatIntervals struct {
 	Day    string `json:"day"`
 	Month  string `json:"month"`
 	Year   string `json:"year"`
+}
+
+const localBrowserTimezone = "browser"
+
+func valueAsTimezone(section *ini.Section, keyName string) (string, error) {
+	timezone := section.Key(keyName).MustString(localBrowserTimezone)
+	if timezone == localBrowserTimezone {
+		return localBrowserTimezone, nil
+	}
+
+	location, err := time.LoadLocation(timezone)
+	if err != nil {
+		return localBrowserTimezone, err
+	}
+
+	return location.String(), nil
 }
 
 func (cfg *Cfg) readDateFormats() {
@@ -25,4 +48,10 @@ func (cfg *Cfg) readDateFormats() {
 	cfg.DateFormats.Interval.Month = valueAsString(dateFormats, "interval_month", "YYYY-MM")
 	cfg.DateFormats.Interval.Year = "YYYY"
 	cfg.DateFormats.UseBrowserLocale = dateFormats.Key("date_format_use_browser_locale").MustBool(false)
+
+	timezone, err := valueAsTimezone(dateFormats, "default_timezone")
+	if err != nil {
+		cfg.Logger.Warn("Unknown timezone as default_timezone", "err", err)
+	}
+	cfg.DateFormats.DefaultTimezone = timezone
 }

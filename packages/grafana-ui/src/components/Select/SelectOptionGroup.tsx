@@ -1,12 +1,12 @@
 import React, { PureComponent } from 'react';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { GrafanaTheme } from '@grafana/data';
 import { GroupProps } from 'react-select';
-import { stylesFactory, withTheme, selectThemeVariant } from '../../themes';
+import { stylesFactory, withTheme } from '../../themes';
 import { Themeable } from '../../types';
 import { Icon } from '../Icon/Icon';
 
-interface ExtendedGroupProps extends GroupProps<any>, Themeable {
+interface ExtendedGroupProps extends Omit<GroupProps<any, any>, 'theme'>, Themeable {
   data: {
     label: string;
     expanded: boolean;
@@ -19,13 +19,6 @@ interface State {
 }
 
 const getSelectOptionGroupStyles = stylesFactory((theme: GrafanaTheme) => {
-  const optionBorder = selectThemeVariant(
-    {
-      light: theme.palette.gray4,
-      dark: theme.palette.dark9,
-    },
-    theme.type
-  );
   return {
     header: css`
       display: flex;
@@ -35,8 +28,11 @@ const getSelectOptionGroupStyles = stylesFactory((theme: GrafanaTheme) => {
       cursor: pointer;
       padding: 7px 10px;
       width: 100%;
-      border-bottom: 1px solid ${optionBorder};
-      text-transform: capitalize;
+      border-bottom: 1px solid ${theme.colors.bg2};
+
+      &:hover {
+        color: ${theme.colors.textStrong};
+      }
     `,
     label: css`
       flex-grow: 1;
@@ -58,7 +54,7 @@ class UnthemedSelectOptionGroup extends PureComponent<ExtendedGroupProps, State>
     } else if (this.props.selectProps && this.props.selectProps.value) {
       const { value } = this.props.selectProps.value;
 
-      if (value && this.props.options.some(option => option.value === value)) {
+      if (value && this.props.options.some((option) => option.value === value)) {
         this.setState({ expanded: true });
       }
     }
@@ -71,7 +67,7 @@ class UnthemedSelectOptionGroup extends PureComponent<ExtendedGroupProps, State>
   }
 
   onToggleChildren = () => {
-    this.setState(prevState => ({
+    this.setState((prevState) => ({
       expanded: !prevState.expanded,
     }));
   };
@@ -80,11 +76,12 @@ class UnthemedSelectOptionGroup extends PureComponent<ExtendedGroupProps, State>
     const { children, label, theme } = this.props;
     const { expanded } = this.state;
     const styles = getSelectOptionGroupStyles(theme);
+
     return (
       <div>
         <div className={styles.header} onClick={this.onToggleChildren}>
           <span className={styles.label}>{label}</span>
-          <Icon className={styles.icon} name={expanded ? 'angle-left' : 'angle-down'} />{' '}
+          <Icon className={styles.icon} name={expanded ? 'angle-up' : 'angle-down'} />{' '}
         </div>
         {expanded && children}
       </div>

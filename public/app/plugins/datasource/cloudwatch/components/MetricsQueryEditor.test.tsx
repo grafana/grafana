@@ -6,15 +6,17 @@ import { DataSourceInstanceSettings } from '@grafana/data';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { MetricsQueryEditor, normalizeQuery, Props } from './MetricsQueryEditor';
 import { CloudWatchDatasource } from '../datasource';
-import { CustomVariableModel, VariableHide } from '../../../../features/variables/types';
+import { CustomVariableModel, initialVariableModelState } from '../../../../features/variables/types';
+import { CloudWatchJsonData } from '../types';
 
 const setup = () => {
   const instanceSettings = {
     jsonData: { defaultRegion: 'us-east-1' },
-  } as DataSourceInstanceSettings;
+  } as DataSourceInstanceSettings<CloudWatchJsonData>;
 
   const templateSrv = new TemplateSrv();
   const variable: CustomVariableModel = {
+    ...initialVariableModelState,
     id: 'var3',
     index: 0,
     name: 'var3',
@@ -27,16 +29,12 @@ const setup = () => {
     multi: true,
     includeAll: false,
     query: '',
-    hide: VariableHide.dontHide,
     type: 'custom',
-    label: null,
-    skipUrlSync: false,
-    global: false,
   };
   templateSrv.init([variable]);
 
   const datasource = new CloudWatchDatasource(instanceSettings, templateSrv as any, {} as any);
-  datasource.metricFindQuery = async () => [{ value: 'test', label: 'test' }];
+  datasource.metricFindQuery = async () => [{ value: 'test', label: 'test', text: 'test' }];
 
   const props: Props = {
     query: {
@@ -111,12 +109,7 @@ describe('QueryEditor', () => {
         props.query.region = (null as unknown) as string;
         const wrapper = mount(<MetricsQueryEditor {...props} />);
         expect(
-          wrapper
-            .find('.gf-form-inline')
-            .first()
-            .find('.gf-form-label.query-part')
-            .first()
-            .text()
+          wrapper.find('.gf-form-inline').first().find('Segment').find('InlineLabel').find('label').text()
         ).toEqual('default');
       });
     });

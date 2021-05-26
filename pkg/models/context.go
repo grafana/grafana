@@ -19,28 +19,24 @@ type ReqContext struct {
 	AllowAnonymous bool
 	SkipCache      bool
 	Logger         log.Logger
+	// RequestNonce is a cryptographic request identifier for use with Content Security Policy.
+	RequestNonce string
 }
 
 // Handle handles and logs error by given status.
-func (ctx *ReqContext) Handle(status int, title string, err error) {
+func (ctx *ReqContext) Handle(cfg *setting.Cfg, status int, title string, err error) {
 	if err != nil {
 		ctx.Logger.Error(title, "error", err)
-		if setting.Env != setting.PROD {
+		if setting.Env != setting.Prod {
 			ctx.Data["ErrorMsg"] = err
 		}
 	}
 
 	ctx.Data["Title"] = title
-	ctx.Data["AppSubUrl"] = setting.AppSubUrl
+	ctx.Data["AppSubUrl"] = cfg.AppSubURL
 	ctx.Data["Theme"] = "dark"
 
-	ctx.HTML(status, setting.ERR_TEMPLATE_NAME)
-}
-
-func (ctx *ReqContext) JsonOK(message string) {
-	resp := make(map[string]interface{})
-	resp["message"] = message
-	ctx.JSON(200, resp)
+	ctx.HTML(status, cfg.ErrTemplateName)
 }
 
 func (ctx *ReqContext) IsApiRequest() bool {
@@ -52,7 +48,7 @@ func (ctx *ReqContext) JsonApiErr(status int, message string, err error) {
 
 	if err != nil {
 		ctx.Logger.Error(message, "error", err)
-		if setting.Env != setting.PROD {
+		if setting.Env != setting.Prod {
 			resp["error"] = err.Error()
 		}
 	}
@@ -81,4 +77,14 @@ func (ctx *ReqContext) HasHelpFlag(flag HelpFlags1) bool {
 
 func (ctx *ReqContext) TimeRequest(timer prometheus.Summary) {
 	ctx.Data["perfmon.timer"] = timer
+}
+
+// QueryBoolWithDefault extracts a value from the request query params and applies a bool default if not present.
+func (ctx *ReqContext) QueryBoolWithDefault(field string, d bool) bool {
+	f := ctx.Query(field)
+	if f == "" {
+		return d
+	}
+
+	return ctx.QueryBool(field)
 }

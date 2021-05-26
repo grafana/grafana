@@ -1,14 +1,14 @@
-import { TemplateSrv } from 'app/features/templating/template_srv';
 import { AnnotationTarget } from './types';
 
 export class CloudMonitoringAnnotationsQueryCtrl {
   static templateUrl = 'partials/annotations.editor.html';
-  annotation: any;
-  templateSrv: TemplateSrv;
+  declare annotation: any;
 
   /** @ngInject */
-  constructor() {
-    this.annotation.target = this.annotation.target || {};
+  constructor($scope: any) {
+    this.annotation = $scope.ctrl.annotation || {};
+    this.annotation.target = $scope.ctrl.annotation.target || {};
+
     this.onQueryChange = this.onQueryChange.bind(this);
   }
 

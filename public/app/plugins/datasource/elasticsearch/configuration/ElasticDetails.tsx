@@ -1,8 +1,9 @@
 import React from 'react';
 import { EventsWithValidation, regexValidation, LegacyForms } from '@grafana/ui';
 const { Select, Input, FormField } = LegacyForms;
-import { ElasticsearchOptions } from '../types';
+import { ElasticsearchOptions, Interval } from '../types';
 import { DataSourceSettings, SelectableValue } from '@grafana/data';
+import { gte, lt } from 'semver';
 
 const indexPatternTypes = [
   { label: 'No pattern', value: 'none' },
@@ -14,27 +15,25 @@ const indexPatternTypes = [
 ];
 
 const esVersions = [
-  { label: '2.x', value: 2 },
-  { label: '5.x', value: 5 },
-  { label: '5.6+', value: 56 },
-  { label: '6.0+', value: 60 },
-  { label: '7.0+', value: 70 },
+  { label: '2.x', value: '2.0.0' },
+  { label: '5.x', value: '5.0.0' },
+  { label: '5.6+', value: '5.6.0' },
+  { label: '6.0+', value: '6.0.0' },
+  { label: '7.0+', value: '7.0.0' },
 ];
 
 type Props = {
   value: DataSourceSettings<ElasticsearchOptions>;
   onChange: (value: DataSourceSettings<ElasticsearchOptions>) => void;
 };
-export const ElasticDetails = (props: Props) => {
-  const { value, onChange } = props;
-
+export const ElasticDetails = ({ value, onChange }: Props) => {
   return (
     <>
       <h3 className="page-heading">Elasticsearch details</h3>
 
       <div className="gf-form-group">
         <div className="gf-form-inline">
-          <div className="gf-form max-width-25">
+          <div className="gf-form">
             <FormField
               labelWidth={10}
               inputWidth={15}
@@ -46,7 +45,7 @@ export const ElasticDetails = (props: Props) => {
             />
           </div>
 
-          <div className="gf-form width-14">
+          <div className="gf-form">
             <FormField
               labelWidth={10}
               label="Pattern"
@@ -55,7 +54,7 @@ export const ElasticDetails = (props: Props) => {
                   options={indexPatternTypes}
                   onChange={intervalHandler(value, onChange)}
                   value={indexPatternTypes.find(
-                    pattern =>
+                    (pattern) =>
                       pattern.value === (value.jsonData.interval === undefined ? 'none' : value.jsonData.interval)
                   )}
                 />
@@ -76,34 +75,32 @@ export const ElasticDetails = (props: Props) => {
         </div>
 
         <div className="gf-form">
-          <span className="gf-form-select-wrapper">
-            <FormField
-              labelWidth={10}
-              label="Version"
-              inputEl={
-                <Select
-                  options={esVersions}
-                  onChange={option => {
-                    const maxConcurrentShardRequests = getMaxConcurrenShardRequestOrDefault(
-                      value.jsonData.maxConcurrentShardRequests,
-                      option.value!
-                    );
-                    onChange({
-                      ...value,
-                      jsonData: {
-                        ...value.jsonData,
-                        esVersion: option.value!,
-                        maxConcurrentShardRequests,
-                      },
-                    });
-                  }}
-                  value={esVersions.find(version => version.value === value.jsonData.esVersion)}
-                />
-              }
-            />
-          </span>
+          <FormField
+            labelWidth={10}
+            label="Version"
+            inputEl={
+              <Select
+                options={esVersions}
+                onChange={(option) => {
+                  const maxConcurrentShardRequests = getMaxConcurrenShardRequestOrDefault(
+                    value.jsonData.maxConcurrentShardRequests,
+                    option.value!
+                  );
+                  onChange({
+                    ...value,
+                    jsonData: {
+                      ...value.jsonData,
+                      esVersion: option.value!,
+                      maxConcurrentShardRequests,
+                    },
+                  });
+                }}
+                value={esVersions.find((version) => version.value === value.jsonData.esVersion)}
+              />
+            }
+          />
         </div>
-        {value.jsonData.esVersion >= 56 && (
+        {gte(value.jsonData.esVersion, '5.6.0') && (
           <div className="gf-form max-width-30">
             <FormField
               aria-label={'Max concurrent Shard Requests input'}
@@ -172,7 +169,9 @@ const jsonDataChangeHandler = (key: keyof ElasticsearchOptions, value: Props['va
   });
 };
 
-const intervalHandler = (value: Props['value'], onChange: Props['onChange']) => (option: SelectableValue<string>) => {
+const intervalHandler = (value: Props['value'], onChange: Props['onChange']) => (
+  option: SelectableValue<Interval | 'none'>
+) => {
   const { database } = value;
   // If option value is undefined it will send its label instead so we have to convert made up value to undefined here.
   const newInterval = option.value === 'none' ? undefined : option.value;
@@ -181,7 +180,7 @@ const intervalHandler = (value: Props['value'], onChange: Props['onChange']) => 
     let newDatabase = '';
 
     if (newInterval !== undefined) {
-      const pattern = indexPatternTypes.find(pattern => pattern.value === newInterval);
+      const pattern = indexPatternTypes.find((pattern) => pattern.value === newInterval);
 
       if (pattern) {
         newDatabase = pattern.example ?? '';
@@ -207,18 +206,18 @@ const intervalHandler = (value: Props['value'], onChange: Props['onChange']) => 
   }
 };
 
-function getMaxConcurrenShardRequestOrDefault(maxConcurrentShardRequests: number | undefined, version: number): number {
-  if (maxConcurrentShardRequests === 5 && version < 70) {
+function getMaxConcurrenShardRequestOrDefault(maxConcurrentShardRequests: number | undefined, version: string): number {
+  if (maxConcurrentShardRequests === 5 && lt(version, '7.0.0')) {
     return 256;
   }
 
-  if (maxConcurrentShardRequests === 256 && version >= 70) {
+  if (maxConcurrentShardRequests === 256 && gte(version, '7.0.0')) {
     return 5;
   }
 
   return maxConcurrentShardRequests || defaultMaxConcurrentShardRequests(version);
 }
 
-export function defaultMaxConcurrentShardRequests(version: number) {
-  return version >= 70 ? 5 : 256;
+export function defaultMaxConcurrentShardRequests(version: string) {
+  return gte(version, '7.0.0') ? 5 : 256;
 }

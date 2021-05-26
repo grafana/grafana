@@ -2,7 +2,7 @@ import React, { FC } from 'react';
 import { Card } from '../types';
 import { Icon, stylesFactory, useTheme } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { cardContent, cardStyle, iconStyle } from './sharedStyles';
 
 interface Props {
@@ -24,7 +24,12 @@ export const DocsCard: FC<Props> = ({ card }) => {
           </div>
         </a>
       </div>
-      <a href={`${card.learnHref}?utm_source=grafana_gettingstarted`} className={styles.url} target="_blank">
+      <a
+        href={`${card.learnHref}?utm_source=grafana_gettingstarted`}
+        className={styles.url}
+        target="_blank"
+        rel="noreferrer"
+      >
         Learn how in the docs <Icon name="external-link-alt" />
       </a>
     </div>
@@ -48,7 +53,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme, complete: boolean) => {
       margin-bottom: ${theme.spacing.md};
     `,
     title: css`
-      margin-bottom: 48px;
+      margin-bottom: ${theme.spacing.md};
     `,
     url: css`
       border-top: 1px solid ${theme.colors.border1};

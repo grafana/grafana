@@ -6,7 +6,7 @@ import teamsReducers from 'app/features/teams/state/reducers';
 import apiKeysReducers from 'app/features/api-keys/state/reducers';
 import foldersReducers from 'app/features/folders/state/reducers';
 import dashboardReducers from 'app/features/dashboard/state/reducers';
-import exploreReducers from 'app/features/explore/state/reducers';
+import exploreReducers from 'app/features/explore/state/main';
 import pluginReducers from 'app/features/plugins/state/reducers';
 import dataSourcesReducers from 'app/features/datasources/state/reducers';
 import usersReducers from 'app/features/users/state/reducers';

@@ -10,7 +10,6 @@ client:
 
 scrape_configs:
 - job_name: system
-  entry_parser: raw
   static_configs:
   - targets:
       - localhost
@@ -18,7 +17,6 @@ scrape_configs:
       job: varlogs
       __path__: /var/log/*log
 - job_name: grafana
-  entry_parser: raw
   static_configs:
   - targets:
       - localhost

@@ -1,6 +1,13 @@
 import { BackendSrv, BackendSrvRequest } from 'src/services';
-import { DataSourceWithBackend } from './DataSourceWithBackend';
-import { DataSourceJsonData, DataQuery, DataSourceInstanceSettings, DataQueryRequest } from '@grafana/data';
+import { DataSourceWithBackend, toStreamingDataResponse } from './DataSourceWithBackend';
+import {
+  DataSourceJsonData,
+  DataQuery,
+  DataSourceInstanceSettings,
+  DataQueryRequest,
+  DataQueryResponseData,
+  MutableDataFrame,
+} from '@grafana/data';
 import { of } from 'rxjs';
 
 class MyDataSource extends DataSourceWithBackend<DataQuery, DataSourceJsonData> {
@@ -18,20 +25,12 @@ const backendSrv = ({
 } as unknown) as BackendSrv;
 
 jest.mock('../services', () => ({
+  ...(jest.requireActual('../services') as any),
   getBackendSrv: () => backendSrv,
-}));
-jest.mock('..', () => ({
-  config: {
-    bootData: {
-      user: {
-        orgId: 77,
-      },
-    },
-    datasources: {
-      sample: {
-        id: 8674,
-      },
-    },
+  getDataSourceSrv: () => {
+    return {
+      getInstanceSettings: () => ({ id: 8674 }),
+    };
   },
 }));
 
@@ -46,6 +45,7 @@ describe('DataSourceWithBackend', () => {
     mockDatasourceRequest.mockReset();
     mockDatasourceRequest.mockReturnValue(Promise.resolve({}));
     const ds = new MyDataSource(settings);
+
     ds.query({
       maxDataPoints: 10,
       intervalMs: 5000,
@@ -64,7 +64,6 @@ describe('DataSourceWithBackend', () => {
               "datasourceId": 1234,
               "intervalMs": 5000,
               "maxDataPoints": 10,
-              "orgId": 77,
               "refId": "A",
             },
             Object {
@@ -72,7 +71,6 @@ describe('DataSourceWithBackend', () => {
               "datasourceId": 8674,
               "intervalMs": 5000,
               "maxDataPoints": 10,
-              "orgId": 77,
               "refId": "B",
             },
           ],
@@ -82,5 +80,27 @@ describe('DataSourceWithBackend', () => {
         "url": "/api/ds/query",
       }
     `);
+  });
+
+  test('it converts results with channels to streaming queries', () => {
+    const request: DataQueryRequest = {
+      intervalMs: 100,
+    } as DataQueryRequest;
+
+    const rsp: DataQueryResponseData = {
+      data: [],
+    };
+
+    // Simple empty query
+    let obs = toStreamingDataResponse(request, rsp);
+    expect(obs).toBeDefined();
+
+    let frame = new MutableDataFrame();
+    frame.meta = {
+      channel: 'a/b/c',
+    };
+    rsp.data = [frame];
+    obs = toStreamingDataResponse(request, rsp);
+    expect(obs).toBeDefined();
   });
 });

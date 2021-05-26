@@ -243,9 +243,9 @@ func (f *JSONFormatter) processItem(value interface{}, deltas []diff.Delta, posi
 			case *diff.Object:
 				switch value.(type) {
 				case map[string]interface{}:
-					//ok
+					// ok
 				default:
-					return errors.New("Type mismatch")
+					return errors.New("type mismatch")
 				}
 				o := value.(map[string]interface{})
 
@@ -268,9 +268,9 @@ func (f *JSONFormatter) processItem(value interface{}, deltas []diff.Delta, posi
 			case *diff.Array:
 				switch value.(type) {
 				case []interface{}:
-					//ok
+					// ok
 				default:
-					return errors.New("Type mismatch")
+					return errors.New("type mismatch")
 				}
 				a := value.([]interface{})
 
@@ -310,7 +310,7 @@ func (f *JSONFormatter) processItem(value interface{}, deltas []diff.Delta, posi
 				f.printRecursive(positionStr, matchedDelta.Value, ChangeDeleted)
 
 			default:
-				return errors.New("Unknown Delta type detected")
+				return fmt.Errorf("unknown Delta type detected %#v", matchedDelta)
 			}
 		}
 	} else {

@@ -1,25 +1,40 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import { DataFrame, DataFrameView, TraceSpanRow } from '@grafana/data';
+import { colors, useTheme } from '@grafana/ui';
 import {
   ThemeOptions,
   ThemeProvider,
   ThemeType,
+  Trace,
   TracePageHeader,
+  TraceProcess,
+  TraceResponse,
   TraceTimelineViewer,
   transformTraceData,
   TTraceTimeline,
   UIElementsContext,
 } from '@jaegertracing/jaeger-ui-components';
+import { TraceToLogsData } from 'app/core/components/TraceToLogsSettings';
+import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
+import { StoreState } from 'app/types';
+import { ExploreId, SplitOpen } from 'app/types/explore';
+import React, { useCallback, useMemo, useState } from 'react';
+import { useSelector } from 'react-redux';
+import { createSpanLinkFactory } from './createSpanLink';
 import { UIElements } from './uiElements';
-import { useViewRange } from './useViewRange';
-import { useSearch } from './useSearch';
 import { useChildrenState } from './useChildrenState';
 import { useDetailState } from './useDetailState';
 import { useHoverIndentGuide } from './useHoverIndentGuide';
-import { colors, useTheme } from '@grafana/ui';
-import { TraceData, TraceSpanData, Trace, TraceSpan, TraceKeyValuePair, TraceLink } from '@grafana/data';
+import { useSearch } from './useSearch';
+import { useViewRange } from './useViewRange';
+
+function noop(): {} {
+  return {};
+}
 
 type Props = {
-  trace: TraceData & { spans: TraceSpanData[] };
+  dataFrames: DataFrame[];
+  splitOpenFn: SplitOpen;
+  exploreId: ExploreId;
 };
 
 export function TraceView(props: Props) {
@@ -47,8 +62,11 @@ export function TraceView(props: Props) {
    */
   const [slim, setSlim] = useState(false);
 
-  const traceProp = useMemo(() => transformTraceData(props.trace), [props.trace]);
+  const traceProp = useMemo(() => transformDataFrames(props.dataFrames), [props.dataFrames]);
   const { search, setSearch, spanFindMatches } = useSearch(traceProp?.spans);
+  const dataSourceName = useSelector((state: StoreState) => state.explore[props.exploreId]?.datasourceInstance?.name);
+  const traceToLogsOptions = (getDatasourceSrv().getInstanceSettings(dataSourceName)?.jsonData as TraceToLogsData)
+    ?.tracesToLogs;
 
   const theme = useTheme();
   const traceTheme = useMemo(
@@ -77,7 +95,14 @@ export function TraceView(props: Props) {
     [childrenHiddenIDs, detailStates, hoverIndentGuideIds, spanNameColumnWidth, traceProp?.traceID]
   );
 
-  if (!traceProp) {
+  const createSpanLink = useMemo(() => createSpanLinkFactory(props.splitOpenFn, traceToLogsOptions), [
+    props.splitOpenFn,
+    traceToLogsOptions,
+  ]);
+  const scrollElement = document.getElementsByClassName('scrollbar-view')[0];
+  const onSlimViewClicked = useCallback(() => setSlim(!slim), [slim]);
+
+  if (!props.dataFrames?.length || !traceProp) {
     return null;
   }
 
@@ -86,14 +111,14 @@ export function TraceView(props: Props) {
       <UIElementsContext.Provider value={UIElements}>
         <TracePageHeader
           canCollapse={false}
-          clearSearch={useCallback(() => {}, [])}
-          focusUiFindMatches={useCallback(() => {}, [])}
+          clearSearch={noop}
+          focusUiFindMatches={noop}
           hideMap={false}
           hideSummary={false}
-          nextResult={useCallback(() => {}, [])}
-          onSlimViewClicked={useCallback(() => setSlim(!slim), [])}
-          onTraceGraphViewClicked={useCallback(() => {}, [])}
-          prevResult={useCallback(() => {}, [])}
+          nextResult={noop}
+          onSlimViewClicked={onSlimViewClicked}
+          onTraceGraphViewClicked={noop}
+          prevResult={noop}
           resultCount={0}
           slimView={slim}
           textFilter={null}
@@ -107,23 +132,23 @@ export function TraceView(props: Props) {
           hideSearchButtons={true}
         />
         <TraceTimelineViewer
-          registerAccessors={useCallback(() => {}, [])}
-          scrollToFirstVisibleSpan={useCallback(() => {}, [])}
+          registerAccessors={noop}
+          scrollToFirstVisibleSpan={noop}
           findMatchesIDs={spanFindMatches}
           trace={traceProp}
           traceTimeline={traceTimeline}
           updateNextViewRangeTime={updateNextViewRangeTime}
           updateViewRangeTime={updateViewRangeTime}
           viewRange={viewRange}
-          focusSpan={useCallback(() => {}, [])}
-          createLinkToExternalSpan={useCallback(() => '', [])}
+          focusSpan={noop}
+          createLinkToExternalSpan={noop as any}
           setSpanNameColumnWidth={setSpanNameColumnWidth}
           collapseAll={collapseAll}
           collapseOne={collapseOne}
           expandAll={expandAll}
           expandOne={expandOne}
           childrenToggle={childrenToggle}
-          clearShouldScrollToFirstUiFindMatch={useCallback(() => {}, [])}
+          clearShouldScrollToFirstUiFindMatch={noop}
           detailLogItemToggle={detailLogItemToggle}
           detailLogsToggle={detailLogsToggle}
           detailWarningsToggle={detailWarningsToggle}
@@ -132,16 +157,59 @@ export function TraceView(props: Props) {
           detailProcessToggle={detailProcessToggle}
           detailTagsToggle={detailTagsToggle}
           detailToggle={toggleDetail}
-          setTrace={useCallback((trace: Trace | null, uiFind: string | null) => {}, [])}
+          setTrace={noop}
           addHoverIndentGuideId={addHoverIndentGuideId}
           removeHoverIndentGuideId={removeHoverIndentGuideId}
-          linksGetter={useCallback(
-            (span: TraceSpan, items: TraceKeyValuePair[], itemIndex: number) => [] as TraceLink[],
-            []
-          )}
+          linksGetter={noop as any}
           uiFind={search}
+          createSpanLink={createSpanLink}
+          scrollElement={scrollElement}
         />
       </UIElementsContext.Provider>
     </ThemeProvider>
   );
+}
+
+function transformDataFrames(frames: DataFrame[]): Trace | null {
+  // At this point we only show single trace.
+  const frame = frames[0];
+  if (!frame) {
+    return null;
+  }
+  let data: TraceResponse =
+    frame.fields.length === 1
+      ? // For backward compatibility when we sent whole json response in a single field/value
+        frame.fields[0].values.get(0)
+      : transformTraceDataFrame(frame);
+  return transformTraceData(data);
+}
+
+function transformTraceDataFrame(frame: DataFrame): TraceResponse {
+  const view = new DataFrameView<TraceSpanRow>(frame);
+  const processes: Record<string, TraceProcess> = {};
+  for (let i = 0; i < view.length; i++) {
+    const span = view.get(i);
+    if (!processes[span.serviceName]) {
+      processes[span.serviceName] = {
+        serviceName: span.serviceName,
+        tags: span.serviceTags,
+      };
+    }
+  }
+
+  return {
+    traceID: view.get(0).traceID,
+    processes,
+    spans: view.toArray().map((s) => {
+      return {
+        ...s,
+        duration: s.duration * 1000,
+        startTime: s.startTime * 1000,
+        processID: s.serviceName,
+        flags: 0,
+        references: s.parentSpanID ? [{ refType: 'CHILD_OF', spanID: s.parentSpanID, traceID: s.traceID }] : undefined,
+        logs: s.logs?.map((l) => ({ ...l, timestamp: l.timestamp * 1000 })) || [],
+      };
+    }),
+  };
 }

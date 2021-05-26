@@ -7,8 +7,6 @@ export class HeatmapDisplayEditorCtrl {
     $scope.editor = this;
     this.panelCtrl = $scope.ctrl;
     this.panel = this.panelCtrl.panel;
-
-    this.panelCtrl.render();
   }
 }
 

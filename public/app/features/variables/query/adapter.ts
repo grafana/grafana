@@ -1,15 +1,15 @@
-import cloneDeep from 'lodash/cloneDeep';
+import { cloneDeep } from 'lodash';
 
 import { QueryVariableModel, VariableRefresh } from '../types';
 import { initialQueryVariableModelState, queryVariableReducer } from './reducer';
 import { dispatch } from '../../../store/store';
 import { setOptionAsCurrent, setOptionFromUrl } from '../state/actions';
 import { VariableAdapter } from '../adapters';
-import { OptionsPicker } from '../pickers';
 import { QueryVariableEditor } from './QueryVariableEditor';
 import { updateQueryVariableOptions } from './actions';
 import { ALL_VARIABLE_TEXT, toVariableIdentifier } from '../state/types';
 import { containsVariable, isAllVariable } from '../utils';
+import { optionPickerFactory } from '../pickers';
 
 export const createQueryVariableAdapter = (): VariableAdapter<QueryVariableModel> => {
   return {
@@ -18,7 +18,7 @@ export const createQueryVariableAdapter = (): VariableAdapter<QueryVariableModel
     name: 'Query',
     initialState: initialQueryVariableModelState,
     reducer: queryVariableReducer,
-    picker: OptionsPicker,
+    picker: optionPickerFactory<QueryVariableModel>(),
     editor: QueryVariableEditor,
     dependsOn: (variable, variableToTest) => {
       return containsVariable(variable.query, variable.datasource, variable.regex, variableToTest.name);
@@ -32,8 +32,8 @@ export const createQueryVariableAdapter = (): VariableAdapter<QueryVariableModel
     updateOptions: async (variable, searchFilter) => {
       await dispatch(updateQueryVariableOptions(toVariableIdentifier(variable), searchFilter));
     },
-    getSaveModel: variable => {
-      const { index, id, initLock, global, queryValue, ...rest } = cloneDeep(variable);
+    getSaveModel: (variable) => {
+      const { index, id, state, global, queryValue, ...rest } = cloneDeep(variable);
       // remove options
       if (variable.refresh !== VariableRefresh.never) {
         return { ...rest, options: [] };
@@ -41,7 +41,7 @@ export const createQueryVariableAdapter = (): VariableAdapter<QueryVariableModel
 
       return rest;
     },
-    getValueForUrl: variable => {
+    getValueForUrl: (variable) => {
       if (isAllVariable(variable)) {
         return ALL_VARIABLE_TEXT;
       }

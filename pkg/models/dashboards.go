@@ -139,7 +139,7 @@ type UpdatePluginDashboardError struct {
 }
 
 func (d UpdatePluginDashboardError) Error() string {
-	return "Dashboard belong to plugin"
+	return "Dashboard belongs to plugin"
 }
 
 const (
@@ -272,11 +272,6 @@ func (cmd *SaveDashboardCommand) GetDashboardModel() *Dashboard {
 	return dash
 }
 
-// GetString a
-func (d *Dashboard) GetString(prop string, defaultValue string) string {
-	return d.Data.Get(prop).MustString(defaultValue)
-}
-
 // UpdateSlug updates the slug
 func (d *Dashboard) UpdateSlug() {
 	title := d.Data.Get("title").MustString()
@@ -299,13 +294,8 @@ func SlugifyTitle(title string) string {
 }
 
 // GetUrl return the html url for a folder if it's folder, otherwise for a dashboard
-func (dash *Dashboard) GetUrl() string {
-	return GetDashboardFolderUrl(dash.IsFolder, dash.Uid, dash.Slug)
-}
-
-// Return the html url for a dashboard
-func (d *Dashboard) GenerateUrl() string {
-	return GetDashboardUrl(d.Uid, d.Slug)
+func (d *Dashboard) GetUrl() string {
+	return GetDashboardFolderUrl(d.IsFolder, d.Uid, d.Slug)
 }
 
 // GetDashboardFolderUrl return the html url for a folder if it's folder, otherwise for a dashboard
@@ -317,17 +307,17 @@ func GetDashboardFolderUrl(isFolder bool, uid string, slug string) string {
 	return GetDashboardUrl(uid, slug)
 }
 
-// GetDashboardUrl return the html url for a dashboard
+// GetDashboardUrl returns the HTML url for a dashboard.
 func GetDashboardUrl(uid string, slug string) string {
 	return fmt.Sprintf("%s/d/%s/%s", setting.AppSubUrl, uid, slug)
 }
 
-// GetFullDashboardUrl return the full url for a dashboard
+// GetFullDashboardUrl returns the full URL for a dashboard.
 func GetFullDashboardUrl(uid string, slug string) string {
 	return fmt.Sprintf("%sd/%s/%s", setting.AppUrl, uid, slug)
 }
 
-// GetFolderUrl return the html url for a folder
+// GetFolderUrl returns the HTML url for a folder.
 func GetFolderUrl(folderUid string, slug string) string {
 	return fmt.Sprintf("%s/dashboards/f/%s/%s", setting.AppSubUrl, folderUid, slug)
 }
@@ -349,11 +339,18 @@ type SaveDashboardCommand struct {
 	RestoredFrom int              `json:"-"`
 	PluginId     string           `json:"-"`
 	FolderId     int64            `json:"folderId"`
+	FolderUid    string           `json:"folderUid"`
 	IsFolder     bool             `json:"isFolder"`
 
 	UpdatedAt time.Time
 
 	Result *Dashboard
+}
+
+type TrimDashboardCommand struct {
+	Dashboard *simplejson.Json `json:"dashboard" binding:"Required"`
+	Meta      *simplejson.Json `json:"meta"`
+	Result    *Dashboard
 }
 
 type DashboardProvisioning struct {
@@ -365,23 +362,9 @@ type DashboardProvisioning struct {
 	Updated     int64
 }
 
-type SaveProvisionedDashboardCommand struct {
-	DashboardCmd          *SaveDashboardCommand
-	DashboardProvisioning *DashboardProvisioning
-
-	Result *Dashboard
-}
-
 type DeleteDashboardCommand struct {
 	Id    int64
 	OrgId int64
-}
-
-type ValidateDashboardBeforeSaveCommand struct {
-	OrgId     int64
-	Dashboard *Dashboard
-	Overwrite bool
-	Result    *ValidateDashboardBeforeSaveResult
 }
 
 type DeleteOrphanedProvisionedDashboardsCommand struct {
@@ -433,16 +416,6 @@ type GetDashboardsByPluginIdQuery struct {
 type GetDashboardSlugByIdQuery struct {
 	Id     int64
 	Result string
-}
-
-type GetProvisionedDashboardDataByIdQuery struct {
-	DashboardId int64
-	Result      *DashboardProvisioning
-}
-
-type GetProvisionedDashboardDataQuery struct {
-	Name   string
-	Result []*DashboardProvisioning
 }
 
 type GetDashboardsBySlugQuery struct {

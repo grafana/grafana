@@ -4,17 +4,19 @@ import tinycolor from 'tinycolor2';
 export class ThresholdFormCtrl {
   panelCtrl: any;
   panel: any;
-  disabled: boolean;
+  disabled = false;
 
   /** @ngInject */
-  constructor($scope: any) {
+  constructor(private $scope: any) {}
+
+  $onInit() {
     this.panel = this.panelCtrl.panel;
 
     if (this.panel.alert) {
       this.disabled = true;
     }
 
-    const unbindDestroy = $scope.$on('$destroy', () => {
+    const unbindDestroy = this.$scope.$on('$destroy', () => {
       this.panelCtrl.editingThresholds = false;
       this.panelCtrl.render();
       unbindDestroy();
@@ -61,12 +63,8 @@ export class ThresholdFormCtrl {
   onThresholdTypeChange(index: number) {
     // Because of the ng-model binding, threshold's color mode is already set here
     if (this.panel.thresholds[index].colorMode === 'custom') {
-      this.panel.thresholds[index].fillColor = tinycolor(config.theme.palette.blue85)
-        .setAlpha(0.2)
-        .toRgbString();
-      this.panel.thresholds[index].lineColor = tinycolor(config.theme.palette.blue77)
-        .setAlpha(0.6)
-        .toRgbString();
+      this.panel.thresholds[index].fillColor = tinycolor(config.theme.palette.blue85).setAlpha(0.2).toRgbString();
+      this.panel.thresholds[index].lineColor = tinycolor(config.theme.palette.blue77).setAlpha(0.6).toRgbString();
     }
     this.panelCtrl.render();
   }

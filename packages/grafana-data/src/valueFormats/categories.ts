@@ -1,10 +1,19 @@
-import { locale, scaledUnits, simpleCountUnit, toFixedUnit, ValueFormatCategory, stringFormater } from './valueFormats';
+import {
+  locale,
+  scaledUnits,
+  simpleCountUnit,
+  toFixedUnit,
+  ValueFormatCategory,
+  stringFormater,
+  booleanValueFormatter,
+} from './valueFormats';
 import {
   dateTimeAsIso,
   dateTimeAsIsoNoDateIfToday,
   dateTimeAsUS,
   dateTimeAsUSNoDateIfToday,
   getDateTimeAsLocalFormat,
+  getDateTimeAsLocalFormatNoDateIfToday,
   dateTimeFromNow,
   toClockMilliseconds,
   toClockSeconds,
@@ -20,6 +29,7 @@ import {
   toNanoSeconds,
   toSeconds,
   toTimeTicks,
+  dateTimeSystemFormatter,
 } from './dateTimeFormatters';
 import { toHex, sci, toHex0x, toPercent, toPercentUnit } from './arithmeticFormatters';
 import { binaryPrefix, currency, SIPrefix } from './symbolFormatters';
@@ -75,14 +85,14 @@ export const getCategories = (): ValueFormatCategory[] => [
   {
     name: 'Computation',
     formats: [
-      { name: 'FLOP/s', id: 'flops', fn: SIPrefix('FLOP/s') },
-      { name: 'MFLOP/s', id: 'mflops', fn: SIPrefix('FLOP/s', 2) },
-      { name: 'GFLOP/s', id: 'gflops', fn: SIPrefix('FLOP/s', 3) },
-      { name: 'TFLOP/s', id: 'tflops', fn: SIPrefix('FLOP/s', 4) },
-      { name: 'PFLOP/s', id: 'pflops', fn: SIPrefix('FLOP/s', 5) },
-      { name: 'EFLOP/s', id: 'eflops', fn: SIPrefix('FLOP/s', 6) },
-      { name: 'ZFLOP/s', id: 'zflops', fn: SIPrefix('FLOP/s', 7) },
-      { name: 'YFLOP/s', id: 'yflops', fn: SIPrefix('FLOP/s', 8) },
+      { name: 'FLOP/s', id: 'flops', fn: SIPrefix('FLOPS') },
+      { name: 'MFLOP/s', id: 'mflops', fn: SIPrefix('FLOPS', 2) },
+      { name: 'GFLOP/s', id: 'gflops', fn: SIPrefix('FLOPS', 3) },
+      { name: 'TFLOP/s', id: 'tflops', fn: SIPrefix('FLOPS', 4) },
+      { name: 'PFLOP/s', id: 'pflops', fn: SIPrefix('FLOPS', 5) },
+      { name: 'EFLOP/s', id: 'eflops', fn: SIPrefix('FLOPS', 6) },
+      { name: 'ZFLOP/s', id: 'zflops', fn: SIPrefix('FLOPS', 7) },
+      { name: 'YFLOP/s', id: 'yflops', fn: SIPrefix('FLOPS', 8) },
     ],
   },
   {
@@ -125,6 +135,9 @@ export const getCategories = (): ValueFormatCategory[] => [
       { name: 'South African Rand (R)', id: 'currencyZAR', fn: currency('R') },
       { name: 'Indian Rupee (₹)', id: 'currencyINR', fn: currency('₹') },
       { name: 'South Korean Won (₩)', id: 'currencyKRW', fn: currency('₩') },
+      { name: 'Indonesian Rupiah (Rp)', id: 'currencyIDR', fn: currency('Rp') },
+      { name: 'Philippine Peso (PHP)', id: 'currencyPHP', fn: currency('PHP') },
+      { name: 'Vietnamese Dong (VND)', id: 'currencyVND', fn: currency('đ', true) },
     ],
   },
   {
@@ -150,10 +163,10 @@ export const getCategories = (): ValueFormatCategory[] => [
     name: 'Data rate',
     formats: [
       { name: 'packets/sec', id: 'pps', fn: SIPrefix('p/s') },
-      { name: 'bytes/sec(IEC)', id: 'Bps', fn: binaryPrefix('B/s') },
-      { name: 'bytes/sec(SI)', id: 'decBps', fn: SIPrefix('B/s') },
-      { name: 'bits/sec(IEC)', id: 'bps', fn: binaryPrefix('b/s') },
-      { name: 'bits/sec(SI)', id: 'decbps', fn: SIPrefix('b/s') },
+      { name: 'bytes/sec(IEC)', id: 'binBps', fn: binaryPrefix('B/s') },
+      { name: 'bytes/sec(SI)', id: 'Bps', fn: SIPrefix('B/s') },
+      { name: 'bits/sec(IEC)', id: 'binbps', fn: binaryPrefix('b/s') },
+      { name: 'bits/sec(SI)', id: 'bps', fn: SIPrefix('b/s') },
       { name: 'kibibytes/sec', id: 'KiBs', fn: binaryPrefix('B/s', 1) },
       { name: 'kibibits/sec', id: 'Kibits', fn: binaryPrefix('b/s', 1) },
       { name: 'kilobytes/sec', id: 'KBs', fn: SIPrefix('B/s', 1) },
@@ -184,6 +197,12 @@ export const getCategories = (): ValueFormatCategory[] => [
       { name: 'Datetime US', id: 'dateTimeAsUS', fn: dateTimeAsUS },
       { name: 'Datetime US (No date if today)', id: 'dateTimeAsUSNoDateIfToday', fn: dateTimeAsUSNoDateIfToday },
       { name: 'Datetime local', id: 'dateTimeAsLocal', fn: getDateTimeAsLocalFormat() },
+      {
+        name: 'Datetime local (No date if today)',
+        id: 'dateTimeAsLocalNoDateIfToday',
+        fn: getDateTimeAsLocalFormatNoDateIfToday(),
+      },
+      { name: 'Datetime default', id: 'dateTimeAsSystem', fn: dateTimeSystemFormatter },
       { name: 'From Now', id: 'dateTimeFromNow', fn: dateTimeFromNow },
     ],
   },
@@ -199,7 +218,7 @@ export const getCategories = (): ValueFormatCategory[] => [
       { name: 'Volt-ampere (VA)', id: 'voltamp', fn: SIPrefix('VA') },
       { name: 'Kilovolt-ampere (kVA)', id: 'kvoltamp', fn: SIPrefix('VA', 1) },
       { name: 'Volt-ampere reactive (var)', id: 'voltampreact', fn: SIPrefix('var') },
-      { name: 'Kilovolt-ampere reactive (kvar)', id: 'kvoltampreact', fn: SIPrefix('var', 1) },
+      { name: 'Kilovolt-ampere reactive (kVAr)', id: 'kvoltampreact', fn: SIPrefix('VAr', 1) },
       { name: 'Watt-hour (Wh)', id: 'watth', fn: SIPrefix('Wh') },
       { name: 'Watt-hour per Kilogram (Wh/kg)', id: 'watthperkg', fn: SIPrefix('Wh/kg') },
       { name: 'Kilowatt-hour (kWh)', id: 'kwatth', fn: SIPrefix('Wh', 1) },
@@ -269,6 +288,7 @@ export const getCategories = (): ValueFormatCategory[] => [
     formats: [
       { name: 'milligram (mg)', id: 'massmg', fn: SIPrefix('g', -1) },
       { name: 'gram (g)', id: 'massg', fn: SIPrefix('g') },
+      { name: 'pound (lb)', id: 'masslb', fn: toFixedUnit('lb') },
       { name: 'kilogram (kg)', id: 'masskg', fn: SIPrefix('g', 1) },
       { name: 'metric ton (t)', id: 'masst', fn: toFixedUnit('t') },
     ],
@@ -277,6 +297,7 @@ export const getCategories = (): ValueFormatCategory[] => [
     name: 'Length',
     formats: [
       { name: 'millimeter (mm)', id: 'lengthmm', fn: SIPrefix('m', -1) },
+      { name: 'inch (in)', id: 'lengthin', fn: toFixedUnit('in') },
       { name: 'feet (ft)', id: 'lengthft', fn: toFixedUnit('ft') },
       { name: 'meter (m)', id: 'lengthm', fn: SIPrefix('m') },
       { name: 'kilometer (km)', id: 'lengthkm', fn: SIPrefix('m', 1) },
@@ -354,16 +375,16 @@ export const getCategories = (): ValueFormatCategory[] => [
   {
     name: 'Throughput',
     formats: [
-      { name: 'counts/sec (cps)', id: 'cps', fn: simpleCountUnit('cps') },
-      { name: 'ops/sec (ops)', id: 'ops', fn: simpleCountUnit('ops') },
-      { name: 'requests/sec (rps)', id: 'reqps', fn: simpleCountUnit('reqps') },
-      { name: 'reads/sec (rps)', id: 'rps', fn: simpleCountUnit('rps') },
-      { name: 'writes/sec (wps)', id: 'wps', fn: simpleCountUnit('wps') },
-      { name: 'I/O ops/sec (iops)', id: 'iops', fn: simpleCountUnit('iops') },
-      { name: 'counts/min (cpm)', id: 'cpm', fn: simpleCountUnit('cpm') },
-      { name: 'ops/min (opm)', id: 'opm', fn: simpleCountUnit('opm') },
-      { name: 'reads/min (rpm)', id: 'rpm', fn: simpleCountUnit('rpm') },
-      { name: 'writes/min (wpm)', id: 'wpm', fn: simpleCountUnit('wpm') },
+      { name: 'counts/sec (cps)', id: 'cps', fn: simpleCountUnit('c/s') },
+      { name: 'ops/sec (ops)', id: 'ops', fn: simpleCountUnit('ops/s') },
+      { name: 'requests/sec (rps)', id: 'reqps', fn: simpleCountUnit('req/s') },
+      { name: 'reads/sec (rps)', id: 'rps', fn: simpleCountUnit('rd/s') },
+      { name: 'writes/sec (wps)', id: 'wps', fn: simpleCountUnit('wr/s') },
+      { name: 'I/O ops/sec (iops)', id: 'iops', fn: simpleCountUnit('io/s') },
+      { name: 'counts/min (cpm)', id: 'cpm', fn: simpleCountUnit('c/m') },
+      { name: 'ops/min (opm)', id: 'opm', fn: simpleCountUnit('ops/m') },
+      { name: 'reads/min (rpm)', id: 'rpm', fn: simpleCountUnit('rd/m') },
+      { name: 'writes/min (wpm)', id: 'wpm', fn: simpleCountUnit('wr/m') },
     ],
   },
   {
@@ -384,6 +405,14 @@ export const getCategories = (): ValueFormatCategory[] => [
       { name: 'Normal cubic meter', id: 'Nm3', fn: toFixedUnit('Nm³') },
       { name: 'cubic decimeter', id: 'dm3', fn: toFixedUnit('dm³') },
       { name: 'gallons', id: 'gallons', fn: toFixedUnit('gal') },
+    ],
+  },
+  {
+    name: 'Boolean',
+    formats: [
+      { name: 'True / False', id: 'bool', fn: booleanValueFormatter('True', 'False') },
+      { name: 'Yes / No', id: 'bool_yes_no', fn: booleanValueFormatter('Yes', 'No') },
+      { name: 'On / Off', id: 'bool_on_off', fn: booleanValueFormatter('On', 'Off') },
     ],
   },
 ];

@@ -1,6 +1,5 @@
 import { FieldConfigEditorProps, FieldConfigPropertyItem, FieldConfigEditorConfig } from '../types/fieldOverrides';
 import { OptionsUIRegistryBuilder } from '../types/OptionsUIRegistryBuilder';
-import { FieldType } from '../types/dataFrame';
 import { PanelOptionsEditorConfig, PanelOptionsEditorItem } from '../types/panel';
 import {
   numberOverrideProcessor,
@@ -12,7 +11,7 @@ import {
   StandardEditorProps,
   StringFieldConfigSettings,
   NumberFieldConfigSettings,
-  ColorFieldConfigSettings,
+  SliderFieldConfigSettings,
   identityOverrideProcessor,
   UnitFieldConfigSettings,
   unitOverrideProcessor,
@@ -33,7 +32,19 @@ export class FieldConfigEditorBuilder<TOptions> extends OptionsUIRegistryBuilder
       override: standardEditorsRegistry.get('number').editor as any,
       editor: standardEditorsRegistry.get('number').editor as any,
       process: numberOverrideProcessor,
-      shouldApply: config.shouldApply ? config.shouldApply : field => field.type === FieldType.number,
+      shouldApply: config.shouldApply ?? (() => true),
+      settings: config.settings || {},
+    });
+  }
+
+  addSliderInput<TSettings>(config: FieldConfigEditorConfig<TOptions, TSettings & SliderFieldConfigSettings, number>) {
+    return this.addCustomEditor({
+      ...config,
+      id: config.path,
+      override: standardEditorsRegistry.get('slider').editor as any,
+      editor: standardEditorsRegistry.get('slider').editor as any,
+      process: numberOverrideProcessor,
+      shouldApply: config.shouldApply ?? (() => true),
       settings: config.settings || {},
     });
   }
@@ -45,7 +56,7 @@ export class FieldConfigEditorBuilder<TOptions> extends OptionsUIRegistryBuilder
       override: standardEditorsRegistry.get('text').editor as any,
       editor: standardEditorsRegistry.get('text').editor as any,
       process: stringOverrideProcessor,
-      shouldApply: config.shouldApply ? config.shouldApply : field => field.type === FieldType.string,
+      shouldApply: config.shouldApply ?? (() => true),
       settings: config.settings || {},
     });
   }
@@ -90,9 +101,7 @@ export class FieldConfigEditorBuilder<TOptions> extends OptionsUIRegistryBuilder
     });
   }
 
-  addColorPicker<TSettings = any>(
-    config: FieldConfigEditorConfig<TOptions, TSettings & ColorFieldConfigSettings, string>
-  ) {
+  addColorPicker<TSettings = any>(config: FieldConfigEditorConfig<TOptions, TSettings, string>) {
     return this.addCustomEditor({
       ...config,
       id: config.path,
@@ -135,6 +144,14 @@ export class PanelOptionsEditorBuilder<TOptions> extends OptionsUIRegistryBuilde
     });
   }
 
+  addSliderInput<TSettings>(config: PanelOptionsEditorConfig<TOptions, TSettings & SliderFieldConfigSettings, number>) {
+    return this.addCustomEditor({
+      ...config,
+      id: config.path,
+      editor: standardEditorsRegistry.get('slider').editor as any,
+    });
+  }
+
   addTextInput<TSettings>(config: PanelOptionsEditorConfig<TOptions, TSettings & StringFieldConfigSettings, string>) {
     return this.addCustomEditor({
       ...config,
@@ -163,6 +180,16 @@ export class PanelOptionsEditorBuilder<TOptions> extends OptionsUIRegistryBuilde
     });
   }
 
+  addMultiSelect<TOption, TSettings extends SelectFieldConfigSettings<TOption>>(
+    config: PanelOptionsEditorConfig<TOptions, TSettings, TOption>
+  ) {
+    return this.addCustomEditor({
+      ...config,
+      id: config.path,
+      editor: standardEditorsRegistry.get('multi-select').editor as any,
+    });
+  }
+
   addRadio<TOption, TSettings extends SelectFieldConfigSettings<TOption>>(
     config: PanelOptionsEditorConfig<TOptions, TSettings, TOption>
   ) {
@@ -181,9 +208,7 @@ export class PanelOptionsEditorBuilder<TOptions> extends OptionsUIRegistryBuilde
     });
   }
 
-  addColorPicker<TSettings = any>(
-    config: PanelOptionsEditorConfig<TOptions, TSettings & ColorFieldConfigSettings, string>
-  ): this {
+  addColorPicker<TSettings = any>(config: PanelOptionsEditorConfig<TOptions, TSettings, string>): this {
     return this.addCustomEditor({
       ...config,
       id: config.path,

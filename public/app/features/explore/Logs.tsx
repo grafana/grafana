@@ -1,6 +1,7 @@
-import React, { PureComponent } from 'react';
-import { css, cx } from 'emotion';
+import React, { PureComponent, createRef } from 'react';
+import { css } from '@emotion/css';
 import { capitalize } from 'lodash';
+import memoizeOne from 'memoize-one';
 
 import {
   rangeUtil,
@@ -8,7 +9,6 @@ import {
   LogLevel,
   TimeZone,
   AbsoluteTimeRange,
-  LogsMetaKind,
   LogsDedupStrategy,
   LogRowModel,
   LogsDedupDescription,
@@ -17,15 +17,25 @@ import {
   GraphSeriesXY,
   LinkModel,
   Field,
+  GrafanaTheme,
+  DataQuery,
 } from '@grafana/data';
-import { LegacyForms, LogLabels, ToggleButtonGroup, ToggleButton, LogRows, Button } from '@grafana/ui';
-const { Switch } = LegacyForms;
+import {
+  RadioButtonGroup,
+  LogRows,
+  Button,
+  InlineField,
+  InlineFieldRow,
+  InlineSwitch,
+  withTheme,
+  stylesFactory,
+} from '@grafana/ui';
 import store from 'app/core/store';
-
+import { dedupLogRows, filterLogLevels } from 'app/core/logs_model';
 import { ExploreGraphPanel } from './ExploreGraphPanel';
-import { MetaInfoText } from './MetaInfoText';
+import { LogsMetaRow } from './LogsMetaRow';
+import LogsNavigation from './LogsNavigation';
 import { RowContextOptions } from '@grafana/ui/src/components/Logs/LogRowContextProvider';
-import { MAX_CHARACTERS } from '@grafana/ui/src/components/Logs/LogRowMessage';
 
 const SETTINGS_KEYS = {
   showLabels: 'grafana.explore.logs.showLabels',
@@ -33,64 +43,59 @@ const SETTINGS_KEYS = {
   wrapLogMessage: 'grafana.explore.logs.wrapLogMessage',
 };
 
-function renderMetaItem(value: any, kind: LogsMetaKind) {
-  if (kind === LogsMetaKind.LabelsMap) {
-    return (
-      <span className="logs-meta-item__labels">
-        <LogLabels labels={value} />
-      </span>
-    );
-  }
-  return value;
-}
-
 interface Props {
-  logRows?: LogRowModel[];
+  logRows: LogRowModel[];
   logsMeta?: LogsMetaItem[];
   logsSeries?: GraphSeriesXY[];
-  dedupedRows?: LogRowModel[];
+  logsQueries?: DataQuery[];
   visibleRange?: AbsoluteTimeRange;
-
   width: number;
+  theme: GrafanaTheme;
   highlighterExpressions?: string[];
   loading: boolean;
   absoluteRange: AbsoluteTimeRange;
   timeZone: TimeZone;
   scanning?: boolean;
   scanRange?: RawTimeRange;
-  dedupStrategy: LogsDedupStrategy;
   showContextToggle?: (row?: LogRowModel) => boolean;
   onChangeTime: (range: AbsoluteTimeRange) => void;
   onClickFilterLabel?: (key: string, value: string) => void;
   onClickFilterOutLabel?: (key: string, value: string) => void;
   onStartScanning?: () => void;
   onStopScanning?: () => void;
-  onDedupStrategyChange: (dedupStrategy: LogsDedupStrategy) => void;
-  onToggleLogLevel: (hiddenLogLevels: LogLevel[]) => void;
   getRowContext?: (row: LogRowModel, options?: RowContextOptions) => Promise<any>;
   getFieldLinks: (field: Field, rowIndex: number) => Array<LinkModel<Field>>;
+  addResultsToCache: () => void;
+  clearCache: () => void;
 }
 
 interface State {
   showLabels: boolean;
   showTime: boolean;
   wrapLogMessage: boolean;
+  dedupStrategy: LogsDedupStrategy;
+  hiddenLogLevels: LogLevel[];
   logsSortOrder: LogsSortOrder | null;
   isFlipping: boolean;
-  showParsedFields: string[];
+  showDetectedFields: string[];
+  forceEscape: boolean;
 }
 
-export class Logs extends PureComponent<Props, State> {
+export class UnthemedLogs extends PureComponent<Props, State> {
   flipOrderTimer: NodeJS.Timeout;
   cancelFlippingTimer: NodeJS.Timeout;
+  topLogsRef = createRef<HTMLDivElement>();
 
   state: State = {
     showLabels: store.getBool(SETTINGS_KEYS.showLabels, false),
     showTime: store.getBool(SETTINGS_KEYS.showTime, true),
     wrapLogMessage: store.getBool(SETTINGS_KEYS.wrapLogMessage, true),
+    dedupStrategy: LogsDedupStrategy.none,
+    hiddenLogLevels: [],
     logsSortOrder: null,
     isFlipping: false,
-    showParsedFields: [],
+    showDetectedFields: [],
+    forceEscape: false,
   };
 
   componentWillUnmount() {
@@ -102,7 +107,7 @@ export class Logs extends PureComponent<Props, State> {
     this.setState({ isFlipping: true });
     // we are using setTimeout here to make sure that disabled button is rendered before the rendering of reordered logs
     this.flipOrderTimer = setTimeout(() => {
-      this.setState(prevState => {
+      this.setState((prevState) => {
         if (prevState.logsSortOrder === null || prevState.logsSortOrder === LogsSortOrder.Descending) {
           return { logsSortOrder: LogsSortOrder.Ascending };
         }
@@ -112,12 +117,14 @@ export class Logs extends PureComponent<Props, State> {
     this.cancelFlippingTimer = setTimeout(() => this.setState({ isFlipping: false }), 1000);
   };
 
-  onChangeDedup = (dedup: LogsDedupStrategy) => {
-    const { onDedupStrategyChange } = this.props;
-    if (this.props.dedupStrategy === dedup) {
-      return onDedupStrategyChange(LogsDedupStrategy.none);
-    }
-    return onDedupStrategyChange(dedup);
+  onEscapeNewlines = () => {
+    this.setState((prevState) => ({
+      forceEscape: !prevState.forceEscape,
+    }));
+  };
+
+  onChangeDedup = (dedupStrategy: LogsDedupStrategy) => {
+    this.setState({ dedupStrategy });
   };
 
   onChangeLabels = (event?: React.SyntheticEvent) => {
@@ -154,8 +161,8 @@ export class Logs extends PureComponent<Props, State> {
   };
 
   onToggleLogLevel = (hiddenRawLevels: string[]) => {
-    const hiddenLogLevels: LogLevel[] = hiddenRawLevels.map(level => LogLevel[level as LogLevel]);
-    this.props.onToggleLogLevel(hiddenLogLevels);
+    const hiddenLogLevels = hiddenRawLevels.map((level) => LogLevel[level as LogLevel]);
+    this.setState({ hiddenLogLevels });
   };
 
   onClickScan = (event: React.SyntheticEvent) => {
@@ -172,36 +179,52 @@ export class Logs extends PureComponent<Props, State> {
     }
   };
 
-  showParsedField = (key: string) => {
-    const index = this.state.showParsedFields.indexOf(key);
+  showDetectedField = (key: string) => {
+    const index = this.state.showDetectedFields.indexOf(key);
 
     if (index === -1) {
-      this.setState(state => {
+      this.setState((state) => {
         return {
-          showParsedFields: state.showParsedFields.concat(key),
+          showDetectedFields: state.showDetectedFields.concat(key),
         };
       });
     }
   };
 
-  hideParsedField = (key: string) => {
-    const index = this.state.showParsedFields.indexOf(key);
+  hideDetectedField = (key: string) => {
+    const index = this.state.showDetectedFields.indexOf(key);
     if (index > -1) {
-      this.setState(state => {
+      this.setState((state) => {
         return {
-          showParsedFields: state.showParsedFields.filter(k => key !== k),
+          showDetectedFields: state.showDetectedFields.filter((k) => key !== k),
         };
       });
     }
   };
 
-  clearParsedFields = () => {
-    this.setState(state => {
+  clearDetectedFields = () => {
+    this.setState((state) => {
       return {
-        showParsedFields: [],
+        showDetectedFields: [],
       };
     });
   };
+
+  checkUnescapedContent = memoizeOne((logRows: LogRowModel[]) => {
+    return !!logRows.some((r) => r.hasUnescapedContent);
+  });
+
+  dedupRows = memoizeOne((logRows: LogRowModel[], dedupStrategy: LogsDedupStrategy) => {
+    const dedupedRows = dedupLogRows(logRows, dedupStrategy);
+    const dedupCount = dedupedRows.reduce((sum, row) => (row.duplicates ? sum + row.duplicates : sum), 0);
+    return { dedupedRows, dedupCount };
+  });
+
+  filterRows = memoizeOne((logRows: LogRowModel[], hiddenLogLevels: LogLevel[]) => {
+    return filterLogLevels(logRows, new Set(hiddenLogLevels));
+  });
+
+  scrollToTopLogs = () => this.topLogsRef.current?.scrollIntoView();
 
   render() {
     const {
@@ -218,169 +241,189 @@ export class Logs extends PureComponent<Props, State> {
       scanRange,
       showContextToggle,
       width,
-      dedupedRows,
       absoluteRange,
       onChangeTime,
       getFieldLinks,
+      theme,
+      logsQueries,
+      clearCache,
+      addResultsToCache,
     } = this.props;
 
-    if (!logRows) {
-      return null;
-    }
+    const {
+      showLabels,
+      showTime,
+      wrapLogMessage,
+      dedupStrategy,
+      hiddenLogLevels,
+      logsSortOrder,
+      isFlipping,
+      showDetectedFields,
+      forceEscape,
+    } = this.state;
 
-    const { showLabels, showTime, wrapLogMessage, logsSortOrder, isFlipping, showParsedFields } = this.state;
-    const { dedupStrategy } = this.props;
+    const styles = getStyles(theme);
     const hasData = logRows && logRows.length > 0;
-    const dedupCount = dedupedRows
-      ? dedupedRows.reduce((sum, row) => (row.duplicates ? sum + row.duplicates : sum), 0)
-      : 0;
-    const meta = logsMeta ? [...logsMeta] : [];
+    const hasUnescapedContent = this.checkUnescapedContent(logRows);
 
-    if (dedupStrategy !== LogsDedupStrategy.none) {
-      meta.push({
-        label: 'Dedup count',
-        value: dedupCount,
-        kind: LogsMetaKind.Number,
-      });
-    }
-
-    if (logRows.some(r => r.entry.length > MAX_CHARACTERS)) {
-      meta.push({
-        label: 'Info',
-        value: 'Logs with more than 100,000 characters could not be parsed and highlighted',
-        kind: LogsMetaKind.String,
-      });
-    }
+    const filteredLogs = this.filterRows(logRows, hiddenLogLevels);
+    const { dedupedRows, dedupCount } = this.dedupRows(filteredLogs, dedupStrategy);
 
     const scanText = scanRange ? `Scanning ${rangeUtil.describeTimeRange(scanRange)}` : 'Scanning...';
-    const series = logsSeries ? logsSeries : [];
 
     return (
-      <div className="logs-panel">
-        <div className="logs-panel-graph">
-          <ExploreGraphPanel
-            series={series}
-            width={width}
-            onHiddenSeriesChanged={this.onToggleLogLevel}
-            loading={loading}
-            absoluteRange={visibleRange || absoluteRange}
-            isStacked={true}
-            showPanel={false}
-            showingGraph={true}
-            showingTable={true}
-            timeZone={timeZone}
-            showBars={true}
-            showLines={false}
-            onUpdateTimeRange={onChangeTime}
-          />
-        </div>
-        <div className="logs-panel-options">
-          <div className="logs-panel-controls">
-            <div className="logs-panel-controls-main">
-              <Switch label="Time" checked={showTime} onChange={this.onChangeTime} transparent />
-              <Switch label="Unique labels" checked={showLabels} onChange={this.onChangeLabels} transparent />
-              <Switch label="Wrap lines" checked={wrapLogMessage} onChange={this.onChangewrapLogMessage} transparent />
-              <ToggleButtonGroup label="Dedup" transparent={true}>
-                {Object.keys(LogsDedupStrategy).map((dedupType: string, i) => (
-                  <ToggleButton
-                    key={i}
-                    value={dedupType}
-                    onChange={this.onChangeDedup}
-                    selected={dedupStrategy === dedupType}
-                    // @ts-ignore
-                    tooltip={LogsDedupDescription[dedupType]}
-                  >
-                    {capitalize(dedupType)}
-                  </ToggleButton>
-                ))}
-              </ToggleButtonGroup>
-            </div>
-            <button
-              disabled={isFlipping}
-              title={logsSortOrder === LogsSortOrder.Ascending ? 'Change to newest first' : 'Change to oldest first'}
-              aria-label="Flip results order"
-              className={cx(
-                'gf-form-label gf-form-label--btn',
-                css`
-                  margin-top: 4px;
-                `
-              )}
-              onClick={this.onChangeLogsSortOrder}
-            >
-              <span className="btn-title">{isFlipping ? 'Flipping...' : 'Flip results order'}</span>
-            </button>
-          </div>
-        </div>
-
-        {meta && (
-          <MetaInfoText
-            metaItems={meta.map(item => {
-              return {
-                label: item.label,
-                value: renderMetaItem(item.value, item.kind),
-              };
-            })}
-          />
-        )}
-
-        {showParsedFields && showParsedFields.length > 0 && (
-          <MetaInfoText
-            metaItems={[
-              {
-                label: 'Showing only parsed fields',
-                value: renderMetaItem(showParsedFields, LogsMetaKind.LabelsMap),
-              },
-              {
-                label: '',
-                value: (
-                  <Button variant="secondary" size="sm" onClick={this.clearParsedFields}>
-                    Show all parsed fields
-                  </Button>
-                ),
-              },
-            ]}
-          />
-        )}
-
-        <LogRows
-          logRows={logRows}
-          deduplicatedRows={dedupedRows}
-          dedupStrategy={dedupStrategy}
-          getRowContext={this.props.getRowContext}
-          highlighterExpressions={highlighterExpressions}
-          rowLimit={logRows ? logRows.length : undefined}
-          onClickFilterLabel={onClickFilterLabel}
-          onClickFilterOutLabel={onClickFilterOutLabel}
-          showContextToggle={showContextToggle}
-          showLabels={showLabels}
-          showTime={showTime}
-          wrapLogMessage={wrapLogMessage}
+      <>
+        <ExploreGraphPanel
+          series={logsSeries || []}
+          width={width}
+          onHiddenSeriesChanged={this.onToggleLogLevel}
+          loading={loading}
+          absoluteRange={visibleRange || absoluteRange}
+          isStacked={true}
+          showPanel={false}
           timeZone={timeZone}
-          getFieldLinks={getFieldLinks}
-          logsSortOrder={logsSortOrder}
-          showParsedFields={showParsedFields}
-          onClickShowParsedField={this.showParsedField}
-          onClickHideParsedField={this.hideParsedField}
+          showBars={true}
+          showLines={false}
+          onUpdateTimeRange={onChangeTime}
         />
-
+        <div className={styles.logOptions} ref={this.topLogsRef}>
+          <InlineFieldRow>
+            <InlineField label="Time" transparent>
+              <InlineSwitch value={showTime} onChange={this.onChangeTime} transparent />
+            </InlineField>
+            <InlineField label="Unique labels" transparent>
+              <InlineSwitch value={showLabels} onChange={this.onChangeLabels} transparent />
+            </InlineField>
+            <InlineField label="Wrap lines" transparent>
+              <InlineSwitch value={wrapLogMessage} onChange={this.onChangewrapLogMessage} transparent />
+            </InlineField>
+            <InlineField label="Dedup" transparent>
+              <RadioButtonGroup
+                options={Object.keys(LogsDedupStrategy).map((dedupType: LogsDedupStrategy) => ({
+                  label: capitalize(dedupType),
+                  value: dedupType,
+                  description: LogsDedupDescription[dedupType],
+                }))}
+                value={dedupStrategy}
+                onChange={this.onChangeDedup}
+                className={styles.radioButtons}
+              />
+            </InlineField>
+          </InlineFieldRow>
+          <Button
+            variant="secondary"
+            disabled={isFlipping}
+            title={logsSortOrder === LogsSortOrder.Ascending ? 'Change to newest first' : 'Change to oldest first'}
+            aria-label="Flip results order"
+            className={styles.flipButton}
+            onClick={this.onChangeLogsSortOrder}
+          >
+            {isFlipping ? 'Flipping...' : 'Flip results order'}
+          </Button>
+        </div>
+        <LogsMetaRow
+          logRows={logRows}
+          meta={logsMeta || []}
+          dedupStrategy={dedupStrategy}
+          dedupCount={dedupCount}
+          hasUnescapedContent={hasUnescapedContent}
+          forceEscape={forceEscape}
+          showDetectedFields={showDetectedFields}
+          onEscapeNewlines={this.onEscapeNewlines}
+          clearDetectedFields={this.clearDetectedFields}
+        />
+        <div className={styles.logsSection}>
+          <div className={styles.logRows}>
+            <LogRows
+              logRows={logRows}
+              deduplicatedRows={dedupedRows}
+              dedupStrategy={dedupStrategy}
+              getRowContext={this.props.getRowContext}
+              highlighterExpressions={highlighterExpressions}
+              onClickFilterLabel={onClickFilterLabel}
+              onClickFilterOutLabel={onClickFilterOutLabel}
+              showContextToggle={showContextToggle}
+              showLabels={showLabels}
+              showTime={showTime}
+              enableLogDetails={true}
+              forceEscape={forceEscape}
+              wrapLogMessage={wrapLogMessage}
+              timeZone={timeZone}
+              getFieldLinks={getFieldLinks}
+              logsSortOrder={logsSortOrder}
+              showDetectedFields={showDetectedFields}
+              onClickShowDetectedField={this.showDetectedField}
+              onClickHideDetectedField={this.hideDetectedField}
+            />
+          </div>
+          <LogsNavigation
+            logsSortOrder={logsSortOrder}
+            visibleRange={visibleRange ?? absoluteRange}
+            absoluteRange={absoluteRange}
+            timeZone={timeZone}
+            onChangeTime={onChangeTime}
+            loading={loading}
+            queries={logsQueries ?? []}
+            scrollToTopLogs={this.scrollToTopLogs}
+            addResultsToCache={addResultsToCache}
+            clearCache={clearCache}
+          />
+        </div>
         {!loading && !hasData && !scanning && (
-          <div className="logs-panel-nodata">
+          <div className={styles.noData}>
             No logs found.
-            <Button size="xs" variant="link" onClick={this.onClickScan}>
+            <Button size="xs" fill="text" onClick={this.onClickScan}>
               Scan for older logs
             </Button>
           </div>
         )}
 
         {scanning && (
-          <div className="logs-panel-nodata">
+          <div className={styles.noData}>
             <span>{scanText}</span>
-            <Button size="xs" variant="link" onClick={this.onClickStopScan}>
+            <Button size="xs" fill="text" onClick={this.onClickStopScan}>
               Stop scan
             </Button>
           </div>
         )}
-      </div>
+      </>
     );
   }
 }
+
+export const Logs = withTheme(UnthemedLogs);
+
+const getStyles = stylesFactory((theme: GrafanaTheme) => {
+  return {
+    noData: css`
+      > * {
+        margin-left: 0.5em;
+      }
+    `,
+    logOptions: css`
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      flex-wrap: wrap;
+      background-color: ${theme.colors.bg1};
+      padding: ${theme.spacing.sm} ${theme.spacing.md};
+      border-radius: ${theme.border.radius.md};
+      margin: ${theme.spacing.md} 0 ${theme.spacing.sm};
+      border: 1px solid ${theme.colors.border2};
+    `,
+    flipButton: css`
+      margin: ${theme.spacing.xs} 0 0 ${theme.spacing.sm};
+    `,
+    radioButtons: css`
+      margin: 0 ${theme.spacing.sm};
+    `,
+    logsSection: css`
+      display: flex;
+      flex-direction: row;
+      justify-content: space-between;
+    `,
+    logRows: css`
+      overflow-x: scroll;
+    `,
+  };
+});

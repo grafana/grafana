@@ -3,16 +3,16 @@ import React, { memo } from 'react';
 
 // Types
 import { AbsoluteTimeRange, QueryEditorProps } from '@grafana/data';
-import { FormLabel } from '@grafana/ui/src/components/FormLabel/FormLabel';
+import { InlineFormLabel } from '@grafana/ui';
 import { CloudWatchDatasource } from '../datasource';
-import { CloudWatchLogsQuery, CloudWatchQuery } from '../types';
+import { CloudWatchJsonData, CloudWatchLogsQuery, CloudWatchQuery } from '../types';
 import { CloudWatchLogsQueryField } from './LogsQueryField';
-import { useCloudWatchSyntax } from '../useCloudwatchSyntax';
-import { CloudWatchLanguageProvider } from '../language_provider';
 import CloudWatchLink from './CloudWatchLink';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 
-type Props = QueryEditorProps<CloudWatchDatasource, CloudWatchQuery> & { allowCustomValue?: boolean };
+type Props = QueryEditorProps<CloudWatchDatasource, CloudWatchQuery, CloudWatchJsonData> & {
+  allowCustomValue?: boolean;
+};
 
 const labelClass = css`
   margin-left: 3px;
@@ -36,11 +36,6 @@ export const CloudWatchLogsQueryEditor = memo(function CloudWatchLogsQueryEditor
     };
   }
 
-  const { isSyntaxReady, syntax } = useCloudWatchSyntax(
-    datasource.languageProvider as CloudWatchLanguageProvider,
-    absolute
-  );
-
   return (
     <CloudWatchLogsQueryField
       exploreId={exploreId}
@@ -52,13 +47,11 @@ export const CloudWatchLogsQueryEditor = memo(function CloudWatchLogsQueryEditor
       history={[]}
       data={data}
       absoluteRange={absolute}
-      syntaxLoaded={isSyntaxReady}
-      syntax={syntax}
       allowCustomValue={allowCustomValue}
       ExtraFieldElement={
-        <FormLabel className={`gf-form-label--btn ${labelClass}`} width="auto" tooltip="Link to Graph in AWS">
+        <InlineFormLabel className={`gf-form-label--btn ${labelClass}`} width="auto" tooltip="Link to Graph in AWS">
           <CloudWatchLink query={query as CloudWatchLogsQuery} panelData={data} datasource={datasource} />
-        </FormLabel>
+        </InlineFormLabel>
       }
     />
   );

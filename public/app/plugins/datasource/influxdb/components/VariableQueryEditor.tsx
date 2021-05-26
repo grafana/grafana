@@ -19,12 +19,13 @@ export default class VariableQueryEditor extends PureComponent<Props> {
     if (datasource.isFlux) {
       return (
         <FluxQueryEditor
-          target={{
+          datasource={datasource}
+          query={{
             refId: 'A',
             query,
           }}
-          refresh={this.onRefresh}
-          change={v => onChange(v.query)}
+          onRunQuery={this.onRefresh}
+          onChange={(v) => onChange(v.query)}
         />
       );
     }
@@ -34,11 +35,11 @@ export default class VariableQueryEditor extends PureComponent<Props> {
         <InlineFormLabel width={10}>Query</InlineFormLabel>
         <div className="gf-form-inline gf-form--grow">
           <TextArea
-            value={query || ''}
+            defaultValue={query || ''}
             placeholder="metric name or tags query"
             rows={1}
             className="gf-form-input"
-            onChange={e => onChange(e.currentTarget.value)}
+            onBlur={(e) => onChange(e.currentTarget.value)}
           />
         </div>
       </div>

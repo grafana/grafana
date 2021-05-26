@@ -10,7 +10,7 @@ interface Props {
 export const SubMenuItems: FunctionComponent<Props> = ({ variables }) => {
   const [visibleVariables, setVisibleVariables] = useState<VariableModel[]>([]);
   useEffect(() => {
-    setVisibleVariables(variables.filter(state => state.hide !== VariableHide.hideVariable));
+    setVisibleVariables(variables.filter((state) => state.hide !== VariableHide.hideVariable));
   }, [variables]);
 
   if (visibleVariables.length === 0) {
@@ -19,7 +19,7 @@ export const SubMenuItems: FunctionComponent<Props> = ({ variables }) => {
 
   return (
     <>
-      {visibleVariables.map(variable => {
+      {visibleVariables.map((variable) => {
         return (
           <div
             key={variable.id}

@@ -1,23 +1,29 @@
 import React, { useState, useCallback } from 'react';
-import { HorizontalGroup, Icon, renderOrCallToRender, stylesFactory, useTheme } from '@grafana/ui';
+import { Icon, renderOrCallToRender, stylesFactory, useTheme } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { useUpdateEffect } from 'react-use';
 import { Draggable } from 'react-beautiful-dnd';
 
 interface QueryOperationRowProps {
   index: number;
   id: string;
-  title?: ((props: { isOpen: boolean }) => React.ReactNode) | React.ReactNode;
-  headerElement?: React.ReactNode;
-  actions?:
-    | ((props: { isOpen: boolean; openRow: () => void; closeRow: () => void }) => React.ReactNode)
-    | React.ReactNode;
+  title?: string;
+  headerElement?: QueryOperationRowRenderProp;
+  actions?: QueryOperationRowRenderProp;
   onOpen?: () => void;
   onClose?: () => void;
   children: React.ReactNode;
   isOpen?: boolean;
   draggable?: boolean;
+}
+
+export type QueryOperationRowRenderProp = ((props: QueryOperationRowRenderProps) => React.ReactNode) | React.ReactNode;
+
+export interface QueryOperationRowRenderProps {
+  isOpen: boolean;
+  onOpen: () => void;
+  onClose: () => void;
 }
 
 export const QueryOperationRow: React.FC<QueryOperationRowProps> = ({
@@ -51,48 +57,58 @@ export const QueryOperationRow: React.FC<QueryOperationRowProps> = ({
     }
   }, [isContentVisible]);
 
-  const titleElement = title && renderOrCallToRender(title, { isOpen: isContentVisible });
-  const actionsElement =
-    actions &&
-    renderOrCallToRender(actions, {
-      isOpen: isContentVisible,
-      openRow: () => {
-        setIsContentVisible(true);
-      },
-      closeRow: () => {
-        setIsContentVisible(false);
-      },
-    });
+  const renderPropArgs: QueryOperationRowRenderProps = {
+    isOpen: isContentVisible,
+    onOpen: () => {
+      setIsContentVisible(true);
+    },
+    onClose: () => {
+      setIsContentVisible(false);
+    },
+  };
+
+  const titleElement = title && renderOrCallToRender(title, renderPropArgs);
+  const actionsElement = actions && renderOrCallToRender(actions, renderPropArgs);
+  const headerElementRendered = headerElement && renderOrCallToRender(headerElement, renderPropArgs);
 
   const rowHeader = (
     <div className={styles.header}>
-      <HorizontalGroup justify="space-between">
+      <Icon
+        name={isContentVisible ? 'angle-down' : 'angle-right'}
+        className={styles.collapseIcon}
+        onClick={onRowToggle}
+      />
+      {title && (
         <div className={styles.titleWrapper} onClick={onRowToggle} aria-label="Query operation row title">
-          {draggable && (
-            <Icon title="Drag and drop to reorder" name="draggabledots" size="lg" className={styles.dragIcon} />
-          )}
-          <Icon name={isContentVisible ? 'angle-down' : 'angle-right'} className={styles.collapseIcon} />
-          {title && <span className={styles.title}>{titleElement}</span>}
-          {headerElement}
+          <div className={styles.title}>{titleElement}</div>
         </div>
-        {actions && actionsElement}
-      </HorizontalGroup>
+      )}
+      {headerElementRendered}
+      {actions && <div>{actionsElement}</div>}
+      {draggable && (
+        <Icon title="Drag and drop to reorder" name="draggabledots" size="lg" className={styles.dragIcon} />
+      )}
     </div>
   );
-  return draggable ? (
-    <Draggable draggableId={id} index={index}>
-      {provided => {
-        return (
-          <>
-            <div ref={provided.innerRef} className={styles.wrapper} {...provided.draggableProps}>
-              <div {...provided.dragHandleProps}>{rowHeader}</div>
-              {isContentVisible && <div className={styles.content}>{children}</div>}
-            </div>
-          </>
-        );
-      }}
-    </Draggable>
-  ) : (
+
+  if (draggable) {
+    return (
+      <Draggable draggableId={id} index={index}>
+        {(provided) => {
+          return (
+            <>
+              <div ref={provided.innerRef} className={styles.wrapper} {...provided.draggableProps}>
+                <div {...provided.dragHandleProps}>{rowHeader}</div>
+                {isContentVisible && <div className={styles.content}>{children}</div>}
+              </div>
+            </>
+          );
+        }}
+      </Draggable>
+    );
+  }
+
+  return (
     <div className={styles.wrapper}>
       {rowHeader}
       {isContentVisible && <div className={styles.content}>{children}</div>}
@@ -110,17 +126,25 @@ const getQueryOperationRowStyles = stylesFactory((theme: GrafanaTheme) => {
       border-radius: ${theme.border.radius.sm};
       background: ${theme.colors.bg2};
       min-height: ${theme.spacing.formInputHeight}px;
-      line-height: ${theme.spacing.sm}px;
       display: flex;
       align-items: center;
       justify-content: space-between;
+      white-space: nowrap;
+
+      &:focus {
+        outline: none;
+      }
     `,
     dragIcon: css`
-      opacity: 0.4;
       cursor: drag;
+      color: ${theme.colors.textWeak};
+      &:hover {
+        color: ${theme.colors.text};
+      }
     `,
     collapseIcon: css`
       color: ${theme.colors.textWeak};
+      cursor: pointer;
       &:hover {
         color: ${theme.colors.text};
       }
@@ -128,12 +152,16 @@ const getQueryOperationRowStyles = stylesFactory((theme: GrafanaTheme) => {
     titleWrapper: css`
       display: flex;
       align-items: center;
+      flex-grow: 1;
       cursor: pointer;
+      overflow: hidden;
+      margin-right: ${theme.spacing.sm};
     `,
     title: css`
       font-weight: ${theme.typography.weight.semibold};
       color: ${theme.colors.textBlue};
       margin-left: ${theme.spacing.sm};
+      overflow: hidden;
     `,
     content: css`
       margin-top: ${theme.spacing.inlineFormMargin};

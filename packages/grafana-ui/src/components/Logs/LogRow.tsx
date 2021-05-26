@@ -8,9 +8,12 @@ import {
   DataQueryResponse,
   GrafanaTheme,
   dateTimeFormat,
+  checkLogsError,
+  escapeUnescapedString,
 } from '@grafana/data';
 import { Icon } from '../Icon/Icon';
-import { cx, css } from 'emotion';
+import { Tooltip } from '../Tooltip/Tooltip';
+import { cx, css } from '@emotion/css';
 
 import {
   LogRowContextRows,
@@ -20,14 +23,13 @@ import {
   RowContextOptions,
 } from './LogRowContextProvider';
 import { Themeable } from '../../types/theme';
-import { withTheme } from '../../themes/index';
+import { styleMixins, withTheme } from '../../themes/index';
 import { getLogRowStyles } from './getLogRowStyles';
 import { stylesFactory } from '../../themes/stylesFactory';
-import { selectThemeVariant } from '../../themes/selectThemeVariant';
 
 //Components
 import { LogDetails } from './LogDetails';
-import { LogRowMessageParsed } from './LogRowMessageParsed';
+import { LogRowMessageDetectedFields } from './LogRowMessageDetectedFields';
 import { LogRowMessage } from './LogRowMessage';
 import { LogLabels } from './LogLabels';
 
@@ -39,8 +41,10 @@ interface Props extends Themeable {
   showTime: boolean;
   wrapLogMessage: boolean;
   timeZone: TimeZone;
-  allowDetails?: boolean;
+  enableLogDetails: boolean;
   logsSortOrder?: LogsSortOrder | null;
+  forceEscape?: boolean;
+  showDetectedFields?: string[];
   getRows: () => LogRowModel[];
   onClickFilterLabel?: (key: string, value: string) => void;
   onClickFilterOutLabel?: (key: string, value: string) => void;
@@ -48,19 +52,16 @@ interface Props extends Themeable {
   getRowContext: (row: LogRowModel, options?: RowContextOptions) => Promise<DataQueryResponse>;
   getFieldLinks?: (field: Field, rowIndex: number) => Array<LinkModel<Field>>;
   showContextToggle?: (row?: LogRowModel) => boolean;
-  showParsedFields?: string[];
-  onClickShowParsedField?: (key: string) => void;
-  onClickHideParsedField?: (key: string) => void;
+  onClickShowDetectedField?: (key: string) => void;
+  onClickHideDetectedField?: (key: string) => void;
 }
 
 interface State {
   showContext: boolean;
   showDetails: boolean;
-  hasHoverBackground: boolean;
 }
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
-  const bgColor = selectThemeVariant({ light: theme.palette.gray7, dark: theme.palette.dark2 }, theme.type);
   return {
     topVerticalAlign: css`
       label: topVerticalAlign;
@@ -68,9 +69,14 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       margin-top: -${theme.spacing.xs};
       margin-left: -${theme.spacing.xxs};
     `,
-    hoverBackground: css`
-      label: hoverBackground;
-      background-color: ${bgColor};
+    detailsOpen: css`
+      &:hover {
+        background-color: ${styleMixins.hoverColor(theme.colors.panelBg, theme)};
+      }
+    `,
+    errorLogRow: css`
+      label: erroredLogRow;
+      color: ${theme.colors.textWeak};
     `,
   };
 });
@@ -85,42 +91,21 @@ class UnThemedLogRow extends PureComponent<Props, State> {
   state: State = {
     showContext: false,
     showDetails: false,
-    hasHoverBackground: false,
   };
 
   toggleContext = () => {
-    this.setState(state => {
+    this.setState((state) => {
       return {
         showContext: !state.showContext,
       };
     });
   };
 
-  /**
-   * We are using onMouse events to change background of Log Details Table to hover-state-background when hovered over Log
-   * Row and vice versa, when context is not open. This can't be done with css because we use 2 separate table rows without common parent element.
-   */
-  addHoverBackground = () => {
-    if (!this.state.showContext) {
-      this.setState({
-        hasHoverBackground: true,
-      });
-    }
-  };
-
-  clearHoverBackground = () => {
-    if (!this.state.showContext) {
-      this.setState({
-        hasHoverBackground: false,
-      });
-    }
-  };
-
   toggleDetails = () => {
-    if (this.props.allowDetails) {
+    if (!this.props.enableLogDetails) {
       return;
     }
-    this.setState(state => {
+    this.setState((state) => {
       return {
         showDetails: !state.showDetails,
       };
@@ -143,56 +128,71 @@ class UnThemedLogRow extends PureComponent<Props, State> {
       getRows,
       onClickFilterLabel,
       onClickFilterOutLabel,
-      onClickShowParsedField,
-      onClickHideParsedField,
+      onClickShowDetectedField,
+      onClickHideDetectedField,
       highlighterExpressions,
-      allowDetails,
+      enableLogDetails,
       row,
       showDuplicates,
       showContextToggle,
       showLabels,
       showTime,
-      showParsedFields,
+      showDetectedFields,
       wrapLogMessage,
       theme,
       getFieldLinks,
+      forceEscape,
     } = this.props;
-    const { showDetails, showContext, hasHoverBackground } = this.state;
+    const { showDetails, showContext } = this.state;
     const style = getLogRowStyles(theme, row.logLevel);
     const styles = getStyles(theme);
-    const hoverBackground = cx(style.logsRow, { [styles.hoverBackground]: hasHoverBackground });
+    const { errorMessage, hasError } = checkLogsError(row);
+    const logRowBackground = cx(style.logsRow, {
+      [styles.errorLogRow]: hasError,
+    });
+
+    const processedRow =
+      row.hasUnescapedContent && forceEscape
+        ? { ...row, entry: escapeUnescapedString(row.entry), raw: escapeUnescapedString(row.raw) }
+        : row;
 
     return (
       <>
-        <tr
-          className={hoverBackground}
-          onMouseEnter={this.addHoverBackground}
-          onMouseLeave={this.clearHoverBackground}
-          onClick={this.toggleDetails}
-        >
+        <tr className={logRowBackground} onClick={this.toggleDetails}>
           {showDuplicates && (
             <td className={style.logsRowDuplicates}>
-              {row.duplicates && row.duplicates > 0 ? `${row.duplicates + 1}x` : null}
+              {processedRow.duplicates && processedRow.duplicates > 0 ? `${processedRow.duplicates + 1}x` : null}
             </td>
           )}
-          <td className={style.logsRowLevel} />
-          {!allowDetails && (
+          <td className={cx({ [style.logsRowLevel]: !hasError })}>
+            {hasError && (
+              <Tooltip content={`Error: ${errorMessage}`} placement="right" theme="error">
+                <Icon className={style.logIconError} name="exclamation-triangle" size="xs" />
+              </Tooltip>
+            )}
+          </td>
+          {enableLogDetails && (
             <td title={showDetails ? 'Hide log details' : 'See log details'} className={style.logsRowToggleDetails}>
               <Icon className={styles.topVerticalAlign} name={showDetails ? 'angle-down' : 'angle-right'} />
             </td>
           )}
           {showTime && <td className={style.logsRowLocalTime}>{this.renderTimeStamp(row.timeEpochMs)}</td>}
-          {showLabels && row.uniqueLabels && (
+          {showLabels && processedRow.uniqueLabels && (
             <td className={style.logsRowLabels}>
-              <LogLabels labels={row.uniqueLabels} />
+              <LogLabels labels={processedRow.uniqueLabels} />
             </td>
           )}
-          {showParsedFields && showParsedFields.length > 0 ? (
-            <LogRowMessageParsed row={row} showParsedFields={showParsedFields!} getFieldLinks={getFieldLinks} />
+          {showDetectedFields && showDetectedFields.length > 0 ? (
+            <LogRowMessageDetectedFields
+              row={processedRow}
+              showDetectedFields={showDetectedFields!}
+              getFieldLinks={getFieldLinks}
+              wrapLogMessage={wrapLogMessage}
+            />
           ) : (
             <LogRowMessage
               highlighterExpressions={highlighterExpressions}
-              row={row}
+              row={processedRow}
               getRows={getRows}
               errors={errors}
               hasMoreContextRows={hasMoreContextRows}
@@ -207,18 +207,18 @@ class UnThemedLogRow extends PureComponent<Props, State> {
         </tr>
         {this.state.showDetails && (
           <LogDetails
-            className={hoverBackground}
-            onMouseEnter={this.addHoverBackground}
-            onMouseLeave={this.clearHoverBackground}
+            className={logRowBackground}
             showDuplicates={showDuplicates}
             getFieldLinks={getFieldLinks}
             onClickFilterLabel={onClickFilterLabel}
             onClickFilterOutLabel={onClickFilterOutLabel}
-            onClickShowParsedField={onClickShowParsedField}
-            onClickHideParsedField={onClickHideParsedField}
+            onClickShowDetectedField={onClickShowDetectedField}
+            onClickHideDetectedField={onClickHideDetectedField}
             getRows={getRows}
-            row={row}
-            showParsedFields={showParsedFields}
+            row={processedRow}
+            wrapLogMessage={wrapLogMessage}
+            hasError={hasError}
+            showDetectedFields={showDetectedFields}
           />
         )}
       </>
@@ -227,16 +227,12 @@ class UnThemedLogRow extends PureComponent<Props, State> {
 
   render() {
     const { showContext } = this.state;
-    const { logsSortOrder } = this.props;
+    const { logsSortOrder, row, getRowContext } = this.props;
 
     if (showContext) {
       return (
         <>
-          <LogRowContextProvider
-            row={this.props.row}
-            getRowContext={this.props.getRowContext}
-            logsSortOrder={logsSortOrder}
-          >
+          <LogRowContextProvider row={row} getRowContext={getRowContext} logsSortOrder={logsSortOrder}>
             {({ result, errors, hasMoreContextRows, updateLimit }) => {
               return <>{this.renderLogRow(result, errors, hasMoreContextRows, updateLimit)}</>;
             }}

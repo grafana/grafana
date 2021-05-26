@@ -1,13 +1,12 @@
 +++
 title = "Build a streaming data source plugin"
-type = "docs"
 +++
 
 # Build a streaming data source plugin
 
 This guide explains how to build a streaming data source plugin.
 
-This guide assumes that you're already familiar with how to [Build a data source plugin]({{< relref "../../../../../tutorials/build-a-data-source-plugin.md" >}}).
+This guide assumes that you're already familiar with how to [Build a data source plugin]({{< relref "/tutorials/build-a-data-source-plugin.md" >}}).
 
 When monitoring critical applications, you want your dashboard to refresh as soon as your data does. In Grafana, you can set your dashboards to automatically refresh at a certain interval, no matter what data source you use. Unfortunately, this means that your queries are requesting all the data to be sent again, regardless of whether the data has actually changed.
 
@@ -77,12 +76,17 @@ Grafana uses [RxJS](https://rxjs.dev/) to continuously send data from a data sou
 1. Use `subscriber.next()` to send the updated data frame whenever you receive new updates.
 
    ```ts
+   import { LoadingState } from '@grafana/data';
+   ```
+
+   ```ts
    const intervalId = setInterval(() => {
      frame.add({ time: Date.now(), value: Math.random() });
 
      subscriber.next({
        data: [frame],
        key: query.refId,
+       state: LoadingState.Streaming,
      });
    }, 500);
 

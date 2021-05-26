@@ -1,67 +1,277 @@
 // Libraries
-import React, { PureComponent } from 'react';
-import _ from 'lodash';
-
-// Services & Utils
-import { getBackendSrv } from '@grafana/runtime';
+import React, { ChangeEvent, FormEvent, useMemo } from 'react';
+import { useAsync } from 'react-use';
 
 // Components
-import { InlineFormLabel, LegacyForms } from '@grafana/ui';
-const { Select } = LegacyForms;
+import { selectors as editorSelectors } from '@grafana/e2e-selectors';
+import { Input, InlineFieldRow, InlineField, Select, TextArea, InlineSwitch } from '@grafana/ui';
 import { QueryEditorProps, SelectableValue } from '@grafana/data';
+import { StreamingClientEditor, RandomWalkEditor } from './components';
 
 // Types
 import { TestDataDataSource } from './datasource';
-import { TestDataQuery, Scenario } from './types';
+import { TestDataQuery, Scenario, NodesQuery, CSVWave } from './types';
+import { PredictablePulseEditor } from './components/PredictablePulseEditor';
+import { CSVWavesEditor } from './components/CSVWaveEditor';
+import { defaultCSVWaveQuery, defaultPulseQuery, defaultQuery } from './constants';
+import { GrafanaLiveEditor } from './components/GrafanaLiveEditor';
+import { NodeGraphEditor } from './components/NodeGraphEditor';
+import { defaultStreamQuery } from './runStreams';
+import { CSVFileEditor } from './components/CSVFileEditor';
+import { CSVContentEditor } from './components/CSVContentEditor';
 
-interface State {
-  scenarioList: Scenario[];
-  current: Scenario | null;
+const showLabelsFor = ['random_walk', 'predictable_pulse'];
+const endpoints = [
+  { value: 'datasources', label: 'Data Sources' },
+  { value: 'search', label: 'Search' },
+  { value: 'annotations', label: 'Annotations' },
+];
+
+const selectors = editorSelectors.components.DataSource.TestData.QueryTab;
+
+export interface EditorProps {
+  onChange: (value: any) => void;
+  query: TestDataQuery;
 }
 
-type Props = QueryEditorProps<TestDataDataSource, TestDataQuery>;
+export type Props = QueryEditorProps<TestDataDataSource, TestDataQuery>;
 
-export class QueryEditor extends PureComponent<Props> {
-  backendSrv = getBackendSrv();
+export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) => {
+  query = { ...defaultQuery, ...query };
 
-  state: State = {
-    scenarioList: [],
-    current: null,
+  const { loading, value: scenarioList } = useAsync<Scenario[]>(async () => {
+    // migrate manual_entry (unusable since 7, removed in 8)
+    if (query.scenarioId === 'manual_entry' && (query as any).points) {
+      let csvContent = 'Time,Value\n';
+      for (const point of (query as any).points) {
+        csvContent += `${point[1]},${point[0]}\n`;
+      }
+      onChange({
+        refId: query.refId,
+        datasource: query.datasource,
+        scenarioId: 'csv_content',
+        csvContent,
+      });
+    }
+
+    return datasource.getScenarios();
+  }, []);
+
+  const onUpdate = (query: TestDataQuery) => {
+    onChange(query);
+    onRunQuery();
   };
 
-  async componentDidMount() {
-    const { query, datasource } = this.props;
+  const currentScenario = useMemo(() => scenarioList?.find((scenario) => scenario.id === query.scenarioId), [
+    scenarioList,
+    query,
+  ]);
+  const scenarioId = currentScenario?.id;
 
-    query.scenarioId = query.scenarioId || 'random_walk';
+  const onScenarioChange = (item: SelectableValue<string>) => {
+    const scenario = scenarioList?.find((sc) => sc.id === item.value);
 
-    // const scenarioList = await backendSrv.get('/api/tsdb/testdata/scenarios');
-    const scenarioList = await datasource.getScenarios();
-    const current: any = _.find(scenarioList, { id: query.scenarioId });
+    if (!scenario) {
+      return;
+    }
 
-    this.setState({ scenarioList: scenarioList, current: current });
-  }
-
-  onScenarioChange = (item: SelectableValue<string>) => {
-    this.props.onChange({
-      ...this.props.query,
+    // Clear model from existing props that belong to other scenarios
+    const update: TestDataQuery = {
       scenarioId: item.value!,
-    });
+      refId: query.refId,
+      alias: query.alias,
+    };
+
+    if (scenario.stringInput) {
+      update.stringInput = scenario.stringInput;
+    }
+
+    switch (scenario.id) {
+      case 'grafana_api':
+        update.stringInput = 'datasources';
+        break;
+      case 'streaming_client':
+        update.stream = defaultStreamQuery;
+        break;
+      case 'live':
+        update.channel = 'random-2s-stream'; // default stream
+        break;
+      case 'predictable_pulse':
+        update.pulseWave = defaultPulseQuery;
+        break;
+      case 'predictable_csv_wave':
+        update.csvWave = defaultCSVWaveQuery;
+        break;
+    }
+
+    onUpdate(update);
   };
 
-  render() {
-    const { query } = this.props;
-    const options = this.state.scenarioList.map(item => ({ label: item.name, value: item.id }));
-    const current = options.find(item => item.value === query.scenarioId);
+  const onInputChange = (e: FormEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value, type } = e.target as HTMLInputElement | HTMLTextAreaElement;
+    let newValue: any = value;
 
-    return (
-      <div className="gf-form-inline">
-        <div className="gf-form">
-          <InlineFormLabel className="query-keyword" width={7}>
-            Scenario
-          </InlineFormLabel>
-          <Select options={options} value={current} onChange={this.onScenarioChange} />
-        </div>
-      </div>
-    );
+    if (type === 'number') {
+      newValue = Number(value);
+    }
+
+    if (name === 'levelColumn') {
+      newValue = (e.target as HTMLInputElement).checked;
+    }
+
+    onUpdate({ ...query, [name]: newValue });
+  };
+
+  const onFieldChange = (field: string) => (e: ChangeEvent<HTMLInputElement>) => {
+    const { name, value, type } = e.target as HTMLInputElement;
+    let newValue: any = value;
+
+    if (type === 'number') {
+      newValue = Number(value);
+    }
+
+    onUpdate({ ...query, [field]: { ...(query as any)[field], [name]: newValue } });
+  };
+
+  const onEndPointChange = ({ value }: SelectableValue) => {
+    onUpdate({ ...query, stringInput: value });
+  };
+
+  const onStreamClientChange = onFieldChange('stream');
+  const onPulseWaveChange = onFieldChange('pulseWave');
+
+  const onCSVWaveChange = (csvWave?: CSVWave[]) => {
+    onUpdate({ ...query, csvWave });
+  };
+
+  const options = useMemo(
+    () =>
+      (scenarioList || [])
+        .map((item) => ({ label: item.name, value: item.id }))
+        .sort((a, b) => a.label.localeCompare(b.label)),
+    [scenarioList]
+  );
+  const showLabels = useMemo(() => showLabelsFor.includes(query.scenarioId), [query]);
+
+  if (loading) {
+    return null;
   }
-}
+
+  return (
+    <>
+      <InlineFieldRow aria-label={selectors.scenarioSelectContainer}>
+        <InlineField labelWidth={14} label="Scenario">
+          <Select
+            options={options}
+            value={options.find((item) => item.value === query.scenarioId)}
+            onChange={onScenarioChange}
+            width={32}
+          />
+        </InlineField>
+        {currentScenario?.stringInput && (
+          <InlineField label="String Input">
+            <Input
+              width={32}
+              id={`stringInput-${query.refId}`}
+              name="stringInput"
+              placeholder={query.stringInput}
+              value={query.stringInput}
+              onChange={onInputChange}
+            />
+          </InlineField>
+        )}
+        <InlineField label="Alias" labelWidth={14}>
+          <Input
+            width={32}
+            id={`alias-${query.refId}`}
+            type="text"
+            placeholder="optional"
+            pattern='[^<>&\\"]+'
+            name="alias"
+            value={query.alias}
+            onChange={onInputChange}
+          />
+        </InlineField>
+        {showLabels && (
+          <InlineField
+            label="Labels"
+            labelWidth={14}
+            tooltip={
+              <>
+                Set labels using a key=value syntax:
+                <br />
+                {`{ key = "value", key2 = "value" }`}
+                <br />
+                key=&quot;value&quot;, key2=&quot;value&quot;
+                <br />
+                key=value, key2=value
+                <br />
+              </>
+            }
+          >
+            <Input
+              width={32}
+              id={`labels-${query.refId}`}
+              name="labels"
+              onChange={onInputChange}
+              value={query?.labels}
+              placeholder="key=value, key2=value2"
+            />
+          </InlineField>
+        )}
+      </InlineFieldRow>
+
+      {scenarioId === 'random_walk' && <RandomWalkEditor onChange={onInputChange} query={query} />}
+      {scenarioId === 'streaming_client' && <StreamingClientEditor onChange={onStreamClientChange} query={query} />}
+      {scenarioId === 'live' && <GrafanaLiveEditor onChange={onUpdate} query={query} />}
+      {scenarioId === 'csv_file' && <CSVFileEditor onChange={onUpdate} query={query} />}
+      {scenarioId === 'csv_content' && <CSVContentEditor onChange={onUpdate} query={query} />}
+      {scenarioId === 'logs' && (
+        <InlineFieldRow>
+          <InlineField label="Lines" labelWidth={14}>
+            <Input
+              type="number"
+              name="lines"
+              value={query.lines}
+              width={32}
+              onChange={onInputChange}
+              placeholder="10"
+            />
+          </InlineField>
+          <InlineField label="Level" labelWidth={14}>
+            <InlineSwitch onChange={onInputChange} name="levelColumn" value={!!query.levelColumn} />
+          </InlineField>
+        </InlineFieldRow>
+      )}
+
+      {scenarioId === 'grafana_api' && (
+        <InlineField labelWidth={14} label="Endpoint">
+          <Select
+            options={endpoints}
+            onChange={onEndPointChange}
+            width={32}
+            value={endpoints.find((ep) => ep.value === query.stringInput)}
+          />
+        </InlineField>
+      )}
+
+      {scenarioId === 'arrow' && (
+        <InlineField grow>
+          <TextArea
+            name="stringInput"
+            value={query.stringInput}
+            rows={10}
+            placeholder="Copy base64 text data from query result"
+            onChange={onInputChange}
+          />
+        </InlineField>
+      )}
+
+      {scenarioId === 'predictable_pulse' && <PredictablePulseEditor onChange={onPulseWaveChange} query={query} />}
+      {scenarioId === 'predictable_csv_wave' && <CSVWavesEditor onChange={onCSVWaveChange} waves={query.csvWave} />}
+      {scenarioId === 'node_graph' && (
+        <NodeGraphEditor onChange={(val: NodesQuery) => onChange({ ...query, nodes: val })} query={query} />
+      )}
+    </>
+  );
+};

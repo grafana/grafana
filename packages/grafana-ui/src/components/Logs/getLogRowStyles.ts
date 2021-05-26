@@ -1,20 +1,10 @@
-import { css } from 'emotion';
-import { LogLevel } from '@grafana/data';
-
-import { GrafanaTheme } from '@grafana/data';
-import { selectThemeVariant } from '../../themes/selectThemeVariant';
-import { stylesFactory } from '../../themes';
+import { css } from '@emotion/css';
+import { GrafanaTheme, LogLevel } from '@grafana/data';
+import { styleMixins, stylesFactory } from '../../themes';
 
 export const getLogRowStyles = stylesFactory((theme: GrafanaTheme, logLevel?: LogLevel) => {
-  let logColor = selectThemeVariant({ light: theme.palette.gray5, dark: theme.palette.gray2 }, theme.type);
-  const borderColor = selectThemeVariant({ light: theme.palette.gray5, dark: theme.palette.gray2 }, theme.type);
-  const bgColor = selectThemeVariant({ light: theme.palette.gray5, dark: theme.palette.dark4 }, theme.type);
-  const context = css`
-    label: context;
-    visibility: hidden;
-    white-space: nowrap;
-    position: relative;
-  `;
+  let logColor = theme.isLight ? theme.palette.gray5 : theme.palette.gray2;
+  const hoverBgColor = styleMixins.hoverColor(theme.colors.panelBg, theme);
 
   switch (logLevel) {
     case LogLevel.crit:
@@ -58,19 +48,22 @@ export const getLogRowStyles = stylesFactory((theme: GrafanaTheme, logLevel?: Lo
       font-family: ${theme.typography.fontFamily.monospace};
       font-size: ${theme.typography.size.sm};
       width: 100%;
+      overflow: hidden;
     `,
-    logsRowsHorizontalScroll: css`
-      label: logs-rows__horizontal-scroll;
-      overflow: scroll;
+    context: css`
+      label: context;
+      visibility: hidden;
+      white-space: nowrap;
+      position: relative;
     `,
-    context: context,
     logsRow: css`
       label: logs-row;
       width: 100%;
       cursor: pointer;
       vertical-align: top;
+
       &:hover {
-        .${context} {
+        .log-row-context {
           visibility: visible;
           z-index: 1;
           margin-left: 10px;
@@ -80,6 +73,7 @@ export const getLogRowStyles = stylesFactory((theme: GrafanaTheme, logLevel?: Lo
           }
         }
       }
+
       td:last-child {
         width: 100%;
       }
@@ -92,7 +86,7 @@ export const getLogRowStyles = stylesFactory((theme: GrafanaTheme, logLevel?: Lo
       }
 
       &:hover {
-        background: ${theme.colors.bodyBg};
+        background: ${hoverBgColor};
       }
     `,
     logsRowDuplicates: css`
@@ -113,8 +107,12 @@ export const getLogRowStyles = stylesFactory((theme: GrafanaTheme, logLevel?: Lo
         top: 1px;
         bottom: 1px;
         width: 3px;
+        left: 4px;
         background-color: ${logColor};
       }
+    `,
+    logIconError: css`
+      color: ${theme.palette.red};
     `,
     logsRowToggleDetails: css`
       label: logs-row-toggle-details__level;
@@ -140,7 +138,7 @@ export const getLogRowStyles = stylesFactory((theme: GrafanaTheme, logLevel?: Lo
     //Log details specific CSS
     logDetailsContainer: css`
       label: logs-row-details-table;
-      border: 1px solid ${borderColor};
+      border: 1px solid ${theme.colors.border2};
       padding: 0 ${theme.spacing.sm} ${theme.spacing.sm};
       border-radius: 3px;
       margin: 20px 8px 20px 16px;
@@ -178,8 +176,9 @@ export const getLogRowStyles = stylesFactory((theme: GrafanaTheme, logLevel?: Lo
       position: relative;
       vertical-align: middle;
       cursor: default;
+
       &:hover {
-        background-color: ${bgColor};
+        background-color: ${hoverBgColor};
       }
     `,
   };

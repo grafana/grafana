@@ -52,7 +52,7 @@ describe('<TracePageSearchBar>', () => {
     it('renders buttons', () => {
       const buttons = wrapper.find('UIButton');
       expect(buttons.length).toBe(4);
-      buttons.forEach(button => {
+      buttons.forEach((button) => {
         expect(button.hasClass(getStyles().TracePageSearchBarBtn)).toBe(true);
         expect(button.hasClass(getStyles().TracePageSearchBarBtnDisabled)).toBe(false);
         expect(button.prop('disabled')).toBe(false);
@@ -82,7 +82,7 @@ describe('<TracePageSearchBar>', () => {
     it('renders buttons', () => {
       const buttons = wrapper.find('UIButton');
       expect(buttons.length).toBe(4);
-      buttons.forEach(button => {
+      buttons.forEach((button) => {
         expect(button.hasClass(getStyles().TracePageSearchBarBtn)).toBe(true);
         expect(button.hasClass(getStyles().TracePageSearchBarBtnDisabled)).toBe(true);
         expect(button.prop('disabled')).toBe(true);

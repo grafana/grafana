@@ -1,11 +1,19 @@
-import _ from 'lodash';
+import { once, chain, difference } from 'lodash';
 import LRU from 'lru-cache';
 import { Value } from 'slate';
 
 import { dateTime, HistoryItem, LanguageProvider } from '@grafana/data';
-import { CompletionItem, CompletionItemGroup, TypeaheadInput, TypeaheadOutput } from '@grafana/ui';
+import { CompletionItem, CompletionItemGroup, SearchFunctionType, TypeaheadInput, TypeaheadOutput } from '@grafana/ui';
 
-import { fixSummariesMetadata, parseSelector, processHistogramLabels, processLabels } from './language_utils';
+import {
+  addLimitInfo,
+  fixSummariesMetadata,
+  limitSuggestions,
+  parseSelector,
+  processHistogramLabels,
+  processLabels,
+  roundSecToMin,
+} from './language_utils';
 import PromqlSyntax, { FUNCTIONS, RATE_RANGES } from './promql';
 
 import { PrometheusDatasource } from './datasource';
@@ -15,7 +23,8 @@ const DEFAULT_KEYS = ['job', 'instance'];
 const EMPTY_SELECTOR = '{}';
 const HISTORY_ITEM_COUNT = 5;
 const HISTORY_COUNT_CUTOFF = 1000 * 60 * 60 * 24; // 24h
-export const DEFAULT_LOOKUP_METRICS_THRESHOLD = 10000; // number of metrics defining an installation that's too big
+// Max number of items (metrics, labels, values) that we display as suggestions. Prevents from running out of memory.
+export const SUGGESTIONS_LIMIT = 10000;
 
 const wrapLabel = (label: string): CompletionItem => ({ label });
 
@@ -26,7 +35,7 @@ const setFunctionKind = (suggestion: CompletionItem): CompletionItem => {
 
 export function addHistoryMetadata(item: CompletionItem, history: any[]): CompletionItem {
   const cutoffTs = Date.now() - HISTORY_COUNT_CUTOFF;
-  const historyForItem = history.filter(h => h.ts > cutoffTs && h.query === item.label);
+  const historyForItem = history.filter((h) => h.ts > cutoffTs && h.query === item.label);
   const count = historyForItem.length;
   const recent = historyForItem[0];
   let hint = `Queried ${count} times in the last 24h.`;
@@ -60,8 +69,8 @@ export default class PromQlLanguageProvider extends LanguageProvider {
   metricsMetadata?: PromMetricsMetadata;
   startTask: Promise<any>;
   datasource: PrometheusDatasource;
-  lookupMetricsThreshold: number;
-  lookupsDisabled: boolean; // Dynamically set to true for big/slow instances
+  labelKeys: string[];
+  labelFetchTs: number;
 
   /**
    *  Cache for labels of series. This is bit simplistic in the sense that it just counts responses each as a 1 and does
@@ -77,9 +86,6 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     this.histogramMetrics = [];
     this.timeRange = { start: 0, end: 0 };
     this.metrics = [];
-    // Disable lookups until we know the instance is small enough
-    this.lookupMetricsThreshold = DEFAULT_LOOKUP_METRICS_THRESHOLD;
-    this.lookupsDisabled = true;
 
     Object.assign(this, initialValues);
   }
@@ -88,19 +94,16 @@ export default class PromQlLanguageProvider extends LanguageProvider {
   cleanText(s: string) {
     const parts = s.split(PREFIX_DELIMITER_REGEX);
     const last = parts.pop()!;
-    return last
-      .trimLeft()
-      .replace(/"$/, '')
-      .replace(/^"/, '');
+    return last.trimLeft().replace(/"$/, '').replace(/^"/, '');
   }
 
   get syntax() {
     return PromqlSyntax;
   }
 
-  request = async (url: string, defaultValue: any): Promise<any> => {
+  request = async (url: string, defaultValue: any, params = {}): Promise<any> => {
     try {
-      const res = await this.datasource.metadataRequest(url);
+      const res = await this.datasource.metadataRequest(url, params);
       return res.data.data;
     } catch (error) {
       console.error(error);
@@ -114,13 +117,18 @@ export default class PromQlLanguageProvider extends LanguageProvider {
       return [];
     }
 
-    this.metrics = await this.request('/api/v1/label/__name__/values', []);
-    this.lookupsDisabled = this.metrics.length > this.lookupMetricsThreshold;
+    // TODO #33976: make those requests parallel
+    await this.fetchLabels();
+    this.metrics = await this.fetchLabelValues('__name__');
     this.metricsMetadata = fixSummariesMetadata(await this.request('/api/v1/metadata', {}));
     this.processHistogramMetrics(this.metrics);
 
     return [];
   };
+
+  getLabelKeys(): string[] {
+    return this.labelKeys;
+  }
 
   processHistogramMetrics = (data: string[]) => {
     const { values } = processHistogramLabels(data);
@@ -194,20 +202,20 @@ export default class PromQlLanguageProvider extends LanguageProvider {
 
   getEmptyCompletionItems = (context: { history: Array<HistoryItem<PromQuery>> }): TypeaheadOutput => {
     const { history } = context;
-    const suggestions = [];
+    const suggestions: CompletionItemGroup[] = [];
 
     if (history && history.length) {
-      const historyItems = _.chain(history)
-        .map(h => h.query.expr)
+      const historyItems = chain(history)
+        .map((h) => h.query.expr)
         .filter()
         .uniq()
         .take(HISTORY_ITEM_COUNT)
         .map(wrapLabel)
-        .map(item => addHistoryMetadata(item, history))
+        .map((item) => addHistoryMetadata(item, history))
         .value();
 
       suggestions.push({
-        prefixMatch: true,
+        searchFunctionType: SearchFunctionType.Prefix,
         skipSort: true,
         label: 'History',
         items: historyItems,
@@ -219,18 +227,20 @@ export default class PromQlLanguageProvider extends LanguageProvider {
 
   getTermCompletionItems = (): TypeaheadOutput => {
     const { metrics, metricsMetadata } = this;
-    const suggestions = [];
+    const suggestions: CompletionItemGroup[] = [];
 
     suggestions.push({
-      prefixMatch: true,
+      searchFunctionType: SearchFunctionType.Prefix,
       label: 'Functions',
       items: FUNCTIONS.map(setFunctionKind),
     });
 
     if (metrics && metrics.length) {
+      const limitInfo = addLimitInfo(metrics);
       suggestions.push({
-        label: 'Metrics',
-        items: metrics.map(m => addMetricsMetadata(m, metricsMetadata)),
+        label: `Metrics${limitInfo}`,
+        items: limitSuggestions(metrics).map((m) => addMetricsMetadata(m, metricsMetadata)),
+        searchFunctionType: SearchFunctionType.Fuzzy,
       });
     }
 
@@ -299,9 +309,15 @@ export default class PromQlLanguageProvider extends LanguageProvider {
 
     const selector = parseSelector(selectorString, selectorString.length - 2).selector;
 
-    const labelValues = await this.getLabelValues(selector);
-    if (labelValues) {
-      suggestions.push({ label: 'Labels', items: Object.keys(labelValues).map(wrapLabel) });
+    const series = await this.getSeries(selector);
+    const labelKeys = Object.keys(series);
+    if (labelKeys.length > 0) {
+      const limitInfo = addLimitInfo(labelKeys);
+      suggestions.push({
+        label: `Labels${limitInfo}`,
+        items: labelKeys.map(wrapLabel),
+        searchFunctionType: SearchFunctionType.Fuzzy,
+      });
     }
     return result;
   };
@@ -322,11 +338,11 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     const suffix = line.substr(cursorOffset);
     const prefix = line.substr(0, cursorOffset);
     const isValueStart = text.match(/^(=|=~|!=|!~)/);
-    const isValueEnd = suffix.match(/^"?[,}]/);
-    // detect cursor in front of value, e.g., {key=|"}
+    const isValueEnd = suffix.match(/^"?[,}]|$/);
+    // Detect cursor in front of value, e.g., {key=|"}
     const isPreValue = prefix.match(/(=|=~|!=|!~)$/) && suffix.match(/^"/);
 
-    // Don't suggestq anything at the beginning or inside a value
+    // Don't suggest anything at the beginning or inside a value
     const isValueEmpty = isValueStart && isValueEnd;
     const hasValuePrefix = isValueEnd && !isValueStart;
     if ((!isValueEmpty && !hasValuePrefix) || isPreValue) {
@@ -346,13 +362,13 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     const containsMetric = selector.includes('__name__=');
     const existingKeys = parsedSelector ? parsedSelector.labelKeys : [];
 
-    let labelValues;
+    let series: Record<string, string[]> = {};
     // Query labels for selector
     if (selector) {
-      labelValues = await this.getLabelValues(selector, !containsMetric);
+      series = await this.getSeries(selector, !containsMetric);
     }
 
-    if (!labelValues) {
+    if (Object.keys(series).length === 0) {
       console.warn(`Server did not return any values for selector = ${selector}`);
       return { suggestions };
     }
@@ -361,23 +377,30 @@ export default class PromQlLanguageProvider extends LanguageProvider {
 
     if ((text && isValueStart) || wrapperClasses.includes('attr-value')) {
       // Label values
-      if (labelKey && labelValues[labelKey]) {
+      if (labelKey && series[labelKey]) {
         context = 'context-label-values';
+        const limitInfo = addLimitInfo(series[labelKey]);
         suggestions.push({
-          label: `Label values for "${labelKey}"`,
-          items: labelValues[labelKey].map(wrapLabel),
+          label: `Label values for "${labelKey}"${limitInfo}`,
+          items: series[labelKey].map(wrapLabel),
+          searchFunctionType: SearchFunctionType.Fuzzy,
         });
       }
     } else {
       // Label keys
-      const labelKeys = labelValues ? Object.keys(labelValues) : containsMetric ? null : DEFAULT_KEYS;
+      const labelKeys = series ? Object.keys(series) : containsMetric ? null : DEFAULT_KEYS;
 
       if (labelKeys) {
-        const possibleKeys = _.difference(labelKeys, existingKeys);
+        const possibleKeys = difference(labelKeys, existingKeys);
         if (possibleKeys.length) {
           context = 'context-labels';
-          const newItems = possibleKeys.map(key => ({ label: key }));
-          const newSuggestion: CompletionItemGroup = { label: `Labels`, items: newItems };
+          const newItems = possibleKeys.map((key) => ({ label: key }));
+          const limitInfo = addLimitInfo(newItems);
+          const newSuggestion: CompletionItemGroup = {
+            label: `Labels${limitInfo}`,
+            items: newItems,
+            searchFunctionType: SearchFunctionType.Fuzzy,
+          };
           suggestions.push(newSuggestion);
         }
       }
@@ -386,30 +409,47 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     return { context, suggestions };
   };
 
-  async getLabelValues(selector: string, withName?: boolean) {
-    if (this.lookupsDisabled) {
-      return undefined;
+  async getSeries(selector: string, withName?: boolean): Promise<Record<string, string[]>> {
+    if (this.datasource.lookupsDisabled) {
+      return {};
     }
     try {
       if (selector === EMPTY_SELECTOR) {
-        return await this.fetchDefaultLabels();
+        return await this.fetchDefaultSeries();
       } else {
         return await this.fetchSeriesLabels(selector, withName);
       }
     } catch (error) {
       // TODO: better error handling
       console.error(error);
-      return undefined;
+      return {};
     }
   }
 
-  fetchLabelValues = async (key: string): Promise<Record<string, string[]>> => {
-    const data = await this.request(`/api/v1/label/${key}/values`, []);
-    return { [key]: data };
+  fetchLabelValues = async (key: string): Promise<string[]> => {
+    const params = this.datasource.getTimeRangeParams();
+    const url = `/api/v1/label/${key}/values`;
+    return await this.request(url, [], params);
   };
 
-  roundToMinutes(seconds: number): number {
-    return Math.floor(seconds / 60);
+  async getLabelValues(key: string): Promise<string[]> {
+    return await this.fetchLabelValues(key);
+  }
+
+  /**
+   * Fetches all label keys
+   */
+  async fetchLabels(): Promise<string[]> {
+    const url = '/api/v1/labels';
+    const params = this.datasource.getTimeRangeParams();
+    this.labelFetchTs = Date.now().valueOf();
+
+    const res = await this.request(url, [], params);
+    if (Array.isArray(res)) {
+      this.labelKeys = res.slice().sort();
+    }
+
+    return [];
   }
 
   /**
@@ -419,24 +459,27 @@ export default class PromQlLanguageProvider extends LanguageProvider {
    * @param withName
    */
   fetchSeriesLabels = async (name: string, withName?: boolean): Promise<Record<string, string[]>> => {
-    const tRange = this.datasource.getTimeRange();
-    const params = new URLSearchParams({
+    const range = this.datasource.getTimeRangeParams();
+    const urlParams = {
+      ...range,
       'match[]': name,
-      start: tRange['start'].toString(),
-      end: tRange['end'].toString(),
-    });
-    const url = `/api/v1/series?${params.toString()}`;
+    };
+    const url = `/api/v1/series`;
     // Cache key is a bit different here. We add the `withName` param and also round up to a minute the intervals.
     // The rounding may seem strange but makes relative intervals like now-1h less prone to need separate request every
     // millisecond while still actually getting all the keys for the correct interval. This still can create problems
     // when user does not the newest values for a minute if already cached.
-    params.set('start', this.roundToMinutes(tRange['start']).toString());
-    params.set('end', this.roundToMinutes(tRange['end']).toString());
-    params.append('withName', withName ? 'true' : 'false');
-    const cacheKey = `/api/v1/series?${params.toString()}`;
+    const cacheParams = new URLSearchParams({
+      'match[]': name,
+      start: roundSecToMin(parseInt(range.start, 10)).toString(),
+      end: roundSecToMin(parseInt(range.end, 10)).toString(),
+      withName: withName ? 'true' : 'false',
+    });
+
+    const cacheKey = `/api/v1/series?${cacheParams.toString()}`;
     let value = this.labelsCache.get(cacheKey);
     if (!value) {
-      const data = await this.request(url, []);
+      const data = await this.request(url, [], urlParams);
       const { values } = processLabels(data, withName);
       value = values;
       this.labelsCache.set(cacheKey, value);
@@ -445,12 +488,23 @@ export default class PromQlLanguageProvider extends LanguageProvider {
   };
 
   /**
+   * Fetch series for a selector. Use this for raw results. Use fetchSeriesLabels() to get labels.
+   * @param match
+   */
+  fetchSeries = async (match: string): Promise<Array<Record<string, string>>> => {
+    const url = '/api/v1/series';
+    const range = this.datasource.getTimeRangeParams();
+    const params = { ...range, match };
+    return await this.request(url, {}, params);
+  };
+
+  /**
    * Fetch this only one as we assume this won't change over time. This is cached differently from fetchSeriesLabels
    * because we can cache more aggressively here and also we do not want to invalidate this cache the same way as in
    * fetchSeriesLabels.
    */
-  fetchDefaultLabels = _.once(async () => {
-    const values = await Promise.all(DEFAULT_KEYS.map(key => this.fetchLabelValues(key)));
-    return values.reduce((acc, value) => ({ ...acc, ...value }), {});
+  fetchDefaultSeries = once(async () => {
+    const values = await Promise.all(DEFAULT_KEYS.map((key) => this.fetchLabelValues(key)));
+    return DEFAULT_KEYS.reduce((acc, key, i) => ({ ...acc, [key]: values[i] }), {});
   });
 }

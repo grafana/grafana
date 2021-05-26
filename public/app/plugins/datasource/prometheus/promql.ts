@@ -1,14 +1,17 @@
+import { Grammar } from 'prismjs';
 import { CompletionItem } from '@grafana/ui';
 
+// When changing RATE_RANGES, check if Loki/LogQL ranges should be changed too
+// @see public/app/plugins/datasource/loki/language_provider.ts
 export const RATE_RANGES: CompletionItem[] = [
-  { label: '$__interval', sortText: '$__interval' },
-  { label: '$__rate_interval', sortText: '$__rate_interval' },
-  { label: '1m', sortText: '00:01:00' },
-  { label: '5m', sortText: '00:05:00' },
-  { label: '10m', sortText: '00:10:00' },
-  { label: '30m', sortText: '00:30:00' },
-  { label: '1h', sortText: '01:00:00' },
-  { label: '1d', sortText: '24:00:00' },
+  { label: '$__interval', sortValue: '$__interval' },
+  { label: '$__rate_interval', sortValue: '$__rate_interval' },
+  { label: '1m', sortValue: '00:01:00' },
+  { label: '5m', sortValue: '00:05:00' },
+  { label: '10m', sortValue: '00:10:00' },
+  { label: '30m', sortValue: '00:30:00' },
+  { label: '1h', sortValue: '01:00:00' },
+  { label: '1d', sortValue: '24:00:00' },
 ];
 
 export const OPERATORS = ['by', 'group_left', 'group_right', 'ignoring', 'on', 'offset', 'without'];
@@ -376,7 +379,7 @@ export const FUNCTIONS = [
   },
 ];
 
-const tokenizer = {
+const tokenizer: Grammar = {
   comment: {
     pattern: /#.*/,
   },
@@ -392,7 +395,7 @@ const tokenizer = {
     },
   },
   'context-labels': {
-    pattern: /\{[^}]*(?=})/,
+    pattern: /\{[^}]*(?=}?)/,
     greedy: true,
     inside: {
       comment: {
@@ -411,7 +414,7 @@ const tokenizer = {
       punctuation: /[{]/,
     },
   },
-  function: new RegExp(`\\b(?:${FUNCTIONS.map(f => f.label).join('|')})(?=\\s*\\()`, 'i'),
+  function: new RegExp(`\\b(?:${FUNCTIONS.map((f) => f.label).join('|')})(?=\\s*\\()`, 'i'),
   'context-range': [
     {
       pattern: /\[[^\]]*(?=])/, // [1m]

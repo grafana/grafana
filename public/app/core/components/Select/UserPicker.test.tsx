@@ -1,6 +1,5 @@
 import React from 'react';
-// @ts-ignore
-import renderer from 'react-test-renderer';
+import { render, screen } from '@testing-library/react';
 import { UserPicker } from './UserPicker';
 
 jest.mock('@grafana/runtime', () => ({
@@ -9,7 +8,7 @@ jest.mock('@grafana/runtime', () => ({
 
 describe('UserPicker', () => {
   it('renders correctly', () => {
-    const tree = renderer.create(<UserPicker onSelected={() => {}} />).toJSON();
-    expect(tree).toMatchSnapshot();
+    render(<UserPicker onSelected={() => {}} />);
+    expect(screen.getByTestId('userPicker')).toBeInTheDocument();
   });
 });

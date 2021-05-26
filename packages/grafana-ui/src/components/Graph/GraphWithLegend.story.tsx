@@ -1,16 +1,32 @@
 import React from 'react';
 
-import { select, text } from '@storybook/addon-knobs';
+import { Story } from '@storybook/react';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { GraphWithLegend, GraphWithLegendProps } from './GraphWithLegend';
-
-import { LegendPlacement, LegendDisplayMode } from '../Legend/Legend';
-import { GraphSeriesXY, FieldType, ArrayVector, dateTime, FieldColorMode } from '@grafana/data';
+import { LegendDisplayMode } from '../VizLegend/models.gen';
+import { GraphSeriesXY, FieldType, ArrayVector, dateTime, FieldColorModeId } from '@grafana/data';
 
 export default {
-  title: 'Visualizations/Graph',
+  title: 'Visualizations/Graph/GraphWithLegend',
   component: GraphWithLegend,
   decorator: [withCenteredStory],
+  parameters: {
+    knobs: {
+      disable: true,
+    },
+    controls: {
+      exclude: ['className', 'series', 'timeRange', 'ariaLabel', 'legendDisplayMode'],
+    },
+  },
+  argTypes: {
+    displayMode: { control: { type: 'radio', options: ['table', 'list', 'hidden'] } },
+    placement: { control: { type: 'radio', options: ['bottom', 'right'] } },
+    rightAxisSeries: { name: 'Right y-axis series, i.e. A,C' },
+    timeZone: { control: { type: 'radio', options: ['browser', 'utc'] } },
+    width: { control: { type: 'range', min: 200, max: 800 } },
+    height: { control: { type: 'range', min: 200, max: 800 } },
+    lineWidth: { control: { type: 'range', min: 1, max: 10 } },
+  },
 };
 
 const series: GraphSeriesXY[] = [
@@ -36,7 +52,7 @@ const series: GraphSeriesXY[] = [
       values: new ArrayVector([10, 20, 10]),
       config: {
         color: {
-          mode: FieldColorMode.Fixed,
+          mode: FieldColorModeId.Fixed,
           fixedColor: 'red',
         },
       },
@@ -68,7 +84,7 @@ const series: GraphSeriesXY[] = [
       values: new ArrayVector([20, 30, 40]),
       config: {
         color: {
-          mode: FieldColorMode.Fixed,
+          mode: FieldColorModeId.Fixed,
           fixedColor: 'blue',
         },
       },
@@ -80,41 +96,18 @@ const series: GraphSeriesXY[] = [
   },
 ];
 
-const getStoriesKnobs = () => {
-  const rightAxisSeries = text('Right y-axis series, i.e. A,C', '');
+interface StoryProps extends GraphWithLegendProps {
+  rightAxisSeries: string;
+  displayMode: string;
+}
 
-  const legendPlacement = select<LegendPlacement>(
-    'Legend placement',
-    {
-      under: 'under',
-      right: 'right',
-    },
-    'under'
-  );
-  const renderLegendAsTable = select<any>(
-    'Render legend as',
-    {
-      list: false,
-      table: true,
-    },
-    false
-  );
-
-  return {
-    rightAxisSeries,
-    legendPlacement,
-    renderLegendAsTable,
-  };
-};
-
-export const graphWithLegend = () => {
-  const { legendPlacement, rightAxisSeries, renderLegendAsTable } = getStoriesKnobs();
-  const props: GraphWithLegendProps = {
-    series: series.map(s => {
+export const WithLegend: Story<StoryProps> = ({ rightAxisSeries, displayMode, legendDisplayMode, ...args }) => {
+  const props: Partial<GraphWithLegendProps> = {
+    series: series.map((s) => {
       if (
         rightAxisSeries
           .split(',')
-          .map(s => s.trim())
+          .map((s) => s.trim())
           .indexOf(s.label.split('-')[0]) > -1
       ) {
         s.yAxis = { index: 2 };
@@ -123,22 +116,36 @@ export const graphWithLegend = () => {
       }
       return s;
     }),
-    displayMode: renderLegendAsTable ? LegendDisplayMode.Table : LegendDisplayMode.List,
-    isLegendVisible: true,
-    onToggleSort: () => {},
-    timeRange: {
-      from: dateTime(1546372800000),
-      to: dateTime(1546380000000),
-      raw: {
-        from: dateTime(1546372800000),
-        to: dateTime(1546380000000),
-      },
-    },
-    timeZone: 'browser',
-    width: 600,
-    height: 300,
-    placement: legendPlacement,
   };
 
-  return <GraphWithLegend {...props} />;
+  return (
+    <GraphWithLegend
+      legendDisplayMode={
+        displayMode === 'hidden'
+          ? LegendDisplayMode.Hidden
+          : displayMode === 'table'
+          ? LegendDisplayMode.Table
+          : LegendDisplayMode.List
+      }
+      {...props}
+      {...args}
+    />
+  );
+};
+WithLegend.args = {
+  rightAxisSeries: '',
+  displayMode: 'list',
+  onToggleSort: () => {},
+  timeRange: {
+    from: dateTime(1546372800000),
+    to: dateTime(1546380000000),
+    raw: {
+      from: dateTime(1546372800000),
+      to: dateTime(1546380000000),
+    },
+  },
+  timeZone: 'browser',
+  width: 600,
+  height: 300,
+  placement: 'bottom',
 };

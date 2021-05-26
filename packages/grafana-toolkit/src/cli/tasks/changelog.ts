@@ -1,8 +1,6 @@
-// @ts-ignore
-import * as _ from 'lodash';
-import { Task, TaskRunner } from './task';
+import { difference, sortBy } from 'lodash';
+import { Task } from './task';
 import GithubClient from '../utils/githubClient';
-import difference from 'lodash/difference';
 import chalk from 'chalk';
 import { useSpinner } from '../utils/useSpinner';
 
@@ -26,8 +24,8 @@ const getPackageChangelog = (packageName: string, issues: any[]) => {
   }
 
   let markdown = chalk.bold.yellow(`\n\n/*** ${packageName} changelog  ***/\n\n`);
-  const bugs = _.sortBy(issues.filter(filterBugs), 'title');
-  const notBugs = _.sortBy(difference(issues, bugs), 'title');
+  const bugs = sortBy(issues.filter(filterBugs), 'title');
+  const notBugs = sortBy(difference(issues, bugs), 'title');
 
   if (notBugs.length > 0) {
     markdown += '### Features / Enhancements\n';
@@ -46,9 +44,8 @@ const getPackageChangelog = (packageName: string, issues: any[]) => {
   return markdown;
 };
 
-const changelogTaskRunner: TaskRunner<ChangelogOptions> = useSpinner<ChangelogOptions>(
-  'Generating changelog',
-  async ({ milestone }) => {
+const changelogTaskRunner = ({ milestone }: ChangelogOptions) =>
+  useSpinner('Generating changelog', async () => {
     const githubClient = new GithubClient();
     const client = githubClient.client;
 
@@ -90,7 +87,7 @@ const changelogTaskRunner: TaskRunner<ChangelogOptions> = useSpinner<ChangelogOp
         mergedIssues.push(item);
       }
     }
-    const issues = _.sortBy(mergedIssues, 'title');
+    const issues = sortBy(mergedIssues, 'title');
 
     const toolkitIssues = issues.filter((item: any) =>
       item.labels.find((label: any) => label.name === 'area/grafana/toolkit')
@@ -106,8 +103,7 @@ const changelogTaskRunner: TaskRunner<ChangelogOptions> = useSpinner<ChangelogOp
     markdown += getPackageChangelog('grafana-ui', grafanaUiIssues);
 
     console.log(markdown);
-  }
-);
+  });
 
 function getMarkdownLineForIssue(item: any) {
   const githubGrafanaUrl = 'https://github.com/grafana/grafana';

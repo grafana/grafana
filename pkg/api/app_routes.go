@@ -31,7 +31,7 @@ func (hs *HTTPServer) initAppPluginRoutes(r *macaron.Macaron) {
 		TLSHandshakeTimeout: 10 * time.Second,
 	}
 
-	for _, plugin := range plugins.Apps {
+	for _, plugin := range hs.PluginManager.Apps() {
 		for _, route := range plugin.Routes {
 			url := util.JoinURLFragments("/api/plugin-proxy/"+plugin.Id, route.Path)
 			handlers := make([]macaron.Handler, 0)

@@ -1,46 +1,60 @@
-import React, { FC } from 'react';
-import { formattedValueToString, LinkModel } from '@grafana/data';
+import React, { FC, ReactElement } from 'react';
+import { DisplayValue, Field, formattedValueToString } from '@grafana/data';
 
-import { TableCellProps } from './types';
+import { TableCellDisplayMode, TableCellProps } from './types';
+import tinycolor from 'tinycolor2';
+import { TableStyles } from './styles';
+import { FilterActions } from './FilterActions';
+import { getTextColorForBackground } from '../../utils';
 
-export const DefaultCell: FC<TableCellProps> = props => {
-  const { field, cell, tableStyles, row } = props;
-  let link: LinkModel<any> | undefined;
+export const DefaultCell: FC<TableCellProps> = (props) => {
+  const { field, cell, tableStyles, cellProps } = props;
 
-  const displayValue = field.display ? field.display(cell.value) : cell.value;
+  const displayValue = field.display!(cell.value);
 
-  if (field.getLinks) {
-    link = field.getLinks({
-      valueRowIndex: row.index,
-    })[0];
+  let value: string | ReactElement;
+  if (React.isValidElement(cell.value)) {
+    value = cell.value;
+  } else {
+    value = formattedValueToString(displayValue);
   }
-  const value = field.display ? formattedValueToString(displayValue) : `${displayValue}`;
 
-  if (!link) {
-    return <div className={tableStyles.tableCell}>{value}</div>;
-  }
+  const cellStyle = getCellStyle(tableStyles, field, displayValue);
+  const showFilters = field.config.filterable;
 
   return (
-    <div className={tableStyles.tableCell}>
-      <a
-        href={link.href}
-        onClick={
-          link.onClick
-            ? event => {
-                // Allow opening in new tab
-                if (!(event.ctrlKey || event.metaKey || event.shiftKey) && link!.onClick) {
-                  event.preventDefault();
-                  link!.onClick(event);
-                }
-              }
-            : undefined
-        }
-        target={link.target}
-        title={link.title}
-        className={tableStyles.tableCellLink}
-      >
-        {value}
-      </a>
+    <div {...cellProps} className={cellStyle}>
+      <div className={tableStyles.cellText}>{value}</div>
+      {showFilters && cell.value !== undefined && <FilterActions {...props} />}
     </div>
   );
 };
+
+function getCellStyle(tableStyles: TableStyles, field: Field, displayValue: DisplayValue) {
+  if (field.config.custom?.displayMode === TableCellDisplayMode.ColorText) {
+    return tableStyles.buildCellContainerStyle(displayValue.color);
+  }
+
+  if (field.config.custom?.displayMode === TableCellDisplayMode.ColorBackgroundSolid) {
+    const bgColor = tinycolor(displayValue.color);
+    const textColor = getTextColorForBackground(displayValue.color!);
+    return tableStyles.buildCellContainerStyle(textColor, bgColor.toRgbString());
+  }
+
+  if (field.config.custom?.displayMode === TableCellDisplayMode.ColorBackground) {
+    const themeFactor = tableStyles.theme.isDark ? 1 : -0.7;
+    const bgColor2 = tinycolor(displayValue.color)
+      .darken(10 * themeFactor)
+      .spin(5)
+      .toRgbString();
+
+    const textColor = getTextColorForBackground(displayValue.color!);
+
+    return tableStyles.buildCellContainerStyle(
+      textColor,
+      `linear-gradient(120deg, ${bgColor2}, ${displayValue.color})`
+    );
+  }
+
+  return tableStyles.cellContainer;
+}

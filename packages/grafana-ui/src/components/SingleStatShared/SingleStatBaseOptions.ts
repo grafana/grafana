@@ -1,5 +1,4 @@
-import cloneDeep from 'lodash/cloneDeep';
-import omit from 'lodash/omit';
+import { cloneDeep, isNumber, omit } from 'lodash';
 
 import {
   fieldReducers,
@@ -15,10 +14,11 @@ import {
   ThresholdsMode,
   ThresholdsConfig,
   validateFieldConfig,
-  FieldColorMode,
+  FieldColorModeId,
 } from '@grafana/data';
+import { OptionsWithTextFormatting } from '../../options';
 
-export interface SingleStatBaseOptions {
+export interface SingleStatBaseOptions extends OptionsWithTextFormatting {
   reduceOptions: ReduceDataOptions;
   orientation: VizOrientation;
 }
@@ -174,7 +174,7 @@ export function sharedSingleStatMigrationHandler(panel: PanelModel<SingleStatBas
     const { defaults } = fieldOptions;
     if (defaults.color && typeof defaults.color === 'string') {
       defaults.color = {
-        mode: FieldColorMode.Fixed,
+        mode: FieldColorModeId.Fixed,
         fixedColor: defaults.color,
       };
     }
@@ -212,6 +212,27 @@ export function sharedSingleStatMigrationHandler(panel: PanelModel<SingleStatBas
     if (oldTitle !== undefined && oldTitle !== null) {
       panel.fieldConfig.defaults.displayName = oldTitle;
       delete (panel.fieldConfig.defaults as any).title;
+    }
+  }
+
+  if (previousVersion < 8.0) {
+    // Explicit min/max was removed for percent/percentunit in 8.0
+    const config = panel.fieldConfig?.defaults;
+    let unit = config?.unit;
+    if (unit === 'percent') {
+      if (!isNumber(config.min)) {
+        config.min = 0;
+      }
+      if (!isNumber(config.max)) {
+        config.max = 100;
+      }
+    } else if (unit === 'percentunit') {
+      if (!isNumber(config.min)) {
+        config.min = 0;
+      }
+      if (!isNumber(config.max)) {
+        config.max = 1;
+      }
     }
   }
 
@@ -291,7 +312,7 @@ export function migrateOldThresholds(thresholds?: any[]): Threshold[] | undefine
   if (!thresholds || !thresholds.length) {
     return undefined;
   }
-  const copy = thresholds.map(t => {
+  const copy = thresholds.map((t) => {
     return {
       // Drops 'index'
       value: t.value === null ? -Infinity : t.value,

@@ -8,14 +8,14 @@ import store from 'app/core/store';
 import { RICH_HISTORY_SETTING_KEYS } from 'app/core/utils/richHistory';
 
 // Types
-import { StoreState } from 'app/types';
+import { ExploreItemState, StoreState } from 'app/types';
 import { ExploreId, RichHistoryQuery } from 'app/types/explore';
 
 // Components, enums
 import { RichHistory, Tabs } from './RichHistory';
 
 //Actions
-import { deleteRichHistory } from '../state/actions';
+import { deleteRichHistory } from '../state/history';
 import { ExploreDrawer } from '../ExploreDrawer';
 
 export interface Props {

@@ -1,4 +1,4 @@
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 import React, { PureComponent } from 'react';
 import { MetadataInspectorProps, rangeUtil } from '@grafana/data';
 import { GraphiteDatasource } from './datasource';
@@ -115,7 +115,7 @@ export class MetricTankMetaInspector extends PureComponent<Props, State> {
     return (
       <div>
         <h2 className="page-heading">Metrictank Lineage</h2>
-        {Object.keys(seriesMetas).map(key => this.renderMeta(seriesMetas[key], key))}
+        {Object.keys(seriesMetas).map((key) => this.renderMeta(seriesMetas[key], key))}
       </div>
     );
   }

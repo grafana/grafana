@@ -1,10 +1,11 @@
 import { Field, FieldType } from '../types/dataFrame';
 import { Vector } from '../types/vector';
 import { dateTime } from '../datetime';
-import isNumber from 'lodash/isNumber';
+import { isNumber } from 'lodash';
 
 type IndexComparer = (a: number, b: number) => number;
 
+/** @public */
 export const fieldIndexComparer = (field: Field, reverse = false): IndexComparer => {
   const values = field.values;
 
@@ -22,6 +23,7 @@ export const fieldIndexComparer = (field: Field, reverse = false): IndexComparer
   }
 };
 
+/** @public */
 export const timeComparer = (a: any, b: any): number => {
   if (!a || !b) {
     return falsyComparer(a, b);
@@ -42,10 +44,12 @@ export const timeComparer = (a: any, b: any): number => {
   return 0;
 };
 
+/** @public */
 export const numericComparer = (a: number, b: number): number => {
   return a - b;
 };
 
+/** @public */
 export const stringComparer = (a: string, b: string): number => {
   if (!a || !b) {
     return falsyComparer(a, b);

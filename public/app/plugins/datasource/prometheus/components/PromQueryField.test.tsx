@@ -1,12 +1,11 @@
-import { mount } from 'enzyme';
 // @ts-ignore
 import RCCascader from 'rc-cascader';
 import React from 'react';
-import PromQlLanguageProvider, { DEFAULT_LOOKUP_METRICS_THRESHOLD } from '../language_provider';
-import PromQueryField, { groupMetricsByPrefix, RECORDING_RULES_GROUP } from './PromQueryField';
-import { ButtonCascader } from '@grafana/ui';
+import PromQlLanguageProvider from '../language_provider';
+import PromQueryField from './PromQueryField';
 import { DataSourceInstanceSettings } from '@grafana/data';
 import { PromOptions } from '../types';
+import { render, screen } from '@testing-library/react';
 
 describe('PromQueryField', () => {
   beforeAll(() => {
@@ -18,10 +17,13 @@ describe('PromQueryField', () => {
     const datasource = ({
       languageProvider: {
         start: () => Promise.resolve([]),
+        syntax: () => {},
+        getLabelKeys: () => [],
+        metrics: [],
       },
     } as unknown) as DataSourceInstanceSettings<PromOptions>;
 
-    const queryField = mount(
+    const queryField = render(
       <PromQueryField
         // @ts-ignore
         datasource={datasource}
@@ -32,14 +34,22 @@ describe('PromQueryField', () => {
       />
     );
 
-    expect(queryField.find(ButtonCascader).length).toBe(1);
+    expect(queryField.getAllByRole('button')).toHaveLength(1);
   });
 
   it('renders a disabled metrics chooser if lookups are disabled in datasource settings', () => {
-    const queryField = mount(
+    const datasource = ({
+      languageProvider: {
+        start: () => Promise.resolve([]),
+        syntax: () => {},
+        getLabelKeys: () => [],
+        metrics: [],
+      },
+    } as unknown) as DataSourceInstanceSettings<PromOptions>;
+    const queryField = render(
       <PromQueryField
         // @ts-ignore
-        datasource={{ lookupsDisabled: true }}
+        datasource={{ ...datasource, lookupsDisabled: true }}
         query={{ expr: '', refId: '' }}
         onRunQuery={() => {}}
         onChange={() => {}}
@@ -47,116 +57,56 @@ describe('PromQueryField', () => {
       />
     );
 
-    expect(
-      queryField
-        .find(ButtonCascader)
-        .find('button')
-        .props().disabled
-    ).toBe(true);
+    const bcButton = queryField.getByRole('button');
+    expect(bcButton).toBeDisabled();
   });
 
   it('refreshes metrics when the data source changes', async () => {
+    const defaultProps = {
+      query: { expr: '', refId: '' },
+      onRunQuery: () => {},
+      onChange: () => {},
+      history: [],
+    };
     const metrics = ['foo', 'bar'];
-    const languageProvider = ({
-      histogramMetrics: [] as any,
-      metrics,
-      metricsMetadata: {},
-      lookupsDisabled: false,
-      lookupMetricsThreshold: DEFAULT_LOOKUP_METRICS_THRESHOLD,
-      start: () => {
-        return Promise.resolve([]);
-      },
-    } as unknown) as PromQlLanguageProvider;
-
-    const queryField = mount(
+    const queryField = render(
       <PromQueryField
         // @ts-ignore
         datasource={{
-          languageProvider,
+          languageProvider: makeLanguageProvider({ metrics: [metrics] }),
         }}
-        query={{ expr: '', refId: '' }}
-        onRunQuery={() => {}}
-        onChange={() => {}}
-        history={[]}
+        {...defaultProps}
       />
     );
-    await Promise.resolve();
-
-    const cascader = queryField.find<RCCascader>(RCCascader);
-    cascader.simulate('click');
-    const cascaderNode: HTMLElement = cascader.instance().getPopupDOMNode();
-
-    for (const item of Array.from(cascaderNode.getElementsByTagName('li'))) {
-      expect(metrics.includes(item.innerHTML)).toBe(true);
-    }
 
     const changedMetrics = ['baz', 'moo'];
-    queryField.setProps({
-      datasource: {
-        languageProvider: {
-          ...languageProvider,
-          metrics: changedMetrics,
-        },
-      },
-    });
-    await Promise.resolve();
+    queryField.rerender(
+      <PromQueryField
+        // @ts-ignore
+        datasource={{
+          languageProvider: makeLanguageProvider({ metrics: [changedMetrics] }),
+        }}
+        {...defaultProps}
+      />
+    );
 
-    for (const item of Array.from(cascaderNode.getElementsByTagName('li'))) {
-      expect(changedMetrics.includes(item.innerHTML)).toBe(true);
-    }
+    // If we check the label browser right away it should be in loading state
+    let labelBrowser = screen.getByRole('button');
+    expect(labelBrowser.textContent).toContain('Loading');
   });
 });
 
-describe('groupMetricsByPrefix()', () => {
-  it('returns an empty group for no metrics', () => {
-    expect(groupMetricsByPrefix([])).toEqual([]);
-  });
-
-  it('returns options grouped by prefix', () => {
-    expect(groupMetricsByPrefix(['foo_metric'])).toMatchObject([
-      {
-        value: 'foo',
-        children: [
-          {
-            value: 'foo_metric',
-          },
-        ],
-      },
-    ]);
-  });
-
-  it('returns options grouped by prefix with metadata', () => {
-    expect(groupMetricsByPrefix(['foo_metric'], { foo_metric: [{ type: 'TYPE', help: 'my help' }] })).toMatchObject([
-      {
-        value: 'foo',
-        children: [
-          {
-            value: 'foo_metric',
-            title: 'foo_metric\nTYPE\nmy help',
-          },
-        ],
-      },
-    ]);
-  });
-
-  it('returns options without prefix as toplevel option', () => {
-    expect(groupMetricsByPrefix(['metric'])).toMatchObject([
-      {
-        value: 'metric',
-      },
-    ]);
-  });
-
-  it('returns recording rules grouped separately', () => {
-    expect(groupMetricsByPrefix([':foo_metric:'])).toMatchObject([
-      {
-        value: RECORDING_RULES_GROUP,
-        children: [
-          {
-            value: ':foo_metric:',
-          },
-        ],
-      },
-    ]);
-  });
-});
+function makeLanguageProvider(options: { metrics: string[][] }) {
+  const metricsStack = [...options.metrics];
+  return ({
+    histogramMetrics: [] as any,
+    metrics: [],
+    metricsMetadata: {},
+    lookupsDisabled: false,
+    getLabelKeys: () => [],
+    start() {
+      this.metrics = metricsStack.shift();
+      return Promise.resolve([]);
+    },
+  } as any) as PromQlLanguageProvider;
+}

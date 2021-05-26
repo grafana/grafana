@@ -13,8 +13,8 @@ const getStylesheetPaths = (root: string = process.cwd()) => {
 export const getStylesheetEntries = (root: string = process.cwd()) => {
   const stylesheetsPaths = getStylesheetPaths(root);
   const entries: { [key: string]: string } = {};
-  supportedExtensions.forEach(e => {
-    stylesheetsPaths.forEach(p => {
+  supportedExtensions.forEach((e) => {
+    stylesheetsPaths.forEach((p) => {
       const entryName = p.split('/').slice(-1)[0];
       if (fs.existsSync(`${p}.${e}`)) {
         if (entries[entryName]) {
@@ -46,7 +46,7 @@ export const hasThemeStylesheets = (root: string = process.cwd()) => {
     }
   }, true);
 
-  const hasMissingStylesheets = stylesheetsSummary.filter(s => s).length === 1;
+  const hasMissingStylesheets = stylesheetsSummary.filter((s) => s).length === 1;
 
   // seems like there is one theme file defined only
   if (result === false && hasMissingStylesheets) {

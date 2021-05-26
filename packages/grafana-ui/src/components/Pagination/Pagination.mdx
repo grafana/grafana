@@ -1,8 +1,21 @@
 import { Meta, Story, Preview, Props } from '@storybook/addon-docs/blocks';
 import { Pagination } from './Pagination';
 
-# Pagination
-
 <Meta title="MDX|Pagination" component={Pagination} />
 
-<Props of={Pagination}/>
+# Pagination
+Component used for rendering a page selector below paginated content.
+
+### Usage
+
+```tsx
+<div>
+  <div>
+    Page 1 content
+  </div>
+  <Pagination currentPage={1} numberOfPages={5} onNavigate={() => fetchPage(2)} />
+</div>
+```
+
+
+<Props of={Pagination} />

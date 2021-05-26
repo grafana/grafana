@@ -9,7 +9,7 @@ var fs = require('fs');
 // @ts-ignore
 // import execa = require('execa');
 var githubClient_1 = tslib_1.__importDefault(require('./githubClient'));
-var resolveContentType = function(extension) {
+var resolveContentType = function (extension) {
   if (extension.startsWith('.')) {
     extension = extension.substr(1);
   }
@@ -24,7 +24,7 @@ var resolveContentType = function(extension) {
       return 'application/octet-stream';
   }
 };
-var GitHubRelease = /** @class */ (function() {
+var GitHubRelease = /** @class */ (function () {
   function GitHubRelease(token, username, repository, releaseNotes, commitHash) {
     this.token = token;
     this.username = username;
@@ -36,14 +36,14 @@ var GitHubRelease = /** @class */ (function() {
       repo: repository,
     });
   }
-  GitHubRelease.prototype.publishAssets = function(srcLocation, destUrl) {
+  GitHubRelease.prototype.publishAssets = function (srcLocation, destUrl) {
     var _this = this;
     // Add the assets. Loop through files in the ci/dist folder and upload each asset.
     var files = fs.readdirSync(srcLocation);
-    return files.map(function(file) {
-      return tslib_1.__awaiter(_this, void 0, void 0, function() {
+    return files.map(function (file) {
+      return tslib_1.__awaiter(_this, void 0, void 0, function () {
         var fileStat, fileData;
-        return tslib_1.__generator(this, function(_a) {
+        return tslib_1.__generator(this, function (_a) {
           fileStat = fs.statSync(srcLocation + '/' + file);
           fileData = fs.readFileSync(srcLocation + '/' + file);
           return [
@@ -60,9 +60,9 @@ var GitHubRelease = /** @class */ (function() {
       });
     });
   };
-  GitHubRelease.prototype.release = function() {
+  GitHubRelease.prototype.release = function () {
     var _a, _b, _c, _d;
-    return tslib_1.__awaiter(this, void 0, void 0, function() {
+    return tslib_1.__awaiter(this, void 0, void 0, function () {
       var ciDir,
         distDir,
         distContentDir,
@@ -75,7 +75,7 @@ var GitHubRelease = /** @class */ (function() {
         newReleaseResponse,
         publishPromises,
         reason_2;
-      return tslib_1.__generator(this, function(_e) {
+      return tslib_1.__generator(this, function (_e) {
         switch (_e.label) {
           case 0:
             ciDir = env_1.getCiFolder();

@@ -170,6 +170,11 @@ func (tn *TelegramNotifier) buildMessageInlineImage(evalContext *alerting.EvalCo
 func (tn *TelegramNotifier) generateTelegramCmd(message string, messageField string, apiAction string, extraConf func(writer *multipart.Writer)) (*models.SendWebhookSync, error) {
 	var body bytes.Buffer
 	w := multipart.NewWriter(&body)
+	defer func() {
+		if err := w.Close(); err != nil {
+			tn.log.Warn("Failed to close writer", "err", err)
+		}
+	}()
 
 	fw, err := w.CreateFormField("chat_id")
 	if err != nil {
@@ -189,7 +194,9 @@ func (tn *TelegramNotifier) generateTelegramCmd(message string, messageField str
 
 	extraConf(w)
 
-	w.Close()
+	if err := w.Close(); err != nil {
+		return nil, err
+	}
 
 	tn.log.Info("Sending telegram notification", "chat_id", tn.ChatID, "bot_token", tn.BotToken, "apiAction", apiAction)
 	url := fmt.Sprintf(telegramAPIURL, tn.BotToken, apiAction)

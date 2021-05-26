@@ -8,7 +8,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
-	. "github.com/smartystreets/goconvey/convey"
+	"github.com/stretchr/testify/assert"
 )
 
 type scenarioContext struct {
@@ -29,88 +29,89 @@ type scenarioContext struct {
 type scenarioFunc func(c *scenarioContext)
 
 func orgRoleScenario(desc string, t *testing.T, role models.RoleType, fn scenarioFunc) {
-	user := &models.SignedInUser{
-		UserId:  userID,
-		OrgId:   orgID,
-		OrgRole: role,
-	}
-	guard := New(dashboardID, orgID, user)
-	sc := &scenarioContext{
-		t:                t,
-		orgRoleScenario:  desc,
-		givenUser:        user,
-		givenDashboardID: dashboardID,
-		g:                guard,
-	}
+	t.Run(desc, func(t *testing.T) {
+		user := &models.SignedInUser{
+			UserId:  userID,
+			OrgId:   orgID,
+			OrgRole: role,
+		}
+		guard := New(dashboardID, orgID, user)
 
-	Convey(desc, func() {
+		sc := &scenarioContext{
+			t:                t,
+			orgRoleScenario:  desc,
+			givenUser:        user,
+			givenDashboardID: dashboardID,
+			g:                guard,
+		}
 		fn(sc)
 	})
 }
 
 func apiKeyScenario(desc string, t *testing.T, role models.RoleType, fn scenarioFunc) {
-	user := &models.SignedInUser{
-		UserId:   0,
-		OrgId:    orgID,
-		OrgRole:  role,
-		ApiKeyId: 10,
-	}
-	guard := New(dashboardID, orgID, user)
-	sc := &scenarioContext{
-		t:                t,
-		orgRoleScenario:  desc,
-		givenUser:        user,
-		givenDashboardID: dashboardID,
-		g:                guard,
-	}
+	t.Run(desc, func(t *testing.T) {
+		user := &models.SignedInUser{
+			UserId:   0,
+			OrgId:    orgID,
+			OrgRole:  role,
+			ApiKeyId: 10,
+		}
+		guard := New(dashboardID, orgID, user)
+		sc := &scenarioContext{
+			t:                t,
+			orgRoleScenario:  desc,
+			givenUser:        user,
+			givenDashboardID: dashboardID,
+			g:                guard,
+		}
 
-	Convey(desc, func() {
 		fn(sc)
 	})
 }
 
-func permissionScenario(desc string, dashboardID int64, sc *scenarioContext, permissions []*models.DashboardAclInfoDTO, fn scenarioFunc) {
-	bus.ClearBusHandlers()
+func permissionScenario(desc string, dashboardID int64, sc *scenarioContext,
+	permissions []*models.DashboardAclInfoDTO, fn scenarioFunc) {
+	sc.t.Run(desc, func(t *testing.T) {
+		bus.ClearBusHandlers()
 
-	bus.AddHandler("test", func(query *models.GetDashboardAclInfoListQuery) error {
-		if query.OrgId != sc.givenUser.OrgId {
-			sc.reportFailure("Invalid organization id for GetDashboardAclInfoListQuery", sc.givenUser.OrgId, query.OrgId)
-		}
-		if query.DashboardId != sc.givenDashboardID {
-			sc.reportFailure("Invalid dashboard id for GetDashboardAclInfoListQuery", sc.givenDashboardID, query.DashboardId)
-		}
+		bus.AddHandler("test", func(query *models.GetDashboardAclInfoListQuery) error {
+			if query.OrgID != sc.givenUser.OrgId {
+				sc.reportFailure("Invalid organization id for GetDashboardAclInfoListQuery", sc.givenUser.OrgId, query.OrgID)
+			}
+			if query.DashboardID != sc.givenDashboardID {
+				sc.reportFailure("Invalid dashboard id for GetDashboardAclInfoListQuery", sc.givenDashboardID, query.DashboardID)
+			}
 
-		query.Result = permissions
-		return nil
-	})
+			query.Result = permissions
+			return nil
+		})
 
-	teams := []*models.TeamDTO{}
+		teams := []*models.TeamDTO{}
 
-	for _, p := range permissions {
-		if p.TeamId > 0 {
-			teams = append(teams, &models.TeamDTO{Id: p.TeamId})
-		}
-	}
-
-	bus.AddHandler("test", func(query *models.GetTeamsByUserQuery) error {
-		if query.OrgId != sc.givenUser.OrgId {
-			sc.reportFailure("Invalid organization id for GetTeamsByUserQuery", sc.givenUser.OrgId, query.OrgId)
-		}
-		if query.UserId != sc.givenUser.UserId {
-			sc.reportFailure("Invalid user id for GetTeamsByUserQuery", sc.givenUser.UserId, query.UserId)
+		for _, p := range permissions {
+			if p.TeamId > 0 {
+				teams = append(teams, &models.TeamDTO{Id: p.TeamId})
+			}
 		}
 
-		query.Result = teams
-		return nil
-	})
+		bus.AddHandler("test", func(query *models.GetTeamsByUserQuery) error {
+			if query.OrgId != sc.givenUser.OrgId {
+				sc.reportFailure("Invalid organization id for GetTeamsByUserQuery", sc.givenUser.OrgId, query.OrgId)
+			}
+			if query.UserId != sc.givenUser.UserId {
+				sc.reportFailure("Invalid user id for GetTeamsByUserQuery", sc.givenUser.UserId, query.UserId)
+			}
 
-	sc.permissionScenario = desc
-	sc.g = New(dashboardID, sc.givenUser.OrgId, sc.givenUser)
-	sc.givenDashboardID = dashboardID
-	sc.givenPermissions = permissions
-	sc.givenTeams = teams
+			query.Result = teams
+			return nil
+		})
 
-	Convey(desc, func() {
+		sc.permissionScenario = desc
+		sc.g = New(dashboardID, sc.givenUser.OrgId, sc.givenUser)
+		sc.givenDashboardID = dashboardID
+		sc.givenPermissions = permissions
+		sc.givenTeams = teams
+
 		fn(sc)
 	})
 }
@@ -147,24 +148,24 @@ const (
 	VIEWER_ACCESS = CAN_VIEW
 )
 
-func (flag permissionFlags) canAdmin() bool {
-	return flag&CAN_ADMIN != 0
+func (f permissionFlags) canAdmin() bool {
+	return f&CAN_ADMIN != 0
 }
 
-func (flag permissionFlags) canEdit() bool {
-	return flag&CAN_EDIT != 0
+func (f permissionFlags) canEdit() bool {
+	return f&CAN_EDIT != 0
 }
 
-func (flag permissionFlags) canSave() bool {
-	return flag&CAN_SAVE != 0
+func (f permissionFlags) canSave() bool {
+	return f&CAN_SAVE != 0
 }
 
-func (flag permissionFlags) canView() bool {
-	return flag&CAN_VIEW != 0
+func (f permissionFlags) canView() bool {
+	return f&CAN_VIEW != 0
 }
 
-func (flag permissionFlags) noAccess() bool {
-	return flag&(CAN_ADMIN|CAN_EDIT|CAN_SAVE|CAN_VIEW) == 0
+func (f permissionFlags) noAccess() bool {
+	return f&(CAN_ADMIN|CAN_EDIT|CAN_SAVE|CAN_VIEW) == 0
 }
 
 func (f permissionFlags) String() string {
@@ -194,7 +195,7 @@ func (f permissionFlags) String() string {
 }
 
 func (sc *scenarioContext) reportSuccess() {
-	So(true, ShouldBeTrue)
+	assert.True(sc.t, true)
 }
 
 func (sc *scenarioContext) reportFailure(desc string, expected interface{}, actual interface{}) {
@@ -230,14 +231,14 @@ func (sc *scenarioContext) reportFailure(desc string, expected interface{}, actu
 		if p.Role != nil {
 			r = string(*p.Role)
 		}
-		buf.WriteString(fmt.Sprintf("\n  Update permission (%d): dashboardId=%d, userId=%d, teamId=%d, role=%v, permission=%s", i, p.DashboardId, p.UserId, p.TeamId, r, p.Permission.String()))
+		buf.WriteString(fmt.Sprintf("\n  Update permission (%d): dashboardId=%d, userId=%d, teamId=%d, role=%v, permission=%s", i, p.DashboardID, p.UserID, p.TeamID, r, p.Permission.String()))
 	}
 
 	sc.t.Fatalf(buf.String())
 }
 
 func newCustomUserPermission(dashboardID int64, userID int64, permission models.PermissionType) *models.DashboardAcl {
-	return &models.DashboardAcl{OrgId: orgID, DashboardId: dashboardID, UserId: userID, Permission: permission}
+	return &models.DashboardAcl{OrgID: orgID, DashboardID: dashboardID, UserID: userID, Permission: permission}
 }
 
 func newDefaultUserPermission(dashboardID int64, permission models.PermissionType) *models.DashboardAcl {
@@ -245,7 +246,7 @@ func newDefaultUserPermission(dashboardID int64, permission models.PermissionTyp
 }
 
 func newCustomTeamPermission(dashboardID int64, teamID int64, permission models.PermissionType) *models.DashboardAcl {
-	return &models.DashboardAcl{OrgId: orgID, DashboardId: dashboardID, TeamId: teamID, Permission: permission}
+	return &models.DashboardAcl{OrgID: orgID, DashboardID: dashboardID, TeamID: teamID, Permission: permission}
 }
 
 func newDefaultTeamPermission(dashboardID int64, permission models.PermissionType) *models.DashboardAcl {
@@ -253,23 +254,23 @@ func newDefaultTeamPermission(dashboardID int64, permission models.PermissionTyp
 }
 
 func newAdminRolePermission(dashboardID int64, permission models.PermissionType) *models.DashboardAcl {
-	return &models.DashboardAcl{OrgId: orgID, DashboardId: dashboardID, Role: &adminRole, Permission: permission}
+	return &models.DashboardAcl{OrgID: orgID, DashboardID: dashboardID, Role: &adminRole, Permission: permission}
 }
 
 func newEditorRolePermission(dashboardID int64, permission models.PermissionType) *models.DashboardAcl {
-	return &models.DashboardAcl{OrgId: orgID, DashboardId: dashboardID, Role: &editorRole, Permission: permission}
+	return &models.DashboardAcl{OrgID: orgID, DashboardID: dashboardID, Role: &editorRole, Permission: permission}
 }
 
 func newViewerRolePermission(dashboardID int64, permission models.PermissionType) *models.DashboardAcl {
-	return &models.DashboardAcl{OrgId: orgID, DashboardId: dashboardID, Role: &viewerRole, Permission: permission}
+	return &models.DashboardAcl{OrgID: orgID, DashboardID: dashboardID, Role: &viewerRole, Permission: permission}
 }
 
 func toDto(acl *models.DashboardAcl) *models.DashboardAclInfoDTO {
 	return &models.DashboardAclInfoDTO{
-		OrgId:          acl.OrgId,
-		DashboardId:    acl.DashboardId,
-		UserId:         acl.UserId,
-		TeamId:         acl.TeamId,
+		OrgId:          acl.OrgID,
+		DashboardId:    acl.DashboardID,
+		UserId:         acl.UserID,
+		TeamId:         acl.TeamID,
 		Role:           acl.Role,
 		Permission:     acl.Permission,
 		PermissionName: acl.Permission.String(),

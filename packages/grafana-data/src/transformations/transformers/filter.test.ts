@@ -20,7 +20,7 @@ describe('Filter Transformer', () => {
     mockTransformationsRegistry([filterFieldsTransformer]);
   });
 
-  it('filters by include', () => {
+  it('filters by include', async () => {
     const cfg = {
       id: DataTransformerID.filterFields,
       options: {
@@ -28,8 +28,11 @@ describe('Filter Transformer', () => {
       },
     };
 
-    const filtered = transformDataFrame([cfg], [simpleSeriesWithTypes])[0];
-    expect(filtered.fields.length).toBe(1);
-    expect(filtered.fields[0].name).toBe('D');
+    await expect(transformDataFrame([cfg], [simpleSeriesWithTypes])).toEmitValuesWith((received) => {
+      const data = received[0];
+      const filtered = data[0];
+      expect(filtered.fields.length).toBe(1);
+      expect(filtered.fields[0].name).toBe('D');
+    });
   });
 });

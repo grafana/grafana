@@ -3,6 +3,8 @@ package commands
 import (
 	"strings"
 
+	"github.com/fatih/color"
+
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/commands/datamigrations"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
@@ -14,7 +16,7 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
-func runDbCommand(command func(commandLine utils.CommandLine, sqlStore *sqlstore.SqlStore) error) func(context *cli.Context) error {
+func runDbCommand(command func(commandLine utils.CommandLine, sqlStore *sqlstore.SQLStore) error) func(context *cli.Context) error {
 	return func(context *cli.Context) error {
 		cmd := &utils.ContextCommandLine{Context: context}
 		debug := cmd.Bool("debug")
@@ -34,7 +36,7 @@ func runDbCommand(command func(commandLine utils.CommandLine, sqlStore *sqlstore
 			cfg.LogConfigSources()
 		}
 
-		engine := &sqlstore.SqlStore{}
+		engine := &sqlstore.SQLStore{}
 		engine.Cfg = cfg
 		engine.Bus = bus.GetBus()
 		if err := engine.Init(); err != nil {
@@ -57,7 +59,7 @@ func runPluginCommand(command func(commandLine utils.CommandLine) error) func(co
 			return err
 		}
 
-		logger.Info("\nRestart grafana after installing plugins . <service grafana-server restart>\n\n")
+		logger.Info(color.GreenString("Please restart Grafana after installing plugins. Refer to Grafana documentation for instructions if necessary.\n\n"))
 		return nil
 	}
 }
@@ -132,6 +134,25 @@ var adminCommands = []*cli.Command{
 	},
 }
 
+var cueCommands = []*cli.Command{
+	{
+		Name:   "validate-schema",
+		Usage:  "validate *.cue files in the project",
+		Action: runPluginCommand(cmd.validateScuemataBasics),
+	},
+	{
+		Name:   "validate-resource",
+		Usage:  "validate *.cue files in the project",
+		Action: runPluginCommand(cmd.validateResources),
+		Flags: []cli.Flag{
+			&cli.StringFlag{
+				Name:  "dashboard",
+				Usage: "dashboard JSON file to validate",
+			},
+		},
+	},
+}
+
 var Commands = []*cli.Command{
 	{
 		Name:        "plugins",
@@ -142,5 +163,10 @@ var Commands = []*cli.Command{
 		Name:        "admin",
 		Usage:       "Grafana admin commands",
 		Subcommands: adminCommands,
+	},
+	{
+		Name:        "cue",
+		Usage:       "Cue validation commands",
+		Subcommands: cueCommands,
 	},
 }

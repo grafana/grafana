@@ -21,7 +21,7 @@ exports[`Render should render team members when sync enabled 1`] = `
   <td>
     testName
   </td>
-  <Component
+  <WithFeatureToggle
     featureToggle={false}
   >
     <td
@@ -35,7 +35,7 @@ exports[`Render should render team members when sync enabled 1`] = `
         </span>
       </div>
     </td>
-  </Component>
+  </WithFeatureToggle>
   <td>
     <TagBadge
       count={0}
@@ -48,7 +48,7 @@ exports[`Render should render team members when sync enabled 1`] = `
   <td
     className="text-right"
   >
-    <Component
+    <DeleteButton
       disabled={true}
       onConfirm={[Function]}
       size="sm"
@@ -78,7 +78,7 @@ exports[`Render when feature toggle editorsCanAdmin is turned off should not ren
   <td>
     testName
   </td>
-  <Component
+  <WithFeatureToggle
     featureToggle={false}
   >
     <td
@@ -134,11 +134,11 @@ exports[`Render when feature toggle editorsCanAdmin is turned off should not ren
         />
       </div>
     </td>
-  </Component>
+  </WithFeatureToggle>
   <td
     className="text-right"
   >
-    <Component
+    <DeleteButton
       disabled={false}
       onConfirm={[Function]}
       size="sm"
@@ -168,7 +168,7 @@ exports[`Render when feature toggle editorsCanAdmin is turned on should render p
   <td>
     testName
   </td>
-  <Component
+  <WithFeatureToggle
     featureToggle={true}
   >
     <td
@@ -224,11 +224,11 @@ exports[`Render when feature toggle editorsCanAdmin is turned on should render p
         />
       </div>
     </td>
-  </Component>
+  </WithFeatureToggle>
   <td
     className="text-right"
   >
-    <Component
+    <DeleteButton
       disabled={false}
       onConfirm={[Function]}
       size="sm"
@@ -258,7 +258,7 @@ exports[`Render when feature toggle editorsCanAdmin is turned on should render s
   <td>
     testName
   </td>
-  <Component
+  <WithFeatureToggle
     featureToggle={true}
   >
     <td
@@ -272,11 +272,11 @@ exports[`Render when feature toggle editorsCanAdmin is turned on should render s
         </span>
       </div>
     </td>
-  </Component>
+  </WithFeatureToggle>
   <td
     className="text-right"
   >
-    <Component
+    <DeleteButton
       disabled={true}
       onConfirm={[Function]}
       size="sm"

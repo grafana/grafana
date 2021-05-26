@@ -77,25 +77,25 @@ describe('when sorting with nulls', () => {
 
   it('numbers with nulls at end with asc sort', () => {
     table.sort({ col: 0, desc: false });
-    values = table.rows.map(row => row[0]);
+    values = table.rows.map((row) => row[0]);
     expect(values).toEqual([-8, 0, 0, 2, 19, 42, null, null]);
   });
 
   it('numbers with nulls at start with desc sort', () => {
     table.sort({ col: 0, desc: true });
-    values = table.rows.map(row => row[0]);
+    values = table.rows.map((row) => row[0]);
     expect(values).toEqual([null, null, 42, 19, 2, 0, 0, -8]);
   });
 
   it('strings with nulls at end with asc sort', () => {
     table.sort({ col: 1, desc: false });
-    values = table.rows.map(row => row[1]);
+    values = table.rows.map((row) => row[1]);
     expect(values).toEqual(['', '', 'a', 'b', 'c', 'd', null, null]);
   });
 
   it('strings with nulls at start with desc sort', () => {
     table.sort({ col: 1, desc: true });
-    values = table.rows.map(row => row[1]);
+    values = table.rows.map((row) => row[1]);
     expect(values).toEqual([null, null, 'd', 'c', 'b', 'a', '', '']);
   });
 });

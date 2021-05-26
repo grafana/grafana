@@ -142,7 +142,7 @@
                             openPolygon(points[i * ps], points[(i * ps) + 1]);
                         }
 
-                        // If an equal point preceeds this, start the polygon at that equal point
+                        // If an equal point precedes this, start the polygon at that equal point
                         else if (equal) {
                             openPolygon(points[(i - 1) * ps], points[((i - 1) * ps) + 1]);
                         }
@@ -157,7 +157,7 @@
                         return;
                     }
 
-                    // If we go below equal, equal at any preceeding point is irrelevant
+                    // If we go below equal, equal at any preceding point is irrelevant
                     else {
                         start = false;
                         equal = false;

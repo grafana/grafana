@@ -1,7 +1,6 @@
-import { AdHocVariableFilter, AdHocVariableModel, VariableHide } from 'app/features/variables/types';
-import { getInstanceState, NEW_VARIABLE_ID, VariablePayload } from '../state/types';
+import { AdHocVariableFilter, AdHocVariableModel, initialVariableModelState } from 'app/features/variables/types';
+import { getInstanceState, VariablePayload, initialVariablesState, VariablesState } from '../state/types';
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { initialVariablesState, VariablesState } from '../state/variablesReducer';
 
 export interface AdHocVariabelFilterUpdate {
   index: number;
@@ -13,15 +12,8 @@ export interface AdHocVariableEditorState {
 }
 
 export const initialAdHocVariableModelState: AdHocVariableModel = {
-  id: NEW_VARIABLE_ID,
-  global: false,
+  ...initialVariableModelState,
   type: 'adhoc',
-  name: '',
-  hide: VariableHide.dontHide,
-  label: '',
-  skipUrlSync: false,
-  index: -1,
-  initLock: null,
   datasource: null,
   filters: [],
 };

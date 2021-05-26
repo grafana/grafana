@@ -8,6 +8,8 @@ describe('searchForTags', () => {
     const tags = ['A', 'B'];
     const link: DashboardLink = {
       targetBlank: false,
+      keepTime: false,
+      includeVars: false,
       asDropdown: false,
       icon: 'some icon',
       tags,
@@ -17,7 +19,7 @@ describe('searchForTags', () => {
       url: '/d/6ieouugGk/DashLinks',
     };
     const backendSrv: any = {
-      search: jest.fn(args => []),
+      search: jest.fn((args) => []),
     };
 
     return { link, backendSrv };
@@ -27,7 +29,7 @@ describe('searchForTags', () => {
     it('then tags from link should be used in search and limit should be 100', async () => {
       const { link, backendSrv } = setupTestContext();
 
-      const results = await searchForTags(link, { getBackendSrv: () => backendSrv });
+      const results = await searchForTags(link.tags, { getBackendSrv: () => backendSrv });
 
       expect(results.length).toEqual(0);
       expect(backendSrv.search).toHaveBeenCalledWith({ tag: ['A', 'B'], limit: 100 });
@@ -40,6 +42,8 @@ describe('resolveLinks', () => {
   const setupTestContext = (dashboardId: number, searchHitId: number) => {
     const link: DashboardLink = {
       targetBlank: false,
+      keepTime: false,
+      includeVars: false,
       asDropdown: false,
       icon: 'some icon',
       tags: [],
@@ -61,10 +65,10 @@ describe('resolveLinks', () => {
       },
     ];
     const linkSrv: any = {
-      getLinkUrl: jest.fn(args => args.url),
+      getLinkUrl: jest.fn((args) => args.url),
     };
-    const sanitize = jest.fn(args => args);
-    const sanitizeUrl = jest.fn(args => args);
+    const sanitize = jest.fn((args) => args);
+    const sanitizeUrl = jest.fn((args) => args);
 
     return { dashboardId, link, searchHits, linkSrv, sanitize, sanitizeUrl };
   };

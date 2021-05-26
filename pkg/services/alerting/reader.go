@@ -36,7 +36,7 @@ func (arr *defaultRuleReader) fetch() []*Rule {
 
 	res := make([]*Rule, 0)
 	for _, ruleDef := range cmd.Result {
-		if model, err := NewRuleFromDBAlert(ruleDef); err != nil {
+		if model, err := NewRuleFromDBAlert(ruleDef, false); err != nil {
 			arr.log.Error("Could not build alert model for rule", "ruleId", ruleDef.Id, "error", err)
 		} else {
 			res = append(res, model)

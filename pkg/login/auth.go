@@ -10,28 +10,27 @@ import (
 )
 
 var (
-	ErrEmailNotAllowed       = errors.New("Required email domain not fulfilled")
-	ErrInvalidCredentials    = errors.New("Invalid Username or Password")
-	ErrNoEmail               = errors.New("Login provider didn't return an email address")
-	ErrProviderDeniedRequest = errors.New("Login provider denied login request")
-	ErrSignUpNotAllowed      = errors.New("Signup is not allowed for this adapter")
-	ErrTooManyLoginAttempts  = errors.New("Too many consecutive incorrect login attempts for user. Login for user temporarily blocked")
-	ErrPasswordEmpty         = errors.New("No password provided")
-	ErrUserDisabled          = errors.New("User is disabled")
-	ErrAbsoluteRedirectTo    = errors.New("Absolute urls are not allowed for redirect_to cookie value")
-	ErrInvalidRedirectTo     = errors.New("Invalid redirect_to cookie value")
-	ErrForbiddenRedirectTo   = errors.New("Forbidden redirect_to cookie value")
+	ErrEmailNotAllowed       = errors.New("required email domain not fulfilled")
+	ErrInvalidCredentials    = errors.New("invalid username or password")
+	ErrNoEmail               = errors.New("login provider didn't return an email address")
+	ErrProviderDeniedRequest = errors.New("login provider denied login request")
+	ErrTooManyLoginAttempts  = errors.New("too many consecutive incorrect login attempts for user - login for user temporarily blocked")
+	ErrPasswordEmpty         = errors.New("no password provided")
+	ErrUserDisabled          = errors.New("user is disabled")
+	ErrAbsoluteRedirectTo    = errors.New("absolute URLs are not allowed for redirect_to cookie value")
+	ErrInvalidRedirectTo     = errors.New("invalid redirect_to cookie value")
+	ErrForbiddenRedirectTo   = errors.New("forbidden redirect_to cookie value")
 )
 
 var loginLogger = log.New("login")
 
 func Init() {
-	bus.AddHandler("auth", AuthenticateUser)
+	bus.AddHandler("auth", authenticateUser)
 }
 
-// AuthenticateUser authenticates the user via username & password
-func AuthenticateUser(query *models.LoginUserQuery) error {
-	if err := validateLoginAttempts(query.Username); err != nil {
+// authenticateUser authenticates the user via username & password
+func authenticateUser(query *models.LoginUserQuery) error {
+	if err := validateLoginAttempts(query); err != nil {
 		return err
 	}
 
@@ -40,7 +39,8 @@ func AuthenticateUser(query *models.LoginUserQuery) error {
 	}
 
 	err := loginUsingGrafanaDB(query)
-	if err == nil || (err != models.ErrUserNotFound && err != ErrInvalidCredentials && err != ErrUserDisabled) {
+	if err == nil || (!errors.Is(err, models.ErrUserNotFound) && !errors.Is(err, ErrInvalidCredentials) &&
+		!errors.Is(err, ErrUserDisabled)) {
 		query.AuthModule = "grafana"
 		return err
 	}
@@ -48,16 +48,16 @@ func AuthenticateUser(query *models.LoginUserQuery) error {
 	ldapEnabled, ldapErr := loginUsingLDAP(query)
 	if ldapEnabled {
 		query.AuthModule = models.AuthModuleLDAP
-		if ldapErr == nil || ldapErr != ldap.ErrInvalidCredentials {
+		if ldapErr == nil || !errors.Is(ldapErr, ldap.ErrInvalidCredentials) {
 			return ldapErr
 		}
 
-		if err != ErrUserDisabled || ldapErr != ldap.ErrInvalidCredentials {
+		if !errors.Is(err, ErrUserDisabled) || !errors.Is(ldapErr, ldap.ErrInvalidCredentials) {
 			err = ldapErr
 		}
 	}
 
-	if err == ErrInvalidCredentials || err == ldap.ErrInvalidCredentials {
+	if errors.Is(err, ErrInvalidCredentials) || errors.Is(err, ldap.ErrInvalidCredentials) {
 		if err := saveInvalidLoginAttempt(query); err != nil {
 			loginLogger.Error("Failed to save invalid login attempt", "err", err)
 		}

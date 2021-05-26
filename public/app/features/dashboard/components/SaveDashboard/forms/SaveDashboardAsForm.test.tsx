@@ -5,6 +5,7 @@ import { DashboardModel } from 'app/features/dashboard/state';
 import { act } from 'react-dom/test-utils';
 
 jest.mock('@grafana/runtime', () => ({
+  ...((jest.requireActual('@grafana/runtime') as unknown) as object),
   getBackendSrv: () => ({ get: jest.fn().mockResolvedValue([]), search: jest.fn().mockResolvedValue([]) }),
 }));
 
@@ -39,7 +40,7 @@ const renderAndSubmitForm = async (dashboard: any, submitSpy: any) => {
       dashboard={dashboard as DashboardModel}
       onCancel={() => {}}
       onSuccess={() => {}}
-      onSubmit={async jsonModel => {
+      onSubmit={async (jsonModel) => {
         submitSpy(jsonModel);
         return {};
       }}

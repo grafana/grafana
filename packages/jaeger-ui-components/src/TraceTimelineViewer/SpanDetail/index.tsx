@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import React from 'react';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import cx from 'classnames';
 
 import AccordianKeyValues from './AccordianKeyValues';
@@ -25,12 +25,13 @@ import CopyIcon from '../../common/CopyIcon';
 import LabeledList from '../../common/LabeledList';
 
 import { TNil } from '../../types';
-import { TraceKeyValuePair, TraceLink, TraceLog, TraceSpan } from '@grafana/data';
+import { TraceKeyValuePair, TraceLink, TraceLog, TraceSpan } from '../../types/trace';
 import AccordianReferences from './AccordianReferences';
 import { autoColor, createStyle, Theme, useTheme } from '../../Theme';
 import { UIDivider } from '../../uiElementsContext';
 import { ubFlex, ubFlexAuto, ubItemsCenter, ubM0, ubMb1, ubMy1, ubTxRightAlign } from '../../uberUtilityStyles';
-import { TextArea } from '@grafana/ui';
+import { DataLinkButton, TextArea } from '@grafana/ui';
+import { CreateSpanLink } from '../types';
 
 const getStyles = createStyle((theme: Theme) => {
   return {
@@ -115,6 +116,7 @@ type SpanDetailProps = {
   stackTracesToggle: (spanID: string) => void;
   referencesToggle: (spanID: string) => void;
   focusSpan: (uiFind: string) => void;
+  createSpanLink?: CreateSpanLink;
 };
 
 export default function SpanDetail(props: SpanDetailProps) {
@@ -131,6 +133,7 @@ export default function SpanDetail(props: SpanDetailProps) {
     stackTracesToggle,
     referencesToggle,
     focusSpan,
+    createSpanLink,
   } = props;
   const {
     isTagsOpen,
@@ -171,13 +174,17 @@ export default function SpanDetail(props: SpanDetailProps) {
   ];
   const deepLinkCopyText = `${window.location.origin}${window.location.pathname}?uiFind=${spanID}`;
   const styles = getStyles(useTheme());
+  const link = createSpanLink?.(span);
 
   return (
     <div>
-      <div className={cx(ubFlex, ubItemsCenter)}>
+      <div className={cx(ubFlex, ubItemsCenter, ubMb1)}>
         <h2 className={cx(ubFlexAuto, ubM0)}>{operationName}</h2>
         <LabeledList className={ubTxRightAlign} dividerClassName={styles.divider} items={overviewItems} />
       </div>
+      {link ? (
+        <DataLinkButton link={{ ...link, title: 'Logs for this span' } as any} buttonProps={{ icon: 'gf-logs' }} />
+      ) : null}
       <UIDivider className={cx(styles.divider, styles.dividerVertical, ubMy1)} />
       <div>
         <div>
@@ -206,7 +213,7 @@ export default function SpanDetail(props: SpanDetailProps) {
             isOpen={logsState.isOpen}
             openedItems={logsState.openedItems}
             onToggle={() => logsToggle(spanID)}
-            onItemToggle={logItem => logItemToggle(spanID, logItem)}
+            onItemToggle={(logItem) => logItemToggle(spanID, logItem)}
             timestamp={traceStartTime}
           />
         )}
@@ -225,16 +232,26 @@ export default function SpanDetail(props: SpanDetailProps) {
             label="Stack trace"
             data={stackTraces}
             isOpen={isStackTracesOpen}
-            TextComponent={textComponentProps => (
-              <TextArea
-                className={styles.Textarea}
-                style={{ cursor: 'unset' }}
-                readOnly
-                cols={10}
-                rows={10}
-                value={textComponentProps.data}
-              />
-            )}
+            TextComponent={(textComponentProps) => {
+              let text;
+              if (textComponentProps.data?.length > 1) {
+                text = textComponentProps.data
+                  .map((stackTrace, index) => `StackTrace ${index + 1}:\n${stackTrace}`)
+                  .join('\n');
+              } else {
+                text = textComponentProps.data?.[0];
+              }
+              return (
+                <TextArea
+                  className={styles.Textarea}
+                  style={{ cursor: 'unset' }}
+                  readOnly
+                  cols={10}
+                  rows={10}
+                  value={text}
+                />
+              );
+            }}
             onToggle={() => stackTracesToggle(spanID)}
           />
         )}

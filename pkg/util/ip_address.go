@@ -8,30 +8,6 @@ import (
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
-// ParseIPAddress parses an IP address and removes port and/or IPV6 format
-func ParseIPAddress(input string) (string, error) {
-	addr, err := SplitHostPort(input)
-	if err != nil {
-		return "", errutil.Wrapf(err, "failed to split network address %q by host and port",
-			input)
-	}
-
-	ip := net.ParseIP(addr.Host)
-	if ip == nil {
-		return addr.Host, nil
-	}
-
-	if ip.IsLoopback() {
-		if strings.Contains(addr.Host, ":") {
-			// IPv6
-			return "::1", nil
-		}
-		return "127.0.0.1", nil
-	}
-
-	return ip.String(), nil
-}
-
 type NetworkAddress struct {
 	Host string
 	Port string
@@ -53,7 +29,7 @@ func SplitHostPortDefault(input, defaultHost, defaultPort string) (NetworkAddres
 		addrEnd := strings.LastIndex(input, "]")
 		if addrEnd < 0 {
 			// Malformed address
-			return addr, fmt.Errorf("Malformed IPv6 address: '%s'", input)
+			return addr, fmt.Errorf("malformed IPv6 address: '%s'", input)
 		}
 
 		start = addrEnd
@@ -78,12 +54,4 @@ func SplitHostPortDefault(input, defaultHost, defaultPort string) (NetworkAddres
 	}
 
 	return addr, nil
-}
-
-// SplitHostPort splits ip address/hostname string by host and port
-func SplitHostPort(input string) (NetworkAddress, error) {
-	if len(input) == 0 {
-		return NetworkAddress{}, fmt.Errorf("Input is empty")
-	}
-	return SplitHostPortDefault(input, "", "")
 }

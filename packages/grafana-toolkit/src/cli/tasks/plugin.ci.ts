@@ -1,6 +1,5 @@
 import { Task, TaskRunner } from './task';
 import { pluginBuildRunner } from './plugin.build';
-import { restoreCwd } from '../utils/cwd';
 import { getPluginJson } from '../../config/utils/pluginValidation';
 import { getPluginId } from '../../config/utils/getPluginId';
 
@@ -9,6 +8,7 @@ import execa = require('execa');
 import path = require('path');
 import fs from 'fs-extra';
 import { getPackageDetails, getGrafanaVersions, readGitLog } from '../../plugins/utils';
+import { buildManifest, signManifest, saveManifest } from '../../plugins/manifest';
 import {
   getJobFolder,
   writeJobStats,
@@ -26,7 +26,9 @@ const rimraf = promisify(rimrafCallback);
 export interface PluginCIOptions {
   finish?: boolean;
   upload?: boolean;
-  signingAdmin?: boolean;
+  signatureType?: string;
+  rootUrls?: string[];
+  maxJestWorkers?: string;
 }
 
 /**
@@ -39,8 +41,12 @@ export interface PluginCIOptions {
  *
  *  Anything that should be put into the final zip file should be put in:
  *   ~/ci/jobs/build_xxx/dist
+ *
+ * @deprecated -- this task was written with a specific circle-ci build in mind.  That system
+ * has been replaced with Drone, and this is no longer the best practice.  Any new work
+ * should be defined in the grafana build pipeline tool or drone configs directly.
  */
-const buildPluginRunner: TaskRunner<PluginCIOptions> = async ({ finish }) => {
+const buildPluginRunner: TaskRunner<PluginCIOptions> = async ({ finish, maxJestWorkers }) => {
   const start = Date.now();
 
   if (finish) {
@@ -58,46 +64,11 @@ const buildPluginRunner: TaskRunner<PluginCIOptions> = async ({ finish }) => {
     writeJobStats(start, workDir);
   } else {
     // Do regular build process with coverage
-    await pluginBuildRunner({ coverage: true });
+    await pluginBuildRunner({ coverage: true, maxJestWorkers });
   }
 };
 
 export const ciBuildPluginTask = new Task<PluginCIOptions>('Build Plugin', buildPluginRunner);
-
-/**
- * 2. Build Docs
- *
- *  Take /docs/* and format it into /ci/docs/HTML site
- *
- */
-const buildPluginDocsRunner: TaskRunner<PluginCIOptions> = async () => {
-  const docsSrc = path.resolve(process.cwd(), 'docs');
-  if (!fs.existsSync(docsSrc)) {
-    console.log('No docs src');
-    return;
-  }
-
-  const start = Date.now();
-  const workDir = getJobFolder();
-  await execa('rimraf', [workDir]);
-  fs.mkdirSync(workDir);
-
-  const docsDest = path.resolve(process.cwd(), 'ci', 'docs');
-  fs.mkdirSync(docsDest);
-
-  const exe = await execa('cp', ['-rv', docsSrc + '/.', docsDest]);
-  console.log(exe.stdout);
-
-  fs.writeFile(path.resolve(docsDest, 'index.html'), `TODO... actually build docs`, err => {
-    if (err) {
-      throw new Error('Unable to docs');
-    }
-  });
-
-  writeJobStats(start, workDir);
-};
-
-export const ciBuildPluginDocsTask = new Task<PluginCIOptions>('Build Plugin Docs', buildPluginDocsRunner);
 
 /**
  * 2. Package
@@ -106,8 +77,13 @@ export const ciBuildPluginDocsTask = new Task<PluginCIOptions>('Build Plugin Doc
  *  1. merge it into: `~/ci/dist`
  *  2. zip it into packages in `~/ci/packages`
  *  3. prepare grafana environment in: `~/ci/grafana-test-env`
+ *
+ *
+ * @deprecated -- this task was written with a specific circle-ci build in mind.  That system
+ * has been replaced with Drone, and this is no longer the best practice.  Any new work
+ * should be defined in the grafana build pipeline tool or drone configs directly.
  */
-const packagePluginRunner: TaskRunner<PluginCIOptions> = async ({ signingAdmin }) => {
+const packagePluginRunner: TaskRunner<PluginCIOptions> = async ({ signatureType, rootUrls }) => {
   const start = Date.now();
   const ciDir = getCiFolder();
   const packagesDir = path.resolve(ciDir, 'packages');
@@ -115,7 +91,7 @@ const packagePluginRunner: TaskRunner<PluginCIOptions> = async ({ signingAdmin }
   const docsDir = path.resolve(ciDir, 'docs');
   const jobsDir = path.resolve(ciDir, 'jobs');
 
-  fs.exists(jobsDir, jobsDirExists => {
+  fs.exists(jobsDir, (jobsDirExists) => {
     if (!jobsDirExists) {
       throw new Error('You must run plugin:ci-build prior to running plugin:ci-package');
     }
@@ -156,18 +132,19 @@ const packagePluginRunner: TaskRunner<PluginCIOptions> = async ({ signingAdmin }
   const pluginJsonFile = path.resolve(distContentDir, 'plugin.json');
   const pluginInfo = getPluginJson(pluginJsonFile);
   pluginInfo.info.build = await getPluginBuildInfo();
-  fs.writeFile(pluginJsonFile, JSON.stringify(pluginInfo, null, 2), err => {
-    if (err) {
-      throw new Error('Error writing: ' + pluginJsonFile);
-    }
-  });
+  fs.writeFileSync(pluginJsonFile, JSON.stringify(pluginInfo, null, 2), { encoding: 'utf-8' });
 
   // Write a MANIFEST.txt file in the dist folder
-  // By using the --signing-admin flag the plugin doesn't need to be in the plugins database to be signed,
-  // however it requires an Admin API key.
   try {
-    const grabplCommandFlags = signingAdmin ? ['build-plugin-manifest', '--signing-admin'] : ['build-plugin-manifest'];
-    await execa('grabpl', [...grabplCommandFlags, distContentDir]);
+    const manifest = await buildManifest(distContentDir);
+    if (signatureType) {
+      manifest.signatureType = signatureType;
+    }
+    if (rootUrls) {
+      manifest.rootUrls = rootUrls;
+    }
+    const signedManifest = await signManifest(manifest);
+    await saveManifest(distContentDir, signedManifest);
   } catch (err) {
     console.warn(`Error signing manifest: ${distContentDir}`, err);
   }
@@ -175,9 +152,7 @@ const packagePluginRunner: TaskRunner<PluginCIOptions> = async ({ signingAdmin }
   console.log('Building ZIP');
   let zipName = pluginInfo.id + '-' + pluginInfo.info.version + '.zip';
   let zipFile = path.resolve(packagesDir, zipName);
-  process.chdir(distDir);
-  await execa('zip', ['-r', zipFile, '.']);
-  restoreCwd();
+  await execa('zip', ['-r', zipFile, '.'], { cwd: distDir });
 
   const zipStats = fs.statSync(zipFile);
   if (zipStats.size < 100) {
@@ -201,19 +176,13 @@ const packagePluginRunner: TaskRunner<PluginCIOptions> = async ({ signingAdmin }
     console.log('Creating documentation zip');
     zipName = pluginInfo.id + '-' + pluginInfo.info.version + '-docs.zip';
     zipFile = path.resolve(packagesDir, zipName);
-    process.chdir(docsDir);
-    await execa('zip', ['-r', zipFile, '.']);
-    restoreCwd();
+    await execa('zip', ['-r', zipFile, '.'], { cwd: docsDir });
 
     info.docs = await getPackageDetails(zipFile, docsDir);
   }
 
   p = path.resolve(packagesDir, 'info.json');
-  fs.writeFile(p, JSON.stringify(info, null, 2), err => {
-    if (err) {
-      throw new Error('Error writing package info: ' + p);
-    }
-  });
+  fs.writeFileSync(p, JSON.stringify(info, null, 2), { encoding: 'utf-8' });
 
   // Write the custom settings
   p = path.resolve(grafanaEnvDir, 'custom.ini');
@@ -222,11 +191,7 @@ const packagePluginRunner: TaskRunner<PluginCIOptions> = async ({ signingAdmin }
     `[paths] \n` +
     `plugins = ${path.resolve(grafanaEnvDir, 'plugins')}\n` +
     `\n`; // empty line
-  fs.writeFile(p, customIniBody, err => {
-    if (err) {
-      throw new Error('Unable to write: ' + p);
-    }
-  });
+  fs.writeFileSync(p, customIniBody, { encoding: 'utf-8' });
 
   writeJobStats(start, getJobFolder());
 };
@@ -237,6 +202,10 @@ export const ciPackagePluginTask = new Task<PluginCIOptions>('Bundle Plugin', pa
  * 4. Report
  *
  *  Create a report from all the previous steps
+ *
+ * @deprecated -- this task was written with a specific circle-ci build in mind.  That system
+ * has been replaced with Drone, and this is no longer the best practice.  Any new work
+ * should be defined in the grafana build pipeline tool or drone configs directly.
  */
 const pluginReportRunner: TaskRunner<PluginCIOptions> = async ({ upload }) => {
   const ciDir = path.resolve(process.cwd(), 'ci');
@@ -264,11 +233,7 @@ const pluginReportRunner: TaskRunner<PluginCIOptions> = async ({ upload }) => {
 
   // Save the report to disk
   const file = path.resolve(ciDir, 'report.json');
-  fs.writeFile(file, JSON.stringify(report, null, 2), err => {
-    if (err) {
-      throw new Error('Unable to write: ' + file);
-    }
-  });
+  fs.writeFileSync(file, JSON.stringify(report, null, 2), { encoding: 'utf-8' });
 
   const GRAFANA_API_KEY = process.env.GRAFANA_API_KEY;
   if (!GRAFANA_API_KEY) {

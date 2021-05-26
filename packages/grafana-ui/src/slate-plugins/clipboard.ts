@@ -24,7 +24,7 @@ export function ClipboardPlugin(): Plugin {
       const selectedBlocks = document
         .getLeafBlocksAtRange(selection)
         .toArray()
-        .map(block => block.text);
+        .map((block) => block.text);
 
       const copiedText = getCopiedText(selectedBlocks, startOffset, endOffset);
       if (copiedText && clipEvent.clipboardData) {

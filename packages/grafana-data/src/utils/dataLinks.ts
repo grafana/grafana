@@ -1,8 +1,8 @@
 import {
   DataLink,
   DataQuery,
-  DataSourceInstanceSettings,
   Field,
+  InternalDataLink,
   InterpolateFunction,
   LinkModel,
   ScopedVars,
@@ -26,42 +26,34 @@ export const DataLinkBuiltInVars = {
   valueCalc: '__value.calc',
 };
 
-type Options = {
-  onClickFn?: (options: { datasourceUid: string; query: any }) => void;
+// We inject these because we cannot import them directly as they reside inside grafana main package.
+export type LinkToExploreOptions = {
+  link: DataLink;
+  scopedVars: ScopedVars;
+  range: TimeRange;
+  field: Field;
+  internalLink: InternalDataLink;
+  onClickFn?: (options: { datasourceUid: string; query: any; range?: TimeRange }) => void;
   replaceVariables: InterpolateFunction;
-  getDataSourceSettingsByUid: (uid: string) => DataSourceInstanceSettings | undefined;
 };
 
-export function mapInternalLinkToExplore(
-  link: DataLink,
-  scopedVars: ScopedVars,
-  range: TimeRange,
-  field: Field,
-  options: Options
-): LinkModel<Field> {
-  if (!link.internal) {
-    throw new Error('Trying to map external link as internal');
-  }
-  const { onClickFn, replaceVariables, getDataSourceSettingsByUid } = options;
+export function mapInternalLinkToExplore(options: LinkToExploreOptions): LinkModel<Field> {
+  const { onClickFn, replaceVariables, link, scopedVars, range, field, internalLink } = options;
 
   const interpolatedQuery = interpolateQuery(link, scopedVars, replaceVariables);
-  return {
-    title: link.title
-      ? replaceVariables(link.title || '', scopedVars)
-      : getDataSourceSettingsByUid(link.internal.datasourceUid)?.name || 'Unknown datasource',
+  const title = link.title ? link.title : internalLink.datasourceName;
 
+  return {
+    title: replaceVariables(title, scopedVars),
     // In this case this is meant to be internal link (opens split view by default) the href will also points
     // to explore but this way you can open it in new tab.
-    href: generateInternalHref(
-      getDataSourceSettingsByUid(link.internal.datasourceUid)?.name || 'unknown',
-      interpolatedQuery,
-      range
-    ),
+    href: generateInternalHref(internalLink.datasourceName, interpolatedQuery, range),
     onClick: onClickFn
       ? () => {
-          onClickFn?.({
-            datasourceUid: link.internal!.datasourceUid,
+          onClickFn({
+            datasourceUid: internalLink.datasourceUid,
             query: interpolatedQuery,
+            range,
           });
         }
       : undefined,
@@ -79,13 +71,6 @@ function generateInternalHref<T extends DataQuery = any>(datasourceName: string,
       range: range.raw,
       datasource: datasourceName,
       queries: [query],
-      // This should get overwritten if datasource does not support that mode and we do not know what mode is
-      // preferred anyway.
-      ui: {
-        showingGraph: true,
-        showingTable: true,
-        showingLogs: true,
-      },
     })}`
   );
 }

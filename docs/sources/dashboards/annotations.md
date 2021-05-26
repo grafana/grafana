@@ -1,11 +1,7 @@
 +++
 title = "Annotations"
 keywords = ["grafana", "annotations", "documentation", "guide"]
-type = "docs"
 aliases = ["/docs/grafana/latest/reference/annotations/"]
-[menu.docs]
-name = "Annotations"
-parent = "dashboard_features"
 weight = 2
 +++
 
@@ -18,7 +14,7 @@ you can get event description and event tags. The text field can include links t
 
 ## Native annotations
 
-Grafana v4.6+ comes with a native annotation store and the ability to add annotation events directly from the graph panel or via the [HTTP API]({{< relref "../http_api/annotations.md" >}}).
+Grafana comes with a native annotation store and the ability to add annotation events directly from the graph panel or via the [HTTP API]({{< relref "../http_api/annotations.md" >}}).
 
 ## Adding annotations
 
@@ -68,12 +64,4 @@ to show.
 
 ### Annotation query details
 
-The annotation query options are different for each data source.
-
-- [Graphite annotation queries]({{< relref "../features/datasources/graphite.md#annotations" >}})
-- [Elasticsearch annotation queries]({{< relref "../features/datasources/elasticsearch.md#annotations" >}})
-- [InfluxDB annotation queries]({{< relref "../features/datasources/influxdb.md#annotations" >}})
-- [Prometheus annotation queries]({{< relref "../features/datasources/prometheus.md#annotations" >}})
-- [MySQL annotation queries]({{< relref "../features/datasources/mysql.md#annotations" >}})
-- [Postgres annotation queries]({{< relref "../features/datasources/postgres.md#annotations" >}})
-- [Loki annotation queries]({{< relref "../features/datasources/loki.md#annotations" >}})
+The annotation query options are different for each data source. For information about annotations in a specific data source, refer to the specific [data source]({{< relref "../datasources/_index.md" >}}) topic.

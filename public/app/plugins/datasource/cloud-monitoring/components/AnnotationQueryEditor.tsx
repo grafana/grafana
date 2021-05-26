@@ -1,14 +1,14 @@
 import React from 'react';
 import { LegacyForms } from '@grafana/ui';
-const { Input } = LegacyForms;
-
-import { TemplateSrv } from 'app/features/templating/template_srv';
+import { TemplateSrv } from '@grafana/runtime';
 import { SelectableValue } from '@grafana/data';
 
 import CloudMonitoringDatasource from '../datasource';
-import { Metrics, LabelFilter, AnnotationsHelp, Project } from './';
+import { AnnotationsHelp, LabelFilter, Metrics, Project, QueryEditorRow } from './';
 import { toOption } from '../functions';
-import { AnnotationTarget, MetricDescriptor } from '../types';
+import { AnnotationTarget, EditorMode, MetricDescriptor, MetricKind } from '../types';
+
+const { Input } = LegacyForms;
 
 export interface Props {
   onQueryChange: (target: AnnotationTarget) => void;
@@ -25,11 +25,12 @@ interface State extends AnnotationTarget {
 }
 
 const DefaultTarget: State = {
+  editorMode: EditorMode.Visual,
   projectName: '',
   projects: [],
   metricType: '',
   filters: [],
-  metricKind: '',
+  metricKind: MetricKind.GAUGE,
   valueType: '',
   refId: 'annotationQuery',
   title: '',
@@ -43,7 +44,7 @@ export class AnnotationQueryEditor extends React.Component<Props, State> {
   state: State = DefaultTarget;
 
   async UNSAFE_componentWillMount() {
-    // Unfortunately, migrations like this need to go componentWillMount. As soon as there's
+    // Unfortunately, migrations like this need to go UNSAFE_componentWillMount. As soon as there's
     // migration hook for this module.ts, we can do the migrations there instead.
     const { target, datasource } = this.props;
     if (!target.projectName) {
@@ -52,7 +53,7 @@ export class AnnotationQueryEditor extends React.Component<Props, State> {
 
     const variableOptionGroup = {
       label: 'Template Variables',
-      options: datasource.variables.map(toOption),
+      options: datasource.getVariables().map(toOption),
     };
 
     const projects = await datasource.getProjects();
@@ -63,7 +64,9 @@ export class AnnotationQueryEditor extends React.Component<Props, State> {
       projects,
     });
 
-    datasource.getLabels(target.metricType, target.projectName, target.refId).then(labels => this.setState({ labels }));
+    datasource
+      .getLabels(target.metricType, target.projectName, target.refId)
+      .then((labels) => this.setState({ labels }));
   }
 
   onMetricTypeChange = ({ valueType, metricKind, type, unit }: MetricDescriptor) => {
@@ -79,7 +82,7 @@ export class AnnotationQueryEditor extends React.Component<Props, State> {
         onQueryChange(this.state);
       }
     );
-    datasource.getLabels(type, this.state.refId, this.state.projectName).then(labels => this.setState({ labels }));
+    datasource.getLabels(type, this.state.refId, this.state.projectName).then((labels) => this.setState({ labels }));
   };
 
   onChange(prop: string, value: string | string[]) {
@@ -98,7 +101,7 @@ export class AnnotationQueryEditor extends React.Component<Props, State> {
           templateVariableOptions={variableOptions}
           datasource={datasource}
           projectName={projectName || datasource.getDefaultProject()}
-          onChange={value => this.onChange('projectName', value)}
+          onChange={(value) => this.onChange('projectName', value)}
         />
         <Metrics
           projectName={projectName}
@@ -106,42 +109,36 @@ export class AnnotationQueryEditor extends React.Component<Props, State> {
           templateSrv={datasource.templateSrv}
           datasource={datasource}
           templateVariableOptions={variableOptions}
-          onChange={metric => this.onMetricTypeChange(metric)}
+          onChange={(metric) => this.onMetricTypeChange(metric)}
         >
-          {metric => (
+          {(metric) => (
             <>
               <LabelFilter
                 labels={labels}
                 filters={filters}
-                onChange={value => this.onChange('filters', value)}
+                onChange={(value) => this.onChange('filters', value)}
                 variableOptionGroup={variableOptionGroup}
               />
             </>
           )}
         </Metrics>
-        <div className="gf-form gf-form-inline">
-          <div className="gf-form">
-            <span className="gf-form-label query-keyword width-9">Title</span>
-            <Input
-              type="text"
-              className="gf-form-input width-20"
-              value={title}
-              onChange={e => this.onChange('title', e.target.value)}
-            />
-          </div>
-          <div className="gf-form">
-            <span className="gf-form-label query-keyword width-9">Text</span>
-            <Input
-              type="text"
-              className="gf-form-input width-20"
-              value={text}
-              onChange={e => this.onChange('text', e.target.value)}
-            />
-          </div>
-          <div className="gf-form gf-form--grow">
-            <div className="gf-form-label gf-form-label--grow" />
-          </div>
-        </div>
+
+        <QueryEditorRow label="Title">
+          <Input
+            type="text"
+            className="gf-form-input width-20"
+            value={title}
+            onChange={(e) => this.onChange('title', e.target.value)}
+          />
+        </QueryEditorRow>
+        <QueryEditorRow label="Text">
+          <Input
+            type="text"
+            className="gf-form-input width-20"
+            value={text}
+            onChange={(e) => this.onChange('text', e.target.value)}
+          />
+        </QueryEditorRow>
 
         <AnnotationsHelp />
       </>

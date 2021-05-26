@@ -6,29 +6,22 @@ import { Form, Spinner } from '@grafana/ui';
 import Page from 'app/core/components/Page/Page';
 import { connectWithCleanUp } from 'app/core/components/connectWithCleanUp';
 import { NotificationChannelForm } from './components/NotificationChannelForm';
-import {
-  loadNotificationChannel,
-  loadNotificationTypes,
-  testNotificationChannel,
-  updateNotificationChannel,
-} from './state/actions';
+import { loadNotificationChannel, testNotificationChannel, updateNotificationChannel } from './state/actions';
 import { getNavModel } from 'app/core/selectors/navModel';
-import { getRouteParamsId } from 'app/core/selectors/location';
 import { mapChannelsToSelectableValue, transformSubmitData, transformTestData } from './utils/notificationChannels';
 import { NotificationChannelType, NotificationChannelDTO, StoreState } from 'app/types';
 import { resetSecureField } from './state/reducers';
+import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 
-interface OwnProps {}
+interface OwnProps extends GrafanaRouteComponentProps<{ id: string }> {}
 
 interface ConnectedProps {
   navModel: NavModel;
-  channelId: number;
   notificationChannel: any;
   notificationChannelTypes: NotificationChannelType[];
 }
 
 interface DispatchProps {
-  loadNotificationTypes: typeof loadNotificationTypes;
   loadNotificationChannel: typeof loadNotificationChannel;
   testNotificationChannel: typeof testNotificationChannel;
   updateNotificationChannel: typeof updateNotificationChannel;
@@ -39,10 +32,7 @@ type Props = OwnProps & ConnectedProps & DispatchProps;
 
 export class EditNotificationChannelPage extends PureComponent<Props> {
   componentDidMount() {
-    const { channelId } = this.props;
-
-    this.props.loadNotificationTypes();
-    this.props.loadNotificationChannel(channelId);
+    this.props.loadNotificationChannel(parseInt(this.props.match.params.id, 10));
   }
 
   onSubmit = (formData: NotificationChannelDTO) => {
@@ -90,15 +80,15 @@ export class EditNotificationChannelPage extends PureComponent<Props> {
               onSubmit={this.onSubmit}
               defaultValues={{
                 ...notificationChannel,
-                type: notificationChannelTypes.find(n => n.value === notificationChannel.type),
+                type: notificationChannelTypes.find((n) => n.value === notificationChannel.type),
               }}
             >
               {({ control, errors, getValues, register, watch }) => {
-                const selectedChannel = notificationChannelTypes.find(c => c.value === getValues().type.value);
+                const selectedChannel = notificationChannelTypes.find((c) => c.value === getValues().type.value);
 
                 return (
                   <NotificationChannelForm
-                    selectableChannels={mapChannelsToSelectableValue(notificationChannelTypes)}
+                    selectableChannels={mapChannelsToSelectableValue(notificationChannelTypes, true)}
                     selectedChannel={selectedChannel}
                     imageRendererAvailable={config.rendererAvailable}
                     onTestChannel={this.onTestChannel}
@@ -125,18 +115,15 @@ export class EditNotificationChannelPage extends PureComponent<Props> {
   }
 }
 
-const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = state => {
-  const channelId = getRouteParamsId(state.location) as number;
+const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (state) => {
   return {
     navModel: getNavModel(state.navIndex, 'channels'),
-    channelId,
     notificationChannel: state.notificationChannel.notificationChannel,
     notificationChannelTypes: state.notificationChannel.notificationChannelTypes,
   };
 };
 
 const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
-  loadNotificationTypes,
   loadNotificationChannel,
   testNotificationChannel,
   updateNotificationChannel,
@@ -146,5 +133,5 @@ const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
 export default connectWithCleanUp(
   mapStateToProps,
   mapDispatchToProps,
-  state => state.notificationChannel
+  (state) => state.notificationChannel
 )(EditNotificationChannelPage);

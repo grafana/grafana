@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import { defaults } from 'lodash';
 import $ from 'jquery';
 import { MetricsPanelCtrl } from 'app/plugins/sdk';
 import config from 'app/core/config';
@@ -18,6 +18,8 @@ export class TablePanelCtrl extends MetricsPanelCtrl {
   dataRaw: any;
   table: any;
   renderer: any;
+  panelHasRowColorMode: boolean;
+  panelHasLinks: boolean;
 
   panelDefaults: any = {
     targets: [{}],
@@ -63,7 +65,10 @@ export class TablePanelCtrl extends MetricsPanelCtrl {
       delete this.panel.fields;
     }
 
-    _.defaults(this.panel, this.panelDefaults);
+    defaults(this.panel, this.panelDefaults);
+
+    this.panelHasRowColorMode = Boolean(this.panel.styles.find((style: any) => style.colorMode === 'row'));
+    this.panelHasLinks = Boolean(this.panel.styles.find((style: any) => style.link));
 
     this.events.on(PanelEvents.dataReceived, this.onDataReceived.bind(this));
     this.events.on(PanelEvents.dataSnapshotLoad, this.onDataReceived.bind(this));
@@ -73,6 +78,10 @@ export class TablePanelCtrl extends MetricsPanelCtrl {
   onInitEditMode() {
     this.addEditorTab('Options', tablePanelEditor, 2);
     this.addEditorTab('Column Styles', columnOptionsTab, 3);
+  }
+
+  migrateToPanel(type: string) {
+    this.onPluginTypeChange(config.panels[type]);
   }
 
   issueQueries(datasource: any) {
@@ -129,7 +138,7 @@ export class TablePanelCtrl extends MetricsPanelCtrl {
       this.dashboard.getTimezone(),
       this.$sanitize,
       this.templateSrv,
-      config.theme.type
+      config.theme
     );
 
     return super.render(this.table);

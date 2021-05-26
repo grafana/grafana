@@ -1,13 +1,13 @@
 import React, { FC, useState, useCallback } from 'react';
-import { css, cx } from 'emotion';
-import { TimeZone, GrafanaTheme, getTimeZoneInfo } from '@grafana/data';
-import { stylesFactory, useTheme } from '../../../themes';
+import { css, cx } from '@emotion/css';
+import { TimeZone, GrafanaTheme2, getTimeZoneInfo } from '@grafana/data';
+import { stylesFactory, useTheme2 } from '../../../themes';
 import { TimeZoneTitle } from '../TimeZonePicker/TimeZoneTitle';
 import { TimeZoneDescription } from '../TimeZonePicker/TimeZoneDescription';
 import { TimeZoneOffset } from '../TimeZonePicker/TimeZoneOffset';
 import { Button } from '../../Button';
 import { TimeZonePicker } from '../TimeZonePicker';
-import isString from 'lodash/isString';
+import { isString } from 'lodash';
 import { selectors } from '@grafana/e2e-selectors';
 
 interface Props {
@@ -16,7 +16,7 @@ interface Props {
   onChangeTimeZone: (timeZone: TimeZone) => void;
 }
 
-export const TimePickerFooter: FC<Props> = props => {
+export const TimePickerFooter: FC<Props> = (props) => {
   const { timeZone, timestamp = Date.now(), onChangeTimeZone } = props;
   const [isEditing, setEditing] = useState(false);
 
@@ -30,7 +30,7 @@ export const TimePickerFooter: FC<Props> = props => {
     [isEditing, setEditing]
   );
 
-  const theme = useTheme();
+  const theme = useTheme2();
   const style = getStyle(theme);
 
   if (!isString(timeZone)) {
@@ -49,7 +49,7 @@ export const TimePickerFooter: FC<Props> = props => {
         <div aria-label={selectors.components.TimeZonePicker.container} className={style.timeZoneContainer}>
           <TimeZonePicker
             includeInternal={true}
-            onChange={timeZone => {
+            onChange={(timeZone) => {
               onToggleChangeTz();
 
               if (isString(timeZone)) {
@@ -82,10 +82,10 @@ export const TimePickerFooter: FC<Props> = props => {
   );
 };
 
-const getStyle = stylesFactory((theme: GrafanaTheme) => {
+const getStyle = stylesFactory((theme: GrafanaTheme2) => {
   return {
     container: css`
-      border-top: 1px solid ${theme.colors.border1};
+      border-top: 1px solid ${theme.colors.border.weak};
       padding: 11px;
       display: flex;
       flex-direction: row;

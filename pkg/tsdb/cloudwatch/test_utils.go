@@ -5,6 +5,7 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/request"
+	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
 	"github.com/aws/aws-sdk-go/service/cloudwatch/cloudwatchiface"
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
@@ -13,63 +14,63 @@ import (
 	"github.com/aws/aws-sdk-go/service/ec2/ec2iface"
 	"github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi"
 	"github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi/resourcegroupstaggingapiiface"
-	"github.com/grafana/grafana/pkg/components/securejsondata"
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
-func fakeDataSource() *models.DataSource {
-	jsonData := simplejson.New()
-	jsonData.Set("defaultRegion", "default")
-	return &models.DataSource{
-		Id:             1,
-		Database:       "default",
-		JsonData:       jsonData,
-		SecureJsonData: securejsondata.SecureJsonData{},
-	}
-}
-
-type fakeCWLogsClient struct {
+type FakeCWLogsClient struct {
 	cloudwatchlogsiface.CloudWatchLogsAPI
 	logGroups      cloudwatchlogs.DescribeLogGroupsOutput
 	logGroupFields cloudwatchlogs.GetLogGroupFieldsOutput
 	queryResults   cloudwatchlogs.GetQueryResultsOutput
 }
 
-func (m fakeCWLogsClient) GetQueryResultsWithContext(ctx context.Context, input *cloudwatchlogs.GetQueryResultsInput, option ...request.Option) (*cloudwatchlogs.GetQueryResultsOutput, error) {
+func (m FakeCWLogsClient) GetQueryResultsWithContext(ctx context.Context, input *cloudwatchlogs.GetQueryResultsInput, option ...request.Option) (*cloudwatchlogs.GetQueryResultsOutput, error) {
 	return &m.queryResults, nil
 }
 
-func (m fakeCWLogsClient) StartQueryWithContext(ctx context.Context, input *cloudwatchlogs.StartQueryInput, option ...request.Option) (*cloudwatchlogs.StartQueryOutput, error) {
+func (m FakeCWLogsClient) StartQueryWithContext(ctx context.Context, input *cloudwatchlogs.StartQueryInput, option ...request.Option) (*cloudwatchlogs.StartQueryOutput, error) {
 	return &cloudwatchlogs.StartQueryOutput{
 		QueryId: aws.String("abcd-efgh-ijkl-mnop"),
 	}, nil
 }
 
-func (m fakeCWLogsClient) StopQueryWithContext(ctx context.Context, input *cloudwatchlogs.StopQueryInput, option ...request.Option) (*cloudwatchlogs.StopQueryOutput, error) {
+func (m FakeCWLogsClient) StopQueryWithContext(ctx context.Context, input *cloudwatchlogs.StopQueryInput, option ...request.Option) (*cloudwatchlogs.StopQueryOutput, error) {
 	return &cloudwatchlogs.StopQueryOutput{
 		Success: aws.Bool(true),
 	}, nil
 }
 
-func (m fakeCWLogsClient) DescribeLogGroupsWithContext(ctx context.Context, input *cloudwatchlogs.DescribeLogGroupsInput, option ...request.Option) (*cloudwatchlogs.DescribeLogGroupsOutput, error) {
+func (m FakeCWLogsClient) DescribeLogGroupsWithContext(ctx context.Context, input *cloudwatchlogs.DescribeLogGroupsInput, option ...request.Option) (*cloudwatchlogs.DescribeLogGroupsOutput, error) {
 	return &m.logGroups, nil
 }
 
-func (m fakeCWLogsClient) GetLogGroupFieldsWithContext(ctx context.Context, input *cloudwatchlogs.GetLogGroupFieldsInput, option ...request.Option) (*cloudwatchlogs.GetLogGroupFieldsOutput, error) {
+func (m FakeCWLogsClient) GetLogGroupFieldsWithContext(ctx context.Context, input *cloudwatchlogs.GetLogGroupFieldsInput, option ...request.Option) (*cloudwatchlogs.GetLogGroupFieldsOutput, error) {
 	return &m.logGroupFields, nil
 }
 
-type fakeCWClient struct {
+type FakeCWClient struct {
 	cloudwatchiface.CloudWatchAPI
 
-	metrics []*cloudwatch.Metric
+	Metrics []*cloudwatch.Metric
+
+	MetricsPerPage int
 }
 
-func (c fakeCWClient) ListMetricsPages(input *cloudwatch.ListMetricsInput, fn func(*cloudwatch.ListMetricsOutput, bool) bool) error {
-	fn(&cloudwatch.ListMetricsOutput{
-		Metrics: c.metrics,
-	}, true)
+func (c FakeCWClient) ListMetricsPages(input *cloudwatch.ListMetricsInput, fn func(*cloudwatch.ListMetricsOutput, bool) bool) error {
+	if c.MetricsPerPage == 0 {
+		c.MetricsPerPage = 1000
+	}
+	chunks := chunkSlice(c.Metrics, c.MetricsPerPage)
+
+	for i, metrics := range chunks {
+		response := fn(&cloudwatch.ListMetricsOutput{
+			Metrics: metrics,
+		}, i+1 == len(chunks))
+		if !response {
+			break
+		}
+	}
 	return nil
 }
 
@@ -130,4 +131,34 @@ func (c fakeRGTAClient) GetResourcesPages(in *resourcegroupstaggingapi.GetResour
 		ResourceTagMappingList: c.tagMapping,
 	}, true)
 	return nil
+}
+
+func chunkSlice(slice []*cloudwatch.Metric, chunkSize int) [][]*cloudwatch.Metric {
+	var chunks [][]*cloudwatch.Metric
+	for {
+		if len(slice) == 0 {
+			break
+		}
+		if len(slice) < chunkSize {
+			chunkSize = len(slice)
+		}
+
+		chunks = append(chunks, slice[0:chunkSize])
+		slice = slice[chunkSize:]
+	}
+
+	return chunks
+}
+
+func newTestConfig() *setting.Cfg {
+	return &setting.Cfg{AWSAllowedAuthProviders: []string{"default"}, AWSAssumeRoleEnabled: true, AWSListMetricsPageLimit: 1000}
+}
+
+type fakeSessionCache struct {
+}
+
+func (s fakeSessionCache) GetSession(region string, settings awsds.AWSDatasourceSettings) (*session.Session, error) {
+	return &session.Session{
+		Config: &aws.Config{},
+	}, nil
 }

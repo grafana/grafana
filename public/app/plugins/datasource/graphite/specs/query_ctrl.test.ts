@@ -1,13 +1,20 @@
+import { dispatch } from 'app/store/store';
 import { uiSegmentSrv } from 'app/core/services/segment_srv';
 import gfunc from '../gfunc';
 import { GraphiteQueryCtrl } from '../query_ctrl';
 import { TemplateSrvStub } from 'test/specs/helpers';
+import { silenceConsoleOutput } from 'test/core/utils/silenceConsoleOutput';
 
 jest.mock('app/core/utils/promiseToDigest', () => ({
   promiseToDigest: (scope: any) => {
     return (p: Promise<any>) => p;
   },
 }));
+
+jest.mock('app/store/store', () => ({
+  dispatch: jest.fn(),
+}));
+const mockDispatch = dispatch as jest.Mock;
 
 describe('GraphiteQueryCtrl', () => {
   const ctx = {
@@ -17,6 +24,7 @@ describe('GraphiteQueryCtrl', () => {
       getFuncDef: gfunc.getFuncDef,
       waitForFuncDefsLoaded: jest.fn(() => Promise.resolve(null)),
       createFuncInstance: gfunc.createFuncInstance,
+      getTagsAutoComplete: jest.fn().mockReturnValue(Promise.resolve([])),
     },
     target: { target: 'aliasByNode(scaleToSeconds(test.prod.*,1),2)' },
     panelCtrl: {
@@ -29,6 +37,7 @@ describe('GraphiteQueryCtrl', () => {
   };
 
   beforeEach(() => {
+    jest.clearAllMocks();
     GraphiteQueryCtrl.prototype.target = ctx.target;
     GraphiteQueryCtrl.prototype.datasource = ctx.datasource;
     GraphiteQueryCtrl.prototype.panelCtrl = ctx.panelCtrl;
@@ -37,7 +46,7 @@ describe('GraphiteQueryCtrl', () => {
       {},
       {} as any,
       //@ts-ignore
-      new uiSegmentSrv({ trustAsHtml: html => html }, { highlightVariablesAsHtml: () => {} }),
+      new uiSegmentSrv({ trustAsHtml: (html) => html }, { highlightVariablesAsHtml: () => {} }),
       //@ts-ignore
       new TemplateSrvStub(),
       {}
@@ -181,6 +190,106 @@ describe('GraphiteQueryCtrl', () => {
 
     it('should have no segments', () => {
       expect(ctx.altSegments.length).toBe(0);
+    });
+  });
+
+  describe('when autocomplete for metric names is not available', () => {
+    silenceConsoleOutput();
+    beforeEach(() => {
+      ctx.ctrl.datasource.getTagsAutoComplete = jest.fn().mockReturnValue(Promise.resolve([]));
+      ctx.ctrl.datasource.metricFindQuery = jest.fn().mockReturnValue(
+        new Promise(() => {
+          throw new Error();
+        })
+      );
+    });
+
+    it('getAltSegments should handle autocomplete errors', async () => {
+      await expect(async () => {
+        await ctx.ctrl.getAltSegments(0, 'any');
+        expect(mockDispatch).toBeCalledWith(
+          expect.objectContaining({
+            type: 'appNotifications/notifyApp',
+          })
+        );
+      }).not.toThrow();
+    });
+
+    it('getAltSegments should display the error message only once', async () => {
+      await ctx.ctrl.getAltSegments(0, 'any');
+      expect(mockDispatch.mock.calls.length).toBe(1);
+
+      await ctx.ctrl.getAltSegments(0, 'any');
+      expect(mockDispatch.mock.calls.length).toBe(1);
+    });
+
+    it('checkOtherSegments should handle autocomplete errors', async () => {
+      await expect(async () => {
+        await ctx.ctrl.checkOtherSegments(1, false);
+        expect(mockDispatch).toBeCalledWith(
+          expect.objectContaining({
+            type: 'appNotifications/notifyApp',
+          })
+        );
+      }).not.toThrow();
+    });
+
+    it('checkOtherSegments should display the error message only once', async () => {
+      await ctx.ctrl.checkOtherSegments(1, false);
+      expect(mockDispatch.mock.calls.length).toBe(1);
+
+      await ctx.ctrl.checkOtherSegments(1, false);
+      expect(mockDispatch.mock.calls.length).toBe(1);
+    });
+  });
+
+  describe('when autocomplete for tags is not available', () => {
+    silenceConsoleOutput();
+    beforeEach(() => {
+      ctx.datasource.metricFindQuery = jest.fn().mockReturnValue(Promise.resolve([]));
+      ctx.datasource.getTagsAutoComplete = jest.fn().mockReturnValue(
+        new Promise(() => {
+          throw new Error();
+        })
+      );
+    });
+
+    it('getTags should handle autocomplete errors', async () => {
+      await expect(async () => {
+        await ctx.ctrl.getTags(0, 'any');
+        expect(mockDispatch).toBeCalledWith(
+          expect.objectContaining({
+            type: 'appNotifications/notifyApp',
+          })
+        );
+      }).not.toThrow();
+    });
+
+    it('getTags should display the error message only once', async () => {
+      await ctx.ctrl.getTags(0, 'any');
+      expect(mockDispatch.mock.calls.length).toBe(1);
+
+      await ctx.ctrl.getTags(0, 'any');
+      expect(mockDispatch.mock.calls.length).toBe(1);
+    });
+
+    it('getTagsAsSegments should handle autocomplete errors', async () => {
+      await expect(async () => {
+        await ctx.ctrl.getTagsAsSegments('any');
+        expect(mockDispatch).toBeCalledWith(
+          expect.objectContaining({
+            type: 'appNotifications/notifyApp',
+          })
+        );
+      }).not.toThrow();
+    });
+
+    it('getTagsAsSegments should display the error message only once', async () => {
+      await ctx.ctrl.getTagsAsSegments('any');
+      expect(mockDispatch.mock.calls.length).toBe(1);
+
+      await ctx.ctrl.getTagsAsSegments('any');
+      expect(mockDispatch.mock.calls.length).toBe(1);
     });
   });
 

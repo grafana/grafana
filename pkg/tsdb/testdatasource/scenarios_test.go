@@ -1,126 +1,214 @@
 package testdatasource
 
 import (
+	"context"
+	"fmt"
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/tsdb"
-	. "github.com/smartystreets/goconvey/convey"
+	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestTestdataScenarios(t *testing.T) {
-	Convey("random walk ", t, func() {
-		scenario := ScenarioRegistry["random_walk"]
+	p := &testDataPlugin{}
 
-		Convey("Should start at the requested value", func() {
-			req := &tsdb.TsdbQuery{
-				TimeRange: tsdb.NewFakeTimeRange("5m", "now", time.Now()),
-				Queries: []*tsdb.Query{
-					{RefId: "A", IntervalMs: 100, MaxDataPoints: 100, Model: simplejson.New()},
+	t.Run("random walk ", func(t *testing.T) {
+		t.Run("Should start at the requested value", func(t *testing.T) {
+			timeRange := plugins.DataTimeRange{From: "5m", To: "now", Now: time.Now()}
+
+			model := simplejson.New()
+			model.Set("startValue", 1.234)
+			modelBytes, err := model.MarshalJSON()
+			require.NoError(t, err)
+
+			query := backend.DataQuery{
+				RefID: "A",
+				TimeRange: backend.TimeRange{
+					From: timeRange.MustGetFrom(),
+					To:   timeRange.MustGetTo(),
 				},
+				Interval:      100 * time.Millisecond,
+				MaxDataPoints: 100,
+				JSON:          modelBytes,
 			}
-			query := req.Queries[0]
-			query.Model.Set("startValue", 1.234)
 
-			result := scenario.Handler(req.Queries[0], req)
-			points := result.Series[0].Points
+			req := &backend.QueryDataRequest{
+				PluginContext: backend.PluginContext{},
+				Queries:       []backend.DataQuery{query},
+			}
 
-			So(result.Series, ShouldNotBeNil)
-			So(points[0][0].Float64, ShouldEqual, 1.234)
+			resp, err := p.handleRandomWalkScenario(context.Background(), req)
+			require.NoError(t, err)
+			require.NotNil(t, resp)
+
+			dResp, exists := resp.Responses[query.RefID]
+			require.True(t, exists)
+			require.NoError(t, dResp.Error)
+
+			require.Len(t, dResp.Frames, 1)
+			frame := dResp.Frames[0]
+			require.Len(t, frame.Fields, 2)
+			require.Equal(t, "time", frame.Fields[0].Name)
+			require.Equal(t, "A-series", frame.Fields[1].Name)
+			val, ok := frame.Fields[1].ConcreteAt(0)
+			require.True(t, ok)
+			require.Equal(t, 1.234, val)
 		})
 	})
 
-	Convey("random walk table", t, func() {
-		scenario := ScenarioRegistry["random_walk_table"]
+	t.Run("random walk table", func(t *testing.T) {
+		t.Run("Should return a table that looks like value/min/max", func(t *testing.T) {
+			timeRange := plugins.DataTimeRange{From: "5m", To: "now", Now: time.Now()}
 
-		Convey("Should return a table that looks like value/min/max", func() {
-			req := &tsdb.TsdbQuery{
-				TimeRange: tsdb.NewFakeTimeRange("5m", "now", time.Now()),
-				Queries: []*tsdb.Query{
-					{RefId: "A", IntervalMs: 100, MaxDataPoints: 100, Model: simplejson.New()},
+			model := simplejson.New()
+			modelBytes, err := model.MarshalJSON()
+			require.NoError(t, err)
+
+			query := backend.DataQuery{
+				RefID: "A",
+				TimeRange: backend.TimeRange{
+					From: timeRange.MustGetFrom(),
+					To:   timeRange.MustGetTo(),
 				},
+				Interval:      100 * time.Millisecond,
+				MaxDataPoints: 100,
+				JSON:          modelBytes,
 			}
 
-			result := scenario.Handler(req.Queries[0], req)
-			table := result.Tables[0]
+			req := &backend.QueryDataRequest{
+				PluginContext: backend.PluginContext{},
+				Queries:       []backend.DataQuery{query},
+			}
 
-			So(len(table.Rows), ShouldBeGreaterThan, 50)
-			for _, row := range table.Rows {
-				value := row[1]
-				min := row[2]
-				max := row[3]
+			resp, err := p.handleRandomWalkTableScenario(context.Background(), req)
+			require.NoError(t, err)
+			require.NotNil(t, resp)
 
-				So(min, ShouldBeLessThan, value)
-				So(max, ShouldBeGreaterThan, value)
+			dResp, exists := resp.Responses[query.RefID]
+			require.True(t, exists)
+			require.NoError(t, dResp.Error)
+
+			require.Len(t, dResp.Frames, 1)
+			frame := dResp.Frames[0]
+			require.Greater(t, frame.Rows(), 50)
+			require.Len(t, frame.Fields, 5)
+			require.Equal(t, "Time", frame.Fields[0].Name)
+			require.Equal(t, "Value", frame.Fields[1].Name)
+			require.Equal(t, "Min", frame.Fields[2].Name)
+			require.Equal(t, "Max", frame.Fields[3].Name)
+			require.Equal(t, "Info", frame.Fields[4].Name)
+
+			for i := 0; i < frame.Rows(); i++ {
+				value, ok := frame.ConcreteAt(1, i)
+				require.True(t, ok)
+				min, ok := frame.ConcreteAt(2, i)
+				require.True(t, ok)
+				max, ok := frame.ConcreteAt(3, i)
+				require.True(t, ok)
+
+				require.Less(t, min, value)
+				require.Greater(t, max, value)
 			}
 		})
 
-		Convey("Should return a table with some nil values", func() {
-			req := &tsdb.TsdbQuery{
-				TimeRange: tsdb.NewFakeTimeRange("5m", "now", time.Now()),
-				Queries: []*tsdb.Query{
-					{RefId: "A", IntervalMs: 100, MaxDataPoints: 100, Model: simplejson.New()},
+		t.Run("Should return a table with some nil values", func(t *testing.T) {
+			timeRange := plugins.DataTimeRange{From: "5m", To: "now", Now: time.Now()}
+
+			model := simplejson.New()
+			model.Set("withNil", true)
+
+			modelBytes, err := model.MarshalJSON()
+			require.NoError(t, err)
+
+			query := backend.DataQuery{
+				RefID: "A",
+				TimeRange: backend.TimeRange{
+					From: timeRange.MustGetFrom(),
+					To:   timeRange.MustGetTo(),
 				},
-			}
-			query := req.Queries[0]
-			query.Model.Set("withNil", true)
-
-			result := scenario.Handler(req.Queries[0], req)
-			table := result.Tables[0]
-
-			nil1 := false
-			nil2 := false
-			nil3 := false
-
-			So(len(table.Rows), ShouldBeGreaterThan, 50)
-			for _, row := range table.Rows {
-				if row[1] == nil {
-					nil1 = true
-				}
-				if row[2] == nil {
-					nil2 = true
-				}
-				if row[3] == nil {
-					nil3 = true
-				}
+				Interval:      100 * time.Millisecond,
+				MaxDataPoints: 100,
+				JSON:          modelBytes,
 			}
 
-			So(nil1, ShouldBeTrue)
-			So(nil2, ShouldBeTrue)
-			So(nil3, ShouldBeTrue)
+			req := &backend.QueryDataRequest{
+				PluginContext: backend.PluginContext{},
+				Queries:       []backend.DataQuery{query},
+			}
+
+			resp, err := p.handleRandomWalkTableScenario(context.Background(), req)
+			require.NoError(t, err)
+			require.NotNil(t, resp)
+
+			dResp, exists := resp.Responses[query.RefID]
+			require.True(t, exists)
+			require.NoError(t, dResp.Error)
+
+			require.Len(t, dResp.Frames, 1)
+			frame := dResp.Frames[0]
+			require.Greater(t, frame.Rows(), 50)
+			require.Len(t, frame.Fields, 5)
+			require.Equal(t, "Time", frame.Fields[0].Name)
+			require.Equal(t, "Value", frame.Fields[1].Name)
+			require.Equal(t, "Min", frame.Fields[2].Name)
+			require.Equal(t, "Max", frame.Fields[3].Name)
+			require.Equal(t, "Info", frame.Fields[4].Name)
+
+			valNil := false
+			minNil := false
+			maxNil := false
+
+			for i := 0; i < frame.Rows(); i++ {
+				_, ok := frame.ConcreteAt(1, i)
+				if !ok {
+					valNil = true
+				}
+
+				_, ok = frame.ConcreteAt(2, i)
+				if !ok {
+					minNil = true
+				}
+
+				_, ok = frame.ConcreteAt(3, i)
+				if !ok {
+					maxNil = true
+				}
+			}
+
+			require.True(t, valNil)
+			require.True(t, minNil)
+			require.True(t, maxNil)
 		})
 	})
 }
 
-func TestToLabels(t *testing.T) {
-	Convey("read labels", t, func() {
-		tags := make(map[string]string)
-		tags["job"] = "foo"
-		tags["instance"] = "bar"
+func TestParseLabels(t *testing.T) {
+	expectedTags := data.Labels{
+		"job":      "foo",
+		"instance": "bar",
+	}
 
-		query1 := tsdb.Query{
-			Model: simplejson.NewFromAny(map[string]interface{}{
-				"labels": `{job="foo", instance="bar"}`,
-			}),
-		}
+	tcs := []struct {
+		model map[string]interface{}
+	}{
+		{model: map[string]interface{}{
+			"labels": `{job="foo", instance="bar"}`,
+		}},
+		{model: map[string]interface{}{
+			"labels": `job=foo, instance=bar`,
+		}},
+		{model: map[string]interface{}{
+			"labels": `job = foo,instance = bar`,
+		}},
+	}
 
-		So(parseLabels(&query1), ShouldResemble, tags)
-
-		query2 := tsdb.Query{
-			Model: simplejson.NewFromAny(map[string]interface{}{
-				"labels": `job=foo, instance=bar`,
-			}),
-		}
-
-		So(parseLabels(&query2), ShouldResemble, tags)
-
-		query3 := tsdb.Query{
-			Model: simplejson.NewFromAny(map[string]interface{}{
-				"labels": `job = foo,instance = bar`,
-			}),
-		}
-
-		So(parseLabels(&query3), ShouldResemble, tags)
-	})
+	for i, tc := range tcs {
+		model := simplejson.NewFromAny(tc.model)
+		assert.Equal(t, expectedTags, parseLabels(model), fmt.Sprintf("Actual tags in test case %d doesn't match expected tags", i+1))
+	}
 }

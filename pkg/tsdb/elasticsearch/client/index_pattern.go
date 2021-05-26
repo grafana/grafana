@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/tsdb"
+	"github.com/grafana/grafana/pkg/plugins"
 )
 
 const (
@@ -19,7 +19,7 @@ const (
 )
 
 type indexPattern interface {
-	GetIndices(timeRange *tsdb.TimeRange) ([]string, error)
+	GetIndices(timeRange plugins.DataTimeRange) ([]string, error)
 }
 
 var newIndexPattern = func(interval string, pattern string) (indexPattern, error) {
@@ -34,7 +34,7 @@ type staticIndexPattern struct {
 	indexName string
 }
 
-func (ip *staticIndexPattern) GetIndices(timeRange *tsdb.TimeRange) ([]string, error) {
+func (ip *staticIndexPattern) GetIndices(timeRange plugins.DataTimeRange) ([]string, error) {
 	return []string{ip.indexName}, nil
 }
 
@@ -73,7 +73,7 @@ func newDynamicIndexPattern(interval, pattern string) (*dynamicIndexPattern, err
 	}, nil
 }
 
-func (ip *dynamicIndexPattern) GetIndices(timeRange *tsdb.TimeRange) ([]string, error) {
+func (ip *dynamicIndexPattern) GetIndices(timeRange plugins.DataTimeRange) ([]string, error) {
 	from := timeRange.GetFromAsTimeUTC()
 	to := timeRange.GetToAsTimeUTC()
 	intervals := ip.intervalGenerator.Generate(from, to)
@@ -220,7 +220,7 @@ var datePatternReplacements = map[string]string{
 	"YYYY": "2006",                    // stdLongYear 1970 1971 ... 2029 2030
 	"gg":   "<stdIsoYearShort>",       // ISO-8601 year number 70 71 ... 29 30
 	"gggg": "<stdIsoYear>",            // ***1970 1971 ... 2029 2030
-	"GG":   "<stdIsoYearShort>",       //70 71 ... 29 30
+	"GG":   "<stdIsoYearShort>",       // 70 71 ... 29 30
 	"GGGG": "<stdIsoYear>",            // ***1970 1971 ... 2029 2030
 	"Q":    "<stdQuarter>",            // 1, 2, 3, 4
 	"A":    "PM",                      // stdPM AM PM
@@ -233,86 +233,113 @@ var datePatternReplacements = map[string]string{
 	"mm":   "04",                      // stdZeroMinute 00 01 ... 58 59
 	"s":    "5",                       // stdSecond 0 1 ... 58 59
 	"ss":   "05",                      // stdZeroSecond ***00 01 ... 58 59
-	"z":    "MST",                     //EST CST ... MST PST
-	"zz":   "MST",                     //EST CST ... MST PST
+	"z":    "MST",                     // EST CST ... MST PST
+	"zz":   "MST",                     // EST CST ... MST PST
 	"Z":    "Z07:00",                  // stdNumColonTZ -07:00 -06:00 ... +06:00 +07:00
 	"ZZ":   "-0700",                   // stdNumTZ -0700 -0600 ... +0600 +0700
 	"X":    "<stdUnix>",               // Seconds since unix epoch 1360013296
 	"LT":   "3:04 PM",                 // 8:30 PM
-	"L":    "01/02/2006",              //09/04/1986
-	"l":    "1/2/2006",                //9/4/1986
-	"ll":   "Jan 2 2006",              //Sep 4 1986
-	"lll":  "Jan 2 2006 3:04 PM",      //Sep 4 1986 8:30 PM
-	"llll": "Mon, Jan 2 2006 3:04 PM", //Thu, Sep 4 1986 8:30 PM
+	"L":    "01/02/2006",              // 09/04/1986
+	"l":    "1/2/2006",                // 9/4/1986
+	"ll":   "Jan 2 2006",              // Sep 4 1986
+	"lll":  "Jan 2 2006 3:04 PM",      // Sep 4 1986 8:30 PM
+	"llll": "Mon, Jan 2 2006 3:04 PM", // Thu, Sep 4 1986 8:30 PM
 }
 
 func formatDate(t time.Time, pattern string) string {
-	var datePattern string
+	var formattedDatePatterns []string
+	var bases []string
 	base := ""
-	ltr := false
+	isBaseFirst := false
 
-	if strings.HasPrefix(pattern, "[") {
-		parts := strings.Split(strings.TrimLeft(pattern, "["), "]")
-		base = parts[0]
-		if len(parts) == 2 {
-			datePattern = parts[1]
+	baseStart := strings.Index(pattern, "[")
+	for baseStart != -1 {
+		var datePattern string
+
+		baseEnd := strings.Index(pattern, "]")
+		base = pattern[baseStart+1 : baseEnd]
+		bases = append(bases, base)
+		if baseStart == 0 {
+			isBaseFirst = true
 		} else {
-			datePattern = base
-			base = ""
+			datePattern = pattern[:baseStart]
+			formatted := t.Format(patternToLayout(datePattern))
+			formattedDatePatterns = append(formattedDatePatterns, formatted)
 		}
-		ltr = true
-	} else if strings.HasSuffix(pattern, "]") {
-		parts := strings.Split(strings.TrimRight(pattern, "]"), "[")
-		datePattern = parts[0]
-		if len(parts) == 2 {
-			base = parts[1]
+
+		if len(pattern) <= baseEnd+1 {
+			break
+		}
+		pattern = pattern[baseEnd+1:]
+
+		baseStart = strings.Index(pattern, "[")
+		if baseStart == -1 {
+			datePattern = pattern
 		} else {
-			base = ""
+			datePattern = pattern[:baseStart]
+			pattern = pattern[baseStart:]
+			baseStart = 0
 		}
-		ltr = false
+		formatted := t.Format(patternToLayout(datePattern))
+		formattedDatePatterns = append(formattedDatePatterns, formatted)
 	}
 
-	formatted := t.Format(patternToLayout(datePattern))
-
-	if strings.Contains(formatted, "<std") {
-		isoYear, isoWeek := t.ISOWeek()
-		isoYearShort := fmt.Sprintf("%d", isoYear)[2:4]
-		formatted = strings.Replace(formatted, "<stdIsoYear>", fmt.Sprintf("%d", isoYear), -1)
-		formatted = strings.Replace(formatted, "<stdIsoYearShort>", isoYearShort, -1)
-		formatted = strings.Replace(formatted, "<stdWeekOfYear>", fmt.Sprintf("%02d", isoWeek), -1)
-
-		formatted = strings.Replace(formatted, "<stdUnix>", fmt.Sprintf("%d", t.Unix()), -1)
-
-		day := t.Weekday()
-		dayOfWeekIso := int(day)
-		if day == time.Sunday {
-			dayOfWeekIso = 7
-		}
-
-		formatted = strings.Replace(formatted, "<stdDayOfWeek>", fmt.Sprintf("%d", day), -1)
-		formatted = strings.Replace(formatted, "<stdDayOfWeekISO>", fmt.Sprintf("%d", dayOfWeekIso), -1)
-		formatted = strings.Replace(formatted, "<stdDayOfYear>", fmt.Sprintf("%d", t.YearDay()), -1)
-
-		quarter := 4
-
-		switch t.Month() {
-		case time.January, time.February, time.March:
-			quarter = 1
-		case time.April, time.May, time.June:
-			quarter = 2
-		case time.July, time.August, time.September:
-			quarter = 3
-		}
-
-		formatted = strings.Replace(formatted, "<stdQuarter>", fmt.Sprintf("%d", quarter), -1)
-		formatted = strings.Replace(formatted, "<stdHourNoZero>", fmt.Sprintf("%d", t.Hour()), -1)
+	isoYear, isoWeek := t.ISOWeek()
+	isoYearShort := fmt.Sprintf("%d", isoYear)[2:4]
+	day := t.Weekday()
+	dayOfWeekIso := int(day)
+	if day == time.Sunday {
+		dayOfWeekIso = 7
+	}
+	var quarter int
+	switch t.Month() {
+	case time.January, time.February, time.March:
+		quarter = 1
+	case time.April, time.May, time.June:
+		quarter = 2
+	case time.July, time.August, time.September:
+		quarter = 3
+	default:
+		quarter = 4
 	}
 
-	if ltr {
-		return base + formatted
+	for i, formatted := range formattedDatePatterns {
+		if !strings.Contains(formatted, "<std") {
+			continue
+		}
+		formatted = strings.ReplaceAll(formatted, "<stdIsoYear>", fmt.Sprintf("%d", isoYear))
+		formatted = strings.ReplaceAll(formatted, "<stdIsoYearShort>", isoYearShort)
+		formatted = strings.ReplaceAll(formatted, "<stdWeekOfYear>", fmt.Sprintf("%02d", isoWeek))
+		formatted = strings.ReplaceAll(formatted, "<stdUnix>", fmt.Sprintf("%d", t.Unix()))
+		formatted = strings.ReplaceAll(formatted, "<stdDayOfWeek>", fmt.Sprintf("%d", day))
+		formatted = strings.ReplaceAll(formatted, "<stdDayOfWeekISO>", fmt.Sprintf("%d", dayOfWeekIso))
+		formatted = strings.ReplaceAll(formatted, "<stdDayOfYear>", fmt.Sprintf("%d", t.YearDay()))
+		formatted = strings.ReplaceAll(formatted, "<stdQuarter>", fmt.Sprintf("%d", quarter))
+		formatted = strings.ReplaceAll(formatted, "<stdHourNoZero>", fmt.Sprintf("%d", t.Hour()))
+
+		formattedDatePatterns[i] = formatted
 	}
 
-	return formatted + base
+	var fullPattern []string
+	var i int
+
+	minLen := min(len(formattedDatePatterns), len(bases))
+	for i = 0; i < minLen; i++ {
+		if isBaseFirst {
+			fullPattern = append(fullPattern, bases[i], formattedDatePatterns[i])
+		} else {
+			fullPattern = append(fullPattern, formattedDatePatterns[i], bases[i])
+		}
+	}
+	formattedDatePatterns = formattedDatePatterns[i:]
+	bases = bases[i:]
+	if len(bases) == 0 {
+		fullPattern = append(fullPattern, formattedDatePatterns...)
+	} else {
+		fullPattern = append(fullPattern, bases...)
+	}
+
+	return strings.Join(fullPattern, "")
 }
 
 func patternToLayout(pattern string) string {
@@ -328,4 +355,11 @@ func patternToLayout(pattern string) string {
 	}
 
 	return pattern
+}
+
+func min(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
 }

@@ -4,13 +4,10 @@ import (
 	"context"
 	"crypto/rand"
 	"crypto/sha256"
-	"crypto/tls"
-	"crypto/x509"
 	"encoding/base64"
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 
@@ -21,7 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/login/social"
-	"github.com/grafana/grafana/pkg/middleware"
+	"github.com/grafana/grafana/pkg/middleware/cookies"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -41,8 +38,8 @@ func GenStateString() (string, error) {
 }
 
 func (hs *HTTPServer) OAuthLogin(ctx *models.ReqContext) {
-	loginInfo := LoginInformation{
-		Action: "login-oauth",
+	loginInfo := models.LoginInfo{
+		AuthModule: "oauth",
 	}
 	if setting.OAuthService == nil {
 		hs.handleOAuthLoginError(ctx, loginInfo, LoginError{
@@ -53,7 +50,7 @@ func (hs *HTTPServer) OAuthLogin(ctx *models.ReqContext) {
 	}
 
 	name := ctx.Params(":name")
-	loginInfo.Action += fmt.Sprintf("-%s", name)
+	loginInfo.AuthModule = name
 	connect, ok := social.SocialMap[name]
 	if !ok {
 		hs.handleOAuthLoginError(ctx, loginInfo, LoginError{
@@ -84,7 +81,7 @@ func (hs *HTTPServer) OAuthLogin(ctx *models.ReqContext) {
 		}
 
 		hashedState := hashStatecode(state, setting.OAuthService.OAuthInfos[name].ClientSecret)
-		middleware.WriteCookie(ctx.Resp, OauthStateCookieName, hashedState, hs.Cfg.OAuthCookieMaxAge, hs.CookieOptionsFromCfg)
+		cookies.WriteCookie(ctx.Resp, OauthStateCookieName, hashedState, hs.Cfg.OAuthCookieMaxAge, hs.CookieOptionsFromCfg)
 		if setting.OAuthService.OAuthInfos[name].HostedDomain == "" {
 			ctx.Redirect(connect.AuthCodeURL(state, oauth2.AccessTypeOnline))
 		} else {
@@ -96,7 +93,7 @@ func (hs *HTTPServer) OAuthLogin(ctx *models.ReqContext) {
 	cookieState := ctx.GetCookie(OauthStateCookieName)
 
 	// delete cookie
-	middleware.DeleteCookie(ctx.Resp, OauthStateCookieName, hs.CookieOptionsFromCfg)
+	cookies.DeleteCookie(ctx.Resp, OauthStateCookieName, hs.CookieOptionsFromCfg)
 
 	if cookieState == "" {
 		hs.handleOAuthLoginError(ctx, loginInfo, LoginError{
@@ -116,46 +113,14 @@ func (hs *HTTPServer) OAuthLogin(ctx *models.ReqContext) {
 		return
 	}
 
-	// handle callback
-	tr := &http.Transport{
-		Proxy: http.ProxyFromEnvironment,
-		TLSClientConfig: &tls.Config{
-			InsecureSkipVerify: setting.OAuthService.OAuthInfos[name].TlsSkipVerify,
-		},
-	}
-	oauthClient := &http.Client{
-		Transport: tr,
-	}
-
-	if setting.OAuthService.OAuthInfos[name].TlsClientCert != "" || setting.OAuthService.OAuthInfos[name].TlsClientKey != "" {
-		cert, err := tls.LoadX509KeyPair(setting.OAuthService.OAuthInfos[name].TlsClientCert, setting.OAuthService.OAuthInfos[name].TlsClientKey)
-		if err != nil {
-			ctx.Logger.Error("Failed to setup TlsClientCert", "oauth", name, "error", err)
-			hs.handleOAuthLoginError(ctx, loginInfo, LoginError{
-				HttpStatus:    http.StatusInternalServerError,
-				PublicMessage: "login.OAuthLogin(Failed to setup TlsClientCert)",
-			})
-			return
-		}
-
-		tr.TLSClientConfig.Certificates = append(tr.TLSClientConfig.Certificates, cert)
-	}
-
-	if setting.OAuthService.OAuthInfos[name].TlsClientCa != "" {
-		caCert, err := ioutil.ReadFile(setting.OAuthService.OAuthInfos[name].TlsClientCa)
-		if err != nil {
-			ctx.Logger.Error("Failed to setup TlsClientCa", "oauth", name, "error", err)
-			hs.handleOAuthLoginError(ctx, loginInfo, LoginError{
-				HttpStatus:    http.StatusInternalServerError,
-				PublicMessage: "login.OAuthLogin(Failed to setup TlsClientCa)",
-			})
-			return
-		}
-
-		caCertPool := x509.NewCertPool()
-		caCertPool.AppendCertsFromPEM(caCert)
-
-		tr.TLSClientConfig.RootCAs = caCertPool
+	oauthClient, err := social.GetOAuthHttpClient(name)
+	if err != nil {
+		ctx.Logger.Error("Failed to create OAuth http client", "error", err)
+		hs.handleOAuthLoginError(ctx, loginInfo, LoginError{
+			HttpStatus:    http.StatusInternalServerError,
+			PublicMessage: "login.OAuthLogin(" + err.Error() + ")",
+		})
+		return
 	}
 
 	oauthCtx := context.WithValue(context.Background(), oauth2.HTTPClient, oauthClient)
@@ -181,7 +146,8 @@ func (hs *HTTPServer) OAuthLogin(ctx *models.ReqContext) {
 	// get user info
 	userInfo, err := connect.UserInfo(client, token)
 	if err != nil {
-		if sErr, ok := err.(*social.Error); ok {
+		var sErr *social.Error
+		if errors.As(err, &sErr) {
 			hs.handleOAuthLoginErrorWithRedirect(ctx, loginInfo, sErr)
 		} else {
 			hs.handleOAuthLoginError(ctx, loginInfo, LoginError{
@@ -207,8 +173,8 @@ func (hs *HTTPServer) OAuthLogin(ctx *models.ReqContext) {
 		return
 	}
 
-	loginInfo.ExtUserInfo = buildExternalUserInfo(token, userInfo, name)
-	loginInfo.User, err = syncUser(ctx, loginInfo.ExtUserInfo, connect)
+	loginInfo.ExternalUser = *buildExternalUserInfo(token, userInfo, name)
+	loginInfo.User, err = syncUser(ctx, &loginInfo.ExternalUser, connect)
 	if err != nil {
 		hs.handleOAuthLoginErrorWithRedirect(ctx, loginInfo, err)
 		return
@@ -220,18 +186,13 @@ func (hs *HTTPServer) OAuthLogin(ctx *models.ReqContext) {
 		return
 	}
 
-	hs.SendLoginLog(&models.SendLoginLogCommand{
-		ReqContext:   ctx,
-		LogAction:    loginInfo.Action,
-		User:         loginInfo.User,
-		ExternalUser: loginInfo.ExtUserInfo,
-		HTTPStatus:   http.StatusOK,
-	})
+	loginInfo.HTTPStatus = http.StatusOK
+	hs.HooksService.RunLoginHook(&loginInfo, ctx)
 	metrics.MApiLoginOAuth.Inc()
 
 	if redirectTo, err := url.QueryUnescape(ctx.GetCookie("redirect_to")); err == nil && len(redirectTo) > 0 {
 		if err := hs.ValidateRedirectTo(redirectTo); err == nil {
-			middleware.DeleteCookie(ctx.Resp, "redirect_to", hs.CookieOptionsFromCfg)
+			cookies.DeleteCookie(ctx.Resp, "redirect_to", hs.CookieOptionsFromCfg)
 			ctx.Redirect(redirectTo)
 			return
 		}
@@ -263,11 +224,11 @@ func buildExternalUserInfo(token *oauth2.Token, userInfo *social.BasicUserInfo, 
 			var orgID int64
 			if setting.AutoAssignOrg && setting.AutoAssignOrgId > 0 {
 				orgID = int64(setting.AutoAssignOrgId)
-				logger.Debug("The user has a role assignment and organization membership is auto-assigned",
+				plog.Debug("The user has a role assignment and organization membership is auto-assigned",
 					"role", userInfo.Role, "orgId", orgID)
 			} else {
 				orgID = int64(1)
-				logger.Debug("The user has a role assignment and organization membership is not auto-assigned",
+				plog.Debug("The user has a role assignment and organization membership is not auto-assigned",
 					"role", userInfo.Role, "orgId", orgID)
 			}
 			extUser.OrgRoles[orgID] = rt
@@ -315,36 +276,21 @@ type LoginError struct {
 	Err           error
 }
 
-type LoginInformation struct {
-	Action      string
-	User        *models.User
-	ExtUserInfo *models.ExternalUserInfo
-}
+func (hs *HTTPServer) handleOAuthLoginError(ctx *models.ReqContext, info models.LoginInfo, err LoginError) {
+	ctx.Handle(hs.Cfg, err.HttpStatus, err.PublicMessage, err.Err)
 
-func (hs *HTTPServer) handleOAuthLoginError(ctx *models.ReqContext, info LoginInformation, err LoginError) {
-	ctx.Handle(err.HttpStatus, err.PublicMessage, err.Err)
-
-	logErr := err.Err
-	if logErr == nil {
-		logErr = errors.New(err.PublicMessage)
+	info.Error = err.Err
+	if info.Error == nil {
+		info.Error = errors.New(err.PublicMessage)
 	}
+	info.HTTPStatus = err.HttpStatus
 
-	hs.SendLoginLog(&models.SendLoginLogCommand{
-		ReqContext: ctx,
-		LogAction:  info.Action,
-		HTTPStatus: err.HttpStatus,
-		Error:      logErr,
-	})
+	hs.HooksService.RunLoginHook(&info, ctx)
 }
 
-func (hs *HTTPServer) handleOAuthLoginErrorWithRedirect(ctx *models.ReqContext, info LoginInformation, err error, v ...interface{}) {
+func (hs *HTTPServer) handleOAuthLoginErrorWithRedirect(ctx *models.ReqContext, info models.LoginInfo, err error, v ...interface{}) {
 	hs.redirectWithError(ctx, err, v...)
 
-	hs.SendLoginLog(&models.SendLoginLogCommand{
-		ReqContext:   ctx,
-		LogAction:    info.Action,
-		User:         info.User,
-		ExternalUser: info.ExtUserInfo,
-		Error:        err,
-	})
+	info.Error = err
+	hs.HooksService.RunLoginHook(&info, ctx)
 }

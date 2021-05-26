@@ -7,17 +7,14 @@ start=$(date +%s)
 
 export TEST_MAX_WORKERS=2
 
-exit_if_fail yarn run prettier:check
-exit_if_fail yarn run packages:typecheck
-exit_if_fail yarn run typecheck
-exit_if_fail yarn run test
+/tmp/grabpl test-frontend --github-token "${GITHUB_GRAFANABOT_TOKEN}" "$@"
 
 end=$(date +%s)
 seconds=$((end - start))
 
 exit_if_fail ./scripts/ci-frontend-metrics.sh
 
-if [ "${CIRCLE_BRANCH}" == "master" ]; then
+if [ "${CIRCLE_BRANCH}" == "main" ]; then
 	exit_if_fail ./scripts/ci-metrics-publisher.sh grafana.ci-performance.frontend-tests=$seconds
 fi
 

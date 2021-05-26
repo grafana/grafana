@@ -1,6 +1,6 @@
 // Libraries
 import Papa, { ParseConfig, Parser, ParseResult } from 'papaparse';
-import defaults from 'lodash/defaults';
+import { defaults } from 'lodash';
 
 // Types
 import { DataFrame, Field, FieldConfig, FieldType } from '../types';
@@ -21,6 +21,7 @@ export interface CSVConfig {
   newline?: string; // default: "\r\n"
   quoteChar?: string; // default: '"'
   encoding?: string; // default: "",
+  useExcelHeader?: boolean; // default: false
   headerStyle?: CSVHeaderStyle;
 }
 
@@ -246,19 +247,28 @@ function getHeaderLine(key: string, fields: Field[], config: CSVConfig): string 
   return '';
 }
 
+function getLocaleDelimiter(): string {
+  const arr = ['x', 'y'];
+  if (arr.toLocaleString) {
+    return arr.toLocaleString().charAt(1);
+  }
+  return ',';
+}
+
 export function toCSV(data: DataFrame[], config?: CSVConfig): string {
   if (!data) {
     return '';
   }
 
-  let csv = '';
   config = defaults(config, {
-    delimiter: ',',
+    delimiter: getLocaleDelimiter(),
     newline: '\r\n',
     quoteChar: '"',
     encoding: '',
     headerStyle: CSVHeaderStyle.name,
+    useExcelHeader: false,
   });
+  let csv = config.useExcelHeader ? `sep=${config.delimiter}${config.newline}` : '';
 
   for (const series of data) {
     const { fields } = series;
@@ -288,7 +298,7 @@ export function toCSV(data: DataFrame[], config?: CSVConfig): string {
     const length = fields[0].values.length;
 
     if (length > 0) {
-      const writers = fields.map(field => makeFieldWriter(field, config!));
+      const writers = fields.map((field) => makeFieldWriter(field, config!));
       for (let i = 0; i < length; i++) {
         for (let j = 0; j < fields.length; j++) {
           if (j > 0) {

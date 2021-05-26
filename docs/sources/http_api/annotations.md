@@ -3,11 +3,6 @@ title = "Annotations HTTP API "
 description = "Grafana Annotations HTTP API"
 keywords = ["grafana", "http", "documentation", "api", "annotation", "annotations", "comment"]
 aliases = ["/docs/grafana/latest/http_api/annotations/"]
-type = "docs"
-[menu.docs]
-name = "Annotations"
-identifier = "annotationshttp"
-parent = "http_api"
 +++
 
 # Annotations resources / actions
@@ -58,7 +53,6 @@ Content-Type: application/json
         "timeEnd": 1507266395000,
         "text": "test",
         "metric": "",
-        "type": "event",
         "tags": [
             "tag1",
             "tag2"
@@ -77,7 +71,6 @@ Content-Type: application/json
         "time": 1507265111000,
         "text": "test",
         "metric": "",
-        "type": "event",
         "tags": [
             "tag1",
             "tag2"
@@ -93,7 +86,9 @@ Content-Type: application/json
 
 Creates an annotation in the Grafana database. The `dashboardId` and `panelId` fields are optional.
 If they are not specified then a global annotation is created and can be queried in any dashboard that adds
-the Grafana annotations data source. When creating a region annotation include the timeEnd property.
+the Grafana annotations data source. When creating a region annotation include the timeEnd property. 
+
+The format for `time` and `timeEnd` should be epoch numbers in millisecond resolution. 
 
 `POST /api/annotations`
 

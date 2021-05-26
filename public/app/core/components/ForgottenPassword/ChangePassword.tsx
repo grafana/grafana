@@ -1,5 +1,5 @@
 import React, { FC, SyntheticEvent } from 'react';
-import { Tooltip, Form, Field, Input, VerticalGroup, Button, LinkButton } from '@grafana/ui';
+import { Tooltip, Form, Field, Input, VerticalGroup, Button } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
 import { submitButton } from '../Login/LoginForm';
 interface Props {
@@ -24,8 +24,7 @@ export const ChangePassword: FC<Props> = ({ onSubmit, onSkip }) => {
             <Input
               autoFocus
               type="password"
-              name="newPassword"
-              ref={register({
+              {...register('newPassword', {
                 required: 'New password required',
               })}
             />
@@ -33,10 +32,9 @@ export const ChangePassword: FC<Props> = ({ onSubmit, onSkip }) => {
           <Field label="Confirm new password" invalid={!!errors.confirmNew} error={errors?.confirmNew?.message}>
             <Input
               type="password"
-              name="confirmNew"
-              ref={register({
+              {...register('confirmNew', {
                 required: 'Confirmed password is required',
-                validate: v => v === getValues().newPassword || 'Passwords must match!',
+                validate: (v: string) => v === getValues().newPassword || 'Passwords must match!',
               })}
             />
           </Field>
@@ -47,12 +45,12 @@ export const ChangePassword: FC<Props> = ({ onSubmit, onSkip }) => {
 
             {onSkip && (
               <Tooltip
-                content="If you skip you will be prompted to change password next time you login."
+                content="If you skip you will be prompted to change password next time you log in."
                 placement="bottom"
               >
-                <LinkButton variant="link" onClick={onSkip} aria-label={selectors.pages.Login.skip}>
+                <Button fill="text" onClick={onSkip} type="button" aria-label={selectors.pages.Login.skip}>
                   Skip
-                </LinkButton>
+                </Button>
               </Tooltip>
             )}
           </VerticalGroup>

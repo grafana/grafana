@@ -30,12 +30,12 @@ Concept topics or sections explain *what* and *why*. They do not explain *how*. 
 Continuing the example in the previous section, here is a sample Grafana workflow. 
 
 1. Install Grafana. <link to task for installing Grafana>
-2. Set up data sources. <link to data sources concept topic, which links to data source task topics>
-3. Create panels. <link to panel concept topic, which links to tasks>
-4. Create dashboards.  <link to panel concept topic, which links to tasks>
-5. Enter queries. <link to query editor concept topic>
-6. Add users. <link to user management concept topic, which links to tasks>
-7. Create playlists. <link to Playlist topic that contains concept information and tasks>
+1. Set up data sources. <link to data sources concept topic, which links to data source task topics>
+1. Create panels. <link to panel concept topic, which links to tasks>
+1. Create dashboards.  <link to panel concept topic, which links to tasks>
+1. Enter queries. <link to query editor concept topic>
+1. Add users. <link to user management concept topic, which links to tasks>
+1. Create playlists. <link to Playlist topic that contains concept information and tasks>
 
 ## Next steps
 

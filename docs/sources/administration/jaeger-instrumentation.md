@@ -2,10 +2,7 @@
 title = "Jaeger instrumentation"
 description = "Jaeger traces emitted and propagation by Grafana"
 keywords = ["grafana", "jaeger", "tracing"]
-type = "docs"
-[menu.docs]
-parent = "admin"
-weight = 9
+weight = 900
 +++
 
 # Jaeger instrumentation

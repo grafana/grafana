@@ -5,19 +5,18 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/tsdb"
-
+	"github.com/grafana/grafana/pkg/plugins"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestIndexPattern(t *testing.T) {
 	Convey("Static index patterns", t, func() {
-		indexPatternScenario(noInterval, "data-*", nil, func(indices []string) {
+		indexPatternScenario(noInterval, "data-*", plugins.DataTimeRange{}, func(indices []string) {
 			So(indices, ShouldHaveLength, 1)
 			So(indices[0], ShouldEqual, "data-*")
 		})
 
-		indexPatternScenario(noInterval, "es-index-name", nil, func(indices []string) {
+		indexPatternScenario(noInterval, "es-index-name", plugins.DataTimeRange{}, func(indices []string) {
 			So(indices, ShouldHaveLength, 1)
 			So(indices[0], ShouldEqual, "es-index-name")
 		})
@@ -27,60 +26,70 @@ func TestIndexPattern(t *testing.T) {
 		from := fmt.Sprintf("%d", time.Date(2018, 5, 15, 17, 50, 0, 0, time.UTC).UnixNano()/int64(time.Millisecond))
 		to := fmt.Sprintf("%d", time.Date(2018, 5, 15, 17, 55, 0, 0, time.UTC).UnixNano()/int64(time.Millisecond))
 
-		indexPatternScenario(intervalHourly, "[data-]YYYY.MM.DD.HH", tsdb.NewTimeRange(from, to), func(indices []string) {
+		indexPatternScenario(intervalHourly, "[data-]YYYY.MM.DD.HH", plugins.NewDataTimeRange(from, to), func(indices []string) {
 			So(indices, ShouldHaveLength, 1)
 			So(indices[0], ShouldEqual, "data-2018.05.15.17")
 		})
 
-		indexPatternScenario(intervalHourly, "YYYY.MM.DD.HH[-data]", tsdb.NewTimeRange(from, to), func(indices []string) {
+		indexPatternScenario(intervalHourly, "YYYY.MM.DD.HH[-data]", plugins.NewDataTimeRange(from, to), func(indices []string) {
 			So(indices, ShouldHaveLength, 1)
 			So(indices[0], ShouldEqual, "2018.05.15.17-data")
 		})
 
-		indexPatternScenario(intervalDaily, "[data-]YYYY.MM.DD", tsdb.NewTimeRange(from, to), func(indices []string) {
+		indexPatternScenario(intervalDaily, "[data-]YYYY.MM.DD", plugins.NewDataTimeRange(from, to), func(indices []string) {
 			So(indices, ShouldHaveLength, 1)
 			So(indices[0], ShouldEqual, "data-2018.05.15")
 		})
 
-		indexPatternScenario(intervalDaily, "YYYY.MM.DD[-data]", tsdb.NewTimeRange(from, to), func(indices []string) {
+		indexPatternScenario(intervalDaily, "YYYY.MM.DD[-data]", plugins.NewDataTimeRange(from, to), func(indices []string) {
 			So(indices, ShouldHaveLength, 1)
 			So(indices[0], ShouldEqual, "2018.05.15-data")
 		})
 
-		indexPatternScenario(intervalWeekly, "[data-]GGGG.WW", tsdb.NewTimeRange(from, to), func(indices []string) {
+		indexPatternScenario(intervalWeekly, "[data-]GGGG.WW", plugins.NewDataTimeRange(from, to), func(indices []string) {
 			So(indices, ShouldHaveLength, 1)
 			So(indices[0], ShouldEqual, "data-2018.20")
 		})
 
-		indexPatternScenario(intervalWeekly, "GGGG.WW[-data]", tsdb.NewTimeRange(from, to), func(indices []string) {
+		indexPatternScenario(intervalWeekly, "GGGG.WW[-data]", plugins.NewDataTimeRange(from, to), func(indices []string) {
 			So(indices, ShouldHaveLength, 1)
 			So(indices[0], ShouldEqual, "2018.20-data")
 		})
 
-		indexPatternScenario(intervalMonthly, "[data-]YYYY.MM", tsdb.NewTimeRange(from, to), func(indices []string) {
+		indexPatternScenario(intervalMonthly, "[data-]YYYY.MM", plugins.NewDataTimeRange(from, to), func(indices []string) {
 			So(indices, ShouldHaveLength, 1)
 			So(indices[0], ShouldEqual, "data-2018.05")
 		})
 
-		indexPatternScenario(intervalMonthly, "YYYY.MM[-data]", tsdb.NewTimeRange(from, to), func(indices []string) {
+		indexPatternScenario(intervalMonthly, "YYYY.MM[-data]", plugins.NewDataTimeRange(from, to), func(indices []string) {
 			So(indices, ShouldHaveLength, 1)
 			So(indices[0], ShouldEqual, "2018.05-data")
 		})
 
-		indexPatternScenario(intervalYearly, "[data-]YYYY", tsdb.NewTimeRange(from, to), func(indices []string) {
+		indexPatternScenario(intervalYearly, "[data-]YYYY", plugins.NewDataTimeRange(from, to), func(indices []string) {
 			So(indices, ShouldHaveLength, 1)
 			So(indices[0], ShouldEqual, "data-2018")
 		})
 
-		indexPatternScenario(intervalYearly, "YYYY[-data]", tsdb.NewTimeRange(from, to), func(indices []string) {
+		indexPatternScenario(intervalYearly, "YYYY[-data]", plugins.NewDataTimeRange(from, to), func(indices []string) {
 			So(indices, ShouldHaveLength, 1)
 			So(indices[0], ShouldEqual, "2018-data")
+		})
+
+		indexPatternScenario(intervalDaily, "YYYY[-data-]MM.DD", plugins.NewDataTimeRange(from, to), func(indices []string) {
+			So(indices, ShouldHaveLength, 1)
+			So(indices[0], ShouldEqual, "2018-data-05.15")
+		})
+
+		indexPatternScenario(intervalDaily, "[data-]YYYY[-moredata-]MM.DD", plugins.NewDataTimeRange(from, to), func(indices []string) {
+			So(indices, ShouldHaveLength, 1)
+			So(indices[0], ShouldEqual, "data-2018-moredata-05.15")
 		})
 
 		Convey("Should return 01 week", func() {
 			from = fmt.Sprintf("%d", time.Date(2018, 1, 15, 17, 50, 0, 0, time.UTC).UnixNano()/int64(time.Millisecond))
 			to = fmt.Sprintf("%d", time.Date(2018, 1, 15, 17, 55, 0, 0, time.UTC).UnixNano()/int64(time.Millisecond))
-			indexPatternScenario(intervalWeekly, "[data-]GGGG.WW", tsdb.NewTimeRange(from, to), func(indices []string) {
+			indexPatternScenario(intervalWeekly, "[data-]GGGG.WW", plugins.NewDataTimeRange(from, to), func(indices []string) {
 				So(indices, ShouldHaveLength, 1)
 				So(indices[0], ShouldEqual, "data-2018.03")
 			})
@@ -266,7 +275,7 @@ func TestIndexPattern(t *testing.T) {
 	})
 }
 
-func indexPatternScenario(interval string, pattern string, timeRange *tsdb.TimeRange, fn func(indices []string)) {
+func indexPatternScenario(interval string, pattern string, timeRange plugins.DataTimeRange, fn func(indices []string)) {
 	Convey(fmt.Sprintf("Index pattern (interval=%s, index=%s", interval, pattern), func() {
 		ip, err := newIndexPattern(interval, pattern)
 		So(err, ShouldBeNil)

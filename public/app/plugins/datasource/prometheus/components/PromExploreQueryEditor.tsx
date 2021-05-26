@@ -1,4 +1,4 @@
-import React, { memo, FC } from 'react';
+import React, { memo, FC, useEffect } from 'react';
 
 // Types
 import { ExploreQueryFieldProps } from '@grafana/data';
@@ -12,7 +12,13 @@ import { PromExploreExtraField } from './PromExploreExtraField';
 export type Props = ExploreQueryFieldProps<PrometheusDatasource, PromQuery, PromOptions>;
 
 export const PromExploreQueryEditor: FC<Props> = (props: Props) => {
-  const { query, data, datasource, history, onChange, onRunQuery } = props;
+  const { range, query, data, datasource, history, onChange, onRunQuery } = props;
+
+  useEffect(() => {
+    if (query.exemplar === undefined) {
+      onChange({ ...query, exemplar: true });
+    }
+  }, [onChange, query]);
 
   function onChangeQueryStep(value: string) {
     const { query, onChange } = props;
@@ -27,15 +33,29 @@ export const PromExploreQueryEditor: FC<Props> = (props: Props) => {
   }
 
   function onReturnKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
-    if (e.key === 'Enter') {
+    if (e.key === 'Enter' && (e.shiftKey || e.ctrlKey)) {
       onRunQuery();
     }
+  }
+
+  function onQueryTypeChange(value: string) {
+    const { query, onChange } = props;
+    let nextQuery;
+    if (value === 'instant') {
+      nextQuery = { ...query, instant: true, range: false };
+    } else if (value === 'range') {
+      nextQuery = { ...query, instant: false, range: true };
+    } else {
+      nextQuery = { ...query, instant: true, range: true };
+    }
+    onChange(nextQuery);
   }
 
   return (
     <PromQueryField
       datasource={datasource}
       query={query}
+      range={range}
       onRunQuery={onRunQuery}
       onChange={onChange}
       onBlur={() => {}}
@@ -43,14 +63,15 @@ export const PromExploreQueryEditor: FC<Props> = (props: Props) => {
       data={data}
       ExtraFieldElement={
         <PromExploreExtraField
-          label={'Step'}
-          onChangeFunc={onStepChange}
+          // Select "both" as default option when Explore is opened. In legacy requests, range and instant can be undefined. In this case, we want to run queries with "both".
+          queryType={query.range === query.instant ? 'both' : query.instant ? 'instant' : 'range'}
+          stepValue={query.interval || ''}
+          onQueryTypeChange={onQueryTypeChange}
+          onStepChange={onStepChange}
           onKeyDownFunc={onReturnKeyDown}
-          value={query.interval || ''}
-          hasTooltip={true}
-          tooltipContent={
-            'Time units can be used here, for example: 5s, 1m, 3h, 1d, 1y (Default if no unit is specified: s)'
-          }
+          query={query}
+          onChange={onChange}
+          datasource={datasource}
         />
       }
     />

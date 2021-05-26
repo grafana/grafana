@@ -1,8 +1,8 @@
-import React, { FC, useCallback, CSSProperties } from 'react';
-import { css, cx } from 'emotion';
-import { GrafanaTheme } from '@grafana/data';
+import React, { FC, useCallback } from 'react';
+import { css } from '@emotion/css';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
-import { useTheme, TagList, styleMixins, stylesFactory } from '@grafana/ui';
+import { TagList, Card, useStyles, Icon, IconName } from '@grafana/ui';
+import { GrafanaTheme } from '@grafana/data';
 import { DashboardSectionItem, OnToggleChecked } from '../types';
 import { SearchCheckbox } from './SearchCheckbox';
 import { SEARCH_ITEM_HEIGHT, SEARCH_ITEM_MARGIN } from '../constants';
@@ -12,18 +12,27 @@ export interface Props {
   editable?: boolean;
   onTagSelected: (name: string) => any;
   onToggleChecked?: OnToggleChecked;
-  style?: CSSProperties;
 }
 
 const selectors = e2eSelectors.pages.Dashboards;
 
-export const SearchItem: FC<Props> = ({ item, editable, onToggleChecked, onTagSelected, style }) => {
-  const theme = useTheme();
-  const styles = getResultsItemStyles(theme);
+const getIconFromMeta = (meta = ''): IconName => {
+  const metaIconMap = new Map<string, IconName>([
+    ['errors', 'info-circle'],
+    ['views', 'eye'],
+  ]);
 
-  const tagSelected = useCallback((tag: string, event: React.MouseEvent<HTMLElement>) => {
-    onTagSelected(tag);
-  }, []);
+  return metaIconMap.has(meta) ? metaIconMap.get(meta)! : 'sort-amount-down';
+};
+
+export const SearchItem: FC<Props> = ({ item, editable, onToggleChecked, onTagSelected }) => {
+  const styles = useStyles(getStyles);
+  const tagSelected = useCallback(
+    (tag: string, event: React.MouseEvent<HTMLElement>) => {
+      onTagSelected(tag);
+    },
+    [onTagSelected]
+  );
 
   const toggleItem = useCallback(
     (event: React.MouseEvent) => {
@@ -32,77 +41,58 @@ export const SearchItem: FC<Props> = ({ item, editable, onToggleChecked, onTagSe
         onToggleChecked(item);
       }
     },
-    [item]
+    [item, onToggleChecked]
   );
 
+  const folderTitle = item.folderTitle || 'General';
   return (
-    <div
-      style={style}
+    <Card
       aria-label={selectors.dashboards(item.title)}
-      className={cx(styles.wrapper, { [styles.selected]: item.selected })}
+      heading={item.title}
+      href={item.url}
+      style={{ minHeight: SEARCH_ITEM_HEIGHT }}
+      className={styles.container}
     >
-      <SearchCheckbox editable={editable} checked={item.checked} onClick={toggleItem} />
-
-      <a href={item.url} className={styles.link}>
-        <div className={styles.body}>
-          <span>{item.title}</span>
-          <span className={styles.folderTitle}>{item.folderTitle}</span>
-        </div>
-      </a>
-      <TagList tags={item.tags} onClick={tagSelected} className={styles.tags} />
-    </div>
+      <Card.Figure align={'center'}>
+        <SearchCheckbox editable={editable} checked={item.checked} onClick={toggleItem} />
+      </Card.Figure>
+      <Card.Meta separator={''}>
+        <span className={styles.metaContainer}>
+          <Icon name={'folder'} />
+          {folderTitle}
+        </span>
+        {item.sortMetaName && (
+          <span className={styles.metaContainer}>
+            <Icon name={getIconFromMeta(item.sortMetaName)} />
+            {item.sortMeta} {item.sortMetaName}
+          </span>
+        )}
+      </Card.Meta>
+      <Card.Tags>
+        <TagList tags={item.tags} onClick={tagSelected} />
+      </Card.Tags>
+    </Card>
   );
 };
 
-const getResultsItemStyles = stylesFactory((theme: GrafanaTheme) => ({
-  wrapper: css`
-    ${styleMixins.listItem(theme)};
-    display: flex;
-    align-items: center;
-    height: ${SEARCH_ITEM_HEIGHT}px;
-    margin-bottom: ${SEARCH_ITEM_MARGIN}px;
-    padding: 0 ${theme.spacing.md};
+const getStyles = (theme: GrafanaTheme) => {
+  return {
+    container: css`
+      margin-bottom: ${SEARCH_ITEM_MARGIN}px;
 
-    &:last-child {
-      margin-bottom: ${SEARCH_ITEM_MARGIN * 2}px;
-    }
+      a {
+        padding: ${theme.spacing.sm} ${theme.spacing.md};
+      }
+    `,
+    metaContainer: css`
+      display: flex;
+      align-items: center;
+      margin-right: ${theme.spacing.sm};
 
-    :hover {
-      cursor: pointer;
-    }
-  `,
-  selected: css`
-    ${styleMixins.listItemSelected(theme)};
-  `,
-  body: css`
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    flex: 1 1 auto;
-    overflow: hidden;
-  `,
-  folderTitle: css`
-    color: ${theme.colors.textWeak};
-    font-size: ${theme.typography.size.xs};
-    line-height: ${theme.typography.lineHeight.xs};
-    position: relative;
-    top: -1px;
-  `,
-  icon: css`
-    margin-left: 10px;
-  `,
-  tags: css`
-    flex-grow: 0;
-    justify-content: flex-end;
-    @media only screen and (max-width: ${theme.breakpoints.md}) {
-      display: none;
-    }
-  `,
-  link: css`
-    display: flex;
-    align-items: center;
-    flex-shrink: 0;
-    flex-grow: 1;
-    height: 100%;
-  `,
-}));
+      svg {
+        margin-right: ${theme.spacing.xs};
+        margin-bottom: 0;
+      }
+    `,
+  };
+};

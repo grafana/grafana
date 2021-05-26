@@ -1,17 +1,16 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { defaultIntervals } from '@grafana/ui/src/components/RefreshPicker/RefreshPicker';
+import { defaultIntervals } from '@grafana/ui';
 
 import { AutoRefreshIntervals, getValidIntervals, Props, validateIntervals } from './AutoRefreshIntervals';
 import { TimeSrv } from '../../services/TimeSrv';
 
 const setupTestContext = (options: Partial<Props>) => {
   const defaults: Props = {
-    renderCount: 0,
     refreshIntervals: ['1s', '5s', '10s'],
     onRefreshIntervalChange: jest.fn(),
-    getIntervalsFunc: intervals => intervals,
+    getIntervalsFunc: (intervals) => intervals,
     validateIntervalsFunc: () => null,
   };
 
@@ -76,10 +75,7 @@ describe('AutoRefreshIntervals', () => {
 
   describe('when input loses focus and previous intervals were invalid', () => {
     it('then onRefreshIntervalChange should be called', () => {
-      const validateIntervalsFunc = jest
-        .fn()
-        .mockReturnValueOnce('Not valid')
-        .mockReturnValue(null);
+      const validateIntervalsFunc = jest.fn().mockReturnValueOnce('Not valid').mockReturnValue(null);
       const { props } = setupTestContext({ validateIntervalsFunc });
 
       userEvent.type(screen.getByRole('textbox'), ',30q');

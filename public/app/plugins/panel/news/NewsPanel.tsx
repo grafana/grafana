@@ -9,12 +9,13 @@ import { feedToDataFrame } from './utils';
 import { loadRSSFeed } from './rss';
 
 // Types
-import { PanelProps, DataFrameView, dateTimeFormat, GrafanaTheme, textUtil } from '@grafana/data';
-import { NewsOptions, NewsItem } from './types';
+import { PanelProps, DataFrameView, dateTimeFormat, GrafanaTheme2, textUtil } from '@grafana/data';
+import { NewsItem } from './types';
+import { PanelOptions } from './models.gen';
 import { DEFAULT_FEED_URL, PROXY_PREFIX } from './constants';
-import { css } from 'emotion';
+import { css, cx } from '@emotion/css';
 
-interface Props extends PanelProps<NewsOptions> {}
+interface Props extends PanelProps<PanelOptions> {}
 
 interface State {
   news?: DataFrameView<NewsItem>;
@@ -29,16 +30,16 @@ export class NewsPanel extends PureComponent<Props, State> {
   }
 
   componentDidMount(): void {
-    this.loadFeed();
+    this.loadChannel();
   }
 
   componentDidUpdate(prevProps: Props): void {
     if (this.props.options.feedUrl !== prevProps.options.feedUrl) {
-      this.loadFeed();
+      this.loadChannel();
     }
   }
 
-  async loadFeed() {
+  async loadChannel() {
     const { options } = this.props;
     try {
       const url = options.feedUrl
@@ -62,8 +63,11 @@ export class NewsPanel extends PureComponent<Props, State> {
   }
 
   render() {
+    const { width } = this.props;
+    const { showImage } = this.props.options;
     const { isError, news } = this.state;
-    const styles = getStyles(config.theme);
+    const styles = getStyles(config.theme2);
+    const useWideLayout = width > 600;
 
     if (isError) {
       return <div>Error Loading News</div>;
@@ -76,12 +80,29 @@ export class NewsPanel extends PureComponent<Props, State> {
       <CustomScrollbar autoHeightMin="100%" autoHeightMax="100%">
         {news.map((item, index) => {
           return (
-            <div key={index} className={styles.item}>
-              <a href={item.link} target="_blank">
-                <div className={styles.title}>{item.title}</div>
+            <div key={index} className={cx(styles.item, useWideLayout && styles.itemWide)}>
+              {showImage && item.ogImage && (
+                <a
+                  href={textUtil.sanitizeUrl(item.link)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={cx(styles.socialImage, useWideLayout && styles.socialImageWide)}
+                >
+                  <img src={item.ogImage} />
+                </a>
+              )}
+              <div className={styles.body}>
                 <div className={styles.date}>{dateTimeFormat(item.date, { format: 'MMM DD' })} </div>
-              </a>
-              <div className={styles.content} dangerouslySetInnerHTML={{ __html: textUtil.sanitize(item.content) }} />
+                <a
+                  className={styles.link}
+                  href={textUtil.sanitizeUrl(item.link)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <div className={styles.title}>{item.title}</div>
+                </a>
+                <div className={styles.content} dangerouslySetInnerHTML={{ __html: textUtil.sanitize(item.content) }} />
+              </div>
             </div>
           );
         })}
@@ -90,22 +111,54 @@ export class NewsPanel extends PureComponent<Props, State> {
   }
 }
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => ({
+const getStyles = stylesFactory((theme: GrafanaTheme2) => ({
   container: css`
     height: 100%;
   `,
   item: css`
-    padding: ${theme.spacing.sm};
+    display: flex;
+    padding: ${theme.spacing(1)};
     position: relative;
     margin-bottom: 4px;
-    margin-right: ${theme.spacing.sm};
-    border-bottom: 2px solid ${theme.colors.border1};
+    margin-right: ${theme.spacing(1)};
+    border-bottom: 2px solid ${theme.colors.border.weak};
+    background: ${theme.colors.background.primary};
+    flex-direction: column;
+    flex-shrink: 0;
+  `,
+  itemWide: css`
+    flex-direction: row;
+  `,
+  body: css``,
+  socialImage: css`
+    display: flex;
+    align-items: center;
+    margin-bottom: ${theme.spacing(1)};
+    > img {
+      width: 100%;
+      border-radius: ${theme.shape.borderRadius(2)} ${theme.shape.borderRadius(2)} 0 0;
+    }
+  `,
+  socialImageWide: css`
+    margin-right: ${theme.spacing(2)};
+    margin-bottom: 0;
+    > img {
+      width: 250px;
+      border-radius: ${theme.shape.borderRadius()};
+    }
+  `,
+  link: css`
+    color: ${theme.colors.text.link};
+
+    &:hover {
+      color: ${theme.colors.text.link};
+      text-decoration: underline;
+    }
   `,
   title: css`
-    color: ${theme.colors.linkExternal};
     max-width: calc(100% - 70px);
     font-size: 16px;
-    margin-bottom: ${theme.spacing.sm};
+    margin-bottom: ${theme.spacing(0.5)};
   `,
   content: css`
     p {
@@ -114,15 +167,9 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
     }
   `,
   date: css`
-    position: absolute;
-    top: 0;
-    right: 0;
-    background: ${theme.colors.panelBg};
-    width: 55px;
-    text-align: right;
-    padding: ${theme.spacing.xs};
+    margin-bottom: ${theme.spacing(0.5)};
     font-weight: 500;
     border-radius: 0 0 0 3px;
-    color: ${theme.colors.textWeak};
+    color: ${theme.colors.text.secondary};
   `,
 }));

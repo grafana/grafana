@@ -1,6 +1,7 @@
 import React from 'react';
 import { shallow } from 'enzyme';
-import ConfigEditor, { Props } from './ConfigEditor';
+import { AwsAuthType } from '@grafana/aws-sdk';
+import { ConfigEditor, Props } from './ConfigEditor';
 
 jest.mock('app/features/plugins/datasource_srv', () => ({
   getDatasourceSrv: () => ({
@@ -21,6 +22,7 @@ const setup = (propOverrides?: object) => {
   const props: Props = {
     options: {
       id: 1,
+      uid: 'z',
       orgId: 1,
       typeLogoUrl: '',
       name: 'CloudWatch',
@@ -28,6 +30,7 @@ const setup = (propOverrides?: object) => {
       url: '',
       database: '',
       type: 'cloudwatch',
+      typeName: 'Cloudwatch',
       user: '',
       password: '',
       basicAuth: false,
@@ -45,7 +48,7 @@ const setup = (propOverrides?: object) => {
         externalId: '',
         database: '',
         customMetricsNamespaces: '',
-        authType: 'keys',
+        authType: AwsAuthType.Keys,
         defaultRegion: 'us-east-2',
         timeField: '@timestamp',
       },
@@ -78,7 +81,7 @@ describe('Render', () => {
     expect(wrapper).toMatchSnapshot();
   });
 
-  it('should should show credentials profile name field', () => {
+  it('should show credentials profile name field', () => {
     const wrapper = setup({
       jsonData: {
         authType: 'credentials',
@@ -87,7 +90,7 @@ describe('Render', () => {
     expect(wrapper).toMatchSnapshot();
   });
 
-  it('should should show access key and secret access key fields', () => {
+  it('should show access key and secret access key fields', () => {
     const wrapper = setup({
       jsonData: {
         authType: 'keys',
@@ -96,7 +99,7 @@ describe('Render', () => {
     expect(wrapper).toMatchSnapshot();
   });
 
-  it('should should show arn role field', () => {
+  it('should show arn role field', () => {
     const wrapper = setup({
       jsonData: {
         authType: 'arn',

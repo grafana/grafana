@@ -18,6 +18,9 @@ type SystemStats struct {
 	AuthTokens            int64
 	DashboardVersions     int64
 	Annotations           int64
+	AlertRules            int64
+	LibraryPanels         int64
+	LibraryVariables      int64
 
 	Admins         int
 	Editors        int
@@ -97,10 +100,4 @@ type UserStats struct {
 	Admins  int64
 	Editors int64
 	Viewers int64
-}
-
-type GetUserStatsQuery struct {
-	MustUpdate bool
-	Active     bool
-	Result     UserStats
 }

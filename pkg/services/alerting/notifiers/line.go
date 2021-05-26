@@ -59,11 +59,8 @@ type LineNotifier struct {
 // Notify send an alert notification to LINE
 func (ln *LineNotifier) Notify(evalContext *alerting.EvalContext) error {
 	ln.log.Info("Executing line notification", "ruleId", evalContext.Rule.ID, "notification", ln.Name)
-	if evalContext.Rule.State == models.AlertStateAlerting {
-		return ln.createAlert(evalContext)
-	}
 
-	return nil
+	return ln.createAlert(evalContext)
 }
 
 func (ln *LineNotifier) createAlert(evalContext *alerting.EvalContext) error {
@@ -75,7 +72,7 @@ func (ln *LineNotifier) createAlert(evalContext *alerting.EvalContext) error {
 	}
 
 	form := url.Values{}
-	body := fmt.Sprintf("%s - %s\n%s", evalContext.Rule.Name, ruleURL, evalContext.Rule.Message)
+	body := fmt.Sprintf("%s - %s\n%s", evalContext.GetNotificationTitle(), ruleURL, evalContext.Rule.Message)
 	form.Add("message", body)
 
 	if ln.NeedsImage() && evalContext.ImagePublicURL != "" {

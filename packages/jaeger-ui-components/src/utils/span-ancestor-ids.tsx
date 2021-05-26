@@ -12,11 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import _find from 'lodash/find';
-import _get from 'lodash/get';
+import { find as _find, get as _get } from 'lodash';
 
 import { TNil } from '../types';
-import { TraceSpan } from '@grafana/data';
+import { TraceSpan } from '../types/trace';
 
 function getFirstAncestor(span: TraceSpan): TraceSpan | TNil {
   return _get(

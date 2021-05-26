@@ -1,5 +1,5 @@
 import React, { memo, PropsWithChildren } from 'react';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { GrafanaTheme } from '@grafana/data';
 import { useTheme, stylesFactory } from '../../../themes';
 
@@ -19,3 +19,5 @@ export const TimePickerTitle = memo<PropsWithChildren<{}>>(({ children }) => {
 
   return <span className={styles.text}>{children}</span>;
 });
+
+TimePickerTitle.displayName = 'TimePickerTitle';

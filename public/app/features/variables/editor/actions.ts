@@ -1,5 +1,5 @@
 import { ThunkResult } from '../../../types';
-import { getNewVariabelIndex, getVariable, getVariables } from '../state/selectors';
+import { getEditorVariables, getNewVariabelIndex, getVariable, getVariables } from '../state/selectors';
 import {
   changeVariableNameFailed,
   changeVariableNameSucceeded,
@@ -9,19 +9,17 @@ import {
   variableEditorUnMounted,
 } from './reducer';
 import { variableAdapters } from '../adapters';
-import {
-  AddVariable,
-  NEW_VARIABLE_ID,
-  toVariableIdentifier,
-  toVariablePayload,
-  VariableIdentifier,
-} from '../state/types';
-import cloneDeep from 'lodash/cloneDeep';
+import { AddVariable, toVariableIdentifier, toVariablePayload, VariableIdentifier } from '../state/types';
+import { cloneDeep } from 'lodash';
 import { VariableType } from '@grafana/data';
-import { addVariable, removeVariable, storeNewVariable } from '../state/sharedReducer';
+import { addVariable, removeVariable } from '../state/sharedReducer';
+import { updateOptions } from '../state/actions';
+import { VariableModel } from '../types';
+import { initInspect } from '../inspect/reducer';
+import { createUsagesNetwork, transformUsagesToNetwork } from '../inspect/utils';
 
 export const variableEditorMount = (identifier: VariableIdentifier): ThunkResult<void> => {
-  return async dispatch => {
+  return async (dispatch) => {
     dispatch(variableEditorMounted({ name: getVariable(identifier.id).name }));
   };
 };
@@ -29,29 +27,13 @@ export const variableEditorMount = (identifier: VariableIdentifier): ThunkResult
 export const variableEditorUnMount = (identifier: VariableIdentifier): ThunkResult<void> => {
   return async (dispatch, getState) => {
     dispatch(variableEditorUnMounted(toVariablePayload(identifier)));
-    if (getState().templating.variables[NEW_VARIABLE_ID]) {
-      dispatch(removeVariable(toVariablePayload({ type: identifier.type, id: NEW_VARIABLE_ID }, { reIndex: false })));
-    }
   };
 };
 
 export const onEditorUpdate = (identifier: VariableIdentifier): ThunkResult<void> => {
-  return async (dispatch, getState) => {
-    const variableInState = getVariable(identifier.id, getState());
-    await variableAdapters.get(variableInState.type).updateOptions(variableInState);
+  return async (dispatch) => {
+    await dispatch(updateOptions(identifier));
     dispatch(switchToListMode());
-  };
-};
-
-export const onEditorAdd = (identifier: VariableIdentifier): ThunkResult<void> => {
-  return async (dispatch, getState) => {
-    const newVariableInState = getVariable(NEW_VARIABLE_ID, getState());
-    const id = newVariableInState.name;
-    dispatch(storeNewVariable(toVariablePayload({ type: identifier.type, id })));
-    const variableInState = getVariable(id, getState());
-    await variableAdapters.get(variableInState.type).updateOptions(variableInState);
-    dispatch(switchToListMode());
-    dispatch(removeVariable(toVariablePayload({ type: identifier.type, id: NEW_VARIABLE_ID }, { reIndex: false })));
   };
 };
 
@@ -67,7 +49,7 @@ export const changeVariableName = (identifier: VariableIdentifier, newName: stri
     }
 
     const variables = getVariables(getState());
-    const foundVariables = variables.filter(v => v.name === newName && v.id !== identifier.id);
+    const foundVariables = variables.filter((v) => v.name === newName && v.id !== identifier.id);
 
     if (foundVariables.length) {
       errorText = 'Variable with the same name already exists';
@@ -78,16 +60,8 @@ export const changeVariableName = (identifier: VariableIdentifier, newName: stri
       return;
     }
 
-    const thunkToCall = identifier.id === NEW_VARIABLE_ID ? completeChangeNewVariableName : completeChangeVariableName;
-    dispatch(thunkToCall(identifier, newName));
+    dispatch(completeChangeVariableName(identifier, newName));
   };
-};
-
-export const completeChangeNewVariableName = (
-  identifier: VariableIdentifier,
-  newName: string
-): ThunkResult<void> => dispatch => {
-  dispatch(changeVariableNameSucceeded(toVariablePayload(identifier, { newName })));
 };
 
 export const completeChangeVariableName = (identifier: VariableIdentifier, newName: string): ThunkResult<void> => (
@@ -110,13 +84,14 @@ export const completeChangeVariableName = (identifier: VariableIdentifier, newNa
   dispatch(removeVariable(toVariablePayload(identifier, { reIndex: false })));
 };
 
-export const switchToNewMode = (): ThunkResult<void> => (dispatch, getState) => {
-  const type: VariableType = 'query';
-  const id = NEW_VARIABLE_ID;
-  const global = false;
-  const model = cloneDeep(variableAdapters.get(type).initialState);
-  const index = getNewVariabelIndex(getState());
+export const switchToNewMode = (type: VariableType = 'query'): ThunkResult<void> => (dispatch, getState) => {
+  const id = getNextAvailableId(type, getVariables(getState()));
   const identifier = { type, id };
+  const global = false;
+  const index = getNewVariabelIndex(getState());
+  const model = cloneDeep(variableAdapters.get(type).initialState);
+  model.id = id;
+  model.name = id;
   dispatch(
     addVariable(
       toVariablePayload<AddVariable>(identifier, { global, model, index })
@@ -125,10 +100,30 @@ export const switchToNewMode = (): ThunkResult<void> => (dispatch, getState) => 
   dispatch(setIdInEditor({ id: identifier.id }));
 };
 
-export const switchToEditMode = (identifier: VariableIdentifier): ThunkResult<void> => dispatch => {
+export const switchToEditMode = (identifier: VariableIdentifier): ThunkResult<void> => (dispatch) => {
   dispatch(setIdInEditor({ id: identifier.id }));
 };
 
-export const switchToListMode = (): ThunkResult<void> => dispatch => {
+export const switchToListMode = (): ThunkResult<void> => (dispatch, getState) => {
   dispatch(clearIdInEditor());
+  const state = getState();
+  const variables = getEditorVariables(state);
+  const dashboard = state.dashboard.getModel();
+  const { unknown, usages } = createUsagesNetwork(variables, dashboard);
+  const unknownsNetwork = transformUsagesToNetwork(unknown);
+  const unknownExits = Object.keys(unknown).length > 0;
+  const usagesNetwork = transformUsagesToNetwork(usages);
+
+  dispatch(initInspect({ unknown, usages, usagesNetwork, unknownsNetwork, unknownExits }));
 };
+
+export function getNextAvailableId(type: VariableType, variables: VariableModel[]): string {
+  let counter = 0;
+  let nextId = `${type}${counter}`;
+
+  while (variables.find((variable) => variable.id === nextId)) {
+    nextId = `${type}${++counter}`;
+  }
+
+  return nextId;
+}

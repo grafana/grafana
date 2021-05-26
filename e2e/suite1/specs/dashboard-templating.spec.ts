@@ -19,6 +19,7 @@ e2e.scenario({
       '__org.id = 1',
       '__user.id = 1',
       '__user.login = admin',
+      '__user.email = admin@localhost',
       `Server:raw = A'A"A,BB\\B,CCC`,
       `Server:regex = (A'A"A|BB\\\\B|CCC)`,
       `Server:lucene = ("A'A\\"A" OR "BB\\\\B" OR "CCC")`,
@@ -33,12 +34,14 @@ e2e.scenario({
       `Server:doublequote = "A'A\\"A","BB\\B","CCC"`,
       `Server:sqlstring = 'A''A"A','BB\\\B','CCC'`,
       `Server:date = null`,
+      `Server:text = All`,
+      `Server:queryparam = var-Server=All`,
     ];
 
     e2e()
       .get('.markdown-html li')
-      .should('have.length', 21)
-      .each(element => {
+      .should('have.length', 24)
+      .each((element) => {
         items.push(element.text());
       })
       .then(() => {

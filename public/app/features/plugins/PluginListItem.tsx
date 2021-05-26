@@ -1,20 +1,23 @@
 import React, { FC } from 'react';
 import { PluginMeta } from '@grafana/data';
-import { PluginSignatureBadge } from './PluginSignatureBadge';
+import { PluginSignatureBadge } from '@grafana/ui';
+import { selectors } from '@grafana/e2e-selectors';
 
 interface Props {
   plugin: PluginMeta;
 }
 
-const PluginListItem: FC<Props> = props => {
+const PluginListItem: FC<Props> = (props) => {
   const { plugin } = props;
 
   return (
-    <li className="card-item-wrapper">
+    <li className="card-item-wrapper" aria-label={selectors.pages.PluginsList.listItem}>
       <a className="card-item" href={`plugins/${plugin.id}/`}>
         <div className="card-item-header">
           <div className="card-item-type">{plugin.type}</div>
-          <PluginSignatureBadge status={plugin.signature} />
+          <div className="card-item-badge">
+            <PluginSignatureBadge status={plugin.signature} />
+          </div>
           {plugin.hasUpdate && (
             <div className="card-item-notice">
               <span bs-tooltip="plugin.latestVersion">Update available!</span>

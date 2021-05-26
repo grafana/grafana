@@ -1,19 +1,20 @@
-import React, { FormEvent, useState, useCallback, useEffect } from 'react';
 import {
-  TimeZone,
-  isDateTime,
-  TimeRange,
-  DateTime,
   dateMath,
+  DateTime,
   dateTimeFormat,
   dateTimeParse,
+  isDateTime,
   rangeUtil,
   RawTimeRange,
+  TimeRange,
+  TimeZone,
 } from '@grafana/data';
-import { TimePickerCalendar } from './TimePickerCalendar';
+import { selectors } from '@grafana/e2e-selectors';
+import React, { FormEvent, useCallback, useEffect, useState } from 'react';
+import { Button } from '../../Button';
 import { Field } from '../../Forms/Field';
 import { Input } from '../../Input/Input';
-import { Button } from '../../Button';
+import { TimePickerCalendar } from './TimePickerCalendar';
 
 interface Props {
   isFullscreen: boolean;
@@ -24,15 +25,15 @@ interface Props {
   isReversed?: boolean;
 }
 
-interface InputState {
+export interface InputState {
   value: string;
   invalid: boolean;
 }
 
 const errorMessage = 'Please enter a past date or "now"';
 
-export const TimeRangeForm: React.FC<Props> = props => {
-  const { value, isFullscreen = false, timeZone, roundup } = props;
+export const TimeRangeForm: React.FC<Props> = (props) => {
+  const { value, isFullscreen = false, timeZone, onApply: onApplyFromProps, isReversed } = props;
 
   const [from, setFrom] = useState<InputState>(valueToState(value.raw.from, false, timeZone));
   const [to, setTo] = useState<InputState>(valueToState(value.raw.to, true, timeZone));
@@ -72,9 +73,9 @@ export const TimeRangeForm: React.FC<Props> = props => {
       const raw: RawTimeRange = { from: from.value, to: to.value };
       const timeRange = rangeUtil.convertRawToRange(raw, timeZone);
 
-      props.onApply(timeRange);
+      onApplyFromProps(timeRange);
     },
-    [from, to, roundup, timeZone]
+    [from.invalid, from.value, onApplyFromProps, timeZone, to.invalid, to.value]
   );
 
   const onChange = useCallback(
@@ -91,25 +92,25 @@ export const TimeRangeForm: React.FC<Props> = props => {
     <>
       <Field label="From" invalid={from.invalid} error={errorMessage}>
         <Input
-          onClick={event => event.stopPropagation()}
+          onClick={(event) => event.stopPropagation()}
           onFocus={onFocus}
-          onChange={event => setFrom(eventToState(event, false, timeZone))}
+          onChange={(event) => setFrom(eventToState(event, false, timeZone))}
           addonAfter={icon}
-          aria-label="TimePicker from field"
+          aria-label={selectors.components.TimePicker.fromField}
           value={from.value}
         />
       </Field>
       <Field label="To" invalid={to.invalid} error={errorMessage}>
         <Input
-          onClick={event => event.stopPropagation()}
+          onClick={(event) => event.stopPropagation()}
           onFocus={onFocus}
-          onChange={event => setTo(eventToState(event, true, timeZone))}
+          onChange={(event) => setTo(eventToState(event, true, timeZone))}
           addonAfter={icon}
-          aria-label="TimePicker to field"
+          aria-label={selectors.components.TimePicker.toField}
           value={to.value}
         />
       </Field>
-      <Button aria-label="TimePicker submit button" onClick={onApply}>
+      <Button aria-label={selectors.components.TimePicker.applyTimeRange} onClick={onApply}>
         Apply time range
       </Button>
 
@@ -122,7 +123,7 @@ export const TimeRangeForm: React.FC<Props> = props => {
         onClose={() => setOpen(false)}
         onChange={onChange}
         timeZone={timeZone}
-        isReversed={props.isReversed}
+        isReversed={isReversed}
       />
     </>
   );

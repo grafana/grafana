@@ -5,12 +5,12 @@ import { PanelProps, renderMarkdown, textUtil } from '@grafana/data';
 // Utils
 import config from 'app/core/config';
 // Types
-import { TextOptions } from './types';
+import { PanelOptions, TextMode } from './models.gen';
 import { CustomScrollbar, stylesFactory } from '@grafana/ui';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 import DangerouslySetHtmlContent from 'dangerously-set-html-content';
 
-interface Props extends PanelProps<TextOptions> {}
+interface Props extends PanelProps<PanelOptions> {}
 
 interface State {
   html: string;
@@ -34,7 +34,7 @@ export class TextPanel extends PureComponent<Props, State> {
 
   componentDidUpdate(prevProps: Props) {
     // Since any change could be referenced in a template variable,
-    // This needs to process everytime (with debounce)
+    // This needs to process every time (with debounce)
     this.updateHTML();
   }
 
@@ -43,7 +43,8 @@ export class TextPanel extends PureComponent<Props, State> {
   }
 
   prepareMarkdown(content: string): string {
-    return renderMarkdown(this.interpolateAndSanitizeString(content));
+    // Sanitize is disabled here as we handle that after variable interpolation
+    return renderMarkdown(this.interpolateAndSanitizeString(content), { noSanitize: config.disableSanitizeHtml });
   }
 
   interpolateAndSanitizeString(content: string): string {
@@ -54,18 +55,18 @@ export class TextPanel extends PureComponent<Props, State> {
     return config.disableSanitizeHtml ? content : textUtil.sanitize(content);
   }
 
-  processContent(options: TextOptions): string {
+  processContent(options: PanelOptions): string {
     const { mode, content } = options;
 
     if (!content) {
       return '';
     }
 
-    if (mode === 'markdown') {
-      return this.prepareMarkdown(content);
+    if (mode === TextMode.HTML) {
+      return this.prepareHTML(content);
     }
 
-    return this.prepareHTML(content);
+    return this.prepareMarkdown(content);
   }
 
   render() {

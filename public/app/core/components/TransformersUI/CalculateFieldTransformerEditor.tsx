@@ -1,28 +1,30 @@
 import React, { ChangeEvent } from 'react';
-
+import { of, OperatorFunction } from 'rxjs';
+import { map } from 'rxjs/operators';
 import {
+  BinaryOperationID,
+  binaryOperators,
+  DataFrame,
   DataTransformerID,
   FieldType,
+  getFieldDisplayName,
   KeyValue,
   ReducerID,
-  standardTransformers,
-  TransformerRegistyItem,
-  TransformerUIProps,
-  BinaryOperationID,
   SelectableValue,
-  binaryOperators,
-  getFieldDisplayName,
+  standardTransformers,
+  TransformerRegistryItem,
+  TransformerUIProps,
 } from '@grafana/data';
-import { Select, StatsPicker, LegacyForms, Input, FilterPill, HorizontalGroup } from '@grafana/ui';
+import { FilterPill, HorizontalGroup, Input, LegacyForms, Select, StatsPicker } from '@grafana/ui';
 import {
-  CalculateFieldTransformerOptions,
+  BinaryOptions,
   CalculateFieldMode,
+  CalculateFieldTransformerOptions,
   getNameFromOptions,
   ReduceOptions,
-  BinaryOptions,
 } from '@grafana/data/src/transformations/transformers/calculateField';
 
-import defaults from 'lodash/defaults';
+import { defaults } from 'lodash';
 
 interface CalculateFieldTransformerEditorProps extends TransformerUIProps<CalculateFieldTransformerOptions> {}
 
@@ -36,6 +38,8 @@ const calculationModes = [
   { value: CalculateFieldMode.BinaryOperation, label: 'Binary operation' },
   { value: CalculateFieldMode.ReduceRow, label: 'Reduce row' },
 ];
+
+const okTypes = new Set<FieldType>([FieldType.time, FieldType.number, FieldType.string]);
 
 export class CalculateFieldTransformerEditor extends React.PureComponent<
   CalculateFieldTransformerEditorProps,
@@ -64,44 +68,67 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
   private initOptions() {
     const { options } = this.props;
     const configuredOptions = options?.reduce?.include || [];
-    const input = standardTransformers.ensureColumnsTransformer.transformer(null)(this.props.input);
-
-    const allNames: string[] = [];
-    const byName: KeyValue<boolean> = {};
-
-    for (const frame of input) {
-      for (const field of frame.fields) {
-        if (field.type !== FieldType.number) {
-          continue;
-        }
-
-        const displayName = getFieldDisplayName(field, frame, input);
-
-        if (!byName[displayName]) {
-          byName[displayName] = true;
-          allNames.push(displayName);
-        }
-      }
-    }
-
-    if (configuredOptions.length) {
-      const options: string[] = [];
-      const selected: string[] = [];
-
-      for (const v of allNames) {
-        if (configuredOptions.includes(v)) {
-          selected.push(v);
-        }
-        options.push(v);
-      }
-
-      this.setState({
-        names: options,
-        selected: selected,
+    const subscription = of(this.props.input)
+      .pipe(
+        standardTransformers.ensureColumnsTransformer.operator(null),
+        this.extractAllNames(),
+        this.extractNamesAndSelected(configuredOptions)
+      )
+      .subscribe(({ selected, names }) => {
+        this.setState({ names, selected }, () => subscription.unsubscribe());
       });
-    } else {
-      this.setState({ names: allNames, selected: [] });
-    }
+  }
+
+  private extractAllNames(): OperatorFunction<DataFrame[], string[]> {
+    return (source) =>
+      source.pipe(
+        map((input) => {
+          const allNames: string[] = [];
+          const byName: KeyValue<boolean> = {};
+
+          for (const frame of input) {
+            for (const field of frame.fields) {
+              if (!okTypes.has(field.type)) {
+                continue;
+              }
+
+              const displayName = getFieldDisplayName(field, frame, input);
+
+              if (!byName[displayName]) {
+                byName[displayName] = true;
+                allNames.push(displayName);
+              }
+            }
+          }
+
+          return allNames;
+        })
+      );
+  }
+
+  private extractNamesAndSelected(
+    configuredOptions: string[]
+  ): OperatorFunction<string[], { names: string[]; selected: string[] }> {
+    return (source) =>
+      source.pipe(
+        map((allNames) => {
+          if (!configuredOptions.length) {
+            return { names: allNames, selected: [] };
+          }
+
+          const names: string[] = [];
+          const selected: string[] = [];
+
+          for (const v of allNames) {
+            if (configuredOptions.includes(v)) {
+              selected.push(v);
+            }
+            names.push(v);
+          }
+
+          return { names, selected };
+        })
+      );
   }
 
   onToggleReplaceFields = () => {
@@ -145,7 +172,7 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
   onFieldToggle = (fieldName: string) => {
     const { selected } = this.state;
     if (selected.indexOf(fieldName) > -1) {
-      this.onChange(selected.filter(s => s !== fieldName));
+      this.onChange(selected.filter((s) => s !== fieldName));
     } else {
       this.onChange([...selected, fieldName]);
     }
@@ -201,7 +228,6 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
               stats={[options.reducer]}
               onChange={this.onStatsChange}
               defaultStat={ReducerID.sum}
-              menuPlacement="bottom"
             />
           </div>
         </div>
@@ -251,7 +277,7 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
 
     let foundLeft = !options?.left;
     let foundRight = !options?.right;
-    const names = this.state.names.map(v => {
+    const names = this.state.names.map((v) => {
       if (v === options?.left) {
         foundLeft = true;
       }
@@ -263,7 +289,7 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
     const leftNames = foundLeft ? names : [...names, { label: options?.left, value: options?.left }];
     const rightNames = foundRight ? names : [...names, { label: options?.right, value: options?.right }];
 
-    const ops = binaryOperators.list().map(v => {
+    const ops = binaryOperators.list().map((v) => {
       return { label: v.id, value: v.id };
     });
 
@@ -280,14 +306,12 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
             className="min-width-18 gf-form-spacing"
             value={options?.left}
             onChange={this.onBinaryLeftChanged}
-            menuPlacement="bottom"
           />
           <Select
             className="width-8 gf-form-spacing"
             options={ops}
             value={options.operator ?? ops[0].value}
             onChange={this.onBinaryOperationChanged}
-            menuPlacement="bottom"
           />
           <Select
             allowCustomValue={true}
@@ -296,7 +320,6 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
             options={rightNames}
             value={options?.right}
             onChange={this.onBinaryRightChanged}
-            menuPlacement="bottom"
           />
         </div>
       </div>
@@ -320,9 +343,8 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
             <Select
               className="width-18"
               options={calculationModes}
-              value={calculationModes.find(v => v.value === mode)}
+              value={calculationModes.find((v) => v.value === mode)}
               onChange={this.onModeChanged}
-              menuPlacement="bottom"
             />
           </div>
         </div>
@@ -354,7 +376,7 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
   }
 }
 
-export const calculateFieldTransformRegistryItem: TransformerRegistyItem<CalculateFieldTransformerOptions> = {
+export const calculateFieldTransformRegistryItem: TransformerRegistryItem<CalculateFieldTransformerOptions> = {
   id: DataTransformerID.calculateField,
   editor: CalculateFieldTransformerEditor,
   transformation: standardTransformers.calculateFieldTransformer,

@@ -1,0 +1,7 @@
+groups:
+  - name: grafana_rules
+    rules:
+    # Record error rate of http requests excluding dataproxy, /ds/query and /tsdb/query requests
+    - record: namespace_job_handler_statuscode:http_request_total:rate5m
+      expr: |
+          sum by (namespace, job, handler, statuscode) (rate(http_request_total[5m]))

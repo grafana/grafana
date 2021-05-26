@@ -1,29 +1,35 @@
 import React, { PureComponent } from 'react';
-import coreModule from 'app/core/core_module';
 import { InfluxQuery } from '../types';
 import { SelectableValue } from '@grafana/data';
-import { cx, css } from 'emotion';
+import { cx, css } from '@emotion/css';
 import {
   InlineFormLabel,
   LinkButton,
   Segment,
   CodeEditor,
+  MonacoEditor,
   CodeEditorSuggestionItem,
   CodeEditorSuggestionItemKind,
 } from '@grafana/ui';
 import { getTemplateSrv } from '@grafana/runtime';
+import InfluxDatasource from '../datasource';
 
-interface Props {
-  target: InfluxQuery;
-  change: (target: InfluxQuery) => void;
-  refresh: () => void;
-}
+type Props = {
+  onChange: (query: InfluxQuery) => void;
+  onRunQuery: () => void;
+  query: InfluxQuery;
+  // `datasource` is not used internally, but this component is used at some places
+  // directly, where the `datasource` prop has to exist. later, when the whole
+  // query-editor gets converted to react we can stop using this component directly
+  // and then we can probably remove the datasource attribute.
+  datasource: InfluxDatasource;
+};
 
 const samples: Array<SelectableValue<string>> = [
-  { label: 'Show buckets', description: 'List the avaliable buckets (table)', value: 'buckets()' },
+  { label: 'Show buckets', description: 'List the available buckets (table)', value: 'buckets()' },
   {
     label: 'Simple query',
-    description: 'filter by measurment and field',
+    description: 'filter by measurement and field',
     value: `from(bucket: "db/rp")
   |> range(start: v.timeRangeStart, stop:v.timeRangeStop)
   |> filter(fn: (r) =>
@@ -87,20 +93,19 @@ v1.tagValues(
 
 export class FluxQueryEditor extends PureComponent<Props> {
   onFluxQueryChange = (query: string) => {
-    const { target, change } = this.props;
-    change({ ...target, query });
-    this.props.refresh();
+    this.props.onChange({ ...this.props.query, query });
+    this.props.onRunQuery();
   };
 
   onSampleChange = (val: SelectableValue<string>) => {
-    this.props.change({
-      ...this.props.target,
+    this.props.onChange({
+      ...this.props.query,
       query: val.value!,
     });
 
     // Angular HACK: Since the target does not actually change!
     this.forceUpdate();
-    this.props.refresh();
+    this.props.onRunQuery();
   };
 
   getSuggestions = (): CodeEditorSuggestionItem[] => {
@@ -133,7 +138,7 @@ export class FluxQueryEditor extends PureComponent<Props> {
     ];
 
     const templateSrv = getTemplateSrv();
-    templateSrv.getVariables().forEach(variable => {
+    templateSrv.getVariables().forEach((variable) => {
       const label = '${' + variable.name + '}';
       let val = templateSrv.replace(label);
       if (val === label) {
@@ -150,14 +155,14 @@ export class FluxQueryEditor extends PureComponent<Props> {
   };
 
   // For some reason in angular, when this component gets re-mounted, the width
-  // is not set properly.  This forces the layout shorly after mount so that it
+  // is not set properly.  This forces the layout shortly after mount so that it
   // displays OK.  Note: this is not an issue when used directly in react
-  editorDidMountCallbackHack = (editor: any) => {
+  editorDidMountCallbackHack = (editor: MonacoEditor) => {
     setTimeout(() => editor.layout(), 100);
   };
 
   render() {
-    const { target } = this.props;
+    const { query } = this.props;
 
     const helpTooltip = (
       <div>
@@ -171,7 +176,7 @@ export class FluxQueryEditor extends PureComponent<Props> {
         <CodeEditor
           height={'200px'}
           language="sql"
-          value={target.query || ''}
+          value={query.query || ''}
           onBlur={this.onFluxQueryChange}
           onSave={this.onFluxQueryChange}
           showMiniMap={false}
@@ -191,7 +196,7 @@ export class FluxQueryEditor extends PureComponent<Props> {
             icon="external-link-alt"
             variant="secondary"
             target="blank"
-            href="https://docs.influxdata.com/flux/latest/introduction/getting-started/"
+            href="https://docs.influxdata.com/influxdb/latest/query-data/get-started/"
           >
             Flux language syntax
           </LinkButton>
@@ -207,10 +212,3 @@ export class FluxQueryEditor extends PureComponent<Props> {
     );
   }
 }
-
-coreModule.directive('fluxQueryEditor', [
-  'reactDirective',
-  (reactDirective: any) => {
-    return reactDirective(FluxQueryEditor, ['target', 'change', 'refresh']);
-  },
-]);

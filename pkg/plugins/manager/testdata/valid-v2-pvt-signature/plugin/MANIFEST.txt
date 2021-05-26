@@ -1,0 +1,30 @@
+
+-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA512
+
+{
+  "manifestVersion": "2.0.0",
+  "signatureType": "private",
+  "signedByOrg": "willbrowne",
+  "signedByOrgName": "Will Browne",
+  "rootUrls": [
+    "http://localhost:3000/"
+  ],
+  "plugin": "test",
+  "version": "1.0.0",
+  "time": 1605807018050,
+  "keyId": "7e4d0c6a708866e7",
+  "files": {
+    "plugin.json": "2bb467c0bfd6c454551419efe475b8bf8573734e73c7bab52b14842adb62886f"
+  }
+}
+-----BEGIN PGP SIGNATURE-----
+Version: OpenPGP.js v4.10.1
+Comment: https://openpgpjs.org
+
+wqIEARMKAAYFAl+2q6oACgkQfk0ManCIZudmzwIJAXWz58cd/91rTXszKPnE
+xbVEvERCbjKTtPBQBNQyqEvV+Ig3MuBSNOVy2SOGrMsdbS6lONgvgt4Cm+iS
+wV+vYifkAgkBJtg/9DMB7/iX5O0h49CtSltcpfBFXlGqIeOwRac/yENzRzAA
+khdr/tZ1PDgRxMqB/u+Vtbpl0xSxgblnrDOYMSI=
+=rLIE
+-----END PGP SIGNATURE-----

@@ -1,7 +1,7 @@
 import { CellProps } from 'react-table';
 import { Field } from '@grafana/data';
 import { TableStyles } from './styles';
-import { FC } from 'react';
+import { CSSProperties, FC } from 'react';
 
 export interface TableFieldOptions {
   width: number;
@@ -14,10 +14,12 @@ export enum TableCellDisplayMode {
   Auto = 'auto',
   ColorText = 'color-text',
   ColorBackground = 'color-background',
+  ColorBackgroundSolid = 'color-background-solid',
   GradientGauge = 'gradient-gauge',
   LcdGauge = 'lcd-gauge',
   JSONView = 'json-view',
   BasicGauge = 'basic',
+  Image = 'image',
 }
 
 export type FieldTextAlignment = 'auto' | 'left' | 'right' | 'center';
@@ -41,7 +43,10 @@ export interface TableSortByFieldState {
 
 export interface TableCellProps extends CellProps<any> {
   tableStyles: TableStyles;
+  cellProps: CSSProperties;
   field: Field;
+  onCellFilterAdded: TableFilterActionCallback;
+  innerWidth: number;
 }
 
 export type CellComponent = FC<TableCellProps>;

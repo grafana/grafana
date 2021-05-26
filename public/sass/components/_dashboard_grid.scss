@@ -7,6 +7,8 @@
 }
 
 .react-grid-item {
+  touch-action: initial !important;
+
   &:hover {
     .react-resizable-handle {
       visibility: visible;

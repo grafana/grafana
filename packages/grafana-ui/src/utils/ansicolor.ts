@@ -172,7 +172,7 @@ const wrap = (x, openCode, closeCode) => {
 
   return String(x)
     .split('\n')
-    .map(line => denormalizeBrightness(open + replaceAll(normalizeBrightness(line), close, open) + close))
+    .map((line) => denormalizeBrightness(open + replaceAll(normalizeBrightness(line), close, open) + close))
     .join('\n');
 };
 
@@ -229,7 +229,7 @@ const assignStringWrappingAPI = (target, wrapBefore = target) =>
     (memo, [k, open, close]) =>
       O.defineProperty(memo, k, {
         // @ts-ignore
-        get: () => assignStringWrappingAPI(str => wrapBefore(wrap(str, open, close))),
+        get: () => assignStringWrappingAPI((str) => wrapBefore(wrap(str, open, close))),
       }),
 
     target
@@ -368,7 +368,7 @@ export default class Colors {
 
     return O.assign(new Colors(), {
       spans: this.spans
-        .map(span => {
+        .map((span) => {
           const c = span.code;
 
           const inverted = styles.has('inverse'),
@@ -417,7 +417,7 @@ export default class Colors {
 
           return styledSpan;
         })
-        .filter(s => s.text.length > 0),
+        .filter((s) => s.text.length > 0),
     });
   }
 
@@ -426,7 +426,7 @@ export default class Colors {
   get asChromeConsoleLogArguments() {
     const spans = this.parsed.spans;
 
-    return [spans.map(s => '%c' + s.text).join(''), ...spans.map(s => s.css)];
+    return [spans.map((s) => '%c' + s.text).join(''), ...spans.map((s) => s.css)];
   }
 
   get browserConsoleArguments() /* LEGACY, DEPRECATED */ {
@@ -434,16 +434,16 @@ export default class Colors {
   }
 
   /**
-   * @desc installs String prototype extensions
+   * @description installs String prototype extensions
    * @example
    * require ('ansicolor').nice
    * console.log ('foo'.bright.red)
    */
   static get nice() {
-    Colors.names.forEach(k => {
+    Colors.names.forEach((k) => {
       if (!(k in String.prototype)) {
         O.defineProperty(String.prototype, k, {
-          get: function() {
+          get: function () {
             // @ts-ignore
             return Colors[k](this);
           },
@@ -455,17 +455,17 @@ export default class Colors {
   }
 
   /**
-   * @desc parses a string containing ANSI escape codes
-   * @return {Colors} parsed representation.
+   * @description parses a string containing ANSI escape codes
+   * @returns {Colors} parsed representation.
    */
   static parse(s: string) {
     return new Colors(s).parsed;
   }
 
   /**
-   * @desc strips ANSI codes from a string
+   * @description strips ANSI codes from a string
    * @param {string} s a string containing ANSI escape codes.
-   * @return {string} clean string.
+   * @returns {string} clean string.
    */
   static strip(s: string) {
     return s.replace(/[\u001b\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-PRZcf-nqry=><]/g, ''); // hope V8 caches the regexp

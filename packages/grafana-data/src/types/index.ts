@@ -1,12 +1,13 @@
 export * from './data';
 export * from './dataFrame';
 export * from './dataLink';
+export * from './dashboard';
+export * from './annotations';
 export * from './logs';
 export * from './navModel';
 export * from './select';
 export * from './time';
 export * from './thresholds';
-export * from './utils';
 export * from './valueMapping';
 export * from './displayValue';
 export * from './graph';
@@ -26,11 +27,10 @@ export * from './orgs';
 export * from './flot';
 export * from './trace';
 export * from './explore';
-
-import * as AppEvents from './appEvents';
-import { AppEvent } from './appEvents';
-export { AppEvent, AppEvents };
-
-import * as PanelEvents from './panelEvents';
-export { PanelEvents };
+export * from './legacyEvents';
+export * from './live';
+export * from './variables';
+export * from './geometry';
+export { isUnsignedPluginSignature } from './pluginSignature';
 export { GrafanaConfig, BuildInfo, FeatureToggles, LicenseInfo } from './config';
+export * from './alerts';

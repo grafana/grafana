@@ -2,6 +2,7 @@ package sqlstore
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"strings"
 	"time"
@@ -72,7 +73,7 @@ func deleteAlertByIdInternal(alertId int64, reason string, sess *DBSession) erro
 }
 
 func HandleAlertsQuery(query *models.GetAlertsQuery) error {
-	builder := SqlBuilder{}
+	builder := SQLBuilder{}
 
 	builder.Write(`SELECT
 		alert.id,
@@ -125,7 +126,7 @@ func HandleAlertsQuery(query *models.GetAlertsQuery) error {
 	}
 
 	if query.User.OrgRole != models.ROLE_ADMIN {
-		builder.writeDashboardPermissionFilter(query.User, models.PERMISSION_VIEW)
+		builder.WriteDashboardPermissionFilter(query.User, models.PERMISSION_VIEW)
 	}
 
 	builder.Write(" ORDER BY name ASC")
@@ -135,7 +136,7 @@ func HandleAlertsQuery(query *models.GetAlertsQuery) error {
 	}
 
 	alerts := make([]*models.AlertListItemDTO, 0)
-	if err := x.SQL(builder.GetSqlString(), builder.params...).Find(&alerts); err != nil {
+	if err := x.SQL(builder.GetSQLString(), builder.params...).Find(&alerts); err != nil {
 		return err
 	}
 
@@ -166,18 +167,18 @@ func deleteAlertDefinition(dashboardId int64, sess *DBSession) error {
 	return nil
 }
 
-func SaveAlerts(cmd *models.SaveAlertsCommand) error {
-	return inTransaction(func(sess *DBSession) error {
-		existingAlerts, err := GetAlertsByDashboardId2(cmd.DashboardId, sess)
+func (ss *SQLStore) SaveAlerts(dashID int64, alerts []*models.Alert) error {
+	return ss.WithTransactionalDbSession(context.Background(), func(sess *DBSession) error {
+		existingAlerts, err := GetAlertsByDashboardId2(dashID, sess)
 		if err != nil {
 			return err
 		}
 
-		if err := updateAlerts(existingAlerts, cmd, sess); err != nil {
+		if err := updateAlerts(existingAlerts, alerts, sess); err != nil {
 			return err
 		}
 
-		if err := deleteMissingAlerts(existingAlerts, cmd, sess); err != nil {
+		if err := deleteMissingAlerts(existingAlerts, alerts, sess); err != nil {
 			return err
 		}
 
@@ -185,8 +186,27 @@ func SaveAlerts(cmd *models.SaveAlertsCommand) error {
 	})
 }
 
-func updateAlerts(existingAlerts []*models.Alert, cmd *models.SaveAlertsCommand, sess *DBSession) error {
-	for _, alert := range cmd.Alerts {
+func SaveAlerts(cmd *models.SaveAlertsCommand) error {
+	return inTransaction(func(sess *DBSession) error {
+		existingAlerts, err := GetAlertsByDashboardId2(cmd.DashboardId, sess)
+		if err != nil {
+			return err
+		}
+
+		if err := updateAlerts(existingAlerts, cmd.Alerts, sess); err != nil {
+			return err
+		}
+
+		if err := deleteMissingAlerts(existingAlerts, cmd.Alerts, sess); err != nil {
+			return err
+		}
+
+		return nil
+	})
+}
+
+func updateAlerts(existingAlerts []*models.Alert, alerts []*models.Alert, sess *DBSession) error {
+	for _, alert := range alerts {
 		update := false
 		var alertToUpdate *models.Alert
 
@@ -245,11 +265,11 @@ func updateAlerts(existingAlerts []*models.Alert, cmd *models.SaveAlertsCommand,
 	return nil
 }
 
-func deleteMissingAlerts(alerts []*models.Alert, cmd *models.SaveAlertsCommand, sess *DBSession) error {
+func deleteMissingAlerts(alerts []*models.Alert, existingAlerts []*models.Alert, sess *DBSession) error {
 	for _, missingAlert := range alerts {
 		missing := true
 
-		for _, k := range cmd.Alerts {
+		for _, k := range existingAlerts {
 			if missingAlert.PanelId == k.PanelId {
 				missing = false
 				break
@@ -286,7 +306,7 @@ func SetAlertState(cmd *models.SetAlertStateCommand) error {
 		if has, err := sess.ID(cmd.AlertId).Get(&alert); err != nil {
 			return err
 		} else if !has {
-			return fmt.Errorf("Could not find alert")
+			return fmt.Errorf("could not find alert")
 		}
 
 		if alert.State == models.AlertStatePaused {
@@ -303,7 +323,7 @@ func SetAlertState(cmd *models.SetAlertStateCommand) error {
 		alert.EvalData = cmd.EvalData
 
 		if cmd.Error == "" {
-			alert.ExecutionError = " " //without this space, xorm skips updating this field
+			alert.ExecutionError = " " // without this space, xorm skips updating this field
 		} else {
 			alert.ExecutionError = cmd.Error
 		}
@@ -371,7 +391,7 @@ func PauseAllAlerts(cmd *models.PauseAllAlertCommand) error {
 }
 
 func GetAlertStatesForDashboard(query *models.GetAlertStatesForDashboardQuery) error {
-	var rawSql = `SELECT
+	var rawSQL = `SELECT
 	                id,
 	                dashboard_id,
 	                panel_id,
@@ -381,7 +401,7 @@ func GetAlertStatesForDashboard(query *models.GetAlertStatesForDashboardQuery) e
 	                WHERE org_id = ? AND dashboard_id = ?`
 
 	query.Result = make([]*models.AlertStateInfoDTO, 0)
-	err := x.SQL(rawSql, query.OrgId, query.DashboardId).Find(&query.Result)
+	err := x.SQL(rawSQL, query.OrgId, query.DashboardId).Find(&query.Result)
 
 	return err
 }

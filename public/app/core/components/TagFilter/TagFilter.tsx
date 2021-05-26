@@ -1,9 +1,8 @@
 // Libraries
 import React, { FC } from 'react';
-import { css } from 'emotion';
-// @ts-ignore
-import { components } from '@torkelo/react-select';
-import { AsyncSelect, stylesFactory, useTheme, resetSelectStyles, Icon } from '@grafana/ui';
+import { css } from '@emotion/css';
+import { components } from 'react-select';
+import { stylesFactory, useTheme, resetSelectStyles, Icon, AsyncMultiSelect } from '@grafana/ui';
 import { escapeStringForRegex, GrafanaTheme } from '@grafana/data';
 // Components
 import { TagOption } from './TagOption';
@@ -43,8 +42,8 @@ export const TagFilter: FC<Props> = ({
   const styles = getStyles(theme);
 
   const onLoadOptions = (query: string) => {
-    return tagOptions().then(options => {
-      return options.map(option => ({
+    return tagOptions().then((options) => {
+      return options.map((option) => ({
         value: option.term,
         label: option.term,
         count: option.count,
@@ -55,10 +54,10 @@ export const TagFilter: FC<Props> = ({
   const onTagChange = (newTags: any[]) => {
     // On remove with 1 item returns null, so we need to make sure it's an empty array in that case
     // https://github.com/JedWatson/react-select/issues/3632
-    onChange((newTags || []).map(tag => tag.value));
+    onChange((newTags || []).map((tag) => tag.value));
   };
 
-  const value = tags.map(tag => ({ value: tag, label: tag, count: 0 }));
+  const value = tags.map((tag) => ({ value: tag, label: tag, count: 0 }));
 
   const selectOptions = {
     defaultOptions: true,
@@ -79,7 +78,7 @@ export const TagFilter: FC<Props> = ({
       MultiValueLabel: (): any => {
         return null; // We want the whole tag to be clickable so we use MultiValueRemove instead
       },
-      MultiValueRemove: (props: any) => {
+      MultiValueRemove(props: any) {
         const { data } = props;
 
         return (
@@ -93,13 +92,13 @@ export const TagFilter: FC<Props> = ({
   };
 
   return (
-    <div className={styles.tagFilter} aria-label="Tag filter">
+    <div className={styles.tagFilter}>
       {isClearable && tags.length > 0 && (
         <span className={styles.clear} onClick={() => onTagChange([])}>
           Clear tags
         </span>
       )}
-      <AsyncSelect {...selectOptions} prefix={<Icon name="tag-alt" />} />
+      <AsyncMultiSelect {...selectOptions} prefix={<Icon name="tag-alt" />} aria-label="Tag filter" />
     </div>
   );
 };

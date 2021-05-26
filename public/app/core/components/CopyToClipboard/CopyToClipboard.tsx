@@ -38,14 +38,14 @@ export class CopyToClipboard extends PureComponent<Props> {
     });
 
     if (onSuccess) {
-      this.clipboardjs.on('success', evt => {
+      this.clipboardjs.on('success', (evt) => {
         evt.clearSelection();
         onSuccess(evt);
       });
     }
 
     if (onError) {
-      this.clipboardjs.on('error', evt => {
+      this.clipboardjs.on('error', (evt) => {
         console.error('Action:', evt.action);
         console.error('Trigger:', evt.trigger);
         onError(evt);

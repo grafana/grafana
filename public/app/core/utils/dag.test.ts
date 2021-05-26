@@ -61,31 +61,31 @@ describe('Directed acyclic graph', () => {
     });
 
     it('when optimizing input edges for node A should return node B and H', () => {
-      const actual = nodeA.getOptimizedInputEdges().map(e => e.inputNode);
+      const actual = nodeA.getOptimizedInputEdges().map((e) => e.inputNode);
       expect(actual).toHaveLength(2);
       expect(actual).toEqual(expect.arrayContaining([nodeB, nodeH]));
     });
 
     it('when optimizing input edges for node B should return node C', () => {
-      const actual = nodeB.getOptimizedInputEdges().map(e => e.inputNode);
+      const actual = nodeB.getOptimizedInputEdges().map((e) => e.inputNode);
       expect(actual).toHaveLength(2);
       expect(actual).toEqual(expect.arrayContaining([nodeC, nodeI]));
     });
 
     it('when optimizing input edges for node C should return node D', () => {
-      const actual = nodeC.getOptimizedInputEdges().map(e => e.inputNode);
+      const actual = nodeC.getOptimizedInputEdges().map((e) => e.inputNode);
       expect(actual).toHaveLength(1);
       expect(actual).toEqual(expect.arrayContaining([nodeD]));
     });
 
     it('when optimizing input edges for node D should return node E', () => {
-      const actual = nodeD.getOptimizedInputEdges().map(e => e.inputNode);
+      const actual = nodeD.getOptimizedInputEdges().map((e) => e.inputNode);
       expect(actual).toHaveLength(1);
       expect(actual).toEqual(expect.arrayContaining([nodeE]));
     });
 
     it('when optimizing input edges for node E should return node F and G', () => {
-      const actual = nodeE.getOptimizedInputEdges().map(e => e.inputNode);
+      const actual = nodeE.getOptimizedInputEdges().map((e) => e.inputNode);
       expect(actual).toHaveLength(2);
       expect(actual).toEqual(expect.arrayContaining([nodeF, nodeG]));
     });
