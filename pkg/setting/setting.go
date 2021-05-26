@@ -1432,6 +1432,9 @@ func (cfg *Cfg) readDataSourcesSettings() {
 
 func (cfg *Cfg) readLiveSettings(iniFile *ini.File) error {
 	section := iniFile.Section("live")
-	cfg.LiveMaxConnections = int(section.Key("max_connections").MustUint(100))
+	cfg.LiveMaxConnections = section.Key("max_connections").MustInt(100)
+	if cfg.LiveMaxConnections < -1 {
+		return fmt.Errorf("unexpected value %d for [live] max_connections", cfg.LiveMaxConnections)
+	}
 	return nil
 }
