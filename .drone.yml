@@ -3435,14 +3435,14 @@ depends_on:
 ---
 kind: pipeline
 type: docker
-name: scan-docker-image
+name: scan-docker-images
 
 platform:
   os: linux
   arch: amd64
 
 steps:
-- name: scan-docker-image-unkown-low-medium-vulnerabilities
+- name: scan-docker-images-unkown-low-medium-vulnerabilities
   image: aquasec/trivy:0.18.3
   commands:
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/grafana:latest
@@ -3450,7 +3450,7 @@ steps:
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/grafana:latest-ubuntu
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/grafana:main-ubuntu
 
-- name: scan-docker-image-high-critical-vulnerabilities
+- name: scan-docker-images-high-critical-vulnerabilities
   image: aquasec/trivy:0.18.3
   commands:
   - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/grafana:latest
