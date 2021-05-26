@@ -22,24 +22,7 @@ func TestCSVFileScenario(t *testing.T) {
 	}
 
 	t.Run("loadCsvFile", func(t *testing.T) {
-		files := []string{"population_by_state.csv", "city_stats.csv"}
-		for _, name := range files {
-			t.Run("Should load file and convert to DataFrame", func(t *testing.T) {
-				frame, err := p.loadCsvFile(name)
-				require.NoError(t, err)
-				require.NotNil(t, frame)
-
-				dr := &backend.DataResponse{
-					Frames: data.Frames{frame},
-				}
-				err = experimental.CheckGoldenDataResponse(
-					filepath.Join("testdata", name+".golden.txt"), dr, true,
-				)
-				require.NoError(t, err)
-			})
-		}
-
-		files = []string{"simple", "mixed"}
+		files := []string{"simple", "mixed"}
 		for _, name := range files {
 			t.Run("Should load CSV Text: "+name, func(t *testing.T) {
 				filePath := filepath.Join("testdata", name+".csv")
