@@ -270,7 +270,7 @@ In case of title already exists the `status` property will be `name-exists`.
 
 `GET /api/dashboards/uid/:uid`
 
-Will return the dashboard given the dashboard unique identifier (uid).
+Will return the dashboard given the dashboard unique identifier (uid). Information about the unique identifier of a folder containing the requested dashboard might be found in the metadata.
 
 **Example Request**:
 
@@ -300,6 +300,8 @@ Content-Type: application/json
   "meta": {
     "isStarred": false,
     "url": "/d/cIBgcSjkk/production-overview",
+    "folderId": 2,
+    "folderUid": "l3KqBxCMz",
     "slug": "production-overview" //deprecated in Grafana v5.0
   }
 }
