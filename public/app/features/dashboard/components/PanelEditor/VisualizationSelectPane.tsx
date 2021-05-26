@@ -162,7 +162,7 @@ const getStyles = (theme: GrafanaTheme) => {
     openWrapper: css`
       display: flex;
       flex-direction: column;
-      flex: 1 1 0;
+      flex: 1 1 100%;
       height: 100%;
       background: ${theme.colors.bg1};
       border: 1px solid ${theme.colors.border1};
