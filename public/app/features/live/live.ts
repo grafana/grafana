@@ -64,7 +64,7 @@ export class CentrifugeSrv implements GrafanaLiveSrv {
       sessionId,
       orgId: this.orgId,
     });
-    if ((window as any).grafanaBootData.settings.liveDisabled !== true) {
+    if (config.liveEnabled) {
       this.centrifuge.connect(); // do connection
     }
     this.connectionState = new BehaviorSubject<boolean>(this.centrifuge.isConnected());
