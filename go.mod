@@ -116,3 +116,5 @@ require (
 	xorm.io/core v0.7.3
 	xorm.io/xorm v0.8.2
 )
+
+replace github.com/apache/thrift => github.com/apache/thrift v0.14.1
