@@ -780,6 +780,13 @@ exports[`Wrapper changes the document title of the explore page 1`] = `
     data-s=""
   >
     
+    .css-gqssyb{min-width:200px;}
+  </style>
+  <style
+    data-emotion="css"
+    data-s=""
+  >
+    
     .css-1hqeivc-grafana-select-menu{background:#111217;box-shadow:0px 10px 20px rgb(20,20,20);position:relative;min-width:100%;z-index:1;}
   </style>
   <style
