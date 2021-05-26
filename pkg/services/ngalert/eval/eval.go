@@ -8,6 +8,7 @@ import (
 	"sort"
 	"time"
 
+	"github.com/grafana/grafana/pkg/expr/classic"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 
 	"github.com/grafana/grafana/pkg/setting"
@@ -146,6 +147,12 @@ func GetExprRequest(ctx AlertExecCtx, data []models.AlertQuery, now time.Time) (
 	return req, nil
 }
 
+type NumberValueCapture struct {
+	Var    string // RefID
+	Labels data.Labels
+	Value  *float64
+}
+
 func executeCondition(ctx AlertExecCtx, c *models.Condition, now time.Time, dataService *tsdb.Service) ExecutionResults {
 	result := ExecutionResults{}
 
@@ -155,11 +162,52 @@ func executeCondition(ctx AlertExecCtx, c *models.Condition, now time.Time, data
 		return ExecutionResults{Error: err}
 	}
 
+	// Eval Capture ...
+	captures := []NumberValueCapture{}
+
+	addValue := func(refID string, labels data.Labels, value *float64) {
+		captures = append(captures, NumberValueCapture{
+			Var:    refID,
+			Value:  value,
+			Labels: labels.Copy(),
+		})
+	}
+
 	for refID, res := range execResp.Responses {
-		if refID != c.Condition {
-			continue
+		for _, frame := range res.Frames {
+			if len(frame.Fields) == 1 && frame.Fields[0].Type() == data.FieldTypeNullableFloat64 {
+				var v *float64
+				if frame.Fields[0].Len() == 1 {
+					v = frame.At(0, 0).(*float64)
+				}
+				addValue(frame.RefID, frame.Fields[0].Labels, v)
+			}
 		}
-		result.Results = res.Frames
+		if refID == c.Condition {
+			result.Results = res.Frames
+		}
+	}
+
+	for _, frame := range result.Results {
+		if frame.Meta != nil && frame.Meta.Custom != nil {
+			if _, ok := frame.Meta.Custom.([]classic.EvalMatch); ok {
+				continue
+			}
+		}
+
+		frame.SetMeta(&data.FrameMeta{})
+
+		if len(frame.Fields) == 1 {
+			theseLabels := frame.Fields[0].Labels
+			for _, cap := range captures {
+				if theseLabels.Equals(cap.Labels) || theseLabels.Contains(cap.Labels) {
+					if frame.Meta.Custom == nil {
+						frame.Meta.Custom = []NumberValueCapture{}
+					}
+					frame.Meta.Custom = append(frame.Meta.Custom.([]NumberValueCapture), cap)
+				}
+			}
+		}
 	}
 
 	return result
