@@ -9,31 +9,36 @@ import {
   Field,
   FieldColorModeId,
   FieldConfigSource,
+  getFrameDisplayName,
   GrafanaTheme,
   TimeZone,
 } from '@grafana/data';
 import {
   DrawStyle,
-  GraphNGLegendEvent,
   Icon,
   LegendDisplayMode,
+  PanelContext,
+  PanelContextProvider,
+  SeriesVisibilityChangeMode,
+  TimeSeries,
+  TooltipDisplayMode,
   TooltipPlugin,
   useStyles,
   useTheme2,
   ZoomPlugin,
-  TooltipDisplayMode,
-  TimeSeries,
 } from '@grafana/ui';
 import { defaultGraphConfig, getGraphFieldConfig } from 'app/plugins/panel/timeseries/config';
-import { hideSeriesConfigFactory } from 'app/plugins/panel/timeseries/overrides/hideSeriesConfigFactory';
 import { ContextMenuPlugin } from 'app/plugins/panel/timeseries/plugins/ContextMenuPlugin';
 import { ExemplarsPlugin } from 'app/plugins/panel/timeseries/plugins/ExemplarsPlugin';
 import { css, cx } from '@emotion/css';
-import React, { useCallback, useMemo, useState, useRef } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { splitOpen } from './state/main';
 import { getFieldLinksForExplore } from './utils/links';
 import { usePrevious } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
+import appEvents from 'app/core/app_events';
+import { seriesVisibilityConfigFactory } from '../dashboard/dashgrid/SeriesVisibilityConfigFactory';
+import { identity } from 'lodash';
 
 const MAX_NUMBER_OF_TIME_SERIES = 20;
 
@@ -44,6 +49,7 @@ interface Props {
   absoluteRange: AbsoluteTimeRange;
   timeZone: TimeZone;
   onUpdateTimeRange: (absoluteRange: AbsoluteTimeRange) => void;
+  onHiddenSeriesChanged?: (hiddenSeries: string[]) => void;
   tooltipDisplayMode: TooltipDisplayMode;
   splitOpenFn?: typeof splitOpen;
 }
@@ -57,6 +63,7 @@ export function ExploreGraphNGPanel({
   annotations,
   tooltipDisplayMode,
   splitOpenFn,
+  onHiddenSeriesChanged,
 }: Props) {
   const theme = useTheme2();
   const [showAllTimeSeries, setShowAllTimeSeries] = useState(false);
@@ -107,13 +114,18 @@ export function ExploreGraphNGPanel({
     });
   }, [fieldConfig, data, timeZone, theme]);
 
-  const onLegendClick = useCallback(
-    (event: GraphNGLegendEvent) => {
-      setBaseStructureRev((r) => r + 1);
-      setFieldConfig(hideSeriesConfigFactory(event, fieldConfig, data));
-    },
-    [fieldConfig, data]
-  );
+  useEffect(() => {
+    if (onHiddenSeriesChanged) {
+      const hiddenFrames: string[] = [];
+      dataWithConfig.forEach((frame) => {
+        const allFieldsHidden = frame.fields.map((field) => field.config?.custom?.hideFrom?.viz).every(identity);
+        if (allFieldsHidden) {
+          hiddenFrames.push(getFrameDisplayName(frame));
+        }
+      });
+      onHiddenSeriesChanged(hiddenFrames);
+    }
+  }, [dataWithConfig, onHiddenSeriesChanged]);
 
   const seriesToShow = showAllTimeSeries ? dataWithConfig : dataWithConfig.slice(0, MAX_NUMBER_OF_TIME_SERIES);
 
@@ -121,8 +133,16 @@ export function ExploreGraphNGPanel({
     return getFieldLinksForExplore({ field, rowIndex, splitOpenFn, range: timeRange });
   };
 
+  const panelContext: PanelContext = {
+    eventBus: appEvents,
+    onToggleSeriesVisibility(label: string, mode: SeriesVisibilityChangeMode) {
+      setBaseStructureRev((r) => r + 1);
+      setFieldConfig(seriesVisibilityConfigFactory(label, mode, fieldConfig, data));
+    },
+  };
+
   return (
-    <>
+    <PanelContextProvider value={panelContext}>
       {dataWithConfig.length > MAX_NUMBER_OF_TIME_SERIES && !showAllTimeSeries && (
         <div className={cx([style.timeSeriesDisclaimer])}>
           <Icon className={style.disclaimerIcon} name="exclamation-triangle" />
@@ -141,7 +161,6 @@ export function ExploreGraphNGPanel({
             width={width}
             height={height}
             timeRange={timeRange}
-            onLegendClick={onLegendClick}
             legend={{ displayMode: LegendDisplayMode.List, placement: 'bottom', calcs: [] }}
             timeZone={timeZone}
           >
@@ -170,7 +189,7 @@ export function ExploreGraphNGPanel({
           </TimeSeries>
         )}
       </AutoSizer>
-    </>
+    </PanelContextProvider>
   );
 }
 
