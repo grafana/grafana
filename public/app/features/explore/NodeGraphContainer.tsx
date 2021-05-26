@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React from 'react';
+import { useToggle } from 'react-use';
 import { Badge, Collapse, useStyles2 } from '@grafana/ui';
 import { DataFrame, GrafanaTheme2, TimeRange } from '@grafana/data';
 import { css } from '@emotion/css';
@@ -32,13 +33,11 @@ export function UnconnectedNodeGraphContainer(props: Props & ConnectedProps<type
   const styles = useStyles2(getStyles);
 
   const { nodes } = useCategorizeFrames(dataFrames);
-  const [open, setOpen] = useState(false);
+  const [open, toggleOpen] = useToggle(false);
   const countWarning =
     withTraceView && nodes[0]?.length > 1000 ? (
       <span className={styles.warningText}> ({nodes[0].length} nodes, can be slow to load)</span>
-    ) : (
-      ''
-    );
+    ) : null;
 
   return (
     <Collapse
@@ -51,7 +50,7 @@ export function UnconnectedNodeGraphContainer(props: Props & ConnectedProps<type
       collapsible={withTraceView}
       // We allow collapsing this only when it is shown together with trace view.
       isOpen={withTraceView ? open : true}
-      onToggle={withTraceView ? () => setOpen(!open) : undefined}
+      onToggle={withTraceView ? () => toggleOpen() : undefined}
     >
       <div style={{ height: withTraceView ? 500 : 600 }}>
         <NodeGraph dataFrames={dataFrames} getLinks={getLinks} />

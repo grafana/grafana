@@ -1,7 +1,7 @@
 import React from 'react';
 import { render } from '@testing-library/react';
 import { UnconnectedNodeGraphContainer } from './NodeGraphContainer';
-import { dateTime, MutableDataFrame } from '@grafana/data';
+import { getDefaultTimeRange, MutableDataFrame } from '@grafana/data';
 import { ExploreId } from '../../types';
 
 describe('NodeGraphContainer', () => {
@@ -10,7 +10,7 @@ describe('NodeGraphContainer', () => {
       <UnconnectedNodeGraphContainer
         dataFrames={[emptyFrame]}
         exploreId={ExploreId.left}
-        range={range}
+        range={getDefaultTimeRange()}
         splitOpen={(() => {}) as any}
         withTraceView={true}
       />
@@ -25,7 +25,7 @@ describe('NodeGraphContainer', () => {
       <UnconnectedNodeGraphContainer
         dataFrames={[nodes]}
         exploreId={ExploreId.left}
-        range={range}
+        range={getDefaultTimeRange()}
         splitOpen={(() => {}) as any}
       />
     );
@@ -35,14 +35,6 @@ describe('NodeGraphContainer', () => {
   });
 });
 
-const range = {
-  from: dateTime(),
-  to: dateTime(),
-  raw: {
-    from: dateTime(),
-    to: dateTime(),
-  },
-};
 const emptyFrame = new MutableDataFrame();
 
 export const nodes = new MutableDataFrame({
