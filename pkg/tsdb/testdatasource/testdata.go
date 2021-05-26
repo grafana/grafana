@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func init() {
@@ -19,6 +20,7 @@ func init() {
 
 type testDataPlugin struct {
 	BackendPluginManager backendplugin.Manager `inject:""`
+	Cfg                  *setting.Cfg          `inject:""`
 	logger               log.Logger
 	scenarios            map[string]*Scenario
 	queryMux             *datasource.QueryTypeMux
