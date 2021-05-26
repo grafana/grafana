@@ -3,16 +3,16 @@ import { DragDropContext, Droppable, DropResult } from 'react-beautiful-dnd';
 import { DataQuery, DataSourceInstanceSettings, PanelData, RelativeTimeRange } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { QueryWrapper } from './QueryWrapper';
-import { GrafanaQuery } from 'app/types/unified-alerting-dto';
+import { GrafanaAlertQuery } from 'app/types/unified-alerting-dto';
 
 interface Props {
   // The query configuration
-  queries: GrafanaQuery[];
+  queries: GrafanaAlertQuery[];
   data: Record<string, PanelData>;
 
   // Query editing
-  onQueriesChange: (queries: GrafanaQuery[]) => void;
-  onDuplicateQuery: (query: GrafanaQuery) => void;
+  onQueriesChange: (queries: GrafanaAlertQuery[]) => void;
+  onDuplicateQuery: (query: GrafanaAlertQuery) => void;
   onRunQueries: () => void;
 }
 
@@ -119,14 +119,14 @@ export class QueryRows extends PureComponent<Props, State> {
     onQueriesChange(update);
   };
 
-  onDuplicateQuery = (query: DataQuery, source: GrafanaQuery): void => {
+  onDuplicateQuery = (query: DataQuery, source: GrafanaAlertQuery): void => {
     this.props.onDuplicateQuery({
       ...source,
       model: query,
     });
   };
 
-  getDataSourceSettings = (query: GrafanaQuery): DataSourceInstanceSettings | undefined => {
+  getDataSourceSettings = (query: GrafanaAlertQuery): DataSourceInstanceSettings | undefined => {
     return getDataSourceSrv().getInstanceSettings(query.datasourceUid);
   };
 

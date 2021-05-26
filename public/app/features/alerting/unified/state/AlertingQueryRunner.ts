@@ -14,7 +14,7 @@ import {
 import { FetchResponse, toDataQueryError } from '@grafana/runtime';
 import { BackendSrv, getBackendSrv } from 'app/core/services/backend_srv';
 import { preProcessPanelData } from 'app/features/query/state/runRequest';
-import { GrafanaQuery } from 'app/types/unified-alerting-dto';
+import { GrafanaAlertQuery } from 'app/types/unified-alerting-dto';
 import { getTimeRangeForExpression } from '../utils/timeRange';
 import { isExpressionQuery } from 'app/features/expressions/guards';
 import { setStructureRevision } from 'app/features/query/state/processing/revision';
@@ -41,7 +41,7 @@ export class AlertingQueryRunner {
     return this.subject.asObservable();
   }
 
-  run(queries: GrafanaQuery[]) {
+  run(queries: GrafanaAlertQuery[]) {
     if (queries.length === 0) {
       const empty = initialState(queries, LoadingState.Done);
       return this.subject.next(empty);
@@ -99,7 +99,7 @@ export class AlertingQueryRunner {
   }
 }
 
-const runRequest = (backendSrv: BackendSrv, queries: GrafanaQuery[]): Observable<Record<string, PanelData>> => {
+const runRequest = (backendSrv: BackendSrv, queries: GrafanaAlertQuery[]): Observable<Record<string, PanelData>> => {
   const initial = initialState(queries, LoadingState.Loading);
   const request = {
     data: { data: queries },
@@ -119,7 +119,7 @@ const runRequest = (backendSrv: BackendSrv, queries: GrafanaQuery[]): Observable
   });
 };
 
-const initialState = (queries: GrafanaQuery[], state: LoadingState): Record<string, PanelData> => {
+const initialState = (queries: GrafanaAlertQuery[], state: LoadingState): Record<string, PanelData> => {
   return queries.reduce((dataByQuery: Record<string, PanelData>, query) => {
     dataByQuery[query.refId] = {
       state,
@@ -131,7 +131,7 @@ const initialState = (queries: GrafanaQuery[], state: LoadingState): Record<stri
   }, {});
 };
 
-const getTimeRange = (query: GrafanaQuery, queries: GrafanaQuery[]): TimeRange => {
+const getTimeRange = (query: GrafanaAlertQuery, queries: GrafanaAlertQuery[]): TimeRange => {
   if (isExpressionQuery(query.model)) {
     const relative = getTimeRangeForExpression(query.model, queries);
     return rangeUtil.relativeToTimeRange(relative);

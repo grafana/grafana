@@ -12,19 +12,19 @@ import { useStyles2, RelativeTimeRangePicker } from '@grafana/ui';
 import { QueryEditorRow } from '../../../../query/components/QueryEditorRow';
 import { VizWrapper } from './VizWrapper';
 import { isExpressionQuery } from '../../../../expressions/guards';
-import { GrafanaQuery } from 'app/types/unified-alerting-dto';
+import { GrafanaAlertQuery } from 'app/types/unified-alerting-dto';
 import { cloneDeep } from 'lodash';
 
 interface Props {
   data: PanelData;
-  query: GrafanaQuery;
-  queries: GrafanaQuery[];
+  query: GrafanaAlertQuery;
+  queries: GrafanaAlertQuery[];
   dsSettings: DataSourceInstanceSettings;
   onChangeDataSource: (settings: DataSourceInstanceSettings, index: number) => void;
   onChangeQuery: (query: DataQuery, index: number) => void;
   onChangeTimeRange?: (timeRange: RelativeTimeRange, index: number) => void;
   onRemoveQuery: (query: DataQuery) => void;
-  onDuplicateQuery: (query: GrafanaQuery) => void;
+  onDuplicateQuery: (query: GrafanaAlertQuery) => void;
   onRunQueries: () => void;
   index: number;
 }
@@ -45,7 +45,7 @@ export const QueryWrapper: FC<Props> = ({
   const styles = useStyles2(getStyles);
   const isExpression = isExpressionQuery(query.model);
 
-  const renderTimePicker = (query: GrafanaQuery, index: number): ReactNode => {
+  const renderTimePicker = (query: GrafanaAlertQuery, index: number): ReactNode => {
     if (isExpressionQuery(query.model) || !onChangeTimeRange) {
       return null;
     }
