@@ -152,11 +152,7 @@ export const InstallControls = ({ localPlugin, remotePlugin }: Props) => {
 };
 
 function getRemoteManageLink(plugin: Plugin): string {
-  const catalogURL = config.pluginCatalogURL;
-  if (catalogURL.endsWith('/')) {
-    return `${catalogURL}${plugin.slug}`;
-  }
-  return `${catalogURL}/${plugin.slug}`;
+  return `https://grafana.com/grafana/plugins/${plugin.slug}`;
 }
 
 export const getStyles = (theme: GrafanaTheme2) => {
