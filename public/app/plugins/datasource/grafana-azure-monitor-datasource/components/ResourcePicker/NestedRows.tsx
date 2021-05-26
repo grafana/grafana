@@ -130,6 +130,12 @@ const EntryIcon: React.FC<EntryIconProps> = ({ isOpen, entry: { type } }) => {
     case ResourceRowType.Resource:
       return <Icon name="cube" />;
 
+    case ResourceRowType.VariableGroup:
+      return <Icon name="x" />;
+
+    case ResourceRowType.Variable:
+      return <Icon name="x" />;
+
     default:
       return null;
   }
@@ -157,7 +163,7 @@ const NestedEntry: React.FC<NestedEntryProps> = ({
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
   const hasChildren = !!entry.children;
-  const isSelectable = entry.type === ResourceRowType.Resource;
+  const isSelectable = entry.type === ResourceRowType.Resource || entry.type === ResourceRowType.Variable;
 
   const handleToggleCollapse = useCallback(() => {
     onToggleCollapse(entry);

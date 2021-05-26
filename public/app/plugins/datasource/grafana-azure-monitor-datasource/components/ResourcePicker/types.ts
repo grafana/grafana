@@ -2,6 +2,8 @@ export enum ResourceRowType {
   Subscription = 'Subscription',
   ResourceGroup = 'ResourceGroup',
   Resource = 'Resource',
+  VariableGroup = 'TemplateVariableGroup',
+  Variable = 'TemplateVariable',
 }
 
 export interface ResourceRow {
