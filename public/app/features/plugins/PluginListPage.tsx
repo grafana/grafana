@@ -64,16 +64,7 @@ export const PluginListPage: React.FC<Props> = ({
             placeholder="Search by name, author, description or type"
             target={actionTarget}
           />
-
-          <PluginsErrorsInfo>
-            <>
-              <br />
-              <p>
-                Note that <strong>unsigned front-end datasource and panel plugins</strong> are still usable, but this is
-                subject to change in the upcoming releases of Grafana
-              </p>
-            </>
-          </PluginsErrorsInfo>
+          <PluginsErrorsInfo />
           {hasFetched && plugins && <PluginList plugins={plugins} />}
         </>
       </Page.Contents>
