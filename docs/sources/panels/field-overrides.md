@@ -10,6 +10,16 @@ Overrides allow you to change the settings for one or more fields. Field options
 
 For example, you could change the number of decimal places shown in all numeric fields or columns by changing the **Decimals** option for **Fields with type** that matches **Numeric**.
 
+## View existing field overrides
+
+1. Navigate to the dashboard that contains the panel for which you want to view overrides.
+1. Open the [panel editor]({{< relref "./panel-editor.md#open-the-panel-editor" >}}).
+1. In the side pane, click **Overrides**.
+
+Grafana displays a list of field overrides, if any have been created for this panel.
+
+
+
 ## Add a field override
 
 You can override as many fields and add as many field options to each override as you want to.
@@ -24,8 +34,6 @@ You can override as many fields and add as many field options to each override a
    - **Fields returned by query -** Select all fields returned by a specific query, such as A, B, or C. Properties you add to a rule with this selector are applied to all fields returned by the selected query.
 1. Click **Add override property**.
 1. Select the field option that you want to apply.
-   - [Standard options]({{< relref "../standard-options.md" >}}), which apply to all panel visualizations that allow transformations.
-   - [Table field options]({{< relref "../visualizations/table/table-field-options.md" >}}), which only apply to table panel visualizations.
 1. Enter options by adding values in the fields. To return options to default values, delete the white text in the fields.
 1. Continue to add overrides to this field by clicking **Add override property**, or you can click **Add override** and select a different field to add overrides to.
 1. When finished, click **Save** to save all panel edits to the dashboard.
