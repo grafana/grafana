@@ -54,45 +54,42 @@ export const PageToolbar: FC<Props> = React.memo(
 
     return (
       <div className={mainStyle}>
-        <div className={styles.toolbarLeft}>
-          {pageIcon && !onGoBack && (
-            <div className={styles.pageIcon}>
-              <Icon name={pageIcon} size="lg" />
-            </div>
-          )}
-          {onGoBack && (
-            <div className={styles.goBackButton}>
-              <IconButton
-                name="arrow-left"
-                tooltip="Go back (Esc)"
-                tooltipPlacement="bottom"
-                size="xxl"
-                surface="dashboard"
-                aria-label={selectors.components.BackButton.backArrow}
-                onClick={onGoBack}
-              />
-            </div>
-          )}
-          <div className={styles.titleWrapper}>
-            {parent && onClickParent && (
-              <button onClick={onClickParent} className={cx(styles.titleLink, styles.parentLink)}>
-                {parent} <span className={styles.parentIcon}>/</span>
-              </button>
-            )}
-            {onClickTitle && (
-              <button onClick={onClickTitle} className={styles.titleLink}>
-                {title}
-              </button>
-            )}
-            {!onClickTitle && <div className={styles.titleText}>{title}</div>}
+        {pageIcon && !onGoBack && (
+          <div className={styles.pageIcon}>
+            <Icon name={pageIcon} size="lg" />
           </div>
-          {leftItems?.map((child, index) => (
-            <div className={styles.leftActionItem} key={index}>
-              {child}
-            </div>
-          ))}
-        </div>
-        <div className={styles.spacer}></div>
+        )}
+        {onGoBack && (
+          <div className={styles.pageIcon}>
+            <IconButton
+              name="arrow-left"
+              tooltip="Go back (Esc)"
+              tooltipPlacement="bottom"
+              size="xxl"
+              surface="dashboard"
+              aria-label={selectors.components.BackButton.backArrow}
+              onClick={onGoBack}
+            />
+          </div>
+        )}
+        {parent && onClickParent && (
+          <button onClick={onClickParent} className={cx(styles.titleText, styles.parentLink)}>
+            {parent} <span className={styles.parentIcon}>/</span>
+          </button>
+        )}
+        {onClickTitle && (
+          <button onClick={onClickTitle} className={styles.titleText}>
+            {title}
+          </button>
+        )}
+        {!onClickTitle && <div className={styles.titleText}>{title}</div>}
+        {leftItems?.map((child, index) => (
+          <div className={styles.leftActionItem} key={index}>
+            {child}
+          </div>
+        ))}
+
+        <div className={styles.spacer} />
         {React.Children.toArray(children)
           .filter(Boolean)
           .map((child, index) => {
@@ -114,7 +111,7 @@ const getStyles = (theme: GrafanaTheme2) => {
 
   const titleStyles = `
       font-size: ${typography.size.lg};
-      padding-left: ${spacing(1)};
+      padding: ${spacing(0.5, 1, 0.5, 1)};
       white-space: nowrap;
       text-overflow: ellipsis;
       overflow: hidden;
@@ -131,71 +128,51 @@ const getStyles = (theme: GrafanaTheme2) => {
 
   return {
     toolbar: css`
-      display: flex;
+      align-items: center;
       background: ${theme.colors.background.canvas};
-      justify-content: flex-end;
-      flex-wrap: wrap;
-      padding: ${theme.spacing(1, 2, 0, 2)};
-    `,
-    toolbarLeft: css`
       display: flex;
-      flex-grow: 1;
-      min-width: 0;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      padding: ${theme.spacing(1.5, 2)};
     `,
     spacer: css`
       flex-grow: 1;
     `,
     pageIcon: css`
-      padding-top: ${spacing(1)};
-      align-items: center;
       display: none;
-
       @media ${styleMixins.mediaUp(theme.v1.breakpoints.md)} {
         display: flex;
+        align-items: center;
       }
     `,
     titleWrapper: css`
       display: flex;
       align-items: center;
-      padding-top: ${spacing(1)};
-      padding-right: ${spacing(1)};
       min-width: 0;
       overflow: hidden;
     `,
-    goBackButton: css`
-      position: relative;
-      top: 8px;
-    `,
     parentIcon: css`
-      margin-left: 4px;
+      margin-left: ${theme.spacing(0.5)};
     `,
     titleText: css`
       ${titleStyles};
     `,
-    titleLink: css`
-      ${titleStyles};
-    `,
     parentLink: css`
       display: none;
-
+      padding-right: 0;
       @media ${styleMixins.mediaUp(theme.v1.breakpoints.md)} {
-        display: inline-block;
+        display: unset;
       }
     `,
     actionWrapper: css`
-      padding-left: ${spacing(1)};
-      padding-top: ${spacing(1)};
+      padding: ${spacing(0.5, 0, 0.5, 1)};
     `,
     leftActionItem: css`
       display: none;
-      height: 40px;
-      position: relative;
-      top: 5px;
-      align-items: center;
-      padding-left: ${spacing(0.5)};
-
       @media ${styleMixins.mediaUp(theme.v1.breakpoints.md)} {
+        align-items: center;
         display: flex;
+        padding-left: ${spacing(0.5)};
       }
     `,
   };

@@ -526,7 +526,7 @@ export const getStyles = stylesFactory((theme: GrafanaTheme, props: Props) => {
     `,
     panelToolbar: css`
       display: flex;
-      padding: ${paneSpacing} 0 ${paneSpacing} ${paneSpacing};
+      padding: 0 0 ${paneSpacing} ${paneSpacing};
       justify-content: space-between;
       flex-wrap: wrap;
     `,

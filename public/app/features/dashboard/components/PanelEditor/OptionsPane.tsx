@@ -67,7 +67,7 @@ const getStyles = (theme: GrafanaTheme) => {
       display: flex;
       flex: 1 1 0;
       flex-direction: column;
-      padding: ${theme.spacing.md} 0 0 0;
+      padding: 0;
     `,
     optionsWrapper: css`
       flex-grow: 1;

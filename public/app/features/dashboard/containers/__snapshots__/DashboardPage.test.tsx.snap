@@ -128,7 +128,7 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
       updateAfterMountMs={500}
     >
       <div
-        className="css-50qyg5"
+        className="css-1xodasp"
       >
         <div
           aria-label="Dashboard submenu"
@@ -507,7 +507,7 @@ exports[`DashboardPage When dashboard has editview url state should render setti
       updateAfterMountMs={500}
     >
       <div
-        className="css-50qyg5"
+        className="css-1xodasp"
       >
         <div
           aria-label="Dashboard submenu"
