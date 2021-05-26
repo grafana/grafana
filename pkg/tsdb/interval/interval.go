@@ -67,9 +67,9 @@ func (ic *intervalCalculator) Calculate(timerange plugins.DataTimeRange, minInte
 }
 
 func GetIntervalFrom(dsInfo *models.DataSource, queryModel *simplejson.Json, defaultInterval time.Duration) (time.Duration, error) {
-	intervalMs := queryModel.Get("intervalMs").MustInt64(-1)
-	if intervalMs != -1 {
-		return time.Millisecond * time.Duration(intervalMs), nil
+	intervalMS := queryModel.Get("intervalMs").MustInt64(-1)
+	if intervalMS != -1 {
+		return time.Millisecond * time.Duration(intervalMS), nil
 	}
 
 	interval := queryModel.Get("interval").MustString("")
