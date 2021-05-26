@@ -5,14 +5,9 @@ import { LoadingPlaceholder } from '@grafana/ui';
 export interface Props {
   teams: Team[];
   isLoading: boolean;
-  loadTeams: () => void;
 }
 
 export class UserTeams extends PureComponent<Props> {
-  componentDidMount() {
-    this.props.loadTeams();
-  }
-
   render() {
     const { isLoading, teams } = this.props;
 
@@ -28,7 +23,7 @@ export class UserTeams extends PureComponent<Props> {
       <div>
         <h3 className="page-sub-heading">Teams</h3>
         <div className="gf-form-group">
-          <table className="filter-table form-inline">
+          <table className="filter-table form-inline" aria-label="User teams table">
             <thead>
               <tr>
                 <th />

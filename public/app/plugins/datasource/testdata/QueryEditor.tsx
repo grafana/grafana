@@ -6,7 +6,7 @@ import { useAsync } from 'react-use';
 import { selectors as editorSelectors } from '@grafana/e2e-selectors';
 import { Input, InlineFieldRow, InlineField, Select, TextArea, InlineSwitch } from '@grafana/ui';
 import { QueryEditorProps, SelectableValue } from '@grafana/data';
-import { StreamingClientEditor, ManualEntryEditor, RandomWalkEditor } from './components';
+import { StreamingClientEditor, RandomWalkEditor } from './components';
 
 // Types
 import { TestDataDataSource } from './datasource';
@@ -17,6 +17,8 @@ import { defaultCSVWaveQuery, defaultPulseQuery, defaultQuery } from './constant
 import { GrafanaLiveEditor } from './components/GrafanaLiveEditor';
 import { NodeGraphEditor } from './components/NodeGraphEditor';
 import { defaultStreamQuery } from './runStreams';
+import { CSVFileEditor } from './components/CSVFileEditor';
+import { CSVContentEditor } from './components/CSVContentEditor';
 
 const showLabelsFor = ['random_walk', 'predictable_pulse'];
 const endpoints = [
@@ -38,6 +40,20 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
   query = { ...defaultQuery, ...query };
 
   const { loading, value: scenarioList } = useAsync<Scenario[]>(async () => {
+    // migrate manual_entry (unusable since 7, removed in 8)
+    if (query.scenarioId === 'manual_entry' && (query as any).points) {
+      let csvContent = 'Time,Value\n';
+      for (const point of (query as any).points) {
+        csvContent += `${point[1]},${point[0]}\n`;
+      }
+      onChange({
+        refId: query.refId,
+        datasource: query.datasource,
+        scenarioId: 'csv_content',
+        csvContent,
+      });
+    }
+
     return datasource.getScenarios();
   }, []);
 
@@ -205,10 +221,11 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
         )}
       </InlineFieldRow>
 
-      {scenarioId === 'manual_entry' && <ManualEntryEditor onChange={onUpdate} query={query} onRunQuery={onRunQuery} />}
       {scenarioId === 'random_walk' && <RandomWalkEditor onChange={onInputChange} query={query} />}
       {scenarioId === 'streaming_client' && <StreamingClientEditor onChange={onStreamClientChange} query={query} />}
       {scenarioId === 'live' && <GrafanaLiveEditor onChange={onUpdate} query={query} />}
+      {scenarioId === 'csv_file' && <CSVFileEditor onChange={onUpdate} query={query} />}
+      {scenarioId === 'csv_content' && <CSVContentEditor onChange={onUpdate} query={query} />}
       {scenarioId === 'logs' && (
         <InlineFieldRow>
           <InlineField label="Lines" labelWidth={14}>

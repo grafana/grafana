@@ -61,6 +61,19 @@ export class TestDataDataSource extends DataSourceWithBackend<TestDataQuery> {
         case 'node_graph':
           streams.push(this.nodesQuery(target, options));
           break;
+
+        // Unusable since 7, removed in 8
+        case 'manual_entry': {
+          let csvContent = 'Time,Value\n';
+          if ((target as any).points) {
+            for (const point of (target as any).points) {
+              csvContent += `${point[1]},${point[0]}\n`;
+            }
+          }
+          target.scenarioId = 'csv_content';
+          target.csvContent = csvContent;
+        }
+
         default:
           if (target.alias) {
             target.alias = this.templateSrv.replace(target.alias, options.scopedVars);

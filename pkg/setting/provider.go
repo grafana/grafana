@@ -32,7 +32,13 @@ func (v ValidationError) Error() string {
 // Provider is a settings provider abstraction
 // with thread-safety and runtime updates.
 type Provider interface {
-	// Update
+	// Current returns a SettingsBag with a static copy of
+	// the current configured pairs of key/values for each
+	// configuration section.
+	Current() SettingsBag
+	// Update receives a SettingsBag with the pairs of key/values
+	// to be updated per section and a SettingsRemovals with the
+	// section keys to be removed.
 	Update(updates SettingsBag, removals SettingsRemovals) error
 	// KeyValue returns a key-value abstraction
 	// for the given pair of section and key.
@@ -92,6 +98,19 @@ type OSSImpl struct {
 
 func (o OSSImpl) Init() error {
 	return nil
+}
+
+func (o OSSImpl) Current() SettingsBag {
+	settingsCopy := make(SettingsBag)
+
+	for _, section := range o.Cfg.Raw.Sections() {
+		settingsCopy[section.Name()] = make(map[string]string)
+		for _, key := range section.Keys() {
+			settingsCopy[section.Name()][key.Name()] = RedactedValue(key.Name(), key.Value())
+		}
+	}
+
+	return settingsCopy
 }
 
 func (OSSImpl) Update(SettingsBag, SettingsRemovals) error {

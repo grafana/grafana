@@ -8,21 +8,24 @@ weight = 110
 
 Alerts allow you to know about problems in your systems moments after they occur. Robust and actionable alerts help you identify and resolve issues quickly, minimizing disruption to your services.
 
+> **Note:** In Grafana 8.0, you can optionally choose the beta version of our new [unified altering]({{< relref "./unified-alerting/_index.md" >}}) system. Out of the box, Grafana still supports the [old alters]({{< relref "./old-alerting/_index.md" >}}) . 
+
+
 Alerts have four main components:
 
 - Alert rule - One or more conditions, the frequency of evaluation, and the (optional) duration that a condition must be met before notifying.
-- Contact point - A channel for sending notifications when the conditions of an alert rule are met.
+- Contact point - A channel for sending notifications when the conditions of an alert rule are met. (Available in unified alerting only.)
 - Notification policy - A set of matching and grouping criteria used to determine where, and how frequently, to send notifications. 
-- Silences - Date and matching criteria used to silence notifications. 
+- Silences - Date and matching criteria used to silence notifications. (Available in unified alerting only.)
 
 ## Alert tasks
 
 You can perform the following tasks for alerts:
 
-- [Create an alert rule]({{< relref "create-alerts.md" >}})
-- [View existing alert rules and their current state]({{< relref "view-alerts.md" >}})
-- [Test alert rules and troubleshoot]({{< relref "troubleshoot-alerts.md" >}})
-- [Add or edit an alert contact point]({{< relref "notifications.md" >}})
+- [Create an alert rule]({{< relref "./old-alerting/create-alerts.md" >}})
+- [View existing alert rules and their current state]({{< relref "./old-alerting/view-alerts.md" >}})
+- [Test alert rules and troubleshoot]({{< relref "./old-alerting/troubleshoot-alerts.md" >}})
+- [Add or edit an alert contact point]({{< relref "./old-alerting/notifications.md" >}})
 
 ## Clustering
 

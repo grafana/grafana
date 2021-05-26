@@ -110,7 +110,7 @@ func (cp *corePlugin) PublishStream(ctx context.Context, req *backend.PublishStr
 	return nil, backendplugin.ErrMethodNotImplemented
 }
 
-func (cp *corePlugin) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender backend.StreamPacketSender) error {
+func (cp *corePlugin) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
 	if cp.StreamHandler != nil {
 		return cp.StreamHandler.RunStream(ctx, req, sender)
 	}
