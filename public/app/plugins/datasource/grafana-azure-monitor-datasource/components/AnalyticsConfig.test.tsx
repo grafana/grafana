@@ -1,6 +1,9 @@
 import React from 'react';
 import { shallow } from 'enzyme';
 import AnalyticsConfig, { Props } from './AnalyticsConfig';
+import { AzureCredentialsForm } from './AzureCredentialsForm';
+import { LegacyForms } from '@grafana/ui';
+const { Switch } = LegacyForms;
 
 const setup = (propsFunc?: (props: Props) => Props) => {
   let props: Props = {
@@ -88,5 +91,36 @@ describe('Render', () => {
       },
     }));
     expect(wrapper).toMatchSnapshot();
+  });
+
+  it('should not render the Switch to use different creds for log analytics by default', () => {
+    const wrapper = setup((props) => ({
+      ...props,
+      options: {
+        ...props.options,
+        jsonData: {
+          ...props.options.jsonData,
+          azureLogAnalyticsSameAs: undefined,
+        },
+      },
+    }));
+    expect(wrapper.find(Switch).exists()).toBe(false);
+    expect(wrapper.find(AzureCredentialsForm).exists()).toBe(false);
+  });
+
+  // Remove this test with deprecated code
+  it('should not render the Switch if different creds for log analytics were set from before', () => {
+    const wrapper = setup((props) => ({
+      ...props,
+      options: {
+        ...props.options,
+        jsonData: {
+          ...props.options.jsonData,
+          azureLogAnalyticsSameAs: false,
+        },
+      },
+    }));
+    expect(wrapper.find(Switch).exists()).toBe(true);
+    expect(wrapper.find(AzureCredentialsForm).exists()).toBe(true);
   });
 });
