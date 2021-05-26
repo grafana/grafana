@@ -14,7 +14,7 @@ export const Library = ({ meta, onNavChanged, basename }: AppRootProps) => {
   const styles = useStyles2(getStyles);
 
   useEffect(() => {
-    onNavChanged(getCatalogNavModel(CatalogTab.Browse, basename));
+    onNavChanged(getCatalogNavModel(CatalogTab.Library, basename));
   }, [onNavChanged, basename]);
 
   const filteredPlugins = items.filter((plugin) => !!installedPlugins.find((_) => _.id === plugin.slug));
