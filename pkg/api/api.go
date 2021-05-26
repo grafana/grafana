@@ -406,7 +406,7 @@ func (hs *HTTPServer) registerRoutes() {
 
 	// admin api
 	r.Group("/api/admin", func(adminRoute routing.RouteRegister) {
-		adminRoute.Get("/settings", routing.Wrap(AdminGetSettings))
+		adminRoute.Get("/settings", routing.Wrap(hs.AdminGetSettings))
 		adminRoute.Post("/users", bind(dtos.AdminCreateUserForm{}), routing.Wrap(AdminCreateUser))
 		adminRoute.Put("/users/:id/password", bind(dtos.AdminUpdateUserPasswordForm{}), routing.Wrap(AdminUpdateUserPassword))
 		adminRoute.Put("/users/:id/permissions", bind(dtos.AdminUpdateUserPermissionsForm{}), routing.Wrap(AdminUpdateUserPermissions))
