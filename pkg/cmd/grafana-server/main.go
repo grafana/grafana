@@ -73,7 +73,7 @@ func main() {
 	if *v || *vv {
 		fmt.Printf("Version %s (commit: %s, branch: %s)\n", version, commit, buildBranch)
 		if *vv {
-			fmt.Println("Dependnencies:")
+			fmt.Println("Dependencies:")
 			if info, ok := debug.ReadBuildInfo(); ok {
 				for _, dep := range info.Deps {
 					fmt.Println(dep.Path, dep.Version)
