@@ -1082,27 +1082,26 @@ def validate_scuemata():
         ],
     }
 
-def scan_docker_image_unkown_low_medium_vulnerabilities_step():
+def scan_docker_image_unkown_low_medium_vulnerabilities_step(edition):
     return {
         'name': 'scan-docker-image-unkown-low-medium-vulnerabilities',
         'image': 'aquasec/trivy:0.18.3',
         'commands': [
-            'trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/grafana:latest',
-            'trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/grafana:main',
-            'trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/grafana:latest-ubuntu',
-            'trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/grafana:main-ubuntu',
-            'trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana-enterprise/grafana:latest',
-            'trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana-enterprise/grafana:main',
-            'trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana-enterprise/grafana:latest-ubuntu',
-            'trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana-enterprise/grafana:main-ubuntu',    
+            'trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/{}:latest'.format(edition),
+            'trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/{}:main'.format(edition),
+            'trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/{}:latest-ubuntu'.format(edition),
+            'trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/{}:main-ubuntu'.format(edition),   
         ],
     }
 
-def scan_docker_image_high_critical_vulnerabilities(image, tag):
+def scan_docker_image_high_critical_vulnerabilities(edition):
     return {
         'name': 'scan-docker-image-high-critical-vulnerabilities',
         'image': 'aquasec/trivy:0.18.3',
         'commands': [
-            'trivy --exit-code 1 --severity HIGH,CRITICAL ' + image + ':' + tag,
+            'trivy --exit-code 1 --severity HIGH,CRITICAL grafana/{}:latest'.format(edition),
+            'trivy --exit-code 1 --severity HIGH,CRITICAL grafana/{}:main'.format(edition),
+            'trivy --exit-code 1 --severity HIGH,CRITICAL grafana/{}:latest-ubuntu'.format(edition),
+            'trivy --exit-code 1 --severity HIGH,CRITICAL grafana/{}:main-ubuntu'.format(edition),
         ],
     }
