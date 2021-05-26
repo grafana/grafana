@@ -69,7 +69,7 @@ type ManagedStream struct {
 	mu        sync.RWMutex
 	id        string
 	start     time.Time
-	last      map[int64]map[string]data.FrameJSON
+	last      map[int64]map[string]data.FrameJSONCache
 	publisher models.ChannelPublisher
 }
 
@@ -78,7 +78,7 @@ func NewManagedStream(id string, publisher models.ChannelPublisher) *ManagedStre
 	return &ManagedStream{
 		id:        id,
 		start:     time.Now(),
-		last:      map[int64]map[string]data.FrameJSON{},
+		last:      map[int64]map[string]data.FrameJSONCache{},
 		publisher: publisher,
 	}
 }
@@ -96,7 +96,7 @@ func (s *ManagedStream) ListChannels(orgID int64, prefix string) []util.DynMap {
 	for k, v := range s.last[orgID] {
 		ch := util.DynMap{}
 		ch["channel"] = prefix + k
-		ch["data"] = v
+		ch["data"] = json.RawMessage(v.Bytes(data.IncludeSchemaOnly))
 		info = append(info, ch)
 	}
 	return info
@@ -106,7 +106,7 @@ func (s *ManagedStream) ListChannels(orgID int64, prefix string) []util.DynMap {
 // unstableSchema flag can be set to disable schema caching for a path.
 func (s *ManagedStream) Push(orgID int64, path string, frame *data.Frame) error {
 	// Keep schema + data for last packet.
-	msg, err := data.FrameToJSON(frame)
+	msg, err := data.FrameToJSONCache(frame)
 	if err != nil {
 		logger.Error("Error marshaling frame with data", "error", err)
 		return err
@@ -114,7 +114,7 @@ func (s *ManagedStream) Push(orgID int64, path string, frame *data.Frame) error 
 
 	s.mu.Lock()
 	if _, ok := s.last[orgID]; !ok {
-		s.last[orgID] = map[string]data.FrameJSON{}
+		s.last[orgID] = map[string]data.FrameJSONCache{}
 	}
 	last, exists := s.last[orgID][path]
 	s.last[orgID][path] = msg
@@ -143,7 +143,7 @@ func (s *ManagedStream) getLastPacket(orgId int64, path string) (json.RawMessage
 	}
 	msg, ok := s.last[orgId][path]
 	if ok {
-		return msg.Body(), ok
+		return msg.Bytes(data.IncludeAll), ok
 	}
 	return nil, ok
 }
