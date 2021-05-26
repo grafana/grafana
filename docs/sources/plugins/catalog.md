@@ -8,7 +8,12 @@ weight = 1
 
 The Plugin catalog, new in Grafana 8.0, allows users to browse and manage plugins from within Grafana. Only Grafana Admins can access and use the catalog.
 
-![Plugin catalog install flow](/img/docs/plugins/plugins-catalog-user-install-8-0.gif)
+<div class="medium-6 columns">
+  <video width="800" height="500" controls>
+    <source src="/assets/videos/plugins-catalog-install-8-0.mp4" type="video/mp4">
+    Your browser does not support the video tag.
+  </video>
+</div>
 
 Before you can use the Plugin catalog, you must enable it in the Grafana [configuration]({{< relref "../administration/configuration.md#plugin_admin_enabled" >}}) file.
 Before following the steps below, make sure you are logged in as a Grafana administrator.
