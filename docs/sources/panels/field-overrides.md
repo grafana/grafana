@@ -8,11 +8,11 @@ weight = 300
 
 Overrides allow you to change the settings for one or more fields. Field options for overrides are exactly the same as the field options available in a particular visualization. The only difference is that you choose which fields to apply them to.
 
-For example, you could change the number of decimal places shown in all numeric fields or columns by changing the **Decimals** option for **Fields with type** that matches **Numeric**. 
+For example, you could change the number of decimal places shown in all numeric fields or columns by changing the **Decimals** option for **Fields with type** that matches **Numeric**.
 
 ## Add a field override
 
-You can override as many field options as you want to.
+You can override as many fields and add as many field options to each override as you want to.
 
 1. Navigate to the panel you want to edit, click the panel title, and then click **Edit**.
 1. Click the **Overrides** tab.
