@@ -13,8 +13,9 @@ import { getBackendSrv, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
 import { InsightsConfig } from './InsightsConfig';
 import ResponseParser from '../azure_monitor/response_parser';
 import { AzureDataSourceJsonData, AzureDataSourceSecureJsonData, AzureDataSourceSettings } from '../types';
-import { getAzureCloud } from '../credentials';
+import { getAzureCloud, isAppInsightsConfigured } from '../credentials';
 import { getLogAnalyticsManagementApiRoute, getManagementApiRoute } from '../api/routes';
+import { Alert } from '@grafana/ui';
 
 export type Props = DataSourcePluginOptionsEditorProps<AzureDataSourceJsonData, AzureDataSourceSecureJsonData>;
 
@@ -127,6 +128,8 @@ export class ConfigEditor extends PureComponent<Props, State> {
     // This is bad, causes so many messy typing issues everwhere..
     options.secureJsonData = (options.secureJsonData || {}) as AzureDataSourceSecureJsonData;
 
+    const isInsightsConfigured = isAppInsightsConfigured(options);
+
     return (
       <>
         <MonitorConfig options={options} updateOptions={this.updateOptions} getSubscriptions={this.getSubscriptions} />
@@ -138,12 +141,18 @@ export class ConfigEditor extends PureComponent<Props, State> {
           getWorkspaces={this.getWorkspaces}
         />
 
-        <InsightsConfig
-          options={options}
-          onUpdateJsonDataOption={this.onUpdateJsonDataOption}
-          onUpdateSecureJsonDataOption={this.onUpdateSecureJsonDataOption}
-          onResetOptionKey={this.resetSecureKey}
-        />
+        {isInsightsConfigured ? (
+          <InsightsConfig
+            options={options}
+            onUpdateJsonDataOption={this.onUpdateJsonDataOption}
+            onUpdateSecureJsonDataOption={this.onUpdateSecureJsonDataOption}
+            onResetOptionKey={this.resetSecureKey}
+          />
+        ) : (
+          <Alert severity="info" title="Application Insights credentials are no longer supported">
+            Configure using Azure AD App Registration above and query Application Insights using Metrics or Logs.
+          </Alert>
+        )}
       </>
     );
   }

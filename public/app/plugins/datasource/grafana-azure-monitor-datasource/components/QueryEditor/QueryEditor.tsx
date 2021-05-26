@@ -1,5 +1,5 @@
 import { Alert } from '@grafana/ui';
-import React, { useState } from 'react';
+import React from 'react';
 import Datasource from '../../datasource';
 import { AzureMonitorQuery, AzureQueryType, AzureMonitorOption, AzureMonitorErrorish } from '../../types';
 import MetricsQueryEditor from '../MetricsQueryEditor';
