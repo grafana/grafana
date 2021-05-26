@@ -7,8 +7,6 @@ import (
 	"strconv"
 	"strings"
 
-	gokit_log "github.com/go-kit/kit/log"
-	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 
@@ -58,14 +56,16 @@ func NewDiscordNotifier(model *NotificationChannelConfig, t *template.Template) 
 }
 
 func (d DiscordNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
-	data := notify.GetTemplateData(ctx, d.tmpl, as, gokit_log.NewNopLogger())
 	alerts := types.Alerts(as...)
 
 	bodyJSON := simplejson.New()
 	bodyJSON.Set("username", "Grafana")
 
 	var tmplErr error
-	tmpl := notify.TmplText(d.tmpl, data, &tmplErr)
+	tmpl, _, err := TmplText(ctx, d.tmpl, as, d.log, &tmplErr)
+	if err != nil {
+		return false, err
+	}
 	if d.Content != "" {
 		bodyJSON.Set("content", tmpl(d.Content))
 	}

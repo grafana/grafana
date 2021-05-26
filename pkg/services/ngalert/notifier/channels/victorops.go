@@ -5,7 +5,6 @@ import (
 	"strings"
 	"time"
 
-	gokit_log "github.com/go-kit/kit/log"
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
@@ -75,9 +74,11 @@ func (vn *VictoropsNotifier) Notify(ctx context.Context, as ...*types.Alert) (bo
 		messageType = victoropsAlertStateRecovery
 	}
 
-	data := notify.GetTemplateData(ctx, vn.tmpl, as, gokit_log.NewNopLogger())
 	var tmplErr error
-	tmpl := notify.TmplText(vn.tmpl, data, &tmplErr)
+	tmpl, _, err := TmplText(ctx, vn.tmpl, as, vn.log, &tmplErr)
+	if err != nil {
+		return false, err
+	}
 
 	groupKey, err := notify.ExtractGroupKey(ctx)
 	if err != nil {

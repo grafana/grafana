@@ -7,14 +7,12 @@ import (
 	"mime/multipart"
 	"strconv"
 
-	gokit_log "github.com/go-kit/kit/log"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	old_notifiers "github.com/grafana/grafana/pkg/services/alerting/notifiers"
 	"github.com/pkg/errors"
-	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
@@ -134,8 +132,10 @@ func (pn *PushoverNotifier) genPushoverBody(ctx context.Context, as ...*types.Al
 	alerts := types.Alerts(as...)
 
 	var tmplErr error
-	data := notify.GetTemplateData(ctx, pn.tmpl, as, gokit_log.NewNopLogger())
-	tmpl := notify.TmplText(pn.tmpl, data, &tmplErr)
+	tmpl, _, err := TmplText(ctx, pn.tmpl, as, pn.log, &tmplErr)
+	if err != nil {
+		return nil, b, err
+	}
 
 	w := multipart.NewWriter(&b)
 	boundary := GetBoundary()
