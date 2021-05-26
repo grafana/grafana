@@ -47,8 +47,8 @@ export const PluginsErrorsInfoUnconnected: React.FC<PluginsErrorsInfoProps> = ({
     >
       <div>
         <p>
-          We have encountered plugins that are unsigned. Grafana Labs cannot guarantee the integrity of unsigned plugins
-          and recommends using signed plugins only.
+          We have encountered plugins that are unsigned. Grafana Labs cannot guarantee the integrity of unsigned
+          plugins. We recommend only using signed plugins.
         </p>
         The following plugins are disabled and not shown in the list below:
         <List
