@@ -67,7 +67,19 @@ The section contains tabs where you enter queries, transform your data, and crea
 
 The section contains tabs where you control almost every aspect of how your data is visualized. Not all options are available for each visualization.
 
-Features in these tabs are documented in the following topics:
+The data model used in Grafana, the [data frame]({{< relref "../../developers/plugins/data-frames.md" >}}), is a columnar-oriented table structure that unifies both time series and table query results. Each column within this structure is called a _field_. A field can represent a single time series or table column.
+
+Field options allow you to change how the data is displayed in your visualizations. Options and overrides that you apply do not change the data, they change how Grafana displays the data.
+
+#### Field options
+
+Changing an option applies the change to all fields, meaning all series or columns. For example, if you change the unit to percentage, then all fields with numeric values are displayed in percentages.
+
+## Field overrides
+
+_Field overrides_ can be added or viewed in the Overrides tab in the panel editor side menu. You can apply options to specific fields (series or columns) rather than all fields. Learn how to apply an override in [Configure specific fields]({{< relref "configure-specific-fields.md" >}}).
+
+Options are documented in the following topics:
 
 - [Add a panel]({{< relref "./add-a-panel.md" >}}) describes how to add a panel to a dashboard.
 - Panel options
