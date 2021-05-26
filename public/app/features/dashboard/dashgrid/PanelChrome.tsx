@@ -344,8 +344,6 @@ export class PanelChrome extends Component<Props, State> {
     // Yes this is called ever render for a function that is triggered on every mouse move
     this.eventFilter.onlyLocal = dashboard.graphTooltip === 0;
 
-    console.log('renderPanel', plugin.meta.id);
-
     return (
       <>
         <div className={panelContentClassNames}>
@@ -405,8 +403,6 @@ export class PanelChrome extends Component<Props, State> {
       'panel-container--no-title': this.hasOverlayHeader(),
       [`panel-alert-state--${alertState}`]: alertState !== undefined,
     });
-
-    console.log('Render', panel.type);
 
     return (
       <div className={containerClassNames} aria-label={selectors.components.Panels.Panel.containerByTitle(panel.title)}>
