@@ -107,7 +107,13 @@ export const InstallControls = ({ localPlugin, remotePlugin }: Props) => {
           ))}
 
         {isRemoteManaged ? (
-          <LinkButton disabled={!hasPermission} href={remoteManageLink} target="_blank" rel="noopener noreferrer">
+          <LinkButton
+            variant="destructive"
+            disabled={!hasPermission}
+            href={remoteManageLink}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
             {'Uninstall via grafana.com'}
           </LinkButton>
         ) : (
