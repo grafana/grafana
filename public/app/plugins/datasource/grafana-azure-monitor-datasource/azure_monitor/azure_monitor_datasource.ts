@@ -56,7 +56,7 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
     super(instanceSettings);
 
     this.timeSrv = getTimeSrv();
-    this.subscriptionId = instanceSettings.jsonData.subscriptionId;
+    this.subscriptionId = instanceSettings.jsonData.subscriptionId!;
 
     const cloud = getAzureCloud(instanceSettings);
     const route = getManagementApiRoute(cloud);
