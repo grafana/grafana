@@ -13,8 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/prometheus/client_golang/prometheus"
 	"golang.org/x/net/context"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
 var (
@@ -91,7 +89,7 @@ type TimeRange struct {
 // or are datasource requests.
 func (s *Service) TransformData(ctx context.Context, req *Request) (r *backend.QueryDataResponse, err error) {
 	if s.isDisabled() {
-		return nil, status.Error(codes.PermissionDenied, "Expressions are disabled")
+		return nil, fmt.Errorf("server side expressions are disabled")
 	}
 
 	start := time.Now()
@@ -111,20 +109,20 @@ func (s *Service) TransformData(ctx context.Context, req *Request) (r *backend.Q
 	// and parsing graph nodes from the queries.
 	pipeline, err := s.BuildPipeline(req)
 	if err != nil {
-		return nil, status.Error(codes.InvalidArgument, err.Error())
+		return nil, err
 	}
 
 	// Execute the pipeline
 	responses, err := s.ExecutePipeline(ctx, pipeline)
 	if err != nil {
-		return nil, status.Error(codes.Unknown, err.Error())
+		return nil, err
 	}
 
 	// Get which queries have the Hide property so they those queries' results
 	// can be excluded from the response.
 	hidden, err := hiddenRefIDs(req.Queries)
 	if err != nil {
-		return nil, status.Error((codes.Internal), err.Error())
+		return nil, err
 	}
 
 	if len(hidden) != 0 {

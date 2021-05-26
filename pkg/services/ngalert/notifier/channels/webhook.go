@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 
-	gokit_log "github.com/go-kit/kit/log"
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
@@ -16,7 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	old_notifiers "github.com/grafana/grafana/pkg/services/alerting/notifiers"
-	"github.com/grafana/grafana/pkg/services/ngalert/logging"
 )
 
 // WebhookNotifier is responsible for sending
@@ -59,7 +57,7 @@ func NewWebHookNotifier(model *NotificationChannelConfig, t *template.Template) 
 
 // webhookMessage defines the JSON object send to webhook endpoints.
 type webhookMessage struct {
-	*template.Data
+	*ExtendedData
 
 	// The protocol version.
 	Version         string `json:"version"`
@@ -81,13 +79,14 @@ func (wn *WebhookNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool
 	}
 
 	as, numTruncated := truncateAlerts(wn.MaxAlerts, as)
-	data := notify.GetTemplateData(ctx, wn.tmpl, as, gokit_log.NewLogfmtLogger(logging.NewWrapper(wn.log)))
-
 	var tmplErr error
-	tmpl := notify.TmplText(wn.tmpl, data, &tmplErr)
+	tmpl, data, err := TmplText(ctx, wn.tmpl, as, wn.log, &tmplErr)
+	if err != nil {
+		return false, err
+	}
 	msg := &webhookMessage{
 		Version:         "1",
-		Data:            data,
+		ExtendedData:    data,
 		GroupKey:        groupKey.String(),
 		TruncatedAlerts: numTruncated,
 		Title:           tmpl(`{{ template "default.title" . }}`),

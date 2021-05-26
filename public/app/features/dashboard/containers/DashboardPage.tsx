@@ -289,7 +289,8 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
   render() {
     const { dashboard, isInitSlow, initError, isPanelEditorOpen, queryParams, theme } = this.props;
     const { editPanel, viewPanel, scrollTop, updateScrollTop } = this.state;
-    const styles = getStyles(theme);
+    const kioskMode = getKioskMode(queryParams.kiosk);
+    const styles = getStyles(theme, kioskMode);
 
     if (!dashboard) {
       if (isInitSlow) {
@@ -302,7 +303,6 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
     // Only trigger render when the scroll has moved by 25
     const approximateScrollTop = Math.round(scrollTop / 25) * 25;
     const inspectPanel = this.getInspectPanel();
-    const kioskMode = getKioskMode(queryParams.kiosk);
 
     return (
       <div className={styles.dashboardContainer}>
@@ -372,7 +372,8 @@ const mapDispatchToProps = {
 /*
  * Styles
  */
-export const getStyles = stylesFactory((theme: GrafanaTheme2) => {
+export const getStyles = stylesFactory((theme: GrafanaTheme2, kioskMode) => {
+  const contentPadding = kioskMode !== KioskMode.Full ? theme.spacing(0, 2, 2) : theme.spacing(2);
   return {
     dashboardContainer: css`
       position: absolute;
@@ -391,7 +392,7 @@ export const getStyles = stylesFactory((theme: GrafanaTheme2) => {
       display: flex;
     `,
     dashboardContent: css`
-      padding: ${theme.spacing(2)};
+      padding: ${contentPadding};
       flex-basis: 100%;
       flex-grow: 1;
     `,
