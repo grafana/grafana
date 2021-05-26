@@ -36,29 +36,3 @@ You can override as many field options as you want to.
 
 1. Navigate to the Overrides tab that contains the override that you want to delete.
 1. Click the trash can icon next to the override.
-
-## Field override example
-
-Let’s assume that our result set is a data frame that consists of four fields: time, high temp, low temp, and humidity.
-
-| time                | high temp | low temp | humidity |
-| ------------------- | --------- | -------- | -------- |
-| 2020-01-02 03:04:00 | 45.0      | 30.0     | 67       |
-| 2020-01-02 03:05:00 | 47.0      | 34.0     | 68       |
-| 2020-01-02 03:06:00 | 48.0      | 31.0     | 68       |
-
-Let's apply the field options from the [field option example]({{< relref "configure-all-fields.md#field-option-example" >}}) to apply the Celsius unit and get rid of the decimal place. This results in the following table:
-
-| time                | high temp | low temp | humidity |
-| ------------------- | --------- | -------- | -------- |
-| 2020-01-02 03:04:00 | 45 °C     | 30 °C    | 67 °C    |
-| 2020-01-02 03:05:00 | 47 °C     | 34 °C    | 68 °C    |
-| 2020-01-02 03:06:00 | 48 °C     | 31 °C    | 68 °C    |
-
-The temperature fields look good, but the humidity is nonsensical. We can fix this by applying a field option override to the humidity field and change the unit to Misc > percent (0-100). This results in a table that makes a lot more sense:
-
-| time                | high temp | low temp | humidity |
-| ------------------- | --------- | -------- | -------- |
-| 2020-01-02 03:04:00 | 45 °C     | 30 °C    | 67%      |
-| 2020-01-02 03:05:00 | 47 °C     | 34 °C    | 68%      |
-| 2020-01-02 03:06:00 | 48 °C     | 31 °C    | 68%      |
