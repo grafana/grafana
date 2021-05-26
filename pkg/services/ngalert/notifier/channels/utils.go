@@ -122,3 +122,9 @@ func joinUrlPath(base, additionalPath string) (string, error) {
 
 	return u.String(), nil
 }
+
+// GetBoundary is used for overriding the behaviour for tests
+// and set a boundary for multipart body. DO NOT set this outside tests.
+var GetBoundary = func() string {
+	return ""
+}

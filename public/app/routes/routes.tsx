@@ -203,7 +203,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     {
       path: '/profile',
       component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "UserProfileEdit" */ 'app/features/profile/UserProfileEdit')
+        () => import(/* webpackChunkName: "UserProfileEditPage" */ 'app/features/profile/UserProfileEditPage')
       ),
     },
     {
@@ -440,24 +440,10 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
-      path: '/alerting/ng/new',
-      pageClass: 'page-alerting',
-      component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "NgAlertingPage"*/ 'app/features/alerting/NextGenAlertingPage')
-      ),
-    },
-    {
       path: '/alerting/:id/edit',
       pageClass: 'page-alerting',
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "AlertingRuleForm"*/ 'app/features/alerting/unified/RuleEditor')
-      ),
-    },
-    {
-      path: '/alerting/ng/:id/edit',
-      pageClass: 'page-alerting',
-      component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "NgAlertingPage"*/ 'app/features/alerting/NextGenAlertingPage')
       ),
     },
     {

@@ -33,6 +33,7 @@ import {
   DataQuery,
 } from '@grafana/data';
 import { getThemeColor } from 'app/core/utils/colors';
+import { SIPrefix } from '@grafana/data/src/valueFormats/symbolFormatters';
 import { config } from '@grafana/runtime';
 
 export const LIMIT_LABEL = 'Line limit';
@@ -443,10 +444,16 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
       kind: LogsMetaKind.Number,
     });
   }
+
+  let totalBytes = 0;
+  const queriesVisited: { [refId: string]: boolean } = {};
   // To add just 1 error message
   let errorMetaAdded = false;
 
   for (const series of logSeries) {
+    const totalBytesKey = series.meta?.custom?.lokiQueryStatKey;
+    const { refId } = series; // Stats are per query, keeping track by refId
+
     if (!errorMetaAdded && series.meta?.custom?.error) {
       meta.push({
         label: '',
@@ -455,7 +462,28 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
       });
       errorMetaAdded = true;
     }
+
+    if (refId && !queriesVisited[refId]) {
+      if (totalBytesKey && series.meta?.stats) {
+        const byteStat = series.meta.stats.find((stat) => stat.displayName === totalBytesKey);
+        if (byteStat) {
+          totalBytes += byteStat.value;
+        }
+      }
+
+      queriesVisited[refId] = true;
+    }
   }
+
+  if (totalBytes > 0) {
+    const { text, suffix } = SIPrefix('B')(totalBytes);
+    meta.push({
+      label: 'Total bytes processed',
+      value: `${text} ${suffix}`,
+      kind: LogsMetaKind.String,
+    });
+  }
+
   return {
     hasUniqueLabels,
     meta,

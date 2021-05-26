@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
@@ -38,7 +39,7 @@ func writePerPageSQL(query searchLibraryElementsQuery, sqlStore *sqlstore.SQLSto
 }
 
 func writeKindSQL(query searchLibraryElementsQuery, builder *sqlstore.SQLBuilder) {
-	if LibraryElementKind(query.kind) == Panel || LibraryElementKind(query.kind) == Variable {
+	if models.LibraryElementKind(query.kind) == models.PanelElement || models.LibraryElementKind(query.kind) == models.VariableElement {
 		builder.Write(" AND le.kind = ?", query.kind)
 	}
 }

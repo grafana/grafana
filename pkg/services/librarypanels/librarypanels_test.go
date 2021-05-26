@@ -493,7 +493,7 @@ func TestConnectLibraryPanelsForDashboard(t *testing.T) {
 			  "description": "Unused description"
 			}
 		`),
-				Kind: int64(libraryelements.Panel),
+				Kind: int64(models.PanelElement),
 			})
 			require.NoError(t, err)
 			dashJSON := map[string]interface{}{
@@ -569,106 +569,6 @@ func TestConnectLibraryPanelsForDashboard(t *testing.T) {
 			require.NoError(t, err)
 			require.Len(t, elements, 1)
 			require.Equal(t, sc.initialResult.Result.UID, elements[sc.initialResult.Result.UID].UID)
-		})
-}
-
-func TestImportDashboard(t *testing.T) {
-	scenarioWithLibraryPanel(t, "When an admin tries to import a dashboard with a library panel, it should connect the two",
-		func(t *testing.T, sc scenarioContext) {
-			importedJSON := map[string]interface{}{
-				"panels": []interface{}{},
-			}
-			importedDashboard := models.Dashboard{
-				Title: "Dummy dash that simulates an imported dash",
-				Data:  simplejson.NewFromAny(importedJSON),
-			}
-			importedDashInDB := createDashboard(t, sc.sqlStore, sc.user, &importedDashboard, sc.folder.Id)
-			elements, err := sc.elementService.GetElementsForDashboard(sc.reqContext, importedDashInDB.Id)
-			require.NoError(t, err)
-			require.Len(t, elements, 0)
-
-			dashJSON := map[string]interface{}{
-				"title": "Testing ImportDashboard",
-				"panels": []interface{}{
-					map[string]interface{}{
-						"id": int64(1),
-						"gridPos": map[string]interface{}{
-							"h": 6,
-							"w": 6,
-							"x": 0,
-							"y": 0,
-						},
-					},
-					map[string]interface{}{
-						"id": int64(2),
-						"gridPos": map[string]interface{}{
-							"h": 6,
-							"w": 6,
-							"x": 6,
-							"y": 0,
-						},
-						"datasource": "${DS_GDEV-TESTDATA}",
-						"libraryPanel": map[string]interface{}{
-							"uid":  sc.initialResult.Result.UID,
-							"name": sc.initialResult.Result.Name,
-						},
-						"title": "Text - Library Panel",
-						"type":  "text",
-					},
-				},
-			}
-			dash := simplejson.NewFromAny(dashJSON)
-			err = sc.service.ImportDashboard(sc.reqContext, dash, importedDashInDB.Id)
-			require.NoError(t, err)
-
-			elements, err = sc.elementService.GetElementsForDashboard(sc.reqContext, importedDashInDB.Id)
-			require.NoError(t, err)
-			require.Len(t, elements, 1)
-			require.Equal(t, sc.initialResult.Result.UID, elements[sc.initialResult.Result.UID].UID)
-		})
-
-	scenarioWithLibraryPanel(t, "When an admin tries to import a dashboard with a library panel without uid, it should fail",
-		func(t *testing.T, sc scenarioContext) {
-			importedJSON := map[string]interface{}{
-				"panels": []interface{}{},
-			}
-			importedDashboard := models.Dashboard{
-				Title: "Dummy dash that simulates an imported dash",
-				Data:  simplejson.NewFromAny(importedJSON),
-			}
-			importedDashInDB := createDashboard(t, sc.sqlStore, sc.user, &importedDashboard, sc.folder.Id)
-
-			dashJSON := map[string]interface{}{
-				"panels": []interface{}{
-					map[string]interface{}{
-						"id": int64(1),
-						"gridPos": map[string]interface{}{
-							"h": 6,
-							"w": 6,
-							"x": 0,
-							"y": 0,
-						},
-					},
-					map[string]interface{}{
-						"id": int64(2),
-						"gridPos": map[string]interface{}{
-							"h": 6,
-							"w": 6,
-							"x": 6,
-							"y": 0,
-						},
-						"datasource": "${DS_GDEV-TESTDATA}",
-						"libraryPanel": map[string]interface{}{
-							"name": sc.initialResult.Result.Name,
-						},
-						"title": "Text - Library Panel",
-						"type":  "text",
-					},
-				},
-			}
-			dash := simplejson.NewFromAny(dashJSON)
-			err := sc.service.ImportDashboard(sc.reqContext, dash, importedDashInDB.Id)
-			require.EqualError(t, err, errLibraryPanelHeaderUIDMissing.Error())
 		})
 }
 
@@ -783,7 +683,7 @@ func scenarioWithLibraryPanel(t *testing.T, desc string, fn func(t *testing.T, s
 			  "description": "A description"
 			}
 		`),
-			Kind: int64(libraryelements.Panel),
+			Kind: int64(models.PanelElement),
 		}
 		resp, err := sc.elementService.CreateElement(sc.reqContext, command)
 		require.NoError(t, err)

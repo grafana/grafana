@@ -57,7 +57,7 @@ export const VisualizationSelectPane: FC<Props> = ({ panel }) => {
         const match = filterPluginList(plugins, query, plugin.meta);
 
         if (match && match.length) {
-          onPluginTypeChange(match[0], true);
+          onPluginTypeChange(match[0], false);
         }
       }
     },
@@ -162,7 +162,7 @@ const getStyles = (theme: GrafanaTheme) => {
     openWrapper: css`
       display: flex;
       flex-direction: column;
-      flex: 1 1 0;
+      flex: 1 1 100%;
       height: 100%;
       background: ${theme.colors.bg1};
       border: 1px solid ${theme.colors.border1};
