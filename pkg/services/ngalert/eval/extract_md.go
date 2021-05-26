@@ -64,5 +64,4 @@ func extractEvalString(frame *data.Frame) (s string) {
 	}
 
 	return ""
-
 }
