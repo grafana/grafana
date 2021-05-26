@@ -165,13 +165,27 @@ If the time zone is set differently between your Grafana server and its remote i
 
 ## Choose template variables
 
-> ** Note:** Available in Grafana Enterprise version 7.5+ (behind `reportVariables` feature flag).
+> **Note:** Available in Grafana Enterprise version 7.5+ (behind `reportVariables` feature flag) and Grafana Enterprise version 8+ without a feature flag.
 
 You can configure report-specific template variables for the dashboard on the report page. The variables that you select will override the variables from the dashboard, and they are used when rendering a PDF file of the report. For detailed information about using template variables, refer to the [Templates and variables]({{< relref "../variables/_index.md" >}}) section. 
 
+Note that the query variables saved with a report might get out of date in case the results of that query change. If that happens, the selected variables will need to be manually updated in the report, unless `All` value is selected.  
+
+## Render report with panels or rows set to repeat by a variable 
+
+> **Note:** Available in Grafana Enterprise v8+.
+
+You can include dynamic dashboards with panels or rows, set to repeat by a variable, into reports. For detailed information about setting up repeating panels or rows in dashboards, refer to the [Repeat panels or rows]({{< relref "../panels/repeat-panels-or-rows.md" >}}) section.
+
+###Caveats:
+
+- Rendering repeating panels for dynamic variable types (e.g. `query` variables) with selected `All` value is currently not supported. As a workaround, it is possible to individually select all the values instead. 
+- If the number of selected variables is different in dashboard from the report, the dimensions of the panels from the dashboard are used.
+- Rendering of the repeating panels inside collapsed rows in reports is not supported.
+
 ## Reports settings
 
-> Only available in Grafana Enterprise v7.2+.
+> **Note:** Available in Grafana Enterprise v7.2+.
 
 You can configure organization-wide report settings in the **Settings** tab on the **Reporting** page. Settings are applied to all the reports for current organization.
 
