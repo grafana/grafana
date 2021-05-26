@@ -133,13 +133,13 @@ func TestPushoverNotifier(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		origGetBoundary := getBoundary
+		origGetBoundary := GetBoundary
 		boundary := "abcd"
-		getBoundary = func() string {
+		GetBoundary = func() string {
 			return boundary
 		}
 		t.Cleanup(func() {
-			getBoundary = origGetBoundary
+			GetBoundary = origGetBoundary
 		})
 
 		t.Run(c.name, func(t *testing.T) {

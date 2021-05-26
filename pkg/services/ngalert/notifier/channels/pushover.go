@@ -20,15 +20,9 @@ import (
 	"github.com/prometheus/common/model"
 )
 
-const (
-	PUSHOVERENDPOINT = "https://api.pushover.net/1/messages.json"
+var (
+	PushoverEndpoint = "https://api.pushover.net/1/messages.json"
 )
-
-// getBoundary is used for overriding the behaviour for tests
-// and set a boundary
-var getBoundary = func() string {
-	return ""
-}
 
 // PushoverNotifier is responsible for sending
 // alert notifications to Pushover
@@ -51,6 +45,10 @@ type PushoverNotifier struct {
 
 // NewSlackNotifier is the constructor for the Slack notifier
 func NewPushoverNotifier(model *NotificationChannelConfig, t *template.Template) (*PushoverNotifier, error) {
+	if model.Settings == nil {
+		return nil, alerting.ValidationError{Reason: "No settings supplied"}
+	}
+
 	userKey := model.DecryptedValue("userKey", model.Settings.Get("userKey").MustString())
 	APIToken := model.DecryptedValue("apiToken", model.Settings.Get("apiToken").MustString())
 	device := model.Settings.Get("device").MustString()
@@ -108,7 +106,7 @@ func (pn *PushoverNotifier) Notify(ctx context.Context, as ...*types.Alert) (boo
 	}
 
 	cmd := &models.SendWebhookSync{
-		Url:        PUSHOVERENDPOINT,
+		Url:        PushoverEndpoint,
 		HttpMethod: "POST",
 		HttpHeader: headers,
 		Body:       uploadBody.String(),
@@ -140,7 +138,7 @@ func (pn *PushoverNotifier) genPushoverBody(ctx context.Context, as ...*types.Al
 	tmpl := notify.TmplText(pn.tmpl, data, &tmplErr)
 
 	w := multipart.NewWriter(&b)
-	boundary := getBoundary()
+	boundary := GetBoundary()
 	if boundary != "" {
 		err = w.SetBoundary(boundary)
 		if err != nil {

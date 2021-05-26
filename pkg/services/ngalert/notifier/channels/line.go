@@ -18,7 +18,7 @@ import (
 	old_notifiers "github.com/grafana/grafana/pkg/services/alerting/notifiers"
 )
 
-const (
+var (
 	LineNotifyURL string = "https://notify-api.line.me/api/notify"
 )
 
