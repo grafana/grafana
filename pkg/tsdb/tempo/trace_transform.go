@@ -191,16 +191,16 @@ func resourceToProcess(resource pdata.Resource) (string, []*KeyValue) {
 
 func getAttributeVal(attr pdata.AttributeValue) interface{} {
 	switch attr.Type() {
-	case pdata.AttributeValueSTRING:
+	case pdata.AttributeValueTypeString:
 		return attr.StringVal()
-	case pdata.AttributeValueINT:
+	case pdata.AttributeValueTypeInt:
 		return attr.IntVal()
-	case pdata.AttributeValueBOOL:
+	case pdata.AttributeValueTypeBool:
 		return attr.BoolVal()
-	case pdata.AttributeValueDOUBLE:
+	case pdata.AttributeValueTypeDouble:
 		return attr.DoubleVal()
-	case pdata.AttributeValueMAP, pdata.AttributeValueARRAY:
-		return tracetranslator.AttributeValueToString(attr, false)
+	case pdata.AttributeValueTypeMap, pdata.AttributeValueTypeArray:
+		return tracetranslator.AttributeValueToString(attr)
 	default:
 		return nil
 	}
@@ -258,15 +258,15 @@ func getTagsFromInstrumentationLibrary(il pdata.InstrumentationLibrary) []*KeyVa
 func getTagFromSpanKind(spanKind pdata.SpanKind) *KeyValue {
 	var tagStr string
 	switch spanKind {
-	case pdata.SpanKindCLIENT:
+	case pdata.SpanKindClient:
 		tagStr = string(tracetranslator.OpenTracingSpanKindClient)
-	case pdata.SpanKindSERVER:
+	case pdata.SpanKindServer:
 		tagStr = string(tracetranslator.OpenTracingSpanKindServer)
-	case pdata.SpanKindPRODUCER:
+	case pdata.SpanKindProducer:
 		tagStr = string(tracetranslator.OpenTracingSpanKindProducer)
-	case pdata.SpanKindCONSUMER:
+	case pdata.SpanKindConsumer:
 		tagStr = string(tracetranslator.OpenTracingSpanKindConsumer)
-	case pdata.SpanKindINTERNAL:
+	case pdata.SpanKindInternal:
 		tagStr = string(tracetranslator.OpenTracingSpanKindInternal)
 	default:
 		return nil
