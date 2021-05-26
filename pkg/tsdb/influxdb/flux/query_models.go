@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/tsdb/interval"
 )
 
 // queryOptions represents datasource configuration options
@@ -45,6 +46,38 @@ type queryModel struct {
 // 	model.Interval = query.Interval
 // 	return model, nil
 // }
+
+// to get the interval-value, there are two possibilities:
+// - either it is available as `IntervalMS` (happens when we executing a query)
+// - it is not available as `IntervalMS` and then we calculate it from
+//   stored minInterval value (happens when alerting)
+func getInterval(query plugins.DataSubQuery, timeRange plugins.DataTimeRange,
+	dsInfo *models.DataSource) (time.Duration, error) {
+	// when executing a query we get the real interval value in query.intervalMS
+	intervalMS := query.IntervalMS
+
+	if intervalMS != 0 {
+		return (time.Millisecond * time.Duration(intervalMS)), nil
+	}
+
+	// if that is not available, we are probably being called for alerting
+	// so we need to calculate an interval-value from the minInterval
+	// that we have stored.
+	defaultMinInterval := time.Millisecond * 1
+	minInterval, err := interval.GetIntervalFrom(dsInfo, query.Model, defaultMinInterval)
+	if err != nil {
+		return time.Duration(0), fmt.Errorf("error reading minInterval: %w", err)
+	}
+
+	calc := interval.NewCalculator(interval.CalculatorOptions{MinInterval: defaultMinInterval})
+
+	// NOTE: interval.Calculate does some work that is unnecessary for us:
+	// - takes timestamps-as-strings and converts them into numbers (we already have those numbers)
+	// - returns both a duration and a text-formatted-duration (we only need the duration)
+	// unfortunately there is no direct access to the math-calculation that happens
+	// inside, so we have to accept the overhead
+	return calc.Calculate(timeRange, minInterval).Value, nil
+}
 
 // getQueryModelTSDB builds a queryModel from plugins.DataQuery information and datasource configuration (dsInfo).
 func getQueryModelTSDB(query plugins.DataSubQuery, timeRange plugins.DataTimeRange,
@@ -87,9 +120,13 @@ func getQueryModelTSDB(query plugins.DataSubQuery, timeRange plugins.DataTimeRan
 	if model.MaxDataPoints == 0 {
 		model.MaxDataPoints = 10000 // 10k/series should be a reasonable place to abort!
 	}
-	model.Interval = time.Millisecond * time.Duration(query.IntervalMS)
-	if model.Interval.Milliseconds() == 0 {
-		model.Interval = time.Millisecond // 1ms
+
+	interval, err := getInterval(query, timeRange, dsInfo)
+	if err != nil {
+		return nil, err
 	}
+
+	model.Interval = interval
+
 	return model, nil
 }
