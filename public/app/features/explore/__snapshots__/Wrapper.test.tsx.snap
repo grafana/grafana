@@ -1795,6 +1795,13 @@ exports[`Wrapper changes the document title of the explore page 1`] = `
     data-s=""
   >
     
+    .css-oambka-collapse__icon{margin-left:-5px;}
+  </style>
+  <style
+    data-emotion="css"
+    data-s=""
+  >
+    
     .css-m04m4l{}
   </style>
   <style
