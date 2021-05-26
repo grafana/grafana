@@ -1,22 +1,22 @@
 +++
-title = "Unified Alerts"
+title = "Grafana 8 Alerts"
 aliases = ["/docs/grafana/latest/alerting/metrics/"]
 weight = 113
 +++
 
-# Unified alerts
+# Grafana 8 alerts
 Alerts allow you to know about problems in your systems moments after they occur. Robust and actionable alerts help you identify and resolve issues quickly, minimizing disruption to your services.
 
->**Note:** This information is for the new, Unified Alerts. This is an [opt-in]({{< relref"./opt-in.md" >}}) feature released in Grafana 8.0. Grafana still supports [dashboard alerts]({{< relref "../old-alerting/_index.md" >}}) out of the box
+>**Note:** This information is for the new, Grafana 8 Alerts. This is an [opt-in]({{< relref"./opt-in.md" >}}) feature released in Grafana 8.0. Grafana still supports [dashboard alerts]({{< relref "../old-alerting/_index.md" >}}) out of the box
 
 Alerts have four main components:
 
-- Alert rule - One or more conditions, the frequency of evaluation, and the (optional) duration that a condition must be met before notifying.
-- Contact point - A channel for sending notifications when the conditions of an alert rule are met. (Available in unified alerting only.)
+- Alerting rule - One or more conditions, the frequency of evaluation, and the (optional) duration that a condition must be met before notifying.
+- Contact point - A channel for sending notifications when the conditions of an alerting rule are met.
 - Notification policy - A set of matching and grouping criteria used to determine where, and how frequently, to send notifications.
-- Silences - Date and matching criteria used to silence notifications. (Available in unified alerting only.)
+- Silences - Date and matching criteria used to silence notifications.
 
-## Alert tasks
+## Alerting tasks
 
 You can perform the following tasks for alerts:
 
@@ -24,6 +24,8 @@ You can perform the following tasks for alerts:
 - [View existing alert rules and their current state]({{< relref "./view-alerts.md" >}})
 - [Test alert rules and troubleshoot]({{< relref "./troubleshoot-alerts.md" >}})
 - [Add or edit an alert contact point]({{< relref "./contact-points.md" >}})
+- [Add or edit notification policies]({{< relref "./notification-policies.md" >}})
+- [Create and edit silences]({{< relref "./silences.md" >}})
 
 ## Clustering
 
@@ -33,14 +35,14 @@ Currently alerting supports a limited form of high availability. Since v4.2.0 of
 
 Grafana managed alerts are evaluated by the Grafana backend. Rule evaluations are scheduled, according to the alert rule configuration, and queries are evaluated by an engine that is part of core Grafana.
 
-Alert rules can only query backend data sources with alerting enabled:
+Alerting rules can only query backend data sources with alerting enabled:
 - builtin or developed and maintained by grafana: `Graphite`, `Prometheus`, `Loki`, `InfluxDB`, `Elasticsearch`,
   `Google Cloud Monitoring`, `Cloudwatch`, `Azure Monitor`, `MySQL`, `PostgreSQL`, `MSSQL`, `OpenTSDB`, `Oracle`, and `Azure Data Explorer`
 - any community backend data sources with alerting enabled (`backend` and `alerting` properties are set in the [plugin.json]({{< relref "../../developers/plugins/metadata.md" >}}))
 
-## Metrics from the alert engine
+## Metrics from the alerting engine
 
-The alert engine publishes some internal metrics about itself. You can read more about how Grafana publishes [internal metrics]({{< relref "../../administration/view-server/internal-metrics.md" >}}).
+The alerting engine publishes some internal metrics about itself. You can read more about how Grafana publishes [internal metrics]({{< relref "../../administration/view-server/internal-metrics.md" >}}).
 
 Metric Name | Type | Description
 ---------- | ----------- | ----------
