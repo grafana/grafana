@@ -10,11 +10,6 @@ This section explains all available table field options. They are listed in the 
 
 Most field options will not affect the visualization until you click outside of the field option box you are editing or press Enter.
 
-For more information about applying these options, refer to:
-
-- [Configure all fields]({{< relref "../../field-options/configure-all-fields.md" >}})
-- [Configure specific fields]({{< relref "../../field-options/configure-specific-fields.md" >}})
-
 ## Column alignment
 
 Choose how Grafana should align cell contents:

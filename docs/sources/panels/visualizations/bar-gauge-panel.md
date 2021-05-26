@@ -19,7 +19,7 @@ This panel can show one or more bar gauges depending on how many series, rows, o
 Bar gauge visualizations allow you to apply:
 
 - [Data transformations]({{< relref "../transformations/_index.md" >}})
-- [Field options and overrides]({{< relref "../field-options/_index.md" >}})
+- [Field overrides]({{< relref "../field-overrides.md" >}})
 - [Thresholds]({{< relref "../thresholds.md" >}})
 
 ## Display options
