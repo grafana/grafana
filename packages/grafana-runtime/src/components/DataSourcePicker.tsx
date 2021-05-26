@@ -2,10 +2,11 @@
 import React, { PureComponent } from 'react';
 
 // Components
-import { HorizontalGroup, PluginSignatureBadge, Select } from '@grafana/ui';
+import { HorizontalGroup, PluginSignatureBadge, Select, stylesFactory } from '@grafana/ui';
 import { DataSourceInstanceSettings, isUnsignedPluginSignature, SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { getDataSourceSrv } from '../services/dataSourceSrv';
+import { css, cx } from '@emotion/css';
 
 /**
  * Component props description for the {@link DataSourcePicker}
@@ -138,11 +139,12 @@ export class DataSourcePicker extends PureComponent<DataSourcePickerProps, DataS
     const { error } = this.state;
     const options = this.getDataSourceOptions();
     const value = this.getCurrentValue();
+    const styles = getStyles();
 
     return (
       <div aria-label={selectors.components.DataSourcePicker.container}>
         <Select
-          className="ds-picker select-container"
+          className={styles.select}
           isMulti={false}
           isClearable={false}
           backspaceRemovesValue={false}
@@ -172,3 +174,13 @@ export class DataSourcePicker extends PureComponent<DataSourcePickerProps, DataS
     );
   }
 }
+
+const getStyles = stylesFactory(() => ({
+  select: cx(
+    css({
+      minWidth: 200,
+    }),
+    'ds-picker',
+    'select-container'
+  ),
+}));
