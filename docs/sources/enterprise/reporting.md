@@ -118,6 +118,10 @@ The last saved version of the report will be sent to selected emails. You can us
 
 {{< docs-imagebox img="/img/docs/enterprise/reports_send_test_mail.png" max-width="500px" class="docs-image--no-shadow" >}}
 
+## Pause report
+
+You can pause sending of reports from the report list view by clicking the pause icon. The report will not be sent according to its schedule until it is resumed by clicking the resume button on the report row. 
+
 ## Send report via the API
 
 You can send reports programmatically with the [send report]({{< relref "../http_api/reporting.md#send-report" >}}) endpoint in the [HTTP APIs]({{< relref "../http_api" >}}).
