@@ -283,7 +283,6 @@ export class UnthemedLogs extends PureComponent<Props, State> {
             onHiddenSeriesChanged={this.onToggleLogLevel}
           />
         ) : undefined}
-
         <div className={styles.logOptions} ref={this.topLogsRef}>
           <InlineFieldRow>
             <InlineField label="Time" transparent>
