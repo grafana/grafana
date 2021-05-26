@@ -259,10 +259,10 @@ func (nc *mockNotificationChannel) matchesExpNotifications(exp map[string][]stri
 				fallthrough
 			case "slack_recv1/slack_test_without_token":
 				// It has a time component "ts".
-				r1 = regexp.MustCompile(`.*"ts"\s*:\s*([0-9]{10})`)
+				r1 = regexp.MustCompile(`.*"ts"\s*:\s*([0-9]+)`)
 			case "sensugo/events":
 				// It has a time component "ts".
-				r1 = regexp.MustCompile(`.*"issued"\s*:\s*([0-9]{10})`)
+				r1 = regexp.MustCompile(`.*"issued"\s*:\s*([0-9]+)`)
 			case "pagerduty_recvX/pagerduty_testX":
 				// It has a changing "source".
 				r1 = regexp.MustCompile(`.*"source"\s*:\s*"([^"]+)"`)
@@ -271,7 +271,7 @@ func (nc *mockNotificationChannel) matchesExpNotifications(exp map[string][]stri
 				r1 = regexp.MustCompile(`.*"text"\s*:\s*"(Grafana v[^"]+)"`)
 			case "victorops_recv/victorops_test":
 				// It has a time component "timestamp".
-				r1 = regexp.MustCompile(`.*"timestamp"\s*:\s*([0-9]{10})`)
+				r1 = regexp.MustCompile(`.*"timestamp"\s*:\s*([0-9]+)`)
 			case "v1/alerts":
 				// It has a changing time fields.
 				r1 = regexp.MustCompile(`.*"startsAt"\s*:\s*"([^"]+)"`)
@@ -1304,10 +1304,10 @@ var expNotifications = map[string][]string{
 		  "icon_url": "https://awesomeemoji.com/rocket",
 		  "attachments": [
 			{
-			  "title": "Integration Test [FIRING:1] SlackAlert1 (UID_SlackAlert1)",
+			  "title": "Integration Test [FIRING:1] SlackAlert1 ",
 			  "title_link": "http://localhost:3000/alerting/list",
 			  "text": "Integration Test ",
-			  "fallback": "Integration Test [FIRING:1] SlackAlert1 (UID_SlackAlert1)",
+			  "fallback": "Integration Test [FIRING:1] SlackAlert1 ",
 			  "footer": "Grafana v",
 			  "footer_icon": "https://grafana.com/assets/img/fav32.png",
 			  "color": "#D63232",
@@ -1331,10 +1331,10 @@ var expNotifications = map[string][]string{
 		  "username": "Integration Test",
 		  "attachments": [
 			{
-			  "title": "[FIRING:1] SlackAlert2 (UID_SlackAlert2)",
+			  "title": "[FIRING:1] SlackAlert2 ",
 			  "title_link": "http://localhost:3000/alerting/list",
-			  "text": "\n**Firing**\nLabels:\n - alertname = SlackAlert2\n - __alert_rule_uid__ = UID_SlackAlert2\nAnnotations:\nSource: \n\n\n\n\n",
-			  "fallback": "[FIRING:1] SlackAlert2 (UID_SlackAlert2)",
+			  "text": "**Firing**\n\nLabels:\n - alertname = SlackAlert2\nAnnotations:\nSilence: http://localhost:3000/alerting/silence/new?alertmanager=grafana&matchers=alertname%%3DSlackAlert2\n",
+			  "fallback": "[FIRING:1] SlackAlert2 ",
 			  "footer": "Grafana v",
 			  "footer_icon": "https://grafana.com/assets/img/fav32.png",
 			  "color": "#D63232",
@@ -1356,17 +1356,17 @@ var expNotifications = map[string][]string{
 		`{
 		  "routing_key": "pagerduty_recv/pagerduty_test",
 		  "dedup_key": "234edb34441f942f713f3c2ccf58b1d719d921b4cbe34e57a1630f1dee847e3b",
-		  "description": "[FIRING:1] PagerdutyAlert (UID_PagerdutyAlert)",
+		  "description": "[FIRING:1] PagerdutyAlert ",
 		  "event_action": "trigger",
 		  "payload": {
-			"summary": "Integration Test [FIRING:1] PagerdutyAlert (UID_PagerdutyAlert)",
+			"summary": "Integration Test [FIRING:1] PagerdutyAlert ",
 			"source": "%s",
 			"severity": "warning",
 			"class": "testclass",
 			"component": "Integration Test",
 			"group": "testgroup",
 			"custom_details": {
-			  "firing": "Labels:\n - alertname = PagerdutyAlert\n - __alert_rule_uid__ = UID_PagerdutyAlert\nAnnotations:\nSource: \n",
+			  "firing": "\nLabels:\n - alertname = PagerdutyAlert\nAnnotations:\nSilence: http://localhost:3000/alerting/silence/new?alertmanager=grafana&matchers=alertname%%3DPagerdutyAlert\n",
 			  "num_firing": "1",
 			  "num_resolved": "0",
 			  "resolved": ""
@@ -1386,8 +1386,8 @@ var expNotifications = map[string][]string{
 		`{
 		  "link": {
 			"messageUrl": "dingtalk://dingtalkclient/page/link?pc_slide=false&url=http%3A%2F%2Flocalhost%3A3000%2Falerting%2Flist",
-			"text": "\n**Firing**\nLabels:\n - alertname = DingDingAlert\n - __alert_rule_uid__ = UID_DingDingAlert\nAnnotations:\nSource: \n\n\n\n\n",
-			"title": "[FIRING:1] DingDingAlert (UID_DingDingAlert)"
+			"text": "**Firing**\n\nLabels:\n - alertname = DingDingAlert\nAnnotations:\nSilence: http://localhost:3000/alerting/silence/new?alertmanager=grafana&matchers=alertname%3DDingDingAlert\n",
+			"title": "[FIRING:1] DingDingAlert "
 		  },
 		  "msgtype": "link"
 		}`,
@@ -1411,13 +1411,13 @@ var expNotifications = map[string][]string{
 		  ],
 		  "sections": [
 			{
-			  "text": "\n**Firing**\nLabels:\n - alertname = TeamsAlert\n - __alert_rule_uid__ = UID_TeamsAlert\nAnnotations:\nSource: \n\n\n\n\n",
+			  "text": "**Firing**\n\nLabels:\n - alertname = TeamsAlert\nAnnotations:\nSilence: http://localhost:3000/alerting/silence/new?alertmanager=grafana&matchers=alertname%3DTeamsAlert\n",
 			  "title": "Details"
 			}
 		  ],
-		  "summary": "[FIRING:1] TeamsAlert (UID_TeamsAlert)",
+		  "summary": "[FIRING:1] TeamsAlert ",
 		  "themeColor": "#D63232",
-		  "title": "[FIRING:1] TeamsAlert (UID_TeamsAlert)"
+		  "title": "[FIRING:1] TeamsAlert "
 		}`,
 	},
 	"webhook_recv/webhook_test": {
@@ -1428,19 +1428,22 @@ var expNotifications = map[string][]string{
 			{
 			  "status": "firing",
 			  "labels": {
-				"__alert_rule_uid__": "UID_WebhookAlert",
 				"alertname": "WebhookAlert"
 			  },
 			  "annotations": {},
 			  "startsAt": "%s",
 			  "endsAt": "0001-01-01T00:00:00Z",
 			  "generatorURL": "",
-			  "fingerprint": "929467973978d053"
+			  "fingerprint": "929467973978d053",
+			  "silenceURL": "http://localhost:3000/alerting/silence/new?alertmanager=grafana&matchers=alertname%%3DWebhookAlert",
+			  "dashboardURL": "",
+			  "panelURL": ""
 			}
 		  ],
-		  "groupLabels": {"alertname": "WebhookAlert"},
+		  "groupLabels": {
+			"alertname": "WebhookAlert"
+		  },
 		  "commonLabels": {
-			"__alert_rule_uid__": "UID_WebhookAlert",
 			"alertname": "WebhookAlert"
 		  },
 		  "commonAnnotations": {},
@@ -1448,14 +1451,14 @@ var expNotifications = map[string][]string{
 		  "version": "1",
 		  "groupKey": "{}/{alertname=\"WebhookAlert\"}:{alertname=\"WebhookAlert\"}",
 		  "truncatedAlerts": 0,
-		  "title": "[FIRING:1] WebhookAlert (UID_WebhookAlert)",
+		  "title": "[FIRING:1] WebhookAlert ",
 		  "state": "alerting",
-		  "message": "\n**Firing**\nLabels:\n - alertname = WebhookAlert\n - __alert_rule_uid__ = UID_WebhookAlert\nAnnotations:\nSource: \n\n\n\n\n"
+		  "message": "**Firing**\n\nLabels:\n - alertname = WebhookAlert\nAnnotations:\nSilence: http://localhost:3000/alerting/silence/new?alertmanager=grafana&matchers=alertname%%3DWebhookAlert\n"
 		}`,
 	},
 	"discord_recv/discord_test": {
 		`{
-		  "content": "\n**Firing**\nLabels:\n - alertname = DiscordAlert\n - __alert_rule_uid__ = UID_DiscordAlert\nAnnotations:\nSource: \n\n\n\n\n",
+		  "content": "**Firing**\n\nLabels:\n - alertname = DiscordAlert\nAnnotations:\nSilence: http://localhost:3000/alerting/silence/new?alertmanager=grafana&matchers=alertname%3DDiscordAlert\n",
 		  "embeds": [
 			{
 			  "color": 14037554,
@@ -1463,7 +1466,7 @@ var expNotifications = map[string][]string{
 				"icon_url": "https://grafana.com/assets/img/fav32.png",
 				"text": "Grafana v"
 			  },
-			  "title": "[FIRING:1] DiscordAlert (UID_DiscordAlert)",
+			  "title": "[FIRING:1] DiscordAlert ",
 			  "type": "rich",
 			  "url": "http://localhost:3000/alerting/list"
 			}
@@ -1483,7 +1486,7 @@ var expNotifications = map[string][]string{
 			  },
 			  "name": "default"
 			},
-			"output": "\n**Firing**\nLabels:\n - alertname = SensuGoAlert\n - __alert_rule_uid__ = UID_SensuGoAlert\nAnnotations:\nSource: \n\n\n\n\n",
+			"output": "**Firing**\n\nLabels:\n - alertname = SensuGoAlert\nAnnotations:\nSilence: http://localhost:3000/alerting/silence/new?alertmanager=grafana&matchers=alertname%%3DSensuGoAlert\n",
 			"status": 2
 		  },
 		  "entity": {
@@ -1496,26 +1499,26 @@ var expNotifications = map[string][]string{
 		}`,
 	},
 	"pushover_recv/pushover_test": {
-		"--abcd\r\nContent-Disposition: form-data; name=\"user\"\r\n\r\nmysecretkey\r\n--abcd\r\nContent-Disposition: form-data; name=\"token\"\r\n\r\nmysecrettoken\r\n--abcd\r\nContent-Disposition: form-data; name=\"priority\"\r\n\r\n0\r\n--abcd\r\nContent-Disposition: form-data; name=\"sound\"\r\n\r\n\r\n--abcd\r\nContent-Disposition: form-data; name=\"title\"\r\n\r\n[FIRING:1] PushoverAlert (UID_PushoverAlert)\r\n--abcd\r\nContent-Disposition: form-data; name=\"url\"\r\n\r\nhttp://localhost:3000/alerting/list\r\n--abcd\r\nContent-Disposition: form-data; name=\"url_title\"\r\n\r\nShow alert rule\r\n--abcd\r\nContent-Disposition: form-data; name=\"message\"\r\n\r\n\n**Firing**\nLabels:\n - alertname = PushoverAlert\n - __alert_rule_uid__ = UID_PushoverAlert\nAnnotations:\nSource: \n\n\n\n\n\r\n--abcd\r\nContent-Disposition: form-data; name=\"html\"\r\n\r\n1\r\n--abcd--\r\n",
+		"--abcd\r\nContent-Disposition: form-data; name=\"user\"\r\n\r\nmysecretkey\r\n--abcd\r\nContent-Disposition: form-data; name=\"token\"\r\n\r\nmysecrettoken\r\n--abcd\r\nContent-Disposition: form-data; name=\"priority\"\r\n\r\n0\r\n--abcd\r\nContent-Disposition: form-data; name=\"sound\"\r\n\r\n\r\n--abcd\r\nContent-Disposition: form-data; name=\"title\"\r\n\r\n[FIRING:1] PushoverAlert \r\n--abcd\r\nContent-Disposition: form-data; name=\"url\"\r\n\r\nhttp://localhost:3000/alerting/list\r\n--abcd\r\nContent-Disposition: form-data; name=\"url_title\"\r\n\r\nShow alert rule\r\n--abcd\r\nContent-Disposition: form-data; name=\"message\"\r\n\r\n**Firing**\n\nLabels:\n - alertname = PushoverAlert\nAnnotations:\nSilence: http://localhost:3000/alerting/silence/new?alertmanager=grafana&matchers=alertname%3DPushoverAlert\n\r\n--abcd\r\nContent-Disposition: form-data; name=\"html\"\r\n\r\n1\r\n--abcd--\r\n",
 	},
 	"telegram_recv/bot6sh027hs034h": {
-		"--abcd\r\nContent-Disposition: form-data; name=\"chat_id\"\r\n\r\ntelegram_chat_id\r\n--abcd\r\nContent-Disposition: form-data; name=\"parse_mode\"\r\n\r\nhtml\r\n--abcd\r\nContent-Disposition: form-data; name=\"text\"\r\n\r\n\n**Firing**\nLabels:\n - alertname = TelegramAlert\n - __alert_rule_uid__ = UID_TelegramAlert\nAnnotations:\nSource: \n\n\n\n\n\r\n--abcd--\r\n",
+		"--abcd\r\nContent-Disposition: form-data; name=\"chat_id\"\r\n\r\ntelegram_chat_id\r\n--abcd\r\nContent-Disposition: form-data; name=\"parse_mode\"\r\n\r\nhtml\r\n--abcd\r\nContent-Disposition: form-data; name=\"text\"\r\n\r\n**Firing**\n\nLabels:\n - alertname = TelegramAlert\nAnnotations:\nSilence: http://localhost:3000/alerting/silence/new?alertmanager=grafana&matchers=alertname%3DTelegramAlert\n\r\n--abcd--\r\n",
 	},
 	"googlechat_recv/googlechat_test": {
 		`{
-		  "previewText": "[FIRING:1] GoogleChatAlert (UID_GoogleChatAlert)",
-		  "fallbackText": "[FIRING:1] GoogleChatAlert (UID_GoogleChatAlert)",
+		  "previewText": "[FIRING:1] GoogleChatAlert ",
+		  "fallbackText": "[FIRING:1] GoogleChatAlert ",
 		  "cards": [
 			{
 			  "header": {
-				"title": "[FIRING:1] GoogleChatAlert (UID_GoogleChatAlert)"
+				"title": "[FIRING:1] GoogleChatAlert "
 			  },
 			  "sections": [
 				{
 				  "widgets": [
 					{
 					  "textParagraph": {
-						"text": "\n**Firing**\nLabels:\n - alertname = GoogleChatAlert\n - __alert_rule_uid__ = UID_GoogleChatAlert\nAnnotations:\nSource: \n\n\n\n\n"
+						"text": "**Firing**\n\nLabels:\n - alertname = GoogleChatAlert\nAnnotations:\nSilence: http://localhost:3000/alerting/silence/new?alertmanager=grafana&matchers=alertname%%3DGoogleChatAlert\n"
 					  }
 					},
 					{
@@ -1552,8 +1555,8 @@ var expNotifications = map[string][]string{
 				"alert_state": "alerting",
 				"client": "Grafana",
 				"client_url": "http://localhost:3000/alerting/list",
-				"description": "[FIRING:1] KafkaAlert (UID_KafkaAlert)",
-				"details": "\n**Firing**\nLabels:\n - alertname = KafkaAlert\n - __alert_rule_uid__ = UID_KafkaAlert\nAnnotations:\nSource: \n\n\n\n\n",
+				"description": "[FIRING:1] KafkaAlert ",
+				"details": "**Firing**\n\nLabels:\n - alertname = KafkaAlert\nAnnotations:\nSilence: http://localhost:3000/alerting/silence/new?alertmanager=grafana&matchers=alertname%3DKafkaAlert\n",
 				"incident_key": "35c0bdb1715f9162a20d7b2a01cb2e3a4c5b1dc663571701e3f67212b696332f"
 			  }
 			}
@@ -1561,30 +1564,30 @@ var expNotifications = map[string][]string{
 		}`,
 	},
 	"line_recv/line_test": {
-		`message=%5BFIRING%3A1%5D+LineAlert+%28UID_LineAlert%29%0Ahttp%3A%2Flocalhost%3A3000%2Falerting%2Flist%0A%0A%0A%2A%2AFiring%2A%2A%0ALabels%3A%0A+-+alertname+%3D+LineAlert%0A+-+__alert_rule_uid__+%3D+UID_LineAlert%0AAnnotations%3A%0ASource%3A+%0A%0A%0A%0A%0A`,
+		`message=%5BFIRING%3A1%5D+LineAlert+%0Ahttp%3A%2Flocalhost%3A3000%2Falerting%2Flist%0A%0A%2A%2AFiring%2A%2A%0A%0ALabels%3A%0A+-+alertname+%3D+LineAlert%0AAnnotations%3A%0ASilence%3A+http%3A%2F%2Flocalhost%3A3000%2Falerting%2Fsilence%2Fnew%3Falertmanager%3Dgrafana%26matchers%3Dalertname%253DLineAlert%0A`,
 	},
 	"threema_recv/threema_test": {
-		`from=%2A1234567&secret=myapisecret&text=%E2%9A%A0%EF%B8%8F+%5BFIRING%3A1%5D+ThreemaAlert+%28UID_ThreemaAlert%29%0A%0A%2AMessage%3A%2A%0A%0A%2A%2AFiring%2A%2A%0ALabels%3A%0A+-+alertname+%3D+ThreemaAlert%0A+-+__alert_rule_uid__+%3D+UID_ThreemaAlert%0AAnnotations%3A%0ASource%3A+%0A%0A%0A%0A%0A%0A%2AURL%3A%2A+http%3A%2Flocalhost%3A3000%2Falerting%2Flist%0A&to=abcdefgh`,
+		`from=%2A1234567&secret=myapisecret&text=%E2%9A%A0%EF%B8%8F+%5BFIRING%3A1%5D+ThreemaAlert+%0A%0A%2AMessage%3A%2A%0A%2A%2AFiring%2A%2A%0A%0ALabels%3A%0A+-+alertname+%3D+ThreemaAlert%0AAnnotations%3A%0ASilence%3A+http%3A%2F%2Flocalhost%3A3000%2Falerting%2Fsilence%2Fnew%3Falertmanager%3Dgrafana%26matchers%3Dalertname%253DThreemaAlert%0A%0A%2AURL%3A%2A+http%3A%2Flocalhost%3A3000%2Falerting%2Flist%0A&to=abcdefgh`,
 	},
 	"victorops_recv/victorops_test": {
 		`{
 		  "alert_url": "http://localhost:3000/alerting/list",
-		  "entity_display_name": "[FIRING:1] VictorOpsAlert (UID_VictorOpsAlert)",
+		  "entity_display_name": "[FIRING:1] VictorOpsAlert ",
 		  "entity_id": "633ae988fa7074bcb51f3d1c5fef2ba1c5c4ccb45b3ecbf681f7d507b078b1ae",
 		  "message_type": "CRITICAL",
 		  "monitoring_tool": "Grafana v",
-		  "state_message": "\n**Firing**\nLabels:\n - alertname = VictorOpsAlert\n - __alert_rule_uid__ = UID_VictorOpsAlert\nAnnotations:\nSource: \n\n\n\n\n",
+		  "state_message": "**Firing**\n\nLabels:\n - alertname = VictorOpsAlert\nAnnotations:\nSilence: http://localhost:3000/alerting/silence/new?alertmanager=grafana&matchers=alertname%%3DVictorOpsAlert\n",
 		  "timestamp": %s
 		}`,
 	},
 	"opsgenie_recv/opsgenie_test": {
 		`{
 		  "alias": "47e92f0f6ef9fe99f3954e0d6155f8d09c4b9a038d8c3105e82c0cee4c62956e",
-		  "description": "[FIRING:1] OpsGenieAlert (UID_OpsGenieAlert)\nhttp://localhost:3000/alerting/list\n\n\n**Firing**\nLabels:\n - alertname = OpsGenieAlert\n - __alert_rule_uid__ = UID_OpsGenieAlert\nAnnotations:\nSource: \n\n\n\n\n",
+		  "description": "[FIRING:1] OpsGenieAlert \nhttp://localhost:3000/alerting/list\n\n**Firing**\n\nLabels:\n - alertname = OpsGenieAlert\nAnnotations:\nSilence: http://localhost:3000/alerting/silence/new?alertmanager=grafana&matchers=alertname%3DOpsGenieAlert\n",
 		  "details": {
 			"url": "http://localhost:3000/alerting/list"
 		  },
-		  "message": "[FIRING:1] OpsGenieAlert (UID_OpsGenieAlert)",
+		  "message": "[FIRING:1] OpsGenieAlert ",
 		  "source": "Grafana",
 		  "tags": []
 		}`,
