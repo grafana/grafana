@@ -339,6 +339,7 @@ type SaveDashboardCommand struct {
 	RestoredFrom int              `json:"-"`
 	PluginId     string           `json:"-"`
 	FolderId     int64            `json:"folderId"`
+	FolderUid    string           `json:"folderUid"`
 	IsFolder     bool             `json:"isFolder"`
 
 	UpdatedAt time.Time
