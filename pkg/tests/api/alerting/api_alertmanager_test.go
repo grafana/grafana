@@ -1597,6 +1597,13 @@ func TestEval(t *testing.T) {
 					  "typeInfo": {
 						"frame": "string"
 					  }
+					},
+					{
+					  "name": "Info",
+					  "type": "string",
+					  "typeInfo": {
+					    "frame": "string"
+					  }
 					}
 				  ]
 				},
@@ -1604,6 +1611,9 @@ func TestEval(t *testing.T) {
 				  "values": [
 					[
 					  "Alerting"
+					],
+					[
+					  ""
 					]
 				  ]
 				}
@@ -1648,6 +1658,13 @@ func TestEval(t *testing.T) {
 					  "typeInfo": {
 						"frame": "string"
 					  }
+					},
+					{
+					  "name": "Info",
+					  "type": "string",
+					  "typeInfo": {
+					    "frame": "string"
+					  }
 					}
 				  ]
 				},
@@ -1655,6 +1672,9 @@ func TestEval(t *testing.T) {
 				  "values": [
 					[
 					  "Normal"
+					],
+					[
+					  ""
 					]
 				  ]
 				}
