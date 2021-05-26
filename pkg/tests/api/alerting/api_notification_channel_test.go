@@ -11,6 +11,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/go-cmp/cmp"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -295,6 +296,7 @@ func (nc *mockNotificationChannel) matchesExpNotifications(exp map[string][]stri
 				"line_recv/line_test", "threema_recv/threema_test":
 				// Multipart data or POST parameters.
 				if expVal != actVals[i] {
+					require.Equal(nc.t, expVal, actVals[i])
 					return false
 				}
 			default:
@@ -302,6 +304,7 @@ func (nc *mockNotificationChannel) matchesExpNotifications(exp map[string][]stri
 				require.NoError(nc.t, json.Unmarshal([]byte(expVal), &expJson))
 				require.NoError(nc.t, json.Unmarshal([]byte(actVals[i]), &actJson))
 				if !assert.ObjectsAreEqual(expJson, actJson) {
+					require.Empty(nc.t, cmp.Diff(expJson, actJson))
 					return false
 				}
 			}
@@ -1304,10 +1307,10 @@ var expNotifications = map[string][]string{
 		  "icon_url": "https://awesomeemoji.com/rocket",
 		  "attachments": [
 			{
-			  "title": "Integration Test [FIRING:1] SlackAlert1 (UID_SlackAlert1)",
+			  "title": "Integration Test [FIRING:1] SlackAlert1 (UID_SlackAlert1 [ var='A' lables={} value=1 ])",
 			  "title_link": "http://localhost:3000/alerting/list",
 			  "text": "Integration Test ",
-			  "fallback": "Integration Test [FIRING:1] SlackAlert1 (UID_SlackAlert1)",
+			  "fallback": "Integration Test [FIRING:1] SlackAlert1 (UID_SlackAlert1 [ var='A' lables={} value=1 ])",
 			  "footer": "Grafana v",
 			  "footer_icon": "https://grafana.com/assets/img/fav32.png",
 			  "color": "#D63232",
@@ -1331,10 +1334,10 @@ var expNotifications = map[string][]string{
 		  "username": "Integration Test",
 		  "attachments": [
 			{
-			  "title": "[FIRING:1] SlackAlert2 (UID_SlackAlert2)",
+			  "title": "[FIRING:1] SlackAlert2 (UID_SlackAlert2 [ var='A' lables={} value=1 ])",
 			  "title_link": "http://localhost:3000/alerting/list",
-			  "text": "\n**Firing**\nLabels:\n - alertname = SlackAlert2\n - __alert_rule_uid__ = UID_SlackAlert2\nAnnotations:\nSource: \n\n\n\n\n",
-			  "fallback": "[FIRING:1] SlackAlert2 (UID_SlackAlert2)",
+			  "text": "\n**Firing**\nLabels:\n - alertname = SlackAlert2\n - __alert_rule_uid__ = UID_SlackAlert2\n - __value__ = [ var='A' lables={} value=1 ]\nAnnotations:\nSource: \n\n\n\n\n",
+			  "fallback": "[FIRING:1] SlackAlert2 (UID_SlackAlert2 [ var='A' lables={} value=1 ])",
 			  "footer": "Grafana v",
 			  "footer_icon": "https://grafana.com/assets/img/fav32.png",
 			  "color": "#D63232",
@@ -1356,17 +1359,17 @@ var expNotifications = map[string][]string{
 		`{
 		  "routing_key": "pagerduty_recv/pagerduty_test",
 		  "dedup_key": "234edb34441f942f713f3c2ccf58b1d719d921b4cbe34e57a1630f1dee847e3b",
-		  "description": "[FIRING:1] PagerdutyAlert (UID_PagerdutyAlert)",
+		  "description": "[FIRING:1] PagerdutyAlert (UID_PagerdutyAlert [ var='A' lables={} value=1 ])",
 		  "event_action": "trigger",
 		  "payload": {
-			"summary": "Integration Test [FIRING:1] PagerdutyAlert (UID_PagerdutyAlert)",
+			"summary": "Integration Test [FIRING:1] PagerdutyAlert (UID_PagerdutyAlert [ var='A' lables={} value=1 ])",
 			"source": "%s",
 			"severity": "warning",
 			"class": "testclass",
 			"component": "Integration Test",
 			"group": "testgroup",
 			"custom_details": {
-			  "firing": "Labels:\n - alertname = PagerdutyAlert\n - __alert_rule_uid__ = UID_PagerdutyAlert\nAnnotations:\nSource: \n",
+			  "firing": "Labels:\n - alertname = PagerdutyAlert\n - __alert_rule_uid__ = UID_PagerdutyAlert\n - __value__ = [ var='A' lables={} value=1 ]\nAnnotations:\nSource: \n",
 			  "num_firing": "1",
 			  "num_resolved": "0",
 			  "resolved": ""
@@ -1386,8 +1389,8 @@ var expNotifications = map[string][]string{
 		`{
 		  "link": {
 			"messageUrl": "dingtalk://dingtalkclient/page/link?pc_slide=false&url=http%3A%2F%2Flocalhost%3A3000%2Falerting%2Flist",
-			"text": "\n**Firing**\nLabels:\n - alertname = DingDingAlert\n - __alert_rule_uid__ = UID_DingDingAlert\nAnnotations:\nSource: \n\n\n\n\n",
-			"title": "[FIRING:1] DingDingAlert (UID_DingDingAlert)"
+			"text": "\n**Firing**\nLabels:\n - alertname = DingDingAlert\n - __alert_rule_uid__ = UID_DingDingAlert\n - __value__ = [ var='A' lables={} value=1 ]\nAnnotations:\nSource: \n\n\n\n\n",
+			"title": "[FIRING:1] DingDingAlert (UID_DingDingAlert [ var='A' lables={} value=1 ])"
 		  },
 		  "msgtype": "link"
 		}`,
@@ -1411,13 +1414,13 @@ var expNotifications = map[string][]string{
 		  ],
 		  "sections": [
 			{
-			  "text": "\n**Firing**\nLabels:\n - alertname = TeamsAlert\n - __alert_rule_uid__ = UID_TeamsAlert\nAnnotations:\nSource: \n\n\n\n\n",
+			  "text": "\n**Firing**\nLabels:\n - alertname = TeamsAlert\n - __alert_rule_uid__ = UID_TeamsAlert\n - __value__ = [ var='A' lables={} value=1 ]\nAnnotations:\nSource: \n\n\n\n\n",
 			  "title": "Details"
 			}
 		  ],
-		  "summary": "[FIRING:1] TeamsAlert (UID_TeamsAlert)",
+		  "summary": "[FIRING:1] TeamsAlert (UID_TeamsAlert [ var='A' lables={} value=1 ])",
 		  "themeColor": "#D63232",
-		  "title": "[FIRING:1] TeamsAlert (UID_TeamsAlert)"
+		  "title": "[FIRING:1] TeamsAlert (UID_TeamsAlert [ var='A' lables={} value=1 ])"
 		}`,
 	},
 	"webhook_recv/webhook_test": {
@@ -1429,18 +1432,20 @@ var expNotifications = map[string][]string{
 			  "status": "firing",
 			  "labels": {
 				"__alert_rule_uid__": "UID_WebhookAlert",
+        "__value__": "[ var='A' lables={} value=1 ]",
 				"alertname": "WebhookAlert"
 			  },
 			  "annotations": {},
 			  "startsAt": "%s",
 			  "endsAt": "0001-01-01T00:00:00Z",
 			  "generatorURL": "",
-			  "fingerprint": "929467973978d053"
+			  "fingerprint": "29c4faeb6c02647a"
 			}
 		  ],
 		  "groupLabels": {"alertname": "WebhookAlert"},
 		  "commonLabels": {
 			"__alert_rule_uid__": "UID_WebhookAlert",
+      "__value__": "[ var='A' lables={} value=1 ]",
 			"alertname": "WebhookAlert"
 		  },
 		  "commonAnnotations": {},
@@ -1448,14 +1453,14 @@ var expNotifications = map[string][]string{
 		  "version": "1",
 		  "groupKey": "{}/{alertname=\"WebhookAlert\"}:{alertname=\"WebhookAlert\"}",
 		  "truncatedAlerts": 0,
-		  "title": "[FIRING:1] WebhookAlert (UID_WebhookAlert)",
+		  "title": "[FIRING:1] WebhookAlert (UID_WebhookAlert [ var='A' lables={} value=1 ])",
 		  "state": "alerting",
-		  "message": "\n**Firing**\nLabels:\n - alertname = WebhookAlert\n - __alert_rule_uid__ = UID_WebhookAlert\nAnnotations:\nSource: \n\n\n\n\n"
+		  "message": "\n**Firing**\nLabels:\n - alertname = WebhookAlert\n - __alert_rule_uid__ = UID_WebhookAlert\n - __value__ = [ var='A' lables={} value=1 ]\nAnnotations:\nSource: \n\n\n\n\n"
 		}`,
 	},
 	"discord_recv/discord_test": {
 		`{
-		  "content": "\n**Firing**\nLabels:\n - alertname = DiscordAlert\n - __alert_rule_uid__ = UID_DiscordAlert\nAnnotations:\nSource: \n\n\n\n\n",
+		  "content": "\n**Firing**\nLabels:\n - alertname = DiscordAlert\n - __alert_rule_uid__ = UID_DiscordAlert\n - __value__ = [ var='A' lables={} value=1 ]\nAnnotations:\nSource: \n\n\n\n\n",
 		  "embeds": [
 			{
 			  "color": 14037554,
@@ -1463,7 +1468,7 @@ var expNotifications = map[string][]string{
 				"icon_url": "https://grafana.com/assets/img/fav32.png",
 				"text": "Grafana v"
 			  },
-			  "title": "[FIRING:1] DiscordAlert (UID_DiscordAlert)",
+			  "title": "[FIRING:1] DiscordAlert (UID_DiscordAlert [ var='A' lables={} value=1 ])",
 			  "type": "rich",
 			  "url": "http://localhost:3000/alerting/list"
 			}
@@ -1483,7 +1488,7 @@ var expNotifications = map[string][]string{
 			  },
 			  "name": "default"
 			},
-			"output": "\n**Firing**\nLabels:\n - alertname = SensuGoAlert\n - __alert_rule_uid__ = UID_SensuGoAlert\nAnnotations:\nSource: \n\n\n\n\n",
+			"output": "\n**Firing**\nLabels:\n - alertname = SensuGoAlert\n - __alert_rule_uid__ = UID_SensuGoAlert\n - __value__ = [ var='A' lables={} value=1 ]\nAnnotations:\nSource: \n\n\n\n\n",
 			"status": 2
 		  },
 		  "entity": {
@@ -1496,26 +1501,26 @@ var expNotifications = map[string][]string{
 		}`,
 	},
 	"pushover_recv/pushover_test": {
-		"--abcd\r\nContent-Disposition: form-data; name=\"user\"\r\n\r\nmysecretkey\r\n--abcd\r\nContent-Disposition: form-data; name=\"token\"\r\n\r\nmysecrettoken\r\n--abcd\r\nContent-Disposition: form-data; name=\"priority\"\r\n\r\n0\r\n--abcd\r\nContent-Disposition: form-data; name=\"sound\"\r\n\r\n\r\n--abcd\r\nContent-Disposition: form-data; name=\"title\"\r\n\r\n[FIRING:1] PushoverAlert (UID_PushoverAlert)\r\n--abcd\r\nContent-Disposition: form-data; name=\"url\"\r\n\r\nhttp://localhost:3000/alerting/list\r\n--abcd\r\nContent-Disposition: form-data; name=\"url_title\"\r\n\r\nShow alert rule\r\n--abcd\r\nContent-Disposition: form-data; name=\"message\"\r\n\r\n\n**Firing**\nLabels:\n - alertname = PushoverAlert\n - __alert_rule_uid__ = UID_PushoverAlert\nAnnotations:\nSource: \n\n\n\n\n\r\n--abcd\r\nContent-Disposition: form-data; name=\"html\"\r\n\r\n1\r\n--abcd--\r\n",
+		"--abcd\r\nContent-Disposition: form-data; name=\"user\"\r\n\r\nmysecretkey\r\n--abcd\r\nContent-Disposition: form-data; name=\"token\"\r\n\r\nmysecrettoken\r\n--abcd\r\nContent-Disposition: form-data; name=\"priority\"\r\n\r\n0\r\n--abcd\r\nContent-Disposition: form-data; name=\"sound\"\r\n\r\n\r\n--abcd\r\nContent-Disposition: form-data; name=\"title\"\r\n\r\n[FIRING:1] PushoverAlert (UID_PushoverAlert [ var='A' lables={} value=1 ])\r\n--abcd\r\nContent-Disposition: form-data; name=\"url\"\r\n\r\nhttp://localhost:3000/alerting/list\r\n--abcd\r\nContent-Disposition: form-data; name=\"url_title\"\r\n\r\nShow alert rule\r\n--abcd\r\nContent-Disposition: form-data; name=\"message\"\r\n\r\n\n**Firing**\nLabels:\n - alertname = PushoverAlert\n - __alert_rule_uid__ = UID_PushoverAlert\n - __value__ = [ var='A' lables={} value=1 ]\nAnnotations:\nSource: \n\n\n\n\n\r\n--abcd\r\nContent-Disposition: form-data; name=\"html\"\r\n\r\n1\r\n--abcd--\r\n",
 	},
 	"telegram_recv/bot6sh027hs034h": {
-		"--abcd\r\nContent-Disposition: form-data; name=\"chat_id\"\r\n\r\ntelegram_chat_id\r\n--abcd\r\nContent-Disposition: form-data; name=\"parse_mode\"\r\n\r\nhtml\r\n--abcd\r\nContent-Disposition: form-data; name=\"text\"\r\n\r\n\n**Firing**\nLabels:\n - alertname = TelegramAlert\n - __alert_rule_uid__ = UID_TelegramAlert\nAnnotations:\nSource: \n\n\n\n\n\r\n--abcd--\r\n",
+		"--abcd\r\nContent-Disposition: form-data; name=\"chat_id\"\r\n\r\ntelegram_chat_id\r\n--abcd\r\nContent-Disposition: form-data; name=\"parse_mode\"\r\n\r\nhtml\r\n--abcd\r\nContent-Disposition: form-data; name=\"text\"\r\n\r\n\n**Firing**\nLabels:\n - alertname = TelegramAlert\n - __alert_rule_uid__ = UID_TelegramAlert\n - __value__ = [ var='A' lables={} value=1 ]\nAnnotations:\nSource: \n\n\n\n\n\r\n--abcd--\r\n",
 	},
 	"googlechat_recv/googlechat_test": {
 		`{
-		  "previewText": "[FIRING:1] GoogleChatAlert (UID_GoogleChatAlert)",
-		  "fallbackText": "[FIRING:1] GoogleChatAlert (UID_GoogleChatAlert)",
+		  "previewText": "[FIRING:1] GoogleChatAlert (UID_GoogleChatAlert [ var='A' lables={} value=1 ])",
+		  "fallbackText": "[FIRING:1] GoogleChatAlert (UID_GoogleChatAlert [ var='A' lables={} value=1 ])",
 		  "cards": [
 			{
 			  "header": {
-				"title": "[FIRING:1] GoogleChatAlert (UID_GoogleChatAlert)"
+				"title": "[FIRING:1] GoogleChatAlert (UID_GoogleChatAlert [ var='A' lables={} value=1 ])"
 			  },
 			  "sections": [
 				{
 				  "widgets": [
 					{
 					  "textParagraph": {
-						"text": "\n**Firing**\nLabels:\n - alertname = GoogleChatAlert\n - __alert_rule_uid__ = UID_GoogleChatAlert\nAnnotations:\nSource: \n\n\n\n\n"
+						"text": "\n**Firing**\nLabels:\n - alertname = GoogleChatAlert\n - __alert_rule_uid__ = UID_GoogleChatAlert\n - __value__ = [ var='A' lables={} value=1 ]\nAnnotations:\nSource: \n\n\n\n\n"
 					  }
 					},
 					{
@@ -1552,8 +1557,8 @@ var expNotifications = map[string][]string{
 				"alert_state": "alerting",
 				"client": "Grafana",
 				"client_url": "http://localhost:3000/alerting/list",
-				"description": "[FIRING:1] KafkaAlert (UID_KafkaAlert)",
-				"details": "\n**Firing**\nLabels:\n - alertname = KafkaAlert\n - __alert_rule_uid__ = UID_KafkaAlert\nAnnotations:\nSource: \n\n\n\n\n",
+				"description": "[FIRING:1] KafkaAlert (UID_KafkaAlert [ var='A' lables={} value=1 ])",
+				"details": "\n**Firing**\nLabels:\n - alertname = KafkaAlert\n - __alert_rule_uid__ = UID_KafkaAlert\n - __value__ = [ var='A' lables={} value=1 ]\nAnnotations:\nSource: \n\n\n\n\n",
 				"incident_key": "35c0bdb1715f9162a20d7b2a01cb2e3a4c5b1dc663571701e3f67212b696332f"
 			  }
 			}
@@ -1561,30 +1566,30 @@ var expNotifications = map[string][]string{
 		}`,
 	},
 	"line_recv/line_test": {
-		`message=%5BFIRING%3A1%5D+LineAlert+%28UID_LineAlert%29%0Ahttp%3A%2Flocalhost%3A3000%2Falerting%2Flist%0A%0A%0A%2A%2AFiring%2A%2A%0ALabels%3A%0A+-+alertname+%3D+LineAlert%0A+-+__alert_rule_uid__+%3D+UID_LineAlert%0AAnnotations%3A%0ASource%3A+%0A%0A%0A%0A%0A`,
+		`message=%5BFIRING%3A1%5D+LineAlert+%28UID_LineAlert+%5B+var%3D%27A%27+lables%3D%7B%7D+value%3D1+%5D%29%0Ahttp%3A%2Flocalhost%3A3000%2Falerting%2Flist%0A%0A%0A%2A%2AFiring%2A%2A%0ALabels%3A%0A+-+alertname+%3D+LineAlert%0A+-+__alert_rule_uid__+%3D+UID_LineAlert%0A+-+__value__+%3D+%5B+var%3D%27A%27+lables%3D%7B%7D+value%3D1+%5D%0AAnnotations%3A%0ASource%3A+%0A%0A%0A%0A%0A`,
 	},
 	"threema_recv/threema_test": {
-		`from=%2A1234567&secret=myapisecret&text=%E2%9A%A0%EF%B8%8F+%5BFIRING%3A1%5D+ThreemaAlert+%28UID_ThreemaAlert%29%0A%0A%2AMessage%3A%2A%0A%0A%2A%2AFiring%2A%2A%0ALabels%3A%0A+-+alertname+%3D+ThreemaAlert%0A+-+__alert_rule_uid__+%3D+UID_ThreemaAlert%0AAnnotations%3A%0ASource%3A+%0A%0A%0A%0A%0A%0A%2AURL%3A%2A+http%3A%2Flocalhost%3A3000%2Falerting%2Flist%0A&to=abcdefgh`,
+		`from=%2A1234567&secret=myapisecret&text=%E2%9A%A0%EF%B8%8F+%5BFIRING%3A1%5D+ThreemaAlert+%28UID_ThreemaAlert+%5B+var%3D%27A%27+lables%3D%7B%7D+value%3D1+%5D%29%0A%0A%2AMessage%3A%2A%0A%0A%2A%2AFiring%2A%2A%0ALabels%3A%0A+-+alertname+%3D+ThreemaAlert%0A+-+__alert_rule_uid__+%3D+UID_ThreemaAlert%0A+-+__value__+%3D+%5B+var%3D%27A%27+lables%3D%7B%7D+value%3D1+%5D%0AAnnotations%3A%0ASource%3A+%0A%0A%0A%0A%0A%0A%2AURL%3A%2A+http%3A%2Flocalhost%3A3000%2Falerting%2Flist%0A&to=abcdefgh`,
 	},
 	"victorops_recv/victorops_test": {
 		`{
 		  "alert_url": "http://localhost:3000/alerting/list",
-		  "entity_display_name": "[FIRING:1] VictorOpsAlert (UID_VictorOpsAlert)",
+		  "entity_display_name": "[FIRING:1] VictorOpsAlert (UID_VictorOpsAlert [ var='A' lables={} value=1 ])",
 		  "entity_id": "633ae988fa7074bcb51f3d1c5fef2ba1c5c4ccb45b3ecbf681f7d507b078b1ae",
 		  "message_type": "CRITICAL",
 		  "monitoring_tool": "Grafana v",
-		  "state_message": "\n**Firing**\nLabels:\n - alertname = VictorOpsAlert\n - __alert_rule_uid__ = UID_VictorOpsAlert\nAnnotations:\nSource: \n\n\n\n\n",
+		  "state_message": "\n**Firing**\nLabels:\n - alertname = VictorOpsAlert\n - __alert_rule_uid__ = UID_VictorOpsAlert\n - __value__ = [ var='A' lables={} value=1 ]\nAnnotations:\nSource: \n\n\n\n\n",
 		  "timestamp": %s
 		}`,
 	},
 	"opsgenie_recv/opsgenie_test": {
 		`{
 		  "alias": "47e92f0f6ef9fe99f3954e0d6155f8d09c4b9a038d8c3105e82c0cee4c62956e",
-		  "description": "[FIRING:1] OpsGenieAlert (UID_OpsGenieAlert)\nhttp://localhost:3000/alerting/list\n\n\n**Firing**\nLabels:\n - alertname = OpsGenieAlert\n - __alert_rule_uid__ = UID_OpsGenieAlert\nAnnotations:\nSource: \n\n\n\n\n",
+		  "description": "[FIRING:1] OpsGenieAlert (UID_OpsGenieAlert [ var='A' lables={} value=1 ])\nhttp://localhost:3000/alerting/list\n\n\n**Firing**\nLabels:\n - alertname = OpsGenieAlert\n - __alert_rule_uid__ = UID_OpsGenieAlert\n - __value__ = [ var='A' lables={} value=1 ]\nAnnotations:\nSource: \n\n\n\n\n",
 		  "details": {
 			"url": "http://localhost:3000/alerting/list"
 		  },
-		  "message": "[FIRING:1] OpsGenieAlert (UID_OpsGenieAlert)",
+		  "message": "[FIRING:1] OpsGenieAlert (UID_OpsGenieAlert [ var='A' lables={} value=1 ])",
 		  "source": "Grafana",
 		  "tags": []
 		}`,
@@ -1595,6 +1600,7 @@ var expNotifications = map[string][]string{
 		  {
 			"labels": {
 			  "__alert_rule_uid__": "UID_AlertmanagerAlert",
+        "__value__": "[ var='A' lables={} value=1 ]",
 			  "alertname": "AlertmanagerAlert"
 			},
 			"annotations": {},
