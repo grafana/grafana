@@ -226,13 +226,20 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
 
         // Create exemplar query
         if (target.exemplar) {
-          const exemplarTarget = cloneDeep(target);
-          exemplarTarget.instant = false;
-          exemplarTarget.requestId += '_exemplar';
+          const metricName = this.languageProvider.histogramMetrics.find((m) => target.expr.includes(m));
+          // Only create exemplar target for different metric names
+          if (
+            !metricName ||
+            (metricName && !activeTargets.some((activeTarget) => activeTarget.expr.includes(metricName)))
+          ) {
+            const exemplarTarget = cloneDeep(target);
+            exemplarTarget.instant = false;
+            exemplarTarget.requestId += '_exemplar';
+            queries.push(this.createQuery(exemplarTarget, options, start, end));
+            activeTargets.push(exemplarTarget);
+          }
           instantTarget.exemplar = false;
           rangeTarget.exemplar = false;
-          queries.push(this.createQuery(exemplarTarget, options, start, end));
-          activeTargets.push(exemplarTarget);
         }
 
         // Add both targets to activeTargets and queries arrays
