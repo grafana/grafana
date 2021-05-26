@@ -152,6 +152,13 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
             }
           }
 
+          // Palette color modes use series index (field index) which does not work for when displaing rows
+          // So updating seriesIndex here makes the palette color modes work in "All values" mode
+          field.state = {
+            ...field.state,
+            seriesIndex: values.length,
+          };
+
           const displayValue = display(field.values.get(j));
 
           if (displayName !== '') {
