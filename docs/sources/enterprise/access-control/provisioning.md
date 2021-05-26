@@ -27,7 +27,7 @@ To create or update custom roles, you can add a list of `roles` in the configura
 
 Note that in order to update a role, you would need to increment the [version]({{< relref "./roles.md#custom-roles" >}}). 
 
-It is only possibly to provision [organization local]({{< relref "./roles#role-scopes" >}}) roles. For creating or updating _global_ roles, refer to the [Fine-grained access control HTTP API]({{< relref "../../http_api/access_control.md" >}}).
+When setting the global flag on a role it overwrites the `orgId`.
 
 ### Delete roles 
 
@@ -110,6 +110,21 @@ roles:
       - name: "Editor"
         # <int> org id. will default to the role org id
         orgId: 1        
+  - name: GlobalReader
+    uid: globalreader
+    description: "Global Role for custom user reader"
+    version: 1
+    # <bool> overwrite org id and creates a global role
+    global: true
+    permissions:
+      - action: "users:read"
+        scope: "users:*"
+    builtInRoles:
+      - name: "Viewer"
+        orgId: 1        
+      - name: "Editor"
+        # <bool> overwrite org id and assign role globally
+        global: true
 ```
 
 ## Supported settings
@@ -132,8 +147,8 @@ A basic set of validation rules are applied to the input `yaml` files.
 ### Built-in role assignments
 
 - `name` must be one of the Organization roles (`Viewer`, `Editor`, `Admin`) or `Grafana Admin`. 
-- When `orgId` is not specified, it inherits the `orgId` from `role`.
-- `orgId` in the `role` and in the assignment must be the same.
+- When `orgId` is not specified, it inherits the `orgId` from `role`. For global roles the default `orgId` is used.
+- `orgId` in the `role` and in the assignment must be the same for none global roles. 
 
 ### Role deletion
 
