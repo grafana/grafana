@@ -255,6 +255,9 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 			"cloud":                  hs.Cfg.Azure.Cloud,
 			"managedIdentityEnabled": hs.Cfg.Azure.ManagedIdentityEnabled,
 		},
+		"caching": map[string]bool{
+			"enabled": hs.Cfg.SectionWithEnvOverrides("caching").Key("enabled").MustBool(true),
+		},
 	}
 
 	return jsonObj, nil
