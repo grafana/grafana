@@ -6,13 +6,11 @@ weight = 1
 
 # Plugin catalog
 
-> **Note:** Only available in Grafana v8.0+.
-
-Plugin catalog allows users to browse and manage plugins from within Grafana. Only Grafana Admins can access and use the catalog.
+The Plugin catalog, new in Grafana 8.0, allows users to browse and manage plugins from within Grafana. Only Grafana Admins can access and use the catalog.
 
 ![Plugin catalog install flow](/img/docs/plugins/plugins-catalog-user-install-8-0.gif)
 
-To use the Plugin catalog, you first need to enable it in the Grafana [configuration]({{< relref "../administration/configuration.md#plugin_admin_enabled" >}}).
+Before you can use the Plugin catalog, you must enable it in the Grafana [configuration]({{< relref "../administration/configuration.md#plugin_admin_enabled" >}}) file.
 Before following the steps below, make sure you are logged in as a Grafana administrator.
 
 ## Browse plugins
@@ -30,8 +28,8 @@ Before following the steps below, make sure you are logged in as a Grafana admin
 1. Click the **Install &amp; manage plugins** button.
 1. Browse and find a plugin.
 1. Click on the plugin logo.
-1. Click the **Install** button.
-1. Wait for a notification confirming the installation was successful.
+1. Click the **Install** button. 
+A confirmation message opens notifying that the installation was successful.
 
 ![Plugin catalog install](/img/docs/plugins/plugins-catalog-install-8-0.png)
 
@@ -42,7 +40,7 @@ Before following the steps below, make sure you are logged in as a Grafana admin
 1. Navigate to the **Library** tab.
 1. Click on the plugin logo.
 1. Click the **Update** button.
-1. Wait for a notification confirming the update was successful.
+A confirmation message opens notifying that the installation was successful.
 
 ![Plugin catalog update](/img/docs/plugins/plugins-catalog-update-8-0.png)
 
@@ -53,6 +51,6 @@ Before following the steps below, make sure you are logged in as a Grafana admin
 1. Navigate to the **Library** tab.
 1. Click on the plugin logo.
 1. Click the **Uninstall** button.
-1. Wait for a notification confirming the uninstallation was successful.
+A confirmation message opens notifying that the installation was successful.
    
 ![Plugin catalog uninstall](/img/docs/plugins/plugins-catalog-uninstall-8-0.png)
