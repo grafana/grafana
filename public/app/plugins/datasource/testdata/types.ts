@@ -6,19 +6,10 @@ export interface Scenario {
   stringInput: string;
 }
 
-export type PointValue = number;
-
-export interface NewPoint {
-  newPointValue: string;
-  newPointTime: string;
-}
-export type Points = PointValue[][];
-
 export interface TestDataQuery extends DataQuery {
   alias?: string;
   scenarioId: string;
   stringInput?: string;
-  points?: Points;
   stream?: StreamingQuery;
   pulseWave?: PulseWaveQuery;
   csvWave?: CSVWave[];

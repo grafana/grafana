@@ -27,7 +27,6 @@ const (
 	noDataPointsQuery                 queryType = "no_data_points"
 	datapointsOutsideRangeQuery       queryType = "datapoints_outside_range"
 	csvMetricValuesQuery              queryType = "csv_metric_values"
-	manualEntryQuery                  queryType = "manual_entry"
 	predictablePulseQuery             queryType = "predictable_pulse"
 	predictableCSVWaveQuery           queryType = "predictable_csv_wave"
 	streamingClientQuery              queryType = "streaming_client"
@@ -116,12 +115,6 @@ Timestamps will line up evenly on timeStepSeconds (For example, 60 seconds means
 		ID:      string(datapointsOutsideRangeQuery),
 		Name:    "Datapoints Outside Range",
 		handler: p.handleDatapointsOutsideRangeScenario,
-	})
-
-	p.registerScenario(&Scenario{
-		ID:      string(manualEntryQuery),
-		Name:    "Manual Entry",
-		handler: p.handleManualEntryScenario,
 	})
 
 	p.registerScenario(&Scenario{
@@ -284,55 +277,6 @@ func (p *testDataPlugin) handleDatapointsOutsideRangeScenario(ctx context.Contex
 			data.NewField(data.TimeSeriesTimeFieldName, nil, []time.Time{outsideTime}),
 			data.NewField(data.TimeSeriesValueFieldName, nil, []float64{10}),
 		}
-
-		respD := resp.Responses[q.RefID]
-		respD.Frames = append(respD.Frames, frame)
-		resp.Responses[q.RefID] = respD
-	}
-
-	return resp, nil
-}
-
-func (p *testDataPlugin) handleManualEntryScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	resp := backend.NewQueryDataResponse()
-
-	for _, q := range req.Queries {
-		model, err := simplejson.NewJson(q.JSON)
-		if err != nil {
-			return nil, fmt.Errorf("error reading query")
-		}
-		points := model.Get("points").MustArray()
-
-		frame := newSeriesForQuery(q, model, 0)
-
-		timeField := data.NewFieldFromFieldType(data.FieldTypeTime, 0)
-		valueField := data.NewFieldFromFieldType(data.FieldTypeNullableFloat64, 0)
-		timeField.Name = data.TimeSeriesTimeFieldName
-		valueField.Name = data.TimeSeriesValueFieldName
-
-		for _, val := range points {
-			pointValues := val.([]interface{})
-
-			var value *float64
-
-			if pointValues[0] != nil {
-				if valueFloat, err := strconv.ParseFloat(string(pointValues[0].(json.Number)), 64); err == nil {
-					value = &valueFloat
-				}
-			}
-
-			timeInt, err := strconv.ParseInt(string(pointValues[1].(json.Number)), 10, 64)
-			if err != nil {
-				continue
-			}
-
-			t := time.Unix(timeInt/int64(1e+3), (timeInt%int64(1e+3))*int64(1e+6))
-
-			timeField.Append(t)
-			valueField.Append(value)
-		}
-
-		frame.Fields = data.Fields{timeField, valueField}
 
 		respD := resp.Responses[q.RefID]
 		respD.Frames = append(respD.Frames, frame)

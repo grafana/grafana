@@ -233,15 +233,9 @@ func csvValuesToField(parts []string) (*data.Field, error) {
 	return field, nil
 }
 
-func parseTimestamp(value string) (time.Time, error) {
-	i, err := strconv.ParseInt(value, 10, 64)
-	if err != nil {
-		return time.Unix(i, 0).UTC(), nil
-	}
-	return time.Parse(time.RFC3339, value)
-}
-
+// This will try to convert the values to a timestamp
 func toTimeField(field *data.Field) *data.Field {
+	found := false
 	count := field.Len()
 	timeField := data.NewFieldFromFieldType(data.FieldTypeNullableTime, count)
 	timeField.Config = field.Config
@@ -254,7 +248,11 @@ func toTimeField(field *data.Field) *data.Field {
 			if err == nil {
 				t := time.Unix(0, int64(v)*int64(time.Millisecond))
 				timeField.SetConcrete(i, t.UTC())
+				found = true
 			}
+		}
+		if !found {
+			return nil
 		}
 		return timeField
 	}
@@ -265,8 +263,12 @@ func toTimeField(field *data.Field) *data.Field {
 				t, err := time.Parse(time.RFC3339, v.(string))
 				if err == nil {
 					timeField.SetConcrete(i, t.UTC())
+					found = true
 				}
 			}
+		}
+		if !found {
+			return nil
 		}
 		return timeField
 	}
