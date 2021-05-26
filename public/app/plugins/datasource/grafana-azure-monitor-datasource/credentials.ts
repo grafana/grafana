@@ -186,7 +186,7 @@ export function updateCredentials(
         },
         secureJsonFields: {
           ...options.secureJsonFields,
-          clientSecret: typeof credentials.clientSecret === 'object',
+          clientSecret: typeof credentials.clientSecret === 'symbol',
         },
       };
 
