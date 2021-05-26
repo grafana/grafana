@@ -69,7 +69,11 @@ The section contains tabs where you control almost every aspect of how your data
 
 Features in these tabs are documented in the following topics:
 
-- [Add a panel]({{< relref "add-a-panel.md" >}}) describes basic panel settings.
+- [Add a panel]({{< relref "./add-a-panel.md" >}}) describes how to add a panel to a dashboard.
+- Panel options
 - [Visualization options]({{< relref "visualizations/_index.md" >}}) vary widely. They are described in the individual visualization topic.
-- [Field options and overrides]({{< relref "field-options/_index.md" >}}) allow you to control almost every aspect of your visualization, including units, value mappings, and [Thresholds]({{< relref "thresholds.md" >}}).
+- Standard options
+- [Thresholds]({{< relref "./thresholds.md" >}})
+- Value mappings
 - [Panel links]({{< relref "../linking/panel-links.md" >}}) and [Data links]({{< relref "../linking/data-links.md" >}}) help you connect your visualization to other resources.
+- Overrides
