@@ -331,12 +331,21 @@ func (evalResults Results) AsDataFrame() data.Frame {
 		frame.Fields = append(frame.Fields, data.NewField(lKey, nil, make([]string, fieldLen)))
 	}
 	frame.Fields = append(frame.Fields, data.NewField("State", nil, make([]string, fieldLen)))
+	frame.Fields = append(frame.Fields, data.NewField("Info", nil, make([]string, fieldLen)))
 
 	for evalIdx, evalResult := range evalResults {
 		for lIdx, v := range labelColumns {
 			frame.Set(lIdx, evalIdx, evalResult.Instance[v])
 		}
+
 		frame.Set(len(labelColumns), evalIdx, evalResult.State.String())
+
+		switch {
+		case evalResult.Error != nil:
+			frame.Set(len(labelColumns)+1, evalIdx, evalResult.Error.Error())
+		case evalResult.EvaluationString != "":
+			frame.Set(len(labelColumns)+1, evalIdx, evalResult.EvaluationString)
+		}
 	}
 	return *frame
 }

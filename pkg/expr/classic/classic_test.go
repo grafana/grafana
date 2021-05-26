@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"testing"
 
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 	"github.com/stretchr/testify/require"
 	ptr "github.com/xorcare/pointer"
@@ -202,7 +203,7 @@ func TestConditionsCmdExecute(t *testing.T) {
 			vars: mathexp.Vars{
 				"A": mathexp.Results{
 					Values: []mathexp.Value{
-						valBasedSeries(ptr.Float64(30), ptr.Float64(40)),
+						valBasedSeriesWithLabels(data.Labels{"h": "1"}, ptr.Float64(30), ptr.Float64(40)),
 						valBasedSeries(ptr.Float64(0), ptr.Float64(10)),
 					},
 				},
@@ -218,7 +219,7 @@ func TestConditionsCmdExecute(t *testing.T) {
 				}},
 			resultNumber: func() mathexp.Number {
 				v := valBasedNumber(ptr.Float64(1))
-				v.SetMeta([]EvalMatch{{Value: ptr.Float64(35)}})
+				v.SetMeta([]EvalMatch{{Value: ptr.Float64(35), Labels: data.Labels{"h": "1"}}})
 				return v
 			},
 		},

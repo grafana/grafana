@@ -8,6 +8,7 @@ import { timeOptions, timeValidationPattern } from '../../utils/time';
 import { ConditionField } from './ConditionField';
 import { GrafanaAlertStatePicker } from './GrafanaAlertStatePicker';
 import { RuleEditorSection } from './RuleEditorSection';
+import { PreviewRule } from './PreviewRule';
 
 const MIN_TIME_RANGE_STEP_S = 10; // 10 seconds
 
@@ -142,6 +143,7 @@ export const ConditionsStep: FC = () => {
           </Field>
         </>
       )}
+      <PreviewRule />
     </RuleEditorSection>
   );
 };
