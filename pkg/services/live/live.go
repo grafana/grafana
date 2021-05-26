@@ -144,6 +144,7 @@ func (g *GrafanaLive) Init() error {
 	// cfg.LogLevel = centrifuge.LogLevelDebug
 	cfg.LogHandler = handleLog
 	cfg.LogLevel = centrifuge.LogLevelError
+	cfg.MetricsNamespace = "grafana_live"
 
 	// Node is the core object in Centrifuge library responsible for many useful
 	// things. For example Node allows to publish messages to channels from server
@@ -155,9 +156,9 @@ func (g *GrafanaLive) Init() error {
 	g.node = node
 
 	g.contextGetter = newPluginContextGetter(g.PluginContextProvider)
-	packetSender := newPluginPacketSender(node)
+	channelSender := newPluginChannelSender(node)
 	presenceGetter := newPluginPresenceGetter(node)
-	g.runStreamManager = runstream.NewManager(packetSender, presenceGetter, g.contextGetter)
+	g.runStreamManager = runstream.NewManager(channelSender, presenceGetter, g.contextGetter)
 
 	// Initialize the main features
 	dash := &features.DashboardHandler{

@@ -1,19 +1,18 @@
-export enum EntryType {
-  Collection,
-  SubCollection,
-  Resource,
-}
-export interface Row {
-  id: string;
-  name: string;
-  type: EntryType;
-  typeLabel: string;
-  subscriptionId: string;
-  location?: string;
-  children?: RowGroup;
-  resourceGroupName?: string;
+export enum ResourceRowType {
+  Subscription = 'Subscription',
+  ResourceGroup = 'ResourceGroup',
+  Resource = 'Resource',
+  VariableGroup = 'TemplateVariableGroup',
+  Variable = 'TemplateVariable',
 }
 
-export interface RowGroup {
-  [subscriptionIdOrResourceGroupName: string]: Row;
+export interface ResourceRow {
+  id: string;
+  name: string;
+  type: ResourceRowType;
+  typeLabel: string;
+  location?: string;
+  children?: ResourceRowGroup;
 }
+
+export type ResourceRowGroup = ResourceRow[];
