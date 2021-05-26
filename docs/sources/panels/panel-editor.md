@@ -9,6 +9,8 @@ This page describes the parts of the Grafana panel editor and links to where you
 
 {{< docs-imagebox img="/img/docs/panel-editor/panel-editor-7-0.png" class="docs-image--no-shadow" max-width="1500px" >}}
 
+If your user account is assigned the appropriate [organization role]({{< relref "../permissions/organization_roles.md" >}}) or [permissions]({{< relref "../permissions/_index.md" >}}), then you can edit or update a panel at any point after it is created. For more information about creating panels, refer to [Add a panel]({{< relref "./add-a-panel.md" >}})
+
 ## Open the Panel editor
 
 There are several ways to access the panel editor, also called the **Edit Panel** screen, _edit mode_, or _panel edit mode_:
