@@ -137,7 +137,7 @@ export function getInitHints(datasource?: PrometheusDatasource): QueryHint[] {
   // Hint if using Loki as Prometheus data source
   if (datasource.directUrl.includes('/loki') && !datasource.languageProvider.metrics.length) {
     hints.push({
-      label: `Using Loki as Prometheus data source is no longer supported and might stop working. Please use Loki data source for your Loki instance.`,
+      label: `Using Loki as a Prometheus data source is no longer supported. You must use the Loki data source for your Loki instance.`,
       type: 'INFO',
     });
   }
