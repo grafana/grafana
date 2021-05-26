@@ -51,7 +51,7 @@ export class UPlotChart extends React.Component<PlotProps, UPlotChartState> {
       return;
     }
     this.props.config.addHook('setSize', (u) => {
-      const canvas = u.root.querySelector<HTMLDivElement>('.u-over');
+      const canvas = u.over;
       if (!canvas) {
         return;
       }
