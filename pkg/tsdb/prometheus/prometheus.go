@@ -26,7 +26,6 @@ import (
 
 type PrometheusExecutor struct {
 	baseRoundTripperFactory func(dsInfo *models.DataSource) (http.RoundTripper, error)
-	intervalCalculator      interval.Calculator
 }
 
 type prometheusTransport struct {
@@ -74,7 +73,6 @@ func New(provider httpclient.Provider) func(*models.DataSource) (plugins.DataPlu
 		}
 
 		return &PrometheusExecutor{
-			intervalCalculator: interval.NewCalculator(interval.CalculatorOptions{MinInterval: time.Second * 1}),
 			baseRoundTripperFactory: func(ds *models.DataSource) (http.RoundTripper, error) {
 				return transport, nil
 			},
@@ -206,14 +204,14 @@ func (e *PrometheusExecutor) parseQuery(dsInfo *models.DataSource, query plugins
 			return nil, err
 		}
 
-		dsInterval, err := interval.GetIntervalFrom(dsInfo, queryModel.Model, time.Second*15)
+		intervalDuration, err := interval.CalculateIntervalDuration(*query.TimeRange, dsInfo, queryModel, time.Second*15)
 		if err != nil {
 			return nil, err
 		}
 
 		intervalFactor := queryModel.Model.Get("intervalFactor").MustInt64(1)
-		interval := e.intervalCalculator.Calculate(*query.TimeRange, dsInterval)
-		step := time.Duration(int64(interval.Value) * intervalFactor)
+
+		step := time.Duration(int64(intervalDuration) * intervalFactor)
 
 		qs = append(qs, &PrometheusQuery{
 			Expr:         expr,

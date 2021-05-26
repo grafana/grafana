@@ -69,15 +69,6 @@ func (ic *intervalCalculator) Calculate(timerange plugins.DataTimeRange, minInte
 func GetIntervalFrom(dsInfo *models.DataSource, queryModel *simplejson.Json, defaultInterval time.Duration) (time.Duration, error) {
 	interval := queryModel.Get("interval").MustString("")
 
-	// intervalMs field appears in the v2 plugins API and should be preferred
-	// if 'interval' isn't present.
-	if interval == "" {
-		intervalMS := queryModel.Get("intervalMs").MustInt(0)
-		if intervalMS != 0 {
-			return time.Duration(intervalMS) * time.Millisecond, nil
-		}
-	}
-
 	if interval == "" && dsInfo != nil && dsInfo.JsonData != nil {
 		dsInterval := dsInfo.JsonData.Get("timeInterval").MustString("")
 		if dsInterval != "" {
@@ -103,6 +94,26 @@ func GetIntervalFrom(dsInfo *models.DataSource, queryModel *simplejson.Json, def
 	}
 
 	return parsedInterval, nil
+}
+
+func CalculateIntervalDuration(timeRange plugins.DataTimeRange, dsInfo *models.DataSource, query plugins.DataSubQuery, defaultMinInterval time.Duration) (time.Duration, error) {
+	// first we look at `.IntervalMS`. if it exists, it is the value we need.
+	intervalMS := query.IntervalMS
+
+	if intervalMS != 0 {
+		return (time.Millisecond * time.Duration(intervalMS)), nil
+	}
+
+	// if `.IntervalMS` does not exist, we try to get the min-interval,
+	// and calculate the interval based on the timerange and the mininterval.
+	minInterval, err := GetIntervalFrom(dsInfo, query.Model, defaultMinInterval)
+
+	if err != nil {
+		return time.Duration(0), err
+	}
+
+	calc := NewCalculator()
+	return calc.Calculate(timeRange, minInterval).Value, nil
 }
 
 // FormatDuration converts a duration into the kbn format e.g. 1m 2h or 3d
