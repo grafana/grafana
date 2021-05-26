@@ -68,7 +68,6 @@ func (c *cache) getOrCreate(alertRule *ngModels.AlertRule, result eval.Result) *
 		OrgID:              alertRule.OrgID,
 		CacheId:            id,
 		Labels:             lbs,
-		State:              result.State,
 		Annotations:        annotations,
 		EvaluationDuration: result.EvaluationDuration,
 	}

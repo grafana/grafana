@@ -119,8 +119,8 @@ export function findMidPointYPosition(u: uPlot, idx: number) {
   for (let i = 1; i < u.data.length; i++) {
     const sData = u.data[i];
     const sVal = sData[idx];
-    if (sVal !== null) {
-      if (max === null) {
+    if (sVal != null) {
+      if (max == null) {
         max = sVal;
       } else {
         if (sVal > max) {
@@ -128,7 +128,7 @@ export function findMidPointYPosition(u: uPlot, idx: number) {
           sMaxIdx = i;
         }
       }
-      if (min === null) {
+      if (min == null) {
         min = sVal;
       } else {
         if (sVal < min) {
@@ -139,10 +139,10 @@ export function findMidPointYPosition(u: uPlot, idx: number) {
     }
   }
 
-  if (min === null && max === null) {
+  if (min == null && max == null) {
     // no tooltip to show
     y = undefined;
-  } else if (min !== null && max !== null) {
+  } else if (min != null && max != null) {
     // find median position
     y = (u.valToPos(min, u.series[sMinIdx].scale!) + u.valToPos(max, u.series[sMaxIdx].scale!)) / 2;
   } else {
