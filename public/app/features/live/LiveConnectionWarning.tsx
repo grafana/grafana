@@ -45,8 +45,8 @@ export class LiveConnectionWarning extends PureComponent<Props, State> {
   render() {
     const { show } = this.state;
     if (show) {
-      if (!contextSrv.isSignedIn) {
-        return null; // do not show the warning for anonomous users (and /login page etc)
+      if (!contextSrv.isSignedIn || (window as any).grafanaBootData.settings.liveDisabled === true) {
+        return null; // do not show the warning for anonymous users (and /login page etc)
       }
 
       return (

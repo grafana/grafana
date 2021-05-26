@@ -54,6 +54,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   viewersCanEdit = false;
   editorsCanAdmin = false;
   disableSanitizeHtml = false;
+  liveDisabled = false;
   theme: GrafanaTheme;
   theme2: GrafanaTheme2;
   pluginsToPreload: string[] = [];
