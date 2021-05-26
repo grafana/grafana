@@ -3,6 +3,7 @@ package channels
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	gokit_log "github.com/go-kit/kit/log"
 	"github.com/prometheus/alertmanager/notify"
@@ -103,7 +104,7 @@ func (kn *KafkaNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 		return false, err
 	}
 
-	topicURL := kn.Endpoint + "/topics/" + kn.Topic
+	topicURL := strings.TrimRight(kn.Endpoint, "/") + "/topics/" + kn.Topic
 
 	cmd := &models.SendWebhookSync{
 		Url:        topicURL,

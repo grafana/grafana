@@ -87,7 +87,7 @@ Content-Type: application/json; charset=UTF-8
     {
         "version": 1,
         "uid": "Kz9m_YjGz",
-        "name": "grafana:roles:reporting:admin:edit",
+        "name": "fixed:reporting:admin:edit",
         "description": "Gives access to edit any report or the organization's general reporting settings.",
         "global": true,
         "updated": "2021-05-13T16:24:26+02:00",
@@ -96,7 +96,7 @@ Content-Type: application/json; charset=UTF-8
     {
         "version": 5,
         "uid": "vi9mlLjGz",
-        "name": "grafana:roles:permissions:admin:read",
+        "name": "fixed:permissions:admin:read",
         "description": "Gives access to read and list roles and permissions, as well as built-in role assignments.",
         "global": true,
         "updated": "2021-05-13T22:41:49+02:00",
@@ -142,7 +142,7 @@ Content-Type: application/json; charset=UTF-8
 {
     "version": 2,
     "uid": "jZrmlLCGk",
-    "name": "grafana:roles:permissions:admin:edit",
+    "name": "fixed:permissions:admin:edit",
     "description": "Gives access to create, update and delete roles, as well as manage built-in role assignments.",
     "global": true,
     "permissions": [
@@ -176,7 +176,7 @@ Code | Description
 
 `POST /api/access-control/roles`
 
-Creates a new custom role and maps given permissions to that role. Note that roles with the same prefix as [Predefined Roles]({{< relref "../enterprise/access-control/roles.md" >}}) can't be created.
+Creates a new custom role and maps given permissions to that role. Note that roles with the same prefix as [Fixed Roles]({{< relref "../enterprise/access-control/roles.md" >}}) can't be created.
 
 #### Required permissions
 
@@ -438,7 +438,7 @@ Content-Type: application/json; charset=UTF-8
         {
             "version": 1,
             "uid": "qQui_LCMk",
-            "name": "grafana:roles:users:org:edit",
+            "name": "fixed:users:org:edit",
             "description": "",
             "global": true,
             "updated": "2021-05-13T16:24:26+02:00",
@@ -447,7 +447,7 @@ Content-Type: application/json; charset=UTF-8
         {
             "version": 1,
             "uid": "PeXmlYjMk",
-            "name": "grafana:roles:users:org:read",
+            "name": "fixed:users:org:read",
             "description": "",
             "global": true,
             "updated": "2021-05-13T16:24:26+02:00",
@@ -458,7 +458,7 @@ Content-Type: application/json; charset=UTF-8
         {
             "version": 1,
             "uid": "qQui_LCMk",
-            "name": "grafana:roles:users:org:edit",
+            "name": "fixed:users:org:edit",
             "description": "",
             "global": true,
             "updated": "2021-05-13T16:24:26+02:00",

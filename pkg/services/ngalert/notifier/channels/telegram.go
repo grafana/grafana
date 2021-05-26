@@ -82,6 +82,13 @@ func (tn *TelegramNotifier) Notify(ctx context.Context, as ...*types.Alert) (boo
 			tn.log.Warn("Failed to close writer", "err", err)
 		}
 	}()
+	boundary := GetBoundary()
+	if boundary != "" {
+		err = w.SetBoundary(boundary)
+		if err != nil {
+			return false, err
+		}
+	}
 
 	for k, v := range msg {
 		if err := writeField(w, k, v); err != nil {
