@@ -11,6 +11,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
@@ -79,15 +80,17 @@ func (p *testDataPlugin) loadCsvFile(fileName string) (*data.Frame, error) {
 	}
 
 	filePath := filepath.Join(p.Cfg.StaticRootPath, "testdata", fileName)
-	fileReader, err := os.Open(filepath.Clean(filePath))
+
+	// Can ignore gosec G304 here, because we check the file pattern above
+	// nolint:gosec
+	fileReader, err := os.Open(filePath)
 	if err != nil {
 		return nil, fmt.Errorf("failed open file: %v", err)
 	}
 
 	defer func() {
-		err = fileReader.Close()
-		if err != nil {
-			p.logger.Error("Failed to close file", "error", err)
+		if err := fileReader.Close(); err != nil {
+			p.logger.Warn("Failed to close file", "err", err, "path", fileName)
 		}
 	}()
 
@@ -125,30 +128,149 @@ func (p *testDataPlugin) loadCsvContent(ioReader io.Reader, name string) (*data.
 		}
 	}
 
+	longest := 0
 	for fieldIndex, rawValues := range fieldRawValues {
 		fieldName := fieldNames[fieldIndex]
-		parsedValues := parseRawStringValues(rawValues)
-		field := data.NewField(fieldName, nil, parsedValues)
-		fields = append(fields, field)
+		field, err := csvValuesToField(rawValues)
+		if err == nil {
+			// Check if the values are actually a time field
+			if strings.Contains(strings.ToLower(fieldName), "time") {
+				timeField := toTimeField(field)
+				if timeField != nil {
+					field = timeField
+				}
+			}
+
+			field.Name = fieldName
+			fields = append(fields, field)
+			if field.Len() > longest {
+				longest = field.Len()
+			}
+		}
+	}
+
+	// Make all fields the same length
+	for _, field := range fields {
+		delta := field.Len() - longest
+		if delta > 0 {
+			field.Extend(delta)
+		}
 	}
 
 	frame := data.NewFrame(name, fields...)
 	return frame, nil
 }
 
-func parseRawStringValues(values []string) interface{} {
-	numericValues := []float64{}
+func csvLineToField(stringInput string) (*data.Field, error) {
+	return csvValuesToField(strings.Split(strings.ReplaceAll(stringInput, " ", ""), ","))
+}
 
-	for _, value := range values {
-		numericValue, err := strconv.ParseFloat(value, 64)
-		if err == nil {
-			numericValues = append(numericValues, numericValue)
+func csvValuesToField(parts []string) (*data.Field, error) {
+	if len(parts) < 1 {
+		return nil, fmt.Errorf("csv must have at least one value")
+	}
+
+	first := strings.ToUpper(parts[0])
+	if first == "T" || first == "F" || first == "TRUE" || first == "FALSE" {
+		field := data.NewFieldFromFieldType(data.FieldTypeNullableBool, len(parts))
+		for idx, strVal := range parts {
+			strVal = strings.ToUpper(strVal)
+			if strVal == "NULL" || strVal == "" {
+				continue
+			}
+			field.SetConcrete(idx, strVal == "T" || strVal == "TRUE")
 		}
+		return field, nil
 	}
 
-	if len(values) == len(numericValues) {
-		return numericValues
+	// Try parsing values as numbers
+	ok := false
+	field := data.NewFieldFromFieldType(data.FieldTypeNullableInt64, len(parts))
+	for idx, strVal := range parts {
+		if strVal == "null" || strVal == "" {
+			continue
+		}
+
+		val, err := strconv.ParseInt(strVal, 10, 64)
+		if err != nil {
+			ok = false
+			break
+		}
+		field.SetConcrete(idx, val)
+		ok = true
+	}
+	if ok {
+		return field, nil
 	}
 
-	return values
+	// Maybe floats
+	field = data.NewFieldFromFieldType(data.FieldTypeNullableFloat64, len(parts))
+	for idx, strVal := range parts {
+		if strVal == "null" || strVal == "" {
+			continue
+		}
+
+		val, err := strconv.ParseFloat(strVal, 64)
+		if err != nil {
+			ok = false
+			break
+		}
+		field.SetConcrete(idx, val)
+		ok = true
+	}
+	if ok {
+		return field, nil
+	}
+
+	// Replace empty strings with null
+	field = data.NewFieldFromFieldType(data.FieldTypeNullableString, len(parts))
+	for idx, strVal := range parts {
+		if strVal == "null" || strVal == "" {
+			continue
+		}
+		field.SetConcrete(idx, strVal)
+	}
+	return field, nil
+}
+
+// This will try to convert the values to a timestamp
+func toTimeField(field *data.Field) *data.Field {
+	found := false
+	count := field.Len()
+	timeField := data.NewFieldFromFieldType(data.FieldTypeNullableTime, count)
+	timeField.Config = field.Config
+	timeField.Name = field.Name
+	timeField.Labels = field.Labels
+	ft := field.Type()
+	if ft.Numeric() {
+		for i := 0; i < count; i++ {
+			v, err := field.FloatAt(i)
+			if err == nil {
+				t := time.Unix(0, int64(v)*int64(time.Millisecond))
+				timeField.SetConcrete(i, t.UTC())
+				found = true
+			}
+		}
+		if !found {
+			return nil
+		}
+		return timeField
+	}
+	if ft == data.FieldTypeNullableString || ft == data.FieldTypeString {
+		for i := 0; i < count; i++ {
+			v, ok := field.ConcreteAt(i)
+			if ok && v != nil {
+				t, err := time.Parse(time.RFC3339, v.(string))
+				if err == nil {
+					timeField.SetConcrete(i, t.UTC())
+					found = true
+				}
+			}
+		}
+		if !found {
+			return nil
+		}
+		return timeField
+	}
+	return nil
 }

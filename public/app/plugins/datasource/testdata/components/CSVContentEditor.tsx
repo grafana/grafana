@@ -8,7 +8,7 @@ export const CSVContentEditor = ({ onChange, query }: EditorProps) => {
   };
 
   return (
-    <InlineField label="File" labelWidth={14}>
+    <InlineField label="CSV" labelWidth={14}>
       <TextArea
         width="100%"
         rows={10}
