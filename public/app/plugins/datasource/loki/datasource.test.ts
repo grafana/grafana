@@ -565,6 +565,7 @@ function makeAnnotationQueryRequest(): AnnotationQueryRequest<LokiQuery> {
       enable: true,
       name: 'test-annotation',
       iconColor: 'red',
+      tagKeys: 'label,label2,label3',
     },
     dashboard: {
       id: 1,
