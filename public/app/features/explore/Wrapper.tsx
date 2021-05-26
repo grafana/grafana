@@ -1,5 +1,5 @@
-import React, { Component } from 'react';
-import { connect } from 'react-redux';
+import React, { PureComponent } from 'react';
+import { connect, ConnectedProps } from 'react-redux';
 import { ExploreId, ExploreQueryParams } from 'app/types/explore';
 import { ErrorBoundaryAlert } from '@grafana/ui';
 import { lastSavedUrl, resetExploreAction, richHistoryUpdatedAction } from './state/main';
@@ -9,24 +9,30 @@ import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { NavModel } from '@grafana/data';
 import { Branding } from '../../core/components/Branding/Branding';
 
-// Libraries
-import { getNavModel, getTitleFromNavModel } from '../../core/selectors/navModel';
-
-// Types
+import { getNavModel } from '../../core/selectors/navModel';
 import { StoreState } from 'app/types';
 
-export interface WrapperProps extends GrafanaRouteComponentProps<{}, ExploreQueryParams> {
-  resetExploreAction: typeof resetExploreAction;
-  richHistoryUpdatedAction: typeof richHistoryUpdatedAction;
-  navModel: NavModel;
-}
+interface RouteProps extends GrafanaRouteComponentProps<{}, ExploreQueryParams> {}
+interface OwnProps {}
 
-export class Wrapper extends Component<WrapperProps> {
+const mapStateToProps = (state: StoreState) => {
+  return {
+    navModel: getNavModel(state.navIndex, 'explore'),
+  };
+};
+
+const mapDispatchToProps = {
+  resetExploreAction,
+  richHistoryUpdatedAction,
+};
+
+const connector = connect(mapStateToProps, mapDispatchToProps);
+
+type Props = OwnProps & RouteProps & ConnectedProps<typeof connector>;
+class WrapperUnconnected extends PureComponent<Props> {
   updatePageDocumentTitle(navModel: NavModel) {
-    // update document title
     if (navModel) {
-      const title = getTitleFromNavModel(navModel);
-      document.title = title ? `${title} - ${Branding.AppTitle}` : Branding.AppTitle;
+      document.title = `${navModel.main.text} - ${Branding.AppTitle}`;
     } else {
       document.title = Branding.AppTitle;
     }
@@ -66,15 +72,6 @@ export class Wrapper extends Component<WrapperProps> {
   }
 }
 
-function mapStateToProps(state: StoreState) {
-  return {
-    navModel: getNavModel(state.navIndex, 'explore'),
-  };
-}
+const Wrapper = connector(WrapperUnconnected);
 
-const mapDispatchToProps = {
-  resetExploreAction,
-  richHistoryUpdatedAction,
-};
-
-export default connect(mapStateToProps, mapDispatchToProps)(Wrapper);
+export default Wrapper;

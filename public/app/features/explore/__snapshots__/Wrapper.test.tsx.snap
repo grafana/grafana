@@ -2925,7 +2925,7 @@ exports[`Wrapper changes the document title of the explore page 1`] = `
   />
   <style />
   <title>
-    Explore: Explore - Grafana
+    Explore - Grafana
   </title>
   <style
     data-emotion="css"
