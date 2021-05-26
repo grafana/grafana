@@ -1,8 +1,8 @@
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
-import { AlertingRule } from 'app/types/unified-alerting';
+import { Alert } from 'app/types/unified-alerting';
 import { css, cx } from '@emotion/css';
-import React, { FC, Fragment, useState } from 'react';
+import React, { FC, Fragment, useMemo, useState } from 'react';
 import { getAlertTableStyles } from '../../styles/table';
 import { alertInstanceKey } from '../../utils/rules';
 import { AlertLabels } from '../AlertLabels';
@@ -10,8 +10,10 @@ import { CollapseToggle } from '../CollapseToggle';
 import { AlertInstanceDetails } from './AlertInstanceDetails';
 import { AlertStateTag } from './AlertStateTag';
 
+type AlertWithKey = Alert & { key: string };
+
 interface Props {
-  instances: AlertingRule['alerts'];
+  instances: Alert[];
 }
 
 export const AlertInstancesTable: FC<Props> = ({ instances }) => {
@@ -19,6 +21,18 @@ export const AlertInstancesTable: FC<Props> = ({ instances }) => {
   const tableStyles = useStyles2(getAlertTableStyles);
 
   const [expandedKeys, setExpandedKeys] = useState<string[]>([]);
+
+  // add key & sort instance. API returns instances in random order, different every time.
+  const sortedInstances = useMemo(
+    (): AlertWithKey[] =>
+      instances
+        .map((instance) => ({
+          ...instance,
+          key: alertInstanceKey(instance),
+        }))
+        .sort((a, b) => a.key.localeCompare(b.key)),
+    [instances]
+  );
 
   const toggleExpandedState = (ruleKey: string) =>
     setExpandedKeys(
@@ -42,8 +56,7 @@ export const AlertInstancesTable: FC<Props> = ({ instances }) => {
         </tr>
       </thead>
       <tbody>
-        {instances.map((instance, idx) => {
-          const key = alertInstanceKey(instance);
+        {sortedInstances.map(({ key, ...instance }, idx) => {
           const isExpanded = expandedKeys.includes(key);
 
           // don't allow expanding if there's nothing to show
