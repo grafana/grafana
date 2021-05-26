@@ -60,6 +60,7 @@ export function getColumns(data: DataFrame, availableWidth: number, columnMinWid
     const selectSortType = (type: FieldType): string => {
       switch (type) {
         case FieldType.number:
+          return 'number';
         case FieldType.time:
           return 'basic';
         default:
@@ -207,4 +208,17 @@ export function getFilteredOptions(options: SelectableValue[], filterValues?: Se
 
 export function sortCaseInsensitive(a: Row<any>, b: Row<any>, id: string) {
   return String(a.values[id]).localeCompare(String(b.values[id]), undefined, { sensitivity: 'base' });
+}
+
+const replaceNonNumeric = /[^0-9.]/gi;
+export function sortNumber(rowA: Row<any>, rowB: Row<any>, id: string) {
+  const valueA = rowA.values[id];
+  const valueB = rowB.values[id];
+  const a = isInfinity(valueA) ? valueA : Number(String(valueA).replace(replaceNonNumeric, ''));
+  const b = isInfinity(valueB) ? valueB : Number(String(valueB).replace(replaceNonNumeric, ''));
+  return a === b ? 0 : a > b ? 1 : -1;
+}
+
+function isInfinity(value: number): boolean {
+  return value === Number.POSITIVE_INFINITY || value === Number.NEGATIVE_INFINITY;
 }
