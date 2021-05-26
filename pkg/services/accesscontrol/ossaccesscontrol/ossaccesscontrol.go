@@ -39,16 +39,19 @@ func (ac *OSSAccessControlService) IsDisabled() bool {
 }
 
 func (ac *OSSAccessControlService) registerUsageMetrics() {
-	ac.UsageStats.RegisterMetricFunc(ac.getUsageMetrics)
+	ac.UsageStats.RegisterMetricsFunc(func() (map[string]interface{}, error) {
+		return map[string]interface{}{
+			"stats.oss.accesscontrol.enabled.count": ac.getUsageMetrics(),
+		}, nil
+	})
 }
 
-func (ac *OSSAccessControlService) getUsageMetrics() (map[string]interface{}, error) {
-	var value int
-	if !ac.IsDisabled() {
-		value = 1
+func (ac *OSSAccessControlService) getUsageMetrics() interface{} {
+	if ac.IsDisabled() {
+		return 0
 	}
 
-	return map[string]interface{}{"stats.oss.accesscontrol.enabled.count": value}, nil
+	return 1
 }
 
 // Evaluate evaluates access to the given resource

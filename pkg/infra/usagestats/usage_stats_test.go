@@ -413,7 +413,7 @@ func TestMetrics(t *testing.T) {
 		metricName := "stats.test_metric.count"
 
 		t.Run("Adds a new metric to the external metrics", func(t *testing.T) {
-			uss.RegisterMetricFunc(func() (map[string]interface{}, error) {
+			uss.RegisterMetricsFunc(func() (map[string]interface{}, error) {
 				return map[string]interface{}{metricName: 1}, nil
 			})
 
@@ -467,7 +467,7 @@ func TestMetrics(t *testing.T) {
 		})
 
 		t.Run("Should include external metrics", func(t *testing.T) {
-			uss.RegisterMetricFunc(func() (map[string]interface{}, error) {
+			uss.RegisterMetricsFunc(func() (map[string]interface{}, error) {
 				return map[string]interface{}{metricName: 1}, nil
 			})
 
@@ -484,7 +484,7 @@ func TestMetrics(t *testing.T) {
 		metrics := map[string]interface{}{"stats.test_metric.count": 1, "stats.test_metric_second.count": 2}
 		extMetricName := "stats.test_external_metric.count"
 
-		uss.RegisterMetricFunc(func() (map[string]interface{}, error) {
+		uss.RegisterMetricsFunc(func() (map[string]interface{}, error) {
 			return map[string]interface{}{extMetricName: 1}, nil
 		})
 
@@ -493,13 +493,13 @@ func TestMetrics(t *testing.T) {
 		assert.Equal(t, 1, metrics[extMetricName])
 
 		t.Run("When loading a metric results to an error", func(t *testing.T) {
-			uss.RegisterMetricFunc(func() (map[string]interface{}, error) {
+			uss.RegisterMetricsFunc(func() (map[string]interface{}, error) {
 				return map[string]interface{}{extMetricName: 1}, nil
 			})
 			extErrorMetricName := "stats.test_external_metric_error.count"
 
 			t.Run("Should not add it to metrics", func(t *testing.T) {
-				uss.RegisterMetricFunc(func() (map[string]interface{}, error) {
+				uss.RegisterMetricsFunc(func() (map[string]interface{}, error) {
 					return map[string]interface{}{extErrorMetricName: 1}, errors.New("some error")
 				})
 
