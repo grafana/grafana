@@ -96,6 +96,23 @@ describe('fixSummariesMetadata', () => {
     };
     expect(fixSummariesMetadata(metadata)).toEqual(expected);
   });
+
+  it('returns metadata with added bucket/count/sum for a histogram', () => {
+    const metadata = {
+      foo: [{ type: 'not_a_histogram', help: 'foo help' }],
+      bar: [{ type: 'histogram', help: 'bar help' }],
+    };
+    const expected = {
+      foo: [{ type: 'not_a_histogram', help: 'foo help' }],
+      bar: [{ type: 'histogram', help: 'bar help' }],
+      bar_bucket: [{ type: 'counter', help: 'Cumulative counters for the observation buckets (bar help)' }],
+      bar_count: [
+        { type: 'counter', help: 'Count of events that have been observed for the histogram metric (bar help)' },
+      ],
+      bar_sum: [{ type: 'counter', help: 'Total sum of all observed values for the histogram metric (bar help)' }],
+    };
+    expect(fixSummariesMetadata(metadata)).toEqual(expected);
+  });
 });
 
 describe('expandRecordingRules()', () => {
