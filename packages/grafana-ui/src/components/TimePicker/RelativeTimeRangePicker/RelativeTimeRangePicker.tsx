@@ -184,7 +184,7 @@ const getStyles = (fromError?: string, toError?: string) => (theme: GrafanaTheme
       position: absolute;
       z-index: ${theme.zIndex.dropdown};
       width: 500px;
-      top: 116%;
+      top: 100%;
       border-radius: 2px;
       border: 1px solid ${theme.colors.border.weak};
       left: 0;

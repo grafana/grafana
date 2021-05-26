@@ -34,7 +34,7 @@ export const isRangeValid = (relative: string, now = Date.now()): RangeValidatio
   if (seconds > Math.ceil(now / 1000)) {
     return {
       isValid: false,
-      errorMessage: 'Can not enter value prior to Jan 1, 1970.',
+      errorMessage: 'Can not enter value prior to January 1, 1970.',
     };
   }
 
