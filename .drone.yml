@@ -3446,81 +3446,13 @@ steps:
   image: aquasec/trivy:0.18.3
   commands:
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/grafana:latest
-
-- name: scan-docker-image-unkown-low-medium-vulnerabilities
-  image: aquasec/trivy:0.18.3
-  commands:
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/grafana:main
-
-- name: scan-docker-image-unkown-low-medium-vulnerabilities
-  image: aquasec/trivy:0.18.3
-  commands:
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/grafana:latest-ubuntu
-
-- name: scan-docker-image-unkown-low-medium-vulnerabilities
-  image: aquasec/trivy:0.18.3
-  commands:
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/grafana:main-ubuntu
-
-- name: scan-docker-image-unkown-low-medium-vulnerabilities
-  image: aquasec/trivy:0.18.3
-  commands:
-  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/grafana-enterprise:latest
-
-- name: scan-docker-image-unkown-low-medium-vulnerabilities
-  image: aquasec/trivy:0.18.3
-  commands:
-  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/grafana-enterprise:main
-
-- name: scan-docker-image-unkown-low-medium-vulnerabilities
-  image: aquasec/trivy:0.18.3
-  commands:
-  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/grafana-enterprise:latest-ubuntu
-
-- name: scan-docker-image-unkown-low-medium-vulnerabilities
-  image: aquasec/trivy:0.18.3
-  commands:
-  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/grafana-enterprise:main-ubuntu
-
-- name: scan-docker-image-high-critical-vulnerabilities
-  image: aquasec/trivy:0.18.3
-  commands:
-  - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/grafana:latest
-
-- name: scan-docker-image-high-critical-vulnerabilities
-  image: aquasec/trivy:0.18.3
-  commands:
-  - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/grafana:main
-
-- name: scan-docker-image-high-critical-vulnerabilities
-  image: aquasec/trivy:0.18.3
-  commands:
-  - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/grafana:latest-ubuntu
-
-- name: scan-docker-image-high-critical-vulnerabilities
-  image: aquasec/trivy:0.18.3
-  commands:
-  - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/grafana:main-ubuntu
-
-- name: scan-docker-image-high-critical-vulnerabilities
-  image: aquasec/trivy:0.18.3
-  commands:
-  - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/grafana-enterprise:latest
-
-- name: scan-docker-image-high-critical-vulnerabilities
-  image: aquasec/trivy:0.18.3
-  commands:
-  - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/grafana-enterprise:main
-
-- name: scan-docker-image-high-critical-vulnerabilities
-  image: aquasec/trivy:0.18.3
-  commands:
-  - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/grafana-enterprise:latest-ubuntu
-
-- name: scan-docker-image-high-critical-vulnerabilities
-  image: aquasec/trivy:0.18.3
-  commands:
-  - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/grafana-enterprise:main-ubuntu
+  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana-enterprise/grafana:latest
+  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana-enterprise/grafana:main
+  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana-enterprise/grafana:latest-ubuntu
+  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana-enterprise/grafana:main-ubuntu
 
 trigger:
   cron:

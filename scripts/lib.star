@@ -1082,12 +1082,19 @@ def validate_scuemata():
         ],
     }
 
-def scan_docker_image_unkown_low_medium_vulnerabilities_step(image, tag):
+def scan_docker_image_unkown_low_medium_vulnerabilities_step():
     return {
         'name': 'scan-docker-image-unkown-low-medium-vulnerabilities',
         'image': 'aquasec/trivy:0.18.3',
         'commands': [
-            'trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM ' + image + ':' + tag,
+            'trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/grafana:latest',
+            'trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/grafana:main',
+            'trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/grafana:latest-ubuntu',
+            'trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/grafana:main-ubuntu',
+            'trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana-enterprise/grafana:latest',
+            'trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana-enterprise/grafana:main',
+            'trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana-enterprise/grafana:latest-ubuntu',
+            'trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana-enterprise/grafana:main-ubuntu',    
         ],
     }
 
