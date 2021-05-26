@@ -162,10 +162,10 @@ func executeCondition(ctx AlertExecCtx, c *models.Condition, now time.Time, data
 		return ExecutionResults{Error: err}
 	}
 
-	// Eval Capture ...
+	// eval captures for the '__value__' label.
 	captures := []NumberValueCapture{}
 
-	addValue := func(refID string, labels data.Labels, value *float64) {
+	captureVal := func(refID string, labels data.Labels, value *float64) {
 		captures = append(captures, NumberValueCapture{
 			Var:    refID,
 			Value:  value,
@@ -174,33 +174,38 @@ func executeCondition(ctx AlertExecCtx, c *models.Condition, now time.Time, data
 	}
 
 	for refID, res := range execResp.Responses {
+		// for each frame within each response, capture value if it is a number.
 		for _, frame := range res.Frames {
-			if len(frame.Fields) == 1 && frame.Fields[0].Type() == data.FieldTypeNullableFloat64 {
-				var v *float64
-				if frame.Fields[0].Len() == 1 {
-					v = frame.At(0, 0).(*float64)
-				}
-				addValue(frame.RefID, frame.Fields[0].Labels, v)
+			if len(frame.Fields) != 1 || frame.Fields[0].Type() != data.FieldTypeNullableFloat64 {
+				continue
 			}
+			var v *float64
+			if frame.Fields[0].Len() == 1 {
+				v = frame.At(0, 0).(*float64) // type checked above
+			}
+			captureVal(frame.RefID, frame.Fields[0].Labels, v)
 		}
+
 		if refID == c.Condition {
 			result.Results = res.Frames
 		}
 	}
 
+	// add capture values as data frame metadata to each result (frame) that has matching labels.
 	for _, frame := range result.Results {
 		if frame.Meta != nil && frame.Meta.Custom != nil {
 			if _, ok := frame.Meta.Custom.([]classic.EvalMatch); ok {
-				continue
+				continue // do not overwrite EvalMatch from classic condition.
 			}
 		}
 
-		frame.SetMeta(&data.FrameMeta{})
+		frame.SetMeta(&data.FrameMeta{}) // overwrite metadata
 
 		if len(frame.Fields) == 1 {
 			theseLabels := frame.Fields[0].Labels
 			for _, cap := range captures {
-				if theseLabels.Equals(cap.Labels) || theseLabels.Contains(cap.Labels) {
+				// matching labels are equal labels, or when one set of labels includes the labels of the other.
+				if theseLabels.Equals(cap.Labels) || theseLabels.Contains(cap.Labels) || cap.Labels.Contains(theseLabels) {
 					if frame.Meta.Custom == nil {
 						frame.Meta.Custom = []NumberValueCapture{}
 					}
