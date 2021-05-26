@@ -59,11 +59,10 @@ function getStyles(theme: GrafanaTheme2) {
     `,
     table: css`
       flex: 1 1 auto;
-      height: 130px;
+      height: 135px;
       margin-top: ${theme.spacing(2)};
       border: 1px solid ${theme.colors.border.medium};
       border-radius: ${theme.shape.borderRadius(1)};
-      padding-bottom: ${theme.spacing(1)};
     `,
   };
 }
