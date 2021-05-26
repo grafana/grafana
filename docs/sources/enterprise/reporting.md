@@ -120,6 +120,8 @@ The last saved version of the report will be sent to selected emails. You can us
 
 ## Pause report
 
+> **Note:** Available in Grafana Enterprise v8+.
+
 You can pause sending of reports from the report list view by clicking the pause icon. The report will not be sent according to its schedule until it is resumed by clicking the resume button on the report row. 
 
 ## Send report via the API
