@@ -6,8 +6,6 @@ import (
 	"net/url"
 	"path"
 
-	gokit_log "github.com/go-kit/kit/log"
-	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 
@@ -16,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	old_notifiers "github.com/grafana/grafana/pkg/services/alerting/notifiers"
-	"github.com/grafana/grafana/pkg/services/ngalert/logging"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -66,13 +63,11 @@ func NewEmailNotifier(model *NotificationChannelConfig, t *template.Template) (*
 
 // Notify sends the alert notification.
 func (en *EmailNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
-	// We only need ExternalURL from this template object. This hack should go away with https://github.com/prometheus/alertmanager/pull/2508.
-	data, err := ExtendData(notify.GetTemplateData(ctx, &template.Template{ExternalURL: en.tmpl.ExternalURL}, as, gokit_log.NewLogfmtLogger(logging.NewWrapper(en.log))))
+	var tmplErr error
+	tmpl, data, err := TmplText(ctx, en.tmpl, as, en.log, &tmplErr)
 	if err != nil {
 		return false, err
 	}
-	var tmplErr error
-	tmpl := TmplText(en.tmpl, data, &tmplErr)
 
 	title := tmpl(`{{ template "default.title" . }}`)
 

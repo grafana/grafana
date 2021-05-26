@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"path/filepath"
@@ -799,7 +800,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				},
 			}
 
-			postDashboardScenario(t, "When calling POST on", "/api/dashboards", "/api/dashboards", mock, cmd, func(sc *scenarioContext) {
+			postDashboardScenario(t, "When calling POST on", "/api/dashboards", "/api/dashboards", mock, nil, cmd, func(sc *scenarioContext) {
 				callPostDashboardShouldReturnSuccess(sc)
 
 				dto := mock.SavedDashboards[0]
@@ -816,6 +817,91 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				assert.Equal(t, "uid", result.Get("uid").MustString())
 				assert.Equal(t, "dash", result.Get("slug").MustString())
 				assert.Equal(t, "/d/uid/dash", result.Get("url").MustString())
+			})
+		})
+
+		t.Run("Given a correct request for creating a dashboard with folder uid", func(t *testing.T) {
+			const folderUid string = "folderUID"
+			const dashID int64 = 2
+
+			cmd := models.SaveDashboardCommand{
+				OrgId:  1,
+				UserId: 5,
+				Dashboard: simplejson.NewFromAny(map[string]interface{}{
+					"title": "Dash",
+				}),
+				Overwrite: true,
+				FolderUid: folderUid,
+				IsFolder:  false,
+				Message:   "msg",
+			}
+
+			mock := &dashboards.FakeDashboardService{
+				SaveDashboardResult: &models.Dashboard{
+					Id:      dashID,
+					Uid:     "uid",
+					Title:   "Dash",
+					Slug:    "dash",
+					Version: 2,
+				},
+			}
+
+			mockFolder := &fakeFolderService{
+				GetFolderByUIDResult: &models.Folder{Id: 1, Uid: "folderUID", Title: "Folder"},
+			}
+
+			postDashboardScenario(t, "When calling POST on", "/api/dashboards", "/api/dashboards", mock, mockFolder, cmd, func(sc *scenarioContext) {
+				callPostDashboardShouldReturnSuccess(sc)
+
+				dto := mock.SavedDashboards[0]
+				assert.Equal(t, cmd.OrgId, dto.OrgId)
+				assert.Equal(t, cmd.UserId, dto.User.UserId)
+				assert.Equal(t, "Dash", dto.Dashboard.Title)
+				assert.True(t, dto.Overwrite)
+				assert.Equal(t, "msg", dto.Message)
+
+				result := sc.ToJSON()
+				assert.Equal(t, "success", result.Get("status").MustString())
+				assert.Equal(t, dashID, result.Get("id").MustInt64())
+				assert.Equal(t, "uid", result.Get("uid").MustString())
+				assert.Equal(t, "dash", result.Get("slug").MustString())
+				assert.Equal(t, "/d/uid/dash", result.Get("url").MustString())
+			})
+		})
+
+		t.Run("Given a request with incorrect folder uid for creating a dashboard with", func(t *testing.T) {
+			const folderUid string = "folderUID"
+			const dashID int64 = 2
+
+			cmd := models.SaveDashboardCommand{
+				OrgId:  1,
+				UserId: 5,
+				Dashboard: simplejson.NewFromAny(map[string]interface{}{
+					"title": "Dash",
+				}),
+				Overwrite: true,
+				FolderUid: folderUid,
+				IsFolder:  false,
+				Message:   "msg",
+			}
+
+			mock := &dashboards.FakeDashboardService{
+				SaveDashboardResult: &models.Dashboard{
+					Id:      dashID,
+					Uid:     "uid",
+					Title:   "Dash",
+					Slug:    "dash",
+					Version: 2,
+				},
+			}
+
+			mockFolder := &fakeFolderService{
+				GetFolderByUIDError: errors.New("Error while searching Folder ID"),
+			}
+
+			postDashboardScenario(t, "When calling POST on", "/api/dashboards", "/api/dashboards", mock, mockFolder, cmd, func(sc *scenarioContext) {
+				callPostDashboard(sc)
+				assert.Equal(t, 500, sc.resp.Code)
 			})
 		})
 
@@ -858,7 +944,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				}
 
 				postDashboardScenario(t, fmt.Sprintf("Expect '%s' error when calling POST on", tc.SaveError.Error()),
-					"/api/dashboards", "/api/dashboards", mock, cmd, func(sc *scenarioContext) {
+					"/api/dashboards", "/api/dashboards", mock, nil, cmd, func(sc *scenarioContext) {
 						callPostDashboard(sc)
 						assert.Equal(t, tc.ExpectedStatusCode, sc.resp.Code)
 					})
@@ -1207,7 +1293,8 @@ func callPostDashboardShouldReturnSuccess(sc *scenarioContext) {
 }
 
 func postDashboardScenario(t *testing.T, desc string, url string, routePattern string,
-	mock *dashboards.FakeDashboardService, cmd models.SaveDashboardCommand, fn scenarioFunc) {
+	mock *dashboards.FakeDashboardService, mockFolder *fakeFolderService, cmd models.SaveDashboardCommand,
+	fn scenarioFunc) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
 		t.Cleanup(bus.ClearBusHandlers)
 
@@ -1235,14 +1322,17 @@ func postDashboardScenario(t *testing.T, desc string, url string, routePattern s
 
 		origNewDashboardService := dashboards.NewService
 		origProvisioningService := dashboards.NewProvisioningService
+		origNewFolderService := dashboards.NewFolderService
 		t.Cleanup(func() {
 			dashboards.NewService = origNewDashboardService
 			dashboards.NewProvisioningService = origProvisioningService
+			dashboards.NewFolderService = origNewFolderService
 		})
 		dashboards.MockDashboardService(mock)
 		dashboards.NewProvisioningService = func(dboards.Store) dashboards.DashboardProvisioningService {
 			return mockDashboardProvisioningService{}
 		}
+		mockFolderService(mockFolder)
 
 		sc.m.Post(routePattern, sc.defaultHandler)
 
