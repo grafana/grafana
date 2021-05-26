@@ -3,6 +3,7 @@ package channels
 import (
 	"context"
 	"fmt"
+	"net/url"
 	"path"
 
 	gokit_log "github.com/go-kit/kit/log"
@@ -66,11 +67,24 @@ func NewEmailNotifier(model *NotificationChannelConfig, t *template.Template) (*
 // Notify sends the alert notification.
 func (en *EmailNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
 	// We only need ExternalURL from this template object. This hack should go away with https://github.com/prometheus/alertmanager/pull/2508.
-	data := notify.GetTemplateData(ctx, &template.Template{ExternalURL: en.tmpl.ExternalURL}, as, gokit_log.NewLogfmtLogger(logging.NewWrapper(en.log)))
+	data, err := ExtendData(notify.GetTemplateData(ctx, &template.Template{ExternalURL: en.tmpl.ExternalURL}, as, gokit_log.NewLogfmtLogger(logging.NewWrapper(en.log))))
+	if err != nil {
+		return false, err
+	}
 	var tmplErr error
-	tmpl := notify.TmplText(en.tmpl, data, &tmplErr)
+	tmpl := TmplText(en.tmpl, data, &tmplErr)
 
 	title := tmpl(`{{ template "default.title" . }}`)
+
+	u, err := url.Parse(en.tmpl.ExternalURL.String())
+	if err != nil {
+		return false, fmt.Errorf("failed to parse external URL: %w", err)
+	}
+	basePath := u.Path
+	u.Path = path.Join(basePath, "/alerting/list")
+	ruleURL := u.String()
+	u.RawQuery = "alertState=firing&view=state"
+	alertPageURL := u.String()
 
 	cmd := &models.SendEmailCommandSync{
 		SendEmailCommand: models.SendEmailCommand{
@@ -84,8 +98,8 @@ func (en *EmailNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 				"CommonLabels":      data.CommonLabels,
 				"CommonAnnotations": data.CommonAnnotations,
 				"ExternalURL":       data.ExternalURL,
-				"RuleUrl":           path.Join(en.tmpl.ExternalURL.String(), "/alerting/list"),
-				"AlertPageUrl":      path.Join(en.tmpl.ExternalURL.String(), "/alerting/list?alertState=firing&view=state"),
+				"RuleUrl":           ruleURL,
+				"AlertPageUrl":      alertPageURL,
 			},
 			To:          en.Addresses,
 			SingleEmail: en.SingleEmail,

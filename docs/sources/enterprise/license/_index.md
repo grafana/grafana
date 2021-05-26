@@ -2,7 +2,7 @@
 title = "Grafana Enterprise license"
 description = "Enterprise license"
 keywords = ["grafana", "licensing", "enterprise"]
-weight = 100
+weight = 10
 +++
 
 # Grafana Enterprise license

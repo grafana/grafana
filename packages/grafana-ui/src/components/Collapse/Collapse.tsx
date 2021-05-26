@@ -13,6 +13,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   collapseBody: css`
     label: collapse__body;
     padding: ${theme.spacing(theme.components.panel.padding)};
+    padding-top: 0;
     flex: 1;
     overflow: hidden;
     display: flex;
@@ -59,7 +60,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
   header: css`
     label: collapse__header;
-    padding: ${theme.spacing(1, 2)};
+    padding: ${theme.spacing(1, 2, 0.5, 2)};
     display: flex;
     cursor: inherit;
     transition: all 0.1s linear;
@@ -67,20 +68,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
   headerCollapsed: css`
     label: collapse__header--collapsed;
-    cursor: pointer;
-    padding: ${theme.spacing(1, 2)};
-  `,
-  headerButtons: css`
-    label: collapse__header-buttons;
-    margin-right: ${theme.spacing(1)};
-    margin-top: ${theme.spacing(0.25)};
-    font-size: ${theme.typography.size.lg};
-    line-height: ${theme.typography.h6.lineHeight};
-    display: inherit;
-  `,
-  headerButtonsCollapsed: css`
-    label: collapse__header-buttons--collapsed;
-    display: none;
+    padding: ${theme.spacing(1, 2, 0.5, 2)};
   `,
   headerLabel: css`
     label: collapse__header-label;
@@ -110,6 +98,7 @@ export const ControlledCollapse: FunctionComponent<Props> = ({ isOpen, onToggle,
   return (
     <Collapse
       isOpen={open}
+      collapsible
       {...otherProps}
       onToggle={() => {
         setOpen(!open);
@@ -140,14 +129,11 @@ export const Collapse: FunctionComponent<Props> = ({
   const panelClass = cx([style.collapse, 'panel-container', className]);
   const loaderClass = loading ? cx([style.loader, style.loaderActive]) : cx([style.loader]);
   const headerClass = collapsible ? cx([style.header]) : cx([style.headerCollapsed]);
-  const headerButtonsClass = collapsible ? cx([style.headerButtons]) : cx([style.headerButtonsCollapsed]);
 
   return (
     <div className={panelClass}>
       <div className={headerClass} onClick={onClickToggle}>
-        <div className={headerButtonsClass}>
-          <Icon name={isOpen ? 'angle-up' : 'angle-down'} />
-        </div>
+        {collapsible && <Icon name={isOpen ? 'angle-up' : 'angle-down'} />}
         <div className={cx([style.headerLabel])}>{label}</div>
       </div>
       {isOpen && (

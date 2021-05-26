@@ -95,7 +95,9 @@ func (r *PluginPathRunner) OnSubscribe(ctx context.Context, user *models.SignedI
 
 	reply := models.SubscribeReply{
 		Presence: true,
-		Data:     resp.Data,
+	}
+	if resp.InitialData != nil {
+		reply.Data = resp.InitialData.Data()
 	}
 	return reply, backend.SubscribeStreamStatusOK, nil
 }

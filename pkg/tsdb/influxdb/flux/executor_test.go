@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/experimental"
 	"github.com/grafana/grafana/pkg/components/securejsondata"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -203,8 +204,12 @@ func TestBuckets(t *testing.T) {
 	verifyGoldenResponse(t, "buckets")
 }
 
-func TestBooleanGrouping(t *testing.T) {
-	verifyGoldenResponse(t, "boolean")
+func TestBooleanTagGrouping(t *testing.T) {
+	verifyGoldenResponse(t, "boolean_tag")
+}
+
+func TestBooleanData(t *testing.T) {
+	verifyGoldenResponse(t, "boolean_data")
 }
 
 func TestGoldenFiles(t *testing.T) {
@@ -226,7 +231,7 @@ func TestRealQuery(t *testing.T) {
 			}),
 		}
 
-		runner, err := runnerFromDataSource(dsInfo)
+		runner, err := runnerFromDataSource(httpclient.NewProvider(), dsInfo)
 		require.NoError(t, err)
 
 		dr := executeQuery(context.Background(), queryModel{

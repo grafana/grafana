@@ -16,30 +16,34 @@ Panels allow you to show your data in visual form. This topic walks you through 
 
 1. Click **Add an empty panel**.
 
-Grafana creates an empty graph panel with your default data source selected.
+Grafana creates an empty time series panel with your default data source selected.
 
-## 2. Edit panel settings
-
-While not required, we recommend that you add a helpful title and description to your panel. You can use [variables you have defined]({{< relref "../variables/_index.md" >}}) in either field, but not [global variables]({{< relref "../variables/variable-types/global-variables.md" >}}).
-
-![](/img/docs/panels/panel-settings-7-0.png)
-
-**Panel title -** Text entered in this field is displayed at the top of your panel in the panel editor and in the dashboard.
-
-**Description -** Text entered in this field is displayed in a tooltip in the upper left corner of the panel. Write a description of the panel and the data you are displaying. Pretend you are explaining it to a new user six months from now, when it is no longer fresh in your mind. Future editors (possibly yourself) will thank you.
-
-## 3. Write a query
+## 2. Write a query
 
 Each panel needs at least one query to display a visualization. You write queries in the Query tab of the panel editor. For more information about the Query tab, refer to [Queries]({{< relref "queries.md" >}}).
 
 1. Choose a data source. In the first line of the Query tab, click the drop-down list to see all available data sources. This list includes all data sources you added. Refer to [Add a data source]({{< relref "../datasources/add-a-data-source.md" >}}) if you need instructions.
 1. Write or construct a query in the query language of your data source. Options will vary. Refer to your specific [data source documentation]({{< relref "../datasources/_index.md" >}}) for specific guidelines.
 
-## 4. Choose a visualization type
+## 3. Choose a visualization type
 
-In the Visualization section of the Panel tab, click a visualization type. Grafana displays a preview of your query results with that visualization applied.
+In the Visualization list, click a visualization type. Grafana displays a preview of your query results with that visualization applied.
 
-For more information about individual visualizations, refer to [Visualizations]({{< relref "visualizations/_index.md" >}}).
+![](/img/docs/panel-editor/select-visualization-8-0.png)
+
+For more information about individual visualizations, refer to [Visualizations options]({{< relref "visualizations/_index.md" >}}).
+
+## 4. (Optional) Edit panel settings
+
+While not required, most visualizations need some adjustment before they properly display the information that you need. Options are defined in the linked topics below.
+
+- [Panel options]({{< relref "./panel-options.md" >}})
+- [Visualization-specific options]({{< relref "./visualizations/_index.md" >}})
+- [Standard options]({{< relref "./standard-options.md" >}})
+- [Thresholds]({{< relref "./thresholds.md" >}})
+- [Value mappings]({{< relref "./value-mappings.md" >}})
+- [Data links]({{< relref "../linking/data-links.md" >}})
+- [Override fields]({{< relref "field-options/configure-specific-fields.md" >}})
 
 ## 5. Apply changes and save
 
@@ -54,7 +58,5 @@ Our Grafana Fundamentals tutorial is a great place to start, or you can learn mo
 - Learn more about [panel editor]({{< relref "panel-editor.md" >}}) options.
 - Add more [queries]({{< relref "queries.md" >}}).
 - [Transform]({{< relref "transformations/_index.md" >}}) your data.
-- [Configure]({{< relref "field-options/_index.md" >}}) how your results are displayed in the visualization.
-
-- If you made a graph panel, set up an [alert]({{< relref "../alerting/_index.md" >}}).
+- Set up an [alert]({{< relref "../alerting/_index.md" >}}).
 - Create [templates and variables]({{< relref "../variables/_index.md" >}}).

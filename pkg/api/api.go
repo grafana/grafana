@@ -284,7 +284,7 @@ func (hs *HTTPServer) registerRoutes() {
 		apiRoute.Any("/plugins/:pluginId/resources/*", hs.CallResource)
 		apiRoute.Get("/plugins/errors", routing.Wrap(hs.GetPluginErrorsList))
 
-		if hs.Cfg.CatalogAppEnabled {
+		if hs.Cfg.PluginAdminEnabled {
 			apiRoute.Group("/plugins", func(pluginRoute routing.RouteRegister) {
 				pluginRoute.Post("/:pluginId/install", bind(dtos.InstallPluginCommand{}), routing.Wrap(hs.InstallPlugin))
 				pluginRoute.Post("/:pluginId/uninstall", routing.Wrap(hs.UninstallPlugin))
@@ -440,7 +440,7 @@ func (hs *HTTPServer) registerRoutes() {
 
 	// admin api
 	r.Group("/api/admin", func(adminRoute routing.RouteRegister) {
-		adminRoute.Get("/settings", reqGrafanaAdmin, routing.Wrap(AdminGetSettings))
+		adminRoute.Get("/settings", reqGrafanaAdmin, routing.Wrap(hs.AdminGetSettings))
 		adminRoute.Get("/stats", reqGrafanaAdmin, routing.Wrap(AdminGetStats))
 		adminRoute.Post("/pause-all-alerts", reqGrafanaAdmin, bind(dtos.PauseAllAlertsCommand{}), routing.Wrap(PauseAllAlerts))
 

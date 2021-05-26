@@ -56,13 +56,13 @@ describe('InfluxQueryBuilder', () => {
     it('should have WITH MEASUREMENT in measurement query for non-empty query with no tags', () => {
       const builder = new InfluxQueryBuilder({ measurement: '', tags: [] });
       const query = builder.buildExploreQuery('MEASUREMENTS', undefined, 'something');
-      expect(query).toBe('SHOW MEASUREMENTS WITH MEASUREMENT =~ /something/ LIMIT 100');
+      expect(query).toBe('SHOW MEASUREMENTS WITH MEASUREMENT =~ /(?i)something/ LIMIT 100');
     });
 
     it('should escape the regex value in measurement query', () => {
       const builder = new InfluxQueryBuilder({ measurement: '', tags: [] });
       const query = builder.buildExploreQuery('MEASUREMENTS', undefined, 'abc/edf/');
-      expect(query).toBe('SHOW MEASUREMENTS WITH MEASUREMENT =~ /abc\\/edf\\// LIMIT 100');
+      expect(query).toBe('SHOW MEASUREMENTS WITH MEASUREMENT =~ /(?i)abc\\/edf\\// LIMIT 100');
     });
 
     it('should have WITH MEASUREMENT WHERE in measurement query for non-empty query with tags', () => {
@@ -71,7 +71,7 @@ describe('InfluxQueryBuilder', () => {
         tags: [{ key: 'app', value: 'email' }],
       });
       const query = builder.buildExploreQuery('MEASUREMENTS', undefined, 'something');
-      expect(query).toBe('SHOW MEASUREMENTS WITH MEASUREMENT =~ /something/ WHERE "app" = \'email\' LIMIT 100');
+      expect(query).toBe('SHOW MEASUREMENTS WITH MEASUREMENT =~ /(?i)something/ WHERE "app" = \'email\' LIMIT 100');
     });
 
     it('should have where condition in measurement query for query with tags', () => {
@@ -158,6 +158,42 @@ describe('InfluxQueryBuilder', () => {
       const builder = new InfluxQueryBuilder({ measurement: 'cpu', tags: [] }, 'site');
       const query = builder.buildExploreQuery('RETENTION POLICIES');
       expect(query).toBe('SHOW RETENTION POLICIES on "site"');
+    });
+
+    it('should handle tag-value=number-ish when getting measurements', () => {
+      const builder = new InfluxQueryBuilder(
+        { measurement: undefined, tags: [{ key: 'app', value: '42', operator: '==' }] },
+        undefined
+      );
+      const query = builder.buildExploreQuery('MEASUREMENTS');
+      expect(query).toBe(`SHOW MEASUREMENTS WHERE "app" == 42 LIMIT 100`);
+    });
+
+    it('should handle tag-value=number-ish getting tag-keys', () => {
+      const builder = new InfluxQueryBuilder(
+        { measurement: undefined, tags: [{ key: 'app', value: '42', operator: '==' }] },
+        undefined
+      );
+      const query = builder.buildExploreQuery('TAG_KEYS');
+      expect(query).toBe(`SHOW TAG KEYS WHERE "app" == 42`);
+    });
+
+    it('should handle tag-value=emptry-string when getting measurements', () => {
+      const builder = new InfluxQueryBuilder(
+        { measurement: undefined, tags: [{ key: 'app', value: '', operator: '==' }] },
+        undefined
+      );
+      const query = builder.buildExploreQuery('MEASUREMENTS');
+      expect(query).toBe(`SHOW MEASUREMENTS WHERE "app" == '' LIMIT 100`);
+    });
+
+    it('should handle tag-value=emptry-string when getting tag-keys', () => {
+      const builder = new InfluxQueryBuilder(
+        { measurement: undefined, tags: [{ key: 'app', value: '', operator: '==' }] },
+        undefined
+      );
+      const query = builder.buildExploreQuery('TAG_KEYS');
+      expect(query).toBe(`SHOW TAG KEYS WHERE "app" == ''`);
     });
   });
 });

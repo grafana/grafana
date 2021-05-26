@@ -1,12 +1,11 @@
-import { VizLegendOptions, HideableFieldConfig, BarValueVisibility } from '@grafana/ui';
+import { HideableFieldConfig, BarValueVisibility, OptionsWithLegend } from '@grafana/ui';
 
 /**
  * @alpha
  */
-export interface TimelineOptions {
+export interface TimelineOptions extends OptionsWithLegend {
   mode: TimelineMode; // not in the saved model!
 
-  legend: VizLegendOptions;
   showValue: BarValueVisibility;
   rowHeight: number;
 
