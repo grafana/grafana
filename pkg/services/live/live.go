@@ -155,9 +155,9 @@ func (g *GrafanaLive) Init() error {
 	g.node = node
 
 	g.contextGetter = newPluginContextGetter(g.PluginContextProvider)
-	packetSender := newPluginPacketSender(node)
+	channelSender := newPluginChannelSender(node)
 	presenceGetter := newPluginPresenceGetter(node)
-	g.runStreamManager = runstream.NewManager(packetSender, presenceGetter, g.contextGetter)
+	g.runStreamManager = runstream.NewManager(channelSender, presenceGetter, g.contextGetter)
 
 	// Initialize the main features
 	dash := &features.DashboardHandler{
