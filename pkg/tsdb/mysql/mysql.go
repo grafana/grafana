@@ -65,13 +65,13 @@ func New(httpClientProvider httpclient.Provider) func(datasource *models.DataSou
 		}
 
 		if datasource.JsonData != nil {
-		timezone, hasTimezone := datasource.JsonData.CheckGet("timezone")
-		if hasTimezone && timezone.MustString() != "" {
-			cnnstr += fmt.Sprintf("&time_zone='%s'", url.QueryEscape(timezone.MustString()))
+			timezone, hasTimezone := datasource.JsonData.CheckGet("timezone")
+			if hasTimezone && timezone.MustString() != "" {
+				cnnstr += fmt.Sprintf("&time_zone='%s'", url.QueryEscape(timezone.MustString()))
+			}
 		}
-	}
 
-	if setting.Env == setting.Dev {
+		if setting.Env == setting.Dev {
 			logger.Debug("getEngine", "connection", cnnstr)
 		}
 
