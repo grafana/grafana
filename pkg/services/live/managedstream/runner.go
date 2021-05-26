@@ -122,16 +122,15 @@ func (s *ManagedStream) Push(orgID int64, path string, frame *data.Frame) error 
 
 	include := data.IncludeAll
 	if exists && last.SameSchema(&msg) {
+		// When the schema has not changed, just send the data.
 		include = data.IncludeDataOnly
 	}
-
-	// When the schema has not changed, just send the data
-	sendBytes := msg.Bytes(include)
+	jsonData := msg.Bytes(include)
 
 	// The channel this will be posted into.
 	channel := live.Channel{Scope: live.ScopeStream, Namespace: s.id, Path: path}.String()
-	logger.Debug("Publish data to channel", "channel", channel, "dataLength", len(sendBytes))
-	return s.publisher(orgID, channel, sendBytes)
+	logger.Debug("Publish data to channel", "channel", channel, "dataLength", len(jsonData))
+	return s.publisher(orgID, channel, jsonData)
 }
 
 // getLastPacket retrieves last packet channel.
