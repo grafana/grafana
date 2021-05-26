@@ -161,7 +161,7 @@ func (p *grpcPlugin) PublishStream(ctx context.Context, request *backend.Publish
 	return pluginClient.PublishStream(ctx, request)
 }
 
-func (p *grpcPlugin) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender backend.StreamPacketSender) error {
+func (p *grpcPlugin) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
 	pluginClient, ok := p.getPluginClient()
 	if !ok {
 		return backendplugin.ErrPluginUnavailable
