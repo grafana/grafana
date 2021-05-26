@@ -457,7 +457,7 @@ func (tp *testPlugin) PublishStream(ctx context.Context, request *backend.Publis
 	return nil, backendplugin.ErrMethodNotImplemented
 }
 
-func (tp *testPlugin) RunStream(ctx context.Context, request *backend.RunStreamRequest, sender backend.StreamPacketSender) error {
+func (tp *testPlugin) RunStream(ctx context.Context, request *backend.RunStreamRequest, sender *backend.StreamSender) error {
 	return backendplugin.ErrMethodNotImplemented
 }
 
