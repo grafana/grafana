@@ -76,6 +76,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
     margin-right: ${theme.spacing(1)};
     font-size: ${theme.typography.size.md};
   `,
+  icon: css`
+    label: collapse__icon;
+    margin-left: -5px;
+  `,
 });
 
 export interface Props {
@@ -133,7 +137,7 @@ export const Collapse: FunctionComponent<Props> = ({
   return (
     <div className={panelClass}>
       <div className={headerClass} onClick={onClickToggle}>
-        {collapsible && <Icon name={isOpen ? 'angle-up' : 'angle-down'} />}
+        {collapsible && <Icon className={style.icon} name={isOpen ? 'angle-up' : 'angle-down'} />}
         <div className={cx([style.headerLabel])}>{label}</div>
       </div>
       {isOpen && (

@@ -10,10 +10,10 @@ import {
   getDefaultRelativeTimeRange,
 } from '@grafana/data';
 import { useStyles2, RelativeTimeRangePicker } from '@grafana/ui';
-import { QueryEditorRow } from '../../query/components/QueryEditorRow';
-import { VizWrapper } from '../unified/components/rule-editor/VizWrapper';
-import { isExpressionQuery } from '../../expressions/guards';
-import { TABLE, TIMESERIES } from '../unified/utils/constants';
+import { QueryEditorRow } from 'app/features/query/components/QueryEditorRow';
+import { VizWrapper } from './VizWrapper';
+import { isExpressionQuery } from 'app/features/expressions/guards';
+import { TABLE, TIMESERIES } from '../../utils/constants';
 import { GrafanaQuery } from 'app/types/unified-alerting-dto';
 
 interface Props {
@@ -32,7 +32,7 @@ interface Props {
 
 export type SupportedPanelPlugins = 'timeseries' | 'table' | 'stat';
 
-export const AlertingQueryWrapper: FC<Props> = ({
+export const QueryWrapper: FC<Props> = ({
   data,
   dsSettings,
   index,

@@ -5,9 +5,9 @@ import { GrafanaTheme2, PanelData } from '@grafana/data';
 import { config, PanelRenderer } from '@grafana/runtime';
 import { RadioButtonGroup, useStyles2 } from '@grafana/ui';
 import { PanelOptions } from 'app/plugins/panel/table/models.gen';
+import { SupportedPanelPlugins } from './QueryWrapper';
 import { useVizHeight } from '../../hooks/useVizHeight';
 import { STAT, TABLE, TIMESERIES } from '../../utils/constants';
-import { SupportedPanelPlugins } from '../../../components/AlertingQueryWrapper';
 
 interface Props {
   data: PanelData;
