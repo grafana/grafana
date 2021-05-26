@@ -38,8 +38,9 @@ type AzureResourceGraphQuery struct {
 	RefID             string
 	ResultFormat      string
 	URL               string
-	Model             *simplejson.Json
+	JSON              json.RawMessage
 	InterpolatedQuery string
+	TimeRange         backend.TimeRange
 }
 
 const argAPIVersion = "2018-09-01-preview"
@@ -49,36 +50,29 @@ const argQueryProviderName = "/providers/Microsoft.ResourceGraph/resources"
 // 1. builds the AzureMonitor url and querystring for each query
 // 2. executes each query by calling the Azure Monitor API
 // 3. parses the responses for each query into the timeseries format
-func (e *AzureResourceGraphDatasource) executeTimeSeriesQuery(ctx context.Context, originalQueries []plugins.DataSubQuery,
-	timeRange plugins.DataTimeRange) (backend.QueryDataResponse, error) {
+func (e *AzureResourceGraphDatasource) executeTimeSeriesQuery(ctx context.Context, originalQueries []backend.DataQuery) (backend.QueryDataResponse, error) {
 	result := backend.QueryDataResponse{
 		Responses: map[string]backend.DataResponse{},
 	}
 
-	queries, err := e.buildQueries(originalQueries, timeRange)
+	queries, err := e.buildQueries(originalQueries)
 	if err != nil {
 		return backend.QueryDataResponse{}, err
 	}
 
 	for _, query := range queries {
-		result.Responses[query.RefID] = e.executeQuery(ctx, query, timeRange)
+		result.Responses[query.RefID] = e.executeQuery(ctx, query)
 	}
 
 	return result, nil
 }
 
-func (e *AzureResourceGraphDatasource) buildQueries(queries []plugins.DataSubQuery,
-	timeRange plugins.DataTimeRange) ([]*AzureResourceGraphQuery, error) {
+func (e *AzureResourceGraphDatasource) buildQueries(queries []backend.DataQuery) ([]*AzureResourceGraphQuery, error) {
 	var azureResourceGraphQueries []*AzureResourceGraphQuery
 
 	for _, query := range queries {
-		queryBytes, err := query.Model.Encode()
-		if err != nil {
-			return nil, fmt.Errorf("failed to re-encode the Azure Resource Graph query into JSON: %w", err)
-		}
-
 		queryJSONModel := argJSONQuery{}
-		err = json.Unmarshal(queryBytes, &queryJSONModel)
+		err := json.Unmarshal(query.JSON, &queryJSONModel)
 		if err != nil {
 			return nil, fmt.Errorf("failed to decode the Azure Resource Graph query object from JSON: %w", err)
 		}
@@ -91,7 +85,8 @@ func (e *AzureResourceGraphDatasource) buildQueries(queries []plugins.DataSubQue
 			resultFormat = "table"
 		}
 
-		interpolatedQuery, err := KqlInterpolate(query, timeRange, azureResourceGraphTarget.Query)
+		// TODO: Verify e.dsInfo is populated
+		interpolatedQuery, err := KqlInterpolate(query, e.dsInfo, azureResourceGraphTarget.Query)
 
 		if err != nil {
 			return nil, err
@@ -100,16 +95,16 @@ func (e *AzureResourceGraphDatasource) buildQueries(queries []plugins.DataSubQue
 		azureResourceGraphQueries = append(azureResourceGraphQueries, &AzureResourceGraphQuery{
 			RefID:             query.RefID,
 			ResultFormat:      resultFormat,
-			Model:             query.Model,
+			JSON:              query.JSON,
 			InterpolatedQuery: interpolatedQuery,
+			TimeRange:         query.TimeRange,
 		})
 	}
 
 	return azureResourceGraphQueries, nil
 }
 
-func (e *AzureResourceGraphDatasource) executeQuery(ctx context.Context, query *AzureResourceGraphQuery,
-	timeRange plugins.DataTimeRange) backend.DataResponse {
+func (e *AzureResourceGraphDatasource) executeQuery(ctx context.Context, query *AzureResourceGraphQuery) backend.DataResponse {
 	queryResult := backend.DataResponse{}
 
 	params := url.Values{}
@@ -129,8 +124,14 @@ func (e *AzureResourceGraphDatasource) executeQuery(ctx context.Context, query *
 		return queryResult
 	}
 
+	model, err := simplejson.NewJson(query.JSON)
+	if err != nil {
+		queryResult.Error = err
+		return queryResult
+	}
+
 	reqBody, err := json.Marshal(map[string]interface{}{
-		"subscriptions": query.Model.Get("subscriptions").MustStringArray(),
+		"subscriptions": model.Get("subscriptions").MustStringArray(),
 		"query":         query.InterpolatedQuery,
 	})
 
@@ -151,8 +152,9 @@ func (e *AzureResourceGraphDatasource) executeQuery(ctx context.Context, query *
 
 	span, ctx := opentracing.StartSpanFromContext(ctx, "azure resource graph query")
 	span.SetTag("interpolated_query", query.InterpolatedQuery)
-	span.SetTag("from", timeRange.From)
-	span.SetTag("until", timeRange.To)
+	// TODO: Check that format is the same
+	span.SetTag("from", query.TimeRange.From.String())
+	span.SetTag("until", query.TimeRange.To.String())
 	span.SetTag("datasource_id", e.dsInfo.Id)
 	span.SetTag("org_id", e.dsInfo.OrgId)
 

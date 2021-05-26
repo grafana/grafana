@@ -13,9 +13,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/api/pluginproxy"
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
@@ -50,45 +50,31 @@ type ApplicationInsightsQuery struct {
 	aggregation string
 }
 
-// nolint:staticcheck // plugins.DataQueryResult deprecated
 func (e *ApplicationInsightsDatasource) executeTimeSeriesQuery(ctx context.Context,
-	originalQueries []plugins.DataSubQuery,
-	timeRange plugins.DataTimeRange) (plugins.DataResponse, error) {
-	result := plugins.DataResponse{
-		Results: map[string]plugins.DataQueryResult{},
-	}
+	originalQueries []backend.DataQuery) (*backend.QueryDataResponse, error) {
+	result := backend.NewQueryDataResponse()
 
-	queries, err := e.buildQueries(originalQueries, timeRange)
+	queries, err := e.buildQueries(originalQueries)
 	if err != nil {
-		return plugins.DataResponse{}, err
+		return nil, err
 	}
 
 	for _, query := range queries {
 		queryRes, err := e.executeQuery(ctx, query)
 		if err != nil {
-			return plugins.DataResponse{}, err
+			return nil, err
 		}
-		result.Results[query.RefID] = queryRes
+		result.Responses[query.RefID] = queryRes
 	}
 
 	return result, nil
 }
 
-func (e *ApplicationInsightsDatasource) buildQueries(queries []plugins.DataSubQuery,
-	timeRange plugins.DataTimeRange) ([]*ApplicationInsightsQuery, error) {
+func (e *ApplicationInsightsDatasource) buildQueries(queries []backend.DataQuery) ([]*ApplicationInsightsQuery, error) {
 	applicationInsightsQueries := []*ApplicationInsightsQuery{}
-	startTime, err := timeRange.ParseFrom()
-	if err != nil {
-		return nil, err
-	}
-
-	endTime, err := timeRange.ParseTo()
-	if err != nil {
-		return nil, err
-	}
 
 	for _, query := range queries {
-		queryBytes, err := query.Model.Encode()
+		queryBytes, err := query.JSON.MarshalJSON()
 		if err != nil {
 			return nil, fmt.Errorf("failed to re-encode the Azure Application Insights query into JSON: %w", err)
 		}
@@ -108,14 +94,14 @@ func (e *ApplicationInsightsDatasource) buildQueries(queries []plugins.DataSubQu
 		// Previous versions of the query model don't specify a time grain, so we
 		// need to fallback to a default value
 		if timeGrain == "auto" || timeGrain == "" {
-			timeGrain, err = setAutoTimeGrain(query.IntervalMS, timeGrains)
+			timeGrain, err = setAutoTimeGrain(query.Interval.Milliseconds(), timeGrains)
 			if err != nil {
 				return nil, err
 			}
 		}
 
 		params := url.Values{}
-		params.Add("timespan", fmt.Sprintf("%v/%v", startTime.UTC().Format(time.RFC3339), endTime.UTC().Format(time.RFC3339)))
+		params.Add("timespan", fmt.Sprintf("%v/%v", query.TimeRange.From.UTC().Format(time.RFC3339), query.TimeRange.To.UTC().Format(time.RFC3339)))
 		if timeGrain != "none" {
 			params.Add("interval", timeGrain)
 		}
@@ -144,10 +130,9 @@ func (e *ApplicationInsightsDatasource) buildQueries(queries []plugins.DataSubQu
 	return applicationInsightsQueries, nil
 }
 
-// nolint:staticcheck // plugins.DataQueryResult deprecated
 func (e *ApplicationInsightsDatasource) executeQuery(ctx context.Context, query *ApplicationInsightsQuery) (
-	plugins.DataQueryResult, error) {
-	queryResult := plugins.DataQueryResult{Meta: simplejson.New(), RefID: query.RefID}
+	backend.DataResponse, error) {
+	queryResult := backend.DataResponse{}
 
 	req, err := e.createRequest(ctx, e.dsInfo)
 	if err != nil {
@@ -188,18 +173,18 @@ func (e *ApplicationInsightsDatasource) executeQuery(ctx context.Context, query 
 		}
 	}()
 	if err != nil {
-		return plugins.DataQueryResult{}, err
+		return backend.DataResponse{}, err
 	}
 
 	if res.StatusCode/100 != 2 {
 		azlog.Debug("Request failed", "status", res.Status, "body", string(body))
-		return plugins.DataQueryResult{}, fmt.Errorf("request failed, status: %s", res.Status)
+		return backend.DataResponse{}, fmt.Errorf("request failed, status: %s", res.Status)
 	}
 
 	mr := MetricsResult{}
 	err = json.Unmarshal(body, &mr)
 	if err != nil {
-		return plugins.DataQueryResult{}, err
+		return backend.DataResponse{}, err
 	}
 
 	frame, err := InsightsMetricsResultToFrame(mr, query.metricName, query.aggregation, query.dimensions)
@@ -210,7 +195,7 @@ func (e *ApplicationInsightsDatasource) executeQuery(ctx context.Context, query 
 
 	applyInsightsMetricAlias(frame, query.Alias)
 
-	queryResult.Dataframes = plugins.NewDecodedDataFrames(data.Frames{frame})
+	queryResult.Frames = data.Frames{frame}
 	return queryResult, nil
 }
 

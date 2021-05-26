@@ -13,6 +13,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/api/pluginproxy"
 	"github.com/grafana/grafana/pkg/models"
@@ -42,57 +43,39 @@ const azureMonitorAPIVersion = "2018-01-01"
 // 1. build the AzureMonitor url and querystring for each query
 // 2. executes each query by calling the Azure Monitor API
 // 3. parses the responses for each query into the timeseries format
-//nolint: staticcheck // plugins.DataPlugin deprecated
-func (e *AzureMonitorDatasource) executeTimeSeriesQuery(ctx context.Context, originalQueries []plugins.DataSubQuery,
-	timeRange plugins.DataTimeRange) (plugins.DataResponse, error) {
-	result := plugins.DataResponse{
-		Results: map[string]plugins.DataQueryResult{},
-	}
+func (e *AzureMonitorDatasource) executeTimeSeriesQuery(ctx context.Context, originalQueries []backend.DataQuery) (*backend.QueryDataResponse, error) {
+	result := backend.NewQueryDataResponse()
 
-	queries, err := e.buildQueries(originalQueries, timeRange)
+	queries, err := e.buildQueries(originalQueries)
 	if err != nil {
-		return plugins.DataResponse{}, err
+		return nil, err
 	}
 
 	for _, query := range queries {
-		queryRes, resp, err := e.executeQuery(ctx, query, originalQueries, timeRange)
+		queryRes, resp, err := e.executeQuery(ctx, query)
 		if err != nil {
-			return plugins.DataResponse{}, err
+			return nil, err
 		}
 
 		frames, err := e.parseResponse(resp, query)
 		if err != nil {
 			queryRes.Error = err
 		} else {
-			queryRes.Dataframes = frames
+			queryRes.Frames = frames
 		}
-		result.Results[query.RefID] = queryRes
+		result.Responses[query.RefID] = queryRes
 	}
 
 	return result, nil
 }
 
-func (e *AzureMonitorDatasource) buildQueries(queries []plugins.DataSubQuery, timeRange plugins.DataTimeRange) ([]*AzureMonitorQuery, error) {
+func (e *AzureMonitorDatasource) buildQueries(queries []backend.DataQuery) ([]*AzureMonitorQuery, error) {
 	azureMonitorQueries := []*AzureMonitorQuery{}
-	startTime, err := timeRange.ParseFrom()
-	if err != nil {
-		return nil, err
-	}
-
-	endTime, err := timeRange.ParseTo()
-	if err != nil {
-		return nil, err
-	}
 
 	for _, query := range queries {
 		var target string
-		queryBytes, err := query.Model.Encode()
-		if err != nil {
-			return nil, fmt.Errorf("failed to re-encode the Azure Monitor query into JSON: %w", err)
-		}
-
 		queryJSONModel := azureMonitorJSONQuery{}
-		err = json.Unmarshal(queryBytes, &queryJSONModel)
+		err := json.Unmarshal(query.JSON, &queryJSONModel)
 		if err != nil {
 			return nil, fmt.Errorf("failed to decode the Azure Monitor query object from JSON: %w", err)
 		}
@@ -106,7 +89,8 @@ func (e *AzureMonitorDatasource) buildQueries(queries []plugins.DataSubQuery, ti
 		urlComponents["resourceName"] = azJSONModel.ResourceName
 
 		ub := urlBuilder{
-			DefaultSubscription: query.DataSource.JsonData.Get("subscriptionId").MustString(),
+			// TODO: Verify if dsInfo is set
+			DefaultSubscription: e.dsInfo.JsonData.Get("subscriptionId").MustString(),
 			Subscription:        queryJSONModel.Subscription,
 			ResourceGroup:       queryJSONModel.AzureMonitor.ResourceGroup,
 			MetricDefinition:    azJSONModel.MetricDefinition,
@@ -119,7 +103,7 @@ func (e *AzureMonitorDatasource) buildQueries(queries []plugins.DataSubQuery, ti
 		timeGrain := azJSONModel.TimeGrain
 		timeGrains := azJSONModel.AllowedTimeGrainsMs
 		if timeGrain == "auto" {
-			timeGrain, err = setAutoTimeGrain(query.IntervalMS, timeGrains)
+			timeGrain, err = setAutoTimeGrain(query.Interval.Milliseconds(), timeGrains)
 			if err != nil {
 				return nil, err
 			}
@@ -127,7 +111,7 @@ func (e *AzureMonitorDatasource) buildQueries(queries []plugins.DataSubQuery, ti
 
 		params := url.Values{}
 		params.Add("api-version", azureMonitorAPIVersion)
-		params.Add("timespan", fmt.Sprintf("%v/%v", startTime.UTC().Format(time.RFC3339), endTime.UTC().Format(time.RFC3339)))
+		params.Add("timespan", fmt.Sprintf("%v/%v", query.TimeRange.From.UTC().Format(time.RFC3339), query.TimeRange.To.UTC().Format(time.RFC3339)))
 		params.Add("interval", timeGrain)
 		params.Add("aggregation", azJSONModel.Aggregation)
 		params.Add("metricnames", azJSONModel.MetricName) // MetricName or MetricNames ?
@@ -168,16 +152,15 @@ func (e *AzureMonitorDatasource) buildQueries(queries []plugins.DataSubQuery, ti
 			Params:        params,
 			RefID:         query.RefID,
 			Alias:         alias,
+			TimeRange:     query.TimeRange,
 		})
 	}
 
 	return azureMonitorQueries, nil
 }
 
-//nolint: staticcheck // plugins.DataPlugin deprecated
-func (e *AzureMonitorDatasource) executeQuery(ctx context.Context, query *AzureMonitorQuery, queries []plugins.DataSubQuery,
-	timeRange plugins.DataTimeRange) (plugins.DataQueryResult, AzureMonitorResponse, error) {
-	queryResult := plugins.DataQueryResult{RefID: query.RefID}
+func (e *AzureMonitorDatasource) executeQuery(ctx context.Context, query *AzureMonitorQuery) (backend.DataResponse, AzureMonitorResponse, error) {
+	queryResult := backend.DataResponse{}
 
 	req, err := e.createRequest(ctx, e.dsInfo)
 	if err != nil {
@@ -190,8 +173,9 @@ func (e *AzureMonitorDatasource) executeQuery(ctx context.Context, query *AzureM
 
 	span, ctx := opentracing.StartSpanFromContext(ctx, "azuremonitor query")
 	span.SetTag("target", query.Target)
-	span.SetTag("from", timeRange.From)
-	span.SetTag("until", timeRange.To)
+	// TODO: Check that format is the same
+	span.SetTag("from", query.TimeRange.From.String())
+	span.SetTag("until", query.TimeRange.To.String())
 	span.SetTag("datasource_id", e.dsInfo.Id)
 	span.SetTag("org_id", e.dsInfo.OrgId)
 
@@ -287,7 +271,7 @@ func (e *AzureMonitorDatasource) unmarshalResponse(res *http.Response) (AzureMon
 }
 
 func (e *AzureMonitorDatasource) parseResponse(amr AzureMonitorResponse, query *AzureMonitorQuery) (
-	plugins.DataFrames, error) {
+	data.Frames, error) {
 	if len(amr.Value) == 0 {
 		return nil, nil
 	}
@@ -347,7 +331,7 @@ func (e *AzureMonitorDatasource) parseResponse(amr AzureMonitorResponse, query *
 		frames = append(frames, frame)
 	}
 
-	return plugins.NewDecodedDataFrames(frames), nil
+	return frames, nil
 }
 
 // formatAzureMonitorLegendKey builds the legend key or timeseries name

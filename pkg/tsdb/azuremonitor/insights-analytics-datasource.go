@@ -11,6 +11,7 @@ import (
 	"net/url"
 	"path"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/api/pluginproxy"
 	"github.com/grafana/grafana/pkg/models"
@@ -40,38 +41,29 @@ type InsightsAnalyticsQuery struct {
 	Target string
 }
 
-//nolint: staticcheck // plugins.DataPlugin deprecated
 func (e *InsightsAnalyticsDatasource) executeTimeSeriesQuery(ctx context.Context,
-	originalQueries []plugins.DataSubQuery, timeRange plugins.DataTimeRange) (plugins.DataResponse, error) {
-	result := plugins.DataResponse{
-		Results: map[string]plugins.DataQueryResult{},
-	}
+	originalQueries []backend.DataQuery) (*backend.QueryDataResponse, error) {
+	result := backend.NewQueryDataResponse()
 
-	queries, err := e.buildQueries(originalQueries, timeRange)
+	queries, err := e.buildQueries(originalQueries)
 	if err != nil {
-		return plugins.DataResponse{}, err
+		return nil, err
 	}
 
 	for _, query := range queries {
-		result.Results[query.RefID] = e.executeQuery(ctx, query)
+		result.Responses[query.RefID] = e.executeQuery(ctx, query)
 	}
 
 	return result, nil
 }
 
-func (e *InsightsAnalyticsDatasource) buildQueries(queries []plugins.DataSubQuery,
-	timeRange plugins.DataTimeRange) ([]*InsightsAnalyticsQuery, error) {
+func (e *InsightsAnalyticsDatasource) buildQueries(queries []backend.DataQuery) ([]*InsightsAnalyticsQuery, error) {
 	iaQueries := []*InsightsAnalyticsQuery{}
 
 	for _, query := range queries {
-		queryBytes, err := query.Model.Encode()
-		if err != nil {
-			return nil, fmt.Errorf("failed to re-encode the Azure Application Insights Analytics query into JSON: %w", err)
-		}
-
 		qm := InsightsAnalyticsQuery{}
 		queryJSONModel := insightsAnalyticsJSONQuery{}
-		err = json.Unmarshal(queryBytes, &queryJSONModel)
+		err := json.Unmarshal(query.JSON, &queryJSONModel)
 		if err != nil {
 			return nil, fmt.Errorf("failed to decode the Azure Application Insights Analytics query object from JSON: %w", err)
 		}
@@ -84,7 +76,7 @@ func (e *InsightsAnalyticsDatasource) buildQueries(queries []plugins.DataSubQuer
 			return nil, fmt.Errorf("query is missing query string property")
 		}
 
-		qm.InterpolatedQuery, err = KqlInterpolate(query, timeRange, qm.RawQuery)
+		qm.InterpolatedQuery, err = KqlInterpolate(query, e.dsInfo, qm.RawQuery)
 		if err != nil {
 			return nil, err
 		}
@@ -98,11 +90,10 @@ func (e *InsightsAnalyticsDatasource) buildQueries(queries []plugins.DataSubQuer
 	return iaQueries, nil
 }
 
-//nolint: staticcheck // plugins.DataPlugin deprecated
-func (e *InsightsAnalyticsDatasource) executeQuery(ctx context.Context, query *InsightsAnalyticsQuery) plugins.DataQueryResult {
-	queryResult := plugins.DataQueryResult{RefID: query.RefID}
+func (e *InsightsAnalyticsDatasource) executeQuery(ctx context.Context, query *InsightsAnalyticsQuery) backend.DataResponse {
+	queryResult := backend.DataResponse{}
 
-	queryResultError := func(err error) plugins.DataQueryResult {
+	queryResultError := func(err error) backend.DataResponse {
 		queryResult.Error = err
 		return queryResult
 	}
@@ -182,8 +173,7 @@ func (e *InsightsAnalyticsDatasource) executeQuery(ctx context.Context, query *I
 			}
 		}
 	}
-	frames := data.Frames{frame}
-	queryResult.Dataframes = plugins.NewDecodedDataFrames(frames)
+	queryResult.Frames = data.Frames{frame}
 
 	return queryResult
 }

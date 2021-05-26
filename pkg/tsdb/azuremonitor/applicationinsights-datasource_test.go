@@ -2,14 +2,12 @@ package azuremonitor
 
 import (
 	"encoding/json"
-	"fmt"
 	"testing"
 	"time"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/stretchr/testify/require"
 
@@ -22,33 +20,28 @@ func TestApplicationInsightsDatasource(t *testing.T) {
 
 		Convey("Parse queries from frontend and build AzureMonitor API queries", func() {
 			fromStart := time.Date(2018, 3, 15, 13, 0, 0, 0, time.UTC).In(time.Local)
-			tsdbQuery := plugins.DataQuery{
-				TimeRange: &plugins.DataTimeRange{
-					From: fmt.Sprintf("%v", fromStart.Unix()*1000),
-					To:   fmt.Sprintf("%v", fromStart.Add(34*time.Minute).Unix()*1000),
-				},
-				Queries: []plugins.DataSubQuery{
-					{
-						DataSource: &models.DataSource{
-							JsonData: simplejson.NewFromAny(map[string]interface{}{}),
-						},
-						Model: simplejson.NewFromAny(map[string]interface{}{
-							"appInsights": map[string]interface{}{
-								"rawQuery":    false,
-								"timeGrain":   "PT1M",
-								"aggregation": "Average",
-								"metricName":  "server/exceptions",
-								"alias":       "testalias",
-								"queryType":   "Application Insights",
-							},
-						}),
-						RefID:      "A",
-						IntervalMS: 1234,
+			tsdbQuery := []backend.DataQuery{
+				{
+					TimeRange: backend.TimeRange{
+						From: fromStart,
+						To:   fromStart.Add(34 * time.Minute),
 					},
+					JSON: []byte(`{
+						"appInsights": {
+							"rawQuery":    false,
+							"timeGrain":   "PT1M",
+							"aggregation": "Average",
+							"metricName":  "server/exceptions",
+							"alias":       "testalias",
+							"queryType":   "Application Insights"
+						}
+					}`),
+					RefID:    "A",
+					Interval: 1234,
 				},
 			}
 			Convey("and is a normal query", func() {
-				queries, err := datasource.buildQueries(tsdbQuery.Queries, *tsdbQuery.TimeRange)
+				queries, err := datasource.buildQueries(tsdbQuery)
 				So(err, ShouldBeNil)
 
 				So(len(queries), ShouldEqual, 1)
@@ -63,66 +56,66 @@ func TestApplicationInsightsDatasource(t *testing.T) {
 			})
 
 			Convey("and has a time grain set to auto", func() {
-				tsdbQuery.Queries[0].Model = simplejson.NewFromAny(map[string]interface{}{
-					"appInsights": map[string]interface{}{
+				tsdbQuery[0].JSON = []byte(`{
+					"appInsights": {
 						"rawQuery":    false,
 						"timeGrain":   "auto",
 						"aggregation": "Average",
 						"metricName":  "Percentage CPU",
 						"alias":       "testalias",
-						"queryType":   "Application Insights",
-					},
-				})
-				tsdbQuery.Queries[0].IntervalMS = 400000
+						"queryType":   "Application Insights"
+					}
+				}`)
+				tsdbQuery[0].Interval, _ = time.ParseDuration("400s")
 
-				queries, err := datasource.buildQueries(tsdbQuery.Queries, *tsdbQuery.TimeRange)
+				queries, err := datasource.buildQueries(tsdbQuery)
 				So(err, ShouldBeNil)
 
 				So(queries[0].Params["interval"][0], ShouldEqual, "PT15M")
 			})
 
 			Convey("and has an empty time grain", func() {
-				tsdbQuery.Queries[0].Model = simplejson.NewFromAny(map[string]interface{}{
-					"appInsights": map[string]interface{}{
+				tsdbQuery[0].JSON = []byte(`{
+					"appInsights": {
 						"rawQuery":    false,
 						"timeGrain":   "",
 						"aggregation": "Average",
 						"metricName":  "Percentage CPU",
 						"alias":       "testalias",
-						"queryType":   "Application Insights",
-					},
-				})
-				tsdbQuery.Queries[0].IntervalMS = 400000
+						"queryType":   "Application Insights"
+					}
+				}`)
+				tsdbQuery[0].Interval, _ = time.ParseDuration("400s")
 
-				queries, err := datasource.buildQueries(tsdbQuery.Queries, *tsdbQuery.TimeRange)
+				queries, err := datasource.buildQueries(tsdbQuery)
 				So(err, ShouldBeNil)
 
 				So(queries[0].Params["interval"][0], ShouldEqual, "PT15M")
 			})
 
 			Convey("and has a time grain set to auto and the metric has a limited list of allowed time grains", func() {
-				tsdbQuery.Queries[0].Model = simplejson.NewFromAny(map[string]interface{}{
-					"appInsights": map[string]interface{}{
+				tsdbQuery[0].JSON = []byte(`{
+					"appInsights": {
 						"rawQuery":            false,
 						"timeGrain":           "auto",
 						"aggregation":         "Average",
 						"metricName":          "Percentage CPU",
 						"alias":               "testalias",
 						"queryType":           "Application Insights",
-						"allowedTimeGrainsMs": []int64{60000, 300000},
-					},
-				})
-				tsdbQuery.Queries[0].IntervalMS = 400000
+						"allowedTimeGrainsMs": [60000, 300000]
+					}
+				}`)
+				tsdbQuery[0].Interval, _ = time.ParseDuration("400s")
 
-				queries, err := datasource.buildQueries(tsdbQuery.Queries, *tsdbQuery.TimeRange)
+				queries, err := datasource.buildQueries(tsdbQuery)
 				So(err, ShouldBeNil)
 
 				So(queries[0].Params["interval"][0], ShouldEqual, "PT5M")
 			})
 
 			Convey("and has a dimension filter", func() {
-				tsdbQuery.Queries[0].Model = simplejson.NewFromAny(map[string]interface{}{
-					"appInsights": map[string]interface{}{
+				tsdbQuery[0].JSON = []byte(`{
+					"appInsights": {
 						"rawQuery":        false,
 						"timeGrain":       "PT1M",
 						"aggregation":     "Average",
@@ -130,11 +123,11 @@ func TestApplicationInsightsDatasource(t *testing.T) {
 						"alias":           "testalias",
 						"queryType":       "Application Insights",
 						"dimension":       "blob",
-						"dimensionFilter": "blob eq '*'",
-					},
-				})
+						"dimensionFilter": "blob eq '*'"
+					}
+				}`)
 
-				queries, err := datasource.buildQueries(tsdbQuery.Queries, *tsdbQuery.TimeRange)
+				queries, err := datasource.buildQueries(tsdbQuery)
 				So(err, ShouldBeNil)
 
 				So(queries[0].Target, ShouldEqual, "aggregation=Average&filter=blob+eq+%27%2A%27&interval=PT1M&segment=blob&timespan=2018-03-15T13%3A00%3A00Z%2F2018-03-15T13%3A34%3A00Z")
@@ -142,19 +135,19 @@ func TestApplicationInsightsDatasource(t *testing.T) {
 			})
 
 			Convey("and has a dimension filter set to None", func() {
-				tsdbQuery.Queries[0].Model = simplejson.NewFromAny(map[string]interface{}{
-					"appInsights": map[string]interface{}{
+				tsdbQuery[0].JSON = []byte(`{
+					"appInsights": {
 						"rawQuery":    false,
 						"timeGrain":   "PT1M",
 						"aggregation": "Average",
 						"metricName":  "Percentage CPU",
 						"alias":       "testalias",
 						"queryType":   "Application Insights",
-						"dimension":   "None",
-					},
-				})
+						"dimension":   "None"
+					}
+				}`)
 
-				queries, err := datasource.buildQueries(tsdbQuery.Queries, *tsdbQuery.TimeRange)
+				queries, err := datasource.buildQueries(tsdbQuery)
 				So(err, ShouldBeNil)
 
 				So(queries[0].Target, ShouldEqual, "aggregation=Average&interval=PT1M&timespan=2018-03-15T13%3A00%3A00Z%2F2018-03-15T13%3A34%3A00Z")

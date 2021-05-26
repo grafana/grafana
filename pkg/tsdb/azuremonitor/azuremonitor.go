@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"regexp"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -70,26 +71,27 @@ func (e *AzureMonitorExecutor) DataQuery(ctx context.Context, dsInfo *models.Dat
 	tsdbQuery plugins.DataQuery) (plugins.DataResponse, error) {
 	var err error
 
-	var azureMonitorQueries []plugins.DataSubQuery
-	var applicationInsightsQueries []plugins.DataSubQuery
-	var azureLogAnalyticsQueries []plugins.DataSubQuery
-	var insightsAnalyticsQueries []plugins.DataSubQuery
-	var azureResourceGraphQueries []plugins.DataSubQuery
+	var azureMonitorQueries []backend.DataQuery
+	var applicationInsightsQueries []backend.DataQuery
+	var azureLogAnalyticsQueries []backend.DataQuery
+	var insightsAnalyticsQueries []backend.DataQuery
+	var azureResourceGraphQueries []backend.DataQuery
 
 	for _, query := range tsdbQuery.Queries {
 		queryType := query.Model.Get("queryType").MustString("")
 
+		// FIXME: query param
 		switch queryType {
 		case "Azure Monitor":
-			azureMonitorQueries = append(azureMonitorQueries, query)
+			azureMonitorQueries = append(azureMonitorQueries, backend.DataQuery{})
 		case "Application Insights":
-			applicationInsightsQueries = append(applicationInsightsQueries, query)
+			applicationInsightsQueries = append(applicationInsightsQueries, backend.DataQuery{})
 		case "Azure Log Analytics":
-			azureLogAnalyticsQueries = append(azureLogAnalyticsQueries, query)
+			azureLogAnalyticsQueries = append(azureLogAnalyticsQueries, backend.DataQuery{})
 		case "Insights Analytics":
-			insightsAnalyticsQueries = append(insightsAnalyticsQueries, query)
+			insightsAnalyticsQueries = append(insightsAnalyticsQueries, backend.DataQuery{})
 		case "Azure Resource Graph":
-			azureResourceGraphQueries = append(azureResourceGraphQueries, query)
+			azureResourceGraphQueries = append(azureResourceGraphQueries, backend.DataQuery{})
 		default:
 			return plugins.DataResponse{}, fmt.Errorf("alerting not supported for %q", queryType)
 		}
@@ -129,46 +131,48 @@ func (e *AzureMonitorExecutor) DataQuery(ctx context.Context, dsInfo *models.Dat
 		pluginManager: e.pluginManager,
 	}
 
-	azResult, err := azDatasource.executeTimeSeriesQuery(ctx, azureMonitorQueries, *tsdbQuery.TimeRange)
+	azResult, err := azDatasource.executeTimeSeriesQuery(ctx, azureMonitorQueries)
 	if err != nil {
 		return plugins.DataResponse{}, err
 	}
 
-	aiResult, err := aiDatasource.executeTimeSeriesQuery(ctx, applicationInsightsQueries, *tsdbQuery.TimeRange)
+	aiResult, err := aiDatasource.executeTimeSeriesQuery(ctx, applicationInsightsQueries)
 	if err != nil {
 		return plugins.DataResponse{}, err
 	}
 
-	alaResult, err := alaDatasource.executeTimeSeriesQuery(ctx, azureLogAnalyticsQueries, *tsdbQuery.TimeRange)
+	alaResult, err := alaDatasource.executeTimeSeriesQuery(ctx, azureLogAnalyticsQueries)
 	if err != nil {
 		return plugins.DataResponse{}, err
 	}
 
-	iaResult, err := iaDatasource.executeTimeSeriesQuery(ctx, insightsAnalyticsQueries, *tsdbQuery.TimeRange)
+	iaResult, err := iaDatasource.executeTimeSeriesQuery(ctx, insightsAnalyticsQueries)
 	if err != nil {
 		return plugins.DataResponse{}, err
 	}
 
-	argResult, err := argDatasource.executeTimeSeriesQuery(ctx, azureResourceGraphQueries, *tsdbQuery.TimeRange)
+	argResult, err := argDatasource.executeTimeSeriesQuery(ctx, azureResourceGraphQueries)
 	if err != nil {
 		return plugins.DataResponse{}, err
 	}
 
-	for k, v := range aiResult.Results {
-		azResult.Results[k] = v
+	// TODO: Collapse into a loop?
+	for k, v := range aiResult.Responses {
+		azResult.Responses[k] = v
 	}
 
-	for k, v := range alaResult.Results {
-		azResult.Results[k] = v
+	for k, v := range alaResult.Responses {
+		azResult.Responses[k] = v
 	}
 
-	for k, v := range iaResult.Results {
-		azResult.Results[k] = v
+	for k, v := range iaResult.Responses {
+		azResult.Responses[k] = v
 	}
 
 	for k, v := range argResult.Responses {
-		azResult.Results[k] = plugins.DataQueryResult{Error: v.Error, Dataframes: plugins.NewDecodedDataFrames(v.Frames)}
+		azResult.Responses[k] = v
 	}
 
-	return azResult, nil
+	// Fixme, change iface and contract
+	return plugins.DataResponse{}, nil
 }
