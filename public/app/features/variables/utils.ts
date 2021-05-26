@@ -239,5 +239,9 @@ export function ensureStringValues(value: any | any[]): string | string[] {
     return value;
   }
 
+  if (typeof value === 'boolean') {
+    return value.toString();
+  }
+
   return '';
 }
