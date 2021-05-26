@@ -33,4 +33,4 @@ Channels are lightweight and ephemeral - they are created automatically on user 
 
 ## Data format
 
-All data travelling over Live channels should be JSON-encoded.
+All data travelling over Live channels must be JSON-encoded.

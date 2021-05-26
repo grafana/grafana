@@ -11,7 +11,7 @@ Grafana Live is enabled by default, but as of Grafana v8 it has a strict default
 
 ## Max number of connections
 
-Grafana Live uses persistent connections (WebSocket at the moment) to deliver real-time updates to clients. You may need to tune your server infrastructure a bit. Here we collect some advices to help you scale Grafana Live to handle more connections. 
+Grafana Live uses persistent connections (WebSocket at the moment) to deliver real-time updates to clients. You may need to tune your server infrastructure a bit.
 
 For this reason the number of maximum connections users can establish with Grafana is limited to 100:
 
@@ -26,7 +26,7 @@ Before making this limit higher make sure your server and infrastructure allow h
 
 ### WebSocket
 
-Grafana Live uses WebSocket protocol to deliver real-time updates to a frontend application. WebSocket is a persistent connection which starts with HTTP Upgrade request and then switches to a TCP mode where WebSocket frames can travel in both directions between a client and a server.
+Grafana Live uses WebSocket protocol to deliver real-time updates to a frontend application. WebSocket is a persistent connection which starts with HTTP Upgrade request (using the same HTTP port as the rest of Grafana) and then switches to a TCP mode where WebSocket frames can travel in both directions between a client and a server.
 
 Each logged-in user opens a WebSocket connection – one per browser tab.
 
@@ -34,15 +34,15 @@ Introducing a persistent connection leads to some things Grafana users should be
 
 ### Resource usage
 
-Each persistent connection will cost some memory on a server. Typically, this should be about 50 KB per connection at this moment. Thus a server with 1 GB RAM is expected to handle about 20k connections max. Each active connection will consume additional CPU resources since client and server send PING/PONG frames to each other to maintain a connection.
+Each persistent connection will cost some memory on a server. Typically, this should be about 50 KB per connection at this moment. Thus a server with 1 GB RAM is expected to handle about 20k connections max. Each active connection consumes an additional CPU resources since client and server send PING/PONG frames to each other to maintain a connection.
 
-And of course it will cost additional CPU as soon as you are using streaming functionality. The exact CPU resource usage is hard to estimate since it heavily depends on Grafana Live usage pattern.
+Of course, it will cost additional CPU as soon as streaming functionality is used. The exact CPU resource utilization is hard to estimate since it heavily depends on Grafana Live usage pattern.
 
 ### Open file limit
 
-Each WebSocket connection will cost a file descriptor on a server machine where Grafana runs. Most operating systems has a quite low default limit for the maximum number of descriptors that process can open.
+Each WebSocket connection costs a file descriptor on a server machine where Grafana runs. Most operating systems has a quite low default limit for the maximum number of descriptors that process can open.
 
-To look the current limit on Unix:
+To look at the current limit on Unix run:
 
 ```
 ulimit -n
@@ -56,11 +56,11 @@ cat /proc/<PROCESS_PID>/limits
 
 The open files limit shows approximately how many user connections your server can currently handle.
 
-This limit can be increased – see for example [these instructions](https://docs.riak.com/riak/kv/2.2.3/using/performance/open-files-limit.1.html).
+This limit can be increased – see for example [these instructions for popular operating systems](https://docs.riak.com/riak/kv/2.2.3/using/performance/open-files-limit.1.html).
 
 ### Ephemeral port exhaustion
 
-Ephemeral ports exhaustion problem can happen between your load balancer and your Grafana server. I.e. when you load balance requests/connections between different Grafana instances. If users connect directly to a single Grafana server instance you should not come across this issue.
+Ephemeral ports exhaustion problem can happen between your load balancer (or reverse proxy) software and Grafana server. I.e. when you load balance requests/connections between different Grafana instances. If users connect directly to a single Grafana server instance you should not come across this issue.
 
 The problem arises due to the fact that each TCP connection uniquely identified in the OS by the 4-part-tuple:
 
@@ -68,7 +68,7 @@ The problem arises due to the fact that each TCP connection uniquely identified 
 source ip | source port | destination ip | destination port
 ```
 
-On load balancer/server boundary you are limited in 65536 possible variants by default. But actually due to some OS limits (for example on Unix available ports defined in `ip_local_port_range` sysctl parameter) and sockets in TIME_WAIT state the number is even less.
+On load balancer/server boundary you are limited in 65535 possible variants by default. But actually due to some OS limits (for example on Unix available ports defined in `ip_local_port_range` sysctl parameter) and sockets in TIME_WAIT state the number is even less.
 
 In order to eliminate a problem you can:
 
@@ -108,6 +108,6 @@ http {
 
 See [more information on Nginx web site](https://www.nginx.com/blog/websocket-nginx/). Refer to your load balancer/reverse proxy documentation to find out more information on dealing with WebSocket connections.
 
-Some corporate proxies can remove headers required to properly establish WebSocket connection. In this case you should tune intermediate proxies to not remove required headers. But the better way may me using Grafana with TLS. In this case WebSocket connection will also inherit TLS and thus must fully resolve proxy problem.
+Some corporate proxies can remove headers required to properly establish WebSocket connection. In this case you should tune intermediate proxies to not remove required headers. But the better way may me using Grafana with TLS. In this case WebSocket connection will also inherit TLS and thus must be handled transparently by proxies.
 
 Proxies like Nginx and Envoy have default limits on maximum number of connections which can be established. Make sure you have a reasonable limit for max number of incoming and outgoing connections in your proxy configuration.
