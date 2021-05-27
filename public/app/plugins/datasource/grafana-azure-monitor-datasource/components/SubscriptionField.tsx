@@ -23,40 +23,43 @@ const SubscriptionField: React.FC<SubscriptionFieldProps> = ({
   const [subscriptions, setSubscriptions] = useState<AzureMonitorOption[]>([]);
 
   useEffect(() => {
-    if (!datasource.azureMonitorDatasource.isConfigured()) {
-      return;
-    }
+    const getSubscriptions =
+      query.queryType === AzureQueryType.LogAnalytics
+        ? () => datasource.azureLogAnalyticsDatasource.getSubscriptions()
+        : () => datasource.azureMonitorDatasource.getSubscriptions();
 
-    datasource.azureMonitorDatasource
-      .getSubscriptions()
+    getSubscriptions()
       .then((results) => {
         const newSubscriptions = results.map((v) => ({ label: v.text, value: v.value, description: v.value }));
         setSubscriptions(newSubscriptions);
         setError(ERROR_SOURCE, undefined);
 
         // Set a default subscription ID, if we can
-        let newSubscription = query.subscription;
+        let newSubscription: string | undefined = query.subscription;
 
         if (!newSubscription && query.queryType === AzureQueryType.AzureMonitor) {
-          newSubscription = datasource.azureMonitorDatasource.subscriptionId;
+          newSubscription = datasource.azureMonitorDatasource.defaultSubscriptionId;
         } else if (!query.subscription && query.queryType === AzureQueryType.LogAnalytics) {
-          newSubscription = datasource.azureLogAnalyticsDatasource.subscriptionId;
+          newSubscription = datasource.azureLogAnalyticsDatasource.defaultSubscriptionId;
         }
 
         if (!newSubscription && newSubscriptions.length > 0) {
           newSubscription = newSubscriptions[0].value;
         }
 
-        newSubscription !== query.subscription &&
+        if (newSubscription && newSubscription !== query.subscription) {
           onQueryChange({
             ...query,
             subscription: newSubscription,
           });
+        }
       })
       .catch((err) => setError(ERROR_SOURCE, err));
   }, [
-    datasource.azureLogAnalyticsDatasource?.subscriptionId,
+    datasource.azureMonitorDatasource?.defaultSubscriptionId,
+    datasource.azureLogAnalyticsDatasource?.defaultSubscriptionId,
     datasource.azureMonitorDatasource,
+    datasource.azureLogAnalyticsDatasource,
     onQueryChange,
     query,
     setError,

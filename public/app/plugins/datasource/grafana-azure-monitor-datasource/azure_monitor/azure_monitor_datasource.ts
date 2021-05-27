@@ -44,7 +44,7 @@ const aggregationTypeMap: Record<string, number> = {
 export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureMonitorQuery, AzureDataSourceJsonData> {
   apiVersion = '2018-01-01';
   apiPreviewVersion = '2017-12-01-preview';
-  subscriptionId: string;
+  defaultSubscriptionId?: string;
   baseUrl: string;
   resourceGroup: string;
   resourceName: string;
@@ -56,7 +56,7 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
     super(instanceSettings);
 
     this.timeSrv = getTimeSrv();
-    this.subscriptionId = instanceSettings.jsonData.subscriptionId;
+    this.defaultSubscriptionId = instanceSettings.jsonData.subscriptionId;
 
     const cloud = getAzureCloud(instanceSettings);
     const route = getManagementApiRoute(cloud);
@@ -67,7 +67,7 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
   }
 
   isConfigured(): boolean {
-    return !!this.subscriptionId && this.subscriptionId.length > 0;
+    return !this.validateDatasource();
   }
 
   filterQuery(item: AzureMonitorQuery): boolean {
@@ -107,7 +107,8 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
       for (const df of res.data) {
         const metricQuery = metricQueries[df.refId]?.azureMonitor;
         if (metricQuery) {
-          const url = this.buildAzurePortalUrl(metricQuery, this.subscriptionId, this.timeSrv.timeRange());
+          // TODO: Should use subscriptionId from the query
+          const url = this.buildAzurePortalUrl(metricQuery, this.defaultSubscriptionId!, this.timeSrv.timeRange());
 
           for (const field of df.fields) {
             field.config.links = [
@@ -174,7 +175,7 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
 
     const templateSrv = getTemplateSrv();
 
-    const subscriptionId = templateSrv.replace(target.subscription || this.subscriptionId, scopedVars);
+    const subscriptionId = templateSrv.replace(target.subscription || this.defaultSubscriptionId, scopedVars);
     const resourceGroup = templateSrv.replace(item.resourceGroup, scopedVars);
     const resourceName = templateSrv.replace(item.resourceName, scopedVars);
     const metricNamespace = templateSrv.replace(item.metricNamespace, scopedVars);
@@ -229,8 +230,8 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
     }
 
     const resourceGroupsQuery = query.match(/^ResourceGroups\(\)/i);
-    if (resourceGroupsQuery) {
-      return this.getResourceGroups(this.subscriptionId);
+    if (resourceGroupsQuery && this.defaultSubscriptionId) {
+      return this.getResourceGroups(this.defaultSubscriptionId);
     }
 
     const resourceGroupsQueryWithSub = query.match(/^ResourceGroups\(([^\)]+?)(,\s?([^,]+?))?\)/i);
@@ -239,9 +240,9 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
     }
 
     const metricDefinitionsQuery = query.match(/^Namespaces\(([^\)]+?)(,\s?([^,]+?))?\)/i);
-    if (metricDefinitionsQuery) {
+    if (metricDefinitionsQuery && this.defaultSubscriptionId) {
       if (!metricDefinitionsQuery[3]) {
-        return this.getMetricDefinitions(this.subscriptionId, this.toVariable(metricDefinitionsQuery[1]));
+        return this.getMetricDefinitions(this.defaultSubscriptionId, this.toVariable(metricDefinitionsQuery[1]));
       }
     }
 
@@ -254,10 +255,10 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
     }
 
     const resourceNamesQuery = query.match(/^ResourceNames\(([^,]+?),\s?([^,]+?)\)/i);
-    if (resourceNamesQuery) {
+    if (resourceNamesQuery && this.defaultSubscriptionId) {
       const resourceGroup = this.toVariable(resourceNamesQuery[1]);
       const metricDefinition = this.toVariable(resourceNamesQuery[2]);
-      return this.getResourceNames(this.subscriptionId, resourceGroup, metricDefinition);
+      return this.getResourceNames(this.defaultSubscriptionId, resourceGroup, metricDefinition);
     }
 
     const resourceNamesQueryWithSub = query.match(/^ResourceNames\(([^,]+?),\s?([^,]+?),\s?(.+?)\)/i);
@@ -269,11 +270,11 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
     }
 
     const metricNamespaceQuery = query.match(/^MetricNamespace\(([^,]+?),\s?([^,]+?),\s?([^,]+?)\)/i);
-    if (metricNamespaceQuery) {
+    if (metricNamespaceQuery && this.defaultSubscriptionId) {
       const resourceGroup = this.toVariable(metricNamespaceQuery[1]);
       const metricDefinition = this.toVariable(metricNamespaceQuery[2]);
       const resourceName = this.toVariable(metricNamespaceQuery[3]);
-      return this.getMetricNamespaces(this.subscriptionId, resourceGroup, metricDefinition, resourceName);
+      return this.getMetricNamespaces(this.defaultSubscriptionId, resourceGroup, metricDefinition, resourceName);
     }
 
     const metricNamespaceQueryWithSub = query.match(
@@ -288,13 +289,19 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
     }
 
     const metricNamesQuery = query.match(/^MetricNames\(([^,]+?),\s?([^,]+?),\s?([^,]+?),\s?([^,]+?)\)/i);
-    if (metricNamesQuery) {
+    if (metricNamesQuery && this.defaultSubscriptionId) {
       if (metricNamesQuery[3].indexOf(',') === -1) {
         const resourceGroup = this.toVariable(metricNamesQuery[1]);
         const metricDefinition = this.toVariable(metricNamesQuery[2]);
         const resourceName = this.toVariable(metricNamesQuery[3]);
         const metricNamespace = this.toVariable(metricNamesQuery[4]);
-        return this.getMetricNames(this.subscriptionId, resourceGroup, metricDefinition, resourceName, metricNamespace);
+        return this.getMetricNames(
+          this.defaultSubscriptionId,
+          resourceGroup,
+          metricDefinition,
+          resourceName,
+          metricNamespace
+        );
       }
     }
 
@@ -318,9 +325,13 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
     return getTemplateSrv().replace((metric || '').trim());
   }
 
-  getSubscriptions() {
+  async getSubscriptions(): Promise<Array<{ text: string; value: string }>> {
+    if (!this.isConfigured()) {
+      return [];
+    }
+
     const url = `${this.baseUrl}?api-version=2019-03-01`;
-    return this.doRequest(url).then((result: any) => {
+    return await this.doRequest(url).then((result: any) => {
       return ResponseParser.parseSubscriptions(result);
     });
   }
@@ -518,13 +529,6 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
           message: 'The Client Id field is required.',
         };
       }
-    }
-
-    if (!this.isValidConfigField(this.subscriptionId)) {
-      return {
-        status: 'error',
-        message: 'The Subscription Id field is required.',
-      };
     }
 
     return undefined;

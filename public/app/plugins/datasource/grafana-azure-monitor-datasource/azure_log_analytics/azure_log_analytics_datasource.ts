@@ -1,4 +1,4 @@
-import { map } from 'lodash';
+import { map, first } from 'lodash';
 import LogAnalyticsQuerystringBuilder from '../log_analytics/querystring_builder';
 import ResponseParser, { transformMetadataToKustoSchema } from './response_parser';
 import {
@@ -37,7 +37,7 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
   baseUrl: string;
   applicationId: string;
 
-  subscriptionId: string;
+  defaultSubscriptionId?: string;
 
   azureMonitorUrl: string;
   defaultOrFirstWorkspace: string;
@@ -55,12 +55,23 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     this.azureMonitorUrl = `/${managementRoute}/subscriptions`;
 
     this.url = instanceSettings.url || '';
-    this.subscriptionId = this.instanceSettings.jsonData.logAnalyticsSubscriptionId || '';
+    this.defaultSubscriptionId = this.instanceSettings.jsonData.logAnalyticsSubscriptionId || '';
     this.defaultOrFirstWorkspace = this.instanceSettings.jsonData.logAnalyticsDefaultWorkspace || '';
   }
 
   isConfigured(): boolean {
-    return !!this.subscriptionId && this.subscriptionId.length > 0;
+    return !this.validateDatasource();
+  }
+
+  async getSubscriptions(): Promise<Array<{ text: string; value: string }>> {
+    if (!this.isConfigured()) {
+      return [];
+    }
+
+    const url = `${this.azureMonitorUrl}?api-version=2019-03-01`;
+    return await this.doRequest(url).then((result: any) => {
+      return ResponseParser.parseSubscriptions(result);
+    });
   }
 
   async getWorkspaces(subscription: string): Promise<AzureLogsVariable[]> {
@@ -74,7 +85,7 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
   }
 
   getWorkspaceList(subscription: string): Promise<any> {
-    const subscriptionId = getTemplateSrv().replace(subscription || this.subscriptionId);
+    const subscriptionId = getTemplateSrv().replace(subscription || this.defaultSubscriptionId);
 
     const workspaceListUrl =
       this.azureMonitorUrl +
@@ -109,7 +120,7 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
       workspace = this.defaultOrFirstWorkspace;
     }
 
-    const subscriptionId = templateSrv.replace(target.subscription || this.subscriptionId, scopedVars);
+    const subscriptionId = templateSrv.replace(target.subscription || this.defaultSubscriptionId, scopedVars);
     const query = templateSrv.replace(item.query, scopedVars, this.interpolateVariable);
 
     return {
@@ -182,10 +193,10 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
   }
 
   async getWorkspaceDetails(workspaceId: string) {
-    if (!this.subscriptionId) {
+    if (!this.defaultSubscriptionId) {
       return {};
     }
-    const response = await this.getWorkspaceList(this.subscriptionId);
+    const response = await this.getWorkspaceList(this.defaultSubscriptionId);
 
     const details = response.data.value.find((o: any) => {
       return o.properties.customerId === workspaceId;
@@ -216,8 +227,8 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
   metricFindQueryInternal(query: string): Promise<MetricFindValue[]> {
     // workspaces() - Get workspaces in the default subscription
     const workspacesQuery = query.match(/^workspaces\(\)/i);
-    if (workspacesQuery) {
-      return this.getWorkspaces(this.subscriptionId);
+    if (workspacesQuery && this.defaultSubscriptionId) {
+      return this.getWorkspaces(this.defaultSubscriptionId);
     }
 
     // workspaces("abc-def-etc") - Get workspaces a specified subscription
@@ -228,6 +239,10 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
 
     // Execute the query as KQL to the default or first workspace
     return this.getDefaultOrFirstWorkspace().then((resourceURI) => {
+      if (!resourceURI) {
+        return [];
+      }
+
       const queries = this.buildQuery(query, null, resourceURI);
       const promises = this.doQueries(queries);
 
@@ -299,16 +314,28 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     return quotedValues.join(',');
   }
 
-  getDefaultOrFirstWorkspace() {
+  async getDefaultOrFirstSubscription(): Promise<string | undefined> {
+    if (this.defaultSubscriptionId) {
+      return this.defaultSubscriptionId;
+    }
+    return this.getSubscriptions().then((subs) => first(subs.map((s) => s.value)));
+  }
+
+  async getDefaultOrFirstWorkspace(): Promise<string | undefined> {
     if (this.defaultOrFirstWorkspace) {
-      return Promise.resolve(this.defaultOrFirstWorkspace);
+      return this.defaultOrFirstWorkspace;
     }
 
-    return this.getWorkspaces(this.subscriptionId).then((workspaces) => {
-      this.defaultOrFirstWorkspace = workspaces[0].value;
+    const subscriptionId = await this.getDefaultOrFirstSubscription();
+    if (!subscriptionId) {
+      return undefined;
+    }
 
-      return this.defaultOrFirstWorkspace;
-    });
+    const workspace = await this.getWorkspaces(subscriptionId).then((ws) => first(ws.map((w) => w.value)));
+    if (workspace) {
+      this.defaultOrFirstWorkspace = workspace;
+    }
+    return workspace;
   }
 
   annotationQuery(options: any) {
@@ -371,20 +398,26 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
   }
 
   // TODO: update to be completely resource-centric
-  testDatasource(): Promise<DatasourceValidationResult> {
+  async testDatasource(): Promise<DatasourceValidationResult> {
     const validationError = this.validateDatasource();
     if (validationError) {
-      return Promise.resolve(validationError);
+      return validationError;
     }
 
-    return this.getDefaultOrFirstWorkspace()
-      .then((resourceOrWorkspace) => {
-        const url = isGUIDish(resourceOrWorkspace)
-          ? `${this.baseUrl}/v1/workspaces/${resourceOrWorkspace}/metadata`
-          : `${this.baseUrl}/v1${resourceOrWorkspace}/metadata`;
+    const resourceOrWorkspace = await this.getDefaultOrFirstWorkspace();
 
-        return this.doRequest(url);
-      })
+    if (!resourceOrWorkspace) {
+      return {
+        status: 'error',
+        message: 'Workspace not found.',
+      };
+    }
+
+    const url = isGUIDish(resourceOrWorkspace)
+      ? `${this.baseUrl}/v1/workspaces/${resourceOrWorkspace}/metadata`
+      : `${this.baseUrl}/v1${resourceOrWorkspace}/metadata`;
+
+    return await this.doRequest(url)
       .then<DatasourceValidationResult>((response: any) => {
         if (response.status === 200) {
           return {
@@ -445,13 +478,6 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
           message: 'The Client Id field is required.',
         };
       }
-    }
-
-    if (!this.isValidConfigField(this.subscriptionId)) {
-      return {
-        status: 'error',
-        message: 'The Subscription Id field is required.',
-      };
     }
 
     return undefined;
