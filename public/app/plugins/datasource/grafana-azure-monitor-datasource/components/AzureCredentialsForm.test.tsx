@@ -11,8 +11,8 @@ const setup = (propsFunc?: (props: Props) => Props) => {
       tenantId: 'e7f3f661-a933-3h3f-0294-31c4f962ec48',
       clientId: '34509fad-c0r9-45df-9e25-f1ee34af6900',
       clientSecret: undefined,
+      defaultSubscriptionId: '44987801-6nn6-49he-9b2d-9106972f9789',
     },
-    defaultSubscription: '44987801-6nn6-49he-9b2d-9106972f9789',
     azureCloudOptions: [
       { value: 'azuremonitor', label: 'Azure' },
       { value: 'govazuremonitor', label: 'Azure US Government' },
@@ -20,7 +20,6 @@ const setup = (propsFunc?: (props: Props) => Props) => {
       { value: 'chinaazuremonitor', label: 'Azure China' },
     ],
     onCredentialsChange: jest.fn(),
-    onDefaultSubscriptionChange: jest.fn(),
     getSubscriptions: jest.fn(),
   };
 

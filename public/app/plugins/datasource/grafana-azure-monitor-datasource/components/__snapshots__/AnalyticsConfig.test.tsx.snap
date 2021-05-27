@@ -103,14 +103,13 @@ exports[`Render should enable azure log analytics load workspaces button 1`] = `
         "azureCloud": "azuremonitor",
         "clientId": "44693801-6ee6-49de-9b2d-9106972f9572",
         "clientSecret": undefined,
+        "defaultSubscriptionId": "e3fe4fde-ad5e-4d60-9974-e2f3562ffdf2",
         "tenantId": "e7f3f661-a933-4b3f-8176-51c4f982ec48",
       }
     }
-    defaultSubscription="e3fe4fde-ad5e-4d60-9974-e2f3562ffdf2"
     getSubscriptions={[MockFunction]}
     managedIdentityEnabled={false}
     onCredentialsChange={[Function]}
-    onDefaultSubscriptionChange={[Function]}
   />
   <div
     className="gf-form-group"
@@ -202,13 +201,13 @@ exports[`Render should render component 1`] = `
         "azureCloud": "azuremonitor",
         "clientId": undefined,
         "clientSecret": undefined,
+        "defaultSubscriptionId": undefined,
         "tenantId": "",
       }
     }
     getSubscriptions={[MockFunction]}
     managedIdentityEnabled={false}
     onCredentialsChange={[Function]}
-    onDefaultSubscriptionChange={[Function]}
   />
   <div
     className="gf-form-group"

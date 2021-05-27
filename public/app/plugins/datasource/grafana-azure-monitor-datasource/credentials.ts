@@ -74,7 +74,7 @@ function getLogAnalyticsSecret(options: AzureDataSourceSettings): undefined | st
   }
 }
 
-export function isLogAnalyticsSameAs(options: AzureDataSourceSettings | AzureDataSourceInstanceSettings): boolean {
+function isLogAnalyticsSameAs(options: AzureDataSourceSettings | AzureDataSourceInstanceSettings): boolean {
   return typeof options.jsonData.azureLogAnalyticsSameAs !== 'boolean' || options.jsonData.azureLogAnalyticsSameAs;
 }
 
@@ -94,6 +94,7 @@ export function getCredentials(options: AzureDataSourceSettings): AzureCredentia
       if (config.azure.managedIdentityEnabled) {
         return {
           authType: 'msi',
+          defaultSubscriptionId: options.jsonData.subscriptionId,
         };
       } else {
         // If authentication type is managed identity but managed identities were disabled in Grafana config,
@@ -110,6 +111,7 @@ export function getCredentials(options: AzureDataSourceSettings): AzureCredentia
         tenantId: options.jsonData.tenantId,
         clientId: options.jsonData.clientId,
         clientSecret: getSecret(options),
+        defaultSubscriptionId: options.jsonData.subscriptionId,
       };
   }
 }
@@ -133,6 +135,7 @@ export function getLogAnalyticsCredentials(options: AzureDataSourceSettings): Az
     tenantId: options.jsonData.logAnalyticsTenantId,
     clientId: options.jsonData.logAnalyticsClientId,
     clientSecret: getLogAnalyticsSecret(options),
+    defaultSubscriptionId: options.jsonData.logAnalyticsSubscriptionId,
   };
 }
 
@@ -151,11 +154,14 @@ export function updateCredentials(
         jsonData: {
           ...options.jsonData,
           azureAuthType: 'msi',
+          subscriptionId: credentials.defaultSubscriptionId,
         },
       };
 
       if (!isLogAnalyticsSameAs(options)) {
         options = updateLogAnalyticsSameAs(options, true);
+      } else {
+        options = updateLogAnalyticsCredentials(options, credentials);
       }
 
       return options;
@@ -169,6 +175,7 @@ export function updateCredentials(
           cloudName: credentials.azureCloud || getDefaultAzureCloud(),
           tenantId: credentials.tenantId,
           clientId: credentials.clientId,
+          subscriptionId: credentials.defaultSubscriptionId,
         },
         secureJsonData: {
           ...options.secureJsonData,
@@ -179,7 +186,7 @@ export function updateCredentials(
         },
         secureJsonFields: {
           ...options.secureJsonFields,
-          clientSecret: typeof credentials.clientSecret === 'object',
+          clientSecret: typeof credentials.clientSecret === 'symbol',
         },
       };
 
@@ -218,6 +225,15 @@ export function updateLogAnalyticsCredentials(
     };
   }
 
+  // Default subscription
+  options = {
+    ...options,
+    jsonData: {
+      ...options.jsonData,
+      logAnalyticsSubscriptionId: credentials.defaultSubscriptionId,
+    },
+  };
+
   return options;
 }
 
@@ -236,28 +252,16 @@ export function updateLogAnalyticsSameAs(options: AzureDataSourceSettings, sameA
       // Get the primary credentials
       let credentials = getCredentials(options);
 
-      // Log Analytics credentials only used if primary credentials are App Registration (client secret)
-      if (credentials.authType === 'clientsecret') {
-        // Check whether the client secret is concealed
-        if (typeof credentials.clientSecret === 'symbol') {
-          // Log Analytics credentials need to be synchronized but the client secret is concealed,
-          // so we have to reset the primary client secret to ensure that user enters a new secret
-          credentials.clientSecret = undefined;
-          options = updateCredentials(options, credentials);
-        }
-
-        // Synchronize the Log Analytics credentials with primary credentials
-        options = updateLogAnalyticsCredentials(options, credentials);
+      // Check whether the primary client secret is concealed
+      if (credentials.authType === 'clientsecret' && typeof credentials.clientSecret === 'symbol') {
+        // Log Analytics credentials need to be synchronized but the client secret is concealed,
+        // so we have to reset the primary client secret to ensure that user enters a new secret
+        credentials.clientSecret = undefined;
+        options = updateCredentials(options, credentials);
       }
 
-      // Synchronize default subscription
-      options = {
-        ...options,
-        jsonData: {
-          ...options.jsonData,
-          logAnalyticsSubscriptionId: options.jsonData.subscriptionId,
-        },
-      };
+      // Synchronize the Log Analytics credentials with primary credentials
+      options = updateLogAnalyticsCredentials(options, credentials);
     }
   }
 
