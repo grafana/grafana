@@ -1,10 +1,10 @@
 import { RelativeTimeRange } from '@grafana/data';
-import { GrafanaQuery } from 'app/types/unified-alerting-dto';
+import { AlertQuery } from 'app/types/unified-alerting-dto';
 import { ExpressionQuery, ExpressionQueryType } from '../../../expressions/types';
 
 const FALL_BACK_TIME_RANGE = { from: 21600, to: 0 };
 
-export const getTimeRangeForExpression = (query: ExpressionQuery, queries: GrafanaQuery[]): RelativeTimeRange => {
+export const getTimeRangeForExpression = (query: ExpressionQuery, queries: AlertQuery[]): RelativeTimeRange => {
   const referencedRefIds: string[] | undefined = getReferencedIds(query, queries);
 
   if (!referencedRefIds) {
@@ -23,7 +23,7 @@ export const getTimeRangeForExpression = (query: ExpressionQuery, queries: Grafa
   };
 };
 
-const getReferencedIds = (model: ExpressionQuery, queries: GrafanaQuery[]): string[] | undefined => {
+const getReferencedIds = (model: ExpressionQuery, queries: AlertQuery[]): string[] | undefined => {
   switch (model.type) {
     case ExpressionQueryType.classic:
       return getReferencedIdsForClassicCondition(model);
@@ -41,7 +41,7 @@ const getReferencedIdsForClassicCondition = (model: ExpressionQuery) => {
   });
 };
 
-const getTimeRanges = (referencedRefIds: string[], queries: GrafanaQuery[]) => {
+const getTimeRanges = (referencedRefIds: string[], queries: AlertQuery[]) => {
   let from: number[] = [];
   let to = [FALL_BACK_TIME_RANGE.to];
   for (const referencedRefIdsKey of referencedRefIds) {
@@ -60,7 +60,7 @@ const getTimeRanges = (referencedRefIds: string[], queries: GrafanaQuery[]) => {
   };
 };
 
-const getReferencedIdsForMath = (model: ExpressionQuery, queries: GrafanaQuery[]) => {
+const getReferencedIdsForMath = (model: ExpressionQuery, queries: AlertQuery[]) => {
   return (
     queries
       // filter queries of type query and filter expression on if it includes any refIds

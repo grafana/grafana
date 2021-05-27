@@ -101,7 +101,7 @@ export enum GrafanaAlertStateDecision {
   OK = 'OK',
 }
 
-export interface GrafanaQuery {
+export interface AlertQuery {
   refId: string;
   queryType: string;
   relativeTimeRange?: RelativeTimeRange;
@@ -115,7 +115,7 @@ export interface PostableGrafanaRuleDefinition {
   condition: string;
   no_data_state: GrafanaAlertStateDecision;
   exec_err_state: GrafanaAlertStateDecision;
-  data: GrafanaQuery[];
+  data: AlertQuery[];
 }
 export interface GrafanaRuleDefinition extends PostableGrafanaRuleDefinition {
   uid: string;

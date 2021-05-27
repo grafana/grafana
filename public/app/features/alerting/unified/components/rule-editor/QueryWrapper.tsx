@@ -14,18 +14,18 @@ import { QueryEditorRow } from 'app/features/query/components/QueryEditorRow';
 import { VizWrapper } from './VizWrapper';
 import { isExpressionQuery } from 'app/features/expressions/guards';
 import { TABLE, TIMESERIES } from '../../utils/constants';
-import { GrafanaQuery } from 'app/types/unified-alerting-dto';
+import { AlertQuery } from 'app/types/unified-alerting-dto';
 
 interface Props {
   data: PanelData;
-  query: GrafanaQuery;
-  queries: GrafanaQuery[];
+  query: AlertQuery;
+  queries: AlertQuery[];
   dsSettings: DataSourceInstanceSettings;
   onChangeDataSource: (settings: DataSourceInstanceSettings, index: number) => void;
   onChangeQuery: (query: DataQuery, index: number) => void;
   onChangeTimeRange?: (timeRange: RelativeTimeRange, index: number) => void;
   onRemoveQuery: (query: DataQuery) => void;
-  onDuplicateQuery: (query: GrafanaQuery) => void;
+  onDuplicateQuery: (query: AlertQuery) => void;
   onRunQueries: () => void;
   index: number;
 }
@@ -49,7 +49,7 @@ export const QueryWrapper: FC<Props> = ({
   const isExpression = isExpressionQuery(query.model);
   const [pluginId, changePluginId] = useState<SupportedPanelPlugins>(isExpression ? TABLE : TIMESERIES);
 
-  const renderTimePicker = (query: GrafanaQuery, index: number): ReactNode => {
+  const renderTimePicker = (query: AlertQuery, index: number): ReactNode => {
     if (isExpressionQuery(query.model) || !onChangeTimeRange) {
       return null;
     }
