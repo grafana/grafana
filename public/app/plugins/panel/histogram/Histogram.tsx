@@ -123,7 +123,8 @@ const prepConfig = (frame: DataFrame, theme: GrafanaTheme2) => {
   for (let i = 2; i < frame.fields.length; i++) {
     const field = frame.fields[i];
 
-    field.state!.seriesIndex = seriesIndex++;
+    field.state = field.state ?? {};
+    field.state.seriesIndex = seriesIndex++;
 
     const customConfig = { ...field.config.custom };
 

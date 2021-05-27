@@ -57,7 +57,7 @@ export const VisualizationSelectPane: FC<Props> = ({ panel }) => {
         const match = filterPluginList(plugins, query, plugin.meta);
 
         if (match && match.length) {
-          onPluginTypeChange(match[0], true);
+          onPluginTypeChange(match[0], false);
         }
       }
     },
