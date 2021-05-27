@@ -18,7 +18,7 @@ describe('ElasticDetails', () => {
 
   it('should not render "Max concurrent Shard Requests" if version is low', () => {
     const options = createDefaultConfigOptions();
-    options.jsonData.esVersion = 5;
+    options.jsonData.esVersion = '5.0.0';
     const wrapper = mount(<ElasticDetails onChange={() => {}} value={options} />);
     expect(wrapper.find('input[aria-label="Max concurrent Shard Requests input"]').length).toBe(0);
   });
@@ -48,16 +48,16 @@ describe('ElasticDetails', () => {
 
   describe('version change', () => {
     const testCases = [
-      { version: 50, expectedMaxConcurrentShardRequests: 256 },
-      { version: 50, maxConcurrentShardRequests: 50, expectedMaxConcurrentShardRequests: 50 },
-      { version: 56, expectedMaxConcurrentShardRequests: 256 },
-      { version: 56, maxConcurrentShardRequests: 256, expectedMaxConcurrentShardRequests: 256 },
-      { version: 56, maxConcurrentShardRequests: 5, expectedMaxConcurrentShardRequests: 256 },
-      { version: 56, maxConcurrentShardRequests: 200, expectedMaxConcurrentShardRequests: 200 },
-      { version: 70, expectedMaxConcurrentShardRequests: 5 },
-      { version: 70, maxConcurrentShardRequests: 256, expectedMaxConcurrentShardRequests: 5 },
-      { version: 70, maxConcurrentShardRequests: 5, expectedMaxConcurrentShardRequests: 5 },
-      { version: 70, maxConcurrentShardRequests: 6, expectedMaxConcurrentShardRequests: 6 },
+      { version: '5.0.0', expectedMaxConcurrentShardRequests: 256 },
+      { version: '5.0.0', maxConcurrentShardRequests: 50, expectedMaxConcurrentShardRequests: 50 },
+      { version: '5.6.0', expectedMaxConcurrentShardRequests: 256 },
+      { version: '5.6.0', maxConcurrentShardRequests: 256, expectedMaxConcurrentShardRequests: 256 },
+      { version: '5.6.0', maxConcurrentShardRequests: 5, expectedMaxConcurrentShardRequests: 256 },
+      { version: '5.6.0', maxConcurrentShardRequests: 200, expectedMaxConcurrentShardRequests: 200 },
+      { version: '7.0.0', expectedMaxConcurrentShardRequests: 5 },
+      { version: '7.0.0', maxConcurrentShardRequests: 256, expectedMaxConcurrentShardRequests: 5 },
+      { version: '7.0.0', maxConcurrentShardRequests: 5, expectedMaxConcurrentShardRequests: 5 },
+      { version: '7.0.0', maxConcurrentShardRequests: 6, expectedMaxConcurrentShardRequests: 6 },
     ];
 
     const onChangeMock = jest.fn();

@@ -2,6 +2,7 @@ import { DataSourceInstanceSettings } from './datasource';
 import { PanelPluginMeta } from './panel';
 import { GrafanaTheme } from './theme';
 import { SystemDateFormatSettings } from '../datetime';
+import { GrafanaTheme2 } from '../themes';
 
 /**
  * Describes the build information that will be available via the Grafana configuration.
@@ -43,9 +44,8 @@ export enum GrafanaEdition {
 export interface FeatureToggles {
   [name: string]: boolean;
 
-  live: boolean;
   ngalert: boolean;
-  panelLibrary: boolean;
+  trimDefaults: boolean;
   accesscontrol: boolean;
 
   /**
@@ -123,6 +123,7 @@ export interface GrafanaConfig {
   editorsCanAdmin: boolean;
   disableSanitizeHtml: boolean;
   theme: GrafanaTheme;
+  theme2: GrafanaTheme2;
   pluginsToPreload: string[];
   featureToggles: FeatureToggles;
   licenseInfo: LicenseInfo;

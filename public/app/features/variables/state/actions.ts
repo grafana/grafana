@@ -1,5 +1,5 @@
 import angular from 'angular';
-import castArray from 'lodash/castArray';
+import { castArray, isEqual } from 'lodash';
 import { DataQuery, LoadingState, TimeRange, UrlQueryMap, UrlQueryValue } from '@grafana/data';
 
 import {
@@ -39,7 +39,7 @@ import {
 import { contextSrv } from 'app/core/services/context_srv';
 import { getTemplateSrv, TemplateSrv } from '../../templating/template_srv';
 import { alignCurrentWithMulti } from '../shared/multiOptions';
-import { hasLegacyVariableSupport, hasStandardVariableSupport, isMulti, isQuery } from '../guard';
+import { hasLegacyVariableSupport, hasOptions, hasStandardVariableSupport, isMulti, isQuery } from '../guard';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { DashboardModel } from 'app/features/dashboard/state';
 import { createErrorNotification } from '../../../core/copy/appNotification';
@@ -51,7 +51,6 @@ import {
 } from './transactionReducer';
 import { getBackendSrv } from '../../../core/services/backend_srv';
 import { cleanVariables } from './variablesReducer';
-import isEqual from 'lodash/isEqual';
 import { ensureStringValues, getCurrentText, getVariableRefresh } from '../utils';
 import { store } from 'app/store/store';
 import { getDatasourceSrv } from '../../plugins/datasource_srv';
@@ -93,7 +92,7 @@ export const initDashboardTemplating = (list: VariableModel[]): ThunkResult<void
   return (dispatch, getState) => {
     let orderIndex = 0;
     for (let index = 0; index < list.length; index++) {
-      const model = list[index];
+      const model = fixSelectedInconsistency(list[index]);
       if (!variableAdapters.getIfExists(model.type)) {
         continue;
       }
@@ -111,8 +110,34 @@ export const initDashboardTemplating = (list: VariableModel[]): ThunkResult<void
   };
 };
 
+export function fixSelectedInconsistency(model: VariableModel): VariableModel | VariableWithOptions {
+  if (!hasOptions(model)) {
+    return model;
+  }
+
+  let found = false;
+  for (const option of model.options) {
+    option.selected = false;
+    if (Array.isArray(model.current.value)) {
+      for (const value of model.current.value) {
+        if (option.value === value) {
+          option.selected = found = true;
+        }
+      }
+    } else if (option.value === model.current.value) {
+      option.selected = found = true;
+    }
+  }
+
+  if (!found && model.options.length) {
+    model.options[0].selected = true;
+  }
+
+  return model;
+}
+
 export const addSystemTemplateVariables = (dashboard: DashboardModel): ThunkResult<void> => {
-  return (dispatch, getState) => {
+  return (dispatch) => {
     const dashboardModel: DashboardVariableModel = {
       ...initialVariableModelState,
       id: '__dashboard',
@@ -494,6 +519,7 @@ export const variableUpdated = (
     return Promise.all(promises).then(() => {
       if (emitChangeEvents) {
         const dashboard = getState().dashboard.getModel();
+        dashboard?.setChangeAffectsAllPanels();
         dashboard?.processRepeats();
         locationService.partial(getQueryWithVariables(getState));
         dashboard?.startRefresh();
@@ -527,6 +553,7 @@ export const onTimeRangeUpdated = (
   try {
     await Promise.all(promises);
     const dashboard = getState().dashboard.getModel();
+    dashboard?.setChangeAffectsAllPanels();
     dashboard?.startRefresh();
   } catch (error) {
     console.error(error);

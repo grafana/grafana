@@ -3,7 +3,7 @@ import { getColorForTheme, GrafanaTheme } from '@grafana/data';
 import { ColorPicker } from '../ColorPicker/ColorPicker';
 import { stylesFactory, useTheme } from '../../themes';
 import { css } from '@emotion/css';
-import { ColorPickerTrigger } from '../ColorPicker/ColorPickerTrigger';
+import { ColorSwatch } from '../ColorPicker/ColorSwatch';
 
 /**
  * @alpha
@@ -26,7 +26,7 @@ export const ColorValueEditor: React.FC<ColorValueEditorProps> = ({ value, onCha
         return (
           <div className={styles.spot} onBlur={hideColorPicker}>
             <div className={styles.colorPicker}>
-              <ColorPickerTrigger
+              <ColorSwatch
                 ref={ref}
                 onClick={showColorPicker}
                 onMouseLeave={hideColorPicker}

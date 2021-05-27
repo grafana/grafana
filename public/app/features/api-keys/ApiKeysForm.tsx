@@ -1,8 +1,9 @@
 import React, { ChangeEvent, FC, FormEvent, useEffect, useState } from 'react';
-import { EventsWithValidation, Icon, InlineFormLabel, LegacyForms, ValidationEvents } from '@grafana/ui';
+import { EventsWithValidation, InlineFormLabel, LegacyForms, ValidationEvents, Button } from '@grafana/ui';
 import { NewApiKey, OrgRole } from '../../types';
 import { rangeUtil } from '@grafana/data';
 import { SlideDown } from '../../core/components/Animations/SlideDown';
+import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
 
 const { Input } = LegacyForms;
 
@@ -65,9 +66,7 @@ export const ApiKeysForm: FC<Props> = ({ show, onClose, onKeyAdded }) => {
   return (
     <SlideDown in={show}>
       <div className="gf-form-inline cta-form">
-        <button className="cta-form__close btn btn-transparent" onClick={onClose}>
-          <Icon name="times" />
-        </button>
+        <CloseButton onClick={onClose} />
         <form className="gf-form-group" onSubmit={onSubmit}>
           <h5>Add API Key</h5>
           <div className="gf-form-inline">
@@ -101,7 +100,7 @@ export const ApiKeysForm: FC<Props> = ({ show, onClose, onKeyAdded }) => {
               />
             </div>
             <div className="gf-form">
-              <button className="btn gf-form-btn btn-primary">Add</button>
+              <Button>Add</Button>
             </div>
           </div>
         </form>

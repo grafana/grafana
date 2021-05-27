@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
+	cw "github.com/weaveworks/common/middleware"
 	"gopkg.in/macaron.v1"
 )
 
@@ -68,6 +69,11 @@ func (h *ContextHandler) Middleware(c *macaron.Context) {
 		AllowAnonymous: false,
 		SkipCache:      false,
 		Logger:         log.New("context"),
+	}
+
+	traceID, exists := cw.ExtractTraceID(c.Req.Request.Context())
+	if exists {
+		ctx.Logger = ctx.Logger.New("traceID", traceID)
 	}
 
 	const headerName = "X-Grafana-Org-Id"
@@ -231,7 +237,7 @@ func (h *ContextHandler) initContextWithBasicAuth(ctx *models.ReqContext, orgID 
 	user := authQuery.User
 
 	query := models.GetSignedInUserQuery{UserId: user.Id, OrgId: orgID}
-	if err := bus.Dispatch(&query); err != nil {
+	if err := bus.DispatchCtx(ctx.Req.Context(), &query); err != nil {
 		ctx.Logger.Error(
 			"Failed at user signed in",
 			"id", user.Id,
@@ -259,18 +265,12 @@ func (h *ContextHandler) initContextWithToken(ctx *models.ReqContext, orgID int6
 	token, err := h.AuthTokenService.LookupToken(ctx.Req.Context(), rawToken)
 	if err != nil {
 		ctx.Logger.Error("Failed to look up user based on cookie", "error", err)
-
-		var revokedErr *models.TokenRevokedError
-		if !errors.As(err, &revokedErr) || !ctx.IsApiRequest() {
-			cookies.WriteSessionCookie(ctx, h.Cfg, "", -1)
-		}
-
 		ctx.Data["lookupTokenErr"] = err
 		return false
 	}
 
 	query := models.GetSignedInUserQuery{UserId: token.UserId, OrgId: orgID}
-	if err := bus.Dispatch(&query); err != nil {
+	if err := bus.DispatchCtx(ctx.Req.Context(), &query); err != nil {
 		ctx.Logger.Error("Failed to get user with id", "userId", token.UserId, "error", err)
 		return false
 	}

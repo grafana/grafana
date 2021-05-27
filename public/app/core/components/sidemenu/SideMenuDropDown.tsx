@@ -1,5 +1,5 @@
 import React, { FC } from 'react';
-import _ from 'lodash';
+import { filter } from 'lodash';
 import DropDownChild from './DropDownChild';
 import { NavModelItem } from '@grafana/data';
 import { Link } from '@grafana/ui';
@@ -13,7 +13,7 @@ const SideMenuDropDown: FC<Props> = (props) => {
   const { link, onHeaderClick } = props;
   let childrenLinks: NavModelItem[] = [];
   if (link.children) {
-    childrenLinks = _.filter(link.children, (item) => !item.hideFromMenu);
+    childrenLinks = filter(link.children, (item) => !item.hideFromMenu);
   }
 
   const linkContent = <span className="sidemenu-item-text">{link.text}</span>;

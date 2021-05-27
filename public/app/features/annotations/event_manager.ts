@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import { each, filter, keys } from 'lodash';
 import tinycolor from 'tinycolor2';
 import {
   ALERTING_COLOR,
@@ -141,7 +141,7 @@ export class EventManager {
     flotOptions.xaxis.eventSectionHeight = eventSectionHeight;
 
     flotOptions.events = {
-      levels: _.keys(types).length + 1,
+      levels: keys(types).length + 1,
       data: annotations,
       types: types,
       manager: this,
@@ -150,7 +150,7 @@ export class EventManager {
 }
 
 function getRegions(events: AnnotationEvent[]) {
-  return _.filter(events, 'isRegion');
+  return filter(events, 'isRegion');
 }
 
 function addRegionMarking(regions: any[], flotOptions: { grid: { markings: any } }) {
@@ -158,7 +158,7 @@ function addRegionMarking(regions: any[], flotOptions: { grid: { markings: any }
   const defaultColor = DEFAULT_ANNOTATION_COLOR;
   let fillColor;
 
-  _.each(regions, (region) => {
+  each(regions, (region) => {
     if (region.source) {
       fillColor = region.source.iconColor || defaultColor;
     } else {

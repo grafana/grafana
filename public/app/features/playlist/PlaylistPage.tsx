@@ -32,7 +32,7 @@ export const PlaylistPage: FC<Props> = ({ navModel }) => {
     <EmptyListCTA
       title="There are no playlists created yet"
       buttonIcon="plus"
-      buttonLink="playlists/create"
+      buttonLink="playlists/new"
       buttonTitle="Create Playlist"
       proTip="You can use playlists to cycle dashboards on TVs without user control"
       proTipLink="http://docs.grafana.org/reference/playlist/"
@@ -132,11 +132,11 @@ export const StartModal: FC<StartModalProps> = ({ playlist, onDismiss }) => {
           onChange={(e) => setAutofit(e.currentTarget.checked)}
         />
       </VerticalGroup>
-      <div className="gf-form-button-row">
+      <Modal.ButtonRow>
         <Button variant="primary" onClick={onStart}>
           Start {playlist.name}
         </Button>
-      </div>
+      </Modal.ButtonRow>
     </Modal>
   );
 };

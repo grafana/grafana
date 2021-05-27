@@ -173,6 +173,62 @@ func TestPagerdutyNotifier(t *testing.T) {
 				So(diff, ShouldBeEmpty)
 			})
 
+			Convey("should return properly formatted default v2 event payload with empty message", func() {
+				json := `{
+					"integrationKey": "abcdefgh0123456789",
+					"autoResolve": false
+				}`
+
+				settingsJSON, err := simplejson.NewJson([]byte(json))
+				So(err, ShouldBeNil)
+
+				model := &models.AlertNotification{
+					Name:     "pagerduty_testing",
+					Type:     "pagerduty",
+					Settings: settingsJSON,
+				}
+
+				not, err := NewPagerdutyNotifier(model)
+				So(err, ShouldBeNil)
+
+				pagerdutyNotifier := not.(*PagerdutyNotifier)
+				evalContext := alerting.NewEvalContext(context.Background(), &alerting.Rule{
+					ID:    0,
+					Name:  "someRule",
+					State: models.AlertStateAlerting,
+				}, &validations.OSSPluginRequestValidator{})
+				evalContext.IsTestRun = true
+
+				payloadJSON, err := pagerdutyNotifier.buildEventPayload(evalContext)
+				So(err, ShouldBeNil)
+				payload, err := simplejson.NewJson(payloadJSON)
+				So(err, ShouldBeNil)
+
+				diff := cmp.Diff(map[string]interface{}{
+					"client":       "Grafana",
+					"client_url":   "",
+					"dedup_key":    "alertId-0",
+					"event_action": "trigger",
+					"links": []interface{}{
+						map[string]interface{}{
+							"href": "",
+						},
+					},
+					"payload": map[string]interface{}{
+						"component": "Grafana",
+						"source":    "<<PRESENCE>>",
+						"custom_details": map[string]interface{}{
+							"state": "alerting",
+						},
+						"severity":  "critical",
+						"summary":   "someRule",
+						"timestamp": "<<PRESENCE>>",
+					},
+					"routing_key": "abcdefgh0123456789",
+				}, payload.Interface(), cmp.Comparer(presenceComparer))
+				So(diff, ShouldBeEmpty)
+			})
+
 			Convey("should return properly formatted payload with message moved to details", func() {
 				json := `{
 					"integrationKey": "abcdefgh0123456789",

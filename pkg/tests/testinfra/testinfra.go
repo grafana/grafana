@@ -1,6 +1,7 @@
 package testinfra
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"net"
@@ -14,7 +15,9 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/server"
+	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/ini.v1"
@@ -24,6 +27,10 @@ import (
 // The server address is returned.
 func StartGrafana(t *testing.T, grafDir, cfgPath string, sqlStore *sqlstore.SQLStore) string {
 	t.Helper()
+	ctx := context.Background()
+	// Prevent duplicate registration errors between tests by replacing
+	// the registry used.
+	metrics.GlobalMetrics.SwapRegisterer(prometheus.NewRegistry())
 
 	origSQLStore := registry.GetService(sqlstore.ServiceName)
 	t.Cleanup(func() {
@@ -58,7 +65,9 @@ func StartGrafana(t *testing.T, grafDir, cfgPath string, sqlStore *sqlstore.SQLS
 		}
 	}()
 	t.Cleanup(func() {
-		server.Shutdown("test cleanup")
+		if err := server.Shutdown(ctx, "test cleanup"); err != nil {
+			t.Error("Timed out waiting on server to shut down")
+		}
 	})
 
 	// Wait for Grafana to be ready
@@ -190,6 +199,11 @@ func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 	_, err = anonSect.NewKey("enabled", "true")
 	require.NoError(t, err)
 
+	alertingSect, err := cfg.NewSection("alerting")
+	require.NoError(t, err)
+	_, err = alertingSect.NewKey("notification_timeout_seconds", "1")
+	require.NoError(t, err)
+
 	for _, o := range opts {
 		if o.EnableCSP {
 			securitySect, err := cfg.NewSection("security")
@@ -205,6 +219,30 @@ func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 		}
 		if o.AnonymousUserRole != "" {
 			_, err = anonSect.NewKey("org_role", string(o.AnonymousUserRole))
+			require.NoError(t, err)
+		}
+		if o.EnableQuota {
+			quotaSection, err := cfg.NewSection("quota")
+			require.NoError(t, err)
+			_, err = quotaSection.NewKey("enabled", "true")
+			require.NoError(t, err)
+		}
+		if o.DisableAnonymous {
+			anonSect, err := cfg.GetSection("auth.anonymous")
+			require.NoError(t, err)
+			_, err = anonSect.NewKey("enabled", "false")
+			require.NoError(t, err)
+		}
+		if o.PluginAdminEnabled {
+			anonSect, err := cfg.NewSection("plugins")
+			require.NoError(t, err)
+			_, err = anonSect.NewKey("plugin_admin_enabled", "true")
+			require.NoError(t, err)
+		}
+		if o.ViewersCanEdit {
+			usersSection, err := cfg.NewSection("users")
+			require.NoError(t, err)
+			_, err = usersSection.NewKey("viewers_can_edit", "true")
 			require.NoError(t, err)
 		}
 	}
@@ -223,4 +261,9 @@ type GrafanaOpts struct {
 	EnableCSP            bool
 	EnableFeatureToggles []string
 	AnonymousUserRole    models.RoleType
+	EnableQuota          bool
+	DisableAnonymous     bool
+	CatalogAppEnabled    bool
+	ViewersCanEdit       bool
+	PluginAdminEnabled   bool
 }

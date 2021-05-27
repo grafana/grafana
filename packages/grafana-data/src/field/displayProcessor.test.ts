@@ -3,6 +3,7 @@ import { DisplayProcessor, DisplayValue } from '../types/displayValue';
 import { MappingType, ValueMapping } from '../types/valueMapping';
 import { FieldConfig, FieldType, ThresholdsMode } from '../types';
 import { systemDateFormats } from '../datetime';
+import { createTheme } from '../themes';
 
 function getDisplayProcessorFromConfig(config: FieldConfig) {
   return getDisplayProcessor({
@@ -10,6 +11,7 @@ function getDisplayProcessorFromConfig(config: FieldConfig) {
       config,
       type: FieldType.number,
     },
+    theme: createTheme(),
   });
 }
 
@@ -26,7 +28,7 @@ describe('Process simple display values', () => {
   // Don't test float values here since the decimal formatting changes
   const processors = [
     // Without options, this shortcuts to a much easier implementation
-    getDisplayProcessor({ field: { config: {} } }),
+    getDisplayProcessor({ field: { config: {} }, theme: createTheme() }),
 
     // Add a simple option that is not used (uses a different base class)
     getDisplayProcessorFromConfig({ min: 0, max: 100 }),
@@ -133,30 +135,40 @@ describe('Format value', () => {
 
   it('should return formatted value if there are no matching value mappings', () => {
     const valueMappings: ValueMapping[] = [
-      { id: 0, text: 'elva', type: MappingType.ValueToText, value: '11' },
-      { id: 1, text: '1-9', type: MappingType.RangeToText, from: '1', to: '9' },
+      { type: MappingType.ValueToText, options: { '11': { text: 'elva' } } },
+      { type: MappingType.RangeToText, options: { from: 1, to: 9, result: { text: '1-9' } } },
     ];
-    const value = '10';
-    const instance = getDisplayProcessorFromConfig({ decimals: 1, mappings: valueMappings });
 
-    const result = instance(value);
+    const instance = getDisplayProcessorFromConfig({ decimals: 1, mappings: valueMappings });
+    const result = instance('10');
 
     expect(result.text).toEqual('10.0');
   });
 
   it('should return mapped value if there are matching value mappings', () => {
     const valueMappings: ValueMapping[] = [
-      { id: 0, text: '1-20', type: MappingType.RangeToText, from: '1', to: '20' },
-      { id: 1, text: 'elva', type: MappingType.ValueToText, value: '11' },
+      { type: MappingType.ValueToText, options: { '11': { text: 'elva' } } },
+      { type: MappingType.RangeToText, options: { from: 1, to: 9, result: { text: '1-9' } } },
     ];
-    const value = '11';
-    const instance = getDisplayProcessorFromConfig({ decimals: 1, mappings: valueMappings });
 
-    expect(instance(value).text).toEqual('1-20');
+    const instance = getDisplayProcessorFromConfig({ decimals: 1, mappings: valueMappings });
+    const result = instance('11');
+
+    expect(result.text).toEqual('elva');
+  });
+
+  it('should return value with color if mapping has color', () => {
+    const valueMappings: ValueMapping[] = [{ type: MappingType.ValueToText, options: { Low: { color: 'red' } } }];
+
+    const instance = getDisplayProcessorFromConfig({ decimals: 1, mappings: valueMappings });
+    const result = instance('Low');
+
+    expect(result.text).toEqual('Low');
+    expect(result.color).toEqual('#F2495C');
   });
 
   it('should return mapped value and leave numeric value in tact if value mapping maps to empty string', () => {
-    const valueMappings: ValueMapping[] = [{ id: 1, text: '', type: MappingType.ValueToText, value: '1' }];
+    const valueMappings: ValueMapping[] = [{ type: MappingType.ValueToText, options: { '1': { text: '' } } }];
     const value = '1';
     const instance = getDisplayProcessorFromConfig({ decimals: 1, mappings: valueMappings });
 
@@ -165,7 +177,7 @@ describe('Format value', () => {
   });
 
   it('should not map 1kW to the value for 1W', () => {
-    const valueMappings: ValueMapping[] = [{ id: 0, text: 'mapped', type: MappingType.ValueToText, value: '1' }];
+    const valueMappings: ValueMapping[] = [{ type: MappingType.ValueToText, options: { '1': { text: 'mapped' } } }];
     const value = '1000';
     const instance = getDisplayProcessorFromConfig({ decimals: 1, mappings: valueMappings, unit: 'watt' });
 
@@ -249,6 +261,7 @@ describe('Date display options', () => {
           unit: 'xyz', // ignore non-date formats
         },
       },
+      theme: createTheme(),
     });
     expect(processor(0).text).toEqual('1970-01-01 00:00:00');
   });
@@ -262,6 +275,7 @@ describe('Date display options', () => {
           unit: 'dateTimeAsUS', // ignore non-date formats
         },
       },
+      theme: createTheme(),
     });
     expect(processor(0).text).toEqual('01/01/1970 12:00:00 am');
   });
@@ -275,6 +289,7 @@ describe('Date display options', () => {
           unit: 'time:YYYY', // ignore non-date formats
         },
       },
+      theme: createTheme(),
     });
     expect(processor(0).text).toEqual('1970');
   });
@@ -289,6 +304,7 @@ describe('Date display options', () => {
         type: FieldType.time,
         config: {},
       },
+      theme: createTheme(),
     });
 
     expect(processor(0).text).toEqual('1970-01');
@@ -303,6 +319,7 @@ describe('Date display options', () => {
         type: FieldType.time,
         config: {},
       },
+      theme: createTheme(),
     });
 
     expect(processor('2020-08-01T08:48:43.783337Z').text).toEqual('2020-08-01 08:48:43');
@@ -315,6 +332,7 @@ describe('Date display options', () => {
           type: FieldType.string,
           config: { unit: 'string' },
         },
+        theme: createTheme(),
       });
       expect(processor('22.1122334455').text).toEqual('22.1122334455');
     });
@@ -325,8 +343,14 @@ describe('Date display options', () => {
           type: FieldType.string,
           config: { decimals: 2 },
         },
+        theme: createTheme(),
       });
       expect(processor('22.1122334455').text).toEqual('22.11');
+
+      // Support empty/missing strings
+      expect(processor(undefined).text).toEqual('');
+      expect(processor(null).text).toEqual('');
+      expect(processor('').text).toEqual('');
     });
   });
 });

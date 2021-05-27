@@ -189,6 +189,7 @@ type queryConditionTestContext struct {
 
 type queryConditionScenarioFunc func(c *queryConditionTestContext)
 
+//nolint: staticcheck // plugins.DataPlugin deprecated
 func (ctx *queryConditionTestContext) exec() (*alerting.ConditionResult, error) {
 	jsonModel, err := simplejson.NewJson([]byte(`{
             "type": "query",
@@ -228,9 +229,11 @@ func (ctx *queryConditionTestContext) exec() (*alerting.ConditionResult, error) 
 }
 
 type fakeReqHandler struct {
+	//nolint: staticcheck // plugins.DataPlugin deprecated
 	response plugins.DataResponse
 }
 
+//nolint: staticcheck // plugins.DataPlugin deprecated
 func (rh fakeReqHandler) HandleRequest(context.Context, *models.DataSource, plugins.DataQuery) (
 	plugins.DataResponse, error) {
 	return rh.response, nil

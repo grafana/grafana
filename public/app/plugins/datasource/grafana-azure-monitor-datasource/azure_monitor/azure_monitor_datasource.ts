@@ -11,6 +11,7 @@ import {
   AzureQueryType,
   AzureMonitorMetricsMetadataResponse,
   AzureMetricQuery,
+  DatasourceValidationResult,
 } from '../types';
 import {
   DataSourceInstanceSettings,
@@ -25,6 +26,8 @@ import { from, Observable } from 'rxjs';
 import { mergeMap } from 'rxjs/operators';
 
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { getAuthType, getAzureCloud } from '../credentials';
+import { getManagementApiRoute } from '../api/routes';
 
 const defaultDropdownValue = 'select';
 
@@ -46,7 +49,6 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
   resourceGroup: string;
   resourceName: string;
   url: string;
-  cloudName: string;
   supportedMetricNamespaces: string[] = [];
   timeSrv: TimeSrv;
 
@@ -55,10 +57,13 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
 
     this.timeSrv = getTimeSrv();
     this.subscriptionId = instanceSettings.jsonData.subscriptionId;
-    this.cloudName = instanceSettings.jsonData.cloudName || 'azuremonitor';
-    this.baseUrl = `/${this.cloudName}/subscriptions`;
+
+    const cloud = getAzureCloud(instanceSettings);
+    const route = getManagementApiRoute(cloud);
+    this.baseUrl = `/${route}/subscriptions`;
+
     this.url = instanceSettings.url!;
-    this.supportedMetricNamespaces = new SupportedNamespaces(this.cloudName).get();
+    this.supportedMetricNamespaces = new SupportedNamespaces(cloud).get();
   }
 
   isConfigured(): boolean {
@@ -75,7 +80,9 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
       item.azureMonitor.metricDefinition &&
       item.azureMonitor.metricDefinition !== defaultDropdownValue &&
       item.azureMonitor.metricName &&
-      item.azureMonitor.metricName !== defaultDropdownValue
+      item.azureMonitor.metricName !== defaultDropdownValue &&
+      item.azureMonitor.aggregation &&
+      item.azureMonitor.aggregation !== defaultDropdownValue
     );
   }
 
@@ -123,7 +130,8 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
   }
 
   buildAzurePortalUrl(metricQuery: AzureMetricQuery, subscriptionId: string, timeRange: TimeRange) {
-    const aggregationType = aggregationTypeMap[metricQuery.aggregation] ?? aggregationTypeMap.Average;
+    const aggregationType =
+      (metricQuery.aggregation && aggregationTypeMap[metricQuery.aggregation]) ?? aggregationTypeMap.Average;
 
     const chartDef = this.stringifyAzurePortalUrlParam({
       v2charts: [
@@ -310,8 +318,8 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
     return getTemplateSrv().replace((metric || '').trim());
   }
 
-  getSubscriptions(route?: string) {
-    const url = `/${route || this.cloudName}/subscriptions?api-version=2019-03-01`;
+  getSubscriptions() {
+    const url = `${this.baseUrl}?api-version=2019-03-01`;
     return this.doRequest(url).then((result: any) => {
       return ResponseParser.parseSubscriptions(result);
     });
@@ -451,24 +459,15 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
     });
   }
 
-  testDatasource(): Promise<any> {
-    if (!this.isValidConfigField(this.instanceSettings.jsonData.tenantId)) {
-      return Promise.resolve({
-        status: 'error',
-        message: 'The Tenant Id field is required.',
-      });
+  testDatasource(): Promise<DatasourceValidationResult> {
+    const validationError = this.validateDatasource();
+    if (validationError) {
+      return Promise.resolve(validationError);
     }
 
-    if (!this.isValidConfigField(this.instanceSettings.jsonData.clientId)) {
-      return Promise.resolve({
-        status: 'error',
-        message: 'The Client Id field is required.',
-      });
-    }
-
-    const url = `/${this.cloudName}/subscriptions?api-version=2019-03-01`;
+    const url = `${this.baseUrl}?api-version=2019-03-01`;
     return this.doRequest(url)
-      .then((response: any) => {
+      .then<DatasourceValidationResult>((response: any) => {
         if (response.status === 200) {
           return {
             status: 'success',
@@ -502,8 +501,37 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
       });
   }
 
-  isValidConfigField(field?: string) {
-    return field && field.length > 0;
+  private validateDatasource(): DatasourceValidationResult | undefined {
+    const authType = getAuthType(this.instanceSettings);
+
+    if (authType === 'clientsecret') {
+      if (!this.isValidConfigField(this.instanceSettings.jsonData.tenantId)) {
+        return {
+          status: 'error',
+          message: 'The Tenant Id field is required.',
+        };
+      }
+
+      if (!this.isValidConfigField(this.instanceSettings.jsonData.clientId)) {
+        return {
+          status: 'error',
+          message: 'The Client Id field is required.',
+        };
+      }
+    }
+
+    if (!this.isValidConfigField(this.subscriptionId)) {
+      return {
+        status: 'error',
+        message: 'The Subscription Id field is required.',
+      };
+    }
+
+    return undefined;
+  }
+
+  private isValidConfigField(field?: string): boolean {
+    return typeof field === 'string' && field.length > 0;
   }
 
   doRequest<T = any>(url: string, maxRetries = 1): Promise<FetchResponse<T>> {

@@ -44,6 +44,7 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
     "refresh": "25s"
   },
   "folderId": 0,
+  "folderUid": "l3KqBxCMz",
   "message": "Made changes to xyz",
   "overwrite": false
 }
@@ -55,6 +56,7 @@ JSON Body schema:
 - **dashboard.id** – id = null to create a new dashboard.
 - **dashboard.uid** – Optional unique identifier when creating a dashboard. uid = null will generate a new uid.
 - **folderId** – The id of the folder to save the dashboard in.
+- **folderUid** – The UID of the folder to save the dashboard in. Overrides the `folderId`.
 - **overwrite** – Set to true if you want to overwrite existing dashboard with newer version, same dashboard title in folder or same dashboard uid.
 - **message** - Set a commit message for the version history.
 - **refresh** - Set the dashboard refresh interval. If this is lower than [the minimum refresh interval]({{< relref "../administration/configuration.md#min_refresh_interval">}}), then Grafana will ignore it and will enforce the minimum refresh interval.
@@ -268,7 +270,7 @@ In case of title already exists the `status` property will be `name-exists`.
 
 `GET /api/dashboards/uid/:uid`
 
-Will return the dashboard given the dashboard unique identifier (uid).
+Will return the dashboard given the dashboard unique identifier (uid). Information about the unique identifier of a folder containing the requested dashboard might be found in the metadata.
 
 **Example Request**:
 
@@ -298,6 +300,8 @@ Content-Type: application/json
   "meta": {
     "isStarred": false,
     "url": "/d/cIBgcSjkk/production-overview",
+    "folderId": 2,
+    "folderUid": "l3KqBxCMz",
     "slug": "production-overview" //deprecated in Grafana v5.0
   }
 }
@@ -435,6 +439,100 @@ Content-Type: application/json
 
 ## Dashboard Search
 See [Folder/Dashboard Search API]({{< relref "folder_dashboard_search.md" >}}).
+
+## Remove default values in dashboard
+
+`POST /api/dashboards/trim`
+
+Will remove default values from input dashboard JSON.
+
+**Example Request for trimming dashboard JSON**:
+
+```http
+POST /api/dashboards/trim HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+
+{
+    "meta": {
+        "isStarred": false,
+        "url": "/d/cIBgcSjkk/production-overview",
+        "folderId": 2,
+        "folderUid": "l3KqBxCMz",
+        "slug": "production-overview"
+    },
+    "dashboard": {
+        "id": 112,
+        "panels": [
+            {
+                "datasource": null,
+                "description": "",
+                "gridPos": {
+                    "h": 9,
+                    "w": 12,
+                    "x": 0,
+                    "y": 0
+                },
+                "id": 2,
+                "options": {
+                    "feedUrl": "https://grafana.com/blog/news.xml",
+                    "showImage": true
+                },
+                "pluginVersion": "8.1.0-pre",
+                "title": "Panel Title",
+                "type": "news"
+            }
+        ],
+        "title": "test dashboard",
+        "uid": "9lzdzI3Mz",
+        "version": 2
+    }
+}
+```
+
+**Example Response**:
+
+```http
+HTTP/1.1 200
+Content-Type: application/json
+
+{
+    "meta": {
+        "folderId": 2,
+        "folderUid": "l3KqBxCMz",
+        "isStarred": false,
+        "slug": "production-overview",
+        "url": "/d/cIBgcSjkk/production-overview"
+    },
+    "dashboard": {
+        "id": 112,
+        "panels": [
+            {
+                "gridPos": {},
+                "id": 2,
+                "options": {
+                    "feedUrl": "https://grafana.com/blog/news.xml",
+                    "showImage": true
+                },
+                "pluginVersion": "8.1.0-pre",
+                "title": "Panel Title",
+                "type": "news"
+            }
+        ],
+        "title": "test dashboard",
+        "uid": "9lzdzI3Mz",
+        "version": 2
+    }
+}
+```
+
+Status Codes:
+
+- **200** – Trimmed
+- **400** – Errors (invalid json, missing or invalid fields, etc)
+- **401** – Unauthorized
+- **403** – Access denied
 
 ## Deprecated resources
 Please note that these resource have been deprecated and will be removed in a future release.

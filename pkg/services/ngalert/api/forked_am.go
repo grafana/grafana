@@ -3,10 +3,10 @@ package api
 import (
 	"fmt"
 
-	apimodels "github.com/grafana/alerting-api/pkg/api"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 )
 
 type ForkedAMSvc struct {
@@ -115,6 +115,19 @@ func (am *ForkedAMSvc) RoutePostAlertingConfig(ctx *models.ReqContext, body apim
 	s, err := am.getService(ctx)
 	if err != nil {
 		return response.Error(400, err.Error(), nil)
+	}
+
+	b, err := backendType(ctx, am.DatasourceCache)
+	if err != nil {
+		return response.Error(400, err.Error(), nil)
+	}
+
+	if err := body.AlertmanagerConfig.ReceiverType().MatchesBackend(b); err != nil {
+		return response.Error(
+			400,
+			"bad match",
+			err,
+		)
 	}
 
 	return s.RoutePostAlertingConfig(ctx, body)

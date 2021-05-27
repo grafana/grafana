@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import { findIndex } from 'lodash';
 import { Column, TableData, QueryResultMeta } from '@grafana/data';
 
 /**
@@ -148,7 +148,7 @@ export function mergeTablesIntoModel(dst?: TableModel, ...tables: TableModel[]):
       // More than one row can be merged into current row
       while (offset < flattenedRows.length) {
         // Find next row that could be merged
-        const match = _.findIndex(flattenedRows, (otherRow) => areRowsMatching(columnsUnion, row, otherRow), offset);
+        const match = findIndex(flattenedRows, (otherRow) => areRowsMatching(columnsUnion, row, otherRow), offset);
         if (match > -1) {
           const matchedRow = flattenedRows[match];
           // Merge values from match into current row if there is a gap in the current row

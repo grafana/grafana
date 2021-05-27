@@ -37,7 +37,7 @@ export class OptionsPaneCategoryDescriptor {
     return this;
   }
 
-  render(isSearching?: boolean) {
+  render(searchQuery?: string) {
     if (this.props.customRender) {
       return this.props.customRender();
     }

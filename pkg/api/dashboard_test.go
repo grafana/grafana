@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"path/filepath"
@@ -16,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/services/live"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/quota"
@@ -76,6 +78,14 @@ func TestGetHomeDashboard(t *testing.T) {
 
 type testState struct {
 	dashQueries []*models.GetDashboardQuery
+}
+
+func newTestLive(t *testing.T) *live.GrafanaLive {
+	gLive := live.NewGrafanaLive()
+	gLive.RouteRegister = routing.NewRouteRegister()
+	err := gLive.Init()
+	require.NoError(t, err)
+	return gLive
 }
 
 // This tests three main scenarios.
@@ -164,7 +174,11 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				"/api/dashboards/db/:slug", role, func(sc *scenarioContext) {
 					state := setUp()
 
-					callDeleteDashboardBySlug(sc, &HTTPServer{Cfg: setting.NewCfg()})
+					callDeleteDashboardBySlug(sc, &HTTPServer{
+						Cfg:                   setting.NewCfg(),
+						LibraryPanelService:   &mockLibraryPanelService{},
+						LibraryElementService: &mockLibraryElementService{},
+					})
 					assert.Equal(t, 403, sc.resp.Code)
 
 					assert.Equal(t, "child-dash", state.dashQueries[0].Slug)
@@ -174,7 +188,11 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				"/api/dashboards/uid/:uid", role, func(sc *scenarioContext) {
 					state := setUp()
 
-					callDeleteDashboardByUID(sc, &HTTPServer{Cfg: setting.NewCfg()})
+					callDeleteDashboardBySlug(sc, &HTTPServer{
+						Cfg:                   setting.NewCfg(),
+						LibraryPanelService:   &mockLibraryPanelService{},
+						LibraryElementService: &mockLibraryElementService{},
+					})
 					assert.Equal(t, 403, sc.resp.Code)
 
 					assert.Equal(t, "abcdefghi", state.dashQueries[0].Uid)
@@ -229,7 +247,11 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				"/api/dashboards/db/:slug", role, func(sc *scenarioContext) {
 					state := setUp()
 
-					callDeleteDashboardBySlug(sc, &HTTPServer{Cfg: setting.NewCfg()})
+					callDeleteDashboardBySlug(sc, &HTTPServer{
+						Cfg:                   setting.NewCfg(),
+						LibraryPanelService:   &mockLibraryPanelService{},
+						LibraryElementService: &mockLibraryElementService{},
+					})
 					assert.Equal(t, 200, sc.resp.Code)
 					assert.Equal(t, "child-dash", state.dashQueries[0].Slug)
 				})
@@ -238,7 +260,11 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				"/api/dashboards/uid/:uid", role, func(sc *scenarioContext) {
 					state := setUp()
 
-					callDeleteDashboardByUID(sc, &HTTPServer{Cfg: setting.NewCfg()})
+					callDeleteDashboardBySlug(sc, &HTTPServer{
+						Cfg:                   setting.NewCfg(),
+						LibraryPanelService:   &mockLibraryPanelService{},
+						LibraryElementService: &mockLibraryElementService{},
+					})
 					assert.Equal(t, 200, sc.resp.Code)
 					assert.Equal(t, "abcdefghi", state.dashQueries[0].Uid)
 				})
@@ -263,7 +289,10 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 
 	t.Run("Given a dashboard with a parent folder which has an ACL", func(t *testing.T) {
 		hs := &HTTPServer{
-			Cfg: setting.NewCfg(),
+			Cfg:                   setting.NewCfg(),
+			Live:                  newTestLive(t),
+			LibraryPanelService:   &mockLibraryPanelService{},
+			LibraryElementService: &mockLibraryElementService{},
 		}
 
 		setUp := func() *testState {
@@ -771,7 +800,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				},
 			}
 
-			postDashboardScenario(t, "When calling POST on", "/api/dashboards", "/api/dashboards", mock, cmd, func(sc *scenarioContext) {
+			postDashboardScenario(t, "When calling POST on", "/api/dashboards", "/api/dashboards", mock, nil, cmd, func(sc *scenarioContext) {
 				callPostDashboardShouldReturnSuccess(sc)
 
 				dto := mock.SavedDashboards[0]
@@ -788,6 +817,91 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				assert.Equal(t, "uid", result.Get("uid").MustString())
 				assert.Equal(t, "dash", result.Get("slug").MustString())
 				assert.Equal(t, "/d/uid/dash", result.Get("url").MustString())
+			})
+		})
+
+		t.Run("Given a correct request for creating a dashboard with folder uid", func(t *testing.T) {
+			const folderUid string = "folderUID"
+			const dashID int64 = 2
+
+			cmd := models.SaveDashboardCommand{
+				OrgId:  1,
+				UserId: 5,
+				Dashboard: simplejson.NewFromAny(map[string]interface{}{
+					"title": "Dash",
+				}),
+				Overwrite: true,
+				FolderUid: folderUid,
+				IsFolder:  false,
+				Message:   "msg",
+			}
+
+			mock := &dashboards.FakeDashboardService{
+				SaveDashboardResult: &models.Dashboard{
+					Id:      dashID,
+					Uid:     "uid",
+					Title:   "Dash",
+					Slug:    "dash",
+					Version: 2,
+				},
+			}
+
+			mockFolder := &fakeFolderService{
+				GetFolderByUIDResult: &models.Folder{Id: 1, Uid: "folderUID", Title: "Folder"},
+			}
+
+			postDashboardScenario(t, "When calling POST on", "/api/dashboards", "/api/dashboards", mock, mockFolder, cmd, func(sc *scenarioContext) {
+				callPostDashboardShouldReturnSuccess(sc)
+
+				dto := mock.SavedDashboards[0]
+				assert.Equal(t, cmd.OrgId, dto.OrgId)
+				assert.Equal(t, cmd.UserId, dto.User.UserId)
+				assert.Equal(t, "Dash", dto.Dashboard.Title)
+				assert.True(t, dto.Overwrite)
+				assert.Equal(t, "msg", dto.Message)
+
+				result := sc.ToJSON()
+				assert.Equal(t, "success", result.Get("status").MustString())
+				assert.Equal(t, dashID, result.Get("id").MustInt64())
+				assert.Equal(t, "uid", result.Get("uid").MustString())
+				assert.Equal(t, "dash", result.Get("slug").MustString())
+				assert.Equal(t, "/d/uid/dash", result.Get("url").MustString())
+			})
+		})
+
+		t.Run("Given a request with incorrect folder uid for creating a dashboard with", func(t *testing.T) {
+			const folderUid string = "folderUID"
+			const dashID int64 = 2
+
+			cmd := models.SaveDashboardCommand{
+				OrgId:  1,
+				UserId: 5,
+				Dashboard: simplejson.NewFromAny(map[string]interface{}{
+					"title": "Dash",
+				}),
+				Overwrite: true,
+				FolderUid: folderUid,
+				IsFolder:  false,
+				Message:   "msg",
+			}
+
+			mock := &dashboards.FakeDashboardService{
+				SaveDashboardResult: &models.Dashboard{
+					Id:      dashID,
+					Uid:     "uid",
+					Title:   "Dash",
+					Slug:    "dash",
+					Version: 2,
+				},
+			}
+
+			mockFolder := &fakeFolderService{
+				GetFolderByUIDError: errors.New("Error while searching Folder ID"),
+			}
+
+			postDashboardScenario(t, "When calling POST on", "/api/dashboards", "/api/dashboards", mock, mockFolder, cmd, func(sc *scenarioContext) {
+				callPostDashboard(sc)
+				assert.Equal(t, 500, sc.resp.Code)
 			})
 		})
 
@@ -830,7 +944,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				}
 
 				postDashboardScenario(t, fmt.Sprintf("Expect '%s' error when calling POST on", tc.SaveError.Error()),
-					"/api/dashboards", "/api/dashboards", mock, cmd, func(sc *scenarioContext) {
+					"/api/dashboards", "/api/dashboards", mock, nil, cmd, func(sc *scenarioContext) {
 						callPostDashboard(sc)
 						assert.Equal(t, tc.ExpectedStatusCode, sc.resp.Code)
 					})
@@ -1022,7 +1136,11 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 			"/api/dashboards/db/:slug", models.ROLE_EDITOR, func(sc *scenarioContext) {
 				setUp()
 
-				callDeleteDashboardBySlug(sc, &HTTPServer{Cfg: setting.NewCfg()})
+				callDeleteDashboardBySlug(sc, &HTTPServer{
+					Cfg:                   setting.NewCfg(),
+					LibraryPanelService:   &mockLibraryPanelService{},
+					LibraryElementService: &mockLibraryElementService{},
+				})
 
 				assert.Equal(t, 400, sc.resp.Code)
 				result := sc.ToJSON()
@@ -1032,7 +1150,11 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 		loggedInUserScenarioWithRole(t, "When calling DELETE on", "DELETE", "/api/dashboards/db/abcdefghi", "/api/dashboards/db/:uid", models.ROLE_EDITOR, func(sc *scenarioContext) {
 			setUp()
 
-			callDeleteDashboardByUID(sc, &HTTPServer{Cfg: setting.NewCfg()})
+			callDeleteDashboardBySlug(sc, &HTTPServer{
+				Cfg:                   setting.NewCfg(),
+				LibraryPanelService:   &mockLibraryPanelService{},
+				LibraryElementService: &mockLibraryElementService{},
+			})
 
 			assert.Equal(t, 400, sc.resp.Code)
 			result := sc.ToJSON()
@@ -1064,8 +1186,10 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 			}
 
 			hs := &HTTPServer{
-				Cfg:                 setting.NewCfg(),
-				ProvisioningService: mock,
+				Cfg:                   setting.NewCfg(),
+				ProvisioningService:   mock,
+				LibraryPanelService:   &mockLibraryPanelService{},
+				LibraryElementService: &mockLibraryElementService{},
 			}
 			callGetDashboard(sc, hs)
 
@@ -1086,10 +1210,16 @@ func getDashboardShouldReturn200WithConfig(sc *scenarioContext, provisioningServ
 		provisioningService = provisioning.NewProvisioningServiceMock()
 	}
 
+	libraryPanelsService := mockLibraryPanelService{}
+	libraryElementsService := mockLibraryElementService{}
+
 	hs := &HTTPServer{
-		Cfg:                 setting.NewCfg(),
-		ProvisioningService: provisioningService,
+		Cfg:                   setting.NewCfg(),
+		LibraryPanelService:   &libraryPanelsService,
+		LibraryElementService: &libraryElementsService,
+		ProvisioningService:   provisioningService,
 	}
+
 	callGetDashboard(sc, hs)
 
 	require.Equal(sc.t, 200, sc.resp.Code)
@@ -1163,7 +1293,8 @@ func callPostDashboardShouldReturnSuccess(sc *scenarioContext) {
 }
 
 func postDashboardScenario(t *testing.T, desc string, url string, routePattern string,
-	mock *dashboards.FakeDashboardService, cmd models.SaveDashboardCommand, fn scenarioFunc) {
+	mock *dashboards.FakeDashboardService, mockFolder *fakeFolderService, cmd models.SaveDashboardCommand,
+	fn scenarioFunc) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
 		t.Cleanup(bus.ClearBusHandlers)
 
@@ -1172,11 +1303,13 @@ func postDashboardScenario(t *testing.T, desc string, url string, routePattern s
 			Bus:                 bus.GetBus(),
 			Cfg:                 cfg,
 			ProvisioningService: provisioning.NewProvisioningServiceMock(),
-			Live:                &live.GrafanaLive{Cfg: setting.NewCfg()},
+			Live:                newTestLive(t),
 			QuotaService: &quota.QuotaService{
 				Cfg: cfg,
 			},
-			PluginManager: &fakePluginManager{},
+			PluginManager:         &fakePluginManager{},
+			LibraryPanelService:   &mockLibraryPanelService{},
+			LibraryElementService: &mockLibraryElementService{},
 		}
 
 		sc := setupScenarioContext(t, url)
@@ -1189,14 +1322,17 @@ func postDashboardScenario(t *testing.T, desc string, url string, routePattern s
 
 		origNewDashboardService := dashboards.NewService
 		origProvisioningService := dashboards.NewProvisioningService
+		origNewFolderService := dashboards.NewFolderService
 		t.Cleanup(func() {
 			dashboards.NewService = origNewDashboardService
 			dashboards.NewProvisioningService = origProvisioningService
+			dashboards.NewFolderService = origNewFolderService
 		})
 		dashboards.MockDashboardService(mock)
 		dashboards.NewProvisioningService = func(dboards.Store) dashboards.DashboardProvisioningService {
 			return mockDashboardProvisioningService{}
 		}
+		mockFolderService(mockFolder)
 
 		sc.m.Post(routePattern, sc.defaultHandler)
 
@@ -1233,11 +1369,13 @@ func restoreDashboardVersionScenario(t *testing.T, desc string, url string, rout
 
 		cfg := setting.NewCfg()
 		hs := HTTPServer{
-			Cfg:                 cfg,
-			Bus:                 bus.GetBus(),
-			ProvisioningService: provisioning.NewProvisioningServiceMock(),
-			Live:                &live.GrafanaLive{Cfg: cfg},
-			QuotaService:        &quota.QuotaService{Cfg: cfg},
+			Cfg:                   cfg,
+			Bus:                   bus.GetBus(),
+			ProvisioningService:   provisioning.NewProvisioningServiceMock(),
+			Live:                  newTestLive(t),
+			QuotaService:          &quota.QuotaService{Cfg: cfg},
+			LibraryPanelService:   &mockLibraryPanelService{},
+			LibraryElementService: &mockLibraryElementService{},
 		}
 
 		sc := setupScenarioContext(t, url)
@@ -1283,4 +1421,46 @@ type mockDashboardProvisioningService struct {
 func (s mockDashboardProvisioningService) GetProvisionedDashboardDataByDashboardID(dashboardID int64) (
 	*models.DashboardProvisioning, error) {
 	return nil, nil
+}
+
+type mockLibraryPanelService struct {
+}
+
+func (m *mockLibraryPanelService) LoadLibraryPanelsForDashboard(c *models.ReqContext, dash *models.Dashboard) error {
+	return nil
+}
+
+func (m *mockLibraryPanelService) CleanLibraryPanelsForDashboard(dash *models.Dashboard) error {
+	return nil
+}
+
+func (m *mockLibraryPanelService) ConnectLibraryPanelsForDashboard(c *models.ReqContext, dash *models.Dashboard) error {
+	return nil
+}
+
+type mockLibraryElementService struct {
+}
+
+func (l *mockLibraryElementService) CreateElement(c *models.ReqContext, cmd libraryelements.CreateLibraryElementCommand) (libraryelements.LibraryElementDTO, error) {
+	return libraryelements.LibraryElementDTO{}, nil
+}
+
+// GetElementsForDashboard gets all connected elements for a specific dashboard.
+func (l *mockLibraryElementService) GetElementsForDashboard(c *models.ReqContext, dashboardID int64) (map[string]libraryelements.LibraryElementDTO, error) {
+	return map[string]libraryelements.LibraryElementDTO{}, nil
+}
+
+// ConnectElementsToDashboard connects elements to a specific dashboard.
+func (l *mockLibraryElementService) ConnectElementsToDashboard(c *models.ReqContext, elementUIDs []string, dashboardID int64) error {
+	return nil
+}
+
+// DisconnectElementsFromDashboard disconnects elements from a specific dashboard.
+func (l *mockLibraryElementService) DisconnectElementsFromDashboard(c *models.ReqContext, dashboardID int64) error {
+	return nil
+}
+
+// DeleteLibraryElementsInFolder deletes all elements for a specific folder.
+func (l *mockLibraryElementService) DeleteLibraryElementsInFolder(c *models.ReqContext, folderUID string) error {
+	return nil
 }

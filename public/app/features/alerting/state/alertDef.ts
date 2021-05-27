@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import { isArray, reduce } from 'lodash';
 import { QueryPartDef, QueryPart } from 'app/core/components/query_part/query_part';
 
 const alertQueryDef = new QueryPartDef({
@@ -128,7 +128,7 @@ function getStateDisplayModel(state: string) {
 }
 
 function joinEvalMatches(matches: any, separator: string) {
-  return _.reduce(
+  return reduce(
     matches,
     (res, ev) => {
       if (ev.metric !== undefined && ev.value !== undefined) {
@@ -151,9 +151,9 @@ function getAlertAnnotationInfo(ah: any) {
   // old way stored evalMatches in data property directly,
   // new way stores it in evalMatches property on new data object
 
-  if (_.isArray(ah.data)) {
+  if (isArray(ah.data)) {
     return joinEvalMatches(ah.data, ', ');
-  } else if (_.isArray(ah.data.evalMatches)) {
+  } else if (isArray(ah.data.evalMatches)) {
     return joinEvalMatches(ah.data.evalMatches, ', ');
   }
 

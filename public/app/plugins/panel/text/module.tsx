@@ -1,11 +1,11 @@
 import { PanelPlugin } from '@grafana/data';
 
 import { TextPanel } from './TextPanel';
-import { TextOptions } from './types';
 import { textPanelMigrationHandler } from './textPanelMigrationHandler';
 import { TextPanelEditor } from './TextPanelEditor';
+import { defaultPanelOptions, PanelOptions, TextMode } from './models.gen';
 
-export const plugin = new PanelPlugin<TextOptions>(TextPanel)
+export const plugin = new PanelPlugin<PanelOptions>(TextPanel)
   .setPanelOptions((builder) => {
     builder
       .addRadio({
@@ -14,22 +14,19 @@ export const plugin = new PanelPlugin<TextOptions>(TextPanel)
         description: 'text mode of the panel',
         settings: {
           options: [
-            { value: 'markdown', label: 'Markdown' },
-            { value: 'html', label: 'HTML' },
+            { value: TextMode.Markdown, label: 'Markdown' },
+            { value: TextMode.HTML, label: 'HTML' },
           ],
         },
-        defaultValue: 'markdown',
+        defaultValue: defaultPanelOptions.mode,
       })
       .addCustomEditor({
         id: 'content',
         path: 'content',
         name: 'Content',
         description: 'Content of the panel',
-        defaultValue: `# Title
-
-For markdown syntax help: [commonmark.org/help](https://commonmark.org/help/)
-         `,
         editor: TextPanelEditor,
+        defaultValue: defaultPanelOptions.content,
       });
   })
   .setMigrationHandler(textPanelMigrationHandler);

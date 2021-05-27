@@ -14,7 +14,7 @@
 
 import cx from 'classnames';
 import { css } from '@emotion/css';
-import _groupBy from 'lodash/groupBy';
+import { groupBy as _groupBy } from 'lodash';
 import React from 'react';
 import { compose, onlyUpdateForKeys, withProps, withState } from 'recompose';
 import { autoColor, createStyle, Theme } from '../Theme';

@@ -6,13 +6,16 @@ import {
   AxisPlacement,
   DrawStyle,
   PointVisibility,
-  ScaleDistribution,
   ScaleOrientation,
   ScaleDirection,
+  GraphTresholdsStyleMode,
 } from '../config';
-import darkTheme from '../../../themes/dark';
+import { createTheme, ThresholdsMode } from '@grafana/data';
+import { ScaleDistribution } from '../models.gen';
 
 describe('UPlotConfigBuilder', () => {
+  const darkTheme = createTheme();
+
   describe('default config', () => {
     it('builds default config', () => {
       const builder = new UPlotConfigBuilder();
@@ -277,6 +280,33 @@ describe('UPlotConfigBuilder', () => {
         });
       });
     });
+  });
+
+  it('disables autoscaling when both (and only) hardMin and hardMax are specified', () => {
+    const builder = new UPlotConfigBuilder();
+
+    builder.addScale({
+      isTime: false,
+      scaleKey: 'scale-y',
+      orientation: ScaleOrientation.Vertical,
+      direction: ScaleDirection.Up,
+      min: -100,
+      max: 100,
+    });
+
+    expect(builder.getConfig().scales!['scale-y']!.auto).toEqual(false);
+
+    builder.addScale({
+      isTime: false,
+      scaleKey: 'scale-y2',
+      orientation: ScaleOrientation.Vertical,
+      direction: ScaleDirection.Up,
+      min: -100,
+      max: 100,
+      softMin: -50,
+    });
+
+    expect(builder.getConfig().scales!['scale-y2']!.auto).toEqual(true);
   });
 
   it('allows axes configuration', () => {
@@ -627,6 +657,39 @@ describe('UPlotConfigBuilder', () => {
           "tzDate": [Function],
         }
       `);
+    });
+  });
+
+  describe('Thresholds', () => {
+    it('Only adds one threshold per scale', () => {
+      const builder = new UPlotConfigBuilder();
+      const addHookFn = jest.fn();
+      builder.addHook = addHookFn;
+
+      builder.addThresholds({
+        scaleKey: 'A',
+        thresholds: {
+          mode: ThresholdsMode.Absolute,
+          steps: [],
+        },
+        config: {
+          mode: GraphTresholdsStyleMode.Area,
+        },
+        theme: darkTheme,
+      });
+      builder.addThresholds({
+        scaleKey: 'A',
+        thresholds: {
+          mode: ThresholdsMode.Absolute,
+          steps: [],
+        },
+        config: {
+          mode: GraphTresholdsStyleMode.Area,
+        },
+        theme: darkTheme,
+      });
+
+      expect(addHookFn).toHaveBeenCalledTimes(1);
     });
   });
 });

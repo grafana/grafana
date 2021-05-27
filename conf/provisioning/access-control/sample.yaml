@@ -1,0 +1,56 @@
+# # config file version
+# apiVersion: 1
+
+# # list of default built-in role assignments that should be removed
+# removeDefaultAssignments:
+#   # <string, required>, must be one of the Organization roles (`Viewer`, `Editor`, `Admin`) or `Grafana Admin`
+#   - builtInRole: "Grafana Admin"
+#     # <string, required>, must be one of the existing predefined roles
+#     predefinedRole: "grafana:roles:permissions:admin"
+
+# # list of default built-in role assignments that should be added back
+# addDefaultAssignments:
+#   # <string, required>, must be one of the Organization roles (`Viewer`, `Editor`, `Admin`) or `Grafana Admin`
+#   - builtInRole: "Admin"
+#     # <string, required>, must be one of the existing predefined roles
+#     predefinedRole: "grafana:roles:reporting:admin:read"
+    
+# # list of roles that should be deleted
+# deleteRoles:
+#   # <string> name of the role you want to create. Required if no uid is set
+#   - name: "custom:roles:reporting:admin:edit"
+#     # <string> uid of the role. Required if no name
+#     uid: customrolesreportingadminedit
+#     # <int> org id. will default to Grafana's default if not specified
+#     orgId: 1
+#     # <bool> force deletion revoking all grants of the role
+#     force: true
+
+# # list of roles to insert/update depending on what is available in the database
+# roles:
+#   # <string, required> name of the role you want to create. Required
+#   - name: custom:roles:users:editor
+#     # <string> uid of the role. Has to be unique for all orgs.
+#     uid: customrolesuserseditor
+#     # <string> description of the role, informative purpose only.
+#     description: "Role to allow users to create/read/write users"
+#     # <int> version of the role, Grafana will update the role when increased
+#     version: 2
+#     # <int> org id. will default to Grafana's default if not specified
+#     orgId: 1    
+#     # <list> list of the permissions granted by this role
+#     permissions:
+#       # <string, required> action allowed
+#       - action: "users:read"
+#         #<string> scope it applies to
+#         scope: "users:*"
+#       - action: "users:write"
+#         scope: "users:*"
+#       - action: "users:create"
+#         scope: "users:*"
+#     # <list> list of builtIn roles the role should be assigned to
+#     builtInRoles:
+#       # <string, required> name of the builtin role you want to assign the role to
+#       - name: "Admin"
+#         # <int> org id. will default to the role org id
+#         orgId: 1

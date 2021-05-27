@@ -19,6 +19,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// nolint:staticcheck // plugins.DataPlugin deprecated
 func TestService(t *testing.T) {
 	dsDF := data.NewFrame("test",
 		data.NewField("time", nil, []*time.Time{utp(1)}),
@@ -40,7 +41,7 @@ func TestService(t *testing.T) {
 		return nil
 	})
 
-	queries := []backend.DataQuery{
+	queries := []Query{
 		{
 			RefID: "A",
 			JSON:  json.RawMessage(`{ "datasource": "test", "datasourceId": 1, "orgId": 1, "intervalMs": 1000, "maxDataPoints": 1000 }`),
@@ -51,7 +52,7 @@ func TestService(t *testing.T) {
 		},
 	}
 
-	req := &backend.QueryDataRequest{Queries: queries}
+	req := &Request{Queries: queries}
 
 	pl, err := s.BuildPipeline(req)
 	require.NoError(t, err)
@@ -102,6 +103,7 @@ type mockEndpoint struct {
 	Frames data.Frames
 }
 
+// nolint:staticcheck // plugins.DataQueryResult deprecated
 func (me *mockEndpoint) DataQuery(ctx context.Context, ds *models.DataSource, query plugins.DataQuery) (
 	plugins.DataResponse, error) {
 	return plugins.DataResponse{

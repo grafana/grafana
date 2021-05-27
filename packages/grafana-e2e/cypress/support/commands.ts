@@ -14,7 +14,7 @@ Cypress.Commands.add('compareScreenshots', (config: CompareScreenshotsConfig | s
 });
 
 Cypress.Commands.add('logToConsole', (message: string, optional?: any) => {
-  cy.task('log', { message, optional });
+  cy.task('log', { message: '(' + new Date().toISOString() + ') ' + message, optional });
 });
 
 Cypress.Commands.add('readProvisions', (filePaths: string[]) => {

@@ -465,6 +465,19 @@ func deleteDashboard(cmd *models.DeleteDashboardCommand, sess *DBSession) error 
 				}
 			}
 		}
+
+		// clean ngalert tables
+		ngalertDeletes := []string{
+			"DELETE FROM alert_rule WHERE namespace_uid = (SELECT uid FROM dashboard WHERE id = ?)",
+			"DELETE FROM alert_rule_version WHERE rule_namespace_uid = (SELECT uid FROM dashboard WHERE id = ?)",
+		}
+
+		for _, sql := range ngalertDeletes {
+			_, err := sess.Exec(sql, dashboard.Id)
+			if err != nil {
+				return err
+			}
+		}
 	}
 
 	if err := deleteAlertDefinition(dashboard.Id, sess); err != nil {

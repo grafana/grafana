@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import { map } from 'lodash';
 import { Observable, of, throwError } from 'rxjs';
 import {
   ArrayVector,
@@ -203,7 +203,7 @@ describe('ElasticDatasource', function (this: any) {
     async function setupDataSource(jsonData?: Partial<ElasticsearchOptions>) {
       jsonData = {
         interval: 'Daily',
-        esVersion: 2,
+        esVersion: '2.0.0',
         timeField: '@timestamp',
         ...(jsonData || {}),
       };
@@ -458,7 +458,7 @@ describe('ElasticDatasource', function (this: any) {
       await expect(ds.getFields()).toEmitValuesWith((received) => {
         expect(received.length).toBe(1);
         const fieldObjects = received[0];
-        const fields = _.map(fieldObjects, 'text');
+        const fields = map(fieldObjects, 'text');
 
         expect(fields).toEqual([
           '@timestamp',
@@ -481,7 +481,7 @@ describe('ElasticDatasource', function (this: any) {
       await expect(ds.getFields('number')).toEmitValuesWith((received) => {
         expect(received.length).toBe(1);
         const fieldObjects = received[0];
-        const fields = _.map(fieldObjects, 'text');
+        const fields = map(fieldObjects, 'text');
 
         expect(fields).toEqual(['system.cpu.system', 'system.cpu.user', 'system.process.cpu.total']);
       });
@@ -493,7 +493,7 @@ describe('ElasticDatasource', function (this: any) {
       await expect(ds.getFields('date')).toEmitValuesWith((received) => {
         expect(received.length).toBe(1);
         const fieldObjects = received[0];
-        const fields = _.map(fieldObjects, 'text');
+        const fields = map(fieldObjects, 'text');
 
         expect(fields).toEqual(['@timestamp', '__timestamp', '@timestampnano']);
       });
@@ -556,7 +556,7 @@ describe('ElasticDatasource', function (this: any) {
       await expect(ds.getFields(undefined, range)).toEmitValuesWith((received) => {
         expect(received.length).toBe(1);
         const fieldObjects = received[0];
-        const fields = _.map(fieldObjects, 'text');
+        const fields = map(fieldObjects, 'text');
         expect(fields).toEqual(['@timestamp', 'beat.hostname']);
       });
     });
@@ -693,7 +693,7 @@ describe('ElasticDatasource', function (this: any) {
         expect(received.length).toBe(1);
 
         const fieldObjects = received[0];
-        const fields = _.map(fieldObjects, 'text');
+        const fields = map(fieldObjects, 'text');
         expect(fields).toEqual([
           '@timestamp_millis',
           'classification_terms',
@@ -720,7 +720,7 @@ describe('ElasticDatasource', function (this: any) {
         expect(received.length).toBe(1);
 
         const fieldObjects = received[0];
-        const fields = _.map(fieldObjects, 'text');
+        const fields = map(fieldObjects, 'text');
         expect(fields).toEqual([
           'justification_blob.overall_vote_score',
           'justification_blob.shallow.jsi.sdb.dsel2.bootlegged-gille.botness',
@@ -739,7 +739,7 @@ describe('ElasticDatasource', function (this: any) {
         expect(received.length).toBe(1);
 
         const fieldObjects = received[0];
-        const fields = _.map(fieldObjects, 'text');
+        const fields = map(fieldObjects, 'text');
         expect(fields).toEqual(['@timestamp_millis']);
       });
     });
@@ -935,6 +935,20 @@ describe('enhanceDataFrame', () => {
         datasourceUid: 'dsUid',
       },
     });
+  });
+
+  it('adds limit to dataframe', () => {
+    const df = new MutableDataFrame({
+      fields: [
+        {
+          name: 'someField',
+          values: new ArrayVector([]),
+        },
+      ],
+    });
+    enhanceDataFrame(df, [], 10);
+
+    expect(df.meta?.limit).toBe(10);
   });
 });
 

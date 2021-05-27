@@ -1,4 +1,4 @@
-import { Alert, VerticalGroup } from '@grafana/ui';
+import { Alert } from '@grafana/ui';
 import React from 'react';
 import Datasource from '../../datasource';
 import { AzureMonitorQuery, AzureQueryType, AzureMonitorOption, AzureMonitorErrorish } from '../../types';
@@ -6,6 +6,10 @@ import MetricsQueryEditor from '../MetricsQueryEditor';
 import QueryTypeField from './QueryTypeField';
 import useLastError from '../../utils/useLastError';
 import LogsQueryEditor from '../LogsQueryEditor';
+import ArgQueryEditor from '../ArgQueryEditor';
+import ApplicationInsightsEditor from '../ApplicationInsightsEditor';
+import InsightsAnalyticsEditor from '../InsightsAnalyticsEditor';
+import { Space } from '../Space';
 
 interface BaseQueryEditorProps {
   query: AzureMonitorQuery;
@@ -26,22 +30,23 @@ const QueryEditor: React.FC<BaseQueryEditorProps> = ({ query, datasource, onChan
     <div data-testid="azure-monitor-query-editor">
       <QueryTypeField query={query} onQueryChange={onChange} />
 
-      <VerticalGroup>
-        <EditorForQueryType
-          subscriptionId={subscriptionId}
-          query={query}
-          datasource={datasource}
-          onChange={onChange}
-          variableOptionGroup={variableOptionGroup}
-          setError={setError}
-        />
+      <EditorForQueryType
+        subscriptionId={subscriptionId}
+        query={query}
+        datasource={datasource}
+        onChange={onChange}
+        variableOptionGroup={variableOptionGroup}
+        setError={setError}
+      />
 
-        {errorMessage && (
+      {errorMessage && (
+        <>
+          <Space v={2} />
           <Alert severity="error" title="An error occurred while requesting metadata from Azure Monitor">
             {errorMessage}
           </Alert>
-        )}
-      </VerticalGroup>
+        </>
+      )}
     </div>
   );
 };
@@ -75,6 +80,24 @@ const EditorForQueryType: React.FC<EditorForQueryTypeProps> = ({
     case AzureQueryType.LogAnalytics:
       return (
         <LogsQueryEditor
+          subscriptionId={subscriptionId}
+          query={query}
+          datasource={datasource}
+          onChange={onChange}
+          variableOptionGroup={variableOptionGroup}
+          setError={setError}
+        />
+      );
+
+    case AzureQueryType.ApplicationInsights:
+      return <ApplicationInsightsEditor query={query} />;
+
+    case AzureQueryType.InsightsAnalytics:
+      return <InsightsAnalyticsEditor query={query} />;
+
+    case AzureQueryType.AzureResourceGraph:
+      return (
+        <ArgQueryEditor
           subscriptionId={subscriptionId}
           query={query}
           datasource={datasource}

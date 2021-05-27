@@ -1,6 +1,6 @@
 # GitHub & grafanabot automation
 
-The bot is configured via [commands.json](https://github.com/grafana/grafana/blob/master/.github/commands.json) and some other GitHub workflows [workflows](https://github.com/grafana/grafana/tree/master/.github/workflows).
+The bot is configured via [commands.json](https://github.com/grafana/grafana/blob/main/.github/commands.json) and some other GitHub workflows [workflows](https://github.com/grafana/grafana/tree/main/.github/workflows).
 
 Comment commands:
 
@@ -17,7 +17,7 @@ Label commands:
 
 ## Metrics
 
-Metrics are configured in [metrics-collector.json](https://github.com/grafana/grafana/blob/master/.github/metrics-collector.json) and are also defined in the 
+Metrics are configured in [metrics-collector.json](https://github.com/grafana/grafana/blob/main/.github/metrics-collector.json) and are also defined in the 
 [metrics-collector](https://github.com/grafana/grafana-github-actions/blob/main/metrics-collector/index.ts) GitHub action.
 
 ## Backport PR

@@ -1,9 +1,10 @@
 import React, { FC, PureComponent } from 'react';
-import { UserDTO } from 'app/types';
+import { AccessControlAction, UserDTO } from 'app/types';
 import { css, cx } from '@emotion/css';
 import { config } from 'app/core/config';
 import { GrafanaTheme } from '@grafana/data';
 import { Button, ConfirmButton, ConfirmModal, Input, LegacyInputStatus, stylesFactory } from '@grafana/ui';
+import { contextSrv } from 'app/core/core';
 
 interface Props {
   user: UserDTO;
@@ -86,6 +87,12 @@ export class UserProfile extends PureComponent<Props, State> {
     const lockMessage = authSource ? `Synced via ${authSource}` : '';
     const styles = getStyles(config.theme);
 
+    const editLocked = user.isExternal || !contextSrv.hasPermission(AccessControlAction.UsersWrite);
+    const passwordChangeLocked = user.isExternal || !contextSrv.hasPermission(AccessControlAction.UsersPasswordUpdate);
+    const canDelete = contextSrv.hasPermission(AccessControlAction.UsersDelete);
+    const canDisable = contextSrv.hasPermission(AccessControlAction.UsersDisable);
+    const canEnable = contextSrv.hasPermission(AccessControlAction.UsersEnable);
+
     return (
       <>
         <h3 className="page-heading">User information</h3>
@@ -96,21 +103,21 @@ export class UserProfile extends PureComponent<Props, State> {
                 <UserProfileRow
                   label="Name"
                   value={user.name}
-                  locked={user.isExternal}
+                  locked={editLocked}
                   lockMessage={lockMessage}
                   onChange={this.onUserNameChange}
                 />
                 <UserProfileRow
                   label="Email"
                   value={user.email}
-                  locked={user.isExternal}
+                  locked={editLocked}
                   lockMessage={lockMessage}
                   onChange={this.onUserEmailChange}
                 />
                 <UserProfileRow
                   label="Username"
                   value={user.login}
-                  locked={user.isExternal}
+                  locked={editLocked}
                   lockMessage={lockMessage}
                   onChange={this.onUserLoginChange}
                 />
@@ -118,7 +125,7 @@ export class UserProfile extends PureComponent<Props, State> {
                   label="Password"
                   value="********"
                   inputType="password"
-                  locked={user.isExternal}
+                  locked={passwordChangeLocked}
                   lockMessage={lockMessage}
                   onChange={this.onPasswordChange}
                 />
@@ -126,34 +133,41 @@ export class UserProfile extends PureComponent<Props, State> {
             </table>
           </div>
           <div className={styles.buttonRow}>
-            <Button variant="destructive" onClick={this.showDeleteUserModal(true)}>
-              Delete user
-            </Button>
-            <ConfirmModal
-              isOpen={showDeleteModal}
-              title="Delete user"
-              body="Are you sure you want to delete this user?"
-              confirmText="Delete user"
-              onConfirm={this.onUserDelete}
-              onDismiss={this.showDeleteUserModal(false)}
-            />
-            {user.isDisabled ? (
+            {canDelete && (
+              <>
+                <Button variant="destructive" onClick={this.showDeleteUserModal(true)}>
+                  Delete user
+                </Button>
+                <ConfirmModal
+                  isOpen={showDeleteModal}
+                  title="Delete user"
+                  body="Are you sure you want to delete this user?"
+                  confirmText="Delete user"
+                  onConfirm={this.onUserDelete}
+                  onDismiss={this.showDeleteUserModal(false)}
+                />
+              </>
+            )}
+            {user.isDisabled && canEnable && (
               <Button variant="secondary" onClick={this.onUserEnable}>
                 Enable user
               </Button>
-            ) : (
-              <Button variant="secondary" onClick={this.showDisableUserModal(true)}>
-                Disable user
-              </Button>
             )}
-            <ConfirmModal
-              isOpen={showDisableModal}
-              title="Disable user"
-              body="Are you sure you want to disable this user?"
-              confirmText="Disable user"
-              onConfirm={this.onUserDisable}
-              onDismiss={this.showDisableUserModal(false)}
-            />
+            {!user.isDisabled && canDisable && (
+              <>
+                <Button variant="secondary" onClick={this.showDisableUserModal(true)}>
+                  Disable user
+                </Button>
+                <ConfirmModal
+                  isOpen={showDisableModal}
+                  title="Disable user"
+                  body="Are you sure you want to disable this user?"
+                  confirmText="Disable user"
+                  onConfirm={this.onUserDisable}
+                  onDismiss={this.showDisableUserModal(false)}
+                />
+              </>
+            )}
           </div>
         </div>
       </>

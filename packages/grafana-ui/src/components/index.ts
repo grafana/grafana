@@ -6,7 +6,7 @@ export { Tooltip, PopoverContent } from './Tooltip/Tooltip';
 export { PopoverController } from './Tooltip/PopoverController';
 export { Popover } from './Tooltip/Popover';
 export { Portal } from './Portal/Portal';
-export { CustomScrollbar } from './CustomScrollbar/CustomScrollbar';
+export { CustomScrollbar, ScrollbarPosition } from './CustomScrollbar/CustomScrollbar';
 export { TabbedContainer, TabConfig } from './TabbedContainer/TabbedContainer';
 
 export { ClipboardButton } from './ClipboardButton/ClipboardButton';
@@ -18,8 +18,6 @@ export { ColorPicker, SeriesColorPicker } from './ColorPicker/ColorPicker';
 export { ColorValueEditor, ColorValueEditorProps } from './OptionsUI/color';
 export { SeriesColorPickerPopover, SeriesColorPickerPopoverWithTheme } from './ColorPicker/SeriesColorPickerPopover';
 export { EmptySearchResult } from './EmptySearchResult/EmptySearchResult';
-export { PieChart } from './PieChart/PieChart';
-export { PieChartType, PieChartLabels, PieChartLegendOptions, PieChartLegendValues } from './PieChart/types';
 export { UnitPicker } from './UnitPicker/UnitPicker';
 export { StatsPicker } from './StatsPicker/StatsPicker';
 export { RefreshPicker, defaultIntervals } from './RefreshPicker/RefreshPicker';
@@ -33,12 +31,12 @@ export { Tag, OnTagClick } from './Tags/Tag';
 export { TagList } from './Tags/TagList';
 export { FilterPill } from './FilterPill/FilterPill';
 
-export { ConfirmModal } from './ConfirmModal/ConfirmModal';
+export { ConfirmModal, ConfirmModalProps } from './ConfirmModal/ConfirmModal';
 export { QueryField } from './QueryField/QueryField';
 
 // Code editor
 export { CodeEditor } from './Monaco/CodeEditorLazy';
-export { CodeEditorSuggestionItem, CodeEditorSuggestionItemKind } from './Monaco/types';
+export { Monaco, MonacoEditor, CodeEditorSuggestionItem, CodeEditorSuggestionItemKind } from './Monaco/types';
 export { variableSuggestionToCodeEditorSuggestion } from './Monaco/utils';
 
 // TODO: namespace
@@ -74,7 +72,15 @@ export { Graph } from './Graph/Graph';
 export { GraphWithLegend } from './Graph/GraphWithLegend';
 export { GraphContextMenu, GraphContextMenuHeader } from './Graph/GraphContextMenu';
 export { BarGauge, BarGaugeDisplayMode } from './BarGauge/BarGauge';
-export { GraphTooltipOptions } from './Graph/GraphTooltip/types';
+export {
+  VizTooltip,
+  VizTooltipContainer,
+  SeriesTable,
+  VizTooltipOptions,
+  TooltipDisplayMode,
+  SeriesTableProps,
+  SeriesTableRowProps,
+} from './VizTooltip';
 export { VizRepeater, VizRepeaterRenderValueProps } from './VizRepeater/VizRepeater';
 export { graphTimeFormat, graphTickFormatter } from './Graph/utils';
 export {
@@ -86,11 +92,16 @@ export {
   PanelChromeLoadingIndicatorProps,
   PanelChromeErrorIndicator,
   PanelChromeErrorIndicatorProps,
+  PanelContextProvider,
+  PanelContext,
+  PanelContextRoot,
+  usePanelContext,
 } from './PanelChrome';
 export { VizLayout, VizLayoutComponentType, VizLayoutLegendProps, VizLayoutProps } from './VizLayout/VizLayout';
-export { VizLegendItem } from './VizLegend/types';
+export { VizLegendItem, SeriesVisibilityChangeBehavior } from './VizLegend/types';
 export { LegendPlacement, LegendDisplayMode, VizLegendOptions } from './VizLegend/models.gen';
 export { VizLegend } from './VizLegend/VizLegend';
+export { VizLegendListItem } from './VizLegend/VizLegendListItem';
 
 export { Alert, AlertVariant } from './Alert/Alert';
 export { GraphSeriesToggler, GraphSeriesTogglerAPI } from './Graph/GraphSeriesToggler';
@@ -102,7 +113,6 @@ export { LogRows } from './Logs/LogRows';
 export { getLogRowStyles } from './Logs/getLogRowStyles';
 export { DataLinkButton } from './DataLinks/DataLinkButton';
 export { FieldLinkList } from './DataLinks/FieldLinkList';
-export { ToggleButtonGroup, ToggleButton } from './ToggleButtonGroup/ToggleButtonGroup';
 // Panel editors
 export { FullWidthButtonContainer } from './Button/FullWidthButtonContainer';
 export { ClickOutsideWrapper } from './ClickOutsideWrapper/ClickOutsideWrapper';
@@ -122,7 +132,12 @@ export { FeatureBadge, FeatureInfoBox } from './InfoBox/FeatureInfoBox';
 
 export { JSONFormatter } from './JSONFormatter/JSONFormatter';
 export { JsonExplorer } from './JSONFormatter/json_explorer/json_explorer';
-export { ErrorBoundary, ErrorBoundaryAlert } from './ErrorBoundary/ErrorBoundary';
+export {
+  ErrorBoundary,
+  ErrorBoundaryAlert,
+  ErrorBoundaryAlertProps,
+  withErrorBoundary,
+} from './ErrorBoundary/ErrorBoundary';
 export { ErrorWithStack } from './ErrorBoundary/ErrorWithStack';
 export { AlphaNotice } from './AlphaNotice/AlphaNotice';
 export { DataSourceHttpSettings } from './DataSourceSettings/DataSourceHttpSettings';
@@ -132,8 +147,6 @@ export { Spinner } from './Spinner/Spinner';
 export { FadeTransition } from './transitions/FadeTransition';
 export { SlideOutTransition } from './transitions/SlideOutTransition';
 export { Segment, SegmentAsync, SegmentInput, SegmentSelect } from './Segment/';
-export { default as Chart } from './Chart';
-export { TooltipContainer } from './Chart/TooltipContainer';
 export { Drawer } from './Drawer/Drawer';
 export { Slider } from './Slider/Slider';
 export { RangeSlider } from './Slider/RangeSlider';
@@ -182,13 +195,13 @@ export { Checkbox } from './Forms/Checkbox';
 export { TextArea } from './TextArea/TextArea';
 export { FileUpload } from './FileUpload/FileUpload';
 export { TimeRangeInput } from './TimePicker/TimeRangeInput';
-export { Card, Props as CardProps, ContainerProps, CardInnerProps, getCardStyles } from './Card/Card';
+export { RelativeTimeRangePicker } from './TimePicker/RelativeTimeRangePicker/RelativeTimeRangePicker';
+export { Card, Props as CardProps, getCardStyles } from './Card/Card';
+export { CardContainer, CardContainerProps } from './Card/CardContainer';
 export { FormattedValueDisplay } from './FormattedValueDisplay/FormattedValueDisplay';
 
 export { ButtonSelect } from './Dropdown/ButtonSelect';
 export { PluginSignatureBadge, PluginSignatureBadgeProps } from './PluginSignatureBadge/PluginSignatureBadge';
-
-// Legacy forms
 
 // Export this until we've figured out a good approach to inline form styles.
 export { InlineFormLabel } from './FormLabel/FormLabel';
@@ -219,17 +232,17 @@ export { LegacyForms, LegacyInputStatus };
 
 // WIP, need renames and exports cleanup
 export * from './uPlot/config';
+export { ScaleDistribution } from './uPlot/models.gen';
+export { UPlotConfigBuilder, UPlotConfigPrepFn } from './uPlot/config/UPlotConfigBuilder';
 export { UPlotChart } from './uPlot/Plot';
+export { PlotLegend } from './uPlot/PlotLegend';
 export * from './uPlot/geometries';
 export * from './uPlot/plugins';
-export { useRefreshAfterGraphRendered } from './uPlot/hooks';
-export { usePlotContext, usePlotPluginContext } from './uPlot/context';
-export { GraphNG, FIXED_UNIT } from './GraphNG/GraphNG';
+export { usePlotContext } from './uPlot/context';
+export { GraphNG, GraphNGProps, FIXED_UNIT } from './GraphNG/GraphNG';
+export { TimeSeries } from './TimeSeries/TimeSeries';
 export { useGraphNGContext } from './GraphNG/hooks';
-export { BarChart } from './BarChart/BarChart';
-export { TimelineChart } from './Timeline/TimelineChart';
-export { BarChartOptions, BarValueVisibility, BarChartFieldConfig } from './BarChart/types';
-export { TimelineOptions, TimelineFieldConfig } from './Timeline/types';
-export { GraphNGLegendEvent, GraphNGLegendEventMode } from './GraphNG/types';
-export * from './NodeGraph';
+export { preparePlotFrame } from './GraphNG/utils';
+export { GraphNGLegendEvent } from './GraphNG/types';
+export * from './PanelChrome/types';
 export { EmotionPerfTest } from './ThemeDemos/EmotionPerfTest';

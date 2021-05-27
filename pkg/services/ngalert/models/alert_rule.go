@@ -15,6 +15,8 @@ var (
 	ErrCannotEditNamespace = errors.New("user does not have permissions to edit the namespace")
 	// ErrRuleGroupNamespaceNotFound
 	ErrRuleGroupNamespaceNotFound = errors.New("rule group not found under this namespace")
+	// ErrAlertRuleFailedValidation
+	ErrAlertRuleFailedValidation = errors.New("invalid alert rule")
 )
 
 type NoDataState string
@@ -24,10 +26,9 @@ func (noDataState NoDataState) String() string {
 }
 
 const (
-	Alerting      NoDataState = "Alerting"
-	NoData        NoDataState = "NoData"
-	KeepLastState NoDataState = "KeepLastState"
-	OK            NoDataState = "OK"
+	Alerting NoDataState = "Alerting"
+	NoData   NoDataState = "NoData"
+	OK       NoDataState = "OK"
 )
 
 type ExecutionErrorState string
@@ -37,8 +38,12 @@ func (executionErrorState ExecutionErrorState) String() string {
 }
 
 const (
-	AlertingErrState      ExecutionErrorState = "Alerting"
-	KeepLastStateErrState ExecutionErrorState = "KeepLastState"
+	AlertingErrState ExecutionErrorState = "Alerting"
+)
+
+const (
+	UIDLabel          = "__alert_rule_uid__"
+	NamespaceUIDLabel = "__alert_rule_namespace_uid__"
 )
 
 // AlertRule is the model for alert rules in unified alerting.
@@ -61,18 +66,6 @@ type AlertRule struct {
 	For         time.Duration
 	Annotations map[string]string
 	Labels      map[string]string
-}
-
-func (alertRule *AlertRule) DataToString() string {
-	response := "["
-	for i, part := range alertRule.Data {
-		response += string(part.Model)
-		if i < len(alertRule.Data)-1 {
-			response += ","
-		}
-	}
-	response += "]"
-	return response
 }
 
 // AlertRuleKey is the alert definition identifier

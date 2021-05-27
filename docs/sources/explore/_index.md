@@ -14,6 +14,7 @@ If you just want to explore your data and do not want to create a dashboard, the
 - [Query management in Explore]({{< relref "query-management.md" >}})
 - [Logs integration in Explore]({{< relref "logs-integration.md" >}})
 - [Trace integration in Explore]({{< relref "trace-integration.md" >}})
+- [Inspector in Explore]({{< relref "explore-inspector.md" >}})
 
 ## Start exploring
 
@@ -22,9 +23,9 @@ In order to access Explore, you must have an editor or an administrator role. Re
 To access Explore:
 
 1. Click on the Explore icon on the menu bar.
-   
+
    {{< docs-imagebox img="/img/docs/explore/access-explore-7-4.png" max-width= "650px" caption="Screenshot of the new Explore Icon" >}}
-   
+
    An empty Explore tab opens.
 
    Alternately to start with an existing query in a panel, choose the Explore option from the Panel menu. This opens an Explore tab with the query from the panel and allows you to tweak or iterate in the query outside of your dashboard.
@@ -41,7 +42,7 @@ The split view provides an easy way to compare graphs and tables side-by-side or
 To open the split view:
 
 1. Click the split button to duplicate the current query and split the page into two side-by-side queries.
-   
+
 It is possible to select another data source for the new query which for example, allows you to compare the same query for two different servers or to compare the staging environment to the production environment.
 
 {{< docs-imagebox img="/img/docs/explore/explore_split-7-4.png" max-width= "950px" caption="Screenshot of Explore option in the panel menu" >}}

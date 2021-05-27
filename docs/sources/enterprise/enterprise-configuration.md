@@ -2,7 +2,7 @@
 title = "Enterprise configuration"
 description = "Enterprise configuration documentation"
 keywords = ["grafana", "configuration", "documentation", "enterprise"]
-weight = 300
+weight = 700
 +++
 
 # Grafana Enterprise configuration
@@ -330,21 +330,24 @@ A list of cookies that are stripped from the outgoing data source and alerting r
 ## [caching]
 
 > **Note:** Available in Grafana Enterprise v7.5 and later versions.
-> **Note:** The Memcached cache backend is unavailable in Grafana Enterprise v7.5.
 
-When query caching is enabled, Grafana temporarily stores the results of data source queries and serves cached responses to similar requests.
+When query caching is enabled, Grafana can temporarily store the results of data source queries and serve cached responses to similar requests.
 
 ### backend
 
-The caching backend to use when storing cached queries. Options: memory
+The caching backend to use when storing cached queries. Options: `memory`, `redis`, and `memcached`.
 
 ### enabled
 
-Setting 'enabled' to true enables caching datasource queries for all data sources.
+Setting 'enabled' to `true` allows users to configure query caching for data sources.
+
+This value is `true` by default.
+
+> **Note:** This setting enables the caching feature, but it does not turn on query caching for any data source. To turn on query caching for a data source, update the setting on the data source configuration page. For more information, refer to the [query caching docs]({{< relref "./query-caching.md#enable-and-configure-query-caching" >}}).
 
 ### ttl
 
-The default TTL (time to live) if no other TTL is available.
+_Time to live_ (TTL) is the time that a query result is stored in the caching system before it is deleted or refreshed. This setting defines the time to live for query caching, when TTL is not configured in data source settings. The default value is `5m` (5 minutes).
 
 ## [caching.memory]
 
@@ -361,3 +364,9 @@ The full Redis URL of your Redis server. Example: `redis://localhost:6739/0`.
 ### prefix
 
 A string that prefixes all Redis keys. This value must be set if using a shared database in Redis. If `prefix` is empty, then one will not be used.
+
+## [caching.memcached]
+
+### memcached_servers
+
+A space-separated list of memcached servers. Example: `memcached-server-1:11211 memcached-server-2:11212 memcached-server-3:11211`. Or if there's only one server: `memcached-server:11211`

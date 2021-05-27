@@ -12,8 +12,11 @@ import { isSharedDashboardQuery, runSharedRequest } from '../../../plugins/datas
 // Types
 import {
   applyFieldOverrides,
+  compareArrayValues,
+  compareDataFrameStructures,
   CoreApp,
   DataConfigSource,
+  DataFrame,
   DataQuery,
   DataQueryRequest,
   DataSourceApi,
@@ -27,6 +30,8 @@ import {
   TimeZone,
   transformDataFrame,
 } from '@grafana/data';
+import { getDashboardQueryRunner } from './DashboardQueryRunner/DashboardQueryRunner';
+import { mergePanelAndDashData } from './mergePanelAndDashData';
 
 export interface QueryRunnerOptions<
   TQuery extends DataQuery = DataQuery,
@@ -72,30 +77,82 @@ export class PanelQueryRunner {
    */
   getData(options: GetDataOptions): Observable<PanelData> {
     const { withFieldConfig, withTransforms } = options;
+    let structureRev = 1;
+    let lastData: DataFrame[] = [];
+    let processedCount = 0;
+    let lastConfigRev = -1;
+    const fastCompare = (a: DataFrame, b: DataFrame) => {
+      return compareDataFrameStructures(a, b, true);
+    };
 
     return this.subject.pipe(
       this.getTransformationsStream(withTransforms),
       map((data: PanelData) => {
         let processedData = data;
+        let sameStructure = false;
 
-        if (withFieldConfig) {
+        if (withFieldConfig && data.series?.length) {
           // Apply field defaults and overrides
-          const fieldConfig = this.dataConfigSource.getFieldOverrideOptions();
-          const timeZone = data.request?.timezone ?? 'browser';
+          let fieldConfig = this.dataConfigSource.getFieldOverrideOptions();
+          let processFields = fieldConfig != null;
 
-          if (fieldConfig) {
+          // If the shape is the same, we can skip field overrides
+          if (
+            data.state === LoadingState.Streaming &&
+            processFields &&
+            processedCount > 0 &&
+            lastData.length &&
+            lastConfigRev === this.dataConfigSource.configRev
+          ) {
+            const sameTypes = compareArrayValues(lastData, processedData.series, fastCompare);
+            if (sameTypes) {
+              // Keep the previous field config settings
+              processedData = {
+                ...processedData,
+                series: lastData.map((frame, frameIndex) => ({
+                  ...frame,
+                  length: data.series[frameIndex].length,
+                  fields: frame.fields.map((field, fieldIndex) => ({
+                    ...field,
+                    values: data.series[frameIndex].fields[fieldIndex].values,
+                    state: {
+                      ...field.state,
+                      calcs: undefined,
+                      // add global range calculation here? (not optimal for streaming)
+                      range: undefined,
+                    },
+                  })),
+                })),
+              };
+              processFields = false;
+              sameStructure = true;
+            }
+          }
+
+          if (processFields) {
+            lastConfigRev = this.dataConfigSource.configRev!;
+            processedCount++; // results with data
             processedData = {
               ...processedData,
               series: applyFieldOverrides({
-                timeZone: timeZone,
+                timeZone: data.request?.timezone ?? 'browser',
                 data: processedData.series,
-                ...fieldConfig,
+                ...fieldConfig!,
               }),
             };
           }
         }
 
-        return processedData;
+        if (!sameStructure) {
+          sameStructure = compareArrayValues(lastData, processedData.series, compareDataFrameStructures);
+        }
+        if (!sameStructure) {
+          structureRev++;
+        }
+
+        lastData = processedData.series;
+
+        return { ...processedData, structureRev };
       })
     );
   }
@@ -135,7 +192,7 @@ export class PanelQueryRunner {
     } = options;
 
     if (isSharedDashboardQuery(datasource)) {
-      this.pipeToSubject(runSharedRequest(options));
+      this.pipeToSubject(runSharedRequest(options), panelId);
       return;
     }
 
@@ -183,18 +240,25 @@ export class PanelQueryRunner {
       request.interval = norm.interval;
       request.intervalMs = norm.intervalMs;
 
-      this.pipeToSubject(runRequest(ds, request));
+      this.pipeToSubject(runRequest(ds, request), panelId);
     } catch (err) {
       console.error('PanelQueryRunner Error', err);
     }
   }
 
-  private pipeToSubject(observable: Observable<PanelData>) {
+  private pipeToSubject(observable: Observable<PanelData>, panelId?: number) {
     if (this.subscription) {
       this.subscription.unsubscribe();
     }
 
-    this.subscription = observable.subscribe({
+    let panelData = observable;
+    const dataSupport = this.dataConfigSource.getDataSupport();
+
+    if (dataSupport.alertStates || dataSupport.annotations) {
+      panelData = mergePanelAndDashData(observable, getDashboardQueryRunner().getResult(panelId));
+    }
+
+    this.subscription = panelData.subscribe({
       next: (data) => {
         this.lastResult = preProcessPanelData(data, this.lastResult);
         // Store preprocessed query results for applying overrides later on in the pipeline

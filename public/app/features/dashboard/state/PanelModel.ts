@@ -1,5 +1,5 @@
 // Libraries
-import _ from 'lodash';
+import { cloneDeep, defaultsDeep, isArray, isEqual, keys } from 'lodash';
 // Utils
 import { getTemplateSrv } from '@grafana/runtime';
 import { getNextRefIdChar } from 'app/core/utils/query';
@@ -11,10 +11,10 @@ import {
   DataLinkBuiltInVars,
   DataQuery,
   DataTransformerConfig,
-  EventBus,
   EventBusSrv,
   FieldConfigSource,
   PanelPlugin,
+  PanelPluginDataSupport,
   ScopedVars,
   urlUtil,
 } from '@grafana/data';
@@ -38,7 +38,6 @@ import {
 } from './getPanelOptionsWithDefaults';
 import { QueryGroupOptions } from 'app/types';
 import { PanelModelLibraryPanel } from '../../library-panels/types';
-import { isDeprecatedPanel } from '../utils/panel';
 
 export interface GridPos {
   x: number;
@@ -59,8 +58,9 @@ const notPersistedProperties: { [str: string]: boolean } = {
   queryRunner: true,
   replaceVariables: true,
   editSourceId: true,
-  hasChanged: true,
+  configRev: true,
   getDisplayTitle: true,
+  dataSupport: true,
 };
 
 // For angular panels we need to clean up properties when changing type
@@ -105,6 +105,7 @@ const mustKeepProps: { [str: string]: boolean } = {
   replaceVariables: true,
   libraryPanel: true,
   getDisplayTitle: true,
+  configRev: true,
 };
 
 const defaults: any = {
@@ -113,6 +114,10 @@ const defaults: any = {
   cachedPluginOptions: {},
   transparent: false,
   options: {},
+  fieldConfig: {
+    defaults: {},
+    overrides: [],
+  },
   datasource: null,
   title: '',
 };
@@ -162,14 +167,18 @@ export class PanelModel implements DataConfigSource {
   isViewing = false;
   isEditing = false;
   isInView = false;
-  hasChanged = false;
-
+  configRev = 0; // increments when configs change
   hasRefreshed?: boolean;
-  events: EventBus;
   cacheTimeout?: any;
-  declare cachedPluginOptions: Record<string, PanelOptionsCache>;
+  cachedPluginOptions: Record<string, PanelOptionsCache> = {};
   legend?: { show: boolean; sort?: string; sortDesc?: boolean };
   plugin?: PanelPlugin;
+
+  /**
+   * The PanelModel event bus only used for internal and legacy angular support.
+   * The EventBus passed to panels is based on the dashboard event model.
+   */
+  events: EventBusSrv;
 
   private queryRunner?: PanelQueryRunner;
 
@@ -208,14 +217,14 @@ export class PanelModel implements DataConfigSource {
     }
 
     // defaults
-    _.defaultsDeep(this, _.cloneDeep(defaults));
+    defaultsDeep(this, cloneDeep(defaults));
 
     // queries must have refId
     this.ensureQueryIds();
   }
 
   ensureQueryIds() {
-    if (this.targets && _.isArray(this.targets)) {
+    if (this.targets && isArray(this.targets)) {
       for (const query of this.targets) {
         if (!query.refId) {
           query.refId = getNextRefIdChar(this.targets);
@@ -228,20 +237,20 @@ export class PanelModel implements DataConfigSource {
     return this.options;
   }
 
-  getFieldConfig() {
-    return this.fieldConfig;
+  get hasChanged(): boolean {
+    return this.configRev > 0;
   }
 
   updateOptions(options: object) {
     this.options = options;
-    this.hasChanged = true;
+    this.configRev++;
     this.events.publish(new PanelOptionsChangedEvent());
     this.render();
   }
 
   updateFieldConfig(config: FieldConfigSource) {
     this.fieldConfig = config;
-    this.hasChanged = true;
+    this.configRev++;
     this.events.publish(new PanelOptionsChangedEvent());
 
     this.resendLastResult();
@@ -256,11 +265,11 @@ export class PanelModel implements DataConfigSource {
         continue;
       }
 
-      if (_.isEqual(this[property], defaults[property])) {
+      if (isEqual(this[property], defaults[property])) {
         continue;
       }
 
-      model[property] = _.cloneDeep(this[property]);
+      model[property] = cloneDeep(this[property]);
     }
 
     if (model.datasource === undefined) {
@@ -309,10 +318,6 @@ export class PanelModel implements DataConfigSource {
   }
 
   private restorePanelOptions(pluginId: string) {
-    if (!this.cachedPluginOptions) {
-      return;
-    }
-
     const prevOptions = this.cachedPluginOptions[pluginId];
 
     if (!prevOptions) {
@@ -355,7 +360,7 @@ export class PanelModel implements DataConfigSource {
 
   clearPropertiesBeforePluginChange() {
     // remove panel type specific  options
-    for (const key of _.keys(this)) {
+    for (const key of keys(this)) {
       if (mustKeepProps[key]) {
         continue;
       }
@@ -380,7 +385,7 @@ export class PanelModel implements DataConfigSource {
     const oldOptions: any = this.getOptionsToRemember();
     const prevFieldConfig = this.fieldConfig;
     const oldPluginId = this.type;
-    const wasAngular = this.isAngularPlugin() || isDeprecatedPanel(this.type);
+    const wasAngular = this.isAngularPlugin();
     this.cachedPluginOptions[oldPluginId] = {
       properties: oldOptions,
       fieldConfig: prevFieldConfig,
@@ -398,7 +403,7 @@ export class PanelModel implements DataConfigSource {
     // switch
     this.type = pluginId;
     this.plugin = newPlugin;
-    this.hasChanged = true;
+    this.configRev++;
 
     // For some reason I need to rebind replace variables here, otherwise the viz repeater does not work
     this.replaceVariables = this.replaceVariables.bind(this);
@@ -417,7 +422,7 @@ export class PanelModel implements DataConfigSource {
     this.interval = options.minInterval;
     this.maxDataPoints = options.maxDataPoints;
     this.targets = options.queries;
-    this.hasChanged = true;
+    this.configRev++;
 
     this.events.publish(new PanelQueriesChangedEvent());
   }
@@ -426,13 +431,13 @@ export class PanelModel implements DataConfigSource {
     query = query || { refId: 'A' };
     query.refId = getNextRefIdChar(this.targets);
     this.targets.push(query as DataQuery);
-    this.hasChanged = true;
+    this.configRev++;
   }
 
   changeQuery(query: DataQuery, index: number) {
     // ensure refId is maintained
     query.refId = this.targets[index].refId;
-    this.hasChanged = true;
+    this.configRev++;
 
     // update query in array
     this.targets = this.targets.map((item, itemIndex) => {
@@ -473,8 +478,12 @@ export class PanelModel implements DataConfigSource {
       fieldConfig: this.fieldConfig,
       replaceVariables: this.replaceVariables,
       fieldConfigRegistry: this.plugin.fieldConfigRegistry,
-      theme: config.theme,
+      theme: config.theme2,
     };
+  }
+
+  getDataSupport(): PanelPluginDataSupport {
+    return this.plugin?.dataSupport ?? { annotations: false, alertStates: false };
   }
 
   getQueryRunner(): PanelQueryRunner {
@@ -503,13 +512,13 @@ export class PanelModel implements DataConfigSource {
   setTransformations(transformations: DataTransformerConfig[]) {
     this.transformations = transformations;
     this.resendLastResult();
-    this.hasChanged = true;
+    this.configRev++;
     this.events.publish(new PanelTransformationsChangedEvent());
   }
 
   setProperty(key: keyof this, value: any) {
     this[key] = value;
-    this.hasChanged = true;
+    this.configRev++;
 
     // Custom handling of repeat dependent options, handled here as PanelEditor can
     // update one key at a time right now

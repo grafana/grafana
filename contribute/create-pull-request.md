@@ -19,7 +19,7 @@ To increase the chance of having your pull request accepted, make sure your pull
 - Commits within the pull request follow the [Formatting guidelines](#Formatting-guidelines). 
 - The pull request closes one related issue.
 - The pull request contains necessary tests that verify the intended behavior.
-- If your pull request has conflicts, rebase your branch onto the master branch.
+- If your pull request has conflicts, rebase your branch onto the main branch.
 
 If the pull request fixes a bug:
 

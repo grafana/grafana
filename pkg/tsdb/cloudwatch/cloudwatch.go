@@ -90,7 +90,7 @@ func (s *CloudWatchService) Init() error {
 		QueryDataHandler: cw,
 	})
 
-	if err := s.BackendPluginManager.Register("cloudwatch", factory); err != nil {
+	if err := s.BackendPluginManager.RegisterAndStart(context.Background(), "cloudwatch", factory); err != nil {
 		plog.Error("Failed to register plugin", "error", err)
 	}
 	return nil

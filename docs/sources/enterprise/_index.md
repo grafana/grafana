@@ -43,6 +43,7 @@ With Grafana Enterprise [enhanced LDAP]({{< relref "enhanced_ldap.md" >}}), you 
 
 With Grafana Enterprise, you get access to new features, including:
 
+- [Fine-grained access control]({{< relref "access-control/_index.md" >}}) to control access with fine-grained roles and permissions.
 - [Data source permissions]({{< relref "datasource_permissions.md" >}}) to restrict query access to specific teams and users.
 - [Reporting]({{< relref "reporting.md" >}}) to generate a PDF report from any dashboard and set up a schedule to have it emailed to whoever you choose.
 - [Export dashboard as PDF]({{< relref "export-pdf.md" >}})
@@ -64,6 +65,7 @@ With a Grafana Enterprise license, you get access to premium data sources, inclu
 - [MongoDB](https://grafana.com/grafana/plugins/grafana-mongodb-datasource)
 - [New Relic](https://grafana.com/plugins/grafana-newrelic-datasource)
 - [Oracle Database](https://grafana.com/plugins/grafana-oracle-datasource)
+- [SAP HANA®](https://grafana.com/grafana/plugins/grafana-saphana-datasource/)
 - [ServiceNow](https://grafana.com/grafana/plugins/grafana-servicenow-datasource)
 - [Snowflake](https://grafana.com/grafana/plugins/grafana-snowflake-datasource)
 - [Splunk](https://grafana.com/plugins/grafana-splunk-datasource)

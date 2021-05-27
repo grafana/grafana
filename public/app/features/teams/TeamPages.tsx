@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
-import _ from 'lodash';
+import { includes } from 'lodash';
 import config from 'app/core/config';
 import Page from 'app/core/components/Page/Page';
 import TeamMembers from './TeamMembers';
@@ -87,7 +87,7 @@ export class TeamPages extends PureComponent<Props, State> {
   getCurrentPage() {
     const pages = ['members', 'settings', 'groupsync'];
     const currentPage = this.props.pageName;
-    return _.includes(pages, currentPage) ? currentPage : pages[0];
+    return includes(pages, currentPage) ? currentPage : pages[0];
   }
 
   textsAreEqual = (text1: string, text2: string) => {

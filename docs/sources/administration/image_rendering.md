@@ -7,7 +7,7 @@ weight = 300
 
 # Image rendering
 
-Grafana supports automatic rendering of panels as PNG images. This allows Grafana to automatically generate images of your panels to include in [alert notifications]({{< relref "../alerting/notifications.md" >}}).
+Grafana supports automatic rendering of panels as PNG images. This allows Grafana to automatically generate images of your panels to include in [alert notifications]({{< relref "../alerting/old-alerting/notifications.md" >}}).
 
 >**Note:** Image rendering of dashboards is not supported at this time.
 
@@ -58,7 +58,7 @@ version: '2'
 
 services:
   grafana:
-    image: grafana/grafana:master
+    image: grafana/grafana:main
     ports:
      - "3000:3000"
     environment:

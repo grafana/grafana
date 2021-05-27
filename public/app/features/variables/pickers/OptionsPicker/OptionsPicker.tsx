@@ -5,17 +5,11 @@ import { LoadingState } from '@grafana/data';
 
 import { StoreState } from 'app/types';
 import { VariableInput } from '../shared/VariableInput';
-import {
-  commitChangesToVariable,
-  filterOrSearchOptions,
-  navigateOptions,
-  openOptions,
-  toggleAndFetchTag,
-} from './actions';
+import { commitChangesToVariable, filterOrSearchOptions, navigateOptions, openOptions } from './actions';
 import { OptionsPickerState, toggleAllOptions, toggleOption } from './reducer';
-import { VariableOption, VariableTag, VariableWithMultiSupport, VariableWithOptions } from '../../types';
+import { VariableOption, VariableWithMultiSupport, VariableWithOptions } from '../../types';
 import { VariableOptions } from '../shared/VariableOptions';
-import { isMulti, isQuery } from '../../guard';
+import { isMulti } from '../../guard';
 import { VariablePickerProps } from '../types';
 import { formatVariableLabel } from '../../shared/formatVariable';
 import { toVariableIdentifier } from '../../state/types';
@@ -31,7 +25,6 @@ export const optionPickerFactory = <Model extends VariableWithOptions | Variable
     filterOrSearchOptions,
     toggleAllOptions,
     toggleOption,
-    toggleAndFetchTag,
     navigateOptions,
   };
 
@@ -80,18 +73,9 @@ export const optionPickerFactory = <Model extends VariableWithOptions | Variable
 
     renderLink(variable: VariableWithOptions) {
       const linkText = formatVariableLabel(variable);
-      const tags = getSelectedTags(variable);
       const loading = variable.state === LoadingState.Loading;
 
-      return (
-        <VariableLink
-          text={linkText}
-          tags={tags}
-          onClick={this.onShowOptions}
-          loading={loading}
-          onCancel={this.onCancel}
-        />
-      );
+      return <VariableLink text={linkText} onClick={this.onShowOptions} loading={loading} onCancel={this.onCancel} />;
     }
 
     onCancel = () => {
@@ -110,10 +94,8 @@ export const optionPickerFactory = <Model extends VariableWithOptions | Variable
             values={picker.options}
             onToggle={this.onToggleOption}
             onToggleAll={this.props.toggleAllOptions}
-            onToggleTag={this.props.toggleAndFetchTag}
             highlightIndex={picker.highlightIndex}
             multi={picker.multi}
-            tags={picker.tags}
             selectedValues={picker.selectedValues}
           />
         </ClickOutsideWrapper>
@@ -125,11 +107,4 @@ export const optionPickerFactory = <Model extends VariableWithOptions | Variable
   OptionsPicker.displayName = 'OptionsPicker';
 
   return OptionsPicker;
-};
-
-const getSelectedTags = (variable: VariableWithOptions): VariableTag[] => {
-  if (!isQuery(variable) || !Array.isArray(variable.tags)) {
-    return [];
-  }
-  return variable.tags.filter((t) => t.selected);
 };
