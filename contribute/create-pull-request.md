@@ -45,7 +45,7 @@ Pull requests for Redux contributions must:
 
 Pull requests that add or modify unit tests that are written in Jest must:
 
-- Avoid adding snapshots tests, we are removing current ones incrementally
+- Don't add snapshots tests, we are removing current ones incrementally.
 - If an existing unit test is written in Enzyme, migrate it to RTL (React Testing Library), except if you’re fixing a bug. Bug fixes usually shouldn't include any bigger refactoring, so it’s ok to skip migrating the test to RTL.
 ### Backend-specific guidelines
 
