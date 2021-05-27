@@ -4,15 +4,14 @@ import (
 	"context"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func setupTestEnv(t testing.TB) *OSSAccessControlService {
@@ -23,7 +22,7 @@ func setupTestEnv(t testing.TB) *OSSAccessControlService {
 
 	ac := OSSAccessControlService{
 		Cfg:        cfg,
-		UsageStats: &usageStatsMock{metricFuncs: make(map[string]usagestats.MetricFunc)},
+		UsageStats: &usageStatsMock{metricsFuncs: make([]usagestats.MetricsFunc, 0)},
 		Log:        log.New("accesscontrol-test"),
 	}
 
@@ -33,22 +32,25 @@ func setupTestEnv(t testing.TB) *OSSAccessControlService {
 }
 
 type usageStatsMock struct {
-	t           *testing.T
-	metricFuncs map[string]usagestats.MetricFunc
+	t            *testing.T
+	metricsFuncs []usagestats.MetricsFunc
 }
 
-func (usm *usageStatsMock) RegisterMetric(name string, fn usagestats.MetricFunc) {
-	usm.metricFuncs[name] = fn
+func (usm *usageStatsMock) RegisterMetricsFunc(fn usagestats.MetricsFunc) {
+	usm.metricsFuncs = append(usm.metricsFuncs, fn)
 }
 
 func (usm *usageStatsMock) GetUsageReport(_ context.Context) (usagestats.UsageReport, error) {
-	metrics := make(map[string]interface{})
-	for name, fn := range usm.metricFuncs {
-		v, err := fn()
-		metrics[name] = v
+	all := make(map[string]interface{})
+	for _, fn := range usm.metricsFuncs {
+		fnMetrics, err := fn()
 		require.NoError(usm.t, err)
+
+		for name, value := range fnMetrics {
+			all[name] = value
+		}
 	}
-	return usagestats.UsageReport{Metrics: metrics}, nil
+	return usagestats.UsageReport{Metrics: all}, nil
 }
 
 type evaluatingPermissionsTestCase struct {
@@ -146,7 +148,7 @@ func TestUsageMetrics(t *testing.T) {
 
 			s := &OSSAccessControlService{
 				Cfg:        cfg,
-				UsageStats: &usageStatsMock{t: t, metricFuncs: make(map[string]usagestats.MetricFunc)},
+				UsageStats: &usageStatsMock{t: t, metricsFuncs: make([]usagestats.MetricsFunc, 0)},
 				Log:        log.New("accesscontrol-test"),
 			}
 
