@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"os"
 	"strconv"
 	"sync"
 	"time"
@@ -133,6 +134,10 @@ func (g *GrafanaLive) Run(ctx context.Context) error {
 
 var clientConcurrency = 8
 
+func (g *GrafanaLive) IsHA() bool {
+	return os.Getenv("GF_LIVE_REDIS_ADDRESS") != ""
+}
+
 // Init initializes Live service.
 // Required to implement the registry.Service interface.
 func (g *GrafanaLive) Init() error {
@@ -155,6 +160,47 @@ func (g *GrafanaLive) Init() error {
 		return err
 	}
 	g.node = node
+
+	if os.Getenv("GF_LIVE_REDIS_ADDRESS") != "" {
+		redisAddress := os.Getenv("GF_LIVE_REDIS_ADDRESS")
+		redisShardConfigs := []centrifuge.RedisShardConfig{
+			{Address: redisAddress},
+		}
+		var redisShards []*centrifuge.RedisShard
+		for _, redisConf := range redisShardConfigs {
+			redisShard, err := centrifuge.NewRedisShard(node, redisConf)
+			if err != nil {
+				return fmt.Errorf("error connecting to Live Redis: %v", err)
+			}
+			redisShards = append(redisShards, redisShard)
+		}
+
+		broker, err := centrifuge.NewRedisBroker(node, centrifuge.RedisBrokerConfig{
+			// We are using Redis streams here for history.
+			UseStreams: true,
+
+			// Use reasonably large expiration interval for stream meta key,
+			// much bigger than maximum HistoryLifetime value in Node config.
+			// This way stream meta data will expire, in some cases you may want
+			// to prevent its expiration setting this to zero value.
+			HistoryMetaTTL: 7 * 24 * time.Hour,
+
+			// And configure a couple of shards to use.
+			Shards: redisShards,
+		})
+		if err != nil {
+			return fmt.Errorf("error creating Live Redis broker: %v", err)
+		}
+		node.SetBroker(broker)
+
+		presenceManager, err := centrifuge.NewRedisPresenceManager(node, centrifuge.RedisPresenceManagerConfig{
+			Shards: redisShards,
+		})
+		if err != nil {
+			return fmt.Errorf("error creating Live Redis presence manager: %v", err)
+		}
+		node.SetPresenceManager(presenceManager)
+	}
 
 	g.contextGetter = newPluginContextGetter(g.PluginContextProvider)
 	channelSender := newPluginChannelSender(node)
