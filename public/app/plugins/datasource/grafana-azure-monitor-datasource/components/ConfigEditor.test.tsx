@@ -1,46 +1,63 @@
+import { render, screen } from '@testing-library/react';
 import React from 'react';
-import { shallow } from 'enzyme';
-import ConfigEditor, { Props } from './ConfigEditor';
+import ConfigEditor from './ConfigEditor';
 
-const setup = () => {
-  const props: Props = {
-    options: {
-      id: 21,
-      uid: 'y',
-      orgId: 1,
-      name: 'Azure Monitor-10-10',
-      type: 'grafana-azure-monitor-datasource',
-      typeLogoUrl: '',
-      typeName: 'Azure',
-      access: 'proxy',
-      url: '',
-      password: '',
-      user: '',
-      database: '',
-      basicAuth: false,
-      basicAuthUser: '',
-      basicAuthPassword: '',
-      withCredentials: false,
-      isDefault: false,
-      jsonData: {
-        subscriptionId: '44987801-6nn6-49he-9b2d-9106972f9789',
-        azureLogAnalyticsSameAs: true,
-        cloudName: 'azuremonitor',
-      },
-      secureJsonFields: {},
-      version: 1,
-      readOnly: false,
-    },
-    onOptionsChange: jest.fn(),
+describe('AppInsights ConfigEditor', () => {
+  const baseOptions = {
+    id: 21,
+    uid: 'y',
+    orgId: 1,
+    name: 'Azure Monitor-10-10',
+    type: 'grafana-azure-monitor-datasource',
+    typeLogoUrl: '',
+    typeName: 'Azure',
+    access: 'proxy',
+    url: '',
+    password: '',
+    user: '',
+    database: '',
+    basicAuth: false,
+    basicAuthUser: '',
+    basicAuthPassword: '',
+    withCredentials: false,
+    isDefault: false,
+    jsonData: {},
+    secureJsonFields: {},
+    version: 1,
+    readOnly: false,
   };
 
-  return shallow(<ConfigEditor {...props} />);
-};
+  const jsonData = {
+    subscriptionId: '44987801-6nn6-49he-9b2d-9106972f9789',
+    azureLogAnalyticsSameAs: true,
+    cloudName: 'azuremonitor',
+  };
 
-describe('Render', () => {
-  it('should render component', () => {
-    const wrapper = setup();
+  const onOptionsChange = jest.fn();
 
-    expect(wrapper).toMatchSnapshot();
+  it('should not render application insights config for new data sources', () => {
+    const options = {
+      ...baseOptions,
+      jsonData,
+    };
+    render(<ConfigEditor options={options} onOptionsChange={onOptionsChange} />);
+
+    expect(screen.queryByText('Azure Application Insights')).not.toBeInTheDocument();
+  });
+
+  it('should render application insights config for data sources using application insights', () => {
+    const options = {
+      ...baseOptions,
+      jsonData: {
+        ...jsonData,
+        appInsightsAppId: 'abc-123',
+      },
+      secureJsonFields: {
+        appInsightsApiKey: true,
+      },
+    };
+    render(<ConfigEditor options={options} onOptionsChange={onOptionsChange} />);
+
+    expect(screen.queryByText('Azure Application Insights')).toBeInTheDocument();
   });
 });
