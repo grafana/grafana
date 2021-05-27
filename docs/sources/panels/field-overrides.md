@@ -1,6 +1,7 @@
 +++
-title = "Configure specific fields"
+title = "Field overrides"
 keywords = ["grafana", "field options", "documentation", "format fields", "overrides", "override fields"]
+aliases = ["/docs/grafana/latest/panels/field-options/", "/docs/grafana/latest/panels/field-options/configure-specific-fields/"]
 weight = 300
 +++
 
@@ -92,7 +93,7 @@ Let’s assume that our result set is a data frame that consists of four fields:
 | 2020-01-02 03:05:00 | 47.0      | 34.0     | 68       |
 | 2020-01-02 03:06:00 | 48.0      | 31.0     | 68       |
 
-Let's apply the field options from the [field option example]({{< relref "configure-all-fields.md#field-option-example" >}}) to apply the Celsius unit and get rid of the decimal place. This results in the following table:
+Let's apply the field options from the [field option example](#field-option-example) to apply the Celsius unit and get rid of the decimal place. This results in the following table:
 
 | time                | high temp | low temp | humidity |
 | ------------------- | --------- | -------- | -------- |

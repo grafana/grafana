@@ -38,7 +38,7 @@ Enable stacking series on top of each other.
 
 The stacking group option is only available as an override.
 
-For more information about creating field overrides, refer to [Add a field override]({{< relref "../../field-options/configure-specific-fields.md#add-a-field-override" >}}) 
+For more information about creating field overrides, refer to [Field overrides]({{< relref "../../field-overrides.md" >}}).
 
 Stack series in the same group. In the Overrides section:
 

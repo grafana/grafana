@@ -9,9 +9,9 @@ This page describes the parts of the Grafana panel editor and links to where you
 
 {{< docs-imagebox img="/img/docs/panel-editor/panel-editor-7-0.png" class="docs-image--no-shadow" max-width="1500px" >}}
 
-If your user account is assigned the appropriate [organization role]({{< relref "../permissions/organization_roles.md" >}}) or [permissions]({{< relref "../permissions/_index.md" >}}), then you can edit or update a panel at any point after it is created. For more information about creating panels, refer to [Add a panel]({{< relref "./add-a-panel.md" >}})
+If your user account is assigned the appropriate [organization role]({{< relref "../permissions/organization_roles.md" >}}) or [permissions]({{< relref "../permissions/_index.md" >}}), then you can edit or update a panel at any point after it is created. For more information about creating panels, refer to [Add a panel]({{< relref "./add-a-panel.md" >}}).
 
-## Open the Panel editor
+## Open the panel editor
 
 There are several ways to access the panel editor, also called the **Edit Panel** screen, _edit mode_, or _panel edit mode_:
 
@@ -77,7 +77,7 @@ Changing an option applies the change to all fields, meaning all series or colum
 
 ## Field overrides
 
-_Field overrides_ can be added or viewed in the Overrides tab in the panel editor side menu. You can apply options to specific fields (series or columns) rather than all fields. Learn how to apply an override in [Configure specific fields]({{< relref "configure-specific-fields.md" >}}).
+_Field overrides_ can be added or viewed in the Overrides tab in the panel editor side menu. You can apply options to specific fields (series or columns) rather than all fields. Learn how to apply an override in [Field overrides]({{< relref "./field-overrides.md" >}}).
 
 Options are documented in the following topics:
 
