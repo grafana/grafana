@@ -85,4 +85,25 @@ export const createMockResourcePickerRows = (): ResourceRowGroup => [
       },
     ],
   },
+
+  {
+    id: '$$grafana-templateVariables$$',
+    name: 'Template variables',
+    type: ResourceRowType.VariableGroup,
+    typeLabel: 'Variables',
+    children: [
+      {
+        id: '$machine',
+        name: '$machine',
+        type: ResourceRowType.Variable,
+        typeLabel: 'Variable',
+      },
+      {
+        id: '$workspace',
+        name: '$workspace',
+        type: ResourceRowType.Variable,
+        typeLabel: 'Variable',
+      },
+    ],
+  },
 ];

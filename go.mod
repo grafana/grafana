@@ -51,7 +51,7 @@ require (
 	github.com/gosimple/slug v1.9.0
 	github.com/grafana/grafana-aws-sdk v0.4.0
 	github.com/grafana/grafana-live-sdk v0.0.6
-	github.com/grafana/grafana-plugin-sdk-go v0.100.0
+	github.com/grafana/grafana-plugin-sdk-go v0.101.0
 	github.com/grafana/loki v1.6.2-0.20210520072447-15d417efe103
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/hashicorp/go-hclog v0.16.0
@@ -76,7 +76,7 @@ require (
 	github.com/prometheus/client_golang v1.10.0
 	github.com/prometheus/client_model v0.2.0
 	github.com/prometheus/common v0.24.0
-	github.com/prometheus/prometheus v1.8.2-0.20210421143221-52df5ef7a3be
+	github.com/prometheus/prometheus v1.8.2-0.20210430082741-2a4b8e12bbf2
 	github.com/robfig/cron v0.0.0-20180505203441-b41be1df6967
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/russellhaering/goxmldsig v1.1.0
@@ -91,7 +91,7 @@ require (
 	github.com/weaveworks/common v0.0.0-20210419092856-009d1eebd624
 	github.com/xorcare/pointer v1.1.0
 	github.com/yudai/gojsondiff v1.0.0
-	go.opentelemetry.io/collector v0.25.0
+	go.opentelemetry.io/collector v0.27.0
 	golang.org/x/crypto v0.0.0-20210513164829-c07d793c2f9a
 	golang.org/x/exp v0.0.0-20210220032938-85be41e4509f // indirect
 	golang.org/x/net v0.0.0-20210521195947-fe42d452be8f
@@ -116,3 +116,5 @@ require (
 	xorm.io/core v0.7.3
 	xorm.io/xorm v0.8.2
 )
+
+replace github.com/apache/thrift => github.com/apache/thrift v0.14.1

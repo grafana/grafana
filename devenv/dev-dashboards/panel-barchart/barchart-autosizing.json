@@ -15,7 +15,6 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
-  "id": 441,
   "links": [],
   "panels": [
     {
@@ -56,19 +55,21 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 13,
-        "w": 24,
+        "h": 10,
+        "w": 12,
         "x": 0,
         "y": 0
       },
       "id": 9,
       "options": {
         "barWidth": 1,
-        "groupWidth": 1,
+        "groupWidth": 0.82,
         "legend": {
-          "calcs": [],
+          "calcs": [
+            "max"
+          ],
           "displayMode": "list",
-          "placement": "bottom"
+          "placement": "right"
         },
         "orientation": "auto",
         "showValue": "auto",
@@ -79,11 +80,85 @@
       },
       "targets": [
         {
+          "csvContent": "Name,Stat1,Stat2\nStockholm, 10, 15\nNew York, 19, 5\nLondon, 10, 1\nNegative, 15, -5\nLong value, 15,10",
           "refId": "A",
-          "scenarioId": "categorical_data"
+          "scenarioId": "csv_content"
         }
       ],
-      "title": "Plenty od data, automatic value sizing",
+      "title": "Auto  sizing & auto show values",
+      "type": "barchart"
+    },
+    {
+      "datasource": null,
+      "description": "Should be smaller given the longer value",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "axisSoftMin": 0,
+            "fillOpacity": 80,
+            "gradientMode": "none",
+            "hideFrom": {
+              "graph": false,
+              "legend": false,
+              "tooltip": false
+            },
+            "lineWidth": 0
+          },
+          "decimals": 2,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 12,
+        "x": 12,
+        "y": 0
+      },
+      "id": 15,
+      "options": {
+        "barWidth": 1,
+        "groupWidth": 0.82,
+        "legend": {
+          "calcs": [
+            "max"
+          ],
+          "displayMode": "list",
+          "placement": "right"
+        },
+        "orientation": "auto",
+        "showValue": "auto",
+        "text": {},
+        "tooltip": {
+          "mode": "single"
+        }
+      },
+      "targets": [
+        {
+          "csvContent": "Name,Stat1,Stat2\nStockholm, 10, 15\nNew York, 19, 5\nLondon, 10, 1\nNegative, 15, -5\nLong value, 15,10",
+          "refId": "A",
+          "scenarioId": "csv_content"
+        }
+      ],
+      "title": "Auto sizing & auto show values",
       "type": "barchart"
     },
     {
@@ -124,10 +199,152 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 12,
-        "w": 24,
+        "h": 11,
+        "w": 8,
         "x": 0,
-        "y": 13
+        "y": 10
+      },
+      "id": 16,
+      "options": {
+        "barWidth": 1,
+        "groupWidth": 0.89,
+        "legend": {
+          "calcs": [
+            "max"
+          ],
+          "displayMode": "list",
+          "placement": "right"
+        },
+        "orientation": "auto",
+        "showValue": "auto",
+        "text": {},
+        "tooltip": {
+          "mode": "single"
+        }
+      },
+      "targets": [
+        {
+          "csvContent": "Name,Stat1,Stat2,Stat3,Stat4,Stat5,Stat6,Stat7,Stat8,Stat9,Stat10\nA, 10, 15,8,3,4,12,14,1,5,10\nB, 19, 5,8,3,4,12,14,6,7,2\nC, 15, 5,8,3,4,10,4,6,7,2\n",
+          "refId": "A",
+          "scenarioId": "csv_content"
+        }
+      ],
+      "title": "auto show values & No room for value",
+      "type": "barchart"
+    },
+    {
+      "datasource": null,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "axisSoftMin": 0,
+            "fillOpacity": 80,
+            "gradientMode": "none",
+            "hideFrom": {
+              "graph": false,
+              "legend": false,
+              "tooltip": false
+            },
+            "lineWidth": 0
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 11,
+        "w": 8,
+        "x": 8,
+        "y": 10
+      },
+      "id": 17,
+      "options": {
+        "barWidth": 1,
+        "groupWidth": 0.89,
+        "legend": {
+          "calcs": [
+            "max"
+          ],
+          "displayMode": "list",
+          "placement": "right"
+        },
+        "orientation": "auto",
+        "showValue": "always",
+        "text": {},
+        "tooltip": {
+          "mode": "single"
+        }
+      },
+      "targets": [
+        {
+          "csvContent": "Name,Stat1,Stat2,Stat3,Stat4,Stat5,Stat6,Stat7,Stat8,Stat9,Stat10\nA, 10, 15,8,3,4,12,14,1,5,10\nB, 19, 5,8,3,4,12,14,6,7,2\nC, 15, 5,8,3,4,10,4,6,7,2\n",
+          "refId": "A",
+          "scenarioId": "csv_content"
+        }
+      ],
+      "title": "auto show values & Always show value",
+      "type": "barchart"
+    },
+    {
+      "datasource": "-- Dashboard --",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "axisSoftMin": 0,
+            "fillOpacity": 80,
+            "gradientMode": "none",
+            "hideFrom": {
+              "graph": false,
+              "legend": false,
+              "tooltip": false
+            },
+            "lineWidth": 0
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 11,
+        "w": 8,
+        "x": 16,
+        "y": 10
       },
       "id": 10,
       "options": {
@@ -142,7 +359,7 @@
         "showValue": "auto",
         "text": {
           "size": 10,
-          "valueSize": 10
+          "valueSize": 25
         },
         "tooltip": {
           "mode": "single"
@@ -150,11 +367,11 @@
       },
       "targets": [
         {
-          "refId": "A",
-          "scenarioId": "categorical_data"
+          "panelId": 9,
+          "refId": "A"
         }
       ],
-      "title": "Plenty od data, fixed value sizing",
+      "title": "Fixed value sizing",
       "type": "barchart"
     },
     {
@@ -195,267 +412,42 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 12,
+        "h": 11,
         "w": 12,
         "x": 0,
-        "y": 25
+        "y": 21
       },
-      "id": 11,
+      "id": 18,
       "options": {
         "barWidth": 1,
-        "groupWidth": 1,
+        "groupWidth": 0.82,
         "legend": {
-          "calcs": [],
+          "calcs": [
+            "max"
+          ],
           "displayMode": "list",
-          "placement": "bottom"
-        },
-        "orientation": "auto",
-        "showValue": "auto",
-        "text": {
-          "size": 10
-        },
-        "tooltip": {
-          "mode": "single"
-        }
-      },
-      "targets": [
-        {
-          "refId": "A",
-          "scenarioId": "categorical_data"
-        }
-      ],
-      "title": "Auto font size, value auto visible",
-      "transformations": [
-        {
-          "id": "filterByValue",
-          "options": {
-            "filters": [
-              {
-                "config": {
-                  "id": "equal",
-                  "options": {
-                    "value": "Bedroom"
-                  }
-                },
-                "fieldName": "location"
-              },
-              {
-                "config": {
-                  "id": "equal",
-                  "options": {
-                    "value": "Cellar"
-                  }
-                },
-                "fieldName": "location"
-              }
-            ],
-            "match": "any",
-            "type": "include"
-          }
-        }
-      ],
-      "type": "barchart"
-    },
-    {
-      "datasource": null,
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "axisSoftMin": 0,
-            "fillOpacity": 80,
-            "gradientMode": "none",
-            "hideFrom": {
-              "graph": false,
-              "legend": false,
-              "tooltip": false
-            },
-            "lineWidth": 0
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 12,
-        "w": 12,
-        "x": 12,
-        "y": 25
-      },
-      "id": 12,
-      "options": {
-        "barWidth": 1,
-        "groupWidth": 1,
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom"
-        },
-        "orientation": "auto",
-        "showValue": "always",
-        "text": {
-          "size": 10
-        },
-        "tooltip": {
-          "mode": "single"
-        }
-      },
-      "targets": [
-        {
-          "refId": "A",
-          "scenarioId": "categorical_data"
-        }
-      ],
-      "title": "Auto font size, value always visible",
-      "transformations": [
-        {
-          "id": "filterByValue",
-          "options": {
-            "filters": [
-              {
-                "config": {
-                  "id": "equal",
-                  "options": {
-                    "value": "Bedroom"
-                  }
-                },
-                "fieldName": "location"
-              },
-              {
-                "config": {
-                  "id": "equal",
-                  "options": {
-                    "value": "Cellar"
-                  }
-                },
-                "fieldName": "location"
-              }
-            ],
-            "match": "any",
-            "type": "include"
-          }
-        }
-      ],
-      "type": "barchart"
-    },
-    {
-      "datasource": null,
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "axisSoftMin": 0,
-            "fillOpacity": 80,
-            "gradientMode": "none",
-            "hideFrom": {
-              "graph": false,
-              "legend": false,
-              "tooltip": false
-            },
-            "lineWidth": 0
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 12,
-        "w": 12,
-        "x": 0,
-        "y": 37
-      },
-      "id": 13,
-      "options": {
-        "barWidth": 1,
-        "groupWidth": 1,
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom"
+          "placement": "right"
         },
         "orientation": "horizontal",
         "showValue": "auto",
-        "text": {
-          "size": 10
-        },
+        "text": {},
         "tooltip": {
           "mode": "single"
         }
       },
       "targets": [
         {
+          "csvContent": "Name,Stat1,Stat2\nStockholm, 10, 15\nNew York, 19, 5\nLondon, 10, 1\nLong value, 15,10",
           "refId": "A",
-          "scenarioId": "categorical_data"
+          "scenarioId": "csv_content"
         }
       ],
-      "title": "Auto font size, value auto visible",
-      "transformations": [
-        {
-          "id": "filterByValue",
-          "options": {
-            "filters": [
-              {
-                "config": {
-                  "id": "equal",
-                  "options": {
-                    "value": "Bedroom"
-                  }
-                },
-                "fieldName": "location"
-              },
-              {
-                "config": {
-                  "id": "equal",
-                  "options": {
-                    "value": "Cellar"
-                  }
-                },
-                "fieldName": "location"
-              }
-            ],
-            "match": "any",
-            "type": "include"
-          }
-        }
-      ],
+      "title": "Auto  sizing & auto show values",
       "type": "barchart"
     },
     {
       "datasource": null,
+      "description": "",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -492,65 +484,37 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 12,
+        "h": 11,
         "w": 12,
         "x": 12,
-        "y": 37
+        "y": 21
       },
-      "id": 14,
+      "id": 19,
       "options": {
         "barWidth": 1,
-        "groupWidth": 1,
+        "groupWidth": 0.89,
         "legend": {
-          "calcs": [],
+          "calcs": [
+            "max"
+          ],
           "displayMode": "list",
-          "placement": "bottom"
+          "placement": "right"
         },
         "orientation": "horizontal",
-        "showValue": "always",
-        "text": {
-          "size": 10
-        },
+        "showValue": "auto",
+        "text": {},
         "tooltip": {
           "mode": "single"
         }
       },
       "targets": [
         {
+          "csvContent": "Name,Stat1,Stat2,Stat3,Stat4,Stat5,Stat6,Stat7,Stat8,Stat9,Stat10\nA, 10, 15,8,3,4,12,14,1,5,10\nB, 19, 5,8,3,4,12,14,6,7,2\nC, 15, 5,8,3,4,10,4,6,7,2\n",
           "refId": "A",
-          "scenarioId": "categorical_data"
+          "scenarioId": "csv_content"
         }
       ],
-      "title": "Auto font size, value always visible",
-      "transformations": [
-        {
-          "id": "filterByValue",
-          "options": {
-            "filters": [
-              {
-                "config": {
-                  "id": "equal",
-                  "options": {
-                    "value": "Bedroom"
-                  }
-                },
-                "fieldName": "location"
-              },
-              {
-                "config": {
-                  "id": "equal",
-                  "options": {
-                    "value": "Cellar"
-                  }
-                },
-                "fieldName": "location"
-              }
-            ],
-            "match": "any",
-            "type": "include"
-          }
-        }
-      ],
+      "title": "auto show values & little room",
       "type": "barchart"
     }
   ],
@@ -571,7 +535,7 @@
   },
   "timepicker": {},
   "timezone": "",
-  "title": "BarChart - value text sizing",
+  "title": "BarChart - Panel Tests - Value sizing",
   "uid": "WFlOM-jM1",
-  "version": 9
+  "version": 3
 }

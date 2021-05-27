@@ -64,4 +64,35 @@ describe('AzureMonitor NestedResourceTable', () => {
 
     expect(screen.getByText('web-server')).toBeInTheDocument();
   });
+
+  it('supports selecting variables', async () => {
+    const rows = createMockResourcePickerRows();
+    const promise = Promise.resolve();
+    const requestNestedRows = jest.fn().mockReturnValue(promise);
+    const onRowSelectedChange = jest.fn();
+    render(
+      <NestedResourceTable
+        rows={rows}
+        selectedRows={[]}
+        requestNestedRows={requestNestedRows}
+        onRowSelectedChange={onRowSelectedChange}
+      />
+    );
+
+    const expandButton = screen.getAllByLabelText('Expand')[5];
+    userEvent.click(expandButton);
+
+    await act(() => promise);
+
+    const checkbox = screen.getByLabelText('$workspace');
+    userEvent.click(checkbox);
+
+    expect(onRowSelectedChange).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: '$workspace',
+        name: '$workspace',
+      }),
+      true
+    );
+  });
 });
