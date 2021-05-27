@@ -6,32 +6,31 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
-
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-var metricsLogger log.Logger = log.New("metrics")
+var metricsLogger = log.New("metrics")
 
 func init() {
 	registry.RegisterService(&UsageStatsService{
 		log:             log.New("infra.usagestats"),
-		externalMetrics: make(map[string]MetricFunc),
+		externalMetrics: make([]MetricsFunc, 0),
 	})
 }
 
 type UsageStats interface {
-	GetUsageReport(ctx context.Context) (UsageReport, error)
-	RegisterMetric(name string, fn MetricFunc)
+	GetUsageReport(context.Context) (UsageReport, error)
+	RegisterMetricsFunc(MetricsFunc)
 }
 
-type MetricFunc func() (interface{}, error)
+type MetricsFunc func() (map[string]interface{}, error)
 
 type UsageStatsService struct {
 	Cfg                *setting.Cfg               `inject:""`
@@ -44,7 +43,7 @@ type UsageStatsService struct {
 	log log.Logger
 
 	oauthProviders           map[string]bool
-	externalMetrics          map[string]MetricFunc
+	externalMetrics          []MetricsFunc
 	concurrentUserStatsCache memoConcurrentUserStats
 }
 

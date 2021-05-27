@@ -240,18 +240,21 @@ func (uss *UsageStatsService) GetUsageReport(ctx context.Context) (UsageReport, 
 }
 
 func (uss *UsageStatsService) registerExternalMetrics(metrics map[string]interface{}) {
-	for name, fn := range uss.externalMetrics {
-		result, err := fn()
+	for _, fn := range uss.externalMetrics {
+		fnMetrics, err := fn()
 		if err != nil {
-			metricsLogger.Error("Failed to fetch external metric", "name", name, "error", err)
+			metricsLogger.Error("Failed to fetch external metrics", "error", err)
 			continue
 		}
-		metrics[name] = result
+
+		for name, value := range fnMetrics {
+			metrics[name] = value
+		}
 	}
 }
 
-func (uss *UsageStatsService) RegisterMetric(name string, fn MetricFunc) {
-	uss.externalMetrics[name] = fn
+func (uss *UsageStatsService) RegisterMetricsFunc(fn MetricsFunc) {
+	uss.externalMetrics = append(uss.externalMetrics, fn)
 }
 
 func (uss *UsageStatsService) sendUsageStats(ctx context.Context) error {
