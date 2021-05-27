@@ -375,7 +375,7 @@ const mapDispatchToProps = {
  * Styles
  */
 export const getStyles = stylesFactory((theme: GrafanaTheme2, kioskMode) => {
-  const contentPadding = kioskMode !== KioskMode.Full ? theme.spacing(0, 2, 2) : theme.spacing(2);
+  const contentPadding = kioskMode !== KioskMode.Full ? theme.spacing(0.5, 2, 2) : theme.spacing(2);
   return {
     dashboardContainer: css`
       position: absolute;
