@@ -7,26 +7,27 @@ weight = 100
 
 # Grafana Live Feature Overview
 
-Let's look at current Grafana Live capabilities.
+This topic explains the current Grafana Live capabilities.
 
 ## Dashboard change notifications 
 
-Starting from Grafana v8 as soon as someone changes dashboard layout it automatically updated on other devices connected to Grafana Live.
+As soon as there is a change to the dashboard layout, it is automatically reflected on other devices connected to Grafana Live.
 
 ## Data streaming from plugins
 
-With Grafana Live datasource plugins can stream data updates if form of Grafana dataframes to a frontend.
+With Grafana Live data source, plugins can stream data updates in the form of Grafana data frames to a frontend.
 
-For datasource plugin channels Grafana uses `ds` scope. Namespace in the case of datasource channels is a datasource unique ID (UID) which is issued by Grafana at the moment of datasource creation. The path is a custom string that plugin authors free to choose themselves (just make sure it consists of allowed symbols).
 
-I.e. datasource channel looks like `ds/<DATASOURCE_UID>/<CUSTOM_PATH>`.
+For data source plugin channels Grafana uses `ds` scope. Namespace in the case of data source channels is a data source unique ID (UID) which is issued by Grafana at the moment of data source creation. The path is a custom string that plugin authors free to choose themselves (just make sure it consists of allowed symbols).
 
-See a tutorial about building a streaming datasource backend plugin for more details.
+For example, a data source channel looks like this: `ds/<DATASOURCE_UID>/<CUSTOM_PATH>`.
 
-The basic streaming example included into Grafana core – it streams frames with some generated data to a panel. To look at it create a new panel, point it to `-- Grafana --` datasource, then choose `Live Measurements` and select `plugin/testdata/random-20Hz-stream` channel. 
+Refer to the tutorial about building a streaming data source backend plugin for more details.
+
+The basic streaming example included in Grafana core streams frames with some generated data to a panel. To look at it create a new panel and point it to the `-- Grafana --` data source. Nex, choose `Live Measurements` and select the `plugin/testdata/random-20Hz-stream` channel. 
 
 ## Data streaming from Telegraf
 
-A new API endpoint `/api/live/push/:streamId` allows accepting metrics data in Influx format from Telegraf. These metrics will be transformed into Grafana dataframes and published to channels.
+A new API endpoint `/api/live/push/:streamId` allows accepting metrics data in Influx format from Telegraf. These metrics are transformed into Grafana data frames and published to channels.
 
 See a tutorial about streaming data from Telegraf for more details.
