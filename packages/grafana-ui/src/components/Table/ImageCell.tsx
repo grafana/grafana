@@ -30,7 +30,13 @@ export const ImageCell: FC<TableCellProps> = (props) => {
     <div {...cellProps} className={tableStyles.cellContainer}>
       {!link && <img src={displayValue.text} className={tableStyles.imageCell} />}
       {link && (
-        <a href={link.href} onClick={onClick} target={link.target} title={link.title} className={tableStyles.cellLink}>
+        <a
+          href={link.href}
+          onClick={onClick}
+          target={link.target}
+          title={link.title}
+          className={tableStyles.imagecellLink}
+        >
           <img src={displayValue.text} className={tableStyles.imageCell} />
         </a>
       )}
