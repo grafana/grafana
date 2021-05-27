@@ -49,6 +49,7 @@ export function discardPanelChanges(): ThunkResult<void> {
     dispatch(setDiscardChanges(true));
   };
 }
+
 export function exitPanelEditor(): ThunkResult<void> {
   return async (dispatch, getStore) => {
     const dashboard = getStore().dashboard.getModel();

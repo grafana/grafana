@@ -302,14 +302,23 @@ export class PanelChrome extends Component<Props, State> {
     return loadingState === LoadingState.Done || pluginMeta.skipDataQuery;
   }
 
+  skipFirstRender(loadingState: LoadingState) {
+    const { isFirstLoad } = this.state;
+    return (
+      this.wantsQueryExecution &&
+      isFirstLoad &&
+      (loadingState === LoadingState.Loading || loadingState === LoadingState.NotStarted)
+    );
+  }
+
   renderPanel(width: number, height: number) {
     const { panel, plugin, dashboard } = this.props;
-    const { renderCounter, data, isFirstLoad } = this.state;
+    const { renderCounter, data } = this.state;
     const { theme } = config;
     const { state: loadingState } = data;
 
     // do not render component until we have first data
-    if (isFirstLoad && (loadingState === LoadingState.Loading || loadingState === LoadingState.NotStarted)) {
+    if (this.skipFirstRender(loadingState)) {
       return null;
     }
 
