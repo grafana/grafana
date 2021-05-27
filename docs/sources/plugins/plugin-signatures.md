@@ -16,8 +16,6 @@ Grafana also writes an error message to the server log:
 WARN[05-26|12:00:00] Some plugin scanning errors were found     errors="plugin '<plugin id>' is unsigned, plugin '<plugin id>' has an invalid signature"
 ```
 
-> **Note:** All Grafana Labs authored backend plugins, including Enterprise plugins, are signed.
-
 If you're a plugin developer and want to know how to sign your plugin, refer to [Sign a plugin]({{< relref "../developers/plugins/sign-a-plugin.md" >}}).
 
 | Signature status | Description |
