@@ -86,28 +86,22 @@ export function UnifiedAlertList(props: PanelProps<UnifiedAlertlistOptions>) {
                         <div className={styles.alertName} title={rule.name}>
                           {rule.name}
                         </div>
-                        {rule.state !== PromAlertingRuleState.Inactive && (
-                          <>
-                            <div className={styles.alertDuration}>
-                              <span className={stateStyle[alertStateToState[rule.state]]}>
-                                {rule.state.toUpperCase()}
-                              </span>{' '}
-                              {firstActiveAt && (
-                                <>
-                                  for{' '}
-                                  <span>
-                                    {intervalToAbbreviatedDurationString({
-                                      start: firstActiveAt,
-                                      end: Date.now(),
-                                    })}
-                                  </span>
-                                </>
-                              )}
-                            </div>
-                          </>
-                        )}
+                        <div className={styles.alertDuration}>
+                          <span className={stateStyle[alertStateToState[rule.state]]}>{rule.state.toUpperCase()}</span>{' '}
+                          {firstActiveAt && rule.state !== PromAlertingRuleState.Inactive && (
+                            <>
+                              for{' '}
+                              <span>
+                                {intervalToAbbreviatedDurationString({
+                                  start: firstActiveAt,
+                                  end: Date.now(),
+                                })}
+                              </span>
+                            </>
+                          )}
+                        </div>
                       </div>
-                      <AlertInstances alerts={rule.alerts} showInstances={props.options.showInstances} />
+                      <AlertInstances rule={rule} showInstances={props.options.showInstances} />
                     </div>
                   </li>
                 );
@@ -145,6 +139,11 @@ function filterRules(options: PanelProps<UnifiedAlertlistOptions>['options'], ru
       Object.entries(annotations).some(([key, value]) => key === Annotation.dashboardUID && value === dashboardUid)
     );
   }
+  if (options.alertName) {
+    filteredRules = filteredRules.filter(({ name }) =>
+      name.toLocaleLowerCase().includes(options.alertName.toLocaleLowerCase())
+    );
+  }
   if (Object.values(options.stateFilter).some((value) => value)) {
     filteredRules = filteredRules.filter((rule) => {
       return (
@@ -152,6 +151,11 @@ function filterRules(options: PanelProps<UnifiedAlertlistOptions>['options'], ru
         (options.stateFilter.pending && rule.state === PromAlertingRuleState.Pending) ||
         (options.stateFilter.inactive && rule.state === PromAlertingRuleState.Inactive)
       );
+    });
+  }
+  if (options.folder) {
+    filteredRules = filteredRules.filter((rule) => {
+      return rule.namespaceName === options.folder.title;
     });
   }
 

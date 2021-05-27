@@ -1,18 +1,20 @@
 import React, { useEffect, useState } from 'react';
 import pluralize from 'pluralize';
 import { Icon, useStyles2 } from '@grafana/ui';
-import { Alert } from 'app/types/unified-alerting';
+import { PromRuleWithLocation } from 'app/types/unified-alerting';
 import { AlertLabels } from 'app/features/alerting/unified/components/AlertLabels';
 import { AlertStateTag } from 'app/features/alerting/unified/components/rules/AlertStateTag';
 import { dateTime, GrafanaTheme2 } from '@grafana/data';
 import { css } from '@emotion/css';
+import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
+import { omit } from 'lodash';
 
 interface Props {
-  alerts: Alert[];
+  rule: PromRuleWithLocation;
   showInstances: boolean;
 }
 
-export const AlertInstances = ({ alerts, showInstances }: Props) => {
+export const AlertInstances = ({ rule, showInstances }: Props) => {
   const [displayInstances, setDisplayInstances] = useState<boolean>(showInstances);
   const styles = useStyles2(getStyles);
 
@@ -22,21 +24,23 @@ export const AlertInstances = ({ alerts, showInstances }: Props) => {
 
   return (
     <div>
-      <div className={styles.instance} onClick={() => setDisplayInstances(!displayInstances)}>
-        <Icon name={displayInstances ? 'angle-down' : 'angle-right'} size={'md'} />
-        <span>{`${alerts.length} ${pluralize('instance', alerts.length)}`}</span>
-      </div>
+      {rule.state !== PromAlertingRuleState.Inactive && (
+        <div className={styles.instance} onClick={() => setDisplayInstances(!displayInstances)}>
+          <Icon name={displayInstances ? 'angle-down' : 'angle-right'} size={'md'} />
+          <span>{`${rule.alerts.length} ${pluralize('instance', rule.alerts.length)}`}</span>
+        </div>
+      )}
 
-      {displayInstances && (
+      {displayInstances && rule.state !== PromAlertingRuleState.Inactive && (
         <ol className={styles.list}>
-          {alerts.map((alert, index) => {
+          {rule.alerts.map((alert, index) => {
             return (
               <li className={styles.listItem} key={`${alert.activeAt}-${index}`}>
                 <div>
                   <AlertStateTag state={alert.state} />
                   <span className={styles.date}>{dateTime(alert.activeAt).format('YYYY-MM-DD HH:mm:ss')}</span>
                 </div>
-                <AlertLabels labels={alert.labels} />
+                <AlertLabels labels={omit(alert.labels, 'alertname')} />
               </li>
             );
           })}

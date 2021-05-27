@@ -38,6 +38,7 @@ export interface UnifiedAlertlistOptions {
   dashboardAlerts: boolean;
   alertName: string;
   showInstances: boolean;
+  folder: { id: number; title: string };
   stateFilter: {
     [K in PromAlertingRuleState]: boolean;
   };

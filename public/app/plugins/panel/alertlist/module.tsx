@@ -7,6 +7,7 @@ import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { AlertListOptions, UnifiedAlertlistOptions, ShowOption, SortOrder } from './types';
 import { alertListPanelMigrationHandler } from './AlertListMigrationHandler';
 import { config } from '@grafana/runtime';
+import { RuleFolderPicker } from 'app/features/alerting/unified/components/rule-editor/RuleFolderPicker';
 
 function showIfCurrentState(options: AlertListOptions) {
   return options.showOptions === ShowOption.Current;
@@ -184,24 +185,19 @@ const unifiedAlertList = new PanelPlugin<UnifiedAlertlistOptions>(UnifiedAlertLi
       defaultValue: '',
       category: ['Filter'],
     })
-    .addTextInput({
-      path: 'dashboardTitle',
-      name: 'Dashboard title',
-      defaultValue: '',
-      category: ['Filter'],
-    })
     .addCustomEditor({
-      path: 'folderId',
+      path: 'folder',
       name: 'Folder',
-      id: 'folderId',
+      id: 'folder',
       defaultValue: null,
       editor: function RenderFolderPicker(props) {
         return (
-          <FolderPicker
-            initialFolderId={props.value}
-            initialTitle="All"
+          <RuleFolderPicker
+            {...props}
             enableReset={true}
-            onChange={({ id }) => props.onChange(id)}
+            onChange={({ title, id }) => {
+              return props.onChange({ title, id });
+            }}
           />
         );
       },
