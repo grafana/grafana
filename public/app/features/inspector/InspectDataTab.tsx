@@ -131,11 +131,11 @@ export class InspectDataTab extends PureComponent<Props, State> {
     });
   };
 
-  toggleDownloadForExcel() {
+  toggleDownloadForExcel = () => {
     this.setState((prevState) => ({
       downloadForExcel: !prevState.downloadForExcel,
     }));
-  }
+  };
 
   getProcessedData(): DataFrame[] {
     const { options, panel } = this.props;
