@@ -78,6 +78,22 @@ type PluginV2 struct {
 	Children []*PluginV2 `json:"-"`
 }
 
+func (p *PluginV2) Decommission() error {
+	return nil
+}
+
+func (p *PluginV2) IsDecommissioned() bool {
+	return false
+}
+
+func (p *PluginV2) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
+	pluginClient, ok := p.getClientAsGRPCPlugin()
+	if !ok {
+		return backendplugin.ErrPluginUnavailable
+	}
+	return pluginClient.RunStream(ctx, req, sender)
+}
+
 type InstallOpts struct {
 	backend.QueryDataHandler
 	backend.CollectMetricsHandler
@@ -209,14 +225,6 @@ func (p *PluginV2) PublishStream(ctx context.Context, req *backend.PublishStream
 		return nil, backendplugin.ErrPluginUnavailable
 	}
 	return pluginClient.PublishStream(ctx, req)
-}
-
-func (p *PluginV2) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender backend.StreamPacketSender) error {
-	pluginClient, ok := p.getClientAsGRPCPlugin()
-	if !ok {
-		return backendplugin.ErrPluginUnavailable
-	}
-	return pluginClient.RunStream(ctx, req, sender)
 }
 
 func (p *PluginV2) getClientAsGRPCPlugin() (PluginClient, bool) {

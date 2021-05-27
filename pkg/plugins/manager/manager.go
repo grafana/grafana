@@ -100,7 +100,7 @@ func (pm *PluginManager) Init() error {
 	pm.pluginScanningErrors = map[string]plugins.PluginError{}
 	pm.pluginInstaller = installer.New(false, pm.Cfg.BuildVersion, installerLog)
 
-	if pm.PluginManagerV2.IsEnabled() {
+	if pm.PluginManagerV2 != nil && pm.PluginManagerV2.IsEnabled() {
 		return nil
 	}
 

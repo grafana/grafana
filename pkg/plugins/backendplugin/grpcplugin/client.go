@@ -73,7 +73,7 @@ func NewBackendPlugin(pluginID, executablePath string, startFns PluginStartFuncs
 		ExecutablePath: executablePath,
 		Managed:        true,
 		VersionedPlugins: map[int]goplugin.PluginSet{
-			grpcplugin.ProtocolVersion: getV2PluginSet(),
+			grpcplugin.ProtocolVersion: GetV2PluginSet(),
 		},
 		startFns: startFns,
 	})
@@ -86,7 +86,7 @@ func NewRendererPlugin(pluginID, executablePath string, startFns PluginStartFunc
 		ExecutablePath: executablePath,
 		Managed:        false,
 		VersionedPlugins: map[int]goplugin.PluginSet{
-			grpcplugin.ProtocolVersion: getV2PluginSet(),
+			grpcplugin.ProtocolVersion: GetV2PluginSet(),
 		},
 		startFns: startFns,
 	})
