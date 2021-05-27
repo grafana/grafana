@@ -758,22 +758,6 @@ func TestResponseParser(t *testing.T) {
 			require.Equal(t, frame.Fields[1].Len(), 2)
 			require.Equal(t, frame.Fields[2].Name, "Count")
 			require.Equal(t, frame.Fields[2].Len(), 2)
-			//
-			//rows := queryRes.Tables[0].Rows
-			//So(rows, ShouldHaveLength, 2)
-			//cols := queryRes.Tables[0].Columns
-			//So(cols, ShouldHaveLength, 3)
-			//
-			//So(cols[0].Text, ShouldEqual, "host")
-			//So(cols[1].Text, ShouldEqual, "Average")
-			//So(cols[2].Text, ShouldEqual, "Count")
-			//
-			//So(rows[0][0].(string), ShouldEqual, "server-1")
-			//So(rows[0][1].(null.Float).Float64, ShouldEqual, 1000)
-			//So(rows[0][2].(null.Float).Float64, ShouldEqual, 369)
-			//So(rows[1][0].(string), ShouldEqual, "server-2")
-			//So(rows[1][1].(null.Float).Float64, ShouldEqual, 2000)
-			//So(rows[1][2].(null.Float).Float64, ShouldEqual, 200)
 		})
 
 		t.Run("Multiple metrics of same type", func(t *testing.T) {
@@ -985,58 +969,6 @@ func TestResponseParser(t *testing.T) {
 			require.Equal(t, frame.Fields[4].Name, "params.var1 * params.var2 * 2")
 			require.Equal(t, frame.Fields[4].Len(), 2)
 		})
-		// t.Run("Raw documents query", func(t *testing.T) {
-		// 	targets := map[string]string{
-		// 		"A": `{
-		// 			"timeField": "@timestamp",
-		// 			"metrics": [{ "type": "raw_document", "id": "1" }]
-		// 		}`,
-		// 	}
-		// 	response := `{
-		//     "responses": [
-		//       {
-		//         "hits": {
-		//           "total": 100,
-		//           "hits": [
-		//             {
-		//               "_id": "1",
-		//               "_type": "type",
-		//               "_index": "index",
-		//               "_source": { "sourceProp": "asd" },
-		//               "fields": { "fieldProp": "field" }
-		//             },
-		//             {
-		//               "_source": { "sourceProp": "asd2" },
-		//               "fields": { "fieldProp": "field2" }
-		//             }
-		//           ]
-		//         }
-		//       }
-		//     ]
-		// 	}`
-		// 	rp, err := newResponseParserForTest(targets, response)
-		// 	So(err, ShouldBeNil)
-		// 	result, err := rp.getTimeSeries()
-		// 	So(err, ShouldBeNil)
-		// 	So(result.Results, ShouldHaveLength, 1)
-
-		// 	queryRes := result.Results["A"]
-		// 	So(queryRes, ShouldNotBeNil)
-		// 	So(queryRes.Tables, ShouldHaveLength, 1)
-
-		// 	rows := queryRes.Tables[0].Rows
-		// 	So(rows, ShouldHaveLength, 1)
-		// 	cols := queryRes.Tables[0].Columns
-		// 	So(cols, ShouldHaveLength, 3)
-
-		// 	So(cols[0].Text, ShouldEqual, "host")
-		// 	So(cols[1].Text, ShouldEqual, "Average test")
-		// 	So(cols[2].Text, ShouldEqual, "Average test2")
-
-		// 	So(rows[0][0].(string), ShouldEqual, "server-1")
-		// 	So(rows[0][1].(null.Float).Float64, ShouldEqual, 1000)
-		// 	So(rows[0][2].(null.Float).Float64, ShouldEqual, 3000)
-		// })
 	})
 
 	t.Run("With top_metrics", func(t *testing.T) {
