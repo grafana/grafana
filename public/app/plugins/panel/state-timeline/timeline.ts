@@ -348,7 +348,7 @@ export function getConfig(opts: TimelineCoreOptions) {
         };
 
   const init = (u: uPlot) => {
-    let over = u.root.querySelector('.u-over')! as HTMLElement;
+    let over = u.over;
     over.style.overflow = 'hidden';
     hoverMarks.forEach((m) => {
       over.appendChild(m);
