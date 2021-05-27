@@ -36,7 +36,9 @@ export class UPlotChart extends React.Component<PlotProps, UPlotChartState> {
     this.state = {
       ctx: {
         plot: null,
-        getCanvasBoundingBox: () => this.plotCanvasBBox.current,
+        getCanvasBoundingBox: () => {
+          return this.plotCanvasBBox.current;
+        },
       },
     };
   }
@@ -50,6 +52,11 @@ export class UPlotChart extends React.Component<PlotProps, UPlotChartState> {
     if (width === 0 && height === 0) {
       return;
     }
+
+    this.props.config.addHook('syncRect', (u, rect) => {
+      (this.plotCanvasBBox as MutableRefObject<any>).current = rect;
+    });
+
     this.props.config.addHook('setSize', (u) => {
       const canvas = u.over;
       if (!canvas) {

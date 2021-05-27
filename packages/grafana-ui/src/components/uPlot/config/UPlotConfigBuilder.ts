@@ -29,6 +29,7 @@ export class UPlotConfigBuilder {
   private hasBottomAxis = false;
   private hooks: Hooks.Arrays = {};
   private tz: string | undefined = undefined;
+  private sync = false;
   // to prevent more than one threshold per scale
   private thresholds: Record<string, UPlotThresholdOptions> = {};
   /**
@@ -132,6 +133,14 @@ export class UPlotConfigBuilder {
 
   setTooltipInterpolator(interpolator: TooltipInterpolator) {
     this.tooltipInterpolator = interpolator;
+  }
+
+  setSync() {
+    this.sync = true;
+  }
+
+  hasSync() {
+    return this.sync;
   }
 
   getConfig() {
