@@ -15,12 +15,12 @@ import (
 
 // createShortURL handles requests to create short URLs.
 func (hs *HTTPServer) createShortURL(c *models.ReqContext, cmd dtos.CreateShortURLCmd) response.Response {
-	hs.log.Debug("Received request to create short URL", "path", cmd.Path)
+	c.Logger.Debug("Received request to create short URL", "path", cmd.Path)
 
 	cmd.Path = strings.TrimSpace(cmd.Path)
 
 	if path.IsAbs(cmd.Path) {
-		hs.log.Error("Invalid short URL path", "path", cmd.Path)
+		c.Logger.Error("Invalid short URL path", "path", cmd.Path)
 		return response.Error(400, "Path should be relative", nil)
 	}
 
@@ -29,7 +29,7 @@ func (hs *HTTPServer) createShortURL(c *models.ReqContext, cmd dtos.CreateShortU
 		return response.Error(500, "Failed to create short URL", err)
 	}
 
-	url := fmt.Sprintf("%s/goto/%s", strings.TrimSuffix(setting.AppUrl, "/"), shortURL.Uid)
+	url := fmt.Sprintf("%s/goto/%s?orgId=%d", strings.TrimSuffix(setting.AppUrl, "/"), shortURL.Uid, c.OrgId)
 	c.Logger.Debug("Created short URL", "url", url)
 
 	dto := dtos.ShortURL{
