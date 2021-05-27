@@ -1,5 +1,5 @@
-import { LinkModel } from '@grafana/data';
-import React, { FC, MouseEventHandler } from 'react';
+import React, { FC } from 'react';
+import { getCellLinks } from '../../utils';
 import { TableCellProps } from './types';
 
 export const ImageCell: FC<TableCellProps> = (props) => {
@@ -7,24 +7,7 @@ export const ImageCell: FC<TableCellProps> = (props) => {
 
   const displayValue = field.display!(cell.value);
 
-  let link: LinkModel<any> | undefined;
-  let onClick: MouseEventHandler<HTMLAnchorElement> | undefined;
-
-  if (field.getLinks) {
-    link = field.getLinks({
-      valueRowIndex: row.index,
-    })[0];
-  }
-
-  if (link && link.onClick) {
-    onClick = (event) => {
-      // Allow opening in new tab
-      if (!(event.ctrlKey || event.metaKey || event.shiftKey) && link!.onClick) {
-        event.preventDefault();
-        link!.onClick(event);
-      }
-    };
-  }
+  const { link, onClick } = getCellLinks(field, row);
 
   return (
     <div {...cellProps} className={tableStyles.cellContainer}>
