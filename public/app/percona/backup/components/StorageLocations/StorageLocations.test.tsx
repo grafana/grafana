@@ -38,7 +38,7 @@ describe('StorageLocations', () => {
     wrapper.find('tbody tr').first().find(dataQa('delete-storage-location-button')).last().simulate('click');
 
     expect(wrapper.find(RemoveStorageLocationModal).prop('isVisible')).toBe(true);
-    await asyncAct(() => wrapper.find(LoaderButton).simulate('click'));
+    await asyncAct(() => wrapper.find(LoaderButton).simulate('submit'));
 
     wrapper.update();
     expect(wrapper.find(RemoveStorageLocationModal).prop('isVisible')).toBe(false);
