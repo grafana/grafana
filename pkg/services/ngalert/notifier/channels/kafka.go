@@ -3,8 +3,8 @@ package channels
 import (
 	"context"
 	"fmt"
+	"strings"
 
-	gokit_log "github.com/go-kit/kit/log"
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
@@ -66,9 +66,11 @@ func (kn *KafkaNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 
 	kn.log.Debug("Notifying Kafka", "alert_state", state)
 
-	data := notify.GetTemplateData(ctx, kn.tmpl, as, gokit_log.NewNopLogger())
 	var tmplErr error
-	tmpl := notify.TmplText(kn.tmpl, data, &tmplErr)
+	tmpl, _, err := TmplText(ctx, kn.tmpl, as, kn.log, &tmplErr)
+	if err != nil {
+		return false, err
+	}
 
 	bodyJSON := simplejson.New()
 	bodyJSON.Set("alert_state", state)
@@ -103,7 +105,7 @@ func (kn *KafkaNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 		return false, err
 	}
 
-	topicURL := kn.Endpoint + "/topics/" + kn.Topic
+	topicURL := strings.TrimRight(kn.Endpoint, "/") + "/topics/" + kn.Topic
 
 	cmd := &models.SendWebhookSync{
 		Url:        topicURL,

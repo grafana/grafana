@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net/http"
 
-	gokit_log "github.com/go-kit/kit/log"
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
@@ -18,7 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	old_notifiers "github.com/grafana/grafana/pkg/services/alerting/notifiers"
-	"github.com/grafana/grafana/pkg/services/ngalert/logging"
 )
 
 const (
@@ -154,9 +152,11 @@ func (on *OpsgenieNotifier) buildOpsgenieMessage(ctx context.Context, alerts mod
 		return nil, "", err
 	}
 
-	data := notify.GetTemplateData(ctx, on.tmpl, as, gokit_log.NewLogfmtLogger(logging.NewWrapper(on.log)))
 	var tmplErr error
-	tmpl := notify.TmplText(on.tmpl, data, &tmplErr)
+	tmpl, data, err := TmplText(ctx, on.tmpl, as, on.log, &tmplErr)
+	if err != nil {
+		return nil, "", err
+	}
 
 	title := tmpl(`{{ template "default.title" . }}`)
 	description := fmt.Sprintf(
