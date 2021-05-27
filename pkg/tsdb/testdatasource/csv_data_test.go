@@ -70,9 +70,8 @@ func TestReadCSV(t *testing.T) {
 	require.NoError(t, err)
 
 	frame := data.NewFrame("", fBool, fBool2, fNum, fStr)
-	frameToJSON, err := data.FrameToJSON(frame)
+	out, err := data.FrameToJSON(frame, data.IncludeAll)
 	require.NoError(t, err)
-	out := frameToJSON.Bytes(data.IncludeAll)
 
 	require.JSONEq(t, `{"schema":{
 		"fields":[

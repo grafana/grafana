@@ -2,6 +2,7 @@ package live
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -621,22 +622,24 @@ func (g *GrafanaLive) HandleListHTTP(c *models.ReqContext) response.Response {
 	}
 
 	// Hardcode sample streams
-	frame := data.NewFrame("testdata",
+	frameJSON, err := data.FrameToJSON(data.NewFrame("testdata",
 		data.NewField("Time", nil, make([]time.Time, 0)),
 		data.NewField("Value", nil, make([]float64, 0)),
 		data.NewField("Min", nil, make([]float64, 0)),
 		data.NewField("Max", nil, make([]float64, 0)),
-	)
-	channels = append(channels, util.DynMap{
-		"channel": "plugin/testdata/random-2s-stream",
-		"data":    frame,
-	}, util.DynMap{
-		"channel": "plugin/testdata/random-flakey-stream",
-		"data":    frame,
-	}, util.DynMap{
-		"channel": "plugin/testdata/random-20Hz-stream",
-		"data":    frame,
-	})
+	), data.IncludeSchemaOnly)
+	if err == nil {
+		channels = append(channels, util.DynMap{
+			"channel": "plugin/testdata/random-2s-stream",
+			"data":    json.RawMessage(frameJSON),
+		}, util.DynMap{
+			"channel": "plugin/testdata/random-flakey-stream",
+			"data":    json.RawMessage(frameJSON),
+		}, util.DynMap{
+			"channel": "plugin/testdata/random-20Hz-stream",
+			"data":    json.RawMessage(frameJSON),
+		})
+	}
 
 	info["channels"] = channels
 	return response.JSONStreaming(200, info)
