@@ -1,18 +1,22 @@
 import React, { FormEvent, ReactElement, useCallback, useState } from 'react';
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { RelativeTimeRange, GrafanaTheme2, TimeOption } from '@grafana/data';
-import { Tooltip } from '../../Tooltip/Tooltip';
 import { useStyles2 } from '../../../themes';
-import { Button, ButtonGroup, ToolbarButton } from '../../Button';
+import { Button } from '../../Button';
 import { ClickOutsideWrapper } from '../../ClickOutsideWrapper/ClickOutsideWrapper';
 import { TimeRangeList } from '../TimeRangePicker/TimeRangeList';
 import { quickOptions } from '../rangeOptions';
 import CustomScrollbar from '../../CustomScrollbar/CustomScrollbar';
 import { TimePickerTitle } from '../TimeRangePicker/TimePickerTitle';
-import { isRangeValid, isRelativeFormat, mapOptionToRelativeTimeRange, mapRelativeTimeRangeToOption } from './utils';
+import {
+  isRangeValid,
+  isRelativeFormat,
+  mapOptionToRelativeTimeRange,
+  mapRelativeTimeRangeToOption,
+  RangeValidation,
+} from './utils';
 import { Field } from '../../Forms/Field';
-import { Input } from '../../Input/Input';
-import { InputState } from '../TimeRangePicker/TimeRangeForm';
+import { getInputStyles, Input } from '../../Input/Input';
 import { Icon } from '../../Icon/Icon';
 
 /**
@@ -23,7 +27,11 @@ export interface RelativeTimeRangePickerProps {
   onChange: (timeRange: RelativeTimeRange) => void;
 }
 
-const errorMessage = 'Value not in relative time format.';
+type InputState = {
+  value: string;
+  validation: RangeValidation;
+};
+
 const validOptions = quickOptions.filter((o) => isRelativeFormat(o.from));
 
 /**
@@ -34,10 +42,10 @@ export function RelativeTimeRangePicker(props: RelativeTimeRangePickerProps): Re
   const [isOpen, setIsOpen] = useState(false);
   const onClose = useCallback(() => setIsOpen(false), []);
   const timeOption = mapRelativeTimeRangeToOption(timeRange);
-  const [from, setFrom] = useState<InputState>({ value: timeOption.from, invalid: !isRangeValid(timeOption.from) });
-  const [to, setTo] = useState<InputState>({ value: timeOption.to, invalid: !isRangeValid(timeOption.to) });
+  const [from, setFrom] = useState<InputState>({ value: timeOption.from, validation: isRangeValid(timeOption.from) });
+  const [to, setTo] = useState<InputState>({ value: timeOption.to, validation: isRangeValid(timeOption.to) });
 
-  const styles = useStyles2(getStyles(from.invalid, to.invalid));
+  const styles = useStyles2(getStyles(from.validation.errorMessage, to.validation.errorMessage));
 
   const onChangeTimeOption = (option: TimeOption) => {
     const relativeTimeRange = mapOptionToRelativeTimeRange(option);
@@ -51,7 +59,7 @@ export function RelativeTimeRangePicker(props: RelativeTimeRangePickerProps): Re
   };
 
   const onOpen = useCallback(
-    (event: FormEvent<HTMLButtonElement>) => {
+    (event: FormEvent<HTMLDivElement>) => {
       event.stopPropagation();
       event.preventDefault();
       setIsOpen(!isOpen);
@@ -62,7 +70,7 @@ export function RelativeTimeRangePicker(props: RelativeTimeRangePickerProps): Re
   const onApply = (event: FormEvent<HTMLButtonElement>) => {
     event.preventDefault();
 
-    if (to.invalid || from.invalid) {
+    if (!to.validation.isValid || !from.validation.isValid) {
       return;
     }
 
@@ -81,14 +89,18 @@ export function RelativeTimeRangePicker(props: RelativeTimeRangePickerProps): Re
   };
 
   return (
-    <ButtonGroup className={styles.container}>
-      <Tooltip content="Choose time range" placement="bottom">
-        <ToolbarButton aria-label="TimePicker Open Button" onClick={onOpen} icon="clock-nine" isOpen={isOpen}>
-          <span data-testid="picker-button-label" className={styles.container}>
-            {timeOption.from} to {timeOption.to}
-          </span>
-        </ToolbarButton>
-      </Tooltip>
+    <div className={styles.container}>
+      <div tabIndex={0} className={styles.pickerInput} onClick={onOpen}>
+        <span className={styles.clockIcon}>
+          <Icon name="clock-nine" />
+        </span>
+        <span>
+          {timeOption.from} to {timeOption.to}
+        </span>
+        <span className={styles.caretIcon}>
+          <Icon name={isOpen ? 'angle-up' : 'angle-down'} size="lg" />
+        </span>
+      </div>
       {isOpen && (
         <ClickOutsideWrapper includeButtonPress={false} onClick={onClose}>
           <div className={styles.content}>
@@ -112,18 +124,18 @@ export function RelativeTimeRangePicker(props: RelativeTimeRangePickerProps): Re
                     .
                   </div>
                 </div>
-                <Field label="From" invalid={from.invalid} error={errorMessage}>
+                <Field label="From" invalid={!from.validation.isValid} error={from.validation.errorMessage}>
                   <Input
                     onClick={(event) => event.stopPropagation()}
-                    onBlur={() => setFrom({ ...from, invalid: !isRangeValid(from.value) })}
+                    onBlur={() => setFrom({ ...from, validation: isRangeValid(from.value) })}
                     onChange={(event) => setFrom({ ...from, value: event.currentTarget.value })}
                     value={from.value}
                   />
                 </Field>
-                <Field label="To" invalid={to.invalid} error={errorMessage}>
+                <Field label="To" invalid={!to.validation.isValid} error={to.validation.errorMessage}>
                   <Input
                     onClick={(event) => event.stopPropagation()}
-                    onBlur={() => setTo({ ...to, invalid: !isRangeValid(to.value) })}
+                    onBlur={() => setTo({ ...to, validation: isRangeValid(to.value) })}
                     onChange={(event) => setTo({ ...to, value: event.currentTarget.value })}
                     value={to.value}
                   />
@@ -136,33 +148,54 @@ export function RelativeTimeRangePicker(props: RelativeTimeRangePickerProps): Re
           </div>
         </ClickOutsideWrapper>
       )}
-    </ButtonGroup>
+    </div>
   );
 }
 
-const getStyles = (fromInvalid: boolean, toInvalid: boolean) => (theme: GrafanaTheme2) => {
-  let bodyHeight = 250;
-  const errorHeight = theme.spacing.gridSize * 4;
-
-  if (fromInvalid && toInvalid) {
-    bodyHeight += errorHeight * 2;
-  } else if (fromInvalid || toInvalid) {
-    bodyHeight += errorHeight;
-  }
+const getStyles = (fromError?: string, toError?: string) => (theme: GrafanaTheme2) => {
+  const inputStyles = getInputStyles({ theme, invalid: false });
+  const bodyMinimumHeight = 250;
+  const bodyHeight = bodyMinimumHeight + calculateErrorHeight(theme, fromError) + calculateErrorHeight(theme, toError);
 
   return {
     container: css`
-      position: relative;
       display: flex;
-      vertical-align: middle;
+      position: relative;
     `,
+    pickerInput: cx(
+      inputStyles.input,
+      inputStyles.wrapper,
+      css`
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        cursor: pointer;
+        padding-right: 0;
+        padding-left: 0;
+        line-height: ${theme.v1.spacing.formInputHeight - 2}px;
+      `
+    ),
+    caretIcon: cx(
+      inputStyles.suffix,
+      css`
+        position: relative;
+        margin-left: ${theme.v1.spacing.xs};
+      `
+    ),
+    clockIcon: cx(
+      inputStyles.prefix,
+      css`
+        position: relative;
+        margin-right: ${theme.v1.spacing.xs};
+      `
+    ),
     content: css`
       background: ${theme.colors.background.primary};
       box-shadow: ${theme.shadows.z3};
       position: absolute;
       z-index: ${theme.zIndex.dropdown};
       width: 500px;
-      top: 116%;
+      top: 100%;
       border-radius: 2px;
       border: 1px solid ${theme.colors.border.weak};
       left: 0;
@@ -189,3 +222,15 @@ const getStyles = (fromInvalid: boolean, toInvalid: boolean) => (theme: GrafanaT
     `,
   };
 };
+
+function calculateErrorHeight(theme: GrafanaTheme2, errorMessage?: string): number {
+  if (!errorMessage) {
+    return 0;
+  }
+
+  if (errorMessage.length > 34) {
+    return theme.spacing.gridSize * 6.5;
+  }
+
+  return theme.spacing.gridSize * 4;
+}

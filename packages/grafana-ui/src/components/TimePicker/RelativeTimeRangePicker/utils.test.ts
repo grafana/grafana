@@ -90,19 +90,23 @@ describe('utils', () => {
 
   describe('isRangeValid', () => {
     it('should consider now as a valid relative format', () => {
-      expect(isRangeValid('now')).toBe(true);
+      const result = isRangeValid('now');
+      expect(result.isValid).toBe(true);
     });
 
     it('should consider now-90d as a valid relative format', () => {
-      expect(isRangeValid('now-90d')).toBe(true);
+      const result = isRangeValid('now-90d');
+      expect(result.isValid).toBe(true);
     });
 
     it('should consider now-90000000d as an invalid relative format', () => {
-      expect(isRangeValid('now-90000000d')).toBe(false);
+      const result = isRangeValid('now-90000000d');
+      expect(result.isValid).toBe(false);
     });
 
     it('should consider now-11111111111s as an invalid relative format', () => {
-      expect(isRangeValid('now-11111111111s')).toBe(false);
+      const result = isRangeValid('now-11111111111s');
+      expect(result.isValid).toBe(false);
     });
   });
 });
