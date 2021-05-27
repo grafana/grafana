@@ -59,7 +59,7 @@ The section contains tabs where you enter queries, transform your data, and crea
 
 - **Query tab -** Select your data source and enter queries here. For more information, refer to [Queries]({{< relref "queries.md" >}}).
 - **Transform tab -** Apply data transformations. For more information, refer to [Transformations]({{< relref "transformations/_index.md" >}}).
-- **Alert tab -** Write alert rules. For more information, refer to [Create alerts]({{< relref "../alerting/create-alerts.md" >}}).
+- **Alert tab -** Write alert rules. For more information, refer to [Create alerts]({{< relref "../alerting/old-alerting/create-alerts.md" >}}).
 
 ### Panel and field options (side pane)
 

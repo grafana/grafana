@@ -24,6 +24,11 @@ func (cr classicReducer) ValidReduceFunc() bool {
 //nolint: gocyclo
 func (cr classicReducer) Reduce(series mathexp.Series) mathexp.Number {
 	num := mathexp.NewNumber("", nil)
+
+	if series.GetLabels() != nil {
+		num.SetLabels(series.GetLabels().Copy())
+	}
+
 	num.SetValue(nil)
 
 	if series.Len() == 0 {

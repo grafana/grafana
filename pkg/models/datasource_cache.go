@@ -50,7 +50,7 @@ func (ds *DataSource) GetHTTPClient(provider httpclient.Provider) (*http.Client,
 	}, nil
 }
 
-func (ds *DataSource) GetHTTPTransport(provider httpclient.Provider) (http.RoundTripper, error) {
+func (ds *DataSource) GetHTTPTransport(provider httpclient.Provider, customMiddlewares ...sdkhttpclient.Middleware) (http.RoundTripper, error) {
 	ptc.Lock()
 	defer ptc.Unlock()
 
@@ -58,7 +58,10 @@ func (ds *DataSource) GetHTTPTransport(provider httpclient.Provider) (http.Round
 		return t.roundTripper, nil
 	}
 
-	rt, err := provider.GetTransport(ds.HTTPClientOptions())
+	opts := ds.HTTPClientOptions()
+	opts.Middlewares = customMiddlewares
+
+	rt, err := provider.GetTransport(opts)
 	if err != nil {
 		return nil, err
 	}
@@ -76,6 +79,7 @@ func (ds *DataSource) HTTPClientOptions() sdkhttpclient.Options {
 	opts := sdkhttpclient.Options{
 		Timeouts: &sdkhttpclient.TimeoutOptions{
 			Timeout:               ds.getTimeout(),
+			DialTimeout:           time.Duration(setting.DataProxyDialTimeout) * time.Second,
 			KeepAlive:             time.Duration(setting.DataProxyKeepAlive) * time.Second,
 			TLSHandshakeTimeout:   time.Duration(setting.DataProxyTLSHandshakeTimeout) * time.Second,
 			ExpectContinueTimeout: time.Duration(setting.DataProxyExpectContinueTimeout) * time.Second,

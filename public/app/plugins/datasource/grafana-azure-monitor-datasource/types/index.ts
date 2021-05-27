@@ -230,3 +230,24 @@ export interface AzureResourceSummaryItem {
   subscriptionName: string;
   resourceGroupName: string;
 }
+
+export interface RawAzureResourceGroupItem {
+  subscriptionURI: string;
+  subscriptionName: string;
+
+  resourceGroupURI: string;
+  resourceGroupName: string;
+}
+
+export interface RawAzureResourceItem {
+  id: string;
+  name: string;
+  subscriptionId: string;
+  resourceGroup: string;
+  type: string;
+  location: string;
+}
+
+export interface AzureGraphResponse<T = unknown> {
+  data: T;
+}

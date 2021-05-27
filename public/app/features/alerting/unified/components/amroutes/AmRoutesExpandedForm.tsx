@@ -54,21 +54,21 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, 
           <FieldArray name="matchers" control={control}>
             {({ fields, append, remove }) => (
               <>
-                <div>Matchers</div>
+                <div>Matching labels</div>
                 <div className={styles.matchersContainer}>
                   {fields.map((field, index) => {
                     const localPath = `matchers[${index}]`;
-
                     return (
                       <HorizontalGroup key={field.id} align="flex-start">
                         <Field
-                          label="Name"
+                          label="Label"
                           invalid={!!errors.matchers?.[index]?.name}
                           error={errors.matchers?.[index]?.name?.message}
                         >
                           <Input
                             {...register(`${localPath}.name`, { required: 'Field is required' })}
                             defaultValue={field.name}
+                            placeholder="label"
                           />
                         </Field>
                         <Field
@@ -79,6 +79,7 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, 
                           <Input
                             {...register(`${localPath}.value`, { required: 'Field is required' })}
                             defaultValue={field.value}
+                            placeholder="value"
                           />
                         </Field>
                         <Field className={styles.matcherRegexField} label="Regex">

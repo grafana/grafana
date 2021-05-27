@@ -78,6 +78,7 @@ var (
 	// HTTP server options
 	DataProxyLogging               bool
 	DataProxyTimeout               int
+	DataProxyDialTimeout           int
 	DataProxyTLSHandshakeTimeout   int
 	DataProxyExpectContinueTimeout int
 	DataProxyMaxIdleConns          int
@@ -252,15 +253,16 @@ type Cfg struct {
 	// CSPTemplate contains the Content Security Policy template.
 	CSPTemplate string
 
-	TempDataLifetime         time.Duration
-	PluginsEnableAlpha       bool
-	PluginsAppsSkipVerifyTLS bool
-	PluginSettings           PluginSettings
-	PluginsAllowUnsigned     []string
-	PluginCatalogURL         string
-	PluginAdminEnabled       bool
-	DisableSanitizeHtml      bool
-	EnterpriseLicensePath    string
+	TempDataLifetime                 time.Duration
+	PluginsEnableAlpha               bool
+	PluginsAppsSkipVerifyTLS         bool
+	PluginSettings                   PluginSettings
+	PluginsAllowUnsigned             []string
+	PluginCatalogURL                 string
+	PluginAdminEnabled               bool
+	PluginAdminExternalManageEnabled bool
+	DisableSanitizeHtml              bool
+	EnterpriseLicensePath            string
 
 	// Metrics
 	MetricsEndpointEnabled           bool
@@ -388,11 +390,6 @@ func (cfg Cfg) IsLiveConfigEnabled() bool {
 // IsNgAlertEnabled returns whether the standalone alerts feature is enabled.
 func (cfg Cfg) IsNgAlertEnabled() bool {
 	return cfg.FeatureToggles["ngalert"]
-}
-
-// IsTrimDefaultsEnabled returns whether the standalone trim dashboard default feature is enabled.
-func (cfg Cfg) IsTrimDefaultsEnabled() bool {
-	return cfg.FeatureToggles["trimDefaults"]
 }
 
 // IsDatabaseMetricsEnabled returns whether the database instrumentation feature is enabled.
@@ -823,7 +820,8 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	// read data proxy settings
 	dataproxy := iniFile.Section("dataproxy")
 	DataProxyLogging = dataproxy.Key("logging").MustBool(false)
-	DataProxyTimeout = dataproxy.Key("timeout").MustInt(30)
+	DataProxyTimeout = dataproxy.Key("timeout").MustInt(10)
+	DataProxyDialTimeout = dataproxy.Key("dialTimeout").MustInt(30)
 	DataProxyKeepAlive = dataproxy.Key("keep_alive_seconds").MustInt(30)
 	DataProxyTLSHandshakeTimeout = dataproxy.Key("tls_handshake_timeout_seconds").MustInt(10)
 	DataProxyExpectContinueTimeout = dataproxy.Key("expect_continue_timeout_seconds").MustInt(1)
@@ -894,6 +892,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	}
 	cfg.PluginCatalogURL = pluginsSection.Key("plugin_catalog_url").MustString("https://grafana.com/grafana/plugins/")
 	cfg.PluginAdminEnabled = pluginsSection.Key("plugin_admin_enabled").MustBool(false)
+	cfg.PluginAdminExternalManageEnabled = pluginsSection.Key("plugin_admin_external_manage_enabled").MustBool(false)
 
 	// Read and populate feature toggles list
 	featureTogglesSection := iniFile.Section("feature_toggles")
