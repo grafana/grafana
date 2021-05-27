@@ -3,7 +3,7 @@ import React, { CSSProperties } from 'react';
 import tinycolor from 'tinycolor2';
 
 // Utils
-import { formattedValueToString, DisplayValue, FieldConfig } from '@grafana/data';
+import { formattedValueToString, DisplayValue, FieldConfig, FieldType } from '@grafana/data';
 import { calculateFontSize } from '../../utils/measureText';
 
 // Types
@@ -413,9 +413,10 @@ export class StackedWithNoChartLayout extends BigValueLayout {
 export function buildLayout(props: Props): BigValueLayout {
   const { width, height, sparkline } = props;
   const useWideLayout = width / height > 2.5;
+  const graphableSparkline = sparkline?.y.type === FieldType.number || sparkline?.y.type === FieldType.boolean;
 
   if (useWideLayout) {
-    if (height > 50 && !!sparkline) {
+    if (height > 50 && graphableSparkline) {
       return new WideWithChartLayout(props);
     } else {
       return new WideNoChartLayout(props);
@@ -423,7 +424,7 @@ export function buildLayout(props: Props): BigValueLayout {
   }
 
   // stacked layouts
-  if (height > 100 && !!sparkline) {
+  if (height > 100 && graphableSparkline) {
     return new StackedWithChartLayout(props);
   } else {
     return new StackedWithNoChartLayout(props);
