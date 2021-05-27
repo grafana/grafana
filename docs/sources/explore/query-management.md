@@ -10,7 +10,7 @@ To help with debugging queries, Explore allows you to investigate query requests
 This functionality is similar to the panel inspector [Stats tab]({{< relref "../panels/inspect-panel.md#inspect-query-performance" >}}) and
 [Query tab]({{< relref "../panels/inspect-panel.md##view-raw-request-and-response-to-data-source" >}}).
 
-{{< docs-imagebox img="/img/docs/v71/query_inspector_explore.png" class="docs-image--no-shadow" max-width= "550px" caption="Screenshot of the query inspector button in Explore" >}}
+{{< figure src="/static/img/docs/v71/query_inspector_explore.png" class="docs-image--no-shadow" max-width= "550px" caption="Screenshot of the query inspector button in Explore" >}}
 
 ## Query history
 
@@ -86,7 +86,7 @@ The first version of Explore features a custom querying experience for Prometheu
 
 On the left side of the query field, click **Metrics** to open the Metric Explorer. This shows a hierarchical menu with metrics grouped by their prefix. For example, all Alertmanager metrics are grouped under the `alertmanager` prefix. This is a good starting point if you just want to explore which metrics are available.
 
-{{< docs-imagebox img="/img/docs/v65/explore_metric_explorer.png" class="docs-image--no-shadow" max-width= "800px" caption="Screenshot of the new Explore option in the panel menu" >}}
+{{< figure src="/static/img/docs/v65/explore_metric_explorer.png" class="docs-image--no-shadow" max-width= "800px" caption="Screenshot of the new Explore option in the panel menu" >}}
 
 ### Query field
 
