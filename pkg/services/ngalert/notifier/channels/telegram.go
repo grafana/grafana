@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"mime/multipart"
 
-	gokit_log "github.com/go-kit/kit/log"
-	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 
@@ -16,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	old_notifiers "github.com/grafana/grafana/pkg/services/alerting/notifiers"
-	"github.com/grafana/grafana/pkg/services/ngalert/logging"
 )
 
 var (
@@ -125,9 +122,11 @@ func (tn *TelegramNotifier) buildTelegramMessage(ctx context.Context, as []*type
 	msg["chat_id"] = tn.ChatID
 	msg["parse_mode"] = "html"
 
-	data := notify.GetTemplateData(ctx, &template.Template{ExternalURL: tn.tmpl.ExternalURL}, as, gokit_log.NewLogfmtLogger(logging.NewWrapper(tn.log)))
 	var tmplErr error
-	tmpl := notify.TmplText(tn.tmpl, data, &tmplErr)
+	tmpl, _, err := TmplText(ctx, tn.tmpl, as, tn.log, &tmplErr)
+	if err != nil {
+		return nil, err
+	}
 
 	message := tmpl(tn.Message)
 	if tmplErr != nil {

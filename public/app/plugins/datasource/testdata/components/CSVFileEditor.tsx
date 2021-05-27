@@ -8,7 +8,12 @@ export const CSVFileEditor = ({ onChange, query }: EditorProps) => {
     onChange({ ...query, csvFileName: value });
   };
 
-  const files = ['population_by_state.csv', 'city_stats.csv'].map((name) => ({ label: name, value: name }));
+  const files = [
+    'population_by_state.csv',
+    'gdp_per_capita.csv',
+    'js_libraries.csv',
+    'browser_marketshare.csv',
+  ].map((name) => ({ label: name, value: name }));
 
   return (
     <InlineFieldRow>
