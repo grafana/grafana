@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
 
 	"golang.org/x/oauth2"
@@ -97,7 +98,11 @@ func extractEmail(claims azureClaims) string {
 
 func extractRole(claims azureClaims) models.RoleType {
 	if len(claims.Roles) == 0 {
-		return models.ROLE_VIEWER
+		if setting.AutoAssignOrgRole == "" {
+			return models.ROLE_VIEWER
+		} else {
+			return models.RoleType(setting.AutoAssignOrgRole)
+		}
 	}
 
 	roleOrder := []models.RoleType{
