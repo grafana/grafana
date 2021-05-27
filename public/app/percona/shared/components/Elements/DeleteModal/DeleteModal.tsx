@@ -1,13 +1,15 @@
-import { LoaderButton, Modal } from '@percona/platform-core';
+import { CheckboxField, LoaderButton, Modal } from '@percona/platform-core';
 import React, { FC } from 'react';
+import { withTypes } from 'react-final-form';
 
 import { Button, HorizontalGroup, useStyles } from '@grafana/ui';
 
 import { Messages } from './DeleteModal.messages';
 import { getStyles } from './DeleteModal.styles';
-import { DeleteModalProps } from './DeleteModal.types';
+import { DeleteModalProps, DeleteModalFormProps } from './DeleteModal.types';
 
 const { defaultTitle, defaultMessage, defaultConfirm, defaultCancel } = Messages;
+const { Form } = withTypes<DeleteModalFormProps>();
 
 export const DeleteModal: FC<DeleteModalProps> = ({
   title,
@@ -16,6 +18,11 @@ export const DeleteModal: FC<DeleteModalProps> = ({
   cancel,
   isVisible,
   loading,
+  showForce,
+  forceLabel = Messages.force,
+  initialForceValue = false,
+  cancelButtonDataQa = 'cancel-delete-modal-button',
+  confirmButtonDataQa = 'confirm-delete-modal-button',
   children,
   setVisible,
   onDelete,
@@ -26,20 +33,22 @@ export const DeleteModal: FC<DeleteModalProps> = ({
     <Modal title={title || defaultTitle} isVisible={isVisible} onClose={() => setVisible(false)}>
       <h4 className={styles.deleteModalContent}>{message || defaultMessage}</h4>
       {children}
-      <HorizontalGroup justify="space-between" spacing="md">
-        <Button variant="secondary" size="md" onClick={() => setVisible(false)} data-qa="cancel-delete-modal-button">
-          {cancel || defaultCancel}
-        </Button>
-        <LoaderButton
-          loading={loading}
-          variant="destructive"
-          size="md"
-          onClick={onDelete}
-          data-qa="confirm-delete-modal-button"
-        >
-          {confirm || defaultConfirm}
-        </LoaderButton>
-      </HorizontalGroup>
+      <Form
+        onSubmit={({ force }) => onDelete(force)}
+        render={({ handleSubmit }) => (
+          <form onSubmit={handleSubmit}>
+            {showForce && <CheckboxField name="force" label={forceLabel} initialValue={initialForceValue} />}
+            <HorizontalGroup justify="space-between" spacing="md">
+              <Button variant="secondary" size="md" onClick={() => setVisible(false)} data-qa={cancelButtonDataQa}>
+                {cancel || defaultCancel}
+              </Button>
+              <LoaderButton loading={loading} variant="destructive" size="md" data-qa={confirmButtonDataQa}>
+                {confirm || defaultConfirm}
+              </LoaderButton>
+            </HorizontalGroup>
+          </form>
+        )}
+      />
     </Modal>
   );
 };

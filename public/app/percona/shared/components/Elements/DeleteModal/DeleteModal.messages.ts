@@ -3,4 +3,5 @@ export const Messages = {
   defaultMessage: 'Are you sure you want to delete this?',
   defaultCancel: 'Cancel',
   defaultConfirm: 'Delete',
+  force: 'Force',
 };
