@@ -449,7 +449,7 @@ Will remove default values from input dashboard JSON.
 **Example Request for trimming dashboard JSON**:
 
 ```http
-POST /api/dashboards/uid/trim HTTP/1.1
+POST /api/dashboards/trim HTTP/1.1
 Accept: application/json
 Content-Type: application/json
 Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
