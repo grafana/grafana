@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"time"
 
-	gokit_log "github.com/go-kit/kit/log"
-	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 
@@ -52,9 +50,11 @@ func NewGoogleChatNotifier(model *NotificationChannelConfig, t *template.Templat
 func (gcn *GoogleChatNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
 	gcn.log.Debug("Executing Google Chat notification")
 
-	data := notify.GetTemplateData(ctx, gcn.tmpl, as, gokit_log.NewNopLogger())
 	var tmplErr error
-	tmpl := notify.TmplText(gcn.tmpl, data, &tmplErr)
+	tmpl, _, err := TmplText(ctx, gcn.tmpl, as, gcn.log, &tmplErr)
+	if err != nil {
+		return false, err
+	}
 
 	widgets := []widget{}
 
