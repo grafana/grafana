@@ -26,17 +26,18 @@ func customQueryParametersMiddleware(logger log.Logger) sdkhttpclient.Middleware
 
 		values, err := url.ParseQuery(customQueryParams)
 		if err != nil {
-			log.Error("Failed to parse custom query parameters, skipping middleware", "error", err)
+			logger.Error("Failed to parse custom query parameters, skipping middleware", "error", err)
 			return next
 		}
 
 		return sdkhttpclient.RoundTripperFunc(func(req *http.Request) (*http.Response, error) {
-			if len(values) > 0 {
-				if len(req.URL.RawQuery) > 0 {
-					req.URL.RawQuery += "&"
+			q := req.URL.Query()
+			for k, keyValues := range values {
+				for _, value := range keyValues {
+					q.Add(k, value)
 				}
-				req.URL.RawQuery += values.Encode()
 			}
+			req.URL.RawQuery = q.Encode()
 
 			return next.RoundTrip(req)
 		})

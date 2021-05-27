@@ -2,6 +2,8 @@ package prometheus
 
 import (
 	"net/http"
+	"net/url"
+	"strings"
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
@@ -129,7 +131,13 @@ func TestCustomQueryParametersMiddleware(t *testing.T) {
 			require.NoError(t, res.Body.Close())
 		}
 
-		require.Equal(t, "http://test.com/query?hello=name&custom=par%2Fam&second=f+oo", req.URL.String())
+		require.True(t, strings.HasPrefix(req.URL.String(), "http://test.com/query?"))
+
+		q := req.URL.Query()
+		require.Len(t, q, 3)
+		require.Equal(t, "name", url.QueryEscape(q.Get("hello")))
+		require.Equal(t, "par%2Fam", url.QueryEscape(q.Get("custom")))
+		require.Equal(t, "f+oo", url.QueryEscape(q.Get("second")))
 	})
 
 	t.Run("With custom query parameters set should apply middleware for request URL not containing query parameters", func(t *testing.T) {
