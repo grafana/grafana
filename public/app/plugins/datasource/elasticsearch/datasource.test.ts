@@ -478,7 +478,7 @@ describe('ElasticDatasource', function (this: any) {
     it('should return number fields', async () => {
       const { ds } = getTestContext({ data, jsonData: { esVersion: 50 }, database: 'metricbeat' });
 
-      await expect(ds.getFields('number')).toEmitValuesWith((received) => {
+      await expect(ds.getFields(['number'])).toEmitValuesWith((received) => {
         expect(received.length).toBe(1);
         const fieldObjects = received[0];
         const fields = map(fieldObjects, 'text');
@@ -490,7 +490,7 @@ describe('ElasticDatasource', function (this: any) {
     it('should return date fields', async () => {
       const { ds } = getTestContext({ data, jsonData: { esVersion: 50 }, database: 'metricbeat' });
 
-      await expect(ds.getFields('date')).toEmitValuesWith((received) => {
+      await expect(ds.getFields(['date'])).toEmitValuesWith((received) => {
         expect(received.length).toBe(1);
         const fieldObjects = received[0];
         const fields = map(fieldObjects, 'text');
@@ -726,7 +726,7 @@ describe('ElasticDatasource', function (this: any) {
     it('should return number fields', async () => {
       const { ds } = getTestContext({ data, database: 'genuine.es7._mapping.response', jsonData: { esVersion: 70 } });
 
-      await expect(ds.getFields('number')).toEmitValuesWith((received) => {
+      await expect(ds.getFields(['number'])).toEmitValuesWith((received) => {
         expect(received.length).toBe(1);
 
         const fieldObjects = received[0];
@@ -738,7 +738,7 @@ describe('ElasticDatasource', function (this: any) {
     it('should return date fields', async () => {
       const { ds } = getTestContext({ data, database: 'genuine.es7._mapping.response', jsonData: { esVersion: 70 } });
 
-      await expect(ds.getFields('date')).toEmitValuesWith((received) => {
+      await expect(ds.getFields(['date'])).toEmitValuesWith((received) => {
         expect(received.length).toBe(1);
 
         const fieldObjects = received[0];

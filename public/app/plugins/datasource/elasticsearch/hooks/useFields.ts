@@ -11,34 +11,34 @@ import {
 
 type AggregationType = BucketAggregationType | MetricAggregationType;
 
-const getFilter = (type: AggregationType | string) => {
+const getFilter = (type: AggregationType) => {
   if (isMetricAggregationType(type)) {
     switch (type) {
       case 'cardinality':
-        return void 0;
+        return [];
       case 'top_metrics':
         // top_metrics was introduced in 7.7 where `metrics` only supported number:
         // https://www.elastic.co/guide/en/elasticsearch/reference/7.7/search-aggregations-metrics-top-metrics.html#_metrics
         // TODO: starting from 7.11 it supports ips and keywords as well:
         // https://www.elastic.co/guide/en/elasticsearch/reference/7.11/search-aggregations-metrics-top-metrics.html#_metrics
-        return 'number';
+        return ['number', 'date'];
       default:
-        return 'number';
+        return ['number'];
     }
   }
 
   if (isBucketAggregationType(type)) {
     switch (type) {
       case 'date_histogram':
-        return 'date';
+        return ['date'];
       case 'geohash_grid':
-        return 'geo_point';
+        return ['geo_point'];
       default:
-        return void 0;
+        return [];
     }
   }
 
-  return void 0;
+  return [];
 };
 
 const toSelectableValue = ({ text }: MetricFindValue): SelectableValue<string> => ({
@@ -53,10 +53,10 @@ const toSelectableValue = ({ text }: MetricFindValue): SelectableValue<string> =
  * If an array of types is providem the promise will resolve with all the fields matching the provided types.
  * @param aggregationType the type of aggregation to get fields for
  */
-export const useFields = (type: AggregationType | string) => {
+export const useFields = (type: AggregationType | string[]) => {
   const datasource = useDatasource();
   const range = useRange();
-  const filter = getFilter(type);
+  const filter = Array.isArray(type) ? type : getFilter(type);
   let rawFields: MetricFindValue[];
 
   return async (q?: string) => {

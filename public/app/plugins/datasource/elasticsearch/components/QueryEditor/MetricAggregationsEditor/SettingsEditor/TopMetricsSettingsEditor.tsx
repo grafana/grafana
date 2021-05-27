@@ -16,7 +16,7 @@ const toMultiSelectValue = (value: string): SelectableValue<string> => ({ value,
 
 export const TopMetricsSettingsEditor: FunctionComponent<Props> = ({ metric }) => {
   const dispatch = useDispatch();
-  const getOrderByOptions = useFields('number');
+  const getOrderByOptions = useFields(['number', 'date']);
   const getMetricsOptions = useFields(metric.type);
 
   return (

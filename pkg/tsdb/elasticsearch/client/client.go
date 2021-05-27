@@ -52,6 +52,8 @@ func coerceVersion(v *simplejson.Json) (*semver.Version, error) {
 			return nil, err
 		}
 
+		// Legacy version numbers (before Grafana 8)
+		// valid values were 2,5,56,60,70
 		switch versionNumber {
 		case 2:
 			return semver.NewVersion("2.0.0")
@@ -63,8 +65,6 @@ func coerceVersion(v *simplejson.Json) (*semver.Version, error) {
 			return semver.NewVersion("6.0.0")
 		case 70:
 			return semver.NewVersion("7.0.0")
-		case 77:
-			return semver.NewVersion("7.7.0")
 		default:
 			return nil, fmt.Errorf("elasticsearch version=%d is not supported", versionNumber)
 		}

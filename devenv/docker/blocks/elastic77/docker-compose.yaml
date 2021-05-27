@@ -6,8 +6,8 @@
     environment:
       - "discovery.type=single-node"
     ports:
-      - "12200:9200"
-      - "12300:9300"
+      - "13200:9200"
+      - "13300:9300"
 
   fake-elastic77-data:
     image: grafana/fake-data-gen

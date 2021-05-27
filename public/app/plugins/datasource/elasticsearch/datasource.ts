@@ -395,7 +395,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
 
   testDatasource() {
     // validate that the index exist and has date field
-    return this.getFields('date')
+    return this.getFields(['date'])
       .pipe(
         mergeMap((dateFields) => {
           const timeField: any = find(dateFields, { text: this.timeField });
@@ -639,7 +639,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
   // TODO: instead of being a string, this could be a custom type representing all the elastic types
   // FIXME: This doesn't seem to return actual MetricFindValues, we should either change the return type
   // or fix the implementation.
-  getFields(type?: string, range?: TimeRange): Observable<MetricFindValue[]> {
+  getFields(type?: string[], range?: TimeRange): Observable<MetricFindValue[]> {
     const typeMap: Record<string, string> = {
       float: 'number',
       double: 'number',
