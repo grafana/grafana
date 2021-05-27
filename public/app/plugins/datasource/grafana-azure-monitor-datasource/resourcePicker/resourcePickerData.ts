@@ -22,6 +22,8 @@ export default class ResourcePickerData {
     this.cloud = getAzureCloud(instanceSettings);
   }
 
+  static readonly templateVariableGroupID = '$$grafana-templateVariables$$';
+
   async getResourcePickerData() {
     const query = `
       resources
@@ -140,6 +142,21 @@ export default class ResourcePickerData {
 
       throw error;
     }
+  }
+
+  transformVariablesToRow(templateVariables: string[]): ResourceRow {
+    return {
+      id: ResourcePickerData.templateVariableGroupID,
+      name: 'Template variables',
+      type: ResourceRowType.VariableGroup,
+      typeLabel: 'Variables',
+      children: templateVariables.map((v) => ({
+        id: v,
+        name: v,
+        type: ResourceRowType.Variable,
+        typeLabel: 'Variable',
+      })),
+    };
   }
 }
 
