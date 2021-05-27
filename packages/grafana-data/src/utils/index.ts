@@ -29,4 +29,5 @@ export {
   LegacyValueMap,
   LegacyRangeMap,
   LegacyBaseMap,
+  LegacyMappingType,
 } from './valueMappings';
