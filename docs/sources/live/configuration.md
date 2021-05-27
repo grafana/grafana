@@ -5,7 +5,7 @@ keywords = ["Grafana", "live", "guide", "websocket"]
 weight = 120
 +++
 
-# Grafana Live configuration guide
+# Configure Grafana Live
 
 Grafana Live is enabled by default. As of Grafana v8.0, it has a strict default for a maximum number of connections per Grafana server instance. 
 
