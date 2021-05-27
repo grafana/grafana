@@ -1,5 +1,5 @@
-import { merge, Observable, of, OperatorFunction, ReplaySubject, timer, Unsubscribable } from 'rxjs';
-import { catchError, map, mapTo, share, takeUntil } from 'rxjs/operators';
+import { Observable, of, OperatorFunction, ReplaySubject, Unsubscribable } from 'rxjs';
+import { catchError, map, share } from 'rxjs/operators';
 import { v4 as uuidv4 } from 'uuid';
 import {
   dataFrameFromJSON,
@@ -9,12 +9,13 @@ import {
   PanelData,
   rangeUtil,
   TimeRange,
+  withLoadingIndicator,
 } from '@grafana/data';
 import { FetchResponse, toDataQueryError } from '@grafana/runtime';
 import { BackendSrv, getBackendSrv } from 'app/core/services/backend_srv';
 import { preProcessPanelData } from 'app/features/query/state/runRequest';
 import { GrafanaQuery } from 'app/types/unified-alerting-dto';
-import { getTimeRangeForExpression } from '../unified/utils/timeRange';
+import { getTimeRangeForExpression } from '../utils/timeRange';
 import { isExpressionQuery } from 'app/features/expressions/guards';
 import { setStructureRevision } from 'app/features/query/state/processing/revision';
 import { cancelNetworkRequestsOnUnsubscribe } from 'app/features/query/state/processing/canceler';
@@ -107,14 +108,15 @@ const runRequest = (backendSrv: BackendSrv, queries: GrafanaQuery[]): Observable
     requestId: uuidv4(),
   };
 
-  const runningRequest = backendSrv.fetch<AlertingQueryResponse>(request).pipe(
-    mapToPanelData(initial),
-    catchError((error) => of(mapErrorToPanelData(initial, error))),
-    cancelNetworkRequestsOnUnsubscribe(backendSrv, request.requestId),
-    share()
-  );
-
-  return merge(timer(200).pipe(mapTo(initial), takeUntil(runningRequest)), runningRequest);
+  return withLoadingIndicator({
+    whileLoading: initial,
+    source: backendSrv.fetch<AlertingQueryResponse>(request).pipe(
+      mapToPanelData(initial),
+      catchError((error) => of(mapErrorToPanelData(initial, error))),
+      cancelNetworkRequestsOnUnsubscribe(backendSrv, request.requestId),
+      share()
+    ),
+  });
 };
 
 const initialState = (queries: GrafanaQuery[], state: LoadingState): Record<string, PanelData> => {

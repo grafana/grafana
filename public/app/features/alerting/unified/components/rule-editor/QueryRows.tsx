@@ -2,7 +2,7 @@ import React, { PureComponent } from 'react';
 import { DragDropContext, Droppable, DropResult } from 'react-beautiful-dnd';
 import { DataQuery, DataSourceInstanceSettings, PanelData, RelativeTimeRange } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
-import { AlertingQueryWrapper } from './AlertingQueryWrapper';
+import { QueryWrapper } from './QueryWrapper';
 import { GrafanaQuery } from 'app/types/unified-alerting-dto';
 
 interface Props {
@@ -20,7 +20,7 @@ interface State {
   dataPerQuery: Record<string, PanelData>;
 }
 
-export class AlertingQueryRows extends PureComponent<Props, State> {
+export class QueryRows extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props);
 
@@ -148,7 +148,7 @@ export class AlertingQueryRows extends PureComponent<Props, State> {
                   }
 
                   return (
-                    <AlertingQueryWrapper
+                    <QueryWrapper
                       index={index}
                       key={`${query.refId}-${index}`}
                       dsSettings={dsSettings}

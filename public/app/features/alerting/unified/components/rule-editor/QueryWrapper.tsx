@@ -9,9 +9,9 @@ import {
   getDefaultRelativeTimeRange,
 } from '@grafana/data';
 import { useStyles2, RelativeTimeRangePicker } from '@grafana/ui';
-import { QueryEditorRow } from '../../query/components/QueryEditorRow';
-import { VizWrapper } from '../unified/components/rule-editor/VizWrapper';
-import { isExpressionQuery } from '../../expressions/guards';
+import { QueryEditorRow } from '../../../../query/components/QueryEditorRow';
+import { VizWrapper } from './VizWrapper';
+import { isExpressionQuery } from '../../../../expressions/guards';
 import { GrafanaQuery } from 'app/types/unified-alerting-dto';
 import { cloneDeep } from 'lodash';
 
@@ -29,7 +29,7 @@ interface Props {
   index: number;
 }
 
-export const AlertingQueryWrapper: FC<Props> = ({
+export const QueryWrapper: FC<Props> = ({
   data,
   dsSettings,
   index,

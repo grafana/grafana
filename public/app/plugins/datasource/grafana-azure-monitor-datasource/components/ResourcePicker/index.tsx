@@ -1,91 +1,102 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import NestedResourceTable from './NestedResourceTable';
-import { Row, RowGroup } from './types';
+import { ResourceRow, ResourceRowGroup } from './types';
 import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, useStyles2 } from '@grafana/ui';
 import ResourcePickerData from '../../resourcePicker/resourcePickerData';
-import { produce } from 'immer';
 import { Space } from '../Space';
-import { parseResourceURI } from './utils';
+import { addResources, findRow, parseResourceURI } from './utils';
 
 interface ResourcePickerProps {
-  resourcePickerData: Pick<ResourcePickerData, 'getResourcePickerData' | 'getResourcesForResourceGroup'>;
+  resourcePickerData: ResourcePickerData;
   resourceURI: string | undefined;
+  templateVariables: string[];
 
   onApply: (resourceURI: string | undefined) => void;
   onCancel: () => void;
 }
 
-const ResourcePicker = ({ resourcePickerData, resourceURI, onApply, onCancel }: ResourcePickerProps) => {
+const ResourcePicker = ({
+  resourcePickerData,
+  resourceURI,
+  templateVariables,
+  onApply,
+  onCancel,
+}: ResourcePickerProps) => {
   const styles = useStyles2(getStyles);
 
-  const [rows, setRows] = useState<RowGroup>({});
+  const [azureRows, setAzureRows] = useState<ResourceRowGroup>([]);
   const [internalSelected, setInternalSelected] = useState<string | undefined>(resourceURI);
 
+  // Sync the resourceURI prop to internal state
   useEffect(() => {
     setInternalSelected(resourceURI);
   }, [resourceURI]);
 
-  const handleFetchInitialResources = useCallback(async () => {
-    const initalRows = await resourcePickerData.getResourcePickerData();
-    setRows(initalRows);
-  }, [resourcePickerData]);
+  const rows = useMemo(() => {
+    const templateVariableRow = resourcePickerData.transformVariablesToRow(templateVariables);
+    return templateVariables.length ? [...azureRows, templateVariableRow] : azureRows;
+  }, [resourcePickerData, azureRows, templateVariables]);
 
-  useEffect(() => {
-    handleFetchInitialResources();
-  }, [handleFetchInitialResources]);
+  // Map the selected item into an array of rows
+  const selectedResourceRows = useMemo(() => {
+    const found = internalSelected && findRow(rows, internalSelected);
+    return found ? [found] : [];
+  }, [internalSelected, rows]);
 
+  // Request resources for a expanded resource group
   const requestNestedRows = useCallback(
-    async (resourceGroup: Row) => {
-      // if we've already fetched resources for a resource group we don't need to re-fetch them
-      if (resourceGroup.children && Object.keys(resourceGroup.children).length > 0) {
+    async (resourceGroup: ResourceRow) => {
+      // If we already have children, we don't need to re-fetch them. Also abort if we're expanding the special
+      // template variable group, though that shouldn't happen in practice
+      if (resourceGroup.children?.length || resourceGroup.id === ResourcePickerData.templateVariableGroupID) {
         return;
       }
 
       // fetch and set nested resources for the resourcegroup into the bigger state object
       const resources = await resourcePickerData.getResourcesForResourceGroup(resourceGroup);
-      setRows(
-        produce(rows, (draftState: RowGroup) => {
-          const subscriptionChildren = draftState[resourceGroup.subscriptionId].children;
-
-          if (subscriptionChildren) {
-            subscriptionChildren[resourceGroup.name].children = resources;
-          }
-        })
-      );
+      const newRows = addResources(azureRows, resourceGroup.id, resources);
+      setAzureRows(newRows);
     },
-    [resourcePickerData, rows]
+    [resourcePickerData, azureRows]
   );
 
-  const handleSelectionChanged = useCallback((row: Row, isSelected: boolean) => {
+  // Select
+  const handleSelectionChanged = useCallback((row: ResourceRow, isSelected: boolean) => {
     isSelected ? setInternalSelected(row.id) : setInternalSelected(undefined);
   }, []);
 
-  const selectedResource = useMemo(() => {
-    if (internalSelected && Object.keys(rows).length) {
-      const parsed = parseResourceURI(internalSelected);
+  // Request initial data on first mount
+  useEffect(() => {
+    resourcePickerData.getResourcePickerData().then((initalRows) => {
+      setAzureRows(initalRows);
+    });
+  }, [resourcePickerData]);
 
-      if (parsed) {
-        const { subscriptionID, resourceGroup } = parsed;
-        const allResourceGroups = rows[subscriptionID].children || {};
-        const selectedResourceGroup = allResourceGroups[resourceGroup.toLowerCase()];
-        const allResourcesInResourceGroup = selectedResourceGroup.children;
-
-        if (!allResourcesInResourceGroup || Object.keys(allResourcesInResourceGroup).length === 0) {
-          requestNestedRows(selectedResourceGroup);
-          return {};
-        }
-
-        const matchingResource = allResourcesInResourceGroup[internalSelected];
-
-        return {
-          [internalSelected]: matchingResource,
-        };
-      }
+  // Request sibling resources for a selected resource - in practice should only be on first mount
+  useEffect(() => {
+    if (!internalSelected || !rows.length) {
+      return;
     }
-    return {};
-  }, [internalSelected, rows, requestNestedRows]);
+
+    // If we can find this resource in the rows, then we don't need to load anything
+    const foundResourceRow = findRow(rows, internalSelected);
+    if (foundResourceRow) {
+      return;
+    }
+
+    const parsedURI = parseResourceURI(internalSelected);
+    const resourceGroupURI = `/subscriptions/${parsedURI?.subscriptionID}/resourceGroups/${parsedURI?.resourceGroup}`;
+    const resourceGroupRow = findRow(rows, resourceGroupURI);
+
+    if (!resourceGroupRow) {
+      // We haven't loaded the data from Azure yet
+      return;
+    }
+
+    requestNestedRows(resourceGroupRow);
+  }, [requestNestedRows, internalSelected, rows]);
 
   const handleApply = useCallback(() => {
     onApply(internalSelected);
@@ -97,20 +108,20 @@ const ResourcePicker = ({ resourcePickerData, resourceURI, onApply, onCancel }: 
         rows={rows}
         requestNestedRows={requestNestedRows}
         onRowSelectedChange={handleSelectionChanged}
-        selectedRows={selectedResource}
+        selectedRows={selectedResourceRows}
       />
 
       <div className={styles.selectionFooter}>
-        {internalSelected && (
+        {selectedResourceRows.length > 0 && (
           <>
             <Space v={2} />
             <h5>Selection</h5>
             <NestedResourceTable
-              noHeader={true}
-              rows={selectedResource}
+              rows={selectedResourceRows}
               requestNestedRows={requestNestedRows}
               onRowSelectedChange={handleSelectionChanged}
-              selectedRows={selectedResource}
+              selectedRows={selectedResourceRows}
+              noHeader={true}
             />
           </>
         )}

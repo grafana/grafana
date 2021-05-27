@@ -638,7 +638,7 @@ func GetAvailableNotifiers() []*alerting.NotifierPlugin {
 			},
 		},
 		{
-			Type:        "alertmanager",
+			Type:        "prometheus-alertmanager",
 			Name:        "Alertmanager",
 			Description: "Sends notifications to Alertmanager",
 			Heading:     "Alertmanager Settings",
@@ -650,6 +650,19 @@ func GetAvailableNotifiers() []*alerting.NotifierPlugin {
 					Placeholder:  "http://localhost:9093",
 					PropertyName: "url",
 					Required:     true,
+				},
+				{
+					Label:        "Basic Auth User",
+					Element:      alerting.ElementTypeInput,
+					InputType:    alerting.InputTypeText,
+					PropertyName: "basicAuthUser",
+				},
+				{
+					Label:        "Basic Auth Password",
+					Element:      alerting.ElementTypeInput,
+					InputType:    alerting.InputTypePassword,
+					PropertyName: "basicAuthPassword",
+					Secure:       true,
 				},
 			},
 		},
