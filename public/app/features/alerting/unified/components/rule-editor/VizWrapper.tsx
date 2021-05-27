@@ -5,22 +5,23 @@ import { GrafanaTheme2, PanelData } from '@grafana/data';
 import { config, PanelRenderer } from '@grafana/runtime';
 import { RadioButtonGroup, useStyles2 } from '@grafana/ui';
 import { PanelOptions } from 'app/plugins/panel/table/models.gen';
+import { SupportedPanelPlugins } from './QueryWrapper';
 import { useVizHeight } from '../../hooks/useVizHeight';
 import { STAT, TABLE, TIMESERIES } from '../../utils/constants';
 
 interface Props {
   data: PanelData;
-  defaultPanel?: 'timeseries' | 'table' | 'stat';
+  currentPanel: SupportedPanelPlugins;
+  changePanel: (panel: SupportedPanelPlugins) => void;
 }
 
-export const VizWrapper: FC<Props> = ({ data, defaultPanel }) => {
-  const [pluginId, changePluginId] = useState<string>(defaultPanel ?? TIMESERIES);
+export const VizWrapper: FC<Props> = ({ data, currentPanel, changePanel }) => {
   const [options, setOptions] = useState<PanelOptions>({
     frameIndex: 0,
     showHeader: true,
   });
   const panels = getSupportedPanels();
-  const vizHeight = useVizHeight(data, pluginId, options.frameIndex);
+  const vizHeight = useVizHeight(data, currentPanel, options.frameIndex);
   const styles = useStyles2(getStyles);
 
   if (!options || !data) {
@@ -30,7 +31,7 @@ export const VizWrapper: FC<Props> = ({ data, defaultPanel }) => {
   return (
     <div className={styles.wrapper}>
       <div className={styles.buttonGroup}>
-        <RadioButtonGroup options={panels} value={pluginId} onChange={changePluginId} />
+        <RadioButtonGroup options={panels} value={currentPanel} onChange={changePanel} />
       </div>
       <div style={{ height: vizHeight, width: '100%' }}>
         <AutoSizer style={{ width: '100%', height: '100%' }}>
@@ -43,7 +44,7 @@ export const VizWrapper: FC<Props> = ({ data, defaultPanel }) => {
                 height={height}
                 width={width}
                 data={data}
-                pluginId={pluginId}
+                pluginId={currentPanel}
                 title="title"
                 onOptionsChange={setOptions}
                 options={options}
