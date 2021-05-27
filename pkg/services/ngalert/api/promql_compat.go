@@ -14,6 +14,7 @@ import (
 	"github.com/prometheus/prometheus/promql"
 	"github.com/prometheus/prometheus/promql/parser"
 
+	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -112,9 +113,13 @@ func instantQueryResults(resp instantQueryResponse) (eval.Results, error) {
 	}
 }
 
-func instantQueryResultsExtractor(b []byte) (interface{}, error) {
+func instantQueryResultsExtractor(r *response.NormalResponse) (interface{}, error) {
+	contentType := r.Header().Get("Content-Type")
+	if !strings.Contains(contentType, "json") {
+		return nil, fmt.Errorf("unexpected content type from upstream. expected JSON, got %v", contentType)
+	}
 	var resp instantQueryResponse
-	err := json.Unmarshal(b, &resp)
+	err := json.Unmarshal(r.Body(), &resp)
 	if err != nil {
 		return nil, err
 	}

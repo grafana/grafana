@@ -41,7 +41,7 @@ export const defaultPanelOptions: Partial<TimelineOptions> = {
  * @alpha
  */
 export const defaultTimelineFieldConfig: TimelineFieldConfig = {
-  lineWidth: 1,
+  lineWidth: 0,
   fillOpacity: 70,
 };
 
