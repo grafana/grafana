@@ -96,6 +96,7 @@ describe('AzureMonitorDatasource', () => {
       };
 
       beforeEach(() => {
+        ctx.instanceSettings.jsonData.azureAuthType = 'msi';
         datasourceRequestMock.mockImplementation(() => Promise.resolve(response));
       });
 
@@ -512,10 +513,11 @@ describe('AzureMonitorDatasource', () => {
     };
 
     beforeEach(() => {
+      ctx.instanceSettings.jsonData.azureAuthType = 'msi';
       datasourceRequestMock.mockImplementation(() => Promise.resolve(response));
     });
 
-    it('should return list of Resource Groups', () => {
+    it('should return list of subscriptions', () => {
       return ctx.ds.getSubscriptions().then((results: Array<{ text: string; value: string }>) => {
         expect(results.length).toEqual(1);
         expect(results[0].text).toEqual('Primary Subscription');
