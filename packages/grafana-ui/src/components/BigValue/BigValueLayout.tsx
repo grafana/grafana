@@ -151,8 +151,7 @@ export abstract class BigValueLayout {
   renderChart(): JSX.Element | null {
     const { sparkline, colorMode } = this.props;
 
-    const fieldType = sparkline?.y?.type;
-    if (fieldType !== FieldType.number) {
+    if (!sparkline || sparkline.y?.type !== FieldType.number) {
       return null;
     }
 
