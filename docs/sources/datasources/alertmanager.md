@@ -12,11 +12,11 @@ Grafana includes built-in support for Prometheus Alertmanager. It is presently i
 
 >**Note:** New in Grafana 8.0.
 
->**Note:** Currently only [Cortex implementation of Prometheus alertmanager](https://cortexmetrics.io/docs/proposals/scalable-alertmanager/) is supported. 
+>**Note:** Currently only the [Cortex implementation of Prometheus alertmanager](https://cortexmetrics.io/docs/proposals/scalable-alertmanager/) is supported. 
 
 ## Provision the Alertmanager data source
 
-You can configure the Alertmanager data sources using config files with Grafana's provisioning system. For more information on how it works and the settings available, refer to the [provisioning docs page]({{< relref "../administration/provisioning/#datasources" >}}).
+Configure the Alertmanager data sources by updating Grafana's configuration files. For more information on how it works and the settings available, refer to the [provisioning docs page]({{< relref "../administration/provisioning/#datasources" >}}).
 
 Here is an example for provisioning the Alertmanager data source:
 
