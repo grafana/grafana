@@ -229,6 +229,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
       data: frame,
     };
     const hoverEvent = new DataHoverEvent(payload);
+    builder.setSync();
     builder.setCursor({
       sync: {
         key: '__global_',
