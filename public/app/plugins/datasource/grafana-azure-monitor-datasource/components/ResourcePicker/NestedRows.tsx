@@ -164,6 +164,8 @@ const NestedEntry: React.FC<NestedEntryProps> = ({
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
   const hasChildren = !!entry.children;
+  // Subscriptions, resource groups, resources, and variables are all selectable, so
+  // the top-level variable group is the only thing that cannot be selected.
   const isSelectable = entry.type !== ResourceRowType.VariableGroup;
 
   const handleToggleCollapse = useCallback(() => {

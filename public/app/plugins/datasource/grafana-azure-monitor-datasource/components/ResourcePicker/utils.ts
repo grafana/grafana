@@ -14,7 +14,7 @@ export function parseResourceURI(resourceURI: string) {
   const groups: RegexGroups = matches?.groups ?? {};
   const { subscriptionID, resourceGroup, resource } = groups;
 
-  if (!subscriptionID || (!subscriptionID && !resourceGroup && !resource)) {
+  if (!subscriptionID) {
     return undefined;
   }
 
