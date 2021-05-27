@@ -12,21 +12,20 @@ For example, you could change the number of decimal places shown in all numeric 
 
 ## View existing field overrides
 
-1. Navigate to the dashboard that contains the panel for which you want to view overrides.
-1. Open the [panel editor]({{< relref "./panel-editor.md#open-the-panel-editor" >}}).
+1. Navigate to the panel you want to edit, click the panel title, and then click **Edit**.
 1. In the side pane, click **Overrides**.
 
 Grafana displays a list of field overrides, if any have been created for this panel.
 
-
+![View overrides](/img/docs/time-series-panel/panel-editor-8-0.png)
 
 ## Add a field override
 
 You can override as many fields and add as many field options to each override as you want to.
 
 1. Navigate to the panel you want to edit, click the panel title, and then click **Edit**.
-1. Click the **Overrides** tab.
-1. Click **Add an override for**.
+1. In the side pane, click **Overrides**.
+1. Click **Add field override**.
 1. Select which fields an override rule will be applied to:
    - **Fields with name -** Select a field from the list of all available fields. Properties you add to a rule with this selector are only applied to this single field.
    - **Fields with name matching regex -** Specify fields to override with a regular expression. Properties you add to a rule with this selector are applied to all fields where the field name match the regex.
@@ -40,13 +39,18 @@ You can override as many fields and add as many field options to each override a
 
 ## Edit a field override
 
-
-
+1. Navigate to the panel you want to edit, click the panel title, and then click **Edit**.
+1. In the side pane, click **Overrides**.
+1. Locate the override that you want to change. You can:
+   - Edit settings on existing overrides or field selection parameters.
+   - Delete existing override properties by clicking the **X** next to the property.
+   - Add additional override properties by clicking **Add override property**.
 
 ## Delete a field override
 
-1. Navigate to the Overrides tab that contains the override that you want to delete.
-1. Click the trash can icon next to the override.
+1. Navigate to the panel you want to edit, click the panel title, and then click **Edit**.
+1. In the side pane, click **Overrides**.
+1. Click the trash can icon next to the override that you want to delete.
 
 ## Example use case for field options and overrides
 
