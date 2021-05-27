@@ -13,6 +13,7 @@ import {
   escapeStringForRegex,
   VizOrientation,
   PanelOptionsEditorBuilder,
+  getReduceOptionAutoModeForData,
 } from '@grafana/data';
 
 // Structure copied from angular
@@ -35,12 +36,13 @@ export function addStandardDataReduceOptions<T extends SingleStatBaseOptions>(
     description: 'Calculate a single value per column or series or show each row',
     settings: {
       options: [
+        { value: undefined, label: 'Auto' },
         { value: false, label: 'Calculate' },
         { value: true, label: 'All values' },
       ],
     },
     category: valueOptionsCategory,
-    defaultValue: false,
+    defaultValue: undefined as boolean | undefined,
   });
 
   builder.addNumberInput({
@@ -54,7 +56,13 @@ export function addStandardDataReduceOptions<T extends SingleStatBaseOptions>(
       min: 1,
       max: 5000,
     },
-    showIf: (options) => options.reduceOptions.values === true,
+    showIf: (options, data) => {
+      if (options.reduceOptions.values !== undefined) {
+        return !options.reduceOptions.values;
+      }
+
+      return data && !getReduceOptionAutoModeForData(data);
+    },
   });
 
   builder.addCustomEditor({

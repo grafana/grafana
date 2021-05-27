@@ -1,8 +1,8 @@
 import { merge } from 'lodash';
-import { getFieldDisplayValues, GetFieldDisplayValuesOptions } from './fieldDisplay';
+import { getFieldDisplayValues, GetFieldDisplayValuesOptions, getReduceOptionAutoModeForData } from './fieldDisplay';
 import { toDataFrame } from '../dataframe/processDataFrame';
 import { ReducerID } from '../transformations/fieldReducer';
-import { MappingType, SpecialValueMatch, ValueMapping } from '../types';
+import { FieldType, MappingType, SpecialValueMatch, ValueMapping } from '../types';
 import { standardFieldConfigEditorRegistry } from './standardFieldConfigEditorRegistry';
 import { createTheme } from '../themes';
 
@@ -25,6 +25,7 @@ describe('FieldDisplay', () => {
   it('show first numeric values', () => {
     const options = createDisplayOptions({
       reduceOptions: {
+        values: false,
         calcs: [ReducerID.first],
       },
       fieldConfig: {
@@ -41,6 +42,7 @@ describe('FieldDisplay', () => {
   it('show last numeric values', () => {
     const options = createDisplayOptions({
       reduceOptions: {
+        values: false,
         calcs: [ReducerID.last],
       },
     });
@@ -384,6 +386,52 @@ describe('FieldDisplay', () => {
       expect(result[0].display.text).toEqual('10');
       expect(result[1].display.title).toEqual('Norway Oslo');
       expect(result[1].display.text).toEqual('20');
+    });
+
+    it('Auto mode with single string field', () => {
+      const values = getReduceOptionAutoModeForData([
+        toDataFrame({
+          fields: [{ name: 'Value', values: ['A', 'B'] }],
+        }),
+      ]);
+
+      expect(values).toBe(true);
+    });
+
+    it('values auto mode with string and numeric fields', () => {
+      const values = getReduceOptionAutoModeForData([
+        toDataFrame({
+          fields: [
+            { name: 'Country', values: ['Sweden', 'Norway'] },
+            { name: 'Value', values: [10, 20] },
+          ],
+        }),
+      ]);
+
+      expect(values).toBe(true);
+    });
+
+    it('Auto mode with single numeric field', () => {
+      const values = getReduceOptionAutoModeForData([
+        toDataFrame({
+          fields: [{ name: 'Value', values: [10, 20] }],
+        }),
+      ]);
+
+      expect(values).toBe(false);
+    });
+
+    it('Auto mode with time series', () => {
+      const values = getReduceOptionAutoModeForData([
+        toDataFrame({
+          fields: [
+            { name: 'Time', values: [100000, 20000], type: FieldType.time },
+            { name: 'Value', values: [10, 20] },
+          ],
+        }),
+      ]);
+
+      expect(values).toBe(false);
     });
   });
 });
