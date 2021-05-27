@@ -136,7 +136,7 @@ func yamlExtractor(v interface{}) func(*response.NormalResponse) (interface{}, e
 	return func(resp *response.NormalResponse) (interface{}, error) {
 		contentType := resp.Header().Get("Content-Type")
 		if !strings.Contains(contentType, "yaml") {
-			return nil, fmt.Errorf("Unexpected content type from upstream. Expected YAML, got %v", contentType)
+			return nil, fmt.Errorf("unexpected content type from upstream. expected YAML, got %v", contentType)
 		}
 		decoder := yaml.NewDecoder(bytes.NewReader(resp.Body()))
 		decoder.KnownFields(true)
@@ -155,7 +155,7 @@ func jsonExtractor(v interface{}) func(*response.NormalResponse) (interface{}, e
 	return func(resp *response.NormalResponse) (interface{}, error) {
 		contentType := resp.Header().Get("Content-Type")
 		if !strings.Contains(contentType, "json") {
-			return nil, fmt.Errorf("Unexpected content type from upstream. Expected JSON, got %v", contentType)
+			return nil, fmt.Errorf("unexpected content type from upstream. expected JSON, got %v", contentType)
 		}
 		return v, json.Unmarshal(resp.Body(), v)
 	}

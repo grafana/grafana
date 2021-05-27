@@ -79,7 +79,7 @@ async function rulerGetRequest<T>(url: string, empty: T): Promise<T> {
       return empty;
     } else if (
       e?.status === 500 &&
-      e?.data?.message?.includes('Unexpected content type from upstream. Expected YAML, got text/html')
+      e?.data?.message?.includes('unexpected content type from upstream. expected YAML, got text/html')
     ) {
       throw {
         ...e,

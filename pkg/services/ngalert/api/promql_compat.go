@@ -116,7 +116,7 @@ func instantQueryResults(resp instantQueryResponse) (eval.Results, error) {
 func instantQueryResultsExtractor(r *response.NormalResponse) (interface{}, error) {
 	contentType := r.Header().Get("Content-Type")
 	if !strings.Contains(contentType, "json") {
-		return nil, fmt.Errorf("Unexpected content type from upstream. Expected JSON, got %v", contentType)
+		return nil, fmt.Errorf("unexpected content type from upstream. expected JSON, got %v", contentType)
 	}
 	var resp instantQueryResponse
 	err := json.Unmarshal(r.Body(), &resp)
