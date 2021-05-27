@@ -84,7 +84,7 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     );
   }
 
-  getWorkspaceList(subscription: string): Promise<any> {
+  private getWorkspaceList(subscription: string): Promise<any> {
     const subscriptionId = getTemplateSrv().replace(subscription || this.defaultSubscriptionId);
 
     const workspaceListUrl =
@@ -404,21 +404,30 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
       return validationError;
     }
 
-    const resourceOrWorkspace = await this.getDefaultOrFirstWorkspace();
-
-    if (!resourceOrWorkspace) {
+    let resourceOrWorkspace: string;
+    try {
+      const result = await this.getDefaultOrFirstWorkspace();
+      if (!result) {
+        return {
+          status: 'error',
+          message: 'Workspace not found.',
+        };
+      }
+      resourceOrWorkspace = result;
+    } catch (e) {
+      let message = 'Azure Log Analytics requires access to Azure Monitor but had the following error: ';
       return {
         status: 'error',
-        message: 'Workspace not found.',
+        message: this.getErrorMessage(message, e),
       };
     }
 
-    const url = isGUIDish(resourceOrWorkspace)
-      ? `${this.baseUrl}/v1/workspaces/${resourceOrWorkspace}/metadata`
-      : `${this.baseUrl}/v1${resourceOrWorkspace}/metadata`;
+    try {
+      const url = isGUIDish(resourceOrWorkspace)
+        ? `${this.baseUrl}/v1/workspaces/${resourceOrWorkspace}/metadata`
+        : `${this.baseUrl}/v1${resourceOrWorkspace}/metadata`;
 
-    return await this.doRequest(url)
-      .then<DatasourceValidationResult>((response: any) => {
+      return await this.doRequest(url).then<DatasourceValidationResult>((response: any) => {
         if (response.status === 200) {
           return {
             status: 'success',
@@ -431,20 +440,14 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
           status: 'error',
           message: 'Returned http status code ' + response.status,
         };
-      })
-      .catch((error: any) => {
-        let message = 'Azure Log Analytics: ';
-        if (error.config && error.config.url && error.config.url.indexOf('workspacesloganalytics') > -1) {
-          message = 'Azure Log Analytics requires access to Azure Monitor but had the following error: ';
-        }
-
-        message = this.getErrorMessage(message, error);
-
-        return {
-          status: 'error',
-          message: message,
-        };
       });
+    } catch (e) {
+      let message = 'Azure Log Analytics: ';
+      return {
+        status: 'error',
+        message: this.getErrorMessage(message, e),
+      };
+    }
   }
 
   private getErrorMessage(message: string, error: any) {

@@ -473,15 +473,16 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
     });
   }
 
-  testDatasource(): Promise<DatasourceValidationResult> {
+  async testDatasource(): Promise<DatasourceValidationResult> {
     const validationError = this.validateDatasource();
     if (validationError) {
       return Promise.resolve(validationError);
     }
 
-    const url = `${this.baseUrl}?api-version=2019-03-01`;
-    return this.doRequest(url)
-      .then<DatasourceValidationResult>((response: any) => {
+    try {
+      const url = `${this.baseUrl}?api-version=2019-03-01`;
+
+      return await this.doRequest(url).then<DatasourceValidationResult>((response: any) => {
         if (response.status === 200) {
           return {
             status: 'success',
@@ -494,25 +495,25 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
           status: 'error',
           message: 'Returned http status code ' + response.status,
         };
-      })
-      .catch((error: any) => {
-        let message = 'Azure Monitor: ';
-        message += error.statusText ? error.statusText + ': ' : '';
-
-        if (error.data && error.data.error && error.data.error.code) {
-          message += error.data.error.code + '. ' + error.data.error.message;
-        } else if (error.data && error.data.error) {
-          message += error.data.error;
-        } else if (error.data) {
-          message += error.data;
-        } else {
-          message += 'Cannot connect to Azure Monitor REST API.';
-        }
-        return {
-          status: 'error',
-          message: message,
-        };
       });
+    } catch (e) {
+      let message = 'Azure Monitor: ';
+      message += e.statusText ? e.statusText + ': ' : '';
+
+      if (e.data && e.data.error && e.data.error.code) {
+        message += e.data.error.code + '. ' + e.data.error.message;
+      } else if (e.data && e.data.error) {
+        message += e.data.error;
+      } else if (e.data) {
+        message += e.data;
+      } else {
+        message += 'Cannot connect to Azure Monitor REST API.';
+      }
+      return {
+        status: 'error',
+        message: message,
+      };
+    }
   }
 
   private validateDatasource(): DatasourceValidationResult | undefined {
