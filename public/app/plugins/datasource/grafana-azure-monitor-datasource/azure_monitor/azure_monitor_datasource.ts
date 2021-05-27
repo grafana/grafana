@@ -67,6 +67,7 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
   }
 
   isConfigured(): boolean {
+    // If validation didn't return any error then the data source is properly configured
     return !this.validateDatasource();
   }
 
