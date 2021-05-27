@@ -1,4 +1,5 @@
 import * as arrayUtils from './arrayUtils';
+
 export * from './Registry';
 export * from './datasource';
 export * from './deprecationWarning';
@@ -21,3 +22,12 @@ export { DocsId } from './docs';
 export { makeClassES5Compatible } from './makeClassES5Compatible';
 export { anyToNumber } from './anyToNumber';
 export { withLoadingIndicator, WithLoadingIndicatorOptions } from './withLoadingIndicator';
+export {
+  getMappedValue,
+  convertOldAngularValueMappings,
+  LegacyValueMapping,
+  LegacyValueMap,
+  LegacyRangeMap,
+  LegacyBaseMap,
+  LegacyMappingType,
+} from './valueMappings';
