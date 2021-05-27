@@ -1,4 +1,4 @@
-import { map, first } from 'lodash';
+import { map } from 'lodash';
 import LogAnalyticsQuerystringBuilder from '../log_analytics/querystring_builder';
 import ResponseParser, { transformMetadataToKustoSchema } from './response_parser';
 import {
@@ -319,7 +319,8 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     if (this.defaultSubscriptionId) {
       return this.defaultSubscriptionId;
     }
-    return this.getSubscriptions().then((subs) => first(subs.map((s) => s.value)));
+    const subscriptions = await this.getSubscriptions();
+    return subscriptions[0]?.value;
   }
 
   async getDefaultOrFirstWorkspace(): Promise<string | undefined> {
@@ -332,10 +333,13 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
       return undefined;
     }
 
-    const workspace = await this.getWorkspaces(subscriptionId).then((ws) => first(ws.map((w) => w.value)));
+    const workspaces = await this.getWorkspaces(subscriptionId);
+    const workspace = workspaces[0]?.value;
+
     if (workspace) {
       this.defaultOrFirstWorkspace = workspace;
     }
+
     return workspace;
   }
 
