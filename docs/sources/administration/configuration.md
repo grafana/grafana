@@ -1477,7 +1477,7 @@ Available to Grafana administrators only, the plugin admin app is set to `false`
 
 For more information, refer to [Plugin catalog]({{< relref "../plugins/catalog.md" >}}).
 
-### plugin_admin_remote_manage_enabled
+### plugin_admin_external_manage_enabled
 
 Set to `true` if you want to enable remote management of plugins. Default is `false`. This is only applicable to Grafana Cloud users.
 

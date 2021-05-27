@@ -897,7 +897,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	}
 	cfg.PluginCatalogURL = pluginsSection.Key("plugin_catalog_url").MustString("https://grafana.com/grafana/plugins/")
 	cfg.PluginAdminEnabled = pluginsSection.Key("plugin_admin_enabled").MustBool(false)
-	cfg.PluginAdminRemoteManageEnabled = pluginsSection.Key("plugin_admin_remote_manage_enabled").MustBool(false)
+	cfg.PluginAdminRemoteManageEnabled = pluginsSection.Key("plugin_admin_external_manage_enabled").MustBool(false)
 
 	// Read and populate feature toggles list
 	featureTogglesSection := iniFile.Section("feature_toggles")
