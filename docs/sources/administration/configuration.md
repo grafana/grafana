@@ -1473,11 +1473,13 @@ Enter a comma-separated list of plugin identifiers to identify plugins that are 
 
 ### plugin_admin_enabled
 
-
 Available to Grafana administrators only, the plugin admin app is set to `false` by default. Set it to `true` to enable the app.
 
 For more information, refer to [Plugin catalog]({{< relref "../plugins/catalog.md" >}}).
 
+### plugin_admin_external_manage_enabled
+
+Set to `true` if you want to enable external management of plugins. Default is `false`. This is only applicable to Grafana Cloud users.
 
 ### plugin_catalog_url
 
