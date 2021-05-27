@@ -207,6 +207,7 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 		"alertingErrorOrTimeout":     setting.AlertingErrorOrTimeout,
 		"alertingNoDataOrNullValues": setting.AlertingNoDataOrNullValues,
 		"alertingMinInterval":        setting.AlertingMinInterval,
+		"liveEnabled":                hs.Cfg.LiveMaxConnections != 0,
 		"autoAssignOrg":              setting.AutoAssignOrg,
 		"verifyEmailEnabled":         setting.VerifyEmailEnabled,
 		"sigV4AuthEnabled":           setting.SigV4AuthEnabled,
