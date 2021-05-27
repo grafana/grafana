@@ -96,11 +96,11 @@ http {
         listen 8000;
 
         location / {
-            proxy_pass http://grafana;
             proxy_http_version 1.1;
             proxy_set_header Upgrade $http_upgrade;
-            proxy_set_header Connection $connection_upgrade;
-            proxy_set_header Host $host;
+            proxy_set_header Connection "Upgrade";
+            proxy_set_header Host $http_host;
+            proxy_pass http://grafana;
         }
     }
 }
