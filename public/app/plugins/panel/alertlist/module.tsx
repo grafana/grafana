@@ -172,6 +172,12 @@ const unifiedAlertList = new PanelPlugin<UnifiedAlertlistOptions>(UnifiedAlertLi
       defaultValue: false,
       category: ['Options'],
     })
+    .addBooleanSwitch({
+      path: 'showInstances',
+      name: 'Show alert instances',
+      defaultValue: false,
+      category: ['Options'],
+    })
     .addTextInput({
       path: 'alertName',
       name: 'Alert name',

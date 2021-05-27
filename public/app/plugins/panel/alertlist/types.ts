@@ -37,6 +37,7 @@ export interface UnifiedAlertlistOptions {
   sortOrder: SortOrder;
   dashboardAlerts: boolean;
   alertName: string;
+  showInstances: boolean;
   stateFilter: {
     [K in PromAlertingRuleState]: boolean;
   };

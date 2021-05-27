@@ -2,9 +2,10 @@ import React, { useEffect, useMemo } from 'react';
 import { sortBy } from 'lodash';
 import { useDispatch } from 'react-redux';
 import { GrafanaTheme, GrafanaTheme2, intervalToAbbreviatedDurationString, PanelProps } from '@grafana/data';
-import { CustomScrollbar, LoadingPlaceholder, useStyles, useStyles2 } from '@grafana/ui';
-import { css, cx } from '@emotion/css';
+import { CustomScrollbar, Icon, IconName, LoadingPlaceholder, useStyles, useStyles2 } from '@grafana/ui';
+import { css } from '@emotion/css';
 
+import { AlertInstances } from './AlertInstances';
 import alertDef from 'app/features/alerting/state/alertDef';
 import { SortOrder, UnifiedAlertlistOptions } from './types';
 
@@ -73,36 +74,40 @@ export function UnifiedAlertList(props: PanelProps<UnifiedAlertlistOptions>) {
                     className={styles.alertRuleItem}
                     key={`alert-${rule.namespaceName}-${rule.groupName}-${rule.name}-${index}`}
                   >
-                    <div className={cx(stateStyle[alertStateToState[rule.state]], stateStyle.common)}>
-                      <span>{rule.state}</span>
+                    <div className={stateStyle.icon}>
+                      <Icon
+                        name={alertDef.getStateDisplayModel(rule.state).iconClass as IconName}
+                        className={stateStyle[alertStateToState[rule.state]]}
+                        size={'lg'}
+                      />
                     </div>
-                    <div className={styles.instanceDetails}>
-                      <div className={styles.alertName} title={rule.name}>
-                        {rule.name}
+                    <div>
+                      <div className={styles.instanceDetails}>
+                        <div className={styles.alertName} title={rule.name}>
+                          {rule.name}
+                        </div>
+                        {rule.state !== PromAlertingRuleState.Inactive && (
+                          <>
+                            <div className={styles.alertDuration}>
+                              <span className={stateStyle[alertStateToState[rule.state]]}>
+                                {rule.state.toUpperCase()}
+                              </span>{' '}
+                              {firstActiveAt && (
+                                <>
+                                  for{' '}
+                                  <span>
+                                    {intervalToAbbreviatedDurationString({
+                                      start: firstActiveAt,
+                                      end: Date.now(),
+                                    })}
+                                  </span>
+                                </>
+                              )}
+                            </div>
+                          </>
+                        )}
                       </div>
-                      {rule.state !== PromAlertingRuleState.Inactive && (
-                        <>
-                          <div className={styles.alertDuration}>
-                            <span className={stateStyle[`${alertStateToState[rule.state]}Text` as const]}>
-                              {rule.state.toUpperCase()}
-                            </span>{' '}
-                            {firstActiveAt && (
-                              <>
-                                for{' '}
-                                <span>
-                                  {intervalToAbbreviatedDurationString({
-                                    start: firstActiveAt,
-                                    end: Date.now(),
-                                  })}
-                                </span>
-                              </>
-                            )}
-                          </div>
-                          <div className={styles.alertRuleItemText}>
-                            <span>{`${rule.alerts.length} instances`}</span>
-                          </div>
-                        </>
-                      )}
+                      <AlertInstances alerts={rule.alerts} showInstances={props.options.showInstances} />
                     </div>
                   </li>
                 );
@@ -186,9 +191,6 @@ const getStyles = (theme: GrafanaTheme) => ({
   alertName: css`
     font-size: ${theme.typography.size.md};
     font-weight: ${theme.typography.weight.bold};
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
   `,
   alertDuration: css`
     font-size: ${theme.typography.size.sm};
@@ -220,6 +222,7 @@ const getStyles = (theme: GrafanaTheme) => ({
     margin-right: ${theme.spacing.xs};
   `,
   instanceDetails: css`
+    min-width: 1px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -245,43 +248,47 @@ const getStateTagStyles = (theme: GrafanaTheme2) => ({
     flex-direction: column;
     justify-content: center;
   `,
+  icon: css`
+    margin-top: ${theme.spacing(2.5)};
+    align-self: flex-start;
+  `,
+  // good: css`
+  //   background-color: ${theme.colors.success.main};
+  //   border: solid 1px ${theme.colors.success.main};
+  //   color: ${theme.colors.success.contrastText};
+  // `,
+  // warning: css`
+  //   background-color: ${theme.colors.warning.main};
+  //   border: solid 1px ${theme.colors.warning.main};
+  //   color: ${theme.colors.warning.contrastText};
+  // `,
+  // bad: css`
+  //   background-color: ${theme.colors.error.main};
+  //   border: solid 1px ${theme.colors.error.main};
+  //   color: ${theme.colors.error.contrastText};
+  // `,
+  // neutral: css`
+  //   background-color: ${theme.colors.secondary.main};
+  //   border: solid 1px ${theme.colors.secondary.main};
+  // `,
+  // info: css`
+  //   background-color: ${theme.colors.primary.main};
+  //   border: solid 1px ${theme.colors.primary.main};
+  //   color: ${theme.colors.primary.contrastText};
+  // `,
   good: css`
-    background-color: ${theme.colors.success.main};
-    border: solid 1px ${theme.colors.success.main};
-    color: ${theme.colors.success.contrastText};
-  `,
-  warning: css`
-    background-color: ${theme.colors.warning.main};
-    border: solid 1px ${theme.colors.warning.main};
-    color: ${theme.colors.warning.contrastText};
-  `,
-  bad: css`
-    background-color: ${theme.colors.error.main};
-    border: solid 1px ${theme.colors.error.main};
-    color: ${theme.colors.error.contrastText};
-  `,
-  neutral: css`
-    background-color: ${theme.colors.secondary.main};
-    border: solid 1px ${theme.colors.secondary.main};
-  `,
-  info: css`
-    background-color: ${theme.colors.primary.main};
-    border: solid 1px ${theme.colors.primary.main};
-    color: ${theme.colors.primary.contrastText};
-  `,
-  goodText: css`
     color: ${theme.colors.success.main};
   `,
-  badText: css`
+  bad: css`
     color: ${theme.colors.error.main};
   `,
-  warningText: css`
+  warning: css`
     color: ${theme.colors.warning.main};
   `,
-  neutralText: css`
+  neutral: css`
     color: ${theme.colors.secondary.main};
   `,
-  infoText: css`
+  info: css`
     color: ${theme.colors.primary.main};
   `,
 });

@@ -113,7 +113,7 @@ function getStateDisplayModel(state: string) {
     case 'pending': {
       return {
         text: 'PENDING',
-        iconClass: 'exclamation-triangle',
+        iconClass: 'hourglass',
         stateClass: 'alert-state-warning',
       };
     }
@@ -122,6 +122,22 @@ function getStateDisplayModel(state: string) {
         text: 'UNKNOWN',
         iconClass: 'question-circle',
         stateClass: 'alert-state-paused',
+      };
+    }
+
+    case 'firing': {
+      return {
+        text: 'FIRING',
+        iconClass: 'fire',
+        stateClass: '',
+      };
+    }
+
+    case 'inactive': {
+      return {
+        text: 'INACTIVE',
+        iconClass: 'check',
+        stateClass: '',
       };
     }
   }
