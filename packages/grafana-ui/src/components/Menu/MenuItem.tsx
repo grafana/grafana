@@ -43,7 +43,16 @@ export const MenuItem: React.FC<MenuItemProps> = React.memo(
           href={url ? url : undefined}
           target={target}
           className={styles.link}
-          onClick={onClick}
+          onClick={
+            onClick
+              ? (event) => {
+                  if (!(event.ctrlKey || event.metaKey || event.shiftKey) && onClick) {
+                    event.preventDefault();
+                    onClick(event);
+                  }
+                }
+              : undefined
+          }
           rel={target === '_blank' ? 'noopener noreferrer' : undefined}
         >
           {icon && <Icon name={icon} className={styles.icon} />} {label}

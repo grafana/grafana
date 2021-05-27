@@ -1,7 +1,7 @@
 import React from 'react';
 import { useToggle } from 'react-use';
-import { Badge, Collapse, useStyles2 } from '@grafana/ui';
-import { DataFrame, GrafanaTheme2, TimeRange } from '@grafana/data';
+import { Badge, Collapse, useStyles2, useTheme2 } from '@grafana/ui';
+import { applyFieldOverrides, DataFrame, GrafanaTheme2, TimeRange } from '@grafana/data';
 import { css } from '@emotion/css';
 import { ExploreId, StoreState } from '../../types';
 import { splitOpen } from './state/main';
@@ -30,10 +30,26 @@ interface Props {
 export function UnconnectedNodeGraphContainer(props: Props & ConnectedProps<typeof connector>) {
   const { dataFrames, range, splitOpen, withTraceView } = props;
   const getLinks = useLinks(range, splitOpen);
+  const theme = useTheme2();
   const styles = useStyles2(getStyles);
 
-  const { nodes } = useCategorizeFrames(dataFrames);
+  // This is implicit dependency that is needed for links to work. At some point when replacing variables in the link
+  // it requires field to have a display property which is added by the overrides even though we don't add any field
+  // overrides in explore.
+  const frames = applyFieldOverrides({
+    fieldConfig: {
+      defaults: {},
+      overrides: [],
+    },
+    data: dataFrames,
+    // We don't need proper replace here as it is only used in getLinks and we use getFieldLinks
+    replaceVariables: (value) => value,
+    theme,
+  });
+
+  const { nodes } = useCategorizeFrames(frames);
   const [open, toggleOpen] = useToggle(false);
+
   const countWarning =
     withTraceView && nodes[0]?.length > 1000 ? (
       <span className={styles.warningText}> ({nodes[0].length} nodes, can be slow to load)</span>
@@ -53,7 +69,7 @@ export function UnconnectedNodeGraphContainer(props: Props & ConnectedProps<type
       onToggle={withTraceView ? () => toggleOpen() : undefined}
     >
       <div style={{ height: withTraceView ? 500 : 600 }}>
-        <NodeGraph dataFrames={dataFrames} getLinks={getLinks} />
+        <NodeGraph dataFrames={frames} getLinks={getLinks} />
       </div>
     </Collapse>
   );
