@@ -178,6 +178,15 @@ func (g *GrafanaLive) Init() error {
 	// different goroutines (belonging to different client connections). This is also
 	// true for other event handlers.
 	node.OnConnect(func(client *centrifuge.Client) {
+		numConnections := g.node.Hub().NumClients()
+		if g.Cfg.LiveMaxConnections >= 0 && numConnections > g.Cfg.LiveMaxConnections {
+			logger.Warn(
+				"Max number of Live connections reached, increase max_connections in [live] configuration section",
+				"user", client.UserID(), "client", client.ID(), "limit", g.Cfg.LiveMaxConnections,
+			)
+			client.Disconnect(centrifuge.DisconnectConnectionLimit)
+			return
+		}
 		var semaphore chan struct{}
 		if clientConcurrency > 1 {
 			semaphore = make(chan struct{}, clientConcurrency)
