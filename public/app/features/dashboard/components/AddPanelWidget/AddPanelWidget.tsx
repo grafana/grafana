@@ -218,7 +218,7 @@ const getStyles = (theme: GrafanaTheme) => {
     // wrapper is used to make sure box-shadow animation isn't cut off in dashboard page
     wrapper: css`
       height: 100%;
-      padding-top: ${theme.spacing.sm};
+      padding-top: ${theme.spacing.xs};
     `,
     callToAction: css`
       overflow: hidden;
