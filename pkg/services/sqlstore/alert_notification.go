@@ -56,7 +56,7 @@ func DeleteAlertNotification(cmd *models.DeleteAlertNotificationCommand) error {
 
 func DeleteAlertNotificationWithUid(cmd *models.DeleteAlertNotificationWithUidCommand) error {
 	existingNotification := &models.GetAlertNotificationsWithUidQuery{OrgId: cmd.OrgId, Uid: cmd.Uid}
-	if err := getAlertNotificationWithUidInternal(existingNotification, newSession()); err != nil {
+	if err := getAlertNotificationWithUidInternal(existingNotification, newSession(context.Background())); err != nil {
 		return err
 	}
 
@@ -77,7 +77,7 @@ func DeleteAlertNotificationWithUid(cmd *models.DeleteAlertNotificationWithUidCo
 }
 
 func GetAlertNotifications(query *models.GetAlertNotificationsQuery) error {
-	return getAlertNotificationInternal(query, newSession())
+	return getAlertNotificationInternal(query, newSession(context.Background()))
 }
 
 func (ss *SQLStore) addAlertNotificationUidByIdHandler() {
@@ -92,7 +92,7 @@ func (ss *SQLStore) GetAlertNotificationUidWithId(query *models.GetAlertNotifica
 		return nil
 	}
 
-	err := getAlertNotificationUidInternal(query, newSession())
+	err := getAlertNotificationUidInternal(query, newSession(context.Background()))
 	if err != nil {
 		return err
 	}
@@ -107,7 +107,7 @@ func newAlertNotificationUidCacheKey(orgID, notificationId int64) string {
 }
 
 func GetAlertNotificationsWithUid(query *models.GetAlertNotificationsWithUidQuery) error {
-	return getAlertNotificationWithUidInternal(query, newSession())
+	return getAlertNotificationWithUidInternal(query, newSession(context.Background()))
 }
 
 func GetAllAlertNotifications(query *models.GetAllAlertNotificationsQuery) error {
@@ -442,7 +442,7 @@ func UpdateAlertNotification(cmd *models.UpdateAlertNotificationCommand) error {
 func UpdateAlertNotificationWithUid(cmd *models.UpdateAlertNotificationWithUidCommand) error {
 	getAlertNotificationWithUidQuery := &models.GetAlertNotificationsWithUidQuery{OrgId: cmd.OrgId, Uid: cmd.Uid}
 
-	if err := getAlertNotificationWithUidInternal(getAlertNotificationWithUidQuery, newSession()); err != nil {
+	if err := getAlertNotificationWithUidInternal(getAlertNotificationWithUidQuery, newSession(context.Background())); err != nil {
 		return err
 	}
 

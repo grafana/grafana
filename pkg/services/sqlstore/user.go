@@ -530,6 +530,7 @@ func GetSignedInUser(ctx context.Context, query *models.GetSignedInUserQuery) er
 		LEFT OUTER JOIN org on org.id = org_user.org_id `
 
 	sess := x.Table("user")
+	sess = sess.Context(ctx)
 	switch {
 	case query.UserId > 0:
 		sess.SQL(rawSQL+"WHERE u.id=?", query.UserId)
