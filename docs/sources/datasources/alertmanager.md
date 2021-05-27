@@ -8,14 +8,11 @@ weight = 1300
 
 # Alertmanager data source
 
-Grafana includes built-in support for Prometheus Alertmanager. Add it as a datasource and you will be able to use the [Grafana alerting UI](https://grafana.com/docs/grafana/latest/alerting/) to manage silences, contact points and notification policies. A dropdown will appear in these pages to allow you to switch between Grafana and any configured alertmanager data sources This data source cannot return graph data and is not available in panels.
-Refer to [Add a data source]({{< relref "add-a-data-source.md" >}}) for instructions on how to add a data source to Grafana. Only users with the organization admin role can add data sources.
+Grafana includes built-in support for Prometheus Alertmanager. It is presently in alpha and not accessible unless [alpha plugins are enabled in Grafana settings](https://grafana.com/docs/grafana/latest/administration/configuration/#enable_alpha). Once you add it as a data source, you can use the [Grafana alerting UI](https://grafana.com/docs/grafana/latest/alerting/) to manage silences, contact points as well as notification policies. A drop down option in these pages allows you to switch between Grafana and any configured Alertmanager data sources .
 
 >**Note:** New in Grafana 8.0.
 
 >**Note:** Currently only [Cortex implementation of Prometheus alertmanager](https://cortexmetrics.io/docs/proposals/scalable-alertmanager/) is supported. 
-
-It is presently in alpha and not accessible unless [alpha plugins are enabled in Grafana settings](https://grafana.com/docs/grafana/latest/administration/configuration/#enable_alpha).
 
 ## Provision the Alertmanager data source
 
