@@ -1,3 +1,4 @@
+import produce from 'immer';
 import { ResourceRow, ResourceRowGroup } from './types';
 
 const RESOURCE_URI_REGEX = /\/subscriptions\/(?<subscriptionID>.+)\/resourceGroups\/(?<resourceGroup>.+)\/providers.+\/(?<resource>[\w-_]+)/;
@@ -33,4 +34,17 @@ export function findRow(rows: ResourceRowGroup, id: string): ResourceRow | undef
   }
 
   return undefined;
+}
+
+export function addResources(rows: ResourceRowGroup, targetResourceGroupID: string, newResources: ResourceRowGroup) {
+  return produce(rows, (draftState) => {
+    const draftRow = findRow(draftState, targetResourceGroupID);
+
+    if (!draftRow) {
+      // This case shouldn't happen often because we're usually coming here from a resource we already have
+      throw new Error('Unable to find resource');
+    }
+
+    draftRow.children = newResources;
+  });
 }

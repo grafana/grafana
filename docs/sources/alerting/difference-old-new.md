@@ -1,11 +1,11 @@
 +++
-title = "Difference between new and old alerts"
+title = " Difference between unified and old Grafana alerts"
 description = "Pause an existing alert rule"
 keywords = ["grafana", "alerting", "guide", "rules", "view"]
-weight = 400
+weight = 112
 +++
 
-# Difference between new and old alerts
+# Difference between unified and old Grafana alerts
 
 The `ngalert` feature toggle enables the beta version of our new alerting system. 
 

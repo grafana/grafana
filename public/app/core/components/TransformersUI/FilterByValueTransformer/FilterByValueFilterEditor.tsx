@@ -21,7 +21,7 @@ export const FilterByValueFilterEditor: React.FC<Props> = (props) => {
   const { fieldsAsOptions, fieldByDisplayName } = fieldsInfo;
   const fieldName = getFieldName(filter, fieldsAsOptions) ?? '';
   const field = fieldByDisplayName[fieldName];
-  const matcherOptions = getMatcherOptions(field);
+  const matcherOptions = field ? getMatcherOptions(field) : [];
   const matcherId = getSelectedMatcherId(filter, matcherOptions);
   const editor = valueMatchersUI.getIfExists(matcherId);
 

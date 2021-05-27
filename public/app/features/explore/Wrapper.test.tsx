@@ -25,6 +25,7 @@ import userEvent from '@testing-library/user-event';
 import { splitOpen } from './state/main';
 import { Route, Router } from 'react-router-dom';
 import { GrafanaRoute } from 'app/core/navigation/GrafanaRoute';
+import { initialUserState } from '../profile/state/reducers';
 
 type Mock = jest.Mock;
 
@@ -252,6 +253,12 @@ describe('Wrapper', () => {
     await screen.findByText(`elastic Editor input: error`);
     await screen.findByText(`loki Editor input: { label="value"}`);
   });
+
+  it('changes the document title of the explore page', async () => {
+    setup({ datasources: [] });
+    await waitFor(() => expect(document.querySelector('head')).toMatchSnapshot());
+    await waitFor(() => expect(document.title).toEqual('Explore - Grafana'));
+  });
 });
 
 type DatasourceSetup = { settings: DataSourceInstanceSettings; api: DataSourceApi };
@@ -293,8 +300,19 @@ function setup(options?: SetupOptions): { datasources: { [name: string]: DataSou
 
   const store = configureStore();
   store.getState().user = {
+    ...initialUserState,
     orgId: 1,
     timeZone: 'utc',
+  };
+
+  store.getState().navIndex = {
+    explore: {
+      id: 'explore',
+      text: 'Explore',
+      subTitle: 'Explore your data',
+      icon: 'compass',
+      url: '/explore',
+    },
   };
 
   locationService.push({ pathname: '/explore' });

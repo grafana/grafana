@@ -9,18 +9,18 @@ import (
 	"github.com/influxdata/influxdb-client-go/v2/api/query"
 )
 
-// Copied from: (Apache 2 license)
-// https://github.com/influxdata/influxdb-client-go/blob/master/query.go#L30
+// based on https://docs.influxdata.com/influxdb/v2.0/reference/syntax/annotated-csv/#data-types
 const (
-	stringDatatype       = "string"
-	doubleDatatype       = "double"
-	boolDatatype         = "bool"
-	longDatatype         = "long"
-	uLongDatatype        = "unsignedLong"
-	durationDatatype     = "duration"
-	base64BinaryDataType = "base64Binary"
-	timeDatatypeRFC      = "dateTime:RFC3339"
-	timeDatatypeRFCNano  = "dateTime:RFC3339Nano"
+	stringDatatype             = "string"
+	doubleDatatype             = "double"
+	booleanDatatype            = "boolean"
+	longDatatype               = "long"
+	unsignedLongDatatype       = "unsignedLong"
+	durationDatatype           = "duration"
+	base64BinaryDataType       = "base64Binary"
+	datetimeRFC339DataType     = "dateTime:RFC3339"
+	datetimeRFC339DataTypeNano = "dateTime:RFC3339Nano"
+	// based on the documentation there should also be "dateTime:number" but i have never seen it yet.
 )
 
 type columnInfo struct {
@@ -92,19 +92,19 @@ func getConverter(t string) (*data.FieldConverter, error) {
 	switch t {
 	case stringDatatype:
 		return &converters.AnyToNullableString, nil
-	case timeDatatypeRFC:
+	case datetimeRFC339DataType:
 		return &timeToOptionalTime, nil
-	case timeDatatypeRFCNano:
+	case datetimeRFC339DataTypeNano:
 		return &timeToOptionalTime, nil
 	case durationDatatype:
 		return &converters.Int64ToNullableInt64, nil
 	case doubleDatatype:
 		return &converters.Float64ToNullableFloat64, nil
-	case boolDatatype:
+	case booleanDatatype:
 		return &converters.BoolToNullableBool, nil
 	case longDatatype:
 		return &converters.Int64ToNullableInt64, nil
-	case uLongDatatype:
+	case unsignedLongDatatype:
 		return &converters.Uint64ToNullableUInt64, nil
 	case base64BinaryDataType:
 		return &converters.AnyToNullableString, nil
@@ -125,7 +125,7 @@ func getGroupColumnNames(cols []*query.FluxColumn) []string {
 }
 
 func isTimestampType(dataType string) bool {
-	return (dataType == timeDatatypeRFC) || (dataType == timeDatatypeRFCNano)
+	return (dataType == datetimeRFC339DataType) || (dataType == datetimeRFC339DataTypeNano)
 }
 
 func hasUsualStartStop(dataCols []*query.FluxColumn) bool {
