@@ -63,7 +63,7 @@ func (srv TestingApiSrv) RouteTestRuleConfig(c *models.ReqContext, body apimodel
 	t := timeNow()
 	queryURL, err := url.Parse(path)
 	if err != nil {
-		return response.Error(http.StatusInternalServerError, "failed to parse url", err)
+		return response.Error(http.StatusInternalServerError, fmt.Errorf("invalid queries or expressions: %w", err).Error(), nil)
 	}
 	params := queryURL.Query()
 	params.Set("query", body.Expr)
@@ -86,13 +86,13 @@ func (srv TestingApiSrv) RouteEvalQueries(c *models.ReqContext, cmd apimodels.Ev
 	}
 
 	if _, err := validateQueriesAndExpressions(cmd.Data, c.SignedInUser, c.SkipCache, srv.DatasourceCache); err != nil {
-		return response.Error(http.StatusBadRequest, "invalid queries or expressions", err)
+		return response.Error(http.StatusBadRequest, fmt.Errorf("invalid queries or expressions: %w", err).Error(), nil)
 	}
 
 	evaluator := eval.Evaluator{Cfg: srv.Cfg}
 	evalResults, err := evaluator.QueriesAndExpressionsEval(c.SignedInUser.OrgId, cmd.Data, now, srv.DataService)
 	if err != nil {
-		return response.Error(http.StatusBadRequest, "Failed to evaluate queries and expressions", err)
+		return response.Error(http.StatusBadRequest, fmt.Errorf("failed to evaluate queries and expressions: %w", err).Error(), nil)
 	}
 
 	return response.JSONStreaming(http.StatusOK, evalResults)
