@@ -183,7 +183,7 @@ Note that the query variables saved with a report might get out of date in case 
 
 You can include dynamic dashboards with panels or rows, set to repeat by a variable, into reports. For detailed information about setting up repeating panels or rows in dashboards, refer to the [Repeat panels or rows]({{< relref "../panels/repeat-panels-or-rows.md" >}}) section.
 
-###Caveats:
+### Caveats:
 
 - Rendering repeating panels for dynamic variable types (e.g. `query` variables) with selected `All` value is currently not supported. As a workaround, it is possible to individually select all the values instead. 
 - If the number of selected variables is different in dashboard from the report, the dimensions of the panels from the dashboard are used.
