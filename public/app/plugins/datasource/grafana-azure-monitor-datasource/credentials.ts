@@ -74,7 +74,7 @@ function getLogAnalyticsSecret(options: AzureDataSourceSettings): undefined | st
   }
 }
 
-export function isLogAnalyticsSameAs(options: AzureDataSourceSettings | AzureDataSourceInstanceSettings): boolean {
+function isLogAnalyticsSameAs(options: AzureDataSourceSettings | AzureDataSourceInstanceSettings): boolean {
   return typeof options.jsonData.azureLogAnalyticsSameAs !== 'boolean' || options.jsonData.azureLogAnalyticsSameAs;
 }
 

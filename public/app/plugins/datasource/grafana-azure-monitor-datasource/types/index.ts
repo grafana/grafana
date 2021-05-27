@@ -54,7 +54,7 @@ export type AzureAuthType = 'msi' | 'clientsecret';
 
 export type ConcealedSecret = symbol;
 
-export interface AzureCredentialsBase {
+interface AzureCredentialsBase {
   authType: AzureAuthType;
   defaultSubscriptionId?: string;
 }
