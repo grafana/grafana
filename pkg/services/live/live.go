@@ -178,7 +178,7 @@ func (g *GrafanaLive) Init() error {
 	// true for other event handlers.
 	node.OnConnect(func(client *centrifuge.Client) {
 		numConnections := g.node.Hub().NumClients()
-		if g.Cfg.LiveMaxConnections >= 0 && numConnections >= g.Cfg.LiveMaxConnections+1 {
+		if g.Cfg.LiveMaxConnections >= 0 && numConnections > g.Cfg.LiveMaxConnections {
 			logger.Warn(
 				"Max number of Live connections reached, increase max_connections in [live] configuration section",
 				"user", client.UserID(), "client", client.ID(), "limit", g.Cfg.LiveMaxConnections,

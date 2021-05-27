@@ -381,7 +381,8 @@ type Cfg struct {
 	ImageUploadProvider string
 
 	// LiveMaxConnections is a maximum number of WebSocket connections to
-	// Grafana Live ws endpoint (per Grafana server instance).
+	// Grafana Live ws endpoint (per Grafana server instance). 0 disables
+	// Live, -1 means unlimited connections.
 	LiveMaxConnections int
 }
 
