@@ -152,12 +152,7 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
             }
           }
 
-          // Palette color modes use series index (field index) which does not work for when displaing rows
-          // So updating seriesIndex here makes the palette color modes work in "All values" mode
-          field.state = {
-            ...field.state,
-            seriesIndex: values.length,
-          };
+          field.state = setIndexForPaletteColor(field, values.length);
 
           const displayValue = display(field.values.get(j));
 
@@ -279,6 +274,17 @@ function getSmartDisplayNameForRow(frame: DataFrame, field: Field, rowIndex: num
   }
 
   return parts.join(' ');
+}
+
+/**
+ * Palette color modes use series index (field index) which does not work for when displaing rows
+ * So updating seriesIndex here makes the palette color modes work in "All values" mode
+ */
+function setIndexForPaletteColor(field: Field, currentLength: number) {
+  return {
+    ...field.state,
+    seriesIndex: currentLength,
+  };
 }
 
 /**
