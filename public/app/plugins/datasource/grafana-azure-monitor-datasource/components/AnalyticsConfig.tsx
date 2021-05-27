@@ -23,14 +23,15 @@ export const AnalyticsConfig: FunctionComponent<Props> = (props: Props) => {
   const { updateOptions, getSubscriptions, getWorkspaces } = props;
   const primaryCredentials = useMemo(() => getCredentials(props.options), [props.options]);
   const logAnalyticsCredentials = useMemo(() => getLogAnalyticsCredentials(props.options), [props.options]);
-  // Only show a section for setting LogAnalytics credentials if they were set from before
-  const [showLogAnalyticsCreds, _] = useState(!!logAnalyticsCredentials);
 
   const subscriptionId = logAnalyticsCredentials
     ? props.options.jsonData.logAnalyticsSubscriptionId
     : props.options.jsonData.subscriptionId;
 
-  const credentialsEnabled = primaryCredentials.authType === 'clientsecret';
+  // Only show a section for setting LogAnalytics credentials if they were set from before
+  // And the authType is supported
+  const [credentialsUsed, _] = useState(!!logAnalyticsCredentials);
+  const credentialsEnabled = credentialsUsed && primaryCredentials.authType === 'clientsecret';
 
   const hasRequiredFields =
     subscriptionId &&
@@ -143,14 +144,13 @@ export const AnalyticsConfig: FunctionComponent<Props> = (props: Props) => {
       <h3 className="page-heading">Azure Monitor Logs</h3>
       {credentialsEnabled && (
         <>
-          {showLogAnalyticsCreds && (
-            <Switch
-              label="Same details as Azure Monitor API"
-              checked={!logAnalyticsCredentials}
-              onChange={onLogAnalyticsSameAsChange}
-              {...tooltipAttribute}
-            />
-          )}
+          <Switch
+            label="Same details as Azure Monitor API"
+            checked={!logAnalyticsCredentials}
+            onChange={onLogAnalyticsSameAsChange}
+            {...tooltipAttribute}
+          />
+
           {showSameAsHelpMsg && (
             <div className="grafana-info-box m-t-2">
               <div className="alert-body">
@@ -158,10 +158,11 @@ export const AnalyticsConfig: FunctionComponent<Props> = (props: Props) => {
               </div>
             </div>
           )}
-          {showLogAnalyticsCreds && logAnalyticsCredentials && (
+
+          {logAnalyticsCredentials && (
             <>
               <Alert severity="info" title="Deprecated">
-                Using different credentials for Azure Monitor logs is deprecated and will be removed in a future
+                Using different credentials for Azure Monitor Logs is deprecated and will be removed in a future
                 version.
                 <br />
                 Create a different Data Source if you need to use different credentials.

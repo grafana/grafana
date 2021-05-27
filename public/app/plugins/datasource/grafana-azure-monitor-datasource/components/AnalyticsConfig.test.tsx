@@ -1,9 +1,6 @@
 import React from 'react';
-import { shallow } from 'enzyme';
+import { render, screen } from '@testing-library/react';
 import AnalyticsConfig, { Props } from './AnalyticsConfig';
-import { AzureCredentialsForm } from './AzureCredentialsForm';
-import { LegacyForms } from '@grafana/ui';
-const { Switch } = LegacyForms;
 
 const setup = (propsFunc?: (props: Props) => Props) => {
   let props: Props = {
@@ -50,14 +47,14 @@ const setup = (propsFunc?: (props: Props) => Props) => {
     props = propsFunc(props);
   }
 
-  return shallow(<AnalyticsConfig {...props} />);
+  return render(<AnalyticsConfig {...props} />);
 };
 
 describe('Render', () => {
   it('should render component', () => {
     const wrapper = setup();
 
-    expect(wrapper).toMatchSnapshot();
+    expect(wrapper.baseElement).toMatchSnapshot();
   });
 
   it('should disable log analytics credentials form', () => {
@@ -71,7 +68,7 @@ describe('Render', () => {
         },
       },
     }));
-    expect(wrapper).toMatchSnapshot();
+    expect(wrapper.baseElement).toMatchSnapshot();
   });
 
   it('should enable azure log analytics load workspaces button', () => {
@@ -90,11 +87,11 @@ describe('Render', () => {
         },
       },
     }));
-    expect(wrapper).toMatchSnapshot();
+    expect(wrapper.baseElement).toMatchSnapshot();
   });
 
   it('should not render the Switch to use different creds for log analytics by default', () => {
-    const wrapper = setup((props) => ({
+    setup((props) => ({
       ...props,
       options: {
         ...props.options,
@@ -104,13 +101,13 @@ describe('Render', () => {
         },
       },
     }));
-    expect(wrapper.find(Switch).exists()).toBe(false);
-    expect(wrapper.find(AzureCredentialsForm).exists()).toBe(false);
+    expect(screen.queryByLabelText('Same details as Azure Monitor API')).not.toBeInTheDocument();
+    expect(screen.queryByText('is deprecated', { exact: false })).not.toBeInTheDocument();
   });
 
   // Remove this test with deprecated code
   it('should not render the Switch if different creds for log analytics were set from before', () => {
-    const wrapper = setup((props) => ({
+    setup((props) => ({
       ...props,
       options: {
         ...props.options,
@@ -120,7 +117,7 @@ describe('Render', () => {
         },
       },
     }));
-    expect(wrapper.find(Switch).exists()).toBe(true);
-    expect(wrapper.find(AzureCredentialsForm).exists()).toBe(true);
+    expect(screen.queryByLabelText('Same details as Azure Monitor API')).toBeInTheDocument();
+    expect(screen.queryByText('is deprecated', { exact: false })).toBeInTheDocument();
   });
 });
