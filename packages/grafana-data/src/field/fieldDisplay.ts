@@ -22,6 +22,7 @@ import { getTimeField } from '../dataframe/processDataFrame';
 import { getFieldMatcher } from '../transformations';
 import { FieldMatcherID } from '../transformations/matchers/ids';
 import { getFieldDisplayName } from './fieldState';
+import { isTimeSerie } from '../dataframe/utils';
 
 /**
  * Options for how to turn DataFrames into an array of display values
@@ -99,6 +100,13 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
 
   let hitLimit = false;
 
+  let showAllValues = reduceOptions.values;
+
+  // if undefined use auto logic by inspecting data
+  if (showAllValues === undefined) {
+    showAllValues = getReduceOptionAutoModeForData(data);
+  }
+
   for (let s = 0; s < data.length && !hitLimit; s++) {
     const dataFrame = data[s]; // Name is already set
 
@@ -136,7 +144,7 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
         });
 
       // Show all rows
-      if (reduceOptions.values) {
+      if (showAllValues) {
         const usesCellValues = displayName.indexOf(VAR_CELL_PREFIX) >= 0;
 
         for (let j = 0; j < field.values.length; j++) {
@@ -145,10 +153,7 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
             for (let k = 0; k < dataFrame.fields.length; k++) {
               const f = dataFrame.fields[k];
               const v = f.values.get(j);
-              scopedVars[VAR_CELL_PREFIX + k] = {
-                value: v,
-                text: toString(v),
-              };
+              scopedVars[VAR_CELL_PREFIX + k] = { value: v, text: toString(v) };
             }
           }
 
@@ -300,6 +305,33 @@ function lookupRowColorFromOverride(display: DisplayValue, fieldConfig: FieldCon
       }
     }
   }
+}
+
+/**
+ * @internal
+ * This function tries to examine the data and figure out if individual rows are of interest (returns true) or if
+ * the user want to calculate a single value for each field
+ */
+export function getReduceOptionAutoModeForData(data: DataFrame[]) {
+  let hasStringField = false;
+
+  for (const frame of data) {
+    // For time series default users likley want to calculate a single value for each one
+    if (isTimeSerie(frame)) {
+      return false;
+    }
+
+    // if there a lot of data we likely do not want to show all rows
+    if (frame.length > 100) {
+      return false;
+    }
+
+    if (frame.fields.length > 0 && frame.fields[0].type === FieldType.string) {
+      hasStringField = true;
+    }
+  }
+
+  return hasStringField;
 }
 
 export function hasLinks(field: Field): boolean {
