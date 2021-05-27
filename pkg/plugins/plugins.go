@@ -23,8 +23,9 @@ type PluginV2 struct {
 	hashiClient *plugin.Client
 	descriptor  grpcplugin.PluginDescriptor
 
-	logger glog.Logger
-	mutex  sync.RWMutex
+	logger         glog.Logger
+	mutex          sync.RWMutex
+	decommissioned bool
 
 	// Common settings
 	Type         string                `json:"type"`
@@ -76,14 +77,6 @@ type PluginV2 struct {
 
 	Parent   *PluginV2   `json:"-"`
 	Children []*PluginV2 `json:"-"`
-}
-
-func (p *PluginV2) Decommission() error {
-	return nil
-}
-
-func (p *PluginV2) IsDecommissioned() bool {
-	return false
 }
 
 func (p *PluginV2) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
@@ -160,6 +153,19 @@ func (p *PluginV2) Stop(ctx context.Context) error {
 
 func (p *PluginV2) IsManaged() bool {
 	return p.descriptor.Managed
+}
+
+func (p *PluginV2) Decommission() error {
+	p.mutex.RLock()
+	defer p.mutex.RUnlock()
+
+	p.decommissioned = true
+
+	return nil
+}
+
+func (p *PluginV2) IsDecommissioned() bool {
+	return p.decommissioned
 }
 
 func (p *PluginV2) Exited() bool {
