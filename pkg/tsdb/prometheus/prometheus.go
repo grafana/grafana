@@ -4,14 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"net/url"
 	"regexp"
 	"strings"
 	"time"
-
-	"github.com/opentracing/opentracing-go"
-
-	"net/http"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
@@ -19,68 +14,11 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/tsdb/interval"
+	"github.com/opentracing/opentracing-go"
 	"github.com/prometheus/client_golang/api"
 	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/prometheus/common/model"
 )
-
-type PrometheusExecutor struct {
-	baseRoundTripperFactory func(dsInfo *models.DataSource) (http.RoundTripper, error)
-	intervalCalculator      interval.Calculator
-}
-
-type prometheusTransport struct {
-	Transport http.RoundTripper
-
-	hasBasicAuth bool
-	username     string
-	password     string
-
-	customQueryParameters string
-}
-
-func (transport *prometheusTransport) RoundTrip(req *http.Request) (*http.Response, error) {
-	if transport.hasBasicAuth {
-		req.SetBasicAuth(transport.username, transport.password)
-	}
-
-	if transport.customQueryParameters != "" {
-		params := url.Values{}
-		for _, param := range strings.Split(transport.customQueryParameters, "&") {
-			parts := strings.Split(param, "=")
-			if len(parts) == 1 {
-				// This is probably a mistake on the users part in defining the params but we don't want to crash.
-				params.Add(parts[0], "")
-			} else {
-				params.Add(parts[0], parts[1])
-			}
-		}
-		if req.URL.RawQuery != "" {
-			req.URL.RawQuery = fmt.Sprintf("%s&%s", req.URL.RawQuery, params.Encode())
-		} else {
-			req.URL.RawQuery = params.Encode()
-		}
-	}
-
-	return transport.Transport.RoundTrip(req)
-}
-
-//nolint: staticcheck // plugins.DataPlugin deprecated
-func New(provider httpclient.Provider) func(*models.DataSource) (plugins.DataPlugin, error) {
-	return func(dsInfo *models.DataSource) (plugins.DataPlugin, error) {
-		transport, err := dsInfo.GetHTTPTransport(provider)
-		if err != nil {
-			return nil, err
-		}
-
-		return &PrometheusExecutor{
-			intervalCalculator: interval.NewCalculator(interval.CalculatorOptions{MinInterval: time.Second * 1}),
-			baseRoundTripperFactory: func(ds *models.DataSource) (http.RoundTripper, error) {
-				return transport, nil
-			},
-		}, nil
-	}
-}
 
 var (
 	plog         log.Logger
@@ -91,32 +29,34 @@ func init() {
 	plog = log.New("tsdb.prometheus")
 }
 
-func (e *PrometheusExecutor) getClient(dsInfo *models.DataSource) (apiv1.API, error) {
-	// Would make sense to cache this but executor is recreated on every alert request anyway.
-	transport, err := e.baseRoundTripperFactory(dsInfo)
-	if err != nil {
-		return nil, err
-	}
+type PrometheusExecutor struct {
+	client             apiv1.API
+	intervalCalculator interval.Calculator
+}
 
-	promTransport := &prometheusTransport{
-		Transport:             transport,
-		hasBasicAuth:          dsInfo.BasicAuth,
-		username:              dsInfo.BasicAuthUser,
-		password:              dsInfo.DecryptedBasicAuthPassword(),
-		customQueryParameters: dsInfo.JsonData.Get("customQueryParameters").MustString(""),
-	}
+//nolint: staticcheck // plugins.DataPlugin deprecated
+func New(provider httpclient.Provider) func(*models.DataSource) (plugins.DataPlugin, error) {
+	return func(dsInfo *models.DataSource) (plugins.DataPlugin, error) {
+		transport, err := dsInfo.GetHTTPTransport(provider, customQueryParametersMiddleware())
+		if err != nil {
+			return nil, err
+		}
 
-	cfg := api.Config{
-		Address:      dsInfo.Url,
-		RoundTripper: promTransport,
-	}
+		cfg := api.Config{
+			Address:      dsInfo.Url,
+			RoundTripper: transport,
+		}
 
-	client, err := api.NewClient(cfg)
-	if err != nil {
-		return nil, err
-	}
+		client, err := api.NewClient(cfg)
+		if err != nil {
+			return nil, err
+		}
 
-	return apiv1.NewAPI(client), nil
+		return &PrometheusExecutor{
+			intervalCalculator: interval.NewCalculator(interval.CalculatorOptions{MinInterval: time.Second * 1}),
+			client:             apiv1.NewAPI(client),
+		}, nil
+	}
 }
 
 //nolint: staticcheck // plugins.DataResponse deprecated
@@ -124,11 +64,6 @@ func (e *PrometheusExecutor) DataQuery(ctx context.Context, dsInfo *models.DataS
 	tsdbQuery plugins.DataQuery) (plugins.DataResponse, error) {
 	result := plugins.DataResponse{
 		Results: map[string]plugins.DataQueryResult{},
-	}
-
-	client, err := e.getClient(dsInfo)
-	if err != nil {
-		return result, err
 	}
 
 	queries, err := e.parseQuery(dsInfo, tsdbQuery)
@@ -145,13 +80,13 @@ func (e *PrometheusExecutor) DataQuery(ctx context.Context, dsInfo *models.DataS
 
 		plog.Debug("Sending query", "start", timeRange.Start, "end", timeRange.End, "step", timeRange.Step, "query", query.Expr)
 
-		span, ctx := opentracing.StartSpanFromContext(ctx, "alerting.prometheus")
+		span, ctx := opentracing.StartSpanFromContext(ctx, "datasource.prometheus")
 		span.SetTag("expr", query.Expr)
 		span.SetTag("start_unixnano", query.Start.UnixNano())
 		span.SetTag("stop_unixnano", query.End.UnixNano())
 		defer span.Finish()
 
-		value, _, err := client.QueryRange(ctx, query.Expr, timeRange)
+		value, _, err := e.client.QueryRange(ctx, query.Expr, timeRange)
 
 		if err != nil {
 			return result, err
