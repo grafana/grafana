@@ -43,7 +43,7 @@ export function addHideFrom(builder: FieldConfigEditorBuilder<HideableFieldConfi
     path: 'hideFrom',
     defaultValue: {
       tooltip: false,
-      graph: false,
+      viz: false,
       legend: false,
     },
     editor: SeriesConfigEditor,
