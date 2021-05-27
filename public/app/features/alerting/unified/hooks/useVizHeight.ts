@@ -5,7 +5,7 @@ import { STAT, TIMESERIES } from '../utils/constants';
 export function useVizHeight(data: PanelData, pluginId: string, frameIndex: number) {
   const theme = useTheme2();
   if (pluginId === TIMESERIES || pluginId === STAT || dataIsEmpty(data)) {
-    return '200px';
+    return 200;
   }
 
   const values = data.series[frameIndex].fields[0].values.length;
@@ -18,7 +18,7 @@ export function useVizHeight(data: PanelData, pluginId: string, frameIndex: numb
   */
   const tableHeight = values * rowHeight + rowHeight;
 
-  return `${tableHeight >= 200 ? 200 : tableHeight}px`;
+  return tableHeight >= 200 ? 200 : tableHeight;
 }
 
 function dataIsEmpty(data: PanelData) {
