@@ -225,7 +225,7 @@ func (rp *responseParser) processMetrics(esAgg *simplejson.Json, target *Query, 
 				}
 				frames = append(frames, data.NewFrame(metric.Field,
 					data.NewField("time", nil, timeVector),
-					data.NewField("value", tags, values).SetConfig(&data.FieldConfig{DisplayNameFromDS: tags["metric"] + metric.Field})))
+					data.NewField("value", tags, values).SetConfig(&data.FieldConfig{DisplayNameFromDS: tags["metric"] + " " + metric.Field})))
 			}
 		case topMetricsType:
 			buckets := esAggBuckets
