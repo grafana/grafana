@@ -133,10 +133,6 @@ Family: scuemata.#Family & {
 
                     // The values depend on panel type
                     options: {...}
-                    libraryPanel?: {
-                        name: string,
-                        uid: string
-                    }
                     fieldConfig: {
                         defaults: {
                             ...

@@ -391,11 +391,6 @@ func (cfg Cfg) IsNgAlertEnabled() bool {
 	return cfg.FeatureToggles["ngalert"]
 }
 
-// IsTrimDefaultsEnabled returns whether the standalone trim dashboard default feature is enabled.
-func (cfg Cfg) IsTrimDefaultsEnabled() bool {
-	return cfg.FeatureToggles["trimDefaults"]
-}
-
 // IsDatabaseMetricsEnabled returns whether the database instrumentation feature is enabled.
 func (cfg Cfg) IsDatabaseMetricsEnabled() bool {
 	return cfg.FeatureToggles["database_metrics"]
