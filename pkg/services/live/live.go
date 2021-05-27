@@ -2,7 +2,6 @@ package live
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -83,7 +82,8 @@ type GrafanaLive struct {
 	DatasourceCache       datasources.CacheService `inject:""`
 	SQLStore              *sqlstore.SQLStore       `inject:""`
 
-	node *centrifuge.Node
+	node         *centrifuge.Node
+	surveyCaller *SurveyCaller
 
 	// Websocket handlers
 	websocketHandler     interface{}
@@ -160,6 +160,11 @@ func (g *GrafanaLive) Init() error {
 		return err
 	}
 	g.node = node
+	g.surveyCaller = NewSurveyCaller(g, node)
+	err = g.surveyCaller.SetupHandlers()
+	if err != nil {
+		return err
+	}
 
 	if os.Getenv("GF_LIVE_REDIS_ADDRESS") != "" {
 		redisAddress := os.Getenv("GF_LIVE_REDIS_ADDRESS")
@@ -205,7 +210,7 @@ func (g *GrafanaLive) Init() error {
 	g.contextGetter = newPluginContextGetter(g.PluginContextProvider)
 	channelSender := newPluginChannelSender(node)
 	presenceGetter := newPluginPresenceGetter(node)
-	g.runStreamManager = runstream.NewManager(channelSender, presenceGetter, g.contextGetter)
+	g.runStreamManager = runstream.NewManager(channelSender, presenceGetter, g.contextGetter, runstream.WithHA(g.IsHA()))
 
 	// Initialize the main features
 	dash := &features.DashboardHandler{
@@ -659,12 +664,10 @@ func (g *GrafanaLive) HandleHTTPPublish(ctx *models.ReqContext, cmd dtos.LivePub
 	return response.JSON(http.StatusOK, dtos.LivePublishResponse{})
 }
 
-// HandleListHTTP returns metadata so the UI can build a nice form
-func (g *GrafanaLive) HandleListHTTP(c *models.ReqContext) response.Response {
-	info := util.DynMap{}
-	channels := make([]util.DynMap, 0)
-	for k, v := range g.ManagedStreamRunner.Streams(c.SignedInUser.OrgId) {
-		channels = append(channels, v.ListChannels(c.SignedInUser.OrgId, "stream/"+k+"/")...)
+func (g *GrafanaLive) getManagedChannels(orgID int64) []*managedstream.ManagedChannel {
+	channels := make([]*managedstream.ManagedChannel, 0)
+	for k, v := range g.ManagedStreamRunner.Streams(orgID) {
+		channels = append(channels, v.ListChannels(orgID, "stream/"+k+"/")...)
 	}
 
 	// Hardcode sample streams
@@ -675,19 +678,35 @@ func (g *GrafanaLive) HandleListHTTP(c *models.ReqContext) response.Response {
 		data.NewField("Max", nil, make([]float64, 0)),
 	), data.IncludeSchemaOnly)
 	if err == nil {
-		channels = append(channels, util.DynMap{
-			"channel": "plugin/testdata/random-2s-stream",
-			"data":    json.RawMessage(frameJSON),
-		}, util.DynMap{
-			"channel": "plugin/testdata/random-flakey-stream",
-			"data":    json.RawMessage(frameJSON),
-		}, util.DynMap{
-			"channel": "plugin/testdata/random-20Hz-stream",
-			"data":    json.RawMessage(frameJSON),
+		channels = append(channels, &managedstream.ManagedChannel{
+			Channel: "plugin/testdata/random-2s-stream",
+			Data:    frameJSON,
+		}, &managedstream.ManagedChannel{
+			Channel: "plugin/testdata/random-flakey-stream",
+			Data:    frameJSON,
+		}, &managedstream.ManagedChannel{
+			Channel: "plugin/testdata/random-20Hz-stream",
+			Data:    frameJSON,
 		})
 	}
+	return channels
+}
 
-	info["channels"] = channels
+// HandleListHTTP returns metadata so the UI can build a nice form
+func (g *GrafanaLive) HandleListHTTP(c *models.ReqContext) response.Response {
+	var channels []*managedstream.ManagedChannel
+	var err error
+	if g.IsHA() {
+		channels, err = g.surveyCaller.CallManagedStreams(c.SignedInUser.OrgId)
+	} else {
+		channels = g.getManagedChannels(c.SignedInUser.OrgId)
+	}
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, http.StatusText(http.StatusInternalServerError), err)
+	}
+	info := util.DynMap{
+		"channels": channels,
+	}
 	return response.JSONStreaming(200, info)
 }
 

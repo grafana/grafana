@@ -11,12 +11,16 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/live"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 var (
 	logger = log.New("live.managed_stream")
 )
+
+type ManagedChannel struct {
+	Channel string          `json:"channel"`
+	Data    json.RawMessage `json:"data"`
+}
 
 // Runner keeps ManagedStream per streamID.
 type Runner struct {
@@ -84,20 +88,20 @@ func NewManagedStream(id string, publisher models.ChannelPublisher) *ManagedStre
 }
 
 // ListChannels returns info for the UI about this stream.
-func (s *ManagedStream) ListChannels(orgID int64, prefix string) []util.DynMap {
+func (s *ManagedStream) ListChannels(orgID int64, prefix string) []*ManagedChannel {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
 	if _, ok := s.last[orgID]; !ok {
-		return []util.DynMap{}
+		return []*ManagedChannel{}
 	}
 
-	info := make([]util.DynMap, 0, len(s.last[orgID]))
+	info := make([]*ManagedChannel, 0, len(s.last[orgID]))
 	for k, v := range s.last[orgID] {
-		ch := util.DynMap{}
-		ch["channel"] = prefix + k
-		ch["data"] = json.RawMessage(v.Bytes(data.IncludeSchemaOnly))
-		info = append(info, ch)
+		info = append(info, &ManagedChannel{
+			Channel: prefix + k,
+			Data:    v.Bytes(data.IncludeSchemaOnly),
+		})
 	}
 	return info
 }

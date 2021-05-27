@@ -59,6 +59,7 @@ type Manager struct {
 	checkInterval           time.Duration
 	maxChecks               int
 	datasourceCheckInterval time.Duration
+	ha                      bool
 }
 
 // ManagerOption modifies Manager behavior (used for tests for example).
@@ -69,6 +70,13 @@ func WithCheckConfig(interval time.Duration, maxChecks int) ManagerOption {
 	return func(sm *Manager) {
 		sm.checkInterval = interval
 		sm.maxChecks = maxChecks
+	}
+}
+
+// WithHA turns on HA mode.
+func WithHA(enabled bool) ManagerOption {
+	return func(sm *Manager) {
+		sm.ha = enabled
 	}
 }
 
@@ -412,6 +420,17 @@ func (s *Manager) SubmitStream(ctx context.Context, user *models.SignedInUser, c
 			return nil, errDatasourceNotFound
 		}
 		pCtx = newPluginCtx
+	}
+
+	if s.ha {
+		// Dirty check for HA case, need to find a better way.
+		numSubscribers, err := s.presenceGetter.GetNumSubscribers(channel)
+		if err != nil {
+			return nil, err
+		}
+		if numSubscribers > 0 {
+			return &submitResult{StreamExists: true}, nil
+		}
 	}
 
 	req := submitRequest{
