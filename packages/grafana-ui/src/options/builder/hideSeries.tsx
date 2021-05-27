@@ -50,7 +50,6 @@ export function addHideFrom(builder: FieldConfigEditorBuilder<HideableFieldConfi
     override: SeriesConfigEditor,
     shouldApply: () => true,
     hideFromDefaults: true,
-    hideFromOverrides: true,
     process: (value) => value,
   });
 }
