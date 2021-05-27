@@ -310,6 +310,8 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
           <div aria-label={selectors.pages.Dashboard.DashNav.nav}>
             <DashNav
               dashboard={dashboard}
+              title={dashboard.title}
+              folderTitle={dashboard.meta.folderTitle}
               isFullscreen={!!viewPanel}
               onAddPanel={this.onAddPanel}
               kioskMode={kioskMode}
