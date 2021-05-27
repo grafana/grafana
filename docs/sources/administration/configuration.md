@@ -1479,7 +1479,7 @@ For more information, refer to [Plugin catalog]({{< relref "../plugins/catalog.m
 
 ### plugin_admin_external_manage_enabled
 
-Set to `true` if you want to enable remote management of plugins. Default is `false`. This is only applicable to Grafana Cloud users.
+Set to `true` if you want to enable external management of plugins. Default is `false`. This is only applicable to Grafana Cloud users.
 
 ### plugin_catalog_url
 

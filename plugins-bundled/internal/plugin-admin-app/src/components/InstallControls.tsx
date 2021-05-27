@@ -25,8 +25,8 @@ export const InstallControls = ({ localPlugin, remotePlugin }: Props) => {
   const [shouldUpdate, setShouldUpdate] = useState(
     remotePlugin?.version && localPlugin?.info.version && gt(remotePlugin?.version!, localPlugin?.info.version!)
   );
-  const isRemoteManaged = config.pluginAdminRemoteManageEnabled;
-  const remoteManageLink = getRemoteManageLink(remotePlugin);
+  const isExternallyManaged = config.pluginAdminExternalManageEnabled;
+  const externalManageLink = getExternalManageLink(remotePlugin);
 
   const styles = useStyles2(getStyles);
 
@@ -96,8 +96,8 @@ export const InstallControls = ({ localPlugin, remotePlugin }: Props) => {
     return (
       <HorizontalGroup height="auto">
         {shouldUpdate &&
-          (isRemoteManaged ? (
-            <LinkButton disabled={!hasPermission} href={remoteManageLink} target="_blank" rel="noopener noreferrer">
+          (isExternallyManaged ? (
+            <LinkButton disabled={!hasPermission} href={externalManageLink} target="_blank" rel="noopener noreferrer">
               {'Update via grafana.com'}
             </LinkButton>
           ) : (
@@ -106,11 +106,11 @@ export const InstallControls = ({ localPlugin, remotePlugin }: Props) => {
             </Button>
           ))}
 
-        {isRemoteManaged ? (
+        {isExternallyManaged ? (
           <LinkButton
             variant="destructive"
             disabled={!hasPermission}
-            href={remoteManageLink}
+            href={externalManageLink}
             target="_blank"
             rel="noopener noreferrer"
           >
@@ -137,8 +137,8 @@ export const InstallControls = ({ localPlugin, remotePlugin }: Props) => {
 
   return (
     <HorizontalGroup height="auto">
-      {isRemoteManaged ? (
-        <LinkButton disabled={!hasPermission} href={remoteManageLink} target="_blank" rel="noopener noreferrer">
+      {isExternallyManaged ? (
+        <LinkButton disabled={!hasPermission} href={externalManageLink} target="_blank" rel="noopener noreferrer">
           {'Install via grafana.com'}
         </LinkButton>
       ) : (
@@ -151,7 +151,7 @@ export const InstallControls = ({ localPlugin, remotePlugin }: Props) => {
   );
 };
 
-function getRemoteManageLink(plugin: Plugin): string {
+function getExternalManageLink(plugin: Plugin): string {
   return `https://grafana.com/grafana/plugins/${plugin.slug}`;
 }
 
