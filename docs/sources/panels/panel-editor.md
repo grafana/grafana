@@ -67,7 +67,7 @@ The section contains tabs where you enter queries, transform your data, and crea
 
 The section contains tabs where you control almost every aspect of how your data is visualized. Not all options are available for each visualization.
 
-The data model used in Grafana, the [data frame]({{< relref "../../developers/plugins/data-frames.md" >}}), is a columnar-oriented table structure that unifies both time series and table query results. Each column within this structure is called a _field_. A field can represent a single time series or table column.
+The data model used in Grafana, the [data frame]({{< relref "../developers/plugins/data-frames.md" >}}), is a columnar-oriented table structure that unifies both time series and table query results. Each column within this structure is called a _field_. A field can represent a single time series or table column.
 
 Field options allow you to change how the data is displayed in your visualizations. Options and overrides that you apply do not change the data, they change how Grafana displays the data.
 
@@ -82,10 +82,10 @@ _Field overrides_ can be added or viewed in the Overrides tab in the panel edito
 Options are documented in the following topics:
 
 - [Add a panel]({{< relref "./add-a-panel.md" >}}) describes how to add a panel to a dashboard.
-- Panel options
+- [Panel options]({{< relref "./panel-options.md" >}})
 - [Visualization options]({{< relref "visualizations/_index.md" >}}) vary widely. They are described in the individual visualization topic.
-- Standard options
+- [Standard options]({{< relref "./standard-options.md" >}})
 - [Thresholds]({{< relref "./thresholds.md" >}})
-- Value mappings
+- [Value mappings]({{< relref "./value-mappings.md" >}})
 - [Panel links]({{< relref "../linking/panel-links.md" >}}) and [Data links]({{< relref "../linking/data-links.md" >}}) help you connect your visualization to other resources.
-- Overrides
+- [Overrides]({{< relref "./field-overrides.md" >}})

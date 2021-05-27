@@ -17,7 +17,7 @@ For Time series panel examples, refer to the Grafana Play dashboard [New Feature
 Time series visualizations allow you to apply:
 
 - [Data transformations]({{< relref "../../transformations/_index.md" >}})
-- [Field overrides]({{< relref "../field-overrides.md" >}})
+- [Field overrides]({{< relref "../../field-overrides.md" >}})
 - [Thresholds]({{< relref "../../thresholds.md" >}})
 
 You can also use field options to create different types of graphs or adjust your axes:

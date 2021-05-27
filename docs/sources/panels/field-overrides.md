@@ -2,7 +2,7 @@
 title = "Field overrides"
 keywords = ["grafana", "field options", "documentation", "format fields", "overrides", "override fields"]
 aliases = ["/docs/grafana/latest/panels/field-options/", "/docs/grafana/latest/panels/field-options/configure-specific-fields/"]
-weight = 300
+weight = 700
 +++
 
 # Field overrides
