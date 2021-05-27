@@ -256,6 +256,7 @@ describe('Wrapper', () => {
 
   it('changes the document title of the explore page', async () => {
     setup({ datasources: [] });
+
     await waitFor(() => expect(document.querySelector('head')).toMatchSnapshot());
     await waitFor(() => expect(document.title).toEqual('Explore - Grafana'));
   });
