@@ -181,7 +181,7 @@ Content-Type: application/json
 
 Updates / removes and reloads database settings. You must provide either `updates`, `removals` or both.
 
-It currently only supports changes on `auth.saml` section.
+This endpoint only supports changes to `auth.saml` configuration.
 
 **Example request:**
 
