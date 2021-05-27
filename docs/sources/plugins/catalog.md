@@ -21,19 +21,20 @@ Before following the steps below, make sure you are logged in as a Grafana admin
 ## Browse plugins
 
 1. In Grafana, navigate to **Configuration > Plugins**.
-1. Click the **Install &amp; manage plugins** button.
-1. You can now browse and search for plugins.
-1. You can also browse existing plugins by navigating to the **Library** tab.
+1. Click **Install &amp; manage plugins**.
+
+You can also browse existing plugins by navigating to the **Library** tab.
 
 ![Plugin catalog browse](/img/docs/plugins/plugins-catalog-browse-8-0.png)
 
 ## Install a plugin
 
 1. In Grafana, navigate to **Configuration > Plugins**.
-1. Click the **Install &amp; manage plugins** button.
+1. Click **Install &amp; manage plugins**.
 1. Browse and find a plugin.
 1. Click on the plugin logo.
-1. Click the **Install** button. 
+1. Click **Install**. 
+
 A confirmation message opens notifying that the installation was successful.
 
 ![Plugin catalog install](/img/docs/plugins/plugins-catalog-install-8-0.png)
@@ -41,10 +42,11 @@ A confirmation message opens notifying that the installation was successful.
 ## Update a plugin
 
 1. In Grafana, navigate to **Configuration > Plugins**.
-1. Click the **Install &amp; manage plugins** button.
+1. Click **Install &amp; manage plugins**.
 1. Navigate to the **Library** tab.
 1. Click on the plugin logo.
-1. Click the **Update** button.
+1. Click **Update**.
+
 A confirmation message opens notifying that the installation was successful.
 
 ![Plugin catalog update](/img/docs/plugins/plugins-catalog-update-8-0.png)
@@ -52,10 +54,11 @@ A confirmation message opens notifying that the installation was successful.
 ## Uninstall a plugin
 
 1. In Grafana, navigate to **Configuration > Plugins**.
-1. Click the **Install &amp; manage plugins** button.
+1. Click **Install &amp; manage plugins**.
 1. Navigate to the **Library** tab.
 1. Click on the plugin logo.
-1. Click the **Uninstall** button.
+1. Click **Uninstall**.
+
 A confirmation message opens notifying that the installation was successful.
    
 ![Plugin catalog uninstall](/img/docs/plugins/plugins-catalog-uninstall-8-0.png)
