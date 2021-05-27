@@ -1,5 +1,6 @@
-import React, { FC, ReactNode } from 'react';
+import React, { FC, ReactNode, useState } from 'react';
 import { css } from '@emotion/css';
+import { cloneDeep } from 'lodash';
 import {
   DataQuery,
   DataSourceInstanceSettings,
@@ -9,11 +10,11 @@ import {
   getDefaultRelativeTimeRange,
 } from '@grafana/data';
 import { useStyles2, RelativeTimeRangePicker } from '@grafana/ui';
-import { QueryEditorRow } from '../../../../query/components/QueryEditorRow';
+import { QueryEditorRow } from 'app/features/query/components/QueryEditorRow';
 import { VizWrapper } from './VizWrapper';
-import { isExpressionQuery } from '../../../../expressions/guards';
+import { isExpressionQuery } from 'app/features/expressions/guards';
+import { TABLE, TIMESERIES } from '../../utils/constants';
 import { GrafanaQuery } from 'app/types/unified-alerting-dto';
-import { cloneDeep } from 'lodash';
 
 interface Props {
   data: PanelData;
@@ -28,6 +29,8 @@ interface Props {
   onRunQueries: () => void;
   index: number;
 }
+
+export type SupportedPanelPlugins = 'timeseries' | 'table' | 'stat';
 
 export const QueryWrapper: FC<Props> = ({
   data,
@@ -44,6 +47,7 @@ export const QueryWrapper: FC<Props> = ({
 }) => {
   const styles = useStyles2(getStyles);
   const isExpression = isExpressionQuery(query.model);
+  const [pluginId, changePluginId] = useState<SupportedPanelPlugins>(isExpression ? TABLE : TIMESERIES);
 
   const renderTimePicker = (query: GrafanaQuery, index: number): ReactNode => {
     if (isExpressionQuery(query.model) || !onChangeTimeRange) {
@@ -74,14 +78,16 @@ export const QueryWrapper: FC<Props> = ({
         onRunQuery={onRunQueries}
         queries={queries}
         renderHeaderExtras={() => renderTimePicker(query, index)}
+        visualization={data ? <VizWrapper data={data} changePanel={changePluginId} currentPanel={pluginId} /> : null}
+        hideDisableQuery={true}
       />
-      {data && <VizWrapper data={data} defaultPanel={isExpression ? 'table' : 'timeseries'} />}
     </div>
   );
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
   wrapper: css`
+    label: AlertingQueryWrapper;
     margin-bottom: ${theme.spacing(1)};
     border: 1px solid ${theme.colors.border.medium};
     border-radius: ${theme.shape.borderRadius(1)};
