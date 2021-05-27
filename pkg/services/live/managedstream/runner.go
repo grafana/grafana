@@ -125,12 +125,12 @@ func (s *ManagedStream) Push(orgID int64, path string, frame *data.Frame) error 
 		// When the schema has not changed, just send the data.
 		include = data.IncludeDataOnly
 	}
-	jsonData := msg.Bytes(include)
+	frameJSON := msg.Bytes(include)
 
 	// The channel this will be posted into.
 	channel := live.Channel{Scope: live.ScopeStream, Namespace: s.id, Path: path}.String()
-	logger.Debug("Publish data to channel", "channel", channel, "dataLength", len(jsonData))
-	return s.publisher(orgID, channel, jsonData)
+	logger.Debug("Publish data to channel", "channel", channel, "dataLength", len(frameJSON))
+	return s.publisher(orgID, channel, frameJSON)
 }
 
 // getLastPacket retrieves last packet channel.
