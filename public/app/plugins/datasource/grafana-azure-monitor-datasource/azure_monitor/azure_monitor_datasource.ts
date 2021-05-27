@@ -105,10 +105,13 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
   ): Promise<DataQueryResponse> {
     if (res.data) {
       for (const df of res.data) {
-        const metricQuery = metricQueries[df.refId]?.azureMonitor;
-        if (metricQuery) {
-          // TODO: Should use subscriptionId from the query
-          const url = this.buildAzurePortalUrl(metricQuery, this.defaultSubscriptionId!, this.timeSrv.timeRange());
+        const metricQuery = metricQueries[df.refId];
+        if (metricQuery && metricQuery.azureMonitor) {
+          const url = this.buildAzurePortalUrl(
+            metricQuery.azureMonitor,
+            metricQuery.subscription,
+            this.timeSrv.timeRange()
+          );
 
           for (const field of df.fields) {
             field.config.links = [
