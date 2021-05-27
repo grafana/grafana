@@ -55,7 +55,7 @@ export class DataSourcePicker extends PureComponent<DataSourcePickerProps, DataS
   static defaultProps: Partial<DataSourcePickerProps> = {
     autoFocus: false,
     openMenuOnFocus: false,
-    placeholder: 'Select datasource',
+    placeholder: 'Select data source',
   };
 
   state: DataSourcePickerState = {};
