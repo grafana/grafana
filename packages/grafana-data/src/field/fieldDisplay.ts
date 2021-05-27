@@ -1,4 +1,4 @@
-import { toString, isEmpty } from 'lodash';
+import { toString, isEmpty, over } from 'lodash';
 
 import { getDisplayProcessor } from './displayProcessor';
 import {
@@ -78,7 +78,7 @@ export interface GetFieldDisplayValuesOptions {
 export const DEFAULT_FIELD_DISPLAY_VALUES_LIMIT = 25;
 
 export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): FieldDisplay[] => {
-  const { replaceVariables, reduceOptions, timeZone } = options;
+  const { replaceVariables, reduceOptions, timeZone, theme } = options;
   const calcs = reduceOptions.calcs.length ? reduceOptions.calcs : [ReducerID.last];
 
   const values: FieldDisplay[] = [];
@@ -168,6 +168,11 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
             });
           } else {
             displayValue.title = getSmartDisplayNameForRow(dataFrame, field, j);
+          }
+
+          const overrideColor = lookupRowColorFromOverride(displayValue, options.fieldConfig);
+          if (overrideColor) {
+            displayValue.color = theme.visualization.getColorByName(overrideColor);
           }
 
           values.push({
@@ -274,6 +279,21 @@ function getSmartDisplayNameForRow(frame: DataFrame, field: Field, rowIndex: num
   }
 
   return parts.join(' ');
+}
+
+/**
+ * This function makes overrides that set color work for row values
+ */
+function lookupRowColorFromOverride(display: DisplayValue, fieldConfig: FieldConfigSource) {
+  for (const override of fieldConfig.overrides) {
+    if (override.matcher.id === 'byName' && override.matcher.options === display.title) {
+      for (const prop of override.properties) {
+        if (prop.id === 'color' && prop.value) {
+          return prop.value.fixedColor;
+        }
+      }
+    }
+  }
 }
 
 export function hasLinks(field: Field): boolean {
