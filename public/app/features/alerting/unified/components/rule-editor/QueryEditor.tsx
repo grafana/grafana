@@ -215,6 +215,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
     container: css`
       background-color: ${theme.colors.background.primary};
       height: 100%;
+      max-width: ${theme.breakpoints.values.xxl}px;
     `,
     runWrapper: css`
       margin-top: ${theme.spacing(1)};
