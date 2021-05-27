@@ -6,14 +6,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/plugins"
 	es "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestResponseParser(t *testing.T) {
@@ -540,7 +537,6 @@ func TestResponseParser(t *testing.T) {
 		})
 
 		t.Run("Histogram response", func(t *testing.T) {
-			t.Skip()
 			targets := map[string]string{
 				"A": `{
 					"timeField": "@timestamp",
@@ -567,22 +563,9 @@ func TestResponseParser(t *testing.T) {
 
 			queryRes := result.Results["A"]
 			require.NotNil(t, queryRes)
-			require.Len(t, queryRes.Tables, 1)
-
-			rows := queryRes.Tables[0].Rows
-			require.Len(t, rows, 3)
-			cols := queryRes.Tables[0].Columns
-			require.Len(t, cols, 2)
-
-			require.Equal(t, cols[0].Text, "bytes")
-			require.Equal(t, cols[1].Text, "Count")
-
-			require.Equal(t, rows[0][0].(null.Float).Float64, 1000)
-			require.Equal(t, rows[0][1].(null.Float).Float64, 1)
-			require.Equal(t, rows[1][0].(null.Float).Float64, 2000)
-			require.Equal(t, rows[1][1].(null.Float).Float64, 3)
-			require.Equal(t, rows[2][0].(null.Float).Float64, 3000)
-			require.Equal(t, rows[2][1].(null.Float).Float64, 2)
+			dataframes, err := queryRes.Dataframes.Decoded()
+			require.NoError(t, err)
+			require.Len(t, dataframes, 1)
 		})
 
 		t.Run("With two filters agg", func(t *testing.T) {
@@ -725,7 +708,6 @@ func TestResponseParser(t *testing.T) {
 		})
 
 		t.Run("No group by time", func(t *testing.T) {
-			t.Skip()
 			targets := map[string]string{
 				"A": `{
 					"timeField": "@timestamp",
@@ -756,34 +738,45 @@ func TestResponseParser(t *testing.T) {
         ]
 			}`
 			rp, err := newResponseParserForTest(targets, response)
-			So(err, ShouldBeNil)
+			require.NoError(t, err)
 			result, err := rp.getTimeSeries()
-			So(err, ShouldBeNil)
-			So(result.Results, ShouldHaveLength, 1)
+			require.NoError(t, err)
+			require.Len(t, result.Results, 1)
 
 			queryRes := result.Results["A"]
-			So(queryRes, ShouldNotBeNil)
-			So(queryRes.Tables, ShouldHaveLength, 1)
+			require.NotNil(t, queryRes)
+			dataframes, err := queryRes.Dataframes.Decoded()
+			require.NoError(t, err)
+			require.Len(t, dataframes, 1)
 
-			rows := queryRes.Tables[0].Rows
-			So(rows, ShouldHaveLength, 2)
-			cols := queryRes.Tables[0].Columns
-			So(cols, ShouldHaveLength, 3)
-
-			So(cols[0].Text, ShouldEqual, "host")
-			So(cols[1].Text, ShouldEqual, "Average")
-			So(cols[2].Text, ShouldEqual, "Count")
-
-			So(rows[0][0].(string), ShouldEqual, "server-1")
-			So(rows[0][1].(null.Float).Float64, ShouldEqual, 1000)
-			So(rows[0][2].(null.Float).Float64, ShouldEqual, 369)
-			So(rows[1][0].(string), ShouldEqual, "server-2")
-			So(rows[1][1].(null.Float).Float64, ShouldEqual, 2000)
-			So(rows[1][2].(null.Float).Float64, ShouldEqual, 200)
+			frame := dataframes[0]
+			require.Equal(t, frame.Name, "")
+			require.Len(t, frame.Fields, 3)
+			require.Equal(t, frame.Fields[0].Name, "host")
+			require.Equal(t, frame.Fields[0].Len(), 2)
+			require.Equal(t, frame.Fields[1].Name, "Average")
+			require.Equal(t, frame.Fields[1].Len(), 2)
+			require.Equal(t, frame.Fields[2].Name, "Count")
+			require.Equal(t, frame.Fields[2].Len(), 2)
+			//
+			//rows := queryRes.Tables[0].Rows
+			//So(rows, ShouldHaveLength, 2)
+			//cols := queryRes.Tables[0].Columns
+			//So(cols, ShouldHaveLength, 3)
+			//
+			//So(cols[0].Text, ShouldEqual, "host")
+			//So(cols[1].Text, ShouldEqual, "Average")
+			//So(cols[2].Text, ShouldEqual, "Count")
+			//
+			//So(rows[0][0].(string), ShouldEqual, "server-1")
+			//So(rows[0][1].(null.Float).Float64, ShouldEqual, 1000)
+			//So(rows[0][2].(null.Float).Float64, ShouldEqual, 369)
+			//So(rows[1][0].(string), ShouldEqual, "server-2")
+			//So(rows[1][1].(null.Float).Float64, ShouldEqual, 2000)
+			//So(rows[1][2].(null.Float).Float64, ShouldEqual, 200)
 		})
 
 		t.Run("Multiple metrics of same type", func(t *testing.T) {
-			t.Skip()
 			targets := map[string]string{
 				"A": `{
 					"timeField": "@timestamp",
@@ -810,27 +803,26 @@ func TestResponseParser(t *testing.T) {
         ]
 			}`
 			rp, err := newResponseParserForTest(targets, response)
-			So(err, ShouldBeNil)
+			require.NoError(t, err)
 			result, err := rp.getTimeSeries()
-			So(err, ShouldBeNil)
-			So(result.Results, ShouldHaveLength, 1)
+			require.NoError(t, err)
+			require.Len(t, result.Results, 1)
 
 			queryRes := result.Results["A"]
-			So(queryRes, ShouldNotBeNil)
-			So(queryRes.Tables, ShouldHaveLength, 1)
+			require.NotNil(t, queryRes)
+			dataframes, err := queryRes.Dataframes.Decoded()
+			require.NoError(t, err)
+			require.Len(t, dataframes, 1)
 
-			rows := queryRes.Tables[0].Rows
-			So(rows, ShouldHaveLength, 1)
-			cols := queryRes.Tables[0].Columns
-			So(cols, ShouldHaveLength, 3)
-
-			So(cols[0].Text, ShouldEqual, "host")
-			So(cols[1].Text, ShouldEqual, "Average test")
-			So(cols[2].Text, ShouldEqual, "Average test2")
-
-			So(rows[0][0].(string), ShouldEqual, "server-1")
-			So(rows[0][1].(null.Float).Float64, ShouldEqual, 1000)
-			So(rows[0][2].(null.Float).Float64, ShouldEqual, 3000)
+			frame := dataframes[0]
+			require.Equal(t, frame.Name, "")
+			require.Len(t, frame.Fields, 3)
+			require.Equal(t, frame.Fields[0].Name, "host")
+			require.Equal(t, frame.Fields[0].Len(), 1)
+			require.Equal(t, frame.Fields[1].Name, "Average test")
+			require.Equal(t, frame.Fields[1].Len(), 1)
+			require.Equal(t, frame.Fields[2].Name, "Average test2")
+			require.Equal(t, frame.Fields[2].Len(), 1)
 		})
 
 		t.Run("With bucket_script", func(t *testing.T) {
@@ -915,7 +907,6 @@ func TestResponseParser(t *testing.T) {
 		})
 
 		t.Run("Terms with two bucket_script", func(t *testing.T) {
-			t.Skip()
 			targets := map[string]string{
 				"A": `{
 					"timeField": "@timestamp",
@@ -969,25 +960,30 @@ func TestResponseParser(t *testing.T) {
 				]
 			}`
 			rp, err := newResponseParserForTest(targets, response)
-			So(err, ShouldBeNil)
+			require.NoError(t, err)
 			result, err := rp.getTimeSeries()
-			So(err, ShouldBeNil)
-			So(result.Results, ShouldHaveLength, 1)
+			require.NoError(t, err)
+			require.Len(t, result.Results, 1)
+
 			queryRes := result.Results["A"]
-			So(queryRes, ShouldNotBeNil)
-			So(queryRes.Tables[0].Rows, ShouldHaveLength, 2)
-			So(queryRes.Tables[0].Columns[1].Text, ShouldEqual, "Sum")
-			So(queryRes.Tables[0].Columns[2].Text, ShouldEqual, "Max")
-			So(queryRes.Tables[0].Columns[3].Text, ShouldEqual, "params.var1 * params.var2")
-			So(queryRes.Tables[0].Columns[4].Text, ShouldEqual, "params.var1 * params.var2 * 2")
-			So(queryRes.Tables[0].Rows[0][1].(null.Float).Float64, ShouldEqual, 2)
-			So(queryRes.Tables[0].Rows[0][2].(null.Float).Float64, ShouldEqual, 3)
-			So(queryRes.Tables[0].Rows[0][3].(null.Float).Float64, ShouldEqual, 6)
-			So(queryRes.Tables[0].Rows[0][4].(null.Float).Float64, ShouldEqual, 24)
-			So(queryRes.Tables[0].Rows[1][1].(null.Float).Float64, ShouldEqual, 3)
-			So(queryRes.Tables[0].Rows[1][2].(null.Float).Float64, ShouldEqual, 4)
-			So(queryRes.Tables[0].Rows[1][3].(null.Float).Float64, ShouldEqual, 12)
-			So(queryRes.Tables[0].Rows[1][4].(null.Float).Float64, ShouldEqual, 48)
+			require.NotNil(t, queryRes)
+			dataframes, err := queryRes.Dataframes.Decoded()
+			require.NoError(t, err)
+			require.Len(t, dataframes, 1)
+
+			frame := dataframes[0]
+			require.Equal(t, frame.Name, "")
+			require.Len(t, frame.Fields, 5)
+			require.Equal(t, frame.Fields[0].Name, "@timestamp")
+			require.Equal(t, frame.Fields[0].Len(), 2)
+			require.Equal(t, frame.Fields[1].Name, "Sum")
+			require.Equal(t, frame.Fields[1].Len(), 2)
+			require.Equal(t, frame.Fields[2].Name, "Max")
+			require.Equal(t, frame.Fields[2].Len(), 2)
+			require.Equal(t, frame.Fields[3].Name, "params.var1 * params.var2")
+			require.Equal(t, frame.Fields[3].Len(), 2)
+			require.Equal(t, frame.Fields[4].Name, "params.var1 * params.var2 * 2")
+			require.Equal(t, frame.Fields[4].Len(), 2)
 		})
 		// t.Run("Raw documents query", func(t *testing.T) {
 		// 	targets := map[string]string{

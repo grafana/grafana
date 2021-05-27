@@ -71,20 +71,12 @@ func (rp *responseParser) getTimeSeries() (plugins.DataResponse, error) {
 			Meta: debugInfo,
 		}
 		props := make(map[string]string)
-		table := plugins.DataTable{
-			Columns: make([]plugins.DataTableColumn, 0),
-			Rows:    make([]plugins.DataRowValues, 0),
-		}
-		err := rp.processBuckets(res.Aggregations, target, &queryRes, &table, props, 0)
+		err := rp.processBuckets(res.Aggregations, target, &queryRes, props, 0)
 		if err != nil {
 			return plugins.DataResponse{}, err
 		}
 		rp.nameFields(queryRes, target)
 		rp.trimDatapoints(queryRes, target)
-
-		if len(table.Rows) > 0 {
-			queryRes.Tables = append(queryRes.Tables, table)
-		}
 
 		result.Results[target.RefID] = queryRes
 	}
@@ -93,7 +85,7 @@ func (rp *responseParser) getTimeSeries() (plugins.DataResponse, error) {
 
 // nolint:staticcheck // plugins.* deprecated
 func (rp *responseParser) processBuckets(aggs map[string]interface{}, target *Query,
-	queryResult *plugins.DataQueryResult, table *plugins.DataTable, props map[string]string, depth int) error {
+	queryResult *plugins.DataQueryResult, props map[string]string, depth int) error {
 	var err error
 	maxDepth := len(target.BucketAggs) - 1
 
@@ -114,7 +106,7 @@ func (rp *responseParser) processBuckets(aggs map[string]interface{}, target *Qu
 			if aggDef.Type == dateHistType {
 				err = rp.processMetrics(esAgg, target, queryResult, props)
 			} else {
-				err = rp.processAggregationDocs(esAgg, aggDef, target, table, props)
+				err = rp.processAggregationDocs(esAgg, aggDef, target, queryResult, props)
 			}
 			if err != nil {
 				return err
@@ -137,7 +129,7 @@ func (rp *responseParser) processBuckets(aggs map[string]interface{}, target *Qu
 				if key, err := bucket.Get("key_as_string").String(); err == nil {
 					newProps[aggDef.Field] = key
 				}
-				err = rp.processBuckets(bucket.MustMap(), target, queryResult, table, newProps, depth+1)
+				err = rp.processBuckets(bucket.MustMap(), target, queryResult, newProps, depth+1)
 				if err != nil {
 					return err
 				}
@@ -160,7 +152,7 @@ func (rp *responseParser) processBuckets(aggs map[string]interface{}, target *Qu
 
 				newProps["filter"] = bucketKey
 
-				err = rp.processBuckets(bucket.MustMap(), target, queryResult, table, newProps, depth+1)
+				err = rp.processBuckets(bucket.MustMap(), target, queryResult, newProps, depth+1)
 				if err != nil {
 					return err
 				}
@@ -362,51 +354,85 @@ func (rp *responseParser) processMetrics(esAgg *simplejson.Json, target *Query, 
 
 // nolint:staticcheck // plugins.* deprecated
 func (rp *responseParser) processAggregationDocs(esAgg *simplejson.Json, aggDef *BucketAgg, target *Query,
-	table *plugins.DataTable, props map[string]string) error {
+	queryResult *plugins.DataQueryResult, props map[string]string) error {
 	propKeys := make([]string, 0)
 	for k := range props {
 		propKeys = append(propKeys, k)
 	}
 	sort.Strings(propKeys)
+	frames := data.Frames{}
+	var fields []*data.Field
 
-	if len(table.Columns) == 0 {
+	if queryResult.Dataframes == nil {
 		for _, propKey := range propKeys {
-			table.Columns = append(table.Columns, plugins.DataTableColumn{Text: propKey})
+			fields = append(fields, data.NewField(propKey, nil, []*string{}))
 		}
-		table.Columns = append(table.Columns, plugins.DataTableColumn{Text: aggDef.Field})
 	}
 
-	addMetricValue := func(values *plugins.DataRowValues, metricName string, value *float64) {
-		found := false
-		for _, c := range table.Columns {
-			if c.Text == metricName {
-				found = true
+	addMetricValue := func(values []interface{}, metricName string, value *float64) {
+		index := -1
+		for i, f := range fields {
+			if f.Name == metricName {
+				index = i
 				break
 			}
 		}
-		if !found {
-			table.Columns = append(table.Columns, plugins.DataTableColumn{Text: metricName})
+
+		var field data.Field
+		if index == -1 {
+			field = *data.NewField(metricName, nil, []*float64{})
+			fields = append(fields, &field)
+		} else {
+			field = *fields[index]
 		}
+		field.Append(value)
 	}
 
 	for _, v := range esAgg.Get("buckets").MustArray() {
 		bucket := simplejson.NewFromAny(v)
-		values := make(plugins.DataRowValues, 0)
+		var values []interface{}
 
-		for _, propKey := range propKeys {
-			values = append(values, props[propKey])
+		found := false
+		for _, e := range fields {
+			for _, propKey := range propKeys {
+				if e.Name == propKey {
+					e.Append(props[propKey])
+				}
+			}
+			if e.Name == aggDef.Field {
+				found = true
+				if key, err := bucket.Get("key").String(); err == nil {
+					e.Append(&key)
+				} else {
+					f, err := bucket.Get("key").Float64()
+					if err != nil {
+						return err
+					}
+					e.Append(&f)
+				}
+			}
 		}
 
-		if key, err := bucket.Get("key").String(); err == nil {
-			values = append(values, key)
-		} else {
-			values = append(values, castToFloat(bucket.Get("key")))
+		if !found {
+			var aggDefField *data.Field
+			if key, err := bucket.Get("key").String(); err == nil {
+				aggDefField = extractDataField(aggDef.Field, &key)
+				aggDefField.Append(&key)
+			} else {
+				f, err := bucket.Get("key").Float64()
+				if err != nil {
+					return err
+				}
+				aggDefField = extractDataField(aggDef.Field, &f)
+				aggDefField.Append(&f)
+			}
+			fields = append(fields, aggDefField)
 		}
 
 		for _, metric := range target.Metrics {
 			switch metric.Type {
 			case countType:
-				addMetricValue(&values, rp.getMetricName(metric.Type), castToFloat(bucket.Get("doc_count")))
+				addMetricValue(values, rp.getMetricName(metric.Type), castToFloat(bucket.Get("doc_count")))
 			case extendedStatsType:
 				metaKeys := make([]string, 0)
 				meta := metric.Meta.MustMap()
@@ -430,7 +456,7 @@ func (rp *responseParser) processAggregationDocs(esAgg *simplejson.Json, aggDef 
 						value = castToFloat(bucket.GetPath(metric.ID, statName))
 					}
 
-					addMetricValue(&values, rp.getMetricName(metric.Type), value)
+					addMetricValue(values, rp.getMetricName(metric.Type), value)
 					break
 				}
 			default:
@@ -451,14 +477,31 @@ func (rp *responseParser) processAggregationDocs(esAgg *simplejson.Json, aggDef 
 					}
 				}
 
-				addMetricValue(&values, metricName, castToFloat(bucket.GetPath(metric.ID, "value")))
+				addMetricValue(values, metricName, castToFloat(bucket.GetPath(metric.ID, "value")))
 			}
 		}
 
-		table.Rows = append(table.Rows, values)
-	}
+		var dataFields []*data.Field
+		dataFields = append(dataFields, fields...)
 
+		frames = data.Frames{
+			&data.Frame{
+				Fields: dataFields,
+			}}
+	}
+	queryResult.Dataframes = plugins.NewDecodedDataFrames(frames)
 	return nil
+}
+
+func extractDataField(name string, v interface{}) *data.Field {
+	switch v.(type) {
+	case *string:
+		return data.NewField(name, nil, []*string{})
+	case *float64:
+		return data.NewField(name, nil, []*float64{})
+	default:
+		return &data.Field{}
+	}
 }
 
 // TODO remove deprecations
