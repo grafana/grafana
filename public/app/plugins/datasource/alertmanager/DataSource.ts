@@ -44,12 +44,19 @@ export class AlertManagerDatasource extends DataSourceApi<AlertManagerQuery> {
 
     try {
       alertmanagerResponse = await this._request('/api/v2/status');
+      if (alertmanagerResponse && alertmanagerResponse?.status === 200) {
+        return {
+          status: 'error',
+          message:
+            'Only Cortex alert manager implementation is supported. A URL to cortex instance should be provided.',
+        };
+      }
     } catch (e) {}
     try {
       cortexAlertmanagerResponse = await this._request('/alertmanager/api/v2/status');
     } catch (e) {}
 
-    return alertmanagerResponse?.status === 200 || cortexAlertmanagerResponse?.status === 200
+    return cortexAlertmanagerResponse?.status === 200
       ? {
           status: 'success',
           message: 'Health check passed.',
