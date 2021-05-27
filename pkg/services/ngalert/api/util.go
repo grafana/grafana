@@ -88,7 +88,7 @@ func (p *AlertingProxy) withReq(
 	method string,
 	u *url.URL,
 	body io.Reader,
-	extractor func([]byte) (interface{}, error),
+	extractor func(*response.NormalResponse) (interface{}, error),
 	headers map[string]string,
 ) response.Response {
 	req, err := http.NewRequest(method, u.String(), body)
@@ -119,7 +119,7 @@ func (p *AlertingProxy) withReq(
 		return response.Error(status, errMessage, nil)
 	}
 
-	t, err := extractor(resp.Body())
+	t, err := extractor(resp)
 	if err != nil {
 		return response.Error(500, err.Error(), nil)
 	}
@@ -132,9 +132,13 @@ func (p *AlertingProxy) withReq(
 	return response.JSON(status, b)
 }
 
-func yamlExtractor(v interface{}) func([]byte) (interface{}, error) {
-	return func(b []byte) (interface{}, error) {
-		decoder := yaml.NewDecoder(bytes.NewReader(b))
+func yamlExtractor(v interface{}) func(*response.NormalResponse) (interface{}, error) {
+	return func(resp *response.NormalResponse) (interface{}, error) {
+		contentType := resp.Header().Get("Content-Type")
+		if !strings.Contains(contentType, "yaml") {
+			return nil, fmt.Errorf("unexpected content type from upstream. expected YAML, got %v", contentType)
+		}
+		decoder := yaml.NewDecoder(bytes.NewReader(resp.Body()))
 		decoder.KnownFields(true)
 
 		err := decoder.Decode(v)
@@ -143,18 +147,22 @@ func yamlExtractor(v interface{}) func([]byte) (interface{}, error) {
 	}
 }
 
-func jsonExtractor(v interface{}) func([]byte) (interface{}, error) {
+func jsonExtractor(v interface{}) func(*response.NormalResponse) (interface{}, error) {
 	if v == nil {
 		// json unmarshal expects a pointer
 		v = &map[string]interface{}{}
 	}
-	return func(b []byte) (interface{}, error) {
-		return v, json.Unmarshal(b, v)
+	return func(resp *response.NormalResponse) (interface{}, error) {
+		contentType := resp.Header().Get("Content-Type")
+		if !strings.Contains(contentType, "json") {
+			return nil, fmt.Errorf("unexpected content type from upstream. expected JSON, got %v", contentType)
+		}
+		return v, json.Unmarshal(resp.Body(), v)
 	}
 }
 
-func messageExtractor(b []byte) (interface{}, error) {
-	return map[string]string{"message": string(b)}, nil
+func messageExtractor(resp *response.NormalResponse) (interface{}, error) {
+	return map[string]string{"message": string(resp.Body())}, nil
 }
 
 func validateCondition(c ngmodels.Condition, user *models.SignedInUser, skipCache bool, datasourceCache datasources.CacheService) error {
