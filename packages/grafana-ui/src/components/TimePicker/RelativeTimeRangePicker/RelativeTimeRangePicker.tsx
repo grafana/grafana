@@ -91,6 +91,9 @@ export function RelativeTimeRangePicker(props: RelativeTimeRangePickerProps): Re
   return (
     <div className={styles.container}>
       <div tabIndex={0} className={styles.pickerInput} onClick={onOpen}>
+        <span className={styles.clockIcon}>
+          <Icon name="clock-nine" />
+        </span>
         <span>
           {timeOption.from} to {timeOption.to}
         </span>
@@ -168,6 +171,7 @@ const getStyles = (fromError?: string, toError?: string) => (theme: GrafanaTheme
         justify-content: space-between;
         cursor: pointer;
         padding-right: 0;
+        padding-left: 0;
         line-height: ${theme.v1.spacing.formInputHeight - 2}px;
       `
     ),
@@ -176,6 +180,13 @@ const getStyles = (fromError?: string, toError?: string) => (theme: GrafanaTheme
       css`
         position: relative;
         margin-left: ${theme.v1.spacing.xs};
+      `
+    ),
+    clockIcon: cx(
+      inputStyles.prefix,
+      css`
+        position: relative;
+        margin-right: ${theme.v1.spacing.xs};
       `
     ),
     content: css`
