@@ -35,7 +35,7 @@ export const ImageCell: FC<TableCellProps> = (props) => {
           onClick={onClick}
           target={link.target}
           title={link.title}
-          className={tableStyles.imagecellLink}
+          className={tableStyles.imageCellLink}
         >
           <img src={displayValue.text} className={tableStyles.imageCell} />
         </a>
