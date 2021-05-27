@@ -1,4 +1,4 @@
-import { GrafanaQuery, GrafanaAlertStateDecision } from 'app/types/unified-alerting-dto';
+import { AlertQuery, GrafanaAlertStateDecision } from 'app/types/unified-alerting-dto';
 
 export enum RuleFormType {
   grafana = 'grafana',
@@ -15,7 +15,7 @@ export interface RuleFormValues {
   annotations: Array<{ key: string; value: string }>;
 
   // grafana rules
-  queries: GrafanaQuery[];
+  queries: AlertQuery[];
   condition: string | null; // refId of the query that gets alerted on
   noDataState: GrafanaAlertStateDecision;
   execErrState: GrafanaAlertStateDecision;
