@@ -22,11 +22,14 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/pkg/errors"
 	"gopkg.in/macaron.v1"
 	"gopkg.in/yaml.v3"
 )
 
 var searchRegex = regexp.MustCompile(`\{(\w+)\}`)
+
+var NotImplementedResp = ErrResp(http.StatusNotImplemented, errors.New("endpoint not implemented"), "")
 
 func toMacaronPath(path string) string {
 	return string(searchRegex.ReplaceAllFunc([]byte(path), func(s []byte) []byte {
@@ -240,4 +243,12 @@ func conditionEval(c *models.ReqContext, cmd ngmodels.EvalAlertConditionCommand,
 	return response.JSONStreaming(http.StatusOK, util.DynMap{
 		"instances": []*data.Frame{&frame},
 	})
+}
+
+// ErrorResp creates a response with a visible error
+func ErrResp(status int, err error, msg string, args ...interface{}) *response.NormalResponse {
+	if msg != "" {
+		err = errors.WithMessagef(err, msg, args...)
+	}
+	return response.Error(status, err.Error(), nil)
 }
