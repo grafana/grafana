@@ -30,7 +30,8 @@ the dashboard, and will also be added as a required input when the dashboard is 
 To export a dashboard without the default values in order to reduce the exported JSON file size, check the toggle **Export with default values removed** option.
 
 During import, the removed default values automatically added back to the dashboard.
-## Importing a dashboard
+
+## Import a dashboard
 
 To import a dashboard click the + icon in the side menu, and then click **Import**.
 
