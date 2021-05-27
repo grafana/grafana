@@ -90,6 +90,7 @@ export function isNumeric(num: any) {
 
 /**
  * @deprecated use MappingType instead
+ * @internal
  */
 export enum LegacyMappingType {
   ValueToText = 1,
@@ -104,11 +105,13 @@ interface LegacyBaseMap {
 
 /**
  * @deprecated use ValueMapping instead
+ * @internal
  */
 export type LegacyValueMapping = LegacyValueMap | LegacyRangeMap;
 
 /**
  * @deprecated use ValueMap instead
+ * @internal
  */
 export interface LegacyValueMap extends LegacyBaseMap {
   value: string;
@@ -116,6 +119,7 @@ export interface LegacyValueMap extends LegacyBaseMap {
 
 /**
  * @deprecated use RangeMap instead
+ * @internal
  */
 export interface LegacyRangeMap extends LegacyBaseMap {
   from: string;
@@ -124,6 +128,7 @@ export interface LegacyRangeMap extends LegacyBaseMap {
 
 /**
  * @deprecated use getValueMappingResult instead
+ * @internal
  */
 export function getMappedValue(valueMappings: LegacyValueMapping[], value: any): LegacyValueMapping {
   const emptyResult = { type: LegacyMappingType.ValueToText, value: '', text: '', from: '', to: '', id: 0 };
@@ -160,7 +165,7 @@ export function getMappedValue(valueMappings: LegacyValueMapping[], value: any):
 }
 
 /**
- * @public
+ * @alpha
  * Converts the old Angular value mappings to new react style
  */
 export function convertOldAngularValueMappings(panel: any): ValueMapping[] {

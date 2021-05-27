@@ -22,4 +22,4 @@ export { DocsId } from './docs';
 export { makeClassES5Compatible } from './makeClassES5Compatible';
 export { anyToNumber } from './anyToNumber';
 export { withLoadingIndicator, WithLoadingIndicatorOptions } from './withLoadingIndicator';
-export { getMappedValue, convertOldAngularValueMappings } from './valueMappings';
+export { getMappedValue, convertOldAngularValueMappings, LegacyValueMapping } from './valueMappings';
