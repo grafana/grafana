@@ -172,7 +172,9 @@ describe('Azure Monitor QueryEditor', () => {
         onChange={() => {}}
       />
     );
-    await waitFor(() => expect(screen.getByTestId('azure-monitor-metrics-query-editor')).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByTestId('azure-monitor-application-insights-query-editor')).toBeInTheDocument()
+    );
 
     expect(screen.queryByText('Application Insights')).toBeInTheDocument();
 
