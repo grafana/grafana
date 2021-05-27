@@ -10,7 +10,7 @@ import { RuleWithLocation } from 'app/types/unified-alerting';
 import {
   Annotations,
   GrafanaAlertStateDecision,
-  GrafanaAlertQuery,
+  AlertQuery,
   Labels,
   PostableRuleGrafanaRuleDTO,
   RulerAlertingRuleDTO,
@@ -135,7 +135,7 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
   }
 }
 
-export const getDefaultQueries = (): GrafanaAlertQuery[] => {
+export const getDefaultQueries = (): AlertQuery[] => {
   const dataSource = getDataSourceSrv().getInstanceSettings('default');
 
   if (!dataSource) {
@@ -158,7 +158,7 @@ export const getDefaultQueries = (): GrafanaAlertQuery[] => {
   ];
 };
 
-const getDefaultExpression = (refId: string): GrafanaAlertQuery => {
+const getDefaultExpression = (refId: string): AlertQuery => {
   const model: ExpressionQuery = {
     refId,
     hide: false,
@@ -197,13 +197,13 @@ const dataQueriesToGrafanaQueries = (
   queries: DataQuery[],
   relativeTimeRange: RelativeTimeRange,
   datasourceName?: string
-): GrafanaAlertQuery[] => {
-  return queries.reduce<GrafanaAlertQuery[]>((queries, target) => {
+): AlertQuery[] => {
+  return queries.reduce<AlertQuery[]>((queries, target) => {
     const dsName = target.datasource || datasourceName;
     if (dsName) {
       // expressions
       if (dsName === ExpressionDatasourceID) {
-        const newQuery: GrafanaAlertQuery = {
+        const newQuery: AlertQuery = {
           refId: target.refId,
           queryType: '',
           relativeTimeRange,
@@ -215,7 +215,7 @@ const dataQueriesToGrafanaQueries = (
       } else {
         const datasource = getDataSourceSrv().getInstanceSettings(target.datasource || datasourceName);
         if (datasource && datasource.meta.alerting) {
-          const newQuery: GrafanaAlertQuery = {
+          const newQuery: AlertQuery = {
             refId: target.refId,
             queryType: target.queryType ?? '',
             relativeTimeRange,

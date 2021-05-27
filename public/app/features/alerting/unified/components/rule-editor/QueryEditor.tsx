@@ -19,14 +19,14 @@ import {
 import { getNextRefIdChar } from 'app/core/utils/query';
 import { defaultCondition } from 'app/features/expressions/utils/expressionTypes';
 import { ExpressionQueryType } from 'app/features/expressions/types';
-import { GrafanaAlertQuery } from 'app/types/unified-alerting-dto';
+import { AlertQuery } from 'app/types/unified-alerting-dto';
 import { AlertingQueryRunner } from '../../state/AlertingQueryRunner';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { isExpressionQuery } from 'app/features/expressions/guards';
 
 interface Props {
-  value?: GrafanaAlertQuery[];
-  onChange: (queries: GrafanaAlertQuery[]) => void;
+  value?: AlertQuery[];
+  onChange: (queries: AlertQuery[]) => void;
 }
 
 interface State {
@@ -34,7 +34,7 @@ interface State {
 }
 export class QueryEditor extends PureComponent<Props, State> {
   private runner: AlertingQueryRunner;
-  private queries: GrafanaAlertQuery[];
+  private queries: AlertQuery[];
 
   constructor(props: Props) {
     super(props);
@@ -62,12 +62,12 @@ export class QueryEditor extends PureComponent<Props, State> {
     this.runner.cancel();
   };
 
-  onChangeQueries = (queries: GrafanaAlertQuery[]) => {
+  onChangeQueries = (queries: AlertQuery[]) => {
     this.queries = queries;
     this.props.onChange(queries);
   };
 
-  onDuplicateQuery = (query: GrafanaAlertQuery) => {
+  onDuplicateQuery = (query: AlertQuery) => {
     const { queries } = this;
     this.onChangeQueries(addQuery(queries, query));
   };
@@ -184,13 +184,10 @@ export class QueryEditor extends PureComponent<Props, State> {
   }
 }
 
-const addQuery = (
-  queries: GrafanaAlertQuery[],
-  queryToAdd: Pick<GrafanaAlertQuery, 'model' | 'datasourceUid'>
-): GrafanaAlertQuery[] => {
+const addQuery = (queries: AlertQuery[], queryToAdd: Pick<AlertQuery, 'model' | 'datasourceUid'>): AlertQuery[] => {
   const refId = getNextRefIdChar(queries);
 
-  const query: GrafanaAlertQuery = {
+  const query: AlertQuery = {
     ...queryToAdd,
     refId,
     queryType: '',
