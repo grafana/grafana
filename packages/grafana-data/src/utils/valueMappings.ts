@@ -97,7 +97,11 @@ export enum LegacyMappingType {
   RangeToText = 2,
 }
 
-interface LegacyBaseMap {
+/**
+ * @deprecated use MappingType instead
+ * @internal
+ */
+export interface LegacyBaseMap {
   id: number; // this could/should just be the array index
   text: string; // the final display value
   type: LegacyMappingType;
