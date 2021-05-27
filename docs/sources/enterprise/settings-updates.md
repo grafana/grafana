@@ -11,7 +11,8 @@ weight = 500
 
 Settings updates at runtime allows you to update Grafana settings with no need to restart the instance.
 
-Those updates that happen at runtime are stored in the database and override settings from the other sources
+Those updates that happen at runtime are stored in the database and override
+[settings from the other sources](https://grafana.com/docs/grafana/latest/administration/configuration/)
 (arguments, environment variables, settings file, etc). Therefore, every time a specific setting key is removed at runtime,
 the value used for that key is the inherited one from the other sources in the reverse order of precedence 
 (`arguments > environment variables > settings file`), being the application default the value used when no one provided
