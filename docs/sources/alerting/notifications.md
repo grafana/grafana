@@ -89,7 +89,7 @@ Addresses | Email addresses to recipients. You can enter multiple email addresse
 
 ### Slack
 
-{{< imgbox max-width="40%" img="/img/docs/v4/slack_notification.png" caption="Alerting Slack Notification" >}}
+{{< figure class="float-right"  max-width="40%" src="/static/img/docs/v4/slack_notification.png" caption="Alerting Slack Notification" >}}
 
 To set up Slack, you need to configure an incoming Slack webhook URL. You can follow
 [Sending messages using Incoming Webhooks](https://api.slack.com/incoming-webhooks) on how to do that. If you want to include screenshots of the
@@ -120,9 +120,9 @@ Setting | Description
 Alert API URL | The API URL for your Opsgenie instance. This will normally be either `https://api.opsgenie.com` or, for EU customers, `https://api.eu.opsgenie.com`.
 API Key | The API Key as provided by Opsgenie for your configured Grafana integration.
 Override priority | Configures the alert priority using the `og_priority` tag. The `og_priority` tag must have one of the following values: `P1`, `P2`, `P3`, `P4`, or `P5`. Default is `False`.
-Send notification tags as | Specify how you would like [Notification Tags]({{< relref "create-alerts.md/#notifications" >}}) delivered to Opsgenie. 
+Send notification tags as | Specify how you would like [Notification Tags]({{< relref "create-alerts.md/#notifications" >}}) delivered to Opsgenie.
 
-> **Note:** When notification tags are sent as `Tags` they are concatenated into a string with a `key:value` format. 
+> **Note:** When notification tags are sent as `Tags` they are concatenated into a string with a `key:value` format.
 
 ### PagerDuty
 
@@ -162,7 +162,7 @@ API Token | Application token
 User key(s) | A comma-separated list of user keys
 Device(s) | A comma-separated list of devices
 Priority | The priority alerting nottifications are sent
-OK priority | The priority OK notifications are sent; if not set, then OK notifications are sent with the priority set for alerting notifications 
+OK priority | The priority OK notifications are sent; if not set, then OK notifications are sent with the priority set for alerting notifications
 Retry | How often (in seconds) the Pushover servers send the same notification to the user. (minimum 30 seconds)
 Expire | How many seconds your notification will continue to be retried for (maximum 86400 seconds)
 Alerting sound | The sound for alerting notifications
