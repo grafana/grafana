@@ -506,7 +506,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
       : await this.runRangeQuery(query, options as any).toPromise();
 
     const annotations: AnnotationEvent[] = [];
-    const splitKeys = tagKeys.split(',');
+    const splitKeys: string[] = tagKeys.split(',').filter((v: string) => v !== '');
 
     for (const frame of data) {
       const labels: { [key: string]: string } = {};
@@ -519,11 +519,15 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
       }
 
       const tags: string[] = [
-        ...new Set<string>(
-          splitKeys.reduce((acc: string[], key: string) => {
-            if (labels[key]) {
-              acc.push.apply(acc, [labels[key]]);
+        ...new Set(
+          Object.entries(labels).reduce((acc: string[], [key, val]) => {
+            if (val === '') {
+              return acc;
             }
+            if (splitKeys.length && !splitKeys.includes(key)) {
+              return acc;
+            }
+            acc.push.apply(acc, [val]);
             return acc;
           }, [])
         ),
