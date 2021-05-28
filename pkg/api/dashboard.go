@@ -51,8 +51,7 @@ func (hs *HTTPServer) TrimDashboard(c *models.ReqContext, cmd models.TrimDashboa
 	dash := cmd.Dashboard
 	meta := cmd.Meta
 
-	trimedResult := *dash
-	trimedResult, err = hs.LoadSchemaService.DashboardTrimDefaults(*dash)
+	trimedResult, err := hs.LoadSchemaService.DashboardTrimDefaults(*dash)
 	if err != nil {
 		return response.Error(500, "Error while trim default value from dashboard json", err)
 	}

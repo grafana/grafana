@@ -84,7 +84,7 @@ func TestAMConfigAccess(t *testing.T) {
 				desc:      "viewer request should fail",
 				url:       "http://viewer:viewer@%s/api/alertmanager/grafana/config/api/v1/alerts",
 				expStatus: http.StatusForbidden,
-				expBody:   `{"message": "Permission denied"}`,
+				expBody:   `{"message": "permission denied"}`,
 			},
 			{
 				desc:      "editor request should succeed",
@@ -146,7 +146,7 @@ func TestAMConfigAccess(t *testing.T) {
 				desc:      "viewer request should fail",
 				url:       "http://viewer:viewer@%s/api/alertmanager/grafana/api/v2/silences",
 				expStatus: http.StatusForbidden,
-				expBody:   `{"message": "Permission denied"}`,
+				expBody:   `{"message": "permission denied"}`,
 			},
 			{
 				desc:      "editor request should succeed",
@@ -252,7 +252,7 @@ func TestAMConfigAccess(t *testing.T) {
 				desc:      "viewer request should fail",
 				url:       "http://viewer:viewer@%s/api/alertmanager/grafana/api/v2/silence/%s",
 				expStatus: http.StatusForbidden,
-				expBody:   `{"message": "Permission denied"}`,
+				expBody:   `{"message": "permission denied"}`,
 			},
 			{
 				desc:      "editor request should succeed",
@@ -504,7 +504,7 @@ func TestRulerAccess(t *testing.T) {
 			desc:             "viewer request should fail",
 			url:              "http://viewer:viewer@%s/api/ruler/grafana/api/v1/rules/default",
 			expStatus:        http.StatusForbidden,
-			expectedResponse: `{"error":"user does not have permissions to edit the namespace", "message":"user does not have permissions to edit the namespace"}`,
+			expectedResponse: `{"message":"user does not have permissions to edit the namespace: user does not have permissions to edit the namespace"}`,
 		},
 		{
 			desc:             "editor request should succeed",
@@ -763,7 +763,7 @@ func TestAlertRuleCRUD(t *testing.T) {
 						Data:  []ngmodels.AlertQuery{},
 					},
 				},
-				expectedResponse: `{"error":"invalid alert rule: no queries or expressions are found", "message":"failed to update rule group"}`,
+				expectedResponse: `{"message":"failed to update rule group: invalid alert rule: no queries or expressions are found"}`,
 			},
 			{
 				desc:      "alert rule with empty title",
@@ -793,7 +793,7 @@ func TestAlertRuleCRUD(t *testing.T) {
 						},
 					},
 				},
-				expectedResponse: `{"error":"invalid alert rule: title is empty", "message":"failed to update rule group"}`,
+				expectedResponse: `{"message":"failed to update rule group: invalid alert rule: title is empty"}`,
 			},
 			{
 				desc:      "alert rule with too long name",
@@ -823,7 +823,7 @@ func TestAlertRuleCRUD(t *testing.T) {
 						},
 					},
 				},
-				expectedResponse: `{"error":"invalid alert rule: name length should not be greater than 190", "message":"failed to update rule group"}`,
+				expectedResponse: `{"message":"failed to update rule group: invalid alert rule: name length should not be greater than 190"}`,
 			},
 			{
 				desc:      "alert rule with too long rulegroup",
@@ -853,7 +853,7 @@ func TestAlertRuleCRUD(t *testing.T) {
 						},
 					},
 				},
-				expectedResponse: `{"error":"invalid alert rule: rule group name length should not be greater than 190", "message":"failed to update rule group"}`,
+				expectedResponse: `{"message":"failed to update rule group: invalid alert rule: rule group name length should not be greater than 190"}`,
 			},
 			{
 				desc:      "alert rule with invalid interval",
@@ -884,7 +884,7 @@ func TestAlertRuleCRUD(t *testing.T) {
 						},
 					},
 				},
-				expectedResponse: `{"error":"invalid alert rule: interval (1s) should be non-zero and divided exactly by scheduler interval: 10s", "message":"failed to update rule group"}`,
+				expectedResponse: `{"message":"failed to update rule group: invalid alert rule: interval (1s) should be non-zero and divided exactly by scheduler interval: 10s"}`,
 			},
 			{
 				desc:      "alert rule with unknown datasource",
@@ -914,7 +914,7 @@ func TestAlertRuleCRUD(t *testing.T) {
 						},
 					},
 				},
-				expectedResponse: `{"error":"invalid query A: data source not found: unknown", "message":"failed to validate alert rule AlwaysFiring"}`,
+				expectedResponse: `{"message":"failed to validate alert rule AlwaysFiring: invalid query A: data source not found: unknown"}`,
 			},
 			{
 				desc:      "alert rule with invalid condition",
@@ -944,7 +944,7 @@ func TestAlertRuleCRUD(t *testing.T) {
 						},
 					},
 				},
-				expectedResponse: `{"error":"condition B not found in any query or expression: it should be one of: [A]", "message":"failed to validate alert rule AlwaysFiring"}`,
+				expectedResponse: `{"message":"failed to validate alert rule AlwaysFiring: condition B not found in any query or expression: it should be one of: [A]"}`,
 			},
 		}
 
@@ -1233,7 +1233,7 @@ func TestAlertRuleCRUD(t *testing.T) {
 		require.NoError(t, err)
 
 		assert.Equal(t, http.StatusNotFound, resp.StatusCode)
-		require.JSONEq(t, `{"error":"failed to get alert rule unknown: could not find alert rule", "message": "failed to update rule group"}`, string(b))
+		require.JSONEq(t, `{"message":"failed to update rule group: failed to get alert rule unknown: could not find alert rule"}`, string(b))
 
 		// let's make sure that rule definitions are not affected by the failed POST request.
 		u = fmt.Sprintf("http://grafana:password@%s/api/ruler/grafana/api/v1/rules/default", grafanaListedAddr)
@@ -1412,7 +1412,7 @@ func TestAlertRuleCRUD(t *testing.T) {
 			require.NoError(t, err)
 
 			require.Equal(t, http.StatusNotFound, resp.StatusCode)
-			require.JSONEq(t, `{"error":"rule group not found under this namespace", "message": "failed to delete rule group"}`, string(b))
+			require.JSONEq(t, `{"message":"failed to delete rule group: rule group not found under this namespace"}`, string(b))
 		})
 
 		t.Run("succeed if the rule group name does exist", func(t *testing.T) {
@@ -1707,7 +1707,7 @@ func TestEval(t *testing.T) {
 			}
 			`,
 			expectedStatusCode: http.StatusBadRequest,
-			expectedResponse:   `{"error":"condition B not found in any query or expression: it should be one of: [A]","message":"invalid condition"}`,
+			expectedResponse:   `{"message":"invalid condition: condition B not found in any query or expression: it should be one of: [A]"}`,
 		},
 		{
 			desc: "unknown query datasource",
@@ -1732,7 +1732,7 @@ func TestEval(t *testing.T) {
 			}
 			`,
 			expectedStatusCode: http.StatusBadRequest,
-			expectedResponse:   `{"error":"invalid query A: data source not found: unknown","message":"invalid condition"}`,
+			expectedResponse:   `{"message":"invalid condition: invalid query A: data source not found: unknown"}`,
 		},
 	}
 
@@ -1888,7 +1888,7 @@ func TestEval(t *testing.T) {
 			}
 			`,
 			expectedStatusCode: http.StatusBadRequest,
-			expectedResponse:   `{"error":"invalid query A: data source not found: unknown","message":"invalid queries or expressions"}`,
+			expectedResponse:   `{"message":"invalid queries or expressions: invalid query A: data source not found: unknown"}`,
 		},
 	}
 

@@ -61,7 +61,7 @@ func TestAlertmanagerConfigurationIsTransactional(t *testing.T) {
 }
 `
 		resp := postRequest(t, alertConfigURL, payload, http.StatusBadRequest) // nolint
-		require.JSONEq(t, "{\"error\":\"alert validation error: token must be specified when using the Slack chat API\", \"message\":\"failed to save and apply Alertmanager configuration\"}", getBody(t, resp.Body))
+		require.JSONEq(t, "{\"message\":\"failed to save and apply Alertmanager configuration: alert validation error: token must be specified when using the Slack chat API\"}", getBody(t, resp.Body))
 
 		resp = getRequest(t, alertConfigURL, http.StatusOK) // nolint
 		require.JSONEq(t, defaultAlertmanagerConfigJSON, getBody(t, resp.Body))

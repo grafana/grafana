@@ -22,11 +22,14 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/pkg/errors"
 	"gopkg.in/macaron.v1"
 	"gopkg.in/yaml.v3"
 )
 
 var searchRegex = regexp.MustCompile(`\{(\w+)\}`)
+
+var NotImplementedResp = ErrResp(http.StatusNotImplemented, errors.New("endpoint not implemented"), "")
 
 func toMacaronPath(path string) string {
 	return string(searchRegex.ReplaceAllFunc([]byte(path), func(s []byte) []byte {
@@ -93,7 +96,7 @@ func (p *AlertingProxy) withReq(
 ) response.Response {
 	req, err := http.NewRequest(method, u.String(), body)
 	if err != nil {
-		return response.Error(400, err.Error(), nil)
+		return ErrResp(http.StatusBadRequest, err, "")
 	}
 	for h, v := range headers {
 		req.Header.Add(h, v)
@@ -116,17 +119,17 @@ func (p *AlertingProxy) withReq(
 				}
 			}
 		}
-		return response.Error(status, errMessage, nil)
+		return ErrResp(status, errors.New(errMessage), "")
 	}
 
 	t, err := extractor(resp)
 	if err != nil {
-		return response.Error(500, err.Error(), nil)
+		return ErrResp(http.StatusInternalServerError, err, "")
 	}
 
 	b, err := json.Marshal(t)
 	if err != nil {
-		return response.Error(500, err.Error(), nil)
+		return ErrResp(http.StatusInternalServerError, err, "")
 	}
 
 	return response.JSON(status, b)
@@ -222,7 +225,7 @@ func conditionEval(c *models.ReqContext, cmd ngmodels.EvalAlertConditionCommand,
 		Data:      cmd.Data,
 	}
 	if err := validateCondition(evalCond, c.SignedInUser, c.SkipCache, datasourceCache); err != nil {
-		return response.Error(400, "invalid condition", err)
+		return ErrResp(http.StatusBadRequest, err, "invalid condition")
 	}
 
 	now := cmd.Now
@@ -233,11 +236,19 @@ func conditionEval(c *models.ReqContext, cmd ngmodels.EvalAlertConditionCommand,
 	evaluator := eval.Evaluator{Cfg: cfg}
 	evalResults, err := evaluator.ConditionEval(&evalCond, now, dataService)
 	if err != nil {
-		return response.Error(http.StatusBadRequest, "Failed to evaluate conditions", err)
+		return ErrResp(http.StatusBadRequest, err, "Failed to evaluate conditions")
 	}
 
 	frame := evalResults.AsDataFrame()
 	return response.JSONStreaming(http.StatusOK, util.DynMap{
 		"instances": []*data.Frame{&frame},
 	})
+}
+
+// ErrorResp creates a response with a visible error
+func ErrResp(status int, err error, msg string, args ...interface{}) *response.NormalResponse {
+	if msg != "" {
+		err = errors.WithMessagef(err, msg, args...)
+	}
+	return response.Error(status, err.Error(), nil)
 }
