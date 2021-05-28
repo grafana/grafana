@@ -29,7 +29,7 @@ the dashboard, and will also be added as a required input when the dashboard is 
 
 To export a dashboard without the default values in order to reduce the exported JSON file size, check the toggle **Export with default values removed** option.
 
-During import, the removed default values are automatically added back to the dashboard.
+During import, the removed default values automatically added back to the dashboard.
 
 ## Import a dashboard
 
