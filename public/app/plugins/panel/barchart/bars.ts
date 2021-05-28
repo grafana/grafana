@@ -353,6 +353,10 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
   };
 
   return {
+    cursor: {
+      x: false,
+      y: false,
+    },
     // scale & axis opts
     xValues,
     xSplits,

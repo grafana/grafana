@@ -75,6 +75,8 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptions> = ({
 
   const config = getConfig(opts, theme);
 
+  builder.setCursor(config.cursor);
+
   builder.addHook('init', config.init);
   builder.addHook('drawClear', config.drawClear);
   builder.addHook('draw', config.draw);
