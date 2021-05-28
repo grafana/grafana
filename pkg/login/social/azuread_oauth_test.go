@@ -39,6 +39,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 				Name:              "My Name",
 				ID:                "1234",
 			},
+			settingAutoAssignOrgRole: "Viewer",
 			want: &BasicUserInfo{
 				Id:      "1234",
 				Name:    "My Name",
@@ -76,6 +77,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 				Name:              "My Name",
 				ID:                "1234",
 			},
+			settingAutoAssignOrgRole: "Viewer",
 			want: &BasicUserInfo{
 				Id:      "1234",
 				Name:    "My Name",
@@ -230,6 +232,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 				Name:              "My Name",
 				ID:                "1234",
 			},
+			settingAutoAssignOrgRole: "Viewer",
 			want: &BasicUserInfo{
 				Id:      "1234",
 				Name:    "My Name",

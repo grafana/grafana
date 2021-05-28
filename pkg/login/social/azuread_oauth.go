@@ -98,11 +98,7 @@ func extractEmail(claims azureClaims) string {
 
 func extractRole(claims azureClaims) models.RoleType {
 	if len(claims.Roles) == 0 {
-		if setting.AutoAssignOrgRole == "" {
-			return models.ROLE_VIEWER
-		} else {
-			return models.RoleType(setting.AutoAssignOrgRole)
-		}
+		return models.RoleType(setting.AutoAssignOrgRole)
 	}
 
 	roleOrder := []models.RoleType{
