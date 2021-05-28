@@ -1,4 +1,4 @@
-import { concat, find, flattenDeep, forEach, map } from 'lodash';
+import { concat, find, flattenDeep, forEach, get, map } from 'lodash';
 import { AnnotationEvent, dateTime, TimeSeries } from '@grafana/data';
 import { AzureLogsTableData, AzureLogsVariable } from '../types';
 import { AzureLogAnalyticsMetadata } from '../types/logAnalyticsMetadata';
@@ -146,6 +146,27 @@ export default class ResponseParser {
 
   static dateTimeToEpoch(dateTimeValue: any) {
     return dateTime(dateTimeValue).valueOf();
+  }
+
+  static parseSubscriptions(result: any): Array<{ text: string; value: string }> {
+    const list: Array<{ text: string; value: string }> = [];
+
+    if (!result) {
+      return list;
+    }
+
+    const valueFieldName = 'subscriptionId';
+    const textFieldName = 'displayName';
+    for (let i = 0; i < result.data.value.length; i++) {
+      if (!find(list, ['value', get(result.data.value[i], valueFieldName)])) {
+        list.push({
+          text: `${get(result.data.value[i], textFieldName)}`,
+          value: get(result.data.value[i], valueFieldName),
+        });
+      }
+    }
+
+    return list;
   }
 }
 

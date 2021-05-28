@@ -29,7 +29,7 @@ export const AzureCredentialsForm: FunctionComponent<Props> = (props: Props) => 
   const hasRequiredFields = isCredentialsComplete(credentials);
 
   const [subscriptions, setSubscriptions] = useState<Array<SelectableValue<string>>>([]);
-  const [loadSubscriptions, onLoadSubscriptions] = useReducer((val) => val + 1, 0);
+  const [loadSubscriptionsClicked, onLoadSubscriptions] = useReducer((val) => val + 1, 0);
   useEffect(() => {
     if (!getSubscriptions || !hasRequiredFields) {
       updateSubscriptions([]);
@@ -38,7 +38,7 @@ export const AzureCredentialsForm: FunctionComponent<Props> = (props: Props) => 
     let canceled = false;
     getSubscriptions().then((result) => {
       if (!canceled) {
-        updateSubscriptions(result);
+        updateSubscriptions(result, loadSubscriptionsClicked);
       }
     });
     return () => {
@@ -46,18 +46,18 @@ export const AzureCredentialsForm: FunctionComponent<Props> = (props: Props) => 
     };
     // This effect is intended to be called only once initially and on Load Subscriptions click
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loadSubscriptions]);
+  }, [loadSubscriptionsClicked]);
 
-  const updateSubscriptions = (received: Array<SelectableValue<string>>) => {
+  const updateSubscriptions = (received: Array<SelectableValue<string>>, autoSelect = false) => {
     setSubscriptions(received);
     if (getSubscriptions) {
-      if (!credentials.defaultSubscriptionId && received.length > 0) {
-        // Setting the default subscription if subscriptions received but no default subscription selected
+      if (autoSelect && !credentials.defaultSubscriptionId && received.length > 0) {
+        // Selecting the default subscription if subscriptions received but no default subscription selected
         onSubscriptionChange(received[0]);
       } else if (credentials.defaultSubscriptionId) {
         const found = received.find((opt) => opt.value === credentials.defaultSubscriptionId);
         if (!found) {
-          // Unsetting the default found if it isn't found among the received subscriptions
+          // Unselecting the default subscription if it isn't found among the received subscriptions
           onSubscriptionChange(undefined);
         }
       }

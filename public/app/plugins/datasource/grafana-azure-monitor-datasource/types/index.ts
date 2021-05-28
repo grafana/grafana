@@ -222,7 +222,7 @@ export interface AzureMonitorOption<T = string> {
 export interface AzureQueryEditorFieldProps {
   query: AzureMonitorQuery;
   datasource: Datasource;
-  subscriptionId: string;
+  subscriptionId?: string;
   variableOptionGroup: { label: string; options: AzureMonitorOption[] };
 
   onQueryChange: (newQuery: AzureMonitorQuery) => void;

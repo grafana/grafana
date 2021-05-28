@@ -20,7 +20,7 @@ interface BaseQueryEditorProps {
 
 const QueryEditor: React.FC<BaseQueryEditorProps> = ({ query, datasource, onChange }) => {
   const [errorMessage, setError] = useLastError();
-  const subscriptionId = query.subscription || datasource.azureMonitorDatasource.subscriptionId;
+  const subscriptionId = query.subscription || datasource.azureMonitorDatasource.defaultSubscriptionId;
   const variableOptionGroup = {
     label: 'Template Variables',
     options: datasource.getVariables().map((v) => ({ label: v, value: v })),
@@ -52,7 +52,7 @@ const QueryEditor: React.FC<BaseQueryEditorProps> = ({ query, datasource, onChan
 };
 
 interface EditorForQueryTypeProps extends BaseQueryEditorProps {
-  subscriptionId: string;
+  subscriptionId?: string;
   setError: (source: string, error: AzureMonitorErrorish | undefined) => void;
 }
 
