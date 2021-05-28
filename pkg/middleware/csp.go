@@ -46,7 +46,7 @@ func AddCSPHeader(cfg *setting.Cfg, logger log.Logger) macaron.Handler {
 
 		re := regexp.MustCompile(`^\w+:(//)?`)
 		rootURL := re.ReplaceAllString(cfg.AppURL, "")
-		val = strings.ReplaceAll(val, "$ROOT_URL", rootURL)
+		val = strings.ReplaceAll(val, "$ROOT_PATH", rootURL)
 		w.Header().Set("Content-Security-Policy", val)
 		ctx.RequestNonce = nonce
 		logger.Debug("Successfully generated CSP nonce", "nonce", nonce)
