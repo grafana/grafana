@@ -23,7 +23,7 @@ type AlertmanagerSrv struct {
 
 func (srv AlertmanagerSrv) RouteCreateSilence(c *models.ReqContext, postableSilence apimodels.PostableSilence) response.Response {
 	if !c.HasUserRole(models.ROLE_EDITOR) {
-		return ErrResp(http.StatusForbidden, errors.New("Permission denied"), "")
+		return ErrResp(http.StatusForbidden, errors.New("permission denied"), "")
 	}
 	silenceID, err := srv.am.CreateSilence(&postableSilence)
 	if err != nil {
@@ -47,7 +47,7 @@ func (srv AlertmanagerSrv) RouteDeleteAlertingConfig(c *models.ReqContext) respo
 
 func (srv AlertmanagerSrv) RouteDeleteSilence(c *models.ReqContext) response.Response {
 	if !c.HasUserRole(models.ROLE_EDITOR) {
-		return ErrResp(http.StatusForbidden, errors.New("Permission denied"), "")
+		return ErrResp(http.StatusForbidden, errors.New("permission denied"), "")
 	}
 	silenceID := c.Params(":SilenceId")
 	if err := srv.am.DeleteSilence(silenceID); err != nil {
@@ -180,7 +180,7 @@ func (srv AlertmanagerSrv) RouteGetSilences(c *models.ReqContext) response.Respo
 
 func (srv AlertmanagerSrv) RoutePostAlertingConfig(c *models.ReqContext, body apimodels.PostableUserConfig) response.Response {
 	if !c.HasUserRole(models.ROLE_EDITOR) {
-		return ErrResp(http.StatusForbidden, errors.New("Permission denied"), "")
+		return ErrResp(http.StatusForbidden, errors.New("permission denied"), "")
 	}
 
 	// Get the last known working configuration

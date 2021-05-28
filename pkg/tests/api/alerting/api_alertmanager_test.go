@@ -84,7 +84,7 @@ func TestAMConfigAccess(t *testing.T) {
 				desc:      "viewer request should fail",
 				url:       "http://viewer:viewer@%s/api/alertmanager/grafana/config/api/v1/alerts",
 				expStatus: http.StatusForbidden,
-				expBody:   `{"message": "Permission denied"}`,
+				expBody:   `{"message": "permission denied"}`,
 			},
 			{
 				desc:      "editor request should succeed",
@@ -146,7 +146,7 @@ func TestAMConfigAccess(t *testing.T) {
 				desc:      "viewer request should fail",
 				url:       "http://viewer:viewer@%s/api/alertmanager/grafana/api/v2/silences",
 				expStatus: http.StatusForbidden,
-				expBody:   `{"message": "Permission denied"}`,
+				expBody:   `{"message": "permission denied"}`,
 			},
 			{
 				desc:      "editor request should succeed",
@@ -252,7 +252,7 @@ func TestAMConfigAccess(t *testing.T) {
 				desc:      "viewer request should fail",
 				url:       "http://viewer:viewer@%s/api/alertmanager/grafana/api/v2/silence/%s",
 				expStatus: http.StatusForbidden,
-				expBody:   `{"message": "Permission denied"}`,
+				expBody:   `{"message": "permission denied"}`,
 			},
 			{
 				desc:      "editor request should succeed",

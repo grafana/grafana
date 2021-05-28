@@ -108,7 +108,6 @@ func (r *ForkedRuler) RoutePostNameRulesConfig(ctx *models.ReqContext, conf apim
 
 	if backendType != payloadType {
 		return ErrResp(400, fmt.Errorf("unexpected backend type (%v) vs payload type (%v)", backendType, payloadType), "")
-
 	}
 
 	switch backendType {
