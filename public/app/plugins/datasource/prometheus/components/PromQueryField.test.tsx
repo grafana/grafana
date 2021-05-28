@@ -3,7 +3,7 @@ import RCCascader from 'rc-cascader';
 import React from 'react';
 import PromQlLanguageProvider from '../language_provider';
 import PromQueryField from './PromQueryField';
-import { DataSourceInstanceSettings } from '@grafana/data';
+import { DataSourceInstanceSettings, PanelData, LoadingState, DataFrame } from '@grafana/data';
 import { PromOptions } from '../types';
 import { render, screen } from '@testing-library/react';
 
@@ -21,6 +21,7 @@ describe('PromQueryField', () => {
         getLabelKeys: () => [],
         metrics: [],
       },
+      getInitHints: () => [],
     } as unknown) as DataSourceInstanceSettings<PromOptions>;
 
     const queryField = render(
@@ -45,6 +46,7 @@ describe('PromQueryField', () => {
         getLabelKeys: () => [],
         metrics: [],
       },
+      getInitHints: () => [],
     } as unknown) as DataSourceInstanceSettings<PromOptions>;
     const queryField = render(
       <PromQueryField
@@ -61,6 +63,60 @@ describe('PromQueryField', () => {
     expect(bcButton).toBeDisabled();
   });
 
+  it('renders an initial hint if no data and initial hint provided', () => {
+    const datasource = ({
+      languageProvider: {
+        start: () => Promise.resolve([]),
+        syntax: () => {},
+        getLabelKeys: () => [],
+        metrics: [],
+      },
+      getInitHints: () => [{ label: 'Initial hint', type: 'INFO' }],
+    } as unknown) as DataSourceInstanceSettings<PromOptions>;
+    render(
+      <PromQueryField
+        // @ts-ignore
+        datasource={{ ...datasource, lookupsDisabled: true }}
+        query={{ expr: '', refId: '' }}
+        onRunQuery={() => {}}
+        onChange={() => {}}
+        history={[]}
+      />
+    );
+    expect(screen.getByText('Initial hint')).toBeInTheDocument();
+  });
+
+  it('renders query hint if data, query hint and initial hint provided', () => {
+    const datasource = ({
+      languageProvider: {
+        start: () => Promise.resolve([]),
+        syntax: () => {},
+        getLabelKeys: () => [],
+        metrics: [],
+      },
+      getInitHints: () => [{ label: 'Initial hint', type: 'INFO' }],
+      getQueryHints: () => [{ label: 'Query hint', type: 'INFO' }],
+    } as unknown) as DataSourceInstanceSettings<PromOptions>;
+    render(
+      <PromQueryField
+        // @ts-ignore
+        datasource={{ ...datasource }}
+        query={{ expr: '', refId: '' }}
+        onRunQuery={() => {}}
+        onChange={() => {}}
+        history={[]}
+        data={
+          {
+            series: [{ name: 'test name' }] as DataFrame[],
+            state: LoadingState.Done,
+          } as PanelData
+        }
+      />
+    );
+    expect(screen.getByText('Query hint')).toBeInTheDocument();
+    expect(screen.queryByText('Initial hint')).not.toBeInTheDocument();
+  });
+
   it('refreshes metrics when the data source changes', async () => {
     const defaultProps = {
       query: { expr: '', refId: '' },
@@ -74,6 +130,7 @@ describe('PromQueryField', () => {
         // @ts-ignore
         datasource={{
           languageProvider: makeLanguageProvider({ metrics: [metrics] }),
+          getInitHints: () => [],
         }}
         {...defaultProps}
       />

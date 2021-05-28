@@ -12,6 +12,7 @@ import { testIds as regularTestIds } from './PromQueryEditor';
 function setup(app: CoreApp): RenderResult {
   const dataSource = ({
     createQuery: jest.fn((q) => q),
+    getInitHints: () => [],
     getPrometheusTime: jest.fn((date, roundup) => 123),
     languageProvider: {
       start: () => Promise.resolve([]),

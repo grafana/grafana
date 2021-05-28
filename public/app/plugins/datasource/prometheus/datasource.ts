@@ -24,7 +24,7 @@ import { catchError, filter, map, tap } from 'rxjs/operators';
 import addLabelToQuery from './add_label_to_query';
 import PrometheusLanguageProvider from './language_provider';
 import { expandRecordingRules } from './language_utils';
-import { getQueryHints } from './query_hints';
+import { getQueryHints, getInitHints } from './query_hints';
 import { getOriginalMetricName, renderTemplate, transform } from './result_transformer';
 import {
   ExemplarTraceIdDestination,
@@ -744,6 +744,10 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
 
   getQueryHints(query: PromQuery, result: any[]) {
     return getQueryHints(query.expr ?? '', result, this);
+  }
+
+  getInitHints() {
+    return getInitHints(this);
   }
 
   async loadRules() {
