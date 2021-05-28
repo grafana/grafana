@@ -8,7 +8,7 @@ weight = 850
 
 The pie chart displays reduced series, or values in a series, from one or more queries, as they relate to each other, in the form of slices of a pie. The arc length, area and central angle of a slice are all proportional to the slices value, as it relates to the sum of all values. This type of chart is best used when you want a quick comparison of a small set of values in an aesthetically pleasing form.
 
-![Pie chart panel](/img/docs/pie-chart-panel/pie-chart-panel-7-5.png)
+![Pie chart panel](/static/img/docs/pie-chart-panel/pie-chart-panel-7-5.png)
 
 ## Data and field options
 
@@ -51,11 +51,11 @@ Select the pie chart display style.
 
 #### Pie
 
-![Pie type chart](/img/docs/pie-chart-panel/pie-type-chart-7-5.png)
+![Pie type chart](/static/img/docs/pie-chart-panel/pie-type-chart-7-5.png)
 
 #### Donut
 
-![Donut type chart](/img/docs/pie-chart-panel/donut-type-chart-7-5.png)
+![Donut type chart](/static/img/docs/pie-chart-panel/donut-type-chart-7-5.png)
 
 ### Labels
 
@@ -69,7 +69,7 @@ Labels are displayed in white over the body of the chart. You might need to sele
 
 The following example shows a pie chart with **Name** and **Percent** labels displayed.
 
-![Pie chart labels](/img/docs/pie-chart-panel/pie-chart-labels-7-5.png)
+![Pie chart labels](/static/img/docs/pie-chart-panel/pie-chart-labels-7-5.png)
 
 {{< docs/shared "visualizations/tooltip-mode.md" >}}
 
