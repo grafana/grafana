@@ -4,7 +4,6 @@ import {
   DataFrame,
   formattedValueToString,
   getFieldColorModeForField,
-  getFieldDisplayName,
   getFieldSeriesColor,
   GrafanaTheme2,
 } from '@grafana/data';
@@ -152,8 +151,6 @@ const prepConfig = (frame: DataFrame, theme: GrafanaTheme2) => {
         fieldIndex: i,
         frameIndex: 0,
       },
-      fieldName: getFieldDisplayName(field, frame),
-      hideInLegend: customConfig.hideFrom?.legend,
     });
   }
 
