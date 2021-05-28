@@ -56,6 +56,7 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
     }
 
     return () => {
+      setCoords(null);
       if (plotCtx && plotCtx.plot) {
         plotCtx.plot.over.removeEventListener('mouseleave', plotMouseLeave);
       }
