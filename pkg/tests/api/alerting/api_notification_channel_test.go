@@ -1454,7 +1454,7 @@ var expNotifications = map[string][]string{
 			  "startsAt": "%s",
 			  "endsAt": "0001-01-01T00:00:00Z",
 			  "generatorURL": "",
-			  "fingerprint": "29c4faeb6c02647a",
+			  "fingerprint": "7611eef9e67f6e50",
 			  "silenceURL": "http://localhost:3000/alerting/silence/new?alertmanager=grafana&matchers=alertname%%3DWebhookAlert",
 			  "dashboardURL": "",
 			  "panelURL": ""
