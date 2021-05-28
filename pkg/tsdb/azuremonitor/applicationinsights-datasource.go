@@ -16,6 +16,8 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/api/pluginproxy"
+	"github.com/grafana/grafana/pkg/components/securejsondata"
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
@@ -26,8 +28,7 @@ import (
 
 // ApplicationInsightsDatasource calls the application insights query API.
 type ApplicationInsightsDatasource struct {
-	httpClient    *http.Client
-	dsInfo        *models.DataSource
+	dsInfo        datasourceInfo
 	pluginManager plugins.Manager
 	cfg           *setting.Cfg
 }
@@ -36,7 +37,8 @@ type ApplicationInsightsDatasource struct {
 // needed to make a metrics query to Application Insights, and the information
 // used to parse the response.
 type ApplicationInsightsQuery struct {
-	RefID string
+	RefID     string
+	TimeRange backend.TimeRange
 
 	// Text based raw query options.
 	ApiURL string
@@ -117,6 +119,7 @@ func (e *ApplicationInsightsDatasource) buildQueries(queries []backend.DataQuery
 		}
 		applicationInsightsQueries = append(applicationInsightsQueries, &ApplicationInsightsQuery{
 			RefID:       query.RefID,
+			TimeRange:   query.TimeRange,
 			ApiURL:      azureURL,
 			Params:      params,
 			Alias:       insightsJSONModel.Alias,
@@ -145,8 +148,12 @@ func (e *ApplicationInsightsDatasource) executeQuery(ctx context.Context, query 
 
 	span, ctx := opentracing.StartSpanFromContext(ctx, "application insights query")
 	span.SetTag("target", query.Target)
-	span.SetTag("datasource_id", e.dsInfo.Id)
-	span.SetTag("org_id", e.dsInfo.OrgId)
+	// TODO: Verify if we can set this as nanosecods (before was ms)
+	span.SetTag("from", query.TimeRange.From.UTC().UnixNano())
+	span.SetTag("until", query.TimeRange.To.UTC().UnixNano())
+	span.SetTag("datasource_id", e.dsInfo.DatasourceID)
+	// TODO: Verify if it's okay to remove OrgId (value: 1)
+	// span.SetTag("org_id", e.dsInfo.OrgId)
 
 	defer span.Finish()
 
@@ -160,7 +167,7 @@ func (e *ApplicationInsightsDatasource) executeQuery(ctx context.Context, query 
 	}
 
 	azlog.Debug("ApplicationInsights", "Request URL", req.URL.String())
-	res, err := ctxhttp.Do(ctx, e.httpClient, req)
+	res, err := ctxhttp.Do(ctx, e.dsInfo.HTTPClient, req)
 	if err != nil {
 		queryResult.Error = err
 		return queryResult, nil
@@ -199,9 +206,9 @@ func (e *ApplicationInsightsDatasource) executeQuery(ctx context.Context, query 
 	return queryResult, nil
 }
 
-func (e *ApplicationInsightsDatasource) createRequest(ctx context.Context, dsInfo *models.DataSource) (*http.Request, error) {
+func (e *ApplicationInsightsDatasource) createRequest(ctx context.Context, dsInfo datasourceInfo) (*http.Request, error) {
 	// find plugin
-	plugin := e.pluginManager.GetDataSource(dsInfo.Type)
+	plugin := e.pluginManager.GetDataSource(dsName)
 	if plugin == nil {
 		return nil, errors.New("unable to find datasource plugin Azure Application Insights")
 	}
@@ -211,10 +218,9 @@ func (e *ApplicationInsightsDatasource) createRequest(ctx context.Context, dsInf
 		return nil, err
 	}
 
-	appInsightsAppID := dsInfo.JsonData.Get("appInsightsAppId").MustString()
-	proxyPass := fmt.Sprintf("%s/v1/apps/%s", routeName, appInsightsAppID)
+	appInsightsAppID := dsInfo.AppInsightsAppId
 
-	u, err := url.Parse(dsInfo.Url)
+	u, err := url.Parse(dsInfo.URL)
 	if err != nil {
 		return nil, err
 	}
@@ -226,13 +232,18 @@ func (e *ApplicationInsightsDatasource) createRequest(ctx context.Context, dsInf
 		return nil, errutil.Wrap("Failed to create request", err)
 	}
 
-	pluginproxy.ApplyRoute(ctx, req, proxyPass, appInsightsRoute, dsInfo, e.cfg)
+	// TODO: Verify if it's a better way to do this proxy
+	proxyPass := fmt.Sprintf("%s/v1/apps/%s", routeName, appInsightsAppID)
+	pluginproxy.ApplyRoute(ctx, req, proxyPass, appInsightsRoute, &models.DataSource{
+		JsonData:       simplejson.NewFromAny(dsInfo.JSONData),
+		SecureJsonData: securejsondata.GetEncryptedJsonData(dsInfo.DecryptedSecureJSONData),
+	}, e.cfg)
 
 	return req, nil
 }
 
 func (e *ApplicationInsightsDatasource) getPluginRoute(plugin *plugins.DataSourcePlugin) (*plugins.AppPluginRoute, string, error) {
-	cloud, err := getAzureCloud(e.cfg, e.dsInfo.JsonData)
+	cloud, err := getAzureCloud(e.cfg, e.dsInfo)
 	if err != nil {
 		return nil, "", err
 	}

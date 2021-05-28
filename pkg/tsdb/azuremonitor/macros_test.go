@@ -7,7 +7,6 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/stretchr/testify/require"
 )
 
@@ -126,7 +125,7 @@ func TestAzureLogAnalyticsMacros(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			defaultTimeField := "TimeGenerated"
-			rawQuery, err := KqlInterpolate(tt.query, &models.DataSource{}, tt.kql, defaultTimeField)
+			rawQuery, err := KqlInterpolate(tt.query, tt.kql, defaultTimeField)
 			tt.Err(t, err)
 			if diff := cmp.Diff(tt.expected, rawQuery, cmpopts.EquateNaNs()); diff != "" {
 				t.Errorf("Result mismatch (-want +got):\n%s", diff)

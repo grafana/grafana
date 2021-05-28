@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/api/pluginproxy"
+	"github.com/grafana/grafana/pkg/components/securejsondata"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -27,8 +28,7 @@ import (
 
 // AzureLogAnalyticsDatasource calls the Azure Log Analytics API's
 type AzureLogAnalyticsDatasource struct {
-	httpClient    *http.Client
-	dsInfo        *models.DataSource
+	dsInfo        datasourceInfo
 	pluginManager plugins.Manager
 	cfg           *setting.Cfg
 }
@@ -108,8 +108,7 @@ func (e *AzureLogAnalyticsDatasource) buildQueries(queries []backend.DataQuery) 
 		apiURL := getApiURL(queryJSONModel)
 
 		params := url.Values{}
-		// TODO: Verify e.dsInfo is populated
-		rawQuery, err := KqlInterpolate(query, e.dsInfo, azureLogAnalyticsTarget.Query, "TimeGenerated")
+		rawQuery, err := KqlInterpolate(query, azureLogAnalyticsTarget.Query, "TimeGenerated")
 		if err != nil {
 			return nil, err
 		}
@@ -156,11 +155,12 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *A
 
 	span, ctx := opentracing.StartSpanFromContext(ctx, "azure log analytics query")
 	span.SetTag("target", query.Target)
-	// TODO: Check that format is the same
-	span.SetTag("from", query.TimeRange.From.String())
-	span.SetTag("until", query.TimeRange.To.String())
-	span.SetTag("datasource_id", e.dsInfo.Id)
-	span.SetTag("org_id", e.dsInfo.OrgId)
+	// TODO: Verify if we can set this as nanosecods (before was ms)
+	span.SetTag("from", query.TimeRange.From.UTC().UnixNano())
+	span.SetTag("until", query.TimeRange.To.UTC().UnixNano())
+	span.SetTag("datasource_id", e.dsInfo.DatasourceID)
+	// TODO: Verify if it's okay to remove OrgId (value: 1)
+	// span.SetTag("org_id", e.dsInfo.OrgId)
 
 	defer span.Finish()
 
@@ -172,7 +172,7 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *A
 	}
 
 	azlog.Debug("AzureLogAnalytics", "Request ApiURL", req.URL.String())
-	res, err := ctxhttp.Do(ctx, e.httpClient, req)
+	res, err := ctxhttp.Do(ctx, e.dsInfo.HTTPClient, req)
 	if err != nil {
 		return queryResultErrorWithExecuted(err)
 	}
@@ -221,8 +221,19 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *A
 	return queryResult
 }
 
-func (e *AzureLogAnalyticsDatasource) createRequest(ctx context.Context, dsInfo *models.DataSource) (*http.Request, error) {
-	u, err := url.Parse(dsInfo.Url)
+func (e *AzureLogAnalyticsDatasource) createRequest(ctx context.Context, dsInfo datasourceInfo) (*http.Request, error) {
+	// find plugin
+	plugin := e.pluginManager.GetDataSource(dsName)
+	if plugin == nil {
+		return nil, errors.New("unable to find datasource plugin Azure Monitor")
+	}
+
+	logAnalyticsRoute, routeName, err := e.getPluginRoute(plugin)
+	if err != nil {
+		return nil, err
+	}
+
+	u, err := url.Parse(dsInfo.URL)
 	if err != nil {
 		return nil, err
 	}
@@ -236,24 +247,17 @@ func (e *AzureLogAnalyticsDatasource) createRequest(ctx context.Context, dsInfo 
 
 	req.Header.Set("Content-Type", "application/json")
 
-	// find plugin
-	plugin := e.pluginManager.GetDataSource(dsInfo.Type)
-	if plugin == nil {
-		return nil, errors.New("unable to find datasource plugin Azure Monitor")
-	}
-
-	logAnalyticsRoute, routeName, err := e.getPluginRoute(plugin)
-	if err != nil {
-		return nil, err
-	}
-
-	pluginproxy.ApplyRoute(ctx, req, routeName, logAnalyticsRoute, dsInfo, e.cfg)
+	// TODO: Verify if it's a better way to do this proxy
+	pluginproxy.ApplyRoute(ctx, req, routeName, logAnalyticsRoute, &models.DataSource{
+		JsonData:       simplejson.NewFromAny(dsInfo.JSONData),
+		SecureJsonData: securejsondata.GetEncryptedJsonData(dsInfo.DecryptedSecureJSONData),
+	}, e.cfg)
 
 	return req, nil
 }
 
 func (e *AzureLogAnalyticsDatasource) getPluginRoute(plugin *plugins.DataSourcePlugin) (*plugins.AppPluginRoute, string, error) {
-	cloud, err := getAzureCloud(e.cfg, e.dsInfo.JsonData)
+	cloud, err := getAzureCloud(e.cfg, e.dsInfo)
 	if err != nil {
 		return nil, "", err
 	}

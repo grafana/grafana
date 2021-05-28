@@ -8,8 +8,6 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/require"
@@ -201,11 +199,9 @@ func TestAppInsightsPluginRoutes(t *testing.T) {
 			name: "plugin proxy route for the Azure public cloud",
 			datasource: &ApplicationInsightsDatasource{
 				cfg: cfg,
-				dsInfo: &models.DataSource{
-					JsonData: simplejson.NewFromAny(map[string]interface{}{
-						"azureAuthType": AzureAuthClientSecret,
-						"cloudName":     "azuremonitor",
-					}),
+				dsInfo: datasourceInfo{
+					AzureAuthType: AzureAuthClientSecret,
+					CloudName:     "azuremonitor",
 				},
 			},
 			expectedRouteName: "appinsights",
@@ -216,11 +212,9 @@ func TestAppInsightsPluginRoutes(t *testing.T) {
 			name: "plugin proxy route for the Azure China cloud",
 			datasource: &ApplicationInsightsDatasource{
 				cfg: cfg,
-				dsInfo: &models.DataSource{
-					JsonData: simplejson.NewFromAny(map[string]interface{}{
-						"azureAuthType": AzureAuthClientSecret,
-						"cloudName":     "chinaazuremonitor",
-					}),
+				dsInfo: datasourceInfo{
+					AzureAuthType: AzureAuthClientSecret,
+					CloudName:     "chinaazuremonitor",
 				},
 			},
 			expectedRouteName: "chinaappinsights",

@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/api/pluginproxy"
+	"github.com/grafana/grafana/pkg/components/securejsondata"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -26,8 +27,7 @@ import (
 
 // AzureResourceGraphDatasource calls the Azure Resource Graph API's
 type AzureResourceGraphDatasource struct {
-	httpClient    *http.Client
-	dsInfo        *models.DataSource
+	dsInfo        datasourceInfo
 	pluginManager plugins.Manager
 	cfg           *setting.Cfg
 }
@@ -50,14 +50,14 @@ const argQueryProviderName = "/providers/Microsoft.ResourceGraph/resources"
 // 1. builds the AzureMonitor url and querystring for each query
 // 2. executes each query by calling the Azure Monitor API
 // 3. parses the responses for each query into the timeseries format
-func (e *AzureResourceGraphDatasource) executeTimeSeriesQuery(ctx context.Context, originalQueries []backend.DataQuery) (backend.QueryDataResponse, error) {
-	result := backend.QueryDataResponse{
+func (e *AzureResourceGraphDatasource) executeTimeSeriesQuery(ctx context.Context, originalQueries []backend.DataQuery) (*backend.QueryDataResponse, error) {
+	result := &backend.QueryDataResponse{
 		Responses: map[string]backend.DataResponse{},
 	}
 
 	queries, err := e.buildQueries(originalQueries)
 	if err != nil {
-		return backend.QueryDataResponse{}, err
+		return nil, err
 	}
 
 	for _, query := range queries {
@@ -85,8 +85,7 @@ func (e *AzureResourceGraphDatasource) buildQueries(queries []backend.DataQuery)
 			resultFormat = "table"
 		}
 
-		// TODO: Verify e.dsInfo is populated
-		interpolatedQuery, err := KqlInterpolate(query, e.dsInfo, azureResourceGraphTarget.Query)
+		interpolatedQuery, err := KqlInterpolate(query, azureResourceGraphTarget.Query)
 
 		if err != nil {
 			return nil, err
@@ -152,11 +151,12 @@ func (e *AzureResourceGraphDatasource) executeQuery(ctx context.Context, query *
 
 	span, ctx := opentracing.StartSpanFromContext(ctx, "azure resource graph query")
 	span.SetTag("interpolated_query", query.InterpolatedQuery)
-	// TODO: Check that format is the same
-	span.SetTag("from", query.TimeRange.From.String())
-	span.SetTag("until", query.TimeRange.To.String())
-	span.SetTag("datasource_id", e.dsInfo.Id)
-	span.SetTag("org_id", e.dsInfo.OrgId)
+	// TODO: Verify if we can set this as nanosecods (before was ms)
+	span.SetTag("from", query.TimeRange.From.UTC().UnixNano())
+	span.SetTag("until", query.TimeRange.To.UTC().UnixNano())
+	span.SetTag("datasource_id", e.dsInfo.DatasourceID)
+	// TODO: Verify if it's okay to remove OrgId (value: 1)
+	// span.SetTag("org_id", e.dsInfo.OrgId)
 
 	defer span.Finish()
 
@@ -168,7 +168,7 @@ func (e *AzureResourceGraphDatasource) executeQuery(ctx context.Context, query *
 	}
 
 	azlog.Debug("AzureResourceGraph", "Request ApiURL", req.URL.String())
-	res, err := ctxhttp.Do(ctx, e.httpClient, req)
+	res, err := ctxhttp.Do(ctx, e.dsInfo.HTTPClient, req)
 	if err != nil {
 		return queryResultErrorWithExecuted(err)
 	}
@@ -191,8 +191,19 @@ func (e *AzureResourceGraphDatasource) executeQuery(ctx context.Context, query *
 	return queryResult
 }
 
-func (e *AzureResourceGraphDatasource) createRequest(ctx context.Context, dsInfo *models.DataSource, reqBody []byte) (*http.Request, error) {
-	u, err := url.Parse(dsInfo.Url)
+func (e *AzureResourceGraphDatasource) createRequest(ctx context.Context, dsInfo datasourceInfo, reqBody []byte) (*http.Request, error) {
+	// find plugin
+	plugin := e.pluginManager.GetDataSource(dsName)
+	if plugin == nil {
+		return nil, errors.New("unable to find datasource plugin Azure Monitor")
+	}
+
+	argRoute, routeName, err := e.getPluginRoute(plugin)
+	if err != nil {
+		return nil, err
+	}
+
+	u, err := url.Parse(dsInfo.URL)
 	if err != nil {
 		return nil, err
 	}
@@ -206,24 +217,17 @@ func (e *AzureResourceGraphDatasource) createRequest(ctx context.Context, dsInfo
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("User-Agent", fmt.Sprintf("Grafana/%s", setting.BuildVersion))
 
-	// find plugin
-	plugin := e.pluginManager.GetDataSource(dsInfo.Type)
-	if plugin == nil {
-		return nil, errors.New("unable to find datasource plugin Azure Monitor")
-	}
-
-	argRoute, routeName, err := e.getPluginRoute(plugin)
-	if err != nil {
-		return nil, err
-	}
-
-	pluginproxy.ApplyRoute(ctx, req, routeName, argRoute, dsInfo, e.cfg)
+	// TODO: Verify if it's a better way to do this proxy
+	pluginproxy.ApplyRoute(ctx, req, routeName, argRoute, &models.DataSource{
+		JsonData:       simplejson.NewFromAny(dsInfo.JSONData),
+		SecureJsonData: securejsondata.GetEncryptedJsonData(dsInfo.DecryptedSecureJSONData),
+	}, e.cfg)
 
 	return req, nil
 }
 
 func (e *AzureResourceGraphDatasource) getPluginRoute(plugin *plugins.DataSourcePlugin) (*plugins.AppPluginRoute, string, error) {
-	cloud, err := getAzureCloud(e.cfg, e.dsInfo.JsonData)
+	cloud, err := getAzureCloud(e.cfg, e.dsInfo)
 	if err != nil {
 		return nil, "", err
 	}

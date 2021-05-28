@@ -14,17 +14,14 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/stretchr/testify/require"
 	ptr "github.com/xorcare/pointer"
 )
 
 func TestAzureMonitorBuildQueries(t *testing.T) {
 	datasource := &AzureMonitorDatasource{
-		dsInfo: &models.DataSource{
-			JsonData: simplejson.NewFromAny(map[string]interface{}{
-				"subscriptionId": "default-subscription",
-			}),
+		dsInfo: datasourceInfo{
+			SubscriptionId: "default-subscription",
 		},
 	}
 	fromStart := time.Date(2018, 3, 15, 13, 0, 0, 0, time.UTC).In(time.Local)
