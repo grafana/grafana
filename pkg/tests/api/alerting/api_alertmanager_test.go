@@ -1613,7 +1613,7 @@ func TestEval(t *testing.T) {
 					  "Alerting"
 					],
 					[
-					  ""
+					  "[ var='A' labels={} value=1 ]"
 					]
 				  ]
 				}
@@ -1674,7 +1674,7 @@ func TestEval(t *testing.T) {
 					  "Normal"
 					],
 					[
-					  ""
+					  "[ var='A' labels={} value=0 ]"
 					]
 				  ]
 				}
