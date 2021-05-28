@@ -31,25 +31,25 @@ Grafana automatically assigns Y-axis to the series. When there are two or more s
 
 Display all Y-axes on the left side.
 
-![Left Y-axis example](/img/docs/time-series-panel/axis-placement-left-7-4.png)
+![Left Y-axis example](/static/img/docs/time-series-panel/axis-placement-left-7-4.png)
 
 ### Right
 
 Display all Y-axes on the right side.
 
-![Right Y-axis example](/img/docs/time-series-panel/axis-placement-right-7-4.png)
+![Right Y-axis example](/static/img/docs/time-series-panel/axis-placement-right-7-4.png)
 
 ### Hidden
 
 Hide the Y-axes.
 
-![Hidden Y-axis example](/img/docs/time-series-panel/axis-placement-hidden-7-4.png)
+![Hidden Y-axis example](/static/img/docs/time-series-panel/axis-placement-hidden-7-4.png)
 
 ## Label
 
 Set a Y-axis text label.
 
-![Label example](/img/docs/time-series-panel/label-example-7-4.png)
+![Label example](/static/img/docs/time-series-panel/label-example-7-4.png)
 
 If you have more than one Y-axis, then you can give assign different labels in the Override tab.
 
@@ -67,7 +67,7 @@ Set a **Soft min** or **soft max** option for better control of Y-axis limits. B
 
 You can set standard min/max options to define hard limits of the Y-axis. For more information, refer to [Standard field options]({{< relref "../../standard-options.md#max" >}}).
 
-![Label example](/img/docs/time-series-panel/axis-soft-min-max-7-4.png)
+![Label example](/static/img/docs/time-series-panel/axis-soft-min-max-7-4.png)
 
 ## Scale
 
