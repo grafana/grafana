@@ -12,7 +12,6 @@ import {
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { FieldLinkList, Portal, UPlotConfigBuilder, useStyles } from '@grafana/ui';
-import { sample } from 'lodash';
 import React, { useCallback, useRef, useState } from 'react';
 import { usePopper } from 'react-popper';
 
@@ -53,11 +52,7 @@ export const ExemplarMarker: React.FC<ExemplarMarkerProps> = ({
         d="m2.35672,4.2425l0,2.357l1.88558,0l0,-2.357l2.3572,0l0,-1.88558l-2.3572,0l0,-2.35692l-1.88558,0l0,2.35692l-2.35672,0l0,1.88558l2.35672,0z"
       />,
     ];
-
-    if (!symbols[dataFrameFieldIndex.frameIndex]) {
-      return sample(symbols);
-    }
-    return symbols[dataFrameFieldIndex.frameIndex];
+    return symbols[dataFrameFieldIndex.frameIndex % symbols.length];
   };
 
   const onMouseEnter = useCallback(() => {
