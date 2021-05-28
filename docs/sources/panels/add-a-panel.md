@@ -43,7 +43,7 @@ While not required, most visualizations need some adjustment before they properl
 - [Thresholds]({{< relref "./thresholds.md" >}})
 - [Value mappings]({{< relref "./value-mappings.md" >}})
 - [Data links]({{< relref "../linking/data-links.md" >}})
-- [Override fields]({{< relref "field-options/configure-specific-fields.md" >}})
+- [Field overrides]({{< relref "./field-overrides.md" >}})
 
 ## 5. Apply changes and save
 

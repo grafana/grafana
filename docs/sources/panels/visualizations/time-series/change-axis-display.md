@@ -12,11 +12,6 @@ This section explains how to use Time series field options to control the displa
 
 Use the following field settings to refine how your axes display.
 
-For more information about applying these options, refer to:
-
-- [Configure all fields]({{< relref "../../field-options/configure-all-fields.md" >}})
-- [Configure specific fields]({{< relref "../../field-options/configure-specific-fields.md" >}})
-
 Some field options will not affect the visualization until you click outside of the field option box you are editing or press Enter.
 
 ## Placement

@@ -12,8 +12,7 @@ The Stat panel shows a one large stat value with an optional graph sparkline. Yo
 
 {{< figure src="/static/img/docs/v66/stat_panel_dark3.png" max-width="1025px" caption="Stat panel" >}}
 
-> **Note:** This panel replaces the Singlestat panel, which was deprecated in Grafana 7.0.
-
+> **Note:** This panel replaces the Singlestat panel, which was deprecated in Grafana 7.0 and removed in Grafana 8.0.
 
 By default, the Stat panel displays one of the following:
 
@@ -31,7 +30,7 @@ Example screenshot:
 Stat visualizations allow you to apply:
 
 - [Data transformations]({{< relref "../transformations/_index.md" >}})
-- [Field options and overrides]({{< relref "../field-options/_index.md" >}})
+- [Field overrides]({{< relref "../field-overrides.md" >}})
 - [Thresholds]({{< relref "../thresholds.md" >}})
 
 ## Automatic layout adjustment

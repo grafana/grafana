@@ -37,7 +37,7 @@ For more information, refer to [@grafana/toolkit](https://www.npmjs.com/package/
 
 ### Field options
 
-Grafana 7.0 introduced the concept of [_field options_]({{< relref "../../panels/field-options/_index.md#field-options" >}}), a new way of configuring your data before it gets visualized. Since this was not available in previous versions, any plugin that enables field-based configuration will not work in previous versions of Grafana.
+Grafana 7.0 introduced the concept of _field options_, a new way of configuring your data before it gets visualized. Since this was not available in previous versions, any plugin that enables field-based configuration will not work in previous versions of Grafana.
 
 For plugins prior to Grafana 7.0, all options are considered _Display options_. The tab for field configuration isn't available.
 
