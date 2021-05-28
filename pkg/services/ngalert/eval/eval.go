@@ -163,7 +163,7 @@ func executeCondition(ctx AlertExecCtx, c *models.Condition, now time.Time, data
 	}
 
 	// eval captures for the '__value__' label.
-	captures := []NumberValueCapture{}
+	captures := make([]NumberValueCapture, 0, len(execResp.Responses))
 
 	captureVal := func(refID string, labels data.Labels, value *float64) {
 		captures = append(captures, NumberValueCapture{
@@ -193,6 +193,7 @@ func executeCondition(ctx AlertExecCtx, c *models.Condition, now time.Time, data
 
 	// add capture values as data frame metadata to each result (frame) that has matching labels.
 	for _, frame := range result.Results {
+        // classic conditions already have metadata set and only have one value, there's no need to add anything in this case.
 		if frame.Meta != nil && frame.Meta.Custom != nil {
 			if _, ok := frame.Meta.Custom.([]classic.EvalMatch); ok {
 				continue // do not overwrite EvalMatch from classic condition.

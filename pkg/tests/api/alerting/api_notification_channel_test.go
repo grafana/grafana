@@ -1618,7 +1618,7 @@ var expNotifications = map[string][]string{
 		  {
 			"labels": {
 			  "__alert_rule_uid__": "UID_AlertmanagerAlert",
-        "__value__": "[ var='A' lables={} value=1 ]",
+        "__value__": "[ var='A' labels={} value=1 ]",
 			  "alertname": "AlertmanagerAlert"
 			},
 			"annotations": {},
