@@ -73,7 +73,7 @@ Field options allow you to change how the data is displayed in your visualizatio
 
 #### Field options
 
-Changing an option applies the change to all fields, meaning all series or columns. For example, if you change the unit to percentage, then all fields with numeric values are displayed in percentages.
+When you change an option, it is applied to all fields, meaning all series or columns. For example, if you change the unit to percentage, then all fields with numeric values are displayed in percentages.
 
 ## Field overrides
 
