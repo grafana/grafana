@@ -79,7 +79,7 @@ func (p *testDataPlugin) loadCsvFile(fileName string) (*data.Frame, error) {
 		return nil, fmt.Errorf("invalid csv file name: %q", fileName)
 	}
 
-	filePath := filepath.Join(p.Cfg.StaticRootPath, "testdata", fileName)
+	filePath := filepath.Join(p.cfg.StaticRootPath, "testdata", fileName)
 
 	// Can ignore gosec G304 here, because we check the file pattern above
 	// nolint:gosec

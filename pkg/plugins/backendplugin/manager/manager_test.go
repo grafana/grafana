@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin/pluginextensionv2"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/require"
 )
@@ -370,6 +371,7 @@ type testPlugin struct {
 	backend.QueryDataHandlerFunc
 	backend.CallResourceHandlerFunc
 	mutex sync.RWMutex
+	pluginextensionv2.ProviderServer
 }
 
 func (tp *testPlugin) PluginID() string {
@@ -424,6 +426,14 @@ func (tp *testPlugin) kill() {
 	tp.mutex.Lock()
 	defer tp.mutex.Unlock()
 	tp.exited = true
+}
+
+func (tp *testPlugin) ConfigureProvider(ctx context.Context, req *pluginextensionv2.ConfigureProviderRequest) (*pluginextensionv2.ConfigureProviderResponse, error) {
+	if tp.ProviderServer != nil {
+		return tp.ProviderServer.ConfigureProvider(ctx, req)
+	}
+
+	return nil, backendplugin.ErrMethodNotImplemented
 }
 
 func (tp *testPlugin) CollectMetrics(ctx context.Context) (*backend.CollectMetricsResult, error) {

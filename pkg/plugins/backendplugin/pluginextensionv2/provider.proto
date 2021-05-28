@@ -1,0 +1,16 @@
+syntax = "proto3";
+package pluginextensionv2;
+
+option go_package = "./;pluginextensionv2";
+
+message ConfigureProviderRequest {
+
+}
+
+message ConfigureProviderResponse {
+  repeated string provider = 1;
+}
+
+service Provider {
+  rpc ConfigureProvider(ConfigureProviderRequest) returns (ConfigureProviderResponse);
+}

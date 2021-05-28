@@ -71,6 +71,7 @@ type PluginManager struct {
 	plugins      map[string]*plugins.PluginBase
 	panels       map[string]*plugins.PanelPlugin
 	apps         map[string]*plugins.AppPlugin
+	providers    map[string]*plugins.ProviderPlugin
 	staticRoutes []*plugins.PluginStaticRoute
 	pluginsMu    sync.RWMutex
 }
@@ -90,6 +91,7 @@ func newManager(cfg *setting.Cfg) *PluginManager {
 		plugins:     map[string]*plugins.PluginBase{},
 		panels:      map[string]*plugins.PanelPlugin{},
 		apps:        map[string]*plugins.AppPlugin{},
+		providers:   map[string]*plugins.ProviderPlugin{},
 	}
 }
 
@@ -163,6 +165,11 @@ func (pm *PluginManager) initExternalPlugins() error {
 		staticRoutesList = append(staticRoutesList, staticRoutes...)
 	}
 
+	for _, provider := range pm.Providers() {
+		staticRoutes := provider.InitFrontendPlugin(pm.Cfg)
+		staticRoutesList = append(staticRoutesList, staticRoutes...)
+	}
+
 	for _, app := range pm.Apps() {
 		staticRoutes := app.InitApp(pm.panels, pm.dataSources, pm.Cfg)
 		staticRoutesList = append(staticRoutesList, staticRoutes...)
@@ -179,6 +186,13 @@ func (pm *PluginManager) initExternalPlugins() error {
 			p.Signature = plugins.PluginSignatureInternal
 		} else {
 			metrics.SetPluginBuildInformation(p.Id, p.Type, p.Info.Version, string(p.Signature))
+		}
+
+		if p.Dependencies.Provider != "" {
+			err := pm.BackendPluginManager.RegisterPluginProviderDependency(context.Background(), p.Id, p.Dependencies.Provider)
+			if err != nil {
+				return errutil.Wrapf(err, "failed to register plugin %q as dependent of provider %q", p.Id, p.Dependencies.Provider)
+			}
 		}
 	}
 
@@ -280,6 +294,18 @@ func (pm *PluginManager) Panels() []*plugins.PanelPlugin {
 
 	var rslt []*plugins.PanelPlugin
 	for _, p := range pm.panels {
+		rslt = append(rslt, p)
+	}
+
+	return rslt
+}
+
+func (pm *PluginManager) Providers() []*plugins.ProviderPlugin {
+	pm.pluginsMu.RLock()
+	defer pm.pluginsMu.RUnlock()
+
+	var rslt []*plugins.ProviderPlugin
+	for _, p := range pm.providers {
 		rslt = append(rslt, p)
 	}
 
@@ -489,6 +515,9 @@ func (pm *PluginManager) loadPlugin(jsonParser *json.Decoder, pluginBase *plugin
 	case *plugins.AppPlugin:
 		pm.apps[p.Id] = p
 		pb = &p.PluginBase
+	case *plugins.ProviderPlugin:
+		pm.providers[p.Id] = p
+		pb = &p.PluginBase
 	default:
 		panic(fmt.Sprintf("Unrecognized plugin type %T", plug))
 	}
@@ -518,6 +547,7 @@ func (pm *PluginManager) loadPlugin(jsonParser *json.Decoder, pluginBase *plugin
 	pb.SignatureOrg = pluginBase.SignatureOrg
 
 	pm.plugins[pb.Id] = pb
+
 	pm.log.Debug("Successfully added plugin", "id", pb.Id)
 	return nil
 }

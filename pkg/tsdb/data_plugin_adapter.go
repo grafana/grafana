@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/adapters"
@@ -94,6 +95,10 @@ func dataPluginQueryAdapter(pluginID string, handler backend.QueryDataHandler) p
 }
 
 func modelToInstanceSettings(ds *models.DataSource) (*backend.DataSourceInstanceSettings, error) {
+	if ds.JsonData == nil {
+		ds.JsonData = simplejson.New()
+	}
+
 	jsonDataBytes, err := ds.JsonData.MarshalJSON()
 	if err != nil {
 		return nil, err

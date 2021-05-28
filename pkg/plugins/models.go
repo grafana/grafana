@@ -84,6 +84,7 @@ type PluginBase struct {
 type PluginDependencies struct {
 	GrafanaVersion string                 `json:"grafanaVersion"`
 	Plugins        []PluginDependencyItem `json:"plugins"`
+	Provider       string                 `json:"provider"`
 }
 
 type PluginInclude struct {

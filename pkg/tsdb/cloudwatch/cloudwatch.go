@@ -27,7 +27,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
-	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -56,33 +55,17 @@ const logStreamIdentifierInternal = "__logstream__grafana_internal__"
 var plog = log.New("tsdb.cloudwatch")
 var aliasFormat = regexp.MustCompile(`\{\{\s*(.+?)\s*\}\}`)
 
-func init() {
-	registry.Register(&registry.Descriptor{
-		Name:         "CloudWatchService",
-		InitPriority: registry.Low,
-		Instance:     &CloudWatchService{},
-	})
-}
-
 type CloudWatchService struct {
 	LogsService          *LogsService          `inject:""`
 	BackendPluginManager backendplugin.Manager `inject:""`
 	Cfg                  *setting.Cfg          `inject:""`
 }
 
-func (s *CloudWatchService) Init() error {
-	plog.Debug("initing")
-
+func New(cfg *setting.Cfg, logsService *LogsService) (coreplugin.ServeOpts, error) {
 	im := datasource.NewInstanceManager(NewInstanceSettings())
-
-	factory := coreplugin.New(backend.ServeOpts{
-		QueryDataHandler: newExecutor(s.LogsService, im, s.Cfg, awsds.NewSessionCache()),
-	})
-
-	if err := s.BackendPluginManager.RegisterAndStart(context.Background(), "cloudwatch", factory); err != nil {
-		plog.Error("Failed to register plugin", "error", err)
-	}
-	return nil
+	return coreplugin.ServeOpts{
+		QueryDataHandler: newExecutor(logsService, im, cfg, awsds.NewSessionCache()),
+	}, nil
 }
 
 type SessionCache interface {

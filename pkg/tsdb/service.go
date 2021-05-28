@@ -5,13 +5,16 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/infra/httpclient"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor"
 	"github.com/grafana/grafana/pkg/tsdb/cloudmonitoring"
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch"
 	"github.com/grafana/grafana/pkg/tsdb/elasticsearch"
 	"github.com/grafana/grafana/pkg/tsdb/graphite"
 	"github.com/grafana/grafana/pkg/tsdb/influxdb"
@@ -22,13 +25,16 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/postgres"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus"
 	"github.com/grafana/grafana/pkg/tsdb/tempo"
+	"github.com/grafana/grafana/pkg/tsdb/testdatasource"
 )
 
 // NewService returns a new Service.
 func NewService() Service {
 	return Service{
 		//nolint: staticcheck // plugins.DataPlugin deprecated
-		registry: map[string]func(*models.DataSource) (plugins.DataPlugin, error){},
+		registry:      map[string]func(*models.DataSource) (plugins.DataPlugin, error){},
+		providerProxy: newProviderProxy(log.New("tsdb.provider-proxy")),
+		logger:        log.New("tsdb"),
 	}
 }
 
@@ -43,6 +49,7 @@ func init() {
 // Service handles data requests to data sources.
 type Service struct {
 	Cfg                    *setting.Cfg              `inject:""`
+	CloudWatchLogsService  *cloudwatch.LogsService   `inject:""`
 	PostgresService        *postgres.PostgresService `inject:""`
 	CloudMonitoringService *cloudmonitoring.Service  `inject:""`
 	AzureMonitorService    *azuremonitor.Service     `inject:""`
@@ -51,7 +58,9 @@ type Service struct {
 	HTTPClientProvider     httpclient.Provider       `inject:""`
 
 	//nolint: staticcheck // plugins.DataPlugin deprecated
-	registry map[string]func(*models.DataSource) (plugins.DataPlugin, error)
+	registry      map[string]func(*models.DataSource) (plugins.DataPlugin, error)
+	providerProxy *providerProxy
+	logger        log.Logger
 }
 
 // Init initialises the service.
@@ -68,7 +77,37 @@ func (s *Service) Init() error {
 	s.registry["grafana-azure-monitor-datasource"] = s.AzureMonitorService.NewExecutor
 	s.registry["loki"] = loki.New(s.HTTPClientProvider)
 	s.registry["tempo"] = tempo.New(s.HTTPClientProvider)
-	return nil
+
+	cloudWatchDataSource, err := cloudwatch.New(s.Cfg, s.CloudWatchLogsService)
+	if err != nil {
+		return err
+	}
+	s.providerProxy.register("cloudwatch-provider", cloudWatchDataSource)
+
+	testDataSource, err := testdatasource.New(s.Cfg)
+	if err != nil {
+		return err
+	}
+	s.providerProxy.register("testdata-provider", testDataSource)
+
+	factory := coreplugin.New(coreplugin.ServeOpts{
+		Provider:            s.providerProxy,
+		CheckHealthHandler:  s.providerProxy,
+		CallResourceHandler: s.providerProxy,
+		QueryDataHandler:    s.providerProxy,
+		StreamHandler:       s.providerProxy,
+	})
+
+	return s.BackendPluginManager.RegisterAndStart(context.Background(), "grafana-core-provider-proxy", factory)
+}
+
+func (s *Service) Run(ctx context.Context) error {
+	<-ctx.Done()
+	stopErr := s.BackendPluginManager.UnregisterAndStop(ctx, "grafana-core-provider-proxy")
+	if stopErr != nil {
+		s.logger.Error("Failed to unregister and stop plugin", "error", stopErr)
+	}
+	return ctx.Err()
 }
 
 //nolint: staticcheck // plugins.DataPlugin deprecated

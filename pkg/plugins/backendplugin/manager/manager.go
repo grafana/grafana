@@ -27,18 +27,22 @@ import (
 
 func init() {
 	registry.RegisterServiceWithPriority(&manager{
-		logger:  log.New("plugins.backend"),
-		plugins: map[string]backendplugin.Plugin{},
+		logger:                    log.New("plugins.backend"),
+		plugins:                   map[string]backendplugin.Plugin{},
+		providerForPlugin:         map[string]string{},
+		providerForPluginOverride: map[string]string{},
 	}, registry.MediumHigh)
 }
 
 type manager struct {
-	Cfg                    *setting.Cfg                  `inject:""`
-	License                models.Licensing              `inject:""`
-	PluginRequestValidator models.PluginRequestValidator `inject:""`
-	pluginsMu              sync.RWMutex
-	plugins                map[string]backendplugin.Plugin
-	logger                 log.Logger
+	Cfg                       *setting.Cfg                  `inject:""`
+	License                   models.Licensing              `inject:""`
+	PluginRequestValidator    models.PluginRequestValidator `inject:""`
+	pluginsMu                 sync.RWMutex
+	plugins                   map[string]backendplugin.Plugin
+	logger                    log.Logger
+	providerForPlugin         map[string]string
+	providerForPluginOverride map[string]string
 }
 
 func (m *manager) Init() error {
@@ -110,6 +114,41 @@ func (m *manager) RegisterAndStart(ctx context.Context, pluginID string, factory
 
 	m.start(ctx, p)
 
+	res, err := p.ConfigureProvider(ctx, nil)
+	if err != nil && !errors.Is(err, backendplugin.ErrMethodNotImplemented) {
+		if stopErr := m.UnregisterAndStop(ctx, pluginID); stopErr != nil {
+			p.Logger().Error("Failed to unregister and stop plugin", "error", stopErr)
+		}
+		return err
+	}
+
+	m.pluginsMu.Lock()
+
+	for plugin, provider := range m.providerForPlugin {
+		for _, proxiedProvider := range res.Provider {
+			if provider == proxiedProvider {
+				m.logger.Info("New provider for plugin", "pluginID", plugin, "oldProvider", provider, "newProvider", pluginID)
+				m.providerForPluginOverride[plugin] = pluginID
+			}
+		}
+	}
+	defer m.pluginsMu.Unlock()
+
+	return nil
+}
+
+// RegisterProviderDependency registers a dependency between plugin (pluginID) and provider (providerID).
+func (m *manager) RegisterPluginProviderDependency(ctx context.Context, pluginID, providerID string) error {
+	m.pluginsMu.Lock()
+	defer m.pluginsMu.Unlock()
+
+	if existingProvider, exists := m.providerForPlugin[pluginID]; exists {
+		return fmt.Errorf("plugin provider dependency already registered for plugin %q and provider %q", pluginID, existingProvider)
+	}
+
+	m.providerForPlugin[pluginID] = providerID
+	m.logger.Debug("Registered plugin provider dependency", "plugin", pluginID, "provider", providerID)
+
 	return nil
 }
 
@@ -135,6 +174,13 @@ func (m *manager) UnregisterAndStop(ctx context.Context, pluginID string) error 
 
 	delete(m.plugins, pluginID)
 
+	for plugin, providerDep := range m.providerForPluginOverride {
+		if pluginID == providerDep {
+			delete(m.providerForPluginOverride, plugin)
+			delete(m.providerForPlugin, plugin)
+		}
+	}
+
 	m.logger.Debug("Backend plugin unregistered", "pluginId", pluginID)
 	return nil
 }
@@ -147,14 +193,27 @@ func (m *manager) IsRegistered(pluginID string) bool {
 
 func (m *manager) Get(pluginID string) (backendplugin.Plugin, bool) {
 	m.pluginsMu.RLock()
-	p, ok := m.plugins[pluginID]
+	p, exists := m.plugins[pluginID]
+	if !exists {
+		if pDependency, providerForPluginExists := m.providerForPluginOverride[pluginID]; providerForPluginExists {
+			p, exists = m.plugins[pDependency]
+		}
+	}
 	m.pluginsMu.RUnlock()
 
-	if ok && p.IsDecommissioned() {
+	if exists && p.IsDecommissioned() {
 		return nil, false
 	}
 
-	return p, ok
+	return p, exists
+}
+
+func (m *manager) GetProviderForPlugin(pluginID string) (string, bool) {
+	m.pluginsMu.RLock()
+	providerID, exists := m.providerForPlugin[pluginID]
+	m.pluginsMu.RUnlock()
+
+	return providerID, exists
 }
 
 func (m *manager) getAWSEnvironmentVariables() []string {
@@ -197,9 +256,7 @@ func (m *manager) start(ctx context.Context, p backendplugin.Plugin) {
 
 // StartPlugin starts a non-managed backend plugin
 func (m *manager) StartPlugin(ctx context.Context, pluginID string) error {
-	m.pluginsMu.RLock()
-	p, registered := m.plugins[pluginID]
-	m.pluginsMu.RUnlock()
+	p, registered := m.Get(pluginID)
 	if !registered {
 		return backendplugin.ErrPluginNotRegistered
 	}
@@ -213,8 +270,8 @@ func (m *manager) StartPlugin(ctx context.Context, pluginID string) error {
 
 // stop stops all managed backend plugins
 func (m *manager) stop(ctx context.Context) {
-	m.pluginsMu.RLock()
-	defer m.pluginsMu.RUnlock()
+	m.pluginsMu.Lock()
+	defer m.pluginsMu.Unlock()
 	var wg sync.WaitGroup
 	for _, p := range m.plugins {
 		wg.Add(1)
@@ -235,6 +292,10 @@ func (m *manager) CollectMetrics(ctx context.Context, pluginID string) (*backend
 	p, registered := m.Get(pluginID)
 	if !registered {
 		return nil, backendplugin.ErrPluginNotRegistered
+	}
+
+	if providerID, exists := m.GetProviderForPlugin(pluginID); exists {
+		ctx = backendplugin.WithProviderID(ctx, providerID)
 	}
 
 	var resp *backend.CollectMetricsResult
@@ -269,6 +330,10 @@ func (m *manager) CheckHealth(ctx context.Context, pluginContext backend.PluginC
 		return nil, backendplugin.ErrPluginNotRegistered
 	}
 
+	if providerID, exists := m.GetProviderForPlugin(pluginContext.PluginID); exists {
+		ctx = backendplugin.WithProviderID(ctx, providerID)
+	}
+
 	var resp *backend.CheckHealthResult
 	err = instrumentation.InstrumentCheckHealthRequest(p.PluginID(), func() (innerErr error) {
 		resp, innerErr = p.CheckHealth(ctx, &backend.CheckHealthRequest{PluginContext: pluginContext})
@@ -284,6 +349,7 @@ func (m *manager) CheckHealth(ctx context.Context, pluginContext backend.PluginC
 			return nil, err
 		}
 
+		m.logger.Error("Failed to check plugin health", "error", err)
 		return nil, errutil.Wrap("failed to check plugin health", backendplugin.ErrHealthCheckFailed)
 	}
 
@@ -294,6 +360,10 @@ func (m *manager) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	p, registered := m.Get(req.PluginContext.PluginID)
 	if !registered {
 		return nil, backendplugin.ErrPluginNotRegistered
+	}
+
+	if providerID, exists := m.GetProviderForPlugin(req.PluginContext.PluginID); exists {
+		ctx = backendplugin.WithProviderID(ctx, providerID)
 	}
 
 	var resp *backend.QueryDataResponse
@@ -325,6 +395,11 @@ func (m *manager) callResourceInternal(w http.ResponseWriter, req *http.Request,
 	p, registered := m.Get(pCtx.PluginID)
 	if !registered {
 		return backendplugin.ErrPluginNotRegistered
+	}
+
+	// Hack to get the actual provider
+	if providerID, exists := m.GetProviderForPlugin(pCtx.PluginID); exists {
+		req = req.WithContext(backendplugin.WithProviderID(req.Context(), providerID))
 	}
 
 	keepCookieModel := keepCookiesJSONModel{}

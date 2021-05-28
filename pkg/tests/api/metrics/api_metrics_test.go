@@ -164,7 +164,7 @@ func makeCWRequest(t *testing.T, req dtos.MetricRequest, addr string) backend.Qu
 	buf = bytes.Buffer{}
 	_, err = io.Copy(&buf, resp.Body)
 	require.NoError(t, err)
-	require.Equal(t, 200, resp.StatusCode)
+	require.Equal(t, 200, resp.StatusCode, buf.String())
 
 	var tr backend.QueryDataResponse
 	err = json.Unmarshal(buf.Bytes(), &tr)

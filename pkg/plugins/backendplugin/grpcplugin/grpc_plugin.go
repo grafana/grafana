@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin/pluginextensionv2"
 	"github.com/hashicorp/go-plugin"
 )
 
@@ -120,6 +121,10 @@ func (p *grpcPlugin) getPluginClient() (pluginClient, bool) {
 	pluginClient := p.pluginClient
 	p.mutex.RUnlock()
 	return pluginClient, true
+}
+
+func (p *grpcPlugin) ConfigureProvider(ctx context.Context, req *pluginextensionv2.ConfigureProviderRequest) (*pluginextensionv2.ConfigureProviderResponse, error) {
+	return nil, backendplugin.ErrMethodNotImplemented
 }
 
 func (p *grpcPlugin) CollectMetrics(ctx context.Context) (*backend.CollectMetricsResult, error) {

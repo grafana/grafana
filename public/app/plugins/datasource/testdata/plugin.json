@@ -31,5 +31,9 @@
       "name": "Streaming Example",
       "path": "dashboards/streaming.json"
     }
-  ]
+  ],
+
+  "dependencies": {
+    "provider": "testdata-provider"
+  }
 }

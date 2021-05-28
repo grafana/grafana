@@ -29,5 +29,9 @@
       "small": "img/amazon-web-services.png",
       "large": "img/amazon-web-services.png"
     }
+  },
+
+  "dependencies": {
+    "provider": "cloudwatch-provider"
   }
 }

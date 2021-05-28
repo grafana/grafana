@@ -568,6 +568,10 @@ func (f *fakeBackendPluginManager) Get(pluginID string) (backendplugin.Plugin, b
 	return nil, false
 }
 
+func (f *fakeBackendPluginManager) RegisterPluginProviderDependency(ctx context.Context, pluginID, providerID string) error {
+	return nil
+}
+
 func (f *fakeBackendPluginManager) UnregisterAndStop(ctx context.Context, pluginID string) error {
 	var result []string
 
