@@ -76,6 +76,7 @@ export const ConfirmModal = ({
           variant="destructive"
           onClick={onConfirm}
           disabled={disabled}
+          autoFocus
           aria-label={selectors.pages.ConfirmModal.delete}
         >
           {confirmText}
