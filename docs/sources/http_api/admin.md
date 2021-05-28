@@ -11,7 +11,7 @@ The Admin HTTP API does not currently work with an API Token. API Tokens are cur
 the permission of server admin, only users can be given that permission. So in order to use these API calls you will have to use Basic Auth and the Grafana user
 must have the Grafana Admin permission. (The default admin user is called `admin` and has permission to use this API.)
 
-## Settings
+## Fetch settings
 
 `GET /api/admin/settings`
 
@@ -169,6 +169,57 @@ Content-Type: application/json
   }
 }
 ```
+
+## Update settings
+
+`PUT /api/admin/settings`
+
+> **Note:** Available in Grafana Enterprise v8.0+.
+
+Updates / removes and reloads database settings. You must provide either `updates`, `removals` or both.
+
+This endpoint only supports changes to `auth.saml` configuration.
+
+**Example request:**
+
+```http
+PUT /api/admin/settings
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+
+{
+  "updates": {
+    "auth.saml": {
+      "enabled": "true"
+    }
+  },
+  "removals": {
+    "auth.saml": ["single_logout"]
+  },
+}
+```
+
+**Example response:**
+
+```http
+HTTP/1.1 200 OK
+Content-Type: application/json
+Content-Length: 32
+
+{
+  "message":"Settings updated"
+}
+```
+
+Status codes:
+
+- **200** - OK
+- **400** - Bad Request
+- **401** - Unauthorized
+- **403** - Forbidden
+- **500** - Internal Server Error
+
 ## Grafana Stats
 
 `GET /api/admin/stats`
