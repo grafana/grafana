@@ -36,7 +36,7 @@ Query history is a new feature that lets you view and interact with the queries 
 
 Learn more about query history in [Explore]({{< relref "../explore" >}}).
 
-{{< docs-imagebox img="/img/docs/v67/rich-history.gif" max-width="1024px" caption="Query history" >}}
+{{< figure src="/static/img/docs/v67/rich-history.gif" max-width="1024px" caption="Query history" >}}
 
 ### Azure OAuth
 Grafana v6.7 comes with a new OAuth integration for Microsoft Azure Active Directory. You can now assign users and groups to Grafana roles from the Azure Portal. Learn how to enable and configure it in [Azure AD OAuth2 authentication]({{< relref "../auth/azuread/" >}}).
@@ -85,7 +85,7 @@ This feature allows you to export a dashboard as a PDF document. All dashboard p
 ### Report landscape mode
 
 You can now use either portrait or landscape mode in your reports. Portrait will render three panels per page and landscape two.
-{{< docs-imagebox img="/img/docs/enterprise/reports_create_new.png" max-width="1024px" caption="New report" >}}
+{{< figure src="/static/img/docs/enterprise/reports_create_new.png" max-width="1024px" caption="New report" >}}
 
 [Reporting]({{< relref "../enterprise/reporting/" >}}) has been updated as a result of this change.
 

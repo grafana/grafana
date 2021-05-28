@@ -11,7 +11,7 @@ The logs panel visualization shows log lines from data sources that support logs
 
 > **Note:** The Logs panel is only available in Grafana v6.4+.
 
-<img class="screenshot" src="/img/docs/v64/logs-panel.png">
+<img class="screenshot" src="/static/img/docs/v64/logs-panel.png">
 
 The logs panel shows the result of queries that were entered in the Query tab. The results of multiple queries are merged and sorted by time. You can scroll inside the panel if the data source returns more lines than can be displayed at any one time.
 
