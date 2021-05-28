@@ -1,13 +1,14 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import pluralize from 'pluralize';
 import { Icon, useStyles2 } from '@grafana/ui';
-import { PromRuleWithLocation } from 'app/types/unified-alerting';
+import { Alert, PromRuleWithLocation } from 'app/types/unified-alerting';
 import { AlertLabels } from 'app/features/alerting/unified/components/AlertLabels';
 import { AlertStateTag } from 'app/features/alerting/unified/components/rules/AlertStateTag';
 import { dateTime, GrafanaTheme2 } from '@grafana/data';
 import { css } from '@emotion/css';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 import { omit } from 'lodash';
+import { alertInstanceKey } from 'app/features/alerting/unified/utils/rules';
 
 interface Props {
   ruleWithLocation: PromRuleWithLocation;
@@ -23,6 +24,15 @@ export const AlertInstances = ({ ruleWithLocation, showInstances }: Props) => {
     setDisplayInstances(showInstances);
   }, [showInstances]);
 
+  // sort instances, because API returns them in random order every time
+  const sortedAlerts = useMemo(
+    (): Alert[] =>
+      displayInstances
+        ? rule.alerts.slice().sort((a, b) => alertInstanceKey(a).localeCompare(alertInstanceKey(b)))
+        : [],
+    [rule, displayInstances]
+  );
+
   return (
     <div>
       {rule.state !== PromAlertingRuleState.Inactive && (
@@ -32,9 +42,9 @@ export const AlertInstances = ({ ruleWithLocation, showInstances }: Props) => {
         </div>
       )}
 
-      {displayInstances && rule.state !== PromAlertingRuleState.Inactive && (
+      {!!sortedAlerts.length && (
         <ol className={styles.list}>
-          {rule.alerts.map((alert, index) => {
+          {sortedAlerts.map((alert, index) => {
             return (
               <li className={styles.listItem} key={`${alert.activeAt}-${index}`}>
                 <div>
