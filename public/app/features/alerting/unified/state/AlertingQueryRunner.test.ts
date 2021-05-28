@@ -10,7 +10,7 @@ import {
 } from '@grafana/data';
 import { FetchResponse } from '@grafana/runtime';
 import { BackendSrv } from 'app/core/services/backend_srv';
-import { GrafanaQuery } from 'app/types/unified-alerting-dto';
+import { AlertQuery } from 'app/types/unified-alerting-dto';
 import { Observable, of, throwError } from 'rxjs';
 import { delay, take } from 'rxjs/operators';
 import { createFetchResponse } from 'test/helpers/createFetchResponse';
@@ -232,7 +232,7 @@ const createDataFrameJSON = (values: number[]): DataFrameJSON => {
   };
 };
 
-const createQuery = (refId: string): GrafanaQuery => {
+const createQuery = (refId: string): AlertQuery => {
   return {
     refId,
     queryType: '',
