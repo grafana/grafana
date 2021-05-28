@@ -6,6 +6,7 @@ import (
 	"os"
 	"time"
 
+	pb "github.com/prometheus/alertmanager/silence/silencepb"
 	"xorm.io/xorm"
 
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
@@ -75,6 +76,7 @@ type migration struct {
 
 	seenChannelUIDs  map[string]struct{}
 	migratedChannels map[*notificationChannel]struct{}
+	silences         []*pb.MeshSilence
 }
 
 func (m *migration) SQL(dialect migrator.Dialect) string {
@@ -216,6 +218,10 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 			return err
 		}
 
+		if err := m.addSilence(da, rule); err != nil {
+			m.mg.Logger.Error("alert migration error: failed to create silence", "rule_name", rule.Title, "err", err)
+		}
+
 		_, err = m.sess.Insert(rule)
 		if err != nil {
 			// TODO better error handling, if constraint
@@ -256,8 +262,15 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 		// the v1 config.
 		ConfigurationVersion: "v1",
 	})
+	if err != nil {
+		return err
+	}
 
-	return err
+	if err := m.writeSilencesFile(); err != nil {
+		m.mg.Logger.Error("alert migration error: failed to write silence file", "err", err)
+	}
+
+	return nil
 }
 
 type AlertConfiguration struct {
@@ -305,6 +318,10 @@ func (m *rmMigration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 	_, err = sess.Exec("delete from alert_instance")
 	if err != nil {
 		return err
+	}
+
+	if err := os.RemoveAll(silencesFileName(mg)); err != nil {
+		mg.Logger.Error("alert migration error: failed to remove silence file", "err", err)
 	}
 
 	return nil

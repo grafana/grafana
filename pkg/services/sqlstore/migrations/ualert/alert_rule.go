@@ -105,7 +105,10 @@ func (m *migration) makeAlertRule(cond condition, da dashAlert, folderUID string
 		For:             duration(da.For),
 		Updated:         time.Now().UTC(),
 		Annotations:     annotations,
-		Labels:          map[string]string{},
+		Labels: map[string]string{
+			"alertname": da.Name,
+			"message":   da.Message,
+		},
 	}
 
 	var err error
@@ -118,6 +121,10 @@ func (m *migration) makeAlertRule(cond condition, da dashAlert, folderUID string
 	if err != nil {
 		return nil, err
 	}
+
+	// Label for routing and silences.
+	n, v := getLabelForRouteMatching(ar.Uid)
+	ar.Labels[n] = v
 
 	return ar, nil
 }
