@@ -4,18 +4,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"net/url"
-	"path"
 	"strings"
 	"time"
 
-	gokit_log "github.com/go-kit/kit/log"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	old_notifiers "github.com/grafana/grafana/pkg/services/alerting/notifiers"
-	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
@@ -76,9 +72,11 @@ func NewSensuGoNotifier(model *NotificationChannelConfig, t *template.Template) 
 func (sn *SensuGoNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
 	sn.log.Debug("Sending Sensu Go result")
 
-	data := notify.GetTemplateData(ctx, sn.tmpl, as, gokit_log.NewNopLogger())
 	var tmplErr error
-	tmpl := notify.TmplText(sn.tmpl, data, &tmplErr)
+	tmpl, _, err := TmplText(ctx, sn.tmpl, as, sn.log, &tmplErr)
+	if err != nil {
+		return false, err
+	}
 
 	// Sensu Go alerts require an entity and a check. We set it to the user-specified
 	// value (optional), else we fallback and use the grafana rule anme  and ruleID.
@@ -109,12 +107,10 @@ func (sn *SensuGoNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool
 		handlers = []string{sn.Handler}
 	}
 
-	u, err := url.Parse(sn.tmpl.ExternalURL.String())
+	ruleURL, err := joinUrlPath(sn.tmpl.ExternalURL.String(), "/alerting/list")
 	if err != nil {
-		return false, fmt.Errorf("failed to parse external URL: %w", err)
+		return false, err
 	}
-	u.Path = path.Join(u.Path, "/alerting/list")
-	ruleURL := u.String()
 	bodyMsgType := map[string]interface{}{
 		"entity": map[string]interface{}{
 			"metadata": map[string]interface{}{

@@ -165,7 +165,6 @@ steps:
   - mkdir -p /hugo/content/docs/grafana
   - cp -r docs/sources/* /hugo/content/docs/grafana/latest/
   - cd /hugo && make prod
-  failure: ignore
   depends_on:
   - initialize
   - build-frontend-docs
@@ -755,8 +754,8 @@ steps:
   image: grafana/build-container:1.4.1
   commands:
   - "[ $(grep FocusConvey -R pkg | wc -l) -eq \"0\" ] || exit 1"
-  - ./bin/grabpl test-backend --edition oss
-  - ./bin/grabpl integration-tests --edition oss
+  - ./bin/grabpl test-backend --edition oss --tries 5
+  - ./bin/grabpl integration-tests --edition oss --tries 5
   depends_on:
   - initialize
 
@@ -1130,8 +1129,8 @@ steps:
   image: grafana/build-container:1.4.1
   commands:
   - "[ $(grep FocusConvey -R pkg | wc -l) -eq \"0\" ] || exit 1"
-  - ./bin/grabpl test-backend --edition enterprise
-  - ./bin/grabpl integration-tests --edition enterprise
+  - ./bin/grabpl test-backend --edition enterprise --tries 5
+  - ./bin/grabpl integration-tests --edition enterprise --tries 5
   depends_on:
   - initialize
 
@@ -1196,8 +1195,8 @@ steps:
   image: grafana/build-container:1.4.1
   commands:
   - "[ $(grep FocusConvey -R pkg | wc -l) -eq \"0\" ] || exit 1"
-  - ./bin/grabpl test-backend --edition enterprise2
-  - ./bin/grabpl integration-tests --edition enterprise2
+  - ./bin/grabpl test-backend --edition enterprise2 --tries 5
+  - ./bin/grabpl integration-tests --edition enterprise2 --tries 5
   depends_on:
   - initialize
 
@@ -1710,8 +1709,8 @@ steps:
   image: grafana/build-container:1.4.1
   commands:
   - "[ $(grep FocusConvey -R pkg | wc -l) -eq \"0\" ] || exit 1"
-  - ./bin/grabpl test-backend --edition oss
-  - ./bin/grabpl integration-tests --edition oss
+  - ./bin/grabpl test-backend --edition oss --tries 5
+  - ./bin/grabpl integration-tests --edition oss --tries 5
   depends_on:
   - initialize
 
@@ -2074,8 +2073,8 @@ steps:
   image: grafana/build-container:1.4.1
   commands:
   - "[ $(grep FocusConvey -R pkg | wc -l) -eq \"0\" ] || exit 1"
-  - ./bin/grabpl test-backend --edition enterprise
-  - ./bin/grabpl integration-tests --edition enterprise
+  - ./bin/grabpl test-backend --edition enterprise --tries 5
+  - ./bin/grabpl integration-tests --edition enterprise --tries 5
   depends_on:
   - initialize
 
@@ -2140,8 +2139,8 @@ steps:
   image: grafana/build-container:1.4.1
   commands:
   - "[ $(grep FocusConvey -R pkg | wc -l) -eq \"0\" ] || exit 1"
-  - ./bin/grabpl test-backend --edition enterprise2
-  - ./bin/grabpl integration-tests --edition enterprise2
+  - ./bin/grabpl test-backend --edition enterprise2 --tries 5
+  - ./bin/grabpl integration-tests --edition enterprise2 --tries 5
   depends_on:
   - initialize
 
@@ -3431,6 +3430,38 @@ depends_on:
 - oss-windows-release-branch
 - enterprise-build-release-branch
 - enterprise-windows-release-branch
+
+---
+kind: pipeline
+type: docker
+name: scan-docker-images
+
+platform:
+  os: linux
+  arch: amd64
+
+steps:
+- name: scan-docker-images-unkown-low-medium-vulnerabilities
+  image: aquasec/trivy:0.18.3
+  commands:
+  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/grafana:latest
+  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/grafana:main
+  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/grafana:latest-ubuntu
+  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/grafana:main-ubuntu
+
+- name: scan-docker-images-high-critical-vulnerabilities
+  image: aquasec/trivy:0.18.3
+  commands:
+  - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/grafana:latest
+  - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/grafana:main
+  - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/grafana:latest-ubuntu
+  - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/grafana:main-ubuntu
+
+trigger:
+  cron:
+  - nightly
+  event:
+  - cron
 
 ---
 kind: secret

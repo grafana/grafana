@@ -52,11 +52,9 @@ func (hs *HTTPServer) TrimDashboard(c *models.ReqContext, cmd models.TrimDashboa
 	meta := cmd.Meta
 
 	trimedResult := *dash
-	if !hs.LoadSchemaService.IsDisabled() {
-		trimedResult, err = hs.LoadSchemaService.DashboardTrimDefaults(*dash)
-		if err != nil {
-			return response.Error(500, "Error while trim default value from dashboard json", err)
-		}
+	trimedResult, err = hs.LoadSchemaService.DashboardTrimDefaults(*dash)
+	if err != nil {
+		return response.Error(500, "Error while trim default value from dashboard json", err)
 	}
 
 	dto := dtos.TrimDashboardFullWithMeta{
@@ -71,7 +69,6 @@ func (hs *HTTPServer) TrimDashboard(c *models.ReqContext, cmd models.TrimDashboa
 func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
 	slug := c.Params(":slug")
 	uid := c.Params(":uid")
-	trimDefaults := c.QueryBoolWithDefault("trimdefaults", false)
 	dash, rsp := getDashboardHelper(c.OrgId, slug, 0, uid)
 	if rsp != nil {
 		return rsp
@@ -138,8 +135,12 @@ func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
 	if dash.FolderId > 0 {
 		query := models.GetDashboardQuery{Id: dash.FolderId, OrgId: c.OrgId}
 		if err := bus.Dispatch(&query); err != nil {
+			if errors.Is(err, models.ErrFolderNotFound) {
+				return response.Error(404, "Folder not found", err)
+			}
 			return response.Error(500, "Dashboard folder could not be read", err)
 		}
+		meta.FolderUid = query.Result.Uid
 		meta.FolderTitle = query.Result.Title
 		meta.FolderUrl = query.Result.GetUrl()
 	}
@@ -174,15 +175,6 @@ func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
 	err = hs.LibraryPanelService.LoadLibraryPanelsForDashboard(c, dash)
 	if err != nil {
 		return response.Error(500, "Error while loading library panels", err)
-	}
-
-	var trimedJson simplejson.Json
-	if trimDefaults && !hs.LoadSchemaService.IsDisabled() {
-		trimedJson, err = hs.LoadSchemaService.DashboardTrimDefaults(*dash.Data)
-		if err != nil {
-			return response.Error(500, "Error while trim default value from dashboard json", err)
-		}
-		dash.Data = &trimedJson
 	}
 
 	dto := dtos.DashboardFullWithMeta{
@@ -285,15 +277,20 @@ func (hs *HTTPServer) PostDashboard(c *models.ReqContext, cmd models.SaveDashboa
 	var err error
 	cmd.OrgId = c.OrgId
 	cmd.UserId = c.UserId
-	trimDefaults := c.QueryBoolWithDefault("trimdefaults", false)
-	if trimDefaults && !hs.LoadSchemaService.IsDisabled() {
-		cmd.Dashboard, err = hs.LoadSchemaService.DashboardApplyDefaults(cmd.Dashboard)
+	if cmd.FolderUid != "" {
+		folders := dashboards.NewFolderService(c.OrgId, c.SignedInUser, hs.SQLStore)
+		folder, err := folders.GetFolderByUID(cmd.FolderUid)
 		if err != nil {
-			return response.Error(500, "Error while applying default value to the dashboard json", err)
+			if errors.Is(err, models.ErrFolderNotFound) {
+				return response.Error(400, "Folder not found", err)
+			}
+			return response.Error(500, "Error while checking folder ID", err)
 		}
+		cmd.FolderId = folder.Id
 	}
+
 	dash := cmd.GetDashboardModel()
-	newDashboard := dash.Id == 0 && dash.Uid == ""
+	newDashboard := dash.Id == 0
 	if newDashboard {
 		limitReached, err := hs.QuotaService.QuotaReached(c, "dashboard")
 		if err != nil {

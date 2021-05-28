@@ -74,7 +74,7 @@ func (srv TestingApiSrv) RouteTestRuleConfig(c *models.ReqContext, body apimodel
 		http.MethodGet,
 		queryURL,
 		nil,
-		jsonExtractor(nil),
+		instantQueryResultsExtractor,
 		nil,
 	)
 }

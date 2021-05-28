@@ -178,6 +178,7 @@ exports[`Render PromQueryEditor with basic options should render 1`] = `
       />
     </div>
   }
+  data-testid="prom-editor"
   datasource={
     Object {
       "createQuery": [MockFunction],

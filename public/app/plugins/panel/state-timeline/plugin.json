@@ -3,10 +3,10 @@
   "name": "State timeline",
   "id": "state-timeline",
 
-  "state": "alpha",
+  "state": "beta",
 
   "info": {
-    "description": "State over time",
+    "description": "State changes and durations",
     "author": {
       "name": "Grafana Labs",
       "url": "https://grafana.com"

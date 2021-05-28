@@ -152,7 +152,7 @@ Since not all datasources have the same configuration settings we only have the 
 | timeInterval            | string  | Prometheus, Elasticsearch, InfluxDB, MySQL, PostgreSQL and MSSQL | Lowest interval/step value that should be used for this data source.                        |
 | httpMode                | string  | Influxdb                                                         | HTTP Method. 'GET', 'POST', defaults to GET                                                 |
 | maxSeries               | number  | Influxdb                                                         | Max number of series/tables that Grafana processes                                          |
-| httpMethod              | string  | Prometheus                                                       | HTTP Method. 'GET', 'POST', defaults to GET                                                 |
+| httpMethod              | string  | Prometheus                                                       | HTTP Method. 'GET', 'POST', defaults to POST                                                 |
 | customQueryParameters   | string  | Prometheus                                                       | Query parameters to add, as a URL-encoded string.                                                 |
 | esVersion               | string  | Elasticsearch                                                    | Elasticsearch version (E.g. `7.0.0`, `7.6.1`)                                            |
 | timeField               | string  | Elasticsearch                                                    | Which field that should be used as timestamp                                                |
@@ -575,3 +575,9 @@ The following sections detail the supported settings and secure settings for eac
 | Name |
 | ---- |
 | url  |
+
+## Grafana Enterprise
+
+Grafana Enterprise supports provisioning for the following resources:
+
+- [Access Control Provisioning]({{< relref "../enterprise/access-control/provisioning.md" >}})

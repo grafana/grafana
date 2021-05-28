@@ -1,17 +1,20 @@
-import { VizLegendOptions, HideableFieldConfig, BarValueVisibility } from '@grafana/ui';
+import { HideableFieldConfig, BarValueVisibility, OptionsWithLegend } from '@grafana/ui';
 
 /**
  * @alpha
  */
-export interface TimelineOptions {
+export interface TimelineOptions extends OptionsWithLegend {
   mode: TimelineMode; // not in the saved model!
 
-  legend: VizLegendOptions;
   showValue: BarValueVisibility;
   rowHeight: number;
+
+  // only used for "samples" mode (status-grid)
   colWidth?: number;
-  alignValue: TimelineValueAlignment;
+  // only used in "changes" mode (state-timeline)
   mergeValues?: boolean;
+  // only used in "changes" mode (state-timeline)
+  alignValue?: TimelineValueAlignment;
 }
 
 export type TimelineValueAlignment = 'center' | 'left' | 'right';
@@ -28,9 +31,9 @@ export interface TimelineFieldConfig extends HideableFieldConfig {
  * @alpha
  */
 export const defaultPanelOptions: Partial<TimelineOptions> = {
-  showValue: BarValueVisibility.Always,
-  mergeValues: true,
+  showValue: BarValueVisibility.Auto,
   alignValue: 'left',
+  mergeValues: true,
   rowHeight: 0.9,
 };
 
@@ -38,7 +41,7 @@ export const defaultPanelOptions: Partial<TimelineOptions> = {
  * @alpha
  */
 export const defaultTimelineFieldConfig: TimelineFieldConfig = {
-  lineWidth: 1,
+  lineWidth: 0,
   fillOpacity: 70,
 };
 
@@ -46,6 +49,8 @@ export const defaultTimelineFieldConfig: TimelineFieldConfig = {
  * @alpha
  */
 export enum TimelineMode {
+  // state-timeline
   Changes = 'changes',
+  // status-grid
   Samples = 'samples',
 }

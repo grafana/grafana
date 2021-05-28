@@ -51,7 +51,7 @@ export class CentrifugeSrv implements GrafanaLiveSrv {
   readonly connectionState: BehaviorSubject<boolean>;
   readonly connectionBlocker: Promise<void>;
   readonly scopes: Record<LiveChannelScope, GrafanaLiveScope>;
-  private orgId: number;
+  private readonly orgId: number;
 
   constructor() {
     const baseURL = window.location.origin.replace('http', 'ws');
@@ -64,7 +64,9 @@ export class CentrifugeSrv implements GrafanaLiveSrv {
       sessionId,
       orgId: this.orgId,
     });
-    this.centrifuge.connect(); // do connection
+    if (config.liveEnabled) {
+      this.centrifuge.connect(); // do connection
+    }
     this.connectionState = new BehaviorSubject<boolean>(this.centrifuge.isConnected());
     this.connectionBlocker = new Promise<void>((resolve) => {
       if (this.centrifuge.isConnected()) {
@@ -95,12 +97,10 @@ export class CentrifugeSrv implements GrafanaLiveSrv {
   //----------------------------------------------------------
 
   onConnect = (context: any) => {
-    console.log('CONNECT', context);
     this.connectionState.next(true);
   };
 
   onDisconnect = (context: any) => {
-    console.log('onDisconnect', context);
     this.connectionState.next(false);
   };
 
@@ -214,23 +214,11 @@ export class CentrifugeSrv implements GrafanaLiveSrv {
 
     return new Observable<DataQueryResponse>((subscriber) => {
       const channel = this.getChannel(options.addr);
+      const key = options.key ?? `xstr/${streamCounter++}`;
       let data: StreamingDataFrame | undefined = undefined;
       let filtered: DataFrame | undefined = undefined;
-      let state = LoadingState.Loading;
-      let { key } = options;
+      let state = LoadingState.Streaming;
       let last = perf.last;
-      if (options.frame) {
-        const msg = dataFrameToJSON(options.frame);
-        data = new StreamingDataFrame(msg, options.buffer);
-        state = LoadingState.Streaming;
-      }
-      if (channel.lastMessageWithSchema && !data) {
-        data = new StreamingDataFrame(channel.lastMessageWithSchema, options.buffer);
-      }
-
-      if (!key) {
-        key = `xstr/${streamCounter++}`;
-      }
 
       const process = (msg: DataFrameJSON) => {
         if (!data) {
@@ -261,6 +249,12 @@ export class CentrifugeSrv implements GrafanaLiveSrv {
           last = perf.last;
         }
       };
+
+      if (options.frame) {
+        process(dataFrameToJSON(options.frame));
+      } else if (channel.lastMessageWithSchema) {
+        process(channel.lastMessageWithSchema);
+      }
 
       const sub = channel.getStream().subscribe({
         error: (err: any) => {

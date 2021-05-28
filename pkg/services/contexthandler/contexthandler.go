@@ -237,7 +237,7 @@ func (h *ContextHandler) initContextWithBasicAuth(ctx *models.ReqContext, orgID 
 	user := authQuery.User
 
 	query := models.GetSignedInUserQuery{UserId: user.Id, OrgId: orgID}
-	if err := bus.Dispatch(&query); err != nil {
+	if err := bus.DispatchCtx(ctx.Req.Context(), &query); err != nil {
 		ctx.Logger.Error(
 			"Failed at user signed in",
 			"id", user.Id,
@@ -270,7 +270,7 @@ func (h *ContextHandler) initContextWithToken(ctx *models.ReqContext, orgID int6
 	}
 
 	query := models.GetSignedInUserQuery{UserId: token.UserId, OrgId: orgID}
-	if err := bus.Dispatch(&query); err != nil {
+	if err := bus.DispatchCtx(ctx.Req.Context(), &query); err != nil {
 		ctx.Logger.Error("Failed to get user with id", "userId", token.UserId, "error", err)
 		return false
 	}

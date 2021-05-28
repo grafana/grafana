@@ -3,13 +3,13 @@ import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/ty
 import React, { FC, useMemo, useState } from 'react';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { getAlertTableStyles } from '../../styles/table';
-import { extractReadableNotifierTypes } from '../../utils/receivers';
+import { extractNotifierTypeCounts } from '../../utils/receivers';
 import { ActionIcon } from '../rules/ActionIcon';
 import { ReceiversSection } from './ReceiversSection';
 import { makeAMLink } from '../../utils/misc';
 import { GrafanaTheme2 } from '@grafana/data';
 import { css } from '@emotion/css';
-import { isReceiverUsed } from '../../utils/alertmanager-config';
+import { isReceiverUsed } from '../../utils/alertmanager';
 import { useDispatch } from 'react-redux';
 import { deleteReceiverAction } from '../../state/actions';
 
@@ -48,7 +48,14 @@ export const ReceiversTable: FC<Props> = ({ config, alertManagerName }) => {
     () =>
       config.alertmanager_config.receivers?.map((receiver) => ({
         name: receiver.name,
-        types: extractReadableNotifierTypes(receiver, grafanaNotifiers.result ?? []),
+        types: Object.entries(extractNotifierTypeCounts(receiver, grafanaNotifiers.result ?? [])).map(
+          ([type, count]) => {
+            if (count > 1) {
+              return `${type} (${count})`;
+            }
+            return type;
+          }
+        ),
       })) ?? [],
     [config, grafanaNotifiers.result]
   );

@@ -65,6 +65,8 @@ interface Props {
   onStopScanning?: () => void;
   getRowContext?: (row: LogRowModel, options?: RowContextOptions) => Promise<any>;
   getFieldLinks: (field: Field, rowIndex: number) => Array<LinkModel<Field>>;
+  addResultsToCache: () => void;
+  clearCache: () => void;
 }
 
 interface State {
@@ -244,6 +246,8 @@ export class UnthemedLogs extends PureComponent<Props, State> {
       getFieldLinks,
       theme,
       logsQueries,
+      clearCache,
+      addResultsToCache,
     } = this.props;
 
     const {
@@ -361,6 +365,8 @@ export class UnthemedLogs extends PureComponent<Props, State> {
             loading={loading}
             queries={logsQueries ?? []}
             scrollToTopLogs={this.scrollToTopLogs}
+            addResultsToCache={addResultsToCache}
+            clearCache={clearCache}
           />
         </div>
         {!loading && !hasData && !scanning && (

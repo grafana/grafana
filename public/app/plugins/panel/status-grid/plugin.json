@@ -3,10 +3,10 @@
   "name": "Status grid",
   "id": "status-grid",
 
-  "state": "alpha",
+  "state": "beta",
 
   "info": {
-    "description": "System status map",
+    "description": "Periodic status history",
     "author": {
       "name": "Grafana Labs",
       "url": "https://grafana.com"

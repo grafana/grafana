@@ -1,7 +1,6 @@
 import React from 'react';
 import { Story, Meta } from '@storybook/react';
 import { allButtonVariants, allButtonFills, Button, ButtonProps } from './Button';
-import { iconOptions } from '../../utils/storybook/knobs';
 import mdx from './Button.mdx';
 import { HorizontalGroup, VerticalGroup } from '../Layout/Layout';
 import { ButtonGroup } from './ButtonGroup';
@@ -11,11 +10,6 @@ import { Card } from '../Card/Card';
 export default {
   title: 'Buttons/Button',
   component: Button,
-  argTypes: {
-    variant: { control: 'select' },
-    size: { control: 'select' },
-    icon: { control: { type: 'select', options: iconOptions } },
-  },
   parameters: {
     docs: {
       page: mdx,
@@ -23,13 +17,10 @@ export default {
     knobs: {
       disable: true,
     },
-    controls: {
-      exclude: ['css', 'className'],
-    },
   },
 } as Meta;
 
-export const Variants: Story<ButtonProps> = ({ children, ...args }) => {
+export const Variants: Story<ButtonProps> = () => {
   const sizes: ComponentSize[] = ['lg', 'md', 'sm'];
   return (
     <VerticalGroup>

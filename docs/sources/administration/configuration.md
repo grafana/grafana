@@ -418,6 +418,10 @@ The length of time that Grafana will wait for a datasource’s first response he
 
 The maximum number of idle connections that Grafana will maintain. Default is `100`. For more details check the [Transport.MaxIdleConns](https://golang.org/pkg/net/http/#Transport.MaxIdleConns) documentation.
 
+### max_idle_connections_per_host
+
+The maximum number of idle connections per host that Grafana will maintain. Default is `2`. For more details check the [Transport.MaxIdleConnsPerHost](https://golang.org/pkg/net/http/#Transport.MaxIdleConnsPerHost) documentation.
+
 ### idle_conn_timeout_seconds
 
 The length of time that Grafana maintains idle connections before closing them. Default is `90` seconds. For more details check the [Transport.IdleConnTimeout](https://golang.org/pkg/net/http/#Transport.IdleConnTimeout) documentation.
@@ -1467,16 +1471,19 @@ Set to `true` if you want to test alpha plugins that are not yet ready for gener
 
 Enter a comma-separated list of plugin identifiers to identify plugins that are allowed to be loaded even if they lack a valid signature.
 
-### catalog_url
+### plugin_admin_enabled
 
-Custom install/learn more URL for enterprise plugins. Defaults to https://grafana.com/grafana/plugins/.
-
-### catalog_app_enabled
-
-
-Available to Grafana administrators only, the plugin catalog app is set to `false` by default. Set it to `true` to enable the app.
+Available to Grafana administrators only, the plugin admin app is set to `false` by default. Set it to `true` to enable the app.
 
 For more information, refer to [Plugin catalog]({{< relref "../plugins/catalog.md" >}}).
+
+### plugin_admin_external_manage_enabled
+
+Set to `true` if you want to enable external management of plugins. Default is `false`. This is only applicable to Grafana Cloud users.
+
+### plugin_catalog_url
+
+Custom install/learn more URL for enterprise plugins. Defaults to https://grafana.com/grafana/plugins/.
 
 <hr>
 

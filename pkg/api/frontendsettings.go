@@ -129,10 +129,14 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 		return nil, err
 	}
 
+	hasPluginManagerApp := false
 	pluginsToPreload := []string{}
 	for _, app := range enabledPlugins.Apps {
 		if app.Preload {
 			pluginsToPreload = append(pluginsToPreload, app.Module)
+		}
+		if app.Id == "grafana-plugin-admin-app" {
+			hasPluginManagerApp = true
 		}
 	}
 
@@ -203,6 +207,7 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 		"alertingErrorOrTimeout":     setting.AlertingErrorOrTimeout,
 		"alertingNoDataOrNullValues": setting.AlertingNoDataOrNullValues,
 		"alertingMinInterval":        setting.AlertingMinInterval,
+		"liveEnabled":                hs.Cfg.LiveMaxConnections != 0,
 		"autoAssignOrg":              setting.AutoAssignOrg,
 		"verifyEmailEnabled":         setting.VerifyEmailEnabled,
 		"sigV4AuthEnabled":           setting.SigV4AuthEnabled,
@@ -238,17 +243,22 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 			"licenseUrl":      hs.License.LicenseURL(c.SignedInUser),
 			"edition":         hs.License.Edition(),
 		},
-		"featureToggles":          hs.Cfg.FeatureToggles,
-		"rendererAvailable":       hs.RenderService.IsAvailable(),
-		"http2Enabled":            hs.Cfg.Protocol == setting.HTTP2Scheme,
-		"sentry":                  hs.Cfg.Sentry,
-		"catalogUrl":              hs.Cfg.CatalogURL,
-		"expressionsEnabled":      hs.Cfg.ExpressionsEnabled,
-		"awsAllowedAuthProviders": hs.Cfg.AWSAllowedAuthProviders,
-		"awsAssumeRoleEnabled":    hs.Cfg.AWSAssumeRoleEnabled,
+		"featureToggles":                   hs.Cfg.FeatureToggles,
+		"rendererAvailable":                hs.RenderService.IsAvailable(),
+		"http2Enabled":                     hs.Cfg.Protocol == setting.HTTP2Scheme,
+		"sentry":                           hs.Cfg.Sentry,
+		"pluginCatalogURL":                 hs.Cfg.PluginCatalogURL,
+		"pluginAdminEnabled":               c.IsGrafanaAdmin && hs.Cfg.PluginAdminEnabled && hasPluginManagerApp,
+		"pluginAdminExternalManageEnabled": hs.Cfg.PluginAdminExternalManageEnabled,
+		"expressionsEnabled":               hs.Cfg.ExpressionsEnabled,
+		"awsAllowedAuthProviders":          hs.Cfg.AWSAllowedAuthProviders,
+		"awsAssumeRoleEnabled":             hs.Cfg.AWSAssumeRoleEnabled,
 		"azure": map[string]interface{}{
 			"cloud":                  hs.Cfg.Azure.Cloud,
 			"managedIdentityEnabled": hs.Cfg.Azure.ManagedIdentityEnabled,
+		},
+		"caching": map[string]bool{
+			"enabled": hs.Cfg.SectionWithEnvOverrides("caching").Key("enabled").MustBool(true),
 		},
 	}
 
@@ -280,16 +290,18 @@ func getPanelSort(id string) int {
 		sort = 10
 	case "status-grid":
 		sort = 11
-	case "graph":
+	case "histogram":
 		sort = 12
-	case "text":
+	case "graph":
 		sort = 13
-	case "alertlist":
+	case "text":
 		sort = 14
-	case "dashlist":
+	case "alertlist":
 		sort = 15
-	case "news":
+	case "dashlist":
 		sort = 16
+	case "news":
+		sort = 17
 	}
 	return sort
 }

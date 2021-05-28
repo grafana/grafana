@@ -3,7 +3,7 @@ import { PanelProps } from '@grafana/data';
 import { useTheme2, ZoomPlugin } from '@grafana/ui';
 import { TimelineMode, TimelineOptions } from './types';
 import { TimelineChart } from './TimelineChart';
-import { prepareTimelineFields } from './utils';
+import { prepareTimelineFields, prepareTimelineLegendItems } from './utils';
 
 interface TimelinePanelProps extends PanelProps<TimelineOptions> {}
 
@@ -26,6 +26,12 @@ export const StateTimelinePanel: React.FC<TimelinePanelProps> = ({
     options.mergeValues,
   ]);
 
+  const legendItems = useMemo(() => prepareTimelineLegendItems(frames, options.legend, theme), [
+    frames,
+    options.legend,
+    theme,
+  ]);
+
   if (!frames || warn) {
     return (
       <div className="panel-empty">
@@ -43,6 +49,7 @@ export const StateTimelinePanel: React.FC<TimelinePanelProps> = ({
       timeZone={timeZone}
       width={width}
       height={height}
+      legendItems={legendItems}
       {...options}
       // hardcoded
       mode={TimelineMode.Changes}

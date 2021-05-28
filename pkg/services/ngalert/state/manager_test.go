@@ -346,7 +346,7 @@ func TestProcessEvalResults(t *testing.T) {
 			},
 		},
 		{
-			desc: "normal -> pending when For is set but not exceeded",
+			desc: "normal -> pending when For is set but not exceeded and first result is normal",
 			alertRule: &models.AlertRule{
 				OrgID:           1,
 				Title:           "test_title",
@@ -400,6 +400,67 @@ func TestProcessEvalResults(t *testing.T) {
 					},
 					StartsAt:           evaluationTime.Add(10 * time.Second),
 					EndsAt:             evaluationTime.Add(10 * time.Second).Add(1 * time.Minute),
+					LastEvaluationTime: evaluationTime.Add(10 * time.Second),
+					EvaluationDuration: evaluationDuration,
+					Annotations:        map[string]string{"annotation": "test"},
+				},
+			},
+		},
+		{
+			desc: "normal -> pending when For is set but not exceeded and first result is alerting",
+			alertRule: &models.AlertRule{
+				OrgID:           1,
+				Title:           "test_title",
+				UID:             "test_alert_rule_uid_2",
+				NamespaceUID:    "test_namespace_uid",
+				Annotations:     map[string]string{"annotation": "test"},
+				Labels:          map[string]string{"label": "test"},
+				IntervalSeconds: 10,
+				For:             1 * time.Minute,
+			},
+			evalResults: []eval.Results{
+				{
+					eval.Result{
+						Instance:           data.Labels{"instance_label": "test"},
+						State:              eval.Alerting,
+						EvaluatedAt:        evaluationTime,
+						EvaluationDuration: evaluationDuration,
+					},
+				},
+				{
+					eval.Result{
+						Instance:           data.Labels{"instance_label": "test"},
+						State:              eval.Alerting,
+						EvaluatedAt:        evaluationTime.Add(10 * time.Second),
+						EvaluationDuration: evaluationDuration,
+					},
+				},
+			},
+			expectedStates: map[string]*state.State{
+				`[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["instance_label","test"],["label","test"]]`: {
+					AlertRuleUID: "test_alert_rule_uid_2",
+					OrgID:        1,
+					CacheId:      `[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["instance_label","test"],["label","test"]]`,
+					Labels: data.Labels{
+						"__alert_rule_namespace_uid__": "test_namespace_uid",
+						"__alert_rule_uid__":           "test_alert_rule_uid_2",
+						"alertname":                    "test_title",
+						"label":                        "test",
+						"instance_label":               "test",
+					},
+					State: eval.Pending,
+					Results: []state.Evaluation{
+						{
+							EvaluationTime:  evaluationTime,
+							EvaluationState: eval.Alerting,
+						},
+						{
+							EvaluationTime:  evaluationTime.Add(10 * time.Second),
+							EvaluationState: eval.Alerting,
+						},
+					},
+					StartsAt:           evaluationTime,
+					EndsAt:             evaluationTime.Add(1 * time.Minute),
 					LastEvaluationTime: evaluationTime.Add(10 * time.Second),
 					EvaluationDuration: evaluationDuration,
 					Annotations:        map[string]string{"annotation": "test"},
@@ -652,7 +713,7 @@ func TestProcessEvalResults(t *testing.T) {
 			},
 		},
 		{
-			desc: "normal -> normal when result is NoData and NoDataState is KeepLastState",
+			desc: "normal -> alerting when result is Error and ExecErrState is Alerting",
 			alertRule: &models.AlertRule{
 				OrgID:           1,
 				Title:           "test_title",
@@ -662,7 +723,7 @@ func TestProcessEvalResults(t *testing.T) {
 				Labels:          map[string]string{"label": "test"},
 				IntervalSeconds: 10,
 				For:             1 * time.Minute,
-				NoDataState:     models.KeepLastState,
+				ExecErrState:    models.AlertingErrState,
 			},
 			evalResults: []eval.Results{
 				{
@@ -676,7 +737,7 @@ func TestProcessEvalResults(t *testing.T) {
 				{
 					eval.Result{
 						Instance:           data.Labels{"instance_label": "test"},
-						State:              eval.NoData,
+						State:              eval.Error,
 						EvaluatedAt:        evaluationTime.Add(10 * time.Second),
 						EvaluationDuration: evaluationDuration,
 					},
@@ -694,7 +755,7 @@ func TestProcessEvalResults(t *testing.T) {
 						"label":                        "test",
 						"instance_label":               "test",
 					},
-					State: eval.Normal,
+					State: eval.Alerting,
 					Results: []state.Evaluation{
 						{
 							EvaluationTime:  evaluationTime,
@@ -702,69 +763,7 @@ func TestProcessEvalResults(t *testing.T) {
 						},
 						{
 							EvaluationTime:  evaluationTime.Add(10 * time.Second),
-							EvaluationState: eval.NoData,
-						},
-					},
-					StartsAt:           evaluationTime.Add(10 * time.Second),
-					EndsAt:             evaluationTime.Add(10 * time.Second).Add(1 * time.Minute),
-					LastEvaluationTime: evaluationTime.Add(10 * time.Second),
-					EvaluationDuration: evaluationDuration,
-					Annotations:        map[string]string{"annotation": "test"},
-				},
-			},
-		},
-		{
-			desc: "normal -> normal when result is NoData and NoDataState is KeepLastState",
-			alertRule: &models.AlertRule{
-				OrgID:           1,
-				Title:           "test_title",
-				UID:             "test_alert_rule_uid_2",
-				NamespaceUID:    "test_namespace_uid",
-				Annotations:     map[string]string{"annotation": "test"},
-				Labels:          map[string]string{"label": "test"},
-				IntervalSeconds: 10,
-				For:             1 * time.Minute,
-				NoDataState:     models.KeepLastState,
-			},
-			evalResults: []eval.Results{
-				{
-					eval.Result{
-						Instance:           data.Labels{"instance_label": "test"},
-						State:              eval.Normal,
-						EvaluatedAt:        evaluationTime,
-						EvaluationDuration: evaluationDuration,
-					},
-				},
-				{
-					eval.Result{
-						Instance:           data.Labels{"instance_label": "test"},
-						State:              eval.NoData,
-						EvaluatedAt:        evaluationTime.Add(10 * time.Second),
-						EvaluationDuration: evaluationDuration,
-					},
-				},
-			},
-			expectedStates: map[string]*state.State{
-				`[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["instance_label","test"],["label","test"]]`: {
-					AlertRuleUID: "test_alert_rule_uid_2",
-					OrgID:        1,
-					CacheId:      `[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["instance_label","test"],["label","test"]]`,
-					Labels: data.Labels{
-						"__alert_rule_namespace_uid__": "test_namespace_uid",
-						"__alert_rule_uid__":           "test_alert_rule_uid_2",
-						"alertname":                    "test_title",
-						"label":                        "test",
-						"instance_label":               "test",
-					},
-					State: eval.Normal,
-					Results: []state.Evaluation{
-						{
-							EvaluationTime:  evaluationTime,
-							EvaluationState: eval.Normal,
-						},
-						{
-							EvaluationTime:  evaluationTime.Add(10 * time.Second),
-							EvaluationState: eval.NoData,
+							EvaluationState: eval.Error,
 						},
 					},
 					StartsAt:           evaluationTime.Add(10 * time.Second),

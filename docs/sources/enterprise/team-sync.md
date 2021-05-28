@@ -3,7 +3,7 @@ title = "Team sync"
 description = "Grafana Team Sync"
 keywords = ["grafana", "auth", "documentation"]
 aliases = ["/docs/grafana/latest/auth/saml/"]
-weight = 600
+weight = 1000
 +++
 
 # Team sync

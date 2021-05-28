@@ -42,16 +42,9 @@ const getStyles = createStyle((theme: Theme) => {
   return {
     nameWrapper: css`
       label: nameWrapper;
-      background: ${autoColor(theme, '#f8f8f8')};
       line-height: 27px;
       overflow: hidden;
       display: flex;
-      &:hover {
-        border-right: 1px solid ${autoColor(theme, '#bbb')};
-        float: left;
-        min-width: calc(100% + 1px);
-        overflow: visible;
-      }
     `,
     nameWrapperMatchingFilter: css`
       label: nameWrapperMatchingFilter;
@@ -401,6 +394,7 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
             <a
               className={cx(styles.name, { [styles.nameDetailExpanded]: isDetailExpanded })}
               aria-checked={isDetailExpanded}
+              title={labelDetail}
               onClick={this._detailToggle}
               role="switch"
               style={{ borderColor: color }}

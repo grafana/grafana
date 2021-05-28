@@ -33,9 +33,8 @@ type DataSourcePlugin struct {
 	Executable string `json:"executable,omitempty"`
 	SDK        bool   `json:"sdk,omitempty"`
 
-	client       *grpcplugin.Client
-	legacyClient *grpcplugin.LegacyClient
-	logger       log.Logger
+	client *grpcplugin.Client
+	logger log.Logger
 }
 
 func (p *DataSourcePlugin) Load(decoder *json.Decoder, base *PluginBase, backendPluginManager backendplugin.Manager) (
@@ -48,8 +47,7 @@ func (p *DataSourcePlugin) Load(decoder *json.Decoder, base *PluginBase, backend
 		cmd := ComposePluginStartCommand(p.Executable)
 		fullpath := filepath.Join(base.PluginDir, cmd)
 		factory := grpcplugin.NewBackendPlugin(p.Id, fullpath, grpcplugin.PluginStartFuncs{
-			OnLegacyStart: p.onLegacyPluginStart,
-			OnStart:       p.onPluginStart,
+			OnStart: p.onPluginStart,
 		})
 		if err := backendPluginManager.RegisterAndStart(context.Background(), p.Id, factory); err != nil {
 			return nil, errutil.Wrapf(err, "failed to register backend plugin")
@@ -64,24 +62,12 @@ func (p *DataSourcePlugin) DataQuery(ctx context.Context, dsInfo *models.DataSou
 		return DataResponse{}, fmt.Errorf("plugin %q can't handle data queries", p.Id)
 	}
 
-	if p.client != nil {
-		endpoint := newDataSourcePluginWrapperV2(p.logger, p.Id, p.Type, p.client.DataPlugin)
-		return endpoint.Query(ctx, dsInfo, query)
-	}
-
-	endpoint := newDataSourcePluginWrapper(p.logger, p.legacyClient.DatasourcePlugin)
+	endpoint := newDataSourcePluginWrapperV2(p.logger, p.Id, p.Type, p.client.DataPlugin)
 	return endpoint.Query(ctx, dsInfo, query)
 }
 
-func (p *DataSourcePlugin) onLegacyPluginStart(pluginID string, client *grpcplugin.LegacyClient, logger log.Logger) error {
-	p.legacyClient = client
-	p.logger = logger
-
-	return nil
-}
-
 func (p *DataSourcePlugin) CanHandleDataQueries() bool {
-	return p.client != nil || p.legacyClient != nil
+	return p.client != nil
 }
 
 func (p *DataSourcePlugin) onPluginStart(pluginID string, client *grpcplugin.Client, logger log.Logger) error {

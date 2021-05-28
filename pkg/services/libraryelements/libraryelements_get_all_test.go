@@ -42,7 +42,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 
 			err := sc.reqContext.Req.ParseForm()
 			require.NoError(t, err)
-			sc.reqContext.Req.Form.Add("kind", strconv.FormatInt(int64(Panel), 10))
+			sc.reqContext.Req.Form.Add("kind", strconv.FormatInt(int64(models.PanelElement), 10))
 
 			resp = sc.service.getAllHandler(sc.reqContext)
 			require.Equal(t, 200, resp.Status())
@@ -62,7 +62,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 							FolderID:    1,
 							UID:         result.Result.Elements[0].UID,
 							Name:        "Text - Library Panel",
-							Kind:        int64(Panel),
+							Kind:        int64(models.PanelElement),
 							Type:        "text",
 							Description: "A description",
 							Model: map[string]interface{}{
@@ -107,7 +107,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 
 			err := sc.reqContext.Req.ParseForm()
 			require.NoError(t, err)
-			sc.reqContext.Req.Form.Add("kind", strconv.FormatInt(int64(Variable), 10))
+			sc.reqContext.Req.Form.Add("kind", strconv.FormatInt(int64(models.VariableElement), 10))
 
 			resp = sc.service.getAllHandler(sc.reqContext)
 			require.Equal(t, 200, resp.Status())
@@ -127,7 +127,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 							FolderID:    1,
 							UID:         result.Result.Elements[0].UID,
 							Name:        "query0",
-							Kind:        int64(Variable),
+							Kind:        int64(models.VariableElement),
 							Type:        "query",
 							Description: "A description",
 							Model: map[string]interface{}{
@@ -187,7 +187,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 							FolderID:    1,
 							UID:         result.Result.Elements[0].UID,
 							Name:        "Text - Library Panel",
-							Kind:        int64(Panel),
+							Kind:        int64(models.PanelElement),
 							Type:        "text",
 							Description: "A description",
 							Model: map[string]interface{}{
@@ -222,7 +222,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 							FolderID:    1,
 							UID:         result.Result.Elements[1].UID,
 							Name:        "Text - Library Panel2",
-							Kind:        int64(Panel),
+							Kind:        int64(models.PanelElement),
 							Type:        "text",
 							Description: "A description",
 							Model: map[string]interface{}{
@@ -286,7 +286,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 							FolderID:    1,
 							UID:         result.Result.Elements[0].UID,
 							Name:        "Text - Library Panel2",
-							Kind:        int64(Panel),
+							Kind:        int64(models.PanelElement),
 							Type:        "text",
 							Description: "A description",
 							Model: map[string]interface{}{
@@ -321,7 +321,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 							FolderID:    1,
 							UID:         result.Result.Elements[1].UID,
 							Name:        "Text - Library Panel",
-							Kind:        int64(Panel),
+							Kind:        int64(models.PanelElement),
 							Type:        "text",
 							Description: "A description",
 							Model: map[string]interface{}{
@@ -360,7 +360,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 
 	scenarioWithPanel(t, "When an admin tries to get all library panels and two exist and typeFilter is set to existing types, it should succeed and the result should be correct",
 		func(t *testing.T, sc scenarioContext) {
-			command := getCreateCommandWithModel(sc.folder.Id, "Gauge - Library Panel", Panel, []byte(`
+			command := getCreateCommandWithModel(sc.folder.Id, "Gauge - Library Panel", models.PanelElement, []byte(`
 			{
 			  "datasource": "${DS_GDEV-TESTDATA}",
 			  "id": 1,
@@ -372,7 +372,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 			resp := sc.service.createHandler(sc.reqContext, command)
 			require.Equal(t, 200, resp.Status())
 
-			command = getCreateCommandWithModel(sc.folder.Id, "BarGauge - Library Panel", Panel, []byte(`
+			command = getCreateCommandWithModel(sc.folder.Id, "BarGauge - Library Panel", models.PanelElement, []byte(`
 			{
 			  "datasource": "${DS_GDEV-TESTDATA}",
 			  "id": 1,
@@ -405,7 +405,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 							FolderID:    1,
 							UID:         result.Result.Elements[0].UID,
 							Name:        "BarGauge - Library Panel",
-							Kind:        int64(Panel),
+							Kind:        int64(models.PanelElement),
 							Type:        "bargauge",
 							Description: "BarGauge description",
 							Model: map[string]interface{}{
@@ -440,7 +440,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 							FolderID:    1,
 							UID:         result.Result.Elements[1].UID,
 							Name:        "Gauge - Library Panel",
-							Kind:        int64(Panel),
+							Kind:        int64(models.PanelElement),
 							Type:        "gauge",
 							Description: "Gauge description",
 							Model: map[string]interface{}{
@@ -479,7 +479,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 
 	scenarioWithPanel(t, "When an admin tries to get all library panels and two exist and typeFilter is set to a nonexistent type, it should succeed and the result should be correct",
 		func(t *testing.T, sc scenarioContext) {
-			command := getCreateCommandWithModel(sc.folder.Id, "Gauge - Library Panel", Panel, []byte(`
+			command := getCreateCommandWithModel(sc.folder.Id, "Gauge - Library Panel", models.PanelElement, []byte(`
 			{
 			  "datasource": "${DS_GDEV-TESTDATA}",
 			  "id": 1,
@@ -542,7 +542,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 							FolderID:    newFolder.Id,
 							UID:         result.Result.Elements[0].UID,
 							Name:        "Text - Library Panel2",
-							Kind:        int64(Panel),
+							Kind:        int64(models.PanelElement),
 							Type:        "text",
 							Description: "A description",
 							Model: map[string]interface{}{
@@ -637,7 +637,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 							FolderID:    1,
 							UID:         result.Result.Elements[0].UID,
 							Name:        "Text - Library Panel",
-							Kind:        int64(Panel),
+							Kind:        int64(models.PanelElement),
 							Type:        "text",
 							Description: "A description",
 							Model: map[string]interface{}{
@@ -672,7 +672,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 							FolderID:    1,
 							UID:         result.Result.Elements[1].UID,
 							Name:        "Text - Library Panel2",
-							Kind:        int64(Panel),
+							Kind:        int64(models.PanelElement),
 							Type:        "text",
 							Description: "A description",
 							Model: map[string]interface{}{
@@ -736,7 +736,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 							FolderID:    1,
 							UID:         result.Result.Elements[0].UID,
 							Name:        "Text - Library Panel2",
-							Kind:        int64(Panel),
+							Kind:        int64(models.PanelElement),
 							Type:        "text",
 							Description: "A description",
 							Model: map[string]interface{}{
@@ -800,7 +800,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 							FolderID:    1,
 							UID:         result.Result.Elements[0].UID,
 							Name:        "Text - Library Panel",
-							Kind:        int64(Panel),
+							Kind:        int64(models.PanelElement),
 							Type:        "text",
 							Description: "A description",
 							Model: map[string]interface{}{
@@ -865,7 +865,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 							FolderID:    1,
 							UID:         result.Result.Elements[0].UID,
 							Name:        "Text - Library Panel2",
-							Kind:        int64(Panel),
+							Kind:        int64(models.PanelElement),
 							Type:        "text",
 							Description: "A description",
 							Model: map[string]interface{}{
@@ -904,7 +904,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 
 	scenarioWithPanel(t, "When an admin tries to get all library panels and two exist and searchString exists in the description, it should succeed and the result should be correct",
 		func(t *testing.T, sc scenarioContext) {
-			command := getCreateCommandWithModel(sc.folder.Id, "Text - Library Panel2", Panel, []byte(`
+			command := getCreateCommandWithModel(sc.folder.Id, "Text - Library Panel2", models.PanelElement, []byte(`
 			{
 			  "datasource": "${DS_GDEV-TESTDATA}",
 			  "id": 1,
@@ -939,7 +939,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 							FolderID:    1,
 							UID:         result.Result.Elements[0].UID,
 							Name:        "Text - Library Panel",
-							Kind:        int64(Panel),
+							Kind:        int64(models.PanelElement),
 							Type:        "text",
 							Description: "A description",
 							Model: map[string]interface{}{
@@ -978,7 +978,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 
 	scenarioWithPanel(t, "When an admin tries to get all library panels and two exist and searchString exists in both name and description, it should succeed and the result should be correct",
 		func(t *testing.T, sc scenarioContext) {
-			command := getCreateCommandWithModel(sc.folder.Id, "Some Other", Panel, []byte(`
+			command := getCreateCommandWithModel(sc.folder.Id, "Some Other", models.PanelElement, []byte(`
 			{
 			  "datasource": "${DS_GDEV-TESTDATA}",
 			  "id": 1,
@@ -1011,7 +1011,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 							FolderID:    1,
 							UID:         result.Result.Elements[0].UID,
 							Name:        "Some Other",
-							Kind:        int64(Panel),
+							Kind:        int64(models.PanelElement),
 							Type:        "text",
 							Description: "A Library Panel",
 							Model: map[string]interface{}{
@@ -1046,7 +1046,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 							FolderID:    1,
 							UID:         result.Result.Elements[1].UID,
 							Name:        "Text - Library Panel",
-							Kind:        int64(Panel),
+							Kind:        int64(models.PanelElement),
 							Type:        "text",
 							Description: "A description",
 							Model: map[string]interface{}{
@@ -1112,7 +1112,7 @@ func TestGetAllLibraryElements(t *testing.T) {
 							FolderID:    1,
 							UID:         result.Result.Elements[0].UID,
 							Name:        "Text - Library Panel2",
-							Kind:        int64(Panel),
+							Kind:        int64(models.PanelElement),
 							Type:        "text",
 							Description: "A description",
 							Model: map[string]interface{}{

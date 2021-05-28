@@ -19,10 +19,10 @@ Currently only the graph panel visualization supports alerts.
 
 You can perform the following tasks for alerts:
 
-- [Add or edit an alert notification channel]({{< relref "notifications.md" >}})
-- [Create an alert rule]({{< relref "create-alerts.md" >}})
-- [View existing alert rules and their current state]({{< relref "view-alerts.md" >}})
-- [Test alert rules and troubleshoot]({{< relref "troubleshoot-alerts.md" >}})
+- [Add or edit an alert notification channel]({{< relref "./old-alerting/notifications.md" >}})
+- [Create an alert rule]({{< relref "./old-alerting/create-alerts.md" >}})
+- [View existing alert rules and their current state]({{< relref "./old-alerting/view-alerts.md" >}})
+- [Test alert rules and troubleshoot]({{< relref "./old-alerting/troubleshoot-alerts.md" >}})
 
 ## Clustering
 
@@ -39,7 +39,7 @@ The actual notifications are configured and shared between multiple alerts.
 Alert rules are evaluated in the Grafana backend in a scheduler and query execution engine that is part
 of core Grafana. Alert rules can query only backend data sources with alerting enabled. Such data sources are:
 - builtin or developed and maintained by grafana, such as: `Graphite`, `Prometheus`, `Loki`, `InfluxDB`, `Elasticsearch`,
-`Google Cloud Monitoring`, `Cloudwatch`, `Azure Monitor`, `MySQL`, `PostgreSQL`, `MSSQL`, `OpenTSDB`, `Oracle`, and `Azure Data Explorer`
+  `Google Cloud Monitoring`, `Cloudwatch`, `Azure Monitor`, `MySQL`, `PostgreSQL`, `MSSQL`, `OpenTSDB`, `Oracle`, and `Azure Data Explorer`
 - any community backend data sources with alerting enabled (`backend` and `alerting` properties are set in the [plugin.json]({{< relref "../developers/plugins/metadata.md" >}}))
 
 ## Metrics from the alert engine

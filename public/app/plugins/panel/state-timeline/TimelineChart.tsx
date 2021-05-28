@@ -1,5 +1,16 @@
 import React from 'react';
-import { PanelContext, PanelContextRoot, GraphNG, GraphNGProps, BarValueVisibility } from '@grafana/ui';
+import {
+  PanelContext,
+  PanelContextRoot,
+  GraphNG,
+  GraphNGProps,
+  BarValueVisibility,
+  LegendDisplayMode,
+  UPlotConfigBuilder,
+  VizLayout,
+  VizLegend,
+  VizLegendItem,
+} from '@grafana/ui';
 import { DataFrame, FieldType, TimeRange } from '@grafana/data';
 import { preparePlotConfigBuilder } from './utils';
 import { TimelineMode, TimelineValueAlignment } from './types';
@@ -11,11 +22,12 @@ export interface TimelineProps extends Omit<GraphNGProps, 'prepConfig' | 'propsT
   mode: TimelineMode;
   rowHeight: number;
   showValue: BarValueVisibility;
-  alignValue: TimelineValueAlignment;
+  alignValue?: TimelineValueAlignment;
   colWidth?: number;
+  legendItems?: VizLegendItem[];
 }
 
-const propsToDiff = ['mode', 'rowHeight', 'colWidth', 'showValue', 'alignValue'];
+const propsToDiff = ['rowHeight', 'colWidth', 'showValue', 'mergeValues', 'alignValue'];
 
 export class TimelineChart extends React.Component<TimelineProps> {
   static contextType = PanelContextRoot;
@@ -30,10 +42,25 @@ export class TimelineChart extends React.Component<TimelineProps> {
       getTimeRange,
       eventBus,
       ...this.props,
+
+      // When there is only one row, use the full space
+      rowHeight: alignedFrame.fields.length > 2 ? this.props.rowHeight : 1,
     });
   };
 
-  renderLegend = () => null;
+  renderLegend = (config: UPlotConfigBuilder) => {
+    const { legend, legendItems } = this.props;
+
+    if (!config || !legendItems || !legend || legend.displayMode === LegendDisplayMode.Hidden) {
+      return null;
+    }
+
+    return (
+      <VizLayout.Legend placement={legend.placement}>
+        <VizLegend placement={legend.placement} items={legendItems} displayMode={legend.displayMode} />
+      </VizLayout.Legend>
+    );
+  };
 
   render() {
     return (
