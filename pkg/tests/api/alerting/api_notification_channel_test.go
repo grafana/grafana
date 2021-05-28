@@ -239,16 +239,16 @@ func (nc *mockNotificationChannel) totalNotifications() int {
 }
 
 func (nc *mockNotificationChannel) matchesExpNotifications(t *testing.T, exp map[string][]string) {
-	nc.t.Helper()
+	t.Helper()
 	nc.receivedNotificationsMtx.Lock()
 	defer nc.receivedNotificationsMtx.Unlock()
 
-	require.Equal(t, len(exp), len(nc.receivedNotifications))
+	require.Len(t, nc.receivedNotifications, len(exp))
 
 	for expKey, expVals := range exp {
 		actVals, ok := nc.receivedNotifications[expKey]
 		require.True(t, ok)
-		require.Equal(t, len(expVals), len(actVals))
+		require.Len(t, actVals, len(expVals))
 		for i := range expVals {
 			expVal := expVals[i]
 			var r1, r2 *regexp.Regexp
@@ -280,11 +280,11 @@ func (nc *mockNotificationChannel) matchesExpNotifications(t *testing.T, exp map
 			}
 			if r1 != nil {
 				parts := r1.FindStringSubmatch(actVals[i])
-				require.Equal(nc.t, 2, len(parts))
+				require.Len(t, parts, 2)
 				if expKey == "v1/alerts" {
 					// 2 fields for Prometheus Alertmanager.
 					parts2 := r2.FindStringSubmatch(actVals[i])
-					require.Equal(nc.t, 2, len(parts2))
+					require.Len(t, parts2, 2)
 					expVal = fmt.Sprintf(expVal, parts[1], parts2[1])
 				} else {
 					expVal = fmt.Sprintf(expVal, parts[1])
@@ -306,6 +306,8 @@ func (nc *mockNotificationChannel) matchesExpNotifications(t *testing.T, exp map
 }
 
 func multipartEqual(t *testing.T, exp, act string) {
+	t.Helper()
+
 	fillMap := func(r *multipart.Reader, m map[string]string) {
 		for {
 			part, err := r.NextPart()
