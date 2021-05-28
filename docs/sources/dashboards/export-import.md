@@ -15,7 +15,7 @@ Dashboards are exported in Grafana JSON format, and contain everything you need 
 
 The export feature is accessed in the share window which you open by clicking the share button in the dashboard menu.
 
-{{< docs-imagebox img="/img/docs/export/export-modal.png" max-width="800px" >}}
+{{< figure src="/static/img/docs/export/export-modal.png" max-width="800px" >}}
 
 ### Making a dashboard portable
 
