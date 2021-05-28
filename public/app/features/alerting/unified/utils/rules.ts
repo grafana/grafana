@@ -147,17 +147,16 @@ export function alertStateToReadable(state: PromAlertingRuleState | GrafanaAlert
 }
 
 export const flattenRules = (rules: RuleNamespace[]) => {
-  return rules.reduce((acc, { dataSourceName, name: namespaceName, groups }) => {
+  return rules.reduce<PromRuleWithLocation[]>((acc, { dataSourceName, name: namespaceName, groups }) => {
     groups.forEach(({ name: groupName, rules }) => {
       rules.forEach((rule) => {
-        if (rule.type !== 'recording') {
-          const ruleToAdd = { dataSourceName, namespaceName, groupName, ...rule };
-          acc.push(ruleToAdd);
+        if (isAlertingRule(rule)) {
+          acc.push({ dataSourceName, namespaceName, groupName, rule });
         }
       });
     });
     return acc;
-  }, [] as PromRuleWithLocation[]);
+  }, []);
 };
 
 export const alertStateToState: Record<PromAlertingRuleState | GrafanaAlertState, State> = {
@@ -171,7 +170,7 @@ export const alertStateToState: Record<PromAlertingRuleState | GrafanaAlertState
   [GrafanaAlertState.Pending]: 'warning',
 };
 
-export function getFirstActiveAt(promRule: AlertingRule | PromRuleWithLocation) {
+export function getFirstActiveAt(promRule: AlertingRule) {
   if (!promRule.alerts) {
     return null;
   }

@@ -32,7 +32,7 @@ export interface AlertListOptions {
   folderId: number;
 }
 
-export interface UnifiedAlertlistOptions {
+export interface UnifiedAlertListOptions {
   maxItems: number;
   sortOrder: SortOrder;
   dashboardAlerts: boolean;

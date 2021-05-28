@@ -4,7 +4,7 @@ import { TagsInput } from '@grafana/ui';
 import { AlertList } from './AlertList';
 import { UnifiedAlertList } from './UnifiedAlertList';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
-import { AlertListOptions, UnifiedAlertlistOptions, ShowOption, SortOrder } from './types';
+import { AlertListOptions, UnifiedAlertListOptions, ShowOption, SortOrder } from './types';
 import { alertListPanelMigrationHandler } from './AlertListMigrationHandler';
 import { config } from '@grafana/runtime';
 import { RuleFolderPicker } from 'app/features/alerting/unified/components/rule-editor/RuleFolderPicker';
@@ -144,7 +144,7 @@ const alertList = new PanelPlugin<AlertListOptions>(AlertList)
   })
   .setMigrationHandler(alertListPanelMigrationHandler);
 
-const unifiedAlertList = new PanelPlugin<UnifiedAlertlistOptions>(UnifiedAlertList).setPanelOptions((builder) => {
+const unifiedAlertList = new PanelPlugin<UnifiedAlertListOptions>(UnifiedAlertList).setPanelOptions((builder) => {
   builder
     .addNumberInput({
       name: 'Max items',

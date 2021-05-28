@@ -10,11 +10,12 @@ import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 import { omit } from 'lodash';
 
 interface Props {
-  rule: PromRuleWithLocation;
+  ruleWithLocation: PromRuleWithLocation;
   showInstances: boolean;
 }
 
-export const AlertInstances = ({ rule, showInstances }: Props) => {
+export const AlertInstances = ({ ruleWithLocation, showInstances }: Props) => {
+  const { rule } = ruleWithLocation;
   const [displayInstances, setDisplayInstances] = useState<boolean>(showInstances);
   const styles = useStyles2(getStyles);
 

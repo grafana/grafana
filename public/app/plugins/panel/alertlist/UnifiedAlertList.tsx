@@ -7,7 +7,7 @@ import { css } from '@emotion/css';
 
 import { AlertInstances } from './AlertInstances';
 import alertDef from 'app/features/alerting/state/alertDef';
-import { SortOrder, UnifiedAlertlistOptions } from './types';
+import { SortOrder, UnifiedAlertListOptions } from './types';
 
 import { flattenRules, alertStateToState, getFirstActiveAt } from 'app/features/alerting/unified/utils/rules';
 import { PromRuleWithLocation } from 'app/types/unified-alerting';
@@ -15,18 +15,16 @@ import { fetchAllPromRulesAction } from 'app/features/alerting/unified/state/act
 import { useUnifiedAlertingSelector } from 'app/features/alerting/unified/hooks/useUnifiedAlertingSelector';
 import { getAllRulesSourceNames } from 'app/features/alerting/unified/utils/datasource';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
-import { Annotation } from 'app/features/alerting/unified/utils/constants';
+import { Annotation, RULE_LIST_POLL_INTERVAL_MS } from 'app/features/alerting/unified/utils/constants';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
-const ALERT_LIST_POLL_INTERVAL_MS = 60000;
-
-export function UnifiedAlertList(props: PanelProps<UnifiedAlertlistOptions>) {
+export function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
   const dispatch = useDispatch();
   const rulesDataSourceNames = useMemo(getAllRulesSourceNames, []);
 
   useEffect(() => {
     dispatch(fetchAllPromRulesAction());
-    const interval = setInterval(() => dispatch(fetchAllPromRulesAction()), ALERT_LIST_POLL_INTERVAL_MS);
+    const interval = setInterval(() => dispatch(fetchAllPromRulesAction()), RULE_LIST_POLL_INTERVAL_MS);
     return () => {
       clearInterval(interval);
     };
@@ -43,16 +41,16 @@ export function UnifiedAlertList(props: PanelProps<UnifiedAlertlistOptions>) {
   const styles = useStyles(getStyles);
   const stateStyle = useStyles2(getStateTagStyles);
 
-  const rules = filterRules(
-    props.options,
-    sortRules(
-      props.options.sortOrder,
-      haveResults
-        ? Object.values(promRulesRequests).flatMap(({ result = [] }) => {
-            return flattenRules(result);
-          })
-        : []
-    )
+  const rules = useMemo(
+    () =>
+      filterRules(
+        props.options,
+        sortRules(
+          props.options.sortOrder,
+          Object.values(promRulesRequests).flatMap(({ result = [] }) => flattenRules(result))
+        )
+      ),
+    [props.options, promRulesRequests]
   );
 
   const rulesToDisplay = rules.length <= props.options.maxItems ? rules : rules.slice(0, props.options.maxItems);
@@ -67,12 +65,13 @@ export function UnifiedAlertList(props: PanelProps<UnifiedAlertlistOptions>) {
         <section>
           <ol className={styles.alertRuleList}>
             {haveResults &&
-              rulesToDisplay.map((rule, index) => {
+              rulesToDisplay.map((ruleWithLocation, index) => {
+                const { rule, namespaceName, groupName } = ruleWithLocation;
                 const firstActiveAt = getFirstActiveAt(rule);
                 return (
                   <li
                     className={styles.alertRuleItem}
-                    key={`alert-${rule.namespaceName}-${rule.groupName}-${rule.name}-${index}`}
+                    key={`alert-${namespaceName}-${groupName}-${rule.name}-${index}`}
                   >
                     <div className={stateStyle.icon}>
                       <Icon
@@ -101,7 +100,7 @@ export function UnifiedAlertList(props: PanelProps<UnifiedAlertlistOptions>) {
                           )}
                         </div>
                       </div>
-                      <AlertInstances rule={rule} showInstances={props.options.showInstances} />
+                      <AlertInstances ruleWithLocation={ruleWithLocation} showInstances={props.options.showInstances} />
                     </div>
                   </li>
                 );
@@ -118,12 +117,11 @@ function sortRules(sortOrder: SortOrder, rules: PromRuleWithLocation[]) {
     // @ts-ignore
     return sortBy(rules, (rule) => alertDef.alertStateSortScore[rule.state]);
   } else if (sortOrder === SortOrder.TimeAsc) {
-    return sortBy(rules, (rule) => getFirstActiveAt(rule) || new Date());
+    return sortBy(rules, (rule) => getFirstActiveAt(rule.rule) || new Date());
   } else if (sortOrder === SortOrder.TimeDesc) {
-    return sortBy(rules, (rule) => getFirstActiveAt(rule) || new Date()).reverse();
+    return sortBy(rules, (rule) => getFirstActiveAt(rule.rule) || new Date()).reverse();
   }
-
-  const result = sortBy(rules, (rule) => rule.name.toLowerCase());
+  const result = sortBy(rules, (rule) => rule.rule.name.toLowerCase());
   if (sortOrder === SortOrder.AlphaDesc) {
     result.reverse();
   }
@@ -131,25 +129,25 @@ function sortRules(sortOrder: SortOrder, rules: PromRuleWithLocation[]) {
   return result;
 }
 
-function filterRules(options: PanelProps<UnifiedAlertlistOptions>['options'], rules: PromRuleWithLocation[]) {
+function filterRules(options: PanelProps<UnifiedAlertListOptions>['options'], rules: PromRuleWithLocation[]) {
   let filteredRules = [...rules];
   if (options.dashboardAlerts) {
     const dashboardUid = getDashboardSrv().getCurrent()?.uid;
-    filteredRules = filteredRules.filter(({ annotations = {} }) =>
+    filteredRules = filteredRules.filter(({ rule: { annotations = {} } }) =>
       Object.entries(annotations).some(([key, value]) => key === Annotation.dashboardUID && value === dashboardUid)
     );
   }
   if (options.alertName) {
-    filteredRules = filteredRules.filter(({ name }) =>
+    filteredRules = filteredRules.filter(({ rule: { name } }) =>
       name.toLocaleLowerCase().includes(options.alertName.toLocaleLowerCase())
     );
   }
   if (Object.values(options.stateFilter).some((value) => value)) {
     filteredRules = filteredRules.filter((rule) => {
       return (
-        (options.stateFilter.firing && rule.state === PromAlertingRuleState.Firing) ||
-        (options.stateFilter.pending && rule.state === PromAlertingRuleState.Pending) ||
-        (options.stateFilter.inactive && rule.state === PromAlertingRuleState.Inactive)
+        (options.stateFilter.firing && rule.rule.state === PromAlertingRuleState.Firing) ||
+        (options.stateFilter.pending && rule.rule.state === PromAlertingRuleState.Pending) ||
+        (options.stateFilter.inactive && rule.rule.state === PromAlertingRuleState.Inactive)
       );
     });
   }
