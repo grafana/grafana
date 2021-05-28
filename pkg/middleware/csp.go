@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"regexp"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -42,6 +43,10 @@ func AddCSPHeader(cfg *setting.Cfg, logger log.Logger) macaron.Handler {
 
 		nonce := base64.RawStdEncoding.EncodeToString(buf[:])
 		val := strings.ReplaceAll(cfg.CSPTemplate, "$NONCE", fmt.Sprintf("'nonce-%s'", nonce))
+
+		re := regexp.MustCompile(`^\w+:(//)?`)
+		rootPath := re.ReplaceAllString(cfg.AppURL, "")
+		val = strings.ReplaceAll(val, "$ROOT_PATH", rootPath)
 		w.Header().Set("Content-Security-Policy", val)
 		ctx.RequestNonce = nonce
 		logger.Debug("Successfully generated CSP nonce", "nonce", nonce)

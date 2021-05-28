@@ -28,7 +28,7 @@ func TestLoadingSettings(t *testing.T) {
 
 		Convey("Given the default ini files", func() {
 			cfg := NewCfg()
-			err := cfg.Load(&CommandLineArgs{HomePath: "../../"})
+			err := cfg.Load(&CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"})
 			So(err, ShouldBeNil)
 
 			So(cfg.AdminUser, ShouldEqual, "admin")
