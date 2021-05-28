@@ -25,8 +25,8 @@ export const AnalyticsConfig: FunctionComponent<Props> = (props: Props) => {
   const logAnalyticsCredentials = useMemo(() => getLogAnalyticsCredentials(props.options), [props.options]);
 
   const subscriptionId = logAnalyticsCredentials
-    ? props.options.jsonData.logAnalyticsSubscriptionId
-    : props.options.jsonData.subscriptionId;
+    ? logAnalyticsCredentials.defaultSubscriptionId
+    : primaryCredentials.defaultSubscriptionId;
 
   // Only show a section for setting LogAnalytics credentials if they were set from before
   // And the authType is supported
@@ -103,18 +103,6 @@ export const AnalyticsConfig: FunctionComponent<Props> = (props: Props) => {
     setSameAsSwitched(true);
   };
 
-  const onLogAnalyticsDefaultSubscriptionChange = (subscriptionId: string | undefined) => {
-    updateOptions((options) => {
-      return {
-        ...options,
-        jsonData: {
-          ...options.jsonData,
-          logAnalyticsSubscriptionId: subscriptionId || '',
-        },
-      };
-    });
-  };
-
   const onDefaultWorkspaceChange = (selected: SelectableValue<string>) => {
     updateOptions((options) => {
       return {
@@ -171,9 +159,7 @@ export const AnalyticsConfig: FunctionComponent<Props> = (props: Props) => {
               <AzureCredentialsForm
                 managedIdentityEnabled={false}
                 credentials={logAnalyticsCredentials}
-                defaultSubscription={subscriptionId}
                 onCredentialsChange={onCredentialsChange}
-                onDefaultSubscriptionChange={onLogAnalyticsDefaultSubscriptionChange}
                 getSubscriptions={getSubscriptions}
               />
             </>
