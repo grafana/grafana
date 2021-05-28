@@ -73,7 +73,7 @@ type HTTPServer struct {
 	SettingsProvider       setting.Provider
 	HooksService           *hooks.HooksService
 	CacheService           *localcache.CacheService
-	DatasourceCache        datasources.CacheService         `inject:""`
+	DataSourceCache        datasources.CacheService
 	AuthTokenService       models.UserTokenService          `inject:""`
 	QuotaService           *quota.QuotaService              `inject:""`
 	RemoteCacheService     *remotecache.RemoteCache         `inject:""`

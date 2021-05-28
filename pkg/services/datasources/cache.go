@@ -10,22 +10,22 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
+func ProvideCacheService(cacheService *localcache.CacheService, sqlStore *sqlstore.SQLStore) *CacheServiceImpl {
+	return &CacheServiceImpl{
+		CacheService: cacheService,
+		SQLStore:     sqlStore,
+	}
+}
+
 type CacheService interface {
+	registry.Service
 	GetDatasource(datasourceID int64, user *models.SignedInUser, skipCache bool) (*models.DataSource, error)
 	GetDatasourceByUID(datasourceUID string, user *models.SignedInUser, skipCache bool) (*models.DataSource, error)
 }
 
 type CacheServiceImpl struct {
-	CacheService *localcache.CacheService `inject:""`
-	SQLStore     *sqlstore.SQLStore       `inject:""`
-}
-
-func init() {
-	registry.Register(&registry.Descriptor{
-		Name:         "DatasourceCacheService",
-		Instance:     &CacheServiceImpl{},
-		InitPriority: registry.Low,
-	})
+	CacheService *localcache.CacheService
+	SQLStore     *sqlstore.SQLStore
 }
 
 func (dc *CacheServiceImpl) Init() error {
