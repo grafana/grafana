@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"net"
+
+	"github.com/grafana/grafana/pkg/registry"
 )
 
 // Typed errors
@@ -63,6 +65,8 @@ type RevokeAuthTokenCmd struct {
 
 // UserTokenService are used for generating and validating user tokens
 type UserTokenService interface {
+	registry.Service
+
 	CreateToken(ctx context.Context, user *User, clientIP net.IP, userAgent string) (*UserToken, error)
 	LookupToken(ctx context.Context, unhashedToken string) (*UserToken, error)
 	TryRotateToken(ctx context.Context, token *UserToken, clientIP net.IP, userAgent string) (bool, error)

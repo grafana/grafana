@@ -12,7 +12,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -20,27 +19,28 @@ import (
 
 const ServiceName = "UserAuthTokenService"
 
-func init() {
-	registry.Register(&registry.Descriptor{
-		Name:         ServiceName,
-		Instance:     &UserAuthTokenService{},
-		InitPriority: registry.Medium,
-	})
-}
-
 var getTime = time.Now
 
 const urgentRotateTime = 1 * time.Minute
 
+func ProvideUserAuthTokenService(sqlStore *sqlstore.SQLStore, serverLockService *serverlock.ServerLockService,
+	cfg *setting.Cfg) *UserAuthTokenService {
+	return &UserAuthTokenService{
+		SQLStore:          sqlStore,
+		ServerLockService: serverLockService,
+		Cfg:               cfg,
+		log:               log.New("auth"),
+	}
+}
+
 type UserAuthTokenService struct {
-	SQLStore          *sqlstore.SQLStore            `inject:""`
-	ServerLockService *serverlock.ServerLockService `inject:""`
-	Cfg               *setting.Cfg                  `inject:""`
+	SQLStore          *sqlstore.SQLStore
+	ServerLockService *serverlock.ServerLockService
+	Cfg               *setting.Cfg
 	log               log.Logger
 }
 
 func (s *UserAuthTokenService) Init() error {
-	s.log = log.New("auth")
 	return nil
 }
 

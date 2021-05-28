@@ -13,6 +13,8 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/grafana/grafana/pkg/services/cleanup"
+
 	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/services/librarypanels"
 
@@ -74,7 +76,7 @@ type HTTPServer struct {
 	HooksService           *hooks.HooksService
 	CacheService           *localcache.CacheService
 	DataSourceCache        datasources.CacheService
-	AuthTokenService       models.UserTokenService          `inject:""`
+	AuthTokenService       models.UserTokenService
 	QuotaService           *quota.QuotaService              `inject:""`
 	RemoteCacheService     *remotecache.RemoteCache         `inject:""`
 	ProvisioningService    provisioning.ProvisioningService `inject:""`
@@ -85,8 +87,8 @@ type HTTPServer struct {
 	DataProxy              *datasourceproxy.DatasourceProxyService `inject:""`
 	PluginRequestValidator models.PluginRequestValidator
 	PluginManager          plugins.Manager
-	SearchService          *search.SearchService          `inject:""`
-	ShortURLService        *shorturls.ShortURLService     `inject:""`
+	SearchService          *search.SearchService `inject:""`
+	ShortURLService        *shorturls.ShortURLService
 	Live                   *live.GrafanaLive              `inject:""`
 	LivePushGateway        *pushhttp.Gateway              `inject:""`
 	ContextHandler         *contexthandler.ContextHandler `inject:""`
@@ -99,6 +101,7 @@ type HTTPServer struct {
 	LibraryPanelService    librarypanels.Service             `inject:""`
 	LibraryElementService  libraryelements.Service           `inject:""`
 	Listener               net.Listener
+	cleanUpService         *cleanup.CleanUpService
 }
 
 type ServerOptions struct {
@@ -110,7 +113,9 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	cacheService *localcache.CacheService, sqlStore *sqlstore.SQLStore,
 	dataService *tsdb.Service, alertEngine *alerting.AlertEngine,
 	usageStatsService *usagestats.UsageStatsService, pluginRequestValidator models.PluginRequestValidator,
-	pluginManager plugins.Manager, backendPM backendplugin.Manager, settingsProvider setting.Provider) *HTTPServer {
+	pluginManager plugins.Manager, backendPM backendplugin.Manager, settingsProvider setting.Provider,
+	dataSourceCache datasources.CacheService, userTokenService models.UserTokenService,
+	cleanUpService *cleanup.CleanUpService, shortURLService *shorturls.ShortURLService) *HTTPServer {
 	macaron.Env = cfg.Env
 	m := macaron.New()
 	// automatically set HEAD for every GET
@@ -132,6 +137,10 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		PluginManager:          pluginManager,
 		BackendPluginManager:   backendPM,
 		SettingsProvider:       settingsProvider,
+		DataSourceCache:        dataSourceCache,
+		AuthTokenService:       userTokenService,
+		cleanUpService:         cleanUpService,
+		ShortURLService:        shortURLService,
 		log:                    log.New("http.server"),
 		macaron:                m,
 		Listener:               opts.Listener,
