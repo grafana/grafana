@@ -437,6 +437,14 @@ The following sections detail the supported settings and secure settings for eac
 | sound      |                |
 | okSound    |                |
 
+#### Alert notification `discord`
+
+| Name           | Secure setting |
+| -------------- | -------------- |
+| url            | yes            |
+| avatar_url     |                |
+| message        |                |
+
 #### Alert notification `slack`
 
 | Name           | Secure setting |
