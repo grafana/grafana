@@ -119,15 +119,15 @@ describe('Table', () => {
 
       const rows = within(getTable()).getAllByRole('row');
       expect(rows).toHaveLength(4);
-      expect(within(rows[1]).getByRole('cell', { name: '2021-01-01 00:00:00' })).toBeInTheDocument();
-      expect(within(rows[1]).getByRole('cell', { name: '10' })).toBeInTheDocument();
-      expect(within(rows[2]).getByRole('cell', { name: '2021-01-01 01:00:00' })).toBeInTheDocument();
-      expect(within(rows[2]).getByRole('cell', { name: '11' })).toBeInTheDocument();
-      expect(within(rows[3]).getByRole('cell', { name: '2021-01-01 02:00:00' })).toBeInTheDocument();
-      expect(within(rows[3]).getByRole('cell', { name: '12' })).toBeInTheDocument();
-      expect(within(rows[1]).getByRole('cell', { name: '10' }).closest('a')).toHaveAttribute('href', '10');
-      expect(within(rows[2]).getByRole('cell', { name: '11' }).closest('a')).toHaveAttribute('href', '11');
-      expect(within(rows[3]).getByRole('cell', { name: '12' }).closest('a')).toHaveAttribute('href', '12');
+      expect(within(rows[1]).getByText('2021-01-01 00:00:00')).toBeInTheDocument();
+      expect(within(rows[1]).getByText('10')).toBeInTheDocument();
+      expect(within(rows[2]).getByText('2021-01-01 01:00:00')).toBeInTheDocument();
+      expect(within(rows[2]).getByText('11')).toBeInTheDocument();
+      expect(within(rows[3]).getByText('2021-01-01 02:00:00')).toBeInTheDocument();
+      expect(within(rows[3]).getByText('12')).toBeInTheDocument();
+      expect(within(rows[1]).getByText('10').closest('a')).toHaveAttribute('href', '10');
+      expect(within(rows[2]).getByText('11').closest('a')).toHaveAttribute('href', '11');
+      expect(within(rows[3]).getByText('12').closest('a')).toHaveAttribute('href', '12');
     });
   });
 
@@ -140,12 +140,12 @@ describe('Table', () => {
 
       const rows = within(getTable()).getAllByRole('row');
       expect(rows).toHaveLength(4);
-      expect(within(rows[1]).getByRole('cell', { name: '2021-01-01 02:00:00' })).toBeInTheDocument();
-      expect(within(rows[1]).getByRole('cell', { name: '12' })).toBeInTheDocument();
-      expect(within(rows[2]).getByRole('cell', { name: '2021-01-01 01:00:00' })).toBeInTheDocument();
-      expect(within(rows[2]).getByRole('cell', { name: '11' })).toBeInTheDocument();
-      expect(within(rows[3]).getByRole('cell', { name: '2021-01-01 00:00:00' })).toBeInTheDocument();
-      expect(within(rows[3]).getByRole('cell', { name: '10' })).toBeInTheDocument();
+      expect(within(rows[1]).getByText('2021-01-01 02:00:00')).toBeInTheDocument();
+      expect(within(rows[1]).getByText('12')).toBeInTheDocument();
+      expect(within(rows[2]).getByText('2021-01-01 01:00:00')).toBeInTheDocument();
+      expect(within(rows[2]).getByText('11')).toBeInTheDocument();
+      expect(within(rows[3]).getByText('2021-01-01 00:00:00')).toBeInTheDocument();
+      expect(within(rows[3]).getByText('10')).toBeInTheDocument();
     });
 
     describe('and clicking on links', () => {
@@ -156,9 +156,9 @@ describe('Table', () => {
         userEvent.click(within(getColumnHeader(/temperature/)).getByText(/temperature/i));
 
         const rows = within(getTable()).getAllByRole('row');
-        expect(within(rows[1]).getByRole('cell', { name: '12' }).closest('a')).toHaveAttribute('href', '12');
-        expect(within(rows[2]).getByRole('cell', { name: '11' }).closest('a')).toHaveAttribute('href', '11');
-        expect(within(rows[3]).getByRole('cell', { name: '10' }).closest('a')).toHaveAttribute('href', '10');
+        expect(within(rows[1]).getByText('12').closest('a')).toHaveAttribute('href', '12');
+        expect(within(rows[2]).getByText('11').closest('a')).toHaveAttribute('href', '11');
+        expect(within(rows[3]).getByText('10').closest('a')).toHaveAttribute('href', '10');
       });
     });
   });
