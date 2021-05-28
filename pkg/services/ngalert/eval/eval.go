@@ -174,7 +174,8 @@ func executeCondition(ctx AlertExecCtx, c *models.Condition, now time.Time, data
 	}
 
 	for refID, res := range execResp.Responses {
-		// for each frame within each response, capture value if it is a number.
+		// for each frame within each response, the response can contain several data types including time-series data.
+		// For now, we favour simplicity and only care about single scalar values.
 		for _, frame := range res.Frames {
 			if len(frame.Fields) != 1 || frame.Fields[0].Type() != data.FieldTypeNullableFloat64 {
 				continue
