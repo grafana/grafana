@@ -16,7 +16,7 @@ The table panel is very flexible, supporting multiple modes for time series and 
 Table visualizations allow you to apply:
 
 - [Data transformations]({{< relref "../../transformations/_index.md" >}})
-- [Field options and overrides]({{< relref "../../field-options/_index.md" >}})
+- [Field overrides]({{< relref "../../field-overrides.md" >}})
 - [Thresholds]({{< relref "../../thresholds.md" >}})
 
 ## Display options
@@ -28,8 +28,8 @@ Table visualizations allow you to apply:
 
   ![Sort descending](/static/img/docs/tables/sort-descending.png "Sort descending")
 
-- [Table field options]({{< relref "table-field-options.md" >}}) allow you to change [field options]({{< relref "../../field-options/_index.md" >}}) such as column width, alignment, and cell display mode.
-- [Filter table columns]({{< relref "filter-table-columns.md" >}}) - You can temporarily change how column data is displayed. For example, you can order values from highest to lowest or hide specific values.
+- [Table field options]({{< relref "./table-field-options.md" >}}) allow you to change table properties such as column width, alignment, and cell display mode.
+- [Filter table columns]({{< relref "./filter-table-columns.md" >}}) - allow you to temporarily change how column data is displayed. For example, you can order values from highest to lowest or hide specific values.
 
 ## Annotation support
 

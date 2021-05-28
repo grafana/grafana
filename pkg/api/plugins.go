@@ -213,7 +213,7 @@ func (hs *HTTPServer) ImportDashboard(c *models.ReqContext, apiCmd dtos.ImportDa
 	}
 
 	trimDefaults := c.QueryBoolWithDefault("trimdefaults", true)
-	if trimDefaults {
+	if trimDefaults && !hs.LoadSchemaService.IsDisabled() {
 		apiCmd.Dashboard, err = hs.LoadSchemaService.DashboardApplyDefaults(apiCmd.Dashboard)
 		if err != nil {
 			return response.Error(500, "Error while applying default value to the dashboard json", err)
