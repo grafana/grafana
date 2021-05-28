@@ -55,7 +55,7 @@ You can override as many fields and add as many field options to each override a
 
 ## Example use case for field options and overrides
 
-The examples below show how you might use field options and overrides.
+The following examples show how you might use field options and overrides.
 
 ## Field option example
 
