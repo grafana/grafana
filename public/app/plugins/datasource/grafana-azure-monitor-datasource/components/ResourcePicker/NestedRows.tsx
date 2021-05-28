@@ -1,6 +1,7 @@
 import { cx } from '@emotion/css';
 import { Checkbox, Icon, IconButton, LoadingPlaceholder, useStyles2, useTheme2, FadeTransition } from '@grafana/ui';
 import React, { useCallback, useEffect, useState } from 'react';
+import { Space } from '../Space';
 import getStyles from './styles';
 import { ResourceRowType, ResourceRow, ResourceRowGroup } from './types';
 import { findRow } from './utils';
@@ -163,7 +164,9 @@ const NestedEntry: React.FC<NestedEntryProps> = ({
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
   const hasChildren = !!entry.children;
-  const isSelectable = entry.type === ResourceRowType.Resource || entry.type === ResourceRowType.Variable;
+  // Subscriptions, resource groups, resources, and variables are all selectable, so
+  // the top-level variable group is the only thing that cannot be selected.
+  const isSelectable = entry.type !== ResourceRowType.VariableGroup;
 
   const handleToggleCollapse = useCallback(() => {
     onToggleCollapse(entry);
@@ -185,7 +188,7 @@ const NestedEntry: React.FC<NestedEntryProps> = ({
             of the collapse button for leaf rows that have no children to get them to align */}
 
       <span className={styles.entryContentItem}>
-        {hasChildren && (
+        {hasChildren ? (
           <IconButton
             className={styles.collapseButton}
             name={isOpen ? 'angle-down' : 'angle-right'}
@@ -193,12 +196,16 @@ const NestedEntry: React.FC<NestedEntryProps> = ({
             onClick={handleToggleCollapse}
             id={entry.id}
           />
-        )}
-
-        {isSelectable && (
-          <Checkbox id={checkboxId} onChange={handleSelectedChanged} disabled={isDisabled} value={isSelected} />
+        ) : (
+          <Space layout="inline" h={2} />
         )}
       </span>
+
+      {isSelectable && (
+        <span className={styles.entryContentItem}>
+          <Checkbox id={checkboxId} onChange={handleSelectedChanged} disabled={isDisabled} value={isSelected} />
+        </span>
+      )}
 
       <span className={styles.entryContentItem}>
         <EntryIcon entry={entry} isOpen={isOpen} />
