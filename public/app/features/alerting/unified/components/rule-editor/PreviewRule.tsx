@@ -26,7 +26,7 @@ export function PreviewRule(): React.ReactElement | null {
     <div className={styles.container}>
       <HorizontalGroup>
         <Button type="button" variant="primary" onClick={onPreview}>
-          Preview your alert
+          Preview alerts
         </Button>
       </HorizontalGroup>
       <PreviewRuleResult preview={preview} />
