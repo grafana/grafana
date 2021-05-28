@@ -206,6 +206,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
       }
 
       target.requestId = options.panelId + target.refId;
+      const metricName = this.languageProvider.histogramMetrics.find((m) => target.expr.includes(m));
 
       // In Explore, we run both (instant and range) queries if both are true (selected) or both are undefined (legacy Explore queries)
       if (options.app === CoreApp.Explore && target.range === target.instant) {
@@ -226,13 +227,19 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
 
         // Create exemplar query
         if (target.exemplar) {
-          const exemplarTarget = cloneDeep(target);
-          exemplarTarget.instant = false;
-          exemplarTarget.requestId += '_exemplar';
+          // Only create exemplar target for different metric names
+          if (
+            !metricName ||
+            (metricName && !activeTargets.some((activeTarget) => activeTarget.expr.includes(metricName)))
+          ) {
+            const exemplarTarget = cloneDeep(target);
+            exemplarTarget.instant = false;
+            exemplarTarget.requestId += '_exemplar';
+            queries.push(this.createQuery(exemplarTarget, options, start, end));
+            activeTargets.push(exemplarTarget);
+          }
           instantTarget.exemplar = false;
           rangeTarget.exemplar = false;
-          queries.push(this.createQuery(exemplarTarget, options, start, end));
-          activeTargets.push(exemplarTarget);
         }
 
         // Add both targets to activeTargets and queries arrays
@@ -250,12 +257,17 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
       } else {
         // It doesn't make sense to query for exemplars in dashboard if only instant is selected
         if (target.exemplar && !target.instant) {
-          const exemplarTarget = cloneDeep(target);
-          exemplarTarget.requestId += '_exemplar';
+          if (
+            !metricName ||
+            (metricName && !activeTargets.some((activeTarget) => activeTarget.expr.includes(metricName)))
+          ) {
+            const exemplarTarget = cloneDeep(target);
+            exemplarTarget.requestId += '_exemplar';
+            queries.push(this.createQuery(exemplarTarget, options, start, end));
+            activeTargets.push(exemplarTarget);
+            this.exemplarErrors.next();
+          }
           target.exemplar = false;
-          queries.push(this.createQuery(exemplarTarget, options, start, end));
-          activeTargets.push(exemplarTarget);
-          this.exemplarErrors.next();
         }
         if (target.exemplar && target.instant) {
           this.exemplarErrors.next('Exemplars are not available for instant queries.');
