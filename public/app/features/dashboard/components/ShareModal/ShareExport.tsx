@@ -7,6 +7,7 @@ import { DashboardExporter } from 'app/features/dashboard/components/DashExportM
 import { appEvents } from 'app/core/core';
 import { ShowModalReactEvent } from 'app/types/events';
 import { ViewJsonModal } from './ViewJsonModal';
+import { config } from '@grafana/runtime';
 
 interface Props {
   dashboard: DashboardModel;
@@ -137,9 +138,11 @@ export class ShareExport extends PureComponent<Props, State> {
         <Field label="Export for sharing externally">
           <Switch value={shareExternally} onChange={this.onShareExternallyChange} />
         </Field>
-        <Field label="Export with default values removed">
-          <Switch value={trimDefaults} onChange={this.onTrimDefaultsChange} />
-        </Field>
+        {config.featureToggles.trimDefaults && (
+          <Field label="Export with default values removed">
+            <Switch value={trimDefaults} onChange={this.onTrimDefaultsChange} />
+          </Field>
+        )}
         <Modal.ButtonRow>
           <Button variant="secondary" onClick={onDismiss} fill="outline">
             Cancel

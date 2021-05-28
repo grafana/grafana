@@ -50,6 +50,12 @@ func (rs *SchemaLoaderService) Init() error {
 	}
 	return nil
 }
+func (rs *SchemaLoaderService) IsDisabled() bool {
+	if rs.Cfg == nil {
+		return true
+	}
+	return !rs.Cfg.IsTrimDefaultsEnabled()
+}
 
 func (rs *SchemaLoaderService) DashboardApplyDefaults(input *simplejson.Json) (*simplejson.Json, error) {
 	val, _ := input.Map()
