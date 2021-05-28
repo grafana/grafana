@@ -64,7 +64,7 @@ Identifier   | Description
 
 ## Query Editor
 
-{{< docs-imagebox img="/img/docs/v45/influxdb_query_still.png" class="docs-image--no-shadow" animated-gif="/img/docs/v45/influxdb_query.gif" >}}
+{{< figure src="/static/img/docs/v45/influxdb_query_still.png" class="docs-image--no-shadow" animated-gif="/static/img/docs/v45/influxdb_query.gif" >}}
 
 You can access the InfluxDB editor under the metrics tab when you are in the edit mode of the Graph or Singlestat panels.
 Enter edit mode by clicking the panel title and clicking **Edit**. The editor allows you to select metrics and tags.
@@ -81,7 +81,7 @@ You can type in regex patterns for metric names or tag filter values. Be sure to
 In the `SELECT` row you can specify what fields and functions you want to use. If you have a
 group by time you need an aggregation function. Some functions like derivative require an aggregation function. The editor tries to simplify and unify this part of the query. For example:
 
-![](/img/docs/influxdb/select_editor.png)
+![](/static/img/docs/influxdb/select_editor.png)
 
 The above generates the following InfluxDB `SELECT` clause:
 

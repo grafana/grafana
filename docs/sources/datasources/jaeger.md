@@ -33,17 +33,17 @@ This is a configuration for the [trace to logs feature]({{< relref "../explore/t
 - **Data source -** Target data source.
 - **Tags -** The tags that will be used in the Loki query. Default is `'cluster', 'hostname', 'namespace', 'pod'`.
 
-![Trace to logs settings](/img/docs/explore/trace-to-logs-settings-7-4.png "Screenshot of the trace to logs settings")
+![Trace to logs settings](/static/img/docs/explore/trace-to-logs-settings-7-4.png "Screenshot of the trace to logs settings")
 
 ## Query traces
 
 You can query and display traces from Jaeger via [Explore]({{< relref "../explore/_index.md" >}}).
 
-{{< docs-imagebox img="/img/docs/v70/jaeger-query-editor.png" class="docs-image--no-shadow" caption="Screenshot of the Jaeger query editor" >}}
+{{< figure src="/static/img/docs/v70/jaeger-query-editor.png" class="docs-image--no-shadow" caption="Screenshot of the Jaeger query editor" >}}
 
 The Jaeger query editor allows you to query by trace ID directly or selecting a trace from trace selector. To query by trace ID, insert the ID into the text input.
 
-{{< docs-imagebox img="/img/docs/v70/jaeger-query-editor-open.png" class="docs-image--no-shadow" caption="Screenshot of the Jaeger query editor with trace selector expanded" >}}
+{{< figure src="/static/img/docs/v70/jaeger-query-editor-open.png" class="docs-image--no-shadow" caption="Screenshot of the Jaeger query editor with trace selector expanded" >}}
 
 Use the trace selector to pick particular trace from all traces logged in the time range you have selected in Explore. The trace selector has three levels of nesting:
 
