@@ -3,7 +3,11 @@ title = "Value mappings"
 weight = 600
 +++
 
-## Value mappings
+# Value mappings
+
+Value mapping concept
+
+## Value mapping types
 
 Value mappings come in different types.
 
@@ -14,3 +18,21 @@ Value mappings come in different types.
 The display text and color are both optional. If you only want to assign colors to text values you can leave the display text empty and the original value will be used for display.
 
 Values mapped via value mappings will skip the unit formatting. This means that a text value mapped to a numerical value will not be formatted using the configured unit.
+
+## Value mapping UI
+
+Value mapping columns
+Copy
+Delete
+Reorder
+
+Set color
+What does transparency do?
+
+## Map a value
+
+## Map a range
+
+## Map a special value
+
+## Edit a value mapping
