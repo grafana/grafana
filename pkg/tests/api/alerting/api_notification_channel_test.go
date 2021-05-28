@@ -1,9 +1,13 @@
 package alerting
 
 import (
+	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
+	"mime/multipart"
 	"net/http"
 	"regexp"
 	"strings"
@@ -12,7 +16,6 @@ import (
 	"time"
 
 	"github.com/prometheus/common/model"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -104,9 +107,10 @@ func TestNotificationChannels(t *testing.T) {
 	// Eventually, we'll get all the desired alerts.
 	// nolint:gosec
 	require.Eventually(t, func() bool {
-		return mockChannel.totalNotifications() == len(alertNames) &&
-			mockChannel.matchesExpNotifications(expNotifications)
+		return mockChannel.totalNotifications() == len(alertNames)
 	}, 30*time.Second, 1*time.Second)
+
+	mockChannel.matchesExpNotifications(t, expNotifications)
 
 	require.NoError(t, mockChannel.Close())
 }
@@ -234,20 +238,17 @@ func (nc *mockNotificationChannel) totalNotifications() int {
 	return total
 }
 
-func (nc *mockNotificationChannel) matchesExpNotifications(exp map[string][]string) bool {
+func (nc *mockNotificationChannel) matchesExpNotifications(t *testing.T, exp map[string][]string) {
 	nc.t.Helper()
 	nc.receivedNotificationsMtx.Lock()
 	defer nc.receivedNotificationsMtx.Unlock()
 
-	if len(nc.receivedNotifications) != len(exp) {
-		return false
-	}
+	require.Equal(t, len(exp), len(nc.receivedNotifications))
 
 	for expKey, expVals := range exp {
 		actVals, ok := nc.receivedNotifications[expKey]
-		if !ok || len(actVals) != len(expVals) {
-			return false
-		}
+		require.True(t, ok)
+		require.Equal(t, len(expVals), len(actVals))
 		for i := range expVals {
 			expVal := expVals[i]
 			var r1, r2 *regexp.Regexp
@@ -291,24 +292,43 @@ func (nc *mockNotificationChannel) matchesExpNotifications(exp map[string][]stri
 			}
 
 			switch expKey {
-			case "pushover_recv/pushover_test", "telegram_recv/bot6sh027hs034h",
-				"line_recv/line_test", "threema_recv/threema_test":
-				// Multipart data or POST parameters.
-				if expVal != actVals[i] {
-					return false
-				}
+			case "line_recv/line_test", "threema_recv/threema_test":
+				// POST parameters.
+				require.Equal(t, expVal, actVals[i])
+			case "pushover_recv/pushover_test", "telegram_recv/bot6sh027hs034h":
+				// Multipart data.
+				multipartEqual(t, expVal, actVals[i])
 			default:
-				var expJson, actJson interface{}
-				require.NoError(nc.t, json.Unmarshal([]byte(expVal), &expJson))
-				require.NoError(nc.t, json.Unmarshal([]byte(actVals[i]), &actJson))
-				if !assert.ObjectsAreEqual(expJson, actJson) {
-					return false
-				}
+				require.JSONEq(t, expVal, actVals[i])
 			}
 		}
 	}
+}
 
-	return true
+func multipartEqual(t *testing.T, exp, act string) {
+	fillMap := func(r *multipart.Reader, m map[string]string) {
+		for {
+			part, err := r.NextPart()
+			if part == nil || errors.Is(err, io.EOF) {
+				break
+			}
+			require.NoError(t, err)
+			key := part.FormName()
+			buf := new(bytes.Buffer)
+			_, err = buf.ReadFrom(part)
+			require.NoError(t, err)
+			value := string(buf.Bytes())
+			m[key] = value
+		}
+	}
+
+	expReader := multipart.NewReader(strings.NewReader(exp), channels.GetBoundary())
+	actReader := multipart.NewReader(strings.NewReader(act), channels.GetBoundary())
+	expMap, actMap := make(map[string]string), make(map[string]string)
+	fillMap(expReader, expMap)
+	fillMap(actReader, actMap)
+
+	require.Equal(t, expMap, actMap)
 }
 
 func (nc *mockNotificationChannel) Close() error {
