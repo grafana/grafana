@@ -99,7 +99,7 @@ Annotations are key and value pairs that provide additional meta information abo
 
 #### Labels
 
-Labels are key value pairs that categorize or identify an alert. Labels are  used to match alerts in silences or match and groups alerts in notification policies. Labels are also shown in rule or alert details in the UI and can be used in contact type message templates. For example, it is common to add a `severity` label and then configure a separate notification policy for each severity. Or one could add a `team` label and configure team specifc notication policies, or silence all alerts for a particular team.
+Labels are key value pairs that categorize or identify an alert. Labels are  used to match alerts in silences or match and groups alerts in notification policies. Labels are also shown in rule or alert details in the UI and can be used in contact type message templates. For example, it is common to add a `severity` label and then configure a separate notification policy for each severity. Or one could add a `team` label and configure team specific notication policies, or silence all alerts for a particular team.
 
 ![Details section](/img/docs/alerting/unified/rule-edit-details-8-0.png 'Details section screenshot')
 
