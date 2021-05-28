@@ -42,7 +42,14 @@ const ResourcePicker = ({
   // Map the selected item into an array of rows
   const selectedResourceRows = useMemo(() => {
     const found = internalSelected && findRow(rows, internalSelected);
-    return found ? [found] : [];
+    return found
+      ? [
+          {
+            ...found,
+            children: undefined,
+          },
+        ]
+      : [];
   }, [internalSelected, rows]);
 
   // Request resources for a expanded resource group

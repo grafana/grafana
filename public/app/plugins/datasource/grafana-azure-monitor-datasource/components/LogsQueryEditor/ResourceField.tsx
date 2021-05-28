@@ -17,10 +17,9 @@ function parseResourceDetails(resourceURI: string) {
   }
 
   return {
-    id: resourceURI,
     subscriptionName: parsed.subscriptionID,
     resourceGroupName: parsed.resourceGroup,
-    name: parsed.resource,
+    resourceName: parsed.resource,
   };
 }
 
@@ -85,7 +84,7 @@ const ResourceLabel = ({ resource, datasource }: ResourceLabelProps) => {
 
   useEffect(() => {
     if (resource && parseResourceDetails(resource)) {
-      datasource.resourcePickerData.getResource(resource).then(setResourceComponents);
+      datasource.resourcePickerData.getResourceURIDisplayProperties(resource).then(setResourceComponents);
     } else {
       setResourceComponents(undefined);
     }
@@ -118,10 +117,18 @@ const FormattedResource = ({ resource }: FormattedResourceProps) => {
   return (
     <span>
       <Icon name="layer-group" /> {resource.subscriptionName}
-      <Separator />
-      <Icon name="folder" /> {resource.resourceGroupName}
-      <Separator />
-      <Icon name="cube" /> {resource.name}
+      {resource.resourceGroupName && (
+        <>
+          <Separator />
+          <Icon name="folder" /> {resource.resourceGroupName}
+        </>
+      )}
+      {resource.resourceName && (
+        <>
+          <Separator />
+          <Icon name="cube" /> {resource.resourceName}
+        </>
+      )}
     </span>
   );
 };
