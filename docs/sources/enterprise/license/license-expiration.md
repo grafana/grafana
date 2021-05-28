@@ -77,3 +77,7 @@ Auditing is not affected by an expired license.
 The concurrent session limit remains active for seven days after the expiration date, after which it will be turned off.
 
 The active users limit is turned off immediately.
+
+### Settings updates at runtime
+
+Settings updates at runtime are not affected by an expired license.

@@ -14,7 +14,7 @@ must have the Grafana Admin permission. (The default admin user is called `admin
 > If you are running Grafana Enterprise and have [Fine-grained access control]({{< relref "../enterprise/access-control/_index.md" >}}) enabled, for some endpoints you would need to have relevant permissions.
 Refer to specific resources to understand what permissions are required.
 
-## Settings
+## Fetch settings
 
 `GET /api/admin/settings`
 
@@ -172,6 +172,57 @@ Content-Type: application/json
   }
 }
 ```
+
+## Update settings
+
+`PUT /api/admin/settings`
+
+> **Note:** Available in Grafana Enterprise v8.0+.
+
+Updates / removes and reloads database settings. You must provide either `updates`, `removals` or both.
+
+This endpoint only supports changes to `auth.saml` configuration.
+
+**Example request:**
+
+```http
+PUT /api/admin/settings
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+
+{
+  "updates": {
+    "auth.saml": {
+      "enabled": "true"
+    }
+  },
+  "removals": {
+    "auth.saml": ["single_logout"]
+  },
+}
+```
+
+**Example response:**
+
+```http
+HTTP/1.1 200 OK
+Content-Type: application/json
+Content-Length: 32
+
+{
+  "message":"Settings updated"
+}
+```
+
+Status codes:
+
+- **200** - OK
+- **400** - Bad Request
+- **401** - Unauthorized
+- **403** - Forbidden
+- **500** - Internal Server Error
+
 ## Grafana Stats
 
 `GET /api/admin/stats`
