@@ -448,7 +448,7 @@ func (am *Alertmanager) buildReceiverIntegrations(receiver *apimodels.PostableAp
 		if err != nil {
 			return nil, err
 		}
-		integrations = append(integrations, notify.NewIntegration(n, n, r.Name, i))
+		integrations = append(integrations, notify.NewIntegration(n, n, r.Type, i))
 	}
 
 	return integrations, nil
