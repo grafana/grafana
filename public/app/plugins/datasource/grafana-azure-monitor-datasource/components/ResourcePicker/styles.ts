@@ -29,13 +29,13 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
 
   cell: css({
-    padding: theme.spacing(1, 0),
+    padding: theme.spacing(1, 1, 1, 0),
     width: '25%',
     overflow: 'hidden',
     textOverflow: 'ellipsis',
     '&:first-of-type': {
       width: '50%',
-      padding: theme.spacing(1, 0, 1, 2),
+      padding: theme.spacing(1, 1, 1, 2),
     },
   }),
 
