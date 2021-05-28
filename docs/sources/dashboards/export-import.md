@@ -25,11 +25,6 @@ add template variables for things like a metric prefix (use constant variable) a
 A template variable of the type `Constant` will automatically be hidden in
 the dashboard, and will also be added as a required input when the dashboard is imported.
 
-### Export with default values removed
-
-If you want to export a dashboard without default values in order to reduce the exported json file size, it is a good idea to check the toggle "Export with default values removed".
-
-When import, the removed default values would be added automatically to the dashboard.
 ## Importing a dashboard
 
 To import a dashboard click the + icon in the side menu, and then click **Import**.
