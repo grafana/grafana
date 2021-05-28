@@ -69,12 +69,13 @@ func (r *Runner) GetOrCreateStream(orgID int64, streamID string) (*ManagedStream
 
 // ManagedStream holds the state of a managed stream.
 type ManagedStream struct {
-	mu        sync.RWMutex
-	id        string
-	start     time.Time
-	last      map[int64]map[string]data.FrameJSONCache
-	FieldSubs map[string]map[string][]string
-	publisher models.ChannelPublisher
+	mu          sync.RWMutex
+	id          string
+	start       time.Time
+	last        map[int64]map[string]data.FrameJSONCache
+	fieldSubsMu sync.Mutex
+	fieldSubs   map[string]map[string][]string
+	publisher   models.ChannelPublisher
 }
 
 // NewManagedStream creates new ManagedStream.
@@ -83,7 +84,7 @@ func NewManagedStream(id string, publisher models.ChannelPublisher) *ManagedStre
 		id:        id,
 		start:     time.Now(),
 		last:      map[int64]map[string]data.FrameJSONCache{},
-		FieldSubs: map[string]map[string][]string{},
+		fieldSubs: map[string]map[string][]string{},
 		publisher: publisher,
 	}
 }
@@ -132,8 +133,11 @@ func (s *ManagedStream) Push(orgID int64, path string, frame *data.Frame) error 
 	}
 	frameJSON := msg.Bytes(include)
 
-	fmt.Printf("%#v %s\n", s.FieldSubs, path)
-	if subChannels, ok := s.FieldSubs[path]; ok {
+	fmt.Printf("%#v %s\n", s.fieldSubs, path)
+
+	s.fieldSubsMu.Lock()
+	defer s.fieldSubsMu.Unlock()
+	if subChannels, ok := s.fieldSubs[path]; ok {
 		for ch, fields := range subChannels {
 			frame := CopyFrameWithFields(frame, fields)
 			frameJSON, err := data.FrameToJSON(frame, include)
@@ -208,13 +212,17 @@ func (s *ManagedStream) OnSubscribe(ctx context.Context, u *models.SignedInUser,
 		base := filepath.Base(e.Path)
 		fields := strings.Split(base, ",")
 		path = strings.TrimSuffix(path, "/"+base)
-		if _, ok := s.FieldSubs[path]; !ok {
-			s.FieldSubs[path] = map[string][]string{}
+		if _, ok := s.fieldSubs[path]; !ok {
+			s.fieldSubs[path] = map[string][]string{}
 		}
-		s.FieldSubs[path][e.Channel] = fields
+		s.fieldSubsMu.Lock()
+		s.fieldSubs[path][e.Channel] = fields
+		s.fieldSubsMu.Unlock()
 		go func() {
 			<-ctx.Done()
-			delete(s.FieldSubs, e.Channel)
+			s.fieldSubsMu.Lock()
+			delete(s.fieldSubs[path], e.Channel)
+			s.fieldSubsMu.Unlock()
 		}()
 	}
 
