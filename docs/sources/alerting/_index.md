@@ -20,7 +20,7 @@ Currently only the graph panel visualization supports alerts.
 You can perform the following tasks for alerts:
 
 - [Add or edit an alert notification channel]({{< relref "./old-alerting/notifications.md" >}})
-- [Create an alert rule]({{< relref "create-alerts.md" >}})
+- [Create an alert rule]({{< relref "./old-alerting/create-alerts.md" >}})
 - [View existing alert rules and their current state]({{< relref "./old-alerting/view-alerts.md" >}})
 - [Test alert rules and troubleshoot]({{< relref "./old-alerting/troubleshoot-alerts.md" >}})
 
