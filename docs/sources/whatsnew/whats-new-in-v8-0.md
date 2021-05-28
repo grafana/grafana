@@ -18,7 +18,7 @@ This topic includes the release notes for Grafana v8.0. For all details, read th
 
 These features are included in the Grafana open source edition.
 
-### Grafana v 8.0 alerts
+### Grafana v8.0 alerts
 
 The new alerts in Grafana 8.0 are an opt-in feature that centralizes alerting information for Grafana managed alerts and alerts from Prometheus-compatible data sources in one UI and API. You can create and edit alerting rules for Grafana managed alerts, Cortex alerts, and Loki alerts as well as see alerting information from prometheus-compatible data sources in a single, searchable view. For more information, on how to create and edit alerts and notifications, refer to [Overview of Grafana 8.0 alerts]({{< relref "../alerting/difference-old-new.md" >}}).
 
