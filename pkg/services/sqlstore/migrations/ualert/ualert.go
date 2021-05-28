@@ -218,10 +218,6 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 			return err
 		}
 
-		if err := m.addSilence(da, rule); err != nil {
-			m.mg.Logger.Error("alert migration error: failed to create silence", "rule_name", rule.Title, "err", err)
-		}
-
 		_, err = m.sess.Insert(rule)
 		if err != nil {
 			// TODO better error handling, if constraint
