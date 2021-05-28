@@ -103,20 +103,6 @@ func (gvs *genericVersionedSchema) Validate(r schema.Resource) error {
 	return gvs.actual.Unify(rv.Value()).Validate(cue.Concrete(true))
 }
 
-// ApplyDefaults returns a new, concrete copy of the Resource with all paths
-// that are 1) missing in the Resource AND 2) specified by the schema,
-// filled with default values specified by the schema.
-func (gvs *genericVersionedSchema) ApplyDefaults(_ schema.Resource) (schema.Resource, error) {
-	panic("not implemented") // TODO: Implement
-}
-
-// TrimDefaults returns a new, concrete copy of the Resource where all paths
-// in the  where the values at those paths are the same as the default value
-// given in the schema.
-func (gvs *genericVersionedSchema) TrimDefaults(_ schema.Resource) (schema.Resource, error) {
-	panic("not implemented") // TODO: Implement
-}
-
 // CUE returns the cue.Value representing the actual schema.
 func (gvs *genericVersionedSchema) CUE() cue.Value {
 	return gvs.actual
@@ -164,7 +150,7 @@ var terminalMigrationFunc = func(x interface{}) (cue.Value, schema.VersionedCueS
 // earlier schema) with a later schema.
 func implicitMigration(v cue.Value, next schema.VersionedCueSchema) migrationFunc {
 	return func(x interface{}) (cue.Value, schema.VersionedCueSchema, error) {
-		w := v.Fill(x)
+		w := v.FillPath(cue.Path{}, x)
 		// TODO is it possible that migration would be successful, but there
 		// still exists some error here? Need to better understand internal CUE
 		// erroring rules? seems like incomplete cue.Value may always an Err()?

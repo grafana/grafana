@@ -44,7 +44,7 @@ export function ValuePicker<T>({
       icon={icon || 'plus'}
       onClick={() => setIsPicking(true)}
       variant={variant}
-      aria-label={selectors.components.ValuePicker.button}
+      aria-label={selectors.components.ValuePicker.button(label)}
     >
       {label}
     </Button>
@@ -54,10 +54,11 @@ export function ValuePicker<T>({
       {!isPicking && (isFullWidth ? <FullWidthButtonContainer>{buttonEl}</FullWidthButtonContainer> : buttonEl)}
 
       {isPicking && (
-        <span aria-label={selectors.components.ValuePicker.select(label)}>
+        <span>
           <Select
             placeholder={label}
             options={options}
+            aria-label={selectors.components.ValuePicker.select(label)}
             isOpen
             onCloseMenu={() => setIsPicking(false)}
             autoFocus={true}

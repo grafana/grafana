@@ -37,7 +37,7 @@ export const PanelChrome: React.FC<PanelChromeProps> = ({
   const { contentStyle, innerWidth, innerHeight } = getContentStyle(padding, theme, width, headerHeight, height);
 
   const headerStyles: CSSProperties = {
-    height: theme.panelHeaderHeight,
+    height: headerHeight,
   };
 
   const containerStyles: CSSProperties = { width, height };

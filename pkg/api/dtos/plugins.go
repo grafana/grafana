@@ -65,4 +65,9 @@ type ImportDashboardCommand struct {
 	Dashboard *simplejson.Json               `json:"dashboard"`
 	Inputs    []plugins.ImportDashboardInput `json:"inputs"`
 	FolderId  int64                          `json:"folderId"`
+	FolderUid string                         `json:"folderUid"`
+}
+
+type InstallPluginCommand struct {
+	Version string `json:"version"`
 }

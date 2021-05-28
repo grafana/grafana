@@ -512,6 +512,16 @@ describe('graphiteDatasource', () => {
       expect(requestOptions.data).toEqual('query=app.*');
       expect(results).not.toBe(null);
     });
+
+    it('should request expanded metrics', () => {
+      ctx.ds.metricFindQuery('expand(*.servers.*)').then((data: any) => {
+        results = data;
+      });
+
+      expect(requestOptions.url).toBe('/api/datasources/proxy/1/metrics/expand');
+      expect(requestOptions.params.query).toBe('*.servers.*');
+      expect(results).not.toBe(null);
+    });
   });
 });
 

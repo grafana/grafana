@@ -16,7 +16,14 @@ import gfunc from './gfunc';
 import { getBackendSrv } from '@grafana/runtime';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 // Types
-import { GraphiteOptions, GraphiteQuery, GraphiteType, MetricTankRequestMeta } from './types';
+import {
+  GraphiteOptions,
+  GraphiteQuery,
+  GraphiteQueryImportConfiguration,
+  GraphiteType,
+  GraphiteLokiMapping,
+  MetricTankRequestMeta,
+} from './types';
 import { getRollupNotice, getRuntimeConsolidationNotice } from 'app/plugins/datasource/graphite/meta';
 import { getSearchFilterScopedVar } from '../../../features/variables/utils';
 import { Observable, of, OperatorFunction, pipe, throwError } from 'rxjs';
@@ -24,7 +31,11 @@ import { catchError, map } from 'rxjs/operators';
 import { DEFAULT_GRAPHITE_VERSION } from './versions';
 import { reduceError } from './utils';
 
-export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOptions> {
+export class GraphiteDatasource extends DataSourceApi<
+  GraphiteQuery,
+  GraphiteOptions,
+  GraphiteQueryImportConfiguration
+> {
   basicAuth: string;
   url: string;
   name: string;
@@ -37,6 +48,7 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
   funcDefs: any = null;
   funcDefsPromise: Promise<any> | null = null;
   _seriesRefLetters: string;
+  private readonly metricMappings: GraphiteLokiMapping[];
 
   constructor(instanceSettings: any, private readonly templateSrv: TemplateSrv = getTemplateSrv()) {
     super(instanceSettings);
@@ -46,6 +58,7 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
     // graphiteVersion is set when a datasource is created but it hadn't been set in the past so we're
     // still falling back to the default behavior here for backwards compatibility (see also #17429)
     this.graphiteVersion = instanceSettings.jsonData.graphiteVersion || DEFAULT_GRAPHITE_VERSION;
+    this.metricMappings = instanceSettings.jsonData.importConfiguration?.loki?.mappings || [];
     this.isMetricTank = instanceSettings.jsonData.graphiteType === GraphiteType.Metrictank;
     this.supportsTags = supportsTags(this.graphiteVersion);
     this.cacheTimeout = instanceSettings.cacheTimeout;
@@ -66,6 +79,14 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
           url: 'http://docs.grafana.org/features/datasources/graphite/#using-graphite-in-grafana',
         },
       ],
+    };
+  }
+
+  getImportQueryConfiguration(): GraphiteQueryImportConfiguration {
+    return {
+      loki: {
+        mappings: this.metricMappings,
+      },
     };
   }
 
@@ -344,6 +365,8 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
 
   metricFindQuery(query: string, optionalOptions?: any): Promise<MetricFindValue[]> {
     const options: any = optionalOptions || {};
+
+    // First attempt to check for tag-related functions (using empty wildcard for interpolation)
     let interpolatedQuery = this.templateSrv.replace(
       query,
       getSearchFilterScopedVar({ query, wildcardChar: '', options: optionalOptions })
@@ -365,26 +388,60 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
       return this.getTagsAutoComplete(expressions, undefined, options);
     }
 
+    // If no tag-related query was found, perform metric-based search (using * as the wildcard for interpolation)
+    let useExpand = query.match(/^expand\((.*)\)$/);
+    query = useExpand ? useExpand[1] : query;
+
     interpolatedQuery = this.templateSrv.replace(
       query,
       getSearchFilterScopedVar({ query, wildcardChar: '*', options: optionalOptions })
     );
 
+    let range;
+    if (options.range) {
+      range = {
+        from: this.translateTime(options.range.from, false, options.timezone),
+        until: this.translateTime(options.range.to, true, options.timezone),
+      };
+    }
+
+    if (useExpand) {
+      return this.requestMetricExpand(interpolatedQuery, options.requestId, range);
+    } else {
+      return this.requestMetricFind(interpolatedQuery, options.requestId, range);
+    }
+  }
+
+  /**
+   * Search for metrics matching giving pattern using /metrics/find endpoint. It will
+   * return all possible values at the last level of the query, for example:
+   *
+   * metrics: prod.servers.001.cpu, prod.servers.002.cpu
+   * query: *.servers.*
+   * result: 001, 002
+   *
+   * For more complex searches use requestMetricExpand
+   */
+  private requestMetricFind(
+    query: string,
+    requestId: string,
+    range?: { from: any; until: any }
+  ): Promise<MetricFindValue[]> {
     const httpOptions: any = {
       method: 'POST',
       url: '/metrics/find',
       params: {},
-      data: `query=${interpolatedQuery}`,
+      data: `query=${query}`,
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
       },
       // for cancellations
-      requestId: options.requestId,
+      requestId: requestId,
     };
 
-    if (options.range) {
-      httpOptions.params.from = this.translateTime(options.range.from, false, options.timezone);
-      httpOptions.params.until = this.translateTime(options.range.to, true, options.timezone);
+    if (range) {
+      httpOptions.params.from = range.from;
+      httpOptions.params.until = range.until;
     }
 
     return this.doGraphiteRequest(httpOptions)
@@ -394,6 +451,46 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
             return {
               text: metric.text,
               expandable: metric.expandable ? true : false,
+            };
+          });
+        })
+      )
+      .toPromise();
+  }
+
+  /**
+   * Search for metrics matching giving pattern using /metrics/expand endpoint.
+   * The result will contain all metrics (with full name) matching provided query.
+   * It's a more flexible version of /metrics/find endpoint (@see requestMetricFind)
+   */
+  private requestMetricExpand(
+    query: string,
+    requestId: string,
+    range?: { from: any; until: any }
+  ): Promise<MetricFindValue[]> {
+    const httpOptions: any = {
+      method: 'GET',
+      url: '/metrics/expand',
+      params: { query },
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      // for cancellations
+      requestId,
+    };
+
+    if (range) {
+      httpOptions.params.from = range.from;
+      httpOptions.params.until = range.until;
+    }
+
+    return this.doGraphiteRequest(httpOptions)
+      .pipe(
+        map((results: any) => {
+          return _map(results.data.results, (metric) => {
+            return {
+              text: metric,
+              expandable: false,
             };
           });
         })

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/registry"
@@ -26,6 +27,7 @@ import (
 // NewService returns a new Service.
 func NewService() Service {
 	return Service{
+		//nolint: staticcheck // plugins.DataPlugin deprecated
 		registry: map[string]func(*models.DataSource) (plugins.DataPlugin, error){},
 	}
 }
@@ -46,27 +48,30 @@ type Service struct {
 	CloudMonitoringService *cloudmonitoring.Service      `inject:""`
 	AzureMonitorService    *azuremonitor.Service         `inject:""`
 	PluginManager          plugins.Manager               `inject:""`
+	HTTPClientProvider     httpclient.Provider           `inject:""`
 
+	//nolint: staticcheck // plugins.DataPlugin deprecated
 	registry map[string]func(*models.DataSource) (plugins.DataPlugin, error)
 }
 
 // Init initialises the service.
 func (s *Service) Init() error {
-	s.registry["graphite"] = graphite.NewExecutor
-	s.registry["opentsdb"] = opentsdb.NewExecutor
-	s.registry["prometheus"] = prometheus.NewExecutor
-	s.registry["influxdb"] = influxdb.NewExecutor
+	s.registry["graphite"] = graphite.New(s.HTTPClientProvider)
+	s.registry["opentsdb"] = opentsdb.New(s.HTTPClientProvider)
+	s.registry["prometheus"] = prometheus.New(s.HTTPClientProvider)
+	s.registry["influxdb"] = influxdb.New(s.HTTPClientProvider)
 	s.registry["mssql"] = mssql.NewExecutor
 	s.registry["postgres"] = s.PostgresService.NewExecutor
-	s.registry["mysql"] = mysql.NewExecutor
-	s.registry["elasticsearch"] = elasticsearch.NewExecutor
+	s.registry["mysql"] = mysql.New(s.HTTPClientProvider)
+	s.registry["elasticsearch"] = elasticsearch.New(s.HTTPClientProvider)
 	s.registry["stackdriver"] = s.CloudMonitoringService.NewExecutor
 	s.registry["grafana-azure-monitor-datasource"] = s.AzureMonitorService.NewExecutor
-	s.registry["loki"] = loki.NewExecutor
-	s.registry["tempo"] = tempo.NewExecutor
+	s.registry["loki"] = loki.New(s.HTTPClientProvider)
+	s.registry["tempo"] = tempo.New(s.HTTPClientProvider)
 	return nil
 }
 
+//nolint: staticcheck // plugins.DataPlugin deprecated
 func (s *Service) HandleRequest(ctx context.Context, ds *models.DataSource, query plugins.DataQuery) (
 	plugins.DataResponse, error) {
 	plugin := s.PluginManager.GetDataPlugin(ds.Type)
@@ -90,6 +95,7 @@ func (s *Service) HandleRequest(ctx context.Context, ds *models.DataSource, quer
 
 // RegisterQueryHandler registers a query handler factory.
 // This is only exposed for tests!
+//nolint: staticcheck // plugins.DataPlugin deprecated
 func (s *Service) RegisterQueryHandler(name string, factory func(*models.DataSource) (plugins.DataPlugin, error)) {
 	s.registry[name] = factory
 }

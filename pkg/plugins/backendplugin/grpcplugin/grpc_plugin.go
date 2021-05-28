@@ -19,12 +19,13 @@ type pluginClient interface {
 }
 
 type grpcPlugin struct {
-	descriptor    PluginDescriptor
-	clientFactory func() *plugin.Client
-	client        *plugin.Client
-	pluginClient  pluginClient
-	logger        log.Logger
-	mutex         sync.RWMutex
+	descriptor     PluginDescriptor
+	clientFactory  func() *plugin.Client
+	client         *plugin.Client
+	pluginClient   pluginClient
+	logger         log.Logger
+	mutex          sync.RWMutex
+	decommissioned bool
 }
 
 // newPlugin allocates and returns a new gRPC (external) backendplugin.Plugin.
@@ -58,16 +59,12 @@ func (p *grpcPlugin) Start(ctx context.Context) error {
 		return err
 	}
 
-	if p.client.NegotiatedVersion() > 1 {
-		p.pluginClient, err = newClientV2(p.descriptor, p.logger, rpcClient)
-		if err != nil {
-			return err
-		}
-	} else {
-		p.pluginClient, err = newClientV1(p.descriptor, p.logger, rpcClient)
-		if err != nil {
-			return err
-		}
+	if p.client.NegotiatedVersion() < 2 {
+		return errors.New("plugin protocol version not supported")
+	}
+	p.pluginClient, err = newClientV2(p.descriptor, p.logger, rpcClient)
+	if err != nil {
+		return err
 	}
 
 	if p.pluginClient == nil {
@@ -98,6 +95,19 @@ func (p *grpcPlugin) Exited() bool {
 		return p.client.Exited()
 	}
 	return true
+}
+
+func (p *grpcPlugin) Decommission() error {
+	p.mutex.RLock()
+	defer p.mutex.RUnlock()
+
+	p.decommissioned = true
+
+	return nil
+}
+
+func (p *grpcPlugin) IsDecommissioned() bool {
+	return p.decommissioned
 }
 
 func (p *grpcPlugin) getPluginClient() (pluginClient, bool) {
@@ -151,7 +161,7 @@ func (p *grpcPlugin) PublishStream(ctx context.Context, request *backend.Publish
 	return pluginClient.PublishStream(ctx, request)
 }
 
-func (p *grpcPlugin) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender backend.StreamPacketSender) error {
+func (p *grpcPlugin) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
 	pluginClient, ok := p.getPluginClient()
 	if !ok {
 		return backendplugin.ErrPluginUnavailable

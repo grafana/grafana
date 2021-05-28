@@ -11,7 +11,7 @@ export class ThresholdManager {
   placeholder: any;
   height: any;
   thresholds: any;
-  needsCleanup: boolean;
+  needsCleanup = false;
   hasSecondYAxis: any;
 
   constructor(private panelCtrl: PanelCtrl) {}
@@ -87,7 +87,8 @@ export class ThresholdManager {
 
   renderHandle(handleIndex: number, defaultHandleTopPos: number) {
     const model = this.thresholds[handleIndex];
-    if (!model.visible) {
+    // alerting defines
+    if (!model.visible && (this.panelCtrl as any).alert) {
       return;
     }
 

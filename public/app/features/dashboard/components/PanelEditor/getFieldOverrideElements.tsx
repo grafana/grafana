@@ -22,6 +22,10 @@ export function getFieldOverrideCategories(props: OptionPaneRenderProps): Option
   const registry = props.plugin.fieldConfigRegistry;
   const data = props.data?.series ?? [];
 
+  if (registry.isEmpty()) {
+    return [];
+  }
+
   const onOverrideChange = (index: number, override: any) => {
     let overrides = cloneDeep(currentFieldConfig.overrides);
     overrides[index] = override;
@@ -207,7 +211,7 @@ export function getFieldOverrideCategories(props: OptionPaneRenderProps): Option
           <Container padding="md" key="Add override">
             <ValuePicker
               icon="plus"
-              label="Add a field override"
+              label="Add field override"
               variant="secondary"
               menuPlacement="auto"
               isFullWidth={true}

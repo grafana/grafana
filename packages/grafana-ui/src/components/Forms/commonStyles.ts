@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { GrafanaTheme, GrafanaThemeV2 } from '@grafana/data';
+import { GrafanaTheme, GrafanaTheme2 } from '@grafana/data';
 import { focusCss } from '../../themes/mixins';
 import { ComponentSize } from '../../types/size';
 
@@ -9,11 +9,15 @@ export const getFocusStyle = (theme: GrafanaTheme) => css`
   }
 `;
 
-export const sharedInputStyle = (theme: GrafanaThemeV2, invalid = false) => {
-  const borderColor = invalid ? theme.colors.error.border : theme.components.input.border;
+export const sharedInputStyle = (theme: GrafanaTheme2, invalid = false) => {
+  const borderColor = invalid ? theme.colors.error.border : theme.components.input.borderColor;
   const borderColorHover = invalid ? theme.colors.error.shade : theme.components.input.borderHover;
   const background = theme.components.input.background;
   const textColor = theme.components.input.text;
+
+  // Cannot use our normal borders for this color for some reason due the alpha values in them.
+  // Need to colors without alpha channel
+  const autoFillBorder = theme.isDark ? '#2e2f35' : '#bab4ca';
 
   return css`
     background: ${background};
@@ -28,6 +32,7 @@ export const sharedInputStyle = (theme: GrafanaThemeV2, invalid = false) => {
       /* Welcome to 2005. This is a HACK to get rid od Chromes default autofill styling */
       box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0), inset 0 0 0 100px ${background}!important;
       -webkit-text-fill-color: ${textColor} !important;
+      border-color: ${autoFillBorder};
     }
 
     &:-webkit-autofill:focus {
@@ -93,7 +98,7 @@ export const inputSizesPixels = (size: string) => {
   }
 };
 
-export function getPropertiesForButtonSize(size: ComponentSize, theme: GrafanaThemeV2) {
+export function getPropertiesForButtonSize(size: ComponentSize, theme: GrafanaTheme2) {
   switch (size) {
     case 'sm':
       return {

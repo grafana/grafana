@@ -12,7 +12,7 @@ export type Interval = 'Hourly' | 'Daily' | 'Weekly' | 'Monthly' | 'Yearly';
 
 export interface ElasticsearchOptions extends DataSourceJsonData {
   timeField: string;
-  esVersion: number;
+  esVersion: string;
   interval?: Interval;
   timeInterval: string;
   maxConcurrentShardRequests?: number;
@@ -27,8 +27,11 @@ interface MetricConfiguration<T extends MetricAggregationType> {
   supportsInlineScript: boolean;
   supportsMissing: boolean;
   isPipelineAgg: boolean;
-  minVersion?: number;
-  maxVersion?: number;
+  /**
+   * A valid semver range for which the metric is known to be available.
+   * If omitted defaults to '*'.
+   */
+  versionRange?: string;
   supportsMultipleBucketPaths: boolean;
   isSingleMetric?: boolean;
   hasSettings: boolean;

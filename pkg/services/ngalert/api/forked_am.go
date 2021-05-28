@@ -126,6 +126,19 @@ func (am *ForkedAMSvc) RoutePostAlertingConfig(ctx *models.ReqContext, body apim
 		return response.Error(400, err.Error(), nil)
 	}
 
+	b, err := backendType(ctx, am.DatasourceCache)
+	if err != nil {
+		return response.Error(400, err.Error(), nil)
+	}
+
+	if err := body.AlertmanagerConfig.ReceiverType().MatchesBackend(b); err != nil {
+		return response.Error(
+			400,
+			"bad match",
+			err,
+		)
+	}
+
 	return s.RoutePostAlertingConfig(ctx, body)
 }
 

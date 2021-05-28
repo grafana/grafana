@@ -123,3 +123,24 @@ func TestPanelValidity(t *testing.T) {
 		return nil
 	}))
 }
+
+func TestCueErrorWrapper(t *testing.T) {
+	t.Run("Testing scuemata validity with valid cue schemas", func(t *testing.T) {
+		tempDir := os.DirFS(filepath.Join("testdata", "malformed_cue"))
+
+		var baseLoadPaths = BaseLoadPaths{
+			BaseCueFS:       tempDir,
+			DistPluginCueFS: GetDefaultLoadPaths().DistPluginCueFS,
+		}
+
+		_, err := BaseDashboardFamily(baseLoadPaths)
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "in file")
+		require.Contains(t, err.Error(), "on line")
+
+		_, err = DistDashboardFamily(baseLoadPaths)
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "in file")
+		require.Contains(t, err.Error(), "on line")
+	})
+}

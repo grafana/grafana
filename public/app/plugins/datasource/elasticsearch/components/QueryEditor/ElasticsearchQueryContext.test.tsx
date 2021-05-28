@@ -1,4 +1,4 @@
-import React, { FunctionComponent } from 'react';
+import React, { PropsWithChildren } from 'react';
 import { renderHook } from '@testing-library/react-hooks';
 import { render } from '@testing-library/react';
 import { ElasticsearchProvider, useQuery } from './ElasticsearchQueryContext';
@@ -50,7 +50,7 @@ describe('ElasticsearchQueryContext', () => {
     });
 
     it('Should return the current query object', () => {
-      const wrapper: FunctionComponent = ({ children }) => (
+      const wrapper = ({ children }: PropsWithChildren<{}>) => (
         <ElasticsearchProvider
           datasource={{} as ElasticDatasource}
           query={query}

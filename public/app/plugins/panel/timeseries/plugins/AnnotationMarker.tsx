@@ -1,16 +1,17 @@
-import React, { useCallback, useRef, useState } from 'react';
-import { GrafanaTheme } from '@grafana/data';
-import { HorizontalGroup, Portal, Tag, VizTooltipContainer, useStyles } from '@grafana/ui';
+import React, { CSSProperties, useCallback, useRef, useState } from 'react';
+import { GrafanaTheme2, dateTimeFormat, systemDateFormats, TimeZone, textUtil, getColorForTheme } from '@grafana/data';
+import { HorizontalGroup, Portal, Tag, VizTooltipContainer, useStyles2, useTheme2 } from '@grafana/ui';
 import { css } from '@emotion/css';
+import alertDef from 'app/features/alerting/state/alertDef';
 
-interface AnnotationMarkerProps {
-  time: string;
-  text: string;
-  tags: string[];
+interface Props {
+  timeZone: TimeZone;
+  annotation: AnnotationsDataFrameViewDTO;
 }
 
-export const AnnotationMarker: React.FC<AnnotationMarkerProps> = ({ time, text, tags }) => {
-  const styles = useStyles(getAnnotationMarkerStyles);
+export function AnnotationMarker({ annotation, timeZone }: Props) {
+  const theme = useTheme2();
+  const styles = useStyles2(getAnnotationMarkerStyles);
   const [isOpen, setIsOpen] = useState(false);
   const markerRef = useRef<HTMLDivElement>(null);
   const annotationPopoverRef = useRef<HTMLDivElement>(null);
@@ -29,6 +30,25 @@ export const AnnotationMarker: React.FC<AnnotationMarkerProps> = ({ time, text, 
     }, 100);
   }, [setIsOpen]);
 
+  const timeFormatter = useCallback(
+    (value: number) => {
+      return dateTimeFormat(value, {
+        format: systemDateFormats.fullDate,
+        timeZone,
+      });
+    },
+    [timeZone]
+  );
+
+  const markerStyles: CSSProperties = {
+    width: 0,
+    height: 0,
+    borderLeft: '4px solid transparent',
+    borderRight: '4px solid transparent',
+    borderBottom: `4px solid ${getColorForTheme(annotation.color, theme.v1)}`,
+    pointerEvents: 'none',
+  };
+
   const renderMarker = useCallback(() => {
     if (!markerRef?.current) {
       return null;
@@ -36,6 +56,24 @@ export const AnnotationMarker: React.FC<AnnotationMarkerProps> = ({ time, text, 
 
     const el = markerRef.current;
     const elBBox = el.getBoundingClientRect();
+    const time = timeFormatter(annotation.time);
+    let text = annotation.text;
+    const tags = annotation.tags;
+    let alertText = '';
+    let state: React.ReactNode | null = null;
+
+    if (annotation.alertId) {
+      const stateModel = alertDef.getStateDisplayModel(annotation.newState!);
+      state = (
+        <div className={styles.alertState}>
+          <i className={stateModel.stateClass}>{stateModel.text}</i>
+        </div>
+      );
+
+      alertText = alertDef.getAlertAnnotationInfo(annotation);
+    } else if (annotation.title) {
+      text = annotation.title + '<br />' + (typeof text === 'string' ? text : '');
+    }
 
     return (
       <VizTooltipContainer
@@ -47,11 +85,12 @@ export const AnnotationMarker: React.FC<AnnotationMarkerProps> = ({ time, text, 
       >
         <div ref={annotationPopoverRef} className={styles.wrapper}>
           <div className={styles.header}>
-            {/*<span className={styles.title}>{annotationEvent.title}</span>*/}
+            {state}
             {time && <span className={styles.time}>{time}</span>}
           </div>
           <div className={styles.body}>
-            {text && <div dangerouslySetInnerHTML={{ __html: text }} />}
+            {text && <div dangerouslySetInnerHTML={{ __html: textUtil.sanitize(text) }} />}
+            {alertText}
             <>
               <HorizontalGroup spacing="xs" wrap>
                 {tags?.map((t, i) => (
@@ -63,62 +102,40 @@ export const AnnotationMarker: React.FC<AnnotationMarkerProps> = ({ time, text, 
         </div>
       </VizTooltipContainer>
     );
-  }, [onMouseEnter, onMouseLeave, styles, time, text, tags]);
+  }, [onMouseEnter, onMouseLeave, timeFormatter, styles, annotation]);
 
   return (
     <>
       <div ref={markerRef} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} className={styles.markerWrapper}>
-        <div className={styles.marker} />
+        <div style={markerStyles} />
       </div>
       {isOpen && <Portal>{renderMarker()}</Portal>}
     </>
   );
-};
+}
 
-const getAnnotationMarkerStyles = (theme: GrafanaTheme) => {
-  const bg = theme.isDark ? theme.palette.dark2 : theme.palette.white;
-  const headerBg = theme.isDark ? theme.palette.dark9 : theme.palette.gray5;
-  const shadowColor = theme.isDark ? theme.palette.black : theme.palette.white;
-
+const getAnnotationMarkerStyles = (theme: GrafanaTheme2) => {
   return {
     markerWrapper: css`
       padding: 0 4px 4px 4px;
     `,
-    marker: css`
-      width: 0;
-      height: 0;
-      border-left: 4px solid transparent;
-      border-right: 4px solid transparent;
-      border-bottom: 4px solid ${theme.palette.red};
-      pointer-events: none;
-    `,
     wrapper: css`
-      background: ${bg};
-      border: 1px solid ${headerBg};
-      border-radius: ${theme.border.radius.md};
       max-width: 400px;
-      box-shadow: 0 0 20px ${shadowColor};
     `,
     tooltip: css`
-      background: none;
       padding: 0;
     `,
     header: css`
-      background: ${headerBg};
-      padding: 6px 10px;
+      padding: ${theme.spacing(0.5, 1)};
+      font-size: ${theme.typography.bodySmall.fontSize};
       display: flex;
     `,
-    title: css`
-      font-weight: ${theme.typography.weight.semibold};
-      padding-right: ${theme.spacing.md};
-      overflow: hidden;
-      display: inline-block;
-      white-space: nowrap;
-      text-overflow: ellipsis;
-      flex-grow: 1;
+    alertState: css`
+      padding-right: ${theme.spacing(1)};
+      font-weight: ${theme.typography.fontWeightMedium};
     `,
     time: css`
-      color: ${theme.colors.textWeak};
+      color: ${theme.colors.text.secondary};
       font-style: italic;
       font-weight: normal;
       display: inline-block;
@@ -126,8 +143,7 @@ const getAnnotationMarkerStyles = (theme: GrafanaTheme) => {
       top: 1px;
     `,
     body: css`
-      padding: ${theme.spacing.sm};
-      font-weight: ${theme.typography.weight.semibold};
+      padding: ${theme.spacing(1)};
     `,
   };
 };

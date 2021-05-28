@@ -14,6 +14,18 @@ export interface Props {
 const ButtonRow: FC<Props> = ({ isReadOnly, onDelete, onSubmit, onTest }) => {
   return (
     <div className="gf-form-button-row">
+      <LinkButton variant="secondary" fill="outline" href={`${config.appSubUrl}/datasources`}>
+        Back
+      </LinkButton>
+      <Button
+        type="button"
+        variant="destructive"
+        disabled={isReadOnly}
+        onClick={onDelete}
+        aria-label={selectors.pages.DataSource.delete}
+      >
+        Delete
+      </Button>
       {!isReadOnly && (
         <Button
           type="submit"
@@ -30,18 +42,6 @@ const ButtonRow: FC<Props> = ({ isReadOnly, onDelete, onSubmit, onTest }) => {
           Test
         </Button>
       )}
-      <Button
-        type="button"
-        variant="destructive"
-        disabled={isReadOnly}
-        onClick={onDelete}
-        aria-label={selectors.pages.DataSource.delete}
-      >
-        Delete
-      </Button>
-      <LinkButton variant="link" href={`${config.appSubUrl}/datasources`}>
-        Back
-      </LinkButton>
     </div>
   );
 };

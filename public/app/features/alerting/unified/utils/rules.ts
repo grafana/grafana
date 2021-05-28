@@ -1,6 +1,8 @@
 import {
   Annotations,
+  GrafanaAlertState,
   Labels,
+  PromAlertingRuleState,
   PromRuleType,
   RulerAlertingRuleDTO,
   RulerGrafanaRuleDTO,
@@ -20,6 +22,7 @@ import {
 import { AsyncRequestState } from './redux';
 import { RULER_NOT_SUPPORTED_MSG } from './constants';
 import { hash } from './misc';
+import { capitalize } from 'lodash';
 
 export function isAlertingRule(rule: Rule): rule is AlertingRule {
   return rule.type === PromRuleType.Alerting;
@@ -37,8 +40,8 @@ export function isRecordingRulerRule(rule: RulerRuleDTO): rule is RulerRecording
   return 'record' in rule;
 }
 
-export function isGrafanaRulerRule(rule: RulerRuleDTO): rule is RulerGrafanaRuleDTO {
-  return 'grafana_alert' in rule;
+export function isGrafanaRulerRule(rule?: RulerRuleDTO): rule is RulerGrafanaRuleDTO {
+  return typeof rule === 'object' && 'grafana_alert' in rule;
 }
 
 export function alertInstanceKey(alert: Alert): string {
@@ -131,4 +134,11 @@ export function ruleWithLocationToRuleIdentifier(ruleWithLocation: RuleWithLocat
     ruleWithLocation.group.name,
     ruleWithLocation.rule
   );
+}
+
+export function alertStateToReadable(state: PromAlertingRuleState | GrafanaAlertState): string {
+  if (state === PromAlertingRuleState.Inactive) {
+    return 'Normal';
+  }
+  return capitalize(state);
 }

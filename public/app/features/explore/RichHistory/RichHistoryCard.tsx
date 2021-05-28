@@ -37,19 +37,13 @@ const getStyles = stylesFactory((theme: GrafanaTheme, isRemoved: boolean) => {
   const rigtColumnContentWidth = '170px';
 
   /* If datasource was removed, card will have inactive color */
-  const cardColor = theme.isLight
-    ? isRemoved
-      ? theme.palette.gray95
-      : theme.palette.white
-    : isRemoved
-    ? theme.palette.gray15
-    : theme.palette.gray05;
+  const cardColor = theme.colors.bg2;
 
   return {
     queryCard: css`
       display: flex;
       flex-direction: column;
-      border: 1px solid ${theme.colors.formInputBorder};
+      border: 1px solid ${theme.colors.border1};
       margin: ${theme.spacing.sm} 0;
       background-color: ${cardColor};
       border-radius: ${theme.border.radius.sm};
@@ -64,7 +58,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme, isRemoved: boolean) => {
       padding: ${theme.spacing.sm};
       border-bottom: none;
       :first-of-type {
-        border-bottom: 1px solid ${theme.colors.formInputBorder};
+        border-bottom: 1px solid ${theme.colors.border1};
         padding: ${theme.spacing.xs} ${theme.spacing.sm};
       }
       img {
@@ -93,7 +87,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme, isRemoved: boolean) => {
       width: calc(100% - ${rigtColumnWidth});
     `,
     queryRow: css`
-      border-top: 1px solid ${theme.colors.formInputBorder};
+      border-top: 1px solid ${theme.colors.border1};
       word-break: break-all;
       padding: 4px 2px;
       :first-child {
@@ -117,14 +111,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme, isRemoved: boolean) => {
       }
     `,
     textArea: css`
-      border: 1px solid ${theme.colors.formInputBorder};
-      background: inherit;
-      color: inherit;
       width: 100%;
-      font-size: ${theme.typography.size.sm};
-      &placeholder {
-        padding: 0 ${theme.spacing.sm};
-      }
     `,
     runButton: css`
       max-width: ${rigtColumnContentWidth};

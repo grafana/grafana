@@ -1,7 +1,7 @@
 /** @jsxImportSource @emotion/react */
 
 import { Profiler, ProfilerOnRenderCallback, useState, FC } from 'react';
-import { GrafanaThemeV2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { css, cx } from '@emotion/css';
 import { useStyles2, useTheme2 } from '../../themes';
 import { Button } from '../Button';
@@ -141,7 +141,7 @@ function MeasureRender({ children, id }: { children: React.ReactNode; id: string
   );
 }
 
-const getStyles = (theme: GrafanaThemeV2) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     main: css(getStylesObjectMain(theme)),
     large: css({
@@ -156,7 +156,7 @@ const getStyles = (theme: GrafanaThemeV2) => {
   };
 };
 
-const getStylesObjects = (theme: GrafanaThemeV2) => {
+const getStylesObjects = (theme: GrafanaTheme2) => {
   return {
     main: getStylesObjectMain(theme),
     large: {
@@ -171,7 +171,7 @@ const getStylesObjects = (theme: GrafanaThemeV2) => {
   };
 };
 
-function getStylesObjectMain(theme: GrafanaThemeV2): any {
+function getStylesObjectMain(theme: GrafanaTheme2): any {
   return {
     background: 'blue',
     border: '1px solid red',
@@ -184,7 +184,7 @@ function getStylesObjectMain(theme: GrafanaThemeV2): any {
   };
 }
 
-function getStylesObjectChild(theme: GrafanaThemeV2): any {
+function getStylesObjectChild(theme: GrafanaTheme2): any {
   return {
     padding: '2px',
     fontSize: '10px',

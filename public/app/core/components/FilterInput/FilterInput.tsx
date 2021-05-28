@@ -13,7 +13,7 @@ export interface Props {
 export const FilterInput: FC<Props> = ({ value, placeholder, width, onChange, autoFocus }) => {
   const suffix =
     value !== '' ? (
-      <Button icon="times" variant="link" size="sm" onClick={() => onChange('')}>
+      <Button icon="times" fill="text" size="sm" onClick={() => onChange('')}>
         Clear
       </Button>
     ) : null;
@@ -23,7 +23,7 @@ export const FilterInput: FC<Props> = ({ value, placeholder, width, onChange, au
       autoFocus={autoFocus ?? false}
       prefix={<Icon name="search" />}
       suffix={suffix}
-      width={width ?? 40}
+      width={width}
       type="text"
       value={value ? unEscapeStringFromRegex(value) : ''}
       onChange={(event) => onChange(escapeStringForRegex(event.currentTarget.value))}

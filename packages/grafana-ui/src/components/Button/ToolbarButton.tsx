@@ -1,6 +1,6 @@
 import React, { forwardRef, ButtonHTMLAttributes } from 'react';
 import { cx, css } from '@emotion/css';
-import { GrafanaThemeV2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { styleMixins, useStyles2 } from '../../themes';
 import { IconName } from '../../types/icon';
 import { Tooltip } from '../Tooltip/Tooltip';
@@ -104,9 +104,9 @@ function renderIcon(icon: IconName | React.ReactNode) {
   return icon;
 }
 
-const getStyles = (theme: GrafanaThemeV2) => {
-  const primaryVariant = getPropertiesForVariant(theme, 'primary');
-  const destructiveVariant = getPropertiesForVariant(theme, 'destructive');
+const getStyles = (theme: GrafanaTheme2) => {
+  const primaryVariant = getPropertiesForVariant(theme, 'primary', 'solid');
+  const destructiveVariant = getPropertiesForVariant(theme, 'destructive', 'solid');
 
   return {
     button: css`
@@ -118,7 +118,7 @@ const getStyles = (theme: GrafanaThemeV2) => {
       border-radius: ${theme.shape.borderRadius()};
       line-height: ${theme.components.height.md * theme.spacing.gridSize - 2}px;
       font-weight: ${theme.typography.fontWeightMedium};
-      border: 1px solid ${theme.colors.border.medium};
+      border: 1px solid ${theme.colors.border.weak};
       white-space: nowrap;
       transition: ${theme.transitions.create(['background', 'box-shadow', 'border-color', 'color'], {
         duration: theme.transitions.duration.short,
@@ -135,7 +135,7 @@ const getStyles = (theme: GrafanaThemeV2) => {
       }
 
       &:hover {
-        box-shadow: ${theme.shadows.z2};
+        box-shadow: ${theme.shadows.z1};
       }
 
       &[disabled],

@@ -2,7 +2,7 @@ import React from 'react';
 import { Button, InfoBox, Portal, stylesFactory, useTheme2 } from '@grafana/ui';
 import { getModalStyles } from '@grafana/ui/src/components/Modal/getModalStyles';
 import { css, cx } from '@emotion/css';
-import { GrafanaThemeV2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 
 interface Props {
   maxConcurrentSessions?: number;
@@ -50,7 +50,7 @@ export const TokenRevokedModal = (props: Props) => {
   );
 };
 
-const getStyles = stylesFactory((theme: GrafanaThemeV2) => {
+const getStyles = stylesFactory((theme: GrafanaTheme2) => {
   return {
     infobox: css`
       margin-bottom: 0;

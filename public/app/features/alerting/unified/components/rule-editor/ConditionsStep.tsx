@@ -1,41 +1,55 @@
 import React, { FC, useState } from 'react';
-import { Field, Input, Select, useStyles, InputControl, InlineLabel, Switch } from '@grafana/ui';
 import { css } from '@emotion/css';
-import { GrafanaTheme } from '@grafana/data';
-import { RuleEditorSection } from './RuleEditorSection';
-import { useFormContext, ValidationOptions } from 'react-hook-form';
-import { RuleFormType, RuleFormValues, TimeOptions } from '../../types/rule-form';
+import { GrafanaTheme, parseDuration, addDurationToDate } from '@grafana/data';
+import { Field, InlineLabel, Input, InputControl, Select, Switch, useStyles } from '@grafana/ui';
+import { useFormContext, RegisterOptions } from 'react-hook-form';
+import { RuleFormType, RuleFormValues } from '../../types/rule-form';
+import { timeOptions, timeValidationPattern } from '../../utils/time';
 import { ConditionField } from './ConditionField';
 import { GrafanaAlertStatePicker } from './GrafanaAlertStatePicker';
+import { RuleEditorSection } from './RuleEditorSection';
+import { PreviewRule } from './PreviewRule';
 
-const timeRangeValidationOptions: ValidationOptions = {
+const MIN_TIME_RANGE_STEP_S = 10; // 10 seconds
+
+const timeRangeValidationOptions: RegisterOptions = {
   required: {
     value: true,
     message: 'Required.',
   },
-  pattern: {
-    value: new RegExp(`^\\d+(${Object.values(TimeOptions).join('|')})$`),
-    message: `Must be of format "(number)(unit)", for example "1m". Available units: ${Object.values(TimeOptions).join(
-      ', '
-    )}`,
+  pattern: timeValidationPattern,
+  validate: (value: string) => {
+    const duration = parseDuration(value);
+    if (Object.keys(duration).length) {
+      const from = new Date();
+      const to = addDurationToDate(from, duration);
+      const diff = to.getTime() - from.getTime();
+      if (diff < MIN_TIME_RANGE_STEP_S * 1000) {
+        return `Cannot be less than ${MIN_TIME_RANGE_STEP_S} seconds.`;
+      }
+      if (diff % (MIN_TIME_RANGE_STEP_S * 1000) !== 0) {
+        return `Must be a multiple of ${MIN_TIME_RANGE_STEP_S} seconds.`;
+      }
+    }
+    return true;
   },
 };
-
-const timeOptions = Object.entries(TimeOptions).map(([key, value]) => ({
-  label: key[0].toUpperCase() + key.slice(1),
-  value: value,
-}));
 
 export const ConditionsStep: FC = () => {
   const styles = useStyles(getStyles);
   const [showErrorHandling, setShowErrorHandling] = useState(false);
-  const { register, control, watch, errors } = useFormContext<RuleFormValues>();
+  const {
+    register,
+    control,
+    watch,
+    formState: { errors },
+  } = useFormContext<RuleFormValues>();
 
   const type = watch('type');
 
   return (
     <RuleEditorSection stepNo={3} title="Define alert conditions">
-      {type === RuleFormType.threshold && (
+      {type === RuleFormType.grafana && (
         <>
           <ConditionField />
           <Field label="Evaluate">
@@ -47,8 +61,9 @@ export const ConditionsStep: FC = () => {
                 className={styles.inlineField}
                 error={errors.evaluateEvery?.message}
                 invalid={!!errors.evaluateEvery?.message}
+                validationMessageHorizontalOverflow={true}
               >
-                <Input width={8} ref={register(timeRangeValidationOptions)} name="evaluateEvery" />
+                <Input width={8} {...register('evaluateEvery', timeRangeValidationOptions)} />
               </Field>
               <InlineLabel
                 width={7}
@@ -60,8 +75,9 @@ export const ConditionsStep: FC = () => {
                 className={styles.inlineField}
                 error={errors.evaluateFor?.message}
                 invalid={!!errors.evaluateFor?.message}
+                validationMessageHorizontalOverflow={true}
               >
-                <Input width={8} ref={register(timeRangeValidationOptions)} name="evaluateFor" />
+                <Input width={8} {...register('evaluateFor', timeRangeValidationOptions)} />
               </Field>
             </div>
           </Field>
@@ -72,48 +88,62 @@ export const ConditionsStep: FC = () => {
             <>
               <Field label="Alert state if no data or all values are null">
                 <InputControl
-                  as={GrafanaAlertStatePicker}
+                  render={({ field: { onChange, ref, ...field } }) => (
+                    <GrafanaAlertStatePicker
+                      {...field}
+                      width={42}
+                      includeNoData={true}
+                      onChange={(value) => onChange(value?.value)}
+                    />
+                  )}
                   name="noDataState"
-                  width={42}
-                  onChange={(values) => values[0]?.value}
                 />
               </Field>
               <Field label="Alert state if execution error or timeout">
                 <InputControl
-                  as={GrafanaAlertStatePicker}
+                  render={({ field: { onChange, ref, ...field } }) => (
+                    <GrafanaAlertStatePicker
+                      {...field}
+                      width={42}
+                      includeNoData={false}
+                      onChange={(value) => onChange(value?.value)}
+                    />
+                  )}
                   name="execErrState"
-                  width={42}
-                  onChange={(values) => values[0]?.value}
                 />
               </Field>
             </>
           )}
         </>
       )}
-      {type === RuleFormType.system && (
+      {type === RuleFormType.cloud && (
         <>
           <Field label="For" description="Expression has to be true for this long for the alert to be fired.">
             <div className={styles.flexRow}>
               <Field invalid={!!errors.forTime?.message} error={errors.forTime?.message} className={styles.inlineField}>
                 <Input
-                  ref={register({ pattern: { value: /^\d+$/, message: 'Must be a postive integer.' } })}
-                  name="forTime"
+                  {...register('forTime', { pattern: { value: /^\d+$/, message: 'Must be a postive integer.' } })}
                   width={8}
                 />
               </Field>
               <InputControl
                 name="forTimeUnit"
-                as={Select}
-                options={timeOptions}
+                render={({ field: { onChange, ref, ...field } }) => (
+                  <Select
+                    {...field}
+                    options={timeOptions}
+                    onChange={(value) => onChange(value?.value)}
+                    width={15}
+                    className={styles.timeUnit}
+                  />
+                )}
                 control={control}
-                width={15}
-                className={styles.timeUnit}
-                onChange={(values) => values[0]?.value}
               />
             </div>
           </Field>
         </>
       )}
+      <PreviewRule />
     </RuleEditorSection>
   );
 };
@@ -125,7 +155,6 @@ const getStyles = (theme: GrafanaTheme) => ({
   flexRow: css`
     display: flex;
     flex-direction: row;
-    align-items: flex-end;
     justify-content: flex-start;
     align-items: flex-start;
   `,

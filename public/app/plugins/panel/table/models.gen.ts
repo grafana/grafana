@@ -31,4 +31,5 @@ export interface PanelFieldConfig {
 
 export const defaultPanelFieldConfig: PanelFieldConfig = {
   displayMode: TableCellDisplayMode.Auto,
+  align: 'auto',
 };

@@ -1,7 +1,17 @@
 // Libraries
 import React, { PureComponent } from 'react';
 // Components
-import { Button, CustomScrollbar, HorizontalGroup, Icon, Modal, stylesFactory, Tooltip } from '@grafana/ui';
+import {
+  Button,
+  CustomScrollbar,
+  HorizontalGroup,
+  Icon,
+  InlineFormLabel,
+  Modal,
+  ScrollbarPosition,
+  stylesFactory,
+  Tooltip,
+} from '@grafana/ui';
 import { getDataSourceSrv, DataSourcePicker } from '@grafana/runtime';
 import { QueryEditorRows } from './QueryEditorRows';
 // Services
@@ -19,7 +29,10 @@ import {
 import { PluginHelp } from 'app/core/components/PluginHelp/PluginHelp';
 import { addQuery } from 'app/core/utils/query';
 import { Unsubscribable } from 'rxjs';
-import { expressionDatasource, ExpressionDatasourceID } from 'app/features/expressions/ExpressionDatasource';
+import {
+  dataSource as expressionDatasource,
+  ExpressionDatasourceID,
+} from 'app/features/expressions/ExpressionDatasource';
 import { selectors } from '@grafana/e2e-selectors';
 import { PanelQueryRunner } from '../state/PanelQueryRunner';
 import { QueryGroupOptionsEditor } from './QueryGroupOptions';
@@ -51,7 +64,7 @@ interface State {
 export class QueryGroup extends PureComponent<Props, State> {
   backendSrv = backendSrv;
   dataSourceSrv = getDataSourceSrv();
-  querySubscription: Unsubscribable | null;
+  querySubscription: Unsubscribable | null = null;
 
   state: State = {
     isLoadingHelp: false,
@@ -189,6 +202,7 @@ export class QueryGroup extends PureComponent<Props, State> {
     return (
       <div>
         <div className={styles.dataSourceRow}>
+          <InlineFormLabel width={'auto'}>Data source</InlineFormLabel>
           <div className={styles.dataSourceRowItem}>
             <DataSourcePicker
               onChange={this.onChangeDataSource}
@@ -272,9 +286,8 @@ export class QueryGroup extends PureComponent<Props, State> {
     this.onScrollBottom();
   };
 
-  setScrollTop = (event: React.MouseEvent<HTMLElement>) => {
-    const target = event.target as HTMLElement;
-    this.setState({ scrollTop: target.scrollTop });
+  setScrollTop = ({ scrollTop }: ScrollbarPosition) => {
+    this.setState({ scrollTop: scrollTop });
   };
 
   onQueriesChange = (queries: DataQuery[]) => {

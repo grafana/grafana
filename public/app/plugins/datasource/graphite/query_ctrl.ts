@@ -2,7 +2,7 @@ import './add_graphite_func';
 import './func_editor';
 
 import { each, eachRight, map, remove } from 'lodash';
-import GraphiteQuery from './graphite_query';
+import GraphiteQuery, { GraphiteTagOperator } from './graphite_query';
 import { QueryCtrl } from 'app/plugins/sdk';
 import { promiseToDigest } from 'app/core/utils/promiseToDigest';
 import { auto } from 'angular';
@@ -18,11 +18,11 @@ export class GraphiteQueryCtrl extends QueryCtrl {
   static templateUrl = 'partials/query.editor.html';
 
   queryModel: GraphiteQuery;
-  segments: any[];
-  addTagSegments: any[];
+  segments: any[] = [];
+  addTagSegments: any[] = [];
   removeTagValue: string;
-  supportsTags: boolean;
-  paused: boolean;
+  supportsTags = false;
+  paused = false;
 
   // to avoid error flooding, these errors are shown only once per session
   private _tagsAutoCompleteErrorShown = false;
@@ -399,7 +399,7 @@ export class GraphiteQueryCtrl extends QueryCtrl {
 
   addNewTag(segment: { value: any }) {
     const newTagKey = segment.value;
-    const newTag = { key: newTagKey, operator: '=', value: '' };
+    const newTag = { key: newTagKey, operator: '=' as GraphiteTagOperator, value: '' };
     this.queryModel.addTag(newTag);
     this.targetChanged();
     this.fixTagSegments();

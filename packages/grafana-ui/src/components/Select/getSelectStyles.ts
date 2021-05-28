@@ -1,12 +1,12 @@
 import { stylesFactory } from '../../themes/stylesFactory';
 import { css } from '@emotion/css';
-import { GrafanaThemeV2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 
-export const getSelectStyles = stylesFactory((theme: GrafanaThemeV2) => {
+export const getSelectStyles = stylesFactory((theme: GrafanaTheme2) => {
   return {
     menu: css`
       label: grafana-select-menu;
-      background: ${theme.colors.background.secondary};
+      background: ${theme.components.dropdown.background};
       box-shadow: ${theme.shadows.z3};
       position: relative;
       min-width: 100%;
@@ -90,7 +90,7 @@ export const getSelectStyles = stylesFactory((theme: GrafanaThemeV2) => {
       line-height: 1;
       background: ${theme.colors.background.secondary};
       border-radius: ${theme.shape.borderRadius()};
-      margin: ${theme.spacing(0, 1, 0, 0)};
+      margin: ${theme.spacing(0.25, 1, 0.25, 0)};
       padding: ${theme.spacing(0.25, 0, 0.25, 1)};
       color: ${theme.colors.text.primary};
       font-size: ${theme.typography.size.sm};

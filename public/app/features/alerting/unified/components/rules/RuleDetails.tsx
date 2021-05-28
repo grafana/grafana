@@ -3,14 +3,16 @@ import React, { FC, useMemo } from 'react';
 import { useStyles } from '@grafana/ui';
 import { css, cx } from '@emotion/css';
 import { GrafanaTheme } from '@grafana/data';
-import { isAlertingRule } from '../../utils/rules';
+import { isAlertingRule, isGrafanaRulerRule } from '../../utils/rules';
 import { isCloudRulesSource } from '../../utils/datasource';
-import { Annotation } from '../Annotation';
+import { AnnotationDetailsField } from '../AnnotationDetailsField';
 import { AlertLabels } from '../AlertLabels';
 import { AlertInstancesTable } from './AlertInstancesTable';
 import { DetailsField } from '../DetailsField';
-import { RuleQuery } from './RuleQuery';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
+import { ExpressionDatasourceUID } from 'app/features/expressions/ExpressionDatasource';
+import { Expression } from '../Expression';
+import { RuleDetailsActionButtons } from './RuleDetailsActionButtons';
 
 interface Props {
   rule: CombinedRule;
@@ -22,27 +24,34 @@ export const RuleDetails: FC<Props> = ({ rule, rulesSource }) => {
 
   const { promRule } = rule;
 
-  const annotations = Object.entries(rule.annotations);
+  const annotations = Object.entries(rule.annotations).filter(([_, value]) => !!value.trim());
 
   const dataSources: Array<{ name: string; icon?: string }> = useMemo(() => {
     if (isCloudRulesSource(rulesSource)) {
       return [{ name: rulesSource.name, icon: rulesSource.meta.info.logos.small }];
-    } else if (rule.queries) {
-      return rule.queries
-        .map(({ datasource }) => {
-          const ds = getDataSourceSrv().getInstanceSettings(datasource);
-          if (ds) {
-            return { name: ds.name, icon: ds.meta.info.logos.small };
-          }
-          return { name: datasource };
-        })
-        .filter(({ name }) => name !== '__expr__');
     }
+
+    if (isGrafanaRulerRule(rule.rulerRule)) {
+      const { data } = rule.rulerRule.grafana_alert;
+
+      return data.reduce((dataSources, query) => {
+        const ds = getDatasourceSrv().getInstanceSettings(query.datasourceUid);
+
+        if (!ds || ds.uid === ExpressionDatasourceUID) {
+          return dataSources;
+        }
+
+        dataSources.push({ name: ds.name, icon: ds.meta.info.logos.small });
+        return dataSources;
+      }, [] as Array<{ name: string; icon?: string }>);
+    }
+
     return [];
   }, [rule, rulesSource]);
 
   return (
     <div>
+      <RuleDetailsActionButtons rule={rule} rulesSource={rulesSource} />
       <div className={styles.wrapper}>
         <div className={styles.leftSide}>
           {!!rule.labels && !!Object.keys(rule.labels).length && (
@@ -50,13 +59,17 @@ export const RuleDetails: FC<Props> = ({ rule, rulesSource }) => {
               <AlertLabels labels={rule.labels} />
             </DetailsField>
           )}
-          <DetailsField label="Expression" className={cx({ [styles.exprRow]: !!annotations.length })} horizontal={true}>
-            <RuleQuery rule={rule} rulesSource={rulesSource} />
-          </DetailsField>
-          {annotations.map(([key, value]) => (
-            <DetailsField key={key} label={key} horizontal={true}>
-              <Annotation annotationKey={key} value={value} />
+          {isCloudRulesSource(rulesSource) && (
+            <DetailsField
+              label="Expression"
+              className={cx({ [styles.exprRow]: !!annotations.length })}
+              horizontal={true}
+            >
+              <Expression expression={rule.query} rulesSource={rulesSource} />
             </DetailsField>
+          )}
+          {annotations.map(([key, value]) => (
+            <AnnotationDetailsField key={key} annotationKey={key} value={value} />
           ))}
         </div>
         <div className={styles.rightSide}>

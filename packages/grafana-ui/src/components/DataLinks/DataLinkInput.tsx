@@ -16,8 +16,9 @@ import { css, cx } from '@emotion/css';
 import { SlatePrism } from '../../slate-plugins';
 import { SCHEMA } from '../../utils/slate';
 import { useStyles2 } from '../../themes';
-import { DataLinkBuiltInVars, GrafanaThemeV2, VariableOrigin, VariableSuggestion } from '@grafana/data';
+import { DataLinkBuiltInVars, GrafanaTheme2, VariableOrigin, VariableSuggestion } from '@grafana/data';
 import { getInputStyles } from '../Input/Input';
+import CustomScrollbar from '../CustomScrollbar/CustomScrollbar';
 
 const modulo = (a: number, n: number) => a - n * Math.floor(a / n);
 
@@ -44,7 +45,7 @@ const plugins = [
   ),
 ];
 
-const getStyles = (theme: GrafanaThemeV2) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   input: getInputStyles({ theme, invalid: false }).input,
   editor: css`
     .token.builtInVariable {
@@ -53,6 +54,9 @@ const getStyles = (theme: GrafanaThemeV2) => ({
     .token.variable {
       color: ${theme.colors.primary.text};
     }
+  `,
+  suggestionsWrapper: css`
+    box-shadow: ${theme.shadows.z2};
   `,
   // Wrapper with child selector needed.
   // When classnames are applied to the same element as the wrapper, it causes the suggestions to stop working
@@ -80,6 +84,12 @@ export const DataLinkInput: React.FC<DataLinkInputProps> = memo(
     // Workaround for https://github.com/ianstormtaylor/slate/issues/2927
     const stateRef = useRef({ showingSuggestions, suggestions, suggestionsIndex, linkUrl, onChange });
     stateRef.current = { showingSuggestions, suggestions, suggestionsIndex, linkUrl, onChange };
+
+    // Used to get the height of the suggestion elements in order to scroll to them.
+    const activeRef = useRef<HTMLDivElement>(null);
+    const activeIndexPosition = useMemo(() => getElementPosition(activeRef.current, suggestionsIndex), [
+      suggestionsIndex,
+    ]);
 
     // SelectionReference is used to position the variables suggestion relatively to current DOM selection
     const selectionRef = useMemo(() => new SelectionReference(), []);
@@ -148,7 +158,7 @@ export const DataLinkInput: React.FC<DataLinkInputProps> = memo(
               <Portal>
                 <ReactPopper
                   referenceElement={selectionRef}
-                  placement="top-end"
+                  placement="bottom-end"
                   modifiers={[
                     {
                       name: 'preventOverflow',
@@ -171,13 +181,16 @@ export const DataLinkInput: React.FC<DataLinkInputProps> = memo(
                 >
                   {({ ref, style, placement }) => {
                     return (
-                      <div ref={ref} style={style} data-placement={placement}>
-                        <DataLinkSuggestions
-                          suggestions={stateRef.current.suggestions}
-                          onSuggestionSelect={onVariableSelect}
-                          onClose={() => setShowingSuggestions(false)}
-                          activeIndex={suggestionsIndex}
-                        />
+                      <div ref={ref} style={style} data-placement={placement} className={styles.suggestionsWrapper}>
+                        <CustomScrollbar scrollTop={activeIndexPosition} autoHeightMax="300px">
+                          <DataLinkSuggestions
+                            activeRef={activeRef}
+                            suggestions={stateRef.current.suggestions}
+                            onSuggestionSelect={onVariableSelect}
+                            onClose={() => setShowingSuggestions(false)}
+                            activeIndex={suggestionsIndex}
+                          />
+                        </CustomScrollbar>
                       </div>
                     );
                   }}
@@ -208,3 +221,7 @@ export const DataLinkInput: React.FC<DataLinkInputProps> = memo(
 );
 
 DataLinkInput.displayName = 'DataLinkInput';
+
+function getElementPosition(suggestionElement: HTMLElement | null, activeIndex: number) {
+  return (suggestionElement?.clientHeight ?? 0) * activeIndex;
+}

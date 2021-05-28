@@ -4,7 +4,7 @@ import { Modal } from '../Modal/Modal';
 import { IconName } from '../../types/icon';
 import { Button } from '../Button';
 import { useStyles2 } from '../../themes';
-import { GrafanaThemeV2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { HorizontalGroup, Input } from '..';
 import { selectors } from '@grafana/e2e-selectors';
 
@@ -57,59 +57,51 @@ export const ConfirmModal = ({
 
   return (
     <Modal className={styles.modal} title={title} icon={icon} isOpen={isOpen} onDismiss={onDismiss}>
-      <div className={styles.modalContent}>
-        <div className={styles.modalText}>
-          {body}
-          {description ? <div className={styles.modalDescription}>{description}</div> : null}
-          {confirmationText ? (
-            <div className={styles.modalConfirmationInput}>
-              <HorizontalGroup justify="center">
-                <Input placeholder={`Type ${confirmationText} to confirm`} onChange={onConfirmationTextChange} />
-              </HorizontalGroup>
-            </div>
-          ) : null}
-        </div>
-        <HorizontalGroup justify="center">
-          {onAlternative ? (
-            <Button variant="primary" onClick={onAlternative}>
-              {alternativeText}
-            </Button>
-          ) : null}
-          <Button
-            variant="destructive"
-            onClick={onConfirm}
-            disabled={disabled}
-            aria-label={selectors.pages.ConfirmModal.delete}
-          >
-            {confirmText}
-          </Button>
-          <Button variant="secondary" onClick={onDismiss}>
-            {dismissText}
-          </Button>
-        </HorizontalGroup>
+      <div className={styles.modalText}>
+        {body}
+        {description ? <div className={styles.modalDescription}>{description}</div> : null}
+        {confirmationText ? (
+          <div className={styles.modalConfirmationInput}>
+            <HorizontalGroup>
+              <Input placeholder={`Type ${confirmationText} to confirm`} onChange={onConfirmationTextChange} />
+            </HorizontalGroup>
+          </div>
+        ) : null}
       </div>
+      <Modal.ButtonRow>
+        <Button variant="secondary" onClick={onDismiss} fill="outline">
+          {dismissText}
+        </Button>
+        <Button
+          variant="destructive"
+          onClick={onConfirm}
+          disabled={disabled}
+          aria-label={selectors.pages.ConfirmModal.delete}
+        >
+          {confirmText}
+        </Button>
+        {onAlternative ? (
+          <Button variant="primary" onClick={onAlternative}>
+            {alternativeText}
+          </Button>
+        ) : null}
+      </Modal.ButtonRow>
     </Modal>
   );
 };
 
-const getStyles = (theme: GrafanaThemeV2) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   modal: css`
     width: 500px;
   `,
-  modalContent: css`
-    text-align: center;
-  `,
   modalText: css({
-    fontSize: theme.typography.h4.fontSize,
+    fontSize: theme.typography.h5.fontSize,
     color: theme.colors.text.primary,
-    marginBottom: `calc(${theme.spacing(2)}*2)`,
-    paddingTop: theme.spacing(2),
   }),
   modalDescription: css({
-    fontSize: theme.typography.h6.fontSize,
-    paddingTop: theme.spacing(2),
+    fontSize: theme.typography.body.fontSize,
   }),
   modalConfirmationInput: css({
-    paddingTop: theme.spacing(2),
+    paddingTop: theme.spacing(1),
   }),
 });

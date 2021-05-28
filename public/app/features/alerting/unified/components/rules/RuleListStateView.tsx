@@ -4,7 +4,7 @@ import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 import React, { FC, useMemo } from 'react';
 import { getFiltersFromUrlParams } from '../../utils/misc';
 import { isAlertingRule } from '../../utils/rules';
-import { RuleListStateSection } from './RuleListSateSection';
+import { RuleListStateSection } from './RuleListStateSection';
 
 interface Props {
   namespaces: CombinedRuleNamespace[];

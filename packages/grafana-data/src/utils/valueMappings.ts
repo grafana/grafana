@@ -1,104 +1,291 @@
-import { ValueMapping, MappingType, ValueMap, RangeMap } from '../types';
+import { MappingType, SpecialValueMatch, ThresholdsConfig, ValueMap, ValueMapping, ValueMappingResult } from '../types';
+import { getActiveThreshold } from '../field';
 
-type TimeSeriesValue = string | number | null;
+export function getValueMappingResult(valueMappings: ValueMapping[], value: any): ValueMappingResult | null {
+  for (const vm of valueMappings) {
+    switch (vm.type) {
+      case MappingType.ValueToText:
+        if (value == null) {
+          continue;
+        }
 
-const addValueToTextMappingText = (
-  allValueMappings: ValueMapping[],
-  valueToTextMapping: ValueMap,
-  value: TimeSeriesValue
-) => {
-  if (valueToTextMapping.value === undefined) {
-    return allValueMappings;
-  }
+        const result = vm.options[value];
+        if (result) {
+          return result;
+        }
 
-  if (value === null && isNullValueMap(valueToTextMapping)) {
-    return allValueMappings.concat(valueToTextMapping);
-  }
+        break;
 
-  let valueAsNumber, valueToTextMappingAsNumber;
+      case MappingType.RangeToText:
+        if (value == null) {
+          continue;
+        }
 
-  if (isNumeric(value as string) && isNumeric(valueToTextMapping.value)) {
-    valueAsNumber = parseFloat(value as string);
-    valueToTextMappingAsNumber = parseFloat(valueToTextMapping.value as string);
+        const valueAsNumber = parseFloat(value as string);
+        if (isNaN(valueAsNumber)) {
+          continue;
+        }
 
-    if (valueAsNumber === valueToTextMappingAsNumber) {
-      return allValueMappings.concat(valueToTextMapping);
+        const isNumFrom = !isNaN(vm.options.from!);
+        if (isNumFrom && valueAsNumber < vm.options.from!) {
+          continue;
+        }
+
+        const isNumTo = !isNaN(vm.options.to!);
+        if (isNumTo && valueAsNumber > vm.options.to!) {
+          continue;
+        }
+
+        return vm.options.result;
+
+      case MappingType.SpecialValue:
+        switch (vm.options.match) {
+          case SpecialValueMatch.Null: {
+            if (value == null) {
+              return vm.options.result;
+            }
+            break;
+          }
+          case SpecialValueMatch.NaN: {
+            if (isNaN(value as any)) {
+              return vm.options.result;
+            }
+            break;
+          }
+          case SpecialValueMatch.NullAndNaN: {
+            if (isNaN(value as any) || value == null) {
+              return vm.options.result;
+            }
+            break;
+          }
+          case SpecialValueMatch.True: {
+            if (value === true || value === 'true') {
+              return vm.options.result;
+            }
+            break;
+          }
+          case SpecialValueMatch.False: {
+            if (value === false || value === 'false') {
+              return vm.options.result;
+            }
+            break;
+          }
+          case SpecialValueMatch.Empty: {
+            if (value === '') {
+              return vm.options.result;
+            }
+            break;
+          }
+        }
     }
-    return allValueMappings;
   }
 
-  if (value === valueToTextMapping.value) {
-    return allValueMappings.concat(valueToTextMapping);
-  }
-
-  return allValueMappings;
-};
-
-const addRangeToTextMappingText = (
-  allValueMappings: ValueMapping[],
-  rangeToTextMapping: RangeMap,
-  value: TimeSeriesValue
-) => {
-  if (rangeToTextMapping.from === undefined || rangeToTextMapping.to === undefined || value === undefined) {
-    return allValueMappings;
-  }
-
-  if (
-    value === null &&
-    rangeToTextMapping.from &&
-    rangeToTextMapping.to &&
-    rangeToTextMapping.from.toLowerCase() === 'null' &&
-    rangeToTextMapping.to.toLowerCase() === 'null'
-  ) {
-    return allValueMappings.concat(rangeToTextMapping);
-  }
-
-  const valueAsNumber = parseFloat(value as string);
-  const fromAsNumber = parseFloat(rangeToTextMapping.from as string);
-  const toAsNumber = parseFloat(rangeToTextMapping.to as string);
-
-  if (isNaN(valueAsNumber) || isNaN(fromAsNumber) || isNaN(toAsNumber)) {
-    return allValueMappings;
-  }
-
-  if (valueAsNumber >= fromAsNumber && valueAsNumber <= toAsNumber) {
-    return allValueMappings.concat(rangeToTextMapping);
-  }
-
-  return allValueMappings;
-};
-
-const getAllFormattedValueMappings = (valueMappings: ValueMapping[], value: TimeSeriesValue) => {
-  const allFormattedValueMappings = valueMappings.reduce((allValueMappings, valueMapping) => {
-    if (valueMapping.type === MappingType.ValueToText) {
-      allValueMappings = addValueToTextMappingText(allValueMappings, valueMapping as ValueMap, value);
-    } else if (valueMapping.type === MappingType.RangeToText) {
-      allValueMappings = addRangeToTextMappingText(allValueMappings, valueMapping as RangeMap, value);
-    }
-
-    return allValueMappings;
-  }, [] as ValueMapping[]);
-
-  allFormattedValueMappings.sort((t1, t2) => {
-    return t1.id - t2.id;
-  });
-
-  return allFormattedValueMappings;
-};
-
-export const getMappedValue = (valueMappings: ValueMapping[], value: TimeSeriesValue): ValueMapping => {
-  return getAllFormattedValueMappings(valueMappings, value)[0];
-};
-
-const isNullValueMap = (mapping: ValueMap): boolean => {
-  if (!mapping || !mapping.value) {
-    return false;
-  }
-  return mapping.value.toLowerCase() === 'null';
-};
+  return null;
+}
 
 // Ref https://stackoverflow.com/a/58550111
-
 export function isNumeric(num: any) {
   return (typeof num === 'number' || (typeof num === 'string' && num.trim() !== '')) && !isNaN(num as number);
+}
+
+/**
+ * @deprecated use MappingType instead
+ * @internal
+ */
+export enum LegacyMappingType {
+  ValueToText = 1,
+  RangeToText = 2,
+}
+
+/**
+ * @deprecated use MappingType instead
+ * @internal
+ */
+export interface LegacyBaseMap {
+  id: number; // this could/should just be the array index
+  text: string; // the final display value
+  type: LegacyMappingType;
+}
+
+/**
+ * @deprecated use ValueMapping instead
+ * @internal
+ */
+export type LegacyValueMapping = LegacyValueMap | LegacyRangeMap;
+
+/**
+ * @deprecated use ValueMap instead
+ * @internal
+ */
+export interface LegacyValueMap extends LegacyBaseMap {
+  value: string;
+}
+
+/**
+ * @deprecated use RangeMap instead
+ * @internal
+ */
+export interface LegacyRangeMap extends LegacyBaseMap {
+  from: string;
+  to: string;
+}
+
+/**
+ * @deprecated use getValueMappingResult instead
+ * @internal
+ */
+export function getMappedValue(valueMappings: LegacyValueMapping[], value: any): LegacyValueMapping {
+  const emptyResult = { type: LegacyMappingType.ValueToText, value: '', text: '', from: '', to: '', id: 0 };
+  if (!valueMappings?.length) {
+    return emptyResult;
+  }
+
+  const upgraded: ValueMapping[] = [];
+  for (const vm of valueMappings) {
+    if (isValueMapping(vm)) {
+      upgraded.push(vm);
+      continue;
+    }
+    upgraded.push(upgradeOldAngularValueMapping(vm));
+  }
+
+  if (!upgraded?.length) {
+    return emptyResult;
+  }
+
+  const result = getValueMappingResult(upgraded, value);
+  if (!result) {
+    return emptyResult;
+  }
+
+  return {
+    type: LegacyMappingType.ValueToText,
+    value: result.text,
+    text: result.text ?? '',
+    from: '',
+    to: '',
+    id: result.index ?? 0,
+  };
+}
+
+/**
+ * @alpha
+ * Converts the old Angular value mappings to new react style
+ */
+export function convertOldAngularValueMappings(panel: any): ValueMapping[] {
+  const mappings: ValueMapping[] = [];
+
+  // Guess the right type based on options
+  let mappingType = panel.mappingType;
+  if (!panel.mappingType) {
+    if (panel.valueMaps && panel.valueMaps.length) {
+      mappingType = 1;
+    } else if (panel.rangeMaps && panel.rangeMaps.length) {
+      mappingType = 2;
+    }
+  }
+
+  if (mappingType === 1) {
+    for (let i = 0; i < panel.valueMaps.length; i++) {
+      const map = panel.valueMaps[i];
+      mappings.push(
+        upgradeOldAngularValueMapping(
+          {
+            ...map,
+            id: i, // used for order
+            type: MappingType.ValueToText,
+          },
+          panel.fieldConfig?.defaults?.thresholds
+        )
+      );
+    }
+  } else if (mappingType === 2) {
+    for (let i = 0; i < panel.rangeMaps.length; i++) {
+      const map = panel.rangeMaps[i];
+      mappings.push(
+        upgradeOldAngularValueMapping(
+          {
+            ...map,
+            id: i, // used for order
+            type: MappingType.RangeToText,
+          },
+          panel.fieldConfig?.defaults?.thresholds
+        )
+      );
+    }
+  }
+
+  return mappings;
+}
+
+function upgradeOldAngularValueMapping(old: any, thresholds?: ThresholdsConfig): ValueMapping {
+  const valueMaps: ValueMap = { type: MappingType.ValueToText, options: {} };
+  const newMappings: ValueMapping[] = [];
+
+  // Use the color we would have picked from thesholds
+  let color: string | undefined = undefined;
+  const numeric = parseFloat(old.text);
+  if (thresholds && !isNaN(numeric)) {
+    const level = getActiveThreshold(numeric, thresholds.steps);
+    if (level && level.color) {
+      color = level.color;
+    }
+  }
+
+  switch (old.type) {
+    case LegacyMappingType.ValueToText:
+    case MappingType.ValueToText:
+      if (old.value != null) {
+        if (old.value === 'null') {
+          newMappings.push({
+            type: MappingType.SpecialValue,
+            options: {
+              match: SpecialValueMatch.Null,
+              result: { text: old.text, color },
+            },
+          });
+        } else {
+          valueMaps.options[String(old.value)] = {
+            text: old.text,
+            color,
+          };
+        }
+      }
+      break;
+    case LegacyMappingType.RangeToText:
+    case MappingType.RangeToText:
+      if (old.from === 'null' || old.to === 'null') {
+        newMappings.push({
+          type: MappingType.SpecialValue,
+          options: {
+            match: SpecialValueMatch.Null,
+            result: { text: old.text, color },
+          },
+        });
+      } else {
+        newMappings.push({
+          type: MappingType.RangeToText,
+          options: {
+            from: +old.from,
+            to: +old.to,
+            result: { text: old.text, color },
+          },
+        });
+      }
+      break;
+  }
+
+  if (Object.keys(valueMaps.options).length > 0) {
+    newMappings.unshift(valueMaps);
+  }
+
+  return newMappings[0];
+}
+
+function isValueMapping(map: any): map is ValueMapping {
+  if (!map) {
+    return false;
+  }
+
+  return map.hasOwnProperty('options') && typeof map.options === 'object';
 }

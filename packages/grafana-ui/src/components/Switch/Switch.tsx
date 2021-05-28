@@ -1,7 +1,7 @@
 import React, { HTMLProps, useRef } from 'react';
 import { css, cx } from '@emotion/css';
 import { uniqueId } from 'lodash';
-import { GrafanaThemeV2, deprecationWarning } from '@grafana/data';
+import { GrafanaTheme2, deprecationWarning } from '@grafana/data';
 import { stylesFactory, useTheme2 } from '../../themes';
 import { getFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
 
@@ -42,20 +42,34 @@ export const Switch = React.forwardRef<HTMLInputElement, Props>(
 
 Switch.displayName = 'Switch';
 
-export const InlineSwitch = React.forwardRef<HTMLInputElement, Props>(({ transparent, ...props }, ref) => {
-  const theme = useTheme2();
-  const styles = getSwitchStyles(theme, transparent);
+export interface InlineSwitchProps extends Props {
+  showLabel?: boolean;
+}
 
-  return (
-    <div className={styles.inlineContainer}>
-      <Switch {...props} ref={ref} />
-    </div>
-  );
-});
+export const InlineSwitch = React.forwardRef<HTMLInputElement, InlineSwitchProps>(
+  ({ transparent, showLabel, label, value, id, ...props }, ref) => {
+    const theme = useTheme2();
+    const styles = getSwitchStyles(theme, transparent);
+
+    return (
+      <div className={styles.inlineContainer}>
+        {showLabel && (
+          <label
+            htmlFor={id}
+            className={cx(styles.inlineLabel, value && styles.inlineLabelEnabled, 'inline-switch-label')}
+          >
+            {label}
+          </label>
+        )}
+        <Switch {...props} id={id} label={label} ref={ref} value={value} />
+      </div>
+    );
+  }
+);
 
 InlineSwitch.displayName = 'Switch';
 
-const getSwitchStyles = stylesFactory((theme: GrafanaThemeV2, transparent?: boolean) => {
+const getSwitchStyles = stylesFactory((theme: GrafanaTheme2, transparent?: boolean) => {
   return {
     switch: css`
       width: 32px;
@@ -104,7 +118,7 @@ const getSwitchStyles = stylesFactory((theme: GrafanaThemeV2, transparent?: bool
         border: none;
         border-radius: 50px;
         background: ${theme.components.input.background};
-        border: 1px solid ${theme.components.input.border};
+        border: 1px solid ${theme.components.input.borderColor};
         transition: all 0.3s ease;
 
         &:hover {
@@ -129,11 +143,28 @@ const getSwitchStyles = stylesFactory((theme: GrafanaThemeV2, transparent?: bool
     inlineContainer: css`
       padding: ${theme.spacing(0, 1)};
       height: ${theme.spacing(theme.components.height.md)};
-      display: flex;
+      display: inline-flex;
       align-items: center;
       background: ${transparent ? 'transparent' : theme.components.input.background};
-      border: 1px solid ${transparent ? 'transparent' : theme.components.input.border};
+      border: 1px solid ${transparent ? 'transparent' : theme.components.input.borderColor};
       border-radius: ${theme.shape.borderRadius()};
+
+      &:hover {
+        border: 1px solid ${transparent ? 'transparent' : theme.components.input.borderHover};
+
+        .inline-switch-label {
+          color: ${theme.colors.text.primary};
+        }
+      }
+    `,
+    inlineLabel: css`
+      cursor: pointer;
+      padding-right: ${theme.spacing(1)};
+      color: ${theme.colors.text.secondary};
+      white-space: nowrap;
+    `,
+    inlineLabelEnabled: css`
+      color: ${theme.colors.text.primary};
     `,
   };
 });

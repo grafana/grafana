@@ -5,8 +5,8 @@ import {
   getDefaultTimeRange,
   HistoryItem,
   LoadingState,
-  LogsDedupStrategy,
   PanelData,
+  AbsoluteTimeRange,
 } from '@grafana/data';
 
 import { ExploreItemState } from 'app/types/explore';
@@ -49,8 +49,8 @@ export const makeExplorePaneState = (): ExploreItemState => ({
   tableResult: null,
   graphResult: null,
   logsResult: null,
-  dedupStrategy: LogsDedupStrategy.none,
   eventBridge: (null as unknown) as EventBusExtended,
+  cache: [],
 });
 
 export const createEmptyQueryResponse = (): PanelData => ({
@@ -97,4 +97,26 @@ export function getUrlStateFromPaneState(pane: ExploreItemState): ExploreUrlStat
     queries: pane.queries.map(clearQueryKeys),
     range: toRawTimeRange(pane.range),
   };
+}
+
+export function createCacheKey(absRange: AbsoluteTimeRange) {
+  const params = {
+    from: absRange.from,
+    to: absRange.to,
+  };
+
+  const cacheKey = Object.entries(params)
+    .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v.toString())}`)
+    .join('&');
+  return cacheKey;
+}
+
+export function getResultsFromCache(
+  cache: Array<{ key: string; value: PanelData }>,
+  absoluteRange: AbsoluteTimeRange
+): PanelData | undefined {
+  const cacheKey = createCacheKey(absoluteRange);
+  const cacheIdx = cache.findIndex((c) => c.key === cacheKey);
+  const cacheValue = cacheIdx >= 0 ? cache[cacheIdx].value : undefined;
+  return cacheValue;
 }

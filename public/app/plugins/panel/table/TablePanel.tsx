@@ -108,7 +108,7 @@ export class TablePanel extends Component<Props> {
     const hasFields = data.series[0]?.fields.length;
 
     if (!count || !hasFields) {
-      return <div>No data</div>;
+      return <div className={tableStyles.noData}>No data</div>;
     }
 
     if (count > 1) {
@@ -141,6 +141,13 @@ const tableStyles = {
     display: flex;
     flex-direction: column;
     justify-content: space-between;
+    height: 100%;
+  `,
+  noData: css`
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
     height: 100%;
   `,
   selectWrapper: css`

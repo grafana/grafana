@@ -1,7 +1,7 @@
 import { css } from '@emotion/react';
-import { GrafanaThemeV2, ThemeTypographyVariant } from '@grafana/data';
+import { GrafanaTheme2, ThemeTypographyVariant } from '@grafana/data';
 
-export function getElementStyles(theme: GrafanaThemeV2) {
+export function getElementStyles(theme: GrafanaTheme2) {
   return css`
     html {
       -ms-overflow-style: scrollbar;
@@ -53,6 +53,10 @@ export function getElementStyles(theme: GrafanaThemeV2) {
 
     button {
       letter-spacing: ${theme.typography.body.letterSpacing};
+
+      &:focus {
+        outline: none;
+      }
     }
 
     // Ex: 14px base font * 85% = about 12px

@@ -1,7 +1,7 @@
 import React from 'react';
 import { TextArea } from '@grafana/ui';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
-import { boolean, number, text } from '@storybook/addon-knobs';
+import { Meta, Story } from '@storybook/react';
 import mdx from './TextArea.mdx';
 
 export default {
@@ -9,39 +9,32 @@ export default {
   component: TextArea,
   decorators: [withCenteredStory],
   parameters: {
+    controls: {
+      exclude: ['cols'],
+    },
     docs: {
       page: mdx,
     },
-  },
-};
-
-export const simple = () => {
-  const BEHAVIOUR_GROUP = 'Behaviour props';
-  // ---
-  const invalid = boolean('Invalid', false, BEHAVIOUR_GROUP);
-  const disabled = boolean('Disabled', false, BEHAVIOUR_GROUP);
-
-  const VISUAL_GROUP = 'Visual options';
-  // ---
-  const placeholder = text('Placeholder', 'This is just a placeholder', VISUAL_GROUP);
-  const cols = number('Cols', 30, { range: true, min: 5, max: 50, step: 5 }, VISUAL_GROUP);
-  const CONTAINER_GROUP = 'Container options';
-  // ---
-  const containerWidth = number(
-    'Container width',
-    300,
-    {
-      range: true,
-      min: 100,
-      max: 500,
-      step: 10,
+    knobs: {
+      disable: true,
     },
-    CONTAINER_GROUP
-  );
+  },
+  argTypes: {
+    containerWidth: { control: { type: 'range', min: 100, max: 500, step: 10 } },
+  },
+} as Meta;
 
+export const Basic: Story = (args) => {
   return (
-    <div style={{ width: containerWidth }}>
-      <TextArea invalid={invalid} placeholder={placeholder} cols={cols} disabled={disabled} />
+    <div style={{ width: args.containerWidth }}>
+      <TextArea invalid={args.invalid} placeholder={args.placeholder} cols={args.cols} disabled={args.disabled} />
     </div>
   );
+};
+Basic.args = {
+  invalid: false,
+  disabled: false,
+  placeholder: 'This is just a placeholder',
+  cols: 30,
+  containerWidth: 300,
 };

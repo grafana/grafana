@@ -2,9 +2,9 @@ version: 2.1
 
 aliases:
   # Workflow filters
-  - &filter-only-master
+  - &filter-only-main
     branches:
-      only: master
+      only: main
 
 jobs:
   scan-docker-image:
@@ -51,10 +51,10 @@ workflows:
     triggers:
       - schedule:
           cron: "0 0 * * *"
-          filters: *filter-only-master
+          filters: *filter-only-main
     jobs:
       - scan-docker-image:
           matrix:
             parameters:
               image: [grafana/grafana, grafana/grafana-enterprise]
-              tag: [latest, master, latest-ubuntu, master-ubuntu]
+              tag: [latest, main, latest-ubuntu, main-ubuntu]

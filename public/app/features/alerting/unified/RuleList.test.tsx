@@ -20,7 +20,8 @@ import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
 import { SerializedError } from '@reduxjs/toolkit';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 import userEvent from '@testing-library/user-event';
-import { setDataSourceSrv } from '@grafana/runtime';
+import { locationService, setDataSourceSrv } from '@grafana/runtime';
+import { Router } from 'react-router-dom';
 
 jest.mock('./api/prometheus');
 jest.mock('./utils/config');
@@ -38,7 +39,9 @@ const renderRuleList = () => {
 
   return render(
     <Provider store={store}>
-      <RuleList />
+      <Router history={locationService.getHistory()}>
+        <RuleList />
+      </Router>
     </Provider>
   );
 };
@@ -241,16 +244,16 @@ describe('RuleList', () => {
     let ruleRows = table.querySelectorAll<HTMLTableRowElement>(':scope > tbody > tr');
     expect(ruleRows).toHaveLength(4);
 
-    expect(ruleRows[0]).toHaveTextContent('n/a');
+    expect(ruleRows[0]).toHaveTextContent('Recording rule');
     expect(ruleRows[0]).toHaveTextContent('recordingrule');
 
-    expect(ruleRows[1]).toHaveTextContent('firing');
+    expect(ruleRows[1]).toHaveTextContent('Firing');
     expect(ruleRows[1]).toHaveTextContent('alertingrule');
 
-    expect(ruleRows[2]).toHaveTextContent('pending');
+    expect(ruleRows[2]).toHaveTextContent('Pending');
     expect(ruleRows[2]).toHaveTextContent('p-rule');
 
-    expect(ruleRows[3]).toHaveTextContent('inactive');
+    expect(ruleRows[3]).toHaveTextContent('Normal');
     expect(ruleRows[3]).toHaveTextContent('i-rule');
 
     expect(byText('Labels').query()).not.toBeInTheDocument();
@@ -274,8 +277,8 @@ describe('RuleList', () => {
     let instanceRows = instancesTable?.querySelectorAll<HTMLTableRowElement>(':scope > tbody > tr');
     expect(instanceRows).toHaveLength(2);
 
-    expect(instanceRows![0]).toHaveTextContent('firingfoo=barseverity=warning2021-03-18 13:47:05');
-    expect(instanceRows![1]).toHaveTextContent('firingfoo=bazseverity=error2021-03-18 13:47:05');
+    expect(instanceRows![0]).toHaveTextContent('Firingfoo=barseverity=warning2021-03-18 13:47:05');
+    expect(instanceRows![1]).toHaveTextContent('Firingfoo=bazseverity=error2021-03-18 13:47:05');
 
     // expand details of an instance
     userEvent.click(ui.alertCollapseToggle.get(instanceRows![0]));

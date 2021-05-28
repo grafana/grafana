@@ -15,6 +15,7 @@ import { TestRuleResult } from './TestRuleResult';
 import { AppNotificationSeverity, StoreState } from 'app/types';
 import { PanelNotSupported } from '../dashboard/components/PanelEditor/PanelNotSupported';
 import { AlertState } from '../../plugins/datasource/alertmanager/types';
+import { EventBusSrv } from '@grafana/data';
 
 interface AngularPanelController {
   _enableAlert: () => void;
@@ -76,24 +77,28 @@ class UnConnectedAlertTab extends PureComponent<Props, State> {
   async loadAlertTab() {
     const { panel, angularPanelComponent } = this.props;
 
-    if (!this.element || !angularPanelComponent || this.component) {
+    if (!this.element || this.component) {
       return;
     }
 
-    const scope = angularPanelComponent.getScope();
+    if (angularPanelComponent) {
+      const scope = angularPanelComponent.getScope();
 
-    // When full page reloading in edit mode the angular panel has on fully compiled & instantiated yet
-    if (!scope.$$childHead) {
-      setTimeout(() => {
-        this.forceUpdate();
-      });
-      return;
+      // When full page reloading in edit mode the angular panel has on fully compiled & instantiated yet
+      if (!scope.$$childHead) {
+        setTimeout(() => {
+          this.forceUpdate();
+        });
+        return;
+      }
+
+      this.panelCtrl = scope.$$childHead.ctrl;
+    } else {
+      this.panelCtrl = this.getReactAlertPanelCtrl();
     }
 
-    this.panelCtrl = scope.$$childHead.ctrl;
     const loader = getAngularLoader();
     const template = '<alert-tab />';
-
     const scopeProps = { ctrl: this.panelCtrl };
 
     this.component = loader.load(this.element, scopeProps, template);
@@ -108,6 +113,16 @@ class UnConnectedAlertTab extends PureComponent<Props, State> {
     if (validationMessage) {
       this.setState({ validationMessage });
     }
+  }
+
+  getReactAlertPanelCtrl() {
+    return {
+      panel: this.props.panel,
+      events: new EventBusSrv(),
+      render: () => {
+        this.props.panel.render();
+      },
+    } as any;
   }
 
   onAddAlert = () => {

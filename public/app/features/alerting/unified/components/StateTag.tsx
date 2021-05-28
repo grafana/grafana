@@ -1,39 +1,56 @@
-import { GrafanaTheme } from '@grafana/data';
-import { useStyles } from '@grafana/ui';
-import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
+import { GrafanaTheme2 } from '@grafana/data';
+import { useStyles2 } from '@grafana/ui';
 import { css, cx } from '@emotion/css';
 import React, { FC } from 'react';
 
+export type State = 'good' | 'bad' | 'warning' | 'neutral' | 'info';
+
 type Props = {
-  status: PromAlertingRuleState;
+  state: State;
 };
 
-export const StateTag: FC<Props> = ({ children, status }) => {
-  const styles = useStyles(getStyles);
+export const StateTag: FC<Props> = ({ children, state }) => {
+  const styles = useStyles2(getStyles);
 
-  return <span className={cx(styles.common, styles[status])}>{children || status}</span>;
+  return <span className={cx(styles.common, styles[state])}>{children || state}</span>;
 };
 
-const getStyles = (theme: GrafanaTheme) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   common: css`
     display: inline-block;
     color: white;
-    border-radius: ${theme.border.radius.sm};
+    border-radius: ${theme.shape.borderRadius()};
     font-size: ${theme.typography.size.sm};
-    padding: ${theme.spacing.xs} ${theme.spacing.sm};
+    padding: ${theme.spacing(0.5, 1)};
     text-transform: capitalize;
     line-height: 1.2;
+    min-width: ${theme.spacing(8)};
+    text-align: center;
+    font-weight: ${theme.typography.fontWeightBold};
   `,
-  [PromAlertingRuleState.Inactive]: css`
-    background-color: ${theme.palette.brandSuccess};
-    border: solid 1px ${theme.palette.brandSuccess};
+  good: css`
+    background-color: ${theme.colors.success.main};
+    border: solid 1px ${theme.colors.success.main};
+    color: ${theme.colors.success.contrastText};
   `,
-  [PromAlertingRuleState.Pending]: css`
-    background-color: ${theme.palette.brandWarning};
-    border: solid 1px ${theme.palette.brandWarning};
+  warning: css`
+    background-color: ${theme.colors.warning.main};
+    border: solid 1px ${theme.colors.warning.main};
+    color: ${theme.colors.warning.contrastText};
   `,
-  [PromAlertingRuleState.Firing]: css`
-    background-color: ${theme.palette.brandDanger};
-    border: solid 1px ${theme.palette.brandDanger};
+  bad: css`
+    background-color: ${theme.colors.error.main};
+    border: solid 1px ${theme.colors.error.main};
+    color: ${theme.colors.error.contrastText};
+  `,
+  neutral: css`
+    background-color: ${theme.colors.secondary.main};
+    border: solid 1px ${theme.colors.secondary.main};
+    color: ${theme.colors.secondary.contrastText};
+  `,
+  info: css`
+    background-color: ${theme.colors.primary.main};
+    border: solid 1px ${theme.colors.primary.main};
+    color: ${theme.colors.primary.contrastText};
   `,
 });

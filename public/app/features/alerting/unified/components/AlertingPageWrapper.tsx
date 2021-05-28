@@ -16,7 +16,7 @@ export const AlertingPageWrapper: FC<Props> = ({ children, pageId, isLoading }) 
   );
 
   return (
-    <Page navModel={navModel} contentWidth="xxl">
+    <Page navModel={navModel}>
       <Page.Contents isLoading={isLoading}>{children}</Page.Contents>
     </Page>
   );

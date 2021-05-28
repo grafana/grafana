@@ -1,3 +1,4 @@
+import { urlUtil } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 import {
   AlertmanagerAlert,
@@ -5,16 +6,16 @@ import {
   AlertmanagerGroup,
   Silence,
   SilenceCreatePayload,
-  SilenceMatcher,
+  Matcher,
 } from 'app/plugins/datasource/alertmanager/types';
 import { getDatasourceAPIId, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 
 // "grafana" for grafana-managed, otherwise a datasource name
-export async function fetchAlertManagerConfig(alertmanagerSourceName: string): Promise<AlertManagerCortexConfig> {
+export async function fetchAlertManagerConfig(alertManagerSourceName: string): Promise<AlertManagerCortexConfig> {
   try {
     const result = await getBackendSrv()
       .fetch<AlertManagerCortexConfig>({
-        url: `/api/alertmanager/${getDatasourceAPIId(alertmanagerSourceName)}/config/api/v1/alerts`,
+        url: `/api/alertmanager/${getDatasourceAPIId(alertManagerSourceName)}/config/api/v1/alerts`,
         showErrorAlert: false,
         showSuccessAlert: false,
       })
@@ -26,8 +27,9 @@ export async function fetchAlertManagerConfig(alertmanagerSourceName: string): P
   } catch (e) {
     // if no config has been uploaded to grafana, it returns error instead of latest config
     if (
-      alertmanagerSourceName === GRAFANA_RULES_SOURCE_NAME &&
-      e.data?.message?.includes('failed to get latest configuration')
+      alertManagerSourceName === GRAFANA_RULES_SOURCE_NAME &&
+      (e.data?.message?.includes('failed to get latest configuration') ||
+        e.data?.message?.includes('could not find an Alertmanager configuration'))
     ) {
       return {
         template_files: {},
@@ -38,20 +40,25 @@ export async function fetchAlertManagerConfig(alertmanagerSourceName: string): P
   }
 }
 
-export async function updateAlertmanagerConfig(
-  alertmanagerSourceName: string,
+export async function updateAlertManagerConfig(
+  alertManagerSourceName: string,
   config: AlertManagerCortexConfig
 ): Promise<void> {
-  await getBackendSrv().post(
-    `/api/alertmanager/${getDatasourceAPIId(alertmanagerSourceName)}/config/api/v1/alerts`,
-    config
-  );
+  await getBackendSrv()
+    .fetch({
+      method: 'POST',
+      url: `/api/alertmanager/${getDatasourceAPIId(alertManagerSourceName)}/config/api/v1/alerts`,
+      data: config,
+      showErrorAlert: false,
+      showSuccessAlert: false,
+    })
+    .toPromise();
 }
 
-export async function fetchSilences(alertmanagerSourceName: string): Promise<Silence[]> {
+export async function fetchSilences(alertManagerSourceName: string): Promise<Silence[]> {
   const result = await getBackendSrv()
     .fetch<Silence[]>({
-      url: `/api/alertmanager/${getDatasourceAPIId(alertmanagerSourceName)}/api/v2/silences`,
+      url: `/api/alertmanager/${getDatasourceAPIId(alertManagerSourceName)}/api/v2/silences`,
       showErrorAlert: false,
       showSuccessAlert: false,
     })
@@ -63,33 +70,42 @@ export async function fetchSilences(alertmanagerSourceName: string): Promise<Sil
 export async function createOrUpdateSilence(
   alertmanagerSourceName: string,
   payload: SilenceCreatePayload
-): Promise<string> {
-  const result = await getBackendSrv().post(
-    `/api/alertmanager/${getDatasourceAPIId(alertmanagerSourceName)}/api/v2/silences`,
-    payload
-  );
-  return result.data.silenceID;
+): Promise<Silence> {
+  const result = await getBackendSrv()
+    .fetch<Silence>({
+      url: `/api/alertmanager/${getDatasourceAPIId(alertmanagerSourceName)}/api/v2/silences`,
+      data: payload,
+      showErrorAlert: false,
+      showSuccessAlert: false,
+      method: 'POST',
+    })
+    .toPromise();
+  return result.data;
 }
 
 export async function expireSilence(alertmanagerSourceName: string, silenceID: string): Promise<void> {
   await getBackendSrv().delete(
-    `/api/alertmanager/${getDatasourceAPIId(alertmanagerSourceName)}/api/v2/silences/${encodeURIComponent(silenceID)}`
+    `/api/alertmanager/${getDatasourceAPIId(alertmanagerSourceName)}/api/v2/silence/${encodeURIComponent(silenceID)}`
   );
 }
 
 export async function fetchAlerts(
   alertmanagerSourceName: string,
-  matchers?: SilenceMatcher[]
+  matchers?: Matcher[],
+  silenced = true,
+  active = true,
+  inhibited = true
 ): Promise<AlertmanagerAlert[]> {
   const filters =
-    matchers
-      ?.map(
-        (matcher) =>
-          `filter=${encodeURIComponent(
-            `${escapeQuotes(matcher.name)}=${matcher.isRegex ? '~' : ''}"${escapeQuotes(matcher.value)}"`
-          )}`
-      )
-      .join('&') || '';
+    urlUtil.toUrlParams({ silenced, active, inhibited }) +
+      matchers
+        ?.map(
+          (matcher) =>
+            `filter=${encodeURIComponent(
+              `${escapeQuotes(matcher.name)}=${matcher.isRegex ? '~' : ''}"${escapeQuotes(matcher.value)}"`
+            )}`
+        )
+        .join('&') || '';
 
   const result = await getBackendSrv()
     .fetch<AlertmanagerAlert[]>({

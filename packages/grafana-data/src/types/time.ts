@@ -40,7 +40,6 @@ export interface TimeOption {
   from: string;
   to: string;
   display: string;
-  section: number;
 }
 
 export interface TimeOptions {
@@ -58,5 +57,17 @@ export function getDefaultTimeRange(): TimeRange {
     from: dateTime(now).subtract(6, 'hour'),
     to: now,
     raw: { from: 'now-6h', to: 'now' },
+  };
+}
+
+/**
+ * Returns the default realtive time range.
+ *
+ * @public
+ */
+export function getDefaultRelativeTimeRange(): RelativeTimeRange {
+  return {
+    from: 600,
+    to: 0,
   };
 }

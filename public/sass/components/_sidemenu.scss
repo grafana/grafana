@@ -23,7 +23,6 @@ $mobile-menu-breakpoint: md;
   @include media-breakpoint-up($mobile-menu-breakpoint) {
     background: $side-menu-bg;
     height: auto;
-    box-shadow: $side-menu-shadow;
     position: relative;
     z-index: $zindex-sidemenu;
   }
@@ -208,7 +207,7 @@ li.sidemenu-org-switcher {
       background: $side-menu-bg-mobile;
       height: auto;
       box-shadow: $side-menu-shadow;
-      position: relative;
+      position: absolute;
       z-index: $zindex-sidemenu;
     }
 
@@ -234,7 +233,7 @@ li.sidemenu-org-switcher {
     }
 
     .sidemenu__logo_small_breakpoint {
-      padding: 13px;
+      padding: 16px 13px;
       display: flex;
       flex-direction: row;
       justify-content: space-between;

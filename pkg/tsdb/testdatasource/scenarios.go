@@ -27,7 +27,6 @@ const (
 	noDataPointsQuery                 queryType = "no_data_points"
 	datapointsOutsideRangeQuery       queryType = "datapoints_outside_range"
 	csvMetricValuesQuery              queryType = "csv_metric_values"
-	manualEntryQuery                  queryType = "manual_entry"
 	predictablePulseQuery             queryType = "predictable_pulse"
 	predictableCSVWaveQuery           queryType = "predictable_csv_wave"
 	streamingClientQuery              queryType = "streaming_client"
@@ -39,6 +38,8 @@ const (
 	serverError500Query               queryType = "server_error_500"
 	logsQuery                         queryType = "logs"
 	nodeGraphQuery                    queryType = "node_graph"
+	csvFileQueryType                  queryType = "csv_file"
+	csvContentQueryType               queryType = "csv_content"
 )
 
 type queryType string
@@ -117,12 +118,6 @@ Timestamps will line up evenly on timeStepSeconds (For example, 60 seconds means
 	})
 
 	p.registerScenario(&Scenario{
-		ID:      string(manualEntryQuery),
-		Name:    "Manual Entry",
-		handler: p.handleManualEntryScenario,
-	})
-
-	p.registerScenario(&Scenario{
 		ID:          string(csvMetricValuesQuery),
 		Name:        "CSV Metric Values",
 		StringInput: "1,20,90,30,5,0",
@@ -186,6 +181,18 @@ Timestamps will line up evenly on timeStepSeconds (For example, 60 seconds means
 	p.registerScenario(&Scenario{
 		ID:   string(nodeGraphQuery),
 		Name: "Node Graph",
+	})
+
+	p.registerScenario(&Scenario{
+		ID:      string(csvFileQueryType),
+		Name:    "CSV File",
+		handler: p.handleCsvFileScenario,
+	})
+
+	p.registerScenario(&Scenario{
+		ID:      string(csvContentQueryType),
+		Name:    "CSV Content",
+		handler: p.handleCsvContentScenario,
 	})
 
 	p.queryMux.HandleFunc("", p.handleFallbackScenario)
@@ -279,96 +286,6 @@ func (p *testDataPlugin) handleDatapointsOutsideRangeScenario(ctx context.Contex
 	return resp, nil
 }
 
-func (p *testDataPlugin) handleManualEntryScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	resp := backend.NewQueryDataResponse()
-
-	for _, q := range req.Queries {
-		model, err := simplejson.NewJson(q.JSON)
-		if err != nil {
-			return nil, fmt.Errorf("error reading query")
-		}
-		points := model.Get("points").MustArray()
-
-		frame := newSeriesForQuery(q, model, 0)
-
-		timeField := data.NewFieldFromFieldType(data.FieldTypeTime, 0)
-		valueField := data.NewFieldFromFieldType(data.FieldTypeNullableFloat64, 0)
-		timeField.Name = data.TimeSeriesTimeFieldName
-		valueField.Name = data.TimeSeriesValueFieldName
-
-		for _, val := range points {
-			pointValues := val.([]interface{})
-
-			var value *float64
-
-			if pointValues[0] != nil {
-				if valueFloat, err := strconv.ParseFloat(string(pointValues[0].(json.Number)), 64); err == nil {
-					value = &valueFloat
-				}
-			}
-
-			timeInt, err := strconv.ParseInt(string(pointValues[1].(json.Number)), 10, 64)
-			if err != nil {
-				continue
-			}
-
-			t := time.Unix(timeInt/int64(1e+3), (timeInt%int64(1e+3))*int64(1e+6))
-
-			timeField.Append(t)
-			valueField.Append(value)
-		}
-
-		frame.Fields = data.Fields{timeField, valueField}
-
-		respD := resp.Responses[q.RefID]
-		respD.Frames = append(respD.Frames, frame)
-		resp.Responses[q.RefID] = respD
-	}
-
-	return resp, nil
-}
-
-func csvToFieldValues(stringInput string) (*data.Field, error) {
-	parts := strings.Split(strings.ReplaceAll(stringInput, " ", ""), ",")
-	if len(parts) < 1 {
-		return nil, fmt.Errorf("csv must have at least one value")
-	}
-
-	first := parts[0]
-	if first == "T" || first == "F" {
-		field := data.NewFieldFromFieldType(data.FieldTypeNullableBool, len(parts))
-		for idx, strVal := range parts {
-			if strVal == "null" || strVal == "" {
-				continue
-			}
-			field.SetConcrete(idx, strVal == "T")
-		}
-		return field, nil
-	}
-
-	// If we can not parse the first value as a number, assume strings
-	_, err := strconv.ParseFloat(first, 64)
-	if err != nil {
-		field := data.NewFieldFromFieldType(data.FieldTypeNullableString, len(parts))
-		for idx, strVal := range parts {
-			if strVal == "null" || strVal == "" {
-				continue
-			}
-			field.SetConcrete(idx, strVal)
-		}
-		return field, nil
-	}
-
-	// Set any valid numbers
-	field := data.NewFieldFromFieldType(data.FieldTypeNullableFloat64, len(parts))
-	for idx, strVal := range parts {
-		if val, err := strconv.ParseFloat(strVal, 64); err == nil {
-			field.SetConcrete(idx, val)
-		}
-	}
-	return field, nil
-}
-
 func (p *testDataPlugin) handleCSVMetricValuesScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	resp := backend.NewQueryDataResponse()
 
@@ -380,7 +297,7 @@ func (p *testDataPlugin) handleCSVMetricValuesScenario(ctx context.Context, req 
 
 		stringInput := model.Get("stringInput").MustString()
 
-		valueField, err := csvToFieldValues(stringInput)
+		valueField, err := csvLineToField(stringInput)
 		if err != nil {
 			return nil, err
 		}
@@ -475,15 +392,15 @@ func (p *testDataPlugin) handlePredictableCSVWaveScenario(ctx context.Context, r
 	for _, q := range req.Queries {
 		model, err := simplejson.NewJson(q.JSON)
 		if err != nil {
-			continue
+			return nil, err
 		}
 
 		respD := resp.Responses[q.RefID]
-		frame, err := predictableCSVWave(q, model)
+		frames, err := predictableCSVWave(q, model)
 		if err != nil {
-			continue
+			return nil, err
 		}
-		respD.Frames = append(respD.Frames, frame)
+		respD.Frames = append(respD.Frames, frames...)
 		resp.Responses[q.RefID] = respD
 	}
 
@@ -786,60 +703,79 @@ func randomWalkTable(query backend.DataQuery, model *simplejson.Json) *data.Fram
 	return frame
 }
 
-func predictableCSVWave(query backend.DataQuery, model *simplejson.Json) (*data.Frame, error) {
-	options := model.Get("csvWave")
+type pCSVOptions struct {
+	TimeStep  int64  `json:"timeStep"`
+	ValuesCSV string `json:"valuesCSV"`
+	Labels    string `json:"labels"`
+	Name      string `json:"name"`
+}
 
-	var timeStep int64
-	var err error
-	if timeStep, err = options.Get("timeStep").Int64(); err != nil {
-		return nil, fmt.Errorf("failed to parse timeStep value '%v' into integer: %v", options.Get("timeStep"), err)
-	}
-	rawValues := options.Get("valuesCSV").MustString()
-	rawValues = strings.TrimRight(strings.TrimSpace(rawValues), ",") // Strip Trailing Comma
-	rawValesCSV := strings.Split(rawValues, ",")
-	values := make([]*float64, len(rawValesCSV))
-
-	for i, rawValue := range rawValesCSV {
-		var val *float64
-		rawValue = strings.TrimSpace(rawValue)
-
-		switch rawValue {
-		case "null":
-			// val stays nil
-		case "nan":
-			f := math.NaN()
-			val = &f
-		default:
-			f, err := strconv.ParseFloat(rawValue, 64)
-			if err != nil {
-				return nil, errutil.Wrapf(err, "failed to parse value '%v' into nullable float", rawValue)
-			}
-			val = &f
-		}
-		values[i] = val
-	}
-
-	timeStep *= 1000 // Seconds to Milliseconds
-	valuesLen := int64(len(values))
-	getValue := func(mod int64) (*float64, error) {
-		var i int64
-		for i = 0; i < valuesLen; i++ {
-			if mod == i*timeStep {
-				return values[i], nil
-			}
-		}
-		return nil, fmt.Errorf("did not get value at point in waveform - should not be here")
-	}
-	fields, err := predictableSeries(query.TimeRange, timeStep, valuesLen, getValue)
+func predictableCSVWave(query backend.DataQuery, model *simplejson.Json) ([]*data.Frame, error) {
+	rawQueries, err := model.Get("csvWave").ToDB()
 	if err != nil {
 		return nil, err
 	}
 
-	frame := newSeriesForQuery(query, model, 0)
-	frame.Fields = fields
-	frame.Fields[1].Labels = parseLabels(model)
+	queries := []pCSVOptions{}
+	err = json.Unmarshal(rawQueries, &queries)
+	if err != nil {
+		return nil, err
+	}
 
-	return frame, nil
+	frames := make([]*data.Frame, 0, len(queries))
+
+	for _, subQ := range queries {
+		var err error
+
+		rawValues := strings.TrimRight(strings.TrimSpace(subQ.ValuesCSV), ",") // Strip Trailing Comma
+		rawValesCSV := strings.Split(rawValues, ",")
+		values := make([]*float64, len(rawValesCSV))
+
+		for i, rawValue := range rawValesCSV {
+			var val *float64
+			rawValue = strings.TrimSpace(rawValue)
+
+			switch rawValue {
+			case "null":
+				// val stays nil
+			case "nan":
+				f := math.NaN()
+				val = &f
+			default:
+				f, err := strconv.ParseFloat(rawValue, 64)
+				if err != nil {
+					return nil, errutil.Wrapf(err, "failed to parse value '%v' into nullable float", rawValue)
+				}
+				val = &f
+			}
+			values[i] = val
+		}
+
+		subQ.TimeStep *= 1000 // Seconds to Milliseconds
+		valuesLen := int64(len(values))
+		getValue := func(mod int64) (*float64, error) {
+			var i int64
+			for i = 0; i < valuesLen; i++ {
+				if mod == i*subQ.TimeStep {
+					return values[i], nil
+				}
+			}
+			return nil, fmt.Errorf("did not get value at point in waveform - should not be here")
+		}
+		fields, err := predictableSeries(query.TimeRange, subQ.TimeStep, valuesLen, getValue)
+		if err != nil {
+			return nil, err
+		}
+
+		frame := newSeriesForQuery(query, model, 0)
+		frame.Fields = fields
+		frame.Fields[1].Labels = parseLabelsString(subQ.Labels)
+		if subQ.Name != "" {
+			frame.Name = subQ.Name
+		}
+		frames = append(frames, frame)
+	}
+	return frames, nil
 }
 
 func predictableSeries(timeRange backend.TimeRange, timeStep, length int64, getValue func(mod int64) (*float64, error)) (data.Fields, error) {
@@ -988,19 +924,21 @@ func newSeriesForQuery(query backend.DataQuery, model *simplejson.Json, index in
  * '{job="foo", instance="bar"} => {job: "foo", instance: "bar"}`
  */
 func parseLabels(model *simplejson.Json) data.Labels {
-	tags := data.Labels{}
-
 	labelText := model.Get("labels").MustString("")
+	return parseLabelsString(labelText)
+}
+
+func parseLabelsString(labelText string) data.Labels {
 	if labelText == "" {
 		return data.Labels{}
 	}
 
 	text := strings.Trim(labelText, `{}`)
 	if len(text) < 2 {
-		return tags
+		return data.Labels{}
 	}
 
-	tags = make(data.Labels)
+	tags := make(data.Labels)
 
 	for _, keyval := range strings.Split(text, ",") {
 		idx := strings.Index(keyval, "=")

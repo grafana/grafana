@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTheme2, stylesFactory } from '../../../themes';
-import { GrafanaThemeV2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { css, cx } from '@emotion/css';
 import { getPropertiesForButtonSize } from '../commonStyles';
 import { getFocusStyles, getMouseFocusStyles } from '../../../themes/mixins';
@@ -52,12 +52,11 @@ export const RadioButton: React.FC<RadioButtonProps> = ({
 
 RadioButton.displayName = 'RadioButton';
 
-const getRadioButtonStyles = stylesFactory((theme: GrafanaThemeV2, size: RadioButtonSize, fullWidth?: boolean) => {
+const getRadioButtonStyles = stylesFactory((theme: GrafanaTheme2, size: RadioButtonSize, fullWidth?: boolean) => {
   const { fontSize, height, padding } = getPropertiesForButtonSize(size, theme);
 
   const textColor = theme.colors.text.secondary;
   const textColorHover = theme.colors.text.primary;
-  const bg = theme.components.input.background;
   // remove the group inner padding (set on RadioButtonGroup)
   const labelHeight = height * theme.spacing.gridSize - 4 - 2;
 
@@ -99,7 +98,7 @@ const getRadioButtonStyles = stylesFactory((theme: GrafanaThemeV2, size: RadioBu
       color: ${textColor};
       padding: ${theme.spacing(0, padding)};
       border-radius: ${theme.shape.borderRadius()};
-      background: ${bg};
+      background: ${theme.colors.background.primary};
       cursor: pointer;
       z-index: 1;
       flex: ${fullWidth ? `1 0 0` : 'none'};

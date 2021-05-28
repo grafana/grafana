@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { FieldConfigSource, GrafanaThemeV2, PanelData, PanelPlugin, SelectableValue } from '@grafana/data';
+import { FieldConfigSource, GrafanaTheme2, PanelData, PanelPlugin, SelectableValue } from '@grafana/data';
 import { DashboardModel, PanelModel } from '../../state';
 import { CustomScrollbar, RadioButtonGroup, useStyles2 } from '@grafana/ui';
 import { getPanelFrameCategory } from './getPanelFrameOptions';
@@ -32,7 +32,7 @@ export const OptionsPaneOptions: React.FC<Props> = (props) => {
     () => [getPanelFrameCategory(props), getVizualizationOptions(props), getFieldOverrideCategories(props)],
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [panel.configRev]
+    [panel.configRev, props.data]
   );
 
   const mainBoxElements: React.ReactNode[] = [];
@@ -66,6 +66,7 @@ export const OptionsPaneOptions: React.FC<Props> = (props) => {
         for (const item of vizOptions) {
           mainBoxElements.push(item.render());
         }
+
         for (const item of justOverrides) {
           mainBoxElements.push(item.render());
         }
@@ -85,13 +86,16 @@ export const OptionsPaneOptions: React.FC<Props> = (props) => {
     }
   }
 
+  // only show radio buttons if we are searching or if the plugin has field config
+  const showSearchRadioButtons = !isSearching && !plugin.fieldConfigRegistry.isEmpty();
+
   return (
     <div className={styles.wrapper}>
       <div className={styles.formBox}>
         <div className={styles.formRow}>
           <FilterInput width={0} value={searchQuery} onChange={setSearchQuery} placeholder={'Search options'} />
         </div>
-        {!isSearching && (
+        {showSearchRadioButtons && (
           <div className={styles.formRow}>
             <RadioButtonGroup options={optionRadioFilters} value={listMode} fullWidth onChange={setListMode} />
           </div>
@@ -109,7 +113,6 @@ export const OptionsPaneOptions: React.FC<Props> = (props) => {
 function getOptionRadioFilters(): Array<SelectableValue<OptionFilter>> {
   return [
     { label: OptionFilter.All, value: OptionFilter.All },
-    { label: OptionFilter.Recent, value: OptionFilter.Recent },
     { label: OptionFilter.Overrides, value: OptionFilter.Overrides },
   ];
 }
@@ -136,19 +139,24 @@ function renderSearchHits(
         key="Normal options"
         forceOpen={1}
       >
-        {optionHits.map((hit) => hit.render(true))}
+        {optionHits.map((hit) => hit.render(searchQuery))}
       </OptionsPaneCategory>
-      {overrideHits.map((override) => override.render(true))}
+      {overrideHits.map((override) => override.render(searchQuery))}
     </div>
   );
 }
 
-const getStyles = (theme: GrafanaThemeV2) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   wrapper: css`
     height: 100%;
     display: flex;
     flex-direction: column;
     flex: 1 1 0;
+
+    .search-fragment-highlight {
+      color: ${theme.colors.warning.text};
+      background: transparent;
+    }
   `,
   searchBox: css`
     display: flex;
@@ -161,7 +169,7 @@ const getStyles = (theme: GrafanaThemeV2) => ({
   formBox: css`
     padding: ${theme.spacing(1)};
     background: ${theme.colors.background.primary};
-    border: 1px solid ${theme.components.panel.border};
+    border: 1px solid ${theme.components.panel.borderColor};
     border-bottom: none;
   `,
   closeButton: css`
@@ -182,7 +190,7 @@ const getStyles = (theme: GrafanaThemeV2) => ({
   `,
   mainBox: css`
     background: ${theme.colors.background.primary};
-    border: 1px solid ${theme.components.panel.border};
+    border: 1px solid ${theme.components.panel.borderColor};
     border-top: none;
     flex-grow: 1;
   `,

@@ -4,7 +4,6 @@ import { GraphDimensions } from './GraphTooltip/types';
 import {
   FlotDataPoint,
   getValueFromDimension,
-  getDisplayProcessor,
   Dimensions,
   dateTimeFormat,
   TimeZone,
@@ -60,12 +59,7 @@ export const GraphContextMenu: React.FC<GraphContextMenuProps> = ({
         contextDimensions.yAxis[0],
         contextDimensions.yAxis[1]
       );
-      const display =
-        source.series.valueField.display ??
-        getDisplayProcessor({
-          field: source.series.valueField,
-          timeZone,
-        });
+      const display = source.series.valueField.display!;
       value = display(valueFromDimensions);
     }
 

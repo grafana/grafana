@@ -3,6 +3,7 @@ package grpcplugin
 import (
 	"context"
 	"errors"
+	"fmt"
 	"io"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -193,7 +194,7 @@ func (c *clientV2) PublishStream(ctx context.Context, req *backend.PublishStream
 	return backend.FromProto().PublishStreamResponse(protoResp), nil
 }
 
-func (c *clientV2) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender backend.StreamPacketSender) error {
+func (c *clientV2) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
 	if c.StreamClient == nil {
 		return backendplugin.ErrMethodNotImplemented
 	}
@@ -208,7 +209,7 @@ func (c *clientV2) RunStream(ctx context.Context, req *backend.RunStreamRequest,
 	}
 
 	for {
-		protoResp, err := protoStream.Recv()
+		p, err := protoStream.Recv()
 		if err != nil {
 			if status.Code(err) == codes.Unimplemented {
 				return backendplugin.ErrMethodNotImplemented
@@ -216,9 +217,11 @@ func (c *clientV2) RunStream(ctx context.Context, req *backend.RunStreamRequest,
 			if errors.Is(err, io.EOF) {
 				return nil
 			}
-			return errutil.Wrap("failed to receive call resource response", err)
+			return fmt.Errorf("error running stream: %w", err)
 		}
-		if err := sender.Send(backend.FromProto().StreamPacket(protoResp)); err != nil {
+		// From GRPC connection we receive already prepared JSON.
+		err = sender.SendJSON(p.Data)
+		if err != nil {
 			return err
 		}
 	}

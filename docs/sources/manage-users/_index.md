@@ -9,6 +9,8 @@ Grafana offers several options for grouping users. Each level has different tool
 
 One of the most important user management tasks is assigning roles, which govern what [permissions]({{< relref "../permissions/_index.md" >}}) a user has. The correct permissions ensure that users have access to only the resources they need.
 
+> Refer to [Fine-grained access Control]({{< relref "../enterprise/access-control/_index.md" >}}) in Grafana Enterprise to understand how you can manage users with fine-grained permissions.
+
 ## Server
 
 The highest and broadest level of user group in Grafana is the server. Every user with an account in a Grafana instance is a member of the server group.

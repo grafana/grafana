@@ -119,10 +119,10 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
   selectionActivated: boolean;
   unitFormats: any;
   data: any;
-  series: TimeSeries[];
+  series: TimeSeries[] = [];
   dataWarning: any;
-  decimals: number;
-  scaledDecimals: number;
+  decimals = 0;
+  scaledDecimals = 0;
 
   processor: DataProcessor; // Shared with graph panel
 

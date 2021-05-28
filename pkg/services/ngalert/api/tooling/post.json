@@ -140,6 +140,11 @@
   },
   "AlertQuery": {
    "properties": {
+    "datasourceUid": {
+     "description": "Grafana data source unique identifier; it should be '-100' for a Server Side Expression operation.",
+     "type": "string",
+     "x-go-name": "DatasourceUID"
+    },
     "model": {
      "description": "JSON is the raw JSON query and includes the above properties as well as custom properties.",
      "type": "object",
@@ -524,6 +529,25 @@
    "type": "object",
    "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/models"
   },
+  "EvalQueriesPayload": {
+   "properties": {
+    "data": {
+     "items": {
+      "$ref": "#/definitions/AlertQuery"
+     },
+     "type": "array",
+     "x-go-name": "Data"
+    },
+    "now": {
+     "format": "date-time",
+     "type": "string",
+     "x-go-name": "Now"
+    }
+   },
+   "type": "object",
+   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+  },
+  "EvalQueriesResponse": {},
   "ExtendedReceiver": {
    "properties": {
     "email_configs": {
@@ -869,6 +893,10 @@
     "slack_api_url": {
      "$ref": "#/definitions/SecretURL"
     },
+    "slack_api_url_file": {
+     "type": "string",
+     "x-go-name": "SlackAPIURLFile"
+    },
     "smtp_auth_identity": {
      "type": "string",
      "x-go-name": "SMTPAuthIdentity"
@@ -936,6 +964,9 @@
     "FollowRedirects": {
      "description": "FollowRedirects specifies whether the client should follow HTTP 3xx redirects.\nThe omitempty flag is not set, because it would be hidden from the\nmarshalled configuration when set to false.",
      "type": "boolean"
+    },
+    "OAuth2": {
+     "$ref": "#/definitions/OAuth2"
     },
     "ProxyURL": {
      "$ref": "#/definitions/URL"
@@ -1092,6 +1123,37 @@
    "title": "NotifierConfig contains base options common across all notifier configurations.",
    "type": "object",
    "x-go-package": "github.com/prometheus/alertmanager/config"
+  },
+  "OAuth2": {
+   "properties": {
+    "ClientID": {
+     "type": "string"
+    },
+    "ClientSecret": {
+     "$ref": "#/definitions/Secret"
+    },
+    "ClientSecretFile": {
+     "type": "string"
+    },
+    "EndpointParams": {
+     "additionalProperties": {
+      "type": "string"
+     },
+     "type": "object"
+    },
+    "Scopes": {
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    },
+    "TokenURL": {
+     "type": "string"
+    }
+   },
+   "title": "OAuth2 is the oauth2 client configuration.",
+   "type": "object",
+   "x-go-package": "github.com/prometheus/common/config"
   },
   "OpsGenieConfig": {
    "properties": {
@@ -1984,6 +2046,10 @@
     "api_url": {
      "$ref": "#/definitions/SecretURL"
     },
+    "api_url_file": {
+     "type": "string",
+     "x-go-name": "APIURLFile"
+    },
     "callback_id": {
      "type": "string",
      "x-go-name": "CallbackID"
@@ -2242,6 +2308,9 @@
     "api_key": {
      "$ref": "#/definitions/Secret"
     },
+    "api_key_file": {
+     "$ref": "#/definitions/Secret"
+    },
     "api_url": {
      "$ref": "#/definitions/URL"
     },
@@ -2390,7 +2459,7 @@
      "$ref": "#/definitions/labelSet"
     },
     "receiver": {
-     "$ref": "#/definitions/Receiver"
+     "$ref": "#/definitions/receiver"
     }
    },
    "required": [
@@ -2595,7 +2664,7 @@
   "gettableAlerts": {
    "description": "GettableAlerts gettable alerts",
    "items": {
-    "$ref": "#/definitions/GettableAlert"
+    "$ref": "#/definitions/gettableAlert"
    },
    "type": "array",
    "x-go-name": "GettableAlerts",
@@ -3690,6 +3759,38 @@
     },
     "tags": [
      "ruler"
+    ]
+   }
+  },
+  "/api/v1/eval": {
+   "post": {
+    "consumes": [
+     "application/json"
+    ],
+    "description": "Test rule",
+    "operationId": "RouteEvalQueries",
+    "parameters": [
+     {
+      "in": "body",
+      "name": "Body",
+      "schema": {
+       "$ref": "#/definitions/EvalQueriesPayload"
+      }
+     }
+    ],
+    "produces": [
+     "application/json"
+    ],
+    "responses": {
+     "200": {
+      "description": "EvalQueriesResponse",
+      "schema": {
+       "$ref": "#/definitions/EvalQueriesResponse"
+      }
+     }
+    },
+    "tags": [
+     "testing"
     ]
    }
   },

@@ -1,20 +1,17 @@
 import React, { FC, MouseEvent, useCallback } from 'react';
 import { css } from '@emotion/css';
-import { getTagColorsFromName, Icon, Tooltip, useStyles } from '@grafana/ui';
+import { Icon, Tooltip, useStyles } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
 import { GrafanaTheme } from '@grafana/data';
-
-import { VariableTag } from '../../types';
 
 interface Props {
   onClick: () => void;
   text: string;
-  tags: VariableTag[];
   loading: boolean;
   onCancel: () => void;
 }
 
-export const VariableLink: FC<Props> = ({ loading, onClick: propsOnClick, tags, text, onCancel }) => {
+export const VariableLink: FC<Props> = ({ loading, onClick: propsOnClick, text, onCancel }) => {
   const styles = useStyles(getStyles);
   const onClick = useCallback(
     (event: MouseEvent<HTMLAnchorElement>) => {
@@ -32,7 +29,7 @@ export const VariableLink: FC<Props> = ({ loading, onClick: propsOnClick, tags, 
         aria-label={selectors.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts(`${text}`)}
         title={text}
       >
-        <VariableLinkText tags={tags} text={text} />
+        <VariableLinkText text={text} />
         <LoadingIndicator onCancel={onCancel} />
       </div>
     );
@@ -45,31 +42,19 @@ export const VariableLink: FC<Props> = ({ loading, onClick: propsOnClick, tags, 
       aria-label={selectors.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts(`${text}`)}
       title={text}
     >
-      <VariableLinkText tags={tags} text={text} />
+      <VariableLinkText text={text} />
       <Icon name="angle-down" size="sm" />
     </a>
   );
 };
 
-const VariableLinkText: FC<Pick<Props, 'tags' | 'text'>> = ({ tags, text }) => {
+interface VariableLinkTextProps {
+  text: string;
+}
+
+const VariableLinkText: FC<VariableLinkTextProps> = ({ text }) => {
   const styles = useStyles(getStyles);
-  return (
-    <span className={styles.textAndTags}>
-      {text}
-      {tags.map((tag) => {
-        const { color, borderColor } = getTagColorsFromName(tag.text.toString());
-        return (
-          <span key={`${tag.text}`}>
-            <span className="label-tag" style={{ backgroundColor: color, borderColor }}>
-              &nbsp;&nbsp;
-              <Icon name="tag-alt" />
-              &nbsp; {tag.text}
-            </span>
-          </span>
-        );
-      })}
-    </span>
-  );
+  return <span className={styles.textAndTags}>{text}</span>;
 };
 
 const LoadingIndicator: FC<Pick<Props, 'onCancel'>> = ({ onCancel }) => {

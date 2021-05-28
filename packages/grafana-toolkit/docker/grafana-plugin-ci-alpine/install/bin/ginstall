@@ -5,7 +5,7 @@
 # for usage information see "show_help" below.
 #
 
-latest=$(wget -O - 'https://raw.githubusercontent.com/grafana/grafana/master/latest.json' | jq -r '.stable')
+latest=$(wget -O - 'https://raw.githubusercontent.com/grafana/grafana/main/latest.json' | jq -r '.stable')
 canary=$(wget -O - "https://grafana.com/api/grafana/versions" | jq ".items[0].version" | tr -d '"')
 
 show_help() {
@@ -62,7 +62,7 @@ if [ "$version" == "latest" ]; then
   wget -O - "https://dl.grafana.com/oss/release/grafana-${version}.linux-amd64.tar.gz" | tar -C /opt -zxf -
 elif [ "$version" == "canary" ]; then
   version="$canary"
-  wget -O - "https://dl.grafana.com/oss/master/grafana-${version}.linux-amd64.tar.gz" | tar -C /opt -zxf -
+  wget -O - "https://dl.grafana.com/oss/main/grafana-${version}.linux-amd64.tar.gz" | tar -C /opt -zxf -
 else
   wget -O - "https://dl.grafana.com/oss/release/grafana-${version}.linux-amd64.tar.gz" | tar -C /opt -zxf -
 fi

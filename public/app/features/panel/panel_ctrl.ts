@@ -16,19 +16,19 @@ export class PanelCtrl {
   panel: any;
   error: any;
   dashboard: DashboardModel;
-  pluginName: string;
-  pluginId: string;
+  pluginName = '';
+  pluginId = '';
   editorTabs: any;
   $scope: any;
   $injector: auto.IInjectorService;
   $location: any;
   $timeout: any;
-  editModeInitiated: boolean;
+  editModeInitiated = false;
   height: number;
   width: number;
   containerHeight: any;
   events: EventBusExtended;
-  loading: boolean;
+  loading = false;
   timing: any;
 
   constructor($scope: any, $injector: auto.IInjectorService) {

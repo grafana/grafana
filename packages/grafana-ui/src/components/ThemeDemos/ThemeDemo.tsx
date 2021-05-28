@@ -3,7 +3,7 @@ import { css, cx } from '@emotion/css';
 import { useTheme2 } from '../../themes/ThemeContext';
 import { Icon } from '../Icon/Icon';
 import { HorizontalGroup, VerticalGroup } from '../Layout/Layout';
-import { GrafanaThemeV2, ThemeRichColor } from '@grafana/data';
+import { GrafanaTheme2, ThemeRichColor } from '@grafana/data';
 import { CollapsableSection } from '../Collapse/CollapsableSection';
 import { Field } from '../Forms/Field';
 import { Input } from '../Input/Input';
@@ -211,7 +211,7 @@ export const ThemeDemo = () => {
 };
 
 interface RichColorDemoProps {
-  theme: GrafanaThemeV2;
+  theme: GrafanaTheme2;
   color: ThemeRichColor;
 }
 
@@ -269,7 +269,7 @@ const colorsTableStyle = css`
   }
 `;
 
-export function TextColors({ t }: { t: GrafanaThemeV2 }) {
+export function TextColors({ t }: { t: GrafanaTheme2 }) {
   return (
     <>
       <DemoText color={t.colors.text.primary}>

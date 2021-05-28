@@ -27,6 +27,14 @@ export enum PluginSignatureStatus {
   missing = 'missing', // missing signature file
 }
 
+/** Describes level of {@link https://grafana.com/docs/grafana/latest/plugins/plugin-signatures/#plugin-signature-levels/ | plugin signature level} */
+export enum PluginSignatureType {
+  grafana = 'grafana',
+  commercial = 'commercial',
+  community = 'community',
+  private = 'private',
+}
+
 /** Describes error code returned from Grafana plugins API call */
 export enum PluginErrorCode {
   missingSignature = 'signatureMissing',
@@ -65,6 +73,8 @@ export interface PluginMeta<T extends KeyValue = {}> {
   latestVersion?: string;
   pinned?: boolean;
   signature?: PluginSignatureStatus;
+  signatureType?: PluginSignatureType;
+  signatureOrg?: string;
   live?: boolean;
 }
 

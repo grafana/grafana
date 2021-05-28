@@ -1,10 +1,8 @@
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import store from 'app/core/store';
 import { useCallback } from 'react';
+import { ALERTMANAGER_NAME_LOCAL_STORAGE_KEY, ALERTMANAGER_NAME_QUERY_KEY } from '../utils/constants';
 import { getAlertManagerDataSources, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
-
-const alertmanagerQueryKey = 'alertmanager';
-const alertmanagerLocalStorageKey = 'alerting-alertmanager';
 
 function isAlertManagerSource(alertManagerSourceName: string): boolean {
   return (
@@ -14,27 +12,39 @@ function isAlertManagerSource(alertManagerSourceName: string): boolean {
 }
 
 /* this will return am name either from query params or from local storage or a default (grafana).
- * it might makes sense to abstract to more generic impl..
+ *
+ * fallbackUrl - if provided, will redirect to this url if alertmanager provided in query no longer
  */
-export function useAlertManagerSourceName(): [string, (alertManagerSourceName: string) => void] {
+export function useAlertManagerSourceName(): [string | undefined, (alertManagerSourceName: string) => void] {
   const [queryParams, updateQueryParams] = useQueryParams();
 
   const update = useCallback(
     (alertManagerSourceName: string) => {
-      if (isAlertManagerSource(alertManagerSourceName)) {
-        store.set(alertmanagerLocalStorageKey, alertManagerSourceName);
-        updateQueryParams({ [alertmanagerQueryKey]: alertManagerSourceName });
+      if (!isAlertManagerSource(alertManagerSourceName)) {
+        return;
+      }
+      if (alertManagerSourceName === GRAFANA_RULES_SOURCE_NAME) {
+        store.delete(ALERTMANAGER_NAME_LOCAL_STORAGE_KEY);
+        updateQueryParams({ [ALERTMANAGER_NAME_QUERY_KEY]: null });
+      } else {
+        store.set(ALERTMANAGER_NAME_LOCAL_STORAGE_KEY, alertManagerSourceName);
+        updateQueryParams({ [ALERTMANAGER_NAME_QUERY_KEY]: alertManagerSourceName });
       }
     },
     [updateQueryParams]
   );
 
-  const querySource = queryParams[alertmanagerQueryKey];
+  const querySource = queryParams[ALERTMANAGER_NAME_QUERY_KEY];
 
-  if (querySource && typeof querySource === 'string' && isAlertManagerSource(querySource)) {
-    return [querySource, update];
+  if (querySource && typeof querySource === 'string') {
+    if (isAlertManagerSource(querySource)) {
+      return [querySource, update];
+    } else {
+      // non existing alert manager
+      return [undefined, update];
+    }
   }
-  const storeSource = store.get(alertmanagerLocalStorageKey);
+  const storeSource = store.get(ALERTMANAGER_NAME_LOCAL_STORAGE_KEY);
   if (storeSource && typeof storeSource === 'string' && isAlertManagerSource(storeSource)) {
     update(storeSource);
     return [storeSource, update];

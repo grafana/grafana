@@ -2,9 +2,11 @@ import React, { FC, useCallback, useEffect, useRef } from 'react';
 import { isNil } from 'lodash';
 import classNames from 'classnames';
 import { css } from '@emotion/css';
-import Scrollbars from 'react-custom-scrollbars';
+import Scrollbars, { positionValues } from 'react-custom-scrollbars';
 import { useStyles2 } from '../../themes';
-import { GrafanaThemeV2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
+
+export type ScrollbarPosition = positionValues;
 
 interface Props {
   className?: string;
@@ -15,7 +17,7 @@ interface Props {
   hideHorizontalTrack?: boolean;
   hideVerticalTrack?: boolean;
   scrollTop?: number;
-  setScrollTop?: (event: any) => void;
+  setScrollTop?: (position: ScrollbarPosition) => void;
   autoHeightMin?: number | string;
   updateAfterMountMs?: number;
 }
@@ -101,11 +103,15 @@ export const CustomScrollbar: FC<Props> = ({
     return <div {...passedProps} className="scrollbar-view" />;
   }, []);
 
+  const onScrollStop = useCallback(() => {
+    ref.current && setScrollTop && setScrollTop(ref.current.getValues());
+  }, [setScrollTop]);
+
   return (
     <Scrollbars
       ref={ref}
       className={classNames(styles.customScrollbar, className)}
-      onScroll={setScrollTop}
+      onScrollStop={onScrollStop}
       autoHeight={true}
       autoHide={autoHide}
       autoHideTimeout={autoHideTimeout}
@@ -127,7 +133,7 @@ export const CustomScrollbar: FC<Props> = ({
 
 export default CustomScrollbar;
 
-const getStyles = (theme: GrafanaThemeV2) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     customScrollbar: css`
       // Fix for Firefox. For some reason sometimes .view container gets a height of its content, but in order to

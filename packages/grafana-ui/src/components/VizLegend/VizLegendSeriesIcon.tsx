@@ -1,19 +1,29 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { SeriesColorPicker } from '../ColorPicker/ColorPicker';
+import { usePanelContext } from '../PanelChrome';
 import { SeriesIcon } from './SeriesIcon';
 
 interface Props {
-  disabled: boolean;
-  color: string;
-  onColorChange: (color: string) => void;
+  seriesName: string;
+  color?: string;
+  gradient?: string;
 }
 
-export const VizLegendSeriesIcon = React.memo<Props>(
-  ({ disabled, color, onColorChange }) => {
-    return disabled ? (
-      <SeriesIcon color={color} />
-    ) : (
-      <SeriesColorPicker color={color} onChange={onColorChange} enableNamedColors>
+/**
+ * @internal
+ */
+export const VizLegendSeriesIcon: React.FunctionComponent<Props> = ({ seriesName, color, gradient }) => {
+  const { onSeriesColorChange } = usePanelContext();
+  const onChange = useCallback(
+    (color: string) => {
+      return onSeriesColorChange!(seriesName, color);
+    },
+    [seriesName, onSeriesColorChange]
+  );
+
+  if (seriesName && onSeriesColorChange && color) {
+    return (
+      <SeriesColorPicker color={color} onChange={onChange} enableNamedColors>
         {({ ref, showColorPicker, hideColorPicker }) => (
           <SeriesIcon
             color={color}
@@ -25,12 +35,8 @@ export const VizLegendSeriesIcon = React.memo<Props>(
         )}
       </SeriesColorPicker>
     );
-  },
-  // areEqual -- return true if they are the same.
-  // onColorChange updates frequently, so ignore that
-  (prevProps, nextProps) => {
-    return prevProps.color === nextProps.color && prevProps.disabled === nextProps.disabled;
   }
-);
+  return <SeriesIcon color={color} gradient={gradient} />;
+};
 
 VizLegendSeriesIcon.displayName = 'VizLegendSeriesIcon';

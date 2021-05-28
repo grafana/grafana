@@ -356,7 +356,7 @@ func setBuildEnv() {
 func getGitBranch() string {
 	v, err := runError("git", "rev-parse", "--abbrev-ref", "HEAD")
 	if err != nil {
-		return "master"
+		return "main"
 	}
 	return string(v)
 }

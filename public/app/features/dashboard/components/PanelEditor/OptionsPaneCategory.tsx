@@ -1,6 +1,6 @@
 import React, { FC, ReactNode, useCallback, useEffect, useState } from 'react';
 import { css, cx } from '@emotion/css';
-import { GrafanaThemeV2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { Counter, Icon, useStyles2 } from '@grafana/ui';
 import { PANEL_EDITOR_UI_STATE_STORAGE_KEY } from './state/reducers';
 import { useLocalStorage } from 'react-use';
@@ -71,7 +71,11 @@ export const OptionsPaneCategory: FC<OptionsPaneCategoryProps> = React.memo(
     });
 
     return (
-      <div className={boxStyles} data-testid="options-category">
+      <div
+        className={boxStyles}
+        data-testid="options-category"
+        aria-label={selectors.components.OptionsGroup.group(id)}
+      >
         <div className={headerStyles} onClick={onToggle} aria-label={selectors.components.OptionsGroup.toggle(id)}>
           <div className={cx(styles.toggle, 'editor-options-group-toggle')}>
             <Icon name={isExpanded ? 'angle-down' : 'angle-right'} />
@@ -86,7 +90,7 @@ export const OptionsPaneCategory: FC<OptionsPaneCategoryProps> = React.memo(
   }
 );
 
-const getStyles = (theme: GrafanaThemeV2) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     box: css`
       border-bottom: 1px solid ${theme.colors.border.weak};

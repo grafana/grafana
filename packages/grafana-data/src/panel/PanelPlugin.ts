@@ -8,6 +8,7 @@ import {
   PanelProps,
   PanelTypeChangedHandler,
   FieldConfigProperty,
+  PanelPluginDataSupport,
 } from '../types';
 import { FieldConfigEditorBuilder, PanelOptionsEditorBuilder } from '../utils/OptionsUIBuilders';
 import { ComponentClass, ComponentType } from 'react';
@@ -106,6 +107,10 @@ export class PanelPlugin<
   onPanelMigration?: PanelMigrationHandler<TOptions>;
   onPanelTypeChanged?: PanelTypeChangedHandler<TOptions>;
   noPadding?: boolean;
+  dataSupport: PanelPluginDataSupport = {
+    annotations: false,
+    alertStates: false,
+  };
 
   /**
    * Legacy angular ctrl.  If this exists it will be used instead of the panel
@@ -256,6 +261,33 @@ export class PanelPlugin<
   setPanelOptions(builder: (builder: PanelOptionsEditorBuilder<TOptions>) => void) {
     // builder is applied lazily when options UI is created
     this.registerOptionEditors = builder;
+    return this;
+  }
+
+  /**
+   * Tells Grafana if the plugin should subscribe to annotation and alertState results.
+   *
+   * @example
+   * ```typescript
+   *
+   * import { ShapePanel } from './ShapePanel';
+   *
+   * interface ShapePanelOptions {}
+   *
+   * export const plugin = new PanelPlugin<ShapePanelOptions>(ShapePanel)
+   *     .useFieldConfig({})
+   *     ...
+   *     ...
+   *     .setDataSupport({
+   *       annotations: true,
+   *       alertStates: true,
+   *     });
+   * ```
+   *
+   * @public
+   **/
+  setDataSupport(support: Partial<PanelPluginDataSupport>) {
+    this.dataSupport = { ...this.dataSupport, ...support };
     return this;
   }
 

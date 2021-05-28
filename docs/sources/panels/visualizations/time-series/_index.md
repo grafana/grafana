@@ -6,7 +6,7 @@ weight = 1200
 
 # Time series panel
 
-> **Note:** This is a beta feature. Time series panel is going to replace the Graph panel in the future releases.
+> **Note:** Time series panel is going to replace the Graph panel in a future release.
 
 Time series panel is a robust visualization to plot time series data. It can render as a line, a path of dots, or a series of bars. This type of graph is versatile enough to display almost any time-series data.
 
@@ -26,20 +26,13 @@ You can also use field options to create different types of graphs or adjust you
 - [Graph time series as bars]({{< relref "graph-time-series-as-bars.md" >}})
 - [Graph time series as points]({{< relref "graph-time-series-as-points.md" >}})
 - [Change axis display]({{< relref "change-axis-display.md" >}})
+- [Graph stacked time series]({{< relref "graph-time-series-stacking.md" >}})
 
 ## Display options
 
 > **Note:** You can migrate Graph panel visualizations to Time series visualizations. To migrate, on the Panel tab, click **Time series** visualization. Grafana transfers all applicable settings. (While in beta, migration is still being refined. It will get better as time goes on!)
 
-### Tooltip mode
-
-When you hover your cursor over the graph, Grafana can display tooltips. Choose how tooltips behave.
-
-- **Single -** The hover tooltip shows only a single series, the one that you are hovering over on the graph.
-- **All -** The hover tooltip shows all series in the graph. Grafana highlights the series that you are hovering over in bold in the series list in the tooltip.
-- **Hidden -** Do not display the tooltip when you interact with the graph.
-
-> **Note:** Use an override to hide individual series from the tooltip.
+{{< docs/shared "visualizations/tooltip-mode.md" >}}
 
 {{< docs/shared "visualizations/legend-mode.md" >}}
 

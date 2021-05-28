@@ -1,42 +1,13 @@
 package api
 
 import (
-	"regexp"
-	"strings"
-
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
-func AdminGetSettings(c *models.ReqContext) response.Response {
-	settings := make(map[string]interface{})
-
-	for _, section := range setting.Raw.Sections() {
-		jsonSec := make(map[string]interface{})
-		settings[section.Name()] = jsonSec
-
-		for _, key := range section.Keys() {
-			keyName := key.Name()
-			value := key.Value()
-			if strings.Contains(keyName, "secret") || strings.Contains(keyName, "password") || (strings.Contains(keyName, "provider_config")) {
-				value = "************"
-			}
-			if strings.Contains(keyName, "url") {
-				var rgx = regexp.MustCompile(`.*:\/\/([^:]*):([^@]*)@.*?$`)
-				var subs = rgx.FindAllSubmatch([]byte(value), -1)
-				if subs != nil && len(subs[0]) == 3 {
-					value = strings.Replace(value, string(subs[0][1]), "******", 1)
-					value = strings.Replace(value, string(subs[0][2]), "******", 1)
-				}
-			}
-
-			jsonSec[keyName] = value
-		}
-	}
-
-	return response.JSON(200, settings)
+func (hs *HTTPServer) AdminGetSettings(_ *models.ReqContext) response.Response {
+	return response.JSON(200, hs.SettingsProvider.Current())
 }
 
 func AdminGetStats(c *models.ReqContext) response.Response {

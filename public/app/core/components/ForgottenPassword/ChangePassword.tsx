@@ -24,8 +24,7 @@ export const ChangePassword: FC<Props> = ({ onSubmit, onSkip }) => {
             <Input
               autoFocus
               type="password"
-              name="newPassword"
-              ref={register({
+              {...register('newPassword', {
                 required: 'New password required',
               })}
             />
@@ -33,10 +32,9 @@ export const ChangePassword: FC<Props> = ({ onSubmit, onSkip }) => {
           <Field label="Confirm new password" invalid={!!errors.confirmNew} error={errors?.confirmNew?.message}>
             <Input
               type="password"
-              name="confirmNew"
-              ref={register({
+              {...register('confirmNew', {
                 required: 'Confirmed password is required',
-                validate: (v) => v === getValues().newPassword || 'Passwords must match!',
+                validate: (v: string) => v === getValues().newPassword || 'Passwords must match!',
               })}
             />
           </Field>
@@ -50,7 +48,7 @@ export const ChangePassword: FC<Props> = ({ onSubmit, onSkip }) => {
                 content="If you skip you will be prompted to change password next time you log in."
                 placement="bottom"
               >
-                <Button variant="link" onClick={onSkip} type="button" aria-label={selectors.pages.Login.skip}>
+                <Button fill="text" onClick={onSkip} type="button" aria-label={selectors.pages.Login.skip}>
                   Skip
                 </Button>
               </Tooltip>

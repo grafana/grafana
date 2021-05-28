@@ -1,12 +1,27 @@
 import { DataFrame, FieldType } from '../types/dataFrame';
+import { getTimeField } from './processDataFrame';
 
-export const isTimeSerie = (frame: DataFrame): boolean => {
+export function isTimeSerie(frame: DataFrame) {
   if (frame.fields.length > 2) {
     return false;
   }
-  return !!frame.fields.find((field) => field.type === FieldType.time);
-};
+  return Boolean(frame.fields.find((field) => field.type === FieldType.time));
+}
 
-export const isTimeSeries = (data: DataFrame[]): boolean => {
+export function isTimeSeries(data: DataFrame[]) {
   return !data.find((frame) => !isTimeSerie(frame));
-};
+}
+
+/**
+ * Indicates if there is any time field in the array of data frames
+ * @param data
+ */
+export function anySeriesWithTimeField(data: DataFrame[]) {
+  for (let i = 0; i < data.length; i++) {
+    const timeField = getTimeField(data[i]);
+    if (timeField.timeField !== undefined && timeField.timeIndex !== undefined) {
+      return true;
+    }
+  }
+  return false;
+}

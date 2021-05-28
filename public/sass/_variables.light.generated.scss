@@ -58,7 +58,6 @@ $layer1: #fff;
 $layer2: #F4F5F5;
 
 $divider: rgba(36, 41, 46, 0.12);
-
 $border0: rgba(36, 41, 46, 0.12);
 $border1: rgba(36, 41, 46, 0.30);
 
@@ -72,20 +71,21 @@ $purple: #9933cc;
 $variable: #0465d7;
 
 $brand-primary: #eb7b18;
-$brand-success: #299c46;
-$brand-warning: #eb7b18;
-$brand-danger: #e02f44;
+$brand-success: #1A7F4B;
+$brand-warning: #E56F00;
+$brand-danger: #E0226E;
 
-$query-red: #e02f44;
-$query-green: #74e680;
+$query-red: #CF0E5B;
+$query-green: #1A7F4B;
 $query-purple: #fe85fc;
 $query-orange: #eb7b18;
 
 // Status colors
 // -------------------------
-$online: #299c46;
-$warn: #f79520;
-$critical: #e02f44;
+$online: #1A7F4B;
+$warn: #BD4B00;
+$critical: #CF0E5B;
+
 
 // Scaffolding
 // -------------------------
@@ -125,9 +125,9 @@ $hr-border-color: $gray-4 !default;
 // Panel
 // -------------------------
 $panel-bg: #fff;
-$panel-border: #fff;
+$panel-border: 1px solid rgba(36, 41, 46, 0.12);
 $panel-header-hover-bg: rgba(36, 41, 46, 0.04);
-$panel-box-shadow: 0px 1px 1px -1px rgba(0,0,0,0.15),0px 0px 0px 0px rgba(0,0,0,0.1),0px 1px 3px 0px rgba(0,0,0,0.1);
+$panel-box-shadow: none;
 $panel-corner: $panel-bg;
 
 // Page header
@@ -203,10 +203,10 @@ $btn-active-box-shadow: 0px 0px 4px rgba(234, 161, 51, 0.6);
 
 // Forms
 // -------------------------
-$input-bg: $white;
-$input-bg-disabled: $gray-5;
+$input-bg: #fff;
+$input-bg-disabled: rgba(36, 41, 46, 0.07);
 
-$input-color: #c7d0d9;
+$input-color: rgba(36, 41, 46, 1);
 $input-border-color: rgba(36, 41, 46, 0.30);
 $input-box-shadow: none;
 $input-border-focus: #5794f2;
@@ -225,10 +225,11 @@ $typeahead-selected-color: $yellow;
 
 // Dropdowns
 // -------------------------
-$dropdownBackground: #F4F5F5;
+$dropdownBackground: #fff;
 $dropdownBorder: rgba(36, 41, 46, 0.12);
 $dropdownDividerTop: rgba(36, 41, 46, 0.12);
 $dropdownDividerBottom: rgba(36, 41, 46, 0.12);
+$dropdownShadow: 0px 13px 20px 1px rgba(24, 26, 27, 0.18);
 
 $dropdownLinkColor: $dark-2;
 $dropdownLinkColorHover: $link-color;
@@ -258,9 +259,9 @@ $side-menu-header-color: #e9edf2;
 
 // Menu dropdowns
 // -------------------------
-$menu-dropdown-bg: #F4F5F5;
+$menu-dropdown-bg: #fff;
 $menu-dropdown-hover-bg: rgba(36, 41, 46, 0.04);
-$menu-dropdown-shadow: 0px 2px 4px -1px rgba(0,0,0,0.15),0px 4px 5px 0px rgba(0,0,0,0.1),0px 1px 10px 0px rgba(0,0,0,0.1);
+$menu-dropdown-shadow: 0px 13px 20px 1px rgba(24, 26, 27, 0.18);
 
 // Tabs
 // -------------------------
@@ -268,27 +269,27 @@ $tab-border-color: $gray-5;
 
 // Form states and alerts
 // -------------------------
-$warning-text-color: lighten($orange, 10%);
-$error-text-color: $red-shade;
-$success-text-color: lighten($green-base, 10%);
+$warning-text-color: #BD4B00;
+$error-text-color: #CF0E5B;
+$success-text-color: #1A7F4B;
 
-$alert-error-bg: linear-gradient(90deg, $red-base, $red-shade);
-$alert-success-bg: linear-gradient(90deg, $green-base, $green-shade);
-$alert-warning-bg: linear-gradient(90deg, $red-base, $red-shade);
-$alert-info-bg: linear-gradient(100deg, $blue-base, $blue-shade);
+$alert-error-bg: #E0226E;
+$alert-success-bg: #1A7F4B;
+$alert-warning-bg: #E56F00;
+$alert-info-bg: #E56F00;
 
 // Tooltips and popovers
-$tooltipBackground: #F4F5F5;
-$tooltipColor: rgba(36, 41, 46, 1);
-$tooltipArrowColor: #F4F5F5;
+$tooltipBackground: #555;
+$tooltipColor: #FFF;
+$tooltipArrowColor: #555;
 $tooltipBackgroundError: #E0226E;
-$tooltipShadow: 0px 2px 1px -2px rgba(0,0,0,0.15),0px 2px 2px 0px rgba(0,0,0,0.1),0px 1px 5px 0px rgba(0,0,0,0.1);
+$tooltipShadow: 0px 4px 8px rgba(24, 26, 27, 0.2);
 
-$popover-bg: #F4F5F5;
+$popover-bg: #fff;
 $popover-color: rgba(36, 41, 46, 1);
-$popover-border-color: rgba(36, 41, 46, 0.30);
+$popover-border-color: rgba(36, 41, 46, 0.12);
 $popover-header-bg: #F4F5F5;
-$popover-shadow: 0px 5px 5px -5px rgba(0,0,0,0.15),0px 8px 10px 1px rgba(0,0,0,0.1),0px 3px 14px 2px rgba(0,0,0,0.1);
+$popover-shadow: 0px 13px 20px 1px rgba(24, 26, 27, 0.18);
 
 $graph-tooltip-bg: $gray-5;
 
@@ -374,7 +375,7 @@ $panel-editor-viz-item-shadow: 0 0 4px $gray-3;
 $panel-editor-viz-item-border: 1px solid $gray-3;
 $panel-editor-viz-item-shadow-hover: 0 0 4px $blue-light;
 $panel-editor-viz-item-border-hover: 1px solid $blue-light;
-$panel-editor-viz-item-bg: $white;
+$panel-editor-viz-item-bg: $card-background;
 $panel-editor-tabs-line-color: $dark-2;
 
 $panel-editor-viz-item-bg-hover: lighten($blue-base, 45%);
@@ -397,3 +398,4 @@ $vertical-resize-handle-dots-hover: $gray-2;
 // Calendar
 $calendar-bg-days: $white;
 $calendar-bg-now: $gray-6;
+

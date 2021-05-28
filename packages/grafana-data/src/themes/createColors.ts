@@ -73,7 +73,7 @@ export interface ThemeHoverStrengh {}
 /** @beta */
 export interface ThemeColors extends ThemeColorsBase<ThemeRichColor> {
   /** Returns a text color for the background */
-  getContrastText(background: string): string;
+  getContrastText(background: string, threshold?: number): string;
   /* Brighten or darken a color by specified factor (0-1) */
   emphasize(color: string, amount?: number): string;
 }
@@ -84,7 +84,14 @@ export type ThemeColorsInput = DeepPartial<ThemeColorsBase<ThemeRichColor>>;
 class DarkColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
   mode: ThemeColorsMode = 'dark';
 
+  // Used to get more white opacity colors
   whiteBase = '201, 209, 217';
+
+  border = {
+    weak: `rgba(${this.whiteBase}, 0.08)`,
+    medium: `rgba(${this.whiteBase}, 0.15)`,
+    strong: `rgba(${this.whiteBase}, 0.25)`,
+  };
 
   text = {
     primary: `rgb(${this.whiteBase})`,
@@ -103,8 +110,9 @@ class DarkColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
   secondary = {
     main: `rgba(${this.whiteBase}, 0.1)`,
     shade: `rgba(${this.whiteBase}, 0.15)`,
-    text: `rgba(${this.whiteBase}, 0.13)`,
+    text: this.text.primary,
     contrastText: `rgb(${this.whiteBase})`,
+    border: this.border.strong,
   };
 
   info = this.primary;
@@ -128,12 +136,6 @@ class DarkColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
     canvas: palette.gray05,
     primary: palette.gray10,
     secondary: palette.gray15,
-  };
-
-  border = {
-    weak: `rgba(${this.whiteBase}, 0.10)`,
-    medium: `rgba(${this.whiteBase}, 0.15)`,
-    strong: `rgba(${this.whiteBase}, 0.20)`,
   };
 
   action = {
@@ -167,10 +169,26 @@ class LightColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
     text: palette.blueLightText,
   };
 
+  text = {
+    primary: `rgba(${this.blackBase}, 1)`,
+    secondary: `rgba(${this.blackBase}, 0.75)`,
+    disabled: `rgba(${this.blackBase}, 0.50)`,
+    link: this.primary.text,
+    maxContrast: palette.black,
+  };
+
+  border = {
+    weak: `rgba(${this.blackBase}, 0.12)`,
+    medium: `rgba(${this.blackBase}, 0.30)`,
+    strong: `rgba(${this.blackBase}, 0.40)`,
+  };
+
   secondary = {
     main: `rgba(${this.blackBase}, 0.11)`,
     shade: `rgba(${this.blackBase}, 0.16)`,
     contrastText: `rgba(${this.blackBase},  1)`,
+    text: this.text.primary,
+    border: this.border.strong,
   };
 
   info = {
@@ -194,27 +212,11 @@ class LightColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
     text: palette.orangeLightText,
   };
 
-  text = {
-    primary: `rgba(${this.blackBase}, 1)`,
-    secondary: `rgba(${this.blackBase}, 0.75)`,
-    disabled: `rgba(${this.blackBase}, 0.50)`,
-    link: this.primary.text,
-    maxContrast: palette.black,
-  };
-
   background = {
     canvas: palette.gray90,
     primary: palette.white,
     secondary: palette.gray100,
   };
-
-  border = {
-    weak: `rgba(${this.blackBase}, 0.12)`,
-    medium: `rgba(${this.blackBase}, 0.30)`,
-    strong: `rgba(${this.blackBase}, 0.40)`,
-  };
-
-  divider = this.border.weak;
 
   action = {
     hover: `rgba(${this.blackBase}, 0.04)`,
@@ -253,9 +255,9 @@ export function createColors(colors: ThemeColorsInput): ThemeColors {
     ...other
   } = colors;
 
-  function getContrastText(background: string) {
+  function getContrastText(background: string, threshold: number = contrastThreshold) {
     const contrastText =
-      getContrastRatio(background, dark.text.maxContrast) >= contrastThreshold
+      getContrastRatio(dark.text.maxContrast, background, base.background.primary) >= threshold
         ? dark.text.maxContrast
         : light.text.maxContrast;
     // todo, need color framework

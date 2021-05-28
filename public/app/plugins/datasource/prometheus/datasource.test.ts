@@ -101,9 +101,10 @@ describe('PrometheusDatasource', () => {
 
   describe('Datasource metadata requests', () => {
     it('should perform a GET request with the default config', () => {
-      ds.metadataRequest('/foo');
+      ds.metadataRequest('/foo', { bar: 'baz baz', foo: 'foo' });
       expect(fetchMock.mock.calls.length).toBe(1);
       expect(fetchMock.mock.calls[0][0].method).toBe('GET');
+      expect(fetchMock.mock.calls[0][0].url).toContain('bar=baz%20baz&foo=foo');
     });
     it('should still perform a GET request with the DS HTTP method set to POST and not POST-friendly endpoint', () => {
       const postSettings = cloneDeep(instanceSettings);
@@ -117,33 +118,104 @@ describe('PrometheusDatasource', () => {
       const postSettings = cloneDeep(instanceSettings);
       postSettings.jsonData.httpMethod = 'POST';
       const promDs = new PrometheusDatasource(postSettings, templateSrvStub as any, timeSrvStub as any);
-      promDs.metadataRequest('api/v1/series');
+      promDs.metadataRequest('api/v1/series', { bar: 'baz baz', foo: 'foo' });
       expect(fetchMock.mock.calls.length).toBe(1);
       expect(fetchMock.mock.calls[0][0].method).toBe('POST');
+      expect(fetchMock.mock.calls[0][0].url).not.toContain('bar=baz%20baz&foo=foo');
+      expect(fetchMock.mock.calls[0][0].data).toEqual({ bar: 'baz baz', foo: 'foo' });
     });
   });
 
-  describe('When using customQueryParams', () => {
-    const promDs = new PrometheusDatasource(
-      { ...instanceSettings, jsonData: { customQueryParameters: 'customQuery=123' } as any },
-      templateSrvStub as any,
-      timeSrvStub as any
-    );
-    it('added to metadata request', () => {
-      promDs.metadataRequest('/foo');
-      expect(fetchMock.mock.calls.length).toBe(1);
-      expect(fetchMock.mock.calls[0][0].url).toBe('proxied/foo?customQuery=123');
-    });
-    it('added to query', () => {
-      promDs.query({
+  describe('customQueryParams', () => {
+    const target = { expr: 'test{job="testjob"}', format: 'time_series', refId: '' };
+    function makeQuery(target: PromQuery) {
+      return {
         range: { from: time({ seconds: 63 }), to: time({ seconds: 183 }) },
-        targets: [{ expr: 'test{job="testjob"}', format: 'time_series' }],
+        targets: [target],
         interval: '60s',
-      } as any);
-      expect(fetchMock.mock.calls.length).toBe(1);
-      expect(fetchMock.mock.calls[0][0].url).toBe(
-        'proxied/api/v1/query_range?query=test%7Bjob%3D%22testjob%22%7D&start=60&end=180&step=60&customQuery=123'
+      } as any;
+    }
+
+    describe('with GET http method', () => {
+      const promDs = new PrometheusDatasource(
+        { ...instanceSettings, jsonData: { customQueryParameters: 'customQuery=123', httpMethod: 'GET' } as any },
+        templateSrvStub as any,
+        timeSrvStub as any
       );
+
+      it('added to metadata request', () => {
+        promDs.metadataRequest('/foo');
+        expect(fetchMock.mock.calls.length).toBe(1);
+        expect(fetchMock.mock.calls[0][0].url).toBe('proxied/foo?customQuery=123');
+      });
+
+      it('adds params to timeseries query', () => {
+        promDs.query(makeQuery(target));
+        expect(fetchMock.mock.calls.length).toBe(1);
+        expect(fetchMock.mock.calls[0][0].url).toBe(
+          'proxied/api/v1/query_range?query=test%7Bjob%3D%22testjob%22%7D&start=60&end=180&step=60&customQuery=123'
+        );
+      });
+      it('adds params to exemplars query', () => {
+        promDs.query(makeQuery({ ...target, exemplar: true }));
+        // We do also range query for single exemplars target
+        expect(fetchMock.mock.calls.length).toBe(2);
+        expect(fetchMock.mock.calls[0][0].url).toContain('&customQuery=123');
+        expect(fetchMock.mock.calls[1][0].url).toContain('&customQuery=123');
+      });
+
+      it('adds params to instant query', () => {
+        promDs.query(makeQuery({ ...target, instant: true }));
+        expect(fetchMock.mock.calls.length).toBe(1);
+        expect(fetchMock.mock.calls[0][0].url).toContain('&customQuery=123');
+      });
+    });
+
+    describe('with POST http method', () => {
+      const promDs = new PrometheusDatasource(
+        { ...instanceSettings, jsonData: { customQueryParameters: 'customQuery=123', httpMethod: 'POST' } as any },
+        templateSrvStub as any,
+        timeSrvStub as any
+      );
+
+      it('added to metadata request with non-POST endpoint', () => {
+        promDs.metadataRequest('/foo');
+        expect(fetchMock.mock.calls.length).toBe(1);
+        expect(fetchMock.mock.calls[0][0].url).toBe('proxied/foo?customQuery=123');
+      });
+
+      it('added to metadata request with POST endpoint', () => {
+        promDs.metadataRequest('/api/v1/labels');
+        expect(fetchMock.mock.calls.length).toBe(1);
+        expect(fetchMock.mock.calls[0][0].url).toBe('proxied/api/v1/labels');
+        expect(fetchMock.mock.calls[0][0].data.customQuery).toBe('123');
+      });
+
+      it('adds params to timeseries query', () => {
+        promDs.query(makeQuery(target));
+        expect(fetchMock.mock.calls.length).toBe(1);
+        expect(fetchMock.mock.calls[0][0].url).toBe('proxied/api/v1/query_range');
+        expect(fetchMock.mock.calls[0][0].data).toEqual({
+          customQuery: '123',
+          query: 'test{job="testjob"}',
+          step: 60,
+          end: 180,
+          start: 60,
+        });
+      });
+      it('adds params to exemplars query', () => {
+        promDs.query(makeQuery({ ...target, exemplar: true }));
+        // We do also range query for single exemplars target
+        expect(fetchMock.mock.calls.length).toBe(2);
+        expect(fetchMock.mock.calls[0][0].data.customQuery).toBe('123');
+        expect(fetchMock.mock.calls[1][0].data.customQuery).toBe('123');
+      });
+
+      it('adds params to instant query', () => {
+        promDs.query(makeQuery({ ...target, instant: true }));
+        expect(fetchMock.mock.calls.length).toBe(1);
+        expect(fetchMock.mock.calls[0][0].data.customQuery).toBe('123');
+      });
     });
   });
 
@@ -1724,6 +1796,7 @@ describe('prepareTargets', () => {
       const target: PromQuery = {
         refId: 'A',
         expr: 'up',
+        requestId: '2A',
       };
 
       const { queries, activeTargets, panelId, end, start } = getPrepareTargetsContext(target);
@@ -1782,6 +1855,7 @@ describe('prepareTargets', () => {
           expr: 'up',
           range: true,
           instant: true,
+          requestId: '2A',
         };
 
         const { queries, activeTargets, panelId, end, start } = getPrepareTargetsContext(target, CoreApp.Explore);
@@ -1839,6 +1913,7 @@ describe('prepareTargets', () => {
           expr: 'up',
           instant: true,
           range: false,
+          requestId: '2A',
         };
 
         const { queries, activeTargets, panelId, end, start } = getPrepareTargetsContext(target, CoreApp.Explore);
@@ -1871,6 +1946,7 @@ describe('prepareTargets', () => {
         expr: 'up',
         range: true,
         instant: false,
+        requestId: '2A',
       };
 
       const { queries, activeTargets, panelId, end, start } = getPrepareTargetsContext(target, CoreApp.Explore);

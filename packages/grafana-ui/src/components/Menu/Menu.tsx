@@ -1,6 +1,6 @@
 import React from 'react';
 import { css } from '@emotion/css';
-import { GrafanaThemeV2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '../../themes';
 
 /** @internal */
@@ -27,15 +27,15 @@ export const Menu = React.forwardRef<HTMLDivElement, MenuProps>(
 Menu.displayName = 'Menu';
 
 /** @internal */
-const getStyles = (theme: GrafanaThemeV2) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     header: css`
       padding: ${theme.spacing(0.5, 0.5, 1, 0.5)};
-      border-bottom: 1px solid ${theme.colors.border.medium};
+      border-bottom: 1px solid ${theme.colors.border.weak};
     `,
     wrapper: css`
-      background: ${theme.colors.background.secondary};
-      box-shadow: ${theme.shadows.z2};
+      background: ${theme.colors.background.primary};
+      box-shadow: ${theme.shadows.z3};
       display: inline-block;
       border-radius: ${theme.shape.borderRadius()};
     `,

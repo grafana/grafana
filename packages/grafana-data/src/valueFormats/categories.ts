@@ -1,4 +1,12 @@
-import { locale, scaledUnits, simpleCountUnit, toFixedUnit, ValueFormatCategory, stringFormater } from './valueFormats';
+import {
+  locale,
+  scaledUnits,
+  simpleCountUnit,
+  toFixedUnit,
+  ValueFormatCategory,
+  stringFormater,
+  booleanValueFormatter,
+} from './valueFormats';
 import {
   dateTimeAsIso,
   dateTimeAsIsoNoDateIfToday,
@@ -397,6 +405,14 @@ export const getCategories = (): ValueFormatCategory[] => [
       { name: 'Normal cubic meter', id: 'Nm3', fn: toFixedUnit('Nm³') },
       { name: 'cubic decimeter', id: 'dm3', fn: toFixedUnit('dm³') },
       { name: 'gallons', id: 'gallons', fn: toFixedUnit('gal') },
+    ],
+  },
+  {
+    name: 'Boolean',
+    formats: [
+      { name: 'True / False', id: 'bool', fn: booleanValueFormatter('True', 'False') },
+      { name: 'Yes / No', id: 'bool_yes_no', fn: booleanValueFormatter('Yes', 'No') },
+      { name: 'On / Off', id: 'bool_on_off', fn: booleanValueFormatter('On', 'Off') },
     ],
   },
 ];

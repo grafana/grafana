@@ -6,13 +6,14 @@ import { Select } from '../Select/Select';
 
 import { fieldReducers, SelectableValue } from '@grafana/data';
 
-interface Props {
+export interface Props {
   placeholder?: string;
   onChange: (stats: string[]) => void;
   stats: string[];
   allowMultiple?: boolean;
   defaultStat?: string;
   className?: string;
+  width?: number;
   menuPlacement?: 'auto' | 'bottom' | 'top';
 }
 
@@ -62,7 +63,7 @@ export class StatsPicker extends PureComponent<Props> {
   };
 
   render() {
-    const { stats, allowMultiple, defaultStat, placeholder, className, menuPlacement } = this.props;
+    const { stats, allowMultiple, defaultStat, placeholder, className, menuPlacement, width } = this.props;
 
     const select = fieldReducers.selectOptions(stats);
     return (
@@ -71,6 +72,7 @@ export class StatsPicker extends PureComponent<Props> {
         className={className}
         isClearable={!defaultStat}
         isMulti={allowMultiple}
+        width={width}
         isSearchable={true}
         options={select.options}
         placeholder={placeholder}

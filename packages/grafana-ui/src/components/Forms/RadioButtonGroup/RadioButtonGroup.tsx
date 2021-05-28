@@ -1,7 +1,7 @@
 import React, { useCallback, useRef } from 'react';
 import { css, cx } from '@emotion/css';
 import { uniqueId } from 'lodash';
-import { GrafanaThemeV2, SelectableValue } from '@grafana/data';
+import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { RadioButtonSize, RadioButton } from './RadioButton';
 import { Icon } from '../../Icon/Icon';
 import { IconName } from '../../../types/icon';
@@ -59,6 +59,7 @@ export function RadioButtonGroup<T>({
             fullWidth={fullWidth}
           >
             {o.icon && <Icon name={o.icon as IconName} className={styles.icon} />}
+            {o.imgUrl && <img src={o.imgUrl} alt={o.label} className={styles.img} />}
             {o.label}
           </RadioButton>
         );
@@ -69,13 +70,13 @@ export function RadioButtonGroup<T>({
 
 RadioButtonGroup.displayName = 'RadioButtonGroup';
 
-const getStyles = (theme: GrafanaThemeV2) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     radioGroup: css({
       display: 'inline-flex',
       flexDirection: 'row',
       flexWrap: 'nowrap',
-      border: `1px solid ${theme.components.input.border}`,
+      border: `1px solid ${theme.components.input.borderColor}`,
       borderRadius: theme.shape.borderRadius(),
       padding: '2px',
     }),
@@ -84,6 +85,11 @@ const getStyles = (theme: GrafanaThemeV2) => {
     }),
     icon: css`
       margin-right: 6px;
+    `,
+    img: css`
+      width: ${theme.spacing(2)};
+      height: ${theme.spacing(2)};
+      margin-right: ${theme.spacing(1)};
     `,
   };
 };

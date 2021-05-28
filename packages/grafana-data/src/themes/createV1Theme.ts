@@ -1,7 +1,7 @@
 import { GrafanaTheme, GrafanaThemeCommons, GrafanaThemeType } from '../types';
-import { GrafanaThemeV2 } from './types';
+import { GrafanaTheme2 } from './types';
 
-export function createV1Theme(theme: Omit<GrafanaThemeV2, 'v1'>): GrafanaTheme {
+export function createV1Theme(theme: Omit<GrafanaTheme2, 'v1'>): GrafanaTheme {
   const oldCommon: GrafanaThemeCommons = {
     name: 'Grafana Default',
     typography: {
@@ -171,27 +171,18 @@ export function createV1Theme(theme: Omit<GrafanaThemeV2, 'v1'>): GrafanaTheme {
     // Next-gen forms functional colors
     formLabel: theme.colors.text.primary,
     formDescription: theme.colors.text.secondary,
-    formInputBg: basicColors.gray05,
-    formInputBgDisabled: basicColors.gray10,
-    formInputBorder: borders.border2,
-    formInputBorderHover: basicColors.gray33,
-    formInputBorderActive: basicColors.blue95,
-    formInputBorderInvalid: basicColors.red88,
-    formInputPlaceholderText: textColors.textFaint,
-    formInputText: basicColors.gray85,
-    formInputDisabledText: basicColors.gray70,
-    formFocusOutline: basicColors.blue77,
-    formValidationMessageText: basicColors.white,
-    formValidationMessageBg: basicColors.red88,
-    formSwitchBg: basicColors.gray25,
-    formSwitchBgActive: basicColors.blue95,
-    formSwitchBgHover: basicColors.gray33,
-    formSwitchBgActiveHover: basicColors.blue80,
-    formSwitchBgDisabled: basicColors.gray25,
-    formSwitchDot: basicColors.gray15,
-    formCheckboxBgChecked: basicColors.blue95,
-    formCheckboxBgCheckedHover: basicColors.blue80,
-    formCheckboxCheckmark: basicColors.gray25,
+    formInputBg: theme.components.input.background,
+    formInputBgDisabled: theme.colors.action.disabledBackground,
+    formInputBorder: theme.components.input.borderColor,
+    formInputBorderHover: theme.components.input.borderHover,
+    formInputBorderActive: theme.colors.primary.border,
+    formInputBorderInvalid: theme.colors.error.border,
+    formInputPlaceholderText: theme.colors.text.disabled,
+    formInputText: theme.components.input.text,
+    formInputDisabledText: theme.colors.action.disabledText,
+    formFocusOutline: theme.colors.primary.main,
+    formValidationMessageText: theme.colors.error.contrastText,
+    formValidationMessageBg: theme.colors.error.main,
   };
 
   return {
@@ -203,16 +194,16 @@ export function createV1Theme(theme: Omit<GrafanaThemeV2, 'v1'>): GrafanaTheme {
     palette: {
       ...basicColors,
       brandPrimary: basicColors.orange,
-      brandSuccess: basicColors.greenBase,
-      brandWarning: basicColors.orange,
-      brandDanger: basicColors.redBase,
-      queryRed: basicColors.redBase,
-      queryGreen: '#74e680',
+      brandSuccess: theme.colors.success.main,
+      brandWarning: theme.colors.warning.main,
+      brandDanger: theme.colors.error.main,
+      queryRed: theme.colors.error.text,
+      queryGreen: theme.colors.success.text,
       queryPurple: '#fe85fc',
       queryOrange: basicColors.orange,
-      online: basicColors.greenBase,
-      warn: '#f79520',
-      critical: basicColors.redBase,
+      online: theme.colors.success.main,
+      warn: theme.colors.success.main,
+      critical: theme.colors.success.main,
     },
     colors: {
       ...backgrounds,
@@ -222,7 +213,7 @@ export function createV1Theme(theme: Omit<GrafanaThemeV2, 'v1'>): GrafanaTheme {
 
       bodyBg: theme.colors.background.canvas,
       panelBg: theme.components.panel.background,
-      panelBorder: theme.components.panel.border,
+      panelBorder: theme.components.panel.borderColor,
       pageHeaderBg: theme.colors.background.canvas,
       pageHeaderBorder: theme.colors.background.canvas,
 
@@ -238,6 +229,7 @@ export function createV1Theme(theme: Omit<GrafanaThemeV2, 'v1'>): GrafanaTheme {
     shadows: {
       listItem: 'none',
     },
+    visualization: theme.visualization,
   };
 }
 

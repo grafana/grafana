@@ -251,6 +251,7 @@ export function SelectBase<T>({
                     transform: translateY(-50%);
                     box-sizing: border-box;
                     line-height: 1;
+                    white-space: nowrap;
                   `
                 )}
               >
@@ -314,7 +315,9 @@ export function SelectBase<T>({
           DropdownIndicator(props: any) {
             return <DropdownIndicator isOpen={props.selectProps.menuIsOpen} />;
           },
-          SingleValue: SingleValue,
+          SingleValue(props: any) {
+            return <SingleValue {...props} disabled={disabled} />;
+          },
           MultiValueContainer: MultiValueContainer,
           MultiValueRemove: MultiValueRemove,
           ...components,

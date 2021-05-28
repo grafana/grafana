@@ -1,7 +1,7 @@
 import React from 'react';
 import { isArray, isObject, isUndefined } from 'lodash';
 import { useStyles2, Icon } from '@grafana/ui';
-import { GrafanaThemeV2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { css } from '@emotion/css';
 import { Diff } from './utils';
 
@@ -24,7 +24,7 @@ export const DiffValues: React.FC<DiffProps> = ({ diff }) => {
   );
 };
 
-const getStyles = (theme: GrafanaThemeV2) => css`
+const getStyles = (theme: GrafanaTheme2) => css`
   background-color: ${theme.colors.action.hover};
   border-radius: ${theme.shape.borderRadius()};
   color: ${theme.colors.text.primary};

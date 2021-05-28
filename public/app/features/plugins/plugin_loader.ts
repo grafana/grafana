@@ -46,6 +46,8 @@ grafanaUI.DataSourceApi = grafanaData.DataSourceApi;
 // rxjs
 import * as rxjs from 'rxjs';
 import * as rxjsOperators from 'rxjs/operators';
+// routing
+import * as reactRouter from 'react-router-dom';
 
 // add cache busting
 const bust = `?_cache=${Date.now()}`;
@@ -92,6 +94,7 @@ exposeToPlugin('angular', angular);
 exposeToPlugin('d3', d3);
 exposeToPlugin('rxjs', rxjs);
 exposeToPlugin('rxjs/operators', rxjsOperators);
+exposeToPlugin('react-router-dom', reactRouter);
 
 // Experimental modules
 exposeToPlugin('prismjs', prismjs);
@@ -236,7 +239,17 @@ export function importPanelPlugin(id: string): Promise<grafanaData.PanelPlugin> 
     throw new Error(`Plugin ${id} not found`);
   }
 
-  panelCache[id] = importPluginModule(meta.module)
+  panelCache[id] = getPanelPlugin(meta);
+
+  return panelCache[id];
+}
+
+export function importPanelPluginFromMeta(meta: grafanaData.PanelPluginMeta): Promise<grafanaData.PanelPlugin> {
+  return getPanelPlugin(meta);
+}
+
+function getPanelPlugin(meta: grafanaData.PanelPluginMeta): Promise<grafanaData.PanelPlugin> {
+  return importPluginModule(meta.module)
     .then((pluginExports) => {
       if (pluginExports.plugin) {
         return pluginExports.plugin as grafanaData.PanelPlugin;
@@ -253,9 +266,7 @@ export function importPanelPlugin(id: string): Promise<grafanaData.PanelPlugin> 
     })
     .catch((err) => {
       // TODO, maybe a different error plugin
-      console.warn('Error loading panel plugin: ' + id, err);
+      console.warn('Error loading panel plugin: ' + meta.id, err);
       return getPanelPluginLoadError(meta, err);
     });
-
-  return panelCache[id];
 }

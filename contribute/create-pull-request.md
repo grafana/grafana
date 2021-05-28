@@ -19,7 +19,7 @@ To increase the chance of having your pull request accepted, make sure your pull
 - Commits within the pull request follow the [Formatting guidelines](#Formatting-guidelines). 
 - The pull request closes one related issue.
 - The pull request contains necessary tests that verify the intended behavior.
-- If your pull request has conflicts, rebase your branch onto the master branch.
+- If your pull request has conflicts, rebase your branch onto the main branch.
 
 If the pull request fixes a bug:
 
@@ -42,6 +42,11 @@ Pull requests for Redux contributions must:
 - Use `reducerTester` to test reducers. Refer to [Redux framework](/contribute/style-guides/redux.md) for more details.
 - Not contain code that mutates state in reducers or thunks.
 - Not contain code that accesses the reducers state slice directly. Instead, the code should use state selectors to access state.
+
+Pull requests that add or modify unit tests that are written in Jest must adhere to these guidelines:
+
+- Don't add snapshots tests. We are incrementally removing existing snapshot tests, we don't want more.
+- If an existing unit test is written in Enzyme, migrate it to RTL (React Testing Library), unless you’re fixing a bug. Bug fixes usually shouldn't include any bigger refactoring, so it’s ok to skip migrating the test to RTL.
 
 ### Backend-specific guidelines
 
