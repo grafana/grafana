@@ -2,7 +2,7 @@ import React, { FC, useEffect } from 'react';
 import { useDispatch } from 'react-redux';
 import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
-import { PageToolbar, withErrorBoundary, useStyles2 } from '@grafana/ui';
+import { Button, Label, PageToolbar, withErrorBoundary, useStyles2 } from '@grafana/ui';
 import Page from 'app/core/components/Page/Page';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { fetchExistingRuleAction } from './state/actions';
@@ -37,8 +37,24 @@ const ViewAlertRulePage: FC<ViewAlertRuleProps> = ({ match }) => {
   return (
     <div className={styles.pageWrapper}>
       <Page>
-        <PageToolbar title={result.group.name} pageIcon="bell" />
-        <Page.Contents>view alert</Page.Contents>
+        <PageToolbar title={result.group.name} pageIcon="bell">
+          <Button variant="primary" type="button">
+            Edit
+          </Button>
+          <Button variant="destructive" type="button">
+            Delete
+          </Button>
+        </PageToolbar>
+        <Page.Contents>
+          {result.rule.annotations && result.rule.annotations.summary && (
+            <>
+              <Label>
+                Summary
+                <textarea value={result.rule.annotations.summary} />
+              </Label>
+            </>
+          )}
+        </Page.Contents>
       </Page>
     </div>
   );
