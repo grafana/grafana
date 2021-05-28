@@ -309,7 +309,7 @@ func putAdminScenario(t *testing.T, desc string, url string, routePattern string
 		t.Cleanup(bus.ClearBusHandlers)
 
 		hs := &HTTPServer{
-			Cfg: setting.NewCfg(),
+			Cfg: setting.NewCfg(setting.CommandLineArgs{}),
 		}
 
 		sc := setupScenarioContext(t, url)

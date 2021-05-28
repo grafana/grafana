@@ -101,7 +101,7 @@ func (m *Manager) Register(pluginID string, factory backendplugin.PluginFactoryF
 }
 
 // RegisterAndStart registers and starts a backend plugin
-func (m *manager) RegisterAndStart(ctx context.Context, pluginID string, factory backendplugin.PluginFactoryFunc) error {
+func (m *Manager) RegisterAndStart(ctx context.Context, pluginID string, factory backendplugin.PluginFactoryFunc) error {
 	err := m.Register(pluginID, factory)
 	if err != nil {
 		return err
@@ -118,7 +118,7 @@ func (m *manager) RegisterAndStart(ctx context.Context, pluginID string, factory
 }
 
 // UnregisterAndStop unregisters and stops a backend plugin
-func (m *manager) UnregisterAndStop(ctx context.Context, pluginID string) error {
+func (m *Manager) UnregisterAndStop(ctx context.Context, pluginID string) error {
 	m.logger.Debug("Unregistering backend plugin", "pluginId", pluginID)
 	m.pluginsMu.Lock()
 	defer m.pluginsMu.Unlock()
@@ -143,7 +143,7 @@ func (m *manager) UnregisterAndStop(ctx context.Context, pluginID string) error 
 	return nil
 }
 
-func (m *manager) IsRegistered(pluginID string) bool {
+func (m *Manager) IsRegistered(pluginID string) bool {
 	p, _ := m.Get(pluginID)
 
 	return p != nil && !p.IsDecommissioned()
@@ -169,7 +169,7 @@ func (m *Manager) getAWSEnvironmentVariables() []string {
 	return variables
 }
 
-func (m *manager) getAzureEnvironmentVariables() []string {
+func (m *Manager) getAzureEnvironmentVariables() []string {
 	variables := []string{}
 	if m.Cfg.Azure.Cloud != "" {
 		variables = append(variables, "AZURE_CLOUD="+m.Cfg.Azure.Cloud)
@@ -200,7 +200,7 @@ func (m *Manager) GetDataPlugin(pluginID string) interface{} {
 }
 
 // start starts a managed backend plugin
-func (m *manager) start(ctx context.Context, p backendplugin.Plugin) {
+func (m *Manager) start(ctx context.Context, p backendplugin.Plugin) {
 	if !p.IsManaged() {
 		return
 	}

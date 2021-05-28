@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
-	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -12,7 +11,7 @@ import (
 var newProviderFunc = sdkhttpclient.NewProvider
 
 // New creates a new HTTP client provider with pre-configured middlewares.
-func New(cfg *setting.Cfg) httpclient.Provider {
+func New(cfg *setting.Cfg) *sdkhttpclient.Provider {
 	logger := log.New("httpclient")
 	userAgent := fmt.Sprintf("Grafana/%s", cfg.BuildVersion)
 	middlewares := []sdkhttpclient.Middleware{

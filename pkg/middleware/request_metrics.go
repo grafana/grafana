@@ -44,7 +44,7 @@ func init() {
 	prometheus.MustRegister(httpRequestsInFlight, httpRequestDurationHistogram)
 }
 
-// RequestMetrics is a middleware handler that instruments the request
+// RequestMetrics is a middleware handler that instruments the request.
 func RequestMetrics(cfg *setting.Cfg) func(handler string) macaron.Handler {
 	return func(handler string) macaron.Handler {
 		return func(res http.ResponseWriter, req *http.Request, c *macaron.Context) {

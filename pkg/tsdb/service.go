@@ -26,7 +26,8 @@ import (
 // NewService returns a new Service.
 func NewService(cfg *setting.Cfg, cloudWatchService *cloudwatch.CloudWatchService,
 	cloudMonitoringService *cloudmonitoring.Service, azureMonitorService *azuremonitor.Service,
-	pluginManager plugins.Manager, postgresService *postgres.PostgresService) *Service {
+	pluginManager plugins.Manager, postgresService *postgres.PostgresService,
+	httpClientProvider httpclient.Provider) *Service {
 	return &Service{
 		Cfg:                    cfg,
 		CloudWatchService:      cloudWatchService,
@@ -34,18 +35,18 @@ func NewService(cfg *setting.Cfg, cloudWatchService *cloudwatch.CloudWatchServic
 		AzureMonitorService:    azureMonitorService,
 		PluginManager:          pluginManager,
 		registry: map[string]func(*models.DataSource) (plugins.DataPlugin, error){
-			"graphite":                         graphite.NewExecutor,
-			"opentsdb":                         opentsdb.NewExecutor,
-			"prometheus":                       prometheus.NewExecutor,
-			"influxdb":                         influxdb.NewExecutor,
+			"graphite":                         graphite.New(httpClientProvider),
+			"opentsdb":                         opentsdb.New(httpClientProvider),
+			"prometheus":                       prometheus.New(httpClientProvider),
+			"influxdb":                         influxdb.New(httpClientProvider),
 			"mssql":                            mssql.NewExecutor,
 			"postgres":                         postgresService.NewExecutor,
-			"mysql":                            mysql.NewExecutor,
-			"elasticsearch":                    elasticsearch.NewExecutor,
+			"mysql":                            mysql.New(httpClientProvider),
+			"elasticsearch":                    elasticsearch.New(httpClientProvider),
 			"stackdriver":                      cloudMonitoringService.NewExecutor,
 			"grafana-azure-monitor-datasource": azureMonitorService.NewExecutor,
-			"loki":                             loki.NewExecutor,
-			"tempo":                            tempo.NewExecutor,
+			"loki":                             loki.New(httpClientProvider),
+			"tempo":                            tempo.New(httpClientProvider),
 		},
 	}
 }
@@ -57,7 +58,6 @@ type Service struct {
 	CloudMonitoringService *cloudmonitoring.Service
 	AzureMonitorService    *azuremonitor.Service
 	PluginManager          plugins.Manager
-	HTTPClientProvider     httpclient.Provider `inject:""`
 
 	//nolint: staticcheck // plugins.DataPlugin deprecated
 	registry map[string]func(*models.DataSource) (plugins.DataPlugin, error)

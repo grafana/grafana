@@ -4,9 +4,12 @@ package main
 
 import (
 	"github.com/google/wire"
+	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/infra/httpclient"
+	"github.com/grafana/grafana/pkg/infra/httpclient/httpclientprovider"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/models"
@@ -57,6 +60,8 @@ var wireSet = wire.NewSet(
 	cloudmonitoring.ProvideService,
 	azuremonitor.ProvideService,
 	postgres.ProvideService,
+	httpclientprovider.New,
+	wire.Bind(new(httpclient.Provider), new(*sdkhttpclient.Provider)),
 )
 
 func initializeServer(cla setting.CommandLineArgs, opts server.Options, apiOpts api.ServerOptions) (*server.Server, error) {

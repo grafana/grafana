@@ -51,7 +51,7 @@ func (s *testService) Run(ctx context.Context) error {
 }
 
 func testServer() *Server {
-	s := newServer(Config{})
+	s := newServer(opts{})
 	// Required to skip configuration initialization that causes
 	// DI errors in this test.
 	s.isInitialized = true

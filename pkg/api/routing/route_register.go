@@ -56,16 +56,16 @@ type RouteRegister interface {
 type RegisterNamedMiddleware func(name string) macaron.Handler
 
 func ProvideRegister(cfg *setting.Cfg) *RouteRegisterImpl {
-	return NewRouteRegister(middleware.RequestTracing, middleware.RequestMetrics(cfg))
+	return NewRouteRegister(middleware.ProvideRouteOperationName, middleware.RequestMetrics(cfg))
 }
 
 // NewRouteRegister creates a new RouteRegister with all middlewares sent as params
-func NewRouteRegister(namedMiddleware ...RegisterNamedMiddleware) *RouteRegisterImpl {
+func NewRouteRegister(namedMiddlewares ...RegisterNamedMiddleware) *RouteRegisterImpl {
 	return &RouteRegisterImpl{
-		prefix:          "",
-		routes:          []route{},
-		subfixHandlers:  []macaron.Handler{},
-		namedMiddleware: namedMiddleware,
+		prefix:           "",
+		routes:           []route{},
+		subfixHandlers:   []macaron.Handler{},
+		namedMiddlewares: namedMiddlewares,
 	}
 }
 
@@ -76,11 +76,11 @@ type route struct {
 }
 
 type RouteRegisterImpl struct {
-	prefix          string
-	subfixHandlers  []macaron.Handler
-	namedMiddleware []RegisterNamedMiddleware
-	routes          []route
-	groups          []*RouteRegisterImpl
+	prefix           string
+	subfixHandlers   []macaron.Handler
+	namedMiddlewares []RegisterNamedMiddleware
+	routes           []route
+	groups           []*RouteRegisterImpl
 }
 
 // Init is necessary to implement registry.Service.
@@ -116,10 +116,10 @@ func (rr *RouteRegisterImpl) Insert(pattern string, fn func(RouteRegister), hand
 
 func (rr *RouteRegisterImpl) Group(pattern string, fn func(rr RouteRegister), handlers ...macaron.Handler) {
 	group := &RouteRegisterImpl{
-		prefix:          rr.prefix + pattern,
-		subfixHandlers:  append(rr.subfixHandlers, handlers...),
-		routes:          []route{},
-		namedMiddleware: rr.namedMiddleware,
+		prefix:           rr.prefix + pattern,
+		subfixHandlers:   append(rr.subfixHandlers, handlers...),
+		routes:           []route{},
+		namedMiddlewares: rr.namedMiddlewares,
 	}
 
 	fn(group)
@@ -147,7 +147,7 @@ func (rr *RouteRegisterImpl) route(pattern, method string, handlers ...macaron.H
 	h := make([]macaron.Handler, 0)
 	fullPattern := rr.prefix + pattern
 
-	for _, fn := range rr.namedMiddleware {
+	for _, fn := range rr.namedMiddlewares {
 		h = append(h, fn(fullPattern))
 	}
 

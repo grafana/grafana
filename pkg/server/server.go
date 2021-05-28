@@ -15,7 +15,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/api"
 	_ "github.com/grafana/grafana/pkg/extensions"
-	"github.com/grafana/grafana/pkg/infra/httpclient/httpclientprovider"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	_ "github.com/grafana/grafana/pkg/infra/remotecache"
@@ -68,18 +67,14 @@ func (r *globalServiceRegistry) GetServices() []*registry.Descriptor {
 
 // New returns a new instance of Server.
 func New(opts Options, cfg *setting.Cfg, httpServer *api.HTTPServer) (*Server, error) {
-	s := newServer(cfg)
-	if err := s.init(); err != nil {
-		return nil, err
-	}
-	return s, nil
+	return newServer(opts, cfg, httpServer)
 }
 
-func newServer(cfg Config) *Server {
+func newServer(opts Options, cfg *setting.Cfg, httpServer *api.HTTPServer) (*Server, error) {
 	rootCtx, shutdownFn := context.WithCancel(context.Background())
 	childRoutines, childCtx := errgroup.WithContext(rootCtx)
 
-	return &Server{
+	s := &Server{
 		context:          childCtx,
 		HTTPServer:       httpServer,
 		shutdownFn:       shutdownFn,
@@ -97,6 +92,8 @@ func newServer(cfg Config) *Server {
 	if err := s.init(); err != nil {
 		return nil, err
 	}
+
+	return s, nil
 }
 
 // Server is responsible for managing the lifecycle of services.

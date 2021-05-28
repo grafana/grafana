@@ -8,7 +8,6 @@ import (
 	_ "github.com/cortexproject/cortex/pkg/util"
 	_ "github.com/crewjam/saml"
 	_ "github.com/gobwas/glob"
-	"github.com/grafana/grafana/pkg/setting"
 	_ "github.com/grafana/loki/clients/pkg/promtail/client"
 	_ "github.com/grafana/loki/pkg/logproto"
 	_ "github.com/grpc-ecosystem/go-grpc-middleware"

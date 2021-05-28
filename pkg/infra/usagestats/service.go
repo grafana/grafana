@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
@@ -52,7 +51,6 @@ func ProvideService(cfg *setting.Cfg, bus bus.Bus, sqlStore *sqlstore.SQLStore,
 		oauthProviders:     oauthProviders,
 		PluginManager:      pluginManager,
 		log:                log.New("infra.usagestats"),
-		externalMetrics:    make(map[string]MetricFunc),
 	}
 }
 

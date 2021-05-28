@@ -27,7 +27,7 @@ type Manager interface {
 	// CheckHealth checks the health of a registered backend plugin.
 	CheckHealth(ctx context.Context, pCtx backend.PluginContext) (*backend.CheckHealthResult, error)
 	// CallResource calls a plugin resource.
-	CallResource(pluginConfig backend.PluginContext, ctx *models.ReqContext, path string)
+	CallResource(pCtx backend.PluginContext, reqCtx *models.ReqContext, path string)
 	// Get plugin by its ID.
 	Get(pluginID string) (Plugin, bool)
 	// GetDataPlugin gets a DataPlugin with a certain ID or nil if it doesn't exist.

@@ -60,9 +60,9 @@ func ProvideService(cfg *setting.Cfg) (*RenderingService, error) {
 	}
 
 	// ensure CSVsDir exists
-	err = os.MkdirAll(rs.Cfg.CSVsDir, 0700)
+	err = os.MkdirAll(cfg.CSVsDir, 0700)
 	if err != nil {
-		return fmt.Errorf("failed to create CSVs directory %q: %w", rs.Cfg.CSVsDir, err)
+		return nil, fmt.Errorf("failed to create CSVs directory %q: %w", cfg.CSVsDir, err)
 	}
 
 	var domain string
