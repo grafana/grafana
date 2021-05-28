@@ -55,3 +55,4 @@ Metric Name | Type | Description
 `alerting.rule_group_rules` | gauge | The number of rules
 
 
+- [View alert rules and their current state]({{< relref "./rule-list.md" >}})
