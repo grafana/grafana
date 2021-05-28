@@ -15,7 +15,7 @@ is a core new feature: Alerting! Read on below for a detailed description of wha
 
 ## Alerting
 
-{{< imgbox max-width="40%" img="/img/docs/v4/drag_handles_gif.gif" caption="Alerting overview" >}}
+{{< figure class="float-right"  max-width="40%" src="/static/img/docs/v4/drag_handles_gif.gif" caption="Alerting overview" >}}
 
 Alerting is a really revolutionary feature for Grafana. It transforms Grafana from a
 visualization tool into a truly mission critical monitoring tool. The alert rules are very easy to
@@ -33,7 +33,7 @@ on but will be not ready for v4 release.
 
 ### Rules
 
-{{< imgbox max-width="40%" img="/img/docs/v4/alerting_conditions.png" caption="Alerting Conditions" >}}
+{{< figure class="float-right"  max-width="40%" src="/static/img/docs/v4/alerting_conditions.png" caption="Alerting Conditions" >}}
 
 The rule configuration allows you to specify a name, how often the rule should be evaluated and a series
 of conditions that all need to be true for the alert to fire.
@@ -48,7 +48,7 @@ of another alert in your conditions, and `Time Of Day`.
 
 ### Notifications
 
-{{< imgbox max-width="40%" img="/img/docs/v4/slack_notification.png" caption="Alerting Slack Notification" >}}
+{{< figure class="float-right"  max-width="40%" src="/static/img/docs/v4/slack_notification.png" caption="Alerting Slack Notification" >}}
 
 Alerting would not be very useful if there was no way to send notifications when rules trigger and change state. You
 can set up notifications of different types. We currently have `Slack`, `PagerDuty`, `Email` and `Webhook` with more in the
@@ -66,7 +66,7 @@ to add graph comments in the form of annotations directly from within Grafana in
 
 ### Alert List Panel
 
-{{< imgbox max-width="30%" img="/img/docs/v4/alert_list_panel.png" caption="Alert List Panel" >}}
+{{< figure class="float-right"  max-width="30%" src="/static/img/docs/v4/alert_list_panel.png" caption="Alert List Panel" >}}
 
 This new panel allows you to show alert rules or a history of alert rule state changes. You can filter based on states you are
 interested in. This panel is very useful for overview style dashboards.
@@ -75,7 +75,7 @@ interested in. This panel is very useful for overview style dashboards.
 
 ## Ad-hoc filter variable
 
-{{< imgbox max-width="30%" img="/img/docs/v4/adhoc_filters.gif" caption="Ad-hoc filters variable" >}}
+{{< figure class="float-right"  max-width="30%" src="/static/img/docs/v4/adhoc_filters.gif" caption="Ad-hoc filters variable" >}}
 
 This is a new and very different type of template variable. It will allow you to create new key/value filters on the fly
 with autocomplete for both key and values. The filter condition will be automatically applied to all
@@ -111,9 +111,9 @@ We always try to bring some UX/UI refinements and polish in every release.
     </p>
   </div>
   <div class="medium-6 columns">
-   {{< lightboxhelper max-width="100%" img="/img/docs/v4/tvmode.png" caption="TV mode" >}}
+   {{< figure src="/static/img/docs/v4/tvmode.png" caption="TV mode" >}}
    <video width="320" height="240" controls>
-    <source src="/assets/videos/tvmode.mp4" type="video/mp4">
+    <source src="/static/assets/videos/tvmode.mp4" type="video/mp4">
     Your browser does not support the video tag.
   </video>
   </div>
@@ -121,7 +121,7 @@ We always try to bring some UX/UI refinements and polish in every release.
 
 ### New row menu and add panel experience
 
-{{< imgbox max-width="50%" img="/img/docs/v4/add_panel.gif" caption="Add Panel flow" >}}
+{{< figure class="float-right"  max-width="50%" src="/static/img/docs/v4/add_panel.gif" caption="Add Panel flow" >}}
 
 We spent a lot of time improving the dashboard building experience to make it both
 more efficient and easier for beginners. After many good but not great experiments
@@ -144,7 +144,7 @@ We plan to further improve dashboard building in the future with a more rich gri
 
 ### Keyboard shortcuts
 
-{{< imgbox max-width="40%" img="/img/docs/v4/shortcuts.png" caption="Shortcuts" >}}
+{{< figure class="float-right"  max-width="40%" src="/static/img/docs/v4/shortcuts.png" caption="Shortcuts" >}}
 
 Grafana v4 introduces a number of really powerful keyboard shortcuts. You can now focus a panel
 by hovering over it with your mouse. With a panel focused you can simply hit `e` to toggle panel

@@ -33,27 +33,27 @@ Set the position of the bar relative to a data point. In the examples below, **S
 
 #### Before
 
-![Bar alignment before icon](/img/docs/time-series-panel/bar-alignment-icon-before-7-4.png)
+![Bar alignment before icon](/static/img/docs/time-series-panel/bar-alignment-icon-before-7-4.png)
 
 The bar is drawn before the point. The point is placed on the trailing corner of the bar.
 
-![Bar alignment before example](/img/docs/time-series-panel/bar-alignment-before-7-4.png)
+![Bar alignment before example](/static/img/docs/time-series-panel/bar-alignment-before-7-4.png)
 
 #### Center
 
-![Bar alignment center icon](/img/docs/time-series-panel/bar-alignment-icon-center-7-4.png)
+![Bar alignment center icon](/static/img/docs/time-series-panel/bar-alignment-icon-center-7-4.png)
 
 The bar is drawn around the point. The point is placed in the center of the bar. This is the default.
 
-![Bar alignment center](/img/docs/time-series-panel/bar-alignment-center-7-4.png)
+![Bar alignment center](/static/img/docs/time-series-panel/bar-alignment-center-7-4.png)
 
 #### After
 
-![Bar alignment after icon](/img/docs/time-series-panel/bar-alignment-icon-after-7-4.png)
+![Bar alignment after icon](/static/img/docs/time-series-panel/bar-alignment-icon-after-7-4.png)
 
 The bar is drawn after the point. The point is placed on the leading corner of the bar.
 
-![Bar alignment after](/img/docs/time-series-panel/bar-alignment-after-7-4.png)
+![Bar alignment after](/static/img/docs/time-series-panel/bar-alignment-after-7-4.png)
 
 ### Line width
 
@@ -61,11 +61,11 @@ Set the thickness of the lines bar outlines, from 0 to 10 pixels. **Fill opacity
 
 Line thickness set to 1:
 
-![Line thickness 1 example](/img/docs/time-series-panel/bar-graph-thickness-1-7-4.png)
+![Line thickness 1 example](/static/img/docs/time-series-panel/bar-graph-thickness-1-7-4.png)
 
 Line thickness set to 7:
 
-![Line thickness 7 example](/img/docs/time-series-panel/bar-graph-thickness-7-7-4.png)
+![Line thickness 7 example](/static/img/docs/time-series-panel/bar-graph-thickness-7-7-4.png)
 
 ### Fill opacity
 
@@ -73,11 +73,11 @@ Set the opacity of the bar fill, from 0 to 100 percent. In the examples below, t
 
 Fill opacity set to 20:
 
-![Fill opacity 20 example](/img/docs/time-series-panel/bar-graph-opacity-20-7-4.png)
+![Fill opacity 20 example](/static/img/docs/time-series-panel/bar-graph-opacity-20-7-4.png)
 
 Fill opacity set to 95:
 
-![Fill opacity 95 example](/img/docs/time-series-panel/bar-graph-opacity-95-7-4.png)
+![Fill opacity 95 example](/static/img/docs/time-series-panel/bar-graph-opacity-95-7-4.png)
 
 ### Gradient mode
 
@@ -89,19 +89,19 @@ Gradient appearance is influenced by the **Fill opacity** setting. In the screen
 
 No gradient fill. This is the default setting.
 
-![Gradient mode none example](/img/docs/time-series-panel/bar-graph-gradient-none-7-4.png)
+![Gradient mode none example](/static/img/docs/time-series-panel/bar-graph-gradient-none-7-4.png)
 
 #### Opacity
 
 Transparency of the gradient is calculated based on the values on the y-axis. Opacity of the fill is increasing with the values on the Y-axis.
 
-![Gradient mode opacity example](/img/docs/time-series-panel/bar-graph-gradient-opacity-7-4.png)
+![Gradient mode opacity example](/static/img/docs/time-series-panel/bar-graph-gradient-opacity-7-4.png)
 
 #### Hue
 
 Gradient color is generated based on the hue of the line color.
 
-![Gradient mode hue example](/img/docs/time-series-panel/bar-graph-gradient-hue-7-4.png)
+![Gradient mode hue example](/static/img/docs/time-series-panel/bar-graph-gradient-hue-7-4.png)
 
 ### Show points
 
@@ -121,17 +121,17 @@ Set the size of the points, from 1 to 40 pixels in diameter.
 
 Point size set to 6:
 
-![Show points point size 6 example](/img/docs/time-series-panel/bar-graph-show-points-6-7-4.png)
+![Show points point size 6 example](/static/img/docs/time-series-panel/bar-graph-show-points-6-7-4.png)
 
 Point size set to 20:
 
-![Show points point size 20 example](/img/docs/time-series-panel/bar-graph-show-points-20-7-4.png)
+![Show points point size 20 example](/static/img/docs/time-series-panel/bar-graph-show-points-20-7-4.png)
 
 #### Never
 
 Never show the points.
 
-![Show points point never example](/img/docs/time-series-panel/bar-graph-show-points-never-7-4.png)
+![Show points point never example](/static/img/docs/time-series-panel/bar-graph-show-points-never-7-4.png)
 
 {{< docs/shared "visualizations/stack-series-link.md" >}}
 
@@ -143,4 +143,4 @@ Below are some bar graph examples to give you ideas.
 
 ### Hue gradient
 
-![Bars with hue gradient example](/img/docs/time-series-panel/bars-with-hue-gradient-7-4.png)
+![Bars with hue gradient example](/static/img/docs/time-series-panel/bars-with-hue-gradient-7-4.png)
