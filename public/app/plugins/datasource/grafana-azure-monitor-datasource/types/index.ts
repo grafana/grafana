@@ -230,10 +230,9 @@ export interface AzureQueryEditorFieldProps {
 }
 
 export interface AzureResourceSummaryItem {
-  id: string;
-  name: string;
   subscriptionName: string;
-  resourceGroupName: string;
+  resourceGroupName: string | undefined;
+  resourceName: string | undefined;
 }
 
 export interface RawAzureResourceGroupItem {
