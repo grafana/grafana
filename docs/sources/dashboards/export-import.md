@@ -25,7 +25,7 @@ add template variables for things like a metric prefix (use constant variable) a
 A template variable of the type `Constant` will automatically be hidden in
 the dashboard, and will also be added as a required input when the dashboard is imported.
 
-## Importing a dashboard
+## Import dashboard
 
 To import a dashboard click the + icon in the side menu, and then click **Import**.
 
