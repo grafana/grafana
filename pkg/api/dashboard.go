@@ -55,7 +55,7 @@ func (hs *HTTPServer) TrimDashboard(c *models.ReqContext, cmd models.TrimDashboa
 	if !hs.LoadSchemaService.IsDisabled() {
 		trimedResult, err = hs.LoadSchemaService.DashboardTrimDefaults(*dash)
 		if err != nil {
-			return response.Error(500, "Error while trim default value from dashboard json", err)
+			return response.Error(500, "Error while exporting with default values removed", err)
 		}
 	}
 
