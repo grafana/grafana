@@ -1,4 +1,4 @@
-import React, { FC, useEffect } from 'react';
+import React, { FC, useCallback, useEffect, useMemo } from 'react';
 import { useDispatch } from 'react-redux';
 import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
@@ -8,6 +8,9 @@ import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { fetchExistingRuleAction } from './state/actions';
 import { useUnifiedAlertingSelector } from './hooks/useUnifiedAlertingSelector';
 import { parseRuleIdentifier } from './utils/rules';
+import { AlertingQueryRunner } from './state/AlertingQueryRunner';
+import { useObservable } from 'react-use';
+import { alertRuleToQueries } from './utils/query';
 
 type ViewAlertRuleProps = GrafanaRouteComponentProps<{ id?: string }>;
 
@@ -16,8 +19,25 @@ const ViewAlertRulePage: FC<ViewAlertRuleProps> = ({ match }) => {
   const { loading, result, error, dispatched } = useUnifiedAlertingSelector((state) => state.ruleForm.existingRule);
   const dispatch = useDispatch();
   const styles = useStyles2(getStyles);
+  const runner = useMemo(() => new AlertingQueryRunner(), []);
+  const data = useObservable(runner.get());
+
+  const onRunQueries = useCallback(() => {
+    const queries = alertRuleToQueries(result);
+
+    if (queries.length === 0) {
+      return;
+    }
+
+    runner.run(queries);
+  }, [result, runner]);
+
+  useEffect(() => {
+    return () => runner.destroy();
+  }, [runner]);
 
   const identifier = getIdentifier(id);
+
   useEffect(() => {
     if (!dispatched && identifier) {
       dispatch(fetchExistingRuleAction(identifier));
@@ -32,7 +52,8 @@ const ViewAlertRulePage: FC<ViewAlertRuleProps> = ({ match }) => {
     return <div>no alert rule</div>;
   }
 
-  console.log(result);
+  console.log('result', result);
+  console.log('data', data);
 
   return (
     <div className={styles.pageWrapper}>
@@ -54,6 +75,9 @@ const ViewAlertRulePage: FC<ViewAlertRuleProps> = ({ match }) => {
               </Label>
             </>
           )}
+          <Button variant="secondary" type="button" onClick={onRunQueries}>
+            Run Queries
+          </Button>
         </Page.Contents>
       </Page>
     </div>
