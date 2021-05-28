@@ -35,7 +35,7 @@ The data source can access metrics from four different services. You can configu
    - **Default Subscription Id** (Subscriptions -> Choose subscription -> Overview -> Subscription ID)
 
 1. Paste these four items into the fields in the Azure Monitor API Details section:
-   {{< docs-imagebox img="/img/docs/v62/config_1_azure_monitor_details.png" class="docs-image--no-shadow" caption="Azure Monitor Configuration Details" >}}
+   {{< figure src="/static/img/docs/v62/config_1_azure_monitor_details.png" class="docs-image--no-shadow" caption="Azure Monitor Configuration Details" >}}
 
    - The Subscription Id can be changed per query. Save the data source and refresh the page to see the list of subscriptions available for the specified Client Id.
 
@@ -50,10 +50,10 @@ The data source can access metrics from four different services. You can configu
    - API Key
 
 1. Paste these two items into the appropriate fields in the Application Insights API Details section:
-   {{< docs-imagebox img="/img/docs/v62/config_2_app_insights_api_details.png" class="docs-image--no-shadow" caption="Application Insights Configuration Details" >}}
+   {{< figure src="/static/img/docs/v62/config_2_app_insights_api_details.png" class="docs-image--no-shadow" caption="Application Insights Configuration Details" >}}
 
 1. Test that the configuration details are correct by clicking on the "Save & Test" button:
-   {{< docs-imagebox img="/img/docs/v62/config_3_save_and_test.png" class="docs-image--no-shadow" caption="Save and Test" >}}
+   {{< figure src="/static/img/docs/v62/config_3_save_and_test.png" class="docs-image--no-shadow" caption="Save and Test" >}}
 
 Alternatively on step 4 if creating a new Azure Active Directory App, use the [Azure CLI](https://docs.microsoft.com/en-us/cli/azure/?view=azure-cli-latest):
 
@@ -89,7 +89,7 @@ Examples of metrics that you can get from the service are:
 - `Microsoft.Network/networkInterfaces - Bytes sent`
 - `Microsoft.Storage/storageAccounts - Used Capacity`
 
-{{< docs-imagebox img="/img/docs/v60/azuremonitor-service-query-editor.png" class="docs-image--no-shadow" caption="Metrics Query Editor" >}}
+{{< figure src="/static/img/docs/v60/azuremonitor-service-query-editor.png" class="docs-image--no-shadow" caption="Metrics Query Editor" >}}
 
 As of Grafana 7.1, the query editor allows you to query multiple dimensions for metrics that support them. Metrics that support multiple dimensions are those listed in the [Azure Monitor supported Metrics List](https://docs.microsoft.com/en-us/azure/azure-monitor/platform/metrics-supported) that have one or more values listed in the "Dimension" column for the metric.
 
@@ -147,7 +147,7 @@ Examples:
 - Chaining template variables: `ResourceNames($rg, $ns)`
 - Do not quote parameters: `MetricNames(hg, Microsoft.Network/publicIPAddresses, grafanaIP)`
 
-{{< docs-imagebox img="/img/docs/v60/azuremonitor-service-variables.png" class="docs-image--no-shadow" caption="Nested Azure Monitor Template Variables" >}}
+{{< figure src="/static/img/docs/v60/azuremonitor-service-variables.png" class="docs-image--no-shadow" caption="Nested Azure Monitor Template Variables" >}}
 
 Check out the [Templating]({{< relref "../variables/_index.md" >}}) documentation for an introduction to the templating feature and the different
 types of template variables.
@@ -160,7 +160,7 @@ Not all metrics returned by the Azure Monitor Metrics API have values. To make i
 
 Grafana alerting is supported for the Azure Monitor service. This is not Azure Alerts support. For more information about Grafana alerting, refer to [how alerting in Grafana works]({{< relref "../alerting/_index.md" >}}).
 
-{{< docs-imagebox img="/img/docs/v60/azuremonitor-alerting.png" class="docs-image--no-shadow" caption="Azure Monitor Alerting" >}}
+{{< figure src="/static/img/docs/v60/azuremonitor-alerting.png" class="docs-image--no-shadow" caption="Azure Monitor Alerting" >}}
 
 ## Query the Logs service
 
@@ -202,7 +202,7 @@ Perf
 
 > **Tip**: In the above query, the Kusto syntax `Samples=count()` and `["Avg Value"]=...` is used to rename those columns — the second syntax allowing for the space. This changes the name of the metric that Grafana uses, and as a result, things like series legends and table columns will match what you specify. Here `Samples` is displayed instead of `_count`.
 
-{{< docs-imagebox img="/img/docs/azuremonitor/logs_multi-value_multi-dim.png" class="docs-image--no-shadow" caption="Azure Logs query with multiple values and multiple dimensions" >}}
+{{< figure src="/static/img/docs/azuremonitor/logs_multi-value_multi-dim.png" class="docs-image--no-shadow" caption="Azure Logs query with multiple values and multiple dimensions" >}}
 
 ### Table queries
 
@@ -294,7 +294,7 @@ Perf
 
 > Only available in Grafana v7.0+.
 
-{{< docs-imagebox img="/img/docs/v70/azure-log-analytics-deep-linking.png" max-width="500px" class="docs-image--right" caption="Logs deep linking" >}}
+{{< figure src="/static/img/docs/v70/azure-log-analytics-deep-linking.png" max-width="500px" class="docs-image--right" caption="Logs deep linking" >}}
 
 Click on a time series in the panel to see a context menu with a link to `View in Azure Portal`. Clicking that link opens the Azure Metric Logs query editor in the Azure Portal and runs the query from the Grafana panel there.
 
@@ -310,7 +310,7 @@ Grafana alerting is supported for Application Insights. This is not Azure Alerts
 
 ## Query Application Insights service
 
-{{< docs-imagebox img="/img/docs/azuremonitor/insights_metrics_multi-dim.png" class="docs-image--no-shadow" caption="Application Insights Query Editor" >}}
+{{< figure src="/static/img/docs/azuremonitor/insights_metrics_multi-dim.png" class="docs-image--no-shadow" caption="Application Insights Query Editor" >}}
 
 As of Grafana 7.1, you can select more than one group by dimension.
 
@@ -362,19 +362,19 @@ Examples:
 - Passing in metric name variable: `AppInsightsGroupBys(requests/count)`
 - Chaining template variables: `AppInsightsGroupBys($metricnames)`
 
-{{< docs-imagebox img="/img/docs/v60/appinsights-service-variables.png" class="docs-image--no-shadow" caption="Nested Application Insights Template Variables" >}}
+{{< figure src="/static/img/docs/v60/appinsights-service-variables.png" class="docs-image--no-shadow" caption="Nested Application Insights Template Variables" >}}
 
 ### Application Insights alerting
 
 Grafana alerting is supported for Application Insights. This is not Azure Alerts support. For more information about Grafana alerting, refer to [Alerts overview]({{< relref "../alerting/_index.md" >}}).
 
-{{< docs-imagebox img="/img/docs/v60/azuremonitor-alerting.png" class="docs-image--no-shadow" caption="Azure Monitor Alerting" >}}
+{{< figure src="/static/img/docs/v60/azuremonitor-alerting.png" class="docs-image--no-shadow" caption="Azure Monitor Alerting" >}}
 
 ## Query the Application Insights Analytics service
 
 If you change the service type to **Insights Analytics**, then a similar editor to the Log Analytics service is available. This service also uses the Kusto language, so the instructions for querying data are identical to [querying the log analytics service]({{< relref "#querying-the-azure-log-analytics-service" >}}), except that you query Application Insights Analytics data instead.
 
-{{< docs-imagebox img="/img/docs/azuremonitor/insights_analytics_multi-dim.png" class="docs-image--no-shadow" caption="Azure Application Insights Analytics query with multiple dimensions" >}}
+{{< figure src="/static/img/docs/azuremonitor/insights_analytics_multi-dim.png" class="docs-image--no-shadow" caption="Azure Application Insights Analytics query with multiple dimensions" >}}
 
 ## Configure the data source with provisioning
 
@@ -419,7 +419,7 @@ To prepare for this upcoming change, Application Insights queries can now be mad
 
 Azure Resource Graph (ARG) is a service in Azure that is designed to extend Azure Resource Management by providing efficient and performant resource exploration with the ability to query at scale across a given set of subscriptions so that you can effectively govern your environment. By querying ARG, you can query resources with complex filtering, iteratively explore resources based on governance requirements, and assess the impact of applying policies in a vast cloud environment.
 
-{{< docs-imagebox img="/img/docs/azure-monitor/azure-resource-graph-8-0.png" class="docs-image--no-shadow" caption="Azure Resource Graph Editor" >}}
+{{< figure src="/static/img/docs/azure-monitor/azure-resource-graph-8-0.png" class="docs-image--no-shadow" caption="Azure Resource Graph Editor" >}}
 
 ### Table queries
 

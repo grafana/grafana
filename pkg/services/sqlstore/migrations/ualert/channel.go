@@ -110,7 +110,8 @@ func (m *migration) makeReceiverAndRoute(ruleUid string, channelUids []interface
 
 	addChannel := func(c *notificationChannel) error {
 		if c.Type == "hipchat" || c.Type == "sensu" {
-			return fmt.Errorf("discontinued notification channel found: %s", c.Type)
+			m.mg.Logger.Error("alert migration error: discontinued notification channel found", "type", c.Type, "name", c.Name, "uid", c.Uid)
+			return nil
 		}
 
 		uid, ok := m.generateChannelUID()
@@ -179,7 +180,8 @@ func (m *migration) updateDefaultAndUnmigratedChannels(amConfig *PostableUserCon
 			continue
 		}
 		if c.Type == "hipchat" || c.Type == "sensu" {
-			return fmt.Errorf("discontinued notification channel found: %s", c.Type)
+			m.mg.Logger.Error("alert migration error: discontinued notification channel found", "type", c.Type, "name", c.Name, "uid", c.Uid)
+			continue
 		}
 
 		uid, ok := m.generateChannelUID()
