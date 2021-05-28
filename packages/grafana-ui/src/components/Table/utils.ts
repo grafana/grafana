@@ -223,7 +223,7 @@ function toNumber(value: any): number {
   }
 
   if (value === null || value === undefined || value === '' || isNaN(value)) {
-    return 0;
+    return Number.NEGATIVE_INFINITY;
   }
 
   return Number(value);

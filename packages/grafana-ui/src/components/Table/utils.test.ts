@@ -442,12 +442,14 @@ describe('Table utils', () => {
       ${{ values: [1] }}                        | ${{ values: [Number.POSITIVE_INFINITY] }} | ${-1}
       ${{ values: [1] }}                        | ${{ values: [Number.NEGATIVE_INFINITY] }} | ${1}
       ${{ values: [1] }}                        | ${{ values: ['infinIty'] }}               | ${1}
+      ${{ values: [-1] }}                       | ${{ values: ['infinIty'] }}               | ${1}
       ${{ values: [] }}                         | ${{ values: [1] }}                        | ${-1}
       ${{ values: [undefined] }}                | ${{ values: [1] }}                        | ${-1}
       ${{ values: [null] }}                     | ${{ values: [1] }}                        | ${-1}
       ${{ values: [Number.POSITIVE_INFINITY] }} | ${{ values: [1] }}                        | ${1}
       ${{ values: [Number.NEGATIVE_INFINITY] }} | ${{ values: [1] }}                        | ${-1}
       ${{ values: ['infinIty'] }}               | ${{ values: [1] }}                        | ${-1}
+      ${{ values: ['infinIty'] }}               | ${{ values: [-1] }}                       | ${-1}
     `("when called with a: '$a.toString', b: '$b.toString' then result should be '$expected'", ({ a, b, expected }) => {
       expect(sortNumber(a, b, '0')).toEqual(expected);
     });
