@@ -9,9 +9,9 @@ weight = 500
 
 > **Note:** Available in Grafana Enterprise v8.0+.
 
-Settings updates at runtime allows you to update Grafana settings with no need to restart the instance.
+Settings updates at runtime allows you to update Grafana settings with no need to restart the Grafana server.
 
-Those updates that happen at runtime are stored in the database and override
+Updates that happen at runtime are stored in the database and override
 [settings from the other sources](https://grafana.com/docs/grafana/latest/administration/configuration/)
 (arguments, environment variables, settings file, etc). Therefore, every time a specific setting key is removed at runtime,
 the value used for that key is the inherited one from the other sources in the reverse order of precedence 
@@ -24,7 +24,7 @@ Currently, **it only supports updates on the `auth.saml` section.**
 
 You can update settings through the [Admin API]({{< relref "../http_api/admin.md#update-settings" >}}).
 
-It verifies if the given settings updates are allowed and valid, persists them into the database and reloads
+When you submit a settings update via API, Grafana verifies if the given settings updates are allowed and valid. If they are, then Grafana stores the settings in the database and reloads
 Grafana services with no need to restart the instance.
 
 So, the payload of a `PUT` request to the update settings endpoint (`/api/admin/settings`) 
@@ -73,8 +73,8 @@ won't be persisted into the database.
 
 ## Background job (high availability set-ups)
 
-Grafana Enterprise has a built-in scheduled background job that every minute looks into the database for
-settings updates. If so, it reloads the Grafana services affected by the detected changes. 
+Grafana Enterprise has a built-in scheduled background job that looks into the database every minute for
+settings updates. If there are updates, it reloads the Grafana services affected by the detected changes. 
 
-It is used as the synchronization mechanism in high availability set-ups. So, after you perform some changes through the
+The background job synchronizes settings between instances in high availability set-ups. So, after you perform some changes through the
 HTTP API, then the other instances are synchronized through the database and the background job.
