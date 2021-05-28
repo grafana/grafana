@@ -5,7 +5,7 @@ export function addTooltipOptions<T extends OptionsWithTooltip>(builder: PanelOp
   builder.addRadio({
     path: 'tooltip.mode',
     name: 'Tooltip mode',
-    category: ['Legend'],
+    category: ['Tooltip'],
     description: '',
     defaultValue: 'single',
     settings: {

@@ -5,23 +5,24 @@ import { GrafanaTheme2, PanelData } from '@grafana/data';
 import { config, PanelRenderer } from '@grafana/runtime';
 import { RadioButtonGroup, useStyles2 } from '@grafana/ui';
 import { PanelOptions } from 'app/plugins/panel/table/models.gen';
+import { SupportedPanelPlugins } from './QueryWrapper';
 import { useVizHeight } from '../../hooks/useVizHeight';
 import { STAT, TABLE, TIMESERIES } from '../../utils/constants';
 
 interface Props {
   data: PanelData;
-  defaultPanel?: 'timeseries' | 'table' | 'stat';
+  currentPanel: SupportedPanelPlugins;
+  changePanel: (panel: SupportedPanelPlugins) => void;
 }
 
-export const VizWrapper: FC<Props> = ({ data, defaultPanel }) => {
-  const [pluginId, changePluginId] = useState<string>(defaultPanel ?? TIMESERIES);
+export const VizWrapper: FC<Props> = ({ data, currentPanel, changePanel }) => {
   const [options, setOptions] = useState<PanelOptions>({
     frameIndex: 0,
     showHeader: true,
   });
   const panels = getSupportedPanels();
-  const vizHeight = useVizHeight(data, pluginId, options.frameIndex);
-  const styles = useStyles2(getStyles);
+  const vizHeight = useVizHeight(data, currentPanel, options.frameIndex);
+  const styles = useStyles2(getStyles(vizHeight));
 
   if (!options || !data) {
     return null;
@@ -30,28 +31,28 @@ export const VizWrapper: FC<Props> = ({ data, defaultPanel }) => {
   return (
     <div className={styles.wrapper}>
       <div className={styles.buttonGroup}>
-        <RadioButtonGroup options={panels} value={pluginId} onChange={changePluginId} />
+        <RadioButtonGroup options={panels} value={currentPanel} onChange={changePanel} />
       </div>
-      <div style={{ height: vizHeight, width: '100%' }}>
-        <AutoSizer style={{ width: '100%', height: '100%' }}>
-          {({ width, height }) => {
-            if (width === 0 || height === 0) {
-              return null;
-            }
-            return (
+      <AutoSizer>
+        {({ width }) => {
+          if (width === 0) {
+            return null;
+          }
+          return (
+            <div style={{ height: `${vizHeight}px`, width: `${width}px` }}>
               <PanelRenderer
-                height={height}
+                height={vizHeight}
                 width={width}
                 data={data}
-                pluginId={pluginId}
+                pluginId={currentPanel}
                 title="title"
                 onOptionsChange={setOptions}
                 options={options}
               />
-            );
-          }}
-        </AutoSizer>
-      </div>
+            </div>
+          );
+        }}
+      </AutoSizer>
     </div>
   );
 };
@@ -62,9 +63,10 @@ const getSupportedPanels = () => {
     .map((panel) => ({ value: panel.id, label: panel.name, imgUrl: panel.info.logos.small }));
 };
 
-const getStyles = (theme: GrafanaTheme2) => ({
+const getStyles = (visHeight: number) => (theme: GrafanaTheme2) => ({
   wrapper: css`
     padding: 0 ${theme.spacing(2)};
+    height: ${visHeight + theme.spacing.gridSize * 4}px;
   `,
   autoSizerWrapper: css`
     width: 100%;
