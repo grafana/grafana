@@ -65,7 +65,7 @@ The section contains tabs where you enter queries, transform your data, and crea
 
 ### Panel display options (side pane)
 
-The section contains tabs where you control almost every aspect of how your data is visualized. Not all options are available for each visualization.
+The section contains tabs where you configure almost every aspect of your data Visualization. Not all options are available for each visualization.
 
 The data model used in Grafana, the [data frame]({{< relref "../developers/plugins/data-frames.md" >}}), is a columnar-oriented table structure that unifies both time series and table query results. Each column within this structure is called a _field_. A field can represent a single time series or table column.
 
