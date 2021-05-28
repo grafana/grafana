@@ -128,12 +128,8 @@ export function getQueryHints(query: string, series?: any[], datasource?: Promet
   return hints;
 }
 
-export function getInitHints(datasource?: PrometheusDatasource): QueryHint[] {
+export function getInitHints(datasource: PrometheusDatasource): QueryHint[] {
   const hints = [];
-  if (!datasource) {
-    return [];
-  }
-
   // Hint if using Loki as Prometheus data source
   if (datasource.directUrl.includes('/loki') && !datasource.languageProvider.metrics.length) {
     hints.push({
