@@ -77,7 +77,7 @@ type HTTPServer struct {
 	CacheService           *localcache.CacheService
 	DataSourceCache        datasources.CacheService
 	AuthTokenService       models.UserTokenService
-	QuotaService           *quota.QuotaService              `inject:""`
+	QuotaService           *quota.QuotaService
 	RemoteCacheService     *remotecache.RemoteCache         `inject:""`
 	ProvisioningService    provisioning.ProvisioningService `inject:""`
 	Login                  login.Service                    `inject:""`

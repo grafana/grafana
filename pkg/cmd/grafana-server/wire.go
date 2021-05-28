@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/cleanup"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/hooks"
+	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/shorturls"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -74,6 +75,7 @@ var wireSet = wire.NewSet(
 	serverlock.ProvideService,
 	cleanup.ProvideService,
 	shorturls.ProvideService,
+	quota.ProvideService,
 )
 
 func initializeServer(cla setting.CommandLineArgs, opts server.Options, apiOpts api.ServerOptions) (*server.Server, error) {
