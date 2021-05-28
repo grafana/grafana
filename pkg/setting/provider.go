@@ -92,8 +92,14 @@ type ReloadHandler interface {
 type SettingsBag map[string]map[string]string
 type SettingsRemovals map[string][]string
 
+func ProvideProvider(cfg *Cfg) *OSSImpl {
+	return &OSSImpl{
+		Cfg: cfg,
+	}
+}
+
 type OSSImpl struct {
-	Cfg *Cfg `inject:""`
+	Cfg *Cfg
 }
 
 func (o OSSImpl) Init() error {

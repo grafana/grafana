@@ -70,7 +70,7 @@ type HTTPServer struct {
 	Bus                    bus.Bus
 	RenderService          rendering.Service
 	Cfg                    *setting.Cfg
-	SettingsProvider       setting.Provider `inject:""`
+	SettingsProvider       setting.Provider
 	HooksService           *hooks.HooksService
 	CacheService           *localcache.CacheService
 	DatasourceCache        datasources.CacheService         `inject:""`
@@ -110,7 +110,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	cacheService *localcache.CacheService, sqlStore *sqlstore.SQLStore,
 	dataService *tsdb.Service, alertEngine *alerting.AlertEngine,
 	usageStatsService *usagestats.UsageStatsService, pluginRequestValidator models.PluginRequestValidator,
-	pluginManager plugins.Manager, backendPM backendplugin.Manager) *HTTPServer {
+	pluginManager plugins.Manager, backendPM backendplugin.Manager, settingsProvider setting.Provider) *HTTPServer {
 	macaron.Env = cfg.Env
 	m := macaron.New()
 	// automatically set HEAD for every GET
@@ -131,6 +131,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		PluginRequestValidator: pluginRequestValidator,
 		PluginManager:          pluginManager,
 		BackendPluginManager:   backendPM,
+		SettingsProvider:       settingsProvider,
 		log:                    log.New("http.server"),
 		macaron:                m,
 		Listener:               opts.Listener,
