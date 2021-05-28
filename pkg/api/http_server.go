@@ -65,7 +65,7 @@ type HTTPServer struct {
 	middlewares []macaron.Handler
 
 	UsageStatsService      *usagestats.UsageStatsService
-	PluginContextProvider  *plugincontext.Provider `inject:""`
+	PluginContextProvider  *plugincontext.Provider
 	RouteRegister          routing.RouteRegister
 	Bus                    bus.Bus
 	RenderService          rendering.Service

@@ -197,6 +197,7 @@ func registerServices(s *server.Server) error {
 		s.HTTPServer.PluginRequestValidator,
 		s.HTTPServer.PluginManager,
 		s.HTTPServer.BackendPluginManager,
+		s.HTTPServer.PluginContextProvider,
 	} {
 		fmt.Printf("Registering %T\n", svc)
 		registry.RegisterService(svc)
