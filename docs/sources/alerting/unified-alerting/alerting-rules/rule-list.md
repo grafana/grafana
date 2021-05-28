@@ -45,5 +45,5 @@ Grafana rules can only be edited or deleted by users with Edit permissions for t
 To edit or delete a rule:
 
 1. Expand this rule to reveal rule controls. 
-1. Click **Edit** to go to the rule editing form. Make changes following [instructions listed here]({{< relref "./create-alert-rule.md" >}}).
+1. Click **Edit** to go to the rule editing form. Make changes following [instructions listed here]({{< relref "./_index.md" >}}) for the corresponding rule type.
 1. Click **Delete"** to delete a rule. 
