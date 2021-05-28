@@ -3,6 +3,9 @@ package managedstream
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 
@@ -70,6 +73,7 @@ type ManagedStream struct {
 	id        string
 	start     time.Time
 	last      map[int64]map[string]data.FrameJSONCache
+	FieldSubs map[string]map[string][]string
 	publisher models.ChannelPublisher
 }
 
@@ -79,6 +83,7 @@ func NewManagedStream(id string, publisher models.ChannelPublisher) *ManagedStre
 		id:        id,
 		start:     time.Now(),
 		last:      map[int64]map[string]data.FrameJSONCache{},
+		FieldSubs: map[string]map[string][]string{},
 		publisher: publisher,
 	}
 }
@@ -95,7 +100,7 @@ func (s *ManagedStream) ListChannels(orgID int64, prefix string) []util.DynMap {
 	info := make([]util.DynMap, 0, len(s.last[orgID]))
 	for k, v := range s.last[orgID] {
 		ch := util.DynMap{}
-		ch["channel"] = prefix + k
+		ch["channel"] = prefix + k + "/usage_user"
 		ch["data"] = json.RawMessage(v.Bytes(data.IncludeSchemaOnly))
 		info = append(info, ch)
 	}
@@ -127,10 +132,53 @@ func (s *ManagedStream) Push(orgID int64, path string, frame *data.Frame) error 
 	}
 	frameJSON := msg.Bytes(include)
 
+	fmt.Printf("%#v %s\n", s.FieldSubs, path)
+	if subChannels, ok := s.FieldSubs[path]; ok {
+		for ch, fields := range subChannels {
+			frame := CopyFrameWithFields(frame, fields)
+			frameJSON, err := data.FrameToJSON(frame, include)
+			if err != nil {
+				return err
+			}
+			logger.Debug("Publish data to channel", "channel", ch, "dataLength", len(frameJSON))
+			err = s.publisher(orgID, ch, frameJSON)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
 	// The channel this will be posted into.
 	channel := live.Channel{Scope: live.ScopeStream, Namespace: s.id, Path: path}.String()
 	logger.Debug("Publish data to channel", "channel", channel, "dataLength", len(frameJSON))
 	return s.publisher(orgID, channel, frameJSON)
+}
+
+func contains(s []string, e string) bool {
+	for _, a := range s {
+		if a == e {
+			return true
+		}
+	}
+	return false
+}
+
+func CopyFrameWithFields(f *data.Frame, fieldNames []string) *data.Frame {
+	var fields []*data.Field
+
+	for _, field := range f.Fields {
+		if field.Name == "labels" || field.Type() == data.FieldTypeTime || contains(fieldNames, field.Name) {
+			fields = append(fields, field)
+		}
+	}
+
+	newFrame := &data.Frame{
+		Name:   f.Name,
+		RefID:  f.RefID,
+		Fields: fields,
+	}
+
+	return newFrame
 }
 
 // getLastPacket retrieves last packet channel.
@@ -152,9 +200,25 @@ func (s *ManagedStream) GetHandlerForPath(_ string) (models.ChannelHandler, erro
 	return s, nil
 }
 
-func (s *ManagedStream) OnSubscribe(_ context.Context, u *models.SignedInUser, e models.SubscribeEvent) (models.SubscribeReply, backend.SubscribeStreamStatus, error) {
+func (s *ManagedStream) OnSubscribe(ctx context.Context, u *models.SignedInUser, e models.SubscribeEvent) (models.SubscribeReply, backend.SubscribeStreamStatus, error) {
 	reply := models.SubscribeReply{}
-	packet, ok := s.getLastPacket(u.OrgId, e.Path)
+
+	var path = e.Path
+	if strings.Contains(e.Path, "/") {
+		base := filepath.Base(e.Path)
+		fields := strings.Split(base, ",")
+		path = strings.TrimSuffix(path, "/"+base)
+		if _, ok := s.FieldSubs[path]; !ok {
+			s.FieldSubs[path] = map[string][]string{}
+		}
+		s.FieldSubs[path][e.Channel] = fields
+		go func() {
+			<-ctx.Done()
+			delete(s.FieldSubs, e.Channel)
+		}()
+	}
+
+	packet, ok := s.getLastPacket(u.OrgId, path)
 	if ok {
 		reply.Data = packet
 	}
