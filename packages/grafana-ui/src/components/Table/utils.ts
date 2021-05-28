@@ -210,15 +210,21 @@ export function sortCaseInsensitive(a: Row<any>, b: Row<any>, id: string) {
   return String(a.values[id]).localeCompare(String(b.values[id]), undefined, { sensitivity: 'base' });
 }
 
-const replaceNonNumeric = /[^0-9.]/gi;
+// sortNumber needs to have great performance as it is called a lot
 export function sortNumber(rowA: Row<any>, rowB: Row<any>, id: string) {
-  const valueA = rowA.values[id];
-  const valueB = rowB.values[id];
-  const a = isInfinity(valueA) ? valueA : Number(String(valueA).replace(replaceNonNumeric, ''));
-  const b = isInfinity(valueB) ? valueB : Number(String(valueB).replace(replaceNonNumeric, ''));
+  const a = toNumber(rowA.values[id]);
+  const b = toNumber(rowB.values[id]);
   return a === b ? 0 : a > b ? 1 : -1;
 }
 
-function isInfinity(value: number): boolean {
-  return value === Number.POSITIVE_INFINITY || value === Number.NEGATIVE_INFINITY;
+function toNumber(value: any): number {
+  if (typeof value === 'number') {
+    return value;
+  }
+
+  if (value === null || value === undefined || value === '' || isNaN(value)) {
+    return 0;
+  }
+
+  return Number(value);
 }

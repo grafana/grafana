@@ -451,5 +451,23 @@ describe('Table utils', () => {
     `("when called with a: '$a.toString', b: '$b.toString' then result should be '$expected'", ({ a, b, expected }) => {
       expect(sortNumber(a, b, '0')).toEqual(expected);
     });
+
+    it.skip('should have good performance', () => {
+      const ITERATIONS = 100000;
+      const a: any = { values: Array(ITERATIONS) };
+      const b: any = { values: Array(ITERATIONS) };
+      for (let i = 0; i < ITERATIONS; i++) {
+        a.values[i] = Math.random() * Date.now();
+        b.values[i] = Math.random() * Date.now();
+      }
+
+      const start = performance.now();
+      for (let i = 0; i < ITERATIONS; i++) {
+        sortNumber(a, b, i.toString(10));
+      }
+      const stop = performance.now();
+      const diff = stop - start;
+      expect(diff).toBeLessThanOrEqual(20);
+    });
   });
 });
