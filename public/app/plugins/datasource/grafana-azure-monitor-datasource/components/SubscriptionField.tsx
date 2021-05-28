@@ -23,10 +23,6 @@ const SubscriptionField: React.FC<SubscriptionFieldProps> = ({
   const [subscriptions, setSubscriptions] = useState<AzureMonitorOption[]>([]);
 
   useEffect(() => {
-    if (!datasource.azureMonitorDatasource.isConfigured()) {
-      return;
-    }
-
     datasource.azureMonitorDatasource
       .getSubscriptions()
       .then((results) => {
@@ -34,28 +30,22 @@ const SubscriptionField: React.FC<SubscriptionFieldProps> = ({
         setSubscriptions(newSubscriptions);
         setError(ERROR_SOURCE, undefined);
 
-        // Set a default subscription ID, if we can
-        let newSubscription = query.subscription;
-
-        if (!newSubscription && query.queryType === AzureQueryType.AzureMonitor) {
-          newSubscription = datasource.azureMonitorDatasource.subscriptionId;
-        } else if (!query.subscription && query.queryType === AzureQueryType.LogAnalytics) {
-          newSubscription = datasource.azureLogAnalyticsDatasource.subscriptionId;
-        }
+        let newSubscription = query.subscription || datasource.azureMonitorDatasource.defaultSubscriptionId;
 
         if (!newSubscription && newSubscriptions.length > 0) {
           newSubscription = newSubscriptions[0].value;
         }
 
-        newSubscription !== query.subscription &&
+        if (newSubscription && newSubscription !== query.subscription) {
           onQueryChange({
             ...query,
             subscription: newSubscription,
           });
+        }
       })
       .catch((err) => setError(ERROR_SOURCE, err));
   }, [
-    datasource.azureLogAnalyticsDatasource?.subscriptionId,
+    datasource.azureMonitorDatasource?.defaultSubscriptionId,
     datasource.azureMonitorDatasource,
     onQueryChange,
     query,
