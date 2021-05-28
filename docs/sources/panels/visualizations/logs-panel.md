@@ -9,8 +9,6 @@ weight = 700
 
 The logs panel visualization shows log lines from data sources that support logs, such as Elastic, Influx, and Loki. Typically you would use this panel next to a graph panel to display the log output of a related process.
 
-> **Note:** The Logs panel is only available in Grafana v6.4+.
-
 <img class="screenshot" src="/static/img/docs/v64/logs-panel.png">
 
 The logs panel shows the result of queries that were entered in the Query tab. The results of multiple queries are merged and sorted by time. You can scroll inside the panel if the data source returns more lines than can be displayed at any one time.
