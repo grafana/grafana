@@ -315,12 +315,10 @@ func multipartEqual(t *testing.T, exp, act string) {
 				break
 			}
 			require.NoError(t, err)
-			key := part.FormName()
 			buf := new(bytes.Buffer)
 			_, err = buf.ReadFrom(part)
 			require.NoError(t, err)
-			value := string(buf.Bytes())
-			m[key] = value
+			m[part.FormName()] = buf.String()
 		}
 	}
 
