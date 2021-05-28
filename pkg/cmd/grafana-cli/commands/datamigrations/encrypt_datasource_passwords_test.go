@@ -1,6 +1,7 @@
 package datamigrations
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -15,7 +16,7 @@ import (
 func TestPasswordMigrationCommand(t *testing.T) {
 	// setup datasources with password, basic_auth and none
 	sqlstore := sqlstore.InitTestDB(t)
-	session := sqlstore.NewSession()
+	session := sqlstore.NewSession(context.Background())
 	defer session.Close()
 
 	datasources := []*models.DataSource{
