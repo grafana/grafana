@@ -96,7 +96,7 @@ Then each pair, label and field is wrapped in a div with a gf-form class.
 
 Note that there are some Angular attributes here. *ng-model* will update the panel data. *ng-change* will render the panel when you change the value. This change will occur on the onblur event due to the *ng-model-onblur* attribute. This means you can see the effect of your changes on the panel while editing.
 
-{{< imgbox img="/assets/img/blog/clock-panel-editor.png" caption="Panel Editor" >}}
+{{< figure class="float-right"  src="/assets/img/blog/clock-panel-editor.png" caption="Panel Editor" >}}
 
 On the editor tab we use a drop down for 12/24 hour clock, an input field for font size and a color picker for the background color.
 

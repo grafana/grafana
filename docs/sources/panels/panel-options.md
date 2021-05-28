@@ -9,7 +9,7 @@ Panel options are common to all panels. They are basic options to add informatio
 
 While not required, we recommend that you add a helpful title and description to all panels.
 
-![](/img/docs/panels/panel-options-8-0.png)
+![](/static/img/docs/panels/panel-options-8-0.png)
 
 ## Title
 

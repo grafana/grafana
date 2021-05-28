@@ -100,7 +100,7 @@ Grafana has an LDAP debug view built-in which allows you to test your LDAP confi
 
 Within this view, you'll be able to see which LDAP servers are currently reachable and test your current configuration.
 
-{{< docs-imagebox img="/img/docs/ldap_debug.png" class="docs-image--no-shadow" max-width="600px" >}}
+{{< figure src="/static/img/docs/ldap_debug.png" class="docs-image--no-shadow" max-width="600px" >}}
 
 
 To use the debug view:
@@ -109,7 +109,7 @@ To use the debug view:
  1. Then, press "Run"
  1. If the user is found within any of your LDAP instances, the mapping information is displayed
 
-{{< docs-imagebox img="/img/docs/ldap_debug_mapping_testing.png" class="docs-image--no-shadow" max-width="600px" >}}
+{{< figure src="/static/img/docs/ldap_debug_mapping_testing.png" class="docs-image--no-shadow" max-width="600px" >}}
 
 ### Bind
 

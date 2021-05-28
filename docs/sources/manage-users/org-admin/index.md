@@ -25,7 +25,7 @@ Grafana displays all user accounts on the server, listed in alphabetical order b
 - **Seen -** How long ago the user logged in. If they have never logged in, then the default longest time (10y) is displayed.
 - **Role -** The organization role currently assigned to the user.
 
-![Org Admin user list](/img/docs/manage-users/org-user-list-7-3.png)
+![Org Admin user list](/static/img/docs/manage-users/org-user-list-7-3.png)
 
 ## Manage organization invitations
 
@@ -47,13 +47,13 @@ Invite or add an existing user account to your organization.
      - **No -** The user is not sent an invitation, but they can sign in to the Grafana server with the email or username that you entered.
 1. Click **Submit**.
 
-![Invite User](/img/docs/manage-users/org-invite-user-7-3.png)
+![Invite User](/static/img/docs/manage-users/org-invite-user-7-3.png)
 
 ### View pending invitations
 
 Review invitations of users that were invited but have not signed in.
 
-![Pending Invites button](/img/docs/manage-users/pending-invites-button-7-3.png)
+![Pending Invites button](/static/img/docs/manage-users/pending-invites-button-7-3.png)
 
 > **Note:** The button is only visible if there are unanswered invitations.
 
@@ -63,7 +63,7 @@ Review invitations of users that were invited but have not signed in.
 
 Grafana displays a list of pending invitations. If necessary, you can use the search field to filter the list.
 
-![Pending Invites list](/img/docs/manage-users/pending-invites-list-7-3.png)
+![Pending Invites list](/static/img/docs/manage-users/pending-invites-list-7-3.png)
 
 ### Cancel invitation
 

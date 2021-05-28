@@ -14,7 +14,7 @@ This topic explains how to grant permissions to specific folders and dashboards.
 
 To learn more about denying access to certain Grafana users, refer to [Restricting access]({{< relref "restricting-access.md">}}).
 
-![Folder permissions](/img/docs/permissions/folder-permissions-7-5.png)
+![Folder permissions](/static/img/docs/permissions/folder-permissions-7-5.png)
 
 ## Permission levels
 

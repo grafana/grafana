@@ -18,4 +18,4 @@ There are several sort options:
 - Views total
 - Views 30 days
 
-{{< docs-imagebox img="/img/docs/enterprise/improved-search-7-5.png" max-width="650px" class="docs-image--no-shadow" >}}
+{{< figure src="/static/img/docs/enterprise/improved-search-7-5.png" max-width="650px" class="docs-image--no-shadow" >}}

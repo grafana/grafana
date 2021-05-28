@@ -53,7 +53,7 @@ For logs where a **level** label is specified, we use the value of the label to 
 
 Logs navigation next to the log lines can be used to request more logs. You can do this by clicking on Older logs button on the bottom of navigation. This is especially useful when you hit the line limit and you want to see more logs. Each request that is run from the navigation is then displayed in the navigation as separate page. Every page is showing from and to timestamp of the incoming log lines. You can re-rerun the same request by clicking on the page.
 
-![Navigate logs in Explore](/img/docs/explore/navigate-logs-8-0.png)
+![Navigate logs in Explore](/static/img/docs/explore/navigate-logs-8-0.png)
 
 ### Visualization options
 
@@ -90,7 +90,7 @@ Each log row has an extendable area with its labels and detected fields, for mor
 #### Derived fields links
 
 By using Derived fields, you can turn any part of a log message into an internal or external link. The created link is visible as a button next to the Detected field in the Log details view.
-{{< docs-imagebox img="/img/docs/explore/detected-fields-link-7-4.png" max-width="800px" caption="Detected fields link in Explore" >}}
+{{< figure src="/static/img/docs/explore/detected-fields-link-7-4.png" max-width="800px" caption="Detected fields link in Explore" >}}
 
 #### Toggle detected fields
 
@@ -98,7 +98,7 @@ By using Derived fields, you can turn any part of a log message into an internal
 
 If your logs are structured in `json` or `logfmt`, then you can show or hide detected fields. Expand a log line and then click the eye icon to show or hide fields.
 
-{{< docs-imagebox img="/img/docs/explore/parsed-fields-7-2.gif" max-width="800px" caption="Toggling detected fields in Explore" >}}
+{{< figure src="/static/img/docs/explore/parsed-fields-7-2.gif" max-width="800px" caption="Toggling detected fields in Explore" >}}
 
 ### Loki-specific features
 
@@ -126,4 +126,4 @@ Click the **Live** button in the Explore toolbar to switch to Live tail view.
 
 While in Live tail view new logs will come from the bottom of the screen and will have fading contrasting background so you can keep track of what is new. Click the **Pause** button or scroll the logs view to pause the Live tailing and explore previous logs without interruption. Click **Resume** button to resume the Live tailing or click **Stop** button to exit Live tailing and go back to standard Explore view.
 
-{{< docs-imagebox img="/img/docs/v64/explore_live_tailing.gif" class="docs-image--no-shadow" caption="Explore Live tailing in action" >}}
+{{< figure src="/static/img/docs/v64/explore_live_tailing.gif" class="docs-image--no-shadow" caption="Explore Live tailing in action" >}}

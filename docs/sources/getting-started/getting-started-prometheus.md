@@ -61,4 +61,4 @@ Now that you have a curated list of queries, create [dashboards]({{< relref "../
 
 The following image shows a dashboard with three panels showing some system metrics.
 
-<img width="850px" src="/img/docs/getting-started/simple_grafana_prom_dashboard.png" caption="Prometheus dashboards" >
+<img width="850px" src="/static/img/docs/getting-started/simple_grafana_prom_dashboard.png" caption="Prometheus dashboards" >

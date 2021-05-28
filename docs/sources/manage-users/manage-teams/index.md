@@ -22,11 +22,11 @@ See the complete list of teams in your Grafana organization.
 
 ### Org Admin view
 
-![Team list](/img/docs/manage-users/org-admin-team-list-7-3.png)
+![Team list](/static/img/docs/manage-users/org-admin-team-list-7-3.png)
 
 ### Team Admin view
 
-![Team list](/img/docs/manage-users/team-admin-team-list-7-3.png)
+![Team list](/static/img/docs/manage-users/team-admin-team-list-7-3.png)
 
 ## Create a team
 
@@ -54,7 +54,7 @@ Add an existing user account to a team.
 1. Repeat the process to add more team members.
 {{< /docs/list >}}
 
-![Add team member](/img/docs/manage-users/add-team-member-7-3.png)
+![Add team member](/static/img/docs/manage-users/add-team-member-7-3.png)
 
 ## Remove a team member
 
@@ -77,7 +77,7 @@ Change team member permission levels.
 1. Click the **Permission** list, and then click the new user permission level.
 {{< /docs/list >}}
 
-![Change team member permissions](/img/docs/manage-users/change-team-permissions-7-3.png)
+![Change team member permissions](/static/img/docs/manage-users/change-team-permissions-7-3.png)
 
 ## Delete a team
 

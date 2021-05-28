@@ -65,7 +65,7 @@ This step varies depending on the query language that you selected when you set 
 
 In the query editor, click **select measurement**.
 
-![InfluxQL query](/img/docs/influxdb/influxql-query-7-5.png)
+![InfluxQL query](/static/img/docs/influxdb/influxql-query-7-5.png)
 
 Grafana displays a list of possible series. Click one to select it, and Grafana graphs any available data. If there is no data to display, then try another selection or check your data source.
 
@@ -80,19 +80,19 @@ Create a simple Flux query.
 
 This generic query returns a list of buckets.
 
-![Flux query](/img/docs/influxdb/flux-query-7-5.png)
+![Flux query](/static/img/docs/influxdb/flux-query-7-5.png)
 
 You can also create Flux queries in the InfluxDB Explore view.
 
 1. In your browser, log in to the InfluxDB native UI (OSS is typically something like http://localhost:8086 or for InfluxDB Cloud use: https://cloud2.influxdata.com).
 1. Click **Explore** to open the Data Explorer.
 1. The InfluxDB Data Explorer provides two mechanisms for creating Flux queries: a graphical query editor and a script editor. Using the graphical query editor, [create a query](https://docs.influxdata.com/influxdb/cloud/query-data/execute-queries/data-explorer/). It will look something like this:
-   
-   ![InfluxDB Explore query](/img/docs/influxdb/influx-explore-query-7-5.png)
+
+   ![InfluxDB Explore query](/static/img/docs/influxdb/influx-explore-query-7-5.png)
 
 1. Click **Script Editor** to view the text of the query, and then copy all the lines of your Flux code, which will look something like this:
-   
-   ![InfluxDB Explore Script Editor](/img/docs/influxdb/explore-query-text-7-5.png)
+
+   ![InfluxDB Explore Script Editor](/static/img/docs/influxdb/explore-query-text-7-5.png)
 
 1. In Grafana, [add a panel](../panels/add-a-panel.md) and then paste your Flux code into the query editor.
 1. Click **Apply**. Your new panel should be visible with data from your Flux query.

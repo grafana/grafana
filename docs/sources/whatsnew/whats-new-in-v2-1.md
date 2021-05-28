@@ -21,7 +21,7 @@ A template variable with Multi-Value enabled allows for the selection of multipl
 These variables can then be used in any Panel to make them more dynamic, and to give you the perfect view of your data.
 Multi-Value variables are also enabling the new `row repeat` and `panel repeat` feature described below.
 
-![Multi-Value Select](/img/docs/v2/multi-select.gif "Multi-Value Select")
+![Multi-Value Select](/static/img/docs/v2/multi-select.gif "Multi-Value Select")
 <br/><br/>
 
 ### Repeating Rows and Panels
@@ -29,7 +29,7 @@ It’s now possible to create a dashboard that automatically adds (or removes) b
 on selected variable values. Any row or any panel can be configured to repeat (duplicate itself) based
 on a multi-value template variable.</p>
 
-![Repeating Rows and Panels](/img/docs/v2/panel-row-repeat.gif "Repeating Rows and Panels")
+![Repeating Rows and Panels](/static/img/docs/v2/panel-row-repeat.gif "Repeating Rows and Panels")
 <br/><br/>
 
 ### Dashboard Links and Navigation
@@ -37,7 +37,7 @@ To support better navigation between dashboards, it's now possible to create cus
 panels to appropriate Dashboards. You also have the ability to create flexible top-level links on any
 given dashboard thanks to the new dashboard navigation bar feature.
 
-![Dashboard Links](/img/docs/v2/dash_links.png "Dashboard Links")
+![Dashboard Links](/static/img/docs/v2/dash_links.png "Dashboard Links")
 
 Dashboard links can be added under dashboard settings. Either defined as static URLs with a custom icon or as dynamic
 dashboard links or dropdowns based on custom dashboard search query. These links appear in the same
@@ -86,7 +86,7 @@ The Viewer role has been modified in Grafana 2.1 so that users assigned this rol
 Grafana 2.1 now comes with full support for InfluxDB 0.9. There is a new query editor designed from scratch
 for the new features InfluxDB 0.9 enables.
 
-![InfluxDB Editor](/img/docs/v2/influx_09_editor_anim.gif "InfluxDB Editor")
+![InfluxDB Editor](/static/img/docs/v2/influx_09_editor_anim.gif "InfluxDB Editor")
 
 <br/>
 
@@ -114,15 +114,15 @@ Define series color using regex rule. This is useful when you have templated gra
 that change depending selected template variables. Using a regex style override rule you could
 for example make all series that contain the word **CPU** `red` and assigned to the second y axis.
 
-![Define series color using regex rule](/img/docs/v2/regex_color_override.png "Define series color using regex rule")
+![Define series color using regex rule](/static/img/docs/v2/regex_color_override.png "Define series color using regex rule")
 
 New series style override, negative-y transform and stack groups. Negative y transform is
 very useful if you want to plot a series on the negative y scale without affecting the legend values like min or max or
 the values shown in the hover tooltip.
 
-![Negative-y Transform](/img/docs/v2/negative-y.png "Negative-y Transform")
+![Negative-y Transform](/static/img/docs/v2/negative-y.png "Negative-y Transform")
 
-![Negative-y Transform](/img/docs/v2/negative-y-form.png "Negative-y Transform")
+![Negative-y Transform](/static/img/docs/v2/negative-y-form.png "Negative-y Transform")
 
 ### Singlestat Panel
 Now support string values. Useful for time series database like InfluxDB that supports

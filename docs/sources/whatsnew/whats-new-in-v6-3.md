@@ -46,7 +46,7 @@ allows you to view lines before and after the line of interest.
 This release adds support for searching and visualizing logs stored in Elasticsearch in the Explore mode. With a special
 simplified query interface specifically designed for logs search.
 
-{{< docs-imagebox img="/img/docs/v63/elasticsearch_explore_logs.png" max-width="600px" caption="New Time Picker" >}}
+{{< figure src="/static/img/docs/v63/elasticsearch_explore_logs.png" max-width="600px" caption="New Time Picker" >}}
 
 Please read [Using Elasticsearch in Grafana]({{< relref "../datasources/elasticsearch/#elasticsearch-version" >}}) for more detailed information on how to get started and use it.
 
@@ -55,7 +55,7 @@ Please read [Using Elasticsearch in Grafana]({{< relref "../datasources/elastics
 This release adds support for searching and visualizing logs stored in InfluxDB in the Explore mode. With a special
 simplified query interface specifically designed for logs search.
 
-{{< docs-imagebox img="/img/docs/v63/influxdb_explore_logs.png" max-width="600px" caption="New Time Picker" >}}
+{{< figure src="/static/img/docs/v63/influxdb_explore_logs.png" max-width="600px" caption="New Time Picker" >}}
 
 Please read [Using InfluxDB in Grafana]({{< relref "../datasources/influxdb/#querying-logs-beta" >}}) for more detailed information on how to get started and use it.
 
@@ -84,7 +84,7 @@ Name | Description
 
 You can then click on point in the Graph.
 
-{{< docs-imagebox img="/img/docs/v63/graph_datalink.png" max-width="400px" caption="New Time Picker" >}}
+{{< figure src="/static/img/docs/v63/graph_datalink.png" max-width="400px" caption="New Time Picker" >}}
 
 For now only the Graph panel supports `Data links` but we hope to add these to many visualizations.
 
@@ -92,18 +92,18 @@ For now only the Graph panel supports `Data links` but we hope to add these to m
 
 The time picker has been re-designed and with a more basic design that makes accessing quick ranges more easy.
 
-{{< docs-imagebox img="/img/docs/v63/time_picker.png" max-width="400px" caption="New Time Picker" >}}
+{{< figure src="/static/img/docs/v63/time_picker.png" max-width="400px" caption="New Time Picker" >}}
 
 ## Graph Gradients
 
 Want more eye candy in your graphs? Then the fill gradient option might be for you! Works really well for
 graphs with only a single series.
 
-{{< docs-imagebox img="/img/docs/v63/graph_gradient_area.jpeg" max-width="800px" caption="Graph Gradient Area" >}}
+{{< figure src="/static/img/docs/v63/graph_gradient_area.jpeg" max-width="800px" caption="Graph Gradient Area" >}}
 
 Looks really nice in light theme as well.
 
-{{< docs-imagebox img="/img/docs/v63/graph_gradients_white.png" max-width="800px" caption="Graph Gradient Area" >}}
+{{< figure src="/static/img/docs/v63/graph_gradients_white.png" max-width="800px" caption="Graph Gradient Area" >}}
 
 ## Grafana Enterprise
 

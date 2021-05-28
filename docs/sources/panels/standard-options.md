@@ -78,7 +78,7 @@ To select a custom unit enter the unit and select the last `Custom: xxx` option 
 
 You can also paste a native emoji in the unit picker and pick it as a custom unit:
 
-{{< docs-imagebox img="/img/docs/v66/custom_unit_burger2.png" max-width="600px" caption="Custom unit emoji" >}}
+{{< figure src="/static/img/docs/v66/custom_unit_burger2.png" max-width="600px" caption="Custom unit emoji" >}}
 
 ### String units
 
@@ -86,7 +86,7 @@ Grafana can sometime be too aggressive in parsing strings and displaying them as
 
 ## Color scheme
 
-{{< figure src="/img/docs/v73/color_scheme_dropdown.png" max-width="350px" caption="Color scheme" class="pull-right" >}}
+{{< figure src="/static/img/docs/v73/color_scheme_dropdown.png" max-width="350px" caption="Color scheme" class="pull-right" >}}
 
 The color scheme option defines how Grafana colors series or fields. There are multiple modes here that work very differently and their utility depends largely on what visualization you currently have selected.
 

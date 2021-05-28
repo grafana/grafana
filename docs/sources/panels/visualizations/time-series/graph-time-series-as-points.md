@@ -33,15 +33,15 @@ Set the size of the points, from 1 to 40 pixels in diameter.
 
 Point size set to 6:
 
-![Show points point size 6 example](/img/docs/time-series-panel/points-graph-show-points-6-7-4.png)
+![Show points point size 6 example](/static/img/docs/time-series-panel/points-graph-show-points-6-7-4.png)
 
 Point size set to 20:
 
-![Show points point size 20 example](/img/docs/time-series-panel/points-graph-show-points-20-7-4.png)
+![Show points point size 20 example](/static/img/docs/time-series-panel/points-graph-show-points-20-7-4.png)
 
 Point size set to 35:
 
-![Show points point size 35 example](/img/docs/time-series-panel/points-graph-show-points-35-7-4.png)
+![Show points point size 35 example](/static/img/docs/time-series-panel/points-graph-show-points-35-7-4.png)
 
 {{< docs/shared "visualizations/stack-series-link.md" >}}
 

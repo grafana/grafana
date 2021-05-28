@@ -9,7 +9,7 @@ weight = 300
 
 The dashboard list panel allows you to display dynamic links to other dashboards. The list can be configured to use starred dashboards, recently viewed dashboards, a search query, and dashboard tags.
 
-{{< docs-imagebox img="/img/docs/v45/dashboard-list-panels.png" max-width="850px">}}
+{{< figure src="/static/img/docs/v45/dashboard-list-panels.png" max-width="850px">}}
 
 On each dashboard load, this panel queries the dashboard list, always providing the most up-to-date results.
 

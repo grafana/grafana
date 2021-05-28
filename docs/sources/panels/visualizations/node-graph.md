@@ -10,11 +10,11 @@ weight = 850
 
 The _Node graph_ can visualize directed graphs or networks. It uses directed force layout to effectively position the nodes so it can help with displaying complex infrastructure maps, hierarchies or execution diagrams.
 
-![Node graph panel](/img/docs/node-graph/node-graph-7-4.png "Node graph")
+![Node graph panel](/static/img/docs/node-graph/node-graph-7-4.png "Node graph")
 
 ## Data requirements
 
-The Node graph panel requires specific shape of the data to be able to display it's nodes and edges. This means not every data source or query can be visualized in this panel. If you want to use this as a data source developer see the section about data API.  
+The Node graph panel requires specific shape of the data to be able to display it's nodes and edges. This means not every data source or query can be visualized in this panel. If you want to use this as a data source developer see the section about data API.
 
 The Node graph visualization consists of _nodes_ and _edges_.
 
@@ -31,7 +31,7 @@ Usually, nodes show two statistical values inside the node and two identifiers j
 
 For example you can have percentage of errors represented by red portion of the circle. Additional details can be displayed in a context menu when which is displayed when you click on the node. There also can be additional links in the context menu that can target either other parts of Grafana or any external link.
 
-![Node graph navigation](/img/docs/node-graph/node-graph-navigation-7-4.gif "Node graph navigation")
+![Node graph navigation](/static/img/docs/node-graph/node-graph-navigation-7-4.gif "Node graph navigation")
 
 ### Edges
 
@@ -61,13 +61,13 @@ Data source needs to return two data frames, one for nodes and one for edges and
 
 Required fields:
 
-| Field name | Type    | Description | 
+| Field name | Type    | Description |
 |------------|---------|-------------|
 | id         | string  | Unique identifier of the node. This ID is referenced by edge in it's source and target field. |
 
 Optional fields:
 
-| Field name | Type    | Description | 
+| Field name | Type    | Description |
 |------------|---------|-------------|
 | title      | string  | Name of the node visible in just under the node. |
 | subTitle   | string  | Additional, name, type or other identifier that will be shown right under the title. |
@@ -80,7 +80,7 @@ Optional fields:
 
 Required fields:
 
-| Field name | Type    | Description | 
+| Field name | Type    | Description |
 |------------|---------|-------------|
 | id         | string  | Unique identifier of the edge. |
 | source     | string  | Id of the source node. |
@@ -88,7 +88,7 @@ Required fields:
 
 Optional fields:
 
-| Field name | Type    | Description | 
+| Field name | Type    | Description |
 |------------|---------|-------------|
 | mainStat   | string/number  | First stat shown in the overlay when hovering over the edge. Can be either string in which case the value will be shown as it is or it can be a number in which case any unit associated with that field will be also shown |
 | secondaryStat   | string/number  | Same as mainStat but shown right under it. |

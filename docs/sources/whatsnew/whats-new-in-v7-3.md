@@ -26,13 +26,13 @@ The main highlights are:
 The table has been updated with improved hover behavior for cells that have longer content than what fits the current column width. As you can see
 in the animated gif below the cell will automatically expand to show you full content of the cell.
 
-{{< figure src="/img/docs/v73/table_hover.gif" max-width="900px" caption="Table hover" >}}
+{{< figure src="/static/img/docs/v73/table_hover.gif" max-width="900px" caption="Table hover" >}}
 
 Another new feature that can be seen in the image above is the new image cell display mode. If you have a field value that is an image URL or a base64 encoded image you can configure the table to display it as an image.
 
 ## New color scheme option
 
-{{< figure src="/img/docs/v73/color_scheme_dropdown.png" max-width="450px" caption="Color scheme" class="pull-right" >}}
+{{< figure src="/static/img/docs/v73/color_scheme_dropdown.png" max-width="450px" caption="Color scheme" class="pull-right" >}}
 
 A new standard field [color scheme]({{< relref "../panels/standard-options.md#color-scheme" >}}) option has been added. This new option will provide a unified way for all new panels to specify how colors should be assigned.
 
@@ -47,15 +47,15 @@ A new standard field [color scheme]({{< relref "../panels/standard-options.md#co
 
 As you can see this adds new continuous color schemes where Grafana will interpolate colors. A great use of these new color schemes is the table panel where you can color the background and get a heatmap like effect.
 
-{{< figure src="/img/docs/v73/table_color_scheme.png" max-width="900px" caption="table color scheme" >}}
+{{< figure src="/static/img/docs/v73/table_color_scheme.png" max-width="900px" caption="table color scheme" >}}
 
 Another thing to highlight is that all these new color schemes are theme aware and adapt to the current theme. For example here is how the new monochrome color scheme look like in the light theme:
 
-{{< figure src="/img/docs/v73/table_color_scheme_mono_light.png" max-width="900px" caption="table color monochrome scheme" >}}
+{{< figure src="/static/img/docs/v73/table_color_scheme_mono_light.png" max-width="900px" caption="table color monochrome scheme" >}}
 
 As this new option is a standard field option it works in every panel. Here is another example from the [Bar Gauge]({{< relref "../panels/visualizations/bar-gauge-panel.md" >}}) panel.
 
-{{< figure src="/img/docs/v73/bar_gauge_gradient_color_scheme.png" max-width="900px" caption="bar gauge color scheme" >}}
+{{< figure src="/static/img/docs/v73/bar_gauge_gradient_color_scheme.png" max-width="900px" caption="bar gauge color scheme" >}}
 
 ## CSV exports for Excel
 

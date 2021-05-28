@@ -23,7 +23,7 @@ To access Prometheus settings, hover your mouse over the **Configuration** (gear
 | `Basic Auth`              | Enable basic authentication to the Prometheus data source.                                                                                                                                              |
 | `User`                    | User name for basic authentication.                                                                                                                                                                     |
 | `Password`                | Password for basic authentication.                                                                                                                                                                      |
-| `Scrape interval`         | Set this to the typical scrape and evaluation interval configured in Prometheus. Defaults to 15s.             
+| `Scrape interval`         | Set this to the typical scrape and evaluation interval configured in Prometheus. Defaults to 15s.
 | `HTTP method`             | Use either POST or GET HTTP method to query your data source. POST is the recommended and pre-selected method as it allows bigger queries. Change this to GET if you have a Prometheus version older than 2.1 or if POST requests are restricted in your network.                                                                                       |
 | `Disable metrics lookup`  | Checking this option will disable the metrics chooser and metric/label support in the query field's autocomplete. This helps if you have performance issues with bigger Prometheus instances.           |
 | `Custom Query Parameters` | Add custom parameters to the Prometheus query URL. For example `timeout`, `partial_response`, `dedup`, or `max_source_resolution`. Multiple parameters should be concatenated together with an '&amp;'. |
@@ -39,8 +39,8 @@ Below you can find information and options for Prometheus query editor in dashbo
 
 Open a graph in edit mode by clicking the title > Edit (or by pressing `e` key while hovering over panel).
 
-{{< docs-imagebox img="/img/docs/v45/prometheus_query_editor_still.png"
-                  animated-gif="/img/docs/v45/prometheus_query_editor.gif" >}}
+{{< figure src="/static/img/docs/v45/prometheus_query_editor_still.png"
+                  animated-gif="/static/img/docs/v45/prometheus_query_editor.gif" >}}
 
 | Name                | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
 | ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -218,7 +218,7 @@ If you are running Grafana in an Amazon EKS cluster, follow the AWS guide to [Qu
 
 Grafana 7.4 and later versions have the capability to show exemplars data alongside a metric both in Explore and Dashboards.
 Exemplars are a way to associate higher cardinality metadata from a specific event with traditional timeseries data.
-{{< docs-imagebox img="/img/docs/v74/exemplars.png" class="docs-image--no-shadow" caption="Screenshot showing the detail window of an Exemplar" >}}
+{{< figure src="/static/img/docs/v74/exemplars.png" class="docs-image--no-shadow" caption="Screenshot showing the detail window of an Exemplar" >}}
 
 Configure Exemplars in the data source settings by adding external or internal links.
-{{< docs-imagebox img="/img/docs/v74/exemplars-setting.png" class="docs-image--no-shadow" caption="Screenshot of the Exemplars configuration" >}}
+{{< figure src="/static/img/docs/v74/exemplars-setting.png" class="docs-image--no-shadow" caption="Screenshot of the Exemplars configuration" >}}

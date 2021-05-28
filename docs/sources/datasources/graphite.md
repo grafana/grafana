@@ -55,8 +55,8 @@ To see the raw text of the query that is sent to Graphite, click the **Toggle te
 
 Click **Select metric** to start navigating the metric space. Once you start, you can continue using the mouse or keyboard arrow keys. You can select a wildcard and still continue.
 
-{{< docs-imagebox img="/img/docs/graphite/graphite-query-editor-still.png"
-                  animated-gif="/img/docs/graphite/graphite-query-editor.gif" >}}
+{{< figure src="/static/img/docs/graphite/graphite-query-editor-still.png"
+                  animated-gif="/static/img/docs/graphite/graphite-query-editor.gif" >}}
 
 ### Functions
 
@@ -65,8 +65,8 @@ a function is selected, it will be added and your focus will be in the text box 
 - To edit or change a parameter, click on it and it will turn into a text box.
 - To delete a function, click the function name followed by the x icon.
 
-{{< docs-imagebox img="/img/docs/graphite/graphite-functions-still.png"
-                  animated-gif="/img/docs/graphite/graphite-functions-demo.gif" >}}
+{{< figure src="/static/img/docs/graphite/graphite-functions-still.png"
+                  animated-gif="/static/img/docs/graphite/graphite-functions-demo.gif" >}}
 
 Some functions like aliasByNode support an optional second argument. To add an argument, hover your mouse over the first argument and then click the `+` symbol that appears. To remove the second optional parameter, click on it and leave it blank and the editor will remove it.
 
@@ -141,12 +141,12 @@ For more details, see the [Graphite docs on the autocomplete API for tags](http:
 The query you specify in the query field should be a metric find type of query. For example, a query like `prod.servers.*` fills the
 variable with all possible values that exist in the wildcard position.
 
-The results contain all possible values occurring only at the last level of the query. To get full metric names matching the query 
-use expand function (`expand(*.servers.*)`). 
+The results contain all possible values occurring only at the last level of the query. To get full metric names matching the query
+use expand function (`expand(*.servers.*)`).
 
 #### Comparison between expanded and non-expanded metric search results
 
-The expanded query returns the full names of matching metrics. In combination with regex, it can extract any part of the metric name. By contrast, a non-expanded query only returns the last part of the metric name. It does not allow you to extract other parts of metric names. 
+The expanded query returns the full names of matching metrics. In combination with regex, it can extract any part of the metric name. By contrast, a non-expanded query only returns the last part of the metric name. It does not allow you to extract other parts of metric names.
 
 Here are some example metrics:
 - `prod.servers.001.cpu`
@@ -190,7 +190,7 @@ tag_values(server, server=~${__searchFilter:regex})
 ### Variable usage
 
 You can use a variable in a metric node path or as a parameter to a function.
-![variable](/img/docs/v2/templated_variable_parameter.png)
+![variable](/static/img/docs/v2/templated_variable_parameter.png)
 
 There are two syntaxes:
 

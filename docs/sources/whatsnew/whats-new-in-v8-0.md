@@ -97,7 +97,7 @@ Log navigation in Explore has been significantly improved. We added pagination t
 
 [Logs in Explore]({{< relref "../explore/logs-integration.md" >}}) was updated as a result of these changes.
 
-![Navigate logs in Explore](/img/docs/explore/navigate-logs-8-0.png)
+![Navigate logs in Explore](/static/img/docs/explore/navigate-logs-8-0.png)
 
 ### Tracing improvements
 
@@ -142,7 +142,7 @@ We changed how the configured Elasticsearch version is handled. You can now spec
 
 You can now use a different interpolation method to use template variables in a more extensive way. You can now use template variables in every query editor field that allows free input.
 
-![Elasticsearch template variables](/img/docs/elasticsearch/input-templates-8-0.png)
+![Elasticsearch template variables](/static/img/docs/elasticsearch/input-templates-8-0.png)
 
 ##### Allow omitting field for metrics that support inline scripts
 
@@ -150,13 +150,13 @@ Metric aggregations can be specified without a field if a script is provided. Yo
 
 Previously this was only possible when adding a new metric without selecting a field, because once selected, the field could not have been removed.
 
-![Elasticsearch omit fields](/img/docs/elasticsearch/omit-fields-8-0.png)
+![Elasticsearch omit fields](/static/img/docs/elasticsearch/omit-fields-8-0.png)
 
 ##### Allow setting a custom limit for log queries
 
 You can now set a custom line limit for logs queries instead of accepting the previously hard-coded 500. We also simplified the query editor to only show relevant fields when issuing logs queries.
 
-![Elasticsearch custom log limit](/img/docs/elasticsearch/custom-log-limit-8-0.png)
+![Elasticsearch custom log limit](/static/img/docs/elasticsearch/custom-log-limit-8-0.png)
 
 ##### Guess field type from first non-empty value
 

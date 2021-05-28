@@ -47,7 +47,7 @@ curl example:
 
 Open the sidemenu and click the organization dropdown and select the `API Keys` option.
 
-![](/img/docs/v2/orgdropdown_api_keys.png)
+![](/static/img/docs/v2/orgdropdown_api_keys.png)
 
 You use the token in all requests in the `Authorization` header, like this:
 
