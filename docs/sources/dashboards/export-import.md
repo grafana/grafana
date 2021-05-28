@@ -15,7 +15,7 @@ Dashboards are exported in Grafana JSON format, and contain everything you need 
 
 The export feature is accessed in the share window which you open by clicking the share button in the dashboard menu.
 
-{{< docs-imagebox img="/img/docs/export/export-modal-8-0.png" max-width="800px" >}}
+{{< docs-imagebox img="/img/docs/export/export-modal.png" max-width="800px" >}}
 
 ### Making a dashboard portable
 
@@ -25,11 +25,11 @@ add template variables for things like a metric prefix (use constant variable) a
 A template variable of the type `Constant` will automatically be hidden in
 the dashboard, and will also be added as a required input when the dashboard is imported.
 
-### Export dashboard without default values
+### Export with default values removed
 
-To export a dashboard without the default values in order to reduce the exported JSON file size, check the toggle **Export with default values removed** option.
+If you want to export a dashboard without default values in order to reduce the exported json file size, it is a good idea to check the toggle "Export with default values removed".
 
-During import, the removed default values automatically added back to the dashboard.
+When import, the removed default values would be added automatically to the dashboard.
 ## Importing a dashboard
 
 To import a dashboard click the + icon in the side menu, and then click **Import**.
