@@ -106,7 +106,7 @@ func TestNotificationChannels(t *testing.T) {
 	require.Eventually(t, func() bool {
 		return mockChannel.totalNotifications() == len(alertNames) &&
 			mockChannel.matchesExpNotifications(expNotifications)
-	}, 25*time.Second, 1*time.Second)
+	}, 30*time.Second, 1*time.Second)
 
 	require.NoError(t, mockChannel.Close())
 }
