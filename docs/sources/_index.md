@@ -51,7 +51,7 @@ aliases = ["/docs/grafana/v1.1", "/docs/grafana/latest/guides/reference/admin", 
     <a href="{{< relref "basics/_index.md" >}}" class="nav-cards__item nav-cards__item--guide">
         <h4>Grafana basics</h4>
         <p>Learn basic observability.</p>
-    </a>  
+    </a>
     <a href="{{< relref "administration/configuration.md" >}}" class="nav-cards__item nav-cards__item--guide">
         <h4>Configure Grafana</h4>
         <p>Review the configuration and setup options.</p>
@@ -75,51 +75,51 @@ aliases = ["/docs/grafana/v1.1", "/docs/grafana/latest/guides/reference/admin", 
 
 <div class="nav-cards">
     <a href="{{< relref "datasources/graphite.md" >}}" class="nav-cards__item nav-cards__item--ds">
-      <img src="/img/docs/logos/icon_graphite.svg" >
+      <img src="/static/img/docs/logos/icon_graphite.svg" >
       <h5>Graphite</h5>
     </a>
     <a href="{{< relref "datasources/elasticsearch.md" >}}" class="nav-cards__item nav-cards__item--ds">
-      <img src="/img/docs/logos/icon_elasticsearch.svg" >
+      <img src="/static/img/docs/logos/icon_elasticsearch.svg" >
       <h5>Elasticsearch</h5>
     </a>
     <a href="{{< relref "datasources/influxdb/_index.md" >}}" class="nav-cards__item nav-cards__item--ds">
-      <img src="/img/docs/logos/icon_influxdb.svg" >
+      <img src="/static/img/docs/logos/icon_influxdb.svg" >
       <h5>InfluxDB</h5>
     </a>
     <a href="{{< relref "datasources/prometheus.md" >}}" class="nav-cards__item nav-cards__item--ds">
-      <img src="/img/docs/logos/icon_prometheus.svg" >
+      <img src="/static/img/docs/logos/icon_prometheus.svg" >
       <h5>Prometheus</h5>
     </a>
     <a href="{{< relref "datasources/google-cloud-monitoring/_index.md" >}}" class="nav-cards__item nav-cards__item--ds">
-      <img src="/img/docs/logos/icon_cloudmonitoring.svg">
+      <img src="/static/img/docs/logos/icon_cloudmonitoring.svg">
       <h5>Google Cloud Monitoring</h5>
     </a>
     <a href="{{< relref "datasources/cloudwatch.md" >}}" class="nav-cards__item nav-cards__item--ds">
-      <img src="/img/docs/logos/icon_cloudwatch.svg">
+      <img src="/static/img/docs/logos/icon_cloudwatch.svg">
       <h5>AWS CloudWatch</h5>
     </a>
     <a href="{{< relref "datasources/azuremonitor.md" >}}" class="nav-cards__item nav-cards__item--ds">
-      <img src="/img/docs/logos/icon_azure_monitor.jpg">
+      <img src="/static/img/docs/logos/icon_azure_monitor.jpg">
       <h5>Azure Monitor</h5>
     </a>
     <a href="{{< relref "datasources/loki.md" >}}" class="nav-cards__item nav-cards__item--ds">
-      <img src="/img/docs/logos/icon_loki.svg">
+      <img src="/static/img/docs/logos/icon_loki.svg">
       <h5>Loki</h5>
     </a>
     <a href="{{< relref "datasources/mysql.md" >}}" class="nav-cards__item nav-cards__item--ds">
-      <img src="/img/docs/logos/icon_mysql.png" >
+      <img src="/static/img/docs/logos/icon_mysql.png" >
       <h5>MySQL</h5>
     </a>
     <a href="{{< relref "datasources/postgres.md" >}}" class="nav-cards__item nav-cards__item--ds">
-      <img src="/img/docs/logos/icon_postgres.svg" >
+      <img src="/static/img/docs/logos/icon_postgres.svg" >
       <h5>Postgres</h5>
     </a>
     <a href="{{< relref "datasources/mssql.md" >}}" class="nav-cards__item nav-cards__item--ds">
-      <img src="/img/docs/logos/sql_server_logo.svg">
+      <img src="/static/img/docs/logos/sql_server_logo.svg">
       <h5>Microsoft SQL Server</h5>
     </a>
     <a href="{{< relref "datasources/opentsdb.md" >}}" class="nav-cards__item nav-cards__item--ds">
-      <img src="/img/docs/logos/icon_opentsdb.png" >
+      <img src="/static/img/docs/logos/icon_opentsdb.png" >
       <h5>OpenTSDB</h5>
     </a>
 </div>

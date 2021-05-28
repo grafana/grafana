@@ -32,7 +32,7 @@ type Gateway struct {
 
 // Init Gateway.
 func (g *Gateway) Init() error {
-	logger.Info("Telemetry Gateway initialization")
+	logger.Info("Live Push Gateway initialization")
 
 	g.converter = convert.NewConverter()
 	return nil
