@@ -167,15 +167,12 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
         <td className={style.logDetailsLabel}>{parsedKey}</td>
         <td className={cx(styles.wordBreakAll, wrapLogMessage && styles.wrapLine)}>
           {parsedValue}
-          {links &&
-            links.map((link) => {
-              return (
-                <>
-                  &nbsp;
-                  <DataLinkButton link={link} />
-                </>
-              );
-            })}
+          {links?.map((link) => (
+            <span key={link.title}>
+              &nbsp;
+              <DataLinkButton link={link} />
+            </span>
+          ))}
           {showFieldsStats && (
             <LogLabelStats
               stats={fieldStats!}

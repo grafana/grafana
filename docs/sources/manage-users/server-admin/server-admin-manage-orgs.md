@@ -21,7 +21,7 @@ Grafana displays all organizations set up on the server, listed in alphabetical 
 - **Id -** The ID number of the organization.
 - **Name -** The name of the organization.
 
-![Server Admin organization list](/img/docs/manage-users/server-org-list-7-3.png)
+![Server Admin organization list](/static/img/docs/manage-users/server-org-list-7-3.png)
 
 ## Create organization
 
@@ -55,7 +55,7 @@ Permanently remove an organization from your Grafana server.
 
 Grafana Server Admins can perform some organization management tasks that are almost identical to Organization Admin tasks, just accessed from a different menu path.
 
-![Server admin Edit Organization](/img/docs/manage-users/server-admin-edit-org-7-3.png)
+![Server admin Edit Organization](/static/img/docs/manage-users/server-admin-edit-org-7-3.png)
 
 ### View organization members and roles
 
