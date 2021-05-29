@@ -94,7 +94,7 @@ type HTTPServer struct {
 	ContextHandler         *contexthandler.ContextHandler
 	SQLStore               *sqlstore.SQLStore
 	DataService            *tsdb.Service
-	PluginDashboardService *plugindashboards.Service `inject:""`
+	PluginDashboardService *plugindashboards.Service
 	AlertEngine            *alerting.AlertEngine
 	LoadSchemaService      *schemaloader.SchemaLoaderService `inject:""`
 	Alertmanager           *notifier.Alertmanager            `inject:""`
@@ -120,7 +120,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	loginService login.Service, accessControl accesscontrol.AccessControl,
 	dataSourceProxy *datasourceproxy.DataSourceProxyService, searchService *search.SearchService,
 	live *live.GrafanaLive, livePushGateway *pushhttp.Gateway, plugCtxProvider *plugincontext.Provider,
-	contextHandler *contexthandler.ContextHandler) *HTTPServer {
+	contextHandler *contexthandler.ContextHandler, pluginDashboardService *plugindashboards.Service) *HTTPServer {
 	macaron.Env = cfg.Env
 	m := macaron.New()
 	// automatically set HEAD for every GET
@@ -156,6 +156,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		LivePushGateway:        livePushGateway,
 		PluginContextProvider:  plugCtxProvider,
 		ContextHandler:         contextHandler,
+		PluginDashboardService: pluginDashboardService,
 		log:                    log.New("http.server"),
 		macaron:                m,
 		Listener:               opts.Listener,
