@@ -101,7 +101,7 @@ func DeleteOrphanedProvisionedDashboards(cmd *models.DeleteOrphanedProvisionedDa
 	}
 
 	for _, deleteDashCommand := range result {
-		err := DeleteDashboard(&models.DeleteDashboardCommand{Id: deleteDashCommand.DashboardId})
+		err := DeleteDashboard(context.TODO(), &models.DeleteDashboardCommand{Id: deleteDashCommand.DashboardId})
 		if err != nil && !errors.Is(err, models.ErrDashboardNotFound) {
 			return err
 		}
