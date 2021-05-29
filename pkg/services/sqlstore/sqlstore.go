@@ -48,6 +48,7 @@ type SQLStore struct {
 	log                         log.Logger
 	Dialect                     migrator.Dialect
 	skipEnsureDefaultOrgAndUser bool
+	dbMigrators                 []registry.DatabaseMigrator
 }
 
 func ProvideService(cfg *setting.Cfg, cacheService *localcache.CacheService, bus bus.Bus) (*SQLStore, error) {
@@ -83,22 +84,6 @@ func newSQLStore(cfg *setting.Cfg, cacheService *localcache.CacheService, bus bu
 	x = ss.engine
 	dialect = ss.Dialect
 
-	if !ss.dbCfg.SkipMigrations {
-		migrator := migrator.NewMigrator(ss.engine, ss.Cfg)
-		migrations.AddMigrations(migrator)
-
-		for _, descriptor := range registry.GetServices() {
-			sc, ok := descriptor.Instance.(registry.DatabaseMigrator)
-			if ok {
-				sc.AddMigration(migrator)
-			}
-		}
-
-		if err := migrator.Start(); err != nil {
-			return nil, err
-		}
-	}
-
 	// Init repo instances
 	annotations.SetRepository(&SQLAnnotationRepo{})
 	annotations.SetAnnotationCleaner(&AnnotationCleanupService{batchSize: ss.Cfg.AnnotationCleanupJobBatchSize, log: log.New("annotationcleaner")})
@@ -113,6 +98,7 @@ func newSQLStore(cfg *setting.Cfg, cacheService *localcache.CacheService, bus bu
 		return nil, err
 	}
 	// Make sure the changes are synced, so they get shared with eventual other DB connections
+	// XXX: Why is this only relevant when not skipping migrations?
 	if !ss.dbCfg.SkipMigrations {
 		if err := ss.Sync(); err != nil {
 			return nil, err
@@ -120,6 +106,28 @@ func newSQLStore(cfg *setting.Cfg, cacheService *localcache.CacheService, bus bu
 	}
 
 	return ss, nil
+}
+
+// AddMigrator adds a registry.DatabaseMigrator.
+func (ss *SQLStore) AddMigrator(migrator registry.DatabaseMigrator) {
+	ss.dbMigrators = append(ss.dbMigrators, migrator)
+}
+
+// Migrate performs database migrations.
+// Has to be done in a second phase (after initialization), since other services can register migrations during
+// the initialization phase.
+func (ss *SQLStore) Migrate() error {
+	if ss.dbCfg.SkipMigrations {
+		return nil
+	}
+
+	migrator := migrator.NewMigrator(ss.engine, ss.Cfg)
+	migrations.AddMigrations(migrator)
+	for _, dbm := range ss.dbMigrators {
+		dbm.AddMigration(migrator)
+	}
+
+	return migrator.Start()
 }
 
 // Sync syncs changes to the database.

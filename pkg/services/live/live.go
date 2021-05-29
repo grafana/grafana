@@ -76,6 +76,8 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 		SQLStore:              sqlStore,
 	}
 
+	sqlStore.AddMigrator(g)
+
 	logger.Debug("GrafanaLive initialization")
 
 	// We use default config here as starting point. Default config contains

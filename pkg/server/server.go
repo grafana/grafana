@@ -141,7 +141,7 @@ func (s *Server) init() error {
 		return err
 	}
 
-	return nil
+	return s.HTTPServer.SQLStore.Migrate()
 }
 
 // Run initializes and starts services. This will block until all services have
