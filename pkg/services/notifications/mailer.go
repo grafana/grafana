@@ -177,7 +177,7 @@ func (ns *NotificationService) buildEmailMessage(cmd *models.SendEmailCommand) (
 		data = make(map[string]interface{}, 10)
 	}
 
-	setDefaultTemplateData(data, nil)
+	setDefaultTemplateData(ns.Cfg, data, nil)
 	err = mailTemplates.ExecuteTemplate(&buffer, cmd.Template, data)
 	if err != nil {
 		return nil, err

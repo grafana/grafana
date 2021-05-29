@@ -90,7 +90,6 @@ var (
 	// Security settings.
 	SecretKey              string
 	DisableGravatar        bool
-	EmailCodeValidMinutes  int
 	DataProxyWhiteList     map[string]bool
 	CookieSecure           bool
 	CookieSameSiteDisabled bool
@@ -207,6 +206,9 @@ type Cfg struct {
 	ReadTimeout      time.Duration
 	EnableGzip       bool
 	EnforceDomain    bool
+
+	// Security settings
+	EmailCodeValidMinutes int
 
 	// build
 	BuildVersion string

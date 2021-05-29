@@ -15,6 +15,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/cleanup"
 	"github.com/grafana/grafana/pkg/services/ngalert"
+	"github.com/grafana/grafana/pkg/services/notifications"
 
 	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/services/librarypanels"
@@ -100,6 +101,7 @@ type HTTPServer struct {
 	AlertNG                *ngalert.AlertNG
 	LibraryPanelService    librarypanels.Service
 	LibraryElementService  libraryelements.Service
+	NotificationService    *notifications.NotificationService
 	Listener               net.Listener
 	cleanUpService         *cleanup.CleanUpService
 }
@@ -122,7 +124,8 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	live *live.GrafanaLive, livePushGateway *pushhttp.Gateway, plugCtxProvider *plugincontext.Provider,
 	contextHandler *contexthandler.ContextHandler, pluginDashboardService *plugindashboards.Service,
 	schemaService *schemaloader.SchemaLoaderService, alertNG *ngalert.AlertNG,
-	libraryPanelService librarypanels.Service, libraryElementService libraryelements.Service) *HTTPServer {
+	libraryPanelService librarypanels.Service, libraryElementService libraryelements.Service,
+	notificationService *notifications.NotificationService) *HTTPServer {
 	macaron.Env = cfg.Env
 	m := macaron.New()
 	// automatically set HEAD for every GET
@@ -163,6 +166,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		AlertNG:                alertNG,
 		LibraryPanelService:    libraryPanelService,
 		LibraryElementService:  libraryElementService,
+		NotificationService:    notificationService,
 		log:                    log.New("http.server"),
 		macaron:                m,
 		Listener:               opts.Listener,
