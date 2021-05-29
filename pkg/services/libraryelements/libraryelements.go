@@ -30,9 +30,9 @@ type Service interface {
 
 // LibraryElementService is the service for the Library Element feature.
 type LibraryElementService struct {
-	Cfg           *setting.Cfg          `inject:""`
-	SQLStore      *sqlstore.SQLStore    `inject:""`
-	RouteRegister routing.RouteRegister `inject:""`
+	Cfg           *setting.Cfg
+	SQLStore      *sqlstore.SQLStore
+	RouteRegister routing.RouteRegister
 	log           log.Logger
 }
 

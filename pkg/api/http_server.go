@@ -26,7 +26,9 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
@@ -101,9 +103,11 @@ type HTTPServer struct {
 	AlertNG                *ngalert.AlertNG
 	LibraryPanelService    librarypanels.Service
 	LibraryElementService  libraryelements.Service
-	NotificationService    *notifications.NotificationService
+	notificationService    *notifications.NotificationService
 	Listener               net.Listener
 	cleanUpService         *cleanup.CleanUpService
+	tracingService         *tracing.TracingService
+	internalMetricsSvc     *metrics.InternalMetricsService
 }
 
 type ServerOptions struct {
@@ -125,7 +129,8 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	contextHandler *contexthandler.ContextHandler, pluginDashboardService *plugindashboards.Service,
 	schemaService *schemaloader.SchemaLoaderService, alertNG *ngalert.AlertNG,
 	libraryPanelService librarypanels.Service, libraryElementService libraryelements.Service,
-	notificationService *notifications.NotificationService) *HTTPServer {
+	notificationService *notifications.NotificationService, tracingService *tracing.TracingService,
+	internalMetricsSvc *metrics.InternalMetricsService) *HTTPServer {
 	macaron.Env = cfg.Env
 	m := macaron.New()
 	// automatically set HEAD for every GET
@@ -166,7 +171,9 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		AlertNG:                alertNG,
 		LibraryPanelService:    libraryPanelService,
 		LibraryElementService:  libraryElementService,
-		NotificationService:    notificationService,
+		notificationService:    notificationService,
+		tracingService:         tracingService,
+		internalMetricsSvc:     internalMetricsSvc,
 		log:                    log.New("http.server"),
 		macaron:                m,
 		Listener:               opts.Listener,

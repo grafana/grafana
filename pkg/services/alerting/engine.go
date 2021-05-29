@@ -23,11 +23,11 @@ import (
 // schedules alert evaluations and makes sure notifications
 // are sent.
 type AlertEngine struct {
-	RenderService    rendering.Service             `inject:""`
-	Bus              bus.Bus                       `inject:""`
-	RequestValidator models.PluginRequestValidator `inject:""`
-	DataService      plugins.DataRequestHandler    `inject:""`
-	Cfg              *setting.Cfg                  `inject:""`
+	RenderService    rendering.Service
+	Bus              bus.Bus
+	RequestValidator models.PluginRequestValidator
+	DataService      plugins.DataRequestHandler
+	Cfg              *setting.Cfg
 
 	execQueue     chan *Job
 	ticker        *Ticker

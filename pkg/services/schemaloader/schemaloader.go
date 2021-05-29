@@ -42,7 +42,7 @@ func ProvideService(cfg *setting.Cfg) (*SchemaLoaderService, error) {
 type SchemaLoaderService struct {
 	log        log.Logger
 	DashFamily schema.VersionedCueSchema
-	Cfg        *setting.Cfg `inject:""`
+	Cfg        *setting.Cfg
 }
 
 func (rs *SchemaLoaderService) IsDisabled() bool {

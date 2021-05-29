@@ -32,10 +32,10 @@ type Service interface {
 
 // LibraryPanelService is the service for the Panel Library feature.
 type LibraryPanelService struct {
-	Cfg                   *setting.Cfg            `inject:""`
-	SQLStore              *sqlstore.SQLStore      `inject:""`
-	RouteRegister         routing.RouteRegister   `inject:""`
-	LibraryElementService libraryelements.Service `inject:""`
+	Cfg                   *setting.Cfg
+	SQLStore              *sqlstore.SQLStore
+	RouteRegister         routing.RouteRegister
+	LibraryElementService libraryelements.Service
 	log                   log.Logger
 }
 

@@ -25,12 +25,12 @@ type UsageStats interface {
 type MetricsFunc func() (map[string]interface{}, error)
 
 type UsageStatsService struct {
-	Cfg                *setting.Cfg               `inject:""`
-	Bus                bus.Bus                    `inject:""`
-	SQLStore           *sqlstore.SQLStore         `inject:""`
-	AlertingUsageStats alerting.UsageStatsQuerier `inject:""`
-	License            models.Licensing           `inject:""`
-	PluginManager      plugins.Manager            `inject:""`
+	Cfg                *setting.Cfg
+	Bus                bus.Bus
+	SQLStore           *sqlstore.SQLStore
+	AlertingUsageStats alerting.UsageStatsQuerier
+	License            models.Licensing
+	PluginManager      plugins.Manager
 
 	log log.Logger
 

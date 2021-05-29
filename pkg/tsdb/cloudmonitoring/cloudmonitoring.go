@@ -83,8 +83,8 @@ func ProvideService(pluginManager plugins.Manager) *Service {
 
 type Service struct {
 	PluginManager      plugins.Manager
-	HTTPClientProvider httpclient.Provider `inject:""`
-	Cfg                *setting.Cfg        `inject:""`
+	HTTPClientProvider httpclient.Provider
+	Cfg                *setting.Cfg
 }
 
 func (s *Service) Init() error {

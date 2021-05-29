@@ -12,8 +12,8 @@ const (
 )
 
 type OSSLicensingService struct {
-	Cfg          *setting.Cfg        `inject:""`
-	HooksService *hooks.HooksService `inject:""`
+	Cfg          *setting.Cfg
+	HooksService *hooks.HooksService
 }
 
 func (*OSSLicensingService) HasLicense() bool {
