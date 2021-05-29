@@ -130,7 +130,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	schemaService *schemaloader.SchemaLoaderService, alertNG *ngalert.AlertNG,
 	libraryPanelService librarypanels.Service, libraryElementService libraryelements.Service,
 	notificationService *notifications.NotificationService, tracingService *tracing.TracingService,
-	internalMetricsSvc *metrics.InternalMetricsService) *HTTPServer {
+	internalMetricsSvc *metrics.InternalMetricsService, quotaService *quota.QuotaService) *HTTPServer {
 	macaron.Env = cfg.Env
 	m := macaron.New()
 	// automatically set HEAD for every GET
@@ -171,6 +171,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		AlertNG:                alertNG,
 		LibraryPanelService:    libraryPanelService,
 		LibraryElementService:  libraryElementService,
+		QuotaService:           quotaService,
 		notificationService:    notificationService,
 		tracingService:         tracingService,
 		internalMetricsSvc:     internalMetricsSvc,

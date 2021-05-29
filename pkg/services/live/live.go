@@ -46,8 +46,7 @@ var (
 
 func NewGrafanaLive() *GrafanaLive {
 	return &GrafanaLive{
-		channels:   make(map[string]models.ChannelHandler),
-		channelsMu: sync.RWMutex{},
+		channels: make(map[string]models.ChannelHandler),
 		GrafanaScope: CoreGrafanaScope{
 			Features: make(map[string]models.ChannelHandlerFactory),
 		},
@@ -74,6 +73,10 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 		CacheService:          cacheService,
 		DataSourceCache:       dataSourceCache,
 		SQLStore:              sqlStore,
+		channels:              make(map[string]models.ChannelHandler),
+		GrafanaScope: CoreGrafanaScope{
+			Features: make(map[string]models.ChannelHandlerFactory),
+		},
 	}
 
 	sqlStore.AddMigrator(g)
