@@ -5,7 +5,6 @@ import { distribute, SPACE_BETWEEN } from 'app/plugins/panel/barchart/distribute
 import { TimelineFieldConfig, TimelineMode, TimelineValueAlignment } from './types';
 import { GrafanaTheme2, TimeRange } from '@grafana/data';
 import { BarValueVisibility } from '@grafana/ui';
-import tinycolor from 'tinycolor2';
 
 const { round, min, ceil } = Math;
 
@@ -515,5 +514,5 @@ export function getConfig(opts: TimelineCoreOptions) {
 
 function getFillColor(fieldConfig: TimelineFieldConfig, color: string) {
   const opacityPercent = (fieldConfig.fillOpacity ?? 100) / 100;
-  return tinycolor(color).setAlpha(opacityPercent).toString();
+  return color + Math.round(opacityPercent * 255).toString(16);
 }
