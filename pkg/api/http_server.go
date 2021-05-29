@@ -96,10 +96,10 @@ type HTTPServer struct {
 	DataService            *tsdb.Service
 	PluginDashboardService *plugindashboards.Service
 	AlertEngine            *alerting.AlertEngine
-	LoadSchemaService      *schemaloader.SchemaLoaderService `inject:""`
-	Alertmanager           *notifier.Alertmanager            `inject:""`
-	LibraryPanelService    librarypanels.Service             `inject:""`
-	LibraryElementService  libraryelements.Service           `inject:""`
+	LoadSchemaService      *schemaloader.SchemaLoaderService
+	Alertmanager           *notifier.Alertmanager  `inject:""`
+	LibraryPanelService    librarypanels.Service   `inject:""`
+	LibraryElementService  libraryelements.Service `inject:""`
 	Listener               net.Listener
 	cleanUpService         *cleanup.CleanUpService
 }
@@ -120,7 +120,8 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	loginService login.Service, accessControl accesscontrol.AccessControl,
 	dataSourceProxy *datasourceproxy.DataSourceProxyService, searchService *search.SearchService,
 	live *live.GrafanaLive, livePushGateway *pushhttp.Gateway, plugCtxProvider *plugincontext.Provider,
-	contextHandler *contexthandler.ContextHandler, pluginDashboardService *plugindashboards.Service) *HTTPServer {
+	contextHandler *contexthandler.ContextHandler, pluginDashboardService *plugindashboards.Service,
+	schemaService *schemaloader.SchemaLoaderService) *HTTPServer {
 	macaron.Env = cfg.Env
 	m := macaron.New()
 	// automatically set HEAD for every GET
@@ -157,6 +158,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		PluginContextProvider:  plugCtxProvider,
 		ContextHandler:         contextHandler,
 		PluginDashboardService: pluginDashboardService,
+		LoadSchemaService:      schemaService,
 		log:                    log.New("http.server"),
 		macaron:                m,
 		Listener:               opts.Listener,
