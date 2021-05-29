@@ -87,7 +87,7 @@ type HTTPServer struct {
 	DataProxy              *datasourceproxy.DataSourceProxyService
 	PluginRequestValidator models.PluginRequestValidator
 	PluginManager          plugins.Manager
-	SearchService          *search.SearchService `inject:""`
+	SearchService          *search.SearchService
 	ShortURLService        *shorturls.ShortURLService
 	Live                   *live.GrafanaLive              `inject:""`
 	LivePushGateway        *pushhttp.Gateway              `inject:""`
@@ -118,7 +118,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	cleanUpService *cleanup.CleanUpService, shortURLService *shorturls.ShortURLService,
 	remoteCache *remotecache.RemoteCache, provisioningService provisioning.ProvisioningService,
 	loginService login.Service, accessControl accesscontrol.AccessControl,
-	dataSourceProxy *datasourceproxy.DataSourceProxyService) *HTTPServer {
+	dataSourceProxy *datasourceproxy.DataSourceProxyService, searchService *search.SearchService) *HTTPServer {
 	macaron.Env = cfg.Env
 	m := macaron.New()
 	// automatically set HEAD for every GET
@@ -149,6 +149,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		Login:                  loginService,
 		AccessControl:          accessControl,
 		DataProxy:              dataSourceProxy,
+		SearchService:          searchService,
 		log:                    log.New("http.server"),
 		macaron:                m,
 		Listener:               opts.Listener,
