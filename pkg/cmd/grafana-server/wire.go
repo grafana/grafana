@@ -30,6 +30,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/hooks"
+	"github.com/grafana/grafana/pkg/services/libraryelements"
+	"github.com/grafana/grafana/pkg/services/librarypanels"
 	"github.com/grafana/grafana/pkg/services/live"
 	"github.com/grafana/grafana/pkg/services/live/pushhttp"
 	"github.com/grafana/grafana/pkg/services/login"
@@ -107,6 +109,10 @@ var wireSet = wire.NewSet(
 	plugindashboards.ProvideService,
 	schemaloader.ProvideService,
 	ngalert.ProvideService,
+	librarypanels.ProvideService,
+	wire.Bind(new(librarypanels.Service), new(*librarypanels.LibraryPanelService)),
+	libraryelements.ProvideService,
+	wire.Bind(new(libraryelements.Service), new(*libraryelements.LibraryElementService)),
 )
 
 func initializeServer(cla setting.CommandLineArgs, opts server.Options, apiOpts api.ServerOptions) (*server.Server, error) {

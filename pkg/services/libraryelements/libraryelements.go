@@ -4,10 +4,20 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
+
+func ProvideService(cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, routeRegister routing.RouteRegister) *LibraryElementService {
+	l := &LibraryElementService{
+		Cfg:           cfg,
+		SQLStore:      sqlStore,
+		RouteRegister: routeRegister,
+		log:           log.New("library-elements"),
+	}
+	l.registerAPIEndpoints()
+	return l
+}
 
 // Service is a service for operating on library elements.
 type Service interface {
@@ -24,19 +34,6 @@ type LibraryElementService struct {
 	SQLStore      *sqlstore.SQLStore    `inject:""`
 	RouteRegister routing.RouteRegister `inject:""`
 	log           log.Logger
-}
-
-func init() {
-	registry.RegisterService(&LibraryElementService{})
-}
-
-// Init initializes the LibraryElement service
-func (l *LibraryElementService) Init() error {
-	l.log = log.New("library-elements")
-
-	l.registerAPIEndpoints()
-
-	return nil
 }
 
 // CreateElement creates a Library Element.

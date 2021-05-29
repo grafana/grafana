@@ -98,8 +98,8 @@ type HTTPServer struct {
 	AlertEngine            *alerting.AlertEngine
 	LoadSchemaService      *schemaloader.SchemaLoaderService
 	AlertNG                *ngalert.AlertNG
-	LibraryPanelService    librarypanels.Service   `inject:""`
-	LibraryElementService  libraryelements.Service `inject:""`
+	LibraryPanelService    librarypanels.Service
+	LibraryElementService  libraryelements.Service
 	Listener               net.Listener
 	cleanUpService         *cleanup.CleanUpService
 }
@@ -121,7 +121,8 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	dataSourceProxy *datasourceproxy.DataSourceProxyService, searchService *search.SearchService,
 	live *live.GrafanaLive, livePushGateway *pushhttp.Gateway, plugCtxProvider *plugincontext.Provider,
 	contextHandler *contexthandler.ContextHandler, pluginDashboardService *plugindashboards.Service,
-	schemaService *schemaloader.SchemaLoaderService, alertNG *ngalert.AlertNG) *HTTPServer {
+	schemaService *schemaloader.SchemaLoaderService, alertNG *ngalert.AlertNG,
+	libraryPanelService librarypanels.Service, libraryElementService libraryelements.Service) *HTTPServer {
 	macaron.Env = cfg.Env
 	m := macaron.New()
 	// automatically set HEAD for every GET
@@ -160,6 +161,8 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		PluginDashboardService: pluginDashboardService,
 		LoadSchemaService:      schemaService,
 		AlertNG:                alertNG,
+		LibraryPanelService:    libraryPanelService,
+		LibraryElementService:  libraryElementService,
 		log:                    log.New("http.server"),
 		macaron:                m,
 		Listener:               opts.Listener,

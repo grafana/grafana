@@ -7,11 +7,21 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
+
+func ProvideService(cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, routeRegister routing.RouteRegister,
+	libraryElementService libraryelements.Service) *LibraryPanelService {
+	return &LibraryPanelService{
+		Cfg:                   cfg,
+		SQLStore:              sqlStore,
+		RouteRegister:         routeRegister,
+		LibraryElementService: libraryElementService,
+		log:                   log.New("library-panels"),
+	}
+}
 
 // Service is a service for operating on library panels.
 type Service interface {
@@ -27,16 +37,6 @@ type LibraryPanelService struct {
 	RouteRegister         routing.RouteRegister   `inject:""`
 	LibraryElementService libraryelements.Service `inject:""`
 	log                   log.Logger
-}
-
-func init() {
-	registry.RegisterService(&LibraryPanelService{})
-}
-
-// Init initializes the LibraryPanel service
-func (lps *LibraryPanelService) Init() error {
-	lps.log = log.New("library-panels")
-	return nil
 }
 
 // LoadLibraryPanelsForDashboard loops through all panels in dashboard JSON and replaces any library panel JSON
