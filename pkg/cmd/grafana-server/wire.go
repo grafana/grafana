@@ -59,6 +59,7 @@ var wireSet = wire.NewSet(
 	sqlstore.ProvideService,
 	localcache.ProvideService,
 	usagestats.ProvideService,
+	wire.Bind(new(usagestats.UsageStats), new(*usagestats.UsageStatsService)),
 	validations.ProvideValidator,
 	wire.Bind(new(models.PluginRequestValidator), new(*validations.OSSPluginRequestValidator)),
 	manager.ProvideService,

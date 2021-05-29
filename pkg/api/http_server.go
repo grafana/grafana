@@ -66,7 +66,7 @@ type HTTPServer struct {
 	httpSrv     *http.Server
 	middlewares []macaron.Handler
 
-	UsageStatsService      *usagestats.UsageStatsService
+	UsageStatsService      usagestats.UsageStats
 	PluginContextProvider  *plugincontext.Provider
 	RouteRegister          routing.RouteRegister
 	Bus                    bus.Bus
@@ -82,7 +82,7 @@ type HTTPServer struct {
 	ProvisioningService    provisioning.ProvisioningService
 	Login                  login.Service
 	License                models.Licensing
-	AccessControl          accesscontrol.AccessControl `inject:""`
+	AccessControl          accesscontrol.AccessControl
 	BackendPluginManager   backendplugin.Manager
 	DataProxy              *datasourceproxy.DatasourceProxyService `inject:""`
 	PluginRequestValidator models.PluginRequestValidator
@@ -117,7 +117,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	dataSourceCache datasources.CacheService, userTokenService models.UserTokenService,
 	cleanUpService *cleanup.CleanUpService, shortURLService *shorturls.ShortURLService,
 	remoteCache *remotecache.RemoteCache, provisioningService provisioning.ProvisioningService,
-	loginService login.Service) *HTTPServer {
+	loginService login.Service, accessControl accesscontrol.AccessControl) *HTTPServer {
 	macaron.Env = cfg.Env
 	m := macaron.New()
 	// automatically set HEAD for every GET
@@ -146,6 +146,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		RemoteCacheService:     remoteCache,
 		ProvisioningService:    provisioningService,
 		Login:                  loginService,
+		AccessControl:          accessControl,
 		log:                    log.New("http.server"),
 		macaron:                m,
 		Listener:               opts.Listener,

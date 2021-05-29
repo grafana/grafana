@@ -193,7 +193,6 @@ func registerServices(s *server.Server) error {
 		s.HTTPServer.HooksService,
 		s.HTTPServer.SQLStore,
 		s.HTTPServer.CacheService,
-		s.HTTPServer.UsageStatsService,
 		s.HTTPServer.PluginRequestValidator,
 		s.HTTPServer.PluginManager,
 		s.HTTPServer.BackendPluginManager,
