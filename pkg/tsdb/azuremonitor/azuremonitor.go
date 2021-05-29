@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -20,14 +19,6 @@ var (
 	azlog           = log.New("tsdb.azuremonitor")
 	legendKeyFormat = regexp.MustCompile(`\{\{\s*(.+?)\s*\}\}`)
 )
-
-func init() {
-	registry.Register(&registry.Descriptor{
-		Name:         "AzureMonitorService",
-		InitPriority: registry.Low,
-		Instance:     &Service{},
-	})
-}
 
 func ProvideService(pluginManager plugins.Manager) *Service {
 	return &Service{
@@ -39,10 +30,6 @@ type Service struct {
 	PluginManager      plugins.Manager
 	HTTPClientProvider httpclient.Provider
 	Cfg                *setting.Cfg
-}
-
-func (s *Service) Init() error {
-	return nil
 }
 
 // AzureMonitorExecutor executes queries for the Azure Monitor datasource - all four services

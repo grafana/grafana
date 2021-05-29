@@ -19,7 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/plugins/plugincontext"
-	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/live/database"
 	"github.com/grafana/grafana/pkg/services/live/features"
@@ -44,10 +43,6 @@ var (
 	logger   = log.New("live")
 	loggerCF = log.New("live.centrifuge")
 )
-
-func init() {
-	registry.RegisterServiceWithPriority(NewGrafanaLive(), registry.Low)
-}
 
 func NewGrafanaLive() *GrafanaLive {
 	return &GrafanaLive{

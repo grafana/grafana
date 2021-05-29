@@ -17,7 +17,6 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/registry"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/api/pluginproxy"
@@ -67,14 +66,6 @@ const (
 	perSeriesAlignerDefault   string = "ALIGN_MEAN"
 )
 
-func init() {
-	registry.Register(&registry.Descriptor{
-		Name:         "CloudMonitoringService",
-		InitPriority: registry.Low,
-		Instance:     &Service{},
-	})
-}
-
 func ProvideService(pluginManager plugins.Manager) *Service {
 	return &Service{
 		PluginManager: pluginManager,
@@ -85,10 +76,6 @@ type Service struct {
 	PluginManager      plugins.Manager
 	HTTPClientProvider httpclient.Provider
 	Cfg                *setting.Cfg
-}
-
-func (s *Service) Init() error {
-	return nil
 }
 
 // Executor executes queries for the CloudMonitoring datasource.
