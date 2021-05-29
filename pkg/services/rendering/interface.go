@@ -59,8 +59,6 @@ type renderFunc func(ctx context.Context, renderKey string, options Opts) (*Rend
 type renderCSVFunc func(ctx context.Context, renderKey string, options CSVOpts) (*RenderCSVResult, error)
 
 type Service interface {
-	// Init is necessary to implement registry.Service.
-	Init() error
 	IsAvailable() bool
 	Render(ctx context.Context, opts Opts) (*RenderResult, error)
 	RenderCSV(ctx context.Context, opts CSVOpts) (*RenderCSVResult, error)

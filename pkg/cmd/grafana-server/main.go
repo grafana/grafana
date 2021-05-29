@@ -19,7 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/extensions"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
-	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/server"
 	_ "github.com/grafana/grafana/pkg/services/alerting/conditions"
 	_ "github.com/grafana/grafana/pkg/services/alerting/notifiers"
@@ -160,9 +159,6 @@ func executeServer(configFile, homePath, pidFile, packaging string, traceDiagnos
 		fmt.Fprintf(os.Stderr, "Failed to start grafana. error: %s\n", err.Error())
 		return err
 	}
-	if err := registerServices(s); err != nil {
-		return err
-	}
 
 	ctx := context.Background()
 
@@ -176,36 +172,6 @@ func executeServer(configFile, homePath, pidFile, packaging string, traceDiagnos
 		}
 	}
 
-	return nil
-}
-
-// registerServices registers Google Wire instantiated services with the dependency graph.
-// TODO: Remove after migration to Wire is completed.
-func registerServices(s *server.Server) error {
-	for _, svc := range []registry.Service{
-		s.HTTPServer,
-		s.HTTPServer.DataService,
-		s.HTTPServer.AlertEngine,
-		s.HTTPServer.Cfg,
-		s.HTTPServer.Bus,
-		s.HTTPServer.RenderService,
-		s.HTTPServer.RouteRegister,
-		s.HTTPServer.HooksService,
-		s.HTTPServer.SQLStore,
-		s.HTTPServer.CacheService,
-		s.HTTPServer.PluginRequestValidator,
-		s.HTTPServer.PluginManager,
-		s.HTTPServer.BackendPluginManager,
-		s.HTTPServer.PluginContextProvider,
-		s.HTTPServer.DataSourceCache,
-		s.HTTPServer.AuthTokenService,
-		s.HTTPServer.QuotaService,
-		s.HTTPServer.RemoteCacheService,
-		s.HTTPServer.DataProxy,
-	} {
-		fmt.Printf("Registering %T\n", svc)
-		registry.RegisterService(svc)
-	}
 	return nil
 }
 
