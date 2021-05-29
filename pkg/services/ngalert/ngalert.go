@@ -14,7 +14,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/ngalert/api"
@@ -39,61 +38,52 @@ const (
 	defaultIntervalSeconds int64 = 6 * baseIntervalSeconds
 )
 
-// AlertNG is the service for evaluating the condition of an alert definition.
-type AlertNG struct {
-	Cfg             *setting.Cfg                            `inject:""`
-	DatasourceCache datasources.CacheService                `inject:""`
-	RouteRegister   routing.RouteRegister                   `inject:""`
-	SQLStore        *sqlstore.SQLStore                      `inject:""`
-	DataService     *tsdb.Service                           `inject:""`
-	DataProxy       *datasourceproxy.DataSourceProxyService `inject:""`
-	QuotaService    *quota.QuotaService                     `inject:""`
-	Metrics         *metrics.Metrics                        `inject:""`
-	Alertmanager    *notifier.Alertmanager
-	Log             log.Logger
-	schedule        schedule.ScheduleService
-	stateManager    *state.Manager
-}
-
-func init() {
-	registry.RegisterService(&AlertNG{})
-}
-
-// Init initializes the AlertingService.
-func (ng *AlertNG) Init() error {
-	ng.Log = log.New("ngalert")
-	ng.stateManager = state.NewManager(ng.Log, ng.Metrics)
+func ProvideService(cfg *setting.Cfg, dataSourceCache datasources.CacheService, routeRegister routing.RouteRegister,
+	sqlStore *sqlstore.SQLStore, dataService *tsdb.Service, dataProxy *datasourceproxy.DataSourceProxyService,
+	quotaService *quota.QuotaService) (*AlertNG, error) {
 	baseInterval := baseIntervalSeconds * time.Second
-
+	logger := log.New("ngalert")
 	store := &store.DBstore{
 		BaseInterval:           baseInterval,
 		DefaultIntervalSeconds: defaultIntervalSeconds,
-		SQLStore:               ng.SQLStore,
-		Logger:                 ng.Log,
+		SQLStore:               sqlStore,
+		Logger:                 logger,
 	}
 
-	var err error
-	ng.Alertmanager, err = notifier.New(ng.Cfg, store, ng.Metrics)
+	alertmanager, err := notifier.New(cfg, store, metrics.GlobalMetrics)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	schedCfg := schedule.SchedulerCfg{
 		C:             clock.New(),
 		BaseInterval:  baseInterval,
-		Logger:        ng.Log,
+		Logger:        logger,
 		MaxAttempts:   maxAttempts,
-		Evaluator:     eval.Evaluator{Cfg: ng.Cfg},
+		Evaluator:     eval.Evaluator{Cfg: cfg},
 		InstanceStore: store,
 		RuleStore:     store,
-		Notifier:      ng.Alertmanager,
-		Metrics:       ng.Metrics,
+		Notifier:      alertmanager,
+		Metrics:       metrics.GlobalMetrics,
 	}
-	ng.schedule = schedule.NewScheduler(schedCfg, ng.DataService)
+	schedule := schedule.NewScheduler(schedCfg, dataService)
 
+	ng := &AlertNG{
+		Cfg:             cfg,
+		DataSourceCache: dataSourceCache,
+		RouteRegister:   routeRegister,
+		SQLStore:        sqlStore,
+		DataService:     dataService,
+		DataProxy:       dataProxy,
+		QuotaService:    quotaService,
+		Metrics:         metrics.GlobalMetrics,
+		Log:             logger,
+		stateManager:    state.NewManager(logger, metrics.GlobalMetrics),
+		schedule:        schedule,
+	}
 	api := api.API{
 		Cfg:             ng.Cfg,
-		DatasourceCache: ng.DatasourceCache,
+		DatasourceCache: ng.DataSourceCache,
 		RouteRegister:   ng.RouteRegister,
 		DataService:     ng.DataService,
 		Schedule:        ng.schedule,
@@ -107,7 +97,23 @@ func (ng *AlertNG) Init() error {
 	}
 	api.RegisterAPIEndpoints(ng.Metrics)
 
-	return nil
+	return ng, nil
+}
+
+// AlertNG is the service for evaluating the condition of an alert definition.
+type AlertNG struct {
+	Cfg             *setting.Cfg
+	DataSourceCache datasources.CacheService
+	RouteRegister   routing.RouteRegister
+	SQLStore        *sqlstore.SQLStore
+	DataService     *tsdb.Service
+	DataProxy       *datasourceproxy.DataSourceProxyService
+	QuotaService    *quota.QuotaService
+	Metrics         *metrics.Metrics
+	Alertmanager    *notifier.Alertmanager
+	Log             log.Logger
+	schedule        schedule.ScheduleService
+	stateManager    *state.Manager
 }
 
 // Run starts the scheduler.

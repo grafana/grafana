@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/registry"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
@@ -36,14 +35,6 @@ type Metrics struct {
 	EvalFailures         *prometheus.CounterVec
 	EvalDuration         *prometheus.SummaryVec
 	GroupRules           *prometheus.GaugeVec
-}
-
-func init() {
-	registry.RegisterService(GlobalMetrics)
-}
-
-func (m *Metrics) Init() error {
-	return nil
 }
 
 // SwapRegisterer overwrites the prometheus register used by a *Metrics in place.

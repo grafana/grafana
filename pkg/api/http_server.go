@@ -14,6 +14,7 @@ import (
 	"sync"
 
 	"github.com/grafana/grafana/pkg/services/cleanup"
+	"github.com/grafana/grafana/pkg/services/ngalert"
 
 	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/services/librarypanels"
@@ -42,7 +43,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/live"
 	"github.com/grafana/grafana/pkg/services/live/pushhttp"
 	"github.com/grafana/grafana/pkg/services/login"
-	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/rendering"
@@ -97,7 +97,7 @@ type HTTPServer struct {
 	PluginDashboardService *plugindashboards.Service
 	AlertEngine            *alerting.AlertEngine
 	LoadSchemaService      *schemaloader.SchemaLoaderService
-	Alertmanager           *notifier.Alertmanager  `inject:""`
+	AlertNG                *ngalert.AlertNG
 	LibraryPanelService    librarypanels.Service   `inject:""`
 	LibraryElementService  libraryelements.Service `inject:""`
 	Listener               net.Listener
@@ -121,7 +121,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	dataSourceProxy *datasourceproxy.DataSourceProxyService, searchService *search.SearchService,
 	live *live.GrafanaLive, livePushGateway *pushhttp.Gateway, plugCtxProvider *plugincontext.Provider,
 	contextHandler *contexthandler.ContextHandler, pluginDashboardService *plugindashboards.Service,
-	schemaService *schemaloader.SchemaLoaderService) *HTTPServer {
+	schemaService *schemaloader.SchemaLoaderService, alertNG *ngalert.AlertNG) *HTTPServer {
 	macaron.Env = cfg.Env
 	m := macaron.New()
 	// automatically set HEAD for every GET
@@ -159,6 +159,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		ContextHandler:         contextHandler,
 		PluginDashboardService: pluginDashboardService,
 		LoadSchemaService:      schemaService,
+		AlertNG:                alertNG,
 		log:                    log.New("http.server"),
 		macaron:                m,
 		Listener:               opts.Listener,

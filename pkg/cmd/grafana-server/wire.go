@@ -34,6 +34,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/live/pushhttp"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/login/loginservice"
+	"github.com/grafana/grafana/pkg/services/ngalert"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/rendering"
@@ -105,6 +106,7 @@ var wireSet = wire.NewSet(
 	wire.Bind(new(models.JWTService), new(*jwt.AuthService)),
 	plugindashboards.ProvideService,
 	schemaloader.ProvideService,
+	ngalert.ProvideService,
 )
 
 func initializeServer(cla setting.CommandLineArgs, opts server.Options, apiOpts api.ServerOptions) (*server.Server, error) {

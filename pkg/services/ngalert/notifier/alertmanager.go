@@ -33,7 +33,6 @@ import (
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -78,10 +77,9 @@ type Alertmanager struct {
 	logger      log.Logger
 	gokitLogger gokit_log.Logger
 
-	Settings *setting.Cfg       `inject:""`
-	SQLStore *sqlstore.SQLStore `inject:""`
+	Settings *setting.Cfg
 	Store    store.AlertingStore
-	Metrics  *metrics.Metrics `inject:""`
+	Metrics  *metrics.Metrics
 
 	notificationLog *nflog.Log
 	marker          types.Marker
