@@ -80,7 +80,7 @@ type HTTPServer struct {
 	QuotaService           *quota.QuotaService
 	RemoteCacheService     *remotecache.RemoteCache
 	ProvisioningService    provisioning.ProvisioningService
-	Login                  login.Service `inject:""`
+	Login                  login.Service
 	License                models.Licensing
 	AccessControl          accesscontrol.AccessControl `inject:""`
 	BackendPluginManager   backendplugin.Manager
@@ -116,7 +116,8 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	pluginManager plugins.Manager, backendPM backendplugin.Manager, settingsProvider setting.Provider,
 	dataSourceCache datasources.CacheService, userTokenService models.UserTokenService,
 	cleanUpService *cleanup.CleanUpService, shortURLService *shorturls.ShortURLService,
-	remoteCache *remotecache.RemoteCache, provisioningService provisioning.ProvisioningService) *HTTPServer {
+	remoteCache *remotecache.RemoteCache, provisioningService provisioning.ProvisioningService,
+	loginService login.Service) *HTTPServer {
 	macaron.Env = cfg.Env
 	m := macaron.New()
 	// automatically set HEAD for every GET
@@ -144,6 +145,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		ShortURLService:        shortURLService,
 		RemoteCacheService:     remoteCache,
 		ProvisioningService:    provisioningService,
+		Login:                  loginService,
 		log:                    log.New("http.server"),
 		macaron:                m,
 		Listener:               opts.Listener,
