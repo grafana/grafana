@@ -27,13 +27,17 @@ const (
 	ServiceName = "RemoteCache"
 )
 
-func init() {
-	rc := &RemoteCache{}
-	registry.Register(&registry.Descriptor{
-		Name:         ServiceName,
-		Instance:     rc,
-		InitPriority: registry.Medium,
-	})
+func ProvideService(cfg *setting.Cfg, sqlStore *sqlstore.SQLStore) (*RemoteCache, error) {
+	client, err := createClient(cfg.RemoteCacheOptions, sqlStore)
+	if err != nil {
+		return nil, err
+	}
+	return &RemoteCache{
+		SQLStore: sqlStore,
+		Cfg:      cfg,
+		log:      log.New("cache.remote"),
+		client:   client,
+	}, nil
 }
 
 // CacheStorage allows the caller to set, get and delete items in the cache.
@@ -55,8 +59,8 @@ type CacheStorage interface {
 type RemoteCache struct {
 	log      log.Logger
 	client   CacheStorage
-	SQLStore *sqlstore.SQLStore `inject:""`
-	Cfg      *setting.Cfg       `inject:""`
+	SQLStore *sqlstore.SQLStore
+	Cfg      *setting.Cfg
 }
 
 // Get reads object from Cache

@@ -201,6 +201,7 @@ func registerServices(s *server.Server) error {
 		s.HTTPServer.DataSourceCache,
 		s.HTTPServer.AuthTokenService,
 		s.HTTPServer.QuotaService,
+		s.HTTPServer.RemoteCacheService,
 	} {
 		fmt.Printf("Registering %T\n", svc)
 		registry.RegisterService(svc)

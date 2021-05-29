@@ -42,9 +42,9 @@ type RenderingService struct {
 	domain          string
 	inProgressCount int
 
-	Cfg                *setting.Cfg             `inject:""`
-	RemoteCacheService *remotecache.RemoteCache `inject:""`
-	PluginManager      plugins.Manager          `inject:""`
+	Cfg                *setting.Cfg
+	RemoteCacheService *remotecache.RemoteCache
+	PluginManager      plugins.Manager
 }
 
 // Init is necessary to implement registry.Service.
@@ -52,7 +52,7 @@ func (rs *RenderingService) Init() error {
 	return nil
 }
 
-func ProvideService(cfg *setting.Cfg) (*RenderingService, error) {
+func ProvideService(cfg *setting.Cfg, remoteCache *remotecache.RemoteCache, pm plugins.Manager) (*RenderingService, error) {
 	// ensure ImagesDir exists
 	err := os.MkdirAll(cfg.ImagesDir, 0700)
 	if err != nil {
@@ -83,9 +83,11 @@ func ProvideService(cfg *setting.Cfg) (*RenderingService, error) {
 	}
 
 	return &RenderingService{
-		Cfg:    cfg,
-		log:    log.New("rendering"),
-		domain: domain,
+		Cfg:                cfg,
+		RemoteCacheService: remoteCache,
+		PluginManager:      pm,
+		log:                log.New("rendering"),
+		domain:             domain,
 	}, nil
 }
 
