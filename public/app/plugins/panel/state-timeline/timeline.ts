@@ -518,7 +518,9 @@ function getFillColor(fieldConfig: TimelineFieldConfig, color: string) {
   if (color.length === 7 && color[0] === '#') {
     color = color + Math.round(opacityPercent * 255).toString(16);
   } else if (color.startsWith('rgb(')) {
-    color = color.replace(')', `, ${opacityPercent * 100})`);
+    // rgb() does not require the "a" suffix to accept alpha values in modern browsers:
+    // https://developer.mozilla.org/en-US/docs/Web/CSS/color_value/rgb()#accepts_alpha_value
+    color = color.replace(')', `, ${opacityPercent})`);
   }
 
   return color;
