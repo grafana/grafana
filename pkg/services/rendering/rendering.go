@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/backgroundsvcs"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 
@@ -47,7 +48,8 @@ type RenderingService struct {
 	PluginManager      plugins.Manager
 }
 
-func ProvideService(cfg *setting.Cfg, remoteCache *remotecache.RemoteCache, pm plugins.Manager) (*RenderingService, error) {
+func ProvideService(cfg *setting.Cfg, remoteCache *remotecache.RemoteCache, pm plugins.Manager,
+	backgroundServices *backgroundsvcs.Container) (*RenderingService, error) {
 	// ensure ImagesDir exists
 	err := os.MkdirAll(cfg.ImagesDir, 0700)
 	if err != nil {
@@ -77,13 +79,15 @@ func ProvideService(cfg *setting.Cfg, remoteCache *remotecache.RemoteCache, pm p
 		domain = "localhost"
 	}
 
-	return &RenderingService{
+	s := &RenderingService{
 		Cfg:                cfg,
 		RemoteCacheService: remoteCache,
 		PluginManager:      pm,
 		log:                log.New("rendering"),
 		domain:             domain,
-	}, nil
+	}
+	backgroundServices.AddBackgroundService(s)
+	return s, nil
 }
 
 func (rs *RenderingService) Run(ctx context.Context) error {

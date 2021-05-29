@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/http"
 
+	"github.com/grafana/grafana/pkg/infra/backgroundsvcs"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/live"
@@ -17,13 +18,15 @@ var (
 	logger = log.New("live.push_http")
 )
 
-func ProvideService(cfg *setting.Cfg, live *live.GrafanaLive) *Gateway {
+func ProvideService(cfg *setting.Cfg, live *live.GrafanaLive, backgroundServices *backgroundsvcs.Container) *Gateway {
 	logger.Info("Live Push Gateway initialization")
-	return &Gateway{
+	g := &Gateway{
 		Cfg:         cfg,
 		GrafanaLive: live,
 		converter:   convert.NewConverter(),
 	}
+	backgroundServices.AddBackgroundService(g)
+	return g
 }
 
 // Gateway receives data and translates it to Grafana Live publications.

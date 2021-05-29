@@ -8,6 +8,7 @@ import (
 
 	"github.com/benbjohnson/clock"
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/infra/backgroundsvcs"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -45,14 +46,13 @@ func (e *AlertEngine) IsDisabled() bool {
 
 // ProvideAlertEngine returns a new AlertEngine.
 func ProvideAlertEngine(renderer rendering.Service, bus bus.Bus, requestValidator models.PluginRequestValidator,
-	dataService plugins.DataRequestHandler) *AlertEngine {
+	dataService plugins.DataRequestHandler, backgroundServices *backgroundsvcs.Container) *AlertEngine {
 	e := &AlertEngine{
 		RenderService:    renderer,
 		Bus:              bus,
 		RequestValidator: requestValidator,
 		DataService:      dataService,
 	}
-
 	e.ticker = NewTicker(time.Now(), time.Second*0, clock.New(), 1)
 	e.execQueue = make(chan *Job, 1000)
 	e.scheduler = newScheduler()
@@ -60,6 +60,9 @@ func ProvideAlertEngine(renderer rendering.Service, bus bus.Bus, requestValidato
 	e.ruleReader = newRuleReader()
 	e.log = log.New("alerting.engine")
 	e.resultHandler = newResultHandler(e.RenderService)
+
+	backgroundServices.AddBackgroundService(e)
+
 	return e
 }
 

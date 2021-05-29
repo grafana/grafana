@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/infra/backgroundsvcs"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/models"
@@ -40,9 +41,10 @@ type UsageStatsService struct {
 }
 
 func ProvideService(cfg *setting.Cfg, bus bus.Bus, sqlStore *sqlstore.SQLStore,
-	alertingStats alerting.UsageStatsQuerier, licensing models.Licensing, pluginManager plugins.Manager) *UsageStatsService {
+	alertingStats alerting.UsageStatsQuerier, licensing models.Licensing, pluginManager plugins.Manager,
+	backgroundServices *backgroundsvcs.Container) *UsageStatsService {
 	oauthProviders := social.GetOAuthProviders(cfg)
-	return &UsageStatsService{
+	s := &UsageStatsService{
 		Cfg:                cfg,
 		Bus:                bus,
 		SQLStore:           sqlStore,
@@ -52,6 +54,8 @@ func ProvideService(cfg *setting.Cfg, bus bus.Bus, sqlStore *sqlstore.SQLStore,
 		PluginManager:      pluginManager,
 		log:                log.New("infra.usagestats"),
 	}
+	backgroundServices.AddBackgroundService(s)
+	return s
 }
 
 func (uss *UsageStatsService) Init() error {

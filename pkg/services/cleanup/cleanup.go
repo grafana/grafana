@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/shorturls"
 
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/infra/backgroundsvcs"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/models"
@@ -18,13 +19,15 @@ import (
 )
 
 func ProvideService(cfg *setting.Cfg, serverLockService *serverlock.ServerLockService,
-	shortURLService *shorturls.ShortURLService) *CleanUpService {
-	return &CleanUpService{
+	shortURLService *shorturls.ShortURLService, backgroundServices *backgroundsvcs.Container) *CleanUpService {
+	s := &CleanUpService{
 		Cfg:               cfg,
 		ServerLockService: serverLockService,
 		ShortURLService:   shortURLService,
 		log:               log.New("cleanup"),
 	}
+	backgroundServices.AddBackgroundService(s)
+	return s
 }
 
 type CleanUpService struct {

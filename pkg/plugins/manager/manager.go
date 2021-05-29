@@ -15,6 +15,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/backgroundsvcs"
 	"github.com/grafana/grafana/pkg/infra/fs"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
@@ -74,8 +75,11 @@ type PluginManager struct {
 	pluginsMu    sync.RWMutex
 }
 
-func ProvideService(cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, backendPM backendplugin.Manager) *PluginManager {
-	return newManager(cfg, sqlStore, backendPM)
+func ProvideService(cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, backendPM backendplugin.Manager,
+	backgroundServices *backgroundsvcs.Container) *PluginManager {
+	s := newManager(cfg, sqlStore, backendPM)
+	backgroundServices.AddBackgroundService(s)
+	return s
 }
 
 func newManager(cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, backendPM backendplugin.Manager) *PluginManager {

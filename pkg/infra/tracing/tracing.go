@@ -7,6 +7,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/grafana/grafana/pkg/infra/backgroundsvcs"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
 
@@ -20,7 +21,7 @@ const (
 	envJaegerAgentPort = "JAEGER_AGENT_PORT"
 )
 
-func ProvideService(cfg *setting.Cfg) (*TracingService, error) {
+func ProvideService(cfg *setting.Cfg, backgroundServices *backgroundsvcs.Container) (*TracingService, error) {
 	ts := &TracingService{
 		Cfg: cfg,
 		log: log.New("tracing"),
@@ -28,6 +29,8 @@ func ProvideService(cfg *setting.Cfg) (*TracingService, error) {
 	if err := ts.parseSettings(); err != nil {
 		return nil, err
 	}
+
+	backgroundServices.AddBackgroundService(ts)
 
 	if ts.enabled {
 		return ts, ts.initGlobalTracer()

@@ -24,6 +24,7 @@ import (
 	httpstatic "github.com/grafana/grafana/pkg/api/static"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/backgroundsvcs"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
@@ -130,7 +131,8 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	schemaService *schemaloader.SchemaLoaderService, alertNG *ngalert.AlertNG,
 	libraryPanelService librarypanels.Service, libraryElementService libraryelements.Service,
 	notificationService *notifications.NotificationService, tracingService *tracing.TracingService,
-	internalMetricsSvc *metrics.InternalMetricsService, quotaService *quota.QuotaService) *HTTPServer {
+	internalMetricsSvc *metrics.InternalMetricsService, quotaService *quota.QuotaService,
+	backgroundServices *backgroundsvcs.Container) *HTTPServer {
 	macaron.Env = cfg.Env
 	m := macaron.New()
 	// automatically set HEAD for every GET
@@ -179,6 +181,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		macaron:                m,
 		Listener:               opts.Listener,
 	}
+	backgroundServices.AddBackgroundService(hs)
 	if hs.Listener != nil {
 		hs.log.Debug("Using provided listener")
 	}

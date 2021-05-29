@@ -11,6 +11,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/events"
+	"github.com/grafana/grafana/pkg/infra/backgroundsvcs"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
@@ -22,7 +23,7 @@ var tmplResetPassword = "reset_password.html"
 var tmplSignUpStarted = "signup_started.html"
 var tmplWelcomeOnSignUp = "welcome_on_signup.html"
 
-func ProvideService(bus bus.Bus, cfg *setting.Cfg) (*NotificationService, error) {
+func ProvideService(bus bus.Bus, cfg *setting.Cfg, backgroundServices *backgroundsvcs.Container) (*NotificationService, error) {
 	ns := &NotificationService{
 		Bus:          bus,
 		Cfg:          cfg,
@@ -30,6 +31,7 @@ func ProvideService(bus bus.Bus, cfg *setting.Cfg) (*NotificationService, error)
 		mailQueue:    make(chan *Message, 10),
 		webhookQueue: make(chan *Webhook, 10),
 	}
+	backgroundServices.AddBackgroundService(ns)
 
 	ns.Bus.AddHandler(ns.sendResetPasswordEmail)
 	ns.Bus.AddHandler(ns.validateResetPasswordCode)

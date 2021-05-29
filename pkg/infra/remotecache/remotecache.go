@@ -7,6 +7,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/backgroundsvcs"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -27,17 +28,19 @@ const (
 	ServiceName = "RemoteCache"
 )
 
-func ProvideService(cfg *setting.Cfg, sqlStore *sqlstore.SQLStore) (*RemoteCache, error) {
+func ProvideService(cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, backgroundServices *backgroundsvcs.Container) (*RemoteCache, error) {
 	client, err := createClient(cfg.RemoteCacheOptions, sqlStore)
 	if err != nil {
 		return nil, err
 	}
-	return &RemoteCache{
+	s := &RemoteCache{
 		SQLStore: sqlStore,
 		Cfg:      cfg,
 		log:      log.New("cache.remote"),
 		client:   client,
-	}, nil
+	}
+	backgroundServices.AddBackgroundService(s)
+	return s, nil
 }
 
 // CacheStorage allows the caller to set, get and delete items in the cache.
@@ -90,7 +93,7 @@ func (ds *RemoteCache) Init() error {
 	return err
 }
 
-// Run start the backend processes for cache clients
+// Run starts the backend processes for cache clients.
 func (ds *RemoteCache) Run(ctx context.Context) error {
 	// create new interface if more clients need GC jobs
 	backgroundjob, ok := ds.client.(registry.BackgroundService)

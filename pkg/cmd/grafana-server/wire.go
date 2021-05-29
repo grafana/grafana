@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/infra/backgroundsvcs"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/httpclient/httpclientprovider"
 	"github.com/grafana/grafana/pkg/infra/localcache"
@@ -47,7 +48,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/services/shorturls"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/services/validations"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor"
@@ -75,8 +75,6 @@ var wireSet = wire.NewSet(
 	localcache.ProvideService,
 	usagestats.ProvideService,
 	wire.Bind(new(usagestats.UsageStats), new(*usagestats.UsageStatsService)),
-	validations.ProvideValidator,
-	wire.Bind(new(models.PluginRequestValidator), new(*validations.OSSPluginRequestValidator)),
 	manager.ProvideService,
 	wire.Bind(new(plugins.Manager), new(*manager.PluginManager)),
 	backendmanager.ProvideService,
@@ -119,6 +117,7 @@ var wireSet = wire.NewSet(
 	notifications.ProvideService,
 	tracing.ProvideService,
 	metrics.ProvideService,
+	backgroundsvcs.ProvideService,
 )
 
 func initializeServer(cla setting.CommandLineArgs, opts server.Options, apiOpts api.ServerOptions) (*server.Server, error) {
