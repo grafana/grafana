@@ -46,7 +46,7 @@ type AlertNG struct {
 	RouteRegister   routing.RouteRegister                   `inject:""`
 	SQLStore        *sqlstore.SQLStore                      `inject:""`
 	DataService     *tsdb.Service                           `inject:""`
-	DataProxy       *datasourceproxy.DatasourceProxyService `inject:""`
+	DataProxy       *datasourceproxy.DataSourceProxyService `inject:""`
 	QuotaService    *quota.QuotaService                     `inject:""`
 	Metrics         *metrics.Metrics                        `inject:""`
 	Alertmanager    *notifier.Alertmanager

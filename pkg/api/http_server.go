@@ -84,7 +84,7 @@ type HTTPServer struct {
 	License                models.Licensing
 	AccessControl          accesscontrol.AccessControl
 	BackendPluginManager   backendplugin.Manager
-	DataProxy              *datasourceproxy.DatasourceProxyService `inject:""`
+	DataProxy              *datasourceproxy.DataSourceProxyService
 	PluginRequestValidator models.PluginRequestValidator
 	PluginManager          plugins.Manager
 	SearchService          *search.SearchService `inject:""`
@@ -117,7 +117,8 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	dataSourceCache datasources.CacheService, userTokenService models.UserTokenService,
 	cleanUpService *cleanup.CleanUpService, shortURLService *shorturls.ShortURLService,
 	remoteCache *remotecache.RemoteCache, provisioningService provisioning.ProvisioningService,
-	loginService login.Service, accessControl accesscontrol.AccessControl) *HTTPServer {
+	loginService login.Service, accessControl accesscontrol.AccessControl,
+	dataSourceProxy *datasourceproxy.DataSourceProxyService) *HTTPServer {
 	macaron.Env = cfg.Env
 	m := macaron.New()
 	// automatically set HEAD for every GET
@@ -147,6 +148,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		ProvisioningService:    provisioningService,
 		Login:                  loginService,
 		AccessControl:          accessControl,
+		DataProxy:              dataSourceProxy,
 		log:                    log.New("http.server"),
 		macaron:                m,
 		Listener:               opts.Listener,

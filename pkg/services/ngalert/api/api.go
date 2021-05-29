@@ -48,7 +48,7 @@ type API struct {
 	RuleStore       store.RuleStore
 	InstanceStore   store.InstanceStore
 	AlertingStore   store.AlertingStore
-	DataProxy       *datasourceproxy.DatasourceProxyService
+	DataProxy       *datasourceproxy.DataSourceProxyService
 	Alertmanager    Alertmanager
 	StateManager    *state.Manager
 }
