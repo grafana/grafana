@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	backendmanager "github.com/grafana/grafana/pkg/plugins/backendplugin/manager"
 	"github.com/grafana/grafana/pkg/plugins/manager"
+	"github.com/grafana/grafana/pkg/plugins/plugincontext"
 	"github.com/grafana/grafana/pkg/server"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/auth"
@@ -26,6 +27,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/hooks"
+	"github.com/grafana/grafana/pkg/services/live"
+	"github.com/grafana/grafana/pkg/services/live/pushhttp"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/login/loginservice"
 	"github.com/grafana/grafana/pkg/services/provisioning"
@@ -90,6 +93,9 @@ var wireSet = wire.NewSet(
 	wire.Bind(new(login.Service), new(*loginservice.Implementation)),
 	datasourceproxy.ProvideService,
 	search.ProvideService,
+	live.ProvideService,
+	pushhttp.ProvideService,
+	plugincontext.ProvideService,
 )
 
 func initializeServer(cla setting.CommandLineArgs, opts server.Options, apiOpts api.ServerOptions) (*server.Server, error) {

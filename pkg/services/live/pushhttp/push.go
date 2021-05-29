@@ -7,7 +7,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/live"
 	"github.com/grafana/grafana/pkg/services/live/convert"
 	"github.com/grafana/grafana/pkg/services/live/pushurl"
@@ -18,24 +17,21 @@ var (
 	logger = log.New("live.push_http")
 )
 
-func init() {
-	registry.RegisterServiceWithPriority(&Gateway{}, registry.Low)
+func ProvideService(cfg *setting.Cfg, live *live.GrafanaLive) *Gateway {
+	logger.Info("Live Push Gateway initialization")
+	return &Gateway{
+		Cfg:         cfg,
+		GrafanaLive: live,
+		converter:   convert.NewConverter(),
+	}
 }
 
 // Gateway receives data and translates it to Grafana Live publications.
 type Gateway struct {
-	Cfg         *setting.Cfg      `inject:""`
-	GrafanaLive *live.GrafanaLive `inject:""`
+	Cfg         *setting.Cfg
+	GrafanaLive *live.GrafanaLive
 
 	converter *convert.Converter
-}
-
-// Init Gateway.
-func (g *Gateway) Init() error {
-	logger.Info("Live Push Gateway initialization")
-
-	g.converter = convert.NewConverter()
-	return nil
 }
 
 // Run Gateway.
