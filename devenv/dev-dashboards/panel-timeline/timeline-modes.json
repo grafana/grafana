@@ -350,7 +350,7 @@
         }
       ],
       "title": "Status grid",
-      "type": "status-grid"
+      "type": "status-history"
     }
   ],
   "refresh": false,

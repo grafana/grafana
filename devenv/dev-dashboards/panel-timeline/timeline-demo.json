@@ -389,7 +389,7 @@
         }
       ],
       "title": "Status map",
-      "type": "status-grid"
+      "type": "status-history"
     }
   ],
   "refresh": false,

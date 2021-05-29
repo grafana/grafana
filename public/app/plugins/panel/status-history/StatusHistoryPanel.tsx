@@ -11,7 +11,7 @@ interface TimelinePanelProps extends PanelProps<StatusPanelOptions> {}
 /**
  * @alpha
  */
-export const StatusGridPanel: React.FC<TimelinePanelProps> = ({
+export const StatusHistoryPanel: React.FC<TimelinePanelProps> = ({
   data,
   timeRange,
   timeZone,

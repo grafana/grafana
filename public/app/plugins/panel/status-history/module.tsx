@@ -1,10 +1,10 @@
 import { FieldColorModeId, FieldConfigProperty, PanelPlugin } from '@grafana/data';
-import { StatusGridPanel } from './StatusGridPanel';
+import { StatusHistoryPanel } from './StatusHistoryPanel';
 import { StatusPanelOptions, StatusFieldConfig, defaultStatusFieldConfig } from './types';
 import { BarValueVisibility } from '@grafana/ui';
 import { addLegendOptions } from '@grafana/ui/src/options/builder';
 
-export const plugin = new PanelPlugin<StatusPanelOptions, StatusFieldConfig>(StatusGridPanel)
+export const plugin = new PanelPlugin<StatusPanelOptions, StatusFieldConfig>(StatusHistoryPanel)
   .useFieldConfig({
     standardOptions: {
       [FieldConfigProperty.Color]: {
