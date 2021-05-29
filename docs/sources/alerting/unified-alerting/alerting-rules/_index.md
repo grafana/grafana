@@ -9,3 +9,4 @@ One or more queries and/or expressions, a condition, the frequency of evaluation
 - [View existing alert rules and their current state]({{< relref "./rule-list.md" >}})
 - [Create Cortex or Loki managed alert rule]({{< relref "./create-cortex-loki-managed-rule.md" >}})
 - [Create Grafana managed alert rule]({{< relref "./create-grafana-managed-rule.md" >}})
+- [State and Health of alerting rules]({{< relref "./state-and-health.md" >}})
