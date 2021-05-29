@@ -38,11 +38,6 @@ type AlertEngine struct {
 	resultHandler resultHandler
 }
 
-// Init is necessary to implement registry.Service.
-func (e *AlertEngine) Init() error {
-	return nil
-}
-
 // IsDisabled returns true if the alerting service is disable for this instance.
 func (e *AlertEngine) IsDisabled() bool {
 	return !setting.AlertingEnabled || !setting.ExecuteAlerts || e.Cfg.IsNgAlertEnabled()

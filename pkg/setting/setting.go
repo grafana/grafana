@@ -390,11 +390,6 @@ type Cfg struct {
 	LiveMaxConnections int
 }
 
-// Init is necessary to implement registry.Service.
-func (cfg *Cfg) Init() error {
-	return nil
-}
-
 // IsLiveConfigEnabled returns true if live should be able to save configs to SQL tables
 func (cfg Cfg) IsLiveConfigEnabled() bool {
 	return cfg.FeatureToggles["live-config"]

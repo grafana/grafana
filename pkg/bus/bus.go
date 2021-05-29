@@ -25,9 +25,6 @@ type TransactionManager interface {
 
 // Bus type defines the bus interface structure
 type Bus interface {
-	// Init is necessary to implement registry.Service.
-	Init() error
-
 	Dispatch(msg Msg) error
 	DispatchCtx(ctx context.Context, msg Msg) error
 	Publish(msg Msg) error
@@ -54,11 +51,6 @@ type InProcBus struct {
 	handlersWithCtx map[string]HandlerFunc
 	listeners       map[string][]HandlerFunc
 	txMng           TransactionManager
-}
-
-// Init is necessary to implement registry.Service.
-func (b *InProcBus) Init() error {
-	return nil
 }
 
 func ProvideBus() *InProcBus {

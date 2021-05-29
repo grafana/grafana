@@ -122,11 +122,6 @@ func newSQLStore(cfg *setting.Cfg, cacheService *localcache.CacheService, bus bu
 	return ss, nil
 }
 
-// Init is necessary to implement registry.Service.
-func (ss *SQLStore) Init() error {
-	return nil
-}
-
 // Sync syncs changes to the database.
 func (ss *SQLStore) Sync() error {
 	return ss.engine.Sync2()

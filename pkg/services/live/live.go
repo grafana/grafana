@@ -283,13 +283,6 @@ func (g *GrafanaLive) Run(ctx context.Context) error {
 
 var clientConcurrency = 8
 
-// Init initializes Live service.
-// Required to implement the registry.Service interface.
-func (g *GrafanaLive) Init() error {
-
-	return nil
-}
-
 func runConcurrentlyIfNeeded(ctx context.Context, semaphore chan struct{}, fn func()) error {
 	if cap(semaphore) > 1 {
 		select {

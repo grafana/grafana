@@ -11,11 +11,6 @@ type CacheService struct {
 	*gocache.Cache
 }
 
-// Init is necessary to implement registry.Service.
-func (s *CacheService) Init() error {
-	return nil
-}
-
 func ProvideService() *CacheService {
 	return New(5*time.Minute, 10*time.Minute)
 }

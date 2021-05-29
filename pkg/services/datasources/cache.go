@@ -6,7 +6,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
@@ -18,7 +17,6 @@ func ProvideCacheService(cacheService *localcache.CacheService, sqlStore *sqlsto
 }
 
 type CacheService interface {
-	registry.Service
 	GetDatasource(datasourceID int64, user *models.SignedInUser, skipCache bool) (*models.DataSource, error)
 	GetDatasourceByUID(datasourceUID string, user *models.SignedInUser, skipCache bool) (*models.DataSource, error)
 }

@@ -17,9 +17,6 @@ type Router interface {
 // RouteRegister allows you to add routes and macaron.Handlers
 // that the web server should serve.
 type RouteRegister interface {
-	// Init is necessary to implement registry.Service.
-	Init() error
-
 	// Get adds a list of handlers to a given route with a GET HTTP verb
 	Get(string, ...macaron.Handler)
 
@@ -81,11 +78,6 @@ type RouteRegisterImpl struct {
 	namedMiddlewares []RegisterNamedMiddleware
 	routes           []route
 	groups           []*RouteRegisterImpl
-}
-
-// Init is necessary to implement registry.Service.
-func (rr *RouteRegisterImpl) Init() error {
-	return nil
 }
 
 func (rr *RouteRegisterImpl) Reset() {

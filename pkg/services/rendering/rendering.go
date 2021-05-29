@@ -47,11 +47,6 @@ type RenderingService struct {
 	PluginManager      plugins.Manager
 }
 
-// Init is necessary to implement registry.Service.
-func (rs *RenderingService) Init() error {
-	return nil
-}
-
 func ProvideService(cfg *setting.Cfg, remoteCache *remotecache.RemoteCache, pm plugins.Manager) (*RenderingService, error) {
 	// ensure ImagesDir exists
 	err := os.MkdirAll(cfg.ImagesDir, 0700)
