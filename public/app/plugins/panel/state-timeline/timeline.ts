@@ -143,7 +143,7 @@ export function getConfig(opts: TimelineCoreOptions) {
     const fieldConfig = getFieldConfig(seriesIdx);
     const fillColor = getFillColor(fieldConfig, valueColor);
 
-    const boxRect = (boxRectsBySeries[seriesIdx][valueIdx] = {
+    boxRectsBySeries[seriesIdx][valueIdx] = {
       x: round(left - xOff),
       y: round(top - yOff),
       w: boxWidth,
@@ -152,9 +152,7 @@ export function getConfig(opts: TimelineCoreOptions) {
       didx: valueIdx,
       // for computing label contrast
       fillColor,
-    });
-
-    qt.add(boxRect);
+    };
 
     if (discrete) {
       let fillStyle = fillColor;
@@ -429,6 +427,16 @@ export function getConfig(opts: TimelineCoreOptions) {
   const setCursor = (u: uPlot) => {
     let cx = round(u.cursor!.left! * pxRatio);
     let cy = round(u.cursor!.top! * pxRatio);
+
+    // if quadtree is empty, fill it
+    if (!qt.o.length && qt.q == null) {
+      for (const seriesRects of boxRectsBySeries) {
+        for (const rect of seriesRects) {
+          rect && qt.add(rect);
+        }
+      }
+    }
+
     doHover(cx, cy);
   };
 
