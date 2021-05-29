@@ -91,7 +91,7 @@ type HTTPServer struct {
 	ShortURLService        *shorturls.ShortURLService
 	Live                   *live.GrafanaLive
 	LivePushGateway        *pushhttp.Gateway
-	ContextHandler         *contexthandler.ContextHandler `inject:""`
+	ContextHandler         *contexthandler.ContextHandler
 	SQLStore               *sqlstore.SQLStore
 	DataService            *tsdb.Service
 	PluginDashboardService *plugindashboards.Service `inject:""`
@@ -119,7 +119,8 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	remoteCache *remotecache.RemoteCache, provisioningService provisioning.ProvisioningService,
 	loginService login.Service, accessControl accesscontrol.AccessControl,
 	dataSourceProxy *datasourceproxy.DataSourceProxyService, searchService *search.SearchService,
-	live *live.GrafanaLive, livePushGateway *pushhttp.Gateway, plugCtxProvider *plugincontext.Provider) *HTTPServer {
+	live *live.GrafanaLive, livePushGateway *pushhttp.Gateway, plugCtxProvider *plugincontext.Provider,
+	contextHandler *contexthandler.ContextHandler) *HTTPServer {
 	macaron.Env = cfg.Env
 	m := macaron.New()
 	// automatically set HEAD for every GET
@@ -154,6 +155,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		Live:                   live,
 		LivePushGateway:        livePushGateway,
 		PluginContextProvider:  plugCtxProvider,
+		ContextHandler:         contextHandler,
 		log:                    log.New("http.server"),
 		macaron:                m,
 		Listener:               opts.Listener,

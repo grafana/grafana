@@ -23,7 +23,9 @@ import (
 	"github.com/grafana/grafana/pkg/server"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/auth"
+	"github.com/grafana/grafana/pkg/services/auth/jwt"
 	"github.com/grafana/grafana/pkg/services/cleanup"
+	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/hooks"
@@ -96,6 +98,9 @@ var wireSet = wire.NewSet(
 	live.ProvideService,
 	pushhttp.ProvideService,
 	plugincontext.ProvideService,
+	contexthandler.ProvideService,
+	jwt.ProvideService,
+	wire.Bind(new(models.JWTService), new(*jwt.AuthService)),
 )
 
 func initializeServer(cla setting.CommandLineArgs, opts server.Options, apiOpts api.ServerOptions) (*server.Server, error) {
