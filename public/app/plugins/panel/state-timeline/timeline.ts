@@ -514,5 +514,12 @@ export function getConfig(opts: TimelineCoreOptions) {
 
 function getFillColor(fieldConfig: TimelineFieldConfig, color: string) {
   const opacityPercent = (fieldConfig.fillOpacity ?? 100) / 100;
-  return color + Math.round(opacityPercent * 255).toString(16);
+
+  if (color.length === 7 && color[0] === '#') {
+    color = color + Math.round(opacityPercent * 255).toString(16);
+  } else if (color.startsWith('rgb(')) {
+    color = color.replace(')', `, ${opacityPercent * 100})`);
+  }
+
+  return color;
 }
