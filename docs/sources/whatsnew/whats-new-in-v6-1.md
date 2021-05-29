@@ -14,7 +14,7 @@ list = false
 
 ### Ad hoc Filtering for Prometheus
 
-{{< imgbox max-width="30%" img="/img/docs/v61/prometheus-ad-hoc.gif" caption="Ad-hoc filters variable for Prometheus" >}}
+{{< figure class="float-right"  max-width="30%" src="/static/img/docs/v61/prometheus-ad-hoc.gif" caption="Ad-hoc filters variable for Prometheus" >}}
 
 The ad hoc filter feature allows you to create new key/value filters on the fly with autocomplete for both key and values. The filter condition is then automatically applied to all queries on the dashboard. This makes it easier to explore your data in a dashboard without changing queries and without having to add new template variables.
 

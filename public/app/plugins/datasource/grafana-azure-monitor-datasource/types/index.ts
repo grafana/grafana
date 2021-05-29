@@ -222,7 +222,7 @@ export interface AzureMonitorOption<T = string> {
 export interface AzureQueryEditorFieldProps {
   query: AzureMonitorQuery;
   datasource: Datasource;
-  subscriptionId: string;
+  subscriptionId?: string;
   variableOptionGroup: { label: string; options: AzureMonitorOption[] };
 
   onQueryChange: (newQuery: AzureMonitorQuery) => void;
@@ -230,10 +230,9 @@ export interface AzureQueryEditorFieldProps {
 }
 
 export interface AzureResourceSummaryItem {
-  id: string;
-  name: string;
   subscriptionName: string;
-  resourceGroupName: string;
+  resourceGroupName: string | undefined;
+  resourceName: string | undefined;
 }
 
 export interface RawAzureResourceGroupItem {
