@@ -1454,7 +1454,7 @@ var expNotifications = map[string][]string{
 			  "startsAt": "%s",
 			  "endsAt": "0001-01-01T00:00:00Z",
 			  "generatorURL": "",
-			  "fingerprint": "929467973978d053",
+			  "fingerprint": "7611eef9e67f6e50",
 			  "silenceURL": "http://localhost:3000/alerting/silence/new?alertmanager=grafana&matchers=alertname%%3DWebhookAlert",
 			  "dashboardURL": "",
 			  "panelURL": ""
@@ -1618,6 +1618,7 @@ var expNotifications = map[string][]string{
 		  {
 			"labels": {
 			  "__alert_rule_uid__": "UID_AlertmanagerAlert",
+        "__value__": "[ var='A' labels={} value=1 ]",
 			  "alertname": "AlertmanagerAlert"
 			},
 			"annotations": {},
