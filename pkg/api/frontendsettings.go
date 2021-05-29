@@ -288,7 +288,7 @@ func getPanelSort(id string) int {
 		sort = 9
 	case "heatmap":
 		sort = 10
-	case "status-grid":
+	case "status-history":
 		sort = 11
 	case "histogram":
 		sort = 12
