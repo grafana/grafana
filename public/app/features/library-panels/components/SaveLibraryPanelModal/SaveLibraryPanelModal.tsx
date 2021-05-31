@@ -9,20 +9,12 @@ import { getModalStyles } from '../../styles';
 interface Props {
   panel: PanelModelWithLibraryPanel;
   folderId: number;
-  isOpen: boolean;
   onConfirm: () => void;
   onDismiss: () => void;
   onDiscard: () => void;
 }
 
-export const SaveLibraryPanelModal: React.FC<Props> = ({
-  panel,
-  folderId,
-  isOpen,
-  onDismiss,
-  onConfirm,
-  onDiscard,
-}) => {
+export const SaveLibraryPanelModal: React.FC<Props> = ({ panel, folderId, onDismiss, onConfirm, onDiscard }) => {
   const [searchString, setSearchString] = useState('');
   const dashState = useAsync(async () => {
     const searchHits = await getConnectedDashboards(panel.libraryPanel.uid);
@@ -52,11 +44,10 @@ export const SaveLibraryPanelModal: React.FC<Props> = ({
   const styles = useStyles(getModalStyles);
   const discardAndClose = useCallback(() => {
     onDiscard();
-    onDismiss();
-  }, [onDiscard, onDismiss]);
+  }, [onDiscard]);
 
   return (
-    <Modal title="Update all panel instances" icon="save" onDismiss={onDismiss} isOpen={isOpen}>
+    <Modal title="Update library panel" icon="save" onDismiss={onDismiss} isOpen={true}>
       <div>
         <p className={styles.textInfo}>
           {'This update will affect '}
@@ -102,7 +93,6 @@ export const SaveLibraryPanelModal: React.FC<Props> = ({
             onClick={() => {
               saveLibraryPanel(panel, folderId).then(() => {
                 onConfirm();
-                onDismiss();
               });
             }}
           >

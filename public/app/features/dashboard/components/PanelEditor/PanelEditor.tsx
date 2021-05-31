@@ -1,6 +1,5 @@
 import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
-import { Prompt } from 'react-router-dom';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { css, cx } from '@emotion/css';
 import { Subscription } from 'rxjs';
@@ -62,6 +61,7 @@ import {
 } from '../../../library-panels/utils';
 import { notifyApp } from '../../../../core/actions';
 import { PanelEditorTableView } from './PanelEditorTableView';
+import { PanelModelWithLibraryPanel } from 'app/features/library-panels/types';
 
 interface OwnProps {
   dashboard: DashboardModel;
@@ -99,8 +99,16 @@ const connector = connect(mapStateToProps, mapDispatchToProps);
 
 type Props = OwnProps & ConnectedProps<typeof connector>;
 
+interface State {
+  showSaveLibraryPanelModal?: boolean;
+}
+
 export class PanelEditorUnconnected extends PureComponent<Props> {
   private eventSubs?: Subscription;
+
+  state: State = {
+    showSaveLibraryPanelModal: false,
+  };
 
   componentDidMount() {
     this.props.initPanelEditor(this.props.sourcePanel, this.props.dashboard);
@@ -164,7 +172,6 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
     ) {
       try {
         await saveAndRefreshLibraryPanel(this.props.panel, this.props.dashboard.meta.folderId!);
-        this.props.updateSourcePanel(this.props.panel);
         this.props.notifyApp(createPanelLibrarySuccessNotification('Library panel saved'));
       } catch (err) {
         this.props.notifyApp(createPanelLibraryErrorNotification(`Error saving library panel: "${err.statusText}"`));
@@ -172,22 +179,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
       return;
     }
 
-    appEvents.publish(
-      new ShowModalReactEvent({
-        component: SaveLibraryPanelModal,
-        props: {
-          panel: this.props.panel,
-          folderId: this.props.dashboard.meta.folderId,
-          isOpen: true,
-          onConfirm: () => {
-            // need to update the source panel here so that when
-            // the user exits the panel editor they aren't prompted to save again
-            this.props.updateSourcePanel(this.props.panel);
-          },
-          onDiscard: this.onDiscard,
-        },
-      })
-    );
+    this.setState({ showSaveLibraryPanelModal: true });
   };
 
   onChangeTab = (tab: PanelEditorTab) => {
@@ -438,18 +430,6 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
 
     return (
       <div className={styles.wrapper} aria-label={selectors.components.PanelEditor.General.content}>
-        <Prompt
-          when={true}
-          message={(location) => {
-            const searchParams = new URLSearchParams(location.search);
-            if (!this.props.panel.libraryPanel || !this.props.panel.hasChanged || searchParams.has('editPanel')) {
-              return true;
-            }
-
-            exitPanelEditor();
-            return false;
-          }}
-        />
         <PageToolbar title={`${dashboard.title} / Edit Panel`} onGoBack={exitPanelEditor}>
           {this.renderEditorActions()}
         </PageToolbar>
@@ -462,6 +442,17 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
             rightPaneVisible={uiState.isPanelOptionsVisible}
           />
         </div>
+        {this.state.showSaveLibraryPanelModal && (
+          <SaveLibraryPanelModal
+            panel={this.props.panel as PanelModelWithLibraryPanel}
+            folderId={this.props.dashboard.meta.folderId as number}
+            onConfirm={() => {}}
+            onDiscard={this.onDiscard}
+            onDismiss={() => {
+              this.setState({ showSaveLibraryPanelModal: false });
+            }}
+          />
+        )}
       </div>
     );
   }

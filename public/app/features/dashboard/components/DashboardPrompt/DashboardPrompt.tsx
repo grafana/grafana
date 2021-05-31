@@ -7,6 +7,10 @@ import { each, filter, find } from 'lodash';
 import angular from 'angular';
 import { UnsavedChangesModal } from '../SaveDashboard/UnsavedChangesModal';
 import * as H from 'history';
+import { SaveLibraryPanelModal } from 'app/features/library-panels/components/SaveLibraryPanelModal/SaveLibraryPanelModal';
+import { PanelModelWithLibraryPanel } from 'app/features/library-panels/types';
+import { useDispatch } from 'react-redux';
+import { discardPanelChanges } from '../PanelEditor/state/actions';
 
 export interface Props {
   dashboard: DashboardModel;
@@ -15,20 +19,26 @@ export interface Props {
 interface State {
   original: object | null;
   originalPath?: string;
-  isOpen?: boolean;
+  modal: PromptModal | null;
   blockedLocation?: H.Location | null;
 }
 
+enum PromptModal {
+  UnsavedChangesModal,
+  SaveLibraryPanelModal,
+}
+
 export const DashboardPrompt = React.memo(({ dashboard }: Props) => {
-  const [state, setState] = useState<State>({ original: null });
-  const { isOpen, original, originalPath, blockedLocation } = state;
+  const [state, setState] = useState<State>({ original: null, modal: null });
+  const dispatch = useDispatch();
+  const { original, originalPath, blockedLocation, modal } = state;
 
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       const originalPath = locationService.getLocation().pathname;
       const original = dashboard.getSaveModelClone();
 
-      setState({ ...state, originalPath, original });
+      setState({ originalPath, original, modal: null });
     });
 
     return () => {
@@ -37,54 +47,78 @@ export const DashboardPrompt = React.memo(({ dashboard }: Props) => {
   }, [dashboard]);
 
   const onSaveSuccess = () => {
-    setState({ ...state, original: null, isOpen: false });
+    setState({ ...state, original: null, modal: null });
     setTimeout(() => locationService.push(blockedLocation!), 10);
   };
 
   const onDiscard = () => {
-    setState({ ...state, original: null, isOpen: false });
+    setState({ ...state, original: null, modal: null });
     setTimeout(() => locationService.push(blockedLocation!), 10);
   };
 
-  const onDismiss = () => {
-    setState({ ...state, isOpen: false });
+  const onHistoryBlock = (location: H.Location) => {
+    const panelInEdit = dashboard.panelInEdit;
+    const search = new URLSearchParams(location.search);
+
+    // Are we leaving panel edit & library panel?
+    if (panelInEdit && panelInEdit.libraryPanel && panelInEdit.hasChanged && !search.has('editPanel')) {
+      setState({ ...state, modal: PromptModal.SaveLibraryPanelModal, blockedLocation: location });
+      return false;
+    }
+
+    // Are we still on the same dashboard?
+    if (originalPath === location.pathname || !original) {
+      return true;
+    }
+
+    if (ignoreChanges(dashboard, original)) {
+      return true;
+    }
+
+    if (!hasChanges(dashboard, original)) {
+      return true;
+    }
+
+    setState({ ...state, modal: PromptModal.UnsavedChangesModal, blockedLocation: location });
+    return false;
   };
 
   return (
     <>
-      <Prompt
-        when={true}
-        message={(location) => {
-          if (originalPath === location.pathname || !original) {
-            return true;
-          }
-
-          if (ignoreChanges(dashboard, original)) {
-            return true;
-          }
-
-          if (!hasChanges(dashboard, original)) {
-            return true;
-          }
-
-          setState({ ...state, isOpen: true, blockedLocation: location });
-          return false;
-        }}
-      />
-      {isOpen && (
+      <Prompt when={true} message={onHistoryBlock} />
+      {modal === PromptModal.UnsavedChangesModal && (
         <UnsavedChangesModal
           dashboard={dashboard}
           onSaveSuccess={onSaveSuccess}
           onDiscard={onDiscard}
-          onDismiss={onDismiss}
+          onDismiss={() => {
+            setState({ ...state, modal: null });
+          }}
+        />
+      )}
+      {modal === PromptModal.SaveLibraryPanelModal && (
+        <SaveLibraryPanelModal
+          panel={dashboard.panelInEdit as PanelModelWithLibraryPanel}
+          folderId={dashboard.meta.folderId as number}
+          onConfirm={() => {
+            locationService.push(blockedLocation!);
+          }}
+          onDiscard={() => {
+            dispatch(discardPanelChanges());
+            locationService.push(blockedLocation!);
+          }}
+          onDismiss={() => {
+            setState({ ...state, modal: null });
+          }}
         />
       )}
     </>
   );
 });
 
-// for some dashboards and users
-// changes should be ignored
+/**
+ * For some dashboards and users changes should be ignored *
+ */
 function ignoreChanges(current: DashboardModel, original: object | null) {
   if (!original) {
     return true;
@@ -107,7 +141,9 @@ function ignoreChanges(current: DashboardModel, original: object | null) {
   return !canSave || fromScript || fromFile;
 }
 
-// remove stuff that should not count in diff
+/**
+ * Remove stuff that should not count in diff
+ */
 function cleanDashboardFromIgnoredChanges(dashData: any) {
   // need to new up the domain model class to get access to expand / collapse row logic
   const model = new DashboardModel(dashData);
