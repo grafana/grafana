@@ -23,13 +23,11 @@ export interface SeriesProps extends LineConfig, BarConfig, FillConfig, PointsCo
   thresholds?: ThresholdsConfig;
   /** Used when gradientMode is set to Scheme  */
   colorMode?: FieldColorMode;
-  fieldName: string;
   drawStyle?: DrawStyle;
   pathBuilder?: Series.PathBuilder;
   pointsBuilder?: Series.Points.Show;
   show?: boolean;
   dataFrameFieldIndex?: DataFrameFieldIndex;
-  hideInLegend?: boolean;
   theme: GrafanaTheme2;
 }
 

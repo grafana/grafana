@@ -7,7 +7,6 @@ import {
   FieldSparkline,
   FieldType,
   getFieldColorModeForField,
-  getFieldDisplayName,
 } from '@grafana/data';
 import {
   AxisPlacement,
@@ -158,7 +157,6 @@ export class Sparkline extends PureComponent<SparklineProps, State> {
       builder.addSeries({
         scaleKey,
         theme,
-        fieldName: getFieldDisplayName(field, data),
         drawStyle: customConfig.drawStyle!,
         lineColor: customConfig.lineColor ?? seriesColor,
         lineWidth: customConfig.lineWidth,

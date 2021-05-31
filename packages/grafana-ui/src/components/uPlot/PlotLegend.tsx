@@ -29,18 +29,17 @@ export const PlotLegend: React.FC<PlotLegendProps> = ({
       const fieldIndex = seriesConfig.dataFrameFieldIndex;
       const axisPlacement = config.getAxisPlacement(s.props.scaleKey);
 
-      if (seriesConfig.hideInLegend || !fieldIndex) {
+      if (!fieldIndex) {
         return undefined;
       }
 
       const field = data[fieldIndex.frameIndex]?.fields[fieldIndex.fieldIndex];
 
-      if (!field) {
+      if (!field || field.config.custom.hideFrom?.legend) {
         return undefined;
       }
 
-      const label = getFieldDisplayName(field, data[fieldIndex.frameIndex]!);
-
+      const label = getFieldDisplayName(field, data[fieldIndex.frameIndex]!, data);
       return {
         disabled: !seriesConfig.show ?? false,
         fieldIndex,
