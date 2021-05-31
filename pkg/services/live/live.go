@@ -222,7 +222,10 @@ func (g *GrafanaLive) Init() error {
 	g.GrafanaScope.Features["dashboard"] = dash
 	g.GrafanaScope.Features["broadcast"] = features.NewBroadcastRunner(g.storage)
 
-	g.ManagedStreamRunner = managedstream.NewRunner(g.Publish)
+	g.ManagedStreamRunner = managedstream.NewRunner(
+		g.Publish,
+		managedstream.NewFrameCacheMemory(),
+	)
 
 	// Set ConnectHandler called when client successfully connected to Node. Your code
 	// inside handler must be synchronized since it will be called concurrently from
@@ -615,7 +618,7 @@ func (g *GrafanaLive) handleDatasourceScope(user *models.SignedInUser, namespace
 	), nil
 }
 
-// Publish sends the data to the channel without checking permissions etc
+// Publish sends the data to the channel without checking permissions etc.
 func (g *GrafanaLive) Publish(orgID int64, channel string, data []byte) error {
 	_, err := g.node.Publish(orgchannel.PrependOrgID(orgID, channel), data)
 	return err
