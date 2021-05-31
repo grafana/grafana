@@ -129,7 +129,10 @@ export function ExploreGraphNGPanel({
           {`Showing only ${MAX_NUMBER_OF_TIME_SERIES} time series. `}
           <span
             className={cx([style.showAllTimeSeries])}
-            onClick={() => setShowAllTimeSeries(true)}
+            onClick={() => {
+              structureChangesRef.current++;
+              setShowAllTimeSeries(true);
+            }}
           >{`Show all ${dataWithConfig.length}`}</span>
         </div>
       )}
