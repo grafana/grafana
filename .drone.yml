@@ -3461,7 +3461,7 @@ steps:
   image: plugins/slack
   settings:
     channel: grafana-backend
-    template: Build {{build.number}} failed for commit
+    template: Nightly docker image scan job for {{repo.name}} failed
     webhook:
       from_secret: slack_webhook
   when:

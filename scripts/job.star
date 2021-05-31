@@ -61,7 +61,7 @@ def slack_job_failed_step(channel):
         'settings': {
             'webhook': from_secret('slack_webhook'),
             'channel': channel,
-            'template': "Nightly docker scan cronjob for {{repo.name}} failed",
+            'template': "Nightly docker image scan job for {{repo.name}} failed",
         },
         'when': {
             'status': 'failure'
