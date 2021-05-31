@@ -155,12 +155,14 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       display: flex;
       overflow: hidden;
       position: absolute;
+      pointer-events: none;
     `,
     confirmButtonShow: css`
       z-index: 1;
       opacity: 1;
       transition: opacity 0.08s ease-out, transform 0.1s ease-out;
       transform: translateX(0);
+      pointer-events: all;
     `,
     confirmButtonHide: css`
       opacity: 0;
