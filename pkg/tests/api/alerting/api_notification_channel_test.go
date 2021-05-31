@@ -1609,7 +1609,7 @@ var expNotifications = map[string][]string{
 		  },
 		  "message": "[FIRING:1] OpsGenieAlert ",
 		  "source": "Grafana",
-		  "tags": []
+		  "tags": ["alertname:OpsGenieAlert"]
 		}`,
 	},
 	// Prometheus Alertmanager.
