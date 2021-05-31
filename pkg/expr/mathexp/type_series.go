@@ -48,8 +48,29 @@ func SeriesFromFrame(frame *data.Frame) (s Series, err error) {
 			s.ValueIdx = i
 		default:
 			// Handle default case
+			// try to convert to *float64
+			var convertedField *data.Field
+			for j := 0; j < field.Len(); j++ {
+				ff, err := field.FloatAt(j)
+				if err != nil {
+					break
+				}
+				if convertedField == nil { // initialise field
+					convertedField = data.NewFieldFromFieldType(data.FieldTypeNullableFloat64, field.Len())
+					convertedField.Name = field.Name
+					convertedField.Labels = field.Labels
+				}
+				convertedField.SetConcrete(j, ff)
+			}
+			if convertedField != nil {
+				frame.Fields[i] = convertedField
+				s.ValueIsNullable = true
+				foundValue = true
+				s.ValueIdx = i
+			}
 		}
 	}
+
 	if !foundTime {
 		return s, fmt.Errorf("no time column found in frame %v", frame.Name)
 	}
