@@ -161,9 +161,7 @@ interface PathBuilders {
   smooth: Series.PathBuilder;
   stepBefore: Series.PathBuilder;
   stepAfter: Series.PathBuilder;
-  bars: Series.PathBuilder;
-  barsAfter: Series.PathBuilder;
-  barsBefore: Series.PathBuilder;
+  [key: string]: Series.PathBuilder;
 }
 
 let builders: PathBuilders | undefined = undefined;
@@ -171,35 +169,35 @@ let builders: PathBuilders | undefined = undefined;
 function mapDrawStyleToPathBuilder(
   style: DrawStyle,
   lineInterpolation?: LineInterpolation,
-  barAlignment?: BarAlignment,
+  barAlignment = 0,
   barWidthFactor = 0.6,
   barMaxWidth = Infinity
 ): Series.PathBuilder {
+  const pathBuilders = uPlot.paths;
+
   if (!builders) {
     // This should be global static, but Jest initalization was failing so we lazy load to avoid the issue
-    const pathBuilders = uPlot.paths;
-
     builders = {
       linear: pathBuilders.linear!(),
       smooth: pathBuilders.spline!(),
       stepBefore: pathBuilders.stepped!({ align: -1 }),
       stepAfter: pathBuilders.stepped!({ align: 1 }),
-      bars: pathBuilders.bars!({ size: [barWidthFactor, barMaxWidth] }),
-      barsBefore: pathBuilders.bars!({ size: [barWidthFactor, barMaxWidth], align: -1 }),
-      barsAfter: pathBuilders.bars!({ size: [barWidthFactor, barMaxWidth], align: 1 }),
     };
   }
 
   if (style === DrawStyle.Bars) {
-    if (barAlignment === BarAlignment.After) {
-      return builders.barsAfter;
+    // each bars pathBuilder is lazy-initialized and globally cached by a key composed of its options
+    let barsCfgKey = `bars|${barAlignment}|${barWidthFactor}|${barMaxWidth}`;
+
+    if (!builders[barsCfgKey]) {
+      builders[barsCfgKey] = pathBuilders.bars!({
+        size: [barWidthFactor, barMaxWidth],
+        align: barAlignment as BarAlignment,
+      });
     }
-    if (barAlignment === BarAlignment.Before) {
-      return builders.barsBefore;
-    }
-    return builders.bars;
-  }
-  if (style === DrawStyle.Line) {
+
+    return builders[barsCfgKey];
+  } else if (style === DrawStyle.Line) {
     if (lineInterpolation === LineInterpolation.StepBefore) {
       return builders.stepBefore;
     }
