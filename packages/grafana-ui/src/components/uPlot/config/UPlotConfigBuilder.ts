@@ -132,7 +132,6 @@ export class UPlotConfigBuilder {
   }
 
   setTooltipInterpolator(interpolator: PlotTooltipInterpolator) {
-    console.log('setTooltipInterpolator');
     this.tooltipInterpolator = interpolator;
   }
 

@@ -366,3 +366,27 @@ function allNonTimeFields(frames: DataFrame[]): Field[] {
   }
   return fields;
 }
+
+export function findNextStateIndex(field: Field, datapointIdx: number) {
+  let end;
+  let rightPointer = datapointIdx + 1;
+
+  if (rightPointer === field.values.length) {
+    return null;
+  }
+
+  while (end === undefined) {
+    if (rightPointer === field.values.length) {
+      return null;
+    }
+    const rightValue = field.values.get(rightPointer);
+
+    if (rightValue !== undefined) {
+      end = rightPointer;
+    } else {
+      rightPointer++;
+    }
+  }
+
+  return end;
+}

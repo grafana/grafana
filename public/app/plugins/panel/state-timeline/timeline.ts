@@ -348,7 +348,6 @@ export function getConfig(opts: TimelineCoreOptions) {
   const init = (u: uPlot) => {
     let over = u.over;
     over.style.overflow = 'hidden';
-    console.log(hoverMarks);
     hoverMarks.forEach((m) => {
       over.appendChild(m);
     });
@@ -375,7 +374,6 @@ export function getConfig(opts: TimelineCoreOptions) {
       h.style.top = round(o!.y / pxRatio) + 'px';
       h.style.width = round(o!.w / pxRatio) + 'px';
       h.style.height = round(o!.h / pxRatio) + 'px';
-      // console.log(o);
     } else {
       h.style.display = 'none';
     }

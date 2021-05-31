@@ -75,5 +75,5 @@ export const plugin = new PanelPlugin<StatusPanelOptions, StatusFieldConfig>(Sta
       });
 
     commonOptionsBuilder.addLegendOptions(builder, false);
-    commonOptionsBuilder.addTooltipOptions(builder);
+    commonOptionsBuilder.addTooltipOptions(builder, true);
   });

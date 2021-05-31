@@ -1,6 +1,6 @@
 import React from 'react';
 import uPlot, { Options, AlignedData } from 'uplot';
-import { CartesianCoords2D, TimeRange } from '@grafana/data';
+import { TimeRange } from '@grafana/data';
 import { UPlotConfigBuilder } from './config/UPlotConfigBuilder';
 
 export type PlotConfig = Pick<
