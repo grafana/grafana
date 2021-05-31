@@ -16,9 +16,13 @@ export const getServerStats = async (): Promise<ServerStat[]> => {
     const res = await getBackendSrv().get('api/admin/stats');
     return [
       { name: 'Total users', value: res.users },
-      { name: 'Total admins', value: res.admins },
-      { name: 'Total editors', value: res.editors },
-      { name: 'Total viewers', value: res.viewers },
+      ...(!hasLicense
+        ? [
+            { name: 'Total admins', value: res.admins },
+            { name: 'Total editors', value: res.editors },
+            { name: 'Total viewers', value: res.viewers },
+          ]
+        : []),
       {
         name: 'Active users (seen last 30 days)',
         value: res.activeUsers,
