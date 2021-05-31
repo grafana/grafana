@@ -9,8 +9,8 @@ weight = 1
 The Plugin catalog allows users to browse and manage plugins from within Grafana. Only Organization Admins who are also Grafana Server Admins can access and use the catalog.
 
 <div class="medium-6 columns">
-  <video width="800" height="500" controls>
-    <source src="/assets/videos/plugins-catalog-install-8-0.mp4" type="video/mp4">
+  <video width="700" height="600" controls>
+    <source src="/static/assets/videos/plugins-catalog-install-8-0.mp4" type="video/mp4">
     Your browser does not support the video tag.
   </video>
 </div>
@@ -27,7 +27,7 @@ To browse available plugins:
 
 You can also browse existing plugins by navigating to the **Library** tab.
 
-![Plugin catalog browse](/img/docs/plugins/plugins-catalog-browse-8-0.png)
+![Plugin catalog browse](/static/img/docs/plugins/plugins-catalog-browse-8-0.png)
 
 ## Install a plugin
 
@@ -39,7 +39,7 @@ You can also browse existing plugins by navigating to the **Library** tab.
 
 A confirmation message opens notifying that the installation was successful.
 
-![Plugin catalog install](/img/docs/plugins/plugins-catalog-install-8-0.png)
+![Plugin catalog install](/static/img/docs/plugins/plugins-catalog-install-8-0.png)
 
 ## Update a plugin
 
@@ -51,7 +51,7 @@ A confirmation message opens notifying that the installation was successful.
 
 A confirmation message opens notifying that the installation was successful.
 
-![Plugin catalog update](/img/docs/plugins/plugins-catalog-update-8-0.png)
+![Plugin catalog update](/static/img/docs/plugins/plugins-catalog-update-8-0.png)
 
 ## Uninstall a plugin
 
@@ -63,4 +63,4 @@ A confirmation message opens notifying that the installation was successful.
 
 A confirmation message opens notifying that the installation was successful.
    
-![Plugin catalog uninstall](/img/docs/plugins/plugins-catalog-uninstall-8-0.png)
+![Plugin catalog uninstall](/static/img/docs/plugins/plugins-catalog-uninstall-8-0.png)
