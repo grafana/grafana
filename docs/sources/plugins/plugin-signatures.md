@@ -8,15 +8,15 @@ aliases = ["/docs/grafana/latest/plugins/plugin-signature-verification"]
 
 Plugin signature verification (signing) is a security measure to make sure plugins haven't been tampered with. Upon loading, Grafana checks to see if a plugin is signed or unsigned when inspecting and verifying its digital signature.
 
-At startup, Grafana verifies the signatures of every plugin in the plugin directory. If a plugin is unsigned, then Grafana won't load or start it. You can see the result of this verification for each plugin by navigating to **Configuration** -> **Plugins**.
+At startup, Grafana verifies the signatures of every plugin in the plugin directory. If a plugin is unsigned, then Grafana does not load nor start it. To see the result of this verification for each plugin, navigate to **Configuration** -> **Plugins**.
 
 Grafana also writes an error message to the server log:
 
 ```bash
-WARN[05-26|12:00:00] Some plugin scanning errors were found     errors="plugin '<plugin id>' is unsigned, plugin '<plugin id>' has an invalid signature"
+WARN[05-26|12:00:00] Some plugin scanning errors were found   errors="plugin '<plugin id>' is unsigned, plugin '<plugin id>' has an invalid signature"
 ```
 
-If you're a plugin developer and want to know how to sign your plugin, refer to [Sign a plugin]({{< relref "../developers/plugins/sign-a-plugin.md" >}}).
+If you are a plugin developer and want to know how to sign your plugin, refer to [Sign a plugin]({{< relref "../developers/plugins/sign-a-plugin.md" >}}).
 
 | Signature status | Description |
 | ---------------- | ----------- |
