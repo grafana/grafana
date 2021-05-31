@@ -59,13 +59,19 @@ type datasourceInfo struct {
 	TenantId                     string `json:"tenantId"`
 	AzureAuthType                string `json:"azureAuthType,omitempty"`
 
-	HTTPClient *http.Client
-	URL        string
-
-	// TODO: Remove these fields when the plugin proxy is no longer used
+	HTTPClient              *http.Client
+	URL                     string
 	JSONData                map[string]interface{}
 	DecryptedSecureJSONData map[string]string
 	DatasourceID            int64
+}
+
+// AzureMonitorExecutor executes queries for the Azure Monitor datasource - all four services
+type AzureMonitorExecutor struct {
+	im                 instancemgmt.InstanceManager
+	pluginManager      plugins.Manager
+	cfg                *setting.Cfg
+	httpClientProvider httpclient.Provider
 }
 
 func NewInstanceSettings() datasource.InstanceFactoryFunc {
@@ -120,14 +126,6 @@ func (s *Service) Init() error {
 		azlog.Error("Failed to register plugin", "error", err)
 	}
 	return nil
-}
-
-// AzureMonitorExecutor executes queries for the Azure Monitor datasource - all four services
-type AzureMonitorExecutor struct {
-	im                 instancemgmt.InstanceManager
-	pluginManager      plugins.Manager
-	cfg                *setting.Cfg
-	httpClientProvider httpclient.Provider
 }
 
 // Query takes in the frontend queries, parses them into the query format
