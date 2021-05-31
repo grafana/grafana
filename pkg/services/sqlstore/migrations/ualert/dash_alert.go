@@ -14,6 +14,7 @@ type dashAlert struct {
 	Message     string
 	Frequency   int64
 	For         time.Duration
+	State       string
 
 	Settings       json.RawMessage
 	ParsedSettings *dashAlertSettings
@@ -30,6 +31,7 @@ SELECT id,
 	message,
 	frequency,
 	for,
+	state,
 	settings
 FROM
 	alert

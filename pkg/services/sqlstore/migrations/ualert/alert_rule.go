@@ -105,7 +105,10 @@ func (m *migration) makeAlertRule(cond condition, da dashAlert, folderUID string
 		For:             duration(da.For),
 		Updated:         time.Now().UTC(),
 		Annotations:     annotations,
-		Labels:          map[string]string{},
+		Labels: map[string]string{
+			"alertname": da.Name,
+			"message":   da.Message,
+		},
 	}
 
 	var err error
@@ -117,6 +120,14 @@ func (m *migration) makeAlertRule(cond condition, da dashAlert, folderUID string
 	ar.ExecErrState, err = transExecErr(da.ParsedSettings.ExecutionErrorState)
 	if err != nil {
 		return nil, err
+	}
+
+	// Label for routing and silences.
+	n, v := getLabelForRouteMatching(ar.Uid)
+	ar.Labels[n] = v
+
+	if err := m.addSilence(da, ar); err != nil {
+		m.mg.Logger.Error("alert migration error: failed to create silence", "rule_name", ar.Title, "err", err)
 	}
 
 	return ar, nil

@@ -67,9 +67,6 @@ func (m *migration) getNotificationChannelMap() (map[interface{}]*notificationCh
 }
 
 func (m *migration) updateReceiverAndRoute(allChannels map[interface{}]*notificationChannel, defaultChannels []*notificationChannel, da dashAlert, rule *alertRule, amConfig *PostableUserConfig) error {
-	rule.Labels["alertname"] = da.Name
-	rule.Annotations["message"] = da.Message
-
 	// Create receiver and route for this rule.
 	if allChannels == nil {
 		return nil
@@ -87,10 +84,6 @@ func (m *migration) updateReceiverAndRoute(allChannels map[interface{}]*notifica
 	if err != nil {
 		return err
 	}
-
-	// Attach label for routing.
-	n, v := getLabelForRouteMatching(rule.Uid)
-	rule.Labels[n] = v
 
 	amConfig.AlertmanagerConfig.Receivers = append(amConfig.AlertmanagerConfig.Receivers, recv)
 	amConfig.AlertmanagerConfig.Route.Routes = append(amConfig.AlertmanagerConfig.Route.Routes, route)
