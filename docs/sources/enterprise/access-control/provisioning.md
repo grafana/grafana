@@ -14,42 +14,42 @@ If you want to manage roles and built-in role assignments by API, refer to the [
 
 ## Configuration
 
-The configuration files must be located in the [`provisioning/access-control/`]({{< relref "../../administration/configuration/#provisioning" >}}) directory.
+The configuration files must be placed in [`provisioning/access-control/`]({{< relref "../../administration/configuration/#provisioning" >}}).
 Grafana performs provisioning during the startup. Refer to the [Reload provisioning configurations]({{< relref "../../http_api/admin/#reload-provisioning-configurations" >}}) to understand how you can reload configuration at runtime.
 
 ## Manage custom roles
 
-You can create, update and delete custom roles, as well as create and remove built-in role assignments for them.
+You can create, update and delete custom roles, as well as create and remove built-in role assignments.
 
 ### Create or update roles
 
 To create or update custom roles, you can add a list of `roles` in the configuration.
 
-Note that in order to update a role, you would need to increment the [version]({{< relref "./roles.md#custom-roles" >}}). 
+When you update a role, you must to increment the [version]({{< relref "./roles.md#custom-roles" >}}). 
 
-It is only possibly to provision [organization local]({{< relref "./roles#role-scopes" >}}) roles. For creating or updating _global_ roles, refer to the [Fine-grained access control HTTP API]({{< relref "../../http_api/access_control.md" >}}).
+It is only possible to provision [organization local]({{< relref "./roles#role-scopes" >}}) roles. For creating or updating _global_ roles, refer to the [Fine-grained access control HTTP API]({{< relref "../../http_api/access_control.md" >}}).
 
 ### Delete roles 
 
-To delete a role, you can add a list of roles under `deleteRoles` section in the configuration file. Note that deletion is performed after role insertion/update.
+To delete a role, you can add a list of roles under the `deleteRoles` section in the configuration file. Deletion is performed after role insertion/update.
 
 ### Create and remove built-in role assignments
 
-To create a built-in role assignment, you can add list of assignments under `builtInRoles` section in the configuration file, as an element of `roles`. To remove a built-in role assignment, leave `builtInRoles` list empty. 
+To create a built-in role assignment, you add list of assignments to the `builtInRoles` section in the configuration file, as an element of `roles`. To remove a built-in role assignment, leave `builtInRoles` list empty. 
 
-Note that it is only possibly to provision [organization local]({{< relref "./roles#built-in-role-assignments" >}}) assignments. For creating or updating _global_ assignments, refer to the [Fine-grained access control HTTP API]({{< relref "../../http_api/access_control.md" >}}).
+It is only possibly to provision [organization local]({{< relref "./roles#built-in-role-assignments" >}}) assignments. For creating or updating _global_ assignments, refer to the [Fine-grained access control HTTP API]({{< relref "../../http_api/access_control.md" >}}).
 
 ## Manage default built-in role assignments
 
-During the startup, Grafana creates [default built-in role assignments]({{< relref "./roles#default-built-in-role-assignments" >}}) with [fixed roles]({{< relref "./roles#fixed-roles" >}}). You can remove and add back later those assignments by using provisioning.
+During startup, Grafana creates [default built-in role assignments]({{< relref "./roles#default-built-in-role-assignments" >}}) with [fixed roles]({{< relref "./roles#fixed-roles" >}}). You can remove and later restore those assignments with provisioning.
 
 ### Remove default assignment
 
-To remove default built-in role assignment, you can use `removeDefaultAssignments` element in the configuration file. You would need to provide built-in role name and fixed role name.
+To remove default built-in role assignments, use the `removeDefaultAssignments` element in the configuration file. You need to provide the built-in role name and fixed role name.
 
-### Add back default assignment
+### Restore default assignment
 
-To add back default built-in role assignment, you can use `addDefaultAssignments` element in the configuration file. You would need to provide built-in role name and fixed role name.
+To restore the default built-in role assignment, use the `addDefaultAssignments` element in the configuration file. You need to provide the built-in role name and fixed role name.
 
 ## Example of a role configuration file
 
