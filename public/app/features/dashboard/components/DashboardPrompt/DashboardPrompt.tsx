@@ -1,5 +1,6 @@
 import { locationService } from '@grafana/runtime';
-import { appEvents, contextSrv } from 'app/core/core';
+import { appEvents } from 'app/core/core';
+import { contextSrv } from 'app/core/services/context_srv';
 import React, { useEffect, useState } from 'react';
 import { Prompt } from 'react-router-dom';
 import { DashboardModel } from '../../state/DashboardModel';
@@ -125,7 +126,7 @@ export const DashboardPrompt = React.memo(({ dashboard }: Props) => {
 /**
  * For some dashboards and users changes should be ignored *
  */
-function ignoreChanges(current: DashboardModel, original: object | null) {
+export function ignoreChanges(current: DashboardModel, original: object | null) {
   if (!original) {
     return true;
   }
@@ -196,7 +197,7 @@ function cleanDashboardFromIgnoredChanges(dashData: any) {
   return dash;
 }
 
-function hasChanges(current: DashboardModel, original: any) {
+export function hasChanges(current: DashboardModel, original: any) {
   const currentClean = cleanDashboardFromIgnoredChanges(current.getSaveModelClone());
   const originalClean = cleanDashboardFromIgnoredChanges(original);
 
