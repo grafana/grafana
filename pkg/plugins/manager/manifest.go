@@ -257,9 +257,12 @@ func pluginFilesRequiringVerification(plugin *plugins.PluginBase) ([]string, err
 
 			if info.Mode()&os.ModeSymlink == os.ModeSymlink {
 				log.Debugf("found plugin symlink file '%s'\n", file)
+				return nil
 			}
 
 			files = append(files, filepath.ToSlash(file))
+
+			return nil
 		}
 
 		lstatInfo, err := os.Lstat(path)
@@ -267,22 +270,20 @@ func pluginFilesRequiringVerification(plugin *plugins.PluginBase) ([]string, err
 			return err
 		}
 
-		// if symlink directory
+		// if symlink directory, verify it links within plugin directory
 		if info.IsDir() && lstatInfo.Mode()&os.ModeSymlink == os.ModeSymlink {
 			symlinkPath, err := filepath.EvalSymlinks(path)
 			if err != nil {
 				return err
 			}
 
-			file, err := filepath.Rel(plugin.PluginDir, symlinkPath)
+			p, err := filepath.Rel(plugin.PluginDir, symlinkPath)
 			if err != nil {
 				return err
 			}
-			if strings.HasPrefix(file, ".."+string(filepath.Separator)) {
-				return fmt.Errorf("file '%s' not inside of plugin directory", file)
+			if strings.HasPrefix(p, ".."+string(filepath.Separator)) {
+				return fmt.Errorf("path '%s' not inside of plugin directory", p)
 			}
-
-			files = append(files, filepath.ToSlash(file))
 		}
 		return nil
 	})
