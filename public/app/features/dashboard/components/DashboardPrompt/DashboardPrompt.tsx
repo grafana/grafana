@@ -1,5 +1,5 @@
 import { locationService } from '@grafana/runtime';
-import { contextSrv } from 'app/core/core';
+import { appEvents, contextSrv } from 'app/core/core';
 import React, { useEffect, useState } from 'react';
 import { Prompt } from 'react-router-dom';
 import { DashboardModel } from '../../state/DashboardModel';
@@ -11,6 +11,7 @@ import { SaveLibraryPanelModal } from 'app/features/library-panels/components/Sa
 import { PanelModelWithLibraryPanel } from 'app/features/library-panels/types';
 import { useDispatch } from 'react-redux';
 import { discardPanelChanges } from '../PanelEditor/state/actions';
+import { DashboardSavedEvent } from 'app/types/events';
 
 export interface Props {
   dashboard: DashboardModel;
@@ -41,20 +42,17 @@ export const DashboardPrompt = React.memo(({ dashboard }: Props) => {
       setState({ originalPath, original, modal: null });
     });
 
+    const savedEventUnsub = appEvents.subscribe(DashboardSavedEvent, () => {
+      const original = dashboard.getSaveModelClone();
+      const originalPath = locationService.getLocation().pathname;
+      setState({ originalPath, original, modal: null });
+    });
+
     return () => {
       clearTimeout(timeoutId);
+      savedEventUnsub.unsubscribe();
     };
   }, [dashboard]);
-
-  const onSaveSuccess = () => {
-    setState({ ...state, original: null, modal: null });
-    setTimeout(() => locationService.push(blockedLocation!), 10);
-  };
-
-  const onDiscard = () => {
-    setState({ ...state, original: null, modal: null });
-    setTimeout(() => locationService.push(blockedLocation!), 10);
-  };
 
   const onHistoryBlock = (location: H.Location) => {
     const panelInEdit = dashboard.panelInEdit;
@@ -89,8 +87,16 @@ export const DashboardPrompt = React.memo(({ dashboard }: Props) => {
       {modal === PromptModal.UnsavedChangesModal && (
         <UnsavedChangesModal
           dashboard={dashboard}
-          onSaveSuccess={onSaveSuccess}
-          onDiscard={onDiscard}
+          onSaveSuccess={() => {
+            locationService.push(blockedLocation!);
+            // need timeout here so that clearing original happens before location change
+            setTimeout(() => locationService.push(blockedLocation!), 10);
+          }}
+          onDiscard={() => {
+            setState({ ...state, original: null, modal: null });
+            // need timeout here so that clearing original happens before location change
+            setTimeout(() => locationService.push(blockedLocation!), 10);
+          }}
           onDismiss={() => {
             setState({ ...state, modal: null });
           }}
