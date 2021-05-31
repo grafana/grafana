@@ -56,7 +56,7 @@ def scan_docker_image_high_critical_vulnerabilities_step(edition):
 
 def slack_job_failed_step(channel):
     return {
-        'name': 'slack_notify_failure',
+        'name': 'slack-notify-failure',
         'image': 'plugins/slack',
         'settings': {
             'webhook': from_secret('slack_webhook'),
