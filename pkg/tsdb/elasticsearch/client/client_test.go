@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/tsdb/interval"
@@ -24,7 +25,7 @@ func TestNewClient(t *testing.T) {
 			JsonData: simplejson.NewFromAny(make(map[string]interface{})),
 		}
 
-		_, err := NewClient(context.Background(), ds, plugins.DataTimeRange{})
+		_, err := NewClient(context.Background(), httpclient.NewProvider(), ds, plugins.DataTimeRange{})
 		require.Error(t, err)
 	})
 
@@ -35,7 +36,7 @@ func TestNewClient(t *testing.T) {
 			}),
 		}
 
-		_, err := NewClient(context.Background(), ds, plugins.DataTimeRange{})
+		_, err := NewClient(context.Background(), httpclient.NewProvider(), ds, plugins.DataTimeRange{})
 		require.Error(t, err)
 	})
 
@@ -48,7 +49,7 @@ func TestNewClient(t *testing.T) {
 				}),
 			}
 
-			_, err := NewClient(context.Background(), ds, plugins.DataTimeRange{})
+			_, err := NewClient(context.Background(), httpclient.NewProvider(), ds, plugins.DataTimeRange{})
 			require.Error(t, err)
 		})
 
@@ -60,7 +61,7 @@ func TestNewClient(t *testing.T) {
 				}),
 			}
 
-			c, err := NewClient(context.Background(), ds, plugins.DataTimeRange{})
+			c, err := NewClient(context.Background(), httpclient.NewProvider(), ds, plugins.DataTimeRange{})
 			require.NoError(t, err)
 			assert.Equal(t, "2.0.0", c.GetVersion().String())
 		})
@@ -73,7 +74,7 @@ func TestNewClient(t *testing.T) {
 				}),
 			}
 
-			c, err := NewClient(context.Background(), ds, plugins.DataTimeRange{})
+			c, err := NewClient(context.Background(), httpclient.NewProvider(), ds, plugins.DataTimeRange{})
 			require.NoError(t, err)
 			assert.Equal(t, "5.0.0", c.GetVersion().String())
 		})
@@ -86,7 +87,7 @@ func TestNewClient(t *testing.T) {
 				}),
 			}
 
-			c, err := NewClient(context.Background(), ds, plugins.DataTimeRange{})
+			c, err := NewClient(context.Background(), httpclient.NewProvider(), ds, plugins.DataTimeRange{})
 			require.NoError(t, err)
 			assert.Equal(t, "5.6.0", c.GetVersion().String())
 		})
@@ -99,7 +100,7 @@ func TestNewClient(t *testing.T) {
 				}),
 			}
 
-			c, err := NewClient(context.Background(), ds, plugins.DataTimeRange{})
+			c, err := NewClient(context.Background(), httpclient.NewProvider(), ds, plugins.DataTimeRange{})
 			require.NoError(t, err)
 			assert.Equal(t, "6.0.0", c.GetVersion().String())
 		})
@@ -112,7 +113,7 @@ func TestNewClient(t *testing.T) {
 				}),
 			}
 
-			c, err := NewClient(context.Background(), ds, plugins.DataTimeRange{})
+			c, err := NewClient(context.Background(), httpclient.NewProvider(), ds, plugins.DataTimeRange{})
 			require.NoError(t, err)
 			assert.Equal(t, "7.0.0", c.GetVersion().String())
 		})
@@ -127,7 +128,7 @@ func TestNewClient(t *testing.T) {
 			}),
 		}
 
-		c, err := NewClient(context.Background(), ds, plugins.DataTimeRange{})
+		c, err := NewClient(context.Background(), httpclient.NewProvider(), ds, plugins.DataTimeRange{})
 		require.NoError(t, err)
 		assert.Equal(t, version, c.GetVersion().String())
 	})
@@ -141,7 +142,7 @@ func TestNewClient(t *testing.T) {
 			}),
 		}
 
-		_, err := NewClient(context.Background(), ds, plugins.DataTimeRange{})
+		_, err := NewClient(context.Background(), httpclient.NewProvider(), ds, plugins.DataTimeRange{})
 		require.Error(t, err)
 	})
 }
@@ -408,14 +409,14 @@ func httpClientScenario(t *testing.T, desc string, ds *models.DataSource, fn sce
 		toStr := fmt.Sprintf("%d", to.UnixNano()/int64(time.Millisecond))
 		timeRange := plugins.NewDataTimeRange(fromStr, toStr)
 
-		c, err := NewClient(context.Background(), ds, timeRange)
+		c, err := NewClient(context.Background(), httpclient.NewProvider(), ds, timeRange)
 		require.NoError(t, err)
 		require.NotNil(t, c)
 		sc.client = c
 
 		currentNewDatasourceHTTPClient := newDatasourceHttpClient
 
-		newDatasourceHttpClient = func(ds *models.DataSource) (*http.Client, error) {
+		newDatasourceHttpClient = func(httpClientProvider httpclient.Provider, ds *models.DataSource) (*http.Client, error) {
 			return ts.Client(), nil
 		}
 

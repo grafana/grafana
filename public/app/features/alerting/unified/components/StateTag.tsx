@@ -24,6 +24,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     padding: ${theme.spacing(0.5, 1)};
     text-transform: capitalize;
     line-height: 1.2;
+    min-width: ${theme.spacing(8)};
+    text-align: center;
+    font-weight: ${theme.typography.fontWeightBold};
   `,
   good: css`
     background-color: ${theme.colors.success.main};

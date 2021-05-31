@@ -18,7 +18,7 @@ import { Plugin, Node } from 'slate';
 import { LokiLabelBrowser } from './LokiLabelBrowser';
 
 // Types
-import { ExploreQueryFieldProps, AbsoluteTimeRange } from '@grafana/data';
+import { ExploreQueryFieldProps } from '@grafana/data';
 import { LokiQuery, LokiOptions } from '../types';
 import { LanguageMap, languages as prismLanguages } from 'prismjs';
 import LokiLanguageProvider, { LokiHistoryItem } from '../language_provider';
@@ -63,8 +63,9 @@ function willApplySuggestion(suggestion: string, { typeaheadContext, typeaheadTe
 
 export interface LokiQueryFieldProps extends ExploreQueryFieldProps<LokiDatasource, LokiQuery, LokiOptions> {
   history: LokiHistoryItem[];
-  absoluteRange: AbsoluteTimeRange;
   ExtraFieldElement?: ReactNode;
+  placeholder?: string;
+  'data-testid'?: string;
 }
 
 interface LokiQueryFieldState {
@@ -138,7 +139,13 @@ export class LokiQueryField extends React.PureComponent<LokiQueryFieldProps, Lok
   };
 
   render() {
-    const { ExtraFieldElement, query, datasource } = this.props;
+    const {
+      ExtraFieldElement,
+      query,
+      datasource,
+      placeholder = 'Enter a Loki query (run with Shift+Enter)',
+    } = this.props;
+
     const { labelsLoaded, labelBrowserVisible } = this.state;
     const lokiLanguageProvider = datasource.languageProvider as LokiLanguageProvider;
     const cleanText = datasource.languageProvider ? lokiLanguageProvider.cleanText : undefined;
@@ -148,7 +155,10 @@ export class LokiQueryField extends React.PureComponent<LokiQueryFieldProps, Lok
 
     return (
       <>
-        <div className="gf-form-inline gf-form-inline--xs-view-flex-column flex-grow-1">
+        <div
+          className="gf-form-inline gf-form-inline--xs-view-flex-column flex-grow-1"
+          data-testid={this.props['data-testid']}
+        >
           <button
             className="gf-form-label query-keyword pointer"
             onClick={this.onClickChooserButton}
@@ -167,7 +177,7 @@ export class LokiQueryField extends React.PureComponent<LokiQueryFieldProps, Lok
               onChange={this.onChangeQuery}
               onBlur={this.props.onBlur}
               onRunQuery={this.props.onRunQuery}
-              placeholder="Enter a Loki query (run with Shift+Enter)"
+              placeholder={placeholder}
               portalOrigin="loki"
             />
           </div>

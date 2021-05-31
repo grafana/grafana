@@ -37,7 +37,6 @@ export class QueryEditor extends PureComponent<Props, State> {
       .fetch({ url: 'api/live/list' })
       .subscribe({
         next: (v: any) => {
-          console.log('GOT', v);
           const channelInfo = v.data?.channels as any[];
           if (channelInfo?.length) {
             const channelFields: Record<string, Array<SelectableValue<string>>> = {};
@@ -73,6 +72,9 @@ export class QueryEditor extends PureComponent<Props, State> {
     const { onChange, query, onRunQuery } = this.props;
     onChange({ ...query, queryType: sel.value! });
     onRunQuery();
+
+    // Reload the channel list
+    this.loadChannelInfo();
   };
 
   onChannelChange = (sel: SelectableValue<string>) => {

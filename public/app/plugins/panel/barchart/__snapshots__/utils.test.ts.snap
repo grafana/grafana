@@ -65,8 +65,13 @@ Object {
       "stroke": [Function],
       "width": [Function],
     },
+    "x": false,
+    "y": false,
   },
   "hooks": Object {
+    "draw": Array [
+      [Function],
+    ],
     "drawClear": Array [
       [Function],
     ],
@@ -102,7 +107,6 @@ Object {
       "paths": [Function],
       "points": Object {
         "fill": undefined,
-        "show": [Function],
         "size": undefined,
         "stroke": undefined,
       },
@@ -183,8 +187,13 @@ Object {
       "stroke": [Function],
       "width": [Function],
     },
+    "x": false,
+    "y": false,
   },
   "hooks": Object {
+    "draw": Array [
+      [Function],
+    ],
     "drawClear": Array [
       [Function],
     ],
@@ -220,7 +229,6 @@ Object {
       "paths": [Function],
       "points": Object {
         "fill": undefined,
-        "show": [Function],
         "size": undefined,
         "stroke": undefined,
       },
@@ -301,8 +309,13 @@ Object {
       "stroke": [Function],
       "width": [Function],
     },
+    "x": false,
+    "y": false,
   },
   "hooks": Object {
+    "draw": Array [
+      [Function],
+    ],
     "drawClear": Array [
       [Function],
     ],
@@ -338,7 +351,6 @@ Object {
       "paths": [Function],
       "points": Object {
         "fill": undefined,
-        "show": [Function],
         "size": undefined,
         "stroke": undefined,
       },
@@ -419,8 +431,13 @@ Object {
       "stroke": [Function],
       "width": [Function],
     },
+    "x": false,
+    "y": false,
   },
   "hooks": Object {
+    "draw": Array [
+      [Function],
+    ],
     "drawClear": Array [
       [Function],
     ],
@@ -456,7 +473,6 @@ Object {
       "paths": [Function],
       "points": Object {
         "fill": undefined,
-        "show": [Function],
         "size": undefined,
         "stroke": undefined,
       },
@@ -537,8 +553,13 @@ Object {
       "stroke": [Function],
       "width": [Function],
     },
+    "x": false,
+    "y": false,
   },
   "hooks": Object {
+    "draw": Array [
+      [Function],
+    ],
     "drawClear": Array [
       [Function],
     ],
@@ -574,7 +595,6 @@ Object {
       "paths": [Function],
       "points": Object {
         "fill": undefined,
-        "show": [Function],
         "size": undefined,
         "stroke": undefined,
       },
@@ -655,8 +675,13 @@ Object {
       "stroke": [Function],
       "width": [Function],
     },
+    "x": false,
+    "y": false,
   },
   "hooks": Object {
+    "draw": Array [
+      [Function],
+    ],
     "drawClear": Array [
       [Function],
     ],
@@ -692,7 +717,6 @@ Object {
       "paths": [Function],
       "points": Object {
         "fill": undefined,
-        "show": [Function],
         "size": undefined,
         "stroke": undefined,
       },
@@ -773,8 +797,13 @@ Object {
       "stroke": [Function],
       "width": [Function],
     },
+    "x": false,
+    "y": false,
   },
   "hooks": Object {
+    "draw": Array [
+      [Function],
+    ],
     "drawClear": Array [
       [Function],
     ],
@@ -810,7 +839,6 @@ Object {
       "paths": [Function],
       "points": Object {
         "fill": undefined,
-        "show": [Function],
         "size": undefined,
         "stroke": undefined,
       },
@@ -891,8 +919,13 @@ Object {
       "stroke": [Function],
       "width": [Function],
     },
+    "x": false,
+    "y": false,
   },
   "hooks": Object {
+    "draw": Array [
+      [Function],
+    ],
     "drawClear": Array [
       [Function],
     ],
@@ -928,7 +961,6 @@ Object {
       "paths": [Function],
       "points": Object {
         "fill": undefined,
-        "show": [Function],
         "size": undefined,
         "stroke": undefined,
       },

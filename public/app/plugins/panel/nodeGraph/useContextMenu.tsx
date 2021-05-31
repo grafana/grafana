@@ -108,6 +108,7 @@ function mapMenuItem<T extends NodeDatum | EdgeDatum>(item: T) {
         label={link.label}
         ariaLabel={link.ariaLabel || link.label}
         onClick={link.onClick ? () => link.onClick?.(item) : undefined}
+        target={'_self'}
       />
     );
   };

@@ -15,7 +15,7 @@ Graph visualizations allow you to apply:
 
 - [Alerts]({{< relref "../../alerting/_index.md" >}}) - This is the only type of visualization that allows you to set alerts.
 - [Data transformations]({{< relref "../transformations/_index.md" >}})
-- [Field options and overrides]({{< relref "../field-options/_index.md" >}})
+- [Field overrides]({{< relref "../field-overrides.md" >}})
 - [Thresholds]({{< relref "../thresholds.md" >}})
 
 ## Display options

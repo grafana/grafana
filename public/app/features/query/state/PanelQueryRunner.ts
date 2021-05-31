@@ -98,6 +98,7 @@ export class PanelQueryRunner {
 
           // If the shape is the same, we can skip field overrides
           if (
+            data.state === LoadingState.Streaming &&
             processFields &&
             processedCount > 0 &&
             lastData.length &&

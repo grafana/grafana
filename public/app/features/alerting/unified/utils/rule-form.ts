@@ -1,4 +1,4 @@
-import { DataQuery, getDefaultTimeRange, rangeUtil, RelativeTimeRange } from '@grafana/data';
+import { DataQuery, rangeUtil, RelativeTimeRange } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getNextRefIdChar } from 'app/core/utils/query';
@@ -10,7 +10,7 @@ import { RuleWithLocation } from 'app/types/unified-alerting';
 import {
   Annotations,
   GrafanaAlertStateDecision,
-  GrafanaQuery,
+  AlertQuery,
   Labels,
   PostableRuleGrafanaRuleDTO,
   RulerAlertingRuleDTO,
@@ -22,6 +22,7 @@ import { isGrafanaRulesSource } from './datasource';
 import { arrayToRecord, recordToArray } from './misc';
 import { isAlertingRulerRule, isGrafanaRulerRule } from './rules';
 import { parseInterval } from './time';
+import { getDefaultRelativeTimeRange } from '../../../../../../packages/grafana-data';
 
 export const getDefaultFormValues = (): RuleFormValues =>
   Object.freeze({
@@ -134,15 +135,13 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
   }
 }
 
-export const getDefaultQueries = (): GrafanaQuery[] => {
+export const getDefaultQueries = (): AlertQuery[] => {
   const dataSource = getDataSourceSrv().getInstanceSettings('default');
 
   if (!dataSource) {
     return [getDefaultExpression('A')];
   }
-
-  const timeRange = getDefaultTimeRange();
-  const relativeTimeRange = rangeUtil.timeRangeToRelative(timeRange);
+  const relativeTimeRange = getDefaultRelativeTimeRange();
 
   return [
     {
@@ -159,7 +158,7 @@ export const getDefaultQueries = (): GrafanaQuery[] => {
   ];
 };
 
-const getDefaultExpression = (refId: string): GrafanaQuery => {
+const getDefaultExpression = (refId: string): AlertQuery => {
   const model: ExpressionQuery = {
     refId,
     hide: false,
@@ -198,13 +197,13 @@ const dataQueriesToGrafanaQueries = (
   queries: DataQuery[],
   relativeTimeRange: RelativeTimeRange,
   datasourceName?: string
-): GrafanaQuery[] => {
-  return queries.reduce<GrafanaQuery[]>((queries, target) => {
+): AlertQuery[] => {
+  return queries.reduce<AlertQuery[]>((queries, target) => {
     const dsName = target.datasource || datasourceName;
     if (dsName) {
       // expressions
       if (dsName === ExpressionDatasourceID) {
-        const newQuery: GrafanaQuery = {
+        const newQuery: AlertQuery = {
           refId: target.refId,
           queryType: '',
           relativeTimeRange,
@@ -216,7 +215,7 @@ const dataQueriesToGrafanaQueries = (
       } else {
         const datasource = getDataSourceSrv().getInstanceSettings(target.datasource || datasourceName);
         if (datasource && datasource.meta.alerting) {
-          const newQuery: GrafanaQuery = {
+          const newQuery: AlertQuery = {
             refId: target.refId,
             queryType: target.queryType ?? '',
             relativeTimeRange,

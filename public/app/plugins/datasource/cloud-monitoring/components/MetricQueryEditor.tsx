@@ -1,14 +1,23 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { SelectableValue } from '@grafana/data';
 import { Project, VisualMetricQueryEditor, AliasBy } from '.';
-import { MetricQuery, MetricDescriptor, EditorMode } from '../types';
+import {
+  MetricQuery,
+  MetricDescriptor,
+  EditorMode,
+  MetricKind,
+  PreprocessorType,
+  AlignmentTypes,
+  CustomMetaData,
+  ValueTypes,
+} from '../types';
 import { getAlignmentPickerData } from '../functions';
 import CloudMonitoringDatasource from '../datasource';
-import { SelectableValue } from '@grafana/data';
 import { MQLQueryEditor } from './MQLQueryEditor';
 
 export interface Props {
   refId: string;
-  usedAlignmentPeriod?: number;
+  customMetaData: CustomMetaData;
   variableOptionGroup: SelectableValue<string>;
   onChange: (query: MetricQuery) => void;
   onRunQuery: () => void;
@@ -29,16 +38,16 @@ export const defaultQuery: (dataSource: CloudMonitoringDatasource) => MetricQuer
   editorMode: EditorMode.Visual,
   projectName: dataSource.getDefaultProject(),
   metricType: '',
-  metricKind: '',
+  metricKind: MetricKind.GAUGE,
   valueType: '',
-  unit: '',
   crossSeriesReducer: 'REDUCE_MEAN',
   alignmentPeriod: 'cloud-monitoring-auto',
-  perSeriesAligner: 'ALIGN_MEAN',
+  perSeriesAligner: AlignmentTypes.ALIGN_MEAN,
   groupBys: [],
   filters: [],
   aliasBy: '',
   query: '',
+  preprocessor: PreprocessorType.None,
 });
 
 function Editor({
@@ -47,7 +56,7 @@ function Editor({
   datasource,
   onChange: onQueryChange,
   onRunQuery,
-  usedAlignmentPeriod,
+  customMetaData,
   variableOptionGroup,
 }: React.PropsWithChildren<Props>) {
   const [state, setState] = useState<State>(defaultState);
@@ -61,22 +70,32 @@ function Editor({
     }
   }, [datasource, groupBys, metricType, projectName, refId]);
 
-  const onChange = (metricQuery: MetricQuery) => {
-    onQueryChange({ ...query, ...metricQuery });
-    onRunQuery();
-  };
+  const onChange = useCallback(
+    (metricQuery: MetricQuery) => {
+      onQueryChange({ ...query, ...metricQuery });
+      onRunQuery();
+    },
+    [onQueryChange, onRunQuery, query]
+  );
 
-  const onMetricTypeChange = async ({ valueType, metricKind, type, unit }: MetricDescriptor) => {
-    const { perSeriesAligner, alignOptions } = getAlignmentPickerData(
-      { valueType, metricKind, perSeriesAligner: state.perSeriesAligner },
-      datasource.templateSrv
-    );
-    setState({
-      ...state,
-      alignOptions,
-    });
-    onChange({ ...query, perSeriesAligner, metricType: type, unit, valueType, metricKind });
-  };
+  const onMetricTypeChange = useCallback(
+    ({ valueType, metricKind, type }: MetricDescriptor) => {
+      const preprocessor =
+        metricKind === MetricKind.GAUGE || valueType === ValueTypes.DISTRIBUTION
+          ? PreprocessorType.None
+          : PreprocessorType.Rate;
+      const { perSeriesAligner } = getAlignmentPickerData(valueType, metricKind, state.perSeriesAligner, preprocessor);
+      onChange({
+        ...query,
+        perSeriesAligner,
+        metricType: type,
+        valueType,
+        metricKind,
+        preprocessor,
+      });
+    },
+    [onChange, query, state]
+  );
 
   return (
     <>
@@ -93,7 +112,7 @@ function Editor({
         <VisualMetricQueryEditor
           labels={state.labels}
           variableOptionGroup={variableOptionGroup}
-          usedAlignmentPeriod={usedAlignmentPeriod}
+          customMetaData={customMetaData}
           onMetricTypeChange={onMetricTypeChange}
           onChange={onChange}
           datasource={datasource}

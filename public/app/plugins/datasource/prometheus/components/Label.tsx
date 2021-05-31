@@ -17,6 +17,7 @@ export interface Props extends Omit<HTMLAttributes<HTMLElement>, 'onClick'> {
   searchTerm?: string;
   value?: string;
   facets?: number;
+  title?: string;
   onClick?: OnLabelClick;
 }
 
@@ -24,7 +25,7 @@ export interface Props extends Omit<HTMLAttributes<HTMLElement>, 'onClick'> {
  * TODO #33976: Create a common, shared component with public/app/plugins/datasource/loki/components/LokiLabel.tsx
  */
 export const Label = forwardRef<HTMLElement, Props>(
-  ({ name, value, hidden, facets, onClick, className, loading, searchTerm, active, style, ...rest }, ref) => {
+  ({ name, value, hidden, facets, onClick, className, loading, searchTerm, active, style, title, ...rest }, ref) => {
     const theme = useTheme2();
     const styles = getLabelStyles(theme);
     const searchWords = searchTerm ? [searchTerm] : [];
@@ -46,7 +47,7 @@ export const Label = forwardRef<HTMLElement, Props>(
         ref={ref}
         onClick={onLabelClick}
         style={style}
-        title={text}
+        title={title || text}
         role="option"
         aria-selected={!!active}
         className={cx(

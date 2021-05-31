@@ -65,6 +65,8 @@ interface Props {
   onStopScanning?: () => void;
   getRowContext?: (row: LogRowModel, options?: RowContextOptions) => Promise<any>;
   getFieldLinks: (field: Field, rowIndex: number) => Array<LinkModel<Field>>;
+  addResultsToCache: () => void;
+  clearCache: () => void;
 }
 
 interface State {
@@ -244,6 +246,8 @@ export class UnthemedLogs extends PureComponent<Props, State> {
       getFieldLinks,
       theme,
       logsQueries,
+      clearCache,
+      addResultsToCache,
     } = this.props;
 
     const {
@@ -269,6 +273,9 @@ export class UnthemedLogs extends PureComponent<Props, State> {
 
     return (
       <>
+        <div className={styles.infoText}>
+          This datasource does not support full-range histograms. The graph is based on the logs seen in the response.
+        </div>
         <ExploreGraphPanel
           series={logsSeries || []}
           width={width}
@@ -361,6 +368,8 @@ export class UnthemedLogs extends PureComponent<Props, State> {
             loading={loading}
             queries={logsQueries ?? []}
             scrollToTopLogs={this.scrollToTopLogs}
+            addResultsToCache={addResultsToCache}
+            clearCache={clearCache}
           />
         </div>
         {!loading && !hasData && !scanning && (
@@ -418,6 +427,10 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
     logRows: css`
       overflow-x: scroll;
+    `,
+    infoText: css`
+      font-size: ${theme.typography.size.sm};
+      color: ${theme.colors.textWeak};
     `,
   };
 });

@@ -30,7 +30,7 @@ This is the most substantial update that Grafana has ever seen. This article wil
 
 ## New Dashboard Layout Engine
 
-{{< docs-imagebox img="/img/docs/v50/new_grid.png" max-width="1000px" class="docs-image--right">}}
+{{< figure src="/static/img/docs/v50/new_grid.png" max-width="1000px" class="docs-image--right">}}
 
 The new dashboard layout engine allows for much easier movement and sizing of panels, as other panels now move out of the way in
 a very intuitive way. Panels are sized independently, so rows are no longer necessary to create layouts. This opens
@@ -43,7 +43,7 @@ with older versions of Grafana.
 
 ## New UX
 
-{{< docs-imagebox img="/img/docs/v50/new_ux_nav.png" max-width="1000px" class="docs-image--right" >}}
+{{< figure src="/static/img/docs/v50/new_ux_nav.png" max-width="1000px" class="docs-image--right" >}}
 
 Almost every page has seen significant UX improvements. All pages (except dashboard pages) have a new tab-based layout that improves navigation between pages. The side menu has also changed quite a bit. You can still hide the side menu completely if you click on the Grafana logo.
 
@@ -51,7 +51,7 @@ Almost every page has seen significant UX improvements. All pages (except dashbo
 
 ## Dashboard Settings
 
-{{< docs-imagebox img="/img/docs/v50/dashboard_settings.png" max-width="1000px" class="docs-image--right" >}}
+{{< figure src="/static/img/docs/v50/dashboard_settings.png" max-width="1000px" class="docs-image--right" >}}
 Dashboard pages have a new header toolbar where buttons and actions are now all moved to the right. All the dashboard
 settings views have been combined with a side nav which allows you to easily move between different setting categories.
 
@@ -59,7 +59,7 @@ settings views have been combined with a side nav which allows you to easily mov
 
 ## New Light Theme
 
-{{< docs-imagebox img="/img/docs/v50/new_white_theme.png" max-width="1000px" class="docs-image--right" >}}
+{{< figure src="/static/img/docs/v50/new_white_theme.png" max-width="1000px" class="docs-image--right" >}}
 
 This theme has not seen a lot of love in recent years and we felt it was time to give it a major overhaul. We are very happy with the result.
 
@@ -67,7 +67,7 @@ This theme has not seen a lot of love in recent years and we felt it was time to
 
 ## Dashboard Folders
 
-{{< docs-imagebox img="/img/docs/v50/new_search.png" max-width="1000px" class="docs-image--right" >}}
+{{< figure src="/static/img/docs/v50/new_search.png" max-width="1000px" class="docs-image--right" >}}
 
 The big new feature that comes with Grafana v5.0 is dashboard folders. Now you can organize your dashboards in folders,
 which is very useful if you have a lot of dashboards or multiple teams.
@@ -83,7 +83,7 @@ We hope to do more with teams in future releases like integration with LDAP and 
 
 ## Permissions
 
-{{< docs-imagebox img="/img/docs/v50/folder_permissions.png" max-width="1000px" class="docs-image--right" >}}
+{{< figure src="/static/img/docs/v50/folder_permissions.png" max-width="1000px" class="docs-image--right" >}}
 
 You can assign permissions to folders and dashboards. The default user role-based permissions can be removed and
 replaced with specific teams or users enabling more control over what a user can see and edit.
@@ -118,7 +118,7 @@ expects the dashboards to exist in the database. More info in the [dashboard pro
 
 ## Graphite Tags and Integrated Function Docs
 
-{{< docs-imagebox img="/img/docs/v50/graphite_tags.png" max-width="1000px" class="docs-image--right" >}}
+{{< figure src="/static/img/docs/v50/graphite_tags.png" max-width="1000px" class="docs-image--right" >}}
 
 The Graphite query editor has been updated to support the latest Graphite version (v1.2) that adds
 many new functions and support for querying by tags. You can now also view function documentation right in the query editor!
