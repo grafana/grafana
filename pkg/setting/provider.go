@@ -102,10 +102,6 @@ type OSSImpl struct {
 	Cfg *Cfg
 }
 
-func (o OSSImpl) Init() error {
-	return nil
-}
-
 func (o OSSImpl) Current() SettingsBag {
 	settingsCopy := make(SettingsBag)
 

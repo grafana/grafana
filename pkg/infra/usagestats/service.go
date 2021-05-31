@@ -58,10 +58,6 @@ func ProvideService(cfg *setting.Cfg, bus bus.Bus, sqlStore *sqlstore.SQLStore,
 	return s
 }
 
-func (uss *UsageStatsService) Init() error {
-	return nil
-}
-
 func (uss *UsageStatsService) Run(ctx context.Context) error {
 	uss.updateTotalStats()
 

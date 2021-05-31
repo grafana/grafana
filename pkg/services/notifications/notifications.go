@@ -73,11 +73,6 @@ type NotificationService struct {
 	log          log.Logger
 }
 
-func (ns *NotificationService) Init() error {
-
-	return nil
-}
-
 func (ns *NotificationService) Run(ctx context.Context) error {
 	for {
 		select {

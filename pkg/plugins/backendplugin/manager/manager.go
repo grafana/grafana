@@ -48,10 +48,6 @@ type Manager struct {
 	logger                 log.Logger
 }
 
-func (m *Manager) Init() error {
-	return nil
-}
-
 func (m *Manager) Run(ctx context.Context) error {
 	<-ctx.Done()
 	m.stop(ctx)

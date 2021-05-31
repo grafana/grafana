@@ -90,10 +90,6 @@ type fakeRenderService struct {
 	rendering.Service
 }
 
-func (s *fakeRenderService) Init() error {
-	return nil
-}
-
 func getContextHandler(t *testing.T) *ContextHandler {
 	t.Helper()
 

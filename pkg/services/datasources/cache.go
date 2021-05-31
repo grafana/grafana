@@ -26,10 +26,6 @@ type CacheServiceImpl struct {
 	SQLStore     *sqlstore.SQLStore
 }
 
-func (dc *CacheServiceImpl) Init() error {
-	return nil
-}
-
 func (dc *CacheServiceImpl) GetDatasource(
 	datasourceID int64,
 	user *models.SignedInUser,

@@ -22,11 +22,6 @@ type ServerLockService struct {
 	log      log.Logger
 }
 
-// Init this service
-func (sl *ServerLockService) Init() error {
-	return nil
-}
-
 // LockAndExecute try to create a lock for this server and only executes the
 // `fn` function when successful. This should not be used at low internal. But services
 // that needs to be run once every ex 10m.

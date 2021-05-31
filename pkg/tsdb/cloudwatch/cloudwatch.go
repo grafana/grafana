@@ -81,10 +81,6 @@ type CloudWatchService struct {
 	Cfg                  *setting.Cfg
 }
 
-func (s *CloudWatchService) Init() error {
-	return nil
-}
-
 type SessionCache interface {
 	GetSession(region string, s awsds.AWSDatasourceSettings) (*session.Session, error)
 }

@@ -190,10 +190,6 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	return hs
 }
 
-func (hs *HTTPServer) Init() error {
-	return nil
-}
-
 func (hs *HTTPServer) AddMiddleware(middleware macaron.Handler) {
 	hs.middlewares = append(hs.middlewares, middleware)
 }

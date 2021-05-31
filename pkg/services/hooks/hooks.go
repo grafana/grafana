@@ -18,10 +18,6 @@ func ProvideService() *HooksService {
 	return &HooksService{}
 }
 
-func (srv *HooksService) Init() error {
-	return nil
-}
-
 func (srv *HooksService) AddIndexDataHook(hook IndexDataHook) {
 	srv.indexDataHooks = append(srv.indexDataHooks, hook)
 }

@@ -33,10 +33,6 @@ type Provider struct {
 	DataSourceCache datasources.CacheService
 }
 
-func (p *Provider) Init() error {
-	return nil
-}
-
 // Get allows getting plugin context by its ID. If datasourceUID is not empty string
 // then PluginContext.DataSourceInstanceSettings will be resolved and appended to
 // returned context.

@@ -18,10 +18,6 @@ func (s *FakeJWTService) Verify(ctx context.Context, token string) (JWTClaims, e
 	return s.VerifyProvider(ctx, token)
 }
 
-func (s *FakeJWTService) Init() error {
-	return nil
-}
-
 func NewFakeJWTService() *FakeJWTService {
 	return &FakeJWTService{
 		VerifyProvider: func(ctx context.Context, token string) (JWTClaims, error) {

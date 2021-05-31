@@ -85,14 +85,6 @@ func (ds *RemoteCache) Delete(key string) error {
 	return ds.client.Delete(key)
 }
 
-// Init initializes the service
-func (ds *RemoteCache) Init() error {
-	ds.log = log.New("cache.remote")
-	var err error
-	ds.client, err = createClient(ds.Cfg.RemoteCacheOptions, ds.SQLStore)
-	return err
-}
-
 // Run starts the backend processes for cache clients.
 func (ds *RemoteCache) Run(ctx context.Context) error {
 	// create new interface if more clients need GC jobs

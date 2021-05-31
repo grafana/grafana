@@ -35,10 +35,6 @@ type DataSourceProxyService struct {
 	HTTPClientProvider     httpclient.Provider
 }
 
-func (p *DataSourceProxyService) Init() error {
-	return nil
-}
-
 func (p *DataSourceProxyService) ProxyDataSourceRequest(c *models.ReqContext) {
 	p.ProxyDatasourceRequestWithID(c, c.ParamsInt64(":id"))
 }

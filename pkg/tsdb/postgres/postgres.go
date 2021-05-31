@@ -32,10 +32,6 @@ type PostgresService struct {
 	tlsManager tlsSettingsProvider
 }
 
-func (s *PostgresService) Init() error {
-	return nil
-}
-
 //nolint: staticcheck // plugins.DataPlugin deprecated
 func (s *PostgresService) NewExecutor(datasource *models.DataSource) (plugins.DataPlugin, error) {
 	s.logger.Debug("Creating Postgres query endpoint")

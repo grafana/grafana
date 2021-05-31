@@ -76,10 +76,39 @@ type PluginManager struct {
 }
 
 func ProvideService(cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, backendPM backendplugin.Manager,
-	backgroundServices *backgroundsvcs.Container) *PluginManager {
-	s := newManager(cfg, sqlStore, backendPM)
-	backgroundServices.AddBackgroundService(s)
-	return s
+	backgroundServices *backgroundsvcs.Container) (*PluginManager, error) {
+	pm := newManager(cfg, sqlStore, backendPM)
+	backgroundServices.AddBackgroundService(pm)
+
+	plog = log.New("plugins")
+	pm.pluginInstaller = installer.New(false, pm.Cfg.BuildVersion, installerLog)
+
+	pm.log.Info("Starting plugin search")
+
+	plugDir := filepath.Join(pm.Cfg.StaticRootPath, "app/plugins")
+	pm.log.Debug("Scanning core plugin directory", "dir", plugDir)
+	if err := pm.scan(plugDir, false); err != nil {
+		return nil, errutil.Wrapf(err, "failed to scan core plugin directory '%s'", plugDir)
+	}
+
+	plugDir = pm.Cfg.BundledPluginsPath
+	pm.log.Debug("Scanning bundled plugins directory", "dir", plugDir)
+	exists, err := fs.Exists(plugDir)
+	if err != nil {
+		return nil, err
+	}
+	if exists {
+		if err := pm.scan(plugDir, false); err != nil {
+			return nil, errutil.Wrapf(err, "failed to scan bundled plugins directory '%s'", plugDir)
+		}
+	}
+
+	err = pm.initExternalPlugins()
+	if err != nil {
+		return nil, err
+	}
+
+	return pm, nil
 }
 
 func newManager(cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, backendPM backendplugin.Manager) *PluginManager {
@@ -94,38 +123,6 @@ func newManager(cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, backendPM backend
 		pluginScanningErrors: map[string]plugins.PluginError{},
 		log:                  log.New("plugins"),
 	}
-}
-
-func (pm *PluginManager) Init() error {
-	plog = log.New("plugins")
-	pm.pluginInstaller = installer.New(false, pm.Cfg.BuildVersion, installerLog)
-
-	pm.log.Info("Starting plugin search")
-
-	plugDir := filepath.Join(pm.Cfg.StaticRootPath, "app/plugins")
-	pm.log.Debug("Scanning core plugin directory", "dir", plugDir)
-	if err := pm.scan(plugDir, false); err != nil {
-		return errutil.Wrapf(err, "failed to scan core plugin directory '%s'", plugDir)
-	}
-
-	plugDir = pm.Cfg.BundledPluginsPath
-	pm.log.Debug("Scanning bundled plugins directory", "dir", plugDir)
-	exists, err := fs.Exists(plugDir)
-	if err != nil {
-		return err
-	}
-	if exists {
-		if err := pm.scan(plugDir, false); err != nil {
-			return errutil.Wrapf(err, "failed to scan bundled plugins directory '%s'", plugDir)
-		}
-	}
-
-	err = pm.initExternalPlugins()
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func (pm *PluginManager) initExternalPlugins() error {
@@ -327,6 +324,7 @@ func (pm *PluginManager) scanPluginPaths() error {
 
 // scan a directory for plugins.
 func (pm *PluginManager) scan(pluginDir string, requireSigned bool) error {
+	fmt.Printf("\nScanning\n\n")
 	scanner := &PluginScanner{
 		pluginPath:                    pluginDir,
 		backendPluginManager:          pm.BackendPluginManager,
@@ -473,6 +471,8 @@ func (pm *PluginManager) loadPlugin(jsonParser *json.Decoder, pluginBase *plugin
 		return err
 	}
 
+	fmt.Printf("\nLoading plugin %+v\n\n", plug)
+
 	pm.pluginsMu.Lock()
 	defer pm.pluginsMu.Unlock()
 
@@ -527,6 +527,7 @@ func (s *PluginScanner) walker(currentPath string, f os.FileInfo, err error) err
 	// We scan all the subfolders for plugin.json (with some exceptions) so that we also load embedded plugins, for
 	// example https://github.com/raintank/worldping-app/tree/master/dist/grafana-worldmap-panel worldmap panel plugin
 	// is embedded in worldping app.
+	fmt.Printf("\nWalking %q\n\n", currentPath)
 	if err != nil {
 		return fmt.Errorf("filepath.Walk reported an error for %q: %w", currentPath, err)
 	}

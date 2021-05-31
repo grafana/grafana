@@ -63,11 +63,6 @@ type Service struct {
 	registry map[string]func(*models.DataSource) (plugins.DataPlugin, error)
 }
 
-// Init initialises the service.
-func (s *Service) Init() error {
-	return nil
-}
-
 //nolint: staticcheck // plugins.DataPlugin deprecated
 func (s *Service) HandleRequest(ctx context.Context, ds *models.DataSource, query plugins.DataQuery) (
 	plugins.DataResponse, error) {

@@ -23,12 +23,6 @@ type LogsService struct {
 	queueLock        sync.Mutex
 }
 
-// Init is called by the DI framework to initialize the instance.
-func (s *LogsService) Init() error {
-	// nolint:staticcheck // plugins.DataQueryResult deprecated
-	return nil
-}
-
 // nolint:staticcheck // plugins.DataQueryResult deprecated
 func (s *LogsService) AddResponseChannel(name string, channel chan plugins.DataResponse) error {
 	s.channelMu.Lock()

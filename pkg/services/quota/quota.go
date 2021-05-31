@@ -22,10 +22,6 @@ type QuotaService struct {
 	Cfg              *setting.Cfg
 }
 
-func (qs *QuotaService) Init() error {
-	return nil
-}
-
 func (qs *QuotaService) QuotaReached(c *models.ReqContext, target string) (bool, error) {
 	if !qs.Cfg.Quota.Enabled {
 		return false, nil

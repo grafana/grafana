@@ -44,7 +44,15 @@ func (l *OSSLicensingService) LicenseURL(user *models.SignedInUser) string {
 	return "https://grafana.com/products/enterprise/?utm_source=grafana_footer"
 }
 
-func (l *OSSLicensingService) Init() error {
+func (*OSSLicensingService) HasValidLicense() bool {
+	return false
+}
+
+func ProvideService(cfg *setting.Cfg, hooksService *hooks.HooksService) *OSSLicensingService {
+	l := &OSSLicensingService{
+		Cfg:          cfg,
+		HooksService: hooksService,
+	}
 	l.HooksService.AddIndexDataHook(func(indexData *dtos.IndexViewData, req *models.ReqContext) {
 		for _, node := range indexData.NavTree {
 			if node.Id == "admin" {
@@ -57,16 +65,5 @@ func (l *OSSLicensingService) Init() error {
 			}
 		}
 	})
-
-	return nil
-}
-
-func (*OSSLicensingService) HasValidLicense() bool {
-	return false
-}
-
-func ProvideService(cfg *setting.Cfg) *OSSLicensingService {
-	return &OSSLicensingService{
-		Cfg: cfg,
-	}
+	return l
 }
