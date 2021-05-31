@@ -19,20 +19,21 @@ func (p *testPublisher) publish(orgID int64, _ string, _ []byte) error {
 
 func TestNewManagedStream(t *testing.T) {
 	publisher := &testPublisher{orgID: 1, t: t}
-	c := NewManagedStream("a", publisher.publish)
+	c := NewManagedStream("a", publisher.publish, NewFrameCacheMemory())
 	require.NotNil(t, c)
 }
 
 func TestManagedStream_GetLastPacket(t *testing.T) {
 	var orgID int64 = 1
 	publisher := &testPublisher{orgID: orgID, t: t}
-	c := NewManagedStream("a", publisher.publish)
-	_, ok := c.getLastPacket(orgID, "test")
+	c := NewManagedStream("a", publisher.publish, NewFrameCacheMemory())
+	_, ok, err := c.frameCache.GetFrame(orgID, "test")
+	require.NoError(t, err)
 	require.False(t, ok)
-	err := c.Push(orgID, "test", data.NewFrame("hello"))
+	err = c.Push(orgID, "test", data.NewFrame("hello"))
 	require.NoError(t, err)
 
-	s, ok := c.getLastPacket(orgID, "test")
+	s, ok, err := c.frameCache.GetFrame(orgID, "test")
 	require.NoError(t, err)
 	require.True(t, ok)
 	require.JSONEq(t, `{"schema":{"name":"hello","fields":[]},"data":{"values":[]}}`, string(s))

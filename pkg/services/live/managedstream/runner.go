@@ -32,10 +32,14 @@ type Runner struct {
 
 // FrameCache allows updating frame schema. Returns true is schema not changed.
 type FrameCache interface {
+	// GetActivePaths returns active managed stream paths with JSON schema.
 	GetActivePaths(orgID int64) (map[string]json.RawMessage, error)
+	// GetSchema returns JSON schema for a path.
 	GetSchema(orgID int64, path string) (json.RawMessage, bool, error)
+	// GetFrame returns full JSON frame for a path.
 	GetFrame(orgID int64, path string) (json.RawMessage, bool, error)
-	Update(orgID int64, path string, frame *data.Frame) (data.FrameJSONCache, bool, error)
+	// Update updates frame cache and returns true if schema changed.
+	Update(orgID int64, path string, frameJson data.FrameJSONCache) (bool, error)
 }
 
 // NewRunner creates new Runner.
@@ -83,7 +87,6 @@ type ManagedStream struct {
 	mu         sync.RWMutex
 	id         string
 	start      time.Time
-	last       map[int64]map[string]struct{}
 	publisher  models.ChannelPublisher
 	frameCache FrameCache
 }
@@ -93,17 +96,17 @@ func NewManagedStream(id string, publisher models.ChannelPublisher, schemaUpdate
 	return &ManagedStream{
 		id:         id,
 		start:      time.Now(),
-		last:       map[int64]map[string]struct{}{},
 		publisher:  publisher,
 		frameCache: schemaUpdater,
 	}
 }
 
 // ListChannels returns info for the UI about this stream.
+// TODO: function should return an error.
 func (s *ManagedStream) ListChannels(orgID int64, prefix string) []*ManagedChannel {
 	paths, err := s.frameCache.GetActivePaths(orgID)
 	if err != nil {
-		// TODO: log.
+		logger.Error("Error getting active managed stream paths", "error", err)
 		return []*ManagedChannel{}
 	}
 	info := make([]*ManagedChannel, 0, len(paths))
@@ -120,21 +123,12 @@ func (s *ManagedStream) ListChannels(orgID int64, prefix string) []*ManagedChann
 // Push sends frame to the stream and saves it for later retrieval by subscribers.
 // unstableSchema flag can be set to disable schema caching for a path.
 func (s *ManagedStream) Push(orgID int64, path string, frame *data.Frame) error {
-	//// Keep schema + data for last packet.
-	//msg, err := data.FrameToJSONCache(frame)
-	//if err != nil {
-	//	logger.Error("Error marshaling frame with data", "error", err)
-	//	return err
-	//}
-	//
-	//s.mu.Lock()
-	//if _, ok := s.last[orgID]; !ok {
-	//	s.last[orgID] = map[string]struct{}{}
-	//}
-	//s.last[orgID][path] = struct{}{}
-	//s.mu.Unlock()
+	jsonFrame, err := data.FrameToJSONCache(frame)
+	if err != nil {
+		return err
+	}
 
-	msg, isUpdated, err := s.frameCache.Update(orgID, path, frame)
+	isUpdated, err := s.frameCache.Update(orgID, path, jsonFrame)
 	if err != nil {
 		logger.Error("Error updating managed stream schema", "error", err)
 		return err
@@ -146,7 +140,7 @@ func (s *ManagedStream) Push(orgID int64, path string, frame *data.Frame) error 
 		// When the schema has been changed, send all.
 		include = data.IncludeAll
 	}
-	frameJSON := msg.Bytes(include)
+	frameJSON := jsonFrame.Bytes(include)
 
 	// The channel this will be posted into.
 	channel := live.Channel{Scope: live.ScopeStream, Namespace: s.id, Path: path}.String()

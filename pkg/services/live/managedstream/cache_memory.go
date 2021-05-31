@@ -48,18 +48,14 @@ func (u *FrameCacheMemory) GetFrame(orgID int64, path string) (json.RawMessage, 
 	return cachedFrame.Bytes(data.IncludeAll), ok, nil
 }
 
-func (u *FrameCacheMemory) Update(orgID int64, path string, frame *data.Frame) (data.FrameJSONCache, bool, error) {
+func (u *FrameCacheMemory) Update(orgID int64, path string, jsonFrame data.FrameJSONCache) (bool, error) {
 	u.mu.Lock()
 	defer u.mu.Unlock()
-	msg, err := data.FrameToJSONCache(frame)
-	if err != nil {
-		return data.FrameJSONCache{}, false, err
-	}
 	if _, ok := u.frames[orgID]; !ok {
 		u.frames[orgID] = map[string]data.FrameJSONCache{}
 	}
-	cachedSchema, exists := u.frames[orgID][path]
-	schemaUpdated := !exists || !cachedSchema.SameSchema(&msg)
-	u.frames[orgID][path] = msg
-	return msg, schemaUpdated, nil
+	cachedJsonFrame, exists := u.frames[orgID][path]
+	schemaUpdated := !exists || !cachedJsonFrame.SameSchema(&jsonFrame)
+	u.frames[orgID][path] = jsonFrame
+	return schemaUpdated, nil
 }
