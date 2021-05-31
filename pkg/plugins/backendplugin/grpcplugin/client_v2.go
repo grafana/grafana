@@ -83,13 +83,8 @@ func newClientV2(descriptor PluginDescriptor, logger log.Logger, rpcClient plugi
 		}
 	}
 
-	if descriptor.startFns.OnStart != nil {
-		client := &Client{
-			DataPlugin:     c.DataClient,
-			RendererPlugin: c.RendererPlugin,
-			StreamClient:   c.StreamClient,
-		}
-		if err := descriptor.startFns.OnStart(descriptor.pluginID, client, logger); err != nil {
+	if descriptor.startRendererFn != nil {
+		if err := descriptor.startRendererFn(descriptor.pluginID, c.RendererPlugin, logger); err != nil {
 			return nil, err
 		}
 	}
