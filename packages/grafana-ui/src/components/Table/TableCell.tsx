@@ -32,15 +32,11 @@ export const TableCell: FC<Props> = ({ cell, field, tableStyles, onCellFilterAdd
     innerWidth -= tableStyles.lastChildExtraPadding;
   }
 
-  return (
-    <>
-      {cell.render('Cell', {
-        field,
-        tableStyles,
-        onCellFilterAdded,
-        cellProps,
-        innerWidth,
-      })}
-    </>
-  );
+  return cell.render('Cell', {
+    field,
+    tableStyles,
+    onCellFilterAdded,
+    cellProps,
+    innerWidth,
+  });
 };
