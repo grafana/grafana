@@ -40,7 +40,7 @@ export const DashboardPrompt = React.memo(({ dashboard }: Props) => {
       const original = dashboard.getSaveModelClone();
 
       setState({ originalPath, original, modal: null });
-    });
+    }, 1000);
 
     const savedEventUnsub = appEvents.subscribe(DashboardSavedEvent, () => {
       const original = dashboard.getSaveModelClone();
