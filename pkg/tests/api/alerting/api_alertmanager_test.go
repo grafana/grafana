@@ -1462,23 +1462,7 @@ func TestAlertmanagerStatus(t *testing.T) {
 		"status": "disabled"
 	},
 	"config": {
-		"route": {
-			"receiver": "grafana-default-email"
-		},
-		"templates": null,
-		"receivers": [{
-			"name": "grafana-default-email",
-			"grafana_managed_receiver_configs": [{
-				"uid": "",
-				"name": "email receiver",
-				"type": "email",
-				"disableResolveMessage": false,
-				"settings": {
-					"addresses": "\u003cexample@email.com\u003e"
-				},
-				"secureSettings": null
-			}]
-		}]
+		"original": "{\"route\":{\"receiver\":\"grafana-default-email\"},\"templates\":null,\"receivers\":[{\"name\":\"grafana-default-email\",\"grafana_managed_receiver_configs\":[{\"uid\":\"\",\"name\":\"email receiver\",\"type\":\"email\",\"disableResolveMessage\":false,\"settings\":{\"addresses\":\"\\u003cexample@email.com\\u003e\"},\"secureSettings\":null}]}]}"
 	},
 	"uptime": null,
 	"versionInfo": {
