@@ -119,6 +119,39 @@ The last saved version of the report will be sent to selected emails. You can us
 
 {{< figure src="/static/img/docs/enterprise/reports_send_test_mail.png" max-width="500px" class="docs-image--no-shadow" >}}
 
+### Report time range
+
+> Setting custom report time range is available in Grafana Enterprise v7.2+.
+
+By default, reports use the saved time range of the dashboard. Changing the time range of the report can be done by:
+
+- Saving a modified time range to the dashboard.
+- Setting a time range via **Time range** field in the report form. If specified, then this custom time range overrides the one from the report's dashboard.
+
+The page header of the report displays the time range for the dashboard's data queries. Dashboards set to use the browser's time zone will use the time zone on the Grafana server.
+
+If the time zone is set differently between your Grafana server and its remote image renderer, then the time ranges in the report might be different between the page header and the time axes in the panels. We advise always setting the time zone to UTC for dashboards when using a remote renderer to avoid this.
+
+### Choose template variables
+
+> **Note:** Available in Grafana Enterprise version 7.5+ (behind `reportVariables` feature flag) and Grafana Enterprise version 8+ without a feature flag.
+
+You can configure report-specific template variables for the dashboard on the report page. The variables that you select will override the variables from the dashboard, and they are used when rendering a PDF file of the report. For detailed information about using template variables, refer to the [Templates and variables]({{< relref "../variables/_index.md" >}}) section.
+
+Note that the query variables saved with a report might get out of date in case the results of that query change. If that happens, the selected variables will need to be manually updated in the report, unless `All` value is selected.
+
+### Render report with panels or rows set to repeat by a variable
+
+> **Note:** Available in Grafana Enterprise v8+.
+
+You can include dynamic dashboards with panels or rows, set to repeat by a variable, into reports. For detailed information about setting up repeating panels or rows in dashboards, refer to the [Repeat panels or rows]({{< relref "../panels/repeat-panels-or-rows.md" >}}) section.
+
+#### Caveats:
+
+- Rendering repeating panels for dynamic variable types (e.g. `query` variables) with selected `All` value is currently not supported. As a workaround, it is possible to individually select all the values instead.
+- If the number of selected variables is different in dashboard from the report, the dimensions of the panels from the dashboard are used.
+- Rendering of the repeating panels inside collapsed rows in reports is not supported.
+
 ## Pause report
 
 > **Note:** Available in Grafana Enterprise v8+.
@@ -157,38 +190,6 @@ font_bold = DejaVuSansCondensed-Bold.ttf
 # Name of the TrueType font file with italic style
 font_italic = DejaVuSansCondensed-Oblique.ttf
 ```
-
-## Report time range
-
-> Setting custom report time range is available in Grafana Enterprise v7.2+.
-
-By default, reports use the saved time range of the dashboard. Changing the time range of the report can be done by:
-- Saving a modified time range to the dashboard.
-- Setting a time range via **Time range** field in the report form. If specified, then this custom time range overrides the one from the report's dashboard.
-
-The page header of the report displays the time range for the dashboard's data queries. Dashboards set to use the browser's time zone will use the time zone on the Grafana server.
-
-If the time zone is set differently between your Grafana server and its remote image renderer, then the time ranges in the report might be different between the page header and the time axes in the panels. We advise always setting the time zone to UTC for dashboards when using a remote renderer to avoid this.
-
-## Choose template variables
-
-> **Note:** Available in Grafana Enterprise version 7.5+ (behind `reportVariables` feature flag) and Grafana Enterprise version 8+ without a feature flag.
-
-You can configure report-specific template variables for the dashboard on the report page. The variables that you select will override the variables from the dashboard, and they are used when rendering a PDF file of the report. For detailed information about using template variables, refer to the [Templates and variables]({{< relref "../variables/_index.md" >}}) section.
-
-Note that the query variables saved with a report might get out of date in case the results of that query change. If that happens, the selected variables will need to be manually updated in the report, unless `All` value is selected.  
-
-## Render report with panels or rows set to repeat by a variable 
-
-> **Note:** Available in Grafana Enterprise v8+.
-
-You can include dynamic dashboards with panels or rows, set to repeat by a variable, into reports. For detailed information about setting up repeating panels or rows in dashboards, refer to the [Repeat panels or rows]({{< relref "../panels/repeat-panels-or-rows.md" >}}) section.
-
-### Caveats:
-
-- Rendering repeating panels for dynamic variable types (e.g. `query` variables) with selected `All` value is currently not supported. As a workaround, it is possible to individually select all the values instead. 
-- If the number of selected variables is different in dashboard from the report, the dimensions of the panels from the dashboard are used.
-- Rendering of the repeating panels inside collapsed rows in reports is not supported.
 
 ## Reports settings
 
