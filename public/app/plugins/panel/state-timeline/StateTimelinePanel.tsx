@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { PanelProps } from '@grafana/data';
-import { useTheme2, ZoomPlugin } from '@grafana/ui';
+import { TooltipPlugin, useTheme2, ZoomPlugin } from '@grafana/ui';
 import { TimelineMode, TimelineOptions } from './types';
 import { TimelineChart } from './TimelineChart';
 import { prepareTimelineFields, prepareTimelineLegendItems } from './utils';
@@ -54,7 +54,14 @@ export const StateTimelinePanel: React.FC<TimelinePanelProps> = ({
       // hardcoded
       mode={TimelineMode.Changes}
     >
-      {(config) => <ZoomPlugin config={config} onZoom={onChangeTimeRange} />}
+      {(config, alignedFrame) => {
+        return (
+          <>
+            <ZoomPlugin config={config} onZoom={onChangeTimeRange} />
+            <TooltipPlugin data={alignedFrame} config={config} mode={options.tooltip.mode} timeZone={timeZone} />
+          </>
+        );
+      }}
     </TimelineChart>
   );
 };

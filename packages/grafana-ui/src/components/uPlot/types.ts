@@ -1,6 +1,6 @@
 import React from 'react';
 import uPlot, { Options, AlignedData } from 'uplot';
-import { TimeRange } from '@grafana/data';
+import { CartesianCoords2D, TimeRange } from '@grafana/data';
 import { UPlotConfigBuilder } from './config/UPlotConfigBuilder';
 
 export type PlotConfig = Pick<
@@ -28,7 +28,10 @@ export abstract class PlotConfigBuilder<P, T> {
   abstract getConfig(): T;
 }
 
-export type TooltipInterpolator = (
+/**
+ * @alpha
+ */
+export type PlotTooltipInterpolator = (
   updateActiveSeriesIdx: (sIdx: number | null) => void,
   updateActiveDatapointIdx: (dIdx: number | null) => void,
   updateTooltipPosition: (clear?: boolean) => void

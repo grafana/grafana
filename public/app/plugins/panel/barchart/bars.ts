@@ -1,11 +1,9 @@
 import uPlot, { Axis, Series } from 'uplot';
 import { pointWithin, Quadtree, Rect } from './quadtree';
 import { distribute, SPACE_BETWEEN } from './distribute';
-import { TooltipInterpolator } from '@grafana/ui/src/components/uPlot/types';
 import { BarValueVisibility, ScaleDirection, ScaleOrientation } from '@grafana/ui/src/components/uPlot/config';
 import { CartesianCoords2D, GrafanaTheme2 } from '@grafana/data';
-import { calculateFontSize, measureText } from '@grafana/ui';
-import { VizTextDisplayOptions } from '@grafana/ui/src/options/builder';
+import { calculateFontSize, measureText, PlotTooltipInterpolator, VizTextDisplayOptions } from '@grafana/ui';
 
 const groupDistr = SPACE_BETWEEN;
 const barDistr = SPACE_BETWEEN;
@@ -311,7 +309,7 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
   };
 
   // handle hover interaction with quadtree probing
-  const interpolateBarChartTooltip: TooltipInterpolator = (
+  const interpolateTooltip: PlotTooltipInterpolator = (
     updateActiveSeriesIdx,
     updateActiveDatapointIdx,
     updateTooltipPosition
@@ -368,7 +366,7 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
     // hooks
     init,
     drawClear,
-    interpolateBarChartTooltip,
+    interpolateTooltip,
   };
 }
 

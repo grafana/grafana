@@ -108,7 +108,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<TimelineOptions> = ({
 
   builder.addHook('init', coreConfig.init);
   builder.addHook('drawClear', coreConfig.drawClear);
-  builder.addHook('setCursor', coreConfig.setCursor);
+  builder.setTooltipInterpolator(coreConfig.interpolateTooltip);
 
   builder.setCursor(coreConfig.cursor);
 
