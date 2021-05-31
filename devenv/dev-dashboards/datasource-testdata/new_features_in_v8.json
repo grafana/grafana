@@ -354,7 +354,7 @@
         "id": 67,
         "links": [],
         "options": {
-          "content": "## Status grid\n\nA sister panel to the state timeline is the new Status grid panel. It can visualize periodic state in a \ngrid. Works with both numerical, string or boolean state.  ",
+          "content": "## Status history\n\nA sister panel to the state timeline is the new Status history panel. It can visualize periodic state in a \ngrid. Works with both numerical, string or boolean state.  ",
           "mode": "markdown"
         },
         "pluginVersion": "8.1.0-pre",
@@ -430,7 +430,7 @@
           }
         ],
         "title": "State timeline with time series + thresholds",
-        "type": "status-grid"
+        "type": "status-history"
       },
       {
         "datasource": "gdev-testdata",
@@ -518,8 +518,8 @@
             "stringInput": "true,true,true,false,true,true,false,true,false"
           }
         ],
-        "title": "Status grid - boolean values",
-        "type": "status-grid"
+        "title": "Status history - boolean values",
+        "type": "status-history"
       },
       {
         "cacheTimeout": null,
