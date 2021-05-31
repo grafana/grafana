@@ -39,8 +39,6 @@ Object {
       "calcs": Array [
         "mean",
         "lastNotNull",
-        "max",
-        "min",
         "sum",
       ],
       "displayMode": "table",
@@ -152,8 +150,6 @@ Object {
       "calcs": Array [
         "mean",
         "lastNotNull",
-        "max",
-        "min",
         "sum",
       ],
       "displayMode": "table",
@@ -209,8 +205,6 @@ Object {
       "calcs": Array [
         "mean",
         "lastNotNull",
-        "max",
-        "min",
         "sum",
       ],
       "displayMode": "table",
