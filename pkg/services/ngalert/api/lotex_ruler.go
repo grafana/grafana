@@ -34,7 +34,7 @@ func NewLotexRuler(proxy *AlertingProxy, log log.Logger) *LotexRuler {
 func (r *LotexRuler) RouteDeleteNamespaceRulesConfig(ctx *models.ReqContext) response.Response {
 	legacyRulerPrefix, err := r.getPrefix(ctx)
 	if err != nil {
-		return response.Error(500, err.Error(), nil)
+		return ErrResp(500, err, "")
 	}
 	return r.withReq(
 		ctx,
@@ -52,7 +52,7 @@ func (r *LotexRuler) RouteDeleteNamespaceRulesConfig(ctx *models.ReqContext) res
 func (r *LotexRuler) RouteDeleteRuleGroupConfig(ctx *models.ReqContext) response.Response {
 	legacyRulerPrefix, err := r.getPrefix(ctx)
 	if err != nil {
-		return response.Error(500, err.Error(), nil)
+		return ErrResp(500, err, "")
 	}
 	return r.withReq(
 		ctx,
@@ -75,7 +75,7 @@ func (r *LotexRuler) RouteDeleteRuleGroupConfig(ctx *models.ReqContext) response
 func (r *LotexRuler) RouteGetNamespaceRulesConfig(ctx *models.ReqContext) response.Response {
 	legacyRulerPrefix, err := r.getPrefix(ctx)
 	if err != nil {
-		return response.Error(500, err.Error(), nil)
+		return ErrResp(500, err, "")
 	}
 	return r.withReq(
 		ctx,
@@ -97,7 +97,7 @@ func (r *LotexRuler) RouteGetNamespaceRulesConfig(ctx *models.ReqContext) respon
 func (r *LotexRuler) RouteGetRulegGroupConfig(ctx *models.ReqContext) response.Response {
 	legacyRulerPrefix, err := r.getPrefix(ctx)
 	if err != nil {
-		return response.Error(500, err.Error(), nil)
+		return ErrResp(500, err, "")
 	}
 	return r.withReq(
 		ctx,
@@ -120,7 +120,7 @@ func (r *LotexRuler) RouteGetRulegGroupConfig(ctx *models.ReqContext) response.R
 func (r *LotexRuler) RouteGetRulesConfig(ctx *models.ReqContext) response.Response {
 	legacyRulerPrefix, err := r.getPrefix(ctx)
 	if err != nil {
-		return response.Error(500, err.Error(), nil)
+		return ErrResp(500, err, "")
 	}
 	return r.withReq(
 		ctx,
@@ -138,11 +138,11 @@ func (r *LotexRuler) RouteGetRulesConfig(ctx *models.ReqContext) response.Respon
 func (r *LotexRuler) RoutePostNameRulesConfig(ctx *models.ReqContext, conf apimodels.PostableRuleGroupConfig) response.Response {
 	legacyRulerPrefix, err := r.getPrefix(ctx)
 	if err != nil {
-		return response.Error(500, err.Error(), nil)
+		return ErrResp(500, err, "")
 	}
 	yml, err := yaml.Marshal(conf)
 	if err != nil {
-		return response.Error(500, "Failed marshal rule group", err)
+		return ErrResp(500, err, "Failed marshal rule group")
 	}
 	ns := ctx.Params("Namespace")
 	u := withPath(*ctx.Req.URL, fmt.Sprintf("%s/%s", legacyRulerPrefix, ns))
