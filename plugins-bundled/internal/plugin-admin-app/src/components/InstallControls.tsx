@@ -4,15 +4,15 @@ import { gt, satisfies } from 'semver';
 
 import { config } from '@grafana/runtime';
 import { Button, HorizontalGroup, Icon, LinkButton, useStyles2 } from '@grafana/ui';
-import { AppEvents, GrafanaTheme2, OrgRole } from '@grafana/data';
+import { AppEvents, GrafanaTheme2 } from '@grafana/data';
 
 import { Metadata, Plugin } from '../types';
-import { hasRole } from '../helpers';
 import { api } from '../api';
 
 // This isn't exported in the sdk yet
 // @ts-ignore
 import appEvents from 'grafana/app/core/app_events';
+import { isGrafanaAdmin } from '../helpers';
 
 interface Props {
   localPlugin?: Metadata;
@@ -76,7 +76,7 @@ export const InstallControls = ({ localPlugin, remotePlugin }: Props) => {
 
   const isDevelopmentBuild = Boolean(localPlugin?.dev);
   const isEnterprise = remotePlugin?.status === 'enterprise';
-  const hasPermission = hasRole(OrgRole.Admin);
+  const hasPermission = isGrafanaAdmin();
 
   if (isEnterprise) {
     return (
@@ -97,7 +97,7 @@ export const InstallControls = ({ localPlugin, remotePlugin }: Props) => {
       <HorizontalGroup height="auto">
         {shouldUpdate &&
           (isExternallyManaged ? (
-            <LinkButton disabled={!hasPermission} href={externalManageLink} target="_blank" rel="noopener noreferrer">
+            <LinkButton href={externalManageLink} target="_blank" rel="noopener noreferrer">
               {'Update via grafana.com'}
             </LinkButton>
           ) : (
@@ -107,21 +107,17 @@ export const InstallControls = ({ localPlugin, remotePlugin }: Props) => {
           ))}
 
         {isExternallyManaged ? (
-          <LinkButton
-            variant="destructive"
-            disabled={!hasPermission}
-            href={externalManageLink}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
+          <LinkButton variant="destructive" href={externalManageLink} target="_blank" rel="noopener noreferrer">
             {'Uninstall via grafana.com'}
           </LinkButton>
         ) : (
-          <Button variant="destructive" disabled={loading || !hasPermission} onClick={onUninstall}>
-            {loading && !shouldUpdate ? 'Uninstalling' : 'Uninstall'}
-          </Button>
+          <>
+            <Button variant="destructive" disabled={loading || !hasPermission} onClick={onUninstall}>
+              {loading && !shouldUpdate ? 'Uninstalling' : 'Uninstall'}
+            </Button>
+            {!hasPermission && <div className={styles.message}>You need admin privileges to manage this plugin.</div>}
+          </>
         )}
-        {!hasPermission && <div className={styles.message}>You need admin privileges to manage this plugin.</div>}
       </HorizontalGroup>
     );
   }
@@ -138,15 +134,17 @@ export const InstallControls = ({ localPlugin, remotePlugin }: Props) => {
   return (
     <HorizontalGroup height="auto">
       {isExternallyManaged ? (
-        <LinkButton disabled={!hasPermission} href={externalManageLink} target="_blank" rel="noopener noreferrer">
+        <LinkButton href={externalManageLink} target="_blank" rel="noopener noreferrer">
           {'Install via grafana.com'}
         </LinkButton>
       ) : (
-        <Button disabled={loading || !hasPermission} onClick={onInstall}>
-          {loading ? 'Installing' : 'Install'}
-        </Button>
+        <>
+          <Button disabled={loading || !hasPermission} onClick={onInstall}>
+            {loading ? 'Installing' : 'Install'}
+          </Button>
+          {!hasPermission && <div className={styles.message}>You need admin privileges to install this plugin.</div>}
+        </>
       )}
-      {!hasPermission && <div className={styles.message}>You need admin privileges to install this plugin.</div>}
     </HorizontalGroup>
   );
 };
