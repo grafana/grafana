@@ -17,8 +17,9 @@ The number of maximum connections users can establish with Grafana is limited to
 
 ```
 [live]
-# max_connections to Grafana Live WebSocket endpoint per Grafana server instance. See Grafana Live docs if you are
-# going to make it higher than default 100 since this can require some OS and infrastructure tuning.
+# max_connections to Grafana Live WebSocket endpoint per Grafana server instance. See Grafana Live docs
+# if you are planning to make it higher than default 100 since this can require some OS and infrastructure
+# tuning. 0 disables Live, -1 means unlimited connections.
 max_connections = 100
 ```
 
