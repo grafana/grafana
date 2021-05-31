@@ -86,7 +86,6 @@ class AppRootPage extends Component<Props, State> {
   }
 
   onNavChanged = (nav: NavModel) => {
-    console.log('NAV CHANGED!!!', nav);
     this.setState({ nav });
   };
 
