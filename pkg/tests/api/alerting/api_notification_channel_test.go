@@ -1389,7 +1389,9 @@ var expNotifications = map[string][]string{
 			  "firing": "\nLabels:\n - alertname = PagerdutyAlert\nAnnotations:\nSilence: http://localhost:3000/alerting/silence/new?alertmanager=grafana&matchers=alertname%%3DPagerdutyAlert\n",
 			  "num_firing": "1",
 			  "num_resolved": "0",
-			  "resolved": ""
+			  "resolved": "",
+			  "alertname": "PagerdutyAlert",
+			  "state": "alerting"
 			}
 		  },
 		  "client": "Grafana",

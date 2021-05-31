@@ -65,6 +65,9 @@ func TestPagerdutyNotifier(t *testing.T) {
 						"num_firing":   "1",
 						"num_resolved": "0",
 						"resolved":     "",
+						"alertname":    "alert1",
+						"lbl1":         "val1",
+						"state":        "alerting",
 					},
 				},
 				Client:    "Grafana",
@@ -112,6 +115,66 @@ func TestPagerdutyNotifier(t *testing.T) {
 						"num_firing":   "2",
 						"num_resolved": "0",
 						"resolved":     "",
+						"alertname":    "alert1",
+						"state":        "alerting",
+					},
+				},
+				Client:    "Grafana",
+				ClientURL: "http://localhost",
+				Links:     []pagerDutyLink{{HRef: "http://localhost", Text: "External URL"}},
+			},
+			expInitError: nil,
+			expMsgError:  nil,
+		}, {
+			name: "Custom config with multiple alerts and overriding labels",
+			settings: `{
+				"integrationKey": "abcdefgh0123456789",
+				"severity": "warning",
+				"class": "{{ .Status }}",
+				"component": "My Grafana",
+				"group": "my_group"
+			}`,
+			alerts: []*types.Alert{
+				{
+					Alert: model.Alert{
+						Labels: model.LabelSet{
+							"alertname": "alert1", "lbl1": "val1",
+							"class": "newclass", "component": "newcomp", "group": "newgroup",
+						},
+						Annotations: model.LabelSet{"ann1": "annv1"},
+					},
+				}, {
+					Alert: model.Alert{
+						Labels: model.LabelSet{
+							"alertname": "alert1", "lbl1": "val2",
+							"class": "newclass", "component": "newcomp", "group": "newgroup",
+						},
+						Annotations: model.LabelSet{"ann1": "annv2"},
+					},
+				},
+			},
+			expMsg: &pagerDutyMessage{
+				RoutingKey:  "abcdefgh0123456789",
+				DedupKey:    "6e3538104c14b583da237e9693b76debbc17f0f8058ef20492e5853096cf8733",
+				Description: "[FIRING:2]  (newclass newcomp newgroup)",
+				EventAction: "trigger",
+				Payload: &pagerDutyPayload{
+					Summary:   "[FIRING:2]  (newclass newcomp newgroup)",
+					Source:    hostname,
+					Severity:  "warning",
+					Class:     "newclass",
+					Component: "newcomp",
+					Group:     "newgroup",
+					CustomDetails: map[string]string{
+						"firing":       "\nLabels:\n - alertname = alert1\n - class = newclass\n - component = newcomp\n - group = newgroup\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matchers=alertname%3Dalert1%2Cclass%3Dnewclass%2Ccomponent%3Dnewcomp%2Cgroup%3Dnewgroup%2Clbl1%3Dval1\n\nLabels:\n - alertname = alert1\n - class = newclass\n - component = newcomp\n - group = newgroup\n - lbl1 = val2\nAnnotations:\n - ann1 = annv2\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matchers=alertname%3Dalert1%2Cclass%3Dnewclass%2Ccomponent%3Dnewcomp%2Cgroup%3Dnewgroup%2Clbl1%3Dval2\n",
+						"num_firing":   "2",
+						"num_resolved": "0",
+						"resolved":     "",
+						"alertname":    "alert1",
+						"state":        "alerting",
+						"class":        "newclass",
+						"component":    "newcomp",
+						"group":        "newgroup",
 					},
 				},
 				Client:    "Grafana",

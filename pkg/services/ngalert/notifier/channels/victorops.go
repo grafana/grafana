@@ -75,9 +75,27 @@ func (vn *VictoropsNotifier) Notify(ctx context.Context, as ...*types.Alert) (bo
 	}
 
 	var tmplErr error
-	tmpl, _, err := TmplText(ctx, vn.tmpl, as, vn.log, &tmplErr)
+	tmpl, data, err := TmplText(ctx, vn.tmpl, as, vn.log, &tmplErr)
 	if err != nil {
 		return false, err
+	}
+
+	for k, v := range data.CommonLabels {
+		val := tmpl(v)
+		if strings.ToLower(k) == "severity" {
+			// Only set severity if it's one of the PD supported enum values
+			// Info, Warning, Error, or Critical (case insensitive)
+			switch sev := strings.ToUpper(val); sev {
+			case "INFO":
+				fallthrough
+			case "WARNING":
+				fallthrough
+			case "CRITICAL":
+				messageType = sev
+			default:
+				vn.log.Warn("Ignoring invalid severity tag", "severity", sev)
+			}
+		}
 	}
 
 	groupKey, err := notify.ExtractGroupKey(ctx)

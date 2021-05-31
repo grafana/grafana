@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/template"
@@ -138,6 +139,12 @@ func (pn *PagerdutyNotifier) buildPagerdutyMessage(ctx context.Context, alerts m
 		details[k] = detail
 	}
 
+	if alerts.Status() == model.AlertFiring {
+		details["state"] = string(models.AlertStateAlerting)
+	} else {
+		details["state"] = string(models.AlertStateOK)
+	}
+
 	msg := &pagerDutyMessage{
 		Client:      "Grafana",
 		ClientURL:   pn.tmpl.ExternalURL.String(),
@@ -157,6 +164,36 @@ func (pn *PagerdutyNotifier) buildPagerdutyMessage(ctx context.Context, alerts m
 			Class:         tmpl(pn.Class),
 			Group:         tmpl(pn.Group),
 		},
+	}
+
+	for k, v := range data.CommonLabels {
+		val := tmpl(v)
+
+		// Override tags appropriately if they are in the PagerDuty v2 API
+		switch strings.ToLower(k) {
+		case "group":
+			msg.Payload.Group = val
+		case "class":
+			msg.Payload.Class = val
+		case "component":
+			msg.Payload.Component = val
+		case "severity":
+			// Only set severity if it's one of the PD supported enum values
+			// Info, Warning, Error, or Critical (case insensitive)
+			switch sev := strings.ToLower(val); sev {
+			case "info":
+				fallthrough
+			case "warning":
+				fallthrough
+			case "error":
+				fallthrough
+			case "critical":
+				msg.Payload.Severity = val
+			default:
+				pn.log.Warn("Ignoring invalid severity tag", "severity", sev)
+			}
+		}
+		msg.Payload.CustomDetails[k] = val
 	}
 
 	if len(msg.Payload.Summary) > 1024 {
