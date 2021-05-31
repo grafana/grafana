@@ -150,24 +150,11 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
   async testDatasource(): Promise<DatasourceValidationResult> {
     const promises: Array<Promise<DatasourceValidationResult>> = [];
 
-    if (this.azureMonitorDatasource.isConfigured()) {
-      promises.push(this.azureMonitorDatasource.testDatasource());
-    }
+    promises.push(this.azureMonitorDatasource.testDatasource());
+    promises.push(this.azureLogAnalyticsDatasource.testDatasource());
 
     if (this.appInsightsDatasource.isConfigured()) {
       promises.push(this.appInsightsDatasource.testDatasource());
-    }
-
-    if (this.azureLogAnalyticsDatasource.isConfigured()) {
-      promises.push(this.azureLogAnalyticsDatasource.testDatasource());
-    }
-
-    if (promises.length === 0) {
-      return {
-        status: 'error',
-        message: `Nothing configured. At least one of the API's must be configured.`,
-        title: 'Error',
-      };
     }
 
     return await Promise.all(promises).then((results) => {

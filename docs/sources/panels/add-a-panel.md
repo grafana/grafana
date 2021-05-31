@@ -12,7 +12,7 @@ Panels allow you to show your data in visual form. This topic walks you through 
 1. Navigate to the dashboard you want to add a panel to.
 1. Click the **Add panel** icon.
 
-   ![](/img/docs/panels/add-panel-icon-7-0.png)
+   ![](/static/img/docs/panels/add-panel-icon-7-0.png)
 
 1. Click **Add an empty panel**.
 
@@ -29,7 +29,7 @@ Each panel needs at least one query to display a visualization. You write querie
 
 In the Visualization list, click a visualization type. Grafana displays a preview of your query results with that visualization applied.
 
-![](/img/docs/panel-editor/select-visualization-8-0.png)
+![](/static/img/docs/panel-editor/select-visualization-8-0.png)
 
 For more information about individual visualizations, refer to [Visualizations options]({{< relref "visualizations/_index.md" >}}).
 
@@ -43,7 +43,7 @@ While not required, most visualizations need some adjustment before they properl
 - [Thresholds]({{< relref "./thresholds.md" >}})
 - [Value mappings]({{< relref "./value-mappings.md" >}})
 - [Data links]({{< relref "../linking/data-links.md" >}})
-- [Override fields]({{< relref "field-options/configure-specific-fields.md" >}})
+- [Field overrides]({{< relref "./field-overrides.md" >}})
 
 ## 5. Apply changes and save
 

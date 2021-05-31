@@ -489,7 +489,7 @@ func verifyCorePluginCatalogue(t *testing.T, pm *PluginManager) {
 		"table-old",
 		"text",
 		"state-timeline",
-		"status-grid",
+		"status-history",
 		"timeseries",
 		"welcome",
 		"xychart",

@@ -52,7 +52,7 @@ Alert rule evaluation interval | Send reminders every | Reminder sent every (aft
 Name | Type | Supports images | Support alert rule tags
 -----|------|---------------- | -----------------------
 [DingDing](#dingdingdingtalk) | `dingding` | yes, external only | no
-Discord | `discord` | yes | no
+[Discord](#discord) | `discord` | yes | no
 [Email](#email) | `email` | yes | no
 [Google Hangouts Chat](#google-hangouts-chat) | `googlechat` | yes, external only | no
 Hipchat | `hipchat` | yes, external only | no
@@ -89,7 +89,7 @@ Addresses | Email addresses to recipients. You can enter multiple email addresse
 
 ### Slack
 
-{{< imgbox max-width="40%" img="/img/docs/v4/slack_notification.png" caption="Alerting Slack Notification" >}}
+{{< figure class="float-right"  max-width="40%" src="/static/img/docs/v4/slack_notification.png" caption="Alerting Slack Notification" >}}
 
 To set up Slack, you need to configure an incoming Slack webhook URL. You can follow
 [Sending messages using Incoming Webhooks](https://api.slack.com/incoming-webhooks) on how to do that. If you want to include screenshots of the
@@ -162,7 +162,7 @@ API Token | Application token
 User key(s) | A comma-separated list of user keys
 Device(s) | A comma-separated list of devices
 Priority | The priority alerting nottifications are sent
-OK priority | The priority OK notifications are sent; if not set, then OK notifications are sent with the priority set for alerting notifications 
+OK priority | The priority OK notifications are sent; if not set, then OK notifications are sent with the priority set for alerting notifications
 Retry | How often (in seconds) the Pushover servers send the same notification to the user. (minimum 30 seconds)
 Expire | How many seconds your notification will continue to be retried for (maximum 86400 seconds)
 Alerting sound | The sound for alerting notifications
@@ -219,6 +219,19 @@ In DingTalk PC Client:
 5. In "Add Robot" panel, input a nickname for the robot and select a "message group" which the robot will join in. click "next".
 
 6. There will be a Webhook URL in the panel, looks like this: https://oapi.dingtalk.com/robot/send?access_token=xxxxxxxxx. Copy this URL to the Grafana DingTalk setting page and then click "finish".
+
+### Discord
+
+To set up Discord, you must create a Discord channel webhook. For instructions on how to create the channel, refer to 
+[Intro to Webhooks](https://support.discord.com/hc/en-us/articles/228383668-Intro-to-Webhooks) f.
+
+Setting | Description
+---------- | -----------
+Webhook URL | Discord webhook URL.
+Message Content | Mention a group using @ or a user using <@ID> when notifying in a channel.
+Avatar URL | Optionally, provide a URL to an image to use as the avatar for the bot's message.
+
+Alternately, use the [Slack](#slack) notifier by appending `/slack` to a Discord webhook URL.
 
 ### Kafka
 

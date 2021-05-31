@@ -14,7 +14,7 @@ export interface MetricMetadata {
 export function useMetricsMetadata(
   datasource: Datasource,
   query: AzureMonitorQuery,
-  subscriptionId: string,
+  subscriptionId: string | undefined,
   onQueryChange: (newQuery: AzureMonitorQuery) => void
 ) {
   const [metricMetadata, setMetricMetadata] = useState<MetricMetadata>({
