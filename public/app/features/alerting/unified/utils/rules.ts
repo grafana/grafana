@@ -14,15 +14,18 @@ import {
   AlertingRule,
   CloudRuleIdentifier,
   GrafanaRuleIdentifier,
+  PromRuleWithLocation,
   RecordingRule,
   Rule,
   RuleIdentifier,
+  RuleNamespace,
   RuleWithLocation,
 } from 'app/types/unified-alerting';
 import { AsyncRequestState } from './redux';
 import { RULER_NOT_SUPPORTED_MSG } from './constants';
 import { hash } from './misc';
 import { capitalize } from 'lodash';
+import { State } from '../components/StateTag';
 
 export function isAlertingRule(rule: Rule): rule is AlertingRule {
   return rule.type === PromRuleType.Alerting;
@@ -141,4 +144,43 @@ export function alertStateToReadable(state: PromAlertingRuleState | GrafanaAlert
     return 'Normal';
   }
   return capitalize(state);
+}
+
+export const flattenRules = (rules: RuleNamespace[]) => {
+  return rules.reduce<PromRuleWithLocation[]>((acc, { dataSourceName, name: namespaceName, groups }) => {
+    groups.forEach(({ name: groupName, rules }) => {
+      rules.forEach((rule) => {
+        if (isAlertingRule(rule)) {
+          acc.push({ dataSourceName, namespaceName, groupName, rule });
+        }
+      });
+    });
+    return acc;
+  }, []);
+};
+
+export const alertStateToState: Record<PromAlertingRuleState | GrafanaAlertState, State> = {
+  [PromAlertingRuleState.Inactive]: 'good',
+  [PromAlertingRuleState.Firing]: 'bad',
+  [PromAlertingRuleState.Pending]: 'warning',
+  [GrafanaAlertState.Alerting]: 'bad',
+  [GrafanaAlertState.Error]: 'bad',
+  [GrafanaAlertState.NoData]: 'info',
+  [GrafanaAlertState.Normal]: 'good',
+  [GrafanaAlertState.Pending]: 'warning',
+};
+
+export function getFirstActiveAt(promRule: AlertingRule) {
+  if (!promRule.alerts) {
+    return null;
+  }
+  return promRule.alerts.reduce((prev, alert) => {
+    if (alert.activeAt && alert.state !== GrafanaAlertState.Normal) {
+      const activeAt = new Date(alert.activeAt);
+      if (prev === null || prev.getTime() > activeAt.getTime()) {
+        return activeAt;
+      }
+    }
+    return prev;
+  }, null as Date | null);
 }
