@@ -64,7 +64,7 @@ Grid | Landscape | v7.2+ | Generates an A4 page in landscape mode with panels ar
 
 ### Scheduling
 
-Scheduled reports can be sent on a weekly, daily, or hourly basis. You may also disable scheduling for when you either want to pause a report or send it via the API.
+Scheduled reports can be sent on a monthly, weekly, daily, or hourly basis. You may also disable scheduling for when you either want to send it via the API.
 
 All scheduling indicates when the reporting service will start rendering the dashboard. It can take a few minutes to render a dashboard with a lot of panels.
 
