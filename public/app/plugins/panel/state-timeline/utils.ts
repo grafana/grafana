@@ -178,11 +178,8 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<TimelineOptions> = ({
       theme,
       show: !customConfig.hideFrom?.viz,
       thresholds: config.thresholds,
-
       // The following properties are not used in the uPlot config, but are utilized as transport for legend config
       dataFrameFieldIndex: field.state?.origin,
-      fieldName: getFieldDisplayName(field, frame),
-      hideInLegend: customConfig.hideFrom?.legend,
     });
   }
 

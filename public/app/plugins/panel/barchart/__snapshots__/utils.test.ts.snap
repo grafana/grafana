@@ -65,6 +65,8 @@ Object {
       "stroke": [Function],
       "width": [Function],
     },
+    "x": false,
+    "y": false,
   },
   "hooks": Object {
     "draw": Array [
@@ -185,6 +187,8 @@ Object {
       "stroke": [Function],
       "width": [Function],
     },
+    "x": false,
+    "y": false,
   },
   "hooks": Object {
     "draw": Array [
@@ -305,6 +309,8 @@ Object {
       "stroke": [Function],
       "width": [Function],
     },
+    "x": false,
+    "y": false,
   },
   "hooks": Object {
     "draw": Array [
@@ -425,6 +431,8 @@ Object {
       "stroke": [Function],
       "width": [Function],
     },
+    "x": false,
+    "y": false,
   },
   "hooks": Object {
     "draw": Array [
@@ -545,6 +553,8 @@ Object {
       "stroke": [Function],
       "width": [Function],
     },
+    "x": false,
+    "y": false,
   },
   "hooks": Object {
     "draw": Array [
@@ -665,6 +675,8 @@ Object {
       "stroke": [Function],
       "width": [Function],
     },
+    "x": false,
+    "y": false,
   },
   "hooks": Object {
     "draw": Array [
@@ -785,6 +797,8 @@ Object {
       "stroke": [Function],
       "width": [Function],
     },
+    "x": false,
+    "y": false,
   },
   "hooks": Object {
     "draw": Array [
@@ -905,6 +919,8 @@ Object {
       "stroke": [Function],
       "width": [Function],
     },
+    "x": false,
+    "y": false,
   },
   "hooks": Object {
     "draw": Array [

@@ -3,7 +3,7 @@ import AzureMonitorDatasource from '../datasource';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { DataSourceInstanceSettings } from '@grafana/data';
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
-import { AzureDataSourceJsonData } from '../types';
+import { AzureDataSourceJsonData, DatasourceValidationResult } from '../types';
 
 const templateSrv = new TemplateSrv();
 
@@ -47,17 +47,14 @@ describe('AzureMonitorDatasource', () => {
       };
 
       beforeEach(() => {
-        ctx.instanceSettings.jsonData.tenantId = 'xxx';
-        ctx.instanceSettings.jsonData.clientId = 'xxx';
+        ctx.instanceSettings.jsonData.azureAuthType = 'msi';
         datasourceRequestMock.mockImplementation(() => Promise.reject(error));
       });
 
       it('should return error status and a detailed error message', () => {
-        return ctx.ds.testDatasource().then((results: any) => {
-          expect(results.status).toEqual('error');
-          expect(results.message).toEqual(
-            '1. Azure Monitor: Bad Request: InvalidApiVersionParameter. An error message. '
-          );
+        return ctx.ds.azureMonitorDatasource.testDatasource().then((result: DatasourceValidationResult) => {
+          expect(result.status).toEqual('error');
+          expect(result.message).toEqual('Azure Monitor: Bad Request: InvalidApiVersionParameter. An error message.');
         });
       });
     });
@@ -78,8 +75,8 @@ describe('AzureMonitorDatasource', () => {
       });
 
       it('should return success status', () => {
-        return ctx.ds.testDatasource().then((results: any) => {
-          expect(results.status).toEqual('success');
+        return ctx.ds.azureMonitorDatasource.testDatasource().then((result: DatasourceValidationResult) => {
+          expect(result.status).toEqual('success');
         });
       });
     });
@@ -99,6 +96,7 @@ describe('AzureMonitorDatasource', () => {
       };
 
       beforeEach(() => {
+        ctx.instanceSettings.jsonData.azureAuthType = 'msi';
         datasourceRequestMock.mockImplementation(() => Promise.resolve(response));
       });
 
@@ -515,10 +513,11 @@ describe('AzureMonitorDatasource', () => {
     };
 
     beforeEach(() => {
+      ctx.instanceSettings.jsonData.azureAuthType = 'msi';
       datasourceRequestMock.mockImplementation(() => Promise.resolve(response));
     });
 
-    it('should return list of Resource Groups', () => {
+    it('should return list of subscriptions', () => {
       return ctx.ds.getSubscriptions().then((results: Array<{ text: string; value: string }>) => {
         expect(results.length).toEqual(1);
         expect(results[0].text).toEqual('Primary Subscription');

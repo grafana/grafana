@@ -129,14 +129,10 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 		return nil, err
 	}
 
-	hasPluginManagerApp := false
 	pluginsToPreload := []string{}
 	for _, app := range enabledPlugins.Apps {
 		if app.Preload {
 			pluginsToPreload = append(pluginsToPreload, app.Module)
-		}
-		if app.Id == "grafana-plugin-admin-app" {
-			hasPluginManagerApp = true
 		}
 	}
 
@@ -207,6 +203,7 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 		"alertingErrorOrTimeout":     setting.AlertingErrorOrTimeout,
 		"alertingNoDataOrNullValues": setting.AlertingNoDataOrNullValues,
 		"alertingMinInterval":        setting.AlertingMinInterval,
+		"liveEnabled":                hs.Cfg.LiveMaxConnections != 0,
 		"autoAssignOrg":              setting.AutoAssignOrg,
 		"verifyEmailEnabled":         setting.VerifyEmailEnabled,
 		"sigV4AuthEnabled":           setting.SigV4AuthEnabled,
@@ -242,15 +239,16 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 			"licenseUrl":      hs.License.LicenseURL(c.SignedInUser),
 			"edition":         hs.License.Edition(),
 		},
-		"featureToggles":          hs.Cfg.FeatureToggles,
-		"rendererAvailable":       hs.RenderService.IsAvailable(),
-		"http2Enabled":            hs.Cfg.Protocol == setting.HTTP2Scheme,
-		"sentry":                  hs.Cfg.Sentry,
-		"pluginCatalogURL":        hs.Cfg.PluginCatalogURL,
-		"pluginAdminEnabled":      c.HasUserRole(models.ROLE_ADMIN) && hs.Cfg.PluginAdminEnabled && hasPluginManagerApp,
-		"expressionsEnabled":      hs.Cfg.ExpressionsEnabled,
-		"awsAllowedAuthProviders": hs.Cfg.AWSAllowedAuthProviders,
-		"awsAssumeRoleEnabled":    hs.Cfg.AWSAssumeRoleEnabled,
+		"featureToggles":                   hs.Cfg.FeatureToggles,
+		"rendererAvailable":                hs.RenderService.IsAvailable(),
+		"http2Enabled":                     hs.Cfg.Protocol == setting.HTTP2Scheme,
+		"sentry":                           hs.Cfg.Sentry,
+		"pluginCatalogURL":                 hs.Cfg.PluginCatalogURL,
+		"pluginAdminEnabled":               (c.IsGrafanaAdmin || hs.Cfg.PluginAdminExternalManageEnabled) && hs.Cfg.PluginAdminEnabled,
+		"pluginAdminExternalManageEnabled": hs.Cfg.PluginAdminEnabled && hs.Cfg.PluginAdminExternalManageEnabled,
+		"expressionsEnabled":               hs.Cfg.ExpressionsEnabled,
+		"awsAllowedAuthProviders":          hs.Cfg.AWSAllowedAuthProviders,
+		"awsAssumeRoleEnabled":             hs.Cfg.AWSAssumeRoleEnabled,
 		"azure": map[string]interface{}{
 			"cloud":                  hs.Cfg.Azure.Cloud,
 			"managedIdentityEnabled": hs.Cfg.Azure.ManagedIdentityEnabled,
@@ -286,7 +284,7 @@ func getPanelSort(id string) int {
 		sort = 9
 	case "heatmap":
 		sort = 10
-	case "status-grid":
+	case "status-history":
 		sort = 11
 	case "histogram":
 		sort = 12
