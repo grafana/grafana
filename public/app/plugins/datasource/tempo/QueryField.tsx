@@ -19,7 +19,7 @@ export class TempoQueryField extends React.PureComponent<Props, State> {
   linkedQuery: DataQuery;
   constructor(props: Props) {
     super(props);
-    this.linkedQuery = { refId: 'linked' };
+    this.linkedQuery = { refId: 'linked', ...props.query.linkedQuery };
   }
 
   async componentDidMount() {

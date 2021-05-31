@@ -12,12 +12,18 @@ export function createTableFrame(
       {
         name: 'Time',
         type: FieldType.time,
+        config: {
+          custom: {
+            width: 150,
+          },
+        },
       },
       {
         name: 'traceID',
         type: FieldType.string,
         config: {
           displayNameFromDS: 'Trace ID',
+          custom: { width: 300 },
           links: [
             {
               title: 'Click to open trace ${__value.raw}',
