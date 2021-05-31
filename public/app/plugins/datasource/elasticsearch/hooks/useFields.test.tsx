@@ -73,6 +73,6 @@ describe('useFields hook', () => {
     // top_metrics work on only on numeric data in 7.7
     rerender('top_metrics');
     result.current();
-    expect(getFields).toHaveBeenLastCalledWith(['number', 'date'], timeRange);
+    expect(getFields).toHaveBeenLastCalledWith(['number'], timeRange);
   });
 });

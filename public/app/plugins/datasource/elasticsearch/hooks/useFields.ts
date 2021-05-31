@@ -21,7 +21,7 @@ const getFilter = (type: AggregationType) => {
         // https://www.elastic.co/guide/en/elasticsearch/reference/7.7/search-aggregations-metrics-top-metrics.html#_metrics
         // TODO: starting from 7.11 it supports ips and keywords as well:
         // https://www.elastic.co/guide/en/elasticsearch/reference/7.11/search-aggregations-metrics-top-metrics.html#_metrics
-        return ['number', 'date'];
+        return ['number'];
       default:
         return ['number'];
     }

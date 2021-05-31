@@ -1,10 +1,10 @@
 import { AsyncMultiSelect, InlineField, SegmentAsync, Select } from '@grafana/ui';
 import React, { FunctionComponent } from 'react';
 import { useDispatch } from '../../../../hooks/useStatelessReducer';
+import { useFields } from '../../../../hooks/useFields';
 import { TopMetrics } from '../aggregations';
 import { changeMetricSetting } from '../state/actions';
 import { orderOptions } from '../../BucketAggregationsEditor/utils';
-import { useFields } from 'app/plugins/datasource/elasticsearch/hooks/useFields';
 import { css } from '@emotion/css';
 import { SelectableValue } from '@grafana/data';
 
