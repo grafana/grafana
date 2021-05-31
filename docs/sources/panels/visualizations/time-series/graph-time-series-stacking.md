@@ -14,11 +14,6 @@ _Stacking_ allows Grafana to display series on top of each other. Be cautious wh
 
 Use the following field settings to configure your series stacking.
 
-For more information about applying these options, refer to:
-
-- [Configure all fields]({{< relref "../../field-options/configure-all-fields.md" >}})
-- [Configure specific fields]({{< relref "../../field-options/configure-specific-fields.md" >}})
-
 Some field options will not affect the visualization until you click outside of the field option box you are editing or press Enter.
 
 ## Stack series
@@ -43,7 +38,7 @@ Enable stacking series on top of each other.
 
 The stacking group option is only available as an override.
 
-For more information about creating field overrides, refer to [Add a field override]({{< relref "../../field-options/configure-specific-fields.md#add-a-field-override" >}})
+For more information about creating field overrides, refer to [Field overrides]({{< relref "../../field-overrides.md" >}}).
 
 Stack series in the same group. In the Overrides section:
 

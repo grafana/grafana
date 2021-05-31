@@ -15,7 +15,7 @@ The pie chart displays reduced series, or values in a series, from one or more q
 Pie chart visualizations allow you to apply:
 
 - [Data transformations]({{< relref "../transformations/_index.md" >}})
-- [Field options and overrides]({{< relref "../field-options/_index.md" >}})
+- [Field overrides]({{< relref "../field-overrides.md" >}})
 - [Thresholds]({{< relref "../thresholds.md" >}})
 
 ## Display options
