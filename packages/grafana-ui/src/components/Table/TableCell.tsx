@@ -38,5 +38,5 @@ export const TableCell: FC<Props> = ({ cell, field, tableStyles, onCellFilterAdd
     onCellFilterAdded,
     cellProps,
     innerWidth,
-  });
+  }) as React.ReactElement;
 };
