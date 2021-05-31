@@ -207,7 +207,10 @@ func getPluginSignatureState(log log.Logger, plugin *plugins.PluginBase) (plugin
 		for _, f := range plugin.Files {
 			if _, exists := manifestFiles[f]; !exists {
 				fullPath, err := filepath.Abs(filepath.Join(plugin.PluginDir, f))
-				if err != nil || !filepath.IsAbs(fullPath) {
+				if err != nil {
+					return plugins.PluginSignatureState{}, err
+				}
+				if !filepath.IsAbs(fullPath) {
 					log.Error("Absolute file path is required to provide plugin symlink verification", "file", f)
 					return plugins.PluginSignatureState{}, err
 				}
