@@ -72,17 +72,18 @@ func (a *alertRule) makeVersion() *alertRuleVersion {
 	}
 }
 
-func addMigrationInfo(da *dashAlert) map[string]string {
-	annotations := da.ParsedSettings.AlertRuleTags
-	if annotations == nil {
-		annotations = make(map[string]string, 3)
+func addMigrationInfo(da *dashAlert) (map[string]string, map[string]string) {
+	lbls := da.ParsedSettings.AlertRuleTags
+	if lbls == nil {
+		lbls = make(map[string]string)
 	}
 
+	annotations := make(map[string]string, 3)
 	annotations["__dashboardUid__"] = da.DashboardUID
 	annotations["__panelId__"] = fmt.Sprintf("%v", da.PanelId)
 	annotations["__alertId__"] = fmt.Sprintf("%v", da.Id)
 
-	return annotations
+	return lbls, annotations
 }
 
 func getMigrationString(da dashAlert) string {
@@ -90,7 +91,9 @@ func getMigrationString(da dashAlert) string {
 }
 
 func (m *migration) makeAlertRule(cond condition, da dashAlert, folderUID string) (*alertRule, error) {
-	annotations := addMigrationInfo(&da)
+	lbls, annotations := addMigrationInfo(&da)
+	lbls["alertname"] = da.Name
+	annotations["message"] = da.Message
 
 	ar := &alertRule{
 		OrgId:           da.OrgId,
@@ -105,10 +108,7 @@ func (m *migration) makeAlertRule(cond condition, da dashAlert, folderUID string
 		For:             duration(da.For),
 		Updated:         time.Now().UTC(),
 		Annotations:     annotations,
-		Labels: map[string]string{
-			"alertname": da.Name,
-			"message":   da.Message,
-		},
+		Labels:          lbls,
 	}
 
 	var err error
