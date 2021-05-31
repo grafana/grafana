@@ -1,3 +1,5 @@
+load('scripts/vault.star', 'from_secret')
+
 def cronjobs(edition):
     if edition != 'oss':
         edition='grafana-enterprise'
@@ -15,6 +17,7 @@ def cronjobs(edition):
     steps=[ 
         scan_docker_image_unkown_low_medium_vulnerabilities_step(edition),
         scan_docker_image_high_critical_vulnerabilities_step(edition),
+        slack_job_failed_step('grafana-backend'),
     ]
     return [
         {
@@ -40,7 +43,7 @@ def scan_docker_image_unkown_low_medium_vulnerabilities_step(edition):
     }
 
 def scan_docker_image_high_critical_vulnerabilities_step(edition):
-    tags=['latest','main','latest-ubuntu','main-ubuntu']
+    tags=['latest', 'main', 'latest-ubuntu', 'main-ubuntu']
     commands=[]
     for t in tags:
         commands.append('trivy --exit-code 1 --severity HIGH,CRITICAL grafana/{}:{}'.format(edition,t))
@@ -49,4 +52,18 @@ def scan_docker_image_high_critical_vulnerabilities_step(edition):
         'name': 'scan-docker-images-high-critical-vulnerabilities',
         'image': 'aquasec/trivy:0.18.3',
         'commands': commands,
+    }
+
+def slack_job_failed_step(channel):
+    return {
+        'name': 'slack-notify-failure',
+        'image': 'plugins/slack',
+        'settings': {
+            'webhook': from_secret('slack_webhook'),
+            'channel': channel,
+            'template': 'Nightly docker image scan job for {{repo.name}} failed: {{build.link}}',
+        },
+        'when': {
+            'status': 'failure'
+        }
     }
