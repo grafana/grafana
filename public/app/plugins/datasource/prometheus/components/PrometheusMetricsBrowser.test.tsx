@@ -9,6 +9,7 @@ import {
   SelectableLabel,
   UnthemedPrometheusMetricsBrowser,
   BrowserProps,
+  calculateLayout,
 } from './PrometheusMetricsBrowser';
 import PromQlLanguageProvider from '../language_provider';
 
@@ -306,5 +307,76 @@ describe('PrometheusMetricsBrowser', () => {
     expect(screen.queryByRole('option', { name: 'value1-2', selected: true })).toBeInTheDocument();
     expect(screen.queryByLabelText('selector')).toHaveTextContent('{label1=~"value1-1|value1-2"}');
     expect(screen.queryAllByRole('option', { name: /label3/ })[0]).toHaveTextContent('label3 (2)');
+  });
+});
+
+describe('calculateLayout()', () => {
+  it('returns default layout on empty input', () => {
+    const { metricsHeight, valueListWidth } = calculateLayout({ valueListsWidth: 0, labelCount: 0, metricCount: 0 });
+    expect(metricsHeight).toBe(0);
+    expect(valueListWidth).toBe(200);
+  });
+  it('returns default layout on minimal input', () => {
+    const { metricsHeight, valueListWidth } = calculateLayout({ valueListsWidth: 1, labelCount: 1, metricCount: 1 });
+    expect(metricsHeight).toBe(25);
+    expect(valueListWidth).toBe(200);
+  });
+  it('returns default layout when value list is very small', () => {
+    const { metricsHeight, valueListWidth } = calculateLayout({ valueListsWidth: 100, labelCount: 1, metricCount: 0 });
+    expect(metricsHeight).toBe(0);
+    expect(valueListWidth).toBe(200);
+  });
+  it('limits metrics height if not many labels are selected', () => {
+    const { metricsHeight, valueListWidth } = calculateLayout({
+      valueListsWidth: 100,
+      labelCount: 1,
+      metricCount: 100,
+    });
+    // 300 + 250
+    expect(metricsHeight).toBe(550);
+    expect(valueListWidth).toBe(200);
+  });
+  it('adds new extra label row for each label', () => {
+    const { metricsHeight, valueListWidth } = calculateLayout({
+      valueListsWidth: 100,
+      labelCount: 2,
+      metricCount: 100,
+    });
+    // 300 + 250 + 250
+    expect(metricsHeight).toBe(800);
+    expect(valueListWidth).toBe(200);
+  });
+  it('puts label values on separate rows when between minimum and maximum space', () => {
+    const { metricsHeight, valueListWidth } = calculateLayout({
+      valueListsWidth: 350,
+      labelCount: 2,
+      metricCount: 100,
+    });
+    // 300 + 250 + 250
+    expect(metricsHeight).toBe(800);
+    // 350 - 24
+    expect(valueListWidth).toBe(326);
+  });
+  it('does not make list wider than maximum space', () => {
+    const { metricsHeight, valueListWidth } = calculateLayout({
+      valueListsWidth: 400,
+      labelCount: 2,
+      metricCount: 100,
+    });
+    // 300 + 250 + 250
+    expect(metricsHeight).toBe(800);
+    // 400 - 24
+    expect(valueListWidth).toBe(376);
+  });
+  it('wraps to next row', () => {
+    const { metricsHeight, valueListWidth } = calculateLayout({
+      valueListsWidth: 600,
+      labelCount: 5,
+      metricCount: 100,
+    });
+    // labels with 3 value rows: 300 + 250 + 250 + 250
+    expect(metricsHeight).toBe(1050);
+    // 2 lists per row minus 24 padding
+    expect(valueListWidth).toBe(276);
   });
 });
