@@ -36,6 +36,7 @@ interface BrowserState {
 interface FacettableValue {
   name: string;
   selected?: boolean;
+  details?: string;
 }
 
 export interface SelectableLabel {
@@ -385,7 +386,19 @@ export class UnthemedPrometheusMetricsBrowser extends React.Component<BrowserPro
         rawValues = rawValues.slice(0, MAX_VALUE_COUNT);
         this.setState({ error });
       }
-      const values: FacettableValue[] = rawValues.map((value) => ({ name: value }));
+      const values: FacettableValue[] = [];
+      const { metricsMetadata } = languageProvider;
+      for (const labelValue of rawValues) {
+        const value: FacettableValue = { name: labelValue };
+        // Adding type/help text to metrics
+        if (name === METRIC_LABEL && metricsMetadata) {
+          const meta = metricsMetadata[labelValue]?.[0];
+          if (meta) {
+            value.details = `(${meta.type}) ${meta.help}`;
+          }
+        }
+        values.push(value);
+      }
       this.updateLabelState(name, { values, loading: false });
     } catch (error) {
       console.error(error);
@@ -498,6 +511,7 @@ export class UnthemedPrometheusMetricsBrowser extends React.Component<BrowserPro
                         <PromLabel
                           name={metrics!.name}
                           value={value?.name}
+                          title={value.details}
                           active={value?.selected}
                           onClick={this.onClickMetric}
                           searchTerm={metricSearchTerm}

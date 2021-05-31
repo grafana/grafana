@@ -1,6 +1,7 @@
 package channels
 
 import (
+	"context"
 	"fmt"
 	"net/url"
 	"path"
@@ -8,8 +9,14 @@ import (
 	"strings"
 	"time"
 
+	gokit_log "github.com/go-kit/kit/log"
+	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/template"
+	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
+
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/ngalert/logging"
 )
 
 type ExtendedAlert struct {
@@ -120,14 +127,20 @@ func ExtendData(data *template.Data) (*ExtendedData, error) {
 	return extended, nil
 }
 
-func TmplText(tmpl *template.Template, data *ExtendedData, err *error) func(string) string {
+func TmplText(ctx context.Context, tmpl *template.Template, alerts []*types.Alert, l log.Logger, tmplErr *error) (func(string) string, *ExtendedData, error) {
+	promTmplData := notify.GetTemplateData(ctx, tmpl, alerts, gokit_log.NewLogfmtLogger(logging.NewWrapper(l)))
+	data, err := ExtendData(promTmplData)
+	if err != nil {
+		return nil, nil, err
+	}
+
 	return func(name string) (s string) {
-		if *err != nil {
+		if *tmplErr != nil {
 			return
 		}
-		s, *err = tmpl.ExecuteTextString(name, data)
+		s, *tmplErr = tmpl.ExecuteTextString(name, data)
 		return s
-	}
+	}, data, nil
 }
 
 // Firing returns the subset of alerts that are firing.

@@ -19,7 +19,7 @@ To access data source settings, hover your mouse over the **Configuration** (gea
 InfluxDB data source options differ depending on which [query language](#query-languages) you select: InfluxQL or Flux.
 
 > **Note:** Though not required, it's a good practice to append the language choice to the data source name. For example:
-> 
+>
  - InfluxDB-InfluxQL
  - InfluxDB-Flux
 
@@ -74,7 +74,7 @@ To help you choose the best language for your needs, here’s a comparison of [F
 
 Enter edit mode by clicking the panel title and clicking **Edit**. The editor allows you to select metrics and tags.
 
-![InfluxQL query editor](/img/docs/influxdb/influxql-query-editor-7-5.png)
+![InfluxQL query editor](/static/img/docs/influxdb/influxql-query-editor-7-5.png)
 
 ### Filter data (WHERE)
 
@@ -89,7 +89,7 @@ You can type in regex patterns for metric names or tag filter values. Be sure to
 In the `SELECT` row you can specify what fields and functions you want to use. If you have a
 group by time you need an aggregation function. Some functions like derivative require an aggregation function. The editor tries to simplify and unify this part of the query. For example:
 
-![](/img/docs/influxdb/select_editor.png)
+![](/static/img/docs/influxdb/select_editor.png)
 
 The above generates the following InfluxDB `SELECT` clause:
 

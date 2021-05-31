@@ -39,7 +39,6 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
   const [focusedSeriesIdx, setFocusedSeriesIdx] = useState<number | null>(null);
   const [focusedPointIdx, setFocusedPointIdx] = useState<number | null>(null);
   const [coords, setCoords] = useState<CartesianCoords2D | null>(null);
-
   const pluginId = `TooltipPlugin`;
 
   // Debug logs
@@ -53,12 +52,13 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
     };
 
     if (plotCtx && plotCtx.plot) {
-      plotCtx.plot.root.querySelector('.u-over')!.addEventListener('mouseleave', plotMouseLeave);
+      plotCtx.plot.over.addEventListener('mouseleave', plotMouseLeave);
     }
 
     return () => {
+      setCoords(null);
       if (plotCtx && plotCtx.plot) {
-        plotCtx.plot.root.querySelector('.u-over')!.removeEventListener('mouseleave', plotMouseLeave);
+        plotCtx.plot.over.removeEventListener('mouseleave', plotMouseLeave);
       }
     };
   }, [plotCtx.plot?.root, setCoords]);
@@ -88,20 +88,19 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
     } else {
       // default series/datapoint idx retireval
       config.addHook('setCursor', (u) => {
+        setFocusedPointIdx(u.cursor.idx === undefined ? u.posToIdx(u.cursor.left || 0) : u.cursor.idx);
+
         const bbox = plotCtx.getCanvasBoundingBox();
         if (!bbox) {
           return;
         }
 
         const { x, y } = positionTooltip(u, bbox);
-
         if (x !== undefined && y !== undefined) {
           setCoords({ x, y });
         } else {
           setCoords(null);
         }
-
-        setFocusedPointIdx(u.cursor.idx === undefined ? u.posToIdx(u.cursor.left || 0) : u.cursor.idx);
       });
 
       config.addHook('setSeries', (_, idx) => {

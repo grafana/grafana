@@ -18,13 +18,23 @@ This topic includes the release notes for Grafana v8.0. For all details, read th
 
 These features are included in the Grafana open source edition.
 
+### Grafana v8.0 alerts
+
+The new alerts in Grafana 8.0 are an opt-in feature that centralizes alerting information for Grafana managed alerts and alerts from Prometheus-compatible data sources in one UI and API. You can create and edit alerting rules for Grafana managed alerts, Cortex alerts, and Loki alerts as well as see alerting information from prometheus-compatible data sources in a single, searchable view. For more information, on how to create and edit alerts and notifications, refer to [Overview of Grafana 8.0 alerts]({{< relref "../alerting/unified-alerting/_index.md" >}}).
+
+As part of the new alert changes, we have introduced a new data source, Alertmanager, which includes built-in support for Prometheus Alertmanager. It is presently in alpha and it not accessible unless alpha plugins are enabled in Grafana settings. For more information, refer to [Alertmanager data source]({{< relref "../datasources/alertmanager.md" >}}).
+
+> **Note:** Out of the box, Grafana still supports old Grafana alerts. They are legacy alerts at this time, and will deprecated in a future release. 
+
+To learn more about the differences between new alerts and the legacy alerts, refer to [Differences between Grafana 8.0 alerts and legacy alerts]({{< relref "../alerting/difference-old-new.md" >}}).
+
 ### Library panels
 
 Library panels allow users to build panels that can be used in multiple dashboards. Any updates made to that shared panel will then automatically be applied to all the dashboards that have that panel.
 
 ### Real-time streaming
 
-Data sources can now send real-time updates to dashboards over a websocket connection.  This can be used with the [MQTT data source](https://github.com/grafana/mqtt-datasource).
+Data sources can now send real-time updates to dashboards over a websocket connection. This can be used with the [MQTT data source](https://github.com/grafana/mqtt-datasource).
 
 In addition to data source integration, events can be sent to dashboards by posting metrics to the new live endpoint: `/api/live/push endpoint`.
 
@@ -48,7 +58,7 @@ This release introduces a new histogram panel visualization.
 
 ### Time series visualization updates
 
-The Time series is out of beta!  We are removing the `Beta` tag and graduating the Time series visualization to a stable state.
+The Time series is out of beta! We are removing the `Beta` tag and graduating the Time series visualization to a stable state.
 
 - **Time series** is now the default visualization option, replacing the **Graph (old)**.
 - The Time series panel now supports stacking. For more information, refer to [Graph stacked time series]({{< relref "../panels/visualizations/time-series/graph-time-series-stacking.md" >}}).
@@ -60,7 +70,7 @@ The Time series is out of beta!  We are removing the `Beta` tag and graduating t
 
 ### Pie chart visualization updates
 
-The Pie chart is out of beta!  We are removing the `Beta` tag and graduating the Pie chart visualization to a stable state.
+The Pie chart is out of beta! We are removing the `Beta` tag and graduating the Pie chart visualization to a stable state.
 
 ### Panel editor updates
 
@@ -97,7 +107,7 @@ Log navigation in Explore has been significantly improved. We added pagination t
 
 [Logs in Explore]({{< relref "../explore/logs-integration.md" >}}) was updated as a result of these changes.
 
-![Navigate logs in Explore](/img/docs/explore/navigate-logs-8-0.png)
+![Navigate logs in Explore](/static/img/docs/explore/navigate-logs-8-0.png)
 
 ### Tracing improvements
 
@@ -115,7 +125,7 @@ Grafana 8.0 includes many performance enhancements.
 
 #### Initial startup and load performance
 
-We reduced the Grafana initial download size massively, approximately 40%. This means that on slower or mobile connections, the initial login page or home dashboard will load much faster. 
+We reduced the Grafana initial download size massively, approximately 40%. This means that on slower or mobile connections, the initial login page or home dashboard will load much faster.
 
 All panels that have migrated from Flot to uPlot will also render two to three times faster because the library is much more efficient. Right now, this includes the Time series, Stat, Timeline, Histogram, and Barchart panel visualizations.
 
@@ -142,7 +152,7 @@ We changed how the configured Elasticsearch version is handled. You can now spec
 
 You can now use a different interpolation method to use template variables in a more extensive way. You can now use template variables in every query editor field that allows free input.
 
-![Elasticsearch template variables](/img/docs/elasticsearch/input-templates-8-0.png)
+![Elasticsearch template variables](/static/img/docs/elasticsearch/input-templates-8-0.png)
 
 ##### Allow omitting field for metrics that support inline scripts
 
@@ -150,13 +160,13 @@ Metric aggregations can be specified without a field if a script is provided. Yo
 
 Previously this was only possible when adding a new metric without selecting a field, because once selected, the field could not have been removed.
 
-![Elasticsearch omit fields](/img/docs/elasticsearch/omit-fields-8-0.png)
+![Elasticsearch omit fields](/static/img/docs/elasticsearch/omit-fields-8-0.png)
 
 ##### Allow setting a custom limit for log queries
 
 You can now set a custom line limit for logs queries instead of accepting the previously hard-coded 500. We also simplified the query editor to only show relevant fields when issuing logs queries.
 
-![Elasticsearch custom log limit](/img/docs/elasticsearch/custom-log-limit-8-0.png)
+![Elasticsearch custom log limit](/static/img/docs/elasticsearch/custom-log-limit-8-0.png)
 
 ##### Guess field type from first non-empty value
 
@@ -206,9 +216,9 @@ You can now configure generic OAuth with empty scopes. This allows OAuth Identit
 
 ##### Added OAuth support for strict parsing of role_attribute_path
 
-You can now configure generic OAuth with strict parsing of the `role_attribute_path`. By default, if  th `role_attribute_path` property does not return a role, then the user is assigned the `Viewer` role. You can disable the role assignment by setting `role_attribute_strict = true`. It denies user access if no role or an invalid role is returned.
+You can now configure generic OAuth with strict parsing of the `role_attribute_path`. By default, if the `role_attribute_path` property does not return a role, then the user is assigned the `Viewer` role. You can disable the role assignment by setting `role_attribute_strict = true`. It denies user access if no role or an invalid role is returned.
 
-####  Singlestat panel deprecated
+#### Singlestat panel deprecated
 
 Support for Singlestat panel has been discontinued. When you upgrade to version 8.0, all existing Singlestat panels automatically becomes Stat panels.
 Stat panel is available as plugin.
@@ -243,3 +253,7 @@ Documentation was updated to reflect these changes.
 ### Elasticsearch: Use application/x-ndjson content type for multi-search requests
 
 For multi-search requests, we now use the correct application/x-ndjson content type instead of the incorrect application/json. Although this should be transparent to most of the users, if you are running Elasticsearch behind a proxy, then be sure that your proxy correctly handles requests with this content type.
+
+### Prometheus: Update default HTTP method to POST for existing data sources
+
+The default HTTP method for Prometheus data source is now POST, previously it was GET. The POST APIs are there since January 2018 (Prometheus 2.1.0) and they have fewer limitations than the GET APIs. Users with Prometheus instance with version < 2.1.0 that use the default HTTP method should update their HTTP method to GET.

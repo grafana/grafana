@@ -30,15 +30,14 @@ type Evaluation struct {
 	EvaluationString string
 }
 
-func resultNormal(alertState *State, result eval.Result) *State {
-	newState := alertState
-	if alertState.State != eval.Normal {
-		newState.EndsAt = result.EvaluatedAt
-		newState.StartsAt = result.EvaluatedAt
+func (a *State) resultNormal(result eval.Result) *State {
+	if a.State != eval.Normal {
+		a.EndsAt = result.EvaluatedAt
+		a.StartsAt = result.EvaluatedAt
 	}
-	newState.Error = result.Error // should be nil since state is not error
-	newState.State = eval.Normal
-	return newState
+	a.Error = result.Error // should be nil since state is not error
+	a.State = eval.Normal
+	return a
 }
 
 func (a *State) resultAlerting(alertRule *ngModels.AlertRule, result eval.Result) *State {

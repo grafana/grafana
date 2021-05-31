@@ -71,7 +71,11 @@ export const OptionsPaneCategory: FC<OptionsPaneCategoryProps> = React.memo(
     });
 
     return (
-      <div className={boxStyles} data-testid="options-category">
+      <div
+        className={boxStyles}
+        data-testid="options-category"
+        aria-label={selectors.components.OptionsGroup.group(id)}
+      >
         <div className={headerStyles} onClick={onToggle} aria-label={selectors.components.OptionsGroup.toggle(id)}>
           <div className={cx(styles.toggle, 'editor-options-group-toggle')}>
             <Icon name={isExpanded ? 'angle-down' : 'angle-right'} />

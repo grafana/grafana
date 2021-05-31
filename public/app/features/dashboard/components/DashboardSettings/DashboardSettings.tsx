@@ -185,7 +185,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => ({
     display: flex;
   `,
   settingsWrapper: css`
-    margin: ${theme.spacing(2)};
+    margin: ${theme.spacing(0, 2, 2)};
     display: flex;
     flex-grow: 1;
   `,

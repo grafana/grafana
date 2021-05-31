@@ -11,19 +11,18 @@ content-type: application/json
     "global": {
       "resolve_timeout": "4m",
       "http_config": {
-        "BasicAuth": null,
-        "Authorization": null,
-        "BearerToken": "",
-        "BearerTokenFile": "",
-        "ProxyURL": {},
-        "TLSConfig": {
-          "CAFile": "",
-          "CertFile": "",
-          "KeyFile": "",
-          "ServerName": "",
-          "InsecureSkipVerify": false
+        "basic_auth": null,
+        "authorization": null,
+        "bearer_token": "",
+        "bearer_token_file": "",
+        "tls_config": {
+          "ca_file": "",
+          "cert_file": "",
+          "key_file": "",
+          "server_name": "",
+          "insecure_skip_verify": false
         },
-        "FollowRedirects": true
+        "follow_redirects": true
       },
       "smtp_from": "youraddress@example.org",
       "smtp_hello": "localhost",
@@ -48,11 +47,11 @@ content-type: application/json
             "smarthost": "",
             "html": "{{ template \"email.default.html\" . }}",
             "tls_config": {
-              "CAFile": "",
-              "CertFile": "",
-              "KeyFile": "",
-              "ServerName": "",
-              "InsecureSkipVerify": false
+              "ca_file": "",
+              "cert_file": "",
+              "key_file": "",
+              "server_name": "",
+              "insecure_skip_verify": false
             }
           }
         ]

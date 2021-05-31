@@ -4,23 +4,10 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
-func AdminGetSettings(c *models.ReqContext) response.Response {
-	settings := make(map[string]interface{})
-
-	for _, section := range setting.Raw.Sections() {
-		jsonSec := make(map[string]interface{})
-		settings[section.Name()] = jsonSec
-
-		for _, key := range section.Keys() {
-			keyName := key.Name()
-			jsonSec[keyName] = setting.RedactedValue(keyName, key.Value())
-		}
-	}
-
-	return response.JSON(200, settings)
+func (hs *HTTPServer) AdminGetSettings(_ *models.ReqContext) response.Response {
+	return response.JSON(200, hs.SettingsProvider.Current())
 }
 
 func AdminGetStats(c *models.ReqContext) response.Response {
