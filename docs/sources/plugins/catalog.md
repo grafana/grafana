@@ -6,7 +6,7 @@ weight = 1
 
 # Plugin catalog
 
-The Plugin catalog allows users to browse and manage plugins from within Grafana. Only Organization Admins who are also Grafana Server Admins can access and use the catalog.
+The plugin catalog allows you to browse and manage plugins from within Grafana. Only a Grafana server administrator can access and use the catalog.
 
 <div class="medium-6 columns">
   <video width="700" height="600" controls>
