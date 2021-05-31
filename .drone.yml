@@ -3460,12 +3460,12 @@ steps:
 - name: slack
   image: plugins/slack
   settings:
-    channel: grafana-ci-notifications
-    template: "Nightly docker scan cronjob failed."
+    channel: grafana-backend
+    template: Build {{build.number}} failed for commit
     webhook:
       from_secret: slack_webhook
   when:
-    status: 
+    status:
     - failure
 
 trigger:
