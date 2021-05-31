@@ -9,7 +9,7 @@ export interface TimelineOptions extends OptionsWithLegend {
   showValue: BarValueVisibility;
   rowHeight: number;
 
-  // only used for "samples" mode (status-grid)
+  // only used for "samples" mode (status-history)
   colWidth?: number;
   // only used in "changes" mode (state-timeline)
   mergeValues?: boolean;
@@ -51,6 +51,6 @@ export const defaultTimelineFieldConfig: TimelineFieldConfig = {
 export enum TimelineMode {
   // state-timeline
   Changes = 'changes',
-  // status-grid
+  // status-history
   Samples = 'samples',
 }
