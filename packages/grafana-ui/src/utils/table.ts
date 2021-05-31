@@ -2,6 +2,10 @@ import { Field, LinkModel } from '@grafana/data';
 import { MouseEventHandler } from 'react';
 import { Row } from 'react-table';
 
+/**
+ * @internal
+ */
+
 export const getCellLinks = (field: Field, row: Row<any>) => {
   let link: LinkModel<any> | undefined;
   let onClick: MouseEventHandler<HTMLAnchorElement> | undefined;
