@@ -72,6 +72,9 @@ export class QueryEditor extends PureComponent<Props, State> {
     const { onChange, query, onRunQuery } = this.props;
     onChange({ ...query, queryType: sel.value! });
     onRunQuery();
+
+    // Reload the channel list
+    this.loadChannelInfo();
   };
 
   onChannelChange = (sel: SelectableValue<string>) => {

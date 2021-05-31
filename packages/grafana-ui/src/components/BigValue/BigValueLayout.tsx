@@ -3,7 +3,7 @@ import React, { CSSProperties } from 'react';
 import tinycolor from 'tinycolor2';
 
 // Utils
-import { formattedValueToString, DisplayValue, FieldConfig } from '@grafana/data';
+import { formattedValueToString, DisplayValue, FieldConfig, FieldType } from '@grafana/data';
 import { calculateFontSize } from '../../utils/measureText';
 
 // Types
@@ -151,7 +151,7 @@ export abstract class BigValueLayout {
   renderChart(): JSX.Element | null {
     const { sparkline, colorMode } = this.props;
 
-    if (!sparkline || !sparkline.y) {
+    if (!sparkline || sparkline.y?.type !== FieldType.number) {
       return null;
     }
 

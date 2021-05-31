@@ -1,6 +1,7 @@
 import { FetchResponse, getBackendSrv } from '@grafana/runtime';
 import { getLogAnalyticsResourcePickerApiRoute } from '../api/routes';
 import { ResourceRowType, ResourceRow, ResourceRowGroup } from '../components/ResourcePicker/types';
+import { parseResourceURI } from '../components/ResourcePicker/utils';
 import { getAzureCloud } from '../credentials';
 import {
   AzureDataSourceInstanceSettings,
@@ -73,21 +74,38 @@ export default class ResourcePickerData {
     return formatResourceGroupChildren(response.data);
   }
 
-  async getResource(resourceURI: string) {
+  async getResourceURIDisplayProperties(resourceURI: string): Promise<AzureResourceSummaryItem> {
+    const { subscriptionID, resourceGroup } = parseResourceURI(resourceURI) ?? {};
+
+    if (!subscriptionID) {
+      throw new Error('Invalid resource URI passed');
+    }
+
+    // resourceGroupURI and resourceURI could be invalid values, but that's okay because the join
+    // will just silently fail as expected
+    const subscriptionURI = `/subscriptions/${subscriptionID}`;
+    const resourceGroupURI = `${subscriptionURI}/resourceGroups/${resourceGroup}`;
+
     const query = `
-      resources
-        | join (
-            resourcecontainers
-              | where type == "microsoft.resources/subscriptions"
-              | project subscriptionName=name, subscriptionId
-          ) on subscriptionId
-        | join (
-            resourcecontainers
-              | where type == "microsoft.resources/subscriptions/resourcegroups"
-              | project resourceGroupName=name, resourceGroup
-          ) on resourceGroup
-        | where id == "${resourceURI}"
-        | project id, name, subscriptionName, resourceGroupName
+      resourcecontainers
+        | where type == "microsoft.resources/subscriptions"
+        | where id == "${subscriptionURI}"
+        | project subscriptionName=name, subscriptionId
+
+        | join kind=leftouter (
+          resourcecontainers
+            | where type == "microsoft.resources/subscriptions/resourcegroups"
+            | where id == "${resourceGroupURI}"
+            | project resourceGroupName=name, resourceGroup, subscriptionId
+        ) on subscriptionId
+
+        | join kind=leftouter (
+          resources
+            | where id == "${resourceURI}"
+            | project resourceName=name, subscriptionId
+        ) on subscriptionId
+
+        | project subscriptionName, resourceGroupName, resourceName
     `;
 
     const { ok, data: response } = await this.makeResourceGraphRequest<AzureResourceSummaryItem[]>(query);

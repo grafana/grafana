@@ -137,22 +137,23 @@ const Sel = ({ loadOptions, filterByLoadOptions, allowCustomValue, onChange, onC
 type InpProps = {
   initialValue: string;
   onChange: (newVal: string) => void;
+  onClose: () => void;
 };
 
-const Inp = ({ initialValue, onChange }: InpProps): JSX.Element => {
+const Inp = ({ initialValue, onChange, onClose }: InpProps): JSX.Element => {
   const [currentValue, setCurrentValue] = useShadowedState(initialValue);
-
-  const onBlur = () => {
-    // we send empty-string as undefined
-    onChange(currentValue);
-  };
 
   return (
     <Input
       autoFocus
       type="text"
       spellCheck={false}
-      onBlur={onBlur}
+      onBlur={onClose}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter') {
+          onChange(currentValue);
+        }
+      }}
       onChange={(e) => {
         setCurrentValue(e.currentTarget.value);
       }}
@@ -208,6 +209,9 @@ export const Seg = ({
       return (
         <Inp
           initialValue={value}
+          onClose={() => {
+            setOpen(false);
+          }}
           onChange={(v) => {
             setOpen(false);
             onChange({ value: v, label: v });

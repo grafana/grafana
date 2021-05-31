@@ -55,7 +55,7 @@ func (hs *HTTPServer) TrimDashboard(c *models.ReqContext, cmd models.TrimDashboa
 	if !hs.LoadSchemaService.IsDisabled() {
 		trimedResult, err = hs.LoadSchemaService.DashboardTrimDefaults(*dash)
 		if err != nil {
-			return response.Error(500, "Error while trim default value from dashboard json", err)
+			return response.Error(500, "Error while exporting with default values removed", err)
 		}
 	}
 
@@ -279,13 +279,6 @@ func (hs *HTTPServer) PostDashboard(c *models.ReqContext, cmd models.SaveDashboa
 	var err error
 	cmd.OrgId = c.OrgId
 	cmd.UserId = c.UserId
-	trimDefaults := c.QueryBoolWithDefault("trimdefaults", false)
-	if trimDefaults && !hs.LoadSchemaService.IsDisabled() {
-		cmd.Dashboard, err = hs.LoadSchemaService.DashboardApplyDefaults(cmd.Dashboard)
-		if err != nil {
-			return response.Error(500, "Error while applying default value to the dashboard json", err)
-		}
-	}
 	if cmd.FolderUid != "" {
 		folders := dashboards.NewFolderService(c.OrgId, c.SignedInUser, hs.SQLStore)
 		folder, err := folders.GetFolderByUID(cmd.FolderUid)
