@@ -34,19 +34,20 @@ Only organization admins can create reports by default. You can customize who ca
 
 1. Click on the reports icon in the side menu. The Reports tab allows you to view, create, and update your reports.
 1. Enter report information. All fields are required unless otherwise indicated.
-   - **Name -** Name of the report as you want it to appear in the Reports list.
-   - **Source dashboard -** Select the dashboard to generate the report from.
-   - **Recipients -** Enter the emails of the people or teams that you want to receive the report, separated by semicolons.
+   - **Report name -** Name of the report as you want it to appear in the Reports list. It's also used as the email subject.
+   - **Recipients -** Enter the emails of the people or teams that you want to receive the report, separated by commas or semicolons.
    - **Reply to -** (optional) The address that will appear in the **Reply to** field of the email.
    - **Message -** (optional) Message body in the email with the report.
-   - **Link back to the source dashboard -** Include a link to the dashboard from within the report email.
+   - **Include a dashboard link -** Include a link to the dashboard from within the report email.
+   - **Source dashboard -** Select the dashboard to generate the report from.
    - **Time range -** (optional) Use custom time range for the report. For more information check [Report time range]({{< relref "#report-time-range" >}}).
-1. **Preview PDF** to make sure the report appears as you expect. Update if necessary.
-1. Enter scheduling information. Options vary depending on the frequency you select.
 1. Select the orientation option for generated report: **Portrait** or **Landscape**.
 1. Select the layout option for generated report: **Simple** or **Grid**.
+1. You can include CSV files for every table panel your dashboard by clicking on **Add a CSV file of table panel data**.
+1. **Preview PDF** to make sure the report appears as you expect. Update if necessary.
+1. Enter scheduling information. Options vary depending on the frequency you select.
 1. **Save** the report.
-1. **Send test email** to verify that the whole configuration is working as expected.
+1. **Send test email** to verify that the whole configuration is working as expected. This will ask you to write an email to send the test email to or to use the emails from the report configuration.
 
 {{< figure src="/static/img/docs/enterprise/reports-create-new-8.0.png" max-width="500px" class="docs-image--no-shadow" >}}
 
