@@ -6,7 +6,7 @@ import (
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 )
 
-func (am *Alertmanager) GetStatus() apimodels.GettableStatus {
+func (am *Alertmanager) GetStatus() (*apimodels.GettableStatus, error) {
 	am.reloadConfigMtx.RLock()
 	defer am.reloadConfigMtx.RUnlock()
 
@@ -18,5 +18,5 @@ func (am *Alertmanager) GetStatus() apimodels.GettableStatus {
 			am.logger.Error("unable to marshal alertmanager configuration", "err", err)
 		}
 	}
-	return *apimodels.NewGettableStatus(&amConfig)
+	return apimodels.NewGettableStatus(&amConfig)
 }

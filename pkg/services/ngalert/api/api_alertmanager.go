@@ -22,7 +22,11 @@ type AlertmanagerSrv struct {
 }
 
 func (srv AlertmanagerSrv) RouteGetAMStatus(c *models.ReqContext) response.Response {
-	return response.JSON(http.StatusOK, srv.am.GetStatus())
+	st, err := srv.am.GetStatus()
+	if err != nil {
+		return ErrResp(http.StatusInternalServerError, err, "failed to get status")
+	}
+	return response.JSON(http.StatusOK, st)
 }
 
 func (srv AlertmanagerSrv) RouteCreateSilence(c *models.ReqContext, postableSilence apimodels.PostableSilence) response.Response {
