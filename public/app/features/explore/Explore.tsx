@@ -279,7 +279,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
       <NodeGraphContainer
         dataFrames={this.getNodeGraphDataFrames(queryResponse.series)}
         exploreId={exploreId}
-        short={showTrace}
+        withTraceView={showTrace}
       />
     );
   }

@@ -1,16 +1,23 @@
 import produce from 'immer';
 import { ResourceRow, ResourceRowGroup } from './types';
 
-const RESOURCE_URI_REGEX = /\/subscriptions\/(?<subscriptionID>.+)\/resourceGroups\/(?<resourceGroup>.+)\/providers.+\/(?<resource>[\w-_]+)/;
+// This regex matches URIs representing:
+//  - subscriptions: /subscriptions/44693801-6ee6-49de-9b2d-9106972f9572
+//  - resource groups: /subscriptions/44693801-6ee6-49de-9b2d-9106972f9572/resourceGroups/cloud-datasources
+//  - resources: /subscriptions/44693801-6ee6-49de-9b2d-9106972f9572/resourceGroups/cloud-datasources/providers/Microsoft.Compute/virtualMachines/GithubTestDataVM
+const RESOURCE_URI_REGEX = /\/subscriptions\/(?<subscriptionID>[^/]+)(?:\/resourceGroups\/(?<resourceGroup>[^/]+)(?:\/providers.+\/(?<resource>[^/]+))?)?/;
+
+type RegexGroups = Record<string, string | undefined>;
 
 export function parseResourceURI(resourceURI: string) {
   const matches = RESOURCE_URI_REGEX.exec(resourceURI);
+  const groups: RegexGroups = matches?.groups ?? {};
+  const { subscriptionID, resourceGroup, resource } = groups;
 
-  if (!matches?.groups?.subscriptionID || !matches?.groups?.resourceGroup) {
+  if (!subscriptionID) {
     return undefined;
   }
 
-  const { subscriptionID, resourceGroup, resource } = matches.groups;
   return { subscriptionID, resourceGroup, resource };
 }
 

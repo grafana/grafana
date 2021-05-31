@@ -7,8 +7,6 @@ import (
 	"path"
 	"strings"
 
-	gokit_log "github.com/go-kit/kit/log"
-	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
@@ -85,9 +83,11 @@ func NewThreemaNotifier(model *NotificationChannelConfig, t *template.Template) 
 func (tn *ThreemaNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
 	tn.log.Debug("Sending threema alert notification", "from", tn.GatewayID, "to", tn.RecipientID)
 
-	tmplData := notify.GetTemplateData(ctx, tn.tmpl, as, gokit_log.NewNopLogger())
 	var tmplErr error
-	tmpl := notify.TmplText(tn.tmpl, tmplData, &tmplErr)
+	tmpl, _, err := TmplText(ctx, tn.tmpl, as, tn.log, &tmplErr)
+	if err != nil {
+		return false, err
+	}
 
 	// Set up basic API request data
 	data := url.Values{}

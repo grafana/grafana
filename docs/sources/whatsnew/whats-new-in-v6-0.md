@@ -27,7 +27,7 @@ The main highlights are:
 
 ## Explore
 
-{{< docs-imagebox img="/img/docs/v60/explore_prometheus.png" max-width="800px" class="docs-image--right" caption="Screenshot of the new Explore option in the panel menu" >}}
+{{< figure src="/static/img/docs/v60/explore_prometheus.png" max-width="800px" class="docs-image--right" caption="Screenshot of the new Explore option in the panel menu" >}}
 
 Grafana's dashboard UI is all about building dashboards for visualization. **Explore** strips away all the dashboard and panel options so that you can focus on the query and metric exploration. Iterate until you have a working query and then think about building a dashboard. You can also jump from a dashboard panel into **Explore** and from there do some ad-hoc query exploration with the panel queries as a starting point.
 
@@ -48,7 +48,7 @@ enabled jumping between metrics query and logs query with preserved label filter
 
 Explore supports splitting the view so you can compare different queries, different data sources and metrics and logs side by side!
 
-{{< docs-imagebox img="/img/docs/v60/explore_split.png" max-width="800px" caption="Screenshot of the new Explore option in the panel menu" >}}
+{{< figure src="/static/img/docs/v60/explore_split.png" max-width="800px" caption="Screenshot of the new Explore option in the panel menu" >}}
 
 <br />
 
@@ -66,7 +66,7 @@ for other log sources to Explore and the next planned integration is Elasticsear
 
 <div class="medium-6 columns">
   <video width="800" height="500" controls>
-    <source src="/assets/videos/explore_loki.mp4" type="video/mp4">
+    <source src="/static/assets/videos/explore_loki.mp4" type="video/mp4">
     Your browser does not support the video tag.
   </video>
 </div>
@@ -82,7 +82,7 @@ video below to see the new Panel Editor in action.
 
 <div class="medium-6 columns">
   <video width="800" height="500" controls>
-    <source src="/assets/videos/panel_change_viz.mp4" type="video/mp4">
+    <source src="/static/assets/videos/panel_change_viz.mp4" type="video/mp4">
     Your browser does not support the video tag.
   </video>
 </div>
@@ -96,7 +96,7 @@ was not ideal. When it supports 100% of the Singlestat Gauge features, we plan t
 singlestats that use it become Gauge panels instead. This new panel contains a new **Threshold** editor that we will
 continue to refine and start using in other panels.
 
-{{< docs-imagebox img="/img/docs/v60/gauge_panel.png" max-width="600px" caption="Gauge Panel" >}}
+{{< figure src="/static/img/docs/v60/gauge_panel.png" max-width="600px" caption="Gauge Panel" >}}
 
 <br>
 
@@ -107,7 +107,7 @@ is part of the future-proofing of Grafana's code base and ecosystem. Starting in
 source** plugins can be written in React using our published `@grafana/ui` sdk library. More information on this
 will be shared soon.
 
-{{< docs-imagebox img="/img/docs/v60/react_panels.png" max-width="600px" caption="React Panel" >}}
+{{< figure src="/static/img/docs/v60/react_panels.png" max-width="600px" caption="React Panel" >}}
 <br />
 
 ## Google Stackdriver data source
@@ -149,7 +149,7 @@ but our goal is to remove this requirement in the near future.
 
 ## Named Colors
 
-{{< docs-imagebox img="/img/docs/v60/named_colors.png" max-width="400px" class="docs-image--right" caption="Named Colors" >}}
+{{< figure src="/static/img/docs/v60/named_colors.png" max-width="400px" class="docs-image--right" caption="Named Colors" >}}
 
 We have updated the color picker to show named colors and primary colors. We hope this will improve accessibility and
 helps making colors more consistent across dashboards. We hope to do more in this color picker in the future, like showing

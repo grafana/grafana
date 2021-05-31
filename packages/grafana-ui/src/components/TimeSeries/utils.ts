@@ -187,11 +187,8 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
       show: !customConfig.hideFrom?.viz,
       gradientMode: customConfig.gradientMode,
       thresholds: config.thresholds,
-
       // The following properties are not used in the uPlot config, but are utilized as transport for legend config
       dataFrameFieldIndex: field.state?.origin,
-      fieldName: getFieldDisplayName(field, frame),
-      hideInLegend: customConfig.hideFrom?.legend,
     });
 
     // Render thresholds in graph
@@ -231,6 +228,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
       data: frame,
     };
     const hoverEvent = new DataHoverEvent(payload);
+    builder.setSync();
     builder.setCursor({
       sync: {
         key: '__global_',

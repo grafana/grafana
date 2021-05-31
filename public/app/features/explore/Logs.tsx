@@ -272,6 +272,9 @@ export class UnthemedLogs extends PureComponent<Props, State> {
 
     return (
       <>
+        <div className={styles.infoText}>
+          This datasource does not support full-range histograms. The graph is based on the logs seen in the response.
+        </div>
         {logsSeries && logsSeries.length ? (
           <ExploreGraphNGPanel
             data={logsSeries}
@@ -421,6 +424,10 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
     logRows: css`
       overflow-x: scroll;
+    `,
+    infoText: css`
+      font-size: ${theme.typography.size.sm};
+      color: ${theme.colors.textWeak};
     `,
   };
 });

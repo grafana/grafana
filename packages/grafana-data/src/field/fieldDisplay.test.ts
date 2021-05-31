@@ -285,6 +285,83 @@ describe('FieldDisplay', () => {
       expect(result[3].display.title).toEqual('B SensorB');
     });
 
+    it('When showing all values set seriesIndex in a way so that values get unique color', () => {
+      const options = createDisplayOptions({
+        reduceOptions: {
+          values: true,
+          calcs: [],
+        },
+        data: [
+          toDataFrame({
+            fields: [
+              {
+                name: 'Name',
+                values: ['A', 'B'],
+              },
+              {
+                name: 'SensorA',
+                values: [10, 20],
+                config: {
+                  color: { mode: 'palette-classic' },
+                },
+              },
+            ],
+          }),
+        ],
+      });
+
+      const result = getFieldDisplayValues(options);
+      expect(result[0].display.color).toEqual('#73BF69');
+      expect(result[1].display.color).toEqual('#F2CC0C');
+    });
+
+    it('When showing all values lookup color via an override', () => {
+      const options = createDisplayOptions({
+        reduceOptions: {
+          values: true,
+          calcs: [],
+        },
+        fieldConfig: {
+          overrides: [
+            {
+              matcher: { id: 'byName', options: 'A' },
+              properties: [
+                {
+                  id: 'color',
+                  value: {
+                    mode: 'fixed',
+                    fixedColor: '#AAA',
+                  },
+                },
+              ],
+            },
+          ],
+          defaults: {},
+        },
+        data: [
+          toDataFrame({
+            fields: [
+              {
+                name: 'Name',
+                values: ['A', 'B'],
+              },
+              {
+                name: 'SensorA',
+                values: [10, 20],
+                config: {
+                  color: { mode: 'palette-classic' },
+                },
+              },
+            ],
+          }),
+        ],
+      });
+
+      const result = getFieldDisplayValues(options);
+      expect(result[0].display.color).toEqual('#AAA');
+      expect(result[1].display.color).toEqual('#F2CC0C');
+    });
+
     it('Multiple other string fields', () => {
       const options = createDisplayOptions({
         reduceOptions: {
