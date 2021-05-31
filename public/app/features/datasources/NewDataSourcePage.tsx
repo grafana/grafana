@@ -100,17 +100,7 @@ class NewDataSourcePage extends PureComponent<Props> {
               Cancel
             </LinkButton>
           </div>
-          {!searchQuery && (
-            <PluginsErrorsInfo>
-              <>
-                <br />
-                <p>
-                  Note that unsigned front-end data source plugins are still usable, but this is subject to change in
-                  the upcoming releases of Grafana.
-                </p>
-              </>
-            </PluginsErrorsInfo>
-          )}
+          {!searchQuery && <PluginsErrorsInfo />}
           <div>
             {searchQuery && this.renderPlugins(plugins)}
             {!searchQuery && this.renderCategories()}
