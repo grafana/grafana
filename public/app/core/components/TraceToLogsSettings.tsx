@@ -6,12 +6,14 @@ import {
   updateDatasourcePluginJsonDataOption,
 } from '@grafana/data';
 import { DataSourcePicker } from '@grafana/runtime';
-import { InlineField, InlineFieldRow, TagsInput, useStyles } from '@grafana/ui';
+import { InlineField, InlineFieldRow, Input, TagsInput, useStyles } from '@grafana/ui';
 import React from 'react';
 
 export interface TraceToLogsOptions {
   datasourceUid?: string;
   tags?: string[];
+  spanStartTimeShift?: number;
+  spanEndTimeShift?: number;
 }
 
 export interface TraceToLogsData extends DataSourceJsonData {
@@ -61,6 +63,48 @@ export function TraceToLogsSettings({ options, onOptionsChange }: Props) {
               updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'tracesToLogs', {
                 datasourceUid: options.jsonData.tracesToLogs?.datasourceUid,
                 tags: tags,
+              })
+            }
+          />
+        </InlineField>
+      </InlineFieldRow>
+
+      <InlineFieldRow>
+        <InlineField
+          label="Span start time shift"
+          labelWidth={26}
+          grow
+          tooltip="Shifts the start time of the span. Default -3600000 ms(60min)"
+        >
+          <Input
+            value={options.jsonData.tracesToLogs?.spanStartTimeShift || ''}
+            type="number"
+            width={40}
+            onChange={(v) =>
+              updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'tracesToLogs', {
+                ...options.jsonData.tracesToLogs,
+                spanStartTimeShift: v.currentTarget.value ? parseInt(v.currentTarget.value, 10) : undefined,
+              })
+            }
+          />
+        </InlineField>
+      </InlineFieldRow>
+
+      <InlineFieldRow>
+        <InlineField
+          label="Span end time shift"
+          labelWidth={26}
+          grow
+          tooltip="Shifts the end time of the span. Default 5000 ms"
+        >
+          <Input
+            value={options.jsonData.tracesToLogs?.spanEndTimeShift || ''}
+            type="number"
+            width={40}
+            onChange={(v) =>
+              updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'tracesToLogs', {
+                ...options.jsonData.tracesToLogs,
+                spanEndTimeShift: v.currentTarget.value ? parseInt(v.currentTarget.value, 10) : undefined,
               })
             }
           />

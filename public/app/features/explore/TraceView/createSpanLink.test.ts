@@ -129,5 +129,42 @@ describe('createSpanLinkFactory', () => {
         `/explore?left={"range":{"from":"20201014T000000","to":"20201014T010006"},"datasource":"loki1","queries":[{"expr":"{ip=\\"192.168.0.1\\", host=\\"host\\"}","refId":""}]}`
       );
     });
+
+    it('with adjusted start and end time', () => {
+      const splitOpenFn = jest.fn();
+      const createLink = createSpanLinkFactory(splitOpenFn, {
+        datasourceUid: 'lokiUid',
+        spanStartTimeShift: -60000, // 1 minute earlier
+        spanEndTimeShift: 60000, // 1 minute after
+      });
+
+      expect(createLink).toBeDefined();
+      const linkDef = createLink!({
+        startTime: new Date('2020-10-14T01:00:00Z').valueOf() * 1000,
+        duration: 1000 * 1000,
+        tags: [
+          {
+            key: 'host',
+            value: 'host',
+          },
+        ],
+        process: {
+          tags: [
+            {
+              key: 'hostname',
+              value: 'hostname1',
+            },
+            {
+              key: 'ip',
+              value: '192.168.0.1',
+            },
+          ],
+        } as any,
+      } as any);
+
+      expect(linkDef.href).toBe(
+        `/explore?left={"range":{"from":"20201014T005900","to":"20201014T010101"},"datasource":"loki1","queries":[{"expr":"{hostname=\\"hostname1\\"}","refId":""}]}`
+      );
+    });
   });
 });

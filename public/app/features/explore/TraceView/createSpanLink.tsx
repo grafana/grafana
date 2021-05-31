@@ -48,7 +48,7 @@ export function createSpanLinkFactory(splitOpenFn: SplitOpen, traceToLogsOptions
       link: dataLink,
       internalLink: dataLink.internal!,
       scopedVars: {},
-      range: getTimeRangeFromSpan(span),
+      range: getTimeRangeFromSpan(span, traceToLogsOptions),
       field: {} as Field,
       onClickFn: splitOpenFn,
       replaceVariables: getTemplateSrv().replace.bind(getTemplateSrv()),
@@ -85,10 +85,18 @@ function getLokiQueryFromSpan(span: TraceSpan, keys?: string[]): string {
  * with very short spans could mean microseconds and that could miss some logs relevant to that spans. In the future
  * something more intelligent should probably be implemented
  */
-function getTimeRangeFromSpan(span: TraceSpan): TimeRange {
-  const from = dateTime(span.startTime / 1000 - 1000 * 60 * 60);
+function getTimeRangeFromSpan(span: TraceSpan, traceToLogsOptions?: TraceToLogsOptions): TimeRange {
+  const adjustedStartTime =
+    traceToLogsOptions?.spanStartTimeShift !== undefined
+      ? span.startTime / 1000 + traceToLogsOptions.spanStartTimeShift
+      : span.startTime / 1000 - 1000 * 60 * 60;
+  const from = dateTime(adjustedStartTime);
   const spanEndMs = (span.startTime + span.duration) / 1000;
-  const to = dateTime(spanEndMs + 5 * 1000);
+  const adjustedEndTime =
+    traceToLogsOptions?.spanEndTimeShift !== undefined
+      ? spanEndMs + traceToLogsOptions.spanEndTimeShift
+      : spanEndMs + 5 * 1000;
+  const to = dateTime(adjustedEndTime);
 
   return {
     from,
