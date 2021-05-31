@@ -170,7 +170,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			queries, err := datasource.buildQueries(tt.queryModel)
+			queries, err := datasource.buildQueries(tt.queryModel, datasourceInfo{})
 			tt.Err(t, err)
 			if diff := cmp.Diff(tt.azureLogAnalyticsQueries[0], queries[0]); diff != "" {
 				t.Errorf("Result mismatch (-want +got):\n%s", diff)
@@ -218,6 +218,7 @@ func TestPluginRoutes(t *testing.T) {
 
 	tests := []struct {
 		name              string
+		dsInfo            datasourceInfo
 		datasource        *AzureLogAnalyticsDatasource
 		expectedProxypass string
 		expectedRouteURL  string
@@ -225,12 +226,14 @@ func TestPluginRoutes(t *testing.T) {
 	}{
 		{
 			name: "plugin proxy route for the Azure public cloud",
-			datasource: &AzureLogAnalyticsDatasource{
-				cfg: cfg,
-				dsInfo: datasourceInfo{
+			dsInfo: datasourceInfo{
+				Settings: azureMonitorSettings{
 					AzureAuthType: AzureAuthClientSecret,
 					CloudName:     "azuremonitor",
 				},
+			},
+			datasource: &AzureLogAnalyticsDatasource{
+				cfg: cfg,
 			},
 			expectedProxypass: "loganalyticsazure",
 			expectedRouteURL:  "https://api.loganalytics.io/",
@@ -238,12 +241,14 @@ func TestPluginRoutes(t *testing.T) {
 		},
 		{
 			name: "plugin proxy route for the Azure China cloud",
-			datasource: &AzureLogAnalyticsDatasource{
-				cfg: cfg,
-				dsInfo: datasourceInfo{
+			dsInfo: datasourceInfo{
+				Settings: azureMonitorSettings{
 					AzureAuthType: AzureAuthClientSecret,
 					CloudName:     "chinaazuremonitor",
 				},
+			},
+			datasource: &AzureLogAnalyticsDatasource{
+				cfg: cfg,
 			},
 			expectedProxypass: "chinaloganalyticsazure",
 			expectedRouteURL:  "https://api.loganalytics.azure.cn/",
@@ -251,12 +256,14 @@ func TestPluginRoutes(t *testing.T) {
 		},
 		{
 			name: "plugin proxy route for the Azure Gov cloud",
-			datasource: &AzureLogAnalyticsDatasource{
-				cfg: cfg,
-				dsInfo: datasourceInfo{
+			dsInfo: datasourceInfo{
+				Settings: azureMonitorSettings{
 					AzureAuthType: AzureAuthClientSecret,
 					CloudName:     "govazuremonitor",
 				},
+			},
+			datasource: &AzureLogAnalyticsDatasource{
+				cfg: cfg,
 			},
 			expectedProxypass: "govloganalyticsazure",
 			expectedRouteURL:  "https://api.loganalytics.us/",
@@ -266,7 +273,7 @@ func TestPluginRoutes(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			route, proxypass, err := tt.datasource.getPluginRoute(plugin)
+			route, proxypass, err := tt.datasource.getPluginRoute(plugin, tt.dsInfo)
 			tt.Err(t, err)
 
 			if diff := cmp.Diff(tt.expectedRouteURL, route.URL, cmpopts.EquateNaNs()); diff != "" {

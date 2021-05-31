@@ -25,7 +25,6 @@ import (
 )
 
 type InsightsAnalyticsDatasource struct {
-	dsInfo        datasourceInfo
 	pluginManager plugins.Manager
 	cfg           *setting.Cfg
 }
@@ -43,22 +42,22 @@ type InsightsAnalyticsQuery struct {
 }
 
 func (e *InsightsAnalyticsDatasource) executeTimeSeriesQuery(ctx context.Context,
-	originalQueries []backend.DataQuery) (*backend.QueryDataResponse, error) {
+	originalQueries []backend.DataQuery, dsInfo datasourceInfo) (*backend.QueryDataResponse, error) {
 	result := backend.NewQueryDataResponse()
 
-	queries, err := e.buildQueries(originalQueries)
+	queries, err := e.buildQueries(originalQueries, dsInfo)
 	if err != nil {
 		return nil, err
 	}
 
 	for _, query := range queries {
-		result.Responses[query.RefID] = e.executeQuery(ctx, query)
+		result.Responses[query.RefID] = e.executeQuery(ctx, query, dsInfo)
 	}
 
 	return result, nil
 }
 
-func (e *InsightsAnalyticsDatasource) buildQueries(queries []backend.DataQuery) ([]*InsightsAnalyticsQuery, error) {
+func (e *InsightsAnalyticsDatasource) buildQueries(queries []backend.DataQuery, dsInfo datasourceInfo) ([]*InsightsAnalyticsQuery, error) {
 	iaQueries := []*InsightsAnalyticsQuery{}
 
 	for _, query := range queries {
@@ -77,7 +76,7 @@ func (e *InsightsAnalyticsDatasource) buildQueries(queries []backend.DataQuery) 
 			return nil, fmt.Errorf("query is missing query string property")
 		}
 
-		qm.InterpolatedQuery, err = KqlInterpolate(query, e.dsInfo, qm.RawQuery)
+		qm.InterpolatedQuery, err = KqlInterpolate(query, dsInfo, qm.RawQuery)
 		if err != nil {
 			return nil, err
 		}
@@ -91,24 +90,24 @@ func (e *InsightsAnalyticsDatasource) buildQueries(queries []backend.DataQuery) 
 	return iaQueries, nil
 }
 
-func (e *InsightsAnalyticsDatasource) executeQuery(ctx context.Context, query *InsightsAnalyticsQuery) backend.DataResponse {
-	queryResult := backend.DataResponse{}
+func (e *InsightsAnalyticsDatasource) executeQuery(ctx context.Context, query *InsightsAnalyticsQuery, dsInfo datasourceInfo) backend.DataResponse {
+	dataResponse := backend.DataResponse{}
 
-	queryResultError := func(err error) backend.DataResponse {
-		queryResult.Error = err
-		return queryResult
+	dataResponseError := func(err error) backend.DataResponse {
+		dataResponse.Error = err
+		return dataResponse
 	}
 
-	req, err := e.createRequest(ctx, e.dsInfo)
+	req, err := e.createRequest(ctx, dsInfo)
 	if err != nil {
-		return queryResultError(err)
+		return dataResponseError(err)
 	}
 	req.URL.Path = path.Join(req.URL.Path, "query")
 	req.URL.RawQuery = query.Params.Encode()
 
 	span, ctx := opentracing.StartSpanFromContext(ctx, "application insights analytics query")
 	span.SetTag("target", query.Target)
-	span.SetTag("datasource_id", e.dsInfo.DatasourceID)
+	span.SetTag("datasource_id", dsInfo.DatasourceID)
 
 	defer span.Finish()
 
@@ -122,14 +121,14 @@ func (e *InsightsAnalyticsDatasource) executeQuery(ctx context.Context, query *I
 	}
 
 	azlog.Debug("ApplicationInsights", "Request URL", req.URL.String())
-	res, err := ctxhttp.Do(ctx, e.dsInfo.HTTPClient, req)
+	res, err := ctxhttp.Do(ctx, dsInfo.HTTPClient, req)
 	if err != nil {
-		return queryResultError(err)
+		return dataResponseError(err)
 	}
 
 	body, err := ioutil.ReadAll(res.Body)
 	if err != nil {
-		return queryResultError(err)
+		return dataResponseError(err)
 	}
 	defer func() {
 		if err := res.Body.Close(); err != nil {
@@ -139,24 +138,24 @@ func (e *InsightsAnalyticsDatasource) executeQuery(ctx context.Context, query *I
 
 	if res.StatusCode/100 != 2 {
 		azlog.Debug("Request failed", "status", res.Status, "body", string(body))
-		return queryResultError(fmt.Errorf("request failed, status: %s, body: %s", res.Status, body))
+		return dataResponseError(fmt.Errorf("request failed, status: %s, body: %s", res.Status, body))
 	}
 	var logResponse AzureLogAnalyticsResponse
 	d := json.NewDecoder(bytes.NewReader(body))
 	d.UseNumber()
 	err = d.Decode(&logResponse)
 	if err != nil {
-		return queryResultError(err)
+		return dataResponseError(err)
 	}
 
 	t, err := logResponse.GetPrimaryResultTable()
 	if err != nil {
-		return queryResultError(err)
+		return dataResponseError(err)
 	}
 
 	frame, err := ResponseTableToFrame(t)
 	if err != nil {
-		return queryResultError(err)
+		return dataResponseError(err)
 	}
 
 	if query.ResultFormat == timeSeries {
@@ -173,9 +172,9 @@ func (e *InsightsAnalyticsDatasource) executeQuery(ctx context.Context, query *I
 			}
 		}
 	}
-	queryResult.Frames = data.Frames{frame}
+	dataResponse.Frames = data.Frames{frame}
 
-	return queryResult
+	return dataResponse
 }
 
 func (e *InsightsAnalyticsDatasource) createRequest(ctx context.Context, dsInfo datasourceInfo) (*http.Request, error) {
@@ -185,12 +184,12 @@ func (e *InsightsAnalyticsDatasource) createRequest(ctx context.Context, dsInfo 
 		return nil, errors.New("unable to find datasource plugin Azure Application Insights")
 	}
 
-	appInsightsRoute, routeName, err := e.getPluginRoute(plugin)
+	appInsightsRoute, routeName, err := e.getPluginRoute(plugin, dsInfo)
 	if err != nil {
 		return nil, err
 	}
 
-	appInsightsAppID := dsInfo.AppInsightsAppId
+	appInsightsAppID := dsInfo.Settings.AppInsightsAppId
 
 	u, err := url.Parse(dsInfo.URL)
 	if err != nil {
@@ -214,8 +213,8 @@ func (e *InsightsAnalyticsDatasource) createRequest(ctx context.Context, dsInfo 
 	return req, nil
 }
 
-func (e *InsightsAnalyticsDatasource) getPluginRoute(plugin *plugins.DataSourcePlugin) (*plugins.AppPluginRoute, string, error) {
-	cloud, err := getAzureCloud(e.cfg, e.dsInfo)
+func (e *InsightsAnalyticsDatasource) getPluginRoute(plugin *plugins.DataSourcePlugin, dsInfo datasourceInfo) (*plugins.AppPluginRoute, string, error) {
+	cloud, err := getAzureCloud(e.cfg, dsInfo)
 	if err != nil {
 		return nil, "", err
 	}

@@ -19,11 +19,13 @@ import (
 )
 
 func TestAzureMonitorBuildQueries(t *testing.T) {
-	datasource := &AzureMonitorDatasource{
-		dsInfo: datasourceInfo{
+	datasource := &AzureMonitorDatasource{}
+	dsInfo := datasourceInfo{
+		Settings: azureMonitorSettings{
 			SubscriptionId: "default-subscription",
 		},
 	}
+
 	fromStart := time.Date(2018, 3, 15, 13, 0, 0, 0, time.UTC).In(time.Local)
 	duration, _ := time.ParseDuration("400s")
 
@@ -162,7 +164,7 @@ func TestAzureMonitorBuildQueries(t *testing.T) {
 				},
 			}
 
-			queries, err := datasource.buildQueries(tsdbQuery)
+			queries, err := datasource.buildQueries(tsdbQuery, dsInfo)
 			require.NoError(t, err)
 			if diff := cmp.Diff(azureMonitorQuery, queries[0], cmpopts.IgnoreUnexported(simplejson.Json{}), cmpopts.IgnoreFields(AzureMonitorQuery{}, "Params")); diff != "" {
 				t.Errorf("Result mismatch (-want +got):\n%s", diff)

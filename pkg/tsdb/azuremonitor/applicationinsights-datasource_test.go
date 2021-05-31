@@ -67,7 +67,9 @@ func TestApplicationInsightsDatasource(t *testing.T) {
 						"queryType":   "Application Insights"
 					}
 				}`)
-				tsdbQuery[0].Interval, _ = time.ParseDuration("400s")
+				var err error
+				tsdbQuery[0].Interval, err = time.ParseDuration("400s")
+				require.NoError(t, err)
 
 				queries, err := datasource.buildQueries(tsdbQuery)
 				So(err, ShouldBeNil)
@@ -191,18 +193,21 @@ func TestAppInsightsPluginRoutes(t *testing.T) {
 	tests := []struct {
 		name              string
 		datasource        *ApplicationInsightsDatasource
+		dsInfo            datasourceInfo
 		expectedRouteName string
 		expectedRouteURL  string
 		Err               require.ErrorAssertionFunc
 	}{
 		{
 			name: "plugin proxy route for the Azure public cloud",
-			datasource: &ApplicationInsightsDatasource{
-				cfg: cfg,
-				dsInfo: datasourceInfo{
+			dsInfo: datasourceInfo{
+				Settings: azureMonitorSettings{
 					AzureAuthType: AzureAuthClientSecret,
 					CloudName:     "azuremonitor",
 				},
+			},
+			datasource: &ApplicationInsightsDatasource{
+				cfg: cfg,
 			},
 			expectedRouteName: "appinsights",
 			expectedRouteURL:  "https://api.applicationinsights.io",
@@ -210,12 +215,14 @@ func TestAppInsightsPluginRoutes(t *testing.T) {
 		},
 		{
 			name: "plugin proxy route for the Azure China cloud",
-			datasource: &ApplicationInsightsDatasource{
-				cfg: cfg,
-				dsInfo: datasourceInfo{
+			dsInfo: datasourceInfo{
+				Settings: azureMonitorSettings{
 					AzureAuthType: AzureAuthClientSecret,
 					CloudName:     "chinaazuremonitor",
 				},
+			},
+			datasource: &ApplicationInsightsDatasource{
+				cfg: cfg,
 			},
 			expectedRouteName: "chinaappinsights",
 			expectedRouteURL:  "https://api.applicationinsights.azure.cn",
@@ -225,7 +232,7 @@ func TestAppInsightsPluginRoutes(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			route, routeName, err := tt.datasource.getPluginRoute(plugin)
+			route, routeName, err := tt.datasource.getPluginRoute(plugin, tt.dsInfo)
 			tt.Err(t, err)
 
 			if diff := cmp.Diff(tt.expectedRouteURL, route.URL, cmpopts.EquateNaNs()); diff != "" {

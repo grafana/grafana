@@ -28,7 +28,6 @@ import (
 
 // ApplicationInsightsDatasource calls the application insights query API.
 type ApplicationInsightsDatasource struct {
-	dsInfo        datasourceInfo
 	pluginManager plugins.Manager
 	cfg           *setting.Cfg
 }
@@ -53,7 +52,7 @@ type ApplicationInsightsQuery struct {
 }
 
 func (e *ApplicationInsightsDatasource) executeTimeSeriesQuery(ctx context.Context,
-	originalQueries []backend.DataQuery) (*backend.QueryDataResponse, error) {
+	originalQueries []backend.DataQuery, dsInfo datasourceInfo) (*backend.QueryDataResponse, error) {
 	result := backend.NewQueryDataResponse()
 
 	queries, err := e.buildQueries(originalQueries)
@@ -62,7 +61,7 @@ func (e *ApplicationInsightsDatasource) executeTimeSeriesQuery(ctx context.Conte
 	}
 
 	for _, query := range queries {
-		queryRes, err := e.executeQuery(ctx, query)
+		queryRes, err := e.executeQuery(ctx, query, dsInfo)
 		if err != nil {
 			return nil, err
 		}
@@ -133,14 +132,14 @@ func (e *ApplicationInsightsDatasource) buildQueries(queries []backend.DataQuery
 	return applicationInsightsQueries, nil
 }
 
-func (e *ApplicationInsightsDatasource) executeQuery(ctx context.Context, query *ApplicationInsightsQuery) (
+func (e *ApplicationInsightsDatasource) executeQuery(ctx context.Context, query *ApplicationInsightsQuery, dsInfo datasourceInfo) (
 	backend.DataResponse, error) {
-	queryResult := backend.DataResponse{}
+	dataResponse := backend.DataResponse{}
 
-	req, err := e.createRequest(ctx, e.dsInfo)
+	req, err := e.createRequest(ctx, dsInfo)
 	if err != nil {
-		queryResult.Error = err
-		return queryResult, nil
+		dataResponse.Error = err
+		return dataResponse, nil
 	}
 
 	req.URL.Path = path.Join(req.URL.Path, query.ApiURL)
@@ -150,7 +149,7 @@ func (e *ApplicationInsightsDatasource) executeQuery(ctx context.Context, query 
 	span.SetTag("target", query.Target)
 	span.SetTag("from", query.TimeRange.From.UTC().UnixNano())
 	span.SetTag("until", query.TimeRange.To.UTC().UnixNano())
-	span.SetTag("datasource_id", e.dsInfo.DatasourceID)
+	span.SetTag("datasource_id", dsInfo.DatasourceID)
 
 	defer span.Finish()
 
@@ -164,10 +163,10 @@ func (e *ApplicationInsightsDatasource) executeQuery(ctx context.Context, query 
 	}
 
 	azlog.Debug("ApplicationInsights", "Request URL", req.URL.String())
-	res, err := ctxhttp.Do(ctx, e.dsInfo.HTTPClient, req)
+	res, err := ctxhttp.Do(ctx, dsInfo.HTTPClient, req)
 	if err != nil {
-		queryResult.Error = err
-		return queryResult, nil
+		dataResponse.Error = err
+		return dataResponse, nil
 	}
 
 	body, err := ioutil.ReadAll(res.Body)
@@ -193,14 +192,14 @@ func (e *ApplicationInsightsDatasource) executeQuery(ctx context.Context, query 
 
 	frame, err := InsightsMetricsResultToFrame(mr, query.metricName, query.aggregation, query.dimensions)
 	if err != nil {
-		queryResult.Error = err
-		return queryResult, nil
+		dataResponse.Error = err
+		return dataResponse, nil
 	}
 
 	applyInsightsMetricAlias(frame, query.Alias)
 
-	queryResult.Frames = data.Frames{frame}
-	return queryResult, nil
+	dataResponse.Frames = data.Frames{frame}
+	return dataResponse, nil
 }
 
 func (e *ApplicationInsightsDatasource) createRequest(ctx context.Context, dsInfo datasourceInfo) (*http.Request, error) {
@@ -210,12 +209,12 @@ func (e *ApplicationInsightsDatasource) createRequest(ctx context.Context, dsInf
 		return nil, errors.New("unable to find datasource plugin Azure Application Insights")
 	}
 
-	appInsightsRoute, routeName, err := e.getPluginRoute(plugin)
+	appInsightsRoute, routeName, err := e.getPluginRoute(plugin, dsInfo)
 	if err != nil {
 		return nil, err
 	}
 
-	appInsightsAppID := dsInfo.AppInsightsAppId
+	appInsightsAppID := dsInfo.Settings.AppInsightsAppId
 
 	u, err := url.Parse(dsInfo.URL)
 	if err != nil {
@@ -239,8 +238,8 @@ func (e *ApplicationInsightsDatasource) createRequest(ctx context.Context, dsInf
 	return req, nil
 }
 
-func (e *ApplicationInsightsDatasource) getPluginRoute(plugin *plugins.DataSourcePlugin) (*plugins.AppPluginRoute, string, error) {
-	cloud, err := getAzureCloud(e.cfg, e.dsInfo)
+func (e *ApplicationInsightsDatasource) getPluginRoute(plugin *plugins.DataSourcePlugin, dsInfo datasourceInfo) (*plugins.AppPluginRoute, string, error) {
+	cloud, err := getAzureCloud(e.cfg, dsInfo)
 	if err != nil {
 		return nil, "", err
 	}

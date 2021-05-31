@@ -20,11 +20,11 @@ const (
 )
 
 func getAuthType(cfg *setting.Cfg, dsInfo datasourceInfo) string {
-	if dsInfo.AzureAuthType != "" {
-		return dsInfo.AzureAuthType
+	if dsInfo.Settings.AzureAuthType != "" {
+		return dsInfo.Settings.AzureAuthType
 	} else {
-		tenantId := dsInfo.TenantId
-		clientId := dsInfo.ClientId
+		tenantId := dsInfo.Settings.TenantId
+		clientId := dsInfo.Settings.ClientId
 
 		// If authentication type isn't explicitly specified and datasource has client credentials,
 		// then this is existing datasource which is configured for app registration (client secret)
@@ -65,8 +65,8 @@ func getAzureCloud(cfg *setting.Cfg, dsInfo datasourceInfo) (string, error) {
 		// In case of managed identity, the cloud is always same as where Grafana is hosted
 		return getDefaultAzureCloud(cfg)
 	case AzureAuthClientSecret:
-		if dsInfo.CloudName != "" {
-			return dsInfo.CloudName, nil
+		if dsInfo.Settings.CloudName != "" {
+			return dsInfo.Settings.CloudName, nil
 		} else {
 			return getDefaultAzureCloud(cfg)
 		}

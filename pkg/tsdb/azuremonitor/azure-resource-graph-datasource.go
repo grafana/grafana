@@ -27,7 +27,6 @@ import (
 
 // AzureResourceGraphDatasource calls the Azure Resource Graph API's
 type AzureResourceGraphDatasource struct {
-	dsInfo        datasourceInfo
 	pluginManager plugins.Manager
 	cfg           *setting.Cfg
 }
@@ -49,25 +48,25 @@ const argQueryProviderName = "/providers/Microsoft.ResourceGraph/resources"
 // executeTimeSeriesQuery does the following:
 // 1. builds the AzureMonitor url and querystring for each query
 // 2. executes each query by calling the Azure Monitor API
-// 3. parses the responses for each query into the timeseries format
-func (e *AzureResourceGraphDatasource) executeTimeSeriesQuery(ctx context.Context, originalQueries []backend.DataQuery) (*backend.QueryDataResponse, error) {
+// 3. parses the responses for each query into data frames
+func (e *AzureResourceGraphDatasource) executeTimeSeriesQuery(ctx context.Context, originalQueries []backend.DataQuery, dsInfo datasourceInfo) (*backend.QueryDataResponse, error) {
 	result := &backend.QueryDataResponse{
 		Responses: map[string]backend.DataResponse{},
 	}
 
-	queries, err := e.buildQueries(originalQueries)
+	queries, err := e.buildQueries(originalQueries, dsInfo)
 	if err != nil {
 		return nil, err
 	}
 
 	for _, query := range queries {
-		result.Responses[query.RefID] = e.executeQuery(ctx, query)
+		result.Responses[query.RefID] = e.executeQuery(ctx, query, dsInfo)
 	}
 
 	return result, nil
 }
 
-func (e *AzureResourceGraphDatasource) buildQueries(queries []backend.DataQuery) ([]*AzureResourceGraphQuery, error) {
+func (e *AzureResourceGraphDatasource) buildQueries(queries []backend.DataQuery, dsInfo datasourceInfo) ([]*AzureResourceGraphQuery, error) {
 	var azureResourceGraphQueries []*AzureResourceGraphQuery
 
 	for _, query := range queries {
@@ -85,7 +84,7 @@ func (e *AzureResourceGraphDatasource) buildQueries(queries []backend.DataQuery)
 			resultFormat = "table"
 		}
 
-		interpolatedQuery, err := KqlInterpolate(query, e.dsInfo, azureResourceGraphTarget.Query)
+		interpolatedQuery, err := KqlInterpolate(query, dsInfo, azureResourceGraphTarget.Query)
 
 		if err != nil {
 			return nil, err
@@ -103,14 +102,14 @@ func (e *AzureResourceGraphDatasource) buildQueries(queries []backend.DataQuery)
 	return azureResourceGraphQueries, nil
 }
 
-func (e *AzureResourceGraphDatasource) executeQuery(ctx context.Context, query *AzureResourceGraphQuery) backend.DataResponse {
-	queryResult := backend.DataResponse{}
+func (e *AzureResourceGraphDatasource) executeQuery(ctx context.Context, query *AzureResourceGraphQuery, dsInfo datasourceInfo) backend.DataResponse {
+	dataResponse := backend.DataResponse{}
 
 	params := url.Values{}
 	params.Add("api-version", argAPIVersion)
 
-	queryResultErrorWithExecuted := func(err error) backend.DataResponse {
-		queryResult = backend.DataResponse{Error: err}
+	dataResponseErrorWithExecuted := func(err error) backend.DataResponse {
+		dataResponse = backend.DataResponse{Error: err}
 		frames := data.Frames{
 			&data.Frame{
 				RefID: query.RefID,
@@ -119,14 +118,14 @@ func (e *AzureResourceGraphDatasource) executeQuery(ctx context.Context, query *
 				},
 			},
 		}
-		queryResult.Frames = frames
-		return queryResult
+		dataResponse.Frames = frames
+		return dataResponse
 	}
 
 	model, err := simplejson.NewJson(query.JSON)
 	if err != nil {
-		queryResult.Error = err
-		return queryResult
+		dataResponse.Error = err
+		return dataResponse
 	}
 
 	reqBody, err := json.Marshal(map[string]interface{}{
@@ -135,15 +134,15 @@ func (e *AzureResourceGraphDatasource) executeQuery(ctx context.Context, query *
 	})
 
 	if err != nil {
-		queryResult.Error = err
-		return queryResult
+		dataResponse.Error = err
+		return dataResponse
 	}
 
-	req, err := e.createRequest(ctx, e.dsInfo, reqBody)
+	req, err := e.createRequest(ctx, dsInfo, reqBody)
 
 	if err != nil {
-		queryResult.Error = err
-		return queryResult
+		dataResponse.Error = err
+		return dataResponse
 	}
 
 	req.URL.Path = path.Join(req.URL.Path, argQueryProviderName)
@@ -153,7 +152,7 @@ func (e *AzureResourceGraphDatasource) executeQuery(ctx context.Context, query *
 	span.SetTag("interpolated_query", query.InterpolatedQuery)
 	span.SetTag("from", query.TimeRange.From.UTC().UnixNano())
 	span.SetTag("until", query.TimeRange.To.UTC().UnixNano())
-	span.SetTag("datasource_id", e.dsInfo.DatasourceID)
+	span.SetTag("datasource_id", dsInfo.DatasourceID)
 
 	defer span.Finish()
 
@@ -161,31 +160,31 @@ func (e *AzureResourceGraphDatasource) executeQuery(ctx context.Context, query *
 		span.Context(),
 		opentracing.HTTPHeaders,
 		opentracing.HTTPHeadersCarrier(req.Header)); err != nil {
-		return queryResultErrorWithExecuted(err)
+		return dataResponseErrorWithExecuted(err)
 	}
 
 	azlog.Debug("AzureResourceGraph", "Request ApiURL", req.URL.String())
-	res, err := ctxhttp.Do(ctx, e.dsInfo.HTTPClient, req)
+	res, err := ctxhttp.Do(ctx, dsInfo.HTTPClient, req)
 	if err != nil {
-		return queryResultErrorWithExecuted(err)
+		return dataResponseErrorWithExecuted(err)
 	}
 
 	argResponse, err := e.unmarshalResponse(res)
 	if err != nil {
-		return queryResultErrorWithExecuted(err)
+		return dataResponseErrorWithExecuted(err)
 	}
 
 	frame, err := ResponseTableToFrame(&argResponse.Data)
 	if err != nil {
-		return queryResultErrorWithExecuted(err)
+		return dataResponseErrorWithExecuted(err)
 	}
 	if frame.Meta == nil {
 		frame.Meta = &data.FrameMeta{}
 	}
 	frame.Meta.ExecutedQueryString = req.URL.RawQuery
 
-	queryResult.Frames = data.Frames{frame}
-	return queryResult
+	dataResponse.Frames = data.Frames{frame}
+	return dataResponse
 }
 
 func (e *AzureResourceGraphDatasource) createRequest(ctx context.Context, dsInfo datasourceInfo, reqBody []byte) (*http.Request, error) {
@@ -195,7 +194,7 @@ func (e *AzureResourceGraphDatasource) createRequest(ctx context.Context, dsInfo
 		return nil, errors.New("unable to find datasource plugin Azure Monitor")
 	}
 
-	argRoute, routeName, err := e.getPluginRoute(plugin)
+	argRoute, routeName, err := e.getPluginRoute(plugin, dsInfo)
 	if err != nil {
 		return nil, err
 	}
@@ -223,8 +222,8 @@ func (e *AzureResourceGraphDatasource) createRequest(ctx context.Context, dsInfo
 	return req, nil
 }
 
-func (e *AzureResourceGraphDatasource) getPluginRoute(plugin *plugins.DataSourcePlugin) (*plugins.AppPluginRoute, string, error) {
-	cloud, err := getAzureCloud(e.cfg, e.dsInfo)
+func (e *AzureResourceGraphDatasource) getPluginRoute(plugin *plugins.DataSourcePlugin, dsInfo datasourceInfo) (*plugins.AppPluginRoute, string, error) {
+	cloud, err := getAzureCloud(e.cfg, dsInfo)
 	if err != nil {
 		return nil, "", err
 	}

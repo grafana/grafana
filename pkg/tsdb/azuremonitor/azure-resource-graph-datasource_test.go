@@ -63,7 +63,7 @@ func TestBuildingAzureResourceGraphQueries(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			queries, err := datasource.buildQueries(tt.queryModel)
+			queries, err := datasource.buildQueries(tt.queryModel, datasourceInfo{})
 			tt.Err(t, err)
 			if diff := cmp.Diff(tt.azureResourceGraphQueries, queries, cmpopts.IgnoreUnexported(simplejson.Json{})); diff != "" {
 				t.Errorf("Result mismatch (-want +got):\n%s", diff)

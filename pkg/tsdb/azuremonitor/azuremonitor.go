@@ -9,9 +9,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
-	sdkHTTPClient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -46,7 +44,7 @@ type Service struct {
 	BackendPluginManager backendplugin.Manager `inject:""`
 }
 
-type datasourceInfo struct {
+type azureMonitorSettings struct {
 	AppInsightsAppId             string `json:"appInsightsAppId"`
 	AzureLogAnalyticsSameAs      bool   `json:"azureLogAnalyticsSameAs"`
 	ClientId                     string `json:"clientId"`
@@ -58,6 +56,10 @@ type datasourceInfo struct {
 	SubscriptionId               string `json:"subscriptionId"`
 	TenantId                     string `json:"tenantId"`
 	AzureAuthType                string `json:"azureAuthType,omitempty"`
+}
+
+type datasourceInfo struct {
+	Settings azureMonitorSettings
 
 	HTTPClient              *http.Client
 	URL                     string
@@ -66,22 +68,14 @@ type datasourceInfo struct {
 	DatasourceID            int64
 }
 
-// AzureMonitorExecutor executes queries for the Azure Monitor datasource - all four services
-type AzureMonitorExecutor struct {
-	im                 instancemgmt.InstanceManager
-	pluginManager      plugins.Manager
-	cfg                *setting.Cfg
-	httpClientProvider httpclient.Provider
-}
-
-func NewInstanceSettings() datasource.InstanceFactoryFunc {
+func NewInstanceSettings(httpClientProvider httpclient.Provider) datasource.InstanceFactoryFunc {
 	return func(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		opts, err := settings.HTTPClientOptions()
 		if err != nil {
 			return nil, err
 		}
 
-		client, err := sdkHTTPClient.New(opts)
+		client, err := httpClientProvider.New(opts)
 		if err != nil {
 			return nil, err
 		}
@@ -92,32 +86,55 @@ func NewInstanceSettings() datasource.InstanceFactoryFunc {
 			return nil, fmt.Errorf("error reading settings: %w", err)
 		}
 
-		model := datasourceInfo{}
-		err = json.Unmarshal(settings.JSONData, &model)
+		azMonitorSettings := azureMonitorSettings{}
+		err = json.Unmarshal(settings.JSONData, &azMonitorSettings)
 		if err != nil {
 			return nil, fmt.Errorf("error reading settings: %w", err)
 		}
-		model.HTTPClient = client
-		model.URL = settings.URL
-		model.JSONData = jsonData
-		model.DecryptedSecureJSONData = settings.DecryptedSecureJSONData
-		model.DatasourceID = settings.ID
+		model := datasourceInfo{
+			Settings:                azMonitorSettings,
+			HTTPClient:              client,
+			URL:                     settings.URL,
+			JSONData:                jsonData,
+			DecryptedSecureJSONData: settings.DecryptedSecureJSONData,
+			DatasourceID:            settings.ID,
+		}
 
 		return model, nil
 	}
 }
 
-func newExecutor(im instancemgmt.InstanceManager, pm plugins.Manager, httpC httpclient.Provider, cfg *setting.Cfg) *AzureMonitorExecutor {
-	return &AzureMonitorExecutor{
-		im:                 im,
-		httpClientProvider: httpC,
-		cfg:                cfg,
-		pluginManager:      pm,
+type azDatasourceExecutor interface {
+	executeTimeSeriesQuery(ctx context.Context, originalQueries []backend.DataQuery, dsInfo datasourceInfo) (*backend.QueryDataResponse, error)
+}
+
+func newExecutor(im instancemgmt.InstanceManager, pm plugins.Manager, httpC httpclient.Provider, cfg *setting.Cfg) *datasource.QueryTypeMux {
+	mux := datasource.NewQueryTypeMux()
+	executors := map[string]azDatasourceExecutor{
+		"Azure Monitor":        &AzureMonitorDatasource{pm, cfg},
+		"Application Insights": &ApplicationInsightsDatasource{pm, cfg},
+		"Azure Log Analytics":  &AzureLogAnalyticsDatasource{pm, cfg},
+		"Insights Analytics":   &InsightsAnalyticsDatasource{pm, cfg},
+		"Azure Resource Graph": &AzureResourceGraphDatasource{pm, cfg},
 	}
+	for dsType := range executors {
+		// Make a copy of the string to keep the reference after the iterator
+		dst := dsType
+		mux.HandleFunc(dsType, func(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+			i, err := im.Get(req.PluginContext)
+			if err != nil {
+				return nil, err
+			}
+			dsInfo := i.(datasourceInfo)
+			ds := executors[dst]
+			return ds.executeTimeSeriesQuery(ctx, req.Queries, dsInfo)
+		})
+	}
+	return mux
 }
 
 func (s *Service) Init() error {
-	im := datasource.NewInstanceManager(NewInstanceSettings())
+	im := datasource.NewInstanceManager(NewInstanceSettings(s.HTTPClientProvider))
 	factory := coreplugin.New(backend.ServeOpts{
 		QueryDataHandler: newExecutor(im, s.PluginManager, s.HTTPClientProvider, s.Cfg),
 	})
@@ -126,116 +143,4 @@ func (s *Service) Init() error {
 		azlog.Error("Failed to register plugin", "error", err)
 	}
 	return nil
-}
-
-// Query takes in the frontend queries, parses them into the query format
-// expected by chosen Azure Monitor service (Azure Monitor, App Insights etc.)
-// executes the queries against the API and parses the response into
-// the right format
-func (e *AzureMonitorExecutor) QueryData(ctx context.Context,
-	req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	var err error
-
-	var azureMonitorQueries []backend.DataQuery
-	var applicationInsightsQueries []backend.DataQuery
-	var azureLogAnalyticsQueries []backend.DataQuery
-	var insightsAnalyticsQueries []backend.DataQuery
-	var azureResourceGraphQueries []backend.DataQuery
-
-	i, err := e.im.Get(req.PluginContext)
-	if err != nil {
-		return nil, err
-	}
-
-	datasourceInfo := i.(datasourceInfo)
-	for _, query := range req.Queries {
-		model, err := simplejson.NewJson(query.JSON)
-		if err != nil {
-			return nil, err
-		}
-
-		queryType := model.Get("queryType").MustString("")
-
-		switch queryType {
-		case "Azure Monitor":
-			azureMonitorQueries = append(azureMonitorQueries, query)
-		case "Application Insights":
-			applicationInsightsQueries = append(applicationInsightsQueries, query)
-		case "Azure Log Analytics":
-			azureLogAnalyticsQueries = append(azureLogAnalyticsQueries, query)
-		case "Insights Analytics":
-			insightsAnalyticsQueries = append(insightsAnalyticsQueries, query)
-		case "Azure Resource Graph":
-			azureResourceGraphQueries = append(azureResourceGraphQueries, query)
-		default:
-			return nil, fmt.Errorf("alerting not supported for %q", queryType)
-		}
-	}
-
-	azDatasource := &AzureMonitorDatasource{
-		dsInfo:        datasourceInfo,
-		pluginManager: e.pluginManager,
-		cfg:           e.cfg,
-	}
-
-	aiDatasource := &ApplicationInsightsDatasource{
-		dsInfo:        datasourceInfo,
-		pluginManager: e.pluginManager,
-		cfg:           e.cfg,
-	}
-
-	alaDatasource := &AzureLogAnalyticsDatasource{
-		dsInfo:        datasourceInfo,
-		pluginManager: e.pluginManager,
-		cfg:           e.cfg,
-	}
-
-	iaDatasource := &InsightsAnalyticsDatasource{
-		dsInfo:        datasourceInfo,
-		pluginManager: e.pluginManager,
-		cfg:           e.cfg,
-	}
-
-	argDatasource := &AzureResourceGraphDatasource{
-		dsInfo:        datasourceInfo,
-		pluginManager: e.pluginManager,
-	}
-
-	azResult, err := azDatasource.executeTimeSeriesQuery(ctx, azureMonitorQueries)
-	if err != nil {
-		return azResult, err
-	}
-
-	aiResult, err := aiDatasource.executeTimeSeriesQuery(ctx, applicationInsightsQueries)
-	if err != nil {
-		return aiResult, err
-	}
-
-	alaResult, err := alaDatasource.executeTimeSeriesQuery(ctx, azureLogAnalyticsQueries)
-	if err != nil {
-		return alaResult, err
-	}
-
-	iaResult, err := iaDatasource.executeTimeSeriesQuery(ctx, insightsAnalyticsQueries)
-	if err != nil {
-		return iaResult, err
-	}
-
-	argResult, err := argDatasource.executeTimeSeriesQuery(ctx, azureResourceGraphQueries)
-	if err != nil {
-		return argResult, err
-	}
-
-	for _, res := range []backend.Responses{
-		aiResult.Responses,
-		alaResult.Responses,
-		iaResult.Responses,
-		argResult.Responses,
-	} {
-		for k, v := range res {
-			azResult.Responses[k] = v
-		}
-	}
-
-	return azResult, nil
 }

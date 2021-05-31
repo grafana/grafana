@@ -28,7 +28,6 @@ import (
 
 // AzureLogAnalyticsDatasource calls the Azure Log Analytics API's
 type AzureLogAnalyticsDatasource struct {
-	dsInfo        datasourceInfo
 	pluginManager plugins.Manager
 	cfg           *setting.Cfg
 }
@@ -48,17 +47,17 @@ type AzureLogAnalyticsQuery struct {
 // executeTimeSeriesQuery does the following:
 // 1. build the AzureMonitor url and querystring for each query
 // 2. executes each query by calling the Azure Monitor API
-// 3. parses the responses for each query into the timeseries format
-func (e *AzureLogAnalyticsDatasource) executeTimeSeriesQuery(ctx context.Context, originalQueries []backend.DataQuery) (*backend.QueryDataResponse, error) {
+// 3. parses the responses for each query into data frames
+func (e *AzureLogAnalyticsDatasource) executeTimeSeriesQuery(ctx context.Context, originalQueries []backend.DataQuery, dsInfo datasourceInfo) (*backend.QueryDataResponse, error) {
 	result := backend.NewQueryDataResponse()
 
-	queries, err := e.buildQueries(originalQueries)
+	queries, err := e.buildQueries(originalQueries, dsInfo)
 	if err != nil {
 		return nil, err
 	}
 
 	for _, query := range queries {
-		result.Responses[query.RefID] = e.executeQuery(ctx, query)
+		result.Responses[query.RefID] = e.executeQuery(ctx, query, dsInfo)
 	}
 
 	return result, nil
@@ -87,7 +86,7 @@ func getApiURL(queryJSONModel logJSONQuery) string {
 	}
 }
 
-func (e *AzureLogAnalyticsDatasource) buildQueries(queries []backend.DataQuery) ([]*AzureLogAnalyticsQuery, error) {
+func (e *AzureLogAnalyticsDatasource) buildQueries(queries []backend.DataQuery, dsInfo datasourceInfo) ([]*AzureLogAnalyticsQuery, error) {
 	azureLogAnalyticsQueries := []*AzureLogAnalyticsQuery{}
 
 	for _, query := range queries {
@@ -108,7 +107,7 @@ func (e *AzureLogAnalyticsDatasource) buildQueries(queries []backend.DataQuery) 
 		apiURL := getApiURL(queryJSONModel)
 
 		params := url.Values{}
-		rawQuery, err := KqlInterpolate(query, e.dsInfo, azureLogAnalyticsTarget.Query, "TimeGenerated")
+		rawQuery, err := KqlInterpolate(query, dsInfo, azureLogAnalyticsTarget.Query, "TimeGenerated")
 		if err != nil {
 			return nil, err
 		}
@@ -128,12 +127,12 @@ func (e *AzureLogAnalyticsDatasource) buildQueries(queries []backend.DataQuery) 
 	return azureLogAnalyticsQueries, nil
 }
 
-func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *AzureLogAnalyticsQuery) backend.DataResponse {
-	queryResult := backend.DataResponse{}
+func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *AzureLogAnalyticsQuery, dsInfo datasourceInfo) backend.DataResponse {
+	dataResponse := backend.DataResponse{}
 
-	queryResultErrorWithExecuted := func(err error) backend.DataResponse {
-		queryResult.Error = err
-		queryResult.Frames = data.Frames{
+	dataResponseErrorWithExecuted := func(err error) backend.DataResponse {
+		dataResponse.Error = err
+		dataResponse.Frames = data.Frames{
 			&data.Frame{
 				RefID: query.RefID,
 				Meta: &data.FrameMeta{
@@ -141,13 +140,13 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *A
 				},
 			},
 		}
-		return queryResult
+		return dataResponse
 	}
 
-	req, err := e.createRequest(ctx, e.dsInfo)
+	req, err := e.createRequest(ctx, dsInfo)
 	if err != nil {
-		queryResult.Error = err
-		return queryResult
+		dataResponse.Error = err
+		return dataResponse
 	}
 
 	req.URL.Path = path.Join(req.URL.Path, query.URL)
@@ -157,7 +156,7 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *A
 	span.SetTag("target", query.Target)
 	span.SetTag("from", query.TimeRange.From.UTC().UnixNano())
 	span.SetTag("until", query.TimeRange.To.UTC().UnixNano())
-	span.SetTag("datasource_id", e.dsInfo.DatasourceID)
+	span.SetTag("datasource_id", dsInfo.DatasourceID)
 
 	defer span.Finish()
 
@@ -165,33 +164,33 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *A
 		span.Context(),
 		opentracing.HTTPHeaders,
 		opentracing.HTTPHeadersCarrier(req.Header)); err != nil {
-		return queryResultErrorWithExecuted(err)
+		return dataResponseErrorWithExecuted(err)
 	}
 
 	azlog.Debug("AzureLogAnalytics", "Request ApiURL", req.URL.String())
-	res, err := ctxhttp.Do(ctx, e.dsInfo.HTTPClient, req)
+	res, err := ctxhttp.Do(ctx, dsInfo.HTTPClient, req)
 	if err != nil {
-		return queryResultErrorWithExecuted(err)
+		return dataResponseErrorWithExecuted(err)
 	}
 
 	logResponse, err := e.unmarshalResponse(res)
 	if err != nil {
-		return queryResultErrorWithExecuted(err)
+		return dataResponseErrorWithExecuted(err)
 	}
 
 	t, err := logResponse.GetPrimaryResultTable()
 	if err != nil {
-		return queryResultErrorWithExecuted(err)
+		return dataResponseErrorWithExecuted(err)
 	}
 
 	frame, err := ResponseTableToFrame(t)
 	if err != nil {
-		return queryResultErrorWithExecuted(err)
+		return dataResponseErrorWithExecuted(err)
 	}
 
 	model, err := simplejson.NewJson(query.JSON)
 	if err != nil {
-		return queryResultErrorWithExecuted(err)
+		return dataResponseErrorWithExecuted(err)
 	}
 
 	err = setAdditionalFrameMeta(frame,
@@ -214,8 +213,8 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *A
 			}
 		}
 	}
-	queryResult.Frames = data.Frames{frame}
-	return queryResult
+	dataResponse.Frames = data.Frames{frame}
+	return dataResponse
 }
 
 func (e *AzureLogAnalyticsDatasource) createRequest(ctx context.Context, dsInfo datasourceInfo) (*http.Request, error) {
@@ -225,7 +224,7 @@ func (e *AzureLogAnalyticsDatasource) createRequest(ctx context.Context, dsInfo 
 		return nil, errors.New("unable to find datasource plugin Azure Monitor")
 	}
 
-	logAnalyticsRoute, routeName, err := e.getPluginRoute(plugin)
+	logAnalyticsRoute, routeName, err := e.getPluginRoute(plugin, dsInfo)
 	if err != nil {
 		return nil, err
 	}
@@ -253,8 +252,8 @@ func (e *AzureLogAnalyticsDatasource) createRequest(ctx context.Context, dsInfo 
 	return req, nil
 }
 
-func (e *AzureLogAnalyticsDatasource) getPluginRoute(plugin *plugins.DataSourcePlugin) (*plugins.AppPluginRoute, string, error) {
-	cloud, err := getAzureCloud(e.cfg, e.dsInfo)
+func (e *AzureLogAnalyticsDatasource) getPluginRoute(plugin *plugins.DataSourcePlugin, dsInfo datasourceInfo) (*plugins.AppPluginRoute, string, error) {
+	cloud, err := getAzureCloud(e.cfg, dsInfo)
 	if err != nil {
 		return nil, "", err
 	}
