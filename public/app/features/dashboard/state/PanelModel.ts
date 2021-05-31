@@ -38,6 +38,7 @@ import {
 } from './getPanelOptionsWithDefaults';
 import { QueryGroupOptions } from 'app/types';
 import { PanelModelLibraryPanel } from '../../library-panels/types';
+import { safeStringifyValue } from '../../../core/utils/explore';
 
 export interface GridPos {
   x: number;
@@ -186,6 +187,27 @@ export class PanelModel implements DataConfigSource {
     this.events = new EventBusSrv();
     this.restoreModel(model);
     this.replaceVariables = this.replaceVariables.bind(this);
+    this.catchTargetsMutationChanges();
+  }
+
+  // Function that catches mutation changes on this.targets for Angular data sources that mutate this.targets directly
+  catchTargetsMutationChanges() {
+    const that = this;
+    for (let index = 0; index < this.targets.length; index++) {
+      this.targets[index] = new Proxy(this.targets[index], {
+        set(target: any, prop: string | symbol, value: any): boolean {
+          if (that.configRev === 0) {
+            const oldValue = safeStringifyValue(target[prop]);
+            const newValue = safeStringifyValue(value);
+            if (oldValue !== newValue) {
+              that.configRev++;
+            }
+          }
+          target[prop] = value;
+          return true;
+        },
+      });
+    }
   }
 
   /** Given a persistened PanelModel restores property values */
@@ -415,6 +437,28 @@ export class PanelModel implements DataConfigSource {
   }
 
   updateQueries(options: QueryGroupOptions) {
+    const previous = {
+      datasource: this.datasource,
+      timeFrom: this.timeFrom,
+      timeShift: this.timeShift,
+      hideTimeOverride: this.hideTimeOverride,
+      interval: this.interval,
+      maxDataPoints: this.maxDataPoints,
+    };
+
+    const current = {
+      datasource: options.dataSource.default ? null : options.dataSource.name!,
+      timeFrom: options.timeRange?.from,
+      timeShift: options.timeRange?.shift,
+      hideTimeOverride: options.timeRange?.hide,
+      interval: options.minInterval,
+      maxDataPoints: options.maxDataPoints,
+    };
+
+    if (!isEqual(previous, current)) {
+      this.configRev++;
+    }
+
     this.datasource = options.dataSource.default ? null : options.dataSource.name!;
     this.timeFrom = options.timeRange?.from;
     this.timeShift = options.timeRange?.shift;
@@ -422,7 +466,6 @@ export class PanelModel implements DataConfigSource {
     this.interval = options.minInterval;
     this.maxDataPoints = options.maxDataPoints;
     this.targets = options.queries;
-    this.configRev++;
 
     this.events.publish(new PanelQueriesChangedEvent());
   }
