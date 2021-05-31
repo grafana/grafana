@@ -3457,6 +3457,17 @@ steps:
   - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/grafana:latest-ubuntu
   - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/grafana:main-ubuntu
 
+- name: slack
+  image: plugins/slack
+  settings:
+    channel: grafana-ci-notifications
+    template: "Nightly docker scan cronjob failed."
+    webhook:
+      from_secret: slack_webhook
+  when:
+    status: 
+    - failure
+
 trigger:
   cron:
   - nightly
