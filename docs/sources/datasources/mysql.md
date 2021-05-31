@@ -72,7 +72,7 @@ You can use wildcards (`*`)  in place of database or table if you want to grant 
 
 > Only available in Grafana v5.4+.
 
-{{< docs-imagebox img="/img/docs/v54/mysql_query_still.png" class="docs-image--no-shadow" animated-gif="/img/docs/v54/mysql_query.gif" >}}
+{{< figure src="/static/img/docs/v54/mysql_query_still.png" class="docs-image--no-shadow" animated-gif="/static/img/docs/v54/mysql_query.gif" >}}
 
 You find the MySQL query editor in the metrics tab in a panel's edit mode. You enter edit mode by clicking the
 panel title, then edit.
@@ -155,7 +155,7 @@ If the `Format as` query option is set to `Table` then you can basically do any 
 
 Query editor with example query:
 
-{{< docs-imagebox img="/img/docs/v45/mysql_table_query.png" >}}
+{{< figure src="/static/img/docs/v45/mysql_table_query.png" >}}
 
 The query:
 
@@ -173,7 +173,7 @@ You can control the name of the Table panel columns by using regular `as ` SQL c
 
 The resulting table panel:
 
-![](/img/docs/v43/mysql_table.png)
+![](/static/img/docs/v43/mysql_table.png)
 
 ## Time series queries
 

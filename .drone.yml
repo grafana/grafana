@@ -165,7 +165,6 @@ steps:
   - mkdir -p /hugo/content/docs/grafana
   - cp -r docs/sources/* /hugo/content/docs/grafana/latest/
   - cd /hugo && make prod
-  failure: ignore
   depends_on:
   - initialize
   - build-frontend-docs
@@ -3457,6 +3456,17 @@ steps:
   - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/grafana:main
   - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/grafana:latest-ubuntu
   - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/grafana:main-ubuntu
+
+- name: slack-notify-failure
+  image: plugins/slack
+  settings:
+    channel: grafana-backend
+    template: "Nightly docker image scan job for {{repo.name}} failed: {{build.link}}"
+    webhook:
+      from_secret: slack_webhook
+  when:
+    status:
+    - failure
 
 trigger:
   cron:

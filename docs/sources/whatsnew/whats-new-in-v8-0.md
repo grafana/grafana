@@ -18,6 +18,16 @@ This topic includes the release notes for Grafana v8.0. For all details, read th
 
 These features are included in the Grafana open source edition.
 
+### Grafana v8.0 alerts
+
+The new alerts in Grafana 8.0 are an opt-in feature that centralizes alerting information for Grafana managed alerts and alerts from Prometheus-compatible data sources in one UI and API. You can create and edit alerting rules for Grafana managed alerts, Cortex alerts, and Loki alerts as well as see alerting information from prometheus-compatible data sources in a single, searchable view. For more information, on how to create and edit alerts and notifications, refer to [Overview of Grafana 8.0 alerts]({{< relref "../alerting/unified-alerting/_index.md" >}}).
+
+As part of the new alert changes, we have introduced a new data source, Alertmanager, which includes built-in support for Prometheus Alertmanager. It is presently in alpha and it not accessible unless alpha plugins are enabled in Grafana settings. For more information, refer to [Alertmanager data source]({{< relref "../datasources/alertmanager.md" >}}).
+
+> **Note:** Out of the box, Grafana still supports old Grafana alerts. They are legacy alerts at this time, and will deprecated in a future release. 
+
+To learn more about the differences between new alerts and the legacy alerts, refer to [Differences between Grafana 8.0 alerts and legacy alerts]({{< relref "../alerting/difference-old-new.md" >}}).
+
 ### Library panels
 
 Library panels allow users to build panels that can be used in multiple dashboards. Any updates made to that shared panel will then automatically be applied to all the dashboards that have that panel.
@@ -97,7 +107,7 @@ Log navigation in Explore has been significantly improved. We added pagination t
 
 [Logs in Explore]({{< relref "../explore/logs-integration.md" >}}) was updated as a result of these changes.
 
-![Navigate logs in Explore](/img/docs/explore/navigate-logs-8-0.png)
+![Navigate logs in Explore](/static/img/docs/explore/navigate-logs-8-0.png)
 
 ### Tracing improvements
 
@@ -142,7 +152,7 @@ We changed how the configured Elasticsearch version is handled. You can now spec
 
 You can now use a different interpolation method to use template variables in a more extensive way. You can now use template variables in every query editor field that allows free input.
 
-![Elasticsearch template variables](/img/docs/elasticsearch/input-templates-8-0.png)
+![Elasticsearch template variables](/static/img/docs/elasticsearch/input-templates-8-0.png)
 
 ##### Allow omitting field for metrics that support inline scripts
 
@@ -150,13 +160,13 @@ Metric aggregations can be specified without a field if a script is provided. Yo
 
 Previously this was only possible when adding a new metric without selecting a field, because once selected, the field could not have been removed.
 
-![Elasticsearch omit fields](/img/docs/elasticsearch/omit-fields-8-0.png)
+![Elasticsearch omit fields](/static/img/docs/elasticsearch/omit-fields-8-0.png)
 
 ##### Allow setting a custom limit for log queries
 
 You can now set a custom line limit for logs queries instead of accepting the previously hard-coded 500. We also simplified the query editor to only show relevant fields when issuing logs queries.
 
-![Elasticsearch custom log limit](/img/docs/elasticsearch/custom-log-limit-8-0.png)
+![Elasticsearch custom log limit](/static/img/docs/elasticsearch/custom-log-limit-8-0.png)
 
 ##### Guess field type from first non-empty value
 

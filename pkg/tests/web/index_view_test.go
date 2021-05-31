@@ -23,8 +23,7 @@ func TestIndexView(t *testing.T) {
 
 		// nolint:bodyclose
 		resp, html := makeRequest(t, addr)
-
-		assert.Regexp(t, `script-src 'self' 'unsafe-eval' 'unsafe-inline';object-src 'none';font-src 'self';style-src 'self' 'unsafe-inline';img-src \* data:;base-uri 'self';connect-src 'self' grafana.com;manifest-src 'self';media-src 'none';form-action 'self';`, resp.Header.Get("Content-Security-Policy"))
+		assert.Regexp(t, `script-src 'self' 'unsafe-eval' 'unsafe-inline' 'strict-dynamic' 'nonce-[^']+';object-src 'none';font-src 'self';style-src 'self' 'unsafe-inline' blob:;img-src \* data:;base-uri 'self';connect-src 'self' grafana.com ws://localhost:3000/ wss://localhost:3000/;manifest-src 'self';media-src 'none';form-action 'self';`, resp.Header.Get("Content-Security-Policy"))
 		assert.Regexp(t, `<script nonce="[^"]+"`, html)
 	})
 
