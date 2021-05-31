@@ -35,7 +35,7 @@ export const PlotLegend: React.FC<PlotLegendProps> = ({
 
       const field = data[fieldIndex.frameIndex]?.fields[fieldIndex.fieldIndex];
 
-      if (!field || field.config.custom.hideFrom?.legend) {
+      if (!field || field.config.custom?.hideFrom?.legend) {
         return undefined;
       }
 
