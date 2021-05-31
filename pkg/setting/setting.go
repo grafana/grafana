@@ -253,15 +253,16 @@ type Cfg struct {
 	// CSPTemplate contains the Content Security Policy template.
 	CSPTemplate string
 
-	TempDataLifetime         time.Duration
-	PluginsEnableAlpha       bool
-	PluginsAppsSkipVerifyTLS bool
-	PluginSettings           PluginSettings
-	PluginsAllowUnsigned     []string
-	PluginCatalogURL         string
-	PluginAdminEnabled       bool
-	DisableSanitizeHtml      bool
-	EnterpriseLicensePath    string
+	TempDataLifetime                 time.Duration
+	PluginsEnableAlpha               bool
+	PluginsAppsSkipVerifyTLS         bool
+	PluginSettings                   PluginSettings
+	PluginsAllowUnsigned             []string
+	PluginCatalogURL                 string
+	PluginAdminEnabled               bool
+	PluginAdminExternalManageEnabled bool
+	DisableSanitizeHtml              bool
+	EnterpriseLicensePath            string
 
 	// Metrics
 	MetricsEndpointEnabled           bool
@@ -379,6 +380,11 @@ type Cfg struct {
 	ExpressionsEnabled bool
 
 	ImageUploadProvider string
+
+	// LiveMaxConnections is a maximum number of WebSocket connections to
+	// Grafana Live ws endpoint (per Grafana server instance). 0 disables
+	// Live, -1 means unlimited connections.
+	LiveMaxConnections int
 }
 
 // IsLiveConfigEnabled returns true if live should be able to save configs to SQL tables
@@ -389,11 +395,6 @@ func (cfg Cfg) IsLiveConfigEnabled() bool {
 // IsNgAlertEnabled returns whether the standalone alerts feature is enabled.
 func (cfg Cfg) IsNgAlertEnabled() bool {
 	return cfg.FeatureToggles["ngalert"]
-}
-
-// IsTrimDefaultsEnabled returns whether the standalone trim dashboard default feature is enabled.
-func (cfg Cfg) IsTrimDefaultsEnabled() bool {
-	return cfg.FeatureToggles["trimDefaults"]
 }
 
 // IsDatabaseMetricsEnabled returns whether the database instrumentation feature is enabled.
@@ -896,6 +897,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	}
 	cfg.PluginCatalogURL = pluginsSection.Key("plugin_catalog_url").MustString("https://grafana.com/grafana/plugins/")
 	cfg.PluginAdminEnabled = pluginsSection.Key("plugin_admin_enabled").MustBool(false)
+	cfg.PluginAdminExternalManageEnabled = pluginsSection.Key("plugin_admin_external_manage_enabled").MustBool(false)
 
 	// Read and populate feature toggles list
 	featureTogglesSection := iniFile.Section("feature_toggles")
@@ -952,6 +954,10 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 
 	cfg.readDateFormats()
 	cfg.readSentryConfig()
+
+	if err := cfg.readLiveSettings(iniFile); err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -1422,4 +1428,13 @@ func (cfg *Cfg) GetContentDeliveryURL(prefix string) string {
 func (cfg *Cfg) readDataSourcesSettings() {
 	datasources := cfg.Raw.Section("datasources")
 	cfg.DataSourceLimit = datasources.Key("datasource_limit").MustInt(5000)
+}
+
+func (cfg *Cfg) readLiveSettings(iniFile *ini.File) error {
+	section := iniFile.Section("live")
+	cfg.LiveMaxConnections = section.Key("max_connections").MustInt(100)
+	if cfg.LiveMaxConnections < -1 {
+		return fmt.Errorf("unexpected value %d for [live] max_connections", cfg.LiveMaxConnections)
+	}
+	return nil
 }
