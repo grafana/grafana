@@ -59,8 +59,10 @@ type datasourceInfo struct {
 	TenantId                     string `json:"tenantId"`
 	AzureAuthType                string `json:"azureAuthType,omitempty"`
 
-	HTTPClient              *http.Client
-	URL                     string
+	HTTPClient *http.Client
+	URL        string
+
+	// TODO: Remove these fields when the plugin proxy is no longer used
 	JSONData                map[string]interface{}
 	DecryptedSecureJSONData map[string]string
 	DatasourceID            int64
@@ -78,19 +80,17 @@ func NewInstanceSettings() datasource.InstanceFactoryFunc {
 			return nil, err
 		}
 
-		// TODO: Refactor model and jsonData
-		// Likely, adapting plugin proxy
-		model := datasourceInfo{}
-		err = json.Unmarshal(settings.JSONData, &model)
-		if err != nil {
-			return nil, fmt.Errorf("error reading settings: %w", err)
-		}
 		jsonData := map[string]interface{}{}
 		err = json.Unmarshal(settings.JSONData, &jsonData)
 		if err != nil {
 			return nil, fmt.Errorf("error reading settings: %w", err)
 		}
 
+		model := datasourceInfo{}
+		err = json.Unmarshal(settings.JSONData, &model)
+		if err != nil {
+			return nil, fmt.Errorf("error reading settings: %w", err)
+		}
 		model.HTTPClient = client
 		model.URL = settings.URL
 		model.JSONData = jsonData
@@ -228,21 +228,15 @@ func (e *AzureMonitorExecutor) QueryData(ctx context.Context,
 		return argResult, err
 	}
 
-	// TODO: Collapse into a loop?
-	for k, v := range aiResult.Responses {
-		azResult.Responses[k] = v
-	}
-
-	for k, v := range alaResult.Responses {
-		azResult.Responses[k] = v
-	}
-
-	for k, v := range iaResult.Responses {
-		azResult.Responses[k] = v
-	}
-
-	for k, v := range argResult.Responses {
-		azResult.Responses[k] = v
+	for _, res := range []backend.Responses{
+		aiResult.Responses,
+		alaResult.Responses,
+		iaResult.Responses,
+		argResult.Responses,
+	} {
+		for k, v := range res {
+			azResult.Responses[k] = v
+		}
 	}
 
 	return azResult, nil

@@ -31,17 +31,17 @@ type kqlMacroEngine struct {
 //   - $__escapeMulti('\\vm\eth0\Total','\\vm\eth2\Total') -> @'\\vm\eth0\Total',@'\\vm\eth2\Total'
 
 // KqlInterpolate interpolates macros for Kusto Query Language (KQL) queries
-func KqlInterpolate(query backend.DataQuery, kql string, defaultTimeField ...string) (string, error) {
+func KqlInterpolate(query backend.DataQuery, dsInfo datasourceInfo, kql string, defaultTimeField ...string) (string, error) {
 	engine := kqlMacroEngine{}
 
 	defaultTimeFieldForAllDatasources := "timestamp"
 	if len(defaultTimeField) > 0 {
 		defaultTimeFieldForAllDatasources = defaultTimeField[0]
 	}
-	return engine.Interpolate(query, kql, defaultTimeFieldForAllDatasources)
+	return engine.Interpolate(query, dsInfo, kql, defaultTimeFieldForAllDatasources)
 }
 
-func (m *kqlMacroEngine) Interpolate(query backend.DataQuery, kql string, defaultTimeField string) (string, error) {
+func (m *kqlMacroEngine) Interpolate(query backend.DataQuery, dsInfo datasourceInfo, kql string, defaultTimeField string) (string, error) {
 	m.timeRange = query.TimeRange
 	m.query = query
 	rExp, _ := regexp.Compile(sExpr)
@@ -71,7 +71,7 @@ func (m *kqlMacroEngine) Interpolate(query backend.DataQuery, kql string, defaul
 		for i, arg := range args {
 			args[i] = strings.Trim(arg, " ")
 		}
-		res, err := m.evaluateMacro(groups[1], defaultTimeField, args)
+		res, err := m.evaluateMacro(groups[1], defaultTimeField, args, dsInfo)
 		if err != nil && macroError == nil {
 			macroError = err
 			return "macro_error()"
@@ -86,7 +86,7 @@ func (m *kqlMacroEngine) Interpolate(query backend.DataQuery, kql string, defaul
 	return kql, nil
 }
 
-func (m *kqlMacroEngine) evaluateMacro(name string, defaultTimeField string, args []string) (string, error) {
+func (m *kqlMacroEngine) evaluateMacro(name string, defaultTimeField string, args []string, dsInfo datasourceInfo) (string, error) {
 	switch name {
 	case "timeFilter":
 		timeColumn := defaultTimeField
@@ -112,8 +112,9 @@ func (m *kqlMacroEngine) evaluateMacro(name string, defaultTimeField string, arg
 				azlog.Warn("Unable to parse model from query", "JSON", m.query.JSON)
 				it = defaultInterval
 			} else {
-				// TODO: Verify that the datasourceInfo never gets a default interval in this case
-				it, err = interval.GetIntervalFrom(&models.DataSource{}, model, defaultInterval)
+				it, err = interval.GetIntervalFrom(&models.DataSource{
+					JsonData: simplejson.NewFromAny(dsInfo.JSONData),
+				}, model, defaultInterval)
 				if err != nil {
 					azlog.Warn("Unable to get interval from query", "model", model)
 					it = defaultInterval

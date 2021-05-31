@@ -148,12 +148,9 @@ func (e *ApplicationInsightsDatasource) executeQuery(ctx context.Context, query 
 
 	span, ctx := opentracing.StartSpanFromContext(ctx, "application insights query")
 	span.SetTag("target", query.Target)
-	// TODO: Verify if we can set this as nanosecods (before was ms)
 	span.SetTag("from", query.TimeRange.From.UTC().UnixNano())
 	span.SetTag("until", query.TimeRange.To.UTC().UnixNano())
 	span.SetTag("datasource_id", e.dsInfo.DatasourceID)
-	// TODO: Verify if it's okay to remove OrgId (value: 1)
-	// span.SetTag("org_id", e.dsInfo.OrgId)
 
 	defer span.Finish()
 
@@ -232,7 +229,7 @@ func (e *ApplicationInsightsDatasource) createRequest(ctx context.Context, dsInf
 		return nil, errutil.Wrap("Failed to create request", err)
 	}
 
-	// TODO: Verify if it's a better way to do this proxy
+	// TODO: Use backend authentication instead
 	proxyPass := fmt.Sprintf("%s/v1/apps/%s", routeName, appInsightsAppID)
 	pluginproxy.ApplyRoute(ctx, req, proxyPass, appInsightsRoute, &models.DataSource{
 		JsonData:       simplejson.NewFromAny(dsInfo.JSONData),

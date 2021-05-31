@@ -125,7 +125,7 @@ func TestAzureLogAnalyticsMacros(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			defaultTimeField := "TimeGenerated"
-			rawQuery, err := KqlInterpolate(tt.query, tt.kql, defaultTimeField)
+			rawQuery, err := KqlInterpolate(tt.query, datasourceInfo{}, tt.kql, defaultTimeField)
 			tt.Err(t, err)
 			if diff := cmp.Diff(tt.expected, rawQuery, cmpopts.EquateNaNs()); diff != "" {
 				t.Errorf("Result mismatch (-want +got):\n%s", diff)

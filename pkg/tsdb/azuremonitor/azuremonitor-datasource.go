@@ -173,12 +173,9 @@ func (e *AzureMonitorDatasource) executeQuery(ctx context.Context, query *AzureM
 
 	span, ctx := opentracing.StartSpanFromContext(ctx, "azuremonitor query")
 	span.SetTag("target", query.Target)
-	// TODO: Verify if we can set this as nanosecods (before was ms)
 	span.SetTag("from", query.TimeRange.From.UTC().UnixNano())
 	span.SetTag("until", query.TimeRange.To.UTC().UnixNano())
 	span.SetTag("datasource_id", e.dsInfo.DatasourceID)
-	// TODO: Verify if it's okay to remove OrgId (value: 1)
-	// span.SetTag("org_id", e.dsInfo.OrgId)
 
 	defer span.Finish()
 
@@ -238,8 +235,8 @@ func (e *AzureMonitorDatasource) createRequest(ctx context.Context, dsInfo datas
 
 	req.Header.Set("Content-Type", "application/json")
 
+	// TODO: Use backend authentication instead
 	proxyPass := fmt.Sprintf("%s/subscriptions", routeName)
-	// TODO: Verify if it's a better way to do this proxy
 	pluginproxy.ApplyRoute(ctx, req, proxyPass, azureMonitorRoute, &models.DataSource{
 		JsonData:       simplejson.NewFromAny(dsInfo.JSONData),
 		SecureJsonData: securejsondata.GetEncryptedJsonData(dsInfo.DecryptedSecureJSONData),

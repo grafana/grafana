@@ -85,7 +85,7 @@ func (e *AzureResourceGraphDatasource) buildQueries(queries []backend.DataQuery)
 			resultFormat = "table"
 		}
 
-		interpolatedQuery, err := KqlInterpolate(query, azureResourceGraphTarget.Query)
+		interpolatedQuery, err := KqlInterpolate(query, e.dsInfo, azureResourceGraphTarget.Query)
 
 		if err != nil {
 			return nil, err
@@ -151,12 +151,9 @@ func (e *AzureResourceGraphDatasource) executeQuery(ctx context.Context, query *
 
 	span, ctx := opentracing.StartSpanFromContext(ctx, "azure resource graph query")
 	span.SetTag("interpolated_query", query.InterpolatedQuery)
-	// TODO: Verify if we can set this as nanosecods (before was ms)
 	span.SetTag("from", query.TimeRange.From.UTC().UnixNano())
 	span.SetTag("until", query.TimeRange.To.UTC().UnixNano())
 	span.SetTag("datasource_id", e.dsInfo.DatasourceID)
-	// TODO: Verify if it's okay to remove OrgId (value: 1)
-	// span.SetTag("org_id", e.dsInfo.OrgId)
 
 	defer span.Finish()
 
@@ -217,7 +214,7 @@ func (e *AzureResourceGraphDatasource) createRequest(ctx context.Context, dsInfo
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("User-Agent", fmt.Sprintf("Grafana/%s", setting.BuildVersion))
 
-	// TODO: Verify if it's a better way to do this proxy
+	// TODO: Use backend authentication instead
 	pluginproxy.ApplyRoute(ctx, req, routeName, argRoute, &models.DataSource{
 		JsonData:       simplejson.NewFromAny(dsInfo.JSONData),
 		SecureJsonData: securejsondata.GetEncryptedJsonData(dsInfo.DecryptedSecureJSONData),

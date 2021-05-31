@@ -77,7 +77,7 @@ func (e *InsightsAnalyticsDatasource) buildQueries(queries []backend.DataQuery) 
 			return nil, fmt.Errorf("query is missing query string property")
 		}
 
-		qm.InterpolatedQuery, err = KqlInterpolate(query, qm.RawQuery)
+		qm.InterpolatedQuery, err = KqlInterpolate(query, e.dsInfo, qm.RawQuery)
 		if err != nil {
 			return nil, err
 		}
@@ -109,8 +109,6 @@ func (e *InsightsAnalyticsDatasource) executeQuery(ctx context.Context, query *I
 	span, ctx := opentracing.StartSpanFromContext(ctx, "application insights analytics query")
 	span.SetTag("target", query.Target)
 	span.SetTag("datasource_id", e.dsInfo.DatasourceID)
-	// TODO: Verify if it's okay to remove OrgId (value: 1)
-	// span.SetTag("org_id", e.dsInfo.OrgId)
 
 	defer span.Finish()
 
@@ -206,7 +204,7 @@ func (e *InsightsAnalyticsDatasource) createRequest(ctx context.Context, dsInfo 
 		return nil, errutil.Wrap("Failed to create request", err)
 	}
 
-	// TODO: Verify if it's a better way to do this proxy
+	// TODO: Use backend authentication instead
 	proxyPass := fmt.Sprintf("%s/v1/apps/%s", routeName, appInsightsAppID)
 	pluginproxy.ApplyRoute(ctx, req, proxyPass, appInsightsRoute, &models.DataSource{
 		JsonData:       simplejson.NewFromAny(dsInfo.JSONData),

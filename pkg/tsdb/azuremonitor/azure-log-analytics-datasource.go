@@ -108,7 +108,7 @@ func (e *AzureLogAnalyticsDatasource) buildQueries(queries []backend.DataQuery) 
 		apiURL := getApiURL(queryJSONModel)
 
 		params := url.Values{}
-		rawQuery, err := KqlInterpolate(query, azureLogAnalyticsTarget.Query, "TimeGenerated")
+		rawQuery, err := KqlInterpolate(query, e.dsInfo, azureLogAnalyticsTarget.Query, "TimeGenerated")
 		if err != nil {
 			return nil, err
 		}
@@ -155,12 +155,9 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *A
 
 	span, ctx := opentracing.StartSpanFromContext(ctx, "azure log analytics query")
 	span.SetTag("target", query.Target)
-	// TODO: Verify if we can set this as nanosecods (before was ms)
 	span.SetTag("from", query.TimeRange.From.UTC().UnixNano())
 	span.SetTag("until", query.TimeRange.To.UTC().UnixNano())
 	span.SetTag("datasource_id", e.dsInfo.DatasourceID)
-	// TODO: Verify if it's okay to remove OrgId (value: 1)
-	// span.SetTag("org_id", e.dsInfo.OrgId)
 
 	defer span.Finish()
 
@@ -247,7 +244,7 @@ func (e *AzureLogAnalyticsDatasource) createRequest(ctx context.Context, dsInfo 
 
 	req.Header.Set("Content-Type", "application/json")
 
-	// TODO: Verify if it's a better way to do this proxy
+	// TODO: Use backend authentication instead
 	pluginproxy.ApplyRoute(ctx, req, routeName, logAnalyticsRoute, &models.DataSource{
 		JsonData:       simplejson.NewFromAny(dsInfo.JSONData),
 		SecureJsonData: securejsondata.GetEncryptedJsonData(dsInfo.DecryptedSecureJSONData),
