@@ -46,8 +46,9 @@ func (e *AlertEngine) IsDisabled() bool {
 
 // ProvideAlertEngine returns a new AlertEngine.
 func ProvideAlertEngine(renderer rendering.Service, bus bus.Bus, requestValidator models.PluginRequestValidator,
-	dataService plugins.DataRequestHandler, backgroundServices *backgroundsvcs.Container) *AlertEngine {
+	dataService plugins.DataRequestHandler, backgroundServices *backgroundsvcs.Container, cfg *setting.Cfg) *AlertEngine {
 	e := &AlertEngine{
+		Cfg:              cfg,
 		RenderService:    renderer,
 		Bus:              bus,
 		RequestValidator: requestValidator,

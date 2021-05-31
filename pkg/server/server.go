@@ -143,11 +143,10 @@ func (s *Server) Run() error {
 	// Start background services.
 	eg, ctx := errgroup.WithContext(s.context)
 	for _, svc := range s.backgroundServices.BackgroundServices {
-		/*
-			if s.serviceRegistry.IsDisabled(svc.Instance) {
-				continue
-			}
-		*/
+		canBeDisabled, ok := svc.(registry.CanBeDisabled)
+		if ok && canBeDisabled.IsDisabled() {
+			continue
+		}
 
 		// Variable is needed for accessing loop variable in callback
 		service := svc
