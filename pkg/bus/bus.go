@@ -54,12 +54,7 @@ type InProcBus struct {
 }
 
 func ProvideBus() *InProcBus {
-	return &InProcBus{
-		handlers:        make(map[string]HandlerFunc),
-		handlersWithCtx: make(map[string]HandlerFunc),
-		listeners:       make(map[string][]HandlerFunc),
-		txMng:           &noopTransactionManager{},
-	}
+	return globalBus
 }
 
 // InTransaction defines an in transaction function
@@ -71,8 +66,13 @@ func (b *InProcBus) InTransaction(ctx context.Context, fn func(ctx context.Conte
 var globalBus = New()
 
 // New initialize the bus
-func New() Bus {
-	return ProvideBus()
+func New() *InProcBus {
+	return &InProcBus{
+		handlers:        make(map[string]HandlerFunc),
+		handlersWithCtx: make(map[string]HandlerFunc),
+		listeners:       make(map[string][]HandlerFunc),
+		txMng:           &noopTransactionManager{},
+	}
 }
 
 // Want to get rid of global bus

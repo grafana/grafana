@@ -65,6 +65,8 @@ func (*OSSLicensingService) HasValidLicense() bool {
 	return false
 }
 
-func ProvideService() *OSSLicensingService {
-	return &OSSLicensingService{}
+func ProvideService(cfg *setting.Cfg) *OSSLicensingService {
+	return &OSSLicensingService{
+		Cfg: cfg,
+	}
 }
