@@ -97,11 +97,11 @@ export const InstallControls = ({ localPlugin, remotePlugin }: Props) => {
       <HorizontalGroup height="auto">
         {shouldUpdate &&
           (isExternallyManaged ? (
-            <LinkButton disabled={!hasPermission} href={externalManageLink} target="_blank" rel="noopener noreferrer">
+            <LinkButton href={externalManageLink} target="_blank" rel="noopener noreferrer">
               {'Update via grafana.com'}
             </LinkButton>
           ) : (
-            <Button disabled={loading} onClick={onUpdate}>
+            <Button disabled={loading || !hasPermission} onClick={onUpdate}>
               {loading ? 'Updating' : 'Update'}
             </Button>
           ))}
