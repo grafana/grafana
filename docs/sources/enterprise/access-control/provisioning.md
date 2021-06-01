@@ -79,28 +79,38 @@ apiVersion: 1
 
 # list of roles that should be deleted
 deleteRoles:
-  - name: custor:reports:editor
+  - name: custom:reports:editor
     orgId: 1
     force: true
 ```
 
 ### Assign your custom to specific built-in roles
 
-To create a built-in role assignment, you add list of assignments to the `builtInRoles` section in the configuration file, as an element of `roles`. To remove a built-in role assignment, leave `builtInRoles` list empty. 
+To assign the role to built-in roles, add said built-in roles to the `builtInRoles` section of your roles. To remove specific assignments you can just remove them from the list.
 
-It is only possibly to provision [organization local]({{< relref "./roles#built-in-role-assignments" >}}) assignments. For creating or updating _global_ assignments, refer to the [Fine-grained access control HTTP API]({{< relref "../../http_api/access_control.md" >}}).
-
+For example this role will be assigned to "Editor" or "Admin" users:
 
 ```yaml
 # config file version
 apiVersion: 1
 
-# list of default built-in role assignments that should be added back
-addDefaultAssignments:
-  # <string>, must be one of the Organization roles (`Viewer`, `Editor`, `Admin`) or `Grafana Admin`
-  - builtInRole: "Admin"
-    # <string>, must be one of the existing fixed roles
-    fixedRole: "fixed:reporting:admin:read"
+
+# Roles to insert/update in the database
+roles:
+  - name: custom:users:editor
+    description: "This role allows users to list/create/update other users in the organization"
+    version: 1
+    orgId: 1
+    permissions:
+      - action: "users:read"
+        scope: "users:*"
+      - action: "users:write"
+        scope: "users:*"
+      - action: "users:create"
+        scope: "users:*"
+    builtInRoles:
+      - name: "Editor"
+      - name: "Admin"
 ```
 
 ## Manage default built-in role assignments
