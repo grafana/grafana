@@ -25,66 +25,66 @@ You can create, update and delete custom roles, as well as create and remove bui
 
 To create or update custom roles, you can add a list of `roles` in the configuration.
 
-When you update a role, you must to increment the [version]({{< relref "./roles.md#custom-roles" >}}). 
+When you update a role, you must remember to increment the [version]({{< relref "./roles.md#custom-roles" >}}), changes won't be accounted for otherwise. 
 
-It is only possible to provision [organization local]({{< relref "./roles#role-scopes" >}}) roles. For creating or updating _global_ roles, refer to the [Fine-grained access control HTTP API]({{< relref "../../http_api/access_control.md" >}}).
+Here is an example yaml file to create a local role with a set of permissions:
 
 ```yaml
 # config file version
 apiVersion: 1
 
-# list of roles to insert/update depending on what is available in the database
+# Roles to insert/update in the database
 roles:
-  # <string, required> name of the role you want to create. Required
-  - name: CustomEditor
-    # <string> uid of the role. Has to be unique for all orgs.
-    uid: customeditor1
-    # <string> description of the role, informative purpose only.
-    description: "Role for our custom user editors"
-    # <int> version of the role, Grafana will update the role when increased
-    version: 2
-    # <int> org id. will default to Grafana's default if not specified
+  - name: custom:users:editor
+    description: "This role allows users to list/create/update other users in the organization"
+    version: 1
     orgId: 1
-    # <list> list of the permissions granted by this role
     permissions:
-      # <string, required> action allowed
       - action: "users:read"
-        #<string, required> scope it applies to
         scope: "users:*"
       - action: "users:write"
         scope: "users:*"
       - action: "users:create"
         scope: "users:*"
-    # <list> list of builtIn roles the role should be assigned to
-    builtInRoles:
-      # <string, required> name of the builtin role you want to assign the role to
-      - name: "Editor"
-        # <int> org id. will default to the role org id
-        orgId: 1 
+```
 
+Here is an example yaml file to create a global role with a set of permissions:
+```yaml
+# config file version
+apiVersion: 1
+
+# Roles to insert/update in the database
+roles:
+  - name: custom:users:editor
+    description: "This role allows users to list/create/update other users in the organization"
+    version: 1
+    global: true
+    permissions:
+      - action: "users:read"
+        scope: "users:*"
+      - action: "users:write"
+        scope: "users:*"
+      - action: "users:create"
+        scope: "users:*"
 ```
 
 ### Delete roles 
 
 To delete a role, you can add a list of roles under the `deleteRoles` section in the configuration file. Deletion is performed after role insertion/update.
 
+Here is an example yaml file to delete a role:
 ```yaml
 # config file version
 apiVersion: 1
 
 # list of roles that should be deleted
 deleteRoles:
-  # <string> name of the role you want to create. Required if no uid is set
-  - name: ReportEditor
-    # <string> uid of the role. Required if no name
-    uid: reporteditor1
-    # <int> org id. will default to Grafana's default if not specified
+  - name: custor:reports:editor
     orgId: 1
-    # <bool> force deletion revoking all grants of the role
     force: true
 ```
 
-### Create and remove built-in role assignments
+### Assign your custom to specific built-in roles
 
 To create a built-in role assignment, you add list of assignments to the `builtInRoles` section in the configuration file, as an element of `roles`. To remove a built-in role assignment, leave `builtInRoles` list empty. 
 
