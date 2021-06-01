@@ -65,6 +65,9 @@ export const VizLegendTable = <T extends unknown>({
 
   return (
     <table className={cx(styles.table, className)}>
+      <colgroup>
+        <col style={{ width: '100%' }} />
+      </colgroup>
       <thead>
         <tr>
           {columns.map((columnHeader) => {
