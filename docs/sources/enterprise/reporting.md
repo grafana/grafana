@@ -43,7 +43,7 @@ Only organization admins can create reports by default. You can customize who ca
    - **Time range -** (optional) Use custom time range for the report. For more information check [Report time range]({{< relref "#report-time-range" >}}).
 1. Select an orientation for the report: **Portrait** or **Landscape**.
 1. Select a layout for the generated report: **Simple** or **Grid**. The simple layout renders each panel as full-width across the PDF. The grid layout renders the PDF with the same panel arrangement and width as the source dashboard.
-1. You can include CSV files for every table panel your dashboard by clicking on **Add a CSV file of table panel data**.
+1. **Add a CSV file of table panel data**: check this box to attach a CSV file to the report email for each table panel on the dashboard.
 1. **Preview PDF** View a rendered PDF with the options you have selected.
 1. Enter scheduling information. Options vary depending on the frequency you select.
 1. **Save** the report.
