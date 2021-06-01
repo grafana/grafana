@@ -3457,6 +3457,17 @@ steps:
   - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/grafana:latest-ubuntu
   - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/grafana:main-ubuntu
 
+- name: slack-notify-failure
+  image: plugins/slack
+  settings:
+    channel: grafana-backend
+    template: "Nightly docker image scan job for {{repo.name}} failed: {{build.link}}"
+    webhook:
+      from_secret: slack_webhook
+  when:
+    status:
+    - failure
+
 trigger:
   cron:
   - nightly
