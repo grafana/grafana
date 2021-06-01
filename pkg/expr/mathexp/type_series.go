@@ -9,7 +9,10 @@ import (
 	"github.com/grafana/grafana/pkg/expr/mathexp/parse"
 )
 
+// seriesTypeTimeIdx is the data frame field index for the Series type's Time column.
 const seriesTypeTimeIdx = 0
+
+// seriesTypeValIdx is the data frame field index for the Series type's Value column.
 const seriesTypeValIdx = 1
 
 // Series has a time.Time and a *float64 fields.
@@ -20,7 +23,7 @@ type Series struct {
 }
 
 // SeriesFromFrame validates that the dataframe can be considered a Series type
-// and populate meta information on Series about the frame.
+// and mutates the frame to be in the format that additional SSE operations expect.
 func SeriesFromFrame(frame *data.Frame) (s Series, err error) {
 	if len(frame.Fields) != 2 {
 		return s, fmt.Errorf("frame must have exactly two fields to be a series, has %v", len(frame.Fields))
