@@ -51,8 +51,8 @@ Annotation example containing two annotations:
 
 ```json
 {
-  summary: "alert summary",
-  description: "alert description"
+  "summary": "alert summary",
+  "description": "alert description"
 }
 ```
 
