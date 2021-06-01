@@ -19,7 +19,7 @@ var ldapAdminReadRole = RoleDTO{
 var ldapAdminEditRole = RoleDTO{
 	Name:        ldapAdminEdit,
 	Version:     2,
-	Description: "Allows every read action for LDAP and in addition allows to administer LDAP.",
+	Description: "Role to allow users everything ldapAdminReadRole allows and to synchronize Grafana users with an LDAP server.",
 	Permissions: ConcatPermissions(ldapAdminReadRole.Permissions, []Permission{
 		{
 			Action: ActionLDAPUsersSync,
