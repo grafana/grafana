@@ -1,5 +1,5 @@
 +++
-title = "Feature overview"
+title = "Live feature overview"
 description = "Grafana Live feature overview"
 keywords = ["Grafana", "live", "guide"]
 weight = 100

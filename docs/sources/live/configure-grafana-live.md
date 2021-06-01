@@ -1,5 +1,5 @@
 +++
-title = "Configuration"
+title = "Configure Grafana Live"
 description = "Grafana Live configuration guide"
 keywords = ["Grafana", "live", "guide", "websocket"]
 weight = 120
