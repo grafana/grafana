@@ -12,6 +12,7 @@ The state timeline visualization shows discrete state changes over time. Each fi
 {{< figure src="/static/img/docs/v8/state_timeline_strings.png" max-width="1025px" caption="state timeline with string states" >}}
 
 ## Shared options
+
 The following shared options are available:
 
 - [Standard options]({{< relref "../standard-options.md" >}}) (Unit, min, max, decimals, color)
@@ -22,13 +23,25 @@ You can also use [field overrides]({{< relref "../field-overrides.md" >}}) to sp
 
 ## Display options
 
-| Name           | Description                                                                                             |
-| -------------- | ------------------------------------------------------------------------------------------------------- |
-| `Show values`  | Controls whether values are rendered inside the state regions. Auto will render values if there is room. |
-| `Align values` | Controls value alignment inside state regions.                                                            |
-| `Row height`   | Controls how much space between rows there are. 1 = no space = 0.5 = 50% space                          |
-| `Line width`   | Controls line width of state regions.                                                         |
-| `Fill opacity` | Controls the opacity of state regions.                                                         |
+### Show values
+
+Controls whether values are rendered inside the state regions. Auto will render values if there is room.
+
+### Align values
+
+Controls value alignment inside state regions.
+
+### Row height
+
+Controls how much space between rows there are. 1 = no space = 0.5 = 50% space.
+
+### Line width
+
+Controls line width of state regions.
+
+### Fill opacity
+
+Controls the opacity of state regions.
 
 ## Value mappings
 
@@ -36,7 +49,7 @@ To assign colors to boolean or string values, use the [Value mappings](< {{ refr
 
 {{< figure src="/static/img/docs/v8/value_mappings_side_editor.png" max-width="300px" caption="Value mappings side editor" >}}
 
-## Time series + thresholds
+## Time series data with thresholds
 
 The panel can be with time series data as well. In this case, the thresholds are used to turn the time series into discrete colored state regions.
 
