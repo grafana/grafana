@@ -5,9 +5,11 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/backgroundsvcs"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/require"
 )
@@ -79,15 +81,16 @@ func pluginScenario(t *testing.T, desc string, fn func(*testing.T, *PluginManage
 	t.Helper()
 
 	t.Run("Given a plugin", func(t *testing.T) {
-		pm := newManager(&setting.Cfg{
+		cfg := &setting.Cfg{
 			FeatureToggles: map[string]bool{},
 			PluginSettings: setting.PluginSettings{
 				"test-app": map[string]string{
 					"path": "testdata/test-app",
 				},
 			},
-		})
-		err := pm.Init()
+		}
+		sqlStore := sqlstore.InitTestDB(t)
+		pm, err := ProvideService(cfg, sqlStore, &fakeBackendPluginManager{}, backgroundsvcs.ProvideService())
 		require.NoError(t, err)
 
 		t.Run(desc, func(t *testing.T) {

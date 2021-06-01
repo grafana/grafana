@@ -1,33 +1,30 @@
 package manager
 
 import (
-	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"testing"
+
+	"github.com/grafana/grafana/pkg/infra/backgroundsvcs"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestGetPluginDashboards(t *testing.T) {
-	sqlStore := sqlstore.SQLStore{}
-	backendPM := &fakeBackendPluginManager{}
-	err := backendPM.Register("test-app", nil)
-	require.NoError(t, err)
-
-	pm := newManager(&setting.Cfg{
+	cfg := &setting.Cfg{
 		FeatureToggles: map[string]bool{},
 		PluginSettings: setting.PluginSettings{
 			"test-app": map[string]string{
 				"path": "testdata/test-app",
 			},
 		},
-	}, &sqlStore, backendPM)
-	pm.plugins["test-app"] = &plugins.PluginBase{}
+	}
+	sqlStore := &sqlstore.SQLStore{}
+	pm, err := ProvideService(cfg, sqlStore, &fakeBackendPluginManager{}, backgroundsvcs.ProvideService())
+	require.NoError(t, err)
 
 	bus.AddHandler("test", func(query *models.GetDashboardQuery) error {
 		if query.Slug == "nginx-connections" {
@@ -54,12 +51,12 @@ func TestGetPluginDashboards(t *testing.T) {
 	dashboards, err := pm.GetPluginDashboards(1, "test-app")
 	require.NoError(t, err)
 
-	assert.Len(t, dashboards, 2)
-	assert.Equal(t, "Nginx Connections", dashboards[0].Title)
-	assert.Equal(t, int64(25), dashboards[0].Revision)
-	assert.Equal(t, int64(22), dashboards[0].ImportedRevision)
-	assert.Equal(t, "db/nginx-connections", dashboards[0].ImportedUri)
+	require.Len(t, dashboards, 2)
+	require.Equal(t, "Nginx Connections", dashboards[0].Title)
+	require.Equal(t, int64(25), dashboards[0].Revision)
+	require.Equal(t, int64(22), dashboards[0].ImportedRevision)
+	require.Equal(t, "db/nginx-connections", dashboards[0].ImportedUri)
 
-	assert.Equal(t, int64(2), dashboards[1].Revision)
-	assert.Equal(t, int64(0), dashboards[1].ImportedRevision)
+	require.Equal(t, int64(2), dashboards[1].Revision)
+	require.Equal(t, int64(0), dashboards[1].ImportedRevision)
 }
