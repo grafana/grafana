@@ -300,9 +300,11 @@ func (a *MetricAggregation) MarshalJSON() ([]byte, error) {
 		}
 
 		if hasOrderBy && hasOrder {
-			sortObject := map[string]interface{}{}
-			sortObject[orderBy.(string)] = order
-			root["sort"] = []map[string]interface{}{sortObject}
+			root["sort"] = []map[string]interface{}{
+				{
+					orderBy.(string): order,
+				},
+			}
 		}
 
 		return json.Marshal(root)
