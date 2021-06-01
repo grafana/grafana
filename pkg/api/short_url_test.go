@@ -50,7 +50,7 @@ func createShortURLScenario(t *testing.T, desc string, url string, routePattern 
 			ShortURLService: &shorturls.ShortURLService{
 				SQLStore: sqlStore,
 			},
-		log: log.New("test"),
+			log: log.New("test"),
 		}
 
 		sc := setupScenarioContext(t, url)
