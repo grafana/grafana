@@ -31,8 +31,10 @@ This is a configuration for the [trace to logs feature]({{< relref "../explore/t
 
 - **Data source -** Target data source.
 - **Tags -** The tags that will be used in the Loki query. Default is `'cluster', 'hostname', 'namespace', 'pod'`.
+- **Span start time shift (ms) -** The time in milliseconds to shift the start time for the Loki query based on the span start time. The default is 0.
+- **Span end time shift (ms) -** The time in milliseconds to shift the end time for the Loki query based on the span end time. The default is 0.
 
-![Trace to logs settings](/static/img/docs/explore/trace-to-logs-settings-7-4.png 'Screenshot of the trace to logs settings')
+![Trace to logs settings](/static/img/docs/explore/trace-to-logs-settings-8.png 'Screenshot of the trace to logs settings')
 
 ## Query traces
 
