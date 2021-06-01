@@ -89,7 +89,7 @@ deleteRoles:
     force: true
 ```
 
-### Assign your custom to specific built-in roles
+### Assign your custom role to specific built-in roles
 
 To assign roles to built-in roles, add said built-in roles to the `builtInRoles` section of your roles. To remove specific assignments you can just remove them from the list.
 
