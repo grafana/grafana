@@ -73,6 +73,14 @@ export const validators = {
     return 'Must include numbers';
   },
 
+  maxLength: (numberOfCharacters: number) => (value: string) => {
+    if (value.length <= numberOfCharacters) {
+      return undefined;
+    }
+
+    return `Must contain at most ${numberOfCharacters} characters`;
+  },
+
   minLength: (numberOfCharacters: number) => (value: string) => {
     if (value.length >= numberOfCharacters) {
       return undefined;
