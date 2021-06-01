@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"net"
 	"os"
+	"os/user"
 	"path/filepath"
 	"strconv"
 	"sync"
@@ -307,6 +308,15 @@ func (s *Server) loadConfiguration() {
 		"branch", s.buildBranch,
 		"compiled", time.Unix(setting.BuildStamp, 0),
 	)
+
+	serverProcessUser, err := user.Current()
+	if err != nil {
+		s.log.Debug("Could not get current OS user to detect process privileges")
+	}
+
+	if (serverProcessUser != nil && serverProcessUser.Username == "root") || os.Geteuid() == 0 {
+		s.log.Warn("Grafana server is being run with elevated privileges. This is not recommended")
+	}
 
 	s.cfg.LogConfigSources()
 }
