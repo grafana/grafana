@@ -1097,6 +1097,7 @@ steps:
   - rmdir bin
   - mv grafana-enterprise /tmp/
   - /tmp/grabpl init-enterprise /tmp/grafana-enterprise ${DRONE_TAG}
+  - mv /tmp/grafana-enterprise/deployment_tools_config.json deployment_tools_config.json
   - mkdir bin
   - mv /tmp/grabpl bin/
   - ./bin/grabpl verify-drone
@@ -2041,6 +2042,7 @@ steps:
   - rmdir bin
   - mv grafana-enterprise /tmp/
   - /tmp/grabpl init-enterprise /tmp/grafana-enterprise
+  - mv /tmp/grafana-enterprise/deployment_tools_config.json deployment_tools_config.json
   - mkdir bin
   - mv /tmp/grabpl bin/
   - ./bin/grabpl verify-drone
@@ -2950,6 +2952,7 @@ steps:
   - rmdir bin
   - mv grafana-enterprise /tmp/
   - /tmp/grabpl init-enterprise /tmp/grafana-enterprise
+  - mv /tmp/grafana-enterprise/deployment_tools_config.json deployment_tools_config.json
   - mkdir bin
   - mv /tmp/grabpl bin/
   - ./bin/grabpl verify-drone
