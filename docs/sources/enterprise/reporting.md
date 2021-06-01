@@ -47,7 +47,7 @@ Only organization admins can create reports by default. You can customize who ca
 1. **Preview PDF** View a rendered PDF with the options you have selected.
 1. Enter scheduling information. Options vary depending on the frequency you select.
 1. **Save** the report.
-1. **Send test email** to verify that the whole configuration is working as expected. This will ask you to write an email to send the test email to or to use the emails from the report configuration.
+1. **Send test email** to verify that the whole configuration is working as expected. You can choose to send this email to the recipients configured for the report, or to a different set of email addresses only used for testing.
 
 {{< figure src="/static/img/docs/enterprise/reports-create-new-8.0.png" max-width="500px" class="docs-image--no-shadow" >}}
 
