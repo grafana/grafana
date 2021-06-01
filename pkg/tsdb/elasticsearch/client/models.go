@@ -290,14 +290,10 @@ func (a *MetricAggregation) MarshalJSON() ([]byte, error) {
 
 		root["size"] = "1"
 
-		_metrics, hasMetrics := a.Settings["metrics"].([]interface{})
+		metrics, hasMetrics := a.Settings["metrics"].([]interface{})
 		if hasMetrics {
-			metrics := make([]string, len(_metrics))
-			for i, v := range _metrics {
-				metrics[i] = v.(string)
-			}
-			for _, metricField := range metrics {
-				metricValue := map[string]string{"field": metricField}
+			for _, v := range metrics {
+				metricValue := map[string]string{"field": v.(string)}
 				rootMetrics = append(rootMetrics, metricValue)
 			}
 			root["metrics"] = rootMetrics
