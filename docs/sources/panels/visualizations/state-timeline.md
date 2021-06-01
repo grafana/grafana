@@ -1,6 +1,6 @@
 +++
 title = "State timeline"
-description = "Stat timeline visualization docs"
+description = "Stat timeline visualization"
 keywords = ["grafana", "docs", "state timeline", "panel"]
 weight = 900
 +++
@@ -44,5 +44,4 @@ The panel can be used to great effect with time series as well. In this scenario
 ## Legend options
 
 When the legend is enabled it can can show either the value mappings or the threshold brackets. To show the value mappings in the legend it's important that the `Color scheme` option under [Standard options]({{< relref "../standard-options.md" >}}) is set to `Single color` or `Classic palette`. To see the threshold brackets in the legend set the `Color scheme` to `From thresholds`.
-
 
