@@ -2,7 +2,7 @@ import React, { FC, useCallback, useEffect, useMemo } from 'react';
 import { useObservable } from 'react-use';
 import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
-import { Button, PageToolbar, withErrorBoundary, useStyles2, Field, TextArea } from '@grafana/ui';
+import { Button, PageToolbar, withErrorBoundary, useStyles2, Field, TextArea, CodeEditor } from '@grafana/ui';
 import Page from 'app/core/components/Page/Page';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { parseRuleIdentifier } from './utils/rules';
@@ -71,21 +71,23 @@ const ViewAlertRulePage: FC<ViewAlertRuleProps> = ({ match }) => {
         </div>
         <div className={styles.queries}>
           <h4>Queries</h4>
-          {/*{rule &&*/}
-          {/*  rule.data.map((query, index) => {*/}
-          {/*    return (*/}
-          {/*      <div key={index} className={styles.query}>*/}
-          {/*        <span>vis</span>*/}
-          {/*        <CodeEditor*/}
-          {/*          language="json"*/}
-          {/*          readOnly*/}
-          {/*          value={JSON.stringify(query.model, null, 2)}*/}
-          {/*          height={200}*/}
-          {/*          showMiniMap={false}*/}
-          {/*        />*/}
-          {/*      </div>*/}
-          {/*    );*/}
-          {/*  })}*/}
+          {rule &&
+            rule.rulerRule &&
+            rule.rulerRule.grafana_alert &&
+            rule.rulerRule.grafana_alert.data.map((query, index) => {
+              return (
+                <div key={index} className={styles.query}>
+                  <span>vis</span>
+                  <CodeEditor
+                    language="json"
+                    readOnly
+                    value={JSON.stringify(query.model, null, 2)}
+                    height={200}
+                    showMiniMap={false}
+                  />
+                </div>
+              );
+            })}
         </div>
       </div>
     </Page>
