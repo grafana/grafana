@@ -23,7 +23,11 @@ var writeCertFileCallNum int
 
 // TestDataSourceCacheManager is to test the Cache manager
 func TestDataSourceCacheManager(t *testing.T) {
-	cfg := setting.NewCfg()
+	cfg, err := setting.NewCfg(setting.CommandLineArgs{
+		HomePath: "../../../",
+	})
+	require.NoError(t, err)
+
 	cfg.DataPath = t.TempDir()
 	mng := tlsManager{
 		logger:          log.New("tsdb.postgres"),
@@ -168,7 +172,10 @@ func TestGetFileName(t *testing.T) {
 
 // Test getTLSSettings.
 func TestGetTLSSettings(t *testing.T) {
-	cfg := setting.NewCfg()
+	cfg, err := setting.NewCfg(setting.CommandLineArgs{
+		HomePath: "../../../",
+	})
+	require.NoError(t, err)
 	cfg.DataPath = t.TempDir()
 
 	mockValidateCertFilePaths()

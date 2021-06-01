@@ -1,6 +1,8 @@
 package manager
 
 import (
+	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -12,6 +14,11 @@ import (
 )
 
 func TestGetPluginDashboards(t *testing.T) {
+	sqlStore := sqlstore.SQLStore{}
+	backendPM := &fakeBackendPluginManager{}
+	err := backendPM.Register("test-app", nil)
+	require.NoError(t, err)
+
 	pm := newManager(&setting.Cfg{
 		FeatureToggles: map[string]bool{},
 		PluginSettings: setting.PluginSettings{
@@ -19,9 +26,8 @@ func TestGetPluginDashboards(t *testing.T) {
 				"path": "testdata/test-app",
 			},
 		},
-	})
-	err := pm.Init()
-	require.NoError(t, err)
+	}, &sqlStore, backendPM)
+	pm.plugins["test-app"] = &plugins.PluginBase{}
 
 	bus.AddHandler("test", func(query *models.GetDashboardQuery) error {
 		if query.Slug == "nginx-connections" {

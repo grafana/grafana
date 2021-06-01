@@ -13,7 +13,10 @@ import (
 )
 
 func TestCSVFileScenario(t *testing.T) {
-	cfg := setting.NewCfg()
+	cfg, err := setting.NewCfg(setting.CommandLineArgs{
+		HomePath: "../../../",
+	})
+	require.NoError(t, err)
 	cfg.DataPath = t.TempDir()
 	cfg.StaticRootPath = "../../../public"
 

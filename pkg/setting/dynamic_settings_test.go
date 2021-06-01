@@ -8,14 +8,17 @@ import (
 )
 
 func TestDynamicSettingsSupport_Override(t *testing.T) {
-	cfg := NewCfg()
+	cfg, err := NewCfg(CommandLineArgs{
+		HomePath: "../../",
+	})
+	require.NoError(t, err)
 
 	envKey := "GF_FOO_BAR"
 	sectionName := "foo"
 	keyName := "bar"
 	expected := "dynamic value"
 
-	err := os.Setenv(envKey, expected)
+	err = os.Setenv(envKey, expected)
 	require.NoError(t, err)
 	defer func() {
 		err := os.Unsetenv(envKey)
@@ -27,12 +30,16 @@ func TestDynamicSettingsSupport_Override(t *testing.T) {
 }
 
 func TestDynamicSettingsSupport_NoOverride(t *testing.T) {
-	cfg := NewCfg()
+	cfg, err := NewCfg(CommandLineArgs{
+		HomePath: "../../",
+	})
+	require.NoError(t, err)
+
 	sectionName := "foo"
 	keyName := "bar"
 	expected := "default value"
 
-	_, err := cfg.Raw.Section(sectionName).NewKey(keyName, expected)
+	_, err = cfg.Raw.Section(sectionName).NewKey(keyName, expected)
 	require.NoError(t, err)
 	value := cfg.SectionWithEnvOverrides(sectionName).Key(keyName).String()
 	require.Equal(t, expected, value)

@@ -692,7 +692,11 @@ func TestGuardianGetHiddenACL(t *testing.T) {
 			return nil
 		})
 
-		cfg := setting.NewCfg()
+		cfg, err := setting.NewCfg(setting.CommandLineArgs{
+			HomePath: "../../../",
+		})
+		So(err, ShouldBeNil)
+
 		cfg.HiddenUsers = map[string]struct{}{"user2": {}}
 
 		Convey("Should get hidden acl", func() {
