@@ -19,17 +19,25 @@ Value mappings are displayed differently in different visualizations.
 
 ### Time series example
 
+Here's an example showing a Time series visualization with value mappings.
+
 ![Value mappings time series example](/static/img/docs/value-mappings/value-mappings-summary-example-8-0.png)
 
 ### Stat example
+
+Here's an example showing a Stat visualization with value mappings.
 
 ![Value mappings stat example](/static/img/docs/value-mappings/value-mappings-stat-example-8-0.png)
 
 ### Bar gauge example
 
+Here's an example showing a Bar gauge visualization with value mappings.
+
 ![Value mappings bar gauge example](/static/img/docs/value-mappings/value-mappings-bar-gauge-example-8-0.png)
 
 ### Table example
+
+Here's an example showing a Table visualization with value mappings.
 
 ![Value mappings table example](/static/img/docs/value-mappings/value-mappings-table-example-8-0.png)
 
