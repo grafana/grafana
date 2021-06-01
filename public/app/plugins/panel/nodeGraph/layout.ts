@@ -44,11 +44,9 @@ export function useLayout(
   rawEdges: EdgeDatum[],
   config: Config = defaultConfig,
   nodeCountLimit: number,
+  width: number,
   rootNodeId?: string
 ) {
-  const [nodesGrid, setNodesGrid] = useState<NodeDatum[]>([]);
-  const [edgesGrid, setEdgesGrid] = useState<EdgeDatumLayout[]>([]);
-
   const [nodesGraph, setNodesGraph] = useState<NodeDatum[]>([]);
   const [edgesGraph, setEdgesGraph] = useState<EdgeDatumLayout[]>([]);
 
@@ -70,18 +68,16 @@ export function useLayout(
   // happening as already visible nodes would change positions.
   useEffect(() => {
     if (rawNodes.length === 0) {
+      setNodesGraph([]);
+      setEdgesGraph([]);
       return;
     }
 
     setLoading(true);
 
-    // d3 just modifies the nodes directly, so lets make sure we don't leak that outside
-    let rawNodesCopy = rawNodes.map((n) => ({ ...n }));
-    let rawEdgesCopy = rawEdges.map((e) => ({ ...e }));
-
-    // This is async but as I wanted to still run the sync grid layout and you cannot return promise from effect having
-    // callback seem ok here.
-    defaultLayout(rawNodesCopy, rawEdgesCopy, ({ nodes, edges }) => {
+    // This is async but as I wanted to still run the sync grid layout and you cannot return promise from effect so
+    // having callback seems ok here.
+    defaultLayout(rawNodes, rawEdges, ({ nodes, edges }) => {
       // TODO: it would be better to cancel the worker somehow but probably not super important right now.
       if (isMounted()) {
         setNodesGraph(nodes);
@@ -89,14 +85,21 @@ export function useLayout(
         setLoading(false);
       }
     });
+  }, [rawNodes, rawEdges, isMounted]);
 
-    rawNodesCopy = rawNodes.map((n) => ({ ...n }));
-    rawEdgesCopy = rawEdges.map((e) => ({ ...e }));
-    gridLayout(rawNodesCopy, config.sort);
+  // Compute grid separately as it is sync and do not need to be inside effect. Also it is dependant on width while
+  // default layout does not care and we don't want to recalculate that on panel resize.
+  const [nodesGrid, edgesGrid] = useMemo(() => {
+    if (rawNodes.length === 0) {
+      return [[], []];
+    }
 
-    setNodesGrid(rawNodesCopy);
-    setEdgesGrid(rawEdgesCopy as EdgeDatumLayout[]);
-  }, [config.sort, rawNodes, rawEdges, isMounted]);
+    const rawNodesCopy = rawNodes.map((n) => ({ ...n }));
+    const rawEdgesCopy = rawEdges.map((e) => ({ ...e }));
+    gridLayout(rawNodesCopy, width, config.sort);
+
+    return [rawNodesCopy, rawEdgesCopy as EdgeDatumLayout[]];
+  }, [config.sort, rawNodes, rawEdges, width]);
 
   // Limit the nodes so we don't show all for performance reasons. Here we don't compute both at the same time so
   // changing the layout can trash internal memoization at the moment.
@@ -159,6 +162,7 @@ function defaultLayout(
  */
 function gridLayout(
   nodes: NodeDatum[],
+  width: number,
   sort?: {
     field: Field;
     ascending: boolean;
@@ -166,8 +170,9 @@ function gridLayout(
 ) {
   const spacingVertical = 140;
   const spacingHorizontal = 120;
-  // TODO probably make this based on the width of the screen
-  const perRow = 4;
+  const padding = spacingHorizontal / 2;
+  const perRow = Math.min(Math.floor((width - padding * 2) / spacingVertical), nodes.length);
+  const midPoint = Math.floor(((perRow - 1) * spacingHorizontal) / 2);
 
   if (sort) {
     nodes.sort((node1, node2) => {
@@ -182,7 +187,7 @@ function gridLayout(
   for (const [index, node] of nodes.entries()) {
     const row = Math.floor(index / perRow);
     const column = index % perRow;
-    node.x = -180 + column * spacingHorizontal;
+    node.x = column * spacingHorizontal - midPoint;
     node.y = -60 + row * spacingVertical;
   }
 }

@@ -135,6 +135,7 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit }: Props) {
     processed.edges,
     config,
     nodeCountLimit,
+    width,
     focusedNodeId
   );
 
