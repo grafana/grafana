@@ -133,7 +133,7 @@ var usersAdminEditRole = RoleDTO{
 var provisioningAdminRole = RoleDTO{
 	Name:        provisioningAdmin,
 	Version:     2,
-	Description: "Allows to reload provisioning configurations.",
+	Description: "Role to allow users to reload the provisioning configuration files.",
 	Permissions: []Permission{
 		{
 			Action: ActionProvisioningReload,
