@@ -112,7 +112,8 @@ export const DashboardPrompt = React.memo(({ dashboard }: Props) => {
           }}
           onDiscard={() => {
             dispatch(discardPanelChanges());
-            locationService.push(blockedLocation!);
+            setState({ ...state, modal: null });
+            setTimeout(() => locationService.push(blockedLocation!), 10);
           }}
           onDismiss={() => {
             setState({ ...state, modal: null });
