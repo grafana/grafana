@@ -38,7 +38,7 @@ To assign colors to boolean or string values, use the [Value mappings](< {{ refr
 
 ## Time series + thresholds
 
-The panel can be used to great effect with time series as well. In this scenario the thresholds will be used to turn the time series into discrete colored state regions.
+The panel can be with time series data as well. In this case, the thresholds are used to turn the time series into discrete colored state regions.
 
 {{< figure src="/static/img/docs/v8/state_timeline_time_series.png" max-width="1025px" caption="state timeline with time series" >}}
 
