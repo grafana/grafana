@@ -19,12 +19,12 @@ import { PanelModel } from 'app/features/dashboard/state';
 import { PanelQueryRunner } from '../query/state/PanelQueryRunner';
 
 class MetricsPanelCtrl extends PanelCtrl {
-  datasource?: DataSourceApi;
+  declare datasource: DataSourceApi;
   contextSrv: ContextSrv;
   datasourceSrv: any;
   timeSrv: any;
   templateSrv: any;
-  range?: TimeRange;
+  declare range: TimeRange;
   interval: any;
   intervalMs: any;
   resolution: any;
@@ -81,7 +81,7 @@ class MetricsPanelCtrl extends PanelCtrl {
       this.panelData = {
         state: LoadingState.Done,
         series: data,
-        timeRange: this.range!,
+        timeRange: this.range,
       };
 
       // Defer panel rendering till the next digest cycle.
@@ -175,7 +175,7 @@ class MetricsPanelCtrl extends PanelCtrl {
     this.datasource = datasource || this.datasource;
     this.range = this.timeSrv.timeRange();
 
-    const newTimeData = applyPanelTimeOverrides(this.panel, this.range!);
+    const newTimeData = applyPanelTimeOverrides(this.panel, this.range);
     this.timeInfo = newTimeData.timeInfo;
     this.range = newTimeData.timeRange;
 
@@ -195,7 +195,7 @@ class MetricsPanelCtrl extends PanelCtrl {
       dashboardId: this.dashboard.id,
       timezone: this.dashboard.getTimezone(),
       timeInfo: this.timeInfo,
-      timeRange: this.range!,
+      timeRange: this.range,
       maxDataPoints: panel.maxDataPoints || this.width,
       minInterval: panel.interval,
       scopedVars: panel.scopedVars,

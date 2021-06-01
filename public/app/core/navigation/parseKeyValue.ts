@@ -45,11 +45,6 @@ export function isObject(value: any) {
   return value !== null && typeof value === 'object';
 }
 
-type Defined<T> = T extends undefined | void ? never : T;
-export function isDefined<T>(value: T): value is Defined<T> {
-  return typeof value !== 'undefined';
-}
-
 export function isWindow(obj: { window: any }) {
   return obj && obj.window === obj;
 }
@@ -121,12 +116,12 @@ export function forEach(obj: any, iterator: any, context?: any) {
   }
   return obj;
 }
-export function tryDecodeURIComponent(value: string): string | void {
+export function tryDecodeURIComponent(value: string): string {
   try {
     return decodeURIComponent(value);
   } catch (e) {
     // Ignore any invalid uri component.
-    return;
+    return '';
   }
 }
 
@@ -142,8 +137,8 @@ function parseKeyValue(keyValue: string | null) {
         val = keyValue.substring(splitPoint + 1);
       }
       key = tryDecodeURIComponent(key);
-      if (isDefined(key)) {
-        val = isDefined(val) ? tryDecodeURIComponent(val) : true;
+      if (key) {
+        val = val !== undefined ? tryDecodeURIComponent(val) : true;
         if (!hasOwnProperty.call(obj, key)) {
           // @ts-ignore
           obj[key] = val;
@@ -159,9 +154,6 @@ function parseKeyValue(keyValue: string | null) {
     }
   });
   return obj;
-}
-export function isUndefined(value: any) {
-  return typeof value === 'undefined';
 }
 
 export default parseKeyValue;
