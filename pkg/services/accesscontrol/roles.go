@@ -30,7 +30,7 @@ var ldapAdminEditRole = RoleDTO{
 var usersOrgReadRole = RoleDTO{
 	Name:        usersOrgRead,
 	Version:     2,
-	Description: "Allows to get user organizations.",
+	Description: "Role to allow users to list users in a given organization.",
 	Permissions: []Permission{
 		{
 			Action: ActionOrgUsersRead,
