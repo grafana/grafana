@@ -103,6 +103,12 @@ export const getTableStyles = (theme: GrafanaTheme2) => {
       white-space: nowrap;
       text-decoration: underline;
     `,
+    imageCellLink: css`
+      cursor: pointer;
+      overflow: hidden;
+      width: 100%;
+      height: 100%;
+    `,
     headerFilter: css`
       label: headerFilter;
       cursor: pointer;
