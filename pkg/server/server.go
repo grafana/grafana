@@ -37,6 +37,7 @@ import (
 	_ "github.com/grafana/grafana/pkg/services/provisioning"
 	_ "github.com/grafana/grafana/pkg/services/rendering"
 	_ "github.com/grafana/grafana/pkg/services/search"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	_ "github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -67,11 +68,12 @@ func (r *globalServiceRegistry) GetServices() []*registry.Descriptor {
 }
 
 // New returns a new instance of Server.
-func New(opts Options, cfg *setting.Cfg, httpServer *api.HTTPServer, backgroundServices *backgroundsvcs.Container) (*Server, error) {
+func New(opts Options, cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, httpServer *api.HTTPServer, backgroundServices *backgroundsvcs.Container) (*Server, error) {
 	rootCtx, shutdownFn := context.WithCancel(context.Background())
 
 	s := &Server{
 		context:            rootCtx,
+		sqlStore:           sqlStore,
 		HTTPServer:         httpServer,
 		shutdownFn:         shutdownFn,
 		shutdownFinished:   make(chan struct{}),
@@ -107,6 +109,7 @@ type Server struct {
 	buildBranch        string
 	backgroundServices *backgroundsvcs.Container
 
+	sqlStore   *sqlstore.SQLStore
 	HTTPServer *api.HTTPServer
 }
 
@@ -128,7 +131,7 @@ func (s *Server) init() error {
 	login.Init()
 	social.NewOAuthService()
 
-	return s.HTTPServer.SQLStore.Migrate()
+	return s.sqlStore.Migrate()
 }
 
 // Run initializes and starts services. This will block until all services have
