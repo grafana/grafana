@@ -22,7 +22,7 @@ type CleanUpService struct {
 	log               log.Logger
 	Cfg               *setting.Cfg                  `inject:""`
 	ServerLockService *serverlock.ServerLockService `inject:""`
-	ShortURLService   *shorturls.ShortURLService    `inject:""`
+	ShortURLService   shorturls.Service             `inject:""`
 }
 
 func init() {

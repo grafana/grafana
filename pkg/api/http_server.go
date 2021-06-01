@@ -93,7 +93,7 @@ type HTTPServer struct {
 	PluginRequestValidator models.PluginRequestValidator           `inject:""`
 	PluginManager          plugins.Manager                         `inject:""`
 	SearchService          *search.SearchService                   `inject:""`
-	ShortURLService        *shorturls.ShortURLService              `inject:""`
+	ShortURLService        shorturls.Service                       `inject:""`
 	Live                   *live.GrafanaLive                       `inject:""`
 	LivePushGateway        *pushhttp.Gateway                       `inject:""`
 	ContextHandler         *contexthandler.ContextHandler          `inject:""`
