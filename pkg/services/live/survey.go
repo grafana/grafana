@@ -66,7 +66,10 @@ func (c *SurveyCaller) handleManagedStreams(data []byte) (interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-	channels := c.live.getManagedChannels(req.OrgID)
+	channels, err := c.live.getManagedChannels(req.OrgID)
+	if err != nil {
+		return nil, err
+	}
 	return NodeManagedChannelsResponse{
 		Channels: channels,
 	}, nil
