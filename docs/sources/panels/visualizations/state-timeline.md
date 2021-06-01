@@ -7,7 +7,7 @@ weight = 900
 
 # State timeline visualization
 
-This visualization excel at showing discrete state changes over time. Each field or series is rendered as it's own unique horizontal band. State regions can either be rendered with values or without. This panel works great with string or boolean states but can also be used with time series. When used with time series the thresholds are used to turn the numerical values into discrete state regions.
+The state timeline visualization shows discrete state changes over time. Each field or series is rendered as its unique horizontal band. State regions can either be rendered with or without values. This panel works well with string or boolean states but can also be used with time series. When used with time series, the thresholds are used to turn the numerical values into discrete state regions.
 
 {{< figure src="/static/img/docs/v8/state_timeline_strings.png" max-width="1025px" caption="state timeline with string states" >}}
 
@@ -44,4 +44,3 @@ The panel can be used to great effect with time series as well. In this scenario
 ## Legend options
 
 When the legend is enabled it can can show either the value mappings or the threshold brackets. To show the value mappings in the legend it's important that the `Color scheme` option under [Standard options]({{< relref "../standard-options.md" >}}) is set to `Single color` or `Classic palette`. To see the threshold brackets in the legend set the `Color scheme` to `From thresholds`.
-
