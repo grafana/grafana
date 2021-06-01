@@ -17,6 +17,13 @@ func ProvideService(sqlStore *sqlstore.SQLStore) *ShortURLService {
 	}
 }
 
+type Service interface {
+	GetShortURLByUID(ctx context.Context, user *models.SignedInUser, uid string) (*models.ShortUrl, error)
+	CreateShortURL(ctx context.Context, user *models.SignedInUser, path string) (*models.ShortUrl, error)
+	UpdateLastSeenAt(ctx context.Context, shortURL *models.ShortUrl) error
+	DeleteStaleShortURLs(ctx context.Context, cmd *models.DeleteShortUrlCommand) error
+}
+
 type ShortURLService struct {
 	SQLStore *sqlstore.SQLStore
 }
@@ -86,3 +93,5 @@ func (s ShortURLService) DeleteStaleShortURLs(ctx context.Context, cmd *models.D
 		return nil
 	})
 }
+
+var _ Service = &ShortURLService{}

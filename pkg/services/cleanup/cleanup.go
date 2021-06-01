@@ -19,7 +19,7 @@ import (
 )
 
 func ProvideService(cfg *setting.Cfg, serverLockService *serverlock.ServerLockService,
-	shortURLService *shorturls.ShortURLService, backgroundServices *backgroundsvcs.Container) *CleanUpService {
+	shortURLService shorturls.Service, backgroundServices *backgroundsvcs.Container) *CleanUpService {
 	s := &CleanUpService{
 		Cfg:               cfg,
 		ServerLockService: serverLockService,
@@ -34,7 +34,7 @@ type CleanUpService struct {
 	log               log.Logger
 	Cfg               *setting.Cfg
 	ServerLockService *serverlock.ServerLockService
-	ShortURLService   *shorturls.ShortURLService
+	ShortURLService   shorturls.Service
 }
 
 func (srv *CleanUpService) Run(ctx context.Context) error {

@@ -92,7 +92,7 @@ type HTTPServer struct {
 	PluginRequestValidator models.PluginRequestValidator
 	PluginManager          plugins.Manager
 	SearchService          *search.SearchService
-	ShortURLService        *shorturls.ShortURLService
+	ShortURLService        shorturls.Service
 	Live                   *live.GrafanaLive
 	LivePushGateway        *pushhttp.Gateway
 	ContextHandler         *contexthandler.ContextHandler
@@ -122,7 +122,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	usageStatsService *usagestats.UsageStatsService, pluginRequestValidator models.PluginRequestValidator,
 	pluginManager plugins.Manager, backendPM backendplugin.Manager, settingsProvider setting.Provider,
 	dataSourceCache datasources.CacheService, userTokenService models.UserTokenService,
-	cleanUpService *cleanup.CleanUpService, shortURLService *shorturls.ShortURLService,
+	cleanUpService *cleanup.CleanUpService, shortURLService shorturls.Service,
 	remoteCache *remotecache.RemoteCache, provisioningService provisioning.ProvisioningService,
 	loginService login.Service, accessControl accesscontrol.AccessControl,
 	dataSourceProxy *datasourceproxy.DataSourceProxyService, searchService *search.SearchService,

@@ -94,6 +94,7 @@ var wireSet = wire.NewSet(
 	serverlock.ProvideService,
 	cleanup.ProvideService,
 	shorturls.ProvideService,
+	wire.Bind(new(shorturls.Service), new(*shorturls.ShortURLService)),
 	quota.ProvideService,
 	remotecache.ProvideService,
 	provisioning.ProvideService,
