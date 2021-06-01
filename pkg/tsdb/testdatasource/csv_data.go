@@ -183,28 +183,9 @@ func csvValuesToField(parts []string) (*data.Field, error) {
 		return field, nil
 	}
 
-	// Try parsing values as numbers
+	// Try parsing values as floats
 	ok := false
-	field := data.NewFieldFromFieldType(data.FieldTypeNullableInt64, len(parts))
-	for idx, strVal := range parts {
-		if strVal == "null" || strVal == "" {
-			continue
-		}
-
-		val, err := strconv.ParseInt(strVal, 10, 64)
-		if err != nil {
-			ok = false
-			break
-		}
-		field.SetConcrete(idx, val)
-		ok = true
-	}
-	if ok {
-		return field, nil
-	}
-
-	// Maybe floats
-	field = data.NewFieldFromFieldType(data.FieldTypeNullableFloat64, len(parts))
+	field := data.NewFieldFromFieldType(data.FieldTypeNullableFloat64, len(parts))
 	for idx, strVal := range parts {
 		if strVal == "null" || strVal == "" {
 			continue

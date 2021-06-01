@@ -1,7 +1,7 @@
 import { getBackendSrv } from '@grafana/runtime';
 import { RuleNamespace } from 'app/types/unified-alerting';
 import { PromRulesResponse } from 'app/types/unified-alerting-dto';
-import { getDatasourceAPIId } from '../utils/datasource';
+import { getAllRulesSourceNames, getDatasourceAPIId } from '../utils/datasource';
 
 export async function fetchRules(dataSourceName: string): Promise<RuleNamespace[]> {
   const response = await getBackendSrv()
@@ -29,4 +29,18 @@ export async function fetchRules(dataSourceName: string): Promise<RuleNamespace[
   });
 
   return Object.values(nsMap);
+}
+
+export async function fetchAllRules(): Promise<RuleNamespace[]> {
+  const namespaces = [] as Array<Promise<RuleNamespace[]>>;
+  getAllRulesSourceNames().forEach(async (name) => {
+    namespaces.push(
+      fetchRules(name).catch((e) => {
+        return [];
+        // TODO add error comms
+      })
+    );
+  });
+  const promises = await Promise.all(namespaces);
+  return promises.flat();
 }
