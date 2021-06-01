@@ -6,4 +6,5 @@ export const Messages = {
   dataModel: 'Data model',
   restore: 'Restore',
   close: 'Close',
+  noService: 'This service no longer exists. Please choose a compatible one.',
 };
