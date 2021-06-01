@@ -2,12 +2,14 @@ package tsdb
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/adapters"
+	"github.com/grafana/grafana/pkg/services/oauthtoken"
 )
 
 // nolint:staticcheck // plugins.DataQuery deprecated
@@ -16,6 +18,17 @@ func dataPluginQueryAdapter(pluginID string, handler backend.QueryDataHandler) p
 		instanceSettings, err := modelToInstanceSettings(ds)
 		if err != nil {
 			return plugins.DataResponse{}, err
+		}
+
+		if query.Headers == nil {
+			query.Headers = make(map[string]string)
+		}
+
+		if oauthtoken.IsOAuthPassThruEnabled(ds) {
+			if token := oauthtoken.GetCurrentOAuthToken(ctx, query.User); token != nil {
+				delete(query.Headers, "Authorization")
+				query.Headers["Authorization"] = fmt.Sprintf("%s %s", token.Type(), token.AccessToken)
+			}
 		}
 
 		req := &backend.QueryDataRequest{
@@ -97,5 +110,6 @@ func modelToInstanceSettings(ds *models.DataSource) (*backend.DataSourceInstance
 		JSONData:                jsonDataBytes,
 		DecryptedSecureJSONData: ds.DecryptedValues(),
 		Updated:                 ds.Updated,
+		UID:                     ds.Uid,
 	}, nil
 }

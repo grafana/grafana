@@ -2,7 +2,6 @@ package tsdb
 
 import (
 	"context"
-	"fmt"
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -118,8 +117,6 @@ type fakeBackendPM struct {
 }
 
 func (m *fakeBackendPM) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	fmt.Println("QueryData called")
-
 	if m.QueryDataHandlerFunc != nil {
 		return m.QueryDataHandlerFunc.QueryData(ctx, req)
 	}
