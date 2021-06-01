@@ -96,6 +96,9 @@ const getStyles = (theme: GrafanaTheme) => ({
   table: css`
     width: 100%;
     margin-left: ${theme.spacing.sm};
+    th:first-child {
+      width: 100%;
+    }
   `,
   header: css`
     color: ${theme.colors.textBlue};
@@ -103,6 +106,7 @@ const getStyles = (theme: GrafanaTheme) => ({
     border-bottom: 1px solid ${theme.colors.border1};
     padding: ${theme.spacing.xxs} ${theme.spacing.sm};
     text-align: right;
+    white-space: nowrap;
   `,
   headerSortable: css`
     cursor: pointer;
