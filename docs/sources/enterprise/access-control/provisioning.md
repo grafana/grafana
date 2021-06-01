@@ -29,7 +29,7 @@ Every role has a [version]({{< relref "./roles.md#custom-roles" >}}) number. For
 
 When you update a role, the existing role inside grafana is altered to be exactly what is specified in the YAML file, including permissions.
 
-Here is an example yaml file to create a local role with a set of permissions:
+Here is an example YAML file to create a local role with a set of permissions:
 
 ```yaml
 # config file version
