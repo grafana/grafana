@@ -38,6 +38,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/live"
+	"gopkg.in/redis.v5"
 )
 
 var (
@@ -222,10 +223,24 @@ func (g *GrafanaLive) Init() error {
 	g.GrafanaScope.Features["dashboard"] = dash
 	g.GrafanaScope.Features["broadcast"] = features.NewBroadcastRunner(g.storage)
 
-	g.ManagedStreamRunner = managedstream.NewRunner(
-		g.Publish,
-		managedstream.NewFrameCacheMemory(),
-	)
+	if g.IsHA() {
+		redisClient := redis.NewClient(&redis.Options{
+			Addr: os.Getenv("GF_LIVE_REDIS_ADDRESS"),
+		})
+		cmd := redisClient.Ping()
+		if _, err := cmd.Result(); err != nil {
+			return fmt.Errorf("error pinging Redis: %v", err)
+		}
+		g.ManagedStreamRunner = managedstream.NewRunner(
+			g.Publish,
+			managedstream.NewRedisFrameCache(redisClient),
+		)
+	} else {
+		g.ManagedStreamRunner = managedstream.NewRunner(
+			g.Publish,
+			managedstream.NewMemoryFrameCache(),
+		)
+	}
 
 	// Set ConnectHandler called when client successfully connected to Node. Your code
 	// inside handler must be synchronized since it will be called concurrently from
@@ -669,8 +684,8 @@ func (g *GrafanaLive) HandleHTTPPublish(ctx *models.ReqContext, cmd dtos.LivePub
 
 func (g *GrafanaLive) getManagedChannels(orgID int64) []*managedstream.ManagedChannel {
 	channels := make([]*managedstream.ManagedChannel, 0)
-	for k, v := range g.ManagedStreamRunner.Streams(orgID) {
-		channels = append(channels, v.ListChannels(orgID, "stream/"+k+"/")...)
+	for _, v := range g.ManagedStreamRunner.Streams(orgID) {
+		channels = append(channels, v.ListChannels(orgID)...)
 	}
 
 	// Hardcode sample streams

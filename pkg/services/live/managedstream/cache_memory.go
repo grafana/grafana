@@ -7,23 +7,23 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
-// FrameCacheMemory ...
-type FrameCacheMemory struct {
+// MemoryFrameCache ...
+type MemoryFrameCache struct {
 	mu     sync.RWMutex
 	frames map[int64]map[string]data.FrameJSONCache
 }
 
-// NewFrameCacheMemory ...
-func NewFrameCacheMemory() *FrameCacheMemory {
-	return &FrameCacheMemory{
+// NewMemoryFrameCache ...
+func NewMemoryFrameCache() *MemoryFrameCache {
+	return &MemoryFrameCache{
 		frames: map[int64]map[string]data.FrameJSONCache{},
 	}
 }
 
-func (u *FrameCacheMemory) GetActivePaths(orgID int64) (map[string]json.RawMessage, error) {
-	u.mu.RLock()
-	defer u.mu.RUnlock()
-	frames, ok := u.frames[orgID]
+func (c *MemoryFrameCache) GetActiveChannels(orgID int64) (map[string]json.RawMessage, error) {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+	frames, ok := c.frames[orgID]
 	if !ok {
 		return nil, nil
 	}
@@ -34,28 +34,21 @@ func (u *FrameCacheMemory) GetActivePaths(orgID int64) (map[string]json.RawMessa
 	return info, nil
 }
 
-func (u *FrameCacheMemory) GetSchema(orgID int64, path string) (json.RawMessage, bool, error) {
-	u.mu.RLock()
-	defer u.mu.RUnlock()
-	cachedFrame, ok := u.frames[orgID][path]
-	return cachedFrame.Bytes(data.IncludeSchemaOnly), ok, nil
-}
-
-func (u *FrameCacheMemory) GetFrame(orgID int64, path string) (json.RawMessage, bool, error) {
-	u.mu.RLock()
-	defer u.mu.RUnlock()
-	cachedFrame, ok := u.frames[orgID][path]
+func (c *MemoryFrameCache) GetFrame(orgID int64, channel string) (json.RawMessage, bool, error) {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+	cachedFrame, ok := c.frames[orgID][channel]
 	return cachedFrame.Bytes(data.IncludeAll), ok, nil
 }
 
-func (u *FrameCacheMemory) Update(orgID int64, path string, jsonFrame data.FrameJSONCache) (bool, error) {
-	u.mu.Lock()
-	defer u.mu.Unlock()
-	if _, ok := u.frames[orgID]; !ok {
-		u.frames[orgID] = map[string]data.FrameJSONCache{}
+func (c *MemoryFrameCache) Update(orgID int64, channel string, jsonFrame data.FrameJSONCache) (bool, error) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if _, ok := c.frames[orgID]; !ok {
+		c.frames[orgID] = map[string]data.FrameJSONCache{}
 	}
-	cachedJsonFrame, exists := u.frames[orgID][path]
+	cachedJsonFrame, exists := c.frames[orgID][channel]
 	schemaUpdated := !exists || !cachedJsonFrame.SameSchema(&jsonFrame)
-	u.frames[orgID][path] = jsonFrame
+	c.frames[orgID][channel] = jsonFrame
 	return schemaUpdated, nil
 }

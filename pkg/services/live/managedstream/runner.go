@@ -17,11 +17,6 @@ var (
 	logger = log.New("live.managed_stream")
 )
 
-type ManagedChannel struct {
-	Channel string          `json:"channel"`
-	Data    json.RawMessage `json:"data"`
-}
-
 // Runner keeps ManagedStream per streamID.
 type Runner struct {
 	mu         sync.RWMutex
@@ -30,24 +25,12 @@ type Runner struct {
 	frameCache FrameCache
 }
 
-// FrameCache allows updating frame schema. Returns true is schema not changed.
-type FrameCache interface {
-	// GetActivePaths returns active managed stream paths with JSON schema.
-	GetActivePaths(orgID int64) (map[string]json.RawMessage, error)
-	// GetSchema returns JSON schema for a path.
-	GetSchema(orgID int64, path string) (json.RawMessage, bool, error)
-	// GetFrame returns full JSON frame for a path.
-	GetFrame(orgID int64, path string) (json.RawMessage, bool, error)
-	// Update updates frame cache and returns true if schema changed.
-	Update(orgID int64, path string, frameJson data.FrameJSONCache) (bool, error)
-}
-
 // NewRunner creates new Runner.
-func NewRunner(publisher models.ChannelPublisher, schemaUpdater FrameCache) *Runner {
+func NewRunner(publisher models.ChannelPublisher, frameCache FrameCache) *Runner {
 	return &Runner{
 		publisher:  publisher,
 		streams:    map[int64]map[string]*ManagedStream{},
-		frameCache: schemaUpdater,
+		frameCache: frameCache,
 	}
 }
 
@@ -101,10 +84,16 @@ func NewManagedStream(id string, publisher models.ChannelPublisher, schemaUpdate
 	}
 }
 
+// ManagedChannel represents a managed stream.
+type ManagedChannel struct {
+	Channel string          `json:"channel"`
+	Data    json.RawMessage `json:"data"`
+}
+
 // ListChannels returns info for the UI about this stream.
 // TODO: function should return an error.
-func (s *ManagedStream) ListChannels(orgID int64, prefix string) []*ManagedChannel {
-	paths, err := s.frameCache.GetActivePaths(orgID)
+func (s *ManagedStream) ListChannels(orgID int64) []*ManagedChannel {
+	paths, err := s.frameCache.GetActiveChannels(orgID)
 	if err != nil {
 		logger.Error("Error getting active managed stream paths", "error", err)
 		return []*ManagedChannel{}
@@ -112,7 +101,7 @@ func (s *ManagedStream) ListChannels(orgID int64, prefix string) []*ManagedChann
 	info := make([]*ManagedChannel, 0, len(paths))
 	for k, v := range paths {
 		managedChannel := &ManagedChannel{
-			Channel: prefix + k,
+			Channel: k,
 			Data:    v,
 		}
 		info = append(info, managedChannel)
@@ -123,12 +112,15 @@ func (s *ManagedStream) ListChannels(orgID int64, prefix string) []*ManagedChann
 // Push sends frame to the stream and saves it for later retrieval by subscribers.
 // unstableSchema flag can be set to disable schema caching for a path.
 func (s *ManagedStream) Push(orgID int64, path string, frame *data.Frame) error {
-	jsonFrame, err := data.FrameToJSONCache(frame)
+	jsonFrameCache, err := data.FrameToJSONCache(frame)
 	if err != nil {
 		return err
 	}
 
-	isUpdated, err := s.frameCache.Update(orgID, path, jsonFrame)
+	// The channel this will be posted into.
+	channel := live.Channel{Scope: live.ScopeStream, Namespace: s.id, Path: path}.String()
+
+	isUpdated, err := s.frameCache.Update(orgID, channel, jsonFrameCache)
 	if err != nil {
 		logger.Error("Error updating managed stream schema", "error", err)
 		return err
@@ -140,10 +132,8 @@ func (s *ManagedStream) Push(orgID int64, path string, frame *data.Frame) error 
 		// When the schema has been changed, send all.
 		include = data.IncludeAll
 	}
-	frameJSON := jsonFrame.Bytes(include)
+	frameJSON := jsonFrameCache.Bytes(include)
 
-	// The channel this will be posted into.
-	channel := live.Channel{Scope: live.ScopeStream, Namespace: s.id, Path: path}.String()
 	logger.Debug("Publish data to channel", "channel", channel, "dataLength", len(frameJSON))
 	return s.publisher(orgID, channel, frameJSON)
 }
@@ -154,12 +144,12 @@ func (s *ManagedStream) GetHandlerForPath(_ string) (models.ChannelHandler, erro
 
 func (s *ManagedStream) OnSubscribe(_ context.Context, u *models.SignedInUser, e models.SubscribeEvent) (models.SubscribeReply, backend.SubscribeStreamStatus, error) {
 	reply := models.SubscribeReply{}
-	packet, ok, err := s.frameCache.GetFrame(u.OrgId, e.Path)
+	frameJSON, ok, err := s.frameCache.GetFrame(u.OrgId, e.Channel)
 	if err != nil {
 		return reply, 0, err
 	}
 	if ok {
-		reply.Data = packet
+		reply.Data = frameJSON
 	}
 	return reply, backend.SubscribeStreamStatusOK, nil
 }
