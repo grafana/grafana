@@ -17,7 +17,7 @@ Additionally you'll need:
 - [Yarn](https://yarnpkg.com) (see `volta.yarn` property in [package.json](../package.json) for the correct version).
 
 We recommend using [Volta](https://github.com/volta-cli/volta) to manage your JS toolchain.
-Refer to the [Volta Getting Started Guide](https://docs.volta.sh/guide/getting-started) for setup instructions for you operating system.
+Refer to the [Volta Getting Started Guide](https://docs.volta.sh/guide/getting-started) for setup instructions for your operating system.
 
 ### macOS
 
