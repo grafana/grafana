@@ -24,9 +24,15 @@ Silences do not prevent alert rules from being run. They also do not stop alert 
 
 ## How label matching works
 
-Alert instances that have labels that match all of the "Matching Labels" specified in the silence will be suppressed.
+Alert instances that have labels that match all of the "Matching Labels" specified in the silence will have their notifications suppressed.
 
-- The **Label** field is the name of the label to match. It is always an equal string match.
+- The **Label** field is the name of the label to match. It must exactly match the label name.
 - The **Value** field matches against the corresponding value for the specified **Label** name. How it matches depends on the **Regex** and **Equal** checkboxes.
 - The **Regex** checkbox specifies if the inputted **Value** should be matched against labels as a regular expression. The regular expression is always anchored. If not selected it is an exact string match.
 - The **Equal** checkbox specifies if the match should include alert instances that match or do not match. If not checked, the silence will include alert instances _do not_ match.
+
+## Viewing and editing silences
+
+1. In the Grafana menu hover your cursor over the **Alerting** (bell) icon and select **Silences** (crossed out bell icon).
+1. To end the silence, click the **Unsilence** button next to the listed silence.
+1. To edit a silence, click the pencil icon next to the listed silence. This will take you to the same view as creating a silence, but with the form filed out. Here the fields can be changed and then press the **Submit** button to change it.
