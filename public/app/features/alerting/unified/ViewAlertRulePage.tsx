@@ -1,4 +1,4 @@
-import React, { FC, useCallback, useEffect, useMemo } from 'react';
+import React, { FC, useCallback, useEffect, useMemo, useState } from 'react';
 import { useObservable } from 'react-use';
 import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
@@ -11,30 +11,37 @@ import { useCombinedRule } from './hooks/useCombinedRule';
 import { alertRuleToQueries } from './utils/query';
 import { contextSrv } from 'app/core/core';
 import { RuleState } from './components/rules/RuleState';
+import { VizWrapper } from './components/rule-editor/VizWrapper';
+import { SupportedPanelPlugins } from './components/rule-editor/QueryWrapper';
+import { TABLE, TIMESERIES } from './utils/constants';
+import { isExpressionQuery } from '../../expressions/guards';
 
 type ViewAlertRuleProps = GrafanaRouteComponentProps<{ id?: string; sourceName?: string }>;
 const isEditor = contextSrv.isEditor;
 const ViewAlertRulePage: FC<ViewAlertRuleProps> = ({ match }) => {
   const styles = useStyles2(getStyles);
+  const [panelId, setPanelId] = useState<SupportedPanelPlugins>(TIMESERIES);
   const { id, sourceName } = match.params;
   const { loading, error, result: rule } = useCombinedRule(getIdentifier(id), sourceName);
   const runner = useMemo(() => new AlertingQueryRunner(), []);
   const data = useObservable(runner.get());
+  const queries = alertRuleToQueries(rule);
 
   const onRunQueries = useCallback(() => {
-    const queries = alertRuleToQueries(rule);
-
     if (queries.length === 0) {
       return;
     }
 
     runner.run(queries);
-  }, [runner, rule]);
+  }, [queries, runner]);
 
   useEffect(() => {
     onRunQueries();
+  }, [onRunQueries]);
+
+  useEffect(() => {
     return () => runner.destroy();
-  }, [runner, onRunQueries]);
+  }, [runner]);
 
   if (!rule) {
     return <div>no alert rule</div>;
@@ -47,9 +54,6 @@ const ViewAlertRulePage: FC<ViewAlertRuleProps> = ({ match }) => {
   if (error) {
     return <div>could not load rule due to error</div>;
   }
-
-  console.log('rule', rule);
-  console.log('data', data);
 
   return (
     <Page>
@@ -80,13 +84,17 @@ const ViewAlertRulePage: FC<ViewAlertRuleProps> = ({ match }) => {
         </div>
         <div className={styles.queries}>
           <h4>Queries</h4>
-          {rule &&
-            rule.rulerRule &&
-            rule.rulerRule.grafana_alert &&
-            rule.rulerRule.grafana_alert.data.map((query, index) => {
-              return (
-                <div key={index} className={styles.query}>
-                  <span>vis</span>
+          {queries.map((query, index) => {
+            return (
+              <div key={index}>
+                <div className={styles.query}>
+                  {data && (
+                    <VizWrapper
+                      data={data[query.refId]}
+                      currentPanel={isExpressionQuery(query.model) ? TABLE : panelId}
+                      changePanel={setPanelId}
+                    />
+                  )}
                   <CodeEditor
                     language="json"
                     readOnly
@@ -95,8 +103,9 @@ const ViewAlertRulePage: FC<ViewAlertRuleProps> = ({ match }) => {
                     showMiniMap={false}
                   />
                 </div>
-              );
-            })}
+              </div>
+            );
+          })}
         </div>
       </div>
     </Page>
@@ -112,7 +121,6 @@ const getIdentifier = (id: string | undefined) => {
 };
 
 const getStyles = (theme: GrafanaTheme2) => {
-  const queryJsonHeight = 250;
   return {
     content: css`
       background: ${theme.colors.background.primary};
@@ -126,7 +134,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       width: 50%;
     `,
     query: css`
-      height: ${queryJsonHeight}px;
+      height: 450px;
     `,
     info: css`
       max-width: ${theme.breakpoints.values.md}px;
