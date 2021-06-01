@@ -1,5 +1,7 @@
 import { FormEvent, useReducer } from 'react';
+import { debounce } from 'lodash';
 import { SelectableValue } from '@grafana/data';
+import { locationService } from '@grafana/runtime';
 import { defaultQuery, defaultQueryParams, queryReducer } from '../reducers/searchQueryReducer';
 import {
   ADD_TAG,
@@ -12,7 +14,8 @@ import {
 } from '../reducers/actionTypes';
 import { DashboardQuery, SearchLayout } from '../types';
 import { hasFilters, parseRouteParams } from '../utils';
-import { locationService } from '@grafana/runtime';
+
+const updateLocation = debounce((query) => locationService.partial(query), 300);
 
 export const useSearchQuery = (defaults: Partial<DashboardQuery>) => {
   const queryParams = parseRouteParams(locationService.getSearchObject());
@@ -21,42 +24,42 @@ export const useSearchQuery = (defaults: Partial<DashboardQuery>) => {
 
   const onQueryChange = (query: string) => {
     dispatch({ type: QUERY_CHANGE, payload: query });
-    locationService.partial({ query });
+    updateLocation({ query });
   };
 
   const onTagFilterChange = (tags: string[]) => {
     dispatch({ type: SET_TAGS, payload: tags });
-    locationService.partial({ tag: tags });
+    updateLocation({ tag: tags });
   };
 
   const onTagAdd = (tag: string) => {
     dispatch({ type: ADD_TAG, payload: tag });
-    locationService.partial({ tag: [...query.tag, tag] });
+    updateLocation({ tag: [...query.tag, tag] });
   };
 
   const onClearFilters = () => {
     dispatch({ type: CLEAR_FILTERS });
-    locationService.partial(defaultQueryParams);
+    updateLocation(defaultQueryParams);
   };
 
   const onStarredFilterChange = (e: FormEvent<HTMLInputElement>) => {
     const starred = (e.target as HTMLInputElement).checked;
     dispatch({ type: TOGGLE_STARRED, payload: starred });
-    locationService.partial({ starred: starred || null });
+    updateLocation({ starred: starred || null });
   };
 
   const onSortChange = (sort: SelectableValue | null) => {
     dispatch({ type: TOGGLE_SORT, payload: sort });
-    locationService.partial({ sort: sort?.value, layout: SearchLayout.List });
+    updateLocation({ sort: sort?.value, layout: SearchLayout.List });
   };
 
   const onLayoutChange = (layout: SearchLayout) => {
     dispatch({ type: LAYOUT_CHANGE, payload: layout });
     if (layout === SearchLayout.Folders) {
-      locationService.partial({ layout, sort: null });
+      updateLocation({ layout, sort: null });
       return;
     }
-    locationService.partial({ layout });
+    updateLocation({ layout });
   };
 
   return {
