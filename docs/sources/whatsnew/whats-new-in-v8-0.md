@@ -239,6 +239,10 @@ Grafana will now cache the results of backend data source queries, so that multi
 
 When creating a report, you can now choose to export Table Panels as .csv files attached to your report email. This will make it easier for recipients to view and work with that data. You can also link back to the dashboard directly from the email, for users who want to see the data live in Grafana. This release also includes some improvements to the Reports list view. See the [Reporting docs]({{< relref "../enterprise/reporting.md" >}}) for more details.
 
+### License restrictions clarification in the docs
+
+Grafana version 7.4 introduced some changes to the way that user roles are counted from a licensing perspective. The docs have been updated to describe more specifically how licensed roles are counted, how they can be updated, and where you can see details about dashboard and folder permissions that affect users' licensed roles. Visit the [License restrictions docs]({{< relref "../enterprise/license/license-restrictions.md" >}}) for details.
+
 ## Breaking changes
 
 The following breaking changes are included in this release.
