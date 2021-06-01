@@ -15,26 +15,28 @@ import { RuleState } from './components/rules/RuleState';
 type ViewAlertRuleProps = GrafanaRouteComponentProps<{ id?: string; sourceName?: string }>;
 const isEditor = contextSrv.isEditor;
 const ViewAlertRulePage: FC<ViewAlertRuleProps> = ({ match }) => {
-  const styles = useStyles2(getStyles);
   const { id, sourceName } = match.params;
-  const { loading, error, result: rule } = useCombinedRule(getIdentifier(id), sourceName);
+  const identifier = getIdentifier(id);
+  const { loading, error, result: rule } = useCombinedRule(identifier, sourceName);
+  const styles = useStyles2(getStyles);
   const runner = useMemo(() => new AlertingQueryRunner(), []);
   const data = useObservable(runner.get());
 
   const onRunQueries = useCallback(() => {
     const queries = alertRuleToQueries(rule);
-
     if (queries.length === 0) {
       return;
     }
-
     runner.run(queries);
   }, [runner, rule]);
 
   useEffect(() => {
     onRunQueries();
+  }, [onRunQueries]);
+
+  useEffect(() => {
     return () => runner.destroy();
-  }, [runner, onRunQueries]);
+  }, [runner]);
 
   if (!rule) {
     return <div>no alert rule</div>;
@@ -107,7 +109,6 @@ const getIdentifier = (id: string | undefined) => {
   if (!id) {
     return undefined;
   }
-
   return parseRuleIdentifier(decodeURIComponent(id));
 };
 

@@ -1,22 +1,21 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo } from 'react';
+import { useDispatch } from 'react-redux';
 import { CombinedRule, RuleIdentifier } from 'app/types/unified-alerting';
 import { AsyncRequestState } from '../utils/redux';
 import { useCombinedRuleNamespaces } from './useCombinedRuleNamespaces';
 import { equalIdentifiers, getRuleIdentifier } from '../utils/rules';
 import { useUnifiedAlertingSelector } from './useUnifiedAlertingSelector';
 import { fetchPromRulesAction, fetchRulerRulesAction } from '../state/actions';
-import { useDispatch } from 'react-redux';
 
 export function useCombinedRule(
   identifier: RuleIdentifier | undefined,
   ruleSourceName: string | undefined
 ): AsyncRequestState<CombinedRule> {
-  const [rule, setRule] = useState<CombinedRule | undefined>();
   const requestState = useCombinedRulesLoader(ruleSourceName);
   const combinedRules = useCombinedRuleNamespaces(ruleSourceName);
 
-  useEffect(() => {
-    if (!identifier || !ruleSourceName || combinedRules.length === 0 || rule) {
+  const rule = useMemo(() => {
+    if (!identifier || !ruleSourceName || combinedRules.length === 0) {
       return;
     }
 
@@ -39,8 +38,8 @@ export function useCombinedRule(
       }
     }
 
-    setRule(combinedRule);
-  }, [combinedRules, identifier, rule, ruleSourceName]);
+    return combinedRule;
+  }, [identifier, ruleSourceName, combinedRules]);
 
   return {
     ...requestState,
