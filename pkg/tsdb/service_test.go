@@ -59,7 +59,7 @@ func TestHandleRequest(t *testing.T) {
 			return &backend.QueryDataResponse{}, nil
 		})
 
-		ds := &models.DataSource{Id: 12, Type: "testjughjgjg", JsonData: simplejson.New()}
+		ds := &models.DataSource{Id: 12, Type: "unregisteredType", JsonData: simplejson.New()}
 		req := plugins.DataQuery{
 			TimeRange: &plugins.DataTimeRange{},
 			Queries: []plugins.DataSubQuery{
