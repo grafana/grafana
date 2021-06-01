@@ -91,8 +91,10 @@ export function transformTraceList(
   datasourceName: string,
   traceRegexs: string[]
 ): DataQueryResponse {
-  const frame = createTableFrame(response.data[0], datasourceId, datasourceName, traceRegexs);
-  response.data[0] = frame;
+  response.data.forEach((data, index) => {
+    const frame = createTableFrame(data, datasourceId, datasourceName, traceRegexs);
+    response.data[index] = frame;
+  });
   return response;
 }
 
