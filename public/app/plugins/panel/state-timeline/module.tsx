@@ -3,8 +3,10 @@ import { StateTimelinePanel } from './StateTimelinePanel';
 import { TimelineOptions, TimelineFieldConfig, defaultPanelOptions, defaultTimelineFieldConfig } from './types';
 import { BarValueVisibility } from '@grafana/ui';
 import { addLegendOptions } from '@grafana/ui/src/options/builder';
+import { timelinePanelChangedHandler } from './migrations';
 
 export const plugin = new PanelPlugin<TimelineOptions, TimelineFieldConfig>(StateTimelinePanel)
+  .setPanelChangeHandler(timelinePanelChangedHandler)
   .useFieldConfig({
     standardOptions: {
       [FieldConfigProperty.Color]: {
