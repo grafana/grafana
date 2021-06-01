@@ -43,7 +43,7 @@ You can search for traces if you set up the trace to logs setting in the data so
 
 To query a particular trace, select TraceID query type and then insert the ID into the Trace ID field.
 
-{{< figure src="/src/img/docs/tempo/query-editor-traceid.png" class="docs-image--no-shadow" caption="Screenshot of the Tempo TraceID query type" >}}
+{{< figure src="/static/img/docs/tempo/query-editor-traceid.png" class="docs-image--no-shadow" caption="Screenshot of the Tempo TraceID query type" >}}
 
 ## Linking Trace ID from logs
 
