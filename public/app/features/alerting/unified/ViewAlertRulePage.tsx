@@ -2,10 +2,11 @@ import React, { FC, useCallback, useEffect, useMemo, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
-import { Button, Label, PageToolbar, withErrorBoundary, useStyles2 } from '@grafana/ui';
+import { Button, CodeEditor, Field, PageToolbar, TextArea, withErrorBoundary, useStyles2 } from '@grafana/ui';
 import Page from 'app/core/components/Page/Page';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { fetchPromRulesAction, fetchRulerRulesAction } from './state/actions';
+import { contextSrv } from 'app/core/services/context_srv';
 import { useUnifiedAlertingSelector } from './hooks/useUnifiedAlertingSelector';
 import { equalIdentifiers, getRuleIdentifier, parseRuleIdentifier } from './utils/rules';
 import { AlertingQueryRunner } from './state/AlertingQueryRunner';
@@ -15,9 +16,10 @@ import { useCombinedRuleNamespaces } from './hooks/useCombinedRuleNamespaces';
 import { AsyncRequestState } from './utils/redux';
 import { AlertQuery, RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 import { SerializedError } from '@reduxjs/toolkit';
+import { RuleState } from './components/rules/RuleState';
 
 type ViewAlertRuleProps = GrafanaRouteComponentProps<{ id?: string; sourceName?: string }>;
-
+const isEditor = contextSrv.isEditor;
 const ViewAlertRulePage: FC<ViewAlertRuleProps> = ({ match }) => {
   const { id, sourceName } = match.params;
   const identifier = getIdentifier(id);
@@ -52,31 +54,52 @@ const ViewAlertRulePage: FC<ViewAlertRuleProps> = ({ match }) => {
   console.log('data', data);
 
   return (
-    <div className={styles.pageWrapper}>
-      <Page>
-        <PageToolbar title={''} pageIcon="bell">
+    <Page>
+      <PageToolbar title={rule.group.name} pageIcon="bell">
+        {isEditor ? (
           <Button variant="primary" type="button">
             Edit
           </Button>
+        ) : null}
+        {isEditor ? (
           <Button variant="destructive" type="button">
             Delete
           </Button>
-        </PageToolbar>
-        <Page.Contents>
-          {/* {result.rule.annotations && result.rule.annotations.summary && (
-            <>
-              <Label>
-                Summary
-                <textarea value={result.rule.annotations.summary} />
-              </Label>
-            </>
-          )} */}
-          <Button variant="secondary" type="button" onClick={onRunQueries}>
-            Run Queries
-          </Button>
-        </Page.Contents>
-      </Page>
-    </div>
+        ) : null}
+      </PageToolbar>
+      <div className={styles.content}>
+        <div className={styles.quickInfo}>
+          <RuleState rule={rule} isCreating={false} isDeleting={false} />
+        </div>
+        <div className={styles.info}>
+          {Object.entries(rule.annotations).map(([key, value], index) => {
+            return (
+              <Field label={key} key={`${key}-${index}`}>
+                <TextArea value={value} readOnly cols={15} rows={2} />
+              </Field>
+            );
+          })}
+        </div>
+        <div className={styles.queries}>
+          <h4>Queries</h4>
+          {/*{rule &&*/}
+          {/*  rule.data.map((query, index) => {*/}
+          {/*    return (*/}
+          {/*      <div key={index} className={styles.query}>*/}
+          {/*        <span>vis</span>*/}
+          {/*        <CodeEditor*/}
+          {/*          language="json"*/}
+          {/*          readOnly*/}
+          {/*          value={JSON.stringify(query.model, null, 2)}*/}
+          {/*          height={200}*/}
+          {/*          showMiniMap={false}*/}
+          {/*        />*/}
+          {/*      </div>*/}
+          {/*    );*/}
+          {/*  })}*/}
+        </div>
+      </div>
+    </Page>
   );
 };
 
@@ -190,19 +213,27 @@ const getIdentifier = (id: string | undefined) => {
   return parseRuleIdentifier(decodeURIComponent(id));
 };
 
-const getStyles = (theme: GrafanaTheme2) => ({
-  pageWrapper: css`
-    width: 100%;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-  `,
-  content: css`
-    background: ${theme.colors.background.primary};
-    border: 1px solid ${theme.colors.border.weak};
-    border-radius: ${theme.shape.borderRadius()};
-    margin: ${theme.spacing(0, 2, 2)};
-  `,
-});
+const getStyles = (theme: GrafanaTheme2) => {
+  const queryJsonHeight = 250;
+  return {
+    content: css`
+      background: ${theme.colors.background.primary};
+      border: 1px solid ${theme.colors.border.weak};
+      border-radius: ${theme.shape.borderRadius()};
+      margin: ${theme.spacing(0, 2, 2)};
+      padding: ${theme.spacing(2)};
+    `,
+    quickInfo: css``,
+    queries: css`
+      width: 50%;
+    `,
+    query: css`
+      height: ${queryJsonHeight}px;
+    `,
+    info: css`
+      max-width: ${theme.breakpoints.values.md}px;
+    `,
+  };
+};
 
 export default withErrorBoundary(ViewAlertRulePage, { style: 'page' });
