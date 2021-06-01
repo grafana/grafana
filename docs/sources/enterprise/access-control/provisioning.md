@@ -19,7 +19,7 @@ Grafana performs provisioning during the startup. Refer to the [Reload provision
 
 ## Manage custom roles
 
-You can create, update and delete custom roles, as well as create and remove built-in role assignments.
+You can create, update, and delete custom roles, as well as create and remove built-in role assignments.
 
 ### Create or update roles
 
