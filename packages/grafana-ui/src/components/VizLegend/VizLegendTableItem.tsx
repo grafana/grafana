@@ -115,7 +115,7 @@ const getStyles = (theme: GrafanaTheme) => {
       align-items: center;
     `,
     value: css`
-      text-align: left;
+      text-align: right;
     `,
     yAxisLabel: css`
       color: ${theme.palette.gray2};
