@@ -6,7 +6,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/backgroundsvcs"
 	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana/pkg/setting"
 
 	"github.com/stretchr/testify/require"
 )
@@ -37,10 +39,6 @@ func newTestService(initErr, runErr error) *testService {
 	}
 }
 
-func (s *testService) Init() error {
-	return s.initErr
-}
-
 func (s *testService) Run(ctx context.Context) error {
 	if s.runErr != nil {
 		return s.runErr
@@ -50,8 +48,10 @@ func (s *testService) Run(ctx context.Context) error {
 	return ctx.Err()
 }
 
-func testServer() *Server {
-	s := newServer(opts{})
+func testServer(t *testing.T) *Server {
+	t.Helper()
+	s, err := newServer(Options{}, setting.NewCfg(), nil, nil, backgroundsvcs.ProvideService())
+	require.NoError(t, err)
 	// Required to skip configuration initialization that causes
 	// DI errors in this test.
 	s.isInitialized = true
@@ -59,24 +59,10 @@ func testServer() *Server {
 }
 
 func TestServer_Run_Error(t *testing.T) {
-	s := testServer()
-
-	var testErr = errors.New("boom")
-
-	s.serviceRegistry = &testServiceRegistry{
-		services: []*registry.Descriptor{
-			{
-				Name:         "TestService1",
-				Instance:     newTestService(nil, nil),
-				InitPriority: registry.High,
-			},
-			{
-				Name:         "TestService2",
-				Instance:     newTestService(nil, testErr),
-				InitPriority: registry.High,
-			},
-		},
-	}
+	s := testServer(t)
+	testErr := errors.New("boom")
+	s.backgroundServices.AddBackgroundService(newTestService(nil, nil))
+	s.backgroundServices.AddBackgroundService(newTestService(nil, testErr))
 
 	err := s.Run()
 	require.ErrorIs(t, err, testErr)
@@ -86,22 +72,8 @@ func TestServer_Run_Error(t *testing.T) {
 func TestServer_Shutdown(t *testing.T) {
 	ctx := context.Background()
 
-	s := testServer()
-	services := []*registry.Descriptor{
-		{
-			Name:         "TestService1",
-			Instance:     newTestService(nil, nil),
-			InitPriority: registry.High,
-		},
-		{
-			Name:         "TestService2",
-			Instance:     newTestService(nil, nil),
-			InitPriority: registry.High,
-		},
-	}
-	s.serviceRegistry = &testServiceRegistry{
-		services: services,
-	}
+	s := testServer(t)
+	s.backgroundServices.AddBackgroundService(newTestService(nil, nil))
 
 	ch := make(chan error)
 
@@ -109,8 +81,8 @@ func TestServer_Shutdown(t *testing.T) {
 		defer close(ch)
 
 		// Wait until all services launched.
-		for _, svc := range services {
-			<-svc.Instance.(*testService).started
+		for _, svc := range s.backgroundServices.BackgroundServices {
+			<-svc.(*testService).started
 		}
 		ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
 		defer cancel()

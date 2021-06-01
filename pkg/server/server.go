@@ -69,6 +69,19 @@ func (r *globalServiceRegistry) GetServices() []*registry.Descriptor {
 
 // New returns a new instance of Server.
 func New(opts Options, cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, httpServer *api.HTTPServer, backgroundServices *backgroundsvcs.Container) (*Server, error) {
+	s, err := newServer(opts, cfg, sqlStore, httpServer, backgroundServices)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := s.init(); err != nil {
+		return nil, err
+	}
+
+	return s, nil
+}
+
+func newServer(opts Options, cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, httpServer *api.HTTPServer, backgroundServices *backgroundsvcs.Container) (*Server, error) {
 	rootCtx, shutdownFn := context.WithCancel(context.Background())
 
 	s := &Server{
@@ -84,9 +97,6 @@ func New(opts Options, cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, httpServer
 		commit:             opts.Commit,
 		buildBranch:        opts.BuildBranch,
 		backgroundServices: backgroundServices,
-	}
-	if err := s.init(); err != nil {
-		return nil, err
 	}
 
 	return s, nil
