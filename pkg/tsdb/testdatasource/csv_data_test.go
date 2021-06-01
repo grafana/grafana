@@ -77,7 +77,7 @@ func TestReadCSV(t *testing.T) {
 		"fields":[
 			{"type":"boolean","typeInfo":{"frame":"bool","nullable":true}},
 			{"type":"boolean","typeInfo":{"frame":"bool","nullable":true}},
-			{"type":"number","typeInfo":{"frame":"int64","nullable":true}},
+			{"type":"number","typeInfo":{"frame":"float64","nullable":true}},
 			{"type":"string","typeInfo":{"frame":"string","nullable":true}}
 		]},"data":{
 			"values":[
