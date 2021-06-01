@@ -50,7 +50,7 @@ roles:
         scope: "users:*"
 ```
 
-Here is an example yaml file to create a global role with a set of permissions (the global:true option makes a role global):
+Here is an example YAML file to create a global role with a set of permissions, where the `global:true` option makes a role global:
 
 ```yaml
 # config file version
