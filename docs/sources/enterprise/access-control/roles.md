@@ -73,7 +73,7 @@ These assignments are called built-in role assignments.
 
 During startup, Grafana will create default assignments for you. When you make any changes to the built-on role assignments, Grafana will take them into account and won’t overwrite during next start.
 
-For more information, refer to [Fine-grained access control references]({{< relref "./fine-grained-access-control-references.md#default-built-in-role-assignments"> }}).
+For more information, refer to [Fine-grained access control references]({{< relref "./fine-grained-access-control-references.md#default-built-in-role-assignments" >}}).
 
 ## Create and remove built-in role assignments
 
