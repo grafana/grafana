@@ -40,7 +40,7 @@ async getTagValues(options: any): Promise<MetricFindValue[]> {
 
 In contrast to the other variable types, you don't interpolate ad-hoc filter variables. Instead you need to list them using the `getVariables` method on `TemplateSrv`.
 
-> **Note:** Since ad-hoc filters have yet to be defined in the `VariableModel` interface, you need to annotate the variable as `any` to access the `filters` property.
+> **Note:** Because ad-hoc filters are not defined in the `VariableModel` interface, you must annotate the variable as `any` to access the `filters` property.
 
 ```ts
 const adhocFilters = getTemplateSrv()
