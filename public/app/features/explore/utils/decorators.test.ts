@@ -1,3 +1,5 @@
+import { DrawStyle, StackingMode } from '@grafana/ui';
+
 jest.mock('@grafana/data/src/datetime/formatter', () => ({
   dateTimeFormat: () => 'format() jest mocked',
   dateTimeFormatTimeAgo: (ts: any) => 'fromNow() jest mocked',
@@ -349,35 +351,34 @@ describe('decorateWithLogsResult', () => {
       ],
       series: [
         {
-          label: 'unknown',
-          color: '#8e8e8e',
-          data: [[0, 3]],
-          isVisible: true,
-          yAxis: {
-            index: 1,
-            min: 0,
-            tickDecimals: 0,
-          },
-          seriesIndex: 0,
-          timeField: {
-            name: 'Time',
-            type: 'time',
-            config: {},
-            values: new ArrayVector([0]),
-            index: 0,
-            display: expect.anything(),
-          },
-          valueField: {
-            name: 'unknown',
-            type: 'number',
-            config: { unit: undefined, color: '#8e8e8e' },
-            values: new ArrayVector([3]),
-            labels: undefined,
-            index: 1,
-            display: expect.anything(),
-            state: expect.anything(),
-          },
-          timeStep: 0,
+          name: 'unknown',
+          length: 1,
+          fields: [
+            { name: 'Time', type: 'time', values: new ArrayVector([0]), config: {} },
+            {
+              name: 'Value',
+              type: 'number',
+              labels: undefined,
+              values: new ArrayVector([3]),
+              config: {
+                min: 0,
+                decimals: 0,
+                unit: undefined,
+                custom: {
+                  drawStyle: DrawStyle.Bars,
+                  barAlignment: 0,
+                  barMaxWidth: 5,
+                  barWidthFactor: 0.9,
+                  lineColor: '#8e8e8e',
+                  fillColor: '#8e8e8e',
+                  pointColor: '#8e8e8e',
+                  lineWidth: 0,
+                  fillOpacity: 100,
+                  stacking: { mode: StackingMode.Normal, group: 'A' },
+                },
+              },
+            },
+          ],
         },
       ],
       visibleRange: undefined,
