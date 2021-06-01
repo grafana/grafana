@@ -250,7 +250,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
               }
 
               if (tableViewEnabled) {
-                return <PanelEditorTableView width={width} height={height} panel={panel} />;
+                return <PanelEditorTableView width={width} height={height} panel={panel} dashboard={dashboard} />;
               }
 
               return (

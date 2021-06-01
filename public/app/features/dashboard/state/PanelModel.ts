@@ -38,7 +38,6 @@ import {
 } from './getPanelOptionsWithDefaults';
 import { QueryGroupOptions } from 'app/types';
 import { PanelModelLibraryPanel } from '../../library-panels/types';
-
 export interface GridPos {
   x: number;
   y: number;
@@ -46,6 +45,8 @@ export interface GridPos {
   h: number;
   static?: boolean;
 }
+
+import { TimeOverrideResult } from '../utils/panel';
 
 const notPersistedProperties: { [str: string]: boolean } = {
   events: true,
@@ -290,6 +291,23 @@ export class PanelModel implements DataConfigSource {
     this.gridPos.y = newPos.y;
     this.gridPos.w = newPos.w;
     this.gridPos.h = newPos.h;
+  }
+
+  runAllPanelQueries(dashboardId: number, dashboardTimezone: string, timeData: TimeOverrideResult, width: number) {
+    this.getQueryRunner().run({
+      datasource: this.datasource,
+      queries: this.targets,
+      panelId: this.editSourceId || this.id,
+      dashboardId: dashboardId,
+      timezone: dashboardTimezone,
+      timeRange: timeData.timeRange,
+      timeInfo: timeData.timeInfo,
+      maxDataPoints: this.maxDataPoints || width,
+      minInterval: this.interval,
+      scopedVars: this.scopedVars,
+      cacheTimeout: this.cacheTimeout,
+      transformations: this.transformations,
+    });
   }
 
   refresh() {
