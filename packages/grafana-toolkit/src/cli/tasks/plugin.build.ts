@@ -18,6 +18,8 @@ interface PluginBuildOptions {
   coverage: boolean;
   maxJestWorkers?: string;
   preserveConsole?: boolean;
+  skipTest?: boolean;
+  skipLint?: boolean;
 }
 
 interface Fixable {
@@ -132,11 +134,17 @@ export const pluginBuildRunner: TaskRunner<PluginBuildOptions> = async ({
   coverage,
   maxJestWorkers,
   preserveConsole,
+  skipTest,
+  skipLint,
 }) => {
   await versions();
   await prepare();
-  await lintPlugin({ fix: false });
-  await testPlugin({ updateSnapshot: false, coverage, maxWorkers: maxJestWorkers, watch: false });
+  if (!skipLint) {
+    await lintPlugin({ fix: false });
+  }
+  if (!skipTest) {
+    await testPlugin({ updateSnapshot: false, coverage, maxWorkers: maxJestWorkers, watch: false });
+  }
   await bundlePlugin({ watch: false, production: true, preserveConsole });
 };
 
