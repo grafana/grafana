@@ -349,7 +349,7 @@ func TestPluginManager_Init(t *testing.T) {
 
 		// this needs to be an absolute path otherwise the plugin's dir field will not
 		// provide enough information to compute os.Lstat when verifying the symlink
-		path, _ := filepath.Abs("testdata/symlink-folder")
+		path, _ := filepath.Abs("testdata/includes-symlinks")
 
 		pm := createManager(t, func(pm *PluginManager) {
 			pm.Cfg.PluginsPath = path

@@ -245,46 +245,48 @@ func pluginFilesRequiringVerification(plugin *plugins.PluginBase) ([]string, err
 			return err
 		}
 
-		if !info.IsDir() && info.Name() != "MANIFEST.txt" {
-			file, err := filepath.Rel(plugin.PluginDir, path)
-			if err != nil {
-				return err
-			}
-
-			if strings.HasPrefix(file, ".."+string(filepath.Separator)) {
-				return fmt.Errorf("file '%s' not inside of plugin directory", file)
-			}
-
-			if info.Mode()&os.ModeSymlink == os.ModeSymlink {
-				log.Debugf("found plugin symlink file '%s'\n", file)
-				return nil
-			}
-
-			files = append(files, filepath.ToSlash(file))
-
-			return nil
-		}
-
-		lstatInfo, err := os.Lstat(path)
-		if err != nil {
-			return err
-		}
-
-		// if symlink directory, verify it links within plugin directory
-		if info.IsDir() && lstatInfo.Mode()&os.ModeSymlink == os.ModeSymlink {
+		if info.Mode()&os.ModeSymlink == os.ModeSymlink {
 			symlinkPath, err := filepath.EvalSymlinks(path)
 			if err != nil {
 				return err
 			}
 
+			symlink, err := os.Stat(symlinkPath)
+			if err != nil {
+				return err
+			}
+
+			// skip symlink directories
+			if symlink.IsDir() {
+				return nil
+			}
+
+			// verify that symlinked file is within plugin directory
 			p, err := filepath.Rel(plugin.PluginDir, symlinkPath)
 			if err != nil {
 				return err
 			}
 			if strings.HasPrefix(p, ".."+string(filepath.Separator)) {
-				return fmt.Errorf("path '%s' not inside of plugin directory", p)
+				return fmt.Errorf("file '%s' not inside of plugin directory", p)
 			}
 		}
+
+		// skip directories and MANIFEST.txt
+		if info.IsDir() || info.Name() == "MANIFEST.txt" {
+			return nil
+		}
+
+		// verify that file is within plugin directory
+		file, err := filepath.Rel(plugin.PluginDir, path)
+		if err != nil {
+			return err
+		}
+		if strings.HasPrefix(file, ".."+string(filepath.Separator)) {
+			return fmt.Errorf("file '%s' not inside of plugin directory", file)
+		}
+
+		files = append(files, filepath.ToSlash(file))
+
 		return nil
 	})
 
