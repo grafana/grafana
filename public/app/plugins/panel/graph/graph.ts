@@ -481,7 +481,7 @@ class GraphElement {
       series.data = series.getFlotPairs(series.nullPointMode || this.panel.nullPointMode);
 
       if (series.transform === 'constant') {
-        series.data = getFlotPairsConstant(series.data, this.ctrl.range);
+        series.data = getFlotPairsConstant(series.data, this.ctrl.range!);
       }
 
       // if hidden remove points and disable stack
@@ -666,8 +666,8 @@ class GraphElement {
 
   addTimeAxis(options: any) {
     const ticks = this.panelWidth / 100;
-    const min = isUndefined(this.ctrl.range.from) ? null : this.ctrl.range.from.valueOf();
-    const max = isUndefined(this.ctrl.range.to) ? null : this.ctrl.range.to.valueOf();
+    const min = isUndefined(this.ctrl.range!.from) ? null : this.ctrl.range!.from.valueOf();
+    const max = isUndefined(this.ctrl.range!.to) ? null : this.ctrl.range!.to.valueOf();
 
     options.xaxis = {
       timezone: this.dashboard.getTimezone(),
