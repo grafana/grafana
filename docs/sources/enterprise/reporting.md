@@ -41,7 +41,7 @@ Only organization admins can create reports by default. You can customize who ca
    - **Include a dashboard link -** Include a link to the dashboard from within the report email.
    - **Source dashboard -** Select the dashboard to generate the report from.
    - **Time range -** (optional) Use custom time range for the report. For more information check [Report time range]({{< relref "#report-time-range" >}}).
-1. Select the orientation option for generated report: **Portrait** or **Landscape**.
+1. Select an orientation for the report: **Portrait** or **Landscape**.
 1. Select the layout option for generated report: **Simple** or **Grid**.
 1. You can include CSV files for every table panel your dashboard by clicking on **Add a CSV file of table panel data**.
 1. **Preview PDF** View a rendered PDF with the options you have selected.
