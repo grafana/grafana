@@ -324,7 +324,6 @@ func (pm *PluginManager) scanPluginPaths() error {
 
 // scan a directory for plugins.
 func (pm *PluginManager) scan(pluginDir string, requireSigned bool) error {
-	fmt.Printf("\nScanning\n\n")
 	scanner := &PluginScanner{
 		pluginPath:                    pluginDir,
 		backendPluginManager:          pm.BackendPluginManager,
@@ -471,8 +470,6 @@ func (pm *PluginManager) loadPlugin(jsonParser *json.Decoder, pluginBase *plugin
 		return err
 	}
 
-	fmt.Printf("\nLoading plugin %+v\n\n", plug)
-
 	pm.pluginsMu.Lock()
 	defer pm.pluginsMu.Unlock()
 
@@ -527,7 +524,6 @@ func (s *PluginScanner) walker(currentPath string, f os.FileInfo, err error) err
 	// We scan all the subfolders for plugin.json (with some exceptions) so that we also load embedded plugins, for
 	// example https://github.com/raintank/worldping-app/tree/master/dist/grafana-worldmap-panel worldmap panel plugin
 	// is embedded in worldping app.
-	fmt.Printf("\nWalking %q\n\n", currentPath)
 	if err != nil {
 		return fmt.Errorf("filepath.Walk reported an error for %q: %w", currentPath, err)
 	}
