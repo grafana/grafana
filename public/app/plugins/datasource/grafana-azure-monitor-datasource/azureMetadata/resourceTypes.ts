@@ -6,12 +6,12 @@ export const resourceTypeMetadata = [
   },
   {
     resourceType: 'microsoft.synapse/workspaces/bigdatapools',
-    displayName: 'Apache Spark pools',
+    displayName: 'Apache Spark pool',
     supportsLogs: true,
   },
   {
     resourceType: 'microsoft.apimanagement/service',
-    displayName: 'API Management services',
+    displayName: 'API Management service',
     supportsLogs: true,
   },
   {
@@ -21,27 +21,27 @@ export const resourceTypeMetadata = [
   },
   {
     resourceType: 'microsoft.web/sites/slots',
-    displayName: 'App Service (Slots)',
+    displayName: 'App Service (Slot)',
     supportsLogs: true,
   },
   {
     resourceType: 'microsoft.web/hostingenvironments',
-    displayName: 'App Service Environments',
+    displayName: 'App Service Environment',
     supportsLogs: true,
   },
   {
     resourceType: 'microsoft.web/serverfarms',
-    displayName: 'App Service plans',
+    displayName: 'App Service plan',
     supportsLogs: true,
   },
   {
     resourceType: 'microsoft.web/sites',
-    displayName: 'App Services',
+    displayName: 'App Service',
     supportsLogs: true,
   },
   {
     resourceType: 'microsoft.network/applicationgateways',
-    displayName: 'Application gateways',
+    displayName: 'Application gateway',
     supportsLogs: true,
   },
   {
@@ -51,7 +51,7 @@ export const resourceTypeMetadata = [
   },
   {
     resourceType: 'microsoft.automation/automationaccounts',
-    displayName: 'Automation Accounts',
+    displayName: 'Automation Account',
     supportsLogs: true,
   },
   {
@@ -71,47 +71,47 @@ export const resourceTypeMetadata = [
   },
   {
     resourceType: 'microsoft.documentdb/databaseaccounts',
-    displayName: 'Azure Cosmos DB accounts',
+    displayName: 'Azure Cosmos DB account',
     supportsLogs: true,
   },
   {
     resourceType: 'microsoft.kusto/clusters',
-    displayName: 'Azure Data Explorer Clusters',
+    displayName: 'Azure Data Explorer Cluster',
     supportsLogs: true,
   },
   {
     resourceType: 'microsoft.dbformariadb/servers',
-    displayName: 'Azure Database for MariaDB servers',
+    displayName: 'Azure Database for MariaDB server',
     supportsLogs: true,
   },
   {
     resourceType: 'microsoft.dbformysql/servers',
-    displayName: 'Azure Database for MySQL servers',
+    displayName: 'Azure Database for MySQL server',
     supportsLogs: true,
   },
   {
     resourceType: 'microsoft.dbforpostgresql/flexibleservers',
-    displayName: 'Azure Database for PostgreSQL flexible servers',
+    displayName: 'Azure Database for PostgreSQL flexible server',
     supportsLogs: true,
   },
   {
     resourceType: 'microsoft.dbforpostgresql/servergroupsv2',
-    displayName: 'Azure Database for PostgreSQL server groups',
+    displayName: 'Azure Database for PostgreSQL server group',
     supportsLogs: true,
   },
   {
     resourceType: 'microsoft.dbforpostgresql/servers',
-    displayName: 'Azure Database for PostgreSQL servers',
+    displayName: 'Azure Database for PostgreSQL server',
     supportsLogs: true,
   },
   {
     resourceType: 'microsoft.dbforpostgresql/serversv2',
-    displayName: 'Azure Database for PostgreSQL servers v2',
+    displayName: 'Azure Database for PostgreSQL server v2',
     supportsLogs: true,
   },
   {
     resourceType: 'microsoft.resources/subscriptions',
-    displayName: 'Azure Resource Manager',
+    displayName: 'Subscription',
     supportsLogs: true,
   },
   {
@@ -131,37 +131,37 @@ export const resourceTypeMetadata = [
   },
   {
     resourceType: 'microsoft.synapse/workspaces',
-    displayName: 'Azure Synapse Analytics',
+    displayName: 'Synapse workspace',
     supportsLogs: true,
   },
   {
     resourceType: 'microsoft.network/bastionhosts',
-    displayName: 'Bastions',
+    displayName: 'Bastion',
     supportsLogs: true,
   },
   {
     resourceType: 'microsoft.batch/batchaccounts',
-    displayName: 'Batch accounts',
+    displayName: 'Batch account',
     supportsLogs: true,
   },
   {
     resourceType: 'microsoft.botservice/botservices',
-    displayName: 'Bot Services',
+    displayName: 'Bot Service',
     supportsLogs: true,
   },
   {
     resourceType: 'microsoft.netapp/netappaccounts/capacitypools',
-    displayName: 'Capacity pools',
+    displayName: 'Capacity pool',
     supportsLogs: true,
   },
   {
     resourceType: 'microsoft.classiccompute/domainnames',
-    displayName: 'Cloud services (classic)',
+    displayName: 'Cloud service (classic)',
     supportsLogs: true,
   },
   {
     resourceType: 'microsoft.vmwarecloudsimple/virtualmachines',
-    displayName: 'CloudSimple Virtual Machines',
+    displayName: 'CloudSimple Virtual Machine',
     supportsLogs: true,
   },
   {
@@ -176,7 +176,7 @@ export const resourceTypeMetadata = [
   },
   {
     resourceType: 'microsoft.network/connections',
-    displayName: 'Connections',
+    displayName: 'Connection',
     supportsLogs: true,
   },
   {
@@ -186,7 +186,7 @@ export const resourceTypeMetadata = [
   },
   {
     resourceType: 'microsoft.containerregistry/registries',
-    displayName: 'Container registries',
+    displayName: 'Container registry',
     supportsLogs: true,
   },
   {
@@ -201,12 +201,12 @@ export const resourceTypeMetadata = [
   },
   {
     resourceType: 'microsoft.datafactory/datafactories',
-    displayName: 'Data factories',
+    displayName: 'Data factory',
     supportsLogs: true,
   },
   {
     resourceType: 'microsoft.datafactory/factories',
-    displayName: 'Data factories (V2)',
+    displayName: 'Data factory (V2)',
     supportsLogs: true,
   },
   {
@@ -221,57 +221,57 @@ export const resourceTypeMetadata = [
   },
   {
     resourceType: 'microsoft.datashare/accounts',
-    displayName: 'Data Shares',
+    displayName: 'Data Share',
     supportsLogs: true,
   },
   {
     resourceType: 'microsoft.synapse/workspaces/sqlpools',
-    displayName: 'Dedicated SQL pools',
+    displayName: 'Dedicated SQL pool',
     supportsLogs: true,
   },
   {
     resourceType: 'microsoft.devices/provisioningservices',
-    displayName: 'Device Provisioning Services',
+    displayName: 'Device Provisioning Service',
     supportsLogs: true,
   },
   {
     resourceType: 'microsoft.compute/disks',
-    displayName: 'Disks',
+    displayName: 'Disk',
     supportsLogs: true,
   },
   {
     resourceType: 'microsoft.network/dnszones',
-    displayName: 'DNS zones',
+    displayName: 'DNS zone',
     supportsLogs: true,
   },
   {
     resourceType: 'microsoft.eventgrid/domains',
-    displayName: 'Event Grid Domains',
+    displayName: 'Event Grid Domain',
     supportsLogs: true,
   },
   {
     resourceType: 'microsoft.eventgrid/systemtopics',
-    displayName: 'Event Grid System Topics',
+    displayName: 'Event Grid System Topic',
     supportsLogs: true,
   },
   {
     resourceType: 'microsoft.eventgrid/topics',
-    displayName: 'Event Grid Topics',
+    displayName: 'Event Grid Topic',
     supportsLogs: true,
   },
   {
     resourceType: 'microsoft.eventhub/clusters',
-    displayName: 'Event Hubs Clusters',
+    displayName: 'Event Hubs Cluster',
     supportsLogs: true,
   },
   {
     resourceType: 'microsoft.eventhub/namespaces',
-    displayName: 'Event Hubs Namespaces',
+    displayName: 'Event Hubs Namespace',
     supportsLogs: true,
   },
   {
     resourceType: 'microsoft.network/expressroutecircuits',
-    displayName: 'ExpressRoute circuits',
+    displayName: 'ExpressRoute circuit',
     supportsLogs: true,
   },
   {
@@ -291,32 +291,32 @@ export const resourceTypeMetadata = [
   },
   {
     resourceType: 'microsoft.network/azurefirewalls',
-    displayName: 'Firewalls',
+    displayName: 'Firewall',
     supportsLogs: true,
   },
   {
     resourceType: 'microsoft.network/frontdoors',
-    displayName: 'Front Doors',
+    displayName: 'Front Door',
     supportsLogs: true,
   },
   {
     resourceType: 'microsoft.hdinsight/clusters',
-    displayName: 'HDInsight clusters',
+    displayName: 'HDInsight cluster',
     supportsLogs: true,
   },
   {
     resourceType: 'microsoft.storagecache/caches',
-    displayName: 'HPC caches',
+    displayName: 'HPC cache',
     supportsLogs: true,
   },
   {
     resourceType: 'microsoft.logic/integrationserviceenvironments',
-    displayName: 'Integration Service Environments',
+    displayName: 'Integration Service Environment',
     supportsLogs: true,
   },
   {
     resourceType: 'microsoft.iotcentral/iotapps',
-    displayName: 'IoT Central Applications',
+    displayName: 'IoT Central Application',
     supportsLogs: true,
   },
   {
@@ -326,7 +326,7 @@ export const resourceTypeMetadata = [
   },
   {
     resourceType: 'microsoft.keyvault/vaults',
-    displayName: 'Key vaults',
+    displayName: 'Key vault',
     supportsLogs: true,
   },
   {
@@ -336,27 +336,27 @@ export const resourceTypeMetadata = [
   },
   {
     resourceType: 'microsoft.containerservice/managedclusters',
-    displayName: 'Kubernetes services',
+    displayName: 'Kubernetes service',
     supportsLogs: true,
   },
   {
     resourceType: 'microsoft.media/mediaservices/liveevents',
-    displayName: 'Live events',
+    displayName: 'Live event',
     supportsLogs: true,
   },
   {
     resourceType: 'microsoft.network/loadbalancers',
-    displayName: 'Load balancers',
+    displayName: 'Load balancer',
     supportsLogs: true,
   },
   {
     resourceType: 'microsoft.operationalinsights/workspaces',
-    displayName: 'Log Analytics workspaces',
+    displayName: 'Log Analytics workspace',
     supportsLogs: true,
   },
   {
     resourceType: 'microsoft.logic/workflows',
-    displayName: 'Logic apps',
+    displayName: 'Logic app',
     supportsLogs: true,
   },
   {
@@ -366,17 +366,17 @@ export const resourceTypeMetadata = [
   },
   {
     resourceType: 'microsoft.media/mediaservices',
-    displayName: 'Media Services',
+    displayName: 'Media service',
     supportsLogs: true,
   },
   {
     resourceType: 'microsoft.network/natgateways',
-    displayName: 'NAT gateways',
+    displayName: 'NAT gateway',
     supportsLogs: true,
   },
   {
     resourceType: 'microsoft.network/networkinterfaces',
-    displayName: 'Network interfaces',
+    displayName: 'Network interface',
     supportsLogs: true,
   },
   {
@@ -386,12 +386,12 @@ export const resourceTypeMetadata = [
   },
   {
     resourceType: 'microsoft.network/networkwatchers',
-    displayName: 'Network Watchers',
+    displayName: 'Network Watcher',
     supportsLogs: true,
   },
   {
     resourceType: 'microsoft.notificationhubs/namespaces/notificationhubs',
-    displayName: 'Notification Hubs',
+    displayName: 'Notification Hub',
     supportsLogs: true,
   },
   {
@@ -401,7 +401,7 @@ export const resourceTypeMetadata = [
   },
   {
     resourceType: 'microsoft.peering/peeringservices',
-    displayName: 'Peering Services',
+    displayName: 'Peering Service',
     supportsLogs: true,
   },
   {
@@ -411,17 +411,17 @@ export const resourceTypeMetadata = [
   },
   {
     resourceType: 'microsoft.network/privateendpoints',
-    displayName: 'Private endpoints',
+    displayName: 'Private endpoint',
     supportsLogs: true,
   },
   {
     resourceType: 'microsoft.network/privatelinkservices',
-    displayName: 'Private link services',
+    displayName: 'Private link service',
     supportsLogs: true,
   },
   {
     resourceType: 'microsoft.network/publicipaddresses',
-    displayName: 'Public IP addresses',
+    displayName: 'Public IP address',
     supportsLogs: true,
   },
   {
@@ -431,22 +431,22 @@ export const resourceTypeMetadata = [
   },
   {
     resourceType: 'microsoft.relay/namespaces',
-    displayName: 'Relays',
+    displayName: 'Relay',
     supportsLogs: true,
   },
   {
     resourceType: 'microsoft.synapse/workspaces/scopepools',
-    displayName: 'Scope pools',
+    displayName: 'Scope pool',
     supportsLogs: true,
   },
   {
     resourceType: 'microsoft.search/searchservices',
-    displayName: 'Search services',
+    displayName: 'Search service',
     supportsLogs: true,
   },
   {
     resourceType: 'microsoft.servicebus/namespaces',
-    displayName: 'Service Bus Namespaces',
+    displayName: 'Service Bus Namespace',
     supportsLogs: true,
   },
   {
@@ -456,82 +456,82 @@ export const resourceTypeMetadata = [
   },
   {
     resourceType: 'microsoft.operationsmanagement/solutions',
-    displayName: 'Solutions',
+    displayName: 'Solution',
     supportsLogs: true,
   },
   {
     resourceType: 'microsoft.sql/servers/databases',
-    displayName: 'SQL databases',
+    displayName: 'SQL database',
     supportsLogs: true,
   },
   {
     resourceType: 'microsoft.sql/servers/elasticpools',
-    displayName: 'SQL elastic pools',
+    displayName: 'SQL elastic pool',
     supportsLogs: true,
   },
   {
     resourceType: 'microsoft.sql/managedinstances',
-    displayName: 'SQL managed instances',
+    displayName: 'SQL managed instance',
     supportsLogs: true,
   },
   {
     resourceType: 'microsoft.storage/storageaccounts',
-    displayName: 'Storage accounts',
+    displayName: 'Storage account',
     supportsLogs: true,
   },
   {
     resourceType: 'microsoft.classicstorage/storageaccounts',
-    displayName: 'Storage accounts (classic)',
+    displayName: 'Storage account (classic)',
     supportsLogs: true,
   },
   {
     resourceType: 'microsoft.storagesync/storagesyncservices',
-    displayName: 'Storage Sync Services',
+    displayName: 'Storage Sync Service',
     supportsLogs: true,
   },
   {
     resourceType: 'microsoft.streamanalytics/streamingjobs',
-    displayName: 'Stream Analytics jobs',
+    displayName: 'Stream Analytics job',
     supportsLogs: true,
   },
   {
     resourceType: 'microsoft.media/mediaservices/streamingendpoints',
-    displayName: 'Streaming Endpoints',
+    displayName: 'Streaming Endpoint',
     supportsLogs: true,
   },
   {
     resourceType: 'microsoft.timeseriesinsights/environments',
-    displayName: 'Time Series Insights environments',
+    displayName: 'Time Series Insights environment',
     supportsLogs: true,
   },
   {
     resourceType: 'microsoft.network/trafficmanagerprofiles',
-    displayName: 'Traffic Manager profiles',
+    displayName: 'Traffic Manager profile',
     supportsLogs: true,
   },
   {
     resourceType: 'microsoft.compute/virtualmachinescalesets',
-    displayName: 'Virtual machine scale sets',
+    displayName: 'Virtual machine scale set',
     supportsLogs: true,
   },
   {
     resourceType: 'microsoft.compute/virtualmachines',
-    displayName: 'Virtual machines',
+    displayName: 'Virtual machine',
     supportsLogs: true,
   },
   {
     resourceType: 'microsoft.classiccompute/virtualmachines',
-    displayName: 'Virtual machines (classic)',
+    displayName: 'Virtual machine (classic)',
     supportsLogs: true,
   },
   {
     resourceType: 'microsoft.network/virtualnetworkgateways',
-    displayName: 'Virtual network gateways',
+    displayName: 'Virtual network gateway',
     supportsLogs: true,
   },
   {
     resourceType: 'microsoft.netapp/netappaccounts/capacitypools/volumes',
-    displayName: 'Volumes',
+    displayName: 'Volume',
     supportsLogs: true,
   },
   {
@@ -541,7 +541,7 @@ export const resourceTypeMetadata = [
   },
   {
     resourceType: 'microsoft.cdn/cdnwebapplicationfirewallpolicies',
-    displayName: 'Web application firewall policies (WAF)',
+    displayName: 'Content Delivery Network WAF policy',
     supportsLogs: true,
   },
   {
