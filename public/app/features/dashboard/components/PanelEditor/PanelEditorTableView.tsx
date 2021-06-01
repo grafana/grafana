@@ -22,21 +22,18 @@ export function PanelEditorTableView({ width, height, panel, dashboard }: Props)
     showHeader: true,
   });
 
-  const timeSrv: TimeSrv = getTimeSrv();
-  const timeData = applyPanelTimeOverrides(panel, timeSrv.timeRange());
-
-  const onRefresh = useCallback(() => {
-    panel.runAllPanelQueries(dashboard.id, dashboard.getTimezone(), timeData, width);
-  }, [dashboard, panel, timeData, width]);
-
-  // Subscribe to panel events
+  // Subscribe to panel event
   useEffect(() => {
-    const subs = new Subscription();
-    subs.add(panel.events.subscribe(RefreshEvent, onRefresh));
+    const timeSrv: TimeSrv = getTimeSrv();
+    const timeData = applyPanelTimeOverrides(panel, timeSrv.timeRange());
+
+    const sub = panel.events.subscribe(RefreshEvent, () => {
+      panel.runAllPanelQueries(dashboard.id, dashboard.getTimezone(), timeData, width);
+    });
     return () => {
-      subs.unsubscribe();
+      sub.unsubscribe();
     };
-  }, [onRefresh, panel]);
+  }, [panel, dashboard, width]);
 
   if (!data) {
     return null;
