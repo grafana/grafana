@@ -37,7 +37,7 @@ Value mappings are displayed differently in different visualizations.
 
 This section describes options in the Value mappings user interface.
 
-> **Note:** Display text and Color are both optional. If you only want to assign colors to text values, then you can leave the display text empty and the original value will be displayed.
+> **Note:** Display text and Color are both optional. If you want to only assign colors to the text values, then you can leave the display text empty and the original value is displayed.
 
 ### Condition
 
