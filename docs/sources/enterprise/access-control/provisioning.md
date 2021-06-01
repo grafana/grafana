@@ -242,6 +242,10 @@ A basic set of validation rules are applied to the input `yaml` files.
 - `name` must not be empty
 - `name` must not have `fixed:` prefix. 
 
+### Permissions
+
+- `name` must not be empty
+
 ### Built-in role assignments
 
 - `name` must be one of the Organization roles (`Viewer`, `Editor`, `Admin`) or `Grafana Admin`. 
