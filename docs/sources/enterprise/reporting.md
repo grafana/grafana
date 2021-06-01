@@ -140,7 +140,7 @@ You can configure report-specific template variables for the dashboard on the re
 
 > **Note:** The query variables saved with a report might go out of date if the results of that query change. For example, if your template variable queries for a list of hostnames and a new hostname is added, then it will not be included in the report. If that happens, the selected variables will need to be manually updated in the report. If you select the `All` value for the template variable or if you keep the dashboard's original variable selection, then the report will stay up-to-date as new values are added.
 
-### Render report with panels or rows set to repeat by a variable
+### Render a report with panels or rows set to repeat by a variable
 
 > **Note:** Available in Grafana Enterprise v8+.
 
