@@ -1,9 +1,9 @@
 +++
-title = "Visualizations"
+title = "Visualization options"
 weight = 400
 +++
 
-# Visualizations
+# Visualization options
 
 Grafana offers a variety of visualizations to suit different use cases. This section of the documentation lists the different visualizations available in Grafana and their unique options.
 
