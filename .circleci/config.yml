@@ -3,3 +3,9 @@ jobs:
   build:
     docker:
       - image: alpine:3.7
+    steps:
+      - run:
+          name: The First Step
+          command: |
+            echo 'Fake step!'
+
