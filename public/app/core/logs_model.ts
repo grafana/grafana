@@ -1,40 +1,34 @@
 import { size } from 'lodash';
-import { colors, ansicolor } from '@grafana/ui';
+import { ansicolor, BarAlignment, colors, DrawStyle, StackingMode } from '@grafana/ui';
 
 import {
-  Labels,
-  LogLevel,
+  AbsoluteTimeRange,
   DataFrame,
+  DataQuery,
+  dateTime,
+  dateTimeFormat,
+  dateTimeFormatTimeAgo,
+  FieldCache,
+  FieldType,
+  FieldWithIndex,
   findCommonLabels,
   findUniqueLabels,
   getLogLevel,
-  FieldType,
   getLogLevelFromKey,
+  Labels,
+  LogLevel,
   LogRowModel,
-  LogsModel,
+  LogsDedupStrategy,
   LogsMetaItem,
   LogsMetaKind,
-  LogsDedupStrategy,
-  GraphSeriesXY,
-  dateTimeFormat,
-  dateTimeFormatTimeAgo,
-  NullValueMode,
-  toDataFrame,
-  FieldCache,
-  FieldWithIndex,
-  getFlotPairs,
-  TimeZone,
-  getDisplayProcessor,
-  textUtil,
-  dateTime,
-  AbsoluteTimeRange,
-  sortInAscendingOrder,
+  LogsModel,
   rangeUtil,
-  DataQuery,
+  sortInAscendingOrder,
+  textUtil,
+  toDataFrame,
 } from '@grafana/data';
 import { getThemeColor } from 'app/core/utils/colors';
 import { SIPrefix } from '@grafana/data/src/valueFormats/symbolFormatters';
-import { config } from '@grafana/runtime';
 
 export const LIMIT_LABEL = 'Line limit';
 
@@ -94,7 +88,7 @@ export function filterLogLevels(logRows: LogRowModel[], hiddenLogLevels: Set<Log
   });
 }
 
-export function makeSeriesForLogs(sortedRows: LogRowModel[], bucketSize: number, timeZone: TimeZone): GraphSeriesXY[] {
+export function makeDataFramesForLogs(sortedRows: LogRowModel[], bucketSize: number): DataFrame[] {
   // currently interval is rangeMs / resolution, which is too low for showing series as bars.
   // Should be solved higher up the chain when executing queries & interval calculated and not here but this is a temporary fix.
 
@@ -109,7 +103,6 @@ export function makeSeriesForLogs(sortedRows: LogRowModel[], bucketSize: number,
       seriesByLevel[row.logLevel] = series = {
         lastTs: null,
         datapoints: [],
-        alias: row.logLevel,
         target: row.logLevel,
         color: LogLevelColor[row.logLevel],
       };
@@ -141,52 +134,31 @@ export function makeSeriesForLogs(sortedRows: LogRowModel[], bucketSize: number,
   return seriesList.map((series, i) => {
     series.datapoints.sort((a: number[], b: number[]) => a[1] - b[1]);
 
-    // EEEP: converts GraphSeriesXY to DataFrame and back again!
     const data = toDataFrame(series);
     const fieldCache = new FieldCache(data);
 
-    const timeField = fieldCache.getFirstFieldOfType(FieldType.time)!;
-    timeField.display = getDisplayProcessor({
-      field: timeField,
-      timeZone,
-      theme: config.theme2,
-    });
-
     const valueField = fieldCache.getFirstFieldOfType(FieldType.number)!;
-    valueField.config = {
-      ...valueField.config,
-      color: series.color,
-    };
 
-    valueField.name = series.alias;
-    const fieldDisplayProcessor = getDisplayProcessor({ field: valueField, timeZone, theme: config.theme2 });
-    valueField.display = (value: any) => ({ ...fieldDisplayProcessor(value), color: series.color });
+    data.fields[valueField.index].config.min = 0;
+    data.fields[valueField.index].config.decimals = 0;
 
-    const points = getFlotPairs({
-      xField: timeField,
-      yField: valueField,
-      nullValueMode: NullValueMode.Null,
-    });
-
-    const graphSeries: GraphSeriesXY = {
-      color: series.color,
-      label: series.alias,
-      data: points,
-      isVisible: true,
-      yAxis: {
-        index: 1,
-        min: 0,
-        tickDecimals: 0,
+    data.fields[valueField.index].config.custom = {
+      drawStyle: DrawStyle.Bars,
+      barAlignment: BarAlignment.Center,
+      barWidthFactor: 0.9,
+      barMaxWidth: 5,
+      lineColor: series.color,
+      pointColor: series.color,
+      fillColor: series.color,
+      lineWidth: 0,
+      fillOpacity: 100,
+      stacking: {
+        mode: StackingMode.Normal,
+        group: 'A',
       },
-      seriesIndex: i,
-      timeField,
-      valueField,
-      // for now setting the time step to be 0,
-      // and handle the bar width by setting lineWidth instead of barWidth in flot options
-      timeStep: 0,
     };
 
-    return graphSeries;
+    return data;
   });
 }
 
@@ -203,7 +175,6 @@ function isLogsData(series: DataFrame) {
 export function dataFrameToLogsModel(
   dataFrame: DataFrame[],
   intervalMs: number | undefined,
-  timeZone: TimeZone,
   absoluteRange?: AbsoluteTimeRange,
   queries?: DataQuery[]
 ): LogsModel {
@@ -220,7 +191,7 @@ export function dataFrameToLogsModel(
         absoluteRange
       );
       logsModel.visibleRange = visibleRange;
-      logsModel.series = makeSeriesForLogs(sortedRows, bucketSize, timeZone);
+      logsModel.series = makeDataFramesForLogs(sortedRows, bucketSize);
 
       if (logsModel.meta) {
         logsModel.meta = adjustMetaInfo(logsModel, visibleRangeMs, requestedRangeMs);
@@ -245,7 +216,7 @@ export function dataFrameToLogsModel(
  * Returns a clamped time range and interval based on the visible logs and the given range.
  *
  * @param sortedRows Log rows from the query response
- * @param intervalMs Dynamnic data interval based on available pixel width
+ * @param intervalMs Dynamic data interval based on available pixel width
  * @param absoluteRange Requested time range
  * @param pxPerBar Default: 20, buckets will be rendered as bars, assuming 10px per histogram bar plus some free space around it
  */

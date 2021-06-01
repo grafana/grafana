@@ -100,7 +100,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
 
   exportLogsAsTxt = () => {
     const { data, panel } = this.props;
-    const logsModel = dataFrameToLogsModel(data || [], undefined, 'utc');
+    const logsModel = dataFrameToLogsModel(data || [], undefined);
     let textToDownload = '';
 
     logsModel.meta?.forEach((metaItem) => {

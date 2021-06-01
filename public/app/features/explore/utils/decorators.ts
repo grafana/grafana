@@ -137,15 +137,8 @@ export const decorateWithLogsResult = (
     return { ...data, logsResult: null };
   }
 
-  const timeZone = data.request?.timezone ?? 'browser';
   const intervalMs = data.request?.intervalMs;
-  const newResults = dataFrameToLogsModel(
-    data.logsFrames,
-    intervalMs,
-    timeZone,
-    options.absoluteRange,
-    options.queries
-  );
+  const newResults = dataFrameToLogsModel(data.logsFrames, intervalMs, options.absoluteRange, options.queries);
   const sortOrder = refreshIntervalToSortOrder(options.refreshInterval);
   const sortedNewResults = sortLogsResult(newResults, sortOrder);
   const rows = sortedNewResults.rows;

@@ -18,7 +18,7 @@ import {
 } from '../types';
 import { fieldMatchers, reduceField, ReducerID } from '../transformations';
 import { FieldMatcher } from '../types/transformations';
-import { isNumber, set, unset, get } from 'lodash';
+import { isNumber, set, unset, get, cloneDeep } from 'lodash';
 import { getDisplayProcessor, getRawDisplayProcessor } from './displayProcessor';
 import { guessFieldTypeForField } from '../dataframe';
 import { standardFieldConfigEditorRegistry } from './standardFieldConfigEditorRegistry';
@@ -119,7 +119,7 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
         displayName,
       };
 
-      const config: FieldConfig = { ...field.config };
+      const config: FieldConfig = { ...cloneDeep(field.config) };
       const context = {
         field,
         data: options.data!,
