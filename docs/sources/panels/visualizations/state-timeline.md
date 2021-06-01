@@ -12,6 +12,7 @@ The state timeline visualization shows discrete state changes over time. Each fi
 {{< figure src="/static/img/docs/v8/state_timeline_strings.png" max-width="1025px" caption="state timeline with string states" >}}
 
 ## Shared options
+The following shared options are available:
 
 - [Standard options]({{< relref "../standard-options.md" >}}) (Unit, min, max, decimals, color)
 - [Thresholds]({{< relref "../thresholds.md" >}})
