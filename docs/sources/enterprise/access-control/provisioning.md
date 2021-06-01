@@ -125,15 +125,14 @@ During startup, Grafana creates [default built-in role assignments]({{< relref "
 
 To remove default built-in role assignments, use the `removeDefaultAssignments` element in the configuration file. You need to provide the built-in role name and fixed role name.
 
+Here is an example:
 ```yaml
 # config file version
 apiVersion: 1
 
 # list of default built-in role assignments that should be removed
 removeDefaultAssignments:
-  # <string>, must be one of the Organization roles (`Viewer`, `Editor`, `Admin`) or `Grafana Admin`
   - builtInRole: "Grafana Admin"
-    # <string>, must be one of the existing fixed roles
     fixedRole: "fixed:permissions:admin"
 
 ```
@@ -142,7 +141,15 @@ removeDefaultAssignments:
 
 To restore the default built-in role assignment, use the `addDefaultAssignments` element in the configuration file. You need to provide the built-in role name and fixed role name.
 
-## Example of a role configuration file
+Here is an example:
+```yaml
+# list of default built-in role assignments that should be added back
+addDefaultAssignments:
+  - builtInRole: "Admin"
+    fixedRole: "fixed:reporting:admin:read"
+```
+
+## Full example of a role configuration file
 
 ```yaml
 # config file version
@@ -189,7 +196,7 @@ roles:
     permissions:
       # <string, required> action allowed
       - action: "users:read"
-        #<string, required> scope it applies to
+        #<string> scope it applies to
         scope: "users:*"
       - action: "users:write"
         scope: "users:*"
