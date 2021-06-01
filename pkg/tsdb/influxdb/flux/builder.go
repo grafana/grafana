@@ -167,10 +167,6 @@ func (fb *frameBuilder) Init(metadata *query.FluxTableMetadata) error {
 	dataColumns := getDataColumns(columns)
 	fb.hasUsualStartStop = hasUsualStartStop(dataColumns)
 
-	// first we store the column-info structures as pointers,
-	// because we need to modify some items in the list
-	var columnInfos []*columnInfo
-
 	for _, col := range dataColumns {
 		if col.IsGroup() {
 			fb.labels = append(fb.labels, col.Name())
@@ -190,8 +186,6 @@ func (fb *frameBuilder) Init(metadata *query.FluxTableMetadata) error {
 				shouldGetLabels:  true, // we default to get-labels
 				isTheSingleValue: false,
 			}
-
-			columnInfos = append(columnInfos, info)
 
 			if isTimestamp {
 				timestampCols = append(timestampCols, info)
@@ -216,7 +210,12 @@ func (fb *frameBuilder) Init(metadata *query.FluxTableMetadata) error {
 		nonTimestampCols[0].isTheSingleValue = true
 	}
 
-	for _, colInfo := range columnInfos {
+	// grafana wants the timestamp columns first, so we add them first
+	for _, colInfo := range timestampCols {
+		fb.columns = append(fb.columns, *colInfo)
+	}
+	// then we add the non-timestamp-columns
+	for _, colInfo := range nonTimestampCols {
 		fb.columns = append(fb.columns, *colInfo)
 	}
 

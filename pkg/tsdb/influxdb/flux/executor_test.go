@@ -119,8 +119,8 @@ func TestExecuteGrouping(t *testing.T) {
 	dr := verifyGoldenResponse(t, "grouping")
 	require.Len(t, dr.Frames, 3)
 	require.Contains(t, dr.Frames[0].Name, "system")
-	require.Len(t, dr.Frames[0].Fields[0].Labels, 1)
-	require.Equal(t, "_time", dr.Frames[0].Fields[1].Name)
+	require.Len(t, dr.Frames[0].Fields[1].Labels, 1)
+	require.Equal(t, "_time", dr.Frames[0].Fields[0].Name)
 
 	st, err := dr.Frames[0].StringTable(-1, -1)
 	require.NoError(t, err)
@@ -303,4 +303,14 @@ func TestMultiTime(t *testing.T) {
 	require.Len(t, frame.Fields[1].Labels, 5)
 	require.Equal(t, frame.Fields[2].Name, "_value")
 	require.Len(t, frame.Fields[2].Labels, 5)
+}
+
+func TestTimestampFirst(t *testing.T) {
+	dr := verifyGoldenResponse(t, "time_first")
+	require.Len(t, dr.Frames, 1)
+	// we make sure the timestamp-column is the first column
+	// in the dataframe, even if it was not the first column
+	// in the csv.
+	require.Equal(t, "_time", dr.Frames[0].Fields[0].Name)
+	require.Equal(t, "_value", dr.Frames[0].Fields[1].Name)
 }
