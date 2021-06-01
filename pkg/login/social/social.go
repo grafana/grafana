@@ -79,7 +79,7 @@ func newSocialBase(name string, config *oauth2.Config, info *setting.OAuthInfo) 
 	}
 }
 
-func NewOAuthService() {
+func NewOAuthService(cfg *setting.Cfg) {
 	setting.OAuthService = &setting.OAuther{}
 	setting.OAuthService.OAuthInfos = make(map[string]*setting.OAuthInfo)
 
@@ -166,8 +166,9 @@ func NewOAuthService() {
 		// AzureAD.
 		if name == "azuread" {
 			SocialMap["azuread"] = &SocialAzureAD{
-				SocialBase:    newSocialBase(name, &config, info),
-				allowedGroups: util.SplitString(sec.Key("allowed_groups").String()),
+				SocialBase:        newSocialBase(name, &config, info),
+				allowedGroups:     util.SplitString(sec.Key("allowed_groups").String()),
+				autoAssignOrgRole: cfg.AutoAssignOrgRole,
 			}
 		}
 
