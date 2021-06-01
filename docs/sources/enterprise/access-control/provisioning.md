@@ -131,7 +131,7 @@ apiVersion: 1
 
 # list of default built-in role assignments that should be removed
 removeDefaultAssignments:
-  - builtInRole: "Grafana Admin"
+  - builtInRole: "Grafana server administrator"
     fixedRole: "fixed:permissions:admin"
 
 ```
