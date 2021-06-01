@@ -64,8 +64,7 @@ type Service struct {
 }
 
 //nolint: staticcheck // plugins.DataPlugin deprecated
-func (s *Service) HandleRequest(ctx context.Context, ds *models.DataSource, query plugins.DataQuery) (
-	plugins.DataResponse, error) {
+func (s *Service) HandleRequest(ctx context.Context, ds *models.DataSource, query plugins.DataQuery) (plugins.DataResponse, error) {
 	plugin := s.PluginManager.GetDataPlugin(ds.Type)
 	if plugin == nil {
 		factory, exists := s.registry[ds.Type]
