@@ -9,6 +9,9 @@ import (
 	"github.com/grafana/grafana/pkg/expr/mathexp/parse"
 )
 
+const seriesTypeTimeIdx = 0
+const seriesTypeValIdx = 1
+
 // Series has a time.Time and a *float64 fields.
 type Series struct {
 	Frame *data.Frame
@@ -57,16 +60,16 @@ FIELDS:
 	}
 
 	if timeIdx != 0 { // make time field the first field
-		frame.Fields[0], frame.Fields[timeIdx] = frame.Fields[timeIdx], frame.Fields[0]
+		frame.Fields[seriesTypeTimeIdx], frame.Fields[timeIdx] = frame.Fields[timeIdx], frame.Fields[seriesTypeTimeIdx]
 	}
 
 	if valueIdx != 1 { // make value field the second field
-		frame.Fields[1], frame.Fields[valueIdx] = frame.Fields[valueIdx], frame.Fields[1]
+		frame.Fields[seriesTypeValIdx], frame.Fields[valueIdx] = frame.Fields[valueIdx], frame.Fields[seriesTypeValIdx]
 	}
 
 	if timeNullable { // make time not nullable if it is in the input
-		timeSlice := make([]time.Time, 0, frame.Fields[0].Len())
-		for rowIdx := 0; rowIdx < frame.Fields[0].Len(); rowIdx++ {
+		timeSlice := make([]time.Time, 0, frame.Fields[seriesTypeTimeIdx].Len())
+		for rowIdx := 0; rowIdx < frame.Fields[seriesTypeTimeIdx].Len(); rowIdx++ {
 			val, ok := frame.At(0, rowIdx).(*time.Time)
 			if !ok {
 				return s, fmt.Errorf("unexpected time type, expected *time.Time but got %T", val)
@@ -76,26 +79,26 @@ FIELDS:
 			}
 			timeSlice = append(timeSlice, *val)
 		}
-		nF := data.NewField(frame.Fields[0].Name, nil, timeSlice) // (labels are not used on time field)
-		nF.Config = frame.Fields[0].Config
-		frame.Fields[0] = nF
+		nF := data.NewField(frame.Fields[seriesTypeTimeIdx].Name, nil, timeSlice) // (labels are not used on time field)
+		nF.Config = frame.Fields[seriesTypeTimeIdx].Config
+		frame.Fields[seriesTypeTimeIdx] = nF
 	}
 
 	if !valueNullable { // make value nullable if it is not in the input
-		floatSlice := make([]*float64, 0, frame.Fields[1].Len())
-		for rowIdx := 0; rowIdx < frame.Fields[1].Len(); rowIdx++ {
-			val, ok := frame.At(1, rowIdx).(float64)
+		floatSlice := make([]*float64, 0, frame.Fields[seriesTypeValIdx].Len())
+		for rowIdx := 0; rowIdx < frame.Fields[seriesTypeValIdx].Len(); rowIdx++ {
+			val, ok := frame.At(seriesTypeValIdx, rowIdx).(float64)
 			if !ok {
 				return s, fmt.Errorf("unexpected time type, expected float64 but got %T", val)
 			}
 			floatSlice = append(floatSlice, &val)
 		}
-		nF := data.NewField(frame.Fields[1].Name, frame.Fields[1].Labels, floatSlice) // (labels are not used on time field)
-		nF.Config = frame.Fields[1].Config
-		frame.Fields[1] = nF
+		nF := data.NewField(frame.Fields[seriesTypeValIdx].Name, frame.Fields[seriesTypeValIdx].Labels, floatSlice) // (labels are not used on time field)
+		nF.Config = frame.Fields[seriesTypeValIdx].Config
+		frame.Fields[seriesTypeValIdx] = nF
 	}
 
-	frame.Fields = []*data.Field{frame.Fields[0], frame.Fields[1]} // drop other fields
+	frame.Fields = []*data.Field{frame.Fields[seriesTypeTimeIdx], frame.Fields[seriesTypeValIdx]} // drop other fields
 
 	s.Frame = frame
 
@@ -105,8 +108,8 @@ FIELDS:
 // NewSeries returns a dataframe of type Series.
 func NewSeries(refID string, labels data.Labels, size int) Series {
 	fields := make([]*data.Field, 2)
-	fields[0] = data.NewField("Time", nil, make([]time.Time, size))
-	fields[1] = data.NewField(refID, labels, make([]*float64, size))
+	fields[seriesTypeTimeIdx] = data.NewField("Time", nil, make([]time.Time, size))
+	fields[seriesTypeValIdx] = data.NewField(refID, labels, make([]*float64, size))
 
 	return Series{
 		Frame: data.NewFrame("", fields...),
@@ -119,9 +122,9 @@ func (s Series) Type() parse.ReturnType { return parse.TypeSeriesSet }
 // Value returns the actual value allows it to fulfill the Value interface.
 func (s Series) Value() interface{} { return &s }
 
-func (s Series) GetLabels() data.Labels { return s.Frame.Fields[1].Labels }
+func (s Series) GetLabels() data.Labels { return s.Frame.Fields[seriesTypeValIdx].Labels }
 
-func (s Series) SetLabels(ls data.Labels) { s.Frame.Fields[1].Labels = ls }
+func (s Series) SetLabels(ls data.Labels) { s.Frame.Fields[seriesTypeValIdx].Labels = ls }
 
 func (s Series) GetName() string { return s.Frame.Name }
 
@@ -143,31 +146,31 @@ func (s Series) GetPoint(pointIdx int) (time.Time, *float64) {
 
 // SetPoint sets the time and value on the corresponding vectors at the specified index.
 func (s Series) SetPoint(pointIdx int, t time.Time, f *float64) (err error) {
-	s.Frame.Fields[0].Set(pointIdx, t)
-	s.Frame.Fields[1].Set(pointIdx, f)
+	s.Frame.Fields[seriesTypeTimeIdx].Set(pointIdx, t)
+	s.Frame.Fields[seriesTypeValIdx].Set(pointIdx, f)
 	return
 }
 
 // AppendPoint appends a point (time/value).
 func (s Series) AppendPoint(pointIdx int, t time.Time, f *float64) (err error) {
-	s.Frame.Fields[0].Append(t)
-	s.Frame.Fields[1].Append(f)
+	s.Frame.Fields[seriesTypeTimeIdx].Append(t)
+	s.Frame.Fields[seriesTypeValIdx].Append(f)
 	return
 }
 
 // Len returns the length of the series.
 func (s Series) Len() int {
-	return s.Frame.Fields[0].Len()
+	return s.Frame.Fields[seriesTypeTimeIdx].Len()
 }
 
 // GetTime returns the time at the specified index.
 func (s Series) GetTime(pointIdx int) time.Time {
-	return s.Frame.Fields[0].At(pointIdx).(time.Time)
+	return s.Frame.Fields[seriesTypeTimeIdx].At(pointIdx).(time.Time)
 }
 
 // GetValue returns the float value at the specified index.
 func (s Series) GetValue(pointIdx int) *float64 {
-	return s.Frame.Fields[1].At(pointIdx).(*float64)
+	return s.Frame.Fields[seriesTypeValIdx].At(pointIdx).(*float64)
 }
 
 // SortByTime sorts the series by the time from oldest to newest.
