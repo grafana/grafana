@@ -70,15 +70,14 @@ func TestReadCSV(t *testing.T) {
 	require.NoError(t, err)
 
 	frame := data.NewFrame("", fBool, fBool2, fNum, fStr)
-	frameToJSON, err := data.FrameToJSON(frame)
+	out, err := data.FrameToJSON(frame, data.IncludeAll)
 	require.NoError(t, err)
-	out := frameToJSON.Bytes(data.IncludeAll)
 
 	require.JSONEq(t, `{"schema":{
 		"fields":[
 			{"type":"boolean","typeInfo":{"frame":"bool","nullable":true}},
 			{"type":"boolean","typeInfo":{"frame":"bool","nullable":true}},
-			{"type":"number","typeInfo":{"frame":"int64","nullable":true}},
+			{"type":"number","typeInfo":{"frame":"float64","nullable":true}},
 			{"type":"string","typeInfo":{"frame":"string","nullable":true}}
 		]},"data":{
 			"values":[

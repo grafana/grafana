@@ -8,10 +8,8 @@ const { Select, Input } = LegacyForms;
 export interface Props {
   managedIdentityEnabled: boolean;
   credentials: AzureCredentials;
-  defaultSubscription?: string;
   azureCloudOptions?: SelectableValue[];
   onCredentialsChange: (updatedCredentials: AzureCredentials) => void;
-  onDefaultSubscriptionChange?: (subscriptionId: string | undefined) => void;
   getSubscriptions?: () => Promise<SelectableValue[]>;
 }
 
@@ -27,18 +25,11 @@ const authTypeOptions: Array<SelectableValue<AzureAuthType>> = [
 ];
 
 export const AzureCredentialsForm: FunctionComponent<Props> = (props: Props) => {
-  const {
-    credentials,
-    defaultSubscription,
-    azureCloudOptions,
-    onCredentialsChange,
-    onDefaultSubscriptionChange,
-    getSubscriptions,
-  } = props;
+  const { credentials, azureCloudOptions, onCredentialsChange, getSubscriptions } = props;
   const hasRequiredFields = isCredentialsComplete(credentials);
 
   const [subscriptions, setSubscriptions] = useState<Array<SelectableValue<string>>>([]);
-  const [loadSubscriptions, onLoadSubscriptions] = useReducer((val) => val + 1, 0);
+  const [loadSubscriptionsClicked, onLoadSubscriptions] = useReducer((val) => val + 1, 0);
   useEffect(() => {
     if (!getSubscriptions || !hasRequiredFields) {
       updateSubscriptions([]);
@@ -47,7 +38,7 @@ export const AzureCredentialsForm: FunctionComponent<Props> = (props: Props) => 
     let canceled = false;
     getSubscriptions().then((result) => {
       if (!canceled) {
-        updateSubscriptions(result);
+        updateSubscriptions(result, loadSubscriptionsClicked);
       }
     });
     return () => {
@@ -55,19 +46,19 @@ export const AzureCredentialsForm: FunctionComponent<Props> = (props: Props) => 
     };
     // This effect is intended to be called only once initially and on Load Subscriptions click
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loadSubscriptions]);
+  }, [loadSubscriptionsClicked]);
 
-  const updateSubscriptions = (received: Array<SelectableValue<string>>) => {
+  const updateSubscriptions = (received: Array<SelectableValue<string>>, autoSelect = false) => {
     setSubscriptions(received);
-    if (onDefaultSubscriptionChange) {
-      if (!defaultSubscription && received.length > 0) {
-        // Setting the default subscription if subscriptions received but no default subscription selected
-        onDefaultSubscriptionChange(received[0].value);
-      } else if (defaultSubscription) {
-        const found = received.find((opt) => opt.value === defaultSubscription);
+    if (getSubscriptions) {
+      if (autoSelect && !credentials.defaultSubscriptionId && received.length > 0) {
+        // Selecting the default subscription if subscriptions received but no default subscription selected
+        onSubscriptionChange(received[0]);
+      } else if (credentials.defaultSubscriptionId) {
+        const found = received.find((opt) => opt.value === credentials.defaultSubscriptionId);
         if (!found) {
-          // Unsetting the default found if it isn't found among the received subscriptions
-          onDefaultSubscriptionChange(undefined);
+          // Unselecting the default subscription if it isn't found among the received subscriptions
+          onSubscriptionChange(undefined);
         }
       }
     }
@@ -75,9 +66,11 @@ export const AzureCredentialsForm: FunctionComponent<Props> = (props: Props) => 
 
   const onAuthTypeChange = (selected: SelectableValue<AzureAuthType>) => {
     if (onCredentialsChange) {
+      setSubscriptions([]);
       const updated: AzureCredentials = {
         ...credentials,
         authType: selected.value || 'msi',
+        defaultSubscriptionId: undefined,
       };
       onCredentialsChange(updated);
     }
@@ -85,9 +78,11 @@ export const AzureCredentialsForm: FunctionComponent<Props> = (props: Props) => 
 
   const onAzureCloudChange = (selected: SelectableValue<string>) => {
     if (onCredentialsChange && credentials.authType === 'clientsecret') {
+      setSubscriptions([]);
       const updated: AzureCredentials = {
         ...credentials,
         azureCloud: selected.value,
+        defaultSubscriptionId: undefined,
       };
       onCredentialsChange(updated);
     }
@@ -95,9 +90,11 @@ export const AzureCredentialsForm: FunctionComponent<Props> = (props: Props) => 
 
   const onTenantIdChange = (event: ChangeEvent<HTMLInputElement>) => {
     if (onCredentialsChange && credentials.authType === 'clientsecret') {
+      setSubscriptions([]);
       const updated: AzureCredentials = {
         ...credentials,
         tenantId: event.target.value,
+        defaultSubscriptionId: undefined,
       };
       onCredentialsChange(updated);
     }
@@ -105,9 +102,11 @@ export const AzureCredentialsForm: FunctionComponent<Props> = (props: Props) => 
 
   const onClientIdChange = (event: ChangeEvent<HTMLInputElement>) => {
     if (onCredentialsChange && credentials.authType === 'clientsecret') {
+      setSubscriptions([]);
       const updated: AzureCredentials = {
         ...credentials,
         clientId: event.target.value,
+        defaultSubscriptionId: undefined,
       };
       onCredentialsChange(updated);
     }
@@ -115,9 +114,11 @@ export const AzureCredentialsForm: FunctionComponent<Props> = (props: Props) => 
 
   const onClientSecretChange = (event: ChangeEvent<HTMLInputElement>) => {
     if (onCredentialsChange && credentials.authType === 'clientsecret') {
+      setSubscriptions([]);
       const updated: AzureCredentials = {
         ...credentials,
         clientSecret: event.target.value,
+        defaultSubscriptionId: undefined,
       };
       onCredentialsChange(updated);
     }
@@ -125,17 +126,23 @@ export const AzureCredentialsForm: FunctionComponent<Props> = (props: Props) => 
 
   const onClientSecretReset = () => {
     if (onCredentialsChange && credentials.authType === 'clientsecret') {
+      setSubscriptions([]);
       const updated: AzureCredentials = {
         ...credentials,
         clientSecret: '',
+        defaultSubscriptionId: undefined,
       };
       onCredentialsChange(updated);
     }
   };
 
-  const onSubscriptionChange = (selected: SelectableValue<string>) => {
-    if (onDefaultSubscriptionChange) {
-      onDefaultSubscriptionChange(selected?.value);
+  const onSubscriptionChange = (selected: SelectableValue<string> | undefined) => {
+    if (onCredentialsChange) {
+      const updated: AzureCredentials = {
+        ...credentials,
+        defaultSubscriptionId: selected?.value,
+      };
+      onCredentialsChange(updated);
     }
   };
 
@@ -230,14 +237,18 @@ export const AzureCredentialsForm: FunctionComponent<Props> = (props: Props) => 
           )}
         </>
       )}
-      {getSubscriptions && onDefaultSubscriptionChange && (
+      {getSubscriptions && (
         <>
           <div className="gf-form-inline">
             <div className="gf-form">
               <InlineFormLabel className="width-12">Default Subscription</InlineFormLabel>
               <div className="width-25">
                 <Select
-                  value={subscriptions.find((opt) => opt.value === defaultSubscription)}
+                  value={
+                    credentials.defaultSubscriptionId
+                      ? subscriptions.find((opt) => opt.value === credentials.defaultSubscriptionId)
+                      : undefined
+                  }
                   options={subscriptions}
                   onChange={onSubscriptionChange}
                 />

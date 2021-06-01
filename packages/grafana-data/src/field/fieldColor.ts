@@ -187,9 +187,8 @@ export class FieldColorSchemeMode implements FieldColorMode {
         };
       }
     } else {
-      const seriesIndex = field.state?.seriesIndex ?? 0;
-
       return (_: number, _percent: number, _threshold?: Threshold) => {
+        const seriesIndex = field.state?.seriesIndex ?? 0;
         return colors[seriesIndex % colors.length];
       };
     }

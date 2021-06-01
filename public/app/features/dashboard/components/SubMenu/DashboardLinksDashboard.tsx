@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useLayoutEffect } from 'react';
 import { Icon, Tooltip } from '@grafana/ui';
 import { sanitize, sanitizeUrl } from '@grafana/data/src/text/sanitize';
 import { getBackendSrv } from 'app/core/services/backend_srv';
@@ -17,8 +17,13 @@ interface Props {
 export const DashboardLinksDashboard: React.FC<Props> = (props) => {
   const { link, linkInfo } = props;
   const listRef = useRef<HTMLUListElement>(null);
+  const [dropdownCssClass, setDropdownCssClass] = useState('invisible');
   const [opened, setOpened] = useState(0);
   const resolvedLinks = useResolvedLinks(props, opened);
+
+  useLayoutEffect(() => {
+    setDropdownCssClass(getDropdownLocationCssClass(listRef.current));
+  }, [resolvedLinks]);
 
   if (link.asDropdown) {
     return (
@@ -33,7 +38,7 @@ export const DashboardLinksDashboard: React.FC<Props> = (props) => {
             <Icon name="bars" style={{ marginRight: '4px' }} />
             <span>{linkInfo.title}</span>
           </a>
-          <ul className={`dropdown-menu ${getDropdownLocationCssClass(listRef.current)}`} role="menu" ref={listRef}>
+          <ul className={`dropdown-menu ${dropdownCssClass}`} role="menu" ref={listRef}>
             {resolvedLinks.length > 0 &&
               resolvedLinks.map((resolvedLink, index) => {
                 return (
