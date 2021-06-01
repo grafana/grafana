@@ -77,7 +77,7 @@ func (s Series) Reduce(refID, rFunc string) (Number, error) {
 	}
 	number := NewNumber(refID, l)
 	var f *float64
-	fVec := s.Frame.Fields[s.ValueIdx]
+	fVec := s.Frame.Fields[1]
 	floatField := Float64Field(*fVec)
 	switch rFunc {
 	case "sum":
