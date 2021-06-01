@@ -61,7 +61,7 @@ var wireSet = wire.NewSet(
 	wire.Bind(new(plugins.DataRequestHandler), new(*tsdb.Service)),
 	alerting.ProvideAlertEngine,
 	wire.Bind(new(alerting.UsageStatsQuerier), new(*alerting.AlertEngine)),
-	setting.NewCfg,
+	setting.NewCfgFromArgs,
 	server.New,
 	api.ProvideHTTPServer,
 	bus.ProvideBus,

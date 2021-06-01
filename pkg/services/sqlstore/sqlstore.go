@@ -434,7 +434,7 @@ func InitTestDB(t ITestDB, opts ...InitTestDBOpt) *SQLStore {
 		}
 
 		// set test db config
-		cfg, err := setting.NewCfg(setting.CommandLineArgs{})
+		cfg, err := setting.NewCfgFromArgs(setting.CommandLineArgs{})
 		if err != nil {
 			t.Fatalf("Failed to create configuration: %s", err.Error())
 		}

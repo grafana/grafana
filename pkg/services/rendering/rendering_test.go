@@ -9,10 +9,7 @@ import (
 
 func TestGetUrl(t *testing.T) {
 	path := "render/d-solo/5SdHCadmz/panel-tests-graph?orgId=1&from=1587390211965&to=1587393811965&panelId=5&width=1000&height=500&tz=Europe%2FStockholm"
-	cfg, err := setting.NewCfg(setting.CommandLineArgs{
-		HomePath: "../../../",
-	})
-	require.NoError(t, err)
+	cfg := setting.NewCfg()
 	rs := &RenderingService{
 		Cfg: cfg,
 	}

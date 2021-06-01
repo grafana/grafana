@@ -113,20 +113,14 @@ func TestSaveInvalidLoginAttempt(t *testing.T) {
 
 func cfgWithBruteForceLoginProtectionDisabled(t *testing.T) *setting.Cfg {
 	t.Helper()
-	cfg, err := setting.NewCfg(setting.CommandLineArgs{
-		HomePath: "../../",
-	})
-	require.NoError(t, err)
+	cfg := setting.NewCfg()
 	cfg.DisableBruteForceLoginProtection = true
 	return cfg
 }
 
 func cfgWithBruteForceLoginProtectionEnabled(t *testing.T) *setting.Cfg {
 	t.Helper()
-	cfg, err := setting.NewCfg(setting.CommandLineArgs{
-		HomePath: "../../",
-	})
-	require.NoError(t, err)
+	cfg := setting.NewCfg()
 	require.False(t, cfg.DisableBruteForceLoginProtection)
 	return cfg
 }

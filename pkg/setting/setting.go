@@ -755,11 +755,15 @@ func (cfg *Cfg) setHomePath(args CommandLineArgs) {
 
 var skipStaticRootValidation = false
 
-func NewCfg(args CommandLineArgs) (*Cfg, error) {
-	cfg := &Cfg{
+func NewCfg() *Cfg {
+	return &Cfg{
 		Logger: log.New("settings"),
 		Raw:    ini.Empty(),
 	}
+}
+
+func NewCfgFromArgs(args CommandLineArgs) (*Cfg, error) {
+	cfg := NewCfg()
 	if err := cfg.Load(args); err != nil {
 		return nil, err
 	}
@@ -778,9 +782,7 @@ func GetCfg() *Cfg {
 		return theCfg
 	}
 
-	// FIXME
-	var err error
-	theCfg, err = NewCfg(CommandLineArgs{})
+	theCfg, err := NewCfgFromArgs(CommandLineArgs{})
 	if err != nil {
 		panic(err)
 	}

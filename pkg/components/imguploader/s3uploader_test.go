@@ -10,12 +10,8 @@ import (
 
 func TestUploadToS3(t *testing.T) {
 	SkipConvey("[Integration test] for external_image_store.s3", t, func() {
-		cfg, err := setting.NewCfg(setting.CommandLineArgs{
-			HomePath: "../../",
-		})
-		So(err, ShouldBeNil)
-
-		err = cfg.Load(setting.CommandLineArgs{
+		cfg := setting.NewCfg()
+		err := cfg.Load(setting.CommandLineArgs{
 			HomePath: "../../../",
 		})
 		So(err, ShouldBeNil)

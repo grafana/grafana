@@ -18,20 +18,23 @@ func (stub *testLogger) Warn(testMessage string, ctx ...interface{}) {
 	stub.warnCalled = true
 	stub.warnMessage = testMessage
 }
+
+func (stub *testLogger) Info(testMessage string, ctx ...interface{}) {
+
+}
+
 func TestSessionSettings(t *testing.T) {
 	Convey("session config", t, func() {
 		skipStaticRootValidation = true
 
 		Convey("Reading session should log error ", func() {
-			var (
-				cfg      = NewCfg()
-				homePath = "../../"
-			)
+			cfg := NewCfg()
+			homePath := "../../"
 
 			stub := &testLogger{}
 			cfg.Logger = stub
 
-			err := cfg.Load(&CommandLineArgs{
+			err := cfg.Load(CommandLineArgs{
 				HomePath: homePath,
 				Config:   filepath.Join(homePath, "pkg/setting/testdata/session.ini"),
 			})

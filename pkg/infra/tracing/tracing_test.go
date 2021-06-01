@@ -107,13 +107,9 @@ func TestInitJaegerCfg_EnabledViaHost(t *testing.T) {
 		require.NoError(t, os.Unsetenv("JAEGER_AGENT_HOST"))
 	}()
 
-	cfg, err := setting.NewCfg(setting.CommandLineArgs{
-		HomePath: "../../",
-	})
-	require.NoError(t, err)
-
+	cfg := setting.NewCfg()
 	ts := &TracingService{Cfg: cfg}
-	_, err = ts.Cfg.Raw.NewSection("tracing.jaeger")
+	_, err := ts.Cfg.Raw.NewSection("tracing.jaeger")
 	require.NoError(t, err)
 	require.NoError(t, ts.parseSettings())
 	jaegerCfg, err := ts.initJaegerCfg()
@@ -131,13 +127,9 @@ func TestInitJaegerCfg_EnabledViaHostPort(t *testing.T) {
 		require.NoError(t, os.Unsetenv("JAEGER_AGENT_PORT"))
 	}()
 
-	cfg, err := setting.NewCfg(setting.CommandLineArgs{
-		HomePath: "../../",
-	})
-	require.NoError(t, err)
-
+	cfg := setting.NewCfg()
 	ts := &TracingService{Cfg: cfg}
-	_, err = ts.Cfg.Raw.NewSection("tracing.jaeger")
+	_, err := ts.Cfg.Raw.NewSection("tracing.jaeger")
 	require.NoError(t, err)
 	require.NoError(t, ts.parseSettings())
 	jaegerCfg, err := ts.initJaegerCfg()

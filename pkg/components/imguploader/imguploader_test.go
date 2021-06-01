@@ -12,12 +12,8 @@ import (
 func TestImageUploaderFactory(t *testing.T) {
 	Convey("Can create image uploader for ", t, func() {
 		Convey("S3ImageUploader config", func() {
-			cfg, err := setting.NewCfg(setting.CommandLineArgs{
-				HomePath: "../../../",
-			})
-			So(err, ShouldBeNil)
-
-			err = cfg.Load(setting.CommandLineArgs{
+			cfg := setting.NewCfg()
+			err := cfg.Load(setting.CommandLineArgs{
 				HomePath: "../../../",
 			})
 			So(err, ShouldBeNil)
@@ -89,12 +85,8 @@ func TestImageUploaderFactory(t *testing.T) {
 		})
 
 		Convey("Webdav uploader", func() {
-			cfg, err := setting.NewCfg(setting.CommandLineArgs{
-				HomePath: "../../../",
-			})
-			So(err, ShouldBeNil)
-
-			err = cfg.Load(setting.CommandLineArgs{
+			cfg := setting.NewCfg()
+			err := cfg.Load(setting.CommandLineArgs{
 				HomePath: "../../../",
 			})
 			So(err, ShouldBeNil)
@@ -121,12 +113,8 @@ func TestImageUploaderFactory(t *testing.T) {
 		})
 
 		Convey("GCS uploader", func() {
-			cfg, err := setting.NewCfg(setting.CommandLineArgs{
-				HomePath: "../../../",
-			})
-			So(err, ShouldBeNil)
-
-			err = cfg.Load(setting.CommandLineArgs{
+			cfg := setting.NewCfg()
+			err := cfg.Load(setting.CommandLineArgs{
 				HomePath: "../../../",
 			})
 			So(err, ShouldBeNil)
@@ -150,12 +138,8 @@ func TestImageUploaderFactory(t *testing.T) {
 		})
 
 		Convey("AzureBlobUploader config", func() {
-			cfg, err := setting.NewCfg(setting.CommandLineArgs{
-				HomePath: "../../../",
-			})
-			So(err, ShouldBeNil)
-
-			err = cfg.Load(setting.CommandLineArgs{
+			cfg := setting.NewCfg()
+			err := cfg.Load(setting.CommandLineArgs{
 				HomePath: "../../../",
 			})
 			So(err, ShouldBeNil)
@@ -184,12 +168,8 @@ func TestImageUploaderFactory(t *testing.T) {
 		})
 
 		Convey("Local uploader", func() {
-			cfg, err := setting.NewCfg(setting.CommandLineArgs{
-				HomePath: "../../../",
-			})
-			So(err, ShouldBeNil)
-
-			err = cfg.Load(setting.CommandLineArgs{
+			cfg := setting.NewCfg()
+			err := cfg.Load(setting.CommandLineArgs{
 				HomePath: "../../../",
 			})
 			So(err, ShouldBeNil)

@@ -10,10 +10,7 @@ import (
 
 func TestEmailCodes(t *testing.T) {
 	Convey("When generating code", t, func() {
-		cfg, err := setting.NewCfg(setting.CommandLineArgs{
-			HomePath: "../../../",
-		})
-		So(err, ShouldBeNil)
+		cfg := setting.NewCfg()
 		cfg.EmailCodeValidMinutes = 120
 
 		user := &models.User{Id: 10, Email: "t@a.com", Login: "asd", Password: "1", Rands: "2"}

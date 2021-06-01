@@ -1,7 +1,6 @@
 package notifications
 
 import (
-	"github.com/stretchr/testify/require"
 	"io/ioutil"
 	"testing"
 
@@ -18,17 +17,12 @@ func TestEmailIntegrationTest(t *testing.T) {
 
 		ns := &NotificationService{}
 		ns.Bus = bus.New()
-		cfg, err := setting.NewCfg(setting.CommandLineArgs{
-			HomePath: "../../../",
-		})
-		require.NoError(t, err)
+		cfg := setting.NewCfg()
 
 		cfg.Smtp.Enabled = true
 		cfg.Smtp.TemplatesPattern = "emails/*.html"
 		cfg.Smtp.FromAddress = "from@address.com"
 		cfg.Smtp.FromName = "Grafana Admin"
-
-		So(err, ShouldBeNil)
 
 		Convey("When sending reset email password", func() {
 			cmd := &models.SendEmailCommand{

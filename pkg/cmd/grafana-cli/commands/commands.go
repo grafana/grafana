@@ -22,7 +22,7 @@ func runDbCommand(command func(commandLine utils.CommandLine, sqlStore *sqlstore
 		debug := cmd.Bool("debug")
 
 		configOptions := strings.Split(cmd.String("configOverrides"), " ")
-		cfg, err := setting.NewCfg(setting.CommandLineArgs{
+		cfg, err := setting.NewCfgFromArgs(setting.CommandLineArgs{
 			Config:   cmd.ConfigFile(),
 			HomePath: cmd.HomePath(),
 			Args:     append(configOptions, cmd.Args().Slice()...), // tailing arguments have precedence over the options string
