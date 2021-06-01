@@ -3,18 +3,20 @@ package api
 import (
 	"encoding/json"
 	"fmt"
+	"regexp"
+	"testing"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/shorturls"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"regexp"
-	"testing"
 )
 
 func TestShortURLAPIEndpoint(t *testing.T) {
@@ -50,6 +52,7 @@ func createShortURLScenario(t *testing.T, desc string, url string, routePattern 
 			ShortURLService: &shorturls.ShortURLService{
 				SQLStore: sqlStore,
 			},
+		log: log.New("test"),
 		}
 
 		sc := setupScenarioContext(t, url)
