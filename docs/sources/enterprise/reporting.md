@@ -149,7 +149,7 @@ You can include dynamic dashboards with panels or rows, set to repeat by a varia
 #### Caveats:
 
 - Rendering repeating panels for dynamic variable types (e.g. `query` variables) with selected `All` value is currently not supported. As a workaround, it is possible to individually select all the values instead.
-- If the number of selected variables is different in dashboard from the report, the dimensions of the panels from the dashboard are used.
+- If you select different template variables in a report for a dashboard with repeating rows, you might see empty space or missing values at the bottom of the report. This is because the dimensions of the panels from the dashboard are used to generate the report. To avoid this issue, use the dashboard's original template variables for the report, or make a copy of the dashboard, select the new set of template variables, and generate a report based on the copied dashboard.
 - Rendering of the repeating panels inside collapsed rows in reports is not supported.
 
 ## Pause report
