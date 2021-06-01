@@ -7,11 +7,11 @@ import { LinkButton, useTheme } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 import validators from 'app/percona/shared/helpers/validators';
 
-import { PRIVACY_POLICY_URL, TERMS_OF_SERVICE_URL } from '../PlatformLogin.constants';
+import { PRIVACY_POLICY_URL, TERMS_OF_SERVICE_URL, MAX_NAME_LENGTH } from '../PlatformLogin.constants';
 import { Messages } from '../PlatformLogin.messages';
 import { PlatformLoginService } from '../PlatformLogin.service';
 import { getStyles } from '../PlatformLogin.styles';
-import { SignUpCredentials, LoginFormProps } from '../types';
+import { LoginFormProps, SignUpCredentials } from '../types';
 
 export const SignUp: FC<LoginFormProps> = ({ changeMode, getSettings }) => {
   const styles = getStyles(useTheme());
@@ -54,14 +54,14 @@ export const SignUp: FC<LoginFormProps> = ({ changeMode, getSettings }) => {
         data-qa="sign-up-first-name-input"
         name="firstName"
         label={Messages.firstNameLabel}
-        validators={[validators.required]}
+        validators={[validators.required, validators.maxLength(MAX_NAME_LENGTH)]}
         showErrorOnBlur
       />
       <TextInputField
         data-qa="sign-up-last-name-input"
         name="lastName"
         label={Messages.lastNameLabel}
-        validators={[validators.required]}
+        validators={[validators.required, validators.maxLength(MAX_NAME_LENGTH)]}
         showErrorOnBlur
       />
       <CheckboxField
