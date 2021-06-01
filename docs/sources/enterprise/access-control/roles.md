@@ -77,7 +77,7 @@ For more information, refer to [Fine-grained access control references]({{< relr
 
 ## Create and remove built-in role assignments
 
-You can create or remove built-in role assignments using [Fine-grained access control API]({{< relref "../../http_api/access_control.md" >}}) or using [Grafana Provisioning]({{< relref "./provisioning"> }}).
+You can create or remove built-in role assignments using [Fine-grained access control API]({{< relref "../../http_api/access_control.md" >}}) or using [Grafana Provisioning]({{< relref "./provisioning" >}}).
 
 ### Scope of assignments
 
