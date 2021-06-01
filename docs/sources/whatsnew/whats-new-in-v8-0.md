@@ -241,7 +241,7 @@ When creating a report, you can now choose to export Table Panels as .csv files 
 
 ### License restrictions clarification in the docs
 
-Grafana version 7.4 introduced some changes to the way that user roles are counted from a licensing perspective. The docs have been updated to describe more specifically how licensed roles are counted, how they can be updated, and where you can see details about dashboard and folder permissions that affect users' licensed roles. Visit the [License restrictions docs]({{< relref "../enterprise/license/license-restrictions.md" >}}) for details.
+The docs have been updated to describe more specifically how licensed roles are counted, how they can be updated, and where you can see details about dashboard and folder permissions that affect users' licensed roles. Visit the [License restrictions docs]({{< relref "../enterprise/license/license-restrictions.md" >}}) for details.
 
 ## Breaking changes
 
