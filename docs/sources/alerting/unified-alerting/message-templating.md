@@ -160,3 +160,9 @@ Template to render entire notification message:
   {{ end }}
 {{ end }}
 ```
+
+## Managing templates for an external alertmanager
+
+Grafana alerting UI supports managing external alertmanager configuration. Add an [alertmanager datasource]({{< relref "../../datasources/alertmanager.md" >}}) and a dropdown will appear at the top of the page, allowing you to select either `Grafana` or an external alertmanager. 
+
+{{< figure max-width="40%" src="/static/img/docs/alerting/unified/contact-points-select-am-8-0.gif" caption="Select alertmanager" >}}
