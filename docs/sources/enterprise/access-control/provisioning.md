@@ -38,7 +38,7 @@ apiVersion: 1
 # Roles to insert/update in the database
 roles:
   - name: custom:users:editor
-    description: "This role allows users to list/create/update other users in the organization"
+    description: "This role allows users to list, create, or update other users within the organization."
     version: 1
     orgId: 1
     permissions:
