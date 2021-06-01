@@ -7,8 +7,8 @@ import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { parseRuleIdentifier } from './utils/rules';
 import { AlertingQueryRunner } from './state/AlertingQueryRunner';
 import { useObservable } from 'react-use';
-import { AlertQuery } from 'app/types/unified-alerting-dto';
 import { useCombinedRule } from './hooks/useCombinedRule';
+import { alertRuleToQueries } from './utils/query';
 
 type ViewAlertRuleProps = GrafanaRouteComponentProps<{ id?: string; sourceName?: string }>;
 
@@ -20,14 +20,14 @@ const ViewAlertRulePage: FC<ViewAlertRuleProps> = ({ match }) => {
   const data = useObservable(runner.get());
 
   const onRunQueries = useCallback(() => {
-    const queries: AlertQuery[] = []; //alertRuleToQueries(result);
+    const queries = alertRuleToQueries(rule);
 
     if (queries.length === 0) {
       return;
     }
 
     runner.run(queries);
-  }, [runner]);
+  }, [runner, rule]);
 
   useEffect(() => {
     return () => runner.destroy();

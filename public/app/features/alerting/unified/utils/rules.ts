@@ -32,8 +32,8 @@ export function isRecordingRule(rule: Rule): rule is RecordingRule {
   return rule.type === PromRuleType.Recording;
 }
 
-export function isAlertingRulerRule(rule: RulerRuleDTO): rule is RulerAlertingRuleDTO {
-  return 'alert' in rule;
+export function isAlertingRulerRule(rule?: RulerRuleDTO): rule is RulerAlertingRuleDTO {
+  return typeof rule === 'object' && 'alert' in rule;
 }
 
 export function isRecordingRulerRule(rule: RulerRuleDTO): rule is RulerRecordingRuleDTO {

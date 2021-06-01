@@ -1,43 +1,38 @@
 import { DataQuery, DataSourceInstanceSettings } from '@grafana/data';
-import { getDataSourceSrv } from '@grafana/runtime';
 import { LokiQuery } from 'app/plugins/datasource/loki/types';
 import { PromQuery } from 'app/plugins/datasource/prometheus/types';
-import { RuleWithLocation } from 'app/types/unified-alerting';
+import { CombinedRule } from 'app/types/unified-alerting';
 import { AlertQuery, RulerAlertingRuleDTO } from 'app/types/unified-alerting-dto';
-import { isGrafanaRulesSource } from './datasource';
+import { isCloudRulesSource, isGrafanaRulesSource } from './datasource';
 import { isAlertingRulerRule, isGrafanaRulerRule } from './rules';
 
-export function alertRuleToQueries(ruleWithLocation: RuleWithLocation | undefined | null): AlertQuery[] {
-  if (!ruleWithLocation) {
+export function alertRuleToQueries(combinedRule: CombinedRule | undefined | null): AlertQuery[] {
+  if (!combinedRule) {
     return [];
   }
 
-  const { ruleSourceName, rule } = ruleWithLocation;
+  const { namespace, rulerRule } = combinedRule;
+  const { rulesSource } = namespace;
 
-  if (isGrafanaRulesSource(ruleSourceName)) {
-    if (isGrafanaRulerRule(rule)) {
-      return rule.grafana_alert.data;
+  if (isGrafanaRulesSource(rulesSource)) {
+    if (isGrafanaRulerRule(rulerRule)) {
+      return rulerRule.grafana_alert.data;
     }
   }
 
-  if (isAlertingRulerRule(rule)) {
-    const dsSettings = getDataSourceSrv().getInstanceSettings(ruleSourceName);
+  if (isCloudRulesSource(rulesSource)) {
+    if (isAlertingRulerRule(rulerRule)) {
+      const model = cloudAlertRuleToModel(rulesSource, rulerRule);
 
-    if (!dsSettings) {
-      // notify user about error.
-      return [];
+      return [
+        {
+          refId: model.refId,
+          datasourceUid: rulesSource.uid,
+          queryType: '',
+          model,
+        },
+      ];
     }
-
-    const model = cloudAlertRuleToModel(dsSettings, rule);
-
-    return [
-      {
-        refId: model.refId,
-        datasourceUid: dsSettings.uid,
-        queryType: '',
-        model,
-      },
-    ];
   }
 
   return [];
