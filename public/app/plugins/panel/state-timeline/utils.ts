@@ -14,6 +14,8 @@ import {
   getValueFormat,
   ThresholdsMode,
   GrafanaTheme2,
+  DisplayValue,
+  DisplayProcessor,
 } from '@grafana/data';
 import {
   UPlotConfigBuilder,
@@ -224,6 +226,26 @@ export function unsetSameFutureValues(values: any[]): any[] | undefined {
   return clone;
 }
 
+export function cachingDisplayProcessor(disp: DisplayProcessor): DisplayProcessor {
+  const cache = new Map<any, DisplayValue>();
+
+  const p = (value: any) => {
+    let v = cache.get(value);
+    if (!v) {
+      v = disp(value);
+      cache.set(value, v);
+
+      // Don't grow too big
+      if (cache.size > 2500) {
+        cache.clear();
+      }
+    }
+    return v;
+  };
+  p.__isCached = true;
+  return p;
+}
+
 // This will return a set of frames with only graphable values included
 export function prepareTimelineFields(
   series: DataFrame[] | undefined,
@@ -250,6 +272,12 @@ export function prepareTimelineFields(
         case FieldType.string:
           // magic value for join() to leave nulls alone
           (field.config.custom = field.config.custom ?? {}).spanNulls = -1;
+
+          if (!(field.display as any).__isCached) {
+            field.display = cachingDisplayProcessor(field.display!);
+          } else {
+            console.log('REUSEING', field.display);
+          }
 
           if (mergeValues) {
             let merged = unsetSameFutureValues(field.values.toArray());
