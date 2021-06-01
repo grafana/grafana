@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/manager"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/require"
 )
 
@@ -105,11 +106,11 @@ func (pm fakeBackendPM) GetDataPlugin(string) interface{} {
 	return nil
 }
 
-func createService() (Service, *fakeExecutor) {
-	s := NewService()
-	s.PluginManager = &manager.PluginManager{
+func createService() (*Service, *fakeExecutor) {
+	manager := &manager.PluginManager{
 		BackendPluginManager: fakeBackendPM{},
 	}
+	s := newService(setting.NewCfg(), manager)
 	e := &fakeExecutor{
 		//nolint: staticcheck // plugins.DataPlugin deprecated
 		results:   make(map[string]plugins.DataQueryResult),

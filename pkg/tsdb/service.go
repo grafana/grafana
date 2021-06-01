@@ -21,43 +21,43 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/postgres"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus"
 	"github.com/grafana/grafana/pkg/tsdb/tempo"
+	"github.com/grafana/grafana/pkg/tsdb/testdatasource"
 )
 
 // NewService returns a new Service.
-func NewService(cfg *setting.Cfg, cloudWatchService *cloudwatch.CloudWatchService,
+func NewService(cfg *setting.Cfg, _ *cloudwatch.CloudWatchService,
 	cloudMonitoringService *cloudmonitoring.Service, azureMonitorService *azuremonitor.Service,
 	pluginManager plugins.Manager, postgresService *postgres.PostgresService,
-	httpClientProvider httpclient.Provider) *Service {
+	httpClientProvider httpclient.Provider, _ *testdatasource.TestDataPlugin) *Service {
+	s := newService(cfg, pluginManager)
+	s.registry["graphite"] = graphite.New(httpClientProvider)
+	s.registry["opentsdb"] = opentsdb.New(httpClientProvider)
+	s.registry["prometheus"] = prometheus.New(httpClientProvider)
+	s.registry["influxdb"] = influxdb.New(httpClientProvider)
+	s.registry["mssql"] = mssql.NewExecutor
+	s.registry["postgres"] = postgresService.NewExecutor
+	s.registry["mysql"] = mysql.New(httpClientProvider)
+	s.registry["elasticsearch"] = elasticsearch.New(httpClientProvider)
+	s.registry["stackdriver"] = cloudMonitoringService.NewExecutor
+	s.registry["grafana-zure-monitor-datasource"] = azureMonitorService.NewExecutor
+	s.registry["loki"] = loki.New(httpClientProvider)
+	s.registry["tempo"] = tempo.New(httpClientProvider)
+
+	return s
+}
+
+func newService(cfg *setting.Cfg, manager plugins.Manager) *Service {
 	return &Service{
-		Cfg:                    cfg,
-		CloudWatchService:      cloudWatchService,
-		CloudMonitoringService: cloudMonitoringService,
-		AzureMonitorService:    azureMonitorService,
-		PluginManager:          pluginManager,
-		registry: map[string]func(*models.DataSource) (plugins.DataPlugin, error){
-			"graphite":                         graphite.New(httpClientProvider),
-			"opentsdb":                         opentsdb.New(httpClientProvider),
-			"prometheus":                       prometheus.New(httpClientProvider),
-			"influxdb":                         influxdb.New(httpClientProvider),
-			"mssql":                            mssql.NewExecutor,
-			"postgres":                         postgresService.NewExecutor,
-			"mysql":                            mysql.New(httpClientProvider),
-			"elasticsearch":                    elasticsearch.New(httpClientProvider),
-			"stackdriver":                      cloudMonitoringService.NewExecutor,
-			"grafana-azure-monitor-datasource": azureMonitorService.NewExecutor,
-			"loki":                             loki.New(httpClientProvider),
-			"tempo":                            tempo.New(httpClientProvider),
-		},
+		Cfg:           cfg,
+		PluginManager: manager,
+		registry:      map[string]func(*models.DataSource) (plugins.DataPlugin, error){},
 	}
 }
 
 // Service handles data requests to data sources.
 type Service struct {
-	Cfg                    *setting.Cfg
-	CloudWatchService      *cloudwatch.CloudWatchService
-	CloudMonitoringService *cloudmonitoring.Service
-	AzureMonitorService    *azuremonitor.Service
-	PluginManager          plugins.Manager
+	Cfg           *setting.Cfg
+	PluginManager plugins.Manager
 
 	//nolint: staticcheck // plugins.DataPlugin deprecated
 	registry map[string]func(*models.DataSource) (plugins.DataPlugin, error)

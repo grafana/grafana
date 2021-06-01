@@ -15,7 +15,7 @@ import (
 )
 
 func TestTestdataScenarios(t *testing.T) {
-	p := &testDataPlugin{}
+	p := &TestDataPlugin{}
 
 	t.Run("random walk ", func(t *testing.T) {
 		t.Run("Should start at the requested value", func(t *testing.T) {
