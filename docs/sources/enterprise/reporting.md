@@ -44,7 +44,7 @@ Only organization admins can create reports by default. You can customize who ca
 1. Select the orientation option for generated report: **Portrait** or **Landscape**.
 1. Select the layout option for generated report: **Simple** or **Grid**.
 1. You can include CSV files for every table panel your dashboard by clicking on **Add a CSV file of table panel data**.
-1. **Preview PDF** to make sure the report appears as you expect. Update if necessary.
+1. **Preview PDF** View a rendered PDF with the options you have selected.
 1. Enter scheduling information. Options vary depending on the frequency you select.
 1. **Save** the report.
 1. **Send test email** to verify that the whole configuration is working as expected. This will ask you to write an email to send the test email to or to use the emails from the report configuration.
