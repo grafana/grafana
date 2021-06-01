@@ -79,6 +79,7 @@ export {
   VizTooltipOptions,
   TooltipDisplayMode,
   SeriesTableProps,
+  SeriesTableRow,
   SeriesTableRowProps,
 } from './VizTooltip';
 export { VizRepeater, VizRepeaterRenderValueProps } from './VizRepeater/VizRepeater';

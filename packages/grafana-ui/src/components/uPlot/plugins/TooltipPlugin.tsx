@@ -4,6 +4,7 @@ import { usePlotContext } from '../context';
 import {
   CartesianCoords2D,
   DataFrame,
+  FALLBACK_COLOR,
   FieldType,
   formattedValueToString,
   getDisplayProcessor,
@@ -133,19 +134,17 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
     // when interacting with a point in single mode
     if (mode === TooltipDisplayMode.Single && focusedSeriesIdx !== null) {
       const field = otherProps.data.fields[focusedSeriesIdx];
-      const plotSeries = plotInstance.series;
 
       const fieldFmt = field.display || getDisplayProcessor({ field, timeZone, theme });
-      const value = fieldFmt(field.values.get(focusedPointIdx));
+      const display = fieldFmt(field.values.get(focusedPointIdx));
 
       tooltip = (
         <SeriesTable
           series={[
             {
-              // TODO: align with uPlot typings
-              color: (plotSeries[focusedSeriesIdx!].stroke as any)(),
+              color: display.color || FALLBACK_COLOR,
               label: getFieldDisplayName(field, otherProps.data),
-              value: value ? formattedValueToString(value) : null,
+              value: display ? formattedValueToString(display) : null,
             },
           ]}
           timestamp={xVal}
@@ -169,13 +168,12 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
           continue;
         }
 
-        const value = field.display!(otherProps.data.fields[i].values.get(focusedPointIdx));
+        const display = field.display!(otherProps.data.fields[i].values.get(focusedPointIdx));
 
         series.push({
-          // TODO: align with uPlot typings
-          color: (plotSeries[i].stroke as any)!(),
+          color: display.color || FALLBACK_COLOR,
           label: getFieldDisplayName(field, frame),
-          value: value ? formattedValueToString(value) : null,
+          value: display ? formattedValueToString(display) : null,
           isActive: focusedSeriesIdx === i,
         });
       }

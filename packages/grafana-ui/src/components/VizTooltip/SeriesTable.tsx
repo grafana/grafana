@@ -46,6 +46,9 @@ const getSeriesTableRowStyles = (theme: GrafanaTheme) => {
   };
 };
 
+/**
+ * @public
+ */
 export const SeriesTableRow: React.FC<SeriesTableRowProps> = ({ color, label, value, isActive }) => {
   const styles = useStyles(getSeriesTableRowStyles);
 
