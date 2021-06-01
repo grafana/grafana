@@ -82,8 +82,8 @@ interface State {
 }
 
 export class UnthemedLogs extends PureComponent<Props, State> {
-  flipOrderTimer: NodeJS.Timeout;
-  cancelFlippingTimer: NodeJS.Timeout;
+  flipOrderTimer?: number;
+  cancelFlippingTimer?: number;
   topLogsRef = createRef<HTMLDivElement>();
 
   state: State = {
@@ -99,14 +99,19 @@ export class UnthemedLogs extends PureComponent<Props, State> {
   };
 
   componentWillUnmount() {
-    clearTimeout(this.flipOrderTimer);
-    clearTimeout(this.cancelFlippingTimer);
+    if (this.flipOrderTimer) {
+      window.clearTimeout(this.flipOrderTimer);
+    }
+
+    if (this.cancelFlippingTimer) {
+      window.clearTimeout(this.cancelFlippingTimer);
+    }
   }
 
   onChangeLogsSortOrder = () => {
     this.setState({ isFlipping: true });
     // we are using setTimeout here to make sure that disabled button is rendered before the rendering of reordered logs
-    this.flipOrderTimer = setTimeout(() => {
+    this.flipOrderTimer = window.setTimeout(() => {
       this.setState((prevState) => {
         if (prevState.logsSortOrder === null || prevState.logsSortOrder === LogsSortOrder.Descending) {
           return { logsSortOrder: LogsSortOrder.Ascending };
@@ -114,7 +119,7 @@ export class UnthemedLogs extends PureComponent<Props, State> {
         return { logsSortOrder: LogsSortOrder.Descending };
       });
     }, 0);
-    this.cancelFlippingTimer = setTimeout(() => this.setState({ isFlipping: false }), 1000);
+    this.cancelFlippingTimer = window.setTimeout(() => this.setState({ isFlipping: false }), 1000);
   };
 
   onEscapeNewlines = () => {
