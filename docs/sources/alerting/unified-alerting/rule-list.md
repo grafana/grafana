@@ -39,11 +39,10 @@ A rule row shows the rule state, health, and summary annotation if the rule has 
 
 ### Edit or delete rule
 
-
 Grafana rules can only be edited or deleted by users with Edit permissions for the folder which contains the rule. Prometheus or Loki rules can be edited or deleted by users with Editor or Admin roles. 
 
 To edit or delete a rule:
 
 1. Expand this rule to reveal rule controls. 
-1. Click **Edit** to go to the rule editing form. Make changes following [instructions listed here]({{< relref "./create-alert-rule.md" >}}).
+1. Click **Edit** to go to the rule editing form. Make changes following [instructions listed here]({{< relref "./create-grafana-managed-rule.md" >}}).
 1. Click **Delete"** to delete a rule. 
