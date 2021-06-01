@@ -3,6 +3,7 @@ package managedstream
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"sync"
 	"time"
 
@@ -67,7 +68,6 @@ func (r *Runner) GetOrCreateStream(orgID int64, streamID string) (*ManagedStream
 
 // ManagedStream holds the state of a managed stream.
 type ManagedStream struct {
-	mu         sync.RWMutex
 	id         string
 	start      time.Time
 	publisher  models.ChannelPublisher
@@ -91,12 +91,10 @@ type ManagedChannel struct {
 }
 
 // ListChannels returns info for the UI about this stream.
-// TODO: function should return an error.
-func (s *ManagedStream) ListChannels(orgID int64) []*ManagedChannel {
+func (s *ManagedStream) ListChannels(orgID int64) ([]*ManagedChannel, error) {
 	paths, err := s.frameCache.GetActiveChannels(orgID)
 	if err != nil {
-		logger.Error("Error getting active managed stream paths", "error", err)
-		return []*ManagedChannel{}
+		return []*ManagedChannel{}, fmt.Errorf("error getting active managed stream paths: %v", err)
 	}
 	info := make([]*ManagedChannel, 0, len(paths))
 	for k, v := range paths {
@@ -106,7 +104,7 @@ func (s *ManagedStream) ListChannels(orgID int64) []*ManagedChannel {
 		}
 		info = append(info, managedChannel)
 	}
-	return info
+	return info, nil
 }
 
 // Push sends frame to the stream and saves it for later retrieval by subscribers.

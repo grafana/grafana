@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"strconv"
 	"sync"
 	"time"
 
@@ -168,6 +167,9 @@ func (g *GrafanaLive) Init() error {
 	}
 
 	if os.Getenv("GF_LIVE_REDIS_ADDRESS") != "" {
+		// Configure HA with Redis. In this case Centrifuge nodes
+		// will be connected over Redis PUB/SUB. Presence will work
+		// globally since kept inside Redis.
 		redisAddress := os.Getenv("GF_LIVE_REDIS_ADDRESS")
 		redisShardConfigs := []centrifuge.RedisShardConfig{
 			{Address: redisAddress},
@@ -182,7 +184,7 @@ func (g *GrafanaLive) Init() error {
 		}
 
 		broker, err := centrifuge.NewRedisBroker(node, centrifuge.RedisBrokerConfig{
-			// We are using Redis streams here for history.
+			// We are using Redis streams here for history. Require Redis >= 5.
 			UseStreams: true,
 
 			// Use reasonably large expiration interval for stream meta key,
@@ -611,14 +613,7 @@ func (g *GrafanaLive) handleStreamScope(u *models.SignedInUser, namespace string
 func (g *GrafanaLive) handleDatasourceScope(user *models.SignedInUser, namespace string) (models.ChannelHandlerFactory, error) {
 	ds, err := g.DatasourceCache.GetDatasourceByUID(namespace, user, false)
 	if err != nil {
-		// the namespace may be an ID
-		id, _ := strconv.ParseInt(namespace, 10, 64)
-		if id > 0 {
-			ds, err = g.DatasourceCache.GetDatasource(id, user, false)
-		}
-		if err != nil {
-			return nil, fmt.Errorf("error getting datasource: %w", err)
-		}
+		return nil, fmt.Errorf("error getting datasource: %w", err)
 	}
 	streamHandler, err := g.getStreamPlugin(ds.Type)
 	if err != nil {
@@ -639,7 +634,7 @@ func (g *GrafanaLive) Publish(orgID int64, channel string, data []byte) error {
 	return err
 }
 
-// ClientCount returns the number of clients
+// ClientCount returns the number of clients.
 func (g *GrafanaLive) ClientCount(orgID int64, channel string) (int, error) {
 	p, err := g.node.Presence(orgchannel.PrependOrgID(orgID, channel))
 	if err != nil {
@@ -682,10 +677,14 @@ func (g *GrafanaLive) HandleHTTPPublish(ctx *models.ReqContext, cmd dtos.LivePub
 	return response.JSON(http.StatusOK, dtos.LivePublishResponse{})
 }
 
-func (g *GrafanaLive) getManagedChannels(orgID int64) []*managedstream.ManagedChannel {
+func (g *GrafanaLive) getManagedChannels(orgID int64) ([]*managedstream.ManagedChannel, error) {
 	channels := make([]*managedstream.ManagedChannel, 0)
 	for _, v := range g.ManagedStreamRunner.Streams(orgID) {
-		channels = append(channels, v.ListChannels(orgID)...)
+		streamChannels, err := v.ListChannels(orgID)
+		if err != nil {
+			return nil, err
+		}
+		channels = append(channels, streamChannels...)
 	}
 
 	// Hardcode sample streams
@@ -707,7 +706,11 @@ func (g *GrafanaLive) getManagedChannels(orgID int64) []*managedstream.ManagedCh
 			Data:    frameJSON,
 		})
 	}
-	return channels
+	return channels, nil
+}
+
+type streamChannelListResponse struct {
+	Channels []*managedstream.ManagedChannel `json:"channels"`
 }
 
 // HandleListHTTP returns metadata so the UI can build a nice form
@@ -717,13 +720,13 @@ func (g *GrafanaLive) HandleListHTTP(c *models.ReqContext) response.Response {
 	if g.IsHA() {
 		channels, err = g.surveyCaller.CallManagedStreams(c.SignedInUser.OrgId)
 	} else {
-		channels = g.getManagedChannels(c.SignedInUser.OrgId)
+		channels, err = g.getManagedChannels(c.SignedInUser.OrgId)
 	}
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, http.StatusText(http.StatusInternalServerError), err)
 	}
-	info := util.DynMap{
-		"channels": channels,
+	info := streamChannelListResponse{
+		Channels: channels,
 	}
 	return response.JSONStreaming(200, info)
 }
