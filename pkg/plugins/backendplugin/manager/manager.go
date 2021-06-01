@@ -17,7 +17,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/instrumentation"
 	"github.com/grafana/grafana/pkg/registry"
@@ -151,6 +150,10 @@ func (m *manager) Get(pluginID string) (backendplugin.Plugin, bool) {
 	p, ok := m.plugins[pluginID]
 	m.pluginsMu.RUnlock()
 
+	if ok && p.IsDecommissioned() {
+		return nil, false
+	}
+
 	return p, ok
 }
 
@@ -179,21 +182,6 @@ func (m *manager) getAzureEnvironmentVariables() []string {
 	}
 
 	return variables
-}
-
-//nolint: staticcheck // plugins.DataPlugin deprecated
-func (m *manager) GetDataPlugin(pluginID string) interface{} {
-	p, _ := m.Get(pluginID)
-
-	if p == nil {
-		return nil
-	}
-
-	if dataPlugin, ok := p.(plugins.DataPlugin); ok {
-		return dataPlugin
-	}
-
-	return nil
 }
 
 // start starts a managed backend plugin
