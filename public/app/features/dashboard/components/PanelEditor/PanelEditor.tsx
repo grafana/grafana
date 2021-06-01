@@ -29,7 +29,6 @@ import { SaveDashboardModalProxy } from '../SaveDashboard/SaveDashboardModalProx
 import { DashboardPanel } from '../../dashgrid/DashboardPanel';
 
 import {
-  exitPanelEditor,
   discardPanelChanges,
   initPanelEditor,
   panelEditorCleanUp,
@@ -85,7 +84,6 @@ const mapStateToProps = (state: StoreState) => {
 
 const mapDispatchToProps = {
   initPanelEditor,
-  exitPanelEditor,
   updateSourcePanel,
   panelEditorCleanUp,
   discardPanelChanges,
@@ -420,8 +418,12 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
     );
   }
 
+  onGoBackToDashboard = () => {
+    locationService.partial({ editPanel: null, tab: null });
+  };
+
   render() {
-    const { dashboard, initDone, updatePanelEditorUIState, uiState, exitPanelEditor } = this.props;
+    const { dashboard, initDone, updatePanelEditorUIState, uiState } = this.props;
     const styles = getStyles(config.theme, this.props);
 
     if (!initDone) {
@@ -430,7 +432,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
 
     return (
       <div className={styles.wrapper} aria-label={selectors.components.PanelEditor.General.content}>
-        <PageToolbar title={`${dashboard.title} / Edit Panel`} onGoBack={exitPanelEditor}>
+        <PageToolbar title={`${dashboard.title} / Edit Panel`} onGoBack={this.onGoBackToDashboard}>
           {this.renderEditorActions()}
         </PageToolbar>
         <div className={styles.verticalSplitPanesWrapper}>
