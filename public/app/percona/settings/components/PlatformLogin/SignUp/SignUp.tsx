@@ -6,7 +6,7 @@ import { SignUpCredentials, LoginFormProps } from '../types';
 import { Messages } from '../PlatformLogin.messages';
 import { getStyles } from '../PlatformLogin.styles';
 import { PlatformLoginService } from '../PlatformLogin.service';
-import { PRIVACY_POLICY_URL, TERMS_OF_SERVICE_URL } from '../PlatformLogin.constants';
+import { PRIVACY_POLICY_URL, TERMS_OF_SERVICE_URL, MAX_NAME_LENGTH } from '../PlatformLogin.constants';
 import { CheckboxField, LoaderButton, TextInputField } from '@percona/platform-core';
 import { AppEvents } from '@grafana/data';
 import { appEvents } from 'app/core/app_events';
@@ -52,14 +52,14 @@ export const SignUp: FC<LoginFormProps> = ({ changeMode, getSettings }) => {
         data-qa="sign-up-first-name-input"
         name="firstName"
         label={Messages.firstNameLabel}
-        validators={[validators.required]}
+        validators={[validators.required, validators.maxLength(MAX_NAME_LENGTH)]}
         showErrorOnBlur
       />
       <TextInputField
         data-qa="sign-up-last-name-input"
         name="lastName"
         label={Messages.lastNameLabel}
-        validators={[validators.required]}
+        validators={[validators.required, validators.maxLength(MAX_NAME_LENGTH)]}
         showErrorOnBlur
       />
       <CheckboxField
