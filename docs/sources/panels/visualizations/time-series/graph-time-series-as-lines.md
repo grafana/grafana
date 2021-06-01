@@ -146,21 +146,27 @@ Dot spacing set to 0, 30:
 
 ![Line style dots 0, 30 example](/static/img/docs/time-series-panel/line-graph-line-style-dots-0-30-7-4.png)
 
-### Null values
+### Connect null values
 
 Choose how null values (gaps in the data) are displayed on the graph.
 
-#### Gaps
+#### Never
 
-If there is a gap in the series, the line in the graph will be broken and show the gap.
+Description
 
-![Null values gaps example](/static/img/docs/time-series-panel/line-graph-null-gaps-7-4.png)
+![Image name](/static/img/docs/time-series-panel/image-8-0.png)
 
-#### Connected
+#### Always
 
-If there is a gap in the series, the line will skip the gap and connect to the next non-null value.
+Description
 
-![Null values connected example](/static/img/docs/time-series-panel/line-graph-null-connected-7-4.png)
+![Image name](/static/img/docs/time-series-panel/image-8-0.png)
+
+#### Threshold
+
+Description
+
+![Image name](/static/img/docs/time-series-panel/image-8-0.png)
 
 ### Show points
 
