@@ -79,35 +79,7 @@ func ProvideService(cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, backendPM bac
 	backgroundServices *backgroundsvcs.Container) (*PluginManager, error) {
 	pm := newManager(cfg, sqlStore, backendPM)
 	backgroundServices.AddBackgroundService(pm)
-
-	plog = log.New("plugins")
-	pm.pluginInstaller = installer.New(false, pm.Cfg.BuildVersion, installerLog)
-
-	pm.log.Info("Starting plugin search")
-
-	plugDir := filepath.Join(pm.Cfg.StaticRootPath, "app/plugins")
-	pm.log.Debug("Scanning core plugin directory", "dir", plugDir)
-	if err := pm.scan(plugDir, false); err != nil {
-		return nil, errutil.Wrapf(err, "failed to scan core plugin directory '%s'", plugDir)
-	}
-
-	plugDir = pm.Cfg.BundledPluginsPath
-	pm.log.Debug("Scanning bundled plugins directory", "dir", plugDir)
-	exists, err := fs.Exists(plugDir)
-	if err != nil {
-		return nil, err
-	}
-	if exists {
-		if err := pm.scan(plugDir, false); err != nil {
-			return nil, errutil.Wrapf(err, "failed to scan bundled plugins directory '%s'", plugDir)
-		}
-	}
-
-	err = pm.initExternalPlugins()
-	if err != nil {
-		return nil, err
-	}
-
+	pm.init()
 	return pm, nil
 }
 
@@ -123,6 +95,33 @@ func newManager(cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, backendPM backend
 		pluginScanningErrors: map[string]plugins.PluginError{},
 		log:                  log.New("plugins"),
 	}
+}
+
+func (pm *PluginManager) init() error {
+	plog = log.New("plugins")
+	pm.pluginInstaller = installer.New(false, pm.Cfg.BuildVersion, installerLog)
+
+	pm.log.Info("Starting plugin search")
+
+	plugDir := filepath.Join(pm.Cfg.StaticRootPath, "app/plugins")
+	pm.log.Debug("Scanning core plugin directory", "dir", plugDir)
+	if err := pm.scan(plugDir, false); err != nil {
+		return errutil.Wrapf(err, "failed to scan core plugin directory '%s'", plugDir)
+	}
+
+	plugDir = pm.Cfg.BundledPluginsPath
+	pm.log.Debug("Scanning bundled plugins directory", "dir", plugDir)
+	exists, err := fs.Exists(plugDir)
+	if err != nil {
+		return err
+	}
+	if exists {
+		if err := pm.scan(plugDir, false); err != nil {
+			return errutil.Wrapf(err, "failed to scan bundled plugins directory '%s'", plugDir)
+		}
+	}
+
+	return pm.initExternalPlugins()
 }
 
 func (pm *PluginManager) initExternalPlugins() error {

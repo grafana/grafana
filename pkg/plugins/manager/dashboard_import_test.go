@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/infra/backgroundsvcs"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -89,8 +88,8 @@ func pluginScenario(t *testing.T, desc string, fn func(*testing.T, *PluginManage
 				},
 			},
 		}
-		sqlStore := sqlstore.InitTestDB(t)
-		pm, err := ProvideService(cfg, sqlStore, &fakeBackendPluginManager{}, backgroundsvcs.ProvideService())
+		pm := newManager(cfg, &sqlstore.SQLStore{}, &fakeBackendPluginManager{})
+		err := pm.init()
 		require.NoError(t, err)
 
 		t.Run(desc, func(t *testing.T) {

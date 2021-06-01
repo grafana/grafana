@@ -3,7 +3,6 @@ package manager
 import (
 	"testing"
 
-	"github.com/grafana/grafana/pkg/infra/backgroundsvcs"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -22,8 +21,8 @@ func TestGetPluginDashboards(t *testing.T) {
 			},
 		},
 	}
-	sqlStore := &sqlstore.SQLStore{}
-	pm, err := ProvideService(cfg, sqlStore, &fakeBackendPluginManager{}, backgroundsvcs.ProvideService())
+	pm := newManager(cfg, &sqlstore.SQLStore{}, &fakeBackendPluginManager{})
+	err := pm.init()
 	require.NoError(t, err)
 
 	bus.AddHandler("test", func(query *models.GetDashboardQuery) error {
