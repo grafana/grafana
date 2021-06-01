@@ -81,6 +81,8 @@ func (m *manager) Register(pluginID string, factory backendplugin.PluginFactoryF
 	}
 
 	hostEnv = append(hostEnv, m.getAWSEnvironmentVariables()...)
+	hostEnv = append(hostEnv, m.getAzureEnvironmentVariables()...)
+
 	pluginSettings := getPluginSettings(pluginID, m.Cfg)
 	env := pluginSettings.ToEnv("GF_PLUGIN", hostEnv)
 
@@ -159,6 +161,21 @@ func (m *manager) getAWSEnvironmentVariables() []string {
 	}
 	if len(m.Cfg.AWSAllowedAuthProviders) > 0 {
 		variables = append(variables, awsds.AllowedAuthProvidersEnvVarKeyName+"="+strings.Join(m.Cfg.AWSAllowedAuthProviders, ","))
+	}
+
+	return variables
+}
+
+func (m *manager) getAzureEnvironmentVariables() []string {
+	variables := []string{}
+	if m.Cfg.Azure.Cloud != "" {
+		variables = append(variables, "AZURE_CLOUD="+m.Cfg.Azure.Cloud)
+	}
+	if m.Cfg.Azure.ManagedIdentityClientId != "" {
+		variables = append(variables, "AZURE_MANAGED_IDENTITY_CLIENT_ID="+m.Cfg.Azure.ManagedIdentityClientId)
+	}
+	if m.Cfg.Azure.ManagedIdentityEnabled {
+		variables = append(variables, "AZURE_MANAGED_IDENTITY_ENABLED=true")
 	}
 
 	return variables

@@ -39,31 +39,31 @@ The following APIs need to be enabled first:
 
 Click on the links above and click the `Enable` button:
 
-{{< docs-imagebox img="/img/docs/v71/cloudmonitoring_enable_api.png" max-width="450px" class="docs-image--no-shadow" caption="Enable GCP APIs" >}}
+{{< figure src="/static/img/docs/v71/cloudmonitoring_enable_api.png" max-width="450px" class="docs-image--no-shadow" caption="Enable GCP APIs" >}}
 
 #### Create a GCP Service Account for a Project
 
 1. Navigate to the [APIs and Services Credentials page](https://console.cloud.google.com/apis/credentials).
 1. Click on the `Create credentials` dropdown/button and choose the `Service account key` option.
 
-   {{< docs-imagebox img="/img/docs/v71/cloudmonitoring_create_service_account_button.png" max-width="500px" class="docs-image--no-shadow" caption="Create service account button" >}}
+   {{< figure src="/static/img/docs/v71/cloudmonitoring_create_service_account_button.png" max-width="500px" class="docs-image--no-shadow" caption="Create service account button" >}}
 
 1. On the `Create service account key` page, choose key type `JSON`. Then in the `Service Account` dropdown, choose the `New service account` option:
 
-   {{< docs-imagebox img="/img/docs/v71/cloudmonitoring_create_service_account_key.png" max-width="500px" class="docs-image--no-shadow" caption="Create service account key" >}}
+   {{< figure src="/static/img/docs/v71/cloudmonitoring_create_service_account_key.png" max-width="500px" class="docs-image--no-shadow" caption="Create service account key" >}}
 
 1. Some new fields will appear. Fill in a name for the service account in the `Service account name` field and then choose the `Monitoring Viewer` role from the `Role` dropdown:
 
-   {{< docs-imagebox img="/img/docs/v71/cloudmonitoring_service_account_choose_role.png" max-width="600px" class="docs-image--no-shadow" caption="Choose role" >}}
+   {{< figure src="/static/img/docs/v71/cloudmonitoring_service_account_choose_role.png" max-width="600px" class="docs-image--no-shadow" caption="Choose role" >}}
 
 1. Click the Create button. A JSON key file will be created and downloaded to your computer. Store this file in a secure place as it allows access to your Google Cloud Monitoring data.
 1. Upload it to Grafana on the data source Configuration page. You can either upload the file or paste in the contents of the file.
 
-   {{< docs-imagebox img="/img/docs/v71/cloudmonitoring_grafana_upload_key.png" max-width="550px" class="docs-image--no-shadow" caption="Upload service key file to Grafana" >}}
+   {{< figure src="/static/img/docs/v71/cloudmonitoring_grafana_upload_key.png" max-width="550px" class="docs-image--no-shadow" caption="Upload service key file to Grafana" >}}
 
 1. The file contents will be encrypted and saved in the Grafana database. Don't forget to save after uploading the file!
 
-   {{< docs-imagebox img="/img/docs/v71/cloudmonitoring_grafana_key_uploaded.png" max-width="600px" class="docs-image--no-shadow" caption="Service key file is uploaded to Grafana" >}}
+   {{< figure src="/static/img/docs/v71/cloudmonitoring_grafana_key_uploaded.png" max-width="600px" class="docs-image--no-shadow" caption="Service key file is uploaded to Grafana" >}}
 
 ### Using GCE Default Service Account
 
@@ -81,7 +81,7 @@ The Google Cloud Monitoring query editor allows you to build two types of querie
 
 ### Metric Queries
 
-{{< docs-imagebox img="/img/docs/google-cloud-monitoring/metric-query-builder-8-0.png" max-width= "400px" class="docs-image--right" >}}
+{{< figure src="/static/img/docs/google-cloud-monitoring/metric-query-builder-8-0.png" max-width= "400px" class="docs-image--right" >}}
 
 The metric query editor allows you to select metrics, group/aggregate by labels and by time, and use filters to specify which time series you want in the results.
 
@@ -195,7 +195,7 @@ Example Result: `gce_instance - compute.googleapis.com/instance/cpu/usage_time`
 
 > **Note:** Available in Grafana v7.1 and later versions.
 
-{{< docs-imagebox img="/img/docs/v71/cloudmonitoring_deep_linking.png" max-width="500px" class="docs-image--right" caption="Google Cloud Monitoring deep linking" >}}
+{{< figure src="/static/img/docs/v71/cloudmonitoring_deep_linking.png" max-width="500px" class="docs-image--right" caption="Google Cloud Monitoring deep linking" >}}
 
 Click on a time series in the panel to see a context menu with a link to View in Metrics Explorer in Google Cloud Console. Clicking that link opens the Metrics Explorer in the Google Cloud Console and runs the query from the Grafana panel there.
 The link navigates the user first to the Google Account Chooser and after successfully selecting an account, the user is redirected to the Metrics Explorer. The provided link is valid for any account, but it only displays the query if your account has access to the GCP project specified in the query.
@@ -208,7 +208,7 @@ Grafana issues one query to the Cloud Monitoring API per query editor row, and e
 
 > **Note:** Available in Grafana v7.0 and later versions.
 
-{{< docs-imagebox img="/img/docs/google-cloud-monitoring/slo-query-builder-8-0.png" max-width= "400px" class="docs-image--right" >}}
+{{< figure src="/static/img/docs/google-cloud-monitoring/slo-query-builder-8-0.png" max-width= "400px" class="docs-image--right" >}}
 
 The SLO query builder in the Google Cloud Monitoring data source allows you to display SLO data in time series format. To get an understanding of the basic concepts in service monitoring, please refer to Google Cloud Monitoring's [official docs](https://cloud.google.com/monitoring/service-monitoring).
 
@@ -303,7 +303,7 @@ Why two ways? The first syntax is easier to read and write but does not allow yo
 
 ## Annotations
 
-{{< docs-imagebox img="/img/docs/google-cloud-monitoring/annotations-8-0.png" max-width= "400px" class="docs-image--right" >}}
+{{< figure src="/static/img/docs/google-cloud-monitoring/annotations-8-0.png" max-width= "400px" class="docs-image--right" >}}
 
 [Annotations]({{< relref "../../dashboards/annotations.md" >}}) allow you to overlay rich event information on top of graphs. You add annotation
 queries via the Dashboard menu / Annotations view. Annotation rendering is expensive so it is important to limit the number of rows returned. There is no support for showing Google Cloud Monitoring annotations and events yet but it works well with [custom metrics](https://cloud.google.com/monitoring/custom-metrics/) in Google Cloud Monitoring.

@@ -432,8 +432,6 @@ func (am *Alertmanager) buildReceiverIntegrations(receiver *apimodels.PostableAp
 			n, err = channels.NewSensuGoNotifier(cfg, tmpl)
 		case "discord":
 			n, err = channels.NewDiscordNotifier(cfg, tmpl)
-		case "alertmanager":
-			n, err = channels.NewAlertmanagerNotifier(cfg, tmpl)
 		case "googlechat":
 			n, err = channels.NewGoogleChatNotifier(cfg, tmpl)
 		case "line":
@@ -442,13 +440,15 @@ func (am *Alertmanager) buildReceiverIntegrations(receiver *apimodels.PostableAp
 			n, err = channels.NewThreemaNotifier(cfg, tmpl)
 		case "opsgenie":
 			n, err = channels.NewOpsgenieNotifier(cfg, tmpl)
+		case "prometheus-alertmanager":
+			n, err = channels.NewAlertmanagerNotifier(cfg, tmpl)
 		default:
 			return nil, fmt.Errorf("notifier %s is not supported", r.Type)
 		}
 		if err != nil {
 			return nil, err
 		}
-		integrations = append(integrations, notify.NewIntegration(n, n, r.Name, i))
+		integrations = append(integrations, notify.NewIntegration(n, n, r.Type, i))
 	}
 
 	return integrations, nil

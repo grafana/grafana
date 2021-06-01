@@ -14,7 +14,7 @@ In [Introduction to time series]({{< relref "timeseries.md#time-series-databases
 
 With time series data, the data often contain more than a single series, and is a set of multiple time series. Many Grafana data sources support this type of data.
 
-{{< docs-imagebox img="/img/docs/example_graph_multi_dim.png" class="docs-image--no-shadow" max-width="850px" >}}
+{{< figure src="/static/img/docs/example_graph_multi_dim.png" class="docs-image--no-shadow" max-width="850px" >}}
 
 The common case is issuing a single query for a measurement with one or more additional properties as dimensions. For example, querying a temperature measurement along with a location property. In this case, multiple series are returned back from that single query and each series has unique location as a dimension.
 
@@ -76,7 +76,7 @@ In this case the labels that represent the dimensions will have two keys based o
 
 > **Note:** More than one dimension is currently only supported in the Logs queries within the Azure Monitor service as of version 7.1.
 
-> **Note:** Multiple dimensions are not supported in a way that maps to multiple alerts in Grafana, but rather they are treated as multiple conditions to a single alert. See the documentation on [creating alerts with multiple series]({{< relref "../alerting/create-alerts.md#multiple-series" >}}).
+> **Note:** Multiple dimensions are not supported in a way that maps to multiple alerts in Grafana, but rather they are treated as multiple conditions to a single alert. See the documentation on [creating alerts with multiple series]({{< relref "../alerting/old-alerting/create-alerts.md#multiple-series" >}}).
 
 ### Multiple values
 

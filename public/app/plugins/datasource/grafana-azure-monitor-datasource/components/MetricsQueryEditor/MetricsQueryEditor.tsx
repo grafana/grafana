@@ -19,7 +19,7 @@ import { InlineFieldRow } from '@grafana/ui';
 interface MetricsQueryEditorProps {
   query: AzureMonitorQuery;
   datasource: Datasource;
-  subscriptionId: string;
+  subscriptionId?: string;
   onChange: (newQuery: AzureMonitorQuery) => void;
   variableOptionGroup: { label: string; options: AzureMonitorOption[] };
   setError: (source: string, error: AzureMonitorErrorish | undefined) => void;
