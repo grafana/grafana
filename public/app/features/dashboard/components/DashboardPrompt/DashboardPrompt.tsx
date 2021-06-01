@@ -105,6 +105,7 @@ export const DashboardPrompt = React.memo(({ dashboard }: Props) => {
       )}
       {modal === PromptModal.SaveLibraryPanelModal && (
         <SaveLibraryPanelModal
+          isUnsavedPrompt
           panel={dashboard.panelInEdit as PanelModelWithLibraryPanel}
           folderId={dashboard.meta.folderId as number}
           onConfirm={() => {
