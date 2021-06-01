@@ -40,13 +40,51 @@ describe('Graph Migrations', () => {
     expect(panel).toMatchSnapshot();
   });
 
-  it('legend', () => {
-    const old: any = {
-      angular: legend,
-    };
-    const panel = {} as PanelModel;
-    panel.options = graphPanelChangedHandler(panel, 'graph', old);
-    expect(panel).toMatchSnapshot();
+  describe('legend', () => {
+    test('without values', () => {
+      const old: any = {
+        angular: {
+          legend: {
+            show: true,
+            values: false,
+            min: false,
+            max: false,
+            current: false,
+            total: false,
+            avg: false,
+          },
+        },
+      };
+      const panel = {} as PanelModel;
+      panel.options = graphPanelChangedHandler(panel, 'graph', old);
+      expect(panel).toMatchSnapshot();
+    });
+    test('with single value', () => {
+      const old: any = {
+        angular: {
+          legend: {
+            show: true,
+            values: true,
+            min: false,
+            max: false,
+            current: false,
+            total: true,
+            avg: false,
+          },
+        },
+      };
+      const panel = {} as PanelModel;
+      panel.options = graphPanelChangedHandler(panel, 'graph', old);
+      expect(panel).toMatchSnapshot();
+    });
+    test('with multiple values', () => {
+      const old: any = {
+        angular: legend,
+      };
+      const panel = {} as PanelModel;
+      panel.options = graphPanelChangedHandler(panel, 'graph', old);
+      expect(panel).toMatchSnapshot();
+    });
   });
 
   describe('stacking', () => {

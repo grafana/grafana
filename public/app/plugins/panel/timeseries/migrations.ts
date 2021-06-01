@@ -26,7 +26,7 @@ import {
   TooltipDisplayMode,
 } from '@grafana/ui';
 import { TimeSeriesOptions } from './types';
-import { omitBy, isNil, isNumber, isString } from 'lodash';
+import { omitBy, pickBy, isNil, isNumber, isString } from 'lodash';
 import { defaultGraphConfig } from './config';
 
 /**
@@ -314,7 +314,8 @@ export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSour
     }
 
     if (angular.legend.values) {
-      options.legend.calcs = getReducersFromLegend(angular.legend);
+      const enabledLegendValues = pickBy(angular.legend);
+      options.legend.calcs = getReducersFromLegend(enabledLegendValues);
     }
   }
 
