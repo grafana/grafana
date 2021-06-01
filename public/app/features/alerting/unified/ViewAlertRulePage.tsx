@@ -13,9 +13,9 @@ import { alertRuleToQueries } from './utils/query';
 type ViewAlertRuleProps = GrafanaRouteComponentProps<{ id?: string; sourceName?: string }>;
 
 const ViewAlertRulePage: FC<ViewAlertRuleProps> = ({ match }) => {
+  const styles = useStyles2(getStyles);
   const { id, sourceName } = match.params;
   const { loading, error, result: rule } = useCombinedRule(getIdentifier(id), sourceName);
-  const styles = useStyles2(getStyles);
   const runner = useMemo(() => new AlertingQueryRunner(), []);
   const data = useObservable(runner.get());
 
@@ -30,11 +30,20 @@ const ViewAlertRulePage: FC<ViewAlertRuleProps> = ({ match }) => {
   }, [runner, rule]);
 
   useEffect(() => {
+    onRunQueries();
     return () => runner.destroy();
-  }, [runner]);
+  }, [runner, onRunQueries]);
 
   if (!rule) {
     return <div>no alert rule</div>;
+  }
+
+  if (loading) {
+    return <div>loading rule</div>;
+  }
+
+  if (error) {
+    return <div>could not load rule due to error</div>;
   }
 
   console.log('rule', rule);

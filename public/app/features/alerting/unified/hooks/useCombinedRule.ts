@@ -48,26 +48,26 @@ export function useCombinedRule(
   };
 }
 
-function useCombinedRulesLoader(sourceName = ''): AsyncRequestState<void> {
+function useCombinedRulesLoader(ruleSourceName = ''): AsyncRequestState<void> {
   const dispatch = useDispatch();
   const promRuleRequests = useUnifiedAlertingSelector((state) => state.promRules);
-  const promRuleRequest = promRuleRequests[sourceName];
+  const promRuleRequest = promRuleRequests[ruleSourceName];
   const rulerRuleRequests = useUnifiedAlertingSelector((state) => state.rulerRules);
-  const rulerRuleRequest = rulerRuleRequests[sourceName];
+  const rulerRuleRequest = rulerRuleRequests[ruleSourceName];
 
   useEffect(() => {
-    if (!sourceName) {
+    if (!ruleSourceName) {
       return;
     }
 
     if (!promRuleRequest?.dispatched) {
-      dispatch(fetchPromRulesAction(sourceName));
+      dispatch(fetchPromRulesAction(ruleSourceName));
     }
 
     if (!rulerRuleRequest?.dispatched) {
-      dispatch(fetchRulerRulesAction(sourceName));
+      dispatch(fetchRulerRulesAction(ruleSourceName));
     }
-  }, [promRuleRequest?.dispatched, rulerRuleRequest?.dispatched, dispatch, sourceName]);
+  }, [promRuleRequest?.dispatched, rulerRuleRequest?.dispatched, dispatch, ruleSourceName]);
 
   return {
     loading: (promRuleRequest?.loading || rulerRuleRequest?.loading) ?? false,
