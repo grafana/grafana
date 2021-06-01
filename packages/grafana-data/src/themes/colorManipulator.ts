@@ -240,12 +240,29 @@ export function emphasize(color: string, coefficient = 0.15) {
  * @beta
  */
 export function alpha(color: string, value: number) {
-  const parts = decomposeColor(color);
   value = clamp(value);
 
-  if (parts.type === 'rgb' || parts.type === 'hsl') {
-    parts.type += 'a';
+  // hex 6, hex 8 (w/alpha)
+  if (color[0] === '#') {
+    if (color.length === 9) {
+      color = color.substring(0, 7);
+    }
+
+    return color + Math.round(value * 255).toString(16);
   }
+  // rgb(, hsl(
+  else if (color[3] === '(') {
+    // rgb() and hsl() do not require the "a" suffix to accept alpha values in modern browsers:
+    // https://developer.mozilla.org/en-US/docs/Web/CSS/color_value/rgb()#accepts_alpha_value
+    return color.replace(')', `, ${value})`);
+  }
+  // rgba(, hsla(
+  else if (color[4] === '(') {
+    return color.substring(0, color.lastIndexOf(',')) + `, ${value})`;
+  }
+
+  const parts = decomposeColor(color);
+
   if (parts.type === 'color') {
     parts.values[3] = `/${value}`;
   } else {
