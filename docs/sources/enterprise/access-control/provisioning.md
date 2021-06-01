@@ -98,7 +98,6 @@ For example this role will be assigned to "Editor" or "Admin" users:
 # config file version
 apiVersion: 1
 
-
 # Roles to insert/update in the database
 roles:
   - name: custom:users:editor
@@ -143,6 +142,9 @@ To restore the default built-in role assignment, use the `addDefaultAssignments`
 
 Here is an example:
 ```yaml
+# config file version
+apiVersion: 1
+
 # list of default built-in role assignments that should be added back
 addDefaultAssignments:
   - builtInRole: "Admin"
