@@ -3,7 +3,6 @@ package api
 import (
 	"encoding/json"
 	"fmt"
-	"regexp"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
