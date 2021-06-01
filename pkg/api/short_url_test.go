@@ -32,8 +32,8 @@ func TestShortURLAPIEndpoint(t *testing.T) {
 				shortUrl := dtos.ShortURL{}
 				err := json.NewDecoder(sc.resp.Body).Decode(&shortUrl)
 				require.NoError(t, err)
-				assert.Equal(t, 200, sc.resp.Code)
-				assert.Regexp(t, regexp.MustCompile("/goto/(.+)\\?orgId=(.+)"), shortUrl.URL)
+				require.Equal(t, 200, sc.resp.Code)
+				require.Regexp(t, "/goto/(.+)\\?orgId=(.+)", shortUrl.URL)
 			})
 	})
 }
