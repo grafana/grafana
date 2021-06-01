@@ -138,7 +138,7 @@ removeDefaultAssignments:
 
 ### Restore default assignment
 
-To restore the default built-in role assignment, use the `addDefaultAssignments` element in the configuration file. You need to provide the built-in role name and fixed role name.
+To restore the default built-in role assignment, use the `addDefaultAssignments` element in the configuration file. You need to provide the built-in role name and the fixed-role name.
 
 Here is an example:
 ```yaml
