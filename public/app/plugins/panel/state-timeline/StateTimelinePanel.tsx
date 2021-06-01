@@ -5,13 +5,13 @@ import {
   formattedValueToString,
   getDisplayProcessor,
   getFieldDisplayName,
+  getValueFormat,
   PanelProps,
 } from '@grafana/data';
 import { TooltipDisplayMode, TooltipPlugin, useTheme2, ZoomPlugin } from '@grafana/ui';
 import { TimelineMode, TimelineOptions } from './types';
 import { TimelineChart } from './TimelineChart';
 import { findNextStateIndex, prepareTimelineFields, prepareTimelineLegendItems } from './utils';
-import { Interval, toDuration } from '@grafana/data/src/valueFormats/dateTimeFormatters';
 import { SeriesTableRow } from '@grafana/ui/src/components/VizTooltip';
 
 interface TimelinePanelProps extends PanelProps<TimelineOptions> {}
@@ -76,7 +76,7 @@ export const StateTimelinePanel: React.FC<TimelinePanelProps> = ({
 
       if (nextStateTs) {
         const duration =
-          nextStateTs && formattedValueToString(toDuration(nextStateTs - stateTs, 0, Interval.Millisecond));
+          nextStateTs && formattedValueToString(getValueFormat('dtdurationms')(nextStateTs - stateTs, 0));
         durationFragment = (
           <>
             <br />
