@@ -71,10 +71,10 @@ export function TraceToLogsSettings({ options, onOptionsChange }: Props) {
 
       <InlineFieldRow>
         <InlineField
-          label="Span start time shift"
+          label="Span start time shift (ms)"
           labelWidth={26}
           grow
-          tooltip="Shifts the start time of the span. Default -3600000 ms(60min)"
+          tooltip="Shifts the start time of the span. Default 0 ms"
         >
           <Input
             value={options.jsonData.tracesToLogs?.spanStartTimeShift || ''}
@@ -92,10 +92,10 @@ export function TraceToLogsSettings({ options, onOptionsChange }: Props) {
 
       <InlineFieldRow>
         <InlineField
-          label="Span end time shift"
+          label="Span end time shift (ms)"
           labelWidth={26}
           grow
-          tooltip="Shifts the end time of the span. Default 5000 ms"
+          tooltip="Shifts the end time of the span. Default 0 ms"
         >
           <Input
             value={options.jsonData.tracesToLogs?.spanEndTimeShift || ''}

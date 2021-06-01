@@ -59,7 +59,7 @@ describe('createSpanLinkFactory', () => {
       } as any);
 
       expect(linkDef.href).toBe(
-        `/explore?left={"range":{"from":"20201014T000000","to":"20201014T010006"},"datasource":"loki1","queries":[{"expr":"{cluster=\\"cluster1\\", hostname=\\"hostname1\\"}","refId":""}]}`
+        `/explore?left={"range":{"from":"20201014T010000","to":"20201014T010001"},"datasource":"loki1","queries":[{"expr":"{cluster=\\"cluster1\\", hostname=\\"hostname1\\"}","refId":""}]}`
       );
     });
 
@@ -91,7 +91,7 @@ describe('createSpanLinkFactory', () => {
       } as any);
 
       expect(linkDef.href).toBe(
-        `/explore?left={"range":{"from":"20201014T000000","to":"20201014T010006"},"datasource":"loki1","queries":[{"expr":"{ip=\\"192.168.0.1\\"}","refId":""}]}`
+        `/explore?left={"range":{"from":"20201014T010000","to":"20201014T010001"},"datasource":"loki1","queries":[{"expr":"{ip=\\"192.168.0.1\\"}","refId":""}]}`
       );
     });
 
@@ -126,7 +126,7 @@ describe('createSpanLinkFactory', () => {
       } as any);
 
       expect(linkDef.href).toBe(
-        `/explore?left={"range":{"from":"20201014T000000","to":"20201014T010006"},"datasource":"loki1","queries":[{"expr":"{ip=\\"192.168.0.1\\", host=\\"host\\"}","refId":""}]}`
+        `/explore?left={"range":{"from":"20201014T010000","to":"20201014T010001"},"datasource":"loki1","queries":[{"expr":"{ip=\\"192.168.0.1\\", host=\\"host\\"}","refId":""}]}`
       );
     });
 

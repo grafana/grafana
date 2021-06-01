@@ -79,23 +79,17 @@ function getLokiQueryFromSpan(span: TraceSpan, keys?: string[]): string {
 }
 
 /**
- * Gets a time range from the span. Naively this could be just start and end time of the span but we also want some
- * buffer around that just so we do not miss some logs which may not have timestamps aligned with the span. Right
- * now the buffers are hardcoded which may be a bit weird for very short spans but at the same time, fractional buffers
- * with very short spans could mean microseconds and that could miss some logs relevant to that spans. In the future
- * something more intelligent should probably be implemented
+ * Gets a time range from the span.
  */
 function getTimeRangeFromSpan(span: TraceSpan, traceToLogsOptions?: TraceToLogsOptions): TimeRange {
-  const adjustedStartTime =
-    traceToLogsOptions?.spanStartTimeShift !== undefined
-      ? span.startTime / 1000 + traceToLogsOptions.spanStartTimeShift
-      : span.startTime / 1000 - 1000 * 60 * 60;
+  const adjustedStartTime = traceToLogsOptions?.spanStartTimeShift
+    ? span.startTime / 1000 + traceToLogsOptions.spanStartTimeShift
+    : span.startTime / 1000;
   const from = dateTime(adjustedStartTime);
   const spanEndMs = (span.startTime + span.duration) / 1000;
-  const adjustedEndTime =
-    traceToLogsOptions?.spanEndTimeShift !== undefined
-      ? spanEndMs + traceToLogsOptions.spanEndTimeShift
-      : spanEndMs + 5 * 1000;
+  const adjustedEndTime = traceToLogsOptions?.spanEndTimeShift
+    ? spanEndMs + traceToLogsOptions.spanEndTimeShift
+    : spanEndMs;
   const to = dateTime(adjustedEndTime);
 
   return {
