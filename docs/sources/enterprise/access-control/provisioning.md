@@ -56,7 +56,7 @@ Here is an example YAML file to create a global role with a set of permissions, 
 # config file version
 apiVersion: 1
 
-# Roles to insert/update in the database
+# Roles to insert into the database, or roles to update in the database
 roles:
   - name: custom:users:editor
     description: "This role allows users to list/create/update other users in the organization"
