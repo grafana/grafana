@@ -447,7 +447,7 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
-      path: '/alerting/:id/view',
+      path: '/alerting/:sourceName/:id/view',
       pageClass: 'page-alerting',
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "AlertingViewPage"*/ 'app/features/alerting/unified/ViewAlertRulePage')

@@ -127,6 +127,23 @@ export function getRuleIdentifier(
   };
 }
 
+export function equalIdentifiers(a: RuleIdentifier, b: RuleIdentifier) {
+  if (isGrafanaRuleIdentifier(a) && isGrafanaRuleIdentifier(b)) {
+    return a.uid === b.uid;
+  }
+
+  if (isCloudRuleIdentifier(a) && isCloudRuleIdentifier(b)) {
+    return (
+      a.groupName === b.groupName &&
+      a.namespace === b.namespace &&
+      a.ruleHash === b.ruleHash &&
+      a.ruleSourceName === b.ruleSourceName
+    );
+  }
+
+  return false;
+}
+
 export function ruleWithLocationToRuleIdentifier(ruleWithLocation: RuleWithLocation): RuleIdentifier {
   return getRuleIdentifier(
     ruleWithLocation.ruleSourceName,
