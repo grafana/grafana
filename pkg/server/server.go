@@ -315,7 +315,7 @@ func (s *Server) loadConfiguration() {
 	}
 
 	if (serverProcessUser != nil && serverProcessUser.Username == "root") || os.Geteuid() == 0 {
-		s.log.Warn("Grafana server is being run with elevated privileges. This is not recommended")
+		s.log.Warn("Grafana server is running with elevated privileges. This is not recommended")
 	}
 
 	s.cfg.LogConfigSources()

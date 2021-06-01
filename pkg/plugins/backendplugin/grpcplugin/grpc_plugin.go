@@ -3,6 +3,8 @@ package grpcplugin
 import (
 	"context"
 	"errors"
+	"os"
+	"os/user"
 	"sync"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -69,6 +71,15 @@ func (p *grpcPlugin) Start(ctx context.Context) error {
 
 	if p.pluginClient == nil {
 		return errors.New("no compatible plugin implementation found")
+	}
+
+	serverProcessUser, err := user.Current()
+	if err != nil {
+		p.Logger().Debug("Could not get current OS user to detect plugin process privileges")
+	}
+
+	if (serverProcessUser != nil && serverProcessUser.Username == "root") || os.Geteuid() == 0 {
+		p.Logger().Warn("Plugin process is running with elevated privileges. This is not recommended")
 	}
 
 	return nil
