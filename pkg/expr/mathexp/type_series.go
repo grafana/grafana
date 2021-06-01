@@ -29,6 +29,7 @@ func SeriesFromFrame(frame *data.Frame) (s Series, err error) {
 	timeNullable := false
 	valueNullable := false
 
+FIELDS:
 	for i, field := range frame.Fields {
 		switch field.Type() {
 		case data.FieldTypeTime:
@@ -43,7 +44,7 @@ func SeriesFromFrame(frame *data.Frame) (s Series, err error) {
 			valueIdx = i
 		default:
 			if valueIdx != -1 && timeIdx != -1 {
-				break
+				break FIELDS
 			}
 		}
 	}
