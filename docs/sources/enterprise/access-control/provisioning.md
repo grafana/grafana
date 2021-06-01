@@ -27,6 +27,10 @@ To create or update custom roles, you can add a list of `roles` in the configura
 
 When you update a role, you must remember to increment the [version]({{< relref "./roles.md#custom-roles" >}}), changes won't be accounted for otherwise. 
 
+Every role has a version number, you must increment the version number for every role that you change.
+
+When you update a role, the existing role, inside grafana, will be altered to be exactly what is specified in the yaml file, including permissions.
+
 Here is an example yaml file to create a local role with a set of permissions:
 
 ```yaml
@@ -49,6 +53,8 @@ roles:
 ```
 
 Here is an example yaml file to create a global role with a set of permissions:
+The global:true option makes a role a global role.
+
 ```yaml
 # config file version
 apiVersion: 1
