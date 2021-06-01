@@ -21,7 +21,7 @@ Alerts            | Alert    | List of alert objects that are included in this n
 GroupLabels       | KeyValue | Labels these alerts were grouped by.
 CommonLabels      | KeyValue | Labels common to all the alerts included in this notification.
 CommonAnnotations | KeyValue | Annotations common to all the alerts included in this notification.
-ExternalURL       | string   | Back link to the Grafana that sent the notification. If using external alertmanager, back link to this alertmanager.
+ExternalURL       | string   | Back link to the Grafana that sent the notification. If using external Alertmanager, back link to this Alertmanager.
 
 The `Alerts` type exposes functions for filtering alerts:
 
@@ -37,7 +37,7 @@ Labels       | KeyValue  | A set of labels attached to the alert.
 Annotations  | KeyValue  | A set of annotations attached to the alert.
 StartsAt     | time.Time | Time the alert started firing.
 EndsAt       | time.Time | Only set if the end time of an alert is known. Otherwise set to a configurable timeout period from the time since the last alert was received.
-GeneratorURL | string    | A back link to Grafana or external alertmanager.
+GeneratorURL | string    | A back link to Grafana or external Alertmanager.
 SilenceURL   | string    | Link to grafana silence for with labels for this alert pre-filled. Only for Grafana managed alerts.
 DashboardURL | string    | Link to grafana dashboard, if alert rule belongs to one. Only for Grafana managed alerts.
 PanelURL     | string    | Link to grafana dashboard panel, if alert rule belongs to one. Only for Grafana managed alerts.
@@ -161,8 +161,8 @@ Template to render entire notification message:
 {{ end }}
 ```
 
-## Managing templates for an external alertmanager
+## Managing templates for an external Alertmanager
 
-Grafana alerting UI supports managing external alertmanager configuration. Add an [alertmanager datasource]({{< relref "../../datasources/alertmanager.md" >}}) and a dropdown will appear at the top of the page, allowing you to select either `Grafana` or an external alertmanager. 
+Grafana alerting UI supports managing external Alertmanager configuration. Add an [Alertmanager datasource]({{< relref "../../datasources/alertmanager.md" >}}) and a dropdown will appear at the top of the page, allowing you to select either `Grafana` or an external Alertmanager. 
 
-{{< figure max-width="40%" src="/static/img/docs/alerting/unified/contact-points-select-am-8-0.gif" caption="Select alertmanager" >}}
+{{< figure max-width="40%" src="/static/img/docs/alerting/unified/contact-points-select-am-8-0.gif" caption="Select Alertmanager" >}}
