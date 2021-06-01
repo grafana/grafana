@@ -77,9 +77,9 @@ func (rs *SchemaLoaderService) Init() error {
 	rs.baseLoadPath = load.BaseLoadPaths{
 		BaseCueFS:       defaultLoadPaths.BaseCueFS,
 		DistPluginCueFS: defaultLoadPaths.DistPluginCueFS,
-		InstanceCueFS:   ScueVFS{},
+		InstanceCueFS:   &ScueVFS{},
 	}
-	rs.baseLoadPath.InstanceCueFS.(ScueVFS).FS.(fstest.MapFS)[rs.pluginFolder] = &fstest.MapFile{Mode: fs.ModeDir}
+	rs.baseLoadPath.InstanceCueFS.(*ScueVFS).FS.(fstest.MapFS)[rs.pluginFolder] = &fstest.MapFile{Mode: fs.ModeDir}
 
 	rs.log = log.New("schemaloader")
 	var err error

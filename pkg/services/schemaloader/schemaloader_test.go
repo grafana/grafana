@@ -25,7 +25,7 @@ func TestSchemaLoader(t *testing.T) {
 		baseLoadPath: load.BaseLoadPaths{
 			BaseCueFS:       Lpath.BaseCueFS,
 			DistPluginCueFS: Lpath.DistPluginCueFS,
-			InstanceCueFS:   ScueVFS{},
+			InstanceCueFS:   &ScueVFS{},
 		},
 	}
 
