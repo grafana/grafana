@@ -62,7 +62,7 @@ var usersOrgEditRole = RoleDTO{
 var usersAdminReadRole = RoleDTO{
 	Name:        usersAdminRead,
 	Version:     2,
-	Description: "Allows to list and get users and related information.",
+	Description: "Role to allow users to list users in a given organization, retrieve the teams they are part of, list their authentication tokens, get their connection quotas.",
 	Permissions: []Permission{
 		{
 			Action: ActionUsersRead,
