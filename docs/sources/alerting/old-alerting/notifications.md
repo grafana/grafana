@@ -52,7 +52,7 @@ Alert rule evaluation interval | Send reminders every | Reminder sent every (aft
 Name | Type | Supports images | Support alert rule tags
 -----|------|---------------- | -----------------------
 [DingDing](#dingdingdingtalk) | `dingding` | yes, external only | no
-Discord | `discord` | yes | no
+[Discord](#discord) | `discord` | yes | no
 [Email](#email) | `email` | yes | no
 [Google Hangouts Chat](#google-hangouts-chat) | `googlechat` | yes, external only | no
 Hipchat | `hipchat` | yes, external only | no
@@ -219,6 +219,19 @@ In DingTalk PC Client:
 5. In "Add Robot" panel, input a nickname for the robot and select a "message group" which the robot will join in. click "next".
 
 6. There will be a Webhook URL in the panel, looks like this: https://oapi.dingtalk.com/robot/send?access_token=xxxxxxxxx. Copy this URL to the Grafana DingTalk setting page and then click "finish".
+
+### Discord
+
+To set up Discord, you must create a Discord channel webhook. For instructions on how to create the channel, refer to 
+[Intro to Webhooks](https://support.discord.com/hc/en-us/articles/228383668-Intro-to-Webhooks) f.
+
+Setting | Description
+---------- | -----------
+Webhook URL | Discord webhook URL.
+Message Content | Mention a group using @ or a user using <@ID> when notifying in a channel.
+Avatar URL | Optionally, provide a URL to an image to use as the avatar for the bot's message.
+
+Alternately, use the [Slack](#slack) notifier by appending `/slack` to a Discord webhook URL.
 
 ### Kafka
 

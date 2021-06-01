@@ -221,7 +221,7 @@ The default display name format is:
 
 `metricName{dimensionName=dimensionValue,dimensionTwoName=DimensionTwoValue}`
 
-This can be customized by using the [display name field option]({{< relref "../panels/field-options/_index.md#display-name" >}}).
+This can be customized by using the [display name field option]({{< relref "../panels/standard-options.md#display-name" >}}).
 
 ### Logs macros
 
