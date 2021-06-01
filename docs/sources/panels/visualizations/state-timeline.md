@@ -28,7 +28,7 @@ You can also use [field overrides]({{< relref "../field-overrides.md" >}}) to sp
 | `Align values` | Controls value alignment inside state regions.                                                            |
 | `Row height`   | Controls how much space between rows there are. 1 = no space = 0.5 = 50% space                          |
 | `Line width`   | Controls line width of state regions.                                                         |
-| `Fill opacity` | Controls the opacity of state regions                                                         |
+| `Fill opacity` | Controls the opacity of state regions.                                                         |
 
 ## Value mappings
 
