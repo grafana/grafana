@@ -44,6 +44,7 @@ With Grafana Enterprise [enhanced LDAP]({{< relref "enhanced_ldap.md" >}}), you 
 With Grafana Enterprise, you get access to new features, including:
 
 - [Data source permissions]({{< relref "datasource_permissions.md" >}}) to restrict query access to specific teams and users.
+- [Data source query caching]({{< relref "query-caching.md" >}}) to temporarily store query results in Grafana to reduce data source load and rate limiting.
 - [Reporting]({{< relref "reporting.md" >}}) to generate a PDF report from any dashboard and set up a schedule to have it emailed to whoever you choose.
 - [Export dashboard as PDF]({{< relref "export-pdf.md" >}})
 - [White labeling]({{< relref "white-labeling.md" >}}) to customize Grafana from the brand and logo to the footer links.
