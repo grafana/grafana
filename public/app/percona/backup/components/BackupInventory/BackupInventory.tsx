@@ -181,6 +181,7 @@ export const BackupInventory: FC = () => {
         isVisible={restoreModalVisible}
         onClose={handleClose}
         onRestore={handleRestore}
+        noService={!selectedBackup?.serviceId || !selectedBackup?.serviceName}
       />
       <AddBackupModal
         backup={selectedBackup}

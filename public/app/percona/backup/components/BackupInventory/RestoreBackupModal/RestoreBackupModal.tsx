@@ -22,7 +22,13 @@ const serviceTypeOptions: Array<SelectableValue<ServiceTypeSelect>> = [
   },
 ];
 
-export const RestoreBackupModal: FC<RestoreBackupModalProps> = ({ backup, isVisible, onClose, onRestore }) => {
+export const RestoreBackupModal: FC<RestoreBackupModalProps> = ({
+  backup,
+  isVisible,
+  noService = false,
+  onClose,
+  onRestore,
+}) => {
   const styles = useStyles(getStyles);
   const initialValues = backup ? toFormProps(backup) : undefined;
   const handleSubmit = ({ serviceType, service }: RestoreBackupFormProps) => {
@@ -69,13 +75,22 @@ export const RestoreBackupModal: FC<RestoreBackupModalProps> = ({ backup, isVisi
               </div>
             </div>
             <HorizontalGroup justify="center" spacing="md">
-              <LoaderButton data-qa="restore-button" size="md" variant="primary" disabled={!valid} loading={submitting}>
+              <LoaderButton
+                data-qa="restore-button"
+                size="md"
+                variant="primary"
+                disabled={!valid || (values.serviceType === ServiceTypeSelect.SAME && noService)}
+                loading={submitting}
+              >
                 {Messages.restore}
               </LoaderButton>
               <Button data-qa="restore-cancel-button" variant="secondary" onClick={onClose}>
                 {Messages.close}
               </Button>
             </HorizontalGroup>
+            <div className={styles.errorLine} data-qa="backup-modal-error">
+              {values.serviceType === ServiceTypeSelect.SAME && noService && Messages.noService}
+            </div>
           </form>
         )}
       />

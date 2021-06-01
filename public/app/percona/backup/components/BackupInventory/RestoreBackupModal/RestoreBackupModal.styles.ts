@@ -1,7 +1,7 @@
 import { css } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
 
-export const getStyles = ({ colors, typography, spacing }: GrafanaTheme) => ({
+export const getStyles = ({ palette, typography, spacing }: GrafanaTheme) => ({
   formHalvesContainer: css`
     display: flex;
     margin-bottom: ${spacing.formInputMargin};
@@ -29,5 +29,14 @@ export const getStyles = ({ colors, typography, spacing }: GrafanaTheme) => ({
       padding: 7px 8px;
       line-height: ${typography.lineHeight.md};
     }
+  `,
+  errorLine: css`
+    color: ${palette.redBase};
+    font-size: ${typography.size.sm};
+    height: ${typography.size.sm};
+    line-height: ${typography.lineHeight.sm};
+    margin-top: ${spacing.sm};
+    padding: ${spacing.formLabelPadding};
+    text-align: center;
   `,
 });

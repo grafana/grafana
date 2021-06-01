@@ -4,6 +4,7 @@ import { Backup } from '../BackupInventory.types';
 export interface RestoreBackupModalProps {
   isVisible: boolean;
   backup: Backup | null;
+  noService?: boolean;
   onClose: () => void;
   onRestore: (serviceId: string, artifactId: string) => void;
 }
