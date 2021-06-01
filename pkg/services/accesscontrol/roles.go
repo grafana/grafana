@@ -5,7 +5,7 @@ import "github.com/grafana/grafana/pkg/models"
 var ldapAdminReadRole = RoleDTO{
 	Name:        ldapAdminRead,
 	Version:     2,
-	Description: "Allows to read LDAP information and status.",
+	Description: "Read LDAP information and status.",
 	Permissions: []Permission{
 		{
 			Action: ActionLDAPUsersRead,
