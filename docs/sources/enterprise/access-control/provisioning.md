@@ -25,9 +25,7 @@ You can create, update and delete custom roles, as well as create and remove bui
 
 To create or update custom roles, you can add a list of `roles` in the configuration.
 
-When you update a role, you must remember to increment the [version]({{< relref "./roles.md#custom-roles" >}}), changes won't be accounted for otherwise. 
-
-Every role has a version number, you must increment the version number for every role that you change.
+Every role has a [version]({{< relref "./roles.md#custom-roles" >}}) number. For each role you update, you must remember to increment it, otherwise changes won't be accounted for.
 
 When you update a role, the existing role, inside grafana, will be altered to be exactly what is specified in the yaml file, including permissions.
 
