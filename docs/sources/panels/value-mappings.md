@@ -99,6 +99,8 @@ Create a mapping for a single value.
 
 ## Map a range
 
+Create a mapping for a range of values.
+
 ![Map a range](/static/img/docs/value-mappings/map-range-8-0.png)
 
 1. [Open the panel editor]({{< relref "./panel-editor.md#open-the-panel-editor" >}}).
@@ -110,6 +112,8 @@ Create a mapping for a single value.
 1. Click **Update** to save the value mapping.
 
 ## Map a special value
+
+Create a mapping for a special value.
 
 ![Map a value](/static/img/docs/value-mappings/map-special-value-8-0.png)
 
