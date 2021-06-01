@@ -434,10 +434,7 @@ func InitTestDB(t ITestDB, opts ...InitTestDBOpt) *SQLStore {
 		}
 
 		// set test db config
-		cfg, err := setting.NewCfgFromArgs(setting.CommandLineArgs{})
-		if err != nil {
-			t.Fatalf("Failed to create configuration: %s", err.Error())
-		}
+		cfg := setting.NewCfg()
 		sec, err := cfg.Raw.NewSection("database")
 		if err != nil {
 			t.Fatalf("Failed to create section: %s", err)
@@ -484,6 +481,11 @@ func InitTestDB(t ITestDB, opts ...InitTestDBOpt) *SQLStore {
 		if err != nil {
 			t.Fatalf("Failed to init test database: %s", err)
 		}
+
+		if err := testSQLStore.Migrate(); err != nil {
+			t.Fatalf("Database migration failed: %s", err)
+		}
+
 		t.Log("Successfully initialized test database")
 		// temp global var until we get rid of global vars
 		dialect = testSQLStore.Dialect
