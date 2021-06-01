@@ -1,6 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import mdx from './Checkbox.mdx';
 import { Checkbox } from './Checkbox';
+import { VerticalGroup } from '../Layout/Layout';
 
 export default {
   title: 'Forms/Checkbox',
@@ -32,5 +33,27 @@ export const uncontrolled = () => {
       label="Skip TLS cert validation"
       description="Set to true if you want to skip TLS cert validation"
     />
+  );
+};
+
+export const StackedList = () => {
+  return (
+    <VerticalGroup>
+      <Checkbox
+        defaultChecked={true}
+        label="Skip TLS cert validation"
+        description="Set to true if you want to skip TLS cert validation"
+      />
+      <Checkbox
+        defaultChecked={true}
+        label="Another checkbox"
+        description="Another long description that does not make any sense"
+      />
+      <Checkbox
+        defaultChecked={true}
+        label="Another checkbox times 2"
+        description="Another long description that does not make any sense or does it?"
+      />
+    </VerticalGroup>
   );
 };
