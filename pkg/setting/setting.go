@@ -1372,9 +1372,6 @@ func (cfg *Cfg) readServerSettings(iniFile *ini.File) error {
 	cfg.Domain = valueAsString(server, "domain", "localhost")
 	cfg.HTTPAddr = valueAsString(server, "http_addr", DefaultHTTPAddr)
 	cfg.HTTPPort = valueAsString(server, "http_port", "3000")
-	if os.Getenv("GF_HTTP_PORT") != "" {
-		cfg.HTTPPort = os.Getenv("GF_HTTP_PORT")
-	}
 	cfg.RouterLogging = server.Key("router_logging").MustBool(false)
 
 	cfg.EnableGzip = server.Key("enable_gzip").MustBool(false)
