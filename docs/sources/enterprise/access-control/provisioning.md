@@ -92,7 +92,7 @@ deleteRoles:
 
 To assign roles to built-in roles, add said built-in roles to the `builtInRoles` section of your roles. To remove specific assignments you can just remove them from the list.
 
-For example this role will be assigned to "Editor" or "Admin" users:
+For example, the following role is assigned to an organization editor or an organization administrator:
 
 ```yaml
 # config file version
