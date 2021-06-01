@@ -47,8 +47,6 @@ export interface TimelineCoreOptions {
   getTimeRange: () => TimeRange;
   formatValue?: (seriesIdx: number, value: any) => string;
   getFieldConfig: (seriesIdx: number) => TimelineFieldConfig;
-  onHover?: (seriesIdx: number, valueIdx: number) => void;
-  onLeave?: (seriesIdx: number, valueIdx: number) => void;
 }
 
 /**
@@ -407,7 +405,6 @@ export function getConfig(opts: TimelineCoreOptions) {
 
   function findCurrentlyHovered(cx: number, cy: number) {
     let found: Rect | null = null;
-
     qt.get(cx, cy, 1, 1, (o) => {
       if (pointWithin(cx, cy, o.x, o.y, o.x + o.w, o.y + o.h)) {
         found = o;
@@ -416,8 +413,6 @@ export function getConfig(opts: TimelineCoreOptions) {
 
     return found;
   }
-
-  // const doHover = mode === TimelineMode.Changes ? hoverMulti : hoverOne;
 
   const interpolateTooltip: PlotTooltipInterpolator = (
     updateActiveSeriesIdx,
@@ -438,12 +433,6 @@ export function getConfig(opts: TimelineCoreOptions) {
 
     const hoveringOver = findCurrentlyHovered(cx, cy);
 
-    if (mode === TimelineMode.Changes) {
-      highlightMulti(cx, cy);
-    } else {
-      setHoverMark(0, hoveringOver);
-    }
-
     if (hoveringOver) {
       // @ts-ignore
       updateActiveSeriesIdx(hoveringOver.sidx);
@@ -452,6 +441,19 @@ export function getConfig(opts: TimelineCoreOptions) {
       updateTooltipPosition();
     } else {
       updateTooltipPosition(true);
+    }
+  };
+
+  const setHighlights = (u: uPlot) => {
+    let cx = round(u.cursor!.left! * pxRatio);
+    let cy = round(u.cursor!.top! * pxRatio);
+
+    const hoveringOver = findCurrentlyHovered(cx, cy);
+
+    if (mode === TimelineMode.Changes) {
+      highlightMulti(cx, cy);
+    } else {
+      setHoverMark(0, hoveringOver);
     }
   };
 
@@ -533,6 +535,7 @@ export function getConfig(opts: TimelineCoreOptions) {
     init,
     drawClear,
     interpolateTooltip,
+    setHighlights,
   };
 }
 

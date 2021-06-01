@@ -8,7 +8,7 @@ import {
   getValueFormat,
   PanelProps,
 } from '@grafana/data';
-import { TooltipDisplayMode, TooltipPlugin, useTheme2, ZoomPlugin } from '@grafana/ui';
+import { TooltipPlugin, useTheme2, ZoomPlugin } from '@grafana/ui';
 import { TimelineMode, TimelineOptions } from './types';
 import { TimelineChart } from './TimelineChart';
 import { findNextStateIndex, prepareTimelineFields, prepareTimelineLegendItems } from './utils';
@@ -130,15 +130,13 @@ export const StateTimelinePanel: React.FC<TimelinePanelProps> = ({
         return (
           <>
             <ZoomPlugin config={config} onZoom={onChangeTimeRange} />
-            {options.tooltip.mode !== TooltipDisplayMode.None && (
-              <TooltipPlugin
-                data={alignedFrame}
-                config={config}
-                mode={options.tooltip.mode}
-                timeZone={timeZone}
-                renderTooltip={renderCustomTooltip}
-              />
-            )}
+            <TooltipPlugin
+              data={alignedFrame}
+              config={config}
+              mode={options.tooltip.mode}
+              timeZone={timeZone}
+              renderTooltip={renderCustomTooltip}
+            />
           </>
         );
       }}

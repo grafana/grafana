@@ -21,6 +21,8 @@ interface TooltipPluginProps {
   data: DataFrame;
   config: UPlotConfigBuilder;
   mode?: TooltipDisplayMode;
+  // Allows custom tooltip content rendering. Exposes aligned data frame with relevant indexes for data inspection
+  // Use field.state.origin indexes from alignedData frame field to get access to original data frame and field index.
   renderTooltip?: (alignedFrame: DataFrame, seriesIdx: number | null, datapointIdx: number | null) => React.ReactNode;
 }
 
@@ -113,7 +115,7 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
     }
   }, [plotCtx, config, setFocusedPointIdx, setFocusedSeriesIdx, setCoords]);
 
-  if (!plotInstance || focusedPointIdx === null) {
+  if (!plotInstance || focusedPointIdx === null || mode === TooltipDisplayMode.None) {
     return null;
   }
 

@@ -95,21 +95,14 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<TimelineOptions> = ({
     getTimeRange,
     // hardcoded formatter for state values
     formatValue: (seriesIdx, value) => formattedValueToString(frame.fields[seriesIdx].display!(value)),
-    // TODO: unimplemeted for now
-    onHover: (seriesIdx: number, valueIdx: number) => {
-      console.log('hover', { seriesIdx, valueIdx });
-    },
-    onLeave: (seriesIdx: number, valueIdx: number) => {
-      console.log('leave', { seriesIdx, valueIdx });
-    },
   };
 
   const coreConfig = getConfig(opts);
 
   builder.addHook('init', coreConfig.init);
   builder.addHook('drawClear', coreConfig.drawClear);
+  builder.addHook('setCursor', coreConfig.setHighlights);
   builder.setTooltipInterpolator(coreConfig.interpolateTooltip);
-
   builder.setCursor(coreConfig.cursor);
 
   builder.addScale({
