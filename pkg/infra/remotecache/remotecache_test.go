@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/backgroundsvcs"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
@@ -22,14 +23,10 @@ func init() {
 func createTestClient(t *testing.T, opts *setting.RemoteCacheOptions, sqlstore *sqlstore.SQLStore) CacheStorage {
 	t.Helper()
 
-	dc := &RemoteCache{
-		SQLStore: sqlstore,
-		Cfg: &setting.Cfg{
-			RemoteCacheOptions: opts,
-		},
+	cfg := &setting.Cfg{
+		RemoteCacheOptions: opts,
 	}
-
-	err := dc.Init()
+	dc, err := ProvideService(cfg, sqlstore, backgroundsvcs.ProvideService())
 	require.Nil(t, err, "Failed to init client for test")
 
 	return dc
@@ -37,7 +34,7 @@ func createTestClient(t *testing.T, opts *setting.RemoteCacheOptions, sqlstore *
 
 func TestCachedBasedOnConfig(t *testing.T) {
 	cfg := setting.NewCfg()
-	err := cfg.Load(&setting.CommandLineArgs{
+	err := cfg.Load(setting.CommandLineArgs{
 		HomePath: "../../../",
 	})
 	require.Nil(t, err, "Failed to load config")
