@@ -14,23 +14,35 @@ import (
 const ServiceName = "AuthService"
 
 func ProvideService(cfg *setting.Cfg, remoteCache *remotecache.RemoteCache) (*AuthService, error) {
-	s := &AuthService{
-		Cfg:         cfg,
-		RemoteCache: remoteCache,
-		log:         log.New("auth.jwt"),
-	}
-	if !cfg.JWTAuthEnabled {
-		return nil, nil
-	}
-
-	if err := s.initClaimExpectations(); err != nil {
-		return nil, err
-	}
-	if err := s.initKeySet(); err != nil {
+	s := newService(cfg, remoteCache)
+	if err := s.init(); err != nil {
 		return nil, err
 	}
 
 	return s, nil
+}
+
+func newService(cfg *setting.Cfg, remoteCache *remotecache.RemoteCache) *AuthService {
+	return &AuthService{
+		Cfg:         cfg,
+		RemoteCache: remoteCache,
+		log:         log.New("auth.jwt"),
+	}
+}
+
+func (s *AuthService) init() error {
+	if !s.Cfg.JWTAuthEnabled {
+		return nil
+	}
+
+	if err := s.initClaimExpectations(); err != nil {
+		return err
+	}
+	if err := s.initKeySet(); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 type AuthService struct {
