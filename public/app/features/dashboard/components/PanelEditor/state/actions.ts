@@ -26,19 +26,6 @@ export function initPanelEditor(sourcePanel: PanelModel, dashboard: DashboardMod
   };
 }
 
-export function updateSourcePanel(sourcePanel: PanelModel): ThunkResult<void> {
-  return (dispatch, getStore) => {
-    const { getPanel } = getStore().panelEditor;
-
-    dispatch(
-      updateEditorInitState({
-        panel: getPanel(),
-        sourcePanel,
-      })
-    );
-  };
-}
-
 export function discardPanelChanges(): ThunkResult<void> {
   return async (dispatch, getStore) => {
     const { getPanel } = getStore().panelEditor;
