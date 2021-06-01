@@ -41,19 +41,20 @@ type SchemaLoaderService struct {
 
 type ScueVFS struct {
 	sync.Mutex
-	fstest.MapFS
+	fs.FS
+	// fstest.MapFS
 }
 
 func (r *ScueVFS) SetInstanceFile(key, content string) {
 	r.Lock()
 	defer r.Unlock()
-	r.MapFS[key] = &fstest.MapFile{Data: []byte(content)}
+	r.FS.(fstest.MapFS)[key] = &fstest.MapFile{Data: []byte(content)}
 }
 
 func (r *ScueVFS) RemoveInstanceFile(key string) {
 	r.Lock()
 	defer r.Unlock()
-	delete(r.MapFS, key)
+	delete(r.FS.(fstest.MapFS), key)
 }
 
 func (rs *SchemaLoaderService) LoadNewPanelPluginSchema(name, content string) error {
@@ -78,7 +79,7 @@ func (rs *SchemaLoaderService) Init() error {
 		DistPluginCueFS: defaultLoadPaths.DistPluginCueFS,
 		InstanceCueFS:   ScueVFS{},
 	}
-	rs.baseLoadPath.InstanceCueFS.(ScueVFS).MapFS[rs.pluginFolder] = &fstest.MapFile{Mode: fs.ModeDir}
+	rs.baseLoadPath.InstanceCueFS.(ScueVFS).FS.(fstest.MapFS)[rs.pluginFolder] = &fstest.MapFile{Mode: fs.ModeDir}
 
 	rs.log = log.New("schemaloader")
 	var err error
