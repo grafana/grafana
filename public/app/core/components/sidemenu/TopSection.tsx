@@ -3,11 +3,13 @@ import _ from 'lodash';
 import TopSectionItem from './TopSectionItem';
 import config from '../../config';
 import { getLocationSrv, getBackendSrv } from '@grafana/runtime';
+import { NavModelItem } from '@grafana/data';
+import { buildIntegratedAlertingMenuItem } from './TopSection.utils';
 
 const TopSection: FC<any> = () => {
   const [showDBaaS, setShowDBaaS] = useState(false);
-  const navTree = _.cloneDeep(config.bootData.navTree);
-  const mainLinks = _.filter(navTree, (item) => !item.hideFromMenu);
+  const navTree = _.cloneDeep(config.bootData.navTree) as NavModelItem[];
+  const [mainLinks, setMainLinks] = useState(_.filter(navTree, item => !item.hideFromMenu));
   const searchLink = {
     text: 'Search',
     icon: 'search',
@@ -21,15 +23,18 @@ const TopSection: FC<any> = () => {
   const onOpenSearch = () => {
     getLocationSrv().update({ query: { search: 'open' }, partial: true });
   };
-  const updateDBaaS = async () => {
+  const updateMenu = async () => {
     const { settings } = await getBackendSrv().post(`${window.location.origin}/v1/Settings/Get`);
     setShowDBaaS(settings.dbaas_enabled);
+
+    if (settings.alerting_enabled) {
+      setMainLinks([...buildIntegratedAlertingMenuItem(mainLinks)]);
+    }
   };
 
-  // TODO: once DBaaS is enabled by default move it to config file (api/index.go)
   useEffect(() => {
-    if (config.bootData.user.isSignedIn) {
-      updateDBaaS();
+    if (config.bootData.user.isGrafanaAdmin) {
+      updateMenu();
     }
   }, []);
 

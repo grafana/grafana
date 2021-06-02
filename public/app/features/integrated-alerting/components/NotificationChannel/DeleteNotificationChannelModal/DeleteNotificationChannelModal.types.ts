@@ -1,7 +1,7 @@
 import { NotificationChannel } from '../NotificationChannel.types';
 
-export interface AddNotificationChannelModalProps {
+export interface DeleteNotificationChannelModalProps {
   isVisible: boolean;
-  notificationChannel?: NotificationChannel;
+  notificationChannel: NotificationChannel;
   setVisible: (value: boolean) => void;
 }

@@ -10,9 +10,11 @@ export const Messages = {
     channel: 'Channel',
   },
   addAction: 'Add',
+  editAction: 'Save',
   cancelAction: 'Cancel',
   emailOption: 'Email',
   pagerDutyOption: 'Pager Duty',
   slackOption: 'Slack',
   addSuccess: 'Notification channel was successfully added',
+  editSuccess: 'Notification channel was successfully edited',
 };

@@ -2,6 +2,9 @@ import { SelectableValue } from '@grafana/data';
 
 export interface NotificationChannelContext {
   getNotificationChannels: () => void;
+  setSelectedNotificationChannel: (notificationChannel: NotificationChannel) => void;
+  setAddModalVisible: (isVisible: boolean) => void;
+  setDeleteModalVisible: (isVisible: boolean) => void;
 }
 
 export enum NotificationChannelType {
