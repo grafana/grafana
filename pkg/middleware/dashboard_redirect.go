@@ -26,7 +26,6 @@ func RedirectFromLegacyDashboardURL() func(c *models.ReqContext) {
 			c.Redirect(url, 301)
 			return
 		}
-
 	}
 }
 
@@ -73,7 +72,5 @@ func RedirectFromLegacyDashboardSoloURL(cfg *setting.Cfg) func(c *models.ReqCont
 		url = strings.Replace(url, "/d/", "/d-solo/", 1)
 		url = fmt.Sprintf("%s?%s", url, c.Req.URL.RawQuery)
 		c.Redirect(url, 301)
-		return
 	}
-
 }

@@ -587,7 +587,6 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 			query.Result = dashboards
 			return nil
 		})
-
 	})
 
 	t.Run("Post dashboard response tests", func(t *testing.T) {
