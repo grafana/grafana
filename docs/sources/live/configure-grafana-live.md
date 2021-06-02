@@ -13,15 +13,7 @@ Grafana Live is enabled by default. As of Grafana v8.0, it has a strict default 
 
 Grafana Live uses persistent connections (WebSocket at the moment) to deliver real-time updates to clients. You may need to tune your server infrastructure a bit.
 
-The number of maximum connections users can establish with Grafana is limited to 100:
-
-```
-[live]
-# max_connections to Grafana Live WebSocket endpoint per Grafana server instance. See Grafana Live docs
-# if you are planning to make it higher than default 100 since this can require some OS and infrastructure
-# tuning. 0 disables Live, -1 means unlimited connections.
-max_connections = 100
-```
+The number of maximum connections users can establish with Grafana is limited to 100 by default. See [max_connections]({{< relref "../administration/configuration.md#max_connections" >}}) option.
 
 In case you want to increase this limit, ensure that your server and infrastructure allow handling more connections. The following sections discuss several common problems which could happen when managing persistent connections, in particular WebSocket connections.
 
