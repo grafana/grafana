@@ -245,7 +245,7 @@ You can now add or remove detailed permissions from Viewer, Editor, and Admin or
 
 ### Data source query caching
 
-Grafana will now cache the results of backend data source queries, so that multiple users viewing the same dashboard or panel will not each submit the same query to the data source (like Splunk or Snowflake) itself.
+Grafana caches the results of backend data source queries so that multiple users viewing the same dashboard or panel do not make multiple submissions of the same query to the data source (like Splunk or Snowflake) itself.
 
 This results in faster average load times for dashboards and fewer duplicate queries overall to data sources, which reduces cost and the risk of throttling, reaching API limits, or overloading your data sources.
 
