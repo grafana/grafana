@@ -16,6 +16,7 @@ import {
   GrafanaTheme2,
   getActiveThreshold,
   Threshold,
+  getFieldConfigWithMinMax,
 } from '@grafana/data';
 import {
   UPlotConfigBuilder,
@@ -248,24 +249,32 @@ export function mergeThresholdValues(field: Field, theme: GrafanaTheme2): Field 
   }
 
   let prev: Threshold | undefined = undefined;
+  let input = field.values.toArray();
   const vals = new Array<String | undefined>(field.values.length);
   if (thresholds.mode === ThresholdsMode.Percentage) {
-    return undefined; // NOT YET SUPPORTED?
-  } else {
-    for (let i = 0; i < vals.length; i++) {
-      const v = field.values.get(i);
+    const { min, max } = getFieldConfigWithMinMax(field);
+    const delta = max! - min!;
+    input = input.map((v) => {
       if (v == null) {
-        vals[i] = v;
-        prev = undefined;
+        return v;
       }
-      const active = getActiveThreshold(v, thresholds.steps);
-      if (active === prev) {
-        vals[i] = undefined;
-      } else {
-        vals[i] = thresholdToText.get(active);
-      }
-      prev = active;
+      return ((v - min!) / delta) * 100;
+    });
+  }
+
+  for (let i = 0; i < vals.length; i++) {
+    const v = input[i];
+    if (v == null) {
+      vals[i] = v;
+      prev = undefined;
     }
+    const active = getActiveThreshold(v, thresholds.steps);
+    if (active === prev) {
+      vals[i] = undefined;
+    } else {
+      vals[i] = thresholdToText.get(active);
+    }
+    prev = active;
   }
 
   return {
