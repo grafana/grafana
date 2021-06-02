@@ -1,5 +1,5 @@
 import React, { FC } from 'react';
-import { useTable, usePagination } from 'react-table';
+import { useTable, usePagination, useExpanded } from 'react-table';
 import { css } from 'emotion';
 import { useStyles } from '@grafana/ui';
 import { getStyles } from './Table.styles';
@@ -21,6 +21,7 @@ export const Table: FC<TableProps> = ({
   pageIndex: propPageIndex = 0,
   pagesPerView,
   children,
+  renderExpandedRow = () => <></>,
 }) => {
   const style = useStyles(getStyles);
   const manualPagination = !!(totalPages && totalPages >= 0);
@@ -33,7 +34,7 @@ export const Table: FC<TableProps> = ({
     initialState,
     manualPagination,
   };
-  const plugins = [];
+  const plugins: any[] = [useExpanded];
 
   if (showPagination) {
     plugins.push(usePagination);
@@ -55,6 +56,7 @@ export const Table: FC<TableProps> = ({
     page,
     rows,
     prepareRow,
+    visibleColumns,
     pageCount,
     setPageSize,
     gotoPage,
@@ -101,15 +103,22 @@ export const Table: FC<TableProps> = ({
                   : (showPagination ? page : rows).map(row => {
                       prepareRow(row);
                       return (
-                        <tr {...row.getRowProps()} key={row.id}>
-                          {row.cells.map(cell => {
-                            return (
-                              <td {...cell.getCellProps()} key={cell.column.id}>
-                                {cell.render('Cell')}
-                              </td>
-                            );
-                          })}
-                        </tr>
+                        <React.Fragment key={row.id}>
+                          <tr {...row.getRowProps()}>
+                            {row.cells.map(cell => {
+                              return (
+                                <td {...cell.getCellProps()} key={cell.column.id}>
+                                  {cell.render('Cell')}
+                                </td>
+                              );
+                            })}
+                          </tr>
+                          {row.isExpanded ? (
+                            <tr>
+                              <td colSpan={visibleColumns.length}>{renderExpandedRow(row)}</td>
+                            </tr>
+                          ) : null}
+                        </React.Fragment>
                       );
                     })}
               </tbody>

@@ -14,6 +14,7 @@ export const DeleteModal: FC<DeleteModalProps> = ({
   cancel,
   isVisible,
   loading,
+  children,
   setVisible,
   onDelete,
 }) => {
@@ -22,6 +23,7 @@ export const DeleteModal: FC<DeleteModalProps> = ({
   return (
     <Modal title={title || defaultTitle} isVisible={isVisible} onClose={() => setVisible(false)}>
       <h4 className={styles.deleteModalContent}>{message || defaultMessage}</h4>
+      {children}
       <HorizontalGroup justify="space-between" spacing="md">
         <Button variant="secondary" size="md" onClick={() => setVisible(false)} data-qa="cancel-delete-modal-button">
           {cancel || defaultCancel}

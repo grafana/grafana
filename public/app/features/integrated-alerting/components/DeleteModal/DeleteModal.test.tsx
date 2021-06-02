@@ -66,4 +66,14 @@ describe('DeleteModal', () => {
 
     expect(setVisible).toHaveBeenCalledWith(false);
   });
+
+  it('should render children if any', () => {
+    const Dummy = () => <></>;
+    const wrapper = mount(
+      <DeleteModal setVisible={jest.fn()} onDelete={jest.fn()} isVisible>
+        <Dummy />
+      </DeleteModal>
+    );
+    expect(wrapper.find(Dummy).exists()).toBeTruthy();
+  });
 });

@@ -2,7 +2,7 @@ import { css } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
 
 export const getStyles = (theme: GrafanaTheme) => {
-  const { colors } = theme;
+  const { colors, spacing } = theme;
 
   const borderColor = colors.border2;
   const backgroundColorBody = colors.bg1;
@@ -37,12 +37,6 @@ export const getStyles = (theme: GrafanaTheme) => {
           }
         }
 
-        tbody {
-          tr {
-            height: 70px;
-          }
-        }
-
         tr {
           :last-child {
             td {
@@ -54,7 +48,7 @@ export const getStyles = (theme: GrafanaTheme) => {
         td {
           background-color: ${backgroundColorBody};
           margin: 0;
-          padding: 0 16px;
+          padding: ${spacing.md};
           border-bottom: 1px solid ${borderColor};
           border-right: 1px solid ${borderColor};
 

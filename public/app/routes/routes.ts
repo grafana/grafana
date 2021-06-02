@@ -562,6 +562,21 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
           ),
       },
     })
+    .when('/backup', {
+      template: '<react-container />',
+      resolve: {
+        component: () =>
+          SafeDynamicImport(import(/* webpackChunkName: "BackupPage" */ 'app/features/backup/BackupPage')),
+      },
+    })
+    .when('/backup/:tab', {
+      template: '<react-container />',
+      reloadOnSearch: false,
+      resolve: {
+        component: () =>
+          SafeDynamicImport(import(/* webpackChunkName: "BackupPage" */ 'app/features/backup/BackupPage')),
+      },
+    })
     .when('/dbaas', {
       template: '<react-container />',
       resolve: {
