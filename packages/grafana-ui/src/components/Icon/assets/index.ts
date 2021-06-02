@@ -33,3 +33,4 @@ export * from './Percona/Surface';
 export * from './Percona/Network';
 export * from './Percona/Process';
 export * from './Percona/Setting';
+export * from './Percona/DatabaseChecks';

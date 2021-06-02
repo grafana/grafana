@@ -2,7 +2,10 @@ import React, { FC, useCallback, useState, useMemo } from 'react';
 import { Field } from 'react-final-form';
 import { TextInputField, validators } from '@percona/platform-core';
 import { DATABASE_LABELS, Databases } from 'app/percona/shared/core';
-import { SelectFieldAdapter, AsyncSelectFieldAdapter } from 'app/percona/shared/components/Form/FieldAdapters';
+import {
+  SelectFieldAdapter,
+  AsyncSelectFieldAdapter,
+} from 'app/percona/shared/components/Form/FieldAdapters/FieldAdapters';
 import { Messages } from 'app/percona/dbaas/DBaaS.messages';
 import { DatabaseOption, DBClusterBasicOptionsProps } from './DBClusterBasicOptions.types';
 import { DATABASE_OPTIONS } from '../../DBCluster.constants';

@@ -580,8 +580,72 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
     .when('/dbaas', {
       template: '<react-container />',
       resolve: {
+        component: () => SafeDynamicImport(import(/* webpackChunkName: "DbaasPage" */ 'app/percona/dbaas/DBaaS')),
+      },
+    })
+    .when('/dbaas/:tab', {
+      template: '<react-container />',
+      reloadOnSearch: false,
+      resolve: {
+        component: () => SafeDynamicImport(import(/* webpackChunkName: "DbaasPage" */ 'app/percona/dbaas/DBaaS')),
+      },
+    })
+    .when('/pmm-database-checks', {
+      template: '<react-container />',
+      resolve: {
+        component: () => SafeDynamicImport(import(/* webpackChunkName: "ChecksPage" */ 'app/percona/check/CheckPanel')),
+      },
+    })
+    .when('/pmm-database-checks/:tab', {
+      template: '<react-container />',
+      reloadOnSearch: false,
+      resolve: {
+        component: () => SafeDynamicImport(import(/* webpackChunkName: "ChecksPage" */ 'app/percona/check/CheckPanel')),
+      },
+    })
+    .when('/settings', {
+      template: '<react-container />',
+      resolve: {
         component: () =>
-          SafeDynamicImport(import(/* webpackChunkName: "IntegratedAlertingPage" */ 'app/percona/dbaas/DBaaS')),
+          SafeDynamicImport(import(/* webpackChunkName: "SettingsPage" */ 'app/percona/settings/Settings')),
+      },
+    })
+    .when('/settings/:tab', {
+      template: '<react-container />',
+      reloadOnSearch: false,
+      resolve: {
+        component: () =>
+          SafeDynamicImport(import(/* webpackChunkName: "SettingsPage" */ 'app/percona/settings/Settings')),
+      },
+    })
+    .when('/inventory', {
+      template: '<react-container />',
+      resolve: {
+        component: () =>
+          SafeDynamicImport(import(/* webpackChunkName: "InventoryPage" */ 'app/percona/inventory/Inventory')),
+      },
+    })
+    .when('/inventory/:tab', {
+      template: '<react-container />',
+      reloadOnSearch: false,
+      resolve: {
+        component: () =>
+          SafeDynamicImport(import(/* webpackChunkName: "InventoryPage" */ 'app/percona/inventory/Inventory')),
+      },
+    })
+    .when('/add-instance', {
+      template: '<react-container />',
+      resolve: {
+        component: () =>
+          SafeDynamicImport(import(/* webpackChunkName: "AddInstancePage" */ 'app/percona/add-instance/panel')),
+      },
+    })
+    .when('/add-instance/:tab', {
+      template: '<react-container />',
+      reloadOnSearch: false,
+      resolve: {
+        component: () =>
+          SafeDynamicImport(import(/* webpackChunkName: "AddInstancePage" */ 'app/percona/add-instance/panel')),
       },
     })
     .when('/alerting/notification/new', {

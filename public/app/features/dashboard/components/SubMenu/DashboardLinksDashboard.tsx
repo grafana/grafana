@@ -18,7 +18,17 @@ export const DashboardLinksDashboard: React.FC<Props> = (props) => {
   const { link, linkInfo } = props;
   const listRef = useRef<HTMLUListElement>(null);
   const [opened, setOpened] = useState(0);
-  const resolvedLinks = useResolvedLinks(props, opened);
+  let resolvedLinks = useResolvedLinks(props, opened);
+
+  // TODO: PMM-7736 remove it ASAP after migration transition period is finished
+  if (props.link.title === 'PMM') {
+    resolvedLinks = [
+      { id: 'pmm-add-instance', url: '/graph/add-instance', title: 'PMM Add Instance' },
+      { id: 'pmm-database-checks', url: '/graph/pmm-database-checks', title: 'PMM Database Checks' },
+      { id: 'pmm-inventory', url: '/graph/inventory', title: 'PMM Inventory' },
+      { id: 'pmm-settings', url: '/graph/settings', title: 'PMM Settings' },
+    ];
+  }
 
   if (link.asDropdown) {
     return (

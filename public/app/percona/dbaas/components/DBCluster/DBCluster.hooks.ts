@@ -47,7 +47,7 @@ export const useDBClusters = (kubernetes: Kubernetes[]): [DBCluster[], GetDBClus
     timer = setInterval(() => getDBClusters(false), RECHECK_INTERVAL);
 
     return () => clearTimeout(timer);
-  }, []);
+  }, [kubernetes]);
 
   return [dbClusters, getDBClusters, loading];
 };

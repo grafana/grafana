@@ -8,17 +8,26 @@ import { buildIntegratedAlertingMenuItem } from './TopSection.utils';
 
 const TopSection: FC<any> = () => {
   const [showDBaaS, setShowDBaaS] = useState(false);
+  const [showSTT, setShowSTT] = useState(false);
   const navTree = _.cloneDeep(config.bootData.navTree) as NavModelItem[];
   const [mainLinks, setMainLinks] = useState(_.filter(navTree, (item) => !item.hideFromMenu));
   const searchLink = {
     text: 'Search',
     icon: 'search',
   };
+
   const dbaasLink = {
     id: 'dbaas',
     icon: 'database',
     text: 'DBaaS',
     url: `${config.appSubUrl}/dbaas`,
+  };
+
+  const sttLink = {
+    id: 'databsase-checks',
+    icon: 'percona-database-checks',
+    text: 'PMM Database checks',
+    url: `${config.appSubUrl}/pmm-database-checks`,
   };
 
   const onOpenSearch = () => {
@@ -27,6 +36,7 @@ const TopSection: FC<any> = () => {
   const updateMenu = async () => {
     const { settings } = await getBackendSrv().post(`${window.location.origin}/v1/Settings/Get`);
     setShowDBaaS(settings.dbaas_enabled);
+    setShowSTT(settings.stt_enabled);
 
     if (settings.alerting_enabled) {
       setMainLinks([...buildIntegratedAlertingMenuItem(mainLinks)]);
@@ -45,6 +55,7 @@ const TopSection: FC<any> = () => {
       {mainLinks.map((link, index) => {
         return <TopSectionItem link={link} key={`${link.id}-${index}`} />;
       })}
+      {showSTT && <TopSectionItem link={sttLink} />}
       {showDBaaS && <TopSectionItem link={dbaasLink} />}
     </div>
   );
