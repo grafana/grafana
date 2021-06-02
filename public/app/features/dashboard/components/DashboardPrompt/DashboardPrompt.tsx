@@ -36,6 +36,8 @@ export const DashboardPrompt = React.memo(({ dashboard }: Props) => {
   const { original, originalPath, blockedLocation, modal } = state;
 
   useEffect(() => {
+    // This timeout delay is to wait for panels to load and migrate scheme before capturing the original state
+    // This is to minimize unsaved changes warnings due to automatic schema migrations
     const timeoutId = setTimeout(() => {
       const originalPath = locationService.getLocation().pathname;
       const original = dashboard.getSaveModelClone();
@@ -43,17 +45,25 @@ export const DashboardPrompt = React.memo(({ dashboard }: Props) => {
       setState({ originalPath, original, modal: null });
     }, 1000);
 
+    return () => {
+      clearTimeout(timeoutId);
+    };
+  }, [dashboard]);
+
+  // Handle saved events
+  useEffect(() => {
     const savedEventUnsub = appEvents.subscribe(DashboardSavedEvent, () => {
       const original = dashboard.getSaveModelClone();
       const originalPath = locationService.getLocation().pathname;
       setState({ originalPath, original, modal: null });
+
+      if (blockedLocation) {
+        moveToBlockedLocationAfterReactStateUpdate(blockedLocation);
+      }
     });
 
-    return () => {
-      clearTimeout(timeoutId);
-      savedEventUnsub.unsubscribe();
-    };
-  }, [dashboard]);
+    return () => savedEventUnsub.unsubscribe();
+  }, [dashboard, blockedLocation]);
 
   const onHistoryBlock = (location: H.Location) => {
     const panelInEdit = dashboard.panelInEdit;
@@ -82,24 +92,25 @@ export const DashboardPrompt = React.memo(({ dashboard }: Props) => {
     return false;
   };
 
+  const onHideModalAndMoveToBlockedLocation = () => {
+    setState({ ...state, modal: null });
+    moveToBlockedLocationAfterReactStateUpdate(blockedLocation);
+  };
+
   return (
     <>
       <Prompt when={true} message={onHistoryBlock} />
       {modal === PromptModal.UnsavedChangesModal && (
         <UnsavedChangesModal
           dashboard={dashboard}
-          onSaveSuccess={() => {
-            locationService.push(blockedLocation!);
-            // need timeout here so that clearing original happens before location change
-            setTimeout(() => locationService.push(blockedLocation!), 10);
-          }}
+          onSaveSuccess={() => {}} // Handled by DashboardSavedEvent above
           onDiscard={() => {
+            // Clear original will allow us to leave without unsaved changes prompt
             setState({ ...state, original: null, modal: null });
-            // need timeout here so that clearing original happens before location change
-            setTimeout(() => locationService.push(blockedLocation!), 10);
+            moveToBlockedLocationAfterReactStateUpdate(blockedLocation);
           }}
           onDismiss={() => {
-            setState({ ...state, modal: null });
+            setState({ ...state, modal: null, blockedLocation: null });
           }}
         />
       )}
@@ -108,22 +119,26 @@ export const DashboardPrompt = React.memo(({ dashboard }: Props) => {
           isUnsavedPrompt
           panel={dashboard.panelInEdit as PanelModelWithLibraryPanel}
           folderId={dashboard.meta.folderId as number}
-          onConfirm={() => {
-            locationService.push(blockedLocation!);
-          }}
+          onConfirm={onHideModalAndMoveToBlockedLocation}
           onDiscard={() => {
             dispatch(discardPanelChanges());
             setState({ ...state, modal: null });
-            setTimeout(() => locationService.push(blockedLocation!), 10);
+            moveToBlockedLocationAfterReactStateUpdate(blockedLocation);
           }}
           onDismiss={() => {
-            setState({ ...state, modal: null });
+            setState({ ...state, modal: null, blockedLocation: null });
           }}
         />
       )}
     </>
   );
 });
+
+function moveToBlockedLocationAfterReactStateUpdate(location?: H.Location | null) {
+  if (location) {
+    setTimeout(() => locationService.push(location!), 10);
+  }
+}
 
 /**
  * For some dashboards and users changes should be ignored *
@@ -212,6 +227,8 @@ export function hasChanges(current: DashboardModel, original: any) {
 
   const currentJson = angular.toJson(currentClean);
   const originalJson = angular.toJson(originalClean);
+  console.log('current', currentJson);
+  console.log('originalJson', originalJson);
 
   return currentJson !== originalJson;
 }

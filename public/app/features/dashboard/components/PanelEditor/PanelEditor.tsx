@@ -415,6 +415,10 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
     locationService.partial({ editPanel: null, tab: null });
   };
 
+  onConfirmAndDismissLibarayPanelModel = () => {
+    this.setState({ showSaveLibraryPanelModal: false });
+  };
+
   render() {
     const { dashboard, initDone, updatePanelEditorUIState, uiState } = this.props;
     const styles = getStyles(config.theme, this.props);
@@ -441,11 +445,9 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
           <SaveLibraryPanelModal
             panel={this.props.panel as PanelModelWithLibraryPanel}
             folderId={this.props.dashboard.meta.folderId as number}
-            onConfirm={() => {}}
+            onConfirm={this.onConfirmAndDismissLibarayPanelModel}
             onDiscard={this.onDiscard}
-            onDismiss={() => {
-              this.setState({ showSaveLibraryPanelModal: false });
-            }}
+            onDismiss={this.onConfirmAndDismissLibarayPanelModel}
           />
         )}
       </div>
