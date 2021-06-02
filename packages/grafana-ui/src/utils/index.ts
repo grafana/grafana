@@ -4,6 +4,7 @@ export * from './slate';
 export * from './dataLinks';
 export * from './tags';
 export * from './scrollbar';
+export * from './table';
 export * from './measureText';
 export * from './useForceUpdate';
 export { SearchFunctionType } from './searchFunctions';
