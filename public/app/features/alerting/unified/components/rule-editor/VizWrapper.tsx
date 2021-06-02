@@ -39,6 +39,13 @@ export const VizWrapper: FC<Props> = ({ data, currentPanel, changePanel }) => {
             if (width === 0 || height === 0) {
               return null;
             }
+            if (data.series.length === 0) {
+              return (
+                <div className={styles.nodata}>
+                  <span>No data</span>
+                </div>
+              );
+            }
             return (
               <PanelRenderer
                 height={height}
@@ -75,4 +82,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: flex;
     justify-content: flex-end;
   `,
+  nodata: css`
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+  `,
+  title: css``,
 });

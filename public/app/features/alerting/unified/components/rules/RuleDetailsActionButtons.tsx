@@ -10,7 +10,7 @@ import { useIsRuleEditable } from '../../hooks/useIsRuleEditable';
 import { deleteRuleAction } from '../../state/actions';
 import { Annotation } from '../../utils/constants';
 import { getRulesSourceName, isCloudRulesSource } from '../../utils/datasource';
-import { createExploreLink } from '../../utils/misc';
+import { createExploreLink, createViewLink } from '../../utils/misc';
 import { getRuleIdentifier, stringifyRuleIdentifier } from '../../utils/rules';
 
 interface Props {
@@ -29,6 +29,7 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource }) => {
   const rightButtons: JSX.Element[] = [];
 
   const { isEditable } = useIsRuleEditable(rulerRule);
+  const returnTo = location.pathname + location.search;
 
   const deleteRule = () => {
     if (ruleToDelete && ruleToDelete.rulerRule) {
@@ -112,6 +113,21 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource }) => {
     }
   }
 
+  if (rulerRule && !inViewMode(location.pathname)) {
+    rightButtons.push(
+      <LinkButton
+        className={style.button}
+        size="xs"
+        key="view"
+        variant="secondary"
+        icon="eye"
+        href={createViewLink(rulesSource, rule, returnTo)}
+      >
+        View
+      </LinkButton>
+    );
+  }
+
   if (isEditable && rulerRule) {
     const editURL = urlUtil.renderUrl(
       `/alerting/${encodeURIComponent(
@@ -120,7 +136,7 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource }) => {
         )
       )}/edit`,
       {
-        returnTo: location.pathname + location.search,
+        returnTo,
       }
     );
 
@@ -165,6 +181,10 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource }) => {
 
   return null;
 };
+
+function inViewMode(pathname: string): boolean {
+  return pathname.endsWith('/view');
+}
 
 export const getStyles = (theme: GrafanaTheme2) => ({
   wrapper: css`

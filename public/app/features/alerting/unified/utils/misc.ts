@@ -1,6 +1,23 @@
 import { urlUtil, UrlQueryMap } from '@grafana/data';
-import { RuleFilterState } from 'app/types/unified-alerting';
+import { CombinedRule, RuleFilterState, RulesSource } from 'app/types/unified-alerting';
 import { ALERTMANAGER_NAME_QUERY_KEY } from './constants';
+import { getRulesSourceName } from './datasource';
+import { getRuleIdentifier, stringifyRuleIdentifier } from './rules';
+
+export function createViewLink(ruleSource: RulesSource, rule: CombinedRule, returnTo: string): string | undefined {
+  const sourceName = getRulesSourceName(ruleSource);
+  const { namespace, group, rulerRule } = rule;
+
+  if (!rulerRule) {
+    return;
+  }
+
+  const identifier = getRuleIdentifier(sourceName, namespace.name, group.name, rulerRule);
+  const paramId = encodeURIComponent(stringifyRuleIdentifier(identifier));
+  const paramSource = encodeURIComponent(sourceName);
+
+  return urlUtil.renderUrl(`/alerting/${paramSource}/${paramId}/view`, { returnTo });
+}
 
 export function createExploreLink(dataSourceName: string, query: string) {
   return urlUtil.renderUrl('explore', {

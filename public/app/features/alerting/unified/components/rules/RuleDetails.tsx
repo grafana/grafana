@@ -13,7 +13,6 @@ import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { ExpressionDatasourceUID } from 'app/features/expressions/ExpressionDatasource';
 import { Expression } from '../Expression';
 import { RuleDetailsActionButtons } from './RuleDetailsActionButtons';
-
 interface Props {
   rule: CombinedRule;
   rulesSource: RulesSource;
@@ -21,7 +20,6 @@ interface Props {
 
 export const RuleDetails: FC<Props> = ({ rule, rulesSource }) => {
   const styles = useStyles(getStyles);
-
   const { promRule } = rule;
 
   const annotations = Object.entries(rule.annotations).filter(([_, value]) => !!value.trim());

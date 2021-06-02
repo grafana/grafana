@@ -99,6 +99,13 @@ export function stringifyRuleIdentifier(location: RuleIdentifier): string {
     .join('$');
 }
 
+export function ruleIdentifierFromParam(param: string | undefined): RuleIdentifier | undefined {
+  if (!param) {
+    return;
+  }
+  return parseRuleIdentifier(decodeURIComponent(param));
+}
+
 export function parseRuleIdentifier(location: string): RuleIdentifier {
   const parts = location.split('$');
   if (parts.length === 1) {

@@ -1,11 +1,12 @@
 import { useEffect, useMemo } from 'react';
 import { useDispatch } from 'react-redux';
-import { CombinedRule, RuleIdentifier } from 'app/types/unified-alerting';
-import { AsyncRequestState } from '../utils/redux';
+import { CombinedRule, RuleIdentifier, RuleNamespace } from 'app/types/unified-alerting';
+import { AsyncRequestMapSlice, AsyncRequestState } from '../utils/redux';
 import { useCombinedRuleNamespaces } from './useCombinedRuleNamespaces';
 import { equalIdentifiers, getRuleIdentifier } from '../utils/rules';
 import { useUnifiedAlertingSelector } from './useUnifiedAlertingSelector';
 import { fetchPromRulesAction, fetchRulerRulesAction } from '../state/actions';
+import { RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
 export function useCombinedRule(
   identifier: RuleIdentifier | undefined,
@@ -47,30 +48,47 @@ export function useCombinedRule(
   };
 }
 
-function useCombinedRulesLoader(ruleSourceName = ''): AsyncRequestState<void> {
+function useCombinedRulesLoader(ruleSourceName: string | undefined): AsyncRequestState<void> {
   const dispatch = useDispatch();
   const promRuleRequests = useUnifiedAlertingSelector((state) => state.promRules);
-  const promRuleRequest = promRuleRequests[ruleSourceName];
+  const promRuleRequest = getRequestState(ruleSourceName, promRuleRequests);
   const rulerRuleRequests = useUnifiedAlertingSelector((state) => state.rulerRules);
-  const rulerRuleRequest = rulerRuleRequests[ruleSourceName];
+  const rulerRuleRequest = getRequestState(ruleSourceName, rulerRuleRequests);
 
   useEffect(() => {
     if (!ruleSourceName) {
       return;
     }
 
-    if (!promRuleRequest?.dispatched) {
+    if (!promRuleRequest.dispatched) {
       dispatch(fetchPromRulesAction(ruleSourceName));
     }
 
-    if (!rulerRuleRequest?.dispatched) {
+    if (!rulerRuleRequest.dispatched) {
       dispatch(fetchRulerRulesAction(ruleSourceName));
     }
-  }, [promRuleRequest?.dispatched, rulerRuleRequest?.dispatched, dispatch, ruleSourceName]);
+  }, [promRuleRequest.dispatched, rulerRuleRequest.dispatched, dispatch, ruleSourceName]);
 
   return {
-    loading: (promRuleRequest?.loading || rulerRuleRequest?.loading) ?? false,
-    error: promRuleRequest?.error ?? rulerRuleRequest?.error,
-    dispatched: (promRuleRequest?.dispatched && rulerRuleRequest?.dispatched) ?? false,
+    loading: promRuleRequest.loading || rulerRuleRequest.loading,
+    error: promRuleRequest.error ?? rulerRuleRequest.error,
+    dispatched: promRuleRequest.dispatched && rulerRuleRequest.dispatched,
   };
+}
+
+function getRequestState(
+  ruleSourceName: string | undefined,
+  slice: AsyncRequestMapSlice<RulerRulesConfigDTO | RuleNamespace[] | null>
+): AsyncRequestState<RulerRulesConfigDTO | RuleNamespace[] | null> {
+  if (!ruleSourceName) {
+    return { loading: false, dispatched: false };
+  }
+
+  const state = slice[ruleSourceName];
+
+  if (!state) {
+    return { loading: false, dispatched: false };
+  }
+
+  return state;
 }
