@@ -168,7 +168,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
               {lazyRendering && (
                 <td colSpan={5}>
                   <Button variant="secondary" size="md" style={{ marginTop: theme.spacing.sm }} onClick={this.showMore}>
-                    Show more rows.
+                    Show more rows
                   </Button>
                 </td>
               )}
