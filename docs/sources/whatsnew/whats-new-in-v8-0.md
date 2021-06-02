@@ -46,7 +46,7 @@ The Bar chart panel is a new visualization that allows categorical data display.
 
 ### State timeline visualization (beta)
 
-The state timeline visualization shows discrete state changes over time. Each field or series is rendered as its unique horizontal band. This panel works well with string or boolean states but can also be used with time series. When used with time series, the thresholds are used to turn the numerical values into discrete state regions. 
+The State timeline visualization shows discrete state changes over time. Each field or series is rendered as a unique horizontal band. This panel works well with string or boolean states, but it can also be used with time series data. When used with time series data, the thresholds are used to turn the numerical values into discrete state regions. 
 
 This panel also takes advantage of the new value mapping features that allow you to color string and boolean values. 
 
