@@ -377,7 +377,7 @@ export function getAppRoutes(): RouteDescriptor[] {
       component: SafeDynamicImport(
         () =>
           import(
-            /* webpackChunkName: "IntegratedAlertingPage" */ 'app/features/integrated-alerting/IntegratedAlertingPage'
+            /* webpackChunkName: "IntegratedAlertingPage" */ 'app/percona/integrated-alerting/IntegratedAlertingPage'
           )
       ),
     },
@@ -386,7 +386,7 @@ export function getAppRoutes(): RouteDescriptor[] {
       component: SafeDynamicImport(
         () =>
           import(
-            /* webpackChunkName: "IntegratedAlertingPage" */ 'app/features/integrated-alerting/IntegratedAlertingPage'
+            /* webpackChunkName: "IntegratedAlertingPage" */ 'app/percona/integrated-alerting/IntegratedAlertingPage'
           )
       ),
     },
@@ -396,11 +396,11 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/backup',
-      component: SafeDynamicImport(() => import(/* webpackChunkName: "BackupPage" */ 'app/features/backup/BackupPage')),
+      component: SafeDynamicImport(() => import(/* webpackChunkName: "BackupPage" */ 'app/percona/backup/BackupPage')),
     },
     {
       path: '/backup/:tab',
-      component: SafeDynamicImport(() => import(/* webpackChunkName: "BackupPage" */ 'app/features/backup/BackupPage')),
+      component: SafeDynamicImport(() => import(/* webpackChunkName: "BackupPage" */ 'app/percona/backup/BackupPage')),
     },
     ...getPluginCatalogRoutes(),
     ...getLiveRoutes(),
