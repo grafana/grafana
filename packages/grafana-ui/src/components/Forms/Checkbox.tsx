@@ -48,21 +48,6 @@ export const getCheckboxStyles = stylesFactory((theme: GrafanaTheme2) => {
   const labelPadding = 1;
 
   return {
-    label: cx(
-      labelStyles.label,
-      css`
-        padding-left: ${theme.spacing(labelPadding)};
-        white-space: nowrap;
-        cursor: pointer;
-      `
-    ),
-    description: cx(
-      labelStyles.description,
-      css`
-        line-height: ${theme.typography.bodySmall.lineHeight};
-        padding-left: ${theme.spacing(checkboxSize + labelPadding)};
-      `
-    ),
     wrapper: css`
       position: relative;
       vertical-align: middle;
@@ -137,6 +122,21 @@ export const getCheckboxStyles = stylesFactory((theme: GrafanaTheme2) => {
         border-color: ${theme.components.input.borderHover};
       }
     `,
+    label: cx(
+      labelStyles.label,
+      css`
+        padding-left: ${theme.spacing(labelPadding)};
+        white-space: nowrap;
+        cursor: pointer;
+      `
+    ),
+    description: cx(
+      labelStyles.description,
+      css`
+        line-height: ${theme.typography.bodySmall.lineHeight};
+        padding-left: ${theme.spacing(checkboxSize + labelPadding)};
+      `
+    ),
   };
 });
 
