@@ -1,3 +1,6 @@
+// Unfortunately this list is manually maintained as there's no (nice) automated way to get
+// data from Azure.
+
 export const locationMetadata = [
   {
     location: 'eastus',
