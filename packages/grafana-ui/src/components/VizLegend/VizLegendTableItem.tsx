@@ -111,7 +111,7 @@ const getStyles = (theme: GrafanaTheme) => {
       color: ${theme.colors.linkDisabled};
     `,
     clickable: css`
-      label: LegendClickabel;
+      label: LegendClickable;
       cursor: pointer;
     `,
     itemWrapper: css`
