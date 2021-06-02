@@ -22,7 +22,7 @@ import (
 // nolint:staticcheck // plugins.DataPlugin deprecated
 func TestService(t *testing.T) {
 	dsDF := data.NewFrame("test",
-		data.NewField("time", nil, []*time.Time{utp(1)}),
+		data.NewField("time", nil, []time.Time{time.Unix(1, 0)}),
 		data.NewField("value", nil, []*float64{fp(2)}))
 
 	dataSvc := tsdb.NewService()
@@ -61,7 +61,7 @@ func TestService(t *testing.T) {
 	require.NoError(t, err)
 
 	bDF := data.NewFrame("",
-		data.NewField("Time", nil, []*time.Time{utp(1)}),
+		data.NewField("Time", nil, []time.Time{time.Unix(1, 0)}),
 		data.NewField("B", nil, []*float64{fp(4)}))
 	bDF.RefID = "B"
 
@@ -88,11 +88,6 @@ func TestService(t *testing.T) {
 	if diff := cmp.Diff(expect, res, options...); diff != "" {
 		t.Errorf("Result mismatch (-want +got):\n%s", diff)
 	}
-}
-
-func utp(sec int64) *time.Time {
-	t := time.Unix(sec, 0)
-	return &t
 }
 
 func fp(f float64) *float64 {
