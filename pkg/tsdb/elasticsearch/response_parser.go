@@ -599,11 +599,11 @@ func getErrorFromElasticResponse(response *es.SearchResponse) plugins.DataQueryR
 }
 
 func processTopMetricValues(stats *simplejson.Json, field string) null.Float {
-	for _, _stat := range stats.MustArray() {
-		stat := _stat.(map[string]interface{})
-		_metrics, hasMetrics := stat["metrics"]
+	for _, stat := range stats.MustArray() {
+		stat := stat.(map[string]interface{})
+		metrics, hasMetrics := stat["metrics"]
 		if hasMetrics {
-			metrics := _metrics.(map[string]interface{})
+			metrics := metrics.(map[string]interface{})
 			metricValue, hasMetricValue := metrics[field]
 			if hasMetricValue && metricValue != nil {
 				return null.FloatFrom(metricValue.(float64))
@@ -615,10 +615,10 @@ func processTopMetricValues(stats *simplejson.Json, field string) null.Float {
 
 func processTopMetrics(metric *MetricAgg, esAgg *simplejson.Json, props map[string]string) plugins.DataTimeSeriesSlice {
 	var series plugins.DataTimeSeriesSlice
-	_metrics, hasMetrics := metric.Settings.MustMap()["metrics"].([]interface{})
+	topMetricsMetric, hasMetrics := metric.Settings.MustMap()["metrics"].([]interface{})
 	if hasMetrics {
-		metrics := make([]string, len(_metrics))
-		for i, v := range _metrics {
+		metrics := make([]string, len(topMetricsMetric))
+		for i, v := range topMetricsMetric {
 			metrics[i] = v.(string)
 		}
 		for _, metricField := range metrics {
