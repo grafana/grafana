@@ -2,6 +2,7 @@ package managedstream
 
 import (
 	"encoding/json"
+	"errors"
 	"sync"
 	"time"
 
@@ -60,24 +61,35 @@ func (c *RedisFrameCache) Update(orgID int64, channel string, jsonFrame data.Fra
 	}
 	c.frames[orgID][channel] = jsonFrame
 	c.mu.Unlock()
-	key := orgchannel.PrependOrgID(orgID, channel)
-	pipe := c.redisClient.Pipeline()
-	pipe.HGetAll(key)
+
 	stringSchema := string(jsonFrame.Bytes(data.IncludeSchemaOnly))
+
+	key := orgchannel.PrependOrgID(orgID, channel)
+
+	pipe := c.redisClient.Pipeline()
+
+	pipe.HGetAll(key)
 	pipe.HMSet(key, map[string]string{
 		"schema": stringSchema,
 		"frame":  string(jsonFrame.Bytes(data.IncludeAll)),
 	})
 	pipe.Expire(key, 7*24*time.Hour)
+
 	replies, err := pipe.Exec()
 	if err != nil {
 		return false, err
 	}
-	if replies[0].Err() != nil {
+	if len(replies) == 0 {
+		return false, errors.New("no replies in response")
+	}
+	reply := replies[0]
+
+	if reply.Err() != nil {
 		return false, err
 	}
-	if reply, ok := replies[0].(*redis.StringStringMapCmd); ok {
-		result, err := reply.Result()
+
+	if mapReply, ok := reply.(*redis.StringStringMapCmd); ok {
+		result, err := mapReply.Result()
 		if err != nil {
 			return false, err
 		}
