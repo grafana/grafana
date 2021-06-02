@@ -14,7 +14,7 @@ def cronjobs(edition):
         'os': 'linux',
         'arch': 'amd64',
     }
-    steps=[ 
+    steps=[
         scan_docker_image_unkown_low_medium_vulnerabilities_step(edition),
         scan_docker_image_high_critical_vulnerabilities_step(edition),
         slack_job_failed_step('grafana-backend'),
@@ -59,7 +59,7 @@ def slack_job_failed_step(channel):
         'name': 'slack-notify-failure',
         'image': 'plugins/slack',
         'settings': {
-            'webhook': from_secret('slack_webhook'),
+            'webhook': from_secret('slack_webhook_backend'),
             'channel': channel,
             'template': 'Nightly docker image scan job for {{repo.name}} failed: {{build.link}}',
         },
