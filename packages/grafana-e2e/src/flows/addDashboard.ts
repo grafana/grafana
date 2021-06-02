@@ -74,9 +74,9 @@ export const addDashboard = (config?: Partial<AddDashboardConfig>) => {
   e2e.flows.assertSuccessNotification();
 
   e2e().logToConsole('Added dashboard with title:', title);
-  e2e().wait(100);
 
   return e2e()
+    .wait(200)
     .url()
     .then((url: string) => {
       const uid = getDashboardUid(url);
