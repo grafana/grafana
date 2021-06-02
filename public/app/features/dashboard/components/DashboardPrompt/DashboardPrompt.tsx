@@ -240,7 +240,7 @@ export function hasChanges(current: DashboardModel, original: any) {
 }
 
 export function hasLibraryPanelChanged(current: PanelModelWithLibraryPanel, original: any): boolean {
-  if (!current || !original?.panels?.length) {
+  if (!current || !original?.panels) {
     return false;
   }
 
@@ -251,6 +251,11 @@ export function hasLibraryPanelChanged(current: PanelModelWithLibraryPanel, orig
   const originalPanel: PanelModel | undefined = original.panels.find(
     (p: PanelModel) => isPanelModelLibraryPanel(p) && p.libraryPanel.uid === current.libraryPanel.uid
   );
+
+  if (!originalPanel) {
+    return true;
+  }
+
   const currentClean = { ...current.getSaveModel(), id: 1 };
   const originalClean = { ...new PanelModel(originalPanel).getSaveModel(), id: 1 };
   return !isEqual(currentClean, originalClean);
