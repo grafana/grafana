@@ -246,6 +246,10 @@ datasources:
       esVersion: "7.0.0"
       logMessageField: message
       logLevelField: fields.level
+      dataLinks:
+        - datasourceUid: my_jaeger_uid # Target UID needs to be known
+          field: traceID
+          url: "$${__value.raw}" # Careful about the double "$$" because of env var expansion
 ```
 
 ## Amazon Elasticsearch Service
