@@ -76,8 +76,8 @@ export const addDashboard = (config?: Partial<AddDashboardConfig>) => {
   e2e().logToConsole('Added dashboard with title:', title);
 
   return e2e()
-    .wait(200)
     .url()
+    .should('contain', '/d/')
     .then((url: string) => {
       const uid = getDashboardUid(url);
 

@@ -35,7 +35,7 @@ export const useDashboardSave = (dashboard: DashboardModel) => {
       const newUrl = locationUtil.stripBaseFromUrl(state.value.url);
 
       if (newUrl !== currentPath) {
-        locationService.replace(newUrl);
+        setTimeout(() => locationService.replace(newUrl));
       }
     }
   }, [dashboard, state]);
