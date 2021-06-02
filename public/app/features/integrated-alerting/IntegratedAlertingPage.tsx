@@ -3,7 +3,7 @@ import { TabsBar, TabContent, Tab, useStyles } from '@grafana/ui';
 import { Messages } from './IntegratedAlerting.messages';
 import { getStyles } from './IntegratedAlerting.styles';
 import { TabKeys } from './IntegratedAlerting.types';
-import { AlertRuleTemplate } from './components/AlertRuleTemplate/AlertRuleTemplate';
+import { AlertRuleTemplate } from './components';
 
 const IntegratedAlertingPage: FC = () => {
   const styles = useStyles(getStyles);
