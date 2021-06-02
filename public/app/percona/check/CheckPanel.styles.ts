@@ -17,12 +17,6 @@ export const getStyles = stylesFactory((theme: GrafanaTheme) => {
       align-items: center;
       justify-content: center;
     `,
-    tabBar: css`
-      height: 42px;
-    `,
-    tabContent: css`
-      height: calc(100% - 42px);
-    `,
     empty: css`
       display: flex;
       width: 100%;

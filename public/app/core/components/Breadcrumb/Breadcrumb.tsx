@@ -4,12 +4,12 @@ import { getStyles } from './Breadcrumb.styles';
 import { BreadcrumbSections } from './BreadcrumbSections';
 import { BreadcrumbProps } from './Breadcrumb.types';
 
-export const Breadcrumb: FC<BreadcrumbProps> = ({ pageModel }) => {
+export const Breadcrumb: FC<BreadcrumbProps> = ({ pageModel, currentLocation }) => {
   const styles = useStyles(getStyles);
 
   return (
     <div data-qa="breadcrumb" className={styles.breadcrumb}>
-      <BreadcrumbSections pageModel={pageModel} />
+      <BreadcrumbSections pageModel={pageModel} currentLocation={currentLocation} />
     </div>
   );
 };

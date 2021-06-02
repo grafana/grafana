@@ -8,7 +8,13 @@ import { Messages } from './FeatureLoader.messages';
 import { PMM_SETTINGS_URL } from './FeatureLoader.constants';
 import { getStyles } from './FeatureLoader.styles';
 
-export const FeatureLoader: FC<FeatureLoaderProps> = ({ featureName, featureFlag, children }) => {
+export const FeatureLoader: FC<FeatureLoaderProps> = ({
+  featureName,
+  featureFlag,
+  messageDataQa = 'settings-link',
+  children,
+  onError = () => null,
+}) => {
   const styles = useStyles(getStyles);
   const [loadingSettings, setLoadingSettings] = useState(true);
   const [featureEnabled, setFeatureEnabled] = useState(false);
@@ -21,6 +27,7 @@ export const FeatureLoader: FC<FeatureLoaderProps> = ({ featureName, featureFlag
       setFeatureEnabled(!!settings[featureFlag]);
     } catch (e) {
       logger.error(e);
+      onError(e);
     } finally {
       setLoadingSettings(false);
     }
@@ -42,7 +49,7 @@ export const FeatureLoader: FC<FeatureLoaderProps> = ({ featureName, featureFlag
         ) : (
           <>
             {Messages.featureDisabled(featureName)}&nbsp;
-            <a data-qa="settings-link" className={styles.link} href={PMM_SETTINGS_URL}>
+            <a data-qa={messageDataQa} className={styles.link} href={PMM_SETTINGS_URL}>
               {Messages.pmmSettings}
             </a>
           </>

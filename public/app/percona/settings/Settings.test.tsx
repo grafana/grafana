@@ -1,9 +1,15 @@
 import React from 'react';
 import { act } from 'react-dom/test-utils';
-import { mount } from 'enzyme';
-import { SettingsPanel } from './Settings';
 import { useSelector } from 'react-redux';
+import { Tab } from '@grafana/ui';
+import { mount, ReactWrapper } from 'enzyme';
+import { stub as settingsStub } from './__mocks__/Settings.service';
+import { SettingsService } from './Settings.service';
+import { SettingsPanel } from './Settings';
 
+const fakeLocationUpdate = jest.fn();
+
+jest.mock('./Settings.service');
 jest.mock('app/percona/shared/components/hooks/parameters.hook');
 jest.mock('react-redux', () => ({
   ...jest.requireActual('react-redux'),
@@ -23,15 +29,18 @@ describe('SettingsPanel::', () => {
     });
   });
   it('Renders correctly without rendering hidden tab', async () => {
-    let root;
+    jest
+      .spyOn(SettingsService, 'getSettings')
+      .mockImplementationOnce(() => Promise.resolve({ ...settingsStub, alertingEnabled: false }));
+    let root: ReactWrapper;
 
     await act(async () => {
       root = mount(<SettingsPanel />);
     });
+    root.update();
 
-    const tabs = root.find('[data-qa="settings-tabs"]');
-
-    expect(tabs.children().length).toBe(5);
+    const tabs = root.find(Tab);
+    expect(tabs).toHaveLength(5);
     expect(root.childAt(0).children().length).toBe(1);
   });
 });

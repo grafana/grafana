@@ -5,7 +5,7 @@ import { Button, Spinner, useTheme, Icon } from '@grafana/ui';
 import { TextInputField, NumberInputField } from '@percona/platform-core';
 import { getSettingsStyles } from 'app/percona/settings/Settings.styles';
 import { Messages } from 'app/percona/settings/Settings.messages';
-import { DATA_RETENTION_URL } from 'app/percona/settings/Settings.constants';
+import { DATA_RETENTION_URL } from 'app/percona/settings/Settings.messages';
 import { LinkTooltip } from 'app/percona/shared/components/Elements/LinkTooltip/LinkTooltip';
 import validators from 'app/percona/shared/helpers/validators';
 import { getStyles } from './Advanced.styles';
