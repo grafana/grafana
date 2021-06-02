@@ -598,15 +598,15 @@ func getErrorFromElasticResponse(response *es.SearchResponse) plugins.DataQueryR
 	return result
 }
 
-func processTopMetricValues(stats *simplejson.Json, metric *MetricAgg, field string) null.Float {
+func processTopMetricValues(stats *simplejson.Json, field string) null.Float {
 	for _, _stat := range stats.MustArray() {
 		stat := _stat.(map[string]interface{})
 		_metrics, hasMetrics := stat["metrics"]
 		if hasMetrics {
 			metrics := _metrics.(map[string]interface{})
-			_metricValue, hasMetricValue := metrics[field]
-			if hasMetricValue && _metricValue != nil {
-				return null.FloatFrom(_metricValue.(float64))
+			metricValue, hasMetricValue := metrics[field]
+			if hasMetricValue && metricValue != nil {
+				return null.FloatFrom(metricValue.(float64))
 			}
 		}
 	}
@@ -629,9 +629,9 @@ func processTopMetrics(metric *MetricAgg, esAgg *simplejson.Json, props map[stri
 			for _, v := range esAgg.Get("buckets").MustArray() {
 				bucket := simplejson.NewFromAny(v)
 				stats := bucket.GetPath(metric.ID, "top")
-				aggregatedValue := processTopMetricValues(stats, metric, metricField)
+				value := processTopMetricValues(stats, metricField)
 				key := castToNullFloat(bucket.Get("key"))
-				newSeries.Points = append(newSeries.Points, plugins.DataTimePoint{aggregatedValue, key})
+				newSeries.Points = append(newSeries.Points, plugins.DataTimePoint{value, key})
 			}
 
 			for k, v := range props {
