@@ -25,7 +25,7 @@ Here's an example showing a Time series visualization with value mappings.
 
 ### Stat example
 
-Here's an example showing a Stat visualization with value mappings.
+Here's an example showing a Stat visualization with value mappings. You might want to hide the sparkline so it doesn't interfere with the values.
 
 ![Value mappings stat example](/static/img/docs/value-mappings/value-mappings-stat-example-8-0.png)
 
@@ -37,7 +37,7 @@ Here's an example showing a Bar gauge visualization with value mappings.
 
 ### Table example
 
-Here's an example showing a Table visualization with value mappings.
+Here's an example showing a Table visualization with value mappings. If you want value mapping colors displayed on the table, then set the cell display mode to **Color text** or **Color background**
 
 ![Value mappings table example](/static/img/docs/value-mappings/value-mappings-table-example-8-0.png)
 
