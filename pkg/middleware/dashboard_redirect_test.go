@@ -29,8 +29,8 @@ func TestMiddlewareDashboardRedirect(t *testing.T) {
 		})
 
 		sc.handlerFunc = redirectFromLegacyDashboardURL
-		sc.m.Get("/dashboard/db/:slug", sc.defaultHandler)
-		sc.fakeReqWithParams("GET", "/dashboard/db/dash?orgId=1&panelId=2", map[string]string{}).exec()
+		sc.m.Get("/dashboards/uid/:uid", sc.defaultHandler)
+		sc.fakeReqWithParams("GET", "/dashboards/uid/dash?orgId=1&panelId=2", map[string]string{}).exec()
 
 		assert.Equal(t, 301, sc.resp.Code)
 		// nolint:bodyclose

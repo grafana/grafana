@@ -9,9 +9,9 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func getDashboardURLBySlug(orgID int64, slug string) (string, error) {
+func getDashboardURLBySlug(orgID int64) (string, error) {
 	// TODO: Drop bus call
-	query := models.GetDashboardQuery{Slug: slug, OrgId: orgID}
+	query := models.GetDashboardQuery{OrgId: orgID}
 	if err := bus.Dispatch(&query); err != nil {
 		return "", models.ErrDashboardNotFound
 	}
@@ -21,15 +21,12 @@ func getDashboardURLBySlug(orgID int64, slug string) (string, error) {
 
 func RedirectFromLegacyDashboardURL() func(c *models.ReqContext) {
 	return func(c *models.ReqContext) {
-		slug := c.Params("slug")
-
-		if slug != "" {
-			if url, err := getDashboardURLBySlug(c.OrgId, slug); err == nil {
-				url = fmt.Sprintf("%s?%s", url, c.Req.URL.RawQuery)
-				c.Redirect(url, 301)
-				return
-			}
+		if url, err := getDashboardURLBySlug(c.OrgId); err == nil {
+			url = fmt.Sprintf("%s?%s", url, c.Req.URL.RawQuery)
+			c.Redirect(url, 301)
+			return
 		}
+
 	}
 }
 
@@ -62,23 +59,21 @@ func RedirectFromLegacyPanelEditURL(cfg *setting.Cfg) func(c *models.ReqContext)
 
 func RedirectFromLegacyDashboardSoloURL(cfg *setting.Cfg) func(c *models.ReqContext) {
 	return func(c *models.ReqContext) {
-		slug := c.Params("slug")
 		renderRequest := c.QueryBool("render")
 
-		if slug != "" {
-			url, err := getDashboardURLBySlug(c.OrgId, slug)
-			if err != nil {
-				return
-			}
-
-			if renderRequest && strings.Contains(url, cfg.AppSubURL) {
-				url = strings.Replace(url, cfg.AppSubURL, "", 1)
-			}
-
-			url = strings.Replace(url, "/d/", "/d-solo/", 1)
-			url = fmt.Sprintf("%s?%s", url, c.Req.URL.RawQuery)
-			c.Redirect(url, 301)
+		url, err := getDashboardURLBySlug(c.OrgId)
+		if err != nil {
 			return
 		}
+
+		if renderRequest && strings.Contains(url, cfg.AppSubURL) {
+			url = strings.Replace(url, cfg.AppSubURL, "", 1)
+		}
+
+		url = strings.Replace(url, "/d/", "/d-solo/", 1)
+		url = fmt.Sprintf("%s?%s", url, c.Req.URL.RawQuery)
+		c.Redirect(url, 301)
+		return
 	}
+
 }
