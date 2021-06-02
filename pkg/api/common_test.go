@@ -13,9 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/fs"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/auth"
-	"github.com/grafana/grafana/pkg/services/auth/jwt"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -166,35 +164,7 @@ func getContextHandler(t *testing.T, cfg *setting.Cfg) *contexthandler.ContextHa
 	userAuthTokenSvc := auth.NewFakeUserAuthTokenService()
 	renderSvc := &fakeRenderService{}
 	authJWTSvc := models.NewFakeJWTService()
-	ctxHdlr := &contexthandler.ContextHandler{}
-
-	err := registry.BuildServiceGraph([]interface{}{cfg}, []*registry.Descriptor{
-		{
-			Name:     sqlstore.ServiceName,
-			Instance: sqlStore,
-		},
-		{
-			Name:     remotecache.ServiceName,
-			Instance: remoteCacheSvc,
-		},
-		{
-			Name:     auth.ServiceName,
-			Instance: userAuthTokenSvc,
-		},
-		{
-			Name:     rendering.ServiceName,
-			Instance: renderSvc,
-		},
-		{
-			Name:     jwt.ServiceName,
-			Instance: authJWTSvc,
-		},
-		{
-			Name:     contexthandler.ServiceName,
-			Instance: ctxHdlr,
-		},
-	})
-	require.NoError(t, err)
+	ctxHdlr := contexthandler.ProvideService(cfg, userAuthTokenSvc, authJWTSvc, remoteCacheSvc, renderSvc, sqlStore)
 
 	return ctxHdlr
 }
