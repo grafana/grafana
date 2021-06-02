@@ -260,7 +260,7 @@ describe('utils/colorManipulator', () => {
 
   describe('alpha', () => {
     it('converts an rgb color to an rgba color with the value provided', () => {
-      expect(alpha('rgb(1, 2, 3)', 0.4)).toEqual('rgba(1, 2, 3, 0.4)');
+      expect(alpha('rgb(1, 2, 3)', 0.4)).toEqual('rgb(1, 2, 3, 0.4)');
     });
 
     it('updates an CSS4 color with the alpha value provided', () => {
@@ -272,7 +272,7 @@ describe('utils/colorManipulator', () => {
     });
 
     it('converts an hsl color to an hsla color with the value provided', () => {
-      expect(alpha('hsl(0, 100%, 50%)', 0.1)).toEqual('hsla(0, 100%, 50%, 0.1)');
+      expect(alpha('hsl(0, 100%, 50%)', 0.1)).toEqual('hsl(0, 100%, 50%, 0.1)');
     });
 
     it('updates an hsla color with the alpha value provided', () => {

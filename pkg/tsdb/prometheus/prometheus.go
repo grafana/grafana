@@ -37,7 +37,7 @@ type PrometheusExecutor struct {
 //nolint: staticcheck // plugins.DataPlugin deprecated
 func New(provider httpclient.Provider) func(*models.DataSource) (plugins.DataPlugin, error) {
 	return func(dsInfo *models.DataSource) (plugins.DataPlugin, error) {
-		transport, err := dsInfo.GetHTTPTransport(provider, customQueryParametersMiddleware())
+		transport, err := dsInfo.GetHTTPTransport(provider, customQueryParametersMiddleware(plog))
 		if err != nil {
 			return nil, err
 		}
