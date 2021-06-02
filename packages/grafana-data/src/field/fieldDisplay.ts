@@ -1,4 +1,4 @@
-import { toString, isEmpty } from 'lodash';
+import { toString } from 'lodash';
 
 import { getDisplayProcessor } from './displayProcessor';
 import {
@@ -373,7 +373,7 @@ function createNoValuesFieldDisplay(options: GetFieldDisplayValuesOptions): Fiel
 }
 
 function getDisplayText(display: DisplayValue, fallback: string): string {
-  if (!display || isEmpty(display.text)) {
+  if (!display) {
     return fallback;
   }
   return display.text;
