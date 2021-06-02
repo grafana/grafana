@@ -7,11 +7,11 @@ weight = 400
 
 # Message templating
 
-Notifications sent via [contact points]({{< relref "./contact-points.md" >}}) are built using templates. Grafana comes with default templates, but they can also be customized. The Grafana's notification templates are based on the [Go templating system](https://golang.org/pkg/text/template). Note that some fields are evaluated as text, and others as HTML which will affect escaping. Most of contact point fields can be templated, and reusable templates can be created and used in multiple contact points.
+Notifications sent via [contact points]({{< relref "./contact-points.md" >}}) are built using templates. Grafana comes with default templates which you can customize. Grafana's notification templates are based on the [Go templating system](https://golang.org/pkg/text/template) where some fields are evaluated as text, while others are evaluated as HTML which can affect escaping. Since most of the contact point fields can be templated, you can create reusable templates and them in multiple contact points.
 
 ## Template data
 
-Data that is passed to templates as well as sent as payload to webhook pushes.
+Template data is passed on to templates as well as sent as payload to webhook pushes.
 
 Name              | Type     | Notes
 ------------------|----------|-----------------------------------------------------------------
@@ -32,7 +32,7 @@ The `Alerts` type exposes functions for filtering alerts:
 
 Name         | Type      | Notes
 -------------|-----------|---------------------------------------------------------------------
-Status       | string    | `firing` or `resolved`
+Status       | string    | `firing` or `resolved`.
 Labels       | KeyValue  | A set of labels attached to the alert.
 Annotations  | KeyValue  | A set of annotations attached to the alert.
 StartsAt     | time.Time | Time the alert started firing.
@@ -45,9 +45,9 @@ Fingerprint  | string    | Fingerprint that can be used to identify the alert.
 
 ### KeyValue
 
-`KeyValue` is a set of key/value string pairs used to represent labels and annotations.
+`KeyValue` is a set of key/value string pairs that represent labels and annotations.
 
-Annotation example containing two annotations:
+Here is an example containing two annotations:
 
 ```json
 {
@@ -81,7 +81,7 @@ stringSlice  | ...string                    | Returns passed strings as slice of
 
 ## Using templating in contact point fields
 
-An example of using templating to render number of firing or resolved alerts in Slack message title, and listing alerts with status and name in message body:
+This section shows an example of using templating to render a number of firing or resolved alerts in Slack message title, and listing alerts with status and name in the message body:
 
 <img  src="/static/img/docs/alerting/unified/contact-points-template-fields-8-0.png" width="600px">
 
@@ -110,9 +110,11 @@ You can create named templates and then reuse them in contact point fields or ot
 1. Find the template you want to edit in the templates table and click the **trash can icon** on the right side.
 1. A confirmation dialog will open. Click **Yes, delete**. 
 
-**Note** You will not be prevented from deleting templates that are in use somewhere in contact points or other templates. Be careful!
+**Note** You are not prevented from deleting templates that are in use somewhere in contact points or other templates. Be careful!
 
 ### Use a template in a contact point field
+
+To use a template:
 
 Simply enter `{{ template "templatename" . }}` into a contact point field, where `templatename` is the `define` parameter of a template. 
 
@@ -121,7 +123,7 @@ Simply enter `{{ template "templatename" . }}` into a contact point field, where
 
 ### Template examples
 
-Template to render a single alert:
+Here is an example of a template to render a single alert:
 ```
 {{ define "alert" }}
   [{{.Status}}] {{ .Labels.alertname }}
@@ -161,8 +163,8 @@ Template to render entire notification message:
 {{ end }}
 ```
 
-## Managing templates for an external Alertmanager
+## Manage templates for an external Alertmanager
 
-Grafana alerting UI supports managing external Alertmanager configuration. Add an [Alertmanager datasource]({{< relref "../../datasources/alertmanager.md" >}}) and a dropdown will appear at the top of the page, allowing you to select either `Grafana` or an external Alertmanager. 
+Grafana alerting UI supports managing external Alertmanager configuration. Once you add an [Alertmanager data source]({{< relref "../../datasources/alertmanager.md" >}}), a dropdown displays at the top of the page, allowing you to select either `Grafana` or an external Alertmanager data source. 
 
 {{< figure max-width="40%" src="/static/img/docs/alerting/unified/contact-points-select-am-8-0.gif" caption="Select Alertmanager" >}}
