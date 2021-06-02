@@ -178,7 +178,7 @@ func (pm *PluginManager) initExternalPlugins() error {
 		if p.IsCorePlugin {
 			p.Signature = plugins.PluginSignatureInternal
 		} else {
-			metrics.SetPluginBuildInformation(p.Id, p.Type, p.Info.Version)
+			metrics.SetPluginBuildInformation(p.Id, p.Type, p.Info.Version, string(p.Signature))
 		}
 	}
 
