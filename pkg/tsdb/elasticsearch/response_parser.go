@@ -615,12 +615,9 @@ func processTopMetricValues(stats *simplejson.Json, field string) null.Float {
 
 func processTopMetrics(metric *MetricAgg, esAgg *simplejson.Json, props map[string]string) plugins.DataTimeSeriesSlice {
 	var series plugins.DataTimeSeriesSlice
-	topMetricsMetric, hasMetrics := metric.Settings.MustMap()["metrics"].([]interface{})
+	metrics, hasMetrics := metric.Settings.MustMap()["metrics"].([]interface{})
+
 	if hasMetrics {
-		metrics := make([]string, len(topMetricsMetric))
-		for i, v := range topMetricsMetric {
-			metrics[i] = v.(string)
-		}
 		for _, metricField := range metrics {
 			newSeries := plugins.DataTimeSeries{
 				Tags: make(map[string]string),
@@ -629,7 +626,7 @@ func processTopMetrics(metric *MetricAgg, esAgg *simplejson.Json, props map[stri
 			for _, v := range esAgg.Get("buckets").MustArray() {
 				bucket := simplejson.NewFromAny(v)
 				stats := bucket.GetPath(metric.ID, "top")
-				value := processTopMetricValues(stats, metricField)
+				value := processTopMetricValues(stats, metricField.(string))
 				key := castToNullFloat(bucket.Get("key"))
 				newSeries.Points = append(newSeries.Points, plugins.DataTimePoint{value, key})
 			}
@@ -638,7 +635,7 @@ func processTopMetrics(metric *MetricAgg, esAgg *simplejson.Json, props map[stri
 				newSeries.Tags[k] = v
 			}
 			newSeries.Tags["metric"] = "top_metrics"
-			newSeries.Tags["field"] = metricField
+			newSeries.Tags["field"] = metricField.(string)
 			series = append(series, newSeries)
 		}
 	}
