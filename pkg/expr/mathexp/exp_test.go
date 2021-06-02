@@ -84,6 +84,18 @@ func float64Pointer(f float64) *float64 {
 	return &f
 }
 
+func strPointer(s string) *string {
+	return &s
+}
+
+func int64Pointer(i int64) *int64 {
+	return &i
+}
+
+func boolPointer(b bool) *bool {
+	return &b
+}
+
 var aSeriesNullableTime = Vars{
 	"A": Results{
 		[]Value{

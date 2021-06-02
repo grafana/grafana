@@ -124,6 +124,156 @@ func TestSeriesFromFrame(t *testing.T) {
 			},
 		},
 		{
+			name: "[]*int, []*time frame should convert",
+			frame: &data.Frame{
+				Name: "test",
+				Fields: []*data.Field{
+					data.NewField("value", nil, []*int64{int64Pointer(5)}),
+					data.NewField("time", nil, []*time.Time{unixTimePointer(5, 0)}),
+				},
+			},
+			errIs: assert.NoError,
+			Is:    assert.Equal,
+			Series: Series{
+				Frame: &data.Frame{
+					Name: "test",
+					Fields: []*data.Field{
+						data.NewField("value", nil, []*float64{float64Pointer(5)}),
+						data.NewField("time", nil, []*time.Time{unixTimePointer(5, 0)}),
+					},
+				},
+				TimeIdx:         1,
+				TimeIsNullable:  true,
+				ValueIdx:        0,
+				ValueIsNullable: true,
+			},
+		},
+		{
+			name: "[]int, []*time frame should convert",
+			frame: &data.Frame{
+				Name: "test",
+				Fields: []*data.Field{
+					data.NewField("value", nil, []int64{5}),
+					data.NewField("time", nil, []*time.Time{unixTimePointer(5, 0)}),
+				},
+			},
+			errIs: assert.NoError,
+			Is:    assert.Equal,
+			Series: Series{
+				Frame: &data.Frame{
+					Name: "test",
+					Fields: []*data.Field{
+						data.NewField("value", nil, []*float64{float64Pointer(5)}),
+						data.NewField("time", nil, []*time.Time{unixTimePointer(5, 0)}),
+					},
+				},
+				TimeIdx:         1,
+				TimeIsNullable:  true,
+				ValueIdx:        0,
+				ValueIsNullable: true,
+			},
+		},
+		{
+			name: "[]string, []*time frame should convert",
+			frame: &data.Frame{
+				Name: "test",
+				Fields: []*data.Field{
+					data.NewField("value", nil, []string{"5"}),
+					data.NewField("time", nil, []*time.Time{unixTimePointer(5, 0)}),
+				},
+			},
+			errIs: assert.NoError,
+			Is:    assert.Equal,
+			Series: Series{
+				Frame: &data.Frame{
+					Name: "test",
+					Fields: []*data.Field{
+						data.NewField("value", nil, []*float64{float64Pointer(5)}),
+						data.NewField("time", nil, []*time.Time{unixTimePointer(5, 0)}),
+					},
+				},
+				TimeIdx:         1,
+				TimeIsNullable:  true,
+				ValueIdx:        0,
+				ValueIsNullable: true,
+			},
+		},
+		{
+			name: "[]*string, []*time frame should convert",
+			frame: &data.Frame{
+				Name: "test",
+				Fields: []*data.Field{
+					data.NewField("value", nil, []*string{strPointer("5")}),
+					data.NewField("time", nil, []*time.Time{unixTimePointer(5, 0)}),
+				},
+			},
+			errIs: assert.NoError,
+			Is:    assert.Equal,
+			Series: Series{
+				Frame: &data.Frame{
+					Name: "test",
+					Fields: []*data.Field{
+						data.NewField("value", nil, []*float64{float64Pointer(5)}),
+						data.NewField("time", nil, []*time.Time{unixTimePointer(5, 0)}),
+					},
+				},
+				TimeIdx:         1,
+				TimeIsNullable:  true,
+				ValueIdx:        0,
+				ValueIsNullable: true,
+			},
+		},
+		{
+			name: "[]bool, []*time frame should convert",
+			frame: &data.Frame{
+				Name: "test",
+				Fields: []*data.Field{
+					data.NewField("value", nil, []bool{true}),
+					data.NewField("time", nil, []*time.Time{unixTimePointer(5, 0)}),
+				},
+			},
+			errIs: assert.NoError,
+			Is:    assert.Equal,
+			Series: Series{
+				Frame: &data.Frame{
+					Name: "test",
+					Fields: []*data.Field{
+						data.NewField("value", nil, []*float64{float64Pointer(1)}),
+						data.NewField("time", nil, []*time.Time{unixTimePointer(5, 0)}),
+					},
+				},
+				TimeIdx:         1,
+				TimeIsNullable:  true,
+				ValueIdx:        0,
+				ValueIsNullable: true,
+			},
+		},
+		{
+			name: "[]*bool, []*time frame should convert",
+			frame: &data.Frame{
+				Name: "test",
+				Fields: []*data.Field{
+					data.NewField("value", nil, []*bool{boolPointer(true)}),
+					data.NewField("time", nil, []*time.Time{unixTimePointer(5, 0)}),
+				},
+			},
+			errIs: assert.NoError,
+			Is:    assert.Equal,
+			Series: Series{
+				Frame: &data.Frame{
+					Name: "test",
+					Fields: []*data.Field{
+						data.NewField("value", nil, []*float64{float64Pointer(1)}),
+						data.NewField("time", nil, []*time.Time{unixTimePointer(5, 0)}),
+					},
+				},
+				TimeIdx:         1,
+				TimeIsNullable:  true,
+				ValueIdx:        0,
+				ValueIsNullable: true,
+			},
+		},
+		{
 			name: "[]*time, []*time frame should error",
 			frame: &data.Frame{
 				Name: "test",

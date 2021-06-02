@@ -51,7 +51,7 @@ func SeriesFromFrame(frame *data.Frame) (s Series, err error) {
 			// try to convert to *float64
 			var convertedField *data.Field
 			for j := 0; j < field.Len(); j++ {
-				ff, err := field.FloatAt(j)
+				ff, err := field.NullableFloatAt(j)
 				if err != nil {
 					break
 				}
@@ -60,7 +60,7 @@ func SeriesFromFrame(frame *data.Frame) (s Series, err error) {
 					convertedField.Name = field.Name
 					convertedField.Labels = field.Labels
 				}
-				convertedField.SetConcrete(j, ff)
+				convertedField.Set(j, ff)
 			}
 			if convertedField != nil {
 				frame.Fields[i] = convertedField
