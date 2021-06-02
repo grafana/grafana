@@ -32,6 +32,7 @@ Show a calculated value based on all rows.
 #### All values
 
 Show a separate stat for every row. If you select this option, then you can also limit the number of rows to display.
+
 - **Limit -** The maximum number of rows to display. Default is 5,000.
 - **Fields -** Select the fields display in the panel.
 
