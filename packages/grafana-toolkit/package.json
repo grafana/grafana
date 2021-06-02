@@ -110,5 +110,8 @@
   },
   "_moduleAliases": {
     "puppeteer": "node_modules/puppeteer-core"
+  },
+  "volta": {
+    "extends": "../../package.json"
   }
 }

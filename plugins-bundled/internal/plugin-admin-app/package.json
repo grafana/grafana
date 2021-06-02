@@ -21,6 +21,6 @@
     "@grafana/ui": "8.1.0-pre"
   },
   "volta": {
-    "node": "12.16.2"
+    "extends": "../../../package.json"
   }
 }

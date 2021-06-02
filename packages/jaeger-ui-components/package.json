@@ -41,5 +41,8 @@
     "recompose": "^0.25.0",
     "tinycolor2": "1.4.1",
     "tween-functions": "^1.2.0"
+  },
+  "volta": {
+    "extends": "../../package.json"
   }
 }
