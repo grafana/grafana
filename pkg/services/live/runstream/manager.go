@@ -29,6 +29,7 @@ type PluginContextGetter interface {
 }
 
 type PresenceGetter interface {
+	// GetNumSubscribers returns number of channel subscribers throughout all nodes.
 	GetNumSubscribers(channel string) (int, error)
 }
 
