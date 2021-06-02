@@ -1,6 +1,5 @@
 import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
-import { Prompt } from 'react-router-dom';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { css, cx } from '@emotion/css';
 import { Subscription } from 'rxjs';
@@ -29,14 +28,7 @@ import { SplitPaneWrapper } from 'app/core/components/SplitPaneWrapper/SplitPane
 import { SaveDashboardModalProxy } from '../SaveDashboard/SaveDashboardModalProxy';
 import { DashboardPanel } from '../../dashgrid/DashboardPanel';
 
-import {
-  exitPanelEditor,
-  discardPanelChanges,
-  initPanelEditor,
-  panelEditorCleanUp,
-  updatePanelEditorUIState,
-  updateSourcePanel,
-} from './state/actions';
+import { discardPanelChanges, initPanelEditor, panelEditorCleanUp, updatePanelEditorUIState } from './state/actions';
 
 import { updateTimeZoneForSession } from 'app/features/profile/state/reducers';
 import { toggleTableView } from './state/reducers';
@@ -62,6 +54,7 @@ import {
 } from '../../../library-panels/utils';
 import { notifyApp } from '../../../../core/actions';
 import { PanelEditorTableView } from './PanelEditorTableView';
+import { PanelModelWithLibraryPanel } from 'app/features/library-panels/types';
 
 interface OwnProps {
   dashboard: DashboardModel;
@@ -85,8 +78,6 @@ const mapStateToProps = (state: StoreState) => {
 
 const mapDispatchToProps = {
   initPanelEditor,
-  exitPanelEditor,
-  updateSourcePanel,
   panelEditorCleanUp,
   discardPanelChanges,
   updatePanelEditorUIState,
@@ -99,8 +90,16 @@ const connector = connect(mapStateToProps, mapDispatchToProps);
 
 type Props = OwnProps & ConnectedProps<typeof connector>;
 
+interface State {
+  showSaveLibraryPanelModal?: boolean;
+}
+
 export class PanelEditorUnconnected extends PureComponent<Props> {
   private eventSubs?: Subscription;
+
+  state: State = {
+    showSaveLibraryPanelModal: false,
+  };
 
   componentDidMount() {
     this.props.initPanelEditor(this.props.sourcePanel, this.props.dashboard);
@@ -164,7 +163,6 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
     ) {
       try {
         await saveAndRefreshLibraryPanel(this.props.panel, this.props.dashboard.meta.folderId!);
-        this.props.updateSourcePanel(this.props.panel);
         this.props.notifyApp(createPanelLibrarySuccessNotification('Library panel saved'));
       } catch (err) {
         this.props.notifyApp(createPanelLibraryErrorNotification(`Error saving library panel: "${err.statusText}"`));
@@ -172,22 +170,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
       return;
     }
 
-    appEvents.publish(
-      new ShowModalReactEvent({
-        component: SaveLibraryPanelModal,
-        props: {
-          panel: this.props.panel,
-          folderId: this.props.dashboard.meta.folderId,
-          isOpen: true,
-          onConfirm: () => {
-            // need to update the source panel here so that when
-            // the user exits the panel editor they aren't prompted to save again
-            this.props.updateSourcePanel(this.props.panel);
-          },
-          onDiscard: this.onDiscard,
-        },
-      })
-    );
+    this.setState({ showSaveLibraryPanelModal: true });
   };
 
   onChangeTab = (tab: PanelEditorTab) => {
@@ -428,8 +411,16 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
     );
   }
 
+  onGoBackToDashboard = () => {
+    locationService.partial({ editPanel: null, tab: null });
+  };
+
+  onConfirmAndDismissLibarayPanelModel = () => {
+    this.setState({ showSaveLibraryPanelModal: false });
+  };
+
   render() {
-    const { dashboard, initDone, updatePanelEditorUIState, uiState, exitPanelEditor } = this.props;
+    const { dashboard, initDone, updatePanelEditorUIState, uiState } = this.props;
     const styles = getStyles(config.theme, this.props);
 
     if (!initDone) {
@@ -438,19 +429,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
 
     return (
       <div className={styles.wrapper} aria-label={selectors.components.PanelEditor.General.content}>
-        <Prompt
-          when={true}
-          message={(location) => {
-            const searchParams = new URLSearchParams(location.search);
-            if (!this.props.panel.libraryPanel || !this.props.panel.hasChanged || searchParams.has('editPanel')) {
-              return true;
-            }
-
-            exitPanelEditor();
-            return false;
-          }}
-        />
-        <PageToolbar title={`${dashboard.title} / Edit Panel`} onGoBack={exitPanelEditor}>
+        <PageToolbar title={`${dashboard.title} / Edit Panel`} onGoBack={this.onGoBackToDashboard}>
           {this.renderEditorActions()}
         </PageToolbar>
         <div className={styles.verticalSplitPanesWrapper}>
@@ -462,6 +441,15 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
             rightPaneVisible={uiState.isPanelOptionsVisible}
           />
         </div>
+        {this.state.showSaveLibraryPanelModal && (
+          <SaveLibraryPanelModal
+            panel={this.props.panel as PanelModelWithLibraryPanel}
+            folderId={this.props.dashboard.meta.folderId as number}
+            onConfirm={this.onConfirmAndDismissLibarayPanelModel}
+            onDiscard={this.onDiscard}
+            onDismiss={this.onConfirmAndDismissLibarayPanelModel}
+          />
+        )}
       </div>
     );
   }

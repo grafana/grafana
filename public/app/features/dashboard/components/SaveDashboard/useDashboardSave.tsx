@@ -31,12 +31,11 @@ export const useDashboardSave = (dashboard: DashboardModel) => {
       appEvents.publish(new DashboardSavedEvent());
       appEvents.emit(AppEvents.alertSuccess, ['Dashboard saved']);
 
-      // Using global locationService because save modals are rendered as a separate React tree
       const currentPath = locationService.getLocation().pathname;
       const newUrl = locationUtil.stripBaseFromUrl(state.value.url);
 
       if (newUrl !== currentPath) {
-        locationService.replace(newUrl);
+        setTimeout(() => locationService.replace(newUrl));
       }
     }
   }, [dashboard, state]);

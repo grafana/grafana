@@ -119,6 +119,113 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
       title="My dashboard"
     />
   </div>
+  <Memo()
+    dashboard={
+      DashboardModel {
+        "annotations": Object {
+          "list": Array [
+            Object {
+              "builtIn": 1,
+              "datasource": "-- Grafana --",
+              "enable": true,
+              "hide": true,
+              "iconColor": "rgba(0, 211, 255, 1)",
+              "name": "Annotations & Alerts",
+              "type": "dashboard",
+            },
+          ],
+        },
+        "autoUpdate": undefined,
+        "description": undefined,
+        "editable": true,
+        "events": EventBusSrv {
+          "emitter": EventEmitter {
+            "_events": Object {},
+            "_eventsCount": 0,
+          },
+        },
+        "formatDate": [Function],
+        "getVariables": [Function],
+        "getVariablesFromState": [Function],
+        "gnetId": null,
+        "graphTooltip": 0,
+        "hasChangesThatAffectsAllPanels": false,
+        "id": null,
+        "links": Array [],
+        "meta": Object {
+          "canEdit": true,
+          "canMakeEditable": false,
+          "canSave": true,
+          "canShare": true,
+          "canStar": true,
+          "hasUnsavedFolderChange": false,
+          "showSettings": true,
+        },
+        "originalTemplating": Array [],
+        "originalTime": Object {
+          "from": "now-6h",
+          "to": "now",
+        },
+        "panels": Array [
+          PanelModel {
+            "cachedPluginOptions": Object {},
+            "configRev": 0,
+            "datasource": null,
+            "events": EventBusSrv {
+              "emitter": EventEmitter {
+                "_events": Object {},
+                "_eventsCount": 0,
+              },
+            },
+            "fieldConfig": Object {
+              "defaults": Object {
+                "mappings": undefined,
+              },
+              "overrides": Array [],
+            },
+            "gridPos": Object {
+              "h": 1,
+              "w": 1,
+              "x": 0,
+              "y": 0,
+            },
+            "id": 1,
+            "isEditing": false,
+            "isInView": false,
+            "isViewing": false,
+            "options": Object {},
+            "replaceVariables": [Function],
+            "targets": Array [
+              Object {
+                "refId": "A",
+              },
+            ],
+            "title": "My graph",
+            "transparent": false,
+            "type": "graph",
+          },
+        ],
+        "refresh": undefined,
+        "revision": undefined,
+        "schemaVersion": 30,
+        "snapshot": undefined,
+        "style": "dark",
+        "tags": Array [],
+        "templating": Object {
+          "list": Array [],
+        },
+        "time": Object {
+          "from": "now-6h",
+          "to": "now",
+        },
+        "timepicker": Object {},
+        "timezone": "",
+        "title": "My dashboard",
+        "uid": null,
+        "version": 0,
+      }
+    }
+  />
   <div
     className="css-17x4n39"
   >
@@ -499,6 +606,113 @@ exports[`DashboardPage When dashboard has editview url state should render setti
       title="My dashboard"
     />
   </div>
+  <Memo()
+    dashboard={
+      DashboardModel {
+        "annotations": Object {
+          "list": Array [
+            Object {
+              "builtIn": 1,
+              "datasource": "-- Grafana --",
+              "enable": true,
+              "hide": true,
+              "iconColor": "rgba(0, 211, 255, 1)",
+              "name": "Annotations & Alerts",
+              "type": "dashboard",
+            },
+          ],
+        },
+        "autoUpdate": undefined,
+        "description": undefined,
+        "editable": true,
+        "events": EventBusSrv {
+          "emitter": EventEmitter {
+            "_events": Object {},
+            "_eventsCount": 0,
+          },
+        },
+        "formatDate": [Function],
+        "getVariables": [Function],
+        "getVariablesFromState": [Function],
+        "gnetId": null,
+        "graphTooltip": 0,
+        "hasChangesThatAffectsAllPanels": false,
+        "id": null,
+        "links": Array [],
+        "meta": Object {
+          "canEdit": true,
+          "canMakeEditable": false,
+          "canSave": true,
+          "canShare": true,
+          "canStar": true,
+          "hasUnsavedFolderChange": false,
+          "showSettings": true,
+        },
+        "originalTemplating": Array [],
+        "originalTime": Object {
+          "from": "now-6h",
+          "to": "now",
+        },
+        "panels": Array [
+          PanelModel {
+            "cachedPluginOptions": Object {},
+            "configRev": 0,
+            "datasource": null,
+            "events": EventBusSrv {
+              "emitter": EventEmitter {
+                "_events": Object {},
+                "_eventsCount": 0,
+              },
+            },
+            "fieldConfig": Object {
+              "defaults": Object {
+                "mappings": undefined,
+              },
+              "overrides": Array [],
+            },
+            "gridPos": Object {
+              "h": 1,
+              "w": 1,
+              "x": 0,
+              "y": 0,
+            },
+            "id": 1,
+            "isEditing": false,
+            "isInView": false,
+            "isViewing": false,
+            "options": Object {},
+            "replaceVariables": [Function],
+            "targets": Array [
+              Object {
+                "refId": "A",
+              },
+            ],
+            "title": "My graph",
+            "transparent": false,
+            "type": "graph",
+          },
+        ],
+        "refresh": undefined,
+        "revision": undefined,
+        "schemaVersion": 30,
+        "snapshot": undefined,
+        "style": "dark",
+        "tags": Array [],
+        "templating": Object {
+          "list": Array [],
+        },
+        "time": Object {
+          "from": "now-6h",
+          "to": "now",
+        },
+        "timepicker": Object {},
+        "timezone": "",
+        "title": "My dashboard",
+        "uid": null,
+        "version": 0,
+      }
+    }
+  />
   <div
     className="css-17x4n39"
   >

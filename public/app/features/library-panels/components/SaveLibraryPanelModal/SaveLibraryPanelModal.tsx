@@ -9,7 +9,7 @@ import { getModalStyles } from '../../styles';
 interface Props {
   panel: PanelModelWithLibraryPanel;
   folderId: number;
-  isOpen: boolean;
+  isUnsavedPrompt?: boolean;
   onConfirm: () => void;
   onDismiss: () => void;
   onDiscard: () => void;
@@ -18,7 +18,7 @@ interface Props {
 export const SaveLibraryPanelModal: React.FC<Props> = ({
   panel,
   folderId,
-  isOpen,
+  isUnsavedPrompt,
   onDismiss,
   onConfirm,
   onDiscard,
@@ -52,11 +52,12 @@ export const SaveLibraryPanelModal: React.FC<Props> = ({
   const styles = useStyles(getModalStyles);
   const discardAndClose = useCallback(() => {
     onDiscard();
-    onDismiss();
-  }, [onDiscard, onDismiss]);
+  }, [onDiscard]);
+
+  const title = isUnsavedPrompt ? 'Unsaved library panel changes' : 'Save library panel';
 
   return (
-    <Modal title="Update all panel instances" icon="save" onDismiss={onDismiss} isOpen={isOpen}>
+    <Modal title={title} icon="save" onDismiss={onDismiss} isOpen={true}>
       <div>
         <p className={styles.textInfo}>
           {'This update will affect '}
@@ -95,14 +96,15 @@ export const SaveLibraryPanelModal: React.FC<Props> = ({
           <Button variant="secondary" onClick={onDismiss} fill="outline">
             Cancel
           </Button>
-          <Button variant="destructive" onClick={discardAndClose}>
-            Discard
-          </Button>
+          {isUnsavedPrompt && (
+            <Button variant="destructive" onClick={discardAndClose}>
+              Discard
+            </Button>
+          )}
           <Button
             onClick={() => {
               saveLibraryPanel(panel, folderId).then(() => {
                 onConfirm();
-                onDismiss();
               });
             }}
           >

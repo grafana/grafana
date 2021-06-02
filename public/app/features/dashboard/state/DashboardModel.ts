@@ -374,10 +374,10 @@ export class DashboardModel {
   }
 
   exitPanelEditor() {
-    getTimeSrv().resumeAutoRefresh();
     this.panelInEdit!.destroy();
     this.panelInEdit = undefined;
     this.refreshIfChangeAffectsAllPanels();
+    getTimeSrv().resumeAutoRefresh();
   }
 
   setChangeAffectsAllPanels() {
