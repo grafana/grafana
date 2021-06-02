@@ -20,6 +20,7 @@ import {
   clusterActionsRender,
 } from './ColumnRenderers/ColumnRenderers';
 import { DeleteDBClusterModal } from './DeleteDBClusterModal/DeleteDBClusterModal';
+import { logger } from '@percona/platform-core';
 
 export const DBCluster: FC<DBClusterProps> = ({ kubernetes }) => {
   const styles = useStyles(getStyles);
@@ -82,11 +83,22 @@ export const DBCluster: FC<DBClusterProps> = ({ kubernetes }) => {
     ),
     [addModalVisible, settingsLoading, settings]
   );
-  const getSettings = useCallback(() => {
-    SettingsService.getSettings(setSettingsLoading, setSettings);
-  }, []);
 
-  useEffect(() => getSettings(), []);
+  const getSettings = async () => {
+    try {
+      setSettingsLoading(true);
+      const settings = await SettingsService.getSettings();
+      setSettings(settings);
+    } catch (e) {
+      logger.error(e);
+    } finally {
+      setSettingsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    getSettings();
+  }, []);
 
   return (
     <div>

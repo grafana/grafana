@@ -1,6 +1,7 @@
 import React, { FC, useEffect, useMemo, useState } from 'react';
 import { Spinner, Tab, TabContent, useTheme } from '@grafana/ui';
 import { cx } from 'emotion';
+import { logger } from '@percona/platform-core';
 import { TabsVertical } from 'app/percona/shared/components/Elements/TabsVertical/TabsVertical';
 import { Advanced, AlertManager, Diagnostics, MetricsResolution, PlatformLogin, SSHKey } from './components';
 import { LoadingCallback, SettingsService } from './Settings.service';
@@ -119,8 +120,16 @@ export const SettingsPanel: FC = () => {
     }
   };
 
-  const getSettings = () => {
-    SettingsService.getSettings(setLoading, setSettings).then();
+  const getSettings = async () => {
+    try {
+      setLoading(true);
+      const settings = await SettingsService.getSettings();
+      setSettings(settings);
+    } catch (e) {
+      logger.error(e);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -155,6 +164,7 @@ export const SettingsPanel: FC = () => {
                   sttEnabled={!!settings.sttEnabled}
                   dbaasEnabled={!!settings.dbaasEnabled}
                   alertingEnabled={!!settings.alertingEnabled}
+                  backupEnabled={!!settings.backupEnabled}
                   azureDiscoverEnabled={!!settings.azureDiscoverEnabled}
                   publicAddress={settings.publicAddress}
                   updateSettings={updateSettings}

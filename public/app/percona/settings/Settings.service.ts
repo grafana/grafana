@@ -3,33 +3,22 @@ import { logger } from '@percona/platform-core';
 import { appEvents } from 'app/core/app_events';
 import { api } from 'app/percona/shared/helpers/api';
 import { Messages } from './Settings.messages';
-import { Settings, SettingsAPIChangePayload, SettingsPayload } from './Settings.types';
+import { Settings, SettingsAPIChangePayload, SettingsAPIResponse, SettingsPayload } from './Settings.types';
 
 export type LoadingCallback = (value: boolean) => void;
 export type SettingsCallback = (settings: Settings) => void;
 
 export const SettingsService = {
-  async getSettings(setLoading: LoadingCallback, setSettings: SettingsCallback) {
-    let response: any;
-
-    try {
-      setLoading(true);
-      response = await api.post<any, any>('/v1/Settings/Get', {});
-
-      setSettings(toModel(response.settings));
-    } catch (e) {
-      logger.error(e);
-    } finally {
-      setLoading(false);
-    }
-
-    return response;
+  async getSettings(): Promise<Settings> {
+    const { settings }: SettingsAPIResponse = await api.post('/v1/Settings/Get', {});
+    return toModel(settings);
   },
   async setSettings(body: SettingsAPIChangePayload, setLoading: LoadingCallback) {
     let response: Settings = {
       awsPartitions: [],
       updatesDisabled: false,
       telemetryEnabled: false,
+      backupEnabled: false,
       metricsResolutions: {
         hr: '',
         mr: '',
@@ -54,7 +43,7 @@ export const SettingsService = {
 
     try {
       setLoading(true);
-      const { settings }: { settings: SettingsPayload } = await api.post<any, any>('/v1/Settings/Change', body);
+      const { settings }: SettingsAPIResponse = await api.post<any, any>('/v1/Settings/Change', body);
       response = toModel(settings);
       appEvents.emit(AppEvents.alertSuccess, [Messages.service.success]);
     } catch (e) {
@@ -86,4 +75,5 @@ const toModel = (response: SettingsPayload): Settings => ({
     slack: response.slack_alerting_settings || {},
   },
   publicAddress: response.pmm_public_address,
+  backupEnabled: response.backup_management_enabled,
 });

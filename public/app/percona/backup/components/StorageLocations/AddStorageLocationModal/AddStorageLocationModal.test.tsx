@@ -80,7 +80,12 @@ describe('AddStorageLocationModal', () => {
 
   it('should show the "Add" button when no location passed', () => {
     const wrapper = mount(<AddStorageLocationModal location={null} onClose={jest.fn()} onAdd={jest.fn()} isVisible />);
-    expect(wrapper.find(LoaderButton).text()).toBe(Messages.addAction);
+    expect(
+      wrapper
+        .find(dataQa('storage-location-add-button'))
+        .first()
+        .text()
+    ).toBe(Messages.addAction);
   });
 
   it('should show the "Edit" button when a location is passed', () => {
@@ -94,27 +99,22 @@ describe('AddStorageLocationModal', () => {
     const wrapper = mount(
       <AddStorageLocationModal location={location} onClose={jest.fn()} onAdd={jest.fn()} isVisible />
     );
-    expect(wrapper.find(LoaderButton).text()).toBe(Messages.editAction);
+    expect(
+      wrapper
+        .find(dataQa('storage-location-add-button'))
+        .first()
+        .text()
+    ).toBe(Messages.editAction);
   });
 
-  it('should not show the test button if "needsLocationValidation" prop is not passed', () => {
+  it('should have the test button', () => {
     const wrapper = mount(<AddStorageLocationModal location={null} onClose={jest.fn()} onAdd={jest.fn()} isVisible />);
-
-    expect(wrapper.find(dataQa('storage-location-test-button')).exists()).toBeFalsy();
-  });
-
-  it('should show the test button if "needsLocationValidation" prop is passed', () => {
-    const wrapper = mount(
-      <AddStorageLocationModal showLocationValidation location={null} onClose={jest.fn()} onAdd={jest.fn()} isVisible />
-    );
 
     expect(wrapper.find(dataQa('storage-location-test-button')).exists()).toBeTruthy();
   });
 
   it('should disable the test button if the form is invalid', () => {
-    const wrapper = mount(
-      <AddStorageLocationModal showLocationValidation location={null} onClose={jest.fn()} onAdd={jest.fn()} isVisible />
-    );
+    const wrapper = mount(<AddStorageLocationModal location={null} onClose={jest.fn()} onAdd={jest.fn()} isVisible />);
 
     expect(
       wrapper
@@ -133,13 +133,7 @@ describe('AddStorageLocationModal', () => {
       path: '/foo/bar',
     };
     const wrapper = mount(
-      <AddStorageLocationModal
-        location={location}
-        showLocationValidation
-        onClose={jest.fn()}
-        onAdd={jest.fn()}
-        isVisible
-      />
+      <AddStorageLocationModal location={location} onClose={jest.fn()} onAdd={jest.fn()} isVisible />
     );
 
     expect(
@@ -161,7 +155,6 @@ describe('AddStorageLocationModal', () => {
     const wrapper = mount(
       <AddStorageLocationModal
         location={location}
-        showLocationValidation
         waitingLocationValidation
         onClose={jest.fn()}
         onAdd={jest.fn()}

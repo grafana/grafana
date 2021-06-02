@@ -26,6 +26,9 @@ export const Messages = {
     alertingLabel: 'Integrated Alerting',
     alertingTooltip: 'Option to enable/disable Integrated Alerting features.',
     alertingLink: `${HOW_TO_DOC_URL}/configure.html#integrated-alerting`,
+    backupLabel: 'Backup Management',
+    backupTooltip: 'Option to enable/disable Backup Management features.',
+    backupLink: `${HOW_TO_DOC_URL}/configure.html#backup-management`,
     technicalPreviewLegend: 'Technical preview features',
     technicalPreviewDescription:
       'These are technical preview features, not recommended to be used in production environments. Read more\n' +

@@ -10,6 +10,7 @@ describe('Advanced::', () => {
         dataRetention="1296000s"
         telemetryEnabled={false}
         sttEnabled={false}
+        backupEnabled={false}
         updatesDisabled
         updateSettings={() => {}}
         publicAddress="pmmtest.percona.com"
@@ -24,7 +25,14 @@ describe('Advanced::', () => {
 
   it("Can't change telemetry when stt is on", () => {
     const root = mount(
-      <Advanced dataRetention="1296000s" telemetryEnabled sttEnabled updatesDisabled updateSettings={() => {}} />
+      <Advanced
+        backupEnabled={false}
+        dataRetention="1296000s"
+        telemetryEnabled
+        sttEnabled
+        updatesDisabled
+        updateSettings={() => {}}
+      />
     );
     const telemetrySwitch = root.find('[data-qa="advanced-telemetry"]').find('input');
 
@@ -37,6 +45,7 @@ describe('Advanced::', () => {
         dataRetention="1296000s"
         telemetryEnabled={false}
         sttEnabled={false}
+        backupEnabled={false}
         updatesDisabled
         updateSettings={() => {}}
       />
@@ -52,6 +61,7 @@ describe('Advanced::', () => {
         dataRetention="1296000s"
         telemetryEnabled={false}
         sttEnabled={false}
+        backupEnabled={false}
         alertingEnabled={false}
         updatesDisabled
         updateSettings={() => {}}
@@ -69,6 +79,7 @@ describe('Advanced::', () => {
         dataRetention="1296000s"
         telemetryEnabled={false}
         sttEnabled={false}
+        backupEnabled={false}
         updatesDisabled
         updateSettings={updateSettings}
       />
@@ -94,6 +105,7 @@ describe('Advanced::', () => {
         dataRetention="1296000s"
         telemetryEnabled={false}
         sttEnabled={false}
+        backupEnabled={false}
         updatesDisabled
         updateSettings={() => {}}
       />

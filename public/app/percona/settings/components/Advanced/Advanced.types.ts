@@ -7,8 +7,21 @@ export interface AdvancedProps {
   sttEnabled: boolean;
   updatesDisabled: boolean;
   dbaasEnabled?: boolean;
+  backupEnabled: boolean;
   alertingEnabled?: boolean;
   azureDiscoverEnabled?: boolean;
   publicAddress?: string;
   updateSettings: (body: AdvancedChangePayload, callback: LoadingCallback, refresh?: boolean) => void;
+}
+
+export interface AdvancedFormProps {
+  retention: number | string;
+  telemetry: boolean;
+  updates: boolean;
+  backup: boolean;
+  stt: boolean;
+  dbaas?: boolean;
+  publicAddress?: string;
+  alerting?: boolean;
+  azureDiscover?: boolean;
 }
