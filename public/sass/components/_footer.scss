@@ -48,7 +48,18 @@
     display: block;
     bottom: $spacer;
     position: absolute;
-    padding: $space-md 0 $space-md 0;
+    padding: $space-md 0;
+
+    li::after {
+      content: ', ';
+      padding: 0 $space-sm/2 0 0;
+    }
+
+    li:last-child {
+      &::after {
+        content: '';
+      }
+    }
   }
 }
 

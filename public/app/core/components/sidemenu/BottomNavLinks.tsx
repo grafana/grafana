@@ -56,7 +56,8 @@ export default class BottomNavLinks extends PureComponent<Props, State> {
           </span>
         </a>
         <ul className="dropdown-menu dropdown-menu--sidemenu" role="menu">
-          {link.subTitle && (
+          {/* NOTE: skip the render with a minimal invasion to the upstream code:) */}
+          {link.subTitle && false && (
             <li className="sidemenu-subtitle">
               <span className="sidemenu-item-text">{link.subTitle}</span>
             </li>
