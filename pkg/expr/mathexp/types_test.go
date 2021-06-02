@@ -95,12 +95,33 @@ func TestSeriesFromFrame(t *testing.T) {
 			},
 		},
 		{
-			name: "[]*float, []time frame should convert",
+			name: "[]time, []*float frame should convert",
 			frame: &data.Frame{
 				Name: "test",
 				Fields: []*data.Field{
 					data.NewField("time", nil, []time.Time{time.Unix(5, 0)}),
 					data.NewField("value", nil, []*float64{float64Pointer(5)}),
+				},
+			},
+			errIs: assert.NoError,
+			Is:    assert.Equal,
+			Series: Series{
+				Frame: &data.Frame{
+					Name: "test",
+					Fields: []*data.Field{
+						data.NewField("time", nil, []time.Time{time.Unix(5, 0)}),
+						data.NewField("value", nil, []*float64{float64Pointer(5)}),
+					},
+				},
+			},
+		},
+		{
+			name: "[]*float, []time frame should convert",
+			frame: &data.Frame{
+				Name: "test",
+				Fields: []*data.Field{
+					data.NewField("value", nil, []*float64{float64Pointer(5)}),
+					data.NewField("time", nil, []time.Time{time.Unix(5, 0)}),
 				},
 			},
 			errIs: assert.NoError,

@@ -62,17 +62,9 @@ FIELDS:
 		return s, fmt.Errorf("no float64 value column found in frame %v", frame.Name)
 	}
 
-	if timeIdx != 0 { // make time field the first field
-		frame.Fields[seriesTypeTimeIdx], frame.Fields[timeIdx] = frame.Fields[timeIdx], frame.Fields[seriesTypeTimeIdx]
-	}
-
-	if valueIdx != 1 { // make value field the second field
-		frame.Fields[seriesTypeValIdx], frame.Fields[valueIdx] = frame.Fields[valueIdx], frame.Fields[seriesTypeValIdx]
-	}
-
 	if timeNullable { // make time not nullable if it is in the input
-		timeSlice := make([]time.Time, 0, frame.Fields[seriesTypeTimeIdx].Len())
-		for rowIdx := 0; rowIdx < frame.Fields[seriesTypeTimeIdx].Len(); rowIdx++ {
+		timeSlice := make([]time.Time, 0, frame.Fields[timeIdx].Len())
+		for rowIdx := 0; rowIdx < frame.Fields[timeIdx].Len(); rowIdx++ {
 			val, ok := frame.At(0, rowIdx).(*time.Time)
 			if !ok {
 				return s, fmt.Errorf("unexpected time type, expected *time.Time but got %T", val)
@@ -82,26 +74,26 @@ FIELDS:
 			}
 			timeSlice = append(timeSlice, *val)
 		}
-		nF := data.NewField(frame.Fields[seriesTypeTimeIdx].Name, nil, timeSlice) // (labels are not used on time field)
-		nF.Config = frame.Fields[seriesTypeTimeIdx].Config
-		frame.Fields[seriesTypeTimeIdx] = nF
+		nF := data.NewField(frame.Fields[timeIdx].Name, nil, timeSlice) // (labels are not used on time field)
+		nF.Config = frame.Fields[timeIdx].Config
+		frame.Fields[timeIdx] = nF
 	}
 
 	if !valueNullable { // make value nullable if it is not in the input
-		floatSlice := make([]*float64, 0, frame.Fields[seriesTypeValIdx].Len())
-		for rowIdx := 0; rowIdx < frame.Fields[seriesTypeValIdx].Len(); rowIdx++ {
-			val, ok := frame.At(seriesTypeValIdx, rowIdx).(float64)
+		floatSlice := make([]*float64, 0, frame.Fields[valueIdx].Len())
+		for rowIdx := 0; rowIdx < frame.Fields[valueIdx].Len(); rowIdx++ {
+			val, ok := frame.At(valueIdx, rowIdx).(float64)
 			if !ok {
 				return s, fmt.Errorf("unexpected time type, expected float64 but got %T", val)
 			}
 			floatSlice = append(floatSlice, &val)
 		}
-		nF := data.NewField(frame.Fields[seriesTypeValIdx].Name, frame.Fields[seriesTypeValIdx].Labels, floatSlice) // (labels are not used on time field)
-		nF.Config = frame.Fields[seriesTypeValIdx].Config
-		frame.Fields[seriesTypeValIdx] = nF
+		nF := data.NewField(frame.Fields[valueIdx].Name, frame.Fields[valueIdx].Labels, floatSlice)
+		nF.Config = frame.Fields[valueIdx].Config
+		frame.Fields[valueIdx] = nF
 	}
 
-	frame.Fields = []*data.Field{frame.Fields[seriesTypeTimeIdx], frame.Fields[seriesTypeValIdx]} // drop other fields
+	frame.Fields = []*data.Field{frame.Fields[timeIdx], frame.Fields[valueIdx]} // drop other fields, set order
 
 	s.Frame = frame
 
