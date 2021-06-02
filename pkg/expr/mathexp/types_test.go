@@ -20,39 +20,39 @@ func TestSeriesSort(t *testing.T) {
 		{
 			name:       "unordered series should sort by time ascending",
 			descending: false,
-			series: makeSeriesNullableTime("", nil, nullTimeTP{
-				unixTimePointer(3, 0), float64Pointer(3),
-			}, nullTimeTP{
-				unixTimePointer(1, 0), float64Pointer(1),
-			}, nullTimeTP{
-				unixTimePointer(2, 0), float64Pointer(2),
+			series: makeSeries("", nil, tp{
+				time.Unix(3, 0), float64Pointer(3),
+			}, tp{
+				time.Unix(1, 0), float64Pointer(1),
+			}, tp{
+				time.Unix(2, 0), float64Pointer(2),
 			}),
 			sortedSeriesIs: assert.Equal,
-			sortedSeries: makeSeriesNullableTime("", nil, nullTimeTP{
-				unixTimePointer(1, 0), float64Pointer(1),
-			}, nullTimeTP{
-				unixTimePointer(2, 0), float64Pointer(2),
-			}, nullTimeTP{
-				unixTimePointer(3, 0), float64Pointer(3),
+			sortedSeries: makeSeries("", nil, tp{
+				time.Unix(1, 0), float64Pointer(1),
+			}, tp{
+				time.Unix(2, 0), float64Pointer(2),
+			}, tp{
+				time.Unix(3, 0), float64Pointer(3),
 			}),
 		},
 		{
 			name:       "unordered series should sort by time descending",
 			descending: true,
-			series: makeSeriesNullableTime("", nil, nullTimeTP{
-				unixTimePointer(3, 0), float64Pointer(3),
-			}, nullTimeTP{
-				unixTimePointer(1, 0), float64Pointer(1),
-			}, nullTimeTP{
-				unixTimePointer(2, 0), float64Pointer(2),
+			series: makeSeries("", nil, tp{
+				time.Unix(3, 0), float64Pointer(3),
+			}, tp{
+				time.Unix(1, 0), float64Pointer(1),
+			}, tp{
+				time.Unix(2, 0), float64Pointer(2),
 			}),
 			sortedSeriesIs: assert.Equal,
-			sortedSeries: makeSeriesNullableTime("", nil, nullTimeTP{
-				unixTimePointer(3, 0), float64Pointer(3),
-			}, nullTimeTP{
-				unixTimePointer(2, 0), float64Pointer(2),
-			}, nullTimeTP{
-				unixTimePointer(1, 0), float64Pointer(1),
+			sortedSeries: makeSeries("", nil, tp{
+				time.Unix(3, 0), float64Pointer(3),
+			}, tp{
+				time.Unix(2, 0), float64Pointer(2),
+			}, tp{
+				time.Unix(1, 0), float64Pointer(1),
 			}),
 		},
 	}
@@ -89,22 +89,18 @@ func TestSeriesFromFrame(t *testing.T) {
 					Name: "test",
 					Fields: []*data.Field{
 						data.NewField("time", nil, []time.Time{}),
-						data.NewField("value", nil, []float64{}),
+						data.NewField("value", nil, []*float64{}),
 					},
 				},
-				TimeIdx:         0,
-				TimeIsNullable:  false,
-				ValueIdx:        1,
-				ValueIsNullable: false,
 			},
 		},
 		{
-			name: "[]*float, []*time frame should convert",
+			name: "[]time, []*float frame should convert",
 			frame: &data.Frame{
 				Name: "test",
 				Fields: []*data.Field{
+					data.NewField("time", nil, []time.Time{time.Unix(5, 0)}),
 					data.NewField("value", nil, []*float64{float64Pointer(5)}),
-					data.NewField("time", nil, []*time.Time{unixTimePointer(5, 0)}),
 				},
 			},
 			errIs: assert.NoError,
@@ -113,14 +109,31 @@ func TestSeriesFromFrame(t *testing.T) {
 				Frame: &data.Frame{
 					Name: "test",
 					Fields: []*data.Field{
+						data.NewField("time", nil, []time.Time{time.Unix(5, 0)}),
 						data.NewField("value", nil, []*float64{float64Pointer(5)}),
-						data.NewField("time", nil, []*time.Time{unixTimePointer(5, 0)}),
 					},
 				},
-				TimeIdx:         1,
-				TimeIsNullable:  true,
-				ValueIdx:        0,
-				ValueIsNullable: true,
+			},
+		},
+		{
+			name: "[]*float, []time frame should convert",
+			frame: &data.Frame{
+				Name: "test",
+				Fields: []*data.Field{
+					data.NewField("value", nil, []*float64{float64Pointer(5)}),
+					data.NewField("time", nil, []time.Time{time.Unix(5, 0)}),
+				},
+			},
+			errIs: assert.NoError,
+			Is:    assert.Equal,
+			Series: Series{
+				Frame: &data.Frame{
+					Name: "test",
+					Fields: []*data.Field{
+						data.NewField("time", nil, []time.Time{time.Unix(5, 0)}),
+						data.NewField("value", nil, []*float64{float64Pointer(5)}),
+					},
+				},
 			},
 		},
 		{

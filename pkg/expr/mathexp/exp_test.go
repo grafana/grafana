@@ -8,60 +8,15 @@ import (
 )
 
 // Common Test Constructor Utils and Types
-type nullTimeTP struct {
-	t *time.Time
-	f *float64
-}
-
 type tp struct {
 	t time.Time
 	f *float64
 }
 
-type timeSecondTP struct {
-	f *float64
-	t time.Time
-}
-
-type noNullTP struct {
-	t time.Time
-	f float64
-}
-
-func makeSeriesNullableTime(name string, labels data.Labels, points ...nullTimeTP) Series {
-	newSeries := NewSeries(name, labels, 0, true, 1, true, len(points))
-	for idx, p := range points {
-		_ = newSeries.SetPoint(idx, p.t, p.f)
-	}
-	return newSeries
-}
-
 func makeSeries(name string, labels data.Labels, points ...tp) Series {
-	newSeries := NewSeries(name, labels, 0, false, 1, true, len(points))
+	newSeries := NewSeries(name, labels, len(points))
 	for idx, p := range points {
-		err := newSeries.SetPoint(idx, &p.t, p.f)
-		if err != nil {
-			panic(err)
-		}
-	}
-	return newSeries
-}
-
-func makeNoNullSeries(name string, labels data.Labels, points ...noNullTP) Series {
-	newSeries := NewSeries(name, labels, 0, false, 1, false, len(points))
-	for idx, p := range points {
-		err := newSeries.SetPoint(idx, &p.t, &p.f)
-		if err != nil {
-			panic(err)
-		}
-	}
-	return newSeries
-}
-
-func makeSeriesTimeSecond(name string, labels data.Labels, points ...timeSecondTP) Series {
-	newSeries := NewSeries(name, labels, 1, false, 0, true, len(points))
-	for idx, p := range points {
-		err := newSeries.SetPoint(idx, &p.t, p.f)
+		err := newSeries.SetPoint(idx, p.t, p.f)
 		if err != nil {
 			panic(err)
 		}
@@ -75,25 +30,8 @@ func makeNumber(name string, labels data.Labels, f *float64) Number {
 	return newNumber
 }
 
-func unixTimePointer(sec, nsec int64) *time.Time {
-	t := time.Unix(sec, nsec)
-	return &t
-}
-
 func float64Pointer(f float64) *float64 {
 	return &f
-}
-
-var aSeriesNullableTime = Vars{
-	"A": Results{
-		[]Value{
-			makeSeriesNullableTime("temp", nil, nullTimeTP{
-				unixTimePointer(5, 0), float64Pointer(2),
-			}, nullTimeTP{
-				unixTimePointer(10, 0), float64Pointer(1),
-			}),
-		},
-	},
 }
 
 var aSeries = Vars{
@@ -108,37 +46,13 @@ var aSeries = Vars{
 	},
 }
 
-var aSeriesTimeSecond = Vars{
-	"A": Results{
-		[]Value{
-			makeSeriesTimeSecond("temp", nil, timeSecondTP{
-				float64Pointer(2), time.Unix(5, 0),
-			}, timeSecondTP{
-				float64Pointer(1), time.Unix(10, 0),
-			}),
-		},
-	},
-}
-
-var aSeriesNoNull = Vars{
-	"A": Results{
-		[]Value{
-			makeNoNullSeries("temp", nil, noNullTP{
-				time.Unix(5, 0), 2,
-			}, noNullTP{
-				time.Unix(10, 0), 1,
-			}),
-		},
-	},
-}
-
 var aSeriesbNumber = Vars{
 	"A": Results{
 		[]Value{
-			makeSeriesNullableTime("temp", nil, nullTimeTP{
-				unixTimePointer(5, 0), float64Pointer(2),
-			}, nullTimeTP{
-				unixTimePointer(10, 0), float64Pointer(1),
+			makeSeries("temp", nil, tp{
+				time.Unix(5, 0), float64Pointer(2),
+			}, tp{
+				time.Unix(10, 0), float64Pointer(1),
 			}),
 		},
 	},
@@ -152,24 +66,24 @@ var aSeriesbNumber = Vars{
 var twoSeriesSets = Vars{
 	"A": Results{
 		[]Value{
-			makeSeriesNullableTime("temp", data.Labels{"sensor": "a", "turbine": "1"}, nullTimeTP{
-				unixTimePointer(5, 0), float64Pointer(6),
-			}, nullTimeTP{
-				unixTimePointer(10, 0), float64Pointer(8),
+			makeSeries("temp", data.Labels{"sensor": "a", "turbine": "1"}, tp{
+				time.Unix(5, 0), float64Pointer(6),
+			}, tp{
+				time.Unix(10, 0), float64Pointer(8),
 			}),
-			makeSeriesNullableTime("temp", data.Labels{"sensor": "b", "turbine": "1"}, nullTimeTP{
-				unixTimePointer(5, 0), float64Pointer(10),
-			}, nullTimeTP{
-				unixTimePointer(10, 0), float64Pointer(16),
+			makeSeries("temp", data.Labels{"sensor": "b", "turbine": "1"}, tp{
+				time.Unix(5, 0), float64Pointer(10),
+			}, tp{
+				time.Unix(10, 0), float64Pointer(16),
 			}),
 		},
 	},
 	"B": Results{
 		[]Value{
-			makeSeriesNullableTime("efficiency", data.Labels{"turbine": "1"}, nullTimeTP{
-				unixTimePointer(5, 0), float64Pointer(.5),
-			}, nullTimeTP{
-				unixTimePointer(10, 0), float64Pointer(.2),
+			makeSeries("efficiency", data.Labels{"turbine": "1"}, tp{
+				time.Unix(5, 0), float64Pointer(.5),
+			}, tp{
+				time.Unix(10, 0), float64Pointer(.2),
 			}),
 		},
 	},
