@@ -93,8 +93,11 @@ FIELDS:
 		frame.Fields[valueIdx] = nF
 	}
 
-	frame.Fields = []*data.Field{frame.Fields[timeIdx], frame.Fields[valueIdx]} // drop other fields, set order
+	fields := make([]*data.Field, 2)
+	fields[seriesTypeTimeIdx] = frame.Fields[timeIdx]
+	fields[seriesTypeValIdx] = frame.Fields[valueIdx]
 
+	frame.Fields = fields
 	s.Frame = frame
 
 	return s, nil

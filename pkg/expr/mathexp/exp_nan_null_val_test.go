@@ -30,7 +30,7 @@ func TestNaN(t *testing.T) {
 		},
 		{
 			name:      "unary -: Op Number(NaN) is NaN",
-			expr:      "! $A",
+			expr:      "-$A",
 			vars:      Vars{"A": Results{[]Value{makeNumber("", nil, NaN)}}},
 			newErrIs:  assert.NoError,
 			execErrIs: assert.NoError,
