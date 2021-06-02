@@ -11,7 +11,7 @@ Grafana Live is enabled by default. As of Grafana v8.0, it has a strict default 
 
 ## Max number of connections
 
-Grafana Live uses persistent connections (WebSocket at the moment) to deliver real-time updates to clients. You may need to tune your server infrastructure a bit.
+Grafana Live uses persistent connections (WebSocket at the moment) to deliver real-time updates to clients. You might need to tune your server infrastructure a bit.
 
 The number of maximum connections users can establish with Grafana is limited to 100:
 
@@ -62,7 +62,7 @@ The open files limit shows approximately how many user connections your server c
 
 ### Ephemeral port exhaustion
 
-Ephemeral port exhaustion problem can happen between your load balancer (or reverse proxy) software and Grafana server. I.e. when you load balance requests/connections between different Grafana instances. If users connect directly to a single Grafana server instance you should not come across this issue.
+Ephemeral port exhaustion problem can happen between your load balancer (or reverse proxy) software and Grafana server. For example, when you load balance requests/connections between different Grafana instances. If you connect directly to a single Grafana server instance, then you should not come across this issue.
 
 The problem arises because each TCP connection uniquely identified in the OS by the 4-part-tuple:
 

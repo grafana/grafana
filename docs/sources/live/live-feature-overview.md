@@ -5,7 +5,7 @@ keywords = ["Grafana", "live", "guide"]
 weight = 100
 +++
 
-# Grafana Live Feature Overview
+# Grafana Live feature overview
 
 This topic explains the current Grafana Live capabilities.
 
@@ -23,7 +23,7 @@ For example, a data source channel looks like this: `ds/<DATASOURCE_UID>/<CUSTOM
 
 Refer to the tutorial about [building a streaming data source backend plugin](https://grafana.com/tutorials/build-a-streaming-data-source-plugin/) for more details.
 
-The basic streaming example included in Grafana core streams frames with some generated data to a panel. To look at it create a new panel and point it to the `-- Grafana --` data source. Nex, choose `Live Measurements` and select the `plugin/testdata/random-20Hz-stream` channel. 
+The basic streaming example included in Grafana core streams frames with some generated data to a panel. To look at it create a new panel and point it to the `-- Grafana --` data source. Next, choose `Live Measurements` and select the `plugin/testdata/random-20Hz-stream` channel. 
 
 ## Data streaming from Telegraf
 
