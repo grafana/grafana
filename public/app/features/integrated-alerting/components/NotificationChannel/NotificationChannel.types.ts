@@ -40,8 +40,26 @@ export interface SlackNotificationChannel extends NotificationChannel {
   channel: string;
 }
 
+export interface NotificationChannelTotals {
+  total_items: number;
+  total_pages: number;
+}
+
+export interface NotificationChannelGetPayload {
+  page_params: {
+    page_size: number;
+    index: number;
+  };
+}
+
+export interface NotificationChannelList {
+  channels: NotificationChannel[];
+  totals: NotificationChannelTotals;
+}
+
 export interface NotificationChannelListResponse {
   channels: NotificationChannelAPI[];
+  totals: NotificationChannelTotals;
 }
 
 export interface NotificationChannelAPI {

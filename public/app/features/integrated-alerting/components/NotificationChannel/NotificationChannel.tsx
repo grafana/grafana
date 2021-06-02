@@ -1,11 +1,13 @@
-import React, { FC, useEffect, useMemo, useState } from 'react';
+import React, { FC, useCallback, useEffect, useMemo, useState } from 'react';
 import { Button, useStyles } from '@grafana/ui';
 import { logger } from '@percona/platform-core';
 import { NotificationChannelService } from './NotificationChannel.service';
 import { Table } from '../Table/Table';
+import { useStoredTablePageSize } from '../Table/Pagination';
 import { NotificationChannel as Channel } from './NotificationChannel.types';
 import { Messages } from './NotificationChannel.messages';
 import { NotificationChannelProvider } from './NotificationChannel.provider';
+import { NOTIFICATION_CHANNEL_TABLE_ID } from './NotificationChannel.constants';
 import { getStyles } from './NotificationChannel.styles';
 import { AddNotificationChannelModal } from './AddNotificationChannelModal';
 import { NotificationChannelActions } from './NotificationChannelActions/NotificationChannelActions';
@@ -19,7 +21,11 @@ export const NotificationChannel: FC = () => {
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [pendingRequest, setPendingRequest] = useState(true);
   const [data, setData] = useState<Channel[]>([]);
-  const [selectedNotificationChannel, setSelectedNotificationChannel] = useState<Channel>();
+  const [pageSize, setPageSize] = useStoredTablePageSize(NOTIFICATION_CHANNEL_TABLE_ID);
+  const [pageIndex, setPageindex] = useState(0);
+  const [totalItems, setTotalItems] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [selectedNotificationChannel, setSelectedNotificationChannel] = useState<Channel | null>();
 
   const columns = useMemo(
     () => [
@@ -46,7 +52,15 @@ export const NotificationChannel: FC = () => {
   const getNotificationChannels = async () => {
     setPendingRequest(true);
     try {
-      setData(await NotificationChannelService.list());
+      const { channels, totals } = await NotificationChannelService.list({
+        page_params: {
+          index: pageIndex,
+          page_size: pageSize as number,
+        },
+      });
+      setData(channels);
+      setTotalItems(totals.total_items || 0);
+      setTotalPages(totals.total_pages || 0);
     } catch (e) {
       logger.error(e);
     } finally {
@@ -54,9 +68,14 @@ export const NotificationChannel: FC = () => {
     }
   };
 
+  const handlePaginationChanged = useCallback((pageSize: number, pageIndex: number) => {
+    setPageSize(pageSize);
+    setPageindex(pageIndex);
+  }, []);
+
   useEffect(() => {
     getNotificationChannels();
-  }, []);
+  }, [pageSize, pageIndex]);
 
   return (
     <NotificationChannelProvider.Provider
@@ -77,11 +96,16 @@ export const NotificationChannel: FC = () => {
         </Button>
       </div>
       <Table
+        showPagination
+        totalItems={totalItems}
+        totalPages={totalPages}
+        pageSize={pageSize}
+        pageIndex={pageIndex}
+        onPaginationChanged={handlePaginationChanged}
         data={data}
         columns={columns}
         pendingRequest={pendingRequest}
         emptyMessage={emptyTable}
-        totalItems={data.length}
       />
       <AddNotificationChannelModal
         isVisible={addModalVisible}

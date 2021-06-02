@@ -43,10 +43,15 @@ export const AddAlertRuleModal: FC<AddAlertRuleModalProps> = ({ isVisible, setVi
   const getData = async () => {
     try {
       const [channelsListResponse, templatesListResponse] = await Promise.all([
-        NotificationChannelService.list(),
+        NotificationChannelService.list({
+          page_params: {
+            index: 0,
+            page_size: 100,
+          },
+        }),
         AlertRuleTemplateService.list(),
       ]);
-      setChannelsOptions(formatChannelsOptions(channelsListResponse));
+      setChannelsOptions(formatChannelsOptions(channelsListResponse.channels));
       setTemplateOptions(formatTemplateOptions(templatesListResponse.templates));
     } catch (e) {
       logger.error(e);

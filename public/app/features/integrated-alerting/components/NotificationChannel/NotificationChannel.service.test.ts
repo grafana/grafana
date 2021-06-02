@@ -17,7 +17,7 @@ describe('NotificationChannelService', () => {
       return Promise.resolve({ channels: notificationChannelResponseStubs });
     });
 
-    const channels = await NotificationChannelService.list();
+    const { channels } = await NotificationChannelService.list({ page_params: { index: 0, page_size: 10 } });
 
     expect(channels).toEqual(notificationChannelStubs);
   });
