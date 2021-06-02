@@ -6,6 +6,7 @@ import { getStyles } from './AlertRulesTable.styles';
 import { AlertRule } from '../AlertRules.types';
 import { AlertRulesTableProps } from './AlertRulesTable.types';
 import { AlertRulesProvider } from '../AlertRules.provider';
+import { EmptyBlock } from '../../EmptyBlock';
 
 export const AlertRulesTable: FC<AlertRulesTableProps> = ({ pendingRequest, data, columns, emptyMessage }) => {
   const style = useStyles(getStyles);
@@ -17,14 +18,12 @@ export const AlertRulesTable: FC<AlertRulesTableProps> = ({ pendingRequest, data
     <div className={style.tableWrap} data-qa="alert-rules-table-outer-wrapper">
       <div className={style.table} data-qa="alert-rules-inner-wrapper">
         {pendingRequest ? (
-          <div data-qa="alert-rules-table-loading" className={style.empty}>
+          <EmptyBlock dataQa="alert-rules-table-loading">
             <Spinner />
-          </div>
+          </EmptyBlock>
         ) : null}
         {!rows.length && !pendingRequest ? (
-          <div data-qa="alert-rules-table-no-data" className={style.empty}>
-            {<h1>{emptyMessage}</h1>}
-          </div>
+          <EmptyBlock dataQa="alert-rules-table-no-data">{<h1>{emptyMessage}</h1>}</EmptyBlock>
         ) : null}
         {rows.length && !pendingRequest ? (
           <table {...getTableProps()} data-qa="alert-rules-table">

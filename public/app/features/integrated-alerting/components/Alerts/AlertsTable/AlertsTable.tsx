@@ -11,6 +11,7 @@ import { Alert, AlertStatus } from '../Alerts.types';
 import { formatAlerts, getSeverityColors } from './AlertsTable.utils';
 import { AlertsActions } from '../AlertsActions/AlertsActions';
 import { AlertRuleSeverity } from '../../AlertRules/AlertRules.types';
+import { EmptyBlock } from '../../EmptyBlock';
 
 const { noData, columns } = Messages.alerts.table;
 
@@ -110,14 +111,12 @@ export const AlertsTable = () => {
     <div className={style.tableWrap} data-qa="alerts-table-outer-wrapper">
       <div className={style.table} data-qa="alerts-inner-wrapper">
         {pendingRequest ? (
-          <div data-qa="alerts-table-loading" className={style.empty}>
+          <EmptyBlock dataQa="alerts-table-loading">
             <Spinner />
-          </div>
+          </EmptyBlock>
         ) : null}
         {!rows.length && !pendingRequest ? (
-          <div data-qa="alerts-table-no-data" className={style.empty}>
-            {<h1>{noData}</h1>}
-          </div>
+          <EmptyBlock dataQa="alerts-table-no-data">{<h1>{noData}</h1>}</EmptyBlock>
         ) : null}
         {rows.length && !pendingRequest ? (
           <table {...getTableProps()} data-qa="alerts-table">
