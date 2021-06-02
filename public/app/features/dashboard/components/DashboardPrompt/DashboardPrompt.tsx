@@ -4,7 +4,7 @@ import { contextSrv } from 'app/core/services/context_srv';
 import React, { useEffect, useState } from 'react';
 import { Prompt } from 'react-router-dom';
 import { DashboardModel } from '../../state/DashboardModel';
-import { each, filter, find } from 'lodash';
+import { each, filter, find, isEqual } from 'lodash';
 import angular from 'angular';
 import { UnsavedChangesModal } from '../SaveDashboard/UnsavedChangesModal';
 import * as H from 'history';
@@ -13,6 +13,8 @@ import { PanelModelWithLibraryPanel } from 'app/features/library-panels/types';
 import { useDispatch } from 'react-redux';
 import { discardPanelChanges } from '../PanelEditor/state/actions';
 import { DashboardSavedEvent } from 'app/types/events';
+import { isPanelModelLibraryPanel } from '../../../library-panels/guard';
+import { PanelModel } from '../../state/PanelModel';
 
 export interface Props {
   dashboard: DashboardModel;
@@ -70,7 +72,11 @@ export const DashboardPrompt = React.memo(({ dashboard }: Props) => {
     const search = new URLSearchParams(location.search);
 
     // Are we leaving panel edit & library panel?
-    if (panelInEdit && panelInEdit.libraryPanel && panelInEdit.hasChanged && !search.has('editPanel')) {
+    if (
+      isPanelModelLibraryPanel(panelInEdit) &&
+      hasLibraryPanelChanged(panelInEdit, original) &&
+      !search.has('editPanel')
+    ) {
       setState({ ...state, modal: PromptModal.SaveLibraryPanelModal, blockedLocation: location });
       return false;
     }
@@ -231,4 +237,21 @@ export function hasChanges(current: DashboardModel, original: any) {
   console.log('originalJson', originalJson);
 
   return currentJson !== originalJson;
+}
+
+export function hasLibraryPanelChanged(current: PanelModelWithLibraryPanel, original: any): boolean {
+  if (!current || !original?.panels?.length) {
+    return false;
+  }
+
+  if (!current.hasChanged) {
+    return false;
+  }
+
+  const originalPanel: PanelModel | undefined = original.panels.find(
+    (p: PanelModel) => isPanelModelLibraryPanel(p) && p.libraryPanel.uid === current.libraryPanel.uid
+  );
+  const currentClean = { ...current.getSaveModel(), id: 1 };
+  const originalClean = { ...new PanelModel(originalPanel).getSaveModel(), id: 1 };
+  return !isEqual(currentClean, originalClean);
 }

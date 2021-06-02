@@ -1,7 +1,8 @@
 import { DashboardModel } from '../../state/DashboardModel';
 import { PanelModel } from '../../state/PanelModel';
 import { setContextSrv } from '../../../../core/services/context_srv';
-import { hasChanges, ignoreChanges } from './DashboardPrompt';
+import { hasChanges, hasLibraryPanelChanged, ignoreChanges } from './DashboardPrompt';
+import { silenceConsoleOutput } from '../../../../../test/core/utils/silenceConsoleOutput';
 
 function getDefaultDashboardModel(): DashboardModel {
   return new DashboardModel({
@@ -24,6 +25,12 @@ function getDefaultDashboardModel(): DashboardModel {
         ],
       },
       { id: 5, type: 'row', gridPos: { x: 0, y: 6, w: 1, h: 1 } },
+      {
+        id: 6,
+        type: 'timeseries',
+        gridPos: { x: 24, y: 6, w: 1, h: 1 },
+        libraryPanel: { uid: 'abcdefg', name: 'Library TimeSeries Panel', version: 1 },
+      },
     ],
   });
 }
@@ -38,6 +45,7 @@ function getTestContext() {
 }
 
 describe('DashboardPrompt', () => {
+  silenceConsoleOutput();
   it('No changes should not have changes', () => {
     const { original, dash } = getTestContext();
     expect(hasChanges(dash, original)).toBe(false);
@@ -152,6 +160,37 @@ describe('DashboardPrompt', () => {
         expect(
           ignoreChanges({ ...dash, meta: { canSave: true, fromScript: undefined, fromFile: undefined } }, original)
         ).toBe(undefined);
+      });
+    });
+  });
+
+  describe('hasLibraryPanelChanged', () => {
+    describe('when called and the library panel has not changed', () => {
+      it('then it should return false', () => {
+        const { original, dash } = getTestContext();
+        const current = dash.panels[3];
+        current.configRev = 0;
+        expect(hasLibraryPanelChanged(current, original)).toBe(false);
+      });
+    });
+
+    describe('when called and the library panel has changed', () => {
+      it('then it should return true', () => {
+        const { original, dash } = getTestContext();
+        const current = dash.panels[3];
+        current.configRev = 1;
+        current.libraryPanel.version = 2;
+        expect(hasLibraryPanelChanged(current, original)).toBe(true);
+      });
+    });
+
+    describe('when called and the library panel has changed but user discarded change', () => {
+      it('then it should return false', () => {
+        const { original, dash } = getTestContext();
+        const current = dash.panels[3];
+        current.configRev = 0;
+        current.libraryPanel.version = 2;
+        expect(hasLibraryPanelChanged(current, original)).toBe(false);
       });
     });
   });
