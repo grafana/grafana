@@ -174,20 +174,25 @@ addDefaultAssignments:
 # list of roles that should be deleted
 deleteRoles:
   # <string> name of the role you want to create. Required if no uid is set
-  - name: ReportEditor
+  - name: "custom:reports:editor"
     # <string> uid of the role. Required if no name
-    uid: reporteditor1
+    uid: "customreportseditor1"
     # <int> org id. will default to Grafana's default if not specified
     orgId: 1
     # <bool> force deletion revoking all grants of the role
+    force: true
+  - name: "custom:global:reports:reader"
+    uid: "customglobalreportsreader1"
+    # <bool> overwrite org id and removes a global role
+    global: true
     force: true
 
 # list of roles to insert/update depending on what is available in the database
 roles:
   # <string, required> name of the role you want to create. Required
-  - name: CustomEditor
+  - name: "custom:users:editor"
     # <string> uid of the role. Has to be unique for all orgs.
-    uid: customeditor1
+    uid: customuserseditor1
     # <string> description of the role, informative purpose only.
     description: "Role for our custom user editors"
     # <int> version of the role, Grafana will update the role when increased
@@ -210,9 +215,9 @@ roles:
       - name: "Editor"
         # <int> org id. will default to the role org id
         orgId: 1        
-  - name: GlobalReader
-    uid: globalreader
-    description: "Global Role for custom user reader"
+  - name: "custom:global:users:reader"
+    uid: "customglobalusersreader1"
+    description: "Global Role for custom user readers"
     version: 1
     # <bool> overwrite org id and creates a global role
     global: true
