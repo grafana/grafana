@@ -95,7 +95,7 @@ func TestSeriesFromFrame(t *testing.T) {
 			},
 		},
 		{
-			name: "[]*float, []*time frame should convert",
+			name: "[]*float, []time frame should convert",
 			frame: &data.Frame{
 				Name: "test",
 				Fields: []*data.Field{
