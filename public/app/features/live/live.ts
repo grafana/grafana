@@ -219,6 +219,7 @@ export class CentrifugeSrv implements GrafanaLiveSrv {
       let filtered: DataFrame | undefined = undefined;
       let state = LoadingState.Streaming;
       let last = perf.last;
+      let lastWidth = -1;
 
       const process = (msg: DataFrameJSON) => {
         if (!data) {
@@ -227,9 +228,11 @@ export class CentrifugeSrv implements GrafanaLiveSrv {
           data.push(msg);
         }
         state = LoadingState.Streaming;
+        const sameWidth = lastWidth === data.fields.length;
+        lastWidth = data.fields.length;
 
         // Filter out fields
-        if (!filtered || msg.schema) {
+        if (!filtered || msg.schema || !sameWidth) {
           filtered = data;
           if (options.filter) {
             const { fields } = options.filter;
