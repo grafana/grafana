@@ -1,0 +1,77 @@
+---
+name: UI Tests
+on:
+  pull_request:
+
+jobs:
+  test:
+    name: Run UI tests
+    runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        node-version: [12.x]
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout Grafana code
+        uses: percona-platform/checkout@v2
+        with:
+          path: ./grafana
+
+      - name: Run with Node ${{ matrix.node-version }}
+        uses: percona-platform/setup-node@v2
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Get Yarn cache directory
+        id: yarn-cache-dir-path
+        working-directory: ./grafana
+        run: echo "::set-output name=dir::$(yarn cache dir)"
+
+      - name: Use Yarn cache
+        uses: percona-platform/cache@v2
+        with:
+          path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
+          key: ${{ runner.os }}-yarn-${{ matrix.node-version }}-${{ hashFiles('**/yarn.lock') }}
+
+      - name: Install dependencies for Grafana
+        working-directory: ./grafana
+        run: yarn install --prefer-offline --frozen-lockfile --no-progress
+
+      - name: Start Environment
+        working-directory: ./grafana
+        run: make run-local-env
+
+      - name: Checkout UI tests in ${{ github.head_ref }} branch
+        uses: percona-platform/checkout@v2
+        continue-on-error: true
+        id: branch_checkout
+        with:
+          token: ${{ secrets.ROBOT_TOKEN }}
+          ref: ${{ github.head_ref }}
+          repository: percona/pmm-ui-tests
+          path: ./pmm-ui-tests
+
+      - name: Checkout UI tests in main branch
+        uses: percona-platform/checkout@v2
+        if: ${{ steps.branch_checkout.outcome != 'success' }}
+        with:
+          token: ${{ secrets.ROBOT_TOKEN }}
+          ref: main
+          repository: percona/pmm-ui-tests
+          path: ./pmm-ui-tests
+
+      - name: Install dependencies for UI tests
+        working-directory: ./pmm-ui-tests
+        run: npm install
+
+      - name: Run UI tests
+        working-directory: ./pmm-ui-tests
+        run: npm run e2e:grafana-pr
+
+      - name: Attaching artifacts
+        if: ${{ always() }}
+        uses: percona-platform/upload-artifact@v2
+        with:
+          name: ui-tests-output
+          path: ./pmm-ui-tests/tests/output
