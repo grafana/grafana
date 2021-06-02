@@ -14,8 +14,6 @@ import {
   getValueFormat,
   ThresholdsMode,
   GrafanaTheme2,
-  DisplayValue,
-  DisplayProcessor,
 } from '@grafana/data';
 import {
   UPlotConfigBuilder,
