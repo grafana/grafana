@@ -17,6 +17,11 @@ type SurveyCaller struct {
 	node *centrifuge.Node
 }
 
+const (
+	managedStreamsCall        = "managed_streams"
+	numChannelSubscribersCall = "num_channel_subscribers"
+)
+
 func NewSurveyCaller(live *GrafanaLive, node *centrifuge.Node) *SurveyCaller {
 	return &SurveyCaller{live: live, node: node}
 }
@@ -34,14 +39,24 @@ type NodeManagedChannelsResponse struct {
 	Channels []*managedstream.ManagedChannel `json:"channels"`
 }
 
+type NumChannelSubscribersRequest struct {
+	Channel string `json:"channel"`
+}
+
+type NumChannelSubscribersResponse struct {
+	Num int `json:"num_subscribers"`
+}
+
 func (c *SurveyCaller) handleSurvey(e centrifuge.SurveyEvent, cb centrifuge.SurveyCallback) {
 	var (
 		resp interface{}
 		err  error
 	)
 	switch e.Op {
-	case "managed_streams":
+	case managedStreamsCall:
 		resp, err = c.handleManagedStreams(e.Data)
+	case numChannelSubscribersCall:
+		resp, err = c.handleNumChannelSubscribers(e.Data)
 	default:
 		err = errors.New("method not found")
 	}
@@ -75,6 +90,18 @@ func (c *SurveyCaller) handleManagedStreams(data []byte) (interface{}, error) {
 	}, nil
 }
 
+func (c *SurveyCaller) handleNumChannelSubscribers(data []byte) (interface{}, error) {
+	var req NumChannelSubscribersRequest
+	err := json.Unmarshal(data, &req)
+	if err != nil {
+		return nil, err
+	}
+	numSubscribers := c.node.Hub().NumSubscribers(req.Channel)
+	return NumChannelSubscribersResponse{
+		Num: numSubscribers,
+	}, nil
+}
+
 func (c *SurveyCaller) CallManagedStreams(orgID int64) ([]*managedstream.ManagedChannel, error) {
 	req := NodeManagedChannelsRequest{OrgID: orgID}
 	jsonData, err := json.Marshal(req)
@@ -84,7 +111,7 @@ func (c *SurveyCaller) CallManagedStreams(orgID int64) ([]*managedstream.Managed
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
-	resp, err := c.node.Survey(ctx, "managed_streams", jsonData)
+	resp, err := c.node.Survey(ctx, managedStreamsCall, jsonData)
 	if err != nil {
 		return nil, err
 	}
@@ -111,4 +138,35 @@ func (c *SurveyCaller) CallManagedStreams(orgID int64) ([]*managedstream.Managed
 	}
 
 	return channels, nil
+}
+
+func (c *SurveyCaller) CallNumChannelSubscribers(channelID string) (int, error) {
+	req := NumChannelSubscribersRequest{Channel: channelID}
+	jsonData, err := json.Marshal(req)
+	if err != nil {
+		return 0, err
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 500*time.Millisecond)
+	defer cancel()
+
+	resp, err := c.node.Survey(ctx, numChannelSubscribersCall, jsonData)
+	if err != nil {
+		return 0, err
+	}
+
+	var num int
+
+	for _, result := range resp {
+		if result.Code != 0 {
+			return 0, fmt.Errorf("unexpected survey code: %d", result.Code)
+		}
+		var res NumChannelSubscribersResponse
+		err := json.Unmarshal(result.Data, &res)
+		if err != nil {
+			return 0, err
+		}
+		num += res.Num
+	}
+
+	return num, nil
 }

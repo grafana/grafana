@@ -127,7 +127,8 @@ func (g *GrafanaLive) AddMigration(mg *migrator.Migrator) {
 func (g *GrafanaLive) Run(ctx context.Context) error {
 	if g.runStreamManager != nil {
 		// Only run stream manager if GrafanaLive properly initialized.
-		return g.runStreamManager.Run(ctx)
+		_ = g.runStreamManager.Run(ctx)
+		return g.node.Shutdown(context.Background())
 	}
 	return nil
 }
@@ -212,7 +213,7 @@ func (g *GrafanaLive) Init() error {
 
 	g.contextGetter = newPluginContextGetter(g.PluginContextProvider)
 	channelSender := newPluginChannelSender(node)
-	presenceGetter := newPluginPresenceGetter(node)
+	presenceGetter := newPluginPresenceGetter(node, g.surveyCaller)
 	g.runStreamManager = runstream.NewManager(channelSender, presenceGetter, g.contextGetter, runstream.WithHA(g.IsHA()))
 
 	// Initialize the main features
@@ -282,6 +283,9 @@ func (g *GrafanaLive) Init() error {
 			reason := "normal"
 			if e.Disconnect != nil {
 				reason = e.Disconnect.Reason
+				if e.Disconnect.Code == 3001 { // Shutdown
+					return
+				}
 			}
 			logger.Debug("Client disconnected", "user", client.UserID(), "client", client.ID(), "reason", reason, "elapsed", time.Since(connectedAt))
 		})

@@ -27,19 +27,16 @@ func (p *pluginChannelSender) Send(channel string, data []byte) error {
 }
 
 type pluginPresenceGetter struct {
-	node *centrifuge.Node
+	node         *centrifuge.Node
+	surveyCaller *SurveyCaller
 }
 
-func newPluginPresenceGetter(node *centrifuge.Node) *pluginPresenceGetter {
-	return &pluginPresenceGetter{node: node}
+func newPluginPresenceGetter(node *centrifuge.Node, surveyCaller *SurveyCaller) *pluginPresenceGetter {
+	return &pluginPresenceGetter{node: node, surveyCaller: surveyCaller}
 }
 
-func (p *pluginPresenceGetter) GetNumSubscribers(channel string) (int, error) {
-	res, err := p.node.PresenceStats(channel)
-	if err != nil {
-		return 0, err
-	}
-	return res.NumClients, nil
+func (p *pluginPresenceGetter) GetNumSubscribers(channelID string) (int, error) {
+	return p.surveyCaller.CallNumChannelSubscribers(channelID)
 }
 
 type pluginContextGetter struct {

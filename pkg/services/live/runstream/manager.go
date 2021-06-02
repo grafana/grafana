@@ -211,7 +211,7 @@ func (s *Manager) watchStream(ctx context.Context, cancelFn func(), sr streamReq
 		case <-presenceTicker.C:
 			numSubscribers, err := s.presenceGetter.GetNumSubscribers(sr.Channel)
 			if err != nil {
-				logger.Error("Error checking num subscribers", "channel", sr.Channel, "path", sr.Path)
+				logger.Error("Error checking num subscribers", "channel", sr.Channel, "path", sr.Path, "error", err)
 				continue
 			}
 			if numSubscribers > 0 {
