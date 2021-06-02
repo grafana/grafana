@@ -46,7 +46,17 @@ The Bar chart panel is a new visualization that allows categorical data display.
 
 ### State timeline visualization (beta)
 
-This new visualization is designed to display state changes and durations.
+The State timeline visualization shows discrete state changes over time. Each field or series is rendered as a unique horizontal band. This panel works well with string or boolean states, but it can also be used with time series data. When used with time series data, the thresholds are used to turn the numerical values into discrete state regions. 
+
+This panel also takes advantage of the new value mapping features that allow you to color string and boolean values. 
+
+Example with string values: 
+{{< figure src="/static/img/docs/v8/state_timeline_strings.png" max-width="1025px" caption="state timeline with string states" >}}
+
+With time series data and thresholds: 
+{{< figure src="/static/img/docs/v8/state_timeline_time_series.png" max-width="1025px" caption="state timeline with time series" >}}
+
+For more information, refer to [State timeline visualization]({{< relref "../panels/visualizations/state-timeline.md" >}}).
 
 ### Status grid visualization (beta)
 
@@ -229,15 +239,19 @@ These features are included in the Grafana Enterprise edition.
 
 ### Fine-grained access control
 
-You can now add or remove detailed permissions from Viewer, Editor, and Admin org roles, to grant users just the right amount of access within Grafana. Available permissions include the ability to view and manage Users, Reports, and the Access Control API itself. Grafana will support more and more permissions over the coming months.
+You can now add or remove detailed permissions from Viewer, Editor, and Admin org roles, to grant users just the right amount of access within Grafana. Available permissions include the ability to view and manage Users, Reports, and the Access Control API itself. Grafana will support more and more permissions over the coming months. See the [Fine-grained access control docs]({{< relref "../enterprise/access-control/_index.md" >}}) for more details.
 
 ### Data source query caching
 
-Grafana will now cache the results of backend data source queries, so that multiple users viewing the same dashboard or panel will not each submit the same query to the data source (like Splunk or Snowflake) itself. This results in faster average load times for dashboards and fewer duplicate queries overall to data sources, which reduces cost and the risk of throttling, reaching API limits, or overloading your data sources. Caching can be enabled per-data source, and time-to-live (TTL) can be configured globally and per data source. Query caching can be set up with Redis, Memcached, or a simple in-memory cache.
+Grafana will now cache the results of backend data source queries, so that multiple users viewing the same dashboard or panel will not each submit the same query to the data source (like Splunk or Snowflake) itself. This results in faster average load times for dashboards and fewer duplicate queries overall to data sources, which reduces cost and the risk of throttling, reaching API limits, or overloading your data sources. Caching can be enabled per-data source, and time-to-live (TTL) can be configured globally and per data source. Query caching can be set up with Redis, Memcached, or a simple in-memory cache. See the [Data source query caching docs]({{< relref "../enterprise/query-caching.md" >}}) for more details.
 
 ### Reporting updates
 
-When creating a report, you can now choose to export Table Panels as .csv files attached to your report email. This will make it easier for recipients to view and work with that data. You can also link back to the dashboard directly from the email, for users who want to see the data live in Grafana. This release also includes some improvements to the Reports list view.
+When creating a report, you can now choose to export Table Panels as .csv files attached to your report email. This will make it easier for recipients to view and work with that data. You can also link back to the dashboard directly from the email, for users who want to see the data live in Grafana. This release also includes some improvements to the Reports list view. See the [Reporting docs]({{< relref "../enterprise/reporting.md" >}}) for more details.
+
+### License restrictions clarification in the docs
+
+The docs have been updated to describe more specifically how licensed roles are counted, how they can be updated, and where you can see details about dashboard and folder permissions that affect users' licensed roles. Visit the [License restrictions docs]({{< relref "../enterprise/license/license-restrictions.md" >}}) for details.
 
 ## Breaking changes
 
