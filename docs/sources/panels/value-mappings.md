@@ -13,6 +13,8 @@ Values mapped via value mappings will skip the unit formatting. This means that 
 
 If value mappings are present in a panel, then Grafana displays a summary in the side pane of the panel editor.
 
+> **Note:** The new value mappings are not compatible with some older visualizations, such as Graph (old) and Singlestat.
+
 ## Value mapping examples
 
 Value mappings are displayed differently in different visualizations.
