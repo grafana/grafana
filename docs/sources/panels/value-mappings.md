@@ -19,7 +19,7 @@ Value mappings are displayed differently in different visualizations.
 
 ### Time series example
 
-Here's an example showing a Time series visualization with value mappings.
+Here's an example showing a Time series visualization with value mappings. Value mapping colors are not applied to this visualization, but the display text is shown on the axis.
 
 ![Value mappings time series example](/static/img/docs/value-mappings/value-mappings-summary-example-8-0.png)
 
