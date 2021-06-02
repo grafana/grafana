@@ -1,7 +1,7 @@
-import React, { FC, useEffect, useMemo, useState } from 'react';
+import React, { FC, useCallback, useEffect, useMemo, useState } from 'react';
 import { useStyles, useTheme } from '@grafana/ui';
 import { logger } from '@percona/platform-core';
-import { Column } from 'react-table';
+import { Cell, Column } from 'react-table';
 import { cx } from 'emotion';
 import { Table } from '../Table/Table';
 import { Messages } from '../../IntegratedAlerting.messages';
@@ -97,32 +97,26 @@ export const Alerts: FC = () => {
     }
   };
 
+  const getCellProps = useCallback(
+    (cell: Cell<Alert>) => ({
+      className: cell.row.original.status === AlertStatus.SILENCED ? style.disabledRow : '',
+      key: cell.row.original.alertId,
+    }),
+    []
+  );
+
   useEffect(() => {
     getAlerts();
   }, []);
 
   return (
-    <Table totalItems={data.length} data={data} columns={columns} pendingRequest={pendingRequest} emptyMessage={noData}>
-      {(rows, table) =>
-        rows.map(row => {
-          const { prepareRow } = table;
-          prepareRow(row);
-          const alert = row.original as Alert;
-          return (
-            <tr
-              {...row.getRowProps()}
-              key={alert.alertId}
-              className={alert.status === AlertStatus.SILENCED ? style.disabledRow : ''}
-            >
-              {row.cells.map(cell => (
-                <td {...cell.getCellProps()} key={cell.column.id}>
-                  {cell.render('Cell')}
-                </td>
-              ))}
-            </tr>
-          );
-        })
-      }
-    </Table>
+    <Table
+      totalItems={data.length}
+      data={data}
+      columns={columns}
+      pendingRequest={pendingRequest}
+      emptyMessage={noData}
+      getCellProps={getCellProps}
+    />
   );
 };

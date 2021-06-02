@@ -21,10 +21,7 @@ export const getStyles = (theme: GrafanaTheme) => {
       margin: 5px;
     `,
     disabledRow: css`
-      & td {
-        color: ${colors.textWeak};
-        background-color: ${colors.dashboardBg} !important;
-      }
+      background-color: ${colors.dashboardBg} !important;
     `,
     getSeverityStyle: (color: string) => css`
       color: ${color};

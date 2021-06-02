@@ -9,6 +9,8 @@ import { PAGE_SIZES } from './Pagination/Pagination.constants';
 import { TableContent } from './TableContent';
 import { Overlay } from 'app/percona/shared/components/Elements/Overlay/Overlay';
 
+const defaultPropGetter = () => ({});
+
 export const Table: FC<TableProps> = ({
   pendingRequest = false,
   data,
@@ -23,6 +25,10 @@ export const Table: FC<TableProps> = ({
   pagesPerView,
   children,
   renderExpandedRow = () => <></>,
+  getHeaderProps = defaultPropGetter,
+  getRowProps = defaultPropGetter,
+  getColumnProps = defaultPropGetter,
+  getCellProps = defaultPropGetter,
 }) => {
   const style = useStyles(getStyles);
   const manualPagination = !!(totalPages && totalPages >= 0);
@@ -91,7 +97,14 @@ export const Table: FC<TableProps> = ({
                           className={css`
                             width: ${column.width};
                           `}
-                          {...column.getHeaderProps()}
+                          {...column.getHeaderProps([
+                            {
+                              className: column.className,
+                              style: column.style,
+                            },
+                            getColumnProps(column),
+                            getHeaderProps(column),
+                          ])}
                         >
                           {column.render('Header')}
                         </th>
@@ -106,10 +119,19 @@ export const Table: FC<TableProps> = ({
                         prepareRow(row);
                         return (
                           <React.Fragment key={row.id}>
-                            <tr {...row.getRowProps()}>
+                            <tr {...row.getRowProps(getRowProps(row))}>
                               {row.cells.map(cell => {
                                 return (
-                                  <td {...cell.getCellProps()} key={cell.column.id}>
+                                  <td
+                                    {...cell.getCellProps([
+                                      {
+                                        className: cell.column.className,
+                                        style: cell.column.style,
+                                      },
+                                      getCellProps(cell),
+                                    ])}
+                                    key={cell.column.id}
+                                  >
                                     {cell.render('Cell')}
                                   </td>
                                 );
