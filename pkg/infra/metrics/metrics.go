@@ -516,7 +516,7 @@ func init() {
 		Name:      "plugin_build_info",
 		Help:      "A metric with a constant '1' value labeled by pluginId, pluginType and version from which Grafana plugin was built",
 		Namespace: ExporterName,
-	}, []string{"plugin_id", "plugin_type", "version"})
+	}, []string{"plugin_id", "plugin_type", "version", "signature_status"})
 
 	StatsTotalDashboardVersions = prometheus.NewGauge(prometheus.GaugeOpts{
 		Name:      "stat_totals_dashboard_versions",
@@ -597,8 +597,8 @@ func SetEnvironmentInformation(labels map[string]string) error {
 	return nil
 }
 
-func SetPluginBuildInformation(pluginID, pluginType, version string) {
-	grafanaPluginBuildInfoDesc.WithLabelValues(pluginID, pluginType, version).Set(1)
+func SetPluginBuildInformation(pluginID, pluginType, version, signatureStatus string) {
+	grafanaPluginBuildInfoDesc.WithLabelValues(pluginID, pluginType, version, signatureStatus).Set(1)
 }
 
 func initMetricVars() {
