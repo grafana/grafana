@@ -148,6 +148,10 @@ export class RefreshEvent extends BusEventBase {
   static type = 'refresh';
 }
 
+export class PanelDirectiveReadyEvent extends BusEventBase {
+  static type = 'panel-directive-ready';
+}
+
 export class RenderEvent extends BusEventBase {
   static type = 'render';
 }
