@@ -1,0 +1,32 @@
+---
+version: "3"
+services:
+  pmm-server:
+    container_name: pmm-server
+    image: perconalab/pmm-server:dev-latest
+    volumes:
+      - "../grafana/public:/usr/share/grafana/public"
+    ports:
+      - 80:80
+      - 443:443
+    environment:
+      - PMM_DEBUG=1
+      - PERCONA_TEST_SAAS_HOST=check-dev.percona.com:443
+      - PERCONA_TEST_CHECKS_PUBLIC_KEY=RWTg+ZmCCjt7O8eWeAmTLAqW+1ozUbpRSKSwNTmO+exlS5KEIPYWuYdX
+
+  mysql:
+    image: percona:5.7.30
+    container_name: pmm-agent_mysql
+    command: >
+      --sql-mode="ANSI_QUOTES"
+      --performance-schema --innodb_monitor_enable=all
+      --slow_query_log --log_slow_rate_limit=1 --log_slow_admin_statements --log_slow_slave_statements --slow_query_log_file=/mysql/slowlogs/slow.log --long_query_time=0
+    ports:
+      - "3306:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=ps
+      - MYSQL_USER=pmm-agent
+      - MYSQL_PASSWORD=pmm-agent-password
+      - UMASK=0777  # for slowlog file
+    volumes:
+      - ./testdata/mysql:/mysql
