@@ -90,6 +90,11 @@ export interface AzureDataSourceJsonData extends DataSourceJsonData {
 
   // logs
   logAnalyticsDefaultWorkspace?: string;
+  /** @deprecated Azure Logs credentials */
+  azureLogAnalyticsSameAs?: boolean;
+  logAnalyticsTenantId?: string;
+  logAnalyticsClientId?: string;
+  logAnalyticsSubscriptionId?: string;
 
   // App Insights
   appInsightsAppId?: string;

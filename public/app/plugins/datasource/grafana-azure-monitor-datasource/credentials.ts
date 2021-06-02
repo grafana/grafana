@@ -65,7 +65,7 @@ function getSecret(options: AzureDataSourceSettings): undefined | string | Conce
   }
 }
 
-/** @deprecated since 8.0, left here for help the migration */
+/** @deprecated since 8.0, left here to help the migration */
 function getLogAnalyticsSecret(options: AzureDataSourceSettings): undefined | string | ConcealedSecret {
   if (options.secureJsonFields.logAnalyticsClientSecret) {
     // The secret is concealed on server
@@ -127,9 +127,9 @@ export function getLogAnalyticsCredentials(options: AzureDataSourceSettings): Az
 
   // LogAnalytics credentials may be encoded in the JSON data
   // from previous versions. Manually extract it.
-  const logAnalyticsTenantId = (options.jsonData as any).logAnalyticsTenantId;
-  const logAnalyticsClientId = (options.jsonData as any).logAnalyticsClientId;
-  const logAnalyticsSubscriptionId = (options.jsonData as any).logAnalyticsSubscriptionId;
+  const logAnalyticsTenantId = options.jsonData.logAnalyticsTenantId;
+  const logAnalyticsClientId = options.jsonData.logAnalyticsClientId;
+  const logAnalyticsSubscriptionId = options.jsonData.logAnalyticsSubscriptionId;
   const logAnalyticsClientSecret = getLogAnalyticsSecret(options);
 
   return {
