@@ -1,12 +1,12 @@
 +++
-title = "Bar gauge options"
+title = "Bar gauge"
 description = "Bar gauge panel options"
 keywords = ["grafana", "bar", "bar gauge"]
 aliases =["/docs/grafana/latest/features/panels/bar_gauge/"]
 weight = 200
 +++
 
-# Bar gauge visualization
+# Bar gauge
 
 The bar gauge simplifies your data by reducing every field to a single value. You choose how Grafana calculates the reduction.
 
