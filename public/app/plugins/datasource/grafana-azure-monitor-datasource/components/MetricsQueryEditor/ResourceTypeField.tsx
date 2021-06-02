@@ -6,7 +6,7 @@ import { Field } from '../Field';
 import { findOption, toOption } from '../../utils/common';
 import { AzureQueryEditorFieldProps, AzureMonitorOption } from '../../types';
 
-const ERROR_SOURCE = 'metrics-namespace';
+const ERROR_SOURCE = 'resource-type';
 const NamespaceField: React.FC<AzureQueryEditorFieldProps> = ({
   query,
   datasource,
@@ -57,10 +57,10 @@ const NamespaceField: React.FC<AzureQueryEditorFieldProps> = ({
   const options = useMemo(() => [...namespaces, variableOptionGroup], [namespaces, variableOptionGroup]);
 
   return (
-    <Field label="Namespace">
-      {/* It's expected that the label reads Namespace but the property is metricDefinition */}
+    <Field label="Resource type">
+      {/* It's expected that the label reads Resource type but the property is metricDefinition */}
       <Select
-        inputId="azure-monitor-metrics-namespace-field"
+        inputId="azure-monitor-metrics-resource-type-field"
         value={findOption(namespaces, query.azureMonitor.metricDefinition)}
         onChange={handleChange}
         options={options}

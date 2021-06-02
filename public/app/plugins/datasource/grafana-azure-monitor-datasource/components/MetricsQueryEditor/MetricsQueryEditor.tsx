@@ -5,7 +5,7 @@ import { AzureMonitorQuery, AzureMonitorOption, AzureMonitorErrorish } from '../
 import { useMetricsMetadata } from '../metrics';
 import SubscriptionField from '../SubscriptionField';
 import MetricNamespaceField from './MetricNamespaceField';
-import NamespaceField from './NamespaceField';
+import ResourceTypeField from './ResourceTypeField';
 import ResourceGroupsField from './ResourceGroupsField';
 import ResourceNameField from './ResourceNameField';
 import MetricNameField from './MetricNameField';
@@ -58,7 +58,7 @@ const MetricsQueryEditor: React.FC<MetricsQueryEditorProps> = ({
       </InlineFieldRow>
 
       <InlineFieldRow>
-        <NamespaceField
+        <ResourceTypeField
           query={query}
           datasource={datasource}
           subscriptionId={subscriptionId}
