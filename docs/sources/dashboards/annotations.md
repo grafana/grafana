@@ -30,7 +30,7 @@ You can also hold down Ctrl/Cmd and select region to create a region annotation.
 {{< figure src="/static/img/docs/annotations/region-annotation-still.png"
 max-width="600px" animated-gif="/static/img/docs/annotations/region-annotation.gif" >}}
 
-### Built in query
+### Built-in query
 
 After you added an annotation they will still be visible. This is due to the built in annotation query that exists on all dashboards. This annotation query will
 fetch all annotation events that originate from the current dashboard and show them on the panel where they were created. This includes alert state history annotations. You can
