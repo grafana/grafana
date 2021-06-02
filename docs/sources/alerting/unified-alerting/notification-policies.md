@@ -72,5 +72,5 @@ One usage example would be:
 * Create a specific route for alerts with "critical" severity with a more invasive contact point type, like pager duty notification
 * Create specific routes for particular teams that handle their own onduty rotations
 
-![Notification policies screenshot](/img/docs/alerting/unified/notification-policies-8-0.png 'Notification policies screenshot')
+![Notification policies screenshot](/static/img/docs/alerting/unified/notification-policies-8-0.png 'Notification policies screenshot')
 
