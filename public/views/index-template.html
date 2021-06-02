@@ -17,7 +17,7 @@
       crossorigin
     />
 
-    <link rel="icon" type="image/x-icon" href="public/img/percona-favicon.ico?cb=1584890955588">
+    <link rel="icon" type="image/x-icon" href="public/img/percona-favicon.ico?cb=1584890955588" />
     <link rel="apple-touch-icon" sizes="180x180" href="[[.AppleTouchIcon]]" />
     <link rel="mask-icon" href="[[.ContentDeliveryURL]]public/img/grafana_mask_icon.svg" color="#F05A28" />
     <link
@@ -70,7 +70,7 @@
         height: 60px;
         background-repeat: no-repeat;
         background-size: contain;
-        background-image: url('[[.LoadingLogo]]');
+        background-image: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNzQiIGhlaWdodD0iNzQiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgPGNpcmNsZSBjeD0iMzciIGN5PSIzNyIgcj0iMzciIGZpbGw9InVybCgjcGFpbnQwX2xpbmVhcikiLz4KICA8cGF0aCBkPSJNMzcuNTAwMyA1OEM0OS4zNzQ0IDU4IDU5IDQ4LjM3NDMgNTkgMzYuNVM0OS4zNzQ0IDE1IDM3LjUwMDMgMTVDMjUuNjI2MSAxNSAxNiAyNC42MjU3IDE2IDM2LjVjMCAuMTY3MS4wMDE5LjMzMzguMDA1Ny41SDE2djMwLjQ2NzJjMi43NDQgMS44OTUgNS43NTY2IDMuNDI4OCA4Ljk2OSA0LjUzMjhIMjVWNTMuOTk0OEMyOC41MjI1IDU2LjUxNjEgMzIuODM4MSA1OCAzNy41MDAzIDU4eiIgZmlsbD0iI2ZmZiIvPgogIDxwYXRoIGQ9Ik01MCAzNi41QzUwIDQzLjQwMzYgNDQuNDAzNyA0OSAzNy41MDAxIDQ5IDMwLjU5NjYgNDkgMjUgNDMuNDAzNiAyNSAzNi41UzMwLjU5NjYgMjQgMzcuNTAwMSAyNEM0NC40MDM3IDI0IDUwIDI5LjU5NjQgNTAgMzYuNXoiIGZpbGw9IiNGQ0I0MkYiLz4KICA8ZGVmcz4KICAgIDxsaW5lYXJHcmFkaWVudCBpZD0icGFpbnQwX2xpbmVhciIgeDE9IjM3IiB5MT0iMCIgeDI9IjM3IiB5Mj0iNzQiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIj4KICAgICAgPHN0b3Agc3RvcC1jb2xvcj0iI0ZCQjMyRiIvPgogICAgICA8c3RvcCBvZmZzZXQ9Ii41MDQ3MzkiIHN0b3AtY29sb3I9IiNDMTE1MTEiLz4KICAgICAgPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjQzExNDExIi8+CiAgICA8L2xpbmVhckdyYWRpZW50PgogIDwvZGVmcz4KPC9zdmc+');
       }
 
       .preloader__text {
@@ -118,12 +118,12 @@
 
       @keyframes preloader-squash {
         0% {
-          transform: scaleX(1.3) scaleY(0.8);
+          transform: scaleX(1.2) scaleY(0.8);
           animation-timing-function: cubic-bezier(0.3, 0, 0.1, 1);
           transform-origin: bottom center;
         }
         15% {
-          transform: scaleX(0.75) scaleY(1.25);
+          transform: scaleX(0.85) scaleY(1.2);
           animation-timing-function: cubic-bezier(0, 0, 0.7, 0.75);
           transform-origin: bottom center;
         }
@@ -132,13 +132,13 @@
           animation-timing-function: cubic-bezier(0.9, 0, 1, 1);
           transform-origin: top center;
         }
-        95% {
-          transform: scaleX(0.75) scaleY(1.25);
+        85% {
+          transform: scaleX(0.85) scaleY(1.2);
           animation-timing-function: cubic-bezier(0, 0, 0, 1);
           transform-origin: bottom center;
         }
         100% {
-          transform: scaleX(1.3) scaleY(0.8);
+          transform: scaleX(1.2) scaleY(0.8);
           transform-origin: bottom center;
           animation-timing-function: cubic-bezier(0, 0, 0.7, 1);
         }
@@ -180,7 +180,7 @@
           <div class="preloader__logo"></div>
         </div>
       </div>
-      <div class="preloader__text">Loading Grafana</div>
+      <div class="preloader__text">Loading Percona Monitoring and Management</div>
       <div class="preloader__text preloader__text--fail">
         <p>
           <strong>If you're seeing this Grafana has failed to load its application files</strong>
