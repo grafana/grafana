@@ -41,10 +41,7 @@ describe('AlertRulesActions', () => {
     };
 
     await asyncAct(() => {
-      wrapper
-        .find(dataQa('copy-alert-rule-button'))
-        .at(0)
-        .simulate('click');
+      wrapper.find(dataQa('copy-alert-rule-button')).at(0).simulate('click');
     });
 
     expect(alertRulesServiceCreate).toBeCalledTimes(1);
@@ -56,10 +53,7 @@ describe('AlertRulesActions', () => {
     const wrapper = mount(withContext(context, <AlertRulesActions alertRule={formattedRulesStubs[0]} />));
 
     await asyncAct(() => {
-      wrapper
-        .find(dataQa('edit-alert-rule-button'))
-        .at(0)
-        .simulate('click');
+      wrapper.find(dataQa('edit-alert-rule-button')).at(0).simulate('click');
     });
 
     expect(context.setSelectedAlertRule).toBeCalledTimes(1);
@@ -71,10 +65,7 @@ describe('AlertRulesActions', () => {
     expect(wrapper.find(dataQa('modal-wrapper'))).toHaveLength(0);
 
     await asyncAct(() => {
-      wrapper
-        .find(dataQa('delete-alert-rule-button'))
-        .at(0)
-        .simulate('click');
+      wrapper.find(dataQa('delete-alert-rule-button')).at(0).simulate('click');
     });
 
     wrapper.update();
@@ -103,10 +94,7 @@ describe('AlertRulesActions', () => {
     const context = mockContext();
     const wrapper = mount(withContext(context, <AlertRulesActions alertRule={formattedRulesStubs[0]} />));
     await asyncAct(() => {
-      wrapper
-        .find(dataQa('toggle-alert-rule'))
-        .find('input')
-        .simulate('click');
+      wrapper.find(dataQa('toggle-alert-rule')).find('input').simulate('click');
     });
 
     expect(context.getAlertRules).toHaveBeenCalled();

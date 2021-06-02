@@ -21,14 +21,8 @@ jest.mock('app/core/app_events', () => {
 });
 
 const selectTemplateOption = (wrapper: ReactWrapper, templateIndex = 0) => {
-  wrapper
-    .find('input')
-    .first()
-    .simulate('keydown', { key: 'ArrowDown' });
-  wrapper
-    .find({ 'aria-label': 'Select option' })
-    .at(templateIndex)
-    .simulate('click');
+  wrapper.find('input').first().simulate('keydown', { key: 'ArrowDown' });
+  wrapper.find({ 'aria-label': 'Select option' }).at(templateIndex).simulate('click');
 };
 
 describe('AddAlertRuleModal', () => {
@@ -143,12 +137,7 @@ describe('AddAlertRuleModal', () => {
     const wrapper = await getMount(<AddAlertRuleModal setVisible={jest.fn()} isVisible alertRule={initialValues} />);
     wrapper.update();
 
-    expect(
-      wrapper
-        .find(dataQa('template-select-input'))
-        .first()
-        .prop('disabled')
-    ).toBeTruthy();
+    expect(wrapper.find(dataQa('template-select-input')).first().prop('disabled')).toBeTruthy();
   });
 
   it('should change params when switching templates', async () => {
@@ -175,22 +164,14 @@ describe('AddAlertRuleModal', () => {
     wrapper.update();
 
     expect(wrapper.find(dataQa('duration-number-input')).text()).toHaveLength(0);
-    expect(
-      wrapper
-        .find(dataQa('severity-select-input'))
-        .find(Select)
-        .text()
-    ).toBe('Choose');
+    expect(wrapper.find(dataQa('severity-select-input')).find(Select).text()).toBe('Choose');
 
     selectTemplateOption(wrapper);
 
     expect(wrapper.find(dataQa('duration-number-input')).props().value).toBe(parseInt(templateStubs[0].for, 10));
-    expect(
-      wrapper
-        .find(dataQa('severity-select-input'))
-        .find(Select)
-        .text()
-    ).toBe(SEVERITY_OPTIONS.find(severity => severity.value === templateStubs[0].severity)?.label);
+    expect(wrapper.find(dataQa('severity-select-input')).find(Select).text()).toBe(
+      SEVERITY_OPTIONS.find((severity) => severity.value === templateStubs[0].severity)?.label
+    );
   });
 
   it('should show the expression and sample alert when switching templates', async () => {
@@ -203,17 +184,7 @@ describe('AddAlertRuleModal', () => {
 
     selectTemplateOption(wrapper);
 
-    expect(
-      wrapper
-        .find(dataQa('template-expression'))
-        .find('pre')
-        .text()
-    ).toBe(templateStubs[0].expr);
-    expect(
-      wrapper
-        .find(dataQa('template-alert'))
-        .find('pre')
-        .text()
-    ).toBe(templateStubs[0].annotations?.summary);
+    expect(wrapper.find(dataQa('template-expression')).find('pre').text()).toBe(templateStubs[0].expr);
+    expect(wrapper.find(dataQa('template-alert')).find('pre').text()).toBe(templateStubs[0].annotations?.summary);
   });
 });

@@ -27,10 +27,10 @@ const getParams = (params: any, type: string): Model => {
 const getModel = (item: ServicesList) => {
   const addType = Object.keys(item).map((type: InventoryType) => ({ type, params: item[type] }));
 
-  return addType.map(agent =>
+  return addType.map((agent) =>
     agent.params.map(
       (arrItem: any): Model => {
-        const transformAgentType = (type: string) => type.replace(/^\w/, c => c.toUpperCase()).replace(/[_-]/g, ' ');
+        const transformAgentType = (type: string) => type.replace(/^\w/, (c) => c.toUpperCase()).replace(/[_-]/g, ' ');
         // @ts-ignore
         const type = inventoryTypes[agent.type] || transformAgentType(agent.type);
 

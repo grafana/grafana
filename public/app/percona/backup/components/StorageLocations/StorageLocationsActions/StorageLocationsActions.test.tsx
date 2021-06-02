@@ -28,10 +28,7 @@ describe('StorageLocationsActions', () => {
     const wrapper = shallow(
       <StorageLocationsActions onDelete={jest.fn()} onUpdate={handleUpdate} location={location} />
     );
-    wrapper
-      .find(DBIcon)
-      .first()
-      .simulate('click');
+    wrapper.find(DBIcon).first().simulate('click');
 
     expect(handleUpdate).toHaveBeenCalledWith(location);
   });

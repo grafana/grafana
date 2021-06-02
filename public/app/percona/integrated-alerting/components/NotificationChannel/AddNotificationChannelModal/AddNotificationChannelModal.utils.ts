@@ -17,7 +17,7 @@ export const INITIAL_VALUES = {
   }: EmailNotificationChannel): NotificationChannelRenderProps => ({
     name: summary,
     type: getOptionFrom(type),
-    emails: emails.join('\n'),
+    emails: emails?.join('\n'),
   }),
   [NotificationChannelType.pagerDuty]: ({
     type,

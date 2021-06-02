@@ -19,10 +19,7 @@ describe('NotificationChannelActions', () => {
       </NotificationChannelProvider.Provider>
     );
 
-    wrapper
-      .find(dataQa('edit-notification-channel-button'))
-      .find('button')
-      .simulate('click');
+    wrapper.find(dataQa('edit-notification-channel-button')).find('button').simulate('click');
 
     expect(notificationChannelContextStub.setSelectedNotificationChannel).toHaveBeenCalled();
     expect(notificationChannelContextStub.setAddModalVisible).toHaveBeenCalled();
@@ -35,10 +32,7 @@ describe('NotificationChannelActions', () => {
       </NotificationChannelProvider.Provider>
     );
 
-    wrapper
-      .find(dataQa('delete-notification-channel-button'))
-      .find('button')
-      .simulate('click');
+    wrapper.find(dataQa('delete-notification-channel-button')).find('button').simulate('click');
 
     expect(notificationChannelContextStub.setSelectedNotificationChannel).toHaveBeenCalled();
     expect(notificationChannelContextStub.setDeleteModalVisible).toHaveBeenCalled();

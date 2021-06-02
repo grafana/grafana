@@ -15,7 +15,7 @@ export class ApiRequest {
     return this.axiosInstance
       .get<T>(path, query)
       .then((response): T => response.data)
-      .catch(e => {
+      .catch((e) => {
         appEvents.emit(AppEvents.alertError, [e.message]);
         throw e;
       });
@@ -25,7 +25,7 @@ export class ApiRequest {
     return this.axiosInstance
       .post<T>(path, body, { cancelToken })
       .then((response): T => response.data)
-      .catch(e => {
+      .catch((e) => {
         if (!disableNotifications && !axios.isCancel(e)) {
           appEvents.emit(AppEvents.alertError, [e.response.data?.message ?? 'Unknown error']);
         }
@@ -38,7 +38,7 @@ export class ApiRequest {
     return this.axiosInstance
       .delete<T>(path)
       .then((response): T => response.data)
-      .catch(e => {
+      .catch((e) => {
         // Notify.error(e.message);
         throw e;
       });
@@ -48,7 +48,7 @@ export class ApiRequest {
     return this.axiosInstance
       .patch<T>(path, body)
       .then((response): T => response.data)
-      .catch(e => {
+      .catch((e) => {
         // Notify.error(e.message);
         throw e;
       });

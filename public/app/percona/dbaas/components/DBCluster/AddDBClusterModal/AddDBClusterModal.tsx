@@ -38,7 +38,7 @@ export const AddDBClusterModal: FC<AddDBClusterModalProps> = ({
           AddDBClusterFields.cpu,
           AddDBClusterFields.disk,
         ],
-        render: renderProps => <DBClusterAdvancedOptions {...renderProps} />,
+        render: (renderProps) => <DBClusterAdvancedOptions {...renderProps} />,
         dataQa: 'dbcluster-advanced-options-step',
       },
     ],

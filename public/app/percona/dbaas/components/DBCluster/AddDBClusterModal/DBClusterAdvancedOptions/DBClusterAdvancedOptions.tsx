@@ -54,7 +54,7 @@ export const DBClusterAdvancedOptions: FC<FormRenderProps> = ({ values, form }) 
   );
   const resourcesInputProps = { step: '0.1' };
 
-  const parsePositiveInt = useCallback(value => (value > 0 && Number.isInteger(+value) ? value : undefined), []);
+  const parsePositiveInt = useCallback((value) => (value > 0 && Number.isInteger(+value) ? value : undefined), []);
 
   const topologies = useMemo(
     () =>

@@ -33,10 +33,7 @@ describe('ManageComponentsVersionsModal::', () => {
       <ManageComponentsVersionsModal isVisible selectedKubernetes={kubernetesStub[0]} setVisible={setVisible} />
     );
 
-    root
-      .find(dataQa('kubernetes-components-versions-cancel'))
-      .find('button')
-      .simulate('click');
+    root.find(dataQa('kubernetes-components-versions-cancel')).find('button').simulate('click');
 
     expect(setVisible).toHaveBeenCalledWith(false);
   });

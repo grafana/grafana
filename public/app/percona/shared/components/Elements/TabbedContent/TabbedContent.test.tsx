@@ -41,7 +41,7 @@ const contentTabs: ContentTab[] = [
 
 describe('TabbedContent', () => {
   beforeEach(() => {
-    (useSelector as jest.Mock).mockImplementation(callback => {
+    (useSelector as jest.Mock).mockImplementation((callback) => {
       return callback({ location: { routeParams: { tab: 'alerts' }, path: '/integrated-alerting/alerts' } });
     });
   });
@@ -70,7 +70,7 @@ describe('TabbedContent', () => {
   });
 
   it('changes location when trying to access a missing tab', async () => {
-    (useSelector as jest.Mock).mockImplementation(callback => {
+    (useSelector as jest.Mock).mockImplementation((callback) => {
       return callback({ location: { routeParams: { tab: 'test' }, path: '/integrated-alerting/test' } });
     });
 

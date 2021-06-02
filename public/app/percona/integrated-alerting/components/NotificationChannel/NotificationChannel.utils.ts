@@ -14,25 +14,25 @@ export const TO_MODEL = {
     channelId: channel.channel_id,
     summary: channel.summary,
     disabled: channel.disabled,
-    sendResolved: channel.email_config.send_resolved,
-    emails: channel.email_config.to,
+    sendResolved: channel.email_config?.send_resolved,
+    emails: channel.email_config?.to,
   }),
   [NotificationChannelType.pagerDuty]: (channel: NotificationChannelAPI): PagerDutylNotificationChannel => ({
     type: NotificationChannelType.pagerDuty,
     channelId: channel.channel_id,
     summary: channel.summary,
     disabled: channel.disabled,
-    sendResolved: channel.pagerduty_config.send_resolved,
-    routingKey: channel.pagerduty_config.routing_key,
-    serviceKey: channel.pagerduty_config.service_key,
+    sendResolved: channel.pagerduty_config?.send_resolved,
+    routingKey: channel.pagerduty_config?.routing_key,
+    serviceKey: channel.pagerduty_config?.service_key,
   }),
   [NotificationChannelType.slack]: (channel: NotificationChannelAPI): SlackNotificationChannel => ({
     type: NotificationChannelType.slack,
     channelId: channel.channel_id,
     summary: channel.summary,
     disabled: channel.disabled,
-    sendResolved: channel.slack_config.send_resolved,
-    channel: channel.slack_config.channel,
+    sendResolved: channel.slack_config?.send_resolved,
+    channel: channel.slack_config?.channel,
   }),
 };
 
@@ -40,7 +40,7 @@ export const TO_API = {
   [NotificationChannelType.email]: (values: NotificationChannelRenderProps): NotificationChannelAPI => ({
     summary: values.name,
     email_config: {
-      to: values.emails.split('\n'),
+      to: values.emails?.split('\n'),
     },
   }),
   [NotificationChannelType.pagerDuty]: (values: NotificationChannelRenderProps): NotificationChannelAPI => ({

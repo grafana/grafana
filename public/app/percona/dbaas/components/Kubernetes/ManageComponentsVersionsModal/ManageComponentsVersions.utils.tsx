@@ -15,14 +15,14 @@ export const requiredVersions = (versions: SelectableValue[]) => {
     return undefined;
   }
 
-  const checked = versions.filter(v => v.value);
+  const checked = versions.filter((v) => v.value);
 
   return checked.length > 0 ? undefined : Messages.required;
 };
 
 export const componentsToOptions = (value: DBClusterMatrix): SelectableValue[] =>
   Object.keys(value)
-    .filter(key => key in SupportedComponents)
+    .filter((key) => key in SupportedComponents)
     .map((key: SupportedComponents) => ({
       name: key,
       value: key,

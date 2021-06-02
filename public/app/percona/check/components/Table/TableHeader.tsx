@@ -6,8 +6,8 @@ interface TableHeaderProps {
 }
 
 export const TableHeader: FC<TableHeaderProps> = ({ columns }) => {
-  const widths = columns.map(col => col.width);
-  const titles = columns.map(col => col.title);
+  const widths = columns.map((col) => col.width);
+  const titles = columns.map((col) => col.title);
 
   return (
     <>

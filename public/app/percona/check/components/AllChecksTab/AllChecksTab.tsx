@@ -27,8 +27,8 @@ export const AllChecksTab: FC = () => {
   const updateUI = (check: CheckDetails) => {
     const { name, disabled } = check;
 
-    setChecks(oldChecks =>
-      oldChecks?.map(oldCheck => {
+    setChecks((oldChecks) =>
+      oldChecks?.map((oldCheck) => {
         if (oldCheck.name !== name) {
           return oldCheck;
         }
@@ -84,7 +84,7 @@ export const AllChecksTab: FC = () => {
           </thead>
           <tbody data-qa="db-checks-all-checks-tbody">
             <ChecksReloadContext.Provider value={{ fetchChecks }}>
-              {checks?.map(check => (
+              {checks?.map((check) => (
                 <CheckTableRow key={check.name} check={check} onSuccess={updateUI} />
               ))}
             </ChecksReloadContext.Provider>

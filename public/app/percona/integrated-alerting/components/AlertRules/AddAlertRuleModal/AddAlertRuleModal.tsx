@@ -48,7 +48,7 @@ export const AddAlertRuleModal: FC<AddAlertRuleModalProps> = ({ isVisible, setVi
   const { getAlertRules } = useContext(AlertRulesProvider);
 
   const updateAlertRuleTemplateParams = () => {
-    setCurrentTemplate(templates.current.find(template => template.name === alertRule?.rawValues.template.name));
+    setCurrentTemplate(templates.current.find((template) => template.name === alertRule?.rawValues.template.name));
   };
 
   const getData = async () => {
@@ -108,7 +108,7 @@ export const AddAlertRuleModal: FC<AddAlertRuleModalProps> = ({ isVisible, setVi
   };
 
   const handleTemplateChange = (name = '') => {
-    const template = templates.current.find(template => template.name === name);
+    const template = templates.current.find((template) => template.name === name);
     setCurrentTemplate(template);
   };
 
@@ -124,8 +124,8 @@ export const AddAlertRuleModal: FC<AddAlertRuleModalProps> = ({ isVisible, setVi
         onSubmit={onSubmit}
         mutators={{
           changeSeverity: ([templateName], state, tools) => {
-            const severityStr = templates.current.find(template => template.name === templateName)?.severity;
-            const newSeverity = SEVERITY_OPTIONS.find(severity => severity.value === severityStr);
+            const severityStr = templates.current.find((template) => template.name === templateName)?.severity;
+            const newSeverity = SEVERITY_OPTIONS.find((severity) => severity.value === severityStr);
 
             if (newSeverity) {
               // TODO since editing the template name is not allowed so far, no need to keep previous option.
@@ -135,7 +135,7 @@ export const AddAlertRuleModal: FC<AddAlertRuleModalProps> = ({ isVisible, setVi
             }
           },
           changeDuration: ([templateName], state, tools) => {
-            const newDuration = templates.current.find(template => template.name === templateName)?.for;
+            const newDuration = templates.current.find((template) => template.name === templateName)?.for;
             tools.changeValue(state, 'duration', () => (newDuration ? parseInt(newDuration, 10) : undefined));
           },
         }}
@@ -148,7 +148,7 @@ export const AddAlertRuleModal: FC<AddAlertRuleModalProps> = ({ isVisible, setVi
                   disabled={!!alertRule}
                   options={templateOptions}
                   {...input}
-                  onChange={name => {
+                  onChange={(name) => {
                     input.onChange(name);
                     form.mutators.changeSeverity(name.value);
                     form.mutators.changeDuration(name.value);
@@ -162,7 +162,7 @@ export const AddAlertRuleModal: FC<AddAlertRuleModalProps> = ({ isVisible, setVi
             <TextInputField label={Messages.nameField} name="name" validators={nameValidators} />
 
             {currentTemplate &&
-              currentTemplate.params?.map(param => <AlertRuleParamField key={param.name} param={param} />)}
+              currentTemplate.params?.map((param) => <AlertRuleParamField key={param.name} param={param} />)}
 
             <NumberInputField label={Messages.durationField} name="duration" validators={durationValidators} />
 

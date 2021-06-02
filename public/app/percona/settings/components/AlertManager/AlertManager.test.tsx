@@ -8,12 +8,7 @@ describe('AlertManager::', () => {
       <AlertManager alertManagerUrl="test url" alertManagerRules="test rules" updateSettings={() => {}} />
     );
 
-    expect(
-      root
-        .find('[data-qa="alertmanager-url"]')
-        .find('input')
-        .prop('value')
-    ).toEqual('test url');
+    expect(root.find('[data-qa="alertmanager-url"]').find('input').prop('value')).toEqual('test url');
     expect(root.find('textarea').text()).toEqual('test rules');
   });
 

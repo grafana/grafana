@@ -58,7 +58,7 @@ export const MetricsResolution: FC<MetricsResolutionProps> = ({ metricsResolutio
     }
 
     if (newResolution !== MetricsResolutionPresets.custom) {
-      const newResolutionKey = resolutionsOptions.findIndex(r => r.value === newResolution);
+      const newResolutionKey = resolutionsOptions.findIndex((r) => r.value === newResolution);
       const resolutions = removeUnits(defaultResolutions[newResolutionKey]);
 
       updateFieldsResolutions(resolutions);

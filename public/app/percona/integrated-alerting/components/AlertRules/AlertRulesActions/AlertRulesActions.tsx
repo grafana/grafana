@@ -46,7 +46,7 @@ export const AlertRulesActions: FC<AlertRulesActionsProps> = ({ alertRule }) => 
 
     const createAlertRulePayload = {
       template_name: rawValues.template.name,
-      channel_ids: rawValues.channels?.map(channel => channel.channel_id),
+      channel_ids: rawValues.channels?.map((channel) => channel.channel_id),
       custom_labels: rawValues.custom_labels,
       ...rawValues,
       disabled: true,

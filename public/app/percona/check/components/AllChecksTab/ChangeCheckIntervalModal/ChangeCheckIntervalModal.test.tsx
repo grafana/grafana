@@ -80,7 +80,6 @@ describe('ChangeCheckIntervalModal', () => {
       wrapper = mount(<ChangeCheckIntervalModal check={TEST_CHECK} setVisible={setVisible} isVisible />);
     });
 
-    // @ts-expect-error
     await act(async () => {
       wrapper.find('form').simulate('submit');
     });

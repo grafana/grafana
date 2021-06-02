@@ -28,7 +28,7 @@ export const MultiCheckboxField: FC<MultiCheckboxFieldProps> = React.memo(
     const validate = useMemo(() => (Array.isArray(validators) ? compose(...validators) : undefined), [validators]);
     const onChangeOption = useCallback(
       (input: FieldInputProps<string, HTMLElement>) => ({ target }: ChangeEvent<HTMLInputElement>) => {
-        const newSelectedOptions = selectedOptions.map(option =>
+        const newSelectedOptions = selectedOptions.map((option) =>
           option.name === target.name ? { ...option, value: target.checked } : option
         );
 
@@ -59,7 +59,7 @@ export const MultiCheckboxField: FC<MultiCheckboxFieldProps> = React.memo(
                 {selectedOptions.map(({ name, label, value }) => (
                   <div className={styles.optionWrapper} key={name} data-qa={`${name}-option`}>
                     <span className={styles.optionLabel}>{label}</span>
-                    {recommendedOptions.some(r => r.name === name) && (
+                    {recommendedOptions.some((r) => r.name === name) && (
                       <span className={styles.recommendedLabel}>{recommendedLabel}</span>
                     )}
                     <CheckboxField

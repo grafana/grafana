@@ -13,11 +13,6 @@ describe('S3Fields', () => {
     expect(inputs.find({ initialValue: '/foo' }).exists()).toBeTruthy();
     expect(inputs.find({ initialValue: 'accessKey' }).exists()).toBeTruthy();
     expect(inputs.find({ initialValue: 'bucket' }).exists()).toBeTruthy();
-    expect(
-      wrapper
-        .find(SecretToggler)
-        .last()
-        .prop('secret')
-    ).toBe('secretKey');
+    expect(wrapper.find(SecretToggler).last().prop('secret')).toBe('secretKey');
   });
 });

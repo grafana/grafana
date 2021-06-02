@@ -12,7 +12,7 @@ export const formatLocationList = (rawList: StorageLocationListReponse): Storage
   const { locations = [] } = rawList;
   const parsedLocations: StorageLocation[] = [];
 
-  locations.forEach(location => {
+  locations.forEach((location) => {
     const { location_id, name, description, pmm_server_config, pmm_client_config, s3_config } = location;
     const newLocation: Partial<StorageLocation> = { name, description, locationID: location_id };
 

@@ -17,8 +17,8 @@ export const TabbedContent: FC<TabbedContentProps> = ({
 }) => {
   const routeUpdated = useRef(false);
   const defaultTab = tabs[0].key;
-  const tabKeys = tabs.map(tab => tab.key);
-  const activeTab = useSelector((state: StoreState) => tabs.find(tab => tab.key === state.location.routeParams.tab));
+  const tabKeys = tabs.map((tab) => tab.key);
+  const activeTab = useSelector((state: StoreState) => tabs.find((tab) => tab.key === state.location.routeParams.tab));
   const isValidTab = (tab?: ContentTab) => Object.values(tabKeys).includes(tab?.key || '');
 
   const selectTab = (tabKey: string) => {

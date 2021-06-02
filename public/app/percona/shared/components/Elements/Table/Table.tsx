@@ -37,9 +37,9 @@ export const Table: FC<TableProps> = ({
       data,
     },
     useRowSelect,
-    hooks => {
+    (hooks) => {
       if (rowSelection) {
-        hooks.visibleColumns.push(columns => [
+        hooks.visibleColumns.push((columns) => [
           {
             id: 'selection',
             Header: ({ getToggleAllRowsSelectedProps }: any) => (

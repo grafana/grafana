@@ -119,7 +119,7 @@ export const Advanced: FC<AdvancedProps> = ({
       standard_interval: `${convertHoursStringToSeconds(standardInterval)}s`,
       frequent_interval: `${convertHoursStringToSeconds(frequentInterval)}s`,
     };
-    const refresh = !!REFRESH_FEATURE_KEYS.find(feature => !!values[feature] !== initialValues[feature]);
+    const refresh = !!REFRESH_FEATURE_KEYS.find((feature) => !!values[feature] !== initialValues[feature]);
     const body: AdvancedChangePayload = {
       data_retention: `${+retention * SECONDS_IN_DAY}s`,
       disable_telemetry: !telemetry,
@@ -138,7 +138,7 @@ export const Advanced: FC<AdvancedProps> = ({
       enable_dbaas: dbaas,
       disable_dbaas: !dbaas,
     };
-    const onError = () => FEATURE_KEYS.forEach(key => form.change(key, initialValues[key]));
+    const onError = () => FEATURE_KEYS.forEach((key) => form.change(key, initialValues[key]));
 
     updateSettings(body, setLoading, refresh, onError);
   };

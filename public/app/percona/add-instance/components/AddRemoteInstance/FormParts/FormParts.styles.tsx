@@ -1,7 +1,7 @@
 import { stylesFactory } from '@grafana/ui';
 import { css } from 'emotion';
 
-export const getStyles = stylesFactory(theme => ({
+export const getStyles = stylesFactory((theme) => ({
   groupWrapper: css`
     width: 50%;
   `,

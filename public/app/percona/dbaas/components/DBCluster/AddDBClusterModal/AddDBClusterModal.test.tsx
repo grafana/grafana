@@ -9,10 +9,7 @@ jest.mock('app/core/app_events');
 
 describe('AddDBClusterModal::', () => {
   const openStep = (root: ReactWrapper, step: string) => {
-    root
-      .find(`[data-qa="${step}"]`)
-      .find('[data-qa="step-header"]')
-      .simulate('click');
+    root.find(`[data-qa="${step}"]`).find('[data-qa="step-header"]').simulate('click');
   };
 
   const isStepActive = (root: ReactWrapper, step: string) =>

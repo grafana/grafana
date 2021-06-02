@@ -58,28 +58,15 @@ describe('StepProgress::', () => {
       />
     );
 
-    expect(
-      wrapper
-        .find('input')
-        .at(0)
-        .prop('value')
-    ).toEqual('Test name');
-    expect(
-      wrapper
-        .find('textarea')
-        .at(0)
-        .prop('value')
-    ).toEqual('Test description');
+    expect(wrapper.find('input').at(0).prop('value')).toEqual('Test name');
+    expect(wrapper.find('textarea').at(0).prop('value')).toEqual('Test description');
   });
   it('changes current step correctly', () => {
     const wrapper = mount(<StepProgress steps={steps} submitButtonMessage="Confirm" onSubmit={() => {}} />);
 
     expect(isCurrentStep(wrapper, 'step-1')).toBeTruthy();
 
-    wrapper
-      .find('[data-qa="step-2"]')
-      .find('[data-qa="step-header"]')
-      .simulate('click');
+    wrapper.find('[data-qa="step-2"]').find('[data-qa="step-header"]').simulate('click');
 
     expect(isCurrentStep(wrapper, 'step-1')).toBeFalsy();
     expect(isCurrentStep(wrapper, 'step-2')).toBeTruthy();

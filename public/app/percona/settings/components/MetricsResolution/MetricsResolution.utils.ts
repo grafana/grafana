@@ -4,7 +4,7 @@ import { MetricsResolutions } from 'app/percona/settings/Settings.types';
 import { defaultResolutions, resolutionsOptions } from './MetricsResolution.constants';
 
 export const getResolutionValue = (metricsResolutions: MetricsResolutions): SelectableValue => {
-  const index = defaultResolutions.findIndex(resolution => isEqual(resolution, metricsResolutions));
+  const index = defaultResolutions.findIndex((resolution) => isEqual(resolution, metricsResolutions));
 
   return index !== -1 ? resolutionsOptions[index] : resolutionsOptions[resolutionsOptions.length - 1];
 };

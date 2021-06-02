@@ -16,7 +16,7 @@ describe('DBClusterAdvancedOptions::', () => {
     const root = await getMount(
       <Form
         onSubmit={jest.fn()}
-        render={renderProps => (
+        render={(renderProps) => (
           <DBClusterAdvancedOptions renderProps={renderProps} selectedCluster={dbClustersStub[0]} />
         )}
       />
@@ -79,7 +79,7 @@ describe('DBClusterAdvancedOptions::', () => {
     const root = await getMount(
       <Form
         onSubmit={jest.fn()}
-        render={renderProps => (
+        render={(renderProps) => (
           <DBClusterAdvancedOptions renderProps={renderProps} selectedCluster={dbClustersStub[0]} />
         )}
       />
@@ -93,7 +93,7 @@ describe('DBClusterAdvancedOptions::', () => {
     const root = await getMount(
       <Form
         onSubmit={jest.fn()}
-        render={renderProps => (
+        render={(renderProps) => (
           <DBClusterAdvancedOptions
             renderProps={{ ...renderProps, valid: true, pristine: false }}
             selectedCluster={dbClustersStub[0]}

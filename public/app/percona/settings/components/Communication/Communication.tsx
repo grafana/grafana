@@ -37,7 +37,7 @@ export const Communication: FC<CommunicationProps> = ({ alertingSettings, update
           <Tab key={index} label={tab.label} active={tab.key === activeTab} onChangeTab={() => setActiveTab(tab.key)} />
         ))}
       </TabsBar>
-      <TabContent>{tabs.map(tab => tab.key === activeTab && tab.component)}</TabContent>
+      <TabContent>{tabs.map((tab) => tab.key === activeTab && tab.component)}</TabContent>
     </div>
   );
 };

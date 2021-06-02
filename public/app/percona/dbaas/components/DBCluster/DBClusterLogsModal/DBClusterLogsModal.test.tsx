@@ -22,10 +22,7 @@ describe('DBClusterLogsModal::', () => {
     expect(root).not.toContain('pre');
     expect(root.find(dataQa('dbcluster-logs')).length).toBe(0);
 
-    const expandButton = root
-      .find(dataQa('dbcluster-logs-actions'))
-      .find('button')
-      .at(0);
+    const expandButton = root.find(dataQa('dbcluster-logs-actions')).find('button').at(0);
 
     await asyncAct(() => expandButton.simulate('click'));
 
@@ -41,10 +38,7 @@ describe('DBClusterLogsModal::', () => {
 
     DBClusterService.getLogs = getLogs();
 
-    const refreshButton = root
-      .find(dataQa('dbcluster-logs-actions'))
-      .find('button')
-      .at(1);
+    const refreshButton = root.find(dataQa('dbcluster-logs-actions')).find('button').at(1);
 
     await asyncAct(() => refreshButton.simulate('click'));
 

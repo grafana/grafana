@@ -16,7 +16,7 @@ import { Messages } from './AddAlertRuleModal.messages';
 
 export const formatChannelsOptions = (channels: NotificationChannel[]): Array<SelectableValue<string>> =>
   channels
-    ? channels.map(channel => ({
+    ? channels.map((channel) => ({
         value: channel.channelId,
         label: channel.summary,
       }))
@@ -24,7 +24,7 @@ export const formatChannelsOptions = (channels: NotificationChannel[]): Array<Se
 
 export const formatTemplateOptions = (templates: Template[]): Array<SelectableValue<string>> =>
   templates
-    ? templates.map(template => ({
+    ? templates.map((template) => ({
         value: template.name,
         label: template.summary,
       }))
@@ -70,16 +70,16 @@ export const formatCreateAPIPayload = (
   const payload: AlertRuleCreatePayload = {
     custom_labels: {},
     disabled: !enabled,
-    channel_ids: notificationChannels ? notificationChannels.map(channel => channel.value) : [],
+    channel_ids: notificationChannels ? notificationChannels.map((channel) => channel.value as string) : [],
     filters: filters ? formatFilters(filters) : [],
     for: `${duration}s`,
-    severity: severity.value,
-    template_name: template.value,
+    severity: severity.value as Severity,
+    template_name: template.value as string,
     summary: name,
     params: [],
   };
 
-  params.forEach(param => {
+  params.forEach((param) => {
     if (data.hasOwnProperty(param.name)) {
       const { name, type } = param;
       const value = data[param.name];
@@ -152,7 +152,7 @@ export const getInitialValues = (alertRule?: AlertRule | null): AddAlertRuleForm
     template: formatEditTemplate(template),
   };
 
-  params?.forEach(param => {
+  params?.forEach((param) => {
     const { float, type } = param;
     const typeMap: Record<keyof typeof AlertRuleParamType, any> = {
       FLOAT: float,

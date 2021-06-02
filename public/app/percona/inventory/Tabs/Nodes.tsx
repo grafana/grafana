@@ -54,7 +54,7 @@ export const NodesTab = () => {
     try {
       setLoading(true);
       // eslint-disable-next-line max-len
-      const requests = nodes.map(node =>
+      const requests = nodes.map((node) =>
         InventoryService.removeNode({ node_id: node.original.node_id, force: forceMode })
       );
 
@@ -143,7 +143,7 @@ export const NodesTab = () => {
           columns={NODES_COLUMNS}
           data={data}
           rowSelection
-          onRowSelection={selected => setSelectedRows(selected)}
+          onRowSelection={(selected) => setSelectedRows(selected)}
           noData={<h1>No nodes Available</h1>}
           loading={loading}
         />

@@ -92,76 +92,16 @@ describe('AllChecksTab::', () => {
     expect(wrapper.find(dataQa('db-checks-all-checks-thead'))).toHaveLength(1);
     expect(wrapper.find(tbody)).toHaveLength(1);
     expect(wrapper.find(tbody).find('tr > td')).toHaveLength(10);
-    expect(
-      wrapper
-        .find(tbody)
-        .find('tr > td')
-        .at(0)
-        .text()
-    ).toBe('Test');
-    expect(
-      wrapper
-        .find(tbody)
-        .find('tr > td')
-        .at(1)
-        .text()
-    ).toBe('test enabled description');
-    expect(
-      wrapper
-        .find(tbody)
-        .find('tr > td')
-        .at(2)
-        .text()
-    ).toBe(Messages.enabled);
-    expect(
-      wrapper
-        .find(tbody)
-        .find('tr > td')
-        .at(3)
-        .text()
-    ).toBe(Interval.STANDARD);
-    expect(
-      wrapper
-        .find(tbody)
-        .find('tr > td')
-        .at(4)
-        .text()
-    ).toBe(Messages.disable);
-    expect(
-      wrapper
-        .find(tbody)
-        .find('tr > td')
-        .at(5)
-        .text()
-    ).toBe('Test disabled');
-    expect(
-      wrapper
-        .find(tbody)
-        .find('tr > td')
-        .at(6)
-        .text()
-    ).toBe('test disabled description');
-    expect(
-      wrapper
-        .find(tbody)
-        .find('tr > td')
-        .at(7)
-        .text()
-    ).toBe(Messages.disabled);
-    expect(
-      wrapper
-        .find(tbody)
-        .find('tr > td')
-        .at(8)
-        .text()
-    ).toBe(Interval.RARE);
-    expect(
-      wrapper
-        .find(tbody)
-        .find('tr > td')
-        .at(9)
-        .text()
-    ).toBe(Messages.enable);
+    expect(wrapper.find(tbody).find('tr > td').at(0).text()).toBe('Test');
+    expect(wrapper.find(tbody).find('tr > td').at(1).text()).toBe('test enabled description');
+    expect(wrapper.find(tbody).find('tr > td').at(2).text()).toBe(Messages.enabled);
+    expect(wrapper.find(tbody).find('tr > td').at(3).text()).toBe(Interval.STANDARD);
+    expect(wrapper.find(tbody).find('tr > td').at(4).text()).toBe(Messages.disable);
+    expect(wrapper.find(tbody).find('tr > td').at(5).text()).toBe('Test disabled');
+    expect(wrapper.find(tbody).find('tr > td').at(6).text()).toBe('test disabled description');
+    expect(wrapper.find(tbody).find('tr > td').at(7).text()).toBe(Messages.disabled);
+    expect(wrapper.find(tbody).find('tr > td').at(8).text()).toBe(Interval.RARE);
+    expect(wrapper.find(tbody).find('tr > td').at(9).text()).toBe(Messages.enable);
 
     wrapper.unmount();
   });

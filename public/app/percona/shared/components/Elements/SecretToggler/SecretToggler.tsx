@@ -9,7 +9,7 @@ export const SecretToggler: FC<SecretTogglerProps> = ({ secret, readOnly, fieldP
   const [visible, setVisible] = useState(false);
   const styles = useStyles(getStyles);
 
-  const toggleVisibility = () => setVisible(visible => !visible);
+  const toggleVisibility = () => setVisible((visible) => !visible);
 
   const iconButton = useMemo(
     () => (

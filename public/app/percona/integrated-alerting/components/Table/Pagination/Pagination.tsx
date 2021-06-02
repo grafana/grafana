@@ -48,7 +48,7 @@ export const Pagination: FC<PaginationProps> = ({
             isSearchable={false}
             value={pageSize}
             options={pageSizeOptions}
-            onChange={e => pageSizeChanged(e.value || 0)}
+            onChange={(e) => pageSizeChanged(e.value || 0)}
           />
         </span>
       </span>
@@ -71,7 +71,7 @@ export const Pagination: FC<PaginationProps> = ({
             disabled={activePageIndex === 0}
             onClick={() => gotoPage(activePageIndex - 1)}
           />
-          {shownPages.map(page => (
+          {shownPages.map((page) => (
             <Button
               data-qa="page-button"
               variant={activePageIndex === page ? 'primary' : 'secondary'}

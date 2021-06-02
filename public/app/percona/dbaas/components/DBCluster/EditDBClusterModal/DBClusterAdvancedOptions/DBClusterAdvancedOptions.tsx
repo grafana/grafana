@@ -49,7 +49,7 @@ export const DBClusterAdvancedOptions: FC<DBClusterAdvancedOptionsProps> = ({ se
   const nodeValidators = [required, min(MIN_NODES)];
   const resourceValidators = [required, min(MIN_RESOURCES), resourceValidator];
   const { topology, resources, memory, cpu, disk, nodes, single } = values;
-  const parsePositiveInt = useCallback(value => (value > 0 && Number.isInteger(+value) ? value : undefined), []);
+  const parsePositiveInt = useCallback((value) => (value > 0 && Number.isInteger(+value) ? value : undefined), []);
   const resourcesBarStyles = useMemo(
     () => ({
       [styles.resourcesBar]: !!allocatedResources,

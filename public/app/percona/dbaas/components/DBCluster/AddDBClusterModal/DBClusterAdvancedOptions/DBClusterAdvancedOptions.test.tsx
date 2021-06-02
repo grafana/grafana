@@ -13,7 +13,7 @@ jest.mock('../../XtraDB.service');
 describe('DBClusterAdvancedOptions::', () => {
   it('renders correctly', async () => {
     const root = await getMount(
-      <Form onSubmit={jest.fn()} render={renderProps => <DBClusterAdvancedOptions {...renderProps} />} />
+      <Form onSubmit={jest.fn()} render={(renderProps) => <DBClusterAdvancedOptions {...renderProps} />} />
     );
 
     expect(root.find('[data-qa="topology-radio-state"]')).toBeTruthy();
@@ -46,7 +46,7 @@ describe('DBClusterAdvancedOptions::', () => {
   });
   it('should set nodes to 1 when topology is single', async () => {
     const root = await getMount(
-      <Form onSubmit={jest.fn()} render={renderProps => <DBClusterAdvancedOptions {...renderProps} />} />
+      <Form onSubmit={jest.fn()} render={(renderProps) => <DBClusterAdvancedOptions {...renderProps} />} />
     );
     root.find('[data-qa="topology-radio-state"]').simulate('change', { target: { value: DBClusterTopology.single } });
 

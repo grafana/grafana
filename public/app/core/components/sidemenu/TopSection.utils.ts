@@ -17,7 +17,7 @@ export const buildIntegratedAlertingMenuItem = (mainLinks: NavModelItem[]): NavM
   const alertingIndex = mainLinks.findIndex(({ id }) => id === 'alerting');
 
   if (alertingIndex >= 0) {
-    mainLinks[alertingIndex].children.unshift(integratedAlertingLink, divider);
+    mainLinks[alertingIndex].children?.unshift(integratedAlertingLink, divider);
   }
 
   return mainLinks;

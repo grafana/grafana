@@ -10,7 +10,7 @@ export const PlatformLogin: FC<SignUpProps> = ({ userEmail, getSettings }) => {
   const theme = useTheme();
   const styles = getStyles(theme);
   const [isSignInMode, setMode] = useState(true);
-  const toggleMode = () => setMode(currentMode => !currentMode);
+  const toggleMode = () => setMode((currentMode) => !currentMode);
 
   return (
     <>

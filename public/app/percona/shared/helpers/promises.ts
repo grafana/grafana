@@ -12,7 +12,7 @@ export type PromiseResult = FulfilledPromiseResult | RejectedPromiseResult;
 
 export const processPromiseResults = (requests: Array<Promise<any>>): Promise<PromiseResult[]> =>
   Promise.all(
-    requests.map(promise =>
+    requests.map((promise) =>
       promise
         .then(
           (value): FulfilledPromiseResult => ({

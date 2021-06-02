@@ -50,7 +50,7 @@ export const processData = (data: Alert[]): ActiveCheck[] => {
       silenced: boolean;
     }>
   > = data
-    .filter(alert => !!alert.labels.stt_check)
+    .filter((alert) => !!alert.labels.stt_check)
     .reduce((acc, alert) => {
       const {
         labels,
@@ -100,7 +100,7 @@ export const processData = (data: Alert[]): ActiveCheck[] => {
     );
 
     const details = value
-      .map(val => ({
+      .map((val) => ({
         description: `${val.summary}${val.description ? `: ${val.description}` : ''}`,
         labels: val.labels ?? [],
         silenced: val.silenced,
@@ -123,7 +123,7 @@ export const processData = (data: Alert[]): ActiveCheck[] => {
 
 export const sumFailedChecks = (checks: ActiveCheck[]): FailedChecks =>
   checks
-    .map(rec => rec.failed)
+    .map((rec) => rec.failed)
     .reduce(
       (acc, failed) => {
         acc[0] += failed[0];

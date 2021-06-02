@@ -27,7 +27,7 @@ export const useDBClusters = (kubernetes: Kubernetes[]): ManageDBClusters => {
     }
 
     try {
-      const requests = DATABASES.map(database => getClusters(kubernetes, database));
+      const requests = DATABASES.map((database) => getClusters(kubernetes, database));
       const results = await Promise.all(requests);
       const clustersList = results.reduce((acc, r) => acc.concat(r), []);
 
@@ -56,7 +56,7 @@ export const useDBClusters = (kubernetes: Kubernetes[]): ManageDBClusters => {
 
 const getClusters = async (kubernetes: Kubernetes[], databaseType: Databases): Promise<DBCluster[]> => {
   const dbClusterService = newDBClusterService(databaseType);
-  const kubernetesByOperator = kubernetes.filter(kubernetesCluster => {
+  const kubernetesByOperator = kubernetes.filter((kubernetesCluster) => {
     const operator = OPERATORS[databaseType] as Operators;
     const operatorStatus = kubernetesCluster.operators[operator].status;
 
@@ -73,7 +73,7 @@ const getClusters = async (kubernetes: Kubernetes[], databaseType: Databases): P
     const clusters: DBClusterPayload[] = (r as FulfilledPromiseResult).value?.clusters ?? [];
 
     // eslint-disable-next-line arrow-body-style
-    const resultClusters = clusters.map(cluster => {
+    const resultClusters = clusters.map((cluster) => {
       return dbClusterService.toModel(cluster, kubernetesByOperator[index].kubernetesClusterName, databaseType);
     });
 

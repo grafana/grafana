@@ -3,7 +3,7 @@ import { logger } from '@percona/platform-core';
 import { PAGE_SIZES } from './Pagination.constants';
 
 export const getPageSize = (pageSize: number) =>
-  PAGE_SIZES.find(size => size.value === pageSize) ? pageSize : (PAGE_SIZES[0].value as number);
+  PAGE_SIZES.find((size) => size.value === pageSize) ? pageSize : (PAGE_SIZES[0].value as number);
 
 export const useStoredTablePageSize = (tableId: string) => {
   let pageSize = PAGE_SIZES[0].value as number;

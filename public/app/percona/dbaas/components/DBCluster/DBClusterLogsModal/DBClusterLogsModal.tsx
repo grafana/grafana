@@ -30,7 +30,7 @@ export const DBClusterLogsModal: FC<DBClusterLogsModalProps> = ({ dbCluster, isV
   };
   const toggleCollapse = () => {
     setLogs({ pods: toggleLogs(logs.pods, !expanded) });
-    setExpanded(currentValue => !currentValue);
+    setExpanded((currentValue) => !currentValue);
   };
   const refresh = () => {
     getClusterLogs();
@@ -68,7 +68,7 @@ export const DBClusterLogsModal: FC<DBClusterLogsModalProps> = ({ dbCluster, isV
                       <Icon name="sync" />
                     </Button>
                   </div>
-                  {logs.pods.map(pod => (
+                  {logs.pods.map((pod) => (
                     <PodLogs key={`${pod.name}${pod.isOpen}`} podLogs={pod} />
                   ))}
                 </>

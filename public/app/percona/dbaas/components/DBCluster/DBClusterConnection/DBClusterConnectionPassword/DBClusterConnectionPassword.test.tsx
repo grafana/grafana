@@ -7,12 +7,7 @@ describe('DBClusterConnectionPassword::', () => {
   it('renders correctly', () => {
     const root = mount(<DBClusterConnectionPassword label="Test" password="1234" />);
 
-    expect(
-      root
-        .find('div')
-        .at(0)
-        .children().length
-    ).toBe(2);
+    expect(root.find('div').at(0).children().length).toBe(2);
     expect(root.text()).toContain('Test');
     expect(root.text()).toContain('*'.repeat(HIDDEN_PASSWORD_LENGTH));
   });

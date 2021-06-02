@@ -29,7 +29,7 @@ jest.mock('@grafana/runtime', () => {
 describe('SettingsPanel::', () => {
   beforeEach(() => {
     console.error = jest.fn();
-    (useSelector as jest.Mock).mockImplementation(callback => {
+    (useSelector as jest.Mock).mockImplementation((callback) => {
       return callback({ location: { routeParams: { tab: 'alerts' }, path: '/integrated-alerting/alerts' } });
     });
   });

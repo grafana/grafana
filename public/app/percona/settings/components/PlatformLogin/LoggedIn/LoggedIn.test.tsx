@@ -22,10 +22,7 @@ describe('LoggedIn::', () => {
 
     expect(PlatformLoginService.signOut).toBeCalledTimes(0);
 
-    root
-      .find(Button)
-      .at(0)
-      .simulate('click');
+    root.find(Button).at(0).simulate('click');
 
     expect(PlatformLoginService.signOut).toBeCalledTimes(1);
   });

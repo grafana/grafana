@@ -22,10 +22,7 @@ describe('NotificationChannel', () => {
 
     expect(wrapper.contains(dataQa('modal-wrapper'))).toBeFalsy();
 
-    wrapper
-      .find(dataQa('notification-channel-add-modal-button'))
-      .find('button')
-      .simulate('click');
+    wrapper.find(dataQa('notification-channel-add-modal-button')).find('button').simulate('click');
 
     expect(wrapper.find(dataQa('modal-wrapper'))).toBeTruthy();
   });

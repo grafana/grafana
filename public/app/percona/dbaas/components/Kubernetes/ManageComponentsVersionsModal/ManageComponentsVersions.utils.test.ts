@@ -19,7 +19,7 @@ describe('ManageComponentsVersions.utils::', () => {
 
   it('checks that at least one version is checked', () => {
     expect(requiredVersions(versions)).toBeUndefined();
-    expect(requiredVersions(versions.map(v => ({ ...v, value: false })))).not.toBeUndefined();
+    expect(requiredVersions(versions.map((v) => ({ ...v, value: false })))).not.toBeUndefined();
   });
   it('converts components to options', () => {
     const components = psmdbComponentsVersionsStubs.versions[0].matrix;

@@ -51,7 +51,7 @@ export const AddInstance: FC<AddInstanceProps> = ({ onSelectInstanceType }) => {
       <nav className={styles.navigationPanel}>
         {instanceList
           .filter(({ isHidden }) => !isHidden)
-          .map(item => (
+          .map((item) => (
             <SelectInstance
               selectInstanceType={selectInstanceType}
               type={item.type}

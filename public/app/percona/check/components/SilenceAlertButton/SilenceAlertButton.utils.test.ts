@@ -31,10 +31,7 @@ describe('SilenceAlertButton.utils::', () => {
     Date.now = jest.fn(() => 1595163832705);
 
     const nowUTCISO = moment.utc().format();
-    const tomorrowUTCISO = moment
-      .utc()
-      .add(24, 'hours')
-      .format();
+    const tomorrowUTCISO = moment.utc().add(24, 'hours').format();
 
     const silencePayload = makeSilencePayload(labels);
 

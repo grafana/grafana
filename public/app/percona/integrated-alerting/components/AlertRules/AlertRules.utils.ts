@@ -45,12 +45,12 @@ export const formatRule = (rule: AlertRulesListResponseRule): AlertRule => {
   const resultParams: AlertRulesParsedParam[] = [];
 
   params.forEach(({ name, type, ...rest }) => {
-    const matchingTemplateParam = templateParams.find(param => param.name === name);
+    const matchingTemplateParam = templateParams.find((param) => param.name === name);
 
     if (matchingTemplateParam) {
       resultParams.push({
         ...matchingTemplateParam,
-        value: Object.values(rest).find(value => value !== undefined),
+        value: Object.values(rest).find((value) => value !== undefined),
       });
     }
   });

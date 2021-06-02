@@ -19,10 +19,7 @@ describe('AlertRuleTemplateActions', () => {
       <AlertRuleTemplateActions template={formattedTemplateStubs[1]} getAlertRuleTemplates={jest.fn()} />
     );
 
-    wrapper
-      .find(dataQa('edit-template-button'))
-      .find('button')
-      .simulate('click');
+    wrapper.find(dataQa('edit-template-button')).find('button').simulate('click');
 
     expect(wrapper.find(dataQa('alert-rule-template-edit-button'))).toBeTruthy();
   });
@@ -32,10 +29,7 @@ describe('AlertRuleTemplateActions', () => {
       <AlertRuleTemplateActions template={formattedTemplateStubs[1]} getAlertRuleTemplates={jest.fn()} />
     );
 
-    wrapper
-      .find(dataQa('delete-template-button'))
-      .find('button')
-      .simulate('click');
+    wrapper.find(dataQa('delete-template-button')).find('button').simulate('click');
 
     expect(wrapper.find(dataQa('confirm-delete-modal-button'))).toBeTruthy();
   });

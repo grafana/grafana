@@ -35,7 +35,7 @@ const AddRemoteInstance: FC<AddRemoteInstanceProps> = ({ instance: { type, crede
   }
 
   const onSubmit = useCallback(
-    async values => {
+    async (values) => {
       try {
         setLoading(true);
 

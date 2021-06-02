@@ -123,7 +123,7 @@ export const NotificationChannel: FC = () => {
       <DeleteNotificationChannelModal
         isVisible={deleteModalVisible}
         setVisible={setDeleteModalVisible}
-        notificationChannel={selectedNotificationChannel}
+        notificationChannel={selectedNotificationChannel as Channel}
       />
     </NotificationChannelProvider.Provider>
   );

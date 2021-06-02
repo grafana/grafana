@@ -21,18 +21,8 @@ describe('MultiCheckboxField', () => {
     const optionsWrapper = wrapper.find(dataQa('test-options'));
 
     expect(optionsWrapper.children().length).toBe(optionsStub.length);
-    expect(
-      optionsWrapper
-        .find(dataQa('v1.0-option'))
-        .text()
-        .includes('1.0')
-    ).toBeTruthy();
-    expect(
-      optionsWrapper
-        .find(dataQa('v5.3.1-option'))
-        .text()
-        .includes('5.3.1')
-    ).toBeTruthy();
+    expect(optionsWrapper.find(dataQa('v1.0-option')).text().includes('1.0')).toBeTruthy();
+    expect(optionsWrapper.find(dataQa('v5.3.1-option')).text().includes('5.3.1')).toBeTruthy();
   });
   it('renders recommended option', () => {
     const wrapper = mount(
@@ -49,12 +39,7 @@ describe('MultiCheckboxField', () => {
       />
     );
 
-    expect(
-      wrapper
-        .find(dataQa('v2.2-option'))
-        .text()
-        .includes('Recommended')
-    ).toBeTruthy();
+    expect(wrapper.find(dataQa('v2.2-option')).text().includes('Recommended')).toBeTruthy();
   });
   it('submits correct values', () => {
     const onSubmit = jest.fn();

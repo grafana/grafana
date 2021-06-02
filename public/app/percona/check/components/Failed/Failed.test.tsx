@@ -7,12 +7,7 @@ describe('Failed::', () => {
   it('should render a sum of total failed checks with severity details', () => {
     const root = shallow(<Failed failed={[1, 0, 1]} />);
 
-    expect(
-      root
-        .find('div > span')
-        .at(0)
-        .text()
-    ).toEqual('2 (1 / 0 / 1)');
+    expect(root.find('div > span').at(0).text()).toEqual('2 (1 / 0 / 1)');
   });
 
   it('should render inner components', () => {

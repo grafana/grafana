@@ -16,7 +16,7 @@ export const ExternalServiceConnectionDetails: FC<FormPartProps> = ({ form }) =>
   const urlValue = formValues?.url;
   const portValidators = useMemo(() => [validators.required, Validators.validatePort], []);
 
-  const trim = useCallback(value => (value ? value.trim() : value), []);
+  const trim = useCallback((value) => (value ? value.trim() : value), []);
   const getUrlParts = () => {
     try {
       const url = new URL(form.getState().values.url);

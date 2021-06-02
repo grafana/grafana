@@ -43,12 +43,7 @@ describe('AlertActions', () => {
   it('calls the API to activate a silenced alert', async () => {
     const wrapper = await getMount(<AlertsActions alert={formatAlert(alertsStubs[3])} getAlerts={fakeGetAlerts} />);
 
-    await asyncAct(() =>
-      wrapper
-        .find(dataQa('silence-alert-button'))
-        .at(0)
-        .simulate('click')
-    );
+    await asyncAct(() => wrapper.find(dataQa('silence-alert-button')).at(0).simulate('click'));
     wrapper.update();
     expect(alertsServiceToggle).toBeCalledTimes(1);
     expect(alertsServiceToggle).toBeCalledWith({ alert_id: '4', silenced: 'FALSE' }, undefined);
@@ -56,12 +51,7 @@ describe('AlertActions', () => {
 
   it('calls the API to silence an active alert', async () => {
     const wrapper = await getMount(<AlertsActions alert={formatAlert(alertsStubs[1])} getAlerts={fakeGetAlerts} />);
-    await asyncAct(() =>
-      wrapper
-        .find(dataQa('silence-alert-button'))
-        .at(0)
-        .simulate('click')
-    );
+    await asyncAct(() => wrapper.find(dataQa('silence-alert-button')).at(0).simulate('click'));
 
     wrapper.update();
 

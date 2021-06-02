@@ -51,7 +51,7 @@ export const Field: React.FC<FieldProps> = ({ label, invalid, loading, disabled,
   const styles = getFieldStyles(theme);
 
   // Get the first, and only, child to retrieve form input's id
-  const child = React.Children.map(children, c => c)![0];
+  const child = React.Children.map(children, (c) => c)![0];
 
   if (child) {
     // Retrieve input's id to apply on the label for correct click interaction

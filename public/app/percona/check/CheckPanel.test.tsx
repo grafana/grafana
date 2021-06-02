@@ -41,7 +41,7 @@ const runAllPromises = () => new Promise(setImmediate);
 
 describe('CheckPanel::', () => {
   beforeEach(() => {
-    (useSelector as jest.Mock).mockImplementation(callback => {
+    (useSelector as jest.Mock).mockImplementation((callback) => {
       return callback({ location: { routeParams: { tab: 'alerts' }, path: '/integrated-alerting/alerts' } });
     });
   });

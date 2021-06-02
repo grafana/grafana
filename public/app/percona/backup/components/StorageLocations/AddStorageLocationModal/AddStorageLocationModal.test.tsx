@@ -80,12 +80,7 @@ describe('AddStorageLocationModal', () => {
 
   it('should show the "Add" button when no location passed', () => {
     const wrapper = mount(<AddStorageLocationModal location={null} onClose={jest.fn()} onAdd={jest.fn()} isVisible />);
-    expect(
-      wrapper
-        .find(dataQa('storage-location-add-button'))
-        .first()
-        .text()
-    ).toBe(Messages.addAction);
+    expect(wrapper.find(dataQa('storage-location-add-button')).first().text()).toBe(Messages.addAction);
   });
 
   it('should show the "Edit" button when a location is passed', () => {
@@ -99,12 +94,7 @@ describe('AddStorageLocationModal', () => {
     const wrapper = mount(
       <AddStorageLocationModal location={location} onClose={jest.fn()} onAdd={jest.fn()} isVisible />
     );
-    expect(
-      wrapper
-        .find(dataQa('storage-location-add-button'))
-        .first()
-        .text()
-    ).toBe(Messages.editAction);
+    expect(wrapper.find(dataQa('storage-location-add-button')).first().text()).toBe(Messages.editAction);
   });
 
   it('should have the test button', () => {
@@ -116,12 +106,7 @@ describe('AddStorageLocationModal', () => {
   it('should disable the test button if the form is invalid', () => {
     const wrapper = mount(<AddStorageLocationModal location={null} onClose={jest.fn()} onAdd={jest.fn()} isVisible />);
 
-    expect(
-      wrapper
-        .find(dataQa('storage-location-test-button'))
-        .last()
-        .props().disabled
-    ).toBe(true);
+    expect(wrapper.find(dataQa('storage-location-test-button')).last().props().disabled).toBe(true);
   });
 
   it('should enable the test button if the form is valid', () => {
@@ -136,12 +121,7 @@ describe('AddStorageLocationModal', () => {
       <AddStorageLocationModal location={location} onClose={jest.fn()} onAdd={jest.fn()} isVisible />
     );
 
-    expect(
-      wrapper
-        .find(dataQa('storage-location-test-button'))
-        .last()
-        .props().disabled
-    ).toBe(false);
+    expect(wrapper.find(dataQa('storage-location-test-button')).last().props().disabled).toBe(false);
   });
 
   it('should disable the add button while waiting for test validation', () => {
@@ -162,11 +142,6 @@ describe('AddStorageLocationModal', () => {
       />
     );
 
-    expect(
-      wrapper
-        .find(dataQa('storage-location-add-button'))
-        .last()
-        .props().disabled
-    ).toBe(true);
+    expect(wrapper.find(dataQa('storage-location-add-button')).last().props().disabled).toBe(true);
   });
 });

@@ -48,12 +48,7 @@ describe('CheckTableRow::', () => {
     expect(tdElements.at(3).text()).toBe('Frequent');
     expect(tdElements.at(4).text()).toBe(Messages.disable);
     expect(tdElements.at(4).find(LoaderButton)).toHaveLength(1);
-    expect(
-      tdElements
-        .at(4)
-        .find(LoaderButton)
-        .prop('variant')
-    ).toBe('destructive');
+    expect(tdElements.at(4).find(LoaderButton).prop('variant')).toBe('destructive');
 
     wrapper = mount(<CheckTableRow check={TEST_CHECK_DISABLED} onSuccess={fakeOnSuccess} />);
     tdElements = wrapper.find('tr').find('td');
@@ -61,12 +56,7 @@ describe('CheckTableRow::', () => {
     expect(tdElements.at(2).text()).toBe(Messages.disabled);
     expect(tdElements.at(3).text()).toBe('Rare');
     expect(tdElements.at(4).text()).toBe(Messages.enable);
-    expect(
-      tdElements
-        .at(4)
-        .find(LoaderButton)
-        .prop('variant')
-    ).toBe('primary');
+    expect(tdElements.at(4).find(LoaderButton).prop('variant')).toBe('primary');
 
     wrapper.unmount();
   });

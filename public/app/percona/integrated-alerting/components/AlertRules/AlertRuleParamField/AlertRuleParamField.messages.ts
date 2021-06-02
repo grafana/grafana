@@ -9,7 +9,7 @@ export const Messages = {
 
     const lowerCaseNameSentenceArr = name.toLowerCase().split(' ');
     const capitalizedSentence = lowerCaseNameSentenceArr
-      .map(word => `${word[0].toUpperCase()}${word.slice(1)}`)
+      .map((word) => `${word[0].toUpperCase()}${word.slice(1)}`)
       .join(' ');
     const { hasMin, hasMax, min = 0, max = 0 } = float;
     const paramDetails: string[] = [beautifyUnit(unit)];

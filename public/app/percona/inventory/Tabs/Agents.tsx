@@ -52,7 +52,7 @@ export const Agents = () => {
     try {
       setLoading(true);
       // eslint-disable-next-line max-len
-      const requests = agents.map(agent =>
+      const requests = agents.map((agent) =>
         InventoryService.removeAgent({ agent_id: agent.original.agent_id, force: forceMode })
       );
       const results = await processPromiseResults(requests);
@@ -139,7 +139,7 @@ export const Agents = () => {
           columns={AGENTS_COLUMNS}
           data={data}
           rowSelection
-          onRowSelection={selected => setSelectedRows(selected)}
+          onRowSelection={(selected) => setSelectedRows(selected)}
           noData={<h1>No agents Available</h1>}
           loading={loading}
         />

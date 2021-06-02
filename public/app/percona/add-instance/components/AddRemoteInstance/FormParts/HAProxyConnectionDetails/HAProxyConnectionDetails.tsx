@@ -12,7 +12,7 @@ export const HAProxyConnectionDetails: FC<MainDetailsFormPartProps> = ({ remoteI
   const styles = getStyles(theme);
 
   const portValidators = useMemo(() => [validators.required, Validators.validatePort], []);
-  const trim = useCallback(value => (value ? value.trim() : value), []);
+  const trim = useCallback((value) => (value ? value.trim() : value), []);
 
   return (
     <div className={styles.groupWrapper}>

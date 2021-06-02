@@ -27,7 +27,7 @@ const { Form } = withTypes<NotificationChannelRenderProps>();
 const TypeField: FC<{ values: NotificationChannelRenderProps }> = ({ values }) => {
   const { type } = values;
 
-  switch (type.value) {
+  switch (type?.value) {
     case NotificationChannelType.email:
       return <EmailFields />;
     case NotificationChannelType.pagerDuty:
@@ -44,7 +44,7 @@ export const AddNotificationChannelModal: FC<AddNotificationChannelModalProps> =
   notificationChannel,
   setVisible,
 }) => {
-  const initialValues = getInitialValues(notificationChannel);
+  const initialValues = notificationChannel ? getInitialValues(notificationChannel) : {};
   const { getNotificationChannels } = useContext(NotificationChannelProvider);
   const onSubmit = async (values: NotificationChannelRenderProps) => {
     const submittedValues = { ...values };
@@ -57,7 +57,7 @@ export const AddNotificationChannelModal: FC<AddNotificationChannelModalProps> =
 
     try {
       if (notificationChannel) {
-        await NotificationChannelService.change(notificationChannel.channelId, submittedValues);
+        await NotificationChannelService.change(notificationChannel.channelId as string, submittedValues);
       } else {
         await NotificationChannelService.add(submittedValues);
       }

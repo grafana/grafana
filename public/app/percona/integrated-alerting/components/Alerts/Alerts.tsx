@@ -64,7 +64,7 @@ export const Alerts: FC = () => {
         Header: labelsColumn,
         accessor: ({ labels }: Alert) => (
           <div className={style.labelsWrapper}>
-            {labels.map(label => (
+            {labels.map((label) => (
               <span key={label} className={style.label}>
                 {label}
               </span>

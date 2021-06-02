@@ -18,7 +18,7 @@ export const NotificationChannelService = {
     return api
       .post(`${BASE_URL}/List`, payload, false, token)
       .then(({ channels, totals }: NotificationChannelListResponse) => ({
-        channels: channels ? channels.map(channel => TO_MODEL[getType(channel)](channel)) : [],
+        channels: channels ? channels.map((channel) => TO_MODEL[getType(channel)](channel)) : [],
         totals,
       }));
   },

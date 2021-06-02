@@ -19,9 +19,9 @@ export const AlertRuleTemplateService = {
     return api.post<TemplatesListAPI, any>(`${BASE_URL}/List`, { ...payload, reload: true }, false, token).then(
       ({ totals, templates = [] }): TemplatesList => ({
         totals,
-        templates: templates.map(template => ({
+        templates: templates.map((template) => ({
           ...template,
-          params: template.params?.map(param => ({
+          params: template.params?.map((param) => ({
             ...param,
             float: param.float
               ? {

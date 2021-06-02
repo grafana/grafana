@@ -17,7 +17,7 @@ export const useCancelToken = () => {
 
   useEffect(
     () => () => {
-      Object.keys(tokens.current).forEach(sourceName => {
+      Object.keys(tokens.current).forEach((sourceName) => {
         cancelToken(sourceName);
       });
     },

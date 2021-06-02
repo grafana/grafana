@@ -56,7 +56,7 @@ export const Services = () => {
     try {
       setLoading(true);
       // eslint-disable-next-line max-len
-      const requests = services.map(service =>
+      const requests = services.map((service) =>
         InventoryService.removeService({ service_id: service.original.service_id, force: forceMode })
       );
       const results = await processPromiseResults(requests);
@@ -141,7 +141,7 @@ export const Services = () => {
           columns={SERVICES_COLUMNS}
           data={data}
           rowSelection
-          onRowSelection={selected => setSelectedRows(selected)}
+          onRowSelection={(selected) => setSelectedRows(selected)}
           noData={<h1>No services Available</h1>}
           loading={loading}
         />

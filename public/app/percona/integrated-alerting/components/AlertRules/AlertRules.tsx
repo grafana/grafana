@@ -112,7 +112,7 @@ export const AlertRules: FC = () => {
         Header: filtersColumn,
         accessor: ({ filters }: AlertRule) => (
           <div className={styles.filtersWrapper}>
-            {filters.map(filter => (
+            {filters.map((filter) => (
               <span key={filter} className={styles.filter}>
                 {filter}
               </span>
@@ -142,7 +142,7 @@ export const AlertRules: FC = () => {
 
   const handleAddButton = () => {
     setSelectedAlertRule(null);
-    setAddModalVisible(currentValue => !currentValue);
+    setAddModalVisible((currentValue) => !currentValue);
   };
 
   const renderSelectedSubRow = useCallback(

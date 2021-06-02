@@ -59,7 +59,7 @@ export const FailedChecksTab: FC<FailedChecksTabProps> = ({ hasNoAccess }) => {
   };
 
   const toggleShowSilenced = () => {
-    setShowSilenced(currentValue => !currentValue);
+    setShowSilenced((currentValue) => !currentValue);
   };
 
   useEffect(() => {

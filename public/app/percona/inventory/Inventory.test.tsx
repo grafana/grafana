@@ -41,7 +41,7 @@ describe('Inventory tables', () => {
     const root = mount(
       <Table
         data={InventoryDataService.getAgentModel(response as any)}
-        rowKey={rec => rec.agent_id}
+        rowKey={(rec) => rec.agent_id}
         columns={AGENTS_COLUMNS}
         loading={false}
       />
@@ -67,7 +67,7 @@ describe('Inventory tables', () => {
     const root = mount(
       <Table
         data={InventoryDataService.getServiceModel(response as any)}
-        rowKey={rec => rec.service_id}
+        rowKey={(rec) => rec.service_id}
         columns={SERVICES_COLUMNS}
         loading={false}
       />
@@ -88,7 +88,7 @@ describe('Inventory tables', () => {
     const root = mount(
       <Table
         data={InventoryDataService.getNodeModel(response as any)}
-        rowKey={rec => rec.node_id}
+        rowKey={(rec) => rec.node_id}
         columns={NODES_COLUMNS}
         loading={false}
       />

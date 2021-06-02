@@ -19,7 +19,7 @@ export const PodLogs: FC<PodLogsProps> = ({ podLogs }) => {
         </pre>
         <span className={styles.label}>{Messages.containers}</span>
         <div data-qa="dbcluster-containers" className={styles.labelSpacing}>
-          {containers.map(container => (
+          {containers.map((container) => (
             <ContainerLogs key={`${container.name}${container.isOpen}`} containerLogs={container} />
           ))}
         </div>

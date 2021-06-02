@@ -111,12 +111,7 @@ describe('AddNotificationChannelModal', () => {
       const wrapper = await getMount(
         withContext(<AddNotificationChannelModal setVisible={jest.fn()} isVisible notificationChannel={channel} />)
       );
-      await asyncAct(() =>
-        wrapper
-          .find(dataQa('keyType-radio-button'))
-          .at(1)
-          .simulate('change')
-      );
+      await asyncAct(() => wrapper.find(dataQa('keyType-radio-button')).at(1).simulate('change'));
 
       wrapper.update();
       await asyncAct(() =>

@@ -13,12 +13,7 @@ describe('TableDataAlertDetails::', () => {
 
     const root = shallow(<TableDataAlertDetails detailsItem={detailsItem} />);
 
-    expect(
-      root
-        .find('td')
-        .at(0)
-        .text()
-    ).toEqual(SEVERITY[detailsItem.labels.severity as Severity]);
+    expect(root.find('td').at(0).text()).toEqual(SEVERITY[detailsItem.labels.severity as Severity]);
   });
 
   it('should correctly render the description', () => {
@@ -26,12 +21,7 @@ describe('TableDataAlertDetails::', () => {
 
     const root = shallow(<TableDataAlertDetails detailsItem={detailsItem} />);
 
-    expect(
-      root
-        .find('td')
-        .at(1)
-        .text()
-    ).toEqual(`${detailsItem.description} - ${Messages.readMore}`);
+    expect(root.find('td').at(1).text()).toEqual(`${detailsItem.description} - ${Messages.readMore}`);
   });
 
   it('should show a silence alert button', () => {
@@ -39,12 +29,7 @@ describe('TableDataAlertDetails::', () => {
 
     const root = shallow(<TableDataAlertDetails detailsItem={detailsItem} />);
 
-    expect(
-      root
-        .find('td')
-        .at(2)
-        .find(SilenceAlertButton)
-    ).toHaveLength(1);
+    expect(root.find('td').at(2).find(SilenceAlertButton)).toHaveLength(1);
   });
 
   it('shows a text for silenced alerts', () => {
@@ -52,18 +37,8 @@ describe('TableDataAlertDetails::', () => {
 
     const root = shallow(<TableDataAlertDetails detailsItem={detailsItem} />);
 
-    expect(
-      root
-        .find('td')
-        .at(2)
-        .find(SilenceAlertButton)
-    ).toHaveLength(0);
-    expect(
-      root
-        .find('td')
-        .at(2)
-        .text()
-    ).toEqual(Messages.silenced);
+    expect(root.find('td').at(2).find(SilenceAlertButton)).toHaveLength(0);
+    expect(root.find('td').at(2).text()).toEqual(Messages.silenced);
   });
 
   it('shows a text for silenced alerts', () => {
@@ -71,17 +46,7 @@ describe('TableDataAlertDetails::', () => {
 
     const root = shallow(<TableDataAlertDetails detailsItem={detailsItem} />);
 
-    expect(
-      root
-        .find('td')
-        .at(2)
-        .find(SilenceAlertButton)
-    ).toHaveLength(0);
-    expect(
-      root
-        .find('td')
-        .at(2)
-        .text()
-    ).toEqual(Messages.silenced);
+    expect(root.find('td').at(2).find(SilenceAlertButton)).toHaveLength(0);
+    expect(root.find('td').at(2).text()).toEqual(Messages.silenced);
   });
 });

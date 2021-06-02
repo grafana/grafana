@@ -11,7 +11,7 @@ const OrientedTabContent: FC<OrientedTabContentProps> = ({ tabs, activeTabKey, t
   return (
     <>
       {tabs
-        .filter(tab => !tab.hidden)
+        .filter((tab) => !tab.hidden)
         .map((tab, index) => (
           <Tab
             key={index}

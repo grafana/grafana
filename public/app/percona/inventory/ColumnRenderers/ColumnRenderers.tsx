@@ -4,7 +4,7 @@ import { CustomLabel } from 'app/percona/inventory/Inventory.types';
 import * as styles from './ColumnRenderers.styles';
 
 export const servicesDetailsRender = (element: any) => {
-  const labels = Object.keys(element).filter(label => !MAIN_COLUMN.includes(label));
+  const labels = Object.keys(element).filter((label) => !MAIN_COLUMN.includes(label));
 
   return (
     <div className={styles.detailsWrapper}>
@@ -18,7 +18,7 @@ export const servicesDetailsRender = (element: any) => {
 
 export const agentsDetailsRender = (element: any) => {
   const mainColumns = ['agent_id', 'type', 'isDeleted', 'service_ids', 'custom_labels'];
-  const labels = Object.keys(element).filter(label => !mainColumns.includes(label));
+  const labels = Object.keys(element).filter((label) => !mainColumns.includes(label));
 
   return (
     <div className={styles.detailsWrapper}>
@@ -41,7 +41,7 @@ export const agentsDetailsRender = (element: any) => {
 
 export const nodesDetailsRender = (element: any) => {
   const mainColumns = ['node_id', 'node_name', 'address', 'custom_labels', 'type', 'isDeleted'];
-  const labels = Object.keys(element).filter(label => !mainColumns.includes(label));
+  const labels = Object.keys(element).filter((label) => !mainColumns.includes(label));
 
   return (
     <div className={styles.detailsWrapper}>

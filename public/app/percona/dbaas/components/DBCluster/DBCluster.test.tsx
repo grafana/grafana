@@ -31,23 +31,8 @@ describe('DBCluster::', () => {
   it('renders database types correctly', () => {
     const root = mount(<DBCluster kubernetes={kubernetesStub} />);
 
-    expect(
-      root
-        .find('td')
-        .at(1)
-        .text()
-    ).toEqual(DATABASE_LABELS[dbClustersStub[0].databaseType]);
-    expect(
-      root
-        .find('td')
-        .at(7)
-        .text()
-    ).toEqual(DATABASE_LABELS[dbClustersStub[1].databaseType]);
-    expect(
-      root
-        .find('td')
-        .at(13)
-        .text()
-    ).toEqual(DATABASE_LABELS[dbClustersStub[2].databaseType]);
+    expect(root.find('td').at(1).text()).toEqual(DATABASE_LABELS[dbClustersStub[0].databaseType]);
+    expect(root.find('td').at(7).text()).toEqual(DATABASE_LABELS[dbClustersStub[1].databaseType]);
+    expect(root.find('td').at(13).text()).toEqual(DATABASE_LABELS[dbClustersStub[2].databaseType]);
   });
 });

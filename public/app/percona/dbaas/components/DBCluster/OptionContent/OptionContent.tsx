@@ -17,12 +17,12 @@ export const OptionContent: FC<OptionContentProps> = ({ title, description, tags
     </div>
     <div className={styles.tagWrapper}>
       {disabledTags &&
-        disabledTags.map(tag => (
+        disabledTags.map((tag) => (
           <span key={tag} className={styles.notAvailableTag}>
             {tag}
           </span>
         ))}
-      {tags.map(tag => (
+      {tags.map((tag) => (
         <span key={tag} className={styles.tag}>
           {tag}
         </span>

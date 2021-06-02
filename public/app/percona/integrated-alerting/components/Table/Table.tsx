@@ -94,9 +94,9 @@ export const Table: FC<TableProps> = ({
             <TableContent loading={pendingRequest} hasData={hasData} emptyMessage={emptyMessage}>
               <table {...getTableProps()} data-qa="table">
                 <thead data-qa="table-thead">
-                  {headerGroups.map(headerGroup => (
+                  {headerGroups.map((headerGroup) => (
                     <tr {...headerGroup.getHeaderGroupProps()}>
-                      {headerGroup.headers.map(column => (
+                      {headerGroup.headers.map((column) => (
                         <th
                           className={css`
                             width: ${column.width};
@@ -119,12 +119,12 @@ export const Table: FC<TableProps> = ({
                 <tbody {...getTableBodyProps()} data-qa="table-tbody">
                   {children
                     ? children(showPagination ? page : rows, tableInstance)
-                    : (showPagination ? page : rows).map(row => {
+                    : (showPagination ? page : rows).map((row) => {
                         prepareRow(row);
                         return (
                           <React.Fragment key={row.id}>
                             <tr {...row.getRowProps(getRowProps(row))}>
-                              {row.cells.map(cell => {
+                              {row.cells.map((cell) => {
                                 return (
                                   <td
                                     {...cell.getCellProps([
@@ -164,8 +164,8 @@ export const Table: FC<TableProps> = ({
           pageSizeOptions={PAGE_SIZES}
           pageSize={pageSize}
           nrRowsOnCurrentPage={page.length}
-          onPageChange={pageIndex => onPageChanged(pageIndex)}
-          onPageSizeChange={pageSize => onPageSizeChanged(pageSize)}
+          onPageChange={(pageIndex) => onPageChanged(pageIndex)}
+          onPageSizeChange={(pageSize) => onPageSizeChanged(pageSize)}
         />
       )}
     </>
