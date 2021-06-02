@@ -56,7 +56,7 @@ Example with string values:
 With time series data and thresholds: 
 {{< figure src="/static/img/docs/v8/state_timeline_time_series.png" max-width="1025px" caption="state timeline with time series" >}}
 
-[Learn more]({{< relref "../panels/visualizations/state-timeline.md" >}})
+For more information, refer to [State timeline visualization]({{< relref "../panels/visualizations/state-timeline.md" >}}).
 
 ### Status grid visualization (beta)
 
