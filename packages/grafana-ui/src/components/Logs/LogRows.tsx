@@ -9,6 +9,7 @@ import { getLogRowStyles } from './getLogRowStyles';
 //Components
 import { LogRow } from './LogRow';
 import { RowContextOptions } from './LogRowContextProvider';
+import { Button } from '../Button';
 
 export const PREVIEW_LIMIT = 100;
 
@@ -33,10 +34,16 @@ export interface Props extends Themeable {
   getFieldLinks?: (field: Field, rowIndex: number) => Array<LinkModel<Field>>;
   onClickShowDetectedField?: (key: string) => void;
   onClickHideDetectedField?: (key: string) => void;
+  /**
+   * Set to true to show "show more rows" allowing to render more logs.
+   * Set to false to render all logs (preview on the first rendered + the rest after a delay).
+   */
+  lazyRendering: boolean;
 }
 
 interface State {
-  renderAll: boolean;
+  lazyRendering: boolean;
+  currentLimit: number;
 }
 
 class UnThemedLogRows extends PureComponent<Props, State> {
@@ -47,19 +54,20 @@ class UnThemedLogRows extends PureComponent<Props, State> {
   };
 
   state: State = {
-    renderAll: false,
+    lazyRendering: false,
+    currentLimit: this.props.previewLimit!,
   };
 
   componentDidMount() {
     // Staged rendering
-    const { logRows, previewLimit } = this.props;
+    const { logRows, previewLimit, lazyRendering } = this.props;
     const rowCount = logRows ? logRows.length : 0;
     // Render all right away if not too far over the limit
     const renderAll = rowCount <= previewLimit! * 2;
     if (renderAll) {
-      this.setState({ renderAll });
-    } else {
-      this.renderAllTimer = window.setTimeout(() => this.setState({ renderAll: true }), 2000);
+      this.setState({ currentLimit: Infinity });
+    } else if (!lazyRendering) {
+      this.renderAllTimer = window.setTimeout(() => this.setState({ currentLimit: Infinity }), 2000);
     }
   }
 
@@ -77,6 +85,14 @@ class UnThemedLogRows extends PureComponent<Props, State> {
     sortLogRows(logRows, logsSortOrder)
   );
 
+  showMore = () => {
+    this.setState(({ currentLimit }) => {
+      return {
+        currentLimit: currentLimit + PREVIEW_LIMIT,
+      };
+    });
+  };
+
   render() {
     const {
       dedupStrategy,
@@ -92,15 +108,15 @@ class UnThemedLogRows extends PureComponent<Props, State> {
       onClickFilterOutLabel,
       theme,
       enableLogDetails,
-      previewLimit,
       getFieldLinks,
       logsSortOrder,
       showDetectedFields,
       onClickShowDetectedField,
       onClickHideDetectedField,
       forceEscape,
+      lazyRendering,
     } = this.props;
-    const { renderAll } = this.state;
+    const { currentLimit } = this.state;
     const { logsRowsTable } = getLogRowStyles(theme);
     const dedupedRows = deduplicatedRows ? deduplicatedRows : logRows;
     const hasData = logRows && logRows.length > 0;
@@ -111,8 +127,8 @@ class UnThemedLogRows extends PureComponent<Props, State> {
     // Staged rendering
     const processedRows = dedupedRows ? dedupedRows : [];
     const orderedRows = logsSortOrder ? this.sortLogs(processedRows, logsSortOrder) : processedRows;
-    const firstRows = orderedRows.slice(0, previewLimit!);
-    const lastRows = orderedRows.slice(previewLimit!, orderedRows.length);
+    const visibleRows = orderedRows.slice(0, currentLimit!);
+    const hasMoreData = visibleRows.length !== orderedRows.length;
 
     // React profiler becomes unusable if we pass all rows to all rows and their labels, using getter instead
     const getRows = this.makeGetRows(orderedRows);
@@ -122,7 +138,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
       <table className={logsRowsTable}>
         <tbody>
           {hasData &&
-            firstRows.map((row, index) => (
+            visibleRows.map((row, index) => (
               <LogRow
                 key={row.uid}
                 getRows={getRows}
@@ -146,34 +162,16 @@ class UnThemedLogRows extends PureComponent<Props, State> {
                 forceEscape={forceEscape}
               />
             ))}
-          {hasData &&
-            renderAll &&
-            lastRows.map((row, index) => (
-              <LogRow
-                key={row.uid}
-                getRows={getRows}
-                getRowContext={getRowContext}
-                row={row}
-                showContextToggle={showContextToggle}
-                showDuplicates={showDuplicates}
-                showLabels={showLabels}
-                showTime={showTime}
-                showDetectedFields={showDetectedFields}
-                wrapLogMessage={wrapLogMessage}
-                timeZone={timeZone}
-                enableLogDetails={enableLogDetails}
-                onClickFilterLabel={onClickFilterLabel}
-                onClickFilterOutLabel={onClickFilterOutLabel}
-                onClickShowDetectedField={onClickShowDetectedField}
-                onClickHideDetectedField={onClickHideDetectedField}
-                getFieldLinks={getFieldLinks}
-                logsSortOrder={logsSortOrder}
-                forceEscape={forceEscape}
-              />
-            ))}
-          {hasData && !renderAll && (
+          {hasData && hasMoreData && (
             <tr>
-              <td colSpan={5}>Rendering {orderedRows.length - previewLimit!} rows...</td>
+              {!lazyRendering && <td colSpan={5}>Rendering {orderedRows.length - currentLimit!} rows...</td>}
+              {lazyRendering && (
+                <td colSpan={5}>
+                  <Button variant="secondary" size="md" style={{ marginTop: theme.spacing.sm }} onClick={this.showMore}>
+                    Show more rows.
+                  </Button>
+                </td>
+              )}
             </tr>
           )}
         </tbody>
