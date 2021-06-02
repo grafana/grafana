@@ -1,4 +1,4 @@
-import { EmailAuthType, EmailSettings } from 'app/percona/settings/Settings.types';
+import { EmailAuthType } from 'app/percona/settings/Settings.types';
 import { FormEmailSettings } from './Email.types';
 import { isEmailFieldNeeded, getAuthTypeFromFields, getInitialValues, cleanupFormValues } from './Email.utils';
 

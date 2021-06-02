@@ -1,7 +1,7 @@
 import React from 'react';
-import { mount } from 'enzyme';
 import { Form, FormRenderProps } from 'react-final-form';
 import { Databases } from 'app/percona/shared/core';
+import { getMount } from 'app/percona/shared/helpers/testUtils';
 import { DBClusterAdvancedOptions } from './DBClusterAdvancedOptions';
 import { EditDBClusterFields } from '../EditDBClusterModal.types';
 import { DBClusterResources } from './DBClusterAdvancedOptions.types';
@@ -12,8 +12,8 @@ jest.mock('../../PSMDB.service');
 jest.mock('../../XtraDB.service');
 
 describe('DBClusterAdvancedOptions::', () => {
-  it('renders correctly', () => {
-    const root = mount(
+  it('renders correctly', async () => {
+    const root = await getMount(
       <Form
         onSubmit={jest.fn()}
         render={renderProps => (
@@ -31,8 +31,8 @@ describe('DBClusterAdvancedOptions::', () => {
     expect(root.find('[data-qa="step-progress-submit-button"]')).toBeTruthy();
   });
 
-  it('should disable memory, cpu and disk when resources are not custom', () => {
-    const root = mount(
+  it('should disable memory, cpu and disk when resources are not custom', async () => {
+    const root = await getMount(
       <Form
         initialValues={{
           [EditDBClusterFields.resources]: DBClusterResources.small,
@@ -52,8 +52,8 @@ describe('DBClusterAdvancedOptions::', () => {
     expect(disk.prop('disabled')).toBeTruthy();
   });
 
-  it('should enable memory and cpu when resources are custom, disk should be disabled', () => {
-    const root = mount(
+  it('should enable memory and cpu when resources are custom, disk should be disabled', async () => {
+    const root = await getMount(
       <Form
         initialValues={{
           [EditDBClusterFields.resources]: DBClusterResources.small,
@@ -75,8 +75,8 @@ describe('DBClusterAdvancedOptions::', () => {
     expect(disk.prop('disabled')).toBeTruthy();
   });
 
-  it('should disable button when invalid', () => {
-    const root = mount(
+  it('should disable button when invalid', async () => {
+    const root = await getMount(
       <Form
         onSubmit={jest.fn()}
         render={renderProps => (
@@ -89,8 +89,8 @@ describe('DBClusterAdvancedOptions::', () => {
     expect(button.prop('disabled')).toBeTruthy();
   });
 
-  it('should enable button when valid', () => {
-    const root = mount(
+  it('should enable button when valid', async () => {
+    const root = await getMount(
       <Form
         onSubmit={jest.fn()}
         render={renderProps => (
@@ -106,8 +106,8 @@ describe('DBClusterAdvancedOptions::', () => {
     expect(button.prop('disabled')).toBeFalsy();
   });
 
-  it('should disabled single node topology when database is MongoDB', () => {
-    const root = mount(
+  it('should disabled single node topology when database is MongoDB', async () => {
+    const root = await getMount(
       <Form
         initialValues={{
           [EditDBClusterFields.databaseType]: {
@@ -126,8 +126,8 @@ describe('DBClusterAdvancedOptions::', () => {
     expect(topology.prop('disable')).toBeUndefined();
   });
 
-  it('should enable single node topology when database is MySQL', () => {
-    const root = mount(
+  it('should enable single node topology when database is MySQL', async () => {
+    const root = await getMount(
       <Form
         initialValues={{
           [EditDBClusterFields.databaseType]: {

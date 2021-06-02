@@ -1,4 +1,3 @@
-import { Databases } from 'app/percona/shared/core';
 import { DBCluster } from '../DBCluster.types';
 
 export interface DBClusterNameProps {

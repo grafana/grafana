@@ -1,9 +1,9 @@
 import React from 'react';
-import { mount } from 'enzyme';
 import { dataQa } from '@percona/platform-core';
 import { EditDBClusterModal } from './EditDBClusterModal';
 import { setVisibleStub, onDBClusterAddedStub } from './__mocks__/addDBClusterModalStubs';
 import { dbClustersStub } from '../__mocks__/dbClustersStubs';
+import { getMount } from 'app/percona/shared/helpers/testUtils';
 
 jest.mock('app/core/app_events');
 jest.mock('../DBCluster.service');
@@ -11,8 +11,8 @@ jest.mock('../PSMDB.service');
 jest.mock('../XtraDB.service');
 
 describe('EditDBClusterModal::', () => {
-  it('should render advanced options', () => {
-    const root = mount(
+  it('should render advanced options', async () => {
+    const root = await getMount(
       <EditDBClusterModal
         isVisible
         setVisible={setVisibleStub}

@@ -10,15 +10,21 @@ const fakeLocationUpdate = jest.fn();
 
 jest.mock('./Check.service');
 jest.mock('../settings/Settings.service');
-jest.mock('react-redux', () => ({
-  ...jest.requireActual('react-redux'),
-  useSelector: jest.fn(),
-}));
+jest.mock('react-redux', () => {
+  const original = jest.requireActual('react-redux');
+  return {
+    ...original,
+    useSelector: jest.fn(),
+  };
+});
 
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  getLocationSrv: jest.fn().mockImplementation(() => ({ update: fakeLocationUpdate })),
-}));
+jest.mock('@grafana/runtime', () => {
+  const original = jest.requireActual('@grafana/runtime');
+  return {
+    ...original,
+    getLocationSrv: jest.fn().mockImplementation(() => ({ update: fakeLocationUpdate })),
+  };
+});
 
 jest.mock('@percona/platform-core', () => {
   const originalModule = jest.requireActual('@percona/platform-core');

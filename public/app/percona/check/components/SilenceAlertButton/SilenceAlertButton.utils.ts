@@ -19,8 +19,7 @@ export const makeSilencePayload = (labels: Labels) => {
     matchers: formatMatchers(labels),
     startsAt: nowUTCISO,
     endsAt: tomorrowUTCISO,
-    // @ts-ignore
-    createdBy: window.grafanaBootData.user.name,
+    createdBy: (window as any).grafanaBootData.user.name,
     comment: '',
     id: '',
   };

@@ -2,7 +2,7 @@ import { Instance } from '../../Discovery.types';
 
 export interface InstancesTableProps {
   instances: Instance[];
-  selectInstance: (any) => void;
+  selectInstance: (arg: any) => void;
   loading: boolean;
   credentials: any;
 }

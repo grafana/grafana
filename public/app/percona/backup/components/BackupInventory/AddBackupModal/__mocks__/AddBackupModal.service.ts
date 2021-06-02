@@ -1,14 +1,16 @@
 import { SelectableValue } from '@grafana/data';
+import { Databases } from 'app/percona/shared/core';
 import * as service from '../AddBackupModal.service';
+import { SelectableService } from '../AddBackupModal.types';
 
-export const serviceStubs: Array<SelectableValue<string>> = [
+export const serviceStubs: Array<SelectableValue<SelectableService>> = [
   {
     label: 'service_1',
-    value: 'Service 1',
+    value: { id: 'Service 1', vendor: Databases.mongodb },
   },
   {
     label: 'service_2',
-    value: 'Service 2',
+    value: { id: 'Service 2', vendor: Databases.mongodb },
   },
 ];
 export const locationsStubs: Array<SelectableValue<string>> = [

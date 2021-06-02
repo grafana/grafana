@@ -28,6 +28,11 @@ export const stub: Settings = {
       url: 'slack.foo.com',
     },
   },
+  sttCheckIntervals: {
+    rareInterval: '10s',
+    standardInterval: '10s',
+    frequentInterval: '10s',
+  },
 };
 
 SettingsService.getSettings = () => Promise.resolve(stub);

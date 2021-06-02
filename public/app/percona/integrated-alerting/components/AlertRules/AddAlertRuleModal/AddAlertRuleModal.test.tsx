@@ -1,11 +1,11 @@
 import React from 'react';
-import { mount, ReactWrapper } from 'enzyme';
-import { act } from 'react-dom/test-utils';
+import { ReactWrapper } from 'enzyme';
 import { dataQa } from '@percona/platform-core';
 import { AddAlertRuleModal } from './AddAlertRuleModal';
 import { AlertRule } from '../AlertRules.types';
 import { templateStubs } from '../../AlertRuleTemplate/__mocks__/alertRuleTemplateStubs';
 import { SEVERITY_OPTIONS } from './AddAlertRulesModal.constants';
+import { getMount } from 'app/percona/shared/helpers/testUtils';
 
 jest.mock('../AlertRules.service');
 jest.mock('../../AlertRuleTemplate/AlertRuleTemplate.service');
@@ -73,11 +73,7 @@ describe('AddAlertRuleModal', () => {
   });
 
   it('should render modal', async () => {
-    let wrapper: ReactWrapper;
-
-    await act(async () => {
-      wrapper = mount(<AddAlertRuleModal setVisible={jest.fn()} isVisible />);
-    });
+    const wrapper = await getMount(<AddAlertRuleModal setVisible={jest.fn()} isVisible />);
 
     expect(wrapper.find(dataQa('add-alert-rule-modal')).exists()).toBeTruthy();
     expect(wrapper.find(dataQa('add-alert-rule-modal-form')).exists()).toBeTruthy();
@@ -85,42 +81,26 @@ describe('AddAlertRuleModal', () => {
   });
 
   it('does not render the modal when visible is set to false', async () => {
-    let wrapper: ReactWrapper;
-
-    await act(async () => {
-      wrapper = mount(<AddAlertRuleModal setVisible={jest.fn()} isVisible={false} />);
-    });
+    const wrapper = await getMount(<AddAlertRuleModal setVisible={jest.fn()} isVisible={false} />);
 
     expect(wrapper.find(dataQa('add-alert-rule-modal-form')).length).toBe(0);
   });
 
   it('renders the modal when visible is set to true', async () => {
-    let wrapper: ReactWrapper;
-
-    await act(async () => {
-      wrapper = mount(<AddAlertRuleModal setVisible={jest.fn()} isVisible />);
-    });
+    const wrapper = await getMount(<AddAlertRuleModal setVisible={jest.fn()} isVisible />);
 
     expect(wrapper.find(dataQa('add-alert-rule-modal-form')).length).toBe(1);
   });
 
   it('should have the submit button disabled by default when adding a new rule', async () => {
-    let wrapper: ReactWrapper;
-
-    await act(async () => {
-      wrapper = mount(<AddAlertRuleModal setVisible={jest.fn()} isVisible />);
-    });
+    const wrapper = await getMount(<AddAlertRuleModal setVisible={jest.fn()} isVisible />);
     const button = wrapper.find(dataQa('add-alert-rule-modal-add-button')).find('button');
 
     expect(button.props().disabled).toBe(true);
   });
 
   it('should enable the submit button if all fields are valid', async () => {
-    let wrapper: ReactWrapper;
-
-    await act(async () => {
-      wrapper = mount(<AddAlertRuleModal setVisible={jest.fn()} isVisible alertRule={initialValues} />);
-    });
+    const wrapper = await getMount(<AddAlertRuleModal setVisible={jest.fn()} isVisible alertRule={initialValues} />);
 
     wrapper.update();
 
@@ -136,11 +116,7 @@ describe('AddAlertRuleModal', () => {
   });
 
   it('should disable the submit button if a negative duration is inserted', async () => {
-    let wrapper: ReactWrapper;
-
-    await act(async () => {
-      wrapper = mount(<AddAlertRuleModal setVisible={jest.fn()} isVisible alertRule={initialValues} />);
-    });
+    const wrapper = await getMount(<AddAlertRuleModal setVisible={jest.fn()} isVisible alertRule={initialValues} />);
 
     wrapper.update();
     const thresholdInput = wrapper.find(dataQa(`${templateParams[0].name}-number-input`));
@@ -163,11 +139,7 @@ describe('AddAlertRuleModal', () => {
   });
 
   it('should disable template edition', async () => {
-    let wrapper: ReactWrapper;
-
-    await act(async () => {
-      wrapper = mount(<AddAlertRuleModal setVisible={jest.fn()} isVisible alertRule={initialValues} />);
-    });
+    const wrapper = await getMount(<AddAlertRuleModal setVisible={jest.fn()} isVisible alertRule={initialValues} />);
     wrapper.update();
 
     expect(
@@ -179,11 +151,7 @@ describe('AddAlertRuleModal', () => {
   });
 
   it('should change params when switching templates', async () => {
-    let wrapper: ReactWrapper;
-
-    await act(async () => {
-      wrapper = mount(<AddAlertRuleModal setVisible={jest.fn()} isVisible />);
-    });
+    const wrapper = await getMount(<AddAlertRuleModal setVisible={jest.fn()} isVisible />);
 
     wrapper.update();
 
@@ -201,11 +169,7 @@ describe('AddAlertRuleModal', () => {
   });
 
   it('should pre-fill severity and duration when switching templates', async () => {
-    let wrapper: ReactWrapper;
-
-    await act(async () => {
-      wrapper = mount(<AddAlertRuleModal setVisible={jest.fn()} isVisible />);
-    });
+    const wrapper = await getMount(<AddAlertRuleModal setVisible={jest.fn()} isVisible />);
 
     wrapper.update();
 
@@ -229,11 +193,7 @@ describe('AddAlertRuleModal', () => {
   });
 
   it('should show the expression and sample alert when switching templates', async () => {
-    let wrapper: ReactWrapper;
-
-    await act(async () => {
-      wrapper = mount(<AddAlertRuleModal setVisible={jest.fn()} isVisible />);
-    });
+    const wrapper = await getMount(<AddAlertRuleModal setVisible={jest.fn()} isVisible />);
 
     wrapper.update();
 

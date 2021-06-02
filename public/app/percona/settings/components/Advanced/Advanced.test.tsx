@@ -101,10 +101,14 @@ describe('Advanced::', () => {
   });
 
   it('Sets correct URL from browser', () => {
-    const oldLocation = window.location;
-
-    delete window.location;
-    window.location = Object.create({ ...oldLocation, hostname: 'pmmtest.percona.com' });
+    const location = {
+      ...window.location,
+      hostname: 'pmmtest.percona.com',
+    };
+    Object.defineProperty(window, 'location', {
+      writable: true,
+      value: location,
+    });
 
     const root = mount(
       <Advanced
@@ -132,6 +136,7 @@ describe('Advanced::', () => {
 
     const root = mount(
       <Advanced
+        backupEnabled={false}
         dataRetention="1296000s"
         telemetryEnabled={false}
         sttEnabled={false}
@@ -151,6 +156,7 @@ describe('Advanced::', () => {
 
     const root = mount(
       <Advanced
+        backupEnabled={false}
         dataRetention="1296000s"
         telemetryEnabled={false}
         sttEnabled={true}

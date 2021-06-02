@@ -1,7 +1,6 @@
 import React from 'react';
-import { mount, ReactWrapper } from 'enzyme';
-import { act } from 'react-dom/test-utils';
 import { dataQa } from '@percona/platform-core';
+import { getMount, asyncAct } from 'app/percona/shared/helpers/testUtils';
 import { AlertsActions } from './AlertsActions';
 import { alertsStubs } from '../__mocks__/alertsStubs';
 import { formatAlert } from '../Alerts.utils';
@@ -26,11 +25,7 @@ describe('AlertActions', () => {
   });
 
   it('renders a barred bell for an active alert', async () => {
-    let wrapper: ReactWrapper;
-
-    await act(async () => {
-      wrapper = await mount(<AlertsActions alert={formatAlert(alertsStubs[0])} getAlerts={fakeGetAlerts} />);
-    });
+    const wrapper = await getMount(<AlertsActions alert={formatAlert(alertsStubs[0])} getAlerts={fakeGetAlerts} />);
 
     wrapper.update();
 
@@ -38,11 +33,7 @@ describe('AlertActions', () => {
   });
 
   it('renders a bell for an silenced alert', async () => {
-    let wrapper: ReactWrapper;
-
-    await act(async () => {
-      wrapper = await mount(<AlertsActions alert={formatAlert(alertsStubs[3])} getAlerts={fakeGetAlerts} />);
-    });
+    const wrapper = await getMount(<AlertsActions alert={formatAlert(alertsStubs[3])} getAlerts={fakeGetAlerts} />);
 
     wrapper.update();
 
@@ -50,30 +41,27 @@ describe('AlertActions', () => {
   });
 
   it('calls the API to activate a silenced alert', async () => {
-    let wrapper: ReactWrapper;
+    const wrapper = await getMount(<AlertsActions alert={formatAlert(alertsStubs[3])} getAlerts={fakeGetAlerts} />);
 
-    await act(async () => {
-      wrapper = await mount(<AlertsActions alert={formatAlert(alertsStubs[3])} getAlerts={fakeGetAlerts} />);
+    await asyncAct(() =>
       wrapper
         .find(dataQa('silence-alert-button'))
         .at(0)
-        .simulate('click');
-    });
+        .simulate('click')
+    );
     wrapper.update();
     expect(alertsServiceToggle).toBeCalledTimes(1);
     expect(alertsServiceToggle).toBeCalledWith({ alert_id: '4', silenced: 'FALSE' }, undefined);
   });
 
   it('calls the API to silence an active alert', async () => {
-    let wrapper: ReactWrapper;
-
-    await act(async () => {
-      wrapper = await mount(<AlertsActions alert={formatAlert(alertsStubs[1])} getAlerts={fakeGetAlerts} />);
+    const wrapper = await getMount(<AlertsActions alert={formatAlert(alertsStubs[1])} getAlerts={fakeGetAlerts} />);
+    await asyncAct(() =>
       wrapper
         .find(dataQa('silence-alert-button'))
         .at(0)
-        .simulate('click');
-    });
+        .simulate('click')
+    );
 
     wrapper.update();
 

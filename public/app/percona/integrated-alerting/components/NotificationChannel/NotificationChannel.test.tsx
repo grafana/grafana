@@ -1,19 +1,14 @@
 import React from 'react';
-import { mount, shallow, ReactWrapper, ShallowWrapper } from 'enzyme';
 import { dataQa } from '@percona/platform-core';
-import { act } from 'react-dom/test-utils';
 import { NotificationChannel } from './NotificationChannel';
 import { DeleteNotificationChannelModal } from './DeleteNotificationChannelModal/DeleteNotificationChannelModal';
+import { getMount } from 'app/percona/shared/helpers/testUtils';
 
 jest.mock('./NotificationChannel.service');
 
 describe('NotificationChannel', () => {
   it('should render table correctly', async () => {
-    let wrapper: ReactWrapper;
-
-    await act(async () => {
-      wrapper = mount(<NotificationChannel />);
-    });
+    const wrapper = await getMount(<NotificationChannel />);
 
     wrapper.update();
 
@@ -23,11 +18,7 @@ describe('NotificationChannel', () => {
   });
 
   it('should render add modal', async () => {
-    let wrapper: ReactWrapper;
-
-    await act(async () => {
-      wrapper = mount(<NotificationChannel />);
-    });
+    const wrapper = await getMount(<NotificationChannel />);
 
     expect(wrapper.contains(dataQa('modal-wrapper'))).toBeFalsy();
 
@@ -40,11 +31,7 @@ describe('NotificationChannel', () => {
   });
 
   it('should render delete modal', async () => {
-    let wrapper: ShallowWrapper;
-
-    await act(async () => {
-      wrapper = shallow(<NotificationChannel />);
-    });
+    const wrapper = await getMount(<NotificationChannel />);
 
     expect(wrapper.find(DeleteNotificationChannelModal).length).toBe(1);
   });

@@ -1,7 +1,6 @@
 import React from 'react';
-import { mount, ReactWrapper } from 'enzyme';
 import { dataQa } from '@percona/platform-core';
-import { act } from 'react-dom/test-utils';
+import { getMount } from 'app/percona/shared/helpers/testUtils';
 import { AlertRuleTemplate } from './AlertRuleTemplate';
 import { AlertRuleTemplateService } from './AlertRuleTemplate.service';
 
@@ -22,11 +21,7 @@ describe('AlertRuleTemplate', () => {
   });
 
   it('should render add modal', async () => {
-    let wrapper: ReactWrapper;
-
-    await act(async () => {
-      wrapper = await mount(<AlertRuleTemplate />);
-    });
+    const wrapper = await getMount(<AlertRuleTemplate />);
 
     expect(wrapper.find('textarea')).toBeTruthy();
     expect(wrapper.contains(dataQa('modal-wrapper'))).toBeFalsy();
@@ -37,11 +32,7 @@ describe('AlertRuleTemplate', () => {
   });
 
   it('should render table content', async () => {
-    let wrapper: ReactWrapper;
-
-    await act(async () => {
-      wrapper = await mount(<AlertRuleTemplate />);
-    });
+    const wrapper = await getMount(<AlertRuleTemplate />);
 
     wrapper.update();
 
@@ -55,11 +46,7 @@ describe('AlertRuleTemplate', () => {
       throw Error('test error');
     });
 
-    let wrapper: ReactWrapper;
-
-    await act(async () => {
-      wrapper = await mount(<AlertRuleTemplate />);
-    });
+    const wrapper = await getMount(<AlertRuleTemplate />);
 
     wrapper.update();
 
@@ -69,11 +56,7 @@ describe('AlertRuleTemplate', () => {
   });
 
   it('should have table initially loading', async () => {
-    let wrapper: ReactWrapper;
-
-    await act(async () => {
-      wrapper = await mount(<AlertRuleTemplate />);
-    });
+    const wrapper = await getMount(<AlertRuleTemplate />);
 
     expect(wrapper.find(dataQa('table-loading'))).toHaveLength(1);
     expect(wrapper.find(dataQa('table-no-data'))).toHaveLength(1);

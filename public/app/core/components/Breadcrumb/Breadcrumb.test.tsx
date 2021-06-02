@@ -1,14 +1,16 @@
 import React from 'react';
-import { mount, ReactWrapper } from 'enzyme';
 import { useSelector } from 'react-redux';
 import { dataQa } from '@percona/platform-core';
-import { act } from 'react-dom/test-utils';
 import { Breadcrumb } from './Breadcrumb';
+import { getMount } from 'app/percona/shared/helpers/testUtils';
 
-jest.mock('react-redux', () => ({
-  ...jest.requireActual('react-redux'),
-  useSelector: jest.fn(),
-}));
+jest.mock('react-redux', () => {
+  const original = jest.requireActual('react-redux');
+  return {
+    ...original,
+    useSelector: jest.fn(),
+  };
+});
 
 const pageModel = {
   title: 'Root',
@@ -27,11 +29,7 @@ describe('Breadcrumb', () => {
   });
 
   it('renders the breadcrumb', async () => {
-    let wrapper: ReactWrapper<any, Readonly<{}>, React.Component<{}, {}, any>>;
-
-    await act(async () => {
-      wrapper = mount(<Breadcrumb pageModel={pageModel} currentLocation="root/child-one" />);
-    });
+    const wrapper = await getMount(<Breadcrumb pageModel={pageModel} currentLocation="root/child-one" />);
 
     expect(wrapper.find(dataQa('breadcrumb'))).toHaveLength(1);
   });

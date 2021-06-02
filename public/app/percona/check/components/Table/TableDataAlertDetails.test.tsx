@@ -5,6 +5,7 @@ import { SilenceAlertButton } from 'app/percona/check/components';
 import { TableDataAlertDetails } from 'app/percona/check/components/Table';
 import { SEVERITY } from 'app/percona/check/CheckPanel.constants';
 import { Messages } from '../../CheckPanel.messages';
+import { Severity } from '../../types';
 
 describe('TableDataAlertDetails::', () => {
   it('should correctly render the severity level', () => {
@@ -17,7 +18,7 @@ describe('TableDataAlertDetails::', () => {
         .find('td')
         .at(0)
         .text()
-    ).toEqual(SEVERITY[detailsItem.labels.severity]);
+    ).toEqual(SEVERITY[detailsItem.labels.severity as Severity]);
   });
 
   it('should correctly render the description', () => {

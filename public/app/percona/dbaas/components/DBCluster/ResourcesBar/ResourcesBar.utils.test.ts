@@ -1,4 +1,4 @@
-import { ResourcesUnits } from '../DBCluster.types';
+import { ResourcesUnits, ResourcesWithUnits } from '../DBCluster.types';
 import { formatResources, getResourcesWidth } from './ResourcesBar.utils';
 
 describe('ResourcesBar.utils::', () => {
@@ -12,7 +12,7 @@ describe('ResourcesBar.utils::', () => {
   });
 
   it('formats resources to 2 decimal places if needed', () => {
-    const getValueWithUnits = (value: number) => ({ value, units: ResourcesUnits.GB });
+    const getValueWithUnits = (value: number) => ({ value, units: ResourcesUnits.GB } as ResourcesWithUnits);
 
     expect(formatResources(getValueWithUnits(0.04))).toEqual(getValueWithUnits(0.04));
     expect(formatResources(getValueWithUnits(0.004))).toEqual(getValueWithUnits(0));
