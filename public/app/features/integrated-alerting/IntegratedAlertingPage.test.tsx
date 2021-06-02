@@ -22,6 +22,8 @@ jest.mock('@grafana/runtime', () => ({
   getLocationSrv: jest.fn().mockImplementation(() => ({ update: fakeLocationUpdate })),
 }));
 
+jest.mock('./components/Alerts/Alerts.service');
+
 describe('IntegratedAlertingPage', () => {
   beforeEach(() => {
     (useSelector as jest.Mock).mockImplementation((callback) => {

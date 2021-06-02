@@ -7,6 +7,7 @@ import { AlertRuleTemplateService } from '../AlertRuleTemplate/AlertRuleTemplate
 import { NotificationChannelService } from '../NotificationChannel/NotificationChannel.service';
 import { NotificationChannelType } from '../NotificationChannel/NotificationChannel.types';
 import { templateStubs } from '../AlertRuleTemplate/__mocks__/alertRuleTemplateStubs';
+import { AlertRulesService } from './AlertRules.service';
 
 const notificationChannelsServiceList = jest.spyOn(NotificationChannelService, 'list').mockImplementation(() =>
   Promise.resolve([
@@ -41,7 +42,7 @@ describe('AlertRules', () => {
     expect(notificationChannelsServiceList).toBeCalledTimes(0);
 
     await act(async () => {
-      wrapper = mount(<AlertRules />);
+      wrapper = await mount(<AlertRules />);
     });
 
     expect(alertRuleTemplateServiceList).toBeCalledTimes(1);
@@ -49,11 +50,12 @@ describe('AlertRules', () => {
 
     wrapper.unmount();
   });
+
   it('should toggle selected alert rule details', async () => {
     let wrapper: ReactWrapper<{}, {}, any>;
 
     await act(async () => {
-      wrapper = mount(<AlertRules />);
+      wrapper = await mount(<AlertRules />);
     });
 
     wrapper.update();
@@ -72,5 +74,47 @@ describe('AlertRules', () => {
       .simulate('click');
 
     expect(wrapper.find(dataQa('alert-rules-details'))).toHaveLength(0);
+  });
+
+  it('should have table initially loading', async () => {
+    let wrapper: ReactWrapper;
+
+    await act(async () => {
+      wrapper = await mount(<AlertRules />);
+    });
+
+    expect(wrapper.find(dataQa('table-loading'))).toHaveLength(1);
+    expect(wrapper.find(dataQa('table-thead')).find('tr')).toHaveLength(0);
+    expect(wrapper.find(dataQa('table-no-data'))).toHaveLength(0);
+  });
+
+  it('should render table content', async () => {
+    let wrapper: ReactWrapper;
+
+    await act(async () => {
+      wrapper = await mount(<AlertRules />);
+    });
+
+    wrapper.update();
+
+    expect(wrapper.find(dataQa('table-thead')).find('tr')).toHaveLength(1);
+    expect(wrapper.find(dataQa('table-tbody')).find('tr')).toHaveLength(6);
+    expect(wrapper.find(dataQa('table-no-data'))).toHaveLength(0);
+  });
+
+  it('should render correctly without data', async () => {
+    jest.spyOn(AlertRulesService, 'list').mockReturnValueOnce(Promise.resolve({ rules: [] }));
+
+    let wrapper: ReactWrapper;
+
+    await act(async () => {
+      wrapper = await mount(<AlertRules />);
+    });
+
+    wrapper.update();
+
+    expect(wrapper.find(dataQa('table-thead')).find('tr')).toHaveLength(0);
+    expect(wrapper.find(dataQa('table-tbody')).find('tr')).toHaveLength(0);
+    expect(wrapper.find(dataQa('table-no-data'))).toHaveLength(1);
   });
 });

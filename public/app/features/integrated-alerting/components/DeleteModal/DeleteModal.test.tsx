@@ -46,7 +46,7 @@ describe('DeleteModal', () => {
   it('should call onDelete on submit', async () => {
     const onDelete = jest.fn();
     const wrapper = mount(<DeleteModal setVisible={jest.fn()} onDelete={onDelete} isVisible />);
-    console.log(wrapper.html());
+
     wrapper
       .find(dataQa('confirm-delete-modal-button'))
       .find('button')

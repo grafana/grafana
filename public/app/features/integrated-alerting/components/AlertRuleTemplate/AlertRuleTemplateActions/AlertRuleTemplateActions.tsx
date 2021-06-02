@@ -3,7 +3,7 @@ import { IconButton, useStyles } from '@grafana/ui';
 import { EditAlertRuleTemplateModal } from '../EditAlertRuleTemplateModal/EditAlertRuleTemplateModal';
 import { getStyles } from './AlertRuleTemplateActions.styles';
 import { AlertRuleTemplateActionsProps } from './AlertRuleTemplateActions.types';
-import { SourceDescription } from '../AlertRuleTemplatesTable/AlertRuleTemplatesTable.types';
+import { SourceDescription } from '../AlertRuleTemplate.types';
 import { DeleteRuleTemplateModal } from '../DeleteRuleTemplateModal/DeleteRuleTemplateModal';
 
 export const AlertRuleTemplateActions: FC<AlertRuleTemplateActionsProps> = ({ template, getAlertRuleTemplates }) => {

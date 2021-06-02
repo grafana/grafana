@@ -6,7 +6,7 @@ import { getStyles } from './Table.styles';
 import { TableProps } from './Table.types';
 import { EmptyBlock } from '../EmptyBlock';
 
-export const Table: FC<TableProps> = ({ pendingRequest, data, columns, emptyMessage }) => {
+export const Table: FC<TableProps> = ({ pendingRequest, data, columns, emptyMessage, children }) => {
   const style = useStyles(getStyles);
   const tableInstance = useTable({ columns, data });
   const { getTableProps, getTableBodyProps, headerGroups, rows, prepareRow } = tableInstance;
@@ -30,7 +30,6 @@ export const Table: FC<TableProps> = ({ pendingRequest, data, columns, emptyMess
                   {headerGroup.headers.map(column => (
                     <th
                       className={css`
-                        cursor: pointer;
                         width: ${column.width};
                       `}
                       {...column.getHeaderProps()}
@@ -42,16 +41,22 @@ export const Table: FC<TableProps> = ({ pendingRequest, data, columns, emptyMess
               ))}
             </thead>
             <tbody {...getTableBodyProps()} data-qa="table-tbody">
-              {rows.map(row => {
-                prepareRow(row);
-                return (
-                  <tr {...row.getRowProps()}>
-                    {row.cells.map(cell => {
-                      return <td {...cell.getCellProps()}>{cell.render('Cell')}</td>;
-                    })}
-                  </tr>
-                );
-              })}
+              {children
+                ? children(rows, tableInstance)
+                : rows.map(row => {
+                    prepareRow(row);
+                    return (
+                      <tr {...row.getRowProps()} key={row.id}>
+                        {row.cells.map(cell => {
+                          return (
+                            <td {...cell.getCellProps()} key={cell.column.id}>
+                              {cell.render('Cell')}
+                            </td>
+                          );
+                        })}
+                      </tr>
+                    );
+                  })}
             </tbody>
           </table>
         ) : null}

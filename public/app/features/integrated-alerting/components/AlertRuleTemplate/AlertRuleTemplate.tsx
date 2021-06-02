@@ -4,16 +4,49 @@ import { logger } from '@percona/platform-core';
 import { Messages } from 'app/features/integrated-alerting/IntegratedAlerting.messages';
 import { getStyles } from './AlertRuleTemplate.styles';
 import { AddAlertRuleTemplateModal } from './AddAlertRuleTemplateModal';
-import { AlertRuleTemplatesTable } from '..';
-import { FormattedTemplate } from './AlertRuleTemplatesTable/AlertRuleTemplatesTable.types';
-import { formatTemplates } from './AlertRuleTemplatesTable/AlertRuleTemplatesTable.utils';
+import { Table } from '../Table/Table';
+import { formatTemplates } from './AlertRuleTemplate.utils';
 import { AlertRuleTemplateService } from './AlertRuleTemplate.service';
+import { Column } from 'react-table';
+import { AlertRuleTemplateActions } from './AlertRuleTemplateActions/AlertRuleTemplateActions';
+import { FormattedTemplate } from './AlertRuleTemplate.types';
+
+const { noData, columns } = Messages.alertRuleTemplate.table;
+
+const { name: nameColumn, source: sourceColumn, createdAt: createdAtColumn, actions: actionsColumn } = columns;
 
 export const AlertRuleTemplate: FC = () => {
   const styles = useStyles(getStyles);
   const [addModalVisible, setAddModalVisible] = useState(false);
-  const [pendingRequest, setPendingRequest] = useState(false);
+  const [pendingRequest, setPendingRequest] = useState(true);
   const [data, setData] = useState<FormattedTemplate[]>([]);
+
+  const columns = React.useMemo(
+    () => [
+      {
+        Header: nameColumn,
+        accessor: 'summary',
+        width: '70%',
+      } as Column,
+      {
+        Header: sourceColumn,
+        accessor: 'source',
+        width: '20%',
+      } as Column,
+      {
+        Header: createdAtColumn,
+        accessor: 'created_at',
+        width: '10%',
+      } as Column,
+      {
+        Header: actionsColumn,
+        accessor: (template: FormattedTemplate) => (
+          <AlertRuleTemplateActions template={template} getAlertRuleTemplates={getAlertRuleTemplates} />
+        ),
+      } as Column,
+    ],
+    []
+  );
 
   const getAlertRuleTemplates = async () => {
     setPendingRequest(true);
@@ -49,11 +82,7 @@ export const AlertRuleTemplate: FC = () => {
         setVisible={setAddModalVisible}
         getAlertRuleTemplates={getAlertRuleTemplates}
       />
-      <AlertRuleTemplatesTable
-        pendingRequest={pendingRequest}
-        data={data}
-        getAlertRuleTemplates={getAlertRuleTemplates}
-      />
+      <Table data={data} columns={columns} pendingRequest={pendingRequest} emptyMessage={noData} />
     </>
   );
 };

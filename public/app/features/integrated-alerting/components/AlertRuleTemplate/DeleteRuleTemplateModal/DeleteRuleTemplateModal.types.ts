@@ -1,4 +1,4 @@
-import { FormattedTemplate } from '../AlertRuleTemplatesTable/AlertRuleTemplatesTable.types';
+import { FormattedTemplate } from '../AlertRuleTemplate.types';
 
 export interface DeleteRuleTemplateModalProps {
   template: FormattedTemplate;
