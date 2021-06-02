@@ -70,7 +70,7 @@ You can enter any Ascii character or emoji in this field.
 You can select a color to for Grafana to display the value mapping text in.
 
 - **Set color -** Click **Set color** to see a range of recommended colors. Click **Custom** to choose your own color.
-- **Text color -** Select this option to make the displayed text the selected color.
+- **Text color -** The primary text color for the current theme, i.e. white in dark theme and black in light theme. 
 - **Transparent -** TORKEL, what does this do?
 
 ![Set color](/static/img/docs/value-mappings/set-color-8-0.png)
