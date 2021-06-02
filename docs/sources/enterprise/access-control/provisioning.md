@@ -14,44 +14,144 @@ If you want to manage roles and built-in role assignments by API, refer to the [
 
 ## Configuration
 
-The configuration files must be located in the [`provisioning/access-control/`]({{< relref "../../administration/configuration/#provisioning" >}}) directory.
+The configuration files must be placed in [`provisioning/access-control/`]({{< relref "../../administration/configuration/#provisioning" >}}).
 Grafana performs provisioning during the startup. Refer to the [Reload provisioning configurations]({{< relref "../../http_api/admin/#reload-provisioning-configurations" >}}) to understand how you can reload configuration at runtime.
 
 ## Manage custom roles
 
-You can create, update and delete custom roles, as well as create and remove built-in role assignments for them.
+You can create, update, and delete custom roles, as well as create and remove built-in role assignments.
 
 ### Create or update roles
 
 To create or update custom roles, you can add a list of `roles` in the configuration.
 
-Note that in order to update a role, you would need to increment the [version]({{< relref "./roles.md#custom-roles" >}}). 
+Every role has a [version]({{< relref "./roles.md#custom-roles" >}}) number. For each role you update, you must remember to increment it, otherwise changes won't be accounted for.
 
-When setting the global flag on a role it overwrites the `orgId`.
+When you update a role, the existing role inside grafana is altered to be exactly what is specified in the YAML file, including permissions.
+
+Here is an example YAML file to create a local role with a set of permissions:
+
+```yaml
+# config file version
+apiVersion: 1
+
+# Roles to insert into the database, or roles to update in the database
+roles:
+  - name: custom:users:editor
+    description: "This role allows users to list, create, or update other users within the organization."
+    version: 1
+    orgId: 1
+    permissions:
+      - action: "users:read"
+        scope: "users:*"
+      - action: "users:write"
+        scope: "users:*"
+      - action: "users:create"
+        scope: "users:*"
+```
+
+Here is an example YAML file to create a global role with a set of permissions, where the `global:true` option makes a role global:
+
+```yaml
+# config file version
+apiVersion: 1
+
+# Roles to insert into the database, or roles to update in the database
+roles:
+  - name: custom:users:editor
+    description: "This role allows users to list, create, or update other users within the organization."
+    version: 1
+    global: true
+    permissions:
+      - action: "users:read"
+        scope: "users:*"
+      - action: "users:write"
+        scope: "users:*"
+      - action: "users:create"
+        scope: "users:*"
+```
+The `orgId` is lost when the role is set to global.
 
 ### Delete roles 
 
-To delete a role, you can add a list of roles under `deleteRoles` section in the configuration file. Note that deletion is performed after role insertion/update.
+To delete a role, you can add a list of roles under the `deleteRoles` section in the configuration file. Such a deletion is performed after a role is inserted or updated.
 
-### Create and remove built-in role assignments
+Here is an example YAML file to delete a role:
+```yaml
+# config file version
+apiVersion: 1
 
-To create a built-in role assignment, you can add list of assignments under `builtInRoles` section in the configuration file, as an element of `roles`. To remove a built-in role assignment, leave `builtInRoles` list empty. 
+# list of roles that should be deleted
+deleteRoles:
+  - name: custom:reports:editor
+    orgId: 1
+    force: true
+```
 
-Note that it is only possibly to provision [organization local]({{< relref "./roles#built-in-role-assignments" >}}) assignments. For creating or updating _global_ assignments, refer to the [Fine-grained access control HTTP API]({{< relref "../../http_api/access_control.md" >}}).
+### Assign your custom role to specific built-in roles
+
+To assign roles to built-in roles, add said built-in roles to the `builtInRoles` section of your roles. To remove a specific assignment, remove it from the list.
+
+For example, the following role is assigned to an organization editor or an organization administrator:
+
+```yaml
+# config file version
+apiVersion: 1
+
+# Roles to insert/update in the database
+roles:
+  - name: custom:users:editor
+    description: "This role allows users to list/create/update other users in the organization"
+    version: 1
+    orgId: 1
+    permissions:
+      - action: "users:read"
+        scope: "users:*"
+      - action: "users:write"
+        scope: "users:*"
+      - action: "users:create"
+        scope: "users:*"
+    builtInRoles:
+      - name: "Editor"
+      - name: "Admin"
+```
 
 ## Manage default built-in role assignments
 
-During the startup, Grafana creates [default built-in role assignments]({{< relref "./roles#default-built-in-role-assignments" >}}) with [fixed roles]({{< relref "./roles#fixed-roles" >}}). You can remove and add back later those assignments by using provisioning.
+During startup, Grafana creates [default built-in role assignments]({{< relref "./roles#default-built-in-role-assignments" >}}) with [fixed roles]({{< relref "./roles#fixed-roles" >}}). You can remove and later restore those assignments with provisioning.
 
 ### Remove default assignment
 
-To remove default built-in role assignment, you can use `removeDefaultAssignments` element in the configuration file. You would need to provide built-in role name and fixed role name.
+To remove default built-in role assignments, use the `removeDefaultAssignments` element in the configuration file. You need to provide the built-in role name and fixed role name.
 
-### Add back default assignment
+Here is an example:
+```yaml
+# config file version
+apiVersion: 1
 
-To add back default built-in role assignment, you can use `addDefaultAssignments` element in the configuration file. You would need to provide built-in role name and fixed role name.
+# list of default built-in role assignments that should be removed
+removeDefaultAssignments:
+  - builtInRole: "Grafana server administrator"
+    fixedRole: "fixed:permissions:admin"
 
-## Example of a role configuration file
+```
+
+### Restore default assignment
+
+To restore the default built-in role assignment, use the `addDefaultAssignments` element in the configuration file. You need to provide the built-in role name and the fixed-role name.
+
+Here is an example:
+```yaml
+# config file version
+apiVersion: 1
+
+# list of default built-in role assignments that should be added back
+addDefaultAssignments:
+  - builtInRole: "Admin"
+    fixedRole: "fixed:reporting:admin:read"
+```
+
+## Full example of a role configuration file
 
 ```yaml
 # config file version
@@ -98,7 +198,7 @@ roles:
     permissions:
       # <string, required> action allowed
       - action: "users:read"
-        #<string, required> scope it applies to
+        #<string> scope it applies to
         scope: "users:*"
       - action: "users:write"
         scope: "users:*"
@@ -143,6 +243,10 @@ A basic set of validation rules are applied to the input `yaml` files.
 
 - `name` must not be empty
 - `name` must not have `fixed:` prefix. 
+
+### Permissions
+
+- `name` must not be empty
 
 ### Built-in role assignments
 
