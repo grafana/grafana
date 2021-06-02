@@ -1,7 +1,5 @@
 import { DashboardModel, PanelModel } from '../../../state';
 import { ThunkResult } from 'app/types';
-import { appEvents } from 'app/core/core';
-import { SaveLibraryPanelModal } from 'app/features/library-panels/components/SaveLibraryPanelModal/SaveLibraryPanelModal';
 import {
   closeCompleted,
   PANEL_EDITOR_UI_STATE_STORAGE_KEY,
@@ -14,7 +12,6 @@ import { cleanUpEditPanel, panelModelAndPluginReady } from '../../../state/reduc
 import store from 'app/core/store';
 import { pick } from 'lodash';
 import { locationService } from '@grafana/runtime';
-import { ShowModalReactEvent } from '../../../../../types/events';
 
 export function initPanelEditor(sourcePanel: PanelModel, dashboard: DashboardModel): ThunkResult<void> {
   return (dispatch) => {
@@ -23,19 +20,6 @@ export function initPanelEditor(sourcePanel: PanelModel, dashboard: DashboardMod
     dispatch(
       updateEditorInitState({
         panel,
-        sourcePanel,
-      })
-    );
-  };
-}
-
-export function updateSourcePanel(sourcePanel: PanelModel): ThunkResult<void> {
-  return (dispatch, getStore) => {
-    const { getPanel } = getStore().panelEditor;
-
-    dispatch(
-      updateEditorInitState({
-        panel: getPanel(),
         sourcePanel,
       })
     );
@@ -52,43 +36,12 @@ export function discardPanelChanges(): ThunkResult<void> {
 
 export function exitPanelEditor(): ThunkResult<void> {
   return async (dispatch, getStore) => {
-    const dashboard = getStore().dashboard.getModel();
-    const { getPanel, shouldDiscardChanges } = getStore().panelEditor;
-    const onConfirm = () => locationService.partial({ editPanel: null, tab: null });
-
-    const panel = getPanel();
-    const onDiscard = () => {
-      dispatch(discardPanelChanges());
-      onConfirm();
-    };
-
-    if (shouldDiscardChanges || !panel.libraryPanel) {
-      onConfirm();
-      return;
-    }
-
-    if (!panel.hasChanged) {
-      onConfirm();
-      return;
-    }
-
-    appEvents.publish(
-      new ShowModalReactEvent({
-        component: SaveLibraryPanelModal,
-        props: {
-          panel,
-          folderId: dashboard!.meta.folderId,
-          isOpen: true,
-          onConfirm,
-          onDiscard,
-        },
-      })
-    );
+    locationService.partial({ editPanel: null, tab: null });
   };
 }
 
-function updateDuplicateLibraryPanels(modifiedPanel: PanelModel, dashboard: DashboardModel, dispatch: any) {
-  if (modifiedPanel.libraryPanel?.uid === undefined) {
+function updateDuplicateLibraryPanels(modifiedPanel: PanelModel, dashboard: DashboardModel | null, dispatch: any) {
+  if (modifiedPanel.libraryPanel?.uid === undefined || !dashboard) {
     return;
   }
 
@@ -132,7 +85,7 @@ export function panelEditorCleanUp(): ThunkResult<void> {
       const sourcePanel = getSourcePanel();
       const panelTypeChanged = sourcePanel.type !== panel.type;
 
-      updateDuplicateLibraryPanels(panel, dashboard!, dispatch);
+      updateDuplicateLibraryPanels(panel, dashboard, dispatch);
 
       // restore the source panel ID before we update source panel
       modifiedSaveModel.id = sourcePanel.id;
