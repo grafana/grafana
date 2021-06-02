@@ -102,7 +102,7 @@ describe('FieldDisplay', () => {
   it('Should return field with default text when no mapping or data available', () => {
     const options = createEmptyDisplayOptions();
     const display = getFieldDisplayValues(options);
-    expect(display[0].display.text).toEqual('No data');
+    expect(display[0].display.text).toEqual('');
     expect(display[0].display.numeric).toEqual(0);
   });
 
