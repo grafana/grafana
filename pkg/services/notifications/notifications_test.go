@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/infra/backgroundsvcs"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
@@ -11,17 +12,14 @@ import (
 )
 
 func TestNotificationService(t *testing.T) {
-	ns := &NotificationService{
-		Cfg: setting.NewCfg(),
-	}
-	ns.Cfg.StaticRootPath = "../../../public/"
-	ns.Cfg.Smtp.Enabled = true
-	ns.Cfg.Smtp.TemplatesPattern = "emails/*.html"
-	ns.Cfg.Smtp.FromAddress = "from@address.com"
-	ns.Cfg.Smtp.FromName = "Grafana Admin"
-	ns.Bus = bus.New()
+	cfg := setting.NewCfg()
+	cfg.StaticRootPath = "../../../public/"
+	cfg.Smtp.Enabled = true
+	cfg.Smtp.TemplatesPattern = "emails/*.html"
+	cfg.Smtp.FromAddress = "from@address.com"
+	cfg.Smtp.FromName = "Grafana Admin"
 
-	err := ns.Init()
+	ns, err := ProvideService(bus.New(), cfg, backgroundsvcs.ProvideService())
 	require.NoError(t, err)
 
 	t.Run("When sending reset email password", func(t *testing.T) {
