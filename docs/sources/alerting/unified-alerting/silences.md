@@ -36,6 +36,6 @@ Alert instances that have labels that match all of the "Matching Labels" specifi
 ## Viewing and editing silences
 
 1. In the Grafana menu hover your cursor over the **Alerting** (bell) icon, then select **Silences** (crossed out bell icon).
-1. To end the silence, click the **Unsilence** option next to the listed silence.
+1. To end the silence, click the **Unsilence** option next to the listed silence. Silences that have ended are still listed and are automatically removed after 5 days. There is no method for manual removal.
 1. To edit a silence, click the pencil icon next to the listed silence. Edit the silence using instructions on how to create a silence.
 1. Click **Submit** to save your changes.
