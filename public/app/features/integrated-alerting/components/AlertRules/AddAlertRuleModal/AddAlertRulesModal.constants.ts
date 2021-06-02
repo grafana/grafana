@@ -1,4 +1,4 @@
-import { Severity } from './AddAlertRuleModal.types';
+import { Severity } from '../../AlertRuleTemplate/AlertRuleTemplate.types';
 import { Messages } from './AddAlertRuleModal.messages';
 
 // TODO: generate SEVERITY_OPTIONS from its type definitions

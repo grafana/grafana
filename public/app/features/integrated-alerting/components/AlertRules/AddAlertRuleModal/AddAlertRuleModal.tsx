@@ -1,4 +1,4 @@
-import React, { FC, useContext, useEffect, useState } from 'react';
+import React, { FC, useContext, useEffect, useRef, useState } from 'react';
 import { Form, Field } from 'react-final-form';
 import { Button, HorizontalGroup, Switch, Select, MultiSelect, useStyles } from '@grafana/ui';
 import {
@@ -27,8 +27,10 @@ import {
 import { AlertRulesProvider } from '../AlertRules.provider';
 import { AlertRulesService } from '../AlertRules.service';
 import { AlertRuleTemplateService } from '../../AlertRuleTemplate/AlertRuleTemplate.service';
+import { Template } from '../../AlertRuleTemplate/AlertRuleTemplate.types';
 import { NotificationChannelService } from '../../NotificationChannel/NotificationChannel.service';
 import { appEvents } from 'app/core/core';
+import { AlertRuleParamField } from '../AlertRuleParamField';
 
 const { required } = validators;
 const durationValidators = [required, minValidator(MINIMUM_DURATION_VALUE)];
@@ -38,7 +40,13 @@ export const AddAlertRuleModal: FC<AddAlertRuleModalProps> = ({ isVisible, setVi
   const styles = useStyles(getStyles);
   const [templateOptions, setTemplateOptions] = useState<Array<SelectableValue<string>>>();
   const [channelsOptions, setChannelsOptions] = useState<Array<SelectableValue<string>>>();
+  const templates = useRef<Template[]>([]);
+  const [currentTemplate, setCurrentTemplate] = useState<Template>();
   const { getAlertRules } = useContext(AlertRulesProvider);
+
+  const updateAlertRuleTemplateParams = () => {
+    setCurrentTemplate(templates.current.find(template => template.name === alertRule?.rawValues.template.name));
+  };
 
   const getData = async () => {
     try {
@@ -58,6 +66,8 @@ export const AddAlertRuleModal: FC<AddAlertRuleModalProps> = ({ isVisible, setVi
       ]);
       setChannelsOptions(formatChannelsOptions(channelsListResponse.channels));
       setTemplateOptions(formatTemplateOptions(templatesListResponse.templates));
+      templates.current = templatesListResponse.templates;
+      updateAlertRuleTemplateParams();
     } catch (e) {
       logger.error(e);
     }
@@ -67,14 +77,19 @@ export const AddAlertRuleModal: FC<AddAlertRuleModalProps> = ({ isVisible, setVi
     getData();
   }, []);
 
-  const initialValues = getInitialValues(alertRule);
+  useEffect(() => {
+    updateAlertRuleTemplateParams();
+  }, [alertRule]);
 
+  const initialValues = getInitialValues(alertRule);
   const onSubmit = async (values: AddAlertRuleFormValues) => {
     try {
       if (alertRule) {
-        await AlertRulesService.update(formatUpdateAPIPayload(alertRule.rawValues.rule_id, values));
+        await AlertRulesService.update(
+          formatUpdateAPIPayload(alertRule.rawValues.rule_id, values, currentTemplate?.params)
+        );
       } else {
-        await AlertRulesService.create(formatCreateAPIPayload(values));
+        await AlertRulesService.create(formatCreateAPIPayload(values, currentTemplate?.params));
       }
       setVisible(false);
       appEvents.emit(AppEvents.alertSuccess, [alertRule ? Messages.updateSuccess : Messages.createSuccess]);
@@ -86,6 +101,12 @@ export const AddAlertRuleModal: FC<AddAlertRuleModalProps> = ({ isVisible, setVi
 
   const handleClose = () => {
     setVisible(false);
+    setCurrentTemplate(undefined);
+  };
+
+  const handleTemplateChange = (name = '') => {
+    const template = templates.current.find(template => template.name === name);
+    setCurrentTemplate(template);
   };
 
   return (
@@ -98,7 +119,24 @@ export const AddAlertRuleModal: FC<AddAlertRuleModalProps> = ({ isVisible, setVi
       <Form
         initialValues={initialValues}
         onSubmit={onSubmit}
-        render={({ handleSubmit, valid, pristine, submitting }) => (
+        mutators={{
+          changeSeverity: ([templateName], state, tools) => {
+            const severityStr = templates.current.find(template => template.name === templateName)?.severity;
+            const newSeverity = SEVERITY_OPTIONS.find(severity => severity.value === severityStr);
+
+            if (newSeverity) {
+              // TODO since editing the template name is not allowed so far, no need to keep previous option.
+              // When edition is allowed, the function param below can take the old value as argument, thus we can keep the selection
+              // before changing it, e.g. "(oldSeverity) => oldSeverity | newSeverity"
+              tools.changeValue(state, 'severity', () => newSeverity);
+            }
+          },
+          changeDuration: ([templateName], state, tools) => {
+            const newDuration = templates.current.find(template => template.name === templateName)?.for;
+            tools.changeValue(state, 'duration', () => (newDuration ? parseInt(newDuration, 10) : undefined));
+          },
+        }}
+        render={({ handleSubmit, valid, pristine, submitting, form }) => (
           <form className={styles.form} onSubmit={handleSubmit} data-qa="add-alert-rule-modal-form">
             <Field name="template" validate={required}>
               {({ input }) => (
@@ -111,6 +149,12 @@ export const AddAlertRuleModal: FC<AddAlertRuleModalProps> = ({ isVisible, setVi
                     className={styles.select}
                     options={templateOptions}
                     {...input}
+                    onChange={name => {
+                      input.onChange(name);
+                      form.mutators.changeSeverity(name.value);
+                      form.mutators.changeDuration(name.value);
+                      handleTemplateChange(name.value);
+                    }}
                     data-qa="template-select-input"
                   />
                 </>
@@ -119,7 +163,8 @@ export const AddAlertRuleModal: FC<AddAlertRuleModalProps> = ({ isVisible, setVi
 
             <TextInputField label={Messages.nameField} name="name" validators={nameValidators} />
 
-            <TextInputField label={Messages.thresholdField} name="threshold" />
+            {currentTemplate &&
+              currentTemplate.params?.map(param => <AlertRuleParamField key={param.name} param={param} />)}
 
             <NumberInputField label={Messages.durationField} name="duration" validators={durationValidators} />
 
@@ -156,6 +201,21 @@ export const AddAlertRuleModal: FC<AddAlertRuleModalProps> = ({ isVisible, setVi
                 </>
               )}
             </Field>
+
+            {currentTemplate && (
+              <>
+                <div data-qa="template-expression" className={styles.templateParsedField}>
+                  <label className={styles.label}>{Messages.templateExpression}</label>
+                  <pre>{currentTemplate.expr}</pre>
+                </div>
+                {currentTemplate.annotations?.summary && (
+                  <div data-qa="template-alert" className={styles.templateParsedField}>
+                    <label className={styles.label}>{Messages.ruleAlert}</label>
+                    <pre>{currentTemplate.annotations?.summary}</pre>
+                  </div>
+                )}
+              </>
+            )}
 
             <Field name="enabled" type="checkbox" defaultValue={true}>
               {({ input }) => (

@@ -1,60 +1,22 @@
-import { AddAlertRuleFormValues, Severity } from './AddAlertRuleModal.types';
+import { Severity, TemplateParamType, TemplateParamUnit } from '../../AlertRuleTemplate/AlertRuleTemplate.types';
+import { AddAlertRuleFormValues } from './AddAlertRuleModal.types';
 import {
   formatCreateAPIPayload,
   formatFilter,
   formatFilters,
   formatTemplateOptions,
-  formatThreshold,
   formatUpdateAPIPayload,
   formatEditFilter,
   formatEditFilters,
   formatEditTemplate,
   formatEditSeverity,
-  formatEditThreshold,
   formatEditNotificationChannel,
   formatEditNotificationChannels,
   minValidator,
+  maxValidator,
 } from './AddAlertRuleModal.utils';
 
 describe('AddAlertRuleModal utils', () => {
-  test('formatThreshold', () => {
-    expect(formatThreshold('2.')).toEqual({
-      name: 'threshold',
-      float: 2,
-      type: 'FLOAT',
-    });
-
-    expect(formatThreshold('.2')).toEqual({
-      name: 'threshold',
-      float: 0.2,
-      type: 'FLOAT',
-    });
-
-    expect(formatThreshold('2.2')).toEqual({
-      name: 'threshold',
-      float: 2.2,
-      type: 'FLOAT',
-    });
-
-    expect(formatThreshold('2')).toEqual({
-      name: 'threshold',
-      float: 2,
-      type: 'FLOAT',
-    });
-
-    expect(formatThreshold('')).toEqual({
-      name: 'threshold',
-      string: '',
-      type: 'STRING',
-    });
-
-    expect(formatThreshold('true')).toEqual({
-      name: 'threshold',
-      bool: true,
-      type: 'BOOL',
-    });
-  });
-
   test('formatFilter', () => {
     expect(formatFilter('key=value')).toEqual({
       key: 'key',
@@ -136,9 +98,39 @@ describe('AddAlertRuleModal utils', () => {
     expect(formatTemplateOptions([])).toEqual([]);
     expect(
       formatTemplateOptions([
-        { summary: 'test summary 1', name: 'testsum1', source: 'SAAS', created_at: 'test', yaml: 'test' },
-        { summary: '', name: '', source: 'SAAS', created_at: 'test', yaml: 'test' },
-        { summary: '   ', name: 'test2', source: 'SAAS', created_at: 'test', yaml: 'test' },
+        {
+          summary: 'test summary 1',
+          name: 'testsum1',
+          source: 'SAAS',
+          created_at: 'test',
+          yaml: 'test',
+          params: [],
+          expr: '',
+          severity: Severity.SEVERITY_CRITICAL,
+          for: '200s',
+        },
+        {
+          summary: '',
+          name: '',
+          source: 'SAAS',
+          created_at: 'test',
+          yaml: 'test',
+          params: [],
+          expr: '',
+          severity: Severity.SEVERITY_ERROR,
+          for: '100s',
+        },
+        {
+          summary: '   ',
+          name: 'test2',
+          source: 'SAAS',
+          created_at: 'test',
+          yaml: 'test',
+          params: [],
+          expr: '',
+          severity: Severity.SEVERITY_CRITICAL,
+          for: '150s',
+        },
       ])
     ).toEqual([
       {
@@ -169,9 +161,24 @@ describe('AddAlertRuleModal utils', () => {
       ],
       severity: { value: Severity.SEVERITY_CRITICAL, label: 'Critical' },
       template: { value: 'Test Template', label: 'Test Template' },
-      threshold: 'true',
+      threshold: 10,
     };
-    expect(formatCreateAPIPayload(inputData)).toEqual({
+    expect(
+      formatCreateAPIPayload(inputData, [
+        {
+          name: 'threshold',
+          type: TemplateParamType.FLOAT,
+          unit: TemplateParamUnit.PERCENTAGE,
+          summary: '',
+          float: {
+            hasDefault: true,
+            hasMin: false,
+            hasMax: false,
+            default: 10,
+          },
+        },
+      ])
+    ).toEqual({
       custom_labels: {},
       disabled: true,
       channel_ids: ['pagerDuty', 'email', 'slack'],
@@ -191,8 +198,8 @@ describe('AddAlertRuleModal utils', () => {
       params: [
         {
           name: 'threshold',
-          bool: true,
-          type: 'BOOL',
+          float: 10,
+          type: 'FLOAT',
         },
       ],
       severity: Severity.SEVERITY_CRITICAL,
@@ -214,9 +221,24 @@ describe('AddAlertRuleModal utils', () => {
       ],
       severity: { value: Severity.SEVERITY_CRITICAL, label: 'Critical' },
       template: { value: 'Test Template', label: 'Test Template' },
-      threshold: 'true',
+      threshold: 10,
     };
-    expect(formatUpdateAPIPayload('testId', inputData)).toEqual({
+    expect(
+      formatUpdateAPIPayload('testId', inputData, [
+        {
+          name: 'threshold',
+          type: TemplateParamType.FLOAT,
+          unit: TemplateParamUnit.PERCENTAGE,
+          summary: '',
+          float: {
+            hasDefault: true,
+            hasMin: false,
+            hasMax: false,
+            default: 10,
+          },
+        },
+      ])
+    ).toEqual({
       rule_id: 'testId',
       custom_labels: {},
       disabled: true,
@@ -237,8 +259,8 @@ describe('AddAlertRuleModal utils', () => {
       params: [
         {
           name: 'threshold',
-          bool: true,
-          type: 'BOOL',
+          float: 10,
+          type: 'FLOAT',
         },
       ],
       severity: Severity.SEVERITY_CRITICAL,
@@ -330,51 +352,6 @@ describe('AddAlertRuleModal utils', () => {
     ]);
   });
 
-  test('formatEditNotificationChannels', () => {
-    expect(formatEditThreshold([])).toBeNull();
-
-    expect(formatEditThreshold(undefined)).toBeNull();
-
-    expect(
-      formatEditThreshold([
-        {
-          name: 'threshold',
-          type: 'BOOL',
-          bool: true,
-        },
-      ])
-    ).toEqual('true');
-
-    expect(
-      formatEditThreshold([
-        {
-          name: 'threshold',
-          type: 'FLOAT',
-          float: 2.3,
-        },
-      ])
-    ).toEqual('2.3');
-
-    expect(
-      formatEditThreshold([
-        {
-          name: 'threshold',
-          type: 'STRING',
-          string: 'test',
-        },
-      ])
-    ).toEqual('test');
-
-    expect(
-      formatEditThreshold([
-        {
-          name: 'threshold',
-          type: 'PARAM_TYPE_INVALID',
-        },
-      ])
-    ).toBeNull();
-  });
-
   test('minimum validator', () => {
     expect(minValidator(1)(-1)).not.toBeUndefined();
     expect(minValidator(1)(0)).not.toBeUndefined();
@@ -388,5 +365,20 @@ describe('AddAlertRuleModal utils', () => {
     expect(minValidator(1)(Infinity)).toBeUndefined();
     expect(minValidator(Number.MAX_VALUE)(1)).not.toBeUndefined();
     expect(minValidator(1)(Number.MAX_VALUE)).toBeUndefined();
+  });
+
+  test('maximum validator', () => {
+    expect(maxValidator(1)(-1)).toBeUndefined();
+    expect(maxValidator(1)(0)).toBeUndefined();
+    expect(maxValidator(0)(0)).toBeUndefined();
+    expect(maxValidator(0.2)(0.25)).not.toBeUndefined();
+    expect(maxValidator(0.99)(0.991)).not.toBeUndefined();
+    expect(maxValidator(1)(1)).toBeUndefined();
+    expect(maxValidator(1)(100)).not.toBeUndefined();
+    expect(maxValidator(-1)(1)).not.toBeUndefined();
+    expect(maxValidator(Infinity)(1)).toBeUndefined();
+    expect(maxValidator(1)(Infinity)).not.toBeUndefined();
+    expect(maxValidator(Number.MAX_VALUE)(1)).toBeUndefined();
+    expect(maxValidator(1)(Number.MAX_VALUE)).not.toBeUndefined();
   });
 });

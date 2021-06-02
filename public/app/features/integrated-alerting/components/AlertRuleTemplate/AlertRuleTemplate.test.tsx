@@ -46,7 +46,7 @@ describe('AlertRuleTemplate', () => {
     wrapper.update();
 
     expect(wrapper.find(dataQa('table-thead')).find('tr')).toHaveLength(1);
-    expect(wrapper.find(dataQa('table-tbody')).find('tr')).toHaveLength(3);
+    expect(wrapper.find(dataQa('table-tbody')).find('tr')).toHaveLength(4);
     expect(wrapper.find(dataQa('table-no-data'))).toHaveLength(0);
   });
 
