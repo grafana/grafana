@@ -16,11 +16,11 @@ export function getManagementApiRoute(azureCloud: string): string {
 export function getLogAnalyticsManagementApiRoute(azureCloud: string): string {
   switch (azureCloud) {
     case 'azuremonitor':
-      return 'workspacesloganalytics';
+      return 'azuremonitor';
     case 'chinaazuremonitor':
-      return 'chinaworkspacesloganalytics';
+      return 'chinaazuremonitor';
     case 'govazuremonitor':
-      return 'govworkspacesloganalytics';
+      return 'govazuremonitor';
     default:
       throw new Error('The cloud not supported.');
   }
@@ -53,13 +53,13 @@ export function getAppInsightsApiRoute(azureCloud: string): string {
 export function getLogAnalyticsResourcePickerApiRoute(azureCloud: string) {
   switch (azureCloud) {
     case 'azuremonitor':
-      return 'loganalytics-resourcepickerdata';
+      return 'azureresourcegraph';
 
     case 'govazuremonitor': // Azure US Government
-      return 'loganalytics-resourcepickerdata-gov';
+      return 'govazureresourcegraph';
 
     case 'chinaazuremonitor': // Azure China
-      return 'loganalytics-resourcepickerdata-china';
+      return 'chinaazureresourcegraph';
 
     default:
       throw new Error('The cloud not supported.');

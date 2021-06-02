@@ -55,7 +55,7 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     this.azureMonitorUrl = `/${managementRoute}/subscriptions`;
 
     this.url = instanceSettings.url || '';
-    this.defaultSubscriptionId = this.instanceSettings.jsonData.logAnalyticsSubscriptionId || '';
+    this.defaultSubscriptionId = this.instanceSettings.jsonData.subscriptionId || '';
     this.defaultOrFirstWorkspace = this.instanceSettings.jsonData.logAnalyticsDefaultWorkspace || '';
   }
 
@@ -473,14 +473,14 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     const authType = getAuthType(this.instanceSettings);
 
     if (authType === 'clientsecret') {
-      if (!this.isValidConfigField(this.instanceSettings.jsonData.logAnalyticsTenantId)) {
+      if (!this.isValidConfigField(this.instanceSettings.jsonData.tenantId)) {
         return {
           status: 'error',
           message: 'The Tenant Id field is required.',
         };
       }
 
-      if (!this.isValidConfigField(this.instanceSettings.jsonData.logAnalyticsClientId)) {
+      if (!this.isValidConfigField(this.instanceSettings.jsonData.clientId)) {
         return {
           status: 'error',
           message: 'The Client Id field is required.',

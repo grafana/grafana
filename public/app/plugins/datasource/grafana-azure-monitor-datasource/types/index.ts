@@ -69,6 +69,12 @@ export interface AzureClientSecretCredentials extends AzureCredentialsBase {
   tenantId?: string;
   clientId?: string;
   clientSecret?: string | ConcealedSecret;
+
+  /** @deprecated Azure Logs credentials */
+  logAnalyticsTenantId?: string;
+  logAnalyticsClientId?: string;
+  logAnalyticsSubscriptionId?: string;
+  logAnalyticsClientSecret?: string | ConcealedSecret;
 }
 
 export type AzureCredentials = AzureManagedIdentityCredentials | AzureClientSecretCredentials;
@@ -83,10 +89,6 @@ export interface AzureDataSourceJsonData extends DataSourceJsonData {
   subscriptionId?: string;
 
   // logs
-  azureLogAnalyticsSameAs?: boolean;
-  logAnalyticsTenantId?: string;
-  logAnalyticsClientId?: string;
-  logAnalyticsSubscriptionId?: string;
   logAnalyticsDefaultWorkspace?: string;
 
   // App Insights
@@ -95,7 +97,6 @@ export interface AzureDataSourceJsonData extends DataSourceJsonData {
 
 export interface AzureDataSourceSecureJsonData {
   clientSecret?: string;
-  logAnalyticsClientSecret?: string;
   appInsightsApiKey?: string;
 }
 

@@ -3,20 +3,23 @@ import { SelectableValue } from '@grafana/data';
 import { AzureCredentialsForm } from './AzureCredentialsForm';
 import { InlineFormLabel, LegacyForms, Button, Alert } from '@grafana/ui';
 const { Select, Switch } = LegacyForms;
-import { AzureDataSourceSettings, AzureCredentials } from '../types';
-import {
-  getCredentials,
-  getLogAnalyticsCredentials,
-  isCredentialsComplete,
-  updateLogAnalyticsCredentials,
-  updateLogAnalyticsSameAs,
-} from '../credentials';
+import { AzureClientSecretCredentials, AzureDataSourceSettings } from '../types';
+import { getCredentials, getLogAnalyticsCredentials, isCredentialsComplete } from '../credentials';
 
 export interface Props {
   options: AzureDataSourceSettings;
   updateOptions: (optionsFunc: (options: AzureDataSourceSettings) => AzureDataSourceSettings) => void;
   getSubscriptions: () => Promise<Array<SelectableValue<string>>>;
   getWorkspaces: (subscriptionId: string) => Promise<Array<SelectableValue<string>>>;
+}
+
+function credentialsDiffer(logCreds: AzureClientSecretCredentials, primaryCreds: AzureClientSecretCredentials) {
+  return (
+    logCreds.authType !== primaryCreds.authType ||
+    logCreds.logAnalyticsClientId !== primaryCreds.clientId ||
+    logCreds.logAnalyticsTenantId !== primaryCreds.tenantId ||
+    logCreds.logAnalyticsClientSecret !== primaryCreds.clientSecret
+  );
 }
 
 export const AnalyticsConfig: FunctionComponent<Props> = (props: Props) => {
@@ -28,9 +31,13 @@ export const AnalyticsConfig: FunctionComponent<Props> = (props: Props) => {
     ? logAnalyticsCredentials.defaultSubscriptionId
     : primaryCredentials.defaultSubscriptionId;
 
-  // Only show a section for setting LogAnalytics credentials if they were set from before
-  // And the authType is supported
-  const [credentialsUsed, _] = useState(!!logAnalyticsCredentials);
+  // Only show a section for setting LogAnalytics credentials if
+  // they were set from before with different values and the
+  // authType is supported
+  const [credentialsUsed, _] = useState(
+    !!logAnalyticsCredentials &&
+      credentialsDiffer(logAnalyticsCredentials, primaryCredentials as AzureClientSecretCredentials)
+  );
   const credentialsEnabled = credentialsUsed && primaryCredentials.authType === 'clientsecret';
 
   const hasRequiredFields =
@@ -91,18 +98,6 @@ export const AnalyticsConfig: FunctionComponent<Props> = (props: Props) => {
     }
   };
 
-  const [sameAsSwitched, setSameAsSwitched] = useState(false);
-
-  const onCredentialsChange = (updatedCredentials: AzureCredentials) => {
-    updateOptions((options) => updateLogAnalyticsCredentials(options, updatedCredentials));
-  };
-
-  const onLogAnalyticsSameAsChange = (event: React.SyntheticEvent<HTMLInputElement>) => {
-    const sameAs = event.currentTarget.checked;
-    updateOptions((options) => updateLogAnalyticsSameAs(options, sameAs));
-    setSameAsSwitched(true);
-  };
-
   const onDefaultWorkspaceChange = (selected: SelectableValue<string>) => {
     updateOptions((options) => {
       return {
@@ -121,12 +116,6 @@ export const AnalyticsConfig: FunctionComponent<Props> = (props: Props) => {
     }),
   };
 
-  const showSameAsHelpMsg =
-    credentialsEnabled &&
-    sameAsSwitched &&
-    primaryCredentials.authType === 'clientsecret' &&
-    !primaryCredentials.clientSecret;
-
   return (
     <>
       <h3 className="page-heading">Azure Monitor Logs</h3>
@@ -134,33 +123,31 @@ export const AnalyticsConfig: FunctionComponent<Props> = (props: Props) => {
         <>
           <Switch
             label="Same details as Azure Monitor API"
-            checked={!logAnalyticsCredentials}
-            onChange={onLogAnalyticsSameAsChange}
+            // no-op, fake disabled switch
+            checked={true}
+            onChange={() => {}}
             {...tooltipAttribute}
           />
 
-          {showSameAsHelpMsg && (
-            <div className="grafana-info-box m-t-2">
-              <div className="alert-body">
-                <p>Re-enter your Azure Monitor Client Secret to use this setting.</p>
-              </div>
-            </div>
-          )}
-
           {logAnalyticsCredentials && (
             <>
-              <Alert severity="info" title="Deprecated">
-                Using different credentials for Azure Monitor Logs is deprecated and will be removed in a future
-                version.
-                <br />
-                Create a different Data Source if you need to use different credentials.
+              <Alert severity="error" title="Deprecated">
+                Using different credentials for Azure Monitor Logs is no longer supported. Authentication information
+                above will be used instead. Please create a new data source with the credentials below.
               </Alert>
 
               <AzureCredentialsForm
                 managedIdentityEnabled={false}
-                credentials={logAnalyticsCredentials}
-                onCredentialsChange={onCredentialsChange}
+                credentials={
+                  {
+                    ...logAnalyticsCredentials,
+                    tenantId: logAnalyticsCredentials.logAnalyticsTenantId,
+                    clientId: logAnalyticsCredentials.logAnalyticsClientId,
+                    clientSecret: logAnalyticsCredentials.logAnalyticsClientSecret,
+                  } as AzureClientSecretCredentials
+                }
                 getSubscriptions={getSubscriptions}
+                disabled={true}
               />
             </>
           )}

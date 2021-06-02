@@ -1,6 +1,7 @@
 import { config } from '@grafana/runtime';
 import {
   AzureAuthType,
+  AzureClientSecretCredentials,
   AzureCloud,
   AzureCredentials,
   AzureDataSourceInstanceSettings,
@@ -64,18 +65,16 @@ function getSecret(options: AzureDataSourceSettings): undefined | string | Conce
   }
 }
 
+/** @deprecated since 8.0, left here for help the migration */
 function getLogAnalyticsSecret(options: AzureDataSourceSettings): undefined | string | ConcealedSecret {
   if (options.secureJsonFields.logAnalyticsClientSecret) {
     // The secret is concealed on server
     return concealed;
   } else {
-    const secret = options.secureJsonData?.logAnalyticsClientSecret;
+    // ClientSecret may be encoded in the JSON data from previous versions
+    const secret = (options.secureJsonData as any)?.logAnalyticsClientSecret;
     return typeof secret === 'string' && secret.length > 0 ? secret : undefined;
   }
-}
-
-function isLogAnalyticsSameAs(options: AzureDataSourceSettings | AzureDataSourceInstanceSettings): boolean {
-  return typeof options.jsonData.azureLogAnalyticsSameAs !== 'boolean' || options.jsonData.azureLogAnalyticsSameAs;
 }
 
 export function isCredentialsComplete(credentials: AzureCredentials): boolean {
@@ -116,7 +115,8 @@ export function getCredentials(options: AzureDataSourceSettings): AzureCredentia
   }
 }
 
-export function getLogAnalyticsCredentials(options: AzureDataSourceSettings): AzureCredentials | undefined {
+/** @deprecated since 8.0, left here for help the migration */
+export function getLogAnalyticsCredentials(options: AzureDataSourceSettings): AzureClientSecretCredentials | undefined {
   const authType = getAuthType(options);
 
   if (authType !== 'clientsecret') {
@@ -125,17 +125,25 @@ export function getLogAnalyticsCredentials(options: AzureDataSourceSettings): Az
     return undefined;
   }
 
-  if (isLogAnalyticsSameAs(options)) {
-    return undefined;
-  }
+  // LogAnalytics credentials may be encoded in the JSON data
+  // from previous versions. Manually extract it.
+  const logAnalyticsTenantId = (options.jsonData as any).logAnalyticsTenantId;
+  const logAnalyticsClientId = (options.jsonData as any).logAnalyticsClientId;
+  const logAnalyticsSubscriptionId = (options.jsonData as any).logAnalyticsSubscriptionId;
+  const logAnalyticsClientSecret = getLogAnalyticsSecret(options);
 
   return {
     authType: 'clientsecret',
     azureCloud: options.jsonData.cloudName || getDefaultAzureCloud(),
-    tenantId: options.jsonData.logAnalyticsTenantId,
-    clientId: options.jsonData.logAnalyticsClientId,
-    clientSecret: getLogAnalyticsSecret(options),
-    defaultSubscriptionId: options.jsonData.logAnalyticsSubscriptionId,
+    tenantId: options.jsonData.tenantId,
+    clientId: options.jsonData.clientId,
+    clientSecret: getSecret(options),
+    defaultSubscriptionId: options.jsonData.subscriptionId,
+    /** @deprecated fields below */
+    logAnalyticsTenantId,
+    logAnalyticsClientId,
+    logAnalyticsSubscriptionId,
+    logAnalyticsClientSecret,
   };
 }
 
@@ -157,12 +165,6 @@ export function updateCredentials(
           subscriptionId: credentials.defaultSubscriptionId,
         },
       };
-
-      if (!isLogAnalyticsSameAs(options)) {
-        options = updateLogAnalyticsSameAs(options, true);
-      } else {
-        options = updateLogAnalyticsCredentials(options, credentials);
-      }
 
       return options;
 
@@ -190,82 +192,8 @@ export function updateCredentials(
         },
       };
 
-      if (isLogAnalyticsSameAs(options)) {
-        options = updateLogAnalyticsCredentials(options, credentials);
-      }
-
       return options;
   }
-}
-
-export function updateLogAnalyticsCredentials(
-  options: AzureDataSourceSettings,
-  credentials: AzureCredentials
-): AzureDataSourceSettings {
-  // Log Analytics credentials only used if primary credentials are App Registration (client secret)
-  if (credentials.authType === 'clientsecret') {
-    options = {
-      ...options,
-      jsonData: {
-        ...options.jsonData,
-        logAnalyticsTenantId: credentials.tenantId,
-        logAnalyticsClientId: credentials.clientId,
-      },
-      secureJsonData: {
-        ...options.secureJsonData,
-        logAnalyticsClientSecret:
-          typeof credentials.clientSecret === 'string' && credentials.clientSecret.length > 0
-            ? credentials.clientSecret
-            : undefined,
-      },
-      secureJsonFields: {
-        ...options.secureJsonFields,
-        logAnalyticsClientSecret: typeof credentials.clientSecret === 'symbol',
-      },
-    };
-  }
-
-  // Default subscription
-  options = {
-    ...options,
-    jsonData: {
-      ...options.jsonData,
-      logAnalyticsSubscriptionId: credentials.defaultSubscriptionId,
-    },
-  };
-
-  return options;
-}
-
-export function updateLogAnalyticsSameAs(options: AzureDataSourceSettings, sameAs: boolean): AzureDataSourceSettings {
-  if (sameAs !== isLogAnalyticsSameAs(options)) {
-    // Update the 'Same As' switch
-    options = {
-      ...options,
-      jsonData: {
-        ...options.jsonData,
-        azureLogAnalyticsSameAs: sameAs,
-      },
-    };
-
-    if (sameAs) {
-      // Get the primary credentials
-      let credentials = getCredentials(options);
-
-      // Check whether the primary client secret is concealed
-      if (credentials.authType === 'clientsecret' && typeof credentials.clientSecret === 'symbol') {
-        // Log Analytics credentials need to be synchronized but the client secret is concealed,
-        // so we have to reset the primary client secret to ensure that user enters a new secret
-        credentials.clientSecret = undefined;
-        options = updateCredentials(options, credentials);
-      }
-
-      // Synchronize the Log Analytics credentials with primary credentials
-      options = updateLogAnalyticsCredentials(options, credentials);
-    }
-  }
-
-  return options;
 }
 
 export function isAppInsightsConfigured(options: AzureDataSourceSettings) {

@@ -9,8 +9,9 @@ export interface Props {
   managedIdentityEnabled: boolean;
   credentials: AzureCredentials;
   azureCloudOptions?: SelectableValue[];
-  onCredentialsChange: (updatedCredentials: AzureCredentials) => void;
+  onCredentialsChange?: (updatedCredentials: AzureCredentials) => void;
   getSubscriptions?: () => Promise<SelectableValue[]>;
+  disabled?: boolean;
 }
 
 const authTypeOptions: Array<SelectableValue<AzureAuthType>> = [
@@ -25,7 +26,7 @@ const authTypeOptions: Array<SelectableValue<AzureAuthType>> = [
 ];
 
 export const AzureCredentialsForm: FunctionComponent<Props> = (props: Props) => {
-  const { credentials, azureCloudOptions, onCredentialsChange, getSubscriptions } = props;
+  const { credentials, azureCloudOptions, onCredentialsChange, getSubscriptions, disabled } = props;
   const hasRequiredFields = isCredentialsComplete(credentials);
 
   const [subscriptions, setSubscriptions] = useState<Array<SelectableValue<string>>>([]);
@@ -189,6 +190,7 @@ export const AzureCredentialsForm: FunctionComponent<Props> = (props: Props) => 
                   placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
                   value={credentials.tenantId || ''}
                   onChange={onTenantIdChange}
+                  disabled={disabled}
                 />
               </div>
             </div>
@@ -202,6 +204,7 @@ export const AzureCredentialsForm: FunctionComponent<Props> = (props: Props) => 
                   placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
                   value={credentials.clientId || ''}
                   onChange={onClientIdChange}
+                  disabled={disabled}
                 />
               </div>
             </div>
@@ -214,7 +217,7 @@ export const AzureCredentialsForm: FunctionComponent<Props> = (props: Props) => 
               </div>
               <div className="gf-form">
                 <div className="max-width-30 gf-form-inline">
-                  <Button variant="secondary" type="button" onClick={onClientSecretReset}>
+                  <Button variant="secondary" type="button" onClick={onClientSecretReset} disabled={disabled}>
                     reset
                   </Button>
                 </div>
@@ -230,6 +233,7 @@ export const AzureCredentialsForm: FunctionComponent<Props> = (props: Props) => 
                     placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
                     value={credentials.clientSecret || ''}
                     onChange={onClientSecretChange}
+                    disabled={disabled}
                   />
                 </div>
               </div>
@@ -251,25 +255,28 @@ export const AzureCredentialsForm: FunctionComponent<Props> = (props: Props) => 
                   }
                   options={subscriptions}
                   onChange={onSubscriptionChange}
+                  isDisabled={disabled}
                 />
               </div>
             </div>
           </div>
-          <div className="gf-form-inline">
-            <div className="gf-form">
-              <div className="max-width-30 gf-form-inline">
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  type="button"
-                  onClick={onLoadSubscriptions}
-                  disabled={!hasRequiredFields}
-                >
-                  Load Subscriptions
-                </Button>
+          {!disabled && (
+            <div className="gf-form-inline">
+              <div className="gf-form">
+                <div className="max-width-30 gf-form-inline">
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    type="button"
+                    onClick={onLoadSubscriptions}
+                    disabled={!hasRequiredFields}
+                  >
+                    Load Subscriptions
+                  </Button>
+                </div>
               </div>
             </div>
-          </div>
+          )}
         </>
       )}
     </div>

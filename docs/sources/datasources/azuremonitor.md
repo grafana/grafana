@@ -396,14 +396,10 @@ datasources:
       cloudName: azuremonitor
       subscriptionId: <subscription-id>
       tenantId: <tenant-id>
-      logAnalyticsClientId: <log-analytics-client-id>
       logAnalyticsDefaultWorkspace: <log-analytics-default-workspace>
-      logAnalyticsSubscriptionId: <log-analytics-subscription-id>
-      logAnalyticsTenantId: <log-analytics-tenant-id>
     secureJsonData:
       clientSecret: <client-secret>
       appInsightsApiKey: <app-insights-api-key>
-      logAnalyticsClientSecret: <log-analytics-client-secret>
     version: 1
 ```
 
