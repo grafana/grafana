@@ -68,7 +68,7 @@ A sister panel to the state timeline is the new Status grid panel visualization.
 
 This hidden feature of the old Graph panel is now a standalone visualization. It combines a histogram transformation and bar chart visualization into a single, integrated, easy-to-use panel. There is also a new standalone histogram transformation that can be paired with any visualization.
 
-![Histogram visualization](/static/img/docs/status-grid/histogram-8-0.png)
+![Histogram visualization](/static/img/docs/histogram/histogram-8-0.png)
 
 ### Time series visualization updates
 
