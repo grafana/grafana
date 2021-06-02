@@ -57,7 +57,7 @@ export class TimelineChart extends React.Component<TimelineProps> {
 
     return (
       <VizLayout.Legend placement={legend.placement}>
-        <VizLegend placement={legend.placement} items={legendItems} displayMode={legend.displayMode} />
+        <VizLegend placement={legend.placement} items={legendItems} displayMode={legend.displayMode} readonly />
       </VizLayout.Legend>
     );
   };
