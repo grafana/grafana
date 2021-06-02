@@ -545,7 +545,7 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
         component: () =>
           SafeDynamicImport(
             import(
-              /* webpackChunkName: "IntegratedAlertingPage" */ 'app/features/integrated-alerting/IntegratedAlertingPage'
+              /* webpackChunkName: "IntegratedAlertingPage" */ 'app/percona/integrated-alerting/IntegratedAlertingPage'
             )
           ),
       },
@@ -557,7 +557,7 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
         component: () =>
           SafeDynamicImport(
             import(
-              /* webpackChunkName: "IntegratedAlertingPage" */ 'app/features/integrated-alerting/IntegratedAlertingPage'
+              /* webpackChunkName: "IntegratedAlertingPage" */ 'app/percona/integrated-alerting/IntegratedAlertingPage'
             )
           ),
       },
@@ -566,7 +566,7 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
       template: '<react-container />',
       resolve: {
         component: () =>
-          SafeDynamicImport(import(/* webpackChunkName: "BackupPage" */ 'app/features/backup/BackupPage')),
+          SafeDynamicImport(import(/* webpackChunkName: "BackupPage" */ 'app/percona/backup/BackupPage')),
       },
     })
     .when('/backup/:tab', {
@@ -574,7 +574,7 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
       reloadOnSearch: false,
       resolve: {
         component: () =>
-          SafeDynamicImport(import(/* webpackChunkName: "BackupPage" */ 'app/features/backup/BackupPage')),
+          SafeDynamicImport(import(/* webpackChunkName: "BackupPage" */ 'app/percona/backup/BackupPage')),
       },
     })
     .when('/dbaas', {
