@@ -29,7 +29,7 @@ describe('BarGaugePanel', () => {
 
     it('should render with title "No data"', () => {
       const displayValue = wrapper.find(`div[aria-label="${valueSelector}"]`).text();
-      expect(displayValue).toBe('No data');
+      expect(displayValue).toBe('');
     });
   });
 

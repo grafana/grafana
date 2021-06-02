@@ -106,6 +106,27 @@ describe('FieldDisplay', () => {
     expect(display[0].display.numeric).toEqual(0);
   });
 
+  it('Should return empty when no field mapped and no data', () => {
+    const mapEmptyToText = '';
+    const options = createEmptyDisplayOptions({
+      options: {
+        data: [
+          {
+            name: '',
+          },
+        ],
+        fieldConfig: {
+          defaults: {
+            mapEmptyToText,
+          },
+        },
+      },
+    });
+    const display = getFieldDisplayValues(options);
+    expect(display[0].display.text).toEqual('');
+    expect(display[0].display.numeric).toEqual(0);
+  });
+
   it('Should return field mapped value when there is no data', () => {
     const mapEmptyToText = '0';
     const options = createEmptyDisplayOptions({
