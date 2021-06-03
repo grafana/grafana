@@ -59,7 +59,6 @@ export class EventEditorCtrl {
     } catch (err) {
       console.log(err);
     } finally {
-      this.panelCtrl.refresh();
       this.close();
       getDashboardQueryRunner().run({ dashboard: this.panelCtrl.dashboard, range: this.panelCtrl.range });
     }
@@ -71,7 +70,6 @@ export class EventEditorCtrl {
     } catch (err) {
       console.log(err);
     } finally {
-      this.panelCtrl.refresh();
       this.close();
       getDashboardQueryRunner().run({ dashboard: this.panelCtrl.dashboard, range: this.panelCtrl.range });
     }
