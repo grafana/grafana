@@ -1,6 +1,6 @@
 +++
-title = "Numeric data Grafana managed alert rules"
-description = "Number data based Grafana managed alert rules"
+title = "Grafana managed alert rules for numeric data"
+description = "Grafana managed alert rules for numeric data"
 keywords = ["grafana", "alerting", "guide", "rules", "create"]
 weight = 400
 +++
@@ -35,7 +35,7 @@ For a MySQL table called "DiskSpace":
 | 2021-June-7 | web3 | /var | 8
 | ...         | ...  | ...  | ...
 
-You can query the data filtering on time, but without returning time series to Grafana. For example:
+You can query the data filtering on time, but without returning time series to Grafana. For example, an alert that would trigger per Host,Disk when there is less than 5% free:
 
 ```sql
 SELECT Host, Disk, CASE WHEN PercentFree < 5.0 THEN PercentFree ELSE 0 END FROM (

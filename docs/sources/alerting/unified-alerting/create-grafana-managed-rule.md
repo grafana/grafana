@@ -58,7 +58,7 @@ So, as you can see from the above scenario Grafana will not send out notificatio
 You can use reduce and math expressions to create a rule that will create an alert per series returned by the query.
 
 1. Add one or more queries
-2. Add a `reduce` expression for each query to aggregate values in the selected time range into a single value. Not needed in case a query returns a single value per series. 
+2. Add a `reduce` expression for each query to aggregate values in the selected time range into a single value. With some data sources this is not needed for [rules using numeric data]({{< relref "./grafana-managed-numeric-rule.md" >}}).
 3. Add a `math` expressions with the condition for the rule. Not needed in case a query or a reduce expression already returns 0 if rule should not be firing, or > 0 if it should be firing. Some examples: `$B > 70` if it should fire in case value of B query/expression is more than 70. `$B < $C * 100` in case it should fire if value of B is less than value of C multiplied by 100. If queries being compared have multiple series in their results, series from different queries are matched if they have the same labels or one is a subset of the other.
 
 See or [expressions documentation]({{< relref "../../panels/expressions.md" >}}) for in depth explanation of `math` and `reduce` expressions.
