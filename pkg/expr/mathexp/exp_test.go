@@ -30,8 +30,25 @@ func makeNumber(name string, labels data.Labels, f *float64) Number {
 	return newNumber
 }
 
+func unixTimePointer(sec, nsec int64) *time.Time {
+	t := time.Unix(sec, nsec)
+	return &t
+}
+
 func float64Pointer(f float64) *float64 {
 	return &f
+}
+
+func strPointer(s string) *string {
+	return &s
+}
+
+func int64Pointer(i int64) *int64 {
+	return &i
+}
+
+func boolPointer(b bool) *bool {
+	return &b
 }
 
 var aSeries = Vars{
