@@ -87,7 +87,7 @@ Select one or more values for each label to tighten your query scope.
 
 >**Note:** If you do not remember a metric name to start with, you can also select a few labels first, to narrow down the list and then find relevant label values. 
 
-All lists in the metrics browser have a search field above them to quickly filter for metrics or labels that match a certain string. Notice that the values section only has one search field. Its filtering applies to all labels to help you find values across labels once they have been selected, e.g., among your labels `app`, `job`, `job_name` only one might contain the value you are looking for.
+All lists in the metrics browser have a search field above them to quickly filter for metrics or labels that match a certain string. The values section only has one search field. Its filtering applies to all labels to help you find values across labels once they have been selected, for example, among your labels `app`, `job`, `job_name` only one might with the value you are looking for.
 
 Once you are happy with your query, you can click on "Use query" to run the query. The button "Use as rate query" will add a `rate(...)[$__interval]` around your query to help write queries for counter metrics.
 The "Validate selector" button will check with Prometheus how many time series are available for that selector.
