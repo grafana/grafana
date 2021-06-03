@@ -5,6 +5,8 @@ import { DataTransformerID } from './ids';
 import { DataFrame, Field, FieldConfig, FieldType } from '../../types/dataFrame';
 import { ArrayVector } from '../../vector/ArrayVector';
 import { AlignedData, join } from './joinDataFrames';
+import { getDisplayProcessor } from '../../field';
+import { createTheme, GrafanaTheme2 } from '../../themes';
 
 /* eslint-disable */
 // prettier-ignore
@@ -179,7 +181,7 @@ export function buildHistogram(frames: DataFrame[], options?: HistogramTransform
       if (field.type === FieldType.number) {
         let fieldHist = histogram(field.values.toArray(), getBucket, histFilter, histSort) as AlignedData;
         histograms.push(fieldHist);
-        counts.push({ ...field });
+        counts.push({ ...field, config: {} });
         if (!config && field.config.unit) {
           config = field.config;
         }
@@ -210,8 +212,7 @@ export function buildHistogram(frames: DataFrame[], options?: HistogramTransform
     }
   }
 
-  const bucketMin = {
-    ...counts[0],
+  const bucketMin: Field = {
     name: histogramFrameBucketMinFieldName,
     values: new ArrayVector(joinedHists[0]),
     type: FieldType.number,
@@ -222,8 +223,6 @@ export function buildHistogram(frames: DataFrame[], options?: HistogramTransform
     ...bucketMin,
     name: histogramFrameBucketMaxFieldName,
     values: new ArrayVector(joinedHists[0].map((v) => v + bucketSize!)),
-    state: undefined,
-    config,
   };
 
   if (options?.combine) {
@@ -235,11 +234,11 @@ export function buildHistogram(frames: DataFrame[], options?: HistogramTransform
     }
     counts = [
       {
-        ...counts[0],
         name: 'Count',
         values: new ArrayVector(vals),
         type: FieldType.number,
         state: undefined,
+        config: {},
       },
     ];
   } else {
@@ -311,7 +310,15 @@ function histogram(
 /**
  * @internal
  */
-export function histogramFieldsToFrame(info: HistogramFields): DataFrame {
+export function histogramFieldsToFrame(info: HistogramFields, theme?: GrafanaTheme2): DataFrame {
+  if (!info.bucketMin.display) {
+    const display = getDisplayProcessor({
+      field: info.bucketMin,
+      theme: theme ?? createTheme(),
+    });
+    info.bucketMin.display = display;
+    info.bucketMax.display = display;
+  }
   return {
     fields: [info.bucketMin, info.bucketMax, ...info.counts],
     length: info.bucketMin.values.length,
