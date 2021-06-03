@@ -10,7 +10,7 @@ import { useStyles } from '../../themes';
 export interface SeriesTableRowProps {
   color?: string;
   label?: string;
-  value: string | GraphSeriesValue;
+  value?: string | GraphSeriesValue;
   isActive?: boolean;
 }
 
@@ -46,7 +46,10 @@ const getSeriesTableRowStyles = (theme: GrafanaTheme) => {
   };
 };
 
-const SeriesTableRow: React.FC<SeriesTableRowProps> = ({ color, label, value, isActive }) => {
+/**
+ * @public
+ */
+export const SeriesTableRow: React.FC<SeriesTableRowProps> = ({ color, label, value, isActive }) => {
   const styles = useStyles(getSeriesTableRowStyles);
 
   return (
@@ -56,8 +59,8 @@ const SeriesTableRow: React.FC<SeriesTableRowProps> = ({ color, label, value, is
           <SeriesIcon color={color} className={styles.icon} />
         </div>
       )}
-      <div className={cx(styles.seriesTableCell, styles.label)}>{label}</div>
-      <div className={cx(styles.seriesTableCell, styles.value)}>{value}</div>
+      {label && <div className={cx(styles.seriesTableCell, styles.label)}>{label}</div>}
+      {value && <div className={cx(styles.seriesTableCell, styles.value)}>{value}</div>}
     </div>
   );
 };

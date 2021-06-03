@@ -1,9 +1,9 @@
-import { HideableFieldConfig, BarValueVisibility, OptionsWithLegend } from '@grafana/ui';
+import { HideableFieldConfig, BarValueVisibility, OptionsWithLegend, OptionsWithTooltip } from '@grafana/ui';
 
 /**
  * @alpha
  */
-export interface TimelineOptions extends OptionsWithLegend {
+export interface TimelineOptions extends OptionsWithLegend, OptionsWithTooltip {
   mode: TimelineMode; // not in the saved model!
 
   showValue: BarValueVisibility;

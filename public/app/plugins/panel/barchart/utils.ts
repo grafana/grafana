@@ -80,7 +80,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptions> = ({
   builder.addHook('drawClear', config.drawClear);
   builder.addHook('draw', config.draw);
 
-  builder.setTooltipInterpolator(config.interpolateBarChartTooltip);
+  builder.setTooltipInterpolator(config.interpolateTooltip);
 
   builder.addScale({
     scaleKey: 'x',

@@ -1,5 +1,5 @@
-import { FieldType, toDataFrame } from '@grafana/data';
-import { prepareTimelineFields } from './utils';
+import { ArrayVector, FieldType, toDataFrame } from '@grafana/data';
+import { findNextStateIndex, prepareTimelineFields } from './utils';
 
 describe('prepare timeline graph', () => {
   it('errors with no time fields', () => {
@@ -56,5 +56,81 @@ describe('prepare timeline graph', () => {
         3,
       ]
     `);
+  });
+});
+
+describe('findNextStateIndex', () => {
+  it('handles leading datapoint index', () => {
+    const field = {
+      name: 'time',
+      type: FieldType.number,
+      values: new ArrayVector([1, undefined, undefined, 2, undefined, undefined]),
+    } as any;
+    const result = findNextStateIndex(field, 0);
+    expect(result).toEqual(3);
+  });
+
+  it('handles trailing datapoint index', () => {
+    const field = {
+      name: 'time',
+      type: FieldType.number,
+      values: new ArrayVector([1, undefined, undefined, 2, undefined, 3]),
+    } as any;
+    const result = findNextStateIndex(field, 5);
+    expect(result).toEqual(null);
+  });
+
+  it('handles trailing undefined', () => {
+    const field = {
+      name: 'time',
+      type: FieldType.number,
+      values: new ArrayVector([1, undefined, undefined, 2, undefined, 3, undefined]),
+    } as any;
+    const result = findNextStateIndex(field, 5);
+    expect(result).toEqual(null);
+  });
+
+  it('handles datapoint index inside range', () => {
+    const field = {
+      name: 'time',
+      type: FieldType.number,
+      values: new ArrayVector([
+        1,
+        undefined,
+        undefined,
+        3,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        2,
+        undefined,
+        undefined,
+      ]),
+    } as any;
+    const result = findNextStateIndex(field, 3);
+    expect(result).toEqual(8);
+  });
+
+  describe('single data points', () => {
+    const field = {
+      name: 'time',
+      type: FieldType.number,
+      values: new ArrayVector([1, 3, 2]),
+    } as any;
+
+    test('leading', () => {
+      const result = findNextStateIndex(field, 0);
+      expect(result).toEqual(1);
+    });
+    test('trailing', () => {
+      const result = findNextStateIndex(field, 2);
+      expect(result).toEqual(null);
+    });
+
+    test('inside', () => {
+      const result = findNextStateIndex(field, 1);
+      expect(result).toEqual(2);
+    });
   });
 });

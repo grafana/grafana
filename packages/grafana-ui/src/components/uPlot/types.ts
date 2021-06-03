@@ -28,7 +28,10 @@ export abstract class PlotConfigBuilder<P, T> {
   abstract getConfig(): T;
 }
 
-export type TooltipInterpolator = (
+/**
+ * @alpha
+ */
+export type PlotTooltipInterpolator = (
   updateActiveSeriesIdx: (sIdx: number | null) => void,
   updateActiveDatapointIdx: (dIdx: number | null) => void,
   updateTooltipPosition: (clear?: boolean) => void

@@ -4,6 +4,7 @@ import { usePlotContext } from '../context';
 import {
   CartesianCoords2D,
   DataFrame,
+  FALLBACK_COLOR,
   FieldType,
   formattedValueToString,
   getDisplayProcessor,
@@ -17,10 +18,13 @@ import { useTheme2 } from '../../../themes/ThemeContext';
 import uPlot from 'uplot';
 
 interface TooltipPluginProps {
-  mode?: TooltipDisplayMode;
   timeZone: TimeZone;
   data: DataFrame;
   config: UPlotConfigBuilder;
+  mode?: TooltipDisplayMode;
+  // Allows custom tooltip content rendering. Exposes aligned data frame with relevant indexes for data inspection
+  // Use field.state.origin indexes from alignedData frame field to get access to original data frame and field index.
+  renderTooltip?: (alignedFrame: DataFrame, seriesIdx: number | null, datapointIdx: number | null) => React.ReactNode;
 }
 
 const TOOLTIP_OFFSET = 10;
@@ -32,6 +36,7 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
   mode = TooltipDisplayMode.Single,
   timeZone,
   config,
+  renderTooltip,
   ...otherProps
 }) => {
   const theme = useTheme2();
@@ -39,6 +44,8 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
   const [focusedSeriesIdx, setFocusedSeriesIdx] = useState<number | null>(null);
   const [focusedPointIdx, setFocusedPointIdx] = useState<number | null>(null);
   const [coords, setCoords] = useState<CartesianCoords2D | null>(null);
+  const plotInstance = plotCtx.plot;
+
   const pluginId = `TooltipPlugin`;
 
   // Debug logs
@@ -109,8 +116,7 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
     }
   }, [plotCtx, config, setFocusedPointIdx, setFocusedSeriesIdx, setCoords]);
 
-  const plotInstance = plotCtx.plot;
-  if (!plotInstance || focusedPointIdx === null) {
+  if (!plotInstance || focusedPointIdx === null || mode === TooltipDisplayMode.None) {
     return null;
   }
 
@@ -120,61 +126,62 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
     return null;
   }
   const xFieldFmt = xField.display || getDisplayProcessor({ field: xField, timeZone, theme });
-  let tooltip = null;
+  let tooltip: React.ReactNode = null;
 
   const xVal = xFieldFmt(xField!.values.get(focusedPointIdx)).text;
 
-  // when interacting with a point in single mode
-  if (mode === TooltipDisplayMode.Single && focusedSeriesIdx !== null) {
-    const field = otherProps.data.fields[focusedSeriesIdx];
-    const plotSeries = plotInstance.series;
+  if (!renderTooltip) {
+    // when interacting with a point in single mode
+    if (mode === TooltipDisplayMode.Single && focusedSeriesIdx !== null) {
+      const field = otherProps.data.fields[focusedSeriesIdx];
 
-    const fieldFmt = field.display || getDisplayProcessor({ field, timeZone, theme });
-    const value = fieldFmt(field.values.get(focusedPointIdx));
+      const fieldFmt = field.display || getDisplayProcessor({ field, timeZone, theme });
+      const display = fieldFmt(field.values.get(focusedPointIdx));
 
-    tooltip = (
-      <SeriesTable
-        series={[
-          {
-            // TODO: align with uPlot typings
-            color: (plotSeries[focusedSeriesIdx!].stroke as any)(),
-            label: getFieldDisplayName(field, otherProps.data),
-            value: value ? formattedValueToString(value) : null,
-          },
-        ]}
-        timestamp={xVal}
-      />
-    );
-  }
-
-  if (mode === TooltipDisplayMode.Multi) {
-    let series: SeriesTableRowProps[] = [];
-    const plotSeries = plotInstance.series;
-
-    for (let i = 0; i < plotSeries.length; i++) {
-      const frame = otherProps.data;
-      const field = frame.fields[i];
-      if (
-        field === xField ||
-        field.type === FieldType.time ||
-        field.type !== FieldType.number ||
-        field.config.custom?.hideFrom?.tooltip
-      ) {
-        continue;
-      }
-
-      const value = field.display!(otherProps.data.fields[i].values.get(focusedPointIdx));
-
-      series.push({
-        // TODO: align with uPlot typings
-        color: (plotSeries[i].stroke as any)!(),
-        label: getFieldDisplayName(field, frame),
-        value: value ? formattedValueToString(value) : null,
-        isActive: focusedSeriesIdx === i,
-      });
+      tooltip = (
+        <SeriesTable
+          series={[
+            {
+              color: display.color || FALLBACK_COLOR,
+              label: getFieldDisplayName(field, otherProps.data),
+              value: display ? formattedValueToString(display) : null,
+            },
+          ]}
+          timestamp={xVal}
+        />
+      );
     }
 
-    tooltip = <SeriesTable series={series} timestamp={xVal} />;
+    if (mode === TooltipDisplayMode.Multi) {
+      let series: SeriesTableRowProps[] = [];
+      const plotSeries = plotInstance.series;
+
+      for (let i = 0; i < plotSeries.length; i++) {
+        const frame = otherProps.data;
+        const field = frame.fields[i];
+        if (
+          field === xField ||
+          field.type === FieldType.time ||
+          field.type !== FieldType.number ||
+          field.config.custom?.hideFrom?.tooltip
+        ) {
+          continue;
+        }
+
+        const display = field.display!(otherProps.data.fields[i].values.get(focusedPointIdx));
+
+        series.push({
+          color: display.color || FALLBACK_COLOR,
+          label: getFieldDisplayName(field, frame),
+          value: display ? formattedValueToString(display) : null,
+          isActive: focusedSeriesIdx === i,
+        });
+      }
+
+      tooltip = <SeriesTable series={series} timestamp={xVal} />;
+    }
+  } else {
+    tooltip = renderTooltip(otherProps.data, focusedSeriesIdx, focusedPointIdx);
   }
 
   return (
