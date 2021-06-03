@@ -3,7 +3,6 @@ package load
 import (
 	"errors"
 	"fmt"
-	"os"
 	"path/filepath"
 
 	"cuelang.org/go/cue"
@@ -23,16 +22,12 @@ var panelSubpath = cue.MakePath(cue.Def("#Panel"))
 
 func defaultOverlay(p BaseLoadPaths) (map[string]load.Source, error) {
 	overlay := make(map[string]load.Source)
-	currentDir, err := os.Getwd()
-	if err != nil {
-		fmt.Println(err)
-	}
 
-	if err := toOverlay(currentDir, p.BaseCueFS, overlay); err != nil {
+	if err := toOverlay(prefix, p.BaseCueFS, overlay); err != nil {
 		return nil, err
 	}
 
-	if err := toOverlay(currentDir, p.DistPluginCueFS, overlay); err != nil {
+	if err := toOverlay(prefix, p.DistPluginCueFS, overlay); err != nil {
 		return nil, err
 	}
 
@@ -51,12 +46,8 @@ func BaseDashboardFamily(p BaseLoadPaths) (schema.VersionedCueSchema, error) {
 	if err != nil {
 		return nil, err
 	}
-	currentDir, err := os.Getwd()
-	if err != nil {
-		fmt.Println(err)
-	}
 	cfg := &load.Config{Overlay: overlay}
-	inst, err := rt.Build(load.Instances([]string{filepath.Join(currentDir, "cue", "data", "gen.cue")}, cfg)[0])
+	inst, err := rt.Build(load.Instances([]string{filepath.Join(prefix, "cue", "data", "gen.cue")}, cfg)[0])
 	if err != nil {
 		cueErrors := wrapCUEError(err)
 		if err != nil {
