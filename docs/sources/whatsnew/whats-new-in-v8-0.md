@@ -42,6 +42,11 @@ These metrics will be broadcast to all dashboards connected to that stream endpo
 
 For more information about real-time streaming, refer to [Grafana Live documentation]({{< relref "../live/_index.md" >}}).
 
+### Prometheus metrics browser
+
+The Prometheus metrics browser allows you to quickly find metrics and select relevant labels to build basic queries. If supported by your Prometheus instance, each metric will show its HELP and TYPE as a tooltip. For more information, refer to [Metrics browser documentation]({{< relref "../datasources/prometheus.md#metrics-browser" >}}).
+
+
 ### Bar chart visualization (beta)
 
 The Bar chart panel is a new visualization that allows categorical data display.
