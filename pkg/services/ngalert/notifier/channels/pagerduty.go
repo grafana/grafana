@@ -124,10 +124,7 @@ func (pn *PagerdutyNotifier) buildPagerdutyMessage(ctx context.Context, alerts m
 	}
 
 	var tmplErr error
-	tmpl, data, err := TmplText(ctx, pn.tmpl, as, pn.log, &tmplErr)
-	if err != nil {
-		return nil, "", err
-	}
+	tmpl, data := TmplText(ctx, pn.tmpl, as, pn.log, &tmplErr)
 
 	details := make(map[string]string, len(pn.CustomDetails))
 	for k, v := range pn.CustomDetails {
@@ -170,7 +167,7 @@ func (pn *PagerdutyNotifier) buildPagerdutyMessage(ctx context.Context, alerts m
 	}
 
 	if tmplErr != nil {
-		return nil, "", fmt.Errorf("failed to template PagerDuty message: %w", tmplErr)
+		pn.log.Debug("failed to template PagerDuty message", "err", tmplErr.Error())
 	}
 
 	return msg, eventType, nil

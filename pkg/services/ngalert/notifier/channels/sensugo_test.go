@@ -3,7 +3,6 @@ package channels
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"net/url"
 	"testing"
 	"time"
@@ -129,14 +128,6 @@ func TestSensuGoNotifier(t *testing.T) {
 				"url": "http://sensu-api.local:8080"
 			}`,
 			expInitError: alerting.ValidationError{Reason: "Could not find the API key property in settings"},
-		}, {
-			name: "Error in building message",
-			settings: `{
-				"url": "http://sensu-api.local:8080",
-				"apikey": "<apikey>",
-				"message": "{{ .Status }"
-			}`,
-			expMsgError: errors.New("failed to template sensugo message: template: :1: unexpected \"}\" in operand"),
 		},
 	}
 
