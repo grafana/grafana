@@ -94,7 +94,7 @@ Lots of panel editor improvements, heavily informed by user research and communi
 
 - All options are now shown in a single pane.
 - You can now search panel options.
-- Value mapping has been completely redesigned.
+- The Value mappings feature has been completely redesigned. For more information, refer to [Value mappings]({{< relref "../panels/value-mappings.md" >}}).
 - New **Table view** option is always available.
 
 The [Panels]({{< relref "../panels/_index.md" >}}) section has been updated to reflect these changes.
