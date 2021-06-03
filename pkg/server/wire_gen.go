@@ -162,7 +162,7 @@ func Initialize(cla setting.CommandLineArgs, opts Options, apiOpts api.ServerOpt
 		return nil, err
 	}
 	httpServer := api.ProvideHTTPServer(apiOpts, cfg, routeRegisterImpl, inProcBus, renderingService, ossLicensingService, hooksService, cacheService, sqlStore, tsdbService, alertEngine, usageStatsService, ossPluginRequestValidator, pluginManager, managerManager, ossImpl, cacheServiceImpl, userAuthTokenService, cleanUpService, shortURLService, remoteCache, provisioningServiceImpl, implementation, ossAccessControlService, dataSourceProxyService, searchService, grafanaLive, gateway, plugincontextProvider, contextHandler, plugindashboardsService, schemaLoaderService, alertNG, libraryPanelService, libraryElementService, notificationService, tracingService, internalMetricsService, quotaService, container)
-	server, err := New(opts, cfg, sqlStore, httpServer, container)
+	server, err := New(opts, cfg, sqlStore, httpServer, provisioningServiceImpl, container)
 	if err != nil {
 		return nil, err
 	}
@@ -258,7 +258,7 @@ func InitializeForTest(cla setting.CommandLineArgs, opts Options, apiOpts api.Se
 		return nil, err
 	}
 	httpServer := api.ProvideHTTPServer(apiOpts, cfg, routeRegisterImpl, inProcBus, renderingService, ossLicensingService, hooksService, cacheService, sqlStore, tsdbService, alertEngine, usageStatsService, ossPluginRequestValidator, pluginManager, managerManager, ossImpl, cacheServiceImpl, userAuthTokenService, cleanUpService, shortURLService, remoteCache, provisioningServiceImpl, implementation, ossAccessControlService, dataSourceProxyService, searchService, grafanaLive, gateway, plugincontextProvider, contextHandler, plugindashboardsService, schemaLoaderService, alertNG, libraryPanelService, libraryElementService, notificationService, tracingService, internalMetricsService, quotaService, container)
-	server, err := New(opts, cfg, sqlStore, httpServer, container)
+	server, err := New(opts, cfg, sqlStore, httpServer, provisioningServiceImpl, container)
 	if err != nil {
 		return nil, err
 	}

@@ -21,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -36,8 +37,8 @@ type Options struct {
 }
 
 // New returns a new instance of Server.
-func New(opts Options, cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, httpServer *api.HTTPServer, backgroundServices *backgroundsvcs.Container) (*Server, error) {
-	s, err := newServer(opts, cfg, sqlStore, httpServer, backgroundServices)
+func New(opts Options, cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, httpServer *api.HTTPServer, provisioningService provisioning.ProvisioningService, backgroundServices *backgroundsvcs.Container) (*Server, error) {
+	s, err := newServer(opts, cfg, sqlStore, httpServer, provisioningService, backgroundServices)
 	if err != nil {
 		return nil, err
 	}
@@ -49,22 +50,23 @@ func New(opts Options, cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, httpServer
 	return s, nil
 }
 
-func newServer(opts Options, cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, httpServer *api.HTTPServer, backgroundServices *backgroundsvcs.Container) (*Server, error) {
+func newServer(opts Options, cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, httpServer *api.HTTPServer, provisioningService provisioning.ProvisioningService, backgroundServices *backgroundsvcs.Container) (*Server, error) {
 	rootCtx, shutdownFn := context.WithCancel(context.Background())
 
 	s := &Server{
-		context:            rootCtx,
-		sqlStore:           sqlStore,
-		HTTPServer:         httpServer,
-		shutdownFn:         shutdownFn,
-		shutdownFinished:   make(chan struct{}),
-		log:                log.New("server"),
-		cfg:                cfg,
-		pidFile:            opts.PidFile,
-		version:            opts.Version,
-		commit:             opts.Commit,
-		buildBranch:        opts.BuildBranch,
-		backgroundServices: backgroundServices,
+		context:             rootCtx,
+		sqlStore:            sqlStore,
+		HTTPServer:          httpServer,
+		provisioningService: provisioningService,
+		shutdownFn:          shutdownFn,
+		shutdownFinished:    make(chan struct{}),
+		log:                 log.New("server"),
+		cfg:                 cfg,
+		pidFile:             opts.PidFile,
+		version:             opts.Version,
+		commit:              opts.Commit,
+		buildBranch:         opts.BuildBranch,
+		backgroundServices:  backgroundServices,
 	}
 
 	return s, nil
@@ -87,8 +89,9 @@ type Server struct {
 	buildBranch        string
 	backgroundServices *backgroundsvcs.Container
 
-	sqlStore   *sqlstore.SQLStore
-	HTTPServer *api.HTTPServer
+	sqlStore            *sqlstore.SQLStore
+	HTTPServer          *api.HTTPServer
+	provisioningService provisioning.ProvisioningService
 }
 
 // init initializes the server and its services.
@@ -109,7 +112,11 @@ func (s *Server) init() error {
 	login.Init()
 	social.NewOAuthService()
 
-	return s.sqlStore.Migrate()
+	if err := s.sqlStore.Migrate(); err != nil {
+		return err
+	}
+
+	return s.provisioningService.RunInitProvisioners()
 }
 
 // Run initializes and starts services. This will block until all services have

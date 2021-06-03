@@ -37,7 +37,7 @@ func (s *testService) Run(ctx context.Context) error {
 
 func testServer(t *testing.T) *Server {
 	t.Helper()
-	s, err := newServer(Options{}, setting.NewCfg(), nil, nil, backgroundsvcs.ProvideService())
+	s, err := newServer(Options{}, setting.NewCfg(), nil, nil, nil, backgroundsvcs.ProvideService())
 	require.NoError(t, err)
 	// Required to skip configuration initialization that causes
 	// DI errors in this test.

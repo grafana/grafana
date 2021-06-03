@@ -32,7 +32,7 @@ func ProvideService(cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, pluginManager
 		provisionPlugins:        plugins.Provision,
 	}
 	backgroundServices.AddBackgroundService(s)
-	return s, s.RunInitProvisioners()
+	return s, nil
 }
 
 type ProvisioningService interface {
