@@ -1,9 +1,10 @@
-import React, { useMemo } from 'react';
-import { PanelProps } from '@grafana/data';
-import { useTheme2, ZoomPlugin } from '@grafana/ui';
+import React, { useCallback, useMemo } from 'react';
+import { DataFrame, PanelProps } from '@grafana/data';
+import { TooltipPlugin, useTheme2, ZoomPlugin } from '@grafana/ui';
 import { TimelineMode, TimelineOptions } from './types';
 import { TimelineChart } from './TimelineChart';
 import { prepareTimelineFields, prepareTimelineLegendItems } from './utils';
+import { StateTimelineTooltip } from './StateTimelineTooltip';
 
 interface TimelinePanelProps extends PanelProps<TimelineOptions> {}
 
@@ -32,6 +33,26 @@ export const StateTimelinePanel: React.FC<TimelinePanelProps> = ({
     theme,
   ]);
 
+  const renderCustomTooltip = useCallback(
+    (alignedData: DataFrame, seriesIdx: number | null, datapointIdx: number | null) => {
+      // Not caring about multi mode in StateTimeline
+      if (seriesIdx === null || datapointIdx === null) {
+        return null;
+      }
+
+      return (
+        <StateTimelineTooltip
+          data={data.series}
+          alignedData={alignedData}
+          seriesIdx={seriesIdx}
+          datapointIdx={datapointIdx}
+          timeZone={timeZone}
+        />
+      );
+    },
+    [timeZone, data]
+  );
+
   if (!frames || warn) {
     return (
       <div className="panel-empty">
@@ -51,10 +72,22 @@ export const StateTimelinePanel: React.FC<TimelinePanelProps> = ({
       height={height}
       legendItems={legendItems}
       {...options}
-      // hardcoded
       mode={TimelineMode.Changes}
     >
-      {(config) => <ZoomPlugin config={config} onZoom={onChangeTimeRange} />}
+      {(config, alignedFrame) => {
+        return (
+          <>
+            <ZoomPlugin config={config} onZoom={onChangeTimeRange} />
+            <TooltipPlugin
+              data={alignedFrame}
+              config={config}
+              mode={options.tooltip.mode}
+              timeZone={timeZone}
+              renderTooltip={renderCustomTooltip}
+            />
+          </>
+        );
+      }}
     </TimelineChart>
   );
 };
