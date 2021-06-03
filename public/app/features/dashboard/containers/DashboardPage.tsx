@@ -29,6 +29,7 @@ import { getKioskMode } from 'app/core/navigation/kiosk';
 import { GrafanaTheme2, UrlQueryValue } from '@grafana/data';
 import { DashboardLoading } from '../components/DashboardLoading/DashboardLoading';
 import { DashboardFailed } from '../components/DashboardLoading/DashboardFailed';
+import { DashboardPrompt } from '../components/DashboardPrompt/DashboardPrompt';
 
 export interface DashboardPageRouteParams {
   uid?: string;
@@ -310,6 +311,8 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
           <div aria-label={selectors.pages.Dashboard.DashNav.nav}>
             <DashNav
               dashboard={dashboard}
+              title={dashboard.title}
+              folderTitle={dashboard.meta.folderTitle}
               isFullscreen={!!viewPanel}
               onAddPanel={this.onAddPanel}
               kioskMode={kioskMode}
@@ -317,6 +320,8 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
             />
           </div>
         )}
+
+        <DashboardPrompt dashboard={dashboard} />
 
         <div className={styles.dashboardScroll}>
           <CustomScrollbar

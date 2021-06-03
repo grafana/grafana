@@ -161,6 +161,7 @@ def init_steps(edition, platform, ver_mode, is_downstream=False, install_deps=Tr
                     'rmdir bin',
                     'mv grafana-enterprise /tmp/',
                     '/tmp/grabpl init-enterprise /tmp/grafana-enterprise{}'.format(source_commit),
+                    'mv /tmp/grafana-enterprise/deployment_tools_config.json deployment_tools_config.json',
                     'mkdir bin',
                     'mv /tmp/grabpl bin/'
                 ] + common_cmds,
@@ -665,7 +666,6 @@ def build_docs_website_step():
         'name': 'build-docs-website',
         # Use latest revision here, since we want to catch if it breaks
         'image': 'grafana/docs-base:latest',
-        'failure': 'ignore',
         'depends_on': [
             'initialize',
             'build-frontend-docs',

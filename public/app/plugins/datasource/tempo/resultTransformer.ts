@@ -12,12 +12,18 @@ export function createTableFrame(
       {
         name: 'Time',
         type: FieldType.time,
+        config: {
+          custom: {
+            width: 150,
+          },
+        },
       },
       {
         name: 'traceID',
         type: FieldType.string,
         config: {
           displayNameFromDS: 'Trace ID',
+          custom: { width: 300 },
           links: [
             {
               title: 'Click to open trace ${__value.raw}',
@@ -85,8 +91,10 @@ export function transformTraceList(
   datasourceName: string,
   traceRegexs: string[]
 ): DataQueryResponse {
-  const frame = createTableFrame(response.data[0], datasourceId, datasourceName, traceRegexs);
-  response.data[0] = frame;
+  response.data.forEach((data, index) => {
+    const frame = createTableFrame(data, datasourceId, datasourceName, traceRegexs);
+    response.data[index] = frame;
+  });
   return response;
 }
 

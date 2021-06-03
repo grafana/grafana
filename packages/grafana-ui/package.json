@@ -72,7 +72,7 @@
     "react-transition-group": "4.4.1",
     "slate": "0.47.8",
     "tinycolor2": "1.4.1",
-    "uplot": "1.6.9"
+    "uplot": "1.6.10"
   },
   "devDependencies": {
     "@rollup/plugin-commonjs": "16.0.0",
@@ -124,5 +124,8 @@
     "typescript": "4.2.4",
     "webpack-filter-warnings-plugin": "1.2.1"
   },
-  "types": "src/index.ts"
+  "types": "src/index.ts",
+  "volta": {
+    "extends": "../../package.json"
+  }
 }

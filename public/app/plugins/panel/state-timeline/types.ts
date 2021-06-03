@@ -1,15 +1,15 @@
-import { HideableFieldConfig, BarValueVisibility, OptionsWithLegend } from '@grafana/ui';
+import { HideableFieldConfig, BarValueVisibility, OptionsWithLegend, OptionsWithTooltip } from '@grafana/ui';
 
 /**
  * @alpha
  */
-export interface TimelineOptions extends OptionsWithLegend {
+export interface TimelineOptions extends OptionsWithLegend, OptionsWithTooltip {
   mode: TimelineMode; // not in the saved model!
 
   showValue: BarValueVisibility;
   rowHeight: number;
 
-  // only used for "samples" mode (status-grid)
+  // only used for "samples" mode (status-history)
   colWidth?: number;
   // only used in "changes" mode (state-timeline)
   mergeValues?: boolean;
@@ -41,7 +41,7 @@ export const defaultPanelOptions: Partial<TimelineOptions> = {
  * @alpha
  */
 export const defaultTimelineFieldConfig: TimelineFieldConfig = {
-  lineWidth: 1,
+  lineWidth: 0,
   fillOpacity: 70,
 };
 
@@ -51,6 +51,6 @@ export const defaultTimelineFieldConfig: TimelineFieldConfig = {
 export enum TimelineMode {
   // state-timeline
   Changes = 'changes',
-  // status-grid
+  // status-history
   Samples = 'samples',
 }
