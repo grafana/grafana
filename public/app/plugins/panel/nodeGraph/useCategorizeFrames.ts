@@ -8,8 +8,7 @@ import { DataFrame } from '@grafana/data';
  */
 export function useCategorizeFrames(series: DataFrame[]) {
   return useMemo(() => {
-    const serviceMapFrames = series.filter((frame) => frame.meta?.preferredVisualisationType === 'nodeGraph');
-    return serviceMapFrames.reduce(
+    return series.reduce(
       (acc, frame) => {
         const sourceField = frame.fields.filter((f) => f.name === 'source');
         if (sourceField.length) {
