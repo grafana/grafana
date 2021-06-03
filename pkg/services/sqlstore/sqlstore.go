@@ -506,11 +506,6 @@ func InitTestDB(t ITestDB, opts ...InitTestDBOpt) *SQLStore {
 		// temp global var until we get rid of global vars
 		dialect = testSQLStore.Dialect
 
-		t.Logf("Cleaning DB")
-		if err := testSQLStore.Dialect.CleanDB(); err != nil {
-			t.Fatalf("Failed to clean test db: %s", err)
-		}
-
 		return testSQLStore
 	}
 
