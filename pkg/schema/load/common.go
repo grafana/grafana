@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"os"
 	"path/filepath"
 
 	"cuelang.org/go/cue"
@@ -47,6 +48,10 @@ func GetDefaultLoadPaths() BaseLoadPaths {
 	}
 }
 
+func isWindows() bool {
+	return os.PathSeparator == '\\' && os.PathListSeparator == ';'
+}
+
 // toOverlay converts all .cue files in the fs.FS into Source entries in an
 // overlay map, as expected by load.Config.
 //
@@ -60,10 +65,10 @@ func GetDefaultLoadPaths() BaseLoadPaths {
 // map, on the premise that control over the FS is sufficient to allow any
 // desired filtering.
 func toOverlay(prefix string, vfs fs.FS, overlay map[string]load.Source) error {
-	if !filepath.IsAbs(prefix) {
+	if !isWindows() && !filepath.IsAbs(prefix) {
 		return fmt.Errorf("must provide absolute path prefix when generating cue overlay, got %q", prefix)
 	}
-
+	// fmt.Printf(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>​%+v", vfs)
 	err := fs.WalkDir(vfs, ".", (func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
@@ -72,7 +77,7 @@ func toOverlay(prefix string, vfs fs.FS, overlay map[string]load.Source) error {
 		if d.IsDir() {
 			return nil
 		}
-
+		// fmt.Println("<<<<<<<<", path)
 		f, err := vfs.Open(path)
 		if err != nil {
 			return err
@@ -84,6 +89,7 @@ func toOverlay(prefix string, vfs fs.FS, overlay map[string]load.Source) error {
 		}
 
 		overlay[filepath.Join(prefix, path)] = load.FromBytes(b)
+		// fmt.Println(">>>>>>>>>>", filepath.Join(prefix, path))
 		return nil
 	}))
 

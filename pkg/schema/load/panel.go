@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/fs"
 	"io/ioutil"
+	"os"
 	"path/filepath"
 
 	"cuelang.org/go/cue"
@@ -71,10 +72,14 @@ func mapPanelModel(id string, vcs schema.VersionedCueSchema) cue.Value {
 
 func readPanelModels(p BaseLoadPaths) (map[string]schema.VersionedCueSchema, error) {
 	overlay := make(map[string]load.Source)
-	if err := toOverlay("/", p.BaseCueFS, overlay); err != nil {
+	currentDir, err := os.Getwd()
+	if err != nil {
+		fmt.Println(err)
+	}
+	if err := toOverlay(currentDir, p.BaseCueFS, overlay); err != nil {
 		return nil, err
 	}
-	if err := toOverlay("/", p.DistPluginCueFS, overlay); err != nil {
+	if err := toOverlay(currentDir, p.DistPluginCueFS, overlay); err != nil {
 		return nil, err
 	}
 

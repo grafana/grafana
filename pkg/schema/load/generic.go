@@ -1,6 +1,10 @@
 package load
 
 import (
+	"fmt"
+	"os"
+	"path/filepath"
+
 	"cuelang.org/go/cue"
 	"cuelang.org/go/cue/load"
 	"github.com/grafana/grafana/pkg/schema"
@@ -12,7 +16,12 @@ import (
 // TODO probably cache this or something
 func getBaseScuemata(p BaseLoadPaths) (*cue.Instance, error) {
 	overlay := make(map[string]load.Source)
-	if err := toOverlay("/grafana", p.BaseCueFS, overlay); err != nil {
+	currentDir, err := os.Getwd()
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	if err := toOverlay(filepath.Join(currentDir, "grafana"), p.BaseCueFS, overlay); err != nil {
 		return nil, err
 	}
 
@@ -32,9 +41,12 @@ func getBaseScuemata(p BaseLoadPaths) (*cue.Instance, error) {
 		// And no, changing the toOverlay() to have a subpath and the
 		// load.Instances to mirror that subpath does not allow us to get rid of
 		// this "/".
-		Dir: "/",
+		Dir: currentDir,
 	}
-	return rt.Build(load.Instances([]string{"/grafana/cue/scuemata"}, cfg)[0])
+	return rt.Build(load.Instances([]string{
+		filepath.Join(currentDir, "grafana", "cue", "scuemata", "scuemata.cue"),
+		filepath.Join(currentDir, "grafana", "cue", "scuemata", "panel-plugin.cue"),
+	}, cfg)[0])
 }
 
 func buildGenericScuemata(famval cue.Value) (schema.VersionedCueSchema, error) {
