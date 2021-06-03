@@ -53,7 +53,8 @@ func newService(cfg *setting.Cfg, manager plugins.Manager, backendPluginManager 
 		Cfg:                  cfg,
 		PluginManager:        manager,
 		BackendPluginManager: backendPluginManager,
-		registry:             map[string]func(*models.DataSource) (plugins.DataPlugin, error){},
+		// nolint:staticcheck // plugins.DataPlugin deprecated
+		registry: map[string]func(*models.DataSource) (plugins.DataPlugin, error){},
 	}
 }
 

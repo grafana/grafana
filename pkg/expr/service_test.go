@@ -88,7 +88,7 @@ type mockEndpoint struct {
 	Frames data.Frames
 }
 
-// nolint:staticcheck // plugins.DataQueryResult deprecated
+// nolint:staticcheck // plugins.DataQueryResponse deprecated
 func (me *mockEndpoint) DataQuery(ctx context.Context, ds *models.DataSource, query plugins.DataQuery) (plugins.DataResponse, error) {
 	return plugins.DataResponse{
 		Results: map[string]plugins.DataQueryResult{
@@ -99,6 +99,7 @@ func (me *mockEndpoint) DataQuery(ctx context.Context, ds *models.DataSource, qu
 	}, nil
 }
 
+// nolint:staticcheck // plugins.DataQueryResponse deprecated
 func (me *mockEndpoint) HandleRequest(ctx context.Context, ds *models.DataSource, query plugins.DataQuery) (plugins.DataResponse, error) {
 	return me.DataQuery(ctx, ds, query)
 }

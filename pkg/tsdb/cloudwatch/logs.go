@@ -9,6 +9,7 @@ import (
 
 func ProvideLogsService() *LogsService {
 	return &LogsService{
+		// nolint:staticcheck // plugins.DataQueryResponse deprecated
 		responseChannels: make(map[string]chan plugins.DataResponse),
 		queues:           make(map[string](chan bool)),
 	}
