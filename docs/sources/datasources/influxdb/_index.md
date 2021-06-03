@@ -75,7 +75,7 @@ To help you choose the best language for your needs, here’s a comparison of [F
 
 Enter edit mode by clicking the panel title and clicking **Edit**. The editor allows you to select metrics and tags.
 
-![InfluxQL query editor](/static/img/docs/influxdb/influxql-query-editor-7-5.png)
+![InfluxQL query editor](/static/img/docs/influxdb/influxql-query-editor-8-0.png)
 
 ### Filter data (WHERE)
 
