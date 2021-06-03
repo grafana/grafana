@@ -16,6 +16,7 @@ export interface VizLegendBaseProps<T> {
   itemRenderer?: (item: VizLegendItem<T>, index: number) => JSX.Element;
   onLabelMouseEnter?: (item: VizLegendItem, event: React.MouseEvent<HTMLElement>) => void;
   onLabelMouseOut?: (item: VizLegendItem, event: React.MouseEvent<HTMLElement>) => void;
+  readonly?: boolean;
 }
 
 export interface VizLegendTableProps<T> extends VizLegendBaseProps<T> {

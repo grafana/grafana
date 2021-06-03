@@ -84,10 +84,7 @@ func (tn *ThreemaNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool
 	tn.log.Debug("Sending threema alert notification", "from", tn.GatewayID, "to", tn.RecipientID)
 
 	var tmplErr error
-	tmpl, _, err := TmplText(ctx, tn.tmpl, as, tn.log, &tmplErr)
-	if err != nil {
-		return false, err
-	}
+	tmpl, _ := TmplText(ctx, tn.tmpl, as, tn.log, &tmplErr)
 
 	// Set up basic API request data
 	data := url.Values{}
@@ -112,7 +109,7 @@ func (tn *ThreemaNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool
 	data.Set("text", message)
 
 	if tmplErr != nil {
-		return false, fmt.Errorf("failed to template Theema message: %w", tmplErr)
+		tn.log.Debug("failed to template Threema message", "err", tmplErr.Error())
 	}
 
 	cmd := &models.SendWebhookSync{

@@ -6,6 +6,7 @@ import {
   getFilteredOptions,
   getTextAlign,
   rowToFieldValue,
+  sortNumber,
   sortOptions,
   valuesToOptions,
 } from './utils';
@@ -412,6 +413,63 @@ describe('Table utils', () => {
 
         expect(result).toEqual([]);
       });
+    });
+  });
+
+  describe('sortNumber', () => {
+    it.each`
+      a                                         | b                                         | expected
+      ${{ values: [] }}                         | ${{ values: [] }}                         | ${0}
+      ${{ values: [undefined] }}                | ${{ values: [undefined] }}                | ${0}
+      ${{ values: [null] }}                     | ${{ values: [null] }}                     | ${0}
+      ${{ values: [Number.POSITIVE_INFINITY] }} | ${{ values: [Number.POSITIVE_INFINITY] }} | ${0}
+      ${{ values: [Number.NEGATIVE_INFINITY] }} | ${{ values: [Number.NEGATIVE_INFINITY] }} | ${0}
+      ${{ values: [Number.POSITIVE_INFINITY] }} | ${{ values: [Number.NEGATIVE_INFINITY] }} | ${1}
+      ${{ values: [Number.NEGATIVE_INFINITY] }} | ${{ values: [Number.POSITIVE_INFINITY] }} | ${-1}
+      ${{ values: ['infinIty'] }}               | ${{ values: ['infinIty'] }}               | ${0}
+      ${{ values: ['infinity'] }}               | ${{ values: ['not infinity'] }}           | ${0}
+      ${{ values: [1] }}                        | ${{ values: [1] }}                        | ${0}
+      ${{ values: [1.5] }}                      | ${{ values: [1.5] }}                      | ${0}
+      ${{ values: [2] }}                        | ${{ values: [1] }}                        | ${1}
+      ${{ values: [25] }}                       | ${{ values: [2.5] }}                      | ${1}
+      ${{ values: [2.5] }}                      | ${{ values: [1.5] }}                      | ${1}
+      ${{ values: [1] }}                        | ${{ values: [2] }}                        | ${-1}
+      ${{ values: [2.5] }}                      | ${{ values: [25] }}                       | ${-1}
+      ${{ values: [1.5] }}                      | ${{ values: [2.5] }}                      | ${-1}
+      ${{ values: [1] }}                        | ${{ values: [] }}                         | ${1}
+      ${{ values: [1] }}                        | ${{ values: [undefined] }}                | ${1}
+      ${{ values: [1] }}                        | ${{ values: [null] }}                     | ${1}
+      ${{ values: [1] }}                        | ${{ values: [Number.POSITIVE_INFINITY] }} | ${-1}
+      ${{ values: [1] }}                        | ${{ values: [Number.NEGATIVE_INFINITY] }} | ${1}
+      ${{ values: [1] }}                        | ${{ values: ['infinIty'] }}               | ${1}
+      ${{ values: [-1] }}                       | ${{ values: ['infinIty'] }}               | ${1}
+      ${{ values: [] }}                         | ${{ values: [1] }}                        | ${-1}
+      ${{ values: [undefined] }}                | ${{ values: [1] }}                        | ${-1}
+      ${{ values: [null] }}                     | ${{ values: [1] }}                        | ${-1}
+      ${{ values: [Number.POSITIVE_INFINITY] }} | ${{ values: [1] }}                        | ${1}
+      ${{ values: [Number.NEGATIVE_INFINITY] }} | ${{ values: [1] }}                        | ${-1}
+      ${{ values: ['infinIty'] }}               | ${{ values: [1] }}                        | ${-1}
+      ${{ values: ['infinIty'] }}               | ${{ values: [-1] }}                       | ${-1}
+    `("when called with a: '$a.toString', b: '$b.toString' then result should be '$expected'", ({ a, b, expected }) => {
+      expect(sortNumber(a, b, '0')).toEqual(expected);
+    });
+
+    it.skip('should have good performance', () => {
+      const ITERATIONS = 100000;
+      const a: any = { values: Array(ITERATIONS) };
+      const b: any = { values: Array(ITERATIONS) };
+      for (let i = 0; i < ITERATIONS; i++) {
+        a.values[i] = Math.random() * Date.now();
+        b.values[i] = Math.random() * Date.now();
+      }
+
+      const start = performance.now();
+      for (let i = 0; i < ITERATIONS; i++) {
+        sortNumber(a, b, i.toString(10));
+      }
+      const stop = performance.now();
+      const diff = stop - start;
+      expect(diff).toBeLessThanOrEqual(20);
     });
   });
 });
