@@ -116,6 +116,10 @@ func (s *Server) init() error {
 		return err
 	}
 
+	if err := s.sqlStore.Reset(); err != nil {
+		return err
+	}
+
 	return s.provisioningService.RunInitProvisioners()
 }
 
