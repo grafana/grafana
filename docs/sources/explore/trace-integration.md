@@ -18,7 +18,7 @@ Supported data sources are:
 
 For information on how to configure queries for the data sources listed above, refer to the documentation for specific data source.
 
-{{< figure src="/static/img/docs/v80/explore-trace-view-full.png" class="docs-image--no-shadow" max-width= "900px" caption="Screenshot of the trace view" >}}
+{{< figure src="/static/img/docs/explore/explore-trace-view-full-8-0.png" class="docs-image--no-shadow" max-width= "900px" caption="Screenshot of the trace view" >}}
 
 ##### Header
 
@@ -61,7 +61,7 @@ Clicking anywhere on the span row shows span details.
 
 You can optionally expand the node graph for the displayed trace. Depending on the data source, this can show spans of the trace as nodes in the graph, or as some additional context like service map based on the current trace.
 
-![Node graph](/static/img/docs/v80/explore-trace-view-node-graph.png "Node graph")
+![Node graph](/static/img/docs/explore/explore-trace-view-node-graph-8-0.png "Node graph")
 
 ##### Trace to logs
 
