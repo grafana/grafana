@@ -243,10 +243,28 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 		return err
 	}
 
+	if err := m.writeAlertmanagerConfig(&amConfig, allChannels); err != nil {
+		return err
+	}
+
+	if err := m.writeSilencesFile(); err != nil {
+		m.mg.Logger.Error("alert migration error: failed to write silence file", "err", err)
+	}
+
+	return nil
+}
+
+func (m *migration) writeAlertmanagerConfig(amConfig *PostableUserConfig, allChannels map[interface{}]*notificationChannel) error {
+	if len(allChannels) == 0 {
+		// No channels, hence don't require Alertmanager config.
+		m.mg.Logger.Info("alert migration: no notification channel found, skipping Alertmanager config")
+		return nil
+	}
+
 	if err := amConfig.EncryptSecureSettings(); err != nil {
 		return err
 	}
-	rawAmConfig, err := json.Marshal(&amConfig)
+	rawAmConfig, err := json.Marshal(amConfig)
 	if err != nil {
 		return err
 	}
@@ -260,10 +278,6 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 	})
 	if err != nil {
 		return err
-	}
-
-	if err := m.writeSilencesFile(); err != nil {
-		m.mg.Logger.Error("alert migration error: failed to write silence file", "err", err)
 	}
 
 	return nil
