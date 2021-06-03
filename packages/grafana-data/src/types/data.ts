@@ -168,6 +168,8 @@ export enum NullValueMode {
  * Describes and API for exposing panel specific data configurations.
  */
 export interface DataConfigSource {
+  editSourceId?: number;
+  id?: number;
   configRev?: number;
   getDataSupport: () => PanelPluginDataSupport;
   getTransformations: () => DataTransformerConfig[] | undefined;

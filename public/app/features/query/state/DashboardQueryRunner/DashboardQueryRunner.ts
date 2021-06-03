@@ -13,7 +13,7 @@ import {
 import { AlertStatesWorker } from './AlertStatesWorker';
 import { SnapshotWorker } from './SnapshotWorker';
 import { AnnotationsWorker } from './AnnotationsWorker';
-import { getAnnotationsByPanelId } from './utils';
+import { emptyResult, getAnnotationsByPanelId } from './utils';
 import { DashboardModel } from '../../../dashboard/state';
 import { getTimeSrv, TimeSrv } from '../../../dashboard/services/TimeSrv';
 import { RefreshEvent } from '../../../../types/events';
@@ -67,7 +67,8 @@ class DashboardQueryRunnerImpl implements DashboardQueryRunner {
 
   private executeRun(options: DashboardQueryRunnerOptions) {
     const workers = this.workers.filter((w) => w.canWork(options));
-    const observables = workers.map((w) => w.work(options));
+    const workerObservables = workers.map((w) => w.work(options));
+    const observables = [emptyResult()].concat(workerObservables); // handles the case when you turn off all the workers
 
     merge(observables)
       .pipe(

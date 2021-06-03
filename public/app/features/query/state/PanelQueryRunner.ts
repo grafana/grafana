@@ -12,6 +12,7 @@ import { isSharedDashboardQuery, runSharedRequest } from '../../../plugins/datas
 // Types
 import {
   applyFieldOverrides,
+  ArrayDataFrame,
   compareArrayValues,
   compareDataFrameStructures,
   CoreApp,
@@ -22,6 +23,7 @@ import {
   DataSourceApi,
   DataSourceJsonData,
   DataTransformerConfig,
+  getDefaultTimeRange,
   LoadingState,
   PanelData,
   rangeUtil,
@@ -31,7 +33,7 @@ import {
   transformDataFrame,
 } from '@grafana/data';
 import { getDashboardQueryRunner } from './DashboardQueryRunner/DashboardQueryRunner';
-import { mergePanelAndDashData } from './mergePanelAndDashData';
+import { DashboardQueryRunnerResult } from './DashboardQueryRunner/types';
 
 export interface QueryRunnerOptions<
   TQuery extends DataQuery = DataQuery,
@@ -64,12 +66,16 @@ export interface GetDataOptions {
 export class PanelQueryRunner {
   private subject: ReplaySubject<PanelData>;
   private subscription?: Unsubscribable;
+  private dashboardSubscription?: Unsubscribable;
   private lastResult?: PanelData;
+  private lastDashboardResult: DashboardQueryRunnerResult;
   private dataConfigSource: DataConfigSource;
 
   constructor(dataConfigSource: DataConfigSource) {
     this.subject = new ReplaySubject(1);
     this.dataConfigSource = dataConfigSource;
+    this.lastDashboardResult = { annotations: [], alertState: undefined };
+    this.initDashboardQuerySubscription();
   }
 
   /**
@@ -251,16 +257,11 @@ export class PanelQueryRunner {
       this.subscription.unsubscribe();
     }
 
-    let panelData = observable;
-    const dataSupport = this.dataConfigSource.getDataSupport();
-
-    if (dataSupport.alertStates || dataSupport.annotations) {
-      panelData = mergePanelAndDashData(observable, getDashboardQueryRunner().getResult(panelId));
-    }
-
-    this.subscription = panelData.subscribe({
+    this.subscription = observable.subscribe({
       next: (data) => {
         this.lastResult = preProcessPanelData(data, this.lastResult);
+        this.lastResult = this.decorateWithDashboardResults(this.lastResult);
+
         // Store preprocessed query results for applying overrides later on in the pipeline
         this.subject.next(this.lastResult);
       },
@@ -294,26 +295,66 @@ export class PanelQueryRunner {
    */
   destroy() {
     // Tell anyone listening that we are done
-    if (this.subject) {
-      this.subject.complete();
-    }
-
-    if (this.subscription) {
-      this.subscription.unsubscribe();
-    }
+    this.subject?.complete();
+    this.subscription?.unsubscribe();
+    this.dashboardSubscription?.unsubscribe();
   }
 
   useLastResultFrom(runner: PanelQueryRunner) {
     this.lastResult = runner.getLastResult();
+    this.lastDashboardResult = runner.getLastDashboardResult();
 
     if (this.lastResult) {
       // The subject is a replay subject so anyone subscribing will get this last result
-      this.subject.next(this.lastResult);
+      this.subject.next(this.decorateWithDashboardResults(this.lastResult));
     }
   }
 
   getLastResult(): PanelData | undefined {
     return this.lastResult;
+  }
+
+  getLastDashboardResult(): DashboardQueryRunnerResult {
+    return this.lastDashboardResult;
+  }
+
+  refreshDashboardQuerySubscription() {
+    this.initDashboardQuerySubscription();
+  }
+
+  private decorateWithDashboardResults(data: PanelData | undefined): PanelData | undefined {
+    if (!data) {
+      return data;
+    }
+
+    const { alertState, annotations } = this.lastDashboardResult;
+    data.annotations = [new ArrayDataFrame(annotations)];
+    data.alertState = alertState;
+
+    return data;
+  }
+
+  private initDashboardQuerySubscription() {
+    if (this.dashboardSubscription) {
+      this.dashboardSubscription.unsubscribe();
+    }
+
+    const { alertStates, annotations } = this.dataConfigSource.getDataSupport();
+
+    if (alertStates || annotations) {
+      const id = this.dataConfigSource.editSourceId ?? this.dataConfigSource.id;
+      this.dashboardSubscription = getDashboardQueryRunner()
+        .getResult(id)
+        .subscribe((dashboardResult) => {
+          this.lastDashboardResult = dashboardResult;
+          const data = this.lastResult ?? {
+            timeRange: getDefaultTimeRange(),
+            series: [],
+            state: LoadingState.NotStarted,
+          };
+          this.subject.next(this.decorateWithDashboardResults(data));
+        });
+    }
   }
 }
 

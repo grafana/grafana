@@ -38,6 +38,8 @@ import {
 } from './getPanelOptionsWithDefaults';
 import { QueryGroupOptions } from 'app/types';
 import { PanelModelLibraryPanel } from '../../library-panels/types';
+import { TimeOverrideResult } from '../utils/panel';
+
 export interface GridPos {
   x: number;
   y: number;
@@ -45,8 +47,6 @@ export interface GridPos {
   h: number;
   static?: boolean;
 }
-
-import { TimeOverrideResult } from '../utils/panel';
 
 const notPersistedProperties: { [str: string]: boolean } = {
   events: true,
@@ -373,6 +373,10 @@ export class PanelModel implements DataConfigSource {
     }
 
     this.applyPluginOptionDefaults(plugin, false);
+    // Two cases:
+    // Grafana loaded a plugin which has support for dashboard queries so we need to setup a dashboard query runner subscription
+    // Grafana loaded a plugin which hasn't support for dashboard queries so we need to unsubscribe from any existing dashboard query runner subscription
+    this.getQueryRunner().refreshDashboardQuerySubscription();
     this.resendLastResult();
   }
 
