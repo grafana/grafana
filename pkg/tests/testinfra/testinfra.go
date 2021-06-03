@@ -36,11 +36,6 @@ func StartGrafana(t *testing.T, grafDir, cfgPath string, sqlStore *sqlstore.SQLS
 	srv, err := server.InitializeForTest(cmdLineArgs, serverOpts, apiServerOpts, sqlStore)
 	require.NoError(t, err)
 
-	t.Cleanup(func() {
-		// Have to reset the route register between tests, since it doesn't get re-created
-		srv.HTTPServer.RouteRegister.Reset()
-	})
-
 	go func() {
 		// When the server runs, it will also build and initialize the service graph
 		if err := srv.Run(); err != nil {
