@@ -55,7 +55,7 @@ export const Legend = function Legend(props: Props) {
           <>
             <VizLegendListItem item={item} className={styles.item} onLabelClick={sortable ? onClick : undefined} />
             {sortable &&
-              (sort?.field === item.data!.field ? <Icon name={sort!.ascending ? 'angle-up' : 'angle-down'} /> : '')}
+              (sort?.field === item.data!.field ? <Icon name={sort!.ascending ? 'arrow-up' : 'arrow-down'} /> : '')}
           </>
         );
       }}
