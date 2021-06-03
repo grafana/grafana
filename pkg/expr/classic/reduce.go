@@ -38,7 +38,7 @@ func (cr classicReducer) Reduce(series mathexp.Series) mathexp.Number {
 	value := float64(0)
 	allNull := true
 
-	vF := series.Frame.Fields[series.ValueIdx]
+	vF := series.Frame.Fields[1]
 	ff := mathexp.Float64Field(*vF)
 
 	switch cr {
