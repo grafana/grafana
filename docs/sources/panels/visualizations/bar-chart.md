@@ -12,7 +12,7 @@ This panel is focused on visualizing categorical data.
 
 ## Supported data formats
 
-Only one data frame is supported and it needs to have at least one string field, that will be used as the category for an X or Y axis, and one or more numerical fields.
+Only one data frame is supported and it needs to have at least one string field that will be used as the category for an X or Y axis and one or more numerical fields.
 
 Example:
 
