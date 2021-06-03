@@ -67,7 +67,7 @@ To sort the nodes, click on the stats inside the legend. The marker next to the 
 
 ![Node graph legend](/static/img/docs/node-graph/node-graph-legend-8-0.png "Node graph legend")
 
-Click on the node and select "Show in Graph layout" option to switch back to default layout and focus on the selected node, to show it in context of the full graph.
+Click on the node and select "Show in Graph layout" option to switch back to graph layout and focus on the selected node, to show it in context of the full graph.
 
 ![Node graph grid to default](/static/img/docs/node-graph/node-graph-grid-to-default-8-0.png "Node graph grid to default")
 
