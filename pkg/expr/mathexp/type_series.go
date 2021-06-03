@@ -18,8 +18,6 @@ const seriesTypeValIdx = 1
 // Series has a time.Time and a *float64 fields.
 type Series struct {
 	Frame *data.Frame
-	// TODO:
-	// - Value can be different number types
 }
 
 // SeriesFromFrame validates that the dataframe can be considered a Series type
