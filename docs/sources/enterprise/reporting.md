@@ -99,9 +99,9 @@ Grid | Landscape | v7.2+ | Generates an A4 page in landscape mode with panels ar
 
 > **Note:** Only available in Grafana Enterprise v8.0+, with the [Grafana image renderer plugin](https://grafana.com/grafana/plugins/grafana-image-renderer) v3.0+.
 
-You can attach a CSV file to the report email for each table panel on the selected dashboard along with the PDF report. By default, CSVs larger than 10Mb won't be sent to avoid email servers to reject the email. You can increase or decrease this limit in the [reporting configuration]({{< relref "#rendering-configuration" >}}).
+You can attach a CSV file to the report email for each table panel on the selected dashboard, along with the PDF report. By default, CSVs larger than 10Mb won't be sent to avoid email servers to reject the email. You can increase or decrease this limit in the [reporting configuration]({{< relref "#rendering-configuration" >}}).
 
-This feature relies on the same plugin that supports the [image rendering]({{< relref "../../administration/image_rendering.md" >}}) features.
+This feature relies on the same plugin that supports the [image rendering]({{< relref "../administration/image_rendering.md" >}}) features.
 
 When the CSV file is generated, it is temporarily written to the `csv` folder in the Grafana `data` folder.
 
