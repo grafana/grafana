@@ -1,10 +1,5 @@
 import uPlot, { Cursor, Band, Hooks, Select } from 'uplot';
 import { defaultsDeep } from 'lodash';
-import { PlotConfig, TooltipInterpolator } from '../types';
-import { ScaleProps, UPlotScaleBuilder } from './UPlotScaleBuilder';
-import { SeriesProps, UPlotSeriesBuilder } from './UPlotSeriesBuilder';
-import { AxisProps, UPlotAxisBuilder } from './UPlotAxisBuilder';
-import { AxisPlacement } from '../config';
 import {
   DataFrame,
   DefaultTimeZone,
@@ -14,6 +9,11 @@ import {
   TimeRange,
   TimeZone,
 } from '@grafana/data';
+import { PlotConfig, PlotTooltipInterpolator } from '../types';
+import { ScaleProps, UPlotScaleBuilder } from './UPlotScaleBuilder';
+import { SeriesProps, UPlotSeriesBuilder } from './UPlotSeriesBuilder';
+import { AxisProps, UPlotAxisBuilder } from './UPlotAxisBuilder';
+import { AxisPlacement } from '../config';
 import { pluginLog } from '../utils';
 import { getThresholdsDrawHook, UPlotThresholdOptions } from './UPlotThresholds';
 
@@ -36,7 +36,7 @@ export class UPlotConfigBuilder {
    * Custom handler for closest datapoint and series lookup. Technicaly returns uPlots setCursor hook
    * that sets tooltips state.
    */
-  tooltipInterpolator: TooltipInterpolator | undefined = undefined;
+  tooltipInterpolator: PlotTooltipInterpolator | undefined = undefined;
 
   constructor(timeZone: TimeZone = DefaultTimeZone) {
     this.tz = getTimeZoneInfo(timeZone, Date.now())?.ianaName;
@@ -131,7 +131,7 @@ export class UPlotConfigBuilder {
     this.bands.push(band);
   }
 
-  setTooltipInterpolator(interpolator: TooltipInterpolator) {
+  setTooltipInterpolator(interpolator: PlotTooltipInterpolator) {
     this.tooltipInterpolator = interpolator;
   }
 

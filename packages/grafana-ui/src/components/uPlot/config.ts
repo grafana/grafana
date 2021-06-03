@@ -108,6 +108,8 @@ export interface LineConfig {
  */
 export interface BarConfig {
   barAlignment?: BarAlignment;
+  barWidthFactor?: number;
+  barMaxWidth?: number;
 }
 
 /**
