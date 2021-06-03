@@ -33,8 +33,13 @@ export default {
     closeOnConfirm: true,
   },
   argTypes: {
-    confirmVariant: { control: { type: 'select' } },
-    size: { control: { type: 'select' } },
+    confirmVariant: {
+      control: {
+        type: 'select',
+      },
+      options: ['primary', 'secondary', 'destructive', 'link'],
+    },
+    size: { control: { type: 'select' }, options: ['xs', 'sm', 'md', 'lg'] },
   },
 } as Meta;
 
@@ -43,6 +48,7 @@ interface StoryProps extends Partial<Props> {
 }
 
 export const Basic: Story<StoryProps> = (args) => {
+  console.log('var', args.confirmVariant);
   return (
     <ConfirmButton
       closeOnConfirm={args.closeOnConfirm}
