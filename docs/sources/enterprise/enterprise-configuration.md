@@ -355,6 +355,19 @@ _Time to live_ (TTL) is the time that a query result is stored in the caching sy
 
 When storing cache data in-memory, this setting defines how often a background process cleans up stale data from the in-memory cache. More frequent "garbage collection" can keep memory usage from climbing but will increase CPU usage.
 
+### max_value_mb
+This value limits the size of a single cache value. If a cache value (or query result) is submitted that exceeds this size, then it will not be cached. To disable this limit, set this value to `0`.
+
+
+### max_size_mb
+
+The maximum size of the in-memory cache in megabytes. Once this size is reached, new cache items will be rejected. For more flexible control over cache eviction policies and size, please use the Redis or Memcached backend. 
+
+To disable the maximum, set this value to `0`. 
+
+> **Note:** Disabling the maximum is not recommended in production environments.
+
+
 ## [caching.redis]
 
 ### url
