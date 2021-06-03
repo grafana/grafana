@@ -361,7 +361,7 @@ When storing cache data in-memory, this setting defines how often a background p
 
 ### max_size_mb
 
-The maximum size of the in-memory cache in megabytes. Once this size is reached, new cache items will be rejected. For more flexible control over cache eviction policies and size, please use the Redis or Memcached backend. 
+The maximum size of the in-memory cache in megabytes. Once this size is reached, new cache items are rejected. For more flexible control over cache eviction policies and size, use the Redis or Memcached backend. 
 
 To disable the maximum, set this value to `0`. 
 
