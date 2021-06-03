@@ -95,12 +95,11 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<TimelineOptions> = ({
     getTimeRange,
     // hardcoded formatter for state values
     formatValue: (seriesIdx, value) => formattedValueToString(frame.fields[seriesIdx].display!(value)),
-    // TODO: unimplemeted for now
-    onHover: (seriesIdx: number, valueIdx: number) => {
-      console.log('hover', { seriesIdx, valueIdx });
+    onHover: (seriesIdx, valueIdx, rect) => {
+      console.log('hover', { seriesIdx, valueIdx, rect });
     },
-    onLeave: (seriesIdx: number, valueIdx: number) => {
-      console.log('leave', { seriesIdx, valueIdx });
+    onLeave: () => {
+      console.log('leave');
     },
   };
 
