@@ -44,20 +44,34 @@ export const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
 
 export const getCheckboxStyles = stylesFactory((theme: GrafanaTheme2) => {
   const labelStyles = getLabelStyles(theme);
-  const checkboxSize = 2;
-  const labelPadding = 1;
-
+  const checkboxSize = '16px';
   return {
+    label: cx(
+      labelStyles.label,
+      css`
+        padding-left: ${theme.spacing(1)};
+        white-space: nowrap;
+        cursor: pointer;
+      `
+    ),
+    description: cx(
+      labelStyles.description,
+      css`
+        line-height: ${theme.typography.bodySmall.lineHeight};
+        padding-left: ${theme.spacing(1)};
+      `
+    ),
     wrapper: css`
       position: relative;
+      padding-left: ${checkboxSize};
       vertical-align: middle;
-      font-size: 0;
+      min-height: ${theme.spacing(3)};
     `,
     input: css`
       position: absolute;
       top: 0;
       left: 0;
-      width: 100% !important; // global styles unset this
+      width: 100%;
       height: 100%;
       opacity: 0;
 
@@ -111,32 +125,21 @@ export const getCheckboxStyles = stylesFactory((theme: GrafanaTheme2) => {
     `,
     checkmark: css`
       display: inline-block;
-      width: ${theme.spacing(checkboxSize)};
-      height: ${theme.spacing(checkboxSize)};
+      width: ${checkboxSize};
+      height: ${checkboxSize};
       border-radius: ${theme.shape.borderRadius()};
+      margin-right: ${theme.spacing(1)};
       background: ${theme.components.input.background};
       border: 1px solid ${theme.components.input.borderColor};
+      position: absolute;
+      top: 2px;
+      left: 0;
 
       &:hover {
         cursor: pointer;
         border-color: ${theme.components.input.borderHover};
       }
     `,
-    label: cx(
-      labelStyles.label,
-      css`
-        padding-left: ${theme.spacing(labelPadding)};
-        white-space: nowrap;
-        cursor: pointer;
-      `
-    ),
-    description: cx(
-      labelStyles.description,
-      css`
-        line-height: ${theme.typography.bodySmall.lineHeight};
-        padding-left: ${theme.spacing(checkboxSize + labelPadding)};
-      `
-    ),
   };
 });
 
