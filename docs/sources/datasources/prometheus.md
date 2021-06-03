@@ -85,7 +85,7 @@ When you select a metric, the browser narrows down the available labels to show 
 You can then select one or more labels for which the available label values are shown in lists in the bottom section.
 Select one or more values for each label to tighten your query scope.
 
-Pro tip: If you do not remember a metric name to start with, you can also select a few labels first and find relevant label values. Once you select a few, the set of applicable metrics is reduced, making it easy to find the metric you were looking for.
+>**Note:** If you do not remember a metric name to start with, you can also select a few labels first, to narrow down the list and then find relevant label values. 
 
 All lists in the metrics browser have a search field above them to quickly filter for metrics or labels that match a certain string. Notice that the values section only has one search field. Its filtering applies to all labels to help you find values across labels once they have been selected, e.g., among your labels `app`, `job`, `job_name` only one might contain the value you are looking for.
 
