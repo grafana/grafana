@@ -44,9 +44,9 @@ You can also use [field overrides]({{< relref "../field-overrides.md" >}}) to sp
 
 ### Orientation 
 
-* **Auto** Grafana will decide orientation based on what the panel dimensions. 
-* **Horizontal** will make the X axis the category axis. 
-* **Vertical** will make the Y axis the category axis. 
+* **Auto** - Grafana will decide orientation based on what the panel dimensions. 
+* **Horizontal** - Will make the X axis the category axis. 
+* **Vertical** - Will make the Y axis the category axis. 
 
 ### Show values
 
