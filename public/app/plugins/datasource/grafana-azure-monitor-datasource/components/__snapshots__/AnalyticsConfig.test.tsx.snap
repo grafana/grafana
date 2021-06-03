@@ -128,32 +128,6 @@ exports[`Render should enable azure log analytics load workspaces button 1`] = `
       Azure Monitor Logs
     </h3>
     <div
-      class="gf-form-switch-container-react"
-    >
-      <label
-        class="gf-form gf-form-switch-container "
-        for="1"
-      >
-        <div
-          class="gf-form-label   pointer"
-        >
-          Same details as Azure Monitor API
-        </div>
-        <div
-          class="gf-form-switch  "
-        >
-          <input
-            checked=""
-            id="1"
-            type="checkbox"
-          />
-          <span
-            class="gf-form-switch__slider"
-          />
-        </div>
-      </label>
-    </div>
-    <div
       aria-label="Alert error"
       class="css-7gef9a"
     >

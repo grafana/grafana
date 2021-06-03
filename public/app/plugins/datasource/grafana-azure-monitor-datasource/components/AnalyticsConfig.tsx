@@ -2,24 +2,15 @@ import React, { FunctionComponent, useEffect, useMemo, useReducer, useState } fr
 import { SelectableValue } from '@grafana/data';
 import { AzureCredentialsForm } from './AzureCredentialsForm';
 import { InlineFormLabel, LegacyForms, Button, Alert } from '@grafana/ui';
-const { Select, Switch } = LegacyForms;
+const { Select } = LegacyForms;
 import { AzureClientSecretCredentials, AzureDataSourceSettings } from '../types';
-import { getCredentials, getLogAnalyticsCredentials, isCredentialsComplete } from '../credentials';
+import { credentialsDiffer, getCredentials, getLogAnalyticsCredentials, isCredentialsComplete } from '../credentials';
 
 export interface Props {
   options: AzureDataSourceSettings;
   updateOptions: (optionsFunc: (options: AzureDataSourceSettings) => AzureDataSourceSettings) => void;
   getSubscriptions: () => Promise<Array<SelectableValue<string>>>;
   getWorkspaces: (subscriptionId: string) => Promise<Array<SelectableValue<string>>>;
-}
-
-function credentialsDiffer(logCreds: AzureClientSecretCredentials, primaryCreds: AzureClientSecretCredentials) {
-  return (
-    logCreds.authType !== primaryCreds.authType ||
-    logCreds.logAnalyticsClientId !== primaryCreds.clientId ||
-    logCreds.logAnalyticsTenantId !== primaryCreds.tenantId ||
-    logCreds.logAnalyticsClientSecret !== primaryCreds.clientSecret
-  );
 }
 
 export const AnalyticsConfig: FunctionComponent<Props> = (props: Props) => {
@@ -34,11 +25,10 @@ export const AnalyticsConfig: FunctionComponent<Props> = (props: Props) => {
   // Only show a section for setting LogAnalytics credentials if
   // they were set from before with different values and the
   // authType is supported
-  const [credentialsUsed, _] = useState(
-    !!logAnalyticsCredentials &&
-      credentialsDiffer(logAnalyticsCredentials, primaryCredentials as AzureClientSecretCredentials)
-  );
-  const credentialsEnabled = credentialsUsed && primaryCredentials.authType === 'clientsecret';
+  const logCredentialsEnabled =
+    primaryCredentials.authType === 'clientsecret' &&
+    logAnalyticsCredentials &&
+    credentialsDiffer(logAnalyticsCredentials, primaryCredentials as AzureClientSecretCredentials);
 
   const hasRequiredFields =
     subscriptionId &&
@@ -110,47 +100,29 @@ export const AnalyticsConfig: FunctionComponent<Props> = (props: Props) => {
     });
   };
 
-  const tooltipAttribute = {
-    ...(!logAnalyticsCredentials && {
-      tooltip: 'Workspaces are pulled from default subscription selected above.',
-    }),
-  };
-
   return (
     <>
       <h3 className="page-heading">Azure Monitor Logs</h3>
-      {credentialsEnabled && (
+      {logCredentialsEnabled && (
         <>
-          <Switch
-            label="Same details as Azure Monitor API"
-            // no-op, fake disabled switch
-            checked={true}
-            onChange={() => {}}
-            {...tooltipAttribute}
+          <Alert severity="error" title="Deprecated">
+            Using different credentials for Azure Monitor Logs is no longer supported. Authentication information above
+            will be used instead. Please create a new data source with the credentials below.
+          </Alert>
+
+          <AzureCredentialsForm
+            managedIdentityEnabled={false}
+            credentials={
+              {
+                ...logAnalyticsCredentials,
+                tenantId: logAnalyticsCredentials!.logAnalyticsTenantId,
+                clientId: logAnalyticsCredentials!.logAnalyticsClientId,
+                clientSecret: logAnalyticsCredentials!.logAnalyticsClientSecret,
+              } as AzureClientSecretCredentials
+            }
+            getSubscriptions={getSubscriptions}
+            disabled={true}
           />
-
-          {logAnalyticsCredentials && (
-            <>
-              <Alert severity="error" title="Deprecated">
-                Using different credentials for Azure Monitor Logs is no longer supported. Authentication information
-                above will be used instead. Please create a new data source with the credentials below.
-              </Alert>
-
-              <AzureCredentialsForm
-                managedIdentityEnabled={false}
-                credentials={
-                  {
-                    ...logAnalyticsCredentials,
-                    tenantId: logAnalyticsCredentials.logAnalyticsTenantId,
-                    clientId: logAnalyticsCredentials.logAnalyticsClientId,
-                    clientSecret: logAnalyticsCredentials.logAnalyticsClientSecret,
-                  } as AzureClientSecretCredentials
-                }
-                getSubscriptions={getSubscriptions}
-                disabled={true}
-              />
-            </>
-          )}
         </>
       )}
       <div className="gf-form-group">

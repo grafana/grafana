@@ -85,7 +85,6 @@ describe('Render', () => {
 
   it('should not render the Switch to use different creds for log analytics by default', () => {
     setup();
-    expect(screen.queryByLabelText('Same details as Azure Monitor API')).not.toBeInTheDocument();
     expect(screen.queryByText('is no longer supported', { exact: false })).not.toBeInTheDocument();
   });
 
@@ -103,11 +102,6 @@ describe('Render', () => {
         },
       },
     }));
-    const toggle = screen.queryByLabelText('Same details as Azure Monitor API');
-    expect(toggle).toBeInTheDocument();
-    expect(screen.queryByText('is no longer supported', { exact: false })).toBeInTheDocument();
-    // The switch should be disabled
-    toggle!.click();
     expect(screen.queryByText('is no longer supported', { exact: false })).toBeInTheDocument();
   });
 });
