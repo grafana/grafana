@@ -13,7 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/stretchr/testify/require"
 )
 
@@ -102,8 +101,4 @@ func (me *mockEndpoint) DataQuery(ctx context.Context, ds *models.DataSource, qu
 
 func (me *mockEndpoint) HandleRequest(ctx context.Context, ds *models.DataSource, query plugins.DataQuery) (plugins.DataResponse, error) {
 	return me.DataQuery(ctx, ds, query)
-}
-
-type fakeBackendPM struct {
-	backendplugin.Manager
 }

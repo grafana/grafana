@@ -18,27 +18,10 @@ import (
 	"github.com/grafana/grafana/pkg/infra/backgroundsvcs"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
-	_ "github.com/grafana/grafana/pkg/infra/remotecache"
-	_ "github.com/grafana/grafana/pkg/infra/serverlock"
-	_ "github.com/grafana/grafana/pkg/infra/tracing"
-	_ "github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/login/social"
-	_ "github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/registry"
-	_ "github.com/grafana/grafana/pkg/services/alerting"
-	_ "github.com/grafana/grafana/pkg/services/auth"
-	_ "github.com/grafana/grafana/pkg/services/auth/jwt"
-	_ "github.com/grafana/grafana/pkg/services/cleanup"
-	_ "github.com/grafana/grafana/pkg/services/librarypanels"
-	_ "github.com/grafana/grafana/pkg/services/login/loginservice"
-	_ "github.com/grafana/grafana/pkg/services/ngalert"
-	_ "github.com/grafana/grafana/pkg/services/notifications"
-	_ "github.com/grafana/grafana/pkg/services/provisioning"
-	_ "github.com/grafana/grafana/pkg/services/rendering"
-	_ "github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
-	_ "github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -50,21 +33,6 @@ type Options struct {
 	Commit      string
 	BuildBranch string
 	Listener    net.Listener
-}
-
-type serviceRegistry interface {
-	IsDisabled(srv registry.Service) bool
-	GetServices() []*registry.Descriptor
-}
-
-type globalServiceRegistry struct{}
-
-func (r *globalServiceRegistry) IsDisabled(srv registry.Service) bool {
-	return registry.IsDisabled(srv)
-}
-
-func (r *globalServiceRegistry) GetServices() []*registry.Descriptor {
-	return registry.GetServices()
 }
 
 // New returns a new instance of Server.

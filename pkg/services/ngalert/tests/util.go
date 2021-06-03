@@ -24,11 +24,11 @@ import (
 )
 
 // SetupTestEnv initializes a store to used by the tests.
-func SetupTestEnv(t *testing.T, baseIntervalSeconds time.Duration) (*ngalert.AlertNG, *store.DBstore) {
+func SetupTestEnv(t *testing.T, baseInterval time.Duration) (*ngalert.AlertNG, *store.DBstore) {
 	t.Helper()
 
 	cfg := setting.NewCfg()
-	cfg.AlertingBaseIntervalSeconds = baseIntervalSeconds
+	cfg.AlertingBaseInterval = baseInterval
 	// AlertNG is disabled by default and only if it's enabled
 	// its database migrations run and the relative database tables are created
 	cfg.FeatureToggles = map[string]bool{"ngalert": true}

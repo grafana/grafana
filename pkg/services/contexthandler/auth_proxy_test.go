@@ -95,7 +95,6 @@ func getContextHandler(t *testing.T) *ContextHandler {
 	t.Helper()
 
 	sqlStore := sqlstore.InitTestDB(t)
-	remoteCacheSvc := &remotecache.RemoteCache{}
 
 	cfg := setting.NewCfg()
 	cfg.RemoteCacheOptions = &setting.RemoteCacheOptions{

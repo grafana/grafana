@@ -65,23 +65,6 @@ import (
 
 import (
 	_ "github.com/grafana/grafana/pkg/extensions"
-	_ "github.com/grafana/grafana/pkg/infra/remotecache"
-	_ "github.com/grafana/grafana/pkg/infra/serverlock"
-	_ "github.com/grafana/grafana/pkg/infra/tracing"
-	_ "github.com/grafana/grafana/pkg/infra/usagestats"
-	_ "github.com/grafana/grafana/pkg/plugins/manager"
-	_ "github.com/grafana/grafana/pkg/services/alerting"
-	_ "github.com/grafana/grafana/pkg/services/auth"
-	_ "github.com/grafana/grafana/pkg/services/auth/jwt"
-	_ "github.com/grafana/grafana/pkg/services/cleanup"
-	_ "github.com/grafana/grafana/pkg/services/librarypanels"
-	_ "github.com/grafana/grafana/pkg/services/login/loginservice"
-	_ "github.com/grafana/grafana/pkg/services/ngalert"
-	_ "github.com/grafana/grafana/pkg/services/notifications"
-	_ "github.com/grafana/grafana/pkg/services/provisioning"
-	_ "github.com/grafana/grafana/pkg/services/rendering"
-	_ "github.com/grafana/grafana/pkg/services/search"
-	_ "github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
 // Injectors from wire.go:

@@ -42,7 +42,7 @@ const (
 func ProvideService(cfg *setting.Cfg, dataSourceCache datasources.CacheService, routeRegister routing.RouteRegister,
 	sqlStore *sqlstore.SQLStore, dataService *tsdb.Service, dataProxy *datasourceproxy.DataSourceProxyService,
 	quotaService *quota.QuotaService, backgroundServices *backgroundsvcs.Container, m *metrics.Metrics) (*AlertNG, error) {
-	baseInterval := cfg.AlertingBaseIntervalSeconds
+	baseInterval := cfg.AlertingBaseInterval
 	if baseInterval <= 0 {
 		baseInterval = defaultBaseIntervalSeconds
 	}

@@ -391,9 +391,9 @@ type Cfg struct {
 
 	// Alerting
 
-	// AlertingBaseIntervalSeconds controls the alerting base interval in seconds.
+	// AlertingBaseInterval controls the alerting base interval in seconds.
 	// Only for internal use and not user configuration.
-	AlertingBaseIntervalSeconds time.Duration
+	AlertingBaseInterval time.Duration
 }
 
 // IsLiveConfigEnabled returns true if live should be able to save configs to SQL tables

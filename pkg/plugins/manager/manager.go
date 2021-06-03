@@ -79,7 +79,9 @@ func ProvideService(cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, backendPM bac
 	backgroundServices *backgroundsvcs.Container) (*PluginManager, error) {
 	pm := newManager(cfg, sqlStore, backendPM)
 	backgroundServices.AddBackgroundService(pm)
-	pm.init()
+	if err := pm.init(); err != nil {
+		return nil, err
+	}
 	return pm, nil
 }
 

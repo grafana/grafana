@@ -7,23 +7,10 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/backgroundsvcs"
-	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/setting"
 
 	"github.com/stretchr/testify/require"
 )
-
-type testServiceRegistry struct {
-	services []*registry.Descriptor
-}
-
-func (r *testServiceRegistry) GetServices() []*registry.Descriptor {
-	return r.services
-}
-
-func (r *testServiceRegistry) IsDisabled(_ registry.Service) bool {
-	return false
-}
 
 type testService struct {
 	started chan struct{}
