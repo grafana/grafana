@@ -20,7 +20,7 @@ These features are included in the Grafana open source edition.
 
 Grafana 7.5 adds a beta version of the next-generation pie chart panel.
 
-![Pie chart panel](/img/docs/pie-chart-panel/pie-chart-panel-7-5.png)
+![Pie chart panel](/static/img/docs/pie-chart-panel/pie-chart-panel-7-5.png)
 
 For more information, refer to [Pie chart panel]({{< relref "../panels/visualizations/pie-chart-panel.md" >}}).
 
@@ -32,7 +32,7 @@ With alerting support for Loki, you can now create alerts on Loki metrics querie
 
 [Alerting]({{< relref "../alerting/_index.md" >}}) was updated as a result of this change.
 
-![Loki alerting](/img/docs/alerting/alerting-for-loki-7-5.png)
+![Loki alerting](/static/img/docs/alerting/alerting-for-loki-7-5.png)
 
 ### Loki label browser
 
@@ -50,7 +50,7 @@ For new Prometheus data sources, we have changed the default HTTP method to POST
 
 When searching for text in Elasticsearch logs, matching words in the log line returned by the query are now highlighted.
 
-![Elastic logs highlighting](/img/docs/elasticsearch/elastic-word-highlighting-7-5.png)
+![Elastic logs highlighting](/static/img/docs/elasticsearch/elastic-word-highlighting-7-5.png)
 
 ### Better format definition for trace data
 

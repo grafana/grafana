@@ -2,11 +2,11 @@ package prometheus
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"testing"
 	"time"
 
+	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/models"
@@ -22,7 +22,17 @@ func TestPrometheus(t *testing.T) {
 	dsInfo := &models.DataSource{
 		JsonData: json,
 	}
-	plug, err := New(httpclient.NewProvider())(dsInfo)
+	var capturedRequest *http.Request
+	mw := sdkhttpclient.MiddlewareFunc(func(opts sdkhttpclient.Options, next http.RoundTripper) http.RoundTripper {
+		return sdkhttpclient.RoundTripperFunc(func(req *http.Request) (*http.Response, error) {
+			capturedRequest = req
+			return &http.Response{StatusCode: http.StatusOK}, nil
+		})
+	})
+	provider := httpclient.NewProvider(sdkhttpclient.ProviderOptions{
+		Middlewares: []sdkhttpclient.Middleware{mw},
+	})
+	plug, err := New(provider)(dsInfo)
 	require.NoError(t, err)
 	executor := plug.(*PrometheusExecutor)
 
@@ -113,26 +123,10 @@ func TestPrometheus(t *testing.T) {
 			"intervalFactor": 1,
 			"refId": "A"
 		}`)
-		queryParams := ""
-		executor.baseRoundTripperFactory = func(ds *models.DataSource) (http.RoundTripper, error) {
-			rt := &RoundTripperMock{}
-			rt.roundTrip = func(request *http.Request) (*http.Response, error) {
-				queryParams = request.URL.RawQuery
-				return nil, fmt.Errorf("this is fine")
-			}
-			return rt, nil
-		}
 		_, _ = executor.DataQuery(context.Background(), dsInfo, query)
-		require.Equal(t, "custom=par%2Fam&second=f+oo", queryParams)
+		require.NotNil(t, capturedRequest)
+		require.Equal(t, "custom=par%2Fam&second=f+oo", capturedRequest.URL.RawQuery)
 	})
-}
-
-type RoundTripperMock struct {
-	roundTrip func(*http.Request) (*http.Response, error)
-}
-
-func (rt *RoundTripperMock) RoundTrip(req *http.Request) (*http.Response, error) {
-	return rt.roundTrip(req)
 }
 
 func queryContext(json string) plugins.DataQuery {

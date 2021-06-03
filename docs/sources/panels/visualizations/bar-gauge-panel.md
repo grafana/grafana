@@ -12,14 +12,14 @@ The bar gauge simplifies your data by reducing every field to a single value. Yo
 
 This panel can show one or more bar gauges depending on how many series, rows, or columns your query returns.
 
-{{< docs-imagebox img="/img/docs/v66/bar_gauge_cover.png" max-width="1025px" caption="Stat panel" >}}
+{{< figure src="/static/img/docs/v66/bar_gauge_cover.png" max-width="1025px" caption="Stat panel" >}}
 
 ## Data and field options
 
 Bar gauge visualizations allow you to apply:
 
 - [Data transformations]({{< relref "../transformations/_index.md" >}})
-- [Field options and overrides]({{< relref "../field-options/_index.md" >}})
+- [Field overrides]({{< relref "../field-overrides.md" >}})
 - [Thresholds]({{< relref "../thresholds.md" >}})
 
 ## Display options

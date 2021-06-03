@@ -3,16 +3,16 @@ import { css } from '@emotion/css';
 import { gt, satisfies } from 'semver';
 
 import { config } from '@grafana/runtime';
-import { Button, HorizontalGroup, Icon, useStyles2 } from '@grafana/ui';
-import { AppEvents, GrafanaTheme2, OrgRole } from '@grafana/data';
+import { Button, HorizontalGroup, Icon, LinkButton, useStyles2 } from '@grafana/ui';
+import { AppEvents, GrafanaTheme2 } from '@grafana/data';
 
 import { Metadata, Plugin } from '../types';
-import { hasRole } from '../helpers';
 import { api } from '../api';
 
 // This isn't exported in the sdk yet
 // @ts-ignore
 import appEvents from 'grafana/app/core/app_events';
+import { isGrafanaAdmin } from '../helpers';
 
 interface Props {
   localPlugin?: Metadata;
@@ -25,6 +25,8 @@ export const InstallControls = ({ localPlugin, remotePlugin }: Props) => {
   const [shouldUpdate, setShouldUpdate] = useState(
     remotePlugin?.version && localPlugin?.info.version && gt(remotePlugin?.version!, localPlugin?.info.version!)
   );
+  const isExternallyManaged = config.pluginAdminExternalManageEnabled;
+  const externalManageLink = getExternalManageLink(remotePlugin);
 
   const styles = useStyles2(getStyles);
 
@@ -74,7 +76,7 @@ export const InstallControls = ({ localPlugin, remotePlugin }: Props) => {
 
   const isDevelopmentBuild = Boolean(localPlugin?.dev);
   const isEnterprise = remotePlugin?.status === 'enterprise';
-  const hasPermission = hasRole(OrgRole.Admin);
+  const hasPermission = isGrafanaAdmin();
 
   if (isEnterprise) {
     return (
@@ -93,15 +95,29 @@ export const InstallControls = ({ localPlugin, remotePlugin }: Props) => {
   if (isInstalled) {
     return (
       <HorizontalGroup height="auto">
-        {shouldUpdate && (
-          <Button disabled={loading || !hasPermission} onClick={onUpdate}>
-            {loading ? 'Updating' : 'Update'}
-          </Button>
+        {shouldUpdate &&
+          (isExternallyManaged ? (
+            <LinkButton href={externalManageLink} target="_blank" rel="noopener noreferrer">
+              {'Update via grafana.com'}
+            </LinkButton>
+          ) : (
+            <Button disabled={loading || !hasPermission} onClick={onUpdate}>
+              {loading ? 'Updating' : 'Update'}
+            </Button>
+          ))}
+
+        {isExternallyManaged ? (
+          <LinkButton variant="destructive" href={externalManageLink} target="_blank" rel="noopener noreferrer">
+            {'Uninstall via grafana.com'}
+          </LinkButton>
+        ) : (
+          <>
+            <Button variant="destructive" disabled={loading || !hasPermission} onClick={onUninstall}>
+              {loading && !shouldUpdate ? 'Uninstalling' : 'Uninstall'}
+            </Button>
+            {!hasPermission && <div className={styles.message}>You need admin privileges to manage this plugin.</div>}
+          </>
         )}
-        <Button variant="destructive" disabled={loading || !hasPermission} onClick={onUninstall}>
-          {loading && !shouldUpdate ? 'Uninstalling' : 'Uninstall'}
-        </Button>
-        {!hasPermission && <div className={styles.message}>You need admin privileges to manage this plugin.</div>}
       </HorizontalGroup>
     );
   }
@@ -117,13 +133,25 @@ export const InstallControls = ({ localPlugin, remotePlugin }: Props) => {
 
   return (
     <HorizontalGroup height="auto">
-      <Button disabled={loading || !hasPermission} onClick={onInstall}>
-        {loading ? 'Installing' : 'Install'}
-      </Button>
-      {!hasPermission && <div className={styles.message}>You need admin privileges to install this plugin.</div>}
+      {isExternallyManaged ? (
+        <LinkButton href={externalManageLink} target="_blank" rel="noopener noreferrer">
+          {'Install via grafana.com'}
+        </LinkButton>
+      ) : (
+        <>
+          <Button disabled={loading || !hasPermission} onClick={onInstall}>
+            {loading ? 'Installing' : 'Install'}
+          </Button>
+          {!hasPermission && <div className={styles.message}>You need admin privileges to install this plugin.</div>}
+        </>
+      )}
     </HorizontalGroup>
   );
 };
+
+function getExternalManageLink(plugin: Plugin): string {
+  return `https://grafana.com/grafana/plugins/${plugin.slug}`;
+}
 
 export const getStyles = (theme: GrafanaTheme2) => {
   return {
