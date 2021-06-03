@@ -66,11 +66,11 @@ func newSQLStore(cfg *setting.Cfg, cacheService *localcache.CacheService, bus bu
 		Bus:                         bus,
 		CacheService:                cacheService,
 		log:                         log.New("sqlstore"),
-		skipEnsureDefaultOrgAndUser: true,
+		skipEnsureDefaultOrgAndUser: false,
 	}
 	for _, opt := range opts {
-		if opt.EnsureDefaultOrgAndUser {
-			testSQLStore.skipEnsureDefaultOrgAndUser = false
+		if !opt.EnsureDefaultOrgAndUser {
+			ss.skipEnsureDefaultOrgAndUser = true
 		}
 	}
 
@@ -94,16 +94,16 @@ func newSQLStore(cfg *setting.Cfg, cacheService *localcache.CacheService, bus bu
 	ss.addAlertNotificationUidByIdHandler()
 	ss.addPreferencesQueryAndCommandHandlers()
 
-	if err := ss.Reset(); err != nil {
-		return nil, err
-	}
-	// Make sure the changes are synced, so they get shared with eventual other DB connections
-	// XXX: Why is this only relevant when not skipping migrations?
-	if !ss.dbCfg.SkipMigrations {
-		if err := ss.Sync(); err != nil {
-			return nil, err
-		}
-	}
+	// if err := ss.Reset(); err != nil {
+	// 	return nil, err
+	// }
+	// // Make sure the changes are synced, so they get shared with eventual other DB connections
+	// // XXX: Why is this only relevant when not skipping migrations?
+	// if !ss.dbCfg.SkipMigrations {
+	// 	if err := ss.Sync(); err != nil {
+	// 		return nil, err
+	// 	}
+	// }
 
 	return ss, nil
 }
@@ -427,6 +427,10 @@ func InitTestDB(t ITestDB, opts ...InitTestDBOpt) *SQLStore {
 	if testSQLStore == nil {
 		dbType := migrator.SQLite
 
+		if len(opts) == 0 {
+			opts = []InitTestDBOpt{{EnsureDefaultOrgAndUser: false}}
+		}
+
 		// environment variable present for test db?
 		if db, present := os.LookupEnv("GRAFANA_TEST_DB"); present {
 			t.Logf("Using database type %q", db)
@@ -484,6 +488,18 @@ func InitTestDB(t ITestDB, opts ...InitTestDBOpt) *SQLStore {
 
 		if err := testSQLStore.Migrate(); err != nil {
 			t.Fatalf("Database migration failed: %s", err)
+		}
+
+		if err := testSQLStore.Reset(); err != nil {
+			t.Fatalf("Database reset failed: %s", err)
+		}
+
+		// Make sure the changes are synced, so they get shared with eventual other DB connections
+		// XXX: Why is this only relevant when not skipping migrations?
+		if !testSQLStore.dbCfg.SkipMigrations {
+			if err := testSQLStore.Sync(); err != nil {
+				t.Fatalf("Database sync failed: %s", err)
+			}
 		}
 
 		t.Log("Successfully initialized test database")

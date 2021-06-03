@@ -11,13 +11,12 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/infra/fs"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/server"
-	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/prometheus/client_golang/prometheus"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/ini.v1"
@@ -28,44 +27,28 @@ import (
 func StartGrafana(t *testing.T, grafDir, cfgPath string, sqlStore *sqlstore.SQLStore) string {
 	t.Helper()
 	ctx := context.Background()
-	// Prevent duplicate registration errors between tests by replacing
-	// the registry used.
-	metrics.GlobalMetrics.SwapRegisterer(prometheus.NewRegistry())
-
-	origSQLStore := registry.GetService(sqlstore.ServiceName)
-	t.Cleanup(func() {
-		registry.Register(origSQLStore)
-	})
-	registry.Register(&registry.Descriptor{
-		Name:         sqlstore.ServiceName,
-		Instance:     sqlStore,
-		InitPriority: sqlstore.InitPriority,
-	})
-
-	t.Logf("Registered SQL store %p", sqlStore)
 
 	listener, err := net.Listen("tcp", "127.0.0.1:0")
 	require.NoError(t, err)
-	server, err := server.New(server.Config{
-		ConfigFile: cfgPath,
-		HomePath:   grafDir,
-		Listener:   listener,
-	})
+	cmdLineArgs := setting.CommandLineArgs{Config: cfgPath, HomePath: grafDir}
+	serverOpts := server.Options{Listener: listener, HomePath: grafDir}
+	apiServerOpts := api.ServerOptions{Listener: listener}
+	srv, err := server.InitializeForTest(cmdLineArgs, serverOpts, apiServerOpts, sqlStore)
 	require.NoError(t, err)
 
 	t.Cleanup(func() {
 		// Have to reset the route register between tests, since it doesn't get re-created
-		server.HTTPServer.RouteRegister.Reset()
+		srv.HTTPServer.RouteRegister.Reset()
 	})
 
 	go func() {
 		// When the server runs, it will also build and initialize the service graph
-		if err := server.Run(); err != nil {
+		if err := srv.Run(); err != nil {
 			t.Log("Server exited uncleanly", "error", err)
 		}
 	}()
 	t.Cleanup(func() {
-		if err := server.Shutdown(ctx, "test cleanup"); err != nil {
+		if err := srv.Shutdown(ctx, "test cleanup"); err != nil {
 			t.Error("Timed out waiting on server to shut down")
 		}
 	})

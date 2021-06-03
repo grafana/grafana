@@ -1,6 +1,6 @@
 // +build wireinject,oss
 
-package main
+package server
 
 import (
 	"github.com/google/wire"
@@ -12,8 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-var wireExtsSet = wire.NewSet(
-	wireSet,
+var wireExtsBasicSet = wire.NewSet(
 	licensing.ProvideService,
 	wire.Bind(new(models.Licensing), new(*licensing.OSSLicensingService)),
 	setting.ProvideProvider,
@@ -22,4 +21,14 @@ var wireExtsSet = wire.NewSet(
 	wire.Bind(new(accesscontrol.AccessControl), new(*ossaccesscontrol.OSSAccessControlService)),
 	validations.ProvideValidator,
 	wire.Bind(new(models.PluginRequestValidator), new(*validations.OSSPluginRequestValidator)),
+)
+
+var wireExtsSet = wire.NewSet(
+	wireSet,
+	wireExtsBasicSet,
+)
+
+var wireExtsTestSet = wire.NewSet(
+	wireTestSet,
+	wireExtsBasicSet,
 )

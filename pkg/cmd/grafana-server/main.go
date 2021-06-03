@@ -150,7 +150,7 @@ func executeServer(configFile, homePath, pidFile, packaging string, traceDiagnos
 
 	metrics.SetBuildInformation(version, commit, buildBranch)
 
-	s, err := initializeServer(setting.CommandLineArgs{
+	s, err := server.Initialize(setting.CommandLineArgs{
 		Config: configFile, HomePath: homePath, Args: flag.Args(),
 	}, server.Options{
 		PidFile: pidFile, Version: version, Commit: commit, BuildBranch: buildBranch,

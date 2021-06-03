@@ -1,6 +1,6 @@
 // +build wireinject
 
-package main
+package server
 
 import (
 	"github.com/google/wire"
@@ -24,7 +24,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/plugins/plugincontext"
 	"github.com/grafana/grafana/pkg/plugins/plugindashboards"
-	"github.com/grafana/grafana/pkg/server"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/auth/jwt"
@@ -58,13 +57,13 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/testdatasource"
 )
 
-var wireSet = wire.NewSet(
+var wireBasicSet = wire.NewSet(
 	tsdb.NewService,
 	wire.Bind(new(plugins.DataRequestHandler), new(*tsdb.Service)),
 	alerting.ProvideAlertEngine,
 	wire.Bind(new(alerting.UsageStatsQuerier), new(*alerting.AlertEngine)),
 	setting.NewCfgFromArgs,
-	server.New,
+	New,
 	api.ProvideHTTPServer,
 	bus.ProvideBus,
 	wire.Bind(new(bus.Bus), new(*bus.InProcBus)),
@@ -73,7 +72,6 @@ var wireSet = wire.NewSet(
 	routing.ProvideRegister,
 	wire.Bind(new(routing.RouteRegister), new(*routing.RouteRegisterImpl)),
 	hooks.ProvideService,
-	sqlstore.ProvideService,
 	localcache.ProvideService,
 	usagestats.ProvideService,
 	wire.Bind(new(usagestats.UsageStats), new(*usagestats.UsageStatsService)),
@@ -122,10 +120,25 @@ var wireSet = wire.NewSet(
 	metrics.ProvideService,
 	backgroundsvcs.ProvideService,
 	testdatasource.ProvideService,
+)
+
+var wireSet = wire.NewSet(
+	wireBasicSet,
+	sqlstore.ProvideService,
 	ngmetrics.ProvideService,
 )
 
-func initializeServer(cla setting.CommandLineArgs, opts server.Options, apiOpts api.ServerOptions) (*server.Server, error) {
+var wireTestSet = wire.NewSet(
+	wireBasicSet,
+	ngmetrics.ProvideServiceForTest,
+)
+
+func Initialize(cla setting.CommandLineArgs, opts Options, apiOpts api.ServerOptions) (*Server, error) {
 	wire.Build(wireExtsSet)
-	return &server.Server{}, nil
+	return &Server{}, nil
+}
+
+func InitializeForTest(cla setting.CommandLineArgs, opts Options, apiOpts api.ServerOptions, sqlStore *sqlstore.SQLStore) (*Server, error) {
+	wire.Build(wireExtsTestSet)
+	return &Server{}, nil
 }

@@ -27,6 +27,11 @@ func ProvideService() *Metrics {
 	return NewMetrics(prometheus.DefaultRegisterer)
 }
 
+// ProvideServiceForTest is a Metrics factory used for test.
+func ProvideServiceForTest() *Metrics {
+	return NewMetrics(prometheus.NewRegistry())
+}
+
 type Metrics struct {
 	*metrics.Alerts
 	AlertState *prometheus.GaugeVec
@@ -38,13 +43,6 @@ type Metrics struct {
 	EvalFailures         *prometheus.CounterVec
 	EvalDuration         *prometheus.SummaryVec
 	GroupRules           *prometheus.GaugeVec
-}
-
-// SwapRegisterer overwrites the prometheus register used by a *Metrics in place.
-// It's used by tests to prevent duplicate registration errors
-func (m *Metrics) SwapRegisterer(r prometheus.Registerer) {
-	next := NewMetrics(r)
-	*m = *next
 }
 
 func NewMetrics(r prometheus.Registerer) *Metrics {

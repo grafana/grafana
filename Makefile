@@ -31,7 +31,7 @@ node_modules: package.json yarn.lock ## Install node modules.
 
 gen-go:
 	@echo "generate go files"
-	wire gen -tags $(WIRE_TAGS) ./pkg/cmd/grafana-server
+	wire gen -tags $(WIRE_TAGS) ./pkg/server
 
 build-go: gen-go ## Build all Go binaries.
 	@echo "build go files"

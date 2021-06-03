@@ -1,6 +1,6 @@
 // +build wireinject,enterprise
 
-package main
+package server
 
 import (
 	"github.com/google/wire"
@@ -8,9 +8,18 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 )
 
-var wireExtsSet = wire.NewSet(
-	wireSet,
+var wireExtsBasicSet = wire.NewSet(
 	licensing.ProvideLicensing,
 	licensing.ProvideLicenseTokenService,
 	wire.Bind(new(models.Licensing), new(*licensing.LicenseTokenService)),
+)
+
+var wireExtsSet = wire.NewSet(
+	wireSet,
+	wireExtsBasicSet,
+)
+
+var wireExtsTestSet = wire.NewSet(
+	wireTestSet,
+	wireExtsBasicSet,
 )
