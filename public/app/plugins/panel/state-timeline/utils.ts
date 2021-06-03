@@ -99,13 +99,16 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<TimelineOptions> = ({
     onHover: (seriesIndex, valueIndex) => {
       hoveredSeriesIdx = seriesIndex;
       hoveredDataIdx = valueIndex;
+      shouldChangeHover = true;
     },
     onLeave: () => {
       hoveredSeriesIdx = null;
       hoveredDataIdx = null;
+      shouldChangeHover = true;
     },
   };
 
+  let shouldChangeHover = false;
   let hoveredSeriesIdx: number | null = null;
   let hoveredDataIdx: number | null = null;
 
@@ -123,15 +126,16 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<TimelineOptions> = ({
     updateActiveDatapointIdx,
     updateTooltipPosition
   ) => (u: uPlot) => {
-    if (hoveredSeriesIdx != null) {
-      // @ts-ignore
-      updateActiveSeriesIdx(hoveredSeriesIdx);
-      // @ts-ignore
-      updateActiveDatapointIdx(hoveredDataIdx);
-      updateTooltipPosition();
-    } else {
-      updateTooltipPosition(true);
+    if (shouldChangeHover) {
+      if (hoveredSeriesIdx != null) {
+        updateActiveSeriesIdx(hoveredSeriesIdx);
+        updateActiveDatapointIdx(hoveredDataIdx);
+      }
+
+      shouldChangeHover = false;
     }
+
+    updateTooltipPosition(hoveredSeriesIdx == null);
   };
 
   builder.setTooltipInterpolator(interpolateTooltip);
