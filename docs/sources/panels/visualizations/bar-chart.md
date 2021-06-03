@@ -58,7 +58,7 @@ This controls whether values are shown on top or to the left of bars.
 
 ## Group width
 
-Controls the spacing between groups. 1 = No space, 0 = Maximum space. 
+Controls the width of groups. 1 = max with, 0 = min width. 
 
 ## Bar width
 
