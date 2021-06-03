@@ -191,7 +191,7 @@ Response values were always interpreted as strings in Elasticsearch responses, w
 
 #### Google Cloud Monitoring data source
 
-A while back, Cloud Monitoring added _preprocessing_ support in their query editor. Now, this feature has also come to the Cloud Monitoring data source in Grafana.
+In a prior release, Cloud Monitoring added _preprocessing_ support in their query editor. This capability has been added to the Cloud Monitoring data source in Grafana.
 
 Whenever a metric is selected in the query editor, a suitable preprocessing option will be selected automatically for you. To avoid breaking changes, preprocessing is not enabled by default on existing queries. If you want to use preprocessing for existing queries, you have to manually select one in the query editor.
 
