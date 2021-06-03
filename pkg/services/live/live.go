@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"os"
 	"sync"
 	"time"
 
@@ -137,13 +136,13 @@ func (g *GrafanaLive) Run(ctx context.Context) error {
 var clientConcurrency = 8
 
 func (g *GrafanaLive) IsHA() bool {
-	return os.Getenv("GF_LIVE_REDIS_ADDRESS") != ""
+	return g.Cfg.LiveHAEngine != ""
 }
 
 // Init initializes Live service.
 // Required to implement the registry.Service interface.
 func (g *GrafanaLive) Init() error {
-	logger.Debug("GrafanaLive initialization")
+	logger.Debug("GrafanaLive initialization", "ha", g.IsHA())
 
 	// We use default config here as starting point. Default config contains
 	// reasonable values for available options.
@@ -163,11 +162,11 @@ func (g *GrafanaLive) Init() error {
 	}
 	g.node = node
 
-	if os.Getenv("GF_LIVE_REDIS_ADDRESS") != "" {
+	if g.IsHA() {
 		// Configure HA with Redis. In this case Centrifuge nodes
 		// will be connected over Redis PUB/SUB. Presence will work
 		// globally since kept inside Redis.
-		redisAddress := os.Getenv("GF_LIVE_REDIS_ADDRESS")
+		redisAddress := g.Cfg.LiveHAEngineURL
 		redisShardConfigs := []centrifuge.RedisShardConfig{
 			{Address: redisAddress},
 		}
@@ -181,6 +180,8 @@ func (g *GrafanaLive) Init() error {
 		}
 
 		broker, err := centrifuge.NewRedisBroker(node, centrifuge.RedisBrokerConfig{
+			Prefix: "gf_live",
+
 			// We are using Redis streams here for history. Require Redis >= 5.
 			UseStreams: true,
 
@@ -199,6 +200,7 @@ func (g *GrafanaLive) Init() error {
 		node.SetBroker(broker)
 
 		presenceManager, err := centrifuge.NewRedisPresenceManager(node, centrifuge.RedisPresenceManagerConfig{
+			Prefix: "gf_live",
 			Shards: redisShards,
 		})
 		if err != nil {
@@ -225,7 +227,7 @@ func (g *GrafanaLive) Init() error {
 	var managedStreamRunner *managedstream.Runner
 	if g.IsHA() {
 		redisClient := redis.NewClient(&redis.Options{
-			Addr: os.Getenv("GF_LIVE_REDIS_ADDRESS"),
+			Addr: g.Cfg.LiveHAEngineURL,
 		})
 		cmd := redisClient.Ping()
 		if _, err := cmd.Result(); err != nil {
