@@ -42,7 +42,7 @@ func (c *RedisFrameCache) GetActiveChannels(orgID int64) (map[string]json.RawMes
 }
 
 func (c *RedisFrameCache) GetFrame(orgID int64, channel string) (json.RawMessage, bool, error) {
-	key := orgchannel.PrependOrgID(orgID, channel)
+	key := getCacheKey(orgchannel.PrependOrgID(orgID, channel))
 	cmd := c.redisClient.HGetAll(key)
 	result, err := cmd.Result()
 	if err != nil {
@@ -54,6 +54,10 @@ func (c *RedisFrameCache) GetFrame(orgID int64, channel string) (json.RawMessage
 	return json.RawMessage(result["frame"]), true, nil
 }
 
+const (
+	frameCacheTTL = 7 * 24 * time.Hour
+)
+
 func (c *RedisFrameCache) Update(orgID int64, channel string, jsonFrame data.FrameJSONCache) (bool, error) {
 	c.mu.Lock()
 	if _, ok := c.frames[orgID]; !ok {
@@ -64,7 +68,7 @@ func (c *RedisFrameCache) Update(orgID int64, channel string, jsonFrame data.Fra
 
 	stringSchema := string(jsonFrame.Bytes(data.IncludeSchemaOnly))
 
-	key := orgchannel.PrependOrgID(orgID, channel)
+	key := getCacheKey(orgchannel.PrependOrgID(orgID, channel))
 
 	pipe := c.redisClient.Pipeline()
 
@@ -73,7 +77,7 @@ func (c *RedisFrameCache) Update(orgID int64, channel string, jsonFrame data.Fra
 		"schema": stringSchema,
 		"frame":  string(jsonFrame.Bytes(data.IncludeAll)),
 	})
-	pipe.Expire(key, 7*24*time.Hour)
+	pipe.Expire(key, frameCacheTTL)
 
 	replies, err := pipe.Exec()
 	if err != nil {
@@ -99,4 +103,8 @@ func (c *RedisFrameCache) Update(orgID int64, channel string, jsonFrame data.Fra
 		return result["schema"] != stringSchema, nil
 	}
 	return true, nil
+}
+
+func getCacheKey(channelID string) string {
+	return "gf_live.managed_stream." + channelID
 }

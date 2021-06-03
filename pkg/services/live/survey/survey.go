@@ -17,8 +17,7 @@ type Caller struct {
 }
 
 const (
-	managedStreamsCall        = "managed_streams"
-	numChannelSubscribersCall = "num_channel_subscribers"
+	managedStreamsCall = "managed_streams"
 )
 
 func NewCaller(managedStreamRunner *managedstream.Runner, node *centrifuge.Node) *Caller {
@@ -38,14 +37,6 @@ type NodeManagedChannelsResponse struct {
 	Channels []*managedstream.ManagedChannel `json:"channels"`
 }
 
-type NumChannelSubscribersRequest struct {
-	Channel string `json:"channel"`
-}
-
-type NumChannelSubscribersResponse struct {
-	Num int `json:"num_subscribers"`
-}
-
 func (c *Caller) handleSurvey(e centrifuge.SurveyEvent, cb centrifuge.SurveyCallback) {
 	var (
 		resp interface{}
@@ -54,8 +45,6 @@ func (c *Caller) handleSurvey(e centrifuge.SurveyEvent, cb centrifuge.SurveyCall
 	switch e.Op {
 	case managedStreamsCall:
 		resp, err = c.handleManagedStreams(e.Data)
-	case numChannelSubscribersCall:
-		resp, err = c.handleNumChannelSubscribers(e.Data)
 	default:
 		err = errors.New("method not found")
 	}
@@ -86,18 +75,6 @@ func (c *Caller) handleManagedStreams(data []byte) (interface{}, error) {
 	}
 	return NodeManagedChannelsResponse{
 		Channels: channels,
-	}, nil
-}
-
-func (c *Caller) handleNumChannelSubscribers(data []byte) (interface{}, error) {
-	var req NumChannelSubscribersRequest
-	err := json.Unmarshal(data, &req)
-	if err != nil {
-		return nil, err
-	}
-	numSubscribers := c.node.Hub().NumSubscribers(req.Channel)
-	return NumChannelSubscribersResponse{
-		Num: numSubscribers,
 	}, nil
 }
 
@@ -137,35 +114,4 @@ func (c *Caller) CallManagedStreams(orgID int64) ([]*managedstream.ManagedChanne
 	}
 
 	return channels, nil
-}
-
-func (c *Caller) CallNumChannelSubscribers(channelID string) (int, error) {
-	req := NumChannelSubscribersRequest{Channel: channelID}
-	jsonData, err := json.Marshal(req)
-	if err != nil {
-		return 0, err
-	}
-	ctx, cancel := context.WithTimeout(context.Background(), 500*time.Millisecond)
-	defer cancel()
-
-	resp, err := c.node.Survey(ctx, numChannelSubscribersCall, jsonData)
-	if err != nil {
-		return 0, err
-	}
-
-	var num int
-
-	for _, result := range resp {
-		if result.Code != 0 {
-			return 0, fmt.Errorf("unexpected survey code: %d", result.Code)
-		}
-		var res NumChannelSubscribersResponse
-		err := json.Unmarshal(result.Data, &res)
-		if err != nil {
-			return 0, err
-		}
-		num += res.Num
-	}
-
-	return num, nil
 }
