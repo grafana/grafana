@@ -8,7 +8,7 @@ import (
 	"golang.org/x/sys/windows"
 )
 
-func isRunningWithElevatedPrivileges() (bool, error) {
+func isServerRunningAsRoot() (bool, error) {
 	var sid *windows.SID
 	defer windows.FreeSid(sid)
 
@@ -26,10 +26,10 @@ func isRunningWithElevatedPrivileges() (bool, error) {
 	}
 
 	token := windows.Token(0)
-	isAdmin, err := token.IsMember(sid)
+	isRoot, err := token.IsMember(sid)
 	if err != nil {
 		return false, fmt.Errorf("error checking if token is member of SID: %w", err)
 	}
 
-	return isAdmin, nil
+	return isRoot, nil
 }

@@ -8,7 +8,7 @@ import (
 	"os/user"
 )
 
-func isRunningWithElevatedPrivileges() (bool, error) {
+func isServerRunningAsRoot() (bool, error) {
 	serverProcessUser, err := user.Current()
 	if err != nil {
 		return false, fmt.Errorf("could not get current OS user to detect process privileges")
