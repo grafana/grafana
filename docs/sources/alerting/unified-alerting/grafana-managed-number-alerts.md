@@ -48,3 +48,19 @@ SELECT Host, Disk, CASE WHEN PercentFree < 5.0 THEN PercentFree ELSE 0 END FROM 
     Disk
   Where __timeFilter(Time)
 ```
+
+This query would return the following Table response to Grafana:
+
+| Host | Disk | PercentFree
+| ---  | -----| --------
+| web1 | /etc | 3
+| web2 | /var | 4
+| web3 | /var | 0
+
+When this query is used as the **condition** in an alert rule, the non-zero will be alerting. So three alert instances will be produced:
+
+| Labels                | Status 
+| ----------------------| ------
+| {Host=web1,disk=/etc} | Alerting
+| {Host=web2,disk=/var} | Alerting
+| {Host=web3,disk=/var} | Normal 
