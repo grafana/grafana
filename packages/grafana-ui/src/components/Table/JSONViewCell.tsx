@@ -60,7 +60,11 @@ function getStyles(theme: GrafanaTheme2) {
     json: css`
       max-width: fit-content;
       max-height: 70vh;
-      overflow-y: auto;
+      min-height: 60vh;
+      overflow-y: scroll;
+      ${theme.breakpoints.up('xxl')} {
+        max-height: 60vh;
+      }
     `,
   };
 }
