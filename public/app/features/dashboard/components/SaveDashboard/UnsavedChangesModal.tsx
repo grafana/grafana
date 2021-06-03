@@ -32,13 +32,7 @@ export const UnsavedChangesModal: React.FC<UnsavedChangesModalProps> = ({
         <Button variant="secondary" onClick={onDismiss} fill="outline">
           Cancel
         </Button>
-        <Button
-          variant="destructive"
-          onClick={() => {
-            onDiscard();
-            onDismiss();
-          }}
-        >
+        <Button variant="destructive" onClick={onDiscard}>
           Discard
         </Button>
         <SaveDashboardButton dashboard={dashboard} onSaveSuccess={onSaveSuccess} />
