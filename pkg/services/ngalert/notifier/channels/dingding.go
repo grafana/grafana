@@ -61,10 +61,7 @@ type DingDingNotifier struct {
 func (dd *DingDingNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
 	dd.log.Info("Sending dingding")
 
-	ruleURL, err := joinUrlPath(dd.tmpl.ExternalURL.String(), "/alerting/list")
-	if err != nil {
-		return false, err
-	}
+	ruleURL := joinUrlPath(dd.tmpl.ExternalURL.String(), "/alerting/list", dd.log)
 
 	q := url.Values{
 		"pc_slide": {"false"},
@@ -76,10 +73,7 @@ func (dd *DingDingNotifier) Notify(ctx context.Context, as ...*types.Alert) (boo
 	messageURL := "dingtalk://dingtalkclient/page/link?" + q.Encode()
 
 	var tmplErr error
-	tmpl, _, err := TmplText(ctx, dd.tmpl, as, dd.log, &tmplErr)
-	if err != nil {
-		return false, err
-	}
+	tmpl, _ := TmplText(ctx, dd.tmpl, as, dd.log, &tmplErr)
 
 	message := tmpl(dd.Message)
 	title := tmpl(`{{ template "default.title" . }}`)
@@ -109,7 +103,7 @@ func (dd *DingDingNotifier) Notify(ctx context.Context, as ...*types.Alert) (boo
 	}
 
 	if tmplErr != nil {
-		return false, fmt.Errorf("failed to template DingDing message: %w", tmplErr)
+		dd.log.Debug("failed to template DingDing message", "err", tmplErr.Error())
 	}
 
 	body, err := json.Marshal(bodyMsg)

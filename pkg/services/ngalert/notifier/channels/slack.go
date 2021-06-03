@@ -244,15 +244,9 @@ var sendSlackRequest = func(request *http.Request, logger log.Logger) error {
 func (sn *SlackNotifier) buildSlackMessage(ctx context.Context, as []*types.Alert) (*slackMessage, error) {
 	alerts := types.Alerts(as...)
 	var tmplErr error
-	tmpl, _, err := TmplText(ctx, sn.tmpl, as, sn.log, &tmplErr)
-	if err != nil {
-		return nil, err
-	}
+	tmpl, _ := TmplText(ctx, sn.tmpl, as, sn.log, &tmplErr)
 
-	ruleURL, err := joinUrlPath(sn.tmpl.ExternalURL.String(), "/alerting/list")
-	if err != nil {
-		return nil, err
-	}
+	ruleURL := joinUrlPath(sn.tmpl.ExternalURL.String(), "/alerting/list", sn.log)
 
 	req := &slackMessage{
 		Channel:   tmpl(sn.Recipient),
@@ -274,7 +268,7 @@ func (sn *SlackNotifier) buildSlackMessage(ctx context.Context, as []*types.Aler
 		},
 	}
 	if tmplErr != nil {
-		return nil, fmt.Errorf("failed to template Slack message: %w", tmplErr)
+		sn.log.Debug("failed to template Slack message", "err", tmplErr.Error())
 	}
 
 	mentionsBuilder := strings.Builder{}

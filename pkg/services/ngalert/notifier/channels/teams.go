@@ -54,15 +54,9 @@ func NewTeamsNotifier(model *NotificationChannelConfig, t *template.Template) (*
 // Notify send an alert notification to Microsoft teams.
 func (tn *TeamsNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
 	var tmplErr error
-	tmpl, _, err := TmplText(ctx, tn.tmpl, as, tn.log, &tmplErr)
-	if err != nil {
-		return false, err
-	}
+	tmpl, _ := TmplText(ctx, tn.tmpl, as, tn.log, &tmplErr)
 
-	ruleURL, err := joinUrlPath(tn.tmpl.ExternalURL.String(), "/alerting/list")
-	if err != nil {
-		return false, err
-	}
+	ruleURL := joinUrlPath(tn.tmpl.ExternalURL.String(), "/alerting/list", tn.log)
 
 	title := tmpl(`{{ template "default.title" . }}`)
 	body := map[string]interface{}{
@@ -95,7 +89,7 @@ func (tn *TeamsNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 	}
 
 	if tmplErr != nil {
-		return false, errors.Wrap(tmplErr, "failed to template Teams message")
+		tn.log.Debug("failed to template Teams message", "err", tmplErr.Error())
 	}
 
 	b, err := json.Marshal(&body)

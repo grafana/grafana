@@ -148,16 +148,10 @@ func (on *OpsgenieNotifier) buildOpsgenieMessage(ctx context.Context, alerts mod
 		return nil, "", nil
 	}
 
-	ruleURL, err := joinUrlPath(on.tmpl.ExternalURL.String(), "/alerting/list")
-	if err != nil {
-		return nil, "", err
-	}
+	ruleURL := joinUrlPath(on.tmpl.ExternalURL.String(), "/alerting/list", on.log)
 
 	var tmplErr error
-	tmpl, data, err := TmplText(ctx, on.tmpl, as, on.log, &tmplErr)
-	if err != nil {
-		return nil, "", err
-	}
+	tmpl, data := TmplText(ctx, on.tmpl, as, on.log, &tmplErr)
 
 	title := tmpl(`{{ template "default.title" . }}`)
 	description := fmt.Sprintf(
@@ -210,10 +204,10 @@ func (on *OpsgenieNotifier) buildOpsgenieMessage(ctx context.Context, alerts mod
 	apiURL = on.APIUrl
 
 	if tmplErr != nil {
-		return nil, "", fmt.Errorf("failed to template Opsgenie message: %w", tmplErr)
+		on.log.Debug("failed to template Opsgenie message", "err", tmplErr.Error())
 	}
 
-	return bodyJSON, apiURL, err
+	return bodyJSON, apiURL, nil
 }
 
 func (on *OpsgenieNotifier) SendResolved() bool {

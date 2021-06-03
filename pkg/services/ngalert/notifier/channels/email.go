@@ -2,7 +2,6 @@ package channels
 
 import (
 	"context"
-	"fmt"
 	"net/url"
 	"path"
 
@@ -64,22 +63,22 @@ func NewEmailNotifier(model *NotificationChannelConfig, t *template.Template) (*
 // Notify sends the alert notification.
 func (en *EmailNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
 	var tmplErr error
-	tmpl, data, err := TmplText(ctx, en.tmpl, as, en.log, &tmplErr)
-	if err != nil {
-		return false, err
-	}
+	tmpl, data := TmplText(ctx, en.tmpl, as, en.log, &tmplErr)
 
 	title := tmpl(`{{ template "default.title" . }}`)
 
+	alertPageURL := en.tmpl.ExternalURL.String()
+	ruleURL := en.tmpl.ExternalURL.String()
 	u, err := url.Parse(en.tmpl.ExternalURL.String())
-	if err != nil {
-		return false, fmt.Errorf("failed to parse external URL: %w", err)
+	if err == nil {
+		basePath := u.Path
+		u.Path = path.Join(basePath, "/alerting/list")
+		ruleURL = u.String()
+		u.RawQuery = "alertState=firing&view=state"
+		alertPageURL = u.String()
+	} else {
+		en.log.Debug("failed to parse external URL", "url", en.tmpl.ExternalURL.String(), "err", err.Error())
 	}
-	basePath := u.Path
-	u.Path = path.Join(basePath, "/alerting/list")
-	ruleURL := u.String()
-	u.RawQuery = "alertState=firing&view=state"
-	alertPageURL := u.String()
 
 	cmd := &models.SendEmailCommandSync{
 		SendEmailCommand: models.SendEmailCommand{
@@ -103,7 +102,7 @@ func (en *EmailNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 	}
 
 	if tmplErr != nil {
-		return false, fmt.Errorf("failed to template email message: %w", tmplErr)
+		en.log.Debug("failed to template email message", "err", tmplErr.Error())
 	}
 
 	if err := bus.DispatchCtx(ctx, cmd); err != nil {

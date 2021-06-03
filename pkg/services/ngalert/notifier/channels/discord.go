@@ -3,7 +3,6 @@ package channels
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"strconv"
 	"strings"
 
@@ -66,10 +65,8 @@ func (d DiscordNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 	bodyJSON.Set("username", "Grafana")
 
 	var tmplErr error
-	tmpl, _, err := TmplText(ctx, d.tmpl, as, d.log, &tmplErr)
-	if err != nil {
-		return false, err
-	}
+	tmpl, _ := TmplText(ctx, d.tmpl, as, d.log, &tmplErr)
+
 	if d.Content != "" {
 		bodyJSON.Set("content", tmpl(d.Content))
 	}
@@ -91,16 +88,13 @@ func (d DiscordNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 	color, _ := strconv.ParseInt(strings.TrimLeft(getAlertStatusColor(alerts.Status()), "#"), 16, 0)
 	embed.Set("color", color)
 
-	ruleURL, err := joinUrlPath(d.tmpl.ExternalURL.String(), "/alerting/list")
-	if err != nil {
-		return false, err
-	}
+	ruleURL := joinUrlPath(d.tmpl.ExternalURL.String(), "/alerting/list", d.log)
 	embed.Set("url", ruleURL)
 
 	bodyJSON.Set("embeds", []interface{}{embed})
 
 	if tmplErr != nil {
-		return false, fmt.Errorf("failed to template discord message: %w", tmplErr)
+		d.log.Debug("failed to template Discord message", "err", tmplErr.Error())
 	}
 
 	body, err := json.Marshal(bodyJSON)

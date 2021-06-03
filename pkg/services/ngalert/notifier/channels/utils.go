@@ -112,15 +112,16 @@ var sendHTTPRequest = func(ctx context.Context, url *url.URL, cfg httpCfg, logge
 	return respBody, nil
 }
 
-func joinUrlPath(base, additionalPath string) (string, error) {
+func joinUrlPath(base, additionalPath string, logger log.Logger) string {
 	u, err := url.Parse(base)
 	if err != nil {
-		return "", fmt.Errorf("failed to parse URL: %w", err)
+		logger.Debug("failed to parse URL while joining URL", "url", base, "err", err.Error())
+		return base
 	}
 
 	u.Path = path.Join(u.Path, additionalPath)
 
-	return u.String(), nil
+	return u.String()
 }
 
 // GetBoundary is used for overriding the behaviour for tests

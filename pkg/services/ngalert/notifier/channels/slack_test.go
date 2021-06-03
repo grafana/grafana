@@ -3,7 +3,6 @@ package channels
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"io"
 	"net/http"
 	"net/url"
@@ -160,13 +159,6 @@ func TestSlackNotifier(t *testing.T) {
 				"token": "1234"
 			}`,
 			expInitError: alerting.ValidationError{Reason: "recipient must be specified when using the Slack chat API"},
-		}, {
-			name: "Error in building message",
-			settings: `{
-				"url": "https://test.slack.com",
-				"title": "{{ .BrokenTemplate }"
-			}`,
-			expMsgError: errors.New("build slack message: failed to template Slack message: template: :1: unexpected \"}\" in operand"),
 		},
 	}
 
