@@ -2,6 +2,7 @@ package load
 
 import (
 	"fmt"
+	"github.com/laher/mergefs"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -120,7 +121,7 @@ func TestCueErrorWrapper(t *testing.T) {
 			"cue/data/gen.cue": &fstest.MapFile{Data: []byte("{;;;;;;;;}")},
 		}
 
-		filesystem := Merge(a, GetDefaultLoadPaths().BaseCueFS)
+		filesystem := mergefs.Merge(a, GetDefaultLoadPaths().BaseCueFS)
 
 		var baseLoadPaths = BaseLoadPaths{
 			BaseCueFS:       filesystem,
