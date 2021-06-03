@@ -56,7 +56,6 @@ export const PlaylistPage: FC<Props> = ({ navModel }) => {
                   variant="secondary"
                   href={`/playlists/edit/${playlist.id}`}
                   icon="cog"
-                  disabled
                   title="Feature temporarily disabled"
                 >
                   Edit playlist
