@@ -81,7 +81,7 @@ To show a horizontal line across the whole graph, add a series override and sele
 The metrics browser allows you to quickly find metrics and select relevant labels to build basic queries.
 When you open the browser you will see all available metrics and labels.
 If supported by your Prometheus instance, each metric will show its HELP and TYPE as a tooltip.
-When you select a metric, the browser will narrow down the available labels to show only the ones applicable to the metric.
+When you select a metric, the browser narrows down the available labels to show only the ones applicable to the metric.
 You can then select one or more labels for which the available label values will be shown in lists in the bottom section.
 You can select one or more values for each label to tighten your query scope.
 
