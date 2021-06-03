@@ -136,7 +136,7 @@ func (g *GrafanaLive) Run(ctx context.Context) error {
 var clientConcurrency = 8
 
 func (g *GrafanaLive) IsHA() bool {
-	return g.Cfg.LiveHAEngine != ""
+	return g.Cfg != nil && g.Cfg.LiveHAEngine != ""
 }
 
 // Init initializes Live service.
