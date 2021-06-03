@@ -7,19 +7,21 @@ weight = 400
 
 # Alerting on numeric data
 
-With certain datasources non-timeseries data can be directly alerted on, or passed into Server Side Expressions (SSE). This allows for more efficiency by doing more processing within the data source, and can also simplify alert rules.
+With certain data sources number data that is not time series can be directly alerted on, or passed into Server Side Expressions (SSE). This allows for more efficiency by doing more processing within the data source, and can also simplify alert rules.
 
-When alerting on numeric data instead of timeseries data, there is no need to reduce each labeled time series into a single number. Instead labeled numbers are returned to Grafana instead.
+When alerting on numeric data instead of time series data, there is no need to reduce each labeled time series into a single number. Instead labeled numbers are returned to Grafana instead.
 
 ## Tabular Data
 
 This feature is supported with backend data sources that query tabular data:
- - SQL Datasources such as MySQL, Postgres, MSSQL, and Oracle.
- - The Azure Kusto based services: Azure Monitor (Logs), Azure Monitor (Azure Resource Graph), and Azure Data Explorer.
 
-A query with Grafana managed alerts or SSE is considered numeric with these datasources if:
- - The "Format AS" option is a table.
- - The table response returned to Grafana from the query includes only one numeric (e.g. int, double, float) column, and optionally additional string columns.
+- SQL data sources such as MySQL, Postgres, MSSQL, and Oracle.
+- The Azure Kusto based services: Azure Monitor (Logs), Azure Monitor (Azure Resource Graph), and Azure Data Explorer.
+
+A query with Grafana managed alerts or SSE is considered numeric with these data sources, if:
+
+- The "Format AS" option is set to "Table" in the data source query.
+- The table response returned to Grafana from the query includes only one numeric (e.g. int, double, float) column, and optionally additional string columns.
 
 If there are string columns then those columns become labels. The name of column becomes the label name, and the value for each row becomes the value of the corresponding label. If multiple rows are returned, then each row should be uniquely identified their labels.
 
@@ -59,8 +61,8 @@ This query would return the following Table response to Grafana:
 
 When this query is used as the **condition** in an alert rule, the non-zero will be alerting. So three alert instances will be produced:
 
-| Labels                | Status 
+| Labels                | Status
 | ----------------------| ------
 | {Host=web1,disk=/etc} | Alerting
 | {Host=web2,disk=/var} | Alerting
-| {Host=web3,disk=/var} | Normal 
+| {Host=web3,disk=/var} | Normal
