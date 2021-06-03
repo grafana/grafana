@@ -73,7 +73,7 @@ def slack_step(channel):
         'settings': {
             'webhook': from_secret('slack_webhook'),
             'channel': channel,
-            'template': 'Build {{build.number}} failed for commit: <https://github.com/{{repo.owner}}/{{repo.name}}/commit/{{build.commit}}|{{ truncate build.commit 8 }}>: {{build.link}}\nAuthor: {{build.author}}',
+            'template': 'Build {{build.number}} failed for commit: <https://github.com/{{repo.owner}}/{{repo.name}}/commit/{{build.commit}}|{{ truncate build.commit 8 }}>: {{build.link}}\nBranch: <https://github.com/{{ repo.owner }}/{{ repo.name }}/commits/{{ build.branch }}|{{ build.branch }}>\nAuthor: {{build.author}}',
         },
     }
 
@@ -161,6 +161,7 @@ def init_steps(edition, platform, ver_mode, is_downstream=False, install_deps=Tr
                     'rmdir bin',
                     'mv grafana-enterprise /tmp/',
                     '/tmp/grabpl init-enterprise /tmp/grafana-enterprise{}'.format(source_commit),
+                    'mv /tmp/grafana-enterprise/deployment_tools_config.json deployment_tools_config.json',
                     'mkdir bin',
                     'mv /tmp/grabpl bin/'
                 ] + common_cmds,
@@ -665,7 +666,6 @@ def build_docs_website_step():
         'name': 'build-docs-website',
         # Use latest revision here, since we want to catch if it breaks
         'image': 'grafana/docs-base:latest',
-        'failure': 'ignore',
         'depends_on': [
             'initialize',
             'build-frontend-docs',

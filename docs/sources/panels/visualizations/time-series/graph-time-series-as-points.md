@@ -20,11 +20,6 @@ This section explains how to use Time series field options to visualize time ser
 
 Use the following field settings to refine your visualization.
 
-For more information about applying these options, refer to:
-
-- [Configure all fields]({{< relref "../../field-options/configure-all-fields.md" >}})
-- [Configure specific fields]({{< relref "../../field-options/configure-specific-fields.md" >}})
-
 Some field options will not affect the visualization until you click outside of the field option box you are editing or press Enter.
 
 ### Point size
@@ -33,15 +28,15 @@ Set the size of the points, from 1 to 40 pixels in diameter.
 
 Point size set to 6:
 
-![Show points point size 6 example](/img/docs/time-series-panel/points-graph-show-points-6-7-4.png)
+![Show points point size 6 example](/static/img/docs/time-series-panel/points-graph-show-points-6-7-4.png)
 
 Point size set to 20:
 
-![Show points point size 20 example](/img/docs/time-series-panel/points-graph-show-points-20-7-4.png)
+![Show points point size 20 example](/static/img/docs/time-series-panel/points-graph-show-points-20-7-4.png)
 
 Point size set to 35:
 
-![Show points point size 35 example](/img/docs/time-series-panel/points-graph-show-points-35-7-4.png)
+![Show points point size 35 example](/static/img/docs/time-series-panel/points-graph-show-points-35-7-4.png)
 
 {{< docs/shared "visualizations/stack-series-link.md" >}}
 

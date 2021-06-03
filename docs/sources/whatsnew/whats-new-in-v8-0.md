@@ -18,6 +18,16 @@ This topic includes the release notes for Grafana v8.0. For all details, read th
 
 These features are included in the Grafana open source edition.
 
+### Grafana v8.0 alerts
+
+The new alerts in Grafana 8.0 are an opt-in feature that centralizes alerting information for Grafana managed alerts and alerts from Prometheus-compatible data sources in one UI and API. You can create and edit alerting rules for Grafana managed alerts, Cortex alerts, and Loki alerts as well as see alerting information from prometheus-compatible data sources in a single, searchable view. For more information, on how to create and edit alerts and notifications, refer to [Overview of Grafana 8.0 alerts]({{< relref "../alerting/unified-alerting/_index.md" >}}).
+
+As part of the new alert changes, we have introduced a new data source, Alertmanager, which includes built-in support for Prometheus Alertmanager. It is presently in alpha and it not accessible unless alpha plugins are enabled in Grafana settings. For more information, refer to [Alertmanager data source]({{< relref "../datasources/alertmanager.md" >}}).
+
+> **Note:** Out of the box, Grafana still supports old Grafana alerts. They are legacy alerts at this time, and will be deprecated in a future release.
+
+To learn more about the differences between new alerts and the legacy alerts, refer to [Differences between Grafana 8.0 alerts and legacy alerts]({{< relref "../alerting/difference-old-new.md" >}}).
+
 ### Library panels
 
 Library panels allow users to build panels that can be used in multiple dashboards. Any updates made to that shared panel will then automatically be applied to all the dashboards that have that panel.
@@ -36,15 +46,29 @@ The Bar chart panel is a new visualization that allows categorical data display.
 
 ### State timeline visualization (beta)
 
-This new visualization is designed to display state changes and durations.
+The State timeline visualization shows discrete state changes over time. Each field or series is rendered as a unique horizontal band. This panel works well with string or boolean states, but it can also be used with time series data. When used with time series data, the thresholds are used to turn the numerical values into discrete state regions.
+
+This panel also takes advantage of the new value mapping features that allow you to color string and boolean values.
+
+Example with string values:
+{{< figure src="/static/img/docs/v8/state_timeline_strings.png" max-width="1025px" caption="state timeline with string states" >}}
+
+With time series data and thresholds:
+{{< figure src="/static/img/docs/v8/state_timeline_time_series.png" max-width="1025px" caption="state timeline with time series" >}}
+
+For more information, refer to [State timeline visualization]({{< relref "../panels/visualizations/state-timeline.md" >}}).
 
 ### Status grid visualization (beta)
 
-This new visualization is designed to display periodic status history.
+A sister panel to the state timeline is the new Status grid panel visualization. It can display periodic state in a grid. Works with both numerical, string or boolean state.
+
+![Status grid visualization](/static/img/docs/status-grid/status-grid-8-0.png)
 
 ### Histogram visualization (beta)
 
-This release introduces a new histogram panel visualization.
+This hidden feature of the old Graph panel is now a standalone visualization. It combines a histogram transformation and bar chart visualization into a single, integrated, easy-to-use panel. There is also a new standalone histogram transformation that can be paired with any visualization.
+
+![Histogram visualization](/static/img/docs/histogram/histogram-8-0.png)
 
 ### Time series visualization updates
 
@@ -97,17 +121,13 @@ Log navigation in Explore has been significantly improved. We added pagination t
 
 [Logs in Explore]({{< relref "../explore/logs-integration.md" >}}) was updated as a result of these changes.
 
-![Navigate logs in Explore](/img/docs/explore/navigate-logs-8-0.png)
-
-### Tracing improvements
-
-- Exemplars
-- Better Jaeger search in Explore
-- Show trace graph for Jaeger, Zipkin, and Tempo
+![Navigate logs in Explore](/static/img/docs/explore/navigate-logs-8-0.png)
 
 ### Plugin catalog
 
 You can now use the Plugin catalog app to easily manage your plugins from within Grafana. Install, update, and uninstall plugins without requiring a server restart.
+
+[Plugin catalog]({{< relref "../plugins/catalog.md" >}}) was added as a result of this feature.
 
 ### Performance improvements
 
@@ -142,7 +162,7 @@ We changed how the configured Elasticsearch version is handled. You can now spec
 
 You can now use a different interpolation method to use template variables in a more extensive way. You can now use template variables in every query editor field that allows free input.
 
-![Elasticsearch template variables](/img/docs/elasticsearch/input-templates-8-0.png)
+![Elasticsearch template variables](/static/img/docs/elasticsearch/input-templates-8-0.png)
 
 ##### Allow omitting field for metrics that support inline scripts
 
@@ -150,13 +170,13 @@ Metric aggregations can be specified without a field if a script is provided. Yo
 
 Previously this was only possible when adding a new metric without selecting a field, because once selected, the field could not have been removed.
 
-![Elasticsearch omit fields](/img/docs/elasticsearch/omit-fields-8-0.png)
+![Elasticsearch omit fields](/static/img/docs/elasticsearch/omit-fields-8-0.png)
 
 ##### Allow setting a custom limit for log queries
 
 You can now set a custom line limit for logs queries instead of accepting the previously hard-coded 500. We also simplified the query editor to only show relevant fields when issuing logs queries.
 
-![Elasticsearch custom log limit](/img/docs/elasticsearch/custom-log-limit-8-0.png)
+![Elasticsearch custom log limit](/static/img/docs/elasticsearch/custom-log-limit-8-0.png)
 
 ##### Guess field type from first non-empty value
 
@@ -221,13 +241,31 @@ These features are included in the Grafana Enterprise edition.
 
 You can now add or remove detailed permissions from Viewer, Editor, and Admin org roles, to grant users just the right amount of access within Grafana. Available permissions include the ability to view and manage Users, Reports, and the Access Control API itself. Grafana will support more and more permissions over the coming months.
 
+[Fine-grained access control docs]({{< relref "../enterprise/access-control/_index.md" >}}) were added as a result of this feature.
+
 ### Data source query caching
 
-Grafana will now cache the results of backend data source queries, so that multiple users viewing the same dashboard or panel will not each submit the same query to the data source (like Splunk or Snowflake) itself. This results in faster average load times for dashboards and fewer duplicate queries overall to data sources, which reduces cost and the risk of throttling, reaching API limits, or overloading your data sources. Caching can be enabled per-data source, and time-to-live (TTL) can be configured globally and per data source. Query caching can be set up with Redis, Memcached, or a simple in-memory cache.
+Grafana will now cache the results of backend data source queries, so that multiple users viewing the same dashboard or panel will not each submit the same query to the data source (like Splunk or Snowflake) itself.
+
+This results in faster average load times for dashboards and fewer duplicate queries overall to data sources, which reduces cost and the risk of throttling, reaching API limits, or overloading your data sources.
+
+Caching can be enabled per-data source, and time-to-live (TTL) can be configured globally and per data source. Query caching can be set up with Redis, Memcached, or a simple in-memory cache.
+
+For more information, refer to the [Data source query caching docs]({{< relref "../enterprise/query-caching.md" >}}).
 
 ### Reporting updates
 
-When creating a report, you can now choose to export Table Panels as .csv files attached to your report email. This will make it easier for recipients to view and work with that data. You can also link back to the dashboard directly from the email, for users who want to see the data live in Grafana. This release also includes some improvements to the Reports list view.
+When creating a report, you can now choose to export Table panels as .csv files attached to your report email. This makes it easier for recipients to view and work with that data.
+
+You can also link back to the dashboard directly from the email, for users who want to see the data live in Grafana. This release also includes some improvements to the Reports list view.
+
+[Reporting docs]({{< relref "../enterprise/reporting.md" >}}) was updated as a result of this feature.
+
+### License restrictions clarification in the docs
+
+The docs have been updated to describe more specifically how licensed roles are counted, how they can be updated, and where you can see details about dashboard and folder permissions that affect users' licensed roles.
+
+For more information, refer to [License restrictions docs]({{< relref "../enterprise/license/license-restrictions.md" >}}).
 
 ## Breaking changes
 

@@ -3,7 +3,6 @@ import {
   FieldType,
   formattedValueToString,
   getFieldColorModeForField,
-  getFieldDisplayName,
   getFieldSeriesColor,
   MutableDataFrame,
   VizOrientation,
@@ -75,11 +74,13 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptions> = ({
 
   const config = getConfig(opts, theme);
 
+  builder.setCursor(config.cursor);
+
   builder.addHook('init', config.init);
   builder.addHook('drawClear', config.drawClear);
   builder.addHook('draw', config.draw);
 
-  builder.setTooltipInterpolator(config.interpolateBarChartTooltip);
+  builder.setTooltipInterpolator(config.interpolateTooltip);
 
   builder.addScale({
     scaleKey: 'x',
@@ -134,8 +135,6 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptions> = ({
         fieldIndex: i,
         frameIndex: 0,
       },
-      fieldName: getFieldDisplayName(field, frame),
-      hideInLegend: customConfig.hideFrom?.legend,
     });
 
     // The builder will manage unique scaleKeys and combine where appropriate

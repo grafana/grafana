@@ -1,7 +1,7 @@
 import AzureMonitorDatasource from '../datasource';
 import FakeSchemaData from './__mocks__/schema';
 import { TemplateSrv } from 'app/features/templating/template_srv';
-import { AzureLogsVariable } from '../types';
+import { AzureLogsVariable, DatasourceValidationResult } from '../types';
 import { toUtc } from '@grafana/data';
 import { backendSrv } from 'app/core/services/backend_srv';
 
@@ -112,17 +112,15 @@ describe('AzureLogAnalyticsDatasource', () => {
       };
 
       beforeEach(() => {
-        ctx.instanceSettings.jsonData.logAnalyticsSubscriptionId = 'xxx';
-        ctx.instanceSettings.jsonData.logAnalyticsTenantId = 'xxx';
-        ctx.instanceSettings.jsonData.logAnalyticsClientId = 'xxx';
+        ctx.instanceSettings.jsonData.azureAuthType = 'msi';
         datasourceRequestMock.mockImplementation(() => Promise.reject(error));
       });
 
       it('should return error status and a detailed error message', () => {
-        return ctx.ds.testDatasource().then((results: any) => {
-          expect(results.status).toEqual('error');
-          expect(results.message).toEqual(
-            '1. Azure Log Analytics: Bad Request: InvalidApiVersionParameter. An error message. '
+        return ctx.ds.azureLogAnalyticsDatasource.testDatasource().then((result: DatasourceValidationResult) => {
+          expect(result.status).toEqual('error');
+          expect(result.message).toEqual(
+            'Azure Log Analytics requires access to Azure Monitor but had the following error: Bad Request: InvalidApiVersionParameter. An error message.'
           );
         });
       });
