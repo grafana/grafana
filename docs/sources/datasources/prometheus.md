@@ -14,22 +14,22 @@ Grafana includes built-in support for Prometheus. This topic explains options, v
 
 To access Prometheus settings, hover your mouse over the **Configuration** (gear) icon, then click **Data Sources**, and then click the Prometheus data source.
 
-| Name                      | Description                                                                                                                                                                                             |
-| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `Name`                    | The data source name. This is how you refer to the data source in panels and queries.                                                                                                                   |
-| `Default`                 | Default data source means that it will be pre-selected for new panels.                                                                                                                                  |
-| `Url`                     | The URL of your Prometheus server, e.g. `http://prometheus.example.org:9090`.                                                                                                                           |
-| `Access`                  | Server (default) = URL needs to be accessible from the Grafana backend/server, Browser = URL needs to be accessible from the browser.                                                                   |
-| `Basic Auth`              | Enable basic authentication to the Prometheus data source.                                                                                                                                              |
-| `User`                    | User name for basic authentication.                                                                                                                                                                     |
-| `Password`                | Password for basic authentication.                                                                                                                                                                      |
-| `Scrape interval`         | Set this to the typical scrape and evaluation interval configured in Prometheus. Defaults to 15s.
-| `HTTP method`             | Use either POST or GET HTTP method to query your data source. POST is the recommended and pre-selected method as it allows bigger queries. Change this to GET if you have a Prometheus version older than 2.1 or if POST requests are restricted in your network.                                                                                       |
-| `Disable metrics lookup`  | Checking this option will disable the metrics chooser and metric/label support in the query field's autocomplete. This helps if you have performance issues with bigger Prometheus instances.           |
-| `Custom Query Parameters` | Add custom parameters to the Prometheus query URL. For example `timeout`, `partial_response`, `dedup`, or `max_source_resolution`. Multiple parameters should be concatenated together with an '&amp;'. |
-| `Label name`              | Add the name of the field in the label object.                                                                                                                                                          |
-| `URL`                     | If the link is external, then enter the full link URL. You can interpolate the value from the field with `${__value.raw }` macro.                                                                       |
-| `Internal link`           | Select if the link is internal or external. In the case of an internal link, a data source selector allows you to select the target data source. Supports tracing data sources only.                    |
+| Name                      | Description                                                                                                                                                                                                                                                       |
+| ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Name`                    | The data source name. This is how you refer to the data source in panels and queries.                                                                                                                                                                             |
+| `Default`                 | Default data source that is pre-selected for new panels.                                                                                                                                                                                            |
+| `Url`                     | The URL of your Prometheus server, for example, `http://prometheus.example.org:9090`.                                                                                                                                                                                     |
+| `Access`                  | Server (default) = URL needs to be accessible from the Grafana backend/server, Browser = URL needs to be accessible from the browser.                                                                                                                             |
+| `Basic Auth`              | Enable basic authentication to the Prometheus data source.                                                                                                                                                                                                        |
+| `User`                    | User name for basic authentication.                                                                                                                                                                                                                               |
+| `Password`                | Password for basic authentication.                                                                                                                                                                                                                                |
+| `Scrape interval`         | Set this to the typical scrape and evaluation interval configured in Prometheus. Defaults to 15s.                                                                                                                                                                 |
+| `HTTP method`             | Use either POST or GET HTTP method to query your data source. POST is the recommended and pre-selected method as it allows bigger queries. Change this to GET if you have a Prometheus version older than 2.1 or if POST requests are restricted in your network. |
+| `Disable metrics lookup`  | Checking this option will disable the metrics chooser and metric/label support in the query field's autocomplete. This helps if you have performance issues with bigger Prometheus instances.                                                                     |
+| `Custom Query Parameters` | Add custom parameters to the Prometheus query URL. For example `timeout`, `partial_response`, `dedup`, or `max_source_resolution`. Multiple parameters should be concatenated together with an '&amp;'.                                                           |
+| `Label name`              | Add the name of the field in the label object.                                                                                                                                                                                                                    |
+| `URL`                     | If the link is external, then enter the full link URL. You can interpolate the value from the field with `${__value.raw }` macro.                                                                                                                                 |
+| `Internal link`           | Select if the link is internal or external. In the case of an internal link, a data source selector allows you to select the target data source. Supports tracing data sources only.                                                                              |
 
 ## Prometheus query editor
 
@@ -75,6 +75,28 @@ To show a horizontal line across the whole graph, add a series override and sele
 | `Step`             | [`Step` parameter of Prometheus range queries](https://prometheus.io/docs/prometheus/latest/querying/api/#range-queries). Time units can be used here, for example: 5s, 1m, 3h, 1d, 1y. Default unit if no unit specified is `s` (seconds).                                                                                                                                                                                                |
 | `Query type`       | `Range`, `Instant`, or `Both`. When running **Range query**, the result of the query is displayed in graph and table. Instant query returns only the latest value that Prometheus has scraped for the requested time series and it is displayed in the table. When **Both** is selected, both instant query and range query is run. Result of range query is displayed in graph and the result of instant query is displayed in the table. |
 | `Exemplars`        | Run and show exemplars in the graph.                                                                                                                                                                                                                                                                                                                                                                                                       |
+
+### Metrics browser
+
+The metrics browser allows you to quickly find metrics and select relevant labels to build basic queries.
+When you open the browser you will see all available metrics and labels.
+If supported by your Prometheus instance, each metric will show its HELP and TYPE as a tooltip.
+When you select a metric, the browser narrows down the available labels to show only the ones applicable to the metric.
+You can then select one or more labels for which the available label values are shown in lists in the bottom section.
+Select one or more values for each label to tighten your query scope.
+
+>**Note:** If you do not remember a metric name to start with, you can also select a few labels first, to narrow down the list and then find relevant label values. 
+
+All lists in the metrics browser have a search field above them to quickly filter for metrics or labels that match a certain string. The values section only has one search field. Its filtering applies to all labels to help you find values across labels once they have been selected, for example, among your labels `app`, `job`, `job_name` only one might with the value you are looking for.
+
+Once you are satisfied with your query, click "Use query" to run the query. The button "Use as rate query" adds a `rate(...)[$__interval]` around your query to help write queries for counter metrics.
+The "Validate selector" button will check with Prometheus how many time series are available for that selector.
+
+#### Limitations 
+
+The metrics browser has a hard limit of 10,000 labels (keys) and 50,000 label values (including metric names). If your Prometheus instance returns more results, the browser will continue functioning. However, the result sets will be cut off above those maximum limits.
+
+{{< figure src="/static/img/docs/v8/prometheus_metrics_browser.png" class="docs-image--no-shadow" max-width="800px" caption="Screenshot of the metrics browser for Prometheus" >}}
 
 ## Templating
 
