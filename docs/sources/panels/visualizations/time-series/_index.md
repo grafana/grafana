@@ -12,7 +12,7 @@ Time series panel is a robust visualization to plot time series data. It can ren
 
 For Time series panel examples, refer to the Grafana Play dashboard [New Features in v7.4](https://play.grafana.org/d/nP8rcffGk/new-features-in-v7-4?orgId=1).
 
-> **Note:** You can migrate Graph panel visualizations to Time series visualizations. To migrate, on the Panel tab, click **Time series** visualization. Grafana transfers all applicable settings. (While in beta, migration is still being refined. It will get better as time goes on!)
+> **Note:** You can migrate Graph panel visualizations to Time series visualizations. To migrate, open the panel and then select the  **Time series** visualization. Grafana transfers all applicable settings.
 
 ## Common time series options
 
