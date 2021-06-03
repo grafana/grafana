@@ -92,7 +92,9 @@ All lists in the metrics browser have a search field above them to quickly filte
 Once you are satisfied with your query, click "Use query" to run the query. The button "Use as rate query" adds a `rate(...)[$__interval]` around your query to help write queries for counter metrics.
 The "Validate selector" button will check with Prometheus how many time series are available for that selector.
 
-Limitations: The metrics browser has a hard limit of 10,000 labels (keys) and 50,000 label values (including metric names). If Prometheus returns more results the browser will continue functioning, but the result sets will be cut off above those limits.
+#### Limitations 
+
+The metrics browser has a hard limit of 10,000 labels (keys) and 50,000 label values (including metric names). If your Prometheus instance returns more results, the browser will continue functioning. However, the result sets will be cut off above those maximum limits.
 
 {{< figure src="/static/img/docs/v8/prometheus_metrics_browser.png" class="docs-image--no-shadow" max-width="800px" caption="Screenshot of the metrics browser for Prometheus" >}}
 
