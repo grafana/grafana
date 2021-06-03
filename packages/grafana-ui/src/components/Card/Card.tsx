@@ -252,8 +252,8 @@ const BaseActions: FC<ActionsProps> = ({ children, styles, disabled, variant }) 
   return (
     <div className={css}>
       {Array.isArray(children)
-        ? React.Children.map(children, (child) => cloneElement(child, { disabled }))
-        : cloneElement(children, { disabled })}
+        ? React.Children.map(children, (child) => cloneElement(child, { disabled, ...child.props }))
+        : cloneElement(children, { disabled, ...children.props })}
     </div>
   );
 };

@@ -123,11 +123,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
   };
 
   render() {
-    // TODO: Clean up
     const { options } = this.props;
-    options.jsonData.cloudName = options.jsonData.cloudName || 'azuremonitor';
-    // This is bad, causes so many messy typing issues everwhere..
-    options.secureJsonData = (options.secureJsonData || {}) as AzureDataSourceSecureJsonData;
 
     return (
       <>
