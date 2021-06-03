@@ -58,10 +58,10 @@ The State timeline visualization shows discrete state changes over time. Each fi
 This panel also takes advantage of the new value mapping features that allow you to color string and boolean values.
 
 Example with string values:
-{{< figure src="/static/img/docs/v8/state_timeline_strings.png" max-width="1025px" caption="state timeline with string states" >}}
+{{< figure src="/static/img/docs/v8/state_timeline_strings.png" max-width="800px" caption="state timeline with string states" >}}
 
 With time series data and thresholds:
-{{< figure src="/static/img/docs/v8/state_timeline_time_series.png" max-width="1025px" caption="state timeline with time series" >}}
+{{< figure src="/static/img/docs/v8/state_timeline_time_series.png" max-width="800px" caption="state timeline with time series" >}}
 
 For more information, refer to [State timeline visualization]({{< relref "../panels/visualizations/state-timeline.md" >}}).
 
