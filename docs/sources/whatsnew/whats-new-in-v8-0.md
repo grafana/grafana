@@ -189,6 +189,15 @@ You can now set a custom line limit for logs queries instead of accepting the pr
 
 Response values were always interpreted as strings in Elasticsearch responses, which caused issues with some visualization types that applied logic based on numeric values. We now apply some heuristics to detect value types from the first non-empty value in each response.
 
+#### Google Cloud Monitoring data source
+
+A while back, Cloud Monitoring added _preprocessing_ support in their query editor. Now, this feature has also come to the Cloud Monitoring data source in Grafana.
+
+Whenever a metric is selected in the query editor, a suitable preprocessing option will be selected automatically for you. To avoid breaking changes, preprocessing is not enabled by default on existing queries. If you want to use preprocessing for existing queries, you have to manually select one in the query editor.
+
+[Google Cloud Monitoring data source]({{< relref "../datasources/google-cloud-monitoring/_index.md#pre-processing" >}}) was updated as a result of this change.
+
+
 #### Graphite data source
 
 [Graphite data source]({{< relref "../datasources/graphite.md" >}}) was updated as a result of these changes.
