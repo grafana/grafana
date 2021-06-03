@@ -38,13 +38,8 @@ func newClientConfig(executablePath string, env []string, logger log.Logger,
 	}
 }
 
-// StartFunc callback function called when a plugin with current plugin protocol version is started.
-type StartFunc func(pluginID string, client *Client, logger log.Logger) error
-
-// PluginStartFuncs functions called for plugin when started.
-type PluginStartFuncs struct {
-	OnStart StartFunc
-}
+// StartRendererFunc callback function called when a renderer plugin is started.
+type StartRendererFunc func(pluginID string, renderer pluginextensionv2.RendererPlugin, logger log.Logger) error
 
 // PluginDescriptor is a descriptor used for registering backend plugins.
 type PluginDescriptor struct {
@@ -52,7 +47,7 @@ type PluginDescriptor struct {
 	executablePath   string
 	managed          bool
 	versionedPlugins map[int]goplugin.PluginSet
-	startFns         PluginStartFuncs
+	startRendererFn  StartRendererFunc
 }
 
 // getV2PluginSet returns list of plugins supported on v2.
@@ -67,7 +62,7 @@ func getV2PluginSet() goplugin.PluginSet {
 }
 
 // NewBackendPlugin creates a new backend plugin factory used for registering a backend plugin.
-func NewBackendPlugin(pluginID, executablePath string, startFns PluginStartFuncs) backendplugin.PluginFactoryFunc {
+func NewBackendPlugin(pluginID, executablePath string) backendplugin.PluginFactoryFunc {
 	return newPlugin(PluginDescriptor{
 		pluginID:       pluginID,
 		executablePath: executablePath,
@@ -75,12 +70,11 @@ func NewBackendPlugin(pluginID, executablePath string, startFns PluginStartFuncs
 		versionedPlugins: map[int]goplugin.PluginSet{
 			grpcplugin.ProtocolVersion: getV2PluginSet(),
 		},
-		startFns: startFns,
 	})
 }
 
 // NewRendererPlugin creates a new renderer plugin factory used for registering a backend renderer plugin.
-func NewRendererPlugin(pluginID, executablePath string, startFns PluginStartFuncs) backendplugin.PluginFactoryFunc {
+func NewRendererPlugin(pluginID, executablePath string, startFn StartRendererFunc) backendplugin.PluginFactoryFunc {
 	return newPlugin(PluginDescriptor{
 		pluginID:       pluginID,
 		executablePath: executablePath,
@@ -88,13 +82,6 @@ func NewRendererPlugin(pluginID, executablePath string, startFns PluginStartFunc
 		versionedPlugins: map[int]goplugin.PluginSet{
 			grpcplugin.ProtocolVersion: getV2PluginSet(),
 		},
-		startFns: startFns,
+		startRendererFn: startFn,
 	})
-}
-
-// Client client for communicating with a plugin using the current (v2) plugin protocol.
-type Client struct {
-	DataPlugin     grpcplugin.DataClient
-	RendererPlugin pluginextensionv2.RendererPlugin
-	StreamClient   grpcplugin.StreamClient
 }

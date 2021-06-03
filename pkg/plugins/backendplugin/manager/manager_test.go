@@ -367,6 +367,7 @@ type testPlugin struct {
 	decommissioned bool
 	backend.CollectMetricsHandlerFunc
 	backend.CheckHealthHandlerFunc
+	backend.QueryDataHandlerFunc
 	backend.CallResourceHandlerFunc
 	mutex sync.RWMutex
 }
@@ -436,6 +437,14 @@ func (tp *testPlugin) CollectMetrics(ctx context.Context) (*backend.CollectMetri
 func (tp *testPlugin) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
 	if tp.CheckHealthHandlerFunc != nil {
 		return tp.CheckHealthHandlerFunc(ctx, req)
+	}
+
+	return nil, backendplugin.ErrMethodNotImplemented
+}
+
+func (tp *testPlugin) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	if tp.QueryDataHandlerFunc != nil {
+		return tp.QueryDataHandlerFunc(ctx, req)
 	}
 
 	return nil, backendplugin.ErrMethodNotImplemented

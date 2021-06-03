@@ -745,26 +745,6 @@ func collectPluginFilesWithin(rootDir string) ([]string, error) {
 	return files, err
 }
 
-// GetDataPlugin gets a DataPlugin with a certain name. If none is found, nil is returned.
-//nolint: staticcheck // plugins.DataPlugin deprecated
-func (pm *PluginManager) GetDataPlugin(id string) plugins.DataPlugin {
-	pm.pluginsMu.RLock()
-	defer pm.pluginsMu.RUnlock()
-
-	if p := pm.GetDataSource(id); p != nil && p.CanHandleDataQueries() {
-		return p
-	}
-
-	// XXX: Might other plugins implement DataPlugin?
-
-	p := pm.BackendPluginManager.GetDataPlugin(id)
-	if p != nil {
-		return p.(plugins.DataPlugin)
-	}
-
-	return nil
-}
-
 func (pm *PluginManager) StaticRoutes() []*plugins.PluginStaticRoute {
 	return pm.staticRoutes
 }

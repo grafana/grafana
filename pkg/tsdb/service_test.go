@@ -4,6 +4,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
@@ -19,7 +21,7 @@ func TestHandleRequest(t *testing.T) {
 			},
 		}
 
-		svc, exe := createService()
+		svc, exe, _ := createService()
 		exe.Return("A", plugins.DataTimeSeriesSlice{plugins.DataTimeSeries{Name: "argh"}})
 
 		res, err := svc.HandleRequest(context.TODO(), &models.DataSource{Id: 1, Type: "test"}, req)
@@ -36,7 +38,7 @@ func TestHandleRequest(t *testing.T) {
 			},
 		}
 
-		svc, exe := createService()
+		svc, exe, _ := createService()
 		exe.Return("A", plugins.DataTimeSeriesSlice{plugins.DataTimeSeries{Name: "argh"}})
 		exe.Return("B", plugins.DataTimeSeriesSlice{plugins.DataTimeSeries{Name: "barg"}})
 
@@ -48,16 +50,28 @@ func TestHandleRequest(t *testing.T) {
 		require.Equal(t, "barg", res.Results["B"].Series[0].Name)
 	})
 
-	t.Run("Should return error when handling request for query with unknown type", func(t *testing.T) {
-		svc, _ := createService()
+	t.Run("Should fallback to backend plugin manager when handling request for query with unregistered type", func(t *testing.T) {
+		svc, _, manager := createService()
+		backendPluginManagerCalled := false
+		manager.QueryDataHandlerFunc = backend.QueryDataHandlerFunc(func(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+			backendPluginManagerCalled = true
+			return &backend.QueryDataResponse{}, nil
+		})
 
+		ds := &models.DataSource{Id: 12, Type: "unregisteredType", JsonData: simplejson.New()}
 		req := plugins.DataQuery{
+			TimeRange: &plugins.DataTimeRange{},
 			Queries: []plugins.DataSubQuery{
-				{RefID: "A", DataSource: &models.DataSource{Id: 1, Type: "asdasdas"}},
+				{
+					RefID:      "A",
+					DataSource: ds,
+					Model:      simplejson.New(),
+				},
 			},
 		}
-		_, err := svc.HandleRequest(context.TODO(), &models.DataSource{Id: 12, Type: "testjughjgjg"}, req)
-		require.Error(t, err)
+		_, err := svc.HandleRequest(context.Background(), ds, req)
+		require.NoError(t, err)
+		require.True(t, backendPluginManagerCalled)
 	})
 }
 
@@ -99,17 +113,22 @@ func (e *fakeExecutor) HandleQuery(refId string, fn resultsFn) {
 
 type fakeBackendPM struct {
 	backendplugin.Manager
+	backend.QueryDataHandlerFunc
 }
 
-func (pm fakeBackendPM) GetDataPlugin(string) interface{} {
-	return nil
-}
-
-func createService() (Service, *fakeExecutor) {
-	s := NewService()
-	s.PluginManager = &manager.PluginManager{
-		BackendPluginManager: fakeBackendPM{},
+func (m *fakeBackendPM) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	if m.QueryDataHandlerFunc != nil {
+		return m.QueryDataHandlerFunc.QueryData(ctx, req)
 	}
+
+	return nil, nil
+}
+
+func createService() (Service, *fakeExecutor, *fakeBackendPM) {
+	s := NewService()
+	fakeBackendPluginManager := &fakeBackendPM{}
+	s.PluginManager = &manager.PluginManager{}
+	s.BackendPluginManager = fakeBackendPluginManager
 	e := &fakeExecutor{
 		//nolint: staticcheck // plugins.DataPlugin deprecated
 		results:   make(map[string]plugins.DataQueryResult),
@@ -120,5 +139,5 @@ func createService() (Service, *fakeExecutor) {
 		return e, nil
 	}
 
-	return s, e
+	return s, e, fakeBackendPluginManager
 }

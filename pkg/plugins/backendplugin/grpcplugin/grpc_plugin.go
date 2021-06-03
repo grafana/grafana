@@ -14,6 +14,7 @@ import (
 type pluginClient interface {
 	backend.CollectMetricsHandler
 	backend.CheckHealthHandler
+	backend.QueryDataHandler
 	backend.CallResourceHandler
 	backend.StreamHandler
 }
@@ -135,6 +136,15 @@ func (p *grpcPlugin) CheckHealth(ctx context.Context, req *backend.CheckHealthRe
 		return nil, backendplugin.ErrPluginUnavailable
 	}
 	return pluginClient.CheckHealth(ctx, req)
+}
+
+func (p *grpcPlugin) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	pluginClient, ok := p.getPluginClient()
+	if !ok {
+		return nil, backendplugin.ErrPluginUnavailable
+	}
+
+	return pluginClient.QueryData(ctx, req)
 }
 
 func (p *grpcPlugin) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {

@@ -113,7 +113,3 @@ func (me *mockEndpoint) DataQuery(ctx context.Context, ds *models.DataSource, qu
 type fakeBackendPM struct {
 	backendplugin.Manager
 }
-
-func (pm fakeBackendPM) GetDataPlugin(string) interface{} {
-	return nil
-}
