@@ -2,12 +2,12 @@ import { PanelModel } from './PanelModel';
 import { getPanelPlugin } from '../../plugins/__mocks__/pluginMocks';
 import {
   DataLinkBuiltInVars,
+  dateTime,
   FieldConfigProperty,
   PanelData,
   PanelProps,
   standardEditorsRegistry,
   standardFieldConfigEditorRegistry,
-  dateTime,
   TimeRange,
 } from '@grafana/data';
 import { ComponentClass } from 'react';
@@ -432,12 +432,23 @@ describe('PanelModel', () => {
 
     describe('destroy', () => {
       it('Should still preserve last query result', () => {
-        model.getQueryRunner().useLastResultFrom({
+        model.getQueryRunner().useLastResultFrom(({
           getLastResult: () => ({} as PanelData),
-        } as PanelQueryRunner);
+          getLastDashboardResult: () => ({ annotations: [] }),
+        } as unknown) as PanelQueryRunner);
 
         model.destroy();
         expect(model.getQueryRunner().getLastResult()).toBeDefined();
+      });
+
+      it('Should still preserve last dashboard query result', () => {
+        model.getQueryRunner().useLastResultFrom(({
+          getLastResult: () => ({} as PanelData),
+          getLastDashboardResult: () => ({ annotations: [] }),
+        } as unknown) as PanelQueryRunner);
+
+        model.destroy();
+        expect(model.getQueryRunner().getLastDashboardResult()).toBeDefined();
       });
     });
 

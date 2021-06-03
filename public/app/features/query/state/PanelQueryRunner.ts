@@ -339,6 +339,10 @@ export class PanelQueryRunner {
       this.dashboardSubscription.unsubscribe();
     }
 
+    if (!this.dataConfigSource?.getDataSupport) {
+      return;
+    }
+
     const { alertStates, annotations } = this.dataConfigSource.getDataSupport();
 
     if (alertStates || annotations) {
