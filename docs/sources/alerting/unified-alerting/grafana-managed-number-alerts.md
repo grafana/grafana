@@ -1,6 +1,6 @@
 +++
-title = "Numeric data Grafana manged alert rules"
-description = "Number data based Grafana manged alert rules"
+title = "Numeric data Grafana managed alert rules"
+description = "Number data based Grafana managed alert rules"
 keywords = ["grafana", "alerting", "guide", "rules", "create"]
 weight = 400
 +++
