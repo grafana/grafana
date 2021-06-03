@@ -65,9 +65,9 @@ With time series data and thresholds:
 
 For more information, refer to [State timeline visualization]({{< relref "../panels/visualizations/state-timeline.md" >}}).
 
-### Status grid visualization (beta)
+### Status history visualization (beta)
 
-A sister panel to the state timeline is the new Status grid panel visualization. It can display periodic state in a grid. Works with both numerical, string or boolean state.
+A sister panel to the state timeline is the new Status history panel visualization. It can display periodic state in a grid. Works with both numerical, string or boolean state.
 
 ![Status grid visualization](/static/img/docs/status-grid/status-grid-8-0.png)
 
