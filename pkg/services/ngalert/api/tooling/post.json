@@ -60,9 +60,7 @@
   "AlertGroup": {
    "$ref": "#/definitions/alertGroup"
   },
-  "AlertGroups": {
-   "$ref": "#/definitions/alertGroups"
-  },
+  "AlertGroups": {},
   "AlertInstancesResponse": {
    "properties": {
     "instances": {
@@ -80,6 +78,65 @@
    },
    "type": "object",
    "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+  },
+  "AlertNotification": {
+   "properties": {
+    "created": {
+     "format": "date-time",
+     "type": "string",
+     "x-go-name": "Created"
+    },
+    "disableResolveMessage": {
+     "type": "boolean",
+     "x-go-name": "DisableResolveMessage"
+    },
+    "frequency": {
+     "$ref": "#/definitions/Duration",
+     "type": "string"
+    },
+    "id": {
+     "format": "int64",
+     "type": "integer",
+     "x-go-name": "Id"
+    },
+    "isDefault": {
+     "type": "boolean",
+     "x-go-name": "IsDefault"
+    },
+    "name": {
+     "type": "string",
+     "x-go-name": "Name"
+    },
+    "secureFields": {
+     "additionalProperties": {
+      "type": "boolean"
+     },
+     "type": "object",
+     "x-go-name": "SecureFields"
+    },
+    "sendReminder": {
+     "type": "boolean",
+     "x-go-name": "SendReminder"
+    },
+    "settings": {
+     "$ref": "#/definitions/Json"
+    },
+    "type": {
+     "type": "string",
+     "x-go-name": "Type"
+    },
+    "uid": {
+     "type": "string",
+     "x-go-name": "Uid"
+    },
+    "updated": {
+     "format": "date-time",
+     "type": "string",
+     "x-go-name": "Updated"
+    }
+   },
+   "type": "object",
+   "x-go-package": "github.com/grafana/grafana/pkg/api/dtos"
   },
   "AlertQuery": {
    "properties": {
@@ -239,16 +296,14 @@
   },
   "Authorization": {
    "properties": {
-    "credentials": {
+    "Credentials": {
      "$ref": "#/definitions/Secret"
     },
-    "credentials_file": {
-     "type": "string",
-     "x-go-name": "CredentialsFile"
+    "CredentialsFile": {
+     "type": "string"
     },
-    "type": {
-     "type": "string",
-     "x-go-name": "Type"
+    "Type": {
+     "type": "string"
     }
    },
    "title": "Authorization contains HTTP authorization credentials.",
@@ -257,16 +312,14 @@
   },
   "BasicAuth": {
    "properties": {
-    "password": {
+    "Password": {
      "$ref": "#/definitions/Secret"
     },
-    "password_file": {
-     "type": "string",
-     "x-go-name": "PasswordFile"
+    "PasswordFile": {
+     "type": "string"
     },
-    "username": {
-     "type": "string",
-     "x-go-name": "Username"
+    "Username": {
+     "type": "string"
     }
    },
    "title": "BasicAuth contains basic HTTP authentication credentials.",
@@ -285,6 +338,13 @@
      "type": "array",
      "x-go-name": "InhibitRules"
     },
+    "receivers": {
+     "items": {
+      "$ref": "#/definitions/Receiver"
+     },
+     "type": "array",
+     "x-go-name": "Receivers"
+    },
     "route": {
      "$ref": "#/definitions/Route"
     },
@@ -299,6 +359,53 @@
    "title": "Config is the top-level configuration for Alertmanager's config files.",
    "type": "object",
    "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+  },
+  "CreateAlertNotificationCommand": {
+   "properties": {
+    "Result": {
+     "$ref": "#/definitions/AlertNotification"
+    },
+    "disableResolveMessage": {
+     "type": "boolean",
+     "x-go-name": "DisableResolveMessage"
+    },
+    "frequency": {
+     "type": "string",
+     "x-go-name": "Frequency"
+    },
+    "isDefault": {
+     "type": "boolean",
+     "x-go-name": "IsDefault"
+    },
+    "name": {
+     "type": "string",
+     "x-go-name": "Name"
+    },
+    "secureSettings": {
+     "additionalProperties": {
+      "type": "string"
+     },
+     "type": "object",
+     "x-go-name": "SecureSettings"
+    },
+    "sendReminder": {
+     "type": "boolean",
+     "x-go-name": "SendReminder"
+    },
+    "settings": {
+     "$ref": "#/definitions/Json"
+    },
+    "type": {
+     "type": "string",
+     "x-go-name": "Type"
+    },
+    "uid": {
+     "type": "string",
+     "x-go-name": "Uid"
+    }
+   },
+   "type": "object",
+   "x-go-package": "github.com/grafana/grafana/pkg/models"
   },
   "DateTime": {
    "description": "DateTime is a time but it serializes to ISO8601 format with millis\nIt knows how to read 3 different variations of a RFC3339 date time.\nMost APIs we encounter want either millisecond or second precision times.\nThis just tries to make it worry-free.",
@@ -478,9 +585,7 @@
    "$ref": "#/definitions/ResponseDetails"
   },
   "GettableAlert": {},
-  "GettableAlerts": {
-   "$ref": "#/definitions/gettableAlerts"
-  },
+  "GettableAlerts": {},
   "GettableApiAlertingConfig": {
    "properties": {
     "global": {
@@ -628,36 +733,7 @@
    "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
   },
   "GettableGrafanaReceiver": {
-   "properties": {
-    "disableResolveMessage": {
-     "type": "boolean",
-     "x-go-name": "DisableResolveMessage"
-    },
-    "name": {
-     "type": "string",
-     "x-go-name": "Name"
-    },
-    "secureFields": {
-     "additionalProperties": {
-      "type": "boolean"
-     },
-     "type": "object",
-     "x-go-name": "SecureFields"
-    },
-    "settings": {
-     "$ref": "#/definitions/Json"
-    },
-    "type": {
-     "type": "string",
-     "x-go-name": "Type"
-    },
-    "uid": {
-     "type": "string",
-     "x-go-name": "UID"
-    }
-   },
-   "type": "object",
-   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+   "$ref": "#/definitions/AlertNotification"
   },
   "GettableGrafanaReceivers": {
    "properties": {
@@ -687,7 +763,8 @@
     },
     "exec_err_state": {
      "enum": [
-      "Alerting"
+      "Alerting",
+      "KeepLastState"
      ],
      "type": "string",
      "x-go-name": "ExecErrState"
@@ -715,6 +792,7 @@
      "enum": [
       "Alerting",
       "NoData",
+      "KeepLastState",
       "OK"
      ],
      "type": "string",
@@ -777,9 +855,7 @@
   "GettableSilences": {
    "$ref": "#/definitions/gettableSilences"
   },
-  "GettableStatus": {
-   "$ref": "#/definitions/alertmanagerStatus"
-  },
+  "GettableStatus": {},
   "GettableUserConfig": {
    "properties": {
     "alertmanager_config": {
@@ -872,32 +948,30 @@
   },
   "HTTPClientConfig": {
    "properties": {
-    "authorization": {
+    "Authorization": {
      "$ref": "#/definitions/Authorization"
     },
-    "basic_auth": {
+    "BasicAuth": {
      "$ref": "#/definitions/BasicAuth"
     },
-    "bearer_token": {
+    "BearerToken": {
      "$ref": "#/definitions/Secret"
     },
-    "bearer_token_file": {
+    "BearerTokenFile": {
      "description": "The bearer token file for the targets. Deprecated in favour of\nAuthorization.CredentialsFile.",
-     "type": "string",
-     "x-go-name": "BearerTokenFile"
+     "type": "string"
     },
-    "follow_redirects": {
+    "FollowRedirects": {
      "description": "FollowRedirects specifies whether the client should follow HTTP 3xx redirects.\nThe omitempty flag is not set, because it would be hidden from the\nmarshalled configuration when set to false.",
-     "type": "boolean",
-     "x-go-name": "FollowRedirects"
+     "type": "boolean"
     },
-    "oauth2": {
+    "OAuth2": {
      "$ref": "#/definitions/OAuth2"
     },
-    "proxy_url": {
+    "ProxyURL": {
      "$ref": "#/definitions/URL"
     },
-    "tls_config": {
+    "TLSConfig": {
      "$ref": "#/definitions/TLSConfig"
     }
    },
@@ -1052,34 +1126,29 @@
   },
   "OAuth2": {
    "properties": {
-    "client_id": {
-     "type": "string",
-     "x-go-name": "ClientID"
+    "ClientID": {
+     "type": "string"
     },
-    "client_secret": {
+    "ClientSecret": {
      "$ref": "#/definitions/Secret"
     },
-    "client_secret_file": {
-     "type": "string",
-     "x-go-name": "ClientSecretFile"
+    "ClientSecretFile": {
+     "type": "string"
     },
-    "endpoint_params": {
+    "EndpointParams": {
      "additionalProperties": {
       "type": "string"
      },
-     "type": "object",
-     "x-go-name": "EndpointParams"
+     "type": "object"
     },
-    "scopes": {
+    "Scopes": {
      "items": {
       "type": "string"
      },
-     "type": "array",
-     "x-go-name": "Scopes"
+     "type": "array"
     },
-    "token_url": {
-     "type": "string",
-     "x-go-name": "TokenURL"
+    "TokenURL": {
+     "type": "string"
     }
    },
    "title": "OAuth2 is the oauth2 client configuration.",
@@ -1436,36 +1505,7 @@
    "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
   },
   "PostableGrafanaReceiver": {
-   "properties": {
-    "disableResolveMessage": {
-     "type": "boolean",
-     "x-go-name": "DisableResolveMessage"
-    },
-    "name": {
-     "type": "string",
-     "x-go-name": "Name"
-    },
-    "secureSettings": {
-     "additionalProperties": {
-      "type": "string"
-     },
-     "type": "object",
-     "x-go-name": "SecureSettings"
-    },
-    "settings": {
-     "$ref": "#/definitions/Json"
-    },
-    "type": {
-     "type": "string",
-     "x-go-name": "Type"
-    },
-    "uid": {
-     "type": "string",
-     "x-go-name": "UID"
-    }
-   },
-   "type": "object",
-   "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+   "$ref": "#/definitions/CreateAlertNotificationCommand"
   },
   "PostableGrafanaReceivers": {
    "properties": {
@@ -1495,7 +1535,8 @@
     },
     "exec_err_state": {
      "enum": [
-      "Alerting"
+      "Alerting",
+      "KeepLastState"
      ],
      "type": "string",
      "x-go-name": "ExecErrState"
@@ -1504,6 +1545,7 @@
      "enum": [
       "Alerting",
       "NoData",
+      "KeepLastState",
       "OK"
      ],
      "type": "string",
@@ -1541,9 +1583,7 @@
    "type": "object",
    "x-go-package": "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
   },
-  "PostableSilence": {
-   "$ref": "#/definitions/postableSilence"
-  },
+  "PostableSilence": {},
   "PostableUserConfig": {
    "properties": {
     "alertmanager_config": {
@@ -1947,6 +1987,18 @@
    "$ref": "#/definitions/URL",
    "title": "SecretURL is a URL that must not be revealed on marshaling."
   },
+  "SecureJsonData": {
+   "additionalProperties": {
+    "items": {
+     "format": "uint8",
+     "type": "integer"
+    },
+    "type": "array"
+   },
+   "description": "SecureJsonData is used to store encrypted data (for example in data_source table). Only values are separately\nencrypted.",
+   "type": "object",
+   "x-go-package": "github.com/grafana/grafana/pkg/components/securejsondata"
+  },
   "SlackAction": {
    "description": "See https://api.slack.com/docs/message-attachments#action_fields and https://api.slack.com/docs/message-buttons\nfor more information.",
    "properties": {
@@ -2140,30 +2192,25 @@
   },
   "TLSConfig": {
    "properties": {
-    "ca_file": {
+    "CAFile": {
      "description": "The CA cert to use for the targets.",
-     "type": "string",
-     "x-go-name": "CAFile"
+     "type": "string"
     },
-    "cert_file": {
+    "CertFile": {
      "description": "The client cert file for the targets.",
-     "type": "string",
-     "x-go-name": "CertFile"
+     "type": "string"
     },
-    "insecure_skip_verify": {
+    "InsecureSkipVerify": {
      "description": "Disable target certificate validation.",
-     "type": "boolean",
-     "x-go-name": "InsecureSkipVerify"
+     "type": "boolean"
     },
-    "key_file": {
+    "KeyFile": {
      "description": "The client key file for the targets.",
-     "type": "string",
-     "x-go-name": "KeyFile"
+     "type": "string"
     },
-    "server_name": {
+    "ServerName": {
      "description": "Used to verify the hostname for the targets.",
-     "type": "string",
-     "x-go-name": "ServerName"
+     "type": "string"
     }
    },
    "title": "TLSConfig configures the options for TLS connections.",
@@ -2403,7 +2450,7 @@
     "alerts": {
      "description": "alerts",
      "items": {
-      "$ref": "#/definitions/gettableAlert"
+      "$ref": "#/definitions/GettableAlert"
      },
      "type": "array",
      "x-go-name": "Alerts"
@@ -2412,7 +2459,7 @@
      "$ref": "#/definitions/labelSet"
     },
     "receiver": {
-     "$ref": "#/definitions/Receiver"
+     "$ref": "#/definitions/receiver"
     }
    },
    "required": [
@@ -2427,7 +2474,7 @@
   "alertGroups": {
    "description": "AlertGroups alert groups",
    "items": {
-    "$ref": "#/definitions/alertGroup"
+    "$ref": "#/definitions/AlertGroup"
    },
    "type": "array",
    "x-go-name": "AlertGroups",
@@ -2579,7 +2626,7 @@
     "receivers": {
      "description": "receivers",
      "items": {
-      "$ref": "#/definitions/receiver"
+      "$ref": "#/definitions/Receiver"
      },
      "type": "array",
      "x-go-name": "Receivers"
@@ -3344,12 +3391,6 @@
       "description": "GettableStatus",
       "schema": {
        "$ref": "#/definitions/GettableStatus"
-      }
-     },
-     "400": {
-      "description": "ValidationError",
-      "schema": {
-       "$ref": "#/definitions/ValidationError"
       }
      }
     },
