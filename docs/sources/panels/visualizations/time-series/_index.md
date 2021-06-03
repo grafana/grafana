@@ -1,12 +1,12 @@
 +++
-title = "Time series panel"
+title = "Time series"
 keywords = ["grafana", "graph panel", "time series panel", "documentation", "guide", "graph"]
 weight = 1200
 +++
 
-# Time series panel
+# Time series
 
-> **Note:** Time series panel is going to replace the Graph panel in a future release.
+> **Note:** Time series panel visualization is going to replace the Graph panel visualization in a future release.
 
 Time series panel is a robust visualization to plot time series data. It can render as a line, a path of dots, or a series of bars. This type of graph is versatile enough to display almost any time-series data.
 
