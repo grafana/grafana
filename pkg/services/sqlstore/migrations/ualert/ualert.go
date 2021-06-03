@@ -257,6 +257,7 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 func (m *migration) writeAlertmanagerConfig(amConfig *PostableUserConfig, allChannels map[interface{}]*notificationChannel) error {
 	if len(allChannels) == 0 {
 		// No channels, hence don't require Alertmanager config.
+		m.mg.Logger.Info("alert migration: no notification channel found, skipping Alertmanager config")
 		return nil
 	}
 
