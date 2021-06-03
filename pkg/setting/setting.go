@@ -388,6 +388,9 @@ type Cfg struct {
 	// Grafana Live ws endpoint (per Grafana server instance). 0 disables
 	// Live, -1 means unlimited connections.
 	LiveMaxConnections int
+
+	// Alerting
+	AlertingBaseIntervalSeconds time.Duration
 }
 
 // IsLiveConfigEnabled returns true if live should be able to save configs to SQL tables

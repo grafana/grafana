@@ -34,15 +34,19 @@ const (
 	// because this could cause existing alert definition
 	// with intervals that are not exactly divided by this number
 	// not to be evaluated
-	baseIntervalSeconds = 10
-	// default alert definiiton interval
-	defaultIntervalSeconds int64 = 6 * baseIntervalSeconds
+	defaultBaseIntervalSeconds = 10
+	// default alert definition interval
+	defaultIntervalSeconds int64 = 6 * defaultBaseIntervalSeconds
 )
 
 func ProvideService(cfg *setting.Cfg, dataSourceCache datasources.CacheService, routeRegister routing.RouteRegister,
 	sqlStore *sqlstore.SQLStore, dataService *tsdb.Service, dataProxy *datasourceproxy.DataSourceProxyService,
-	quotaService *quota.QuotaService, backgroundServices *backgroundsvcs.Container) (*AlertNG, error) {
-	baseInterval := baseIntervalSeconds * time.Second
+	quotaService *quota.QuotaService, backgroundServices *backgroundsvcs.Container, m *metrics.Metrics) (*AlertNG, error) {
+	baseInterval := cfg.AlertingBaseIntervalSeconds
+	if baseInterval <= 0 {
+		baseInterval = defaultBaseIntervalSeconds
+	}
+	baseInterval *= time.Second
 	logger := log.New("ngalert")
 	store := &store.DBstore{
 		BaseInterval:           baseInterval,
@@ -51,7 +55,7 @@ func ProvideService(cfg *setting.Cfg, dataSourceCache datasources.CacheService, 
 		Logger:                 logger,
 	}
 
-	alertmanager, err := notifier.New(cfg, store, metrics.GlobalMetrics)
+	alertmanager, err := notifier.New(cfg, store, m)
 	if err != nil {
 		return nil, err
 	}
@@ -65,7 +69,7 @@ func ProvideService(cfg *setting.Cfg, dataSourceCache datasources.CacheService, 
 		InstanceStore: store,
 		RuleStore:     store,
 		Notifier:      alertmanager,
-		Metrics:       metrics.GlobalMetrics,
+		Metrics:       m,
 	}
 	schedule := schedule.NewScheduler(schedCfg, dataService)
 
@@ -77,13 +81,15 @@ func ProvideService(cfg *setting.Cfg, dataSourceCache datasources.CacheService, 
 		DataService:     dataService,
 		DataProxy:       dataProxy,
 		QuotaService:    quotaService,
-		Metrics:         metrics.GlobalMetrics,
+		Metrics:         m,
 		Log:             logger,
 		Alertmanager:    alertmanager,
-		stateManager:    state.NewManager(logger, metrics.GlobalMetrics),
+		stateManager:    state.NewManager(logger, m),
 		schedule:        schedule,
 	}
-	backgroundServices.AddBackgroundService(ng)
+	if backgroundServices != nil {
+		backgroundServices.AddBackgroundService(ng)
+	}
 	api := api.API{
 		Cfg:             ng.Cfg,
 		DatasourceCache: ng.DataSourceCache,

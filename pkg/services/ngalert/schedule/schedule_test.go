@@ -38,8 +38,9 @@ type evalAppliedInfo struct {
 }
 
 func TestWarmStateCache(t *testing.T) {
-	evaluationTime, _ := time.Parse("2006-01-02", "2021-03-25")
-	dbstore := tests.SetupTestEnv(t, 1)
+	evaluationTime, err := time.Parse("2006-01-02", "2021-03-25")
+	require.NoError(t, err)
+	_, dbstore := tests.SetupTestEnv(t, 1)
 
 	rule := tests.CreateTestAlertRule(t, dbstore, 600)
 
@@ -125,8 +126,7 @@ func TestWarmStateCache(t *testing.T) {
 }
 
 func TestAlertingTicker(t *testing.T) {
-	dbstore := tests.SetupTestEnv(t, 1)
-	t.Cleanup(registry.ClearOverrides)
+	_, dbstore := tests.SetupTestEnv(t, 1)
 
 	alerts := make([]*models.AlertRule, 0)
 

@@ -22,7 +22,10 @@ const (
 	ProxyBackend   = "proxy"
 )
 
-var GlobalMetrics = NewMetrics(prometheus.DefaultRegisterer)
+// ProvideService is a Metrics factory.
+func ProvideService() *Metrics {
+	return NewMetrics(prometheus.DefaultRegisterer)
+}
 
 type Metrics struct {
 	*metrics.Alerts
