@@ -35,13 +35,16 @@ func (c *cache) getOrCreate(alertRule *ngModels.AlertRule, result eval.Result) *
 	c.mtxStates.Lock()
 	defer c.mtxStates.Unlock()
 
-	ruleLabels, annotations := c.expandRuleLabelsAndAnnotations(alertRule, result)
+	templateData := make(map[string]string, len(result.Instance)+3)
+	for k, v := range result.Instance {
+		templateData[k] = v
+	}
+	attachRuleLabels(templateData, alertRule)
+	ruleLabels, annotations := c.expandRuleLabelsAndAnnotations(alertRule, templateData)
 
 	// if duplicate labels exist, alertRule label will take precedence
 	lbs := mergeLabels(ruleLabels, result.Instance)
-	lbs[ngModels.UIDLabel] = alertRule.UID
-	lbs[ngModels.NamespaceUIDLabel] = alertRule.NamespaceUID
-	lbs[prometheusModel.AlertNameLabel] = alertRule.Title
+	attachRuleLabels(lbs, alertRule)
 
 	il := ngModels.InstanceLabels(lbs)
 	id, err := il.StringKey()
@@ -57,6 +60,9 @@ func (c *cache) getOrCreate(alertRule *ngModels.AlertRule, result eval.Result) *
 	}
 
 	if state, ok := c.states[alertRule.OrgID][alertRule.UID][id]; ok {
+		// Annotations can change over time for the same alert.
+		state.Annotations = annotations
+		c.states[alertRule.OrgID][alertRule.UID][id] = state
 		return state
 	}
 
@@ -77,11 +83,17 @@ func (c *cache) getOrCreate(alertRule *ngModels.AlertRule, result eval.Result) *
 	return newState
 }
 
-func (c *cache) expandRuleLabelsAndAnnotations(alertRule *ngModels.AlertRule, result eval.Result) (map[string]string, map[string]string) {
+func attachRuleLabels(m map[string]string, alertRule *ngModels.AlertRule) {
+	m[ngModels.UIDLabel] = alertRule.UID
+	m[ngModels.NamespaceUIDLabel] = alertRule.NamespaceUID
+	m[prometheusModel.AlertNameLabel] = alertRule.Title
+}
+
+func (c *cache) expandRuleLabelsAndAnnotations(alertRule *ngModels.AlertRule, data map[string]string) (map[string]string, map[string]string) {
 	expand := func(original map[string]string) map[string]string {
 		expanded := make(map[string]string, len(original))
 		for k, v := range original {
-			ev, err := expandTemplate(alertRule.Title, v, result.Instance)
+			ev, err := expandTemplate(alertRule.Title, v, data)
 			expanded[k] = ev
 			if err != nil {
 				c.log.Error("error in expanding template", "name", k, "value", v, "err", err.Error())
@@ -98,7 +110,7 @@ func (c *cache) expandRuleLabelsAndAnnotations(alertRule *ngModels.AlertRule, re
 
 func expandTemplate(name, text string, data map[string]string) (result string, resultErr error) {
 	name = "__alert_" + name
-	text = "{{$labels := .Labels}}" + text
+	text = "{{- $labels := .Labels -}}" + text
 	// It'd better to have no alert description than to kill the whole process
 	// if there's a bug in the template.
 	defer func() {
