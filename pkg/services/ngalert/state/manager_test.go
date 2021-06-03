@@ -774,6 +774,55 @@ func TestProcessEvalResults(t *testing.T) {
 				},
 			},
 		},
+		{
+			desc: "template is correctly expanded",
+			alertRule: &models.AlertRule{
+				OrgID:           1,
+				Title:           "test_title",
+				UID:             "test_alert_rule_uid",
+				NamespaceUID:    "test_namespace_uid",
+				Annotations:     map[string]string{"summary": "{{$labels.pod}} is down in {{$labels.cluster}} cluster -> {{$labels.namespace}} namespace"},
+				Labels:          map[string]string{"label": "test", "job": "{{$labels.namespace}}/{{$labels.pod}}"},
+				IntervalSeconds: 10,
+			},
+			evalResults: []eval.Results{
+				{
+					eval.Result{
+						Instance:           data.Labels{"cluster": "us-central-1", "namespace": "prod", "pod": "grafana"},
+						State:              eval.Normal,
+						EvaluatedAt:        evaluationTime,
+						EvaluationDuration: evaluationDuration,
+					},
+				},
+			},
+			expectedStates: map[string]*state.State{
+				`[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid"],["alertname","test_title"],["cluster","us-central-1"],["job","prod/grafana"],["label","test"],["namespace","prod"],["pod","grafana"]]`: {
+					AlertRuleUID: "test_alert_rule_uid",
+					OrgID:        1,
+					CacheId:      `[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid"],["alertname","test_title"],["cluster","us-central-1"],["job","prod/grafana"],["label","test"],["namespace","prod"],["pod","grafana"]]`,
+					Labels: data.Labels{
+						"__alert_rule_namespace_uid__": "test_namespace_uid",
+						"__alert_rule_uid__":           "test_alert_rule_uid",
+						"alertname":                    "test_title",
+						"cluster":                      "us-central-1",
+						"namespace":                    "prod",
+						"pod":                          "grafana",
+						"label":                        "test",
+						"job":                          "prod/grafana",
+					},
+					State: eval.Normal,
+					Results: []state.Evaluation{
+						{
+							EvaluationTime:  evaluationTime,
+							EvaluationState: eval.Normal,
+						},
+					},
+					LastEvaluationTime: evaluationTime,
+					EvaluationDuration: evaluationDuration,
+					Annotations:        map[string]string{"summary": "grafana is down in us-central-1 cluster -> prod namespace"},
+				},
+			},
+		},
 	}
 
 	for _, tc := range testCases {

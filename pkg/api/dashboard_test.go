@@ -147,19 +147,6 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 		t.Run("When user is an Org Viewer", func(t *testing.T) {
 			role := models.ROLE_VIEWER
 
-			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/db/child-dash",
-				"/api/dashboards/db/:slug", role, func(sc *scenarioContext) {
-					state := setUp()
-
-					dash := getDashboardShouldReturn200(sc)
-
-					assert.Equal(t, "child-dash", state.dashQueries[0].Slug)
-
-					assert.False(t, dash.Meta.CanEdit)
-					assert.False(t, dash.Meta.CanSave)
-					assert.False(t, dash.Meta.CanAdmin)
-				})
-
 			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/uid/abcdefghi",
 				"/api/dashboards/uid/:uid", role, func(sc *scenarioContext) {
 					state := setUp()
@@ -171,20 +158,6 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 					assert.False(t, dash.Meta.CanEdit)
 					assert.False(t, dash.Meta.CanSave)
 					assert.False(t, dash.Meta.CanAdmin)
-				})
-
-			loggedInUserScenarioWithRole(t, "When calling DELETE on", "DELETE", "/api/dashboards/db/child-dash",
-				"/api/dashboards/db/:slug", role, func(sc *scenarioContext) {
-					state := setUp()
-
-					callDeleteDashboardBySlug(sc, &HTTPServer{
-						Cfg:                   setting.NewCfg(),
-						LibraryPanelService:   &mockLibraryPanelService{},
-						LibraryElementService: &mockLibraryElementService{},
-					})
-					assert.Equal(t, 403, sc.resp.Code)
-
-					assert.Equal(t, "child-dash", state.dashQueries[0].Slug)
 				})
 
 			loggedInUserScenarioWithRole(t, "When calling DELETE on", "DELETE", "/api/dashboards/uid/abcdefghi",
@@ -221,19 +194,6 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 		t.Run("When user is an Org Editor", func(t *testing.T) {
 			role := models.ROLE_EDITOR
 
-			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/db/child-dash",
-				"/api/dashboards/db/:slug", role, func(sc *scenarioContext) {
-					state := setUp()
-
-					dash := getDashboardShouldReturn200(sc)
-
-					assert.Equal(t, "child-dash", state.dashQueries[0].Slug)
-
-					assert.True(t, dash.Meta.CanEdit)
-					assert.True(t, dash.Meta.CanSave)
-					assert.False(t, dash.Meta.CanAdmin)
-				})
-
 			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/uid/abcdefghi",
 				"/api/dashboards/uid/:uid", role, func(sc *scenarioContext) {
 					state := setUp()
@@ -244,19 +204,6 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 					assert.True(t, dash.Meta.CanEdit)
 					assert.True(t, dash.Meta.CanSave)
 					assert.False(t, dash.Meta.CanAdmin)
-				})
-
-			loggedInUserScenarioWithRole(t, "When calling DELETE on", "DELETE", "/api/dashboards/db/child-dash",
-				"/api/dashboards/db/:slug", role, func(sc *scenarioContext) {
-					state := setUp()
-
-					callDeleteDashboardBySlug(sc, &HTTPServer{
-						Cfg:                   setting.NewCfg(),
-						LibraryPanelService:   &mockLibraryPanelService{},
-						LibraryElementService: &mockLibraryElementService{},
-					})
-					assert.Equal(t, 200, sc.resp.Code)
-					assert.Equal(t, "child-dash", state.dashQueries[0].Slug)
 				})
 
 			loggedInUserScenarioWithRole(t, "When calling DELETE on", "DELETE", "/api/dashboards/uid/abcdefghi",
@@ -356,16 +303,6 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 		t.Run("When user is an Org Viewer and has no permissions for this dashboard", func(t *testing.T) {
 			role := models.ROLE_VIEWER
 
-			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/db/child-dash",
-				"/api/dashboards/db/:slug", role, func(sc *scenarioContext) {
-					state := setUp()
-
-					sc.handlerFunc = hs.GetDashboard
-					sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
-					assert.Equal(t, "child-dash", state.dashQueries[0].Slug)
-					assert.Equal(t, 403, sc.resp.Code)
-				})
-
 			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/uid/abcdefghi",
 				"/api/dashboards/uid/:uid", role, func(sc *scenarioContext) {
 					state := setUp()
@@ -374,15 +311,6 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 					sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
 					assert.Equal(t, "abcdefghi", state.dashQueries[0].Uid)
 					assert.Equal(t, 403, sc.resp.Code)
-				})
-
-			loggedInUserScenarioWithRole(t, "When calling DELETE on", "DELETE", "/api/dashboards/db/child-dash",
-				"/api/dashboards/db/:slug", role, func(sc *scenarioContext) {
-					state := setUp()
-
-					callDeleteDashboardBySlug(sc, hs)
-					assert.Equal(t, 403, sc.resp.Code)
-					assert.Equal(t, "child-dash", state.dashQueries[0].Slug)
 				})
 
 			loggedInUserScenarioWithRole(t, "When calling DELETE on", "DELETE", "/api/dashboards/uid/abcdefghi",
@@ -414,17 +342,6 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 		t.Run("When user is an Org Editor and has no permissions for this dashboard", func(t *testing.T) {
 			role := models.ROLE_EDITOR
 
-			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/db/child-dash",
-				"/api/dashboards/db/:slug", role, func(sc *scenarioContext) {
-					state := setUp()
-
-					sc.handlerFunc = hs.GetDashboard
-					sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
-
-					assert.Equal(t, "child-dash", state.dashQueries[0].Slug)
-					assert.Equal(t, 403, sc.resp.Code)
-				})
-
 			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/uid/abcdefghi",
 				"/api/dashboards/uid/:uid", role, func(sc *scenarioContext) {
 					state := setUp()
@@ -434,15 +351,6 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 
 					assert.Equal(t, "abcdefghi", state.dashQueries[0].Uid)
 					assert.Equal(t, 403, sc.resp.Code)
-				})
-
-			loggedInUserScenarioWithRole(t, "When calling DELETE on", "DELETE", "/api/dashboards/db/child-dash",
-				"/api/dashboards/db/:slug", role, func(sc *scenarioContext) {
-					state := setUp()
-
-					callDeleteDashboardBySlug(sc, hs)
-					assert.Equal(t, 403, sc.resp.Code)
-					assert.Equal(t, "child-dash", state.dashQueries[0].Slug)
 				})
 
 			loggedInUserScenarioWithRole(t, "When calling DELETE on", "DELETE", "/api/dashboards/uid/abcdefghi",
@@ -487,22 +395,6 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				return state
 			}
 
-			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/db/child-dash",
-				"/api/dashboards/db/:slug", role, func(sc *scenarioContext) {
-					state := setUpInner()
-					bus.AddHandler("test", func(query *models.GetDashboardAclInfoListQuery) error {
-						query.Result = mockResult
-						return nil
-					})
-
-					dash := getDashboardShouldReturn200(sc)
-
-					assert.Equal(t, "child-dash", state.dashQueries[0].Slug)
-					assert.True(t, dash.Meta.CanEdit)
-					assert.True(t, dash.Meta.CanSave)
-					assert.False(t, dash.Meta.CanAdmin)
-				})
-
 			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/uid/abcdefghi",
 				"/api/dashboards/uid/:uid", role, func(sc *scenarioContext) {
 					state := setUpInner()
@@ -514,14 +406,6 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 					assert.True(t, dash.Meta.CanSave)
 					assert.False(t, dash.Meta.CanAdmin)
 				})
-
-			loggedInUserScenarioWithRole(t, "When calling DELETE on", "DELETE", "/api/dashboards/db/child-dash", "/api/dashboards/db/:slug", role, func(sc *scenarioContext) {
-				state := setUpInner()
-
-				callDeleteDashboardBySlug(sc, hs)
-				assert.Equal(t, 200, sc.resp.Code)
-				assert.Equal(t, "child-dash", state.dashQueries[0].Slug)
-			})
 
 			loggedInUserScenarioWithRole(t, "When calling DELETE on", "DELETE", "/api/dashboards/uid/abcdefghi", "/api/dashboards/uid/:uid", role, func(sc *scenarioContext) {
 				state := setUpInner()
@@ -570,17 +454,6 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				return state
 			}
 
-			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/db/child-dash", "/api/dashboards/db/:slug", role, func(sc *scenarioContext) {
-				state := setUpInner()
-
-				dash := getDashboardShouldReturn200(sc)
-
-				assert.Equal(t, "child-dash", state.dashQueries[0].Slug)
-				assert.True(t, dash.Meta.CanEdit)
-				assert.False(t, dash.Meta.CanSave)
-				assert.False(t, dash.Meta.CanAdmin)
-			})
-
 			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/uid/abcdefghi", "/api/dashboards/uid/:uid", role, func(sc *scenarioContext) {
 				state := setUpInner()
 
@@ -591,14 +464,6 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				assert.True(t, dash.Meta.CanEdit)
 				assert.False(t, dash.Meta.CanSave)
 				assert.False(t, dash.Meta.CanAdmin)
-			})
-
-			loggedInUserScenarioWithRole(t, "When calling DELETE on", "DELETE", "/api/dashboards/db/child-dash", "/api/dashboards/db/:slug", role, func(sc *scenarioContext) {
-				state := setUpInner()
-
-				callDeleteDashboardBySlug(sc, hs)
-				assert.Equal(t, 403, sc.resp.Code)
-				assert.Equal(t, "child-dash", state.dashQueries[0].Slug)
 			})
 
 			loggedInUserScenarioWithRole(t, "When calling DELETE on", "DELETE", "/api/dashboards/uid/abcdefghi", "/api/dashboards/uid/:uid", role, func(sc *scenarioContext) {
@@ -626,16 +491,6 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				return state
 			}
 
-			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/db/child-dash", "/api/dashboards/db/:slug", role, func(sc *scenarioContext) {
-				state := setUpInner()
-
-				dash := getDashboardShouldReturn200(sc)
-				assert.Equal(t, "child-dash", state.dashQueries[0].Slug)
-				assert.True(t, dash.Meta.CanEdit)
-				assert.True(t, dash.Meta.CanSave)
-				assert.True(t, dash.Meta.CanAdmin)
-			})
-
 			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/uid/abcdefghi", "/api/dashboards/uid/:uid", role, func(sc *scenarioContext) {
 				state := setUpInner()
 
@@ -645,14 +500,6 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				assert.True(t, dash.Meta.CanEdit)
 				assert.True(t, dash.Meta.CanSave)
 				assert.True(t, dash.Meta.CanAdmin)
-			})
-
-			loggedInUserScenarioWithRole(t, "When calling DELETE on", "DELETE", "/api/dashboards/db/child-dash", "/api/dashboards/db/:slug", role, func(sc *scenarioContext) {
-				state := setUpInner()
-
-				callDeleteDashboardBySlug(sc, hs)
-				assert.Equal(t, 200, sc.resp.Code)
-				assert.Equal(t, "child-dash", state.dashQueries[0].Slug)
 			})
 
 			loggedInUserScenarioWithRole(t, "When calling DELETE on", "DELETE", "/api/dashboards/uid/abcdefghi", "/api/dashboards/uid/:uid", role, func(sc *scenarioContext) {
@@ -694,16 +541,6 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				return state
 			}
 
-			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/db/child-dash", "/api/dashboards/db/:slug", role, func(sc *scenarioContext) {
-				state := setUpInner()
-
-				dash := getDashboardShouldReturn200(sc)
-
-				assert.Equal(t, "child-dash", state.dashQueries[0].Slug)
-				assert.False(t, dash.Meta.CanEdit)
-				assert.False(t, dash.Meta.CanSave)
-			})
-
 			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/uid/abcdefghi", "/api/dashboards/uid/:uid", role, func(sc *scenarioContext) {
 				state := setUpInner()
 
@@ -711,14 +548,6 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				assert.Equal(t, "abcdefghi", state.dashQueries[0].Uid)
 				assert.False(t, dash.Meta.CanEdit)
 				assert.False(t, dash.Meta.CanSave)
-			})
-
-			loggedInUserScenarioWithRole(t, "When calling DELETE on", "DELETE", "/api/dashboards/db/child-dash", "/api/dashboards/db/:slug", role, func(sc *scenarioContext) {
-				state := setUpInner()
-
-				callDeleteDashboardBySlug(sc, hs)
-				assert.Equal(t, 403, sc.resp.Code)
-				assert.Equal(t, "child-dash", state.dashQueries[0].Slug)
 			})
 
 			loggedInUserScenarioWithRole(t, "When calling DELETE on", "DELETE", "/api/dashboards/uid/abcdefghi", "/api/dashboards/uid/:uid", role, func(sc *scenarioContext) {
@@ -761,18 +590,6 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 			query.Result = dashboards
 			return nil
 		})
-
-		role := models.ROLE_EDITOR
-
-		loggedInUserScenarioWithRole(t, "When calling DELETE on", "DELETE", "/api/dashboards/db/dash",
-			"/api/dashboards/db/:slug", role, func(sc *scenarioContext) {
-				callDeleteDashboardBySlug(sc, &HTTPServer{Cfg: setting.NewCfg()})
-
-				assert.Equal(t, 412, sc.resp.Code)
-				result := sc.ToJSON()
-				assert.Equal(t, "multiple-slugs-exists", result.Get("status").MustString())
-				assert.Equal(t, models.ErrDashboardsWithSameSlugExists.Error(), result.Get("message").MustString())
-			})
 	})
 
 	t.Run("Post dashboard response tests", func(t *testing.T) {
@@ -1134,21 +951,6 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				return nil
 			})
 		}
-
-		loggedInUserScenarioWithRole(t, "When calling DELETE on", "DELETE", "/api/dashboards/db/dash",
-			"/api/dashboards/db/:slug", models.ROLE_EDITOR, func(sc *scenarioContext) {
-				setUp()
-
-				callDeleteDashboardBySlug(sc, &HTTPServer{
-					Cfg:                   setting.NewCfg(),
-					LibraryPanelService:   &mockLibraryPanelService{},
-					LibraryElementService: &mockLibraryElementService{},
-				})
-
-				assert.Equal(t, 400, sc.resp.Code)
-				result := sc.ToJSON()
-				assert.Equal(t, models.ErrDashboardCannotDeleteProvisionedDashboard.Error(), result.Get("error").MustString())
-			})
 
 		loggedInUserScenarioWithRole(t, "When calling DELETE on", "DELETE", "/api/dashboards/db/abcdefghi", "/api/dashboards/db/:uid", models.ROLE_EDITOR, func(sc *scenarioContext) {
 			setUp()
