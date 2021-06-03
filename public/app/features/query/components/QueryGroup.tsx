@@ -1,7 +1,17 @@
 // Libraries
 import React, { PureComponent } from 'react';
 // Components
-import { Button, CustomScrollbar, HorizontalGroup, Icon, Modal, stylesFactory, Tooltip } from '@grafana/ui';
+import {
+  Button,
+  CustomScrollbar,
+  HorizontalGroup,
+  Icon,
+  InlineFormLabel,
+  Modal,
+  ScrollbarPosition,
+  stylesFactory,
+  Tooltip,
+} from '@grafana/ui';
 import { getDataSourceSrv, DataSourcePicker } from '@grafana/runtime';
 import { QueryEditorRows } from './QueryEditorRows';
 // Services
@@ -192,6 +202,7 @@ export class QueryGroup extends PureComponent<Props, State> {
     return (
       <div>
         <div className={styles.dataSourceRow}>
+          <InlineFormLabel width={'auto'}>Data source</InlineFormLabel>
           <div className={styles.dataSourceRowItem}>
             <DataSourcePicker
               onChange={this.onChangeDataSource}
@@ -275,9 +286,8 @@ export class QueryGroup extends PureComponent<Props, State> {
     this.onScrollBottom();
   };
 
-  setScrollTop = (event: React.MouseEvent<HTMLElement>) => {
-    const target = event.target as HTMLElement;
-    this.setState({ scrollTop: target.scrollTop });
+  setScrollTop = ({ scrollTop }: ScrollbarPosition) => {
+    this.setState({ scrollTop: scrollTop });
   };
 
   onQueriesChange = (queries: DataQuery[]) => {

@@ -16,10 +16,9 @@ export class TempoQueryField extends React.PureComponent<Props, State> {
   state = {
     linkedDatasource: undefined,
   };
-  linkedQuery: DataQuery;
+
   constructor(props: Props) {
     super(props);
-    this.linkedQuery = { refId: 'linked' };
   }
 
   async componentDidMount() {
@@ -38,10 +37,9 @@ export class TempoQueryField extends React.PureComponent<Props, State> {
 
   onChangeLinkedQuery = (value: DataQuery) => {
     const { query, onChange } = this.props;
-    this.linkedQuery = value;
     onChange({
       ...query,
-      linkedQuery: this.linkedQuery,
+      linkedQuery: { ...value, refId: 'linked' },
     });
   };
 
@@ -50,10 +48,8 @@ export class TempoQueryField extends React.PureComponent<Props, State> {
   };
 
   render() {
-    const { query, onChange, range } = this.props;
+    const { query, onChange } = this.props;
     const { linkedDatasource } = this.state;
-
-    const absoluteTimeRange = { from: range!.from!.valueOf(), to: range!.to!.valueOf() }; // Range here is never optional
 
     return (
       <>
@@ -85,9 +81,8 @@ export class TempoQueryField extends React.PureComponent<Props, State> {
               datasource={linkedDatasource!}
               onChange={this.onChangeLinkedQuery}
               onRunQuery={this.onRunLinkedQuery}
-              query={this.linkedQuery as any}
+              query={this.props.query.linkedQuery ?? ({ refId: 'linked' } as any)}
               history={[]}
-              absoluteRange={absoluteTimeRange}
             />
           </>
         )}

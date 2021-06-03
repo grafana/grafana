@@ -10,12 +10,23 @@ import {
   FALLBACK_COLOR,
   FieldType,
   ArrayVector,
+  FieldColorModeId,
+  getValueFormat,
+  ThresholdsMode,
+  GrafanaTheme2,
 } from '@grafana/data';
-import { UPlotConfigBuilder, FIXED_UNIT, SeriesVisibilityChangeMode, UPlotConfigPrepFn } from '@grafana/ui';
+import {
+  UPlotConfigBuilder,
+  FIXED_UNIT,
+  SeriesVisibilityChangeMode,
+  UPlotConfigPrepFn,
+  VizLegendOptions,
+  VizLegendItem,
+} from '@grafana/ui';
 import { TimelineCoreOptions, getConfig } from './timeline';
 import { AxisPlacement, ScaleDirection, ScaleOrientation } from '@grafana/ui/src/components/uPlot/config';
-import { measureText } from '@grafana/ui/src/utils/measureText';
 import { TimelineFieldConfig, TimelineOptions } from './types';
+import { PlotTooltipInterpolator } from '@grafana/ui/src/components/uPlot/types';
 
 const defaultConfig: TimelineFieldConfig = {
   lineWidth: 0,
@@ -69,14 +80,6 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<TimelineOptions> = ({
     return FALLBACK_COLOR;
   };
 
-  const yAxisWidth =
-    frame.fields.reduce((maxWidth, field) => {
-      return Math.max(
-        maxWidth,
-        measureText(getFieldDisplayName(field, frame), Math.round(10 * devicePixelRatio)).width
-      );
-    }, 0) + 24;
-
   const opts: TimelineCoreOptions = {
     // should expose in panel config
     mode: mode!,
@@ -93,20 +96,49 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<TimelineOptions> = ({
     getTimeRange,
     // hardcoded formatter for state values
     formatValue: (seriesIdx, value) => formattedValueToString(frame.fields[seriesIdx].display!(value)),
-    // TODO: unimplemeted for now
-    onHover: (seriesIdx: number, valueIdx: number) => {
-      console.log('hover', { seriesIdx, valueIdx });
+    onHover: (seriesIndex, valueIndex) => {
+      hoveredSeriesIdx = seriesIndex;
+      hoveredDataIdx = valueIndex;
+      shouldChangeHover = true;
     },
-    onLeave: (seriesIdx: number, valueIdx: number) => {
-      console.log('leave', { seriesIdx, valueIdx });
+    onLeave: () => {
+      hoveredSeriesIdx = null;
+      hoveredDataIdx = null;
+      shouldChangeHover = true;
     },
   };
+
+  let shouldChangeHover = false;
+  let hoveredSeriesIdx: number | null = null;
+  let hoveredDataIdx: number | null = null;
 
   const coreConfig = getConfig(opts);
 
   builder.addHook('init', coreConfig.init);
   builder.addHook('drawClear', coreConfig.drawClear);
   builder.addHook('setCursor', coreConfig.setCursor);
+
+  // in TooltipPlugin, this gets invoked and the result is bound to a setCursor hook
+  // which fires after the above setCursor hook, so can take advantage of hoveringOver
+  // already set by the above onHover/onLeave callbacks that fire from coreConfig.setCursor
+  const interpolateTooltip: PlotTooltipInterpolator = (
+    updateActiveSeriesIdx,
+    updateActiveDatapointIdx,
+    updateTooltipPosition
+  ) => (u: uPlot) => {
+    if (shouldChangeHover) {
+      if (hoveredSeriesIdx != null) {
+        updateActiveSeriesIdx(hoveredSeriesIdx);
+        updateActiveDatapointIdx(hoveredDataIdx);
+      }
+
+      shouldChangeHover = false;
+    }
+
+    updateTooltipPosition(hoveredSeriesIdx == null);
+  };
+
+  builder.setTooltipInterpolator(interpolateTooltip);
 
   builder.setCursor(coreConfig.cursor);
 
@@ -143,7 +175,6 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<TimelineOptions> = ({
     values: coreConfig.yValues,
     grid: false,
     ticks: false,
-    size: yAxisWidth,
     gap: 16,
     theme,
   });
@@ -177,11 +208,8 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<TimelineOptions> = ({
       theme,
       show: !customConfig.hideFrom?.viz,
       thresholds: config.thresholds,
-
       // The following properties are not used in the uPlot config, but are utilized as transport for legend config
       dataFrameFieldIndex: field.state?.origin,
-      fieldName: getFieldDisplayName(field, frame),
-      hideInLegend: customConfig.hideFrom?.legend,
     });
   }
 
@@ -290,4 +318,105 @@ export function prepareTimelineFields(
     return { warn: 'No graphable fields' };
   }
   return { frames };
+}
+
+export function prepareTimelineLegendItems(
+  frames: DataFrame[] | undefined,
+  options: VizLegendOptions,
+  theme: GrafanaTheme2
+): VizLegendItem[] | undefined {
+  if (!frames || options.displayMode === 'hidden') {
+    return undefined;
+  }
+
+  const fields = allNonTimeFields(frames);
+  if (!fields.length) {
+    return undefined;
+  }
+
+  const items: VizLegendItem[] = [];
+  const fieldConfig = fields[0].config;
+  const colorMode = fieldConfig.color?.mode ?? FieldColorModeId.Fixed;
+  const thresholds = fieldConfig.thresholds;
+
+  // If thresholds are enabled show each step in the legend
+  if (colorMode === FieldColorModeId.Thresholds && thresholds?.steps && thresholds.steps.length > 1) {
+    const steps = thresholds.steps;
+    const disp = getValueFormat(thresholds.mode === ThresholdsMode.Percentage ? 'percent' : fieldConfig.unit ?? '');
+
+    const fmt = (v: number) => formattedValueToString(disp(v));
+
+    for (let i = 1; i <= steps.length; i++) {
+      const step = steps[i - 1];
+      items.push({
+        label: i === 1 ? `< ${fmt(steps[i].value)}` : `${fmt(step.value)}+`,
+        color: theme.visualization.getColorByName(step.color),
+        yAxis: 1,
+      });
+    }
+
+    return items;
+  }
+
+  // If thresholds are enabled show each step in the legend
+  if (colorMode.startsWith('continuous')) {
+    return undefined; // eventually a color bar
+  }
+
+  let stateColors: Map<string, string | undefined> = new Map();
+
+  fields.forEach((field) => {
+    field.values.toArray().forEach((v) => {
+      let state = field.display!(v);
+      stateColors.set(state.text, state.color!);
+    });
+  });
+
+  stateColors.forEach((color, label) => {
+    if (label.length > 0) {
+      items.push({
+        label: label!,
+        color: theme.visualization.getColorByName(color ?? FALLBACK_COLOR),
+        yAxis: 1,
+      });
+    }
+  });
+
+  return items;
+}
+
+function allNonTimeFields(frames: DataFrame[]): Field[] {
+  const fields: Field[] = [];
+  for (const frame of frames) {
+    for (const field of frame.fields) {
+      if (field.type !== FieldType.time) {
+        fields.push(field);
+      }
+    }
+  }
+  return fields;
+}
+
+export function findNextStateIndex(field: Field, datapointIdx: number) {
+  let end;
+  let rightPointer = datapointIdx + 1;
+
+  if (rightPointer === field.values.length) {
+    return null;
+  }
+
+  while (end === undefined) {
+    if (rightPointer === field.values.length) {
+      return null;
+    }
+    const rightValue = field.values.get(rightPointer);
+
+    if (rightValue !== undefined) {
+      end = rightPointer;
+    } else {
+      rightPointer++;
+    }
+  }
+
+  return end;
 }

@@ -107,8 +107,6 @@ export class AngularApp {
 
     monkeyPatchInjectorWithPreAssignedBindings(injector);
 
-    console.log('Angular app bootstrap');
-
     injector.invoke(() => {
       this.preBootModules.forEach((module) => {
         extend(module, this.registerFunctions);

@@ -14,8 +14,8 @@ describe('createGraphFrames', () => {
       id: '4322526419282105830',
       title: 'loki-all',
       subTitle: 'store.validateQueryTimeRange',
-      mainStat: 'total: 0ms (0.02%)',
-      secondaryStat: 'self: 0ms (100%)',
+      mainStat: '0ms (0.02%)',
+      secondaryStat: '0ms (100%)',
       color: 0.00021968356127648162,
     });
 
@@ -23,8 +23,8 @@ describe('createGraphFrames', () => {
       id: '4450900759028499335',
       title: 'loki-all',
       subTitle: 'HTTP GET - loki_api_v1_query_range',
-      mainStat: 'total: 18.21ms (100%)',
-      secondaryStat: 'self: 3.22ms (17.71%)',
+      mainStat: '18.21ms (100%)',
+      secondaryStat: '3.22ms (17.71%)',
       color: 0.17707117189595056,
     });
 
@@ -44,8 +44,8 @@ describe('createGraphFrames', () => {
       id: '4322526419282105830',
       title: 'loki-all',
       subTitle: 'store.validateQueryTimeRange',
-      mainStat: 'total: 14.98ms (100%)',
-      secondaryStat: 'self: 14.98ms (100%)',
+      mainStat: '14.98ms (100%)',
+      secondaryStat: '14.98ms (100%)',
       color: 1.000007560204647,
     });
   });

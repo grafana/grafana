@@ -1,20 +1,15 @@
 import React, { PureComponent } from 'react';
 import { UserDTO, UserOrg } from 'app/types';
-import { LoadingPlaceholder, Button } from '@grafana/ui';
+import { Button, LoadingPlaceholder } from '@grafana/ui';
 
 export interface Props {
-  user: UserDTO;
+  user: UserDTO | null;
   orgs: UserOrg[];
   isLoading: boolean;
-  loadOrgs: () => void;
   setUserOrg: (org: UserOrg) => void;
 }
 
 export class UserOrganizations extends PureComponent<Props> {
-  componentDidMount() {
-    this.props.loadOrgs();
-  }
-
   render() {
     const { isLoading, orgs, user } = this.props;
 
@@ -30,7 +25,7 @@ export class UserOrganizations extends PureComponent<Props> {
       <div>
         <h3 className="page-sub-heading">Organizations</h3>
         <div className="gf-form-group">
-          <table className="filter-table form-inline">
+          <table className="filter-table form-inline" aria-label="User organizations table">
             <thead>
               <tr>
                 <th>Name</th>
@@ -45,7 +40,7 @@ export class UserOrganizations extends PureComponent<Props> {
                     <td>{org.name}</td>
                     <td>{org.role}</td>
                     <td className="text-right">
-                      {org.orgId === user.orgId ? (
+                      {org.orgId === user?.orgId ? (
                         <Button variant="secondary" size="sm" disabled>
                           Current
                         </Button>

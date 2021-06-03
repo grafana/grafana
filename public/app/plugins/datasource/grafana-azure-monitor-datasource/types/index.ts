@@ -10,6 +10,12 @@ import Datasource from '../datasource';
 export type AzureDataSourceSettings = DataSourceSettings<AzureDataSourceJsonData, AzureDataSourceSecureJsonData>;
 export type AzureDataSourceInstanceSettings = DataSourceInstanceSettings<AzureDataSourceJsonData>;
 
+export interface DatasourceValidationResult {
+  status: 'success' | 'error';
+  message: string;
+  title?: string;
+}
+
 export type AzureResultFormat = 'time_series' | 'table';
 
 export enum AzureQueryType {
@@ -33,22 +39,48 @@ export interface AzureMonitorQuery extends DataQuery {
   azureResourceGraph: AzureResourceGraphQuery;
 }
 
+/**
+ * Azure clouds known to Azure Monitor.
+ */
+export enum AzureCloud {
+  Public = 'AzureCloud',
+  China = 'AzureChinaCloud',
+  USGovernment = 'AzureUSGovernment',
+  Germany = 'AzureGermanCloud',
+  None = '',
+}
+
+export type AzureAuthType = 'msi' | 'clientsecret';
+
 export type ConcealedSecret = symbol;
 
-export interface AzureCredentials {
+interface AzureCredentialsBase {
+  authType: AzureAuthType;
+  defaultSubscriptionId?: string;
+}
+
+export interface AzureManagedIdentityCredentials extends AzureCredentialsBase {
+  authType: 'msi';
+}
+
+export interface AzureClientSecretCredentials extends AzureCredentialsBase {
+  authType: 'clientsecret';
   azureCloud?: string;
   tenantId?: string;
   clientId?: string;
   clientSecret?: string | ConcealedSecret;
 }
 
+export type AzureCredentials = AzureManagedIdentityCredentials | AzureClientSecretCredentials;
+
 export interface AzureDataSourceJsonData extends DataSourceJsonData {
   cloudName: string;
+  azureAuthType?: AzureAuthType;
 
   // monitor
   tenantId?: string;
   clientId?: string;
-  subscriptionId: string;
+  subscriptionId?: string;
 
   // logs
   azureLogAnalyticsSameAs?: boolean;
@@ -91,7 +123,10 @@ export interface AzureMetricQuery {
 export interface AzureLogsQuery {
   query: string;
   resultFormat: string;
-  workspace: string;
+  resource?: string;
+
+  /** @deprecated Queries should be migrated to use Resource instead */
+  workspace?: string;
 }
 
 export interface AzureResourceGraphQuery {
@@ -187,9 +222,36 @@ export interface AzureMonitorOption<T = string> {
 export interface AzureQueryEditorFieldProps {
   query: AzureMonitorQuery;
   datasource: Datasource;
-  subscriptionId: string;
+  subscriptionId?: string;
   variableOptionGroup: { label: string; options: AzureMonitorOption[] };
 
   onQueryChange: (newQuery: AzureMonitorQuery) => void;
   setError: (source: string, error: AzureMonitorErrorish | undefined) => void;
+}
+
+export interface AzureResourceSummaryItem {
+  subscriptionName: string;
+  resourceGroupName: string | undefined;
+  resourceName: string | undefined;
+}
+
+export interface RawAzureResourceGroupItem {
+  subscriptionURI: string;
+  subscriptionName: string;
+
+  resourceGroupURI: string;
+  resourceGroupName: string;
+}
+
+export interface RawAzureResourceItem {
+  id: string;
+  name: string;
+  subscriptionId: string;
+  resourceGroup: string;
+  type: string;
+  location: string;
+}
+
+export interface AzureGraphResponse<T = unknown> {
+  data: T;
 }

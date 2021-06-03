@@ -85,7 +85,6 @@ export class StatPanel extends PureComponent<PanelProps<StatPanelOptions>> {
 
     return getFieldDisplayValues({
       fieldConfig,
-      ensureGlobalRange: true,
       reduceOptions: options.reduceOptions,
       replaceVariables,
       theme: config.theme2,

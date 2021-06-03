@@ -39,7 +39,7 @@ const AmRoutes: FC = () => {
     (alertManagerSourceName && amConfigs[alertManagerSourceName]) || initialAsyncRequestState;
 
   const config = result?.alertmanager_config;
-  const routes = useMemo(() => amRouteToFormAmRoute(config?.route), [config?.route]);
+  const [routes, id2ExistingRoute] = useMemo(() => amRouteToFormAmRoute(config?.route), [config?.route]);
 
   const receivers = stringsToSelectableValues(
     (config?.receivers ?? []).map((receiver: Receiver) => receiver.name)
@@ -59,10 +59,13 @@ const AmRoutes: FC = () => {
   );
 
   const handleSave = (data: Partial<FormAmRoute>) => {
-    const newData = formAmRouteToAmRoute({
-      ...routes,
-      ...data,
-    });
+    const newData = formAmRouteToAmRoute(
+      {
+        ...routes,
+        ...data,
+      },
+      id2ExistingRoute
+    );
 
     if (isRootRouteEditMode) {
       exitRootRouteEditMode();

@@ -145,8 +145,6 @@ export const getCardStyles = stylesFactory((theme: GrafanaTheme2) => {
     media: css`
       margin-right: ${theme.spacing(2)};
       width: 40px;
-      display: flex;
-      align-items: center;
 
       & > * {
         width: 100%;
@@ -254,8 +252,8 @@ const BaseActions: FC<ActionsProps> = ({ children, styles, disabled, variant }) 
   return (
     <div className={css}>
       {Array.isArray(children)
-        ? React.Children.map(children, (child) => cloneElement(child, { disabled }))
-        : cloneElement(children, { disabled })}
+        ? React.Children.map(children, (child) => cloneElement(child, { disabled, ...child.props }))
+        : cloneElement(children, { disabled, ...children.props })}
     </div>
   );
 };

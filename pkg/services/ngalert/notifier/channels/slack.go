@@ -10,14 +10,11 @@ import (
 	"net"
 	"net/http"
 	"net/url"
-	"path"
 	"regexp"
 	"strings"
 	"time"
 
-	gokit_log "github.com/go-kit/kit/log"
 	"github.com/prometheus/alertmanager/config"
-	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 
@@ -25,7 +22,6 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	old_notifiers "github.com/grafana/grafana/pkg/services/alerting/notifiers"
-	"github.com/grafana/grafana/pkg/services/ngalert/logging"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -246,10 +242,11 @@ var sendSlackRequest = func(request *http.Request, logger log.Logger) error {
 }
 
 func (sn *SlackNotifier) buildSlackMessage(ctx context.Context, as []*types.Alert) (*slackMessage, error) {
-	data := notify.GetTemplateData(ctx, sn.tmpl, as, gokit_log.NewLogfmtLogger(logging.NewWrapper(sn.log)))
 	alerts := types.Alerts(as...)
 	var tmplErr error
-	tmpl := notify.TmplText(sn.tmpl, data, &tmplErr)
+	tmpl, _ := TmplText(ctx, sn.tmpl, as, sn.log, &tmplErr)
+
+	ruleURL := joinUrlPath(sn.tmpl.ExternalURL.String(), "/alerting/list", sn.log)
 
 	req := &slackMessage{
 		Channel:   tmpl(sn.Recipient),
@@ -264,14 +261,14 @@ func (sn *SlackNotifier) buildSlackMessage(ctx context.Context, as []*types.Aler
 				Footer:     "Grafana v" + setting.BuildVersion,
 				FooterIcon: FooterIconURL,
 				Ts:         time.Now().Unix(),
-				TitleLink:  path.Join(sn.tmpl.ExternalURL.String(), "/alerting/list"),
+				TitleLink:  ruleURL,
 				Text:       tmpl(sn.Text),
 				Fields:     nil, // TODO. Should be a config.
 			},
 		},
 	}
 	if tmplErr != nil {
-		return nil, fmt.Errorf("failed to template Slack message: %w", tmplErr)
+		sn.log.Debug("failed to template Slack message", "err", tmplErr.Error())
 	}
 
 	mentionsBuilder := strings.Builder{}

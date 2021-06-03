@@ -6,7 +6,7 @@ export { Tooltip, PopoverContent } from './Tooltip/Tooltip';
 export { PopoverController } from './Tooltip/PopoverController';
 export { Popover } from './Tooltip/Popover';
 export { Portal } from './Portal/Portal';
-export { CustomScrollbar } from './CustomScrollbar/CustomScrollbar';
+export { CustomScrollbar, ScrollbarPosition } from './CustomScrollbar/CustomScrollbar';
 export { TabbedContainer, TabConfig } from './TabbedContainer/TabbedContainer';
 
 export { ClipboardButton } from './ClipboardButton/ClipboardButton';
@@ -79,6 +79,7 @@ export {
   VizTooltipOptions,
   TooltipDisplayMode,
   SeriesTableProps,
+  SeriesTableRow,
   SeriesTableRowProps,
 } from './VizTooltip';
 export { VizRepeater, VizRepeaterRenderValueProps } from './VizRepeater/VizRepeater';
@@ -239,6 +240,7 @@ export { PlotLegend } from './uPlot/PlotLegend';
 export * from './uPlot/geometries';
 export * from './uPlot/plugins';
 export { usePlotContext } from './uPlot/context';
+export { PlotTooltipInterpolator } from './uPlot/types';
 export { GraphNG, GraphNGProps, FIXED_UNIT } from './GraphNG/GraphNG';
 export { TimeSeries } from './TimeSeries/TimeSeries';
 export { useGraphNGContext } from './GraphNG/hooks';

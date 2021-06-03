@@ -51,7 +51,7 @@ export class CentrifugeSrv implements GrafanaLiveSrv {
   readonly connectionState: BehaviorSubject<boolean>;
   readonly connectionBlocker: Promise<void>;
   readonly scopes: Record<LiveChannelScope, GrafanaLiveScope>;
-  private orgId: number;
+  private readonly orgId: number;
 
   constructor() {
     const baseURL = window.location.origin.replace('http', 'ws');
@@ -64,7 +64,9 @@ export class CentrifugeSrv implements GrafanaLiveSrv {
       sessionId,
       orgId: this.orgId,
     });
-    this.centrifuge.connect(); // do connection
+    if (config.liveEnabled) {
+      this.centrifuge.connect(); // do connection
+    }
     this.connectionState = new BehaviorSubject<boolean>(this.centrifuge.isConnected());
     this.connectionBlocker = new Promise<void>((resolve) => {
       if (this.centrifuge.isConnected()) {
@@ -95,12 +97,10 @@ export class CentrifugeSrv implements GrafanaLiveSrv {
   //----------------------------------------------------------
 
   onConnect = (context: any) => {
-    console.log('CONNECT', context);
     this.connectionState.next(true);
   };
 
   onDisconnect = (context: any) => {
-    console.log('onDisconnect', context);
     this.connectionState.next(false);
   };
 
@@ -219,6 +219,7 @@ export class CentrifugeSrv implements GrafanaLiveSrv {
       let filtered: DataFrame | undefined = undefined;
       let state = LoadingState.Streaming;
       let last = perf.last;
+      let lastWidth = -1;
 
       const process = (msg: DataFrameJSON) => {
         if (!data) {
@@ -227,9 +228,11 @@ export class CentrifugeSrv implements GrafanaLiveSrv {
           data.push(msg);
         }
         state = LoadingState.Streaming;
+        const sameWidth = lastWidth === data.fields.length;
+        lastWidth = data.fields.length;
 
         // Filter out fields
-        if (!filtered || msg.schema) {
+        if (!filtered || msg.schema || !sameWidth) {
           filtered = data;
           if (options.filter) {
             const { fields } = options.filter;

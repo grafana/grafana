@@ -22,7 +22,6 @@ import { getTimeField } from '../dataframe/processDataFrame';
 import { getFieldMatcher } from '../transformations';
 import { FieldMatcherID } from '../transformations/matchers/ids';
 import { getFieldDisplayName } from './fieldState';
-import { ensureGlobalRangeOnState } from './scale';
 
 /**
  * Options for how to turn DataFrames into an array of display values
@@ -74,13 +73,12 @@ export interface GetFieldDisplayValuesOptions {
   sparkline?: boolean; // Calculate the sparkline
   theme: GrafanaTheme2;
   timeZone?: TimeZone;
-  ensureGlobalRange?: boolean;
 }
 
 export const DEFAULT_FIELD_DISPLAY_VALUES_LIMIT = 25;
 
 export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): FieldDisplay[] => {
-  const { replaceVariables, reduceOptions, timeZone } = options;
+  const { replaceVariables, reduceOptions, timeZone, theme } = options;
   const calcs = reduceOptions.calcs.length ? reduceOptions.calcs : [ReducerID.last];
 
   const values: FieldDisplay[] = [];
@@ -100,10 +98,6 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
   const scopedVars: ScopedVars = {};
 
   let hitLimit = false;
-
-  if (options.ensureGlobalRange) {
-    ensureGlobalRangeOnState(data);
-  }
 
   for (let s = 0; s < data.length && !hitLimit; s++) {
     const dataFrame = data[s]; // Name is already set
@@ -158,6 +152,8 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
             }
           }
 
+          field.state = setIndexForPaletteColor(field, values.length);
+
           const displayValue = display(field.values.get(j));
 
           if (displayName !== '') {
@@ -167,6 +163,11 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
             });
           } else {
             displayValue.title = getSmartDisplayNameForRow(dataFrame, field, j);
+          }
+
+          const overrideColor = lookupRowColorFromOverride(displayValue, options.fieldConfig);
+          if (overrideColor) {
+            displayValue.color = theme.visualization.getColorByName(overrideColor);
           }
 
           values.push({
@@ -273,6 +274,32 @@ function getSmartDisplayNameForRow(frame: DataFrame, field: Field, rowIndex: num
   }
 
   return parts.join(' ');
+}
+
+/**
+ * Palette color modes use series index (field index) which does not work for when displaing rows
+ * So updating seriesIndex here makes the palette color modes work in "All values" mode
+ */
+function setIndexForPaletteColor(field: Field, currentLength: number) {
+  return {
+    ...field.state,
+    seriesIndex: currentLength,
+  };
+}
+
+/**
+ * This function makes overrides that set color work for row values
+ */
+function lookupRowColorFromOverride(display: DisplayValue, fieldConfig: FieldConfigSource) {
+  for (const override of fieldConfig.overrides) {
+    if (override.matcher.id === 'byName' && override.matcher.options === display.title) {
+      for (const prop of override.properties) {
+        if (prop.id === 'color' && prop.value) {
+          return prop.value.fixedColor;
+        }
+      }
+    }
+  }
 }
 
 export function hasLinks(field: Field): boolean {

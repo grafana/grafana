@@ -8,6 +8,7 @@ import (
 	"testing/fstest"
 
 	"github.com/grafana/grafana/pkg/schema/load"
+	"github.com/laher/mergefs"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -35,7 +36,7 @@ func TestValidateScuemataBasics(t *testing.T) {
 		filesystem := fstest.MapFS{
 			"cue/data/gen.cue": &fstest.MapFile{Data: genCue},
 		}
-		mergedFS := load.Merge(filesystem, defaultBaseLoadPaths.BaseCueFS)
+		mergedFS := mergefs.Merge(filesystem, defaultBaseLoadPaths.BaseCueFS)
 
 		var baseLoadPaths = load.BaseLoadPaths{
 			BaseCueFS:       mergedFS,
@@ -53,7 +54,7 @@ func TestValidateScuemataBasics(t *testing.T) {
 		filesystem := fstest.MapFS{
 			"cue/data/gen.cue": &fstest.MapFile{Data: genCue},
 		}
-		mergedFS := load.Merge(filesystem, defaultBaseLoadPaths.BaseCueFS)
+		mergedFS := mergefs.Merge(filesystem, defaultBaseLoadPaths.BaseCueFS)
 
 		var baseLoadPaths = load.BaseLoadPaths{
 			BaseCueFS:       mergedFS,
@@ -78,7 +79,7 @@ func TestValidateScuemataBasics(t *testing.T) {
 			"valid.json":   &fstest.MapFile{Data: validPanel},
 			"invalid.json": &fstest.MapFile{Data: invalidPanel},
 		}
-		mergedFS := load.Merge(filesystem, defaultBaseLoadPaths.BaseCueFS)
+		mergedFS := mergefs.Merge(filesystem, defaultBaseLoadPaths.BaseCueFS)
 
 		var baseLoadPaths = load.BaseLoadPaths{
 			BaseCueFS:       mergedFS,
@@ -110,7 +111,7 @@ func TestValidateScuemataBasics(t *testing.T) {
 					require.NoError(t, err, "failed to open dashboard file")
 
 					err = validateResources(b, baseLoadPaths, load.BaseDashboardFamily)
-					assert.EqualError(t, err, "failed validation: Family.lineages.0.0.panels.0.fieldConfig.defaults: field mappings not allowed")
+					assert.EqualError(t, err, "failed validation: Family.lineages.0.0.panels.0.type: incomplete value !=\"\"")
 				})
 			}
 

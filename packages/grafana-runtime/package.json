@@ -46,5 +46,8 @@
     "rollup-plugin-visualizer": "4.2.0",
     "typescript": "4.2.4"
   },
-  "types": "src/index.ts"
+  "types": "src/index.ts",
+  "volta": {
+    "extends": "../../package.json"
+  }
 }

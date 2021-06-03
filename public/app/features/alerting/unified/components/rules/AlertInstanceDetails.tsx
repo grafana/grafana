@@ -8,7 +8,7 @@ interface Props {
 }
 
 export const AlertInstanceDetails: FC<Props> = ({ instance }) => {
-  const annotations = Object.entries(instance.annotations || {}) || [];
+  const annotations = (Object.entries(instance.annotations || {}) || []).filter(([_, value]) => !!value.trim());
 
   return (
     <div>

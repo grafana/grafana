@@ -1,11 +1,7 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { DataFrame, dateTime } from '@grafana/data';
+import { dateTime } from '@grafana/data';
 import alertDef from './alertDef';
 import {
-  AlertDefinition,
-  AlertDefinitionDTO,
-  AlertDefinitionState,
-  AlertDefinitionUiState,
   AlertRule,
   AlertRuleDTO,
   AlertRulesState,
@@ -13,11 +9,7 @@ import {
   NotificationChannelState,
   NotifierDTO,
 } from 'app/types';
-import store from 'app/core/store';
 import unifiedAlertingReducer from '../unified/state/reducers';
-
-export const ALERT_DEFINITION_UI_STATE_STORAGE_KEY = 'grafana.alerting.alertDefinition.ui';
-const DEFAULT_ALERT_DEFINITION_UI_STATE: AlertDefinitionUiState = { rightPaneSize: 400, topPaneSize: 0.45 };
 
 export const initialState: AlertRulesState = {
   items: [],
@@ -29,24 +21,6 @@ export const initialChannelState: NotificationChannelState = {
   notificationChannelTypes: [],
   notificationChannel: {},
   notifiers: [],
-};
-
-export const initialAlertDefinitionState: AlertDefinitionState = {
-  alertDefinition: {
-    id: 0,
-    uid: '',
-    title: '',
-    description: '',
-    condition: '',
-    data: [],
-    intervalSeconds: 60,
-  },
-  uiState: { ...store.getObject(ALERT_DEFINITION_UI_STATE_STORAGE_KEY, DEFAULT_ALERT_DEFINITION_UI_STATE) },
-  data: [],
-  alertDefinitions: [] as AlertDefinition[],
-  /* These are functions as they are mutated later on and redux toolkit will Object.freeze state so
-   * we need to store these using functions instead */
-  getInstances: () => [] as DataFrame[],
 };
 
 function convertToAlertRule(dto: AlertRuleDTO, state: string): AlertRule {
@@ -135,41 +109,6 @@ const notificationChannelSlice = createSlice({
   },
 });
 
-const alertDefinitionSlice = createSlice({
-  name: 'alertDefinition',
-  initialState: initialAlertDefinitionState,
-  reducers: {
-    setAlertDefinition: (state: AlertDefinitionState, action: PayloadAction<AlertDefinitionDTO>) => {
-      state.alertDefinition.title = action.payload.title;
-      state.alertDefinition.id = action.payload.id;
-      state.alertDefinition.uid = action.payload.uid;
-      state.alertDefinition.condition = action.payload.condition;
-      state.alertDefinition.intervalSeconds = action.payload.intervalSeconds;
-      state.alertDefinition.data = action.payload.data;
-      state.alertDefinition.description = action.payload.description;
-    },
-    updateAlertDefinitionOptions: (state: AlertDefinitionState, action: PayloadAction<Partial<AlertDefinition>>) => {
-      state.alertDefinition = { ...state.alertDefinition, ...action.payload };
-    },
-    setUiState: (state: AlertDefinitionState, action: PayloadAction<AlertDefinitionUiState>) => {
-      state.uiState = { ...state.uiState, ...action.payload };
-    },
-    setAlertDefinitions: (state: AlertDefinitionState, action: PayloadAction<AlertDefinition[]>) => {
-      state.alertDefinitions = action.payload;
-    },
-    setInstanceData: (state: AlertDefinitionState, action: PayloadAction<DataFrame[]>) => {
-      state.getInstances = () => action.payload;
-    },
-    cleanUpState: (state: AlertDefinitionState, action: PayloadAction<undefined>) => {
-      state.alertDefinitions = initialAlertDefinitionState.alertDefinitions;
-      state.alertDefinition = initialAlertDefinitionState.alertDefinition;
-      state.data = initialAlertDefinitionState.data;
-      state.getInstances = initialAlertDefinitionState.getInstances;
-      state.uiState = initialAlertDefinitionState.uiState;
-    },
-  },
-});
-
 export const { loadAlertRules, loadedAlertRules, setSearchQuery } = alertRulesSlice.actions;
 
 export const {
@@ -178,23 +117,12 @@ export const {
   resetSecureField,
 } = notificationChannelSlice.actions;
 
-export const {
-  setUiState,
-  updateAlertDefinitionOptions,
-  setAlertDefinitions,
-  setAlertDefinition,
-  setInstanceData,
-  cleanUpState,
-} = alertDefinitionSlice.actions;
-
 export const alertRulesReducer = alertRulesSlice.reducer;
 export const notificationChannelReducer = notificationChannelSlice.reducer;
-export const alertDefinitionsReducer = alertDefinitionSlice.reducer;
 
 export default {
   alertRules: alertRulesReducer,
   notificationChannel: notificationChannelReducer,
-  alertDefinition: alertDefinitionsReducer,
   unifiedAlerting: unifiedAlertingReducer,
 };
 

@@ -78,9 +78,11 @@ var (
 	// HTTP server options
 	DataProxyLogging               bool
 	DataProxyTimeout               int
+	DataProxyDialTimeout           int
 	DataProxyTLSHandshakeTimeout   int
 	DataProxyExpectContinueTimeout int
 	DataProxyMaxIdleConns          int
+	DataProxyMaxIdleConnsPerHost   int
 	DataProxyKeepAlive             int
 	DataProxyIdleConnTimeout       int
 	StaticRootPath                 string
@@ -251,15 +253,16 @@ type Cfg struct {
 	// CSPTemplate contains the Content Security Policy template.
 	CSPTemplate string
 
-	TempDataLifetime         time.Duration
-	PluginsEnableAlpha       bool
-	PluginsAppsSkipVerifyTLS bool
-	PluginSettings           PluginSettings
-	PluginsAllowUnsigned     []string
-	CatalogURL               string
-	CatalogAppEnabled        bool
-	DisableSanitizeHtml      bool
-	EnterpriseLicensePath    string
+	TempDataLifetime                 time.Duration
+	PluginsEnableAlpha               bool
+	PluginsAppsSkipVerifyTLS         bool
+	PluginSettings                   PluginSettings
+	PluginsAllowUnsigned             []string
+	PluginCatalogURL                 string
+	PluginAdminEnabled               bool
+	PluginAdminExternalManageEnabled bool
+	DisableSanitizeHtml              bool
+	EnterpriseLicensePath            string
 
 	// Metrics
 	MetricsEndpointEnabled           bool
@@ -377,6 +380,11 @@ type Cfg struct {
 	ExpressionsEnabled bool
 
 	ImageUploadProvider string
+
+	// LiveMaxConnections is a maximum number of WebSocket connections to
+	// Grafana Live ws endpoint (per Grafana server instance). 0 disables
+	// Live, -1 means unlimited connections.
+	LiveMaxConnections int
 }
 
 // IsLiveConfigEnabled returns true if live should be able to save configs to SQL tables
@@ -822,11 +830,13 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	// read data proxy settings
 	dataproxy := iniFile.Section("dataproxy")
 	DataProxyLogging = dataproxy.Key("logging").MustBool(false)
-	DataProxyTimeout = dataproxy.Key("timeout").MustInt(30)
+	DataProxyTimeout = dataproxy.Key("timeout").MustInt(10)
+	DataProxyDialTimeout = dataproxy.Key("dialTimeout").MustInt(30)
 	DataProxyKeepAlive = dataproxy.Key("keep_alive_seconds").MustInt(30)
 	DataProxyTLSHandshakeTimeout = dataproxy.Key("tls_handshake_timeout_seconds").MustInt(10)
 	DataProxyExpectContinueTimeout = dataproxy.Key("expect_continue_timeout_seconds").MustInt(1)
 	DataProxyMaxIdleConns = dataproxy.Key("max_idle_connections").MustInt(100)
+	DataProxyMaxIdleConnsPerHost = dataproxy.Key("max_idle_connections_per_host").MustInt(2)
 	DataProxyIdleConnTimeout = dataproxy.Key("idle_conn_timeout_seconds").MustInt(90)
 	cfg.SendUserHeader = dataproxy.Key("send_user_header").MustBool(false)
 
@@ -890,8 +900,9 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 		plug = strings.TrimSpace(plug)
 		cfg.PluginsAllowUnsigned = append(cfg.PluginsAllowUnsigned, plug)
 	}
-	cfg.CatalogURL = pluginsSection.Key("catalog_url").MustString("https://grafana.com/grafana/plugins/")
-	cfg.CatalogAppEnabled = pluginsSection.Key("catalog_app_enabled").MustBool(false)
+	cfg.PluginCatalogURL = pluginsSection.Key("plugin_catalog_url").MustString("https://grafana.com/grafana/plugins/")
+	cfg.PluginAdminEnabled = pluginsSection.Key("plugin_admin_enabled").MustBool(false)
+	cfg.PluginAdminExternalManageEnabled = pluginsSection.Key("plugin_admin_external_manage_enabled").MustBool(false)
 
 	// Read and populate feature toggles list
 	featureTogglesSection := iniFile.Section("feature_toggles")
@@ -948,6 +959,10 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 
 	cfg.readDateFormats()
 	cfg.readSentryConfig()
+
+	if err := cfg.readLiveSettings(iniFile); err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -1418,4 +1433,13 @@ func (cfg *Cfg) GetContentDeliveryURL(prefix string) string {
 func (cfg *Cfg) readDataSourcesSettings() {
 	datasources := cfg.Raw.Section("datasources")
 	cfg.DataSourceLimit = datasources.Key("datasource_limit").MustInt(5000)
+}
+
+func (cfg *Cfg) readLiveSettings(iniFile *ini.File) error {
+	section := iniFile.Section("live")
+	cfg.LiveMaxConnections = section.Key("max_connections").MustInt(100)
+	if cfg.LiveMaxConnections < -1 {
+		return fmt.Errorf("unexpected value %d for [live] max_connections", cfg.LiveMaxConnections)
+	}
+	return nil
 }

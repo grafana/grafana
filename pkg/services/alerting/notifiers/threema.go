@@ -19,7 +19,7 @@ func init() {
 	alerting.RegisterNotifier(&alerting.NotifierPlugin{
 		Type:        "threema",
 		Name:        "Threema Gateway",
-		Description: "Sends notifications to Threema using the Threema Gateway",
+		Description: "Sends notifications to Threema using Threema Gateway (Basic IDs)",
 		Heading:     "Threema Gateway settings",
 		Info: "Notifications can be configured for any Threema Gateway ID of type \"Basic\". End-to-End IDs are not currently supported." +
 			"The Threema Gateway ID can be set up at https://gateway.threema.ch/.",
@@ -30,7 +30,7 @@ func init() {
 				Element:        alerting.ElementTypeInput,
 				InputType:      alerting.InputTypeText,
 				Placeholder:    "*3MAGWID",
-				Description:    "Your 8 character Threema Gateway ID (starting with a *).",
+				Description:    "Your 8 character Threema Gateway Basic ID (starting with a *).",
 				PropertyName:   "gateway_id",
 				Required:       true,
 				ValidationRule: "\\*[0-9A-Z]{7}",
