@@ -144,6 +144,25 @@ type GettableStatus struct {
 	VersionInfo *amv2.VersionInfo `json:"versionInfo"`
 }
 
+func (s *GettableStatus) UnmarshalJSON(b []byte) error {
+	amStatus := amv2.AlertmanagerStatus{}
+	if err := json.Unmarshal(b, &amStatus); err != nil {
+		return err
+	}
+
+	c := Config{}
+	if err := yaml.Unmarshal([]byte(*amStatus.Config.Original), &c); err != nil {
+		return err
+	}
+
+	s.Cluster = amStatus.Cluster
+	s.Config = &PostableApiAlertingConfig{Config: c}
+	s.Uptime = amStatus.Uptime
+	s.VersionInfo = amStatus.VersionInfo
+
+	return nil
+}
+
 func NewGettableStatus(cfg *PostableApiAlertingConfig) *GettableStatus {
 	// In Grafana, the only field we support is Config.
 	cs := amv2.ClusterStatusStatusDisabled
@@ -518,10 +537,6 @@ type Config struct {
 	Templates    []string              `yaml:"templates" json:"templates"`
 }
 
-// Config is the entrypoint for the embedded Alertmanager config with the exception of receivers.
-// Prometheus historically uses yaml files as the method of configuration and thus some
-// post-validation is included in the UnmarshalYAML method. Here we simply run this with
-// a noop unmarshaling function in order to benefit from said validation.
 func (c *Config) UnmarshalJSON(b []byte) error {
 	type plain Config
 	if err := json.Unmarshal(b, (*plain)(c)); err != nil {
