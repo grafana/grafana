@@ -57,7 +57,6 @@ describe('Validate email', () => {
   // NOTE (nicolalamacchia): some of these tests were taken from Chromium's source code
   test('email validator should return undefined if the passed email is valid', () => {
     expect(validators.validateEmail('test@example.org')).toBeUndefined();
-    expect(validators.validateEmail('test@example')).toBeUndefined();
     expect(validators.validateEmail('someone@127.0.0.1')).toBeUndefined();
     expect(validators.validateEmail("!#$%&'*+/=?^_`{|}~.-@com.com")).toBeUndefined();
     expect(validators.validateEmail('te..st@example.com')).toBeUndefined();
@@ -65,6 +64,7 @@ describe('Validate email', () => {
 
   test('email validator should return an error string if the passed email is invalid', () => {
     expect(validators.validateEmail('test')).toEqual('Invalid email address');
+    expect(validators.validateEmail('test@example')).toEqual('Invalid email address');
     expect(validators.validateEmail('invalid:email@example.com')).toEqual('Invalid email address');
     expect(validators.validateEmail('someone@somewhere.com.')).toEqual('Invalid email address');
     expect(validators.validateEmail('""test\blah""@example.com')).toEqual('Invalid email address');

@@ -49,6 +49,7 @@ export const SignUp: FC<LoginFormProps> = ({ changeMode, getSettings }) => {
         label={Messages.emailLabel}
         validators={[validators.required, validators.validateEmail]}
         showErrorOnBlur
+        parse={(value) => value.trim()}
       />
       <TextInputField
         data-qa="sign-up-first-name-input"
@@ -56,6 +57,7 @@ export const SignUp: FC<LoginFormProps> = ({ changeMode, getSettings }) => {
         label={Messages.firstNameLabel}
         validators={[validators.required, validators.maxLength(MAX_NAME_LENGTH)]}
         showErrorOnBlur
+        parse={(value) => value.trim()}
       />
       <TextInputField
         data-qa="sign-up-last-name-input"
@@ -63,6 +65,7 @@ export const SignUp: FC<LoginFormProps> = ({ changeMode, getSettings }) => {
         label={Messages.lastNameLabel}
         validators={[validators.required, validators.maxLength(MAX_NAME_LENGTH)]}
         showErrorOnBlur
+        parse={(value) => value.trim()}
       />
       <CheckboxField
         label={<CheckboxLabel />}

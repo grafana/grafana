@@ -37,6 +37,7 @@ export const SignIn: FC<LoginFormProps> = ({ changeMode, getSettings }) => {
         label={Messages.emailLabel}
         validators={[validators.required, validators.validateEmail]}
         showErrorOnBlur
+        parse={(value) => value.trim()}
       />
       <PasswordInputField
         data-qa="sign-in-password-input"
