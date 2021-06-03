@@ -1,4 +1,4 @@
-package live
+package survey
 
 import (
 	"context"
@@ -7,14 +7,13 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/live/managedstream"
-
 	"github.com/centrifugal/centrifuge"
+	"github.com/grafana/grafana/pkg/services/live/managedstream"
 )
 
-type SurveyCaller struct {
-	live *GrafanaLive
-	node *centrifuge.Node
+type Caller struct {
+	managedStreamRunner *managedstream.Runner
+	node                *centrifuge.Node
 }
 
 const (
@@ -22,11 +21,11 @@ const (
 	numChannelSubscribersCall = "num_channel_subscribers"
 )
 
-func NewSurveyCaller(live *GrafanaLive, node *centrifuge.Node) *SurveyCaller {
-	return &SurveyCaller{live: live, node: node}
+func NewCaller(managedStreamRunner *managedstream.Runner, node *centrifuge.Node) *Caller {
+	return &Caller{managedStreamRunner: managedStreamRunner, node: node}
 }
 
-func (c *SurveyCaller) SetupHandlers() error {
+func (c *Caller) SetupHandlers() error {
 	c.node.OnSurvey(c.handleSurvey)
 	return nil
 }
@@ -47,7 +46,7 @@ type NumChannelSubscribersResponse struct {
 	Num int `json:"num_subscribers"`
 }
 
-func (c *SurveyCaller) handleSurvey(e centrifuge.SurveyEvent, cb centrifuge.SurveyCallback) {
+func (c *Caller) handleSurvey(e centrifuge.SurveyEvent, cb centrifuge.SurveyCallback) {
 	var (
 		resp interface{}
 		err  error
@@ -75,13 +74,13 @@ func (c *SurveyCaller) handleSurvey(e centrifuge.SurveyEvent, cb centrifuge.Surv
 	})
 }
 
-func (c *SurveyCaller) handleManagedStreams(data []byte) (interface{}, error) {
+func (c *Caller) handleManagedStreams(data []byte) (interface{}, error) {
 	var req NodeManagedChannelsRequest
 	err := json.Unmarshal(data, &req)
 	if err != nil {
 		return nil, err
 	}
-	channels, err := c.live.getManagedChannels(req.OrgID)
+	channels, err := c.managedStreamRunner.GetManagedChannels(req.OrgID)
 	if err != nil {
 		return nil, err
 	}
@@ -90,7 +89,7 @@ func (c *SurveyCaller) handleManagedStreams(data []byte) (interface{}, error) {
 	}, nil
 }
 
-func (c *SurveyCaller) handleNumChannelSubscribers(data []byte) (interface{}, error) {
+func (c *Caller) handleNumChannelSubscribers(data []byte) (interface{}, error) {
 	var req NumChannelSubscribersRequest
 	err := json.Unmarshal(data, &req)
 	if err != nil {
@@ -102,7 +101,7 @@ func (c *SurveyCaller) handleNumChannelSubscribers(data []byte) (interface{}, er
 	}, nil
 }
 
-func (c *SurveyCaller) CallManagedStreams(orgID int64) ([]*managedstream.ManagedChannel, error) {
+func (c *Caller) CallManagedStreams(orgID int64) ([]*managedstream.ManagedChannel, error) {
 	req := NodeManagedChannelsRequest{OrgID: orgID}
 	jsonData, err := json.Marshal(req)
 	if err != nil {
@@ -140,7 +139,7 @@ func (c *SurveyCaller) CallManagedStreams(orgID int64) ([]*managedstream.Managed
 	return channels, nil
 }
 
-func (c *SurveyCaller) CallNumChannelSubscribers(channelID string) (int, error) {
+func (c *Caller) CallNumChannelSubscribers(channelID string) (int, error) {
 	req := NumChannelSubscribersRequest{Channel: channelID}
 	jsonData, err := json.Marshal(req)
 	if err != nil {

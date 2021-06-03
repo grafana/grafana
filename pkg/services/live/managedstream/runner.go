@@ -35,6 +35,38 @@ func NewRunner(publisher models.ChannelPublisher, frameCache FrameCache) *Runner
 	}
 }
 
+func (r *Runner) GetManagedChannels(orgID int64) ([]*ManagedChannel, error) {
+	channels := make([]*ManagedChannel, 0)
+	for _, v := range r.Streams(orgID) {
+		streamChannels, err := v.ListChannels(orgID)
+		if err != nil {
+			return nil, err
+		}
+		channels = append(channels, streamChannels...)
+	}
+
+	// Hardcode sample streams
+	frameJSON, err := data.FrameToJSON(data.NewFrame("testdata",
+		data.NewField("Time", nil, make([]time.Time, 0)),
+		data.NewField("Value", nil, make([]float64, 0)),
+		data.NewField("Min", nil, make([]float64, 0)),
+		data.NewField("Max", nil, make([]float64, 0)),
+	), data.IncludeSchemaOnly)
+	if err == nil {
+		channels = append(channels, &ManagedChannel{
+			Channel: "plugin/testdata/random-2s-stream",
+			Data:    frameJSON,
+		}, &ManagedChannel{
+			Channel: "plugin/testdata/random-flakey-stream",
+			Data:    frameJSON,
+		}, &ManagedChannel{
+			Channel: "plugin/testdata/random-20Hz-stream",
+			Data:    frameJSON,
+		})
+	}
+	return channels, nil
+}
+
 // Streams returns a map of active managed streams (per streamID).
 func (r *Runner) Streams(orgID int64) map[string]*ManagedStream {
 	r.mu.RLock()
