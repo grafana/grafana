@@ -1,26 +1,18 @@
 +++
-title = "Pie chart panel"
+title = "Pie chart"
 keywords = ["grafana", "pie chart"]
 weight = 850
 +++
 
-# Pie chart panel
+# Pie chart
 
 The pie chart displays reduced series, or values in a series, from one or more queries, as they relate to each other, in the form of slices of a pie. The arc length, area and central angle of a slice are all proportional to the slices value, as it relates to the sum of all values. This type of chart is best used when you want a quick comparison of a small set of values in an aesthetically pleasing form.
 
 ![Pie chart panel](/static/img/docs/pie-chart-panel/pie-chart-panel-7-5.png)
 
-## Data and field options
+## Value options
 
-Pie chart visualizations allow you to apply:
-
-- [Data transformations]({{< relref "../transformations/_index.md" >}})
-- [Field overrides]({{< relref "../field-overrides.md" >}})
-- [Thresholds]({{< relref "../thresholds.md" >}})
-
-## Display options
-
-Use the following options to refine your visualization:
+Use the following options to refine the value in your visualization.
 
 ### Show
 
@@ -45,15 +37,19 @@ Select which field or fields to display in the visualization. Each field name is
 - **All fields -** All fields that are not removed by transformations.
 - **Time -** All fields with time values.
 
+## Pie chart options
+
+Use these options to refine how your visualization looks.
+
 ### Pie chart type
 
 Select the pie chart display style.
 
-#### Pie
+### Pie
 
 ![Pie type chart](/static/img/docs/pie-chart-panel/pie-type-chart-7-5.png)
 
-#### Donut
+### Donut
 
 ![Donut type chart](/static/img/docs/pie-chart-panel/donut-type-chart-7-5.png)
 
