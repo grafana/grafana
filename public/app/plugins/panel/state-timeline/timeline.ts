@@ -1,6 +1,6 @@
-import uPlot, { Series, Cursor } from 'uplot';
+import uPlot, { Cursor, Series } from 'uplot';
 import { FIXED_UNIT } from '@grafana/ui/src/components/GraphNG/GraphNG';
-import { Quadtree, Rect, pointWithin } from 'app/plugins/panel/barchart/quadtree';
+import { pointWithin, Quadtree, Rect } from 'app/plugins/panel/barchart/quadtree';
 import { distribute, SPACE_BETWEEN } from 'app/plugins/panel/barchart/distribute';
 import { TimelineFieldConfig, TimelineMode, TimelineValueAlignment } from './types';
 import { GrafanaTheme2, TimeRange } from '@grafana/data';
@@ -47,8 +47,8 @@ export interface TimelineCoreOptions {
   getTimeRange: () => TimeRange;
   formatValue?: (seriesIdx: number, value: any) => string;
   getFieldConfig: (seriesIdx: number) => TimelineFieldConfig;
-  onHover?: (seriesIdx: number, valueIdx: number) => void;
-  onLeave?: (seriesIdx: number, valueIdx: number) => void;
+  onHover?: (seriesIdx: number, valueIdx: number, rect: Rect) => void;
+  onLeave?: () => void;
 }
 
 /**
@@ -69,8 +69,8 @@ export function getConfig(opts: TimelineCoreOptions) {
     getTimeRange,
     getValueColor,
     getFieldConfig,
-    // onHover,
-    // onLeave,
+    onHover,
+    onLeave,
   } = opts;
 
   let qt: Quadtree;
@@ -382,16 +382,24 @@ export function getConfig(opts: TimelineCoreOptions) {
     hovered[i] = o;
   }
 
+  let hoveredAtCursor: Rect | null = null;
+
   function hoverMulti(cx: number, cy: number) {
+    let foundAtCursor: Rect | null = null;
+
     for (let i = 0; i < numSeries; i++) {
       let found: Rect | null = null;
 
       if (cx >= 0) {
-        cy = yMids[i];
+        let cy2 = yMids[i];
 
-        qt.get(cx, cy, 1, 1, (o) => {
-          if (pointWithin(cx, cy, o.x, o.y, o.x + o.w, o.y + o.h)) {
+        qt.get(cx, cy2, 1, 1, (o) => {
+          if (pointWithin(cx, cy2, o.x, o.y, o.x + o.w, o.y + o.h)) {
             found = o;
+
+            if (Math.abs(cy - cy2) <= o.h / 2) {
+              foundAtCursor = o;
+            }
           }
         });
       }
@@ -404,21 +412,40 @@ export function getConfig(opts: TimelineCoreOptions) {
         setHoverMark(i, null);
       }
     }
+
+    if (foundAtCursor) {
+      if (foundAtCursor !== hoveredAtCursor) {
+        hoveredAtCursor = foundAtCursor;
+        // @ts-ignore
+        onHover && onHover(foundAtCursor.sidx, foundAtCursor.didx, foundAtCursor);
+      }
+    } else if (hoveredAtCursor) {
+      hoveredAtCursor = null;
+      onLeave && onLeave();
+    }
   }
 
   function hoverOne(cx: number, cy: number) {
-    let found: Rect | null = null;
+    let foundAtCursor: Rect | null = null;
 
     qt.get(cx, cy, 1, 1, (o) => {
       if (pointWithin(cx, cy, o.x, o.y, o.x + o.w, o.y + o.h)) {
-        found = o;
+        foundAtCursor = o;
       }
     });
 
-    if (found) {
-      setHoverMark(0, found);
-    } else if (hovered[0] != null) {
+    if (foundAtCursor) {
+      setHoverMark(0, foundAtCursor);
+
+      if (foundAtCursor !== hoveredAtCursor) {
+        hoveredAtCursor = foundAtCursor;
+        // @ts-ignore
+        onHover && onHover(foundAtCursor.sidx, foundAtCursor.didx, foundAtCursor);
+      }
+    } else if (hoveredAtCursor) {
       setHoverMark(0, null);
+      hoveredAtCursor = null;
+      onLeave && onLeave();
     }
   }
 
