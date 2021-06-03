@@ -351,7 +351,7 @@ _Time to live_ (TTL) is the time that a query result is stored in the caching sy
 
 ### max_value_mb
 
-This value limits the size of a single cache value. If a cache value (or query result) is submitted that exceeds this size, then it will not be cached. To disable this limit, set this value to `0`.
+This value limits the size of a single cache value. If a cache value (or query result) exceeds this size, then it is not cached. To disable this limit, set this value to `0`.
 
 ## [caching.memory]
 
