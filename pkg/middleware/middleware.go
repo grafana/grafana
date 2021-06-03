@@ -48,7 +48,7 @@ func AddDefaultResponseHeaders(cfg *setting.Cfg) macaron.Handler {
 
 // addSecurityHeaders adds HTTP(S) response headers that enable various security protections in the client's browser.
 func addSecurityHeaders(w macaron.ResponseWriter, cfg *setting.Cfg) {
-	if (cfg.Protocol == setting.HTTPSScheme || cfg.Protocol == setting.HTTP2Scheme) && cfg.StrictTransportSecurity {
+	if cfg.StrictTransportSecurity {
 		strictHeaderValues := []string{fmt.Sprintf("max-age=%v", cfg.StrictTransportSecurityMaxAge)}
 		if cfg.StrictTransportSecurityPreload {
 			strictHeaderValues = append(strictHeaderValues, "preload")
