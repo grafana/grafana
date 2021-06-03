@@ -1,9 +1,11 @@
 package state
 
 import (
+	"bytes"
 	"fmt"
 	"strings"
 	"sync"
+	text_template "text/template"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
@@ -33,16 +35,21 @@ func (c *cache) getOrCreate(alertRule *ngModels.AlertRule, result eval.Result) *
 	c.mtxStates.Lock()
 	defer c.mtxStates.Unlock()
 
+	templateData := make(map[string]string, len(result.Instance)+3)
+	for k, v := range result.Instance {
+		templateData[k] = v
+	}
+	attachRuleLabels(templateData, alertRule)
+	ruleLabels, annotations := c.expandRuleLabelsAndAnnotations(alertRule, templateData)
+
 	// if duplicate labels exist, alertRule label will take precedence
-	lbs := mergeLabels(alertRule.Labels, result.Instance)
-	lbs[ngModels.UIDLabel] = alertRule.UID
-	lbs[ngModels.NamespaceUIDLabel] = alertRule.NamespaceUID
-	lbs[prometheusModel.AlertNameLabel] = alertRule.Title
+	lbs := mergeLabels(ruleLabels, result.Instance)
+	attachRuleLabels(lbs, alertRule)
 
 	il := ngModels.InstanceLabels(lbs)
 	id, err := il.StringKey()
 	if err != nil {
-		c.log.Error("error getting cacheId for entry", "msg", err.Error())
+		c.log.Error("error getting cacheId for entry", "err", err.Error())
 	}
 
 	if _, ok := c.states[alertRule.OrgID]; !ok {
@@ -53,12 +60,10 @@ func (c *cache) getOrCreate(alertRule *ngModels.AlertRule, result eval.Result) *
 	}
 
 	if state, ok := c.states[alertRule.OrgID][alertRule.UID][id]; ok {
+		// Annotations can change over time for the same alert.
+		state.Annotations = annotations
+		c.states[alertRule.OrgID][alertRule.UID][id] = state
 		return state
-	}
-
-	annotations := map[string]string{}
-	if len(alertRule.Annotations) > 0 {
-		annotations = alertRule.Annotations
 	}
 
 	// If the first result we get is alerting, set StartsAt to EvaluatedAt because we
@@ -76,6 +81,62 @@ func (c *cache) getOrCreate(alertRule *ngModels.AlertRule, result eval.Result) *
 	}
 	c.states[alertRule.OrgID][alertRule.UID][id] = newState
 	return newState
+}
+
+func attachRuleLabels(m map[string]string, alertRule *ngModels.AlertRule) {
+	m[ngModels.UIDLabel] = alertRule.UID
+	m[ngModels.NamespaceUIDLabel] = alertRule.NamespaceUID
+	m[prometheusModel.AlertNameLabel] = alertRule.Title
+}
+
+func (c *cache) expandRuleLabelsAndAnnotations(alertRule *ngModels.AlertRule, data map[string]string) (map[string]string, map[string]string) {
+	expand := func(original map[string]string) map[string]string {
+		expanded := make(map[string]string, len(original))
+		for k, v := range original {
+			ev, err := expandTemplate(alertRule.Title, v, data)
+			expanded[k] = ev
+			if err != nil {
+				c.log.Error("error in expanding template", "name", k, "value", v, "err", err.Error())
+				// Store the original template on error.
+				expanded[k] = v
+			}
+		}
+
+		return expanded
+	}
+
+	return expand(alertRule.Labels), expand(alertRule.Annotations)
+}
+
+func expandTemplate(name, text string, data map[string]string) (result string, resultErr error) {
+	name = "__alert_" + name
+	text = "{{- $labels := .Labels -}}" + text
+	// It'd better to have no alert description than to kill the whole process
+	// if there's a bug in the template.
+	defer func() {
+		if r := recover(); r != nil {
+			var ok bool
+			resultErr, ok = r.(error)
+			if !ok {
+				resultErr = fmt.Errorf("panic expanding template %v: %v", name, r)
+			}
+		}
+	}()
+
+	tmpl, err := text_template.New(name).Option("missingkey=zero").Parse(text)
+	if err != nil {
+		return "", fmt.Errorf("error parsing template %v: %s", name, err.Error())
+	}
+	var buffer bytes.Buffer
+	err = tmpl.Execute(&buffer, struct {
+		Labels map[string]string
+	}{
+		Labels: data,
+	})
+	if err != nil {
+		return "", fmt.Errorf("error executing template %v: %s", name, err.Error())
+	}
+	return buffer.String(), nil
 }
 
 func (c *cache) set(entry *State) {
