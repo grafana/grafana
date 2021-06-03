@@ -2,6 +2,7 @@
 title = "Bar chart"
 description = "Bar chart visualization"
 keywords = ["grafana", "docs", "bar chart", "panel", "barchart"]
+weight = 170
 +++
 
 # Bar chart
