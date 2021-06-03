@@ -481,7 +481,7 @@ func InitTestDB(t ITestDB, opts ...InitTestDBOpt) *SQLStore {
 		engine.DatabaseTZ = time.UTC
 		engine.TZLocation = time.UTC
 
-		testSQLStore, err = newSQLStore(cfg, localcache.New(5*time.Minute, 10*time.Minute), bus.New(), engine, opts...)
+		testSQLStore, err = newSQLStore(cfg, localcache.New(5*time.Minute, 10*time.Minute), bus.GetBus(), engine, opts...)
 		if err != nil {
 			t.Fatalf("Failed to init test database: %s", err)
 		}
