@@ -349,16 +349,15 @@ This value is `true` by default.
 
 _Time to live_ (TTL) is the time that a query result is stored in the caching system before it is deleted or refreshed. This setting defines the time to live for query caching, when TTL is not configured in data source settings. The default value is `5m` (5 minutes).
 
+### max_value_mb
+
+This value limits the size of a single cache value. If a cache value (or query result) is submitted that exceeds this size, then it will not be cached. To disable this limit, set this value to `0`.
+
 ## [caching.memory]
 
 ### gc_interval
 
 When storing cache data in-memory, this setting defines how often a background process cleans up stale data from the in-memory cache. More frequent "garbage collection" can keep memory usage from climbing but will increase CPU usage.
-
-### max_value_mb
-
-This value limits the size of a single cache value. If a cache value (or query result) is submitted that exceeds this size, then it will not be cached. To disable this limit, set this value to `0`.
-
 
 ### max_size_mb
 
