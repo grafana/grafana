@@ -21,7 +21,7 @@ To access Loki settings, click the **Configuration** (gear) icon, then click **D
 | Name                  | Description                                                                                                                                               |
 | --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `Name`                | The data source name. This is how you refer to the data source in panels, queries, and Explore.                                                           |
-| `Default`             | Default data source means that it will be pre-selected for new panels.                                                                                    |
+| `Default`             | Default data source that is pre-selected for new panels.                                                                                    |
 | `URL`                 | URL of the Loki instance, e.g., `http://localhost:3100`.                                                                                             |
 | `Whitelisted Cookies` | Grafana Proxy deletes forwarded cookies by default. Specify cookies by name that should be forwarded to the data source.                                  |
 | `Maximum lines`       | Upper limit for the number of log lines returned by Loki (default is 1000). Lower this limit if your browser is sluggish when displaying logs in Explore. |
