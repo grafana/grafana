@@ -90,7 +90,6 @@
     "@testing-library/user-event": "^12.1.3",
     "@types/angular": "1.6.56",
     "@types/angular-route": "1.7.0",
-    "@types/braintree__sanitize-url": "4.0.0",
     "@types/classnames": "2.2.9",
     "@types/clipboard": "2.0.1",
     "@types/common-tags": "^1.8.0",
