@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"reflect"
 
+	"github.com/go-openapi/strfmt"
+
 	"github.com/pkg/errors"
 	amv2 "github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/alertmanager/config"
@@ -123,19 +125,30 @@ type GetSilencesParams struct {
 }
 
 // swagger:model
-type GettableStatus amv2.AlertmanagerStatus
+type GettableStatus struct {
+	// cluster
+	// Required: true
+	Cluster *amv2.ClusterStatus `json:"cluster"`
 
-func NewGettableStatus(cfg *PostableApiAlertingConfig) (*GettableStatus, error) {
-	blob, err := json.Marshal(cfg)
-	if err != nil {
-		return nil, err
-	}
-	toString := string(blob)
+	// config
+	// Required: true
+	Config *PostableApiAlertingConfig `json:"config"`
 
+	// uptime
+	// Required: true
+	// Format: date-time
+	Uptime *strfmt.DateTime `json:"uptime"`
+
+	// version info
+	// Required: true
+	VersionInfo *amv2.VersionInfo `json:"versionInfo"`
+}
+
+func NewGettableStatus(cfg *PostableApiAlertingConfig) *GettableStatus {
 	// In Grafana, the only field we support is Config.
 	cs := amv2.ClusterStatusStatusDisabled
 	na := "N/A"
-	status := &GettableStatus{
+	return &GettableStatus{
 		Cluster: &amv2.ClusterStatus{
 			Status: &cs,
 			Peers:  []*amv2.PeerStatus{},
@@ -148,9 +161,8 @@ func NewGettableStatus(cfg *PostableApiAlertingConfig) (*GettableStatus, error) 
 			Revision:  &na,
 			Version:   &na,
 		},
-		Config: &amv2.AlertmanagerConfig{Original: &toString},
+		Config: cfg,
 	}
-	return status, nil
 }
 
 // swagger:model
