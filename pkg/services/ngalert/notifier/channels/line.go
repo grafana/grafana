@@ -57,10 +57,7 @@ func (ln *LineNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, e
 	ruleURL := path.Join(ln.tmpl.ExternalURL.String(), "/alerting/list")
 
 	var tmplErr error
-	tmpl, _, err := TmplText(ctx, ln.tmpl, as, ln.log, &tmplErr)
-	if err != nil {
-		return false, err
-	}
+	tmpl, _ := TmplText(ctx, ln.tmpl, as, ln.log, &tmplErr)
 
 	body := fmt.Sprintf(
 		"%s\n%s\n\n%s",

@@ -123,30 +123,24 @@ func (pn *PushoverNotifier) SendResolved() bool {
 func (pn *PushoverNotifier) genPushoverBody(ctx context.Context, as ...*types.Alert) (map[string]string, bytes.Buffer, error) {
 	var b bytes.Buffer
 
-	ruleURL, err := joinUrlPath(pn.tmpl.ExternalURL.String(), "/alerting/list")
-	if err != nil {
-		return nil, b, err
-	}
+	ruleURL := joinUrlPath(pn.tmpl.ExternalURL.String(), "/alerting/list", pn.log)
 
 	alerts := types.Alerts(as...)
 
 	var tmplErr error
-	tmpl, _, err := TmplText(ctx, pn.tmpl, as, pn.log, &tmplErr)
-	if err != nil {
-		return nil, b, err
-	}
+	tmpl, _ := TmplText(ctx, pn.tmpl, as, pn.log, &tmplErr)
 
 	w := multipart.NewWriter(&b)
 	boundary := GetBoundary()
 	if boundary != "" {
-		err = w.SetBoundary(boundary)
+		err := w.SetBoundary(boundary)
 		if err != nil {
 			return nil, b, err
 		}
 	}
 
 	// Add the user token
-	err = w.WriteField("user", pn.UserKey)
+	err := w.WriteField("user", pn.UserKey)
 	if err != nil {
 		return nil, b, err
 	}

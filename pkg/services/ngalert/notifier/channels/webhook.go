@@ -79,10 +79,7 @@ func (wn *WebhookNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool
 
 	as, numTruncated := truncateAlerts(wn.MaxAlerts, as)
 	var tmplErr error
-	tmpl, data, err := TmplText(ctx, wn.tmpl, as, wn.log, &tmplErr)
-	if err != nil {
-		return false, err
-	}
+	tmpl, data := TmplText(ctx, wn.tmpl, as, wn.log, &tmplErr)
 	msg := &webhookMessage{
 		Version:         "1",
 		ExtendedData:    data,
