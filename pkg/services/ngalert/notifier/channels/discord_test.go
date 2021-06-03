@@ -3,7 +3,6 @@ package channels
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"net/url"
 	"testing"
 
@@ -103,14 +102,6 @@ func TestDiscordNotifier(t *testing.T) {
 			name:         "Error in initialization",
 			settings:     `{}`,
 			expInitError: alerting.ValidationError{Reason: "Could not find webhook url property in settings"},
-		},
-		{
-			name: "Error in building messsage",
-			settings: `{
-				"url": "http://localhost",
-				"message": "{{ .Status }"
-			}`,
-			expMsgError: errors.New("failed to template discord message: template: :1: unexpected \"}\" in operand"),
 		},
 	}
 
