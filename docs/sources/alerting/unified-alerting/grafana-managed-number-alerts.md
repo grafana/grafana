@@ -7,8 +7,7 @@ weight = 400
 
 # Alerting on numeric data
 
-With certain data sources number data that is not time series can be directly alerted on, or passed into Server Side Expressions (SSE). This allows for more efficiency by doing more processing within the data source, and can also simplify alert rules.
-
+Among certain data sources numeric data that is not time series can be directly alerted on, or passed into Server Side Expressions (SSE). This allows for more processing and resulting efficiency within the data source, and it can also simplify alert rules.
 When alerting on numeric data instead of time series data, there is no need to reduce each labeled time series into a single number. Instead labeled numbers are returned to Grafana instead.
 
 ## Tabular Data
@@ -27,7 +26,7 @@ If there are string columns then those columns become labels. The name of column
 
 ## Example
 
-If you have a MySQL table called "DiskSpace" like the following:
+For a MySQL table called "DiskSpace":
 
 | Time        | Host | Disk | PercentFree
 | ----------- | ---  | -----| --------
@@ -36,7 +35,7 @@ If you have a MySQL table called "DiskSpace" like the following:
 | 2021-June-7 | web3 | /var | 8
 | ...         | ...  | ...  | ...
 
-You can query this data filtering on time, but without returning time series to Grafana:
+You can query the data filtering on time, but without returning time series to Grafana. For example:
 
 ```sql
 SELECT Host, Disk, CASE WHEN PercentFree < 5.0 THEN PercentFree ELSE 0 END FROM (
@@ -51,7 +50,7 @@ SELECT Host, Disk, CASE WHEN PercentFree < 5.0 THEN PercentFree ELSE 0 END FROM 
   Where __timeFilter(Time)
 ```
 
-This query would return the following Table response to Grafana:
+This query returns the following Table response to Grafana:
 
 | Host | Disk | PercentFree
 | ---  | -----| --------
@@ -59,7 +58,7 @@ This query would return the following Table response to Grafana:
 | web2 | /var | 4
 | web3 | /var | 0
 
-When this query is used as the **condition** in an alert rule, the non-zero will be alerting. So three alert instances will be produced:
+When this query is used as the **condition** in an alert rule, then the non-zero will be alerting. As a result, three alert instances are produced:
 
 | Labels                | Status
 | ----------------------| ------
