@@ -29,6 +29,8 @@ func TestInitContextWithAuthProxy_CachedInvalidUserID(t *testing.T) {
 	const userID = int64(1)
 	const orgID = int64(4)
 
+	svc := getContextHandler(t)
+
 	upsertHandler := func(cmd *models.UpsertUserCommand) error {
 		require.Equal(t, name, cmd.ExternalUser.Login)
 		cmd.Result = &models.User{Id: userID}
@@ -51,8 +53,6 @@ func TestInitContextWithAuthProxy_CachedInvalidUserID(t *testing.T) {
 	t.Cleanup(func() {
 		bus.ClearBusHandlers()
 	})
-
-	svc := getContextHandler(t)
 
 	req, err := http.NewRequest("POST", "http://example.com", nil)
 	require.NoError(t, err)
