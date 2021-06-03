@@ -2,7 +2,7 @@ import { DataTransformerInfo } from '../../types';
 import { map } from 'rxjs/operators';
 
 import { DataTransformerID } from './ids';
-import { DataFrame, Field, FieldType } from '../../types/dataFrame';
+import { DataFrame, Field, FieldConfig, FieldType } from '../../types/dataFrame';
 import { ArrayVector } from '../../vector/ArrayVector';
 import { AlignedData, join } from './joinDataFrames';
 
@@ -172,6 +172,7 @@ export function buildHistogram(frames: DataFrame[], options?: HistogramTransform
 
   let histograms: AlignedData[] = [];
   let counts: Field[] = [];
+  let config: FieldConfig | undefined = undefined;
 
   for (const frame of frames) {
     for (const field of frame.fields) {
@@ -179,8 +180,15 @@ export function buildHistogram(frames: DataFrame[], options?: HistogramTransform
         let fieldHist = histogram(field.values.toArray(), getBucket, histFilter, histSort) as AlignedData;
         histograms.push(fieldHist);
         counts.push({ ...field });
+        if (!config && field.config.unit) {
+          config = field.config;
+        }
       }
     }
+  }
+
+  if (!config) {
+    config = {};
   }
 
   // Quit early for empty a
@@ -208,12 +216,14 @@ export function buildHistogram(frames: DataFrame[], options?: HistogramTransform
     values: new ArrayVector(joinedHists[0]),
     type: FieldType.number,
     state: undefined,
+    config,
   };
   const bucketMax = {
     ...bucketMin,
     name: histogramFrameBucketMaxFieldName,
     values: new ArrayVector(joinedHists[0].map((v) => v + bucketSize!)),
     state: undefined,
+    config,
   };
 
   if (options?.combine) {
