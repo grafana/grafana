@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor"
 	"github.com/grafana/grafana/pkg/tsdb/cloudmonitoring"
@@ -28,8 +29,9 @@ import (
 func NewService(cfg *setting.Cfg, _ *cloudwatch.CloudWatchService,
 	cloudMonitoringService *cloudmonitoring.Service, azureMonitorService *azuremonitor.Service,
 	pluginManager plugins.Manager, postgresService *postgres.PostgresService,
-	httpClientProvider httpclient.Provider, _ *testdatasource.TestDataPlugin) *Service {
-	s := newService(cfg, pluginManager)
+	httpClientProvider httpclient.Provider, _ *testdatasource.TestDataPlugin,
+	backendPluginManager backendplugin.Manager) *Service {
+	s := newService(cfg, pluginManager, backendPluginManager)
 	s.registry["graphite"] = graphite.New(httpClientProvider)
 	s.registry["opentsdb"] = opentsdb.New(httpClientProvider)
 	s.registry["prometheus"] = prometheus.New(httpClientProvider)
@@ -46,18 +48,20 @@ func NewService(cfg *setting.Cfg, _ *cloudwatch.CloudWatchService,
 	return s
 }
 
-func newService(cfg *setting.Cfg, manager plugins.Manager) *Service {
+func newService(cfg *setting.Cfg, manager plugins.Manager, backendPluginManager backendplugin.Manager) *Service {
 	return &Service{
-		Cfg:           cfg,
-		PluginManager: manager,
-		registry:      map[string]func(*models.DataSource) (plugins.DataPlugin, error){},
+		Cfg:                  cfg,
+		PluginManager:        manager,
+		BackendPluginManager: backendPluginManager,
+		registry:             map[string]func(*models.DataSource) (plugins.DataPlugin, error){},
 	}
 }
 
 // Service handles data requests to data sources.
 type Service struct {
-	Cfg           *setting.Cfg
-	PluginManager plugins.Manager
+	Cfg                  *setting.Cfg
+	PluginManager        plugins.Manager
+	BackendPluginManager backendplugin.Manager
 
 	//nolint: staticcheck // plugins.DataPlugin deprecated
 	registry map[string]func(*models.DataSource) (plugins.DataPlugin, error)
@@ -65,23 +69,18 @@ type Service struct {
 
 //nolint: staticcheck // plugins.DataPlugin deprecated
 func (s *Service) HandleRequest(ctx context.Context, ds *models.DataSource, query plugins.DataQuery) (plugins.DataResponse, error) {
-	plugin := s.PluginManager.GetDataPlugin(ds.Type)
-	if plugin == nil {
-		factory, exists := s.registry[ds.Type]
-		if !exists {
-			return plugins.DataResponse{}, fmt.Errorf(
-				"could not find plugin corresponding to data source type: %q", ds.Type)
-		}
-
+	if factory, exists := s.registry[ds.Type]; exists {
 		var err error
-		plugin, err = factory(ds)
+		plugin, err := factory(ds)
 		if err != nil {
 			return plugins.DataResponse{}, fmt.Errorf("could not instantiate endpoint for data plugin %q: %w",
 				ds.Type, err)
 		}
+
+		return plugin.DataQuery(ctx, ds, query)
 	}
 
-	return plugin.DataQuery(ctx, ds, query)
+	return dataPluginQueryAdapter(ds.Type, s.BackendPluginManager).DataQuery(ctx, ds, query)
 }
 
 // RegisterQueryHandler registers a query handler factory.

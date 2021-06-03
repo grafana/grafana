@@ -18,7 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/backgroundsvcs"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/instrumentation"
 	"github.com/grafana/grafana/pkg/setting"
@@ -153,6 +152,10 @@ func (m *Manager) Get(pluginID string) (backendplugin.Plugin, bool) {
 	p, ok := m.plugins[pluginID]
 	m.pluginsMu.RUnlock()
 
+	if ok && p.IsDecommissioned() {
+		return nil, false
+	}
+
 	return p, ok
 }
 
@@ -181,21 +184,6 @@ func (m *Manager) getAzureEnvironmentVariables() []string {
 	}
 
 	return variables
-}
-
-//nolint: staticcheck // plugins.DataPlugin deprecated
-func (m *Manager) GetDataPlugin(pluginID string) interface{} {
-	p, _ := m.Get(pluginID)
-
-	if p == nil {
-		return nil
-	}
-
-	if dataPlugin, ok := p.(plugins.DataPlugin); ok {
-		return dataPlugin
-	}
-
-	return nil
 }
 
 // start starts a managed backend plugin
@@ -246,10 +234,7 @@ func (m *Manager) stop(ctx context.Context) {
 
 // CollectMetrics collects metrics from a registered backend plugin.
 func (m *Manager) CollectMetrics(ctx context.Context, pluginID string) (*backend.CollectMetricsResult, error) {
-	m.pluginsMu.RLock()
-	p, registered := m.plugins[pluginID]
-	m.pluginsMu.RUnlock()
-
+	p, registered := m.Get(pluginID)
 	if !registered {
 		return nil, backendplugin.ErrPluginNotRegistered
 	}
@@ -281,10 +266,7 @@ func (m *Manager) CheckHealth(ctx context.Context, pluginContext backend.PluginC
 		}, nil
 	}
 
-	m.pluginsMu.RLock()
-	p, registered := m.plugins[pluginContext.PluginID]
-	m.pluginsMu.RUnlock()
-
+	p, registered := m.Get(pluginContext.PluginID)
 	if !registered {
 		return nil, backendplugin.ErrPluginNotRegistered
 	}
@@ -310,15 +292,39 @@ func (m *Manager) CheckHealth(ctx context.Context, pluginContext backend.PluginC
 	return resp, nil
 }
 
+func (m *Manager) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	p, registered := m.Get(req.PluginContext.PluginID)
+	if !registered {
+		return nil, backendplugin.ErrPluginNotRegistered
+	}
+
+	var resp *backend.QueryDataResponse
+	err := instrumentation.InstrumentQueryDataRequest(p.PluginID(), func() (innerErr error) {
+		resp, innerErr = p.QueryData(ctx, req)
+		return
+	})
+
+	if err != nil {
+		if errors.Is(err, backendplugin.ErrMethodNotImplemented) {
+			return nil, err
+		}
+
+		if errors.Is(err, backendplugin.ErrPluginUnavailable) {
+			return nil, err
+		}
+
+		return nil, errutil.Wrap("failed to query data", err)
+	}
+
+	return resp, nil
+}
+
 type keepCookiesJSONModel struct {
 	KeepCookies []string `json:"keepCookies"`
 }
 
 func (m *Manager) callResourceInternal(w http.ResponseWriter, req *http.Request, pCtx backend.PluginContext) error {
-	m.pluginsMu.RLock()
-	p, registered := m.plugins[pCtx.PluginID]
-	m.pluginsMu.RUnlock()
-
+	p, registered := m.Get(pCtx.PluginID)
 	if !registered {
 		return backendplugin.ErrPluginNotRegistered
 	}

@@ -125,7 +125,7 @@ func Initialize(cla setting.CommandLineArgs, opts Options, apiOpts api.ServerOpt
 	if err != nil {
 		return nil, err
 	}
-	tsdbService := tsdb.NewService(cfg, cloudWatchService, service, azuremonitorService, pluginManager, postgresService, provider, testDataPlugin)
+	tsdbService := tsdb.NewService(cfg, cloudWatchService, service, azuremonitorService, pluginManager, postgresService, provider, testDataPlugin, managerManager)
 	alertEngine := alerting.ProvideAlertEngine(renderingService, inProcBus, ossPluginRequestValidator, tsdbService, container, cfg)
 	usageStatsService := usagestats.ProvideService(cfg, inProcBus, sqlStore, alertEngine, ossLicensingService, pluginManager, container)
 	ossImpl := setting.ProvideProvider(cfg)
@@ -221,7 +221,7 @@ func InitializeForTest(cla setting.CommandLineArgs, opts Options, apiOpts api.Se
 	if err != nil {
 		return nil, err
 	}
-	tsdbService := tsdb.NewService(cfg, cloudWatchService, service, azuremonitorService, pluginManager, postgresService, provider, testDataPlugin)
+	tsdbService := tsdb.NewService(cfg, cloudWatchService, service, azuremonitorService, pluginManager, postgresService, provider, testDataPlugin, managerManager)
 	alertEngine := alerting.ProvideAlertEngine(renderingService, inProcBus, ossPluginRequestValidator, tsdbService, container, cfg)
 	usageStatsService := usagestats.ProvideService(cfg, inProcBus, sqlStore, alertEngine, ossLicensingService, pluginManager, container)
 	ossImpl := setting.ProvideProvider(cfg)

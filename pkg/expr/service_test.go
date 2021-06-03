@@ -107,7 +107,3 @@ func (me *mockEndpoint) HandleRequest(ctx context.Context, ds *models.DataSource
 type fakeBackendPM struct {
 	backendplugin.Manager
 }
-
-func (pm fakeBackendPM) GetDataPlugin(string) interface{} {
-	return nil
-}

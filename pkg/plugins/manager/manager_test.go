@@ -552,8 +552,6 @@ func verifyBundledPluginCatalogue(t *testing.T, pm *PluginManager) {
 }
 
 type fakeBackendPluginManager struct {
-	backendplugin.Manager
-
 	registeredPlugins []string
 }
 
@@ -565,6 +563,10 @@ func (f *fakeBackendPluginManager) Register(pluginID string, factory backendplug
 func (f *fakeBackendPluginManager) RegisterAndStart(ctx context.Context, pluginID string, factory backendplugin.PluginFactoryFunc) error {
 	f.registeredPlugins = append(f.registeredPlugins, pluginID)
 	return nil
+}
+
+func (f *fakeBackendPluginManager) Get(pluginID string) (backendplugin.Plugin, bool) {
+	return nil, false
 }
 
 func (f *fakeBackendPluginManager) UnregisterAndStop(ctx context.Context, pluginID string) error {
@@ -601,8 +603,14 @@ func (f *fakeBackendPluginManager) CheckHealth(ctx context.Context, pCtx backend
 	return nil, nil
 }
 
+func (f *fakeBackendPluginManager) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	return nil, nil
+}
+
 func (f *fakeBackendPluginManager) CallResource(pluginConfig backend.PluginContext, ctx *models.ReqContext, path string) {
 }
+
+var _ backendplugin.Manager = &fakeBackendPluginManager{}
 
 type fakePluginInstaller struct {
 	installCount   int

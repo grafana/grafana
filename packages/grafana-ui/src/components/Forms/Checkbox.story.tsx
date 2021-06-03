@@ -2,6 +2,7 @@ import React, { useState, useCallback } from 'react';
 import mdx from './Checkbox.mdx';
 import { Checkbox } from './Checkbox';
 import { VerticalGroup } from '../Layout/Layout';
+import { Field } from './Field';
 
 export default {
   title: 'Forms/Checkbox',
@@ -55,5 +56,16 @@ export const StackedList = () => {
         description="Another long description that does not make any sense or does it?"
       />
     </VerticalGroup>
+  );
+};
+
+export const InAField = () => {
+  return (
+    <Field
+      label="Hidden"
+      description="Annotation queries can be toggled on or of at the top of the dashboard. With this option checked this toggle will be hidden."
+    >
+      <Checkbox name="hide" id="hide" defaultChecked={true} />
+    </Field>
   );
 };
