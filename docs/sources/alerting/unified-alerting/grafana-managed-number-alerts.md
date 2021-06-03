@@ -25,3 +25,26 @@ If there are string columns then those columns become labels. The name of column
 
 ## Example
 
+If you have a MySQL table called "DiskSpace" like the following:
+
+| Time        | Host | Disk | PercentFree
+| ----------- | ---  | -----| --------
+| 2021-June-7 | web1 | /etc | 3
+| 2021-June-7 | web2 | /var | 4
+| 2021-June-7 | web3 | /var | 8
+| ...         | ...  | ...  | ...
+
+You can query this data filtering on time, but without returning time series to Grafana:
+
+```sql
+SELECT Host, Disk, CASE WHEN PercentFree < 5.0 THEN PercentFree ELSE 0 END FROM (
+  SELECT 
+      Host, 
+      Disk, 
+      Avg(PercentFree) 
+  FROM DiskSpace
+  Group By 
+    Host, 
+    Disk
+  Where __timeFilter(Time)
+```
