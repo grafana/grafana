@@ -11,14 +11,12 @@ import (
 )
 
 func (hs *HTTPServer) GetDashboardPermissionList(c *models.ReqContext) response.Response {
-	dashID := c.ParamsInt64(":dashboardId")
-
-	_, rsp := getDashboardHelper(c.OrgId, "", dashID, "")
+	dash, rsp := getDashboardHelper(c.OrgId, "", c.ParamsInt64(":dashboardId"), c.Params(":dashboardUid"))
 	if rsp != nil {
 		return rsp
 	}
 
-	g := guardian.New(dashID, c.OrgId, c.SignedInUser)
+	g := guardian.New(dash.Id, c.OrgId, c.SignedInUser)
 
 	if canAdmin, err := g.CanAdmin(); err != nil || !canAdmin {
 		return dashboardGuardianResponse(err)
@@ -55,14 +53,12 @@ func (hs *HTTPServer) UpdateDashboardPermissions(c *models.ReqContext, apiCmd dt
 		return response.Error(400, err.Error(), err)
 	}
 
-	dashID := c.ParamsInt64(":dashboardId")
-
-	_, rsp := getDashboardHelper(c.OrgId, "", dashID, "")
+	dash, rsp := getDashboardHelper(c.OrgId, "", c.ParamsInt64(":dashboardId"), c.Params(":dashboardUid"))
 	if rsp != nil {
 		return rsp
 	}
 
-	g := guardian.New(dashID, c.OrgId, c.SignedInUser)
+	g := guardian.New(dash.Id, c.OrgId, c.SignedInUser)
 	if canAdmin, err := g.CanAdmin(); err != nil || !canAdmin {
 		return dashboardGuardianResponse(err)
 	}
@@ -71,7 +67,7 @@ func (hs *HTTPServer) UpdateDashboardPermissions(c *models.ReqContext, apiCmd dt
 	for _, item := range apiCmd.Items {
 		items = append(items, &models.DashboardAcl{
 			OrgID:       c.OrgId,
-			DashboardID: dashID,
+			DashboardID: dash.Id,
 			UserID:      item.UserID,
 			TeamID:      item.TeamID,
 			Role:        item.Role,
@@ -99,7 +95,7 @@ func (hs *HTTPServer) UpdateDashboardPermissions(c *models.ReqContext, apiCmd dt
 		return response.Error(403, "Cannot remove own admin permission for a folder", nil)
 	}
 
-	if err := updateDashboardACL(hs, dashID, items); err != nil {
+	if err := updateDashboardACL(hs, dash.Id, items); err != nil {
 		if errors.Is(err, models.ErrDashboardAclInfoMissing) ||
 			errors.Is(err, models.ErrDashboardPermissionDashboardEmpty) {
 			return response.Error(409, err.Error(), err)
