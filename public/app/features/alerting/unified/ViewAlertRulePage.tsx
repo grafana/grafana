@@ -2,6 +2,7 @@ import React, { FC, useCallback, useEffect, useMemo, useState } from 'react';
 import { useObservable } from 'react-use';
 import { css } from '@emotion/css';
 import { GrafanaTheme2, PanelData } from '@grafana/data';
+import AutoSizer from 'react-virtualized-auto-sizer';
 import { PageToolbar, withErrorBoundary, useStyles2 } from '@grafana/ui';
 import Page from 'app/core/components/Page/Page';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
@@ -11,7 +12,7 @@ import { alertRuleToQueries } from './utils/query';
 import { RuleState } from './components/rules/RuleState';
 import { VizWrapper } from './components/rule-editor/VizWrapper';
 import { SupportedPanelPlugins } from './components/rule-editor/QueryWrapper';
-import { TABLE, TIMESERIES } from './utils/constants';
+import { STAT, TABLE, TIMESERIES } from './utils/constants';
 import { isExpressionQuery } from '../../expressions/guards';
 import { ruleIdentifierFromParam } from './utils/rules';
 import { RuleDetails } from './components/rules/RuleDetails';
@@ -20,7 +21,10 @@ import { CombinedRule } from 'app/types/unified-alerting';
 import { DetailsField } from './components/DetailsField';
 import { RuleHealth } from './components/rules/RuleHealth';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { config, getDataSourceSrv } from '@grafana/runtime';
+import { PanelChrome } from '@grafana/ui/src/components/PanelChrome/PanelChrome';
+import { PanelRenderer } from 'app/features/panel/PanelRenderer';
+import { PanelOptions } from 'app/plugins/panel/table/models.gen';
 
 type ViewAlertRuleProps = GrafanaRouteComponentProps<{ id?: string; sourceName?: string }>;
 
@@ -73,18 +77,20 @@ const ViewAlertRulePage: FC<ViewAlertRuleProps> = ({ match }) => {
     <Page>
       <PageToolbar title={`${renderGroup(rule)} / ${rule.name}`} pageIcon="bell" />
       <div className={styles.content}>
-        <div>
-          <RuleState rule={rule} isCreating={false} isDeleting={false} />
+        <div className={styles.details}>
+          <div>
+            <RuleState rule={rule} isCreating={false} isDeleting={false} />
+          </div>
+          <div>
+            <RuleDetails rulesSource={rulesSource} rule={rule} />
+            {rule.promRule && (
+              <DetailsField label="Health" horizontal={true}>
+                <RuleHealth rule={rule.promRule} />
+              </DetailsField>
+            )}
+          </div>
         </div>
-        <div>
-          <RuleDetails rulesSource={rulesSource} rule={rule} />
-          {rule.promRule && (
-            <DetailsField label="Health" horizontal={true}>
-              <RuleHealth rule={rule.promRule} />
-            </DetailsField>
-          )}
-        </div>
-        <div>
+        <div className={styles.queries}>
           <div className={styles.label}>Queries</div>
           {queries.map((query) => {
             return (
@@ -114,10 +120,39 @@ function AlertQueryViz(props: AlertQueryVizProps): JSX.Element | null {
   const { data, defaultPanel = 'timeseries', query } = props;
   const [panel, setPanel] = useState<SupportedPanelPlugins>(defaultPanel);
   const dsSettings = getDataSourceSrv().getInstanceSettings(query.datasourceUid);
+  const [options, setOptions] = useState<PanelOptions>({
+    frameIndex: 0,
+    showHeader: true,
+  });
 
   if (!data) {
     return null;
   }
+
+  return (
+    <div className={styles.content2}>
+      <AutoSizer>
+        {({ width, height }) => (
+          <PanelChrome width={width} height={height} title={query.refId}>
+            {(innerWidth, innerHeight) => (
+              <div className={styles.innerContent}>
+                <PanelRenderer
+                  height={innerHeight}
+                  width={innerWidth}
+                  data={data}
+                  pluginId={panel}
+                  title=""
+                  onOptionsChange={setOptions}
+                  options={options}
+                />
+              </div>
+            )}
+          </PanelChrome>
+        )}
+      </AutoSizer>
+    </div>
+  );
+
   return (
     <div className={styles.wrapper}>
       <div className={styles.header}>
@@ -133,6 +168,12 @@ function AlertQueryViz(props: AlertQueryVizProps): JSX.Element | null {
   );
 }
 
+const getSupportedPanels = () => {
+  return Object.values(config.panels)
+    .filter((p) => p.id === TIMESERIES || p.id === TABLE || p.id === STAT)
+    .map((panel) => ({ value: panel.id, label: panel.name, imgUrl: panel.info.logos.small }));
+};
+
 function renderGroup(rule: CombinedRule): string {
   if (rule.name === rule.group.name) {
     return rule.namespace.name;
@@ -142,6 +183,11 @@ function renderGroup(rule: CombinedRule): string {
 
 const getVizStyles = (theme: GrafanaTheme2) => {
   return {
+    innerContent: css``,
+    content2: css`
+      width: 100%;
+      height: 250px;
+    `,
     wrapper: css`
       margin-bottom: ${theme.spacing(2)};
       border: 1px solid ${theme.colors.border.medium};
@@ -168,22 +214,30 @@ const getVizStyles = (theme: GrafanaTheme2) => {
     refId: css`
       font-weight: ${theme.typography.fontWeightMedium};
       color: ${theme.colors.text.link};
-      margin-left: ${theme.spacing(2)};
       overflow: hidden;
     `,
     datasource: css`
       margin-left: ${theme.spacing(2)};
+      font-style: italic;
     `,
   };
 };
 
 const getStyles = (theme: GrafanaTheme2) => {
+  const section = css`
+    margin: ${theme.spacing(0, 0, 2)};
+  `;
+
   return {
     content: css`
+      margin: ${theme.spacing(0, 2, 2)};
+    `,
+    section: section,
+    details: css`
+      ${section}
       background: ${theme.colors.background.primary};
       border: 1px solid ${theme.colors.border.weak};
       border-radius: ${theme.shape.borderRadius()};
-      margin: ${theme.spacing(0, 2, 2)};
       padding: ${theme.spacing(2)};
     `,
     quickInfo: css`
@@ -191,7 +245,8 @@ const getStyles = (theme: GrafanaTheme2) => {
       justify-content: space-between;
     `,
     queries: css`
-      width: 50%;
+      height: 100%;
+      width: 100%;
     `,
     query: css`
       height: 450px;
