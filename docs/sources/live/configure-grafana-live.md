@@ -7,13 +7,13 @@ weight = 120
 
 # Configure Grafana Live
 
-Grafana Live is enabled by default. As of Grafana v8.0, it has a strict default for a maximum number of connections per Grafana server instance. 
+Grafana Live is enabled by default. In Grafana v8.0, it has a strict default for a maximum number of connections per Grafana server instance. 
 
 ## Max number of connections
 
 Grafana Live uses persistent connections (WebSocket at the moment) to deliver real-time updates to clients. You might need to tune your server infrastructure a bit.
 
-The number of maximum connections users can establish with Grafana is limited to 100 by default. See [max_connections]({{< relref "../administration/configuration.md#max_connections" >}}) option.
+The number of maximum connections users can establish with Grafana is limited to 100 by default. Refer to the [max_connections]({{< relref "../administration/configuration.md#max_connections" >}}) option for details. 
 
 In case you want to increase this limit, ensure that your server and infrastructure allow handling more connections. The following sections discuss several common problems which could happen when managing persistent connections, in particular WebSocket connections.
 
@@ -21,7 +21,7 @@ In case you want to increase this limit, ensure that your server and infrastruct
 
 Grafana Live uses WebSocket protocol to deliver real-time updates to a frontend application. WebSocket is a persistent connection that starts with an HTTP Upgrade request (using the same HTTP port as the rest of Grafana) and then switches to a TCP mode where WebSocket frames can travel in both directions between a client and a server.
 
-Each logged-in user opens a WebSocket connection – one per browser tab.
+Each logged-in user opens a WebSocket connection, that is one per browser tab.
 
 Introducing a persistent connection leads to some things Grafana users should be aware of.
 
@@ -50,7 +50,7 @@ cat /proc/<PROCESS_PID>/limits
 The open files limit shows approximately how many user connections your server can currently handle.
 		
 
-		To increase this limit, refer to [these instructions for popular operating systems](https://docs.riak.com/riak/kv/2.2.3/using/performance/open-files-limit.1.html).
+To increase this limit, refer to [these instructions](https://docs.riak.com/riak/kv/2.2.3/using/performance/open-files-limit.1.html)for popular operating systems.
 
 ### Ephemeral port exhaustion
 

@@ -1491,11 +1491,11 @@ Custom install/learn more URL for enterprise plugins. Defaults to https://grafan
 
 ### max_connections
 
-> **Note**: Available since Grafana v8.0.
+> **Note**: Available in Grafana v8.0 and later versions.
 
-`max_connections` option defines a maximum number of connections to Grafana Live WebSocket endpoint per Grafana server instance. Default is `100`.
+The `max_connections` option specifies the maximum number of connections to the Grafana Live WebSocket endpoint per Grafana server instance. Default is `100`.
 
-See [Grafana Live configuration docs]({{< relref "../live/configure-grafana-live.md" >}}) if you are planning to make it higher than default since this can require some OS and infrastructure tuning.
+Refer to [Grafana Live configuration documentation]({{< relref "../live/configure-grafana-live.md" >}}) if you specify a number higher than default since this can require some operating system and infrastructure tuning.
 
 0 disables Grafana Live, -1 means unlimited connections.
 

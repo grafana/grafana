@@ -40,7 +40,7 @@ In addition to data source integration, events can be sent to dashboards by post
 
 These metrics will be broadcast to all dashboards connected to that stream endpoint.
 
-See more about real-time streaming in [Grafana Live documentation]({{< relref "../live/_index.md" >}}).
+For more information about real-time streaming, refer to [Grafana Live documentation]({{< relref "../live/_index.md" >}}).
 
 ### Bar chart visualization (beta)
 
