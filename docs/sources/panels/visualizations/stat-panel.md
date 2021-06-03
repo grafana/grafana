@@ -1,14 +1,14 @@
 +++
-title = "Stat panel"
+title = "Stat"
 description = "Stat panel documentation"
 keywords = ["grafana", "docs", "stat panel"]
 aliases = ["/docs/grafana/latest/features/panels/stat/", "/docs/grafana/latest/features/panels/singlestat/", "/docs/grafana/latest/reference/singlestat/"]
 weight = 900
 +++
 
-# Stat panel
+# Stat
 
-The Stat panel shows a one large stat value with an optional graph sparkline. You can control the background or value color using thresholds.
+The Stat panel visualization shows a one large stat value with an optional graph sparkline. You can control the background or value color using thresholds.
 
 {{< figure src="/static/img/docs/v66/stat_panel_dark3.png" max-width="1025px" caption="Stat panel" >}}
 
