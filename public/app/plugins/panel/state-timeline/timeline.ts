@@ -4,7 +4,7 @@ import { pointWithin, Quadtree, Rect } from 'app/plugins/panel/barchart/quadtree
 import { distribute, SPACE_BETWEEN } from 'app/plugins/panel/barchart/distribute';
 import { TimelineFieldConfig, TimelineMode, TimelineValueAlignment } from './types';
 import { GrafanaTheme2, TimeRange } from '@grafana/data';
-import { BarValueVisibility, PlotTooltipInterpolator } from '@grafana/ui';
+import { BarValueVisibility } from '@grafana/ui';
 import { alpha } from '@grafana/data/src/themes/colorManipulator';
 
 const { round, min, ceil } = Math;
@@ -47,6 +47,8 @@ export interface TimelineCoreOptions {
   getTimeRange: () => TimeRange;
   formatValue?: (seriesIdx: number, value: any) => string;
   getFieldConfig: (seriesIdx: number) => TimelineFieldConfig;
+  onHover?: (seriesIdx: number, valueIdx: number, rect: Rect) => void;
+  onLeave?: () => void;
 }
 
 /**
@@ -67,8 +69,8 @@ export function getConfig(opts: TimelineCoreOptions) {
     getTimeRange,
     getValueColor,
     getFieldConfig,
-    // onHover,
-    // onLeave,
+    onHover,
+    onLeave,
   } = opts;
 
   let qt: Quadtree;
@@ -366,6 +368,7 @@ export function getConfig(opts: TimelineCoreOptions) {
 
   function setHoverMark(i: number, o: Rect | null) {
     let h = hoverMarks[i];
+
     if (o) {
       h.style.display = '';
       h.style.left = round(o!.x / pxRatio) + 'px';
@@ -379,16 +382,24 @@ export function getConfig(opts: TimelineCoreOptions) {
     hovered[i] = o;
   }
 
-  function highlightMulti(cx: number, cy: number) {
+  let hoveredAtCursor: Rect | null = null;
+
+  function hoverMulti(cx: number, cy: number) {
+    let foundAtCursor: Rect | null = null;
+
     for (let i = 0; i < numSeries; i++) {
       let found: Rect | null = null;
 
       if (cx >= 0) {
-        cy = yMids[i];
+        let cy2 = yMids[i];
 
-        qt.get(cx, cy, 1, 1, (o) => {
-          if (pointWithin(cx, cy, o.x, o.y, o.x + o.w, o.y + o.h)) {
+        qt.get(cx, cy2, 1, 1, (o) => {
+          if (pointWithin(cx, cy2, o.x, o.y, o.x + o.w, o.y + o.h)) {
             found = o;
+
+            if (Math.abs(cy - cy2) <= o.h / 2) {
+              foundAtCursor = o;
+            }
           }
         });
       }
@@ -401,24 +412,46 @@ export function getConfig(opts: TimelineCoreOptions) {
         setHoverMark(i, null);
       }
     }
+
+    if (foundAtCursor) {
+      if (foundAtCursor !== hoveredAtCursor) {
+        hoveredAtCursor = foundAtCursor;
+        // @ts-ignore
+        onHover && onHover(foundAtCursor.sidx, foundAtCursor.didx, foundAtCursor);
+      }
+    } else if (hoveredAtCursor) {
+      hoveredAtCursor = null;
+      onLeave && onLeave();
+    }
   }
 
-  function findCurrentlyHovered(cx: number, cy: number) {
-    let found: Rect | null = null;
+  function hoverOne(cx: number, cy: number) {
+    let foundAtCursor: Rect | null = null;
+
     qt.get(cx, cy, 1, 1, (o) => {
       if (pointWithin(cx, cy, o.x, o.y, o.x + o.w, o.y + o.h)) {
-        found = o;
+        foundAtCursor = o;
       }
     });
 
-    return found;
+    if (foundAtCursor) {
+      setHoverMark(0, foundAtCursor);
+
+      if (foundAtCursor !== hoveredAtCursor) {
+        hoveredAtCursor = foundAtCursor;
+        // @ts-ignore
+        onHover && onHover(foundAtCursor.sidx, foundAtCursor.didx, foundAtCursor);
+      }
+    } else if (hoveredAtCursor) {
+      setHoverMark(0, null);
+      hoveredAtCursor = null;
+      onLeave && onLeave();
+    }
   }
 
-  const interpolateTooltip: PlotTooltipInterpolator = (
-    updateActiveSeriesIdx,
-    updateActiveDatapointIdx,
-    updateTooltipPosition
-  ) => (u: uPlot) => {
+  const doHover = mode === TimelineMode.Changes ? hoverMulti : hoverOne;
+
+  const setCursor = (u: uPlot) => {
     let cx = round(u.cursor!.left! * pxRatio);
     let cy = round(u.cursor!.top! * pxRatio);
 
@@ -431,30 +464,7 @@ export function getConfig(opts: TimelineCoreOptions) {
       }
     }
 
-    const hoveringOver = findCurrentlyHovered(cx, cy);
-
-    if (hoveringOver) {
-      // @ts-ignore
-      updateActiveSeriesIdx(hoveringOver.sidx);
-      // @ts-ignore
-      updateActiveDatapointIdx(hoveringOver.didx);
-      updateTooltipPosition();
-    } else {
-      updateTooltipPosition(true);
-    }
-  };
-
-  const setHighlights = (u: uPlot) => {
-    let cx = round(u.cursor!.left! * pxRatio);
-    let cy = round(u.cursor!.top! * pxRatio);
-
-    const hoveringOver = findCurrentlyHovered(cx, cy);
-
-    if (mode === TimelineMode.Changes) {
-      highlightMulti(cx, cy);
-    } else {
-      setHoverMark(0, hoveringOver);
-    }
+    doHover(cx, cy);
   };
 
   // hide y crosshair & hover points
@@ -534,8 +544,7 @@ export function getConfig(opts: TimelineCoreOptions) {
     // hooks
     init,
     drawClear,
-    interpolateTooltip,
-    setHighlights,
+    setCursor,
   };
 }
 

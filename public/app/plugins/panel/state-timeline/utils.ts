@@ -26,6 +26,7 @@ import {
 import { TimelineCoreOptions, getConfig } from './timeline';
 import { AxisPlacement, ScaleDirection, ScaleOrientation } from '@grafana/ui/src/components/uPlot/config';
 import { TimelineFieldConfig, TimelineOptions } from './types';
+import { PlotTooltipInterpolator } from '@grafana/ui/src/components/uPlot/types';
 
 const defaultConfig: TimelineFieldConfig = {
   lineWidth: 0,
@@ -95,14 +96,46 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<TimelineOptions> = ({
     getTimeRange,
     // hardcoded formatter for state values
     formatValue: (seriesIdx, value) => formattedValueToString(frame.fields[seriesIdx].display!(value)),
+    onHover: (seriesIndex, valueIndex) => {
+      hoveredSeriesIdx = seriesIndex;
+      hoveredDataIdx = valueIndex;
+    },
+    onLeave: () => {
+      hoveredSeriesIdx = null;
+      hoveredDataIdx = null;
+    },
   };
+
+  let hoveredSeriesIdx: number | null = null;
+  let hoveredDataIdx: number | null = null;
 
   const coreConfig = getConfig(opts);
 
   builder.addHook('init', coreConfig.init);
   builder.addHook('drawClear', coreConfig.drawClear);
-  builder.addHook('setCursor', coreConfig.setHighlights);
-  builder.setTooltipInterpolator(coreConfig.interpolateTooltip);
+  builder.addHook('setCursor', coreConfig.setCursor);
+
+  // in TooltipPlugin, this gets invoked and the result is bound to a setCursor hook
+  // which fires after the above setCursor hook, so can take advantage of hoveringOver
+  // already set by the above onHover/onLeave callbacks that fire from coreConfig.setCursor
+  const interpolateTooltip: PlotTooltipInterpolator = (
+    updateActiveSeriesIdx,
+    updateActiveDatapointIdx,
+    updateTooltipPosition
+  ) => (u: uPlot) => {
+    if (hoveredSeriesIdx != null) {
+      // @ts-ignore
+      updateActiveSeriesIdx(hoveredSeriesIdx);
+      // @ts-ignore
+      updateActiveDatapointIdx(hoveredDataIdx);
+      updateTooltipPosition();
+    } else {
+      updateTooltipPosition(true);
+    }
+  };
+
+  builder.setTooltipInterpolator(interpolateTooltip);
+
   builder.setCursor(coreConfig.cursor);
 
   builder.addScale({
