@@ -29,4 +29,4 @@ The basic streaming example included in Grafana core streams frames with some ge
 
 A new API endpoint `/api/live/push/:streamId` allows accepting metrics data in Influx format from Telegraf. These metrics are transformed into Grafana data frames and published to channels.
 
-See a tutorial about [streaming metrics from Telegraf to Grafana](https://grafana.com/tutorials/stream-metrics-from-telegraf-to-grafana/) for more details.
+Refer to the tutorial about [streaming metrics from Telegraf to Grafana](https://grafana.com/tutorials/stream-metrics-from-telegraf-to-grafana/) for more information.

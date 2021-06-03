@@ -7,15 +7,15 @@ weight = 110
 
 # Grafana Live Channel guide
 
-Grafana Live is a PUB/SUB server - clients subscribe to channels to receive real-time updates published to those channels.
+Grafana Live is a PUB/SUB server, clients subscribe to channels to receive real-time updates published to those channels.
 
 ## Channel structure
 
-Channel – is just a string identifier. In Grafana channel consists of 3 parts delimited by `/`:
+Channel is a string identifier. In Grafana channel consists of 3 parts delimited by `/`:
 
-* Scope
-* Namespace
-* Path
+- Scope
+- Namespace
+- Path
 
 For example, the channel `grafana/dashboard/xyz` has the scope `grafana`, namespace `dashboard`, and path `xyz`.
 
