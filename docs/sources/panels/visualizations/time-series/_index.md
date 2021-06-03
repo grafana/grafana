@@ -12,25 +12,11 @@ Time series panel is a robust visualization to plot time series data. It can ren
 
 For Time series panel examples, refer to the Grafana Play dashboard [New Features in v7.4](https://play.grafana.org/d/nP8rcffGk/new-features-in-v7-4?orgId=1).
 
-## Data and field options
-
-Time series visualizations allow you to apply:
-
-- [Data transformations]({{< relref "../../transformations/_index.md" >}})
-- [Field overrides]({{< relref "../../field-overrides.md" >}})
-- [Thresholds]({{< relref "../../thresholds.md" >}})
-
-You can also use field options to create different types of graphs or adjust your axes:
-
-- [Graph time series as lines]({{< relref "graph-time-series-as-lines.md" >}})
-- [Graph time series as bars]({{< relref "graph-time-series-as-bars.md" >}})
-- [Graph time series as points]({{< relref "graph-time-series-as-points.md" >}})
-- [Change axis display]({{< relref "change-axis-display.md" >}})
-- [Graph stacked time series]({{< relref "graph-time-series-stacking.md" >}})
-
-## Display options
-
 > **Note:** You can migrate Graph panel visualizations to Time series visualizations. To migrate, on the Panel tab, click **Time series** visualization. Grafana transfers all applicable settings. (While in beta, migration is still being refined. It will get better as time goes on!)
+
+## Common time series options
+
+These options are available whether you are graphing your time series as lines, bars, or points.
 
 {{< docs/shared "visualizations/tooltip-mode.md" >}}
 
@@ -39,3 +25,16 @@ You can also use field options to create different types of graphs or adjust you
 ### Legend calculations
 
 Choose which of the [standard calculations]({{< relref "../../calculations-list.md">}}) to show in the legend. You can have more than one.
+
+## Graph styles
+
+Use these options to choose how to display your time series data.
+
+- [Graph time series as lines]({{< relref "graph-time-series-as-lines.md" >}})
+- [Graph time series as bars]({{< relref "graph-time-series-as-bars.md" >}})
+- [Graph time series as points]({{< relref "graph-time-series-as-points.md" >}})
+- [Graph stacked time series]({{< relref "graph-time-series-stacking.md" >}})
+
+## Axis
+
+For more information about adjusting your time series axes, refer to [Change axis display]({{< relref "change-axis-display.md" >}}).
