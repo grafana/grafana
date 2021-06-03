@@ -47,8 +47,8 @@ export interface TimelineCoreOptions {
   getTimeRange: () => TimeRange;
   formatValue?: (seriesIdx: number, value: any) => string;
   getFieldConfig: (seriesIdx: number) => TimelineFieldConfig;
-  onHover?: (seriesIdx: number, valueIdx: number, rect: Rect) => void;
-  onLeave?: () => void;
+  onHover: (seriesIdx: number, valueIdx: number, rect: Rect) => void;
+  onLeave: () => void;
 }
 
 /**
@@ -416,12 +416,11 @@ export function getConfig(opts: TimelineCoreOptions) {
     if (foundAtCursor) {
       if (foundAtCursor !== hoveredAtCursor) {
         hoveredAtCursor = foundAtCursor;
-        // @ts-ignore
-        onHover && onHover(foundAtCursor.sidx, foundAtCursor.didx, foundAtCursor);
+        onHover(foundAtCursor!.sidx, foundAtCursor!.didx, foundAtCursor);
       }
     } else if (hoveredAtCursor) {
       hoveredAtCursor = null;
-      onLeave && onLeave();
+      onLeave();
     }
   }
 
@@ -439,13 +438,12 @@ export function getConfig(opts: TimelineCoreOptions) {
 
       if (foundAtCursor !== hoveredAtCursor) {
         hoveredAtCursor = foundAtCursor;
-        // @ts-ignore
-        onHover && onHover(foundAtCursor.sidx, foundAtCursor.didx, foundAtCursor);
+        onHover(foundAtCursor!.sidx, foundAtCursor!.didx, foundAtCursor);
       }
     } else if (hoveredAtCursor) {
       setHoverMark(0, null);
       hoveredAtCursor = null;
-      onLeave && onLeave();
+      onLeave();
     }
   }
 
