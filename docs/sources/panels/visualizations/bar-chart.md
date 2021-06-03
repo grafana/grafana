@@ -56,11 +56,11 @@ This controls whether values are shown on top or to the left of bars.
 * **Always** Always show values.
 * **Never** Never show values.  
 
-## Group width
+### Group width
 
 Controls the width of groups. 1 = max with, 0 = min width. 
 
-## Bar width
+### Bar width
 
 Controls the width of bars. 1 = Max width, 0 = Min width. 
 
