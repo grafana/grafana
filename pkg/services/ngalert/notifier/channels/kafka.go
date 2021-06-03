@@ -2,7 +2,6 @@ package channels
 
 import (
 	"context"
-	"fmt"
 	"strings"
 
 	"github.com/prometheus/alertmanager/notify"
@@ -97,7 +96,7 @@ func (kn *KafkaNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 	recordJSON.Set("records", []interface{}{valueJSON})
 
 	if tmplErr != nil {
-		return false, fmt.Errorf("failed to template Kafka message: %w", tmplErr)
+		kn.log.Debug("failed to template Kafka message", "err", tmplErr.Error())
 	}
 
 	body, err := recordJSON.MarshalJSON()

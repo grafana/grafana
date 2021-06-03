@@ -130,7 +130,7 @@ func (tn *TelegramNotifier) buildTelegramMessage(ctx context.Context, as []*type
 
 	message := tmpl(tn.Message)
 	if tmplErr != nil {
-		return nil, tmplErr
+		tn.log.Debug("failed to template Telegram message", "err", tmplErr.Error())
 	}
 
 	msg["text"] = message

@@ -109,7 +109,7 @@ func (dd *DingDingNotifier) Notify(ctx context.Context, as ...*types.Alert) (boo
 	}
 
 	if tmplErr != nil {
-		return false, fmt.Errorf("failed to template DingDing message: %w", tmplErr)
+		dd.log.Debug("failed to template DingDing message", "err", tmplErr.Error())
 	}
 
 	body, err := json.Marshal(bodyMsg)

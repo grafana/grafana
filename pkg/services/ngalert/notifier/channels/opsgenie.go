@@ -210,7 +210,7 @@ func (on *OpsgenieNotifier) buildOpsgenieMessage(ctx context.Context, alerts mod
 	apiURL = on.APIUrl
 
 	if tmplErr != nil {
-		return nil, "", fmt.Errorf("failed to template Opsgenie message: %w", tmplErr)
+		on.log.Debug("failed to template Opsgenie message", "err", tmplErr.Error())
 	}
 
 	return bodyJSON, apiURL, err
