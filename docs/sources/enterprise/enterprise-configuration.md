@@ -356,6 +356,7 @@ _Time to live_ (TTL) is the time that a query result is stored in the caching sy
 When storing cache data in-memory, this setting defines how often a background process cleans up stale data from the in-memory cache. More frequent "garbage collection" can keep memory usage from climbing but will increase CPU usage.
 
 ### max_value_mb
+
 This value limits the size of a single cache value. If a cache value (or query result) is submitted that exceeds this size, then it will not be cached. To disable this limit, set this value to `0`.
 
 
