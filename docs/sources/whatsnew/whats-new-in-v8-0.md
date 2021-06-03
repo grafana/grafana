@@ -245,11 +245,11 @@ You can now add or remove detailed permissions from Viewer, Editor, and Admin or
 
 ### Data source query caching
 
-Grafana will now cache the results of backend data source queries, so that multiple users viewing the same dashboard or panel will not each submit the same query to the data source (like Splunk or Snowflake) itself.
+Grafana caches the results of backend data source queries so that multiple users viewing the same dashboard or panel do not make multiple submissions of the same query to the data source (like Splunk or Snowflake) itself.
 
 This results in faster average load times for dashboards and fewer duplicate queries overall to data sources, which reduces cost and the risk of throttling, reaching API limits, or overloading your data sources.
 
-Caching can be enabled per-data source, and time-to-live (TTL) can be configured globally and per data source. Query caching can be set up with Redis, Memcached, or a simple in-memory cache.
+You can enable caching per data source, and time-to-live (TTL) can be configured globally and per data source. Query caching can be set up with Redis, Memcached, or a simple in-memory cache.
 
 For more information, refer to the [Data source query caching docs]({{< relref "../enterprise/query-caching.md" >}}).
 
@@ -259,11 +259,11 @@ When creating a report, you can now choose to export Table panels as .csv files 
 
 You can also link back to the dashboard directly from the email, for users who want to see the data live in Grafana. This release also includes some improvements to the Reports list view.
 
-[Reporting docs]({{< relref "../enterprise/reporting.md" >}}) was updated as a result of this feature.
+For more information, refer to [Reporting docs]({{< relref "../enterprise/reporting.md" >}}).
 
 ### License restrictions clarification in the docs
 
-The docs have been updated to describe more specifically how licensed roles are counted, how they can be updated, and where you can see details about dashboard and folder permissions that affect users' licensed roles.
+The Grafana Enterprise documentation has been updated to describe more specifically how licensed roles are counted, how they can be updated, and where you can see details about dashboard and folder permissions that affect users' licensed roles.
 
 For more information, refer to [License restrictions docs]({{< relref "../enterprise/license/license-restrictions.md" >}}).
 

@@ -1,13 +1,13 @@
 +++
-title = "Dashboard list panel"
+title = "Dashboard list"
 keywords = ["grafana", "dashboard list", "documentation", "panel", "dashlist"]
 aliases = ["/docs/grafana/latest/reference/dashlist/", "/docs/grafana/latest/features/panels/dashlist/"]
 weight = 300
 +++
 
-# Dashboard list panel
+# Dashboard list
 
-The dashboard list panel allows you to display dynamic links to other dashboards. The list can be configured to use starred dashboards, recently viewed dashboards, a search query, and dashboard tags.
+The dashboard list visualization allows you to display dynamic links to other dashboards. The list can be configured to use starred dashboards, recently viewed dashboards, a search query, and dashboard tags.
 
 {{< figure src="/static/img/docs/v45/dashboard-list-panels.png" max-width="850px">}}
 
@@ -17,15 +17,13 @@ On each dashboard load, this panel queries the dashboard list, always providing 
 
 Use these options to refine your visualization.
 
-### Options
-
 - **Starred -** Display starred dashboards in alphabetical order.
 - **Recently viewed -** Display recently viewed dashboards in alphabetical order.
 - **Search -** Display dashboards by search query or tags. You must enter at least one value in **Query** or **Tags**. For the **Query** and **Tags** fields. Variable interpolation is supported, for example,`$my_var` or `${my_var}`.
 - **Show headings -** The chosen list selection (Starred, Recently viewed, Search) is shown as a heading.
 - **Max items -** Sets the maximum number of items to list per section. For example, if you left this at the default value of 10 and displayed Starred and Recently viewed dashboards, then the panel would display up to 20 total dashboards, ten in each section.
 
-### Search
+## Search
 
 These options only apply if the **Search** option is selected.
 
