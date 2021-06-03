@@ -36,9 +36,11 @@ Library panels allow users to build panels that can be used in multiple dashboar
 
 Data sources can now send real-time updates to dashboards over a websocket connection. This can be used with the [MQTT data source](https://github.com/grafana/mqtt-datasource).
 
-In addition to data source integration, events can be sent to dashboards by posting metrics to the new live endpoint: `/api/live/push endpoint`.
+In addition to data source integration, events can be sent to dashboards by posting metrics to the new live endpoint: `/api/live/push` endpoint.
 
 These metrics will be broadcast to all dashboards connected to that stream endpoint.
+
+For more information about real-time streaming, refer to [Grafana Live documentation]({{< relref "../live/_index.md" >}}).
 
 ### Bar chart visualization (beta)
 
