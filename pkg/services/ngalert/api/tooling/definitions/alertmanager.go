@@ -537,6 +537,10 @@ type Config struct {
 	Templates    []string              `yaml:"templates" json:"templates"`
 }
 
+// Config is the entrypoint for the embedded Alertmanager config with the exception of receivers.
+// Prometheus historically uses yaml files as the method of configuration and thus some
+// post-validation is included in the UnmarshalYAML method. Here we simply run this with
+// a noop unmarshaling function in order to benefit from said validation.
 func (c *Config) UnmarshalJSON(b []byte) error {
 	type plain Config
 	if err := json.Unmarshal(b, (*plain)(c)); err != nil {
