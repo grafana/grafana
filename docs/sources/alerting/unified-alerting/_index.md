@@ -20,9 +20,9 @@ Alerts have four main components:
 
 You can perform the following tasks for alerts:
 
-- [Create a Grafana managed alert rule]({{< relref "./create-grafana-managed-rule.md" >}})
-- [Create a Cortex or Loki managed alert rule]({{< relref "./create-cortex-loki-managed-rule.md" >}})
-- [View existing alert rules and their current state]({{< relref "./rule-list.md" >}})
+- [Create a Grafana managed alert rule]({{< relref "alerting-rules/create-grafana-managed-rule.md" >}})
+- [Create a Cortex or Loki managed alert rule]({{< relref "alerting-rules/create-cortex-loki-managed-rule.md" >}})
+- [View existing alert rules and their current state]({{< relref "alerting-rules/rule-list.md" >}})
 - [Test alert rules and troubleshoot]({{< relref "./troubleshoot-alerts.md" >}})
 - [Add or edit an alert contact point]({{< relref "./contact-points.md" >}})
 - [Add or edit notification policies]({{< relref "./notification-policies.md" >}})
@@ -30,7 +30,7 @@ You can perform the following tasks for alerts:
 
 ## Clustering
 
-Currently alerting supports a limited form of high availability. Since v4.2.0 of Grafana, alert notifications are deduped when running multiple servers. This means all alerts are executed on every server but no duplicate alert notifications are sent due to the deduping logic. Proper load balancing of alerts will be introduced in the future.
+Currently alerting supports a limited form of high availability. Alert notifications are deduped when running multiple servers. This means all alerts are executed on every server but no duplicate alert notifications are sent due to the deduping logic. Proper load balancing of alerts will be introduced in the future.
 
 ## Alert evaluation
 
@@ -56,4 +56,4 @@ Metric Name | Type | Description
 `alerting.rule_group_rules` | gauge | The number of rules
 
 
-- [View alert rules and their current state]({{< relref "./rule-list.md" >}})
+- [View alert rules and their current state]({{< relref "alerting-rules/rule-list.md" >}})
