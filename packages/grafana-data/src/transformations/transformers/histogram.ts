@@ -181,16 +181,18 @@ export function buildHistogram(frames: DataFrame[], options?: HistogramTransform
       if (field.type === FieldType.number) {
         let fieldHist = histogram(field.values.toArray(), getBucket, histFilter, histSort) as AlignedData;
         histograms.push(fieldHist);
-        counts.push({ ...field, config: {} });
+        counts.push({
+          ...field,
+          config: {
+            ...field.config,
+            unit: undefined,
+          },
+        });
         if (!config && field.config.unit) {
           config = field.config;
         }
       }
     }
-  }
-
-  if (!config) {
-    config = {};
   }
 
   // Quit early for empty a
@@ -217,7 +219,7 @@ export function buildHistogram(frames: DataFrame[], options?: HistogramTransform
     values: new ArrayVector(joinedHists[0]),
     type: FieldType.number,
     state: undefined,
-    config,
+    config: config ?? {},
   };
   const bucketMax = {
     ...bucketMin,
@@ -234,11 +236,11 @@ export function buildHistogram(frames: DataFrame[], options?: HistogramTransform
     }
     counts = [
       {
+        ...counts[0],
         name: 'Count',
         values: new ArrayVector(vals),
         type: FieldType.number,
         state: undefined,
-        config: {},
       },
     ];
   } else {

@@ -65,7 +65,9 @@ describe('histogram frames frames', () => {
           ],
         },
         Object {
-          "config": Object {},
+          "config": Object {
+            "unit": undefined,
+          },
           "name": "A",
           "values": Array [
             1,
@@ -80,7 +82,9 @@ describe('histogram frames frames', () => {
           ],
         },
         Object {
-          "config": Object {},
+          "config": Object {
+            "unit": undefined,
+          },
           "name": "B",
           "values": Array [
             0,
@@ -95,7 +99,9 @@ describe('histogram frames frames', () => {
           ],
         },
         Object {
-          "config": Object {},
+          "config": Object {
+            "unit": undefined,
+          },
           "name": "C",
           "values": Array [
             0,
@@ -110,7 +116,9 @@ describe('histogram frames frames', () => {
           ],
         },
         Object {
-          "config": Object {},
+          "config": Object {
+            "unit": undefined,
+          },
           "name": "C",
           "values": Array [
             0,
