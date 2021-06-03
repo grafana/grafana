@@ -38,7 +38,7 @@ export const Legend = function Legend(props: Props) {
     (item) => {
       onSort({
         field: item.data!.field,
-        ascending: item.data!.field === sort?.field ? !sort?.ascending : true,
+        ascending: item.data!.field === sort?.field ? !sort?.ascending : false,
       });
     },
     [sort, onSort]
