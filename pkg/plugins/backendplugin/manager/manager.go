@@ -311,7 +311,7 @@ func (m *manager) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 			return nil, err
 		}
 
-		return nil, errutil.Wrap("failed to check plugin health", backendplugin.ErrHealthCheckFailed)
+		return nil, errutil.Wrap("failed to query data", err)
 	}
 
 	return resp, nil
