@@ -3,25 +3,7 @@ import { render, screen, fireEvent, waitFor, getByText } from '@testing-library/
 import userEvent from '@testing-library/user-event';
 import { NodeGraph } from './NodeGraph';
 import { makeEdgesDataFrame, makeNodesDataFrame } from './utils';
-
-jest.mock('./layout.worker.js', () => {
-  const { layout } = jest.requireActual('./layout.worker.js');
-  class TestWorker {
-    constructor() {}
-    postMessage(data: any) {
-      const { nodes, edges, config } = data;
-      setTimeout(() => {
-        layout(nodes, edges, config);
-        // @ts-ignore
-        this.onmessage({ data: { nodes, edges } });
-      }, 1);
-    }
-  }
-  return {
-    __esModule: true,
-    default: TestWorker,
-  };
-});
+jest.mock('./layout.worker.js');
 
 jest.mock('react-use/lib/useMeasure', () => {
   return {

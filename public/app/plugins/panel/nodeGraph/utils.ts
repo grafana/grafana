@@ -227,7 +227,6 @@ function nodesFrame() {
       ...fields[key],
       name: key,
     })),
-    meta: { preferredVisualisationType: 'nodeGraph' },
   });
 }
 
@@ -266,7 +265,6 @@ function edgesFrame() {
       ...fields[key],
       name: key,
     })),
-    meta: { preferredVisualisationType: 'nodeGraph' },
   });
 }
 
