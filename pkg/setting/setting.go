@@ -390,6 +390,9 @@ type Cfg struct {
 	LiveMaxConnections int
 
 	// Alerting
+
+	// AlertingBaseIntervalSeconds controls the alerting base interval in seconds.
+	// Only for internal use and not user configuration.
 	AlertingBaseIntervalSeconds time.Duration
 }
 
