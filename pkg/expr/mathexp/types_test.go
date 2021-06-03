@@ -141,8 +141,8 @@ func TestSeriesFromFrame(t *testing.T) {
 			frame: &data.Frame{
 				Name: "test",
 				Fields: []*data.Field{
-					data.NewField("value", nil, []*int64{int64Pointer(5)}),
 					data.NewField("time", nil, []*time.Time{unixTimePointer(5, 0)}),
+					data.NewField("value", nil, []*int64{int64Pointer(5)}),
 				},
 			},
 			errIs: assert.NoError,
@@ -151,14 +151,10 @@ func TestSeriesFromFrame(t *testing.T) {
 				Frame: &data.Frame{
 					Name: "test",
 					Fields: []*data.Field{
+						data.NewField("time", nil, []time.Time{time.Unix(5, 0)}),
 						data.NewField("value", nil, []*float64{float64Pointer(5)}),
-						data.NewField("time", nil, []*time.Time{unixTimePointer(5, 0)}),
 					},
 				},
-				TimeIdx:         1,
-				TimeIsNullable:  true,
-				ValueIdx:        0,
-				ValueIsNullable: true,
 			},
 		},
 		{
@@ -166,8 +162,8 @@ func TestSeriesFromFrame(t *testing.T) {
 			frame: &data.Frame{
 				Name: "test",
 				Fields: []*data.Field{
-					data.NewField("value", nil, []int64{5}),
 					data.NewField("time", nil, []*time.Time{unixTimePointer(5, 0)}),
+					data.NewField("value", nil, []int64{5}),
 				},
 			},
 			errIs: assert.NoError,
@@ -176,14 +172,10 @@ func TestSeriesFromFrame(t *testing.T) {
 				Frame: &data.Frame{
 					Name: "test",
 					Fields: []*data.Field{
+						data.NewField("time", nil, []time.Time{time.Unix(5, 0)}),
 						data.NewField("value", nil, []*float64{float64Pointer(5)}),
-						data.NewField("time", nil, []*time.Time{unixTimePointer(5, 0)}),
 					},
 				},
-				TimeIdx:         1,
-				TimeIsNullable:  true,
-				ValueIdx:        0,
-				ValueIsNullable: true,
 			},
 		},
 		{
@@ -191,8 +183,8 @@ func TestSeriesFromFrame(t *testing.T) {
 			frame: &data.Frame{
 				Name: "test",
 				Fields: []*data.Field{
-					data.NewField("value", nil, []string{"5"}),
 					data.NewField("time", nil, []*time.Time{unixTimePointer(5, 0)}),
+					data.NewField("value", nil, []string{"5"}),
 				},
 			},
 			errIs: assert.NoError,
@@ -201,14 +193,10 @@ func TestSeriesFromFrame(t *testing.T) {
 				Frame: &data.Frame{
 					Name: "test",
 					Fields: []*data.Field{
+						data.NewField("time", nil, []time.Time{time.Unix(5, 0)}),
 						data.NewField("value", nil, []*float64{float64Pointer(5)}),
-						data.NewField("time", nil, []*time.Time{unixTimePointer(5, 0)}),
 					},
 				},
-				TimeIdx:         1,
-				TimeIsNullable:  true,
-				ValueIdx:        0,
-				ValueIsNullable: true,
 			},
 		},
 		{
@@ -216,8 +204,8 @@ func TestSeriesFromFrame(t *testing.T) {
 			frame: &data.Frame{
 				Name: "test",
 				Fields: []*data.Field{
-					data.NewField("value", nil, []*string{strPointer("5")}),
 					data.NewField("time", nil, []*time.Time{unixTimePointer(5, 0)}),
+					data.NewField("value", nil, []*string{strPointer("5")}),
 				},
 			},
 			errIs: assert.NoError,
@@ -226,14 +214,10 @@ func TestSeriesFromFrame(t *testing.T) {
 				Frame: &data.Frame{
 					Name: "test",
 					Fields: []*data.Field{
+						data.NewField("time", nil, []time.Time{time.Unix(5, 0)}),
 						data.NewField("value", nil, []*float64{float64Pointer(5)}),
-						data.NewField("time", nil, []*time.Time{unixTimePointer(5, 0)}),
 					},
 				},
-				TimeIdx:         1,
-				TimeIsNullable:  true,
-				ValueIdx:        0,
-				ValueIsNullable: true,
 			},
 		},
 		{
@@ -241,8 +225,8 @@ func TestSeriesFromFrame(t *testing.T) {
 			frame: &data.Frame{
 				Name: "test",
 				Fields: []*data.Field{
-					data.NewField("value", nil, []bool{true}),
 					data.NewField("time", nil, []*time.Time{unixTimePointer(5, 0)}),
+					data.NewField("value", nil, []bool{true}),
 				},
 			},
 			errIs: assert.NoError,
@@ -251,14 +235,10 @@ func TestSeriesFromFrame(t *testing.T) {
 				Frame: &data.Frame{
 					Name: "test",
 					Fields: []*data.Field{
+						data.NewField("time", nil, []time.Time{time.Unix(5, 0)}),
 						data.NewField("value", nil, []*float64{float64Pointer(1)}),
-						data.NewField("time", nil, []*time.Time{unixTimePointer(5, 0)}),
 					},
 				},
-				TimeIdx:         1,
-				TimeIsNullable:  true,
-				ValueIdx:        0,
-				ValueIsNullable: true,
 			},
 		},
 		{
@@ -266,8 +246,8 @@ func TestSeriesFromFrame(t *testing.T) {
 			frame: &data.Frame{
 				Name: "test",
 				Fields: []*data.Field{
-					data.NewField("value", nil, []*bool{boolPointer(true)}),
 					data.NewField("time", nil, []*time.Time{unixTimePointer(5, 0)}),
+					data.NewField("value", nil, []*bool{boolPointer(true)}),
 				},
 			},
 			errIs: assert.NoError,
@@ -276,14 +256,10 @@ func TestSeriesFromFrame(t *testing.T) {
 				Frame: &data.Frame{
 					Name: "test",
 					Fields: []*data.Field{
+						data.NewField("time", nil, []time.Time{time.Unix(5, 0)}),
 						data.NewField("value", nil, []*float64{float64Pointer(1)}),
-						data.NewField("time", nil, []*time.Time{unixTimePointer(5, 0)}),
 					},
 				},
-				TimeIdx:         1,
-				TimeIsNullable:  true,
-				ValueIdx:        0,
-				ValueIsNullable: true,
 			},
 		},
 		{
