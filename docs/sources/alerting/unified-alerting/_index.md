@@ -11,7 +11,7 @@ Alerts allow you to know about problems in your systems moments after they occur
 
 Alerts have four main components:
 
-- Alerting rule - One or more conditions, the frequency of evaluation, and the (optional) duration that a condition must be met before notifying.
+- Alerting rule - One or more query and/or expression, a condition, the frequency of evaluation, and the (optional) duration that a condition must be met before creating an alert.
 - Contact point - A channel for sending notifications when the conditions of an alerting rule are met.
 - Notification policy - A set of matching and grouping criteria used to determine where, and how frequently, to send notifications.
 - Silences - Date and matching criteria used to silence notifications.
@@ -22,7 +22,7 @@ You can perform the following tasks for alerts:
 
 - [Create a Grafana managed alert rule]({{< relref "./create-grafana-managed-rule.md" >}})
 - [Create a Cortex or Loki managed alert rule]({{< relref "./create-cortex-loki-managed-rule.md" >}})
-- [View existing alert rules and their current state]({{< relref "./view-alerts.md" >}})
+- [View existing alert rules and their current state]({{< relref "./rule-list.md" >}})
 - [Test alert rules and troubleshoot]({{< relref "./troubleshoot-alerts.md" >}})
 - [Add or edit an alert contact point]({{< relref "./contact-points.md" >}})
 - [Add or edit notification policies]({{< relref "./notification-policies.md" >}})
