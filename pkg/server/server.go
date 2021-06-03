@@ -8,7 +8,6 @@ import (
 	"io/ioutil"
 	"net"
 	"os"
-	"os/user"
 	"path/filepath"
 	"strconv"
 	"sync"
@@ -24,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
+	"github.com/grafana/grafana/pkg/infra/process"
 	_ "github.com/grafana/grafana/pkg/infra/remotecache"
 	_ "github.com/grafana/grafana/pkg/infra/serverlock"
 	_ "github.com/grafana/grafana/pkg/infra/tracing"
@@ -309,12 +309,11 @@ func (s *Server) loadConfiguration() {
 		"compiled", time.Unix(setting.BuildStamp, 0),
 	)
 
-	serverProcessUser, err := user.Current()
+	elevated, err := process.IsServerProcessRunningWithElevatedPrivileges()
 	if err != nil {
-		s.log.Debug("Could not get current OS user to detect process privileges")
+		s.log.Debug("Error checking server process execution privilege", "err", err)
 	}
-
-	if (serverProcessUser != nil && serverProcessUser.Username == "root") || os.Geteuid() == 0 {
+	if elevated {
 		s.log.Warn("Grafana server is running with elevated privileges. This is not recommended")
 	}
 
