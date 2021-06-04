@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
 import { GrafanaTheme2, urlUtil } from '@grafana/data';
+import { locationService } from '@grafana/runtime';
 import { Button, ConfirmModal, HorizontalGroup, LinkButton, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { CombinedRule, RulesSource } from 'app/types/unified-alerting';
@@ -30,6 +31,7 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource }) => {
 
   const { isEditable } = useIsRuleEditable(rulerRule);
   const returnTo = location.pathname + location.search;
+  const isViewMode = inViewMode(location.pathname);
 
   const deleteRule = () => {
     if (ruleToDelete && ruleToDelete.rulerRule) {
@@ -43,6 +45,11 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource }) => {
           )
         )
       );
+
+      if (isViewMode) {
+        return locationService.replace('/alerting/list');
+      }
+
       setRuleToDelete(undefined);
     }
   };
@@ -113,7 +120,7 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource }) => {
     }
   }
 
-  if (rulerRule && !inViewMode(location.pathname)) {
+  if (rulerRule && !isViewMode) {
     rightButtons.push(
       <LinkButton
         className={style.button}

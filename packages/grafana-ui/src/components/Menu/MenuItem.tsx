@@ -2,8 +2,8 @@ import React from 'react';
 import { css, cx } from '@emotion/css';
 import { GrafanaTheme2, LinkTarget } from '@grafana/data';
 import { useStyles2 } from '../../themes';
-import { Icon } from '../Icon/Icon';
 import { IconName } from '../../types';
+import { MenuItemLabel } from './MenuItemLabel';
 
 /** @internal */
 export interface MenuItemProps {
@@ -15,6 +15,8 @@ export interface MenuItemProps {
   target?: LinkTarget;
   /** Icon of the menu item */
   icon?: IconName;
+  /** Image source if you want to use an image as an icon */
+  imgSrc?: string;
   /** Url of the menu item */
   url?: string;
   /** Handler for the click behaviour */
@@ -27,7 +29,7 @@ export interface MenuItemProps {
 
 /** @internal */
 export const MenuItem: React.FC<MenuItemProps> = React.memo(
-  ({ url, icon, label, ariaLabel, target, onClick, className, active }) => {
+  ({ url, icon, label, ariaLabel, target, onClick, className, active, imgSrc }) => {
     const styles = useStyles2(getStyles);
     const itemStyle = cx(
       {
@@ -55,7 +57,7 @@ export const MenuItem: React.FC<MenuItemProps> = React.memo(
           }
           rel={target === '_blank' ? 'noopener noreferrer' : undefined}
         >
-          {icon && <Icon name={icon} className={styles.icon} />} {label}
+          <MenuItemLabel imgSrc={imgSrc} icon={icon} label={label} />
         </a>
       </div>
     );
@@ -88,11 +90,6 @@ const getStyles = (theme: GrafanaTheme2) => {
     `,
     activeItem: css`
       background: ${theme.colors.action.selected};
-    `,
-    icon: css`
-      opacity: 0.7;
-      margin-right: 10px;
-      color: ${theme.colors.text.secondary};
     `,
   };
 };

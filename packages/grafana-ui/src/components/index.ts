@@ -93,6 +93,8 @@ export {
   PanelChromeLoadingIndicatorProps,
   PanelChromeErrorIndicator,
   PanelChromeErrorIndicatorProps,
+  PanelChromeExternalLink,
+  PanelChromeExternalLinkProps,
   PanelContextProvider,
   PanelContext,
   PanelContextRoot,
