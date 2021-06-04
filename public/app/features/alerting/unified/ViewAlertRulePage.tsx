@@ -1,7 +1,7 @@
 import React, { FC, useCallback, useEffect, useMemo } from 'react';
 import { useObservable } from 'react-use';
 import { css } from '@emotion/css';
-import { GrafanaTheme2, LoadingState, PanelData } from '@grafana/data';
+import { GrafanaTheme2, PanelData } from '@grafana/data';
 import { PageToolbar, withErrorBoundary, useStyles2, HorizontalGroup, Alert } from '@grafana/ui';
 import Page from 'app/core/components/Page/Page';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
@@ -93,7 +93,7 @@ const ViewAlertRulePage: FC<ViewAlertRuleProps> = ({ match }) => {
             )}
           </div>
         </div>
-        {hasQueryResult(data) && (
+        {data && Object.keys(data).length > 0 && (
           <>
             <HorizontalGroup height="50px">
               <div className={styles.label}>Query results</div>
@@ -118,13 +118,6 @@ const ViewAlertRulePage: FC<ViewAlertRuleProps> = ({ match }) => {
     </Page>
   );
 };
-
-function hasQueryResult(data: Record<string, PanelData> | undefined): boolean {
-  if (!data) {
-    return false;
-  }
-  return Object.keys(data).length > 0;
-}
 
 function ruleGroup(rule: CombinedRule): string {
   if (rule.name === rule.group.name) {
