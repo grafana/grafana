@@ -223,7 +223,7 @@ If you want to prevent Grafana Admin from creating users, you can do the followi
 By default, the Grafana Server Admin is the only user who can create and manage custom roles. If you want your users to do the same, you have two options:
 
 1. Create a built-in role assignment and map `fixed:permissions:admin:edit` and `fixed:permissions:admin:read` fixed roles to the `Editor` built-in role.
-1. [Create a custom role]({{< ref "#create-your-custom-role" >}}) with `roles.builtin:add` and `roles:write` permissions, and create a built-in role assignment for `Editor` organization role.
+1. [Create a custom role]({{< ref "#create-your-custom-role" >}}) with `roles.builtin:add` and `roles:write` permissions, then create a built-in role assignment for `Editor` organization role.
 
 Note that in any scenario, your `Editor` would be able to create and manage roles only with the permissions they have, or with a subset of them. 
 FIXME ???
