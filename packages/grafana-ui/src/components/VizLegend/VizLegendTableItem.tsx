@@ -13,6 +13,7 @@ export interface Props {
   onLabelClick?: (item: VizLegendItem, event: React.MouseEvent<HTMLDivElement>) => void;
   onLabelMouseEnter?: (item: VizLegendItem, event: React.MouseEvent<HTMLDivElement>) => void;
   onLabelMouseOut?: (item: VizLegendItem, event: React.MouseEvent<HTMLDivElement>) => void;
+  readonly?: boolean;
 }
 
 /**
@@ -24,6 +25,7 @@ export const LegendTableItem: React.FunctionComponent<Props> = ({
   onLabelMouseEnter,
   onLabelMouseOut,
   className,
+  readonly,
 }) => {
   const styles = useStyles(getStyles);
 
@@ -58,12 +60,12 @@ export const LegendTableItem: React.FunctionComponent<Props> = ({
     <tr className={cx(styles.row, className)}>
       <td>
         <span className={styles.itemWrapper}>
-          <VizLegendSeriesIcon color={item.color} seriesName={item.label} />
+          <VizLegendSeriesIcon color={item.color} seriesName={item.label} readonly={readonly} />
           <div
             onMouseEnter={onMouseEnter}
             onMouseOut={onMouseOut}
-            onClick={onClick}
-            className={cx(styles.label, item.disabled && styles.labelDisabled)}
+            onClick={!readonly ? onClick : undefined}
+            className={cx(styles.label, item.disabled && styles.labelDisabled, !readonly && styles.clickable)}
           >
             {item.label} {item.yAxis === 2 && <span className={styles.yAxisLabel}>(right y-axis)</span>}
           </div>
@@ -102,12 +104,15 @@ const getStyles = (theme: GrafanaTheme) => {
     `,
     label: css`
       label: LegendLabel;
-      cursor: pointer;
       white-space: nowrap;
     `,
     labelDisabled: css`
       label: LegendLabelDisabled;
       color: ${theme.colors.linkDisabled};
+    `,
+    clickable: css`
+      label: LegendClickable;
+      cursor: pointer;
     `,
     itemWrapper: css`
       display: flex;

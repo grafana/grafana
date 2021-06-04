@@ -1,5 +1,11 @@
 import { FetchResponse, getBackendSrv } from '@grafana/runtime';
 import { getLogAnalyticsResourcePickerApiRoute } from '../api/routes';
+import {
+  locationDisplayNames,
+  logsSupportedLocationsKusto,
+  logsSupportedResourceTypesKusto,
+  resourceTypeDisplayNames,
+} from '../azureMetadata';
 import { ResourceRowType, ResourceRow, ResourceRowGroup } from '../components/ResourcePicker/types';
 import { parseResourceURI } from '../components/ResourcePicker/utils';
 import { getAzureCloud } from '../credentials';
@@ -10,7 +16,6 @@ import {
   RawAzureResourceGroupItem,
   RawAzureResourceItem,
 } from '../types';
-import { SUPPORTED_LOCATIONS, SUPPORTED_RESOURCE_TYPES } from './supportedResources';
 
 const RESOURCE_GRAPH_URL = '/providers/Microsoft.ResourceGraph/resources?api-version=2020-04-01-preview';
 
@@ -42,7 +47,7 @@ export default class ResourcePickerData {
             | project resourceGroupURI=id, resourceGroupName=name, resourceGroup
           ) on resourceGroup
 
-        | where type in (${SUPPORTED_RESOURCE_TYPES})
+        | where type in (${logsSupportedResourceTypesKusto})
 
         // Get only unique resource groups and subscriptions. Also acts like a project
         | summarize count() by resourceGroupName, resourceGroupURI, subscriptionName, subscriptionURI
@@ -63,7 +68,7 @@ export default class ResourcePickerData {
     const { ok, data: response } = await this.makeResourceGraphRequest<RawAzureResourceItem[]>(`
       resources
       | where id hasprefix "${resourceGroup.id}"
-      | where type in (${SUPPORTED_RESOURCE_TYPES}) and location in (${SUPPORTED_LOCATIONS})
+      | where type in (${logsSupportedResourceTypesKusto}) and location in (${logsSupportedLocationsKusto})
     `);
 
     // TODO: figure out desired error handling strategy
@@ -222,7 +227,7 @@ function formatResourceGroupChildren(rawData: RawAzureResourceItem[]): ResourceR
     id: item.id,
     resourceGroupName: item.resourceGroup,
     type: ResourceRowType.Resource,
-    typeLabel: item.type, // TODO: these types can be quite long, we may wish to format them more
-    location: item.location, // TODO: we may wish to format these locations, by default they are written as 'northeurope' rather than a more human readable "North Europe"
+    typeLabel: resourceTypeDisplayNames[item.type] || item.type,
+    location: locationDisplayNames[item.location] || item.location,
   }));
 }

@@ -3,7 +3,6 @@ package channels
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"net/url"
 	"os"
 	"testing"
@@ -124,13 +123,6 @@ func TestPagerdutyNotifier(t *testing.T) {
 			name:         "Error in initing",
 			settings:     `{}`,
 			expInitError: alerting.ValidationError{Reason: "Could not find integration key property in settings"},
-		}, {
-			name: "Error in building message",
-			settings: `{
-				"integrationKey": "abcdefgh0123456789",
-				"class": "{{ .Status }"
-			}`,
-			expMsgError: errors.New("build pagerduty message: failed to template PagerDuty message: template: :1: unexpected \"}\" in operand"),
 		},
 	}
 
