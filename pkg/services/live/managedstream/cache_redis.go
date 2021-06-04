@@ -70,7 +70,8 @@ func (c *RedisFrameCache) Update(orgID int64, channel string, jsonFrame data.Fra
 
 	key := getCacheKey(orgchannel.PrependOrgID(orgID, channel))
 
-	pipe := c.redisClient.Pipeline()
+	pipe := c.redisClient.TxPipeline()
+	defer func() { _ = pipe.Close() }()
 
 	pipe.HGetAll(key)
 	pipe.HMSet(key, map[string]string{
