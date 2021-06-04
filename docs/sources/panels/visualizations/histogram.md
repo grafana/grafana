@@ -17,7 +17,7 @@ Histogram visualization supports time series and any table results with one or m
 
 ## Display options
 
-Use these options to refine your visualization.
+Use the following options to refine your visualization.
 
 ### Bucket size
 
