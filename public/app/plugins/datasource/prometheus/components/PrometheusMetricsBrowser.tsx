@@ -13,6 +13,8 @@ const MAX_LABEL_COUNT = 10000;
 const MAX_VALUE_COUNT = 50000;
 const EMPTY_SELECTOR = '{}';
 const METRIC_LABEL = '__name__';
+const LIST_ITEM_SIZE = 25;
+
 export const LAST_USED_LABELS_KEY = 'grafana.datasources.prometheus.browser.labels';
 
 export interface BrowserProps {
@@ -46,43 +48,6 @@ export interface SelectableLabel {
   values?: FacettableValue[];
   hidden?: boolean;
   facets?: number;
-}
-
-// Layout constants
-const LIST_ITEM_SIZE = 25;
-const VALUE_LIST_WIDTH_MIN = 200;
-const VALUE_LIST_WIDTH_MAX = 400;
-const VALUE_LIST_PADDING = 24;
-const LABEL_LIST_HEIGHT = 300;
-const VALUE_LIST_HEIGHT = 250;
-
-interface LayoutInput {
-  valueListsWidth: number;
-  labelCount: number;
-  metricCount: number;
-}
-
-interface LayoutOutput {
-  metricsHeight: number;
-  valueListWidth: number;
-}
-
-/**
- * Calculate the height of the metrics list based on how many label lists are shown. The label lists
- * will also try to use up roughly equal space, keeping it between VALUE_LIST_WIDTH_MIN and VALUE_LIST_WIDTH_MAX.
- **/
-export function calculateLayout({ valueListsWidth, labelCount, metricCount }: LayoutInput): LayoutOutput {
-  let valueListWidth = Math.max(VALUE_LIST_WIDTH_MIN, valueListsWidth);
-  let valueListRows = 1;
-  if (valueListsWidth && labelCount > 1) {
-    const colsMin = Math.floor(valueListsWidth / VALUE_LIST_WIDTH_MAX);
-    const cols = valueListsWidth / VALUE_LIST_WIDTH_MAX === colsMin ? colsMin : colsMin + 1;
-    const colWidth = Math.floor(valueListsWidth / cols) - VALUE_LIST_PADDING;
-    valueListWidth = Math.max(colWidth, VALUE_LIST_WIDTH_MIN);
-    valueListRows = Math.ceil(labelCount / cols);
-  }
-  const metricsHeight = Math.min(LABEL_LIST_HEIGHT + VALUE_LIST_HEIGHT * valueListRows, metricCount * LIST_ITEM_SIZE);
-  return { metricsHeight, valueListWidth };
 }
 
 export function buildSelector(labels: SelectableLabel[]): string {
@@ -142,7 +107,7 @@ export function facetLabels(
 const getStyles = stylesFactory((theme: GrafanaTheme) => ({
   wrapper: css`
     background-color: ${theme.colors.bg2};
-    padding: ${theme.spacing.md};
+    padding: ${theme.spacing.sm};
     width: 100%;
   `,
   list: css`
@@ -519,9 +484,6 @@ export class UnthemedPrometheusMetricsBrowser extends React.Component<BrowserPro
     const selector = buildSelector(this.state.labels);
     const empty = selector === EMPTY_SELECTOR;
     const metricCount = metrics?.values?.length || 0;
-    const valueListsWidth = this.valueListsRef?.current?.getBoundingClientRect().width || 0;
-    const labelCount = selectedLabels.length;
-    const { metricsHeight, valueListWidth } = calculateLayout({ metricCount, labelCount, valueListsWidth });
 
     return (
       <div className={styles.wrapper}>
@@ -538,7 +500,7 @@ export class UnthemedPrometheusMetricsBrowser extends React.Component<BrowserPro
               </div>
               <div role="list" className={styles.valueListWrapper}>
                 <FixedSizeList
-                  height={metricsHeight}
+                  height={Math.min(450, metricCount * LIST_ITEM_SIZE)}
                   itemCount={metricCount}
                   itemSize={LIST_ITEM_SIZE}
                   itemKey={(i) => (metrics!.values as FacettableValue[])[i].name}
@@ -581,7 +543,7 @@ export class UnthemedPrometheusMetricsBrowser extends React.Component<BrowserPro
                 />
               </div>
               {/* Using fixed height here to prevent jumpy layout */}
-              <div className={styles.list} style={{ height: 200 }}>
+              <div className={styles.list} style={{ height: 120 }}>
                 {nonMetricLabels.map((label) => (
                   <PromLabel
                     key={label.name}
@@ -597,8 +559,8 @@ export class UnthemedPrometheusMetricsBrowser extends React.Component<BrowserPro
               </div>
             </div>
             <div className={styles.section}>
-              <Label description="Choose the label values that you would like to use for the query. Use the search field to find values across selected labels.">
-                3. Find values for the selected labels
+              <Label description="Use the search field to find values across selected labels.">
+                3. Select (multiple) values for your labels
               </Label>
               <div>
                 <Input
@@ -631,7 +593,7 @@ export class UnthemedPrometheusMetricsBrowser extends React.Component<BrowserPro
                       itemCount={label.values?.length || 0}
                       itemSize={25}
                       itemKey={(i) => (label.values as FacettableValue[])[i].name}
-                      width={valueListWidth}
+                      width={200}
                       className={styles.valueList}
                     >
                       {({ index, style }) => {
