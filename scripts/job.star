@@ -23,7 +23,7 @@ def cronjobs(edition):
         {
             'kind': 'pipeline',
             'node': {
-                'host': 'gcloud'
+                'host': 'testdrone'
             },
             'type': 'docker',
             'platform': platform_conf,

@@ -236,7 +236,7 @@ services:
     MYSQL_USER: grafana
 
 node:
-  host: gcloud
+  host: testdrone
 
 trigger:
   event:
@@ -567,7 +567,7 @@ services:
     MYSQL_USER: grafana
 
 node:
-  host: gcloud
+  host: testdrone
 
 trigger:
   branch:
@@ -618,7 +618,7 @@ steps:
   - initialize
 
 node:
-  host: gcloud
+  host: testdrone
 
 trigger:
   branch:
@@ -674,7 +674,7 @@ steps:
   - initialize
 
 node:
-  host: gcloud
+  host: testdrone
 
 trigger:
   branch:
@@ -705,7 +705,7 @@ steps:
       from_secret: slack_webhook
 
 node:
-  host: gcloud
+  host: testdrone
 
 trigger:
   branch:
@@ -1022,7 +1022,7 @@ services:
     MYSQL_USER: grafana
 
 node:
-  host: gcloud
+  host: testdrone
 
 trigger:
   ref:
@@ -1071,7 +1071,7 @@ steps:
   - initialize
 
 node:
-  host: gcloud
+  host: testdrone
 
 trigger:
   ref:
@@ -1501,7 +1501,7 @@ image_pull_secrets:
 - dockerconfigjson
 
 node:
-  host: gcloud
+  host: testdrone
 
 trigger:
   ref:
@@ -1574,7 +1574,7 @@ image_pull_secrets:
 - dockerconfigjson
 
 node:
-  host: gcloud
+  host: testdrone
 
 trigger:
   ref:
@@ -1648,7 +1648,7 @@ steps:
   - initialize
 
 node:
-  host: gcloud
+  host: testdrone
 
 trigger:
   ref:
@@ -1679,7 +1679,7 @@ steps:
       from_secret: slack_webhook
 
 node:
-  host: gcloud
+  host: testdrone
 
 trigger:
   ref:
@@ -1985,7 +1985,7 @@ services:
     MYSQL_USER: grafana
 
 node:
-  host: gcloud
+  host: testdrone
 
 trigger:
   event:
@@ -2034,7 +2034,7 @@ steps:
   - initialize
 
 node:
-  host: gcloud
+  host: testdrone
 
 trigger:
   event:
@@ -2458,7 +2458,7 @@ image_pull_secrets:
 - dockerconfigjson
 
 node:
-  host: gcloud
+  host: testdrone
 
 trigger:
   event:
@@ -2531,7 +2531,7 @@ image_pull_secrets:
 - dockerconfigjson
 
 node:
-  host: gcloud
+  host: testdrone
 
 trigger:
   event:
@@ -2605,7 +2605,7 @@ steps:
   - initialize
 
 node:
-  host: gcloud
+  host: testdrone
 
 trigger:
   event:
@@ -2636,7 +2636,7 @@ steps:
       from_secret: slack_webhook
 
 node:
-  host: gcloud
+  host: testdrone
 
 trigger:
   event:
@@ -2917,7 +2917,7 @@ services:
     MYSQL_USER: grafana
 
 node:
-  host: gcloud
+  host: testdrone
 
 trigger:
   ref:
@@ -2962,7 +2962,7 @@ steps:
   - initialize
 
 node:
-  host: gcloud
+  host: testdrone
 
 trigger:
   ref:
@@ -3389,7 +3389,7 @@ image_pull_secrets:
 - dockerconfigjson
 
 node:
-  host: gcloud
+  host: testdrone
 
 trigger:
   ref:
@@ -3458,7 +3458,7 @@ image_pull_secrets:
 - dockerconfigjson
 
 node:
-  host: gcloud
+  host: testdrone
 
 trigger:
   ref:
@@ -3486,7 +3486,7 @@ steps:
       from_secret: slack_webhook
 
 node:
-  host: gcloud
+  host: testdrone
 
 trigger:
   ref:
@@ -3538,7 +3538,7 @@ steps:
     - failure
 
 node:
-  host: gcloud
+  host: testdrone
 
 trigger:
   cron:

@@ -30,7 +30,7 @@ def pipeline(
     pipeline = {
         'kind': 'pipeline',
          'node': {
-                'host': 'gcloud'
+                'host': 'testdrone'
             },
         'type': 'docker',
         'platform': platform_conf,
@@ -57,7 +57,7 @@ def notify_pipeline(name, slack_channel, trigger, depends_on=[]):
     return {
         'kind': 'pipeline',
          'node': {
-                'host': 'gcloud'
+                'host': 'testdrone'
             },
         'type': 'docker',
         'platform': {
