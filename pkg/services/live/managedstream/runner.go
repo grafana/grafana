@@ -117,10 +117,25 @@ func (s *ManagedStream) publishToSubChannels(orgID int64, path string, frame *da
 	if subChannels, ok := s.fieldSubs[path]; ok {
 		for ch, fields := range subChannels {
 			frame := copyFrameWithFields(frame, fields)
-			frameJSON, err := data.FrameToJSON(frame, include)
+			msg, err := data.FrameToJSONCache(frame)
 			if err != nil {
+				logger.Error("Error marshaling frame with data", "error", err)
 				return err
 			}
+			s.mu.Lock()
+			channel, _ := live.ParseChannel(ch)
+			if _, ok := s.last[orgID]; !ok {
+				s.last[orgID] = map[string]data.FrameJSONCache{}
+			}
+			last, exists := s.last[orgID][channel.Path]
+			s.last[orgID][channel.Path] = msg
+			s.mu.Unlock()
+			include := data.IncludeAll
+			if exists && last.SameSchema(&msg) {
+				// When the schema has not changed, just send the data.
+				include = data.IncludeDataOnly
+			}
+			frameJSON := msg.Bytes(include)
 			logger.Debug("Publish data to channel", "channel", ch, "dataLength", len(frameJSON))
 			err = s.publisher(orgID, ch, frameJSON)
 			if err != nil {
@@ -238,6 +253,11 @@ func (s *ManagedStream) OnSubscribe(ctx context.Context, u *models.SignedInUser,
 			delete(s.fieldSubs[path], e.Channel)
 			s.fieldSubsMu.Unlock()
 		}()
+		packet, ok := s.getLastPacket(u.OrgId, e.Path)
+		if ok {
+			reply.Data = packet
+		}
+		return reply, backend.SubscribeStreamStatusOK, nil
 	}
 
 	packet, ok := s.getLastPacket(u.OrgId, path)
