@@ -16,17 +16,29 @@ export const mapRelativeTimeRangeToOption = (range: RelativeTimeRange): TimeOpti
   return { from, to, display: `${from} to ${to}` };
 };
 
-export const isRangeValid = (relative: string, now = Date.now()): boolean => {
+export type RangeValidation = {
+  isValid: boolean;
+  errorMessage?: string;
+};
+
+export const isRangeValid = (relative: string, now = Date.now()): RangeValidation => {
   if (!isRelativeFormat(relative)) {
-    return false;
+    return {
+      isValid: false,
+      errorMessage: 'Value not in relative time format.',
+    };
   }
 
   const seconds = relativeToSeconds(relative);
 
   if (seconds > Math.ceil(now / 1000)) {
-    return false;
+    return {
+      isValid: false,
+      errorMessage: 'Can not enter value prior to January 1, 1970.',
+    };
   }
-  return true;
+
+  return { isValid: true };
 };
 
 export const isRelativeFormat = (format: string): boolean => {

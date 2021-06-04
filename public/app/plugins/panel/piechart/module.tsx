@@ -1,8 +1,9 @@
-import { FieldColorModeId, FieldConfigProperty, PanelPlugin, ReducerID, standardEditorsRegistry } from '@grafana/data';
+import { FieldColorModeId, FieldConfigProperty, PanelPlugin } from '@grafana/data';
 import { PieChartPanel } from './PieChartPanel';
 import { PieChartOptions, PieChartType, PieChartLabels, PieChartLegendValues } from './types';
 import { LegendDisplayMode, commonOptionsBuilder } from '@grafana/ui';
 import { PieChartPanelChangedHandler } from './migrations';
+import { addStandardDataReduceOptions } from '../stat/types';
 
 export const plugin = new PanelPlugin<PieChartOptions>(PieChartPanel)
   .setPanelChangeHandler(PieChartPanelChangedHandler)
@@ -25,15 +26,8 @@ export const plugin = new PanelPlugin<PieChartOptions>(PieChartPanel)
     },
   })
   .setPanelOptions((builder) => {
+    addStandardDataReduceOptions(builder);
     builder
-      .addCustomEditor({
-        id: 'reduceOptions.calcs',
-        path: 'reduceOptions.calcs',
-        name: 'Calculation',
-        description: 'Choose a reducer function / calculation',
-        editor: standardEditorsRegistry.get('stats-picker').editor as any,
-        defaultValue: [ReducerID.lastNotNull],
-      })
       .addRadio({
         name: 'Piechart type',
         description: 'How the piechart should be rendered',

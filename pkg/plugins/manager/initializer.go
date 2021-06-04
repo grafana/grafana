@@ -73,7 +73,7 @@ func (l *Initializer) Initialize(p *plugins.PluginV2) error {
 
 func (l *Initializer) handleModuleDefaults(p *plugins.PluginV2) {
 	if isExternalPlugin(p.PluginDir, l.Cfg) {
-		metrics.SetPluginBuildInformation(p.ID, p.Type, p.Info.Version)
+		metrics.SetPluginBuildInformation(p.ID, p.Type, p.Info.Version, string(p.Signature))
 
 		p.Module = path.Join("plugins", p.ID, "module")
 		p.BaseUrl = path.Join("public/plugins", p.ID)
