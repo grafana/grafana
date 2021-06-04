@@ -159,6 +159,7 @@ Time series data points with gaps in the the data are never connected.
 #### Always
 
 Time series data points with gaps in the the data are always connected.
+
 #### Threshold
 
 A threshold can be set above which gaps in the data should no longer be connected. This can be useful when the connected gaps in the data are of a known size and/or within a known range and gaps outside this range should no longer be connected. 
