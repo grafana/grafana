@@ -22,6 +22,9 @@ def cronjobs(edition):
     return [
         {
             'kind': 'pipeline',
+            'node': {
+                'host': 'gcloud'
+            },
             'type': 'docker',
             'platform': platform_conf,
             'name': 'scan-docker-images',

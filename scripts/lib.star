@@ -29,6 +29,9 @@ def pipeline(
 
     pipeline = {
         'kind': 'pipeline',
+         'node': {
+                'host': 'gcloud'
+            },
         'type': 'docker',
         'platform': platform_conf,
         'name': name,
@@ -53,6 +56,9 @@ def notify_pipeline(name, slack_channel, trigger, depends_on=[]):
     trigger = dict(trigger, status = ['failure'])
     return {
         'kind': 'pipeline',
+         'node': {
+                'host': 'gcloud'
+            },
         'type': 'docker',
         'platform': {
             'os': 'linux',

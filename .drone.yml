@@ -235,6 +235,9 @@ services:
     MYSQL_ROOT_PASSWORD: rootpass
     MYSQL_USER: grafana
 
+node:
+  host: gcloud
+
 trigger:
   event:
   - pull_request
@@ -563,6 +566,9 @@ services:
     MYSQL_ROOT_PASSWORD: rootpass
     MYSQL_USER: grafana
 
+node:
+  host: gcloud
+
 trigger:
   branch:
   - main
@@ -610,6 +616,9 @@ steps:
       from_secret: gcp_key
   depends_on:
   - initialize
+
+node:
+  host: gcloud
 
 trigger:
   branch:
@@ -664,6 +673,9 @@ steps:
   depends_on:
   - initialize
 
+node:
+  host: gcloud
+
 trigger:
   branch:
   - main
@@ -691,6 +703,9 @@ steps:
     template: "Build {{build.number}} failed for commit: <https://github.com/{{repo.owner}}/{{repo.name}}/commit/{{build.commit}}|{{ truncate build.commit 8 }}>: {{build.link}}\nBranch: <https://github.com/{{ repo.owner }}/{{ repo.name }}/commits/{{ build.branch }}|{{ build.branch }}>\nAuthor: {{build.author}}"
     webhook:
       from_secret: slack_webhook
+
+node:
+  host: gcloud
 
 trigger:
   branch:
@@ -1006,6 +1021,9 @@ services:
     MYSQL_ROOT_PASSWORD: rootpass
     MYSQL_USER: grafana
 
+node:
+  host: gcloud
+
 trigger:
   ref:
   - refs/tags/v*
@@ -1051,6 +1069,9 @@ steps:
       from_secret: gcp_key
   depends_on:
   - initialize
+
+node:
+  host: gcloud
 
 trigger:
   ref:
@@ -1479,6 +1500,9 @@ services:
 image_pull_secrets:
 - dockerconfigjson
 
+node:
+  host: gcloud
+
 trigger:
   ref:
   - refs/tags/v*
@@ -1548,6 +1572,9 @@ steps:
 
 image_pull_secrets:
 - dockerconfigjson
+
+node:
+  host: gcloud
 
 trigger:
   ref:
@@ -1620,6 +1647,9 @@ steps:
   depends_on:
   - initialize
 
+node:
+  host: gcloud
+
 trigger:
   ref:
   - refs/tags/v*
@@ -1647,6 +1677,9 @@ steps:
     template: "Build {{build.number}} failed for commit: <https://github.com/{{repo.owner}}/{{repo.name}}/commit/{{build.commit}}|{{ truncate build.commit 8 }}>: {{build.link}}\nBranch: <https://github.com/{{ repo.owner }}/{{ repo.name }}/commits/{{ build.branch }}|{{ build.branch }}>\nAuthor: {{build.author}}"
     webhook:
       from_secret: slack_webhook
+
+node:
+  host: gcloud
 
 trigger:
   ref:
@@ -1951,6 +1984,9 @@ services:
     MYSQL_ROOT_PASSWORD: rootpass
     MYSQL_USER: grafana
 
+node:
+  host: gcloud
+
 trigger:
   event:
   - custom
@@ -1996,6 +2032,9 @@ steps:
       from_secret: gcp_key
   depends_on:
   - initialize
+
+node:
+  host: gcloud
 
 trigger:
   event:
@@ -2418,6 +2457,9 @@ services:
 image_pull_secrets:
 - dockerconfigjson
 
+node:
+  host: gcloud
+
 trigger:
   event:
   - custom
@@ -2487,6 +2529,9 @@ steps:
 
 image_pull_secrets:
 - dockerconfigjson
+
+node:
+  host: gcloud
 
 trigger:
   event:
@@ -2559,6 +2604,9 @@ steps:
   depends_on:
   - initialize
 
+node:
+  host: gcloud
+
 trigger:
   event:
   - custom
@@ -2586,6 +2634,9 @@ steps:
     template: "Build {{build.number}} failed for commit: <https://github.com/{{repo.owner}}/{{repo.name}}/commit/{{build.commit}}|{{ truncate build.commit 8 }}>: {{build.link}}\nBranch: <https://github.com/{{ repo.owner }}/{{ repo.name }}/commits/{{ build.branch }}|{{ build.branch }}>\nAuthor: {{build.author}}"
     webhook:
       from_secret: slack_webhook
+
+node:
+  host: gcloud
 
 trigger:
   event:
@@ -2865,6 +2916,9 @@ services:
     MYSQL_ROOT_PASSWORD: rootpass
     MYSQL_USER: grafana
 
+node:
+  host: gcloud
+
 trigger:
   ref:
   - refs/heads/v*
@@ -2906,6 +2960,9 @@ steps:
       from_secret: gcp_key
   depends_on:
   - initialize
+
+node:
+  host: gcloud
 
 trigger:
   ref:
@@ -3331,6 +3388,9 @@ services:
 image_pull_secrets:
 - dockerconfigjson
 
+node:
+  host: gcloud
+
 trigger:
   ref:
   - refs/heads/v*
@@ -3397,6 +3457,9 @@ steps:
 image_pull_secrets:
 - dockerconfigjson
 
+node:
+  host: gcloud
+
 trigger:
   ref:
   - refs/heads/v*
@@ -3421,6 +3484,9 @@ steps:
     template: "Build {{build.number}} failed for commit: <https://github.com/{{repo.owner}}/{{repo.name}}/commit/{{build.commit}}|{{ truncate build.commit 8 }}>: {{build.link}}\nBranch: <https://github.com/{{ repo.owner }}/{{ repo.name }}/commits/{{ build.branch }}|{{ build.branch }}>\nAuthor: {{build.author}}"
     webhook:
       from_secret: slack_webhook
+
+node:
+  host: gcloud
 
 trigger:
   ref:
@@ -3470,6 +3536,9 @@ steps:
   when:
     status:
     - failure
+
+node:
+  host: gcloud
 
 trigger:
   cron:
