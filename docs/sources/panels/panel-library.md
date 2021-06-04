@@ -5,7 +5,9 @@ weight = 400
 
 # Library panels
 
-Library panels allow users to create reusable panels you use in multiple dashboards. When a change is made to the library panel, it is propogated to other dashboards. If needed, you can remove a panel from the library, and make it an individual panel.
+Library panels allow users to create reusable panels where any changes made to one instance of the library panel is reflected on every dashboard 
+affecting all other instances. where the panel is used. These panels can be saved in folders alongside Dashboards and streamline reuse of panels 
+across multiple dashboards.
 
 ## Create a library panel
 
