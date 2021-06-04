@@ -7,10 +7,10 @@ import {
   logger,
   validators,
 } from '@percona/platform-core';
-import React, { FC, useContext, useEffect, useRef, useState, useCallback } from 'react';
+import React, { FC, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { Form, Field } from 'react-final-form';
 
-import { SelectableValue, AppEvents } from '@grafana/data';
+import { AppEvents, SelectableValue } from '@grafana/data';
 import { Button, HorizontalGroup, Switch, useStyles } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { Label } from 'app/percona/shared/components/Form/Label';

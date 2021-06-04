@@ -1,4 +1,4 @@
-import { logger, CheckboxField } from '@percona/platform-core';
+import { CheckboxField, logger } from '@percona/platform-core';
 import React, { useCallback, useEffect, useState } from 'react';
 import { Form } from 'react-final-form';
 
