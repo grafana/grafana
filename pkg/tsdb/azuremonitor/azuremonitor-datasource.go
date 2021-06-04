@@ -172,7 +172,7 @@ func (e *AzureMonitorDatasource) executeQuery(ctx context.Context, query *AzureM
 
 	span, ctx := opentracing.StartSpanFromContext(ctx, "azuremonitor query")
 	span.SetTag("target", query.Target)
-	span.SetTag("from", query.TimeRange.From.UTC().UnixNano()/int64(time.Millisecond))
+	span.SetTag("from", query.TimeRange.From.UnixNano()/int64(time.Millisecond))
 	span.SetTag("until", query.TimeRange.To.UnixNano()/int64(time.Millisecond))
 	span.SetTag("datasource_id", dsInfo.DatasourceID)
 	span.SetTag("org_id", dsInfo.OrgID)

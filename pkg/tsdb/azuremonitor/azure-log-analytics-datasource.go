@@ -155,7 +155,7 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *A
 
 	span, ctx := opentracing.StartSpanFromContext(ctx, "azure log analytics query")
 	span.SetTag("target", query.Target)
-	span.SetTag("from", query.TimeRange.From.UTC().UnixNano()/int64(time.Millisecond))
+	span.SetTag("from", query.TimeRange.From.UnixNano()/int64(time.Millisecond))
 	span.SetTag("until", query.TimeRange.To.UnixNano()/int64(time.Millisecond))
 	span.SetTag("datasource_id", dsInfo.DatasourceID)
 	span.SetTag("org_id", dsInfo.OrgID)
