@@ -51,7 +51,7 @@ The Prometheus metrics browser allows you to quickly find metrics and select rel
 
 The Bar chart panel is a new visualization that supports categorical data. It only supports one data frame and it needs to have at least one string field that will be used as the category for an X or Y axis and one or more numerical fields.
 
-{{< figure src="/static/img/docs/v8/bar_chart_example.png" max-width="1025px" caption="Bar chart example" >}}
+{{< figure src="/static/img/docs/bar-chart-panel/bar-chart-example-v8-0.png" max-width="1025px" caption="Bar chart example" >}}
 
 To use it with time series you first have to add a **Reduce** transform.
 

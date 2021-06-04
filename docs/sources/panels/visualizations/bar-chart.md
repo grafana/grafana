@@ -2,13 +2,14 @@
 title = "Bar chart"
 description = "Bar chart visualization"
 keywords = ["grafana", "docs", "bar chart", "panel", "barchart"]
+weight = 200
 +++
 
 # Bar chart visualization
 
 This panel is focused on visualizing categorical data.
 
-{{< figure src="/static/img/docs/v8/bar_chart_example.png" max-width="1025px" caption="Bar chart example" >}}
+{{< figure src="/static/img/docs/bar-chart-panel/bar-chart-example-v8-0.png" max-width="1025px" caption="Bar chart example" >}}
 
 ## Supported data formats
 
@@ -28,7 +29,7 @@ If you have more than one numerical field the panel will show grouped bars.
 If you have multiple time series or tables you first need to join them using a join or reduce transform. For example if you 
 have multiple time series and you want to compare their last and max value add the **Reduce** transform and specify  **Max** and **Last** as options under **Calculations**. 
 
-{{< figure src="/static/img/docs/v8/bar_chart_time_series.png" max-width="1025px" caption="Bar chart time series example" >}}
+{{< figure src="/static/img/docs/bar-chart-panel/bar-chart-time-series-v8-0.png" max-width="1025px" caption="Bar chart time series example" >}}
 
 ## Shared options
 
