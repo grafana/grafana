@@ -123,9 +123,7 @@ function hasQueryResult(data: Record<string, PanelData> | undefined): boolean {
   if (!data) {
     return false;
   }
-  return !!Object.values(data).find((d) => {
-    return d.series.length > 0 || d.state === LoadingState.Loading;
-  });
+  return Object.keys(data).length > 0;
 }
 
 function ruleGroup(rule: CombinedRule): string {
