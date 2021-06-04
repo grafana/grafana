@@ -35,6 +35,12 @@ export default {
         options: getAvailableIcons(),
       },
     },
+    size: {
+      control: {
+        type: 'select',
+        options: ['sm', 'md', 'lg'],
+      },
+    },
   },
 };
 const options = generateOptions();

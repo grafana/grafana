@@ -16,6 +16,7 @@ export default {
   argTypes: {
     icon: { control: { type: 'select', options: iconOptions } },
     color: { control: 'select' },
+    text: { control: 'text' },
   },
 };
 
