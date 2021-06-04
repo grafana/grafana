@@ -2,7 +2,6 @@ package load
 
 import (
 	"fmt"
-	"github.com/laher/mergefs"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -10,6 +9,7 @@ import (
 	"testing/fstest"
 
 	"github.com/grafana/grafana/pkg/schema"
+	"github.com/laher/mergefs"
 	"github.com/stretchr/testify/require"
 )
 
