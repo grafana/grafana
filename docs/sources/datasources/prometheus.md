@@ -17,8 +17,8 @@ To access Prometheus settings, hover your mouse over the **Configuration** (gear
 | Name                      | Description                                                                                                                                                                                                                                                       |
 | ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `Name`                    | The data source name. This is how you refer to the data source in panels and queries.                                                                                                                                                                             |
-| `Default`                 | Default data source that is pre-selected for new panels.                                                                                                                                                                                            |
-| `Url`                     | The URL of your Prometheus server, for example, `http://prometheus.example.org:9090`.                                                                                                                                                                                     |
+| `Default`                 | Default data source that is pre-selected for new panels.                                                                                                                                                                                                          |
+| `Url`                     | The URL of your Prometheus server, for example, `http://prometheus.example.org:9090`.                                                                                                                                                                             |
 | `Access`                  | Server (default) = URL needs to be accessible from the Grafana backend/server, Browser = URL needs to be accessible from the browser.                                                                                                                             |
 | `Basic Auth`              | Enable basic authentication to the Prometheus data source.                                                                                                                                                                                                        |
 | `User`                    | User name for basic authentication.                                                                                                                                                                                                                               |
@@ -81,22 +81,23 @@ To show a horizontal line across the whole graph, add a series override and sele
 The metrics browser allows you to quickly find metrics and select relevant labels to build basic queries.
 When you open the browser you will see all available metrics and labels.
 If supported by your Prometheus instance, each metric will show its HELP and TYPE as a tooltip.
+
+{{< figure src="/static/img/docs/v8/prometheus_metrics_browser.png" class="docs-image--no-shadow" max-width="800px" caption="Screenshot of the metrics browser for Prometheus" >}}
+
 When you select a metric, the browser narrows down the available labels to show only the ones applicable to the metric.
 You can then select one or more labels for which the available label values are shown in lists in the bottom section.
 Select one or more values for each label to tighten your query scope.
 
->**Note:** If you do not remember a metric name to start with, you can also select a few labels first, to narrow down the list and then find relevant label values. 
+> **Note:** If you do not remember a metric name to start with, you can also select a few labels first, to narrow down the list and then find relevant label values.
 
 All lists in the metrics browser have a search field above them to quickly filter for metrics or labels that match a certain string. The values section only has one search field. Its filtering applies to all labels to help you find values across labels once they have been selected, for example, among your labels `app`, `job`, `job_name` only one might with the value you are looking for.
 
 Once you are satisfied with your query, click "Use query" to run the query. The button "Use as rate query" adds a `rate(...)[$__interval]` around your query to help write queries for counter metrics.
 The "Validate selector" button will check with Prometheus how many time series are available for that selector.
 
-#### Limitations 
+#### Limitations
 
 The metrics browser has a hard limit of 10,000 labels (keys) and 50,000 label values (including metric names). If your Prometheus instance returns more results, the browser will continue functioning. However, the result sets will be cut off above those maximum limits.
-
-{{< figure src="/static/img/docs/v8/prometheus_metrics_browser.png" class="docs-image--no-shadow" max-width="800px" caption="Screenshot of the metrics browser for Prometheus" >}}
 
 ## Templating
 
