@@ -330,7 +330,6 @@ def build_backend_step(edition, ver_mode, variants=None, is_downstream=False):
             'GITHUB_TOKEN': from_secret(github_token),
         }
         cmds = [
-            'make gen-go',
             './bin/grabpl build-backend --jobs 8 --edition {} --github-token $${{GITHUB_TOKEN}} --no-pull-enterprise ${{DRONE_TAG}}'.format(
                 edition,
             ),
@@ -449,6 +448,8 @@ def test_backend_step(edition, tries=None):
             'initialize',
         ],
         'commands': [
+            # Generate Go code, will install Wire
+            'make gen-go',
             # First make sure that there are no tests with FocusConvey
             '[ $(grep FocusConvey -R pkg | wc -l) -eq "0" ] || exit 1',
             # Then execute non-integration tests in parallel, since it should be safe
