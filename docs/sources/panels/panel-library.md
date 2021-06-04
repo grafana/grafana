@@ -6,7 +6,7 @@ weight = 400
 # Library panels
 
 Library panels allow users to create reusable panels where any changes made to one instance of the library panel is reflected on every dashboard 
-affecting all other instances. where the panel is used. These panels can be saved in folders alongside Dashboards and streamline reuse of panels 
+affecting all other instances where the panel is used. These panels can be saved in folders alongside Dashboards and streamline reuse of panels 
 across multiple dashboards.
 
 ## Create a library panel
@@ -21,9 +21,9 @@ To create a library panel:
 1. Create a Grafana panel as you normally would, following instructions in [Add a panel]({{< relref "./add-a-panel.md" >}}). You an also use an existing panel.
 1. Click the title of the panel and then click **Edit**. The panel opens in edit mode.
 1. In the panel display options (side pane), click the down arrow option to bring changes to the visualization.
-   {{< figure src="/static/img/docs/library-panels/create-lib-panel-from-edit-8-0.png" class="docs-image--no-shadow" max-width= "900px" caption="Screenshot of the edit panel" >}}
+   {{< figure src="/static/img/docs/library-panels/create-lib-panel-from-edit-8-0.png" class="docs-image--no-shadow" max-width= "800px" caption="Screenshot of the edit panel" >}}
 1. Click the **Library panels** option, and then click **Create new library panel** to open the create dialog.
-   {{< figure src="/static/img/docs/library-panels/create-lib-panel-8-0.png" class="docs-image--no-shadow" max-width= "900px" caption="Screenshot of the create library panel dialog" >}}
+   {{< figure src="/static/img/docs/library-panels/create-lib-panel-8-0.png" class="docs-image--no-shadow" max-width= "500px" caption="Screenshot of the create library panel dialog" >}}
 1. In **Library panel name**, enter the name.
 1. In **Save in folder**, select the folder to save the library panel. By default, the General folder is selected.
 1. Click **Create library panel** to save your changes.
@@ -31,7 +31,7 @@ To create a library panel:
 
 Optionally, you can click title of the panel and then click **More > Create Library panel**. Next, follow the instructions Step 5 in the procedure above. 
 
-   {{< figure src="/static/img/docs/library-panels/create-lib-panel-from-edit-8-0.png" class="docs-image--no-shadow" max-width= "900px" caption="Screenshot of the edit panel" >}}
+   {{< figure src="/static/img/docs/library-panels/create-from-more-8-0.png" class="docs-image--no-shadow" max-width= "900px" caption="Screenshot of the edit panel" >}}
 
 Also, library panels can also be created using the “Share” option for any panel. 
 
@@ -65,7 +65,7 @@ To unlink a library panel from a dashboard:
 
 1. Hover over **Dashboard** on the left menu, and then click **Library panels**.
 1. Select a library panel that is being used in different dashboards. You will see a list of all the dashboards where the library panel is used.
-   {{< figure src="/static/img/docs/library-panels/used-in-list-8-0.png" class="docs-image--no-shadow" max-width= "900px" caption="Screenshot of the edit panel" >}}
+   {{< figure src="/static/img/docs/library-panels/unlink-8-0.png" class="docs-image--no-shadow" max-width= "900px" caption="Screenshot of the edit panel" >}}
 1. Select the panel you want to unlink and update. 
 1. Click the title of the panel and then click **Edit**. The panel opens in edit mode.
 1. Click the **Unlink** option on the top right corner of the UI.
