@@ -21,7 +21,7 @@ Example request:
 curl --location --request GET '<grafana_url>/api/access-control/builtin-roles' --header 'Authorization: Basic YWRtaW46cGFzc3dvcmQ='
 ```
 
-Auth tokens cannot be used here, you must use the base64 username:password Basic Authorization
+You must use the base64 username:password Basic Authorization here. Auth tokens are not applicable here.
 
 Example response:
 ```
@@ -223,6 +223,6 @@ If you want to prevent Grafana Admin from creating users, you can do the followi
 By default, the Grafana Server Admin is the only user who can create and manage custom roles. If you want your users to do the same, you have two options:
 
 1. Create a built-in role assignment and map `fixed:permissions:admin:edit` and `fixed:permissions:admin:read` fixed roles to the `Editor` built-in role.
-1. [Create a custom role]({{< ref "#create-your-custom-role" >}}) with `roles.builtin:add` and `roles:write` permissions, and create a built-in role assignment for `Editor` organization role.
+1. [Create a custom role]({{< ref "#create-your-custom-role" >}}) with `roles.builtin:add` and `roles:write` permissions, then create a built-in role assignment for `Editor` organization role.
 
 Note that any user with the ability to modify roles can only create, update or delete roles with permissions they themselves have been granted.
