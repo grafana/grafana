@@ -171,7 +171,6 @@ Azure Resource Graph is now supported in Azure Monitor data source. This is a se
 
 For a comprehensive lits of all enhancements, refer to the [Azure Monitor data source documentation]({{< relref "../datasources/azuremonitor.md" >}}).
 
-
 #### Elasticsearch data source
 
 [Elasticsearch data source]({{< relref "../datasources/elasticsearch.md" >}}) and [Provisioning]({{< relref "../administration/provisioning.md" >}}) were updated as a result of these changes.
