@@ -52,17 +52,15 @@ az ad sp create-for-rbac -n "http://localhost:3000"
 
 ## Choose a Service
 
-In the query editor for a panel, after choosing your Azure Monitor data source, the first option is to choose a service. There are four options here:
+In the query editor for a panel, after choosing your Azure Monitor data source, the first option is to choose a service. There are three options here:
 
-- `Metrics`
-- `Logs`
-- `Azure Resource Graph`
+- Metrics
+- Logs
+- Azure Resource Graph
 
 The query editor changes depending on which one you pick. Metrics is the default.
 
-Starting in Grafana 7.1, Insights Analytics replaced the former edit mode from within Application Insights.
-
-Starting in Grafana 7.4, the Azure Monitor query type was renamed to Metrics and Azure Logs Analytics was renamed to Logs.
+Starting in Grafana 7.4, the Azure Monitor query type was renamed to Metrics and Azure Logs Analytics was renamed to Logs. Starting in Grafana 8.0 Application Insights and Insights Analytics is unavailable for new panels, in favor of querying through Metrics and Logs.
 
 ## Query the Metrics service
 
@@ -289,12 +287,6 @@ If you're not currently logged in to the Azure Portal, then the link opens the l
 
 <div class="clearfix"></div>
 
-### Logs alerting
-
-> Only available in Grafana v7.0+.
-
-Grafana alerting is supported for Application Insights. This is not Azure Alerts support. Read more about how alerting in Grafana works in [Alerting rules]({{< relref "../alerting/_index.md" >}}).
-
 ## Query the Azure Resource Graph service
 
 Azure Resource Graph (ARG) is a service in Azure that is designed to extend Azure Resource Management by providing efficient and performant resource exploration with the ability to query at scale across a given set of subscriptions so that you can effectively govern your environment. By querying ARG, you can query resources with complex filtering, iteratively explore resources based on governance requirements, and assess the impact of applying policies in a vast cloud environment.
@@ -359,9 +351,11 @@ securityresources
 
 ## Configure the data source with provisioning
 
-It's now possible to configure data sources using config files with Grafana's provisioning system. You can read more about how it works and all the settings you can set for data sources on the [provisioning docs page]({{< relref "../administration/provisioning/#datasources" >}})
+You can configure data sources using config files with Grafana’s provisioning system. You can read more about how it works and all the settings you can set for data sources on the [provisioning docs page]({{< relref "../administration/provisioning/#datasources" >}})
 
 Here are some provisioning examples for this data source.
+
+### Azure AD App Registration (client secret)
 
 ```yaml
 # config file version
@@ -372,21 +366,58 @@ datasources:
     type: grafana-azure-monitor-datasource
     access: proxy
     jsonData:
-      appInsightsAppId: <app-insights-app-id>
-      clientId: <client-id>
-      cloudName: azuremonitor
-      subscriptionId: <subscription-id>
+      azureAuthType: clientsecret
+      cloudName: azuremonitor # See table below
       tenantId: <tenant-id>
-      logAnalyticsClientId: <log-analytics-client-id>
-      logAnalyticsDefaultWorkspace: <log-analytics-default-workspace>
-      logAnalyticsSubscriptionId: <log-analytics-subscription-id>
-      logAnalyticsTenantId: <log-analytics-tenant-id>
+      clientId: <client-id>
+      subscriptionId: <subscription-id> # Optional, default subscription
     secureJsonData:
       clientSecret: <client-secret>
-      appInsightsApiKey: <app-insights-api-key>
-      logAnalyticsClientSecret: <log-analytics-client-secret>
     version: 1
 ```
+
+### Managed Identity
+
+```yaml
+# config file version
+apiVersion: 1
+
+datasources:
+  - name: Azure Monitor
+    type: grafana-azure-monitor-datasource
+    access: proxy
+    jsonData:
+      azureAuthType: msi
+      subscriptionId: <subscription-id> # Optional, default subscription
+    version: 1
+```
+
+### App Registration (client secret)
+
+```yaml
+datasources:
+  - name: Azure Monitor
+    type: grafana-azure-monitor-datasource
+    access: proxy
+    jsonData:
+      azureAuthType: clientsecret
+      cloudName: azuremonitor # See table below
+      tenantId: <tenant-id>
+      clientId: <client-id>
+      subscriptionId: <subscription-id> # Optional, default subscription
+    secureJsonData:
+      clientSecret: <client-secret>
+    version: 1
+```
+
+### Supported cloud names
+
+| Azure Cloud                                      | Value                      |
+| ------------------------------------------------ | -------------------------- |
+| Microsoft Azure public cloud                     | `azuremonitor` (_default_) |
+| Microsoft Chinese national cloud                 | `chinaazuremonitor`        |
+| US Government cloud                              | `govazuremonitor`          |
+| Microsoft German national cloud ("Black Forest") | `germanyazuremonitor`      |
 
 ## Deprecating Application Insights and Insights Analytics
 
