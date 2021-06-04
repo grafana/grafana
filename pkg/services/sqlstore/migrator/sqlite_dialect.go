@@ -41,13 +41,6 @@ func (db *SQLite3) BooleanStr(value bool) string {
 	return "0"
 }
 
-func (db *SQLite3) Default(col *Column) string {
-	if col.Type == DB_DateTime {
-		return fmt.Sprintf("'%s'", col.Default)
-	}
-	return col.Default
-}
-
 func (db *SQLite3) DateTimeFunc(value string) string {
 	return "datetime(" + value + ")"
 }

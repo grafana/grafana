@@ -43,13 +43,6 @@ func (db *MySQLDialect) BooleanStr(value bool) string {
 	return "0"
 }
 
-func (db *MySQLDialect) Default(col *Column) string {
-	if col.Type == DB_DateTime {
-		return fmt.Sprintf("'%s'", col.Default)
-	}
-	return col.Default
-}
-
 func (db *MySQLDialect) SQLType(c *Column) string {
 	var res string
 	switch c.Type {

@@ -2,12 +2,12 @@ package ualert
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 )
 
 // AddMigration defines database migrations.
+// If Alerting NG is not enabled does nothing.
 func AddTablesMigrations(mg *migrator.Migrator) {
 	AddAlertDefinitionMigrations(mg, 60)
 	AddAlertDefinitionVersionMigrations(mg)
@@ -254,31 +254,4 @@ func AddAlertmanagerConfigMigrations(mg *migrator.Migrator) {
 	mg.AddMigration("Add column default in alert_configuration", migrator.NewAddColumnMigration(alertConfiguration, &migrator.Column{
 		Name: "default", Type: migrator.DB_Bool, Nullable: false, Default: "0",
 	}))
-
-	//------- rename table ------------------
-	tempTable := "alert_configuration_TBD" // do not change it
-	migrationId := fmt.Sprintf("Rename table %s to %s - v1", alertConfiguration.Name, tempTable)
-	mg.AddMigration(migrationId, migrator.NewRenameTableMigration(alertConfiguration.Name, tempTable))
-
-	alertConfigurationV2 := migrator.Table{
-		Name: "alert_configuration",
-		Columns: []*migrator.Column{
-			{Name: "id", Type: migrator.DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
-			{Name: "alertmanager_configuration", Type: migrator.DB_Text, Nullable: false},
-			{Name: "configuration_version", Type: migrator.DB_NVarchar, Length: 3}, // In a format of vXX e.g. v1, v2, v10, etc
-			{Name: "created_at", Type: migrator.DB_DateTime, Nullable: false, Default: time.Now().Format("2006-01-02 15:04:05")},
-			{Name: "default", Type: migrator.DB_Bool, Nullable: false, Default: "0"},
-		},
-	}
-	mg.AddMigration("create alert_configuration table v2", migrator.NewAddTableMigration(alertConfigurationV2))
-
-	//------- copy data from v1 to v2 -------------------
-	mg.AddMigration("copy alert_configuration v1 to v2", migrator.NewCopyTableDataMigration(alertConfigurationV2.Name, tempTable, map[string]string{
-		"id":                         "id",
-		"alertmanager_configuration": "alertmanager_configuration",
-		"configuration_version":      "configuration_version",
-		"default":                    "default",
-	}))
-
-	mg.AddMigration(fmt.Sprintf("drop old table %s", tempTable), migrator.NewDropTableMigration(tempTable))
 }

@@ -50,8 +50,6 @@ func (db *PostgresDialect) Default(col *Column) string {
 			return "FALSE"
 		}
 		return "TRUE"
-	} else if col.Type == DB_DateTime {
-		return fmt.Sprintf("'%s'", col.Default)
 	}
 	return col.Default
 }
