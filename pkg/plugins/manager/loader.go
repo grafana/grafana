@@ -40,6 +40,7 @@ func (l *Loader) Init() error {
 	return nil
 }
 
+// This should probably return a "data model" for the plugin instead
 func (l *Loader) Load(pluginJSONPath string, requireSigned bool) (*plugins.PluginV2, error) {
 	p, err := l.LoadAll([]string{pluginJSONPath}, requireSigned)
 	if err != nil {
@@ -49,6 +50,7 @@ func (l *Loader) Load(pluginJSONPath string, requireSigned bool) (*plugins.Plugi
 	return p[0], nil
 }
 
+// This should probably return a "data model" for the plugin instead
 func (l *Loader) LoadAll(pluginJSONPaths []string, requireSigned bool) ([]*plugins.PluginV2, error) {
 	var foundPlugins = make(map[string]*plugins.PluginV2)
 

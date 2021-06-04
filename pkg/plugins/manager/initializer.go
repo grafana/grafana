@@ -84,6 +84,7 @@ func (l *Initializer) handleModuleDefaults(p *plugins.PluginV2) {
 		return
 	}
 
+	// Both feel weird here
 	p.IsCorePlugin = true
 	p.Signature = plugins.PluginSignatureInternal
 

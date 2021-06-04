@@ -312,23 +312,3 @@ func createRequest(ds *models.DataSource, query plugins.DataQuery) (*backend.Que
 
 	return req, nil
 }
-
-func modelToInstanceSettings(ds *models.DataSource) (*backend.DataSourceInstanceSettings, error) {
-	jsonDataBytes, err := ds.JsonData.MarshalJSON()
-	if err != nil {
-		return nil, err
-	}
-
-	return &backend.DataSourceInstanceSettings{
-		ID:                      ds.Id,
-		Name:                    ds.Name,
-		URL:                     ds.Url,
-		Database:                ds.Database,
-		User:                    ds.User,
-		BasicAuthEnabled:        ds.BasicAuth,
-		BasicAuthUser:           ds.BasicAuthUser,
-		JSONData:                jsonDataBytes,
-		DecryptedSecureJSONData: ds.DecryptedValues(),
-		Updated:                 ds.Updated,
-	}, nil
-}
