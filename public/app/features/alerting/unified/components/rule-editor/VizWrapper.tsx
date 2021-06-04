@@ -76,11 +76,4 @@ const getStyles = (visHeight: number) => (theme: GrafanaTheme2) => ({
     display: flex;
     justify-content: flex-end;
   `,
-  nodata: css`
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100%;
-  `,
-  title: css``,
 });
