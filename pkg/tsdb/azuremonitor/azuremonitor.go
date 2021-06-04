@@ -66,6 +66,7 @@ type datasourceInfo struct {
 	JSONData                map[string]interface{}
 	DecryptedSecureJSONData map[string]string
 	DatasourceID            int64
+	OrgID                   int64
 }
 
 func NewInstanceSettings(httpClientProvider httpclient.Provider) datasource.InstanceFactoryFunc {
@@ -126,6 +127,7 @@ func newExecutor(im instancemgmt.InstanceManager, pm plugins.Manager, httpC http
 				return nil, err
 			}
 			dsInfo := i.(datasourceInfo)
+			dsInfo.OrgID = req.PluginContext.OrgID
 			ds := executors[dst]
 			return ds.executeTimeSeriesQuery(ctx, req.Queries, dsInfo)
 		})

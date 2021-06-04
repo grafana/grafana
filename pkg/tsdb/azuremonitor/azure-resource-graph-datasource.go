@@ -2,6 +2,7 @@ package azuremonitor
 
 import (
 	"bytes"
+	"time"
 
 	"context"
 	"encoding/json"
@@ -150,9 +151,10 @@ func (e *AzureResourceGraphDatasource) executeQuery(ctx context.Context, query *
 
 	span, ctx := opentracing.StartSpanFromContext(ctx, "azure resource graph query")
 	span.SetTag("interpolated_query", query.InterpolatedQuery)
-	span.SetTag("from", query.TimeRange.From.UTC().UnixNano())
-	span.SetTag("until", query.TimeRange.To.UTC().UnixNano())
+	span.SetTag("from", query.TimeRange.From.UTC().UnixNano()/int64(time.Millisecond))
+	span.SetTag("until", query.TimeRange.To.UnixNano()/int64(time.Millisecond))
 	span.SetTag("datasource_id", dsInfo.DatasourceID)
+	span.SetTag("org_id", dsInfo.OrgID)
 
 	defer span.Finish()
 

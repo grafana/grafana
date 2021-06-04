@@ -147,9 +147,10 @@ func (e *ApplicationInsightsDatasource) executeQuery(ctx context.Context, query 
 
 	span, ctx := opentracing.StartSpanFromContext(ctx, "application insights query")
 	span.SetTag("target", query.Target)
-	span.SetTag("from", query.TimeRange.From.UTC().UnixNano())
-	span.SetTag("until", query.TimeRange.To.UTC().UnixNano())
+	span.SetTag("from", query.TimeRange.From.UTC().UnixNano()/int64(time.Millisecond))
+	span.SetTag("until", query.TimeRange.To.UnixNano()/int64(time.Millisecond))
 	span.SetTag("datasource_id", dsInfo.DatasourceID)
+	span.SetTag("org_id", dsInfo.OrgID)
 
 	defer span.Finish()
 
