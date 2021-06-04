@@ -18,7 +18,7 @@ import {
 import { getBackendSrv, getTemplateSrv, DataSourceWithBackend, FetchResponse } from '@grafana/runtime';
 import { Observable, from } from 'rxjs';
 import { mergeMap } from 'rxjs/operators';
-import { getAuthType, getAzureCloud } from '../credentials';
+import { getAuthType, getAzureCloud, isLogAnalyticsSameAs } from '../credentials';
 import { getLogAnalyticsApiRoute, getLogAnalyticsManagementApiRoute } from '../api/routes';
 import { AzureLogAnalyticsMetadata } from '../types/logAnalyticsMetadata';
 import { isGUIDish } from '../components/ResourcePicker/utils';
@@ -55,7 +55,13 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     this.azureMonitorUrl = `/${managementRoute}/subscriptions`;
 
     this.url = instanceSettings.url || '';
-    this.defaultSubscriptionId = this.instanceSettings.jsonData.logAnalyticsSubscriptionId || '';
+
+    const sameAsMonitor = isLogAnalyticsSameAs(instanceSettings);
+
+    this.defaultSubscriptionId = sameAsMonitor
+      ? instanceSettings.jsonData.subscriptionId
+      : instanceSettings.jsonData.logAnalyticsSubscriptionId;
+
     this.defaultOrFirstWorkspace = this.instanceSettings.jsonData.logAnalyticsDefaultWorkspace || '';
   }
 
@@ -228,8 +234,14 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
   metricFindQueryInternal(query: string): Promise<MetricFindValue[]> {
     // workspaces() - Get workspaces in the default subscription
     const workspacesQuery = query.match(/^workspaces\(\)/i);
-    if (workspacesQuery && this.defaultSubscriptionId) {
-      return this.getWorkspaces(this.defaultSubscriptionId);
+    if (workspacesQuery) {
+      if (this.defaultSubscriptionId) {
+        return this.getWorkspaces(this.defaultSubscriptionId);
+      } else {
+        throw new Error(
+          'No subscription ID. Specify a default subscription ID in the data source config to use workspaces() without a subscription ID'
+        );
+      }
     }
 
     // workspaces("abc-def-etc") - Get workspaces a specified subscription
