@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { gt, satisfies } from 'semver';
 
 import { config } from '@grafana/runtime';
@@ -25,6 +25,7 @@ export const InstallControls = ({ localPlugin, remotePlugin }: Props) => {
   const [shouldUpdate, setShouldUpdate] = useState(
     remotePlugin?.version && localPlugin?.info.version && gt(remotePlugin?.version!, localPlugin?.info.version!)
   );
+  const [hasInstalledPanel, setHasInstalledPanel] = useState(false);
   const isExternallyManaged = config.pluginAdminExternalManageEnabled;
   const externalManageLink = getExternalManageLink(remotePlugin);
 
@@ -37,6 +38,7 @@ export const InstallControls = ({ localPlugin, remotePlugin }: Props) => {
       appEvents.emit(AppEvents.alertSuccess, [`Installed ${remotePlugin?.name}`]);
       setLoading(false);
       setIsInstalled(true);
+      setHasInstalledPanel(remotePlugin.typeCode === 'panel');
     } catch (error) {
       setLoading(false);
     }
@@ -115,6 +117,11 @@ export const InstallControls = ({ localPlugin, remotePlugin }: Props) => {
             <Button variant="destructive" disabled={loading || !hasPermission} onClick={onUninstall}>
               {loading && !shouldUpdate ? 'Uninstalling' : 'Uninstall'}
             </Button>
+            {hasInstalledPanel && (
+              <div className={cx(styles.message, styles.messageMargin)}>
+                Please refresh your browser window before using this plugin.
+              </div>
+            )}
             {!hasPermission && <div className={styles.message}>You need admin privileges to manage this plugin.</div>}
           </>
         )}
@@ -157,6 +164,9 @@ export const getStyles = (theme: GrafanaTheme2) => {
   return {
     message: css`
       color: ${theme.colors.text.secondary};
+    `,
+    messageMargin: css`
+      margin-left: ${theme.spacing()};
     `,
     readme: css`
       margin: ${theme.spacing(3)} 0;
