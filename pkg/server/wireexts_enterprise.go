@@ -8,6 +8,9 @@ import (
 	"github.com/grafana/grafana/pkg/extensions/accesscontrol/manager"
 	"github.com/grafana/grafana/pkg/extensions/accesscontrol/provisioner"
 	"github.com/grafana/grafana/pkg/extensions/analytics"
+	"github.com/grafana/grafana/pkg/extensions/analytics/datasources"
+	"github.com/grafana/grafana/pkg/extensions/analytics/summaries"
+	"github.com/grafana/grafana/pkg/extensions/analytics/views"
 	"github.com/grafana/grafana/pkg/extensions/backgroundsvcs"
 	"github.com/grafana/grafana/pkg/extensions/licensing"
 	"github.com/grafana/grafana/pkg/extensions/provisioning/service"
@@ -29,15 +32,20 @@ var wireExtsBasicSet = wire.NewSet(
 	settingsprovider.ProvideService,
 	wire.Bind(new(setting.Provider), new(*settingsprovider.Implementation)),
 	manager.ProvideService,
-	wire.Bind(new(accesscontrol.AccessControl), new(*manager.CacheWrapper)),
+	wire.Bind(new(accesscontrol.AccessControl), new(*manager.EnterpriseAccessControl)),
 	database.ProvideService,
 	wire.Bind(new(provisioner.Store), new(*database.AccessControlStore)),
+	provisioning.ProvideService,
 	service.ProvideService,
 	wire.Bind(new(provisioning.ProvisioningService), new(*service.EnterpriseProvisioningServiceImpl)),
 	provisioner.ProvideService,
 	analytics.ProvideService,
+	ossbackgroundsvcs.ProvideService,
 	backgroundsvcs.ProvideService,
 	wire.Bind(new(ossbackgroundsvcs.Service), new(*backgroundsvcs.Container)),
+	datasources.ProvideService,
+	summaries.ProvideService,
+	views.ProvideService,
 )
 
 var wireExtsSet = wire.NewSet(
