@@ -101,7 +101,7 @@ func (s *ManagedStream) ListChannels(orgID int64, prefix string) []util.DynMap {
 	info := make([]util.DynMap, 0, len(s.last[orgID]))
 	for k, v := range s.last[orgID] {
 		ch := util.DynMap{}
-		ch["channel"] = prefix + k + "/usage_user"
+		ch["channel"] = prefix + k
 		ch["data"] = json.RawMessage(v.Bytes(data.IncludeSchemaOnly))
 		info = append(info, ch)
 	}
