@@ -41,7 +41,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert"
 	ngmetrics "github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/notifications"
-	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/schemaloader"
@@ -96,8 +95,6 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(shorturls.Service), new(*shorturls.ShortURLService)),
 	quota.ProvideService,
 	remotecache.ProvideService,
-	provisioning.ProvideService,
-	wire.Bind(new(provisioning.ProvisioningService), new(*provisioning.ProvisioningServiceImpl)),
 	loginservice.ProvideService,
 	wire.Bind(new(login.Service), new(*loginservice.Implementation)),
 	datasourceproxy.ProvideService,
