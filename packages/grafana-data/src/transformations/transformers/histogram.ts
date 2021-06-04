@@ -8,19 +8,30 @@ import { AlignedData, join } from './joinDataFrames';
 import { getDisplayProcessor } from '../../field';
 import { createTheme, GrafanaTheme2 } from '../../themes';
 
-/* eslint-disable */
-// prettier-ignore
 /**
  * @internal
  */
+/* eslint-disable */
 export const histogramBucketSizes = [
-    .001, .002, .0025, .005,
-     .01,  .02,  .025,  .05,
-      .1,   .2,   .25,   .5,
-       1,    2,     4,    5,
-      10,   20,    25,   50,
-     100,  200,   250,  500,
-    1000, 2000,  2500, 5000,
+  1e-9,  2e-9,  2.5e-9,  4e-9,  5e-9,
+  1e-8,  2e-8,  2.5e-8,  4e-8,  5e-8,
+  1e-7,  2e-7,  2.5e-7,  4e-7,  5e-7,
+  1e-6,  2e-6,  2.5e-6,  4e-6,  5e-6,
+  1e-5,  2e-5,  2.5e-5,  4e-5,  5e-5,
+  1e-4,  2e-4,  2.5e-4,  4e-4,  5e-4,
+  1e-3,  2e-3,  2.5e-3,  4e-3,  5e-3,
+  1e-2,  2e-2,  2.5e-2,  4e-2,  5e-2,
+  1e-1,  2e-1,  2.5e-1,  4e-1,  5e-1,
+  1,     2,              4,     5,
+  1e+1,  2e+1,  2.5e+1,  4e+1,  5e+1,
+  1e+2,  2e+2,  2.5e+2,  4e+2,  5e+2,
+  1e+3,  2e+3,  2.5e+3,  4e+3,  5e+3,
+  1e+4,  2e+4,  2.5e+4,  4e+4,  5e+4,
+  1e+5,  2e+5,  2.5e+5,  4e+5,  5e+5,
+  1e+6,  2e+6,  2.5e+6,  4e+6,  5e+6,
+  1e+7,  2e+7,  2.5e+7,  4e+7,  5e+7,
+  1e+8,  2e+8,  2.5e+8,  4e+8,  5e+8,
+  1e+9,  2e+9,  2.5e+9,  4e+9,  5e+9,
 ];
 /* eslint-enable */
 
@@ -135,6 +146,8 @@ export function getHistogramFields(frame: DataFrame): HistogramFields | undefine
   return undefined;
 }
 
+const APPROX_BUCKETS = 20;
+
 /**
  * @alpha
  */
@@ -163,7 +176,7 @@ export function buildHistogram(frames: DataFrame[], options?: HistogramTransform
 
     // choose bucket
     for (const size of histogramBucketSizes) {
-      if (range / 10 < size) {
+      if (range / APPROX_BUCKETS < size) {
         bucketSize = size;
         break;
       }
