@@ -10,14 +10,10 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
-	grpcplugin2 "github.com/grafana/grafana-plugin-sdk-go/backend/grpcplugin"
-	goplugin "github.com/hashicorp/go-plugin"
-
 	"github.com/grafana/grafana/pkg/infra/fs"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin/grpcplugin"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -142,12 +138,6 @@ func (l *Loader) LoadAll(pluginJSONPaths []string, requireSigned bool) ([]*plugi
 		}
 
 		if plugin.Backend {
-			startCmd := plugin.Executable
-			if plugin.Type == "renderer" {
-				startCmd = "plugin_start"
-			}
-			executableFilename := plugins.ComposePluginStartCommand(startCmd)
-
 			hostEnv := []string{
 				fmt.Sprintf("GF_VERSION=%s", l.Cfg.BuildVersion),
 				fmt.Sprintf("GF_EDITION=%s", l.License.Edition()),
@@ -169,20 +159,7 @@ func (l *Loader) LoadAll(pluginJSONPaths []string, requireSigned bool) ([]*plugi
 			hostEnv = append(hostEnv, l.getAWSEnvironmentVariables()...)
 			hostEnv = append(hostEnv, l.getAzureEnvironmentVariables()...)
 
-			pluginSettings := getPluginSettings(plugin.ID, l.Cfg)
-			err := plugin.Setup(grpcplugin.PluginDescriptor{
-				PluginID:       plugin.ID,
-				ExecutablePath: filepath.Join(plugin.PluginDir, executableFilename),
-				Env:            pluginSettings.ToEnv("GF_PLUGIN", hostEnv),
-				Managed:        true,
-				VersionedPlugins: map[int]goplugin.PluginSet{
-					grpcplugin2.ProtocolVersion: grpcplugin.GetV2PluginSet(),
-				},
-			}, l.log.New("pluginID", plugin.ID))
-
-			if err != nil {
-				return nil, err
-			}
+			plugin.AttachBackendDetails(getPluginSettings(plugin.ID, l.Cfg).ToEnv("GF_PLUGIN", hostEnv))
 		}
 
 		//if p, exists := pm.plugins[pb.Id]; exists {

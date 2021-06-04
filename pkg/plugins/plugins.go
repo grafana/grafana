@@ -4,16 +4,19 @@ package plugins
 import (
 	"context"
 	"errors"
+	"path/filepath"
 	"sync"
 
 	"github.com/hashicorp/go-plugin"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	grpcplugin2 "github.com/grafana/grafana-plugin-sdk-go/backend/grpcplugin"
 	sdk "github.com/grafana/grafana-plugin-sdk-go/backend/grpcplugin"
 	glog "github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/grpcplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/pluginextensionv2"
+	goplugin "github.com/hashicorp/go-plugin"
 )
 
 var _ backendplugin.Plugin = (*PluginV2)(nil)
@@ -97,11 +100,25 @@ func (p *PluginV2) PluginID() string {
 	return p.ID
 }
 
-func (p *PluginV2) Setup(descriptor grpcplugin.PluginDescriptor, logger glog.Logger) error {
-	p.descriptor = descriptor
-	p.logger = logger
+// Would be nice to see some function that could setup the backend and
+// attach the data to the model as its own separate field
+func (p *PluginV2) AttachBackendDetails(env []string) {
+	startCmd := p.Executable
+	if p.Type == "renderer" {
+		startCmd = "plugin_start"
+	}
+	executableFilename := ComposePluginStartCommand(startCmd)
 
-	return nil
+	p.descriptor = grpcplugin.PluginDescriptor{
+		PluginID:       p.ID,
+		ExecutablePath: filepath.Join(p.PluginDir, executableFilename),
+		Env:            env,
+		Managed:        true,
+		VersionedPlugins: map[int]goplugin.PluginSet{
+			grpcplugin2.ProtocolVersion: grpcplugin.GetV2PluginSet(),
+		},
+	}
+	p.logger = glog.New("pluginID", p.ID)
 }
 
 func (p *PluginV2) Start(ctx context.Context) error {

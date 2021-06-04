@@ -276,7 +276,7 @@ func (hs *HTTPServer) GetTestDataRandomWalk(c *models.ReqContext) response.Respo
 }
 
 func createRequest(ds *models.DataSource, query plugins.DataQuery) (*backend.QueryDataRequest, error) {
-	instanceSettings, err := modelToInstanceSettings(ds)
+	instanceSettings, err := adapters.ModelToInstanceSettings(ds)
 	if err != nil {
 		return nil, err
 	}
