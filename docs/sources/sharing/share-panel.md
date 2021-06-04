@@ -71,3 +71,16 @@ Here is an example of the HTML code:
 The result is an interactive Grafana graph embedded in an iframe:
 
 <iframe src="https://snapshot.raintank.io/dashboard-solo/snapshot/y7zwi2bZ7FcoTlB93WN7yWO4aMiz3pZb?from=1493369923321&to=1493377123321&panelId=4" width="650" height="300" frameborder="0"></iframe>
+
+## Library panel
+
+Library panels can be created using the “Share” option for any panel. 
+
+To create a library panel from the Share Panel dialog:
+
+1. Click **Library panel**. 
+   {{< figure src="/static/img/docs/library-panels/create-lib-panel-8-0.png" class="docs-image--no-shadow" max-width= "900px" caption="Screenshot of the create library panel dialog" >}}
+1. In **Library panel name**, enter the name.
+1. In **Save in folder**, select the folder to save the library panel. By default, the General folder is selected.
+1. Click **Create library panel** to save your changes.
+1. Save the dashboard. 
