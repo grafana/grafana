@@ -84,7 +84,7 @@ func NewOAuthService(cfg *setting.Cfg) {
 	setting.OAuthService.OAuthInfos = make(map[string]*setting.OAuthInfo)
 
 	for _, name := range allOauthes {
-		sec := setting.Raw.Section("auth." + name)
+		sec := cfg.Raw.Section("auth." + name)
 
 		info := &setting.OAuthInfo{
 			ClientId:            sec.Key("client_id").String(),
@@ -131,7 +131,7 @@ func NewOAuthService(cfg *setting.Cfg) {
 				TokenURL:  info.TokenUrl,
 				AuthStyle: oauth2.AuthStyleAutoDetect,
 			},
-			RedirectURL: strings.TrimSuffix(setting.AppUrl, "/") + SocialBaseUrl + name,
+			RedirectURL: strings.TrimSuffix(cfg.AppURL, "/") + SocialBaseUrl + name,
 			Scopes:      info.Scopes,
 		}
 
@@ -205,11 +205,11 @@ func NewOAuthService(cfg *setting.Cfg) {
 				ClientID:     info.ClientId,
 				ClientSecret: info.ClientSecret,
 				Endpoint: oauth2.Endpoint{
-					AuthURL:   setting.GrafanaComUrl + "/oauth2/authorize",
-					TokenURL:  setting.GrafanaComUrl + "/api/oauth2/token",
+					AuthURL:   cfg.GrafanaComURL + "/oauth2/authorize",
+					TokenURL:  cfg.GrafanaComURL + "/api/oauth2/token",
 					AuthStyle: oauth2.AuthStyleInHeader,
 				},
-				RedirectURL: strings.TrimSuffix(setting.AppUrl, "/") + SocialBaseUrl + name,
+				RedirectURL: strings.TrimSuffix(cfg.AppURL, "/") + SocialBaseUrl + name,
 				Scopes:      info.Scopes,
 			}
 
