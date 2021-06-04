@@ -49,7 +49,7 @@ Stack series in the same group. In the Overrides section:
 1. Click on **Normal** stacking mode.
 1. Name the stacking group you want the series to appear in. The stacking group name option is only available when creating an override.
 
-![Stack series override](/static/img/docs/time-series-panel/stack-series-override-editor-8-0)
+![Stack series override editor](/static/img/docs/time-series-panel/stack-series-override-editor-8-0.png)
 
 A-series and B-series stacked in group A, C-series, and D-series stacked in group B:
 
