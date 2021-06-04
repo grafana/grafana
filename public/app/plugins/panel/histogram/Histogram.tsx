@@ -86,11 +86,11 @@ const prepConfig = (frame: DataFrame, theme: GrafanaTheme2) => {
 
       if (wantedMax === fullRangeMax) {
         wantedMax += bucketSize;
-      } else if (wantedMax < fullRangeMax) {
+      } else {
         wantedMax = incrRoundUp(wantedMax, bucketSize);
       }
 
-      if (wantedMin !== fullRangeMin) {
+      if (wantedMin > fullRangeMin) {
         wantedMin = incrRoundDn(wantedMin, bucketSize);
       }
 
