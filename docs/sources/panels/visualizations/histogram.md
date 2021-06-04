@@ -21,7 +21,7 @@ Use the following options to refine your visualization.
 
 ### Bucket size
 
-The size of the buckets. Leave empty for automatic bucket sizing (~10% of the full range).
+The size of the buckets. Leave this empty for automatic bucket sizing (~10% of the full range).
 
 ### Bucket offset
 
