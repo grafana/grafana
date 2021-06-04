@@ -13,6 +13,9 @@ across multiple dashboards.
 
 Before you can use library panels, you have to create them.
 
+> **Note:** When you create library panels, the panel on the source dashboard is converted to a library panel as well. You will need to save the original dashboard once a panel is converted. 
+
+
 To create a library panel:
 
 1. Create a Grafana panel as you normally would, following instructions in [Add a panel]({{< relref "./add-a-panel.md" >}}). You an also use an existing panel.
@@ -24,14 +27,15 @@ To create a library panel:
 1. In **Library panel name**, enter the name.
 1. In **Save in folder**, select the folder to save the library panel. By default, the General folder is selected.
 1. Click **Create library panel** to save your changes.
+1. Save the dashboard. 
 
-Optionally, you can click title of the panel and then click **More > Create Library panel**. 
+Optionally, you can click title of the panel and then click **More > Create Library panel**. Next, follow the instructions Step 5 in the procedure above. 
 
    {{< figure src="/static/img/docs/library-panels/create-lib-panel-from-edit-8-0.png" class="docs-image--no-shadow" max-width= "900px" caption="Screenshot of the edit panel" >}}
 
-   Then follow the instructions from 
+Also, library panels can also be created using the “Share” option for any panel. 
 
-Once created, you can modify the library panel.  can be modified, and once saved, all instances of the library panel will represent these modifications.
+Once created, you can modify the library panel using any dashboard on which it appears. Once the library panel changes are saved, all instances of the library panel will reflect these modifications.
 
 
 ## Add a library panel
@@ -67,6 +71,8 @@ To unlink a library panel from a dashboard:
 1. Click the **Unlink** option on the top right corner of the UI.
 
 ## Delete a library panel
+
+Before you delete a library panel, verify that it is no longer in use on any dashboard.
 
 To delete a library panel:
 
