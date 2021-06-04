@@ -1,6 +1,6 @@
 import React from 'react';
 import { EventsWithValidation, regexValidation, LegacyForms } from '@grafana/ui';
-const { Select, Input, FormField } = LegacyForms;
+const { Switch, Select, Input, FormField } = LegacyForms;
 import { ElasticsearchOptions, Interval } from '../types';
 import { DataSourceSettings, SelectableValue } from '@grafana/data';
 import { gte, lt } from 'semver';
@@ -20,6 +20,7 @@ const esVersions = [
   { label: '5.6+', value: '5.6.0' },
   { label: '6.0+', value: '6.0.0' },
   { label: '7.0+', value: '7.0.0' },
+  { label: '7.7+', value: '7.7.0' },
 ];
 
 type Props = {
@@ -141,6 +142,14 @@ export const ElasticDetails = ({ value, onChange }: Props) => {
             />
           </div>
         </div>
+        <div className="gf-form-inline">
+          <Switch
+            label="X-Pack Enabled"
+            labelClass="width-13"
+            checked={value.jsonData.xpack || false}
+            onChange={jsonDataSwitchChangeHandler('xpack', value, onChange)}
+          />
+        </div>
       </div>
     </>
   );
@@ -165,6 +174,20 @@ const jsonDataChangeHandler = (key: keyof ElasticsearchOptions, value: Props['va
     jsonData: {
       ...value.jsonData,
       [key]: event.currentTarget.value,
+    },
+  });
+};
+
+const jsonDataSwitchChangeHandler = (
+  key: keyof ElasticsearchOptions,
+  value: Props['value'],
+  onChange: Props['onChange']
+) => (event: React.SyntheticEvent<HTMLInputElement>) => {
+  onChange({
+    ...value,
+    jsonData: {
+      ...value.jsonData,
+      [key]: event.currentTarget.checked,
     },
   });
 };

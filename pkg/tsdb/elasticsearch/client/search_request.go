@@ -419,9 +419,11 @@ func (b *aggBuilderImpl) GeoHashGrid(key, field string, fn func(a *GeoHashGridAg
 
 func (b *aggBuilderImpl) Metric(key, metricType, field string, fn func(a *MetricAggregation)) AggBuilder {
 	innerAgg := &MetricAggregation{
+		Type:     metricType,
 		Field:    field,
 		Settings: make(map[string]interface{}),
 	}
+
 	aggDef := newAggDef(key, &aggContainer{
 		Type:        metricType,
 		Aggregation: innerAgg,

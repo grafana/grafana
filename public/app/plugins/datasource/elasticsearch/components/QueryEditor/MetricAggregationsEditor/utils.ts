@@ -240,6 +240,23 @@ export const metricAggregationConfig: MetricsConfiguration = {
       },
     },
   },
+  top_metrics: {
+    label: 'Top Metrics',
+    xpack: true,
+    requiresField: false,
+    isPipelineAgg: false,
+    supportsMissing: false,
+    supportsMultipleBucketPaths: false,
+    hasSettings: true,
+    supportsInlineScript: false,
+    versionRange: '>=7.7.0',
+    hasMeta: false,
+    defaults: {
+      settings: {
+        order: 'desc',
+      },
+    },
+  },
 };
 
 interface PipelineOption {

@@ -603,6 +603,75 @@ describe('ElasticResponse', () => {
     });
   });
 
+  describe('with top_metrics', () => {
+    beforeEach(() => {
+      targets = [
+        {
+          refId: 'A',
+          metrics: [
+            {
+              type: 'top_metrics',
+              settings: {
+                order: 'top',
+                orderBy: '@timestamp',
+                metrics: ['@value', '@anotherValue'],
+              },
+              id: '1',
+            },
+          ],
+          bucketAggs: [{ type: 'date_histogram', id: '2' }],
+        },
+      ];
+      response = {
+        responses: [
+          {
+            aggregations: {
+              '2': {
+                buckets: [
+                  {
+                    key: new Date('2021-01-01T00:00:00.000Z').valueOf(),
+                    key_as_string: '2021-01-01T00:00:00.000Z',
+                    '1': {
+                      top: [{ sort: ['2021-01-01T00:00:00.000Z'], metrics: { '@value': 1, '@anotherValue': 2 } }],
+                    },
+                  },
+                  {
+                    key: new Date('2021-01-01T00:00:10.000Z').valueOf(),
+                    key_as_string: '2021-01-01T00:00:10.000Z',
+                    '1': {
+                      top: [{ sort: ['2021-01-01T00:00:10.000Z'], metrics: { '@value': 1, '@anotherValue': 2 } }],
+                    },
+                  },
+                ],
+              },
+            },
+          },
+        ],
+      };
+    });
+
+    it('should return 2 series', () => {
+      const result = new ElasticResponse(targets, response).getTimeSeries();
+      expect(result.data.length).toBe(2);
+
+      const firstSeries = result.data[0];
+      expect(firstSeries.target).toBe('Top Metrics @value');
+      expect(firstSeries.datapoints.length).toBe(2);
+      expect(firstSeries.datapoints).toEqual([
+        [1, new Date('2021-01-01T00:00:00.000Z').valueOf()],
+        [1, new Date('2021-01-01T00:00:10.000Z').valueOf()],
+      ]);
+
+      const secondSeries = result.data[1];
+      expect(secondSeries.target).toBe('Top Metrics @anotherValue');
+      expect(secondSeries.datapoints.length).toBe(2);
+      expect(secondSeries.datapoints).toEqual([
+        [2, new Date('2021-01-01T00:00:00.000Z').valueOf()],
+        [2, new Date('2021-01-01T00:00:10.000Z').valueOf()],
+      ]);
+    });
+  });
+
   describe('single group by with alias pattern', () => {
     let result: any;
 

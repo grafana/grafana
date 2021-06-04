@@ -64,6 +64,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
   index: string;
   timeField: string;
   esVersion: string;
+  xpack: boolean;
   interval: string;
   maxConcurrentShardRequests?: number;
   queryBuilder: ElasticQueryBuilder;
@@ -87,6 +88,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
 
     this.timeField = settingsData.timeField;
     this.esVersion = coerceESVersion(settingsData.esVersion);
+    this.xpack = Boolean(settingsData.xpack);
     this.indexPattern = new IndexPattern(this.index, settingsData.interval);
     this.interval = settingsData.timeInterval;
     this.maxConcurrentShardRequests = settingsData.maxConcurrentShardRequests;
@@ -393,7 +395,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
 
   testDatasource() {
     // validate that the index exist and has date field
-    return this.getFields('date')
+    return this.getFields(['date'])
       .pipe(
         mergeMap((dateFields) => {
           const timeField: any = find(dateFields, { text: this.timeField });
@@ -642,34 +644,33 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
   // TODO: instead of being a string, this could be a custom type representing all the elastic types
   // FIXME: This doesn't seem to return actual MetricFindValues, we should either change the return type
   // or fix the implementation.
-  getFields(type?: string, range?: TimeRange): Observable<MetricFindValue[]> {
+  getFields(type?: string[], range?: TimeRange): Observable<MetricFindValue[]> {
+    const typeMap: Record<string, string> = {
+      float: 'number',
+      double: 'number',
+      integer: 'number',
+      long: 'number',
+      date: 'date',
+      date_nanos: 'date',
+      string: 'string',
+      text: 'string',
+      scaled_float: 'number',
+      nested: 'nested',
+      histogram: 'number',
+    };
     return this.get('/_mapping', range).pipe(
       map((result) => {
-        const typeMap: any = {
-          float: 'number',
-          double: 'number',
-          integer: 'number',
-          long: 'number',
-          date: 'date',
-          date_nanos: 'date',
-          string: 'string',
-          text: 'string',
-          scaled_float: 'number',
-          nested: 'nested',
-          histogram: 'number',
-        };
-
         const shouldAddField = (obj: any, key: string) => {
           if (this.isMetadataField(key)) {
             return false;
           }
 
-          if (!type) {
+          if (!type || type.length === 0) {
             return true;
           }
 
           // equal query type filter, or via typemap translation
-          return type === obj.type || type === typeMap[obj.type];
+          return type.includes(obj.type) || type.includes(typeMap[obj.type]);
         };
 
         // Store subfield names: [system, process, cpu, total] -> system.process.cpu.total

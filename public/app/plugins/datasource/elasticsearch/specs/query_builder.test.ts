@@ -8,8 +8,9 @@ describe('ElasticQueryBuilder', () => {
   const builder56 = new ElasticQueryBuilder({ timeField: '@timestamp', esVersion: '5.6.0' });
   const builder6x = new ElasticQueryBuilder({ timeField: '@timestamp', esVersion: '6.0.0' });
   const builder7x = new ElasticQueryBuilder({ timeField: '@timestamp', esVersion: '7.0.0' });
+  const builder77 = new ElasticQueryBuilder({ timeField: '@timestamp', esVersion: '7.7.0' });
 
-  const allBuilders = [builder, builder5x, builder56, builder6x, builder7x];
+  const allBuilders = [builder, builder5x, builder56, builder6x, builder7x, builder77];
 
   allBuilders.forEach((builder) => {
     describe(`version ${builder.esVersion}`, () => {
@@ -431,6 +432,36 @@ describe('ElasticQueryBuilder', () => {
         expect(firstLevel.aggs['2'].moving_avg).not.toBe(undefined);
         expect(firstLevel.aggs['2'].moving_avg.buckets_path).toBe('3');
         expect(firstLevel.aggs['4']).toBe(undefined);
+      });
+
+      it('with top_metrics', () => {
+        const query = builder.build({
+          refId: 'A',
+          metrics: [
+            {
+              id: '2',
+              type: 'top_metrics',
+              settings: {
+                order: 'desc',
+                orderBy: '@timestamp',
+                metrics: ['@value'],
+              },
+            },
+          ],
+          bucketAggs: [{ type: 'date_histogram', field: '@timestamp', id: '3' }],
+        });
+
+        const firstLevel = query.aggs['3'];
+
+        expect(firstLevel.aggs['2']).not.toBe(undefined);
+        expect(firstLevel.aggs['2'].top_metrics).not.toBe(undefined);
+        expect(firstLevel.aggs['2'].top_metrics.metrics).not.toBe(undefined);
+        expect(firstLevel.aggs['2'].top_metrics.size).not.toBe(undefined);
+        expect(firstLevel.aggs['2'].top_metrics.sort).not.toBe(undefined);
+        expect(firstLevel.aggs['2'].top_metrics.metrics.length).toBe(1);
+        expect(firstLevel.aggs['2'].top_metrics.metrics).toEqual([{ field: '@value' }]);
+        expect(firstLevel.aggs['2'].top_metrics.sort).toEqual([{ '@timestamp': 'desc' }]);
+        expect(firstLevel.aggs['2'].top_metrics.size).toBe(1);
       });
 
       it('with derivative', () => {

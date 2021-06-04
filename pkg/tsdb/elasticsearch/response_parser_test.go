@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/plugins"
 	es "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client"
+	"github.com/stretchr/testify/assert"
 
 	. "github.com/smartystreets/goconvey/convey"
 )
@@ -991,6 +992,80 @@ func TestResponseParser(t *testing.T) {
 		// 	So(rows[0][1].(null.Float).Float64, ShouldEqual, 1000)
 		// 	So(rows[0][2].(null.Float).Float64, ShouldEqual, 3000)
 		// })
+	})
+
+	t.Run("With top_metrics", func(t *testing.T) {
+		targets := map[string]string{
+			"A": `{
+				"timeField": "@timestamp",
+				"metrics": [
+					{
+						"type": "top_metrics",
+						"settings": {
+							"order": "desc",
+							"orderBy": "@timestamp",
+							"metrics": ["@value", "@anotherValue"]
+						},
+						"id": "1"
+					}
+				],
+				"bucketAggs": [{ "type": "date_histogram", "field": "@timestamp", "id": "3" }]
+			}`,
+		}
+		response := `{
+			"responses": [{
+				"aggregations": {
+					"3": {
+						"buckets": [
+							{
+								"key": 1609459200000,
+								"key_as_string": "2021-01-01T00:00:00.000Z",
+								"1": {
+									"top": [
+										{ "sort": ["2021-01-01T00:00:00.000Z"], "metrics": { "@value": 1, "@anotherValue": 2 } }
+									]
+								}
+							},
+							{
+								"key": 1609459210000,
+								"key_as_string": "2021-01-01T00:00:10.000Z",
+								"1": {
+									"top": [
+										{ "sort": ["2021-01-01T00:00:10.000Z"], "metrics": { "@value": 1, "@anotherValue": 2 } }
+									]
+								}
+							}
+						]			
+					}
+				}
+			}]
+		}`
+		rp, err := newResponseParserForTest(targets, response)
+		assert.Nil(t, err)
+		result, err := rp.getTimeSeries()
+		assert.Nil(t, err)
+		assert.Len(t, result.Results, 1)
+
+		queryRes := result.Results["A"]
+		assert.NotNil(t, queryRes)
+		assert.Len(t, queryRes.Series, 2)
+
+		seriesOne := queryRes.Series[0]
+		assert.Equal(t, seriesOne.Name, "Top Metrics @value")
+		assert.Len(t, seriesOne.Points, 2)
+		assert.Equal(t, seriesOne.Points[0][0].Float64, 1.)
+		assert.Equal(t, seriesOne.Points[0][1].Float64, 1609459200000.)
+		assert.Equal(t, seriesOne.Points[1][0].Float64, 1.)
+		assert.Equal(t, seriesOne.Points[1][1].Float64, 1609459210000.)
+
+		seriesTwo := queryRes.Series[1]
+		assert.Equal(t, seriesTwo.Name, "Top Metrics @anotherValue")
+		assert.Len(t, seriesTwo.Points, 2)
+
+		assert.Equal(t, seriesTwo.Points[0][0].Float64, 2.)
+		assert.Equal(t, seriesTwo.Points[0][1].Float64, 1609459200000.)
+		assert.Equal(t, seriesTwo.Points[1][0].Float64, 2.)
+		assert.Equal(t, seriesTwo.Points[1][1].Float64, 1609459210000.)
 	})
 }
 

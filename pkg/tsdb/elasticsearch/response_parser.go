@@ -18,6 +18,7 @@ const (
 	countType         = "count"
 	percentilesType   = "percentiles"
 	extendedStatsType = "extended_stats"
+	topMetricsType    = "top_metrics"
 	// Bucket types
 	dateHistType    = "date_histogram"
 	histogramType   = "histogram"
@@ -225,6 +226,10 @@ func (rp *responseParser) processMetrics(esAgg *simplejson.Json, target *Query, 
 				}
 				*series = append(*series, newSeries)
 			}
+		case topMetricsType:
+			topMetricSeries := processTopMetrics(metric, esAgg, props)
+			*series = append(*series, topMetricSeries...)
+
 		case extendedStatsType:
 			buckets := esAgg.Get("buckets").MustArray()
 
@@ -591,4 +596,48 @@ func getErrorFromElasticResponse(response *es.SearchResponse) plugins.DataQueryR
 	}
 
 	return result
+}
+
+func processTopMetricValues(stats *simplejson.Json, field string) null.Float {
+	for _, stat := range stats.MustArray() {
+		stat := stat.(map[string]interface{})
+		metrics, hasMetrics := stat["metrics"]
+		if hasMetrics {
+			metrics := metrics.(map[string]interface{})
+			metricValue, hasMetricValue := metrics[field]
+			if hasMetricValue && metricValue != nil {
+				return null.FloatFrom(metricValue.(float64))
+			}
+		}
+	}
+	return null.NewFloat(0, false)
+}
+
+func processTopMetrics(metric *MetricAgg, esAgg *simplejson.Json, props map[string]string) plugins.DataTimeSeriesSlice {
+	var series plugins.DataTimeSeriesSlice
+	metrics, hasMetrics := metric.Settings.MustMap()["metrics"].([]interface{})
+
+	if hasMetrics {
+		for _, metricField := range metrics {
+			newSeries := plugins.DataTimeSeries{
+				Tags: make(map[string]string),
+			}
+
+			for _, v := range esAgg.Get("buckets").MustArray() {
+				bucket := simplejson.NewFromAny(v)
+				stats := bucket.GetPath(metric.ID, "top")
+				value := processTopMetricValues(stats, metricField.(string))
+				key := castToNullFloat(bucket.Get("key"))
+				newSeries.Points = append(newSeries.Points, plugins.DataTimePoint{value, key})
+			}
+
+			for k, v := range props {
+				newSeries.Tags[k] = v
+			}
+			newSeries.Tags["metric"] = "top_metrics"
+			newSeries.Tags["field"] = metricField.(string)
+			series = append(series, newSeries)
+		}
+	}
+	return series
 }
