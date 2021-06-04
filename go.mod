@@ -52,7 +52,7 @@ require (
 	github.com/gosimple/slug v1.9.0
 	github.com/grafana/grafana-aws-sdk v0.4.0
 	github.com/grafana/grafana-live-sdk v0.0.6
-	github.com/grafana/grafana-plugin-sdk-go v0.102.0
+	github.com/grafana/grafana-plugin-sdk-go v0.104.0
 	github.com/grafana/loki v1.6.2-0.20210520072447-15d417efe103
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/hashicorp/go-hclog v0.16.0
@@ -74,7 +74,7 @@ require (
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/pkg/browser v0.0.0-20210115035449-ce105d075bb4 // indirect
 	github.com/pkg/errors v0.9.1
-	github.com/prometheus/alertmanager v0.21.1-0.20210511232218-7301451eb94d
+	github.com/prometheus/alertmanager v0.22.2
 	github.com/prometheus/client_golang v1.10.0
 	github.com/prometheus/client_model v0.2.0
 	github.com/prometheus/common v0.24.0

@@ -11,7 +11,7 @@ import { Dimensions2D, GrafanaTheme2 } from '@grafana/data';
 export interface VizTooltipContainerProps extends HTMLAttributes<HTMLDivElement> {
   position: { x: number; y: number };
   offset: { x: number; y: number };
-  children?: JSX.Element;
+  children?: React.ReactNode;
 }
 
 /**
