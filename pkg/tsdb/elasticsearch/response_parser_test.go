@@ -1025,24 +1025,37 @@ func TestResponseParser(t *testing.T) {
 
 		queryRes := result.Results["A"]
 		assert.NotNil(t, queryRes)
-		assert.Len(t, queryRes.Series, 2)
+		dataframes, err := queryRes.Dataframes.Decoded()
+		assert.NoError(t, err)
+		assert.Len(t, dataframes, 2)
 
-		seriesOne := queryRes.Series[0]
+		seriesOne := dataframes[0]
 		assert.Equal(t, seriesOne.Name, "Top Metrics @value")
-		assert.Len(t, seriesOne.Points, 2)
-		assert.Equal(t, seriesOne.Points[0][0].Float64, 1.)
-		assert.Equal(t, seriesOne.Points[0][1].Float64, 1609459200000.)
-		assert.Equal(t, seriesOne.Points[1][0].Float64, 1.)
-		assert.Equal(t, seriesOne.Points[1][1].Float64, 1609459210000.)
+		assert.Len(t, seriesOne.Fields, 2)
+		v, _ := seriesOne.FloatAt(0, 0)
+		assert.Equal(t, 1609459200000., v)
+		v, _ = seriesOne.FloatAt(1, 0)
+		assert.Equal(t, 1., v)
 
-		seriesTwo := queryRes.Series[1]
+		v, _ = seriesOne.FloatAt(0, 1)
+		assert.Equal(t, 1609459210000., v)
+		v, _ = seriesOne.FloatAt(1, 1)
+		assert.Equal(t, 1., v)
+
+		seriesTwo := dataframes[1]
 		assert.Equal(t, seriesTwo.Name, "Top Metrics @anotherValue")
-		assert.Len(t, seriesTwo.Points, 2)
+		l, _ := seriesTwo.MarshalJSON()
+		fmt.Println(string(l))
+		assert.Len(t, seriesTwo.Fields, 2)
+		v, _ = seriesTwo.FloatAt(0, 0)
+		assert.Equal(t, 1609459200000., v)
+		v, _ = seriesTwo.FloatAt(1, 0)
+		assert.Equal(t, 2., v)
 
-		assert.Equal(t, seriesTwo.Points[0][0].Float64, 2.)
-		assert.Equal(t, seriesTwo.Points[0][1].Float64, 1609459200000.)
-		assert.Equal(t, seriesTwo.Points[1][0].Float64, 2.)
-		assert.Equal(t, seriesTwo.Points[1][1].Float64, 1609459210000.)
+		v, _ = seriesTwo.FloatAt(0, 1)
+		assert.Equal(t, 1609459210000., v)
+		v, _ = seriesTwo.FloatAt(1, 1)
+		assert.Equal(t, 2., v)
 	})
 }
 
