@@ -97,12 +97,12 @@ type PluginInstallerLogger interface {
 }
 
 type PluginFinderV2 interface {
-	// Find tries to discover all plugin.json in the provider directory and then returns their file-system paths.
+	// Find tries to discover all plugin.json in the provided directory and then returns their file-system paths.
 	Find(string) ([]string, error)
 }
 
 type PluginLoaderV2 interface {
-	// Load loads a list plugins and returns them.
+	// LoadAll loads a list plugins and returns them.
 	LoadAll(pluginJSONPaths []string, requireSigned bool) ([]*PluginV2, error)
 
 	// Load loads a plugin and returns it.
