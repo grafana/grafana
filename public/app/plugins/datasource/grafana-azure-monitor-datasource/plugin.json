@@ -31,7 +31,7 @@
   "routes": [
     {
       "path": "azuremonitor",
-      "method": "GET",
+      "method": "*",
       "url": "https://management.azure.com",
       "authType": "azure",
       "tokenAuth": {
@@ -48,7 +48,7 @@
     },
     {
       "path": "govazuremonitor",
-      "method": "GET",
+      "method": "*",
       "url": "https://management.usgovcloudapi.net",
       "authType": "azure",
       "tokenAuth": {
@@ -65,7 +65,7 @@
     },
     {
       "path": "germanyazuremonitor",
-      "method": "GET",
+      "method": "*",
       "url": "https://management.microsoftazure.de",
       "authType": "azure",
       "tokenAuth": {
@@ -82,7 +82,7 @@
     },
     {
       "path": "chinaazuremonitor",
-      "method": "GET",
+      "method": "*",
       "url": "https://management.chinacloudapi.cn",
       "authType": "azure",
       "tokenAuth": {
@@ -90,74 +90,6 @@
         "params": {
           "azure_auth_type": "{{.JsonData.azureAuthType | orEmpty}}",
           "azure_cloud": "AzureChinaCloud",
-          "tenant_id": "{{.JsonData.tenantId | orEmpty}}",
-          "client_id": "{{.JsonData.clientId | orEmpty}}",
-          "client_secret": "{{.SecureJsonData.clientSecret | orEmpty}}"
-        }
-      },
-      "headers": [{ "name": "x-ms-app", "content": "Grafana" }]
-    },
-    {
-      "path": "azureresourcegraph",
-      "method": "POST",
-      "url": "https://management.azure.com",
-      "authType": "azure",
-      "tokenAuth": {
-        "scopes": ["https://management.azure.com/.default"],
-        "params": {
-          "azure_auth_type": "{{.JsonData.azureAuthType | orEmpty}}",
-          "azure_cloud": "AzureCloud",
-          "tenant_id": "{{.JsonData.tenantId | orEmpty}}",
-          "client_id": "{{.JsonData.clientId | orEmpty}}",
-          "client_secret": "{{.SecureJsonData.clientSecret | orEmpty}}"
-        }
-      },
-      "headers": [{ "name": "x-ms-app", "content": "Grafana" }]
-    },
-    {
-      "path": "chinaazureresourcegraph",
-      "method": "POST",
-      "url": "https://management.azure.com",
-      "authType": "azure",
-      "tokenAuth": {
-        "scopes": ["https://management.chinacloudapi.cn/.default"],
-        "params": {
-          "azure_auth_type": "{{.JsonData.azureAuthType | orEmpty}}",
-          "azure_cloud": "AzureChinaCloud",
-          "tenant_id": "{{.JsonData.tenantId | orEmpty}}",
-          "client_id": "{{.JsonData.clientId | orEmpty}}",
-          "client_secret": "{{.SecureJsonData.clientSecret | orEmpty}}"
-        }
-      },
-      "headers": [{ "name": "x-ms-app", "content": "Grafana" }]
-    },
-    {
-      "path": "govazureresourcegraph",
-      "method": "POST",
-      "url": "https://management.usgovcloudapi.net",
-      "authType": "azure",
-      "tokenAuth": {
-        "scopes": ["https://management.usgovcloudapi.net/.default"],
-        "params": {
-          "azure_auth_type": "{{.JsonData.azureAuthType | orEmpty}}",
-          "azure_cloud": "AzureUSGovernment",
-          "tenant_id": "{{.JsonData.tenantId | orEmpty}}",
-          "client_id": "{{.JsonData.clientId | orEmpty}}",
-          "client_secret": "{{.SecureJsonData.clientSecret | orEmpty}}"
-        }
-      },
-      "headers": [{ "name": "x-ms-app", "content": "Grafana" }]
-    },
-    {
-      "path": "germanyazureresourcegraph",
-      "method": "POST",
-      "url": "https://management.microsoftazure.de",
-      "authType": "azure",
-      "tokenAuth": {
-        "scopes": ["https://management.microsoftazure.de/.default"],
-        "params": {
-          "azure_auth_type": "{{.JsonData.azureAuthType | orEmpty}}",
-          "azure_cloud": "AzureGermanCloud",
           "tenant_id": "{{.JsonData.tenantId | orEmpty}}",
           "client_id": "{{.JsonData.clientId | orEmpty}}",
           "client_secret": "{{.SecureJsonData.clientSecret | orEmpty}}"
@@ -184,59 +116,8 @@
       ]
     },
     {
-      "path": "loganalytics-resourcepickerdata",
-      "method": "POST",
-      "url": "https://management.azure.com",
-      "authType": "azure",
-      "tokenAuth": {
-        "scopes": ["https://management.azure.com/.default"],
-        "params": {
-          "azure_auth_type": "{{.JsonData.azureAuthType | orEmpty}}",
-          "azure_cloud": "AzureCloud",
-          "tenant_id": "{{.JsonData.logAnalyticsTenantId | orEmpty}}",
-          "client_id": "{{.JsonData.logAnalyticsClientId | orEmpty}}",
-          "client_secret": "{{.SecureJsonData.logAnalyticsClientSecret | orEmpty}}"
-        }
-      },
-      "headers": [{ "name": "x-ms-app", "content": "Grafana" }]
-    },
-    {
-      "path": "loganalytics-resourcepickerdata-china",
-      "method": "POST",
-      "url": "https://management.chinacloudapi.cn",
-      "authType": "azure",
-      "tokenAuth": {
-        "scopes": ["https://management.chinacloudapi.cn/.default"],
-        "params": {
-          "azure_auth_type": "{{.JsonData.azureAuthType | orEmpty}}",
-          "azure_cloud": "AzureChinaCloud",
-          "tenant_id": "{{.JsonData.logAnalyticsTenantId | orEmpty}}",
-          "client_id": "{{.JsonData.logAnalyticsClientId | orEmpty}}",
-          "client_secret": "{{.SecureJsonData.logAnalyticsClientSecret | orEmpty}}"
-        }
-      },
-      "headers": [{ "name": "x-ms-app", "content": "Grafana" }]
-    },
-    {
-      "path": "loganalytics-resourcepickerdata-gov",
-      "method": "POST",
-      "url": "https://management.usgovcloudapi.net",
-      "authType": "azure",
-      "tokenAuth": {
-        "scopes": ["https://management.usgovcloudapi.net/.default"],
-        "params": {
-          "azure_auth_type": "{{.JsonData.azureAuthType | orEmpty}}",
-          "azure_cloud": "AzureUSGovernment",
-          "tenant_id": "{{.JsonData.logAnalyticsTenantId | orEmpty}}",
-          "client_id": "{{.JsonData.logAnalyticsClientId | orEmpty}}",
-          "client_secret": "{{.SecureJsonData.logAnalyticsClientSecret | orEmpty}}"
-        }
-      },
-      "headers": [{ "name": "x-ms-app", "content": "Grafana" }]
-    },
-    {
       "path": "workspacesloganalytics",
-      "method": "GET",
+      "method": "*",
       "url": "https://management.azure.com",
       "authType": "azure",
       "tokenAuth": {
@@ -253,7 +134,7 @@
     },
     {
       "path": "chinaworkspacesloganalytics",
-      "method": "GET",
+      "method": "*",
       "url": "https://management.chinacloudapi.cn",
       "authType": "azure",
       "tokenAuth": {
@@ -270,11 +151,28 @@
     },
     {
       "path": "govworkspacesloganalytics",
-      "method": "GET",
+      "method": "*",
       "url": "https://management.usgovcloudapi.net",
       "authType": "azure",
       "tokenAuth": {
         "scopes": ["https://management.usgovcloudapi.net/.default"],
+        "params": {
+          "azure_auth_type": "{{.JsonData.azureAuthType | orEmpty}}",
+          "azure_cloud": "AzureUSGovernment",
+          "tenant_id": "{{.JsonData.logAnalyticsTenantId | orEmpty}}",
+          "client_id": "{{.JsonData.logAnalyticsClientId | orEmpty}}",
+          "client_secret": "{{.SecureJsonData.logAnalyticsClientSecret | orEmpty}}"
+        }
+      },
+      "headers": [{ "name": "x-ms-app", "content": "Grafana" }]
+    },
+    {
+      "path": "germanyworkspacesloganalytics",
+      "method": "*",
+      "url": "https://management.microsoftazure.de",
+      "authType": "azure",
+      "tokenAuth": {
+        "scopes": ["https://management.microsoftazure.de/.default"],
         "params": {
           "azure_auth_type": "{{.JsonData.azureAuthType | orEmpty}}",
           "azure_cloud": "AzureUSGovernment",
