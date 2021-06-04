@@ -18,8 +18,6 @@ const seriesTypeValIdx = 1
 // Series has a time.Time and a *float64 fields.
 type Series struct {
 	Frame *data.Frame
-	// TODO:
-	// - Value can be different number types
 }
 
 // SeriesFromFrame validates that the dataframe can be considered a Series type
@@ -49,6 +47,26 @@ FIELDS:
 			valueNullable = true
 			valueIdx = i
 		default:
+			// Handle default case
+			// try to convert to *float64
+			var convertedField *data.Field
+			for j := 0; j < field.Len(); j++ {
+				ff, err := field.NullableFloatAt(j)
+				if err != nil {
+					break
+				}
+				if convertedField == nil { // initialise field
+					convertedField = data.NewFieldFromFieldType(data.FieldTypeNullableFloat64, field.Len())
+					convertedField.Name = field.Name
+					convertedField.Labels = field.Labels
+				}
+				convertedField.Set(j, ff)
+			}
+			if convertedField != nil {
+				frame.Fields[i] = convertedField
+				valueNullable = true
+				valueIdx = i
+			}
 			if valueIdx != -1 && timeIdx != -1 {
 				break FIELDS
 			}
@@ -65,7 +83,7 @@ FIELDS:
 	if timeNullable { // make time not nullable if it is in the input
 		timeSlice := make([]time.Time, 0, frame.Fields[timeIdx].Len())
 		for rowIdx := 0; rowIdx < frame.Fields[timeIdx].Len(); rowIdx++ {
-			val, ok := frame.At(0, rowIdx).(*time.Time)
+			val, ok := frame.At(timeIdx, rowIdx).(*time.Time)
 			if !ok {
 				return s, fmt.Errorf("unexpected time type, expected *time.Time but got %T", val)
 			}
