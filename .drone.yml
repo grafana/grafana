@@ -781,6 +781,7 @@ steps:
 - name: build-backend
   image: grafana/build-container:1.4.1
   commands:
+  - make gen-go
   - ./bin/grabpl build-backend --jobs 8 --edition oss --github-token $${GITHUB_TOKEN} --no-pull-enterprise ${DRONE_TAG}
   environment:
     GITHUB_TOKEN:
@@ -1157,6 +1158,7 @@ steps:
 - name: build-backend
   image: grafana/build-container:1.4.1
   commands:
+  - make gen-go
   - ./bin/grabpl build-backend --jobs 8 --edition enterprise --github-token $${GITHUB_TOKEN} --no-pull-enterprise ${DRONE_TAG}
   environment:
     GITHUB_TOKEN:
@@ -1214,6 +1216,7 @@ steps:
 - name: build-backend-enterprise2
   image: grafana/build-container:1.4.1
   commands:
+  - make gen-go
   - ./bin/grabpl build-backend --jobs 8 --edition enterprise2 --github-token $${GITHUB_TOKEN} --no-pull-enterprise ${DRONE_TAG}
   environment:
     GITHUB_TOKEN:

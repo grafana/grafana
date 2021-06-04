@@ -5,6 +5,7 @@
 WIRE_TAGS = "oss"
 
 -include local/Makefile
+include .bingo/Variables.mk
 
 .PHONY: all deps-go deps-js deps build-go build-server build-cli build-js build build-docker-dev build-docker-full lint-go golangci-lint test-go test-js test run run-frontend clean devenv devenv-down protobuf help
 
@@ -29,9 +30,9 @@ node_modules: package.json yarn.lock ## Install node modules.
 
 ##@ Building
 
-gen-go:
+gen-go: $(WIRE)
 	@echo "generate go files"
-	wire gen -tags $(WIRE_TAGS) ./pkg/server
+	$(WIRE) gen -tags $(WIRE_TAGS) ./pkg/server
 
 build-go: gen-go ## Build all Go binaries.
 	@echo "build go files"
