@@ -43,7 +43,7 @@ Controls the fill opacity bars.
 
 Set the mode of the gradient fill. Fill gradient is based on the line color. To change the color, use the standard [color scheme]({{< relref "../standard-options.md#color-scheme" >}}) field option.
 
-Gradient appearance is influenced by the **Fill opacity** setting.
+Gradient display is influenced by the **Fill opacity** setting.
 
 #### None
 
