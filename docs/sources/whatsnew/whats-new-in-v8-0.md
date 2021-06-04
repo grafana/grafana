@@ -73,7 +73,7 @@ For more information, refer to [State timeline visualization]({{< relref "../pan
 
 ### Status history visualization (beta)
 
-A sister panel to the state timeline is the new Status history panel visualization. It can display periodic state in a grid. It supports both numerical, string or boolean state. Colors can be assigned using value mappings, thresholds or gradient color
+A sister panel to the state timeline is the new Status history panel visualization. It can display periodic states in a grid view. It supports both numerical, string, or boolean states. You can assign colors using value mappings, thresholds, or gradient color. For more information, refer to [Status history]({{< relref "../panels/visualizations/status-history.md" >}}).
 schemes.
 
 ![Status grid visualization](/static/img/docs/status-grid/status-grid-8-0.png)
