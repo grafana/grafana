@@ -52,11 +52,16 @@ export class GrafanaDatasource extends DataSourceApi<GrafanaQuery> {
           buffer.maxDelta = request.range.to.valueOf() - request.range.from.valueOf();
         }
 
+        // Add the filter to the channel path
+        if (filter?.fields?.length) {
+          addr.path += '/' + filter.fields.join(',');
+        }
+
         queries.push(
           getGrafanaLiveSrv().getDataStream({
             key: `${request.requestId}.${counter++}`,
             addr: addr!,
-            filter,
+            // filter, <-- handled by the backend now :)
             buffer,
           })
         );
