@@ -15,16 +15,14 @@ import (
 type Finder struct {
 	Cfg *setting.Cfg `inject:""`
 
-	log   log.Logger
-	found []string
+	log log.Logger
 }
 
 func init() {
 	registry.Register(&registry.Descriptor{
 		Name: "PluginFinder",
 		Instance: &Finder{
-			log:   log.New("plugin.finder"),
-			found: []string{},
+			log: log.New("plugin.finder"),
 		},
 		InitPriority: registry.MediumHigh,
 	})
@@ -40,6 +38,7 @@ func (f *Finder) Find(pluginsPath string) ([]string, error) {
 		return nil, err
 	}
 
+	var pluginJSONPaths []string
 	if !exists {
 		if err = os.MkdirAll(pluginsPath, os.ModePerm); err != nil {
 			f.log.Error("Failed to create external plugins directory", "dir", pluginsPath, "error", err)
@@ -47,67 +46,69 @@ func (f *Finder) Find(pluginsPath string) ([]string, error) {
 			f.log.Info("External plugins directory created", "directory", pluginsPath)
 		}
 	} else {
-		if err := util.Walk(pluginsPath, true, true, f.walker); err != nil {
-			if errors.Is(err, os.ErrNotExist) {
-				f.log.Debug("Couldn't scan directory since it doesn't exist", "pluginDir", pluginsPath, "err", err)
-				return nil, err
-			}
-			if errors.Is(err, os.ErrPermission) {
-				f.log.Debug("Couldn't scan directory due to lack of permissions", "pluginDir", pluginsPath, "err", err)
-				return nil, err
-			}
-			if pluginsPath != "data/plugins" {
-				f.log.Warn("Could not scan dir", "pluginDir", pluginsPath, "err", err)
-			}
+		pluginJSONPaths, err = f.getPluginJSONPaths(pluginsPath)
+		if err != nil {
 			return nil, err
 		}
 	}
 
+	var pluginSettingJSONPaths []string
 	for _, settings := range f.Cfg.PluginSettings {
 		path, exists := settings["path"]
 		if !exists || path == "" {
 			continue
 		}
-		if err := util.Walk(pluginsPath, true, true, f.walker); err != nil {
-			if errors.Is(err, os.ErrNotExist) {
-				f.log.Debug("Couldn't scan directory since it doesn't exist", "pluginDir", pluginsPath, "err", err)
-				return nil, err
-			}
-			if errors.Is(err, os.ErrPermission) {
-				f.log.Debug("Couldn't scan directory due to lack of permissions", "pluginDir", pluginsPath, "err", err)
-				return nil, err
-			}
-			if pluginsPath != "data/plugins" {
-				f.log.Warn("Could not scan dir", "pluginDir", pluginsPath, "err", err)
-			}
+		pluginJSONPaths, err := f.getPluginJSONPaths(path)
+		if err != nil {
 			return nil, err
 		}
+		pluginSettingJSONPaths = append(pluginSettingJSONPaths, pluginJSONPaths...)
 	}
 
-	return f.found, nil
+	return append(pluginJSONPaths, pluginSettingJSONPaths...), nil
 }
 
-func (f *Finder) walker(currentPath string, fi os.FileInfo, err error) error {
-	// We scan all the sub-folders for plugin.json (with some exceptions) so that we also load embedded plugins, for
-	// example https://github.com/raintank/worldping-app/tree/master/dist/grafana-worldmap-panel worldmap panel plugin
-	// is embedded in worldping app.
-	if err != nil {
-		return fmt.Errorf("filepath.Walk reported an error for %q: %w", currentPath, err)
+func (f *Finder) getPluginJSONPaths(rootDirPath string) ([]string, error) {
+	var found []string
+
+	if err := util.Walk(rootDirPath, true, true,
+		func(currentPath string, fi os.FileInfo, err error) error {
+			// We scan all the sub-folders for plugin.json (with some exceptions) so that we also load embedded plugins, for
+			// example https://github.com/raintank/worldping-app/tree/master/dist/grafana-worldmap-panel worldmap panel plugin
+			// is embedded in worldping app.
+			if err != nil {
+				return fmt.Errorf("filepath.Walk reported an error for %q: %w", currentPath, err)
+			}
+
+			if fi.Name() == "node_modules" || fi.Name() == "Chromium.app" {
+				return util.ErrWalkSkipDir
+			}
+
+			if fi.IsDir() {
+				return nil
+			}
+
+			if fi.Name() != "plugin.json" {
+				return nil
+			}
+
+			found = append(found, currentPath)
+			return nil
+		}); err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			f.log.Debug("Couldn't scan directory since it doesn't exist", "pluginDir", rootDirPath, "err", err)
+			return []string{}, err
+		}
+		if errors.Is(err, os.ErrPermission) {
+			f.log.Debug("Couldn't scan directory due to lack of permissions", "pluginDir", rootDirPath, "err", err)
+			return []string{}, err
+		}
+		if rootDirPath != "data/plugins" {
+			f.log.Warn("Could not scan dir", "pluginDir", rootDirPath, "err", err)
+		}
+
+		return []string{}, err
 	}
 
-	if fi.Name() == "node_modules" || fi.Name() == "Chromium.app" {
-		return util.ErrWalkSkipDir
-	}
-
-	if fi.IsDir() {
-		return nil
-	}
-
-	if fi.Name() != "plugin.json" {
-		return nil
-	}
-
-	f.found = append(f.found, currentPath)
-
-	return nil
+	return found, nil
 }

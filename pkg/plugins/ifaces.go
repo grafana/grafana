@@ -115,8 +115,6 @@ type PluginInitializerV2 interface {
 }
 
 type PluginManagerV2 interface {
-	Reload() // find, load and initialize dynamically
-
 	StartPlugin(ctx context.Context, pluginID string) error
 	StopPlugin(ctx context.Context, pluginID string) error
 
@@ -143,6 +141,13 @@ type PluginManagerV2 interface {
 	IsEnabled() bool
 
 	Register(*PluginV2) error
+	// IsRegistered checks if a plugin is registered with the manager
+	IsRegistered(pluginID string) bool
 
+	// InstallCorePlugin installs a core plugin.
 	InstallCorePlugin(string, InstallOpts) error
+	// Install installs a plugin.
+	Install(ctx context.Context, pluginID, version string) error
+	// Uninstall uninstalls a plugin.
+	Uninstall(ctx context.Context, pluginID string) error
 }

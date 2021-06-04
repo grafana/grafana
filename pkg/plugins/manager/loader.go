@@ -3,11 +3,13 @@ package manager
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"runtime"
 	"strings"
 
+	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
 	grpcplugin2 "github.com/grafana/grafana-plugin-sdk-go/backend/grpcplugin"
 	goplugin "github.com/hashicorp/go-plugin"
 
@@ -15,15 +17,14 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/grpcplugin"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 type Loader struct {
-	Cfg                  *setting.Cfg          `inject:""`
-	BackendPluginManager backendplugin.Manager `inject:""`
+	Cfg     *setting.Cfg     `inject:""`
+	License models.Licensing `inject:""`
 
 	allowUnsignedPluginsCondition unsignedPluginV2ConditionFunc
 	log                           log.Logger
@@ -146,9 +147,33 @@ func (l *Loader) LoadAll(pluginJSONPaths []string, requireSigned bool) ([]*plugi
 				startCmd = "plugin_start"
 			}
 			executableFilename := plugins.ComposePluginStartCommand(startCmd)
+
+			hostEnv := []string{
+				fmt.Sprintf("GF_VERSION=%s", l.Cfg.BuildVersion),
+				fmt.Sprintf("GF_EDITION=%s", l.License.Edition()),
+			}
+
+			if l.License.HasLicense() {
+				hostEnv = append(
+					hostEnv,
+					fmt.Sprintf("GF_ENTERPRISE_LICENSE_PATH=%s", l.Cfg.EnterpriseLicensePath),
+				)
+
+				if envProvider, ok := l.License.(models.LicenseEnvironment); ok {
+					for k, v := range envProvider.Environment() {
+						hostEnv = append(hostEnv, fmt.Sprintf("%s=%s", k, v))
+					}
+				}
+			}
+
+			hostEnv = append(hostEnv, l.getAWSEnvironmentVariables()...)
+			hostEnv = append(hostEnv, l.getAzureEnvironmentVariables()...)
+
+			pluginSettings := getPluginSettings(plugin.ID, l.Cfg)
 			err := plugin.Setup(grpcplugin.PluginDescriptor{
 				PluginID:       plugin.ID,
 				ExecutablePath: filepath.Join(plugin.PluginDir, executableFilename),
+				Env:            pluginSettings.ToEnv("GF_PLUGIN", hostEnv),
 				Managed:        true,
 				VersionedPlugins: map[int]goplugin.PluginSet{
 					grpcplugin2.ProtocolVersion: grpcplugin.GetV2PluginSet(),
@@ -201,6 +226,64 @@ func (l *Loader) LoadAll(pluginJSONPaths []string, requireSigned bool) ([]*plugi
 	return res, nil
 }
 
+func (l *Loader) getAWSEnvironmentVariables() []string {
+	var variables []string
+	if l.Cfg.AWSAssumeRoleEnabled {
+		variables = append(variables, awsds.AssumeRoleEnabledEnvVarKeyName+"=true")
+	}
+	if len(l.Cfg.AWSAllowedAuthProviders) > 0 {
+		variables = append(variables, awsds.AllowedAuthProvidersEnvVarKeyName+"="+strings.Join(l.Cfg.AWSAllowedAuthProviders, ","))
+	}
+
+	return variables
+}
+
+func (l *Loader) getAzureEnvironmentVariables() []string {
+	var variables []string
+	if l.Cfg.Azure.Cloud != "" {
+		variables = append(variables, "AZURE_CLOUD="+l.Cfg.Azure.Cloud)
+	}
+	if l.Cfg.Azure.ManagedIdentityClientId != "" {
+		variables = append(variables, "AZURE_MANAGED_IDENTITY_CLIENT_ID="+l.Cfg.Azure.ManagedIdentityClientId)
+	}
+	if l.Cfg.Azure.ManagedIdentityEnabled {
+		variables = append(variables, "AZURE_MANAGED_IDENTITY_ENABLED=true")
+	}
+
+	return variables
+}
+
 func isRendererPlugin(pluginType string) bool {
 	return pluginType == "renderer"
+}
+
+type pluginSettings map[string]string
+
+func (ps pluginSettings) ToEnv(prefix string, hostEnv []string) []string {
+	var env []string
+	for k, v := range ps {
+		key := fmt.Sprintf("%s_%s", prefix, strings.ToUpper(k))
+		if value := os.Getenv(key); value != "" {
+			v = value
+		}
+
+		env = append(env, fmt.Sprintf("%s=%s", key, v))
+	}
+
+	env = append(env, hostEnv...)
+
+	return env
+}
+
+func getPluginSettings(plugID string, cfg *setting.Cfg) pluginSettings {
+	ps := pluginSettings{}
+	for k, v := range cfg.PluginSettings[plugID] {
+		if k == "path" || strings.ToLower(k) == "id" {
+			continue
+		}
+
+		ps[k] = v
+	}
+
+	return ps
 }

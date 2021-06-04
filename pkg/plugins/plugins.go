@@ -108,10 +108,8 @@ func (p *PluginV2) Start(ctx context.Context) error {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
 
-	var env []string
-
 	clientFactory := func() *plugin.Client {
-		return plugin.NewClient(grpcplugin.NewClientConfig(p.descriptor.ExecutablePath, env, p.logger, p.descriptor.VersionedPlugins))
+		return plugin.NewClient(grpcplugin.NewClientConfig(p.descriptor.ExecutablePath, p.descriptor.Env, p.logger, p.descriptor.VersionedPlugins))
 	}
 	p.hashiClient = clientFactory()
 	rpcClient, err := p.hashiClient.Client()

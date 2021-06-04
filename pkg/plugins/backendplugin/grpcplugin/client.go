@@ -45,6 +45,7 @@ type StartRendererFunc func(pluginID string, renderer pluginextensionv2.Renderer
 type PluginDescriptor struct {
 	PluginID         string
 	ExecutablePath   string
+	Env              []string
 	Managed          bool
 	VersionedPlugins map[int]goplugin.PluginSet
 	startRendererFn  StartRendererFunc
