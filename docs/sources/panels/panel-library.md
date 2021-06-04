@@ -31,7 +31,7 @@ To create a library panel:
 
 Optionally, you can click title of the panel and then click **More > Create Library panel**. Next, follow the instructions Step 5 in the procedure above. 
 
-   {{< figure src="/static/img/docs/library-panels/create-lib-panel-from-edit-8-0.png" class="docs-image--no-shadow" max-width= "900px" caption="Screenshot of the edit panel" >}}
+   {{< figure src="/static/img/docs/library-panels/create-from-more-8-0.png" class="docs-image--no-shadow" max-width= "900px" caption="Screenshot of the edit panel" >}}
 
 Also, library panels can also be created using the “Share” option for any panel. 
 
