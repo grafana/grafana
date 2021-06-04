@@ -1,7 +1,7 @@
 import React, { FC, useCallback, useEffect, useMemo } from 'react';
 import { useObservable } from 'react-use';
 import { css } from '@emotion/css';
-import { GrafanaTheme2, PanelData } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { PageToolbar, withErrorBoundary, useStyles2, HorizontalGroup, Alert } from '@grafana/ui';
 import Page from 'app/core/components/Page/Page';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
