@@ -72,5 +72,23 @@ describe('Card', () => {
       expect(screen.getByRole('button', { name: 'Click Me' })).not.toBeDisabled();
       expect(screen.getByRole('button', { name: 'Delete' })).not.toBeDisabled();
     });
+
+    it('Children should be conditional', () => {
+      const shouldNotRender = false;
+      render(
+        <Card heading="Test Heading">
+          <Card.Actions>
+            <Button>Click Me</Button>
+            {shouldNotRender && <Button>Delete</Button>}
+          </Card.Actions>
+          <Card.SecondaryActions>
+            {shouldNotRender && <IconButton name="trash-alt" aria-label="Delete" disabled={false} />}
+          </Card.SecondaryActions>
+        </Card>
+      );
+
+      expect(screen.getByRole('button', { name: 'Click Me' })).not.toBeDisabled();
+      expect(screen.queryByRole('button', { name: 'Delete' })).not.toBeInTheDocument();
+    });
   });
 });
