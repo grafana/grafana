@@ -13,7 +13,7 @@ This panel shows periodic state over time. Each field or series is rendered as a
 
 ## Supported data 
 
-This panel works with string, boolean and numerical fields or time series. A time field is required. You can use value mappings to color strings or assing text values to numerical ranges.  
+This panel works with string, boolean and numerical fields or time series. A time field is required. You can use value mappings to color strings or assign text values to numerical ranges.  
 
 ## Display options
 

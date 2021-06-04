@@ -21,7 +21,7 @@ Controls whether Grafana merges identical values if they are next to each other.
 
 ### Show values
 
-Controls whether values are rendered inside the state regions. Auto will render values if there is enought space.
+Controls whether values are rendered inside the state regions. Auto will render values if there is sufficient space.
 
 ### Align values
 
