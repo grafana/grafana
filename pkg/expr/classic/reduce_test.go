@@ -399,9 +399,9 @@ func TestPercentDiffAbsReducer(t *testing.T) {
 }
 
 func valBasedSeries(vals ...*float64) mathexp.Series {
-	newSeries := mathexp.NewSeries("", nil, 0, false, 1, true, len(vals))
+	newSeries := mathexp.NewSeries("", nil, len(vals))
 	for idx, f := range vals {
-		err := newSeries.SetPoint(idx, unixTimePointer(int64(idx)), f)
+		err := newSeries.SetPoint(idx, time.Unix(int64(idx), 0), f)
 		if err != nil {
 			panic(err)
 		}
@@ -410,19 +410,14 @@ func valBasedSeries(vals ...*float64) mathexp.Series {
 }
 
 func valBasedSeriesWithLabels(l data.Labels, vals ...*float64) mathexp.Series {
-	newSeries := mathexp.NewSeries("", l, 0, false, 1, true, len(vals))
+	newSeries := mathexp.NewSeries("", l, len(vals))
 	for idx, f := range vals {
-		err := newSeries.SetPoint(idx, unixTimePointer(int64(idx)), f)
+		err := newSeries.SetPoint(idx, time.Unix(int64(idx), 0), f)
 		if err != nil {
 			panic(err)
 		}
 	}
 	return newSeries
-}
-
-func unixTimePointer(sec int64) *time.Time {
-	t := time.Unix(sec, 0)
-	return &t
 }
 
 func valBasedNumber(f *float64) mathexp.Number {

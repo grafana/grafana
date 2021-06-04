@@ -922,6 +922,8 @@ github.com/grafana/grafana-plugin-sdk-go v0.79.0/go.mod h1:NvxLzGkVhnoBKwzkst6CF
 github.com/grafana/grafana-plugin-sdk-go v0.91.0/go.mod h1:Ot3k7nY7P6DXmUsDgKvNB7oG1v7PRyTdmnYVoS554bU=
 github.com/grafana/grafana-plugin-sdk-go v0.102.0 h1:Pknh7mlOaJvdhPgKHxcimDOSd9h29eSpA34W0/sOF6c=
 github.com/grafana/grafana-plugin-sdk-go v0.102.0/go.mod h1:D7x3ah+1d4phNXpbnOaxa/osSaZlwh9/ZUnGGzegRbk=
+github.com/grafana/grafana-plugin-sdk-go v0.104.0 h1:Ij2tPdEasSjCb2MxHaaiylyW4RLVZYyWpApzN/mlTxo=
+github.com/grafana/grafana-plugin-sdk-go v0.104.0/go.mod h1:D7x3ah+1d4phNXpbnOaxa/osSaZlwh9/ZUnGGzegRbk=
 github.com/grafana/loki v1.6.2-0.20210520072447-15d417efe103 h1:qCmofFVwQR9QnsinstVqI1NPLMVl33jNCnOCXEAVn6E=
 github.com/grafana/loki v1.6.2-0.20210520072447-15d417efe103/go.mod h1:GHIsn+EohCChsdu5YouNZewqLeV9L2FNw4DEJU3P9qE=
 github.com/gregjones/httpcache v0.0.0-20180305231024-9cad4c3443a7/go.mod h1:FecbI9+v66THATjSRHfNgh1IVFe/9kFxbXtjV0ctIMA=
@@ -1498,8 +1500,8 @@ github.com/prometheus/alertmanager v0.21.1-0.20200911160112-1fdff6b3f939/go.mod 
 github.com/prometheus/alertmanager v0.21.1-0.20201106142418-c39b78780054/go.mod h1:imXRHOP6QTsE0fFsIsAV/cXimS32m7gVZOiUj11m6Ig=
 github.com/prometheus/alertmanager v0.21.1-0.20210310093010-0f9cab6991e6/go.mod h1:MTqVn+vIupE0dzdgo+sMcNCp37SCAi8vPrvKTTnTz9g=
 github.com/prometheus/alertmanager v0.21.1-0.20210422101724-8176f78a70e1/go.mod h1:gsEqwD5BHHW9RNKvCuPOrrTMiP5I+faJUyLXvnivHik=
-github.com/prometheus/alertmanager v0.21.1-0.20210511232218-7301451eb94d h1:4b0yyecYCQ7Q64vtcq0Kmny7fiomEVEkC6x57zlzy3w=
-github.com/prometheus/alertmanager v0.21.1-0.20210511232218-7301451eb94d/go.mod h1:VTGfCWWNKkw9ENSnUYhFcdtr3AwDsxBgB4rlB3kRJ4s=
+github.com/prometheus/alertmanager v0.22.2 h1:JrDZalSEMb2/2bqGAhls6ZnvOxbC5jMIu29JV+uWTC0=
+github.com/prometheus/alertmanager v0.22.2/go.mod h1:rYinOWxFuCnNssc3iOjn2oMTlhLaPcUuqV5yk5JKUAE=
 github.com/prometheus/client_golang v0.8.0/go.mod h1:7SWBe2y4D6OKWSNQJUaRYU/AaXPKyh/dDVn+NZz0KFw=
 github.com/prometheus/client_golang v0.9.1/go.mod h1:7SWBe2y4D6OKWSNQJUaRYU/AaXPKyh/dDVn+NZz0KFw=
 github.com/prometheus/client_golang v0.9.2/go.mod h1:OsXs2jCmiKlQ1lTBmv21f2mNfw4xf/QclQDMrYNZzcM=

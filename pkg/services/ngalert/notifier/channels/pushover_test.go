@@ -121,14 +121,6 @@ func TestPushoverNotifier(t *testing.T) {
 				"userKey": "<userKey>"
 			}`,
 			expInitError: alerting.ValidationError{Reason: "API token not found"},
-		}, {
-			name: "Error in building message",
-			settings: `{
-				"apiToken": "<apiToken>",
-				"userKey": "<userKey>",
-				"message": "{{ .BrokenTemplate }"
-			}`,
-			expMsgError: errors.New("failed to template pushover message: template: :1: unexpected \"}\" in operand"),
 		},
 	}
 

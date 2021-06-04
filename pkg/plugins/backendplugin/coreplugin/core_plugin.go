@@ -5,10 +5,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin/instrumentation"
 )
 
 // corePlugin represents a plugin that's part of Grafana core.
@@ -43,15 +40,6 @@ func (cp *corePlugin) Logger() log.Logger {
 	return cp.logger
 }
 
-//nolint: staticcheck // plugins.DataResponse deprecated
-func (cp *corePlugin) DataQuery(ctx context.Context, dsInfo *models.DataSource,
-	tsdbQuery plugins.DataQuery) (plugins.DataResponse, error) {
-	// TODO: Inline the adapter, since it shouldn't be necessary
-	adapter := newQueryEndpointAdapter(cp.pluginID, cp.logger, instrumentation.InstrumentQueryDataHandler(
-		cp.QueryDataHandler))
-	return adapter.DataQuery(ctx, dsInfo, tsdbQuery)
-}
-
 func (cp *corePlugin) Start(ctx context.Context) error {
 	return nil
 }
@@ -83,6 +71,14 @@ func (cp *corePlugin) CollectMetrics(ctx context.Context) (*backend.CollectMetri
 func (cp *corePlugin) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
 	if cp.CheckHealthHandler != nil {
 		return cp.CheckHealthHandler.CheckHealth(ctx, req)
+	}
+
+	return nil, backendplugin.ErrMethodNotImplemented
+}
+
+func (cp *corePlugin) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	if cp.QueryDataHandler != nil {
+		return cp.QueryDataHandler.QueryData(ctx, req)
 	}
 
 	return nil, backendplugin.ErrMethodNotImplemented

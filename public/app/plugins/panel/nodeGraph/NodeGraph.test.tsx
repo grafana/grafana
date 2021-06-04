@@ -3,23 +3,14 @@ import { render, screen, fireEvent, waitFor, getByText } from '@testing-library/
 import userEvent from '@testing-library/user-event';
 import { NodeGraph } from './NodeGraph';
 import { makeEdgesDataFrame, makeNodesDataFrame } from './utils';
+jest.mock('./layout.worker.js');
 
-jest.mock('./layout.worker.js', () => {
-  const { layout } = jest.requireActual('./layout.worker.js');
-  class TestWorker {
-    constructor() {}
-    postMessage(data: any) {
-      const { nodes, edges, config } = data;
-      setTimeout(() => {
-        layout(nodes, edges, config);
-        // @ts-ignore
-        this.onmessage({ data: { nodes, edges } });
-      }, 1);
-    }
-  }
+jest.mock('react-use/lib/useMeasure', () => {
   return {
     __esModule: true,
-    default: TestWorker,
+    default: () => {
+      return [() => {}, { width: 500, height: 200 }];
+    },
   };
 });
 
@@ -57,7 +48,6 @@ describe('NodeGraph', () => {
     await screen.findByLabelText('Node: service:1');
 
     panView({ x: 10, y: 10 });
-    screen.debug(getSvg());
     // Though we try to pan down 10px we are rendering in straight line 3 nodes so there are bounds preventing
     // as panning vertically
     await waitFor(() => expect(getTranslate()).toEqual({ x: 10, y: 0 }));
@@ -209,9 +199,9 @@ describe('NodeGraph', () => {
     const button = await screen.findByTitle(/Grid layout/);
     userEvent.click(button);
 
-    await expectNodePositionCloseTo('service:0', { x: -180, y: -60 });
-    await expectNodePositionCloseTo('service:1', { x: -60, y: -60 });
-    await expectNodePositionCloseTo('service:2', { x: 60, y: -60 });
+    await expectNodePositionCloseTo('service:0', { x: -60, y: -60 });
+    await expectNodePositionCloseTo('service:1', { x: 60, y: -60 });
+    await expectNodePositionCloseTo('service:2', { x: -60, y: 80 });
   });
 });
 

@@ -22,6 +22,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/opentracing/opentracing-go"
+	ol "github.com/opentracing/opentracing-go/log"
 	cw "github.com/weaveworks/common/middleware"
 	"gopkg.in/macaron.v1"
 )
@@ -61,9 +63,12 @@ func (h *ContextHandler) Init() error {
 }
 
 // Middleware provides a middleware to initialize the Macaron context.
-func (h *ContextHandler) Middleware(c *macaron.Context) {
-	ctx := &models.ReqContext{
-		Context:        c,
+func (h *ContextHandler) Middleware(mContext *macaron.Context) {
+	span, _ := opentracing.StartSpanFromContext(mContext.Req.Context(), "Auth - Middleware")
+	defer span.Finish()
+
+	reqContext := &models.ReqContext{
+		Context:        mContext,
 		SignedInUser:   &models.SignedInUser{},
 		IsSignedIn:     false,
 		AllowAnonymous: false,
@@ -71,20 +76,20 @@ func (h *ContextHandler) Middleware(c *macaron.Context) {
 		Logger:         log.New("context"),
 	}
 
-	traceID, exists := cw.ExtractTraceID(c.Req.Request.Context())
+	traceID, exists := cw.ExtractTraceID(mContext.Req.Request.Context())
 	if exists {
-		ctx.Logger = ctx.Logger.New("traceID", traceID)
+		reqContext.Logger = reqContext.Logger.New("traceID", traceID)
 	}
 
 	const headerName = "X-Grafana-Org-Id"
 	orgID := int64(0)
-	orgIDHeader := ctx.Req.Header.Get(headerName)
+	orgIDHeader := reqContext.Req.Header.Get(headerName)
 	if orgIDHeader != "" {
 		id, err := strconv.ParseInt(orgIDHeader, 10, 64)
 		if err == nil {
 			orgID = id
 		} else {
-			ctx.Logger.Debug("Received invalid header", "header", headerName, "value", orgIDHeader)
+			reqContext.Logger.Debug("Received invalid header", "header", headerName, "value", orgIDHeader)
 		}
 	}
 
@@ -94,33 +99,41 @@ func (h *ContextHandler) Middleware(c *macaron.Context) {
 	// then look for api key in session (special case for render calls via api)
 	// then test if anonymous access is enabled
 	switch {
-	case h.initContextWithRenderAuth(ctx):
-	case h.initContextWithAPIKey(ctx):
-	case h.initContextWithBasicAuth(ctx, orgID):
-	case h.initContextWithAuthProxy(ctx, orgID):
-	case h.initContextWithToken(ctx, orgID):
-	case h.initContextWithJWT(ctx, orgID):
-	case h.initContextWithAnonymousUser(ctx):
+	case h.initContextWithRenderAuth(reqContext):
+	case h.initContextWithAPIKey(reqContext):
+	case h.initContextWithBasicAuth(reqContext, orgID):
+	case h.initContextWithAuthProxy(reqContext, orgID):
+	case h.initContextWithToken(reqContext, orgID):
+	case h.initContextWithJWT(reqContext, orgID):
+	case h.initContextWithAnonymousUser(reqContext):
 	}
 
-	ctx.Logger = log.New("context", "userId", ctx.UserId, "orgId", ctx.OrgId, "uname", ctx.Login)
-	ctx.Data["ctx"] = ctx
+	reqContext.Logger = log.New("context", "userId", reqContext.UserId, "orgId", reqContext.OrgId, "uname", reqContext.Login)
+	reqContext.Data["ctx"] = reqContext
 
-	c.Map(ctx)
+	span.LogFields(
+		ol.String("uname", reqContext.Login),
+		ol.Int64("orgId", reqContext.OrgId),
+		ol.Int64("userId", reqContext.UserId))
+
+	mContext.Map(reqContext)
 
 	// update last seen every 5min
-	if ctx.ShouldUpdateLastSeenAt() {
-		ctx.Logger.Debug("Updating last user_seen_at", "user_id", ctx.UserId)
-		if err := bus.Dispatch(&models.UpdateUserLastSeenAtCommand{UserId: ctx.UserId}); err != nil {
-			ctx.Logger.Error("Failed to update last_seen_at", "error", err)
+	if reqContext.ShouldUpdateLastSeenAt() {
+		reqContext.Logger.Debug("Updating last user_seen_at", "user_id", reqContext.UserId)
+		if err := bus.Dispatch(&models.UpdateUserLastSeenAtCommand{UserId: reqContext.UserId}); err != nil {
+			reqContext.Logger.Error("Failed to update last_seen_at", "error", err)
 		}
 	}
 }
 
-func (h *ContextHandler) initContextWithAnonymousUser(ctx *models.ReqContext) bool {
+func (h *ContextHandler) initContextWithAnonymousUser(reqContext *models.ReqContext) bool {
 	if !h.Cfg.AnonymousEnabled {
 		return false
 	}
+
+	span, _ := opentracing.StartSpanFromContext(reqContext.Req.Context(), "initContextWithAnonymousUser")
+	defer span.Finish()
 
 	org, err := h.SQLStore.GetOrgByName(h.Cfg.AnonymousOrgName)
 	if err != nil {
@@ -128,17 +141,17 @@ func (h *ContextHandler) initContextWithAnonymousUser(ctx *models.ReqContext) bo
 		return false
 	}
 
-	ctx.IsSignedIn = false
-	ctx.AllowAnonymous = true
-	ctx.SignedInUser = &models.SignedInUser{IsAnonymous: true}
-	ctx.OrgRole = models.RoleType(h.Cfg.AnonymousOrgRole)
-	ctx.OrgId = org.Id
-	ctx.OrgName = org.Name
+	reqContext.IsSignedIn = false
+	reqContext.AllowAnonymous = true
+	reqContext.SignedInUser = &models.SignedInUser{IsAnonymous: true}
+	reqContext.OrgRole = models.RoleType(h.Cfg.AnonymousOrgRole)
+	reqContext.OrgId = org.Id
+	reqContext.OrgName = org.Name
 	return true
 }
 
-func (h *ContextHandler) initContextWithAPIKey(ctx *models.ReqContext) bool {
-	header := ctx.Req.Header.Get("Authorization")
+func (h *ContextHandler) initContextWithAPIKey(reqContext *models.ReqContext) bool {
+	header := reqContext.Req.Header.Get("Authorization")
 	parts := strings.SplitN(header, " ", 2)
 	var keyString string
 	if len(parts) == 2 && parts[0] == "Bearer" {
@@ -154,17 +167,20 @@ func (h *ContextHandler) initContextWithAPIKey(ctx *models.ReqContext) bool {
 		return false
 	}
 
+	span, _ := opentracing.StartSpanFromContext(reqContext.Req.Context(), "initContextWithAPIKey")
+	defer span.Finish()
+
 	// base64 decode key
 	decoded, err := apikeygen.Decode(keyString)
 	if err != nil {
-		ctx.JsonApiErr(401, InvalidAPIKey, err)
+		reqContext.JsonApiErr(401, InvalidAPIKey, err)
 		return true
 	}
 
 	// fetch key
 	keyQuery := models.GetApiKeyByNameQuery{KeyName: decoded.Name, OrgId: decoded.OrgId}
 	if err := bus.Dispatch(&keyQuery); err != nil {
-		ctx.JsonApiErr(401, InvalidAPIKey, err)
+		reqContext.JsonApiErr(401, InvalidAPIKey, err)
 		return true
 	}
 
@@ -173,11 +189,11 @@ func (h *ContextHandler) initContextWithAPIKey(ctx *models.ReqContext) bool {
 	// validate api key
 	isValid, err := apikeygen.IsValid(decoded, apikey.Key)
 	if err != nil {
-		ctx.JsonApiErr(500, "Validating API key failed", err)
+		reqContext.JsonApiErr(500, "Validating API key failed", err)
 		return true
 	}
 	if !isValid {
-		ctx.JsonApiErr(401, InvalidAPIKey, err)
+		reqContext.JsonApiErr(401, InvalidAPIKey, err)
 		return true
 	}
 
@@ -187,31 +203,34 @@ func (h *ContextHandler) initContextWithAPIKey(ctx *models.ReqContext) bool {
 		getTime = time.Now
 	}
 	if apikey.Expires != nil && *apikey.Expires <= getTime().Unix() {
-		ctx.JsonApiErr(401, "Expired API key", err)
+		reqContext.JsonApiErr(401, "Expired API key", err)
 		return true
 	}
 
-	ctx.IsSignedIn = true
-	ctx.SignedInUser = &models.SignedInUser{}
-	ctx.OrgRole = apikey.Role
-	ctx.ApiKeyId = apikey.Id
-	ctx.OrgId = apikey.OrgId
+	reqContext.IsSignedIn = true
+	reqContext.SignedInUser = &models.SignedInUser{}
+	reqContext.OrgRole = apikey.Role
+	reqContext.ApiKeyId = apikey.Id
+	reqContext.OrgId = apikey.OrgId
 	return true
 }
 
-func (h *ContextHandler) initContextWithBasicAuth(ctx *models.ReqContext, orgID int64) bool {
+func (h *ContextHandler) initContextWithBasicAuth(reqContext *models.ReqContext, orgID int64) bool {
 	if !h.Cfg.BasicAuthEnabled {
 		return false
 	}
 
-	header := ctx.Req.Header.Get("Authorization")
+	header := reqContext.Req.Header.Get("Authorization")
 	if header == "" {
 		return false
 	}
 
+	span, ctx := opentracing.StartSpanFromContext(reqContext.Req.Context(), "initContextWithBasicAuth")
+	defer span.Finish()
+
 	username, password, err := util.DecodeBasicAuthHeader(header)
 	if err != nil {
-		ctx.JsonApiErr(401, "Invalid Basic Auth Header", err)
+		reqContext.JsonApiErr(401, "Invalid Basic Auth Header", err)
 		return true
 	}
 
@@ -221,7 +240,7 @@ func (h *ContextHandler) initContextWithBasicAuth(ctx *models.ReqContext, orgID 
 		Cfg:      h.Cfg,
 	}
 	if err := bus.Dispatch(&authQuery); err != nil {
-		ctx.Logger.Debug(
+		reqContext.Logger.Debug(
 			"Failed to authorize the user",
 			"username", username,
 			"err", err,
@@ -230,63 +249,66 @@ func (h *ContextHandler) initContextWithBasicAuth(ctx *models.ReqContext, orgID 
 		if errors.Is(err, models.ErrUserNotFound) {
 			err = login.ErrInvalidCredentials
 		}
-		ctx.JsonApiErr(401, InvalidUsernamePassword, err)
+		reqContext.JsonApiErr(401, InvalidUsernamePassword, err)
 		return true
 	}
 
 	user := authQuery.User
 
 	query := models.GetSignedInUserQuery{UserId: user.Id, OrgId: orgID}
-	if err := bus.DispatchCtx(ctx.Req.Context(), &query); err != nil {
-		ctx.Logger.Error(
+	if err := bus.DispatchCtx(ctx, &query); err != nil {
+		reqContext.Logger.Error(
 			"Failed at user signed in",
 			"id", user.Id,
 			"org", orgID,
 		)
-		ctx.JsonApiErr(401, InvalidUsernamePassword, err)
+		reqContext.JsonApiErr(401, InvalidUsernamePassword, err)
 		return true
 	}
 
-	ctx.SignedInUser = query.Result
-	ctx.IsSignedIn = true
+	reqContext.SignedInUser = query.Result
+	reqContext.IsSignedIn = true
 	return true
 }
 
-func (h *ContextHandler) initContextWithToken(ctx *models.ReqContext, orgID int64) bool {
+func (h *ContextHandler) initContextWithToken(reqContext *models.ReqContext, orgID int64) bool {
 	if h.Cfg.LoginCookieName == "" {
 		return false
 	}
 
-	rawToken := ctx.GetCookie(h.Cfg.LoginCookieName)
+	rawToken := reqContext.GetCookie(h.Cfg.LoginCookieName)
 	if rawToken == "" {
 		return false
 	}
 
-	token, err := h.AuthTokenService.LookupToken(ctx.Req.Context(), rawToken)
+	span, ctx := opentracing.StartSpanFromContext(reqContext.Req.Context(), "initContextWithToken")
+	defer span.Finish()
+
+	token, err := h.AuthTokenService.LookupToken(ctx, rawToken)
 	if err != nil {
-		ctx.Logger.Error("Failed to look up user based on cookie", "error", err)
-		ctx.Data["lookupTokenErr"] = err
+		reqContext.Logger.Error("Failed to look up user based on cookie", "error", err)
+		reqContext.Data["lookupTokenErr"] = err
 		return false
 	}
 
 	query := models.GetSignedInUserQuery{UserId: token.UserId, OrgId: orgID}
-	if err := bus.DispatchCtx(ctx.Req.Context(), &query); err != nil {
-		ctx.Logger.Error("Failed to get user with id", "userId", token.UserId, "error", err)
+	if err := bus.DispatchCtx(ctx, &query); err != nil {
+		reqContext.Logger.Error("Failed to get user with id", "userId", token.UserId, "error", err)
 		return false
 	}
 
-	ctx.SignedInUser = query.Result
-	ctx.IsSignedIn = true
-	ctx.UserToken = token
+	reqContext.SignedInUser = query.Result
+	reqContext.IsSignedIn = true
+	reqContext.UserToken = token
 
 	// Rotate the token just before we write response headers to ensure there is no delay between
 	// the new token being generated and the client receiving it.
-	ctx.Resp.Before(h.rotateEndOfRequestFunc(ctx, h.AuthTokenService, token))
+	reqContext.Resp.Before(h.rotateEndOfRequestFunc(reqContext, h.AuthTokenService, token))
 
 	return true
 }
 
-func (h *ContextHandler) rotateEndOfRequestFunc(ctx *models.ReqContext, authTokenService models.UserTokenService,
+func (h *ContextHandler) rotateEndOfRequestFunc(reqContext *models.ReqContext, authTokenService models.UserTokenService,
 	token *models.UserToken) macaron.BeforeFunc {
 	return func(w macaron.ResponseWriter) {
 		// if response has already been written, skip.
@@ -296,48 +318,54 @@ func (h *ContextHandler) rotateEndOfRequestFunc(ctx *models.ReqContext, authToke
 
 		// if the request is cancelled by the client we should not try
 		// to rotate the token since the client would not accept any result.
-		if errors.Is(ctx.Context.Req.Context().Err(), context.Canceled) {
+		if errors.Is(reqContext.Context.Req.Context().Err(), context.Canceled) {
 			return
 		}
 
-		addr := ctx.RemoteAddr()
+		span, ctx := opentracing.StartSpanFromContext(reqContext.Req.Context(), "rotateEndOfRequestFunc")
+		defer span.Finish()
+
+		addr := reqContext.RemoteAddr()
 		ip, err := network.GetIPFromAddress(addr)
 		if err != nil {
-			ctx.Logger.Debug("Failed to get client IP address", "addr", addr, "err", err)
+			reqContext.Logger.Debug("Failed to get client IP address", "addr", addr, "err", err)
 			ip = nil
 		}
-		rotated, err := authTokenService.TryRotateToken(ctx.Req.Context(), token, ip, ctx.Req.UserAgent())
+		rotated, err := authTokenService.TryRotateToken(ctx, token, ip, reqContext.Req.UserAgent())
 		if err != nil {
-			ctx.Logger.Error("Failed to rotate token", "error", err)
+			reqContext.Logger.Error("Failed to rotate token", "error", err)
 			return
 		}
 
 		if rotated {
-			cookies.WriteSessionCookie(ctx, h.Cfg, token.UnhashedToken, h.Cfg.LoginMaxLifetime)
+			cookies.WriteSessionCookie(reqContext, h.Cfg, token.UnhashedToken, h.Cfg.LoginMaxLifetime)
 		}
 	}
 }
 
-func (h *ContextHandler) initContextWithRenderAuth(ctx *models.ReqContext) bool {
-	key := ctx.GetCookie("renderKey")
+func (h *ContextHandler) initContextWithRenderAuth(reqContext *models.ReqContext) bool {
+	key := reqContext.GetCookie("renderKey")
 	if key == "" {
 		return false
 	}
 
+	span, _ := opentracing.StartSpanFromContext(reqContext.Req.Context(), "initContextWithRenderAuth")
+	defer span.Finish()
+
 	renderUser, exists := h.RenderService.GetRenderUser(key)
 	if !exists {
-		ctx.JsonApiErr(401, "Invalid Render Key", nil)
+		reqContext.JsonApiErr(401, "Invalid Render Key", nil)
 		return true
 	}
 
-	ctx.IsSignedIn = true
-	ctx.SignedInUser = &models.SignedInUser{
+	reqContext.IsSignedIn = true
+	reqContext.SignedInUser = &models.SignedInUser{
 		OrgId:   renderUser.OrgID,
 		UserId:  renderUser.UserID,
 		OrgRole: models.RoleType(renderUser.OrgRole),
 	}
-	ctx.IsRenderCall = true
-	ctx.LastSeenAt = time.Now()
+	reqContext.IsRenderCall = true
+	reqContext.LastSeenAt = time.Now()
 	return true
 }
 
@@ -371,11 +399,11 @@ func (h *ContextHandler) handleError(ctx *models.ReqContext, err error, statusCo
 	}
 }
 
-func (h *ContextHandler) initContextWithAuthProxy(ctx *models.ReqContext, orgID int64) bool {
-	username := ctx.Req.Header.Get(h.Cfg.AuthProxyHeaderName)
+func (h *ContextHandler) initContextWithAuthProxy(reqContext *models.ReqContext, orgID int64) bool {
+	username := reqContext.Req.Header.Get(h.Cfg.AuthProxyHeaderName)
 	auth := authproxy.New(h.Cfg, &authproxy.Options{
 		RemoteCache: h.RemoteCache,
-		Ctx:         ctx,
+		Ctx:         reqContext,
 		OrgID:       orgID,
 	})
 
@@ -391,9 +419,12 @@ func (h *ContextHandler) initContextWithAuthProxy(ctx *models.ReqContext, orgID 
 		return false
 	}
 
+	span, _ := opentracing.StartSpanFromContext(reqContext.Req.Context(), "initContextWithAuthProxy")
+	defer span.Finish()
+
 	// Check if allowed to continue with this IP
 	if err := auth.IsAllowedIP(); err != nil {
-		h.handleError(ctx, err, 407, func(details error) {
+		h.handleError(reqContext, err, 407, func(details error) {
 			logger.Error("Failed to check whitelisted IP addresses", "message", err.Error(), "error", details)
 		})
 		return true
@@ -401,7 +432,7 @@ func (h *ContextHandler) initContextWithAuthProxy(ctx *models.ReqContext, orgID 
 
 	id, err := logUserIn(auth, username, logger, false)
 	if err != nil {
-		h.handleError(ctx, err, 407, nil)
+		h.handleError(reqContext, err, 407, nil)
 		return true
 	}
 
@@ -422,13 +453,13 @@ func (h *ContextHandler) initContextWithAuthProxy(ctx *models.ReqContext, orgID 
 		}
 		id, err = logUserIn(auth, username, logger, true)
 		if err != nil {
-			h.handleError(ctx, err, 407, nil)
+			h.handleError(reqContext, err, 407, nil)
 			return true
 		}
 
 		user, err = auth.GetSignedInUser(id)
 		if err != nil {
-			h.handleError(ctx, err, 407, nil)
+			h.handleError(reqContext, err, 407, nil)
 			return true
 		}
 	}
@@ -436,12 +467,12 @@ func (h *ContextHandler) initContextWithAuthProxy(ctx *models.ReqContext, orgID 
 	logger.Debug("Successfully got user info", "userID", user.UserId, "username", user.Login)
 
 	// Add user info to context
-	ctx.SignedInUser = user
-	ctx.IsSignedIn = true
+	reqContext.SignedInUser = user
+	reqContext.IsSignedIn = true
 
 	// Remember user data in cache
 	if err := auth.Remember(id); err != nil {
-		h.handleError(ctx, err, 500, func(details error) {
+		h.handleError(reqContext, err, 500, func(details error) {
 			logger.Error(
 				"Failed to store user in cache",
 				"username", username,
