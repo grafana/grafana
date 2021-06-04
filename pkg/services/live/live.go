@@ -166,7 +166,7 @@ func (g *GrafanaLive) Init() error {
 		// Configure HA with Redis. In this case Centrifuge nodes
 		// will be connected over Redis PUB/SUB. Presence will work
 		// globally since kept inside Redis.
-		redisAddress := g.Cfg.LiveHAEngineURL
+		redisAddress := g.Cfg.LiveHAEngineAddress
 		redisShardConfigs := []centrifuge.RedisShardConfig{
 			{Address: redisAddress},
 		}
@@ -227,7 +227,7 @@ func (g *GrafanaLive) Init() error {
 	var managedStreamRunner *managedstream.Runner
 	if g.IsHA() {
 		redisClient := redis.NewClient(&redis.Options{
-			Addr: g.Cfg.LiveHAEngineURL,
+			Addr: g.Cfg.LiveHAEngineAddress,
 		})
 		cmd := redisClient.Ping()
 		if _, err := cmd.Result(); err != nil {
