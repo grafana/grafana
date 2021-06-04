@@ -3,7 +3,6 @@ package metrics
 import (
 	"context"
 
-	"github.com/grafana/grafana/pkg/infra/backgroundsvcs"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics/graphitebridge"
 	"github.com/grafana/grafana/pkg/setting"
@@ -24,11 +23,10 @@ func init() {
 	initFrontendMetrics()
 }
 
-func ProvideService(cfg *setting.Cfg, backgroundServices *backgroundsvcs.Container) (*InternalMetricsService, error) {
+func ProvideService(cfg *setting.Cfg) (*InternalMetricsService, error) {
 	s := &InternalMetricsService{
 		Cfg: cfg,
 	}
-	backgroundServices.AddBackgroundService(s)
 	return s, s.readSettings()
 }
 

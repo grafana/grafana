@@ -13,7 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
-	"github.com/grafana/grafana/pkg/infra/backgroundsvcs"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/middleware"
@@ -64,8 +63,7 @@ type CoreGrafanaScope struct {
 
 func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, routeRegister routing.RouteRegister,
 	logsService *cloudwatch.LogsService, pluginManager *manager.PluginManager, cacheService *localcache.CacheService,
-	dataSourceCache datasources.CacheService, sqlStore *sqlstore.SQLStore,
-	backgroundServices *backgroundsvcs.Container) (*GrafanaLive, error) {
+	dataSourceCache datasources.CacheService, sqlStore *sqlstore.SQLStore) (*GrafanaLive, error) {
 	g := &GrafanaLive{
 		Cfg:                   cfg,
 		PluginContextProvider: plugCtxProvider,
@@ -80,7 +78,6 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 			Features: make(map[string]models.ChannelHandlerFactory),
 		},
 	}
-	backgroundServices.AddBackgroundService(g)
 
 	sqlStore.AddMigrator(g)
 

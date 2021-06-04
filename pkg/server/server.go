@@ -2,7 +2,6 @@ package server
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"net"
@@ -11,8 +10,6 @@ import (
 	"strconv"
 	"sync"
 
-	"golang.org/x/sync/errgroup"
-
 	"github.com/grafana/grafana/pkg/api"
 	_ "github.com/grafana/grafana/pkg/extensions"
 	"github.com/grafana/grafana/pkg/infra/backgroundsvcs"
@@ -20,7 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/login/social"
-	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
@@ -37,7 +33,8 @@ type Options struct {
 }
 
 // New returns a new instance of Server.
-func New(opts Options, cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, httpServer *api.HTTPServer, provisioningService provisioning.ProvisioningService, backgroundServices *backgroundsvcs.Container) (*Server, error) {
+func New(opts Options, cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, httpServer *api.HTTPServer,
+	provisioningService provisioning.ProvisioningService, backgroundServices backgroundsvcs.Service) (*Server, error) {
 	s, err := newServer(opts, cfg, sqlStore, httpServer, provisioningService, backgroundServices)
 	if err != nil {
 		return nil, err
@@ -50,7 +47,8 @@ func New(opts Options, cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, httpServer
 	return s, nil
 }
 
-func newServer(opts Options, cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, httpServer *api.HTTPServer, provisioningService provisioning.ProvisioningService, backgroundServices *backgroundsvcs.Container) (*Server, error) {
+func newServer(opts Options, cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, httpServer *api.HTTPServer,
+	provisioningService provisioning.ProvisioningService, backgroundServices backgroundsvcs.Service) (*Server, error) {
 	rootCtx, shutdownFn := context.WithCancel(context.Background())
 
 	s := &Server{
@@ -87,7 +85,7 @@ type Server struct {
 	version            string
 	commit             string
 	buildBranch        string
-	backgroundServices *backgroundsvcs.Container
+	backgroundServices backgroundsvcs.Service
 
 	sqlStore            *sqlstore.SQLStore
 	HTTPServer          *api.HTTPServer
@@ -133,33 +131,7 @@ func (s *Server) Run() error {
 	}
 
 	// Start background services.
-	eg, ctx := errgroup.WithContext(s.context)
-	for _, svc := range s.backgroundServices.BackgroundServices {
-		canBeDisabled, ok := svc.(registry.CanBeDisabled)
-		if ok && canBeDisabled.IsDisabled() {
-			continue
-		}
-
-		// Variable is needed for accessing loop variable in callback
-		service := svc
-		eg.Go(func() error {
-			select {
-			case <-ctx.Done():
-				return ctx.Err()
-			default:
-			}
-			err := service.Run(ctx)
-			// Do not return context.Canceled error since errgroup.Group only
-			// returns the first error to the caller - thus we can miss a more
-			// interesting error.
-			if err != nil && !errors.Is(err, context.Canceled) {
-				s.log.Error("Stopped background service", "reason", err)
-				return fmt.Errorf("background service run error: %w", err)
-			}
-			s.log.Debug("Stopped background service", "reason", err)
-			return nil
-		})
-	}
+	eg := s.backgroundServices.Run(s.context)
 
 	s.notifySystemd("READY=1")
 

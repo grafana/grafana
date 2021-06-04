@@ -15,7 +15,6 @@ import (
 
 	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana/pkg/infra/backgroundsvcs"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
@@ -26,7 +25,7 @@ import (
 )
 
 func ProvideService(cfg *setting.Cfg, licensing models.Licensing,
-	pluginRequestValidator models.PluginRequestValidator, backgroundServices *backgroundsvcs.Container) *Manager {
+	pluginRequestValidator models.PluginRequestValidator) *Manager {
 	s := &Manager{
 		Cfg:                    cfg,
 		License:                licensing,
@@ -34,7 +33,6 @@ func ProvideService(cfg *setting.Cfg, licensing models.Licensing,
 		logger:                 log.New("plugins.backend"),
 		plugins:                map[string]backendplugin.Plugin{},
 	}
-	backgroundServices.AddBackgroundService(s)
 	return s
 }
 

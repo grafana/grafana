@@ -13,7 +13,6 @@ import (
 	"github.com/benbjohnson/clock"
 
 	"github.com/grafana/grafana/pkg/api/routing"
-	"github.com/grafana/grafana/pkg/infra/backgroundsvcs"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -41,7 +40,7 @@ const (
 
 func ProvideService(cfg *setting.Cfg, dataSourceCache datasources.CacheService, routeRegister routing.RouteRegister,
 	sqlStore *sqlstore.SQLStore, dataService *tsdb.Service, dataProxy *datasourceproxy.DataSourceProxyService,
-	quotaService *quota.QuotaService, backgroundServices *backgroundsvcs.Container, m *metrics.Metrics) (*AlertNG, error) {
+	quotaService *quota.QuotaService, m *metrics.Metrics) (*AlertNG, error) {
 	baseInterval := cfg.AlertingBaseInterval
 	if baseInterval <= 0 {
 		baseInterval = defaultBaseIntervalSeconds
@@ -86,9 +85,6 @@ func ProvideService(cfg *setting.Cfg, dataSourceCache datasources.CacheService, 
 		Alertmanager:    alertmanager,
 		stateManager:    state.NewManager(logger, m),
 		schedule:        schedule,
-	}
-	if backgroundServices != nil {
-		backgroundServices.AddBackgroundService(ng)
 	}
 	api := api.API{
 		Cfg:             ng.Cfg,

@@ -7,7 +7,6 @@ import (
 	"errors"
 	"time"
 
-	"github.com/grafana/grafana/pkg/infra/backgroundsvcs"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -28,7 +27,7 @@ const (
 	ServiceName = "RemoteCache"
 )
 
-func ProvideService(cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, backgroundServices *backgroundsvcs.Container) (*RemoteCache, error) {
+func ProvideService(cfg *setting.Cfg, sqlStore *sqlstore.SQLStore) (*RemoteCache, error) {
 	client, err := createClient(cfg.RemoteCacheOptions, sqlStore)
 	if err != nil {
 		return nil, err
@@ -39,7 +38,6 @@ func ProvideService(cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, backgroundSer
 		log:      log.New("cache.remote"),
 		client:   client,
 	}
-	backgroundServices.AddBackgroundService(s)
 	return s, nil
 }
 

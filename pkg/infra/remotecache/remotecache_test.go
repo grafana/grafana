@@ -4,7 +4,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/infra/backgroundsvcs"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
@@ -26,7 +25,7 @@ func createTestClient(t *testing.T, opts *setting.RemoteCacheOptions, sqlstore *
 	cfg := &setting.Cfg{
 		RemoteCacheOptions: opts,
 	}
-	dc, err := ProvideService(cfg, sqlstore, backgroundsvcs.ProvideService())
+	dc, err := ProvideService(cfg, sqlstore)
 	require.Nil(t, err, "Failed to init client for test")
 
 	return dc

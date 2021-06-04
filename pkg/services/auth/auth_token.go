@@ -8,7 +8,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/infra/backgroundsvcs"
 	"github.com/grafana/grafana/pkg/infra/serverlock"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -25,14 +24,13 @@ var getTime = time.Now
 const urgentRotateTime = 1 * time.Minute
 
 func ProvideUserAuthTokenService(sqlStore *sqlstore.SQLStore, serverLockService *serverlock.ServerLockService,
-	cfg *setting.Cfg, backgroundServices *backgroundsvcs.Container) *UserAuthTokenService {
+	cfg *setting.Cfg) *UserAuthTokenService {
 	s := &UserAuthTokenService{
 		SQLStore:          sqlStore,
 		ServerLockService: serverLockService,
 		Cfg:               cfg,
 		log:               log.New("auth"),
 	}
-	backgroundServices.AddBackgroundService(s)
 	return s
 }
 

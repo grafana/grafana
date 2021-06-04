@@ -8,7 +8,6 @@ import (
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/infra/backgroundsvcs"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/httpclient/httpclientprovider"
 	"github.com/grafana/grafana/pkg/infra/localcache"
@@ -115,7 +114,6 @@ var wireBasicSet = wire.NewSet(
 	notifications.ProvideService,
 	tracing.ProvideService,
 	metrics.ProvideService,
-	backgroundsvcs.ProvideService,
 	testdatasource.ProvideService,
 )
 

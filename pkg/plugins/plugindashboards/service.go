@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/infra/backgroundsvcs"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -12,15 +11,13 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb"
 )
 
-func ProvideService(dataService *tsdb.Service, pluginManager plugins.Manager, sqlStore *sqlstore.SQLStore,
-	backgroundServices *backgroundsvcs.Container) *Service {
+func ProvideService(dataService *tsdb.Service, pluginManager plugins.Manager, sqlStore *sqlstore.SQLStore) *Service {
 	s := &Service{
 		DataService:   dataService,
 		PluginManager: pluginManager,
 		SQLStore:      sqlStore,
 		logger:        log.New("plugindashboards"),
 	}
-	backgroundServices.AddBackgroundService(s)
 	bus.AddEventListener(s.handlePluginStateChanged)
 	return s
 }

@@ -7,10 +7,13 @@ import (
 	"github.com/grafana/grafana/pkg/extensions/accesscontrol/database"
 	"github.com/grafana/grafana/pkg/extensions/accesscontrol/manager"
 	"github.com/grafana/grafana/pkg/extensions/accesscontrol/provisioner"
+	"github.com/grafana/grafana/pkg/extensions/analytics"
+	"github.com/grafana/grafana/pkg/extensions/backgroundsvcs"
 	"github.com/grafana/grafana/pkg/extensions/licensing"
 	"github.com/grafana/grafana/pkg/extensions/provisioning/service"
 	"github.com/grafana/grafana/pkg/extensions/requestinterceptor"
 	"github.com/grafana/grafana/pkg/extensions/settings/settingsprovider"
+	ossbackgroundsvcs "github.com/grafana/grafana/pkg/infra/backgroundsvcs"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/provisioning"
@@ -32,6 +35,9 @@ var wireExtsBasicSet = wire.NewSet(
 	service.ProvideService,
 	wire.Bind(new(provisioning.ProvisioningService), new(*service.EnterpriseProvisioningServiceImpl)),
 	provisioner.ProvideService,
+	analytics.ProvideService,
+	backgroundsvcs.ProvideService,
+	wire.Bind(new(ossbackgroundsvcs.Service), new(*backgroundsvcs.Container)),
 )
 
 var wireExtsSet = wire.NewSet(
