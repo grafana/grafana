@@ -100,6 +100,9 @@ func (e *timeSeriesQuery) processQuery(q *Query, ms *es.MultiSearchRequestBuilde
 
 	// iterate backwards to create aggregations bottom-down
 	for _, bucketAgg := range q.BucketAggs {
+		bucketAgg.Settings = simplejson.NewFromAny(
+			bucketAgg.generateSettingsForDSL(),
+		)
 		switch bucketAgg.Type {
 		case dateHistType:
 			aggBuilder = addDateHistogramAgg(aggBuilder, bucketAgg, from, to)
@@ -182,26 +185,34 @@ func (e *timeSeriesQuery) processQuery(q *Query, ms *es.MultiSearchRequestBuilde
 	return nil
 }
 
-// Casts values to int when required by Elastic's query DSL
-func (metricAggregation MetricAgg) generateSettingsForDSL(version *semver.Version) map[string]interface{} {
-	setFloatPath := func(path ...string) {
-		if stringValue, err := metricAggregation.Settings.GetPath(path...).String(); err == nil {
-			if value, err := strconv.ParseFloat(stringValue, 64); err == nil {
-				metricAggregation.Settings.SetPath(path, value)
-			}
+func setFloatPath(settings *simplejson.Json, path ...string) {
+	if stringValue, err := settings.GetPath(path...).String(); err == nil {
+		if value, err := strconv.ParseFloat(stringValue, 64); err == nil {
+			settings.SetPath(path, value)
 		}
 	}
+}
 
+func setIntPath(settings *simplejson.Json, path ...string) {
+	if stringValue, err := settings.GetPath(path...).String(); err == nil {
+		if value, err := strconv.ParseInt(stringValue, 10, 64); err == nil {
+			settings.SetPath(path, value)
+		}
+	}
+}
+
+// Casts values to float when required by Elastic's query DSL
+func (metricAggregation MetricAgg) generateSettingsForDSL(version *semver.Version) map[string]interface{} {
 	switch metricAggregation.Type {
 	case "moving_avg":
-		setFloatPath("window")
-		setFloatPath("predict")
-		setFloatPath("settings", "alpha")
-		setFloatPath("settings", "beta")
-		setFloatPath("settings", "gamma")
-		setFloatPath("settings", "period")
+		setFloatPath(metricAggregation.Settings, "window")
+		setFloatPath(metricAggregation.Settings, "predict")
+		setFloatPath(metricAggregation.Settings, "settings", "alpha")
+		setFloatPath(metricAggregation.Settings, "settings", "beta")
+		setFloatPath(metricAggregation.Settings, "settings", "gamma")
+		setFloatPath(metricAggregation.Settings, "settings", "period")
 	case "serial_diff":
-		setFloatPath("lag")
+		setFloatPath(metricAggregation.Settings, "lag")
 	}
 
 	if isMetricAggregationWithInlineScriptSupport(metricAggregation.Type) {
@@ -223,6 +234,16 @@ func (metricAggregation MetricAgg) generateSettingsForDSL(version *semver.Versio
 	}
 
 	return metricAggregation.Settings.MustMap()
+}
+
+func (bucketAgg BucketAgg) generateSettingsForDSL() map[string]interface{} {
+	// TODO: This might also need to be applied to other bucket aggregations and other fields.
+	switch bucketAgg.Type {
+	case "date_histogram":
+		setIntPath(bucketAgg.Settings, "min_doc_count")
+	}
+
+	return bucketAgg.Settings.MustMap()
 }
 
 func addDateHistogramAgg(aggBuilder es.AggBuilder, bucketAgg *BucketAgg, timeFrom, timeTo string) es.AggBuilder {
