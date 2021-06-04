@@ -1,5 +1,5 @@
-import { merge, Observable, Subject, Unsubscribable } from 'rxjs';
-import { map, mergeAll, reduce, share, takeUntil } from 'rxjs/operators';
+import { merge, Observable, ReplaySubject, Subject, Unsubscribable } from 'rxjs';
+import { mergeAll, reduce, share, takeUntil } from 'rxjs/operators';
 import { AnnotationQuery } from '@grafana/data';
 
 import { dedupAnnotations } from 'app/features/annotations/events_processing';
@@ -13,13 +13,13 @@ import {
 import { AlertStatesWorker } from './AlertStatesWorker';
 import { SnapshotWorker } from './SnapshotWorker';
 import { AnnotationsWorker } from './AnnotationsWorker';
-import { getAnnotationsByPanelId } from './utils';
+import { emptyResult, getAnnotationsByPanelId } from './utils';
 import { DashboardModel } from '../../../dashboard/state';
 import { getTimeSrv, TimeSrv } from '../../../dashboard/services/TimeSrv';
 import { RefreshEvent } from '../../../../types/events';
 
 class DashboardQueryRunnerImpl implements DashboardQueryRunner {
-  private readonly results: Subject<DashboardQueryRunnerWorkerResult>;
+  private readonly results: ReplaySubject<DashboardQueryRunnerWorkerResult>;
   private readonly runs: Subject<DashboardQueryRunnerOptions>;
   private readonly cancellationStream: Subject<AnnotationQuery>;
   private readonly runsSubscription: Unsubscribable;
@@ -39,7 +39,7 @@ class DashboardQueryRunnerImpl implements DashboardQueryRunner {
     this.cancel = this.cancel.bind(this);
     this.destroy = this.destroy.bind(this);
     this.executeRun = this.executeRun.bind(this);
-    this.results = new Subject<DashboardQueryRunnerWorkerResult>();
+    this.results = new ReplaySubject<DashboardQueryRunnerWorkerResult>();
     this.runs = new Subject<DashboardQueryRunnerOptions>();
     this.cancellationStream = new Subject<any>();
     this.runsSubscription = this.runs.subscribe((options) => this.executeRun(options));
@@ -53,21 +53,26 @@ class DashboardQueryRunnerImpl implements DashboardQueryRunner {
   }
 
   getResult(panelId?: number): Observable<DashboardQueryRunnerResult> {
-    return this.results.asObservable().pipe(
-      map((result) => {
-        const annotations = getAnnotationsByPanelId(result.annotations, panelId);
-
-        const alertState = result.alertStates.find((res) => Boolean(panelId) && res.panelId === panelId);
-
-        return { annotations: dedupAnnotations(annotations), alertState };
-      }),
-      share() // sharing this so we can merge this with it self in mergePanelAndDashData
-    );
+    return new Observable<DashboardQueryRunnerResult>((subscriber) => {
+      const subscription = this.results.subscribe({
+        next: (result) => {
+          const annotations = getAnnotationsByPanelId(result.annotations, panelId);
+          const alertState = result.alertStates.find((res) => Boolean(panelId) && res.panelId === panelId);
+          subscriber.next({ annotations: dedupAnnotations(annotations), alertState });
+        },
+        error: subscriber.error,
+        complete: subscriber.complete,
+      });
+      return () => {
+        subscription.unsubscribe();
+      };
+    });
   }
 
   private executeRun(options: DashboardQueryRunnerOptions) {
     const workers = this.workers.filter((w) => w.canWork(options));
-    const observables = workers.map((w) => w.work(options));
+    const workerObservables = workers.map((w) => w.work(options));
+    const observables = [emptyResult()].concat(workerObservables);
 
     merge(observables)
       .pipe(
