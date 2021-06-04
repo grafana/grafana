@@ -36,9 +36,16 @@ Library panels allow users to build panels that can be used in multiple dashboar
 
 Data sources can now send real-time updates to dashboards over a websocket connection. This can be used with the [MQTT data source](https://github.com/grafana/mqtt-datasource).
 
-In addition to data source integration, events can be sent to dashboards by posting metrics to the new live endpoint: `/api/live/push endpoint`.
+In addition to data source integration, events can be sent to dashboards by posting metrics to the new live endpoint: `/api/live/push` endpoint.
 
 These metrics will be broadcast to all dashboards connected to that stream endpoint.
+
+For more information about real-time streaming, refer to [Grafana Live documentation]({{< relref "../live/_index.md" >}}).
+
+### Prometheus metrics browser
+
+The Prometheus metrics browser allows you to quickly find metrics and select relevant labels to build basic queries. If supported by your Prometheus instance, each metric will show its HELP and TYPE as a tooltip. For more information, refer to [Metrics browser documentation]({{< relref "../datasources/prometheus.md#metrics-browser" >}}).
+
 
 ### Bar chart visualization (beta)
 
@@ -51,16 +58,16 @@ The State timeline visualization shows discrete state changes over time. Each fi
 This panel also takes advantage of the new value mapping features that allow you to color string and boolean values.
 
 Example with string values:
-{{< figure src="/static/img/docs/v8/state_timeline_strings.png" max-width="1025px" caption="state timeline with string states" >}}
+{{< figure src="/static/img/docs/v8/state_timeline_strings.png" max-width="800px" caption="state timeline with string states" >}}
 
 With time series data and thresholds:
-{{< figure src="/static/img/docs/v8/state_timeline_time_series.png" max-width="1025px" caption="state timeline with time series" >}}
+{{< figure src="/static/img/docs/v8/state_timeline_time_series.png" max-width="800px" caption="state timeline with time series" >}}
 
 For more information, refer to [State timeline visualization]({{< relref "../panels/visualizations/state-timeline.md" >}}).
 
-### Status grid visualization (beta)
+### Status history visualization (beta)
 
-A sister panel to the state timeline is the new Status grid panel visualization. It can display periodic state in a grid. Works with both numerical, string or boolean state.
+A sister panel to the state timeline is the new Status history panel visualization. It can display periodic state in a grid. Works with both numerical, string or boolean state.
 
 ![Status grid visualization](/static/img/docs/status-grid/status-grid-8-0.png)
 
@@ -92,7 +99,7 @@ Lots of panel editor improvements, heavily informed by user research and communi
 
 - All options are now shown in a single pane.
 - You can now search panel options.
-- Value mapping has been completely redesigned.
+- The Value mappings feature has been completely redesigned. For more information, refer to [Value mappings]({{< relref "../panels/value-mappings.md" >}}).
 - New **Table view** option is always available.
 
 The [Panels]({{< relref "../panels/_index.md" >}}) section has been updated to reflect these changes.
@@ -182,6 +189,15 @@ You can now set a custom line limit for logs queries instead of accepting the pr
 
 Response values were always interpreted as strings in Elasticsearch responses, which caused issues with some visualization types that applied logic based on numeric values. We now apply some heuristics to detect value types from the first non-empty value in each response.
 
+#### Google Cloud Monitoring data source
+
+In a prior release, Cloud Monitoring added _preprocessing_ support in their query editor. This capability has been added to the Cloud Monitoring data source in Grafana.
+
+Whenever a metric is selected in the query editor, a suitable preprocessing option is automatically selected for you. To avoid breaking changes, preprocessing is not enabled by default on existing queries. If you want to use preprocessing for existing queries, you have to manually select one in the query editor.
+
+[Google Cloud Monitoring data source]({{< relref "../datasources/google-cloud-monitoring/_index.md#pre-processing" >}}) was updated as a result of this change.
+
+
 #### Graphite data source
 
 [Graphite data source]({{< relref "../datasources/graphite.md" >}}) was updated as a result of these changes.
@@ -245,11 +261,11 @@ You can now add or remove detailed permissions from Viewer, Editor, and Admin or
 
 ### Data source query caching
 
-Grafana will now cache the results of backend data source queries, so that multiple users viewing the same dashboard or panel will not each submit the same query to the data source (like Splunk or Snowflake) itself.
+Grafana caches the results of backend data source queries so that multiple users viewing the same dashboard or panel do not make multiple submissions of the same query to the data source (like Splunk or Snowflake) itself.
 
 This results in faster average load times for dashboards and fewer duplicate queries overall to data sources, which reduces cost and the risk of throttling, reaching API limits, or overloading your data sources.
 
-Caching can be enabled per-data source, and time-to-live (TTL) can be configured globally and per data source. Query caching can be set up with Redis, Memcached, or a simple in-memory cache.
+You can enable caching per data source, and time-to-live (TTL) can be configured globally and per data source. Query caching can be set up with Redis, Memcached, or a simple in-memory cache.
 
 For more information, refer to the [Data source query caching docs]({{< relref "../enterprise/query-caching.md" >}}).
 
@@ -259,11 +275,11 @@ When creating a report, you can now choose to export Table panels as .csv files 
 
 You can also link back to the dashboard directly from the email, for users who want to see the data live in Grafana. This release also includes some improvements to the Reports list view.
 
-[Reporting docs]({{< relref "../enterprise/reporting.md" >}}) was updated as a result of this feature.
+For more information, refer to [Reporting docs]({{< relref "../enterprise/reporting.md" >}}).
 
 ### License restrictions clarification in the docs
 
-The docs have been updated to describe more specifically how licensed roles are counted, how they can be updated, and where you can see details about dashboard and folder permissions that affect users' licensed roles.
+The Grafana Enterprise documentation has been updated to describe more specifically how licensed roles are counted, how they can be updated, and where you can see details about dashboard and folder permissions that affect users' licensed roles.
 
 For more information, refer to [License restrictions docs]({{< relref "../enterprise/license/license-restrictions.md" >}}).
 
