@@ -449,6 +449,7 @@ def test_backend_step(edition, tries=None):
         ],
         'commands': [
             # Generate Go code, will install Wire
+            # TODO: Install Wire in Docker image instead
             'make gen-go',
             # First make sure that there are no tests with FocusConvey
             '[ $(grep FocusConvey -R pkg | wc -l) -eq "0" ] || exit 1',
