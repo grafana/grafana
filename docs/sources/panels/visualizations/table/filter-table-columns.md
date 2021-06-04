@@ -6,8 +6,6 @@ weight = 600
 
 # Filter table columns
 
-> **Note:** This feature is available in Grafana 7.2+.
-
 If you turn on the **Column filter** in [Table options]({{< relref "table-field-options.md" >}}), then you can filter table options.
 
 ## Turn on column filtering
