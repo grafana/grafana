@@ -16,7 +16,7 @@ export default {
       page: mdx,
     },
     knobs: {
-      disabled: true,
+      disable: true,
     },
     controls: {
       exclude: ['onChange', 'options'],
@@ -24,15 +24,21 @@ export default {
   },
   argTypes: {
     variant: {
+      options: ['primary', 'secondary', 'destructive', 'link'],
       control: {
         type: 'select',
-        options: ['primary', 'secondary', 'destructive', 'link'],
       },
     },
     icon: {
       control: {
         type: 'select',
         options: getAvailableIcons(),
+      },
+    },
+    size: {
+      options: ['sm', 'md', 'lg'],
+      control: {
+        type: 'select',
       },
     },
   },

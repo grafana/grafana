@@ -49,7 +49,13 @@ The Prometheus metrics browser allows you to quickly find metrics and select rel
 
 ### Bar chart visualization (beta)
 
-The Bar chart panel is a new visualization that allows categorical data display.
+The Bar chart panel is a new visualization that supports categorical data. It only supports one data frame and it needs to have at least one string field that will be used as the category for an X or Y axis and one or more numerical fields.
+
+{{< figure src="/static/img/docs/bar-chart-panel/bar-chart-example-v8-0.png" max-width="1025px" caption="Bar chart example" >}}
+
+To use it with time series you first have to add a **Reduce** transform.
+
+For more information, refer to [Bar chart visualization]({{< relref "../panels/visualizations/bar-chart.md" >}}).
 
 ### State timeline visualization (beta)
 
@@ -65,9 +71,9 @@ With time series data and thresholds:
 
 For more information, refer to [State timeline visualization]({{< relref "../panels/visualizations/state-timeline.md" >}}).
 
-### Status grid visualization (beta)
+### Status history visualization (beta)
 
-A sister panel to the state timeline is the new Status grid panel visualization. It can display periodic state in a grid. Works with both numerical, string or boolean state.
+A sister panel to the state timeline is the new Status history panel visualization. It can display periodic state in a grid. Works with both numerical, string or boolean state.
 
 ![Status grid visualization](/static/img/docs/status-grid/status-grid-8-0.png)
 
@@ -75,7 +81,7 @@ A sister panel to the state timeline is the new Status grid panel visualization.
 
 This hidden feature of the old Graph panel is now a standalone visualization. It combines a histogram transformation and bar chart visualization into a single, integrated, easy-to-use panel. There is also a new standalone histogram transformation that can be paired with any visualization.
 
-![Histogram visualization](/static/img/docs/histogram/histogram-8-0.png)
+{{< figure src="/static/img/docs/histogram/histogram-8-0.png" max-width="1025px" caption="Histogram example" >}}
 
 ### Time series visualization updates
 
@@ -188,6 +194,15 @@ You can now set a custom line limit for logs queries instead of accepting the pr
 ##### Guess field type from first non-empty value
 
 Response values were always interpreted as strings in Elasticsearch responses, which caused issues with some visualization types that applied logic based on numeric values. We now apply some heuristics to detect value types from the first non-empty value in each response.
+
+#### Google Cloud Monitoring data source
+
+In a prior release, Cloud Monitoring added _preprocessing_ support in their query editor. This capability has been added to the Cloud Monitoring data source in Grafana.
+
+Whenever a metric is selected in the query editor, a suitable preprocessing option is automatically selected for you. To avoid breaking changes, preprocessing is not enabled by default on existing queries. If you want to use preprocessing for existing queries, you have to manually select one in the query editor.
+
+[Google Cloud Monitoring data source]({{< relref "../datasources/google-cloud-monitoring/_index.md#pre-processing" >}}) was updated as a result of this change.
+
 
 #### Graphite data source
 
