@@ -83,6 +83,8 @@ This hidden feature of the old Graph panel is now a standalone visualization. It
 
 {{< figure src="/static/img/docs/histogram/histogram-8-0.png" max-width="1025px" caption="Histogram example" >}}
 
+For more information, refer to [Histogram]({{< relref "../panels/visualizations/histogram.md" >}})
+
 ### Time series visualization updates
 
 The Time series is out of beta! We are removing the `Beta` tag and graduating the Time series visualization to a stable state.
@@ -96,9 +98,17 @@ The Time series is out of beta! We are removing the `Beta` tag and graduating th
 
 [Time series panel]({{< relref "../panels/visualizations/time-series/_index.md" >}}) topics have been updated as a result of these changes.
 
+### Node graph visualization updates
+
+You can now expand the node graph for the displayed trace when using the Trace to logs feature.. Depending on the data source, this can show spans of the trace as nodes in the graph, or as some additional context like service map based on the current trace.
+
+We also added a grid view and the ability to explore hidden nodes.
+
+[Tracing in Explore]({{< relref "../explore/trace-integration.md" >}}) and [Node graph]({{< relref "../panels/visualizations/node-graph.md" >}}) were updated as a result of these changes.
+
 ### Pie chart visualization updates
 
-The Pie chart is out of beta! We are removing the `Beta` tag and graduating the Pie chart visualization to a stable state.
+The Pie chart is out of beta! We are removing the `beta` tag and graduating the Pie chart visualization to a stable state.
 
 ### Panel editor updates
 
