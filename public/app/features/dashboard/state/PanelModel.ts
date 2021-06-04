@@ -27,6 +27,7 @@ import {
   PanelTransformationsChangedEvent,
   RefreshEvent,
   RenderEvent,
+  PanelGridUpdatedEvent,
 } from 'app/types/events';
 import { getTimeSrv } from '../services/TimeSrv';
 import { getVariablesUrlParams } from '../../variables/getAllVariableValuesForUrl';
@@ -313,6 +314,10 @@ export class PanelModel implements DataConfigSource {
   refresh() {
     this.hasRefreshed = true;
     this.events.publish(new RefreshEvent());
+  }
+
+  updateGridLayout() {
+    this.events.publish(new PanelGridUpdatedEvent({ gridPos: this.gridPos, panelId: this.id }));
   }
 
   render() {

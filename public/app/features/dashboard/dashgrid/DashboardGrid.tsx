@@ -15,7 +15,7 @@ import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT } from 'app/core
 import { DashboardPanel } from './DashboardPanel';
 import { DashboardModel, PanelModel } from '../state';
 import { Subscription } from 'rxjs';
-import { DashboardPanelsChangedEvent } from 'app/types/events';
+import { PanelGridUpdatedEvent, DashboardPanelsChangedEvent } from 'app/types/events';
 
 let lastGridWidth = 1200;
 let ignoreNextWidthChange = false;
@@ -98,10 +98,24 @@ export interface Props {
   isPanelEditorOpen?: boolean;
 }
 
-export class DashboardGrid extends PureComponent<Props> {
+export interface State {
+  layout: ReactGridLayout.Layout[];
+  shouldForceUpdate: boolean;
+}
+
+export class DashboardGrid extends PureComponent<Props, State> {
   private panelMap: { [id: string]: PanelModel } = {};
   private panelRef: { [id: string]: HTMLElement } = {};
   private eventSubs = new Subscription();
+
+  constructor(props: Props) {
+    super(props);
+
+    this.state = {
+      layout: this.buildLayout(),
+      shouldForceUpdate: true,
+    };
+  }
 
   componentDidMount() {
     const { dashboard } = this.props;
@@ -140,11 +154,22 @@ export class DashboardGrid extends PureComponent<Props> {
         panelPos.isDraggable = panel.collapsed;
       }
 
+      this.eventSubs.add(panel.events.subscribe(PanelGridUpdatedEvent, this.onPanelGridPosUpdated));
       layout.push(panelPos);
     }
 
     return layout;
   }
+
+  onPanelGridPosUpdated = (event: PanelGridUpdatedEvent) => {
+    const layoutIndexItem = this.state.layout.findIndex(
+      (item) => Number.parseInt(item.i, 10) === event.payload.panelId
+    );
+    const newLayout = [...this.state.layout];
+    newLayout[layoutIndexItem] = { ...newLayout[layoutIndexItem], ...event.payload.gridPos };
+    this.setState({ layout: newLayout, shouldForceUpdate: false });
+    this.updateGridPos(newLayout[layoutIndexItem], newLayout);
+  };
 
   onLayoutChange = (newLayout: ReactGridLayout.Layout[]) => {
     for (const newPos of newLayout) {
@@ -153,8 +178,11 @@ export class DashboardGrid extends PureComponent<Props> {
 
     this.props.dashboard.sortPanelsByGridPos();
 
-    // Call render() after any changes.  This is called when the layout loads
-    this.forceUpdate();
+    // Call render() after any changes.  This is called when the initial layout loads
+    // After layout is updated via setState
+    if (this.state.shouldForceUpdate) {
+      this.forceUpdate();
+    }
   };
 
   triggerForceUpdate = () => {
@@ -263,7 +291,7 @@ export class DashboardGrid extends PureComponent<Props> {
     return (
       <SizedReactLayoutGrid
         className={classNames({ layout: true })}
-        layout={this.buildLayout()}
+        layout={this.state.layout}
         isResizable={dashboard.meta.canEdit}
         isDraggable={dashboard.meta.canEdit}
         onLayoutChange={this.onLayoutChange}

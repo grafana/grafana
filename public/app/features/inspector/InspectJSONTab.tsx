@@ -105,8 +105,12 @@ export class InspectJSONTab extends PureComponent<Props, State> {
           appEvents.emit(AppEvents.alertError, ['Unable to apply']);
         } else {
           const updates = JSON.parse(this.state.text);
+          const shouldGridPosUpdate = JSON.stringify(updates?.gridPos) !== JSON.stringify(panel?.gridPos);
           panel!.restoreModel(updates);
           panel!.refresh();
+          if (shouldGridPosUpdate) {
+            panel!.updateGridLayout();
+          }
           appEvents.emit(AppEvents.alertSuccess, ['Panel model updated']);
         }
       } catch (err) {
