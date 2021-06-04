@@ -167,7 +167,7 @@ The following data source updates are included with this Grafana release.
 
 Azure Resource Graph is now supported in Azure Monitor data source. This is a service in Azure that is designed to extend Azure Resource Management by providing efficient and performance resource exploration. Also, in addition to querying Log Analytics Workspaces, you can now query the logs for any individual [supported resource](https://docs.microsoft.com/en-us/azure/azure-monitor/essentials/metrics-supported), or for all resources in a subscription or resource group. 
 
-> **Note:** In Grafana 7.5 we started the deprecation for separate Application Insights queries, in favor of querying Application Insights resources through Metrics and Logs. In Grafana 8.0 new Application Insights and Insights Analytics queries cannot be made, and existing queries have been made read only.
+> **Note:** In Grafana 7.5 we started the deprecation for separate Application Insights queries, in favor of querying Application Insights resources through Metrics and Logs. In Grafana 8.0 new Application Insights and Insights Analytics queries cannot be made, and existing queries have been made read-only.
 
 For a comprehensive lits of all enhancements, refer to the [Azure Monitor data source documentation]({{< relref "../datasources/azuremonitor.md" >}}).
 
