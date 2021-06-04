@@ -60,6 +60,7 @@ type renderCSVFunc func(ctx context.Context, renderKey string, options CSVOpts) 
 
 type Service interface {
 	IsAvailable() bool
+	Version() string
 	Render(ctx context.Context, opts Opts) (*RenderResult, error)
 	RenderCSV(ctx context.Context, opts CSVOpts) (*RenderCSVResult, error)
 	RenderErrorImage(error error) (*RenderResult, error)

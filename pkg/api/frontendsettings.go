@@ -241,6 +241,7 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 		},
 		"featureToggles":                   hs.Cfg.FeatureToggles,
 		"rendererAvailable":                hs.RenderService.IsAvailable(),
+		"rendererVersion":                  hs.RenderService.Version(),
 		"http2Enabled":                     hs.Cfg.Protocol == setting.HTTP2Scheme,
 		"sentry":                           hs.Cfg.Sentry,
 		"pluginCatalogURL":                 hs.Cfg.PluginCatalogURL,
