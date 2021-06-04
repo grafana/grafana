@@ -7,7 +7,7 @@ weight = 605
 
 # Histogram
 
-This panel calculates the distribution of values and presents them as a bar chart. The Y axis and the height of each bar represents the count of values that fall into each bracket while the X axis represents the value range.
+The histogram visualization calculates the distribution of values and presents them as a bar chart. The Y-axis and the height of each bar represent the count of values that fall into each bracket while the X-axis represents the value range.
 
 {{< figure src="/static/img/docs/histogram-panel/histogram-example-v8-0.png" max-width="625px" caption="Bar chart example" >}}
 
@@ -64,4 +64,3 @@ Gradient color is generated based on the hue of the line color.
 ### Legend calculations
 
 Choose which of the [standard calculations]({{< relref "../calculations-list.md">}}) to show in the legend. You can have more than one.
-
