@@ -155,6 +155,7 @@ Choose how null values (gaps in the data) are displayed on the graph. Null value
 #### Never
 
 Time series data points with gaps in the the data are never connected.
+
 #### Always
 
 Time series data points with gaps in the the data are always connected.
