@@ -85,7 +85,7 @@ export default {
       disable: true,
     },
     controls: {
-      exclude: ['className', 'series', 'timeRange', 'ariaLabel'],
+      exclude: ['className', 'ariaLabel'],
     },
   },
   args: {
@@ -107,7 +107,7 @@ export default {
     tooltipMode: { control: { type: 'radio', options: ['multi', 'single'] } },
     timeZone: { control: { type: 'radio', options: ['browser', 'utc'] } },
     width: { control: { type: 'range', min: 200, max: 800 } },
-    height: { control: { type: 'range', min: 200, max: 800 } },
+    height: { control: { type: 'range', min: 200, max: 1700, step: 300 } },
     lineWidth: { control: { type: 'range', min: 1, max: 10 } },
   },
 };
