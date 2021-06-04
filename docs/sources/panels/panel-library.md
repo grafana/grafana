@@ -3,9 +3,9 @@ title = "Library panels"
 weight = 400
 +++
 
-# Library panel
+# Library panels
 
-Library panels allow users to create reusable panels that aren’t tied to any one dashboard. As a result, any changes made to one instance of the library panel affecting all other instances.
+Library panels allow users to create reusable panels you use in multiple dashboards. When a change is made to the library panel, it is propogated to other dashboards. If needed, you can remove a panel from the library, and make it an individual panel.
 
 ## Create a library panel
 
@@ -13,7 +13,7 @@ Before you can use library panels, you have to create them.
 
 To create a library panel:
 
-1. Create a panel as you normally would, following instructions in [Add a panel]({{< relref "./add-a-panel.md" >}}).
+1. Create a Grafana panel as you normally would, following instructions in [Add a panel]({{< relref "./add-a-panel.md" >}}).
 1. Click the title of the panel and then click **Edit**. The panel opens in edit mode.
 1. In the panel display options (side pane), click the down arrow option to bring changes to the visualization.
    {{< figure src="/static/img/docs/library-panels/create-lib-panel-from-edit-8-0.png" class="docs-image--no-shadow" max-width= "900px" caption="Screenshot of the edit panel" >}}
