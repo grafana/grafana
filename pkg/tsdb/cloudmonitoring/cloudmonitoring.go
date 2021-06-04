@@ -29,7 +29,7 @@ import (
 )
 
 var (
-	slog log.Logger
+	slog = log.New("tsdb.cloudMonitoring")
 )
 
 var (
@@ -100,10 +100,6 @@ func (s *Service) NewExecutor(dsInfo *models.DataSource) (plugins.DataPlugin, er
 		pluginManager: s.PluginManager,
 		cfg:           s.Cfg,
 	}, nil
-}
-
-func init() {
-	slog = log.New("tsdb.cloudMonitoring")
 }
 
 // Query takes in the frontend queries, parses them into the CloudMonitoring query format
