@@ -522,6 +522,9 @@ func (st DBstore) UpdateRuleGroup(cmd UpdateRuleGroupCmd) error {
 		}
 
 		if err := st.UpsertAlertRules(upsertRules); err != nil {
+			if st.SQLStore.Dialect.IsUniqueConstraintViolation(err) {
+				return ngmodels.ErrAlertRuleUniqueConstraintViolation
+			}
 			return err
 		}
 
