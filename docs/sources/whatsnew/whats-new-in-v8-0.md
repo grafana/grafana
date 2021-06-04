@@ -90,6 +90,7 @@ The Time series is out of beta! We are removing the `Beta` tag and graduating th
 - **Time series** is now the default visualization option, replacing the **Graph (old)**.
 - The Time series panel now supports stacking. For more information, refer to [Graph stacked time series]({{< relref "../panels/visualizations/time-series/graph-time-series-stacking.md" >}}).
 - You can now add alerts in the Time series panel, just like the old Graph panel.
+- Updated [connect null values]({{< relref "../panels/visualizations/time-series/graph-time-series-as-lines.md#connect-null-values" >}}) options.
 - We added support for a shared crosshair and a tooltip that’s now smarter when it comes to data display in the tooltip.
 - Various performance improvements.
 
