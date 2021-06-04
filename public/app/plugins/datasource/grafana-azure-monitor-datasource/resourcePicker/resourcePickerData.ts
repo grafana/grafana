@@ -17,7 +17,7 @@ import {
   RawAzureResourceItem,
 } from '../types';
 
-const RESOURCE_GRAPH_URL = '/providers/Microsoft.ResourceGraph/resources?api-version=2020-04-01-preview';
+const RESOURCE_GRAPH_URL = '/providers/Microsoft.ResourceGraph/resources?api-version=2021-03-01';
 
 export default class ResourcePickerData {
   private proxyUrl: string;
