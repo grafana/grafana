@@ -7,7 +7,7 @@ weight = 900
 
 # Status history
 
-This panel shows periodic state over time. Each field or series is rendered as a horizontal row. Boxes are rendered and centered around each value. 
+The Status history visualization shows periodic states over time. Each field or series is rendered as a horizontal row. Boxes are rendered and centered around each value. 
 
 {{< figure src="/static/img/docs/status-history-panel/status-history-example-v8-0.png" max-width="1025px" caption="Status history example" >}}
 
