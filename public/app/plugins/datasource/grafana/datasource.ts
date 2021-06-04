@@ -6,6 +6,7 @@ import {
   DataSourceApi,
   DataSourceInstanceSettings,
   isValidLiveChannelAddress,
+  LiveChannelScope,
   parseLiveChannelAddress,
   StreamingFrameOptions,
 } from '@grafana/data';
@@ -53,15 +54,16 @@ export class GrafanaDatasource extends DataSourceApi<GrafanaQuery> {
         }
 
         // Add the filter to the channel path
-        if (filter?.fields?.length) {
+        if (addr.scope === LiveChannelScope.Stream && filter?.fields?.length) {
           addr.path += '/' + filter.fields.join(',');
+          filter = undefined; // filter is handled on the server side
         }
 
         queries.push(
           getGrafanaLiveSrv().getDataStream({
             key: `${request.requestId}.${counter++}`,
             addr: addr!,
-            // filter, <-- handled by the backend now :)
+            filter,
             buffer,
           })
         );
