@@ -49,7 +49,13 @@ The Prometheus metrics browser allows you to quickly find metrics and select rel
 
 ### Bar chart visualization (beta)
 
-The Bar chart panel is a new visualization that allows categorical data display.
+The Bar chart panel is a new visualization that supports categorical data. It only supports one data frame and it needs to have at least one string field that will be used as the category for an X or Y axis and one or more numerical fields.
+
+{{< figure src="/static/img/docs/bar-chart-panel/bar-chart-example-v8-0.png" max-width="1025px" caption="Bar chart example" >}}
+
+To use it with time series you first have to add a **Reduce** transform.
+
+For more information, refer to [Bar chart visualization]({{< relref "../panels/visualizations/bar-chart.md" >}}).
 
 ### State timeline visualization (beta)
 
@@ -75,7 +81,7 @@ A sister panel to the state timeline is the new Status history panel visualizati
 
 This hidden feature of the old Graph panel is now a standalone visualization. It combines a histogram transformation and bar chart visualization into a single, integrated, easy-to-use panel. There is also a new standalone histogram transformation that can be paired with any visualization.
 
-![Histogram visualization](/static/img/docs/histogram/histogram-8-0.png)
+{{< figure src="/static/img/docs/histogram/histogram-8-0.png" max-width="1025px" caption="Histogram example" >}}
 
 ### Time series visualization updates
 

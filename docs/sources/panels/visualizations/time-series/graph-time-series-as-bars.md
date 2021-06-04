@@ -13,8 +13,8 @@ This section explains how to use Time series field options to visualize time ser
 ## Create the panel
 
 1. [Add a panel]({{< relref "../../add-a-panel.md" >}}). Select the [Time series]({{< relref "_index.md" >}}) visualization.
-1. In the [Panel editor]({{< relref "../../panel-editor.md" >}}), click the **Field** tab.
-1. In Style, click **Bars**.
+2. In the [Panel editor]({{< relref "../../panel-editor.md" >}}) side pane, click **Graph styles** to expand it.
+3. In Style, click **Bars**.
 
 ## Style the bars
 
