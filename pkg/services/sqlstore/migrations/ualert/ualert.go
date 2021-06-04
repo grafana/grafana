@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"time"
 
 	pb "github.com/prometheus/alertmanager/silence/silencepb"
 	"xorm.io/xorm"
@@ -288,7 +287,7 @@ type AlertConfiguration struct {
 
 	AlertmanagerConfiguration string
 	ConfigurationVersion      string
-	CreatedAt                 time.Time `xorm:"created"`
+	CreatedAt                 int64 `xorm:"created"`
 }
 
 type rmMigration struct {

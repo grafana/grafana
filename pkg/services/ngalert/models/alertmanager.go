@@ -1,7 +1,5 @@
 package models
 
-import "time"
-
 const AlertConfigurationVersion = 1
 
 // AlertConfiguration represents a single version of the Alerting Engine Configuration.
@@ -10,7 +8,7 @@ type AlertConfiguration struct {
 
 	AlertmanagerConfiguration string
 	ConfigurationVersion      string
-	CreatedAt                 time.Time `xorm:"created"`
+	CreatedAt                 int64 `xorm:"created"`
 	Default                   bool
 }
 
