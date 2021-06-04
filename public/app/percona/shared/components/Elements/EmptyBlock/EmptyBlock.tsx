@@ -1,6 +1,5 @@
 import { useStyles } from '@grafana/ui';
-import React from 'react';
-import { FC } from 'react';
+import React, { FC } from 'react';
 import { getStyles } from './EmptyBlock.styles';
 import { EmptyBlockProps } from './EmptyBlock.types';
 

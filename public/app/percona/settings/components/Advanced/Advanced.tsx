@@ -5,8 +5,7 @@ import { cx } from 'emotion';
 import { Button, Spinner, useTheme, Icon } from '@grafana/ui';
 import { TextInputField, NumberInputField } from '@percona/platform-core';
 import { getSettingsStyles } from 'app/percona/settings/Settings.styles';
-import { Messages } from 'app/percona/settings/Settings.messages';
-import { DATA_RETENTION_URL } from 'app/percona/settings/Settings.messages';
+import { Messages, DATA_RETENTION_URL } from 'app/percona/settings/Settings.messages';
 import { LinkTooltip } from 'app/percona/shared/components/Elements/LinkTooltip/LinkTooltip';
 import validators from 'app/percona/shared/helpers/validators';
 import { getStyles } from './Advanced.styles';
@@ -260,7 +259,7 @@ export const Advanced: FC<AdvancedProps> = ({
                 <Icon name="info-circle" size={'xl'} className={styles.technicalPreviewIcon} />
                 <p>
                   {technicalPreviewDescription}{' '}
-                  <a href={TECHNICAL_PREVIEW_DOC_URL} target="_blank">
+                  <a href={TECHNICAL_PREVIEW_DOC_URL} target="_blank" rel="noreferrer">
                     {technicalPreviewLinkText}
                   </a>
                 </p>

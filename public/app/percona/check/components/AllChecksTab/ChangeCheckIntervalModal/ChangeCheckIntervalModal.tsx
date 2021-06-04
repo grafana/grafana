@@ -1,9 +1,8 @@
 import React, { FC } from 'react';
 import { withTypes } from 'react-final-form';
-import { logger, RadioButtonGroupField } from '@percona/platform-core';
+import { logger, RadioButtonGroupField, LoaderButton, Modal } from '@percona/platform-core';
 import { Messages } from './ChangeCheckIntervalModal.messages';
 import { Button, HorizontalGroup, useStyles } from '@grafana/ui';
-import { LoaderButton, Modal } from '@percona/platform-core';
 import { AppEvents } from '@grafana/data';
 import { appEvents } from 'app/core/app_events';
 import { CheckService } from 'app/percona/check/Check.service';

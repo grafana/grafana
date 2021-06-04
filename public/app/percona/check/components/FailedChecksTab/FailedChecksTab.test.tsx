@@ -1,8 +1,7 @@
 import React from 'react';
-import { dataQa, logger } from '@percona/platform-core';
+import { LoaderButton, dataQa, logger } from '@percona/platform-core';
 import { CheckService } from 'app/percona/check/Check.service';
 import { getMount } from 'app/percona/shared/helpers/testUtils';
-import { LoaderButton } from '@percona/platform-core';
 import { Table } from 'app/percona/check/components';
 import { FailedChecksTab } from './FailedChecksTab';
 

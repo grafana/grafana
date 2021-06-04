@@ -95,8 +95,10 @@ export const Table: FC<TableProps> = ({
               <table {...getTableProps()} data-qa="table">
                 <thead data-qa="table-thead">
                   {headerGroups.map((headerGroup) => (
+                    /* eslint-disable-next-line react/jsx-key */
                     <tr {...headerGroup.getHeaderGroupProps()}>
                       {headerGroup.headers.map((column) => (
+                        /* eslint-disable-next-line react/jsx-key */
                         <th
                           className={css`
                             width: ${column.width};

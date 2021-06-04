@@ -10,7 +10,7 @@ const ReadMoreLink = () => {
   return (
     <span>
       {Messages.tooltipDescription}{' '}
-      <a href="https://per.co.na/pmm-feature-status" target="_blank" className={styles.link}>
+      <a href="https://per.co.na/pmm-feature-status" target="_blank" rel="noreferrer" className={styles.link}>
         {Messages.linkText}
       </a>
     </span>

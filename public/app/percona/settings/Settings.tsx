@@ -6,10 +6,9 @@ import { LoadingCallback, SettingsService } from './Settings.service';
 import { Settings, TabKeys, SettingsAPIChangePayload } from './Settings.types';
 import { Messages } from './Settings.messages';
 import { getSettingsStyles } from './Settings.styles';
-import { GET_SETTINGS_CANCEL_TOKEN, SET_SETTINGS_CANCEL_TOKEN } from './Settings.constants';
+import { GET_SETTINGS_CANCEL_TOKEN, SET_SETTINGS_CANCEL_TOKEN, PAGE_MODEL } from './Settings.constants';
 import { Communication } from './components/Communication/Communication';
 import PageWrapper from '../shared/components/PageWrapper/PageWrapper';
-import { PAGE_MODEL } from './Settings.constants';
 import { ContentTab, TabbedContent, TabOrientation } from '../shared/components/Elements/TabbedContent';
 import { useCancelToken } from '../shared/components/hooks/cancelToken.hook';
 

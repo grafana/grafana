@@ -10,8 +10,7 @@ import {
   logger,
   validators,
 } from '@percona/platform-core';
-import { SelectableValue } from '@grafana/data';
-import { AppEvents } from '@grafana/data';
+import { AppEvents, SelectableValue } from '@grafana/data';
 import { Label } from 'app/percona/shared/components/Form/Label';
 import { SelectField } from 'app/percona/shared/components/Form/SelectField';
 import { MultiSelectField } from 'app/percona/shared/components/Form/MultiSelectField';

@@ -1,10 +1,9 @@
 import React, { FC, useCallback, useState } from 'react';
 import { Button, HorizontalGroup, useStyles } from '@grafana/ui';
-import { TextInputField, TextareaInputField, validators } from '@percona/platform-core';
+import { Modal, CheckboxField, TextInputField, TextareaInputField, validators } from '@percona/platform-core';
 import { Table } from 'app/percona/shared/components/Elements/Table/Table';
 import { Messages } from 'app/percona/dbaas/DBaaS.messages';
 import { Form, FormRenderProps } from 'react-final-form';
-import { Modal, CheckboxField } from '@percona/platform-core';
 import { Databases } from 'app/percona/shared/core';
 import { getStyles } from './Kubernetes.styles';
 import { NewKubernetesCluster, KubernetesProps, Kubernetes } from './Kubernetes.types';

@@ -2,7 +2,7 @@ import React, { FC } from 'react';
 import { Form, Field, FormRenderProps } from 'react-final-form';
 import { FormApi } from 'final-form';
 import { Button, HorizontalGroup, useStyles } from '@grafana/ui';
-import { AppEvents } from '@grafana/data';
+import { AppEvents, SelectableValue } from '@grafana/data';
 import { LoaderButton, Modal, logger } from '@percona/platform-core';
 import appEvents from 'app/core/app_events';
 import { SelectFieldAdapter } from 'app/percona/shared/components/Form/FieldAdapters/FieldAdapters';
@@ -24,7 +24,6 @@ import {
   ManageComponentsVersionsRenderProps,
   ManageComponentVersionsFields,
 } from './ManageComponentsVersionsModal.types';
-import { SelectableValue } from '@grafana/data';
 import { Operators } from '../../DBCluster/AddDBClusterModal/DBClusterBasicOptions/DBClusterBasicOptions.types';
 import { useOperatorsComponentsVersions } from './ManageComponentsVersions.hooks';
 import { KubernetesOperatorStatus } from '../OperatorStatusItem/KubernetesOperatorStatus/KubernetesOperatorStatus.types';

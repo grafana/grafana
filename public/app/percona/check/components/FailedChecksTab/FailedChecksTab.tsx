@@ -1,5 +1,5 @@
 import React, { FC, useEffect, useState } from 'react';
-import { logger } from '@percona/platform-core';
+import { LoaderButton, logger } from '@percona/platform-core';
 import { useCancelToken } from 'app/percona/shared/components/hooks/cancelToken.hook';
 import { isApiCancelError } from 'app/percona/shared/helpers/api';
 import { Table } from 'app/percona/check/components';
@@ -12,7 +12,6 @@ import { FailedChecksTabProps } from './types';
 import { Messages } from './FailedChecksTab.messages';
 import { getStyles } from './FailedChecksTab.styles';
 import { loadShowSilencedValue, saveShowSilencedValue } from './FailedChecksTab.utils';
-import { LoaderButton } from '@percona/platform-core';
 import { appEvents } from '../../../../core/app_events';
 import { AppEvents } from '@grafana/data';
 import { GET_ACTIVE_ALERTS_CANCEL_TOKEN } from './FailedChecksTab.constants';

@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Button, HorizontalGroup, Modal } from '@grafana/ui';
-import { logger } from '@percona/platform-core';
+import { CheckboxField, logger } from '@percona/platform-core';
 import { useCancelToken } from 'app/percona/shared/components/hooks/cancelToken.hook';
 import { isApiCancelError } from 'app/percona/shared/helpers/api';
 import { Form } from 'react-final-form';
@@ -13,7 +13,6 @@ import { SelectedTableRows } from 'app/percona/shared/components/Elements/Table/
 import { InventoryService } from '../Inventory.service';
 import { AGENTS_COLUMNS, GET_AGENTS_CANCEL_TOKEN } from '../Inventory.constants';
 import { styles } from './Tabs.styles';
-import { CheckboxField } from '@percona/platform-core';
 import { appEvents } from '../../../core/app_events';
 import { AppEvents } from '@grafana/data';
 
