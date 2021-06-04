@@ -210,6 +210,8 @@ func (rp *responseParser) processMetrics(esAgg *simplejson.Json, target *Query, 
 			sort.Strings(percentileKeys)
 			for _, percentileName := range percentileKeys {
 				tags := make(map[string]string, len(props))
+				timeVector := make([]time.Time, 0, len(esAggBuckets))
+				values := make([]*float64, 0, len(esAggBuckets))
 
 				for k, v := range props {
 					tags[k] = v
@@ -285,6 +287,8 @@ func (rp *responseParser) processMetrics(esAgg *simplejson.Json, target *Query, 
 				}
 
 				tags := make(map[string]string, len(props))
+				timeVector := make([]time.Time, 0, len(esAggBuckets))
+				values := make([]*float64, 0, len(esAggBuckets))
 
 				for k, v := range props {
 					tags[k] = v

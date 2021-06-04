@@ -333,9 +333,9 @@ func TestResponseParser(t *testing.T) {
 			require.Equal(t, frame.Name, "p90")
 			require.Len(t, frame.Fields, 2)
 			require.Equal(t, frame.Fields[0].Name, "time")
-			require.Equal(t, frame.Fields[0].Len(), 4)
+			require.Equal(t, frame.Fields[0].Len(), 2)
 			require.Equal(t, frame.Fields[1].Name, "value")
-			require.Equal(t, frame.Fields[1].Len(), 4)
+			require.Equal(t, frame.Fields[1].Len(), 2)
 		})
 
 		t.Run("With extended stats", func(t *testing.T) {
@@ -417,17 +417,17 @@ func TestResponseParser(t *testing.T) {
 			require.Equal(t, frame.Name, "server1 Std Dev Lower")
 			require.Len(t, frame.Fields, 2)
 			require.Equal(t, frame.Fields[0].Name, "time")
-			require.Equal(t, frame.Fields[0].Len(), 2)
+			require.Equal(t, frame.Fields[0].Len(), 1)
 			require.Equal(t, frame.Fields[1].Name, "value")
-			require.Equal(t, frame.Fields[1].Len(), 2)
+			require.Equal(t, frame.Fields[1].Len(), 1)
 
 			frame = dataframes[2]
 			require.Equal(t, frame.Name, "server1 Std Dev Upper")
 			require.Len(t, frame.Fields, 2)
 			require.Equal(t, frame.Fields[0].Name, "time")
-			require.Equal(t, frame.Fields[0].Len(), 3)
+			require.Equal(t, frame.Fields[0].Len(), 1)
 			require.Equal(t, frame.Fields[1].Name, "value")
-			require.Equal(t, frame.Fields[1].Len(), 3)
+			require.Equal(t, frame.Fields[1].Len(), 1)
 
 			frame = dataframes[3]
 			require.Equal(t, frame.Name, "server2 Max")
@@ -441,17 +441,17 @@ func TestResponseParser(t *testing.T) {
 			require.Equal(t, frame.Name, "server2 Std Dev Lower")
 			require.Len(t, frame.Fields, 2)
 			require.Equal(t, frame.Fields[0].Name, "time")
-			require.Equal(t, frame.Fields[0].Len(), 2)
+			require.Equal(t, frame.Fields[0].Len(), 1)
 			require.Equal(t, frame.Fields[1].Name, "value")
-			require.Equal(t, frame.Fields[1].Len(), 2)
+			require.Equal(t, frame.Fields[1].Len(), 1)
 
 			frame = dataframes[5]
 			require.Equal(t, frame.Name, "server2 Std Dev Upper")
 			require.Len(t, frame.Fields, 2)
 			require.Equal(t, frame.Fields[0].Name, "time")
-			require.Equal(t, frame.Fields[0].Len(), 3)
+			require.Equal(t, frame.Fields[0].Len(), 1)
 			require.Equal(t, frame.Fields[1].Name, "value")
-			require.Equal(t, frame.Fields[1].Len(), 3)
+			require.Equal(t, frame.Fields[1].Len(), 1)
 		})
 
 		t.Run("Single group by with alias pattern", func(t *testing.T) {
