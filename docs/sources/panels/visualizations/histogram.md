@@ -63,4 +63,4 @@ Gradient color is generated based on the hue of the line color.
 
 ### Legend calculations
 
-Choose which of the [standard calculations]({{< relref "../calculations-list.md">}}) to show in the legend. You can have more than one.
+Choose a [standard calculations]({{< relref "../calculations-list.md">}}) to show in the legend. You can select more than one.
