@@ -1,5 +1,5 @@
 +++
-title = "Library panel"
+title = "Library panels"
 weight = 400
 +++
 
