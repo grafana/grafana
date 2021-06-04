@@ -2,9 +2,11 @@ import { DataTransformerInfo } from '../../types';
 import { map } from 'rxjs/operators';
 
 import { DataTransformerID } from './ids';
-import { DataFrame, Field, FieldType } from '../../types/dataFrame';
+import { DataFrame, Field, FieldConfig, FieldType } from '../../types/dataFrame';
 import { ArrayVector } from '../../vector/ArrayVector';
 import { AlignedData, join } from './joinDataFrames';
+import { getDisplayProcessor } from '../../field';
+import { createTheme, GrafanaTheme2 } from '../../themes';
 
 /* eslint-disable */
 // prettier-ignore
@@ -172,13 +174,23 @@ export function buildHistogram(frames: DataFrame[], options?: HistogramTransform
 
   let histograms: AlignedData[] = [];
   let counts: Field[] = [];
+  let config: FieldConfig | undefined = undefined;
 
   for (const frame of frames) {
     for (const field of frame.fields) {
       if (field.type === FieldType.number) {
         let fieldHist = histogram(field.values.toArray(), getBucket, histFilter, histSort) as AlignedData;
         histograms.push(fieldHist);
-        counts.push({ ...field });
+        counts.push({
+          ...field,
+          config: {
+            ...field.config,
+            unit: undefined,
+          },
+        });
+        if (!config && field.config.unit) {
+          config = field.config;
+        }
       }
     }
   }
@@ -202,18 +214,17 @@ export function buildHistogram(frames: DataFrame[], options?: HistogramTransform
     }
   }
 
-  const bucketMin = {
-    ...counts[0],
+  const bucketMin: Field = {
     name: histogramFrameBucketMinFieldName,
     values: new ArrayVector(joinedHists[0]),
     type: FieldType.number,
     state: undefined,
+    config: config ?? {},
   };
   const bucketMax = {
     ...bucketMin,
     name: histogramFrameBucketMaxFieldName,
     values: new ArrayVector(joinedHists[0].map((v) => v + bucketSize!)),
-    state: undefined,
   };
 
   if (options?.combine) {
@@ -301,7 +312,15 @@ function histogram(
 /**
  * @internal
  */
-export function histogramFieldsToFrame(info: HistogramFields): DataFrame {
+export function histogramFieldsToFrame(info: HistogramFields, theme?: GrafanaTheme2): DataFrame {
+  if (!info.bucketMin.display) {
+    const display = getDisplayProcessor({
+      field: info.bucketMin,
+      theme: theme ?? createTheme(),
+    });
+    info.bucketMin.display = display;
+    info.bucketMax.display = display;
+  }
   return {
     fields: [info.bucketMin, info.bucketMax, ...info.counts],
     length: info.bucketMin.values.length,
