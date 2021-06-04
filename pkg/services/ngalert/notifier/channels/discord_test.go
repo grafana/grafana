@@ -3,7 +3,6 @@ package channels
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"net/url"
 	"testing"
 
@@ -64,6 +63,7 @@ func TestDiscordNotifier(t *testing.T) {
 		{
 			name: "Custom config with multiple alerts",
 			settings: `{
+				"avatar_url": "https://grafana.com/assets/img/fav32.png",
 				"url": "http://localhost",
 				"message": "{{ len .Alerts.Firing }} alerts are firing, {{ len .Alerts.Resolved }} are resolved"
 			}`,
@@ -81,7 +81,8 @@ func TestDiscordNotifier(t *testing.T) {
 				},
 			},
 			expMsg: map[string]interface{}{
-				"content": "2 alerts are firing, 0 are resolved",
+				"avatar_url": "https://grafana.com/assets/img/fav32.png",
+				"content":    "2 alerts are firing, 0 are resolved",
 				"embeds": []interface{}{map[string]interface{}{
 					"color": 1.4037554e+07,
 					"footer": map[string]interface{}{
@@ -101,14 +102,6 @@ func TestDiscordNotifier(t *testing.T) {
 			name:         "Error in initialization",
 			settings:     `{}`,
 			expInitError: alerting.ValidationError{Reason: "Could not find webhook url property in settings"},
-		},
-		{
-			name: "Error in building messsage",
-			settings: `{
-				"url": "http://localhost",
-				"message": "{{ .Status }"
-			}`,
-			expMsgError: errors.New("failed to template discord message: template: :1: unexpected \"}\" in operand"),
 		},
 	}
 

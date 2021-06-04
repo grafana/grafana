@@ -29,7 +29,7 @@ func (hs *HTTPServer) createShortURL(c *models.ReqContext, cmd dtos.CreateShortU
 		return response.Error(500, "Failed to create short URL", err)
 	}
 
-	url := fmt.Sprintf("%s/goto/%s", strings.TrimSuffix(setting.AppUrl, "/"), shortURL.Uid)
+	url := fmt.Sprintf("%s/goto/%s?orgId=%d", strings.TrimSuffix(setting.AppUrl, "/"), shortURL.Uid, c.OrgId)
 	c.Logger.Debug("Created short URL", "url", url)
 
 	dto := dtos.ShortURL{
