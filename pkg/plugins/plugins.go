@@ -77,6 +77,8 @@ type PluginV2 struct {
 
 	Parent   *PluginV2   `json:"-"`
 	Children []*PluginV2 `json:"-"`
+
+	StaticRoutes []*PluginStaticRoute `json:"-"`
 }
 
 type InstallOpts struct {

@@ -77,6 +77,12 @@ func (l *Initializer) handleModuleDefaults(p *plugins.PluginV2) {
 
 		p.Module = path.Join("plugins", p.ID, "module")
 		p.BaseUrl = path.Join("public/plugins", p.ID)
+		p.StaticRoutes = []*plugins.PluginStaticRoute{
+			{
+				Directory: p.PluginDir,
+				PluginId:  p.ID,
+			},
+		}
 		return
 	}
 
