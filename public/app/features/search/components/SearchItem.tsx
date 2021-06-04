@@ -53,7 +53,7 @@ export const SearchItem: FC<Props> = ({ item, editable, onToggleChecked, onTagSe
       style={{ minHeight: SEARCH_ITEM_HEIGHT }}
       className={styles.container}
     >
-      <Card.Figure align={'center'}>
+      <Card.Figure align={'center'} className={styles.checkbox}>
         <SearchCheckbox editable={editable} checked={item.checked} onClick={toggleItem} />
       </Card.Figure>
       <Card.Meta separator={''}>
@@ -93,6 +93,9 @@ const getStyles = (theme: GrafanaTheme) => {
         margin-right: ${theme.spacing.xs};
         margin-bottom: 0;
       }
+    `,
+    checkbox: css`
+      margin-right: 0;
     `,
   };
 };
