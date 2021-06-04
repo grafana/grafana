@@ -11,7 +11,7 @@ export default {
       disable: true,
     },
     controls: {
-      exclude: ['className', 'labelClass', 'switchClass'],
+      exclude: ['className', 'labelClass', 'switchClass', 'onChange'],
     },
   },
 } as Meta;

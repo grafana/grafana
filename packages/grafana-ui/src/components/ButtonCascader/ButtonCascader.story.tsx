@@ -13,7 +13,7 @@ export default {
       disable: true,
     },
     controls: {
-      exclude: ['className', 'value', 'fieldNames'],
+      exclude: ['className', 'value', 'fieldNames', 'loadData', 'onChange', 'onPopupVisibleChange'],
     },
   },
   args: {

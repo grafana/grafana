@@ -21,7 +21,7 @@ export default {
       disable: true,
     },
     controls: {
-      exclude: ['className'],
+      exclude: ['className', 'onClick', 'onCancel', 'onConfirm'],
     },
   },
   args: {

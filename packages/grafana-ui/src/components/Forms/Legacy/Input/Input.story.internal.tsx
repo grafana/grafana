@@ -15,7 +15,7 @@ export default {
       disable: true,
     },
     controls: {
-      exclude: ['inputRef'],
+      exclude: ['inputRef', 'onBlur', 'onFocus', 'onChange'],
     },
   },
   argTypes: {

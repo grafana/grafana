@@ -17,7 +17,16 @@ export default {
       disable: true,
     },
     controls: {
-      exclude: ['className', 'timeRange', 'data', 'legend', 'fields'],
+      exclude: [
+        'className',
+        'timeRange',
+        'data',
+        'legend',
+        'fields',
+        'structureRev',
+        'onLegendClick',
+        'preparePlotFrame',
+      ],
     },
   },
   argTypes: {

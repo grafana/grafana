@@ -14,7 +14,7 @@ export default {
       disable: true,
     },
     controls: {
-      exclude: ['className', 'options', 'value'],
+      exclude: ['className', 'options', 'value', 'onChange'],
     },
   },
   argTypes: {
