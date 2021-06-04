@@ -182,9 +182,9 @@ The Azure Monitor data source now supports Managed Identity for users hosting Gr
 
 Also, in addition to querying Log Analytics Workspaces, you can now query the logs for any individual [supported resource](https://docs.microsoft.com/en-us/azure/azure-monitor/essentials/metrics-supported), or for all resources in a subscription or resource group.
 
-> **Note:** In Grafana 7.5 we started the deprecation for separate Application Insights queries, in favor of querying Application Insights resources through Metrics and Logs. In Grafana 8.0 new Application Insights and Insights Analytics queries cannot be made, and existing queries have been made read-only. For more details, refer to the [Azure Monitor data source documentation]({{< relref "../datasources/azuremonitor.md#deprecating-application-insights" >}}
+> **Note:** In Grafana 7.5 we started the deprecation for separate Application Insights queries, in favor of querying Application Insights resources through Metrics and Logs. In Grafana 8.0 new Application Insights and Insights Analytics queries cannot be made, and existing queries have been made read-only. For more details, refer to the [Deprecating Application Insights]({{< relref "../datasources/azuremonitor.md#deprecating-application-insights" >}}.
 
-Using an Application Insights API_KEY is not supported when querying with Metrics or Logs, so users should make sure Azure Monitor is configued with an Azure AD App Registration that has access to the correct Application Insights resources.
+[Azure Monitor data source]({{< relref "../datasources/azuremonitor.md" >}}) was updated as a result of these changes.
 
 #### Elasticsearch data source
 

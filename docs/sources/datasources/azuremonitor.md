@@ -15,7 +15,7 @@ The Azure Monitor data source supports multiple services in the Azure cloud:
 
 ## Add the data source
 
-The data source can access metrics from four different services. You can configure access to the services that you use. It is also possible to use the same credentials for multiple services if that is how you have set it up in Azure AD.
+The Azure Monitor data source can access metrics from three different services. Configure access to the services that you plan to use. To use different credentials for different Azure services, configure multiple Azure Monitor data sources.The Azure Monitor data source can access metrics from three different services. Configure access to the services that you plan to use. To use different credentials for different Azure services, configure multiple Azure Monitor data sources.
 
 - [Guide to setting up an Azure Active Directory Application for Azure Monitor.](https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-create-service-principal-portal)
 - [Guide to setting up an Azure Active Directory Application for Azure Monitor Logs.](https://dev.loganalytics.io/documentation/Authorization/AAD-Setup)
