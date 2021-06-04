@@ -13,7 +13,7 @@ The histogram visualization calculates the distribution of values and presents t
 
 ## Supported data formats
 
-This panel supports time series and any table results with one or more numerical fields.
+Histogram visualization supports time series and any table results with one or more numerical fields.
 
 ## Display options
 
