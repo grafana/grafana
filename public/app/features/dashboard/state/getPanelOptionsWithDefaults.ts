@@ -198,7 +198,9 @@ export function restoreCustomOverrideRules(current: FieldConfigSource, old: Fiel
       if (isCustomFieldProp(prop)) {
         const currentOverride = result.overrides.find((o) => isEqual(o.matcher, override.matcher));
         if (currentOverride) {
-          currentOverride.properties.push(prop);
+          if (currentOverride !== override) {
+            currentOverride.properties.push(prop);
+          }
         } else {
           result.overrides.push(override);
         }
