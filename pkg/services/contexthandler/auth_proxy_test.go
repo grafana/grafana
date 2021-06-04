@@ -7,7 +7,6 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/infra/backgroundsvcs"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/models"
@@ -103,7 +102,7 @@ func getContextHandler(t *testing.T) *ContextHandler {
 	cfg.AuthProxyHeaderName = "X-Killa"
 	cfg.AuthProxyEnabled = true
 	cfg.AuthProxyHeaderProperty = "username"
-	remoteCacheSvc, err := remotecache.ProvideService(cfg, sqlStore, backgroundsvcs.ProvideService())
+	remoteCacheSvc, err := remotecache.ProvideService(cfg, sqlStore)
 	require.NoError(t, err)
 	userAuthTokenSvc := auth.NewFakeUserAuthTokenService()
 	renderSvc := &fakeRenderService{}

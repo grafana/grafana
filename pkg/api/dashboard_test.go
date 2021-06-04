@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	dboards "github.com/grafana/grafana/pkg/dashboards"
-	"github.com/grafana/grafana/pkg/infra/backgroundsvcs"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -86,7 +85,7 @@ func newTestLive(t *testing.T) *live.GrafanaLive {
 	var err error
 	gLive := live.NewGrafanaLive()
 	gLive.RouteRegister = routing.NewRouteRegister()
-	gLive, err = live.ProvideService(nil, nil, gLive.RouteRegister, nil, nil, nil, nil, sqlstore.InitTestDB(t), backgroundsvcs.ProvideService())
+	gLive, err = live.ProvideService(nil, nil, gLive.RouteRegister, nil, nil, nil, nil, sqlstore.InitTestDB(t))
 	require.NoError(t, err)
 	return gLive
 }

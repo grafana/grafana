@@ -17,7 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/gtime"
-	"github.com/grafana/grafana/pkg/infra/backgroundsvcs"
 	"github.com/grafana/grafana/pkg/infra/fs"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
@@ -609,7 +608,7 @@ func getContextHandler(t *testing.T, cfg *setting.Cfg) *contexthandler.ContextHa
 	cfg.RemoteCacheOptions = &setting.RemoteCacheOptions{
 		Name: "database",
 	}
-	remoteCacheSvc, err := remotecache.ProvideService(cfg, sqlStore, backgroundsvcs.ProvideService())
+	remoteCacheSvc, err := remotecache.ProvideService(cfg, sqlStore)
 	require.NoError(t, err)
 	userAuthTokenSvc := auth.NewFakeUserAuthTokenService()
 	renderSvc := &fakeRenderService{}

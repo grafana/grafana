@@ -8,7 +8,6 @@ import (
 
 	"time"
 
-	"github.com/grafana/grafana/pkg/infra/backgroundsvcs"
 	"github.com/grafana/grafana/pkg/setting"
 	. "github.com/smartystreets/goconvey/convey"
 )
@@ -40,7 +39,7 @@ func (handler *FakeResultHandler) handle(evalContext *EvalContext) error {
 
 func TestEngineProcessJob(t *testing.T) {
 	Convey("Alerting engine job processing", t, func() {
-		engine := ProvideAlertEngine(nil, nil, nil, nil, backgroundsvcs.ProvideService(), setting.NewCfg())
+		engine := ProvideAlertEngine(nil, nil, nil, nil, setting.NewCfg())
 		setting.AlertingEvaluationTimeout = 30 * time.Second
 		setting.AlertingNotificationTimeout = 30 * time.Second
 		setting.AlertingMaxAttempts = 3
