@@ -7,9 +7,9 @@ weight = 115
 
 # Permissions
 
-Each permission is defined by an action and a scope. When evaluating a fine-grained access decision, consider what specific action a user should be allowed to perform, and on what resources (its scope).
+A permission is an action and a scope. When creating a fine-grained access control, consider what specific action a user should be allowed to perform, and on what resources (its scope).
 
-To grant permissions to a user, create built-in role assignments. A built-in role assignment is a *modification* to one of the existing built-in roles in Grafana (Viewer, Editor, Admin) For more information, refer to [Built-in role assignments]({{< relref "./roles.md#built-in-role-assignments" >}}).
+To grant permissions to a user, you create a built-in role assignment to map a role to a built-in role. A built-in role assignment *modifies* to one of the existing built-in roles in Grafana (Viewer, Editor, Admin). For more information, refer to [Built-in role assignments]({{< relref "./roles.md#built-in-role-assignments" >}}).
 
 To learn more about which permissions are used for which resources, refer to [Resources with fine-grained permissions]({{< relref "./_index.md#resources-with-fine-grained-permissions" >}}).
 
@@ -17,7 +17,7 @@ action
 : The specific action on a resource defines what a user is allowed to perform if they have permission with the relevant action assigned to it.
 
 scope
-: The scope describes where an action can be performed, such as reading a specific user profile. In such case, a permission is associated with the scope `users:<userId>` to the relevant role. Also, you can combine multiple scopes by using the `/` delimiter.
+: The scope describes where an action can be performed, such as reading a specific user profile. In such case, a permission is associated with the scope `users:<userId>` to the relevant role.
 
 ## Action definitions
 
