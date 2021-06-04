@@ -13,7 +13,7 @@ The Status history visualization shows periodic states over time. Each field or 
 
 ## Supported data 
 
-This panel works with string, boolean and numerical fields or time series. A time field is required. You can use value mappings to color strings or assign text values to numerical ranges.  
+Status history visualization works with string, boolean and numerical fields or time series. A time field is required. You can use value mappings to color strings or assign text values to numerical ranges.  
 
 ## Display options
 
