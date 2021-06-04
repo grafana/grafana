@@ -7,13 +7,13 @@ weight = 605
 
 # Histogram
 
-This panel calculates the distribution of values and presents them as a bar chart. The Y axis and the height of each bar represents the count of values that fall into each bracket while the X axis represents the value range. 
+This panel calculates the distribution of values and presents them as a bar chart. The Y axis and the height of each bar represents the count of values that fall into each bracket while the X axis represents the value range.
 
 {{< figure src="/static/img/docs/histogram-panel/histogram-example-v8-0.png" max-width="625px" caption="Bar chart example" >}}
 
 ## Supported data formats
 
-This panel supports time series and any table results with one or more numerical fields. 
+This panel supports time series and any table results with one or more numerical fields.
 
 ## Display options
 
@@ -21,15 +21,15 @@ Use these options to refine your visualization.
 
 ### Bucket size
 
-The size of the buckets. Leave empty for automatic bucket sizing. 
+The size of the buckets. Leave empty for automatic bucket sizing (~10% of the full range).
 
 ### Bucket offset
 
-If the first bucket should not start at zero. 
+If the first bucket should not start at zero. A non-zero offset has the effect of shifting the aggregation window. For example, 5-sized buckets that are be 0-5, 5-10, 10-15 with a 0 offset would become 2-7, 7-12, 12-15 with and offset of 2; offsets of 0, 5 or 10 in this case would effectively do nothing. Typically this option would be used with an explicitly-defined bucket size rather than automatic. For this setting to have an effect, the offset amount should be greater than 0 and less than the bucket size; values outside this range will have the same effect as values within this range.
 
 ### Combine series
 
-This will merge all series and fields into a combined histogram. 
+This will merge all series and fields into a combined histogram.
 
 ### Line width
 
