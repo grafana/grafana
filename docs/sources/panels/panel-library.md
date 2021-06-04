@@ -7,6 +7,14 @@ weight = 400
 
 Library panels allow users to create reusable panels that aren’t tied to any one dashboard. As a result, any changes made to one instance of the library panel affecting all other instances.
 
+## Manage library panels
+
+To access existing library panels:
+
+1. Hover over the **Dashboard** option on the left menu, then select **Library panels** from the drop down options. You can see a list of previusly defined library panels.
+   {{< figure src="/static/img/docs/library-panels/library-panel-list-8-0.png" class="docs-image--no-shadow" max-width= "900px" caption="Screenshot of the edit panel" >}}
+1. Search for a specific library panel if you know its name. You can also filter the panels by folder or type.
+
 ## Create a library panel
 
 To create a library panel:
@@ -26,9 +34,11 @@ Once created, you can modify the library panel.  can be modified, and once saved
 
 ## Add a library panel
 
-1. Hover over **+** on the left menu, and select **Create** from the drop down options.
-Click the **Add panel** option to open the 
-1. Click  “Add a panel from the panel library”. Choosing this option will present a list of your library panels that can be searched and filtered. Clicking your desired panel will then add it to the dashboard.
+1. Hover over the **+** option on the left menu, then select **Create** from the drop down options. The Add panel dialog opens.
+   {{< figure src="/static/img/docs/library-panels/add-library-panel-8-0.png" class="docs-image--no-shadow" max-width= "900px" caption="Screenshot of the edit panel" >}}
+1. Click the **Add a panel from the panel library** option. You will see a list of your library panels. 
+1. Filter the list or search to find the panel you want to add.
+1. Click your desired panel and add it to the dashboard.
 
 
 ## Unlink a library panel
@@ -39,13 +49,14 @@ To unlink a library panel:
 
 1. Hover over **Dashboard** on the left menu, and select Library panels from the drop down options.
 1. Select a library panel that is being used in different dashboards. You will see a list of all the dashboards.
+   {{< figure src="/static/img/docs/library-panels/used-in-list-8-0.png" class="docs-image--no-shadow" max-width= "900px" caption="Screenshot of the edit panel" >}}
 1. Select the panel you want to unlink and update. 
 1. Click the title of the panel and then click **Edit**. The panel opens in edit mode.
 1. Click the **Unlink** option on the top right corner of the UI.
 
 ## Delete a library panel
 
-To delete a panel:
+To delete a library panel:
 
 1. Hover over **Dashboard** on the left menu, and select Library panels from the drop down options.
 1. Select a library panel that is being used in different dashboards. You will see a list of all the dashboards.
