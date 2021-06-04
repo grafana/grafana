@@ -184,6 +184,8 @@ Also, in addition to querying Log Analytics Workspaces, you can now query the lo
 
 > **Note:** In Grafana 7.5 we started the deprecation for separate Application Insights queries, in favor of querying Application Insights resources through Metrics and Logs. In Grafana 8.0 new Application Insights and Insights Analytics queries cannot be made, and existing queries have been made read-only. For more details, refer to the [Azure Monitor data source documentation]({{< relref "../datasources/azuremonitor.md#deprecating-application-insights" >}}
 
+Using an Application Insights API_KEY is not supported when querying with Metrics or Logs, so users should make sure Azure Monitor is configued with an Azure AD App Registration that has access to the correct Application Insights resources.
+
 #### Elasticsearch data source
 
 [Elasticsearch data source]({{< relref "../datasources/elasticsearch.md" >}}) and [Provisioning]({{< relref "../administration/provisioning.md" >}}) were updated as a result of these changes.

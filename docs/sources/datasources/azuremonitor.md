@@ -187,7 +187,7 @@ Perf
 
 > **Tip**: In the above query, the Kusto syntax `Samples=count()` and `["Avg Value"]=...` is used to rename those columns — the second syntax allowing for the space. This changes the name of the metric that Grafana uses, and as a result, things like series legends and table columns will match what you specify. Here `Samples` is displayed instead of `_count`.
 
-{{< figure src="/static/img/docs/azuremonitor/logs_multi-value_multi-dim.png" class="docs-image--no-shadow" caption="Azure Logs query with multiple values and multiple dimensions" >}}
+{{< figure src="/static/img/docs/azure-monitor/logs_multi-value_multi-dim.png" class="docs-image--no-shadow" caption="Azure Logs query with multiple values and multiple dimensions" >}}
 
 ### Table queries
 
@@ -291,7 +291,7 @@ If you're not currently logged in to the Azure Portal, then the link opens the l
 
 Azure Resource Graph (ARG) is a service in Azure that is designed to extend Azure Resource Management by providing efficient and performant resource exploration with the ability to query at scale across a given set of subscriptions so that you can effectively govern your environment. By querying ARG, you can query resources with complex filtering, iteratively explore resources based on governance requirements, and assess the impact of applying policies in a vast cloud environment.
 
-{{< figure src="/static/img/docs/azure-monitor/azure-resource-graph-8-0.png" class="docs-image--no-shadow" caption="Azure Resource Graph Editor" >}}
+{{< figure src="/static/img/docs/azure-monitor/azure-resource-graph.png" class="docs-image--no-shadow" caption="Azure Resource Graph editor" max-width="650px" >}}
 
 ### Table queries
 
@@ -425,12 +425,12 @@ Application Insights and Insights Analytics are two ways to query the same Azure
 
 For Application Insights, new queries can be made with the Metrics query type by selecting the "Application Insights" resource type.
 
-{{< figure src="/static/img/docs/azure-monitor/app-insights-metrics.png" max-width="500px" class="docs-image--no-shadow" caption="Azure Monitor Application Insights example" >}}
+{{< figure src="/static/img/docs/azure-monitor/app-insights-metrics.png" max-width="650px" class="docs-image--no-shadow" caption="Azure Monitor Application Insights example" >}}
 
 For Insights Analaytics, new queries can be written with Kusto in the Logs query type by selecting your Application Insights resource.
 
-{{< figure src="/static/img/docs/azure-monitor/app-insights-logs.png" max-width="500px" class="docs-image--no-shadow" caption="Azure Logs Application Insights example" >}}
+{{< figure src="/static/img/docs/azure-monitor/app-insights-logs.png" max-width="650px" class="docs-image--no-shadow" caption="Azure Logs Application Insights example" >}}
 
-{{< figure src="/static/img/docs/azure-monitor/app-insights-resource-picker.png" max-width="500px" class="docs-image--no-shadow" caption="Azure Logs Application Insights resource picker" >}}
+{{< figure src="/static/img/docs/azure-monitor/app-insights-resource-picker.png" max-width="650px" class="docs-image--no-shadow" caption="Azure Logs Application Insights resource picker" >}}
 
 Azure Monitor Metrics and Azure Monitor Logs do not use Application Insights API keys, so make sure the data source is configured with an Azure AD app registration that has access to Application Insights
