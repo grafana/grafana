@@ -8,10 +8,27 @@ import (
 	"strings"
 
 	"cuelang.org/go/cue"
+	errs "cuelang.org/go/cue/errors"
 	cuejson "cuelang.org/go/pkg/encoding/json"
 )
 
 var rt = &cue.Runtime{}
+
+// CueError wraps Errors caused by malformed cue files.
+type CueError struct {
+	ErrorMap map[int]string
+}
+
+// Error func needed to implement standard golang error
+func (cErr *CueError) Error() string {
+	var errorString string
+	if cErr.ErrorMap != nil {
+		for k, v := range cErr.ErrorMap {
+			errorString = errorString + fmt.Sprintf("line: %d, %s \n", k, v)
+		}
+	}
+	return errorString
+}
 
 // CueSchema represents a single, complete CUE-based schema that can perform
 // operations on Resources.
@@ -93,6 +110,10 @@ func SearchAndValidate(s VersionedCueSchema, v interface{}) (VersionedCueSchema,
 	// collates all the individual errors, relates them to the schema that
 	// produced them, and ideally deduplicates repeated errors across each
 	// schema.
+	cueErrors := WrapCUEError(err)
+	if err != nil {
+		return nil, cueErrors
+	}
 	return nil, err
 }
 
@@ -400,6 +421,26 @@ func removeDefaultHelper(inputdef cue.Value, input cue.Value) (cue.Value, bool, 
 // TODO this is a terrible way to do this, refactor
 type Resource struct {
 	Value interface{}
+}
+
+// WrapCUEError is a wrapper for cueErrors that occur and are not self explanatory.
+// If an error is of type cueErr, then iterate through the error array, export line number
+// and filename, otherwise return usual error.
+func WrapCUEError(err error) error {
+	var cErr errs.Error
+	m := make(map[int]string)
+	if ok := errors.As(err, &cErr); ok {
+		for _, e := range errs.Errors(err) {
+			if e.Position().File() != nil {
+				line := e.Position().Line()
+				m[line] = fmt.Sprintf("%q: in file %s", err, e.Position().File().Name())
+			}
+		}
+	}
+	if len(m) != 0 {
+		return &CueError{m}
+	}
+	return err
 }
 
 // TODO add migrator with SearchOption for stopping criteria
