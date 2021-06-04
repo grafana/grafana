@@ -27,8 +27,8 @@ export const HistogramPanel: React.FC<Props> = ({ data, options, width, height }
       return undefined;
     }
 
-    return histogramFieldsToFrame(hist);
-  }, [data.series, options]);
+    return histogramFieldsToFrame(hist, theme);
+  }, [data.series, options, theme]);
 
   if (!histogram || !histogram.fields.length) {
     return (
