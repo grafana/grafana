@@ -14,55 +14,42 @@ To create a library panel:
 1. Create a panel as you normally would, following instructions in [Add a panel]({{< relref "./add-a-panel.md" >}}).
 1. Click the title of the panel and then click **Edit**. The panel opens in edit mode.
 1. In the panel display options (side pane), click the down arrow option to bring changes to the visualization.
-1. Click the **Library panels** option, and then click **Create new library panel**.
+   {{< figure src="/static/img/docs/library-panels/create-lib-panel-from-edit-8-0.png" class="docs-image--no-shadow" max-width= "900px" caption="Screenshot of the edit panel" >}}
+1. Click the **Library panels** option, and then click **Create new library panel** to open the create dialog.
+   {{< figure src="/static/img/docs/library-panels/create-lib-panel-8-0.png" class="docs-image--no-shadow" max-width= "900px" caption="Screenshot of the create library panel dialog" >}}
 1. In **Library panel name**, enter the name.
 1. In **Save in folder**, select the folder to save the library panel. By default, the General folder is selected.
-
-
-
-1. Click the dashboard icon on the side menu, then select **Library panels** from the dropdown options.
-1. 
-. In the  
-
-   ![](/static/img/docs/panels/add-panel-icon-7-0.png)
-
-1. Choose from the options to specify a name for the new library panel, and the folder to save the library panel in.
-1. Click **Save**.
+1. Click **Create library panel** to save your changes.
 
 Once created, you can modify the library panel.  can be modified, and once saved, all instances of the library panel will represent these modifications.
 
+
 ## Add a library panel
 
-1. Click the **Add panel** option.  button, where you’ll be presented with a few options, one of which is “Add a panel from the panel library”. Choosing this option will present a list of your library panels that can be searched and filtered. Clicking your desired panel will then add it to the dashboard.
+1. Hover over **+** on the left menu, and select **Create** from the drop down options.
+Click the **Add panel** option to open the 
+1. Click  “Add a panel from the panel library”. Choosing this option will present a list of your library panels that can be searched and filtered. Clicking your desired panel will then add it to the dashboard.
 
 
-Choose a data source. In the first line of the Query tab, click the drop-down list to see all available data sources. This list includes all data sources you added. Refer to [Add a data source]({{< relref "../datasources/add-a-data-source.md" >}}) if you need instructions.
-1. Write or construct a query in the query language of your data source. Options will vary. Refer to your specific [data source documentation]({{< relref "../datasources/_index.md" >}}) for specific guidelines.
+## Unlink a library panel
 
-## 3. Choose a visualization type
+In case you have a library panel on your dashboard that want to modify it without affecting all other instances of the library panel, you can unlink the library panel. 
 
-In the Visualization list, click a visualization type. Grafana displays a preview of your query results with that visualization applied.
+To unlink a library panel:
 
-![](/static/img/docs/panel-editor/select-visualization-8-0.png)
+1. Hover over **Dashboard** on the left menu, and select Library panels from the drop down options.
+1. Select a library panel that is being used in different dashboards. You will see a list of all the dashboards.
+1. Select the panel you want to unlink and update. 
+1. Click the title of the panel and then click **Edit**. The panel opens in edit mode.
+1. Click the **Unlink** option on the top right corner of the UI.
 
-For more information about individual visualizations, refer to [Visualizations options]({{< relref "visualizations/_index.md" >}}).
+## Delete a library panel
 
-## 4. (Optional) Edit panel settings
+To delete a panel:
 
-While not required, most visualizations need some adjustment before they properly display the information that you need. Options are defined in the linked topics below.
+1. Hover over **Dashboard** on the left menu, and select Library panels from the drop down options.
+1. Select a library panel that is being used in different dashboards. You will see a list of all the dashboards.
+1. Select the panel you want to delete. 
+1. Click the delete icon next to the library panel name.
+  
 
-- [Panel options]({{< relref "./panel-options.md" >}})
-- [Visualization-specific options]({{< relref "./visualizations/_index.md" >}})
-- [Standard options]({{< relref "./standard-options.md" >}})
-- [Thresholds]({{< relref "./thresholds.md" >}})
-- [Value mappings]({{< relref "./value-mappings.md" >}})
-- [Data links]({{< relref "../linking/data-links.md" >}})
-- [Field overrides]({{< relref "./field-overrides.md" >}})
-
-## 5. Apply changes and save
-
-Save the dashboard. Either press Ctrl/Cmd+S or click **Save** in the upper right corner of the screen.
-
-Your options vary depending on the changes you made and whether or not it is a new dashboard. We recommend you add a note to describe your changes before you click **Save**. Notes are very helpful if you need to revert the dashboard to a previous version.
-
-## 
