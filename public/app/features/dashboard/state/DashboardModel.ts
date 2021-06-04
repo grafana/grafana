@@ -43,6 +43,7 @@ import { dispatch } from '../../../store/store';
 import { isAllVariable } from '../../variables/utils';
 import { DashboardPanelsChangedEvent, RefreshEvent, RenderEvent } from 'app/types/events';
 import { getTimeSrv } from '../services/TimeSrv';
+import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
 
 export interface CloneOptions {
   saveVariables?: boolean;
@@ -436,9 +437,17 @@ export class DashboardModel {
       return this.panelInEdit;
     }
 
-    for (const panel of this.panels) {
-      if (panel.id === id) {
-        return panel;
+    const panel = this.panels.find((p) => p.id === id);
+
+    if (panel) {
+      return panel;
+    }
+
+    const rows = this.panels.filter((p) => p.type === 'row');
+    for (const row of rows) {
+      const rowPanel: any = row.panels?.find((p: any) => p.id === id);
+      if (rowPanel) {
+        return new PanelModel(rowPanel);
       }
     }
 
@@ -893,6 +902,14 @@ export class DashboardModel {
           // update insert post and y max
           insertPos += 1;
           yMax = Math.max(yMax, panel.gridPos.y + panel.gridPos.h);
+
+          const sharedDashboardPanels = this.panels.filter(
+            (p) => p.datasource === SHARED_DASHBOARD_QUERY && p.targets.some((t: any) => t.panelId === panel.id)
+          );
+
+          for (const sharedPanel of sharedDashboardPanels) {
+            sharedPanel.refresh();
+          }
         }
 
         const pushDownAmount = yMax - row.gridPos.y - 1;
