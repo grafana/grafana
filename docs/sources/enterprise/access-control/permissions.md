@@ -72,6 +72,6 @@ Scopes | Descriptions
 roles:* | Restrict an action to a set of roles. For example, `roles:*` matches any role, `roles:randomuid` matches only the role with UID `randomuid` and `roles:custom:reports:{editor,viewer}` matches both `custom:reports:editor` and `custom:reports:viewer` roles.
 permissions:delegate | The scope is only applicable for roles associated with the Access Control itself and indicates that you can delegate your permissions only, or a subset of it, by creating a new role or making an assignment.
 reports:* | Restrict an action to a set of reports. For example, `reports:*` matches any report and `reports:1` matches the report with id `1`.
-service:access-control | Restrict an action to target only the access-control service. For example, you can use this in conjunction with the `provisioning:reload` or the `status:accesscontrol` actions.
+service:accesscontrol | Restrict an action to target only the fine-grained access control service. For example, you can use this in conjunction with the `provisioning:reload` or the `status:accesscontrol` actions.
 global:users:* | Restrict an action to a set of global users.
 users:* | Restrict an action to a set of users from an organization.
