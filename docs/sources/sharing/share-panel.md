@@ -15,6 +15,7 @@ To share a panel:
 1. Click **Share**. The share dialog opens and shows the Link tab.
 
 ![Panel share direct link](/static/img/docs/sharing/share-panel-direct-link-8-0.png)
+
 ## Use direct link
 
 The Link tab has the current time range, template variables and theme selected by default. You can optionally enable a shortened URL to share.
