@@ -21,7 +21,7 @@ Example request:
 curl --location --request GET '<grafana_url>/api/access-control/builtin-roles' --header 'Authorization: Basic YWRtaW46cGFzc3dvcmQ='
 ```
 
-Auth tokens cannot be used here, you must use the base64 username:password Basic Authorization
+You must use the base64 username:password Basic Authorization here. Auth tokens are not applicable here.
 
 Example response:
 ```
