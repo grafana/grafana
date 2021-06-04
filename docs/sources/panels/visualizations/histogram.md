@@ -51,7 +51,7 @@ No gradient fill. This is the default setting.
 
 #### Opacity
 
-Transparency of the gradient is calculated based on the values on the y-axis. Opacity of the fill is increasing with the values on the Y-axis.
+Transparency of the gradient is calculated based on the values on the Y-axis. The opacity of the fill is increasing with the values on the Y-axis.
 
 #### Hue
 
