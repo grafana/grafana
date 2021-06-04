@@ -51,13 +51,7 @@ export const PlaylistPage: FC<Props> = ({ navModel }) => {
                 Start playlist
               </Button>
               {contextSrv.isEditor && (
-                <LinkButton
-                  key="edit"
-                  variant="secondary"
-                  href={`/playlists/edit/${playlist.id}`}
-                  icon="cog"
-                  title="Feature temporarily disabled"
-                >
+                <LinkButton key="edit" variant="secondary" href={`/playlists/edit/${playlist.id}`} icon="cog">
                   Edit playlist
                 </LinkButton>
               )}
