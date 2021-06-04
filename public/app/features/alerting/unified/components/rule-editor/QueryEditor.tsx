@@ -118,7 +118,7 @@ export class QueryEditor extends PureComponent<Props, State> {
           Query
         </Button>
         {config.expressionsEnabled && (
-          <Tooltip content="Experimental feature: queries could stop working in next version" placement="right">
+          <Tooltip content="Beta feature: queries could stop working in next version" placement="right">
             <Button
               type="button"
               icon="plus"
