@@ -5,23 +5,19 @@ keywords = ["grafana", "docs", "state timeline", "panel"]
 weight = 900
 +++
 
-# State timeline visualization
+# State timeline
 
-The state timeline visualization shows discrete state changes over time. Each field or series is rendered as its unique horizontal band. State regions can either be rendered with or without values. This panel works well with string or boolean states but can also be used with time series. When used with time series, the thresholds are used to turn the numerical values into discrete state regions.
+The state timeline panel visualization shows discrete state changes over time. Each field or series is rendered as its unique horizontal band. State regions can either be rendered with or without values. This panel works well with string or boolean states but can also be used with time series. When used with time series, the thresholds are used to turn the numerical values into discrete state regions.
 
 {{< figure src="/static/img/docs/v8/state_timeline_strings.png" max-width="1025px" caption="state timeline with string states" >}}
 
-## Shared options
+## State timeline options
 
-The following shared options are available:
+Use these options to refine the visualization.
 
-- [Standard options]({{< relref "../standard-options.md" >}}) (Unit, min, max, decimals, color)
-- [Thresholds]({{< relref "../thresholds.md" >}})
-- [Value mappings]({{< relref "../value-mappings.md" >}})
+### Merge equal consecutive values
 
-You can also use [field overrides]({{< relref "../field-overrides.md" >}}) to specify options per field or series.
-
-## Display options
+Controls whether Grafana merges identical values if they are next to each other.
 
 ### Show values
 
@@ -58,3 +54,5 @@ The panel can be with time series data as well. In this case, the thresholds are
 ## Legend options
 
 When the legend option is enabled it can show either the value mappings or the threshold brackets. To show the value mappings in the legend, it's important that the `Color scheme` option under [Standard options]({{< relref "../standard-options.md" >}}) is set to `Single color` or `Classic palette`. To see the threshold brackets in the legend set the `Color scheme` to `From thresholds`.
+
+{{< docs/shared "visualizations/legend-mode.md" >}}

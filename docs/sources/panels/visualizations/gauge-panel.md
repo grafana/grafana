@@ -1,5 +1,5 @@
 +++
-title = "Gauge panel"
+title = "Gauge"
 description = "Gauge panel docs"
 keywords = ["grafana", "gauge", "gauge panel"]
 aliases = ["/docs/grafana/latest/features/panels/gauge/"]

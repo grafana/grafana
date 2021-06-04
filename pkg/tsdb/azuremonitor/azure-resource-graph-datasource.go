@@ -226,7 +226,7 @@ func (e *AzureResourceGraphDatasource) getPluginRoute(plugin *plugins.DataSource
 		return nil, "", err
 	}
 
-	routeName, err := getResourceGraphApiRoute(cloud)
+	routeName, err := getManagementApiRoute(cloud)
 	if err != nil {
 		return nil, "", err
 	}
