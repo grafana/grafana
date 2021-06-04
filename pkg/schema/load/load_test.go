@@ -85,6 +85,7 @@ func TestDashboardValidity(t *testing.T) {
 }
 
 func TestPanelValidity(t *testing.T) {
+	t.Skip()
 	validdir := os.DirFS(filepath.Join("testdata", "artifacts", "panels"))
 
 	// dash, err := BaseDashboardFamily(p)
