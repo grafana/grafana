@@ -3,9 +3,8 @@ package manager
 import (
 	"fmt"
 
-	"github.com/grafana/grafana/pkg/plugins"
-
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
 )
 

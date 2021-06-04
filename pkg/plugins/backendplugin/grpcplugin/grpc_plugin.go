@@ -12,7 +12,6 @@ import (
 )
 
 type pluginClient interface {
-	backend.QueryDataHandler
 	backend.CollectMetricsHandler
 	backend.CheckHealthHandler
 	backend.QueryDataHandler
