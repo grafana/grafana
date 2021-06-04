@@ -1,5 +1,5 @@
 import { FetchResponse, getBackendSrv } from '@grafana/runtime';
-import { getLogAnalyticsResourcePickerApiRoute } from '../api/routes';
+import { getLogAnalyticsManagementApiRoute } from '../api/routes';
 import {
   locationDisplayNames,
   logsSupportedLocationsKusto,
@@ -17,7 +17,7 @@ import {
   RawAzureResourceItem,
 } from '../types';
 
-const RESOURCE_GRAPH_URL = '/providers/Microsoft.ResourceGraph/resources?api-version=2020-04-01-preview';
+const RESOURCE_GRAPH_URL = '/providers/Microsoft.ResourceGraph/resources?api-version=2021-03-01';
 
 export default class ResourcePickerData {
   private proxyUrl: string;
@@ -148,7 +148,7 @@ export default class ResourcePickerData {
     try {
       return await getBackendSrv()
         .fetch<AzureGraphResponse<T>>({
-          url: this.proxyUrl + '/' + getLogAnalyticsResourcePickerApiRoute(this.cloud) + RESOURCE_GRAPH_URL,
+          url: this.proxyUrl + '/' + getLogAnalyticsManagementApiRoute(this.cloud) + RESOURCE_GRAPH_URL,
           method: 'POST',
           data: {
             query: query,
