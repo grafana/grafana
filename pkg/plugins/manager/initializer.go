@@ -46,7 +46,7 @@ func (l *Initializer) Initialize(p *plugins.PluginV2) error {
 	p.Info.Logos.Large = getPluginLogoUrl(p.Type, p.Info.Logos.Large, p.BaseUrl)
 
 	for i := 0; i < len(p.Info.Screenshots); i++ {
-		p.Info.Screenshots[i].Path = evalRelativePluginUrlPath(p.Info.Screenshots[i].Path, p.BaseUrl)
+		p.Info.Screenshots[i].Path = evalRelativePluginUrlPath(p.Info.Screenshots[i].Path, p.BaseUrl, p.Type)
 	}
 
 	if p.Type == "app" {
@@ -113,17 +113,21 @@ func (l *Initializer) setPathsBasedOnApp(parent *plugins.PluginV2, child *plugin
 
 func getPluginLogoUrl(pluginType, path, baseUrl string) string {
 	if path == "" {
-		return "public/img/icn-" + pluginType + ".svg"
+		return defaultLogoPath(pluginType)
 	}
 
-	return evalRelativePluginUrlPath(path, baseUrl)
+	return evalRelativePluginUrlPath(path, baseUrl, pluginType)
+}
+
+func defaultLogoPath(pluginType string) string {
+	return "public/img/icn-" + pluginType + ".svg"
 }
 
 func isExternalPlugin(pluginDir string, cfg *setting.Cfg) bool {
 	return !strings.Contains(pluginDir, cfg.StaticRootPath)
 }
 
-func evalRelativePluginUrlPath(pathStr string, baseUrl string) string {
+func evalRelativePluginUrlPath(pathStr, baseUrl, pluginType string) string {
 	if pathStr == "" {
 		return ""
 	}
@@ -132,5 +136,11 @@ func evalRelativePluginUrlPath(pathStr string, baseUrl string) string {
 	if u.IsAbs() {
 		return pathStr
 	}
+
+	// is set as default or has already been prefixed with base path
+	if pathStr == defaultLogoPath(pluginType) || strings.HasPrefix(pathStr, baseUrl) {
+		return pathStr
+	}
+
 	return path.Join(baseUrl, pathStr)
 }
