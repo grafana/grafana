@@ -1,4 +1,7 @@
 import React, { FC, useEffect, useState, useCallback } from 'react';
+import { LoaderButton, logger } from '@percona/platform-core';
+import { useCancelToken } from 'app/percona/shared/components/hooks/cancelToken.hook';
+import { isApiCancelError } from 'app/percona/shared/helpers/api';
 import { Table } from 'app/percona/check/components';
 import { ActiveCheck } from 'app/percona/check/types';
 import { COLUMNS } from 'app/percona/check/CheckPanel.constants';
@@ -9,7 +12,6 @@ import { FailedChecksTabProps } from './types';
 import { Messages } from './FailedChecksTab.messages';
 import { getStyles } from './FailedChecksTab.styles';
 import { loadShowSilencedValue, saveShowSilencedValue } from './FailedChecksTab.utils';
-import { LoaderButton } from '@percona/platform-core';
 import { appEvents } from '../../../../core/app_events';
 import { AppEvents } from '@grafana/data';
 import { GET_ACTIVE_ALERTS_CANCEL_TOKEN } from './FailedChecksTab.constants';
