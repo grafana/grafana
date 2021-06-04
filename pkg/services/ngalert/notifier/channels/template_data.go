@@ -2,7 +2,6 @@ package channels
 
 import (
 	"context"
-	"fmt"
 	"net/url"
 	"path"
 	"sort"
@@ -55,11 +54,12 @@ func removePrivateItems(kv template.KV) template.KV {
 	return kv
 }
 
-func extendAlert(alert template.Alert, externalURL string) (*ExtendedAlert, error) {
-	extended := ExtendedAlert{
+func extendAlert(alert template.Alert, externalURL string, logger log.Logger) *ExtendedAlert {
+	// remove "private" annotations & labels so they don't show up in the template
+	extended := &ExtendedAlert{
 		Status:       alert.Status,
-		Labels:       alert.Labels,
-		Annotations:  alert.Annotations,
+		Labels:       removePrivateItems(alert.Labels),
+		Annotations:  removePrivateItems(alert.Annotations),
 		StartsAt:     alert.StartsAt,
 		EndsAt:       alert.EndsAt,
 		GeneratorURL: alert.GeneratorURL,
@@ -67,50 +67,45 @@ func extendAlert(alert template.Alert, externalURL string) (*ExtendedAlert, erro
 	}
 
 	// fill in some grafana-specific urls
-	if len(externalURL) > 0 {
-		u, err := url.Parse(externalURL)
-		if err != nil {
-			return nil, fmt.Errorf("failed to parse external URL: %w", err)
+	if len(externalURL) == 0 {
+		return extended
+	}
+	u, err := url.Parse(externalURL)
+	if err != nil {
+		logger.Debug("failed to parse external URL while extending template data", "url", externalURL, "err", err.Error())
+		return extended
+	}
+	externalPath := u.Path
+	dashboardUid := alert.Annotations["__dashboardUid__"]
+	if len(dashboardUid) > 0 {
+		u.Path = path.Join(externalPath, "/d/", dashboardUid)
+		extended.DashboardURL = u.String()
+		panelId := alert.Annotations["__panelId__"]
+		if len(panelId) > 0 {
+			u.RawQuery = "viewPanel=" + panelId
+			extended.PanelURL = u.String()
 		}
-		externalPath := u.Path
-		dashboardUid := alert.Annotations["__dashboardUid__"]
-		if len(dashboardUid) > 0 {
-			u.Path = path.Join(externalPath, "/d/", dashboardUid)
-			extended.DashboardURL = u.String()
-			panelId := alert.Annotations["__panelId__"]
-			if len(panelId) > 0 {
-				u.RawQuery = "viewPanel=" + panelId
-				extended.PanelURL = u.String()
-			}
-		}
-
-		matchers := make([]string, 0)
-		for key, value := range alert.Labels {
-			if !(strings.HasPrefix(key, "__") && strings.HasSuffix(key, "__")) {
-				matchers = append(matchers, key+"="+value)
-			}
-		}
-		sort.Strings(matchers)
-		u.Path = path.Join(externalPath, "/alerting/silence/new")
-		u.RawQuery = "alertmanager=grafana&matchers=" + url.QueryEscape(strings.Join(matchers, ","))
-		extended.SilenceURL = u.String()
 	}
 
-	// remove "private" annotations & labels so they don't show up in the template
-	extended.Annotations = removePrivateItems(extended.Annotations)
-	extended.Labels = removePrivateItems(extended.Labels)
+	matchers := make([]string, 0)
+	for key, value := range alert.Labels {
+		if !(strings.HasPrefix(key, "__") && strings.HasSuffix(key, "__")) {
+			matchers = append(matchers, key+"="+value)
+		}
+	}
+	sort.Strings(matchers)
+	u.Path = path.Join(externalPath, "/alerting/silence/new")
+	u.RawQuery = "alertmanager=grafana&matchers=" + url.QueryEscape(strings.Join(matchers, ","))
+	extended.SilenceURL = u.String()
 
-	return &extended, nil
+	return extended
 }
 
-func ExtendData(data *template.Data) (*ExtendedData, error) {
+func ExtendData(data *template.Data, logger log.Logger) *ExtendedData {
 	alerts := []ExtendedAlert{}
 
 	for _, alert := range data.Alerts {
-		extendedAlert, err := extendAlert(alert, data.ExternalURL)
-		if err != nil {
-			return nil, err
-		}
+		extendedAlert := extendAlert(alert, data.ExternalURL, logger)
 		alerts = append(alerts, *extendedAlert)
 	}
 
@@ -124,15 +119,12 @@ func ExtendData(data *template.Data) (*ExtendedData, error) {
 
 		ExternalURL: data.ExternalURL,
 	}
-	return extended, nil
+	return extended
 }
 
-func TmplText(ctx context.Context, tmpl *template.Template, alerts []*types.Alert, l log.Logger, tmplErr *error) (func(string) string, *ExtendedData, error) {
+func TmplText(ctx context.Context, tmpl *template.Template, alerts []*types.Alert, l log.Logger, tmplErr *error) (func(string) string, *ExtendedData) {
 	promTmplData := notify.GetTemplateData(ctx, tmpl, alerts, gokit_log.NewLogfmtLogger(logging.NewWrapper(l)))
-	data, err := ExtendData(promTmplData)
-	if err != nil {
-		return nil, nil, err
-	}
+	data := ExtendData(promTmplData, l)
 
 	return func(name string) (s string) {
 		if *tmplErr != nil {
@@ -140,7 +132,7 @@ func TmplText(ctx context.Context, tmpl *template.Template, alerts []*types.Aler
 		}
 		s, *tmplErr = tmpl.ExecuteTextString(name, data)
 		return s
-	}, data, nil
+	}, data
 }
 
 // Firing returns the subset of alerts that are firing.

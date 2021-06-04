@@ -2,7 +2,6 @@ package channels
 
 import (
 	"context"
-	"errors"
 	"net/url"
 	"testing"
 
@@ -84,14 +83,6 @@ func TestTelegramNotifier(t *testing.T) {
 			name:         "Error in initing",
 			settings:     `{}`,
 			expInitError: alerting.ValidationError{Reason: "Could not find Bot Token in settings"},
-		}, {
-			name: "Error in building message",
-			settings: `{
-				"bottoken": "abcdefgh0123456789",
-				"chatid": "someid",
-				"message": "{{ .BrokenTemplate }"
-			}`,
-			expMsgError: errors.New("template: :1: unexpected \"}\" in operand"),
 		},
 	}
 

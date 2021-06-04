@@ -27,6 +27,14 @@ import {
 import { PanelOptions } from './models.gen';
 import { ScaleDistribution } from '@grafana/ui/src/components/uPlot/models.gen';
 
+function incrRoundDn(num: number, incr: number) {
+  return Math.floor(num / incr) * incr;
+}
+
+function incrRoundUp(num: number, incr: number) {
+  return Math.ceil(num / incr) * incr;
+}
+
 export interface HistogramProps extends Themeable2 {
   options: PanelOptions; // used for diff
   alignedFrame: DataFrame; // This could take HistogramFields
@@ -70,7 +78,24 @@ const prepConfig = (frame: DataFrame, theme: GrafanaTheme2) => {
     distribution: ScaleDistribution.Linear,
     orientation: ScaleOrientation.Horizontal,
     direction: ScaleDirection.Right,
-    range: (u) => [u.data[0][0], u.data[0][u.data[0].length - 1] + bucketSize],
+    range: (u, wantedMin, wantedMax) => {
+      let fullRangeMin = u.data[0][0];
+      let fullRangeMax = u.data[0][u.data[0].length - 1];
+
+      // snap to bucket divisors...
+
+      if (wantedMax === fullRangeMax) {
+        wantedMax += bucketSize;
+      } else {
+        wantedMax = incrRoundUp(wantedMax, bucketSize);
+      }
+
+      if (wantedMin > fullRangeMin) {
+        wantedMin = incrRoundDn(wantedMin, bucketSize);
+      }
+
+      return [wantedMin, wantedMax];
+    },
   });
 
   builder.addScale({
@@ -112,6 +137,14 @@ const prepConfig = (frame: DataFrame, theme: GrafanaTheme2) => {
     //ticks: false,
     //gap: 15,
     theme,
+  });
+
+  builder.setCursor({
+    drag: {
+      x: true,
+      y: false,
+      setScale: true,
+    },
   });
 
   let pathBuilder = uPlot.paths.bars!({ align: 1, size: [1, Infinity] });

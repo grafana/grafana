@@ -228,8 +228,14 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
   metricFindQueryInternal(query: string): Promise<MetricFindValue[]> {
     // workspaces() - Get workspaces in the default subscription
     const workspacesQuery = query.match(/^workspaces\(\)/i);
-    if (workspacesQuery && this.defaultSubscriptionId) {
-      return this.getWorkspaces(this.defaultSubscriptionId);
+    if (workspacesQuery) {
+      if (this.defaultSubscriptionId) {
+        return this.getWorkspaces(this.defaultSubscriptionId);
+      } else {
+        throw new Error(
+          'No subscription ID. Specify a default subscription ID in the data source config to use workspaces() without a subscription ID'
+        );
+      }
     }
 
     // workspaces("abc-def-etc") - Get workspaces a specified subscription
