@@ -10,7 +10,6 @@ Grafana allows you to share dashboards and panels with other users within an org
 - A Snapshot
 - An embedded link (for panels only)
 - An export link (for dashboards only)
-- Library panel
 
 Refer to [Share a dashboard]({{< relref "share-dashboard.md" >}}) and [Share a panel]({{< relref "share-panel.md" >}}) for more information.
 
