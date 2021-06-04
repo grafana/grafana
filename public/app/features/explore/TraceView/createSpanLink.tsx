@@ -1,4 +1,4 @@
-import { DataLink, dateTime, Field, mapInternalLinkToExplore, TimeRange } from '@grafana/data';
+import { DataLink, dateTime, Field, mapInternalLinkToExplore, rangeUtil, TimeRange } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 import { Icon } from '@grafana/ui';
 import { SplitOpen } from 'app/types/explore';
@@ -83,12 +83,12 @@ function getLokiQueryFromSpan(span: TraceSpan, keys?: string[]): string {
  */
 function getTimeRangeFromSpan(span: TraceSpan, traceToLogsOptions?: TraceToLogsOptions): TimeRange {
   const adjustedStartTime = traceToLogsOptions?.spanStartTimeShift
-    ? span.startTime / 1000 + traceToLogsOptions.spanStartTimeShift
+    ? span.startTime / 1000 - rangeUtil.intervalToMs(traceToLogsOptions.spanStartTimeShift)
     : span.startTime / 1000;
   const from = dateTime(adjustedStartTime);
   const spanEndMs = (span.startTime + span.duration) / 1000;
   const adjustedEndTime = traceToLogsOptions?.spanEndTimeShift
-    ? spanEndMs + traceToLogsOptions.spanEndTimeShift
+    ? spanEndMs + rangeUtil.intervalToMs(traceToLogsOptions.spanEndTimeShift)
     : spanEndMs;
   const to = dateTime(adjustedEndTime);
 

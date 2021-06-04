@@ -134,8 +134,8 @@ describe('createSpanLinkFactory', () => {
       const splitOpenFn = jest.fn();
       const createLink = createSpanLinkFactory(splitOpenFn, {
         datasourceUid: 'lokiUid',
-        spanStartTimeShift: -60000, // 1 minute earlier
-        spanEndTimeShift: 60000, // 1 minute after
+        spanStartTimeShift: '1m',
+        spanEndTimeShift: '1m',
       });
 
       expect(createLink).toBeDefined();

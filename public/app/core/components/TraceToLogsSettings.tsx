@@ -12,8 +12,8 @@ import React from 'react';
 export interface TraceToLogsOptions {
   datasourceUid?: string;
   tags?: string[];
-  spanStartTimeShift?: number;
-  spanEndTimeShift?: number;
+  spanStartTimeShift?: string;
+  spanEndTimeShift?: string;
 }
 
 export interface TraceToLogsData extends DataSourceJsonData {
@@ -71,42 +71,44 @@ export function TraceToLogsSettings({ options, onOptionsChange }: Props) {
 
       <InlineFieldRow>
         <InlineField
-          label="Span start time shift (ms)"
+          label="Span start time shift"
           labelWidth={26}
           grow
-          tooltip="Shifts the start time of the span. Default 0 ms"
+          tooltip="Shifts the start time of the span. Default 0 (Time units can be used here, for example: 5s, 1m, 3h)"
         >
           <Input
-            value={options.jsonData.tracesToLogs?.spanStartTimeShift || ''}
-            type="number"
+            type="text"
+            placeholder="1h"
             width={40}
             onChange={(v) =>
               updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'tracesToLogs', {
                 ...options.jsonData.tracesToLogs,
-                spanStartTimeShift: v.currentTarget.value ? parseInt(v.currentTarget.value, 10) : undefined,
+                spanStartTimeShift: v.currentTarget.value,
               })
             }
+            value={options.jsonData.tracesToLogs?.spanStartTimeShift || ''}
           />
         </InlineField>
       </InlineFieldRow>
 
       <InlineFieldRow>
         <InlineField
-          label="Span end time shift (ms)"
+          label="Span end time shift"
           labelWidth={26}
           grow
-          tooltip="Shifts the end time of the span. Default 0 ms"
+          tooltip="Shifts the end time of the span. Default 0 Time units can be used here, for example: 5s, 1m, 3h"
         >
           <Input
-            value={options.jsonData.tracesToLogs?.spanEndTimeShift || ''}
-            type="number"
+            type="text"
+            placeholder="1h"
             width={40}
             onChange={(v) =>
               updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'tracesToLogs', {
                 ...options.jsonData.tracesToLogs,
-                spanEndTimeShift: v.currentTarget.value ? parseInt(v.currentTarget.value, 10) : undefined,
+                spanEndTimeShift: v.currentTarget.value,
               })
             }
+            value={options.jsonData.tracesToLogs?.spanEndTimeShift || ''}
           />
         </InlineField>
       </InlineFieldRow>
