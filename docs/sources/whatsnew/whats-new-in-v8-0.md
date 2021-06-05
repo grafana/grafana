@@ -30,7 +30,7 @@ To learn more about the differences between new alerts and the legacy alerts, re
 
 ### Library panels
 
-Library panels allow users to build panels that can be used in multiple dashboards. Any updates made to that shared panel will then automatically be applied to all the dashboards that have that panel.
+Library panels allow users to build panels that can be used in multiple dashboards. Any updates made to that shared panel will then automatically be applied to all the dashboards that have that panel. For instructions on how to create, add, unlink and manage library panels, refer to [Library panels]({{< relref "../panels/panel-library.md" >}}).
 
 ### Real-time streaming
 
@@ -49,7 +49,13 @@ The Prometheus metrics browser allows you to quickly find metrics and select rel
 
 ### Bar chart visualization (beta)
 
-The Bar chart panel is a new visualization that allows categorical data display.
+The Bar chart panel is a new visualization that supports categorical data. It only supports one data frame and it needs to have at least one string field that will be used as the category for an X or Y axis and one or more numerical fields.
+
+{{< figure src="/static/img/docs/bar-chart-panel/bar-chart-example-v8-0.png" max-width="1025px" caption="Bar chart example" >}}
+
+To use it with time series you first have to add a **Reduce** transform.
+
+For more information, refer to [Bar chart visualization]({{< relref "../panels/visualizations/bar-chart.md" >}}).
 
 ### State timeline visualization (beta)
 
@@ -67,7 +73,8 @@ For more information, refer to [State timeline visualization]({{< relref "../pan
 
 ### Status history visualization (beta)
 
-A sister panel to the state timeline is the new Status history panel visualization. It can display periodic state in a grid. Works with both numerical, string or boolean state.
+A sister panel to the state timeline is the new Status history panel visualization. It can display periodic states in a grid view. It supports both numerical, string, or boolean states. You can assign colors using value mappings, thresholds, or gradient color. For more information, refer to [Status history]({{< relref "../panels/visualizations/status-history.md" >}}).
+schemes.
 
 ![Status grid visualization](/static/img/docs/status-grid/status-grid-8-0.png)
 
@@ -75,7 +82,9 @@ A sister panel to the state timeline is the new Status history panel visualizati
 
 This hidden feature of the old Graph panel is now a standalone visualization. It combines a histogram transformation and bar chart visualization into a single, integrated, easy-to-use panel. There is also a new standalone histogram transformation that can be paired with any visualization.
 
-![Histogram visualization](/static/img/docs/histogram/histogram-8-0.png)
+{{< figure src="/static/img/docs/histogram/histogram-8-0.png" max-width="1025px" caption="Histogram example" >}}
+
+For more information, refer to [Histogram]({{< relref "../panels/visualizations/histogram.md" >}})
 
 ### Time series visualization updates
 
@@ -84,14 +93,23 @@ The Time series is out of beta! We are removing the `Beta` tag and graduating th
 - **Time series** is now the default visualization option, replacing the **Graph (old)**.
 - The Time series panel now supports stacking. For more information, refer to [Graph stacked time series]({{< relref "../panels/visualizations/time-series/graph-time-series-stacking.md" >}}).
 - You can now add alerts in the Time series panel, just like the old Graph panel.
+- Updated [connect null values]({{< relref "../panels/visualizations/time-series/graph-time-series-as-lines.md#connect-null-values" >}}) options.
 - We added support for a shared crosshair and a tooltip that’s now smarter when it comes to data display in the tooltip.
 - Various performance improvements.
 
 [Time series panel]({{< relref "../panels/visualizations/time-series/_index.md" >}}) topics have been updated as a result of these changes.
 
+### Node graph visualization updates
+
+You can now expand the node graph for the displayed trace when using the Trace to logs feature.. Depending on the data source, this can show spans of the trace as nodes in the graph, or as some additional context like service map based on the current trace.
+
+We also added a grid view and the ability to explore hidden nodes.
+
+[Tracing in Explore]({{< relref "../explore/trace-integration.md" >}}) and [Node graph]({{< relref "../panels/visualizations/node-graph.md" >}}) were updated as a result of these changes.
+
 ### Pie chart visualization updates
 
-The Pie chart is out of beta! We are removing the `Beta` tag and graduating the Pie chart visualization to a stable state.
+The Pie chart is out of beta! We are removing the `beta` tag and graduating the Pie chart visualization to a stable state.
 
 ### Panel editor updates
 
@@ -156,6 +174,16 @@ These improvements affect any subsequent data updates or interactions, including
 ### Data source updates
 
 The following data source updates are included with this Grafana release.
+
+#### Azure Monitor data source
+
+Azure Resource Graph is now supported in the Azure Monitor data source. This is a service in Azure that is designed to extend Azure Resource Management by providing efficient and performance resource exploration. 
+
+Also, in addition to querying Log Analytics Workspaces, you can now query the logs for any individual [supported resource](https://docs.microsoft.com/en-us/azure/azure-monitor/essentials/metrics-supported), or for all resources in a subscription or resource group. 
+
+> **Note:** In Grafana 7.5 we started the deprecation for separate Application Insights queries, in favor of querying Application Insights resources through Metrics and Logs. In Grafana 8.0 new Application Insights and Insights Analytics queries cannot be made, and existing queries have been made read-only.
+
+For a comprehensive list of all enhancements, refer to the [Azure Monitor data source documentation]({{< relref "../datasources/azuremonitor.md" >}}).
 
 #### Elasticsearch data source
 

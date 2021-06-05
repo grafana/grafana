@@ -7,7 +7,6 @@ import (
 )
 
 // AddMigration defines database migrations.
-// If Alerting NG is not enabled does nothing.
 func AddTablesMigrations(mg *migrator.Migrator) {
 	AddAlertDefinitionMigrations(mg, 60)
 	AddAlertDefinitionVersionMigrations(mg)
@@ -194,6 +193,14 @@ func AddAlertRuleMigrations(mg *migrator.Migrator, defaultIntervalSeconds int64)
 
 	// add labels column
 	mg.AddMigration("add column labels to alert_rule", migrator.NewAddColumnMigration(alertRule, &migrator.Column{Name: "labels", Type: migrator.DB_Text, Nullable: true}))
+
+	mg.AddMigration("remove unique index from alert_rule on org_id, title columns", migrator.NewDropIndexMigration(alertRule, &migrator.Index{
+		Cols: []string{"org_id", "title"}, Type: migrator.UniqueIndex,
+	}))
+
+	mg.AddMigration("add index in alert_rule on org_id, namespase_uid and title columns", migrator.NewAddIndexMigration(alertRule, &migrator.Index{
+		Cols: []string{"org_id", "namespace_uid", "title"}, Type: migrator.UniqueIndex,
+	}))
 }
 
 func AddAlertRuleVersionMigrations(mg *migrator.Migrator) {

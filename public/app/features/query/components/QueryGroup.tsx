@@ -344,7 +344,7 @@ export class QueryGroup extends PureComponent<Props, State> {
           </Button>
         )}
         {config.expressionsEnabled && this.isExpressionsSupported(dsSettings) && (
-          <Tooltip content="Experimental feature: queries could stop working in next version" placement="right">
+          <Tooltip content="Beta feature: queries could stop working in next version" placement="right">
             <Button
               icon="plus"
               onClick={this.onAddExpressionClick}

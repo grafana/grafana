@@ -15,7 +15,7 @@ export default {
       disable: true,
     },
     controls: {
-      exclude: ['className', 'series', 'timeRange', 'ariaLabel', 'legendDisplayMode'],
+      exclude: ['className', 'ariaLabel', 'legendDisplayMode'],
     },
   },
   argTypes: {
@@ -24,7 +24,7 @@ export default {
     rightAxisSeries: { name: 'Right y-axis series, i.e. A,C' },
     timeZone: { control: { type: 'radio', options: ['browser', 'utc'] } },
     width: { control: { type: 'range', min: 200, max: 800 } },
-    height: { control: { type: 'range', min: 200, max: 800 } },
+    height: { control: { type: 'range', min: 1700, step: 300 } },
     lineWidth: { control: { type: 'range', min: 1, max: 10 } },
   },
 };
