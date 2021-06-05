@@ -7,6 +7,7 @@ import { segmentStyles } from './styles';
 const getStyles = stylesFactory((theme: GrafanaTheme, hidden: boolean) => {
   return {
     wrapper: css`
+      max-width: 500px;
       display: flex;
       flex-direction: column;
     `,

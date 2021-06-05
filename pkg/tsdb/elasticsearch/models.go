@@ -43,6 +43,7 @@ var metricAggType = map[string]string{
 	"min":            "Min",
 	"extended_stats": "Extended Stats",
 	"percentiles":    "Percentiles",
+	"top_metrics":    "Top Metrics",
 	"cardinality":    "Unique Count",
 	"moving_avg":     "Moving Average",
 	"moving_fn":      "Moving Function",

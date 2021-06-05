@@ -20,9 +20,10 @@ export default {
   argTypes: {
     disabledOptions: {
       name: 'Disabled item',
-      control: { type: 'select', options: ['', 'graphite', 'prometheus', 'elastic'] },
+      control: { type: 'select' },
+      options: ['', 'graphite', 'prometheus', 'elastic'],
     },
-    size: { control: { type: 'select' } },
+    size: { control: { type: 'select' }, options: ['xs', 'sm', 'md', 'lg'] },
   },
 };
 
