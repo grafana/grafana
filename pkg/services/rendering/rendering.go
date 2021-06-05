@@ -41,6 +41,7 @@ type RenderingService struct {
 	renderCSVAction renderCSVFunc
 	domain          string
 	inProgressCount int
+	version         string
 
 	Cfg                *setting.Cfg
 	RemoteCacheService *remotecache.RemoteCache
@@ -90,7 +91,14 @@ func ProvideService(cfg *setting.Cfg, remoteCache *remotecache.RemoteCache, pm p
 func (rs *RenderingService) Run(ctx context.Context) error {
 	if rs.remoteAvailable() {
 		rs.log = rs.log.New("renderer", "http")
-		rs.log.Info("Backend rendering via external http server")
+
+		version, err := rs.getRemotePluginVersion()
+		if err != nil {
+			rs.log.Info("Couldn't get remote renderer version", "err", err)
+		}
+
+		rs.log.Info("Backend rendering via external http server", "version", version)
+		rs.version = version
 		rs.renderAction = rs.renderViaHTTP
 		rs.renderCSVAction = rs.renderCSVViaHTTP
 		<-ctx.Done()
@@ -105,6 +113,7 @@ func (rs *RenderingService) Run(ctx context.Context) error {
 			return err
 		}
 
+		rs.version = rs.pluginInfo.Info.Version
 		rs.renderAction = rs.renderViaPlugin
 		rs.renderCSVAction = rs.renderCSVViaPlugin
 		<-ctx.Done()
@@ -129,6 +138,10 @@ func (rs *RenderingService) remoteAvailable() bool {
 
 func (rs *RenderingService) IsAvailable() bool {
 	return rs.remoteAvailable() || rs.pluginAvailable()
+}
+
+func (rs *RenderingService) Version() string {
+	return rs.version
 }
 
 func (rs *RenderingService) RenderErrorImage(err error) (*RenderResult, error) {

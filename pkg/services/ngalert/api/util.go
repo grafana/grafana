@@ -118,6 +118,10 @@ func (p *AlertingProxy) withReq(
 					errMessage = message.(string)
 				}
 			}
+		} else if strings.HasPrefix(resp.Header().Get("Content-Type"), "text/html") {
+			// if Content-Type is text/html
+			// do not return the body
+			errMessage = "redacted html"
 		}
 		return ErrResp(status, errors.New(errMessage), "")
 	}
