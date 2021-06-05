@@ -158,27 +158,47 @@ export function buildHistogram(frames: DataFrame[], options?: HistogramTransform
 
   // if bucket size is auto, try to calc from all numeric fields
   if (!bucketSize) {
-    let min = Infinity,
-      max = -Infinity;
+    let allValues: number[] = [];
 
     // TODO: include field configs!
     for (const frame of frames) {
       for (const field of frame.fields) {
         if (field.type === FieldType.number) {
-          for (const value of field.values.toArray()) {
-            min = Math.min(min, value);
-            max = Math.max(max, value);
-          }
+          allValues = allValues.concat(field.values.toArray());
         }
       }
     }
 
-    let range = Math.abs(max - min);
+    allValues.sort((a, b) => a - b);
+
+    let smallestDelta = Infinity;
+
+    // TODO: case of 1 value needs work
+    if (allValues.length === 1) {
+      smallestDelta = 1;
+    } else {
+      for (let i = 1; i < allValues.length; i++) {
+        let delta = allValues[i] - allValues[i - 1];
+
+        if (delta !== 0) {
+          smallestDelta = Math.min(smallestDelta, delta);
+        }
+      }
+    }
+
+    let min = allValues[0];
+    let max = allValues[allValues.length - 1];
+
+    let range = max - min;
+
+    const targetSize = range / APPROX_BUCKETS;
 
     // choose bucket
-    for (const size of histogramBucketSizes) {
-      if (range / APPROX_BUCKETS < size) {
-        bucketSize = size;
+    for (let i = 0; i < histogramBucketSizes.length; i++) {
+      let _bucketSize = histogramBucketSizes[i];
+
+      if (targetSize < _bucketSize && _bucketSize >= smallestDelta) {
+        bucketSize = _bucketSize;
         break;
       }
     }
