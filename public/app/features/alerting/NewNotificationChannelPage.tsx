@@ -13,7 +13,7 @@ import {
 } from './utils/notificationChannels';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { createNotificationChannel, loadNotificationTypes, testNotificationChannel } from './state/actions';
-import { NotificationChannelType, NotificationChannelDTO, StoreState } from '../../types';
+import { NotificationChannelType, NotificationChannelDTO, StoreState, Dethunked } from '../../types';
 import { resetSecureField } from './state/reducers';
 
 interface OwnProps {}
@@ -24,9 +24,9 @@ interface ConnectedProps {
 }
 
 interface DispatchProps {
-  createNotificationChannel: typeof createNotificationChannel;
-  loadNotificationTypes: typeof loadNotificationTypes;
-  testNotificationChannel: typeof testNotificationChannel;
+  createNotificationChannel: Dethunked<typeof createNotificationChannel>;
+  loadNotificationTypes: Dethunked<typeof loadNotificationTypes>;
+  testNotificationChannel: Dethunked<typeof testNotificationChannel>;
   resetSecureField: typeof resetSecureField;
 }
 

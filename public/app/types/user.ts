@@ -88,11 +88,11 @@ export interface UserOrg {
 }
 
 export interface UserAdminState {
-  user: UserDTO | null;
+  user?: UserDTO;
   sessions: UserSession[];
   orgs: UserOrg[];
   isLoading: boolean;
-  error?: UserAdminError | null;
+  error?: UserAdminError;
 }
 
 export interface UserAdminError {

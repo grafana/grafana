@@ -18,6 +18,7 @@ import {
   SyncInfo,
   LdapConnectionInfo,
   AccessControlAction,
+  Dethunked,
 } from 'app/types';
 import {
   loadLdapState,
@@ -32,16 +33,16 @@ import { contextSrv } from 'app/core/core';
 interface Props extends GrafanaRouteComponentProps<{}, { username: string }> {
   navModel: NavModel;
   ldapConnectionInfo: LdapConnectionInfo;
-  ldapUser: LdapUser;
-  ldapSyncInfo: SyncInfo;
-  ldapError: LdapError;
+  ldapUser?: LdapUser;
+  ldapSyncInfo?: SyncInfo;
+  ldapError?: LdapError;
   userError?: LdapError;
 
-  loadLdapState: typeof loadLdapState;
-  loadLdapSyncStatus: typeof loadLdapSyncStatus;
-  loadUserMapping: typeof loadUserMapping;
-  clearUserError: typeof clearUserError;
-  clearUserMappingInfo: typeof clearUserMappingInfo;
+  loadLdapState: Dethunked<typeof loadLdapState>;
+  loadLdapSyncStatus: Dethunked<typeof loadLdapSyncStatus>;
+  loadUserMapping: Dethunked<typeof loadUserMapping>;
+  clearUserError: Dethunked<typeof clearUserError>;
+  clearUserMappingInfo: Dethunked<typeof clearUserMappingInfo>;
 }
 
 interface State {

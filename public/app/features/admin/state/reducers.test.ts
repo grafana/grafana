@@ -17,15 +17,15 @@ import { LdapState, LdapUser, UserAdminState, UserDTO, UserListAdminState } from
 
 const makeInitialLdapState = (): LdapState => ({
   connectionInfo: [],
-  syncInfo: null,
-  user: null,
-  ldapError: null,
-  connectionError: null,
-  userError: null,
+  syncInfo: undefined,
+  user: undefined,
+  ldapError: undefined,
+  connectionError: undefined,
+  userError: undefined,
 });
 
 const makeInitialUserAdminState = (): UserAdminState => ({
-  user: null,
+  user: undefined,
   sessions: [],
   orgs: [],
   isLoading: true,
@@ -95,7 +95,7 @@ describe('LDAP page reducer', () => {
                 error: (null as unknown) as string,
               },
             ],
-            ldapError: null,
+            ldapError: undefined,
           });
       });
     });
@@ -167,7 +167,7 @@ describe('LDAP page reducer', () => {
         .thenStateShouldEqual({
           ...makeInitialLdapState(),
           user: getTestUserMapping(),
-          userError: null,
+          userError: undefined,
         });
     });
   });
@@ -189,7 +189,7 @@ describe('LDAP page reducer', () => {
         )
         .thenStateShouldEqual({
           ...makeInitialLdapState(),
-          user: null,
+          user: undefined,
           userError: {
             title: 'User not found',
             body: 'Cannot find user',
@@ -208,7 +208,7 @@ describe('LDAP page reducer', () => {
         .whenActionIsDispatched(clearUserMappingInfoAction())
         .thenStateShouldEqual({
           ...makeInitialLdapState(),
-          user: null,
+          user: undefined,
         });
     });
   });

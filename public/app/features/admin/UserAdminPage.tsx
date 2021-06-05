@@ -9,7 +9,16 @@ import { UserProfile } from './UserProfile';
 import { UserPermissions } from './UserPermissions';
 import { UserSessions } from './UserSessions';
 import { UserLdapSyncInfo } from './UserLdapSyncInfo';
-import { StoreState, UserDTO, UserOrg, UserSession, SyncInfo, UserAdminError, AccessControlAction } from 'app/types';
+import {
+  StoreState,
+  UserDTO,
+  UserOrg,
+  UserSession,
+  SyncInfo,
+  UserAdminError,
+  AccessControlAction,
+  Dethunked,
+} from 'app/types';
 import {
   loadAdminUserPage,
   revokeSession,
@@ -38,19 +47,19 @@ interface Props extends GrafanaRouteComponentProps<{ id: string }> {
   isLoading: boolean;
   error: UserAdminError;
 
-  loadAdminUserPage: typeof loadAdminUserPage;
-  revokeSession: typeof revokeSession;
-  revokeAllSessions: typeof revokeAllSessions;
-  updateUser: typeof updateUser;
-  setUserPassword: typeof setUserPassword;
-  disableUser: typeof disableUser;
-  enableUser: typeof enableUser;
-  deleteUser: typeof deleteUser;
-  updateUserPermissions: typeof updateUserPermissions;
-  addOrgUser: typeof addOrgUser;
-  updateOrgUserRole: typeof updateOrgUserRole;
-  deleteOrgUser: typeof deleteOrgUser;
-  syncLdapUser: typeof syncLdapUser;
+  loadAdminUserPage: Dethunked<typeof loadAdminUserPage>;
+  revokeSession: Dethunked<typeof revokeSession>;
+  revokeAllSessions: Dethunked<typeof revokeAllSessions>;
+  updateUser: Dethunked<typeof updateUser>;
+  setUserPassword: Dethunked<typeof setUserPassword>;
+  disableUser: Dethunked<typeof disableUser>;
+  enableUser: Dethunked<typeof enableUser>;
+  deleteUser: Dethunked<typeof deleteUser>;
+  updateUserPermissions: Dethunked<typeof updateUserPermissions>;
+  addOrgUser: Dethunked<typeof addOrgUser>;
+  updateOrgUserRole: Dethunked<typeof updateOrgUserRole>;
+  deleteOrgUser: Dethunked<typeof deleteOrgUser>;
+  syncLdapUser: Dethunked<typeof syncLdapUser>;
 }
 
 interface State {
@@ -174,12 +183,12 @@ export class UserAdminPage extends PureComponent<Props, State> {
 
 const mapStateToProps = (state: StoreState) => ({
   navModel: getNavModel(state.navIndex, 'global-users'),
-  user: state.userAdmin.user,
+  user: state.userAdmin.user!,
   sessions: state.userAdmin.sessions,
   orgs: state.userAdmin.orgs,
-  ldapSyncInfo: state.ldap.syncInfo,
+  ldapSyncInfo: state.ldap.syncInfo!,
   isLoading: state.userAdmin.isLoading,
-  error: state.userAdmin.error,
+  error: state.userAdmin.error!,
 });
 
 const mapDispatchToProps = {
