@@ -15,7 +15,7 @@ import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT } from 'app/core
 import { DashboardPanel } from './DashboardPanel';
 import { DashboardModel, PanelModel } from '../state';
 import { Subscription } from 'rxjs';
-import { PanelGridUpdatedEvent, DashboardPanelsChangedEvent } from 'app/types/events';
+import { PanelGridPositionLayoutEvent, DashboardPanelsChangedEvent } from 'app/types/events';
 
 let lastGridWidth = 1200;
 let ignoreNextWidthChange = false;
@@ -154,21 +154,19 @@ export class DashboardGrid extends PureComponent<Props, State> {
         panelPos.isDraggable = panel.collapsed;
       }
 
-      this.eventSubs.add(panel.events.subscribe(PanelGridUpdatedEvent, this.onPanelGridPosUpdated));
+      this.eventSubs.add(panel.events.subscribe(PanelGridPositionLayoutEvent, this.onUpdatePanelGridPositionLayout));
       layout.push(panelPos);
     }
 
     return layout;
   }
 
-  onPanelGridPosUpdated = (event: PanelGridUpdatedEvent) => {
-    const layoutIndexItem = this.state.layout.findIndex(
-      (item) => Number.parseInt(item.i, 10) === event.payload.panelId
-    );
+  onUpdatePanelGridPositionLayout = (event: PanelGridPositionLayoutEvent) => {
+    const indexGridItem = this.state.layout.findIndex((item) => Number.parseInt(item.i, 10) === event.payload.panelId);
     const newLayout = [...this.state.layout];
-    newLayout[layoutIndexItem] = { ...newLayout[layoutIndexItem], ...event.payload.gridPos };
+    newLayout[indexGridItem] = { ...newLayout[indexGridItem], ...event.payload.gridPos };
     this.setState({ layout: newLayout, shouldForceUpdate: false });
-    this.updateGridPos(newLayout[layoutIndexItem], newLayout);
+    this.updateGridPos(newLayout[indexGridItem], newLayout);
   };
 
   onLayoutChange = (newLayout: ReactGridLayout.Layout[]) => {
