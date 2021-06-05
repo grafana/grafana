@@ -8,19 +8,31 @@ import { AlignedData, join } from './joinDataFrames';
 import { getDisplayProcessor } from '../../field';
 import { createTheme, GrafanaTheme2 } from '../../themes';
 
-/* eslint-disable */
-// prettier-ignore
 /**
  * @internal
  */
+/* eslint-disable */
+// prettier-ignore
 export const histogramBucketSizes = [
-    .001, .002, .0025, .005,
-     .01,  .02,  .025,  .05,
-      .1,   .2,   .25,   .5,
-       1,    2,     4,    5,
-      10,   20,    25,   50,
-     100,  200,   250,  500,
-    1000, 2000,  2500, 5000,
+  1e-9,  2e-9,  2.5e-9,  4e-9,  5e-9,
+  1e-8,  2e-8,  2.5e-8,  4e-8,  5e-8,
+  1e-7,  2e-7,  2.5e-7,  4e-7,  5e-7,
+  1e-6,  2e-6,  2.5e-6,  4e-6,  5e-6,
+  1e-5,  2e-5,  2.5e-5,  4e-5,  5e-5,
+  1e-4,  2e-4,  2.5e-4,  4e-4,  5e-4,
+  1e-3,  2e-3,  2.5e-3,  4e-3,  5e-3,
+  1e-2,  2e-2,  2.5e-2,  4e-2,  5e-2,
+  1e-1,  2e-1,  2.5e-1,  4e-1,  5e-1,
+  1,     2,              4,     5,
+  1e+1,  2e+1,  2.5e+1,  4e+1,  5e+1,
+  1e+2,  2e+2,  2.5e+2,  4e+2,  5e+2,
+  1e+3,  2e+3,  2.5e+3,  4e+3,  5e+3,
+  1e+4,  2e+4,  2.5e+4,  4e+4,  5e+4,
+  1e+5,  2e+5,  2.5e+5,  4e+5,  5e+5,
+  1e+6,  2e+6,  2.5e+6,  4e+6,  5e+6,
+  1e+7,  2e+7,  2.5e+7,  4e+7,  5e+7,
+  1e+8,  2e+8,  2.5e+8,  4e+8,  5e+8,
+  1e+9,  2e+9,  2.5e+9,  4e+9,  5e+9,
 ];
 /* eslint-enable */
 
@@ -135,6 +147,8 @@ export function getHistogramFields(frame: DataFrame): HistogramFields | undefine
   return undefined;
 }
 
+const APPROX_BUCKETS = 20;
+
 /**
  * @alpha
  */
@@ -144,27 +158,47 @@ export function buildHistogram(frames: DataFrame[], options?: HistogramTransform
 
   // if bucket size is auto, try to calc from all numeric fields
   if (!bucketSize) {
-    let min = Infinity,
-      max = -Infinity;
+    let allValues: number[] = [];
 
     // TODO: include field configs!
     for (const frame of frames) {
       for (const field of frame.fields) {
         if (field.type === FieldType.number) {
-          for (const value of field.values.toArray()) {
-            min = Math.min(min, value);
-            max = Math.max(max, value);
-          }
+          allValues = allValues.concat(field.values.toArray());
         }
       }
     }
 
-    let range = Math.abs(max - min);
+    allValues.sort((a, b) => a - b);
+
+    let smallestDelta = Infinity;
+
+    // TODO: case of 1 value needs work
+    if (allValues.length === 1) {
+      smallestDelta = 1;
+    } else {
+      for (let i = 1; i < allValues.length; i++) {
+        let delta = allValues[i] - allValues[i - 1];
+
+        if (delta !== 0) {
+          smallestDelta = Math.min(smallestDelta, delta);
+        }
+      }
+    }
+
+    let min = allValues[0];
+    let max = allValues[allValues.length - 1];
+
+    let range = max - min;
+
+    const targetSize = range / APPROX_BUCKETS;
 
     // choose bucket
-    for (const size of histogramBucketSizes) {
-      if (range / 10 < size) {
-        bucketSize = size;
+    for (let i = 0; i < histogramBucketSizes.length; i++) {
+      let _bucketSize = histogramBucketSizes[i];
+
+      if (targetSize < _bucketSize && _bucketSize >= smallestDelta) {
+        bucketSize = _bucketSize;
         break;
       }
     }
