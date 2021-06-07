@@ -340,7 +340,6 @@ func awsServiceNamespace(dsType string) string {
 // so we can instrument outbound connections
 func newConntrackDialContext(name string) func(context.Context, string, string) (net.Conn, error) {
 	return conntrack.NewDialContextFunc(
-		conntrack.DialWithTracing(),
 		conntrack.DialWithName(name),
 		conntrack.DialWithDialer(&net.Dialer{
 			Timeout:   time.Duration(setting.DataProxyTimeout) * time.Second,
