@@ -3,30 +3,35 @@ package server
 import (
 	"context"
 	"errors"
+	"fmt"
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/infra/backgroundsvcs"
+	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/setting"
 
 	"github.com/stretchr/testify/require"
 )
 
 type testService struct {
-	started chan struct{}
-	initErr error
-	runErr  error
+	started    chan struct{}
+	runErr     error
+	isDisabled bool
 }
 
-func newTestService(initErr, runErr error) *testService {
+func newTestService(runErr error, disabled bool) *testService {
 	return &testService{
-		started: make(chan struct{}),
-		initErr: initErr,
-		runErr:  runErr,
+		started:    make(chan struct{}),
+		runErr:     runErr,
+		isDisabled: disabled,
 	}
 }
 
 func (s *testService) Run(ctx context.Context) error {
+	if s.isDisabled {
+		return fmt.Errorf("Shouldn't run disabled service")
+	}
+
 	if s.runErr != nil {
 		return s.runErr
 	}
@@ -35,10 +40,13 @@ func (s *testService) Run(ctx context.Context) error {
 	return ctx.Err()
 }
 
-func testServer(t *testing.T) *Server {
+func (s *testService) IsDisabled() bool {
+	return s.isDisabled
+}
+
+func testServer(t *testing.T, services ...registry.BackgroundService) *Server {
 	t.Helper()
-	s, err := newServer(Options{}, setting.NewCfg(), nil, nil, nil, backgroundsvcs.ProvideService(
-		nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil))
+	s, err := newServer(Options{}, setting.NewCfg(), nil, nil, nil, registry.NewBackgroundServiceRegistry(services...))
 	require.NoError(t, err)
 	// Required to skip configuration initialization that causes
 	// DI errors in this test.
@@ -47,11 +55,8 @@ func testServer(t *testing.T) *Server {
 }
 
 func TestServer_Run_Error(t *testing.T) {
-	s := testServer(t)
 	testErr := errors.New("boom")
-	s.backgroundServices.AddBackgroundService(newTestService(nil, nil))
-	s.backgroundServices.AddBackgroundService(newTestService(nil, testErr))
-
+	s := testServer(t, newTestService(nil, false), newTestService(testErr, false))
 	err := s.Run()
 	require.ErrorIs(t, err, testErr)
 	require.NotZero(t, s.ExitCode(err))
@@ -60,8 +65,7 @@ func TestServer_Run_Error(t *testing.T) {
 func TestServer_Shutdown(t *testing.T) {
 	ctx := context.Background()
 
-	s := testServer(t)
-	s.backgroundServices.AddBackgroundService(newTestService(nil, nil))
+	s := testServer(t, newTestService(nil, false), newTestService(nil, true))
 
 	ch := make(chan error)
 
@@ -69,8 +73,10 @@ func TestServer_Shutdown(t *testing.T) {
 		defer close(ch)
 
 		// Wait until all services launched.
-		for _, svc := range s.backgroundServices.BackgroundServices {
-			<-svc.(*testService).started
+		for _, svc := range s.backgroundServices {
+			if !svc.(*testService).isDisabled {
+				<-svc.(*testService).started
+			}
 		}
 		ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
 		defer cancel()

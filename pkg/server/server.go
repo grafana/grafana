@@ -2,24 +2,27 @@ package server
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strconv"
 	"sync"
 
 	"github.com/grafana/grafana/pkg/api"
 	_ "github.com/grafana/grafana/pkg/extensions"
-	"github.com/grafana/grafana/pkg/infra/backgroundsvcs"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/login/social"
+	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
+	"golang.org/x/sync/errgroup"
 )
 
 // Options contains parameters for the New function.
@@ -34,8 +37,8 @@ type Options struct {
 
 // New returns a new instance of Server.
 func New(opts Options, cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, httpServer *api.HTTPServer,
-	provisioningService provisioning.ProvisioningService, backgroundServices backgroundsvcs.Service) (*Server, error) {
-	s, err := newServer(opts, cfg, sqlStore, httpServer, provisioningService, backgroundServices)
+	provisioningService provisioning.ProvisioningService, backgroundServiceProvider *registry.BackgroundServiceRegistry) (*Server, error) {
+	s, err := newServer(opts, cfg, sqlStore, httpServer, provisioningService, backgroundServiceProvider)
 	if err != nil {
 		return nil, err
 	}
@@ -48,11 +51,13 @@ func New(opts Options, cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, httpServer
 }
 
 func newServer(opts Options, cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, httpServer *api.HTTPServer,
-	provisioningService provisioning.ProvisioningService, backgroundServices backgroundsvcs.Service) (*Server, error) {
+	provisioningService provisioning.ProvisioningService, backgroundServiceProvider *registry.BackgroundServiceRegistry) (*Server, error) {
 	rootCtx, shutdownFn := context.WithCancel(context.Background())
+	childRoutines, childCtx := errgroup.WithContext(rootCtx)
 
 	s := &Server{
-		context:             rootCtx,
+		context:             childCtx,
+		childRoutines:       childRoutines,
 		sqlStore:            sqlStore,
 		HTTPServer:          httpServer,
 		provisioningService: provisioningService,
@@ -64,7 +69,7 @@ func newServer(opts Options, cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, http
 		version:             opts.Version,
 		commit:              opts.Commit,
 		buildBranch:         opts.BuildBranch,
-		backgroundServices:  backgroundServices,
+		backgroundServices:  backgroundServiceProvider.Services,
 	}
 
 	return s, nil
@@ -74,6 +79,7 @@ func newServer(opts Options, cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, http
 type Server struct {
 	context          context.Context
 	shutdownFn       context.CancelFunc
+	childRoutines    *errgroup.Group
 	log              log.Logger
 	cfg              *setting.Cfg
 	shutdownOnce     sync.Once
@@ -85,7 +91,7 @@ type Server struct {
 	version            string
 	commit             string
 	buildBranch        string
-	backgroundServices backgroundsvcs.Service
+	backgroundServices []registry.BackgroundService
 
 	sqlStore            *sqlstore.SQLStore
 	HTTPServer          *api.HTTPServer
@@ -130,13 +136,40 @@ func (s *Server) Run() error {
 		return err
 	}
 
+	services := s.backgroundServices
+
 	// Start background services.
-	eg := s.backgroundServices.Run(s.context)
+	for _, svc := range services {
+		if registry.IsDisabled(svc) {
+			continue
+		}
+
+		service := svc
+		serviceName := reflect.TypeOf(service).String()
+		s.childRoutines.Go(func() error {
+			select {
+			case <-s.context.Done():
+				return s.context.Err()
+			default:
+			}
+			s.log.Debug("Starting background service " + serviceName)
+			err := service.Run(s.context)
+			// Do not return context.Canceled error since errgroup.Group only
+			// returns the first error to the caller - thus we can miss a more
+			// interesting error.
+			if err != nil && !errors.Is(err, context.Canceled) {
+				s.log.Error("Stopped background service "+serviceName, "reason", err)
+				return fmt.Errorf("%s run error: %w", serviceName, err)
+			}
+			s.log.Debug("Stopped background service "+serviceName, "reason", err)
+			return nil
+		})
+	}
 
 	s.notifySystemd("READY=1")
 
 	s.log.Debug("Waiting on services...")
-	return eg.Wait()
+	return s.childRoutines.Wait()
 }
 
 // Shutdown initiates Grafana graceful shutdown. This shuts down all
