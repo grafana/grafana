@@ -1,7 +1,7 @@
 import { useEffect, useMemo } from 'react';
 import { useDispatch } from 'react-redux';
 import { CombinedRule, RuleIdentifier, RuleNamespace } from 'app/types/unified-alerting';
-import { AsyncRequestMapSlice, AsyncRequestState } from '../utils/redux';
+import { AsyncRequestMapSlice, AsyncRequestState, initialAsyncRequestState } from '../utils/redux';
 import { useCombinedRuleNamespaces } from './useCombinedRuleNamespaces';
 import { equalIdentifiers, getRuleIdentifier } from '../utils/rules';
 import { useUnifiedAlertingSelector } from './useUnifiedAlertingSelector';
@@ -20,9 +20,7 @@ export function useCombinedRule(
       return;
     }
 
-    let combinedRule: CombinedRule | undefined;
-
-    namespaces: for (const namespace of combinedRules) {
+    for (const namespace of combinedRules) {
       for (const group of namespace.groups) {
         for (const rule of group.rules) {
           if (!rule.rulerRule) {
@@ -32,14 +30,13 @@ export function useCombinedRule(
           const id = getRuleIdentifier(ruleSourceName, namespace.name, group.name, rule.rulerRule);
 
           if (equalIdentifiers(id, identifier)) {
-            combinedRule = rule;
-            break namespaces;
+            return rule;
           }
         }
       }
     }
 
-    return combinedRule;
+    return;
   }, [identifier, ruleSourceName, combinedRules]);
 
   return {
