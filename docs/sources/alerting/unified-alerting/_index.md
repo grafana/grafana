@@ -20,6 +20,7 @@ Alerts have four main components:
 
 You can perform the following tasks for alerts:
 
+
 - [Create a Grafana managed alert rule]({{< relref "alerting-rules/create-grafana-managed-rule.md" >}})
 - [Create a Cortex or Loki managed alert rule]({{< relref "alerting-rules/create-cortex-loki-managed-rule.md" >}})
 - [View existing alert rules and their current state]({{< relref "alerting-rules/rule-list.md" >}})
@@ -49,7 +50,7 @@ Metric Name | Type | Description
 ---------- | ----------- | ----------
 `alerting.alerts` | gauge | How many alerts by state
 `alerting.request_duration_seconds` | histogram | Histogram of requests to the Alerting API
-`alerting.active_configurations` | gauge | The number of active, non default alertmanager configurations for grafana managed alerts
+`alerting.active_configurations` | gauge | The number of active, non default Alertmanager configurations for grafana managed alerts
 `alerting.rule_evaluations_total` | counter | The total number of rule evaluations
 `alerting.rule_evaluation_failures_total` | counter | The total number of rule evaluation failures
 `alerting.rule_evaluation_duration_seconds` | summary | The duration for a rule to execute

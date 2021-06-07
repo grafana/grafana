@@ -21,6 +21,8 @@ export function getLogAnalyticsManagementApiRoute(azureCloud: string): string {
       return 'chinaazuremonitor';
     case 'govazuremonitor':
       return 'govazuremonitor';
+    case 'germanyazuremonitor':
+      return 'germanyazuremonitor';
     default:
       throw new Error('The cloud not supported.');
   }
@@ -45,22 +47,6 @@ export function getAppInsightsApiRoute(azureCloud: string): string {
       return 'appinsights';
     case 'chinaazuremonitor':
       return 'chinaappinsights';
-    default:
-      throw new Error('The cloud not supported.');
-  }
-}
-
-export function getLogAnalyticsResourcePickerApiRoute(azureCloud: string) {
-  switch (azureCloud) {
-    case 'azuremonitor':
-      return 'azureresourcegraph';
-
-    case 'govazuremonitor': // Azure US Government
-      return 'govazureresourcegraph';
-
-    case 'chinaazuremonitor': // Azure China
-      return 'chinaazureresourcegraph';
-
     default:
       throw new Error('The cloud not supported.');
   }

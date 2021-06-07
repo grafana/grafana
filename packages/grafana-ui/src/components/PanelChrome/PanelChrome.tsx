@@ -1,7 +1,7 @@
 import React, { CSSProperties, ReactNode } from 'react';
 import { css } from '@emotion/css';
-import { useTheme, useStyles } from '../../themes';
-import { GrafanaTheme } from '@grafana/data';
+import { useStyles2, useTheme2 } from '../../themes';
+import { GrafanaTheme2 } from '@grafana/data';
 
 /**
  * @internal
@@ -31,8 +31,9 @@ export const PanelChrome: React.FC<PanelChromeProps> = ({
   padding = 'md',
   leftItems = [],
 }) => {
-  const theme = useTheme();
-  const styles = useStyles(getStyles);
+  const theme = useTheme2();
+  const styles = useStyles2(getStyles);
+
   const headerHeight = getHeaderHeight(theme, title, leftItems);
   const { contentStyle, innerWidth, innerHeight } = getContentStyle(padding, theme, width, headerHeight, height);
 
@@ -62,15 +63,21 @@ const itemsRenderer = (items: ReactNode[], renderer: (items: ReactNode[]) => Rea
   return toRender.length > 0 ? renderer(toRender) : null;
 };
 
-const getHeaderHeight = (theme: GrafanaTheme, title: string, items: ReactNode[]) => {
+const getHeaderHeight = (theme: GrafanaTheme2, title: string, items: ReactNode[]) => {
   if (title.length > 0 || items.length > 0) {
-    return theme.panelHeaderHeight;
+    return theme.spacing.gridSize * theme.components.panel.headerHeight;
   }
   return 0;
 };
 
-const getContentStyle = (padding: string, theme: GrafanaTheme, width: number, headerHeight: number, height: number) => {
-  const chromePadding = padding === 'md' ? theme.panelPadding : 0;
+const getContentStyle = (
+  padding: string,
+  theme: GrafanaTheme2,
+  width: number,
+  headerHeight: number,
+  height: number
+) => {
+  const chromePadding = padding === 'md' ? theme.components.panel.padding : 0;
   const panelBorder = 1 * 2;
   const innerWidth = width - chromePadding * 2 - panelBorder;
   const innerHeight = height - headerHeight - chromePadding * 2 - panelBorder;
@@ -82,12 +89,14 @@ const getContentStyle = (padding: string, theme: GrafanaTheme, width: number, he
   return { contentStyle, innerWidth, innerHeight };
 };
 
-const getStyles = (theme: GrafanaTheme) => {
+const getStyles = (theme: GrafanaTheme2) => {
+  const { padding, background, borderColor } = theme.components.panel;
+
   return {
     container: css`
       label: panel-container;
-      background-color: ${theme.colors.panelBg};
-      border: 1px solid ${theme.colors.panelBorder};
+      background-color: ${background};
+      border: 1px solid ${borderColor};
       position: relative;
       border-radius: 3px;
       height: 100%;
@@ -110,12 +119,13 @@ const getStyles = (theme: GrafanaTheme) => {
       text-overflow: ellipsis;
       overflow: hidden;
       white-space: nowrap;
-      padding-left: ${theme.panelPadding}px;
+      padding-left: ${theme.spacing(padding)};
       flex-grow: 1;
+      font-weight: ${theme.typography.fontWeightMedium};
     `,
     leftItems: css`
       display: flex;
-      padding-right: ${theme.panelPadding}px;
+      padding-right: ${theme.spacing(padding)};
     `,
   };
 };
