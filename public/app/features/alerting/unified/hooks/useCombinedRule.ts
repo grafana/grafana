@@ -87,7 +87,7 @@ function getRequestState(
   const state = slice[ruleSourceName];
 
   if (!state) {
-    return { loading: false, dispatched: false };
+    return initialAsyncRequestState;
   }
 
   return state;
