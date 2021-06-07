@@ -1,19 +1,22 @@
 +++
-title = "Old Grafana Alerts"
+title = "Legacy Grafana Alerts"
 aliases = ["/docs/grafana/latest/alerting/rules/", "/docs/grafana/latest/alerting/metrics/"]
 weight = 114
 +++
 
-# Old Grafana alerts
+# Legacy Grafana alerts
 
-Alerts allow you to know about problems in your systems moments after they occur. Robust and actionable alerts help you identify and resolve issues quickly, minimizing disruption to your services.
+Legacy Grafana alerts consists of two parts:
 
-Alerts have four main components:
+Alert rules - When the alert is triggered. Alert rules are defined by one or more conditions that are regularly evaluated by Grafana.
+Notification channel - How the alert is delivered. When the conditions of an alert rule are met, the Grafana notifies the channels configured for that alert.
 
-- Alert rule - One or more conditions, the frequency of evaluation, and the (optional) duration that a condition must be met before notifying.
-- Contact point - A channel for sending notifications when the conditions of an alert rule are met.
-- Notification policy - A set of matching and grouping criteria used to determine where, and how frequently, to send notifications. 
-- Silences - Date and matching criteria used to silence notifications. 
+Currently only the graph panel visualization supports alerts.
+
+Legacy aerts have two main components:
+
+- Alert rule - When the alert is triggered. Alert rules are defined by one or more conditions that are regularly evaluated by Grafana.
+- Notification channel -  How the alert is delivered. When the conditions of an alert rule are met, the Grafana notifies the channels configured for that alert.
 
 ## Alert tasks
 
