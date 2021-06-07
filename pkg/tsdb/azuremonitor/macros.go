@@ -6,7 +6,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/tsdb/interval"
 )
 
@@ -15,8 +17,8 @@ const sExpr = `\$` + rsIdentifier + `(?:\(([^\)]*)\))?`
 const escapeMultiExpr = `\$__escapeMulti\(('.*')\)`
 
 type kqlMacroEngine struct {
-	timeRange plugins.DataTimeRange
-	query     plugins.DataSubQuery
+	timeRange backend.TimeRange
+	query     backend.DataQuery
 }
 
 //  Macros:
@@ -29,18 +31,18 @@ type kqlMacroEngine struct {
 //   - $__escapeMulti('\\vm\eth0\Total','\\vm\eth2\Total') -> @'\\vm\eth0\Total',@'\\vm\eth2\Total'
 
 // KqlInterpolate interpolates macros for Kusto Query Language (KQL) queries
-func KqlInterpolate(query plugins.DataSubQuery, timeRange plugins.DataTimeRange, kql string, defaultTimeField ...string) (string, error) {
+func KqlInterpolate(query backend.DataQuery, dsInfo datasourceInfo, kql string, defaultTimeField ...string) (string, error) {
 	engine := kqlMacroEngine{}
 
 	defaultTimeFieldForAllDatasources := "timestamp"
 	if len(defaultTimeField) > 0 {
 		defaultTimeFieldForAllDatasources = defaultTimeField[0]
 	}
-	return engine.Interpolate(query, timeRange, kql, defaultTimeFieldForAllDatasources)
+	return engine.Interpolate(query, dsInfo, kql, defaultTimeFieldForAllDatasources)
 }
 
-func (m *kqlMacroEngine) Interpolate(query plugins.DataSubQuery, timeRange plugins.DataTimeRange, kql string, defaultTimeField string) (string, error) {
-	m.timeRange = timeRange
+func (m *kqlMacroEngine) Interpolate(query backend.DataQuery, dsInfo datasourceInfo, kql string, defaultTimeField string) (string, error) {
+	m.timeRange = query.TimeRange
 	m.query = query
 	rExp, _ := regexp.Compile(sExpr)
 	escapeMultiRegex, _ := regexp.Compile(escapeMultiExpr)
@@ -69,7 +71,7 @@ func (m *kqlMacroEngine) Interpolate(query plugins.DataSubQuery, timeRange plugi
 		for i, arg := range args {
 			args[i] = strings.Trim(arg, " ")
 		}
-		res, err := m.evaluateMacro(groups[1], defaultTimeField, args)
+		res, err := m.evaluateMacro(groups[1], defaultTimeField, args, dsInfo)
 		if err != nil && macroError == nil {
 			macroError = err
 			return "macro_error()"
@@ -84,7 +86,7 @@ func (m *kqlMacroEngine) Interpolate(query plugins.DataSubQuery, timeRange plugi
 	return kql, nil
 }
 
-func (m *kqlMacroEngine) evaluateMacro(name string, defaultTimeField string, args []string) (string, error) {
+func (m *kqlMacroEngine) evaluateMacro(name string, defaultTimeField string, args []string, dsInfo datasourceInfo) (string, error) {
 	switch name {
 	case "timeFilter":
 		timeColumn := defaultTimeField
@@ -92,27 +94,34 @@ func (m *kqlMacroEngine) evaluateMacro(name string, defaultTimeField string, arg
 			timeColumn = args[0]
 		}
 		return fmt.Sprintf("['%s'] >= datetime('%s') and ['%s'] <= datetime('%s')", timeColumn,
-			m.timeRange.GetFromAsTimeUTC().Format(time.RFC3339), timeColumn,
-			m.timeRange.GetToAsTimeUTC().Format(time.RFC3339)), nil
+			m.timeRange.From.UTC().Format(time.RFC3339), timeColumn,
+			m.timeRange.To.UTC().Format(time.RFC3339)), nil
 	case "timeFrom", "__from":
-		return fmt.Sprintf("datetime('%s')", m.timeRange.GetFromAsTimeUTC().Format(time.RFC3339)), nil
+		return fmt.Sprintf("datetime('%s')", m.timeRange.From.UTC().Format(time.RFC3339)), nil
 	case "timeTo", "__to":
-		return fmt.Sprintf("datetime('%s')", m.timeRange.GetToAsTimeUTC().Format(time.RFC3339)), nil
+		return fmt.Sprintf("datetime('%s')", m.timeRange.To.UTC().Format(time.RFC3339)), nil
 	case "interval":
 		var it time.Duration
-		if m.query.IntervalMS == 0 {
-			to := m.timeRange.MustGetTo().UnixNano()
-			from := m.timeRange.MustGetFrom().UnixNano()
+		if m.query.Interval.Milliseconds() == 0 {
+			to := m.timeRange.To.UnixNano()
+			from := m.timeRange.From.UnixNano()
 			// default to "100 datapoints" if nothing in the query is more specific
 			defaultInterval := time.Duration((to - from) / 60)
-			var err error
-			it, err = interval.GetIntervalFrom(m.query.DataSource, m.query.Model, defaultInterval)
+			model, err := simplejson.NewJson(m.query.JSON)
 			if err != nil {
-				azlog.Warn("Unable to get interval from query", "datasource", m.query.DataSource, "model", m.query.Model)
+				azlog.Warn("Unable to parse model from query", "JSON", m.query.JSON)
 				it = defaultInterval
+			} else {
+				it, err = interval.GetIntervalFrom(&models.DataSource{
+					JsonData: simplejson.NewFromAny(dsInfo.JSONData),
+				}, model, defaultInterval)
+				if err != nil {
+					azlog.Warn("Unable to get interval from query", "model", model)
+					it = defaultInterval
+				}
 			}
 		} else {
-			it = time.Millisecond * time.Duration(m.query.IntervalMS)
+			it = time.Millisecond * time.Duration(m.query.Interval.Milliseconds())
 		}
 		return fmt.Sprintf("%dms", int(it/time.Millisecond)), nil
 	case "contains":

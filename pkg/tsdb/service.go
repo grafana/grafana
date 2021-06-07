@@ -27,11 +27,14 @@ import (
 
 // NewService returns a new Service.
 func NewService(cfg *setting.Cfg, _ *cloudwatch.CloudWatchService,
-	cloudMonitoringService *cloudmonitoring.Service, azureMonitorService *azuremonitor.Service,
+	cloudMonitoringService *cloudmonitoring.Service, _ *azuremonitor.Service,
 	pluginManager plugins.Manager, postgresService *postgres.PostgresService,
 	httpClientProvider httpclient.Provider, _ *testdatasource.TestDataPlugin,
 	backendPluginManager backendplugin.Manager) *Service {
 	s := newService(cfg, pluginManager, backendPluginManager)
+
+	// register backend data sources using legacy plugin
+	// contracts/non-SDK contracts
 	s.registry["graphite"] = graphite.New(httpClientProvider)
 	s.registry["opentsdb"] = opentsdb.New(httpClientProvider)
 	s.registry["prometheus"] = prometheus.New(httpClientProvider)
@@ -41,7 +44,6 @@ func NewService(cfg *setting.Cfg, _ *cloudwatch.CloudWatchService,
 	s.registry["mysql"] = mysql.New(httpClientProvider)
 	s.registry["elasticsearch"] = elasticsearch.New(httpClientProvider)
 	s.registry["stackdriver"] = cloudMonitoringService.NewExecutor
-	s.registry["grafana-zure-monitor-datasource"] = azureMonitorService.NewExecutor
 	s.registry["loki"] = loki.New(httpClientProvider)
 	s.registry["tempo"] = tempo.New(httpClientProvider)
 
