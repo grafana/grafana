@@ -16,7 +16,7 @@ The Azure Monitor data source supports multiple services in the Azure cloud:
 
 ## Add the data source
 
-The Azure Monitor data source can access metrics from three different services. Configure access to the services that you plan to use. To use different credentials for different Azure services, configure multiple Azure Monitor data sources.The Azure Monitor data source can access metrics from three different services. Configure access to the services that you plan to use. To use different credentials for different Azure services, configure multiple Azure Monitor data sources.
+The Azure Monitor data source can access metrics from three different services. Configure access to the services that you plan to use. To use different credentials for different Azure services, configure multiple Azure Monitor data sources.
 
 - [Guide to setting up an Azure Active Directory Application for Azure Monitor.](https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-create-service-principal-portal)
 - [Guide to setting up an Azure Active Directory Application for Azure Monitor Logs.](https://dev.loganalytics.io/documentation/Authorization/AAD-Setup)
@@ -25,7 +25,7 @@ The Azure Monitor data source can access metrics from three different services. 
 
 1. In the name field, Grafana will automatically fill in a name for the data source - `Azure Monitor` or something like `Azure Monitor - 3`. If you are going to configure multiple data sources, then change the name to something more informative.
 
-1. If you are using Azure Monitor, you need 4 pieces of information from the Azure portal (see link above for detailed instructions):
+1. Fill in the Azure AD App Registration details:
 
    - **Tenant Id** (Azure Active Directory -> Properties -> Directory ID)
    - **Client Id** (Azure Active Directory -> App Registrations -> Choose your app -> Application ID)
@@ -36,11 +36,6 @@ The Azure Monitor data source can access metrics from three different services. 
    {{< figure src="/static/img/docs/v62/config_1_azure_monitor_details.png" class="docs-image--no-shadow" caption="Azure Monitor Configuration Details" >}}
 
    - The Subscription Id can be changed per query. Save the data source and refresh the page to see the list of subscriptions available for the specified Client Id.
-
-1. If you are also using the Azure Monitor Logs service, then you need to specify these two configuration values (or you can reuse the Client Id and Secret from the previous step).
-
-   - Client Id (Azure Active Directory -> App Registrations -> Choose your app -> Application ID)
-   - Client Secret (Azure Active Directory -> App Registrations -> Choose your app -> Keys -> Create a key -> Use client secret)
 
 1. Test that the configuration details are correct by clicking on the "Save & Test" button:
    {{< figure src="/static/img/docs/v62/config_3_save_and_test.png" class="docs-image--no-shadow" caption="Save and Test" >}}
