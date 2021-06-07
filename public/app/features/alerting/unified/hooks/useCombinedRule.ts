@@ -81,7 +81,7 @@ function getRequestState(
   slice: AsyncRequestMapSlice<RulerRulesConfigDTO | RuleNamespace[] | null>
 ): AsyncRequestState<RulerRulesConfigDTO | RuleNamespace[] | null> {
   if (!ruleSourceName) {
-    return { loading: false, dispatched: false };
+    return initialAsyncRequestState;
   }
 
   const state = slice[ruleSourceName];
