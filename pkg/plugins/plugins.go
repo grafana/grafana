@@ -11,7 +11,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	grpcplugin2 "github.com/grafana/grafana-plugin-sdk-go/backend/grpcplugin"
-	glog "github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/grpcplugin"
 	goplugin "github.com/hashicorp/go-plugin"
@@ -26,7 +26,7 @@ type PluginV2 struct {
 
 	BackendClient backendplugin.Plugin
 
-	logger         glog.Logger
+	logger         log.Logger
 	mutex          sync.RWMutex
 	decommissioned bool
 
@@ -92,7 +92,7 @@ type InstallOpts struct {
 	backend.StreamHandler
 }
 
-func (p *PluginV2) Logger() glog.Logger {
+func (p *PluginV2) Logger() log.Logger {
 	return p.logger
 }
 
@@ -118,7 +118,7 @@ func (p *PluginV2) AttachBackendDetails(env []string) {
 			grpcplugin2.ProtocolVersion: grpcplugin.GetV2PluginSet(),
 		},
 	}
-	p.logger = glog.New("pluginID", p.ID)
+	p.logger = log.New("pluginID", p.ID)
 }
 
 func (p *PluginV2) Start(ctx context.Context) error {
