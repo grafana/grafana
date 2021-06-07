@@ -8,8 +8,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/require"
@@ -18,36 +17,28 @@ import (
 func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 	datasource := &AzureLogAnalyticsDatasource{}
 	fromStart := time.Date(2018, 3, 15, 13, 0, 0, 0, time.UTC).In(time.Local)
-
-	timeRange := plugins.DataTimeRange{
-		From: fmt.Sprintf("%v", fromStart.Unix()*1000),
-		To:   fmt.Sprintf("%v", fromStart.Add(34*time.Minute).Unix()*1000),
-	}
+	timeRange := backend.TimeRange{From: fromStart, To: fromStart.Add(34 * time.Minute)}
 
 	tests := []struct {
 		name                     string
-		queryModel               []plugins.DataSubQuery
-		timeRange                plugins.DataTimeRange
+		queryModel               []backend.DataQuery
 		azureLogAnalyticsQueries []*AzureLogAnalyticsQuery
 		Err                      require.ErrorAssertionFunc
 	}{
 		{
-			name:      "Query with macros should be interpolated",
-			timeRange: timeRange,
-			queryModel: []plugins.DataSubQuery{
+			name: "Query with macros should be interpolated",
+			queryModel: []backend.DataQuery{
 				{
-					DataSource: &models.DataSource{
-						JsonData: simplejson.NewFromAny(map[string]interface{}{}),
-					},
-					Model: simplejson.NewFromAny(map[string]interface{}{
+					JSON: []byte(fmt.Sprintf(`{
 						"queryType": "Azure Log Analytics",
-						"azureLogAnalytics": map[string]interface{}{
+						"azureLogAnalytics": {
 							"resource":     "/subscriptions/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/resourceGroups/cloud-datasources/providers/Microsoft.OperationalInsights/workspaces/AppInsightsTestDataWorkspace",
 							"query":        "query=Perf | where $__timeFilter() | where $__contains(Computer, 'comp1','comp2') | summarize avg(CounterValue) by bin(TimeGenerated, $__interval), Computer",
-							"resultFormat": timeSeries,
-						},
-					}),
-					RefID: "A",
+							"resultFormat": "%s"
+						}
+					}`, timeSeries)),
+					RefID:     "A",
+					TimeRange: timeRange,
 				},
 			},
 			azureLogAnalyticsQueries: []*AzureLogAnalyticsQuery{
@@ -55,36 +46,34 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 					RefID:        "A",
 					ResultFormat: timeSeries,
 					URL:          "v1/subscriptions/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/resourceGroups/cloud-datasources/providers/Microsoft.OperationalInsights/workspaces/AppInsightsTestDataWorkspace/query",
-					Model: simplejson.NewFromAny(map[string]interface{}{
-						"azureLogAnalytics": map[string]interface{}{
+					JSON: []byte(fmt.Sprintf(`{
+						"queryType": "Azure Log Analytics",
+						"azureLogAnalytics": {
+							"resource":     "/subscriptions/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/resourceGroups/cloud-datasources/providers/Microsoft.OperationalInsights/workspaces/AppInsightsTestDataWorkspace",
 							"query":        "query=Perf | where $__timeFilter() | where $__contains(Computer, 'comp1','comp2') | summarize avg(CounterValue) by bin(TimeGenerated, $__interval), Computer",
-							"resultFormat": timeSeries,
-							"workspace":    "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
-						},
-					}),
-					Params: url.Values{"query": {"query=Perf | where ['TimeGenerated'] >= datetime('2018-03-15T13:00:00Z') and ['TimeGenerated'] <= datetime('2018-03-15T13:34:00Z') | where ['Computer'] in ('comp1','comp2') | summarize avg(CounterValue) by bin(TimeGenerated, 34000ms), Computer"}},
-					Target: "query=query%3DPerf+%7C+where+%5B%27TimeGenerated%27%5D+%3E%3D+datetime%28%272018-03-15T13%3A00%3A00Z%27%29+and+%5B%27TimeGenerated%27%5D+%3C%3D+datetime%28%272018-03-15T13%3A34%3A00Z%27%29+%7C+where+%5B%27Computer%27%5D+in+%28%27comp1%27%2C%27comp2%27%29+%7C+summarize+avg%28CounterValue%29+by+bin%28TimeGenerated%2C+34000ms%29%2C+Computer",
+							"resultFormat": "%s"
+						}
+					}`, timeSeries)),
+					Params:    url.Values{"query": {"query=Perf | where ['TimeGenerated'] >= datetime('2018-03-15T13:00:00Z') and ['TimeGenerated'] <= datetime('2018-03-15T13:34:00Z') | where ['Computer'] in ('comp1','comp2') | summarize avg(CounterValue) by bin(TimeGenerated, 34000ms), Computer"}},
+					Target:    "query=query%3DPerf+%7C+where+%5B%27TimeGenerated%27%5D+%3E%3D+datetime%28%272018-03-15T13%3A00%3A00Z%27%29+and+%5B%27TimeGenerated%27%5D+%3C%3D+datetime%28%272018-03-15T13%3A34%3A00Z%27%29+%7C+where+%5B%27Computer%27%5D+in+%28%27comp1%27%2C%27comp2%27%29+%7C+summarize+avg%28CounterValue%29+by+bin%28TimeGenerated%2C+34000ms%29%2C+Computer",
+					TimeRange: timeRange,
 				},
 			},
 			Err: require.NoError,
 		},
 
 		{
-			name:      "Legacy queries with a workspace GUID should use workspace-centric url",
-			timeRange: timeRange,
-			queryModel: []plugins.DataSubQuery{
+			name: "Legacy queries with a workspace GUID should use workspace-centric url",
+			queryModel: []backend.DataQuery{
 				{
-					DataSource: &models.DataSource{
-						JsonData: simplejson.NewFromAny(map[string]interface{}{}),
-					},
-					Model: simplejson.NewFromAny(map[string]interface{}{
+					JSON: []byte(fmt.Sprintf(`{
 						"queryType": "Azure Log Analytics",
-						"azureLogAnalytics": map[string]interface{}{
+						"azureLogAnalytics": {
 							"workspace":    "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
 							"query":        "query=Perf",
-							"resultFormat": timeSeries,
-						},
-					}),
+							"resultFormat": "%s"
+						}
+					}`, timeSeries)),
 					RefID: "A",
 				},
 			},
@@ -93,13 +82,14 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 					RefID:        "A",
 					ResultFormat: timeSeries,
 					URL:          "v1/workspaces/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/query",
-					Model: simplejson.NewFromAny(map[string]interface{}{
-						"azureLogAnalytics": map[string]interface{}{
+					JSON: []byte(fmt.Sprintf(`{
+						"queryType": "Azure Log Analytics",
+						"azureLogAnalytics": {
 							"workspace":    "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
 							"query":        "query=Perf",
-							"resultFormat": timeSeries,
-						},
-					}),
+							"resultFormat": "%s"
+						}
+					}`, timeSeries)),
 					Params: url.Values{"query": {"query=Perf"}},
 					Target: "query=query%3DPerf",
 				},
@@ -108,21 +98,17 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 		},
 
 		{
-			name:      "Legacy workspace queries with a resource URI (from a template variable) should use resource-centric url",
-			timeRange: timeRange,
-			queryModel: []plugins.DataSubQuery{
+			name: "Legacy workspace queries with a resource URI (from a template variable) should use resource-centric url",
+			queryModel: []backend.DataQuery{
 				{
-					DataSource: &models.DataSource{
-						JsonData: simplejson.NewFromAny(map[string]interface{}{}),
-					},
-					Model: simplejson.NewFromAny(map[string]interface{}{
+					JSON: []byte(fmt.Sprintf(`{
 						"queryType": "Azure Log Analytics",
-						"azureLogAnalytics": map[string]interface{}{
+						"azureLogAnalytics": {
 							"workspace":    "/subscriptions/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/resourceGroups/cloud-datasources/providers/Microsoft.OperationalInsights/workspaces/AppInsightsTestDataWorkspace",
 							"query":        "query=Perf",
-							"resultFormat": timeSeries,
-						},
-					}),
+							"resultFormat": "%s"
+						}
+					}`, timeSeries)),
 					RefID: "A",
 				},
 			},
@@ -131,13 +117,14 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 					RefID:        "A",
 					ResultFormat: timeSeries,
 					URL:          "v1/subscriptions/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/resourceGroups/cloud-datasources/providers/Microsoft.OperationalInsights/workspaces/AppInsightsTestDataWorkspace/query",
-					Model: simplejson.NewFromAny(map[string]interface{}{
-						"azureLogAnalytics": map[string]interface{}{
+					JSON: []byte(fmt.Sprintf(`{
+						"queryType": "Azure Log Analytics",
+						"azureLogAnalytics": {
 							"workspace":    "/subscriptions/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/resourceGroups/cloud-datasources/providers/Microsoft.OperationalInsights/workspaces/AppInsightsTestDataWorkspace",
 							"query":        "query=Perf",
-							"resultFormat": timeSeries,
-						},
-					}),
+							"resultFormat": "%s"
+						}
+					}`, timeSeries)),
 					Params: url.Values{"query": {"query=Perf"}},
 					Target: "query=query%3DPerf",
 				},
@@ -146,21 +133,17 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 		},
 
 		{
-			name:      "Queries with a Resource should use resource-centric url",
-			timeRange: timeRange,
-			queryModel: []plugins.DataSubQuery{
+			name: "Queries with a Resource should use resource-centric url",
+			queryModel: []backend.DataQuery{
 				{
-					DataSource: &models.DataSource{
-						JsonData: simplejson.NewFromAny(map[string]interface{}{}),
-					},
-					Model: simplejson.NewFromAny(map[string]interface{}{
+					JSON: []byte(fmt.Sprintf(`{
 						"queryType": "Azure Log Analytics",
-						"azureLogAnalytics": map[string]interface{}{
+						"azureLogAnalytics": {
 							"resource":     "/subscriptions/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/resourceGroups/cloud-datasources/providers/Microsoft.OperationalInsights/workspaces/AppInsightsTestDataWorkspace",
 							"query":        "query=Perf",
-							"resultFormat": timeSeries,
-						},
-					}),
+							"resultFormat": "%s"
+						}
+					}`, timeSeries)),
 					RefID: "A",
 				},
 			},
@@ -169,13 +152,14 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 					RefID:        "A",
 					ResultFormat: timeSeries,
 					URL:          "v1/subscriptions/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/resourceGroups/cloud-datasources/providers/Microsoft.OperationalInsights/workspaces/AppInsightsTestDataWorkspace/query",
-					Model: simplejson.NewFromAny(map[string]interface{}{
-						"azureLogAnalytics": map[string]interface{}{
+					JSON: []byte(fmt.Sprintf(`{
+						"queryType": "Azure Log Analytics",
+						"azureLogAnalytics": {
 							"resource":     "/subscriptions/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/resourceGroups/cloud-datasources/providers/Microsoft.OperationalInsights/workspaces/AppInsightsTestDataWorkspace",
 							"query":        "query=Perf",
-							"resultFormat": timeSeries,
-						},
-					}),
+							"resultFormat": "%s"
+						}
+					}`, timeSeries)),
 					Params: url.Values{"query": {"query=Perf"}},
 					Target: "query=query%3DPerf",
 				},
@@ -186,9 +170,9 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			queries, err := datasource.buildQueries(tt.queryModel, tt.timeRange)
+			queries, err := datasource.buildQueries(tt.queryModel, datasourceInfo{})
 			tt.Err(t, err)
-			if diff := cmp.Diff(tt.azureLogAnalyticsQueries, queries, cmpopts.IgnoreUnexported(simplejson.Json{})); diff != "" {
+			if diff := cmp.Diff(tt.azureLogAnalyticsQueries[0], queries[0]); diff != "" {
 				t.Errorf("Result mismatch (-want +got):\n%s", diff)
 			}
 		})
@@ -234,6 +218,7 @@ func TestPluginRoutes(t *testing.T) {
 
 	tests := []struct {
 		name              string
+		dsInfo            datasourceInfo
 		datasource        *AzureLogAnalyticsDatasource
 		expectedProxypass string
 		expectedRouteURL  string
@@ -241,14 +226,14 @@ func TestPluginRoutes(t *testing.T) {
 	}{
 		{
 			name: "plugin proxy route for the Azure public cloud",
+			dsInfo: datasourceInfo{
+				Settings: azureMonitorSettings{
+					AzureAuthType: AzureAuthClientSecret,
+					CloudName:     "azuremonitor",
+				},
+			},
 			datasource: &AzureLogAnalyticsDatasource{
 				cfg: cfg,
-				dsInfo: &models.DataSource{
-					JsonData: simplejson.NewFromAny(map[string]interface{}{
-						"azureAuthType": AzureAuthClientSecret,
-						"cloudName":     "azuremonitor",
-					}),
-				},
 			},
 			expectedProxypass: "loganalyticsazure",
 			expectedRouteURL:  "https://api.loganalytics.io/",
@@ -256,14 +241,14 @@ func TestPluginRoutes(t *testing.T) {
 		},
 		{
 			name: "plugin proxy route for the Azure China cloud",
+			dsInfo: datasourceInfo{
+				Settings: azureMonitorSettings{
+					AzureAuthType: AzureAuthClientSecret,
+					CloudName:     "chinaazuremonitor",
+				},
+			},
 			datasource: &AzureLogAnalyticsDatasource{
 				cfg: cfg,
-				dsInfo: &models.DataSource{
-					JsonData: simplejson.NewFromAny(map[string]interface{}{
-						"azureAuthType": AzureAuthClientSecret,
-						"cloudName":     "chinaazuremonitor",
-					}),
-				},
 			},
 			expectedProxypass: "chinaloganalyticsazure",
 			expectedRouteURL:  "https://api.loganalytics.azure.cn/",
@@ -271,14 +256,14 @@ func TestPluginRoutes(t *testing.T) {
 		},
 		{
 			name: "plugin proxy route for the Azure Gov cloud",
+			dsInfo: datasourceInfo{
+				Settings: azureMonitorSettings{
+					AzureAuthType: AzureAuthClientSecret,
+					CloudName:     "govazuremonitor",
+				},
+			},
 			datasource: &AzureLogAnalyticsDatasource{
 				cfg: cfg,
-				dsInfo: &models.DataSource{
-					JsonData: simplejson.NewFromAny(map[string]interface{}{
-						"azureAuthType": AzureAuthClientSecret,
-						"cloudName":     "govazuremonitor",
-					}),
-				},
 			},
 			expectedProxypass: "govloganalyticsazure",
 			expectedRouteURL:  "https://api.loganalytics.us/",
@@ -288,7 +273,7 @@ func TestPluginRoutes(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			route, proxypass, err := tt.datasource.getPluginRoute(plugin)
+			route, proxypass, err := tt.datasource.getPluginRoute(plugin, tt.dsInfo)
 			tt.Err(t, err)
 
 			if diff := cmp.Diff(tt.expectedRouteURL, route.URL, cmpopts.EquateNaNs()); diff != "" {
