@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -53,9 +54,9 @@ func (i *Interval) Milliseconds() int64 {
 	return i.Value.Nanoseconds() / int64(time.Millisecond)
 }
 
-func (ic *intervalCalculator) Calculate(timerange plugins.DataTimeRange, minInterval time.Duration) Interval {
-	to := timerange.MustGetTo().UnixNano()
-	from := timerange.MustGetFrom().UnixNano()
+func (ic *intervalCalculator) Calculate(timerange backend.TimeRange, minInterval time.Duration) Interval {
+	to := timerange.From.UnixNano()
+	from := timerange.To.UnixNano()
 	interval := time.Duration((to - from) / defaultRes)
 
 	if interval < minInterval {

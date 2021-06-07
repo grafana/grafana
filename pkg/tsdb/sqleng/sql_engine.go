@@ -15,7 +15,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -32,7 +31,7 @@ var ErrConnectionFailed = errors.New("failed to connect to server - please inspe
 // SQLMacroEngine interpolates macros into sql. It takes in the Query to have access to query context and
 // timeRange to be able to generate queries that use from and to.
 type SQLMacroEngine interface {
-	Interpolate(query plugins.DataSubQuery, timeRange plugins.DataTimeRange, sql string) (string, error)
+	Interpolate(query plugins.DataSubQuery, timeRange backend.TimeRange, sql string) (string, error)
 }
 
 // SqlQueryResultTransformer transforms a query result row to RowValues with proper types.
@@ -146,8 +145,9 @@ const rowLimit = 1000000
 // DataQuery queries for data.
 //nolint: staticcheck // plugins.DataPlugin deprecated
 func (e *dataPlugin) DataQuery(ctx context.Context, dsInfo *models.DataSource,
-	queryContext plugins.DataQuery) (plugins.DataResponse, error) {
-	ch := make(chan plugins.DataQueryResult, len(queryContext.Queries))
+	queryContext backend.DataQuery) (*backend.QueryDataResponse, error) {
+	result := backend.NewQueryDataResponse()
+	ch := make(chan backend.DataResponse, len(queryContext.Queries))
 	var wg sync.WaitGroup
 	// Execute each query in a goroutine and wait for them to finish afterwards
 	for _, query := range queryContext.Queries {
@@ -163,25 +163,23 @@ func (e *dataPlugin) DataQuery(ctx context.Context, dsInfo *models.DataSource,
 
 	// Read results from channels
 	close(ch)
-	result := plugins.DataResponse{
-		Results: make(map[string]plugins.DataQueryResult),
-	}
+	result.Responses = make(map[string]backend.DataResponse)
 	for queryResult := range ch {
-		result.Results[queryResult.RefID] = queryResult
+		result.Responses[queryResult.RefID] = queryResult
 	}
 
 	return result, nil
 }
 
 //nolint: staticcheck // plugins.DataQueryResult deprecated
-func (e *dataPlugin) executeQuery(query plugins.DataSubQuery, wg *sync.WaitGroup, queryContext plugins.DataQuery,
-	ch chan plugins.DataQueryResult) {
+func (e *dataPlugin) executeQuery(query plugins.DataSubQuery, wg *sync.WaitGroup, queryContext backend.DataQuery,
+	ch chan backend.DataResponse) {
 	defer wg.Done()
-
-	queryResult := plugins.DataQueryResult{
-		Meta:  simplejson.New(),
-		RefID: query.RefID,
-	}
+	queryResult := backend.DataResponse{}
+	// queryResult := plugins.DataQueryResult{
+	// 	Meta:  simplejson.New(),
+	// 	RefID: query.RefID,
+	// }
 
 	defer func() {
 		if r := recover(); r != nil {
@@ -201,10 +199,8 @@ func (e *dataPlugin) executeQuery(query plugins.DataSubQuery, wg *sync.WaitGroup
 	if rawSQL == "" {
 		panic("Query model property rawSql should not be empty at this point")
 	}
-	var timeRange plugins.DataTimeRange
-	if queryContext.TimeRange != nil {
-		timeRange = *queryContext.TimeRange
-	}
+
+	timeRange := queryContext.TimeRange
 
 	// global substitutions
 	interpolatedQuery, err := Interpolate(query, timeRange, rawSQL)
@@ -228,7 +224,7 @@ func (e *dataPlugin) executeQuery(query plugins.DataSubQuery, wg *sync.WaitGroup
 			ExecutedQueryString: interpolatedQuery,
 		})
 		queryResult.Error = fmt.Errorf("%s: %w", frameErr, err)
-		queryResult.Dataframes = plugins.NewDecodedDataFrames(data.Frames{&emptyFrame})
+		queryResult.Frames = data.Frames{&emptyFrame}
 		ch <- queryResult
 	}
 	session := e.engine.NewSession()
@@ -317,28 +313,28 @@ func (e *dataPlugin) executeQuery(query plugins.DataSubQuery, wg *sync.WaitGroup
 		}
 	}
 
-	queryResult.Dataframes = plugins.NewDecodedDataFrames(data.Frames{frame})
+	queryResult.Frames = data.Frames{frame}
 	ch <- queryResult
 }
 
 // Interpolate provides global macros/substitutions for all sql datasources.
-var Interpolate = func(query plugins.DataSubQuery, timeRange plugins.DataTimeRange, sql string) (string, error) {
+var Interpolate = func(query plugins.DataSubQuery, timeRange backend.TimeRange, sql string) (string, error) {
 	minInterval, err := interval.GetIntervalFrom(query.DataSource, query.Model, time.Second*60)
 	if err != nil {
 		return "", err
 	}
 	interval := sqlIntervalCalculator.Calculate(timeRange, minInterval)
-
 	sql = strings.ReplaceAll(sql, "$__interval_ms", strconv.FormatInt(interval.Milliseconds(), 10))
 	sql = strings.ReplaceAll(sql, "$__interval", interval.Text)
-	sql = strings.ReplaceAll(sql, "$__unixEpochFrom()", fmt.Sprintf("%d", timeRange.GetFromAsSecondsEpoch()))
-	sql = strings.ReplaceAll(sql, "$__unixEpochTo()", fmt.Sprintf("%d", timeRange.GetToAsSecondsEpoch()))
+
+	sql = strings.ReplaceAll(sql, "$__unixEpochFrom()", fmt.Sprintf("%d", timeRange.From.Unix()))
+	sql = strings.ReplaceAll(sql, "$__unixEpochTo()", fmt.Sprintf("%d", timeRange.To.Unix()))
 
 	return sql, nil
 }
 
 //nolint: staticcheck // plugins.DataPlugin deprecated
-func (e *dataPlugin) newProcessCfg(query plugins.DataSubQuery, queryContext plugins.DataQuery,
+func (e *dataPlugin) newProcessCfg(query plugins.DataSubQuery, queryContext backend.DataQuery,
 	rows *core.Rows, interpolatedQuery string) (*dataQueryModel, error) {
 	columnNames, err := rows.Columns()
 	if err != nil {
@@ -375,10 +371,8 @@ func (e *dataPlugin) newProcessCfg(query plugins.DataSubQuery, queryContext plug
 	}
 	//nolint: staticcheck // plugins.DataPlugin deprecated
 
-	if queryContext.TimeRange != nil {
-		qm.TimeRange.From = queryContext.TimeRange.GetFromAsTimeUTC()
-		qm.TimeRange.To = queryContext.TimeRange.GetToAsTimeUTC()
-	}
+	qm.TimeRange.From = queryContext.TimeRange.From.UTC()
+	qm.TimeRange.To = queryContext.TimeRange.To.UTC()
 
 	format := query.Model.Get("format").MustString("time_series")
 	switch format {
@@ -438,7 +432,7 @@ type dataQueryModel struct {
 	metricIndex       int
 	rows              *core.Rows
 	metricPrefix      bool
-	queryContext      plugins.DataQuery
+	queryContext      backend.DataQuery
 }
 
 func convertInt64ToFloat64(origin *data.Field, newField *data.Field) {
