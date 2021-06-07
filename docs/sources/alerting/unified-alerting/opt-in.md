@@ -1,9 +1,11 @@
 +++
 title = "Opt-in to Grafana 8 Alerts"
-description = "How to enable Grafana 8 Alerts"
+description = "Enable Grafana 8 Alerts"
+weight = 128
 +++
 
 # Enable Grafana 8 Alerts
+
 Setting the `ngalert` feature toggle enables the new Grafana 8 Alerting system.
 
 >**Note:** It is recommended to backup Grafana's database before enabling this feature. If you are using PostgreSQL as the backend data source, then the minimum required version is 9.5.
