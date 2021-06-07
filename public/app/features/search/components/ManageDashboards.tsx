@@ -153,7 +153,6 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       display: flex;
       flex-direction: column;
       flex: 1;
-      height: 100%;
       margin-top: ${theme.spacing.xl};
     `,
     spinner: css`
