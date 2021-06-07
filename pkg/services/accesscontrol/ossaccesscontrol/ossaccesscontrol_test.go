@@ -6,7 +6,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
@@ -93,7 +92,6 @@ func TestEvaluatingPermissions(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
 			ac := setupTestEnv(t)
-			t.Cleanup(registry.ClearOverrides)
 
 			user := &models.SignedInUser{
 				UserId:         1,
