@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { css } from '@emotion/css';
 import { DataSourceInstanceSettings, GrafanaTheme2, PanelData, urlUtil } from '@grafana/data';
 import { getDataSourceSrv, PanelRenderer } from '@grafana/runtime';
-import { LinkButton, useStyles2, useTheme2 } from '@grafana/ui';
+import { Alert, CodeEditor, LinkButton, useStyles2, useTheme2 } from '@grafana/ui';
 import { isExpressionQuery } from 'app/features/expressions/guards';
 import { PanelOptions } from 'app/plugins/panel/table/models.gen';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
@@ -29,8 +29,25 @@ export function RuleViewerVisualization(props: RuleViewerVisualizationProps): JS
     showHeader: true,
   });
 
-  if (!data || !dsSettings) {
+  if (!data) {
     return null;
+  }
+
+  if (!dsSettings) {
+    return (
+      <div className={styles.content}>
+        <Alert title="Could not find datasource for query" />
+        <CodeEditor
+          width="100%"
+          height="250px"
+          language="json"
+          showLineNumbers={false}
+          showMiniMap={false}
+          value={JSON.stringify(query, null, '\t')}
+          readOnly={true}
+        />
+      </div>
+    );
   }
 
   return (
@@ -114,6 +131,9 @@ const getStyles = (theme: GrafanaTheme2) => {
     `,
     spacing: css`
       padding: ${theme.spacing(0, 1, 0, 0)};
+    `,
+    errorMessage: css`
+      white-space: pre-wrap;
     `,
   };
 };
