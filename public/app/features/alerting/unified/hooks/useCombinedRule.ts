@@ -57,14 +57,9 @@ function useCombinedRulesLoader(ruleSourceName: string | undefined): AsyncReques
       return;
     }
 
-    if (!promRuleRequest.dispatched) {
-      dispatch(fetchPromRulesAction(ruleSourceName));
-    }
-
-    if (!rulerRuleRequest.dispatched) {
-      dispatch(fetchRulerRulesAction(ruleSourceName));
-    }
-  }, [promRuleRequest.dispatched, rulerRuleRequest.dispatched, dispatch, ruleSourceName]);
+    dispatch(fetchPromRulesAction(ruleSourceName));
+    dispatch(fetchRulerRulesAction(ruleSourceName));
+  }, [dispatch, ruleSourceName]);
 
   return {
     loading: promRuleRequest.loading || rulerRuleRequest.loading,
