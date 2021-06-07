@@ -1,6 +1,5 @@
 import { css } from '@emotion/css';
 import { GrafanaTheme2, urlUtil } from '@grafana/data';
-import { locationService } from '@grafana/runtime';
 import { Button, ConfirmModal, HorizontalGroup, LinkButton, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { CombinedRule, RulesSource } from 'app/types/unified-alerting';
