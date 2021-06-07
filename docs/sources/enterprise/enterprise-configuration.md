@@ -133,6 +133,10 @@ Maximum number of concurrent calls to the rendering service.
 
 Scale factor for rendering images. Value `2` is enough for monitor resolutions, `4` would be better for printed material. Setting a higher value affects performance and memory.
 
+### max_attachment_size_mb
+
+Set the maximum file size in megabytes for the CSV attachments.
+
 ### fonts_path
 
 Path to the directory containing font files.
