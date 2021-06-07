@@ -27,8 +27,8 @@ func ProvideBackgroundServiceRegistry(httpServer *api.HTTPServer, ng *ngalert.Al
 	provisioning *provisioning.ProvisioningServiceImpl, alerting *alerting.AlertEngine, pm *manager.PluginManager,
 	dashSvc *plugindashboards.Service, backendPM *backendmanager.Manager, metrics *metrics.InternalMetricsService,
 	usageStats *usagestats.UsageStatsService, tracing *tracing.TracingService,
-	remoteCache *remotecache.RemoteCache) *registry.BackgroundServiceRegistry {
-	return registry.NewBackgroundServiceRegistry(
+	remoteCache *remotecache.RemoteCache) *BackgroundServiceRegistry {
+	return NewBackgroundServiceRegistry(
 		httpServer,
 		ng,
 		cleanup,
@@ -46,4 +46,17 @@ func ProvideBackgroundServiceRegistry(httpServer *api.HTTPServer, ng *ngalert.Al
 		usageStats,
 		tracing,
 		remoteCache)
+}
+
+// BackgroundServiceRegistry provides background services.
+type BackgroundServiceRegistry struct {
+	Services []registry.BackgroundService
+}
+
+func NewBackgroundServiceRegistry(services ...registry.BackgroundService) *BackgroundServiceRegistry {
+	return &BackgroundServiceRegistry{services}
+}
+
+func (r *BackgroundServiceRegistry) GetServices() []registry.BackgroundService {
+	return r.Services
 }

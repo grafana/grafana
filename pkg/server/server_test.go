@@ -46,7 +46,7 @@ func (s *testService) IsDisabled() bool {
 
 func testServer(t *testing.T, services ...registry.BackgroundService) *Server {
 	t.Helper()
-	s, err := newServer(Options{}, setting.NewCfg(), nil, nil, nil, registry.NewBackgroundServiceRegistry(services...))
+	s, err := newServer(Options{}, setting.NewCfg(), nil, nil, nil, NewBackgroundServiceRegistry(services...))
 	require.NoError(t, err)
 	// Required to skip configuration initialization that causes
 	// DI errors in this test.

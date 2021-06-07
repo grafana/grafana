@@ -7,12 +7,8 @@ import (
 )
 
 // BackgroundServiceRegistry provides background services.
-type BackgroundServiceRegistry struct {
-	Services []BackgroundService
-}
-
-func NewBackgroundServiceRegistry(services ...BackgroundService) *BackgroundServiceRegistry {
-	return &BackgroundServiceRegistry{services}
+type BackgroundServiceRegistry interface {
+	GetServices() []BackgroundService
 }
 
 // CanBeDisabled allows the services to decide if it should

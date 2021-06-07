@@ -37,7 +37,7 @@ type Options struct {
 
 // New returns a new instance of Server.
 func New(opts Options, cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, httpServer *api.HTTPServer,
-	provisioningService provisioning.ProvisioningService, backgroundServiceProvider *registry.BackgroundServiceRegistry) (*Server, error) {
+	provisioningService provisioning.ProvisioningService, backgroundServiceProvider registry.BackgroundServiceRegistry) (*Server, error) {
 	s, err := newServer(opts, cfg, sqlStore, httpServer, provisioningService, backgroundServiceProvider)
 	if err != nil {
 		return nil, err
@@ -51,7 +51,7 @@ func New(opts Options, cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, httpServer
 }
 
 func newServer(opts Options, cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, httpServer *api.HTTPServer,
-	provisioningService provisioning.ProvisioningService, backgroundServiceProvider *registry.BackgroundServiceRegistry) (*Server, error) {
+	provisioningService provisioning.ProvisioningService, backgroundServiceProvider registry.BackgroundServiceRegistry) (*Server, error) {
 	rootCtx, shutdownFn := context.WithCancel(context.Background())
 	childRoutines, childCtx := errgroup.WithContext(rootCtx)
 
@@ -69,7 +69,7 @@ func newServer(opts Options, cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, http
 		version:             opts.Version,
 		commit:              opts.Commit,
 		buildBranch:         opts.BuildBranch,
-		backgroundServices:  backgroundServiceProvider.Services,
+		backgroundServices:  backgroundServiceProvider.GetServices(),
 	}
 
 	return s, nil
