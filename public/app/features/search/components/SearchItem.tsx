@@ -91,7 +91,6 @@ const getStyles = (theme: GrafanaTheme) => {
 
       svg {
         margin-right: ${theme.spacing.xs};
-        margin-bottom: 0;
       }
     `,
     checkbox: css`
