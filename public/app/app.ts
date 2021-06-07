@@ -34,7 +34,7 @@ import { checkBrowserCompatibility } from 'app/core/utils/browser';
 import { arrayMove } from 'app/core/utils/arrayMove';
 import { importPluginModule } from 'app/features/plugins/plugin_loader';
 import { angularModules, coreModule } from 'app/core/core_module';
-import { registerAngularDirectives } from 'app/core/core';
+import { contextSrv, registerAngularDirectives } from 'app/core/core';
 import { setupAngularRoutes } from 'app/routes/routes';
 import { registerEchoBackend, setEchoSrv } from '@grafana/runtime';
 import { Echo } from './core/services/echo/Echo';
@@ -202,7 +202,10 @@ export class GrafanaApp {
       reportPerformance('tti', tti);
     });
 
-    registerEchoBackend(new PerformanceBackend({}));
+    if (contextSrv.user.orgRole !== '') {
+      registerEchoBackend(new PerformanceBackend({}));
+    }
+
     if (config.sentry.enabled) {
       registerEchoBackend(
         new SentryEchoBackend({
