@@ -349,11 +349,24 @@ This value is `true` by default.
 
 _Time to live_ (TTL) is the time that a query result is stored in the caching system before it is deleted or refreshed. This setting defines the time to live for query caching, when TTL is not configured in data source settings. The default value is `5m` (5 minutes).
 
+### max_value_mb
+
+This value limits the size of a single cache value. If a cache value (or query result) exceeds this size, then it is not cached. To disable this limit, set this value to `0`.
+
 ## [caching.memory]
 
 ### gc_interval
 
 When storing cache data in-memory, this setting defines how often a background process cleans up stale data from the in-memory cache. More frequent "garbage collection" can keep memory usage from climbing but will increase CPU usage.
+
+### max_size_mb
+
+The maximum size of the in-memory cache in megabytes. Once this size is reached, new cache items are rejected. For more flexible control over cache eviction policies and size, use the Redis or Memcached backend. 
+
+To disable the maximum, set this value to `0`. 
+
+> **Note:** Disabling the maximum is not recommended in production environments.
+
 
 ## [caching.redis]
 
