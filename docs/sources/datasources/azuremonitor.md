@@ -427,6 +427,8 @@ For Insights Analaytics, new queries can be written with Kusto in the Logs query
 
 {{< figure src="/static/img/docs/azure-monitor/app-insights-logs.png" max-width="650px" class="docs-image--no-shadow" caption="Azure Logs Application Insights example" >}}
 
+The new resource picker for Logs shows all resources on your Azure subscription compatible with Logs.
+
 {{< figure src="/static/img/docs/azure-monitor/app-insights-resource-picker.png" max-width="650px" class="docs-image--no-shadow" caption="Azure Logs Application Insights resource picker" >}}
 
 Azure Monitor Metrics and Azure Monitor Logs do not use Application Insights API keys, so make sure the data source is configured with an Azure AD app registration that has access to Application Insights
