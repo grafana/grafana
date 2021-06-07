@@ -7,9 +7,9 @@ weight = 400
 
 # Notification policies
 
-Notification policies determine how alerts are routed to contact points. Policies have a tree structure, where each policy can have one or more child policies. Each policy except for the root policy can also match specific alert labels. Each alert enters policy tree at the root and then traverses each child polciy. If `Continue matching subsequent sibling nodes` is not checked, it stops at the first matching node, otherwise, it continues matching it's siblings as well. If an alert does not match any children of a policy, the alert is handled based on the configuration settings of this policy and notified to the contact point configured on this policy. Alert that does not match any specific policy is handled by the root policy.
+Notification policies determine how alerts are routed to contact points. Policies have a tree structure, where each policy can have one or more child policies. Each policy except for the root policy can also match specific alert labels. Each alert enters policy tree at the root and then traverses each child policy. If `Continue matching subsequent sibling nodes` is not checked, it stops at the first matching node, otherwise, it continues matching it's siblings as well. If an alert does not match any children of a policy, the alert is handled based on the configuration settings of this policy and notified to the contact point configured on this policy. Alert that does not match any specific policy is handled by the root policy.
 
-Grafana alerting UI allows you to configrue Grafana notification policies as well as notification policies (routes) for an [external Alertmanager if one is configured]({{< relref "../../datasources/alertmanager.md" >}}).
+Grafana alerting UI allows you to configure Grafana notification policies as well as notification policies (routes) for an [external Alertmanager if one is configured]({{< relref "../../datasources/alertmanager.md" >}}).
 
 
 ## Edit notification policies
@@ -49,7 +49,7 @@ Group timing options
 - **Contact point -** The [contact point]({{< relref "./contact-points.md" >}}) to send notification to if alert matched this specific policy but did not match any of it's nested policies, or there were no nested specific policies.
 - **Matching labels -** Rules for matching alert labels. See ["How label matching works"](#how-label-matching-works) below for details.
 - **Continue matching subsequent sibling nodes -** If not enabled and an alert matches this policy but not any of it's nested policies, matching will stop and a notification will be sent to the contact point defined on this policy. If enabled, notification will be sent but alert will continue matching subsequent siblings of this policy, thus sending more than one notification. Use this if for example you want to send notification to a catch-all contact point as well as to one of more specific contact points handled by subsequent policies. 
-- **Override grouping** - Toggle if you want to override grouping for this policy. If toggled, you will be able to specify grouping same as for root policy described a bove. If not toggled, root policy grouping will be used. 
+- **Override grouping** - Toggle if you want to override grouping for this policy. If toggled, you will be able to specify grouping same as for root policy described above. If not toggled, root policy grouping will be used. 
 - **Override group timings** Toggle if you want to override group timings for this policy. If toggled, you will be able to specify group timings same as for root policy described above. If not toggled, root policy group timings will be used.
 
 
