@@ -172,7 +172,10 @@ async function deleteRule(ruleWithLocation: RuleWithLocation): Promise<void> {
   });
 }
 
-export function deleteRuleAction(ruleIdentifier: RuleIdentifier): ThunkResult<void> {
+export function deleteRuleAction(
+  ruleIdentifier: RuleIdentifier,
+  options: { navigateTo?: string } = {}
+): ThunkResult<void> {
   /*
    * fetch the rules group from backend, delete group if it is found and+
    * reload ruler rules
@@ -188,6 +191,10 @@ export function deleteRuleAction(ruleIdentifier: RuleIdentifier): ThunkResult<vo
         // refetch rules for this rules source
         dispatch(fetchRulerRulesAction(ruleWithLocation.ruleSourceName));
         dispatch(fetchPromRulesAction(ruleWithLocation.ruleSourceName));
+
+        if (options.navigateTo) {
+          locationService.replace(options.navigateTo);
+        }
       })(),
       {
         successMessage: 'Rule deleted.',

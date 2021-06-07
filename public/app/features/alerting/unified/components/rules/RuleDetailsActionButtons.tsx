@@ -35,21 +35,14 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource }) => {
 
   const deleteRule = () => {
     if (ruleToDelete && ruleToDelete.rulerRule) {
-      dispatch(
-        deleteRuleAction(
-          getRuleIdentifier(
-            getRulesSourceName(ruleToDelete.namespace.rulesSource),
-            ruleToDelete.namespace.name,
-            ruleToDelete.group.name,
-            ruleToDelete.rulerRule
-          )
-        )
+      const identifier = getRuleIdentifier(
+        getRulesSourceName(ruleToDelete.namespace.rulesSource),
+        ruleToDelete.namespace.name,
+        ruleToDelete.group.name,
+        ruleToDelete.rulerRule
       );
 
-      if (isViewMode) {
-        return locationService.replace('/alerting/list');
-      }
-
+      dispatch(deleteRuleAction(identifier, { navigateTo: isViewMode ? '/alerting/list' : undefined }));
       setRuleToDelete(undefined);
     }
   };
