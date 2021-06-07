@@ -56,7 +56,7 @@ In the query editor for a panel, after choosing your Azure Monitor data source, 
 
 The query editor changes depending on which one you pick. Metrics is the default.
 
-Starting in Grafana 7.4, the Azure Monitor query type was renamed to Metrics and Azure Logs Analytics was renamed to Logs. Starting in Grafana 8.0 Application Insights and Insights Analytics is unavailable for new panels, in favor of querying through Metrics and Logs.
+In Grafana 7.4, the Azure Monitor query type was renamed to Metrics, and Azure Logs Analytics was renamed to Logs. In Grafana 8.0 Application Insights and Insights Analytics is unavailable for new panels, in favor of querying through Metrics and Logs.
 
 ## Query the Metrics service
 
