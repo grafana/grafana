@@ -6,16 +6,15 @@ import (
 	"crypto/x509"
 	"errors"
 	"fmt"
-	"github.com/mwitkow/go-conntrack"
 	"net"
 	"net/http"
 	"sync"
 	"time"
 
 	"github.com/grafana/grafana-aws-sdk/pkg/sigv4"
-
 	"github.com/grafana/grafana/pkg/infra/metrics/metricutil"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/mwitkow/go-conntrack"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
