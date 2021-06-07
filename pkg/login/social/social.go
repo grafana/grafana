@@ -215,7 +215,7 @@ func NewOAuthService(cfg *setting.Cfg) {
 
 			SocialMap[grafanaCom] = &SocialGrafanaCom{
 				SocialBase:           newSocialBase(name, &config, info),
-				url:                  setting.GrafanaComUrl,
+				url:                  cfg.GrafanaComURL,
 				allowedOrganizations: util.SplitString(sec.Key("allowed_organizations").String()),
 			}
 		}

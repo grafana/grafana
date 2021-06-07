@@ -386,7 +386,7 @@ type Cfg struct {
 	// Live, -1 means unlimited connections.
 	LiveMaxConnections int
 
-	// Grafana.NET URL
+	// Grafana.com URL
 	GrafanaComURL string
 }
 
