@@ -3,7 +3,6 @@ package azuremonitor
 import (
 	"fmt"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -20,12 +19,12 @@ const (
 	azureMonitorGermany      = "germanyazuremonitor"
 )
 
-func getAuthType(cfg *setting.Cfg, pluginData *simplejson.Json) string {
-	if authType := pluginData.Get("azureAuthType").MustString(); authType != "" {
-		return authType
+func getAuthType(cfg *setting.Cfg, dsInfo datasourceInfo) string {
+	if dsInfo.Settings.AzureAuthType != "" {
+		return dsInfo.Settings.AzureAuthType
 	} else {
-		tenantId := pluginData.Get("tenantId").MustString()
-		clientId := pluginData.Get("clientId").MustString()
+		tenantId := dsInfo.Settings.TenantId
+		clientId := dsInfo.Settings.ClientId
 
 		// If authentication type isn't explicitly specified and datasource has client credentials,
 		// then this is existing datasource which is configured for app registration (client secret)
@@ -59,15 +58,15 @@ func getDefaultAzureCloud(cfg *setting.Cfg) (string, error) {
 	}
 }
 
-func getAzureCloud(cfg *setting.Cfg, pluginData *simplejson.Json) (string, error) {
-	authType := getAuthType(cfg, pluginData)
+func getAzureCloud(cfg *setting.Cfg, dsInfo datasourceInfo) (string, error) {
+	authType := getAuthType(cfg, dsInfo)
 	switch authType {
 	case AzureAuthManagedIdentity:
 		// In case of managed identity, the cloud is always same as where Grafana is hosted
 		return getDefaultAzureCloud(cfg)
 	case AzureAuthClientSecret:
-		if cloud := pluginData.Get("cloudName").MustString(); cloud != "" {
-			return cloud, nil
+		if dsInfo.Settings.CloudName != "" {
+			return dsInfo.Settings.CloudName, nil
 		} else {
 			return getDefaultAzureCloud(cfg)
 		}

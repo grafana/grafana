@@ -65,7 +65,6 @@ func (s *Service) Init() error {
 	s.registry["mysql"] = mysql.New(s.HTTPClientProvider)
 	s.registry["elasticsearch"] = elasticsearch.New(s.HTTPClientProvider)
 	s.registry["stackdriver"] = s.CloudMonitoringService.NewExecutor
-	s.registry["grafana-azure-monitor-datasource"] = s.AzureMonitorService.NewExecutor
 	s.registry["loki"] = loki.New(s.HTTPClientProvider)
 	s.registry["tempo"] = tempo.New(s.HTTPClientProvider)
 	return nil
