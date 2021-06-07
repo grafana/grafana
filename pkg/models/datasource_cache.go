@@ -1,10 +1,12 @@
 package models
 
 import (
+	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"errors"
 	"fmt"
+	"github.com/mwitkow/go-conntrack"
 	"net"
 	"net/http"
 	"sync"
@@ -155,12 +157,9 @@ func (ds *DataSource) GetHttpTransport() (*dataSourceTransport, error) {
 	// Create transport which adds all
 	customHeaders := ds.getCustomHeaders()
 	transport := &http.Transport{
-		TLSClientConfig: tlsConfig,
-		Proxy:           http.ProxyFromEnvironment,
-		Dial: (&net.Dialer{
-			Timeout:   time.Duration(setting.DataProxyTimeout) * time.Second,
-			KeepAlive: time.Duration(setting.DataProxyKeepAlive) * time.Second,
-		}).Dial,
+		TLSClientConfig:       tlsConfig,
+		Proxy:                 http.ProxyFromEnvironment,
+		DialContext:           newConntrackDialContext(ds.Name),
 		TLSHandshakeTimeout:   time.Duration(setting.DataProxyTLSHandshakeTimeout) * time.Second,
 		ExpectContinueTimeout: time.Duration(setting.DataProxyExpectContinueTimeout) * time.Second,
 		MaxIdleConns:          setting.DataProxyMaxIdleConns,
@@ -331,4 +330,17 @@ func awsServiceNamespace(dsType string) string {
 	default:
 		panic(fmt.Sprintf("Unsupported datasource %q", dsType))
 	}
+}
+
+// newConntrackDialContext takes a http.DefaultTransport and adds the Conntrack Dialer
+// so we can instrument outbound connections
+func newConntrackDialContext(name string) func(context.Context, string, string) (net.Conn, error) {
+	return conntrack.NewDialContextFunc(
+		conntrack.DialWithTracing(),
+		conntrack.DialWithName(name),
+		conntrack.DialWithDialer(&net.Dialer{
+			Timeout:   time.Duration(setting.DataProxyTimeout) * time.Second,
+			KeepAlive: time.Duration(setting.DataProxyKeepAlive) * time.Second,
+		}),
+	)
 }
