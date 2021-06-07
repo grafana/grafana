@@ -155,7 +155,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       flex: 1;
       height: 100%;
       padding-top: ${theme.spacing.lg};
-      margin-top: -${theme.spacing.md};
+      margin-top: -${theme.spacing.lg};
     `,
     spinner: css`
       display: flex;
