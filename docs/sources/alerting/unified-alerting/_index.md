@@ -50,7 +50,7 @@ Metric Name | Type | Description
 ---------- | ----------- | ----------
 `alerting.alerts` | gauge | How many alerts by state
 `alerting.request_duration_seconds` | histogram | Histogram of requests to the Alerting API
-`alerting.active_configurations` | gauge | The number of active, non default alertmanager configurations for grafana managed alerts
+`alerting.active_configurations` | gauge | The number of active, non default Alertmanager configurations for grafana managed alerts
 `alerting.rule_evaluations_total` | counter | The total number of rule evaluations
 `alerting.rule_evaluation_failures_total` | counter | The total number of rule evaluation failures
 `alerting.rule_evaluation_duration_seconds` | summary | The duration for a rule to execute
