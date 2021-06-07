@@ -10,6 +10,7 @@ import (
 	"io/ioutil"
 	"net/url"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 
@@ -144,7 +145,7 @@ func getPluginSignatureState(log log.Logger, plugin *plugins.PluginBase) (plugin
 			}
 			if rootURL.Scheme == appURL.Scheme &&
 				rootURL.Host == appURL.Host &&
-				rootURL.RequestURI() == appURL.RequestURI() {
+				path.Clean(rootURL.RequestURI()) == path.Clean(appURL.RequestURI()) {
 				foundMatch = true
 				break
 			}
