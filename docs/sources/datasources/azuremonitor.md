@@ -291,7 +291,7 @@ Azure Resource Graph (ARG) is a service in Azure that is designed to extend Azur
 
 ### Table queries
 
-Queries are written in the [Kusto Query Language](https://docs.microsoft.com/en-us/azure/governance/resource-graph/concepts/query-language). Please note that not all Kusto language features are available in ARG. An Azure Resource Graph query is formatted as table data.
+Queries are written in the [Kusto Query Language](https://docs.microsoft.com/en-us/azure/governance/resource-graph/concepts/query-language). Not all Kusto language features are available in ARG. An Azure Resource Graph query is formatted as table data.
 
 If your credentials give you access to multiple subscriptions, then you can choose multiple subscriptions before entering queries.
 
@@ -347,7 +347,7 @@ securityresources
 
 ## Configure the data source with provisioning
 
-You can configure data sources using config files with Grafana’s provisioning system. You can read more about how it works and all the settings you can set for data sources on the [provisioning docs page]({{< relref "../administration/provisioning/#datasources" >}})
+You can configure data sources using config files with Grafana’s provisioning system. For more information on how it works and all the settings you can set for data sources on the [provisioning docs page]({{< relref "../administration/provisioning/#datasources" >}})
 
 Here are some provisioning examples for this data source.
 
@@ -415,7 +415,7 @@ datasources:
 | US Government cloud                              | `govazuremonitor`          |
 | Microsoft German national cloud ("Black Forest") | `germanyazuremonitor`      |
 
-## Deprecating Application Insights and Insights Analytics
+## Deprecated Application Insights and Insights Analytics
 
 Application Insights and Insights Analytics are two ways to query the same Azure Application Insights data, which can also be queried from Metrics and Logs. In Grafana 8.0, Application Insights and Insights Analytics are deprecated and made read-only in favor of querying this data through Metrics and Logs. Existing queries will continue to work, but you cannot edit them. New panels are not able to use Application Insights or Insights Analytics.
 
