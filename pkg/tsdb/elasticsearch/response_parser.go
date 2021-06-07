@@ -2,7 +2,6 @@ package elasticsearch
 
 import (
 	"errors"
-	"github.com/grafana/grafana/pkg/components/null"
 	"regexp"
 	"sort"
 	"strconv"
@@ -162,7 +161,7 @@ func (rp *responseParser) processBuckets(aggs map[string]interface{}, target *Qu
 	return nil
 }
 
-// nolint:staticcheck // plugins.* deprecated
+// nolint:staticcheck,gocyclo // plugins.* deprecated
 func (rp *responseParser) processMetrics(esAgg *simplejson.Json, target *Query, query *plugins.DataQueryResult,
 	props map[string]string) error {
 	frames := data.Frames{}
@@ -237,15 +236,15 @@ func (rp *responseParser) processMetrics(esAgg *simplejson.Json, target *Query, 
 				tags := make(map[string]string, len(props))
 				timeVector := make([]time.Time, 0, len(esAggBuckets))
 				values := make([]*float64, 0, len(esAggBuckets))
+				for k, v := range props {
+					tags[k] = v
+				}
 
 				for _, v := range buckets {
 					bucket := simplejson.NewFromAny(v)
 					stats := bucket.GetPath(metric.ID, "top")
 					key := castToFloat(bucket.Get("key"))
 
-					for k, v := range props {
-						tags[k] = v
-					}
 					tags["metric"] = "top_metrics"
 					tags["field"] = metricField.(string)
 
@@ -722,19 +721,4 @@ func getErrorFromElasticResponse(response *es.SearchResponse) plugins.DataQueryR
 	}
 
 	return result
-}
-
-func processTopMetricValues(stats *simplejson.Json, field string) null.Float {
-	for _, stat := range stats.MustArray() {
-		stat := stat.(map[string]interface{})
-		metrics, hasMetrics := stat["metrics"]
-		if hasMetrics {
-			metrics := metrics.(map[string]interface{})
-			metricValue, hasMetricValue := metrics[field]
-			if hasMetricValue && metricValue != nil {
-				return null.FloatFrom(metricValue.(float64))
-			}
-		}
-	}
-	return null.NewFloat(0, false)
 }
