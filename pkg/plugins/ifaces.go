@@ -6,6 +6,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 )
 
 // Manager is the plugin manager service interface.
@@ -143,9 +144,9 @@ type PluginManagerV2 interface {
 	Register(*PluginV2) error
 	// IsRegistered checks if a plugin is registered with the manager
 	IsRegistered(pluginID string) bool
+	// RegisterCorePlugin registers and starts a core plugin
+	RegisterCorePlugin(ctx context.Context, pluginJSONPath string, factory backendplugin.PluginFactoryFunc) error
 
-	// InstallCorePlugin installs a core plugin.
-	InstallCorePlugin(string, InstallOpts) error
 	// Install installs a plugin.
 	Install(ctx context.Context, pluginID, version string) error
 	// Uninstall uninstalls a plugin.

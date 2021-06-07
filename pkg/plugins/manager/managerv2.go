@@ -96,7 +96,7 @@ func (m *PluginManagerV2) Run(ctx context.Context) error {
 	return ctx.Err()
 }
 
-func (m *PluginManagerV2) InstallCorePlugin(pluginJSONPath string, opts plugins.InstallOpts) error {
+func (m *PluginManagerV2) RegisterCorePlugin(ctx context.Context, pluginJSONPath string, factory backendplugin.PluginFactoryFunc) error {
 	fullPath := filepath.Join(m.Cfg.StaticRootPath, "app/plugins", pluginJSONPath)
 
 	plugin, err := m.PluginLoader.Load(fullPath, false)
@@ -104,7 +104,10 @@ func (m *PluginManagerV2) InstallCorePlugin(pluginJSONPath string, opts plugins.
 		return err
 	}
 
-	plugin.Client = opts
+	plugin.Client, err = factory(plugin.ID, m.log.New("pluginID", plugin.ID), []string{})
+	if err != nil {
+		return err
+	}
 
 	err = m.PluginInitializer.Initialize(plugin)
 	if err != nil {
