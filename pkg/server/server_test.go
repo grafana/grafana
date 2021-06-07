@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana/pkg/server/backgroundsvcs"
 	"github.com/grafana/grafana/pkg/setting"
 
 	"github.com/stretchr/testify/require"
@@ -46,7 +47,7 @@ func (s *testService) IsDisabled() bool {
 
 func testServer(t *testing.T, services ...registry.BackgroundService) *Server {
 	t.Helper()
-	s, err := newServer(Options{}, setting.NewCfg(), nil, nil, nil, NewBackgroundServiceRegistry(services...))
+	s, err := newServer(Options{}, setting.NewCfg(), nil, nil, nil, backgroundsvcs.NewBackgroundServiceRegistry(services...))
 	require.NoError(t, err)
 	// Required to skip configuration initialization that causes
 	// DI errors in this test.
