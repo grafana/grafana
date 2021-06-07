@@ -155,10 +155,15 @@ func (ds *DataSource) GetHttpTransport() (*dataSourceTransport, error) {
 
 	// Create transport which adds all
 	customHeaders := ds.getCustomHeaders()
+	datasourceLabelName, err := metricutil.SanitizeLabelName(ds.Name)
+	if err != nil {
+		return nil, err
+	}
+
 	transport := &http.Transport{
 		TLSClientConfig:       tlsConfig,
 		Proxy:                 http.ProxyFromEnvironment,
-		DialContext:           newConntrackDialContext(ds.Name),
+		DialContext:           newConntrackDialContext(datasourceLabelName),
 		TLSHandshakeTimeout:   time.Duration(setting.DataProxyTLSHandshakeTimeout) * time.Second,
 		ExpectContinueTimeout: time.Duration(setting.DataProxyExpectContinueTimeout) * time.Second,
 		MaxIdleConns:          setting.DataProxyMaxIdleConns,
