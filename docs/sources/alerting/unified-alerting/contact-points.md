@@ -7,9 +7,9 @@ weight = 400
 
 # Contact points
 
-Contact points define where to send notifications about alerts that match a particular [notification policy]({{< relref "./notification-policies.md" >}}). A contact point can contain one or more contact point types, eg email, slack, webhook and so on. A notification will dispatched to all contact point types defined on a contact point. [Templating]({{< relref "./message-templating.md" >}}) can be used to customize contact point type message with alert data. Grafana alerting UI can be used to configure both Grafana managed contact points and contact points for an [external alertmanager if one is configured]({{< relref "../../datasources/alertmanager.md" >}}).
+Contact points define where to send notifications about alerts that match a particular [notification policy]({{< relref "./notification-policies.md" >}}). A contact point can contain one or more contact point types, eg email, slack, webhook and so on. A notification will dispatched to all contact point types defined on a contact point. [Templating]({{< relref "./message-templating/_index.md" >}}) can be used to customize contact point type message with alert data. Grafana alerting UI can be used to configure both Grafana managed contact points and contact points for an [external Alertmanager if one is configured]({{< relref "../../datasources/alertmanager.md" >}}).
 
-## Adding a contact point
+## Add a contact point
 
 1. In the Grafana side bar, hover your cursor over the **Alerting** (bell) icon and then click **Contact points**.
 1. Click **Add contact point**.
@@ -54,20 +54,20 @@ VictorOps | `victorops`
 [Webhook](#webhook) | `webhook`
 [Zenduty](#zenduty) | `webhook` 
 
-## Managing contact points for an external alertmanager
+## Manage contact points for an external Alertmanager
 
-Grafana alerting UI supports managing external alertmanager configuration. Add an [alertmanager datasource]({{< relref "../../datasources/alertmanager.md" >}}) and a dropdown will appear at the top of the page, allowing you to select either `Grafana` or an external alertmanager. 
+Grafana alerting UI supports managing external Alertmanager configuration. Once you add an [Alertmanager data source]({{< relref "../../datasources/alertmanager.md" >}}), a dropdown displays at the top of the page where you can select either `Grafana` or an external Alertmanager as your data source. 
 
-{{< figure max-width="40%" src="/static/img/docs/alerting/unified/contact-points-select-am-8-0.gif" caption="Select alertmanager" >}}
+{{< figure max-width="40%" src="/static/img/docs/alerting/unified/contact-points-select-am-8-0.gif" caption="Select Alertmanager" >}}
 
-### Editing alertmanager global config
+### Edit Alertmanager global config
 
 To edit global configuration options for an alertmanager, like SMTP server that is used by default for all email contact types:
 
 
 1. In the Grafana side bar, hover your cursor over the **Alerting** (bell) icon and then click **Contact points**.
-1. In the dropdown at the top of the page, select a alertmanager datasource.
+1. In the dropdown at the top of the page, select an Alertmanager data source.
 1. Click **Edit global config** button at the bottom of the page.
 1. Fill out the form and click **Save global config**.
 
-**Note** this is only for external alertmanagers. Some global options for Grafana contact types, like email settings, can be configured via [Grafana configuration]({{< relref "../../administration/configuration.md" >}}).
+**Note** this is only for external Alertmanagers. Some global options for Grafana contact types, like email settings, can be configured via [Grafana configuration]({{< relref "../../administration/configuration.md" >}}).
