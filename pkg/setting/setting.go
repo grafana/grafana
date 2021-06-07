@@ -394,6 +394,9 @@ type Cfg struct {
 
 	// Grafana.com URL
 	GrafanaComURL string
+
+	// Alertting
+	AlertingMaxAttempts int
 }
 
 // IsLiveConfigEnabled returns true if live should be able to save configs to SQL tables
@@ -891,7 +894,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 		cfg.ReportingDistributor = cfg.ReportingDistributor[:100]
 	}
 
-	if err := readAlertingSettings(iniFile); err != nil {
+	if err := cfg.readAlertingSettings(iniFile); err != nil {
 		return err
 	}
 
@@ -1333,7 +1336,7 @@ func readRenderingSettings(iniFile *ini.File, cfg *Cfg) error {
 	return nil
 }
 
-func readAlertingSettings(iniFile *ini.File) error {
+func (cfg *Cfg) readAlertingSettings(iniFile *ini.File) error {
 	alerting := iniFile.Section("alerting")
 	AlertingEnabled = alerting.Key("enabled").MustBool(true)
 	ExecuteAlerts = alerting.Key("execute_alerts").MustBool(true)
@@ -1347,6 +1350,7 @@ func readAlertingSettings(iniFile *ini.File) error {
 	notificationTimeoutSeconds := alerting.Key("notification_timeout_seconds").MustInt64(30)
 	AlertingNotificationTimeout = time.Second * time.Duration(notificationTimeoutSeconds)
 	AlertingMaxAttempts = alerting.Key("max_attempts").MustInt(3)
+	cfg.AlertingMaxAttempts = AlertingMaxAttempts
 	AlertingMinInterval = alerting.Key("min_interval_seconds").MustInt64(1)
 
 	return nil

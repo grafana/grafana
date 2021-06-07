@@ -28,7 +28,6 @@ import (
 )
 
 const (
-	maxAttempts int64 = 3
 	// scheduler interval
 	// changing this value is discouraged
 	// because this could cause existing alert definition
@@ -82,7 +81,7 @@ func (ng *AlertNG) Init() error {
 		C:             clock.New(),
 		BaseInterval:  baseInterval,
 		Logger:        ng.Log,
-		MaxAttempts:   maxAttempts,
+		MaxAttempts:   int64(ng.Cfg.AlertingMaxAttempts),
 		Evaluator:     eval.Evaluator{Cfg: ng.Cfg, Log: ng.Log},
 		InstanceStore: store,
 		RuleStore:     store,
