@@ -12,7 +12,7 @@ describe('histogram frames frames', () => {
     const series1 = toDataFrame({
       fields: [
         { name: 'A', type: FieldType.number, values: [1, 2, 3, 4, 5] },
-        { name: 'B', type: FieldType.number, values: [3, 4, 5, 6, 7] },
+        { name: 'B', type: FieldType.number, values: [3, 4, 5, 6, 7], config: { unit: 'mph' } },
         { name: 'C', type: FieldType.number, values: [5, 6, 7, 8, 9] },
       ],
     });
@@ -26,10 +26,14 @@ describe('histogram frames frames', () => {
       out.fields.map((f) => ({
         name: f.name,
         values: f.values.toArray(),
+        config: f.config,
       }))
     ).toMatchInlineSnapshot(`
       Array [
         Object {
+          "config": Object {
+            "unit": "mph",
+          },
           "name": "BucketMin",
           "values": Array [
             1,
@@ -44,6 +48,9 @@ describe('histogram frames frames', () => {
           ],
         },
         Object {
+          "config": Object {
+            "unit": "mph",
+          },
           "name": "BucketMax",
           "values": Array [
             2,
@@ -58,6 +65,9 @@ describe('histogram frames frames', () => {
           ],
         },
         Object {
+          "config": Object {
+            "unit": undefined,
+          },
           "name": "A",
           "values": Array [
             1,
@@ -72,6 +82,9 @@ describe('histogram frames frames', () => {
           ],
         },
         Object {
+          "config": Object {
+            "unit": undefined,
+          },
           "name": "B",
           "values": Array [
             0,
@@ -86,6 +99,9 @@ describe('histogram frames frames', () => {
           ],
         },
         Object {
+          "config": Object {
+            "unit": undefined,
+          },
           "name": "C",
           "values": Array [
             0,
@@ -100,6 +116,9 @@ describe('histogram frames frames', () => {
           ],
         },
         Object {
+          "config": Object {
+            "unit": undefined,
+          },
           "name": "C",
           "values": Array [
             0,
