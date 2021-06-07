@@ -63,7 +63,6 @@ func toOverlay(prefix string, vfs fs.FS, overlay map[string]load.Source) error {
 	if !filepath.IsAbs(prefix) {
 		return fmt.Errorf("must provide absolute path prefix when generating cue overlay, got %q", prefix)
 	}
-
 	err := fs.WalkDir(vfs, ".", (func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
