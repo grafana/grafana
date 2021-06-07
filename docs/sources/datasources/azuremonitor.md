@@ -10,24 +10,22 @@ weight = 300
 
 The Azure Monitor data source supports multiple services in the Azure cloud:
 
-- **[Azure Monitor Metrics]({{< relref "#querying-the-azure-monitor-service" >}})** (or Metrics) is the platform service that provides a single source for monitoring Azure resources.
-- **[Azure Monitor Logs]({{< relref "#querying-the-azure-log-analytics-service" >}})** (or Logs) gives you access to log data collected by Azure Monitor.
-- **[Application Insights]({{< relref "#querying-the-application-insights-service" >}})** is an extensible Application Performance Management (APM) service for web developers on multiple platforms and can be used to monitor your live web application - it will automatically detect performance anomalies.
-- **[Application Insights Analytics]({{< relref "#query-the-application-insights-analytics-service" >}})** allows you to query [Application Insights data](https://docs.microsoft.com/en-us/azure/azure-monitor/app/analytics) using the same query language used for Azure Log Analytics.
+- **[Azure Monitor Metrics]({{< relref "#query-the-metrics-service" >}})** (or Metrics) is the platform service that provides a single source for monitoring Azure resources.
+- **[Azure Monitor Logs]({{< relref "#query-the-logs-service" >}})** (or Logs) gives you access to log data collected by Azure Monitor.
+- **[Azure Resource Graph]({{< relref "#query-the-azure-resource-graph-service" >}})** allows you to query the resources on your Azure subscription.
 
 ## Add the data source
 
-The data source can access metrics from four different services. You can configure access to the services that you use. It is also possible to use the same credentials for multiple services if that is how you have set it up in Azure AD.
+The Azure Monitor data source can access metrics from three different services. Configure access to the services that you plan to use. To use different credentials for different Azure services, configure multiple Azure Monitor data sources.
 
 - [Guide to setting up an Azure Active Directory Application for Azure Monitor.](https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-create-service-principal-portal)
 - [Guide to setting up an Azure Active Directory Application for Azure Monitor Logs.](https://dev.loganalytics.io/documentation/Authorization/AAD-Setup)
-- [Quickstart Guide for Application Insights.](https://dev.applicationinsights.io/quickstart/)
 
 1. Accessed from the Grafana main menu, newly installed data sources can be added immediately within the Data Sources section. Next, click the "Add data source" button in the upper right. The Azure Monitor data source will be available for selection in the Cloud section in the list of data sources.
 
 1. In the name field, Grafana will automatically fill in a name for the data source - `Azure Monitor` or something like `Azure Monitor - 3`. If you are going to configure multiple data sources, then change the name to something more informative.
 
-1. If you are using Azure Monitor, you need 4 pieces of information from the Azure portal (see link above for detailed instructions):
+1. Fill in the Azure AD App Registration details:
 
    - **Tenant Id** (Azure Active Directory -> Properties -> Directory ID)
    - **Client Id** (Azure Active Directory -> App Registrations -> Choose your app -> Application ID)
@@ -38,19 +36,6 @@ The data source can access metrics from four different services. You can configu
    {{< figure src="/static/img/docs/v62/config_1_azure_monitor_details.png" class="docs-image--no-shadow" caption="Azure Monitor Configuration Details" >}}
 
    - The Subscription Id can be changed per query. Save the data source and refresh the page to see the list of subscriptions available for the specified Client Id.
-
-1. If you are also using the Azure Monitor Logs service, then you need to specify these two configuration values (or you can reuse the Client Id and Secret from the previous step).
-
-   - Client Id (Azure Active Directory -> App Registrations -> Choose your app -> Application ID)
-   - Client Secret (Azure Active Directory -> App Registrations -> Choose your app -> Keys -> Create a key -> Use client secret)
-
-1. If you are using Application Insights, then you need two pieces of information from the Azure Portal (see link above for detailed instructions):
-
-   - Application ID
-   - API Key
-
-1. Paste these two items into the appropriate fields in the Application Insights API Details section:
-   {{< figure src="/static/img/docs/v62/config_2_app_insights_api_details.png" class="docs-image--no-shadow" caption="Application Insights Configuration Details" >}}
 
 1. Test that the configuration details are correct by clicking on the "Save & Test" button:
    {{< figure src="/static/img/docs/v62/config_3_save_and_test.png" class="docs-image--no-shadow" caption="Save and Test" >}}
@@ -63,19 +48,15 @@ az ad sp create-for-rbac -n "http://localhost:3000"
 
 ## Choose a Service
 
-In the query editor for a panel, after choosing your Azure Monitor data source, the first option is to choose a service. There are four options here:
+In the query editor for a panel, after choosing your Azure Monitor data source, the first option is to choose a service. There are three options here:
 
-- `Metrics`
-- `Application Insights`
-- `Logs`
-- `Insights Analytics`
-- `Azure Resource Graph`
+- Metrics
+- Logs
+- Azure Resource Graph
 
 The query editor changes depending on which one you pick. Metrics is the default.
 
-Starting in Grafana 7.1, Insights Analytics replaced the former edit mode from within Application Insights.
-
-Starting in Grafana 7.4, the Azure Monitor query type was renamed to Metrics and Azure Logs Analytics was renamed to Logs.
+In Grafana 7.4, the Azure Monitor query type was renamed to Metrics, and Azure Logs Analytics was renamed to Logs. In Grafana 8.0 Application Insights and Insights Analytics is unavailable for new panels, in favor of querying through Metrics and Logs.
 
 ## Query the Metrics service
 
@@ -202,7 +183,7 @@ Perf
 
 > **Tip**: In the above query, the Kusto syntax `Samples=count()` and `["Avg Value"]=...` is used to rename those columns — the second syntax allowing for the space. This changes the name of the metric that Grafana uses, and as a result, things like series legends and table columns will match what you specify. Here `Samples` is displayed instead of `_count`.
 
-{{< figure src="/static/img/docs/azuremonitor/logs_multi-value_multi-dim.png" class="docs-image--no-shadow" caption="Azure Logs query with multiple values and multiple dimensions" >}}
+{{< figure src="/static/img/docs/azure-monitor/logs_multi-value_multi-dim.png" class="docs-image--no-shadow" caption="Azure Logs query with multiple values and multiple dimensions" >}}
 
 ### Table queries
 
@@ -302,128 +283,15 @@ If you're not currently logged in to the Azure Portal, then the link opens the l
 
 <div class="clearfix"></div>
 
-### Logs alerting
-
-> Only available in Grafana v7.0+.
-
-Grafana alerting is supported for Application Insights. This is not Azure Alerts support. Read more about how alerting in Grafana works in [Alerting rules]({{< relref "../alerting/_index.md" >}}).
-
-## Query Application Insights service
-
-{{< figure src="/static/img/docs/azuremonitor/insights_metrics_multi-dim.png" class="docs-image--no-shadow" caption="Application Insights Query Editor" >}}
-
-As of Grafana 7.1, you can select more than one group by dimension.
-
-### Format legend keys with aliases for Application Insights
-
-The default legend formatting is:
-
-`metricName{dimensionName=dimensionValue,dimensionTwoName=DimensionTwoValue}`
-
-In the Legend Format field, the aliases which are defined below can be combined any way you want.
-
-Application Insights examples:
-
-- `city: {{ client/city }}`
-- `{{ metric }} [Location: {{ client/countryOrRegion }}, {{ client/city }}]`
-
-### Alias patterns for Application Insights
-
-- `{{ groupbyvalue }}` = _Legacy as of 7.1+ (for backwards compatibility)_ replaced with the first dimension's key/label (as sorted by the key/label)
-- `{{ groupbyname }}` = _Legacy as of 7.1+ (for backwards compatibility)_ replaced with first dimension's value (as sorted by the key/label) (e.g. BlockBlob)
-- `{{ metric }}` = replaced with metric name (e.g. requests/count)
-- `{{ arbitraryDim }}` = _Available in 7.1+_ replaced with the value of the corresponding dimension. (e.g. `{{ client/city }}` becomes Chicago)
-
-### Filter expressions for Application Insights
-
-The filter field takes an OData filter expression.
-
-Examples:
-
-- `client/city eq 'Boydton'`
-- `client/city ne 'Boydton'`
-- `client/city ne 'Boydton' and client/city ne 'Dublin'`
-- `client/city eq 'Boydton' or client/city eq 'Dublin'`
-
-### Templating with variables for Application Insights
-
-Use the one of the following queries in the `Query` field in the Variable edit view.
-
-Check out the [Templating]({{< relref "../variables/_index.md" >}}) documentation for an introduction to the templating feature and the different types of template variables.
-
-| Name                               | Description                                                  |
-| ---------------------------------- | ------------------------------------------------------------ |
-| `AppInsightsMetricNames()`         | Returns a list of metric names.                              |
-| `AppInsightsGroupBys(aMetricName)` | Returns a list of "group bys" for the specified metric name. |
-
-Examples:
-
-- Metric Names query: `AppInsightsMetricNames()`
-- Passing in metric name variable: `AppInsightsGroupBys(requests/count)`
-- Chaining template variables: `AppInsightsGroupBys($metricnames)`
-
-{{< figure src="/static/img/docs/v60/appinsights-service-variables.png" class="docs-image--no-shadow" caption="Nested Application Insights Template Variables" >}}
-
-### Application Insights alerting
-
-Grafana alerting is supported for Application Insights. This is not Azure Alerts support. For more information about Grafana alerting, refer to [Alerts overview]({{< relref "../alerting/_index.md" >}}).
-
-{{< figure src="/static/img/docs/v60/azuremonitor-alerting.png" class="docs-image--no-shadow" caption="Azure Monitor Alerting" >}}
-
-## Query the Application Insights Analytics service
-
-If you change the service type to **Insights Analytics**, then a similar editor to the Log Analytics service is available. This service also uses the Kusto language, so the instructions for querying data are identical to [querying the log analytics service]({{< relref "#querying-the-azure-log-analytics-service" >}}), except that you query Application Insights Analytics data instead.
-
-{{< figure src="/static/img/docs/azuremonitor/insights_analytics_multi-dim.png" class="docs-image--no-shadow" caption="Azure Application Insights Analytics query with multiple dimensions" >}}
-
-## Configure the data source with provisioning
-
-It's now possible to configure data sources using config files with Grafana's provisioning system. You can read more about how it works and all the settings you can set for data sources on the [provisioning docs page]({{< relref "../administration/provisioning/#datasources" >}})
-
-Here are some provisioning examples for this data source.
-
-```yaml
-# config file version
-apiVersion: 1
-
-datasources:
-  - name: Azure Monitor
-    type: grafana-azure-monitor-datasource
-    access: proxy
-    jsonData:
-      appInsightsAppId: <app-insights-app-id>
-      clientId: <client-id>
-      cloudName: azuremonitor
-      subscriptionId: <subscription-id>
-      tenantId: <tenant-id>
-      logAnalyticsClientId: <log-analytics-client-id>
-      logAnalyticsDefaultWorkspace: <log-analytics-default-workspace>
-      logAnalyticsSubscriptionId: <log-analytics-subscription-id>
-      logAnalyticsTenantId: <log-analytics-tenant-id>
-    secureJsonData:
-      clientSecret: <client-secret>
-      appInsightsApiKey: <app-insights-api-key>
-      logAnalyticsClientSecret: <log-analytics-client-secret>
-    version: 1
-```
-
-## Deprecating Application Insights and Insights Analytics
-
-Application Insights and Insights Analytics are two ways to query the same Azure Application Insights data. That same data can also be queried from Metrics. In the upcoming Grafana 8.0 release, the Logs query type will be improved to allow querying of Application Insights data using KQL.
-
-> **Note** In Grafana 8.0, Application Insights and Insights Analytics will be deprecated and made read-only in favor of querying this data through Metrics and Logs. Existing queries will continue to work, but you cannot edit them.
-
-To prepare for this upcoming change, Application Insights queries can now be made in Metrics, under the "microsoft.insights/components" Namespace. Insights Analytics queries cannot be made within Logs with KQL at this time.
-
-## Query Azure Resource Graph service
+## Query the Azure Resource Graph service
 
 Azure Resource Graph (ARG) is a service in Azure that is designed to extend Azure Resource Management by providing efficient and performant resource exploration with the ability to query at scale across a given set of subscriptions so that you can effectively govern your environment. By querying ARG, you can query resources with complex filtering, iteratively explore resources based on governance requirements, and assess the impact of applying policies in a vast cloud environment.
 
-{{< figure src="/static/img/docs/azure-monitor/azure-resource-graph-8-0.png" class="docs-image--no-shadow" caption="Azure Resource Graph Editor" >}}
+{{< figure src="/static/img/docs/azure-monitor/azure-resource-graph.png" class="docs-image--no-shadow" caption="Azure Resource Graph editor" max-width="650px" >}}
 
 ### Table queries
 
-Queries are written in the [Kusto Query Language](https://docs.microsoft.com/en-us/azure/data-explorer/kusto/query/). An Azure Resource Graph query is formatted as table data.
+Queries are written in the [Kusto Query Language](https://docs.microsoft.com/en-us/azure/governance/resource-graph/concepts/query-language). Not all Kusto language features are available in ARG. An Azure Resource Graph query is formatted as table data.
 
 If your credentials give you access to multiple subscriptions, then you can choose multiple subscriptions before entering queries.
 
@@ -453,7 +321,7 @@ Resources
 
 ### Group and aggregate the values by property
 
-You can also use `summarize` and `count` to define how to group and aggregate the values by property. For example, returning count of healthy, unhealthy, and not applicable resources per recommendation.:
+You can also use `summarize` and `count` to define how to group and aggregate the values by property. For example, returning count of healthy, unhealthy, and not applicable resources per recommendation:
 
 ```kusto
 securityresources
@@ -476,3 +344,91 @@ securityresources
     portalLink=properties.links.azurePortal
 | summarize numberOfResources=count(resourceId) by tostring(recommendationName), tostring(recommendationState)
 ```
+
+## Configure the data source with provisioning
+
+You can configure data sources using config files with Grafana’s provisioning system. For more information on how it works and all the settings you can set for data sources on the [provisioning docs page]({{< relref "../administration/provisioning/#datasources" >}})
+
+Here are some provisioning examples for this data source.
+
+### Azure AD App Registration (client secret)
+
+```yaml
+# config file version
+apiVersion: 1
+
+datasources:
+  - name: Azure Monitor
+    type: grafana-azure-monitor-datasource
+    access: proxy
+    jsonData:
+      azureAuthType: clientsecret
+      cloudName: azuremonitor # See table below
+      tenantId: <tenant-id>
+      clientId: <client-id>
+      subscriptionId: <subscription-id> # Optional, default subscription
+    secureJsonData:
+      clientSecret: <client-secret>
+    version: 1
+```
+
+### Managed Identity
+
+```yaml
+# config file version
+apiVersion: 1
+
+datasources:
+  - name: Azure Monitor
+    type: grafana-azure-monitor-datasource
+    access: proxy
+    jsonData:
+      azureAuthType: msi
+      subscriptionId: <subscription-id> # Optional, default subscription
+    version: 1
+```
+
+### App Registration (client secret)
+
+```yaml
+datasources:
+  - name: Azure Monitor
+    type: grafana-azure-monitor-datasource
+    access: proxy
+    jsonData:
+      azureAuthType: clientsecret
+      cloudName: azuremonitor # See table below
+      tenantId: <tenant-id>
+      clientId: <client-id>
+      subscriptionId: <subscription-id> # Optional, default subscription
+    secureJsonData:
+      clientSecret: <client-secret>
+    version: 1
+```
+
+### Supported cloud names
+
+| Azure Cloud                                      | Value                      |
+| ------------------------------------------------ | -------------------------- |
+| Microsoft Azure public cloud                     | `azuremonitor` (_default_) |
+| Microsoft Chinese national cloud                 | `chinaazuremonitor`        |
+| US Government cloud                              | `govazuremonitor`          |
+| Microsoft German national cloud ("Black Forest") | `germanyazuremonitor`      |
+
+## Deprecated Application Insights and Insights Analytics
+
+Application Insights and Insights Analytics are two ways to query the same Azure Application Insights data, which can also be queried from Metrics and Logs. In Grafana 8.0, Application Insights and Insights Analytics are deprecated and made read-only in favor of querying this data through Metrics and Logs. Existing queries will continue to work, but you cannot edit them. New panels are not able to use Application Insights or Insights Analytics.
+
+For Application Insights, new queries can be made with the Metrics query type by selecting the "Application Insights" resource type.
+
+{{< figure src="/static/img/docs/azure-monitor/app-insights-metrics.png" max-width="650px" class="docs-image--no-shadow" caption="Azure Monitor Application Insights example" >}}
+
+For Insights Analaytics, new queries can be written with Kusto in the Logs query type by selecting your Application Insights resource.
+
+{{< figure src="/static/img/docs/azure-monitor/app-insights-logs.png" max-width="650px" class="docs-image--no-shadow" caption="Azure Logs Application Insights example" >}}
+
+The new resource picker for Logs shows all resources on your Azure subscription compatible with Logs.
+
+{{< figure src="/static/img/docs/azure-monitor/app-insights-resource-picker.png" max-width="650px" class="docs-image--no-shadow" caption="Azure Logs Application Insights resource picker" >}}
+
+Azure Monitor Metrics and Azure Monitor Logs do not use Application Insights API keys, so make sure the data source is configured with an Azure AD app registration that has access to Application Insights
