@@ -22,7 +22,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/ngalert/schedule"
 
-	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -96,8 +95,6 @@ func TestWarmStateCache(t *testing.T) {
 		CurrentStateEnd:   evaluationTime.Add(1 * time.Minute),
 	}
 	_ = dbstore.SaveAlertInstance(saveCmd2)
-
-	t.Cleanup(registry.ClearOverrides)
 
 	schedCfg := schedule.SchedulerCfg{
 		C:            clock.NewMock(),
