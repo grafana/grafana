@@ -1,6 +1,9 @@
 package opentsdb
 
 import (
+	"io/ioutil"
+	"net/http"
+	"strings"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -10,6 +13,53 @@ import (
 
 func TestOpenTsdbExecutor(t *testing.T) {
 	exec := &OpenTsdbExecutor{}
+
+	t.Run("Parse response should handle invalid JSON", func(t *testing.T) {
+		response := `{ invalid }`
+
+		query := OpenTsdbQuery{}
+
+		result, err := exec.parseResponse(query, &http.Response{Body: ioutil.NopCloser(strings.NewReader(response))})
+		require.Nil(t, result["A"].Dataframes)
+		require.Error(t, err)
+	})
+
+	t.Run("Parse response should handle invalid JSON", func(t *testing.T) {
+		response := `
+		[
+			{
+				"metric": "test",
+				"dps": {
+					"58": 50.0
+				}
+			}
+		]`
+
+		query := OpenTsdbQuery{}
+
+		resp := http.Response{Body: ioutil.NopCloser(strings.NewReader(response))}
+		resp.StatusCode = 200
+		result, err := exec.parseResponse(query, &resp)
+		require.NoError(t, err)
+
+		decoded, err := result["A"].Dataframes.Decoded()
+		require.NoError(t, err)
+		require.Len(t, decoded, 1)
+
+		frame := decoded[0]
+
+		require.Len(t, frame.Fields, 2)
+
+		field1 := frame.Fields[0]
+		field2 := frame.Fields[1]
+
+		require.Equal(t, field1.Len(), 1)
+		require.Equal(t, field2.Len(), 1)
+
+		require.Equal(t, field2.At(0).(float64), 50.0)
+
+		require.Nil(t, err)
+	})
 
 	t.Run("Build metric with downsampling enabled", func(t *testing.T) {
 		query := plugins.DataSubQuery{

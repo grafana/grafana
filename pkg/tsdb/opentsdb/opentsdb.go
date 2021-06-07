@@ -152,7 +152,7 @@ func (e *OpenTsdbExecutor) parseResponse(query OpenTsdbQuery, res *http.Response
 				return nil, err
 			}
 			timeVector = append(timeVector, time.Unix(timestamp, 0).UTC())
-			values = append(values, float64(value))
+			values = append(values, value)
 		}
 		frames = append(frames, data.NewFrame(name,
 			data.NewField("time", nil, timeVector),
