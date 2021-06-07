@@ -27,8 +27,8 @@ import { hash } from './misc';
 import { capitalize } from 'lodash';
 import { State } from '../components/StateTag';
 
-export function isAlertingRule(rule: Rule): rule is AlertingRule {
-  return rule.type === PromRuleType.Alerting;
+export function isAlertingRule(rule: Rule | undefined): rule is AlertingRule {
+  return typeof rule === 'object' && rule.type === PromRuleType.Alerting;
 }
 
 export function isRecordingRule(rule: Rule): rule is RecordingRule {

@@ -32,7 +32,7 @@ const getStyles = (theme: GrafanaTheme) => ({
     margin: ${theme.spacing.md} 0;
 
     & > div:first-child {
-      width: 110px;
+      width: 150px;
       padding-right: ${theme.spacing.sm};
       font-size: ${theme.typography.size.sm};
       font-weight: ${theme.typography.weight.semibold};

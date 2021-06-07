@@ -1,18 +1,15 @@
 import { CombinedRule, RulesSource } from 'app/types/unified-alerting';
-import React, { FC, useMemo } from 'react';
+import React, { FC } from 'react';
 import { useStyles } from '@grafana/ui';
-import { css, cx } from '@emotion/css';
+import { css } from '@emotion/css';
 import { GrafanaTheme } from '@grafana/data';
-import { isAlertingRule, isGrafanaRulerRule } from '../../utils/rules';
-import { isCloudRulesSource } from '../../utils/datasource';
-import { AnnotationDetailsField } from '../AnnotationDetailsField';
 import { AlertLabels } from '../AlertLabels';
-import { AlertInstancesTable } from './AlertInstancesTable';
 import { DetailsField } from '../DetailsField';
-import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { ExpressionDatasourceUID } from 'app/features/expressions/ExpressionDatasource';
-import { Expression } from '../Expression';
 import { RuleDetailsActionButtons } from './RuleDetailsActionButtons';
+import { RuleDetailsDataSources } from './RuleDetailsDataSources';
+import { RuleDetailsMatchingInstances } from './RuleDetailsMatchingInstances';
+import { RuleDetailsExpression } from './RuleDetailsExpression';
+import { RuleDetailsAnnotations } from './RuleDetailsAnnotations';
 interface Props {
   rule: CombinedRule;
   rulesSource: RulesSource;
@@ -21,31 +18,6 @@ interface Props {
 export const RuleDetails: FC<Props> = ({ rule, rulesSource }) => {
   const styles = useStyles(getStyles);
   const { promRule } = rule;
-
-  const annotations = Object.entries(rule.annotations).filter(([_, value]) => !!value.trim());
-
-  const dataSources: Array<{ name: string; icon?: string }> = useMemo(() => {
-    if (isCloudRulesSource(rulesSource)) {
-      return [{ name: rulesSource.name, icon: rulesSource.meta.info.logos.small }];
-    }
-
-    if (isGrafanaRulerRule(rule.rulerRule)) {
-      const { data } = rule.rulerRule.grafana_alert;
-
-      return data.reduce((dataSources, query) => {
-        const ds = getDatasourceSrv().getInstanceSettings(query.datasourceUid);
-
-        if (!ds || ds.uid === ExpressionDatasourceUID) {
-          return dataSources;
-        }
-
-        dataSources.push({ name: ds.name, icon: ds.meta.info.logos.small });
-        return dataSources;
-      }, [] as Array<{ name: string; icon?: string }>);
-    }
-
-    return [];
-  }, [rule, rulesSource]);
 
   return (
     <div>
@@ -57,41 +29,14 @@ export const RuleDetails: FC<Props> = ({ rule, rulesSource }) => {
               <AlertLabels labels={rule.labels} />
             </DetailsField>
           )}
-          {isCloudRulesSource(rulesSource) && (
-            <DetailsField
-              label="Expression"
-              className={cx({ [styles.exprRow]: !!annotations.length })}
-              horizontal={true}
-            >
-              <Expression expression={rule.query} rulesSource={rulesSource} />
-            </DetailsField>
-          )}
-          {annotations.map(([key, value]) => (
-            <AnnotationDetailsField key={key} annotationKey={key} value={value} />
-          ))}
+          <RuleDetailsExpression rulesSource={rulesSource} rule={rule} />
+          <RuleDetailsAnnotations rule={rule} />
         </div>
         <div className={styles.rightSide}>
-          {!!dataSources.length && (
-            <DetailsField label="Data source">
-              {dataSources.map(({ name, icon }) => (
-                <div key={name}>
-                  {icon && (
-                    <>
-                      <img className={styles.dataSourceIcon} src={icon} />{' '}
-                    </>
-                  )}
-                  {name}
-                </div>
-              ))}
-            </DetailsField>
-          )}
+          <RuleDetailsDataSources rulesSource={rulesSource} rule={rule} />
         </div>
       </div>
-      {promRule && isAlertingRule(promRule) && !!promRule.alerts?.length && (
-        <DetailsField label="Matching instances" horizontal={true}>
-          <AlertInstancesTable instances={promRule.alerts} />
-        </DetailsField>
-      )}
+      <RuleDetailsMatchingInstances promRule={promRule} />
     </div>
   );
 };
@@ -107,12 +52,5 @@ export const getStyles = (theme: GrafanaTheme) => ({
   rightSide: css`
     padding-left: 90px;
     width: 300px;
-  `,
-  exprRow: css`
-    margin-bottom: 46px;
-  `,
-  dataSourceIcon: css`
-    width: ${theme.spacing.md};
-    height: ${theme.spacing.md};
   `,
 });
