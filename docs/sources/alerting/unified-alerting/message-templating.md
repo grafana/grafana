@@ -116,7 +116,7 @@ You can create named templates and then reuse them in contact point fields or ot
 
 To use a template:
 
-Simply enter `{{ template "templatename" . }}` into a contact point field, where `templatename` is the `define` parameter of a template. 
+Enter `{{ template "templatename" . }}` into a contact point field, where `templatename` is the `define` parameter of a template. 
 
 <img  src="/static/img/docs/alerting/unified/contact-points-use-template-8-0.png" width="600px">
 
