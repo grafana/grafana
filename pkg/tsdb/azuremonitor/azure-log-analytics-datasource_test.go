@@ -7,10 +7,7 @@ import (
 	"time"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/require"
 )
 
@@ -173,114 +170,6 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 			queries, err := datasource.buildQueries(tt.queryModel, datasourceInfo{})
 			tt.Err(t, err)
 			if diff := cmp.Diff(tt.azureLogAnalyticsQueries[0], queries[0]); diff != "" {
-				t.Errorf("Result mismatch (-want +got):\n%s", diff)
-			}
-		})
-	}
-}
-
-func TestPluginRoutes(t *testing.T) {
-	cfg := &setting.Cfg{
-		Azure: setting.AzureSettings{
-			Cloud:                  setting.AzurePublic,
-			ManagedIdentityEnabled: true,
-		},
-	}
-
-	plugin := &plugins.DataSourcePlugin{
-		Routes: []*plugins.AppPluginRoute{
-			{
-				Path:   "loganalyticsazure",
-				Method: "GET",
-				URL:    "https://api.loganalytics.io/",
-				Headers: []plugins.AppPluginRouteHeader{
-					{Name: "x-ms-app", Content: "Grafana"},
-				},
-			},
-			{
-				Path:   "chinaloganalyticsazure",
-				Method: "GET",
-				URL:    "https://api.loganalytics.azure.cn/",
-				Headers: []plugins.AppPluginRouteHeader{
-					{Name: "x-ms-app", Content: "Grafana"},
-				},
-			},
-			{
-				Path:   "govloganalyticsazure",
-				Method: "GET",
-				URL:    "https://api.loganalytics.us/",
-				Headers: []plugins.AppPluginRouteHeader{
-					{Name: "x-ms-app", Content: "Grafana"},
-				},
-			},
-		},
-	}
-
-	tests := []struct {
-		name              string
-		dsInfo            datasourceInfo
-		datasource        *AzureLogAnalyticsDatasource
-		expectedProxypass string
-		expectedRouteURL  string
-		Err               require.ErrorAssertionFunc
-	}{
-		{
-			name: "plugin proxy route for the Azure public cloud",
-			dsInfo: datasourceInfo{
-				Settings: azureMonitorSettings{
-					AzureAuthType: AzureAuthClientSecret,
-					CloudName:     "azuremonitor",
-				},
-			},
-			datasource: &AzureLogAnalyticsDatasource{
-				cfg: cfg,
-			},
-			expectedProxypass: "loganalyticsazure",
-			expectedRouteURL:  "https://api.loganalytics.io/",
-			Err:               require.NoError,
-		},
-		{
-			name: "plugin proxy route for the Azure China cloud",
-			dsInfo: datasourceInfo{
-				Settings: azureMonitorSettings{
-					AzureAuthType: AzureAuthClientSecret,
-					CloudName:     "chinaazuremonitor",
-				},
-			},
-			datasource: &AzureLogAnalyticsDatasource{
-				cfg: cfg,
-			},
-			expectedProxypass: "chinaloganalyticsazure",
-			expectedRouteURL:  "https://api.loganalytics.azure.cn/",
-			Err:               require.NoError,
-		},
-		{
-			name: "plugin proxy route for the Azure Gov cloud",
-			dsInfo: datasourceInfo{
-				Settings: azureMonitorSettings{
-					AzureAuthType: AzureAuthClientSecret,
-					CloudName:     "govazuremonitor",
-				},
-			},
-			datasource: &AzureLogAnalyticsDatasource{
-				cfg: cfg,
-			},
-			expectedProxypass: "govloganalyticsazure",
-			expectedRouteURL:  "https://api.loganalytics.us/",
-			Err:               require.NoError,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			route, proxypass, err := tt.datasource.getPluginRoute(plugin, tt.dsInfo)
-			tt.Err(t, err)
-
-			if diff := cmp.Diff(tt.expectedRouteURL, route.URL, cmpopts.EquateNaNs()); diff != "" {
-				t.Errorf("Result mismatch (-want +got):\n%s", diff)
-			}
-
-			if diff := cmp.Diff(tt.expectedProxypass, proxypass, cmpopts.EquateNaNs()); diff != "" {
 				t.Errorf("Result mismatch (-want +got):\n%s", diff)
 			}
 		})

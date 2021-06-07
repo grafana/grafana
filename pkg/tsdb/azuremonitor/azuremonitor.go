@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
-	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
@@ -39,7 +38,6 @@ func init() {
 
 type Service struct {
 	PluginManager        plugins.Manager       `inject:""`
-	HTTPClientProvider   httpclient.Provider   `inject:""`
 	Cfg                  *setting.Cfg          `inject:""`
 	BackendPluginManager backendplugin.Manager `inject:""`
 }
@@ -60,29 +58,23 @@ type azureMonitorSettings struct {
 
 type datasourceInfo struct {
 	Settings azureMonitorSettings
+	Services map[string]datasourceService
 
-	HTTPClient              *http.Client
-	URL                     string
 	JSONData                map[string]interface{}
 	DecryptedSecureJSONData map[string]string
 	DatasourceID            int64
 	OrgID                   int64
 }
 
-func NewInstanceSettings(httpClientProvider httpclient.Provider) datasource.InstanceFactoryFunc {
+type datasourceService struct {
+	URL        string
+	HTTPClient *http.Client
+}
+
+func NewInstanceSettings(cfg *setting.Cfg) datasource.InstanceFactoryFunc {
 	return func(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-		opts, err := settings.HTTPClientOptions()
-		if err != nil {
-			return nil, err
-		}
-
-		client, err := httpClientProvider.New(opts)
-		if err != nil {
-			return nil, err
-		}
-
 		jsonData := map[string]interface{}{}
-		err = json.Unmarshal(settings.JSONData, &jsonData)
+		err := json.Unmarshal(settings.JSONData, &jsonData)
 		if err != nil {
 			return nil, fmt.Errorf("error reading settings: %w", err)
 		}
@@ -94,11 +86,26 @@ func NewInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 		}
 		model := datasourceInfo{
 			Settings:                azMonitorSettings,
-			HTTPClient:              client,
-			URL:                     settings.URL,
 			JSONData:                jsonData,
 			DecryptedSecureJSONData: settings.DecryptedSecureJSONData,
 			DatasourceID:            settings.ID,
+			Services:                map[string]datasourceService{},
+		}
+
+		// Instantiate an HTTP client per route for the current cloud
+		cloudRoutes, ok := routes[azMonitorSettings.CloudName]
+		if !ok {
+			return nil, fmt.Errorf("unable to find the cloud %s", azMonitorSettings.CloudName)
+		}
+		for name, route := range cloudRoutes {
+			client, err := newHTTPClient(route, model, cfg, settings)
+			if err != nil {
+				return nil, err
+			}
+			model.Services[name] = datasourceService{
+				URL:        route.url,
+				HTTPClient: client,
+			}
 		}
 
 		return model, nil
@@ -109,14 +116,14 @@ type azDatasourceExecutor interface {
 	executeTimeSeriesQuery(ctx context.Context, originalQueries []backend.DataQuery, dsInfo datasourceInfo) (*backend.QueryDataResponse, error)
 }
 
-func newExecutor(im instancemgmt.InstanceManager, pm plugins.Manager, httpC httpclient.Provider, cfg *setting.Cfg) *datasource.QueryTypeMux {
+func newExecutor(im instancemgmt.InstanceManager, pm plugins.Manager, cfg *setting.Cfg) *datasource.QueryTypeMux {
 	mux := datasource.NewQueryTypeMux()
 	executors := map[string]azDatasourceExecutor{
-		"Azure Monitor":        &AzureMonitorDatasource{pm, cfg},
-		"Application Insights": &ApplicationInsightsDatasource{pm, cfg},
-		"Azure Log Analytics":  &AzureLogAnalyticsDatasource{pm, cfg},
-		"Insights Analytics":   &InsightsAnalyticsDatasource{pm, cfg},
-		"Azure Resource Graph": &AzureResourceGraphDatasource{pm, cfg},
+		azureMonitor:       &AzureMonitorDatasource{},
+		appInsights:        &ApplicationInsightsDatasource{},
+		azureLogAnalytics:  &AzureLogAnalyticsDatasource{},
+		insightsAnalytics:  &InsightsAnalyticsDatasource{},
+		azureResourceGraph: &AzureResourceGraphDatasource{},
 	}
 	for dsType := range executors {
 		// Make a copy of the string to keep the reference after the iterator
@@ -136,9 +143,9 @@ func newExecutor(im instancemgmt.InstanceManager, pm plugins.Manager, httpC http
 }
 
 func (s *Service) Init() error {
-	im := datasource.NewInstanceManager(NewInstanceSettings(s.HTTPClientProvider))
+	im := datasource.NewInstanceManager(NewInstanceSettings(s.Cfg))
 	factory := coreplugin.New(backend.ServeOpts{
-		QueryDataHandler: newExecutor(im, s.PluginManager, s.HTTPClientProvider, s.Cfg),
+		QueryDataHandler: newExecutor(im, s.PluginManager, s.Cfg),
 	})
 
 	if err := s.BackendPluginManager.Register(dsName, factory); err != nil {

@@ -1,4 +1,4 @@
-package pluginproxy
+package tokenprovider
 
 import (
 	"context"
@@ -8,7 +8,6 @@ import (
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -18,27 +17,19 @@ var (
 )
 
 type azureAccessTokenProvider struct {
-	datasourceId      int64
-	datasourceVersion int
-	ctx               context.Context
-	cfg               *setting.Cfg
-	route             *plugins.AppPluginRoute
-	authParams        *plugins.JwtTokenAuth
+	cfg        *setting.Cfg
+	authParams *plugins.JwtTokenAuth
 }
 
-func newAzureAccessTokenProvider(ctx context.Context, cfg *setting.Cfg, ds *models.DataSource, pluginRoute *plugins.AppPluginRoute,
+func NewAzureAccessTokenProvider(cfg *setting.Cfg,
 	authParams *plugins.JwtTokenAuth) *azureAccessTokenProvider {
 	return &azureAccessTokenProvider{
-		datasourceId:      ds.Id,
-		datasourceVersion: ds.Version,
-		ctx:               ctx,
-		cfg:               cfg,
-		route:             pluginRoute,
-		authParams:        authParams,
+		cfg:        cfg,
+		authParams: authParams,
 	}
 }
 
-func (provider *azureAccessTokenProvider) getAccessToken() (string, error) {
+func (provider *azureAccessTokenProvider) GetAccessToken() (string, error) {
 	var credential TokenCredential
 
 	if provider.isManagedIdentityCredential() {
@@ -52,7 +43,7 @@ func (provider *azureAccessTokenProvider) getAccessToken() (string, error) {
 		credential = provider.getClientSecretCredential()
 	}
 
-	accessToken, err := azureTokenCache.GetAccessToken(provider.ctx, credential, provider.authParams.Scopes)
+	accessToken, err := azureTokenCache.GetAccessToken(credential, provider.authParams.Scopes)
 	if err != nil {
 		return "", err
 	}
@@ -126,8 +117,8 @@ func (c *managedIdentityCredential) Init() error {
 	}
 }
 
-func (c *managedIdentityCredential) GetAccessToken(ctx context.Context, scopes []string) (*AccessToken, error) {
-	accessToken, err := c.credential.GetToken(ctx, azcore.TokenRequestOptions{Scopes: scopes})
+func (c *managedIdentityCredential) GetAccessToken(scopes []string) (*AccessToken, error) {
+	accessToken, err := c.credential.GetToken(context.Background(), azcore.TokenRequestOptions{Scopes: scopes})
 	if err != nil {
 		return nil, err
 	}
@@ -157,8 +148,8 @@ func (c *clientSecretCredential) Init() error {
 	}
 }
 
-func (c *clientSecretCredential) GetAccessToken(ctx context.Context, scopes []string) (*AccessToken, error) {
-	accessToken, err := c.credential.GetToken(ctx, azcore.TokenRequestOptions{Scopes: scopes})
+func (c *clientSecretCredential) GetAccessToken(scopes []string) (*AccessToken, error) {
+	accessToken, err := c.credential.GetToken(context.Background(), azcore.TokenRequestOptions{Scopes: scopes})
 	if err != nil {
 		return nil, err
 	}
