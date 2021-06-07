@@ -234,12 +234,14 @@ func (rp *responseParser) processMetrics(esAgg *simplejson.Json, target *Query, 
 			metrics := metric.Settings.Get("metrics").MustArray()
 
 			for _, metricField := range metrics {
+				tags := make(map[string]string, len(props))
+				timeVector := make([]time.Time, 0, len(esAggBuckets))
+				values := make([]*float64, 0, len(esAggBuckets))
+
 				for _, v := range buckets {
 					bucket := simplejson.NewFromAny(v)
 					stats := bucket.GetPath(metric.ID, "top")
 					key := castToFloat(bucket.Get("key"))
-
-					tags := make(map[string]string, len(props))
 
 					for k, v := range props {
 						tags[k] = v

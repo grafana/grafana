@@ -1029,32 +1029,36 @@ func TestResponseParser(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Len(t, dataframes, 2)
 
-		seriesOne := dataframes[0]
-		assert.Equal(t, seriesOne.Name, "Top Metrics @value")
-		assert.Len(t, seriesOne.Fields, 2)
-		v, _ := seriesOne.FloatAt(0, 0)
+		frame := dataframes[0]
+		assert.Equal(t, frame.Name, "Top Metrics @value")
+		assert.Len(t, frame.Fields, 2)
+		require.Equal(t, frame.Fields[0].Len(), 2)
+		require.Equal(t, frame.Fields[1].Len(), 2)
+		v, _ := frame.FloatAt(0, 0)
 		assert.Equal(t, 1609459200000., v)
-		v, _ = seriesOne.FloatAt(1, 0)
+		v, _ = frame.FloatAt(1, 0)
 		assert.Equal(t, 1., v)
 
-		v, _ = seriesOne.FloatAt(0, 1)
+		v, _ = frame.FloatAt(0, 1)
 		assert.Equal(t, 1609459210000., v)
-		v, _ = seriesOne.FloatAt(1, 1)
+		v, _ = frame.FloatAt(1, 1)
 		assert.Equal(t, 1., v)
 
-		seriesTwo := dataframes[1]
-		assert.Equal(t, seriesTwo.Name, "Top Metrics @anotherValue")
-		l, _ := seriesTwo.MarshalJSON()
+		frame = dataframes[1]
+		assert.Equal(t, frame.Name, "Top Metrics @anotherValue")
+		l, _ := frame.MarshalJSON()
 		fmt.Println(string(l))
-		assert.Len(t, seriesTwo.Fields, 2)
-		v, _ = seriesTwo.FloatAt(0, 0)
+		assert.Len(t, frame.Fields, 2)
+		require.Equal(t, frame.Fields[0].Len(), 2)
+		require.Equal(t, frame.Fields[1].Len(), 2)
+		v, _ = frame.FloatAt(0, 0)
 		assert.Equal(t, 1609459200000., v)
-		v, _ = seriesTwo.FloatAt(1, 0)
+		v, _ = frame.FloatAt(1, 0)
 		assert.Equal(t, 2., v)
 
-		v, _ = seriesTwo.FloatAt(0, 1)
+		v, _ = frame.FloatAt(0, 1)
 		assert.Equal(t, 1609459210000., v)
-		v, _ = seriesTwo.FloatAt(1, 1)
+		v, _ = frame.FloatAt(1, 1)
 		assert.Equal(t, 2., v)
 	})
 }
