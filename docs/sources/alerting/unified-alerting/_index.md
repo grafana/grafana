@@ -20,6 +20,7 @@ Alerts have four main components:
 
 You can perform the following tasks for alerts:
 
+
 - [Create a Grafana managed alert rule]({{< relref "alerting-rules/create-grafana-managed-rule.md" >}})
 - [Create a Cortex or Loki managed alert rule]({{< relref "alerting-rules/create-cortex-loki-managed-rule.md" >}})
 - [View existing alert rules and their current state]({{< relref "alerting-rules/rule-list.md" >}})

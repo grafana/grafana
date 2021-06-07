@@ -934,6 +934,78 @@ func TestSettingsCasting(t *testing.T) {
 		assert.Equal(t, 1., serialDiffSettings["lag"])
 	})
 
+	t.Run("Date Histogram Settings", func(t *testing.T) {
+		t.Run("Correctly transforms date_histogram settings", func(t *testing.T) {
+			c := newFakeClient("5.0.0")
+			_, err := executeTsdbQuery(c, `{
+				"timeField": "@timestamp",
+				"bucketAggs": [
+					{ 
+						"type": "date_histogram",
+						"field": "@timestamp",
+						"id": "2",
+						"settings": {
+							"min_doc_count": "1" 
+						}
+					}
+				],
+				"metrics": [
+					{ "id": "1", "type": "average", "field": "@value" },
+					{
+						"id": "3",
+						"type": "serial_diff",
+						"field": "1",
+						"pipelineAgg": "1",
+						"settings": {
+							"lag": "1"
+						}
+					}
+				]
+			}`, from, to, 15*time.Second)
+			assert.Nil(t, err)
+			sr := c.multisearchRequests[0].Requests[0]
+
+			dateHistogramAgg := sr.Aggs[0].Aggregation.Aggregation.(*es.DateHistogramAgg)
+
+			assert.Equal(t, 1, dateHistogramAgg.MinDocCount)
+		})
+
+		t.Run("Correctly uses already int min_doc_count", func(t *testing.T) {
+			c := newFakeClient("5.0.0")
+			_, err := executeTsdbQuery(c, `{
+				"timeField": "@timestamp",
+				"bucketAggs": [
+					{ 
+						"type": "date_histogram",
+						"field": "@timestamp",
+						"id": "2",
+						"settings": {
+							"min_doc_count": 10
+						}
+					}
+				],
+				"metrics": [
+					{ "id": "1", "type": "average", "field": "@value" },
+					{
+						"id": "3",
+						"type": "serial_diff",
+						"field": "1",
+						"pipelineAgg": "1",
+						"settings": {
+							"lag": "1"
+						}
+					}
+				]
+			}`, from, to, 15*time.Second)
+			assert.Nil(t, err)
+			sr := c.multisearchRequests[0].Requests[0]
+
+			dateHistogramAgg := sr.Aggs[0].Aggregation.Aggregation.(*es.DateHistogramAgg)
+
+			assert.Equal(t, 10, dateHistogramAgg.MinDocCount)
+		})
+	})
+
 	t.Run("Inline Script", func(t *testing.T) {
 		t.Run("Correctly handles scripts for ES < 5.6", func(t *testing.T) {
 			c := newFakeClient("5.0.0")
