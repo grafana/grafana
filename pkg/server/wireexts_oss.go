@@ -6,6 +6,7 @@ import (
 	"github.com/google/wire"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana/pkg/server/backgroundsvcs"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/licensing"
@@ -25,8 +26,8 @@ var wireExtsBasicSet = wire.NewSet(
 	wire.Bind(new(models.PluginRequestValidator), new(*validations.OSSPluginRequestValidator)),
 	provisioning.ProvideService,
 	wire.Bind(new(provisioning.ProvisioningService), new(*provisioning.ProvisioningServiceImpl)),
-	ProvideBackgroundServiceRegistry,
-	wire.Bind(new(registry.BackgroundServiceRegistry), new(*BackgroundServiceRegistry)),
+	backgroundsvcs.ProvideBackgroundServiceRegistry,
+	wire.Bind(new(registry.BackgroundServiceRegistry), new(*backgroundsvcs.BackgroundServiceRegistry)),
 )
 
 var wireExtsSet = wire.NewSet(

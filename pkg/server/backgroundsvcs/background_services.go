@@ -1,4 +1,4 @@
-package server
+package backgroundsvcs
 
 import (
 	"github.com/grafana/grafana/pkg/api"
