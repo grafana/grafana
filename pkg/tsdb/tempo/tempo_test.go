@@ -10,7 +10,9 @@ import (
 )
 
 func TestTempo(t *testing.T) {
-	plug, err := NewExecutor(&models.DataSource{})
+	plug, err := NewExecutor(&models.DataSource{
+		Name: "tempo",
+	})
 	executor := plug.(*tempoExecutor)
 	require.NoError(t, err)
 

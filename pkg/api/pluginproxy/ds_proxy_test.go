@@ -551,7 +551,7 @@ func TestDataSourceProxy_requestHandling(t *testing.T) {
 		}))
 		t.Cleanup(backend.Close)
 
-		ds := &models.DataSource{Url: backend.URL, Type: models.DS_GRAPHITE}
+		ds := &models.DataSource{Url: backend.URL, Type: models.DS_GRAPHITE, Name: "graphite"}
 
 		responseRecorder := &closeNotifierResponseRecorder{
 			ResponseRecorder: httptest.NewRecorder(),
