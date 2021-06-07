@@ -2,7 +2,7 @@
 title = "Enhanced LDAP Integration"
 description = "Grafana Enhanced LDAP Integration Guide "
 keywords = ["grafana", "configuration", "documentation", "ldap", "active directory", "enterprise"]
-weight = 300
+weight = 600
 +++
 
 # Enhanced LDAP integration

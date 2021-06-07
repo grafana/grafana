@@ -2,7 +2,7 @@
 title = "Enterprise configuration"
 description = "Enterprise configuration documentation"
 keywords = ["grafana", "configuration", "documentation", "enterprise"]
-weight = 300
+weight = 700
 +++
 
 # Grafana Enterprise configuration
@@ -132,6 +132,10 @@ Maximum number of concurrent calls to the rendering service.
 ### image_scale_factor
 
 Scale factor for rendering images. Value `2` is enough for monitor resolutions, `4` would be better for printed material. Setting a higher value affects performance and memory.
+
+### max_attachment_size_mb
+
+Set the maximum file size in megabytes for the CSV attachments.
 
 ### fonts_path
 

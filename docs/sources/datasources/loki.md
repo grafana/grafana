@@ -18,12 +18,12 @@ Add it as a data source and you are ready to build dashboards or query your log 
 
 To access Loki settings, click the **Configuration** (gear) icon, then click **Data Sources**, and then click the Loki data source.
 
-| Name                  | Description                                                                                                                                   |
-| --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| `Name`                | The data source name. This is how you refer to the data source in panels, queries, and Explore.                                               |
-| `Default`             | Default data source means that it will be pre-selected for new panels.                                                                        |
-| `URL`                 | The URL of the Loki instance, e.g., `http://localhost:3100`                                                                                   |
-| `Whitelisted Cookies` | Grafana Proxy deletes forwarded cookies by default. Specify cookies by name that should be forwarded to the data source.                      |
+| Name                  | Description                                                                                                                                               |
+| --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Name`                | The data source name. This is how you refer to the data source in panels, queries, and Explore.                                                           |
+| `Default`             | Default data source that is pre-selected for new panels.                                                                                    |
+| `URL`                 | URL of the Loki instance, e.g., `http://localhost:3100`.                                                                                             |
+| `Whitelisted Cookies` | Grafana Proxy deletes forwarded cookies by default. Specify cookies by name that should be forwarded to the data source.                                  |
 | `Maximum lines`       | Upper limit for the number of log lines returned by Loki (default is 1000). Lower this limit if your browser is sluggish when displaying logs in Explore. |
 
 ### Derived fields
@@ -52,21 +52,22 @@ The new field with the link shown in log details:
 
 You can use the Loki query editor to create log and metric queries.
 
-| Name               | Description                                                                                                                                                                                                 |
-| ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `Query expression` | Loki query expression, refer to the [LogQL documentation](https://grafana.com/docs/loki/latest/logql/) for more information.                                                                                                    |
+| Name               | Description                                                                                                                                                                                   |
+| ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Query expression` | Loki query expression, refer to the [LogQL documentation](https://grafana.com/docs/loki/latest/logql/) for more information.                                                                  |
 | `Query type`       | Choose the type of query to run. The instant type queries against a single point in time. We are using "To" time from the time range. The range type queries over the selected range of time. |
-| `Line limit`       | Upper limit for number of log lines returned by query. The default is the Maximum lines limit set in Loki settings.                                                                                         |
-| `Legend`           | Available only in Dashboard. Controls the name of the time series, using name or pattern. For example `{{hostname}}` is replaced with the label value for the label `hostname`.                             |
+| `Line limit`       | Upper limit for number of log lines returned by query. The default is the Maximum lines limit set in Loki settings.                                                                           |
+| `Legend`           | Available only in Dashboard. Controls the name of the time series, using name or pattern. For example `{{hostname}}` is replaced with the label value for the label `hostname`.               |
 
 ### Log browser
 
 With Loki log browser you can easily navigate trough your list of labels and values and construct the query of your choice. Log browser has multi-step selection:
+
 1. Choose the labels you would like to consider for your search.
 2. Pick the values for selected labels. Log browser supports facetting and therefore it shows you only possible label combinations.
 3. Choose the type of query - logs query or rate metrics query. Additionally, you can also validate selector.
 
-{{< figure src="/static/img/docs/v75/loki_log_browser.png" class="docs-image--no-shadow" max-width="800px" caption="Screenshot of the derived fields debugging" >}}
+{{< figure src="/static/img/docs/v75/loki_log_browser.png" class="docs-image--no-shadow" max-width="800px" caption="Screenshot of the log browser for Loki" >}}
 
 ## Querying with Loki
 

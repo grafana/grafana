@@ -13,17 +13,12 @@ This section explains how to use Time series field options to visualize time ser
 ## Create the panel
 
 1. [Add a panel]({{< relref "../../add-a-panel.md" >}}). Select the [Time series]({{< relref "_index.md" >}}) visualization.
-1. In the [Panel editor]({{< relref "../../panel-editor.md" >}}), click the **Field** tab..
+1. In the [Panel editor]({{< relref "../../panel-editor.md" >}}) side pane, click **Graph styles** to expand it.
 1. In Style, click **Points**.
 
 ## Style the points
 
 Use the following field settings to refine your visualization.
-
-For more information about applying these options, refer to:
-
-- [Configure all fields]({{< relref "../../field-options/configure-all-fields.md" >}})
-- [Configure specific fields]({{< relref "../../field-options/configure-specific-fields.md" >}})
 
 Some field options will not affect the visualization until you click outside of the field option box you are editing or press Enter.
 
