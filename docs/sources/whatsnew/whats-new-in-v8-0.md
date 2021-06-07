@@ -24,9 +24,9 @@ The new alerts in Grafana 8.0 are an opt-in feature that centralizes alerting in
 
 As part of the new alert changes, we have introduced a new data source, Alertmanager, which includes built-in support for Prometheus Alertmanager. It is presently in alpha and it not accessible unless alpha plugins are enabled in Grafana settings. For more information, refer to [Alertmanager data source]({{< relref "../datasources/alertmanager.md" >}}).
 
-> **Note:** Out of the box, Grafana still supports old Grafana alerts. They are legacy alerts at this time, and will be deprecated in a future release.
+> **Note:** Out of the box, Grafana still supports old Grafana alerts. They are legacy alerts at this time, and will be deprecated in a future release. 
 
-To learn more about the differences between new alerts and the legacy alerts, refer to [Differences between Grafana 8.0 alerts and legacy alerts]({{< relref "../alerting/difference-old-new.md" >}}).
+To learn more about the differences between new alerts and the legacy alerts, refer to [What's New with Grafana 8 Alerts]({{< relref "../alerting/difference-old-new.md" >}}).
 
 ### Library panels
 
