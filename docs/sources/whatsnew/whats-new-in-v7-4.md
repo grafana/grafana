@@ -68,7 +68,7 @@ For more information, refer to [Filter data by value]({{< relref "../panels/tran
 
 On the Overrides tab, you can now set properties for fields returned by a specific query.
 
-For more information, refer to [Add a field override]({{< relref "../panels/field-options/configure-specific-fields.md#add-a-field-override" >}}).
+For more information, refer to [Field overrides]({{< relref "../panels/field-overrides.md" >}}).
 
 ### Exemplar support
 
@@ -107,7 +107,7 @@ You can now provide detailed information to alert notification recipients by inj
 
 {{< figure src="/static/img/docs/alerting/alert-notification-template-7-4.png" max-width="700px" caption="Variable support in alert notifications" >}}
 
-For more information, refer to the [alert notification docs]({{< relref "../alerting/notifications.md#notification-templating" >}}).
+For more information, refer to the [alert notification docs]({{< relref "../alerting/old-alerting/notifications.md#notification-templating" >}}).
 
 ### Content security policy support
 
