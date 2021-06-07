@@ -45,6 +45,7 @@ import { QueryRunner } from './features/query/state/QueryRunner';
 import { getTimeSrv } from './features/dashboard/services/TimeSrv';
 import { getVariablesUrlParams } from './features/variables/getAllVariableValuesForUrl';
 import getDefaultMonacoLanguages from '../lib/monaco-languages';
+import { contextSrv } from './core/services/context_srv';
 
 // add move to lodash for backward compatabilty with plugins
 // @ts-ignore
@@ -146,7 +147,9 @@ function initEchoSrv() {
     }
   });
 
-  registerEchoBackend(new PerformanceBackend({}));
+  if (contextSrv.user.orgRole !== '') {
+    registerEchoBackend(new PerformanceBackend({}));
+  }
 
   if (config.sentry.enabled) {
     registerEchoBackend(
