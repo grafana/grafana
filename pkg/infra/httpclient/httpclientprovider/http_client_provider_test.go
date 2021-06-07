@@ -19,7 +19,7 @@ func TestHTTPClientProvider(t *testing.T) {
 		t.Cleanup(func() {
 			newProviderFunc = origNewProviderFunc
 		})
-		_ = New(&setting.Cfg{SigV4AuthEnabled: false})
+		_ = New(&setting.Cfg{SigV4AuthEnabled: false}, "")
 		require.Len(t, providerOpts, 1)
 		o := providerOpts[0]
 		require.Len(t, o.Middlewares, 5)
@@ -40,7 +40,7 @@ func TestHTTPClientProvider(t *testing.T) {
 		t.Cleanup(func() {
 			newProviderFunc = origNewProviderFunc
 		})
-		_ = New(&setting.Cfg{SigV4AuthEnabled: true})
+		_ = New(&setting.Cfg{SigV4AuthEnabled: true}, "")
 		require.Len(t, providerOpts, 1)
 		o := providerOpts[0]
 		require.Len(t, o.Middlewares, 6)

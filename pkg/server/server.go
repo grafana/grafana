@@ -282,7 +282,7 @@ func (s *Server) buildServiceGraph(services []*registry.Descriptor) error {
 		s.cfg,
 		routing.NewRouteRegister(middleware.ProvideRouteOperationName, middleware.RequestMetrics(s.cfg)),
 		localcache.New(5*time.Minute, 10*time.Minute),
-		httpclientprovider.New(s.cfg),
+		httpclientprovider.New(s.cfg, "server"),
 		s,
 	}
 	return registry.BuildServiceGraph(objs, services)
