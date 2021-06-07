@@ -180,11 +180,11 @@ describe('align frames', () => {
     `);
   });
 
-  it('sort single frame', () => {
+  it('sort single frame as index zero', () => {
     const series1 = toDataFrame({
       fields: [
-        { name: 'TheTime', type: FieldType.time, values: [6000, 2000, 1500] },
         { name: 'A1', type: FieldType.number, values: [1, 22, 15] },
+        { name: 'TheTime', type: FieldType.time, values: [6000, 2000, 1500] },
       ],
     });
 

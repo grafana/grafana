@@ -71,10 +71,11 @@ func mapPanelModel(id string, vcs schema.VersionedCueSchema) cue.Value {
 
 func readPanelModels(p BaseLoadPaths) (map[string]schema.VersionedCueSchema, error) {
 	overlay := make(map[string]load.Source)
-	if err := toOverlay("/", p.BaseCueFS, overlay); err != nil {
+
+	if err := toOverlay(prefix, p.BaseCueFS, overlay); err != nil {
 		return nil, err
 	}
-	if err := toOverlay("/", p.DistPluginCueFS, overlay); err != nil {
+	if err := toOverlay(prefix, p.DistPluginCueFS, overlay); err != nil {
 		return nil, err
 	}
 
