@@ -6,7 +6,9 @@ weight = 114
 
 # Legacy Grafana alerts
 
-Legacy Grafana alerts consists of two parts:
+Grafana 8.0 has [new and improved alerts]({{< relref "../unified-alerting/_index.md" >}}). The new alerting system are an opt-in feature that centralizes alerting information for Grafana managed alerts and alerts from Prometheus-compatible data sources in one UI and API.
+
+Out of the box, Grafana still supports legacy dashboard alerts. Legacy Grafana alerts consists of two parts:
 
 Alert rules - When the alert is triggered. Alert rules are defined by one or more conditions that are regularly evaluated by Grafana.
 Notification channel - How the alert is delivered. When the conditions of an alert rule are met, the Grafana notifies the channels configured for that alert.
