@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { LogRows, CustomScrollbar } from '@grafana/ui';
 import { PanelProps, Field } from '@grafana/data';
 import { Options } from './types';
@@ -12,6 +12,20 @@ export const LogsPanel: React.FunctionComponent<LogsPanelProps> = ({
   timeZone,
   options: { showLabels, showTime, wrapLogMessage, sortOrder, dedupStrategy, enableLogDetails },
 }) => {
+  const [logRows, deduplicatedRows] = useMemo(() => {
+    const newResults = data ? dataFrameToLogsModel(data.series, data.request?.intervalMs) : null;
+    const logRows = newResults?.rows || [];
+    const deduplicatedRows = dedupLogRows(logRows, dedupStrategy);
+    return [logRows, deduplicatedRows];
+  }, [data, dedupStrategy]);
+
+  const getFieldLinks = useCallback(
+    (field: Field, rowIndex: number) => {
+      return getFieldLinksForExplore({ field, rowIndex, range: data.timeRange });
+    },
+    [data]
+  );
+
   if (!data) {
     return (
       <div className="panel-empty">
@@ -20,21 +34,12 @@ export const LogsPanel: React.FunctionComponent<LogsPanelProps> = ({
     );
   }
 
-  const newResults = data ? dataFrameToLogsModel(data.series, data.request?.intervalMs) : null;
-  const logRows = newResults?.rows || [];
-  const deduplicatedRows = dedupLogRows(logRows, dedupStrategy);
-
-  const getFieldLinks = (field: Field, rowIndex: number) => {
-    return getFieldLinksForExplore({ field, rowIndex, range: data.timeRange });
-  };
-
   return (
     <CustomScrollbar autoHide>
       <LogRows
         logRows={logRows}
         deduplicatedRows={deduplicatedRows}
         dedupStrategy={dedupStrategy}
-        highlighterExpressions={[]}
         showLabels={showLabels}
         showTime={showTime}
         wrapLogMessage={wrapLogMessage}
