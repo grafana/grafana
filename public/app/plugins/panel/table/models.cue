@@ -29,7 +29,7 @@ Family: {
                 }
                 PanelFieldConfig: {
                     width?: int
-		    minWidth?: int
+                    minWidth?: int
                     align?: string | *"auto"
                     displayMode?: string | *"auto" // TODO? TableCellDisplayMode
                     filterable?: bool
