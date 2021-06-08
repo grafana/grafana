@@ -1,4 +1,4 @@
-import React, { FC, useCallback, useEffect, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 import { useObservable } from 'react-use';
 import { css } from '@emotion/css';
 import { GrafanaTheme2, LoadingState, PanelData } from '@grafana/data';
@@ -33,7 +33,7 @@ type RuleViewerProps = GrafanaRouteComponentProps<{ id?: string; sourceName?: st
 const errorMessage = 'Could not find data source for rule';
 const errorTitle = 'Could not view rule';
 
-const RuleViewer: FC<RuleViewerProps> = ({ match }) => {
+export function RuleViewer({ match }: RuleViewerProps) {
   const styles = useStyles2(getStyles);
   const { id, sourceName } = match.params;
   const identifier = ruleIdentifierFromParam(id);
@@ -152,7 +152,7 @@ const RuleViewer: FC<RuleViewerProps> = ({ match }) => {
       )}
     </RuleViewerLayout>
   );
-};
+}
 
 function isLoading(data: Record<string, PanelData>): boolean {
   return !!Object.values(data).find((d) => d.state === LoadingState.Loading);
