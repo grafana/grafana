@@ -2,9 +2,12 @@
 
 exports[`Render should render component 1`] = `
 <li
-  className="divider"
+  className="divider css-1djiy5s"
 >
-  <a>
+  <a
+    href="#"
+    onMouseDown={[Function]}
+  >
     <span
       style={
         Object {
@@ -18,9 +21,12 @@ exports[`Render should render component 1`] = `
 
 exports[`Render should render icon if exists 1`] = `
 <li
-  className=""
+  className="css-1djiy5s"
 >
-  <a>
+  <a
+    href="#"
+    onMouseDown={[Function]}
+  >
     <Icon
       className="css-290ig"
       name="icon-test"
@@ -38,9 +44,12 @@ exports[`Render should render icon if exists 1`] = `
 
 exports[`Render should render nested submenu items 1`] = `
 <li
-  className=""
+  className="css-1djiy5s"
 >
-  <a>
+  <a
+    href="#"
+    onMouseDown={[Function]}
+  >
     <Icon
       className="css-290ig"
       name="icon-test"
