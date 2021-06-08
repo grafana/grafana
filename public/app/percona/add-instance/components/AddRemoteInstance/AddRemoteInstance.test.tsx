@@ -3,7 +3,7 @@ import React from 'react';
 import { dataQa } from '@percona/platform-core';
 import AddRemoteInstance from './AddRemoteInstance';
 
-describe('Add remote instance:: ', () => {
+xdescribe('Add remote instance:: ', () => {
   it('should render correct for mysql and highlight empty mandatory fields on submit', async () => {
     const type = 'mysql';
 

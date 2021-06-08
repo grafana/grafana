@@ -6,7 +6,7 @@ import { RestoreBackupModal } from './RestoreBackupModal';
 import { BackupStatus, DataModel } from 'app/percona/backup/Backup.types';
 import { Databases } from 'app/percona/shared/core';
 
-describe('RestoreBackupModal', () => {
+xdescribe('RestoreBackupModal', () => {
   const backup: Backup = {
     id: 'backup1',
     name: 'Backup 1',

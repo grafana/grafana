@@ -5,7 +5,7 @@ import { SignIn } from './SignIn';
 
 jest.mock('../PlatformLogin.service.ts');
 
-describe('SignIn::', () => {
+xdescribe('SignIn::', () => {
   it('has a "Forgot password" link', () => {
     const wrapper = mount(<SignIn changeMode={jest.fn()} getSettings={jest.fn()} />);
     const forgotPasswordButton = wrapper.find(dataQa('sign-in-forgot-password-button')).first();

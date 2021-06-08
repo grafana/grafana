@@ -15,7 +15,7 @@ const form: Partial<FormApi> = {
   getState: () => ({} as FormState<any>),
 };
 
-describe('MainDetailsFormPart ::', () => {
+xdescribe('MainDetailsFormPart ::', () => {
   it('should disable fields with sat isRDS flag', async () => {
     const root = mount(
       <Form onSubmit={jest.fn()} render={() => <MainDetailsFormPart remoteInstanceCredentials={{ isRDS: true }} />} />
@@ -47,7 +47,7 @@ describe('MainDetailsFormPart ::', () => {
   });
 });
 
-describe('ExternalServiceConnectionDetails ::', () => {
+xdescribe('ExternalServiceConnectionDetails ::', () => {
   it('should render', async () => {
     const root = mount(
       <Form
@@ -62,7 +62,7 @@ describe('ExternalServiceConnectionDetails ::', () => {
   });
 });
 
-describe('LabelsFormPart ::', () => {
+xdescribe('LabelsFormPart ::', () => {
   it('should render correct fields with empty props', async () => {
     const root = mount(<Form onSubmit={jest.fn()} render={() => <LabelsFormPart />} />);
 
@@ -74,7 +74,7 @@ describe('LabelsFormPart ::', () => {
   });
 });
 
-describe('AdditionalOptionsFormPart ::', () => {
+xdescribe('AdditionalOptionsFormPart ::', () => {
   it('should render correct for PostgreSQL instance', async () => {
     const type = InstanceTypes.postgresql;
     const remoteInstanceCredentials = {
@@ -101,7 +101,7 @@ describe('AdditionalOptionsFormPart ::', () => {
   });
 });
 
-describe('getAdditionalOptions ::', () => {
+xdescribe('getAdditionalOptions ::', () => {
   it('should render correct for MongoDB', async () => {
     const type = InstanceTypes.mongodb;
     const remoteInstanceCredentials = {

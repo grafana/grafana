@@ -15,7 +15,7 @@ jest.mock('@percona/platform-core', () => {
   };
 });
 
-describe('AlertRuleTemplate', () => {
+xdescribe('AlertRuleTemplate', () => {
   afterEach(() => {
     jest.clearAllMocks();
   });

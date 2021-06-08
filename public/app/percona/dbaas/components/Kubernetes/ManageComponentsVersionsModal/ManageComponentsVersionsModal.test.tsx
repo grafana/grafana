@@ -13,7 +13,7 @@ import {
 jest.mock('app/core/app_events');
 jest.mock('./ManageComponentsVersions.hooks');
 
-describe('ManageComponentsVersionsModal::', () => {
+xdescribe('ManageComponentsVersionsModal::', () => {
   it('renders form with operator, component and versions field with correct values', () => {
     const root = mount(
       <ManageComponentsVersionsModal isVisible selectedKubernetes={kubernetesStub[0]} setVisible={jest.fn()} />

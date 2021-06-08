@@ -4,7 +4,7 @@ import { dataQa } from '@percona/platform-core';
 import { Form } from 'react-final-form';
 import { ExternalServiceConnectionDetails } from './ExternalServiceConnectionDetails';
 
-describe('Add remote instance:: ', () => {
+xdescribe('Add remote instance:: ', () => {
   it('should render correct for mysql and highlight empty mandatory fields on submit', async () => {
     const root = mount(
       <Form

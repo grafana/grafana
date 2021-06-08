@@ -3,7 +3,7 @@ import { mount } from 'enzyme';
 import { dataQa } from '@percona/platform-core';
 import { Slack } from './Slack';
 
-describe('Slack::', () => {
+xdescribe('Slack::', () => {
   it('Renders with props', () => {
     const root = mount(
       <Slack

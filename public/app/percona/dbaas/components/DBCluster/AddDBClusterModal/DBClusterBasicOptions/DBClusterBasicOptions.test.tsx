@@ -8,7 +8,7 @@ import { kubernetesClusterNameValidator } from './DBClusterBasicOptions.utils';
 import { Messages } from '../../../../DBaaS.messages';
 import { kubernetesStub } from '../../../Kubernetes/__mocks__/kubernetesStubs';
 
-describe('DBClusterBasicOptions::', () => {
+xdescribe('DBClusterBasicOptions::', () => {
   it('renders correctly', () => {
     const root = mount(
       <Form

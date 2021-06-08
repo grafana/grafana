@@ -6,7 +6,7 @@ import { AddBackupModal } from './AddBackupModal';
 
 jest.mock('./AddBackupModal.service');
 
-describe('AddBackupModal', () => {
+xdescribe('AddBackupModal', () => {
   it('should render fields', () => {
     const wrapper = mount(<AddBackupModal isVisible backup={null} onClose={jest.fn()} onBackup={jest.fn()} />);
 

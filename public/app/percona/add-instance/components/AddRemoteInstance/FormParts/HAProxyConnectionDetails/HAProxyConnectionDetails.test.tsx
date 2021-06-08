@@ -4,7 +4,7 @@ import { Form } from 'react-final-form';
 import { dataQa } from '@percona/platform-core';
 import { HAProxyConnectionDetails } from './HAProxyConnectionDetails';
 
-describe('HAProxy connection details:: ', () => {
+xdescribe('HAProxy connection details:: ', () => {
   it('should trim username and password values right', async () => {
     const root = mount(
       <Form onSubmit={jest.fn()} render={() => <HAProxyConnectionDetails remoteInstanceCredentials={{}} />} />
