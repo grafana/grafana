@@ -3,9 +3,10 @@ import { mount } from 'enzyme';
 import { LocationType, StorageLocation } from '../StorageLocations.types';
 import { WarningBlock } from '../../../../shared/components/Elements/WarningBlock/WarningBlock';
 import { RemoveStorageLocationModal } from './RemoveStorageLocationModal';
+import { CheckboxField } from '@percona/platform-core';
 
 describe('RemoveStorageLocationModal', () => {
-  it('should have a WarningBlock', () => {
+  it('should have a WarningBlock and CheckboxField', () => {
     const location: StorageLocation = {
       locationID: 'ID1',
       name: 'Location_1',
@@ -23,5 +24,6 @@ describe('RemoveStorageLocationModal', () => {
       />
     );
     expect(wrapper.find(WarningBlock).exists()).toBeTruthy();
+    expect(wrapper.find(CheckboxField).exists()).toBeTruthy();
   });
 });
