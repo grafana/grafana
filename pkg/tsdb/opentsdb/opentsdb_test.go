@@ -7,12 +7,26 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestOpenTsdbExecutor(t *testing.T) {
 	exec := &OpenTsdbExecutor{}
+
+	t.Run("create request", func(t *testing.T) {
+		req, err := exec.createRequest(&models.DataSource{}, OpenTsdbQuery{})
+		require.NoError(t, err)
+
+		assert.Equal(t, "POST", req.Method)
+		body, err := ioutil.ReadAll(req.Body)
+		require.NoError(t, err)
+
+		testBody := "{\"start\":0,\"end\":0,\"queries\":null}"
+		assert.Equal(t, testBody, string(body))
+	})
 
 	t.Run("Parse response should handle invalid JSON", func(t *testing.T) {
 		response := `{ invalid }`
@@ -24,7 +38,7 @@ func TestOpenTsdbExecutor(t *testing.T) {
 		require.Error(t, err)
 	})
 
-	t.Run("Parse response should handle invalid JSON", func(t *testing.T) {
+	t.Run("Parse response should handle JSON", func(t *testing.T) {
 		response := `
 		[
 			{
