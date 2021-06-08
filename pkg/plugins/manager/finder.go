@@ -69,7 +69,7 @@ func (f *Finder) Find(pluginsPath string) ([]string, error) {
 }
 
 func (f *Finder) getPluginJSONPaths(rootDirPath string) ([]string, error) {
-	var found []string
+	var pluginJSONPaths []string
 
 	if err := util.Walk(rootDirPath, true, true,
 		func(currentPath string, fi os.FileInfo, err error) error {
@@ -92,7 +92,7 @@ func (f *Finder) getPluginJSONPaths(rootDirPath string) ([]string, error) {
 				return nil
 			}
 
-			found = append(found, currentPath)
+			pluginJSONPaths = append(pluginJSONPaths, currentPath)
 			return nil
 		}); err != nil {
 		if errors.Is(err, os.ErrNotExist) {
@@ -110,5 +110,5 @@ func (f *Finder) getPluginJSONPaths(rootDirPath string) ([]string, error) {
 		return []string{}, err
 	}
 
-	return found, nil
+	return pluginJSONPaths, nil
 }
