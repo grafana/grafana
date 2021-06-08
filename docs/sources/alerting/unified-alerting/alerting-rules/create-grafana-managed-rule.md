@@ -27,7 +27,7 @@ This section describes the fields you fill out to create an alert.
   - **Alert type -** Select **Grafana managed alert**.
   - **Folder -** Select a folder this alert rule will belong to. To create a new folder, click on the drop down and type in a new folder name.
 
-![Alert type section screenshot](/img/docs/alerting/unified/rule-edit-grafana-alert-type-8-0.png 'Alert type section screenshot')
+![Alert type section screenshot](/static/img/docs/alerting/unified/rule-edit-grafana-alert-type-8-0.png 'Alert type section screenshot')
 
 ### Query
 
@@ -51,7 +51,7 @@ If a query returns multiple series, then the aggregation function and threshold 
 
 So, as you can see from the above scenario Grafana will not send out notifications when other series cause the alert to fire if the rule already is in state `Firing`. If you want to have alert per series, create a multi dimensional alert rule as described in the section below.
 
-![Query section classic condition](/img/docs/alerting/unified/rule-edit-classic-8-0.png 'Query section classic condition screenshot')
+![Query section classic condition](/static/img/docs/alerting/unified/rule-edit-classic-8-0.png 'Query section classic condition screenshot')
 
 #### Multi dimensional rule
 
@@ -63,7 +63,7 @@ You can use reduce and math expressions to create a rule that will create an ale
 
 See or [expressions documentation]({{< relref "../../../panels/expressions.md" >}}) for in depth explanation of `math` and `reduce` expressions.
 
-![Query section multi dimensional](/img/docs/alerting/unified/rule-edit-multi-8-0.png 'Query section multi dimensional screenshot')
+![Query section multi dimensional](/static/img/docs/alerting/unified/rule-edit-multi-8-0.png 'Query section multi dimensional screenshot')
 
 ### Conditions
 
@@ -87,7 +87,7 @@ See or [expressions documentation]({{< relref "../../../panels/expressions.md" >
 | Alerting                | Set alert rule state to `Alerting`                  |
 | OK                      | Set alert rule state to `Normal`                    |
 
-![Conditions section](/img/docs/alerting/unified/rule-edit-grafana-conditions-8-0.png 'Conditions section screenshot')
+![Conditions section](/static/img/docs/alerting/unified/rule-edit-grafana-conditions-8-0.png 'Conditions section screenshot')
 
 ### Details
 
@@ -101,7 +101,7 @@ Annotations are key and value pairs that provide additional meta information abo
 
 Labels are key value pairs that categorize or identify an alert. Labels are  used to match alerts in silences or match and groups alerts in notification policies. Labels are also shown in rule or alert details in the UI and can be used in contact type message templates. For example, it is common to add a `severity` label and then configure a separate notification policy for each severity. Or one could add a `team` label and configure team specific notification policies, or silence all alerts for a particular team. Labels can also be templated like annotations, for example `{{ $labels.namespace }}/{{ $labels.job }}` will produce a new rule label that will have the evaluated `namespace` and `job` label value added for every alert this rule produces. The rule labels take precedence over the labels produced by the query/condition.
 
-![Details section](/img/docs/alerting/unified/rule-edit-details-8-0.png 'Details section screenshot')
+![Details section](/static/img/docs/alerting/unified/rule-edit-details-8-0.png 'Details section screenshot')
 
 ## Preview alerts
 

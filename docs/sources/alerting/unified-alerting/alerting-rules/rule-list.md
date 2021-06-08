@@ -16,13 +16,13 @@ By default, the group view is shown. You can toggle between group or state views
 
 Group view shows Grafana alert rules grouped by folder and Loki or Prometheus alert rules grouped by `namespace` + `group`. This is the default rule list view, intended for managing rules. You can expand each group to view a list of rules in this group. Each rule can be further expanded to view its details. Action buttons and any alerts spawned by this rule, and each alert can be further expanded to view its details.
 
-![Grouped alert rule view](/img/docs/alerting/unified/rule-list-group-view-8-0.png 'Screenshot of grouped alert rule view')
+![Grouped alert rule view](/static/img/docs/alerting/unified/rule-list-group-view-8-0.png 'Screenshot of grouped alert rule view')
 
 ### State view
 
 State view shows alert rules grouped by state. Use this view to get an overview of which rules are in what state. Each rule can be expanded to view its details. Action buttons and any alerts spawned by this rule, and each alert can be further expanded to view its details.
 
-![Alert rule state view](/img/docs/alerting/unified/rule-list-state-view-8-0.png 'Screenshot of alert rule state view')
+![Alert rule state view](/static/img/docs/alerting/unified/rule-list-state-view-8-0.png 'Screenshot of alert rule state view')
 
 ## Filter alert rules
 You can use the following filters to view only alert rules that match specific criteria:
@@ -35,7 +35,7 @@ You can use the following filters to view only alert rules that match specific c
 
 A rule row shows the rule state, health, and summary annotation if the rule has one. You can expand the rule row to display rule labels, all annotations, data sources this rule queries, and a list of alert instances spawned from this rule.
 
-![Alert rule details](/img/docs/alerting/unified/rule-details-8-0.png 'Screenshot of alert rule details')
+![Alert rule details](/static/img/docs/alerting/unified/rule-details-8-0.png 'Screenshot of alert rule details')
 
 ### Edit or delete rule
 

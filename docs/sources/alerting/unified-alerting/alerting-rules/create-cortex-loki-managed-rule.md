@@ -29,19 +29,19 @@ This section describes the fields you fill out to create an alert.
   - **Namespace -** Select an existing rule namespace or click **Add new** to create a new one.
   - **Group -** Select an existing group within the selected namespace or click **Add new** to create a new one. Newly created rules will be added to the end of the rule group.
 
-![Alert type section screenshot](/img/docs/alerting/unified/rule-edit-cortex-alert-type-8-0.png 'Alert type section screenshot')
+![Alert type section screenshot](/static/img/docs/alerting/unified/rule-edit-cortex-alert-type-8-0.png 'Alert type section screenshot')
 
 ### Query
 
 Enter a PromQL or LogQL expression. Rule will fire if evaluation result has at least one series with value > 0. An alert will be created per each such series.
 
-![Query section](/img/docs/alerting/unified/rule-edit-cortex-query-8-0.png 'Query section screenshot')
+![Query section](/static/img/docs/alerting/unified/rule-edit-cortex-query-8-0.png 'Query section screenshot')
 
 ### Conditions
 
   - **For -** For how long the selected condition should violated before an alert enters `Firing` state. When condition threshold is violated for the first time, an alert becomes `Pending`. If the **for** time elapses and the condition is still violated, it becomes `Firing`. Else it reverts back to `Normal`. 
 
-![Conditions section](/img/docs/alerting/unified/rule-edit-cortex-conditions-8-0.png 'Conditions section screenshot')
+![Conditions section](/static/img/docs/alerting/unified/rule-edit-cortex-conditions-8-0.png 'Conditions section screenshot')
 
 ### Details
 
@@ -55,7 +55,7 @@ Annotations are key and value pairs that provide additional meta information abo
 
 Labels are key value pairs that categorize or identify an alert. Labels are  used to match alerts in silences or match and groups alerts in notification policies. Labels are also shown in rule or alert details in the UI and can be used in contact type message templates. For example, it is common to add a `severity` label and then configure a separate notification policy for each severity. Or one could add a `team` label and configure team specific notification policies, or silence all alerts for a particular team.
 
-![Details section](/img/docs/alerting/unified/rule-edit-details-8-0.png 'Details section screenshot')
+![Details section](/static/img/docs/alerting/unified/rule-edit-details-8-0.png 'Details section screenshot')
 
 ## Preview alerts
 
