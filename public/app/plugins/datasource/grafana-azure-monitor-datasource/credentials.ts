@@ -115,15 +115,6 @@ export function getCredentials(options: AzureDataSourceSettings): AzureCredentia
   }
 }
 
-export function credentialsDiffer(logCreds: AzureClientSecretCredentials, primaryCreds: AzureClientSecretCredentials) {
-  return (
-    logCreds.authType !== primaryCreds.authType ||
-    logCreds.logAnalyticsClientId !== primaryCreds.clientId ||
-    logCreds.logAnalyticsTenantId !== primaryCreds.tenantId ||
-    logCreds.logAnalyticsClientSecret !== primaryCreds.clientSecret
-  );
-}
-
 /** @deprecated since 8.0, left here for help the migration */
 export function getLogAnalyticsCredentials(options: AzureDataSourceSettings): AzureClientSecretCredentials | undefined {
   const authType = getAuthType(options);

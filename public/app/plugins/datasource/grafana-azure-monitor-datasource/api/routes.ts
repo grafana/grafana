@@ -13,21 +13,6 @@ export function getManagementApiRoute(azureCloud: string): string {
   }
 }
 
-export function getLogAnalyticsManagementApiRoute(azureCloud: string): string {
-  switch (azureCloud) {
-    case 'azuremonitor':
-      return 'azuremonitor';
-    case 'chinaazuremonitor':
-      return 'chinaazuremonitor';
-    case 'govazuremonitor':
-      return 'govazuremonitor';
-    case 'germanyazuremonitor':
-      return 'germanyazuremonitor';
-    default:
-      throw new Error('The cloud not supported.');
-  }
-}
-
 export function getLogAnalyticsApiRoute(azureCloud: string): string {
   switch (azureCloud) {
     case 'azuremonitor':

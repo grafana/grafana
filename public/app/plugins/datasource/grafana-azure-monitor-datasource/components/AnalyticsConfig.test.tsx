@@ -96,9 +96,7 @@ describe('Render', () => {
         ...props.options,
         jsonData: {
           ...props.options.jsonData,
-          logAnalyticsTenantId: 'foo',
-          logAnalyticsClientId: 'bar',
-          logAnalyticsSubscriptionId: 'foobar',
+          azureLogAnalyticsSameAs: false,
         },
       },
     }));

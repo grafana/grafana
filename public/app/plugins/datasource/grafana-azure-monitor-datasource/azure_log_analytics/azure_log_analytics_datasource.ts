@@ -19,7 +19,7 @@ import { getBackendSrv, getTemplateSrv, DataSourceWithBackend, FetchResponse } f
 import { Observable, from } from 'rxjs';
 import { mergeMap } from 'rxjs/operators';
 import { getAuthType, getAzureCloud } from '../credentials';
-import { getLogAnalyticsApiRoute, getLogAnalyticsManagementApiRoute } from '../api/routes';
+import { getLogAnalyticsApiRoute, getManagementApiRoute } from '../api/routes';
 import { AzureLogAnalyticsMetadata } from '../types/logAnalyticsMetadata';
 import { isGUIDish } from '../components/ResourcePicker/utils';
 
@@ -51,7 +51,7 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     const logAnalyticsRoute = getLogAnalyticsApiRoute(cloud);
     this.baseUrl = `/${logAnalyticsRoute}`;
 
-    const managementRoute = getLogAnalyticsManagementApiRoute(cloud);
+    const managementRoute = getManagementApiRoute(cloud);
     this.azureMonitorUrl = `/${managementRoute}/subscriptions`;
 
     this.url = instanceSettings.url || '';

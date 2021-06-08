@@ -4,7 +4,7 @@ import { AzureCredentialsForm } from './AzureCredentialsForm';
 import { InlineFormLabel, LegacyForms, Button, Alert } from '@grafana/ui';
 const { Select } = LegacyForms;
 import { AzureClientSecretCredentials, AzureDataSourceSettings } from '../types';
-import { credentialsDiffer, getCredentials, getLogAnalyticsCredentials, isCredentialsComplete } from '../credentials';
+import { getCredentials, getLogAnalyticsCredentials, isCredentialsComplete } from '../credentials';
 
 export interface Props {
   options: AzureDataSourceSettings;
@@ -28,7 +28,7 @@ export const AnalyticsConfig: FunctionComponent<Props> = (props: Props) => {
   const logCredentialsEnabled =
     primaryCredentials.authType === 'clientsecret' &&
     logAnalyticsCredentials &&
-    credentialsDiffer(logAnalyticsCredentials, primaryCredentials as AzureClientSecretCredentials);
+    props.options.jsonData.azureLogAnalyticsSameAs === false;
 
   const hasRequiredFields =
     subscriptionId &&
