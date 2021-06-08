@@ -11,11 +11,11 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 )
 
-func GetAPIKeyCurrent(c *models.ReqContext) Response {
+func GetAPIKeyCurrent(c *models.ReqContext) response.Response {
 	query := models.GetApiKeyByIdQuery{ApiKeyId: c.ApiKeyId}
 
 	if err := bus.Dispatch(&query); err != nil {
-		return Error(500, "Failed to get api key", err)
+		return response.Error(500, "Failed to get api key", err)
 	}
 
 	var expiration *time.Time = nil
@@ -24,7 +24,7 @@ func GetAPIKeyCurrent(c *models.ReqContext) Response {
 		expiration = &v
 	}
 
-	return JSON(200, &models.ApiKeyDetailsDTO{
+	return response.JSON(200, &models.ApiKeyDetailsDTO{
 		Id:         query.Result.Id,
 		OrgId:      query.Result.OrgId,
 		Name:       query.Result.Name,

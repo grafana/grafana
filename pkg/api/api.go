@@ -244,7 +244,7 @@ func (hs *HTTPServer) registerRoutes() {
 
 		// current api key
 		apiRoute.Group("/auth/key", func(keyRoute routing.RouteRegister) {
-			keyRoute.Get("/", Wrap(GetAPIKeyCurrent))
+			keyRoute.Get("/", routing.Wrap(GetAPIKeyCurrent))
 		})
 		// auth api keys
 		apiRoute.Group("/auth/keys", func(keysRoute routing.RouteRegister) {
