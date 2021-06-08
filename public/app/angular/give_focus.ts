@@ -1,4 +1,4 @@
-import coreModule from '../core_module';
+import coreModule from '../core/core_module';
 
 coreModule.directive('giveFocus', () => {
   return (scope: any, element: any, attrs: any) => {
