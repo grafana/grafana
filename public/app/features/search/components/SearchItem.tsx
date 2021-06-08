@@ -1,11 +1,11 @@
 import React, { FC, useCallback } from 'react';
 import { css } from '@emotion/css';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
-import { TagList, Card, useStyles, Icon, IconName } from '@grafana/ui';
-import { GrafanaTheme } from '@grafana/data';
+import { TagList, Card, Icon, IconName, useStyles2 } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
 import { DashboardSectionItem, OnToggleChecked } from '../types';
 import { SearchCheckbox } from './SearchCheckbox';
-import { SEARCH_ITEM_HEIGHT, SEARCH_ITEM_MARGIN } from '../constants';
+import { SEARCH_ITEM_HEIGHT } from '../constants';
 
 export interface Props {
   item: DashboardSectionItem;
@@ -26,7 +26,7 @@ const getIconFromMeta = (meta = ''): IconName => {
 };
 
 export const SearchItem: FC<Props> = ({ item, editable, onToggleChecked, onTagSelected }) => {
-  const styles = useStyles(getStyles);
+  const styles = useStyles2(getStyles);
   const tagSelected = useCallback(
     (tag: string, event: React.MouseEvent<HTMLElement>) => {
       onTagSelected(tag);
@@ -75,23 +75,22 @@ export const SearchItem: FC<Props> = ({ item, editable, onToggleChecked, onTagSe
   );
 };
 
-const getStyles = (theme: GrafanaTheme) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     container: css`
-      margin-bottom: ${SEARCH_ITEM_MARGIN}px;
+      margin-bottom: ${theme.spacing(0.75)};
 
       a {
-        padding: ${theme.spacing.sm} ${theme.spacing.md};
+        padding: ${theme.spacing(1)} ${theme.spacing(2)};
       }
     `,
     metaContainer: css`
       display: flex;
       align-items: center;
-      margin-right: ${theme.spacing.sm};
+      margin-right: ${theme.spacing(1)};
 
       svg {
-        margin-right: ${theme.spacing.xs};
-        margin-bottom: 0;
+        margin-right: ${theme.spacing(0.5)};
       }
     `,
     checkbox: css`
