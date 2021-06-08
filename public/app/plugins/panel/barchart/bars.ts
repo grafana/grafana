@@ -226,7 +226,7 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
 
       // Calculate final labels positions according to unified text size
       const textMeasurement = measureText(label.formattedValue, fontSize * devicePixelRatio);
-      const actualLineHeight = textMeasurement.actualBoundingBoxAscent + textMeasurement.actualBoundingBoxAscent;
+      const actualLineHeight = textMeasurement.actualBoundingBoxAscent + textMeasurement.actualBoundingBoxDescent;
 
       if (ori === ScaleOrientation.Horizontal) {
         x = label.x + label.barWidth / 2;
