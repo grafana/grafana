@@ -124,7 +124,6 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
         };
       }
 
-      // const displayName = getFieldDisplayName(field, dataFrame, data);
       const displayName = field.config.displayName ?? '';
 
       const display =
@@ -155,25 +154,17 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
           field.state = setIndexForPaletteColor(field, values.length);
 
           const displayValue = display(field.values.get(j));
-
-          if (displayName !== '') {
-            displayValue.title = replaceVariables(displayName, {
-              ...field.state?.scopedVars, // series and field scoped vars
-              ...scopedVars,
-            });
-          } else {
-            displayValue.title = getSmartDisplayNameForRow(dataFrame, field, j);
-          }
-
-          const overrideColor = lookupRowColorFromOverride(displayValue, options.fieldConfig);
-          if (overrideColor) {
-            displayValue.color = theme.visualization.getColorByName(overrideColor);
-          }
+          const rowName = getSmartDisplayNameForRow(dataFrame, field, j, replaceVariables, scopedVars);
+          const overrideColor = lookupRowColorFromOverride(rowName, options.fieldConfig, theme);
 
           values.push({
             name: '',
             field: config,
-            display: displayValue,
+            display: {
+              ...displayValue,
+              title: rowName,
+              color: overrideColor ?? displayValue.color,
+            },
             view,
             colIndex: i,
             rowIndex: j,
@@ -250,9 +241,22 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
   return values;
 };
 
-function getSmartDisplayNameForRow(frame: DataFrame, field: Field, rowIndex: number): string {
+function getSmartDisplayNameForRow(
+  frame: DataFrame,
+  field: Field,
+  rowIndex: number,
+  replaceVariables: InterpolateFunction,
+  scopedVars: ScopedVars
+): string {
   let parts: string[] = [];
   let otherNumericFields = 0;
+
+  if (field.config.displayName) {
+    return replaceVariables(field.config.displayName, {
+      ...field.state?.scopedVars, // series and field scoped vars
+      ...scopedVars,
+    });
+  }
 
   for (const otherField of frame.fields) {
     if (otherField === field) {
@@ -290,16 +294,18 @@ function setIndexForPaletteColor(field: Field, currentLength: number) {
 /**
  * This function makes overrides that set color work for row values
  */
-function lookupRowColorFromOverride(display: DisplayValue, fieldConfig: FieldConfigSource) {
+function lookupRowColorFromOverride(displayName: string, fieldConfig: FieldConfigSource, theme: GrafanaTheme2) {
   for (const override of fieldConfig.overrides) {
-    if (override.matcher.id === 'byName' && override.matcher.options === display.title) {
+    if (override.matcher.id === 'byName' && override.matcher.options === displayName) {
       for (const prop of override.properties) {
         if (prop.id === 'color' && prop.value) {
-          return prop.value.fixedColor;
+          return theme.visualization.getColorByName(prop.value.fixedColor);
         }
       }
     }
   }
+
+  return null;
 }
 
 export function hasLinks(field: Field): boolean {
