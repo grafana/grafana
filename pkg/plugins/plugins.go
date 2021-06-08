@@ -1,23 +1,39 @@
-// Package plugins contains plugin related logic.
 package plugins
 
 import (
 	"context"
-	"sync"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 )
 
-var _ backendplugin.Plugin = (*PluginV2)(nil)
-
 type PluginV2 struct {
+	JSONData
+
+	PluginDir    string
+	IsCorePlugin bool
+
+	// app fields
+	IncludedInAppID string
+	DefaultNavURL   string
+	Pinned          bool
+
+	// signature fields
+	SignatureType PluginSignatureType
+	SignatureOrg  string
+	Parent        *PluginV2
+	Children      []*PluginV2
+
+	// gcom update checker fields
+	GrafanaComVersion   string
+	GrafanaComHasUpdate bool
+
 	Client backendplugin.Plugin
+}
 
-	logger log.Logger
-	mutex  sync.RWMutex
-
+// JSONData represents the plugin's plugin.json data
+type JSONData struct {
 	// Common settings
 	Type         string                `json:"type"`
 	Name         string                `json:"name"`
@@ -34,19 +50,8 @@ type PluginV2 struct {
 	Signature    PluginSignatureStatus `json:"signature"`
 	Backend      bool                  `json:"backend"`
 
-	IncludedInAppID string              `json:"-"`
-	PluginDir       string              `json:"-"`
-	DefaultNavURL   string              `json:"-"`
-	IsCorePlugin    bool                `json:"-"`
-	SignatureType   PluginSignatureType `json:"-"`
-	SignatureOrg    string              `json:"-"`
-
 	// App settings
 	AutoEnabled bool `json:"autoEnabled"`
-
-	GrafanaNetVersion   string `json:"-"`
-	GrafanaNetHasUpdate bool   `json:"-"`
-	Pinned              bool   `json:"-"`
 
 	// Datasource settings
 	Annotations  bool            `json:"annotations"`
@@ -65,33 +70,17 @@ type PluginV2 struct {
 	// Backend (App + Datasource settings)
 	Routes     []*AppPluginRoute `json:"routes"`
 	Executable string            `json:"executable,omitempty"`
-
-	Parent   *PluginV2   `json:"-"`
-	Children []*PluginV2 `json:"-"`
-
-	StaticRoutes []*PluginStaticRoute `json:"-"`
-}
-
-type InstallOpts struct {
-	backend.QueryDataHandler
-	backend.CollectMetricsHandler
-	backend.CheckHealthHandler
-	backend.CallResourceHandler
-	backend.StreamHandler
-}
-
-func (p *PluginV2) Logger() log.Logger {
-	return p.logger
 }
 
 func (p *PluginV2) PluginID() string {
 	return p.ID
 }
 
-func (p *PluginV2) Start(ctx context.Context) error {
-	p.mutex.Lock()
-	defer p.mutex.Unlock()
+func (p *PluginV2) Logger() log.Logger {
+	return p.Client.Logger()
+}
 
+func (p *PluginV2) Start(ctx context.Context) error {
 	err := p.Client.Start(ctx)
 	if err != nil {
 		return err
@@ -198,6 +187,10 @@ func (p *PluginV2) getPluginClient() (PluginClient, bool) {
 		return p.Client, true
 	}
 	return nil, false
+}
+
+func (p *PluginV2) GetStaticRoutes() []*PluginStaticRoute {
+	return []*PluginStaticRoute{{Directory: p.PluginDir, PluginId: p.ID}}
 }
 
 type PluginClient interface {
