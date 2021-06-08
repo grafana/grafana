@@ -54,10 +54,6 @@ const AmRoutes: FC = () => {
   };
 
   useCleanup((state) => state.unifiedAlerting.saveAMConfig);
-  const { loading: saving, error: savingError, dispatched: savingDispatched } = useUnifiedAlertingSelector(
-    (state) => state.saveAMConfig
-  );
-
   const handleSave = (data: Partial<FormAmRoute>) => {
     const newData = formAmRouteToAmRoute(
       {
@@ -83,15 +79,10 @@ const AmRoutes: FC = () => {
         oldConfig: result,
         alertManagerSourceName: alertManagerSourceName!,
         successMessage: 'Saved',
+        refetch: true,
       })
     );
   };
-
-  useEffect(() => {
-    if (savingDispatched && !saving && !savingError) {
-      fetchConfig();
-    }
-  }, [fetchConfig, savingDispatched, saving, savingError]);
 
   if (!alertManagerSourceName) {
     return <Redirect to="/alerting/routes" />;

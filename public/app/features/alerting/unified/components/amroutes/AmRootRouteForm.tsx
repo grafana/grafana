@@ -38,7 +38,7 @@ export const AmRootRouteForm: FC<AmRootRouteFormProps> = ({
         <>
           <Field label="Default contact point" invalid={!!errors.receiver} error={errors.receiver?.message}>
             <>
-              <div className={styles.container}>
+              <div className={styles.container} data-testid="am-receiver-select">
                 <InputControl
                   render={({ field: { onChange, ref, ...field } }) => (
                     <Select
@@ -59,7 +59,11 @@ export const AmRootRouteForm: FC<AmRootRouteFormProps> = ({
               </div>
             </>
           </Field>
-          <Field label="Group by" description="Group alerts when you receive a notification based on labels.">
+          <Field
+            label="Group by"
+            description="Group alerts when you receive a notification based on labels."
+            data-testid="am-group-select"
+          >
             {/* @ts-ignore-check: react-hook-form made me do this */}
             <InputControl
               render={({ field: { onChange, ref, ...field } }) => (
