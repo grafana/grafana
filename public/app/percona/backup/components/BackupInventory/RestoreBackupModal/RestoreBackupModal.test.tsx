@@ -1,12 +1,15 @@
-import React from 'react';
-import { mount } from 'enzyme';
 import { dataQa } from '@percona/platform-core';
-import { Backup } from '../BackupInventory.types';
-import { RestoreBackupModal } from './RestoreBackupModal';
+import { mount } from 'enzyme';
+import React from 'react';
+
 import { BackupStatus, DataModel } from 'app/percona/backup/Backup.types';
 import { Databases } from 'app/percona/shared/core';
 
-describe('RestoreBackupModal', () => {
+import { Backup } from '../BackupInventory.types';
+
+import { RestoreBackupModal } from './RestoreBackupModal';
+
+xdescribe('RestoreBackupModal', () => {
   const backup: Backup = {
     id: 'backup1',
     name: 'Backup 1',

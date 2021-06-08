@@ -1,10 +1,11 @@
 /* eslint-disable react/display-name */
-import React from 'react';
-import { mount, ReactWrapper } from 'enzyme';
 import { LoaderButton, TextInputField, TextareaInputField } from '@percona/platform-core';
+import { mount, ReactWrapper } from 'enzyme';
+import React from 'react';
+
 import { StepProgress } from './StepProgress';
 
-describe('StepProgress::', () => {
+xdescribe('StepProgress::', () => {
   const steps = [
     {
       render: () => (

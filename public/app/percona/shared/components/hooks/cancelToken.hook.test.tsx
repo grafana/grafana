@@ -64,7 +64,7 @@ describe('useCancelToken', () => {
     expect(cancelSpy).toHaveBeenCalledTimes(3);
   });
 
-  it('should clean all requests on unmount', () => {
+  xit('should clean all requests on unmount', () => {
     const wrapper = mount(<Dummy />);
     const button = wrapper.find('button');
 
@@ -80,7 +80,7 @@ describe('useCancelToken', () => {
     expect(cancelSpy).toHaveBeenCalledTimes(5);
   });
 
-  it('should explicitly cancel a token', () => {
+  xit('should explicitly cancel a token', () => {
     const wrapper = mount(<Dummy />);
     const button = wrapper.find('button');
 

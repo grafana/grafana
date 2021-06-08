@@ -34,7 +34,7 @@ const withContext = (wrapper: JSX.Element) => (
 const findFormButton = (wrapper: ReactWrapper) =>
   wrapper.find(dataQa('notification-channel-add-button')).find('button');
 
-describe('AddNotificationChannelModal', () => {
+xdescribe('AddNotificationChannelModal', () => {
   it('should render modal with correct fields', async () => {
     const wrapper = await getMount(withContext(<AddNotificationChannelModal setVisible={jest.fn()} isVisible />));
 

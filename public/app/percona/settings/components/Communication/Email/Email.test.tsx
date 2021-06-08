@@ -4,7 +4,7 @@ import React from 'react';
 
 import { Email } from './Email';
 
-describe('Email::', () => {
+xdescribe('Email::', () => {
   it('Renders with props', () => {
     const root = mount(
       <Email

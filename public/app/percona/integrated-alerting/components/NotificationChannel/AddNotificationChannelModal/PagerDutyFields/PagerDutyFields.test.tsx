@@ -7,7 +7,7 @@ import { NotificationChannelType, PagerDutyKeyType } from '../../NotificationCha
 
 import { PagerDutyFields } from './PagerDutyFields';
 
-describe('PagerDutyFields', () => {
+xdescribe('PagerDutyFields', () => {
   it('should render with routing as the default key option', () => {
     const values = { name: 'test name', type: { value: NotificationChannelType.pagerDuty, label: 'test label' } };
     const wrapper = mount(<Form onSubmit={jest.fn()} render={() => <PagerDutyFields values={values} />} />);

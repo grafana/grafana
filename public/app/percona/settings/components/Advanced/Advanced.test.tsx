@@ -5,7 +5,7 @@ import React from 'react';
 import { Advanced } from './Advanced';
 import { sttCheckIntervalsStub } from './__mocks__/stubs';
 
-describe('Advanced::', () => {
+xdescribe('Advanced::', () => {
   it('Renders correctly with props', () => {
     const root = mount(
       <Advanced

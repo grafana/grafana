@@ -6,7 +6,7 @@ import { formattedTemplateStubs } from '../__mocks__/alertRuleTemplateStubs';
 
 import { AlertRuleTemplateActions } from './AlertRuleTemplateActions';
 
-describe('AlertRuleTemplateActions', () => {
+xdescribe('AlertRuleTemplateActions', () => {
   it('should render component correctly', () => {
     const wrapper = mount(
       <AlertRuleTemplateActions template={formattedTemplateStubs[0]} getAlertRuleTemplates={jest.fn()} />

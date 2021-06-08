@@ -10,7 +10,7 @@ import { AddDBClusterFields } from '../AddDBClusterModal.types';
 import { DBClusterBasicOptions } from './DBClusterBasicOptions';
 import { kubernetesClusterNameValidator } from './DBClusterBasicOptions.utils';
 
-describe('DBClusterBasicOptions::', () => {
+xdescribe('DBClusterBasicOptions::', () => {
   it('renders correctly', () => {
     const root = mount(
       <Form

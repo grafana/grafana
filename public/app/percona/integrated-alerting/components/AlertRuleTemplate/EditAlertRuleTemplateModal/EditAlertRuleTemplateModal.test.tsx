@@ -9,7 +9,7 @@ import { EditAlertRuleTemplateModal } from './EditAlertRuleTemplateModal';
 jest.mock('../AlertRuleTemplate.service');
 jest.mock('app/core/app_events');
 
-describe('EditAlertRuleTemplateModal', () => {
+xdescribe('EditAlertRuleTemplateModal', () => {
   it('should render component correctly', () => {
     const wrapper = mount(
       <EditAlertRuleTemplateModal
