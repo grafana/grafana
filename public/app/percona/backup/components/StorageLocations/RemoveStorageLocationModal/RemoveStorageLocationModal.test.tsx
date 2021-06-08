@@ -1,3 +1,4 @@
+import { CheckboxField } from '@percona/platform-core';
 import { mount } from 'enzyme';
 import React from 'react';
 
@@ -7,7 +8,7 @@ import { LocationType, StorageLocation } from '../StorageLocations.types';
 import { RemoveStorageLocationModal } from './RemoveStorageLocationModal';
 
 describe('RemoveStorageLocationModal', () => {
-  it('should have a WarningBlock', () => {
+  it('should have a WarningBlock and CheckboxField', () => {
     const location: StorageLocation = {
       locationID: 'ID1',
       name: 'Location_1',
@@ -25,5 +26,6 @@ describe('RemoveStorageLocationModal', () => {
       />
     );
     expect(wrapper.find(WarningBlock).exists()).toBeTruthy();
+    expect(wrapper.find(CheckboxField).exists()).toBeTruthy();
   });
 });

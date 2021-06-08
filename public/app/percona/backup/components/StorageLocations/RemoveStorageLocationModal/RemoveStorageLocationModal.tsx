@@ -14,7 +14,8 @@ export const RemoveStorageLocationModal: FC<RemoveStorageLocationModalProps> = (
   onDelete,
   setVisible,
 }) => {
-  const handleDelete = () => onDelete(location);
+  const handleDelete = (force: boolean) => onDelete(location, force);
+
   return (
     <DeleteModal
       title={Messages.title}
@@ -23,6 +24,7 @@ export const RemoveStorageLocationModal: FC<RemoveStorageLocationModalProps> = (
       setVisible={setVisible}
       message={Messages.getDeleteMessage(location?.name || '')}
       onDelete={handleDelete}
+      showForce
     >
       <WarningBlock message={Messages.deleteLocationWarning} />
     </DeleteModal>
