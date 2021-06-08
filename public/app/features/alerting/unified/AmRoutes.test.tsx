@@ -72,6 +72,10 @@ const ui = {
 
   receiverSelect: byTestId('am-receiver-select'),
   groupSelect: byTestId('am-group-select'),
+
+  groupWaitContainer: byTestId('am-group-wait'),
+  groupIntervalContainer: byTestId('am-group-interval'),
+  groupRepeatContainer: byTestId('am-repeat-interval'),
 };
 
 describe('AmRoutes', () => {
@@ -240,6 +244,13 @@ describe('AmRoutes', () => {
     const groupSelect = ui.groupSelect.get();
     await userEvent.type(byRole('textbox').get(groupSelect), 'namespace{enter}');
 
+    // configure timing intervals
+    userEvent.click(byText('Timing options').get(rootRouteContainer));
+
+    await updateTiming(ui.groupWaitContainer.get(), '1', 'Minutes');
+    await updateTiming(ui.groupIntervalContainer.get(), '4', 'Minutes');
+    await updateTiming(ui.groupRepeatContainer.get(), '5', 'Hours');
+
     //save
     userEvent.click(ui.saveButton.get(rootRouteContainer));
 
@@ -257,6 +268,9 @@ describe('AmRoutes', () => {
           group_by: ['alertname', 'namespace'],
           receiver: 'critical',
           routes: [],
+          group_interval: '4m',
+          group_wait: '1m',
+          repeat_interval: '5h',
         },
         templates: [],
       },
@@ -316,4 +330,12 @@ describe('AmRoutes', () => {
 const clickSelectOption = async (selectElement: HTMLElement, optionText: string): Promise<void> => {
   userEvent.click(byRole('textbox').get(selectElement));
   userEvent.click(byText(optionText).get(selectElement));
+};
+
+const updateTiming = async (selectElement: HTMLElement, value: string, timeUnit: string): Promise<void> => {
+  const inputs = byRole('textbox').queryAll(selectElement);
+  expect(inputs).toHaveLength(2);
+  await userEvent.type(inputs[0], value);
+  userEvent.click(inputs[1]);
+  userEvent.click(byText(timeUnit).get(selectElement));
 };
