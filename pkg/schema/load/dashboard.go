@@ -3,6 +3,7 @@ package load
 import (
 	"errors"
 	"fmt"
+	"path/filepath"
 
 	"cuelang.org/go/cue"
 	"cuelang.org/go/cue/load"
@@ -13,10 +14,12 @@ var panelSubpath = cue.MakePath(cue.Def("#Panel"))
 
 func defaultOverlay(p BaseLoadPaths) (map[string]load.Source, error) {
 	overlay := make(map[string]load.Source)
-	if err := toOverlay("/", p.BaseCueFS, overlay); err != nil {
+
+	if err := toOverlay(prefix, p.BaseCueFS, overlay); err != nil {
 		return nil, err
 	}
-	if err := toOverlay("/", p.DistPluginCueFS, overlay); err != nil {
+
+	if err := toOverlay(prefix, p.DistPluginCueFS, overlay); err != nil {
 		return nil, err
 	}
 
@@ -35,9 +38,8 @@ func BaseDashboardFamily(p BaseLoadPaths) (schema.VersionedCueSchema, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	cfg := &load.Config{Overlay: overlay}
-	inst, err := rt.Build(load.Instances([]string{"/cue/data/gen.cue"}, cfg)[0])
+	inst, err := rt.Build(load.Instances([]string{filepath.Join(prefix, "cue", "data", "gen.cue")}, cfg)[0])
 	if err != nil {
 		cueError := schema.WrapCUEError(err)
 		if err != nil {
@@ -71,12 +73,10 @@ func DistDashboardFamily(p BaseLoadPaths) (schema.VersionedCueSchema, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	dj, err := disjunctPanelScuemata(scuemap)
 	if err != nil {
 		return nil, err
 	}
-
 	// Stick this into a dummy struct so that we can unify it into place, as
 	// Value.Fill() can't target definitions. Need new method based on cue.Path;
 	// a CL has been merged that creates FillPath and will be in the next

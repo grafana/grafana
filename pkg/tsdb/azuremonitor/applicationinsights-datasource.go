@@ -13,8 +13,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/api/pluginproxy"
+	"github.com/grafana/grafana/pkg/components/securejsondata"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -26,8 +28,6 @@ import (
 
 // ApplicationInsightsDatasource calls the application insights query API.
 type ApplicationInsightsDatasource struct {
-	httpClient    *http.Client
-	dsInfo        *models.DataSource
 	pluginManager plugins.Manager
 	cfg           *setting.Cfg
 }
@@ -36,7 +36,8 @@ type ApplicationInsightsDatasource struct {
 // needed to make a metrics query to Application Insights, and the information
 // used to parse the response.
 type ApplicationInsightsQuery struct {
-	RefID string
+	RefID     string
+	TimeRange backend.TimeRange
 
 	// Text based raw query options.
 	ApiURL string
@@ -50,45 +51,31 @@ type ApplicationInsightsQuery struct {
 	aggregation string
 }
 
-// nolint:staticcheck // plugins.DataQueryResult deprecated
 func (e *ApplicationInsightsDatasource) executeTimeSeriesQuery(ctx context.Context,
-	originalQueries []plugins.DataSubQuery,
-	timeRange plugins.DataTimeRange) (plugins.DataResponse, error) {
-	result := plugins.DataResponse{
-		Results: map[string]plugins.DataQueryResult{},
-	}
+	originalQueries []backend.DataQuery, dsInfo datasourceInfo) (*backend.QueryDataResponse, error) {
+	result := backend.NewQueryDataResponse()
 
-	queries, err := e.buildQueries(originalQueries, timeRange)
+	queries, err := e.buildQueries(originalQueries)
 	if err != nil {
-		return plugins.DataResponse{}, err
+		return nil, err
 	}
 
 	for _, query := range queries {
-		queryRes, err := e.executeQuery(ctx, query)
+		queryRes, err := e.executeQuery(ctx, query, dsInfo)
 		if err != nil {
-			return plugins.DataResponse{}, err
+			return nil, err
 		}
-		result.Results[query.RefID] = queryRes
+		result.Responses[query.RefID] = queryRes
 	}
 
 	return result, nil
 }
 
-func (e *ApplicationInsightsDatasource) buildQueries(queries []plugins.DataSubQuery,
-	timeRange plugins.DataTimeRange) ([]*ApplicationInsightsQuery, error) {
+func (e *ApplicationInsightsDatasource) buildQueries(queries []backend.DataQuery) ([]*ApplicationInsightsQuery, error) {
 	applicationInsightsQueries := []*ApplicationInsightsQuery{}
-	startTime, err := timeRange.ParseFrom()
-	if err != nil {
-		return nil, err
-	}
-
-	endTime, err := timeRange.ParseTo()
-	if err != nil {
-		return nil, err
-	}
 
 	for _, query := range queries {
-		queryBytes, err := query.Model.Encode()
+		queryBytes, err := query.JSON.MarshalJSON()
 		if err != nil {
 			return nil, fmt.Errorf("failed to re-encode the Azure Application Insights query into JSON: %w", err)
 		}
@@ -108,14 +95,14 @@ func (e *ApplicationInsightsDatasource) buildQueries(queries []plugins.DataSubQu
 		// Previous versions of the query model don't specify a time grain, so we
 		// need to fallback to a default value
 		if timeGrain == "auto" || timeGrain == "" {
-			timeGrain, err = setAutoTimeGrain(query.IntervalMS, timeGrains)
+			timeGrain, err = setAutoTimeGrain(query.Interval.Milliseconds(), timeGrains)
 			if err != nil {
 				return nil, err
 			}
 		}
 
 		params := url.Values{}
-		params.Add("timespan", fmt.Sprintf("%v/%v", startTime.UTC().Format(time.RFC3339), endTime.UTC().Format(time.RFC3339)))
+		params.Add("timespan", fmt.Sprintf("%v/%v", query.TimeRange.From.UTC().Format(time.RFC3339), query.TimeRange.To.UTC().Format(time.RFC3339)))
 		if timeGrain != "none" {
 			params.Add("interval", timeGrain)
 		}
@@ -131,6 +118,7 @@ func (e *ApplicationInsightsDatasource) buildQueries(queries []plugins.DataSubQu
 		}
 		applicationInsightsQueries = append(applicationInsightsQueries, &ApplicationInsightsQuery{
 			RefID:       query.RefID,
+			TimeRange:   query.TimeRange,
 			ApiURL:      azureURL,
 			Params:      params,
 			Alias:       insightsJSONModel.Alias,
@@ -144,15 +132,14 @@ func (e *ApplicationInsightsDatasource) buildQueries(queries []plugins.DataSubQu
 	return applicationInsightsQueries, nil
 }
 
-// nolint:staticcheck // plugins.DataQueryResult deprecated
-func (e *ApplicationInsightsDatasource) executeQuery(ctx context.Context, query *ApplicationInsightsQuery) (
-	plugins.DataQueryResult, error) {
-	queryResult := plugins.DataQueryResult{Meta: simplejson.New(), RefID: query.RefID}
+func (e *ApplicationInsightsDatasource) executeQuery(ctx context.Context, query *ApplicationInsightsQuery, dsInfo datasourceInfo) (
+	backend.DataResponse, error) {
+	dataResponse := backend.DataResponse{}
 
-	req, err := e.createRequest(ctx, e.dsInfo)
+	req, err := e.createRequest(ctx, dsInfo)
 	if err != nil {
-		queryResult.Error = err
-		return queryResult, nil
+		dataResponse.Error = err
+		return dataResponse, nil
 	}
 
 	req.URL.Path = path.Join(req.URL.Path, query.ApiURL)
@@ -160,8 +147,10 @@ func (e *ApplicationInsightsDatasource) executeQuery(ctx context.Context, query 
 
 	span, ctx := opentracing.StartSpanFromContext(ctx, "application insights query")
 	span.SetTag("target", query.Target)
-	span.SetTag("datasource_id", e.dsInfo.Id)
-	span.SetTag("org_id", e.dsInfo.OrgId)
+	span.SetTag("from", query.TimeRange.From.UnixNano()/int64(time.Millisecond))
+	span.SetTag("until", query.TimeRange.To.UnixNano()/int64(time.Millisecond))
+	span.SetTag("datasource_id", dsInfo.DatasourceID)
+	span.SetTag("org_id", dsInfo.OrgID)
 
 	defer span.Finish()
 
@@ -175,10 +164,10 @@ func (e *ApplicationInsightsDatasource) executeQuery(ctx context.Context, query 
 	}
 
 	azlog.Debug("ApplicationInsights", "Request URL", req.URL.String())
-	res, err := ctxhttp.Do(ctx, e.httpClient, req)
+	res, err := ctxhttp.Do(ctx, dsInfo.HTTPClient, req)
 	if err != nil {
-		queryResult.Error = err
-		return queryResult, nil
+		dataResponse.Error = err
+		return dataResponse, nil
 	}
 
 	body, err := ioutil.ReadAll(res.Body)
@@ -188,48 +177,47 @@ func (e *ApplicationInsightsDatasource) executeQuery(ctx context.Context, query 
 		}
 	}()
 	if err != nil {
-		return plugins.DataQueryResult{}, err
+		return backend.DataResponse{}, err
 	}
 
 	if res.StatusCode/100 != 2 {
 		azlog.Debug("Request failed", "status", res.Status, "body", string(body))
-		return plugins.DataQueryResult{}, fmt.Errorf("request failed, status: %s", res.Status)
+		return backend.DataResponse{}, fmt.Errorf("request failed, status: %s", res.Status)
 	}
 
 	mr := MetricsResult{}
 	err = json.Unmarshal(body, &mr)
 	if err != nil {
-		return plugins.DataQueryResult{}, err
+		return backend.DataResponse{}, err
 	}
 
 	frame, err := InsightsMetricsResultToFrame(mr, query.metricName, query.aggregation, query.dimensions)
 	if err != nil {
-		queryResult.Error = err
-		return queryResult, nil
+		dataResponse.Error = err
+		return dataResponse, nil
 	}
 
 	applyInsightsMetricAlias(frame, query.Alias)
 
-	queryResult.Dataframes = plugins.NewDecodedDataFrames(data.Frames{frame})
-	return queryResult, nil
+	dataResponse.Frames = data.Frames{frame}
+	return dataResponse, nil
 }
 
-func (e *ApplicationInsightsDatasource) createRequest(ctx context.Context, dsInfo *models.DataSource) (*http.Request, error) {
+func (e *ApplicationInsightsDatasource) createRequest(ctx context.Context, dsInfo datasourceInfo) (*http.Request, error) {
 	// find plugin
-	plugin := e.pluginManager.GetDataSource(dsInfo.Type)
+	plugin := e.pluginManager.GetDataSource(dsName)
 	if plugin == nil {
 		return nil, errors.New("unable to find datasource plugin Azure Application Insights")
 	}
 
-	appInsightsRoute, routeName, err := e.getPluginRoute(plugin)
+	appInsightsRoute, routeName, err := e.getPluginRoute(plugin, dsInfo)
 	if err != nil {
 		return nil, err
 	}
 
-	appInsightsAppID := dsInfo.JsonData.Get("appInsightsAppId").MustString()
-	proxyPass := fmt.Sprintf("%s/v1/apps/%s", routeName, appInsightsAppID)
+	appInsightsAppID := dsInfo.Settings.AppInsightsAppId
 
-	u, err := url.Parse(dsInfo.Url)
+	u, err := url.Parse(dsInfo.URL)
 	if err != nil {
 		return nil, err
 	}
@@ -241,13 +229,18 @@ func (e *ApplicationInsightsDatasource) createRequest(ctx context.Context, dsInf
 		return nil, errutil.Wrap("Failed to create request", err)
 	}
 
-	pluginproxy.ApplyRoute(ctx, req, proxyPass, appInsightsRoute, dsInfo, e.cfg)
+	// TODO: Use backend authentication instead
+	proxyPass := fmt.Sprintf("%s/v1/apps/%s", routeName, appInsightsAppID)
+	pluginproxy.ApplyRoute(ctx, req, proxyPass, appInsightsRoute, &models.DataSource{
+		JsonData:       simplejson.NewFromAny(dsInfo.JSONData),
+		SecureJsonData: securejsondata.GetEncryptedJsonData(dsInfo.DecryptedSecureJSONData),
+	}, e.cfg)
 
 	return req, nil
 }
 
-func (e *ApplicationInsightsDatasource) getPluginRoute(plugin *plugins.DataSourcePlugin) (*plugins.AppPluginRoute, string, error) {
-	cloud, err := getAzureCloud(e.cfg, e.dsInfo.JsonData)
+func (e *ApplicationInsightsDatasource) getPluginRoute(plugin *plugins.DataSourcePlugin, dsInfo datasourceInfo) (*plugins.AppPluginRoute, string, error) {
+	cloud, err := getAzureCloud(e.cfg, dsInfo)
 	if err != nil {
 		return nil, "", err
 	}
