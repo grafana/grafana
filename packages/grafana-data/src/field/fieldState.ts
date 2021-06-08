@@ -50,6 +50,8 @@ export function getFieldDisplayName(field: Field, frame?: DataFrame, allFrames?:
   return displayName;
 }
 
+const TIME_SERIES_VALUE_FIELD_NAME_LOWER_CASE = TIME_SERIES_VALUE_FIELD_NAME.toLowerCase();
+
 /**
  * Get an appropriate display name. If the 'displayName' field config is set, use that
  */
@@ -94,7 +96,7 @@ function calculateFieldDisplayName(field: Field, frame?: DataFrame, allFrames?: 
     frameNameAdded = true;
   }
 
-  if (field.name && field.name !== TIME_SERIES_VALUE_FIELD_NAME) {
+  if (field.name && field.name.toLowerCase() !== TIME_SERIES_VALUE_FIELD_NAME_LOWER_CASE) {
     parts.push(field.name);
   }
 
@@ -126,7 +128,7 @@ function calculateFieldDisplayName(field: Field, frame?: DataFrame, allFrames?: 
   } else if (field.name) {
     displayName = field.name;
   } else {
-    displayName = TIME_SERIES_VALUE_FIELD_NAME;
+    displayName = TIME_SERIES_VALUE_FIELD_NAME_LOWER_CASE;
   }
 
   // Ensure unique field name

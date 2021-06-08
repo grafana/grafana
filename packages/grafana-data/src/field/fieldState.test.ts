@@ -137,6 +137,17 @@ describe('Check field state calculations (displayName and id)', () => {
     expect(title).toEqual('Server A');
   });
 
+  it('should only use label for time series value field names', () => {
+    const title = checkScenario({
+      frames: [
+        toDataFrame({
+          fields: [{ name: 'value', labels: { server: 'Server A' } }],
+        }),
+      ],
+    });
+    expect(title).toEqual('Server A');
+  });
+
   it('should use label value only if all series have same name', () => {
     const title = checkScenario({
       frames: [
