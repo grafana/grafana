@@ -3,32 +3,20 @@ package plugins
 
 import (
 	"context"
-	"errors"
-	"path/filepath"
 	"sync"
 
-	"github.com/hashicorp/go-plugin"
-
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	grpcplugin2 "github.com/grafana/grafana-plugin-sdk-go/backend/grpcplugin"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin/grpcplugin"
-	goplugin "github.com/hashicorp/go-plugin"
 )
 
 var _ backendplugin.Plugin = (*PluginV2)(nil)
 
 type PluginV2 struct {
-	Client      PluginClient
-	hashiClient *plugin.Client
-	descriptor  grpcplugin.PluginDescriptor
+	Client backendplugin.Plugin
 
-	BackendClient backendplugin.Plugin
-
-	logger         log.Logger
-	mutex          sync.RWMutex
-	decommissioned bool
+	logger log.Logger
+	mutex  sync.RWMutex
 
 	// Common settings
 	Type         string                `json:"type"`
@@ -100,90 +88,53 @@ func (p *PluginV2) PluginID() string {
 	return p.ID
 }
 
-// Would be nice to see some function that could setup the backend and
-// attach the data to the model as its own separate field
-func (p *PluginV2) AttachBackendDetails(env []string) {
-	startCmd := p.Executable
-	if p.Type == "renderer" {
-		startCmd = "plugin_start"
-	}
-	executableFilename := ComposePluginStartCommand(startCmd)
-
-	p.descriptor = grpcplugin.PluginDescriptor{
-		PluginID:       p.ID,
-		ExecutablePath: filepath.Join(p.PluginDir, executableFilename),
-		Env:            env,
-		Managed:        true,
-		VersionedPlugins: map[int]goplugin.PluginSet{
-			grpcplugin2.ProtocolVersion: grpcplugin.GetV2PluginSet(),
-		},
-	}
-	p.logger = log.New("pluginID", p.ID)
-}
-
 func (p *PluginV2) Start(ctx context.Context) error {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
 
-	clientFactory := func() *plugin.Client {
-		return plugin.NewClient(grpcplugin.NewClientConfig(p.descriptor.ExecutablePath, p.descriptor.Env, p.logger, p.descriptor.VersionedPlugins))
-	}
-	p.hashiClient = clientFactory()
-	rpcClient, err := p.hashiClient.Client()
+	err := p.Client.Start(ctx)
 	if err != nil {
 		return err
-	}
-
-	if p.hashiClient.NegotiatedVersion() < 2 {
-		return errors.New("incompatible version")
-	}
-
-	p.Client, err = newRPCClient(rpcClient)
-	if err != nil {
-		return err
-	}
-
-	if p.Client == nil {
-		return errors.New("no compatible plugin implementation found")
 	}
 
 	return nil
 }
 
 func (p *PluginV2) Stop(ctx context.Context) error {
-	p.mutex.Lock()
-	defer p.mutex.Unlock()
-
-	if p.hashiClient != nil {
-		p.hashiClient.Kill()
+	err := p.Client.Stop(ctx)
+	if err != nil {
+		return err
 	}
+
 	return nil
 }
 
 func (p *PluginV2) IsManaged() bool {
-	return p.descriptor.Managed
+	if p.Client != nil {
+		return p.Client.IsManaged()
+	}
+	return false
 }
 
 func (p *PluginV2) Decommission() error {
-	p.mutex.RLock()
-	defer p.mutex.RUnlock()
-
-	p.decommissioned = true
-
+	if p.Client != nil {
+		return p.Client.Decommission()
+	}
 	return nil
 }
 
 func (p *PluginV2) IsDecommissioned() bool {
-	return p.decommissioned
+	if p.Client != nil {
+		return p.Client.IsDecommissioned()
+	}
+	return false
 }
 
 func (p *PluginV2) Exited() bool {
-	p.mutex.RLock()
-	defer p.mutex.RUnlock()
-	if p.hashiClient != nil {
-		return p.hashiClient.Exited()
+	if p.Client != nil {
+		return p.Client.Exited()
 	}
-	return true
+	return false
 }
 
 func (p *PluginV2) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
@@ -243,31 +194,16 @@ func (p *PluginV2) RunStream(ctx context.Context, req *backend.RunStreamRequest,
 }
 
 func (p *PluginV2) getPluginClient() (PluginClient, bool) {
-	if p.IsCorePlugin {
-		return p.getClientAsCorePlugin()
+	if p.Client != nil {
+		return p.Client, true
 	}
-
-	return p.getClientAsGRPCPlugin()
+	return nil, false
 }
 
-func (p *PluginV2) getClientAsGRPCPlugin() (PluginClient, bool) {
-	p.mutex.RLock()
-	if p.hashiClient == nil || p.hashiClient.Exited() || p.Client == nil {
-		p.mutex.RUnlock()
-		return nil, false
-	}
-	c := p.Client
-	p.mutex.RUnlock()
-	return c, true
-}
-
-func (p *PluginV2) getClientAsCorePlugin() (PluginClient, bool) {
-	p.mutex.RLock()
-	if p.Client == nil {
-		p.mutex.RUnlock()
-		return nil, false
-	}
-	c := p.Client
-	p.mutex.RUnlock()
-	return c, true
+type PluginClient interface {
+	backend.QueryDataHandler
+	backend.CollectMetricsHandler
+	backend.CheckHealthHandler
+	backend.CallResourceHandler
+	backend.StreamHandler
 }

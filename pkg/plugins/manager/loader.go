@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin/grpcplugin"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -160,8 +161,16 @@ func (l *Loader) LoadAll(pluginJSONPaths []string, requireSigned bool) ([]*plugi
 
 			hostEnv = append(hostEnv, l.getAWSEnvironmentVariables()...)
 			hostEnv = append(hostEnv, l.getAzureEnvironmentVariables()...)
+			env := getPluginSettings(plugin.ID, l.Cfg).ToEnv("GF_PLUGIN", hostEnv)
 
-			plugin.AttachBackendDetails(getPluginSettings(plugin.ID, l.Cfg).ToEnv("GF_PLUGIN", hostEnv))
+			cmd := plugins.ComposePluginStartCommand(plugin.Executable)
+			factory := grpcplugin.NewBackendPlugin(plugin.ID, filepath.Join(plugin.PluginDir, cmd))
+			backendClient, err := factory(plugin.ID, l.log.New("pluginID", plugin.ID), env)
+			if err != nil {
+				return nil, err
+			}
+
+			plugin.Client = backendClient
 		}
 
 		//if p, exists := pm.plugins[pb.Id]; exists {

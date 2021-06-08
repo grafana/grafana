@@ -36,14 +36,14 @@ func newPlugin(descriptor PluginDescriptor) backendplugin.PluginFactoryFunc {
 			descriptor: descriptor,
 			logger:     logger,
 			clientFactory: func() *plugin.Client {
-				return plugin.NewClient(NewClientConfig(descriptor.ExecutablePath, env, logger, descriptor.VersionedPlugins))
+				return plugin.NewClient(newClientConfig(descriptor.executablePath, env, logger, descriptor.versionedPlugins))
 			},
 		}, nil
 	}
 }
 
 func (p *grpcPlugin) PluginID() string {
-	return p.descriptor.PluginID
+	return p.descriptor.pluginID
 }
 
 func (p *grpcPlugin) Logger() log.Logger {
@@ -86,7 +86,7 @@ func (p *grpcPlugin) Stop(ctx context.Context) error {
 }
 
 func (p *grpcPlugin) IsManaged() bool {
-	return p.descriptor.Managed
+	return p.descriptor.managed
 }
 
 func (p *grpcPlugin) Exited() bool {
