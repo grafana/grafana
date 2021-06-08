@@ -36,6 +36,7 @@ import {
   GrafanaLiveStreamScope,
 } from './scopes';
 import { registerLiveFeatures } from './features';
+import { contextSrv } from '../../core/services/context_srv';
 import { perf } from './perf';
 
 export const sessionId =
@@ -56,7 +57,8 @@ export class CentrifugeSrv implements GrafanaLiveSrv {
   constructor() {
     const baseURL = window.location.origin.replace('http', 'ws');
     const liveUrl = `${baseURL}${config.appSubUrl}/api/live/ws`;
-    this.orgId = (window as any).grafanaBootData.user.orgId;
+
+    this.orgId = contextSrv.user.orgId;
     this.centrifuge = new Centrifuge(liveUrl, {
       debug: true,
     });
@@ -64,7 +66,8 @@ export class CentrifugeSrv implements GrafanaLiveSrv {
       sessionId,
       orgId: this.orgId,
     });
-    if (config.liveEnabled) {
+    // orgRole is set when logged in *or* anonomus users can use grafana
+    if (config.liveEnabled && contextSrv.user.orgRole !== '') {
       this.centrifuge.connect(); // do connection
     }
     this.connectionState = new BehaviorSubject<boolean>(this.centrifuge.isConnected());
