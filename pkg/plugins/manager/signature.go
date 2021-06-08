@@ -52,38 +52,40 @@ func (s *PluginSignatureValidator) validate(plugin *plugins.PluginV2) *plugins.P
 			"state", plugin.Signature)
 	}
 
-	// For the time being, we choose to only require back-end plugins to be signed
-	// NOTE: the state is calculated again when setting metadata on the object
-	if !plugin.Backend || !s.requireSigned {
+	if !s.requireSigned {
 		return nil
 	}
 
 	switch plugin.Signature {
 	case plugins.PluginSignatureUnsigned:
 		if allowed := s.allowUnsigned(plugin); !allowed {
-			logger.Debug("Plugin is unsigned", "id", plugin.ID)
-			s.errors = append(s.errors, fmt.Errorf("plugin %q is unsigned", plugin.ID))
+			logger.Debug("Plugin is unsigned", "pluginID", plugin.ID)
+			s.errors = append(s.errors, fmt.Errorf("plugin '%s' is unsigned", plugin.ID))
 			return &plugins.PluginError{
 				ErrorCode: signatureMissing,
 			}
 		}
-		logger.Warn("Running an unsigned backend plugin", "pluginID", plugin.ID, "pluginDir",
+		logger.Warn("Running an unsigned plugin", "pluginID", plugin.ID, "pluginDir",
 			plugin.PluginDir)
 		return nil
 	case plugins.PluginSignatureInvalid:
-		logger.Debug("Plugin %q has an invalid signature", plugin.ID)
-		s.errors = append(s.errors, fmt.Errorf("plugin %q has an invalid signature", plugin.ID))
+		logger.Debug("Plugin has an invalid signature", "pluginID", plugin.ID)
+		s.errors = append(s.errors, fmt.Errorf("plugin '%s' has an invalid signature", plugin.ID))
 		return &plugins.PluginError{
 			ErrorCode: signatureInvalid,
 		}
 	case plugins.PluginSignatureModified:
-		logger.Debug("Plugin %q has a modified signature", plugin.ID)
-		s.errors = append(s.errors, fmt.Errorf("plugin %q's signature has been modified", plugin.ID))
+		logger.Debug("Plugin has a modified signature", "pluginID", plugin.ID)
+		s.errors = append(s.errors, fmt.Errorf("plugin '%s' has a modified signature", plugin.ID))
 		return &plugins.PluginError{
 			ErrorCode: signatureModified,
 		}
 	default:
-		panic(fmt.Sprintf("Plugin %q has unrecognized plugin signature state %q", plugin.ID, plugin.Signature))
+		logger.Warn("Plugin has an unrecognized plugin signature state", "pluginID", plugin.ID, "signature",
+			plugin.Signature)
+		return &plugins.PluginError{
+			ErrorCode: signatureInvalid,
+		}
 	}
 }
 
