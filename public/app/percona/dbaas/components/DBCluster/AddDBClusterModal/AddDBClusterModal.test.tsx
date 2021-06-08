@@ -7,7 +7,7 @@ import { kubernetesStub } from '../../Kubernetes/__mocks__/kubernetesStubs';
 
 jest.mock('app/core/app_events');
 
-describe('AddDBClusterModal::', () => {
+xdescribe('AddDBClusterModal::', () => {
   const openStep = (root: ReactWrapper, step: string) => {
     root.find(`[data-qa="${step}"]`).find('[data-qa="step-header"]').simulate('click');
   };

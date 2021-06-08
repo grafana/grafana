@@ -4,7 +4,7 @@ import { dataQa } from '@percona/platform-core';
 import { AlertRuleTemplateActions } from './AlertRuleTemplateActions';
 import { formattedTemplateStubs } from '../__mocks__/alertRuleTemplateStubs';
 
-describe('AlertRuleTemplateActions', () => {
+xdescribe('AlertRuleTemplateActions', () => {
   it('should render component correctly', () => {
     const wrapper = mount(
       <AlertRuleTemplateActions template={formattedTemplateStubs[0]} getAlertRuleTemplates={jest.fn()} />

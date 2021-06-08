@@ -4,7 +4,7 @@ import { mount, ReactWrapper } from 'enzyme';
 import { LoaderButton, TextInputField, TextareaInputField } from '@percona/platform-core';
 import { StepProgress } from './StepProgress';
 
-describe('StepProgress::', () => {
+xdescribe('StepProgress::', () => {
   const steps = [
     {
       render: () => (

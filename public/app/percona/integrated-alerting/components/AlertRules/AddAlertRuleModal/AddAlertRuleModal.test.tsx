@@ -25,7 +25,7 @@ const selectTemplateOption = (wrapper: ReactWrapper, templateIndex = 0) => {
   wrapper.find({ 'aria-label': 'Select option' }).at(templateIndex).simulate('click');
 };
 
-describe('AddAlertRuleModal', () => {
+xdescribe('AddAlertRuleModal', () => {
   const {
     name: templateName,
     summary: templateSummary,

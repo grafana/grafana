@@ -5,7 +5,7 @@ import { dataQa } from '@percona/platform-core';
 import { SlackFields } from './SlackFields';
 import { Messages } from '../AddNotificationChannelModal.messages';
 
-describe('SlackFields', () => {
+xdescribe('SlackFields', () => {
   it('should render correct fields', () => {
     const wrapper = mount(<Form onSubmit={jest.fn()} render={() => <SlackFields />} />);
 

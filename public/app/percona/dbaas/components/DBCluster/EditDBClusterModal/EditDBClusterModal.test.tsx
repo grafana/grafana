@@ -10,7 +10,7 @@ jest.mock('../DBCluster.service');
 jest.mock('../PSMDB.service');
 jest.mock('../XtraDB.service');
 
-describe('EditDBClusterModal::', () => {
+xdescribe('EditDBClusterModal::', () => {
   it('should render advanced options', async () => {
     const root = await getMount(
       <EditDBClusterModal

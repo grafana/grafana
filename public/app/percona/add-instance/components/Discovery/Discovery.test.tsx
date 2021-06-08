@@ -3,7 +3,7 @@ import { mount } from 'enzyme';
 import React from 'react';
 import Discovery from './Discovery';
 
-describe('Discovery instance:: ', () => {
+xdescribe('Discovery instance:: ', () => {
   it('Should render correct', () => {
     const selectInstance = jest.fn();
 

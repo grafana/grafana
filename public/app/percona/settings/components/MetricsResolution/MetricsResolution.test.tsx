@@ -5,7 +5,7 @@ import { defaultResolutions } from './MetricsResolution.constants';
 import { removeUnits } from './MetricsResolution.utils';
 import { dataQa } from '@percona/platform-core';
 
-describe('MetricsResolution::', () => {
+xdescribe('MetricsResolution::', () => {
   it('Renders correctly with props for standard resolution', () => {
     const root = mount(<MetricsResolution metricsResolutions={defaultResolutions[1]} updateSettings={() => {}} />);
     const lrInput = root.find('[data-qa="lr-number-input"]');
