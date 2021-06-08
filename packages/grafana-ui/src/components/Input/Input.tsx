@@ -145,6 +145,10 @@ export const getInputStyles = stylesFactory(({ theme, invalid = false, width }: 
     inputDisabled: css`
       background-color: ${theme.colors.action.disabledBackground};
       color: ${theme.colors.action.disabledText};
+      border: 1px solid ${theme.colors.action.disabledBackground};
+      &:focus {
+        box-shadow: none;
+      }
     `,
     addon: css`
       label: input-addon;

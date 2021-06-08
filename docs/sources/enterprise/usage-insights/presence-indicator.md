@@ -14,7 +14,7 @@ When you are signed in and looking at any given dashboard, you can know who is l
 
 When there are more active users on a dashboard than can fit within the presence indicator, click  the **+X** icon. Doing so opens [dashboard insights]({{< relref "dashboard-datasource-insights.md" >}}), which contains more details about recent user activity.
 
-{{< docs-imagebox img="/img/docs/enterprise/presence_indicators.png" max-width="400px" class="docs-image--no-shadow" >}}
+{{< figure src="/static/img/docs/enterprise/presence_indicators.png" max-width="400px" class="docs-image--no-shadow" >}}
 
 To change _recent_ to something other than the past 10 minutes, edit the [configuration]({{< relref "../../administration/configuration.md">}}) file:
 

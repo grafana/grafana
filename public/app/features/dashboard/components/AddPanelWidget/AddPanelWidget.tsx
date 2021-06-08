@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { connect, MapDispatchToProps } from 'react-redux';
 import { css, cx, keyframes } from '@emotion/css';
 import { chain, cloneDeep, defaults, find, sortBy } from 'lodash';
 import tinycolor from 'tinycolor2';
@@ -12,13 +13,12 @@ import store from 'app/core/store';
 import { addPanel } from 'app/features/dashboard/state/reducers';
 import { DashboardModel, PanelModel } from '../../state';
 import { LS_PANEL_COPY_KEY } from 'app/core/constants';
-import { LibraryPanelDTO } from '../../../library-panels/types';
+import { LibraryElementDTO } from '../../../library-panels/types';
 import { toPanelModelLibraryPanel } from '../../../library-panels/utils';
 import {
   LibraryPanelsSearch,
   LibraryPanelsSearchVariant,
 } from '../../../library-panels/components/LibraryPanelsSearch/LibraryPanelsSearch';
-import { connect, MapDispatchToProps } from 'react-redux';
 
 export type PanelPluginInfo = { id: any; defaults: { gridPos: { w: any; h: any }; title: any } };
 
@@ -108,7 +108,7 @@ export const AddPanelWidgetUnconnected: React.FC<Props> = ({ panel, dashboard })
     dashboard.removePanel(panel);
   };
 
-  const onAddLibraryPanel = (panelInfo: LibraryPanelDTO) => {
+  const onAddLibraryPanel = (panelInfo: LibraryElementDTO) => {
     const { gridPos } = panel;
 
     const newPanel: PanelModel = {
@@ -136,32 +136,30 @@ export const AddPanelWidgetUnconnected: React.FC<Props> = ({ panel, dashboard })
   const copiedPanelPlugins = useMemo(() => getCopiedPanelPlugins(), []);
 
   return (
-    <div className={cx('panel-container', styles.wrapper)}>
-      <AddPanelWidgetHandle onCancel={onCancelAddPanel} onBack={addPanelView ? onBack : undefined} styles={styles}>
-        {addPanelView ? 'Add panel from panel library' : 'Add panel'}
-      </AddPanelWidgetHandle>
-      {addPanelView ? (
-        <LibraryPanelsSearch onClick={onAddLibraryPanel} variant={LibraryPanelsSearchVariant.Tight} showPanelFilter />
-      ) : (
-        <div className={styles.actionsWrapper}>
-          <div className={styles.actionsRow}>
-            <div onClick={() => onCreateNewPanel()} aria-label={selectors.pages.AddDashboard.addNewPanel}>
-              <Icon name="file-blank" size="xl" />
-              Add an empty panel
-            </div>
-            <div onClick={onCreateNewRow}>
-              <Icon name="wrap-text" size="xl" />
-              Add a new row
-            </div>
-          </div>
-          {(config.featureToggles.panelLibrary || copiedPanelPlugins.length === 1) && (
+    <div className={styles.wrapper}>
+      <div className={cx('panel-container', styles.callToAction)}>
+        <AddPanelWidgetHandle onCancel={onCancelAddPanel} onBack={addPanelView ? onBack : undefined} styles={styles}>
+          {addPanelView ? 'Add panel from panel library' : 'Add panel'}
+        </AddPanelWidgetHandle>
+        {addPanelView ? (
+          <LibraryPanelsSearch onClick={onAddLibraryPanel} variant={LibraryPanelsSearchVariant.Tight} showPanelFilter />
+        ) : (
+          <div className={styles.actionsWrapper}>
             <div className={styles.actionsRow}>
-              {config.featureToggles.panelLibrary && (
-                <div onClick={() => setAddPanelView(true)}>
-                  <Icon name="book-open" size="xl" />
-                  Add a panel from the panel library
-                </div>
-              )}
+              <div onClick={() => onCreateNewPanel()} aria-label={selectors.pages.AddDashboard.addNewPanel}>
+                <Icon name="file-blank" size="xl" />
+                Add an empty panel
+              </div>
+              <div onClick={onCreateNewRow}>
+                <Icon name="wrap-text" size="xl" />
+                Add a new row
+              </div>
+            </div>
+            <div className={styles.actionsRow}>
+              <div onClick={() => setAddPanelView(true)}>
+                <Icon name="book-open" size="xl" />
+                Add a panel from the panel library
+              </div>
               {copiedPanelPlugins.length === 1 && (
                 <div onClick={() => onPasteCopiedPanel(copiedPanelPlugins[0])}>
                   <Icon name="clipboard-alt" size="xl" />
@@ -169,9 +167,9 @@ export const AddPanelWidgetUnconnected: React.FC<Props> = ({ panel, dashboard })
                 </div>
               )}
             </div>
-          )}
-        </div>
-      )}
+          </div>
+        )}
+      </div>
     </div>
   );
 };
@@ -217,7 +215,12 @@ const getStyles = (theme: GrafanaTheme) => {
   `;
 
   return {
+    // wrapper is used to make sure box-shadow animation isn't cut off in dashboard page
     wrapper: css`
+      height: 100%;
+      padding-top: ${theme.spacing.xs};
+    `,
+    callToAction: css`
       overflow: hidden;
       outline: 2px dotted transparent;
       outline-offset: 2px;

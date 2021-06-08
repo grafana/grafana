@@ -17,7 +17,7 @@ steps:
   image: grafana/build-container:1.4.1
   commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.57/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.0.0/grabpl
   - chmod +x bin/grabpl
   - ./bin/grabpl verify-drone
   - curl -fLO https://github.com/jwilder/dockerize/releases/download/v$${DOCKERIZE_VERSION}/dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
@@ -94,6 +94,13 @@ steps:
   depends_on:
   - initialize
   - lint-backend
+
+- name: validate-scuemata
+  image: grafana/build-container:1.4.1
+  commands:
+  - ./bin/linux-amd64/grafana-cli cue validate-schema
+  depends_on:
+  - build-backend
 
 - name: gen-version
   image: grafana/build-container:1.4.1
@@ -235,7 +242,7 @@ trigger:
 ---
 kind: pipeline
 type: docker
-name: build-master
+name: build-main
 
 platform:
   os: linux
@@ -251,7 +258,7 @@ steps:
   image: grafana/build-container:1.4.1
   commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.57/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.0.0/grabpl
   - chmod +x bin/grabpl
   - ./bin/grabpl verify-drone
   - curl -fLO https://github.com/jwilder/dockerize/releases/download/v$${DOCKERIZE_VERSION}/dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
@@ -268,7 +275,7 @@ steps:
     - SOURCE_BUILD_NUMBER=${DRONE_BUILD_NUMBER}
     - SOURCE_COMMIT=${DRONE_COMMIT}
     repositories:
-    - grafana/grafana-enterprise
+    - grafana/grafana-enterprise@main
     server: https://drone.grafana.net
     token:
       from_secret: drone_token
@@ -354,6 +361,13 @@ steps:
   depends_on:
   - initialize
   - lint-backend
+
+- name: validate-scuemata
+  image: grafana/build-container:1.4.1
+  commands:
+  - ./bin/linux-amd64/grafana-cli cue validate-schema
+  depends_on:
+  - build-backend
 
 - name: gen-version
   image: grafana/build-container:1.4.1
@@ -551,14 +565,14 @@ services:
 
 trigger:
   branch:
-  - master
+  - main
   event:
   - push
 
 ---
 kind: pipeline
 type: docker
-name: windows-master
+name: windows-main
 
 platform:
   os: windows
@@ -575,7 +589,7 @@ steps:
   image: grafana/ci-wix:0.1.1
   commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.57/windows/grabpl.exe -OutFile grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.0.0/windows/grabpl.exe -OutFile grabpl.exe
   - .\grabpl.exe verify-drone
 
 - name: build-windows-installer
@@ -589,8 +603,8 @@ steps:
   - cp C:\App\nssm-2.24.zip .
   - .\grabpl.exe windows-installer --edition oss --build-id $$env:DRONE_BUILD_NUMBER
   - $$fname = ((Get-Childitem grafana*.msi -name) -split "`n")[0]
-  - gsutil cp $$fname gs://grafana-downloads/oss/master/
-  - gsutil cp "$$fname.sha256" gs://grafana-downloads/oss/master/
+  - gsutil cp $$fname gs://grafana-downloads/oss/main/
+  - gsutil cp "$$fname.sha256" gs://grafana-downloads/oss/main/
   environment:
     GCP_KEY:
       from_secret: gcp_key
@@ -599,17 +613,17 @@ steps:
 
 trigger:
   branch:
-  - master
+  - main
   event:
   - push
 
 depends_on:
-- build-master
+- build-main
 
 ---
 kind: pipeline
 type: docker
-name: publish-master
+name: publish-main
 
 platform:
   os: linux
@@ -625,7 +639,7 @@ steps:
   image: grafana/build-container:1.4.1
   commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.57/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.0.0/grabpl
   - chmod +x bin/grabpl
   - ./bin/grabpl verify-drone
   environment:
@@ -652,18 +666,18 @@ steps:
 
 trigger:
   branch:
-  - master
+  - main
   event:
   - push
 
 depends_on:
-- build-master
-- windows-master
+- build-main
+- windows-main
 
 ---
 kind: pipeline
 type: docker
-name: notify-master
+name: notify-main
 
 platform:
   os: linux
@@ -674,22 +688,22 @@ steps:
   image: plugins/slack
   settings:
     channel: grafana-ci-notifications
-    template: "Build {{build.number}} failed for commit: <https://github.com/{{repo.owner}}/{{repo.name}}/commit/{{build.commit}}|{{ truncate build.commit 8 }}>: {{build.link}}\nAuthor: {{build.author}}"
+    template: "Build {{build.number}} failed for commit: <https://github.com/{{repo.owner}}/{{repo.name}}/commit/{{build.commit}}|{{ truncate build.commit 8 }}>: {{build.link}}\nBranch: <https://github.com/{{ repo.owner }}/{{ repo.name }}/commits/{{ build.branch }}|{{ build.branch }}>\nAuthor: {{build.author}}"
     webhook:
       from_secret: slack_webhook
 
 trigger:
   branch:
-  - master
+  - main
   event:
   - push
   status:
   - failure
 
 depends_on:
-- build-master
-- windows-master
-- publish-master
+- build-main
+- windows-main
+- publish-main
 
 ---
 kind: pipeline
@@ -710,7 +724,7 @@ steps:
   image: grafana/build-container:1.4.1
   commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.57/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.0.0/grabpl
   - chmod +x bin/grabpl
   - ./bin/grabpl verify-drone
   - ./bin/grabpl verify-version ${DRONE_TAG}
@@ -740,8 +754,8 @@ steps:
   image: grafana/build-container:1.4.1
   commands:
   - "[ $(grep FocusConvey -R pkg | wc -l) -eq \"0\" ] || exit 1"
-  - ./bin/grabpl test-backend --edition oss
-  - ./bin/grabpl integration-tests --edition oss
+  - ./bin/grabpl test-backend --edition oss --tries 5
+  - ./bin/grabpl integration-tests --edition oss --tries 5
   depends_on:
   - initialize
 
@@ -794,6 +808,13 @@ steps:
   depends_on:
   - initialize
   - lint-backend
+
+- name: validate-scuemata
+  image: grafana/build-container:1.4.1
+  commands:
+  - ./bin/linux-amd64/grafana-cli cue validate-schema
+  depends_on:
+  - build-backend
 
 - name: gen-version
   image: grafana/build-container:1.4.1
@@ -1009,7 +1030,7 @@ steps:
   image: grafana/ci-wix:0.1.1
   commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.57/windows/grabpl.exe -OutFile grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.0.0/windows/grabpl.exe -OutFile grabpl.exe
   - .\grabpl.exe verify-drone
 
 - name: build-windows-installer
@@ -1060,7 +1081,7 @@ steps:
   image: grafana/build-container:1.4.1
   commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.57/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.0.0/grabpl
   - chmod +x bin/grabpl
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
   - cd grafana-enterprise
@@ -1076,6 +1097,7 @@ steps:
   - rmdir bin
   - mv grafana-enterprise /tmp/
   - /tmp/grabpl init-enterprise /tmp/grafana-enterprise ${DRONE_TAG}
+  - mv /tmp/grafana-enterprise/deployment_tools_config.json deployment_tools_config.json
   - mkdir bin
   - mv /tmp/grabpl bin/
   - ./bin/grabpl verify-drone
@@ -1108,8 +1130,8 @@ steps:
   image: grafana/build-container:1.4.1
   commands:
   - "[ $(grep FocusConvey -R pkg | wc -l) -eq \"0\" ] || exit 1"
-  - ./bin/grabpl test-backend --edition enterprise
-  - ./bin/grabpl integration-tests --edition enterprise
+  - ./bin/grabpl test-backend --edition enterprise --tries 5
+  - ./bin/grabpl integration-tests --edition enterprise --tries 5
   depends_on:
   - initialize
 
@@ -1163,12 +1185,19 @@ steps:
   - initialize
   - lint-backend
 
+- name: validate-scuemata
+  image: grafana/build-container:1.4.1
+  commands:
+  - ./bin/linux-amd64/grafana-cli cue validate-schema
+  depends_on:
+  - build-backend
+
 - name: test-backend-enterprise2
   image: grafana/build-container:1.4.1
   commands:
   - "[ $(grep FocusConvey -R pkg | wc -l) -eq \"0\" ] || exit 1"
-  - ./bin/grabpl test-backend --edition enterprise2
-  - ./bin/grabpl integration-tests --edition enterprise2
+  - ./bin/grabpl test-backend --edition enterprise2 --tries 5
+  - ./bin/grabpl integration-tests --edition enterprise2 --tries 5
   depends_on:
   - initialize
 
@@ -1447,6 +1476,9 @@ services:
 - name: memcached
   image: memcached:1.6.9-alpine
 
+image_pull_secrets:
+- dockerconfigjson
+
 trigger:
   ref:
   - refs/tags/v*
@@ -1474,7 +1506,7 @@ steps:
   image: grafana/ci-wix:0.1.1
   commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.57/windows/grabpl.exe -OutFile grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.0.0/windows/grabpl.exe -OutFile grabpl.exe
   - git clone "https://$$env:GITHUB_TOKEN@github.com/grafana/grafana-enterprise.git"
   - cd grafana-enterprise
   - git checkout ${DRONE_TAG}
@@ -1514,6 +1546,9 @@ steps:
   depends_on:
   - initialize
 
+image_pull_secrets:
+- dockerconfigjson
+
 trigger:
   ref:
   - refs/tags/v*
@@ -1540,7 +1575,7 @@ steps:
   image: grafana/build-container:1.4.1
   commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.57/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.0.0/grabpl
   - chmod +x bin/grabpl
   - ./bin/grabpl verify-drone
   - ./bin/grabpl verify-version ${DRONE_TAG}
@@ -1609,7 +1644,7 @@ steps:
   image: plugins/slack
   settings:
     channel: grafana-ci-notifications
-    template: "Build {{build.number}} failed for commit: <https://github.com/{{repo.owner}}/{{repo.name}}/commit/{{build.commit}}|{{ truncate build.commit 8 }}>: {{build.link}}\nAuthor: {{build.author}}"
+    template: "Build {{build.number}} failed for commit: <https://github.com/{{repo.owner}}/{{repo.name}}/commit/{{build.commit}}|{{ truncate build.commit 8 }}>: {{build.link}}\nBranch: <https://github.com/{{ repo.owner }}/{{ repo.name }}/commits/{{ build.branch }}|{{ build.branch }}>\nAuthor: {{build.author}}"
     webhook:
       from_secret: slack_webhook
 
@@ -1645,7 +1680,7 @@ steps:
   image: grafana/build-container:1.4.1
   commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.57/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.0.0/grabpl
   - chmod +x bin/grabpl
   - ./bin/grabpl verify-drone
   - ./bin/grabpl verify-version v7.3.0-test
@@ -1675,8 +1710,8 @@ steps:
   image: grafana/build-container:1.4.1
   commands:
   - "[ $(grep FocusConvey -R pkg | wc -l) -eq \"0\" ] || exit 1"
-  - ./bin/grabpl test-backend --edition oss
-  - ./bin/grabpl integration-tests --edition oss
+  - ./bin/grabpl test-backend --edition oss --tries 5
+  - ./bin/grabpl integration-tests --edition oss --tries 5
   depends_on:
   - initialize
 
@@ -1729,6 +1764,13 @@ steps:
   depends_on:
   - initialize
   - lint-backend
+
+- name: validate-scuemata
+  image: grafana/build-container:1.4.1
+  commands:
+  - ./bin/linux-amd64/grafana-cli cue validate-schema
+  depends_on:
+  - build-backend
 
 - name: gen-version
   image: grafana/build-container:1.4.1
@@ -1933,7 +1975,7 @@ steps:
   image: grafana/ci-wix:0.1.1
   commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.57/windows/grabpl.exe -OutFile grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.0.0/windows/grabpl.exe -OutFile grabpl.exe
   - .\grabpl.exe verify-drone
 
 - name: build-windows-installer
@@ -1984,11 +2026,11 @@ steps:
   image: grafana/build-container:1.4.1
   commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.57/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.0.0/grabpl
   - chmod +x bin/grabpl
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
   - cd grafana-enterprise
-  - git checkout master
+  - git checkout main
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -2000,6 +2042,7 @@ steps:
   - rmdir bin
   - mv grafana-enterprise /tmp/
   - /tmp/grabpl init-enterprise /tmp/grafana-enterprise
+  - mv /tmp/grafana-enterprise/deployment_tools_config.json deployment_tools_config.json
   - mkdir bin
   - mv /tmp/grabpl bin/
   - ./bin/grabpl verify-drone
@@ -2032,8 +2075,8 @@ steps:
   image: grafana/build-container:1.4.1
   commands:
   - "[ $(grep FocusConvey -R pkg | wc -l) -eq \"0\" ] || exit 1"
-  - ./bin/grabpl test-backend --edition enterprise
-  - ./bin/grabpl integration-tests --edition enterprise
+  - ./bin/grabpl test-backend --edition enterprise --tries 5
+  - ./bin/grabpl integration-tests --edition enterprise --tries 5
   depends_on:
   - initialize
 
@@ -2087,12 +2130,19 @@ steps:
   - initialize
   - lint-backend
 
+- name: validate-scuemata
+  image: grafana/build-container:1.4.1
+  commands:
+  - ./bin/linux-amd64/grafana-cli cue validate-schema
+  depends_on:
+  - build-backend
+
 - name: test-backend-enterprise2
   image: grafana/build-container:1.4.1
   commands:
   - "[ $(grep FocusConvey -R pkg | wc -l) -eq \"0\" ] || exit 1"
-  - ./bin/grabpl test-backend --edition enterprise2
-  - ./bin/grabpl integration-tests --edition enterprise2
+  - ./bin/grabpl test-backend --edition enterprise2 --tries 5
+  - ./bin/grabpl integration-tests --edition enterprise2 --tries 5
   depends_on:
   - initialize
 
@@ -2365,6 +2415,9 @@ services:
 - name: memcached
   image: memcached:1.6.9-alpine
 
+image_pull_secrets:
+- dockerconfigjson
+
 trigger:
   event:
   - custom
@@ -2392,10 +2445,10 @@ steps:
   image: grafana/ci-wix:0.1.1
   commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.57/windows/grabpl.exe -OutFile grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.0.0/windows/grabpl.exe -OutFile grabpl.exe
   - git clone "https://$$env:GITHUB_TOKEN@github.com/grafana/grafana-enterprise.git"
   - cd grafana-enterprise
-  - git checkout master
+  - git checkout main
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -2432,6 +2485,9 @@ steps:
   depends_on:
   - initialize
 
+image_pull_secrets:
+- dockerconfigjson
+
 trigger:
   event:
   - custom
@@ -2458,7 +2514,7 @@ steps:
   image: grafana/build-container:1.4.1
   commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.57/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.0.0/grabpl
   - chmod +x bin/grabpl
   - ./bin/grabpl verify-drone
   - ./bin/grabpl verify-version v7.3.0-test
@@ -2527,7 +2583,7 @@ steps:
   image: plugins/slack
   settings:
     channel: grafana-ci-notifications
-    template: "Build {{build.number}} failed for commit: <https://github.com/{{repo.owner}}/{{repo.name}}/commit/{{build.commit}}|{{ truncate build.commit 8 }}>: {{build.link}}\nAuthor: {{build.author}}"
+    template: "Build {{build.number}} failed for commit: <https://github.com/{{repo.owner}}/{{repo.name}}/commit/{{build.commit}}|{{ truncate build.commit 8 }}>: {{build.link}}\nBranch: <https://github.com/{{ repo.owner }}/{{ repo.name }}/commits/{{ build.branch }}|{{ build.branch }}>\nAuthor: {{build.author}}"
     webhook:
       from_secret: slack_webhook
 
@@ -2563,7 +2619,7 @@ steps:
   image: grafana/build-container:1.4.1
   commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.57/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.0.0/grabpl
   - chmod +x bin/grabpl
   - ./bin/grabpl verify-drone
   - curl -fLO https://github.com/jwilder/dockerize/releases/download/v$${DOCKERIZE_VERSION}/dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
@@ -2643,6 +2699,13 @@ steps:
   depends_on:
   - initialize
   - lint-backend
+
+- name: validate-scuemata
+  image: grafana/build-container:1.4.1
+  commands:
+  - ./bin/linux-amd64/grafana-cli cue validate-schema
+  depends_on:
+  - build-backend
 
 - name: gen-version
   image: grafana/build-container:1.4.1
@@ -2826,7 +2889,7 @@ steps:
   image: grafana/ci-wix:0.1.1
   commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.57/windows/grabpl.exe -OutFile grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.0.0/windows/grabpl.exe -OutFile grabpl.exe
   - .\grabpl.exe verify-drone
 
 - name: build-windows-installer
@@ -2873,7 +2936,7 @@ steps:
   image: grafana/build-container:1.4.1
   commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.57/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.0.0/grabpl
   - chmod +x bin/grabpl
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
   - cd grafana-enterprise
@@ -2889,6 +2952,7 @@ steps:
   - rmdir bin
   - mv grafana-enterprise /tmp/
   - /tmp/grabpl init-enterprise /tmp/grafana-enterprise
+  - mv /tmp/grafana-enterprise/deployment_tools_config.json deployment_tools_config.json
   - mkdir bin
   - mv /tmp/grabpl bin/
   - ./bin/grabpl verify-drone
@@ -2971,6 +3035,13 @@ steps:
   depends_on:
   - initialize
   - lint-backend
+
+- name: validate-scuemata
+  image: grafana/build-container:1.4.1
+  commands:
+  - ./bin/linux-amd64/grafana-cli cue validate-schema
+  depends_on:
+  - build-backend
 
 - name: test-backend-enterprise2
   image: grafana/build-container:1.4.1
@@ -3257,6 +3328,9 @@ services:
 - name: memcached
   image: memcached:1.6.9-alpine
 
+image_pull_secrets:
+- dockerconfigjson
+
 trigger:
   ref:
   - refs/heads/v*
@@ -3284,7 +3358,7 @@ steps:
   image: grafana/ci-wix:0.1.1
   commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.57/windows/grabpl.exe -OutFile grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.0.0/windows/grabpl.exe -OutFile grabpl.exe
   - git clone "https://$$env:GITHUB_TOKEN@github.com/grafana/grafana-enterprise.git"
   - cd grafana-enterprise
   - git checkout $$env:DRONE_BRANCH
@@ -3320,6 +3394,9 @@ steps:
   depends_on:
   - initialize
 
+image_pull_secrets:
+- dockerconfigjson
+
 trigger:
   ref:
   - refs/heads/v*
@@ -3341,7 +3418,7 @@ steps:
   image: plugins/slack
   settings:
     channel: grafana-ci-notifications
-    template: "Build {{build.number}} failed for commit: <https://github.com/{{repo.owner}}/{{repo.name}}/commit/{{build.commit}}|{{ truncate build.commit 8 }}>: {{build.link}}\nAuthor: {{build.author}}"
+    template: "Build {{build.number}} failed for commit: <https://github.com/{{repo.owner}}/{{repo.name}}/commit/{{build.commit}}|{{ truncate build.commit 8 }}>: {{build.link}}\nBranch: <https://github.com/{{ repo.owner }}/{{ repo.name }}/commits/{{ build.branch }}|{{ build.branch }}>\nAuthor: {{build.author}}"
     webhook:
       from_secret: slack_webhook
 
@@ -3356,5 +3433,64 @@ depends_on:
 - oss-windows-release-branch
 - enterprise-build-release-branch
 - enterprise-windows-release-branch
+
+---
+kind: pipeline
+type: docker
+name: scan-docker-images
+
+platform:
+  os: linux
+  arch: amd64
+
+steps:
+- name: scan-docker-images-unkown-low-medium-vulnerabilities
+  image: aquasec/trivy:0.18.3
+  commands:
+  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/grafana:latest
+  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/grafana:main
+  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/grafana:latest-ubuntu
+  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/grafana:main-ubuntu
+
+- name: scan-docker-images-high-critical-vulnerabilities
+  image: aquasec/trivy:0.18.3
+  commands:
+  - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/grafana:latest
+  - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/grafana:main
+  - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/grafana:latest-ubuntu
+  - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/grafana:main-ubuntu
+
+- name: slack-notify-failure
+  image: plugins/slack
+  settings:
+    channel: grafana-backend
+    template: "Nightly docker image scan job for {{repo.name}} failed: {{build.link}}"
+    webhook:
+      from_secret: slack_webhook_backend
+  when:
+    status:
+    - failure
+
+trigger:
+  cron:
+  - nightly
+  event:
+  - cron
+
+---
+kind: secret
+name: dockerconfigjson
+
+get:
+  path: secret/data/common/gcr
+  name: .dockerconfigjson
+
+---
+kind: secret
+name: github_token
+
+get:
+  path: infra/data/ci/github/grafanabot
+  name: pat
 
 ...

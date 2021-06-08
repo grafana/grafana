@@ -14,6 +14,7 @@ import { serializeParams } from '../../../core/utils/fetch';
 import { apiPrefix } from './constants';
 import { ZipkinSpan } from './types';
 import { transformResponse } from './utils/transforms';
+import { createGraphFrames } from './utils/graphTransform';
 
 export interface ZipkinQuery extends DataQuery {
   query: string;
@@ -67,7 +68,7 @@ export class ZipkinDatasource extends DataSourceApi<ZipkinQuery> {
 
 function responseToDataQueryResponse(response: { data: ZipkinSpan[] }): DataQueryResponse {
   return {
-    data: response?.data ? [transformResponse(response?.data)] : [],
+    data: response?.data ? [transformResponse(response?.data), ...createGraphFrames(response?.data)] : [],
   };
 }
 

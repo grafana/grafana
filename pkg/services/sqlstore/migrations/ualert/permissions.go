@@ -44,7 +44,6 @@ func (m *migration) createFolder(orgID int64, title string) (*dashboard, error) 
 		}),
 	}
 	dash := cmd.getDashboardModel()
-	var userId int64 = -1
 
 	uid, err := m.generateNewDashboardUid(dash.OrgId)
 	if err != nil {
@@ -55,9 +54,9 @@ func (m *migration) createFolder(orgID int64, title string) (*dashboard, error) 
 	parentVersion := dash.Version
 	dash.setVersion(1)
 	dash.Created = time.Now()
-	dash.CreatedBy = userId
+	dash.CreatedBy = FOLDER_CREATED_BY
 	dash.Updated = time.Now()
-	dash.UpdatedBy = userId
+	dash.UpdatedBy = FOLDER_CREATED_BY
 	metrics.MApiDashboardInsert.Inc()
 
 	if _, err = m.sess.Insert(dash); err != nil {

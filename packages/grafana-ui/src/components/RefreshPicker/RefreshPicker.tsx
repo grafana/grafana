@@ -82,6 +82,7 @@ export class RefreshPicker extends PureComponent<Props> {
               options={options}
               onChange={this.onChangeSelect as any}
               variant={variant}
+              aria-label={selectors.components.RefreshPicker.intervalButton}
             />
           )}
         </ButtonGroup>

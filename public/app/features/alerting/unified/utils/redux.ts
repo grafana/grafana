@@ -1,5 +1,8 @@
 import { AnyAction, AsyncThunk, createSlice, Draft, isAsyncThunkAction, SerializedError } from '@reduxjs/toolkit';
-
+import { FetchError } from '@grafana/runtime';
+import { isArray } from 'angular';
+import { appEvents } from 'app/core/core';
+import { AppEvents } from '@grafana/data';
 export interface AsyncRequestState<T> {
   result?: T;
   loading: boolean;
@@ -98,9 +101,49 @@ export function createAsyncMapSlice<T, ThunkArg = void, ThunkApiConfig = {}>(
 export function withSerializedError<T>(p: Promise<T>): Promise<T> {
   return p.catch((e) => {
     const err: SerializedError = {
-      message: e.data?.message || e.message || e.statusText,
+      message: messageFromError(e),
       code: e.statusCode,
     };
     throw err;
   });
+}
+
+export function withAppEvents<T>(
+  p: Promise<T>,
+  options: { successMessage?: string; errorMessage?: string }
+): Promise<T> {
+  return p
+    .then((v) => {
+      if (options.successMessage) {
+        appEvents.emit(AppEvents.alertSuccess, [options.successMessage]);
+      }
+      return v;
+    })
+    .catch((e) => {
+      const msg = messageFromError(e);
+      appEvents.emit(AppEvents.alertError, [`${options.errorMessage ?? 'Error'}: ${msg}`]);
+      throw e;
+    });
+}
+
+function isFetchError(e: unknown): e is FetchError {
+  return typeof e === 'object' && e !== null && 'status' in e && 'data' in e;
+}
+
+function messageFromError(e: Error | FetchError | SerializedError): string {
+  if (isFetchError(e)) {
+    if (e.data?.message) {
+      let msg = e.data?.message;
+      if (typeof e.data?.error === 'string') {
+        msg += `; ${e.data.error}`;
+      }
+      return msg;
+    } else if (isArray(e.data) && e.data.length && e.data[0]?.message) {
+      return e.data
+        .map((d) => d?.message)
+        .filter((m) => !!m)
+        .join(' ');
+    }
+  }
+  return (e as Error)?.message || String(e);
 }

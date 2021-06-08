@@ -1,6 +1,10 @@
 import { isNumber } from 'lodash';
 import {
+  DashboardCursorSync,
   DataFrame,
+  DataHoverClearEvent,
+  DataHoverEvent,
+  DataHoverPayload,
   FieldConfig,
   FieldType,
   formattedValueToString,
@@ -9,8 +13,7 @@ import {
   getFieldSeriesColor,
 } from '@grafana/data';
 
-import { PrepConfigOpts } from '../GraphNG/utils';
-import { UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
+import { UPlotConfigBuilder, UPlotConfigPrepFn } from '../uPlot/config/UPlotConfigBuilder';
 import { FIXED_UNIT } from '../GraphNG/GraphNG';
 import {
   AxisPlacement,
@@ -31,9 +34,14 @@ const defaultConfig: GraphFieldConfig = {
   axisPlacement: AxisPlacement.Auto,
 };
 
-type PrepConfig = (opts: PrepConfigOpts) => UPlotConfigBuilder;
-
-export const preparePlotConfigBuilder: PrepConfig = ({ frame, theme, timeZone, getTimeRange }) => {
+export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursorSync }> = ({
+  frame,
+  theme,
+  timeZone,
+  getTimeRange,
+  eventBus,
+  sync,
+}) => {
   const builder = new UPlotConfigBuilder(timeZone);
 
   // X is the first field in the aligned frame
@@ -44,20 +52,25 @@ export const preparePlotConfigBuilder: PrepConfig = ({ frame, theme, timeZone, g
 
   let seriesIndex = 0;
 
+  const xScaleKey = 'x';
+  let xScaleUnit = '_x';
+  let yScaleKey = '';
+
   if (xField.type === FieldType.time) {
+    xScaleUnit = 'time';
     builder.addScale({
-      scaleKey: 'x',
+      scaleKey: xScaleKey,
       orientation: ScaleOrientation.Horizontal,
       direction: ScaleDirection.Right,
       isTime: true,
       range: () => {
-        const timeRange = getTimeRange();
-        return [timeRange.from.valueOf(), timeRange.to.valueOf()];
+        const r = getTimeRange();
+        return [r.from.valueOf(), r.to.valueOf()];
       },
     });
 
     builder.addAxis({
-      scaleKey: 'x',
+      scaleKey: xScaleKey,
       isTime: true,
       placement: AxisPlacement.Bottom,
       timeZone,
@@ -65,14 +78,18 @@ export const preparePlotConfigBuilder: PrepConfig = ({ frame, theme, timeZone, g
     });
   } else {
     // Not time!
+    if (xField.config.unit) {
+      xScaleUnit = xField.config.unit;
+    }
+
     builder.addScale({
-      scaleKey: 'x',
+      scaleKey: xScaleKey,
       orientation: ScaleOrientation.Horizontal,
       direction: ScaleDirection.Right,
     });
 
     builder.addAxis({
-      scaleKey: 'x',
+      scaleKey: xScaleKey,
       placement: AxisPlacement.Bottom,
       theme,
     });
@@ -82,7 +99,7 @@ export const preparePlotConfigBuilder: PrepConfig = ({ frame, theme, timeZone, g
 
   let indexByName: Map<string, number> | undefined = undefined;
 
-  for (let i = 0; i < frame.fields.length; i++) {
+  for (let i = 1; i < frame.fields.length; i++) {
     const field = frame.fields[i];
     const config = field.config as FieldConfig<GraphFieldConfig>;
     const customConfig: GraphFieldConfig = {
@@ -113,6 +130,10 @@ export const preparePlotConfigBuilder: PrepConfig = ({ frame, theme, timeZone, g
       softMin: customConfig.axisSoftMin,
       softMax: customConfig.axisSoftMax,
     });
+
+    if (!yScaleKey) {
+      yScaleKey = scaleKey;
+    }
 
     if (customConfig.axisPlacement !== AxisPlacement.Hidden) {
       builder.addAxis({
@@ -158,17 +179,16 @@ export const preparePlotConfigBuilder: PrepConfig = ({ frame, theme, timeZone, g
       lineInterpolation: customConfig.lineInterpolation,
       lineStyle: customConfig.lineStyle,
       barAlignment: customConfig.barAlignment,
+      barWidthFactor: customConfig.barWidthFactor,
+      barMaxWidth: customConfig.barMaxWidth,
       pointSize: customConfig.pointSize,
       pointColor: customConfig.pointColor ?? seriesColor,
       spanNulls: customConfig.spanNulls || false,
-      show: !customConfig.hideFrom?.graph,
+      show: !customConfig.hideFrom?.viz,
       gradientMode: customConfig.gradientMode,
       thresholds: config.thresholds,
-
       // The following properties are not used in the uPlot config, but are utilized as transport for legend config
       dataFrameFieldIndex: field.state?.origin,
-      fieldName: getFieldDisplayName(field, frame),
-      hideInLegend: customConfig.hideFrom?.legend,
     });
 
     // Render thresholds in graph
@@ -183,7 +203,6 @@ export const preparePlotConfigBuilder: PrepConfig = ({ frame, theme, timeZone, g
         });
       }
     }
-
     collectStackingGroups(field, stackingGroups, seriesIndex);
   }
 
@@ -197,6 +216,46 @@ export const preparePlotConfigBuilder: PrepConfig = ({ frame, theme, timeZone, g
       }
     }
   }
+
+  builder.scaleKeys = [xScaleKey, yScaleKey];
+
+  if (sync !== DashboardCursorSync.Off) {
+    const payload: DataHoverPayload = {
+      point: {
+        [xScaleKey]: null,
+        [yScaleKey]: null,
+      },
+      data: frame,
+    };
+    const hoverEvent = new DataHoverEvent(payload);
+    builder.setSync();
+    builder.setCursor({
+      sync: {
+        key: '__global_',
+        filters: {
+          pub: (type: string, src: uPlot, x: number, y: number, w: number, h: number, dataIdx: number) => {
+            payload.columnIndex = dataIdx;
+            if (x < 0 && y < 0) {
+              payload.point[xScaleUnit] = null;
+              payload.point[yScaleKey] = null;
+              eventBus.publish(new DataHoverClearEvent(payload));
+            } else {
+              // convert the points
+              payload.point[xScaleUnit] = src.posToVal(x, xScaleKey);
+              payload.point[yScaleKey] = src.posToVal(y, yScaleKey);
+              eventBus.publish(hoverEvent);
+              hoverEvent.payload.down = undefined;
+            }
+            return true;
+          },
+        },
+        // ??? setSeries: syncMode === DashboardCursorSync.Tooltip,
+        scales: builder.scaleKeys,
+        match: [() => true, () => true],
+      },
+    });
+  }
+
   return builder;
 };
 

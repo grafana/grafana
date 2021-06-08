@@ -28,7 +28,7 @@ This image is based on [Ubuntu](https://ubuntu.com/), available in [the Ubuntu o
 > **Note:** The `grafana/grafana:<version>-ubuntu` image is available for Grafana version 6.5.0 and later.
 
 ## Run Grafana
-You can run the latest Grafana version, run a specific version, or run an unstable version based on the master branch of the [grafana/grafana GitHub repository](https://github.com/grafana/grafana).
+You can run the latest Grafana version, run a specific version, or run an unstable version based on the main branch of the [grafana/grafana GitHub repository](https://github.com/grafana/grafana).
 
 ### Run the latest stable version of Grafana
 
@@ -51,11 +51,11 @@ docker run -d -p 3000:3000 --name grafana grafana/grafana:<version number>
 docker run -d -p 3000:3000 --name grafana grafana/grafana:6.5.0
 ```
 
-### Run the Grafana master branch
+### Run the Grafana main branch
 
-For every successful build of the master branch, we update the `grafana/grafana:master` and `grafana/grafana:master-ubuntu` tags. Additionally, two new tags are created, `grafana/grafana-dev:<version>-<build ID>pre` and `grafana/grafana-dev:<version>-<build ID>pre-ubuntu`, where *version* is the next version of Grafana and *build ID* is the ID of the corresponding CI build. Use these to get access to the latest master builds of Grafana.
+For every successful build of the main branch, we update the `grafana/grafana:main` and `grafana/grafana:main-ubuntu` tags. Additionally, two new tags are created, `grafana/grafana-dev:<version>-<build ID>pre` and `grafana/grafana-dev:<version>-<build ID>pre-ubuntu`, where *version* is the next version of Grafana and *build ID* is the ID of the corresponding CI build. Use these to get access to the latest main builds of Grafana.
 
-When running Grafana master in production, we *strongly* recommend that you use the `grafana/grafana-dev:<version>-<build ID>pre` tag. This tag guarantees that you use a specific version of Grafana instead of whatever was the most recent commit at the time.
+When running Grafana main in production, we *strongly* recommend that you use the `grafana/grafana-dev:<version>-<build ID>pre` tag. This tag guarantees that you use a specific version of Grafana instead of whatever was the most recent commit at the time.
 
 For a list of available tags, check out [grafana/grafana](https://hub.docker.com/r/grafana/grafana/tags/) and [grafana/grafana-dev](https://hub.docker.com/r/grafana/grafana-dev/tags/).
 

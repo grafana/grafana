@@ -2,7 +2,7 @@ import React from 'react';
 import { merge } from 'lodash';
 import { Table } from '@grafana/ui';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
-import { number } from '@storybook/addon-knobs';
+import { Meta, Story } from '@storybook/react';
 import { useTheme2 } from '../../themes';
 import mdx from './Table.mdx';
 import {
@@ -21,11 +21,22 @@ export default {
   component: Table,
   decorators: [withCenteredStory],
   parameters: {
+    controls: {
+      exclude: ['onColumnResize', 'onSortByChange', 'onCellFilterAdded', 'ariaLabel', 'data', 'initialSortBy'],
+    },
     docs: {
       page: mdx,
     },
+    knobs: {
+      disable: true,
+    },
   },
-};
+  args: {
+    width: 700,
+    height: 500,
+    columnMinWidth: 150,
+  },
+} as Meta;
 
 function buildData(theme: GrafanaTheme2, config: Record<string, FieldConfig>): DataFrame {
   const data = new MutableDataFrame({
@@ -99,21 +110,19 @@ const defaultThresholds: ThresholdsConfig = {
   mode: ThresholdsMode.Absolute,
 };
 
-export const Simple = () => {
+export const Basic: Story = (args) => {
   const theme = useTheme2();
-  const width = number('width', 700, {}, 'Props');
   const data = buildData(theme, {});
 
   return (
     <div className="panel-container" style={{ width: 'auto' }}>
-      <Table data={data} height={500} width={width} />
+      <Table data={data} height={args.height} width={args.width} {...args} />
     </div>
   );
 };
 
-export const BarGaugeCell = () => {
+export const BarGaugeCell: Story = (args) => {
   const theme = useTheme2();
-  const width = number('width', 700, {}, 'Props');
   const data = buildData(theme, {
     Progress: {
       custom: {
@@ -126,14 +135,13 @@ export const BarGaugeCell = () => {
 
   return (
     <div className="panel-container" style={{ width: 'auto' }}>
-      <Table data={data} height={500} width={width} />
+      <Table data={data} height={args.height} width={args.width} {...args} />
     </div>
   );
 };
 
-export const ColoredCells = () => {
+export const ColoredCells: Story = (args) => {
   const theme = useTheme2();
-  const width = number('width', 750, {}, 'Props');
   const data = buildData(theme, {
     Progress: {
       custom: {
@@ -146,7 +154,7 @@ export const ColoredCells = () => {
 
   return (
     <div className="panel-container" style={{ width: 'auto' }}>
-      <Table data={data} height={500} width={width} />
+      <Table data={data} height={args.height} width={args.width} {...args} />
     </div>
   );
 };

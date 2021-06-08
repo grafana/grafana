@@ -12,7 +12,7 @@ If we wait for canceled requests to complete, it might create unnecessary load o
 Grafana uses a concept called _request cancelation_ to cancel any ongoing request that Grafana doesn't need.
 
 #### Before Grafana 7.2
-Before Grafana can cancel any data request, it has to identify that request. Grafana identifies a request using the property `requestId` [passed as options](https://github.com/grafana/grafana/blob/master/docs/sources/packages_api/runtime/backendsrvrequest.md) when you use [BackendSrv](https://grafana.com/docs/grafana/latest/packages_api/runtime/backendsrv).
+Before Grafana can cancel any data request, it has to identify that request. Grafana identifies a request using the property `requestId` [passed as options](https://github.com/grafana/grafana/blob/main/docs/sources/packages_api/runtime/backendsrvrequest.md) when you use [BackendSrv](https://grafana.com/docs/grafana/latest/packages_api/runtime/backendsrv).
 
 The cancellation logic is as follows:
 - When an ongoing request discovers that an additional request with the same `requestId` has started, then Grafana will cancel the ongoing request.

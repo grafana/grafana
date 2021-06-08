@@ -6,7 +6,7 @@ import (
 )
 
 // --- Migration Guide line ---
-// 1. Never change a migration that is committed and pushed to master
+// 1. Never change a migration that is committed and pushed to main
 // 2. Always add new migrations (to change or undo previous migrations)
 // 3. Some migrations are not yet written (rename column, table, drop table, index etc)
 
@@ -38,7 +38,9 @@ func AddMigrations(mg *Migrator) {
 	addUserAuthTokenMigrations(mg)
 	addCacheMigration(mg)
 	addShortURLMigrations(mg)
-	ualert.AddMigration(mg)
+	ualert.AddTablesMigrations(mg)
+	ualert.AddDashAlertMigration(mg)
+	addLibraryElementsMigrations(mg)
 }
 
 func addMigrationLogMigrations(mg *Migrator) {

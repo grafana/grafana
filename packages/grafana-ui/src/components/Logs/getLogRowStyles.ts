@@ -48,6 +48,7 @@ export const getLogRowStyles = stylesFactory((theme: GrafanaTheme, logLevel?: Lo
       font-family: ${theme.typography.fontFamily.monospace};
       font-size: ${theme.typography.size.sm};
       width: 100%;
+      overflow: hidden;
     `,
     context: css`
       label: context;

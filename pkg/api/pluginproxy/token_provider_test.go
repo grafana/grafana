@@ -41,13 +41,16 @@ func TestAccessToken_pluginWithJWTTokenAuthRoute(t *testing.T) {
 		},
 	}
 
-	templateData := templateData{
-		JsonData: map[string]interface{}{
-			"clientEmail": "test@test.com",
-			"tokenUri":    "login.url.com/token",
+	authParams := &plugins.JwtTokenAuth{
+		Url: "https://login.server.com/{{.JsonData.tenantId}}/oauth2/token",
+		Scopes: []string{
+			"https://www.testapi.com/auth/monitoring.read",
+			"https://www.testapi.com/auth/cloudplatformprojects.readonly",
 		},
-		SecureJsonData: map[string]string{
-			"privateKey": "testkey",
+		Params: map[string]string{
+			"token_uri":    "login.url.com/token",
+			"client_email": "test@test.com",
+			"private_key":  "testkey",
 		},
 	}
 
@@ -66,7 +69,7 @@ func TestAccessToken_pluginWithJWTTokenAuthRoute(t *testing.T) {
 		setUp(t, func(conf *jwt.Config, ctx context.Context) (*oauth2.Token, error) {
 			return &oauth2.Token{AccessToken: "abc"}, nil
 		})
-		provider := newJwtAccessTokenProvider(context.Background(), ds, pluginRoute, templateData)
+		provider := newJwtAccessTokenProvider(context.Background(), ds, pluginRoute, authParams)
 		token, err := provider.getAccessToken()
 		require.NoError(t, err)
 
@@ -85,7 +88,7 @@ func TestAccessToken_pluginWithJWTTokenAuthRoute(t *testing.T) {
 			return &oauth2.Token{AccessToken: "abc"}, nil
 		})
 
-		provider := newJwtAccessTokenProvider(context.Background(), ds, pluginRoute, templateData)
+		provider := newJwtAccessTokenProvider(context.Background(), ds, pluginRoute, authParams)
 		_, err := provider.getAccessToken()
 		require.NoError(t, err)
 	})
@@ -96,7 +99,7 @@ func TestAccessToken_pluginWithJWTTokenAuthRoute(t *testing.T) {
 				AccessToken: "abc",
 				Expiry:      time.Now().Add(1 * time.Minute)}, nil
 		})
-		provider := newJwtAccessTokenProvider(context.Background(), ds, pluginRoute, templateData)
+		provider := newJwtAccessTokenProvider(context.Background(), ds, pluginRoute, authParams)
 		token1, err := provider.getAccessToken()
 		require.NoError(t, err)
 		assert.Equal(t, "abc", token1)
@@ -135,13 +138,18 @@ func TestAccessToken_pluginWithTokenAuthRoute(t *testing.T) {
 		},
 	}
 
-	templateData := templateData{
-		JsonData: map[string]interface{}{
-			"client_id": "my_client_id",
-			"audience":  "www.example.com",
+	authParams := &plugins.JwtTokenAuth{
+		Url: server.URL + "/oauth/token",
+		Scopes: []string{
+			"https://www.testapi.com/auth/monitoring.read",
+			"https://www.testapi.com/auth/cloudplatformprojects.readonly",
 		},
-		SecureJsonData: map[string]string{
+		Params: map[string]string{
+			"grant_type":    "client_credentials",
+			"client_id":     "my_client_id",
 			"client_secret": "my_secret",
+			"audience":      "www.example.com",
+			"client_name":   "datasource_plugin",
 		},
 	}
 
@@ -162,7 +170,7 @@ func TestAccessToken_pluginWithTokenAuthRoute(t *testing.T) {
 
 		mockTimeNow(time.Now())
 		defer resetTimeNow()
-		provider := newGenericAccessTokenProvider(&models.DataSource{}, pluginRoute, templateData)
+		provider := newGenericAccessTokenProvider(&models.DataSource{}, pluginRoute, authParams)
 
 		testCases := []tokenTestDescription{
 			{
@@ -244,7 +252,7 @@ func TestAccessToken_pluginWithTokenAuthRoute(t *testing.T) {
 
 		mockTimeNow(time.Now())
 		defer resetTimeNow()
-		provider := newGenericAccessTokenProvider(&models.DataSource{}, pluginRoute, templateData)
+		provider := newGenericAccessTokenProvider(&models.DataSource{}, pluginRoute, authParams)
 
 		token = map[string]interface{}{
 			"access_token":  "2YotnFZFEjr1zCsicMWpAA",

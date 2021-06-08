@@ -7,23 +7,26 @@ import { useStyles } from '../../themes';
 import { GrafanaTheme } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
-export interface Props {
-  item: VizLegendItem;
+export interface Props<T> {
+  item: VizLegendItem<T>;
   className?: string;
-  onLabelClick?: (item: VizLegendItem, event: React.MouseEvent<HTMLDivElement>) => void;
+  onLabelClick?: (item: VizLegendItem<T>, event: React.MouseEvent<HTMLDivElement>) => void;
   onLabelMouseEnter?: (item: VizLegendItem, event: React.MouseEvent<HTMLDivElement>) => void;
   onLabelMouseOut?: (item: VizLegendItem, event: React.MouseEvent<HTMLDivElement>) => void;
+  readonly?: boolean;
 }
 
 /**
  * @internal
  */
-export const VizLegendListItem: React.FunctionComponent<Props> = ({
+export const VizLegendListItem = <T extends unknown = any>({
   item,
   onLabelClick,
   onLabelMouseEnter,
   onLabelMouseOut,
-}) => {
+  className,
+  readonly,
+}: Props<T>) => {
   const styles = useStyles(getStyles);
 
   const onMouseEnter = useCallback(
@@ -54,13 +57,16 @@ export const VizLegendListItem: React.FunctionComponent<Props> = ({
   );
 
   return (
-    <div className={styles.itemWrapper} aria-label={selectors.components.VizLegend.seriesName(item.label)}>
-      <VizLegendSeriesIcon seriesName={item.label} color={item.color} />
+    <div
+      className={cx(styles.itemWrapper, className)}
+      aria-label={selectors.components.VizLegend.seriesName(item.label)}
+    >
+      <VizLegendSeriesIcon seriesName={item.label} color={item.color} gradient={item.gradient} readonly={readonly} />
       <div
         onMouseEnter={onMouseEnter}
         onMouseOut={onMouseOut}
-        onClick={onClick}
-        className={cx(styles.label, item.disabled && styles.labelDisabled)}
+        onClick={!readonly ? onClick : undefined}
+        className={cx(styles.label, item.disabled && styles.labelDisabled, !readonly && styles.clickable)}
       >
         {item.label}
       </div>
@@ -75,14 +81,18 @@ VizLegendListItem.displayName = 'VizLegendListItem';
 const getStyles = (theme: GrafanaTheme) => ({
   label: css`
     label: LegendLabel;
-    cursor: pointer;
     white-space: nowrap;
+  `,
+  clickable: css`
+    label: LegendClickabel;
+    cursor: pointer;
   `,
   labelDisabled: css`
     label: LegendLabelDisabled;
     color: ${theme.colors.linkDisabled};
   `,
   itemWrapper: css`
+    label: LegendItemWrapper;
     display: flex;
     white-space: nowrap;
     align-items: center;

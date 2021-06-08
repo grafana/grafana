@@ -1,4 +1,4 @@
-import { useStyles2 } from '@grafana/ui';
+import { ConfirmModal, useStyles2 } from '@grafana/ui';
 import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
 import React, { FC, Fragment, useMemo, useState } from 'react';
 import { getAlertTableStyles } from '../../styles/table';
@@ -7,6 +7,8 @@ import { DetailsField } from '../DetailsField';
 import { ActionIcon } from '../rules/ActionIcon';
 import { ReceiversSection } from './ReceiversSection';
 import { makeAMLink } from '../../utils/misc';
+import { useDispatch } from 'react-redux';
+import { deleteTemplateAction } from '../../state/actions';
 
 interface Props {
   config: AlertManagerCortexConfig;
@@ -14,10 +16,19 @@ interface Props {
 }
 
 export const TemplatesTable: FC<Props> = ({ config, alertManagerName }) => {
+  const dispatch = useDispatch();
   const [expandedTemplates, setExpandedTemplates] = useState<Record<string, boolean>>({});
   const tableStyles = useStyles2(getAlertTableStyles);
 
   const templateRows = useMemo(() => Object.entries(config.template_files), [config]);
+  const [templateToDelete, setTemplateToDelete] = useState<string>();
+
+  const deleteTemplate = () => {
+    if (templateToDelete) {
+      dispatch(deleteTemplateAction(templateToDelete, alertManagerName));
+    }
+    setTemplateToDelete(undefined);
+  };
 
   return (
     <ReceiversSection
@@ -26,7 +37,7 @@ export const TemplatesTable: FC<Props> = ({ config, alertManagerName }) => {
       addButtonLabel="New template"
       addButtonTo={makeAMLink('/alerting/notifications/templates/new', alertManagerName)}
     >
-      <table className={tableStyles.table}>
+      <table className={tableStyles.table} data-testid="templates-table">
         <colgroup>
           <col className={tableStyles.colExpand} />
           <col />
@@ -59,14 +70,14 @@ export const TemplatesTable: FC<Props> = ({ config, alertManagerName }) => {
                   <td>{name}</td>
                   <td className={tableStyles.actionsCell}>
                     <ActionIcon
-                      href={makeAMLink(
+                      to={makeAMLink(
                         `/alerting/notifications/templates/${encodeURIComponent(name)}/edit`,
                         alertManagerName
                       )}
                       tooltip="edit template"
                       icon="pen"
                     />
-                    <ActionIcon tooltip="delete template" icon="trash-alt" />
+                    <ActionIcon onClick={() => setTemplateToDelete(name)} tooltip="delete template" icon="trash-alt" />
                   </td>
                 </tr>
                 {isExpanded && (
@@ -84,6 +95,17 @@ export const TemplatesTable: FC<Props> = ({ config, alertManagerName }) => {
           })}
         </tbody>
       </table>
+
+      {!!templateToDelete && (
+        <ConfirmModal
+          isOpen={true}
+          title="Delete template"
+          body={`Are you sure you want to delete template "${templateToDelete}"?`}
+          confirmText="Yes, delete"
+          onConfirm={deleteTemplate}
+          onDismiss={() => setTemplateToDelete(undefined)}
+        />
+      )}
     </ReceiversSection>
   );
 };

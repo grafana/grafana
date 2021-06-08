@@ -1,9 +1,13 @@
-import { EventBusSrv, EventBus } from '@grafana/data';
+import { EventBusSrv, EventBus, DashboardCursorSync } from '@grafana/data';
 import React from 'react';
+import { SeriesVisibilityChangeMode } from '.';
 
 /** @alpha */
 export interface PanelContext {
   eventBus: EventBus;
+
+  /** Dashboard panels sync */
+  sync?: DashboardCursorSync;
 
   /**
    * Called when a component wants to change the color for a series
@@ -11,9 +15,11 @@ export interface PanelContext {
    * @alpha -- experimental
    */
   onSeriesColorChange?: (label: string, color: string) => void;
+
+  onToggleSeriesVisibility?: (label: string, mode: SeriesVisibilityChangeMode) => void;
 }
 
-const PanelContextRoot = React.createContext<PanelContext>({
+export const PanelContextRoot = React.createContext<PanelContext>({
   eventBus: new EventBusSrv(),
 });
 

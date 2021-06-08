@@ -36,7 +36,7 @@ const getStyles = (theme: GrafanaTheme) => ({
       padding-right: ${theme.spacing.sm};
       font-size: ${theme.typography.size.sm};
       font-weight: ${theme.typography.weight.semibold};
-      line-height: ${theme.typography.lineHeight.lg};
+      line-height: 1.8;
     }
     & > div:nth-child(2) {
       flex: 1;

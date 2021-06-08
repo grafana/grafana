@@ -6,16 +6,14 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"testing/fstest"
 
-	"github.com/grafana/grafana"
 	"github.com/grafana/grafana/pkg/schema"
+	"github.com/laher/mergefs"
 	"github.com/stretchr/testify/require"
 )
 
-var p BaseLoadPaths = BaseLoadPaths{
-	BaseCueFS:       grafana.CoreSchema,
-	DistPluginCueFS: grafana.PluginSchema,
-}
+var p = GetDefaultLoadPaths()
 
 // Basic well-formedness tests on core scuemata.
 func TestScuemataBasics(t *testing.T) {
@@ -48,10 +46,7 @@ func TestScuemataBasics(t *testing.T) {
 }
 
 func TestDashboardValidity(t *testing.T) {
-	// TODO FIXME remove this once we actually have dashboard schema filled in
-	// enough that the tests pass, lol
-	t.Skip()
-	validdir := os.DirFS(filepath.Join("testdata", "artifacts", "dashboards", "basic"))
+	validdir := os.DirFS(filepath.Join("testdata", "artifacts", "dashboards"))
 
 	dash, err := BaseDashboardFamily(p)
 	require.NoError(t, err, "error while loading base dashboard scuemata")
@@ -85,10 +80,8 @@ func TestDashboardValidity(t *testing.T) {
 }
 
 func TestPanelValidity(t *testing.T) {
+	t.Skip()
 	validdir := os.DirFS(filepath.Join("testdata", "artifacts", "panels"))
-
-	// dash, err := BaseDashboardFamily(p)
-	// require.NoError(t, err, "error while loading base dashboard scuemata")
 
 	ddash, err := DistDashboardFamily(p)
 	require.NoError(t, err, "error while loading dist dashboard scuemata")
@@ -111,7 +104,6 @@ func TestPanelValidity(t *testing.T) {
 		t.Run(path, func(t *testing.T) {
 			// TODO FIXME stop skipping once we actually have the schema filled in
 			// enough that the tests pass, lol
-			t.Skip()
 
 			b, err := validdir.Open(path)
 			require.NoError(t, err, "failed to open panel file")
@@ -122,4 +114,29 @@ func TestPanelValidity(t *testing.T) {
 
 		return nil
 	}))
+}
+
+func TestCueErrorWrapper(t *testing.T) {
+	t.Run("Testing cue error wrapper", func(t *testing.T) {
+		a := fstest.MapFS{
+			"cue/data/gen.cue": &fstest.MapFile{Data: []byte("{;;;;;;;;}")},
+		}
+
+		filesystem := mergefs.Merge(a, GetDefaultLoadPaths().BaseCueFS)
+
+		var baseLoadPaths = BaseLoadPaths{
+			BaseCueFS:       filesystem,
+			DistPluginCueFS: GetDefaultLoadPaths().DistPluginCueFS,
+		}
+
+		_, err := BaseDashboardFamily(baseLoadPaths)
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "in file")
+		require.Contains(t, err.Error(), "line: ")
+
+		_, err = DistDashboardFamily(baseLoadPaths)
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "in file")
+		require.Contains(t, err.Error(), "line: ")
+	})
 }

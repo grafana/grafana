@@ -2,10 +2,10 @@ import React, { Component } from 'react';
 import { css } from '@emotion/css';
 import config from 'app/core/config';
 import { UserPicker } from 'app/core/components/Select/UserPicker';
-import { TeamPicker, Team } from 'app/core/components/Select/TeamPicker';
+import { TeamPicker } from 'app/core/components/Select/TeamPicker';
 import { Button, Form, HorizontalGroup, Select, stylesFactory } from '@grafana/ui';
 import { GrafanaTheme, SelectableValue } from '@grafana/data';
-import { User } from 'app/types';
+import { Team, User } from 'app/types';
 import {
   dashboardPermissionLevels,
   dashboardAclTargets,
@@ -62,8 +62,8 @@ class AddPermissions extends Component<Props, NewDashboardAclItem> {
     this.setState({ userId: user && !Array.isArray(user) ? user.id : 0 });
   };
 
-  onTeamSelected = (team: Team) => {
-    this.setState({ teamId: team && !Array.isArray(team) ? team.id : 0 });
+  onTeamSelected = (team: SelectableValue<Team>) => {
+    this.setState({ teamId: team.value?.id && !Array.isArray(team.value) ? team.value.id : 0 });
   };
 
   onPermissionChanged = (permission: SelectableValue<PermissionLevel>) => {

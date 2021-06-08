@@ -21,4 +21,4 @@ The data source of the newly created dashboard panels will be the one selected a
 
 In case you want to customize a dashboard, we recommend that you save it under a different name.  Otherwise the dashboard will be overwritten when a new version of the dashboard is released.
 
-{{< docs-imagebox img="/img/docs/google-cloud-monitoring/curated-dashboards-7-4.png" max-width= "650px" >}}
+{{< figure src="/static/img/docs/google-cloud-monitoring/curated-dashboards-7-4.png" max-width= "650px" >}}

@@ -3,7 +3,7 @@ import appEvents from 'app/core/app_events';
 import { PostgresMetaQuery } from './meta_query';
 import { QueryCtrl } from 'app/plugins/sdk';
 import { SqlPart } from 'app/core/components/sql_part/sql_part';
-import PostgresQuery from './postgres_query';
+import PostgresQueryModel from './postgres_query_model';
 import sqlPart from './sql_part';
 import { auto } from 'angular';
 import { PanelEvents, QueryResultMeta } from '@grafana/data';
@@ -24,7 +24,7 @@ export class PostgresQueryCtrl extends QueryCtrl {
   static templateUrl = 'partials/query.editor.html';
 
   formats: any[];
-  queryModel: PostgresQuery;
+  queryModel: PostgresQueryModel;
   metaBuilder: PostgresMetaQuery;
   lastQueryMeta?: QueryResultMeta;
   lastQueryError?: string;
@@ -48,7 +48,7 @@ export class PostgresQueryCtrl extends QueryCtrl {
   ) {
     super($scope, $injector);
     this.target = this.target;
-    this.queryModel = new PostgresQuery(this.target, templateSrv, this.panel.scopedVars);
+    this.queryModel = new PostgresQueryModel(this.target, templateSrv, this.panel.scopedVars);
     this.metaBuilder = new PostgresMetaQuery(this.target, this.queryModel);
     this.updateProjection();
 

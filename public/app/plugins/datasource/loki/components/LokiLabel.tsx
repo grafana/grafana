@@ -56,7 +56,12 @@ export const LokiLabel = forwardRef<HTMLElement, Props>(
         )}
         {...rest}
       >
-        <Highlighter textToHighlight={text} searchWords={searchWords} highlightClassName={styles.matchHighLight} />
+        <Highlighter
+          textToHighlight={text}
+          searchWords={searchWords}
+          autoEscape={true}
+          highlightClassName={styles.matchHighLight}
+        />
       </span>
     );
   }

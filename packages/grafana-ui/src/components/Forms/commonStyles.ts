@@ -15,6 +15,10 @@ export const sharedInputStyle = (theme: GrafanaTheme2, invalid = false) => {
   const background = theme.components.input.background;
   const textColor = theme.components.input.text;
 
+  // Cannot use our normal borders for this color for some reason due the alpha values in them.
+  // Need to colors without alpha channel
+  const autoFillBorder = theme.isDark ? '#2e2f35' : '#bab4ca';
+
   return css`
     background: ${background};
     line-height: ${theme.typography.body.lineHeight};
@@ -28,6 +32,7 @@ export const sharedInputStyle = (theme: GrafanaTheme2, invalid = false) => {
       /* Welcome to 2005. This is a HACK to get rid od Chromes default autofill styling */
       box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0), inset 0 0 0 100px ${background}!important;
       -webkit-text-fill-color: ${textColor} !important;
+      border-color: ${autoFillBorder};
     }
 
     &:-webkit-autofill:focus {

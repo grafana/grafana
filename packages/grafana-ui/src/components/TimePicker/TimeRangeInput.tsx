@@ -1,15 +1,15 @@
 import React, { FC, FormEvent, MouseEvent, useState } from 'react';
 import { css, cx } from '@emotion/css';
 import { dateMath, dateTime, getDefaultTimeRange, GrafanaTheme2, TimeRange, TimeZone } from '@grafana/data';
-import { useStyles2 } from '../../themes/ThemeContext';
+import { useTheme2 } from '../../themes/ThemeContext';
 import { ClickOutsideWrapper } from '../ClickOutsideWrapper/ClickOutsideWrapper';
 import { Icon } from '../Icon/Icon';
 import { getInputStyles } from '../Input/Input';
-import { getFocusStyle } from '../Forms/commonStyles';
 import { TimePickerButtonLabel } from './TimeRangePicker';
 import { TimePickerContent } from './TimeRangePicker/TimePickerContent';
 import { otherOptions, quickOptions } from './rangeOptions';
 import { selectors } from '@grafana/e2e-selectors';
+import { stylesFactory } from '../../themes';
 
 const isValidTimeRange = (range: any) => {
   return dateMath.isValid(range.from) && dateMath.isValid(range.to);
@@ -25,6 +25,7 @@ export interface TimeRangeInputProps {
   clearable?: boolean;
   isReversed?: boolean;
   hideQuickRanges?: boolean;
+  disabled?: boolean;
 }
 
 const noop = () => {};
@@ -39,13 +40,18 @@ export const TimeRangeInput: FC<TimeRangeInputProps> = ({
   placeholder = 'Select time range',
   isReversed = true,
   hideQuickRanges = false,
+  disabled = false,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const styles = useStyles2(getStyles);
+  const theme = useTheme2();
+  const styles = getStyles(theme, disabled);
 
   const onOpen = (event: FormEvent<HTMLDivElement>) => {
     event.stopPropagation();
     event.preventDefault();
+    if (disabled) {
+      return;
+    }
     setIsOpen(!isOpen);
   };
 
@@ -79,12 +85,14 @@ export const TimeRangeInput: FC<TimeRangeInputProps> = ({
           <span className={styles.placeholder}>{placeholder}</span>
         )}
 
-        <span className={styles.caretIcon}>
-          {isValidTimeRange(value) && clearable && (
-            <Icon className={styles.clearIcon} name="times" size="lg" onClick={onRangeClear} />
-          )}
-          <Icon name={isOpen ? 'angle-up' : 'angle-down'} size="lg" />
-        </span>
+        {!disabled && (
+          <span className={styles.caretIcon}>
+            {isValidTimeRange(value) && clearable && (
+              <Icon className={styles.clearIcon} name="times" size="lg" onClick={onRangeClear} />
+            )}
+            <Icon name={isOpen ? 'angle-up' : 'angle-down'} size="lg" />
+          </span>
+        )}
       </div>
       {isOpen && (
         <ClickOutsideWrapper includeButtonPress={false} onClick={onClose}>
@@ -106,7 +114,7 @@ export const TimeRangeInput: FC<TimeRangeInputProps> = ({
   );
 };
 
-const getStyles = (theme: GrafanaTheme2) => {
+const getStyles = stylesFactory((theme: GrafanaTheme2, disabled = false) => {
   const inputStyles = getInputStyles({ theme, invalid: false });
   return {
     container: css`
@@ -118,6 +126,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     `,
     pickerInput: cx(
       inputStyles.input,
+      disabled && inputStyles.inputDisabled,
       inputStyles.wrapper,
       css`
         display: flex;
@@ -126,7 +135,6 @@ const getStyles = (theme: GrafanaTheme2) => {
         cursor: pointer;
         padding-right: 0;
         line-height: ${theme.v1.spacing.formInputHeight - 2}px;
-        ${getFocusStyle(theme.v1)};
       `
     ),
     caretIcon: cx(
@@ -147,4 +155,4 @@ const getStyles = (theme: GrafanaTheme2) => {
       opacity: 1;
     `,
   };
-};
+});

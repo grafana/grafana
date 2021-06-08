@@ -1,17 +1,16 @@
 import React, { FC, useCallback, useEffect, useRef, useState } from 'react';
 import { css } from '@emotion/css';
 import { GrafanaTheme, PanelPluginMeta, SelectableValue } from '@grafana/data';
-import { Icon, Input, RadioButtonGroup, CustomScrollbar, useStyles, Button } from '@grafana/ui';
+import { Button, CustomScrollbar, Icon, Input, RadioButtonGroup, useStyles } from '@grafana/ui';
 import { changePanelPlugin } from '../../state/actions';
 import { StoreState } from 'app/types';
 import { PanelModel } from '../../state/PanelModel';
 import { useDispatch, useSelector } from 'react-redux';
-import { VizTypePicker, getAllPanelPluginMeta, filterPluginList } from '../VizTypePicker/VizTypePicker';
+import { filterPluginList, getAllPanelPluginMeta, VizTypePicker } from '../VizTypePicker/VizTypePicker';
 import { Field } from '@grafana/ui/src/components/Forms/Field';
 import { PanelLibraryOptionsGroup } from 'app/features/library-panels/components/PanelLibraryOptionsGroup/PanelLibraryOptionsGroup';
 import { toggleVizPicker } from './state/reducers';
 import { selectors } from '@grafana/e2e-selectors';
-import { config } from 'app/core/config';
 
 interface Props {
   panel: PanelModel;
@@ -58,7 +57,7 @@ export const VisualizationSelectPane: FC<Props> = ({ panel }) => {
         const match = filterPluginList(plugins, query, plugin.meta);
 
         if (match && match.length) {
-          onPluginTypeChange(match[0], true);
+          onPluginTypeChange(match[0], false);
         }
       }
     },
@@ -107,11 +106,9 @@ export const VisualizationSelectPane: FC<Props> = ({ panel }) => {
             onClick={onCloseVizPicker}
           />
         </div>
-        {config.featureToggles.panelLibrary && (
-          <Field className={styles.customFieldMargin}>
-            <RadioButtonGroup options={radioOptions} value={listMode} onChange={setListMode} fullWidth />
-          </Field>
-        )}
+        <Field className={styles.customFieldMargin}>
+          <RadioButtonGroup options={radioOptions} value={listMode} onChange={setListMode} fullWidth />
+        </Field>
       </div>
       <div className={styles.scrollWrapper}>
         <CustomScrollbar autoHeightMin="100%">
@@ -165,7 +162,7 @@ const getStyles = (theme: GrafanaTheme) => {
     openWrapper: css`
       display: flex;
       flex-direction: column;
-      flex: 1 1 0;
+      flex: 1 1 100%;
       height: 100%;
       background: ${theme.colors.bg1};
       border: 1px solid ${theme.colors.border1};

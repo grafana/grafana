@@ -24,6 +24,11 @@ func (cr classicReducer) ValidReduceFunc() bool {
 //nolint: gocyclo
 func (cr classicReducer) Reduce(series mathexp.Series) mathexp.Number {
 	num := mathexp.NewNumber("", nil)
+
+	if series.GetLabels() != nil {
+		num.SetLabels(series.GetLabels().Copy())
+	}
+
 	num.SetValue(nil)
 
 	if series.Len() == 0 {
@@ -33,7 +38,7 @@ func (cr classicReducer) Reduce(series mathexp.Series) mathexp.Number {
 	value := float64(0)
 	allNull := true
 
-	vF := series.Frame.Fields[series.ValueIdx]
+	vF := series.Frame.Fields[1]
 	ff := mathexp.Float64Field(*vF)
 
 	switch cr {

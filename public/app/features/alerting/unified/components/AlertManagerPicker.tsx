@@ -1,8 +1,9 @@
-import { SelectableValue } from '@grafana/data';
+import { SelectableValue, GrafanaTheme2 } from '@grafana/data';
 import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 import React, { FC, useMemo } from 'react';
-import { Select } from '@grafana/ui';
+import { Field, Select, useStyles2 } from '@grafana/ui';
 import { getAllDataSources } from '../utils/config';
+import { css } from '@emotion/css';
 
 interface Props {
   onChange: (alertManagerSourceName: string) => void;
@@ -11,6 +12,8 @@ interface Props {
 }
 
 export const AlertManagerPicker: FC<Props> = ({ onChange, current, disabled = false }) => {
+  const styles = useStyles2(getStyles);
+
   const options: Array<SelectableValue<string>> = useMemo(() => {
     return [
       {
@@ -30,20 +33,35 @@ export const AlertManagerPicker: FC<Props> = ({ onChange, current, disabled = fa
     ];
   }, []);
 
+  // no need to show the picker if there's only one option
+  if (options.length === 1) {
+    return null;
+  }
+
   return (
-    <Select
+    <Field
+      className={styles.field}
+      label={disabled ? 'Alert manager' : 'Choose alert manager'}
       disabled={disabled}
-      width={29}
-      className="ds-picker select-container"
-      isMulti={false}
-      isClearable={false}
-      backspaceRemovesValue={false}
-      onChange={(value) => value.value && onChange(value.value)}
-      options={options}
-      maxMenuHeight={500}
-      noOptionsMessage="No datasources found"
-      value={current}
-      getOptionLabel={(o) => o.label}
-    />
+      data-testid="alertmanager-picker"
+    >
+      <Select
+        width={29}
+        className="ds-picker select-container"
+        backspaceRemovesValue={false}
+        onChange={(value) => value.value && onChange(value.value)}
+        options={options}
+        maxMenuHeight={500}
+        noOptionsMessage="No datasources found"
+        value={current}
+        getOptionLabel={(o) => o.label}
+      />
+    </Field>
   );
 };
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  field: css`
+    margin-bottom: ${theme.spacing(4)};
+  `,
+});

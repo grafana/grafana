@@ -1,91 +1,57 @@
 import { map } from 'lodash';
-import { MysqlMetricFindValue } from './types';
-
-interface TableResponse extends Record<string, any> {
-  type: string;
-  refId: string;
-  meta: any;
-}
-
-interface SeriesResponse extends Record<string, any> {
-  target: string;
-  refId: string;
-  meta: any;
-  datapoints: [any[]];
-}
-
-export interface MysqlResponse {
-  data: Array<TableResponse | SeriesResponse>;
-}
+import { AnnotationEvent, DataFrame, FieldType, MetricFindValue } from '@grafana/data';
+import { BackendDataSourceResponse, FetchResponse, toDataQueryResponse } from '@grafana/runtime';
 
 export default class ResponseParser {
-  processQueryResult(res: any): MysqlResponse {
-    const data: any[] = [];
+  transformMetricFindResponse(raw: FetchResponse<BackendDataSourceResponse>): MetricFindValue[] {
+    const frames = toDataQueryResponse(raw).data as DataFrame[];
 
-    if (!res.data.results) {
-      return { data: data };
-    }
-
-    for (const key in res.data.results) {
-      const queryRes = res.data.results[key];
-
-      if (queryRes.series) {
-        for (const series of queryRes.series) {
-          data.push({
-            target: series.name,
-            datapoints: series.points,
-            refId: queryRes.refId,
-            meta: queryRes.meta,
-          });
-        }
-      }
-
-      if (queryRes.tables) {
-        for (const table of queryRes.tables) {
-          table.type = 'table';
-          table.refId = queryRes.refId;
-          table.meta = queryRes.meta;
-          data.push(table);
-        }
-      }
-    }
-
-    return { data: data };
-  }
-
-  parseMetricFindQueryResult(refId: string, results: any): MysqlMetricFindValue[] {
-    if (!results || results.data.length === 0 || results.data.results[refId].meta.rowCount === 0) {
+    if (!frames || !frames.length) {
       return [];
     }
 
-    const columns = results.data.results[refId].tables[0].columns;
-    const rows = results.data.results[refId].tables[0].rows;
-    const textColIndex = this.findColIndex(columns, '__text');
-    const valueColIndex = this.findColIndex(columns, '__value');
+    const frame = frames[0];
 
-    if (columns.length === 2 && textColIndex !== -1 && valueColIndex !== -1) {
-      return this.transformToKeyValueList(rows, textColIndex, valueColIndex);
+    const values: MetricFindValue[] = [];
+    const textField = frame.fields.find((f) => f.name === '__text');
+    const valueField = frame.fields.find((f) => f.name === '__value');
+
+    if (textField && valueField) {
+      for (let i = 0; i < textField.values.length; i++) {
+        values.push({ text: '' + textField.values.get(i), value: '' + valueField.values.get(i) });
+      }
+    } else {
+      const textFields = frame.fields.filter((f) => f.type === FieldType.string);
+      if (textFields) {
+        values.push(
+          ...textFields
+            .flatMap((f) => f.values.toArray())
+            .map((v) => ({
+              text: '' + v,
+            }))
+        );
+      }
     }
 
-    return this.transformToSimpleList(rows);
+    return Array.from(new Set(values.map((v) => v.text))).map((text) => ({
+      text,
+      value: values.find((v) => v.text === text)?.value,
+    }));
   }
 
-  transformToKeyValueList(rows: any, textColIndex: number, valueColIndex: number) {
+  transformToKeyValueList(rows: any, textColIndex: number, valueColIndex: number): MetricFindValue[] {
     const res = [];
 
     for (let i = 0; i < rows.length; i++) {
       if (!this.containsKey(res, rows[i][textColIndex])) {
-        res.push({
-          text: rows[i][textColIndex],
-          value: rows[i][valueColIndex],
-        });
+        res.push({ text: rows[i][textColIndex], value: rows[i][valueColIndex] });
       }
     }
 
     return res;
   }
 
-  transformToSimpleList(rows: any) {
+  transformToSimpleList(rows: any): MetricFindValue[] {
     const res = [];
 
     for (let i = 0; i < rows.length; i++) {
@@ -120,47 +86,38 @@ export default class ResponseParser {
     return false;
   }
 
-  transformAnnotationResponse(options: any, data: any) {
-    const table = data.data.results[options.annotation.name].tables[0];
+  async transformAnnotationResponse(options: any, data: BackendDataSourceResponse): Promise<AnnotationEvent[]> {
+    const frames = toDataQueryResponse({ data: data }).data as DataFrame[];
+    const frame = frames[0];
+    const timeField = frame.fields.find((f) => f.name === 'time' || f.name === 'time_sec');
 
-    let timeColumnIndex = -1;
-    let timeEndColumnIndex = -1;
-    let textColumnIndex = -1;
-    let tagsColumnIndex = -1;
-
-    for (let i = 0; i < table.columns.length; i++) {
-      if (table.columns[i].text === 'time_sec' || table.columns[i].text === 'time') {
-        timeColumnIndex = i;
-      } else if (table.columns[i].text === 'timeend') {
-        timeEndColumnIndex = i;
-      } else if (table.columns[i].text === 'title') {
-        throw {
-          message: 'The title column for annotations is deprecated, now only a column named text is returned',
-        };
-      } else if (table.columns[i].text === 'text') {
-        textColumnIndex = i;
-      } else if (table.columns[i].text === 'tags') {
-        tagsColumnIndex = i;
-      }
+    if (!timeField) {
+      throw new Error('Missing mandatory time column (with time column alias) in annotation query');
     }
 
-    if (timeColumnIndex === -1) {
-      throw {
-        message: 'Missing mandatory time column (with time_sec column alias) in annotation query.',
-      };
+    if (frame.fields.find((f) => f.name === 'title')) {
+      throw new Error('The title column for annotations is deprecated, now only a column named text is returned');
     }
 
-    const list = [];
-    for (let i = 0; i < table.rows.length; i++) {
-      const row = table.rows[i];
-      const timeEnd =
-        timeEndColumnIndex !== -1 && row[timeEndColumnIndex] ? Math.floor(row[timeEndColumnIndex]) : undefined;
+    const timeEndField = frame.fields.find((f) => f.name === 'timeend');
+    const textField = frame.fields.find((f) => f.name === 'text');
+    const tagsField = frame.fields.find((f) => f.name === 'tags');
+
+    const list: AnnotationEvent[] = [];
+    for (let i = 0; i < frame.length; i++) {
+      const timeEnd = timeEndField && timeEndField.values.get(i) ? Math.floor(timeEndField.values.get(i)) : undefined;
       list.push({
         annotation: options.annotation,
-        time: Math.floor(row[timeColumnIndex]),
+        time: Math.floor(timeField.values.get(i)),
         timeEnd,
-        text: row[textColumnIndex] ? row[textColumnIndex].toString() : '',
-        tags: row[tagsColumnIndex] ? row[tagsColumnIndex].trim().split(/\s*,\s*/) : [],
+        text: textField && textField.values.get(i) ? textField.values.get(i) : '',
+        tags:
+          tagsField && tagsField.values.get(i)
+            ? tagsField.values
+                .get(i)
+                .trim()
+                .split(/\s*,\s*/)
+            : [],
       });
     }
 

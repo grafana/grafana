@@ -6,14 +6,16 @@ import {
   PanelData,
   sortLogsResult,
   standardTransformers,
+  DataQuery,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { groupBy } from 'lodash';
 import { Observable, of } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { map, mergeMap } from 'rxjs/operators';
 import { dataFrameToLogsModel } from '../../../core/logs_model';
 import { refreshIntervalToSortOrder } from '../../../core/utils/explore';
 import { ExplorePanelData } from '../../../types';
+import { preProcessPanelData } from '../../query/state/runRequest';
 
 /**
  * When processing response first we try to determine what kind of dataframes we got as one query can return multiple
@@ -129,15 +131,14 @@ export const decorateWithTableResult = (data: ExplorePanelData): Observable<Expl
 };
 
 export const decorateWithLogsResult = (
-  options: { absoluteRange?: AbsoluteTimeRange; refreshInterval?: string } = {}
+  options: { absoluteRange?: AbsoluteTimeRange; refreshInterval?: string; queries?: DataQuery[] } = {}
 ) => (data: ExplorePanelData): ExplorePanelData => {
   if (data.logsFrames.length === 0) {
     return { ...data, logsResult: null };
   }
 
-  const timeZone = data.request?.timezone ?? 'browser';
   const intervalMs = data.request?.intervalMs;
-  const newResults = dataFrameToLogsModel(data.logsFrames, intervalMs, timeZone, options.absoluteRange);
+  const newResults = dataFrameToLogsModel(data.logsFrames, intervalMs, options.absoluteRange, options.queries);
   const sortOrder = refreshIntervalToSortOrder(options.refreshInterval);
   const sortedNewResults = sortLogsResult(newResults, sortOrder);
   const rows = sortedNewResults.rows;
@@ -146,6 +147,23 @@ export const decorateWithLogsResult = (
 
   return { ...data, logsResult };
 };
+
+// decorateData applies all decorators
+export function decorateData(
+  data: PanelData,
+  queryResponse: PanelData,
+  absoluteRange: AbsoluteTimeRange,
+  refreshInterval: string | undefined,
+  queries: DataQuery[] | undefined
+): Observable<ExplorePanelData> {
+  return of(data).pipe(
+    map((data: PanelData) => preProcessPanelData(data, queryResponse)),
+    map(decorateWithFrameTypeMetadata),
+    map(decorateWithGraphResult),
+    map(decorateWithLogsResult({ absoluteRange, refreshInterval, queries })),
+    mergeMap(decorateWithTableResult)
+  );
+}
 
 /**
  * Check if frame contains time series, which for our purpose means 1 time column and 1 or more numeric columns.

@@ -14,7 +14,7 @@ import {
   useTable,
 } from 'react-table';
 import { FixedSizeList } from 'react-window';
-import { getColumns, sortCaseInsensitive } from './utils';
+import { getColumns, sortCaseInsensitive, sortNumber } from './utils';
 import {
   TableColumnResizeActionCallback,
   TableFilterActionCallback,
@@ -27,8 +27,10 @@ import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
 import { Filter } from './Filter';
 import { TableCell } from './TableCell';
 import { useStyles2 } from '../../themes';
+import { selectors } from '@grafana/e2e-selectors';
 
 const COLUMN_MIN_WIDTH = 150;
+const e2eSelectorsTable = selectors.components.Panels.Visualization.Table;
 
 export interface Props {
   ariaLabel?: string;
@@ -151,7 +153,8 @@ export const Table: FC<Props> = memo((props: Props) => {
       stateReducer: stateReducer,
       initialState: getInitialState(initialSortBy, memoizedColumns),
       sortTypes: {
-        'alphanumeric-insensitive': sortCaseInsensitive,
+        number: sortNumber, // should be replace with the builtin number when react-table is upgraded, see https://github.com/tannerlinsley/react-table/pull/3235
+        'alphanumeric-insensitive': sortCaseInsensitive, // should be replace with the builtin string when react-table is upgraded, see https://github.com/tannerlinsley/react-table/pull/3235
       },
     }),
     [initialSortBy, memoizedColumns, memoizedData, resizable, stateReducer]
@@ -182,7 +185,6 @@ export const Table: FC<Props> = memo((props: Props) => {
               onCellFilterAdded={onCellFilterAdded}
               columnIndex={index}
               columnCount={row.cells.length}
-              dataRowIndex={row.index}
             />
           ))}
         </div>
@@ -202,7 +204,12 @@ export const Table: FC<Props> = memo((props: Props) => {
               {headerGroups.map((headerGroup: HeaderGroup) => {
                 const { key, ...headerGroupProps } = headerGroup.getHeaderGroupProps();
                 return (
-                  <div className={tableStyles.thead} {...headerGroupProps} key={key}>
+                  <div
+                    className={tableStyles.thead}
+                    {...headerGroupProps}
+                    key={key}
+                    aria-label={e2eSelectorsTable.header}
+                  >
                     {headerGroup.headers.map((column: Column, index: number) =>
                       renderHeaderCell(column, tableStyles, data.fields[index])
                     )}

@@ -84,6 +84,7 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
           "getVariablesFromState": [Function],
           "gnetId": null,
           "graphTooltip": 0,
+          "hasChangesThatAffectsAllPanels": false,
           "id": null,
           "links": Array [],
           "meta": Object {
@@ -112,7 +113,9 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
                 },
               },
               "fieldConfig": Object {
-                "defaults": Object {},
+                "defaults": Object {
+                  "mappings": undefined,
+                },
                 "overrides": Array [],
               },
               "gridPos": Object {
@@ -147,7 +150,9 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
                 },
               },
               "fieldConfig": Object {
-                "defaults": Object {},
+                "defaults": Object {
+                  "mappings": undefined,
+                },
                 "overrides": Array [],
               },
               "gridPos": Object {
@@ -182,7 +187,9 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
                 },
               },
               "fieldConfig": Object {
-                "defaults": Object {},
+                "defaults": Object {
+                  "mappings": undefined,
+                },
                 "overrides": Array [],
               },
               "gridPos": Object {
@@ -217,7 +224,9 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
                 },
               },
               "fieldConfig": Object {
-                "defaults": Object {},
+                "defaults": Object {
+                  "mappings": undefined,
+                },
                 "overrides": Array [],
               },
               "gridPos": Object {
@@ -244,7 +253,7 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
           ],
           "refresh": undefined,
           "revision": undefined,
-          "schemaVersion": 29,
+          "schemaVersion": 30,
           "snapshot": undefined,
           "style": "dark",
           "tags": Array [],
@@ -277,7 +286,9 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
             },
           },
           "fieldConfig": Object {
-            "defaults": Object {},
+            "defaults": Object {
+              "mappings": undefined,
+            },
             "overrides": Array [],
           },
           "gridPos": Object {
@@ -345,6 +356,7 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
           "getVariablesFromState": [Function],
           "gnetId": null,
           "graphTooltip": 0,
+          "hasChangesThatAffectsAllPanels": false,
           "id": null,
           "links": Array [],
           "meta": Object {
@@ -373,7 +385,9 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
                 },
               },
               "fieldConfig": Object {
-                "defaults": Object {},
+                "defaults": Object {
+                  "mappings": undefined,
+                },
                 "overrides": Array [],
               },
               "gridPos": Object {
@@ -408,7 +422,9 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
                 },
               },
               "fieldConfig": Object {
-                "defaults": Object {},
+                "defaults": Object {
+                  "mappings": undefined,
+                },
                 "overrides": Array [],
               },
               "gridPos": Object {
@@ -443,7 +459,9 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
                 },
               },
               "fieldConfig": Object {
-                "defaults": Object {},
+                "defaults": Object {
+                  "mappings": undefined,
+                },
                 "overrides": Array [],
               },
               "gridPos": Object {
@@ -478,7 +496,9 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
                 },
               },
               "fieldConfig": Object {
-                "defaults": Object {},
+                "defaults": Object {
+                  "mappings": undefined,
+                },
                 "overrides": Array [],
               },
               "gridPos": Object {
@@ -505,7 +525,7 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
           ],
           "refresh": undefined,
           "revision": undefined,
-          "schemaVersion": 29,
+          "schemaVersion": 30,
           "snapshot": undefined,
           "style": "dark",
           "tags": Array [],
@@ -538,7 +558,9 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
             },
           },
           "fieldConfig": Object {
-            "defaults": Object {},
+            "defaults": Object {
+              "mappings": undefined,
+            },
             "overrides": Array [],
           },
           "gridPos": Object {
@@ -606,6 +628,7 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
           "getVariablesFromState": [Function],
           "gnetId": null,
           "graphTooltip": 0,
+          "hasChangesThatAffectsAllPanels": false,
           "id": null,
           "links": Array [],
           "meta": Object {
@@ -634,7 +657,9 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
                 },
               },
               "fieldConfig": Object {
-                "defaults": Object {},
+                "defaults": Object {
+                  "mappings": undefined,
+                },
                 "overrides": Array [],
               },
               "gridPos": Object {
@@ -669,7 +694,9 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
                 },
               },
               "fieldConfig": Object {
-                "defaults": Object {},
+                "defaults": Object {
+                  "mappings": undefined,
+                },
                 "overrides": Array [],
               },
               "gridPos": Object {
@@ -704,7 +731,9 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
                 },
               },
               "fieldConfig": Object {
-                "defaults": Object {},
+                "defaults": Object {
+                  "mappings": undefined,
+                },
                 "overrides": Array [],
               },
               "gridPos": Object {
@@ -739,7 +768,9 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
                 },
               },
               "fieldConfig": Object {
-                "defaults": Object {},
+                "defaults": Object {
+                  "mappings": undefined,
+                },
                 "overrides": Array [],
               },
               "gridPos": Object {
@@ -766,7 +797,7 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
           ],
           "refresh": undefined,
           "revision": undefined,
-          "schemaVersion": 29,
+          "schemaVersion": 30,
           "snapshot": undefined,
           "style": "dark",
           "tags": Array [],
@@ -799,7 +830,9 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
             },
           },
           "fieldConfig": Object {
-            "defaults": Object {},
+            "defaults": Object {
+              "mappings": undefined,
+            },
             "overrides": Array [],
           },
           "gridPos": Object {
@@ -867,6 +900,7 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
           "getVariablesFromState": [Function],
           "gnetId": null,
           "graphTooltip": 0,
+          "hasChangesThatAffectsAllPanels": false,
           "id": null,
           "links": Array [],
           "meta": Object {
@@ -895,7 +929,9 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
                 },
               },
               "fieldConfig": Object {
-                "defaults": Object {},
+                "defaults": Object {
+                  "mappings": undefined,
+                },
                 "overrides": Array [],
               },
               "gridPos": Object {
@@ -930,7 +966,9 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
                 },
               },
               "fieldConfig": Object {
-                "defaults": Object {},
+                "defaults": Object {
+                  "mappings": undefined,
+                },
                 "overrides": Array [],
               },
               "gridPos": Object {
@@ -965,7 +1003,9 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
                 },
               },
               "fieldConfig": Object {
-                "defaults": Object {},
+                "defaults": Object {
+                  "mappings": undefined,
+                },
                 "overrides": Array [],
               },
               "gridPos": Object {
@@ -1000,7 +1040,9 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
                 },
               },
               "fieldConfig": Object {
-                "defaults": Object {},
+                "defaults": Object {
+                  "mappings": undefined,
+                },
                 "overrides": Array [],
               },
               "gridPos": Object {
@@ -1027,7 +1069,7 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
           ],
           "refresh": undefined,
           "revision": undefined,
-          "schemaVersion": 29,
+          "schemaVersion": 30,
           "snapshot": undefined,
           "style": "dark",
           "tags": Array [],
@@ -1060,7 +1102,9 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
             },
           },
           "fieldConfig": Object {
-            "defaults": Object {},
+            "defaults": Object {
+              "mappings": undefined,
+            },
             "overrides": Array [],
           },
           "gridPos": Object {

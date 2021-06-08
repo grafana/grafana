@@ -5,7 +5,7 @@ import SpectrumPalette from './SpectrumPalette';
 import { Themeable2 } from '../../types/theme';
 import { warnAboutColorPickerPropsDeprecation } from './warnAboutColorPickerPropsDeprecation';
 import { css } from '@emotion/css';
-import { GrafanaTheme2, getColorForTheme } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { stylesFactory, withTheme2 } from '../../themes';
 
 export type ColorPickerChangeHandler = (color: string) => void;
@@ -59,7 +59,7 @@ class UnThemedColorPickerPopover<T extends CustomPickersDescriptor> extends Reac
     if (enableNamedColors) {
       return changeHandler(color);
     }
-    changeHandler(getColorForTheme(color, theme.v1));
+    changeHandler(theme.visualization.getColorByName(color));
   };
 
   onTabChange = (tab: PickerType | keyof T) => {

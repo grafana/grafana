@@ -88,10 +88,10 @@ module.exports = {
             ],
           },
         },
-        // {
-        //   from: './node_modules/@kusto/monaco-kusto/release/min/',
-        //   to: 'monaco/min/vs/language/kusto/',
-        // },
+        {
+          from: './node_modules/@kusto/monaco-kusto/release/min/',
+          to: '../lib/monaco/min/vs/language/kusto/',
+        },
       ],
     }),
   ],
@@ -157,6 +157,15 @@ module.exports = {
         test: /\.(svg|ico|jpg|jpeg|png|gif|eot|otf|webp|ttf|woff|woff2|cur|ani|pdf)(\?.*)?$/,
         loader: 'file-loader',
         options: { name: 'static/img/[name].[hash:8].[ext]' },
+      },
+      {
+        test: /\.worker\.js$/,
+        use: {
+          loader: 'worker-loader',
+          options: {
+            inline: 'fallback',
+          },
+        },
       },
     ],
   },

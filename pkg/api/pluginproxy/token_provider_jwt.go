@@ -28,17 +28,17 @@ type jwtAccessTokenProvider struct {
 	datasourceVersion int
 	ctx               context.Context
 	route             *plugins.AppPluginRoute
-	data              templateData
+	authParams        *plugins.JwtTokenAuth
 }
 
 func newJwtAccessTokenProvider(ctx context.Context, ds *models.DataSource, pluginRoute *plugins.AppPluginRoute,
-	data templateData) *jwtAccessTokenProvider {
+	authParams *plugins.JwtTokenAuth) *jwtAccessTokenProvider {
 	return &jwtAccessTokenProvider{
 		datasourceId:      ds.Id,
 		datasourceVersion: ds.Version,
 		ctx:               ctx,
 		route:             pluginRoute,
-		data:              data,
+		authParams:        authParams,
 	}
 }
 
@@ -54,31 +54,19 @@ func (provider *jwtAccessTokenProvider) getAccessToken() (string, error) {
 
 	conf := &jwt.Config{}
 
-	if val, ok := provider.route.JwtTokenAuth.Params["client_email"]; ok {
-		interpolatedVal, err := interpolateString(val, provider.data)
-		if err != nil {
-			return "", err
-		}
-		conf.Email = interpolatedVal
+	if val, ok := provider.authParams.Params["client_email"]; ok {
+		conf.Email = val
 	}
 
-	if val, ok := provider.route.JwtTokenAuth.Params["private_key"]; ok {
-		interpolatedVal, err := interpolateString(val, provider.data)
-		if err != nil {
-			return "", err
-		}
-		conf.PrivateKey = []byte(interpolatedVal)
+	if val, ok := provider.authParams.Params["private_key"]; ok {
+		conf.PrivateKey = []byte(val)
 	}
 
-	if val, ok := provider.route.JwtTokenAuth.Params["token_uri"]; ok {
-		interpolatedVal, err := interpolateString(val, provider.data)
-		if err != nil {
-			return "", err
-		}
-		conf.TokenURL = interpolatedVal
+	if val, ok := provider.authParams.Params["token_uri"]; ok {
+		conf.TokenURL = val
 	}
 
-	conf.Scopes = provider.route.JwtTokenAuth.Scopes
+	conf.Scopes = provider.authParams.Scopes
 
 	token, err := getTokenSource(conf, provider.ctx)
 	if err != nil {

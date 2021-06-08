@@ -9,6 +9,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/live/convert"
+	"github.com/grafana/grafana/pkg/services/live/livecontext"
 	"github.com/grafana/grafana/pkg/services/live/managedstream"
 	"github.com/grafana/grafana/pkg/services/live/pushurl"
 
@@ -101,15 +102,10 @@ const (
 )
 
 func (s *Handler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
-	var streamID string
-
-	streamID = r.Header.Get("X-Grafana-Live-Stream")
-	if streamID == "" {
-		streamID = r.URL.Query().Get("gf_live_stream")
-	}
-	if streamID == "" {
+	streamID, ok := livecontext.GetContextStreamID(r.Context())
+	if !ok || streamID == "" {
 		logger.Warn("Push request without stream ID")
-		rw.WriteHeader(http.StatusBadRequest)
+		rw.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
@@ -156,13 +152,20 @@ func (s *Handler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		}
 	}()
 
+	user, ok := livecontext.GetContextSignedUser(r.Context())
+	if !ok {
+		logger.Error("No user found in context")
+		rw.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
 	for {
 		_, body, err := conn.ReadMessage()
 		if err != nil {
 			break
 		}
 
-		stream, err := s.managedStreamRunner.GetOrCreateStream(streamID)
+		stream, err := s.managedStreamRunner.GetOrCreateStream(user.OrgId, streamID)
 		if err != nil {
 			logger.Error("Error getting stream", "error", err)
 			continue
@@ -171,13 +174,11 @@ func (s *Handler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		// TODO Grafana 8: decide which formats to use or keep all.
 		urlValues := r.URL.Query()
 		frameFormat := pushurl.FrameFormatFromValues(urlValues)
-		unstableSchema := pushurl.UnstableSchemaFromValues(urlValues)
 
 		logger.Debug("Live Push request",
 			"protocol", "http",
 			"streamId", streamID,
 			"bodyLength", len(body),
-			"unstableSchema", unstableSchema,
 			"frameFormat", frameFormat,
 		)
 
@@ -188,7 +189,7 @@ func (s *Handler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		}
 
 		for _, mf := range metricFrames {
-			err := stream.Push(mf.Key(), mf.Frame(), unstableSchema)
+			err := stream.Push(user.OrgId, mf.Key(), mf.Frame())
 			if err != nil {
 				return
 			}

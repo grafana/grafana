@@ -13,19 +13,22 @@ type gceAccessTokenProvider struct {
 	datasourceVersion int
 	ctx               context.Context
 	route             *plugins.AppPluginRoute
+	authParams        *plugins.JwtTokenAuth
 }
 
-func newGceAccessTokenProvider(ctx context.Context, ds *models.DataSource, pluginRoute *plugins.AppPluginRoute) *gceAccessTokenProvider {
+func newGceAccessTokenProvider(ctx context.Context, ds *models.DataSource, pluginRoute *plugins.AppPluginRoute,
+	authParams *plugins.JwtTokenAuth) *gceAccessTokenProvider {
 	return &gceAccessTokenProvider{
 		datasourceId:      ds.Id,
 		datasourceVersion: ds.Version,
 		ctx:               ctx,
 		route:             pluginRoute,
+		authParams:        authParams,
 	}
 }
 
 func (provider *gceAccessTokenProvider) getAccessToken() (string, error) {
-	tokenSrc, err := google.DefaultTokenSource(provider.ctx, provider.route.JwtTokenAuth.Scopes...)
+	tokenSrc, err := google.DefaultTokenSource(provider.ctx, provider.authParams.Scopes...)
 	if err != nil {
 		logger.Error("Failed to get default token from meta data server", "error", err)
 		return "", err

@@ -26,7 +26,7 @@ export const JsonEditorSettings: React.FC<Props> = ({ dashboard }) => {
   const styles = useStyles2(getStyles);
 
   return (
-    <>
+    <div>
       <h3 className="dashboard-settings__header">JSON Model</h3>
       <div className="dashboard-settings__subheader">
         The JSON model below is the data structure that defines the dashboard. This includes dashboard settings, panel
@@ -53,7 +53,7 @@ export const JsonEditorSettings: React.FC<Props> = ({ dashboard }) => {
           <Button onClick={onClick}>Save changes</Button>
         </HorizontalGroup>
       )}
-    </>
+    </div>
   );
 };
 

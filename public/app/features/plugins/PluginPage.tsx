@@ -17,13 +17,14 @@ import {
   PluginSignatureType,
   PluginType,
   UrlQueryMap,
+  PanelPluginMeta,
 } from '@grafana/data';
 import { AppNotificationSeverity } from 'app/types';
 import { Alert, LinkButton, PluginSignatureBadge, Tooltip, Badge, useStyles2, Icon } from '@grafana/ui';
 
 import Page from 'app/core/components/Page/Page';
 import { getPluginSettings } from './PluginSettingsCache';
-import { importAppPlugin, importDataSourcePlugin, importPanelPlugin } from './plugin_loader';
+import { importAppPlugin, importDataSourcePlugin, importPanelPluginFromMeta } from './plugin_loader';
 import { getNotFoundNav } from 'app/core/nav_model_srv';
 import { PluginHelp } from 'app/core/components/PluginHelp/PluginHelp';
 import { AppConfigCtrlWrapper } from './wrappers/AppConfigWrapper';
@@ -310,7 +311,7 @@ class PluginPage extends PureComponent<Props, State> {
         <br />
         <p>
           Grafana Labs checks each plugin to verify that it has a valid digital signature. Plugin signature verification
-          is part of our security measures to ensure plugins are safe and trustworthy.
+          is part of our security measures to ensure plugins are safe and trustworthy.{' '}
           {!isSignatureValid &&
             'Grafana Labs can’t guarantee the integrity of this unsigned plugin. Ask the plugin author to request it to be signed.'}
         </p>
@@ -501,16 +502,7 @@ export function loadPlugin(pluginId: string): Promise<GrafanaPlugin> {
       return importDataSourcePlugin(info);
     }
     if (info.type === PluginType.panel) {
-      return importPanelPlugin(pluginId).then((plugin) => {
-        // Panel Meta does not have the *full* settings meta
-        return getPluginSettings(pluginId).then((meta) => {
-          plugin.meta = {
-            ...meta, // Set any fields that do not exist
-            ...plugin.meta,
-          };
-          return plugin;
-        });
-      });
+      return importPanelPluginFromMeta(info as PanelPluginMeta);
     }
     if (info.type === PluginType.renderer) {
       return Promise.resolve({ meta: info } as GrafanaPlugin);

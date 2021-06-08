@@ -4,7 +4,7 @@ import classNames from 'classnames';
 import { Subscription } from 'rxjs';
 // Components
 import { PanelHeader } from './PanelHeader/PanelHeader';
-import { ErrorBoundary, PanelContextProvider, PanelContext } from '@grafana/ui';
+import { ErrorBoundary, PanelContextProvider, PanelContext, SeriesVisibilityChangeMode } from '@grafana/ui';
 // Utils & Services
 import { getTimeSrv, TimeSrv } from '../services/TimeSrv';
 import { applyPanelTimeOverrides } from 'app/features/dashboard/utils/panel';
@@ -15,7 +15,7 @@ import { DashboardModel, PanelModel } from '../state';
 import { PANEL_BORDER } from 'app/core/constants';
 import {
   AbsoluteTimeRange,
-  EventBusSrv,
+  DashboardCursorSync,
   EventFilterOptions,
   FieldConfigSource,
   getDefaultTimeRange,
@@ -30,6 +30,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { loadSnapshotData } from '../utils/loadSnapshotData';
 import { RefreshEvent, RenderEvent } from 'app/types/events';
 import { changeSeriesColorConfigFactory } from 'app/plugins/panel/timeseries/overrides/colorSeriesConfigFactory';
+import { seriesVisibilityConfigFactory } from './SeriesVisibilityConfigFactory';
 
 const DEFAULT_PLUGIN_ERROR = 'Error in plugin';
 
@@ -61,22 +62,18 @@ export class PanelChrome extends Component<Props, State> {
   constructor(props: Props) {
     super(props);
 
-    // Can this eventBus be on PanelModel?
-    // when we have more complex event filtering, that may be a better option
-    const eventBus = props.dashboard.events
-      ? props.dashboard.events.newScopedBus(
-          `panel:${props.panel.id}`, // panelID
-          this.eventFilter
-        )
-      : new EventBusSrv();
+    // Can this eventBus be on PanelModel?  when we have more complex event filtering, that may be a better option
+    const eventBus = props.dashboard.events.newScopedBus(`panel:${props.panel.id}`, this.eventFilter);
 
     this.state = {
       isFirstLoad: true,
       renderCounter: 0,
       refreshWhenInView: false,
       context: {
+        sync: props.isEditing ? DashboardCursorSync.Off : props.dashboard.graphTooltip,
         eventBus,
         onSeriesColorChange: this.onSeriesColorChange,
+        onToggleSeriesVisibility: this.onSeriesVisibilityChange,
       },
       data: this.getInitialPanelDataState(),
     };
@@ -84,6 +81,12 @@ export class PanelChrome extends Component<Props, State> {
 
   onSeriesColorChange = (label: string, color: string) => {
     this.onFieldConfigChange(changeSeriesColorConfigFactory(label, color, this.props.panel.fieldConfig));
+  };
+
+  onSeriesVisibilityChange = (label: string, mode: SeriesVisibilityChangeMode) => {
+    this.onFieldConfigChange(
+      seriesVisibilityConfigFactory(label, mode, this.props.panel.fieldConfig, this.state.data.series)
+    );
   };
 
   getInitialPanelDataState(): PanelData {
@@ -131,7 +134,23 @@ export class PanelChrome extends Component<Props, State> {
   }
 
   componentDidUpdate(prevProps: Props) {
-    const { isInView } = this.props;
+    const { isInView, isEditing } = this.props;
+
+    if (prevProps.dashboard.graphTooltip !== this.props.dashboard.graphTooltip) {
+      this.setState((s) => {
+        return {
+          context: { ...s.context, sync: isEditing ? DashboardCursorSync.Off : this.props.dashboard.graphTooltip },
+        };
+      });
+    }
+
+    if (isEditing !== prevProps.isEditing) {
+      this.setState((s) => {
+        return {
+          context: { ...s.context, sync: isEditing ? DashboardCursorSync.Off : this.props.dashboard.graphTooltip },
+        };
+      });
+    }
 
     // View state has changed
     if (isInView !== prevProps.isInView) {
@@ -161,16 +180,7 @@ export class PanelChrome extends Component<Props, State> {
   // The next is outside a react synthetic event so setState is not batched
   // So in this context we can only do a single call to setState
   onDataUpdate(data: PanelData) {
-    const { isInView, dashboard, panel, plugin } = this.props;
-
-    if (!isInView) {
-      if (data.state !== LoadingState.Streaming) {
-        // Ignore events when not visible.
-        // The call will be repeated when the panel comes into view
-        this.setState({ refreshWhenInView: true });
-      }
-      return;
-    }
+    const { dashboard, panel, plugin } = this.props;
 
     // Ignore this data update if we are now a non data panel
     if (plugin.meta.skipDataQuery) {
@@ -213,6 +223,7 @@ export class PanelChrome extends Component<Props, State> {
 
   onRefresh = () => {
     const { panel, isInView, width } = this.props;
+
     if (!isInView) {
       this.setState({ refreshWhenInView: true });
       return;
@@ -226,20 +237,10 @@ export class PanelChrome extends Component<Props, State> {
         return;
       }
 
-      panel.getQueryRunner().run({
-        datasource: panel.datasource,
-        queries: panel.targets,
-        panelId: panel.editSourceId || panel.id,
-        dashboardId: this.props.dashboard.id,
-        timezone: this.props.dashboard.getTimezone(),
-        timeRange: timeData.timeRange,
-        timeInfo: timeData.timeInfo,
-        maxDataPoints: panel.maxDataPoints || width,
-        minInterval: panel.interval,
-        scopedVars: panel.scopedVars,
-        cacheTimeout: panel.cacheTimeout,
-        transformations: panel.transformations,
-      });
+      if (this.state.refreshWhenInView) {
+        this.setState({ refreshWhenInView: false });
+      }
+      panel.runAllPanelQueries(this.props.dashboard.id, this.props.dashboard.getTimezone(), timeData, width);
     } else {
       // The panel should render on refresh as well if it doesn't have a query, like clock panel
       this.setState((prevState) => ({
@@ -287,14 +288,23 @@ export class PanelChrome extends Component<Props, State> {
     return loadingState === LoadingState.Done || pluginMeta.skipDataQuery;
   }
 
+  skipFirstRender(loadingState: LoadingState) {
+    const { isFirstLoad } = this.state;
+    return (
+      this.wantsQueryExecution &&
+      isFirstLoad &&
+      (loadingState === LoadingState.Loading || loadingState === LoadingState.NotStarted)
+    );
+  }
+
   renderPanel(width: number, height: number) {
     const { panel, plugin, dashboard } = this.props;
-    const { renderCounter, data, isFirstLoad } = this.state;
+    const { renderCounter, data } = this.state;
     const { theme } = config;
     const { state: loadingState } = data;
 
     // do not render component until we have first data
-    if (isFirstLoad && (loadingState === LoadingState.Loading || loadingState === LoadingState.NotStarted)) {
+    if (this.skipFirstRender(loadingState)) {
       return null;
     }
 
@@ -370,7 +380,7 @@ export class PanelChrome extends Component<Props, State> {
     const { errorMessage, data } = this.state;
     const { transparent } = panel;
 
-    let alertState = data.alertState?.state;
+    let alertState = config.featureToggles.ngalert ? undefined : data.alertState?.state;
 
     const containerClassNames = classNames({
       'panel-container': true,

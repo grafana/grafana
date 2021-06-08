@@ -12,6 +12,7 @@ export const plugin = new PanelPlugin<DebugPanelOptions>(DebugPanel).useFieldCon
         options: [
           { label: 'Render', value: DebugMode.Render },
           { label: 'Events', value: DebugMode.Events },
+          { label: 'Cursor', value: DebugMode.Cursor },
         ],
       },
     })

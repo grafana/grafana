@@ -2,44 +2,62 @@ import { PanelModel } from '../dashboard/state';
 import { Dispatch } from 'react';
 import { AnyAction } from '@reduxjs/toolkit';
 
-export interface LibraryPanelSearchResult {
+export enum LibraryElementKind {
+  Panel = 1,
+  Variable,
+}
+
+export enum LibraryElementConnectionKind {
+  Dashboard = 1,
+}
+
+export interface LibraryElementConnectionDTO {
+  id: number;
+  kind: LibraryElementConnectionKind;
+  elementId: number;
+  connectionId: number;
+  created: string;
+  createdBy: LibraryElementDTOMetaUser;
+}
+
+export interface LibraryElementsSearchResult {
   totalCount: number;
-  libraryPanels: LibraryPanelDTO[];
+  elements: LibraryElementDTO[];
   perPage: number;
   page: number;
 }
 
-export interface LibraryPanelDTO {
+export interface LibraryElementDTO {
   id: number;
   orgId: number;
   folderId: number;
   uid: string;
   name: string;
+  kind: LibraryElementKind;
   type: string;
   description: string;
   model: any;
   version: number;
-  meta: LibraryPanelDTOMeta;
+  meta: LibraryElementDTOMeta;
 }
 
-export interface LibraryPanelDTOMeta {
-  canEdit: boolean;
+export interface LibraryElementDTOMeta {
   folderName: string;
   folderUid: string;
   connectedDashboards: number;
   created: string;
   updated: string;
-  createdBy: LibraryPanelDTOMetaUser;
-  updatedBy: LibraryPanelDTOMetaUser;
+  createdBy: LibraryElementDTOMetaUser;
+  updatedBy: LibraryElementDTOMetaUser;
 }
 
-export interface LibraryPanelDTOMetaUser {
+export interface LibraryElementDTOMetaUser {
   id: number;
   name: string;
   avatarUrl: string;
 }
 
-export type PanelModelLibraryPanel = Pick<LibraryPanelDTO, 'uid' | 'name' | 'meta' | 'version'>;
+export type PanelModelLibraryPanel = Pick<LibraryElementDTO, 'uid' | 'name' | 'meta' | 'version'>;
 
 export interface PanelModelWithLibraryPanel extends PanelModel {
   libraryPanel: PanelModelLibraryPanel;

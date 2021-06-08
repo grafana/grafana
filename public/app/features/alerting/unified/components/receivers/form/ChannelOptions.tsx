@@ -1,11 +1,12 @@
 import React from 'react';
-import { Button, Checkbox, Field, Input } from '@grafana/ui';
-import { OptionElement } from './OptionElement';
-import { ChannelValues } from '../../../types/receiver-form';
-import { useFormContext, FieldError, FieldErrors } from 'react-hook-form';
+import { Button, Field, Input } from '@grafana/ui';
+import { OptionField } from './fields/OptionField';
+import { ChannelValues, ReceiverFormValues } from '../../../types/receiver-form';
+import { useFormContext, FieldError, FieldErrors, DeepMap } from 'react-hook-form';
 import { NotificationChannelOption, NotificationChannelSecureFields } from 'app/types';
 
 export interface Props<R extends ChannelValues> {
+  defaultValues: R;
   selectedChannelOptions: NotificationChannelOption[];
   secureFields: NotificationChannelSecureFields;
 
@@ -15,13 +16,14 @@ export interface Props<R extends ChannelValues> {
 }
 
 export function ChannelOptions<R extends ChannelValues>({
+  defaultValues,
   selectedChannelOptions,
   onResetSecureField,
   secureFields,
   errors,
   pathPrefix = '',
 }: Props<R>): JSX.Element {
-  const { register, watch } = useFormContext();
+  const { watch } = useFormContext<ReceiverFormValues<R>>();
   const currentFormValues = watch() as Record<string, any>; // react hook form types ARE LYING!
   return (
     <>
@@ -29,43 +31,15 @@ export function ChannelOptions<R extends ChannelValues>({
         const key = `${option.label}-${index}`;
         // Some options can be dependent on other options, this determines what is selected in the dependency options
         // I think this needs more thought.
-        const selectedOptionValue =
-          currentFormValues[`${pathPrefix}settings.${option.showWhen.field}`] &&
-          currentFormValues[`${pathPrefix}settings.${option.showWhen.field}`];
+        const selectedOptionValue = currentFormValues[`${pathPrefix}settings.${option.showWhen.field}`];
 
         if (option.showWhen.field && selectedOptionValue !== option.showWhen.is) {
           return null;
         }
 
-        if (option.element === 'checkbox') {
+        if (secureFields && secureFields[option.propertyName]) {
           return (
-            <Field key={key}>
-              <Checkbox
-                {...register(
-                  option.secure
-                    ? `${pathPrefix}secureSettings.${option.propertyName}`
-                    : `${pathPrefix}settings.${option.propertyName}`
-                )}
-                label={option.label}
-                description={option.description}
-              />
-            </Field>
-          );
-        }
-
-        const error: FieldError | undefined = ((option.secure ? errors?.secureSettings : errors?.settings) as
-          | Record<string, FieldError>
-          | undefined)?.[option.propertyName];
-
-        return (
-          <Field
-            key={key}
-            label={option.label}
-            description={option.description}
-            invalid={!!error}
-            error={error?.message}
-          >
-            {secureFields && secureFields[option.propertyName] ? (
+            <Field key={key} label={option.label} description={option.description || undefined}>
               <Input
                 readOnly={true}
                 value="Configured"
@@ -80,10 +54,24 @@ export function ChannelOptions<R extends ChannelValues>({
                   </Button>
                 }
               />
-            ) : (
-              <OptionElement pathPrefix={pathPrefix} option={option} />
-            )}
-          </Field>
+            </Field>
+          );
+        }
+
+        const error: FieldError | DeepMap<any, FieldError> | undefined = ((option.secure
+          ? errors?.secureSettings
+          : errors?.settings) as DeepMap<any, FieldError> | undefined)?.[option.propertyName];
+
+        const defaultValue = defaultValues?.settings?.[option.propertyName];
+
+        return (
+          <OptionField
+            defaultValue={defaultValue}
+            key={key}
+            error={error}
+            pathPrefix={option.secure ? `${pathPrefix}secureSettings.` : `${pathPrefix}settings.`}
+            option={option}
+          />
         );
       })}
     </>

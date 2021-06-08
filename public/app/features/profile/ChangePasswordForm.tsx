@@ -1,9 +1,10 @@
 import React, { FC } from 'react';
+import { css } from '@emotion/css';
+import { Button, Field, Form, HorizontalGroup, Input, LinkButton } from '@grafana/ui';
+
 import config from 'app/core/config';
 import { UserDTO } from 'app/types';
-import { Button, LinkButton, Form, Field, Input, HorizontalGroup } from '@grafana/ui';
-import { ChangePasswordFields } from 'app/core/utils/UserProvider';
-import { css } from '@emotion/css';
+import { ChangePasswordFields } from './types';
 
 export interface Props {
   user: UserDTO;

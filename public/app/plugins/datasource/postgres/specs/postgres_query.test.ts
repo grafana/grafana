@@ -1,4 +1,4 @@
-import PostgresQuery from '../postgres_query';
+import PostgresQueryModel from '../postgres_query_model';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 
 describe('PostgresQuery', () => {
@@ -9,17 +9,17 @@ describe('PostgresQuery', () => {
 
   describe('When initializing', () => {
     it('should not be in SQL mode', () => {
-      const query = new PostgresQuery({}, templateSrv);
+      const query = new PostgresQueryModel({}, templateSrv);
       expect(query.target.rawQuery).toBe(false);
     });
     it('should be in SQL mode for pre query builder queries', () => {
-      const query = new PostgresQuery({ rawSql: 'SELECT 1' }, templateSrv);
+      const query = new PostgresQueryModel({ rawSql: 'SELECT 1' }, templateSrv);
       expect(query.target.rawQuery).toBe(true);
     });
   });
 
   describe('When generating time column SQL', () => {
-    const query = new PostgresQuery({}, templateSrv);
+    const query = new PostgresQueryModel({}, templateSrv);
 
     query.target.timeColumn = 'time';
     expect(query.buildTimeColumn()).toBe('time AS "time"');
@@ -28,17 +28,20 @@ describe('PostgresQuery', () => {
   });
 
   describe('When generating time column SQL with group by time', () => {
-    let query = new PostgresQuery(
+    let query = new PostgresQueryModel(
       { timeColumn: 'time', group: [{ type: 'time', params: ['5m', 'none'] }] },
       templateSrv
     );
     expect(query.buildTimeColumn()).toBe('$__timeGroupAlias(time,5m)');
     expect(query.buildTimeColumn(false)).toBe('$__timeGroup(time,5m)');
 
-    query = new PostgresQuery({ timeColumn: 'time', group: [{ type: 'time', params: ['5m', 'NULL'] }] }, templateSrv);
+    query = new PostgresQueryModel(
+      { timeColumn: 'time', group: [{ type: 'time', params: ['5m', 'NULL'] }] },
+      templateSrv
+    );
     expect(query.buildTimeColumn()).toBe('$__timeGroupAlias(time,5m,NULL)');
 
-    query = new PostgresQuery(
+    query = new PostgresQueryModel(
       { timeColumn: 'time', timeColumnType: 'int4', group: [{ type: 'time', params: ['5m', 'none'] }] },
       templateSrv
     );
@@ -47,7 +50,7 @@ describe('PostgresQuery', () => {
   });
 
   describe('When generating metric column SQL', () => {
-    const query = new PostgresQuery({}, templateSrv);
+    const query = new PostgresQueryModel({}, templateSrv);
 
     query.target.metricColumn = 'host';
     expect(query.buildMetricColumn()).toBe('host AS metric');
@@ -56,7 +59,7 @@ describe('PostgresQuery', () => {
   });
 
   describe('When generating value column SQL', () => {
-    const query = new PostgresQuery({}, templateSrv);
+    const query = new PostgresQueryModel({}, templateSrv);
 
     let column = [{ type: 'column', params: ['value'] }];
     expect(query.buildValueColumn(column)).toBe('value');
@@ -84,7 +87,7 @@ describe('PostgresQuery', () => {
   });
 
   describe('When generating value column SQL with metric column', () => {
-    const query = new PostgresQuery({}, templateSrv);
+    const query = new PostgresQueryModel({}, templateSrv);
     query.target.metricColumn = 'host';
 
     let column = [{ type: 'column', params: ['value'] }];
@@ -124,7 +127,7 @@ describe('PostgresQuery', () => {
   });
 
   describe('When generating WHERE clause', () => {
-    const query = new PostgresQuery({ where: [] }, templateSrv);
+    const query = new PostgresQueryModel({ where: [] }, templateSrv);
 
     expect(query.buildWhereClause()).toBe('');
 
@@ -143,7 +146,7 @@ describe('PostgresQuery', () => {
   });
 
   describe('When generating GROUP BY clause', () => {
-    const query = new PostgresQuery({ group: [], metricColumn: 'none' }, templateSrv);
+    const query = new PostgresQueryModel({ group: [], metricColumn: 'none' }, templateSrv);
 
     expect(query.buildGroupClause()).toBe('');
     query.target.group = [{ type: 'time', params: ['5m'] }];
@@ -160,7 +163,7 @@ describe('PostgresQuery', () => {
       where: [],
     };
     let result = 'SELECT\n  t AS "time",\n  value\nFROM table\nORDER BY 1';
-    const query = new PostgresQuery(target, templateSrv);
+    const query = new PostgresQueryModel(target, templateSrv);
 
     expect(query.buildQuery()).toBe(result);
 

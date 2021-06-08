@@ -4,14 +4,15 @@ import { useStyles } from '@grafana/ui';
 import { css, cx } from '@emotion/css';
 import { GrafanaTheme } from '@grafana/data';
 import { isAlertingRule, isGrafanaRulerRule } from '../../utils/rules';
-import { isCloudRulesSource, isGrafanaRulesSource } from '../../utils/datasource';
-import { Annotation } from '../Annotation';
+import { isCloudRulesSource } from '../../utils/datasource';
+import { AnnotationDetailsField } from '../AnnotationDetailsField';
 import { AlertLabels } from '../AlertLabels';
 import { AlertInstancesTable } from './AlertInstancesTable';
 import { DetailsField } from '../DetailsField';
-import { RuleQuery } from './RuleQuery';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { ExpressionDatasourceUID } from 'app/features/expressions/ExpressionDatasource';
+import { Expression } from '../Expression';
+import { RuleDetailsActionButtons } from './RuleDetailsActionButtons';
 
 interface Props {
   rule: CombinedRule;
@@ -23,7 +24,7 @@ export const RuleDetails: FC<Props> = ({ rule, rulesSource }) => {
 
   const { promRule } = rule;
 
-  const annotations = Object.entries(rule.annotations);
+  const annotations = Object.entries(rule.annotations).filter(([_, value]) => !!value.trim());
 
   const dataSources: Array<{ name: string; icon?: string }> = useMemo(() => {
     if (isCloudRulesSource(rulesSource)) {
@@ -50,6 +51,7 @@ export const RuleDetails: FC<Props> = ({ rule, rulesSource }) => {
 
   return (
     <div>
+      <RuleDetailsActionButtons rule={rule} rulesSource={rulesSource} />
       <div className={styles.wrapper}>
         <div className={styles.leftSide}>
           {!!rule.labels && !!Object.keys(rule.labels).length && (
@@ -57,17 +59,17 @@ export const RuleDetails: FC<Props> = ({ rule, rulesSource }) => {
               <AlertLabels labels={rule.labels} />
             </DetailsField>
           )}
-          <DetailsField
-            label={isGrafanaRulesSource(rulesSource) ? 'Query' : 'Expression'}
-            className={cx({ [styles.exprRow]: !!annotations.length })}
-            horizontal={true}
-          >
-            <RuleQuery rule={rule} rulesSource={rulesSource} />
-          </DetailsField>
-          {annotations.map(([key, value]) => (
-            <DetailsField key={key} label={key} horizontal={true}>
-              <Annotation annotationKey={key} value={value} />
+          {isCloudRulesSource(rulesSource) && (
+            <DetailsField
+              label="Expression"
+              className={cx({ [styles.exprRow]: !!annotations.length })}
+              horizontal={true}
+            >
+              <Expression expression={rule.query} rulesSource={rulesSource} />
             </DetailsField>
+          )}
+          {annotations.map(([key, value]) => (
+            <AnnotationDetailsField key={key} annotationKey={key} value={value} />
           ))}
         </div>
         <div className={styles.rightSide}>

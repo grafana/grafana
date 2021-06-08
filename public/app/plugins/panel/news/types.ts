@@ -3,6 +3,7 @@ export interface NewsItem {
   title: string;
   link: string;
   content: string;
+  ogImage?: string | null;
 }
 
 /**
@@ -20,4 +21,5 @@ export interface RssItem {
   pubDate?: string;
   content?: string;
   contentSnippet?: string;
+  ogImage?: string | null;
 }

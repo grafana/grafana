@@ -17,7 +17,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/instrumentation"
 	"github.com/grafana/grafana/pkg/registry"
@@ -47,7 +46,6 @@ func (m *manager) Init() error {
 }
 
 func (m *manager) Run(ctx context.Context) error {
-	m.start(ctx)
 	<-ctx.Done()
 	m.stop(ctx)
 	return ctx.Err()
@@ -82,6 +80,8 @@ func (m *manager) Register(pluginID string, factory backendplugin.PluginFactoryF
 	}
 
 	hostEnv = append(hostEnv, m.getAWSEnvironmentVariables()...)
+	hostEnv = append(hostEnv, m.getAzureEnvironmentVariables()...)
+
 	pluginSettings := getPluginSettings(pluginID, m.Cfg)
 	env := pluginSettings.ToEnv("GF_PLUGIN", hostEnv)
 
@@ -96,8 +96,64 @@ func (m *manager) Register(pluginID string, factory backendplugin.PluginFactoryF
 	return nil
 }
 
+// RegisterAndStart registers and starts a backend plugin
+func (m *manager) RegisterAndStart(ctx context.Context, pluginID string, factory backendplugin.PluginFactoryFunc) error {
+	err := m.Register(pluginID, factory)
+	if err != nil {
+		return err
+	}
+
+	p, exists := m.Get(pluginID)
+	if !exists {
+		return fmt.Errorf("backend plugin %s is not registered", pluginID)
+	}
+
+	m.start(ctx, p)
+
+	return nil
+}
+
+// UnregisterAndStop unregisters and stops a backend plugin
+func (m *manager) UnregisterAndStop(ctx context.Context, pluginID string) error {
+	m.logger.Debug("Unregistering backend plugin", "pluginId", pluginID)
+	m.pluginsMu.Lock()
+	defer m.pluginsMu.Unlock()
+
+	p, exists := m.plugins[pluginID]
+	if !exists {
+		return fmt.Errorf("backend plugin %s is not registered", pluginID)
+	}
+
+	m.logger.Debug("Stopping backend plugin process", "pluginId", pluginID)
+	if err := p.Decommission(); err != nil {
+		return err
+	}
+
+	if err := p.Stop(ctx); err != nil {
+		return err
+	}
+
+	delete(m.plugins, pluginID)
+
+	m.logger.Debug("Backend plugin unregistered", "pluginId", pluginID)
+	return nil
+}
+
+func (m *manager) IsRegistered(pluginID string) bool {
+	p, _ := m.Get(pluginID)
+
+	return p != nil && !p.IsDecommissioned()
+}
+
 func (m *manager) Get(pluginID string) (backendplugin.Plugin, bool) {
+	m.pluginsMu.RLock()
 	p, ok := m.plugins[pluginID]
+	m.pluginsMu.RUnlock()
+
+	if ok && p.IsDecommissioned() {
+		return nil, false
+	}
+
 	return p, ok
 }
 
@@ -113,33 +169,29 @@ func (m *manager) getAWSEnvironmentVariables() []string {
 	return variables
 }
 
-//nolint: staticcheck // plugins.DataPlugin deprecated
-func (m *manager) GetDataPlugin(pluginID string) interface{} {
-	plugin := m.plugins[pluginID]
-	if plugin == nil {
-		return nil
+func (m *manager) getAzureEnvironmentVariables() []string {
+	variables := []string{}
+	if m.Cfg.Azure.Cloud != "" {
+		variables = append(variables, "AZURE_CLOUD="+m.Cfg.Azure.Cloud)
+	}
+	if m.Cfg.Azure.ManagedIdentityClientId != "" {
+		variables = append(variables, "AZURE_MANAGED_IDENTITY_CLIENT_ID="+m.Cfg.Azure.ManagedIdentityClientId)
+	}
+	if m.Cfg.Azure.ManagedIdentityEnabled {
+		variables = append(variables, "AZURE_MANAGED_IDENTITY_ENABLED=true")
 	}
 
-	if dataPlugin, ok := plugin.(plugins.DataPlugin); ok {
-		return dataPlugin
-	}
-
-	return nil
+	return variables
 }
 
-// start starts all managed backend plugins
-func (m *manager) start(ctx context.Context) {
-	m.pluginsMu.RLock()
-	defer m.pluginsMu.RUnlock()
-	for _, p := range m.plugins {
-		if !p.IsManaged() {
-			continue
-		}
+// start starts a managed backend plugin
+func (m *manager) start(ctx context.Context, p backendplugin.Plugin) {
+	if !p.IsManaged() {
+		return
+	}
 
-		if err := startPluginAndRestartKilledProcesses(ctx, p); err != nil {
-			p.Logger().Error("Failed to start plugin", "error", err)
-			continue
-		}
+	if err := startPluginAndRestartKilledProcesses(ctx, p); err != nil {
+		p.Logger().Error("Failed to start plugin", "error", err)
 	}
 }
 
@@ -180,10 +232,7 @@ func (m *manager) stop(ctx context.Context) {
 
 // CollectMetrics collects metrics from a registered backend plugin.
 func (m *manager) CollectMetrics(ctx context.Context, pluginID string) (*backend.CollectMetricsResult, error) {
-	m.pluginsMu.RLock()
-	p, registered := m.plugins[pluginID]
-	m.pluginsMu.RUnlock()
-
+	p, registered := m.Get(pluginID)
 	if !registered {
 		return nil, backendplugin.ErrPluginNotRegistered
 	}
@@ -215,10 +264,7 @@ func (m *manager) CheckHealth(ctx context.Context, pluginContext backend.PluginC
 		}, nil
 	}
 
-	m.pluginsMu.RLock()
-	p, registered := m.plugins[pluginContext.PluginID]
-	m.pluginsMu.RUnlock()
-
+	p, registered := m.Get(pluginContext.PluginID)
 	if !registered {
 		return nil, backendplugin.ErrPluginNotRegistered
 	}
@@ -244,15 +290,39 @@ func (m *manager) CheckHealth(ctx context.Context, pluginContext backend.PluginC
 	return resp, nil
 }
 
+func (m *manager) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	p, registered := m.Get(req.PluginContext.PluginID)
+	if !registered {
+		return nil, backendplugin.ErrPluginNotRegistered
+	}
+
+	var resp *backend.QueryDataResponse
+	err := instrumentation.InstrumentQueryDataRequest(p.PluginID(), func() (innerErr error) {
+		resp, innerErr = p.QueryData(ctx, req)
+		return
+	})
+
+	if err != nil {
+		if errors.Is(err, backendplugin.ErrMethodNotImplemented) {
+			return nil, err
+		}
+
+		if errors.Is(err, backendplugin.ErrPluginUnavailable) {
+			return nil, err
+		}
+
+		return nil, errutil.Wrap("failed to query data", err)
+	}
+
+	return resp, nil
+}
+
 type keepCookiesJSONModel struct {
 	KeepCookies []string `json:"keepCookies"`
 }
 
 func (m *manager) callResourceInternal(w http.ResponseWriter, req *http.Request, pCtx backend.PluginContext) error {
-	m.pluginsMu.RLock()
-	p, registered := m.plugins[pCtx.PluginID]
-	m.pluginsMu.RUnlock()
-
+	p, registered := m.Get(pCtx.PluginID)
 	if !registered {
 		return backendplugin.ErrPluginNotRegistered
 	}
@@ -435,6 +505,11 @@ func restartKilledProcess(ctx context.Context, p backendplugin.Plugin) error {
 			}
 			return nil
 		case <-ticker.C:
+			if p.IsDecommissioned() {
+				p.Logger().Debug("Plugin decommissioned")
+				return nil
+			}
+
 			if !p.Exited() {
 				continue
 			}

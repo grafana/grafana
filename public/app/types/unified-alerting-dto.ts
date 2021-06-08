@@ -11,6 +11,14 @@ export enum PromAlertingRuleState {
   Pending = 'pending',
 }
 
+export enum GrafanaAlertState {
+  Normal = 'Normal',
+  Alerting = 'Alerting',
+  Pending = 'Pending',
+  NoData = 'NoData',
+  Error = 'Error',
+}
+
 export enum PromRuleType {
   Alerting = 'alerting',
   Recording = 'recording',
@@ -29,7 +37,7 @@ export interface PromAlertingRuleDTO extends PromRuleDTOBase {
   alerts: Array<{
     labels: Labels;
     annotations: Annotations;
-    state: Exclude<PromAlertingRuleState, PromAlertingRuleState.Inactive>;
+    state: Exclude<PromAlertingRuleState | GrafanaAlertState, PromAlertingRuleState.Inactive>;
     activeAt: string;
     value: string;
   }>;
@@ -86,13 +94,14 @@ export interface RulerAlertingRuleDTO extends RulerRuleBaseDTO {
   annotations?: Annotations;
 }
 
-export enum GrafanaAlertState {
+export enum GrafanaAlertStateDecision {
   Alerting = 'Alerting',
   NoData = 'NoData',
   KeepLastState = 'KeepLastState',
   OK = 'OK',
 }
-export interface GrafanaQuery {
+
+export interface AlertQuery {
   refId: string;
   queryType: string;
   relativeTimeRange?: RelativeTimeRange;
@@ -104,9 +113,9 @@ export interface PostableGrafanaRuleDefinition {
   uid?: string;
   title: string;
   condition: string;
-  no_data_state: GrafanaAlertState;
-  exec_err_state: GrafanaAlertState;
-  data: GrafanaQuery[];
+  no_data_state: GrafanaAlertStateDecision;
+  exec_err_state: GrafanaAlertStateDecision;
+  data: AlertQuery[];
 }
 export interface GrafanaRuleDefinition extends PostableGrafanaRuleDefinition {
   uid: string;

@@ -6,7 +6,7 @@ import { PanelPluginMeta, PluginType } from '@grafana/data';
 
 import { LibraryPanelsSearch, LibraryPanelsSearchProps } from './LibraryPanelsSearch';
 import * as api from '../../state/api';
-import { LibraryPanelSearchResult } from '../../types';
+import { LibraryElementKind, LibraryElementsSearchResult } from '../../types';
 import { backendSrv } from '../../../../core/services/backend_srv';
 import * as viztypepicker from '../../../dashboard/components/VizTypePicker/VizTypePicker';
 
@@ -38,7 +38,7 @@ jest.mock('debounce-promise', () => {
 
 async function getTestContext(
   propOverrides: Partial<LibraryPanelsSearchProps> = {},
-  searchResult: LibraryPanelSearchResult = { libraryPanels: [], perPage: 40, page: 1, totalCount: 0 }
+  searchResult: LibraryElementsSearchResult = { elements: [], perPage: 40, page: 1, totalCount: 0 }
 ) {
   jest.clearAllMocks();
   const pluginInfo: any = { logos: { small: '', large: '' } };
@@ -102,7 +102,7 @@ describe('LibraryPanelsSearch', () => {
           searchString: 'a',
           folderFilter: [],
           page: 0,
-          panelFilter: [],
+          typeFilter: [],
           perPage: 40,
         });
       });
@@ -130,7 +130,7 @@ describe('LibraryPanelsSearch', () => {
           sortDirection: 'alpha-desc',
           folderFilter: [],
           page: 0,
-          panelFilter: [],
+          typeFilter: [],
           perPage: 40,
         });
       });
@@ -158,7 +158,7 @@ describe('LibraryPanelsSearch', () => {
           searchString: '',
           folderFilter: [],
           page: 0,
-          panelFilter: ['graph', 'timeseries'],
+          typeFilter: ['graph', 'timeseries'],
           perPage: 40,
         });
       });
@@ -188,7 +188,7 @@ describe('LibraryPanelsSearch', () => {
           searchString: '',
           folderFilter: ['0'],
           page: 0,
-          panelFilter: [],
+          typeFilter: [],
           perPage: 40,
         });
       });
@@ -203,10 +203,11 @@ describe('LibraryPanelsSearch', () => {
           page: 1,
           totalCount: 1,
           perPage: 40,
-          libraryPanels: [
+          elements: [
             {
               id: 1,
               name: 'Library Panel Name',
+              kind: LibraryElementKind.Panel,
               uid: 'uid',
               description: 'Library Panel Description',
               folderId: 0,
@@ -215,7 +216,6 @@ describe('LibraryPanelsSearch', () => {
               orgId: 1,
               version: 1,
               meta: {
-                canEdit: true,
                 folderName: 'General',
                 folderUid: '',
                 connectedDashboards: 0,
@@ -247,10 +247,11 @@ describe('LibraryPanelsSearch', () => {
           page: 1,
           totalCount: 1,
           perPage: 40,
-          libraryPanels: [
+          elements: [
             {
               id: 1,
               name: 'Library Panel Name',
+              kind: LibraryElementKind.Panel,
               uid: 'uid',
               description: 'Library Panel Description',
               folderId: 0,
@@ -259,7 +260,6 @@ describe('LibraryPanelsSearch', () => {
               orgId: 1,
               version: 1,
               meta: {
-                canEdit: true,
                 folderName: 'General',
                 folderUid: '',
                 connectedDashboards: 0,

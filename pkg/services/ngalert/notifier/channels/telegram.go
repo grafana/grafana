@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"mime/multipart"
 
-	gokit_log "github.com/go-kit/kit/log"
-	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 
@@ -18,8 +16,8 @@ import (
 	old_notifiers "github.com/grafana/grafana/pkg/services/alerting/notifiers"
 )
 
-const (
-	telegramAPIURL = "https://api.telegram.org/bot%s/sendMessage"
+var (
+	TelegramAPIURL = "https://api.telegram.org/bot%s/sendMessage"
 )
 
 // TelegramNotifier is responsible for sending
@@ -34,7 +32,7 @@ type TelegramNotifier struct {
 }
 
 // NewTelegramNotifier is the constructor for the Telegram notifier
-func NewTelegramNotifier(model *models.AlertNotification, t *template.Template) (*TelegramNotifier, error) {
+func NewTelegramNotifier(model *NotificationChannelConfig, t *template.Template) (*TelegramNotifier, error) {
 	if model.Settings == nil {
 		return nil, alerting.ValidationError{Reason: "No Settings Supplied"}
 	}
@@ -52,12 +50,18 @@ func NewTelegramNotifier(model *models.AlertNotification, t *template.Template) 
 	}
 
 	return &TelegramNotifier{
-		NotifierBase: old_notifiers.NewNotifierBase(model),
-		BotToken:     botToken,
-		ChatID:       chatID,
-		Message:      message,
-		tmpl:         t,
-		log:          log.New("alerting.notifier.telegram"),
+		NotifierBase: old_notifiers.NewNotifierBase(&models.AlertNotification{
+			Uid:                   model.UID,
+			Name:                  model.Name,
+			Type:                  model.Type,
+			DisableResolveMessage: model.DisableResolveMessage,
+			Settings:              model.Settings,
+		}),
+		BotToken: botToken,
+		ChatID:   chatID,
+		Message:  message,
+		tmpl:     t,
+		log:      log.New("alerting.notifier.telegram"),
 	}, nil
 }
 
@@ -75,6 +79,13 @@ func (tn *TelegramNotifier) Notify(ctx context.Context, as ...*types.Alert) (boo
 			tn.log.Warn("Failed to close writer", "err", err)
 		}
 	}()
+	boundary := GetBoundary()
+	if boundary != "" {
+		err = w.SetBoundary(boundary)
+		if err != nil {
+			return false, err
+		}
+	}
 
 	for k, v := range msg {
 		if err := writeField(w, k, v); err != nil {
@@ -90,7 +101,7 @@ func (tn *TelegramNotifier) Notify(ctx context.Context, as ...*types.Alert) (boo
 
 	tn.log.Info("sending telegram notification", "chat_id", tn.ChatID)
 	cmd := &models.SendWebhookSync{
-		Url:        fmt.Sprintf(telegramAPIURL, tn.BotToken),
+		Url:        fmt.Sprintf(TelegramAPIURL, tn.BotToken),
 		Body:       body.String(),
 		HttpMethod: "POST",
 		HttpHeader: map[string]string{
@@ -111,13 +122,12 @@ func (tn *TelegramNotifier) buildTelegramMessage(ctx context.Context, as []*type
 	msg["chat_id"] = tn.ChatID
 	msg["parse_mode"] = "html"
 
-	data := notify.GetTemplateData(ctx, &template.Template{ExternalURL: tn.tmpl.ExternalURL}, as, gokit_log.NewNopLogger())
 	var tmplErr error
-	tmpl := notify.TmplText(tn.tmpl, data, &tmplErr)
+	tmpl, _ := TmplText(ctx, tn.tmpl, as, tn.log, &tmplErr)
 
 	message := tmpl(tn.Message)
 	if tmplErr != nil {
-		return nil, tmplErr
+		tn.log.Debug("failed to template Telegram message", "err", tmplErr.Error())
 	}
 
 	msg["text"] = message

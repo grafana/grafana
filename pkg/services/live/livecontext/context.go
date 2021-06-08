@@ -38,3 +38,18 @@ func GetContextValues(ctx context.Context) (url.Values, bool) {
 	}
 	return nil, false
 }
+
+type streamIDContextKey struct{}
+
+func SetContextStreamID(ctx context.Context, streamID string) context.Context {
+	ctx = context.WithValue(ctx, streamIDContextKey{}, streamID)
+	return ctx
+}
+
+func GetContextStreamID(ctx context.Context) (string, bool) {
+	if val := ctx.Value(streamIDContextKey{}); val != nil {
+		values, ok := val.(string)
+		return values, ok
+	}
+	return "", false
+}

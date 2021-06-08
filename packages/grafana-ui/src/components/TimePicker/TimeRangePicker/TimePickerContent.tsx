@@ -1,11 +1,11 @@
-import { GrafanaTheme2, isDateTime, TimeOption, TimeRange, TimeZone } from '@grafana/data';
+import { GrafanaTheme2, isDateTime, rangeUtil, RawTimeRange, TimeOption, TimeRange, TimeZone } from '@grafana/data';
 import { css, cx } from '@emotion/css';
-import React, { memo, useState } from 'react';
+import React, { memo, useMemo, useState } from 'react';
 import { useMedia } from 'react-use';
 import { stylesFactory, useTheme2 } from '../../../themes';
 import { CustomScrollbar } from '../../CustomScrollbar/CustomScrollbar';
 import { Icon } from '../../Icon/Icon';
-import { mapRangeToTimeOption } from './mapper';
+import { mapOptionToTimeRange, mapRangeToTimeOption } from './mapper';
 import { TimePickerTitle } from './TimePickerTitle';
 import { TimeRangeForm } from './TimeRangeForm';
 import { TimeRangeList } from './TimeRangeList';
@@ -156,6 +156,11 @@ export const TimePickerContentWithScreenSize: React.FC<PropsWithScreenSize> = (p
   const theme = useTheme2();
   const styles = getStyles(theme, isReversed, hideQuickRanges, isContainerTall);
   const historyOptions = mapToHistoryOptions(history, timeZone);
+  const timeOption = useTimeOption(value.raw, otherOptions, quickOptions);
+
+  const onChangeTimeOption = (timeOption: TimeOption) => {
+    return onChange(mapOptionToTimeRange(timeOption));
+  };
 
   return (
     <div className={cx(styles.container, className)}>
@@ -173,17 +178,15 @@ export const TimePickerContentWithScreenSize: React.FC<PropsWithScreenSize> = (p
                 <TimeRangeList
                   title="Relative time ranges"
                   options={quickOptions}
-                  onSelect={onChange}
-                  value={value}
-                  timeZone={timeZone}
+                  onChange={onChangeTimeOption}
+                  value={timeOption}
                 />
                 <div className={styles.spacing} />
                 <TimeRangeList
                   title="Other quick ranges"
                   options={otherOptions}
-                  onSelect={onChange}
-                  value={value}
-                  timeZone={timeZone}
+                  onChange={onChangeTimeOption}
+                  value={timeOption}
                 />
               </>
             )}
@@ -210,6 +213,10 @@ const NarrowScreenForm: React.FC<FormProps> = (props) => {
   const [collapsedFlag, setCollapsedFlag] = useState(!isAbsolute);
   const collapsed = hideQuickRanges ? false : collapsedFlag;
 
+  const onChangeTimeOption = (timeOption: TimeOption) => {
+    return onChange(mapOptionToTimeRange(timeOption));
+  };
+
   return (
     <>
       <div
@@ -233,10 +240,8 @@ const NarrowScreenForm: React.FC<FormProps> = (props) => {
             <TimeRangeList
               title="Recently used absolute ranges"
               options={historyOptions}
-              onSelect={onChange}
-              value={value}
+              onChange={onChangeTimeOption}
               placeholderEmpty={null}
-              timeZone={timeZone}
             />
           )}
         </div>
@@ -246,8 +251,12 @@ const NarrowScreenForm: React.FC<FormProps> = (props) => {
 };
 
 const FullScreenForm: React.FC<FormProps> = (props) => {
+  const { onChange } = props;
   const theme = useTheme2();
   const styles = getFullScreenStyles(theme, props.hideQuickRanges);
+  const onChangeTimeOption = (timeOption: TimeOption) => {
+    return onChange(mapOptionToTimeRange(timeOption));
+  };
 
   return (
     <>
@@ -268,10 +277,8 @@ const FullScreenForm: React.FC<FormProps> = (props) => {
           <TimeRangeList
             title="Recently used absolute ranges"
             options={props.historyOptions || []}
-            onSelect={props.onChange}
-            value={props.value}
+            onChange={onChangeTimeOption}
             placeholderEmpty={<EmptyRecentList />}
-            timeZone={props.timeZone}
           />
         </div>
       )}
@@ -313,3 +320,24 @@ function mapToHistoryOptions(ranges?: TimeRange[], timeZone?: TimeZone): TimeOpt
 }
 
 EmptyRecentList.displayName = 'EmptyRecentList';
+
+const useTimeOption = (
+  raw: RawTimeRange,
+  quickOptions: TimeOption[],
+  otherOptions: TimeOption[]
+): TimeOption | undefined => {
+  return useMemo(() => {
+    if (!rangeUtil.isRelativeTimeRange(raw)) {
+      return;
+    }
+    const quickOption = quickOptions.find((option) => {
+      return option.from === raw.from && option.to === raw.to;
+    });
+    if (quickOption) {
+      return quickOption;
+    }
+    return otherOptions.find((option) => {
+      return option.from === raw.from && option.to === raw.to;
+    });
+  }, [raw, otherOptions, quickOptions]);
+};

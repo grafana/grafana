@@ -26,7 +26,6 @@ interface Props {
 
 const defaultChannelValues: GrafanaChannelValues = Object.freeze({
   __id: '',
-  sendReminder: true,
   secureSettings: {},
   settings: {},
   secureFields: {},
@@ -63,7 +62,7 @@ export const GrafanaReceiverForm: FC<Props> = ({ existing, alertManagerSourceNam
         newConfig: updateConfigWithReceiver(config, newReceiver, existing?.name),
         oldConfig: config,
         alertManagerSourceName: GRAFANA_RULES_SOURCE_NAME,
-        successMessage: existing ? 'Receiver updated.' : 'Receiver created',
+        successMessage: existing ? 'Contact point updated.' : 'Contact point created',
         redirectPath: '/alerting/notifications',
       })
     );
@@ -77,6 +76,7 @@ export const GrafanaReceiverForm: FC<Props> = ({ existing, alertManagerSourceNam
   if (grafanaNotifiers.result) {
     return (
       <ReceiverForm<GrafanaChannelValues>
+        config={config}
         onSubmit={onSubmit}
         initialValues={existingValue}
         notifiers={grafanaNotifiers.result}

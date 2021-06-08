@@ -19,8 +19,7 @@ import (
 )
 
 func TestWebhookNotifier(t *testing.T) {
-	tmpl, err := template.FromGlobs("templates/default.tmpl")
-	require.NoError(t, err)
+	tmpl := templateForTests(t)
 
 	externalURL, err := url.Parse("http://localhost")
 	require.NoError(t, err)
@@ -45,17 +44,17 @@ func TestWebhookNotifier(t *testing.T) {
 				{
 					Alert: model.Alert{
 						Labels:      model.LabelSet{"alertname": "alert1", "lbl1": "val1"},
-						Annotations: model.LabelSet{"ann1": "annv1"},
+						Annotations: model.LabelSet{"ann1": "annv1", "__dashboardUid__": "abcd", "__panelId__": "efgh"},
 					},
 				},
 			},
 			expUrl:        "http://localhost/test",
 			expHttpMethod: "POST",
 			expMsg: &webhookMessage{
-				Data: &template.Data{
+				ExtendedData: &ExtendedData{
 					Receiver: "my_receiver",
 					Status:   "firing",
-					Alerts: template.Alerts{
+					Alerts: ExtendedAlerts{
 						{
 							Status: "firing",
 							Labels: template.KV{
@@ -65,7 +64,10 @@ func TestWebhookNotifier(t *testing.T) {
 							Annotations: template.KV{
 								"ann1": "annv1",
 							},
-							Fingerprint: "fac0861a85de433a",
+							Fingerprint:  "fac0861a85de433a",
+							DashboardURL: "http://localhost/d/abcd",
+							PanelURL:     "http://localhost/d/abcd?viewPanel=efgh",
+							SilenceURL:   "http://localhost/alerting/silence/new?alertmanager=grafana&matchers=alertname%3Dalert1%2Clbl1%3Dval1",
 						},
 					},
 					GroupLabels: template.KV{
@@ -84,7 +86,7 @@ func TestWebhookNotifier(t *testing.T) {
 				GroupKey: "alertname",
 				Title:    "[FIRING:1]  (val1)",
 				State:    "alerting",
-				Message:  "\n**Firing**\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSource: \n\n\n\n\n",
+				Message:  "**Firing**\n\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matchers=alertname%3Dalert1%2Clbl1%3Dval1\nDashboard: http://localhost/d/abcd\nPanel: http://localhost/d/abcd?viewPanel=efgh\n",
 			},
 			expInitError: nil,
 			expMsgError:  nil,
@@ -120,10 +122,10 @@ func TestWebhookNotifier(t *testing.T) {
 			expUsername:   "user1",
 			expPassword:   "mysecret",
 			expMsg: &webhookMessage{
-				Data: &template.Data{
+				ExtendedData: &ExtendedData{
 					Receiver: "my_receiver",
 					Status:   "firing",
-					Alerts: template.Alerts{
+					Alerts: ExtendedAlerts{
 						{
 							Status: "firing",
 							Labels: template.KV{
@@ -134,6 +136,7 @@ func TestWebhookNotifier(t *testing.T) {
 								"ann1": "annv1",
 							},
 							Fingerprint: "fac0861a85de433a",
+							SilenceURL:  "http://localhost/alerting/silence/new?alertmanager=grafana&matchers=alertname%3Dalert1%2Clbl1%3Dval1",
 						}, {
 							Status: "firing",
 							Labels: template.KV{
@@ -144,6 +147,7 @@ func TestWebhookNotifier(t *testing.T) {
 								"ann1": "annv2",
 							},
 							Fingerprint: "fab6861a85d5eeb5",
+							SilenceURL:  "http://localhost/alerting/silence/new?alertmanager=grafana&matchers=alertname%3Dalert1%2Clbl1%3Dval2",
 						},
 					},
 					GroupLabels: template.KV{
@@ -160,7 +164,7 @@ func TestWebhookNotifier(t *testing.T) {
 				TruncatedAlerts: 1,
 				Title:           "[FIRING:2]  ",
 				State:           "alerting",
-				Message:         "\n**Firing**\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSource: \nLabels:\n - alertname = alert1\n - lbl1 = val2\nAnnotations:\n - ann1 = annv2\nSource: \n\n\n\n\n",
+				Message:         "**Firing**\n\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matchers=alertname%3Dalert1%2Clbl1%3Dval1\n\nLabels:\n - alertname = alert1\n - lbl1 = val2\nAnnotations:\n - ann1 = annv2\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matchers=alertname%3Dalert1%2Clbl1%3Dval2\n",
 			},
 			expInitError: nil,
 			expMsgError:  nil,
@@ -176,7 +180,7 @@ func TestWebhookNotifier(t *testing.T) {
 			settingsJSON, err := simplejson.NewJson([]byte(c.settings))
 			require.NoError(t, err)
 
-			m := &models.AlertNotification{
+			m := &NotificationChannelConfig{
 				Name:     "webhook_testing",
 				Type:     "webhook",
 				Settings: settingsJSON,

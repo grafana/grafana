@@ -346,6 +346,42 @@ describe('query actions', () => {
         return actions.length === expectedNumberOfActions;
       });
     });
+
+    describe('and data source type changed', () => {
+      it('then correct actions are dispatched', async () => {
+        const variable = createVariable({ datasource: 'other' });
+        const editor = {};
+        const preloadedState: any = { templating: { editor: { extended: { dataSource: { type: 'previous' } } } } };
+
+        mocks.pluginLoader.importDataSourcePlugin = jest.fn().mockResolvedValue({
+          components: { VariableQueryEditor: editor },
+        });
+
+        const tester = await reduxTester<RootReducerType>({ preloadedState })
+          .givenRootReducer(getRootReducer())
+          .whenActionIsDispatched(
+            addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable }))
+          )
+          .whenAsyncActionIsDispatched(changeQueryVariableDataSource(toVariablePayload(variable), 'datasource'), true);
+
+        tester.thenDispatchedActionsPredicateShouldEqual((actions) => {
+          const [changeVariable, updateDatasource, updateEditor] = actions;
+          const expectedNumberOfActions = 3;
+
+          expect(changeVariable).toEqual(
+            changeVariableProp(toVariablePayload(variable, { propName: 'query', propValue: '' }))
+          );
+          expect(updateDatasource).toEqual(
+            changeVariableEditorExtended({ propName: 'dataSource', propValue: mocks.datasource })
+          );
+          expect(updateEditor).toEqual(
+            changeVariableEditorExtended({ propName: 'VariableQueryEditor', propValue: editor })
+          );
+
+          return actions.length === expectedNumberOfActions;
+        });
+      });
+    });
   });
 
   describe('when changeQueryVariableDataSource is dispatched and editor is not configured', () => {

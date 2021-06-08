@@ -1,10 +1,14 @@
 package prometheus
 
 import (
+	"context"
+	"net/http"
 	"testing"
 	"time"
 
+	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	p "github.com/prometheus/common/model"
@@ -12,12 +16,25 @@ import (
 )
 
 func TestPrometheus(t *testing.T) {
+	json, _ := simplejson.NewJson([]byte(`
+		{ "customQueryParameters": "custom=par/am&second=f oo"}
+	`))
 	dsInfo := &models.DataSource{
-		JsonData: simplejson.New(),
+		JsonData: json,
 	}
-	plug, err := NewExecutor(dsInfo)
-	executor := plug.(*PrometheusExecutor)
+	var capturedRequest *http.Request
+	mw := sdkhttpclient.MiddlewareFunc(func(opts sdkhttpclient.Options, next http.RoundTripper) http.RoundTripper {
+		return sdkhttpclient.RoundTripperFunc(func(req *http.Request) (*http.Response, error) {
+			capturedRequest = req
+			return &http.Response{StatusCode: http.StatusOK}, nil
+		})
+	})
+	provider := httpclient.NewProvider(sdkhttpclient.ProviderOptions{
+		Middlewares: []sdkhttpclient.Middleware{mw},
+	})
+	plug, err := New(provider)(dsInfo)
 	require.NoError(t, err)
+	executor := plug.(*PrometheusExecutor)
 
 	t.Run("converting metric name", func(t *testing.T) {
 		metric := map[p.LabelName]p.LabelValue{
@@ -47,100 +64,82 @@ func TestPrometheus(t *testing.T) {
 	})
 
 	t.Run("parsing query model with step", func(t *testing.T) {
-		json := `{
-				"expr": "go_goroutines",
-				"format": "time_series",
-				"refId": "A"
-			}`
-		jsonModel, _ := simplejson.NewJson([]byte(json))
-		queryModels := []plugins.DataSubQuery{
-			{Model: jsonModel},
-		}
-
-		timeRange := plugins.NewDataTimeRange("12h", "now")
-		queryContext := plugins.DataQuery{
-			Queries:   queryModels,
-			TimeRange: &timeRange,
-		}
-
-		models, err := executor.parseQuery(dsInfo, queryContext)
+		query := queryContext(`{
+			"expr": "go_goroutines",
+			"format": "time_series",
+			"refId": "A"
+		}`)
+		timerange := plugins.NewDataTimeRange("12h", "now")
+		query.TimeRange = &timerange
+		models, err := executor.parseQuery(dsInfo, query)
 		require.NoError(t, err)
 		require.Equal(t, time.Second*30, models[0].Step)
 	})
 
 	t.Run("parsing query model without step parameter", func(t *testing.T) {
-		json := `{
-				"expr": "go_goroutines",
-				"format": "time_series",
-				"intervalFactor": 1,
-				"refId": "A"
-			}`
-		jsonModel, _ := simplejson.NewJson([]byte(json))
-		queryModels := []plugins.DataSubQuery{
-			{Model: jsonModel},
-		}
-
-		timeRange := plugins.NewDataTimeRange("48h", "now")
-		queryContext := plugins.DataQuery{
-			Queries:   queryModels,
-			TimeRange: &timeRange,
-		}
-		models, err := executor.parseQuery(dsInfo, queryContext)
+		query := queryContext(`{
+			"expr": "go_goroutines",
+			"format": "time_series",
+			"intervalFactor": 1,
+			"refId": "A"
+		}`)
+		models, err := executor.parseQuery(dsInfo, query)
 		require.NoError(t, err)
 		require.Equal(t, time.Minute*2, models[0].Step)
 
-		timeRange = plugins.NewDataTimeRange("1h", "now")
-		queryContext.TimeRange = &timeRange
-		models, err = executor.parseQuery(dsInfo, queryContext)
+		timeRange := plugins.NewDataTimeRange("1h", "now")
+		query.TimeRange = &timeRange
+		models, err = executor.parseQuery(dsInfo, query)
 		require.NoError(t, err)
 		require.Equal(t, time.Second*15, models[0].Step)
 	})
 
 	t.Run("parsing query model with high intervalFactor", func(t *testing.T) {
-		json := `{
-					"expr": "go_goroutines",
-					"format": "time_series",
-					"intervalFactor": 10,
-					"refId": "A"
-				}`
-		jsonModel, _ := simplejson.NewJson([]byte(json))
-		queryModels := []plugins.DataSubQuery{
-			{Model: jsonModel},
-		}
-
-		timeRange := plugins.NewDataTimeRange("48h", "now")
-		queryContext := plugins.DataQuery{
-			TimeRange: &timeRange,
-			Queries:   queryModels,
-		}
-
-		models, err := executor.parseQuery(dsInfo, queryContext)
+		models, err := executor.parseQuery(dsInfo, queryContext(`{
+			"expr": "go_goroutines",
+			"format": "time_series",
+			"intervalFactor": 10,
+			"refId": "A"
+		}`))
 		require.NoError(t, err)
 		require.Equal(t, time.Minute*20, models[0].Step)
 	})
 
 	t.Run("parsing query model with low intervalFactor", func(t *testing.T) {
-		json := `{
-					"expr": "go_goroutines",
-					"format": "time_series",
-					"intervalFactor": 1,
-					"refId": "A"
-				}`
-		jsonModel, _ := simplejson.NewJson([]byte(json))
-		queryModels := []plugins.DataSubQuery{
-			{Model: jsonModel},
-		}
-
-		timeRange := plugins.NewDataTimeRange("48h", "now")
-		queryContext := plugins.DataQuery{
-			TimeRange: &timeRange,
-			Queries:   queryModels,
-		}
-
-		models, err := executor.parseQuery(dsInfo, queryContext)
+		models, err := executor.parseQuery(dsInfo, queryContext(`{
+			"expr": "go_goroutines",
+			"format": "time_series",
+			"intervalFactor": 1,
+			"refId": "A"
+		}`))
 		require.NoError(t, err)
 		require.Equal(t, time.Minute*2, models[0].Step)
 	})
+
+	t.Run("runs query with custom params", func(t *testing.T) {
+		query := queryContext(`{
+			"expr": "go_goroutines",
+			"format": "time_series",
+			"intervalFactor": 1,
+			"refId": "A"
+		}`)
+		_, _ = executor.DataQuery(context.Background(), dsInfo, query)
+		require.NotNil(t, capturedRequest)
+		require.Equal(t, "custom=par%2Fam&second=f+oo", capturedRequest.URL.RawQuery)
+	})
+}
+
+func queryContext(json string) plugins.DataQuery {
+	jsonModel, _ := simplejson.NewJson([]byte(json))
+	queryModels := []plugins.DataSubQuery{
+		{Model: jsonModel},
+	}
+
+	timeRange := plugins.NewDataTimeRange("48h", "now")
+	return plugins.DataQuery{
+		TimeRange: &timeRange,
+		Queries:   queryModels,
+	}
 }
 
 func TestParseResponse(t *testing.T) {

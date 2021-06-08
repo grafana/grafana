@@ -59,7 +59,7 @@ export const XYChartPanel: React.FC<XYChartPanelProps> = ({
           <TooltipPlugin
             config={config}
             data={alignedDataFrame}
-            mode={options.tooltipOptions.mode as any}
+            mode={options.tooltip.mode as any}
             timeZone={timeZone}
           />
         );

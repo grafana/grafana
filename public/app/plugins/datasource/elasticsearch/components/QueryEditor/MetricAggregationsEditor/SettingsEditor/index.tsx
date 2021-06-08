@@ -14,6 +14,7 @@ import { SettingField } from './SettingField';
 import { SettingsEditorContainer } from '../../SettingsEditorContainer';
 import { useDescription } from './useDescription';
 import { MovingAverageSettingsEditor } from './MovingAverageSettingsEditor';
+import { TopMetricsSettingsEditor } from './TopMetricsSettingsEditor';
 import { uniqueId } from 'lodash';
 import { metricAggregationConfig } from '../utils';
 import { useQuery } from '../../ElasticsearchQueryContext';
@@ -66,6 +67,8 @@ export const SettingsEditor = ({ metric, previousMetrics }: Props) => {
           <SettingField label="Shift" metric={metric} settingName="shift" />
         </>
       )}
+
+      {metric.type === 'top_metrics' && <TopMetricsSettingsEditor metric={metric} />}
 
       {metric.type === 'bucket_script' && (
         <BucketScriptSettingsEditor value={metric} previousMetrics={previousMetrics} />
