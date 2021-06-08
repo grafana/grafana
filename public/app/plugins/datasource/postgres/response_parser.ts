@@ -92,6 +92,11 @@ export default class ResponseParser {
   async transformAnnotationResponse(options: any, data: BackendDataSourceResponse): Promise<AnnotationEvent[]> {
     const frames = toDataQueryResponse({ data: data }).data as DataFrame[];
     const frame = frames[0];
+
+    if (!frame) {
+      return [];
+    }
+
     const timeField = frame.fields.find((f) => f.name === 'time');
 
     if (!timeField) {
