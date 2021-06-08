@@ -284,10 +284,13 @@ func TestPluginManager_Init(t *testing.T) {
 
 	t.Run("With back-end plugin with valid v2 private signature (plugin root URL ignores trailing slash)", func(t *testing.T) {
 		origAppURL := setting.AppUrl
+		origAppSubURL := setting.AppSubUrl
 		t.Cleanup(func() {
 			setting.AppUrl = origAppURL
+			setting.AppSubUrl = origAppSubURL
 		})
-		setting.AppUrl = "http://localhost:3000/grafana/"
+		setting.AppUrl = "http://localhost:3000/"
+		setting.AppSubUrl = "/grafana"
 
 		pm := createManager(t, func(pm *PluginManager) {
 			pm.Cfg.PluginsPath = "testdata/valid-v2-pvt-signature-root-url-uri"
