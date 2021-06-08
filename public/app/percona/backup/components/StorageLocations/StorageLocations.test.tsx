@@ -42,7 +42,7 @@ describe('StorageLocations', () => {
 
     wrapper.update();
     expect(wrapper.find(RemoveStorageLocationModal).prop('isVisible')).toBe(false);
-    expect(spy).toHaveBeenCalledWith(stubLocations.locations[0].location_id);
+    expect(spy).toHaveBeenCalledWith(stubLocations.locations[0].location_id, false);
   });
 
   it('should open the modal by clicking the "Add" button', () => {

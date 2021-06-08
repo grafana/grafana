@@ -116,10 +116,10 @@ export const StorageLocations: FC = () => {
     setDeleteModalVisible(true);
   };
 
-  const handleDelete = async (location: StorageLocation) => {
+  const handleDelete = async (location: StorageLocation, force: boolean) => {
     setDeletePending(true);
     try {
-      await StorageLocationsService.delete(location.locationID);
+      await StorageLocationsService.delete(location.locationID, force);
       setDeleteModalVisible(false);
       appEvents.emit(AppEvents.alertSuccess, [Messages.storageLocations.getDeleteSuccess(location.name)]);
       getData();

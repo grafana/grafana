@@ -1,5 +1,5 @@
-import { DeleteModal } from 'app/percona/shared/components/Elements/DeleteModal';
 import React, { FC } from 'react';
+import { DeleteModal } from 'app/percona/shared/components/Elements/DeleteModal';
 import { WarningBlock } from '../../../../shared/components/Elements/WarningBlock/WarningBlock';
 import { Messages } from './RemoveStorageLocationModal.messages';
 import { RemoveStorageLocationModalProps } from './RemoveStorageLocationModal.types';
@@ -11,7 +11,8 @@ export const RemoveStorageLocationModal: FC<RemoveStorageLocationModalProps> = (
   onDelete,
   setVisible,
 }) => {
-  const handleDelete = () => onDelete(location);
+  const handleDelete = (force: boolean) => onDelete(location, force);
+
   return (
     <DeleteModal
       title={Messages.title}
@@ -20,6 +21,7 @@ export const RemoveStorageLocationModal: FC<RemoveStorageLocationModalProps> = (
       setVisible={setVisible}
       message={Messages.getDeleteMessage(location?.name || '')}
       onDelete={handleDelete}
+      showForce
     >
       <WarningBlock message={Messages.deleteLocationWarning} />
     </DeleteModal>
