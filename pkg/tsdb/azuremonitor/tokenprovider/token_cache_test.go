@@ -37,16 +37,18 @@ func (c *fakeCredential) Init() error {
 	return nil
 }
 
-func (c *fakeCredential) GetAccessToken(scopes []string) (*AccessToken, error) {
+func (c *fakeCredential) GetAccessToken(ctx context.Context, scopes []string) (*AccessToken, error) {
 	c.calledTimes = c.calledTimes + 1
 	if c.getAccessTokenFunc != nil {
-		return c.getAccessTokenFunc(context.TODO(), scopes)
+		return c.getAccessTokenFunc(ctx, scopes)
 	}
 	fakeAccessToken := &AccessToken{Token: fmt.Sprintf("%v-token-%v", c.key, c.calledTimes), ExpiresOn: timeNow().Add(time.Hour)}
 	return fakeAccessToken, nil
 }
 
 func TestConcurrentTokenCache_GetAccessToken(t *testing.T) {
+	ctx := context.Background()
+
 	scopes1 := []string{"Scope1"}
 	scopes2 := []string{"Scope2"}
 
@@ -54,7 +56,7 @@ func TestConcurrentTokenCache_GetAccessToken(t *testing.T) {
 		cache := NewConcurrentTokenCache()
 		credential := &fakeCredential{key: "credential-1"}
 
-		token, err := cache.GetAccessToken(credential, scopes1)
+		token, err := cache.GetAccessToken(ctx, credential, scopes1)
 		require.NoError(t, err)
 		assert.Equal(t, "credential-1-token-1", token)
 
@@ -68,19 +70,19 @@ func TestConcurrentTokenCache_GetAccessToken(t *testing.T) {
 		cache := NewConcurrentTokenCache()
 		credential := &fakeCredential{key: "credential-1"}
 
-		token1, err = cache.GetAccessToken(credential, scopes1)
+		token1, err = cache.GetAccessToken(ctx, credential, scopes1)
 		require.NoError(t, err)
 		assert.Equal(t, "credential-1-token-1", token1)
 
-		token2, err = cache.GetAccessToken(credential, scopes2)
+		token2, err = cache.GetAccessToken(ctx, credential, scopes2)
 		require.NoError(t, err)
 		assert.Equal(t, "credential-1-token-2", token2)
 
-		token1, err = cache.GetAccessToken(credential, scopes1)
+		token1, err = cache.GetAccessToken(ctx, credential, scopes1)
 		require.NoError(t, err)
 		assert.Equal(t, "credential-1-token-1", token1)
 
-		token2, err = cache.GetAccessToken(credential, scopes2)
+		token2, err = cache.GetAccessToken(ctx, credential, scopes2)
 		require.NoError(t, err)
 		assert.Equal(t, "credential-1-token-2", token2)
 
@@ -95,19 +97,19 @@ func TestConcurrentTokenCache_GetAccessToken(t *testing.T) {
 		credential1 := &fakeCredential{key: "credential-1"}
 		credential2 := &fakeCredential{key: "credential-2"}
 
-		token1, err = cache.GetAccessToken(credential1, scopes1)
+		token1, err = cache.GetAccessToken(ctx, credential1, scopes1)
 		require.NoError(t, err)
 		assert.Equal(t, "credential-1-token-1", token1)
 
-		token2, err = cache.GetAccessToken(credential2, scopes1)
+		token2, err = cache.GetAccessToken(ctx, credential2, scopes1)
 		require.NoError(t, err)
 		assert.Equal(t, "credential-2-token-1", token2)
 
-		token1, err = cache.GetAccessToken(credential1, scopes1)
+		token1, err = cache.GetAccessToken(ctx, credential1, scopes1)
 		require.NoError(t, err)
 		assert.Equal(t, "credential-1-token-1", token1)
 
-		token2, err = cache.GetAccessToken(credential2, scopes1)
+		token2, err = cache.GetAccessToken(ctx, credential2, scopes1)
 		require.NoError(t, err)
 		assert.Equal(t, "credential-2-token-1", token2)
 
@@ -273,6 +275,8 @@ func TestCredentialCacheEntry_EnsureInitialized(t *testing.T) {
 }
 
 func TestScopesCacheEntry_GetAccessToken(t *testing.T) {
+	ctx := context.Background()
+
 	scopes := []string{"Scope1"}
 
 	t.Run("when credential getAccessToken returns error", func(t *testing.T) {
@@ -290,7 +294,7 @@ func TestScopesCacheEntry_GetAccessToken(t *testing.T) {
 				cond:       sync.NewCond(&sync.Mutex{}),
 			}
 
-			accessToken, err := cacheEntry.getAccessToken()
+			accessToken, err := cacheEntry.getAccessToken(ctx)
 
 			assert.Error(t, err)
 			assert.Equal(t, "", accessToken)
@@ -306,13 +310,13 @@ func TestScopesCacheEntry_GetAccessToken(t *testing.T) {
 			}
 
 			var err error
-			_, err = cacheEntry.getAccessToken()
+			_, err = cacheEntry.getAccessToken(ctx)
 			assert.Error(t, err)
 
-			_, err = cacheEntry.getAccessToken()
+			_, err = cacheEntry.getAccessToken(ctx)
 			assert.Error(t, err)
 
-			_, err = cacheEntry.getAccessToken()
+			_, err = cacheEntry.getAccessToken(ctx)
 			assert.Error(t, err)
 
 			assert.Equal(t, 3, credential.calledTimes)
@@ -343,14 +347,14 @@ func TestScopesCacheEntry_GetAccessToken(t *testing.T) {
 			var accessToken string
 			var err error
 
-			_, err = cacheEntry.getAccessToken()
+			_, err = cacheEntry.getAccessToken(ctx)
 			assert.Error(t, err)
 
-			accessToken, err = cacheEntry.getAccessToken()
+			accessToken, err = cacheEntry.getAccessToken(ctx)
 			assert.NoError(t, err)
 			assert.Equal(t, "token-2", accessToken)
 
-			accessToken, err = cacheEntry.getAccessToken()
+			accessToken, err = cacheEntry.getAccessToken(ctx)
 			assert.NoError(t, err)
 			assert.Equal(t, "token-2", accessToken)
 
@@ -378,21 +382,21 @@ func TestScopesCacheEntry_GetAccessToken(t *testing.T) {
 				defer func() {
 					assert.NotNil(t, recover(), "credential expected to panic")
 				}()
-				_, _ = cacheEntry.getAccessToken()
+				_, _ = cacheEntry.getAccessToken(ctx)
 			}()
 
 			func() {
 				defer func() {
 					assert.NotNil(t, recover(), "credential expected to panic")
 				}()
-				_, _ = cacheEntry.getAccessToken()
+				_, _ = cacheEntry.getAccessToken(ctx)
 			}()
 
 			func() {
 				defer func() {
 					assert.NotNil(t, recover(), "credential expected to panic")
 				}()
-				_, _ = cacheEntry.getAccessToken()
+				_, _ = cacheEntry.getAccessToken(ctx)
 			}()
 
 			assert.Equal(t, 3, credential.calledTimes)
@@ -426,14 +430,14 @@ func TestScopesCacheEntry_GetAccessToken(t *testing.T) {
 				defer func() {
 					assert.NotNil(t, recover(), "credential expected to panic")
 				}()
-				_, _ = cacheEntry.getAccessToken()
+				_, _ = cacheEntry.getAccessToken(ctx)
 			}()
 
 			func() {
 				defer func() {
 					assert.Nil(t, recover(), "credential not expected to panic")
 				}()
-				accessToken, err = cacheEntry.getAccessToken()
+				accessToken, err = cacheEntry.getAccessToken(ctx)
 				assert.NoError(t, err)
 				assert.Equal(t, "token-2", accessToken)
 			}()
@@ -442,7 +446,7 @@ func TestScopesCacheEntry_GetAccessToken(t *testing.T) {
 				defer func() {
 					assert.Nil(t, recover(), "credential not expected to panic")
 				}()
-				accessToken, err = cacheEntry.getAccessToken()
+				accessToken, err = cacheEntry.getAccessToken(ctx)
 				assert.NoError(t, err)
 				assert.Equal(t, "token-2", accessToken)
 			}()

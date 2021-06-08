@@ -1,6 +1,7 @@
 package tokenprovider
 
 import (
+	"context"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/plugins"
@@ -13,12 +14,13 @@ var getAccessTokenFunc func(credential TokenCredential, scopes []string)
 
 type tokenCacheFake struct{}
 
-func (c *tokenCacheFake) GetAccessToken(credential TokenCredential, scopes []string) (string, error) {
+func (c *tokenCacheFake) GetAccessToken(ctx context.Context, credential TokenCredential, scopes []string) (string, error) {
 	getAccessTokenFunc(credential, scopes)
 	return "4cb83b87-0ffb-4abd-82f6-48a8c08afc53", nil
 }
 
 func TestAzureTokenProvider_isManagedIdentityCredential(t *testing.T) {
+	ctx := context.Background()
 
 	cfg := &setting.Cfg{}
 
@@ -35,7 +37,7 @@ func TestAzureTokenProvider_isManagedIdentityCredential(t *testing.T) {
 		},
 	}
 
-	provider := NewAzureAccessTokenProvider(cfg, authParams)
+	provider := NewAzureAccessTokenProvider(ctx, cfg, authParams)
 
 	t.Run("when managed identities enabled", func(t *testing.T) {
 		cfg.Azure.ManagedIdentityEnabled = true
@@ -104,6 +106,7 @@ func TestAzureTokenProvider_isManagedIdentityCredential(t *testing.T) {
 }
 
 func TestAzureTokenProvider_getAccessToken(t *testing.T) {
+	ctx := context.Background()
 
 	cfg := &setting.Cfg{}
 
@@ -120,7 +123,7 @@ func TestAzureTokenProvider_getAccessToken(t *testing.T) {
 		},
 	}
 
-	provider := NewAzureAccessTokenProvider(cfg, authParams)
+	provider := NewAzureAccessTokenProvider(ctx, cfg, authParams)
 
 	original := azureTokenCache
 	azureTokenCache = &tokenCacheFake{}
@@ -175,6 +178,8 @@ func TestAzureTokenProvider_getAccessToken(t *testing.T) {
 }
 
 func TestAzureTokenProvider_getClientSecretCredential(t *testing.T) {
+	ctx := context.Background()
+
 	cfg := &setting.Cfg{}
 
 	authParams := &plugins.JwtTokenAuth{
@@ -190,7 +195,7 @@ func TestAzureTokenProvider_getClientSecretCredential(t *testing.T) {
 		},
 	}
 
-	provider := NewAzureAccessTokenProvider(cfg, authParams)
+	provider := NewAzureAccessTokenProvider(ctx, cfg, authParams)
 
 	t.Run("should return clientSecretCredential with values", func(t *testing.T) {
 		result := provider.getClientSecretCredential()

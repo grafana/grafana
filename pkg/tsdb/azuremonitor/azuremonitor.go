@@ -9,6 +9,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -57,8 +58,10 @@ type azureMonitorSettings struct {
 }
 
 type datasourceInfo struct {
-	Settings azureMonitorSettings
-	Services map[string]datasourceService
+	Settings    azureMonitorSettings
+	Services    map[string]datasourceService
+	Routes      map[string]azRoute
+	HTTPCliOpts httpclient.Options
 
 	JSONData                map[string]interface{}
 	DecryptedSecureJSONData map[string]string
@@ -84,30 +87,20 @@ func NewInstanceSettings(cfg *setting.Cfg) datasource.InstanceFactoryFunc {
 		if err != nil {
 			return nil, fmt.Errorf("error reading settings: %w", err)
 		}
+		httpCliOpts, err := settings.HTTPClientOptions()
+		if err != nil {
+			return nil, fmt.Errorf("error getting http options: %w", err)
+		}
+
 		model := datasourceInfo{
 			Settings:                azMonitorSettings,
 			JSONData:                jsonData,
 			DecryptedSecureJSONData: settings.DecryptedSecureJSONData,
 			DatasourceID:            settings.ID,
 			Services:                map[string]datasourceService{},
+			Routes:                  routes[azMonitorSettings.CloudName],
+			HTTPCliOpts:             httpCliOpts,
 		}
-
-		// Instantiate an HTTP client per route for the current cloud
-		cloudRoutes, ok := routes[azMonitorSettings.CloudName]
-		if !ok {
-			return nil, fmt.Errorf("unable to find the cloud %s", azMonitorSettings.CloudName)
-		}
-		for name, route := range cloudRoutes {
-			client, err := newHTTPClient(route, model, cfg, settings)
-			if err != nil {
-				return nil, err
-			}
-			model.Services[name] = datasourceService{
-				URL:        route.url,
-				HTTPClient: client,
-			}
-		}
-
 		return model, nil
 	}
 }
@@ -136,6 +129,18 @@ func newExecutor(im instancemgmt.InstanceManager, pm plugins.Manager, cfg *setti
 			dsInfo := i.(datasourceInfo)
 			dsInfo.OrgID = req.PluginContext.OrgID
 			ds := executors[dst]
+			if _, ok := dsInfo.Services[dst]; !ok {
+				// Create an HTTP Client if it has not been created before
+				route := dsInfo.Routes[dst]
+				client, err := newHTTPClient(ctx, route, dsInfo, cfg)
+				if err != nil {
+					return nil, err
+				}
+				dsInfo.Services[dst] = datasourceService{
+					URL:        dsInfo.Routes[dst].url,
+					HTTPClient: client,
+				}
+			}
 			return ds.executeTimeSeriesQuery(ctx, req.Queries, dsInfo)
 		})
 	}

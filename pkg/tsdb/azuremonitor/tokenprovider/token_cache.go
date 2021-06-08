@@ -1,6 +1,7 @@
 package tokenprovider
 
 import (
+	"context"
 	"sort"
 	"strings"
 	"sync"
@@ -16,11 +17,11 @@ type AccessToken struct {
 type TokenCredential interface {
 	GetCacheKey() string
 	Init() error
-	GetAccessToken(scopes []string) (*AccessToken, error)
+	GetAccessToken(ctx context.Context, scopes []string) (*AccessToken, error)
 }
 
 type ConcurrentTokenCache interface {
-	GetAccessToken(credential TokenCredential, scopes []string) (string, error)
+	GetAccessToken(ctx context.Context, credential TokenCredential, scopes []string) (string, error)
 }
 
 func NewConcurrentTokenCache() ConcurrentTokenCache {
@@ -47,8 +48,8 @@ type scopesCacheEntry struct {
 	accessToken *AccessToken
 }
 
-func (c *tokenCacheImpl) GetAccessToken(credential TokenCredential, scopes []string) (string, error) {
-	return c.getEntryFor(credential).getAccessToken(scopes)
+func (c *tokenCacheImpl) GetAccessToken(ctx context.Context, credential TokenCredential, scopes []string) (string, error) {
+	return c.getEntryFor(credential).getAccessToken(ctx, scopes)
 }
 
 func (c *tokenCacheImpl) getEntryFor(credential TokenCredential) *credentialCacheEntry {
@@ -66,13 +67,13 @@ func (c *tokenCacheImpl) getEntryFor(credential TokenCredential) *credentialCach
 	return entry.(*credentialCacheEntry)
 }
 
-func (c *credentialCacheEntry) getAccessToken(scopes []string) (string, error) {
+func (c *credentialCacheEntry) getAccessToken(ctx context.Context, scopes []string) (string, error) {
 	err := c.ensureInitialized()
 	if err != nil {
 		return "", err
 	}
 
-	return c.getEntryFor(scopes).getAccessToken()
+	return c.getEntryFor(scopes).getAccessToken(ctx)
 }
 
 func (c *credentialCacheEntry) ensureInitialized() error {
@@ -111,7 +112,7 @@ func (c *credentialCacheEntry) getEntryFor(scopes []string) *scopesCacheEntry {
 	return entry.(*scopesCacheEntry)
 }
 
-func (c *scopesCacheEntry) getAccessToken() (string, error) {
+func (c *scopesCacheEntry) getAccessToken(ctx context.Context) (string, error) {
 	var accessToken *AccessToken
 	var err error
 	shouldRefresh := false
@@ -137,7 +138,7 @@ func (c *scopesCacheEntry) getAccessToken() (string, error) {
 	c.cond.L.Unlock()
 
 	if shouldRefresh {
-		accessToken, err = c.refreshAccessToken()
+		accessToken, err = c.refreshAccessToken(ctx)
 		if err != nil {
 			return "", err
 		}
@@ -146,7 +147,7 @@ func (c *scopesCacheEntry) getAccessToken() (string, error) {
 	return accessToken.Token, nil
 }
 
-func (c *scopesCacheEntry) refreshAccessToken() (*AccessToken, error) {
+func (c *scopesCacheEntry) refreshAccessToken(ctx context.Context) (*AccessToken, error) {
 	var accessToken *AccessToken
 
 	// Safeguarding from panic caused by credential implementation
@@ -163,7 +164,7 @@ func (c *scopesCacheEntry) refreshAccessToken() (*AccessToken, error) {
 		c.cond.L.Unlock()
 	}()
 
-	token, err := c.credential.GetAccessToken(c.scopes)
+	token, err := c.credential.GetAccessToken(ctx, c.scopes)
 	if err != nil {
 		return nil, err
 	}
