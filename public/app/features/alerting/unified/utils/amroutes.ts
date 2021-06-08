@@ -51,8 +51,8 @@ export const emptyArrayFieldMatcher: Matcher = {
 
 export const emptyRoute: FormAmRoute = {
   id: '',
-  matchers: [emptyArrayFieldMatcher],
   groupBy: [],
+  matchers: [],
   routes: [],
   continue: false,
   receiver: '',

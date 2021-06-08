@@ -36,25 +36,28 @@ export const AmRootRouteForm: FC<AmRootRouteFormProps> = ({
     <Form defaultValues={routes} onSubmit={onSave}>
       {({ control, errors, setValue }) => (
         <>
-          <Field label="Default contact point">
-            <div className={styles.container}>
-              <InputControl
-                render={({ field: { onChange, ref, ...field } }) => (
-                  <Select
-                    {...field}
-                    className={styles.input}
-                    onChange={(value) => onChange(mapSelectValueToString(value))}
-                    options={receivers}
-                  />
-                )}
-                control={control}
-                name="receiver"
-              />
-              <span>or</span>
-              <Link href={makeAMLink('/alerting/notifications/receivers/new', alertManagerSourceName)}>
-                Create a contact point
-              </Link>
-            </div>
+          <Field label="Default contact point" invalid={!!errors.receiver} error={errors.receiver?.message}>
+            <>
+              <div className={styles.container}>
+                <InputControl
+                  render={({ field: { onChange, ref, ...field } }) => (
+                    <Select
+                      {...field}
+                      className={styles.input}
+                      onChange={(value) => onChange(mapSelectValueToString(value))}
+                      options={receivers}
+                    />
+                  )}
+                  control={control}
+                  name="receiver"
+                  rules={{ required: { value: true, message: 'Required.' } }}
+                />
+                <span>or</span>
+                <Link href={makeAMLink('/alerting/notifications/receivers/new', alertManagerSourceName)}>
+                  Create a contact point
+                </Link>
+              </div>
+            </>
           </Field>
           <Field label="Group by" description="Group alerts when you receive a notification based on labels.">
             {/* @ts-ignore-check: react-hook-form made me do this */}
