@@ -227,8 +227,6 @@ export function hasChanges(current: DashboardModel, original: any) {
 
   const currentJson = angular.toJson(currentClean);
   const originalJson = angular.toJson(originalClean);
-  console.log('current', currentJson);
-  console.log('originalJson', originalJson);
 
   return currentJson !== originalJson;
 }
