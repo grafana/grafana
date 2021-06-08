@@ -8,6 +8,139 @@ weight = 300
 
 # Azure Monitor data source
 
+Grafana includes built-in support for Azure Monitor, the Azure service to maximise availablity and performance of your applications and services in the Azure Cloud. The Azure Monitor data source supports visualising data from three Azure services:
+
+- **Azure Monitor Metrics** to collect numeric data from resources in your Azure account
+- **Azure Monitor Logs** to collect log and performance data from your Azure account, and query using the powerful Kusto Language
+- **Azure Resource Graph** to quickly query your Azure resources across subscriptions
+
+This topic explains configuring, querying, and other options specific to the Azure Monitor data source. Refer to [Add a data source]({{< relref "add-a-data-source.md" >}}) for instructions on how to add a data source to Grafana.
+
+## Azure Monitor settings
+
+To access Azure Monitor settings, hover your mouse over the **Configuration** (gear) icon, then click **Data Sources**, and then click the Azure Monitor data source. If you haven't already, you'll need to [add the Azure Monitor data source]({{< relref "add-a-data-source.md" >}}).
+
+You will need to create an app registration and service principal in Azure AD to authenticate the data source. See the [Azure documentation](https://docs.microsoft.com/en-us/azure/active-directory/develop/howto-create-service-principal-portal#get-tenant-and-app-id-values-for-signing-in) for details on this. Alternatively, if you are hosting Grafana in Azure (e.g. App Service, or Azure Virtual Machines) you can configure the Azure Monitor data source to use Managed Identity to securely authenticate without entering credentials into Grafana. See [Configuring using Managed Identity](#todo) for more details.
+
+| Name                    | Description                                                                                                                                                                                                                                                                                                             |
+| ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Authentication          | Enables Managed Identity. See [Configuring using Managed Identity](#todo) for more details.                                                                                                                                                                                                                             |
+| Azure Cloud             | The national cloud for your Azure account. For most users this will be the default "Azure". For more details, see [](https://docs.microsoft.com/en-us/azure/active-directory/develop/authentication-national-cloud)                                                                                                     |
+| Directory (tenant) ID   | The directory/tenant ID for the Azure AD app registration to use for authentication. See [Get tenant and app ID values for signing in](https://docs.microsoft.com/en-us/azure/active-directory/develop/howto-create-service-principal-portal#get-tenant-and-app-id-values-for-signing-in) from the Azure documentation. |
+| Application (client) ID | The application/client ID for the Azure AD app registration to use for authentication.                                                                                                                                                                                                                                  |
+| Client secret           | The application client secret for the Azure AD app registration to use for authentication. See [Create a new application secret](https://docs.microsoft.com/en-us/azure/active-directory/develop/howto-create-service-principal-portal#option-2-create-a-new-application-secret) from the Azure documentation.          |
+| Default subscription    | (optional)                                                                                                                                                                                                                                                                                                              |
+| Default workspace       | (optional)                                                                                                                                                                                                                                                                                                              |
+
+## Azure Monitor query editor
+
+The Azure Monitor data source has three different modes depending on which Azure service you wish to query:
+
+- **Metrics** for [Azure Monitor Metrics](https://docs.microsoft.com/en-us/azure/azure-monitor/essentials/data-platform-metrics)
+- **Logs** for [Azure Monitor Logs](https://docs.microsoft.com/en-us/azure/azure-monitor/logs/data-platform-logs)
+- Azure Resource Graph
+
+### Querying Azure Monitor Metrics
+
+Azure Monitor Metrics collects numeric data from [supported resources](https://docs.microsoft.com/en-us/azure/azure-monitor/monitor-reference) and allows you to query them to investigate the health and utilisation of your resources to maximise availability and performance.
+
+Metrics are more lightweight than data in Azure Monitior Logs and only stores numeric data in a particular structure. Metrics is capable for supporting near real-time scenarios making it useful for fast detection of issues. Azure Monitor Logs can store a variety of different data types each with their own structure.
+
+> metrics screenshot
+
+#### Your first Azure Monitor Metrics query
+
+1. Select the Metrics query type
+1. Select a resource to pull metrics from using the subscription, resource group, resource type, and resource fields.
+1. Some resources, such as storage accounts, organise metrics under multiple metric namespaces. Grafana will pick a default namespace, but change this to see which other metrics are available.
+1. Select a metric from the Metric field.
+
+Optionally, you can apply further aggregations or filter by dimensions for further analysis.
+
+1. Change the aggregation from the default average to show minimum, maximum or total values.
+1. Set a specific custom time grain. By default Grafana will automatically select a time grain interval based on your selected time range.
+1. For metrics that have multiple dimensions, you can split and filter further the returned metrics. For example, the Application Insights dependency calls metric supports returning multiple time series for successful vs unsuccessful calls.
+
+The options available will change depending on what is most relevent to the selected metric.
+
+#### Legend alias formatting
+
+The legend label for Metrics can be changed using aliases. In the Legend Format field, you can combine aliases defined below any way you want e.g
+
+- `Blob Type: {{ blobtype }}` becomes `Blob Type: PageBlob`, `Blob Type: BlockBlob`
+- `{{ resourcegroup }} - {{ resourcename }}` becomes `production - web_server`
+
+| Alias pattern               | Description                                                                                 |
+| --------------------------- | ------------------------------------------------------------------------------------------- |
+| {{ resourcegroup }}         | Replaced with the the resource group                                                        |
+| {{ namespace  }}            | Replaced with the resource type / namespace (e.g. Microsoft.Compute/virtualMachines)        |
+| {{ resourcename  }}         | Replaced with the resource name                                                             |
+| {{ metric  }}               | Replaced with the metric name (e.g. Percentage CPU)                                         |
+| _{{ arbitaryDimensionID }}_ | Replaced with the value of the specified dimension. (e.g. {{ blobtype }} becomes BlockBlob) |
+| {{ dimensionname  }}        | _(Legacy for backwards compatibility)_ Replaced with the name of the first dimension        |
+| {{ dimensionvalue  }}       | _(Legacy for backwards compatibility)_ Replaced with the value of the first dimension       |
+
+#### Supported Azure Monitor metrics
+
+Not all metrics returned by the Azure Monitor Metrics API have values. To make it easier for you when building a query, the Grafana data source has a list of supported metrics and ignores metrics which will never have values. This list is updated regularly as new services and metrics are added to the Azure cloud. For more information about the list of metrics, refer to [current supported namespaces](https://github.com/grafana/grafana/blob/main/public/app/plugins/datasource/grafana-azure-monitor-datasource/azure_monitor/supported_namespaces.ts).
+
+### Querying Azure Monitor Logs
+
+Azure Monitor Logs collects and organises log and performance data from [supported resources](https://docs.microsoft.com/en-us/azure/azure-monitor/monitor-reference) and makes many sources of data available to query together with the sophisticated [Kusto Query Language (KQL)](https://docs.microsoft.com/en-us/azure/data-explorer/kusto/query/).
+
+Wheras Azure Monitor Metrics can only store numeric data in a simplified structure, Logs can store different data types each with their own strucutre and can perform complexe analysis of data using KQL.
+
+#### Your first Azure Monitor Logs query
+
+1. Select the Logs query type
+2. Select a resource to query. Alternatively, you can dynamically query all resources under a single resource group or subscription.
+3. Enter in your Kusto query. See below for examples.
+
+##### KQL time series queries
+
+Time series query are for values that change over time, usually for panels such as the Time series panel
+
+## Going further with Azure Monitor
+
+### Template variables for Metrics
+
+Instead of hard-coding values for fields like resource group or resource name in your queries, you can use variables in their place to create more interactive, dynamic, and reusable dashboards.
+
+Check out the [Templating]({{< relref "../variables/_index.md" >}}) documentation for an introduction to the templating feature and the different
+types of template variables.
+
+> **Note:** Azure Monitor Metriocs does not support multiple values. To visualize multiple time series (for example, metrics for two servers), add multiple queries to view them in the same panel
+
+The Azure Monitor data source provides the following queries you can specify in the Query field in the Variable edit view
+
+| Name                                                                         | Description                                                                   |
+| ---------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| `Subscriptions()`                                                            | Returns subscriptions.                                                        |
+| `ResourceGroups()`                                                           | Returns resource groups.                                                      |
+| `ResourceGroups(subscriptionID)`                                             | Returns resource groups for a specified subscription.                         |
+| `Namespaces(aResourceGroup)`                                                 | Returns namespaces for the default subscription and specified resource group. |
+| `Namespaces(subscriptionID, aResourceGroup)`                                 | Returns namespaces for the specified subscription and resource group.         |
+| `ResourceNames(aResourceGroup, aNamespace)`                                  | Returns a list of resource names.                                             |
+| `ResourceNames(subscriptionID, aResourceGroup, aNamespace)`                  | Returns a list of resource names for a specified subscription.                |
+| `MetricNamespace(aResourceGroup, aNamespace, aResourceName)`                 | Returns a list of metric namespaces.                                          |
+| `MetricNamespace(subscriptionID, aResourceGroup, aNamespace, aResourceName)` | Returns a list of metric namespaces for a specified subscription.             |
+| `MetricNames(aResourceGroup, aNamespace, aResourceName)`                     | Returns a list of metric names.                                               |
+| `MetricNames(subscriptionID, aResourceGroup, aNamespace, aResourceName)`     | Returns a list of metric names for a specified subscription.                  |
+
+Where a subscription ID is not specified, the default subscription from the data source configuration will be used.
+
+---
+
+---
+
+---
+
+---
+
+> _Old documentation remains below_
+
+# Azure Monitor data source
+
 The Azure Monitor data source supports multiple services in the Azure cloud:
 
 - **[Azure Monitor Metrics]({{< relref "#query-the-metrics-service" >}})** (or Metrics) is the platform service that provides a single source for monitoring Azure resources.
