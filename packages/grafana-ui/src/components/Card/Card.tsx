@@ -33,16 +33,7 @@ export interface CardInterface extends FC<Props> {
  *
  * @public
  */
-export const Card: CardInterface = ({
-  heading,
-  description,
-  disabled,
-  href,
-  onClick,
-  className,
-  children,
-  ...htmlProps
-}) => {
+export const Card: CardInterface = ({ heading, description, disabled, href, onClick, children, ...htmlProps }) => {
   const theme = useTheme2();
   const styles = getCardStyles(theme);
   const [tags, figure, meta, actions, secondaryActions] = ['Tags', 'Figure', 'Meta', 'Actions', 'SecondaryActions'].map(
@@ -243,7 +234,7 @@ const Meta: FC<ChildProps & { separator?: string }> = memo(({ children, styles, 
 Meta.displayName = 'Meta';
 
 interface ActionsProps extends ChildProps {
-  children: JSX.Element | JSX.Element[];
+  children?: React.ReactNode;
   variant?: 'primary' | 'secondary';
 }
 
@@ -251,9 +242,9 @@ const BaseActions: FC<ActionsProps> = ({ children, styles, disabled, variant }) 
   const css = variant === 'primary' ? styles?.actions : styles?.secondaryActions;
   return (
     <div className={css}>
-      {Array.isArray(children)
-        ? React.Children.map(children, (child) => cloneElement(child, { disabled, ...child.props }))
-        : cloneElement(children, { disabled, ...children.props })}
+      {React.Children.map(children, (child) => {
+        return React.isValidElement(child) ? cloneElement(child, { disabled, ...child.props }) : null;
+      })}
     </div>
   );
 };
