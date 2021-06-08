@@ -325,6 +325,20 @@ describe('AmRoutes', () => {
       template_files: {},
     });
   });
+
+  it('Show error message if loading Alermanager config fails', async () => {
+    mocks.api.fetchAlertManagerConfig.mockRejectedValue({
+      status: 500,
+      data: {
+        message: "Alertmanager has exploded. it's gone. Forget about it.",
+      },
+    });
+    await renderAmRoutes();
+    await waitFor(() => expect(mocks.api.fetchAlertManagerConfig).toHaveBeenCalledTimes(1));
+    expect(await byText("Alertmanager has exploded. it's gone. Forget about it.").find()).toBeInTheDocument();
+    expect(ui.rootReceiver.query()).not.toBeInTheDocument();
+    expect(ui.editButton.query()).not.toBeInTheDocument();
+  });
 });
 
 const clickSelectOption = async (selectElement: HTMLElement, optionText: string): Promise<void> => {
