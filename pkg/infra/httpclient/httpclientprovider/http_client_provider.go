@@ -2,13 +2,14 @@ package httpclientprovider
 
 import (
 	"fmt"
+	"net/http"
+
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics/metricutil"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/mwitkow/go-conntrack"
-	"net/http"
 )
 
 var newProviderFunc = sdkhttpclient.NewProvider
