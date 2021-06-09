@@ -86,11 +86,6 @@ export interface DashScrollPayload {
 
 export interface PanelChangeViewPayload {}
 
-export interface PanelGridPositionLayoutPayload {
-  gridPos: object;
-  panelId: number;
-}
-
 /**
  * Events
  */
@@ -209,7 +204,4 @@ export class AnnotationQueryStarted extends BusEventWithPayload<AnnotationQuery>
 
 export class AnnotationQueryFinished extends BusEventWithPayload<AnnotationQuery> {
   static type = 'annotation-query-finished';
-}
-export class PanelGridPositionLayoutEvent extends BusEventWithPayload<PanelGridPositionLayoutPayload> {
-  static type = 'dashboard-panel-grid-updated';
 }

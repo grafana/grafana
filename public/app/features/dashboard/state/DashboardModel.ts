@@ -1088,6 +1088,13 @@ export class DashboardModel {
     return this.meta.canEdit || this.meta.canMakeEditable;
   }
 
+  shouldUpdateDashboardPanelFromJSON(updatedPanel: PanelModel, panel: PanelModel) {
+    const shouldUpdateGridPositionLayout = !isEqual(updatedPanel?.gridPos, panel?.gridPos);
+    if (shouldUpdateGridPositionLayout) {
+      this.events.publish(new DashboardPanelsChangedEvent());
+    }
+  }
+
   private getPanelRepeatVariable(panel: PanelModel) {
     return this.getVariablesFromState().find((variable) => variable.name === panel.repeat);
   }
