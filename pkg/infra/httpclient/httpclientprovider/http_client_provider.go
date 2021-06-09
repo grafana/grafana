@@ -16,7 +16,7 @@ import (
 var newProviderFunc = sdkhttpclient.NewProvider
 
 // New creates a new HTTP client provider with pre-configured middlewares.
-func New(cfg *setting.Cfg, connName string) httpclient.Provider {
+func New(cfg *setting.Cfg) httpclient.Provider {
 	logger := log.New("httpclient")
 	userAgent := fmt.Sprintf("Grafana/%s", cfg.BuildVersion)
 	middlewares := []sdkhttpclient.Middleware{
@@ -34,15 +34,18 @@ func New(cfg *setting.Cfg, connName string) httpclient.Provider {
 	return newProviderFunc(sdkhttpclient.ProviderOptions{
 		Middlewares: middlewares,
 		ConfigureTransport: func(opts sdkhttpclient.Options, transport *http.Transport) {
-			newConntrackRoundTripper(connName)
+			datasourceName, exists := opts.Labels["datasource_name"]
+			if !exists {
+				return
+			}
+			newConntrackRoundTripper(datasourceName, transport)
 		},
 	})
 }
 
 // newConntrackRoundTripper takes a http.DefaultTransport and adds the Conntrack Dialer
 // so we can instrument outbound connections
-func newConntrackRoundTripper(name string) *http.Transport {
-	transport := http.DefaultTransport.(*http.Transport).Clone()
+func newConntrackRoundTripper(name string, transport *http.Transport) *http.Transport {
 	transport.DialContext = conntrack.NewDialContextFunc(
 		conntrack.DialWithTracing(),
 		conntrack.DialWithName(name),
