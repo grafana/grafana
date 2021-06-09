@@ -1,5 +1,4 @@
-import { map } from 'lodash';
-import { AnnotationEvent, DataFrame, FieldType, MetricFindValue } from '@grafana/data';
+import { AnnotationEvent, DataFrame, MetricFindValue } from '@grafana/data';
 import { BackendDataSourceResponse, FetchResponse, toDataQueryResponse } from '@grafana/runtime';
 
 export default class ResponseParser {
@@ -21,69 +20,19 @@ export default class ResponseParser {
         values.push({ text: '' + textField.values.get(i), value: '' + valueField.values.get(i) });
       }
     } else {
-      const textFields = frame.fields.filter((f) => f.type === FieldType.string);
-      if (textFields) {
-        values.push(
-          ...textFields
-            .flatMap((f) => f.values.toArray())
-            .map((v) => ({
-              text: '' + v,
-            }))
-        );
-      }
+      values.push(
+        ...frame.fields
+          .flatMap((f) => f.values.toArray())
+          .map((v) => ({
+            text: v,
+          }))
+      );
     }
 
     return Array.from(new Set(values.map((v) => v.text))).map((text) => ({
       text,
       value: values.find((v) => v.text === text)?.value,
     }));
-  }
-
-  transformToKeyValueList(rows: any, textColIndex: number, valueColIndex: number): MetricFindValue[] {
-    const res = [];
-
-    for (let i = 0; i < rows.length; i++) {
-      if (!this.containsKey(res, rows[i][textColIndex])) {
-        res.push({ text: rows[i][textColIndex], value: rows[i][valueColIndex] });
-      }
-    }
-
-    return res;
-  }
-
-  transformToSimpleList(rows: any): MetricFindValue[] {
-    const res = [];
-
-    for (let i = 0; i < rows.length; i++) {
-      for (let j = 0; j < rows[i].length; j++) {
-        res.push(rows[i][j]);
-      }
-    }
-
-    const unique = Array.from(new Set(res));
-
-    return map(unique, (value) => {
-      return { text: value };
-    });
-  }
-
-  findColIndex(columns: any[], colName: string) {
-    for (let i = 0; i < columns.length; i++) {
-      if (columns[i].text === colName) {
-        return i;
-      }
-    }
-
-    return -1;
-  }
-
-  containsKey(res: any[], key: any) {
-    for (let i = 0; i < res.length; i++) {
-      if (res[i].text === key) {
-        return true;
-      }
-    }
-    return false;
   }
 
   async transformAnnotationResponse(options: any, data: BackendDataSourceResponse): Promise<AnnotationEvent[]> {
