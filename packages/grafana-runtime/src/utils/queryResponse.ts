@@ -13,7 +13,8 @@ import {
   DataFrameJSON,
   dataFrameFromJSON,
 } from '@grafana/data';
-import { FetchResponse } from '../services';
+import { FetchError, FetchResponse } from '../services';
+import { TestingStatus } from '../../../../public/app/types';
 
 /**
  * Single response object from a backend data source. Properties are optional but response should contain at least
@@ -125,6 +126,34 @@ export function toDataQueryResponse(
   }
 
   return rsp;
+}
+
+/**
+ * Data sources using api/ds/query to test data sources can use this function to
+ * handle errors and convert them to TestingStatus object.
+ *
+ * If possible, this should be avoided in favor of implementing /health endpoint
+ * and testing data source with DataSourceWithBackend.testDataSource()
+ */
+export function toTestingStatus(err: FetchError): TestingStatus {
+  const queryResponse = toDataQueryResponse(err);
+  // POST api/ds/query errors returned as { message: string, error: string } objects
+  if (queryResponse.error?.data?.message && queryResponse.error?.data?.error) {
+    return {
+      status: 'error',
+      message: queryResponse.error.data.message,
+      details: { message: queryResponse.error.data.error },
+    };
+  }
+  // POST api/ds/query errors returned in results object
+  else if (queryResponse.error?.refId && queryResponse.error?.message) {
+    return {
+      status: 'error',
+      message: queryResponse.error.message,
+    };
+  }
+
+  throw err;
 }
 
 /**

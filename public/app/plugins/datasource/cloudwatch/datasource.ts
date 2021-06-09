@@ -64,6 +64,7 @@ import { CloudWatchLanguageProvider } from './language_provider';
 import { VariableWithMultiSupport } from 'app/features/variables/types';
 import { AwsUrl, encodeUrl } from './aws_url';
 import { increasingInterval } from './utils/rxjs/increasingInterval';
+import { toTestingStatus } from '@grafana/runtime/src/utils/queryResponse';
 
 const DS_QUERY_ENDPOINT = '/api/ds/query';
 
@@ -881,10 +882,14 @@ export class CloudWatchDatasource extends DataSourceWithBackend<CloudWatchQuery,
     const metricName = 'EstimatedCharges';
     const dimensions = {};
 
-    return this.getDimensionValues(region, namespace, metricName, 'ServiceName', dimensions).then(() => ({
-      status: 'success',
-      message: 'Data source is working',
-    }));
+    return this.getDimensionValues(region, namespace, metricName, 'ServiceName', dimensions)
+      .then(() => ({
+        status: 'success',
+        message: 'Data source is working',
+      }))
+      .catch((error) => {
+        return toTestingStatus(error);
+      });
   }
 
   awsRequest(url: string, data: MetricRequest): Observable<TSDBResponse> {
