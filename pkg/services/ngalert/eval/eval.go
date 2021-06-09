@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/expr/classic"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 
 	"github.com/grafana/grafana/pkg/setting"
@@ -220,7 +221,14 @@ func executeCondition(ctx AlertExecCtx, c *models.Condition, now time.Time, data
 	return result
 }
 
-func executeQueriesAndExpressions(ctx AlertExecCtx, data []models.AlertQuery, now time.Time, dataService *tsdb.Service) (*backend.QueryDataResponse, error) {
+func executeQueriesAndExpressions(ctx AlertExecCtx, data []models.AlertQuery, now time.Time, dataService *tsdb.Service) (resp *backend.QueryDataResponse, err error) {
+	defer func() {
+		if e := recover(); e != nil {
+			// override the error returned
+			err = fmt.Errorf("alert rule panic: %s", log.Stack(1))
+		}
+	}()
+
 	queryDataReq, err := GetExprRequest(ctx, data, now)
 	if err != nil {
 		return nil, err
