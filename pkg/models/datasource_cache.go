@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"fmt"
 	"net/http"
+	"strconv"
 	"sync"
 	"time"
 
@@ -17,10 +18,18 @@ func (ds *DataSource) getTimeout() time.Duration {
 	timeout := 0
 	if ds.JsonData != nil {
 		timeout = ds.JsonData.Get("timeout").MustInt()
+		if timeout == 0 {
+			if timeoutStr := ds.JsonData.Get("timeout").MustString(); timeoutStr != "" {
+				if t, err := strconv.Atoi(timeoutStr); err == nil {
+					timeout = t
+				}
+			}
+		}
 	}
 	if timeout == 0 {
 		timeout = setting.DataProxyTimeout
 	}
+	fmt.Printf("data source timeout, named %q, timeout %d", ds.Name, timeout)
 	return time.Duration(timeout) * time.Second
 }
 
