@@ -97,8 +97,9 @@ export function localTimeFormat(
   }
 
   // https://momentjs.com/docs/#/displaying/format/
-  const parts = new Intl.DateTimeFormat(locale, options).formatToParts(new Date());
-  const hour12 = !!parts.filter((part) => part.type === 'dayPeriod').pop();
+  const dateTimeFormat = new Intl.DateTimeFormat(locale, options);
+  const parts = dateTimeFormat.formatToParts(new Date());
+  const hour12 = dateTimeFormat.resolvedOptions().hour12;
 
   const mapping: { [key: string]: string } = {
     year: 'YYYY',
