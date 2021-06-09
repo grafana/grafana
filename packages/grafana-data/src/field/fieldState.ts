@@ -97,7 +97,7 @@ function calculateFieldDisplayName(field: Field, frame?: DataFrame, allFrames?: 
   }
 
   // check if we should add field name before labels
-  if (otherFieldNamesExists(field, frame)) {
+  if (field.name !== TIME_SERIES_VALUE_FIELD_NAME && (!field.labels || Object.keys(field.labels).length === 0)) {
     parts.push(field.name);
   }
 
@@ -170,34 +170,6 @@ function getUniqueFieldName(field: Field, frame?: DataFrame) {
   }
 
   return field.name;
-}
-
-/**
- * Scans data for other fields with labels but with different field names, if found returns true.
- * */
-function otherFieldNamesExists(field: Field, frame?: DataFrame): boolean {
-  // Also matches undefined
-  if (field.name == null || !frame) {
-    return false;
-  }
-
-  for (let i = 0; i < frame.fields.length; i++) {
-    const otherField = frame.fields[i];
-    if (otherField === field) {
-      continue;
-    }
-
-    // ignore time field
-    if (otherField.type === FieldType.time) {
-      return false;
-    }
-
-    if (field.name !== otherField.name) {
-      return true;
-    }
-  }
-
-  return false;
 }
 
 /**
