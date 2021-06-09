@@ -41,6 +41,39 @@ export function useCombinedRule(
   };
 }
 
+export function useCombinedRulesMatching(
+  ruleName: string | undefined,
+  ruleSourceName: string | undefined
+): AsyncRequestState<CombinedRule[]> {
+  const requestState = useCombinedRulesLoader(ruleSourceName);
+  const combinedRules = useCombinedRuleNamespaces(ruleSourceName);
+
+  const rules = useMemo(() => {
+    if (!ruleName || !ruleSourceName || combinedRules.length === 0) {
+      return [];
+    }
+
+    const rules: CombinedRule[] = [];
+
+    for (const namespace of combinedRules) {
+      for (const group of namespace.groups) {
+        for (const rule of group.rules) {
+          if (rule.name === ruleName) {
+            rules.push(rule);
+          }
+        }
+      }
+    }
+
+    return rules;
+  }, [ruleName, ruleSourceName, combinedRules]);
+
+  return {
+    ...requestState,
+    result: rules,
+  };
+}
+
 function useCombinedRulesLoader(ruleSourceName: string | undefined): AsyncRequestState<void> {
   const dispatch = useDispatch();
   const promRuleRequests = useUnifiedAlertingSelector((state) => state.promRules);

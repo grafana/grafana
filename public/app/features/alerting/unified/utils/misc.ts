@@ -4,7 +4,7 @@ import { ALERTMANAGER_NAME_QUERY_KEY } from './constants';
 import { getRulesSourceName } from './datasource';
 import * as ruleId from './rule-id';
 
-export function createViewLink(ruleSource: RulesSource, rule: CombinedRule, returnTo: string): string | undefined {
+export function createViewLink(ruleSource: RulesSource, rule: CombinedRule, returnTo: string): string {
   const sourceName = getRulesSourceName(ruleSource);
   const identifier = ruleId.fromCombinedRule(sourceName, rule);
   const paramId = ruleId.stringify(identifier, true);

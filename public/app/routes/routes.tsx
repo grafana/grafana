@@ -442,7 +442,15 @@ export function getAppRoutes(): RouteDescriptor[] {
       path: '/alerting/:sourceName/:id/view',
       pageClass: 'page-alerting',
       component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "AlertingRuleViewer"*/ 'app/features/alerting/unified/RuleViewer')
+        () => import(/* webpackChunkName: "AlertingRule"*/ 'app/features/alerting/unified/RuleViewer')
+      ),
+    },
+    {
+      path: '/alerting/:sourceName/:name/find',
+      pageClass: 'page-alerting',
+      component: SafeDynamicImport(
+        () =>
+          import(/* webpackChunkName: "AlertingRedirectToRule"*/ 'app/features/alerting/unified/RedirectToRuleViewer')
       ),
     },
     {

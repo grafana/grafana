@@ -63,16 +63,20 @@ export function RuleViewerVisualization(props: RuleViewerVisualizationProps): JS
                 </div>
                 <div className={styles.actions}>
                   <PanelPluginsButtonGroup onChange={setPanel} value={panel} size="sm" />
-                  <div className={styles.spacing} />
-                  <LinkButton
-                    size="sm"
-                    variant="secondary"
-                    icon="compass"
-                    target="_blank"
-                    href={createExploreLink(dsSettings, query)}
-                  >
-                    View in Explore
-                  </LinkButton>
+                  {!isExpressionQuery(query.model) && (
+                    <>
+                      <div className={styles.spacing} />
+                      <LinkButton
+                        size="sm"
+                        variant="secondary"
+                        icon="compass"
+                        target="_blank"
+                        href={createExploreLink(dsSettings, query)}
+                      >
+                        View in Explore
+                      </LinkButton>
+                    </>
+                  )}
                 </div>
               </div>
               <PanelRenderer
