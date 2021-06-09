@@ -62,7 +62,7 @@ ldap.user:read | n/a | Get a user via LDAP.
 ldap.user:sync | n/a | Sync a user via LDAP.
 ldap.status:read | n/a | Verify the LDAP servers’ availability.
 status:accesscontrol | service:access-control | Get access-control enabled status.
-settings:write | settings:\*\*, settings:auth.saml:*, or on the property level settings:auth.saml:enabled | Update settings
+settings:write | settings:\*\*<br>settings:auth.saml:*<br>settings:auth.saml:enabled (property level) | Update settings
 
 ## Scope definitions
 
