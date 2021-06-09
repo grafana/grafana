@@ -7,8 +7,13 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/data/converters"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/live/telemetry"
 	influx "github.com/influxdata/line-protocol"
+)
+
+var (
+	logger = log.New("live.telemetry.telegraf")
 )
 
 var _ telemetry.Converter = (*Converter)(nil)
@@ -220,7 +225,7 @@ func (s *metricFrame) append(m influx.Metric) error {
 		if index, ok := s.fieldCache[f.Key]; ok {
 			field := s.fields[index]
 			if ft != field.Type() {
-				fmt.Printf("error appending value of type: %v as %v // %v\n", field.Type(), ft, v)
+				logger.Warn("error appending values", "type", field.Type(), "expect", ft, "line", v)
 				if field.Type() == data.FieldTypeNullableString && v != nil {
 					str := fmt.Sprintf("%v", f.Value)
 					v = &str
