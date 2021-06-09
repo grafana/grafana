@@ -50,7 +50,7 @@ Metrics are more lightweight than data in Azure Monitior Logs and only stores nu
 
 #### Your first Azure Monitor Metrics query
 
-1. Select the Metrics query type
+1. Select the Metrics service
 1. Select a resource to pull metrics from using the subscription, resource group, resource type, and resource fields.
 1. Some resources, such as storage accounts, organise metrics under multiple metric namespaces. Grafana will pick a default namespace, but change this to see which other metrics are available.
 1. Select a metric from the Metric field.
@@ -92,13 +92,63 @@ Wheras Azure Monitor Metrics can only store numeric data in a simplified structu
 
 #### Your first Azure Monitor Logs query
 
-1. Select the Logs query type
+1. Select the Logs service
 2. Select a resource to query. Alternatively, you can dynamically query all resources under a single resource group or subscription.
-3. Enter in your Kusto query. See below for examples.
+3. Enter in your KQL query. See below for examples.
 
-##### KQL time series queries
+##### Kusto Query Language
 
-Time series query are for values that change over time, usually for panels such as the Time series panel
+Azure Monitor Logs queries are written using the Kusto Query Language (KQL), a rich language designed to be easy to read and write, which should be familiar to those know who SQL. The Azure documentation has plenty of resource to help with learning KQL:
+
+- [Log queries in Azure Monitor](https://docs.microsoft.com/en-us/azure/azure-monitor/logs/log-query-overview)
+- [Getting started with Kusto](https://docs.microsoft.com/en-us/azure/data-explorer/kusto/concepts/)
+- [Tutorial: Use Kusto queries in Azure Monitor](https://docs.microsoft.com/en-us/azure/data-explorer/kusto/query/tutorial?pivots=azuremonitor)
+- [SQL to Kusto cheat sheet](https://docs.microsoft.com/en-us/azure/data-explorer/kusto/query/sqlcheatsheet)
+
+Here is an example query that returns a virtual machine's CPU performance, averaged over 5m time grains
+
+```kusto
+Perf
+# $__timeFilter is a special Grafana macro that filters the results to the time span of the dashboard
+| where $__timeFilter(TimeGenerated)
+| where CounterName == "% Processor Time"
+| summarize avg(CounterValue) by bin(TimeGenerated, 5m), Computer
+| order by TimeGenerated asc
+```
+
+Time series queries are for values that change over time, usually for graph visualisations such as the Time series panel. Each query should return at least a datetime column and a numeric value column. The result must also be sorted in ascending order by the datetime column.
+
+A query can also have one or more non-numeric/non-datetime columns, and those columns are considered dimensions and become labels in the response. For example, a query that returns the aggregated count grouped by hour, Computer, and the CounterName:
+
+```kusto
+Perf
+| where $__timeFilter(TimeGenerated)
+| summarize count() by bin(TimeGenerated, 1h), Computer, CounterName
+| order by TimeGenerated asc
+```
+
+You can also select additional number value columns (with, or without multiple dimensions). For example, getting a count and average value by hour, Computer, CounterName, and InstanceName:
+
+```kusto
+Perf
+| where $__timeFilter(TimeGenerated)
+| summarize Samples=count(), ["Avg Value"]=avg(CounterValue)
+    by bin(TimeGenerated, $__interval), Computer, CounterName, InstanceName
+| order by TimeGenerated asc
+```
+
+Table queries are mainly used in the Table panel and show a list of columns and rows. This example query returns rows with the six specified columns:
+
+```kusto
+AzureActivity
+| where $__timeFilter()
+| project TimeGenerated, ResourceGroup, Category, OperationName, ActivityStatus, Caller
+| order by TimeGenerated desc
+```
+
+##### Logs macros
+
+_TODO_
 
 ## Going further with Azure Monitor
 
