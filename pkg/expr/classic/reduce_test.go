@@ -112,6 +112,7 @@ func TestReducer(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			require.Equal(t, true, tt.reducer.ValidReduceFunc())
 			num := tt.reducer.Reduce(tt.inputSeries)
 			require.Equal(t, tt.expectedNumber, num)
 		})

@@ -15,7 +15,7 @@ func (cr classicReducer) ValidReduceFunc() bool {
 	switch cr {
 	case "avg", "sum", "min", "max", "count", "last", "median":
 		return true
-	case "diff", "diff_abs", "percent_diff", "percent_diff_abs", "count_not_null":
+	case "diff", "diff_abs", "percent_diff", "percent_diff_abs", "count_non_null":
 		return true
 	}
 	return false
