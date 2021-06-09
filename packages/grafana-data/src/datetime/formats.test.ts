@@ -18,7 +18,7 @@ describe('Date Formats', () => {
   });
 });
 
-describe('Date Formats with hour12', () => {
+describe('Date Formats without hour12', () => {
   it('localTimeFormat', () => {
     const format = localTimeFormat(
       {
