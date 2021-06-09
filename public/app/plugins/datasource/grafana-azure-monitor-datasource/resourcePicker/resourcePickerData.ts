@@ -1,6 +1,13 @@
 import { FetchResponse, getBackendSrv } from '@grafana/runtime';
-import { getLogAnalyticsResourcePickerApiRoute } from '../api/routes';
+import { getLogAnalyticsManagementApiRoute } from '../api/routes';
+import {
+  locationDisplayNames,
+  logsSupportedLocationsKusto,
+  logsSupportedResourceTypesKusto,
+  resourceTypeDisplayNames,
+} from '../azureMetadata';
 import { ResourceRowType, ResourceRow, ResourceRowGroup } from '../components/ResourcePicker/types';
+import { parseResourceURI } from '../components/ResourcePicker/utils';
 import { getAzureCloud } from '../credentials';
 import {
   AzureDataSourceInstanceSettings,
@@ -9,9 +16,8 @@ import {
   RawAzureResourceGroupItem,
   RawAzureResourceItem,
 } from '../types';
-import { SUPPORTED_LOCATIONS, SUPPORTED_RESOURCE_TYPES } from './supportedResources';
 
-const RESOURCE_GRAPH_URL = '/providers/Microsoft.ResourceGraph/resources?api-version=2020-04-01-preview';
+const RESOURCE_GRAPH_URL = '/providers/Microsoft.ResourceGraph/resources?api-version=2021-03-01';
 
 export default class ResourcePickerData {
   private proxyUrl: string;
@@ -21,6 +27,8 @@ export default class ResourcePickerData {
     this.proxyUrl = instanceSettings.url!;
     this.cloud = getAzureCloud(instanceSettings);
   }
+
+  static readonly templateVariableGroupID = '$$grafana-templateVariables$$';
 
   async getResourcePickerData() {
     const query = `
@@ -39,7 +47,7 @@ export default class ResourcePickerData {
             | project resourceGroupURI=id, resourceGroupName=name, resourceGroup
           ) on resourceGroup
 
-        | where type in (${SUPPORTED_RESOURCE_TYPES})
+        | where type in (${logsSupportedResourceTypesKusto})
 
         // Get only unique resource groups and subscriptions. Also acts like a project
         | summarize count() by resourceGroupName, resourceGroupURI, subscriptionName, subscriptionURI
@@ -60,7 +68,7 @@ export default class ResourcePickerData {
     const { ok, data: response } = await this.makeResourceGraphRequest<RawAzureResourceItem[]>(`
       resources
       | where id hasprefix "${resourceGroup.id}"
-      | where type in (${SUPPORTED_RESOURCE_TYPES}) and location in (${SUPPORTED_LOCATIONS})
+      | where type in (${logsSupportedResourceTypesKusto}) and location in (${logsSupportedLocationsKusto})
     `);
 
     // TODO: figure out desired error handling strategy
@@ -71,21 +79,38 @@ export default class ResourcePickerData {
     return formatResourceGroupChildren(response.data);
   }
 
-  async getResource(resourceURI: string) {
+  async getResourceURIDisplayProperties(resourceURI: string): Promise<AzureResourceSummaryItem> {
+    const { subscriptionID, resourceGroup } = parseResourceURI(resourceURI) ?? {};
+
+    if (!subscriptionID) {
+      throw new Error('Invalid resource URI passed');
+    }
+
+    // resourceGroupURI and resourceURI could be invalid values, but that's okay because the join
+    // will just silently fail as expected
+    const subscriptionURI = `/subscriptions/${subscriptionID}`;
+    const resourceGroupURI = `${subscriptionURI}/resourceGroups/${resourceGroup}`;
+
     const query = `
-      resources
-        | join (
-            resourcecontainers
-              | where type == "microsoft.resources/subscriptions"
-              | project subscriptionName=name, subscriptionId
-          ) on subscriptionId
-        | join (
-            resourcecontainers
-              | where type == "microsoft.resources/subscriptions/resourcegroups"
-              | project resourceGroupName=name, resourceGroup
-          ) on resourceGroup
-        | where id == "${resourceURI}"
-        | project id, name, subscriptionName, resourceGroupName
+      resourcecontainers
+        | where type == "microsoft.resources/subscriptions"
+        | where id == "${subscriptionURI}"
+        | project subscriptionName=name, subscriptionId
+
+        | join kind=leftouter (
+          resourcecontainers
+            | where type == "microsoft.resources/subscriptions/resourcegroups"
+            | where id == "${resourceGroupURI}"
+            | project resourceGroupName=name, resourceGroup, subscriptionId
+        ) on subscriptionId
+
+        | join kind=leftouter (
+          resources
+            | where id == "${resourceURI}"
+            | project resourceName=name, subscriptionId
+        ) on subscriptionId
+
+        | project subscriptionName, resourceGroupName, resourceName
     `;
 
     const { ok, data: response } = await this.makeResourceGraphRequest<AzureResourceSummaryItem[]>(query);
@@ -123,7 +148,7 @@ export default class ResourcePickerData {
     try {
       return await getBackendSrv()
         .fetch<AzureGraphResponse<T>>({
-          url: this.proxyUrl + '/' + getLogAnalyticsResourcePickerApiRoute(this.cloud) + RESOURCE_GRAPH_URL,
+          url: this.proxyUrl + '/' + getLogAnalyticsManagementApiRoute(this.cloud) + RESOURCE_GRAPH_URL,
           method: 'POST',
           data: {
             query: query,
@@ -140,6 +165,21 @@ export default class ResourcePickerData {
 
       throw error;
     }
+  }
+
+  transformVariablesToRow(templateVariables: string[]): ResourceRow {
+    return {
+      id: ResourcePickerData.templateVariableGroupID,
+      name: 'Template variables',
+      type: ResourceRowType.VariableGroup,
+      typeLabel: 'Variables',
+      children: templateVariables.map((v) => ({
+        id: v,
+        name: v,
+        type: ResourceRowType.Variable,
+        typeLabel: 'Variable',
+      })),
+    };
   }
 }
 
@@ -187,7 +227,7 @@ function formatResourceGroupChildren(rawData: RawAzureResourceItem[]): ResourceR
     id: item.id,
     resourceGroupName: item.resourceGroup,
     type: ResourceRowType.Resource,
-    typeLabel: item.type, // TODO: these types can be quite long, we may wish to format them more
-    location: item.location, // TODO: we may wish to format these locations, by default they are written as 'northeurope' rather than a more human readable "North Europe"
+    typeLabel: resourceTypeDisplayNames[item.type] || item.type,
+    location: locationDisplayNames[item.location] || item.location,
   }));
 }

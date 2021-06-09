@@ -98,6 +98,17 @@ export function fetchAllPromAndRulerRulesAction(force = false): ThunkResult<void
   };
 }
 
+export function fetchAllPromRulesAction(force = false): ThunkResult<void> {
+  return (dispatch, getStore) => {
+    const { promRules } = getStore().unifiedAlerting;
+    getAllRulesSourceNames().map((name) => {
+      if (force || !promRules[name]?.loading) {
+        dispatch(fetchPromRulesAction(name));
+      }
+    });
+  };
+}
+
 async function findExistingRule(ruleIdentifier: RuleIdentifier): Promise<RuleWithLocation | null> {
   if (isGrafanaRuleIdentifier(ruleIdentifier)) {
     const namespaces = await fetchRulerRules(GRAFANA_RULES_SOURCE_NAME);

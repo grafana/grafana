@@ -444,8 +444,8 @@ describe('LokiDatasource', () => {
   });
 
   describe('when calling annotationQuery', () => {
-    const getTestContext = (response: any) => {
-      const query = makeAnnotationQueryRequest();
+    const getTestContext = (response: any, options: any = []) => {
+      const query = makeAnnotationQueryRequest(options);
       fetchMock.mockImplementation(() => of(response));
 
       const ds = createLokiDSForTests();
@@ -490,6 +490,58 @@ describe('LokiDatasource', () => {
 
       expect(res[1].text).toBe('hello 2');
       expect(res[1].tags).toEqual(['value2']);
+    });
+    describe('Formatting', () => {
+      const response: FetchResponse = ({
+        data: {
+          data: {
+            resultType: LokiResultType.Stream,
+            result: [
+              {
+                stream: {
+                  label: 'value',
+                  label2: 'value2',
+                  label3: 'value3',
+                },
+                values: [['1549016857498000000', 'hello']],
+              },
+            ],
+          },
+          status: 'success',
+        },
+      } as unknown) as FetchResponse;
+      describe('When tagKeys is set', () => {
+        it('should only include selected labels', async () => {
+          const { promise } = getTestContext(response, { tagKeys: 'label2,label3' });
+
+          const res = await promise;
+
+          expect(res.length).toBe(1);
+          expect(res[0].text).toBe('hello');
+          expect(res[0].tags).toEqual(['value2', 'value3']);
+        });
+      });
+      describe('When textFormat is set', () => {
+        it('should fromat the text accordingly', async () => {
+          const { promise } = getTestContext(response, { textFormat: 'hello {{label2}}' });
+
+          const res = await promise;
+
+          expect(res.length).toBe(1);
+          expect(res[0].text).toBe('hello value2');
+        });
+      });
+      describe('When titleFormat is set', () => {
+        it('should fromat the title accordingly', async () => {
+          const { promise } = getTestContext(response, { titleFormat: 'Title {{label2}}' });
+
+          const res = await promise;
+
+          expect(res.length).toBe(1);
+          expect(res[0].title).toBe('Title value2');
+          expect(res[0].text).toBe('hello');
+        });
+      });
     });
   });
 
@@ -552,7 +604,7 @@ function createLokiDSForTests(
   return new LokiDatasource(customSettings, templateSrvMock, timeSrvStub as any);
 }
 
-function makeAnnotationQueryRequest(): AnnotationQueryRequest<LokiQuery> {
+function makeAnnotationQueryRequest(options: any): AnnotationQueryRequest<LokiQuery> {
   const timeRange = {
     from: dateTime(),
     to: dateTime(),
@@ -565,6 +617,7 @@ function makeAnnotationQueryRequest(): AnnotationQueryRequest<LokiQuery> {
       enable: true,
       name: 'test-annotation',
       iconColor: 'red',
+      ...options,
     },
     dashboard: {
       id: 1,

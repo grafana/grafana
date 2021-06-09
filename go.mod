@@ -44,14 +44,14 @@ require (
 	github.com/go-sql-driver/mysql v1.6.0
 	github.com/go-stack/stack v1.8.0
 	github.com/gobwas/glob v0.2.3
+	github.com/gofrs/uuid v4.0.0+incompatible
 	github.com/golang/mock v1.5.0
 	github.com/google/go-cmp v0.5.5
 	github.com/google/uuid v1.2.0
 	github.com/gorilla/websocket v1.4.2
 	github.com/gosimple/slug v1.9.0
 	github.com/grafana/grafana-aws-sdk v0.4.0
-	github.com/grafana/grafana-live-sdk v0.0.6
-	github.com/grafana/grafana-plugin-sdk-go v0.101.0
+	github.com/grafana/grafana-plugin-sdk-go v0.104.0
 	github.com/grafana/loki v1.6.2-0.20210520072447-15d417efe103
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/hashicorp/go-hclog v0.16.0
@@ -59,6 +59,7 @@ require (
 	github.com/hashicorp/go-version v1.3.0
 	github.com/inconshreveable/log15 v0.0.0-20180818164646-67afb5ed74ec
 	github.com/influxdata/influxdb-client-go/v2 v2.2.3
+	github.com/influxdata/line-protocol v0.0.0-20210311194329-9aa0e372d097
 	github.com/jmespath/go-jmespath v0.4.0
 	github.com/json-iterator/go v1.1.11
 	github.com/jung-kurt/gofpdf v1.16.2
@@ -68,15 +69,17 @@ require (
 	github.com/magefile/mage v1.11.0
 	github.com/mattn/go-isatty v0.0.12
 	github.com/mattn/go-sqlite3 v1.14.7
+	github.com/matttproud/golang_protobuf_extensions v1.0.1
+	github.com/mwitkow/go-conntrack v0.0.0-20190716064945-2f068394615f
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/pkg/browser v0.0.0-20210115035449-ce105d075bb4 // indirect
 	github.com/pkg/errors v0.9.1
-	github.com/prometheus/alertmanager v0.21.1-0.20210511232218-7301451eb94d
+	github.com/prometheus/alertmanager v0.22.2
 	github.com/prometheus/client_golang v1.10.0
 	github.com/prometheus/client_model v0.2.0
 	github.com/prometheus/common v0.24.0
-	github.com/prometheus/prometheus v1.8.2-0.20210421143221-52df5ef7a3be
+	github.com/prometheus/prometheus v1.8.2-0.20210430082741-2a4b8e12bbf2
 	github.com/robfig/cron v0.0.0-20180505203441-b41be1df6967
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/russellhaering/goxmldsig v1.1.0
@@ -91,7 +94,7 @@ require (
 	github.com/weaveworks/common v0.0.0-20210419092856-009d1eebd624
 	github.com/xorcare/pointer v1.1.0
 	github.com/yudai/gojsondiff v1.0.0
-	go.opentelemetry.io/collector v0.25.0
+	go.opentelemetry.io/collector v0.27.0
 	golang.org/x/crypto v0.0.0-20210513164829-c07d793c2f9a
 	golang.org/x/exp v0.0.0-20210220032938-85be41e4509f // indirect
 	golang.org/x/net v0.0.0-20210521195947-fe42d452be8f
@@ -116,3 +119,5 @@ require (
 	xorm.io/core v0.7.3
 	xorm.io/xorm v0.8.2
 )
+
+replace github.com/apache/thrift => github.com/apache/thrift v0.14.1

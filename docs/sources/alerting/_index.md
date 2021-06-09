@@ -4,52 +4,23 @@ aliases = ["/docs/grafana/latest/alerting/rules/", "/docs/grafana/latest/alertin
 weight = 110
 +++
 
-# Alerts overview
+# Grafana alerts
 
-Alerts allow you to know about problems in your systems moments after they occur. Robust and actionable alerts help you identify and resolve issues quickly, minimizing disruption to your services.
+Alerts allow you to know about problems in your systems moments after they occur. Robust and actionable alerts help you identify and resolve issues quickly, minimizing disruption to your services. 
 
-> **Note:** In Grafana 8.0, you can optionally choose the beta version of our new [unified altering]({{< relref "./unified-alerting/_index.md" >}}) system. Out of the box, Grafana still supports the [old alters]({{< relref "./old-alerting/_index.md" >}}) . 
-
+Grafana 8.0 has new and improved alerts. The new alerting system are an [opt-in]({{< relref "./unified-alerting/opt-in.md" >}}) feature that centralizes alerting information for Grafana managed alerts and alerts from Prometheus-compatible data sources in one UI and API.
 
 Alerts have four main components:
 
-- Alert rule - One or more conditions, the frequency of evaluation, and the (optional) duration that a condition must be met before notifying.
-- Contact point - A channel for sending notifications when the conditions of an alert rule are met. (Available in unified alerting only.)
-- Notification policy - A set of matching and grouping criteria used to determine where, and how frequently, to send notifications. 
-- Silences - Date and matching criteria used to silence notifications. (Available in unified alerting only.)
+- Alerting rule - One or more query and/or expression, a condition, the frequency of evaluation, and the (optional) duration that a condition must be met before creating an alert.
+- Contact point - A channel for sending notifications when the conditions of an alerting rule are met.
+- Notification policy - A set of matching and grouping criteria used to determine where, and how frequently, to send notifications.
+- Silences - Date and matching criteria used to silence notifications.
 
-## Alert tasks
+You can create and edit alerting rules for Grafana managed alerts, Cortex alerts, and Loki alerts as well as see alerting information from prometheus-compatible data sources in a single, searchable view. For more information, on how to create and edit alerts and notifications, refer to [Overview of Grafana 8.0 alerts]({{< relref "../alerting/unified-alerting/_index.md" >}}).
 
-You can perform the following tasks for alerts:
+As part of the new alert changes, we have introduced a new data source, Alertmanager, which includes built-in support for Prometheus Alertmanager. It is presently in alpha and it not accessible unless alpha plugins are enabled in Grafana settings. For more information, refer to [Alertmanager data source]({{< relref "../datasources/alertmanager.md" >}}).
 
-- [Create an alert rule]({{< relref "./old-alerting/create-alerts.md" >}})
-- [View existing alert rules and their current state]({{< relref "./old-alerting/view-alerts.md" >}})
-- [Test alert rules and troubleshoot]({{< relref "./old-alerting/troubleshoot-alerts.md" >}})
-- [Add or edit an alert contact point]({{< relref "./old-alerting/notifications.md" >}})
+> **Note:** Out of the box, Grafana still supports old Grafana alerts. They are legacy alerts at this time, and will be deprecated in a future release. For more information, refer to [Legacy Grafana alerts]({{< relref "./old-alerting/_index.md" >}}).
 
-## Clustering
-
-Currently alerting supports a limited form of high availability. Since v4.2.0 of Grafana, alert notifications are deduped when running multiple servers. This means all alerts are executed on every server but no duplicate alert notifications are sent due to the deduping logic. Proper load balancing of alerts will be introduced in the future.
-
-## Alert evaluation
-
-Grafana managed alerts are evaluated by the Grafana backend. Rule evaluations are scheduled, according to the alert rule configuration, and queries are evaluated by an engine that is part of core Grafana.
-
-Alert rules can only query backend data sources with alerting enabled:
-- builtin or developed and maintained by grafana: `Graphite`, `Prometheus`, `Loki`, `InfluxDB`, `Elasticsearch`,
-`Google Cloud Monitoring`, `Cloudwatch`, `Azure Monitor`, `MySQL`, `PostgreSQL`, `MSSQL`, `OpenTSDB`, `Oracle`, and `Azure Data Explorer`
-- any community backend data sources with alerting enabled (`backend` and `alerting` properties are set in the [plugin.json]({{< relref "../developers/plugins/metadata.md" >}}))
-
-## Metrics from the alert engine
-
-The alert engine publishes some internal metrics about itself. You can read more about how Grafana publishes [internal metrics]({{< relref "../administration/view-server/internal-metrics.md" >}}).
-
-Metric Name | Type | Description
----------- | ----------- | ----------
-`alerting.alerts` | gauge | How many alerts by state
-`alerting.request_duration_seconds` | histogram | Histogram of requests to the Alerting API
-`alerting.active_configurations` | gauge | The number of active, non default alertmanager configurations for grafana managed alerts
-`alerting.rule_evaluations_total` | counter | The total number of rule evaluations
-`alerting.rule_evaluation_failures_total` | counter | The total number of rule evaluation failures
-`alerting.rule_evaluation_duration_seconds` | summary | The duration for a rule to execute
-`alerting.rule_group_rules` | gauge | The number of rules
+To learn more about the differences between new alerts and the legacy alerts, refer to [What's New with Grafana 8 Alerts]({{< relref "../alerting/difference-old-new.md" >}}).

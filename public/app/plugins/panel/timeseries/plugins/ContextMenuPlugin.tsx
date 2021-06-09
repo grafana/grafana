@@ -10,16 +10,8 @@ import {
   MenuItem,
   UPlotConfigBuilder,
 } from '@grafana/ui';
-import {
-  CartesianCoords2D,
-  DataFrame,
-  DataFrameView,
-  getFieldDisplayName,
-  InterpolateFunction,
-  TimeZone,
-} from '@grafana/data';
+import { CartesianCoords2D, DataFrame, getFieldDisplayName, InterpolateFunction, TimeZone } from '@grafana/data';
 import { useClickAway } from 'react-use';
-import { getFieldLinksSupplier } from '../../../../features/panel/panellinks/linkSuppliers';
 import { pluginLog } from '@grafana/ui/src/components/uPlot/utils';
 
 interface ContextMenuPluginProps {
@@ -75,7 +67,7 @@ export const ContextMenuPlugin: React.FC<ContextMenuPluginProps> = ({
     };
 
     config.addHook('init', (u) => {
-      const canvas = u.root.querySelector<HTMLDivElement>('.u-over');
+      const canvas = u.over;
       plotCanvas.current = canvas || undefined;
       plotCanvas.current?.addEventListener('mousedown', onMouseCapture);
       plotCanvas.current?.addEventListener('mouseleave', () => {});
@@ -207,28 +199,22 @@ export const ContextMenuView: React.FC<ContextMenuProps> = ({
       const hasLinks = field.config.links && field.config.links.length > 0;
 
       if (hasLinks) {
-        const linksSupplier = getFieldLinksSupplier({
-          display: displayValue,
-          name: field.name,
-          view: new DataFrameView(data),
-          rowIndex: dataIdx,
-          colIndex: seriesIdx,
-          field: field.config,
-          hasLinks,
-        });
-
-        if (linksSupplier) {
+        if (field.getLinks) {
           items.push({
-            items: linksSupplier.getLinks(replaceVariables).map<MenuItemProps>((link) => {
-              return {
-                label: link.title,
-                ariaLabel: link.title,
-                url: link.href,
-                target: link.target,
-                icon: `${link.target === '_self' ? 'link' : 'external-link-alt'}` as IconName,
-                onClick: link.onClick,
-              };
-            }),
+            items: field
+              .getLinks({
+                valueRowIndex: dataIdx,
+              })
+              .map<MenuItemProps>((link) => {
+                return {
+                  label: link.title,
+                  ariaLabel: link.title,
+                  url: link.href,
+                  target: link.target,
+                  icon: `${link.target === '_self' ? 'link' : 'external-link-alt'}` as IconName,
+                  onClick: link.onClick,
+                };
+              }),
           });
         }
       }

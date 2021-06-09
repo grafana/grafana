@@ -14,7 +14,7 @@ import {
   useTable,
 } from 'react-table';
 import { FixedSizeList } from 'react-window';
-import { getColumns, sortCaseInsensitive } from './utils';
+import { getColumns, sortCaseInsensitive, sortNumber } from './utils';
 import {
   TableColumnResizeActionCallback,
   TableFilterActionCallback,
@@ -153,7 +153,8 @@ export const Table: FC<Props> = memo((props: Props) => {
       stateReducer: stateReducer,
       initialState: getInitialState(initialSortBy, memoizedColumns),
       sortTypes: {
-        'alphanumeric-insensitive': sortCaseInsensitive,
+        number: sortNumber, // should be replace with the builtin number when react-table is upgraded, see https://github.com/tannerlinsley/react-table/pull/3235
+        'alphanumeric-insensitive': sortCaseInsensitive, // should be replace with the builtin string when react-table is upgraded, see https://github.com/tannerlinsley/react-table/pull/3235
       },
     }),
     [initialSortBy, memoizedColumns, memoizedData, resizable, stateReducer]
@@ -184,7 +185,6 @@ export const Table: FC<Props> = memo((props: Props) => {
               onCellFilterAdded={onCellFilterAdded}
               columnIndex={index}
               columnCount={row.cells.length}
-              dataRowIndex={row.index}
             />
           ))}
         </div>

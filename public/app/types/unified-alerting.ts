@@ -101,6 +101,13 @@ export interface RuleWithLocation {
   rule: RulerRuleDTO;
 }
 
+export interface PromRuleWithLocation {
+  rule: AlertingRule;
+  dataSourceName: string;
+  namespaceName: string;
+  groupName: string;
+}
+
 export interface CloudRuleIdentifier {
   ruleSourceName: string;
   namespace: string;

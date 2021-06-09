@@ -4,7 +4,6 @@ import {
   DataFrame,
   formattedValueToString,
   getFieldColorModeForField,
-  getFieldDisplayName,
   getFieldSeriesColor,
   GrafanaTheme2,
 } from '@grafana/data';
@@ -28,14 +27,28 @@ import {
 import { PanelOptions } from './models.gen';
 import { ScaleDistribution } from '@grafana/ui/src/components/uPlot/models.gen';
 
+function incrRoundDn(num: number, incr: number) {
+  return Math.floor(num / incr) * incr;
+}
+
+function incrRoundUp(num: number, incr: number) {
+  return Math.ceil(num / incr) * incr;
+}
+
 export interface HistogramProps extends Themeable2 {
   options: PanelOptions; // used for diff
   alignedFrame: DataFrame; // This could take HistogramFields
+  bucketSize: number;
   width: number;
   height: number;
   structureRev?: number; // a number that will change when the frames[] structure changes
   legend: VizLegendOptions;
   children?: (builder: UPlotConfigBuilder, frame: DataFrame) => React.ReactNode;
+}
+
+export function getBucketSize(frame: DataFrame) {
+  // assumes BucketMin is fields[0] and BucktMax is fields[1]
+  return frame.fields[1].values.get(0) - frame.fields[0].values.get(0);
 }
 
 const prepConfig = (frame: DataFrame, theme: GrafanaTheme2) => {
@@ -44,7 +57,7 @@ const prepConfig = (frame: DataFrame, theme: GrafanaTheme2) => {
   let builder = new UPlotConfigBuilder();
 
   // assumes BucketMin is fields[0] and BucktMax is fields[1]
-  let bucketSize = frame.fields[1].values.get(0) - frame.fields[0].values.get(0);
+  let bucketSize = getBucketSize(frame);
 
   // splits shifter, to ensure splits always start at first bucket
   let xSplits: uPlot.Axis.Splits = (u, axisIdx, scaleMin, scaleMax, foundIncr, foundSpace) => {
@@ -71,7 +84,24 @@ const prepConfig = (frame: DataFrame, theme: GrafanaTheme2) => {
     distribution: ScaleDistribution.Linear,
     orientation: ScaleOrientation.Horizontal,
     direction: ScaleDirection.Right,
-    range: (u) => [u.data[0][0], u.data[0][u.data[0].length - 1] + bucketSize],
+    range: (u, wantedMin, wantedMax) => {
+      let fullRangeMin = u.data[0][0];
+      let fullRangeMax = u.data[0][u.data[0].length - 1];
+
+      // snap to bucket divisors...
+
+      if (wantedMax === fullRangeMax) {
+        wantedMax += bucketSize;
+      } else {
+        wantedMax = incrRoundUp(wantedMax, bucketSize);
+      }
+
+      if (wantedMin > fullRangeMin) {
+        wantedMin = incrRoundDn(wantedMin, bucketSize);
+      }
+
+      return [wantedMin, wantedMax];
+    },
   });
 
   builder.addScale({
@@ -115,6 +145,14 @@ const prepConfig = (frame: DataFrame, theme: GrafanaTheme2) => {
     theme,
   });
 
+  builder.setCursor({
+    drag: {
+      x: true,
+      y: false,
+      setScale: true,
+    },
+  });
+
   let pathBuilder = uPlot.paths.bars!({ align: 1, size: [1, Infinity] });
 
   let seriesIndex = 0;
@@ -152,8 +190,6 @@ const prepConfig = (frame: DataFrame, theme: GrafanaTheme2) => {
         fieldIndex: i,
         frameIndex: 0,
       },
-      fieldName: getFieldDisplayName(field, frame),
-      hideInLegend: customConfig.hideFrom?.legend,
     });
   }
 
@@ -221,13 +257,14 @@ export class Histogram extends React.Component<HistogramProps, State> {
   }
 
   componentDidUpdate(prevProps: HistogramProps) {
-    const { structureRev, alignedFrame } = this.props;
+    const { structureRev, alignedFrame, bucketSize } = this.props;
 
     if (alignedFrame !== prevProps.alignedFrame) {
       let newState = this.prepState(this.props, false);
 
       if (newState) {
         const shouldReconfig =
+          bucketSize !== prevProps.bucketSize ||
           this.props.options !== prevProps.options ||
           this.state.config === undefined ||
           structureRev !== prevProps.structureRev ||

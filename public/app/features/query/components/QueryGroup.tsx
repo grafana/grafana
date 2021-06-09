@@ -6,6 +6,7 @@ import {
   CustomScrollbar,
   HorizontalGroup,
   Icon,
+  InlineFormLabel,
   Modal,
   ScrollbarPosition,
   stylesFactory,
@@ -201,6 +202,7 @@ export class QueryGroup extends PureComponent<Props, State> {
     return (
       <div>
         <div className={styles.dataSourceRow}>
+          <InlineFormLabel width={'auto'}>Data source</InlineFormLabel>
           <div className={styles.dataSourceRowItem}>
             <DataSourcePicker
               onChange={this.onChangeDataSource}
@@ -342,7 +344,7 @@ export class QueryGroup extends PureComponent<Props, State> {
           </Button>
         )}
         {config.expressionsEnabled && this.isExpressionsSupported(dsSettings) && (
-          <Tooltip content="Experimental feature: queries could stop working in next version" placement="right">
+          <Tooltip content="Beta feature: queries could stop working in next version" placement="right">
             <Button
               icon="plus"
               onClick={this.onAddExpressionClick}

@@ -282,6 +282,35 @@ func TestPluginManager_Init(t *testing.T) {
 		assert.Nil(t, pm.plugins[("test")])
 	})
 
+	t.Run("With back-end plugin with valid v2 private signature (plugin root URL ignores trailing slash)", func(t *testing.T) {
+		origAppURL := setting.AppUrl
+		origAppSubURL := setting.AppSubUrl
+		t.Cleanup(func() {
+			setting.AppUrl = origAppURL
+			setting.AppSubUrl = origAppSubURL
+		})
+		setting.AppUrl = "http://localhost:3000/"
+		setting.AppSubUrl = "/grafana"
+
+		pm := createManager(t, func(pm *PluginManager) {
+			pm.Cfg.PluginsPath = "testdata/valid-v2-pvt-signature-root-url-uri"
+		})
+		err := pm.Init()
+		require.NoError(t, err)
+		require.Empty(t, pm.scanningErrors)
+
+		const pluginID = "test"
+		assert.NotNil(t, pm.plugins[pluginID])
+		assert.Equal(t, "datasource", pm.plugins[pluginID].Type)
+		assert.Equal(t, "Test", pm.plugins[pluginID].Name)
+		assert.Equal(t, pluginID, pm.plugins[pluginID].Id)
+		assert.Equal(t, "1.0.0", pm.plugins[pluginID].Info.Version)
+		assert.Equal(t, plugins.PluginSignatureValid, pm.plugins[pluginID].Signature)
+		assert.Equal(t, plugins.PrivateType, pm.plugins[pluginID].SignatureType)
+		assert.Equal(t, "Will Browne", pm.plugins[pluginID].SignatureOrg)
+		assert.False(t, pm.plugins[pluginID].IsCorePlugin)
+	})
+
 	t.Run("With back-end plugin with valid v2 private signature", func(t *testing.T) {
 		origAppURL := setting.AppUrl
 		t.Cleanup(func() {
@@ -489,7 +518,7 @@ func verifyCorePluginCatalogue(t *testing.T, pm *PluginManager) {
 		"table-old",
 		"text",
 		"state-timeline",
-		"status-grid",
+		"status-history",
 		"timeseries",
 		"welcome",
 		"xychart",
@@ -551,8 +580,6 @@ func verifyBundledPluginCatalogue(t *testing.T, pm *PluginManager) {
 }
 
 type fakeBackendPluginManager struct {
-	backendplugin.Manager
-
 	registeredPlugins []string
 }
 
@@ -564,6 +591,10 @@ func (f *fakeBackendPluginManager) Register(pluginID string, factory backendplug
 func (f *fakeBackendPluginManager) RegisterAndStart(ctx context.Context, pluginID string, factory backendplugin.PluginFactoryFunc) error {
 	f.registeredPlugins = append(f.registeredPlugins, pluginID)
 	return nil
+}
+
+func (f *fakeBackendPluginManager) Get(pluginID string) (backendplugin.Plugin, bool) {
+	return nil, false
 }
 
 func (f *fakeBackendPluginManager) UnregisterAndStop(ctx context.Context, pluginID string) error {
@@ -600,8 +631,14 @@ func (f *fakeBackendPluginManager) CheckHealth(ctx context.Context, pCtx backend
 	return nil, nil
 }
 
+func (f *fakeBackendPluginManager) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	return nil, nil
+}
+
 func (f *fakeBackendPluginManager) CallResource(pluginConfig backend.PluginContext, ctx *models.ReqContext, path string) {
 }
+
+var _ backendplugin.Manager = &fakeBackendPluginManager{}
 
 type fakePluginInstaller struct {
 	installCount   int

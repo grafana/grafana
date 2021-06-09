@@ -5,7 +5,6 @@ import (
 	"strings"
 	"time"
 
-	gokit_log "github.com/go-kit/kit/log"
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
@@ -75,9 +74,8 @@ func (vn *VictoropsNotifier) Notify(ctx context.Context, as ...*types.Alert) (bo
 		messageType = victoropsAlertStateRecovery
 	}
 
-	data := notify.GetTemplateData(ctx, vn.tmpl, as, gokit_log.NewNopLogger())
 	var tmplErr error
-	tmpl := notify.TmplText(vn.tmpl, data, &tmplErr)
+	tmpl, _ := TmplText(ctx, vn.tmpl, as, vn.log, &tmplErr)
 
 	groupKey, err := notify.ExtractGroupKey(ctx)
 	if err != nil {
@@ -92,11 +90,12 @@ func (vn *VictoropsNotifier) Notify(ctx context.Context, as ...*types.Alert) (bo
 	bodyJSON.Set("state_message", tmpl(`{{ template "default.message" . }}`))
 	bodyJSON.Set("monitoring_tool", "Grafana v"+setting.BuildVersion)
 
-	ruleURL, err := joinUrlPath(vn.tmpl.ExternalURL.String(), "/alerting/list")
-	if err != nil {
-		return false, err
-	}
+	ruleURL := joinUrlPath(vn.tmpl.ExternalURL.String(), "/alerting/list", vn.log)
 	bodyJSON.Set("alert_url", ruleURL)
+
+	if tmplErr != nil {
+		vn.log.Debug("failed to template VictorOps message", "err", tmplErr.Error())
+	}
 
 	b, err := bodyJSON.MarshalJSON()
 	if err != nil {

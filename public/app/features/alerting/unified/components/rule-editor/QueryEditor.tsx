@@ -19,14 +19,14 @@ import {
 import { getNextRefIdChar } from 'app/core/utils/query';
 import { defaultCondition } from 'app/features/expressions/utils/expressionTypes';
 import { ExpressionQueryType } from 'app/features/expressions/types';
-import { GrafanaQuery } from 'app/types/unified-alerting-dto';
+import { AlertQuery } from 'app/types/unified-alerting-dto';
 import { AlertingQueryRunner } from '../../state/AlertingQueryRunner';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { isExpressionQuery } from 'app/features/expressions/guards';
 
 interface Props {
-  value?: GrafanaQuery[];
-  onChange: (queries: GrafanaQuery[]) => void;
+  value?: AlertQuery[];
+  onChange: (queries: AlertQuery[]) => void;
 }
 
 interface State {
@@ -34,11 +34,13 @@ interface State {
 }
 export class QueryEditor extends PureComponent<Props, State> {
   private runner: AlertingQueryRunner;
+  private queries: AlertQuery[];
 
   constructor(props: Props) {
     super(props);
     this.state = { panelDataByRefId: {} };
     this.runner = new AlertingQueryRunner();
+    this.queries = props.value ?? [];
   }
 
   componentDidMount() {
@@ -52,29 +54,34 @@ export class QueryEditor extends PureComponent<Props, State> {
   }
 
   onRunQueries = () => {
-    const { value = [] } = this.props;
-    this.runner.run(value);
+    const { queries } = this;
+    this.runner.run(queries);
   };
 
   onCancelQueries = () => {
     this.runner.cancel();
   };
 
-  onDuplicateQuery = (query: GrafanaQuery) => {
-    const { onChange, value = [] } = this.props;
-    onChange(addQuery(value, query));
+  onChangeQueries = (queries: AlertQuery[]) => {
+    this.queries = queries;
+    this.props.onChange(queries);
+  };
+
+  onDuplicateQuery = (query: AlertQuery) => {
+    const { queries } = this;
+    this.onChangeQueries(addQuery(queries, query));
   };
 
   onNewAlertingQuery = () => {
-    const { onChange, value = [] } = this.props;
+    const { queries } = this;
     const defaultDataSource = getDatasourceSrv().getInstanceSettings('default');
 
     if (!defaultDataSource) {
       return;
     }
 
-    onChange(
-      addQuery(value, {
+    this.onChangeQueries(
+      addQuery(queries, {
         datasourceUid: defaultDataSource.uid,
         model: {
           refId: '',
@@ -85,10 +92,10 @@ export class QueryEditor extends PureComponent<Props, State> {
   };
 
   onNewExpressionQuery = () => {
-    const { onChange, value = [] } = this.props;
+    const { queries } = this;
 
-    onChange(
-      addQuery(value, {
+    this.onChangeQueries(
+      addQuery(queries, {
         datasourceUid: ExpressionDatasourceUID,
         model: expressionDatasource.newQuery({
           type: ExpressionQueryType.classic,
@@ -111,7 +118,7 @@ export class QueryEditor extends PureComponent<Props, State> {
           Query
         </Button>
         {config.expressionsEnabled && (
-          <Tooltip content="Experimental feature: queries could stop working in next version" placement="right">
+          <Tooltip content="Beta feature: queries could stop working in next version" placement="right">
             <Button
               type="button"
               icon="plus"
@@ -166,7 +173,7 @@ export class QueryEditor extends PureComponent<Props, State> {
         <QueryRows
           data={panelDataByRefId}
           queries={value}
-          onQueriesChange={this.props.onChange}
+          onQueriesChange={this.onChangeQueries}
           onDuplicateQuery={this.onDuplicateQuery}
           onRunQueries={this.onRunQueries}
         />
@@ -177,13 +184,10 @@ export class QueryEditor extends PureComponent<Props, State> {
   }
 }
 
-const addQuery = (
-  queries: GrafanaQuery[],
-  queryToAdd: Pick<GrafanaQuery, 'model' | 'datasourceUid'>
-): GrafanaQuery[] => {
+const addQuery = (queries: AlertQuery[], queryToAdd: Pick<AlertQuery, 'model' | 'datasourceUid'>): AlertQuery[] => {
   const refId = getNextRefIdChar(queries);
 
-  const query: GrafanaQuery = {
+  const query: AlertQuery = {
     ...queryToAdd,
     refId,
     queryType: '',
@@ -211,6 +215,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
     container: css`
       background-color: ${theme.colors.background.primary};
       height: 100%;
+      max-width: ${theme.breakpoints.values.xxl}px;
     `,
     runWrapper: css`
       margin-top: ${theme.spacing(1)};

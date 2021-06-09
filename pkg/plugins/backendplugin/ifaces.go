@@ -24,13 +24,12 @@ type Manager interface {
 	CollectMetrics(ctx context.Context, pluginID string) (*backend.CollectMetricsResult, error)
 	// CheckHealth checks the health of a registered backend plugin.
 	CheckHealth(ctx context.Context, pCtx backend.PluginContext) (*backend.CheckHealthResult, error)
+	// QueryData query data from a registered backend plugin.
+	QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error)
 	// CallResource calls a plugin resource.
 	CallResource(pluginConfig backend.PluginContext, ctx *models.ReqContext, path string)
 	// Get plugin by its ID.
 	Get(pluginID string) (Plugin, bool)
-	// GetDataPlugin gets a DataPlugin with a certain ID or nil if it doesn't exist.
-	// TODO: interface{} is the return type in order to break a dependency cycle. Should be plugins.DataPlugin.
-	GetDataPlugin(pluginID string) interface{}
 }
 
 // Plugin is the backend plugin interface.
@@ -45,6 +44,7 @@ type Plugin interface {
 	IsDecommissioned() bool
 	backend.CollectMetricsHandler
 	backend.CheckHealthHandler
+	backend.QueryDataHandler
 	backend.CallResourceHandler
 	backend.StreamHandler
 }

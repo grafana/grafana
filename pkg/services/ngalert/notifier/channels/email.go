@@ -2,12 +2,9 @@ package channels
 
 import (
 	"context"
-	"fmt"
 	"net/url"
 	"path"
 
-	gokit_log "github.com/go-kit/kit/log"
-	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 
@@ -16,7 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	old_notifiers "github.com/grafana/grafana/pkg/services/alerting/notifiers"
-	"github.com/grafana/grafana/pkg/services/ngalert/logging"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -66,25 +62,23 @@ func NewEmailNotifier(model *NotificationChannelConfig, t *template.Template) (*
 
 // Notify sends the alert notification.
 func (en *EmailNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
-	// We only need ExternalURL from this template object. This hack should go away with https://github.com/prometheus/alertmanager/pull/2508.
-	data, err := ExtendData(notify.GetTemplateData(ctx, &template.Template{ExternalURL: en.tmpl.ExternalURL}, as, gokit_log.NewLogfmtLogger(logging.NewWrapper(en.log))))
-	if err != nil {
-		return false, err
-	}
 	var tmplErr error
-	tmpl := TmplText(en.tmpl, data, &tmplErr)
+	tmpl, data := TmplText(ctx, en.tmpl, as, en.log, &tmplErr)
 
 	title := tmpl(`{{ template "default.title" . }}`)
 
+	alertPageURL := en.tmpl.ExternalURL.String()
+	ruleURL := en.tmpl.ExternalURL.String()
 	u, err := url.Parse(en.tmpl.ExternalURL.String())
-	if err != nil {
-		return false, fmt.Errorf("failed to parse external URL: %w", err)
+	if err == nil {
+		basePath := u.Path
+		u.Path = path.Join(basePath, "/alerting/list")
+		ruleURL = u.String()
+		u.RawQuery = "alertState=firing&view=state"
+		alertPageURL = u.String()
+	} else {
+		en.log.Debug("failed to parse external URL", "url", en.tmpl.ExternalURL.String(), "err", err.Error())
 	}
-	basePath := u.Path
-	u.Path = path.Join(basePath, "/alerting/list")
-	ruleURL := u.String()
-	u.RawQuery = "alertState=firing&view=state"
-	alertPageURL := u.String()
 
 	cmd := &models.SendEmailCommandSync{
 		SendEmailCommand: models.SendEmailCommand{
@@ -108,7 +102,7 @@ func (en *EmailNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 	}
 
 	if tmplErr != nil {
-		return false, fmt.Errorf("failed to template email message: %w", tmplErr)
+		en.log.Debug("failed to template email message", "err", tmplErr.Error())
 	}
 
 	if err := bus.DispatchCtx(ctx, cmd); err != nil {
