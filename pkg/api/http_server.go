@@ -13,6 +13,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/services/librarypanels"
 
@@ -105,6 +106,7 @@ type HTTPServer struct {
 	Alertmanager           *notifier.Alertmanager                  `inject:""`
 	LibraryPanelService    librarypanels.Service                   `inject:""`
 	LibraryElementService  libraryelements.Service                 `inject:""`
+	SocialService          *social.SocialService                   `inject:""`
 	Listener               net.Listener
 }
 

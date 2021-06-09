@@ -51,7 +51,7 @@ func (hs *HTTPServer) OAuthLogin(ctx *models.ReqContext) {
 
 	name := ctx.Params(":name")
 	loginInfo.AuthModule = name
-	connect, ok := social.SocialMap[name]
+	connect, ok := hs.SocialService.SocialMap[name]
 	if !ok {
 		hs.handleOAuthLoginError(ctx, loginInfo, LoginError{
 			HttpStatus:    http.StatusNotFound,
