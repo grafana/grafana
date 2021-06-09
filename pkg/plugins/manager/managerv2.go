@@ -96,6 +96,11 @@ func (m *PluginManagerV2) Run(ctx context.Context) error {
 	return ctx.Err()
 }
 
+func (m *PluginManagerV2) IsDisabled() bool {
+	_, exists := m.Cfg.FeatureToggles["pluginManagerV2"]
+	return !exists
+}
+
 func (m *PluginManagerV2) RegisterCorePlugin(ctx context.Context, pluginJSONPath string, factory backendplugin.PluginFactoryFunc) error {
 	fullPath := filepath.Join(m.Cfg.StaticRootPath, "app/plugins", pluginJSONPath)
 
@@ -146,17 +151,12 @@ func (m *PluginManagerV2) installPlugins(path string, requireSigning bool) error
 		if err != nil {
 			return err
 		}
-		if err := m.RegisterAndStart(context.Background(), p); err != nil {
+		if err := m.registerAndStart(context.Background(), p); err != nil {
 			return err
 		}
 	}
 
 	return nil
-}
-
-func (m *PluginManagerV2) IsDisabled() bool {
-	_, exists := m.Cfg.FeatureToggles["pluginManagerV2"]
-	return !exists
 }
 
 func (m *PluginManagerV2) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
@@ -184,32 +184,6 @@ func (m *PluginManagerV2) QueryData(ctx context.Context, req *backend.QueryDataR
 	}
 
 	return resp, err
-}
-
-func (m *PluginManagerV2) StartPlugin(ctx context.Context, pluginID string) error {
-	p := m.GetPlugin(pluginID)
-	if p == nil {
-		return backendplugin.ErrPluginNotRegistered
-	}
-
-	if p.IsManaged() {
-		return errors.New("backend plugin is managed and cannot be manually started")
-	}
-
-	return startPluginAndRestartKilledProcesses(ctx, p)
-}
-
-func (m *PluginManagerV2) StopPlugin(ctx context.Context, pluginID string) error {
-	p := m.GetPlugin(pluginID)
-	if p == nil {
-		return backendplugin.ErrPluginNotRegistered
-	}
-
-	if p.IsManaged() {
-		return errors.New("backend plugin is managed and cannot be manually started")
-	}
-
-	return stopPluginProcess(ctx, p)
 }
 
 func (m *PluginManagerV2) GetPlugin(pluginID string) *plugins.PluginV2 {
@@ -248,8 +222,21 @@ func (m *PluginManagerV2) Apps() {
 
 }
 
+func (m *PluginManagerV2) Plugins() {
+
+}
+
 func (m *PluginManagerV2) Errors(pluginID string) {
 	//m.PluginLoader.errors
+}
+
+func (m *PluginManagerV2) StaticRoutes() []*plugins.PluginStaticRoute {
+	var staticRoutes []*plugins.PluginStaticRoute
+	for _, plugin := range m.plugins {
+		staticRoutes = append(staticRoutes, plugin.GetStaticRoutes()...)
+	}
+
+	return staticRoutes
 }
 
 func (m *PluginManagerV2) CallResource(pCtx backend.PluginContext, reqCtx *models.ReqContext, path string) {
@@ -482,7 +469,7 @@ func (m *PluginManagerV2) Register(p *plugins.PluginV2) error {
 	return nil
 }
 
-func (m *PluginManagerV2) RegisterAndStart(ctx context.Context, plugin *plugins.PluginV2) error {
+func (m *PluginManagerV2) registerAndStart(ctx context.Context, plugin *plugins.PluginV2) error {
 	err := m.Register(plugin)
 	if err != nil {
 		return err
@@ -657,14 +644,6 @@ func startPluginAndRestartKilledProcesses(ctx context.Context, p *plugins.Plugin
 			p.Logger().Error("Attempt to restart killed plugin process failed", "error", err)
 		}
 	}(ctx, p)
-
-	return nil
-}
-
-func stopPluginProcess(ctx context.Context, p *plugins.PluginV2) error {
-	if err := p.Stop(ctx); err != nil {
-		return err
-	}
 
 	return nil
 }

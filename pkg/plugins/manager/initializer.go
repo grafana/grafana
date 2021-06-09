@@ -39,7 +39,6 @@ func (l *Initializer) Init() error {
 	return nil
 }
 
-// Can this step be actually done through pointer receiver?
 func (l *Initializer) Initialize(p *plugins.PluginV2) error {
 	if len(p.Dependencies.Plugins) == 0 {
 		p.Dependencies.Plugins = []plugins.PluginDependencyItem{}

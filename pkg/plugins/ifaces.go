@@ -116,17 +116,17 @@ type PluginInitializerV2 interface {
 }
 
 type PluginManagerV2 interface {
-	StartPlugin(ctx context.Context, pluginID string) error
-	StopPlugin(ctx context.Context, pluginID string) error
-
 	// Fetch plugin info
 	DataSource(pluginID string)
 	Panel(pluginID string)
 	App(pluginID string)
 	Renderer()
 
+	Plugins()
 	DataSources()
 	Apps()
+
+	StaticRoutes() []*PluginStaticRoute
 
 	// Plugin error metadata
 	Errors(pluginID string)
