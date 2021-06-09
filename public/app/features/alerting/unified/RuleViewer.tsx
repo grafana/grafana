@@ -15,7 +15,6 @@ import { AlertingQueryRunner } from './state/AlertingQueryRunner';
 import { useCombinedRule } from './hooks/useCombinedRule';
 import { alertRuleToQueries } from './utils/query';
 import { RuleState } from './components/rules/RuleState';
-import { ruleIdentifierFromParam } from './utils/rules';
 import { getRulesSourceByName } from './utils/datasource';
 import { DetailsField } from './components/DetailsField';
 import { RuleHealth } from './components/rules/RuleHealth';
@@ -27,6 +26,7 @@ import { RuleViewerLayout, RuleViewerLayoutContent } from './components/rule-vie
 import { AlertLabels } from './components/AlertLabels';
 import { RuleDetailsExpression } from './components/rules/RuleDetailsExpression';
 import { RuleDetailsAnnotations } from './components/rules/RuleDetailsAnnotations';
+import * as ruleId from './utils/rule-id';
 
 type RuleViewerProps = GrafanaRouteComponentProps<{ id?: string; sourceName?: string }>;
 
@@ -36,7 +36,7 @@ const errorTitle = 'Could not view rule';
 export function RuleViewer({ match }: RuleViewerProps) {
   const styles = useStyles2(getStyles);
   const { id, sourceName } = match.params;
-  const identifier = ruleIdentifierFromParam(id);
+  const identifier = ruleId.tryParse(id, true);
   const { loading, error, result: rule } = useCombinedRule(identifier, sourceName);
   const runner = useMemo(() => new AlertingQueryRunner(), []);
   const data = useObservable(runner.get());

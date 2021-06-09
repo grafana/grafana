@@ -3,10 +3,10 @@ import { useDispatch } from 'react-redux';
 import { CombinedRule, RuleIdentifier, RuleNamespace } from 'app/types/unified-alerting';
 import { AsyncRequestMapSlice, AsyncRequestState, initialAsyncRequestState } from '../utils/redux';
 import { useCombinedRuleNamespaces } from './useCombinedRuleNamespaces';
-import { equalIdentifiers, getRuleIdentifier } from '../utils/rules';
 import { useUnifiedAlertingSelector } from './useUnifiedAlertingSelector';
 import { fetchPromRulesAction, fetchRulerRulesAction } from '../state/actions';
 import { RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
+import * as ruleId from '../utils/rule-id';
 
 export function useCombinedRule(
   identifier: RuleIdentifier | undefined,
@@ -23,13 +23,9 @@ export function useCombinedRule(
     for (const namespace of combinedRules) {
       for (const group of namespace.groups) {
         for (const rule of group.rules) {
-          if (!rule.rulerRule) {
-            continue;
-          }
+          const id = ruleId.fromCombinedRule(ruleSourceName, rule);
 
-          const id = getRuleIdentifier(ruleSourceName, namespace.name, group.name, rule.rulerRule);
-
-          if (equalIdentifiers(id, identifier)) {
+          if (ruleId.equal(id, identifier)) {
             return rule;
           }
         }

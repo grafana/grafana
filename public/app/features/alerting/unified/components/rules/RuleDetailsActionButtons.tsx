@@ -11,7 +11,7 @@ import { deleteRuleAction } from '../../state/actions';
 import { Annotation } from '../../utils/constants';
 import { getRulesSourceName, isCloudRulesSource } from '../../utils/datasource';
 import { createExploreLink, createViewLink } from '../../utils/misc';
-import { getRuleIdentifier, stringifyRuleIdentifier } from '../../utils/rules';
+import * as ruleId from '../../utils/rule-id';
 
 interface Props {
   rule: CombinedRule;
@@ -34,7 +34,7 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource }) => {
 
   const deleteRule = () => {
     if (ruleToDelete && ruleToDelete.rulerRule) {
-      const identifier = getRuleIdentifier(
+      const identifier = ruleId.fromRulerRule(
         getRulesSourceName(ruleToDelete.namespace.rulesSource),
         ruleToDelete.namespace.name,
         ruleToDelete.group.name,
@@ -112,7 +112,7 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource }) => {
     }
   }
 
-  if (rulerRule && !isViewMode) {
+  if (!isViewMode) {
     rightButtons.push(
       <LinkButton
         className={style.button}
@@ -128,16 +128,12 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource }) => {
   }
 
   if (isEditable && rulerRule) {
-    const editURL = urlUtil.renderUrl(
-      `/alerting/${encodeURIComponent(
-        stringifyRuleIdentifier(
-          getRuleIdentifier(getRulesSourceName(rulesSource), namespace.name, group.name, rulerRule)
-        )
-      )}/edit`,
-      {
-        returnTo,
-      }
-    );
+    const sourceName = getRulesSourceName(rulesSource);
+    const identifier = ruleId.fromRulerRule(sourceName, namespace.name, group.name, rulerRule);
+
+    const editURL = urlUtil.renderUrl(`/alerting/${ruleId.stringify(identifier, true)}/edit`, {
+      returnTo,
+    });
 
     rightButtons.push(
       <LinkButton className={style.button} size="xs" key="edit" variant="secondary" icon="pen" href={editURL}>
