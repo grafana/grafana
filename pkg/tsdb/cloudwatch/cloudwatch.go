@@ -102,7 +102,7 @@ func NewInstanceSettings() datasource.InstanceFactoryFunc {
 	return func(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		jsonData := struct {
 			Profile       string `json:"profile"`
-			Region        string `json:"defaulRegion"`
+			Region        string `json:"defaultRegion"`
 			AssumeRoleARN string `json:"assumeRoleArn"`
 			ExternalID    string `json:"externalId"`
 			Endpoint      string `json:"endpoint"`
