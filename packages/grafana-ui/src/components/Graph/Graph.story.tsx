@@ -1,12 +1,10 @@
 import React from 'react';
 import { Graph } from '@grafana/ui';
-import Chart from '../Chart';
 import { dateTime, ArrayVector, FieldType, GraphSeriesXY, FieldColorModeId } from '@grafana/data';
 import { Story } from '@storybook/react';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
-import { TooltipContentProps, TooltipMode } from '../Chart/Tooltip';
+import { VizTooltip, TooltipDisplayMode, VizTooltipContentProps } from '../VizTooltip';
 import { JSONFormatter } from '../JSONFormatter/JSONFormatter';
-import { NOOP_CONTROL } from '../../utils/storybook/noopControl';
 import { GraphProps } from './Graph';
 
 const series: GraphSeriesXY[] = [
@@ -86,6 +84,9 @@ export default {
     knobs: {
       disable: true,
     },
+    controls: {
+      exclude: ['className', 'ariaLabel'],
+    },
   },
   args: {
     series: series,
@@ -106,24 +107,20 @@ export default {
     tooltipMode: { control: { type: 'radio', options: ['multi', 'single'] } },
     timeZone: { control: { type: 'radio', options: ['browser', 'utc'] } },
     width: { control: { type: 'range', min: 200, max: 800 } },
-    height: { control: { type: 'range', min: 200, max: 800 } },
+    height: { control: { type: 'range', min: 200, max: 1700, step: 300 } },
     lineWidth: { control: { type: 'range', min: 1, max: 10 } },
-    className: NOOP_CONTROL,
-    series: NOOP_CONTROL,
-    timeRange: NOOP_CONTROL,
-    ariaLabel: NOOP_CONTROL,
   },
 };
 
-export const WithTooltip: Story<GraphProps & { tooltipMode: TooltipMode }> = ({ tooltipMode, ...args }) => {
+export const WithTooltip: Story<GraphProps & { tooltipMode: TooltipDisplayMode }> = ({ tooltipMode, ...args }) => {
   return (
     <Graph {...args}>
-      <Chart.Tooltip mode={tooltipMode} />
+      <VizTooltip mode={tooltipMode} />
     </Graph>
   );
 };
 
-const CustomGraphTooltip = ({ activeDimensions }: TooltipContentProps) => {
+const CustomGraphTooltip = ({ activeDimensions }: VizTooltipContentProps) => {
   return (
     <div style={{ height: '200px' }}>
       <div>Showing currently active active dimensions:</div>
@@ -132,10 +129,13 @@ const CustomGraphTooltip = ({ activeDimensions }: TooltipContentProps) => {
   );
 };
 
-export const WithCustomTooltip: Story<GraphProps & { tooltipMode: TooltipMode }> = ({ tooltipMode, ...args }) => {
+export const WithCustomTooltip: Story<GraphProps & { tooltipMode: TooltipDisplayMode }> = ({
+  tooltipMode,
+  ...args
+}) => {
   return (
     <Graph {...args}>
-      <Chart.Tooltip mode={tooltipMode} tooltipComponent={CustomGraphTooltip} />
+      <VizTooltip mode={tooltipMode} tooltipComponent={CustomGraphTooltip} />
     </Graph>
   );
 };

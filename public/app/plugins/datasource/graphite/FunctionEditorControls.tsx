@@ -11,6 +11,10 @@ export interface FunctionDescriptor {
     fake: boolean;
     name: string;
     params: string[];
+    /**
+     * True if the function was not found on the list of available function descriptions.
+     */
+    unknown?: boolean;
   };
 }
 

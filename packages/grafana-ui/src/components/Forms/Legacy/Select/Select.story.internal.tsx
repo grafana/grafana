@@ -1,11 +1,10 @@
 import React, { useState, useCallback } from 'react';
 import { action } from '@storybook/addon-actions';
-import { Story } from '@storybook/react';
+import { Meta, Story } from '@storybook/react';
 import { withCenteredStory } from '../../../../utils/storybook/withCenteredStory';
 import { UseState } from '../../../../utils/storybook/UseState';
 import { SelectableValue } from '@grafana/data';
 import { Select, AsyncSelect as AsyncSelectComponent } from './Select';
-import { NOOP_CONTROL } from '../../../../utils/storybook/noopControl';
 
 export default {
   title: 'Forms/Legacy/Select',
@@ -15,29 +14,32 @@ export default {
     knobs: {
       disable: true,
     },
+    controls: {
+      exclude: [
+        'className',
+        'menuPlacement',
+        'menuPosition',
+        'maxMenuHeight',
+        'minMenuHeight',
+        'maxVisibleValues',
+        'prefix',
+        'renderControl',
+        'value',
+        'tooltipContent',
+        'components',
+        'inputValue',
+        'id',
+        'inputId',
+        'defaultValue',
+        'loading',
+        'aria-label',
+      ],
+    },
   },
   argTypes: {
     width: { control: { type: 'range', min: 5, max: 30 } },
-    className: NOOP_CONTROL,
-    menuPlacement: NOOP_CONTROL,
-    menuPosition: NOOP_CONTROL,
-    maxMenuHeight: NOOP_CONTROL,
-    minMenuHeight: NOOP_CONTROL,
-    maxVisibleValues: NOOP_CONTROL,
-    prefix: NOOP_CONTROL,
-    renderControl: NOOP_CONTROL,
-    value: NOOP_CONTROL,
-    options: NOOP_CONTROL,
-    tooltipContent: NOOP_CONTROL,
-    components: NOOP_CONTROL,
-    inputValue: NOOP_CONTROL,
-    id: NOOP_CONTROL,
-    inputId: NOOP_CONTROL,
-    defaultValue: NOOP_CONTROL,
-    loading: NOOP_CONTROL,
-    'aria-label': NOOP_CONTROL,
   },
-};
+} as Meta;
 
 const initialValue: SelectableValue<string> = { label: 'A label', value: 'A value' };
 

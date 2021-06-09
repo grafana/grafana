@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import { find, isEmpty, isNil, sortBy, uniq } from 'lodash';
 import $ from 'jquery';
 import * as d3 from 'd3';
 import { contextSrv } from 'app/core/core';
@@ -37,7 +37,7 @@ coreModule.directive('colorLegend', () => {
         const legendWidth = Math.floor(legendElem.outerWidth() ?? 10);
 
         if (panel.color.mode === 'spectrum') {
-          const colorScheme: any = _.find(ctrl.colorSchemes, {
+          const colorScheme: any = find(ctrl.colorSchemes, {
             value: panel.color.colorScheme,
           });
           const colorScale = getColorScale(colorScheme, contextSrv.user.lightTheme, legendWidth);
@@ -69,15 +69,15 @@ coreModule.directive('heatmapLegend', () => {
 
       function render() {
         clearLegend(elem);
-        if (!_.isEmpty(ctrl.data) && !_.isEmpty(ctrl.data.cards)) {
+        if (!isEmpty(ctrl.data) && !isEmpty(ctrl.data.cards)) {
           const cardStats = ctrl.data.cardStats;
-          const rangeFrom = _.isNil(panel.color.min) ? Math.max(cardStats.min, 0) : panel.color.min;
-          const rangeTo = _.isNil(panel.color.max) ? cardStats.max : panel.color.max;
+          const rangeFrom = isNil(panel.color.min) ? Math.max(cardStats.min, 0) : panel.color.min;
+          const rangeTo = isNil(panel.color.max) ? cardStats.max : panel.color.max;
           const maxValue = cardStats.max;
           const minValue = cardStats.min;
 
           if (panel.color.mode === 'spectrum') {
-            const colorScheme: any = _.find(ctrl.colorSchemes, {
+            const colorScheme: any = find(ctrl.colorSchemes, {
               value: panel.color.colorScheme,
             });
             drawColorLegend(elem, colorScheme, rangeFrom, rangeTo, maxValue, minValue);
@@ -313,7 +313,7 @@ function buildLegendTicks(rangeFrom: number, rangeTo: number, maxValue: number, 
     ticks.push(maxValue);
   }
   ticks.push(rangeTo);
-  ticks = _.sortBy(_.uniq(ticks));
+  ticks = sortBy(uniq(ticks));
   return ticks;
 }
 

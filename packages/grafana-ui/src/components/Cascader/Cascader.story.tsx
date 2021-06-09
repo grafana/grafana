@@ -1,6 +1,5 @@
-import { Story } from '@storybook/react';
+import { Story, Meta } from '@storybook/react';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
-import { NOOP_CONTROL } from '../../utils/storybook/noopControl';
 import { Cascader } from '@grafana/ui';
 import { CascaderOption, CascaderProps } from './Cascader';
 import mdx from './Cascader.mdx';
@@ -43,6 +42,9 @@ export default {
     knobs: {
       disable: true,
     },
+    controls: {
+      exclude: ['placeholder', 'initialValue', 'changeOnSelect'],
+    },
   },
   args: {
     onSelect,
@@ -50,11 +52,8 @@ export default {
   },
   argTypes: {
     width: { control: { type: 'range', min: 0, max: 70 } },
-    placeholder: NOOP_CONTROL,
-    initialValue: NOOP_CONTROL,
-    changeOnSelect: NOOP_CONTROL,
   },
-};
+} as Meta;
 
 const Template: Story<CascaderProps> = (args) => <Cascader {...args} />;
 

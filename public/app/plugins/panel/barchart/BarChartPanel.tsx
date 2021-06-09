@@ -1,22 +1,15 @@
-import React, { useCallback, useMemo } from 'react';
-import { FieldType, PanelProps, VizOrientation } from '@grafana/data';
-import { BarChart, BarChartOptions, GraphNGLegendEvent } from '@grafana/ui';
-import { changeSeriesColorConfigFactory } from '../timeseries/overrides/colorSeriesConfigFactory';
-import { hideSeriesConfigFactory } from '../timeseries/overrides/hideSeriesConfigFactory';
+import React, { useMemo } from 'react';
+import { FieldType, PanelProps, TimeRange, VizOrientation } from '@grafana/data';
+import { TooltipPlugin } from '@grafana/ui';
+import { BarChartOptions } from './types';
+import { BarChart } from './BarChart';
 
 interface Props extends PanelProps<BarChartOptions> {}
 
 /**
  * @alpha
  */
-export const BarChartPanel: React.FunctionComponent<Props> = ({
-  data,
-  options,
-  width,
-  height,
-  fieldConfig,
-  onFieldConfigChange,
-}) => {
+export const BarChartPanel: React.FunctionComponent<Props> = ({ data, options, width, height, timeZone }) => {
   const orientation = useMemo(() => {
     if (!options.orientation || options.orientation === VizOrientation.Auto) {
       return width < height ? VizOrientation.Horizontal : VizOrientation.Vertical;
@@ -24,20 +17,6 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({
 
     return options.orientation;
   }, [width, height, options.orientation]);
-
-  const onLegendClick = useCallback(
-    (event: GraphNGLegendEvent) => {
-      onFieldConfigChange(hideSeriesConfigFactory(event, fieldConfig, data.series));
-    },
-    [fieldConfig, onFieldConfigChange, data.series]
-  );
-
-  const onSeriesColorChange = useCallback(
-    (label: string, color: string) => {
-      onFieldConfigChange(changeSeriesColorConfigFactory(label, color, fieldConfig));
-    },
-    [fieldConfig, onFieldConfigChange]
-  );
 
   if (!data || !data.series?.length) {
     return (
@@ -65,13 +44,18 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({
 
   return (
     <BarChart
-      data={data.series}
+      frames={data.series}
+      timeZone={timeZone}
+      timeRange={({ from: 1, to: 1 } as unknown) as TimeRange} // HACK
+      structureRev={data.structureRev}
       width={width}
       height={height}
-      onLegendClick={onLegendClick}
-      onSeriesColorChange={onSeriesColorChange}
       {...options}
       orientation={orientation}
-    />
+    >
+      {(config, alignedFrame) => {
+        return <TooltipPlugin data={alignedFrame} config={config} mode={options.tooltip.mode} timeZone={timeZone} />;
+      }}
+    </BarChart>
   );
 };

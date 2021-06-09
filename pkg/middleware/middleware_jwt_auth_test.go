@@ -40,7 +40,7 @@ func TestMiddlewareJWTAuth(t *testing.T) {
 				"foo-username": myUsername,
 			}, nil
 		}
-		bus.AddHandler("get-sign-user", func(query *models.GetSignedInUserQuery) error {
+		bus.AddHandlerCtx("get-sign-user", func(ctx context.Context, query *models.GetSignedInUserQuery) error {
 			query.Result = &models.SignedInUser{
 				UserId: id,
 				OrgId:  orgID,
@@ -67,7 +67,7 @@ func TestMiddlewareJWTAuth(t *testing.T) {
 				"foo-email": myEmail,
 			}, nil
 		}
-		bus.AddHandler("get-sign-user", func(query *models.GetSignedInUserQuery) error {
+		bus.AddHandlerCtx("get-sign-user", func(ctx context.Context, query *models.GetSignedInUserQuery) error {
 			query.Result = &models.SignedInUser{
 				UserId: id,
 				OrgId:  orgID,

@@ -78,7 +78,7 @@ const reducer = (state: ManageDashboardsState, action: SearchAction) => {
             return [...filtered, { ...result, items: result.items.filter((item) => !dashboards.includes(item.uid)) }];
           }
           return filtered;
-        }, []),
+        }, [] as DashboardSection[]),
       };
     }
     default:

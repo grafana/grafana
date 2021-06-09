@@ -10,7 +10,6 @@ interface Props {
 }
 
 const REFRESH_OPTIONS = [
-  { label: 'Never', value: VariableRefresh.never },
   { label: 'On dashboard load', value: VariableRefresh.onDashboardLoad },
   { label: 'On time range change', value: VariableRefresh.onTimeRangeChanged },
 ];

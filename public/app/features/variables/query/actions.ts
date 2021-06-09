@@ -1,15 +1,21 @@
-import { toDataQueryError, getDataSourceSrv } from '@grafana/runtime';
+import { getDataSourceSrv, toDataQueryError } from '@grafana/runtime';
 import { updateOptions } from '../state/actions';
 import { QueryVariableModel } from '../types';
 import { ThunkResult } from '../../../types';
 import { getVariable } from '../state/selectors';
-import { addVariableEditorError, changeVariableEditorExtended, removeVariableEditorError } from '../editor/reducer';
+import {
+  addVariableEditorError,
+  changeVariableEditorExtended,
+  removeVariableEditorError,
+  VariableEditorState,
+} from '../editor/reducer';
 import { changeVariableProp } from '../state/sharedReducer';
 import { toVariableIdentifier, toVariablePayload, VariableIdentifier } from '../state/types';
 import { getVariableQueryEditor } from '../editor/getVariableQueryEditor';
 import { Subscription } from 'rxjs';
 import { getVariableQueryRunner } from './VariableQueryRunner';
 import { variableQueryObserver } from './variableQueryObserver';
+import { QueryVariableEditorState } from './reducer';
 
 export const updateQueryVariableOptions = (
   identifier: VariableIdentifier,
@@ -58,7 +64,12 @@ export const changeQueryVariableDataSource = (
 ): ThunkResult<void> => {
   return async (dispatch, getState) => {
     try {
+      const editorState = getState().templating.editor as VariableEditorState<QueryVariableEditorState>;
+      const previousDatasource = editorState.extended?.dataSource;
       const dataSource = await getDataSourceSrv().get(name ?? '');
+      if (previousDatasource && previousDatasource.type !== dataSource?.type) {
+        dispatch(changeVariableProp(toVariablePayload(identifier, { propName: 'query', propValue: '' })));
+      }
       dispatch(changeVariableEditorExtended({ propName: 'dataSource', propValue: dataSource }));
 
       const VariableQueryEditor = await getVariableQueryEditor(dataSource);

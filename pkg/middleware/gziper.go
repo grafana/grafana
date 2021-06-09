@@ -14,7 +14,8 @@ var gzipIgnoredPathPrefixes = []string{
 	"/api/datasources/proxy", // Ignore datasource proxy requests.
 	"/api/plugin-proxy/",
 	"/metrics",
-	"/live/ws", // WebSocket does not support gzip compression.
+	"/api/live/ws",   // WebSocket does not support gzip compression.
+	"/api/live/push", // WebSocket does not support gzip compression.
 }
 
 func Gziper() macaron.Handler {

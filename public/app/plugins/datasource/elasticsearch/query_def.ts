@@ -1,4 +1,4 @@
-import { BucketAggregation } from './components/QueryEditor/BucketAggregationsEditor/aggregations';
+import { DateHistogram } from './components/QueryEditor/BucketAggregationsEditor/aggregations';
 import {
   ExtendedStat,
   MetricAggregation,
@@ -36,7 +36,7 @@ export function defaultMetricAgg(id = '1'): MetricAggregation {
   return { type: 'count', id };
 }
 
-export function defaultBucketAgg(id = '1'): BucketAggregation {
+export function defaultBucketAgg(id = '1'): DateHistogram {
   return { type: 'date_histogram', id, settings: { interval: 'auto' } };
 }
 

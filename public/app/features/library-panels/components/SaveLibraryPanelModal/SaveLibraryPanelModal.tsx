@@ -1,16 +1,15 @@
 import React, { useCallback, useState } from 'react';
-import { Button, HorizontalGroup, Icon, Input, Modal, useStyles } from '@grafana/ui';
+import { Button, Icon, Input, Modal, useStyles } from '@grafana/ui';
 import { useAsync, useDebounce } from 'react-use';
-import { getBackendSrv } from 'app/core/services/backend_srv';
 import { usePanelSave } from '../../utils/usePanelSave';
-import { getLibraryPanelConnectedDashboards } from '../../state/api';
+import { getConnectedDashboards } from '../../state/api';
 import { PanelModelWithLibraryPanel } from '../../types';
 import { getModalStyles } from '../../styles';
 
 interface Props {
   panel: PanelModelWithLibraryPanel;
   folderId: number;
-  isOpen: boolean;
+  isUnsavedPrompt?: boolean;
   onConfirm: () => void;
   onDismiss: () => void;
   onDiscard: () => void;
@@ -19,26 +18,20 @@ interface Props {
 export const SaveLibraryPanelModal: React.FC<Props> = ({
   panel,
   folderId,
-  isOpen,
+  isUnsavedPrompt,
   onDismiss,
   onConfirm,
   onDiscard,
 }) => {
   const [searchString, setSearchString] = useState('');
-  const connectedDashboardsState = useAsync(async () => {
-    const connectedDashboards = await getLibraryPanelConnectedDashboards(panel.libraryPanel.uid);
-    return connectedDashboards;
-  }, []);
-
   const dashState = useAsync(async () => {
-    const connectedDashboards = connectedDashboardsState.value;
-    if (connectedDashboards && connectedDashboards.length > 0) {
-      const dashboardDTOs = await getBackendSrv().search({ dashboardIds: connectedDashboards });
-      return dashboardDTOs.map((dash) => dash.title);
+    const searchHits = await getConnectedDashboards(panel.libraryPanel.uid);
+    if (searchHits.length > 0) {
+      return searchHits.map((dash) => dash.title);
     }
 
     return [];
-  }, [connectedDashboardsState.value]);
+  }, [panel.libraryPanel.uid]);
 
   const [filteredDashboards, setFilteredDashboards] = useState<string[]>([]);
   useDebounce(
@@ -59,11 +52,12 @@ export const SaveLibraryPanelModal: React.FC<Props> = ({
   const styles = useStyles(getModalStyles);
   const discardAndClose = useCallback(() => {
     onDiscard();
-    onDismiss();
-  }, [onDiscard, onDismiss]);
+  }, [onDiscard]);
+
+  const title = isUnsavedPrompt ? 'Unsaved library panel changes' : 'Save library panel';
 
   return (
-    <Modal title="Update all panel instances" icon="save" onDismiss={onDismiss} isOpen={isOpen}>
+    <Modal title={title} icon="save" onDismiss={onDismiss} isOpen={true}>
       <div>
         <p className={styles.textInfo}>
           {'This update will affect '}
@@ -98,24 +92,25 @@ export const SaveLibraryPanelModal: React.FC<Props> = ({
             </tbody>
           </table>
         )}
-        <HorizontalGroup>
+        <Modal.ButtonRow>
+          <Button variant="secondary" onClick={onDismiss} fill="outline">
+            Cancel
+          </Button>
+          {isUnsavedPrompt && (
+            <Button variant="destructive" onClick={discardAndClose}>
+              Discard
+            </Button>
+          )}
           <Button
             onClick={() => {
               saveLibraryPanel(panel, folderId).then(() => {
                 onConfirm();
-                onDismiss();
               });
             }}
           >
             Update all
           </Button>
-          <Button variant="destructive" onClick={discardAndClose}>
-            Discard
-          </Button>
-          <Button variant="secondary" onClick={onDismiss}>
-            Cancel
-          </Button>
-        </HorizontalGroup>
+        </Modal.ButtonRow>
       </div>
     </Modal>
   );

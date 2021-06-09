@@ -79,7 +79,7 @@ func (s *CloudWatchService) Init() error {
 		QueryDataHandler: newExecutor(s.LogsService, im, s.Cfg, awsds.NewSessionCache()),
 	})
 
-	if err := s.BackendPluginManager.Register("cloudwatch", factory); err != nil {
+	if err := s.BackendPluginManager.RegisterAndStart(context.Background(), "cloudwatch", factory); err != nil {
 		plog.Error("Failed to register plugin", "error", err)
 	}
 	return nil
@@ -100,7 +100,15 @@ func newExecutor(logsService *LogsService, im instancemgmt.InstanceManager, cfg 
 
 func NewInstanceSettings() datasource.InstanceFactoryFunc {
 	return func(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-		var jsonData map[string]string
+		jsonData := struct {
+			Profile       string `json:"profile"`
+			Region        string `json:"defaulRegion"`
+			AssumeRoleARN string `json:"assumeRoleArn"`
+			ExternalID    string `json:"externalId"`
+			Endpoint      string `json:"endpoint"`
+			Namespace     string `json:"customMetricsNamespaces"`
+			AuthType      string `json:"authType"`
+		}{}
 
 		err := json.Unmarshal(settings.JSONData, &jsonData)
 		if err != nil {
@@ -108,18 +116,17 @@ func NewInstanceSettings() datasource.InstanceFactoryFunc {
 		}
 
 		model := datasourceInfo{
-			profile:       jsonData["profile"],
-			region:        jsonData["defaultRegion"],
-			assumeRoleARN: jsonData["assumeRoleArn"],
-			externalID:    jsonData["externalId"],
-			endpoint:      jsonData["endpoint"],
-			namespace:     jsonData["customMetricsNamespaces"],
+			profile:       jsonData.Profile,
+			region:        jsonData.Region,
+			assumeRoleARN: jsonData.AssumeRoleARN,
+			externalID:    jsonData.ExternalID,
+			endpoint:      jsonData.Endpoint,
+			namespace:     jsonData.Namespace,
 			datasourceID:  settings.ID,
 		}
 
-		atStr := jsonData["authType"]
 		at := awsds.AuthTypeDefault
-		switch atStr {
+		switch jsonData.AuthType {
 		case "credentials":
 			at = awsds.AuthTypeSharedCreds
 		case "keys":
@@ -132,7 +139,7 @@ func NewInstanceSettings() datasource.InstanceFactoryFunc {
 			at = awsds.AuthTypeDefault
 			plog.Warn("Authentication type \"arn\" is deprecated, falling back to default")
 		default:
-			plog.Warn("Unrecognized AWS authentication type", "type", atStr)
+			plog.Warn("Unrecognized AWS authentication type", "type", jsonData.AuthType)
 		}
 
 		model.authType = at

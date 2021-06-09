@@ -45,7 +45,7 @@ export class StatPanel extends PureComponent<PanelProps<StatPanelOptions>> {
         text={options.text}
         width={width}
         height={height}
-        theme={config.theme}
+        theme={config.theme2}
         onClick={openMenu}
         className={targetClassName}
       />
@@ -87,7 +87,7 @@ export class StatPanel extends PureComponent<PanelProps<StatPanelOptions>> {
       fieldConfig,
       reduceOptions: options.reduceOptions,
       replaceVariables,
-      theme: config.theme,
+      theme: config.theme2,
       data: data.series,
       sparkline: options.graphMode !== BigValueGraphMode.None,
       timeZone,

@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"net/http"
 
-	apimodels "github.com/grafana/alerting-api/pkg/api"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 )
 
 type promEndpoints struct {
@@ -40,34 +40,38 @@ func NewLotexProm(proxy *AlertingProxy, log log.Logger) *LotexProm {
 func (p *LotexProm) RouteGetAlertStatuses(ctx *models.ReqContext) response.Response {
 	endpoints, err := p.getEndpoints(ctx)
 	if err != nil {
-		return response.Error(500, err.Error(), nil)
+		return ErrResp(http.StatusInternalServerError, err, "")
 	}
 
 	return p.withReq(
-		ctx, &http.Request{
-			URL: withPath(
-				*ctx.Req.URL,
-				endpoints.alerts,
-			),
-		},
+		ctx,
+		http.MethodGet,
+		withPath(
+			*ctx.Req.URL,
+			endpoints.alerts,
+		),
+		nil,
 		jsonExtractor(&apimodels.AlertResponse{}),
+		nil,
 	)
 }
 
 func (p *LotexProm) RouteGetRuleStatuses(ctx *models.ReqContext) response.Response {
 	endpoints, err := p.getEndpoints(ctx)
 	if err != nil {
-		return response.Error(500, err.Error(), nil)
+		return ErrResp(http.StatusInternalServerError, err, "")
 	}
 
 	return p.withReq(
-		ctx, &http.Request{
-			URL: withPath(
-				*ctx.Req.URL,
-				endpoints.rules,
-			),
-		},
+		ctx,
+		http.MethodGet,
+		withPath(
+			*ctx.Req.URL,
+			endpoints.rules,
+		),
+		nil,
 		jsonExtractor(&apimodels.RuleResponse{}),
+		nil,
 	)
 }
 

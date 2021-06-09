@@ -1,5 +1,5 @@
 import React, { FC, useState } from 'react';
-import { MapStateToProps, connect } from 'react-redux';
+import { connect, MapStateToProps } from 'react-redux';
 import { NavModel, SelectableValue, urlUtil } from '@grafana/data';
 import Page from 'app/core/components/Page/Page';
 import { StoreState } from 'app/types';
@@ -10,7 +10,7 @@ import { getBackendSrv, locationService } from '@grafana/runtime';
 import { PlaylistDTO } from './types';
 import { Button, Card, Checkbox, Field, LinkButton, Modal, RadioButtonGroup, VerticalGroup } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
-import OrgActionBar from 'app/core/components/OrgActionBar/OrgActionBar';
+import PageActionBar from 'app/core/components/PageActionBar/PageActionBar';
 import EmptyListCTA from '../../core/components/EmptyListCTA/EmptyListCTA';
 
 interface ConnectedProps {
@@ -32,7 +32,7 @@ export const PlaylistPage: FC<Props> = ({ navModel }) => {
     <EmptyListCTA
       title="There are no playlists created yet"
       buttonIcon="plus"
-      buttonLink="playlists/create"
+      buttonLink="playlists/new"
       buttonTitle="Create Playlist"
       proTip="You can use playlists to cycle dashboards on TVs without user control"
       proTipLink="http://docs.grafana.org/reference/playlist/"
@@ -51,14 +51,7 @@ export const PlaylistPage: FC<Props> = ({ navModel }) => {
                 Start playlist
               </Button>
               {contextSrv.isEditor && (
-                <LinkButton
-                  key="edit"
-                  variant="secondary"
-                  href={`/playlists/edit/${playlist.id}`}
-                  icon="cog"
-                  disabled
-                  title="Feature temporarily disabled"
-                >
+                <LinkButton key="edit" variant="secondary" href={`/playlists/edit/${playlist.id}`} icon="cog">
                   Edit playlist
                 </LinkButton>
               )}
@@ -73,7 +66,7 @@ export const PlaylistPage: FC<Props> = ({ navModel }) => {
     <Page navModel={navModel}>
       <Page.Contents isLoading={loading}>
         {hasPlaylists && (
-          <OrgActionBar
+          <PageActionBar
             searchQuery={searchQuery}
             linkButton={{ title: 'New playlist', href: '/playlists/new' }}
             setSearchQuery={setSearchQuery}
@@ -132,11 +125,11 @@ export const StartModal: FC<StartModalProps> = ({ playlist, onDismiss }) => {
           onChange={(e) => setAutofit(e.currentTarget.checked)}
         />
       </VerticalGroup>
-      <div className="gf-form-button-row">
+      <Modal.ButtonRow>
         <Button variant="primary" onClick={onStart}>
           Start {playlist.name}
         </Button>
-      </div>
+      </Modal.ButtonRow>
     </Modal>
   );
 };

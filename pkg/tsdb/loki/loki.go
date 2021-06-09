@@ -3,11 +3,13 @@ package loki
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"regexp"
 	"strings"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -16,20 +18,23 @@ import (
 	"github.com/grafana/loki/pkg/loghttp"
 	"github.com/grafana/loki/pkg/logproto"
 	"github.com/opentracing/opentracing-go"
+	"github.com/prometheus/common/config"
 	"github.com/prometheus/common/model"
 )
 
 type LokiExecutor struct {
 	intervalCalculator interval.Calculator
+	httpClientProvider httpclient.Provider
 }
 
-func NewExecutor(dsInfo *models.DataSource) (plugins.DataPlugin, error) {
-	return newExecutor(), nil
-}
-
-func newExecutor() *LokiExecutor {
-	return &LokiExecutor{
-		intervalCalculator: interval.NewCalculator(interval.CalculatorOptions{MinInterval: time.Second * 1}),
+// nolint:staticcheck // plugins.DataPlugin deprecated
+func New(httpClientProvider httpclient.Provider) func(dsInfo *models.DataSource) (plugins.DataPlugin, error) {
+	// nolint:staticcheck // plugins.DataPlugin deprecated
+	return func(dsInfo *models.DataSource) (plugins.DataPlugin, error) {
+		return &LokiExecutor{
+			intervalCalculator: interval.NewCalculator(interval.CalculatorOptions{MinInterval: time.Second * 1}),
+			httpClientProvider: httpClientProvider,
+		}, nil
 	}
 }
 
@@ -39,16 +44,33 @@ var (
 )
 
 // DataQuery executes a Loki query.
+//nolint: staticcheck // plugins.DataPlugin deprecated
 func (e *LokiExecutor) DataQuery(ctx context.Context, dsInfo *models.DataSource,
 	queryContext plugins.DataQuery) (plugins.DataResponse, error) {
 	result := plugins.DataResponse{
 		Results: map[string]plugins.DataQueryResult{},
 	}
 
+	tlsConfig, err := dsInfo.GetTLSConfig(e.httpClientProvider)
+	if err != nil {
+		return plugins.DataResponse{}, err
+	}
+
+	transport, err := dsInfo.GetHTTPTransport(e.httpClientProvider)
+	if err != nil {
+		return plugins.DataResponse{}, err
+	}
+
 	client := &client.DefaultClient{
 		Address:  dsInfo.Url,
 		Username: dsInfo.BasicAuthUser,
 		Password: dsInfo.DecryptedBasicAuthPassword(),
+		TLSConfig: config.TLSConfig{
+			InsecureSkipVerify: tlsConfig.InsecureSkipVerify,
+		},
+		Tripperware: func(t http.RoundTripper) http.RoundTripper {
+			return transport
+		},
 	}
 
 	queries, err := e.parseQuery(dsInfo, queryContext)
@@ -144,6 +166,7 @@ func (e *LokiExecutor) parseQuery(dsInfo *models.DataSource, queryContext plugin
 	return qs, nil
 }
 
+//nolint: staticcheck // plugins.DataPlugin deprecated
 func parseResponse(value *loghttp.QueryResponse, query *lokiQuery) (plugins.DataQueryResult, error) {
 	var queryRes plugins.DataQueryResult
 	frames := data.Frames{}

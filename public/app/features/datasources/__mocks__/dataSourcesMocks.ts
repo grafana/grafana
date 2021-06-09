@@ -34,6 +34,7 @@ export const getMockDataSource = (): DataSourceSettings => {
     withCredentials: false,
     database: '',
     id: 13,
+    uid: 'x',
     isDefault: false,
     jsonData: { authType: 'credentials', defaultRegion: 'eu-west-2' },
     name: 'gdev-cloudwatch',

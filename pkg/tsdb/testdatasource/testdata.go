@@ -1,6 +1,7 @@
 package testdatasource
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -10,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func init() {
@@ -18,6 +20,7 @@ func init() {
 
 type testDataPlugin struct {
 	BackendPluginManager backendplugin.Manager `inject:""`
+	Cfg                  *setting.Cfg          `inject:""`
 	logger               log.Logger
 	scenarios            map[string]*Scenario
 	queryMux             *datasource.QueryTypeMux
@@ -35,7 +38,7 @@ func (p *testDataPlugin) Init() error {
 		CallResourceHandler: httpadapter.New(resourceMux),
 		StreamHandler:       newTestStreamHandler(p.logger),
 	})
-	err := p.BackendPluginManager.Register("testdata", factory)
+	err := p.BackendPluginManager.RegisterAndStart(context.Background(), "testdata", factory)
 	if err != nil {
 		p.logger.Error("Failed to register plugin", "error", err)
 	}

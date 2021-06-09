@@ -101,8 +101,6 @@ export class TeamList extends PureComponent<Props, any> {
             <FilterInput placeholder="Search teams" value={searchQuery} onChange={this.onSearchQueryChange} />
           </div>
 
-          <div className="page-action-bar__spacer" />
-
           <LinkButton className={disabledClass} href={newTeamHref}>
             New Team
           </LinkButton>

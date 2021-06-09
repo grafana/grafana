@@ -8,7 +8,6 @@ import { Editor } from '@grafana/slate-react';
 import Plain from 'slate-plain-serializer';
 import ReactDOM from 'react-dom';
 import React from 'react';
-import _ from 'lodash';
 
 function flattenSuggestions(s: any) {
   return s ? s.reduce((acc: any, g: any) => acc.concat(g.items), []) : [];

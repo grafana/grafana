@@ -5,25 +5,23 @@ import (
 	"context"
 	"errors"
 	"io/ioutil"
+	"net/http"
+	"net/http/httptest"
 	"runtime"
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/licensing"
-	"github.com/stretchr/testify/require"
-
-	"net/http"
-	"net/http/httptest"
-
-	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // This is to ensure that the interface contract is held by the implementation
@@ -62,6 +60,9 @@ func TestMetrics(t *testing.T) {
 				AuthTokens:            15,
 				DashboardVersions:     16,
 				Annotations:           17,
+				AlertRules:            18,
+				LibraryPanels:         19,
+				LibraryVariables:      20,
 			}
 			getSystemStatsQuery = query
 			return nil
@@ -311,6 +312,9 @@ func TestMetrics(t *testing.T) {
 			assert.Equal(t, 5, metrics.Get("stats.avg_auth_token_per_user.count").MustInt())
 			assert.Equal(t, 16, metrics.Get("stats.dashboard_versions.count").MustInt())
 			assert.Equal(t, 17, metrics.Get("stats.annotations.count").MustInt())
+			assert.Equal(t, 18, metrics.Get("stats.alert_rules.count").MustInt())
+			assert.Equal(t, 19, metrics.Get("stats.library_panels.count").MustInt())
+			assert.Equal(t, 20, metrics.Get("stats.library_variables.count").MustInt())
 
 			assert.Equal(t, 9, metrics.Get("stats.ds."+models.DS_ES+".count").MustInt())
 			assert.Equal(t, 10, metrics.Get("stats.ds."+models.DS_PROMETHEUS+".count").MustInt())
@@ -409,30 +413,13 @@ func TestMetrics(t *testing.T) {
 		metricName := "stats.test_metric.count"
 
 		t.Run("Adds a new metric to the external metrics", func(t *testing.T) {
-			uss.RegisterMetric(metricName, func() (interface{}, error) {
-				return 1, nil
+			uss.RegisterMetricsFunc(func() (map[string]interface{}, error) {
+				return map[string]interface{}{metricName: 1}, nil
 			})
 
-			metric, err := uss.externalMetrics[metricName]()
+			metrics, err := uss.externalMetrics[0]()
 			require.NoError(t, err)
-			assert.Equal(t, 1, metric)
-		})
-
-		t.Run("When metric already exists, the metric should be overridden", func(t *testing.T) {
-			uss.RegisterMetric(metricName, func() (interface{}, error) {
-				return 1, nil
-			})
-
-			metric, err := uss.externalMetrics[metricName]()
-			require.NoError(t, err)
-			assert.Equal(t, 1, metric)
-
-			uss.RegisterMetric(metricName, func() (interface{}, error) {
-				return 2, nil
-			})
-			newMetric, err := uss.externalMetrics[metricName]()
-			require.NoError(t, err)
-			assert.Equal(t, 2, newMetric)
+			assert.Equal(t, map[string]interface{}{metricName: 1}, metrics)
 		})
 	})
 
@@ -480,8 +467,8 @@ func TestMetrics(t *testing.T) {
 		})
 
 		t.Run("Should include external metrics", func(t *testing.T) {
-			uss.RegisterMetric(metricName, func() (interface{}, error) {
-				return 1, nil
+			uss.RegisterMetricsFunc(func() (map[string]interface{}, error) {
+				return map[string]interface{}{metricName: 1}, nil
 			})
 
 			report, err := uss.GetUsageReport(context.Background())
@@ -497,8 +484,8 @@ func TestMetrics(t *testing.T) {
 		metrics := map[string]interface{}{"stats.test_metric.count": 1, "stats.test_metric_second.count": 2}
 		extMetricName := "stats.test_external_metric.count"
 
-		uss.RegisterMetric(extMetricName, func() (interface{}, error) {
-			return 1, nil
+		uss.RegisterMetricsFunc(func() (map[string]interface{}, error) {
+			return map[string]interface{}{extMetricName: 1}, nil
 		})
 
 		uss.registerExternalMetrics(metrics)
@@ -506,14 +493,14 @@ func TestMetrics(t *testing.T) {
 		assert.Equal(t, 1, metrics[extMetricName])
 
 		t.Run("When loading a metric results to an error", func(t *testing.T) {
-			uss.RegisterMetric(extMetricName, func() (interface{}, error) {
-				return 1, nil
+			uss.RegisterMetricsFunc(func() (map[string]interface{}, error) {
+				return map[string]interface{}{extMetricName: 1}, nil
 			})
 			extErrorMetricName := "stats.test_external_metric_error.count"
 
 			t.Run("Should not add it to metrics", func(t *testing.T) {
-				uss.RegisterMetric(extErrorMetricName, func() (interface{}, error) {
-					return 1, errors.New("some error")
+				uss.RegisterMetricsFunc(func() (map[string]interface{}, error) {
+					return map[string]interface{}{extErrorMetricName: 1}, errors.New("some error")
 				})
 
 				uss.registerExternalMetrics(metrics)
@@ -549,15 +536,15 @@ type fakePluginManager struct {
 	panels      map[string]*plugins.PanelPlugin
 }
 
-func (pm fakePluginManager) DataSourceCount() int {
+func (pm *fakePluginManager) DataSourceCount() int {
 	return len(pm.dataSources)
 }
 
-func (pm fakePluginManager) GetDataSource(id string) *plugins.DataSourcePlugin {
+func (pm *fakePluginManager) GetDataSource(id string) *plugins.DataSourcePlugin {
 	return pm.dataSources[id]
 }
 
-func (pm fakePluginManager) PanelCount() int {
+func (pm *fakePluginManager) PanelCount() int {
 	return len(pm.panels)
 }
 
@@ -613,7 +600,7 @@ func createService(t *testing.T, cfg setting.Cfg) *UsageStatsService {
 		SQLStore:           sqlstore.InitTestDB(t),
 		License:            &licensing.OSSLicensingService{},
 		AlertingUsageStats: &alertingUsageMock{},
-		externalMetrics:    make(map[string]MetricFunc),
+		externalMetrics:    make([]MetricsFunc, 0),
 		PluginManager:      &fakePluginManager{},
 	}
 }

@@ -60,7 +60,7 @@ export class DashboardQueryEditor extends PureComponent<Props, State> {
     const query = queries[0] as DashboardQuery;
     const defaultDS = await getDatasourceSrv().get();
     const dashboard = getDashboardSrv().getCurrent();
-    const panel = dashboard.getPanelById(query.panelId ?? -124134);
+    const panel = dashboard?.getPanelById(query.panelId ?? -124134);
 
     if (!panel) {
       this.setState({ defaultDatasource: defaultDS.name });
@@ -126,6 +126,10 @@ export class DashboardQueryEditor extends PureComponent<Props, State> {
 
   render() {
     const dashboard = getDashboardSrv().getCurrent();
+    if (!dashboard) {
+      return null;
+    }
+
     const query = this.getQuery();
 
     let selected: SelectableValue<number> | undefined;

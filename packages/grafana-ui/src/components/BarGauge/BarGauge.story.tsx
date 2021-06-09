@@ -1,12 +1,11 @@
 import React from 'react';
-import { Story } from '@storybook/react';
+import { Story, Meta } from '@storybook/react';
 import { BarGauge, BarGaugeDisplayMode } from '@grafana/ui';
-import { NOOP_CONTROL } from '../../utils/storybook/noopControl';
 import { VizOrientation, ThresholdsMode, Field, FieldType, getDisplayProcessor } from '@grafana/data';
 import { Props } from './BarGauge';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import mdx from './BarGauge.mdx';
-import { useTheme } from '../../themes';
+import { useTheme2 } from '../../themes';
 
 export default {
   title: 'Visualizations/BarGauge',
@@ -18,6 +17,19 @@ export default {
     },
     knobs: {
       disable: true,
+    },
+    controls: {
+      exclude: [
+        'theme',
+        'field',
+        'value',
+        'display',
+        'orientation',
+        'text',
+        'onClick',
+        'className',
+        'alignmentFactors',
+      ],
     },
   },
   args: {
@@ -45,17 +57,8 @@ export default {
     height: { control: { type: 'range', min: 200, max: 800 } },
     threshold1Color: { control: 'color' },
     threshold2Color: { control: 'color' },
-    theme: NOOP_CONTROL,
-    field: NOOP_CONTROL,
-    value: NOOP_CONTROL,
-    display: NOOP_CONTROL,
-    orientation: NOOP_CONTROL,
-    text: NOOP_CONTROL,
-    onClick: NOOP_CONTROL,
-    className: NOOP_CONTROL,
-    alignmentFactors: NOOP_CONTROL,
   },
-};
+} as Meta;
 
 interface StoryProps extends Partial<Props> {
   numeric: number;
@@ -69,7 +72,7 @@ interface StoryProps extends Partial<Props> {
 }
 
 const AddBarGaugeStory = (storyProps: StoryProps) => {
-  const theme = useTheme();
+  const theme = useTheme2();
 
   const field: Partial<Field> = {
     type: FieldType.number,
@@ -86,7 +89,7 @@ const AddBarGaugeStory = (storyProps: StoryProps) => {
       },
     },
   };
-  field.display = getDisplayProcessor({ field });
+  field.display = getDisplayProcessor({ field, theme });
 
   const props: Partial<Props> = {
     theme,

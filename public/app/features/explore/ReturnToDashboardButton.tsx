@@ -1,6 +1,6 @@
 import React, { FC } from 'react';
 import { connect } from 'react-redux';
-import { Icon, Tooltip, ButtonSelect, ToolbarButton, ButtonGroup } from '@grafana/ui';
+import { ButtonGroup, ButtonSelect, Icon, ToolbarButton, Tooltip } from '@grafana/ui';
 import { DataQuery, urlUtil } from '@grafana/data';
 
 import kbn from '../../core/utils/kbn';
@@ -43,6 +43,10 @@ export const UnconnectedReturnToDashboardButton: FC<Props> = ({
   const returnToPanel = async ({ withChanges = false } = {}) => {
     const dashboardSrv = getDashboardSrv();
     const dash = dashboardSrv.getCurrent();
+    if (!dash) {
+      return;
+    }
+
     const titleSlug = kbn.slugifyForUrl(dash.title);
 
     if (withChanges) {

@@ -19,14 +19,13 @@ If you are interested in Grafana Enterprise (not Grafana OS), jump to [Deploy Gr
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: grafana
+  name: grafana-pvc
 spec:
   accessModes:
     - ReadWriteOnce
   resources:
     requests:
       storage: 1Gi
-  storageClassName: local-path
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -43,10 +42,14 @@ spec:
       labels:
         app: grafana
     spec:
+      securityContext:
+        fsGroup: 472
+        supplementalGroups:
+        - 0    
       containers:
-        - image: grafana/grafana:latest
+        - name: grafana
+          image: grafana/grafana:7.5.2
           imagePullPolicy: IfNotPresent
-          name: grafana
           ports:
             - containerPort: 3000
               name: http-grafana
@@ -61,19 +64,25 @@ spec:
             periodSeconds: 30
             successThreshold: 1
             timeoutSeconds: 2
+          livenessProbe:
+            failureThreshold: 3
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            successThreshold: 1
+            tcpSocket:
+              port: 3000
+            timeoutSeconds: 1            
           resources:
-            limits:
-              memory: 4Gi
             requests:
-              cpu: 100m
-              memory: 2Gi
+              cpu: 250m
+              memory: 750Mi
           volumeMounts:
             - mountPath: /var/lib/grafana
-              name: grafana
+              name: grafana-pv
       volumes:
-        - name: grafana
+        - name: grafana-pv
           persistentVolumeClaim:
-            claimName: grafana
+            claimName: grafana-pvc
 ---
 apiVersion: v1
 kind: Service

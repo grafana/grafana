@@ -85,19 +85,19 @@ describe('AngularLocationWrapper', () => {
 
     it('search() should accept object', function () {
       locationService.push('/path/b');
-      wrapper.search({ one: 1, two: true });
-      expect(wrapper.search()).toEqual({ one: 1, two: true });
+      wrapper.search({ one: '1', two: true });
+      expect(wrapper.search()).toEqual({ one: '1', two: true });
       expect(wrapper.absUrl()).toBe('http://www.domain.com:9877/path/b?one=1&two');
     });
 
     it('should copy object', function () {
       locationService.push('/path/b');
-      const obj: Record<string, any> = { one: 1, two: true, three: null };
+      const obj: Record<string, any> = { one: '1', two: true, three: null };
       wrapper.search(obj);
-      expect(obj).toEqual({ one: 1, two: true, three: null });
+      expect(obj).toEqual({ one: '1', two: true, three: null });
       obj.one = 'changed';
 
-      expect(wrapper.search()).toEqual({ one: 1, two: true });
+      expect(wrapper.search()).toEqual({ one: '1', two: true });
       expect(wrapper.absUrl()).toBe('http://www.domain.com:9877/path/b?one=1&two');
     });
 
@@ -117,8 +117,8 @@ describe('AngularLocationWrapper', () => {
 
     it('should remove multiple parameters', function () {
       locationService.push('/path/b');
-      wrapper.search({ one: 1, two: true });
-      expect(wrapper.search()).toEqual({ one: 1, two: true });
+      wrapper.search({ one: '1', two: true });
+      expect(wrapper.search()).toEqual({ one: '1', two: true });
 
       wrapper.search({ one: null, two: null });
       expect(wrapper.search()).toEqual({});

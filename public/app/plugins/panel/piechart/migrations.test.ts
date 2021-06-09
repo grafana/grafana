@@ -1,6 +1,7 @@
 import { FieldColorModeId, FieldConfigProperty, FieldMatcherID, PanelModel } from '@grafana/data';
-import { LegendDisplayMode, PieChartLabels } from '@grafana/ui';
+import { LegendDisplayMode } from '@grafana/ui';
 import { PieChartPanelChangedHandler } from './migrations';
+import { PieChartLabels } from './types';
 
 describe('PieChart -> PieChartV2 migrations', () => {
   it('only migrates old piechart', () => {

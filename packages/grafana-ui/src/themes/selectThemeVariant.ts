@@ -1,6 +1,9 @@
 import { GrafanaThemeType } from '@grafana/data';
 
-type VariantDescriptor = { [key in GrafanaThemeType]: string | number };
+/**
+ * @deprecated
+ */
+export type VariantDescriptor = { [key in GrafanaThemeType]: string | number };
 
 /**
  * @deprecated use theme.isLight ? or theme.isDark instead

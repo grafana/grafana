@@ -1,8 +1,6 @@
 // Libraries
 import React, { ReactNode } from 'react';
-import intersectionBy from 'lodash/intersectionBy';
-import debounce from 'lodash/debounce';
-import unionBy from 'lodash/unionBy';
+import { intersectionBy, debounce, unionBy } from 'lodash';
 
 import {
   BracesPlugin,

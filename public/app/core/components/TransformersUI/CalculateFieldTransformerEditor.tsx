@@ -24,7 +24,7 @@ import {
   ReduceOptions,
 } from '@grafana/data/src/transformations/transformers/calculateField';
 
-import defaults from 'lodash/defaults';
+import { defaults } from 'lodash';
 
 interface CalculateFieldTransformerEditorProps extends TransformerUIProps<CalculateFieldTransformerOptions> {}
 

@@ -56,8 +56,7 @@ export const NewOrgPage: FC<PropsWithState> = ({ navModel }) => {
                 <Field label="Organization name" invalid={!!errors.name} error={errors.name && errors.name.message}>
                   <Input
                     placeholder="Org name"
-                    name="name"
-                    ref={register({
+                    {...register('name', {
                       required: 'Organization name is required',
                       validate: async (orgName) => await validateOrg(orgName),
                     })}

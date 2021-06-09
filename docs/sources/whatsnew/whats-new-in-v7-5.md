@@ -20,7 +20,7 @@ These features are included in the Grafana open source edition.
 
 Grafana 7.5 adds a beta version of the next-generation pie chart panel.
 
-![Pie chart panel](/img/docs/pie-chart-panel/pie-chart-panel-7-5.png)
+![Pie chart panel](/static/img/docs/pie-chart-panel/pie-chart-panel-7-5.png)
 
 For more information, refer to [Pie chart panel]({{< relref "../panels/visualizations/pie-chart-panel.md" >}}).
 
@@ -32,7 +32,7 @@ With alerting support for Loki, you can now create alerts on Loki metrics querie
 
 [Alerting]({{< relref "../alerting/_index.md" >}}) was updated as a result of this change.
 
-![Loki alerting](/img/docs/alerting/alerting-for-loki-7-5.png)
+![Loki alerting](/static/img/docs/alerting/alerting-for-loki-7-5.png)
 
 ### Loki label browser
 
@@ -50,7 +50,7 @@ For new Prometheus data sources, we have changed the default HTTP method to POST
 
 When searching for text in Elasticsearch logs, matching words in the log line returned by the query are now highlighted.
 
-![Elastic logs highlighting](/img/docs/elasticsearch/elastic-word-highlighting-7-5.png)
+![Elastic logs highlighting](/static/img/docs/elasticsearch/elastic-word-highlighting-7-5.png)
 
 ### Better format definition for trace data
 
@@ -65,6 +65,8 @@ Previously, when users wanted to configure the Postgres data source to connect w
 Instead of the file path, users can now paste the SSL certification content in the UI. This allows them to configure the certification even when they do not have access to the server.
 
 > **Note:** It remains as limitation for the hosted Grafana, because the user doesn't have access to the server configuration.
+
+[Postgres data source]({{< relref "../datasources/postgres.md" >}}) and [Provisioning]({{< relref "../administration/provisioning.md" >}}) were updated as a result of this change.
 
 ### Deprecation notice for some Azure Monitor queries
 
@@ -95,6 +97,8 @@ We have converted Tempo to a backend data source and dropped support for tempo-q
 server:
   http_listen_port: 3101
 ```
+
+[Azure Monitor data source]({{< relref "../datasources/azuremonitor.md" >}}) was updated as a result of this change.
 
 ## Enterprise features
 
@@ -141,7 +145,7 @@ Each Grafana Enterprise user will be limited to three concurrent user sessions. 
 
 A new session is created when you sign in to Grafana from a different device or a different browser. Multiple windows and tabs in the same browser are all part of the same session, so having many Grafana tabs open will not cause any issues.
 
-For more information on Grafana Enterprise licensing and restrictions, refer to [License restrictions]({{< relref "../enterprise/license-restrictions.md" >}}).
+For more information on Grafana Enterprise licensing and restrictions, refer to [License restrictions]({{< relref "../enterprise/license/license-restrictions.md" >}}).
 
 ## Breaking changes
 

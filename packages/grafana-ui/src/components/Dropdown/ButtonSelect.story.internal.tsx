@@ -1,12 +1,11 @@
 import React from 'react';
 import { action } from '@storybook/addon-actions';
-import { Story } from '@storybook/react';
+import { Meta, Story } from '@storybook/react';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { UseState } from '../../utils/storybook/UseState';
 import { SelectableValue } from '@grafana/data';
 import { ButtonSelect } from './ButtonSelect';
 import { DashboardStoryCanvas } from '../../utils/storybook/DashboardStoryCanvas';
-import { NOOP_CONTROL } from '../../utils/storybook/noopControl';
 
 export default {
   title: 'Forms/Select/ButtonSelect',
@@ -16,14 +15,11 @@ export default {
     knobs: {
       disable: true,
     },
+    controls: {
+      exclude: ['className', 'options', 'value', 'tooltipContent'],
+    },
   },
-  argTypes: {
-    className: NOOP_CONTROL,
-    options: NOOP_CONTROL,
-    value: NOOP_CONTROL,
-    tooltipContent: NOOP_CONTROL,
-  },
-};
+} as Meta;
 
 export const Basic: Story = (args) => {
   const initialValue: SelectableValue<string> = { label: 'A label', value: 'A value' };

@@ -1,6 +1,4 @@
-import isString from 'lodash/isString';
-import isArray from 'lodash/isArray';
-import isEqual from 'lodash/isEqual';
+import { isString, isArray, isEqual } from 'lodash';
 import { ScopedVars, UrlQueryMap, VariableType } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 
@@ -239,6 +237,10 @@ export function ensureStringValues(value: any | any[]): string | string[] {
 
   if (typeof value === 'string') {
     return value;
+  }
+
+  if (typeof value === 'boolean') {
+    return value.toString();
   }
 
   return '';

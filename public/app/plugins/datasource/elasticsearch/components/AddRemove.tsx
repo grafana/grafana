@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { FunctionComponent } from 'react';
+import React from 'react';
 import { IconButton } from './IconButton';
 
 interface Props {
@@ -13,7 +13,7 @@ interface Props {
  * A component used to show add & remove buttons for mutable lists of values. Wether to show or not the add or the remove buttons
  * depends on the `index` and `elements` props. This enforces a consistent experience whenever this pattern is used.
  */
-export const AddRemove: FunctionComponent<Props> = ({ index, onAdd, onRemove, elements }) => {
+export const AddRemove = ({ index, onAdd, onRemove, elements }: Props) => {
   return (
     <div
       className={css`

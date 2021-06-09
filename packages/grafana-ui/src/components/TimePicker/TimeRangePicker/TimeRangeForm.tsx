@@ -1,19 +1,20 @@
-import React, { FormEvent, useState, useCallback, useEffect } from 'react';
 import {
-  TimeZone,
-  isDateTime,
-  TimeRange,
-  DateTime,
   dateMath,
+  DateTime,
   dateTimeFormat,
   dateTimeParse,
+  isDateTime,
   rangeUtil,
   RawTimeRange,
+  TimeRange,
+  TimeZone,
 } from '@grafana/data';
-import { TimePickerCalendar } from './TimePickerCalendar';
+import { selectors } from '@grafana/e2e-selectors';
+import React, { FormEvent, useCallback, useEffect, useState } from 'react';
+import { Button } from '../../Button';
 import { Field } from '../../Forms/Field';
 import { Input } from '../../Input/Input';
-import { Button } from '../../Button';
+import { TimePickerCalendar } from './TimePickerCalendar';
 
 interface Props {
   isFullscreen: boolean;
@@ -95,7 +96,7 @@ export const TimeRangeForm: React.FC<Props> = (props) => {
           onFocus={onFocus}
           onChange={(event) => setFrom(eventToState(event, false, timeZone))}
           addonAfter={icon}
-          aria-label="TimePicker from field"
+          aria-label={selectors.components.TimePicker.fromField}
           value={from.value}
         />
       </Field>
@@ -105,11 +106,11 @@ export const TimeRangeForm: React.FC<Props> = (props) => {
           onFocus={onFocus}
           onChange={(event) => setTo(eventToState(event, true, timeZone))}
           addonAfter={icon}
-          aria-label="TimePicker to field"
+          aria-label={selectors.components.TimePicker.toField}
           value={to.value}
         />
       </Field>
-      <Button aria-label="TimePicker submit button" onClick={onApply}>
+      <Button aria-label={selectors.components.TimePicker.applyTimeRange} onClick={onApply}>
         Apply time range
       </Button>
 

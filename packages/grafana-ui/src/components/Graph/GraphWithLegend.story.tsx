@@ -3,9 +3,8 @@ import React from 'react';
 import { Story } from '@storybook/react';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { GraphWithLegend, GraphWithLegendProps } from './GraphWithLegend';
-import { LegendDisplayMode } from '../VizLegend/types';
+import { LegendDisplayMode } from '../VizLegend/models.gen';
 import { GraphSeriesXY, FieldType, ArrayVector, dateTime, FieldColorModeId } from '@grafana/data';
-import { NOOP_CONTROL } from '../../utils/storybook/noopControl';
 
 export default {
   title: 'Visualizations/Graph/GraphWithLegend',
@@ -15,6 +14,9 @@ export default {
     knobs: {
       disable: true,
     },
+    controls: {
+      exclude: ['className', 'ariaLabel', 'legendDisplayMode'],
+    },
   },
   argTypes: {
     displayMode: { control: { type: 'radio', options: ['table', 'list', 'hidden'] } },
@@ -22,13 +24,8 @@ export default {
     rightAxisSeries: { name: 'Right y-axis series, i.e. A,C' },
     timeZone: { control: { type: 'radio', options: ['browser', 'utc'] } },
     width: { control: { type: 'range', min: 200, max: 800 } },
-    height: { control: { type: 'range', min: 200, max: 800 } },
+    height: { control: { type: 'range', min: 1700, step: 300 } },
     lineWidth: { control: { type: 'range', min: 1, max: 10 } },
-    className: NOOP_CONTROL,
-    series: NOOP_CONTROL,
-    timeRange: NOOP_CONTROL,
-    ariaLabel: NOOP_CONTROL,
-    legendDisplayMode: NOOP_CONTROL,
   },
 };
 

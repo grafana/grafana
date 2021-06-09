@@ -35,7 +35,9 @@ exports[`Render should render organization and preferences 1`] = `
   <PageContents
     isLoading={false}
   >
-    <VerticalGroup>
+    <VerticalGroup
+      spacing="lg"
+    >
       <OrgProfile
         onSubmit={[Function]}
         orgName="Cool org"

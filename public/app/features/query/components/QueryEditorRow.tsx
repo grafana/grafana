@@ -1,10 +1,10 @@
 // Libraries
-import React, { PureComponent } from 'react';
+import React, { PureComponent, ReactNode } from 'react';
 import classNames from 'classnames';
-import _ from 'lodash';
+import { has, cloneDeep } from 'lodash';
 // Utils & Services
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { AngularComponent, getAngularLoader, getTemplateSrv } from '@grafana/runtime';
+import { AngularComponent, getAngularLoader } from '@grafana/runtime';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { ErrorBoundaryAlert, HorizontalGroup, InfoBox } from '@grafana/ui';
 import {
@@ -19,7 +19,7 @@ import {
   TimeRange,
   toLegacyResponseData,
 } from '@grafana/data';
-import { QueryEditorRowTitle } from './QueryEditorRowTitle';
+import { QueryEditorRowHeader } from './QueryEditorRowHeader';
 import {
   QueryOperationRow,
   QueryOperationRowRenderProps,
@@ -33,13 +33,17 @@ interface Props {
   data: PanelData;
   query: DataQuery;
   queries: DataQuery[];
-  dsSettings: DataSourceInstanceSettings;
   id: string;
   index: number;
-  onAddQuery: (query?: DataQuery) => void;
+  dataSource: DataSourceInstanceSettings;
+  onChangeDataSource?: (dsSettings: DataSourceInstanceSettings) => void;
+  renderHeaderExtras?: () => ReactNode;
+  onAddQuery: (query: DataQuery) => void;
   onRemoveQuery: (query: DataQuery) => void;
   onChange: (query: DataQuery) => void;
   onRunQuery: () => void;
+  visualization?: ReactNode;
+  hideDisableQuery?: boolean;
 }
 
 interface State {
@@ -53,7 +57,7 @@ interface State {
 
 export class QueryEditorRow extends PureComponent<Props, State> {
   element: HTMLElement | null = null;
-  angularScope: AngularQueryComponentScope | null;
+  angularScope: AngularQueryComponentScope | null = null;
   angularQueryEditor: AngularComponent | null = null;
 
   state: State = {
@@ -109,7 +113,7 @@ export class QueryEditorRow extends PureComponent<Props, State> {
   }
 
   getQueryDataSourceIdentifier(): string | null | undefined {
-    const { query, dsSettings } = this.props;
+    const { query, dataSource: dsSettings } = this.props;
     return query.datasource ?? dsSettings.name;
   }
 
@@ -127,7 +131,7 @@ export class QueryEditorRow extends PureComponent<Props, State> {
     this.setState({
       datasource,
       loadedDataSourceIdentifier: dataSourceIdentifier,
-      hasTextEditMode: _.has(datasource, 'components.QueryCtrl.prototype.toggleEditorMode'),
+      hasTextEditMode: has(datasource, 'components.QueryCtrl.prototype.toggleEditorMode'),
     });
   }
 
@@ -232,7 +236,7 @@ export class QueryEditorRow extends PureComponent<Props, State> {
   };
 
   onCopyQuery = () => {
-    const copy = _.cloneDeep(this.props.query);
+    const copy = cloneDeep(this.props.query);
     this.props.onAddQuery(copy);
   };
 
@@ -269,7 +273,7 @@ export class QueryEditorRow extends PureComponent<Props, State> {
   }
 
   renderActions = (props: QueryOperationRowRenderProps) => {
-    const { query } = this.props;
+    const { query, hideDisableQuery = false } = this.props;
     const { hasTextEditMode, datasource } = this.state;
     const isDisabled = query.hide;
 
@@ -290,38 +294,38 @@ export class QueryEditorRow extends PureComponent<Props, State> {
           />
         )}
         <QueryOperationAction title="Duplicate query" icon="copy" onClick={this.onCopyQuery} />
-        <QueryOperationAction
-          title="Disable/enable query"
-          icon={isDisabled ? 'eye-slash' : 'eye'}
-          onClick={this.onDisableQuery}
-        />
+        {!hideDisableQuery ? (
+          <QueryOperationAction
+            title="Disable/enable query"
+            icon={isDisabled ? 'eye-slash' : 'eye'}
+            onClick={this.onDisableQuery}
+          />
+        ) : null}
         <QueryOperationAction title="Remove query" icon="trash-alt" onClick={this.onRemoveQuery} />
       </HorizontalGroup>
     );
   };
 
-  renderTitle = (props: QueryOperationRowRenderProps) => {
-    const { query, dsSettings, onChange, queries } = this.props;
-    const dataSourceName = dsSettings.meta.mixed
-      ? getTemplateSrv().replace(this.getQueryDataSourceIdentifier() ?? '')
-      : undefined;
-    const isDisabled = query.hide;
+  renderHeader = (props: QueryOperationRowRenderProps) => {
+    const { query, dataSource, onChangeDataSource, onChange, queries, renderHeaderExtras } = this.props;
 
     return (
-      <QueryEditorRowTitle
+      <QueryEditorRowHeader
         query={query}
         queries={queries}
-        dataSourceName={dataSourceName}
-        disabled={isDisabled}
+        onChangeDataSource={onChangeDataSource}
+        dataSource={dataSource}
+        disabled={query.hide}
         onClick={(e) => this.onToggleEditMode(e, props)}
         onChange={onChange}
         collapsedText={!props.isOpen ? this.renderCollapsedText() : null}
+        renderExtras={renderHeaderExtras}
       />
     );
   };
 
   render() {
-    const { query, id, index } = this.props;
+    const { query, id, index, visualization } = this.props;
     const { datasource, showingHelp } = this.state;
     const isDisabled = query.hide;
 
@@ -343,7 +347,7 @@ export class QueryEditorRow extends PureComponent<Props, State> {
           id={id}
           draggable={true}
           index={index}
-          headerElement={this.renderTitle}
+          headerElement={this.renderHeader}
           actions={this.renderActions}
           onOpen={this.onOpen}
         >
@@ -359,6 +363,7 @@ export class QueryEditorRow extends PureComponent<Props, State> {
               )}
               {editor}
             </ErrorBoundaryAlert>
+            {visualization}
           </div>
         </QueryOperationRow>
       </div>

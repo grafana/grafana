@@ -11,7 +11,9 @@ This API allows you to interact programmatically with the [Reporting]({{< relref
 
 > Reporting is only available in Grafana Enterprise. Read more about [Grafana Enterprise]({{< relref "../enterprise" >}}).
 
-
+> If you have [Fine-grained access Control]({{< relref "../enterprise/access-control/_index.md" >}}) enabled, for some endpoints you would need to have relevant permissions.
+Refer to specific resources to understand what permissions are required.
+ 
 ## Send a report
 
 > Only available in Grafana Enterprise v7.0+.
@@ -21,6 +23,14 @@ This API allows you to interact programmatically with the [Reporting]({{< relref
 `POST /api/reports/email`
 
 Generate and send a report. This API waits for the report to be generated before returning. We recommend that you set the client's timeout to at least 60 seconds.
+
+#### Required permissions
+
+See note in the [introduction]({{< ref "#reporting-api" >}}) for an explanation.
+
+Action | Scope
+--- | --- | 
+reports:send | n/a
 
 ### Example request
 
@@ -63,4 +73,4 @@ Code | Description
 401 | Authentication failed, refer to [Authentication API]({{< relref "../http_api/auth.md" >}}).
 403 | User is authenticated but is not authorized to generate the report.
 404 | Report not found.
-500 | Unexpected error or server misconfiguration. Refer to body and/or server logs for more details.
+500 | Unexpected error or server misconfiguration. Refer to server logs for more details.

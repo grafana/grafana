@@ -1,5 +1,6 @@
-import { Button } from '@grafana/ui';
 import { css } from '@emotion/css';
+import { selectors } from '@grafana/e2e-selectors';
+import { Button } from '@grafana/ui';
 import React from 'react';
 import { ExemplarTraceIdDestination } from '../types';
 import ExemplarSetting from './ExemplarSetting';
@@ -36,6 +37,7 @@ export function ExemplarsSettings({ options, onChange }: Props) {
 
       <Button
         variant="secondary"
+        aria-label={selectors.components.DataSource.Prometheus.configPage.exemplarsAddButton}
         className={css`
           margin-bottom: 10px;
         `}

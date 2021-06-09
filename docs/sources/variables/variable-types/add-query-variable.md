@@ -30,7 +30,6 @@ Query expressions are different for each data source. For more information, refe
 
 1. In the **Data source** list, select the target data source for the query. For more information about data sources, refer to [Add a data source]({{< relref "../../datasources/add-a-data-source.md" >}}).
 1. In the **Refresh** list, select when the variable should update options.
-   - **Never -** Variables queries are cached and values are not updated. This is fine if the values never change, but problematic if they are dynamic and change a lot.
    - **On Dashboard Load -** Queries the data source every time the dashboard loads. This slows down dashboard loading, because the variable query needs to be completed before dashboard can be initialized.
    - **On Time Range Change -** Queries the data source when the dashboard time range changes. Only use this option if your variable options query contains a time range filter or is dependent on the dashboard time range.
 1. In the **Query** field, enter a query.
@@ -39,6 +38,5 @@ Query expressions are different for each data source. For more information, refe
 1. (optional) In the **Regex** field, type a regex expression to filter or capture specific parts of the names returned by your data source query. To see examples, refer to [Filter variables with regex]({{< relref "../filter-variables-with-regex.md" >}}).
 1. In the **Sort** list, select the sort order for values to be displayed in the dropdown list. The default option, **Disabled**, means that the order of options returned by your data source query will be used.
 1. (optional) Enter [Selection Options]({{< relref "../variable-selection-options.md" >}}).
-1. (optional) Enter [Value groups/tags]({{< relref "../variable-value-tags.md" >}}).
 1. In **Preview of values**, Grafana displays a list of the current variable values. Review them to ensure they match what you expect.
 1. Click **Add** to add the variable to the dashboard.

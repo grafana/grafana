@@ -1,6 +1,13 @@
 import { BackendSrv, BackendSrvRequest } from 'src/services';
-import { DataSourceWithBackend } from './DataSourceWithBackend';
-import { DataSourceJsonData, DataQuery, DataSourceInstanceSettings, DataQueryRequest } from '@grafana/data';
+import { DataSourceWithBackend, toStreamingDataResponse } from './DataSourceWithBackend';
+import {
+  DataSourceJsonData,
+  DataQuery,
+  DataSourceInstanceSettings,
+  DataQueryRequest,
+  DataQueryResponseData,
+  MutableDataFrame,
+} from '@grafana/data';
 import { of } from 'rxjs';
 
 class MyDataSource extends DataSourceWithBackend<DataQuery, DataSourceJsonData> {
@@ -18,6 +25,7 @@ const backendSrv = ({
 } as unknown) as BackendSrv;
 
 jest.mock('../services', () => ({
+  ...(jest.requireActual('../services') as any),
   getBackendSrv: () => backendSrv,
   getDataSourceSrv: () => {
     return {
@@ -72,5 +80,27 @@ describe('DataSourceWithBackend', () => {
         "url": "/api/ds/query",
       }
     `);
+  });
+
+  test('it converts results with channels to streaming queries', () => {
+    const request: DataQueryRequest = {
+      intervalMs: 100,
+    } as DataQueryRequest;
+
+    const rsp: DataQueryResponseData = {
+      data: [],
+    };
+
+    // Simple empty query
+    let obs = toStreamingDataResponse(request, rsp);
+    expect(obs).toBeDefined();
+
+    let frame = new MutableDataFrame();
+    frame.meta = {
+      channel: 'a/b/c',
+    };
+    rsp.data = [frame];
+    obs = toStreamingDataResponse(request, rsp);
+    expect(obs).toBeDefined();
   });
 });

@@ -1,41 +1,27 @@
-const antlr4 = require('antlr4');
-const ScrollQLLexer = require('./ScrollQLLexer').ScrollQLLexer;
-const ScrollQLParser = require('./ScrollQLParser').ScrollQLParser;
-const ScrollQLParserListener = require('./ScrollQLParserListener').ScrollQLParserListener;
+const byRE = /\s+by\s+/im;
 
-class GroupListener extends ScrollQLParserListener {
-  groupNames: string[] = [];
+/**
+ * groups look like this: (@a.foo)( as )(bar),
+ * group 1 is the field, group 2 is " as " and group 3 is the alias
+ * this regex will not advance past any non-identifier or whitespace characters, e.g. |
+ */
+const groupsRE = /([\w$@().]+)(?:(\s+as\s+)([\w$]+))?\s*,?\s*/iy;
 
-  enterLogStats(ctx: any) {
-    this.groupNames = [];
-    if (ctx.groups && ctx.groups.length > 0) {
-      const groups = ctx.groups;
+export function getStatsGroups(query: string): string[] {
+  let groups = [];
 
-      groups.forEach((group: any) => {
-        // This code is for handling the case where a field specifier is aliased, with the alias available via
-        // the proj property. Otherwise we can just take the group text as it is.
-        const proj = group.fieldSpec?.().proj;
-        if (proj) {
-          this.groupNames.push(proj.getText());
-        } else {
-          this.groupNames.push(group.getText());
-        }
-      });
+  // find " by "
+  let b;
+  if ((b = query.match(byRE))) {
+    // continue incremental scanning from there for groups & aliases
+    groupsRE.lastIndex = b.index! + b[0].length;
+
+    let g;
+    while ((g = groupsRE.exec(query))) {
+      groups.push(g[2] ? g[3] : g[1]);
+      groupsRE.lastIndex = g.index + g[0].length;
     }
   }
-}
 
-export function getStatsGroups(text: string): string[] {
-  // Dummy prefix needed here for parser to function correctly
-  const dummyPrefix = 'source test start=0 end=1|';
-  const queryText = dummyPrefix + text;
-  const chars = new antlr4.InputStream(queryText);
-  const lexer = new ScrollQLLexer(chars);
-  const tokens = new antlr4.CommonTokenStream(lexer);
-  const parser = new ScrollQLParser(tokens);
-  parser.buildParseTrees = true;
-  const tree = parser.query();
-  const groupListener = new GroupListener();
-  antlr4.tree.ParseTreeWalker.DEFAULT.walk(groupListener, tree);
-  return groupListener.groupNames;
+  return groups;
 }

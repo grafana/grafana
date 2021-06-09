@@ -35,7 +35,7 @@ export class SwitchCtrl {
   checked: any;
   show: any;
   id: any;
-  label: string;
+  label?: string;
 
   /** @ngInject */
   constructor($scope: any, private $timeout: any) {

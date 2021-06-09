@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
-import { Story } from '@storybook/react';
+import { Story, Meta } from '@storybook/react';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
-import { NOOP_CONTROL } from '../../utils/storybook/noopControl';
 import { ClipboardButton, Props } from './ClipboardButton';
 import { Input } from '../Forms/Legacy/Input/Input';
 import mdx from './ClipboardButton.mdx';
@@ -17,15 +16,11 @@ export default {
     knobs: {
       disable: true,
     },
+    controls: {
+      exclude: ['size', 'variant', 'icon', 'className', 'fullWidth'],
+    },
   },
-  argTypes: {
-    size: NOOP_CONTROL,
-    variant: NOOP_CONTROL,
-    icon: NOOP_CONTROL,
-    className: NOOP_CONTROL,
-    fullWidth: NOOP_CONTROL,
-  },
-};
+} as Meta;
 
 interface StoryProps extends Partial<Props> {
   inputText: string;

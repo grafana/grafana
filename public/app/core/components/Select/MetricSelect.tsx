@@ -1,5 +1,5 @@
 import React, { useMemo, useCallback, FC } from 'react';
-import _ from 'lodash';
+import { flatten } from 'lodash';
 
 import { LegacyForms } from '@grafana/ui';
 import { SelectableValue } from '@grafana/data';
@@ -60,7 +60,7 @@ const useSelectOptions = ({ variables = [], options }: Props): Array<SelectableV
 
 const useSelectedOption = (options: Array<SelectableValue<string>>, value: string): SelectableValue<string> => {
   return useMemo(() => {
-    const allOptions = options.every((o) => o.options) ? _.flatten(options.map((o) => o.options)) : options;
+    const allOptions = options.every((o) => o.options) ? flatten(options.map((o) => o.options)) : options;
     return allOptions.find((option) => option.value === value);
   }, [options, value]);
 };

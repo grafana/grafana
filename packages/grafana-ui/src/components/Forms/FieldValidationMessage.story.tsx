@@ -1,8 +1,7 @@
 import React from 'react';
-import { Story } from '@storybook/react';
+import { Meta, Story } from '@storybook/react';
 import { FieldValidationMessage, FieldValidationMessageProps } from './FieldValidationMessage';
 import mdx from './FieldValidationMessage.mdx';
-import { NOOP_CONTROL } from '../../utils/storybook/noopControl';
 
 export default {
   title: 'Forms/FieldValidationMessage',
@@ -14,6 +13,9 @@ export default {
     knobs: {
       disable: true,
     },
+    controls: {
+      exclude: ['className'],
+    },
   },
   args: {
     horizontal: false,
@@ -21,9 +23,8 @@ export default {
   },
   argTypes: {
     children: { name: 'message' },
-    className: NOOP_CONTROL,
   },
-};
+} as Meta;
 
 export const Basic: Story<FieldValidationMessageProps> = (args) => {
   return <FieldValidationMessage horizontal={args.horizontal}>{args.children}</FieldValidationMessage>;

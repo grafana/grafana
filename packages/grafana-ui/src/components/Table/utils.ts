@@ -60,10 +60,11 @@ export function getColumns(data: DataFrame, availableWidth: number, columnMinWid
     const selectSortType = (type: FieldType): string => {
       switch (type) {
         case FieldType.number:
+          return 'number';
         case FieldType.time:
           return 'basic';
         default:
-          return 'alphanumeric';
+          return 'alphanumeric-insensitive';
       }
     };
 
@@ -203,4 +204,27 @@ export function getFilteredOptions(options: SelectableValue[], filterValues?: Se
   }
 
   return options.filter((option) => filterValues.some((filtered) => filtered.value === option.value));
+}
+
+export function sortCaseInsensitive(a: Row<any>, b: Row<any>, id: string) {
+  return String(a.values[id]).localeCompare(String(b.values[id]), undefined, { sensitivity: 'base' });
+}
+
+// sortNumber needs to have great performance as it is called a lot
+export function sortNumber(rowA: Row<any>, rowB: Row<any>, id: string) {
+  const a = toNumber(rowA.values[id]);
+  const b = toNumber(rowB.values[id]);
+  return a === b ? 0 : a > b ? 1 : -1;
+}
+
+function toNumber(value: any): number {
+  if (typeof value === 'number') {
+    return value;
+  }
+
+  if (value === null || value === undefined || value === '' || isNaN(value)) {
+    return Number.NEGATIVE_INFINITY;
+  }
+
+  return Number(value);
 }

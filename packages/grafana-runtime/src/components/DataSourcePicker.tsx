@@ -2,10 +2,11 @@
 import React, { PureComponent } from 'react';
 
 // Components
-import { HorizontalGroup, PluginSignatureBadge, Select } from '@grafana/ui';
+import { HorizontalGroup, PluginSignatureBadge, Select, stylesFactory } from '@grafana/ui';
 import { DataSourceInstanceSettings, isUnsignedPluginSignature, SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { getDataSourceSrv } from '../services/dataSourceSrv';
+import { css, cx } from '@emotion/css';
 
 /**
  * Component props description for the {@link DataSourcePicker}
@@ -24,10 +25,14 @@ export interface DataSourcePickerProps {
   mixed?: boolean;
   dashboard?: boolean;
   metrics?: boolean;
+  type?: string | string[];
   annotations?: boolean;
   variables?: boolean;
+  alerting?: boolean;
   pluginId?: string;
   noDefault?: boolean;
+  width?: number;
+  filter?: (dataSource: DataSourceInstanceSettings) => boolean;
 }
 
 /**
@@ -51,7 +56,7 @@ export class DataSourcePicker extends PureComponent<DataSourcePickerProps, DataS
   static defaultProps: Partial<DataSourcePickerProps> = {
     autoFocus: false,
     openMenuOnFocus: false,
-    placeholder: 'Select datasource',
+    placeholder: 'Select data source',
   };
 
   state: DataSourcePickerState = {};
@@ -105,9 +110,10 @@ export class DataSourcePicker extends PureComponent<DataSourcePickerProps, DataS
   }
 
   getDataSourceOptions() {
-    const { tracing, metrics, mixed, dashboard, variables, annotations, pluginId } = this.props;
+    const { alerting, tracing, metrics, mixed, dashboard, variables, annotations, pluginId, type, filter } = this.props;
     const options = this.dataSourceSrv
       .getList({
+        alerting,
         tracing,
         metrics,
         dashboard,
@@ -115,6 +121,8 @@ export class DataSourcePicker extends PureComponent<DataSourcePickerProps, DataS
         variables,
         annotations,
         pluginId,
+        filter,
+        type,
       })
       .map((ds) => ({
         value: ds.name,
@@ -127,15 +135,16 @@ export class DataSourcePicker extends PureComponent<DataSourcePickerProps, DataS
   }
 
   render() {
-    const { autoFocus, onBlur, openMenuOnFocus, placeholder } = this.props;
+    const { autoFocus, onBlur, openMenuOnFocus, placeholder, width } = this.props;
     const { error } = this.state;
     const options = this.getDataSourceOptions();
     const value = this.getCurrentValue();
+    const styles = getStyles();
 
     return (
       <div aria-label={selectors.components.DataSourcePicker.container}>
         <Select
-          className="ds-picker select-container"
+          className={styles.select}
           isMulti={false}
           isClearable={false}
           backspaceRemovesValue={false}
@@ -143,11 +152,12 @@ export class DataSourcePicker extends PureComponent<DataSourcePickerProps, DataS
           options={options}
           autoFocus={autoFocus}
           onBlur={onBlur}
+          width={width}
           openMenuOnFocus={openMenuOnFocus}
           maxMenuHeight={500}
           placeholder={placeholder}
           noOptionsMessage="No datasources found"
-          value={value}
+          value={value ?? null}
           invalid={!!error}
           getOptionLabel={(o) => {
             if (o.meta && isUnsignedPluginSignature(o.meta.signature) && o !== value) {
@@ -164,3 +174,13 @@ export class DataSourcePicker extends PureComponent<DataSourcePickerProps, DataS
     );
   }
 }
+
+const getStyles = stylesFactory(() => ({
+  select: cx(
+    css({
+      minWidth: 200,
+    }),
+    'ds-picker',
+    'select-container'
+  ),
+}));

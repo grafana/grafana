@@ -10,7 +10,6 @@ import {
   TextBoxVariableModel,
   VariableModel,
   VariableOption,
-  VariableTag,
   VariableWithOptions,
 } from 'app/features/variables/types';
 import {
@@ -108,7 +107,6 @@ function sanitizeOption(option: VariableOption): VariableOption {
     ...option,
     text: sanitizeStringOrStringArray(option.text),
     value: sanitizeStringOrStringArray(option.value),
-    tags: sanitizeTags(option.tags),
   };
 }
 
@@ -118,19 +116,6 @@ function sanitizeFilter(filter: AdHocVariableFilter): AdHocVariableFilter {
     key: sanitizeStringOrStringArray(filter.key),
     value: sanitizeStringOrStringArray(filter.key),
   };
-}
-
-function sanitizeTags(tags?: VariableTag[]): VariableTag[] {
-  if (!tags) {
-    return [];
-  }
-
-  return tags.map((t) => ({
-    ...t,
-    text: sanitizeStringOrStringArray(t.text),
-    values: sanitizeStringOrStringArray(t.values),
-    valuesText: sanitizeStringOrStringArray(t.valuesText),
-  }));
 }
 
 function sanitizeVariable(variable: VariableModel): VariableModel {
@@ -251,9 +236,6 @@ class QuerySanitizer implements VariableTypeSanitizer<QueryVariableModel> {
       datasource: REPLACE_WITH,
       definition: REPLACE_WITH,
       queryValue: REPLACE_WITH,
-      tagsQuery: REPLACE_WITH,
-      tagValuesQuery: REPLACE_WITH,
-      tags: sanitizeTags(variable.tags),
     };
   }
 }

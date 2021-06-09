@@ -4,14 +4,13 @@ import { connect } from 'react-redux';
 import { hot } from 'react-hot-loader';
 // Components
 import Page from 'app/core/components/Page/Page';
-import OrgActionBar from 'app/core/components/OrgActionBar/OrgActionBar';
+import PageActionBar from 'app/core/components/PageActionBar/PageActionBar';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import DataSourcesList from './DataSourcesList';
 // Types
-import { DataSourceSettings, NavModel } from '@grafana/data';
+import { DataSourceSettings, NavModel, LayoutMode } from '@grafana/data';
 import { IconName } from '@grafana/ui';
 import { StoreState } from 'app/types';
-import { LayoutMode } from 'app/core/components/LayoutSelector/LayoutSelector';
 // Actions
 import { loadDataSources } from './state/actions';
 import { getNavModel } from 'app/core/selectors/navModel';
@@ -75,7 +74,7 @@ export class DataSourcesListPage extends PureComponent<Props> {
             {hasFetched && dataSourcesCount === 0 && <EmptyListCTA {...emptyListModel} />}
             {hasFetched &&
               dataSourcesCount > 0 && [
-                <OrgActionBar
+                <PageActionBar
                   searchQuery={searchQuery}
                   setSearchQuery={(query) => setDataSourcesSearchQuery(query)}
                   linkButton={linkButton}
