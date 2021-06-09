@@ -294,8 +294,6 @@ github.com/census-instrumentation/opencensus-proto v0.2.1/go.mod h1:f6KPmirojxKA
 github.com/census-instrumentation/opencensus-proto v0.3.0/go.mod h1:f6KPmirojxKA12rnyqOA5BBL4O983OfeGPqjHWSTneU=
 github.com/centrifugal/centrifuge v0.17.0 h1:ANZMhcR8pFbRUPdv45nrIhhZcsSOdtshT3YM4v1/NHY=
 github.com/centrifugal/centrifuge v0.17.0/go.mod h1:AEFs3KPGRpvX1jCe24NDlGWQu7DPa7vdzeY/aUluOm0=
-github.com/centrifugal/centrifuge-go v0.7.1/go.mod h1:G8cXpoTVd8l6CMHh9LWyUJOEfu6cjrm4SGdT36E15Hc=
-github.com/centrifugal/protocol v0.3.5/go.mod h1:2YbBCaDwQHl37ErRdMrKSj18X2yVvpkQYtSX6aVbe5A=
 github.com/centrifugal/protocol v0.5.0 h1:h71u2Q53yhplftmUk1tjc+Mu6TKJ/eO3YRD3h7Qjvj4=
 github.com/centrifugal/protocol v0.5.0/go.mod h1:ru2N4pwiND/jE+XLtiLYbUo3YmgqgniGNW9f9aRgoVI=
 github.com/certifi/gocertifi v0.0.0-20191021191039-0944d244cd40/go.mod h1:sGbDF6GwGcLpkNXPUTkMRoywsNa/ol15pxFe6ERfguA=
@@ -916,10 +914,7 @@ github.com/grafana/go-mssqldb v0.0.0-20210326084033-d0ce3c521036 h1:GplhUk6Xes5J
 github.com/grafana/go-mssqldb v0.0.0-20210326084033-d0ce3c521036/go.mod h1:xbL0rPBG9cCiLr28tMa8zpbdarY27NDyej4t/EjAShU=
 github.com/grafana/grafana-aws-sdk v0.4.0 h1:JmTaXfOJ/ydHSWH9kEt8Yhfb9kAhIW4LUOO3SWCviYg=
 github.com/grafana/grafana-aws-sdk v0.4.0/go.mod h1:+pPo5U+pX0zWimR7YBc7ASeSQfbRkcTyQYqMiAj7G5U=
-github.com/grafana/grafana-live-sdk v0.0.6 h1:P1QFn0ZradOJp3zVpfG0STZMP+pgZrW0e0zvpqOrYVI=
-github.com/grafana/grafana-live-sdk v0.0.6/go.mod h1:f15hHmWyLdFjmuWLsjeKeZnq/HnNQ3QkoPcaEww45AY=
 github.com/grafana/grafana-plugin-sdk-go v0.79.0/go.mod h1:NvxLzGkVhnoBKwzkst6CFfpMFKwAdIUZ1q8ssuLeF60=
-github.com/grafana/grafana-plugin-sdk-go v0.91.0/go.mod h1:Ot3k7nY7P6DXmUsDgKvNB7oG1v7PRyTdmnYVoS554bU=
 github.com/grafana/grafana-plugin-sdk-go v0.104.0 h1:Ij2tPdEasSjCb2MxHaaiylyW4RLVZYyWpApzN/mlTxo=
 github.com/grafana/grafana-plugin-sdk-go v0.104.0/go.mod h1:D7x3ah+1d4phNXpbnOaxa/osSaZlwh9/ZUnGGzegRbk=
 github.com/grafana/loki v1.6.2-0.20210520072447-15d417efe103 h1:qCmofFVwQR9QnsinstVqI1NPLMVl33jNCnOCXEAVn6E=
