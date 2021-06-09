@@ -21,9 +21,7 @@ const stripBaseFromUrl = (url: string): string => {
     segmentToStrip = `${window.location.origin}${appSubUrl}`;
   }
 
-  return url.length > 0 && url.indexOf(segmentToStrip) !== -1
-    ? url.slice(segmentToStrip.length - stripExtraChars)
-    : url;
+  return url.length > 0 && url.indexOf(segmentToStrip) === 0 ? url.slice(segmentToStrip.length - stripExtraChars) : url;
 };
 
 /**
