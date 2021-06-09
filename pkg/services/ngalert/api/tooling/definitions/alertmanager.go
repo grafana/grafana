@@ -7,7 +7,6 @@ import (
 	"reflect"
 
 	"github.com/go-openapi/strfmt"
-
 	"github.com/pkg/errors"
 	amv2 "github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/alertmanager/config"
@@ -150,15 +149,28 @@ func (s *GettableStatus) UnmarshalJSON(b []byte) error {
 		return err
 	}
 
-	c := Config{}
+	c := config.Config{}
 	if err := yaml.Unmarshal([]byte(*amStatus.Config.Original), &c); err != nil {
 		return err
 	}
 
 	s.Cluster = amStatus.Cluster
-	s.Config = &PostableApiAlertingConfig{Config: c}
+	s.Config = &PostableApiAlertingConfig{Config: Config{
+		Global:       c.Global,
+		Route:        c.Route,
+		InhibitRules: c.InhibitRules,
+		Templates:    c.Templates,
+	}}
 	s.Uptime = amStatus.Uptime
 	s.VersionInfo = amStatus.VersionInfo
+
+	type overrides struct {
+		Receivers *[]*PostableApiReceiver `yaml:"receivers,omitempty" json:"receivers,omitempty"`
+	}
+
+	if err := yaml.Unmarshal([]byte(*amStatus.Config.Original), &overrides{Receivers: &s.Config.Receivers}); err != nil {
+		return err
+	}
 
 	return nil
 }
