@@ -3,6 +3,9 @@ package managedstream
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 
@@ -66,11 +69,13 @@ func (r *Runner) GetOrCreateStream(orgID int64, streamID string) (*ManagedStream
 
 // ManagedStream holds the state of a managed stream.
 type ManagedStream struct {
-	mu        sync.RWMutex
-	id        string
-	start     time.Time
-	last      map[int64]map[string]data.FrameJSONCache
-	publisher models.ChannelPublisher
+	mu          sync.RWMutex
+	id          string
+	start       time.Time
+	last        map[int64]map[string]data.FrameJSONCache
+	fieldSubsMu sync.Mutex
+	fieldSubs   map[string]map[string][]string
+	publisher   models.ChannelPublisher
 }
 
 // NewManagedStream creates new ManagedStream.
@@ -79,6 +84,7 @@ func NewManagedStream(id string, publisher models.ChannelPublisher) *ManagedStre
 		id:        id,
 		start:     time.Now(),
 		last:      map[int64]map[string]data.FrameJSONCache{},
+		fieldSubs: map[string]map[string][]string{},
 		publisher: publisher,
 	}
 }
@@ -100,6 +106,44 @@ func (s *ManagedStream) ListChannels(orgID int64, prefix string) []util.DynMap {
 		info = append(info, ch)
 	}
 	return info
+}
+
+func (s *ManagedStream) publishToSubChannels(orgID int64, path string, frame *data.Frame, include data.FrameInclude) error {
+	s.fieldSubsMu.Lock()
+	defer s.fieldSubsMu.Unlock()
+
+	fmt.Printf("%#v %s\n", s.fieldSubs, path)
+
+	if subChannels, ok := s.fieldSubs[path]; ok {
+		for ch, fields := range subChannels {
+			frame := copyFrameWithFields(frame, fields)
+			msg, err := data.FrameToJSONCache(frame)
+			if err != nil {
+				logger.Error("Error marshaling frame with data", "error", err)
+				return err
+			}
+			s.mu.Lock()
+			channel, _ := live.ParseChannel(ch)
+			if _, ok := s.last[orgID]; !ok {
+				s.last[orgID] = map[string]data.FrameJSONCache{}
+			}
+			last, exists := s.last[orgID][channel.Path]
+			s.last[orgID][channel.Path] = msg
+			s.mu.Unlock()
+			include := data.IncludeAll
+			if exists && last.SameSchema(&msg) {
+				// When the schema has not changed, just send the data.
+				include = data.IncludeDataOnly
+			}
+			frameJSON := msg.Bytes(include)
+			logger.Debug("Publish data to channel", "channel", ch, "dataLength", len(frameJSON))
+			err = s.publisher(orgID, ch, frameJSON)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }
 
 // Push sends frame to the stream and saves it for later retrieval by subscribers.
@@ -127,10 +171,43 @@ func (s *ManagedStream) Push(orgID int64, path string, frame *data.Frame) error 
 	}
 	frameJSON := msg.Bytes(include)
 
+	// Publish to currently active sub channels.
+	err = s.publishToSubChannels(orgID, path, frame, include)
+	if err != nil {
+		return err
+	}
+
 	// The channel this will be posted into.
 	channel := live.Channel{Scope: live.ScopeStream, Namespace: s.id, Path: path}.String()
 	logger.Debug("Publish data to channel", "channel", channel, "dataLength", len(frameJSON))
 	return s.publisher(orgID, channel, frameJSON)
+}
+
+func contains(s []string, e string) bool {
+	for _, a := range s {
+		if a == e {
+			return true
+		}
+	}
+	return false
+}
+
+func copyFrameWithFields(f *data.Frame, fieldNames []string) *data.Frame {
+	var fields []*data.Field
+
+	for _, field := range f.Fields {
+		if field.Name == "labels" || field.Type() == data.FieldTypeTime || contains(fieldNames, field.Name) {
+			fields = append(fields, field)
+		}
+	}
+
+	newFrame := &data.Frame{
+		Name:   f.Name,
+		RefID:  f.RefID,
+		Fields: fields,
+	}
+
+	return newFrame
 }
 
 // getLastPacket retrieves last packet channel.
@@ -152,9 +229,38 @@ func (s *ManagedStream) GetHandlerForPath(_ string) (models.ChannelHandler, erro
 	return s, nil
 }
 
-func (s *ManagedStream) OnSubscribe(_ context.Context, u *models.SignedInUser, e models.SubscribeEvent) (models.SubscribeReply, backend.SubscribeStreamStatus, error) {
+func (s *ManagedStream) OnSubscribe(ctx context.Context, u *models.SignedInUser, e models.SubscribeEvent) (models.SubscribeReply, backend.SubscribeStreamStatus, error) {
 	reply := models.SubscribeReply{}
-	packet, ok := s.getLastPacket(u.OrgId, e.Path)
+
+	var path = e.Path
+	if strings.Contains(e.Path, "/") {
+		// For paths like xxx/usage_user,usage_idle we keep channel in special
+		// map till connection is active. This map will be checked upon publish to
+		// xxx and frame with only selected field names will be sent to channels.
+		// (usage_user and usage_idle in example above).
+		base := filepath.Base(e.Path)
+		fields := strings.Split(base, ",")
+		path = strings.TrimSuffix(path, "/"+base)
+		if _, ok := s.fieldSubs[path]; !ok {
+			s.fieldSubs[path] = map[string][]string{}
+		}
+		s.fieldSubsMu.Lock()
+		s.fieldSubs[path][e.Channel] = fields
+		s.fieldSubsMu.Unlock()
+		go func() {
+			<-ctx.Done()
+			s.fieldSubsMu.Lock()
+			delete(s.fieldSubs[path], e.Channel)
+			s.fieldSubsMu.Unlock()
+		}()
+		packet, ok := s.getLastPacket(u.OrgId, e.Path)
+		if ok {
+			reply.Data = packet
+		}
+		return reply, backend.SubscribeStreamStatusOK, nil
+	}
+
+	packet, ok := s.getLastPacket(u.OrgId, path)
 	if ok {
 		reply.Data = packet
 	}

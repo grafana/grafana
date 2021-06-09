@@ -6,6 +6,7 @@ import {
   DataSourceApi,
   DataSourceInstanceSettings,
   isValidLiveChannelAddress,
+  LiveChannelScope,
   parseLiveChannelAddress,
   StreamingFrameOptions,
 } from '@grafana/data';
@@ -50,6 +51,12 @@ export class GrafanaDatasource extends DataSourceApi<GrafanaQuery> {
           buffer.maxLength = buffer.maxLength! * 2; //??
         } else if (request.rangeRaw?.to === 'now') {
           buffer.maxDelta = request.range.to.valueOf() - request.range.from.valueOf();
+        }
+
+        // Add the filter to the channel path
+        if (addr.scope === LiveChannelScope.Stream && filter?.fields?.length) {
+          addr.path += '/' + filter.fields.join(',');
+          filter = undefined; // filter is handled on the server side
         }
 
         queries.push(
