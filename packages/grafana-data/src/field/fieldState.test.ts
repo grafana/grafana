@@ -214,6 +214,6 @@ describe('Check field state calculations (displayName and id)', () => {
       ],
       fieldIndex: 1,
     });
-    expect(title).toEqual('line {host="ec2-13-53-116-156.eu-north-1.compute.amazonaws.com", region="eu-north1"}');
+    expect(title).toEqual('{host="ec2-13-53-116-156.eu-north-1.compute.amazonaws.com", region="eu-north1"}');
   });
 });
