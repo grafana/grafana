@@ -1,10 +1,13 @@
 package manager
 
 import (
+	"fmt"
 	"net/url"
 	"path"
 	"path/filepath"
 	"strings"
+
+	"github.com/grafana/grafana/pkg/models"
 
 	"github.com/gosimple/slug"
 
@@ -38,6 +41,20 @@ func (l *Initializer) Init() error {
 
 // Can this step be actually done through pointer receiver?
 func (l *Initializer) Initialize(p *plugins.PluginV2) error {
+	if len(p.Dependencies.Plugins) == 0 {
+		p.Dependencies.Plugins = []plugins.PluginDependencyItem{}
+	}
+
+	if p.Dependencies.GrafanaVersion == "" {
+		p.Dependencies.GrafanaVersion = "*"
+	}
+
+	for _, include := range p.Includes {
+		if include.Role == "" {
+			include.Role = models.ROLE_VIEWER
+		}
+	}
+
 	l.handleModuleDefaults(p)
 
 	p.Info.Logos.Small = getPluginLogoUrl(p.Type, p.Info.Logos.Small, p.BaseUrl)
@@ -66,6 +83,14 @@ func (l *Initializer) Initialize(p *plugins.PluginV2) error {
 		}
 	}
 
+	if !p.IsCorePlugin {
+		pluginType := "external"
+		if strings.HasPrefix(p.PluginDir, l.Cfg.BundledPluginsPath) {
+			pluginType = "bundled"
+		}
+		l.log.Info(fmt.Sprintf("Successfully added %s plugin", pluginType), "pluginID", p.ID)
+	}
+
 	return nil
 }
 
@@ -77,10 +102,6 @@ func (l *Initializer) handleModuleDefaults(p *plugins.PluginV2) {
 		p.BaseUrl = path.Join("public/plugins", p.ID)
 		return
 	}
-
-	// Both feel weird here
-	p.IsCorePlugin = true
-	p.Signature = plugins.PluginSignatureInternal
 
 	// Previously there was an assumption that the plugin directory
 	// should be public/app/plugins/<plugin type>/<plugin id>

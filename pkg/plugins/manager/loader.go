@@ -41,7 +41,6 @@ func (l *Loader) Init() error {
 	return nil
 }
 
-// This should probably return a "data model" for the plugin instead
 func (l *Loader) Load(pluginJSONPath string, requireSigned bool) (*plugins.PluginV2, error) {
 	p, err := l.LoadAll([]string{pluginJSONPath}, requireSigned)
 	if err != nil {
@@ -51,7 +50,6 @@ func (l *Loader) Load(pluginJSONPath string, requireSigned bool) (*plugins.Plugi
 	return p[0], nil
 }
 
-// This should probably return a "data model" for the plugin instead
 func (l *Loader) LoadAll(pluginJSONPaths []string, requireSigned bool) ([]*plugins.PluginV2, error) {
 	var foundPlugins = make(map[string]*plugins.PluginV2)
 
@@ -78,16 +76,6 @@ func (l *Loader) LoadAll(pluginJSONPaths []string, requireSigned bool) ([]*plugi
 			return nil, errors.New("did not find type or id properties in plugin.json")
 		}
 
-		plugin.PluginDir = filepath.Dir(pluginJSONPath)
-		signatureState, err := pluginSignatureState(l.log, plugin)
-		if err != nil {
-			l.log.Warn("Could not get plugin signature state", "pluginID", plugin.ID, "err", err)
-			return nil, err
-		}
-		plugin.Signature = signatureState.Status
-		plugin.SignatureType = signatureState.Type
-		plugin.SignatureOrg = signatureState.SigningOrg
-
 		foundPlugins[filepath.Dir(pluginJSONPath)] = plugin
 	}
 
@@ -110,7 +98,8 @@ func (l *Loader) LoadAll(pluginJSONPaths []string, requireSigned bool) ([]*plugi
 	}
 
 	// wire up plugin dependencies
-	for _, plugin := range foundPlugins {
+	for pluginDir, plugin := range foundPlugins {
+		plugin.PluginDir = pluginDir
 		ancestors := strings.Split(plugin.PluginDir, string(filepath.Separator))
 		ancestors = ancestors[0 : len(ancestors)-1]
 		aPath := ""
@@ -130,13 +119,26 @@ func (l *Loader) LoadAll(pluginJSONPaths []string, requireSigned bool) ([]*plugi
 
 	// start of second pass
 	for _, plugin := range foundPlugins {
+		signatureState, err := pluginSignatureState(l.log, l.Cfg, plugin)
+		if err != nil {
+			l.log.Warn("Could not get plugin signature state", "pluginID", plugin.ID, "err", err)
+			return nil, err
+		}
+		plugin.Signature = signatureState.Status
+		plugin.SignatureType = signatureState.Type
+		plugin.SignatureOrg = signatureState.SigningOrg
+
 		l.log.Debug("Found plugin", "id", plugin.ID, "signature", plugin.Signature, "hasParent", plugin.Parent != nil)
 		signingError := newSignatureValidator(l.Cfg, requireSigned, l.allowUnsignedPluginsCondition).validate(plugin)
 		if signingError != nil {
 			l.log.Debug("Failed to validate plugin signature. Will skip loading", "id", plugin.ID,
 				"signature", plugin.Signature, "status", signingError.ErrorCode)
 			//pm.pluginScanningErrors[plugin.Id] = *signingError
-			return nil, nil // collect scanning error
+			return nil, nil
+		}
+
+		if plugin.Signature.IsInternal() {
+			plugin.IsCorePlugin = true
 		}
 
 		l.log.Debug("Attempting to add plugin", "id", plugin.ID)
@@ -182,34 +184,15 @@ func (l *Loader) LoadAll(pluginJSONPaths []string, requireSigned bool) ([]*plugi
 			env := getPluginSettings(plugin.ID, l.Cfg).ToEnv("GF_PLUGIN", hostEnv)
 
 			cmd := plugins.ComposePluginStartCommand(plugin.Executable)
-			factory := grpcplugin.NewBackendPlugin(plugin.ID, filepath.Join(plugin.PluginDir, cmd))
-			backendClient, err := factory(plugin.ID, l.log.New("pluginID", plugin.ID), env)
-			if err != nil {
+			backendFactory := grpcplugin.NewBackendPlugin(plugin.ID, filepath.Join(plugin.PluginDir, cmd))
+			if backendClient, err := backendFactory(plugin.ID, l.log.New("pluginID", plugin.ID), env); err != nil {
 				return nil, err
-			}
-
-			plugin.Client = backendClient
-		}
-
-		if !strings.HasPrefix(plugin.PluginDir, l.Cfg.StaticRootPath) {
-			l.log.Info("Registering plugin", "id", plugin.ID)
-		}
-
-		if len(plugin.Dependencies.Plugins) == 0 {
-			plugin.Dependencies.Plugins = []plugins.PluginDependencyItem{}
-		}
-
-		if plugin.Dependencies.GrafanaVersion == "" {
-			plugin.Dependencies.GrafanaVersion = "*"
-		}
-
-		for _, include := range plugin.Includes {
-			if include.Role == "" {
-				include.Role = models.ROLE_VIEWER
+			} else {
+				plugin.Client = backendClient
 			}
 		}
 
-		l.log.Debug("Successfully added plugin", "id", plugin.ID)
+		logger.Debug("Loaded plugin", "pluginID", plugin.ID)
 
 		//if len(scanner.errors) > 0 {
 		//	l.log.Warn("Some plugins failed to load", "errors", scanner.errors)

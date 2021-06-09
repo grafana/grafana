@@ -142,8 +142,6 @@ func (m *PluginManagerV2) installPlugins(path string, requireSigning bool) error
 	}
 
 	for _, p := range loadedPlugins {
-		m.log.Info("Loaded plugin", "pluginID", p.ID)
-
 		err = m.PluginInitializer.Initialize(p)
 		if err != nil {
 			return err

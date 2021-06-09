@@ -192,7 +192,7 @@ func getPluginSignatureState(log log.Logger, plugin *plugins.PluginBase) (plugin
 		}
 		sum := hex.EncodeToString(h.Sum(nil))
 		if sum != hash {
-			log.Warn("Plugin file's signature has been modified versus manifest", "plugin", plugin.Id, "filename", fp)
+			log.Warn("Plugin file has been modified", "plugin", plugin.Id, "filename", fp)
 			return plugins.PluginSignatureState{
 				Status: plugins.PluginSignatureModified,
 			}, nil
@@ -226,8 +226,15 @@ func getPluginSignatureState(log log.Logger, plugin *plugins.PluginBase) (plugin
 	}, nil
 }
 
-func pluginSignatureState(log log.Logger, plugin *plugins.PluginV2) (plugins.PluginSignatureState, error) {
+func pluginSignatureState(log log.Logger, cfg *setting.Cfg, plugin *plugins.PluginV2) (plugins.PluginSignatureState, error) {
 	log.Debug("Getting signature state of plugin", "plugin", plugin.ID, "isBackend", plugin.Backend)
+
+	if isCorePlugin(cfg, plugin) {
+		return plugins.PluginSignatureState{
+			Status: plugins.PluginSignatureInternal,
+		}, nil
+	}
+
 	manifestPath := filepath.Join(plugin.PluginDir, "MANIFEST.txt")
 
 	// nolint:gosec
@@ -320,7 +327,7 @@ func pluginSignatureState(log log.Logger, plugin *plugins.PluginV2) (plugins.Plu
 		}
 		sum := hex.EncodeToString(h.Sum(nil))
 		if sum != hash {
-			log.Warn("Plugin file's signature has been modified versus manifest", "plugin", plugin.ID, "filename", fp)
+			log.Warn("Plugin file has been modified", "plugin", plugin.ID, "filename", fp)
 			return plugins.PluginSignatureState{
 				Status: plugins.PluginSignatureModified,
 			}, nil
@@ -357,6 +364,11 @@ func pluginSignatureState(log log.Logger, plugin *plugins.PluginV2) (plugins.Plu
 		Type:       manifest.SignatureType,
 		SigningOrg: manifest.SignedByOrgName,
 	}, nil
+}
+
+// should add more secure checks
+func isCorePlugin(cfg *setting.Cfg, p *plugins.PluginV2) bool {
+	return strings.Contains(p.PluginDir, filepath.Join(cfg.StaticRootPath, "app/plugins"))
 }
 
 // gets plugin filenames that require verification for plugin signing
