@@ -12,7 +12,7 @@ export function inspectPackager(): Packager {
       const markdowns: string[] = [];
       const newline = '\n';
 
-      markdowns.push(`#### Shared sanitized data from Grafana (${new Date().toISOString()})`);
+      markdowns.push(`#### Shared data from Grafana (${new Date().toISOString()})`);
       for (const item of items) {
         let markdown = '';
         markdown += `##### ${item.name}  `;
