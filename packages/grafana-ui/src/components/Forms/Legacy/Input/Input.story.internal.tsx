@@ -11,9 +11,6 @@ export default {
   component: Input,
   decorators: [withCenteredStory],
   parameters: {
-    knobs: {
-      disable: true,
-    },
     controls: {
       exclude: ['inputRef'],
     },

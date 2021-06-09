@@ -11,9 +11,6 @@ export default {
   component: Select,
   decorators: [withCenteredStory],
   parameters: {
-    knobs: {
-      disable: true,
-    },
     controls: {
       exclude: [
         'className',

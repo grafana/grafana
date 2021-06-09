@@ -9,9 +9,6 @@ export default {
   component: ButtonCascader,
   decorators: [withCenteredStory],
   parameters: {
-    knobs: {
-      disable: true,
-    },
     controls: {
       exclude: ['className', 'value', 'fieldNames'],
     },

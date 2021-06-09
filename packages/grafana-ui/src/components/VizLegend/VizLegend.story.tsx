@@ -11,11 +11,6 @@ export default {
   title: 'Visualizations/VizLegend',
   component: VizLegend,
   decorators: [withCenteredStory],
-  parameters: {
-    knobs: {
-      disable: true,
-    },
-  },
   args: {
     containerWidth: '100%',
     seriesCount: 5,

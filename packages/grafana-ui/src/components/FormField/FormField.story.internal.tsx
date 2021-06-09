@@ -8,9 +8,6 @@ export default {
   component: FormField,
   decorators: [withCenteredStory],
   parameters: {
-    knobs: {
-      disable: true,
-    },
     controls: {
       exclude: ['inputEl'],
     },

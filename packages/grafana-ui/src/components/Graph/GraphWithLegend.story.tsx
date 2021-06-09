@@ -11,9 +11,6 @@ export default {
   component: GraphWithLegend,
   decorator: [withCenteredStory],
   parameters: {
-    knobs: {
-      disable: true,
-    },
     controls: {
       exclude: ['className', 'ariaLabel', 'legendDisplayMode'],
     },

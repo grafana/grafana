@@ -9,9 +9,6 @@ export default {
   decorators: [],
   parameters: {
     docs: {},
-    knobs: {
-      disable: true,
-    },
   },
   argTypes: {
     icon: { options: iconOptions, control: { type: 'select' } },

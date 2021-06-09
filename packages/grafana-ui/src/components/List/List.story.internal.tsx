@@ -9,9 +9,6 @@ export default {
   title: 'Layout/List',
   component: List,
   parameters: {
-    knobs: {
-      disable: true,
-    },
     controls: {
       exclude: ['renderItem', 'getItemKey', 'className', 'items'],
     },
