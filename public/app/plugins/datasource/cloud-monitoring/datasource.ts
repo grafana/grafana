@@ -16,6 +16,7 @@ import { DataSourceWithBackend, toDataQueryResponse } from '@grafana/runtime';
 import { CloudMonitoringVariableSupport } from './variables';
 import { catchError, map, mergeMap } from 'rxjs/operators';
 import { from, Observable, of, throwError } from 'rxjs';
+import { MetricQuery } from '../cloudwatch/types';
 
 export default class CloudMonitoringDatasource extends DataSourceWithBackend<
   CloudMonitoringQuery,
@@ -103,10 +104,10 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
       .toPromise();
   }
 
-  applyTemplateVariables(
-    { metricQuery, refId, queryType, sloQuery }: CloudMonitoringQuery,
-    scopedVars: ScopedVars
-  ): Record<string, any> {
+  applyTemplateVariables(query: CloudMonitoringQuery, scopedVars: ScopedVars): Record<string, any> {
+    const { refId, queryType, sloQuery } = query;
+    // Query won't have the key metricQuery in v6.x, just the plain object
+    const metricQuery = query.metricQuery ? query.metricQuery : (query as MetricQuery);
     return {
       datasourceId: this.id,
       refId,
