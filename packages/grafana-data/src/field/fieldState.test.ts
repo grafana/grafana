@@ -81,11 +81,11 @@ describe('Check field state calculations (displayName and id)', () => {
       frames: [
         toDataFrame({
           name: 'Series A',
-          fields: [{ name: 'Field 1' }],
+          fields: [{ name: 'Field 1' }, { name: 'Field 2' }],
         }),
         toDataFrame({
           name: 'Series B',
-          fields: [{ name: 'Field 1' }],
+          fields: [{ name: 'Field 1' }, { name: 'Field 2' }],
         }),
       ],
     });
