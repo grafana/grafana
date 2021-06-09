@@ -1,5 +1,5 @@
 import React from 'react';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { LogRows, CustomScrollbar, useTheme2 } from '@grafana/ui';
 import { PanelProps, Field } from '@grafana/data';
 import { Options } from './types';
