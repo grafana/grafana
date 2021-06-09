@@ -2,7 +2,6 @@ package channels
 
 import (
 	"context"
-	"fmt"
 	"strings"
 
 	"github.com/prometheus/alertmanager/notify"
@@ -67,10 +66,7 @@ func (kn *KafkaNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 	kn.log.Debug("Notifying Kafka", "alert_state", state)
 
 	var tmplErr error
-	tmpl, _, err := TmplText(ctx, kn.tmpl, as, kn.log, &tmplErr)
-	if err != nil {
-		return false, err
-	}
+	tmpl, _ := TmplText(ctx, kn.tmpl, as, kn.log, &tmplErr)
 
 	bodyJSON := simplejson.New()
 	bodyJSON.Set("alert_state", state)
@@ -78,10 +74,7 @@ func (kn *KafkaNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 	bodyJSON.Set("client", "Grafana")
 	bodyJSON.Set("details", tmpl(`{{ template "default.message" . }}`))
 
-	ruleURL, err := joinUrlPath(kn.tmpl.ExternalURL.String(), "/alerting/list")
-	if err != nil {
-		return false, err
-	}
+	ruleURL := joinUrlPath(kn.tmpl.ExternalURL.String(), "/alerting/list", kn.log)
 	bodyJSON.Set("client_url", ruleURL)
 
 	groupKey, err := notify.ExtractGroupKey(ctx)
@@ -97,7 +90,7 @@ func (kn *KafkaNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 	recordJSON.Set("records", []interface{}{valueJSON})
 
 	if tmplErr != nil {
-		return false, fmt.Errorf("failed to template Kafka message: %w", tmplErr)
+		kn.log.Debug("failed to template Kafka message", "err", tmplErr.Error())
 	}
 
 	body, err := recordJSON.MarshalJSON()

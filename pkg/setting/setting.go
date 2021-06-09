@@ -385,6 +385,9 @@ type Cfg struct {
 	// Grafana Live ws endpoint (per Grafana server instance). 0 disables
 	// Live, -1 means unlimited connections.
 	LiveMaxConnections int
+
+	// Grafana.com URL
+	GrafanaComURL string
 }
 
 // IsLiveConfigEnabled returns true if live should be able to save configs to SQL tables
@@ -940,6 +943,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	if GrafanaComUrl == "" {
 		GrafanaComUrl = valueAsString(iniFile.Section("grafana_com"), "url", "https://grafana.com")
 	}
+	cfg.GrafanaComURL = GrafanaComUrl
 
 	imageUploadingSection := iniFile.Section("external_image_storage")
 	cfg.ImageUploadProvider = valueAsString(imageUploadingSection, "provider", "")

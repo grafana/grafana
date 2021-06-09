@@ -11,8 +11,11 @@ import (
 	"net/url"
 	"path"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/api/pluginproxy"
+	"github.com/grafana/grafana/pkg/components/securejsondata"
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
@@ -22,8 +25,6 @@ import (
 )
 
 type InsightsAnalyticsDatasource struct {
-	httpClient    *http.Client
-	dsInfo        *models.DataSource
 	pluginManager plugins.Manager
 	cfg           *setting.Cfg
 }
@@ -40,38 +41,29 @@ type InsightsAnalyticsQuery struct {
 	Target string
 }
 
-//nolint: staticcheck // plugins.DataPlugin deprecated
 func (e *InsightsAnalyticsDatasource) executeTimeSeriesQuery(ctx context.Context,
-	originalQueries []plugins.DataSubQuery, timeRange plugins.DataTimeRange) (plugins.DataResponse, error) {
-	result := plugins.DataResponse{
-		Results: map[string]plugins.DataQueryResult{},
-	}
+	originalQueries []backend.DataQuery, dsInfo datasourceInfo) (*backend.QueryDataResponse, error) {
+	result := backend.NewQueryDataResponse()
 
-	queries, err := e.buildQueries(originalQueries, timeRange)
+	queries, err := e.buildQueries(originalQueries, dsInfo)
 	if err != nil {
-		return plugins.DataResponse{}, err
+		return nil, err
 	}
 
 	for _, query := range queries {
-		result.Results[query.RefID] = e.executeQuery(ctx, query)
+		result.Responses[query.RefID] = e.executeQuery(ctx, query, dsInfo)
 	}
 
 	return result, nil
 }
 
-func (e *InsightsAnalyticsDatasource) buildQueries(queries []plugins.DataSubQuery,
-	timeRange plugins.DataTimeRange) ([]*InsightsAnalyticsQuery, error) {
+func (e *InsightsAnalyticsDatasource) buildQueries(queries []backend.DataQuery, dsInfo datasourceInfo) ([]*InsightsAnalyticsQuery, error) {
 	iaQueries := []*InsightsAnalyticsQuery{}
 
 	for _, query := range queries {
-		queryBytes, err := query.Model.Encode()
-		if err != nil {
-			return nil, fmt.Errorf("failed to re-encode the Azure Application Insights Analytics query into JSON: %w", err)
-		}
-
 		qm := InsightsAnalyticsQuery{}
 		queryJSONModel := insightsAnalyticsJSONQuery{}
-		err = json.Unmarshal(queryBytes, &queryJSONModel)
+		err := json.Unmarshal(query.JSON, &queryJSONModel)
 		if err != nil {
 			return nil, fmt.Errorf("failed to decode the Azure Application Insights Analytics query object from JSON: %w", err)
 		}
@@ -84,7 +76,7 @@ func (e *InsightsAnalyticsDatasource) buildQueries(queries []plugins.DataSubQuer
 			return nil, fmt.Errorf("query is missing query string property")
 		}
 
-		qm.InterpolatedQuery, err = KqlInterpolate(query, timeRange, qm.RawQuery)
+		qm.InterpolatedQuery, err = KqlInterpolate(query, dsInfo, qm.RawQuery)
 		if err != nil {
 			return nil, err
 		}
@@ -98,26 +90,25 @@ func (e *InsightsAnalyticsDatasource) buildQueries(queries []plugins.DataSubQuer
 	return iaQueries, nil
 }
 
-//nolint: staticcheck // plugins.DataPlugin deprecated
-func (e *InsightsAnalyticsDatasource) executeQuery(ctx context.Context, query *InsightsAnalyticsQuery) plugins.DataQueryResult {
-	queryResult := plugins.DataQueryResult{RefID: query.RefID}
+func (e *InsightsAnalyticsDatasource) executeQuery(ctx context.Context, query *InsightsAnalyticsQuery, dsInfo datasourceInfo) backend.DataResponse {
+	dataResponse := backend.DataResponse{}
 
-	queryResultError := func(err error) plugins.DataQueryResult {
-		queryResult.Error = err
-		return queryResult
+	dataResponseError := func(err error) backend.DataResponse {
+		dataResponse.Error = err
+		return dataResponse
 	}
 
-	req, err := e.createRequest(ctx, e.dsInfo)
+	req, err := e.createRequest(ctx, dsInfo)
 	if err != nil {
-		return queryResultError(err)
+		return dataResponseError(err)
 	}
 	req.URL.Path = path.Join(req.URL.Path, "query")
 	req.URL.RawQuery = query.Params.Encode()
 
 	span, ctx := opentracing.StartSpanFromContext(ctx, "application insights analytics query")
 	span.SetTag("target", query.Target)
-	span.SetTag("datasource_id", e.dsInfo.Id)
-	span.SetTag("org_id", e.dsInfo.OrgId)
+	span.SetTag("datasource_id", dsInfo.DatasourceID)
+	span.SetTag("org_id", dsInfo.OrgID)
 
 	defer span.Finish()
 
@@ -131,14 +122,14 @@ func (e *InsightsAnalyticsDatasource) executeQuery(ctx context.Context, query *I
 	}
 
 	azlog.Debug("ApplicationInsights", "Request URL", req.URL.String())
-	res, err := ctxhttp.Do(ctx, e.httpClient, req)
+	res, err := ctxhttp.Do(ctx, dsInfo.HTTPClient, req)
 	if err != nil {
-		return queryResultError(err)
+		return dataResponseError(err)
 	}
 
 	body, err := ioutil.ReadAll(res.Body)
 	if err != nil {
-		return queryResultError(err)
+		return dataResponseError(err)
 	}
 	defer func() {
 		if err := res.Body.Close(); err != nil {
@@ -148,24 +139,24 @@ func (e *InsightsAnalyticsDatasource) executeQuery(ctx context.Context, query *I
 
 	if res.StatusCode/100 != 2 {
 		azlog.Debug("Request failed", "status", res.Status, "body", string(body))
-		return queryResultError(fmt.Errorf("request failed, status: %s, body: %s", res.Status, body))
+		return dataResponseError(fmt.Errorf("request failed, status: %s, body: %s", res.Status, body))
 	}
 	var logResponse AzureLogAnalyticsResponse
 	d := json.NewDecoder(bytes.NewReader(body))
 	d.UseNumber()
 	err = d.Decode(&logResponse)
 	if err != nil {
-		return queryResultError(err)
+		return dataResponseError(err)
 	}
 
 	t, err := logResponse.GetPrimaryResultTable()
 	if err != nil {
-		return queryResultError(err)
+		return dataResponseError(err)
 	}
 
 	frame, err := ResponseTableToFrame(t)
 	if err != nil {
-		return queryResultError(err)
+		return dataResponseError(err)
 	}
 
 	if query.ResultFormat == timeSeries {
@@ -182,28 +173,26 @@ func (e *InsightsAnalyticsDatasource) executeQuery(ctx context.Context, query *I
 			}
 		}
 	}
-	frames := data.Frames{frame}
-	queryResult.Dataframes = plugins.NewDecodedDataFrames(frames)
+	dataResponse.Frames = data.Frames{frame}
 
-	return queryResult
+	return dataResponse
 }
 
-func (e *InsightsAnalyticsDatasource) createRequest(ctx context.Context, dsInfo *models.DataSource) (*http.Request, error) {
+func (e *InsightsAnalyticsDatasource) createRequest(ctx context.Context, dsInfo datasourceInfo) (*http.Request, error) {
 	// find plugin
-	plugin := e.pluginManager.GetDataSource(dsInfo.Type)
+	plugin := e.pluginManager.GetDataSource(dsName)
 	if plugin == nil {
 		return nil, errors.New("unable to find datasource plugin Azure Application Insights")
 	}
 
-	appInsightsRoute, routeName, err := e.getPluginRoute(plugin)
+	appInsightsRoute, routeName, err := e.getPluginRoute(plugin, dsInfo)
 	if err != nil {
 		return nil, err
 	}
 
-	appInsightsAppID := dsInfo.JsonData.Get("appInsightsAppId").MustString()
-	proxyPass := fmt.Sprintf("%s/v1/apps/%s", routeName, appInsightsAppID)
+	appInsightsAppID := dsInfo.Settings.AppInsightsAppId
 
-	u, err := url.Parse(dsInfo.Url)
+	u, err := url.Parse(dsInfo.URL)
 	if err != nil {
 		return nil, fmt.Errorf("unable to parse url for Application Insights Analytics datasource: %w", err)
 	}
@@ -215,13 +204,18 @@ func (e *InsightsAnalyticsDatasource) createRequest(ctx context.Context, dsInfo 
 		return nil, errutil.Wrap("Failed to create request", err)
 	}
 
-	pluginproxy.ApplyRoute(ctx, req, proxyPass, appInsightsRoute, dsInfo, e.cfg)
+	// TODO: Use backend authentication instead
+	proxyPass := fmt.Sprintf("%s/v1/apps/%s", routeName, appInsightsAppID)
+	pluginproxy.ApplyRoute(ctx, req, proxyPass, appInsightsRoute, &models.DataSource{
+		JsonData:       simplejson.NewFromAny(dsInfo.JSONData),
+		SecureJsonData: securejsondata.GetEncryptedJsonData(dsInfo.DecryptedSecureJSONData),
+	}, e.cfg)
 
 	return req, nil
 }
 
-func (e *InsightsAnalyticsDatasource) getPluginRoute(plugin *plugins.DataSourcePlugin) (*plugins.AppPluginRoute, string, error) {
-	cloud, err := getAzureCloud(e.cfg, e.dsInfo.JsonData)
+func (e *InsightsAnalyticsDatasource) getPluginRoute(plugin *plugins.DataSourcePlugin, dsInfo datasourceInfo) (*plugins.AppPluginRoute, string, error) {
+	cloud, err := getAzureCloud(e.cfg, dsInfo)
 	if err != nil {
 		return nil, "", err
 	}

@@ -25,9 +25,6 @@ export default {
     docs: {
       page: mdx,
     },
-    knobs: {
-      disable: true,
-    },
     controls: {
       exclude: ['prefix', 'suffix', 'addonBefore', 'addonAfter'],
     },
