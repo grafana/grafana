@@ -41,6 +41,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
   getTimeRange,
   eventBus,
   sync,
+  allFrames,
 }) => {
   const builder = new UPlotConfigBuilder(timeZone);
 
@@ -97,7 +98,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
 
   const stackingGroups: Map<string, number[]> = new Map();
 
-  let indexByName: Map<string, number> | undefined = undefined;
+  let indexByName: { alignedNames: Map<string, number>; originNames: Map<string, number> } | undefined;
 
   for (let i = 1; i < frame.fields.length; i++) {
     const field = frame.fields[i];
@@ -152,11 +153,11 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
 
     if (customConfig.fillBelowTo) {
       if (!indexByName) {
-        indexByName = getNamesToFieldIndex(frame);
+        indexByName = getNamesToFieldIndex(frame, allFrames);
       }
 
-      const t = indexByName.get(getFieldDisplayName(field, frame, undefined, true));
-      const b = indexByName.get(customConfig.fillBelowTo);
+      const t = indexByName.alignedNames.get(getFieldDisplayName(field, frame, undefined, true));
+      const b = indexByName.originNames.get(customConfig.fillBelowTo);
       if (isNumber(b) && isNumber(t)) {
         builder.addBand({
           series: [t, b],
@@ -260,10 +261,26 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
   return builder;
 };
 
-export function getNamesToFieldIndex(frame: DataFrame): Map<string, number> {
-  const names = new Map<string, number>();
+export function getNamesToFieldIndex(
+  frame: DataFrame,
+  allFrames?: DataFrame[]
+): { alignedNames: Map<string, number>; originNames: Map<string, number> } {
+  const alignedNames = new Map<string, number>();
+  const originNames = new Map<string, number>();
   for (let i = 0; i < frame.fields.length; i++) {
-    names.set(getFieldDisplayName(frame.fields[i], frame, undefined, true), i);
+    const origin = frame.fields[i].state?.origin;
+    if (allFrames && origin) {
+      originNames.set(
+        getFieldDisplayName(
+          allFrames[origin.frameIndex].fields[origin.fieldIndex],
+          allFrames[origin.frameIndex],
+          allFrames,
+          true
+        ),
+        i
+      );
+    }
+    alignedNames.set(getFieldDisplayName(frame.fields[i], frame, undefined, true), i);
   }
-  return names;
+  return { alignedNames, originNames };
 }
