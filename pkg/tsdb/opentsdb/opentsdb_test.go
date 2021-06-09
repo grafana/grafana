@@ -5,7 +5,10 @@ import (
 	"net/http"
 	"strings"
 	"testing"
+	"time"
 
+	"github.com/google/go-cmp/cmp"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -44,10 +47,18 @@ func TestOpenTsdbExecutor(t *testing.T) {
 			{
 				"metric": "test",
 				"dps": {
-					"58": 50.0
+					"1405544146": 50.0
 				}
 			}
 		]`
+
+		testFrame := data.NewFrame("test",
+			data.NewField("time", nil, []time.Time{
+				time.Date(2014, 7, 16, 20, 55, 46, 0, time.UTC),
+			}),
+			data.NewField("value", nil, []float64{
+				50}),
+		)
 
 		query := OpenTsdbQuery{}
 
@@ -62,17 +73,9 @@ func TestOpenTsdbExecutor(t *testing.T) {
 
 		frame := decoded[0]
 
-		require.Len(t, frame.Fields, 2)
-
-		field1 := frame.Fields[0]
-		field2 := frame.Fields[1]
-
-		require.Equal(t, field1.Len(), 1)
-		require.Equal(t, field2.Len(), 1)
-
-		require.Equal(t, field2.At(0).(float64), 50.0)
-
-		require.Nil(t, err)
+		if diff := cmp.Diff(testFrame, frame, data.FrameTestCompareOptions()...); diff != "" {
+			t.Errorf("Result mismatch (-want +got):\n%s", diff)
+		}
 	})
 
 	t.Run("Build metric with downsampling enabled", func(t *testing.T) {
