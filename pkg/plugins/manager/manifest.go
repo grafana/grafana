@@ -10,6 +10,7 @@ import (
 	"io/ioutil"
 	"net/url"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 
@@ -134,6 +135,11 @@ func getPluginSignatureState(log log.Logger, plugin *plugins.PluginBase) (plugin
 		if err != nil {
 			return plugins.PluginSignatureState{}, err
 		}
+		appSubURL, err := url.Parse(setting.AppSubUrl)
+		if err != nil {
+			return plugins.PluginSignatureState{}, err
+		}
+		appURLPath := path.Join(appSubURL.RequestURI(), appURL.RequestURI())
 
 		foundMatch := false
 		for _, u := range manifest.RootURLs {
@@ -142,11 +148,14 @@ func getPluginSignatureState(log log.Logger, plugin *plugins.PluginBase) (plugin
 				log.Warn("Could not parse plugin root URL", "plugin", plugin.Id, "rootUrl", rootURL)
 				return plugins.PluginSignatureState{}, err
 			}
+
 			if rootURL.Scheme == appURL.Scheme &&
-				rootURL.Host == appURL.Host &&
-				rootURL.RequestURI() == appURL.RequestURI() {
-				foundMatch = true
-				break
+				rootURL.Host == appURL.Host {
+				foundMatch = path.Clean(rootURL.RequestURI()) == appURLPath
+
+				if foundMatch {
+					break
+				}
 			}
 		}
 

@@ -282,6 +282,35 @@ func TestPluginManager_Init(t *testing.T) {
 		assert.Nil(t, pm.plugins[("test")])
 	})
 
+	t.Run("With back-end plugin with valid v2 private signature (plugin root URL ignores trailing slash)", func(t *testing.T) {
+		origAppURL := setting.AppUrl
+		origAppSubURL := setting.AppSubUrl
+		t.Cleanup(func() {
+			setting.AppUrl = origAppURL
+			setting.AppSubUrl = origAppSubURL
+		})
+		setting.AppUrl = "http://localhost:3000/"
+		setting.AppSubUrl = "/grafana"
+
+		pm := createManager(t, func(pm *PluginManager) {
+			pm.Cfg.PluginsPath = "testdata/valid-v2-pvt-signature-root-url-uri"
+		})
+		err := pm.Init()
+		require.NoError(t, err)
+		require.Empty(t, pm.scanningErrors)
+
+		const pluginID = "test"
+		assert.NotNil(t, pm.plugins[pluginID])
+		assert.Equal(t, "datasource", pm.plugins[pluginID].Type)
+		assert.Equal(t, "Test", pm.plugins[pluginID].Name)
+		assert.Equal(t, pluginID, pm.plugins[pluginID].Id)
+		assert.Equal(t, "1.0.0", pm.plugins[pluginID].Info.Version)
+		assert.Equal(t, plugins.PluginSignatureValid, pm.plugins[pluginID].Signature)
+		assert.Equal(t, plugins.PrivateType, pm.plugins[pluginID].SignatureType)
+		assert.Equal(t, "Will Browne", pm.plugins[pluginID].SignatureOrg)
+		assert.False(t, pm.plugins[pluginID].IsCorePlugin)
+	})
+
 	t.Run("With back-end plugin with valid v2 private signature", func(t *testing.T) {
 		origAppURL := setting.AppUrl
 		t.Cleanup(func() {
