@@ -84,7 +84,7 @@ describe('MSSQLDatasource', () => {
     });
   });
 
-  describe('When performing metricFindQuery', () => {
+  describe('When performing metricFindQuery that returns multiple string fields', () => {
     let results: MetricFindValue[];
     const query = 'select * from atable';
     const response = {
@@ -153,6 +153,50 @@ describe('MSSQLDatasource', () => {
       expect(results[0].value).toBe('value1');
       expect(results[2].text).toBe('aTitle3');
       expect(results[2].value).toBe('value3');
+    });
+  });
+
+  describe('When performing metricFindQuery without key, value columns', () => {
+    let results: any;
+    const query = 'select id, values from atable';
+    const response = {
+      results: {
+        tempvar: {
+          refId: 'tempvar',
+          frames: [
+            dataFrameToJSON(
+              new MutableDataFrame({
+                fields: [
+                  { name: 'id', values: [1, 2, 3] },
+                  { name: 'values', values: ['test1', 'test2', 'test3'] },
+                ],
+                meta: {
+                  executedQueryString: 'select id, values from atable',
+                },
+              })
+            ),
+          ],
+        },
+      },
+    };
+
+    beforeEach(() => {
+      fetchMock.mockImplementation(() => of(createFetchResponse(response)));
+
+      return ctx.ds.metricFindQuery(query).then((data: any) => {
+        results = data;
+      });
+    });
+
+    it('should return list of all field values as text', () => {
+      expect(results).toEqual([
+        { text: 1 },
+        { text: 2 },
+        { text: 3 },
+        { text: 'test1' },
+        { text: 'test2' },
+        { text: 'test3' },
+      ]);
     });
   });
 
