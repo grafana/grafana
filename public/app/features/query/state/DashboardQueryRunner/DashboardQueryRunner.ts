@@ -60,8 +60,8 @@ class DashboardQueryRunnerImpl implements DashboardQueryRunner {
           const alertState = result.alertStates.find((res) => Boolean(panelId) && res.panelId === panelId);
           subscriber.next({ annotations: dedupAnnotations(annotations), alertState });
         },
-        error: subscriber.error,
-        complete: subscriber.complete,
+        error: (err) => subscriber.error(err),
+        complete: () => subscriber.complete(),
       });
       return () => {
         subscription.unsubscribe();
