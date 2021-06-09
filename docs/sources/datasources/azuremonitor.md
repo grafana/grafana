@@ -148,11 +148,22 @@ AzureActivity
 
 ##### Logs macros
 
-_TODO_
+To make writing queries easier there are several Grafana macros that can be used in the where clause of a query:
+
+| Macro                           | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| ------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `$__timeFilter()`               | Used to filter the results to the time range of the dashboard.<br/>Example: `TimeGenerated >= datetime(2018-06-05T18:09:58.907Z) and TimeGenerated <= datetime(2018-06-05T20:09:58.907Z)`.                                                                                                                                                                                                                                                                                                                 |
+| `$__timeFilter(datetimeColumn)` | Like `$__timeFilter()`, but specifies a custom field to filter on.                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| `$__timeFrom()`                 | Expands to the start of the dashboard time range.<br/>Example: `datetime(2018-06-05T18:09:58.907Z)`.                                                                                                                                                                                                                                                                                                                                                                                                       |
+| `$__timeTo()`                   | Expands to the end of the dashboard time range.<br/>Example: `datetime(2018-06-05T20:09:58.907Z)`.                                                                                                                                                                                                                                                                                                                                                                                                         |
+| `$__escapeMulti($myVar)`        | Used with multi-value template variables that contain illegal characters.<br/>If `$myVar` has the following two values as a string `'\\grafana-vm\Network(eth0)\Total','\\hello!'`, then it expands to `@'\\grafana-vm\Network(eth0)\Total', @'\\hello!'`.<br/><br/>If using single value variables there is no need for this macro, simply escape the variable inline instead - `@'\$myVar'`.                                                                                                             |
+| `$__contains(colName, $myVar)`  | Used with multi-value template variables.<br/>If `$myVar` has the value `'value1','value2'`, it expands to: `colName in ('value1','value2')`.<br/><br/>If using the `All` option, then check the `Include All Option` checkbox and in the `Custom all value` field type in the value `all`. If `$myVar` has value `all` then the macro will instead expand to `1 == 1`. For template variables with a lot of options, this will increase the query performance by not building a large "where..in" clause. |
+
+Additionally, Grafana has the built-in `$__interval` macro
 
 ## Going further with Azure Monitor
 
-### Template variables for Metrics
+### Template variables
 
 Instead of hard-coding values for fields like resource group or resource name in your queries, you can use variables in their place to create more interactive, dynamic, and reusable dashboards.
 
