@@ -2,11 +2,14 @@ package httpclientprovider
 
 import (
 	"fmt"
+	"net/http"
 
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/metrics/metricutil"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/mwitkow/go-conntrack"
 )
 
 var newProviderFunc = sdkhttpclient.NewProvider
@@ -29,5 +32,27 @@ func New(cfg *setting.Cfg) httpclient.Provider {
 
 	return newProviderFunc(sdkhttpclient.ProviderOptions{
 		Middlewares: middlewares,
+		ConfigureTransport: func(opts sdkhttpclient.Options, transport *http.Transport) {
+			datasourceName, exists := opts.Labels["datasource_name"]
+			if !exists {
+				return
+			}
+			datasourceLabelName, err := metricutil.SanitizeLabelName(datasourceName)
+
+			if err != nil {
+				return
+			}
+			newConntrackRoundTripper(datasourceLabelName, transport)
+		},
 	})
+}
+
+// newConntrackRoundTripper takes a http.DefaultTransport and adds the Conntrack Dialer
+// so we can instrument outbound connections
+func newConntrackRoundTripper(name string, transport *http.Transport) *http.Transport {
+	transport.DialContext = conntrack.NewDialContextFunc(
+		conntrack.DialWithName(name),
+		conntrack.DialWithDialContextFunc(transport.DialContext),
+	)
+	return transport
 }
