@@ -144,6 +144,11 @@ export function getPanelMenu(
     onClick: (e: React.MouseEvent<any>) => onInspectPanel('json'),
   });
 
+  inspectMenu.push({
+    text: 'Share',
+    onClick: (e: React.MouseEvent<any>) => onInspectPanel('share'),
+  });
+
   menu.push({
     type: 'submenu',
     text: 'Inspect',
