@@ -41,6 +41,14 @@ describe('locationUtil', () => {
       const urlWithoutMaster = locationUtil.stripBaseFromUrl('http://www.domain.com:9877/subUrl/grafana/');
       expect(urlWithoutMaster).toBe('/grafana/');
     });
+    test('relative url with subdirectory  subUrl', () => {
+      const urlWithoutMaster = locationUtil.stripBaseFromUrl('/grafana/subUrl');
+      expect(urlWithoutMaster).toBe('/grafana/subUrl');
+    });
+    test('absolute url with subdirectory subUrl', () => {
+      const urlWithoutMaster = locationUtil.stripBaseFromUrl('http://www.domain.com:9877/grafana/subUrl');
+      expect(urlWithoutMaster).toBe('/grafana/subUrl');
+    });
   });
 
   describe('strip base when appSubUrl not configured', () => {
