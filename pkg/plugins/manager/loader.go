@@ -54,26 +54,9 @@ func (l *Loader) LoadAll(pluginJSONPaths []string, requireSigned bool) ([]*plugi
 	var foundPlugins = make(map[string]*plugins.PluginV2)
 
 	for _, pluginJSONPath := range pluginJSONPaths {
-		l.log.Debug("Loading plugin", "path", pluginJSONPath)
-		// nolint:gosec
-		// We can ignore the gosec G304 warning on this one because `currentPath` is based
-		// on plugin the folder structure on disk and not user input.
-		reader, err := os.Open(pluginJSONPath)
+		plugin, err := l.readPluginJSON(pluginJSONPath)
 		if err != nil {
 			return nil, err
-		}
-
-		plugin := &plugins.PluginV2{}
-		if err := json.NewDecoder(reader).Decode(&plugin); err != nil {
-			return nil, err
-		}
-
-		if err := reader.Close(); err != nil {
-			l.log.Warn("Failed to close JSON file", "path", pluginJSONPath, "err", err)
-		}
-
-		if plugin.ID == "" || plugin.Type == "" {
-			return nil, errors.New("did not find type or id properties in plugin.json")
 		}
 
 		foundPlugins[filepath.Dir(pluginJSONPath)] = plugin
@@ -100,16 +83,16 @@ func (l *Loader) LoadAll(pluginJSONPaths []string, requireSigned bool) ([]*plugi
 	// wire up plugin dependencies
 	for pluginDir, plugin := range foundPlugins {
 		plugin.PluginDir = pluginDir
-		ancestors := strings.Split(plugin.PluginDir, string(filepath.Separator))
-		ancestors = ancestors[0 : len(ancestors)-1]
-		aPath := ""
+		children := strings.Split(plugin.PluginDir, string(filepath.Separator))
+		children = children[0 : len(children)-1]
+		pluginPath := ""
 
 		if runtime.GOOS != "windows" && filepath.IsAbs(plugin.PluginDir) {
-			aPath = "/"
+			pluginPath = "/"
 		}
-		for _, a := range ancestors {
-			aPath = filepath.Join(aPath, a)
-			if parent, ok := foundPlugins[aPath]; ok {
+		for _, child := range children {
+			pluginPath = filepath.Join(pluginPath, child)
+			if parent, ok := foundPlugins[pluginPath]; ok {
 				plugin.Parent = parent
 				plugin.Parent.Children = append(plugin.Parent.Children, plugin)
 				break
@@ -141,50 +124,24 @@ func (l *Loader) LoadAll(pluginJSONPaths []string, requireSigned bool) ([]*plugi
 			plugin.IsCorePlugin = true
 		}
 
-		l.log.Debug("Attempting to add plugin", "id", plugin.ID)
-
-		pluginJSONPath := filepath.Join(plugin.PluginDir, "plugin.json")
-
 		// External plugins need a module.js file for SystemJS to load
-		if !strings.HasPrefix(pluginJSONPath, l.Cfg.StaticRootPath) && !isRendererPlugin(plugin.Type) {
+		if isExternalPlugin(plugin.PluginDir, l.Cfg) && !isRendererPlugin(plugin.Type) {
 			module := filepath.Join(plugin.PluginDir, "module.js")
-			exists, err := fs.Exists(module)
-			if err != nil {
+			if exists, err := fs.Exists(module); err != nil {
 				return nil, err
-			}
-			if !exists {
+			} else if !exists {
 				l.log.Warn("Plugin missing module.js",
-					"name", plugin.Name,
+					"pluginID", plugin.ID,
 					"warning", "Missing module.js, If you loaded this plugin from git, make sure to compile it.",
 					"path", module)
 			}
 		}
 
 		if plugin.Backend {
-			hostEnv := []string{
-				fmt.Sprintf("GF_VERSION=%s", l.Cfg.BuildVersion),
-				fmt.Sprintf("GF_EDITION=%s", l.License.Edition()),
-			}
-
-			if l.License.HasLicense() {
-				hostEnv = append(
-					hostEnv,
-					fmt.Sprintf("GF_ENTERPRISE_LICENSE_PATH=%s", l.Cfg.EnterpriseLicensePath),
-				)
-
-				if envProvider, ok := l.License.(models.LicenseEnvironment); ok {
-					for k, v := range envProvider.Environment() {
-						hostEnv = append(hostEnv, fmt.Sprintf("%s=%s", k, v))
-					}
-				}
-			}
-
-			hostEnv = append(hostEnv, l.getAWSEnvironmentVariables()...)
-			hostEnv = append(hostEnv, l.getAzureEnvironmentVariables()...)
-			env := getPluginSettings(plugin.ID, l.Cfg).ToEnv("GF_PLUGIN", hostEnv)
-
 			cmd := plugins.ComposePluginStartCommand(plugin.Executable)
 			backendFactory := grpcplugin.NewBackendPlugin(plugin.ID, filepath.Join(plugin.PluginDir, cmd))
+			env := l.getPluginEnvVars(plugin)
+
 			if backendClient, err := backendFactory(plugin.ID, l.log.New("pluginID", plugin.ID), env); err != nil {
 				return nil, err
 			} else {
@@ -207,6 +164,58 @@ func (l *Loader) LoadAll(pluginJSONPaths []string, requireSigned bool) ([]*plugi
 	}
 
 	return res, nil
+}
+
+func (l *Loader) readPluginJSON(pluginJSONPath string) (*plugins.PluginV2, error) {
+	l.log.Debug("Loading plugin", "path", pluginJSONPath)
+
+	// nolint:gosec
+	// We can ignore the gosec G304 warning on this one because `currentPath` is based
+	// on plugin the folder structure on disk and not user input.
+	reader, err := os.Open(pluginJSONPath)
+	if err != nil {
+		return nil, err
+	}
+
+	plugin := &plugins.PluginV2{}
+	if err := json.NewDecoder(reader).Decode(&plugin); err != nil {
+		return nil, err
+	}
+
+	if err := reader.Close(); err != nil {
+		l.log.Warn("Failed to close JSON file", "path", pluginJSONPath, "err", err)
+	}
+
+	if !isValidPluginJSON(plugin.JSONData) {
+		return nil, errors.New("did not find type or id properties in plugin.json")
+	}
+
+	return plugin, nil
+}
+
+func (l *Loader) getPluginEnvVars(plugin *plugins.PluginV2) []string {
+	hostEnv := []string{
+		fmt.Sprintf("GF_VERSION=%s", l.Cfg.BuildVersion),
+		fmt.Sprintf("GF_EDITION=%s", l.License.Edition()),
+	}
+
+	if l.License.HasLicense() {
+		hostEnv = append(
+			hostEnv,
+			fmt.Sprintf("GF_ENTERPRISE_LICENSE_PATH=%s", l.Cfg.EnterpriseLicensePath),
+		)
+
+		if envProvider, ok := l.License.(models.LicenseEnvironment); ok {
+			for k, v := range envProvider.Environment() {
+				hostEnv = append(hostEnv, fmt.Sprintf("%s=%s", k, v))
+			}
+		}
+	}
+
+	hostEnv = append(hostEnv, l.getAWSEnvironmentVariables()...)
+	hostEnv = append(hostEnv, l.getAzureEnvironmentVariables()...)
+	env := getPluginSettings(plugin.ID, l.Cfg).ToEnv("GF_PLUGIN", hostEnv)
+	return env
 }
 
 func (l *Loader) getAWSEnvironmentVariables() []string {
@@ -234,6 +243,13 @@ func (l *Loader) getAzureEnvironmentVariables() []string {
 	}
 
 	return variables
+}
+
+func isValidPluginJSON(data plugins.JSONData) bool {
+	if data.ID == "" || data.Type == "" {
+		return false
+	}
+	return true
 }
 
 func isRendererPlugin(pluginType string) bool {
