@@ -29,7 +29,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/cleanup"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
-	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/hooks"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/services/librarypanels"
@@ -84,8 +83,6 @@ var wireBasicSet = wire.NewSet(
 	postgres.ProvideService,
 	httpclientprovider.New,
 	wire.Bind(new(httpclient.Provider), new(*sdkhttpclient.Provider)),
-	datasources.ProvideCacheService,
-	wire.Bind(new(datasources.CacheService), new(*datasources.CacheServiceImpl)),
 	auth.ProvideUserAuthTokenService,
 	wire.Bind(new(models.UserTokenService), new(*auth.UserAuthTokenService)),
 	serverlock.ProvideService,

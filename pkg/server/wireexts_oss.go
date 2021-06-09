@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/server/backgroundsvcs"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/validations"
@@ -28,6 +29,8 @@ var wireExtsBasicSet = wire.NewSet(
 	wire.Bind(new(provisioning.ProvisioningService), new(*provisioning.ProvisioningServiceImpl)),
 	backgroundsvcs.ProvideBackgroundServiceRegistry,
 	wire.Bind(new(registry.BackgroundServiceRegistry), new(*backgroundsvcs.BackgroundServiceRegistry)),
+	datasources.ProvideCacheService,
+	wire.Bind(new(datasources.CacheService), new(*datasources.CacheServiceImpl)),
 )
 
 var wireExtsSet = wire.NewSet(
