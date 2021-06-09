@@ -11,9 +11,6 @@ export default {
     docs: {
       page: mdx,
     },
-    knobs: {
-      disable: true,
-    },
     controls: {
       exclude: ['description'],
     },

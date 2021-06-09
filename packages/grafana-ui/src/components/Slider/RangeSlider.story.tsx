@@ -10,9 +10,6 @@ export default {
     controls: {
       exclude: ['tooltipAlwaysVisible'],
     },
-    knobs: {
-      disable: true,
-    },
   },
   argTypes: {
     isStep: { name: 'step' },
