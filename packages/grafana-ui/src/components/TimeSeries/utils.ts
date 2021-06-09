@@ -220,6 +220,9 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
 
   builder.scaleKeys = [xScaleKey, yScaleKey];
 
+  // if hovered value is null, how far we may scan left/right to hover nearest non-null
+  const hoverProximityPx = 10;
+
   let cursor: Partial<uPlot.Cursor> = {
     // this scans left and right from cursor position to find nearest data index with value != null
     // TODO: do we want to only scan past undefined values, but halt at explicit null values?
@@ -247,7 +250,22 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
 
         let xVals = self.data[0];
 
-        hoveredIdx = xVals[nonNullRgt] - cursorXVal > cursorXVal - xVals[nonNullLft] ? nonNullLft : nonNullRgt;
+        let curPos = self.valToPos(cursorXVal, 'x');
+        let rgtPos = self.valToPos(xVals[nonNullRgt], 'x');
+        let lftPos = self.valToPos(xVals[nonNullLft], 'x');
+
+        let lftDelta = curPos - lftPos;
+        let rgtDelta = rgtPos - curPos;
+
+        if (lftDelta <= rgtDelta) {
+          if (lftDelta <= hoverProximityPx) {
+            hoveredIdx = nonNullLft;
+          }
+        } else {
+          if (rgtDelta <= hoverProximityPx) {
+            hoveredIdx = nonNullRgt;
+          }
+        }
       }
 
       return hoveredIdx;
