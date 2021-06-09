@@ -36,16 +36,20 @@ export function getFrameDisplayName(frame: DataFrame, index?: number) {
   return `Series (${index})`;
 }
 
-export function getFieldDisplayName(field: Field, frame?: DataFrame, allFrames?: DataFrame[]): string {
-  const existingTitle = field.state?.displayName;
+export function getFieldDisplayName(field: Field, frame?: DataFrame, allFrames?: DataFrame[], noCache = false): string {
+  if (!noCache) {
+    const existingTitle = field.state?.displayName;
 
-  if (existingTitle) {
-    return existingTitle;
+    if (existingTitle) {
+      return existingTitle;
+    }
   }
 
   const displayName = calculateFieldDisplayName(field, frame, allFrames);
-  field.state = field.state || {};
-  field.state.displayName = displayName;
+  if (!noCache) {
+    field.state = field.state || {};
+    field.state.displayName = displayName;
+  }
 
   return displayName;
 }

@@ -154,7 +154,8 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
       if (!indexByName) {
         indexByName = getNamesToFieldIndex(frame);
       }
-      const t = indexByName.get(getFieldDisplayName(field, frame));
+
+      const t = indexByName.get(getFieldDisplayName(field, frame, undefined, true));
       const b = indexByName.get(customConfig.fillBelowTo);
       if (isNumber(b) && isNumber(t)) {
         builder.addBand({
@@ -262,7 +263,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
 export function getNamesToFieldIndex(frame: DataFrame): Map<string, number> {
   const names = new Map<string, number>();
   for (let i = 0; i < frame.fields.length; i++) {
-    names.set(getFieldDisplayName(frame.fields[i], frame), i);
+    names.set(getFieldDisplayName(frame.fields[i], frame, undefined, true), i);
   }
   return names;
 }
