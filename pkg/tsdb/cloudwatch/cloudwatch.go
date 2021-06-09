@@ -100,6 +100,7 @@ func newExecutor(logsService *LogsService, im instancemgmt.InstanceManager, cfg 
 
 func NewInstanceSettings() datasource.InstanceFactoryFunc {
 	return func(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+		// here initialize the setting
 		jsonData := struct {
 			Profile       string `json:"profile"`
 			Region        string `json:"defaulRegion"`
@@ -167,6 +168,7 @@ type cloudWatchExecutor struct {
 }
 
 func (e *cloudWatchExecutor) newSession(region string, pluginCtx backend.PluginContext) (*session.Session, error) {
+
 	dsInfo, err := e.getDSInfo(pluginCtx)
 	if err != nil {
 		return nil, err
@@ -379,6 +381,7 @@ func (e *cloudWatchExecutor) executeLogAlertQuery(ctx context.Context, req *back
 }
 
 func (e *cloudWatchExecutor) getDSInfo(pluginCtx backend.PluginContext) (*datasourceInfo, error) {
+	// here get the datasource info from instance manager whenever needed
 	i, err := e.im.Get(pluginCtx)
 	if err != nil {
 		return nil, err

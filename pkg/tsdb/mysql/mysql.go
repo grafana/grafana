@@ -1,6 +1,8 @@
 package mysql
 
 import (
+	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/url"
@@ -10,15 +12,19 @@ import (
 	"time"
 
 	"github.com/VividCortex/mysqlerr"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
+	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/setting"
 
 	"github.com/go-sql-driver/mysql"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
 )
 
@@ -28,47 +34,76 @@ const (
 	dateTimeFormat2 = "2006-01-02T15:04:05Z"
 )
 
+var logger = log.New("tsdb.mysql")
+
+type Service struct {
+	Cfg                  *setting.Cfg          `inject:""`
+	BackendPluginManager backendplugin.Manager `inject:""`
+	HTTPClientProvider   httpclient.Provider   `inject:""`
+	im                   instancemgmt.InstanceManager
+}
+
 func characterEscape(s string, escapeChar string) string {
 	return strings.ReplaceAll(s, escapeChar, url.QueryEscape(escapeChar))
 }
 
-//nolint: staticcheck // plugins.DataPlugin deprecated
-func New(httpClientProvider httpclient.Provider) func(datasource *models.DataSource) (plugins.DataPlugin, error) {
-	//nolint: staticcheck // plugins.DataPlugin deprecated
-	return func(datasource *models.DataSource) (plugins.DataPlugin, error) {
-		logger := log.New("tsdb.mysql")
+func init() {
+	registry.Register(&registry.Descriptor{Instance: &Service{}})
+}
 
+func (s *Service) Init() error {
+	s.im = datasource.NewInstanceManager(newInstanceSettings(s.HTTPClientProvider))
+	factory := coreplugin.New(backend.ServeOpts{
+		QueryDataHandler: s,
+	})
+
+	if err := s.BackendPluginManager.Register("mysql", factory); err != nil {
+		logger.Error("Failed to register plugin", "error", err)
+	}
+	return nil
+}
+
+func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.InstanceFactoryFunc {
+	return func(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		protocol := "tcp"
-		if strings.HasPrefix(datasource.Url, "/") {
+		if strings.HasPrefix(settings.URL, "/") {
 			protocol = "unix"
 		}
 
 		cnnstr := fmt.Sprintf("%s:%s@%s(%s)/%s?collation=utf8mb4_unicode_ci&parseTime=true&loc=UTC&allowNativePasswords=true",
-			characterEscape(datasource.User, ":"),
-			datasource.DecryptedPassword(),
+			characterEscape(settings.User, ":"),
+			settings.DecryptedSecureJSONData["password"],
 			protocol,
-			characterEscape(datasource.Url, ")"),
-			characterEscape(datasource.Database, "?"),
+			characterEscape(settings.URL, ")"),
+			characterEscape(settings.Database, "?"),
 		)
 
-		tlsConfig, err := datasource.GetTLSConfig(httpClientProvider)
+		opts, err := settings.HTTPClientOptions()
+		if err != nil {
+			return nil, err
+		}
+
+		tlsConfig, err := httpClientProvider.GetTLSConfig(opts)
 		if err != nil {
 			return nil, err
 		}
 
 		if tlsConfig.RootCAs != nil || len(tlsConfig.Certificates) > 0 {
-			tlsConfigString := fmt.Sprintf("ds%d", datasource.Id)
+			tlsConfigString := fmt.Sprintf("ds%d", settings.ID)
 			if err := mysql.RegisterTLSConfig(tlsConfigString, tlsConfig); err != nil {
 				return nil, err
 			}
 			cnnstr += "&tls=" + tlsConfigString
 		}
 
-		if datasource.JsonData != nil {
-			timezone, hasTimezone := datasource.JsonData.CheckGet("timezone")
-			if hasTimezone && timezone.MustString() != "" {
-				cnnstr += fmt.Sprintf("&time_zone='%s'", url.QueryEscape(timezone.MustString()))
-			}
+		jsonData := map[string]interface{}{}
+		err = json.Unmarshal(settings.JSONData, &jsonData)
+		if err != nil {
+			return nil, fmt.Errorf("error reading settings: %w", err)
+		}
+		timezone, hasTimezone := jsonData["timezone"]
+		if hasTimezone && timezone.(string) != "" {
+			cnnstr += fmt.Sprintf("&time_zone='%s'", url.QueryEscape(timezone.(string)))
 		}
 
 		if setting.Env == setting.Dev {
@@ -78,7 +113,7 @@ func New(httpClientProvider httpclient.Provider) func(datasource *models.DataSou
 		config := sqleng.DataPluginConfiguration{
 			DriverName:        "mysql",
 			ConnectionString:  cnnstr,
-			Datasource:        datasource,
+			Datasource:        &settings,
 			TimeColumnNames:   []string{"time", "time_sec"},
 			MetricColumnTypes: []string{"CHAR", "VARCHAR", "TINYTEXT", "TEXT", "MEDIUMTEXT", "LONGTEXT"},
 		}
@@ -87,8 +122,12 @@ func New(httpClientProvider httpclient.Provider) func(datasource *models.DataSou
 			log: logger,
 		}
 
-		return sqleng.NewDataPlugin(config, &rowTransformer, newMysqlMacroEngine(logger), logger)
+		return sqleng.NewQueryDataHandler(config, &rowTransformer, newMysqlMacroEngine(logger), logger)
 	}
+}
+
+func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	return nil, nil
 }
 
 type mysqlQueryResultTransformer struct {

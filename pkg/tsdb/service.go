@@ -61,7 +61,6 @@ func (s *Service) Init() error {
 	s.registry["prometheus"] = prometheus.New(s.HTTPClientProvider)
 	s.registry["influxdb"] = influxdb.New(s.HTTPClientProvider)
 	s.registry["mssql"] = mssql.NewExecutor
-	s.registry["postgres"] = s.PostgresService.NewExecutor
 	s.registry["mysql"] = mysql.New(s.HTTPClientProvider)
 	s.registry["elasticsearch"] = elasticsearch.New(s.HTTPClientProvider)
 	s.registry["stackdriver"] = s.CloudMonitoringService.NewExecutor

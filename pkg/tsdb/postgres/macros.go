@@ -89,7 +89,7 @@ func (m *postgresMacroEngine) evaluateMacro(name string, args []string) (string,
 			return "", fmt.Errorf("missing time column argument for macro %v", name)
 		}
 
-		return fmt.Sprintf("%s BETWEEN '%s' AND '%s'", args[0], m.timeRange.From.UTC().Format(time.RFC3339Nano), m.timeRange.GetToAsTimeUTC().Format(time.RFC3339Nano)), nil
+		return fmt.Sprintf("%s BETWEEN '%s' AND '%s'", args[0], m.timeRange.From.UTC().Format(time.RFC3339Nano), m.timeRange.To.UTC().Format(time.RFC3339Nano)), nil
 	case "__timeFrom":
 		return fmt.Sprintf("'%s'", m.timeRange.From.UTC().Format(time.RFC3339Nano)), nil
 	case "__timeTo":
@@ -128,7 +128,7 @@ func (m *postgresMacroEngine) evaluateMacro(name string, args []string) (string,
 		if len(args) == 0 {
 			return "", fmt.Errorf("missing time column argument for macro %v", name)
 		}
-		return fmt.Sprintf("%s >= %d AND %s <= %d", args[0], m.timeRange.From.UnixNano()/int64(time.Second), args[0], m.timeRange.GetToAsSecondsEpoch()), nil
+		return fmt.Sprintf("%s >= %d AND %s <= %d", args[0], m.timeRange.From.Unix(), args[0], m.timeRange.To.Unix()), nil
 	case "__unixEpochNanoFilter":
 		if len(args) == 0 {
 			return "", fmt.Errorf("missing time column argument for macro %v", name)

@@ -8,17 +8,17 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/grafana/grafana/pkg/infra/fs"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 )
 
 var validateCertFunc = validateCertFilePaths
 var writeCertFileFunc = writeCertFile
 
 type tlsSettingsProvider interface {
-	getTLSSettings(datasource *models.DataSource) (tlsSettings, error)
+	getTLSSettings(dsInfo *datasourceInfo) (tlsSettings, error)
 }
 
 type datasourceCacheManager struct {
@@ -48,31 +48,29 @@ type tlsSettings struct {
 	CertKeyFile         string
 }
 
-func (m *tlsManager) getTLSSettings(datasource *models.DataSource) (tlsSettings, error) {
-	tlsMode := strings.TrimSpace(strings.ToLower(datasource.JsonData.Get("sslmode").MustString("verify-full")))
-	isTLSDisabled := tlsMode == "disable"
+func (m *tlsManager) getTLSSettings(dsInfo *datasourceInfo) (tlsSettings, error) {
+	isTLSDisabled := dsInfo.sslmode == "disable"
 
 	settings := tlsSettings{}
-	settings.Mode = tlsMode
+	settings.Mode = dsInfo.sslmode
 
 	if isTLSDisabled {
 		m.logger.Debug("Postgres TLS/SSL is disabled")
 		return settings, nil
 	}
 
-	m.logger.Debug("Postgres TLS/SSL is enabled", "tlsMode", tlsMode)
+	m.logger.Debug("Postgres TLS/SSL is enabled", "tlsMode", dsInfo.sslmode)
 
-	settings.ConfigurationMethod = strings.TrimSpace(
-		strings.ToLower(datasource.JsonData.Get("tlsConfigurationMethod").MustString("file-path")))
+	settings.ConfigurationMethod = dsInfo.tlsConfigurationMethod
 
 	if settings.ConfigurationMethod == "file-content" {
-		if err := m.writeCertFiles(datasource, &settings); err != nil {
+		if err := m.writeCertFiles(dsInfo, &settings); err != nil {
 			return settings, err
 		}
 	} else {
-		settings.RootCertFile = datasource.JsonData.Get("sslRootCertFile").MustString("")
-		settings.CertFile = datasource.JsonData.Get("sslCertFile").MustString("")
-		settings.CertKeyFile = datasource.JsonData.Get("sslKeyFile").MustString("")
+		settings.RootCertFile = dsInfo.sslRootCertFile
+		settings.CertFile = dsInfo.sslCertFile
+		settings.CertKeyFile = dsInfo.sslKeyFile
 		if err := validateCertFunc(settings.RootCertFile, settings.CertFile, settings.CertKeyFile); err != nil {
 			return settings, err
 		}
@@ -119,7 +117,7 @@ func getFileName(dataDir string, fileType certFileType) string {
 
 // writeCertFile writes a certificate file.
 func writeCertFile(
-	ds *models.DataSource, logger log.Logger, fileContent string, generatedFilePath string) error {
+	dsInfo *datasourceInfo, logger log.Logger, fileContent string, generatedFilePath string) error {
 	fileContent = strings.TrimSpace(fileContent)
 	if fileContent != "" {
 		logger.Debug("Writing cert file", "path", generatedFilePath)
@@ -146,30 +144,26 @@ func writeCertFile(
 	return nil
 }
 
-func (m *tlsManager) writeCertFiles(ds *models.DataSource, settings *tlsSettings) error {
+func (m *tlsManager) writeCertFiles(dsInfo *datasourceInfo, settings *tlsSettings) error {
 	m.logger.Debug("Writing TLS certificate files to disk")
-	decrypted := ds.DecryptedValues()
-	tlsRootCert := decrypted["tlsCACert"]
-	tlsClientCert := decrypted["tlsClientCert"]
-	tlsClientKey := decrypted["tlsClientKey"]
 
-	if tlsRootCert == "" && tlsClientCert == "" && tlsClientKey == "" {
+	if dsInfo.tlsCACert == "" && dsInfo.tlsClientCert == "" && dsInfo.tlsClientKey == "" {
 		m.logger.Debug("No TLS/SSL certificates provided")
 	}
 
 	// Calculate all files path
-	workDir := filepath.Join(m.dataPath, "tls", ds.Uid+"generatedTLSCerts")
+	workDir := filepath.Join(m.dataPath, "tls", dsInfo.uid+"generatedTLSCerts")
 	settings.RootCertFile = getFileName(workDir, rootCert)
 	settings.CertFile = getFileName(workDir, clientCert)
 	settings.CertKeyFile = getFileName(workDir, clientKey)
 
 	// Find datasource in the cache, if found, skip writing files
-	cacheKey := strconv.Itoa(int(ds.Id))
+	cacheKey := strconv.Itoa(int(dsInfo.datasourceID))
 	m.dsCacheInstance.locker.RLock(cacheKey)
 	item, ok := m.dsCacheInstance.cache.Load(cacheKey)
 	m.dsCacheInstance.locker.RUnlock(cacheKey)
 	if ok {
-		if item.(int) == ds.Version {
+		if !item.(time.Time).Before(dsInfo.updated) {
 			return nil
 		}
 	}
@@ -179,7 +173,7 @@ func (m *tlsManager) writeCertFiles(ds *models.DataSource, settings *tlsSettings
 
 	item, ok = m.dsCacheInstance.cache.Load(cacheKey)
 	if ok {
-		if item.(int) == ds.Version {
+		if !item.(time.Time).Before(dsInfo.updated) {
 			return nil
 		}
 	}
@@ -195,18 +189,18 @@ func (m *tlsManager) writeCertFiles(ds *models.DataSource, settings *tlsSettings
 		}
 	}
 
-	if err = writeCertFileFunc(ds, m.logger, tlsRootCert, settings.RootCertFile); err != nil {
+	if err = writeCertFileFunc(dsInfo, m.logger, dsInfo.tlsCACert, settings.RootCertFile); err != nil {
 		return err
 	}
-	if err = writeCertFileFunc(ds, m.logger, tlsClientCert, settings.CertFile); err != nil {
+	if err = writeCertFileFunc(dsInfo, m.logger, dsInfo.tlsClientCert, settings.CertFile); err != nil {
 		return err
 	}
-	if err = writeCertFileFunc(ds, m.logger, tlsClientKey, settings.CertKeyFile); err != nil {
+	if err = writeCertFileFunc(dsInfo, m.logger, dsInfo.tlsClientKey, settings.CertKeyFile); err != nil {
 		return err
 	}
 
 	// Update datasource cache
-	m.dsCacheInstance.cache.Store(cacheKey, ds.Version)
+	m.dsCacheInstance.cache.Store(cacheKey, dsInfo.updated)
 	return nil
 }
 

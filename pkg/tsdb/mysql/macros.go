@@ -6,6 +6,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/components/gtime"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -19,7 +20,7 @@ var restrictedRegExp = regexp.MustCompile(`(?im)([\s]*show[\s]+grants|[\s,]sessi
 
 type mySQLMacroEngine struct {
 	*sqleng.SQLMacroEngineBase
-	timeRange plugins.DataTimeRange
+	timeRange backend.TimeRange
 	query     plugins.DataSubQuery
 	logger    log.Logger
 }
@@ -28,7 +29,7 @@ func newMysqlMacroEngine(logger log.Logger) sqleng.SQLMacroEngine {
 	return &mySQLMacroEngine{SQLMacroEngineBase: sqleng.NewSQLMacroEngineBase(), logger: logger}
 }
 
-func (m *mySQLMacroEngine) Interpolate(query plugins.DataSubQuery, timeRange plugins.DataTimeRange, sql string) (string, error) {
+func (m *mySQLMacroEngine) Interpolate(query plugins.DataSubQuery, timeRange backend.TimeRange, sql string) (string, error) {
 	m.timeRange = timeRange
 	m.query = query
 
@@ -74,11 +75,11 @@ func (m *mySQLMacroEngine) evaluateMacro(name string, args []string) (string, er
 			return "", fmt.Errorf("missing time column argument for macro %v", name)
 		}
 
-		return fmt.Sprintf("%s BETWEEN FROM_UNIXTIME(%d) AND FROM_UNIXTIME(%d)", args[0], m.timeRange.GetFromAsSecondsEpoch(), m.timeRange.GetToAsSecondsEpoch()), nil
+		return fmt.Sprintf("%s BETWEEN FROM_UNIXTIME(%d) AND FROM_UNIXTIME(%d)", args[0], m.timeRange.From.Unix(), m.timeRange.To.Unix()), nil
 	case "__timeFrom":
-		return fmt.Sprintf("FROM_UNIXTIME(%d)", m.timeRange.GetFromAsSecondsEpoch()), nil
+		return fmt.Sprintf("FROM_UNIXTIME(%d)", m.timeRange.From.Unix()), nil
 	case "__timeTo":
-		return fmt.Sprintf("FROM_UNIXTIME(%d)", m.timeRange.GetToAsSecondsEpoch()), nil
+		return fmt.Sprintf("FROM_UNIXTIME(%d)", m.timeRange.To.Unix()), nil
 	case "__timeGroup":
 		if len(args) < 2 {
 			return "", fmt.Errorf("macro %v needs time column and interval", name)
@@ -104,16 +105,16 @@ func (m *mySQLMacroEngine) evaluateMacro(name string, args []string) (string, er
 		if len(args) == 0 {
 			return "", fmt.Errorf("missing time column argument for macro %v", name)
 		}
-		return fmt.Sprintf("%s >= %d AND %s <= %d", args[0], m.timeRange.GetFromAsSecondsEpoch(), args[0], m.timeRange.GetToAsSecondsEpoch()), nil
+		return fmt.Sprintf("%s >= %d AND %s <= %d", args[0], m.timeRange.From.Unix(), args[0], m.timeRange.To.Unix()), nil
 	case "__unixEpochNanoFilter":
 		if len(args) == 0 {
 			return "", fmt.Errorf("missing time column argument for macro %v", name)
 		}
-		return fmt.Sprintf("%s >= %d AND %s <= %d", args[0], m.timeRange.GetFromAsTimeUTC().UnixNano(), args[0], m.timeRange.GetToAsTimeUTC().UnixNano()), nil
+		return fmt.Sprintf("%s >= %d AND %s <= %d", args[0], m.timeRange.From.UTC().UnixNano(), args[0], m.timeRange.To.UTC().UnixNano()), nil
 	case "__unixEpochNanoFrom":
-		return fmt.Sprintf("%d", m.timeRange.GetFromAsTimeUTC().UnixNano()), nil
+		return fmt.Sprintf("%d", m.timeRange.From.UTC().UnixNano()), nil
 	case "__unixEpochNanoTo":
-		return fmt.Sprintf("%d", m.timeRange.GetToAsTimeUTC().UnixNano()), nil
+		return fmt.Sprintf("%d", m.timeRange.To.UTC().UnixNano()), nil
 	case "__unixEpochGroup":
 		if len(args) < 2 {
 			return "", fmt.Errorf("macro %v needs time column and interval and optional fill value", name)

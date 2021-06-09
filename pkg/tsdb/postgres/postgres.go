@@ -1,78 +1,106 @@
 package postgres
 
 import (
+	"context"
+	"encoding/json"
 	"fmt"
 	"reflect"
 	"strconv"
 	"strings"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
 )
 
+type Service struct {
+	cfg                  *setting.Cfg          `inject:""`
+	BackendPluginManager backendplugin.Manager `inject:""`
+	logger               log.Logger
+	tlsManager           tlsSettingsProvider
+	im                   instancemgmt.InstanceManager
+}
+
 func init() {
-	registry.Register(&registry.Descriptor{
-		Name:         "PostgresService",
-		InitPriority: registry.Low,
-		Instance:     &PostgresService{},
-	})
+	registry.Register(&registry.Descriptor{Instance: &Service{}})
 }
 
-type PostgresService struct {
-	Cfg        *setting.Cfg `inject:""`
-	logger     log.Logger
-	tlsManager tlsSettingsProvider
-}
-
-func (s *PostgresService) Init() error {
+func (s *Service) Init() error {
 	s.logger = log.New("tsdb.postgres")
-	s.tlsManager = newTLSManager(s.logger, s.Cfg.DataPath)
+	s.tlsManager = newTLSManager(s.logger, s.cfg.DataPath)
+	s.im = datasource.NewInstanceManager(newInstanceSettings())
+	factory := coreplugin.New(backend.ServeOpts{QueryDataHandler: s})
+
+	if err := s.BackendPluginManager.Register("postgres", factory); err != nil {
+		s.logger.Error("Failed to register plugin", "error", err)
+	}
 	return nil
 }
 
-//nolint: staticcheck // plugins.DataPlugin deprecated
-func (s *PostgresService) NewExecutor(datasource *models.DataSource) (plugins.DataPlugin, error) {
-	s.logger.Debug("Creating Postgres query endpoint")
-
-	cnnstr, err := s.generateConnectionString(datasource)
+func (s *Service) getDSInfo(pluginCtx backend.PluginContext) (*sqleng.DatasourceInfo, error) {
+	i, err := s.im.Get(pluginCtx)
 	if err != nil {
 		return nil, err
 	}
+	instance := i.(sqleng.DatasourceInfo)
+	return &instance, nil
+}
 
-	if s.Cfg.Env == setting.Dev {
-		s.logger.Debug("getEngine", "connection", cnnstr)
+func newInstanceSettings() datasource.InstanceFactoryFunc {
+	return func(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+		type JSONData struct {
+			SSLMode                string `json:"sslmode"`
+			TLSConfigurationMethod string `json:"tlsConfigurationMethod"`
+			Timescaledb            bool   `json:"timescaledb"`
+			SSLRootCertFile        string `json:"sslRootCertFile"`
+			SSLCertFile            string `json:"sslCertFile"`
+			SSLKeyFile             string `json:"sslKeyFile"`
+		}
+
+		// set up defaults
+		jsonData := JSONData{
+			SSLMode:                "verify-full",
+			TLSConfigurationMethod: "file-path",
+			Timescaledb:            false,
+		}
+
+		err := json.Unmarshal(settings.JSONData, &jsonData)
+		if err != nil {
+			return nil, fmt.Errorf("error reading settings: %w", err)
+		}
+
+		model := sqleng.DatasourceInfo{
+			DatasourceID:           settings.ID,
+			Uid:                    settings.UID,
+			Url:                    settings.URL,
+			User:                   settings.User,
+			Database:               settings.Database,
+			Updated:                settings.Updated,
+			SSLmode:                strings.TrimSpace(strings.ToLower(jsonData.SSLMode)),
+			TLSConfigurationMethod: strings.TrimSpace(strings.ToLower(jsonData.TLSConfigurationMethod)),
+			Timescaledb:            jsonData.Timescaledb,
+			SSLRootCertFile:        jsonData.SSLRootCertFile,
+			SSLCertFile:            jsonData.SSLCertFile,
+			SSLKeyFile:             jsonData.SSLKeyFile,
+		}
+
+		model.Password = settings.DecryptedSecureJSONData["password"]
+		model.TLSCACert = settings.DecryptedSecureJSONData["tlsCACert"]
+		model.TLSClientCert = settings.DecryptedSecureJSONData["tlsClientCert"]
+		model.TLSClientKey = settings.DecryptedSecureJSONData["tlsClientKey"]
+
+		return model, nil
 	}
-
-	config := sqleng.DataPluginConfiguration{
-		DriverName:        "postgres",
-		ConnectionString:  cnnstr,
-		Datasource:        datasource,
-		MetricColumnTypes: []string{"UNKNOWN", "TEXT", "VARCHAR", "CHAR"},
-	}
-
-	queryResultTransformer := postgresQueryResultTransformer{
-		log: s.logger,
-	}
-
-	timescaledb := datasource.JsonData.Get("timescaledb").MustBool(false)
-
-	plugin, err := sqleng.NewDataPlugin(config, &queryResultTransformer, newPostgresMacroEngine(timescaledb),
-		s.logger)
-	if err != nil {
-		s.logger.Error("Failed connecting to Postgres", "err", err)
-		return nil, err
-	}
-
-	s.logger.Debug("Successfully connected to Postgres")
-	return plugin, nil
 }
 
 // escape single quotes and backslashes in Postgres connection string parameters.
@@ -80,14 +108,14 @@ func escape(input string) string {
 	return strings.ReplaceAll(strings.ReplaceAll(input, `\`, `\\`), "'", `\'`)
 }
 
-func (s *PostgresService) generateConnectionString(datasource *models.DataSource) (string, error) {
+func (s *Service) generateConnectionString(dsInfo *sqleng.DatasourceInfo) (string, error) {
 	var host string
 	var port int
-	if strings.HasPrefix(datasource.Url, "/") {
-		host = datasource.Url
+	if strings.HasPrefix(dsInfo.Url, "/") {
+		host = dsInfo.Url
 		s.logger.Debug("Generating connection string with Unix socket specifier", "socket", host)
 	} else {
-		sp := strings.SplitN(datasource.Url, ":", 2)
+		sp := strings.SplitN(dsInfo.Url, ":", 2)
 		host = sp[0]
 		if len(sp) > 1 {
 			var err error
@@ -103,12 +131,12 @@ func (s *PostgresService) generateConnectionString(datasource *models.DataSource
 	}
 
 	connStr := fmt.Sprintf("user='%s' password='%s' host='%s' dbname='%s'",
-		escape(datasource.User), escape(datasource.DecryptedPassword()), escape(host), escape(datasource.Database))
+		escape(dsInfo.User), escape(dsInfo.Password), escape(host), escape(dsInfo.Database))
 	if port > 0 {
 		connStr += fmt.Sprintf(" port=%d", port)
 	}
 
-	tlsSettings, err := s.tlsManager.getTLSSettings(datasource)
+	tlsSettings, err := s.tlsManager.getTLSSettings(dsInfo)
 	if err != nil {
 		return "", err
 	}
@@ -131,6 +159,41 @@ func (s *PostgresService) generateConnectionString(datasource *models.DataSource
 
 	s.logger.Debug("Generated Postgres connection string successfully")
 	return connStr, nil
+}
+
+func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataHandler, error) {
+	s.logger.Debug("Creating Postgres query endpoint")
+	dsInfo, err := s.getDSInfo(req.PluginContext)
+	if err != nil {
+		return nil, err
+	}
+
+	cnnstr, err := s.generateConnectionString(dsInfo)
+
+	if s.cfg.Env == setting.Dev {
+		s.logger.Debug("getEngine", "connection", cnnstr)
+	}
+
+	config := sqleng.DataPluginConfiguration{
+		DriverName:        "postgres",
+		ConnectionString:  cnnstr,
+		Datasource:        dsInfo,
+		MetricColumnTypes: []string{"UNKNOWN", "TEXT", "VARCHAR", "CHAR"},
+	}
+
+	queryResultTransformer := postgresQueryResultTransformer{
+		log: s.logger,
+	}
+
+	plugin, err := sqleng.NewQueryDataHandler(config, &queryResultTransformer, newPostgresMacroEngine(dsInfo.Timescaledb),
+		s.logger)
+	if err != nil {
+		s.logger.Error("Failed connecting to Postgres", "err", err)
+		return nil, err
+	}
+
+	s.logger.Debug("Successfully connected to Postgres")
+	return &plugin, nil
 }
 
 type postgresQueryResultTransformer struct {
