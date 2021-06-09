@@ -96,6 +96,46 @@ describe('Streaming JSON', () => {
           },
         ]
       `);
+      expect(stream.meta.streamPacket).toMatchInlineSnapshot(`
+        Object {
+          "action": "append",
+          "packets": 2,
+          "popped": 0,
+          "pushed": 1,
+        }
+      `);
+
+      stream.push({
+        data: {
+          values: [
+            [400, 500],
+            ['d', 'e'],
+            [4, 5],
+          ],
+        },
+      });
+      expect(stream.meta.streamPacket).toMatchInlineSnapshot(`
+        Object {
+          "action": "append",
+          "packets": 3,
+          "popped": 1,
+          "pushed": 2,
+        }
+      `);
+
+      stream.push({
+        data: {
+          values: [[600], ['f'], [6]],
+        },
+      });
+      expect(stream.meta.streamPacket).toMatchInlineSnapshot(`
+        Object {
+          "action": "append",
+          "packets": 4,
+          "popped": 1,
+          "pushed": 1,
+        }
+      `);
     });
 
     it('should append new data and slice based on maxDelta', () => {

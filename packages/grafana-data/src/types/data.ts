@@ -47,6 +47,11 @@ export interface QueryResultMeta {
   channel?: string;
 
   /**
+   * When streaming, this represents what changed in the last packet
+   */
+  streamPacket?: StreamPacketInfo;
+
+  /**
    * Optionally identify which topic the frame should be assigned to.
    * A value specified in the response will override what the request asked for.
    */
@@ -76,6 +81,13 @@ export interface QueryResultMeta {
   limit?: number; // used by log models and loki
   json?: boolean; // used to keep track of old json doc values
   instant?: boolean;
+}
+
+export interface StreamPacketInfo {
+  packets: number;
+  pushed?: number;
+  popped?: number;
+  action?: 'append' | 'replace';
 }
 
 export interface QueryResultMetaStat extends FieldConfig {

@@ -1,5 +1,5 @@
 import { Field, DataFrame, FieldType } from '../types/dataFrame';
-import { Labels, QueryResultMeta } from '../types';
+import { Labels, QueryResultMeta, StreamPacketInfo } from '../types';
 import { ArrayVector } from '../vector';
 import { DataFrameJSON, decodeFieldValueEntities, FieldSchema } from './DataFrameJSON';
 import { guessFieldTypeFromValue } from './processDataFrame';
@@ -28,13 +28,14 @@ enum PushMode {
 export class StreamingDataFrame implements DataFrame {
   name?: string;
   refId?: string;
-  meta?: QueryResultMeta;
+  meta: QueryResultMeta = {};
 
   fields: Array<Field<any, ArrayVector<any>>> = [];
   length = 0;
 
   options: StreamingFrameOptions;
 
+  private packetCount = 0;
   private schemaFields: FieldSchema[] = [];
   private timeFieldIndex = -1;
   private pushMode = PushMode.wide;
@@ -56,8 +57,10 @@ export class StreamingDataFrame implements DataFrame {
    * apply the new message to the existing data.  This will replace the existing schema
    * if a new schema is included in the message, or append data matching the current schema
    */
-  push(msg: DataFrameJSON) {
+  push(msg: DataFrameJSON, replace?: boolean) {
     const { schema, data } = msg;
+    this.packetCount++;
+    const streamPacket: StreamPacketInfo = { packets: this.packetCount };
 
     if (schema) {
       this.pushMode = PushMode.wide;
@@ -74,7 +77,9 @@ export class StreamingDataFrame implements DataFrame {
       const niceSchemaFields = this.pushMode === PushMode.labels ? schema.fields.slice(1) : schema.fields;
 
       this.refId = schema.refId;
-      this.meta = schema.meta;
+      if (schema.meta) {
+        this.meta = { ...schema.meta };
+      }
 
       if (hasSameStructure(this.schemaFields, niceSchemaFields)) {
         const len = niceSchemaFields.length;
@@ -163,9 +168,19 @@ export class StreamingDataFrame implements DataFrame {
         });
       }
 
-      let curValues = this.fields.map((f) => f.values.buffer);
+      let appended = values;
+      if (replace || !this.length) {
+        streamPacket.action = 'replace';
+      } else {
+        const curValues = this.fields.map((f) => f.values.buffer);
 
-      let appended = circPush(curValues, values, this.options.maxLength, this.timeFieldIndex, this.options.maxDelta);
+        appended = circPush(curValues, values, this.options.maxLength, this.timeFieldIndex, this.options.maxDelta);
+
+        streamPacket.action = 'append';
+        streamPacket.pushed = values[0].length;
+        const delta = this.length - appended[0].length;
+        streamPacket.popped = delta + streamPacket.pushed; // Is this right?
+      }
 
       appended.forEach((v, i) => {
         const { state, values } = this.fields[i];
@@ -177,6 +192,7 @@ export class StreamingDataFrame implements DataFrame {
 
       // Update the frame length
       this.length = appended[0].length;
+      this.meta.streamPacket = streamPacket;
     }
   }
 
