@@ -15,9 +15,9 @@ import (
 )
 
 // Parses the json queries and returns a requestQuery. The requestQuery has a 1 to 1 mapping to a query editor row
-func (e *cloudWatchExecutor) parseQueries(req *backend.QueryDataRequest, startTime time.Time, endTime time.Time) (map[string][]*requestQuery, error) {
+func (e *cloudWatchExecutor) parseQueries(queries []backend.DataQuery) (map[string][]*requestQuery, error) {
 	requestQueries := make(map[string][]*requestQuery)
-	for _, query := range req.Queries {
+	for _, query := range queries {
 		model, err := simplejson.NewJson(query.JSON)
 		if err != nil {
 			return nil, &queryError{err: err, RefID: query.RefID}
@@ -29,7 +29,7 @@ func (e *cloudWatchExecutor) parseQueries(req *backend.QueryDataRequest, startTi
 		}
 
 		refID := query.RefID
-		query, err := parseRequestQuery(model, refID, startTime, endTime)
+		query, err := parseRequestQuery(model, refID, query.TimeRange.From, query.TimeRange.To)
 		if err != nil {
 			return nil, &queryError{err: err, RefID: refID}
 		}
