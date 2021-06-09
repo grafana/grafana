@@ -57,6 +57,6 @@ export const parameters = {
     },
   },
   knobs: {
-    escapeHTML: false,
+    disable: true,
   },
 };

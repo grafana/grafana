@@ -13,9 +13,6 @@ export default {
   component: TimeSeries,
   decorators: [withCenteredStory],
   parameters: {
-    knobs: {
-      disable: true,
-    },
     controls: {
       exclude: ['className', 'timeRange', 'data', 'legend', 'fields'],
     },
