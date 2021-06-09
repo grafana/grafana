@@ -62,6 +62,7 @@ ldap.user:read | n/a | Get a user via LDAP.
 ldap.user:sync | n/a | Sync a user via LDAP.
 ldap.status:read | n/a | Verify the LDAP servers’ availability.
 status:accesscontrol | service:access-control | Get access-control enabled status.
+settings:write | settings:\*\*, settings:auth.saml:*, or on the property level settings:auth.saml:enabled | Update settings
 
 ## Scope definitions
 
@@ -75,3 +76,4 @@ reports:* | Restrict an action to a set of reports. For example, `reports:*` mat
 service:accesscontrol | Restrict an action to target only the fine-grained access control service. For example, you can use this in conjunction with the `provisioning:reload` or the `status:accesscontrol` actions.
 global:users:* | Restrict an action to a set of global users.
 users:* | Restrict an action to a set of users from an organization.
+settings:** | Restrict an action to a set of settings. For example, `settings:**`matches all settings, `settings:auth.saml:*` matches all saml settings and `settings:auth.saml:enabled`matches the enable property on the saml settings
