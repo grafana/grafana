@@ -1,7 +1,9 @@
 package azuremonitor
 
 import (
+	"context"
 	"fmt"
+	"net/http"
 	"net/url"
 	"testing"
 	"time"
@@ -171,6 +173,43 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 			tt.Err(t, err)
 			if diff := cmp.Diff(tt.azureLogAnalyticsQueries[0], queries[0]); diff != "" {
 				t.Errorf("Result mismatch (-want +got):\n%s", diff)
+			}
+		})
+	}
+}
+
+func TestLogAnalyticsCreateRequest(t *testing.T) {
+	ctx := context.Background()
+	dsInfo := datasourceInfo{
+		Services: map[string]datasourceService{
+			azureLogAnalytics: {URL: "http://ds"},
+		},
+	}
+
+	tests := []struct {
+		name            string
+		expectedURL     string
+		expectedHeaders http.Header
+		Err             require.ErrorAssertionFunc
+	}{
+		{
+			name:            "creates a request",
+			expectedURL:     "http://ds/",
+			expectedHeaders: http.Header{"Content-Type": []string{"application/json"}},
+			Err:             require.NoError,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ds := AzureLogAnalyticsDatasource{}
+			req, err := ds.createRequest(ctx, dsInfo)
+			tt.Err(t, err)
+			if req.URL.String() != tt.expectedURL {
+				t.Errorf("Expecting %s, got %s", tt.expectedURL, req.URL.String())
+			}
+			if !cmp.Equal(req.Header, tt.expectedHeaders) {
+				t.Errorf("Unexpected HTTP headers: %v", cmp.Diff(req.Header, tt.expectedHeaders))
 			}
 		})
 	}

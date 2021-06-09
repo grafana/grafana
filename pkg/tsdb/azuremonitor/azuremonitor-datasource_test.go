@@ -1,9 +1,11 @@
 package azuremonitor
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"net/http"
 	"net/url"
 	"path/filepath"
 	"testing"
@@ -508,4 +510,43 @@ func loadTestFile(t *testing.T, name string) AzureMonitorResponse {
 	err = json.Unmarshal(jsonBody, &azData)
 	require.NoError(t, err)
 	return azData
+}
+
+func TestAzureMonitorCreateRequest(t *testing.T) {
+	ctx := context.Background()
+	dsInfo := datasourceInfo{
+		Services: map[string]datasourceService{
+			azureMonitor: {URL: "http://ds"},
+		},
+	}
+
+	tests := []struct {
+		name            string
+		expectedURL     string
+		expectedHeaders http.Header
+		Err             require.ErrorAssertionFunc
+	}{
+		{
+			name:        "creates a request",
+			expectedURL: "http://ds/subscriptions",
+			expectedHeaders: http.Header{
+				"Content-Type": []string{"application/json"},
+			},
+			Err: require.NoError,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ds := AzureMonitorDatasource{}
+			req, err := ds.createRequest(ctx, dsInfo)
+			tt.Err(t, err)
+			if req.URL.String() != tt.expectedURL {
+				t.Errorf("Expecting %s, got %s", tt.expectedURL, req.URL.String())
+			}
+			if !cmp.Equal(req.Header, tt.expectedHeaders) {
+				t.Errorf("Unexpected HTTP headers: %v", cmp.Diff(req.Header, tt.expectedHeaders))
+			}
+		})
+	}
 }

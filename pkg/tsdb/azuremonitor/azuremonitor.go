@@ -74,7 +74,7 @@ type datasourceService struct {
 	HTTPClient *http.Client
 }
 
-func NewInstanceSettings(cfg *setting.Cfg) datasource.InstanceFactoryFunc {
+func NewInstanceSettings() datasource.InstanceFactoryFunc {
 	return func(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		jsonData := map[string]interface{}{}
 		err := json.Unmarshal(settings.JSONData, &jsonData)
@@ -109,15 +109,8 @@ type azDatasourceExecutor interface {
 	executeTimeSeriesQuery(ctx context.Context, originalQueries []backend.DataQuery, dsInfo datasourceInfo) (*backend.QueryDataResponse, error)
 }
 
-func newExecutor(im instancemgmt.InstanceManager, pm plugins.Manager, cfg *setting.Cfg) *datasource.QueryTypeMux {
+func newExecutor(im instancemgmt.InstanceManager, cfg *setting.Cfg, executors map[string]azDatasourceExecutor) *datasource.QueryTypeMux {
 	mux := datasource.NewQueryTypeMux()
-	executors := map[string]azDatasourceExecutor{
-		azureMonitor:       &AzureMonitorDatasource{},
-		appInsights:        &ApplicationInsightsDatasource{},
-		azureLogAnalytics:  &AzureLogAnalyticsDatasource{},
-		insightsAnalytics:  &InsightsAnalyticsDatasource{},
-		azureResourceGraph: &AzureResourceGraphDatasource{},
-	}
 	for dsType := range executors {
 		// Make a copy of the string to keep the reference after the iterator
 		dst := dsType
@@ -137,7 +130,7 @@ func newExecutor(im instancemgmt.InstanceManager, pm plugins.Manager, cfg *setti
 					return nil, err
 				}
 				dsInfo.Services[dst] = datasourceService{
-					URL:        dsInfo.Routes[dst].url,
+					URL:        dsInfo.Routes[dst].URL,
 					HTTPClient: client,
 				}
 			}
@@ -148,9 +141,16 @@ func newExecutor(im instancemgmt.InstanceManager, pm plugins.Manager, cfg *setti
 }
 
 func (s *Service) Init() error {
-	im := datasource.NewInstanceManager(NewInstanceSettings(s.Cfg))
+	im := datasource.NewInstanceManager(NewInstanceSettings())
+	executors := map[string]azDatasourceExecutor{
+		azureMonitor:       &AzureMonitorDatasource{},
+		appInsights:        &ApplicationInsightsDatasource{},
+		azureLogAnalytics:  &AzureLogAnalyticsDatasource{},
+		insightsAnalytics:  &InsightsAnalyticsDatasource{},
+		azureResourceGraph: &AzureResourceGraphDatasource{},
+	}
 	factory := coreplugin.New(backend.ServeOpts{
-		QueryDataHandler: newExecutor(im, s.PluginManager, s.Cfg),
+		QueryDataHandler: newExecutor(im, s.Cfg, executors),
 	})
 
 	if err := s.BackendPluginManager.Register(dsName, factory); err != nil {

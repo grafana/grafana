@@ -27,10 +27,10 @@ const (
 	azureResourceGraph = "Azure Resource Graph"
 )
 
-func newHTTPClient(ctx context.Context, route azRoute, model datasourceInfo, cfg *setting.Cfg) (*http.Client, error) {
+func httpCliProvider(ctx context.Context, route azRoute, model datasourceInfo, cfg *setting.Cfg) *httpclient.Provider {
 	tokenAuth := &plugins.JwtTokenAuth{
-		Url:    route.url,
-		Scopes: route.scopes,
+		Url:    route.URL,
+		Scopes: route.Scopes,
 		Params: map[string]string{
 			"azure_auth_type": model.Settings.AzureAuthType,
 			"azure_cloud":     cfg.Azure.Cloud,
@@ -39,15 +39,15 @@ func newHTTPClient(ctx context.Context, route azRoute, model datasourceInfo, cfg
 			"client_secret":   model.DecryptedSecureJSONData["clientSecret"],
 		},
 	}
-
 	tokenProvider := tokenprovider.NewAzureAccessTokenProvider(ctx, cfg, tokenAuth)
-
-	httpClientProvider := httpclient.NewProvider(httpclient.ProviderOptions{
+	return httpclient.NewProvider(httpclient.ProviderOptions{
 		Middlewares: []httpclient.Middleware{
 			tokenprovider.AuthMiddleware(tokenProvider),
 		},
 	})
+}
 
-	model.HTTPCliOpts.Headers = route.headers
-	return httpClientProvider.New(model.HTTPCliOpts)
+func newHTTPClient(ctx context.Context, route azRoute, model datasourceInfo, cfg *setting.Cfg) (*http.Client, error) {
+	model.HTTPCliOpts.Headers = route.Headers
+	return httpCliProvider(ctx, route, model, cfg).New(model.HTTPCliOpts)
 }
