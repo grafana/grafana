@@ -91,6 +91,24 @@ func (l *Loader) LoadAll(pluginJSONPaths []string, requireSigned bool) ([]*plugi
 		foundPlugins[filepath.Dir(pluginJSONPath)] = plugin
 	}
 
+	pluginsByID := make(map[string]struct{})
+	for scannedPluginPath, scannedPlugin := range foundPlugins {
+		// Check if scanning found duplicate plugins
+		if _, dupe := pluginsByID[scannedPlugin.ID]; dupe {
+			l.log.Warn("Skipping plugin as it's a duplicate", "id", scannedPlugin.ID)
+			//scanner.errors = append(scanner.errors, plugins.DuplicatePluginError{PluginID: scannedPlugin.Id, ExistingPluginDir: scannedPlugin.PluginDir})
+			delete(foundPlugins, scannedPluginPath)
+			continue
+		}
+		pluginsByID[scannedPlugin.ID] = struct{}{}
+
+		// Check if scanning found plugins that are already installed
+		//if existing := pm.GetPlugin(scannedPlugin.ID); existing != nil {
+		//	l.log.Debug("Skipping plugin as it's already installed", "plugin", existing.ID, "version", existing.Info.Version)
+		//	delete(foundPlugins, scannedPluginPath)
+		//}
+	}
+
 	// wire up plugin dependencies
 	for _, plugin := range foundPlugins {
 		ancestors := strings.Split(plugin.PluginDir, string(filepath.Separator))
@@ -172,12 +190,6 @@ func (l *Loader) LoadAll(pluginJSONPaths []string, requireSigned bool) ([]*plugi
 
 			plugin.Client = backendClient
 		}
-
-		//if p, exists := pm.plugins[pb.Id]; exists {
-		//	l.log.Warn("Plugin is duplicate", "id", pb.Id)
-		//	scanner.errors = append(scanner.errors, plugins.DuplicatePluginError{Plugin: pb, ExistingPlugin: p})
-		//	return nil, nil // return duplicate error?
-		//}
 
 		if !strings.HasPrefix(plugin.PluginDir, l.Cfg.StaticRootPath) {
 			l.log.Info("Registering plugin", "id", plugin.ID)
