@@ -2,8 +2,8 @@ import React from 'react';
 import uPlot, { AlignedData } from 'uplot';
 import {
   DataFrame,
+  formattedValueToString,
   getFieldColorModeForField,
-  getFieldDisplayName,
   getFieldSeriesColor,
   GrafanaTheme2,
 } from '@grafana/data';
@@ -16,6 +16,8 @@ import {
   AxisPlacement,
   ScaleDirection,
   ScaleOrientation,
+  LegendDisplayMode,
+  PlotLegend,
 } from '@grafana/ui';
 
 import {
@@ -25,19 +27,28 @@ import {
 import { PanelOptions } from './models.gen';
 import { ScaleDistribution } from '@grafana/ui/src/components/uPlot/models.gen';
 
+function incrRoundDn(num: number, incr: number) {
+  return Math.floor(num / incr) * incr;
+}
+
+function incrRoundUp(num: number, incr: number) {
+  return Math.ceil(num / incr) * incr;
+}
+
 export interface HistogramProps extends Themeable2 {
   options: PanelOptions; // used for diff
   alignedFrame: DataFrame; // This could take HistogramFields
+  bucketSize: number;
   width: number;
   height: number;
   structureRev?: number; // a number that will change when the frames[] structure changes
   legend: VizLegendOptions;
-  //onLegendClick?: (event: GraphNGLegendEvent) => void;
   children?: (builder: UPlotConfigBuilder, frame: DataFrame) => React.ReactNode;
+}
 
-  //prepConfig: (frame: DataFrame) => UPlotConfigBuilder;
-  //propsToDiff?: string[];
-  //renderLegend: (config: UPlotConfigBuilder) => React.ReactElement;
+export function getBucketSize(frame: DataFrame) {
+  // assumes BucketMin is fields[0] and BucktMax is fields[1]
+  return frame.fields[1].values.get(0) - frame.fields[0].values.get(0);
 }
 
 const prepConfig = (frame: DataFrame, theme: GrafanaTheme2) => {
@@ -46,7 +57,7 @@ const prepConfig = (frame: DataFrame, theme: GrafanaTheme2) => {
   let builder = new UPlotConfigBuilder();
 
   // assumes BucketMin is fields[0] and BucktMax is fields[1]
-  let bucketSize = frame.fields[1].values.get(0) - frame.fields[0].values.get(0);
+  let bucketSize = getBucketSize(frame);
 
   // splits shifter, to ensure splits always start at first bucket
   let xSplits: uPlot.Axis.Splits = (u, axisIdx, scaleMin, scaleMax, foundIncr, foundSpace) => {
@@ -73,7 +84,24 @@ const prepConfig = (frame: DataFrame, theme: GrafanaTheme2) => {
     distribution: ScaleDistribution.Linear,
     orientation: ScaleOrientation.Horizontal,
     direction: ScaleDirection.Right,
-    range: (u) => [u.data[0][0], u.data[0][u.data[0].length - 1] + bucketSize],
+    range: (u, wantedMin, wantedMax) => {
+      let fullRangeMin = u.data[0][0];
+      let fullRangeMax = u.data[0][u.data[0].length - 1];
+
+      // snap to bucket divisors...
+
+      if (wantedMax === fullRangeMax) {
+        wantedMax += bucketSize;
+      } else {
+        wantedMax = incrRoundUp(wantedMax, bucketSize);
+      }
+
+      if (wantedMin > fullRangeMin) {
+        wantedMin = incrRoundDn(wantedMin, bucketSize);
+      }
+
+      return [wantedMin, wantedMax];
+    },
   });
 
   builder.addScale({
@@ -84,12 +112,18 @@ const prepConfig = (frame: DataFrame, theme: GrafanaTheme2) => {
     direction: ScaleDirection.Up,
   });
 
+  const fmt = frame.fields[0].display!;
+  const xAxisFormatter = (v: number) => {
+    return formattedValueToString(fmt(v));
+  };
+
   builder.addAxis({
     scaleKey: 'x',
     isTime: false,
     placement: AxisPlacement.Bottom,
     incrs: histogramBucketSizes,
     splits: xSplits,
+    values: (u: uPlot, vals: any[]) => vals.map(xAxisFormatter),
     //incrs: () => [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((mult) => mult * bucketSize),
     //splits: config.xSplits,
     //values: config.xValues,
@@ -111,6 +145,14 @@ const prepConfig = (frame: DataFrame, theme: GrafanaTheme2) => {
     theme,
   });
 
+  builder.setCursor({
+    drag: {
+      x: true,
+      y: false,
+      setScale: true,
+    },
+  });
+
   let pathBuilder = uPlot.paths.bars!({ align: 1, size: [1, Infinity] });
 
   let seriesIndex = 0;
@@ -119,7 +161,8 @@ const prepConfig = (frame: DataFrame, theme: GrafanaTheme2) => {
   for (let i = 2; i < frame.fields.length; i++) {
     const field = frame.fields[i];
 
-    field.state!.seriesIndex = seriesIndex++;
+    field.state = field.state ?? {};
+    field.state.seriesIndex = seriesIndex++;
 
     const customConfig = { ...field.config.custom };
 
@@ -138,17 +181,15 @@ const prepConfig = (frame: DataFrame, theme: GrafanaTheme2) => {
       colorMode,
       pathBuilder,
       //pointsBuilder: config.drawPoints,
-      show: !customConfig.hideFrom?.graph,
+      show: !customConfig.hideFrom?.vis,
       gradientMode: customConfig.gradientMode,
       thresholds: field.config.thresholds,
 
       // The following properties are not used in the uPlot config, but are utilized as transport for legend config
-      // dataFrameFieldIndex: {
-      //   fieldIndex: i,
-      //   frameIndex: 0,
-      // },
-      fieldName: getFieldDisplayName(field, frame),
-      hideInLegend: customConfig.hideFrom?.legend,
+      dataFrameFieldIndex: {
+        fieldIndex: i,
+        frameIndex: 0,
+      },
     });
   }
 
@@ -176,10 +217,6 @@ const preparePlotData = (frame: DataFrame) => {
   }
 
   return data;
-};
-
-const renderLegend = (config: UPlotConfigBuilder) => {
-  return null;
 };
 
 interface State {
@@ -210,14 +247,24 @@ export class Histogram extends React.Component<HistogramProps, State> {
     return state;
   }
 
+  renderLegend(config: UPlotConfigBuilder) {
+    const { legend } = this.props;
+    if (!config || legend.displayMode === LegendDisplayMode.Hidden) {
+      return null;
+    }
+
+    return <PlotLegend data={[this.props.alignedFrame]} config={config} maxHeight="35%" maxWidth="60%" {...legend} />;
+  }
+
   componentDidUpdate(prevProps: HistogramProps) {
-    const { structureRev, alignedFrame } = this.props;
+    const { structureRev, alignedFrame, bucketSize } = this.props;
 
     if (alignedFrame !== prevProps.alignedFrame) {
       let newState = this.prepState(this.props, false);
 
       if (newState) {
         const shouldReconfig =
+          bucketSize !== prevProps.bucketSize ||
           this.props.options !== prevProps.options ||
           this.state.config === undefined ||
           structureRev !== prevProps.structureRev ||
@@ -241,7 +288,7 @@ export class Histogram extends React.Component<HistogramProps, State> {
     }
 
     return (
-      <VizLayout width={width} height={height} legend={renderLegend(config) as any}>
+      <VizLayout width={width} height={height} legend={this.renderLegend(config)}>
         {(vizWidth: number, vizHeight: number) => (
           <UPlotChart
             config={this.state.config!}

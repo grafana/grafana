@@ -2,17 +2,17 @@ import React, { PureComponent } from 'react';
 import { css } from '@emotion/css';
 
 import {
-  Select,
-  Field,
-  Form,
-  Tooltip,
-  Icon,
-  stylesFactory,
-  Label,
   Button,
-  RadioButtonGroup,
+  Field,
   FieldSet,
+  Form,
+  Icon,
+  Label,
+  RadioButtonGroup,
+  Select,
+  stylesFactory,
   TimeZonePicker,
+  Tooltip,
 } from '@grafana/ui';
 import { SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -142,6 +142,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
                     </Tooltip>
                   </Label>
                 }
+                aria-label="User preferences home dashboard drop down"
               >
                 <Select
                   value={dashboards.find((dashboard) => dashboard.id === homeDashboardId)}
@@ -157,7 +158,9 @@ export class SharedPreferences extends PureComponent<Props, State> {
                 <TimeZonePicker includeInternal={true} value={timezone} onChange={this.onTimeZoneChanged} />
               </Field>
               <div className="gf-form-button-row">
-                <Button variant="primary">Save</Button>
+                <Button variant="primary" aria-label="User preferences save button">
+                  Save
+                </Button>
               </div>
             </FieldSet>
           );

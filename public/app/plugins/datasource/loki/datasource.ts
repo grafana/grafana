@@ -492,8 +492,8 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
       .toPromise();
   }
 
-  async annotationQuery(options: AnnotationQueryRequest<LokiQuery>): Promise<AnnotationEvent[]> {
-    const { expr, maxLines, instant } = options.annotation;
+  async annotationQuery(options: any): Promise<AnnotationEvent[]> {
+    const { expr, maxLines, instant, tagKeys = '', titleFormat = '', textFormat = '' } = options.annotation;
 
     if (!expr) {
       return [];
@@ -506,26 +506,40 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
       : await this.runRangeQuery(query, options as any).toPromise();
 
     const annotations: AnnotationEvent[] = [];
+    const splitKeys: string[] = tagKeys.split(',').filter((v: string) => v !== '');
 
     for (const frame of data) {
-      const tags: string[] = [];
+      const labels: { [key: string]: string } = {};
       for (const field of frame.fields) {
         if (field.labels) {
-          tags.push.apply(tags, [
-            ...new Set(
-              Object.values(field.labels)
-                .map((label: string) => label.trim())
-                .filter((label: string) => label !== '')
-            ),
-          ]);
+          for (const [key, value] of Object.entries(field.labels)) {
+            labels[key] = String(value).trim();
+          }
         }
       }
+
+      const tags: string[] = [
+        ...new Set(
+          Object.entries(labels).reduce((acc: string[], [key, val]) => {
+            if (val === '') {
+              return acc;
+            }
+            if (splitKeys.length && !splitKeys.includes(key)) {
+              return acc;
+            }
+            acc.push.apply(acc, [val]);
+            return acc;
+          }, [])
+        ),
+      ];
+
       const view = new DataFrameView<{ ts: string; line: string }>(frame);
 
       view.forEach((row) => {
         annotations.push({
           time: new Date(row.ts).valueOf(),
-          text: row.line,
+          title: renderTemplate(titleFormat, labels),
+          text: renderTemplate(textFormat, labels) || row.line,
           tags,
         });
       });
@@ -564,6 +578,16 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     // The min interval is set to 1ms
     return Math.max(interval, 1);
   }
+}
+
+export function renderTemplate(aliasPattern: string, aliasData: { [key: string]: string }) {
+  const aliasRegex = /\{\{\s*(.+?)\s*\}\}/g;
+  return aliasPattern.replace(aliasRegex, (_match, g1) => {
+    if (aliasData[g1]) {
+      return aliasData[g1];
+    }
+    return '';
+  });
 }
 
 export function lokiRegularEscape(value: any) {

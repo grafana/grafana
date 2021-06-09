@@ -1,27 +1,26 @@
-import { cloneDeep, omit } from 'lodash';
+import { cloneDeep, isNumber, omit } from 'lodash';
 
 import {
-  fieldReducers,
-  Threshold,
-  sortThresholds,
+  convertOldAngularValueMappings,
+  FieldColorModeId,
   FieldConfig,
-  ReducerID,
-  ValueMapping,
-  MappingType,
-  VizOrientation,
+  fieldReducers,
   PanelModel,
   ReduceDataOptions,
-  ThresholdsMode,
+  ReducerID,
+  sortThresholds,
+  Threshold,
   ThresholdsConfig,
+  ThresholdsMode,
   validateFieldConfig,
-  FieldColorModeId,
-  TextDisplayOptions,
+  ValueMapping,
+  VizOrientation,
 } from '@grafana/data';
+import { OptionsWithTextFormatting } from '../../options';
 
-export interface SingleStatBaseOptions {
+export interface SingleStatBaseOptions extends OptionsWithTextFormatting {
   reduceOptions: ReduceDataOptions;
   orientation: VizOrientation;
-  text?: TextDisplayOptions;
 }
 
 const optionsToKeep = ['reduceOptions', 'orientation'];
@@ -216,6 +215,27 @@ export function sharedSingleStatMigrationHandler(panel: PanelModel<SingleStatBas
     }
   }
 
+  if (previousVersion < 8.0) {
+    // Explicit min/max was removed for percent/percentunit in 8.0
+    const config = panel.fieldConfig?.defaults;
+    let unit = config?.unit;
+    if (unit === 'percent') {
+      if (!isNumber(config.min)) {
+        config.min = 0;
+      }
+      if (!isNumber(config.max)) {
+        config.max = 100;
+      }
+    } else if (unit === 'percentunit') {
+      if (!isNumber(config.min)) {
+        config.min = 0;
+      }
+      if (!isNumber(config.max)) {
+        config.max = 1;
+      }
+    }
+  }
+
   return options as SingleStatBaseOptions;
 }
 
@@ -305,41 +325,9 @@ export function migrateOldThresholds(thresholds?: any[]): Threshold[] | undefine
 }
 
 /**
+ * @deprecated use convertOldAngularValueMappings instead
  * Convert the angular single stat mapping to new react style
  */
 export function convertOldAngularValueMapping(panel: any): ValueMapping[] {
-  const mappings: ValueMapping[] = [];
-
-  // Guess the right type based on options
-  let mappingType = panel.mappingType;
-  if (!panel.mappingType) {
-    if (panel.valueMaps && panel.valueMaps.length) {
-      mappingType = 1;
-    } else if (panel.rangeMaps && panel.rangeMaps.length) {
-      mappingType = 2;
-    }
-  }
-
-  // check value to text mappings if its enabled
-  if (mappingType === 1) {
-    for (let i = 0; i < panel.valueMaps.length; i++) {
-      const map = panel.valueMaps[i];
-      mappings.push({
-        ...map,
-        id: i, // used for order
-        type: MappingType.ValueToText,
-      });
-    }
-  } else if (mappingType === 2) {
-    for (let i = 0; i < panel.rangeMaps.length; i++) {
-      const map = panel.rangeMaps[i];
-      mappings.push({
-        ...map,
-        id: i, // used for order
-        type: MappingType.RangeToText,
-      });
-    }
-  }
-
-  return mappings;
+  return convertOldAngularValueMappings(panel);
 }

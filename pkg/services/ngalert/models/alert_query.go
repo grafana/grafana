@@ -9,7 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/expr"
 )
 
-const defaultMaxDataPoints float64 = 100
+const defaultMaxDataPoints float64 = 43200 // 12 hours at 1sec interval
 const defaultIntervalMS float64 = 1000
 
 // Duration is a type used for marshalling durations.

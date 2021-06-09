@@ -28,7 +28,7 @@ const basicAuthOption: NotificationChannelOption = option(
   {
     element: 'subform',
     subformOptions: [
-      option('ussername', 'Username', ''),
+      option('username', 'Username', ''),
       option('password', 'Password', ''),
       option('password_file', 'Password file', ''),
     ],
@@ -329,4 +329,55 @@ export const cloudNotifierTypes: NotifierDTO[] = [
       httpConfigOption,
     ],
   },
+];
+
+export const globalConfigOptions: NotificationChannelOption[] = [
+  // email
+  option('smtp_from', 'SMTP from', 'The default SMTP From header field.'),
+  option(
+    'smtp_smarthost',
+    'SMTP smarthost',
+    'The default SMTP smarthost used for sending emails, including port number. Port number usually is 25, or 587 for SMTP over TLS (sometimes referred to as STARTTLS). Example: smtp.example.org:587'
+  ),
+  option('smtp_hello', 'SMTP hello', 'The default hostname to identify to the SMTP server.', {
+    placeholder: 'localhost',
+  }),
+  option(
+    'smtp_auth_username',
+    'SMTP auth username',
+    "SMTP Auth using CRAM-MD5, LOGIN and PLAIN. If empty, Alertmanager doesn't authenticate to the SMTP server."
+  ),
+  option('smtp_auth_password', 'SMTP auth password', 'SMTP Auth using LOGIN and PLAIN.'),
+  option('smtp_auth_identity', 'SMTP auth identity', 'SMTP Auth using PLAIN.'),
+  option('smtp_auth_secret', 'SMTP auth secret', 'SMTP Auth using CRAM-MD5.'),
+  option(
+    'smtp_require_tls',
+    'SMTP require TLS',
+    'The default SMTP TLS requirement. Note that Go does not support unencrypted connections to remote SMTP endpoints.',
+    {
+      element: 'checkbox',
+    }
+  ),
+
+  // slack
+  option('slack_api_url', 'Slack API URL', ''),
+  option('victorops_api_key', 'VictorOps API key', ''),
+  option('victorops_api_url', 'VictorOps API URL', '', {
+    placeholder: 'https://alert.victorops.com/integrations/generic/20131114/alert/',
+  }),
+  option('pagerduty_url', 'PagerDuty URL', 'https://events.pagerduty.com/v2/enqueue'),
+  option('opsgenie_api_key', 'OpsGenie API key', ''),
+  option('opsgenie_api_url', 'OpsGenie API URL', '', { placeholder: 'https://api.opsgenie.com/' }),
+  option('wechat_api_url', 'WeChat API URL', '', { placeholder: 'https://qyapi.weixin.qq.com/cgi-bin/' }),
+  option('wechat_api_secret', 'WeChat API secret', ''),
+  option('wechat_api_corp_id', 'WeChat API corp id', ''),
+  httpConfigOption,
+  option(
+    'resolve_timeout',
+    'Resolve timeout',
+    'ResolveTimeout is the default value used by alertmanager if the alert does not include EndsAt, after this time passes it can declare the alert as resolved if it has not been updated. This has no impact on alerts from Prometheus, as they always include EndsAt.',
+    {
+      placeholder: '5m',
+    }
+  ),
 ];

@@ -405,7 +405,6 @@ describe('UPlotConfigBuilder', () => {
     builder.addSeries({
       drawStyle: DrawStyle.Line,
       scaleKey: 'scale-x',
-      fieldName: 'A-series',
       lineColor: '#0000ff',
       theme: darkTheme,
     });
@@ -418,7 +417,6 @@ describe('UPlotConfigBuilder', () => {
     builder.addSeries({
       drawStyle: DrawStyle.Line,
       scaleKey: 'scale-x',
-      fieldName: 'A-series',
       lineColor: '#FFAABB',
       fillOpacity: 50,
       theme: darkTheme,
@@ -432,7 +430,6 @@ describe('UPlotConfigBuilder', () => {
     builder.addSeries({
       drawStyle: DrawStyle.Line,
       scaleKey: 'scale-x',
-      fieldName: 'A-series',
       lineColor: '#FFAABB',
       fillOpacity: 50,
       fillColor: '#FF0000',
@@ -447,7 +444,6 @@ describe('UPlotConfigBuilder', () => {
     builder.addSeries({
       drawStyle: DrawStyle.Line,
       scaleKey: 'scale-x',
-      fieldName: 'A-series',
       lineColor: '#FFAABB',
       fillOpacity: 50,
       gradientMode: GraphGradientMode.Opacity,
@@ -462,7 +458,6 @@ describe('UPlotConfigBuilder', () => {
     builder.addSeries({
       drawStyle: DrawStyle.Line,
       scaleKey: 'scale-x',
-      fieldName: 'A-series',
       fillOpacity: 50,
       gradientMode: GraphGradientMode.Opacity,
       showPoints: PointVisibility.Auto,
@@ -524,7 +519,6 @@ describe('UPlotConfigBuilder', () => {
       builder.addSeries({
         drawStyle: DrawStyle.Line,
         scaleKey: 'scale-x',
-        fieldName: 'A-series',
         fillOpacity: 50,
         gradientMode: GraphGradientMode.Opacity,
         showPoints: PointVisibility.Auto,
@@ -536,7 +530,6 @@ describe('UPlotConfigBuilder', () => {
       builder.addSeries({
         drawStyle: DrawStyle.Line,
         scaleKey: 'scale-x',
-        fieldName: 'B-series',
         fillOpacity: 50,
         gradientMode: GraphGradientMode.Opacity,
         showPoints: PointVisibility.Auto,
@@ -550,7 +543,6 @@ describe('UPlotConfigBuilder', () => {
       builder.addSeries({
         drawStyle: DrawStyle.Line,
         scaleKey: 'scale-x',
-        fieldName: 'C-series',
         fillOpacity: 50,
         gradientMode: GraphGradientMode.Opacity,
         showPoints: PointVisibility.Auto,

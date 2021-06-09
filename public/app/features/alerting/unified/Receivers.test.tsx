@@ -16,6 +16,7 @@ import { byLabelText, byRole, byTestId, byText } from 'testing-library-selector'
 import userEvent from '@testing-library/user-event';
 import { ALERTMANAGER_NAME_LOCAL_STORAGE_KEY, ALERTMANAGER_NAME_QUERY_KEY } from './utils/constants';
 import store from 'app/core/store';
+import { contextSrv } from 'app/core/services/context_srv';
 
 jest.mock('./api/alertmanager');
 jest.mock('./api/grafana');
@@ -95,6 +96,7 @@ describe('Receivers', () => {
     mocks.getAllDataSources.mockReturnValue(Object.values(dataSources));
     mocks.api.fetchNotifiers.mockResolvedValue(grafanaNotifiersMock);
     setDataSourceSrv(new MockDataSourceSrv(dataSources));
+    contextSrv.isEditor = true;
     store.delete(ALERTMANAGER_NAME_LOCAL_STORAGE_KEY);
   });
 
@@ -191,10 +193,8 @@ describe('Receivers', () => {
                 disableResolveMessage: false,
                 name: 'my new receiver',
                 secureSettings: {},
-                sendReminder: true,
                 settings: {
                   apiKey: 'foobarbaz',
-                  roomid: '',
                   url: 'http://hipchat',
                 },
                 type: 'hipchat',

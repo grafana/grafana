@@ -1,9 +1,11 @@
 package state
 
 import (
+	"bytes"
 	"fmt"
 	"strings"
 	"sync"
+	text_template "text/template"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
@@ -33,16 +35,21 @@ func (c *cache) getOrCreate(alertRule *ngModels.AlertRule, result eval.Result) *
 	c.mtxStates.Lock()
 	defer c.mtxStates.Unlock()
 
+	templateData := make(map[string]string, len(result.Instance)+3)
+	for k, v := range result.Instance {
+		templateData[k] = v
+	}
+	attachRuleLabels(templateData, alertRule)
+	ruleLabels, annotations := c.expandRuleLabelsAndAnnotations(alertRule, templateData)
+
 	// if duplicate labels exist, alertRule label will take precedence
-	lbs := mergeLabels(alertRule.Labels, result.Instance)
-	lbs[ngModels.UIDLabel] = alertRule.UID
-	lbs[ngModels.NamespaceUIDLabel] = alertRule.NamespaceUID
-	lbs[prometheusModel.AlertNameLabel] = alertRule.Title
+	lbs := mergeLabels(ruleLabels, result.Instance)
+	attachRuleLabels(lbs, alertRule)
 
 	il := ngModels.InstanceLabels(lbs)
 	id, err := il.StringKey()
 	if err != nil {
-		c.log.Error("error getting cacheId for entry", "msg", err.Error())
+		c.log.Error("error getting cacheId for entry", "err", err.Error())
 	}
 
 	if _, ok := c.states[alertRule.OrgID]; !ok {
@@ -53,12 +60,10 @@ func (c *cache) getOrCreate(alertRule *ngModels.AlertRule, result eval.Result) *
 	}
 
 	if state, ok := c.states[alertRule.OrgID][alertRule.UID][id]; ok {
+		// Annotations can change over time for the same alert.
+		state.Annotations = annotations
+		c.states[alertRule.OrgID][alertRule.UID][id] = state
 		return state
-	}
-
-	annotations := map[string]string{}
-	if len(alertRule.Annotations) > 0 {
-		annotations = alertRule.Annotations
 	}
 
 	// If the first result we get is alerting, set StartsAt to EvaluatedAt because we
@@ -68,7 +73,6 @@ func (c *cache) getOrCreate(alertRule *ngModels.AlertRule, result eval.Result) *
 		OrgID:              alertRule.OrgID,
 		CacheId:            id,
 		Labels:             lbs,
-		State:              result.State,
 		Annotations:        annotations,
 		EvaluationDuration: result.EvaluationDuration,
 	}
@@ -77,6 +81,62 @@ func (c *cache) getOrCreate(alertRule *ngModels.AlertRule, result eval.Result) *
 	}
 	c.states[alertRule.OrgID][alertRule.UID][id] = newState
 	return newState
+}
+
+func attachRuleLabels(m map[string]string, alertRule *ngModels.AlertRule) {
+	m[ngModels.UIDLabel] = alertRule.UID
+	m[ngModels.NamespaceUIDLabel] = alertRule.NamespaceUID
+	m[prometheusModel.AlertNameLabel] = alertRule.Title
+}
+
+func (c *cache) expandRuleLabelsAndAnnotations(alertRule *ngModels.AlertRule, data map[string]string) (map[string]string, map[string]string) {
+	expand := func(original map[string]string) map[string]string {
+		expanded := make(map[string]string, len(original))
+		for k, v := range original {
+			ev, err := expandTemplate(alertRule.Title, v, data)
+			expanded[k] = ev
+			if err != nil {
+				c.log.Error("error in expanding template", "name", k, "value", v, "err", err.Error())
+				// Store the original template on error.
+				expanded[k] = v
+			}
+		}
+
+		return expanded
+	}
+
+	return expand(alertRule.Labels), expand(alertRule.Annotations)
+}
+
+func expandTemplate(name, text string, data map[string]string) (result string, resultErr error) {
+	name = "__alert_" + name
+	text = "{{- $labels := .Labels -}}" + text
+	// It'd better to have no alert description than to kill the whole process
+	// if there's a bug in the template.
+	defer func() {
+		if r := recover(); r != nil {
+			var ok bool
+			resultErr, ok = r.(error)
+			if !ok {
+				resultErr = fmt.Errorf("panic expanding template %v: %v", name, r)
+			}
+		}
+	}()
+
+	tmpl, err := text_template.New(name).Option("missingkey=zero").Parse(text)
+	if err != nil {
+		return "", fmt.Errorf("error parsing template %v: %s", name, err.Error())
+	}
+	var buffer bytes.Buffer
+	err = tmpl.Execute(&buffer, struct {
+		Labels map[string]string
+	}{
+		Labels: data,
+	})
+	if err != nil {
+		return "", fmt.Errorf("error executing template %v: %s", name, err.Error())
+	}
+	return buffer.String(), nil
 }
 
 func (c *cache) set(entry *State) {
@@ -92,8 +152,8 @@ func (c *cache) set(entry *State) {
 }
 
 func (c *cache) get(orgID int64, alertRuleUID, stateId string) (*State, error) {
-	c.mtxStates.Lock()
-	defer c.mtxStates.Unlock()
+	c.mtxStates.RLock()
+	defer c.mtxStates.RUnlock()
 	if state, ok := c.states[orgID][alertRuleUID][stateId]; ok {
 		return state, nil
 	}
@@ -102,8 +162,8 @@ func (c *cache) get(orgID int64, alertRuleUID, stateId string) (*State, error) {
 
 func (c *cache) getAll(orgID int64) []*State {
 	var states []*State
-	c.mtxStates.Lock()
-	defer c.mtxStates.Unlock()
+	c.mtxStates.RLock()
+	defer c.mtxStates.RUnlock()
 	for _, v1 := range c.states[orgID] {
 		for _, v2 := range v1 {
 			states = append(states, v2)
@@ -114,8 +174,8 @@ func (c *cache) getAll(orgID int64) []*State {
 
 func (c *cache) getStatesForRuleUID(orgID int64, alertRuleUID string) []*State {
 	var ruleStates []*State
-	c.mtxStates.Lock()
-	defer c.mtxStates.Unlock()
+	c.mtxStates.RLock()
+	defer c.mtxStates.RUnlock()
 	for _, state := range c.states[orgID][alertRuleUID] {
 		ruleStates = append(ruleStates, state)
 	}
@@ -135,9 +195,9 @@ func (c *cache) reset() {
 	c.states = make(map[int64]map[string]map[string]*State)
 }
 
-func (c *cache) trim() {
-	c.mtxStates.Lock()
-	defer c.mtxStates.Unlock()
+func (c *cache) recordMetrics() {
+	c.mtxStates.RLock()
+	defer c.mtxStates.RUnlock()
 
 	// Set default values to zero such that gauges are reset
 	// after all values from a single state disappear.
@@ -149,16 +209,10 @@ func (c *cache) trim() {
 		eval.Error:    0,
 	}
 
-	for _, org := range c.states {
-		for _, rule := range org {
+	for org, orgMap := range c.states {
+		c.metrics.GroupRules.WithLabelValues(fmt.Sprint(org)).Set(float64(len(orgMap)))
+		for _, rule := range orgMap {
 			for _, state := range rule {
-				if len(state.Results) > 100 {
-					newResults := make([]Evaluation, 100)
-					// Keep last 100 results
-					copy(newResults, state.Results[len(state.Results)-100:])
-					state.Results = newResults
-				}
-
 				n := ct[state.State]
 				ct[state.State] = n + 1
 			}

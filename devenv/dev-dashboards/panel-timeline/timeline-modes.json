@@ -15,6 +15,7 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
+  "id": 329,
   "links": [],
   "panels": [
     {
@@ -23,6 +24,10 @@
         "defaults": {
           "color": {
             "mode": "palette-classic"
+          },
+          "custom": {
+            "fillOpacity": 70,
+            "lineWidth": 1
           },
           "mappings": [],
           "thresholds": {
@@ -49,13 +54,14 @@
       },
       "id": 8,
       "options": {
+        "alignValue": "left",
         "colWidth": 0.9,
         "legend": {
           "calcs": [],
           "displayMode": "list",
           "placement": "bottom"
         },
-        "mode": "spans",
+        "mergeValues": true,
         "rowHeight": 0.9,
         "showValue": "always"
       },
@@ -187,8 +193,8 @@
           "scenarioId": "manual_entry"
         }
       ],
-      "title": "Spans Mode",
-      "type": "timeline"
+      "title": "State timeline",
+      "type": "state-timeline"
     },
     {
       "datasource": null,
@@ -196,6 +202,10 @@
         "defaults": {
           "color": {
             "mode": "palette-classic"
+          },
+          "custom": {
+            "fillOpacity": 70,
+            "lineWidth": 1
           },
           "mappings": [],
           "thresholds": {
@@ -222,13 +232,14 @@
       },
       "id": 9,
       "options": {
+        "alignValue": "left",
         "colWidth": 0.9,
         "legend": {
           "calcs": [],
           "displayMode": "list",
           "placement": "bottom"
         },
-        "mode": "spans",
+        "mergeValues": true,
         "rowHeight": 0.9,
         "showValue": "always"
       },
@@ -252,23 +263,31 @@
           "stringInput": "true,null,false,null,true,false"
         }
       ],
-      "title": "Spans Mode (strings & booleans)",
-      "type": "timeline"
+      "title": "State timeline (strings & booleans)",
+      "type": "state-timeline"
     },
     {
       "datasource": null,
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "palette-classic"
+            "mode": "thresholds"
+          },
+          "custom": {
+            "fillOpacity": 70,
+            "lineWidth": 1
           },
           "mappings": [],
           "thresholds": {
-            "mode": "absolute",
+            "mode": "percentage",
             "steps": [
               {
                 "color": "green",
                 "value": null
+              },
+              {
+                "color": "#EAB839",
+                "value": 60
               },
               {
                 "color": "red",
@@ -296,7 +315,6 @@
           "displayMode": "list",
           "placement": "bottom"
         },
-        "mode": "grid",
         "rowHeight": 0.9,
         "showValue": "always"
       },
@@ -331,14 +349,17 @@
           "stringInput": ""
         }
       ],
-      "title": "Grid Mode",
-      "type": "timeline"
+      "title": "Status grid",
+      "type": "status-history"
     }
   ],
   "refresh": false,
-  "schemaVersion": 29,
+  "schemaVersion": 30,
   "style": "dark",
-  "tags": [],
+  "tags": [
+    "gdev",
+    "panel-tests"
+  ],
   "templating": {
     "list": []
   },
@@ -350,5 +371,5 @@
   "timezone": "utc",
   "title": "Timeline Modes",
   "uid": "mIJjFy8Gz",
-  "version": 7
+  "version": 12
 }

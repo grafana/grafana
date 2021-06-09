@@ -48,6 +48,11 @@ export async function getLibraryPanel(uid: string): Promise<LibraryElementDTO> {
   return result;
 }
 
+export async function getLibraryPanelByName(name: string): Promise<LibraryElementDTO[]> {
+  const { result } = await getBackendSrv().get<{ result: LibraryElementDTO[] }>(`/api/library-elements/name/${name}`);
+  return result;
+}
+
 export async function addLibraryPanel(
   panelSaveModel: PanelModelWithLibraryPanel,
   folderId: number

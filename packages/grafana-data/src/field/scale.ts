@@ -2,7 +2,6 @@ import { isNumber } from 'lodash';
 import { GrafanaTheme2 } from '../themes/types';
 import { reduceField, ReducerID } from '../transformations/fieldReducer';
 import { Field, FieldConfig, FieldType, NumericRange, Threshold } from '../types';
-import { getColorForTheme } from '../utils';
 import { getFieldColorModeForField } from './fieldColor';
 import { getActiveThresholdForValue } from './thresholds';
 
@@ -42,21 +41,22 @@ export function getScaleCalculator(field: Field, theme: GrafanaTheme2): ScaleCal
 
 function getBooleanScaleCalculator(field: Field, theme: GrafanaTheme2): ScaleCalculator {
   const trueValue: ColorScaleValue = {
-    color: getColorForTheme('green', theme.v1),
+    color: theme.visualization.getColorByName('green'),
     percent: 1,
     threshold: (undefined as unknown) as Threshold,
   };
 
   const falseValue: ColorScaleValue = {
-    color: getColorForTheme('red', theme.v1),
+    color: theme.visualization.getColorByName('red'),
     percent: 0,
     threshold: (undefined as unknown) as Threshold,
   };
 
   const mode = getFieldColorModeForField(field);
-  if (mode.isContinuous && mode.colors) {
-    trueValue.color = getColorForTheme(mode.colors[mode.colors.length - 1], theme.v1);
-    falseValue.color = getColorForTheme(mode.colors[0], theme.v1);
+  if (mode.isContinuous && mode.getColors) {
+    const colors = mode.getColors(theme);
+    trueValue.color = colors[colors.length - 1];
+    falseValue.color = colors[0];
   }
 
   return (value: number) => {

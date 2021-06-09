@@ -25,7 +25,6 @@ const getStyles = (theme: GrafanaTheme2) => {
     wrapper: css`
       background: ${theme.colors.background.primary};
       width: 250px;
-      box-shadow: 0 5px 10px 0 ${theme.shadows.z1};
     `,
     item: css`
       background: none;

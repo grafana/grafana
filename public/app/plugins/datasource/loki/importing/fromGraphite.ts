@@ -12,6 +12,17 @@ const GRAPHITE_TO_LOKI_OPERATOR = {
   '!=~': '!~',
 };
 
+/**
+ * Converts Graphite glob-like pattern to a regular expression
+ */
+function convertGlobToRegEx(text: string): string {
+  if (text.includes('*') || text.includes('{')) {
+    return '^' + text.replace(/\*/g, '.*').replace(/\{/g, '(').replace(/}/g, ')').replace(/,/g, '|');
+  } else {
+    return text;
+  }
+}
+
 export default function fromGraphiteQueries(
   graphiteQueries: GraphiteQuery[],
   graphiteDataSource: GraphiteDatasource
@@ -62,17 +73,12 @@ function fromGraphite(graphiteQuery: GraphiteQueryModel, config: GraphiteToLokiQ
             return true;
           }
 
-          if (value.includes('{')) {
-            labels[matcher.labelName] = {
-              value: value.replace(/\*/g, '.*').replace(/\{/g, '(').replace(/}/g, ')').replace(/,/g, '|'),
-              operator: '=~',
-            };
-          } else {
-            labels[matcher.labelName] = {
-              value: value,
-              operator: '=',
-            };
-          }
+          const converted = convertGlobToRegEx(value);
+          labels[matcher.labelName] = {
+            value: converted,
+            operator: converted !== value ? '=~' : '=',
+          };
+
           return true;
         }
         return targetNodes[index] === matcher.value || matcher.value === '*';

@@ -75,7 +75,7 @@ func (lps *LibraryPanelService) LoadLibraryPanelsForDashboard(c *models.ReqConte
 			continue
 		}
 
-		if libraryelements.LibraryElementKind(elementInDB.Kind) != libraryelements.Panel {
+		if models.LibraryElementKind(elementInDB.Kind) != models.PanelElement {
 			continue
 		}
 
@@ -166,7 +166,7 @@ func (lps *LibraryPanelService) CleanLibraryPanelsForDashboard(dash *models.Dash
 // ConnectLibraryPanelsForDashboard loops through all panels in dashboard JSON and connects any library panels to the dashboard.
 func (lps *LibraryPanelService) ConnectLibraryPanelsForDashboard(c *models.ReqContext, dash *models.Dashboard) error {
 	panels := dash.Data.Get("panels").MustArray()
-	var libraryPanels []string
+	libraryPanels := make(map[string]string)
 	for _, panel := range panels {
 		panelAsJSON := simplejson.NewFromAny(panel)
 		libraryPanel := panelAsJSON.Get("libraryPanel")
@@ -179,8 +179,16 @@ func (lps *LibraryPanelService) ConnectLibraryPanelsForDashboard(c *models.ReqCo
 		if len(uid) == 0 {
 			return errLibraryPanelHeaderUIDMissing
 		}
-		libraryPanels = append(libraryPanels, uid)
+		_, exists := libraryPanels[uid]
+		if !exists {
+			libraryPanels[uid] = uid
+		}
 	}
 
-	return lps.LibraryElementService.ConnectElementsToDashboard(c, libraryPanels, dash.Id)
+	elementUIDs := make([]string, 0, len(libraryPanels))
+	for libraryPanel := range libraryPanels {
+		elementUIDs = append(elementUIDs, libraryPanel)
+	}
+
+	return lps.LibraryElementService.ConnectElementsToDashboard(c, elementUIDs, dash.Id)
 }

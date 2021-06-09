@@ -180,7 +180,6 @@ export const mockGrafanaReceiver = (
   name: type,
   disableResolveMessage: false,
   settings: {},
-  sendReminder: true,
   ...overrides,
 });
 

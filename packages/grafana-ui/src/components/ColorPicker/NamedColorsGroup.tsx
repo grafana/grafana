@@ -1,38 +1,34 @@
 import React, { FunctionComponent } from 'react';
-import { ColorDefinition } from '@grafana/data';
+import { ThemeVizHue } from '@grafana/data';
 import { Color } from 'csstype';
-import { upperFirst, find } from 'lodash';
 import { ColorSwatch, ColorSwatchVariant } from './ColorSwatch';
-import { useTheme2 } from '../../themes/ThemeContext';
-
-type ColorChangeHandler = (color: ColorDefinition) => void;
+import { upperFirst } from 'lodash';
 
 interface NamedColorsGroupProps {
-  colors: ColorDefinition[];
+  hue: ThemeVizHue;
   selectedColor?: Color;
-  onColorSelect: ColorChangeHandler;
+  onColorSelect: (colorName: string) => void;
   key?: string;
 }
 
 const NamedColorsGroup: FunctionComponent<NamedColorsGroupProps> = ({
-  colors,
+  hue,
   selectedColor,
   onColorSelect,
   ...otherProps
 }) => {
-  const theme = useTheme2();
-  const primaryColor = find(colors, (color) => !!color.isPrimary);
+  const primaryShade = hue.shades.find((shade) => shade.primary)!;
 
   return (
     <div {...otherProps} style={{ display: 'flex', flexDirection: 'column' }}>
-      {primaryColor && (
+      {primaryShade && (
         <ColorSwatch
-          key={primaryColor.name}
-          isSelected={primaryColor.name === selectedColor}
+          key={primaryShade.name}
+          isSelected={primaryShade.name === selectedColor}
           variant={ColorSwatchVariant.Large}
-          color={primaryColor.variants[theme.colors.mode]}
-          label={upperFirst(primaryColor.hue)}
-          onClick={() => onColorSelect(primaryColor)}
+          color={primaryShade.color}
+          label={upperFirst(hue.name)}
+          onClick={() => onColorSelect(primaryShade.name)}
         />
       )}
       <div
@@ -41,15 +37,15 @@ const NamedColorsGroup: FunctionComponent<NamedColorsGroupProps> = ({
           marginTop: '8px',
         }}
       >
-        {colors.map(
-          (color) =>
-            !color.isPrimary && (
-              <div key={color.name} style={{ marginRight: '4px' }}>
+        {hue.shades.map(
+          (shade) =>
+            !shade.primary && (
+              <div key={shade.name} style={{ marginRight: '4px' }}>
                 <ColorSwatch
-                  key={color.name}
-                  isSelected={color.name === selectedColor}
-                  color={color.variants[theme.colors.mode]}
-                  onClick={() => onColorSelect(color)}
+                  key={shade.name}
+                  isSelected={shade.name === selectedColor}
+                  color={shade.color}
+                  onClick={() => onColorSelect(shade.name)}
                 />
               </div>
             )

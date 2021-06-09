@@ -13,8 +13,6 @@ type Manager interface {
 	Renderer() *RendererPlugin
 	// GetDataSource gets a data source plugin with a certain ID.
 	GetDataSource(id string) *DataSourcePlugin
-	// GetDataPlugin gets a data plugin with a certain ID.
-	GetDataPlugin(id string) DataPlugin
 	// GetPlugin gets a plugin with a certain ID.
 	GetPlugin(id string) *PluginBase
 	// GetApp gets an app plugin with a certain ID.
@@ -49,7 +47,7 @@ type Manager interface {
 	// ImportDashboard imports a dashboard.
 	ImportDashboard(pluginID, path string, orgID, folderID int64, dashboardModel *simplejson.Json,
 		overwrite bool, inputs []ImportDashboardInput, user *models.SignedInUser,
-		requestHandler DataRequestHandler) (PluginDashboardInfoDTO, error)
+		requestHandler DataRequestHandler) (PluginDashboardInfoDTO, *models.Dashboard, error)
 	// ScanningErrors returns plugin scanning errors encountered.
 	ScanningErrors() []PluginError
 	// LoadPluginDashboard loads a plugin dashboard.

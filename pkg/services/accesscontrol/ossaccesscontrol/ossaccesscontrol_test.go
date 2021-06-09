@@ -4,14 +4,14 @@ import (
 	"context"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func setupTestEnv(t testing.TB) *OSSAccessControlService {
@@ -21,13 +21,36 @@ func setupTestEnv(t testing.TB) *OSSAccessControlService {
 	cfg.FeatureToggles = map[string]bool{"accesscontrol": true}
 
 	ac := OSSAccessControlService{
-		Cfg: cfg,
-		Log: log.New("accesscontrol-test"),
+		Cfg:        cfg,
+		UsageStats: &usageStatsMock{metricsFuncs: make([]usagestats.MetricsFunc, 0)},
+		Log:        log.New("accesscontrol-test"),
 	}
 
 	err := ac.Init()
 	require.NoError(t, err)
 	return &ac
+}
+
+type usageStatsMock struct {
+	t            *testing.T
+	metricsFuncs []usagestats.MetricsFunc
+}
+
+func (usm *usageStatsMock) RegisterMetricsFunc(fn usagestats.MetricsFunc) {
+	usm.metricsFuncs = append(usm.metricsFuncs, fn)
+}
+
+func (usm *usageStatsMock) GetUsageReport(_ context.Context) (usagestats.UsageReport, error) {
+	all := make(map[string]interface{})
+	for _, fn := range usm.metricsFuncs {
+		fnMetrics, err := fn()
+		require.NoError(usm.t, err)
+
+		for name, value := range fnMetrics {
+			all[name] = value
+		}
+	}
+	return usagestats.UsageReport{Metrics: all}, nil
 }
 
 type evaluatingPermissionsTestCase struct {
@@ -94,6 +117,48 @@ func TestEvaluatingPermissions(t *testing.T) {
 				require.NoError(t, err)
 				assert.Equal(t, tc.evalResult, result)
 			}
+		})
+	}
+}
+
+func TestUsageMetrics(t *testing.T) {
+	tests := []struct {
+		name          string
+		enabled       bool
+		expectedValue int
+	}{
+		{
+			name:          "Expecting metric with value 0",
+			enabled:       false,
+			expectedValue: 0,
+		},
+		{
+			name:          "Expecting metric with value 1",
+			enabled:       true,
+			expectedValue: 1,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cfg := setting.NewCfg()
+			if tt.enabled {
+				cfg.FeatureToggles = map[string]bool{"accesscontrol": true}
+			}
+
+			s := &OSSAccessControlService{
+				Cfg:        cfg,
+				UsageStats: &usageStatsMock{t: t, metricsFuncs: make([]usagestats.MetricsFunc, 0)},
+				Log:        log.New("accesscontrol-test"),
+			}
+
+			err := s.Init()
+			assert.Nil(t, err)
+
+			report, err := s.UsageStats.GetUsageReport(context.Background())
+			assert.Nil(t, err)
+
+			assert.Equal(t, tt.expectedValue, report.Metrics["stats.oss.accesscontrol.enabled.count"])
 		})
 	}
 }

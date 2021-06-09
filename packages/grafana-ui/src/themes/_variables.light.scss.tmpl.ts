@@ -80,9 +80,10 @@ $query-orange: ${theme.v1.palette.orange};
 
 // Status colors
 // -------------------------
-$online: ${theme.v1.palette.online};
-$warn: ${theme.v1.palette.warn};
-$critical: ${theme.v1.palette.critical};
+$online: ${theme.colors.success.text};
+$warn: ${theme.colors.warning.text};
+$critical: ${theme.colors.error.text};
+
 
 // Scaffolding
 // -------------------------

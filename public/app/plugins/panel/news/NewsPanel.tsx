@@ -124,6 +124,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => ({
     border-bottom: 2px solid ${theme.colors.border.weak};
     background: ${theme.colors.background.primary};
     flex-direction: column;
+    flex-shrink: 0;
   `,
   itemWide: css`
     flex-direction: row;

@@ -1,6 +1,9 @@
 export const Components = {
   TimePicker: {
     openButton: 'TimePicker Open Button',
+    fromField: 'TimePicker from field',
+    toField: 'TimePicker to field',
+    applyTimeRange: 'TimePicker submit button',
   },
   DataSource: {
     TestData: {
@@ -17,6 +20,13 @@ export const Components = {
     },
     Jaeger: {
       traceIDInput: 'Trace ID',
+    },
+    Prometheus: {
+      configPage: {
+        exemplarsAddButton: 'Add exemplar config button',
+        internalLinkSwitch: 'Internal link switch',
+      },
+      exemplarMarker: 'Exemplar marker',
     },
   },
   Menu: {
@@ -110,6 +120,7 @@ export const Components = {
   },
   RefreshPicker: {
     runButton: 'RefreshPicker run button',
+    intervalButton: 'RefreshPicker interval button',
   },
   QueryTab: {
     content: 'Query editor tab content',
@@ -154,7 +165,8 @@ export const Components = {
     backArrow: 'Go Back button',
   },
   OptionsGroup: {
-    toggle: (title?: string) => (title ? `Options group ${title}` : 'Options group'),
+    group: (title?: string) => (title ? `Options group ${title}` : 'Options group'),
+    toggle: (title?: string) => (title ? `Options group ${title} toggle` : 'Options group toggle'),
   },
   PluginVisualization: {
     item: (title: string) => `Plugin visualization item ${title}`,

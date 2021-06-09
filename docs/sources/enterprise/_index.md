@@ -43,7 +43,9 @@ With Grafana Enterprise [enhanced LDAP]({{< relref "enhanced_ldap.md" >}}), you 
 
 With Grafana Enterprise, you get access to new features, including:
 
+- [Fine-grained access control]({{< relref "access-control/_index.md" >}}) to control access with fine-grained roles and permissions.
 - [Data source permissions]({{< relref "datasource_permissions.md" >}}) to restrict query access to specific teams and users.
+- [Data source query caching]({{< relref "query-caching.md" >}}) to temporarily store query results in Grafana to reduce data source load and rate limiting.
 - [Reporting]({{< relref "reporting.md" >}}) to generate a PDF report from any dashboard and set up a schedule to have it emailed to whoever you choose.
 - [Export dashboard as PDF]({{< relref "export-pdf.md" >}})
 - [White labeling]({{< relref "white-labeling.md" >}}) to customize Grafana from the brand and logo to the footer links.
@@ -51,6 +53,7 @@ With Grafana Enterprise, you get access to new features, including:
 - [Vault integration]({{< relref "vault.md" >}}) to manage your configuration or provisioning secrets with Vault.
 - [Auditing]({{< relref "auditing.md" >}}) tracks important changes to your Grafana instance to help you manage and mitigate suspicious activity and meet compliance requirements.
 - [Request security]({{< relref "request-security.md" >}}) makes it possible to restrict outgoing requests from the Grafana server.
+- [Settings updates at runtime]({{< relref "settings-updates.md" >}}) allows you to update Grafana settings at runtime without requiring a restart.
 
 ## Enterprise data sources
 
@@ -64,6 +67,7 @@ With a Grafana Enterprise license, you get access to premium data sources, inclu
 - [MongoDB](https://grafana.com/grafana/plugins/grafana-mongodb-datasource)
 - [New Relic](https://grafana.com/plugins/grafana-newrelic-datasource)
 - [Oracle Database](https://grafana.com/plugins/grafana-oracle-datasource)
+- [SAP HANA®](https://grafana.com/grafana/plugins/grafana-saphana-datasource/)
 - [ServiceNow](https://grafana.com/grafana/plugins/grafana-servicenow-datasource)
 - [Snowflake](https://grafana.com/grafana/plugins/grafana-snowflake-datasource)
 - [Splunk](https://grafana.com/plugins/grafana-splunk-datasource)
@@ -73,4 +77,3 @@ With a Grafana Enterprise license, you get access to premium data sources, inclu
 ## Try Grafana Enterprise
 
 To purchase or obtain a trial license contact the Grafana Labs [Sales Team](https://grafana.com/contact?about=support&topic=Grafana%20Enterprise).
-

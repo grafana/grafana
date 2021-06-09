@@ -46,6 +46,8 @@ grafanaUI.DataSourceApi = grafanaData.DataSourceApi;
 // rxjs
 import * as rxjs from 'rxjs';
 import * as rxjsOperators from 'rxjs/operators';
+// routing
+import * as reactRouter from 'react-router-dom';
 
 // add cache busting
 const bust = `?_cache=${Date.now()}`;
@@ -92,6 +94,7 @@ exposeToPlugin('angular', angular);
 exposeToPlugin('d3', d3);
 exposeToPlugin('rxjs', rxjs);
 exposeToPlugin('rxjs/operators', rxjsOperators);
+exposeToPlugin('react-router-dom', reactRouter);
 
 // Experimental modules
 exposeToPlugin('prismjs', prismjs);

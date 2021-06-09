@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/loki/pkg/loghttp"
@@ -60,9 +61,10 @@ func TestLoki(t *testing.T) {
 			TimeRange: &timeRange,
 		}
 
-		exe := newExecutor()
+		exe, err := New(httpclient.NewProvider())(dsInfo)
 		require.NoError(t, err)
-		models, err := exe.parseQuery(dsInfo, queryContext)
+		lokiExecutor := exe.(*LokiExecutor)
+		models, err := lokiExecutor.parseQuery(dsInfo, queryContext)
 		require.NoError(t, err)
 		require.Equal(t, time.Second*30, models[0].Step)
 	})
@@ -82,15 +84,16 @@ func TestLoki(t *testing.T) {
 				{Model: jsonModel},
 			},
 		}
-		exe := newExecutor()
+		exe, err := New(httpclient.NewProvider())(dsInfo)
 		require.NoError(t, err)
-		models, err := exe.parseQuery(dsInfo, queryContext)
+		lokiExecutor := exe.(*LokiExecutor)
+		models, err := lokiExecutor.parseQuery(dsInfo, queryContext)
 		require.NoError(t, err)
 		require.Equal(t, time.Minute*2, models[0].Step)
 
 		timeRange = plugins.NewDataTimeRange("1h", "now")
 		queryContext.TimeRange = &timeRange
-		models, err = exe.parseQuery(dsInfo, queryContext)
+		models, err = lokiExecutor.parseQuery(dsInfo, queryContext)
 		require.NoError(t, err)
 		require.Equal(t, time.Second*2, models[0].Step)
 	})

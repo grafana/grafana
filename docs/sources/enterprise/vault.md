@@ -2,7 +2,7 @@
 title = "Vault"
 description = ""
 keywords = ["grafana", "vault", "configuration"]
-weight = 700
+weight = 1200
 +++
 
 # Vault integration

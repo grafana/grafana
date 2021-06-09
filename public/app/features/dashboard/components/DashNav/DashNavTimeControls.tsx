@@ -88,6 +88,7 @@ export class DashNavTimeControls extends Component<Props> {
     const timePickerValue = getTimeSrv().timeRange();
     const timeZone = dashboard.getTimezone();
     const styles = getStyles();
+    const hideIntervalPicker = dashboard.panelInEdit?.isEditing;
 
     return (
       <div className={styles.container}>
@@ -106,6 +107,7 @@ export class DashNavTimeControls extends Component<Props> {
           value={dashboard.refresh}
           intervals={intervals}
           tooltip="Refresh dashboard"
+          noIntervalPicker={hideIntervalPicker}
         />
       </div>
     );

@@ -8,6 +8,8 @@ weight = 50
 
 # Permissions
 
+> Refer to [Fine-grained access Control]({{< relref "../enterprise/access-control/_index.md" >}}) in Grafana Enterprise for managing access with fine-grained permissions. 
+
 What you can do in Grafana is defined by the _permissions_ associated with your user account.
 
 There are three types of permissions:
@@ -22,6 +24,8 @@ You can be granted permissions based on:
 - Folder or dashboard permissions assigned to your user account (Admin, Editor, or Viewer).
 - (Grafana Enterprise) Data source permissions. For more information, refer to [Data source permissions]({{< relref "../enterprise/datasource_permissions.md" >}}) in [Grafana Enterprise]({{< relref "../enterprise" >}}).
 - (Grafana Cloud) Grafana Cloud has additional roles. For more information, refer to [Grafana Cloud roles and permissions](/docs/grafana-cloud/cloud-portal/cloud-roles/).
+
+If you are running Grafana Enterprise, you can grant access by using fine-grained roles and permissions, refer to [Fine-grained access Control]({{< relref "../enterprise/access-control/_index.md" >}}) for more information.
 
 ## Grafana Server Admin role
 
