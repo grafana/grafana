@@ -3,6 +3,7 @@ package plugins
 import (
 	"context"
 	"encoding/json"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -117,7 +118,22 @@ func (app *AppPlugin) InitApp(panels map[string]*PanelPlugin, dataSources map[st
 			app.DefaultNavUrl = cfg.AppSubURL + "/plugins/" + app.Id + "/page/" + include.Slug
 		}
 		if include.Type == "dashboard" && include.DefaultNav {
-			app.DefaultNavUrl = cfg.AppSubURL + "/dashboard/db/" + include.Slug
+			dashboardFilePath := filepath.Join(app.PluginDir, include.Path)
+
+			// It's safe to ignore gosec warning G304 since the variable part of the file path comes from a configuration
+			// variable.
+			// nolint:gosec
+			jsonBody, err := os.Open(dashboardFilePath)
+			if err != nil {
+				return nil
+			}
+			var dashboard models.Dashboard
+			jsonParser := json.NewDecoder(jsonBody)
+			if err = jsonParser.Decode(&dashboard); err != nil {
+				return nil
+			}
+
+			app.DefaultNavUrl = cfg.AppSubURL + "/d/" + dashboard.Uid
 		}
 	}
 

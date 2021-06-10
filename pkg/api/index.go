@@ -1,7 +1,10 @@
 package api
 
 import (
+	"encoding/json"
 	"fmt"
+	"os"
+	"path/filepath"
 	"sort"
 	"strings"
 
@@ -109,8 +112,22 @@ func (hs *HTTPServer) getAppLinks(c *models.ReqContext) ([]*dtos.NavLink, error)
 			}
 
 			if include.Type == "dashboard" && include.AddToNav {
+				dashboardFilePath := filepath.Join(plugin.PluginDir, include.Path)
+
+				// It's safe to ignore gosec warning G304 since the variable part of the file path comes from a configuration
+				// variable.
+				// nolint:gosec
+				jsonBody, err := os.Open(dashboardFilePath)
+				if err != nil {
+					return nil, err
+				}
+				var dashboard models.Dashboard
+				jsonParser := json.NewDecoder(jsonBody)
+				if err = jsonParser.Decode(&dashboard); err != nil {
+					return nil, err
+				}
 				link := &dtos.NavLink{
-					Url:  hs.Cfg.AppSubURL + "/dashboard/db/" + include.Slug,
+					Url:  hs.Cfg.AppSubURL + "/d/" + dashboard.Uid,
 					Text: include.Name,
 				}
 				appLink.Children = append(appLink.Children, link)
