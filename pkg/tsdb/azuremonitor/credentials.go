@@ -27,7 +27,7 @@ const (
 	azureResourceGraph = "Azure Resource Graph"
 )
 
-func httpCliProvider(ctx context.Context, route azRoute, model datasourceInfo, cfg *setting.Cfg) *httpclient.Provider {
+func httpClientProvider(ctx context.Context, route azRoute, model datasourceInfo, cfg *setting.Cfg) *httpclient.Provider {
 	if len(route.Scopes) > 0 {
 		tokenAuth := &plugins.JwtTokenAuth{
 			Url:    route.URL,
@@ -53,5 +53,5 @@ func httpCliProvider(ctx context.Context, route azRoute, model datasourceInfo, c
 
 func newHTTPClient(ctx context.Context, route azRoute, model datasourceInfo, cfg *setting.Cfg) (*http.Client, error) {
 	model.HTTPCliOpts.Headers = route.Headers
-	return httpCliProvider(ctx, route, model, cfg).New(model.HTTPCliOpts)
+	return httpClientProvider(ctx, route, model, cfg).New(model.HTTPCliOpts)
 }
