@@ -59,8 +59,7 @@ export class StreamingDataFrame implements DataFrame {
    */
   push(msg: DataFrameJSON, replace?: boolean) {
     const { schema, data } = msg;
-    this.packetCount++;
-    const streamPacket: StreamPacketInfo = { packets: this.packetCount };
+    const streamPacket: StreamPacketInfo = { packet: this.packetCount++ };
 
     if (schema) {
       this.pushMode = PushMode.wide;
@@ -178,8 +177,6 @@ export class StreamingDataFrame implements DataFrame {
 
         streamPacket.action = 'append';
         streamPacket.pushed = values[0].length;
-        const delta = this.length - appended[0].length;
-        streamPacket.popped = delta + streamPacket.pushed; // Is this right?
       }
 
       appended.forEach((v, i) => {

@@ -83,10 +83,16 @@ export interface QueryResultMeta {
   instant?: boolean;
 }
 
+/**
+ * Stream packet info is attached to StreamingDataFrames and indicate how many
+ * rows were added to the end of the frame.  The number of discarded rows can be
+ * calculated from previous state
+ *
+ * @public -- but runtime
+ */
 export interface StreamPacketInfo {
-  packets: number;
+  packet: number;
   pushed?: number;
-  popped?: number;
   action?: 'append' | 'replace';
 }
 

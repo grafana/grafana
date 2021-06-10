@@ -386,7 +386,7 @@ describe('Streaming JSON', () => {
       Object {
         "info": Object {
           "action": "replace",
-          "packets": 1,
+          "packet": 1,
         },
         "values": Array [
           1,
@@ -408,8 +408,7 @@ describe('Streaming JSON', () => {
       Object {
         "info": Object {
           "action": "append",
-          "packets": 2,
-          "popped": 1,
+          "packet": 2,
           "pushed": 2,
         },
         "values": Array [
@@ -430,8 +429,7 @@ describe('Streaming JSON', () => {
       Object {
         "info": Object {
           "action": "append",
-          "packets": 3,
-          "popped": 1,
+          "packet": 3,
           "pushed": 1,
         },
         "values": Array [
