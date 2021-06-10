@@ -203,6 +203,7 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 		"alertingErrorOrTimeout":     setting.AlertingErrorOrTimeout,
 		"alertingNoDataOrNullValues": setting.AlertingNoDataOrNullValues,
 		"alertingMinInterval":        setting.AlertingMinInterval,
+		"liveEnabled":                hs.Cfg.LiveMaxConnections != 0,
 		"autoAssignOrg":              setting.AutoAssignOrg,
 		"verifyEmailEnabled":         setting.VerifyEmailEnabled,
 		"sigV4AuthEnabled":           setting.SigV4AuthEnabled,
@@ -238,14 +239,24 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 			"licenseUrl":      hs.License.LicenseURL(c.SignedInUser),
 			"edition":         hs.License.Edition(),
 		},
-		"featureToggles":          hs.Cfg.FeatureToggles,
-		"rendererAvailable":       hs.RenderService.IsAvailable(),
-		"http2Enabled":            hs.Cfg.Protocol == setting.HTTP2Scheme,
-		"sentry":                  hs.Cfg.Sentry,
-		"marketplaceUrl":          hs.Cfg.MarketplaceURL,
-		"expressionsEnabled":      hs.Cfg.ExpressionsEnabled,
-		"awsAllowedAuthProviders": hs.Cfg.AWSAllowedAuthProviders,
-		"awsAssumeRoleEnabled":    hs.Cfg.AWSAssumeRoleEnabled,
+		"featureToggles":                   hs.Cfg.FeatureToggles,
+		"rendererAvailable":                hs.RenderService.IsAvailable(),
+		"rendererVersion":                  hs.RenderService.Version(),
+		"http2Enabled":                     hs.Cfg.Protocol == setting.HTTP2Scheme,
+		"sentry":                           hs.Cfg.Sentry,
+		"pluginCatalogURL":                 hs.Cfg.PluginCatalogURL,
+		"pluginAdminEnabled":               (c.IsGrafanaAdmin || hs.Cfg.PluginAdminExternalManageEnabled) && hs.Cfg.PluginAdminEnabled,
+		"pluginAdminExternalManageEnabled": hs.Cfg.PluginAdminEnabled && hs.Cfg.PluginAdminExternalManageEnabled,
+		"expressionsEnabled":               hs.Cfg.ExpressionsEnabled,
+		"awsAllowedAuthProviders":          hs.Cfg.AWSAllowedAuthProviders,
+		"awsAssumeRoleEnabled":             hs.Cfg.AWSAssumeRoleEnabled,
+		"azure": map[string]interface{}{
+			"cloud":                  hs.Cfg.Azure.Cloud,
+			"managedIdentityEnabled": hs.Cfg.Azure.ManagedIdentityEnabled,
+		},
+		"caching": map[string]bool{
+			"enabled": hs.Cfg.SectionWithEnvOverrides("caching").Key("enabled").MustBool(true),
+		},
 	}
 
 	return jsonObj, nil
@@ -254,9 +265,9 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 func getPanelSort(id string) int {
 	sort := 100
 	switch id {
-	case "graph":
-		sort = 1
 	case "timeseries":
+		sort = 1
+	case "barchart":
 		sort = 2
 	case "stat":
 		sort = 3
@@ -270,16 +281,24 @@ func getPanelSort(id string) int {
 		sort = 7
 	case "piechart":
 		sort = 8
-	case "text":
+	case "state-timeline":
 		sort = 9
 	case "heatmap":
 		sort = 10
-	case "alertlist":
+	case "status-history":
 		sort = 11
-	case "dashlist":
+	case "histogram":
 		sort = 12
-	case "news":
+	case "graph":
 		sort = 13
+	case "text":
+		sort = 14
+	case "alertlist":
+		sort = 15
+	case "dashlist":
+		sort = 16
+	case "news":
+		sort = 17
 	}
 	return sort
 }

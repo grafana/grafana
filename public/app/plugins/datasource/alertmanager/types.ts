@@ -68,14 +68,13 @@ export type WebhookConfig = {
 };
 
 export type GrafanaManagedReceiverConfig = {
-  id?: number;
-  frequency: number;
+  uid?: string;
   disableResolveMessage: boolean;
-  secureFields: Record<string, unknown>;
+  secureFields?: Record<string, boolean>;
+  secureSettings?: Record<string, unknown>;
   settings: Record<string, unknown>;
-  sendReminder: boolean;
   type: string;
-  uid: string;
+  name: string;
   updated?: string;
   created?: string;
 };
@@ -92,17 +91,19 @@ export type Receiver = {
   victorops_configs?: unknown[];
   wechat_configs?: unknown[];
   grafana_managed_receiver_configs?: GrafanaManagedReceiverConfig[];
+  [key: string]: unknown;
 };
 
 export type Route = {
   receiver?: string;
   group_by?: string[];
   continue?: boolean;
+  matchers?: string[];
   match?: Record<string, string>;
   match_re?: Record<string, string>;
   group_wait?: string;
   group_interval?: string;
-  repeat_itnerval?: string;
+  repeat_interval?: string;
   routes?: Route[];
 };
 
@@ -140,4 +141,79 @@ export type AlertmanagerConfig = {
   route?: Route;
   inhibit_rules?: InhibitRule[];
   receivers?: Receiver[];
+};
+
+export type Matcher = {
+  name: string;
+  value: string;
+  isRegex: boolean;
+  isEqual: boolean;
+};
+
+export enum SilenceState {
+  Active = 'active',
+  Expired = 'expired',
+  Pending = 'pending',
+}
+
+export enum AlertState {
+  Unprocessed = 'unprocessed',
+  Active = 'active',
+  Suppressed = 'suppressed',
+}
+
+export enum MatcherOperator {
+  equal = '=',
+  notEqual = '!=',
+  regex = '=~',
+  notRegex = '!~',
+}
+
+export type Silence = {
+  id: string;
+  matchers?: Matcher[];
+  startsAt: string;
+  endsAt: string;
+  updatedAt: string;
+  createdBy: string;
+  comment: string;
+  status: {
+    state: SilenceState;
+  };
+};
+
+export type SilenceCreatePayload = {
+  id?: string;
+  matchers?: Matcher[];
+  startsAt: string;
+  endsAt: string;
+  createdBy: string;
+  comment: string;
+};
+
+export type AlertmanagerAlert = {
+  startsAt: string;
+  updatedAt: string;
+  endsAt: string;
+  generatorURL?: string;
+  labels: { [key: string]: string };
+  annotations: { [key: string]: string };
+  receivers: [
+    {
+      name: string;
+    }
+  ];
+  fingerprint: string;
+  status: {
+    state: AlertState;
+    silencedBy: string[];
+    inhibitedBy: string[];
+  };
+};
+
+export type AlertmanagerGroup = {
+  labels: { [key: string]: string };
+  receiver: { name: string };
+  alerts: AlertmanagerAlert[];
+  id: string;
 };

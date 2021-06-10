@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { SelectableValue, TimeZone } from '@grafana/data';
-import { Select, TagsInput, Input, Field, CollapsableSection, RadioButtonGroup } from '@grafana/ui';
+import { TimeZone } from '@grafana/data';
+import { TagsInput, Input, Field, CollapsableSection, RadioButtonGroup } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { DashboardModel } from '../../state/DashboardModel';
@@ -30,8 +30,8 @@ export const GeneralSettings: React.FC<Props> = ({ dashboard }) => {
     dashboard[event.currentTarget.name as 'title' | 'description'] = event.currentTarget.value;
   };
 
-  const onTooltipChange = (graphTooltip: SelectableValue<number>) => {
-    dashboard.graphTooltip = graphTooltip.value;
+  const onTooltipChange = (graphTooltip: number) => {
+    dashboard.graphTooltip = graphTooltip;
     setRenderCounter(renderCounter + 1);
   };
 
@@ -117,12 +117,7 @@ export const GeneralSettings: React.FC<Props> = ({ dashboard }) => {
           label="Graph tooltip"
           description="Controls tooltip and hover highlight behavior across different panels"
         >
-          <Select
-            onChange={onTooltipChange}
-            options={GRAPH_TOOLTIP_OPTIONS}
-            width={40}
-            value={dashboard.graphTooltip}
-          />
+          <RadioButtonGroup onChange={onTooltipChange} options={GRAPH_TOOLTIP_OPTIONS} value={dashboard.graphTooltip} />
         </Field>
       </CollapsableSection>
 

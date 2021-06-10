@@ -54,6 +54,7 @@ export class BackendSrv implements BackendService {
       };
     }
 
+    this.noBackendCache = false;
     this.internalFetch = this.internalFetch.bind(this);
     this.fetchQueue = new FetchQueue();
     this.responseQueue = new ResponseQueue(this.fetchQueue, this.internalFetch);
@@ -400,10 +401,6 @@ export class BackendSrv implements BackendService {
 
   search(query: any): Promise<DashboardSearchHit[]> {
     return this.get('/api/search', query);
-  }
-
-  getDashboardBySlug(slug: string) {
-    return this.get(`/api/dashboards/db/${slug}`);
   }
 
   getDashboardByUid(uid: string) {

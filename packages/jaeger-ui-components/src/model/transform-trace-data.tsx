@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import _isEqual from 'lodash/isEqual';
+import { isEqual as _isEqual } from 'lodash';
 
 // @ts-ignore
 import { getTraceSpanIdsAsTree } from '../selectors/trace';

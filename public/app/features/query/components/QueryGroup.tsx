@@ -1,7 +1,17 @@
 // Libraries
 import React, { PureComponent } from 'react';
 // Components
-import { Button, CustomScrollbar, HorizontalGroup, Icon, Modal, stylesFactory, Tooltip } from '@grafana/ui';
+import {
+  Button,
+  CustomScrollbar,
+  HorizontalGroup,
+  Icon,
+  InlineFormLabel,
+  Modal,
+  ScrollbarPosition,
+  stylesFactory,
+  Tooltip,
+} from '@grafana/ui';
 import { getDataSourceSrv, DataSourcePicker } from '@grafana/runtime';
 import { QueryEditorRows } from './QueryEditorRows';
 // Services
@@ -19,7 +29,10 @@ import {
 import { PluginHelp } from 'app/core/components/PluginHelp/PluginHelp';
 import { addQuery } from 'app/core/utils/query';
 import { Unsubscribable } from 'rxjs';
-import { expressionDatasource, ExpressionDatasourceID } from 'app/features/expressions/ExpressionDatasource';
+import {
+  dataSource as expressionDatasource,
+  ExpressionDatasourceID,
+} from 'app/features/expressions/ExpressionDatasource';
 import { selectors } from '@grafana/e2e-selectors';
 import { PanelQueryRunner } from '../state/PanelQueryRunner';
 import { QueryGroupOptionsEditor } from './QueryGroupOptions';
@@ -45,12 +58,13 @@ interface State {
   scrollTop: number;
   data: PanelData;
   isHelpOpen: boolean;
+  defaultDataSource?: DataSourceApi;
 }
 
 export class QueryGroup extends PureComponent<Props, State> {
   backendSrv = backendSrv;
   dataSourceSrv = getDataSourceSrv();
-  querySubscription: Unsubscribable | null;
+  querySubscription: Unsubscribable | null = null;
 
   state: State = {
     isLoadingHelp: false,
@@ -76,7 +90,8 @@ export class QueryGroup extends PureComponent<Props, State> {
     try {
       const ds = await this.dataSourceSrv.get(options.dataSource.name);
       const dsSettings = this.dataSourceSrv.getInstanceSettings(options.dataSource.name);
-      this.setState({ dataSource: ds, dsSettings });
+      const defaultDataSource = await this.dataSourceSrv.get();
+      this.setState({ dataSource: ds, dsSettings, defaultDataSource });
     } catch (error) {
       console.log('failed to load data source', error);
     }
@@ -140,14 +155,22 @@ export class QueryGroup extends PureComponent<Props, State> {
   };
 
   onAddQueryClick = () => {
-    if (this.state.dsSettings?.meta.mixed) {
-      this.setState({ isAddingMixed: true });
-      return;
-    }
-
-    this.onChange({ queries: addQuery(this.props.options.queries) });
+    const { options } = this.props;
+    this.onChange({ queries: addQuery(options.queries, this.newQuery()) });
     this.onScrollBottom();
   };
+
+  newQuery(): Partial<DataQuery> {
+    const { dsSettings, defaultDataSource } = this.state;
+
+    if (!dsSettings?.meta.mixed) {
+      return {};
+    }
+
+    return {
+      datasource: defaultDataSource?.name,
+    };
+  }
 
   onChange(changedProps: Partial<QueryGroupOptions>) {
     this.props.onOptionsChange({
@@ -179,6 +202,7 @@ export class QueryGroup extends PureComponent<Props, State> {
     return (
       <div>
         <div className={styles.dataSourceRow}>
+          <InlineFormLabel width={'auto'}>Data source</InlineFormLabel>
           <div className={styles.dataSourceRowItem}>
             <DataSourcePicker
               onChange={this.onChangeDataSource}
@@ -262,9 +286,8 @@ export class QueryGroup extends PureComponent<Props, State> {
     this.onScrollBottom();
   };
 
-  setScrollTop = (event: React.MouseEvent<HTMLElement>) => {
-    const target = event.target as HTMLElement;
-    this.setState({ scrollTop: target.scrollTop });
+  setScrollTop = ({ scrollTop }: ScrollbarPosition) => {
+    this.setState({ scrollTop: scrollTop });
   };
 
   onQueriesChange = (queries: DataQuery[]) => {
@@ -320,9 +343,8 @@ export class QueryGroup extends PureComponent<Props, State> {
             Query
           </Button>
         )}
-        {isAddingMixed && this.renderMixedPicker()}
         {config.expressionsEnabled && this.isExpressionsSupported(dsSettings) && (
-          <Tooltip content="Experimental feature: queries could stop working in next version" placement="right">
+          <Tooltip content="Beta feature: queries could stop working in next version" placement="right">
             <Button
               icon="plus"
               onClick={this.onAddExpressionClick}

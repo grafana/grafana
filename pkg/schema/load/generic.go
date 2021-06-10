@@ -1,6 +1,8 @@
 package load
 
 import (
+	"path/filepath"
+
 	"cuelang.org/go/cue"
 	"cuelang.org/go/cue/load"
 	"github.com/grafana/grafana/pkg/schema"
@@ -12,7 +14,8 @@ import (
 // TODO probably cache this or something
 func getBaseScuemata(p BaseLoadPaths) (*cue.Instance, error) {
 	overlay := make(map[string]load.Source)
-	if err := toOverlay("/grafana", p.BaseCueFS, overlay); err != nil {
+
+	if err := toOverlay(filepath.Join(prefix, "grafana"), p.BaseCueFS, overlay); err != nil {
 		return nil, err
 	}
 
@@ -32,9 +35,12 @@ func getBaseScuemata(p BaseLoadPaths) (*cue.Instance, error) {
 		// And no, changing the toOverlay() to have a subpath and the
 		// load.Instances to mirror that subpath does not allow us to get rid of
 		// this "/".
-		Dir: "/",
+		Dir: prefix,
 	}
-	return rt.Build(load.Instances([]string{"/grafana/cue/scuemata"}, cfg)[0])
+	return rt.Build(load.Instances([]string{
+		filepath.Join(prefix, "grafana", "cue", "scuemata", "scuemata.cue"),
+		filepath.Join(prefix, "grafana", "cue", "scuemata", "panel-plugin.cue"),
+	}, cfg)[0])
 }
 
 func buildGenericScuemata(famval cue.Value) (schema.VersionedCueSchema, error) {
@@ -103,20 +109,6 @@ func (gvs *genericVersionedSchema) Validate(r schema.Resource) error {
 	return gvs.actual.Unify(rv.Value()).Validate(cue.Concrete(true))
 }
 
-// ApplyDefaults returns a new, concrete copy of the Resource with all paths
-// that are 1) missing in the Resource AND 2) specified by the schema,
-// filled with default values specified by the schema.
-func (gvs *genericVersionedSchema) ApplyDefaults(_ schema.Resource) (schema.Resource, error) {
-	panic("not implemented") // TODO: Implement
-}
-
-// TrimDefaults returns a new, concrete copy of the Resource where all paths
-// in the  where the values at those paths are the same as the default value
-// given in the schema.
-func (gvs *genericVersionedSchema) TrimDefaults(_ schema.Resource) (schema.Resource, error) {
-	panic("not implemented") // TODO: Implement
-}
-
 // CUE returns the cue.Value representing the actual schema.
 func (gvs *genericVersionedSchema) CUE() cue.Value {
 	return gvs.actual
@@ -164,7 +156,7 @@ var terminalMigrationFunc = func(x interface{}) (cue.Value, schema.VersionedCueS
 // earlier schema) with a later schema.
 func implicitMigration(v cue.Value, next schema.VersionedCueSchema) migrationFunc {
 	return func(x interface{}) (cue.Value, schema.VersionedCueSchema, error) {
-		w := v.Fill(x)
+		w := v.FillPath(cue.Path{}, x)
 		// TODO is it possible that migration would be successful, but there
 		// still exists some error here? Need to better understand internal CUE
 		// erroring rules? seems like incomplete cue.Value may always an Err()?

@@ -17,17 +17,28 @@ export default function createMockDatasource() {
       getSubscriptions: jest.fn().mockResolvedValueOnce([]),
     },
 
+    getAzureLogAnalyticsWorkspaces: jest.fn().mockResolvedValueOnce([]),
+
     getResourceGroups: jest.fn().mockResolvedValueOnce([]),
     getMetricDefinitions: jest.fn().mockResolvedValueOnce([]),
     getResourceNames: jest.fn().mockResolvedValueOnce([]),
     getMetricNamespaces: jest.fn().mockResolvedValueOnce([]),
     getMetricNames: jest.fn().mockResolvedValueOnce([]),
     getMetricMetadata: jest.fn().mockResolvedValueOnce({
-      primaryAggType: 'average',
-      supportedAggTypes: [],
+      primaryAggType: 'Average',
+      supportedAggTypes: ['Average', 'Maximum', 'Minimum'],
       supportedTimeGrains: [],
       dimensions: [],
     }),
+
+    azureLogAnalyticsDatasource: {
+      getKustoSchema: () => Promise.resolve(),
+    },
+    resourcePickerData: {
+      getResourcePickerData: () => ({}),
+      getResourcesForResourceGroup: () => ({}),
+      getResourceURIFromWorkspace: () => '',
+    },
   };
 
   const mockDatasource = _mockDatasource as Datasource;

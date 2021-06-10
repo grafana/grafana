@@ -24,6 +24,22 @@ message RenderResponse {
   string error = 1;
 }
 
+message RenderCSVRequest {
+  string url = 1;
+  string filePath = 2;
+  string renderKey = 3;
+  string domain = 4;
+  int32 timeout = 5;
+  string timezone = 6;
+  map<string, StringList> headers = 7;
+}
+
+message RenderCSVResponse {
+  string error = 1;
+  string fileName = 2;
+}
+
 service Renderer {
   rpc Render(RenderRequest) returns (RenderResponse);
+  rpc RenderCSV(RenderCSVRequest) returns (RenderCSVResponse);
 }

@@ -11,9 +11,9 @@
 # In each subsection folders are ordered first by depth, then alphabetically.
 # This should make it easy to add new rules without breaking existing ones.
 
-# Documentation owner: Diana Payton
-/docs/ @grafana/docs-squad
-/contribute/ @marcusolsson @grafana/docs-squad
+# Documentation owner: Jita Chatterjee
+/docs/ @grafana/docs-squad @pkolyvas
+/contribute/ @marcusolsson @grafana/docs-squad @pkolyvas
 /docs/sources/developers/plugins/ @marcusolsson @grafana/docs-squad
 /docs/sources/enterprise/ @osg-grafana @grafana/docs-squad
 
@@ -35,6 +35,10 @@ go.sum @grafana/backend-platform
 /pkg/tsdb/loki @grafana/observability-squad
 /pkg/tsdb/zipkin @grafana/observability-squad
 /pkg/tsdb/tempo @grafana/observability-squad
+
+# Unified Alerting
+/pkg/services/ngalert @grafana/alerting-squad
+/pkg/services/sqlstore/migrations/ualert @grafana/alerting-squad
 
 # Database migrations
 /pkg/services/sqlstore/migrations @grafana/backend-platform @grafana/hosted-grafana-team

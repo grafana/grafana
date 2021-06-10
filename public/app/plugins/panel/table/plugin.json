@@ -9,7 +9,7 @@
   },
 
   "info": {
-    "description": "Table Panel for Grafana",
+    "description": "Supports many column styles",
     "author": {
       "name": "Grafana Labs",
       "url": "https://grafana.com"

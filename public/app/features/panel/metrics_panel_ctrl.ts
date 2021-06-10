@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import { isArray } from 'lodash';
 import { PanelCtrl } from 'app/features/panel/panel_ctrl';
 import { applyPanelTimeOverrides } from 'app/features/dashboard/utils/panel';
 import { ContextSrv } from 'app/core/services/context_srv';
@@ -19,18 +19,18 @@ import { PanelModel } from 'app/features/dashboard/state';
 import { PanelQueryRunner } from '../query/state/PanelQueryRunner';
 
 class MetricsPanelCtrl extends PanelCtrl {
-  datasource: DataSourceApi;
+  declare datasource: DataSourceApi;
   contextSrv: ContextSrv;
   datasourceSrv: any;
   timeSrv: any;
   templateSrv: any;
-  range: TimeRange;
+  declare range: TimeRange;
   interval: any;
   intervalMs: any;
   resolution: any;
   timeInfo?: string;
-  skipDataOnInit: boolean;
-  dataList: LegacyResponseData[];
+  skipDataOnInit = false;
+  dataList: LegacyResponseData[] = [];
   querySubscription?: Unsubscribable | null;
   useDataFrames = false;
   panelData?: PanelData;
@@ -74,7 +74,7 @@ class MetricsPanelCtrl extends PanelCtrl {
       this.updateTimeRange();
       let data = this.panel.snapshotData;
       // backward compatibility
-      if (!_.isArray(data)) {
+      if (!isArray(data)) {
         data = data.data;
       }
 

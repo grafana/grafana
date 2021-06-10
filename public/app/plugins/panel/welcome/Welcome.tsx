@@ -40,7 +40,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
     container: css`
       display: flex;
-      background: url(public/img/login_background_${theme.type}.svg) no-repeat;
+      /// background: url(public/img/g8_home_v2.svg) no-repeat;
       background-size: cover;
       height: 100%;
       align-items: center;

@@ -1,5 +1,5 @@
 import { stylesFactory } from '../../themes';
-import { GrafanaTheme } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { getLabelStyles } from './Label';
 import { getLegendStyles } from './Legend';
 import { getFieldValidationMessageStyles } from './FieldValidationMessage';
@@ -8,11 +8,14 @@ import { ComponentSize } from '../../types/size';
 import { getInputStyles } from '../Input/Input';
 import { getCheckboxStyles } from './Checkbox';
 
+/** @deprecated */
 export const getFormStyles = stylesFactory(
-  (theme: GrafanaTheme, options: { variant: ButtonVariant; size: ComponentSize; invalid: boolean }) => {
+  (theme: GrafanaTheme2, options: { variant: ButtonVariant; size: ComponentSize; invalid: boolean }) => {
+    console.warn('getFormStyles is deprecated');
+
     return {
       label: getLabelStyles(theme),
-      legend: getLegendStyles(theme),
+      legend: getLegendStyles(theme.v1),
       fieldValidationMessage: getFieldValidationMessageStyles(theme),
       button: getButtonStyles({
         theme,

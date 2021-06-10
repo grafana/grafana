@@ -16,6 +16,7 @@ awsconfig
 .yarn/
 vendor/
 /docs/menu.yaml
+/requests
 
 # Enterprise emails
 /emails/templates/enterprise_*

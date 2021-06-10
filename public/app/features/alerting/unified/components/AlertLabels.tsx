@@ -1,20 +1,19 @@
 import { GrafanaTheme } from '@grafana/data';
 import { useStyles } from '@grafana/ui';
 import { css } from '@emotion/css';
-import React, { FC } from 'react';
+import React from 'react';
 import { AlertLabel } from './AlertLabel';
 
-interface Props {
-  labels: Record<string, string>;
-}
+type Props = { labels: Record<string, string> };
 
-export const AlertLabels: FC<Props> = ({ labels }) => {
+export const AlertLabels = ({ labels }: Props) => {
   const styles = useStyles(getStyles);
+  const pairs = Object.entries(labels).filter(([key]) => !(key.startsWith('__') && key.endsWith('__')));
 
   return (
     <div className={styles.wrapper}>
-      {Object.entries(labels).map(([k, v]) => (
-        <AlertLabel key={`${k}-${v}`} labelKey={k} value={v} />
+      {pairs.map(([key, value], index) => (
+        <AlertLabel key={`${key}-${value}-${index}`} labelKey={key} value={value} />
       ))}
     </div>
   );

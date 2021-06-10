@@ -14,7 +14,7 @@ import {
   TimeRange,
 } from '@grafana/data';
 import { Scenario, TestDataQuery } from './types';
-import { DataSourceWithBackend, getBackendSrv, getLiveDataStream, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
+import { DataSourceWithBackend, getBackendSrv, getGrafanaLiveSrv, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
 import { queryMetricTree } from './metricTree';
 import { runStream } from './runStreams';
 import { getSearchFilterScopedVar } from 'app/features/variables/utils';
@@ -61,7 +61,24 @@ export class TestDataDataSource extends DataSourceWithBackend<TestDataQuery> {
         case 'node_graph':
           streams.push(this.nodesQuery(target, options));
           break;
+
+        // Unusable since 7, removed in 8
+        case 'manual_entry': {
+          let csvContent = 'Time,Value\n';
+          if ((target as any).points) {
+            for (const point of (target as any).points) {
+              csvContent += `${point[1]},${point[0]}\n`;
+            }
+          }
+          target.scenarioId = 'csv_content';
+          target.csvContent = csvContent;
+        }
+
         default:
+          if (target.alias) {
+            target.alias = this.templateSrv.replace(target.alias, options.scopedVars);
+          }
+
           backendQueries.push(target);
       }
     }
@@ -188,7 +205,7 @@ function runGrafanaLiveQuery(
   if (!target.channel) {
     throw new Error(`Missing channel config`);
   }
-  return getLiveDataStream({
+  return getGrafanaLiveSrv().getDataStream({
     addr: {
       scope: LiveChannelScope.Plugin,
       namespace: 'testdata',

@@ -1,5 +1,4 @@
-import each from 'lodash/each';
-import template from 'lodash/template';
+import { each, template } from 'lodash';
 
 import config from 'app/core/config';
 import { angularMocks, sinon } from '../lib/common';

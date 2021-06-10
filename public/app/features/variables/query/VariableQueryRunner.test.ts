@@ -7,7 +7,7 @@ import { queryBuilder } from '../shared/testing/builders';
 import { QueryRunner, QueryRunners } from './queryRunners';
 import { toVariableIdentifier, VariableIdentifier } from '../state/types';
 import { QueryVariableModel } from '../types';
-import { updateVariableOptions, updateVariableTags } from './reducer';
+import { updateVariableOptions } from './reducer';
 
 type DoneCallback = {
   (...args: any[]): any;
@@ -146,56 +146,6 @@ describe('VariableQueryRunner', () => {
     });
   });
 
-  describe('tags case', () => {
-    it('then it should work as expected', (done) => {
-      const variable = queryBuilder().withId('query').withTags(true).withTagsQuery('A tags query').build();
-      const {
-        identifier,
-        runner,
-        datasource,
-        getState,
-        getVariable,
-        queryRunners,
-        queryRunner,
-        dispatch,
-      } = getTestContext(variable);
-
-      expectOnResults({
-        identifier,
-        runner,
-        expect: (results) => {
-          // verify that the observable works as expected
-          expect(results).toEqual([
-            { state: LoadingState.Loading, identifier },
-            { state: LoadingState.Done, identifier },
-          ]);
-
-          // verify that mocks have been called as expected
-          expect(getState).toHaveBeenCalledTimes(3);
-          expect(getVariable).toHaveBeenCalledTimes(1);
-          expect(queryRunners.getRunnerForDatasource).toHaveBeenCalledTimes(1);
-          expect(queryRunner.getTarget).toHaveBeenCalledTimes(1);
-          expect(queryRunner.runRequest).toHaveBeenCalledTimes(1);
-          expect(datasource.metricFindQuery).toHaveBeenCalledTimes(1);
-
-          // updateVariableOptions, updateVariableTags and validateVariableSelectionState
-          expect(dispatch).toHaveBeenCalledTimes(3);
-          expect(dispatch.mock.calls[0][0]).toEqual(
-            updateVariableOptions({
-              id: 'query',
-              type: 'query',
-              data: { results: [], templatedRegex: 'getTemplatedRegex result' },
-            })
-          );
-          expect(dispatch.mock.calls[1][0]).toEqual(updateVariableTags({ id: 'query', type: 'query', data: [] }));
-        },
-        done,
-      });
-
-      runner.queueRequest({ identifier, datasource });
-    });
-  });
-
   describe('error cases', () => {
     describe('queryRunners.getRunnerForDatasource throws', () => {
       it('then it should work as expected', (done) => {
@@ -273,48 +223,6 @@ describe('VariableQueryRunner', () => {
             expect(queryRunner.runRequest).toHaveBeenCalledTimes(1);
             expect(datasource.metricFindQuery).not.toHaveBeenCalled();
             expect(dispatch).not.toHaveBeenCalled();
-          },
-          done,
-        });
-
-        runner.queueRequest({ identifier, datasource });
-      });
-    });
-
-    describe('metricFindQuery throws', () => {
-      it('then it should work as expected', (done) => {
-        const variable = queryBuilder().withId('query').withTags(true).withTagsQuery('A tags query').build();
-        const {
-          identifier,
-          runner,
-          datasource,
-          getState,
-          getVariable,
-          queryRunners,
-          queryRunner,
-          dispatch,
-        } = getTestContext(variable);
-
-        datasource.metricFindQuery = jest.fn().mockRejectedValue(new Error('metricFindQuery error'));
-
-        expectOnResults({
-          identifier,
-          runner,
-          expect: (results) => {
-            // verify that the observable works as expected
-            expect(results).toEqual([
-              { state: LoadingState.Loading, identifier },
-              { state: LoadingState.Error, identifier, error: new Error('metricFindQuery error') },
-            ]);
-
-            // verify that mocks have been called as expected
-            expect(getState).toHaveBeenCalledTimes(3);
-            expect(getVariable).toHaveBeenCalledTimes(1);
-            expect(queryRunners.getRunnerForDatasource).toHaveBeenCalledTimes(1);
-            expect(queryRunner.getTarget).toHaveBeenCalledTimes(1);
-            expect(queryRunner.runRequest).toHaveBeenCalledTimes(1);
-            expect(datasource.metricFindQuery).toHaveBeenCalledTimes(1);
-            expect(dispatch).toHaveBeenCalledTimes(1);
           },
           done,
         });

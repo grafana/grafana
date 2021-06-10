@@ -79,7 +79,7 @@ onInitEditMode() {
 
 For editor tabs html, it is best to use Grafana css styles rather than custom styles. This is to preserve the look and feel of other tabs in Grafana.
 
-Most editor tabs should use the [gf-form css class](https://github.com/grafana/grafana/blob/master/public/sass/components/_gf-form.scss) from Grafana. The example below has one row with a couple of columns and each column is wrapped in a div like this:
+Most editor tabs should use the [gf-form css class](https://github.com/grafana/grafana/blob/main/public/sass/components/_gf-form.scss) from Grafana. The example below has one row with a couple of columns and each column is wrapped in a div like this:
 
 ```html
 <div class="section gf-form-group">
@@ -96,7 +96,7 @@ Then each pair, label and field is wrapped in a div with a gf-form class.
 
 Note that there are some Angular attributes here. *ng-model* will update the panel data. *ng-change* will render the panel when you change the value. This change will occur on the onblur event due to the *ng-model-onblur* attribute. This means you can see the effect of your changes on the panel while editing.
 
-{{< imgbox img="/assets/img/blog/clock-panel-editor.png" caption="Panel Editor" >}}
+{{< figure class="float-right"  src="/assets/img/blog/clock-panel-editor.png" caption="Panel Editor" >}}
 
 On the editor tab we use a drop down for 12/24 hour clock, an input field for font size and a color picker for the background color.
 

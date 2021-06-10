@@ -1,6 +1,5 @@
 import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
-import { Prompt } from 'react-router-dom';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { css, cx } from '@emotion/css';
 import { Subscription } from 'rxjs';
@@ -9,6 +8,7 @@ import { FieldConfigSource, GrafanaTheme } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import {
   HorizontalGroup,
+  InlineSwitch,
   ModalsController,
   PageToolbar,
   RadioButtonGroup,
@@ -28,16 +28,10 @@ import { SplitPaneWrapper } from 'app/core/components/SplitPaneWrapper/SplitPane
 import { SaveDashboardModalProxy } from '../SaveDashboard/SaveDashboardModalProxy';
 import { DashboardPanel } from '../../dashgrid/DashboardPanel';
 
-import {
-  exitPanelEditor,
-  discardPanelChanges,
-  initPanelEditor,
-  panelEditorCleanUp,
-  updatePanelEditorUIState,
-  updateSourcePanel,
-} from './state/actions';
+import { discardPanelChanges, initPanelEditor, panelEditorCleanUp, updatePanelEditorUIState } from './state/actions';
 
 import { updateTimeZoneForSession } from 'app/features/profile/state/reducers';
+import { toggleTableView } from './state/reducers';
 
 import { getPanelEditorTabs } from './state/selectors';
 import { getPanelStateById } from '../../state/selectors';
@@ -59,6 +53,8 @@ import {
   saveAndRefreshLibraryPanel,
 } from '../../../library-panels/utils';
 import { notifyApp } from '../../../../core/actions';
+import { PanelEditorTableView } from './PanelEditorTableView';
+import { PanelModelWithLibraryPanel } from 'app/features/library-panels/types';
 
 interface OwnProps {
   dashboard: DashboardModel;
@@ -75,18 +71,18 @@ const mapStateToProps = (state: StoreState) => {
     panel,
     initDone: state.panelEditor.initDone,
     uiState: state.panelEditor.ui,
+    tableViewEnabled: state.panelEditor.tableViewEnabled,
     variables: getVariables(state),
   };
 };
 
 const mapDispatchToProps = {
   initPanelEditor,
-  exitPanelEditor,
-  updateSourcePanel,
   panelEditorCleanUp,
   discardPanelChanges,
   updatePanelEditorUIState,
   updateTimeZoneForSession,
+  toggleTableView,
   notifyApp,
 };
 
@@ -94,8 +90,16 @@ const connector = connect(mapStateToProps, mapDispatchToProps);
 
 type Props = OwnProps & ConnectedProps<typeof connector>;
 
+interface State {
+  showSaveLibraryPanelModal?: boolean;
+}
+
 export class PanelEditorUnconnected extends PureComponent<Props> {
   private eventSubs?: Subscription;
+
+  state: State = {
+    showSaveLibraryPanelModal: false,
+  };
 
   componentDidMount() {
     this.props.initPanelEditor(this.props.sourcePanel, this.props.dashboard);
@@ -159,7 +163,6 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
     ) {
       try {
         await saveAndRefreshLibraryPanel(this.props.panel, this.props.dashboard.meta.folderId!);
-        this.props.updateSourcePanel(this.props.panel);
         this.props.notifyApp(createPanelLibrarySuccessNotification('Library panel saved'));
       } catch (err) {
         this.props.notifyApp(createPanelLibraryErrorNotification(`Error saving library panel: "${err.statusText}"`));
@@ -167,22 +170,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
       return;
     }
 
-    appEvents.publish(
-      new ShowModalReactEvent({
-        component: SaveLibraryPanelModal,
-        props: {
-          panel: this.props.panel,
-          folderId: this.props.dashboard.meta.folderId,
-          isOpen: true,
-          onConfirm: () => {
-            // need to update the source panel here so that when
-            // the user exits the panel editor they aren't prompted to save again
-            this.props.updateSourcePanel(this.props.panel);
-          },
-          onDiscard: this.onDiscard,
-        },
-      })
-    );
+    this.setState({ showSaveLibraryPanelModal: true });
   };
 
   onChangeTab = (tab: PanelEditorTab) => {
@@ -213,9 +201,16 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
 
   onDisplayModeChange = (mode?: DisplayMode) => {
     const { updatePanelEditorUIState } = this.props;
+    if (this.props.tableViewEnabled) {
+      this.props.toggleTableView();
+    }
     updatePanelEditorUIState({
       mode: mode,
     });
+  };
+
+  onToggleTableView = () => {
+    this.props.toggleTableView();
   };
 
   onTogglePanelOptions = () => {
@@ -224,7 +219,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
   };
 
   renderPanel = (styles: EditorStyles) => {
-    const { dashboard, panel, uiState, plugin, tab } = this.props;
+    const { dashboard, panel, uiState, plugin, tab, tableViewEnabled } = this.props;
     const tabs = getPanelEditorTabs(tab, plugin);
 
     return (
@@ -236,6 +231,11 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
               if (width < 3 || height < 3) {
                 return null;
               }
+
+              if (tableViewEnabled) {
+                return <PanelEditorTableView width={width} height={height} panel={panel} dashboard={dashboard} />;
+              }
+
               return (
                 <div className={styles.centeringContainer} style={{ width, height }}>
                   <div style={calculatePanelSize(uiState.mode, width, height, panel)} data-panelid={panel.editSourceId}>
@@ -290,12 +290,21 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
   }
 
   renderPanelToolbar(styles: EditorStyles) {
-    const { dashboard, uiState, variables, updateTimeZoneForSession, panel } = this.props;
+    const { dashboard, uiState, variables, updateTimeZoneForSession, panel, tableViewEnabled } = this.props;
+
     return (
       <div className={styles.panelToolbar}>
         <HorizontalGroup justify={variables.length > 0 ? 'space-between' : 'flex-end'} align="flex-start">
           {this.renderTemplateVariables(styles)}
           <HorizontalGroup>
+            <InlineSwitch
+              label="Table view"
+              showLabel={true}
+              id="table-view"
+              value={tableViewEnabled}
+              onClick={this.onToggleTableView}
+              aria-label={selectors.components.PanelEditor.toggleTableView}
+            />
             <RadioButtonGroup value={uiState.mode} options={displayModes} onChange={this.onDisplayModeChange} />
             <DashNavTimeControls dashboard={dashboard} onChangeTimeZone={updateTimeZoneForSession} />
             {!uiState.isPanelOptionsVisible && <VisualizationButton panel={panel} />}
@@ -330,7 +339,13 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
           Save
         </ToolbarButton>
       ),
-      <ToolbarButton onClick={this.onBack} variant="primary" title="Apply changes and go back to dashboard" key="apply">
+      <ToolbarButton
+        onClick={this.onBack}
+        variant="primary"
+        title="Apply changes and go back to dashboard"
+        key="apply"
+        aria-label={selectors.components.PanelEditor.applyButton}
+      >
         Apply
       </ToolbarButton>,
     ];
@@ -354,7 +369,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
                     isOpen: true,
                   });
                 }}
-                title="Disconnects this panel from the reusable panel so that you can edit it regularly."
+                title="Disconnects this panel from the library panel so that you can edit it regularly."
                 key="unlink"
               >
                 Unlink
@@ -396,8 +411,16 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
     );
   }
 
+  onGoBackToDashboard = () => {
+    locationService.partial({ editPanel: null, tab: null });
+  };
+
+  onConfirmAndDismissLibarayPanelModel = () => {
+    this.setState({ showSaveLibraryPanelModal: false });
+  };
+
   render() {
-    const { dashboard, initDone, updatePanelEditorUIState, uiState, exitPanelEditor } = this.props;
+    const { dashboard, initDone, updatePanelEditorUIState, uiState } = this.props;
     const styles = getStyles(config.theme, this.props);
 
     if (!initDone) {
@@ -406,19 +429,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
 
     return (
       <div className={styles.wrapper} aria-label={selectors.components.PanelEditor.General.content}>
-        <Prompt
-          when={true}
-          message={(location) => {
-            const searchParams = new URLSearchParams(location.search);
-            if (!this.props.panel.libraryPanel || !this.props.panel.hasChanged || searchParams.has('editPanel')) {
-              return true;
-            }
-
-            exitPanelEditor();
-            return false;
-          }}
-        />
-        <PageToolbar title={`${dashboard.title} / Edit Panel`} onGoBack={exitPanelEditor}>
+        <PageToolbar title={`${dashboard.title} / Edit Panel`} onGoBack={this.onGoBackToDashboard}>
           {this.renderEditorActions()}
         </PageToolbar>
         <div className={styles.verticalSplitPanesWrapper}>
@@ -430,6 +441,15 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
             rightPaneVisible={uiState.isPanelOptionsVisible}
           />
         </div>
+        {this.state.showSaveLibraryPanelModal && (
+          <SaveLibraryPanelModal
+            panel={this.props.panel as PanelModelWithLibraryPanel}
+            folderId={this.props.dashboard.meta.folderId as number}
+            onConfirm={this.onConfirmAndDismissLibarayPanelModel}
+            onDiscard={this.onDiscard}
+            onDismiss={this.onConfirmAndDismissLibarayPanelModel}
+          />
+        )}
       </div>
     );
   }
@@ -486,6 +506,7 @@ export const getStyles = stylesFactory((theme: GrafanaTheme, props: Props) => {
       min-height: 0;
       width: 100%;
       padding-left: ${paneSpacing};
+      padding-right: 2px;
     `,
     tabsWrapper: css`
       height: 100%;
@@ -493,7 +514,7 @@ export const getStyles = stylesFactory((theme: GrafanaTheme, props: Props) => {
     `,
     panelToolbar: css`
       display: flex;
-      padding: ${paneSpacing} 0 ${paneSpacing} ${paneSpacing};
+      padding: 0 0 ${paneSpacing} ${paneSpacing};
       justify-content: space-between;
       flex-wrap: wrap;
     `,

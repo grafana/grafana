@@ -1,6 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { cloneDeep, isString, trim } from 'lodash';
-import { VariableOption, VariableTag, VariableWithMultiSupport, VariableWithOptions } from '../../types';
+import { VariableOption, VariableWithOptions } from '../../types';
 import { ALL_VARIABLE_VALUE } from '../../state/types';
 import { isMulti, isQuery } from '../../guard';
 import { applyStateChanges } from '../../../../core/utils/applyStateChanges';
@@ -15,10 +15,8 @@ export interface ToggleOption {
 export interface OptionsPickerState {
   id: string;
   selectedValues: VariableOption[];
-  selectedTags: VariableTag[];
   queryValue: string;
   highlightIndex: number;
-  tags: VariableTag[];
   options: VariableOption[];
   multi: boolean;
 }
@@ -27,21 +25,12 @@ export const initialState: OptionsPickerState = {
   id: '',
   highlightIndex: -1,
   queryValue: '',
-  selectedTags: [],
   selectedValues: [],
-  tags: [],
   options: [],
   multi: false,
 };
 
 export const OPTIONS_LIMIT = 1000;
-
-const getTags = (model: VariableWithMultiSupport) => {
-  if (isQuery(model) && Array.isArray(model.tags)) {
-    return cloneDeep(model.tags);
-  }
-  return [];
-};
 
 const optionsToRecord = (options: VariableOption[]): Record<string, VariableOption> => {
   if (!Array.isArray(options)) {
@@ -129,7 +118,6 @@ const optionsPickerSlice = createSlice({
       state.multi = false;
 
       if (isMulti(action.payload)) {
-        state.tags = getTags(action.payload);
         state.multi = action.payload.multi ?? false;
       }
 
@@ -171,44 +159,6 @@ const optionsPickerSlice = createSlice({
       }
 
       return applyStateChanges(state, updateDefaultSelection, updateAllSelection, updateOptions);
-    },
-    toggleTag: (state, action: PayloadAction<VariableTag>): OptionsPickerState => {
-      const tag = action.payload;
-      const values = tag.values || [];
-      const selected = !tag.selected;
-
-      state.tags = state.tags.map((t) => {
-        if (t.text !== tag.text) {
-          return t;
-        }
-
-        t.selected = selected;
-        t.values = values;
-
-        if (selected) {
-          t.valuesText = values.join(' + ');
-        } else {
-          delete t.valuesText;
-        }
-
-        return t;
-      });
-
-      const availableOptions = optionsToRecord(state.options);
-
-      if (!selected) {
-        state.selectedValues = state.selectedValues.filter(
-          (option) => !isString(option.value) || !availableOptions[option.value]
-        );
-        return applyStateChanges(state, updateDefaultSelection, updateOptions);
-      }
-
-      const optionsFromTag = values
-        .filter((value) => value !== ALL_VARIABLE_VALUE && !!availableOptions[value])
-        .map((value) => ({ selected, value, text: value }));
-
-      state.selectedValues.push.apply(state.selectedValues, optionsFromTag);
-      return applyStateChanges(state, updateDefaultSelection, updateOptions);
     },
     moveOptionsHighlight: (state, action: PayloadAction<number>): OptionsPickerState => {
       let nextIndex = state.highlightIndex + action.payload;
@@ -270,7 +220,6 @@ export const {
   toggleOption,
   showOptions,
   hideOptions,
-  toggleTag,
   moveOptionsHighlight,
   toggleAllOptions,
   updateSearchQuery,

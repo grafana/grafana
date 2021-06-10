@@ -77,6 +77,7 @@ export const addDashboard = (config?: Partial<AddDashboardConfig>) => {
 
   return e2e()
     .url()
+    .should('contain', '/d/')
     .then((url: string) => {
       const uid = getDashboardUid(url);
 

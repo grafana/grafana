@@ -31,7 +31,8 @@ $popper-margin-from-ref: 5px;
   background: $tooltipBackground;
   border-radius: $border-radius-sm;
   box-shadow: $tooltipShadow;
-  padding: $space-sm;
+  padding: $space-xs $space-sm;
+  font-size: $font-size-sm;
   color: $tooltipColor;
   font-weight: $font-weight-semi-bold;
 

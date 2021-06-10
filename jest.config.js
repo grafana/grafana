@@ -13,9 +13,13 @@ module.exports = {
   testRegex: '(\\.|/)(test)\\.(jsx?|tsx?)$',
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
   setupFiles: ['jest-canvas-mock', './public/test/jest-shim.ts', './public/test/jest-setup.ts'],
+  testTimeout: 30000,
   setupFilesAfterEnv: ['./public/test/setupTests.ts'],
   snapshotSerializers: ['enzyme-to-json/serializer'],
-  globals: { 'ts-jest': { isolatedModules: true } },
+  globals: {
+    'ts-jest': { isolatedModules: true },
+    __webpack_public_path__: '', // empty string
+  },
   moduleNameMapper: {
     '\\.svg': '<rootDir>/public/test/mocks/svg.ts',
     '\\.css': '<rootDir>/public/test/mocks/style.ts',

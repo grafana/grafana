@@ -9,8 +9,8 @@
                     "from": 18000,
                     "to": 10800
                 },
+                "datasourceUid": "-100",
                 "model": {
-                    "datasource": "__expr__",
                     "type": "math",
                     "expression": "2 + 2 > 1"
                 }

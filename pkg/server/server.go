@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/bus"
 	_ "github.com/grafana/grafana/pkg/extensions"
+	"github.com/grafana/grafana/pkg/infra/httpclient/httpclientprovider"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
@@ -149,7 +150,7 @@ func (s *Server) init() error {
 	}
 
 	login.Init()
-	social.NewOAuthService()
+	social.NewOAuthService(s.cfg)
 
 	services := s.serviceRegistry.GetServices()
 	if err := s.buildServiceGraph(services); err != nil {
@@ -222,17 +223,23 @@ func (s *Server) Run() error {
 // Shutdown initiates Grafana graceful shutdown. This shuts down all
 // running background services. Since Run blocks Shutdown supposed to
 // be run from a separate goroutine.
-func (s *Server) Shutdown(reason string) {
+func (s *Server) Shutdown(ctx context.Context, reason string) error {
+	var err error
 	s.shutdownOnce.Do(func() {
 		s.log.Info("Shutdown started", "reason", reason)
 		// Call cancel func to stop services.
 		s.shutdownFn()
-		// Can introduce termination timeout here if needed over incoming Context,
-		// but this will require changing Shutdown method signature to accept context
-		// and return an error - caller can exit with code > 0 then.
-		// I.e. sth like server.Shutdown(context.WithTimeout(...), reason).
-		<-s.shutdownFinished
+		// Wait for server to shut down
+		select {
+		case <-s.shutdownFinished:
+			s.log.Debug("Finished waiting for server to shut down")
+		case <-ctx.Done():
+			s.log.Warn("Timed out while waiting for server to shut down")
+			err = fmt.Errorf("timeout waiting for shutdown")
+		}
 	})
+
+	return err
 }
 
 // ExitCode returns an exit code for a given error.
@@ -273,8 +280,9 @@ func (s *Server) buildServiceGraph(services []*registry.Descriptor) error {
 	objs := []interface{}{
 		bus.GetBus(),
 		s.cfg,
-		routing.NewRouteRegister(middleware.RequestTracing, middleware.RequestMetrics(s.cfg)),
+		routing.NewRouteRegister(middleware.ProvideRouteOperationName, middleware.RequestMetrics(s.cfg)),
 		localcache.New(5*time.Minute, 10*time.Minute),
+		httpclientprovider.New(s.cfg),
 		s,
 	}
 	return registry.BuildServiceGraph(objs, services)

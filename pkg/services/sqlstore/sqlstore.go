@@ -74,8 +74,6 @@ func (ss *SQLStore) Register() {
 
 func (ss *SQLStore) Init() error {
 	ss.log = log.New("sqlstore")
-	ss.readConfig()
-
 	if err := ss.initEngine(); err != nil {
 		return errutil.Wrap("failed to connect to database", err)
 	}
@@ -87,7 +85,7 @@ func (ss *SQLStore) Init() error {
 	dialect = ss.Dialect
 
 	if !ss.dbCfg.SkipMigrations {
-		migrator := migrator.NewMigrator(ss.engine)
+		migrator := migrator.NewMigrator(ss.engine, ss.Cfg)
 		migrations.AddMigrations(migrator)
 
 		for _, descriptor := range registry.GetServices() {
@@ -159,7 +157,6 @@ func (ss *SQLStore) ensureMainOrgAndAdminUser() error {
 		// ensure admin user
 		if !ss.Cfg.DisableInitAdminCreation {
 			ss.log.Debug("Creating default admin user")
-			ss.log.Debug("Creating default admin user")
 			if _, err := ss.createUser(ctx, sess, userCreationArgs{
 				Login:    ss.Cfg.AdminUser,
 				Email:    ss.Cfg.AdminUser + "@localhost",
@@ -205,6 +202,10 @@ func (ss *SQLStore) buildExtraConnectionString(sep rune) string {
 }
 
 func (ss *SQLStore) buildConnectionString() (string, error) {
+	if err := ss.readConfig(); err != nil {
+		return "", err
+	}
+
 	cnnstr := ss.dbCfg.ConnectionString
 
 	// special case used by integration tests
@@ -232,6 +233,10 @@ func (ss *SQLStore) buildConnectionString() (string, error) {
 			}
 
 			cnnstr += "&tls=custom"
+		}
+
+		if isolation := ss.dbCfg.IsolationLevel; isolation != "" {
+			cnnstr += "&tx_isolation=" + isolation
 		}
 
 		cnnstr += ss.buildExtraConnectionString('&')
@@ -340,12 +345,15 @@ func (ss *SQLStore) initEngine() error {
 }
 
 // readConfig initializes the SQLStore from its configuration.
-func (ss *SQLStore) readConfig() {
+func (ss *SQLStore) readConfig() error {
 	sec := ss.Cfg.Raw.Section("database")
 
 	cfgURL := sec.Key("url").String()
 	if len(cfgURL) != 0 {
-		dbURL, _ := url.Parse(cfgURL)
+		dbURL, err := url.Parse(cfgURL)
+		if err != nil {
+			return err
+		}
 		ss.dbCfg.Type = dbURL.Scheme
 		ss.dbCfg.Host = dbURL.Host
 
@@ -380,9 +388,11 @@ func (ss *SQLStore) readConfig() {
 	ss.dbCfg.ClientCertPath = sec.Key("client_cert_path").String()
 	ss.dbCfg.ServerCertName = sec.Key("server_cert_name").String()
 	ss.dbCfg.Path = sec.Key("path").MustString("data/grafana.db")
+	ss.dbCfg.IsolationLevel = sec.Key("isolation_level").String()
 
 	ss.dbCfg.CacheMode = sec.Key("cache_mode").MustString("private")
 	ss.dbCfg.SkipMigrations = sec.Key("skip_migrations").MustBool()
+	return nil
 }
 
 // ITestDB is an interface of arguments for testing db
@@ -447,6 +457,15 @@ func InitTestDB(t ITestDB, opts ...InitTestDBOpt) *SQLStore {
 			}
 		}
 
+		// useful if you already have a database that you want to use for tests.
+		// cannot just set it on testSQLStore as it overrides the config in Init
+		if _, present := os.LookupEnv("SKIP_MIGRATIONS"); present {
+			t.Log("Skipping database migrations")
+			if _, err := sec.NewKey("skip_migrations", "true"); err != nil {
+				t.Fatalf("Failed to create key: %s", err)
+			}
+		}
+
 		// need to get engine to clean db before we init
 		t.Logf("Creating database connection: %q", sec.Key("connection_string"))
 		engine, err := xorm.NewEngine(dbType, sec.Key("connection_string").String())
@@ -502,6 +521,14 @@ func IsTestDbPostgres() bool {
 	return false
 }
 
+func IsTestDBMSSQL() bool {
+	if db, present := os.LookupEnv("GRAFANA_TEST_DB"); present {
+		return db == migrator.MSSQL
+	}
+
+	return false
+}
+
 type DatabaseConfig struct {
 	Type             string
 	Host             string
@@ -515,6 +542,7 @@ type DatabaseConfig struct {
 	ClientCertPath   string
 	ServerCertName   string
 	ConnectionString string
+	IsolationLevel   string
 	MaxOpenConn      int
 	MaxIdleConn      int
 	ConnMaxLifetime  int

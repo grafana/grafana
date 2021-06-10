@@ -1,50 +1,68 @@
-import React from 'react';
-import { Button, Field, FieldArray, FormAPI, Input, InlineLabel, IconButton, Label, stylesFactory } from '@grafana/ui';
+import React, { FC } from 'react';
+import { Button, Field, FieldArray, Input, InlineLabel, Label, useStyles } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
-import { config } from 'app/core/config';
 import { css, cx } from '@emotion/css';
+import { useFormContext } from 'react-hook-form';
 
-interface Props extends Pick<FormAPI<{}>, 'register' | 'control'> {
+interface Props {
   className?: string;
 }
 
-const LabelsField = (props: Props) => {
-  const styles = getStyles(config.theme);
-  const { register, control } = props;
+const LabelsField: FC<Props> = ({ className }) => {
+  const styles = useStyles(getStyles);
+  const {
+    register,
+    control,
+    watch,
+    formState: { errors },
+  } = useFormContext();
+  const labels = watch('labels');
   return (
-    <div className={props.className}>
+    <div className={cx(className, styles.wrapper)}>
       <Label>Custom Labels</Label>
       <FieldArray control={control} name="labels">
         {({ fields, append, remove }) => {
           return (
             <>
               <div className={styles.flexRow}>
-                <InlineLabel width={12}>Labels</InlineLabel>
+                <InlineLabel width={18}>Labels</InlineLabel>
                 <div className={styles.flexColumn}>
                   {fields.map((field, index) => {
                     return (
                       <div key={field.id}>
                         <div className={cx(styles.flexRow, styles.centerAlignRow)}>
-                          <Field className={styles.labelInput}>
+                          <Field
+                            className={styles.labelInput}
+                            invalid={!!errors.labels?.[index]?.key?.message}
+                            error={errors.labels?.[index]?.key?.message}
+                          >
                             <Input
-                              ref={register()}
-                              name={`labels[${index}].key`}
+                              {...register(`labels[${index}].key`, {
+                                required: { value: !!labels[index]?.value, message: 'Required.' },
+                              })}
                               placeholder="key"
                               defaultValue={field.key}
                             />
                           </Field>
-                          <div className={styles.equalSign}>=</div>
-                          <Field className={styles.labelInput}>
+                          <InlineLabel className={styles.equalSign}>=</InlineLabel>
+                          <Field
+                            className={styles.labelInput}
+                            invalid={!!errors.labels?.[index]?.value?.message}
+                            error={errors.labels?.[index]?.value?.message}
+                          >
                             <Input
-                              ref={register()}
-                              name={`labels[${index}].value`}
+                              {...register(`labels[${index}].value`, {
+                                required: { value: !!labels[index]?.key, message: 'Required.' },
+                              })}
                               placeholder="value"
                               defaultValue={field.value}
                             />
                           </Field>
-                          <IconButton
+                          <Button
+                            className={styles.deleteLabelButton}
                             aria-label="delete label"
-                            name="trash-alt"
+                            icon="trash-alt"
+                            variant="secondary"
                             onClick={() => {
                               remove(index);
                             }}
@@ -58,7 +76,6 @@ const LabelsField = (props: Props) => {
                     icon="plus-circle"
                     type="button"
                     variant="secondary"
-                    size="sm"
                     onClick={() => {
                       append({});
                     }}
@@ -75,8 +92,11 @@ const LabelsField = (props: Props) => {
   );
 };
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => {
+const getStyles = (theme: GrafanaTheme) => {
   return {
+    wrapper: css`
+      margin-top: ${theme.spacing.md};
+    `,
     flexColumn: css`
       display: flex;
       flex-direction: column;
@@ -90,6 +110,10 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
         margin-left: ${theme.spacing.xs};
       }
     `,
+    deleteLabelButton: css`
+      margin-left: ${theme.spacing.xs};
+      align-self: flex-start;
+    `,
     addLabelButton: css`
       flex-grow: 0;
       align-self: flex-start;
@@ -98,21 +122,19 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       align-items: baseline;
     `,
     equalSign: css`
-      width: ${theme.spacing.lg};
-      height: ${theme.spacing.lg};
-      padding: ${theme.spacing.sm};
-      line-height: ${theme.spacing.sm};
-      background-color: ${theme.colors.bg2};
-      margin: 0 ${theme.spacing.xs};
+      align-self: flex-start;
+      width: 28px;
+      justify-content: center;
+      margin-left: ${theme.spacing.xs};
     `,
     labelInput: css`
-      width: 200px;
+      width: 183px;
       margin-bottom: ${theme.spacing.sm};
       & + & {
         margin-left: ${theme.spacing.sm};
       }
     `,
   };
-});
+};
 
 export default LabelsField;

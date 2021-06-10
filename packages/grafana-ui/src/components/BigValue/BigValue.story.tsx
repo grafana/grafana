@@ -10,7 +10,7 @@ import {
 } from './BigValue';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import mdx from './BigValue.mdx';
-import { useTheme } from '../../themes';
+import { useTheme2 } from '../../themes';
 import { ArrayVector, FieldSparkline, FieldType } from '@grafana/data';
 
 export default {
@@ -20,9 +20,6 @@ export default {
   parameters: {
     docs: {
       page: mdx,
-    },
-    knobs: {
-      disable: true,
     },
     controls: {
       exclude: ['value', 'sparkline', 'onClick', 'className', 'alignmentFactors', 'text', 'count', 'theme'],
@@ -68,7 +65,7 @@ export const Basic: Story<StoryProps> = ({
   textMode,
   justifyMode,
 }) => {
-  const theme = useTheme();
+  const theme = useTheme2();
   const sparkline: FieldSparkline = {
     y: {
       name: '',

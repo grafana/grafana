@@ -44,6 +44,8 @@ func createExternalDashboardSnapshot(cmd models.CreateDashboardSnapshotCommand) 
 		"name":      cmd.Name,
 		"expires":   cmd.Expires,
 		"dashboard": cmd.Dashboard,
+		"key":       cmd.Key,
+		"deleteKey": cmd.DeleteKey,
 	}
 
 	messageBytes, err := simplejson.NewFromAny(message).Encode()

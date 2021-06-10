@@ -1,7 +1,7 @@
 import { Observable, Subscription } from 'rxjs';
 import { matcherHint, printExpected, printReceived } from 'jest-matcher-utils';
 import { expectObservable, forceObservableCompletion } from './utils';
-import isEqual from 'lodash/isEqual';
+import { isEqual } from 'lodash';
 
 function passMessage(received: any[], expected: any[]) {
   return `${matcherHint('.not.toEmitValues')}

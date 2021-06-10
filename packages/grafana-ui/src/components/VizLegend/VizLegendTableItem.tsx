@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { css, cx } from '@emotion/css';
 import { VizLegendSeriesIcon } from './VizLegendSeriesIcon';
-import { VizLegendItem, SeriesColorChangeHandler } from './types';
+import { VizLegendItem } from './types';
 import { useStyles } from '../../themes/ThemeContext';
 import { styleMixins } from '../../themes';
 import { GrafanaTheme, formattedValueToString } from '@grafana/data';
@@ -11,7 +11,9 @@ export interface Props {
   item: VizLegendItem;
   className?: string;
   onLabelClick?: (item: VizLegendItem, event: React.MouseEvent<HTMLDivElement>) => void;
-  onSeriesColorChange?: SeriesColorChangeHandler;
+  onLabelMouseEnter?: (item: VizLegendItem, event: React.MouseEvent<HTMLDivElement>) => void;
+  onLabelMouseOut?: (item: VizLegendItem, event: React.MouseEvent<HTMLDivElement>) => void;
+  readonly?: boolean;
 }
 
 /**
@@ -19,32 +21,51 @@ export interface Props {
  */
 export const LegendTableItem: React.FunctionComponent<Props> = ({
   item,
-  onSeriesColorChange,
   onLabelClick,
+  onLabelMouseEnter,
+  onLabelMouseOut,
   className,
+  readonly,
 }) => {
   const styles = useStyles(getStyles);
+
+  const onMouseEnter = useCallback(
+    (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
+      if (onLabelMouseEnter) {
+        onLabelMouseEnter(item, event);
+      }
+    },
+    [item, onLabelMouseEnter]
+  );
+
+  const onMouseOut = useCallback(
+    (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
+      if (onLabelMouseOut) {
+        onLabelMouseOut(item, event);
+      }
+    },
+    [item, onLabelMouseOut]
+  );
+
+  const onClick = useCallback(
+    (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
+      if (onLabelClick) {
+        onLabelClick(item, event);
+      }
+    },
+    [item, onLabelClick]
+  );
 
   return (
     <tr className={cx(styles.row, className)}>
       <td>
         <span className={styles.itemWrapper}>
-          <VizLegendSeriesIcon
-            disabled={!onSeriesColorChange}
-            color={item.color}
-            onColorChange={(color) => {
-              if (onSeriesColorChange) {
-                onSeriesColorChange(item.label, color);
-              }
-            }}
-          />
+          <VizLegendSeriesIcon color={item.color} seriesName={item.label} readonly={readonly} />
           <div
-            onClick={(event) => {
-              if (onLabelClick) {
-                onLabelClick(item, event);
-              }
-            }}
-            className={cx(styles.label, item.disabled && styles.labelDisabled)}
+            onMouseEnter={onMouseEnter}
+            onMouseOut={onMouseOut}
+            onClick={!readonly ? onClick : undefined}
+            className={cx(styles.label, item.disabled && styles.labelDisabled, !readonly && styles.clickable)}
           >
             {item.label} {item.yAxis === 2 && <span className={styles.yAxisLabel}>(right y-axis)</span>}
           </div>
@@ -83,12 +104,15 @@ const getStyles = (theme: GrafanaTheme) => {
     `,
     label: css`
       label: LegendLabel;
-      cursor: pointer;
       white-space: nowrap;
     `,
     labelDisabled: css`
       label: LegendLabelDisabled;
       color: ${theme.colors.linkDisabled};
+    `,
+    clickable: css`
+      label: LegendClickable;
+      cursor: pointer;
     `,
     itemWrapper: css`
       display: flex;

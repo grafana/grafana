@@ -1,13 +1,13 @@
 +++
-title = "Graph panel"
+title = "Graph panel (old)"
 keywords = ["grafana", "graph panel", "documentation", "guide", "graph"]
 aliases = ["/docs/grafana/latest/reference/graph/", "/docs/grafana/latest/features/panels/graph/"]
 weight = 500
 +++
 
-# Graph panel
+# Graph panel (old)
 
-This visualization is the most-used in the Grafana ecosystem. It can render as a line, a path of dots, or a series of bars. This type of graph is versatile enough to display almost any time-series data.
+The graph panel can render metrics as a line, a path of dots, or a series of bars. This type of graph is versatile enough to display almost any time-series data.
 
 ## Data and field options
 
@@ -15,7 +15,7 @@ Graph visualizations allow you to apply:
 
 - [Alerts]({{< relref "../../alerting/_index.md" >}}) - This is the only type of visualization that allows you to set alerts.
 - [Data transformations]({{< relref "../transformations/_index.md" >}})
-- [Field options and overrides]({{< relref "../field-options/_index.md" >}})
+- [Field overrides]({{< relref "../field-overrides.md" >}})
 - [Thresholds]({{< relref "../thresholds.md" >}})
 
 ## Display options

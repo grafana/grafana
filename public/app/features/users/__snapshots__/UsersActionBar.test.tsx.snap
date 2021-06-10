@@ -12,9 +12,6 @@ exports[`Render should render component 1`] = `
       placeholder="Search user by login, email or name"
       value=""
     />
-    <div
-      className="page-action-bar__spacer"
-    />
   </div>
 </div>
 `;
@@ -31,32 +28,29 @@ exports[`Render should render pending invites button 1`] = `
       placeholder="Search user by login, email or name"
       value=""
     />
-    <div
-      style={
-        Object {
-          "marginLeft": "1rem",
-        }
+  </div>
+  <div
+    style={
+      Object {
+        "marginLeft": "1rem",
       }
-    >
-      <RadioButtonGroup
-        onChange={[MockFunction]}
-        options={
-          Array [
-            Object {
-              "label": "Users",
-              "value": "users",
-            },
-            Object {
-              "label": "Pending Invites (5)",
-              "value": "invites",
-            },
-          ]
-        }
-        value="users"
-      />
-    </div>
-    <div
-      className="page-action-bar__spacer"
+    }
+  >
+    <RadioButtonGroup
+      onChange={[MockFunction]}
+      options={
+        Array [
+          Object {
+            "label": "Users",
+            "value": "users",
+          },
+          Object {
+            "label": "Pending Invites (5)",
+            "value": "invites",
+          },
+        ]
+      }
+      value="users"
     />
   </div>
 </div>
@@ -74,15 +68,12 @@ exports[`Render should show external user management button 1`] = `
       placeholder="Search user by login, email or name"
       value=""
     />
-    <div
-      className="page-action-bar__spacer"
-    />
-    <LinkButton
-      href="some/url"
-      rel="noopener"
-      target="_blank"
-    />
   </div>
+  <LinkButton
+    href="some/url"
+    rel="noopener"
+    target="_blank"
+  />
 </div>
 `;
 
@@ -98,14 +89,11 @@ exports[`Render should show invite button 1`] = `
       placeholder="Search user by login, email or name"
       value=""
     />
-    <div
-      className="page-action-bar__spacer"
-    />
-    <LinkButton
-      href="org/users/invite"
-    >
-      Invite
-    </LinkButton>
   </div>
+  <LinkButton
+    href="org/users/invite"
+  >
+    Invite
+  </LinkButton>
 </div>
 `;

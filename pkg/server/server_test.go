@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/grafana/grafana/pkg/registry"
 
@@ -83,6 +84,8 @@ func TestServer_Run_Error(t *testing.T) {
 }
 
 func TestServer_Shutdown(t *testing.T) {
+	ctx := context.Background()
+
 	s := testServer()
 	services := []*registry.Descriptor{
 		{
@@ -100,14 +103,24 @@ func TestServer_Shutdown(t *testing.T) {
 		services: services,
 	}
 
+	ch := make(chan error)
+
 	go func() {
+		defer close(ch)
+
 		// Wait until all services launched.
 		for _, svc := range services {
 			<-svc.Instance.(*testService).started
 		}
-		s.Shutdown("test interrupt")
+		ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
+		defer cancel()
+		err := s.Shutdown(ctx, "test interrupt")
+		ch <- err
 	}()
 	err := s.Run()
 	require.NoError(t, err)
 	require.Zero(t, s.ExitCode(err))
+
+	err = <-ch
+	require.NoError(t, err)
 }

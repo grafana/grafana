@@ -1,7 +1,6 @@
 import React, { FC } from 'react';
 import { AlphaNotice } from '@grafana/ui';
 import { PluginState } from '@grafana/data';
-import { css } from '@emotion/css';
 
 interface Props {
   state?: PluginState;
@@ -24,15 +23,7 @@ const PluginStateinfo: FC<Props> = (props) => {
     return null;
   }
 
-  return (
-    <AlphaNotice
-      state={props.state}
-      text={text}
-      className={css`
-        margin-left: 16px;
-      `}
-    />
-  );
+  return <AlphaNotice state={props.state} text={text} />;
 };
 
 export default PluginStateinfo;

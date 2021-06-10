@@ -8,6 +8,7 @@ import (
 
 	"cuelang.org/go/cue"
 	"cuelang.org/go/cue/load"
+	"github.com/grafana/grafana"
 )
 
 var rt = &cue.Runtime{}
@@ -39,6 +40,13 @@ type BaseLoadPaths struct {
 	InstanceCueFS fs.FS
 }
 
+func GetDefaultLoadPaths() BaseLoadPaths {
+	return BaseLoadPaths{
+		BaseCueFS:       grafana.CoreSchema,
+		DistPluginCueFS: grafana.PluginSchema,
+	}
+}
+
 // toOverlay converts all .cue files in the fs.FS into Source entries in an
 // overlay map, as expected by load.Config.
 //
@@ -55,7 +63,6 @@ func toOverlay(prefix string, vfs fs.FS, overlay map[string]load.Source) error {
 	if !filepath.IsAbs(prefix) {
 		return fmt.Errorf("must provide absolute path prefix when generating cue overlay, got %q", prefix)
 	}
-
 	err := fs.WalkDir(vfs, ".", (func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
