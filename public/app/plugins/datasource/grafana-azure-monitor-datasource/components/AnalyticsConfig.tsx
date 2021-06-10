@@ -4,7 +4,7 @@ import { AzureCredentialsForm } from './AzureCredentialsForm';
 import { InlineFormLabel, LegacyForms, Button, Alert } from '@grafana/ui';
 const { Select } = LegacyForms;
 import { AzureClientSecretCredentials, AzureDataSourceSettings } from '../types';
-import { getCredentials, getLogAnalyticsCredentials, isCredentialsComplete } from '../credentials';
+import { getCredentials, isCredentialsComplete } from '../credentials';
 
 export interface Props {
   options: AzureDataSourceSettings;
@@ -16,25 +16,16 @@ export interface Props {
 export const AnalyticsConfig: FunctionComponent<Props> = (props: Props) => {
   const { updateOptions, getSubscriptions, getWorkspaces } = props;
   const primaryCredentials = useMemo(() => getCredentials(props.options), [props.options]);
-  const logAnalyticsCredentials = useMemo(() => getLogAnalyticsCredentials(props.options), [props.options]);
 
-  const subscriptionId = logAnalyticsCredentials
-    ? logAnalyticsCredentials.defaultSubscriptionId
-    : primaryCredentials.defaultSubscriptionId;
+  const subscriptionId = primaryCredentials.defaultSubscriptionId;
 
   // Only show a section for setting LogAnalytics credentials if
   // they were set from before with different values and the
   // authType is supported
   const logCredentialsEnabled =
-    primaryCredentials.authType === 'clientsecret' &&
-    logAnalyticsCredentials &&
-    props.options.jsonData.azureLogAnalyticsSameAs === false;
+    primaryCredentials.authType === 'clientsecret' && props.options.jsonData.azureLogAnalyticsSameAs === false;
 
-  const hasRequiredFields =
-    subscriptionId &&
-    (logAnalyticsCredentials
-      ? isCredentialsComplete(logAnalyticsCredentials)
-      : isCredentialsComplete(primaryCredentials));
+  const hasRequiredFields = subscriptionId && isCredentialsComplete(primaryCredentials);
 
   const defaultWorkspace = props.options.jsonData.logAnalyticsDefaultWorkspace;
 
@@ -114,10 +105,11 @@ export const AnalyticsConfig: FunctionComponent<Props> = (props: Props) => {
             managedIdentityEnabled={false}
             credentials={
               {
-                ...logAnalyticsCredentials,
-                tenantId: logAnalyticsCredentials!.logAnalyticsTenantId,
-                clientId: logAnalyticsCredentials!.logAnalyticsClientId,
-                clientSecret: logAnalyticsCredentials!.logAnalyticsClientSecret,
+                ...primaryCredentials,
+                // Use deprecated Log Analytics credentials read-only
+                // to help with a possible migration
+                tenantId: props.options.jsonData.logAnalyticsTenantId,
+                clientId: props.options.jsonData.logAnalyticsClientId,
               } as AzureClientSecretCredentials
             }
             getSubscriptions={getSubscriptions}

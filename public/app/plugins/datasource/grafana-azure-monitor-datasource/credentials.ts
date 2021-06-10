@@ -1,7 +1,6 @@
 import { config } from '@grafana/runtime';
 import {
   AzureAuthType,
-  AzureClientSecretCredentials,
   AzureCloud,
   AzureCredentials,
   AzureDataSourceInstanceSettings,
@@ -65,18 +64,6 @@ function getSecret(options: AzureDataSourceSettings): undefined | string | Conce
   }
 }
 
-/** @deprecated since 8.0, left here to help the migration */
-function getLogAnalyticsSecret(options: AzureDataSourceSettings): undefined | string | ConcealedSecret {
-  if (options.secureJsonFields.logAnalyticsClientSecret) {
-    // The secret is concealed on server
-    return concealed;
-  } else {
-    // ClientSecret may be encoded in the JSON data from previous versions
-    const secret = (options.secureJsonData as any)?.logAnalyticsClientSecret;
-    return typeof secret === 'string' && secret.length > 0 ? secret : undefined;
-  }
-}
-
 export function isCredentialsComplete(credentials: AzureCredentials): boolean {
   switch (credentials.authType) {
     case 'msi':
@@ -113,38 +100,6 @@ export function getCredentials(options: AzureDataSourceSettings): AzureCredentia
         defaultSubscriptionId: options.jsonData.subscriptionId,
       };
   }
-}
-
-/** @deprecated since 8.0, left here for help the migration */
-export function getLogAnalyticsCredentials(options: AzureDataSourceSettings): AzureClientSecretCredentials | undefined {
-  const authType = getAuthType(options);
-
-  if (authType !== 'clientsecret') {
-    // Only app registration (client secret) authentication supports different credentials for Log Analytics
-    // for backward compatibility
-    return undefined;
-  }
-
-  // LogAnalytics credentials may be encoded in the JSON data
-  // from previous versions. Manually extract it.
-  const logAnalyticsTenantId = options.jsonData.logAnalyticsTenantId;
-  const logAnalyticsClientId = options.jsonData.logAnalyticsClientId;
-  const logAnalyticsSubscriptionId = options.jsonData.logAnalyticsSubscriptionId;
-  const logAnalyticsClientSecret = getLogAnalyticsSecret(options);
-
-  return {
-    authType: 'clientsecret',
-    azureCloud: options.jsonData.cloudName || getDefaultAzureCloud(),
-    tenantId: options.jsonData.tenantId,
-    clientId: options.jsonData.clientId,
-    clientSecret: getSecret(options),
-    defaultSubscriptionId: options.jsonData.subscriptionId,
-    /** @deprecated fields below */
-    logAnalyticsTenantId,
-    logAnalyticsClientId,
-    logAnalyticsSubscriptionId,
-    logAnalyticsClientSecret,
-  };
 }
 
 export function updateCredentials(

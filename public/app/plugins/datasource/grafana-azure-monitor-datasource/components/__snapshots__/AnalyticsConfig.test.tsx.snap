@@ -219,33 +219,6 @@ exports[`Render should enable azure log analytics load workspaces button 1`] = `
           <label
             class="width-12 gf-form-label width-10"
           >
-            Client Secret
-          </label>
-          <div
-            class="width-15"
-          >
-            <div
-              style="flex-grow: 1;"
-            >
-              <input
-                class="gf-form-input width-30"
-                disabled=""
-                placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
-                value=""
-              />
-            </div>
-          </div>
-        </div>
-      </div>
-      <div
-        class="gf-form-inline"
-      >
-        <div
-          class="gf-form"
-        >
-          <label
-            class="width-12 gf-form-label width-10"
-          >
             Default Subscription
           </label>
           <div

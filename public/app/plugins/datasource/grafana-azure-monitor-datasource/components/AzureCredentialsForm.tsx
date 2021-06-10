@@ -209,36 +209,37 @@ export const AzureCredentialsForm: FunctionComponent<Props> = (props: Props) => 
               </div>
             </div>
           </div>
-          {typeof credentials.clientSecret === 'symbol' ? (
-            <div className="gf-form-inline">
-              <div className="gf-form">
-                <InlineFormLabel className="width-12">Client Secret</InlineFormLabel>
-                <Input className="width-25" placeholder="configured" disabled={true} />
-              </div>
-              <div className="gf-form">
-                <div className="max-width-30 gf-form-inline">
-                  <Button variant="secondary" type="button" onClick={onClientSecretReset} disabled={disabled}>
-                    reset
-                  </Button>
+          {!disabled &&
+            (typeof credentials.clientSecret === 'symbol' ? (
+              <div className="gf-form-inline">
+                <div className="gf-form">
+                  <InlineFormLabel className="width-12">Client Secret</InlineFormLabel>
+                  <Input className="width-25" placeholder="configured" disabled={true} />
+                </div>
+                <div className="gf-form">
+                  <div className="max-width-30 gf-form-inline">
+                    <Button variant="secondary" type="button" onClick={onClientSecretReset} disabled={disabled}>
+                      reset
+                    </Button>
+                  </div>
                 </div>
               </div>
-            </div>
-          ) : (
-            <div className="gf-form-inline">
-              <div className="gf-form">
-                <InlineFormLabel className="width-12">Client Secret</InlineFormLabel>
-                <div className="width-15">
-                  <Input
-                    className="width-30"
-                    placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
-                    value={credentials.clientSecret || ''}
-                    onChange={onClientSecretChange}
-                    disabled={disabled}
-                  />
+            ) : (
+              <div className="gf-form-inline">
+                <div className="gf-form">
+                  <InlineFormLabel className="width-12">Client Secret</InlineFormLabel>
+                  <div className="width-15">
+                    <Input
+                      className="width-30"
+                      placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
+                      value={credentials.clientSecret || ''}
+                      onChange={onClientSecretChange}
+                      disabled={disabled}
+                    />
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
+            ))}
         </>
       )}
       {getSubscriptions && (
