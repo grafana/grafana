@@ -12,7 +12,7 @@ export type NodeDatum = SimulationNodeDatum & {
   mainStat?: Field;
   secondaryStat?: Field;
   arcSections: Field[];
-  color: string;
+  color?: Field;
 };
 
 // This is the data we have before the graph is laid out with source and target being string IDs.

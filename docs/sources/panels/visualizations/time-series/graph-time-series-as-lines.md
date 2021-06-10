@@ -13,17 +13,12 @@ This section explains how to use Time series field options to visualize time ser
 ## Create the panel
 
 1. [Add a panel]({{< relref "../../add-a-panel.md" >}}). Select the [Time series]({{< relref "_index.md" >}}) visualization.
-1. In the [Panel editor]({{< relref "../../panel-editor.md" >}}), click the **Field** tab.
+1. In the [Panel editor]({{< relref "../../panel-editor.md" >}}) side pane, click **Graph styles** to expand it.
 1. In Style, click **Lines**.
 
 ## Style the lines
 
 Use the following field settings to refine your visualization.
-
-For more information about applying these options, refer to:
-
-- [Configure all fields]({{< relref "../../field-options/configure-all-fields.md" >}})
-- [Configure specific fields]({{< relref "../../field-options/configure-specific-fields.md" >}})
 
 Some field options will not affect the visualization until you click outside of the field option box you are editing or press Enter.
 
@@ -33,35 +28,35 @@ Choose how Grafana interpolates the series line. The screenshots below show the 
 
 #### Linear
 
-![Linear interpolation icon](/img/docs/time-series-panel/interpolation-icon-linear-7-4.png)
+![Linear interpolation icon](/static/img/docs/time-series-panel/interpolation-icon-linear-7-4.png)
 
 Points are joined by straight lines.
 
-![Linear interpolation example](/img/docs/time-series-panel/interpolation-linear-7-4.png)
+![Linear interpolation example](/static/img/docs/time-series-panel/interpolation-linear-7-4.png)
 
 #### Smooth
 
-![Smooth interpolation icon](/img/docs/time-series-panel/interpolation-icon-smooth-7-4.png)
+![Smooth interpolation icon](/static/img/docs/time-series-panel/interpolation-icon-smooth-7-4.png)
 
 Points are joined by curved lines resulting in smooth transitions between points.
 
-![Smooth interpolation example](/img/docs/time-series-panel/interpolation-smooth-7-4.png)
+![Smooth interpolation example](/static/img/docs/time-series-panel/interpolation-smooth-7-4.png)
 
 #### Step before
 
-![Step before interpolation icon](/img/docs/time-series-panel/interpolation-icon-step-before-7-4.png)
+![Step before interpolation icon](/static/img/docs/time-series-panel/interpolation-icon-step-before-7-4.png)
 
 The line is displayed as steps between points. Points are rendered at the end of the step.
 
-![Step before interpolation example](/img/docs/time-series-panel/interpolation-step-before-7-4.png)
+![Step before interpolation example](/static/img/docs/time-series-panel/interpolation-step-before-7-4.png)
 
 #### Step after
 
-![Step after interpolation icon](/img/docs/time-series-panel/interpolation-icon-step-after-7-4.png)
+![Step after interpolation icon](/static/img/docs/time-series-panel/interpolation-icon-step-after-7-4.png)
 
 Line is displayed as steps between points. Points are rendered at the beginning of the step.
 
-![Step after interpolation example](/img/docs/time-series-panel/interpolation-step-after-7-4.png)
+![Step after interpolation example](/static/img/docs/time-series-panel/interpolation-step-after-7-4.png)
 
 ### Line width
 
@@ -69,11 +64,11 @@ Set the thickness of the series line, from 0 to 10 pixels.
 
 Line thickness set to 1:
 
-![Line thickness 1 example](/img/docs/time-series-panel/line-graph-thickness-1-7-4.png)
+![Line thickness 1 example](/static/img/docs/time-series-panel/line-graph-thickness-1-7-4.png)
 
 Line thickness set to 7:
 
-![Line thickness 7 example](/img/docs/time-series-panel/line-graph-thickness-7-7-4.png)
+![Line thickness 7 example](/static/img/docs/time-series-panel/line-graph-thickness-7-7-4.png)
 
 ### Fill opacity
 
@@ -81,15 +76,15 @@ Set the opacity of the series fill, from 0 to 100 percent.
 
 Fill opacity set to 20:
 
-![Fill opacity 20 example](/img/docs/time-series-panel/line-graph-opacity-20-7-4.png)
+![Fill opacity 20 example](/static/img/docs/time-series-panel/line-graph-opacity-20-7-4.png)
 
 Fill opacity set to 95:
 
-![Fill opacity 95 example](/img/docs/time-series-panel/line-graph-opacity-95-7-4.png)
+![Fill opacity 95 example](/static/img/docs/time-series-panel/line-graph-opacity-95-7-4.png)
 
 ### Gradient mode
 
-Set the mode of the gradient fill. Fill gradient is based on the line color. To change the color, use the standard [color scheme]({{< relref "../../field-options/standard-field-options.md#color-scheme" >}}) field option.
+Set the mode of the gradient fill. Fill gradient is based on the line color. To change the color, use the standard [color scheme]({{< relref "../../standard-options.md#color-scheme" >}}) field option.
 
 Gradient appearance is influenced by the **Fill opacity** setting. In the screenshots below, **Fill opacity** is set to 50.
 
@@ -97,23 +92,23 @@ Gradient appearance is influenced by the **Fill opacity** setting. In the screen
 
 No gradient fill. This is the default setting.
 
-![Gradient mode none example](/img/docs/time-series-panel/line-graph-gradient-none-7-4.png)
+![Gradient mode none example](/static/img/docs/time-series-panel/line-graph-gradient-none-7-4.png)
 
 #### Opacity
 
 Transparency of the gradient is calculated based on the values on the y-axis. Opacity of the fill is increasing with the values on the Y-axis.
 
-![Gradient mode opacity example](/img/docs/time-series-panel/line-graph-gradient-opacity-7-4.png)
+![Gradient mode opacity example](/static/img/docs/time-series-panel/line-graph-gradient-opacity-7-4.png)
 
 #### Hue
 
 Gradient color is generated based on the hue of the line color.
 
-![Gradient mode hue example](/img/docs/time-series-panel/line-graph-gradient-hue-7-4.png)
+![Gradient mode hue example](/static/img/docs/time-series-panel/line-graph-gradient-hue-7-4.png)
 
 ### Line style
 
-Set the style of the line. To change the color, use the standard [color scheme]({{< relref "../../field-options/standard-field-options.md#color-scheme" >}}) field option.
+Set the style of the line. To change the color, use the standard [color scheme]({{< relref "../../standard-options.md#color-scheme" >}}) field option.
 
 Line style appearance is influenced by the **Line width** and **Fill opacity** settings. In the screenshots below, **Line width** is set to 3 and **Fill opacity** is set to 20.
 
@@ -121,7 +116,7 @@ Line style appearance is influenced by the **Line width** and **Fill opacity** s
 
 Display solid line. This is the default setting.
 
-![Line style solid example](/img/docs/time-series-panel/line-graph-line-style-solid-7-4.png)
+![Line style solid example](/static/img/docs/time-series-panel/line-graph-line-style-solid-7-4.png)
 
 #### Dash
 
@@ -129,15 +124,15 @@ Display a dashed line. When you choose this option, a list appears so that you c
 
 Dash spacing set to 10, 10 (default):
 
-![Line style dashed 10, 10 example](/img/docs/time-series-panel/line-graph-line-style-dashed-10-10-7-4.png)
+![Line style dashed 10, 10 example](/static/img/docs/time-series-panel/line-graph-line-style-dashed-10-10-7-4.png)
 
 Dash spacing set to 10, 30:
 
-![Line style dashed 10, 30 example](/img/docs/time-series-panel/line-graph-line-style-dashed-10-30-7-4.png)
+![Line style dashed 10, 30 example](/static/img/docs/time-series-panel/line-graph-line-style-dashed-10-30-7-4.png)
 
 Dash spacing set to 40, 10:
 
-![Line style dashed 40, 10 example](/img/docs/time-series-panel/line-graph-line-style-dashed-40-10-7-4.png)
+![Line style dashed 40, 10 example](/static/img/docs/time-series-panel/line-graph-line-style-dashed-40-10-7-4.png)
 
 #### Dots
 
@@ -145,27 +140,31 @@ Display dotted lines. When you choose this option, a list appears so that you ca
 
 Dot spacing set to 0, 10 (default):
 
-![Line style dots 0, 10 example](/img/docs/time-series-panel/line-graph-line-style-dots-0-10-7-4.png)
+![Line style dots 0, 10 example](/static/img/docs/time-series-panel/line-graph-line-style-dots-0-10-7-4.png)
 
 Dot spacing set to 0, 30:
 
-![Line style dots 0, 30 example](/img/docs/time-series-panel/line-graph-line-style-dots-0-30-7-4.png)
+![Line style dots 0, 30 example](/static/img/docs/time-series-panel/line-graph-line-style-dots-0-30-7-4.png)
 
-### Null values
+### Connect null values
 
-Choose how null values (gaps in the data) are displayed on the graph.
+Choose how null values (gaps in the data) are displayed on the graph. Null values can be connected to form a continuous line or, optionally, set a threshold above which gaps in the data should no longer be connected. 
 
-#### Gaps
+![Image name](/static/img/docs/time-series-panel/connect-null-values-8-0.png)
 
-If there is a gap in the series, the line in the graph will be broken and show the gap.
+#### Never
 
-![Null values gaps example](/img/docs/time-series-panel/line-graph-null-gaps-7-4.png)
+Time series data points with gaps in the the data are never connected.
 
-#### Connected
+#### Always
 
-If there is a gap in the series, the line will skip the gap and connect to the next non-null value.
+Time series data points with gaps in the the data are always connected.
 
-![Null values connected example](/img/docs/time-series-panel/line-graph-null-connected-7-4.png)
+#### Threshold
+
+A threshold can be set above which gaps in the data should no longer be connected. This can be useful when the connected gaps in the data are of a known size and/or within a known range and gaps outside this range should no longer be connected. 
+
+![Image name](/static/img/docs/time-series-panel/connect-null-values-8-0.png)
 
 ### Show points
 
@@ -185,17 +184,17 @@ Set the size of the points, from 1 to 40 pixels in diameter.
 
 Point size set to 4:
 
-![Show points point size 4 example](/img/docs/time-series-panel/line-graph-show-points-4-7-4.png)
+![Show points point size 4 example](/static/img/docs/time-series-panel/line-graph-show-points-4-7-4.png)
 
 Point size set to 10:
 
-![Show points point size 10 example](/img/docs/time-series-panel/line-graph-show-points-10-7-4.png)
+![Show points point size 10 example](/static/img/docs/time-series-panel/line-graph-show-points-10-7-4.png)
 
 #### Never
 
 Never show the points.
 
-![Show points point never example](/img/docs/time-series-panel/line-graph-show-points-never-7-4.png)
+![Show points point never example](/static/img/docs/time-series-panel/line-graph-show-points-never-7-4.png)
 
 {{< docs/shared "visualizations/stack-series-link.md" >}}
 
@@ -213,7 +212,7 @@ Fill the area between two series. On the Overrides tab:
 
 A-series filled below to B-series:
 
-![Fill below to example](/img/docs/time-series-panel/line-graph-fill-below-to-7-4.png)
+![Fill below to example](/static/img/docs/time-series-panel/line-graph-fill-below-to-7-4.png)
 
 ## Line graph examples
 
@@ -223,14 +222,14 @@ Below are some line graph examples to give you ideas.
 
 This is a graph with different line styles and colors applied to each series and zero fill.
 
-![Various line styles example](/img/docs/time-series-panel/various-line-styles-7-4.png)
+![Various line styles example](/static/img/docs/time-series-panel/various-line-styles-7-4.png)
 
 ### Interpolation modes examples
 
-![Interpolation modes example](/img/docs/time-series-panel/interpolation-modes-examples-7-4.png)
+![Interpolation modes example](/static/img/docs/time-series-panel/interpolation-modes-examples-7-4.png)
 
 ### Fill below example
 
 This graph shows three series: Min, Max, and Value. The Min and Max series have **Line width** set to 0. Max has a **Fill below to** override set to Min, which fills the area between Max and Min with the Max line color.
 
-![Fill below example](/img/docs/time-series-panel/fill-below-to-7-4.png)
+![Fill below example](/static/img/docs/time-series-panel/fill-below-to-7-4.png)

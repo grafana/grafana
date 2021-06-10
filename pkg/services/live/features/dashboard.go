@@ -47,7 +47,7 @@ func (h *DashboardHandler) GetHandlerForPath(path string) (models.ChannelHandler
 }
 
 // OnSubscribe for now allows anyone to subscribe to any dashboard
-func (h *DashboardHandler) OnSubscribe(ctx context.Context, user *models.SignedInUser, e models.SubscribeEvent) (models.SubscribeReply, backend.SubscribeStreamStatus, error) {
+func (h *DashboardHandler) OnSubscribe(_ context.Context, user *models.SignedInUser, e models.SubscribeEvent) (models.SubscribeReply, backend.SubscribeStreamStatus, error) {
 	parts := strings.Split(e.Path, "/")
 	if parts[0] == "gitops" {
 		// gitops gets all changes for everything, so lets make sure it is an admin user
@@ -63,13 +63,13 @@ func (h *DashboardHandler) OnSubscribe(ctx context.Context, user *models.SignedI
 	if len(parts) == 2 && parts[0] == "uid" {
 		query := models.GetDashboardQuery{Uid: parts[1], OrgId: user.OrgId}
 		if err := bus.Dispatch(&query); err != nil {
-			logger.Error("Unknown dashboard", "query", query)
+			logger.Error("Error getting dashboard", "query", query, "error", err)
 			return models.SubscribeReply{}, backend.SubscribeStreamStatusNotFound, nil
 		}
 
 		dash := query.Result
-		guardian := guardian.New(dash.Id, user.OrgId, user)
-		if canView, err := guardian.CanView(); err != nil || !canView {
+		guard := guardian.New(dash.Id, user.OrgId, user)
+		if canView, err := guard.CanView(); err != nil || !canView {
 			return models.SubscribeReply{}, backend.SubscribeStreamStatusPermissionDenied, nil
 		}
 
@@ -102,27 +102,27 @@ func (h *DashboardHandler) OnPublish(ctx context.Context, user *models.SignedInU
 		event := dashboardEvent{}
 		err := json.Unmarshal(e.Data, &event)
 		if err != nil || event.UID != parts[1] {
-			return models.PublishReply{}, backend.SubscribeStreamStatusNotFound, fmt.Errorf("bad request")
+			return models.PublishReply{}, backend.PublishStreamStatusNotFound, fmt.Errorf("bad request")
 		}
 		if event.Action != EDITING_STARTED {
 			// just ignore the event
-			return models.PublishReply{}, backend.SubscribeStreamStatusNotFound, fmt.Errorf("ignore???")
+			return models.PublishReply{}, backend.PublishStreamStatusNotFound, fmt.Errorf("ignore???")
 		}
 		query := models.GetDashboardQuery{Uid: parts[1], OrgId: user.OrgId}
 		if err := bus.Dispatch(&query); err != nil {
 			logger.Error("Unknown dashboard", "query", query)
-			return models.PublishReply{}, backend.SubscribeStreamStatusNotFound, nil
+			return models.PublishReply{}, backend.PublishStreamStatusNotFound, nil
 		}
 
 		guardian := guardian.New(query.Result.Id, user.OrgId, user)
 		canEdit, err := guardian.CanEdit()
 		if err != nil {
-			return models.PublishReply{}, backend.SubscribeStreamStatusNotFound, fmt.Errorf("internal error")
+			return models.PublishReply{}, backend.PublishStreamStatusNotFound, fmt.Errorf("internal error")
 		}
 
 		// Ignore edit events if the user can not edit
 		if !canEdit {
-			return models.PublishReply{}, backend.SubscribeStreamStatusNotFound, nil // NOOP
+			return models.PublishReply{}, backend.PublishStreamStatusNotFound, nil // NOOP
 		}
 
 		// Tell everyone who is editing
@@ -130,12 +130,12 @@ func (h *DashboardHandler) OnPublish(ctx context.Context, user *models.SignedInU
 
 		msg, err := json.Marshal(event)
 		if err != nil {
-			return models.PublishReply{}, backend.SubscribeStreamStatusNotFound, fmt.Errorf("internal error")
+			return models.PublishReply{}, backend.PublishStreamStatusNotFound, fmt.Errorf("internal error")
 		}
 		return models.PublishReply{Data: msg}, backend.PublishStreamStatusOK, nil
 	}
 
-	return models.PublishReply{}, backend.SubscribeStreamStatusNotFound, nil
+	return models.PublishReply{}, backend.PublishStreamStatusNotFound, nil
 }
 
 // DashboardSaved should broadcast to the appropriate stream

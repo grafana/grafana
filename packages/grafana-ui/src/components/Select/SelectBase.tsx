@@ -251,6 +251,7 @@ export function SelectBase<T>({
                     transform: translateY(-50%);
                     box-sizing: border-box;
                     line-height: 1;
+                    white-space: nowrap;
                   `
                 )}
               >

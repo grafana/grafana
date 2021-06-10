@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react';
-import { InlineFormLabel, Button, LegacyForms } from '@grafana/ui';
+import { InlineFormLabel, Button, LegacyForms, Alert } from '@grafana/ui';
 const { Input } = LegacyForms;
 import { AzureDataSourceSettings, AzureDataSourceJsonData, AzureDataSourceSecureJsonData } from '../types';
 
@@ -22,7 +22,7 @@ export class InsightsConfig extends PureComponent<Props> {
     const { options, onUpdateJsonDataOption, onUpdateSecureJsonDataOption } = this.props;
     return (
       <>
-        <h3 className="page-heading">Azure Application Insights Details</h3>
+        <h3 className="page-heading">Azure Application Insights</h3>
         <div className="gf-form-group">
           {options.secureJsonFields.appInsightsApiKey ? (
             <div className="gf-form-inline">
@@ -66,6 +66,10 @@ export class InsightsConfig extends PureComponent<Props> {
             </div>
           </div>
         </div>
+
+        <Alert severity="info" title="Application Insights credentials are deprecated">
+          Configure using Azure AD App Registration above and update existing queries to use Metrics or Logs.
+        </Alert>
       </>
     );
   }

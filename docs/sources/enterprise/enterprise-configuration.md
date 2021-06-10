@@ -2,7 +2,7 @@
 title = "Enterprise configuration"
 description = "Enterprise configuration documentation"
 keywords = ["grafana", "configuration", "documentation", "enterprise"]
-weight = 300
+weight = 700
 +++
 
 # Grafana Enterprise configuration
@@ -132,6 +132,10 @@ Maximum number of concurrent calls to the rendering service.
 ### image_scale_factor
 
 Scale factor for rendering images. Value `2` is enough for monitor resolutions, `4` would be better for printed material. Setting a higher value affects performance and memory.
+
+### max_attachment_size_mb
+
+Set the maximum file size in megabytes for the CSV attachments.
 
 ### fonts_path
 
@@ -331,29 +335,42 @@ A list of cookies that are stripped from the outgoing data source and alerting r
 
 > **Note:** Available in Grafana Enterprise v7.5 and later versions.
 
-When query caching is enabled, Grafana temporarily stores the results of data source queries and serves cached responses to similar requests.
+When query caching is enabled, Grafana can temporarily store the results of data source queries and serve cached responses to similar requests.
 
 ### backend
 
-The caching backend to use when storing cached queries. Options: memory
-
-> **Note:** This setting enables the caching feature, and does not enable query caching for any data source. To enable query caching for a data source, refer to the data source’s configuration page.
+The caching backend to use when storing cached queries. Options: `memory`, `redis`, and `memcached`.
 
 ### enabled
 
-Setting 'enabled' to true enables query caching for data sources with configured caching.
+Setting 'enabled' to `true` allows users to configure query caching for data sources.
 
-This value is enabled by default.
+This value is `true` by default.
+
+> **Note:** This setting enables the caching feature, but it does not turn on query caching for any data source. To turn on query caching for a data source, update the setting on the data source configuration page. For more information, refer to the [query caching docs]({{< relref "./query-caching.md#enable-and-configure-query-caching" >}}).
 
 ### ttl
 
-The default TTL (time to live) if no other TTL is available.
+_Time to live_ (TTL) is the time that a query result is stored in the caching system before it is deleted or refreshed. This setting defines the time to live for query caching, when TTL is not configured in data source settings. The default value is `5m` (5 minutes).
+
+### max_value_mb
+
+This value limits the size of a single cache value. If a cache value (or query result) exceeds this size, then it is not cached. To disable this limit, set this value to `0`.
 
 ## [caching.memory]
 
 ### gc_interval
 
 When storing cache data in-memory, this setting defines how often a background process cleans up stale data from the in-memory cache. More frequent "garbage collection" can keep memory usage from climbing but will increase CPU usage.
+
+### max_size_mb
+
+The maximum size of the in-memory cache in megabytes. Once this size is reached, new cache items are rejected. For more flexible control over cache eviction policies and size, use the Redis or Memcached backend. 
+
+To disable the maximum, set this value to `0`. 
+
+> **Note:** Disabling the maximum is not recommended in production environments.
+
 
 ## [caching.redis]
 

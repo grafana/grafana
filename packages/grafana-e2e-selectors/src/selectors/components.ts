@@ -120,6 +120,7 @@ export const Components = {
   },
   RefreshPicker: {
     runButton: 'RefreshPicker run button',
+    intervalButton: 'RefreshPicker interval button',
   },
   QueryTab: {
     content: 'Query editor tab content',
@@ -164,7 +165,8 @@ export const Components = {
     backArrow: 'Go Back button',
   },
   OptionsGroup: {
-    toggle: (title?: string) => (title ? `Options group ${title}` : 'Options group'),
+    group: (title?: string) => (title ? `Options group ${title}` : 'Options group'),
+    toggle: (title?: string) => (title ? `Options group ${title} toggle` : 'Options group toggle'),
   },
   PluginVisualization: {
     item: (title: string) => `Plugin visualization item ${title}`,

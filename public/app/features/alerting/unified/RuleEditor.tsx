@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
-import { Alert, LinkButton, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
+import { Alert, LinkButton, LoadingPlaceholder, useStyles2, withErrorBoundary } from '@grafana/ui';
 import Page from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/services/context_srv';
 import { useCleanup } from 'app/core/hooks/useCleanup';
@@ -22,7 +22,7 @@ const ExistingRuleEditor: FC<ExistingRuleEditorProps> = ({ identifier }) => {
   useCleanup((state) => state.unifiedAlerting.ruleForm.existingRule);
   const { loading, result, error, dispatched } = useUnifiedAlertingSelector((state) => state.ruleForm.existingRule);
   const dispatch = useDispatch();
-  const { isEditable, loading: loadingEditableStatus } = useIsRuleEditable(result?.rule);
+  const { isEditable } = useIsRuleEditable(result?.rule);
 
   useEffect(() => {
     if (!dispatched) {
@@ -30,7 +30,7 @@ const ExistingRuleEditor: FC<ExistingRuleEditorProps> = ({ identifier }) => {
     }
   }, [dispatched, dispatch, identifier]);
 
-  if (loading || loadingEditableStatus) {
+  if (loading || isEditable === undefined) {
     return (
       <Page.Contents>
         <LoadingPlaceholder text="Loading rule..." />
@@ -82,4 +82,4 @@ const warningStyles = (theme: GrafanaTheme2) => ({
   `,
 });
 
-export default RuleEditor;
+export default withErrorBoundary(RuleEditor, { style: 'page' });

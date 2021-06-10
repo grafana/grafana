@@ -2,11 +2,9 @@ package channels
 
 import (
 	"context"
-	"fmt"
+	"net/url"
 	"path"
 
-	gokit_log "github.com/go-kit/kit/log"
-	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 
@@ -31,7 +29,7 @@ type EmailNotifier struct {
 
 // NewEmailNotifier is the constructor function
 // for the EmailNotifier.
-func NewEmailNotifier(model *models.AlertNotification, t *template.Template) (*EmailNotifier, error) {
+func NewEmailNotifier(model *NotificationChannelConfig, t *template.Template) (*EmailNotifier, error) {
 	if model.Settings == nil {
 		return nil, alerting.ValidationError{Reason: "No Settings Supplied"}
 	}
@@ -47,23 +45,40 @@ func NewEmailNotifier(model *models.AlertNotification, t *template.Template) (*E
 	addresses := util.SplitEmails(addressesString)
 
 	return &EmailNotifier{
-		NotifierBase: old_notifiers.NewNotifierBase(model),
-		Addresses:    addresses,
-		SingleEmail:  singleEmail,
-		Message:      model.Settings.Get("message").MustString(),
-		log:          log.New("alerting.notifier.email"),
-		tmpl:         t,
+		NotifierBase: old_notifiers.NewNotifierBase(&models.AlertNotification{
+			Uid:                   model.UID,
+			Name:                  model.Name,
+			Type:                  model.Type,
+			DisableResolveMessage: model.DisableResolveMessage,
+			Settings:              model.Settings,
+		}),
+		Addresses:   addresses,
+		SingleEmail: singleEmail,
+		Message:     model.Settings.Get("message").MustString(),
+		log:         log.New("alerting.notifier.email"),
+		tmpl:        t,
 	}, nil
 }
 
 // Notify sends the alert notification.
 func (en *EmailNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
-	// We only need ExternalURL from this template object. This hack should go away with https://github.com/prometheus/alertmanager/pull/2508.
-	data := notify.GetTemplateData(ctx, &template.Template{ExternalURL: en.tmpl.ExternalURL}, as, gokit_log.NewNopLogger())
 	var tmplErr error
-	tmpl := notify.TmplText(en.tmpl, data, &tmplErr)
+	tmpl, data := TmplText(ctx, en.tmpl, as, en.log, &tmplErr)
 
 	title := tmpl(`{{ template "default.title" . }}`)
+
+	alertPageURL := en.tmpl.ExternalURL.String()
+	ruleURL := en.tmpl.ExternalURL.String()
+	u, err := url.Parse(en.tmpl.ExternalURL.String())
+	if err == nil {
+		basePath := u.Path
+		u.Path = path.Join(basePath, "/alerting/list")
+		ruleURL = u.String()
+		u.RawQuery = "alertState=firing&view=state"
+		alertPageURL = u.String()
+	} else {
+		en.log.Debug("failed to parse external URL", "url", en.tmpl.ExternalURL.String(), "err", err.Error())
+	}
 
 	cmd := &models.SendEmailCommandSync{
 		SendEmailCommand: models.SendEmailCommand{
@@ -77,8 +92,8 @@ func (en *EmailNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 				"CommonLabels":      data.CommonLabels,
 				"CommonAnnotations": data.CommonAnnotations,
 				"ExternalURL":       data.ExternalURL,
-				"RuleUrl":           path.Join(en.tmpl.ExternalURL.String(), "/alerting/list"),
-				"AlertPageUrl":      path.Join(en.tmpl.ExternalURL.String(), "/alerting/list?alertState=firing&view=state"),
+				"RuleUrl":           ruleURL,
+				"AlertPageUrl":      alertPageURL,
 			},
 			To:          en.Addresses,
 			SingleEmail: en.SingleEmail,
@@ -87,7 +102,7 @@ func (en *EmailNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 	}
 
 	if tmplErr != nil {
-		return false, fmt.Errorf("failed to template email message: %w", tmplErr)
+		en.log.Debug("failed to template email message", "err", tmplErr.Error())
 	}
 
 	if err := bus.DispatchCtx(ctx, cmd); err != nil {

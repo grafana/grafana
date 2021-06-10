@@ -9,6 +9,7 @@ import { MetricAggregationsEditor } from './MetricAggregationsEditor';
 import { BucketAggregationsEditor } from './BucketAggregationsEditor';
 import { useDispatch } from '../../hooks/useStatelessReducer';
 import { useNextId } from '../../hooks/useNextId';
+import { metricAggregationConfig } from './MetricAggregationsEditor/utils';
 
 export type ElasticQueryEditorProps = QueryEditorProps<ElasticDatasource, ElasticsearchQuery, ElasticsearchOptions>;
 
@@ -34,6 +35,10 @@ const QueryEditorForm = ({ value }: Props) => {
 
   // To be considered a time series query, the last bucked aggregation must be a Date Histogram
   const isTimeSeriesQuery = value.bucketAggs?.slice(-1)[0]?.type === 'date_histogram';
+
+  const showBucketAggregationsEditor = value.metrics?.every(
+    (metric) => !metricAggregationConfig[metric.type].isSingleMetric
+  );
 
   return (
     <>
@@ -65,7 +70,7 @@ const QueryEditorForm = ({ value }: Props) => {
       </InlineFieldRow>
 
       <MetricAggregationsEditor nextId={nextId} />
-      <BucketAggregationsEditor nextId={nextId} />
+      {showBucketAggregationsEditor && <BucketAggregationsEditor nextId={nextId} />}
     </>
   );
 };

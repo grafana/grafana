@@ -4,11 +4,11 @@ import { toString, toNumber as _toNumber, isEmpty, isBoolean } from 'lodash';
 // Types
 import { Field, FieldType } from '../types/dataFrame';
 import { DisplayProcessor, DisplayValue } from '../types/displayValue';
-import { getValueFormat } from '../valueFormats/valueFormats';
+import { getValueFormat, isBooleanUnit } from '../valueFormats/valueFormats';
 import { getValueMappingResult } from '../utils/valueMappings';
 import { dateTime } from '../datetime';
 import { KeyValue, TimeZone } from '../types';
-import { getScaleCalculator, ScaleCalculator } from './scale';
+import { getScaleCalculator } from './scale';
 import { GrafanaTheme2 } from '../themes/types';
 import { anyToNumber } from '../utils/anyToNumber';
 
@@ -49,11 +49,14 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
   if (field.type === FieldType.time && !hasDateUnit) {
     unit = `dateTimeAsSystem`;
     hasDateUnit = true;
+  } else if (field.type === FieldType.boolean) {
+    if (!isBooleanUnit(unit)) {
+      unit = 'bool';
+    }
   }
 
   const formatFunc = getValueFormat(unit || 'none');
   const scaleFunc = getScaleCalculator(field, options.theme);
-  const defaultColor = getDefaultColorFunc(field, scaleFunc, options.theme);
 
   return (value: any) => {
     const { mappings } = config;
@@ -113,7 +116,7 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
     }
 
     if (!color) {
-      const scaleResult = defaultColor(value);
+      const scaleResult = scaleFunc(-Infinity);
       color = scaleResult.color;
       percent = scaleResult.percent;
     }
@@ -131,33 +134,4 @@ export function getRawDisplayProcessor(): DisplayProcessor {
     text: `${value}`,
     numeric: (null as unknown) as number,
   });
-}
-
-function getDefaultColorFunc(field: Field, scaleFunc: ScaleCalculator, theme: GrafanaTheme2) {
-  if (field.type === FieldType.string) {
-    return (value: any) => {
-      if (!value) {
-        return { color: theme.colors.background.primary, percent: 0 };
-      }
-
-      const hc = strHashCode(value as string);
-      const color = theme.visualization.getColorByName(
-        theme.visualization.palette[Math.floor(hc % theme.visualization.palette.length)]
-      );
-
-      return {
-        color: color,
-        percent: 0,
-      };
-    };
-  }
-  return (value: any) => scaleFunc(-Infinity);
-}
-
-/**
- * Converts a string into a numeric value -- we just need it to be different
- * enough so that it has a reasonable distribution across a color pallet
- */
-function strHashCode(str: string) {
-  return str.split('').reduce((prevHash, currVal) => ((prevHash << 5) - prevHash + currVal.charCodeAt(0)) | 0, 0);
 }

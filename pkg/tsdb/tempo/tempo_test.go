@@ -4,13 +4,14 @@ import (
 	"context"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestTempo(t *testing.T) {
-	plug, err := NewExecutor(&models.DataSource{})
+	plug, err := New(httpclient.NewProvider())(&models.DataSource{})
 	executor := plug.(*tempoExecutor)
 	require.NoError(t, err)
 

@@ -3,7 +3,6 @@ package pluginproxy
 import (
 	"context"
 	"crypto/sha256"
-	"errors"
 	"fmt"
 	"strings"
 
@@ -44,7 +43,7 @@ func (provider *azureAccessTokenProvider) getAccessToken() (string, error) {
 
 	if provider.isManagedIdentityCredential() {
 		if !provider.cfg.Azure.ManagedIdentityEnabled {
-			err := fmt.Errorf("managed identity authentication not enabled in Grafana config")
+			err := fmt.Errorf("managed identity authentication is not enabled in Grafana config")
 			return "", err
 		} else {
 			credential = provider.getManagedIdentityCredential()
@@ -118,23 +117,16 @@ func (c *managedIdentityCredential) GetCacheKey() string {
 	return fmt.Sprintf("azure|msi|%s", clientId)
 }
 
+func (c *managedIdentityCredential) Init() error {
+	if credential, err := azidentity.NewManagedIdentityCredential(c.clientId, nil); err != nil {
+		return err
+	} else {
+		c.credential = credential
+		return nil
+	}
+}
+
 func (c *managedIdentityCredential) GetAccessToken(ctx context.Context, scopes []string) (*AccessToken, error) {
-	// No need to lock here because the caller is responsible for thread safety
-	if c.credential == nil {
-		var err error
-		c.credential, err = azidentity.NewManagedIdentityCredential(c.clientId, nil)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	// Implementation of ManagedIdentityCredential doesn't support scopes, converting to resource
-	if len(scopes) == 0 {
-		return nil, errors.New("scopes not provided")
-	}
-	resource := strings.TrimSuffix(scopes[0], "/.default")
-	scopes = []string{resource}
-
 	accessToken, err := c.credential.GetToken(ctx, azcore.TokenRequestOptions{Scopes: scopes})
 	if err != nil {
 		return nil, err
@@ -155,16 +147,17 @@ func (c *clientSecretCredential) GetCacheKey() string {
 	return fmt.Sprintf("azure|clientsecret|%s|%s|%s|%s", c.authority, c.tenantId, c.clientId, hashSecret(c.clientSecret))
 }
 
-func (c *clientSecretCredential) GetAccessToken(ctx context.Context, scopes []string) (*AccessToken, error) {
-	// No need to lock here because the caller is responsible for thread safety
-	if c.credential == nil {
-		var err error
-		c.credential, err = azidentity.NewClientSecretCredential(c.tenantId, c.clientId, c.clientSecret, nil)
-		if err != nil {
-			return nil, err
-		}
+func (c *clientSecretCredential) Init() error {
+	options := &azidentity.ClientSecretCredentialOptions{AuthorityHost: c.authority}
+	if credential, err := azidentity.NewClientSecretCredential(c.tenantId, c.clientId, c.clientSecret, options); err != nil {
+		return err
+	} else {
+		c.credential = credential
+		return nil
 	}
+}
 
+func (c *clientSecretCredential) GetAccessToken(ctx context.Context, scopes []string) (*AccessToken, error) {
 	accessToken, err := c.credential.GetToken(ctx, azcore.TokenRequestOptions{Scopes: scopes})
 	if err != nil {
 		return nil, err

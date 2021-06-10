@@ -16,6 +16,7 @@ export interface VizLegendBaseProps<T> {
   itemRenderer?: (item: VizLegendItem<T>, index: number) => JSX.Element;
   onLabelMouseEnter?: (item: VizLegendItem, event: React.MouseEvent<HTMLElement>) => void;
   onLabelMouseOut?: (item: VizLegendItem, event: React.MouseEvent<HTMLElement>) => void;
+  readonly?: boolean;
 }
 
 export interface VizLegendTableProps<T> extends VizLegendBaseProps<T> {
@@ -31,7 +32,8 @@ export interface LegendProps<T = any> extends VizLegendBaseProps<T>, VizLegendTa
 export interface VizLegendItem<T = any> {
   getItemKey?: () => string;
   label: string;
-  color: string;
+  color?: string;
+  gradient?: string;
   yAxis: number;
   disabled?: boolean;
   // displayValues?: DisplayValue[];

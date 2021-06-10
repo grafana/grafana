@@ -14,6 +14,8 @@ type Props = {
   logsSortOrder?: LogsSortOrder | null;
   onChangeTime: (range: AbsoluteTimeRange) => void;
   scrollToTopLogs: () => void;
+  addResultsToCache: () => void;
+  clearCache: () => void;
 };
 
 export type LogsPage = {
@@ -30,6 +32,8 @@ function LogsNavigation({
   scrollToTopLogs,
   visibleRange,
   queries,
+  clearCache,
+  addResultsToCache,
 }: Props) {
   const [pages, setPages] = useState<LogsPage[]>([]);
   const [currentPageIndex, setCurrentPageIndex] = useState(0);
@@ -53,6 +57,7 @@ function LogsNavigation({
     let newPages: LogsPage[] = [];
     // We want to start new pagination if queries change or if absolute range is different than expected
     if (!isEqual(expectedRangeRef.current, absoluteRange) || !isEqual(expectedQueriesRef.current, queries)) {
+      clearCache();
       setPages([newPage]);
       setCurrentPageIndex(0);
       expectedQueriesRef.current = queries;
@@ -72,7 +77,14 @@ function LogsNavigation({
       const index = newPages.findIndex((page) => page.queryRange.to === absoluteRange.to);
       setCurrentPageIndex(index);
     }
-  }, [visibleRange, absoluteRange, logsSortOrder, queries]);
+    addResultsToCache();
+  }, [visibleRange, absoluteRange, logsSortOrder, queries, clearCache, addResultsToCache]);
+
+  useEffect(() => {
+    return () => clearCache();
+    // We can't enforce the eslint rule here because we only want to run when component unmounts.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const changeTime = ({ from, to }: AbsoluteTimeRange) => {
     expectedRangeRef.current = { from, to };

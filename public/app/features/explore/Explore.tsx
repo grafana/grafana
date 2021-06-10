@@ -6,7 +6,14 @@ import { connect } from 'react-redux';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import memoizeOne from 'memoize-one';
 import { selectors } from '@grafana/e2e-selectors';
-import { ErrorBoundaryAlert, stylesFactory, withTheme, CustomScrollbar } from '@grafana/ui';
+import {
+  ErrorBoundaryAlert,
+  stylesFactory,
+  withTheme,
+  CustomScrollbar,
+  Collapse,
+  TooltipDisplayMode,
+} from '@grafana/ui';
 import {
   AbsoluteTimeRange,
   DataQuery,
@@ -34,12 +41,12 @@ import { StoreState } from 'app/types';
 import { ExploreToolbar } from './ExploreToolbar';
 import { NoDataSourceCallToAction } from './NoDataSourceCallToAction';
 import { getTimeZone } from '../profile/state/selectors';
-import { TraceView } from './TraceView/TraceView';
 import { SecondaryActions } from './SecondaryActions';
 import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR, FilterItem } from '@grafana/ui/src/components/Table/types';
 import { ExploreGraphNGPanel } from './ExploreGraphNGPanel';
 import { NodeGraphContainer } from './NodeGraphContainer';
 import { ResponseErrorContainer } from './ResponseErrorContainer';
+import { TraceViewContainer } from './TraceView/TraceViewContainer';
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
@@ -222,19 +229,21 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     );
   }
 
-  renderGraphPanel(width: number) {
+  renderGraphPanel() {
     const { graphResult, absoluteRange, timeZone, splitOpen, queryResponse, loading } = this.props;
     return (
-      <ExploreGraphNGPanel
-        data={graphResult!}
-        width={width}
-        absoluteRange={absoluteRange}
-        timeZone={timeZone}
-        onUpdateTimeRange={this.onUpdateTimeRange}
-        annotations={queryResponse.annotations}
-        splitOpenFn={splitOpen}
-        isLoading={loading}
-      />
+      <Collapse label="Graph" loading={loading} isOpen>
+        <ExploreGraphNGPanel
+          data={graphResult!}
+          height={400}
+          tooltipDisplayMode={TooltipDisplayMode.Single}
+          absoluteRange={absoluteRange}
+          timeZone={timeZone}
+          onUpdateTimeRange={this.onUpdateTimeRange}
+          annotations={queryResponse.annotations}
+          splitOpenFn={splitOpen}
+        />
+      </Collapse>
     );
   }
 
@@ -250,11 +259,10 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     );
   }
 
-  renderLogsPanel(width: number) {
+  renderLogsPanel() {
     const { exploreId, syncedTimes } = this.props;
     return (
       <LogsContainer
-        width={width}
         exploreId={exploreId}
         syncedTimes={syncedTimes}
         onClickFilterLabel={this.onClickFilterLabel}
@@ -271,7 +279,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
       <NodeGraphContainer
         dataFrames={this.getNodeGraphDataFrames(queryResponse.series)}
         exploreId={exploreId}
-        short={showTrace}
+        withTraceView={showTrace}
       />
     );
   }
@@ -290,7 +298,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
 
     return (
       // If there is no data (like 404) we show a separate error so no need to show anything here
-      dataFrames.length && <TraceView exploreId={exploreId} dataFrames={dataFrames} splitOpenFn={splitOpen} />
+      dataFrames.length && <TraceViewContainer exploreId={exploreId} dataFrames={dataFrames} splitOpenFn={splitOpen} />
     );
   }
 
@@ -349,10 +357,10 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
                       {showPanels && (
                         <>
                           {showMetrics && graphResult && (
-                            <ErrorBoundaryAlert>{this.renderGraphPanel(width)}</ErrorBoundaryAlert>
+                            <ErrorBoundaryAlert>{this.renderGraphPanel()}</ErrorBoundaryAlert>
                           )}
                           {showTable && <ErrorBoundaryAlert>{this.renderTablePanel(width)}</ErrorBoundaryAlert>}
-                          {showLogs && <ErrorBoundaryAlert>{this.renderLogsPanel(width)}</ErrorBoundaryAlert>}
+                          {showLogs && <ErrorBoundaryAlert>{this.renderLogsPanel()}</ErrorBoundaryAlert>}
                           {showNodeGraph && <ErrorBoundaryAlert>{this.renderNodeGraphPanel()}</ErrorBoundaryAlert>}
                           {showTrace && <ErrorBoundaryAlert>{this.renderTraceViewPanel()}</ErrorBoundaryAlert>}
                         </>

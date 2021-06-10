@@ -23,7 +23,7 @@ Follow the instructions on the Install tab. You can either install the plugin wi
 
 For more information about Grafana CLI plugin commands, refer to [Plugin commands]({{< relref "../administration/cli.md#plugins-commands" >}}).
 
-As of Grafana v8.0, Marketplace for Grafana was introduced in order to make managing plugins easier. For more information, refer to [Plugin marketplace]({{< relref "./marketplace.md" >}}).
+As of Grafana v8.0, a plugin catalog app was introduced in order to make managing plugins easier. For more information, refer to [Plugin catalog]({{< relref "./catalog.md" >}}).
 
 ### Install a packaged plugin
 

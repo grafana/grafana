@@ -31,7 +31,7 @@ async function assertSegmentSelect(
   callbackValue: unknown
 ) {
   // we find the segment
-  const segs = screen.getAllByText(segmentText, { selector: 'label' });
+  const segs = screen.getAllByRole('button', { name: segmentText });
   expect(segs.length).toBe(1);
   const seg = segs[0];
   expect(seg).toBeInTheDocument();

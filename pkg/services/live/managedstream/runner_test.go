@@ -23,31 +23,17 @@ func TestNewManagedStream(t *testing.T) {
 	require.NotNil(t, c)
 }
 
-func TestManagedStream_GetLastPacket_UnstableSchema(t *testing.T) {
-	var orgID int64 = 1
-	publisher := &testPublisher{orgID: orgID, t: t}
-	c := NewManagedStream("a", publisher.publish)
-	_, ok := c.getLastPacket(orgID, "test")
-	require.False(t, ok)
-	err := c.Push(orgID, "test", data.NewFrame("hello"), true)
-	require.NoError(t, err)
-
-	_, ok = c.getLastPacket(orgID, "test")
-	require.NoError(t, err)
-	require.False(t, ok)
-}
-
 func TestManagedStream_GetLastPacket(t *testing.T) {
 	var orgID int64 = 1
 	publisher := &testPublisher{orgID: orgID, t: t}
 	c := NewManagedStream("a", publisher.publish)
 	_, ok := c.getLastPacket(orgID, "test")
 	require.False(t, ok)
-	err := c.Push(orgID, "test", data.NewFrame("hello"), false)
+	err := c.Push(orgID, "test", data.NewFrame("hello"))
 	require.NoError(t, err)
 
 	s, ok := c.getLastPacket(orgID, "test")
 	require.NoError(t, err)
 	require.True(t, ok)
-	require.Equal(t, `{"schema":{"name":"hello","fields":[]},"data":{"values":[]}}`, string(s))
+	require.JSONEq(t, `{"schema":{"name":"hello","fields":[]},"data":{"values":[]}}`, string(s))
 }

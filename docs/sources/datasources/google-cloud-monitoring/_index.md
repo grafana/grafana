@@ -39,31 +39,31 @@ The following APIs need to be enabled first:
 
 Click on the links above and click the `Enable` button:
 
-{{< docs-imagebox img="/img/docs/v71/cloudmonitoring_enable_api.png" max-width="450px" class="docs-image--no-shadow" caption="Enable GCP APIs" >}}
+{{< figure src="/static/img/docs/v71/cloudmonitoring_enable_api.png" max-width="450px" class="docs-image--no-shadow" caption="Enable GCP APIs" >}}
 
 #### Create a GCP Service Account for a Project
 
 1. Navigate to the [APIs and Services Credentials page](https://console.cloud.google.com/apis/credentials).
 1. Click on the `Create credentials` dropdown/button and choose the `Service account key` option.
 
-   {{< docs-imagebox img="/img/docs/v71/cloudmonitoring_create_service_account_button.png" max-width="500px" class="docs-image--no-shadow" caption="Create service account button" >}}
+   {{< figure src="/static/img/docs/v71/cloudmonitoring_create_service_account_button.png" max-width="500px" class="docs-image--no-shadow" caption="Create service account button" >}}
 
 1. On the `Create service account key` page, choose key type `JSON`. Then in the `Service Account` dropdown, choose the `New service account` option:
 
-   {{< docs-imagebox img="/img/docs/v71/cloudmonitoring_create_service_account_key.png" max-width="500px" class="docs-image--no-shadow" caption="Create service account key" >}}
+   {{< figure src="/static/img/docs/v71/cloudmonitoring_create_service_account_key.png" max-width="500px" class="docs-image--no-shadow" caption="Create service account key" >}}
 
 1. Some new fields will appear. Fill in a name for the service account in the `Service account name` field and then choose the `Monitoring Viewer` role from the `Role` dropdown:
 
-   {{< docs-imagebox img="/img/docs/v71/cloudmonitoring_service_account_choose_role.png" max-width="600px" class="docs-image--no-shadow" caption="Choose role" >}}
+   {{< figure src="/static/img/docs/v71/cloudmonitoring_service_account_choose_role.png" max-width="600px" class="docs-image--no-shadow" caption="Choose role" >}}
 
 1. Click the Create button. A JSON key file will be created and downloaded to your computer. Store this file in a secure place as it allows access to your Google Cloud Monitoring data.
 1. Upload it to Grafana on the data source Configuration page. You can either upload the file or paste in the contents of the file.
 
-   {{< docs-imagebox img="/img/docs/v71/cloudmonitoring_grafana_upload_key.png" max-width="550px" class="docs-image--no-shadow" caption="Upload service key file to Grafana" >}}
+   {{< figure src="/static/img/docs/v71/cloudmonitoring_grafana_upload_key.png" max-width="550px" class="docs-image--no-shadow" caption="Upload service key file to Grafana" >}}
 
 1. The file contents will be encrypted and saved in the Grafana database. Don't forget to save after uploading the file!
 
-   {{< docs-imagebox img="/img/docs/v71/cloudmonitoring_grafana_key_uploaded.png" max-width="600px" class="docs-image--no-shadow" caption="Service key file is uploaded to Grafana" >}}
+   {{< figure src="/static/img/docs/v71/cloudmonitoring_grafana_key_uploaded.png" max-width="600px" class="docs-image--no-shadow" caption="Service key file is uploaded to Grafana" >}}
 
 ### Using GCE Default Service Account
 
@@ -81,7 +81,7 @@ The Google Cloud Monitoring query editor allows you to build two types of querie
 
 ### Metric Queries
 
-{{< docs-imagebox img="/img/docs/v70/metric-query-builder.png" max-width= "400px" class="docs-image--right" >}}
+{{< figure src="/static/img/docs/google-cloud-monitoring/metric-query-builder-8-0.png" max-width= "400px" class="docs-image--right" >}}
 
 The metric query editor allows you to select metrics, group/aggregate by labels and by time, and use filters to specify which time series you want in the results.
 
@@ -97,7 +97,7 @@ Google Cloud Monitoring supports different kinds of metrics like `GAUGE`, `DELTA
 
 #### Filter
 
-To add a filter, click the plus icon and choose a field to filter by and enter a filter value e.g. `instance_name = grafana-1`. You can remove the filter by clicking on the filter name and select `--remove filter--`.
+To add a filter, click the plus icon and choose a field to filter by and enter a filter value e.g. `instance_name = grafana-1`. You can remove the filter by clicking on the trash icon.
 
 ##### Simple wildcards
 
@@ -107,13 +107,41 @@ When the operator is set to `=` or `!=` it is possible to add wildcards to the f
 
 When the operator is set to `=~` or `!=~` it is possible to add regular expressions to the filter value field. E.g `us-central[1-3]-[af]` would match all values that starts with "us-central", is followed by a number in the range of 1 to 3, a dash and then either an "a" or an "f". Leading and trailing slashes are not needed when creating regular expressions.
 
-#### Aggregation
+#### Pre-processing
 
-The aggregation field lets you combine time series based on common statistics. For more information about aggregation, refer to [aggregation options](https://cloud.google.com/monitoring/charts/metrics-selector#aggregation-options).
+Preprocessing options are displayed in the UI when the selected metric has a metric kind of `delta` or `cumulative`. If the selected metric has a metric kind of `gauge`, no pre-processing option will be displayed.
 
-The `Aligner` field allows you to align multiple time series after the same group by time interval. For more information about aligner, refer to [alignment metric selector](https://cloud.google.com/monitoring/charts/metrics-selector#alignment).
+If you select `Rate`, data points are aligned and converted to a rate per time series. If you select `Delta`, data points are aligned by their delta (difference) per time series.
 
-##### Alignment Period/Group by Time
+#### Grouping
+
+You can reduce the amount of data returned for a metric by combining different time series. To combine multiple time series, specify a grouping and a function.
+
+##### Group by
+
+Group by resource or metric labels to reduce the number of time series and to aggregate the results by a group. For example, group by `instance_name` to view an aggregated metric for a Compute instance.
+
+###### Metadata labels
+
+Resource metadata labels contain information that can uniquely identify a resource in Google Cloud. Metadata labels are only returned in the time series response if they're part of the **Group By** segment in the time series request.
+
+There's no API for retrieving metadata labels. As a result, you cannot populate the group by list with the metadata labels that are available for the selected service and metric. However, the **Group By** field list comes with a pre-defined set of common system labels.
+
+User labels cannot be predefined, but you can enter them manually in the **Group By** field. If a metadata label, user label, or system label is included in the **Group By** segment, then you can create filters based on it and expand its value on the **Alias** field.
+
+##### Group by function
+
+Select a grouping function to combine the time series in the group into a single time series.
+
+#### Alignment
+
+The process of alignment consists of collecting all data points received in a fixed length of time, applying a function to combine those data points, and assigning a timestamp to the result.
+
+##### Alignment function
+
+During alignment, all data points are received in a fixed interval. Within each interval (determined by the alignment period) and for each time series, the data is aggregated into a single point. The value of that point is determined by the type of alignment function used. For more information on alignment functions, refer to [alignment metric selector](https://cloud.google.com/monitoring/charts/metrics-selector#alignment).
+
+##### Alignment period
 
 The `Alignment Period` groups a metric by time if an aggregation is chosen. The default is to use the GCP Google Cloud Monitoring default groupings (which allows you to compare graphs in Grafana with graphs in the Google Cloud Monitoring UI).
 The option is called `cloud monitoring auto` and the defaults are:
@@ -124,23 +152,13 @@ The option is called `cloud monitoring auto` and the defaults are:
 
 The other automatic option is `grafana auto`. This will automatically set the group by time depending on the time range chosen and the width of the time series panel. For more information about grafana auto, refer to the [interval variable](http://docs.grafana.org/variables/templates-and-variables/#the-interval-variable).
 
-It is also possible to choose fixed time intervals to group by, like `1h` or `1d`.
-
-#### Group By
-
-Group by resource or metric labels to reduce the number of time series and to aggregate the results by a group by. E.g. Group by instance_name to see an aggregated metric for a Compute instance.
-
-##### Metadata labels
-
-Resource metadata labels contain information to uniquely identify a resource in Google Cloud. Metadata labels are only returned in the time series response if they're part of the **Group By** segment in the time series request. There's no API for retrieving metadata labels, so it's not possible to populate the group by dropdown with the metadata labels that are available for the selected service and metric. However, the **Group By** field dropdown comes with a pre-defined list of common system labels.
-
-User labels cannot be pre-defined, but it's possible to enter them manually in the **Group By** field. If a metadata label, user label or system label is included in the **Group By** segment, then you can create filters based on it and expand its value on the **Alias** field.
+You can also choose fixed time intervals to group by, like `1h` or `1d`.
 
 #### Alias patterns
 
 The Alias By field allows you to control the format of the legend keys. The default is to show the metric name and labels. This can be long and hard to read. Using the following patterns in the alias field, you can format the legend key the way you want it.
 
-#### Metric Type Patterns
+#### Metric type patterns
 
 | Alias Pattern        | Description                  | Example Result                                    |
 | -------------------- | ---------------------------- | ------------------------------------------------- |
@@ -148,7 +166,7 @@ The Alias By field allows you to control the format of the legend keys. The defa
 | `{{metric.name}}`    | returns the metric name part | `instance/cpu/utilization`                        |
 | `{{metric.service}}` | returns the service part     | `compute`                                         |
 
-#### Label Patterns
+#### Label patterns
 
 In the Group By dropdown, you can see a list of metric and resource labels for a metric. These can be included in the legend key using alias patterns.
 
@@ -177,7 +195,7 @@ Example Result: `gce_instance - compute.googleapis.com/instance/cpu/usage_time`
 
 > **Note:** Available in Grafana v7.1 and later versions.
 
-{{< docs-imagebox img="/img/docs/v71/cloudmonitoring_deep_linking.png" max-width="500px" class="docs-image--right" caption="Google Cloud Monitoring deep linking" >}}
+{{< figure src="/static/img/docs/v71/cloudmonitoring_deep_linking.png" max-width="500px" class="docs-image--right" caption="Google Cloud Monitoring deep linking" >}}
 
 Click on a time series in the panel to see a context menu with a link to View in Metrics Explorer in Google Cloud Console. Clicking that link opens the Metrics Explorer in the Google Cloud Console and runs the query from the Grafana panel there.
 The link navigates the user first to the Google Account Chooser and after successfully selecting an account, the user is redirected to the Metrics Explorer. The provided link is valid for any account, but it only displays the query if your account has access to the GCP project specified in the query.
@@ -190,7 +208,7 @@ Grafana issues one query to the Cloud Monitoring API per query editor row, and e
 
 > **Note:** Available in Grafana v7.0 and later versions.
 
-{{< docs-imagebox img="/img/docs/v70/slo-query-builder.png" max-width= "400px" class="docs-image--right" >}}
+{{< figure src="/static/img/docs/google-cloud-monitoring/slo-query-builder-8-0.png" max-width= "400px" class="docs-image--right" >}}
 
 The SLO query builder in the Google Cloud Monitoring data source allows you to display SLO data in time series format. To get an understanding of the basic concepts in service monitoring, please refer to Google Cloud Monitoring's [official docs](https://cloud.google.com/monitoring/service-monitoring).
 
@@ -212,7 +230,7 @@ The friendly names for the time series selectors are shown in Grafana. Here is t
 | SLO Compliance             | select_slo_compliance                   |
 | SLO Error Budget Remaining | select_slo_budget_fraction              |
 
-#### Alias Patterns for SLO queries
+#### Alias patterns for SLO queries
 
 The Alias By field allows you to control the format of the legend keys for SLO queries too.
 
@@ -223,7 +241,7 @@ The Alias By field allows you to control the format of the legend keys for SLO q
 | `{{slo}}`      | returns the SLO              | `latency-slo`       |
 | `{{selector}}` | returns the selector         | `select_slo_health` |
 
-#### Alignment Period/Group by Time for SLO queries
+#### Alignment period/group by time for SLO queries
 
 SLO queries use the same [alignment period functionality as metric queries]({{< relref "#metric-queries" >}}).
 
@@ -285,7 +303,7 @@ Why two ways? The first syntax is easier to read and write but does not allow yo
 
 ## Annotations
 
-{{< docs-imagebox img="/img/docs/v71/cloudmonitoring_annotations_query_editor.png" max-width= "400px" class="docs-image--right" >}}
+{{< figure src="/static/img/docs/google-cloud-monitoring/annotations-8-0.png" max-width= "400px" class="docs-image--right" >}}
 
 [Annotations]({{< relref "../../dashboards/annotations.md" >}}) allow you to overlay rich event information on top of graphs. You add annotation
 queries via the Dashboard menu / Annotations view. Annotation rendering is expensive so it is important to limit the number of rows returned. There is no support for showing Google Cloud Monitoring annotations and events yet but it works well with [custom metrics](https://cloud.google.com/monitoring/custom-metrics/) in Google Cloud Monitoring.

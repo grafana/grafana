@@ -9,7 +9,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
-	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/infra/log"
 )
 
@@ -32,14 +31,14 @@ func newTestStreamHandler(logger log.Logger) *testStreamHandler {
 }
 
 func (p *testStreamHandler) SubscribeStream(_ context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
-	schema, err := data.FrameToJSON(p.frame, true, false)
+	p.logger.Debug("Allowing access to stream", "path", req.Path, "user", req.PluginContext.User)
+	initialData, err := backend.NewInitialFrame(p.frame, data.IncludeSchemaOnly)
 	if err != nil {
 		return nil, err
 	}
-	p.logger.Debug("Allowing access to stream", "path", req.Path, "user", req.PluginContext.User)
 	return &backend.SubscribeStreamResponse{
-		Status: backend.SubscribeStreamStatusOK,
-		Data:   schema,
+		Status:      backend.SubscribeStreamStatusOK,
+		InitialData: initialData,
 	}, nil
 }
 
@@ -50,7 +49,7 @@ func (p *testStreamHandler) PublishStream(_ context.Context, req *backend.Publis
 	}, nil
 }
 
-func (p *testStreamHandler) RunStream(ctx context.Context, request *backend.RunStreamRequest, sender backend.StreamPacketSender) error {
+func (p *testStreamHandler) RunStream(ctx context.Context, request *backend.RunStreamRequest, sender *backend.StreamSender) error {
 	p.logger.Debug("New stream call", "path", request.Path)
 	var conf testStreamConfig
 	switch request.Path {
@@ -78,7 +77,7 @@ type testStreamConfig struct {
 	Drop     float64
 }
 
-func (p *testStreamHandler) runTestStream(ctx context.Context, path string, conf testStreamConfig, sender backend.StreamPacketSender) error {
+func (p *testStreamHandler) runTestStream(ctx context.Context, path string, conf testStreamConfig, sender *backend.StreamSender) error {
 	spread := 50.0
 	walker := rand.Float64() * 100
 
@@ -101,17 +100,7 @@ func (p *testStreamHandler) runTestStream(ctx context.Context, path string, conf
 			p.frame.Fields[1].Set(0, walker)                                // Value
 			p.frame.Fields[2].Set(0, walker-((rand.Float64()*spread)+0.01)) // Min
 			p.frame.Fields[3].Set(0, walker+((rand.Float64()*spread)+0.01)) // Max
-
-			bytes, err := data.FrameToJSON(p.frame, false, true)
-			if err != nil {
-				logger.Warn("unable to marshal line", "error", err)
-				continue
-			}
-
-			packet := &backend.StreamPacket{
-				Data: bytes,
-			}
-			if err := sender.Send(packet); err != nil {
+			if err := sender.SendFrame(p.frame, data.IncludeDataOnly); err != nil {
 				return err
 			}
 		}

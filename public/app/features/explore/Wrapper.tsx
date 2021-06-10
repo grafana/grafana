@@ -1,18 +1,43 @@
-import React, { Component } from 'react';
-import { connect } from 'react-redux';
+import React, { PureComponent } from 'react';
+import { connect, ConnectedProps } from 'react-redux';
 import { ExploreId, ExploreQueryParams } from 'app/types/explore';
 import { ErrorBoundaryAlert } from '@grafana/ui';
 import { lastSavedUrl, resetExploreAction, richHistoryUpdatedAction } from './state/main';
 import { getRichHistory } from '../../core/utils/richHistory';
 import { ExplorePaneContainer } from './ExplorePaneContainer';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
+import { NavModel } from '@grafana/data';
+import { Branding } from '../../core/components/Branding/Branding';
 
-interface WrapperProps extends GrafanaRouteComponentProps<{}, ExploreQueryParams> {
-  resetExploreAction: typeof resetExploreAction;
-  richHistoryUpdatedAction: typeof richHistoryUpdatedAction;
-}
+import { getNavModel } from '../../core/selectors/navModel';
+import { StoreState } from 'app/types';
 
-export class Wrapper extends Component<WrapperProps> {
+interface RouteProps extends GrafanaRouteComponentProps<{}, ExploreQueryParams> {}
+interface OwnProps {}
+
+const mapStateToProps = (state: StoreState) => {
+  return {
+    navModel: getNavModel(state.navIndex, 'explore'),
+  };
+};
+
+const mapDispatchToProps = {
+  resetExploreAction,
+  richHistoryUpdatedAction,
+};
+
+const connector = connect(mapStateToProps, mapDispatchToProps);
+
+type Props = OwnProps & RouteProps & ConnectedProps<typeof connector>;
+class WrapperUnconnected extends PureComponent<Props> {
+  updatePageDocumentTitle(navModel: NavModel) {
+    if (navModel) {
+      document.title = `${navModel.main.text} - ${Branding.AppTitle}`;
+    } else {
+      document.title = Branding.AppTitle;
+    }
+  }
+
   componentWillUnmount() {
     this.props.resetExploreAction({});
   }
@@ -23,6 +48,7 @@ export class Wrapper extends Component<WrapperProps> {
 
     const richHistory = getRichHistory();
     this.props.richHistoryUpdatedAction({ richHistory });
+    this.updatePageDocumentTitle(this.props.navModel);
   }
 
   render() {
@@ -46,9 +72,6 @@ export class Wrapper extends Component<WrapperProps> {
   }
 }
 
-const mapDispatchToProps = {
-  resetExploreAction,
-  richHistoryUpdatedAction,
-};
+const Wrapper = connector(WrapperUnconnected);
 
-export default connect(null, mapDispatchToProps)(Wrapper);
+export default Wrapper;
