@@ -70,6 +70,10 @@ describe('getPanelMenu', () => {
               "onClick": [Function],
               "text": "Copy",
             },
+            Object {
+              "onClick": [Function],
+              "text": "Create library panel",
+            },
           ],
           "text": "More...",
           "type": "submenu",

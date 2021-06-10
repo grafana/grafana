@@ -6,18 +6,13 @@ aliases = ["/docs/grafana/latest/features/datasources/postgres/"]
 weight = 1200
 +++
 
-# Using PostgreSQL in Grafana
+# PostgreSQL data source
 
-Grafana ships with a built-in PostgreSQL data source plugin that allows you to query and visualize data from a PostgreSQL compatible database.
+Grafana ships with a built-in PostgreSQL data source plugin that allows you to query and visualize data from a PostgreSQL compatible database. This topic explains options, variables, querying, and other options specific to this data source. For instructions about how to add a data source to Grafana, refer to [Add a data source]({{< relref "add-a-data-source.md" >}}). Only users with the organization admin role can add data sources.
 
-## Adding the data source
+## PostgreSQL settings
 
-1. Open the side menu by clicking the Grafana icon in the top header.
-1. In the side menu under the `Configuration` icon you should find a link named `Data Sources`.
-1. Click the `+ Add data source` button in the top header.
-1. Select *PostgreSQL* from the *Type* dropdown.
-
-### Data source options
+To access PostgreSQL settings, hover your mouse over the **Configuration** (gear) icon, then click **Data Sources**, and then click the Prometheus data source.
 
 Name               | Description
 -----------------  | -------------
@@ -27,7 +22,7 @@ Name               | Description
 `Database`         | Name of your PostgreSQL database.
 `User`             | Database user's login/username
 `Password`         | Database user's password
-`SSL Mode`         | Determines whether or with what priority a secure SSL TCP/IP connection will be negotiated with the server. When SSL Mode is disabled, SSL Method and Auth Details would not be visible. 
+`SSL Mode`         | Determines whether or with what priority a secure SSL TCP/IP connection will be negotiated with the server. When SSL Mode is disabled, SSL Method and Auth Details would not be visible.
 `SSL Auth Details Method`       | Determines whether the SSL Auth details will be configured as a file path or file content. Grafana v7.5+
 `SSL Auth Details Value` | File path or file content of SSL root certificate, client certificate and client key
 `Max open`         | The maximum number of open connections to the database, default `unlimited` (Grafana v5.4+).
@@ -73,7 +68,7 @@ Make sure the user does not get any unwanted privileges from the public role.
 
 ## Query editor
 
-{{< docs-imagebox img="/img/docs/v53/postgres_query_still.png" class="docs-image--no-shadow" animated-gif="/img/docs/v53/postgres_query.gif" >}}
+{{< figure src="/static/img/docs/v53/postgres_query_still.png" class="docs-image--no-shadow" animated-gif="/static/img/docs/v53/postgres_query.gif" >}}
 
 You find the PostgreSQL query editor in the metrics tab in Graph or Singlestat panel's edit mode. You enter edit mode by clicking the
 panel title, then edit.
@@ -103,7 +98,7 @@ The available functions in the query editor depend on the PostgreSQL version you
 If you use aggregate functions you need to group your resultset. The editor will automatically add a `GROUP BY time` if you add an aggregate function.
 
 The editor tries to simplify and unify this part of the query. For example:<br>
-![](/img/docs/v53/postgres_select_editor.png)<br>
+![](/static/img/docs/v53/postgres_select_editor.png)<br>
 
 The above will generate the following PostgreSQL `SELECT` clause:
 
@@ -165,7 +160,7 @@ If the `Format as` query option is set to `Table` then you can basically do any 
 
 Query editor with example query:
 
-![](/img/docs/v46/postgres_table_query.png)
+![](/static/img/docs/v46/postgres_table_query.png)
 
 
 The query:
@@ -184,7 +179,7 @@ You can control the name of the Table panel columns by using regular `as ` SQL c
 
 The resulting table panel:
 
-![postgres table](/img/docs/v46/postgres_table.png)
+![postgres table](/static/img/docs/v46/postgres_table.png)
 
 ## Time series queries
 

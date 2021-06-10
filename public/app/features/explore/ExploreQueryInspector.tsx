@@ -10,6 +10,7 @@ import { InspectJSONTab } from 'app/features/inspector/InspectJSONTab';
 import { QueryInspector } from 'app/features/inspector/QueryInspector';
 import { InspectStatsTab } from 'app/features/inspector/InspectStatsTab';
 import { InspectDataTab } from 'app/features/inspector/InspectDataTab';
+import { InspectErrorTab } from 'app/features/inspector/InspectErrorTab';
 
 interface DispatchProps {
   runQueries: typeof runQueries;
@@ -25,6 +26,7 @@ interface Props extends DispatchProps {
 export function ExploreQueryInspector(props: Props) {
   const { loading, width, onClose, queryResponse } = props;
   const dataFrames = queryResponse?.series || [];
+  const error = queryResponse?.error;
 
   const statsTab: TabConfig = {
     label: 'Stats',
@@ -53,14 +55,23 @@ export function ExploreQueryInspector(props: Props) {
     ),
   };
 
-  const queryInspectorTab: TabConfig = {
-    label: 'Query Inspector',
-    value: 'query_inspector',
+  const queryTab: TabConfig = {
+    label: 'Query',
+    value: 'query',
     icon: 'info-circle',
     content: <QueryInspector data={dataFrames} onRefreshQuery={() => props.runQueries(props.exploreId)} />,
   };
 
-  const tabs = [statsTab, queryInspectorTab, jsonTab, dataTab];
+  const tabs = [statsTab, queryTab, jsonTab, dataTab];
+  if (error) {
+    const errorTab: TabConfig = {
+      label: 'Error',
+      value: 'error',
+      icon: 'exclamation-triangle',
+      content: <InspectErrorTab error={error} />,
+    };
+    tabs.push(errorTab);
+  }
   return (
     <ExploreDrawer width={width} onResize={() => {}}>
       <TabbedContainer tabs={tabs} onClose={onClose} closeIconTooltip="Close query inspector" />

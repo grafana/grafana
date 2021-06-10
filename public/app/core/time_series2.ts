@@ -1,5 +1,5 @@
-import _ from 'lodash';
-import { getValueFormat, ValueFormatter, stringToJsRegex, DecimalCount, formattedValueToString } from '@grafana/data';
+import { isNumber, isFinite, escape } from 'lodash';
+import { DecimalCount, formattedValueToString, getValueFormat, stringToJsRegex, ValueFormatter } from '@grafana/data';
 
 function matchSeriesOverride(aliasOrRegex: string, seriesAlias: string) {
   if (!aliasOrRegex) {
@@ -43,9 +43,9 @@ export function updateLegendValues(data: TimeSeries[], panel: any, height: numbe
     const formatter = getValueFormat(axis.format);
 
     // decimal override
-    if (_.isNumber(panel.decimals)) {
+    if (isNumber(panel.decimals)) {
       series.updateLegendValues(formatter, panel.decimals);
-    } else if (_.isNumber(axis.decimals)) {
+    } else if (isNumber(axis.decimals)) {
       series.updateLegendValues(formatter, axis.decimals + 1);
     } else {
       series.updateLegendValues(formatter, null);
@@ -72,15 +72,15 @@ export default class TimeSeries {
   valueFormater: any;
   stats: any;
   legend: boolean;
-  hideTooltip: boolean;
-  allIsNull: boolean;
-  allIsZero: boolean;
+  hideTooltip?: boolean;
+  allIsNull?: boolean;
+  allIsZero?: boolean;
   decimals: DecimalCount;
   hasMsResolution: boolean;
-  isOutsideRange: boolean;
+  isOutsideRange?: boolean;
 
   lines: any;
-  hiddenSeries: boolean;
+  hiddenSeries?: boolean;
   dashes: any;
   bars: any;
   points: any;
@@ -98,7 +98,7 @@ export default class TimeSeries {
     this.label = opts.alias;
     this.id = opts.alias;
     this.alias = opts.alias;
-    this.aliasEscaped = _.escape(opts.alias);
+    this.aliasEscaped = escape(opts.alias);
     this.color = opts.color;
     this.bars = { fillColor: opts.color };
     this.valueFormater = getValueFormat('none');
@@ -247,7 +247,7 @@ export default class TimeSeries {
       }
 
       if (currentValue !== null) {
-        if (_.isNumber(currentValue)) {
+        if (isNumber(currentValue)) {
           this.stats.total += currentValue;
           this.allIsNull = false;
           nonNulls++;
@@ -326,7 +326,7 @@ export default class TimeSeries {
   }
 
   formatValue(value: number | null) {
-    if (!_.isFinite(value)) {
+    if (!isFinite(value)) {
       value = null; // Prevent NaN formatting
     }
     return formattedValueToString(this.valueFormater(value, this.decimals));

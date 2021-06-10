@@ -5,6 +5,7 @@ import (
 	"regexp"
 	"strconv"
 
+	"github.com/Masterminds/semver"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/plugins"
 	es "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client"
@@ -26,6 +27,7 @@ var newTimeSeriesQuery = func(client es.Client, dataQuery plugins.DataQuery,
 	}
 }
 
+// nolint:staticcheck // plugins.DataQueryResult deprecated
 func (e *timeSeriesQuery) execute() (plugins.DataResponse, error) {
 	tsQueryParser := newTimeSeriesQueryParser()
 	queries, err := tsQueryParser.parse(e.tsdbQuery)
@@ -60,6 +62,7 @@ func (e *timeSeriesQuery) execute() (plugins.DataResponse, error) {
 	return rp.getTimeSeries()
 }
 
+// nolint:staticcheck // plugins.DataQueryResult deprecated
 func (e *timeSeriesQuery) processQuery(q *Query, ms *es.MultiSearchRequestBuilder, from, to string,
 	result plugins.DataResponse) error {
 	minInterval, err := e.client.GetMinInterval(q.Interval)
@@ -97,6 +100,9 @@ func (e *timeSeriesQuery) processQuery(q *Query, ms *es.MultiSearchRequestBuilde
 
 	// iterate backwards to create aggregations bottom-down
 	for _, bucketAgg := range q.BucketAggs {
+		bucketAgg.Settings = simplejson.NewFromAny(
+			bucketAgg.generateSettingsForDSL(),
+		)
 		switch bucketAgg.Type {
 		case dateHistType:
 			aggBuilder = addDateHistogramAgg(aggBuilder, bucketAgg, from, to)
@@ -141,7 +147,7 @@ func (e *timeSeriesQuery) processQuery(q *Query, ms *es.MultiSearchRequestBuilde
 					}
 
 					aggBuilder.Pipeline(m.ID, m.Type, bucketPaths, func(a *es.PipelineAggregation) {
-						a.Settings = m.Settings.MustMap()
+						a.Settings = m.generateSettingsForDSL(e.client.GetVersion())
 					})
 				} else {
 					continue
@@ -162,7 +168,7 @@ func (e *timeSeriesQuery) processQuery(q *Query, ms *es.MultiSearchRequestBuilde
 						}
 
 						aggBuilder.Pipeline(m.ID, m.Type, bucketPath, func(a *es.PipelineAggregation) {
-							a.Settings = m.Settings.MustMap()
+							a.Settings = m.generateSettingsForDSL(e.client.GetVersion())
 						})
 					}
 				} else {
@@ -171,12 +177,73 @@ func (e *timeSeriesQuery) processQuery(q *Query, ms *es.MultiSearchRequestBuilde
 			}
 		} else {
 			aggBuilder.Metric(m.ID, m.Type, m.Field, func(a *es.MetricAggregation) {
-				a.Settings = m.Settings.MustMap()
+				a.Settings = m.generateSettingsForDSL(e.client.GetVersion())
 			})
 		}
 	}
 
 	return nil
+}
+
+func setFloatPath(settings *simplejson.Json, path ...string) {
+	if stringValue, err := settings.GetPath(path...).String(); err == nil {
+		if value, err := strconv.ParseFloat(stringValue, 64); err == nil {
+			settings.SetPath(path, value)
+		}
+	}
+}
+
+func setIntPath(settings *simplejson.Json, path ...string) {
+	if stringValue, err := settings.GetPath(path...).String(); err == nil {
+		if value, err := strconv.ParseInt(stringValue, 10, 64); err == nil {
+			settings.SetPath(path, value)
+		}
+	}
+}
+
+// Casts values to float when required by Elastic's query DSL
+func (metricAggregation MetricAgg) generateSettingsForDSL(version *semver.Version) map[string]interface{} {
+	switch metricAggregation.Type {
+	case "moving_avg":
+		setFloatPath(metricAggregation.Settings, "window")
+		setFloatPath(metricAggregation.Settings, "predict")
+		setFloatPath(metricAggregation.Settings, "settings", "alpha")
+		setFloatPath(metricAggregation.Settings, "settings", "beta")
+		setFloatPath(metricAggregation.Settings, "settings", "gamma")
+		setFloatPath(metricAggregation.Settings, "settings", "period")
+	case "serial_diff":
+		setFloatPath(metricAggregation.Settings, "lag")
+	}
+
+	if isMetricAggregationWithInlineScriptSupport(metricAggregation.Type) {
+		scriptValue, err := metricAggregation.Settings.GetPath("script").String()
+		if err != nil {
+			// the script is stored using the old format : `script:{inline: "value"}` or is not set
+			scriptValue, err = metricAggregation.Settings.GetPath("script", "inline").String()
+		}
+
+		constraint, _ := semver.NewConstraint(">=5.6.0")
+
+		if err == nil {
+			if constraint.Check(version) {
+				metricAggregation.Settings.SetPath([]string{"script"}, scriptValue)
+			} else {
+				metricAggregation.Settings.SetPath([]string{"script"}, map[string]interface{}{"inline": scriptValue})
+			}
+		}
+	}
+
+	return metricAggregation.Settings.MustMap()
+}
+
+func (bucketAgg BucketAgg) generateSettingsForDSL() map[string]interface{} {
+	// TODO: This might also need to be applied to other bucket aggregations and other fields.
+	switch bucketAgg.Type {
+	case "date_histogram":
+		setIntPath(bucketAgg.Settings, "min_doc_count")
+	}
+
+	return bucketAgg.Settings.MustMap()
 }
 
 func addDateHistogramAgg(aggBuilder es.AggBuilder, bucketAgg *BucketAgg, timeFrom, timeTo string) es.AggBuilder {

@@ -1,6 +1,6 @@
-import { BigValueTextMode, sharedSingleStatMigrationHandler } from '@grafana/ui';
+import { BigValueTextMode, commonOptionsBuilder, sharedSingleStatMigrationHandler } from '@grafana/ui';
 import { PanelPlugin } from '@grafana/data';
-import { addOrientationOption, addStandardDataReduceOptions, addTextSizeOptions, StatPanelOptions } from './types';
+import { addOrientationOption, addStandardDataReduceOptions, StatPanelOptions } from './types';
 import { StatPanel } from './StatPanel';
 import { statPanelChangedHandler } from './StatMigrations';
 
@@ -11,7 +11,7 @@ export const plugin = new PanelPlugin<StatPanelOptions>(StatPanel)
 
     addStandardDataReduceOptions(builder);
     addOrientationOption(builder, mainCategory);
-    addTextSizeOptions(builder);
+    commonOptionsBuilder.addTextSizeOptions(builder);
 
     builder.addSelect({
       path: 'textMode',

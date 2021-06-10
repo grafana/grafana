@@ -1,5 +1,5 @@
 import { GraphiteDatasource } from './datasource';
-import _ from 'lodash';
+import { isArray } from 'lodash';
 
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { dateTime, getFrameDisplayName } from '@grafana/data';
@@ -215,7 +215,7 @@ describe('graphiteDatasource', () => {
       });
 
       it('should parse the tags string into an array', () => {
-        expect(_.isArray(results[0].tags)).toEqual(true);
+        expect(isArray(results[0].tags)).toEqual(true);
         expect(results[0].tags.length).toEqual(2);
         expect(results[0].tags[0]).toEqual('tag1');
         expect(results[0].tags[1]).toEqual('tag2');
@@ -244,7 +244,7 @@ describe('graphiteDatasource', () => {
       });
 
       it('should parse the tags string into an array', () => {
-        expect(_.isArray(results[0].tags)).toEqual(true);
+        expect(isArray(results[0].tags)).toEqual(true);
         expect(results[0].tags.length).toEqual(2);
         expect(results[0].tags[0]).toEqual('tag1');
         expect(results[0].tags[1]).toEqual('tag2');
@@ -510,6 +510,16 @@ describe('graphiteDatasource', () => {
       expect(requestOptions.url).toBe('/api/datasources/proxy/1/metrics/find');
       expect(requestOptions.params).toEqual({});
       expect(requestOptions.data).toEqual('query=app.*');
+      expect(results).not.toBe(null);
+    });
+
+    it('should request expanded metrics', () => {
+      ctx.ds.metricFindQuery('expand(*.servers.*)').then((data: any) => {
+        results = data;
+      });
+
+      expect(requestOptions.url).toBe('/api/datasources/proxy/1/metrics/expand');
+      expect(requestOptions.params.query).toBe('*.servers.*');
       expect(results).not.toBe(null);
     });
   });

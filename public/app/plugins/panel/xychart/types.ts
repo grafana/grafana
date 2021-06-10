@@ -1,13 +1,10 @@
-import { GraphTooltipOptions } from '@grafana/ui';
-import { OptionsWithLegend } from '../timeseries/types';
-
+import { OptionsWithTooltip, OptionsWithLegend } from '@grafana/ui';
 export interface XYDimensionConfig {
   frame: number;
   x?: string; // name | first
   exclude?: string[]; // all other numbers except
 }
 
-export interface Options extends OptionsWithLegend {
+export interface Options extends OptionsWithLegend, OptionsWithTooltip {
   dims: XYDimensionConfig;
-  tooltipOptions: GraphTooltipOptions;
 }

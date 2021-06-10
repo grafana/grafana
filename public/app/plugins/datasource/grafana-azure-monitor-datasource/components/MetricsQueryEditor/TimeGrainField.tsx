@@ -55,7 +55,7 @@ const TimeGrainField: React.FC<TimeGrainFieldProps> = ({
   }, [timeGrainOptions, variableOptionGroup]);
 
   return (
-    <Field label="Time Grain">
+    <Field label="Time grain">
       <Select
         inputId="azure-monitor-metrics-time-grain-field"
         value={findOption(timeGrainOptions, query.azureMonitor.timeGrain)}

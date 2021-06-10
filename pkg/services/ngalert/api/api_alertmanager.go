@@ -4,20 +4,15 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"time"
 
-	"gopkg.in/yaml.v3"
-
-	"github.com/go-openapi/strfmt"
-	apimodels "github.com/grafana/alerting-api/pkg/api"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/util"
-	amv2 "github.com/prometheus/alertmanager/api/v2/models"
 )
 
 type AlertmanagerSrv struct {
@@ -27,33 +22,39 @@ type AlertmanagerSrv struct {
 }
 
 func (srv AlertmanagerSrv) RouteCreateSilence(c *models.ReqContext, postableSilence apimodels.PostableSilence) response.Response {
+	if !c.HasUserRole(models.ROLE_EDITOR) {
+		return ErrResp(http.StatusForbidden, errors.New("permission denied"), "")
+	}
 	silenceID, err := srv.am.CreateSilence(&postableSilence)
 	if err != nil {
 		if errors.Is(err, notifier.ErrSilenceNotFound) {
-			return response.Error(http.StatusNotFound, err.Error(), nil)
+			return ErrResp(http.StatusNotFound, err, "")
 		}
 
 		if errors.Is(err, notifier.ErrCreateSilenceBadPayload) {
-			return response.Error(http.StatusBadRequest, err.Error(), nil)
+			return ErrResp(http.StatusBadRequest, err, "")
 		}
 
-		return response.Error(http.StatusInternalServerError, "failed to create silence", err)
+		return ErrResp(http.StatusInternalServerError, err, "failed to create silence")
 	}
 	return response.JSON(http.StatusAccepted, util.DynMap{"message": "silence created", "id": silenceID})
 }
 
 func (srv AlertmanagerSrv) RouteDeleteAlertingConfig(c *models.ReqContext) response.Response {
 	// not implemented
-	return response.Error(http.StatusNotImplemented, "", nil)
+	return NotImplementedResp
 }
 
 func (srv AlertmanagerSrv) RouteDeleteSilence(c *models.ReqContext) response.Response {
+	if !c.HasUserRole(models.ROLE_EDITOR) {
+		return ErrResp(http.StatusForbidden, errors.New("permission denied"), "")
+	}
 	silenceID := c.Params(":SilenceId")
 	if err := srv.am.DeleteSilence(silenceID); err != nil {
 		if errors.Is(err, notifier.ErrSilenceNotFound) {
-			return response.Error(http.StatusNotFound, err.Error(), nil)
+			return ErrResp(http.StatusNotFound, err, "")
 		}
-		return response.Error(http.StatusInternalServerError, err.Error(), nil)
+		return ErrResp(http.StatusInternalServerError, err, "")
 	}
 	return response.JSON(http.StatusOK, util.DynMap{"message": "silence deleted"})
 }
@@ -62,249 +63,94 @@ func (srv AlertmanagerSrv) RouteGetAlertingConfig(c *models.ReqContext) response
 	query := ngmodels.GetLatestAlertmanagerConfigurationQuery{}
 	if err := srv.store.GetLatestAlertmanagerConfiguration(&query); err != nil {
 		if errors.Is(err, store.ErrNoAlertmanagerConfiguration) {
-			return response.Error(http.StatusNotFound, err.Error(), nil)
+			return ErrResp(http.StatusNotFound, err, "")
 		}
-		return response.Error(http.StatusInternalServerError, "failed to get latest configuration", err)
+		return ErrResp(http.StatusInternalServerError, err, "failed to get latest configuration")
 	}
 
-	cfg := apimodels.PostableUserConfig{}
-	if err := yaml.Unmarshal([]byte(query.Result.AlertmanagerConfiguration), &cfg); err != nil {
-		return response.Error(http.StatusInternalServerError, "failed to unmarshal alertmanager configuration", err)
+	cfg, err := notifier.Load([]byte(query.Result.AlertmanagerConfiguration))
+	if err != nil {
+		return ErrResp(http.StatusInternalServerError, err, "failed to unmarshal alertmanager configuration")
 	}
 
-	var apiReceiverName string
-	var receivers []*apimodels.GettableGrafanaReceiver
-	alertmanagerCfg := cfg.AlertmanagerConfig
-	if len(alertmanagerCfg.Receivers) > 0 {
-		apiReceiverName = alertmanagerCfg.Receivers[0].Name
-		receivers = make([]*apimodels.GettableGrafanaReceiver, 0, len(alertmanagerCfg.Receivers[0].PostableGrafanaReceivers.GrafanaManagedReceivers))
-		for _, pr := range alertmanagerCfg.Receivers[0].PostableGrafanaReceivers.GrafanaManagedReceivers {
+	result := apimodels.GettableUserConfig{
+		TemplateFiles: cfg.TemplateFiles,
+		AlertmanagerConfig: apimodels.GettableApiAlertingConfig{
+			Config: cfg.AlertmanagerConfig.Config,
+		},
+	}
+	for _, recv := range cfg.AlertmanagerConfig.Receivers {
+		receivers := make([]*apimodels.GettableGrafanaReceiver, 0, len(recv.PostableGrafanaReceivers.GrafanaManagedReceivers))
+		for _, pr := range recv.PostableGrafanaReceivers.GrafanaManagedReceivers {
 			secureFields := make(map[string]bool, len(pr.SecureSettings))
 			for k := range pr.SecureSettings {
+				decryptedValue, err := pr.GetDecryptedSecret(k)
+				if err != nil {
+					return ErrResp(http.StatusInternalServerError, err, "failed to decrypt stored secure setting: %s", k)
+				}
+				if decryptedValue == "" {
+					continue
+				}
 				secureFields[k] = true
 			}
 			gr := apimodels.GettableGrafanaReceiver{
-				Uid:                   pr.Uid,
+				UID:                   pr.UID,
 				Name:                  pr.Name,
 				Type:                  pr.Type,
-				IsDefault:             pr.IsDefault,
-				SendReminder:          pr.SendReminder,
 				DisableResolveMessage: pr.DisableResolveMessage,
-				Frequency:             pr.Frequency,
 				Settings:              pr.Settings,
 				SecureFields:          secureFields,
 			}
 			receivers = append(receivers, &gr)
 		}
-	}
-
-	gettableApiReceiver := apimodels.GettableApiReceiver{
-		GettableGrafanaReceivers: apimodels.GettableGrafanaReceivers{
-			GrafanaManagedReceivers: receivers,
-		},
-	}
-	gettableApiReceiver.Name = apiReceiverName
-	result := apimodels.GettableUserConfig{
-		TemplateFiles: cfg.TemplateFiles,
-		AlertmanagerConfig: apimodels.GettableApiAlertingConfig{
-			Config: alertmanagerCfg.Config,
-			Receivers: []*apimodels.GettableApiReceiver{
-				&gettableApiReceiver,
+		gettableApiReceiver := apimodels.GettableApiReceiver{
+			GettableGrafanaReceivers: apimodels.GettableGrafanaReceivers{
+				GrafanaManagedReceivers: receivers,
 			},
-		},
+		}
+		gettableApiReceiver.Name = recv.Name
+		result.AlertmanagerConfig.Receivers = append(result.AlertmanagerConfig.Receivers, &gettableApiReceiver)
 	}
 
 	return response.JSON(http.StatusOK, result)
 }
 
 func (srv AlertmanagerSrv) RouteGetAMAlertGroups(c *models.ReqContext) response.Response {
-	recipient := c.Params(":Recipient")
-	srv.log.Info("RouteGetAMAlertGroups: ", "Recipient", recipient)
-	now := time.Now()
-	result := apimodels.AlertGroups{
-		&amv2.AlertGroup{
-			Alerts: []*amv2.GettableAlert{
-				{
-					Annotations: amv2.LabelSet{
-						"annotation1-1": "value1",
-						"annotation1-2": "value2",
-					},
-					EndsAt:      timePtr(strfmt.DateTime(now.Add(time.Hour))),
-					Fingerprint: stringPtr("fingerprint 1"),
-					Receivers: []*amv2.Receiver{
-						{
-							Name: stringPtr("receiver identifier 1-1"),
-						},
-						{
-							Name: stringPtr("receiver identifier 1-2"),
-						},
-					},
-					StartsAt: timePtr(strfmt.DateTime(now)),
-					Status: &amv2.AlertStatus{
-						InhibitedBy: []string{"inhibitedBy 1"},
-						SilencedBy:  []string{"silencedBy 1"},
-						State:       stringPtr(amv2.AlertStatusStateActive),
-					},
-					UpdatedAt: timePtr(strfmt.DateTime(now.Add(-time.Hour))),
-					Alert: amv2.Alert{
-						GeneratorURL: strfmt.URI("a URL"),
-						Labels: amv2.LabelSet{
-							"label1-1": "value1",
-							"label1-2": "value2",
-						},
-					},
-				},
-				{
-					Annotations: amv2.LabelSet{
-						"annotation2-1": "value1",
-						"annotation2-2": "value2",
-					},
-					EndsAt:      timePtr(strfmt.DateTime(now.Add(time.Hour))),
-					Fingerprint: stringPtr("fingerprint 2"),
-					Receivers: []*amv2.Receiver{
-						{
-							Name: stringPtr("receiver identifier 2-1"),
-						},
-						{
-							Name: stringPtr("receiver identifier 2-2"),
-						},
-					},
-					StartsAt: timePtr(strfmt.DateTime(now)),
-					Status: &amv2.AlertStatus{
-						InhibitedBy: []string{"inhibitedBy 2"},
-						SilencedBy:  []string{"silencedBy 2"},
-						State:       stringPtr(amv2.AlertStatusStateActive),
-					},
-					UpdatedAt: timePtr(strfmt.DateTime(now.Add(-time.Hour))),
-					Alert: amv2.Alert{
-						GeneratorURL: strfmt.URI("a URL"),
-						Labels: amv2.LabelSet{
-							"label2-1": "value1",
-							"label2-2": "value2",
-						},
-					},
-				},
-			},
-			Labels: amv2.LabelSet{
-				"label1-1": "value1",
-				"label1-2": "value2",
-			},
-			Receiver: &amv2.Receiver{
-				Name: stringPtr("receiver identifier 2-1"),
-			},
-		},
-		&amv2.AlertGroup{
-			Alerts: []*amv2.GettableAlert{
-				{
-					Annotations: amv2.LabelSet{
-						"annotation2-1": "value1",
-						"annotation2-2": "value2",
-					},
-					EndsAt:      timePtr(strfmt.DateTime(now.Add(time.Hour))),
-					Fingerprint: stringPtr("fingerprint 2"),
-					Receivers: []*amv2.Receiver{
-						{
-							Name: stringPtr("receiver identifier 2-1"),
-						},
-						{
-							Name: stringPtr("receiver identifier 2-2"),
-						},
-					},
-					StartsAt: timePtr(strfmt.DateTime(now)),
-					Status: &amv2.AlertStatus{
-						InhibitedBy: []string{"inhibitedBy 2"},
-						SilencedBy:  []string{"silencedBy 2"},
-						State:       stringPtr(amv2.AlertStatusStateActive),
-					},
-					UpdatedAt: timePtr(strfmt.DateTime(now.Add(-time.Hour))),
-					Alert: amv2.Alert{
-						GeneratorURL: strfmt.URI("a URL"),
-						Labels: amv2.LabelSet{
-							"label2-1": "value1",
-							"label2-2": "value2",
-						},
-					},
-				},
-			},
-			Labels: amv2.LabelSet{
-				"label2-1": "value1",
-				"label2-2": "value2",
-			},
-			Receiver: &amv2.Receiver{
-				Name: stringPtr("receiver identifier 2-1"),
-			},
-		},
+	groups, err := srv.am.GetAlertGroups(
+		c.QueryBoolWithDefault("active", true),
+		c.QueryBoolWithDefault("silenced", true),
+		c.QueryBoolWithDefault("inhibited", true),
+		c.QueryStrings("filter"),
+		c.Query("receiver"),
+	)
+	if err != nil {
+		if errors.Is(err, notifier.ErrGetAlertGroupsBadPayload) {
+			return ErrResp(http.StatusBadRequest, err, "")
+		}
+		// any other error here should be an unexpected failure and thus an internal error
+		return ErrResp(http.StatusInternalServerError, err, "")
 	}
-	return response.JSON(http.StatusOK, result)
+
+	return response.JSON(http.StatusOK, groups)
 }
 
 func (srv AlertmanagerSrv) RouteGetAMAlerts(c *models.ReqContext) response.Response {
-	recipient := c.Params(":Recipient")
-	srv.log.Info("RouteGetAMAlerts: ", "Recipient", recipient)
-	now := time.Now()
-	result := apimodels.GettableAlerts{
-		&amv2.GettableAlert{
-			Annotations: amv2.LabelSet{
-				"annotation1-1": "value1",
-				"annotation1-2": "value2",
-			},
-			EndsAt:      timePtr(strfmt.DateTime(now.Add(time.Hour))),
-			Fingerprint: stringPtr("fingerprint 1"),
-			Receivers: []*amv2.Receiver{
-				{
-					Name: stringPtr("receiver identifier 1-1"),
-				},
-				{
-					Name: stringPtr("receiver identifier 1-2"),
-				},
-			},
-			StartsAt: timePtr(strfmt.DateTime(now)),
-			Status: &amv2.AlertStatus{
-				InhibitedBy: []string{"inhibitedBy 1"},
-				SilencedBy:  []string{"silencedBy 1"},
-				State:       stringPtr(amv2.AlertStatusStateActive),
-			},
-			UpdatedAt: timePtr(strfmt.DateTime(now.Add(-time.Hour))),
-			Alert: amv2.Alert{
-				GeneratorURL: strfmt.URI("a URL"),
-				Labels: amv2.LabelSet{
-					"label1-1": "value1",
-					"label1-2": "value2",
-				},
-			},
-		},
-		&amv2.GettableAlert{
-			Annotations: amv2.LabelSet{
-				"annotation2-1": "value1",
-				"annotation2-2": "value2",
-			},
-			EndsAt:      timePtr(strfmt.DateTime(now.Add(time.Hour))),
-			Fingerprint: stringPtr("fingerprint 2"),
-			Receivers: []*amv2.Receiver{
-				{
-					Name: stringPtr("receiver identifier 2-1"),
-				},
-				{
-					Name: stringPtr("receiver identifier 2-2"),
-				},
-			},
-			StartsAt: timePtr(strfmt.DateTime(now)),
-			Status: &amv2.AlertStatus{
-				InhibitedBy: []string{"inhibitedBy 2"},
-				SilencedBy:  []string{"silencedBy 2"},
-				State:       stringPtr(amv2.AlertStatusStateActive),
-			},
-			UpdatedAt: timePtr(strfmt.DateTime(now.Add(-time.Hour))),
-			Alert: amv2.Alert{
-				GeneratorURL: strfmt.URI("a URL"),
-				Labels: amv2.LabelSet{
-					"label2-1": "value1",
-					"label2-2": "value2",
-				},
-			},
-		},
+	alerts, err := srv.am.GetAlerts(
+		c.QueryBoolWithDefault("active", true),
+		c.QueryBoolWithDefault("silenced", true),
+		c.QueryBoolWithDefault("inhibited", true),
+		c.QueryStrings("filter"),
+		c.Query("receiver"),
+	)
+	if err != nil {
+		if errors.Is(err, notifier.ErrGetAlertsBadPayload) {
+			return ErrResp(http.StatusBadRequest, err, "")
+		}
+		// any other error here should be an unexpected failure and thus an internal error
+		return ErrResp(http.StatusInternalServerError, err, "")
 	}
-	return response.JSON(http.StatusOK, result)
+
+	return response.JSON(http.StatusOK, alerts)
 }
 
 func (srv AlertmanagerSrv) RouteGetSilence(c *models.ReqContext) response.Response {
@@ -312,43 +158,89 @@ func (srv AlertmanagerSrv) RouteGetSilence(c *models.ReqContext) response.Respon
 	gettableSilence, err := srv.am.GetSilence(silenceID)
 	if err != nil {
 		if errors.Is(err, notifier.ErrSilenceNotFound) {
-			return response.Error(http.StatusNotFound, err.Error(), nil)
+			return ErrResp(http.StatusNotFound, err, "")
 		}
 		// any other error here should be an unexpected failure and thus an internal error
-		return response.Error(http.StatusInternalServerError, err.Error(), nil)
+		return ErrResp(http.StatusInternalServerError, err, "")
 	}
 	return response.JSON(http.StatusOK, gettableSilence)
 }
 
 func (srv AlertmanagerSrv) RouteGetSilences(c *models.ReqContext) response.Response {
-	filters := c.QueryStrings("Filter")
-	gettableSilences, err := srv.am.ListSilences(filters)
+	gettableSilences, err := srv.am.ListSilences(c.QueryStrings("filter"))
 	if err != nil {
 		if errors.Is(err, notifier.ErrListSilencesBadPayload) {
-			return response.Error(http.StatusBadRequest, err.Error(), nil)
+			return ErrResp(http.StatusBadRequest, err, "")
 		}
 		// any other error here should be an unexpected failure and thus an internal error
-		return response.Error(http.StatusInternalServerError, err.Error(), nil)
+		return ErrResp(http.StatusInternalServerError, err, "")
 	}
 	return response.JSON(http.StatusOK, gettableSilences)
 }
 
 func (srv AlertmanagerSrv) RoutePostAlertingConfig(c *models.ReqContext, body apimodels.PostableUserConfig) response.Response {
-	config, err := yaml.Marshal(&body)
-	if err != nil {
-		return response.Error(http.StatusInternalServerError, "failed to serialize to the Alertmanager configuration", err)
+	if !c.HasUserRole(models.ROLE_EDITOR) {
+		return ErrResp(http.StatusForbidden, errors.New("permission denied"), "")
 	}
 
-	cmd := ngmodels.SaveAlertmanagerConfigurationCmd{
-		AlertmanagerConfiguration: string(config),
-		ConfigurationVersion:      fmt.Sprintf("v%d", ngmodels.AlertConfigurationVersion),
-	}
-	if err := srv.store.SaveAlertmanagerConfiguration(&cmd); err != nil {
-		return response.Error(http.StatusInternalServerError, "failed to save Alertmanager configuration", err)
+	// Get the last known working configuration
+	query := ngmodels.GetLatestAlertmanagerConfigurationQuery{}
+	if err := srv.store.GetLatestAlertmanagerConfiguration(&query); err != nil {
+		// If we don't have a configuration there's nothing for us to know and we should just continue saving the new one
+		if !errors.Is(err, store.ErrNoAlertmanagerConfiguration) {
+			return ErrResp(http.StatusInternalServerError, err, "failed to get latest configuration")
+		}
 	}
 
-	if err := srv.am.ApplyConfig(&body); err != nil {
-		return response.Error(http.StatusInternalServerError, "failed to apply Alertmanager configuration", err)
+	currentReceiverMap := make(map[string]*apimodels.PostableGrafanaReceiver)
+	if query.Result != nil {
+		currentConfig, err := notifier.Load([]byte(query.Result.AlertmanagerConfiguration))
+		if err != nil {
+			return ErrResp(http.StatusInternalServerError, err, "failed to load lastest configuration")
+		}
+		currentReceiverMap = currentConfig.GetGrafanaReceiverMap()
+	}
+
+	// Copy the previously known secure settings
+	for i, r := range body.AlertmanagerConfig.Receivers {
+		for j, gr := range r.PostableGrafanaReceivers.GrafanaManagedReceivers {
+			if gr.UID == "" { // new receiver
+				continue
+			}
+
+			cgmr, ok := currentReceiverMap[gr.UID]
+			if !ok {
+				// it tries to update a receiver that didn't previously exist
+				return ErrResp(http.StatusBadRequest, fmt.Errorf("unknown receiver: %s", gr.UID), "")
+			}
+
+			// frontend sends only the secure settings that have to be updated
+			// therefore we have to copy from the last configuration only those secure settings not included in the request
+			for key := range cgmr.SecureSettings {
+				_, ok := body.AlertmanagerConfig.Receivers[i].PostableGrafanaReceivers.GrafanaManagedReceivers[j].SecureSettings[key]
+				if !ok {
+					decryptedValue, err := cgmr.GetDecryptedSecret(key)
+					if err != nil {
+						return ErrResp(http.StatusInternalServerError, err, "failed to decrypt stored secure setting: %s", key)
+					}
+
+					if body.AlertmanagerConfig.Receivers[i].PostableGrafanaReceivers.GrafanaManagedReceivers[j].SecureSettings == nil {
+						body.AlertmanagerConfig.Receivers[i].PostableGrafanaReceivers.GrafanaManagedReceivers[j].SecureSettings = make(map[string]string, len(cgmr.SecureSettings))
+					}
+
+					body.AlertmanagerConfig.Receivers[i].PostableGrafanaReceivers.GrafanaManagedReceivers[j].SecureSettings[key] = decryptedValue
+				}
+			}
+		}
+	}
+
+	if err := body.ProcessConfig(); err != nil {
+		return ErrResp(http.StatusInternalServerError, err, "failed to post process Alertmanager configuration")
+	}
+
+	if err := srv.am.SaveAndApplyConfig(&body); err != nil {
+		srv.log.Error("unable to save and apply alertmanager configuration", "err", err)
+		return ErrResp(http.StatusBadRequest, err, "failed to save and apply Alertmanager configuration")
 	}
 
 	return response.JSON(http.StatusAccepted, util.DynMap{"message": "configuration created"})
@@ -356,5 +248,5 @@ func (srv AlertmanagerSrv) RoutePostAlertingConfig(c *models.ReqContext, body ap
 
 func (srv AlertmanagerSrv) RoutePostAMAlerts(c *models.ReqContext, body apimodels.PostableAlerts) response.Response {
 	// not implemented
-	return response.Error(http.StatusNotImplemented, "", nil)
+	return NotImplementedResp
 }

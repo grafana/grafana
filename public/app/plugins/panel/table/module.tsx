@@ -27,7 +27,7 @@ export const plugin = new PanelPlugin<PanelOptions, PanelFieldConfig>(TablePanel
           name: 'Column alignment',
           settings: {
             options: [
-              { label: 'auto', value: null },
+              { label: 'auto', value: 'auto' },
               { label: 'left', value: 'left' },
               { label: 'center', value: 'center' },
               { label: 'right', value: 'right' },

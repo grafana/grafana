@@ -1,5 +1,4 @@
 import React from 'react';
-import { renderComponentWithTheme } from '../../utils/storybook/withTheme';
 import { CallToActionCard, CallToActionCardProps } from './CallToActionCard';
 import { Story, Meta } from '@storybook/react';
 import { Button } from '../Button/Button';
@@ -9,9 +8,6 @@ export default {
   title: 'Layout/CallToActionCard',
   component: CallToActionCard,
   parameters: {
-    knobs: {
-      disable: true,
-    },
     controls: {
       exclude: ['className', 'callToActionElement', 'theme'],
     },
@@ -37,11 +33,9 @@ export const Basic: Story<StoryProps> = (args) => {
     ),
   };
 
-  return renderComponentWithTheme(CallToActionCard, {
-    message: args.message,
-    callToActionElement: ctaElements[args.Element],
-    footer: args.footer,
-  });
+  return (
+    <CallToActionCard message={args.message} callToActionElement={ctaElements[args.Element]} footer={args.footer} />
+  );
 };
 
 Basic.args = {

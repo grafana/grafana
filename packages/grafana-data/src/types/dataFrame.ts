@@ -7,6 +7,7 @@ import { Vector } from './vector';
 import { FieldColor } from './fieldColor';
 import { ScopedVars } from './ScopedVars';
 
+/** @public */
 export enum FieldType {
   time = 'time', // or date
   number = 'number',
@@ -18,6 +19,7 @@ export enum FieldType {
 }
 
 /**
+ * @public
  * Every property is optional
  *
  * Plugins may extend this with additional properties. Something like series overrides
@@ -86,6 +88,7 @@ export interface FieldConfig<TOptions extends object = any> {
   custom?: TOptions;
 }
 
+/** @public */
 export interface ValueLinkConfig {
   /**
    * Result of field reduction
@@ -134,6 +137,7 @@ export interface Field<T = any, V = Vector<T>> {
   getLinks?: (config: ValueLinkConfig) => Array<LinkModel<Field>>;
 }
 
+/** @alpha */
 export interface FieldState {
   /**
    * An appropriate name for the field (does not include frame info)
@@ -171,6 +175,7 @@ export interface FieldState {
   origin?: DataFrameFieldIndex;
 }
 
+/** @public */
 export interface NumericRange {
   min?: number | null;
   max?: number | null;
@@ -186,6 +191,7 @@ export interface DataFrame extends QueryResultBase {
 }
 
 /**
+ * @public
  * Like a field, but properties are optional and values may be a simple array
  */
 export interface FieldDTO<T = any> {
@@ -197,6 +203,7 @@ export interface FieldDTO<T = any> {
 }
 
 /**
+ * @public
  * Like a DataFrame, but fields may be a FieldDTO
  */
 export interface DataFrameDTO extends QueryResultBase {

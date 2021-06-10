@@ -1,24 +1,24 @@
-import _ from 'lodash';
+import { concat, every, find, groupBy, head, map, partition } from 'lodash';
 
 export function dedupAnnotations(annotations: any) {
   let dedup = [];
 
   // Split events by annotationId property existence
-  const events = _.partition(annotations, 'id');
+  const events = partition(annotations, 'id');
 
-  const eventsById = _.groupBy(events[0], 'id');
-  dedup = _.map(eventsById, (eventGroup) => {
-    if (eventGroup.length > 1 && !_.every(eventGroup, isPanelAlert)) {
+  const eventsById = groupBy(events[0], 'id');
+  dedup = map(eventsById, (eventGroup) => {
+    if (eventGroup.length > 1 && !every(eventGroup, isPanelAlert)) {
       // Get first non-panel alert
-      return _.find(eventGroup, (event) => {
+      return find(eventGroup, (event) => {
         return event.eventType !== 'panel-alert';
       });
     } else {
-      return _.head(eventGroup);
+      return head(eventGroup);
     }
   });
 
-  dedup = _.concat(dedup, events[1]);
+  dedup = concat(dedup, events[1]);
   return dedup;
 }
 

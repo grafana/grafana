@@ -5,7 +5,7 @@
 # for usage information see "show_help" below.
 #
 
-latest=$(curl -s 'https://raw.githubusercontent.com/grafana/grafana/master/latest.json' | jq -r '.stable')
+latest=$(curl -s 'https://raw.githubusercontent.com/grafana/grafana/main/latest.json' | jq -r '.stable')
 canary=$(curl -s "https://grafana.com/api/grafana/versions" | jq ".items[0].version" | tr -d '"')
 
 show_help() {
@@ -47,7 +47,7 @@ done
 
 # Make sure the script is being run as root
 if [ $EUID -ne 0 ]; then
-   echo "This script must be run as root" 
+   echo "This script must be run as root"
    exit 1
 fi
 

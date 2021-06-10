@@ -2,9 +2,9 @@
   "type": "panel",
   "name": "Time series",
   "id": "timeseries",
-  "state": "beta",
 
   "info": {
+    "description": "Time based line, area and bar charts",
     "author": {
       "name": "Grafana Labs",
       "url": "https://grafana.com"

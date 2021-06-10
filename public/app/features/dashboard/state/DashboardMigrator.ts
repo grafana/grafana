@@ -1,12 +1,25 @@
 // Libraries
-import _, { defaults } from 'lodash';
+import { each, find, findIndex, flattenDeep, isArray, isBoolean, isNumber, isString, map, max, some } from 'lodash';
 // Utils
 import getFactors from 'app/core/utils/factors';
 import kbn from 'app/core/utils/kbn';
 // Types
 import { PanelModel } from './PanelModel';
 import { DashboardModel } from './DashboardModel';
-import { DataLink, DataLinkBuiltInVars, urlUtil } from '@grafana/data';
+import {
+  DataLink,
+  DataLinkBuiltInVars,
+  MappingType,
+  SpecialValueMatch,
+  PanelPlugin,
+  standardEditorsRegistry,
+  standardFieldConfigEditorRegistry,
+  ThresholdsConfig,
+  urlUtil,
+  ValueMap,
+  ValueMapping,
+  getActiveThreshold,
+} from '@grafana/data';
 // Constants
 import {
   DEFAULT_PANEL_SPAN,
@@ -16,10 +29,18 @@ import {
   GRID_COLUMN_COUNT,
   MIN_PANEL_HEIGHT,
 } from 'app/core/constants';
-import { isConstant, isMulti, isQuery } from 'app/features/variables/guard';
+import { isConstant, isMulti } from 'app/features/variables/guard';
 import { alignCurrentWithMulti } from 'app/features/variables/shared/multiOptions';
-import { VariableHide, VariableTag } from '../../variables/types';
+import { VariableHide } from '../../variables/types';
+import { config } from 'app/core/config';
+import { plugin as statPanelPlugin } from 'app/plugins/panel/stat/module';
+import { plugin as gaugePanelPlugin } from 'app/plugins/panel/gauge/module';
+import { getStandardFieldConfigs, getStandardOptionEditors } from '@grafana/ui';
 
+standardEditorsRegistry.setInit(getStandardOptionEditors);
+standardFieldConfigEditorRegistry.setInit(getStandardFieldConfigs);
+
+type PanelSchemeUpgradeHandler = (panel: PanelModel) => PanelModel;
 export class DashboardMigrator {
   dashboard: DashboardModel;
 
@@ -30,8 +51,8 @@ export class DashboardMigrator {
   updateSchema(old: any) {
     let i, j, k, n;
     const oldVersion = this.dashboard.schemaVersion;
-    const panelUpgrades = [];
-    this.dashboard.schemaVersion = 27;
+    const panelUpgrades: PanelSchemeUpgradeHandler[] = [];
+    this.dashboard.schemaVersion = 30;
 
     if (oldVersion === this.dashboard.schemaVersion) {
       return;
@@ -51,11 +72,12 @@ export class DashboardMigrator {
         if (panel.type === 'graphite') {
           panel.type = 'graph';
         }
+
         if (panel.type !== 'graph') {
-          return;
+          return panel;
         }
 
-        if (_.isBoolean(panel.legend)) {
+        if (isBoolean(panel.legend)) {
           panel.legend = { show: panel.legend };
         }
 
@@ -86,6 +108,8 @@ export class DashboardMigrator {
           panel.y_formats[1] = panel.y2_format;
           delete panel.y2_format;
         }
+
+        return panel;
       });
     }
 
@@ -98,6 +122,8 @@ export class DashboardMigrator {
           panel.id = maxId;
           maxId += 1;
         }
+
+        return panel;
       });
     }
 
@@ -106,18 +132,22 @@ export class DashboardMigrator {
       // move aliasYAxis changes
       panelUpgrades.push((panel: any) => {
         if (panel.type !== 'graph') {
-          return;
+          return panel;
         }
-        _.each(panel.aliasYAxis, (value, key) => {
+
+        each(panel.aliasYAxis, (value, key) => {
           panel.seriesOverrides = [{ alias: key, yaxis: value }];
         });
+
         delete panel.aliasYAxis;
+
+        return panel;
       });
     }
 
     if (oldVersion < 6) {
       // move drop-downs to new schema
-      const annotations: any = _.find(old.pulldowns, { type: 'annotations' });
+      const annotations: any = find(old.pulldowns, { type: 'annotations' });
 
       if (annotations) {
         this.dashboard.annotations = {
@@ -150,24 +180,26 @@ export class DashboardMigrator {
 
       // ensure query refIds
       panelUpgrades.push((panel: any) => {
-        _.each(panel.targets, (target) => {
+        each(panel.targets, (target) => {
           if (!target.refId) {
             target.refId = panel.getNextQueryLetter && panel.getNextQueryLetter();
           }
         });
+
+        return panel;
       });
     }
 
     if (oldVersion < 8) {
       panelUpgrades.push((panel: any) => {
-        _.each(panel.targets, (target) => {
+        each(panel.targets, (target) => {
           // update old influxdb query schema
           if (target.fields && target.tags && target.groupBy) {
             if (target.rawQuery) {
               delete target.fields;
               delete target.fill;
             } else {
-              target.select = _.map(target.fields, (field) => {
+              target.select = map(target.fields, (field) => {
                 const parts = [];
                 parts.push({ type: 'field', params: [field.name] });
                 parts.push({ type: field.func, params: [] });
@@ -180,7 +212,7 @@ export class DashboardMigrator {
                 return parts;
               });
               delete target.fields;
-              _.each(target.groupBy, (part) => {
+              each(target.groupBy, (part) => {
                 if (part.type === 'time' && part.interval) {
                   part.params = [part.interval];
                   delete part.interval;
@@ -198,6 +230,8 @@ export class DashboardMigrator {
             }
           }
         });
+
+        return panel;
       });
     }
 
@@ -206,7 +240,7 @@ export class DashboardMigrator {
       // move aliasYAxis changes
       panelUpgrades.push((panel: any) => {
         if (panel.type !== 'singlestat' && panel.thresholds !== '') {
-          return;
+          return panel;
         }
 
         if (panel.thresholds) {
@@ -217,6 +251,8 @@ export class DashboardMigrator {
             panel.thresholds = k.join(',');
           }
         }
+
+        return panel;
       });
     }
 
@@ -225,22 +261,24 @@ export class DashboardMigrator {
       // move aliasYAxis changes
       panelUpgrades.push((panel: any) => {
         if (panel.type !== 'table') {
-          return;
+          return panel;
         }
 
-        _.each(panel.styles, (style) => {
+        each(panel.styles, (style) => {
           if (style.thresholds && style.thresholds.length >= 3) {
             const k = style.thresholds;
             k.shift();
             style.thresholds = k;
           }
         });
+
+        return panel;
       });
     }
 
     if (oldVersion < 12) {
       // update template variables
-      _.each(this.dashboard.getVariables(), (templateVariable: any) => {
+      each(this.dashboard.getVariables(), (templateVariable: any) => {
         if (templateVariable.refresh) {
           templateVariable.refresh = 1;
         }
@@ -259,10 +297,10 @@ export class DashboardMigrator {
       // update graph yaxes changes
       panelUpgrades.push((panel: any) => {
         if (panel.type !== 'graph') {
-          return;
+          return panel;
         }
         if (!panel.grid) {
-          return;
+          return panel;
         }
 
         if (!panel.yaxes) {
@@ -301,6 +339,8 @@ export class DashboardMigrator {
           delete panel['y-axis'];
           delete panel['x-axis'];
         }
+
+        return panel;
       });
     }
 
@@ -308,10 +348,10 @@ export class DashboardMigrator {
       // update graph yaxes changes
       panelUpgrades.push((panel: any) => {
         if (panel.type !== 'graph') {
-          return;
+          return panel;
         }
         if (!panel.grid) {
-          return;
+          return panel;
         }
 
         if (!panel.thresholds) {
@@ -346,8 +386,8 @@ export class DashboardMigrator {
           }
         }
 
-        if (_.isNumber(t1.value)) {
-          if (_.isNumber(t2.value)) {
+        if (isNumber(t1.value)) {
+          if (isNumber(t2.value)) {
             if (t1.value > t2.value) {
               t1.op = t2.op = 'lt';
               panel.thresholds.push(t1);
@@ -368,6 +408,8 @@ export class DashboardMigrator {
         delete panel.grid.threshold2;
         delete panel.grid.threshold2Color;
         delete panel.grid.thresholdLine;
+
+        return panel;
       });
     }
 
@@ -388,12 +430,15 @@ export class DashboardMigrator {
           // (ie. [1,2,3,4,6,12,24] for 24 columns)
           panel.maxPerRow =
             factors[
-              _.findIndex(factors, (o) => {
+              findIndex(factors, (o) => {
                 return o > max;
               }) - 1
             ];
         }
+
         delete panel.minSpan;
+
+        return panel;
       });
     }
 
@@ -424,15 +469,19 @@ export class DashboardMigrator {
           delete panel.options.suffix;
           delete panel['options-gauge'];
         }
+
+        return panel;
       });
     }
 
     if (oldVersion < 19) {
       // migrate change to gauge options
       panelUpgrades.push((panel: any) => {
-        if (panel.links && _.isArray(panel.links)) {
+        if (panel.links && isArray(panel.links)) {
           panel.links = panel.links.map(upgradePanelLink);
         }
+
+        return panel;
       });
     }
 
@@ -445,13 +494,13 @@ export class DashboardMigrator {
       };
       panelUpgrades.push((panel: any) => {
         // For graph panel
-        if (panel.options && panel.options.dataLinks && _.isArray(panel.options.dataLinks)) {
+        if (panel.options && panel.options.dataLinks && isArray(panel.options.dataLinks)) {
           panel.options.dataLinks = panel.options.dataLinks.map(updateLinks);
         }
 
         // For panel with fieldOptions
         if (panel.options && panel.options.fieldOptions && panel.options.fieldOptions.defaults) {
-          if (panel.options.fieldOptions.defaults.links && _.isArray(panel.options.fieldOptions.defaults.links)) {
+          if (panel.options.fieldOptions.defaults.links && isArray(panel.options.fieldOptions.defaults.links)) {
             panel.options.fieldOptions.defaults.links = panel.options.fieldOptions.defaults.links.map(updateLinks);
           }
           if (panel.options.fieldOptions.defaults.title) {
@@ -460,6 +509,8 @@ export class DashboardMigrator {
             );
           }
         }
+
+        return panel;
       });
     }
 
@@ -472,28 +523,32 @@ export class DashboardMigrator {
       };
       panelUpgrades.push((panel: any) => {
         // For graph panel
-        if (panel.options && panel.options.dataLinks && _.isArray(panel.options.dataLinks)) {
+        if (panel.options && panel.options.dataLinks && isArray(panel.options.dataLinks)) {
           panel.options.dataLinks = panel.options.dataLinks.map(updateLinks);
         }
 
         // For panel with fieldOptions
         if (panel.options && panel.options.fieldOptions && panel.options.fieldOptions.defaults) {
-          if (panel.options.fieldOptions.defaults.links && _.isArray(panel.options.fieldOptions.defaults.links)) {
+          if (panel.options.fieldOptions.defaults.links && isArray(panel.options.fieldOptions.defaults.links)) {
             panel.options.fieldOptions.defaults.links = panel.options.fieldOptions.defaults.links.map(updateLinks);
           }
         }
+
+        return panel;
       });
     }
 
     if (oldVersion < 22) {
       panelUpgrades.push((panel: any) => {
         if (panel.type !== 'table') {
-          return;
+          return panel;
         }
 
-        _.each(panel.styles, (style) => {
+        each(panel.styles, (style) => {
           style.align = 'auto';
         });
+
+        return panel;
       });
     }
 
@@ -513,65 +568,31 @@ export class DashboardMigrator {
       panelUpgrades.push((panel: any) => {
         const wasAngularTable = panel.type === 'table';
         if (wasAngularTable && !panel.styles) {
-          return; // styles are missing so assumes default settings
+          return panel; // styles are missing so assumes default settings
         }
         const wasReactTable = panel.table === 'table2';
         if (!wasAngularTable || wasReactTable) {
-          return;
+          return panel;
         }
         panel.type = wasAngularTable ? 'table-old' : 'table';
+        return panel;
       });
     }
 
     if (oldVersion < 25) {
-      for (const variable of this.dashboard.templating.list) {
-        if (!isQuery(variable)) {
-          continue;
-        }
-
-        const { tags, current } = variable;
-        if (!Array.isArray(tags)) {
-          variable.tags = [];
-          continue;
-        }
-
-        const currentTags = current?.tags ?? [];
-        const currents = currentTags.reduce((all, tag) => {
-          if (tag && tag.hasOwnProperty('text') && typeof tag['text'] === 'string') {
-            all[tag.text] = tag;
-          }
-          return all;
-        }, {} as Record<string, VariableTag>);
-
-        const newTags: VariableTag[] = [];
-
-        for (const tag of tags) {
-          if (typeof tag === 'object') {
-            // new format let's assume it's correct
-            newTags.push(tag);
-            continue;
-          }
-
-          if (typeof tag !== 'string') {
-            // something that we do not support
-            continue;
-          }
-
-          newTags.push(defaults(currents[tag], { text: tag, selected: false }));
-        }
-        variable.tags = newTags;
-      }
+      // tags are removed in version 28
     }
 
     if (oldVersion < 26) {
       panelUpgrades.push((panel: any) => {
         const wasReactText = panel.type === 'text2';
         if (!wasReactText) {
-          return;
+          return panel;
         }
 
         panel.type = 'text';
         delete panel.options.angular;
+        return panel;
       });
     }
 
@@ -590,16 +611,65 @@ export class DashboardMigrator {
       }
     }
 
+    if (oldVersion < 28) {
+      panelUpgrades.push((panel: PanelModel) => {
+        if (panel.type === 'singlestat') {
+          return migrateSinglestat(panel);
+        }
+
+        return panel;
+      });
+
+      for (const variable of this.dashboard.templating.list) {
+        if (variable.tags) {
+          delete variable.tags;
+        }
+
+        if (variable.tagsQuery) {
+          delete variable.tagsQuery;
+        }
+
+        if (variable.tagValuesQuery) {
+          delete variable.tagValuesQuery;
+        }
+
+        if (variable.useTags) {
+          delete variable.useTags;
+        }
+      }
+    }
+
+    if (oldVersion < 29) {
+      for (const variable of this.dashboard.templating.list) {
+        if (variable.type !== 'query') {
+          continue;
+        }
+
+        if (variable.refresh !== 1 && variable.refresh !== 2) {
+          variable.refresh = 1;
+        }
+
+        if (variable.options?.length) {
+          variable.options = [];
+        }
+      }
+    }
+
+    if (oldVersion < 30) {
+      panelUpgrades.push(upgradeValueMappingsForPanel);
+      panelUpgrades.push(migrateTooltipOptions);
+    }
+
     if (panelUpgrades.length === 0) {
       return;
     }
 
     for (j = 0; j < this.dashboard.panels.length; j++) {
       for (k = 0; k < panelUpgrades.length; k++) {
-        panelUpgrades[k].call(this, this.dashboard.panels[j]);
+        this.dashboard.panels[j] = panelUpgrades[k].call(this, this.dashboard.panels[j]);
         if (this.dashboard.panels[j].panels) {
           for (n = 0; n < this.dashboard.panels[j].panels.length; n++) {
-            panelUpgrades[k].call(this, this.dashboard.panels[j].panels[n]);
+            this.dashboard.panels[j].panels[n] = panelUpgrades[k].call(this, this.dashboard.panels[j].panels[n]);
           }
         }
       }
@@ -610,10 +680,10 @@ export class DashboardMigrator {
     let yPos = 0;
     const widthFactor = GRID_COLUMN_COUNT / 12;
 
-    const maxPanelId = _.max(
-      _.flattenDeep(
-        _.map(old.rows, (row) => {
-          return _.map(row.panels, 'id');
+    const maxPanelId = max(
+      flattenDeep(
+        map(old.rows, (row) => {
+          return map(row.panels, 'id');
         })
       )
     );
@@ -624,7 +694,7 @@ export class DashboardMigrator {
     }
 
     // Add special "row" panels if even one row is collapsed, repeated or has visible title
-    const showRows = _.some(old.rows, (row) => row.collapse || row.showTitle || row.repeat);
+    const showRows = some(old.rows, (row) => row.collapse || row.showTitle || row.repeat);
 
     for (const row of old.rows) {
       if (row.repeatIteration) {
@@ -697,7 +767,7 @@ export class DashboardMigrator {
 }
 
 function getGridHeight(height: number | string) {
-  if (_.isString(height)) {
+  if (isString(height)) {
     height = parseInt(height.replace('px', ''), 10);
   }
 
@@ -769,7 +839,7 @@ class RowArea {
     }
 
     if (startPlace !== undefined && endPlace !== undefined && endPlace - startPlace >= panelWidth - 1) {
-      const yPos = _.max(this.area.slice(startPlace));
+      const yPos = max(this.area.slice(startPlace));
       place = {
         x: startPlace,
         y: yPos,
@@ -843,4 +913,129 @@ function updateVariablesSyntax(text: string) {
     }
     return match;
   });
+}
+
+function migrateSinglestat(panel: PanelModel) {
+  // If   'grafana-singlestat-panel' exists, move to that
+  if (config.panels['grafana-singlestat-panel']) {
+    panel.type = 'grafana-singlestat-panel';
+    return panel;
+  }
+
+  let returnSaveModel = false;
+
+  if (!panel.changePlugin) {
+    returnSaveModel = true;
+    panel = new PanelModel(panel);
+  }
+
+  // To make sure PanelModel.isAngularPlugin logic thinks the current panel is angular
+  // And since this plugin no longer exist we just fake it here
+  panel.plugin = { angularPanelCtrl: {} } as PanelPlugin;
+
+  // Otheriwse use gauge or stat panel
+  if ((panel as any).gauge?.show) {
+    gaugePanelPlugin.meta = config.panels['gauge'];
+    panel.changePlugin(gaugePanelPlugin);
+  } else {
+    statPanelPlugin.meta = config.panels['stat'];
+    panel.changePlugin(statPanelPlugin);
+  }
+
+  if (returnSaveModel) {
+    return panel.getSaveModel();
+  }
+
+  return panel;
+}
+
+function upgradeValueMappingsForPanel(panel: PanelModel) {
+  const fieldConfig = panel.fieldConfig;
+  if (!fieldConfig) {
+    return panel;
+  }
+
+  fieldConfig.defaults.mappings = upgradeValueMappings(fieldConfig.defaults.mappings, fieldConfig.defaults.thresholds);
+
+  for (const override of fieldConfig.overrides) {
+    for (const prop of override.properties) {
+      if (prop.id === 'mappings') {
+        prop.value = upgradeValueMappings(prop.value);
+      }
+    }
+  }
+
+  return panel;
+}
+
+function upgradeValueMappings(oldMappings: any, thresholds?: ThresholdsConfig): ValueMapping[] | undefined {
+  if (!oldMappings) {
+    return undefined;
+  }
+
+  const valueMaps: ValueMap = { type: MappingType.ValueToText, options: {} };
+  const newMappings: ValueMapping[] = [];
+
+  for (const old of oldMappings) {
+    // Use the color we would have picked from thesholds
+    let color: string | undefined = undefined;
+    const numeric = parseFloat(old.text);
+    if (thresholds && !isNaN(numeric)) {
+      const level = getActiveThreshold(numeric, thresholds.steps);
+      if (level && level.color) {
+        color = level.color;
+      }
+    }
+
+    switch (old.type) {
+      case 1: // MappingType.ValueToText:
+        if (old.value != null) {
+          if (old.value === 'null') {
+            newMappings.push({
+              type: MappingType.SpecialValue,
+              options: {
+                match: SpecialValueMatch.Null,
+                result: { text: old.text, color },
+              },
+            });
+          } else {
+            valueMaps.options[String(old.value)] = {
+              text: old.text,
+              color,
+            };
+          }
+        }
+        break;
+      case 2: // MappingType.RangeToText:
+        newMappings.push({
+          type: MappingType.RangeToText,
+          options: {
+            from: +old.from,
+            to: +old.to,
+            result: { text: old.text, color },
+          },
+        });
+        break;
+    }
+  }
+
+  if (Object.keys(valueMaps.options).length > 0) {
+    newMappings.unshift(valueMaps);
+  }
+
+  return newMappings;
+}
+
+function migrateTooltipOptions(panel: PanelModel) {
+  if (panel.type === 'timeseries' || panel.type === 'xychart') {
+    if (panel.options.tooltipOptions) {
+      panel.options = {
+        ...panel.options,
+        tooltip: panel.options.tooltipOptions,
+      };
+      delete panel.options.tooltipOptions;
+    }
+  }
+
+  return panel;
 }

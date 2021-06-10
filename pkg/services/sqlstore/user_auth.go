@@ -13,6 +13,8 @@ import (
 
 var getTime = time.Now
 
+const genericOAuthModule = "oauth_generic_oauth"
+
 func init() {
 	bus.AddHandler("sql", GetUserByAuthInfo)
 	bus.AddHandler("sql", GetExternalUserInfoByLogin)
@@ -101,7 +103,17 @@ func GetUserByAuthInfo(query *models.GetUserByAuthInfoQuery) error {
 		return models.ErrUserNotFound
 	}
 
-	// create authInfo record to link accounts
+	// Special case for generic oauth duplicates
+	if query.AuthModule == genericOAuthModule && user.Id != 0 {
+		authQuery.UserId = user.Id
+		authQuery.AuthModule = query.AuthModule
+		err = GetAuthInfo(authQuery)
+		if !errors.Is(err, models.ErrUserNotFound) {
+			if err != nil {
+				return err
+			}
+		}
+	}
 	if authQuery.Result == nil && query.AuthModule != "" {
 		cmd2 := &models.SetAuthInfoCommand{
 			UserId:     user.Id,
@@ -151,6 +163,7 @@ func GetAuthInfo(query *models.GetAuthInfoQuery) error {
 	if err != nil {
 		return err
 	}
+
 	if !has {
 		return models.ErrUserNotFound
 	}

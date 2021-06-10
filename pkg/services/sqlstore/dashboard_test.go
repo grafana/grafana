@@ -28,7 +28,7 @@ func TestDashboardDataAccess(t *testing.T) {
 			savedFolder := insertTestDashboard(t, sqlStore, "1 test dash folder", 1, 0, true, "prod", "webapp")
 			savedDash := insertTestDashboard(t, sqlStore, "test dash 23", 1, savedFolder.Id, false, "prod", "webapp")
 			insertTestDashboard(t, sqlStore, "test dash 45", 1, savedFolder.Id, false, "prod")
-			insertTestDashboard(t, sqlStore, "test dash 67", 1, 0, false, "prod", "webapp")
+			savedDash2 := insertTestDashboard(t, sqlStore, "test dash 67", 1, 0, false, "prod")
 
 			Convey("Should return dashboard model", func() {
 				So(savedDash.Title, ShouldEqual, "test dash 23")
@@ -343,7 +343,7 @@ func TestDashboardDataAccess(t *testing.T) {
 			Convey("Should be able to search for dashboard by dashboard ids", func() {
 				Convey("should be able to find two dashboards by id", func() {
 					query := search.FindPersistedDashboardsQuery{
-						DashboardIds: []int64{2, 3},
+						DashboardIds: []int64{savedDash.Id, savedDash2.Id},
 						SignedInUser: &models.SignedInUser{OrgId: 1, OrgRole: models.ROLE_EDITOR},
 					}
 

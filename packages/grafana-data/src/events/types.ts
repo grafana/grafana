@@ -7,6 +7,7 @@ import { Unsubscribable, Observable } from 'rxjs';
 export interface BusEvent {
   readonly type: string;
   readonly payload?: any;
+  readonly origin?: EventBus;
 }
 
 /**
@@ -16,6 +17,7 @@ export interface BusEvent {
 export abstract class BusEventBase implements BusEvent {
   readonly type: string;
   readonly payload?: any;
+  readonly origin?: EventBus;
 
   constructor() {
     //@ts-ignore
@@ -56,6 +58,14 @@ export interface BusEventHandler<T extends BusEvent> {
  * @alpha
  * Main minimal interface
  */
+export interface EventFilterOptions {
+  onlyLocal: boolean;
+}
+
+/**
+ * @alpha
+ * Main minimal interface
+ */
 export interface EventBus {
   /**
    * Publish single vent
@@ -63,19 +73,28 @@ export interface EventBus {
   publish<T extends BusEvent>(event: T): void;
 
   /**
-   * Subscribe to single event
-   */
-  subscribe<T extends BusEvent>(eventType: BusEventType<T>, handler: BusEventHandler<T>): Unsubscribable;
-
-  /**
    * Get observable of events
    */
   getStream<T extends BusEvent>(eventType: BusEventType<T>): Observable<T>;
 
   /**
+   * Subscribe to an event stream
+   *
+   * This function is a wrapper around the `getStream(...)` function
+   */
+  subscribe<T extends BusEvent>(eventType: BusEventType<T>, handler: BusEventHandler<T>): Unsubscribable;
+
+  /**
    * Remove all event subscriptions
    */
   removeAllListeners(): void;
+
+  /**
+   * Returns a new bus scoped that knows where it exists in a heiarchy
+   *
+   * @internal -- This is included for internal use only should not be used directly
+   */
+  newScopedBus(key: string, filter: EventFilterOptions): EventBus;
 }
 
 /**

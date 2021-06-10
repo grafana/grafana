@@ -11,7 +11,7 @@ This API can be used to create/update/delete Teams and to add/remove users to Te
 
 ## Team Search With Paging
 
-`GET /api/teams/search?perpage=50&page=1&query=mytea`
+`GET /api/teams/search?perpage=50&page=1&query=myteam`
 
 or
 
@@ -42,6 +42,7 @@ The `name` parameter returns a single team if the parameter matches the `name` f
 HTTP/1.1 200
 Content-Type: application/json
 
+{
   "totalCount": 1,
   "teams": [
     {

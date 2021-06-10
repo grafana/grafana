@@ -79,31 +79,38 @@ func newSocialBase(name string, config *oauth2.Config, info *setting.OAuthInfo) 
 	}
 }
 
-func NewOAuthService() {
+func NewOAuthService(cfg *setting.Cfg) {
 	setting.OAuthService = &setting.OAuther{}
 	setting.OAuthService.OAuthInfos = make(map[string]*setting.OAuthInfo)
 
 	for _, name := range allOauthes {
-		sec := setting.Raw.Section("auth." + name)
+		sec := cfg.Raw.Section("auth." + name)
+
 		info := &setting.OAuthInfo{
-			ClientId:           sec.Key("client_id").String(),
-			ClientSecret:       sec.Key("client_secret").String(),
-			Scopes:             util.SplitString(sec.Key("scopes").String()),
-			AuthUrl:            sec.Key("auth_url").String(),
-			TokenUrl:           sec.Key("token_url").String(),
-			ApiUrl:             sec.Key("api_url").String(),
-			Enabled:            sec.Key("enabled").MustBool(),
-			EmailAttributeName: sec.Key("email_attribute_name").String(),
-			EmailAttributePath: sec.Key("email_attribute_path").String(),
-			RoleAttributePath:  sec.Key("role_attribute_path").String(),
-			AllowedDomains:     util.SplitString(sec.Key("allowed_domains").String()),
-			HostedDomain:       sec.Key("hosted_domain").String(),
-			AllowSignup:        sec.Key("allow_sign_up").MustBool(),
-			Name:               sec.Key("name").MustString(name),
-			TlsClientCert:      sec.Key("tls_client_cert").String(),
-			TlsClientKey:       sec.Key("tls_client_key").String(),
-			TlsClientCa:        sec.Key("tls_client_ca").String(),
-			TlsSkipVerify:      sec.Key("tls_skip_verify_insecure").MustBool(),
+			ClientId:            sec.Key("client_id").String(),
+			ClientSecret:        sec.Key("client_secret").String(),
+			Scopes:              util.SplitString(sec.Key("scopes").String()),
+			AuthUrl:             sec.Key("auth_url").String(),
+			TokenUrl:            sec.Key("token_url").String(),
+			ApiUrl:              sec.Key("api_url").String(),
+			Enabled:             sec.Key("enabled").MustBool(),
+			EmailAttributeName:  sec.Key("email_attribute_name").String(),
+			EmailAttributePath:  sec.Key("email_attribute_path").String(),
+			RoleAttributePath:   sec.Key("role_attribute_path").String(),
+			RoleAttributeStrict: sec.Key("role_attribute_strict").MustBool(),
+			AllowedDomains:      util.SplitString(sec.Key("allowed_domains").String()),
+			HostedDomain:        sec.Key("hosted_domain").String(),
+			AllowSignup:         sec.Key("allow_sign_up").MustBool(),
+			Name:                sec.Key("name").MustString(name),
+			TlsClientCert:       sec.Key("tls_client_cert").String(),
+			TlsClientKey:        sec.Key("tls_client_key").String(),
+			TlsClientCa:         sec.Key("tls_client_ca").String(),
+			TlsSkipVerify:       sec.Key("tls_skip_verify_insecure").MustBool(),
+		}
+
+		// when empty_scopes parameter exists and is true, overwrite scope with empty value
+		if sec.Key("empty_scopes").MustBool() {
+			info.Scopes = []string{}
 		}
 
 		if !info.Enabled {
@@ -124,7 +131,7 @@ func NewOAuthService() {
 				TokenURL:  info.TokenUrl,
 				AuthStyle: oauth2.AuthStyleAutoDetect,
 			},
-			RedirectURL: strings.TrimSuffix(setting.AppUrl, "/") + SocialBaseUrl + name,
+			RedirectURL: strings.TrimSuffix(cfg.AppURL, "/") + SocialBaseUrl + name,
 			Scopes:      info.Scopes,
 		}
 
@@ -159,18 +166,20 @@ func NewOAuthService() {
 		// AzureAD.
 		if name == "azuread" {
 			SocialMap["azuread"] = &SocialAzureAD{
-				SocialBase:    newSocialBase(name, &config, info),
-				allowedGroups: util.SplitString(sec.Key("allowed_groups").String()),
+				SocialBase:        newSocialBase(name, &config, info),
+				allowedGroups:     util.SplitString(sec.Key("allowed_groups").String()),
+				autoAssignOrgRole: cfg.AutoAssignOrgRole,
 			}
 		}
 
 		// Okta
 		if name == "okta" {
 			SocialMap["okta"] = &SocialOkta{
-				SocialBase:        newSocialBase(name, &config, info),
-				apiUrl:            info.ApiUrl,
-				allowedGroups:     util.SplitString(sec.Key("allowed_groups").String()),
-				roleAttributePath: info.RoleAttributePath,
+				SocialBase:          newSocialBase(name, &config, info),
+				apiUrl:              info.ApiUrl,
+				allowedGroups:       util.SplitString(sec.Key("allowed_groups").String()),
+				roleAttributePath:   info.RoleAttributePath,
+				roleAttributeStrict: info.RoleAttributeStrict,
 			}
 		}
 
@@ -183,6 +192,7 @@ func NewOAuthService() {
 				emailAttributePath:   info.EmailAttributePath,
 				nameAttributePath:    sec.Key("name_attribute_path").String(),
 				roleAttributePath:    info.RoleAttributePath,
+				roleAttributeStrict:  info.RoleAttributeStrict,
 				loginAttributePath:   sec.Key("login_attribute_path").String(),
 				idTokenAttributeName: sec.Key("id_token_attribute_name").String(),
 				teamIds:              sec.Key("team_ids").Ints(","),
@@ -195,17 +205,17 @@ func NewOAuthService() {
 				ClientID:     info.ClientId,
 				ClientSecret: info.ClientSecret,
 				Endpoint: oauth2.Endpoint{
-					AuthURL:   setting.GrafanaComUrl + "/oauth2/authorize",
-					TokenURL:  setting.GrafanaComUrl + "/api/oauth2/token",
+					AuthURL:   cfg.GrafanaComURL + "/oauth2/authorize",
+					TokenURL:  cfg.GrafanaComURL + "/api/oauth2/token",
 					AuthStyle: oauth2.AuthStyleInHeader,
 				},
-				RedirectURL: strings.TrimSuffix(setting.AppUrl, "/") + SocialBaseUrl + name,
+				RedirectURL: strings.TrimSuffix(cfg.AppURL, "/") + SocialBaseUrl + name,
 				Scopes:      info.Scopes,
 			}
 
 			SocialMap[grafanaCom] = &SocialGrafanaCom{
 				SocialBase:           newSocialBase(name, &config, info),
-				url:                  setting.GrafanaComUrl,
+				url:                  cfg.GrafanaComURL,
 				allowedOrganizations: util.SplitString(sec.Key("allowed_organizations").String()),
 			}
 		}

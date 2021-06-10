@@ -18,6 +18,7 @@ const (
 	countType         = "count"
 	percentilesType   = "percentiles"
 	extendedStatsType = "extended_stats"
+	topMetricsType    = "top_metrics"
 	// Bucket types
 	dateHistType    = "date_histogram"
 	histogramType   = "histogram"
@@ -40,6 +41,7 @@ var newResponseParser = func(responses []*es.SearchResponse, targets []*Query, d
 	}
 }
 
+// nolint:staticcheck // plugins.DataResponse deprecated
 func (rp *responseParser) getTimeSeries() (plugins.DataResponse, error) {
 	result := plugins.DataResponse{
 		Results: make(map[string]plugins.DataQueryResult),
@@ -87,6 +89,7 @@ func (rp *responseParser) getTimeSeries() (plugins.DataResponse, error) {
 	return result, nil
 }
 
+// nolint:staticcheck // plugins.* deprecated
 func (rp *responseParser) processBuckets(aggs map[string]interface{}, target *Query,
 	series *plugins.DataTimeSeriesSlice, table *plugins.DataTable, props map[string]string, depth int) error {
 	var err error
@@ -165,6 +168,7 @@ func (rp *responseParser) processBuckets(aggs map[string]interface{}, target *Qu
 	return nil
 }
 
+// nolint:staticcheck // plugins.* deprecated
 func (rp *responseParser) processMetrics(esAgg *simplejson.Json, target *Query, series *plugins.DataTimeSeriesSlice,
 	props map[string]string) error {
 	for _, metric := range target.Metrics {
@@ -222,6 +226,10 @@ func (rp *responseParser) processMetrics(esAgg *simplejson.Json, target *Query, 
 				}
 				*series = append(*series, newSeries)
 			}
+		case topMetricsType:
+			topMetricSeries := processTopMetrics(metric, esAgg, props)
+			*series = append(*series, topMetricSeries...)
+
 		case extendedStatsType:
 			buckets := esAgg.Get("buckets").MustArray()
 
@@ -294,6 +302,7 @@ func (rp *responseParser) processMetrics(esAgg *simplejson.Json, target *Query, 
 	return nil
 }
 
+// nolint:staticcheck // plugins.* deprecated
 func (rp *responseParser) processAggregationDocs(esAgg *simplejson.Json, aggDef *BucketAgg, target *Query,
 	table *plugins.DataTable, props map[string]string) error {
 	propKeys := make([]string, 0)
@@ -437,6 +446,7 @@ func (rp *responseParser) nameSeries(seriesList plugins.DataTimeSeriesSlice, tar
 
 var aliasPatternRegex = regexp.MustCompile(`\{\{([\s\S]+?)\}\}`)
 
+// nolint:staticcheck // plugins.* deprecated
 func (rp *responseParser) getSeriesName(series plugins.DataTimeSeries, target *Query, metricTypeCount int) string {
 	metricType := series.Tags["metric"]
 	metricName := rp.getMetricName(metricType)
@@ -569,6 +579,7 @@ func findAgg(target *Query, aggID string) (*BucketAgg, error) {
 	return nil, errors.New("can't found aggDef, aggID:" + aggID)
 }
 
+// nolint:staticcheck // plugins.DataQueryResult deprecated
 func getErrorFromElasticResponse(response *es.SearchResponse) plugins.DataQueryResult {
 	var result plugins.DataQueryResult
 	json := simplejson.NewFromAny(response.Error)
@@ -585,4 +596,48 @@ func getErrorFromElasticResponse(response *es.SearchResponse) plugins.DataQueryR
 	}
 
 	return result
+}
+
+func processTopMetricValues(stats *simplejson.Json, field string) null.Float {
+	for _, stat := range stats.MustArray() {
+		stat := stat.(map[string]interface{})
+		metrics, hasMetrics := stat["metrics"]
+		if hasMetrics {
+			metrics := metrics.(map[string]interface{})
+			metricValue, hasMetricValue := metrics[field]
+			if hasMetricValue && metricValue != nil {
+				return null.FloatFrom(metricValue.(float64))
+			}
+		}
+	}
+	return null.NewFloat(0, false)
+}
+
+func processTopMetrics(metric *MetricAgg, esAgg *simplejson.Json, props map[string]string) plugins.DataTimeSeriesSlice {
+	var series plugins.DataTimeSeriesSlice
+	metrics, hasMetrics := metric.Settings.MustMap()["metrics"].([]interface{})
+
+	if hasMetrics {
+		for _, metricField := range metrics {
+			newSeries := plugins.DataTimeSeries{
+				Tags: make(map[string]string),
+			}
+
+			for _, v := range esAgg.Get("buckets").MustArray() {
+				bucket := simplejson.NewFromAny(v)
+				stats := bucket.GetPath(metric.ID, "top")
+				value := processTopMetricValues(stats, metricField.(string))
+				key := castToNullFloat(bucket.Get("key"))
+				newSeries.Points = append(newSeries.Points, plugins.DataTimePoint{value, key})
+			}
+
+			for k, v := range props {
+				newSeries.Tags[k] = v
+			}
+			newSeries.Tags["metric"] = "top_metrics"
+			newSeries.Tags["field"] = metricField.(string)
+			series = append(series, newSeries)
+		}
+	}
+	return series
 }

@@ -11,31 +11,31 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/go-openapi/strfmt"
-	apimodels "github.com/grafana/alerting-api/pkg/api"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/services/ngalert/eval"
+	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tsdb"
+	"github.com/grafana/grafana/pkg/util"
+	"github.com/pkg/errors"
 	"gopkg.in/macaron.v1"
 	"gopkg.in/yaml.v3"
 )
 
 var searchRegex = regexp.MustCompile(`\{(\w+)\}`)
 
+var NotImplementedResp = ErrResp(http.StatusNotImplemented, errors.New("endpoint not implemented"), "")
+
 func toMacaronPath(path string) string {
 	return string(searchRegex.ReplaceAllFunc([]byte(path), func(s []byte) []byte {
 		m := string(s[1 : len(s)-1])
 		return []byte(fmt.Sprintf(":%s", m))
 	}))
-}
-
-func timePtr(t strfmt.DateTime) *strfmt.DateTime {
-	return &t
-}
-
-func stringPtr(s string) *string {
-	return &s
 }
 
 func backendType(ctx *models.ReqContext, cache datasources.CacheService) (apimodels.Backend, error) {
@@ -91,12 +91,12 @@ func (p *AlertingProxy) withReq(
 	method string,
 	u *url.URL,
 	body io.Reader,
-	extractor func([]byte) (interface{}, error),
+	extractor func(*response.NormalResponse) (interface{}, error),
 	headers map[string]string,
 ) response.Response {
 	req, err := http.NewRequest(method, u.String(), body)
 	if err != nil {
-		return response.Error(400, err.Error(), nil)
+		return ErrResp(http.StatusBadRequest, err, "")
 	}
 	for h, v := range headers {
 		req.Header.Add(h, v)
@@ -118,26 +118,34 @@ func (p *AlertingProxy) withReq(
 					errMessage = message.(string)
 				}
 			}
+		} else if strings.HasPrefix(resp.Header().Get("Content-Type"), "text/html") {
+			// if Content-Type is text/html
+			// do not return the body
+			errMessage = "redacted html"
 		}
-		return response.Error(status, errMessage, nil)
+		return ErrResp(status, errors.New(errMessage), "")
 	}
 
-	t, err := extractor(resp.Body())
+	t, err := extractor(resp)
 	if err != nil {
-		return response.Error(500, err.Error(), nil)
+		return ErrResp(http.StatusInternalServerError, err, "")
 	}
 
 	b, err := json.Marshal(t)
 	if err != nil {
-		return response.Error(500, err.Error(), nil)
+		return ErrResp(http.StatusInternalServerError, err, "")
 	}
 
 	return response.JSON(status, b)
 }
 
-func yamlExtractor(v interface{}) func([]byte) (interface{}, error) {
-	return func(b []byte) (interface{}, error) {
-		decoder := yaml.NewDecoder(bytes.NewReader(b))
+func yamlExtractor(v interface{}) func(*response.NormalResponse) (interface{}, error) {
+	return func(resp *response.NormalResponse) (interface{}, error) {
+		contentType := resp.Header().Get("Content-Type")
+		if !strings.Contains(contentType, "yaml") {
+			return nil, fmt.Errorf("unexpected content type from upstream. expected YAML, got %v", contentType)
+		}
+		decoder := yaml.NewDecoder(bytes.NewReader(resp.Body()))
 		decoder.KnownFields(true)
 
 		err := decoder.Decode(v)
@@ -146,16 +154,105 @@ func yamlExtractor(v interface{}) func([]byte) (interface{}, error) {
 	}
 }
 
-func jsonExtractor(v interface{}) func([]byte) (interface{}, error) {
+func jsonExtractor(v interface{}) func(*response.NormalResponse) (interface{}, error) {
 	if v == nil {
 		// json unmarshal expects a pointer
 		v = &map[string]interface{}{}
 	}
-	return func(b []byte) (interface{}, error) {
-		return v, json.Unmarshal(b, v)
+	return func(resp *response.NormalResponse) (interface{}, error) {
+		contentType := resp.Header().Get("Content-Type")
+		if !strings.Contains(contentType, "json") {
+			return nil, fmt.Errorf("unexpected content type from upstream. expected JSON, got %v", contentType)
+		}
+		return v, json.Unmarshal(resp.Body(), v)
 	}
 }
 
-func messageExtractor(b []byte) (interface{}, error) {
-	return map[string]string{"message": string(b)}, nil
+func messageExtractor(resp *response.NormalResponse) (interface{}, error) {
+	return map[string]string{"message": string(resp.Body())}, nil
+}
+
+func validateCondition(c ngmodels.Condition, user *models.SignedInUser, skipCache bool, datasourceCache datasources.CacheService) error {
+	if len(c.Data) == 0 {
+		return nil
+	}
+
+	refIDs, err := validateQueriesAndExpressions(c.Data, user, skipCache, datasourceCache)
+	if err != nil {
+		return err
+	}
+
+	t := make([]string, 0, len(refIDs))
+	for refID := range refIDs {
+		t = append(t, refID)
+	}
+	if _, ok := refIDs[c.Condition]; !ok {
+		return fmt.Errorf("condition %s not found in any query or expression: it should be one of: [%s]", c.Condition, strings.Join(t, ","))
+	}
+	return nil
+}
+
+func validateQueriesAndExpressions(data []ngmodels.AlertQuery, user *models.SignedInUser, skipCache bool, datasourceCache datasources.CacheService) (map[string]struct{}, error) {
+	refIDs := make(map[string]struct{})
+	if len(data) == 0 {
+		return nil, nil
+	}
+
+	for _, query := range data {
+		datasourceUID, err := query.GetDatasource()
+		if err != nil {
+			return nil, err
+		}
+
+		isExpression, err := query.IsExpression()
+		if err != nil {
+			return nil, err
+		}
+		if isExpression {
+			refIDs[query.RefID] = struct{}{}
+			continue
+		}
+
+		_, err = datasourceCache.GetDatasourceByUID(datasourceUID, user, skipCache)
+		if err != nil {
+			return nil, fmt.Errorf("invalid query %s: %w: %s", query.RefID, err, datasourceUID)
+		}
+		refIDs[query.RefID] = struct{}{}
+	}
+	return refIDs, nil
+}
+
+func conditionEval(c *models.ReqContext, cmd ngmodels.EvalAlertConditionCommand, datasourceCache datasources.CacheService, dataService *tsdb.Service, cfg *setting.Cfg) response.Response {
+	evalCond := ngmodels.Condition{
+		Condition: cmd.Condition,
+		OrgID:     c.SignedInUser.OrgId,
+		Data:      cmd.Data,
+	}
+	if err := validateCondition(evalCond, c.SignedInUser, c.SkipCache, datasourceCache); err != nil {
+		return ErrResp(http.StatusBadRequest, err, "invalid condition")
+	}
+
+	now := cmd.Now
+	if now.IsZero() {
+		now = timeNow()
+	}
+
+	evaluator := eval.Evaluator{Cfg: cfg}
+	evalResults, err := evaluator.ConditionEval(&evalCond, now, dataService)
+	if err != nil {
+		return ErrResp(http.StatusBadRequest, err, "Failed to evaluate conditions")
+	}
+
+	frame := evalResults.AsDataFrame()
+	return response.JSONStreaming(http.StatusOK, util.DynMap{
+		"instances": []*data.Frame{&frame},
+	})
+}
+
+// ErrorResp creates a response with a visible error
+func ErrResp(status int, err error, msg string, args ...interface{}) *response.NormalResponse {
+	if msg != "" {
+		err = errors.WithMessagef(err, msg, args...)
+	}
+	return response.Error(status, err.Error(), nil)
 }

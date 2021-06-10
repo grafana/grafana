@@ -1,13 +1,21 @@
-import _ from 'lodash';
+import { keys as _keys } from 'lodash';
 import { DashboardModel } from '../state/DashboardModel';
 import { PanelModel } from '../state/PanelModel';
 import { getDashboardModel } from '../../../../test/helpers/getDashboardModel';
 import { variableAdapters } from '../../variables/adapters';
 import { createAdHocVariableAdapter } from '../../variables/adhoc/adapter';
 import { createQueryVariableAdapter } from '../../variables/query/adapter';
+import { createCustomVariableAdapter } from '../../variables/custom/adapter';
+import { expect } from '../../../../test/lib/common';
+import { setTimeSrv, TimeSrv } from '../services/TimeSrv';
 
 jest.mock('app/core/services/context_srv', () => ({}));
-variableAdapters.setInit(() => [createQueryVariableAdapter(), createAdHocVariableAdapter()]);
+
+variableAdapters.setInit(() => [
+  createQueryVariableAdapter(),
+  createAdHocVariableAdapter(),
+  createCustomVariableAdapter(),
+]);
 
 describe('DashboardModel', () => {
   describe('when creating new dashboard model defaults only', () => {
@@ -49,7 +57,7 @@ describe('DashboardModel', () => {
     it('should sort keys', () => {
       const model = new DashboardModel({});
       const saveModel = model.getSaveModelClone();
-      const keys = _.keys(saveModel);
+      const keys = _keys(saveModel);
 
       expect(keys[0]).toBe('annotations');
       expect(keys[1]).toBe('autoUpdate');
@@ -260,20 +268,19 @@ describe('DashboardModel', () => {
     });
   });
 
-  describe('updateSubmenuVisibility with empty lists', () => {
+  describe('isSubMenuVisible with empty lists', () => {
     let model: DashboardModel;
 
     beforeEach(() => {
       model = new DashboardModel({});
-      model.updateSubmenuVisibility();
     });
 
-    it('should not enable submmenu', () => {
-      expect(model.meta.submenuEnabled).toBe(false);
+    it('should not show submenu', () => {
+      expect(model.isSubMenuVisible()).toBe(false);
     });
   });
 
-  describe('updateSubmenuVisibility with annotation', () => {
+  describe('isSubMenuVisible with annotation', () => {
     let model: DashboardModel;
 
     beforeEach(() => {
@@ -282,32 +289,35 @@ describe('DashboardModel', () => {
           list: [{}],
         },
       });
-      model.updateSubmenuVisibility();
     });
 
-    it('should enable submmenu', () => {
-      expect(model.meta.submenuEnabled).toBe(true);
+    it('should show submmenu', () => {
+      expect(model.isSubMenuVisible()).toBe(true);
     });
   });
 
-  describe('updateSubmenuVisibility with template var', () => {
+  describe('isSubMenuVisible with template var', () => {
     let model: DashboardModel;
 
     beforeEach(() => {
-      model = new DashboardModel({
-        templating: {
-          list: [{}],
+      model = new DashboardModel(
+        {
+          templating: {
+            list: [{}],
+          },
         },
-      });
-      model.updateSubmenuVisibility();
+        {},
+        // getVariablesFromState stub to return a variable
+        () => [{} as any]
+      );
     });
 
     it('should enable submmenu', () => {
-      expect(model.meta.submenuEnabled).toBe(true);
+      expect(model.isSubMenuVisible()).toBe(true);
     });
   });
 
-  describe('updateSubmenuVisibility with hidden template var', () => {
+  describe('isSubMenuVisible with hidden template var', () => {
     let model: DashboardModel;
 
     beforeEach(() => {
@@ -316,15 +326,14 @@ describe('DashboardModel', () => {
           list: [{ hide: 2 }],
         },
       });
-      model.updateSubmenuVisibility();
     });
 
     it('should not enable submmenu', () => {
-      expect(model.meta.submenuEnabled).toBe(false);
+      expect(model.isSubMenuVisible()).toBe(false);
     });
   });
 
-  describe('updateSubmenuVisibility with hidden annotation toggle', () => {
+  describe('isSubMenuVisible with hidden annotation toggle', () => {
     let dashboard: DashboardModel;
 
     beforeEach(() => {
@@ -333,11 +342,10 @@ describe('DashboardModel', () => {
           list: [{ hide: true }],
         },
       });
-      dashboard.updateSubmenuVisibility();
     });
 
     it('should not enable submmenu', () => {
-      expect(dashboard.meta.submenuEnabled).toBe(false);
+      expect(dashboard.isSubMenuVisible()).toBe(false);
     });
   });
 
@@ -522,6 +530,7 @@ describe('DashboardModel', () => {
           list: [
             {
               name: 'dc',
+              type: 'custom',
               current: {
                 text: 'dc1 + dc2',
                 value: ['dc1', 'dc2'],
@@ -533,6 +542,7 @@ describe('DashboardModel', () => {
             },
             {
               name: 'app',
+              type: 'custom',
               current: {
                 text: 'se1 + se2',
                 value: ['se1', 'se2'],
@@ -755,5 +765,167 @@ describe('DashboardModel', () => {
         expect(result).toBe(expected);
       }
     );
+  });
+});
+
+describe('exitViewPanel', () => {
+  function getTestContext() {
+    const panel: any = { setIsViewing: jest.fn() };
+    const dashboard = new DashboardModel({});
+    dashboard.startRefresh = jest.fn();
+    dashboard.panelInView = panel;
+
+    return { dashboard, panel };
+  }
+
+  describe('when called', () => {
+    it('then panelInView is set to undefined', () => {
+      const { dashboard, panel } = getTestContext();
+
+      dashboard.exitViewPanel(panel);
+
+      expect(dashboard.panelInView).toBeUndefined();
+    });
+
+    it('then setIsViewing is called on panel', () => {
+      const { dashboard, panel } = getTestContext();
+
+      dashboard.exitViewPanel(panel);
+
+      expect(panel.setIsViewing).toHaveBeenCalledWith(false);
+    });
+
+    it('then startRefresh is not called', () => {
+      const { dashboard, panel } = getTestContext();
+
+      dashboard.exitViewPanel(panel);
+
+      expect(dashboard.startRefresh).not.toHaveBeenCalled();
+    });
+
+    describe('and there is a change that affects all panels', () => {
+      it('then startRefresh is not called', () => {
+        const { dashboard, panel } = getTestContext();
+        dashboard.setChangeAffectsAllPanels();
+
+        dashboard.exitViewPanel(panel);
+
+        expect(dashboard.startRefresh).toHaveBeenCalled();
+      });
+    });
+  });
+});
+
+describe('exitPanelEditor', () => {
+  function getTestContext(setPreviousAutoRefresh = false) {
+    const panel: any = { destroy: jest.fn() };
+    const dashboard = new DashboardModel({});
+    const timeSrvMock = ({
+      pauseAutoRefresh: jest.fn(),
+      resumeAutoRefresh: jest.fn(),
+      setAutoRefresh: jest.fn(),
+    } as unknown) as TimeSrv;
+    dashboard.startRefresh = jest.fn();
+    dashboard.panelInEdit = panel;
+    if (setPreviousAutoRefresh) {
+      timeSrvMock.previousAutoRefresh = '5s';
+    }
+    setTimeSrv(timeSrvMock);
+    return { dashboard, panel, timeSrvMock };
+  }
+
+  describe('when called', () => {
+    it('then panelInEdit is set to undefined', () => {
+      const { dashboard } = getTestContext();
+
+      dashboard.exitPanelEditor();
+
+      expect(dashboard.panelInEdit).toBeUndefined();
+    });
+
+    it('then destroy is called on panel', () => {
+      const { dashboard, panel } = getTestContext();
+
+      dashboard.exitPanelEditor();
+
+      expect(panel.destroy).toHaveBeenCalled();
+    });
+
+    it('then startRefresh is not called', () => {
+      const { dashboard } = getTestContext();
+
+      dashboard.exitPanelEditor();
+
+      expect(dashboard.startRefresh).not.toHaveBeenCalled();
+    });
+
+    it('then auto refresh property is resumed', () => {
+      const { dashboard, timeSrvMock } = getTestContext(true);
+      dashboard.exitPanelEditor();
+      expect(timeSrvMock.resumeAutoRefresh).toHaveBeenCalled();
+    });
+
+    describe('and there is a change that affects all panels', () => {
+      it('then startRefresh is called', () => {
+        const { dashboard } = getTestContext();
+        dashboard.setChangeAffectsAllPanels();
+
+        dashboard.exitPanelEditor();
+
+        expect(dashboard.startRefresh).toHaveBeenCalled();
+      });
+    });
+  });
+});
+
+describe('setChangeAffectsAllPanels', () => {
+  it.each`
+    panelInEdit  | panelInView  | expected
+    ${null}      | ${null}      | ${false}
+    ${undefined} | ${undefined} | ${false}
+    ${null}      | ${{}}        | ${true}
+    ${undefined} | ${{}}        | ${true}
+    ${{}}        | ${null}      | ${true}
+    ${{}}        | ${undefined} | ${true}
+    ${{}}        | ${{}}        | ${true}
+  `(
+    'when called and panelInEdit:{$panelInEdit} and panelInView:{$panelInView}',
+    ({ panelInEdit, panelInView, expected }) => {
+      const dashboard = new DashboardModel({});
+      dashboard.panelInEdit = panelInEdit;
+      dashboard.panelInView = panelInView;
+
+      dashboard.setChangeAffectsAllPanels();
+
+      expect(dashboard['hasChangesThatAffectsAllPanels']).toEqual(expected);
+    }
+  );
+});
+
+describe('initEditPanel', () => {
+  function getTestContext() {
+    const dashboard = new DashboardModel({});
+    const timeSrvMock = ({
+      pauseAutoRefresh: jest.fn(),
+      resumeAutoRefresh: jest.fn(),
+    } as unknown) as TimeSrv;
+    setTimeSrv(timeSrvMock);
+    return { dashboard, timeSrvMock };
+  }
+
+  describe('when called', () => {
+    it('then panelInEdit is not undefined', () => {
+      const { dashboard } = getTestContext();
+      dashboard.addPanel({ type: 'timeseries' });
+      dashboard.initEditPanel(dashboard.panels[0]);
+      expect(dashboard.panelInEdit).not.toBeUndefined();
+    });
+
+    it('then auto-refresh is paused', () => {
+      const { dashboard, timeSrvMock } = getTestContext();
+      dashboard.addPanel({ type: 'timeseries' });
+      dashboard.initEditPanel(dashboard.panels[0]);
+      expect(timeSrvMock.pauseAutoRefresh).toHaveBeenCalled();
+    });
   });
 });

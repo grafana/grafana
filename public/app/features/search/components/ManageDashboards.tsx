@@ -1,6 +1,6 @@
 import React, { FC, memo, useState } from 'react';
 import { css } from '@emotion/css';
-import { HorizontalGroup, stylesFactory, useTheme, Spinner } from '@grafana/ui';
+import { stylesFactory, useTheme, Spinner } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
 import { contextSrv } from 'app/core/services/context_srv';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
@@ -93,11 +93,11 @@ export const ManageDashboards: FC<Props> = memo(({ folder }) => {
 
   return (
     <div className={styles.container}>
-      <div>
-        <HorizontalGroup justify="space-between">
+      <div className="page-action-bar">
+        <div className="gf-form gf-form--grow m-r-2">
           <FilterInput value={query.query} onChange={onQueryChange} placeholder={'Search dashboards by name'} />
-          <DashboardActions isEditor={isEditor} canEdit={hasEditPermissionInFolders || canSave} folderId={folderId} />
-        </HorizontalGroup>
+        </div>
+        <DashboardActions isEditor={isEditor} canEdit={hasEditPermissionInFolders || canSave} folderId={folderId} />
       </div>
 
       <div className={styles.results}>
@@ -148,13 +148,15 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
     container: css`
       height: 100%;
+      display: flex;
+      flex-direction: column;
     `,
     results: css`
       display: flex;
       flex-direction: column;
-      flex: 1;
+      flex: 1 1 0;
       height: 100%;
-      margin-top: ${theme.spacing.xl};
+      padding-top: ${theme.spacing.lg};
     `,
     spinner: css`
       display: flex;

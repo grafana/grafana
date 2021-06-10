@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import { isString, property, escape } from 'lodash';
 import { deprecationWarning, ScopedVars, TimeRange } from '@grafana/data';
 import { getFilteredVariables, getVariables, getVariableWithName } from '../variables/state/selectors';
 import { variableRegex } from '../variables/utils';
@@ -184,11 +184,11 @@ export class TemplateSrv implements BaseTemplateSrv {
   }
 
   highlightVariablesAsHtml(str: string) {
-    if (!str || !_.isString(str)) {
+    if (!str || !isString(str)) {
       return str;
     }
 
-    str = _.escape(str);
+    str = escape(str);
     this.regex.lastIndex = 0;
     return str.replace(this.regex, (match, var1, var2, fmt2, var3) => {
       if (this.getVariableAtIndex(var1 || var2 || var3)) {
@@ -215,7 +215,7 @@ export class TemplateSrv implements BaseTemplateSrv {
       return accessor;
     }
 
-    return (this.fieldAccessorCache[fieldPath] = _.property(fieldPath));
+    return (this.fieldAccessorCache[fieldPath] = property(fieldPath));
   }
 
   private getVariableValue(variableName: string, fieldPath: string | undefined, scopedVars: ScopedVars) {

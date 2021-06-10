@@ -10,6 +10,7 @@ import { MutableDataFrame } from '@grafana/data';
 
 jest.mock('react-redux', () => ({
   useSelector: jest.fn(() => undefined),
+  connect: jest.fn((v) => v),
 }));
 
 function renderTraceView() {

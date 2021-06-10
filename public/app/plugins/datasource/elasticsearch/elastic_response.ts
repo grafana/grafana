@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import { clone, filter, find, identity, isArray, keys, map, uniq, values as _values } from 'lodash';
 import flatten from 'app/core/utils/flatten';
 import * as queryDef from './query_def';
 import TableModel from 'app/core/table_model';
@@ -14,11 +14,18 @@ import { ElasticsearchAggregation, ElasticsearchQuery } from './types';
 import {
   ExtendedStatMetaType,
   isMetricAggregationWithField,
+  TopMetrics,
 } from './components/QueryEditor/MetricAggregationsEditor/aggregations';
 import { describeMetric, getScriptValue } from './utils';
 import { metricAggregationConfig } from './components/QueryEditor/MetricAggregationsEditor/utils';
 
 const HIGHLIGHT_TAGS_EXP = `${queryDef.highlightTags.pre}([^@]+)${queryDef.highlightTags.post}`;
+type TopMetricMetric = Record<string, number>;
+interface TopMetricBucket {
+  top: Array<{
+    metrics: TopMetricMetric;
+  }>;
+}
 
 export class ElasticResponse {
   constructor(private targets: ElasticsearchQuery[], private response: any) {
@@ -103,6 +110,33 @@ export class ElasticResponse {
 
           break;
         }
+        case 'top_metrics': {
+          if (metric.settings?.metrics?.length) {
+            for (const metricField of metric.settings?.metrics) {
+              newSeries = {
+                datapoints: [],
+                metric: metric.type,
+                props: props,
+                refId: target.refId,
+                field: metricField,
+              };
+              for (let i = 0; i < esAgg.buckets.length; i++) {
+                const bucket = esAgg.buckets[i];
+                const stats = bucket[metric.id] as TopMetricBucket;
+                const values = stats.top.map((hit) => {
+                  if (hit.metrics[metricField]) {
+                    return hit.metrics[metricField];
+                  }
+                  return null;
+                });
+                const point = [values[values.length - 1], bucket.key];
+                newSeries.datapoints.push(point);
+              }
+              seriesList.push(newSeries);
+            }
+          }
+          break;
+        }
         default: {
           newSeries = {
             datapoints: [],
@@ -144,7 +178,7 @@ export class ElasticResponse {
   ) {
     // add columns
     if (table.columns.length === 0) {
-      for (const propKey of _.keys(props)) {
+      for (const propKey of keys(props)) {
         table.addColumn({ text: propKey, filterable: true });
       }
       table.addColumn({ text: aggDef.field, filterable: true });
@@ -155,11 +189,11 @@ export class ElasticResponse {
       table.addColumn({ text: metricName });
       values.push(value);
     };
-    const buckets = _.isArray(esAgg.buckets) ? esAgg.buckets : [esAgg.buckets];
+    const buckets = isArray(esAgg.buckets) ? esAgg.buckets : [esAgg.buckets];
     for (const bucket of buckets) {
       const values = [];
 
-      for (const propValues of _.values(props)) {
+      for (const propValues of _values(props)) {
         values.push(propValues);
       }
 
@@ -195,9 +229,26 @@ export class ElasticResponse {
             }
             break;
           }
+          case 'top_metrics': {
+            const baseName = this.getMetricName(metric.type);
+
+            if (metric.settings?.metrics) {
+              for (const metricField of metric.settings.metrics) {
+                // If we selected more than one metric we also add each metric name
+                const metricName = metric.settings.metrics.length > 1 ? `${baseName} ${metricField}` : baseName;
+
+                const stats = bucket[metric.id] as TopMetricBucket;
+
+                // Size of top_metrics is fixed to 1.
+                addMetricValue(values, metricName, stats.top[0].metrics[metricField]);
+              }
+            }
+
+            break;
+          }
           default: {
             let metricName = this.getMetricName(metric.type);
-            const otherMetrics = _.filter(target.metrics, { type: metric.type });
+            const otherMetrics = filter(target.metrics, { type: metric.type });
 
             // if more of the same metric type include field field name in property
             if (otherMetrics.length > 1) {
@@ -228,7 +279,7 @@ export class ElasticResponse {
     const maxDepth = target.bucketAggs!.length - 1;
 
     for (aggId in aggs) {
-      aggDef = _.find(target.bucketAggs, { id: aggId });
+      aggDef = find(target.bucketAggs, { id: aggId });
       esAgg = aggs[aggId];
 
       if (!aggDef) {
@@ -244,7 +295,7 @@ export class ElasticResponse {
       } else {
         for (const nameIndex in esAgg.buckets) {
           bucket = esAgg.buckets[nameIndex];
-          props = _.clone(props);
+          props = clone(props);
           if (bucket.key !== void 0) {
             props[aggDef.field] = bucket.key;
           } else {
@@ -276,7 +327,7 @@ export class ElasticResponse {
     return metric;
   }
 
-  private getSeriesName(series: any, target: ElasticsearchQuery, metricTypeCount: any) {
+  private getSeriesName(series: any, target: ElasticsearchQuery, dedup: boolean) {
     let metricName = this.getMetricName(series.metric);
 
     if (target.alias) {
@@ -304,12 +355,12 @@ export class ElasticResponse {
 
     if (queryDef.isPipelineAgg(series.metric)) {
       if (series.metric && queryDef.isPipelineAggWithMultipleBucketPaths(series.metric)) {
-        const agg: any = _.find(target.metrics, { id: series.metricId });
+        const agg: any = find(target.metrics, { id: series.metricId });
         if (agg && agg.settings.script) {
           metricName = getScriptValue(agg);
 
           for (const pv of agg.pipelineVariables) {
-            const appliedAgg: any = _.find(target.metrics, { id: pv.pipelineAgg });
+            const appliedAgg: any = find(target.metrics, { id: pv.pipelineAgg });
             if (appliedAgg) {
               metricName = metricName.replace('params.' + pv.name, describeMetric(appliedAgg));
             }
@@ -318,7 +369,7 @@ export class ElasticResponse {
           metricName = 'Unset';
         }
       } else {
-        const appliedAgg: any = _.find(target.metrics, { id: series.field });
+        const appliedAgg: any = find(target.metrics, { id: series.field });
         if (appliedAgg) {
           metricName += ' ' + describeMetric(appliedAgg);
         } else {
@@ -329,7 +380,7 @@ export class ElasticResponse {
       metricName += ' ' + series.field;
     }
 
-    const propKeys = _.keys(series.props);
+    const propKeys = keys(series.props);
     if (propKeys.length === 0) {
       return metricName;
     }
@@ -339,19 +390,22 @@ export class ElasticResponse {
       name += series.props[propName] + ' ';
     }
 
-    if (metricTypeCount === 1) {
-      return name.trim();
+    if (dedup) {
+      return name.trim() + ' ' + metricName;
     }
 
-    return name.trim() + ' ' + metricName;
+    return name.trim();
   }
 
   nameSeries(seriesList: any, target: ElasticsearchQuery) {
-    const metricTypeCount = _.uniq(_.map(seriesList, 'metric')).length;
+    const metricTypeCount = uniq(map(seriesList, 'metric')).length;
+    const hasTopMetricWithMultipleMetrics = (target.metrics?.filter(
+      (m) => m.type === 'top_metrics'
+    ) as TopMetrics[]).some((m) => (m?.settings?.metrics?.length || 0) > 1);
 
     for (let i = 0; i < seriesList.length; i++) {
       const series = seriesList[i];
-      series.target = this.getSeriesName(series, target, metricTypeCount);
+      series.target = this.getSeriesName(series, target, metricTypeCount > 1 || hasTopMetricWithMultipleMetrics);
     }
   }
 
@@ -394,7 +448,7 @@ export class ElasticResponse {
   }
 
   trimDatapoints(aggregations: any, target: ElasticsearchQuery) {
-    const histogram: any = _.find(target.bucketAggs, { type: 'date_histogram' });
+    const histogram: any = find(target.bucketAggs, { type: 'date_histogram' });
 
     const shouldDropFirstAndLast = histogram && histogram.settings && histogram.settings.trimEdges;
     if (shouldDropFirstAndLast) {
@@ -488,11 +542,11 @@ export class ElasticResponse {
                     });
                   });
                 })
-                .filter(_.identity);
+                .filter(identity);
               // If meta and searchWords already exists, add the words and
               // deduplicate otherwise create a new set of search words.
               const searchWords = series.meta?.searchWords
-                ? _.uniq([...series.meta.searchWords, ...newSearchWords])
+                ? uniq([...series.meta.searchWords, ...newSearchWords])
                 : [...newSearchWords];
               series.meta = series.meta ? { ...series.meta, searchWords } : { searchWords };
             }

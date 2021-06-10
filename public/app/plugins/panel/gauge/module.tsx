@@ -1,8 +1,9 @@
 import { PanelPlugin } from '@grafana/data';
 import { GaugePanel } from './GaugePanel';
 import { GaugeOptions } from './types';
-import { addStandardDataReduceOptions, addTextSizeOptions } from '../stat/types';
+import { addStandardDataReduceOptions } from '../stat/types';
 import { gaugePanelMigrationHandler, gaugePanelChangedHandler } from './GaugeMigrations';
+import { commonOptionsBuilder } from '@grafana/ui';
 
 export const plugin = new PanelPlugin<GaugeOptions>(GaugePanel)
   .useFieldConfig()
@@ -23,7 +24,7 @@ export const plugin = new PanelPlugin<GaugeOptions>(GaugePanel)
         defaultValue: true,
       });
 
-    addTextSizeOptions(builder);
+    commonOptionsBuilder.addTextSizeOptions(builder);
   })
   .setPanelChangeHandler(gaugePanelChangedHandler)
   .setMigrationHandler(gaugePanelMigrationHandler);

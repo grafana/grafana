@@ -1,5 +1,5 @@
 import React, { ComponentProps } from 'react';
-import { FieldType } from '@grafana/data';
+import { FieldType, DataFrame } from '@grafana/data';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { InspectDataTab } from './InspectDataTab';
@@ -60,6 +60,28 @@ describe('InspectDataTab', () => {
       const dataFrameInput = screen.getByRole('textbox', { name: /Select dataframe/i });
       userEvent.click(dataFrameInput);
       expect(screen.getByText(/Second data frame/i)).toBeInTheDocument();
+    });
+    it('should show download logs button if logs data', () => {
+      const dataWithLogs = ([
+        {
+          name: 'Data frame with logs',
+          fields: [
+            { name: 'time', type: FieldType.time, values: [100, 200, 300] },
+            { name: 'name', type: FieldType.string, values: ['uniqueA', 'b', 'c'] },
+            { name: 'value', type: FieldType.number, values: [1, 2, 3] },
+          ],
+          length: 3,
+          meta: {
+            preferredVisualisationType: 'logs',
+          },
+        },
+      ] as unknown) as DataFrame[];
+      render(<InspectDataTab {...createProps({ data: dataWithLogs })} />);
+      expect(screen.getByText(/Download logs/i)).toBeInTheDocument();
+    });
+    it('should not show download logs button if no logs data', () => {
+      render(<InspectDataTab {...createProps()} />);
+      expect(screen.queryByText(/Download logs/i)).not.toBeInTheDocument();
     });
   });
 });

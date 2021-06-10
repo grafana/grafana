@@ -19,7 +19,7 @@ describe('Trace view', () => {
         e2e().contains('gdev-jaeger').scrollIntoView().should('be.visible').click();
       });
 
-    e2e.components.QueryField.container().should('be.visible').type('long-trace');
+    e2e.components.DataSource.Jaeger.traceIDInput().should('be.visible').type('long-trace');
 
     e2e.components.RefreshPicker.runButton().should('be.visible').click();
 
@@ -29,7 +29,7 @@ describe('Trace view', () => {
 
     e2e.pages.Explore.General.scrollBar().scrollTo('center');
 
-    // After scrolling we should have 140 spans instead of the first 100
+    // After scrolling we should load more spans
     e2e.components.TraceViewer.spanBar().should('have.length', 140);
   });
 });

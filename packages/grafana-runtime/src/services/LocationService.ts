@@ -1,7 +1,7 @@
 import { deprecationWarning, UrlQueryMap, urlUtil } from '@grafana/data';
 import * as H from 'history';
 import { LocationUpdate } from './LocationSrv';
-import { createLogger } from '@grafana/ui';
+import { attachDebugger, createLogger } from '@grafana/ui';
 import { config } from '../config';
 
 /**
@@ -35,24 +35,6 @@ export class HistoryWrapper implements LocationService {
         ? H.createMemoryHistory({ initialEntries: ['/'] })
         : H.createBrowserHistory({ basename: config.appSubUrl ?? '/' });
 
-    // For debugging purposes the location service is attached to global _debug variable
-    if (process.env.NODE_ENV !== 'production') {
-      // @ts-ignore
-      let debugGlobal = window['_debug'];
-      if (debugGlobal) {
-        debugGlobal = {
-          ...debugGlobal,
-          location: this,
-        };
-      } else {
-        debugGlobal = {
-          location: this,
-        };
-      }
-      // @ts-ignore
-      window['_debug'] = debugGlobal;
-    }
-
     this.partial = this.partial.bind(this);
     this.push = this.push.bind(this);
     this.replace = this.replace.bind(this);
@@ -85,9 +67,9 @@ export class HistoryWrapper implements LocationService {
     const updatedUrl = urlUtil.renderUrl(currentLocation.pathname, newQuery);
 
     if (replace) {
-      this.history.replace(updatedUrl);
+      this.history.replace(updatedUrl, this.history.location.state);
     } else {
-      this.history.push(updatedUrl);
+      this.history.push(updatedUrl, this.history.location.state);
     }
   }
 
@@ -168,5 +150,10 @@ export const setLocationService = (location: LocationService) => {
   locationService = location;
 };
 
+const navigationLog = createLogger('Router');
+
 /** @internal */
-export const navigationLogger = createLogger('Router');
+export const navigationLogger = navigationLog.logger;
+
+// For debugging purposes the location service is attached to global _debug variable
+attachDebugger('location', locationService, navigationLog);

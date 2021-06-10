@@ -1,6 +1,6 @@
 export class Edge {
-  inputNode: Node;
-  outputNode: Node;
+  inputNode?: Node;
+  outputNode?: Node;
 
   _linkTo(node: Node, direction: number) {
     if (direction <= 0) {
@@ -82,10 +82,10 @@ export class Node {
     }
 
     if (typeof from === 'object') {
-      return this.inputEdges.find((e) => e.inputNode.name === from.name);
+      return this.inputEdges.find((e) => e.inputNode?.name === from.name);
     }
 
-    return this.inputEdges.find((e) => e.inputNode.name === from);
+    return this.inputEdges.find((e) => e.inputNode?.name === from);
   }
 
   getEdgeTo(to: string | Node): Edge | null | undefined {
@@ -94,19 +94,19 @@ export class Node {
     }
 
     if (typeof to === 'object') {
-      return this.outputEdges.find((e) => e.outputNode.name === to.name);
+      return this.outputEdges.find((e) => e.outputNode?.name === to.name);
     }
 
-    return this.outputEdges.find((e) => e.outputNode.name === to);
+    return this.outputEdges.find((e) => e.outputNode?.name === to);
   }
 
   getOptimizedInputEdges(): Edge[] {
     const toBeRemoved: any[] = [];
     this.inputEdges.forEach((e) => {
-      const inputEdgesNodes = e.inputNode.inputEdges.map((e) => e.inputNode);
+      const inputEdgesNodes = e.inputNode?.inputEdges.map((e) => e.inputNode);
 
-      inputEdgesNodes.forEach((n) => {
-        const edgeToRemove = n.getEdgeTo(this.name);
+      inputEdgesNodes?.forEach((n) => {
+        const edgeToRemove = n?.getEdgeTo(this.name);
         if (edgeToRemove) {
           toBeRemoved.push(edgeToRemove);
         }
@@ -201,11 +201,11 @@ export class Graph {
 export const printGraph = (g: Graph) => {
   Object.keys(g.nodes).forEach((name) => {
     const n = g.nodes[name];
-    let outputEdges = n.outputEdges.map((e: Edge) => e.outputNode.name).join(', ');
+    let outputEdges = n.outputEdges.map((e: Edge) => e.outputNode?.name).join(', ');
     if (!outputEdges) {
       outputEdges = '<none>';
     }
-    let inputEdges = n.inputEdges.map((e: Edge) => e.inputNode.name).join(', ');
+    let inputEdges = n.inputEdges.map((e: Edge) => e.inputNode?.name).join(', ');
     if (!inputEdges) {
       inputEdges = '<none>';
     }

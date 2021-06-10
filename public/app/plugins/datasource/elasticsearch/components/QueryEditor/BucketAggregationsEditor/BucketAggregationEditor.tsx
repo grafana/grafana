@@ -1,8 +1,8 @@
-import { MetricFindValue, SelectableValue } from '@grafana/data';
+import { SelectableValue } from '@grafana/data';
 import { InlineSegmentGroup, Segment, SegmentAsync } from '@grafana/ui';
-import React, { FunctionComponent } from 'react';
+import React from 'react';
+import { useFields } from '../../../hooks/useFields';
 import { useDispatch } from '../../../hooks/useStatelessReducer';
-import { useDatasource } from '../ElasticsearchQueryContext';
 import { segmentStyles } from '../styles';
 import { BucketAggregation, BucketAggregationType, isBucketAggregationWithField } from './aggregations';
 import { SettingsEditor } from './SettingsEditor';
@@ -17,11 +17,6 @@ const bucketAggOptions: Array<SelectableValue<BucketAggregationType>> = Object.e
   })
 );
 
-const toSelectableValue = ({ value, text }: MetricFindValue): SelectableValue<string> => ({
-  label: text,
-  value: `${value || text}`,
-});
-
 const toOption = (bucketAgg: BucketAggregation) => ({
   label: bucketAggregationConfig[bucketAgg.type].label,
   value: bucketAgg.type,
@@ -31,25 +26,9 @@ interface QueryMetricEditorProps {
   value: BucketAggregation;
 }
 
-export const BucketAggregationEditor: FunctionComponent<QueryMetricEditorProps> = ({ value }) => {
-  const datasource = useDatasource();
+export const BucketAggregationEditor = ({ value }: QueryMetricEditorProps) => {
   const dispatch = useDispatch<BucketAggregationAction>();
-
-  // TODO: Move this in a separate hook (and simplify)
-  const getFields = async () => {
-    const get = () => {
-      switch (value.type) {
-        case 'date_histogram':
-          return datasource.getFields('date');
-        case 'geohash_grid':
-          return datasource.getFields('geo_point');
-        default:
-          return datasource.getFields();
-      }
-    };
-
-    return (await get().toPromise()).map(toSelectableValue);
-  };
+  const getFields = useFields(value.type);
 
   return (
     <>

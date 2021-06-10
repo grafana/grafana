@@ -15,6 +15,7 @@ import (
 	"net/url"
 
 	"github.com/grafana/grafana/pkg/components/null"
+	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -22,16 +23,24 @@ import (
 )
 
 type OpenTsdbExecutor struct {
+	httpClientProvider httpclient.Provider
 }
 
-func NewExecutor(*models.DataSource) (plugins.DataPlugin, error) {
-	return &OpenTsdbExecutor{}, nil
+//nolint: staticcheck // plugins.DataPlugin deprecated
+func New(httpClientProvider httpclient.Provider) func(*models.DataSource) (plugins.DataPlugin, error) {
+	//nolint: staticcheck // plugins.DataPlugin deprecated
+	return func(*models.DataSource) (plugins.DataPlugin, error) {
+		return &OpenTsdbExecutor{
+			httpClientProvider: httpClientProvider,
+		}, nil
+	}
 }
 
 var (
 	plog = log.New("tsdb.opentsdb")
 )
 
+// nolint:staticcheck // plugins.DataQueryResult deprecated
 func (e *OpenTsdbExecutor) DataQuery(ctx context.Context, dsInfo *models.DataSource,
 	queryContext plugins.DataQuery) (plugins.DataResponse, error) {
 	var tsdbQuery OpenTsdbQuery
@@ -54,7 +63,7 @@ func (e *OpenTsdbExecutor) DataQuery(ctx context.Context, dsInfo *models.DataSou
 		return plugins.DataResponse{}, err
 	}
 
-	httpClient, err := dsInfo.GetHttpClient()
+	httpClient, err := dsInfo.GetHTTPClient(e.httpClientProvider)
 	if err != nil {
 		return plugins.DataResponse{}, err
 	}
@@ -101,6 +110,7 @@ func (e *OpenTsdbExecutor) createRequest(dsInfo *models.DataSource, data OpenTsd
 	return req, nil
 }
 
+// nolint:staticcheck // plugins.DataQueryResult deprecated
 func (e *OpenTsdbExecutor) parseResponse(query OpenTsdbQuery, res *http.Response) (map[string]plugins.DataQueryResult, error) {
 	queryResults := make(map[string]plugins.DataQueryResult)
 	queryRes := plugins.DataQueryResult{}

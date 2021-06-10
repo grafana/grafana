@@ -17,9 +17,6 @@ export default {
     docs: {
       page: mdx,
     },
-    knobs: {
-      disable: true,
-    },
   },
   argTypes: {
     severity: { control: { type: 'select', options: severities } },
@@ -36,11 +33,16 @@ export const Examples: Story<Props> = ({ severity, title, buttonContent }) => {
           buttonContent={<span>{buttonContent}</span>}
           onRemove={action('Remove button clicked')}
         >
-          Child content that includes some alert details, like maybe what actually happened.
+          <VerticalGroup>
+            <div>Child content that includes some alert details, like maybe what actually happened.</div>
+          </VerticalGroup>
         </Alert>
       </StoryExample>
       <StoryExample name="No dismiss">
         <Alert title={title} severity={severity} />
+      </StoryExample>
+      <StoryExample name="Elevated alert used for absolute positioned alerts">
+        <Alert title={title} severity={severity} elevated />
       </StoryExample>
       <StoryExample name="Severities">
         <VerticalGroup>

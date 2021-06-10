@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { DashboardModel } from '../../state/DashboardModel';
-import { LinkSettingsEdit, LinkSettingsHeader, LinkSettingsList } from '../LinksSettings';
+import { LinkSettingsEdit, LinkSettingsList } from '../LinksSettings';
+import { newLink } from '../LinksSettings/LinkSettingsEdit';
+import { DashboardSettingsHeader } from './DashboardSettingsHeader';
 interface Props {
   dashboard: DashboardModel;
 }
@@ -8,30 +10,28 @@ interface Props {
 export type LinkSettingsMode = 'list' | 'new' | 'edit';
 
 export const LinksSettings: React.FC<Props> = ({ dashboard }) => {
-  const [mode, setMode] = useState<LinkSettingsMode>('list');
-  const [editLinkIdx, setEditLinkIdx] = useState<number | null>(null);
-  const hasLinks = dashboard.links.length > 0;
+  const [editIdx, setEditIdx] = useState<number | null>(null);
 
-  const backToList = () => {
-    setMode('list');
+  const onGoBack = () => {
+    setEditIdx(null);
   };
-  const setupNew = () => {
-    setEditLinkIdx(null);
-    setMode('new');
+
+  const onNew = () => {
+    dashboard.links = [...dashboard.links, { ...newLink }];
+    setEditIdx(dashboard.links.length - 1);
   };
-  const editLink = (idx: number) => {
-    setEditLinkIdx(idx);
-    setMode('edit');
+
+  const onEdit = (idx: number) => {
+    setEditIdx(idx);
   };
+
+  const isEditing = editIdx !== null;
 
   return (
     <>
-      <LinkSettingsHeader onNavClick={backToList} onBtnClick={setupNew} mode={mode} hasLinks={hasLinks} />
-      {mode === 'list' ? (
-        <LinkSettingsList dashboard={dashboard} setupNew={setupNew} editLink={editLink} />
-      ) : (
-        <LinkSettingsEdit dashboard={dashboard} mode={mode} editLinkIdx={editLinkIdx} backToList={backToList} />
-      )}
+      <DashboardSettingsHeader onGoBack={onGoBack} title="Dashboard links" isEditing={isEditing} />
+      {!isEditing && <LinkSettingsList dashboard={dashboard} onNew={onNew} onEdit={onEdit} />}
+      {isEditing && <LinkSettingsEdit dashboard={dashboard} editLinkIdx={editIdx!} onGoBack={onGoBack} />}
     </>
   );
 };

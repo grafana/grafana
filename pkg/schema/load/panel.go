@@ -30,7 +30,7 @@ func disjunctPanelScuemata(scuemap map[string]schema.VersionedCueSchema) (cue.Va
 			cv := mapPanelModel(id, sch)
 
 			mjv, miv := sch.Version()
-			parts = parts.Fill(cv, "allPanels", fmt.Sprintf("%s@%v.%v", id, mjv, miv))
+			parts = parts.FillPath(cue.MakePath(cue.Str("allPanels"), cue.Str(fmt.Sprintf("%s@%v.%v", id, mjv, miv))), cv)
 			sch = sch.Successor()
 		}
 	}
@@ -58,20 +58,24 @@ func mapPanelModel(id string, vcs schema.VersionedCueSchema) cue.Value {
 		panelSchema: maj: in.v.maj
 		panelSchema: min: in.v.min
 		options: in.model.PanelOptions
-		fieldConfig: defaults: custom: in.model.PanelFieldConfig
+		fieldConfig: defaults: custom: {}
+		if in.model.PanelFieldConfig != _|_ {
+			fieldConfig: defaults: custom: in.model.PanelFieldConfig
+		}
 	}
 	`, id, maj, min))
 
 	// TODO validate, especially with #PanelModel
-	return inter.Value().Fill(vcs.CUE(), "in", "model").LookupPath(cue.MakePath(cue.Str(("result"))))
+	return inter.Value().FillPath(cue.MakePath(cue.Str("in"), cue.Str("model")), vcs.CUE()).LookupPath(cue.MakePath(cue.Str(("result"))))
 }
 
 func readPanelModels(p BaseLoadPaths) (map[string]schema.VersionedCueSchema, error) {
 	overlay := make(map[string]load.Source)
-	if err := toOverlay("/", p.BaseCueFS, overlay); err != nil {
+
+	if err := toOverlay(prefix, p.BaseCueFS, overlay); err != nil {
 		return nil, err
 	}
-	if err := toOverlay("/", p.DistPluginCueFS, overlay); err != nil {
+	if err := toOverlay(prefix, p.DistPluginCueFS, overlay); err != nil {
 		return nil, err
 	}
 
@@ -140,7 +144,8 @@ func readPanelModels(p BaseLoadPaths) (map[string]schema.VersionedCueSchema, err
 		}
 
 		// Ensure the declared value is subsumed by/correct wrt #PanelFamily
-		if err := pmf.Subsume(pmod); err != nil {
+		// TODO not actually sure that Final is what we want here.
+		if err := pmf.Subsume(pmod, cue.Final()); err != nil {
 			return err
 		}
 

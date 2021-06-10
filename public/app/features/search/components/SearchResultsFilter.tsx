@@ -1,11 +1,9 @@
-import React, { Dispatch, FC, SetStateAction } from 'react';
+import React, { FC, FormEvent } from 'react';
 import { css } from '@emotion/css';
 import { Button, Checkbox, stylesFactory, useTheme, HorizontalGroup } from '@grafana/ui';
 import { GrafanaTheme, SelectableValue } from '@grafana/data';
-import { DashboardQuery } from '../types';
+import { DashboardQuery, SearchLayout } from '../types';
 import { ActionRow } from './ActionRow';
-
-type onSelectChange = (value: SelectableValue) => void;
 
 export interface Props {
   allChecked?: boolean;
@@ -14,10 +12,10 @@ export interface Props {
   deleteItem: () => void;
   hideLayout?: boolean;
   moveTo: () => void;
-  onLayoutChange: Dispatch<SetStateAction<string>>;
-  onSortChange: onSelectChange;
-  onStarredFilterChange: onSelectChange;
-  onTagFilterChange: onSelectChange;
+  onLayoutChange: (layout: SearchLayout) => void;
+  onSortChange: (value: SelectableValue) => void;
+  onStarredFilterChange: (event: FormEvent<HTMLInputElement>) => void;
+  onTagFilterChange: (tags: string[]) => void;
   onToggleAllChecked: () => void;
   query: DashboardQuery;
   editable?: boolean;

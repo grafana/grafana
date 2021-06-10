@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import { isString, escape } from 'lodash';
 import $ from 'jquery';
 import coreModule from 'app/core/core_module';
 import alertDef from '../alerting/state/alertDef';
@@ -17,7 +17,7 @@ export function annotationTooltipDirective(
       return $sanitize(str);
     } catch (err) {
       console.log('Could not sanitize annotation string, html escaping instead');
-      return _.escape(str);
+      return escape(str);
     }
   }
 
@@ -45,7 +45,7 @@ export function annotationTooltipDirective(
           text = text + '<br />' + event.text;
         }
       } else if (title) {
-        text = title + '<br />' + (_.isString(text) ? text : '');
+        text = title + '<br />' + (isString(text) ? text : '');
         title = '';
       }
 
@@ -55,11 +55,11 @@ export function annotationTooltipDirective(
       }
       header += `
           <span class="graph-annotation__title ${titleStateClass}">${sanitizeString(title)}</span>
-          <span class="graph-annotation__time">${dashboard.formatDate(event.min)}</span>
+          <span class="graph-annotation__time">${dashboard?.formatDate(event.min)}</span>
       `;
 
       // Show edit icon only for users with at least Editor role
-      if (event.id && dashboard.canAddAnnotations()) {
+      if (event.id && dashboard?.canAddAnnotations()) {
         header += `
           <span class="pointer graph-annotation__edit-icon" ng-click="onEdit()">
             <i class="fa fa-pencil-square"></i>

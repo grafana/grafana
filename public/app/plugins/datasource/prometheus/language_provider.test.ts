@@ -5,11 +5,12 @@ import { PrometheusDatasource } from './datasource';
 import { HistoryItem } from '@grafana/data';
 import { PromQuery } from './types';
 import Mock = jest.Mock;
+import { SearchFunctionType } from '@grafana/ui';
 
 describe('Language completion provider', () => {
   const datasource: PrometheusDatasource = ({
     metadataRequest: () => ({ data: { data: [] as any[] } }),
-    getTimeRange: () => ({ start: 0, end: 1 }),
+    getTimeRangeParams: () => ({ start: '0', end: '1' }),
   } as any) as PrometheusDatasource;
 
   describe('cleanText', () => {
@@ -123,14 +124,14 @@ describe('Language completion provider', () => {
       expect(result.suggestions).toMatchObject([
         {
           items: [
-            { label: '$__interval', sortText: '$__interval' }, // TODO: figure out why this row and sortText is needed
-            { label: '$__rate_interval', sortText: '$__rate_interval' },
-            { label: '1m', sortText: '00:01:00' },
-            { label: '5m', sortText: '00:05:00' },
-            { label: '10m', sortText: '00:10:00' },
-            { label: '30m', sortText: '00:30:00' },
-            { label: '1h', sortText: '01:00:00' },
-            { label: '1d', sortText: '24:00:00' },
+            { label: '$__interval', sortValue: '$__interval' }, // TODO: figure out why this row and sortValue is needed
+            { label: '$__rate_interval', sortValue: '$__rate_interval' },
+            { label: '1m', sortValue: '00:01:00' },
+            { label: '5m', sortValue: '00:05:00' },
+            { label: '10m', sortValue: '00:10:00' },
+            { label: '30m', sortValue: '00:30:00' },
+            { label: '1h', sortValue: '01:00:00' },
+            { label: '1d', sortValue: '24:00:00' },
           ],
           label: 'Range vector',
         },
@@ -236,13 +237,19 @@ describe('Language completion provider', () => {
         value: valueWithSelection,
       });
       expect(result.context).toBe('context-labels');
-      expect(result.suggestions).toEqual([{ items: [{ label: 'job' }, { label: 'instance' }], label: 'Labels' }]);
+      expect(result.suggestions).toEqual([
+        {
+          items: [{ label: 'job' }, { label: 'instance' }],
+          label: 'Labels',
+          searchFunctionType: SearchFunctionType.Fuzzy,
+        },
+      ]);
     });
 
     it('returns label suggestions on label context and metric', async () => {
       const datasources: PrometheusDatasource = ({
         metadataRequest: () => ({ data: { data: [{ __name__: 'metric', bar: 'bazinga' }] as any[] } }),
-        getTimeRange: () => ({ start: 0, end: 1 }),
+        getTimeRangeParams: () => ({ start: '0', end: '1' }),
       } as any) as PrometheusDatasource;
       const instance = new LanguageProvider(datasources);
       const value = Plain.deserialize('metric{}');
@@ -255,7 +262,9 @@ describe('Language completion provider', () => {
         value: valueWithSelection,
       });
       expect(result.context).toBe('context-labels');
-      expect(result.suggestions).toEqual([{ items: [{ label: 'bar' }], label: 'Labels' }]);
+      expect(result.suggestions).toEqual([
+        { items: [{ label: 'bar' }], label: 'Labels', searchFunctionType: SearchFunctionType.Fuzzy },
+      ]);
     });
 
     it('returns label suggestions on label context but leaves out labels that already exist', async () => {
@@ -273,7 +282,7 @@ describe('Language completion provider', () => {
             ],
           },
         }),
-        getTimeRange: () => ({ start: 0, end: 1 }),
+        getTimeRangeParams: () => ({ start: '0', end: '1' }),
       } as any) as PrometheusDatasource;
       const instance = new LanguageProvider(datasource);
       const value = Plain.deserialize('{job1="foo",job2!="foo",job3=~"foo",__name__="metric",}');
@@ -286,7 +295,9 @@ describe('Language completion provider', () => {
         value: valueWithSelection,
       });
       expect(result.context).toBe('context-labels');
-      expect(result.suggestions).toEqual([{ items: [{ label: 'bar' }], label: 'Labels' }]);
+      expect(result.suggestions).toEqual([
+        { items: [{ label: 'bar' }], label: 'Labels', searchFunctionType: SearchFunctionType.Fuzzy },
+      ]);
     });
 
     it('returns label value suggestions inside a label value context after a negated matching operator', async () => {
@@ -311,6 +322,7 @@ describe('Language completion provider', () => {
         {
           items: [{ label: 'value1' }, { label: 'value2' }],
           label: 'Label values for "job"',
+          searchFunctionType: SearchFunctionType.Fuzzy,
         },
       ]);
     });
@@ -346,7 +358,9 @@ describe('Language completion provider', () => {
         value: valueWithSelection,
       });
       expect(result.context).toBe('context-label-values');
-      expect(result.suggestions).toEqual([{ items: [{ label: 'baz' }], label: 'Label values for "bar"' }]);
+      expect(result.suggestions).toEqual([
+        { items: [{ label: 'baz' }], label: 'Label values for "bar"', searchFunctionType: SearchFunctionType.Fuzzy },
+      ]);
     });
 
     it('returns label suggestions on aggregation context and metric w/ selector', async () => {
@@ -364,7 +378,9 @@ describe('Language completion provider', () => {
         value: valueWithSelection,
       });
       expect(result.context).toBe('context-aggregation');
-      expect(result.suggestions).toEqual([{ items: [{ label: 'bar' }], label: 'Labels' }]);
+      expect(result.suggestions).toEqual([
+        { items: [{ label: 'bar' }], label: 'Labels', searchFunctionType: SearchFunctionType.Fuzzy },
+      ]);
     });
 
     it('returns label suggestions on aggregation context and metric w/o selector', async () => {
@@ -382,7 +398,9 @@ describe('Language completion provider', () => {
         value: valueWithSelection,
       });
       expect(result.context).toBe('context-aggregation');
-      expect(result.suggestions).toEqual([{ items: [{ label: 'bar' }], label: 'Labels' }]);
+      expect(result.suggestions).toEqual([
+        { items: [{ label: 'bar' }], label: 'Labels', searchFunctionType: SearchFunctionType.Fuzzy },
+      ]);
     });
 
     it('returns label suggestions inside a multi-line aggregation context', async () => {
@@ -406,6 +424,7 @@ describe('Language completion provider', () => {
         {
           items: [{ label: 'bar' }],
           label: 'Labels',
+          searchFunctionType: SearchFunctionType.Fuzzy,
         },
       ]);
     });
@@ -429,6 +448,7 @@ describe('Language completion provider', () => {
         {
           items: [{ label: 'bar' }],
           label: 'Labels',
+          searchFunctionType: SearchFunctionType.Fuzzy,
         },
       ]);
     });
@@ -452,6 +472,7 @@ describe('Language completion provider', () => {
         {
           items: [{ label: 'bar' }],
           label: 'Labels',
+          searchFunctionType: SearchFunctionType.Fuzzy,
         },
       ]);
     });
@@ -490,6 +511,7 @@ describe('Language completion provider', () => {
         {
           items: [{ label: 'bar' }],
           label: 'Labels',
+          searchFunctionType: SearchFunctionType.Fuzzy,
         },
       ]);
     });
@@ -497,7 +519,7 @@ describe('Language completion provider', () => {
     it('does not re-fetch default labels', async () => {
       const datasource: PrometheusDatasource = ({
         metadataRequest: jest.fn(() => ({ data: { data: [] as any[] } })),
-        getTimeRange: jest.fn(() => ({ start: 0, end: 1 })),
+        getTimeRangeParams: jest.fn(() => ({ start: '0', end: '1' })),
       } as any) as PrometheusDatasource;
 
       const instance = new LanguageProvider(datasource);
@@ -523,7 +545,7 @@ describe('Language completion provider', () => {
     it('does not issue any metadata requests when lookup is disabled', async () => {
       const datasource: PrometheusDatasource = ({
         metadataRequest: jest.fn(() => ({ data: { data: ['foo', 'bar'] as string[] } })),
-        getTimeRange: jest.fn(() => ({ start: 0, end: 1 })),
+        getTimeRangeParams: jest.fn(() => ({ start: '0', end: '1' })),
         lookupsDisabled: true,
       } as any) as PrometheusDatasource;
       const instance = new LanguageProvider(datasource);
@@ -546,7 +568,7 @@ describe('Language completion provider', () => {
     it('issues metadata requests when lookup is not disabled', async () => {
       const datasource: PrometheusDatasource = ({
         metadataRequest: jest.fn(() => ({ data: { data: ['foo', 'bar'] as string[] } })),
-        getTimeRange: jest.fn(() => ({ start: 0, end: 1 })),
+        getTimeRangeParams: jest.fn(() => ({ start: '0', end: '1' })),
         lookupsDisabled: false,
       } as any) as PrometheusDatasource;
       const instance = new LanguageProvider(datasource);

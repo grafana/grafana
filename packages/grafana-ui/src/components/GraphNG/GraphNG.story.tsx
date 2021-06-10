@@ -1,20 +1,18 @@
 import { FieldColorModeId, toDataFrame, dateTime } from '@grafana/data';
 import React from 'react';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
-import { GraphNG, GraphNGProps } from './GraphNG';
+import { GraphNGProps } from './GraphNG';
 import { LegendDisplayMode, LegendPlacement } from '../VizLegend/models.gen';
 import { prepDataForStorybook } from '../../utils/storybook/data';
-import { useTheme } from '../../themes';
+import { useTheme2 } from '../../themes';
 import { Story } from '@storybook/react';
+import { TimeSeries } from '../TimeSeries/TimeSeries';
 
 export default {
   title: 'Visualizations/GraphNG',
-  component: GraphNG,
+  component: TimeSeries,
   decorators: [withCenteredStory],
   parameters: {
-    knobs: {
-      disable: true,
-    },
     controls: {
       exclude: ['className', 'timeRange', 'data', 'legend', 'fields'],
     },
@@ -34,7 +32,7 @@ interface StoryProps extends GraphNGProps {
   unit: string;
 }
 export const Lines: Story<StoryProps> = ({ placement, unit, legendDisplayMode, ...args }) => {
-  const theme = useTheme();
+  const theme = useTheme2();
   const seriesA = toDataFrame({
     target: 'SeriesA',
     datapoints: [
@@ -51,9 +49,9 @@ export const Lines: Story<StoryProps> = ({ placement, unit, legendDisplayMode, .
   const data = prepDataForStorybook([seriesA], theme);
 
   return (
-    <GraphNG
+    <TimeSeries
       {...args}
-      data={data}
+      frames={data}
       legend={{
         displayMode:
           legendDisplayMode === 'hidden'
@@ -64,6 +62,7 @@ export const Lines: Story<StoryProps> = ({ placement, unit, legendDisplayMode, .
         placement: placement,
         calcs: [],
       }}
+      timeZone="browser"
     />
   );
 };

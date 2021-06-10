@@ -1,14 +1,16 @@
 import React, { FC, useEffect } from 'react';
 import { css } from '@emotion/css';
-import { IconName, Tab, TabContent, TabsBar, useForceUpdate, useStyles } from '@grafana/ui';
-import { AlertTab } from 'app/features/alerting/AlertTab';
+import { IconName, Tab, TabContent, TabsBar, useForceUpdate, useStyles2 } from '@grafana/ui';
 import { TransformationsEditor } from '../TransformationsEditor/TransformationsEditor';
 import { DashboardModel, PanelModel } from '../../state';
 import { PanelEditorTab, PanelEditorTabId } from './types';
 import { Subscription } from 'rxjs';
 import { PanelQueriesChangedEvent, PanelTransformationsChangedEvent } from 'app/types/events';
 import { PanelEditorQueries } from './PanelEditorQueries';
-import { GrafanaTheme } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
+import { config } from '@grafana/runtime';
+import AlertTabIndex from 'app/features/alerting/AlertTabIndex';
+import { PanelAlertTab } from 'app/features/alerting/unified/PanelAlertTab';
 
 interface PanelEditorTabsProps {
   panel: PanelModel;
@@ -19,7 +21,7 @@ interface PanelEditorTabsProps {
 
 export const PanelEditorTabs: FC<PanelEditorTabsProps> = React.memo(({ panel, dashboard, tabs, onChangeTab }) => {
   const forceUpdate = useForceUpdate();
-  const styles = useStyles(getStyles);
+  const styles = useStyles2(getStyles);
 
   useEffect(() => {
     const eventSubs = new Subscription();
@@ -38,6 +40,19 @@ export const PanelEditorTabs: FC<PanelEditorTabsProps> = React.memo(({ panel, da
     <div className={styles.wrapper}>
       <TabsBar className={styles.tabBar}>
         {tabs.map((tab) => {
+          if (config.featureToggles.ngalert && tab.id === PanelEditorTabId.Alert) {
+            return (
+              <PanelAlertTab
+                key={tab.id}
+                label={tab.text}
+                active={tab.active}
+                onChangeTab={() => onChangeTab(tab)}
+                icon={tab.icon as IconName}
+                panel={panel}
+                dashboard={dashboard}
+              />
+            );
+          }
           return (
             <Tab
               key={tab.id}
@@ -52,7 +67,7 @@ export const PanelEditorTabs: FC<PanelEditorTabsProps> = React.memo(({ panel, da
       </TabsBar>
       <TabContent className={styles.tabContent}>
         {activeTab.id === PanelEditorTabId.Query && <PanelEditorQueries panel={panel} queries={panel.targets} />}
-        {activeTab.id === PanelEditorTabId.Alert && <AlertTab panel={panel} dashboard={dashboard} />}
+        {activeTab.id === PanelEditorTabId.Alert && <AlertTabIndex panel={panel} dashboard={dashboard} />}
         {activeTab.id === PanelEditorTabId.Transform && <TransformationsEditor panel={panel} />}
       </TabContent>
     </div>
@@ -75,7 +90,7 @@ function getCounter(panel: PanelModel, tab: PanelEditorTab) {
   return null;
 }
 
-const getStyles = (theme: GrafanaTheme) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     wrapper: css`
       display: flex;
@@ -83,7 +98,7 @@ const getStyles = (theme: GrafanaTheme) => {
       height: 100%;
     `,
     tabBar: css`
-      padding-left: ${theme.spacing.md};
+      padding-left: ${theme.spacing(2)};
     `,
     tabContent: css`
       padding: 0;
@@ -91,12 +106,8 @@ const getStyles = (theme: GrafanaTheme) => {
       flex-direction: column;
       flex-grow: 1;
       min-height: 0;
-      background: ${theme.colors.panelBg};
-      border-right: 1px solid ${theme.colors.pageHeaderBorder};
-
-      .toolbar {
-        background: transparent;
-      }
+      background: ${theme.colors.background.primary};
+      border-right: 1px solid ${theme.components.panel.borderColor};
     `,
   };
 };
