@@ -416,7 +416,7 @@ The length of time that Grafana will wait for a datasource’s first response he
 
 ### max_conns_per_host
 
-Optionally limits the total number of connections per host, including connections in the dialing, active, and idle states. On limit violation, dials will block. A value of zero (0) means no limit.
+Optionally limits the total number of connections per host, including connections in the dialing, active, and idle states. On limit violation, dials will block. A value of `0` means no limit. Default is `0`.
 For more details check the [Transport.MaxConnsPerHost](https://golang.org/pkg/net/http/#Transport.MaxConnsPerHost) documentation.
 
 ### max_idle_connections
