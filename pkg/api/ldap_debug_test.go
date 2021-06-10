@@ -4,7 +4,10 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"path/filepath"
 	"testing"
+
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -572,4 +575,60 @@ func TestPostSyncUserWithLDAPAPIEndpoint_WhenUserNotInLDAP(t *testing.T) {
 	`
 
 	assert.JSONEq(t, expected, sc.resp.Body.String())
+}
+
+type reloadLDAPAccessControlTestCase struct {
+	desc         string
+	expectedCode int
+	permissions  []*accesscontrol.Permission
+}
+
+func TestPostReloadLDAPCfg_AccessControl(t *testing.T) {
+	tests := []reloadLDAPAccessControlTestCase{
+		{
+			desc:         "should return 200 for user with correct permissions",
+			expectedCode: http.StatusOK,
+			permissions: []*accesscontrol.Permission{
+				{Action: accesscontrol.ActionLDAPConfigReload},
+			},
+		},
+		{
+			desc:         "should return 403 for user without required permissions",
+			expectedCode: http.StatusForbidden,
+			permissions: []*accesscontrol.Permission{
+				{Action: "wrong"},
+			},
+		},
+	}
+
+	url := "/api/admin/ldap/reload"
+
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			t.Helper()
+
+			enabled := setting.LDAPEnabled
+			configFile := setting.LDAPConfigFile
+
+			t.Cleanup(func() {
+				setting.LDAPEnabled = enabled
+				setting.LDAPConfigFile = configFile
+			})
+			setting.LDAPEnabled = true
+
+			path, err := filepath.Abs("../../conf/ldap.toml")
+			assert.NoError(t, err)
+			setting.LDAPConfigFile = path
+
+			sc := setupAccessControlScenarioContext(t, setting.NewCfg(), url, test.permissions)
+
+			sc.resp = httptest.NewRecorder()
+			sc.req, err = http.NewRequest(http.MethodPost, url, nil)
+			assert.NoError(t, err)
+
+			sc.exec()
+
+			assert.Equal(t, test.expectedCode, sc.resp.Code)
+		})
+	}
 }
