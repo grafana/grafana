@@ -28,23 +28,27 @@ const (
 )
 
 func httpCliProvider(ctx context.Context, route azRoute, model datasourceInfo, cfg *setting.Cfg) *httpclient.Provider {
-	tokenAuth := &plugins.JwtTokenAuth{
-		Url:    route.URL,
-		Scopes: route.Scopes,
-		Params: map[string]string{
-			"azure_auth_type": model.Settings.AzureAuthType,
-			"azure_cloud":     cfg.Azure.Cloud,
-			"tenant_id":       model.Settings.TenantId,
-			"client_id":       model.Settings.ClientId,
-			"client_secret":   model.DecryptedSecureJSONData["clientSecret"],
-		},
+	if len(route.Scopes) > 0 {
+		tokenAuth := &plugins.JwtTokenAuth{
+			Url:    route.URL,
+			Scopes: route.Scopes,
+			Params: map[string]string{
+				"azure_auth_type": model.Settings.AzureAuthType,
+				"azure_cloud":     cfg.Azure.Cloud,
+				"tenant_id":       model.Settings.TenantId,
+				"client_id":       model.Settings.ClientId,
+				"client_secret":   model.DecryptedSecureJSONData["clientSecret"],
+			},
+		}
+		tokenProvider := tokenprovider.NewAzureAccessTokenProvider(ctx, cfg, tokenAuth)
+		return httpclient.NewProvider(httpclient.ProviderOptions{
+			Middlewares: []httpclient.Middleware{
+				tokenprovider.AuthMiddleware(tokenProvider),
+			},
+		})
+	} else {
+		return httpclient.NewProvider()
 	}
-	tokenProvider := tokenprovider.NewAzureAccessTokenProvider(ctx, cfg, tokenAuth)
-	return httpclient.NewProvider(httpclient.ProviderOptions{
-		Middlewares: []httpclient.Middleware{
-			tokenprovider.AuthMiddleware(tokenProvider),
-		},
-	})
 }
 
 func newHTTPClient(ctx context.Context, route azRoute, model datasourceInfo, cfg *setting.Cfg) (*http.Client, error) {

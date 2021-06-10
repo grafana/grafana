@@ -65,21 +65,26 @@ var (
 	// and the service to query (e.g. Azure Monitor or Azure Log Analytics)
 	routes = map[string]map[string]azRoute{
 		azureMonitorPublic: {
-			azureMonitor:      azManagement,
-			appInsights:       azAppInsights,
-			azureLogAnalytics: azLogAnalytics,
+			azureMonitor:       azManagement,
+			azureLogAnalytics:  azLogAnalytics,
+			azureResourceGraph: azManagement,
+			appInsights:        azAppInsights,
+			insightsAnalytics:  azAppInsights,
 		},
 		azureMonitorUSGovernment: {
-			azureMonitor:      azUSGovManagement,
-			azureLogAnalytics: azUSGovLogAnalytics,
+			azureMonitor:       azUSGovManagement,
+			azureLogAnalytics:  azUSGovLogAnalytics,
+			azureResourceGraph: azUSGovManagement,
 		},
 		azureMonitorGermany: {
 			azureMonitor: azGermanyManagement,
 		},
 		azureMonitorChina: {
-			azureMonitor:      azChinaManagement,
-			appInsights:       azChinaAppInsights,
-			azureLogAnalytics: azChinaLogAnalytics,
+			azureMonitor:       azChinaManagement,
+			azureLogAnalytics:  azChinaLogAnalytics,
+			azureResourceGraph: azChinaManagement,
+			appInsights:        azChinaAppInsights,
+			insightsAnalytics:  azChinaAppInsights,
 		},
 	}
 )
