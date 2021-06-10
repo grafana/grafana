@@ -32,19 +32,22 @@ export const fieldNameMatcherItem: FieldMatcherUIRegistryItem<string> = {
   optionsToLabel: (options) => options,
 };
 
-const useFieldDisplayNames = (data: DataFrame[]): Set<string> => {
+export function useFieldDisplayNames(data: DataFrame[]): Set<string> {
   return useMemo(() => {
     const names: Set<string> = new Set();
 
     for (const frame of data) {
       for (const field of frame.fields) {
         names.add(getFieldDisplayName(field, frame, data));
+        if (field.name) {
+          names.add(field.name);
+        }
       }
     }
 
     return names;
   }, [data]);
-};
+}
 
 const useSelectOptions = (displayNames: Set<string>, currentName: string): Array<SelectableValue<string>> => {
   return useMemo(() => {

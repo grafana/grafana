@@ -1,15 +1,9 @@
 import React, { memo, useMemo, useCallback } from 'react';
 import { MatcherUIProps, FieldMatcherUIRegistryItem } from './types';
-import {
-  FieldMatcherID,
-  fieldMatchers,
-  getFieldDisplayName,
-  SelectableValue,
-  DataFrame,
-  ByNamesMatcherOptions,
-} from '@grafana/data';
+import { FieldMatcherID, fieldMatchers, SelectableValue, ByNamesMatcherOptions } from '@grafana/data';
 import { MultiSelect } from '../Select/Select';
 import { Input } from '../Input/Input';
+import { useFieldDisplayNames } from './FieldNameMatcherEditor';
 
 export const FieldNamesMatcherEditor = memo<MatcherUIProps<ByNamesMatcherOptions>>((props) => {
   const { data, options, onChange: onChangeFromProps } = props;
@@ -54,20 +48,6 @@ export const fieldNamesMatcherItem: FieldMatcherUIRegistryItem<ByNamesMatcherOpt
   description: 'Set properties for a specific field',
   optionsToLabel: (options) => (options.names ?? []).join(', '),
   excludeFromPicker: true,
-};
-
-const useFieldDisplayNames = (data: DataFrame[]): Set<string> => {
-  return useMemo(() => {
-    const names: Set<string> = new Set();
-
-    for (const frame of data) {
-      for (const field of frame.fields) {
-        names.add(getFieldDisplayName(field, frame, data));
-      }
-    }
-
-    return names;
-  }, [data]);
 };
 
 const useSelectOptions = (displayNames: Set<string>): Array<SelectableValue<string>> => {
