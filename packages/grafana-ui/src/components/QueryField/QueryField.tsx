@@ -46,6 +46,10 @@ export interface QueryFieldState {
   typeaheadPrefix: string;
   typeaheadText: string;
   value: Value;
+  /**
+   * Check if anything has been written. Used to manage keyboard navigation.
+   * */
+  dirty: boolean;
 }
 
 /**
@@ -88,6 +92,7 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
       typeaheadPrefix: '',
       typeaheadText: '',
       value: makeValue(props.query || '', props.syntax),
+      dirty: false,
     };
   }
 
@@ -119,6 +124,16 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
     }
   }
 
+  onKeyDown = (event: KeyboardEvent, editor: CoreEditor, next: Function) => {
+    if (event.key === 'Esc' || (event.key === 'Tab' && !this.state.dirty)) {
+      editor.blur();
+    } else if (event.key !== 'Tab') {
+      this.setState({
+        dirty: true,
+      });
+    }
+    return next();
+  };
   /**
    * Update local state, propagate change upstream and optionally run the query afterwards.
    */
@@ -187,6 +202,11 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
         this.runOnChangeAndRunQuery();
       }
     }
+
+    this.setState({
+      dirty: false,
+    });
+
     return next();
   };
 
@@ -212,7 +232,7 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
             readOnly={this.props.disabled}
             onBlur={this.handleBlur}
             onClick={this.props.onClick}
-            // onKeyDown={this.onKeyDown}
+            onKeyDown={this.onKeyDown}
             onChange={(change: { value: Value }) => {
               this.onChange(change.value, false);
             }}
