@@ -21,6 +21,11 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
+var (
+	pluginRendererLog = log.New("renderer", "plugin")
+	httpRendererLog   = log.New("renderer", "http")
+)
+
 func init() {
 	remotecache.Register(&RenderUser{})
 	registry.Register(&registry.Descriptor{
@@ -84,56 +89,6 @@ func (rs *RenderingService) Init() error {
 	return nil
 }
 
-func (rs *RenderingService) Run(ctx context.Context) error {
-	if rs.remoteAvailable() {
-		rs.log = rs.log.New("renderer", "http")
-
-		version, err := rs.getRemotePluginVersion()
-		if err != nil {
-			rs.log.Info("Couldn't get remote renderer version", "err", err)
-		}
-
-		rs.log.Info("Backend rendering via external http server", "version", version)
-		rs.version = version
-		rs.renderAction = rs.renderViaHTTP
-		rs.renderCSVAction = rs.renderCSVViaHTTP
-		<-ctx.Done()
-		return nil
-	}
-
-	if rs.pluginAvailable() {
-		rs.log = rs.log.New("renderer", "plugin")
-		rs.pluginInfo = rs.PluginManager.Renderer()
-
-		if rs.PluginManagerV2.Renderer() != nil {
-			renderer := rs.PluginManagerV2.Renderer()
-
-			rs.version = renderer.Info.Version
-			rs.renderAction = rs.renderViaPlugin
-			rs.renderCSVAction = rs.renderCSVViaPlugin
-			<-ctx.Done()
-			return nil
-		}
-
-		if err := rs.startPlugin(ctx); err != nil {
-			return err
-		}
-
-		rs.version = rs.pluginInfo.Info.Version
-		rs.renderAction = rs.renderViaPlugin
-		rs.renderCSVAction = rs.renderCSVViaPlugin
-		<-ctx.Done()
-		return nil
-	}
-
-	rs.log.Debug("No image renderer found/installed. " +
-		"For image rendering support please install the grafana-image-renderer plugin. " +
-		"Read more at https://grafana.com/docs/grafana/latest/administration/image_rendering/")
-
-	<-ctx.Done()
-	return nil
-}
-
 func (rs *RenderingService) pluginAvailable() bool {
 	return rs.PluginManager.Renderer() != nil || rs.PluginManagerV2.Renderer() != nil
 }
@@ -150,7 +105,7 @@ func (rs *RenderingService) Version() string {
 	return rs.version
 }
 
-func (rs *RenderingService) RenderErrorImage(err error) (*RenderResult, error) {
+func (rs *RenderingService) RenderErrorImage(_ error) (*RenderResult, error) {
 	imgUrl := "public/img/rendering_error.png"
 
 	return &RenderResult{
@@ -208,6 +163,47 @@ func (rs *RenderingService) render(ctx context.Context, opts Opts) (*RenderResul
 
 	rs.inProgressCount++
 	metrics.MRenderingQueue.Set(float64(rs.inProgressCount))
+
+	if rs.remoteAvailable() {
+		rs.log = httpRendererLog
+
+		version, err := rs.getRemotePluginVersion()
+		if err != nil {
+			rs.log.Info("Couldn't get remote renderer version", "err", err)
+		}
+
+		rs.log.Info("Backend rendering via external http server", "version", version)
+		rs.version = version
+		rs.renderAction = rs.renderViaHTTP
+		rs.renderCSVAction = rs.renderCSVViaHTTP
+	}
+
+	if rs.pluginAvailable() {
+		rs.log = pluginRendererLog
+
+		if rs.PluginManagerV2.Renderer() != nil {
+			renderer := rs.PluginManagerV2.Renderer()
+
+			rs.version = renderer.Info.Version
+			rs.renderAction = rs.renderViaPlugin
+			rs.renderCSVAction = rs.renderCSVViaPlugin
+		} else {
+			rs.pluginInfo = rs.PluginManager.Renderer()
+
+			if err := rs.startPlugin(ctx); err != nil {
+				return nil, err
+			}
+
+			rs.version = rs.pluginInfo.Info.Version
+			rs.renderAction = rs.renderViaPlugin
+			rs.renderCSVAction = rs.renderCSVViaPlugin
+		}
+	}
+
+	rs.log.Debug("No image renderer found/installed. " +
+		"For image rendering support please install the grafana-image-renderer plugin. " +
+		"Read more at https://grafana.com/docs/grafana/latest/administration/image_rendering/")
+
 	return rs.renderAction(ctx, renderKey, opts)
 }
 
