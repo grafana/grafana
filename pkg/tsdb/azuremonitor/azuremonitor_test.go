@@ -80,7 +80,6 @@ func (f *fakeExecutor) executeTimeSeriesQuery(ctx context.Context, originalQueri
 }
 
 func Test_newExecutor(t *testing.T) {
-
 	cfg := &setting.Cfg{}
 
 	tests := []struct {
