@@ -343,7 +343,9 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
   }
 
   interpolateVariablesInQueries(queries: CloudMonitoringQuery[], scopedVars: ScopedVars): CloudMonitoringQuery[] {
-    return queries.map((query) => this.applyTemplateVariables(query, scopedVars) as CloudMonitoringQuery);
+    return queries.map(
+      (query) => this.applyTemplateVariables(this.migrateQuery(query), scopedVars) as CloudMonitoringQuery
+    );
   }
 
   interpolateFilters(filters: string[], scopedVars: ScopedVars) {
