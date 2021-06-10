@@ -368,6 +368,22 @@ func TestPluginManager_Init(t *testing.T) {
 		assert.Equal(t, []error{fmt.Errorf(`plugin 'test' has a modified signature`)}, pm.scanningErrors)
 		assert.Nil(t, pm.plugins[("test")])
 	})
+
+	t.Run("With back-end plugin with a lib dir that has symbolic links", func(t *testing.T) {
+		origAppURL := setting.AppUrl
+		t.Cleanup(func() {
+			setting.AppUrl = origAppURL
+		})
+		setting.AppUrl = "http://localhost:3000/"
+
+		pm := createManager(t, func(pm *PluginManager) {
+			pm.Cfg.PluginsPath = "testdata/symbolic-file-links"
+		})
+		err := pm.Init()
+		require.NoError(t, err)
+		// This plugin should be properly registered, even though it has a symbolicly linked file in it.
+		assert.NotNil(t, pm.plugins[("test")])
+	})
 }
 
 func TestPluginManager_IsBackendOnlyPlugin(t *testing.T) {
