@@ -1,6 +1,5 @@
 import { DeleteDataSourceConfig } from './deleteDataSource';
 import { e2e } from '../index';
-import { fromBaseUrl, getDataSourceId } from '../support/url';
 import { v4 as uuidv4 } from 'uuid';
 
 export interface AddDataSourceConfig {
@@ -35,7 +34,6 @@ export const addDataSource = (config?: Partial<AddDataSourceConfig>) => {
     basicAuth,
     basicAuthPassword,
     basicAuthUser,
-    checkHealth,
     expectedAlertMessage,
     form,
     name,
@@ -88,26 +86,17 @@ export const addDataSource = (config?: Partial<AddDataSourceConfig>) => {
 
   return e2e()
     .url()
-    .then((url: string) => {
-      const id = getDataSourceId(url);
-
+    .then(() => {
       e2e.getScenarioContext().then(({ addedDataSources }: any) => {
         e2e.setScenarioContext({
-          addedDataSources: [...addedDataSources, { id, name } as DeleteDataSourceConfig],
+          addedDataSources: [...addedDataSources, { name } as DeleteDataSourceConfig],
         });
       });
-
-      if (checkHealth) {
-        const healthUrl = fromBaseUrl(`/api/datasources/${id}/health`);
-        e2e().logToConsole(`Fetching ${healthUrl}`);
-        e2e().request(healthUrl).its('body').should('have.property', 'status').and('eq', 'OK');
-      }
 
       // @todo remove `wrap` when possible
       return e2e().wrap(
         {
           config: fullConfig,
-          id,
         },
         { log: false }
       );
