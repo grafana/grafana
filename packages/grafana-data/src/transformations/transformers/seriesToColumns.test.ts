@@ -49,9 +49,7 @@ describe('SeriesToColumns Transformer', () => {
             Object {
               "config": Object {},
               "name": "time",
-              "state": Object {
-                "displayName": "time",
-              },
+              "state": Object {},
               "type": "time",
               "values": Array [
                 1000,
@@ -174,9 +172,7 @@ describe('SeriesToColumns Transformer', () => {
             Object {
               "config": Object {},
               "name": "time",
-              "state": Object {
-                "displayName": "time",
-              },
+              "state": Object {},
               "type": "time",
               "values": Array [
                 1000,
