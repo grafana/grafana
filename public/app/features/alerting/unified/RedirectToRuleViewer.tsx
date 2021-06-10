@@ -2,7 +2,7 @@ import React from 'react';
 import { Redirect } from 'react-router-dom';
 import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
-import { Card, Icon, LoadingPlaceholder, useStyles2, withErrorBoundary } from '@grafana/ui';
+import { Alert, Card, Icon, LoadingPlaceholder, useStyles2, withErrorBoundary } from '@grafana/ui';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { useCombinedRulesMatching } from './hooks/useCombinedRule';
 import { createViewLink } from './utils/misc';
@@ -18,7 +18,17 @@ export function RedirectToRuleViewer(props: RedirectToRuleViewerProps): JSX.Elem
   const { error, loading, result: rules, dispatched } = useCombinedRulesMatching(name, sourceName);
 
   if (error) {
-    return <div>error</div>;
+    return (
+      <RuleViewerLayout>
+        <Alert title={`Failed to load rules from ${sourceName}`}>
+          <details className={styles.errorMessage}>
+            {error.message}
+            <br />
+            {!!error?.stack && error.stack}
+          </details>
+        </Alert>
+      </RuleViewerLayout>
+    );
   }
 
   if (loading || !dispatched || !Array.isArray(rules)) {
@@ -30,13 +40,19 @@ export function RedirectToRuleViewer(props: RedirectToRuleViewerProps): JSX.Elem
   }
 
   if (!name || !sourceName) {
-    return <Redirect to="" />;
+    return <Redirect to="/notfound" />;
   }
 
   const rulesSource = getRulesSourceByName(sourceName);
 
   if (!rulesSource) {
-    return null;
+    return (
+      <RuleViewerLayout>
+        <Alert title="Could not view rule">
+          <details className={styles.errorMessage}>{`Could not find data source with name: ${sourceName}.`}</details>
+        </Alert>
+      </RuleViewerLayout>
+    );
   }
 
   if (rules.length === 1) {
@@ -84,6 +100,9 @@ function getStyles(theme: GrafanaTheme2) {
     `,
     namespace: css`
       margin-left: ${theme.spacing(1)};
+    `,
+    errorMessage: css`
+      white-space: pre-wrap;
     `,
   };
 }
