@@ -79,6 +79,11 @@ const (
 	ActionLDAPUsersSync  = "ldap.user:sync"
 	ActionLDAPStatusRead = "ldap.status:read"
 
+	//API key actions
+	ActionApiKeyList   = "apikey:list"
+	ActionApiKeyAdd    = "apikey:add"
+	ActionApiKeyDelete = "apikey:delete"
+
 	// Global Scopes
 	ScopeGlobalUsersAll = "global:users:*"
 
