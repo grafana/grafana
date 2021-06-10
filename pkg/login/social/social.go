@@ -240,7 +240,7 @@ func (ss *SocialService) NewOAuthService(cfg *setting.Cfg) {
 }
 
 // GetOAuthProviders returns available oauth providers and if they're enabled or not
-var GetOAuthProviders = func(cfg *setting.Cfg) map[string]bool {
+func (ss *SocialService) GetOAuthProviders(cfg *setting.Cfg) map[string]bool {
 	result := map[string]bool{}
 
 	if cfg == nil || cfg.Raw == nil {
