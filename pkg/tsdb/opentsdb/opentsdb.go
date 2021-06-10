@@ -145,7 +145,6 @@ func (e *OpenTsdbExecutor) parseResponse(query OpenTsdbQuery, res *http.Response
 		name := val.Metric
 
 		for timeString, value := range val.DataPoints {
-			// we need to change here
 			timestamp, err := strconv.ParseInt(timeString, 10, 64)
 			if err != nil {
 				plog.Info("Failed to unmarshal opentsdb timestamp", "timestamp", timeString)
