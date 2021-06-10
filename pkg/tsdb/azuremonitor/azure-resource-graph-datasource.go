@@ -43,7 +43,7 @@ type AzureResourceGraphQuery struct {
 	TimeRange         backend.TimeRange
 }
 
-const argAPIVersion = "2018-09-01-preview"
+const argAPIVersion = "2021-03-01"
 const argQueryProviderName = "/providers/Microsoft.ResourceGraph/resources"
 
 // executeTimeSeriesQuery does the following:
@@ -132,6 +132,7 @@ func (e *AzureResourceGraphDatasource) executeQuery(ctx context.Context, query *
 	reqBody, err := json.Marshal(map[string]interface{}{
 		"subscriptions": model.Get("subscriptions").MustStringArray(),
 		"query":         query.InterpolatedQuery,
+		"options":       map[string]string{"resultFormat": "table"},
 	})
 
 	if err != nil {
