@@ -9,7 +9,7 @@ import {
   FieldType,
   formattedValueToString,
   getFieldColorModeForField,
-  getFieldDisplayName,
+  calculateFieldDisplayName,
   getFieldSeriesColor,
 } from '@grafana/data';
 
@@ -156,7 +156,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
         indexByName = getNamesToFieldIndex(frame, allFrames);
       }
 
-      const t = indexByName.alignedNames.get(getFieldDisplayName(field, frame, undefined, true));
+      const t = indexByName.alignedNames.get(calculateFieldDisplayName(field, frame));
       const b = indexByName.originNames.get(customConfig.fillBelowTo);
       if (isNumber(b) && isNumber(t)) {
         builder.addBand({
@@ -271,16 +271,15 @@ export function getNamesToFieldIndex(
     const origin = frame.fields[i].state?.origin;
     if (allFrames && origin) {
       originNames.set(
-        getFieldDisplayName(
+        calculateFieldDisplayName(
           allFrames[origin.frameIndex].fields[origin.fieldIndex],
           allFrames[origin.frameIndex],
-          allFrames,
-          true
+          allFrames
         ),
         i
       );
     }
-    alignedNames.set(getFieldDisplayName(frame.fields[i], frame, undefined, true), i);
+    alignedNames.set(calculateFieldDisplayName(frame.fields[i], frame), i);
   }
   return { alignedNames, originNames };
 }
