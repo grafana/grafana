@@ -33,16 +33,7 @@ export interface CardInterface extends FC<Props> {
  *
  * @public
  */
-export const Card: CardInterface = ({
-  heading,
-  description,
-  disabled,
-  href,
-  onClick,
-  className,
-  children,
-  ...htmlProps
-}) => {
+export const Card: CardInterface = ({ heading, description, disabled, href, onClick, children, ...htmlProps }) => {
   const theme = useTheme2();
   const styles = getCardStyles(theme);
   const [tags, figure, meta, actions, secondaryActions] = ['Tags', 'Figure', 'Meta', 'Actions', 'SecondaryActions'].map(

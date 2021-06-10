@@ -259,6 +259,32 @@ describe('FieldDisplay', () => {
       expect(result[1].display.text).toEqual('20');
     });
 
+    it('With cached display processor', () => {
+      const options = createDisplayOptions({
+        reduceOptions: {
+          values: true,
+          calcs: [],
+        },
+        data: [
+          toDataFrame({
+            fields: [
+              { name: 'Name', values: ['A', 'B'] },
+              { name: 'Value', values: [10, 10] },
+            ],
+          }),
+        ],
+      });
+
+      const cache = { numeric: 10, text: 'Value' };
+      options.data![0].fields[1].display = (v: any) => {
+        return cache;
+      };
+
+      const result = getFieldDisplayValues(options);
+      expect(result[0].display.title).toEqual('A');
+      expect(result[1].display.title).toEqual('B');
+    });
+
     it('Single string field multiple value fields', () => {
       const options = createDisplayOptions({
         reduceOptions: {
