@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -308,6 +309,27 @@ func TestDataSource_GetHttpTransport(t *testing.T) {
 		require.NotNil(t, configuredOpts.SigV4)
 		require.Equal(t, "es", configuredOpts.SigV4.Service)
 	})
+}
+
+func TestDataSource_getTimeout(t *testing.T) {
+	setting.DataProxyTimeout = 30
+	testCases := []struct {
+		jsonData        *simplejson.Json
+		expectedTimeout time.Duration
+	}{
+		{jsonData: simplejson.New(), expectedTimeout: 30 * time.Second},
+		{jsonData: simplejson.NewFromAny(map[string]interface{}{"timeout": nil}), expectedTimeout: 30 * time.Second},
+		{jsonData: simplejson.NewFromAny(map[string]interface{}{"timeout": 0}), expectedTimeout: 30 * time.Second},
+		{jsonData: simplejson.NewFromAny(map[string]interface{}{"timeout": 1}), expectedTimeout: time.Second},
+		{jsonData: simplejson.NewFromAny(map[string]interface{}{"timeout": "2"}), expectedTimeout: 2 * time.Second},
+	}
+
+	for _, tc := range testCases {
+		ds := &DataSource{
+			JsonData: tc.jsonData,
+		}
+		assert.Equal(t, tc.expectedTimeout, ds.getTimeout())
+	}
 }
 
 func TestDataSource_DecryptedValue(t *testing.T) {
