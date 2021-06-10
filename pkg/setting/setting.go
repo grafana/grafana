@@ -82,6 +82,7 @@ var (
 	DataProxyTimeout               int
 	DataProxyTLSHandshakeTimeout   int
 	DataProxyExpectContinueTimeout int
+	DataProxyMaxConnsPerHost       int
 	DataProxyMaxIdleConns          int
 	DataProxyMaxIdleConnsPerHost   int
 	DataProxyKeepAlive             int
