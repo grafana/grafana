@@ -21,6 +21,8 @@ import (
 	"gopkg.in/ini.v1"
 )
 
+const defaultAppURL = "http://localhost:3000/"
+
 func TestPluginManager_Init(t *testing.T) {
 	t.Run("Base case (core + bundled plugins)", func(t *testing.T) {
 		staticRootPath, err := filepath.Abs("../../../public")
@@ -289,7 +291,7 @@ func TestPluginManager_Init(t *testing.T) {
 			setting.AppUrl = origAppURL
 			setting.AppSubUrl = origAppSubURL
 		})
-		setting.AppUrl = "http://localhost:3000/"
+		setting.AppUrl = defaultAppURL
 		setting.AppSubUrl = "/grafana"
 
 		pm := createManager(t, func(pm *PluginManager) {
@@ -316,7 +318,7 @@ func TestPluginManager_Init(t *testing.T) {
 		t.Cleanup(func() {
 			setting.AppUrl = origAppURL
 		})
-		setting.AppUrl = "http://localhost:3000/"
+		setting.AppUrl = defaultAppURL
 
 		pm := createManager(t, func(pm *PluginManager) {
 			pm.Cfg.PluginsPath = "testdata/valid-v2-pvt-signature"
@@ -342,7 +344,7 @@ func TestPluginManager_Init(t *testing.T) {
 		t.Cleanup(func() {
 			setting.AppUrl = origAppURL
 		})
-		setting.AppUrl = "http://localhost:3000/"
+		setting.AppUrl = defaultAppURL
 
 		pm := createManager(t, func(pm *PluginManager) {
 			pm.Cfg.PluginsPath = "testdata/invalid-v2-signature"
@@ -358,7 +360,7 @@ func TestPluginManager_Init(t *testing.T) {
 		t.Cleanup(func() {
 			setting.AppUrl = origAppURL
 		})
-		setting.AppUrl = "http://localhost:3000/"
+		setting.AppUrl = defaultAppURL
 
 		pm := createManager(t, func(pm *PluginManager) {
 			pm.Cfg.PluginsPath = "testdata/invalid-v2-signature-2"
@@ -374,7 +376,7 @@ func TestPluginManager_Init(t *testing.T) {
 		t.Cleanup(func() {
 			setting.AppUrl = origAppURL
 		})
-		setting.AppUrl = "http://localhost:3000/"
+		setting.AppUrl = defaultAppURL
 
 		pm := createManager(t, func(pm *PluginManager) {
 			pm.Cfg.PluginsPath = "testdata/symbolic-file-links"
