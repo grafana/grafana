@@ -14,7 +14,9 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/grpcplugin"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin/pluginextensionv2"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -125,7 +127,7 @@ func (l *Loader) LoadAll(pluginJSONPaths []string, requireSigned bool) ([]*plugi
 		}
 
 		// External plugins need a module.js file for SystemJS to load
-		if isExternalPlugin(plugin.PluginDir, l.Cfg) && !isRendererPlugin(plugin.Type) {
+		if isExternalPlugin(plugin.PluginDir, l.Cfg) && !plugin.IsRenderer() {
 			module := filepath.Join(plugin.PluginDir, "module.js")
 			if exists, err := fs.Exists(module); err != nil {
 				return nil, err
@@ -138,10 +140,21 @@ func (l *Loader) LoadAll(pluginJSONPaths []string, requireSigned bool) ([]*plugi
 		}
 
 		if plugin.Backend {
-			cmd := plugins.ComposePluginStartCommand(plugin.Executable)
-			backendFactory := grpcplugin.NewBackendPlugin(plugin.ID, filepath.Join(plugin.PluginDir, cmd))
-			env := l.getPluginEnvVars(plugin)
+			var backendFactory backendplugin.PluginFactoryFunc
+			if plugin.IsRenderer() {
+				cmd := plugins.ComposeRendererStartCommand()
+				backendFactory = grpcplugin.NewRendererPlugin(plugin.ID, filepath.Join(plugin.PluginDir, cmd),
+					func(pluginID string, renderer pluginextensionv2.RendererPlugin, logger log.Logger) error {
+						//TODO
+						return nil
+					},
+				)
+			} else {
+				cmd := plugins.ComposePluginStartCommand(plugin.Executable)
+				backendFactory = grpcplugin.NewBackendPlugin(plugin.ID, filepath.Join(plugin.PluginDir, cmd))
+			}
 
+			env := l.getPluginEnvVars(plugin)
 			if backendClient, err := backendFactory(plugin.ID, l.log.New("pluginID", plugin.ID), env); err != nil {
 				return nil, err
 			} else {
@@ -250,10 +263,6 @@ func isValidPluginJSON(data plugins.JSONData) bool {
 		return false
 	}
 	return true
-}
-
-func isRendererPlugin(pluginType string) bool {
-	return pluginType == "renderer"
 }
 
 type pluginSettings map[string]string

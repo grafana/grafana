@@ -67,7 +67,7 @@ type JSONData struct {
 	Streaming    bool            `json:"streaming"`
 	SDK          bool            `json:"sdk,omitempty"`
 
-	// Backend (App + Datasource settings)
+	// Backend (App + Datasource + Renderer settings)
 	Routes     []*AppPluginRoute `json:"routes"`
 	Executable string            `json:"executable,omitempty"`
 }
@@ -191,6 +191,10 @@ func (p *PluginV2) getPluginClient() (PluginClient, bool) {
 
 func (p *PluginV2) GetStaticRoutes() []*PluginStaticRoute {
 	return []*PluginStaticRoute{{Directory: p.PluginDir, PluginId: p.ID}}
+}
+
+func (p *PluginV2) IsRenderer() bool {
+	return p.Type == "renderer"
 }
 
 type PluginClient interface {
