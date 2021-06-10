@@ -263,6 +263,14 @@ func (st DBstore) UpsertAlertRules(rules []UpsertRule) error {
 					r.New.For = r.Existing.For
 				}
 
+				if r.New.ExecErrState == "" {
+					r.New.ExecErrState = r.Existing.ExecErrState
+				}
+
+				if r.New.NoDataState == "" {
+					r.New.NoDataState = r.Existing.NoDataState
+				}
+
 				if err := st.validateAlertRule(r.New); err != nil {
 					return err
 				}

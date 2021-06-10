@@ -1520,16 +1520,14 @@ func TestAlertRuleCRUD(t *testing.T) {
 			}`, body)
 	}
 
-	// update the rule; keep title, condition, interval, for, queries and expressions if not provided
+	// update the rule; keep title, condition, interval, for, no data state, error state, queries and expressions if not provided
 	{
 		rules := apimodels.PostableRuleGroupConfig{
 			Name: "arulegroup",
 			Rules: []apimodels.PostableExtendedRuleNode{
 				{
 					GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
-						UID:          ruleUID, // Including the UID in the payload makes the endpoint update the existing rule.
-						NoDataState:  apimodels.NoDataState(ngmodels.Alerting),
-						ExecErrState: apimodels.ExecutionErrorState(ngmodels.AlertingErrState),
+						UID: ruleUID, // Including the UID in the payload makes the endpoint update the existing rule.
 					},
 				},
 			},
