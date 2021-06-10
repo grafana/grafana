@@ -210,8 +210,13 @@ func (m *PluginManagerV2) App(pluginID string) {
 
 }
 
-func (m *PluginManagerV2) Renderer() {
-
+func (m *PluginManagerV2) Renderer() *plugins.PluginV2 {
+	for _, p := range m.plugins {
+		if p.IsRenderer() {
+			return p
+		}
+	}
+	return nil
 }
 
 func (m *PluginManagerV2) DataSources() {

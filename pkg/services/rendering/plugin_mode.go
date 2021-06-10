@@ -44,8 +44,12 @@ func (rs *RenderingService) renderViaPlugin(ctx context.Context, renderKey strin
 		Headers:           headers,
 	}
 	rs.log.Debug("Calling renderer plugin", "req", req)
-
-	rsp, err := rs.pluginInfo.GrpcPluginV2.Render(ctx, req)
+	var rsp *pluginextensionv2.RenderResponse
+	if rs.PluginManagerV2.Renderer() != nil {
+		rsp, err = rs.PluginManagerV2.Renderer().Renderer.Render(ctx, req)
+	} else {
+		rsp, err = rs.pluginInfo.GrpcPluginV2.Render(ctx, req)
+	}
 	if errors.Is(ctx.Err(), context.DeadlineExceeded) {
 		rs.log.Info("Rendering timed out")
 		return nil, ErrTimeout
@@ -87,8 +91,12 @@ func (rs *RenderingService) renderCSVViaPlugin(ctx context.Context, renderKey st
 		Headers:   headers,
 	}
 	rs.log.Debug("Calling renderer plugin", "req", req)
-
-	rsp, err := rs.pluginInfo.GrpcPluginV2.RenderCSV(ctx, req)
+	var rsp *pluginextensionv2.RenderCSVResponse
+	if rs.PluginManagerV2.Renderer() != nil {
+		rsp, err = rs.PluginManagerV2.Renderer().Renderer.RenderCSV(ctx, req)
+	} else {
+		rsp, err = rs.pluginInfo.GrpcPluginV2.RenderCSV(ctx, req)
+	}
 	if err != nil {
 		if errors.Is(ctx.Err(), context.DeadlineExceeded) {
 			rs.log.Info("Rendering timed out")

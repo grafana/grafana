@@ -6,6 +6,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin/pluginextensionv2"
 )
 
 type PluginV2 struct {
@@ -29,7 +30,8 @@ type PluginV2 struct {
 	GrafanaComVersion   string
 	GrafanaComHasUpdate bool
 
-	Client backendplugin.Plugin
+	Client   backendplugin.Plugin
+	Renderer pluginextensionv2.RendererPlugin
 }
 
 // JSONData represents the plugin's plugin.json data

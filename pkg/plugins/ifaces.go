@@ -120,7 +120,7 @@ type PluginManagerV2 interface {
 	DataSource(pluginID string)
 	Panel(pluginID string)
 	App(pluginID string)
-	Renderer()
+	Renderer() *PluginV2
 
 	Plugins()
 	DataSources()

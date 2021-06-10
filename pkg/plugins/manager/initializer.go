@@ -103,7 +103,7 @@ func (i *Initializer) Initialize(p *plugins.PluginV2) error {
 			cmd := plugins.ComposeRendererStartCommand()
 			backendFactory = grpcplugin.NewRendererPlugin(p.ID, filepath.Join(p.PluginDir, cmd),
 				func(pluginID string, renderer pluginextensionv2.RendererPlugin, logger log.Logger) error {
-					//TODO
+					p.Renderer = renderer
 					return nil
 				},
 			)
