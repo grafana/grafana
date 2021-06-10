@@ -3,27 +3,20 @@ package manager
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"os"
 	"path/filepath"
 	"runtime"
 	"strings"
 
-	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
 	"github.com/grafana/grafana/pkg/infra/fs"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin/grpcplugin"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin/pluginextensionv2"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 type Loader struct {
-	Cfg     *setting.Cfg     `inject:""`
-	License models.Licensing `inject:""`
+	Cfg *setting.Cfg `inject:""`
 
 	allowUnsignedPluginsCondition unsignedPluginV2ConditionFunc
 	log                           log.Logger
@@ -53,7 +46,7 @@ func (l *Loader) Load(pluginJSONPath string, requireSigned bool) (*plugins.Plugi
 }
 
 func (l *Loader) LoadAll(pluginJSONPaths []string, requireSigned bool) ([]*plugins.PluginV2, error) {
-	var foundPlugins = make(map[string]*plugins.PluginV2)
+	var foundPlugins = make(map[string]plugins.JSONData)
 
 	for _, pluginJSONPath := range pluginJSONPaths {
 		plugin, err := l.readPluginJSON(pluginJSONPath)
@@ -75,6 +68,7 @@ func (l *Loader) LoadAll(pluginJSONPaths []string, requireSigned bool) ([]*plugi
 		}
 		pluginsByID[scannedPlugin.ID] = struct{}{}
 
+		// Probably move this whole logic to higher-level (let manager decide)
 		// Check if scanning found plugins that are already installed
 		//if existing := pm.GetPlugin(scannedPlugin.ID); existing != nil {
 		//	l.log.Debug("Skipping plugin as it's already installed", "plugin", existing.ID, "version", existing.Info.Version)
@@ -83,27 +77,36 @@ func (l *Loader) LoadAll(pluginJSONPaths []string, requireSigned bool) ([]*plugi
 	}
 
 	// wire up plugin dependencies
-	for pluginDir, plugin := range foundPlugins {
-		plugin.PluginDir = pluginDir
-		children := strings.Split(plugin.PluginDir, string(filepath.Separator))
+	loadedPlugins := make(map[string]*plugins.PluginV2)
+	for pluginDir, pluginJSON := range foundPlugins {
+		p := &plugins.PluginV2{
+			JSONData:  pluginJSON,
+			PluginDir: pluginDir,
+		}
+
+		children := strings.Split(p.PluginDir, string(filepath.Separator))
 		children = children[0 : len(children)-1]
 		pluginPath := ""
 
-		if runtime.GOOS != "windows" && filepath.IsAbs(plugin.PluginDir) {
+		if runtime.GOOS != "windows" && filepath.IsAbs(p.PluginDir) {
 			pluginPath = "/"
 		}
 		for _, child := range children {
 			pluginPath = filepath.Join(pluginPath, child)
-			if parent, ok := foundPlugins[pluginPath]; ok {
-				plugin.Parent = parent
-				plugin.Parent.Children = append(plugin.Parent.Children, plugin)
+			if parentPluginJSON, ok := foundPlugins[pluginPath]; ok {
+				p.Parent = &plugins.PluginV2{
+					JSONData:  parentPluginJSON,
+					PluginDir: pluginPath,
+				}
+				p.Parent.Children = append(p.Parent.Children, p)
 				break
 			}
 		}
+		loadedPlugins[p.PluginDir] = p
 	}
 
 	// start of second pass
-	for _, plugin := range foundPlugins {
+	for _, plugin := range loadedPlugins {
 		signatureState, err := pluginSignatureState(l.log, l.Cfg, plugin)
 		if err != nil {
 			l.log.Warn("Could not get plugin signature state", "pluginID", plugin.ID, "err", err)
@@ -139,29 +142,6 @@ func (l *Loader) LoadAll(pluginJSONPaths []string, requireSigned bool) ([]*plugi
 			}
 		}
 
-		if plugin.Backend {
-			var backendFactory backendplugin.PluginFactoryFunc
-			if plugin.IsRenderer() {
-				cmd := plugins.ComposeRendererStartCommand()
-				backendFactory = grpcplugin.NewRendererPlugin(plugin.ID, filepath.Join(plugin.PluginDir, cmd),
-					func(pluginID string, renderer pluginextensionv2.RendererPlugin, logger log.Logger) error {
-						//TODO
-						return nil
-					},
-				)
-			} else {
-				cmd := plugins.ComposePluginStartCommand(plugin.Executable)
-				backendFactory = grpcplugin.NewBackendPlugin(plugin.ID, filepath.Join(plugin.PluginDir, cmd))
-			}
-
-			env := l.getPluginEnvVars(plugin)
-			if backendClient, err := backendFactory(plugin.ID, l.log.New("pluginID", plugin.ID), env); err != nil {
-				return nil, err
-			} else {
-				plugin.Client = backendClient
-			}
-		}
-
 		logger.Debug("Loaded plugin", "pluginID", plugin.ID)
 
 		//if len(scanner.errors) > 0 {
@@ -170,16 +150,16 @@ func (l *Loader) LoadAll(pluginJSONPaths []string, requireSigned bool) ([]*plugi
 		//}
 	}
 
-	res := make([]*plugins.PluginV2, 0, len(foundPlugins))
+	res := make([]*plugins.PluginV2, 0, len(loadedPlugins))
 
-	for _, p := range foundPlugins {
+	for _, p := range loadedPlugins {
 		res = append(res, p)
 	}
 
 	return res, nil
 }
 
-func (l *Loader) readPluginJSON(pluginJSONPath string) (*plugins.PluginV2, error) {
+func (l *Loader) readPluginJSON(pluginJSONPath string) (plugins.JSONData, error) {
 	l.log.Debug("Loading plugin", "path", pluginJSONPath)
 
 	// nolint:gosec
@@ -187,75 +167,23 @@ func (l *Loader) readPluginJSON(pluginJSONPath string) (*plugins.PluginV2, error
 	// on plugin the folder structure on disk and not user input.
 	reader, err := os.Open(pluginJSONPath)
 	if err != nil {
-		return nil, err
+		return plugins.JSONData{}, err
 	}
 
-	plugin := &plugins.PluginV2{}
+	plugin := plugins.JSONData{}
 	if err := json.NewDecoder(reader).Decode(&plugin); err != nil {
-		return nil, err
+		return plugins.JSONData{}, err
 	}
 
 	if err := reader.Close(); err != nil {
 		l.log.Warn("Failed to close JSON file", "path", pluginJSONPath, "err", err)
 	}
 
-	if !isValidPluginJSON(plugin.JSONData) {
-		return nil, errors.New("did not find type or id properties in plugin.json")
+	if !isValidPluginJSON(plugin) {
+		return plugins.JSONData{}, errors.New("did not find type or id properties in plugin.json")
 	}
 
 	return plugin, nil
-}
-
-func (l *Loader) getPluginEnvVars(plugin *plugins.PluginV2) []string {
-	hostEnv := []string{
-		fmt.Sprintf("GF_VERSION=%s", l.Cfg.BuildVersion),
-		fmt.Sprintf("GF_EDITION=%s", l.License.Edition()),
-	}
-
-	if l.License.HasLicense() {
-		hostEnv = append(
-			hostEnv,
-			fmt.Sprintf("GF_ENTERPRISE_LICENSE_PATH=%s", l.Cfg.EnterpriseLicensePath),
-		)
-
-		if envProvider, ok := l.License.(models.LicenseEnvironment); ok {
-			for k, v := range envProvider.Environment() {
-				hostEnv = append(hostEnv, fmt.Sprintf("%s=%s", k, v))
-			}
-		}
-	}
-
-	hostEnv = append(hostEnv, l.getAWSEnvironmentVariables()...)
-	hostEnv = append(hostEnv, l.getAzureEnvironmentVariables()...)
-	env := getPluginSettings(plugin.ID, l.Cfg).ToEnv("GF_PLUGIN", hostEnv)
-	return env
-}
-
-func (l *Loader) getAWSEnvironmentVariables() []string {
-	var variables []string
-	if l.Cfg.AWSAssumeRoleEnabled {
-		variables = append(variables, awsds.AssumeRoleEnabledEnvVarKeyName+"=true")
-	}
-	if len(l.Cfg.AWSAllowedAuthProviders) > 0 {
-		variables = append(variables, awsds.AllowedAuthProvidersEnvVarKeyName+"="+strings.Join(l.Cfg.AWSAllowedAuthProviders, ","))
-	}
-
-	return variables
-}
-
-func (l *Loader) getAzureEnvironmentVariables() []string {
-	var variables []string
-	if l.Cfg.Azure.Cloud != "" {
-		variables = append(variables, "AZURE_CLOUD="+l.Cfg.Azure.Cloud)
-	}
-	if l.Cfg.Azure.ManagedIdentityClientId != "" {
-		variables = append(variables, "AZURE_MANAGED_IDENTITY_CLIENT_ID="+l.Cfg.Azure.ManagedIdentityClientId)
-	}
-	if l.Cfg.Azure.ManagedIdentityEnabled {
-		variables = append(variables, "AZURE_MANAGED_IDENTITY_ENABLED=true")
-	}
-
-	return variables
 }
 
 func isValidPluginJSON(data plugins.JSONData) bool {
@@ -263,35 +191,4 @@ func isValidPluginJSON(data plugins.JSONData) bool {
 		return false
 	}
 	return true
-}
-
-type pluginSettings map[string]string
-
-func (ps pluginSettings) ToEnv(prefix string, hostEnv []string) []string {
-	var env []string
-	for k, v := range ps {
-		key := fmt.Sprintf("%s_%s", prefix, strings.ToUpper(k))
-		if value := os.Getenv(key); value != "" {
-			v = value
-		}
-
-		env = append(env, fmt.Sprintf("%s=%s", key, v))
-	}
-
-	env = append(env, hostEnv...)
-
-	return env
-}
-
-func getPluginSettings(plugID string, cfg *setting.Cfg) pluginSettings {
-	ps := pluginSettings{}
-	for k, v := range cfg.PluginSettings[plugID] {
-		if k == "path" || strings.ToLower(k) == "id" {
-			continue
-		}
-
-		ps[k] = v
-	}
-
-	return ps
 }
