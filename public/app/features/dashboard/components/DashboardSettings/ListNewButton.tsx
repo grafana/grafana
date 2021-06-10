@@ -2,6 +2,7 @@ import React, { ButtonHTMLAttributes } from 'react';
 import { Button, useStyles } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
 import { css } from '@emotion/css';
+import { selectors } from '@grafana/e2e-selectors';
 
 export interface Props extends ButtonHTMLAttributes<HTMLButtonElement> {}
 
@@ -9,7 +10,12 @@ export const ListNewButton: React.FC<Props> = ({ children, ...restProps }) => {
   const styles = useStyles(getStyles);
   return (
     <div className={styles.buttonWrapper}>
-      <Button icon="plus" variant="secondary" {...restProps}>
+      <Button
+        aria-label={selectors.pages.Dashboard.Settings.Annotations.List.newButton}
+        icon="plus"
+        variant="secondary"
+        {...restProps}
+      >
         {children}
       </Button>
     </div>
