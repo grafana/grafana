@@ -99,7 +99,7 @@ export interface Props {
 }
 
 export interface State {
-  shouldForceUpdate: boolean;
+  isLayoutInitialized: boolean;
 }
 export class DashboardGrid extends PureComponent<Props, State> {
   private panelMap: { [id: string]: PanelModel } = {};
@@ -110,7 +110,7 @@ export class DashboardGrid extends PureComponent<Props, State> {
     super(props);
 
     this.state = {
-      shouldForceUpdate: true,
+      isLayoutInitialized: false,
     };
   }
 
@@ -165,9 +165,9 @@ export class DashboardGrid extends PureComponent<Props, State> {
     this.props.dashboard.sortPanelsByGridPos();
 
     // Call render() after any changes.  This is called when the initial layout loads
-    if (this.state.shouldForceUpdate) {
+    if (!this.state.isLayoutInitialized) {
       this.forceUpdate();
-      this.setState({ shouldForceUpdate: false });
+      this.setState({ isLayoutInitialized: true });
     }
   };
 
