@@ -96,46 +96,6 @@ describe('Streaming JSON', () => {
           },
         ]
       `);
-      expect(stream.meta.streamPacket).toMatchInlineSnapshot(`
-        Object {
-          "action": "append",
-          "packets": 2,
-          "popped": 0,
-          "pushed": 1,
-        }
-      `);
-
-      stream.push({
-        data: {
-          values: [
-            [400, 500],
-            ['d', 'e'],
-            [4, 5],
-          ],
-        },
-      });
-      expect(stream.meta.streamPacket).toMatchInlineSnapshot(`
-        Object {
-          "action": "append",
-          "packets": 3,
-          "popped": 1,
-          "pushed": 2,
-        }
-      `);
-
-      stream.push({
-        data: {
-          values: [[600], ['f'], [6]],
-        },
-      });
-      expect(stream.meta.streamPacket).toMatchInlineSnapshot(`
-        Object {
-          "action": "append",
-          "packets": 4,
-          "popped": 1,
-          "pushed": 1,
-        }
-      `);
     });
 
     it('should append new data and slice based on maxDelta', () => {
@@ -391,6 +351,96 @@ describe('Streaming JSON', () => {
           ],
         },
       ]
+    `);
+  });
+
+  describe('keep track of packets', () => {
+    const json: DataFrameJSON = {
+      schema: {
+        fields: [
+          { name: 'time', type: FieldType.time },
+          { name: 'value', type: FieldType.number },
+        ],
+      },
+      data: {
+        values: [
+          [100, 200, 300],
+          [1, 2, 3],
+        ],
+      },
+    };
+
+    const stream = new StreamingDataFrame(json, {
+      maxLength: 4,
+      maxDelta: 300,
+    });
+
+    const getSnapshot = (f: StreamingDataFrame) => {
+      return {
+        values: f.fields[1].values.toArray(),
+        info: f.meta.streamPacket,
+      };
+    };
+
+    expect(getSnapshot(stream)).toMatchInlineSnapshot(`
+      Object {
+        "info": Object {
+          "action": "replace",
+          "packets": 1,
+        },
+        "values": Array [
+          1,
+          2,
+          3,
+        ],
+      }
+    `);
+
+    stream.push({
+      data: {
+        values: [
+          [400, 500],
+          [4, 5],
+        ],
+      },
+    });
+    expect(getSnapshot(stream)).toMatchInlineSnapshot(`
+      Object {
+        "info": Object {
+          "action": "append",
+          "packets": 2,
+          "popped": 1,
+          "pushed": 2,
+        },
+        "values": Array [
+          2,
+          3,
+          4,
+          5,
+        ],
+      }
+    `);
+
+    stream.push({
+      data: {
+        values: [[600], [6]],
+      },
+    });
+    expect(getSnapshot(stream)).toMatchInlineSnapshot(`
+      Object {
+        "info": Object {
+          "action": "append",
+          "packets": 3,
+          "popped": 1,
+          "pushed": 1,
+        },
+        "values": Array [
+          3,
+          4,
+          5,
+          6,
+        ],
+      }
     `);
   });
 
