@@ -34,12 +34,30 @@ describe('locationUtil', () => {
       });
     });
     test('relative url', () => {
-      const urlWithoutMaster = locationUtil.stripBaseFromUrl('/subUrl/grafana/');
-      expect(urlWithoutMaster).toBe('/grafana/');
+      const urlWithoutMaster = locationUtil.stripBaseFromUrl('/subUrl/thisShouldRemain/');
+      expect(urlWithoutMaster).toBe('/thisShouldRemain/');
     });
-    test('absolute url url', () => {
-      const urlWithoutMaster = locationUtil.stripBaseFromUrl('http://www.domain.com:9877/subUrl/grafana/');
-      expect(urlWithoutMaster).toBe('/grafana/');
+    test('relative url with multiple subUrl in path', () => {
+      const urlWithoutMaster = locationUtil.stripBaseFromUrl('/subUrl/thisShouldRemain/subUrl/');
+      expect(urlWithoutMaster).toBe('/thisShouldRemain/subUrl/');
+    });
+    test('relative url with subdirectory subUrl', () => {
+      const urlWithoutMaster = locationUtil.stripBaseFromUrl('/thisShouldRemain/subUrl/');
+      expect(urlWithoutMaster).toBe('/thisShouldRemain/subUrl/');
+    });
+    test('absolute url', () => {
+      const urlWithoutMaster = locationUtil.stripBaseFromUrl('http://www.domain.com:9877/subUrl/thisShouldRemain/');
+      expect(urlWithoutMaster).toBe('/thisShouldRemain/');
+    });
+    test('absolute url with multiple subUrl in path', () => {
+      const urlWithoutMaster = locationUtil.stripBaseFromUrl(
+        'http://www.domain.com:9877/subUrl/thisShouldRemain/subUrl/'
+      );
+      expect(urlWithoutMaster).toBe('/thisShouldRemain/subUrl/');
+    });
+    test('absolute url with subdirectory subUrl', () => {
+      const urlWithoutMaster = locationUtil.stripBaseFromUrl('http://www.domain.com:9877/thisShouldRemain/subUrl/');
+      expect(urlWithoutMaster).toBe('/thisShouldRemain/subUrl/');
     });
   });
 
