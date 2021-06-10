@@ -113,7 +113,7 @@ func (hs *HTTPServer) OAuthLogin(ctx *models.ReqContext) {
 		return
 	}
 
-	oauthClient, err := social.GetOAuthHttpClient(name)
+	oauthClient, err := hs.SocialService.GetOAuthHttpClient(name)
 	if err != nil {
 		ctx.Logger.Error("Failed to create OAuth http client", "error", err)
 		hs.handleOAuthLoginError(ctx, loginInfo, LoginError{

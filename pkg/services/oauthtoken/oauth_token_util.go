@@ -53,7 +53,7 @@ func (o *OAuthTokenService) GetCurrentOAuthToken(ctx context.Context, user *mode
 		return nil
 	}
 
-	client, err := social.GetOAuthHttpClient(authProvider)
+	client, err := o.SocialService.GetOAuthHttpClient(authProvider)
 	if err != nil {
 		logger.Error("failed to get OAuth http client", "provider", authProvider, "error", err)
 		return nil

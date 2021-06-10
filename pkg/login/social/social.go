@@ -262,7 +262,7 @@ func (ss *SocialService) GetOAuthProviders(cfg *setting.Cfg) map[string]bool {
 	return result
 }
 
-func GetOAuthHttpClient(name string) (*http.Client, error) {
+func (ss *SocialService) GetOAuthHttpClient(name string) (*http.Client, error) {
 	if setting.OAuthService == nil {
 		return nil, fmt.Errorf("OAuth not enabled")
 	}
