@@ -12,7 +12,7 @@ Setting the `ngalert` feature toggle enables the new Grafana 8 Alerting system.
 
 At startup, when the feature toggle is enabled, Grafana dashboard alerting is disabled and existing dashboard alerts are migrated into a format that is compatible with the Grafana 8 alerting system. You are able to view these migrated rules, alongside any new alerts you create after the migration, from the Alerting page of your Grafana installation. 
 
-During beta, Grafana 8 alerting system can fetch rules from all available Prometheus, Loki, and Alertmanager data sources. It may not be able to retrieve rules from all other supported data sources. 
+During beta, Grafana 8 alerting system can retrieve rules from all available Prometheus, Loki, and Alertmanager data sources. It may not be able to fetch rules from all other supported data sources at this time. 
 
 Also notification channels are migrated to an Alertmanager configuration with the appropriate routes and receivers. Default notification channels are added as contact points to the default route. Notification channels not associated with any dahsboard alert go to the `autogen-unlinked-channel-recv` route.
 
