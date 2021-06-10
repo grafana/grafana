@@ -1,4 +1,4 @@
-import React, { FormEvent, PureComponent } from 'react';
+import React, { ChangeEvent, FormEvent, PureComponent } from 'react';
 import { isEqual } from 'lodash';
 import { AppEvents, LoadingState, SelectableValue, VariableType } from '@grafana/data';
 import { Button, Icon, InlineFieldRow, VerticalGroup } from '@grafana/ui';
@@ -23,6 +23,7 @@ import { VariableSectionHeader } from './VariableSectionHeader';
 import { hasOptions } from '../guard';
 import { VariableTypeSelect } from './VariableTypeSelect';
 import { VariableHideSelect } from './VariableHideSelect';
+import { VariableSwitchField } from "./VariableSwitchField";
 
 export interface OwnProps {
   identifier: VariableIdentifier;
@@ -78,6 +79,12 @@ export class VariableEditorEditorUnConnected extends PureComponent<Props> {
     event.preventDefault();
     this.props.changeVariableProp(
       toVariablePayload(this.props.identifier, { propName: 'label', propValue: event.currentTarget.value })
+    );
+  };
+
+  onVerifyOptionFromUrlChange = (event: ChangeEvent<HTMLInputElement>) => {
+    this.props.changeVariableProp(
+      toVariablePayload(this.props.identifier, { propName: 'verifyOptionFromUrl', propValue: event.target.checked })
     );
   };
 
@@ -156,6 +163,16 @@ export class VariableEditorEditorUnConnected extends PureComponent<Props> {
                   onChange={this.onHideChange}
                   hide={this.props.variable.hide}
                   type={this.props.variable.type}
+                />
+              </InlineFieldRow>
+
+              <InlineFieldRow>
+                <VariableSwitchField
+                  value={this.props.variable.verifyOptionFromUrl}
+                  name="Verify option"
+                  tooltip="Verify option get from url"
+                  onChange={this.onVerifyOptionFromUrlChange}
+                  ariaLabel={selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsVerifyOptionFromUrl}
                 />
               </InlineFieldRow>
 

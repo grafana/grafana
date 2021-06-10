@@ -83,6 +83,7 @@ export const Pages = {
             generalTypeSelect: 'Variable editor Form Type select',
             generalLabelInput: 'Variable editor Form Label field',
             generalHideSelect: 'Variable editor Form Hide select',
+            selectionOptionsVerifyOptionFromUrl: 'Variable editor Form verifyOptionFromUrl switch',
             selectionOptionsMultiSwitch: 'Variable editor Form Multi switch',
             selectionOptionsIncludeAllSwitch: 'Variable editor Form IncludeAll switch',
             selectionOptionsCustomAllInput: 'Variable editor Form IncludeAll field',
