@@ -43,6 +43,7 @@ export class TimelineChart extends React.Component<TimelineProps> {
       frame: alignedFrame,
       getTimeRange,
       eventBus,
+      allFrames: this.props.frames,
       ...this.props,
 
       // When there is only one row, use the full space

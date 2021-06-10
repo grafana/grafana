@@ -9,8 +9,8 @@ import {
   FieldType,
   formattedValueToString,
   getFieldColorModeForField,
-  calculateFieldDisplayName,
   getFieldSeriesColor,
+  getFieldDisplayName,
 } from '@grafana/data';
 
 import { UPlotConfigBuilder, UPlotConfigPrepFn } from '../uPlot/config/UPlotConfigBuilder';
@@ -98,7 +98,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
 
   const stackingGroups: Map<string, number[]> = new Map();
 
-  let indexByName: { alignedNames: Map<string, number>; originNames: Map<string, number> } | undefined;
+  let indexByName: Map<string, number> | undefined;
 
   for (let i = 1; i < frame.fields.length; i++) {
     const field = frame.fields[i];
@@ -151,13 +151,16 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
 
     let { fillOpacity } = customConfig;
 
-    if (customConfig.fillBelowTo) {
+    if (customConfig.fillBelowTo && field.state?.origin) {
       if (!indexByName) {
         indexByName = getNamesToFieldIndex(frame, allFrames);
       }
 
-      const t = indexByName.alignedNames.get(calculateFieldDisplayName(field, frame));
-      const b = indexByName.originNames.get(customConfig.fillBelowTo);
+      const originFrame = allFrames[field.state.origin.frameIndex];
+      const originField = originFrame.fields[field.state.origin.fieldIndex];
+
+      const t = indexByName.get(getFieldDisplayName(originField, originFrame, allFrames));
+      const b = indexByName.get(customConfig.fillBelowTo);
       if (isNumber(b) && isNumber(t)) {
         builder.addBand({
           series: [t, b],
@@ -261,17 +264,13 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
   return builder;
 };
 
-export function getNamesToFieldIndex(
-  frame: DataFrame,
-  allFrames?: DataFrame[]
-): { alignedNames: Map<string, number>; originNames: Map<string, number> } {
-  const alignedNames = new Map<string, number>();
+export function getNamesToFieldIndex(frame: DataFrame, allFrames: DataFrame[]): Map<string, number> {
   const originNames = new Map<string, number>();
   for (let i = 0; i < frame.fields.length; i++) {
     const origin = frame.fields[i].state?.origin;
-    if (allFrames && origin) {
+    if (origin) {
       originNames.set(
-        calculateFieldDisplayName(
+        getFieldDisplayName(
           allFrames[origin.frameIndex].fields[origin.fieldIndex],
           allFrames[origin.frameIndex],
           allFrames
@@ -279,7 +278,6 @@ export function getNamesToFieldIndex(
         i
       );
     }
-    alignedNames.set(calculateFieldDisplayName(frame.fields[i], frame), i);
   }
-  return { alignedNames, originNames };
+  return originNames;
 }

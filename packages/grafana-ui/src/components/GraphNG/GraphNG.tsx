@@ -38,7 +38,7 @@ export interface GraphNGProps extends Themeable2 {
   fields?: XYFieldMatchers; // default will assume timeseries data
   onLegendClick?: (event: GraphNGLegendEvent) => void;
   children?: (builder: UPlotConfigBuilder, alignedFrame: DataFrame) => React.ReactNode;
-  prepConfig: (alignedFrame: DataFrame, getTimeRange: () => TimeRange, allFrames?: DataFrame[]) => UPlotConfigBuilder;
+  prepConfig: (alignedFrame: DataFrame, getTimeRange: () => TimeRange, allFrames: DataFrame[]) => UPlotConfigBuilder;
   propsToDiff?: string[];
   preparePlotFrame?: (frames: DataFrame[], dimFields: XYFieldMatchers) => DataFrame;
   renderLegend: (config: UPlotConfigBuilder) => React.ReactElement | null;

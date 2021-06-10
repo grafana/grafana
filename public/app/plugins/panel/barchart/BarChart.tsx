@@ -51,6 +51,7 @@ export const BarChart: React.FC<BarChartProps> = (props) => {
       legend,
       tooltip,
       text,
+      allFrames: props.frames,
     });
   };
 
