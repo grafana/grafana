@@ -18,6 +18,7 @@ import {
 
 import { makeValue, SCHEMA, CompletionItemGroup, TypeaheadOutput, TypeaheadInput, SuggestionsState } from '../..';
 import { selectors } from '@grafana/e2e-selectors';
+import { Tooltip } from '../Tooltip/Tooltip';
 
 export interface QueryFieldProps {
   additionalPlugins?: Plugin[];
@@ -50,6 +51,7 @@ export interface QueryFieldState {
    * Check if anything has been written. Used to manage keyboard navigation.
    * */
   dirty: boolean;
+  focused: boolean;
 }
 
 /**
@@ -93,6 +95,7 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
       typeaheadText: '',
       value: makeValue(props.query || '', props.syntax),
       dirty: false,
+      focused: false,
     };
   }
 
@@ -124,7 +127,8 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
     }
   }
 
-  onKeyDown = (event: KeyboardEvent, editor: CoreEditor, next: Function) => {
+  onKeyDown = (keyEvent: Event, editor: CoreEditor, next: Function) => {
+    const event = keyEvent as KeyboardEvent;
     if (event.key === 'Esc' || (event.key === 'Tab' && !this.state.dirty)) {
       editor.blur();
     } else if (event.key !== 'Tab') {
@@ -134,12 +138,25 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
     }
     return next();
   };
+
+  onFocus = (event: Event, editor: CoreEditor, next: Function) => {
+    // https://github.com/ianstormtaylor/slate/issues/2434
+    setTimeout(
+      () =>
+        this.setState({
+          focused: true,
+        }),
+      0
+    );
+    next();
+  };
   /**
    * Update local state, propagate change upstream and optionally run the query afterwards.
    */
   onChange = (value: Value, runQuery?: boolean) => {
     const documentChanged = value.document !== this.state.value.document;
     const prevValue = this.state.value;
+
     if (this.props.onRichValueChange) {
       this.props.onRichValueChange(value);
     }
@@ -205,6 +222,7 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
 
     this.setState({
       dirty: false,
+      focused: false,
     });
 
     return next();
@@ -221,27 +239,32 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
     const wrapperClassName = classnames('slate-query-field__wrapper', {
       'slate-query-field__wrapper--disabled': disabled,
     });
+    const description = 'Edit your queries. Press escape to stop editing.';
 
     return (
       <div className={wrapperClassName}>
-        <div className="slate-query-field" aria-label={selectors.components.QueryField.container}>
-          <Editor
-            ref={(editor) => (this.editor = editor!)}
-            schema={SCHEMA}
-            autoCorrect={false}
-            readOnly={this.props.disabled}
-            onBlur={this.handleBlur}
-            onClick={this.props.onClick}
-            onKeyDown={this.onKeyDown}
-            onChange={(change: { value: Value }) => {
-              this.onChange(change.value, false);
-            }}
-            placeholder={this.props.placeholder}
-            plugins={this.plugins}
-            spellCheck={false}
-            value={this.state.value}
-          />
-        </div>
+        <Tooltip content={description} show={this.state.focused} placement="top">
+          <div className="slate-query-field" aria-label={selectors.components.QueryField.container}>
+            <Editor
+              aria-description={description}
+              ref={(editor) => (this.editor = editor!)}
+              schema={SCHEMA}
+              autoCorrect={false}
+              readOnly={this.props.disabled}
+              onFocus={this.onFocus}
+              onBlur={this.handleBlur}
+              onClick={this.props.onClick}
+              onKeyDown={this.onKeyDown}
+              onChange={(change: { value: Value }) => {
+                this.onChange(change.value, false);
+              }}
+              placeholder={this.props.placeholder}
+              plugins={this.plugins}
+              spellCheck={false}
+              value={this.state.value}
+            />
+          </div>
+        </Tooltip>
       </div>
     );
   }
