@@ -90,6 +90,10 @@ export abstract class BigValueLayout {
         break;
       case BigValueColorMode.Background:
         styles.color = getTextColorForBackground(this.valueColor);
+        break;
+      case BigValueColorMode.None:
+        styles.color = this.props.theme.colors.text.primary;
+        break;
     }
 
     return styles;

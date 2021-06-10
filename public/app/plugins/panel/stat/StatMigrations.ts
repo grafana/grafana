@@ -13,16 +13,20 @@ export const statPanelChangedHandler = (
   const options = sharedSingleStatPanelChangedHandler(panel, prevPluginId, prevOptions) as StatPanelOptions;
 
   // Changing from angular singlestat
-  if (prevPluginId === 'singlestat' && prevOptions.angular) {
+  if (prevOptions.angular && (prevPluginId === 'singlestat' || prevPluginId === 'grafana-singlestat-panel')) {
     const oldOptions = prevOptions.angular;
 
-    options.graphMode =
-      oldOptions.sparkline && oldOptions.sparkline.show === true ? BigValueGraphMode.Area : BigValueGraphMode.None;
+    options.graphMode = BigValueGraphMode.None;
+    if (oldOptions.sparkline && oldOptions.sparkline.show) {
+      options.graphMode = BigValueGraphMode.Area;
+    }
 
     if (oldOptions.colorBackground) {
       options.colorMode = BigValueColorMode.Background;
-    } else {
+    } else if (oldOptions.colorValue) {
       options.colorMode = BigValueColorMode.Value;
+    } else {
+      options.colorMode = BigValueColorMode.None;
     }
 
     if (oldOptions.valueName === 'name') {
