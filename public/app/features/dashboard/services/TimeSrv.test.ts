@@ -11,17 +11,17 @@ jest.mock('app/core/core', () => ({
 
 describe('timeSrv', () => {
   let timeSrv: TimeSrv;
-
-  const _dashboard: any = {
-    time: { from: 'now-6h', to: 'now' },
-    getTimezone: jest.fn(() => 'browser'),
-    timeRangeUpdated: jest.fn(() => {}),
-  };
+  let _dashboard: any;
 
   beforeEach(() => {
+    _dashboard = {
+      time: { from: 'now-6h', to: 'now' },
+      getTimezone: jest.fn(() => 'browser'),
+      refresh: false,
+      timeRangeUpdated: jest.fn(() => {}),
+    };
     timeSrv = new TimeSrv(new ContextSrvStub() as any);
     timeSrv.init(_dashboard);
-    _dashboard.refresh = false;
   });
 
   describe('timeRange', () => {
