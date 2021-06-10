@@ -167,13 +167,14 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = (props) => {
               <div className="gf-form">
                 <FormField
                   label="Timeout"
+                  type="number"
                   labelWidth={13}
                   inputWidth={20}
                   tooltip="HTTP request timeout in seconds"
                   value={dataSourceConfig.jsonData.timeout}
                   onChange={(event) => {
                     onSettingsChange({
-                      jsonData: { ...dataSourceConfig.jsonData, timeout: event.currentTarget.value },
+                      jsonData: { ...dataSourceConfig.jsonData, timeout: parseInt(event.currentTarget.value, 10) },
                     });
                   }}
                 />
