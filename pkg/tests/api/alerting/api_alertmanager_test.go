@@ -1268,12 +1268,14 @@ func TestAlertRuleCRUD(t *testing.T) {
 					ApiRuleNode: &apimodels.ApiRuleNode{
 						For: interval,
 						Labels: map[string]string{
-							"label1": "val42",
-							"foo":    "bar",
+							// delete foo label
+							"label1": "val1", // update label value
+							"label2": "val2", // new label
 						},
 						Annotations: map[string]string{
-							"annotation1": "val42",
-							"foo":         "bar",
+							// delete foo annotation
+							"annotation1": "val1", // update annotation value
+							"annotation2": "val2", // new annotation
 						},
 					},
 					GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
@@ -1347,14 +1349,14 @@ func TestAlertRuleCRUD(t *testing.T) {
 		         "rules":[
 		            {
 						"annotations": {
-							"annotation1": "val42",
-							"foo": "bar"
+							"annotation1": "val1",
+							"annotation2": "val2"
 					   },
 		               "expr":"",
 					   "for": "30s",
 					   "labels": {
-							"foo": "bar",
-							"label1": "val42"
+							"label1": "val1",
+							"label2": "val2"
 					   },
 		               "grafana_alert":{
 		                  "id":1,

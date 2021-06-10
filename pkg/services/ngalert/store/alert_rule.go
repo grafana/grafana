@@ -263,14 +263,6 @@ func (st DBstore) UpsertAlertRules(rules []UpsertRule) error {
 					r.New.For = r.Existing.For
 				}
 
-				if len(r.New.Annotations) == 0 {
-					r.New.Annotations = r.Existing.Annotations
-				}
-
-				if len(r.New.Labels) == 0 {
-					r.New.Labels = r.Existing.Labels
-				}
-
 				if err := st.validateAlertRule(r.New); err != nil {
 					return err
 				}
