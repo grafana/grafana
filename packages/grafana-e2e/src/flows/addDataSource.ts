@@ -6,6 +6,9 @@ export interface AddDataSourceConfig {
   basicAuth: boolean;
   basicAuthPassword: string;
   basicAuthUser: string;
+  /**
+   * @deprecated check health request is no longer supported
+   */
   checkHealth: boolean;
   expectedAlertMessage: string | RegExp;
   form: () => void;
