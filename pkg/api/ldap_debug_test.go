@@ -577,31 +577,93 @@ func TestPostSyncUserWithLDAPAPIEndpoint_WhenUserNotInLDAP(t *testing.T) {
 	assert.JSONEq(t, expected, sc.resp.Body.String())
 }
 
-type reloadLDAPAccessControlTestCase struct {
-	desc         string
+// ***
+// Access control tests for ldap endpoints
+// ***
+
+type ldapAccessControlTestCase struct {
 	expectedCode int
+	desc         string
+	url          string
+	method       string
 	permissions  []*accesscontrol.Permission
 }
 
-func TestPostReloadLDAPCfg_AccessControl(t *testing.T) {
-	tests := []reloadLDAPAccessControlTestCase{
+func TestLDAP_AccessControl(t *testing.T) {
+	tests := []ldapAccessControlTestCase{
 		{
-			desc:         "should return 200 for user with correct permissions",
+			url:          "/api/admin/ldap/reload",
+			method:       http.MethodPost,
+			desc:         "ReloadLDAPCfg should return 200 for user with correct permissions",
 			expectedCode: http.StatusOK,
 			permissions: []*accesscontrol.Permission{
 				{Action: accesscontrol.ActionLDAPConfigReload},
 			},
 		},
 		{
-			desc:         "should return 403 for user without required permissions",
+			url:          "/api/admin/ldap/reload",
+			method:       http.MethodPost,
+			desc:         "ReloadLDAPCfg should return 403 for user without required permissions",
+			expectedCode: http.StatusForbidden,
+			permissions: []*accesscontrol.Permission{
+				{Action: "wrong"},
+			},
+		},
+		{
+			url:          "/api/admin/ldap/status",
+			method:       http.MethodGet,
+			desc:         "GetLDAPStatus should return 200 for user without required permissions",
+			expectedCode: http.StatusOK,
+			permissions: []*accesscontrol.Permission{
+				{Action: accesscontrol.ActionLDAPStatusRead},
+			},
+		},
+		{
+			url:          "/api/admin/ldap/status",
+			method:       http.MethodGet,
+			desc:         "GetLDAPStatus should return 200 for user without required permissions",
+			expectedCode: http.StatusForbidden,
+			permissions: []*accesscontrol.Permission{
+				{Action: "wrong"},
+			},
+		},
+		{
+			url:          "/api/admin/ldap/test",
+			method:       http.MethodGet,
+			desc:         "GetUserFromLDAP should return 200 for user with required permissions",
+			expectedCode: http.StatusOK,
+			permissions: []*accesscontrol.Permission{
+				{Action: accesscontrol.ActionLDAPUsersRead},
+			},
+		},
+		{
+			url:          "/api/admin/ldap/test",
+			method:       http.MethodGet,
+			desc:         "GetUserFromLDAP should return 403 for user without required permissions",
+			expectedCode: http.StatusForbidden,
+			permissions: []*accesscontrol.Permission{
+				{Action: "wrong"},
+			},
+		},
+		{
+			url:          "/api/admin/ldap/sync/test",
+			method:       http.MethodPost,
+			desc:         "PostSyncUserWithLDAP should return 200 for user without required permissions",
+			expectedCode: http.StatusOK,
+			permissions: []*accesscontrol.Permission{
+				{Action: accesscontrol.ActionLDAPUsersSync},
+			},
+		},
+		{
+			url:          "/api/admin/ldap/sync/test",
+			method:       http.MethodPost,
+			desc:         "PostSyncUserWithLDAP should return 200 for user without required permissions",
 			expectedCode: http.StatusForbidden,
 			permissions: []*accesscontrol.Permission{
 				{Action: "wrong"},
 			},
 		},
 	}
-
-	url := "/api/admin/ldap/reload"
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
@@ -614,20 +676,41 @@ func TestPostReloadLDAPCfg_AccessControl(t *testing.T) {
 				setting.LDAPEnabled = enabled
 				setting.LDAPConfigFile = configFile
 			})
-			setting.LDAPEnabled = true
 
+			setting.LDAPEnabled = true
 			path, err := filepath.Abs("../../conf/ldap.toml")
 			assert.NoError(t, err)
 			setting.LDAPConfigFile = path
 
-			sc := setupAccessControlScenarioContext(t, setting.NewCfg(), url, test.permissions)
+			cfg := setting.NewCfg()
+			cfg.LDAPEnabled = true
 
+			sc := setupAccessControlScenarioContext(t, cfg, test.url, test.permissions)
 			sc.resp = httptest.NewRecorder()
-			sc.req, err = http.NewRequest(http.MethodPost, url, nil)
+			sc.req, err = http.NewRequest(test.method, test.url, nil)
 			assert.NoError(t, err)
 
-			sc.exec()
+			// Add minimal setup to pass handler
+			userSearchResult = &models.ExternalUserInfo{}
+			userSearchError = nil
+			newLDAP = func(_ []*ldap.ServerConfig) multildap.IMultiLDAP {
+				return &LDAPMock{}
+			}
 
+			bus.AddHandler("test", func(q *models.GetUserByIdQuery) error {
+				q.Result = &models.User{}
+				return nil
+			})
+
+			bus.AddHandler("test", func(q *models.GetAuthInfoQuery) error {
+				return nil
+			})
+
+			bus.AddHandler("test", func(cmd *models.UpsertUserCommand) error {
+				return nil
+			})
+
+			sc.exec()
 			assert.Equal(t, test.expectedCode, sc.resp.Code)
 		})
 	}
