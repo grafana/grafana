@@ -384,6 +384,17 @@ func TestPluginManager_Init(t *testing.T) {
 		err := pm.Init()
 		require.NoError(t, err)
 		// This plugin should be properly registered, even though it has a symbolicly linked file in it.
+		require.Empty(t, pm.scanningErrors)
+		const pluginID = "test"
+		assert.NotNil(t, pm.plugins[pluginID])
+		assert.Equal(t, "datasource", pm.plugins[pluginID].Type)
+		assert.Equal(t, "Test", pm.plugins[pluginID].Name)
+		assert.Equal(t, pluginID, pm.plugins[pluginID].Id)
+		assert.Equal(t, "1.0.0", pm.plugins[pluginID].Info.Version)
+		assert.Equal(t, plugins.PluginSignatureValid, pm.plugins[pluginID].Signature)
+		assert.Equal(t, plugins.GrafanaType, pm.plugins[pluginID].SignatureType)
+		assert.Equal(t, "Grafana Labs", pm.plugins[pluginID].SignatureOrg)
+		assert.False(t, pm.plugins[pluginID].IsCorePlugin)
 		assert.NotNil(t, pm.plugins[("test")])
 	})
 }
