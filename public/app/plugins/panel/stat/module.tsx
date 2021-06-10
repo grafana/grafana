@@ -4,13 +4,23 @@ import {
   commonOptionsBuilder,
   sharedSingleStatMigrationHandler,
 } from '@grafana/ui';
-import { PanelPlugin } from '@grafana/data';
+import { FieldConfigProperty, PanelPlugin } from '@grafana/data';
 import { addOrientationOption, addStandardDataReduceOptions, StatPanelOptions } from './types';
 import { StatPanel } from './StatPanel';
 import { statPanelChangedHandler } from './StatMigrations';
 
 export const plugin = new PanelPlugin<StatPanelOptions>(StatPanel)
-  .useFieldConfig()
+  .useFieldConfig({
+    standardOptions: {
+      [FieldConfigProperty.Color]: {
+        settings: {
+          byValueSupport: true,
+          bySeriesSupport: true,
+          preferThresholdsMode: false,
+        },
+      },
+    },
+  })
   .setPanelOptions((builder) => {
     const mainCategory = ['Stat styles'];
 

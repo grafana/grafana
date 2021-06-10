@@ -163,6 +163,7 @@ export abstract class BigValueLayout {
     let lineColor: string;
 
     switch (colorMode) {
+      case BigValueColorMode.None:
       case BigValueColorMode.Value:
         lineColor = this.valueColor;
         fillColor = tinycolor(this.valueColor).setAlpha(0.2).toRgbString();
