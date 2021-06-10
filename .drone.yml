@@ -3493,4 +3493,12 @@ get:
   path: infra/data/ci/github/grafanabot
   name: pat
 
+---
+kind: secret
+name: drone_token
+
+get:
+  path: infra/data/ci/drone
+  name: machine-user-token
+
 ...
