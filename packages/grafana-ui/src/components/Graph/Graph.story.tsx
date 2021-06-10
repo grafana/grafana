@@ -81,9 +81,6 @@ export default {
   component: Graph,
   decorators: [withCenteredStory],
   parameters: {
-    knobs: {
-      disable: true,
-    },
     controls: {
       exclude: ['className', 'ariaLabel'],
     },
