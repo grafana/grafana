@@ -19,7 +19,7 @@ Also notification channels are migrated to an Alertmanager configuration with th
 Since `Hipchat` and `Sensu` are discontinued, they are not migrated to the new alerting. If you have dashboard alerts associated with those types of channels and you want to migrate to the new alerting, make sure you assign another supported notification channel, so that you continue to receive notifications for those alerts.
 Finally, silences (expiring after one year) are created for all paused dashboard alerts.
 
-During beta, the migration of existing dashboard rules may change.  
+During beta, the migration of existing dashboard rules might change.
 
 ## Disabling Grafana 8 Alerting after migration
 To disable Grafana 8 Alerting, remove or disable the `ngalert` feature toggle. Dashboard alerts will be re-enabled and any alerts created during or after the migration are deleted.
