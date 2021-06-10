@@ -1,11 +1,10 @@
 import React from 'react';
-import { Graph } from '@grafana/ui';
 import { dateTime, ArrayVector, FieldType, GraphSeriesXY, FieldColorModeId } from '@grafana/data';
 import { Story } from '@storybook/react';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { VizTooltip, TooltipDisplayMode, VizTooltipContentProps } from '../VizTooltip';
 import { JSONFormatter } from '../JSONFormatter/JSONFormatter';
-import { GraphProps } from './Graph';
+import { GraphProps, Graph } from './Graph';
 
 const series: GraphSeriesXY[] = [
   {
