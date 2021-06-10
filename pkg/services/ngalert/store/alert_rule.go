@@ -272,7 +272,7 @@ func (st DBstore) UpsertAlertRules(rules []UpsertRule) error {
 				}
 
 				// no way to update multiple rules at once
-				if _, err := sess.ID(r.Existing.ID).Update(r.New); err != nil {
+				if _, err := sess.ID(r.Existing.ID).AllCols().Update(r.New); err != nil {
 					return fmt.Errorf("failed to update rule %s: %w", r.New.Title, err)
 				}
 
