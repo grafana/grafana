@@ -16,7 +16,6 @@ import { DataSourceWithBackend, toDataQueryResponse } from '@grafana/runtime';
 import { CloudMonitoringVariableSupport } from './variables';
 import { catchError, map, mergeMap } from 'rxjs/operators';
 import { from, Observable, of, throwError } from 'rxjs';
-import { MetricQuery } from '../cloudwatch/types';
 
 export default class CloudMonitoringDatasource extends DataSourceWithBackend<
   CloudMonitoringQuery,
@@ -104,10 +103,10 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
       .toPromise();
   }
 
-  applyTemplateVariables(query: CloudMonitoringQuery, scopedVars: ScopedVars): Record<string, any> {
-    const { refId, queryType, sloQuery } = query;
-    // Query won't have the key metricQuery in v6.x, just the plain object
-    const metricQuery = query.metricQuery ? query.metricQuery : (query as MetricQuery);
+  applyTemplateVariables(
+    { metricQuery, refId, queryType, sloQuery }: CloudMonitoringQuery,
+    scopedVars: ScopedVars
+  ): Record<string, any> {
     return {
       datasourceId: this.id,
       refId,
@@ -344,7 +343,9 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
   }
 
   interpolateVariablesInQueries(queries: CloudMonitoringQuery[], scopedVars: ScopedVars): CloudMonitoringQuery[] {
-    return queries.map((query) => this.applyTemplateVariables(query, scopedVars) as CloudMonitoringQuery);
+    return queries.map(
+      (query) => this.applyTemplateVariables(this.migrateQuery(query), scopedVars) as CloudMonitoringQuery
+    );
   }
 
   interpolateFilters(filters: string[], scopedVars: ScopedVars) {
