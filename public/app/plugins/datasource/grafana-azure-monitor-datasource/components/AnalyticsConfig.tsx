@@ -3,7 +3,7 @@ import { SelectableValue } from '@grafana/data';
 import { AzureCredentialsForm } from './AzureCredentialsForm';
 import { InlineFormLabel, LegacyForms, Button, Alert } from '@grafana/ui';
 const { Select } = LegacyForms;
-import { AzureClientSecretCredentials, AzureDataSourceSettings } from '../types';
+import { AzureDataSourceSettings } from '../types';
 import { getCredentials, isCredentialsComplete } from '../credentials';
 
 export interface Props {
@@ -103,15 +103,14 @@ export const AnalyticsConfig: FunctionComponent<Props> = (props: Props) => {
 
           <AzureCredentialsForm
             managedIdentityEnabled={false}
-            credentials={
-              {
-                ...primaryCredentials,
-                // Use deprecated Log Analytics credentials read-only
-                // to help with a possible migration
-                tenantId: props.options.jsonData.logAnalyticsTenantId,
-                clientId: props.options.jsonData.logAnalyticsClientId,
-              } as AzureClientSecretCredentials
-            }
+            credentials={{
+              ...primaryCredentials,
+              authType: 'clientsecret',
+              // Use deprecated Log Analytics credentials read-only
+              // to help with a possible migration
+              tenantId: props.options.jsonData.logAnalyticsTenantId,
+              clientId: props.options.jsonData.logAnalyticsClientId,
+            }}
             getSubscriptions={getSubscriptions}
             disabled={true}
           />
