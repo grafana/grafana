@@ -156,7 +156,7 @@ export class TimeSrv {
     this.refresh = getRefreshFromUrl({
       params: paramsJSON,
       currentRefresh: this.refresh,
-      refreshIntervals: this.dashboard?.timepicker?.refresh_intervals,
+      refreshIntervals: this.dashboard?.timepicker?.refresh_intervals ?? undefined,
       isAllowedIntervalFn: this.contextSrv.isAllowedInterval,
       minRefreshInterval: config.minRefreshInterval,
     });

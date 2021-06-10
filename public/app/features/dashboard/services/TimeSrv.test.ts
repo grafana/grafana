@@ -130,6 +130,17 @@ describe('timeSrv', () => {
       expect(timeSrv.time.to).toEqual('now');
     });
 
+    it('should handle refresh_intervals=null when refresh is enabled', () => {
+      locationService.push('/d/id?refresh=30s');
+
+      timeSrv = new TimeSrv(new ContextSrvStub() as any);
+
+      _dashboard.timepicker = {
+        refresh_intervals: null,
+      };
+      expect(() => timeSrv.init(_dashboard)).not.toThrow();
+    });
+
     describe('data point windowing', () => {
       it('handles time window specfied as interval string', () => {
         locationService.push('/d/id?time=1410337645000&time.window=10s');
