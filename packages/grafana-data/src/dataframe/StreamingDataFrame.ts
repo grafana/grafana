@@ -59,7 +59,7 @@ export class StreamingDataFrame implements DataFrame {
    */
   push(msg: DataFrameJSON, replace?: boolean) {
     const { schema, data } = msg;
-    const streamPacket: StreamPacketInfo = { packet: this.packetCount++ };
+    const streamPacket: StreamPacketInfo = { packet: ++this.packetCount };
 
     if (schema) {
       this.pushMode = PushMode.wide;
