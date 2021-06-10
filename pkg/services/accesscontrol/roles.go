@@ -17,10 +17,13 @@ var ldapAdminReadRole = RoleDTO{
 
 var ldapAdminEditRole = RoleDTO{
 	Name:    ldapAdminEdit,
-	Version: 1,
+	Version: 2,
 	Permissions: ConcatPermissions(ldapAdminReadRole.Permissions, []Permission{
 		{
 			Action: ActionLDAPUsersSync,
+		},
+		{
+			Action: ActionLDAPConfigReload,
 		},
 	}),
 }
