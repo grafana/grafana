@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/services/librarypanels"
+	"github.com/grafana/grafana/pkg/services/oauthtoken"
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	httpstatic "github.com/grafana/grafana/pkg/api/static"
@@ -107,6 +108,7 @@ type HTTPServer struct {
 	LibraryPanelService    librarypanels.Service                   `inject:""`
 	LibraryElementService  libraryelements.Service                 `inject:""`
 	SocialService          *social.SocialService                   `inject:""`
+	OAuthTokenService      *oauthtoken.OAuthTokenService           `inject:""`
 	Listener               net.Listener
 }
 

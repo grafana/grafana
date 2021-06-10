@@ -39,6 +39,7 @@ type DataSourceProxy struct {
 	plugin         *plugins.DataSourcePlugin
 	cfg            *setting.Cfg
 	clientProvider httpclient.Provider
+	oAuthService   *oauthtoken.OAuthTokenService
 }
 
 type handleResponseTransport struct {
@@ -71,7 +72,7 @@ func (lw *logWrapper) Write(p []byte) (n int, err error) {
 
 // NewDataSourceProxy creates a new Datasource proxy
 func NewDataSourceProxy(ds *models.DataSource, plugin *plugins.DataSourcePlugin, ctx *models.ReqContext,
-	proxyPath string, cfg *setting.Cfg, clientProvider httpclient.Provider) (*DataSourceProxy, error) {
+	proxyPath string, cfg *setting.Cfg, clientProvider httpclient.Provider, oAuthService *oauthtoken.OAuthTokenService) (*DataSourceProxy, error) {
 	targetURL, err := datasource.ValidateURL(ds.Type, ds.Url)
 	if err != nil {
 		return nil, err
@@ -85,6 +86,7 @@ func NewDataSourceProxy(ds *models.DataSource, plugin *plugins.DataSourcePlugin,
 		targetUrl:      targetURL,
 		cfg:            cfg,
 		clientProvider: clientProvider,
+		oAuthService:   oAuthService,
 	}, nil
 }
 
@@ -237,8 +239,8 @@ func (proxy *DataSourceProxy) director(req *http.Request) {
 		ApplyRoute(proxy.ctx.Req.Context(), req, proxy.proxyPath, proxy.route, proxy.ds, proxy.cfg)
 	}
 
-	if oauthtoken.IsOAuthPassThruEnabled(proxy.ds) {
-		if token := oauthtoken.GetCurrentOAuthToken(proxy.ctx.Req.Context(), proxy.ctx.SignedInUser); token != nil {
+	if proxy.oAuthService.IsOAuthPassThruEnabled(proxy.ds) {
+		if token := proxy.oAuthService.GetCurrentOAuthToken(proxy.ctx.Req.Context(), proxy.ctx.SignedInUser); token != nil {
 			req.Header.Set("Authorization", fmt.Sprintf("%s %s", token.Type(), token.AccessToken))
 		}
 	}

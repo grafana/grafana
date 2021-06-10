@@ -307,7 +307,7 @@ func GetOAuthHttpClient(name string) (*http.Client, error) {
 	return oauthClient, nil
 }
 
-func GetConnector(name string) (SocialConnector, error) {
+func (ss *SocialService) GetConnector(name string) (SocialConnector, error) {
 	// The socialMap keys don't have "oauth_" prefix, but everywhere else in the system does
 	provider := strings.TrimPrefix(name, "oauth_")
 	connector, ok := SocialMap[provider]
