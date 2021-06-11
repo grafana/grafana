@@ -141,8 +141,7 @@ class DataSourceWithBackend<
           const rsp = toDataQueryResponse(raw, queries as DataQuery[]);
           // Check if any response should subscribe to a live stream
           if (rsp.data?.length && rsp.data.find((f: DataFrame) => f.meta?.channel)) {
-            const buffer = this.getStreamingFrameOptions(request);
-            return toStreamingDataResponse(buffer, rsp);
+            return toStreamingDataResponse(rsp, request, this.getStreamingFrameOptions);
           }
           return of(rsp);
         }),
@@ -177,7 +176,7 @@ class DataSourceWithBackend<
   /**
    * Optionally override the streaming behavior
    */
-  getStreamingFrameOptions = (request: DataQueryRequest<TQuery>) => {
+  getStreamingFrameOptions = (request: DataQueryRequest<TQuery>, frame: DataFrame) => {
     const buffer: StreamingFrameOptions = {
       maxLength: request.maxDataPoints ?? 500,
       action: StreamingFrameAction.Append,
@@ -236,9 +235,10 @@ class DataSourceWithBackend<
   }
 }
 
-export function toStreamingDataResponse(
-  buffer: StreamingFrameOptions,
-  rsp: DataQueryResponse
+export function toStreamingDataResponse<TQuery extends DataQuery = DataQuery>(
+  rsp: DataQueryResponse,
+  req: DataQueryRequest<TQuery>,
+  getter: (req: DataQueryRequest<TQuery>, frame: DataFrame) => StreamingFrameOptions
 ): Observable<DataQueryResponse> {
   const live = getGrafanaLiveSrv();
   if (!live) {
@@ -247,18 +247,19 @@ export function toStreamingDataResponse(
 
   const staticdata: DataFrame[] = [];
   const streams: Array<Observable<DataQueryResponse>> = [];
-  for (const frame of rsp.data) {
-    const addr = parseLiveChannelAddress(frame.meta?.channel);
+  for (const f of rsp.data) {
+    const addr = parseLiveChannelAddress(f.meta?.channel);
     if (addr) {
+      const frame = f as DataFrame;
       streams.push(
         live.getDataStream({
           addr,
-          buffer,
-          frame: frame as DataFrame,
+          buffer: getter(req, frame),
+          frame,
         })
       );
     } else {
-      staticdata.push(frame);
+      staticdata.push(f);
     }
   }
   if (staticdata.length) {

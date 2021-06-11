@@ -1,9 +1,32 @@
-import { Field, DataFrame, FieldType, Labels, QueryResultMeta, StreamPacketInfo, StreamingFrameAction } from '../types';
+import { Field, DataFrame, FieldType, Labels, QueryResultMeta } from '../types';
 import { ArrayVector } from '../vector';
 import { DataFrameJSON, decodeFieldValueEntities, FieldSchema } from './DataFrameJSON';
 import { guessFieldTypeFromValue } from './processDataFrame';
 import { join } from '../transformations/transformers/joinDataFrames';
 import { AlignedData } from 'uplot';
+
+/**
+ * Indicate if the frame is appened or replace
+ *
+ * @public -- but runtime
+ */
+export enum StreamingFrameAction {
+  Append = 'append',
+  Replace = 'replace',
+}
+
+/**
+ * Stream packet info is attached to StreamingDataFrames and indicate how many
+ * rows were added to the end of the frame.  The number of discarded rows can be
+ * calculated from previous state
+ *
+ * @public -- but runtime
+ */
+export interface StreamPacketInfo {
+  number: number;
+  action: StreamingFrameAction;
+  slicedIndex: number;
+}
 
 /**
  * @alpha
@@ -42,6 +65,11 @@ export class StreamingDataFrame implements DataFrame {
 
   // current labels
   private labels: Set<string> = new Set();
+  readonly packetInfo: StreamPacketInfo = {
+    number: 0,
+    action: StreamingFrameAction.Replace,
+    slicedIndex: 0,
+  };
 
   constructor(frame: DataFrameJSON, opts?: StreamingFrameOptions) {
     this.options = {
@@ -50,10 +78,6 @@ export class StreamingDataFrame implements DataFrame {
       ...opts,
     };
     this.alwaysReplace = this.options.action === StreamingFrameAction.Replace;
-
-    this.meta.packetInfo = {
-      number: 0,
-    };
 
     this.push(frame);
   }
@@ -65,7 +89,7 @@ export class StreamingDataFrame implements DataFrame {
   push(msg: DataFrameJSON) {
     const { schema, data } = msg;
 
-    this.meta.packetInfo!.number++;
+    this.packetInfo.number++;
 
     if (schema) {
       this.pushMode = PushMode.wide;
@@ -176,20 +200,20 @@ export class StreamingDataFrame implements DataFrame {
       let appended = values;
 
       if (this.alwaysReplace || !this.length) {
-        this.meta.packetInfo!.action = StreamingFrameAction.Replace;
+        this.packetInfo.action = StreamingFrameAction.Replace;
+        this.packetInfo.slicedIndex = 0;
       } else {
         appended = this.fields.map((f) => f.values.buffer);
 
         // mutates appended
-        this.meta.packetInfo!.slicedIndex = circPush(
+        this.packetInfo.action = StreamingFrameAction.Append;
+        this.packetInfo.slicedIndex = circPush(
           appended,
           values,
           this.options.maxLength,
           this.timeFieldIndex,
           this.options.maxDelta
         );
-
-        this.meta.packetInfo!.action = StreamingFrameAction.Append;
       }
 
       appended.forEach((v, i) => {
@@ -287,6 +311,11 @@ function closestIdx(num: number, arr: number[], lo?: number, hi?: number) {
   }
 
   return hi;
+}
+
+export function getStreamingDataFramePacket(frame: DataFrame) {
+  const pi = (frame as any).packetInfo as StreamPacketInfo;
+  return pi?.action ? pi : undefined;
 }
 
 // mutable circular push

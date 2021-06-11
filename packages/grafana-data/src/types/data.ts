@@ -47,11 +47,6 @@ export interface QueryResultMeta {
   channel?: string;
 
   /**
-   * When streaming, this represents what changed in the last packet
-   */
-  packetInfo?: StreamPacketInfo;
-
-  /**
    * Optionally identify which topic the frame should be assigned to.
    * A value specified in the response will override what the request asked for.
    */
@@ -82,30 +77,6 @@ export interface QueryResultMeta {
   json?: boolean; // used to keep track of old json doc values
   instant?: boolean;
 }
-
-/**
- * Indicate if the frame is appened or replace
- *
- * @public -- but runtime
- */
-export enum StreamingFrameAction {
-  Append = 'append',
-  Replace = 'replace',
-}
-
-/**
- * Stream packet info is attached to StreamingDataFrames and indicate how many
- * rows were added to the end of the frame.  The number of discarded rows can be
- * calculated from previous state
- *
- * @public -- but runtime
- */
-export interface StreamPacketInfo {
-  number: number;
-  action?: StreamingFrameAction;
-  slicedIndex?: number;
-}
-
 export interface QueryResultMetaStat extends FieldConfig {
   displayName: string;
   value: number;
