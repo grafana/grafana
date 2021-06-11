@@ -10,17 +10,7 @@ import { StatPanel } from './StatPanel';
 import { statPanelChangedHandler } from './StatMigrations';
 
 export const plugin = new PanelPlugin<StatPanelOptions>(StatPanel)
-  .useFieldConfig({
-    standardOptions: {
-      [FieldConfigProperty.Color]: {
-        settings: {
-          byValueSupport: true,
-          bySeriesSupport: true,
-          preferThresholdsMode: false,
-        },
-      },
-    },
-  })
+  .useFieldConfig()
   .setPanelOptions((builder) => {
     const mainCategory = ['Stat styles'];
 
