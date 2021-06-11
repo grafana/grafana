@@ -74,7 +74,7 @@ The `orgId` is lost when the role is set to global.
 
 ### Delete roles 
 
-To delete a role, you can add a list of roles under the `deleteRoles` section in the configuration file. 
+To delete a role, add a list of roles under the `deleteRoles` section in the configuration file. 
 
 > Deletion of roles listed under the `deleteRoles` section happens **before** saving roles listed under the `roles` section.
 
