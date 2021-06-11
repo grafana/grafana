@@ -16,6 +16,7 @@ export interface DashboardMeta {
   canShare?: boolean;
   canStar?: boolean;
   canAdmin?: boolean;
+  canInteraction?: boolean;
   url?: string;
   folderId?: number;
   fromExplore?: boolean;
@@ -65,6 +66,7 @@ export interface DashboardInitError {
 export enum KioskMode {
   Off = 'off',
   TV = 'tv',
+  Dashboard = 'dashboard',
   Full = 'full',
 }
 

@@ -58,8 +58,15 @@ export const PanelHeader: FC<Props> = ({ panel, error, isViewing, isEditing, dat
                   />
                 ) : null}
                 <span className="panel-title-text">{title}</span>
-                <Icon name="angle-down" className="panel-menu-toggle" />
-                <PanelHeaderMenuWrapper panel={panel} dashboard={dashboard} show={panelMenuOpen} onClose={closeMenu} />
+                {dashboard.meta.canInteraction && <Icon name="angle-down" className="panel-menu-toggle" />}
+                {dashboard.meta.canInteraction && (
+                  <PanelHeaderMenuWrapper
+                    panel={panel}
+                    dashboard={dashboard}
+                    show={panelMenuOpen}
+                    onClose={closeMenu}
+                  />
+                )}
                 {data.request && data.request.timeInfo && (
                   <span className="panel-time-info">
                     <Icon name="clock-nine" size="sm" /> {data.request.timeInfo}

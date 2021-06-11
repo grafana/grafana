@@ -16,7 +16,15 @@ import {
   dashboardInitSlow,
 } from './reducers';
 // Types
-import { DashboardDTO, DashboardInitPhase, DashboardRoutes, StoreState, ThunkDispatch, ThunkResult } from 'app/types';
+import {
+  DashboardDTO,
+  DashboardInitPhase,
+  DashboardRoutes,
+  KioskMode,
+  StoreState,
+  ThunkDispatch,
+  ThunkResult,
+} from 'app/types';
 import { DashboardModel } from './DashboardModel';
 import { DataQuery, locationUtil } from '@grafana/data';
 import { initVariablesTransaction } from '../../variables/state/actions';
@@ -158,6 +166,9 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
     if (storeState.dashboard.modifiedQueries) {
       const { panelId, queries } = storeState.dashboard.modifiedQueries;
       dashboard.meta.fromExplore = !!(panelId && queries);
+    }
+    if (queryParams.kiosk !== KioskMode.Dashboard) {
+      dashboard.meta.canInteraction = true;
     }
 
     // template values service needs to initialize completely before the rest of the dashboard can load

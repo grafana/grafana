@@ -26,6 +26,8 @@ export function getKioskMode(queryParam?: UrlQueryValue): KioskMode {
   switch (queryParam) {
     case 'tv':
       return KioskMode.TV;
+    case 'dashboard':
+      return KioskMode.Dashboard;
     //  legacy support
     case '1':
     case true:

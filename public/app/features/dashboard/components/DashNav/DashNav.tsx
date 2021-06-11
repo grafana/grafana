@@ -182,20 +182,20 @@ class DashNav extends PureComponent<Props> {
 
   renderRightActionsButton() {
     const { dashboard, onAddPanel, isFullscreen, kioskMode } = this.props;
-    const { canEdit, showSettings } = dashboard.meta;
+    const { canInteraction, canEdit, showSettings } = dashboard.meta;
     const { snapshot } = dashboard;
     const snapshotUrl = snapshot && snapshot.originalUrl;
     const buttons: ReactNode[] = [];
-    const tvButton = (
-      <ToolbarButton tooltip="Cycle view mode" icon="monitor" onClick={this.onToggleTVMode} key="tv-button" />
+    const cycleViewButton = (
+      <ToolbarButton tooltip="Cycle view mode" icon="monitor" onClick={this.onToggleTVMode} key="circle-button" />
     );
 
     if (this.isPlaylistRunning()) {
       return [this.renderPlaylistControls(), this.renderTimeControls()];
     }
 
-    if (kioskMode === KioskMode.TV) {
-      return [this.renderTimeControls(), tvButton];
+    if (kioskMode === KioskMode.TV || !canInteraction) {
+      return [this.renderTimeControls(), cycleViewButton];
     }
 
     if (canEdit && !isFullscreen) {
@@ -238,7 +238,7 @@ class DashNav extends PureComponent<Props> {
     this.addCustomContent(customRightActions, buttons);
 
     buttons.push(this.renderTimeControls());
-    buttons.push(tvButton);
+    buttons.push(cycleViewButton);
     return buttons;
   }
 
@@ -247,16 +247,19 @@ class DashNav extends PureComponent<Props> {
   }
 
   render() {
-    const { isFullscreen, title, folderTitle } = this.props;
+    const { isFullscreen, title, folderTitle, dashboard } = this.props;
+    const canInteraction = dashboard.meta.canInteraction;
     const onGoBack = isFullscreen ? this.onClose : undefined;
-
+    const parent = canInteraction ? folderTitle : undefined;
+    const onClickTitle = canInteraction ? this.onDashboardNameClick : undefined;
+    const onClickParent = canInteraction ? this.onFolderNameClick : undefined;
     return (
       <PageToolbar
         pageIcon={isFullscreen ? undefined : 'apps'}
         title={title}
-        parent={folderTitle}
-        onClickTitle={this.onDashboardNameClick}
-        onClickParent={this.onFolderNameClick}
+        parent={parent}
+        onClickTitle={onClickTitle}
+        onClickParent={onClickParent}
         onGoBack={onGoBack}
         leftItems={this.renderLeftActionsButton()}
       >
