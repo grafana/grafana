@@ -29,7 +29,7 @@ export class UnthemedTimeSeries extends React.Component<TimeSeriesProps> {
       return null;
     }
 
-    return <PlotLegend data={frames} config={config} maxHeight="35%" maxWidth="60%" {...legend} />;
+    return <PlotLegend data={frames} config={config} {...legend} />;
   };
 
   render() {
