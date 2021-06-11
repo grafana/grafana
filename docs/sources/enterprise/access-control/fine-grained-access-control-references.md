@@ -21,7 +21,7 @@ Fixed roles | Permissions | Descriptions
 `fixed:users:org:read` | `org.users:read` | Allows to get user organizations.
 `fixed:users:org:edit` | All permissions from `fixed:users:org:read` and <br>`org.users:add`<br>`org.users:remove`<br>`org.users.role:update` | Allows every read action for user organizations and in addition allows to administer user organizations.
 `fixed:ldap:admin:read` | `ldap.user:read`<br>`ldap.status:read` | Allows to read LDAP information and status.
-`fixed:ldap:admin:edit` | All permissions from `fixed:ldap:admin:read` and <br>`ldap.user:sync` | Allows every read action for LDAP and in addition allows to administer LDAP.
+`fixed:ldap:admin:edit` | All permissions from `fixed:ldap:admin:read` and <br>`ldap.user:sync`<br>`ldap.config:reload` | Allows every read action for LDAP and in addition allows to administer LDAP.
 `fixed:settings:admin:edit` | `settings:write` | Update all settings
 
 ## Default built-in role assignments

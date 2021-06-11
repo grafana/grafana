@@ -548,42 +548,46 @@ describe('LokiDatasource', () => {
   describe('metricFindQuery', () => {
     const getTestContext = (mock: LokiDatasource) => {
       const ds = createLokiDSForTests();
-      ds.getVersion = mock.getVersion;
       ds.metadataRequest = mock.metadataRequest;
 
       return { ds };
     };
 
-    const mocks = makeMetadataAndVersionsMocks();
+    const mock = makeMockLokiDatasource(
+      { label1: ['value1', 'value2'], label2: ['value3', 'value4'] },
+      { '{label1="value1", label2="value2"}': [{ label5: 'value5' }] }
+    );
 
-    mocks.forEach((mock, index) => {
-      it(`should return label names for Loki v${index}`, async () => {
-        const { ds } = getTestContext(mock);
+    it(`should return label names for Loki`, async () => {
+      const { ds } = getTestContext(mock);
 
-        const res = await ds.metricFindQuery('label_names()');
+      const res = await ds.metricFindQuery('label_names()');
 
-        expect(res).toEqual([{ text: 'label1' }, { text: 'label2' }]);
-      });
+      expect(res).toEqual([{ text: 'label1' }, { text: 'label2' }]);
     });
 
-    mocks.forEach((mock, index) => {
-      it(`should return label values for Loki v${index}`, async () => {
-        const { ds } = getTestContext(mock);
+    it(`should return label values for Loki when no matcher`, async () => {
+      const { ds } = getTestContext(mock);
 
-        const res = await ds.metricFindQuery('label_values(label1)');
+      const res = await ds.metricFindQuery('label_values(label1)');
 
-        expect(res).toEqual([{ text: 'value1' }, { text: 'value2' }]);
-      });
+      expect(res).toEqual([{ text: 'value1' }, { text: 'value2' }]);
     });
 
-    mocks.forEach((mock, index) => {
-      it(`should return empty array when incorrect query for Loki v${index}`, async () => {
-        const { ds } = getTestContext(mock);
+    it(`should return label values for Loki with matcher`, async () => {
+      const { ds } = getTestContext(mock);
 
-        const res = await ds.metricFindQuery('incorrect_query');
+      const res = await ds.metricFindQuery('label_values({label1="value1", label2="value2"},label5)');
 
-        expect(res).toEqual([]);
-      });
+      expect(res).toEqual([{ text: 'value5' }]);
+    });
+
+    it(`should return empty array when incorrect query for Loki`, async () => {
+      const { ds } = getTestContext(mock);
+
+      const res = await ds.metricFindQuery('incorrect_query');
+
+      expect(res).toEqual([]);
     });
   });
 });
@@ -628,14 +632,4 @@ function makeAnnotationQueryRequest(options: any): AnnotationQueryRequest<LokiQu
     },
     rangeRaw: timeRange,
   };
-}
-
-function makeMetadataAndVersionsMocks() {
-  const mocks = [];
-  for (let i = 0; i <= 1; i++) {
-    const mock: LokiDatasource = makeMockLokiDatasource({ label1: ['value1', 'value2'], label2: ['value3', 'value4'] });
-    mock.getVersion = jest.fn().mockReturnValue(`v${i}`);
-    mocks.push(mock);
-  }
-  return mocks;
 }
