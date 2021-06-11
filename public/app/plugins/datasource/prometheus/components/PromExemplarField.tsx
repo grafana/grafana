@@ -1,5 +1,5 @@
-import { GrafanaTheme } from '@grafana/data';
-import { IconButton, InlineLabel, Tooltip, useStyles } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import { IconButton, InlineLabel, Tooltip, useStyles2 } from '@grafana/ui';
 import { css, cx } from '@emotion/css';
 import React, { useEffect, useState } from 'react';
 import { PrometheusDatasource } from '../datasource';
@@ -12,7 +12,7 @@ interface Props {
 
 export function PromExemplarField({ datasource, onChange, isEnabled }: Props) {
   const [error, setError] = useState<string>();
-  const styles = useStyles(getStyles);
+  const styles = useStyles2(getStyles);
 
   useEffect(() => {
     const subscription = datasource.exemplarErrors.subscribe((err) => {
@@ -50,13 +50,13 @@ export function PromExemplarField({ datasource, onChange, isEnabled }: Props) {
   );
 }
 
-function getStyles(theme: GrafanaTheme) {
+function getStyles(theme: GrafanaTheme2) {
   return {
     eyeIcon: css`
-      margin-left: ${theme.spacing.md};
+      margin-left: ${theme.spacing(2)};
     `,
     activeIcon: css`
-      color: ${theme.palette.blue95};
+      color: ${theme.colors.primary.main};
     `,
     iconWrapper: css`
       display: flex;
