@@ -35,7 +35,6 @@ export class StreamingDataFrame implements DataFrame {
 
   options: StreamingFrameOptions;
 
-  private packetCount = 0;
   private schemaFields: FieldSchema[] = [];
   private timeFieldIndex = -1;
   private pushMode = PushMode.wide;
@@ -52,6 +51,10 @@ export class StreamingDataFrame implements DataFrame {
     };
     this.alwaysReplace = this.options.action === StreamingFrameAction.Replace;
 
+    this.meta.packetInfo = {
+      number: 0,
+    };
+
     this.push(frame);
   }
 
@@ -61,7 +64,8 @@ export class StreamingDataFrame implements DataFrame {
    */
   push(msg: DataFrameJSON) {
     const { schema, data } = msg;
-    const streamPacket: StreamPacketInfo = { packet: ++this.packetCount };
+
+    this.meta.packetInfo!.number++;
 
     if (schema) {
       this.pushMode = PushMode.wide;
@@ -170,15 +174,22 @@ export class StreamingDataFrame implements DataFrame {
       }
 
       let appended = values;
+
       if (this.alwaysReplace || !this.length) {
-        streamPacket.action = StreamingFrameAction.Replace;
+        this.meta.packetInfo!.action = StreamingFrameAction.Replace;
       } else {
-        const curValues = this.fields.map((f) => f.values.buffer);
+        appended = this.fields.map((f) => f.values.buffer);
 
-        appended = circPush(curValues, values, this.options.maxLength, this.timeFieldIndex, this.options.maxDelta);
+        // mutates appended
+        this.meta.packetInfo!.slicedIndex = circPush(
+          appended,
+          values,
+          this.options.maxLength,
+          this.timeFieldIndex,
+          this.options.maxDelta
+        );
 
-        streamPacket.action = StreamingFrameAction.Append;
-        streamPacket.pushed = values[0].length;
+        this.meta.packetInfo!.action = StreamingFrameAction.Append;
       }
 
       appended.forEach((v, i) => {
@@ -191,7 +202,6 @@ export class StreamingDataFrame implements DataFrame {
 
       // Update the frame length
       this.length = appended[0].length;
-      this.meta.streamPacket = streamPacket;
     }
   }
 
@@ -310,7 +320,7 @@ function circPush(data: number[][], newData: number[][], maxLength = Infinity, d
     }
   }
 
-  return data;
+  return sliceIdx;
 }
 
 function hasSameStructure(a: FieldSchema[], b: FieldSchema[]): boolean {

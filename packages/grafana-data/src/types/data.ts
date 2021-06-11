@@ -49,7 +49,7 @@ export interface QueryResultMeta {
   /**
    * When streaming, this represents what changed in the last packet
    */
-  streamPacket?: StreamPacketInfo;
+  packetInfo?: StreamPacketInfo;
 
   /**
    * Optionally identify which topic the frame should be assigned to.
@@ -101,9 +101,9 @@ export enum StreamingFrameAction {
  * @public -- but runtime
  */
 export interface StreamPacketInfo {
-  packet: number;
-  pushed?: number;
+  number: number;
   action?: StreamingFrameAction;
+  slicedIndex?: number;
 }
 
 export interface QueryResultMetaStat extends FieldConfig {
