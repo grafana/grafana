@@ -1,4 +1,4 @@
-package pluginproxy
+package tokenprovider
 
 import (
 	"context"
@@ -8,7 +8,6 @@ import (
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -18,27 +17,21 @@ var (
 )
 
 type azureAccessTokenProvider struct {
-	datasourceId      int64
-	datasourceVersion int
-	ctx               context.Context
-	cfg               *setting.Cfg
-	route             *plugins.AppPluginRoute
-	authParams        *plugins.JwtTokenAuth
+	ctx        context.Context
+	cfg        *setting.Cfg
+	authParams *plugins.JwtTokenAuth
 }
 
-func newAzureAccessTokenProvider(ctx context.Context, cfg *setting.Cfg, ds *models.DataSource, pluginRoute *plugins.AppPluginRoute,
+func NewAzureAccessTokenProvider(ctx context.Context, cfg *setting.Cfg,
 	authParams *plugins.JwtTokenAuth) *azureAccessTokenProvider {
 	return &azureAccessTokenProvider{
-		datasourceId:      ds.Id,
-		datasourceVersion: ds.Version,
-		ctx:               ctx,
-		cfg:               cfg,
-		route:             pluginRoute,
-		authParams:        authParams,
+		ctx:        ctx,
+		cfg:        cfg,
+		authParams: authParams,
 	}
 }
 
-func (provider *azureAccessTokenProvider) getAccessToken() (string, error) {
+func (provider *azureAccessTokenProvider) GetAccessToken() (string, error) {
 	var credential TokenCredential
 
 	if provider.isManagedIdentityCredential() {

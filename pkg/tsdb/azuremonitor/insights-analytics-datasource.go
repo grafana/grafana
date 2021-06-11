@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -13,21 +12,12 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/api/pluginproxy"
-	"github.com/grafana/grafana/pkg/components/securejsondata"
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/opentracing/opentracing-go"
 	"golang.org/x/net/context/ctxhttp"
 )
 
-type InsightsAnalyticsDatasource struct {
-	pluginManager plugins.Manager
-	cfg           *setting.Cfg
-}
+type InsightsAnalyticsDatasource struct{}
 
 type InsightsAnalyticsQuery struct {
 	RefID string
@@ -122,7 +112,7 @@ func (e *InsightsAnalyticsDatasource) executeQuery(ctx context.Context, query *I
 	}
 
 	azlog.Debug("ApplicationInsights", "Request URL", req.URL.String())
-	res, err := ctxhttp.Do(ctx, dsInfo.HTTPClient, req)
+	res, err := ctxhttp.Do(ctx, dsInfo.Services[appInsights].HTTPClient, req)
 	if err != nil {
 		return dataResponseError(err)
 	}
@@ -179,59 +169,14 @@ func (e *InsightsAnalyticsDatasource) executeQuery(ctx context.Context, query *I
 }
 
 func (e *InsightsAnalyticsDatasource) createRequest(ctx context.Context, dsInfo datasourceInfo) (*http.Request, error) {
-	// find plugin
-	plugin := e.pluginManager.GetDataSource(dsName)
-	if plugin == nil {
-		return nil, errors.New("unable to find datasource plugin Azure Application Insights")
-	}
-
-	appInsightsRoute, routeName, err := e.getPluginRoute(plugin, dsInfo)
-	if err != nil {
-		return nil, err
-	}
-
 	appInsightsAppID := dsInfo.Settings.AppInsightsAppId
 
-	u, err := url.Parse(dsInfo.URL)
-	if err != nil {
-		return nil, fmt.Errorf("unable to parse url for Application Insights Analytics datasource: %w", err)
-	}
-	u.Path = path.Join(u.Path, fmt.Sprintf("/v1/apps/%s", appInsightsAppID))
-
-	req, err := http.NewRequest(http.MethodGet, u.String(), nil)
+	req, err := http.NewRequest(http.MethodGet, dsInfo.Services[insightsAnalytics].URL, nil)
 	if err != nil {
 		azlog.Debug("Failed to create request", "error", err)
 		return nil, errutil.Wrap("Failed to create request", err)
 	}
-
-	// TODO: Use backend authentication instead
-	proxyPass := fmt.Sprintf("%s/v1/apps/%s", routeName, appInsightsAppID)
-	pluginproxy.ApplyRoute(ctx, req, proxyPass, appInsightsRoute, &models.DataSource{
-		JsonData:       simplejson.NewFromAny(dsInfo.JSONData),
-		SecureJsonData: securejsondata.GetEncryptedJsonData(dsInfo.DecryptedSecureJSONData),
-	}, e.cfg)
-
+	req.Header.Set("X-API-Key", dsInfo.DecryptedSecureJSONData["appInsightsApiKey"])
+	req.URL.Path = fmt.Sprintf("/v1/apps/%s", appInsightsAppID)
 	return req, nil
-}
-
-func (e *InsightsAnalyticsDatasource) getPluginRoute(plugin *plugins.DataSourcePlugin, dsInfo datasourceInfo) (*plugins.AppPluginRoute, string, error) {
-	cloud, err := getAzureCloud(e.cfg, dsInfo)
-	if err != nil {
-		return nil, "", err
-	}
-
-	routeName, err := getAppInsightsApiRoute(cloud)
-	if err != nil {
-		return nil, "", err
-	}
-
-	var pluginRoute *plugins.AppPluginRoute
-	for _, route := range plugin.Routes {
-		if route.Path == routeName {
-			pluginRoute = route
-			break
-		}
-	}
-
-	return pluginRoute, routeName, nil
 }

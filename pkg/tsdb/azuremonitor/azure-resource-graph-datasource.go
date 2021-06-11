@@ -6,7 +6,6 @@ import (
 
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -15,11 +14,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/api/pluginproxy"
-	"github.com/grafana/grafana/pkg/components/securejsondata"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/opentracing/opentracing-go"
@@ -27,10 +22,7 @@ import (
 )
 
 // AzureResourceGraphDatasource calls the Azure Resource Graph API's
-type AzureResourceGraphDatasource struct {
-	pluginManager plugins.Manager
-	cfg           *setting.Cfg
-}
+type AzureResourceGraphDatasource struct{}
 
 // AzureResourceGraphQuery is the query request that is built from the saved values for
 // from the UI
@@ -167,7 +159,7 @@ func (e *AzureResourceGraphDatasource) executeQuery(ctx context.Context, query *
 	}
 
 	azlog.Debug("AzureResourceGraph", "Request ApiURL", req.URL.String())
-	res, err := ctxhttp.Do(ctx, dsInfo.HTTPClient, req)
+	res, err := ctxhttp.Do(ctx, dsInfo.Services[azureResourceGraph].HTTPClient, req)
 	if err != nil {
 		return dataResponseErrorWithExecuted(err)
 	}
@@ -191,60 +183,16 @@ func (e *AzureResourceGraphDatasource) executeQuery(ctx context.Context, query *
 }
 
 func (e *AzureResourceGraphDatasource) createRequest(ctx context.Context, dsInfo datasourceInfo, reqBody []byte) (*http.Request, error) {
-	// find plugin
-	plugin := e.pluginManager.GetDataSource(dsName)
-	if plugin == nil {
-		return nil, errors.New("unable to find datasource plugin Azure Monitor")
-	}
-
-	argRoute, routeName, err := e.getPluginRoute(plugin, dsInfo)
-	if err != nil {
-		return nil, err
-	}
-
-	u, err := url.Parse(dsInfo.URL)
-	if err != nil {
-		return nil, err
-	}
-	u.Path = path.Join(u.Path, "render")
-	req, err := http.NewRequest(http.MethodPost, u.String(), bytes.NewBuffer(reqBody))
+	req, err := http.NewRequest(http.MethodPost, dsInfo.Services[azureResourceGraph].URL, bytes.NewBuffer(reqBody))
 	if err != nil {
 		azlog.Debug("Failed to create request", "error", err)
 		return nil, errutil.Wrap("failed to create request", err)
 	}
-
+	req.URL.Path = "/"
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("User-Agent", fmt.Sprintf("Grafana/%s", setting.BuildVersion))
 
-	// TODO: Use backend authentication instead
-	pluginproxy.ApplyRoute(ctx, req, routeName, argRoute, &models.DataSource{
-		JsonData:       simplejson.NewFromAny(dsInfo.JSONData),
-		SecureJsonData: securejsondata.GetEncryptedJsonData(dsInfo.DecryptedSecureJSONData),
-	}, e.cfg)
-
 	return req, nil
-}
-
-func (e *AzureResourceGraphDatasource) getPluginRoute(plugin *plugins.DataSourcePlugin, dsInfo datasourceInfo) (*plugins.AppPluginRoute, string, error) {
-	cloud, err := getAzureCloud(e.cfg, dsInfo)
-	if err != nil {
-		return nil, "", err
-	}
-
-	routeName, err := getManagementApiRoute(cloud)
-	if err != nil {
-		return nil, "", err
-	}
-
-	var pluginRoute *plugins.AppPluginRoute
-	for _, route := range plugin.Routes {
-		if route.Path == routeName {
-			pluginRoute = route
-			break
-		}
-	}
-
-	return pluginRoute, routeName, nil
 }
 
 func (e *AzureResourceGraphDatasource) unmarshalResponse(res *http.Response) (AzureResourceGraphResponse, error) {
