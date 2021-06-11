@@ -84,7 +84,7 @@ export const DynamicTable = <T extends object>({
   );
 };
 
-const getStyles = <T extends any>(cols: Array<DynamicTableColumnProps<T>>, isExpandable: boolean) => {
+const getStyles = <T extends unknown>(cols: Array<DynamicTableColumnProps<T>>, isExpandable: boolean) => {
   const sizes = cols.map((col) => {
     if (!col.size) {
       return 'auto';

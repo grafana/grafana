@@ -40,12 +40,12 @@ import { contextSrv } from 'app/core/core';
 
 interface Props extends GrafanaRouteComponentProps<{ id: string }> {
   navModel: NavModel;
-  user: UserDTO;
+  user?: UserDTO;
   orgs: UserOrg[];
   sessions: UserSession[];
-  ldapSyncInfo: SyncInfo;
+  ldapSyncInfo?: SyncInfo;
   isLoading: boolean;
-  error: UserAdminError;
+  error?: UserAdminError;
 
   loadAdminUserPage: Dethunked<typeof loadAdminUserPage>;
   revokeSession: Dethunked<typeof revokeSession>;
@@ -62,15 +62,7 @@ interface Props extends GrafanaRouteComponentProps<{ id: string }> {
   syncLdapUser: Dethunked<typeof syncLdapUser>;
 }
 
-interface State {
-  // isLoading: boolean;
-}
-
-export class UserAdminPage extends PureComponent<Props, State> {
-  state = {
-    // isLoading: true,
-  };
-
+export class UserAdminPage extends PureComponent<Props> {
   async componentDidMount() {
     const { match, loadAdminUserPage } = this.props;
     loadAdminUserPage(parseInt(match.params.id, 10));
@@ -82,7 +74,7 @@ export class UserAdminPage extends PureComponent<Props, State> {
 
   onPasswordChange = (password: string) => {
     const { user, setUserPassword } = this.props;
-    setUserPassword(user.id, password);
+    user && setUserPassword(user.id, password);
   };
 
   onUserDelete = (userId: number) => {
@@ -99,42 +91,41 @@ export class UserAdminPage extends PureComponent<Props, State> {
 
   onGrafanaAdminChange = (isGrafanaAdmin: boolean) => {
     const { user, updateUserPermissions } = this.props;
-    updateUserPermissions(user.id, isGrafanaAdmin);
+    user && updateUserPermissions(user.id, isGrafanaAdmin);
   };
 
   onOrgRemove = (orgId: number) => {
     const { user, deleteOrgUser } = this.props;
-    deleteOrgUser(user.id, orgId);
+    user && deleteOrgUser(user.id, orgId);
   };
 
   onOrgRoleChange = (orgId: number, newRole: string) => {
     const { user, updateOrgUserRole } = this.props;
-    updateOrgUserRole(user.id, orgId, newRole);
+    user && updateOrgUserRole(user.id, orgId, newRole);
   };
 
   onOrgAdd = (orgId: number, role: string) => {
     const { user, addOrgUser } = this.props;
-    addOrgUser(user, orgId, role);
+    user && addOrgUser(user, orgId, role);
   };
 
   onSessionRevoke = (tokenId: number) => {
     const { user, revokeSession } = this.props;
-    revokeSession(tokenId, user.id);
+    user && revokeSession(tokenId, user.id);
   };
 
   onAllSessionsRevoke = () => {
     const { user, revokeAllSessions } = this.props;
-    revokeAllSessions(user.id);
+    user && revokeAllSessions(user.id);
   };
 
   onUserSync = () => {
     const { user, syncLdapUser } = this.props;
-    syncLdapUser(user.id);
+    user && syncLdapUser(user.id);
   };
 
   render() {
     const { navModel, user, orgs, sessions, ldapSyncInfo, isLoading } = this.props;
-    // const { isLoading } = this.state;
     const isLDAPUser = user && user.isExternal && user.authLabels && user.authLabels.includes('LDAP');
     const canReadSessions = contextSrv.hasPermission(AccessControlAction.UsersAuthTokenList);
     const canReadLDAPStatus = contextSrv.hasPermission(AccessControlAction.LDAPStatusRead);
@@ -183,12 +174,12 @@ export class UserAdminPage extends PureComponent<Props, State> {
 
 const mapStateToProps = (state: StoreState) => ({
   navModel: getNavModel(state.navIndex, 'global-users'),
-  user: state.userAdmin.user!,
+  user: state.userAdmin.user,
   sessions: state.userAdmin.sessions,
   orgs: state.userAdmin.orgs,
-  ldapSyncInfo: state.ldap.syncInfo!,
+  ldapSyncInfo: state.ldap.syncInfo,
   isLoading: state.userAdmin.isLoading,
-  error: state.userAdmin.error!,
+  error: state.userAdmin.error,
 });
 
 const mapDispatchToProps = {
