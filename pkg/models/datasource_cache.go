@@ -91,6 +91,7 @@ func (ds *DataSource) HTTPClientOptions() sdkhttpclient.Options {
 			KeepAlive:             time.Duration(setting.DataProxyKeepAlive) * time.Second,
 			TLSHandshakeTimeout:   time.Duration(setting.DataProxyTLSHandshakeTimeout) * time.Second,
 			ExpectContinueTimeout: time.Duration(setting.DataProxyExpectContinueTimeout) * time.Second,
+			MaxConnsPerHost:       setting.DataProxyMaxConnsPerHost,
 			MaxIdleConns:          setting.DataProxyMaxIdleConns,
 			MaxIdleConnsPerHost:   setting.DataProxyMaxIdleConnsPerHost,
 			IdleConnTimeout:       time.Duration(setting.DataProxyIdleConnTimeout) * time.Second,
