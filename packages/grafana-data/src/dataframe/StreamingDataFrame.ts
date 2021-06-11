@@ -1,5 +1,4 @@
-import { Field, DataFrame, FieldType } from '../types/dataFrame';
-import { Labels, QueryResultMeta, StreamPacketInfo } from '../types';
+import { Field, DataFrame, FieldType, Labels, QueryResultMeta, StreamPacketInfo, StreamingFrameAction } from '../types';
 import { ArrayVector } from '../vector';
 import { DataFrameJSON, decodeFieldValueEntities, FieldSchema } from './DataFrameJSON';
 import { guessFieldTypeFromValue } from './processDataFrame';
@@ -12,6 +11,7 @@ import { AlignedData } from 'uplot';
 export interface StreamingFrameOptions {
   maxLength?: number; // 1000
   maxDelta?: number; // how long to keep things
+  action?: StreamingFrameAction;
 }
 
 enum PushMode {
@@ -39,6 +39,7 @@ export class StreamingDataFrame implements DataFrame {
   private schemaFields: FieldSchema[] = [];
   private timeFieldIndex = -1;
   private pushMode = PushMode.wide;
+  private alwaysReplace = false;
 
   // current labels
   private labels: Set<string> = new Set();
@@ -49,6 +50,7 @@ export class StreamingDataFrame implements DataFrame {
       maxDelta: Infinity,
       ...opts,
     };
+    this.alwaysReplace = this.options.action === StreamingFrameAction.Replace;
 
     this.push(frame);
   }
@@ -57,7 +59,7 @@ export class StreamingDataFrame implements DataFrame {
    * apply the new message to the existing data.  This will replace the existing schema
    * if a new schema is included in the message, or append data matching the current schema
    */
-  push(msg: DataFrameJSON, replace?: boolean) {
+  push(msg: DataFrameJSON) {
     const { schema, data } = msg;
     const streamPacket: StreamPacketInfo = { packet: ++this.packetCount };
 
@@ -168,14 +170,14 @@ export class StreamingDataFrame implements DataFrame {
       }
 
       let appended = values;
-      if (replace || !this.length) {
-        streamPacket.action = 'replace';
+      if (this.alwaysReplace || !this.length) {
+        streamPacket.action = StreamingFrameAction.Replace;
       } else {
         const curValues = this.fields.map((f) => f.values.buffer);
 
         appended = circPush(curValues, values, this.options.maxLength, this.timeFieldIndex, this.options.maxDelta);
 
-        streamPacket.action = 'append';
+        streamPacket.action = StreamingFrameAction.Append;
         streamPacket.pushed = values[0].length;
       }
 

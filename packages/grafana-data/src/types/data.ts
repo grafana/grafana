@@ -84,6 +84,16 @@ export interface QueryResultMeta {
 }
 
 /**
+ * Indicate if the frame is appened or replace
+ *
+ * @public -- but runtime
+ */
+export enum StreamingFrameAction {
+  Append = 'append',
+  Replace = 'replace',
+}
+
+/**
  * Stream packet info is attached to StreamingDataFrames and indicate how many
  * rows were added to the end of the frame.  The number of discarded rows can be
  * calculated from previous state
@@ -93,7 +103,7 @@ export interface QueryResultMeta {
 export interface StreamPacketInfo {
   packet: number;
   pushed?: number;
-  action?: 'append' | 'replace';
+  action?: StreamingFrameAction;
 }
 
 export interface QueryResultMetaStat extends FieldConfig {
