@@ -977,6 +977,11 @@ function upgradeValueMappings(oldMappings: any, thresholds?: ThresholdsConfig): 
   const newMappings: ValueMapping[] = [];
 
   for (const old of oldMappings) {
+    // when migrating singlestat to stat/gauge, mappings are already handled by angular-> react migration
+    if (old.type && old.options) {
+      newMappings.push(old);
+      continue;
+    }
     // Use the color we would have picked from thesholds
     let color: string | undefined = undefined;
     const numeric = parseFloat(old.text);
