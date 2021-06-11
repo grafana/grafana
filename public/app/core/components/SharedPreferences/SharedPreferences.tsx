@@ -90,7 +90,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
 
   onSubmitForm = async () => {
     const { homeDashboardId, theme, timezone } = this.state;
-    this.service.update({ homeDashboardId, theme, timezone });
+    await this.service.update({ homeDashboardId, theme, timezone });
     window.location.reload();
   };
 
