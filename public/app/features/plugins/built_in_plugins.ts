@@ -51,6 +51,7 @@ import * as pluginsListPanel from 'app/plugins/panel/pluginlist/module';
 import * as alertListPanel from 'app/plugins/panel/alertlist/module';
 import * as annoListPanel from 'app/plugins/panel/annolist/module';
 import * as heatmapPanel from 'app/plugins/panel/heatmap/module';
+import * as heatmap2Panel from 'app/plugins/panel/heatmap2/module';
 import * as tablePanel from 'app/plugins/panel/table/module';
 import * as oldTablePanel from 'app/plugins/panel/table-old/module';
 import * as statPanel from 'app/plugins/panel/stat/module';
@@ -100,6 +101,7 @@ const builtInPlugins: any = {
   'app/plugins/panel/alertlist/module': alertListPanel,
   'app/plugins/panel/annolist/module': annoListPanel,
   'app/plugins/panel/heatmap/module': heatmapPanel,
+  'app/plugins/panel/heatmap2/module': heatmap2Panel,
   'app/plugins/panel/table/module': tablePanel,
   'app/plugins/panel/table-old/module': oldTablePanel,
   'app/plugins/panel/news/module': newsPanel,
