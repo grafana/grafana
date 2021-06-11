@@ -2,6 +2,7 @@ package azuremonitor
 
 import (
 	"context"
+	"net/http"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -42,7 +43,7 @@ func TestNewInstanceSettings(t *testing.T) {
 			factory := NewInstanceSettings()
 			instance, err := factory(tt.settings)
 			tt.Err(t, err)
-			if !cmp.Equal(instance, tt.expectedModel, cmpopts.IgnoreFields(datasourceInfo{}, "Services", "HTTPCliOpts")) {
+			if !cmp.Equal(instance, tt.expectedModel, cmpopts.IgnoreFields(datasourceInfo{}, "HTTPCliOpts")) {
 				t.Errorf("Unexpected instance: %v", cmp.Diff(instance, tt.expectedModel))
 			}
 		})
@@ -53,8 +54,7 @@ type fakeInstance struct{}
 
 func (f *fakeInstance) Get(pluginContext backend.PluginContext) (instancemgmt.Instance, error) {
 	return datasourceInfo{
-		Services: map[string]datasourceService{},
-		Routes:   routes[azureMonitorPublic],
+		Routes: routes[azureMonitorPublic],
 	}, nil
 }
 
@@ -68,19 +68,21 @@ type fakeExecutor struct {
 	expectedURL string
 }
 
-func (f *fakeExecutor) executeTimeSeriesQuery(ctx context.Context, originalQueries []backend.DataQuery, dsInfo datasourceInfo) (*backend.QueryDataResponse, error) {
-	if s, ok := dsInfo.Services[f.queryType]; !ok {
+func (f *fakeExecutor) executeTimeSeriesQuery(ctx context.Context, originalQueries []backend.DataQuery, dsInfo datasourceInfo, client *http.Client, url string) (*backend.QueryDataResponse, error) {
+	if client == nil {
 		f.t.Errorf("The HTTP client for %s is missing", f.queryType)
 	} else {
-		if s.URL != f.expectedURL {
-			f.t.Errorf("Unexpected URL %s wanted %s", s.URL, f.expectedURL)
+		if url != f.expectedURL {
+			f.t.Errorf("Unexpected URL %s wanted %s", url, f.expectedURL)
 		}
 	}
 	return &backend.QueryDataResponse{}, nil
 }
 
-func Test_newExecutor(t *testing.T) {
-	cfg := &setting.Cfg{}
+func Test_newMux(t *testing.T) {
+	cfg := &setting.Cfg{
+		Azure: setting.AzureSettings{},
+	}
 
 	tests := []struct {
 		name        string
@@ -104,7 +106,12 @@ func Test_newExecutor(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mux := newExecutor(&fakeInstance{}, cfg, map[string]azDatasourceExecutor{
+			s := &Service{
+				Services: map[string]datasourceService{},
+				Cfg:      cfg,
+				im:       &fakeInstance{},
+			}
+			mux := s.newMux(map[string]azDatasourceExecutor{
 				tt.queryType: &fakeExecutor{
 					t:           t,
 					queryType:   tt.queryType,

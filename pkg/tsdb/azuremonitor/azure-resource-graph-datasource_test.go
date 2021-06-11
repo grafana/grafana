@@ -76,11 +76,8 @@ func TestBuildingAzureResourceGraphQueries(t *testing.T) {
 
 func TestAzureResourceGraphCreateRequest(t *testing.T) {
 	ctx := context.Background()
-	dsInfo := datasourceInfo{
-		Services: map[string]datasourceService{
-			azureResourceGraph: {URL: "http://ds"},
-		},
-	}
+	url := "http://ds"
+	dsInfo := datasourceInfo{}
 
 	tests := []struct {
 		name            string
@@ -102,7 +99,7 @@ func TestAzureResourceGraphCreateRequest(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			ds := AzureResourceGraphDatasource{}
-			req, err := ds.createRequest(ctx, dsInfo, []byte{})
+			req, err := ds.createRequest(ctx, dsInfo, []byte{}, url)
 			tt.Err(t, err)
 			if req.URL.String() != tt.expectedURL {
 				t.Errorf("Expecting %s, got %s", tt.expectedURL, req.URL.String())

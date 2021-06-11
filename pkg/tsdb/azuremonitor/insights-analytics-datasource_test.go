@@ -11,11 +11,9 @@ import (
 
 func TestInsightsAnalyticsCreateRequest(t *testing.T) {
 	ctx := context.Background()
+	url := "http://ds"
 	dsInfo := datasourceInfo{
 		Settings: azureMonitorSettings{AppInsightsAppId: "foo"},
-		Services: map[string]datasourceService{
-			insightsAnalytics: {URL: "http://ds"},
-		},
 		DecryptedSecureJSONData: map[string]string{
 			"appInsightsApiKey": "key",
 		},
@@ -40,7 +38,7 @@ func TestInsightsAnalyticsCreateRequest(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			ds := InsightsAnalyticsDatasource{}
-			req, err := ds.createRequest(ctx, dsInfo)
+			req, err := ds.createRequest(ctx, dsInfo, url)
 			tt.Err(t, err)
 			if req.URL.String() != tt.expectedURL {
 				t.Errorf("Expecting %s, got %s", tt.expectedURL, req.URL.String())
