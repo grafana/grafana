@@ -23,7 +23,7 @@ import { VariableSectionHeader } from './VariableSectionHeader';
 import { hasOptions } from '../guard';
 import { VariableTypeSelect } from './VariableTypeSelect';
 import { VariableHideSelect } from './VariableHideSelect';
-import { VariableSwitchField } from "./VariableSwitchField";
+import { VariableSwitchField } from './VariableSwitchField';
 
 export interface OwnProps {
   identifier: VariableIdentifier;
@@ -172,7 +172,9 @@ export class VariableEditorEditorUnConnected extends PureComponent<Props> {
                   name="Verify option"
                   tooltip="Verify option get from url"
                   onChange={this.onVerifyOptionFromUrlChange}
-                  ariaLabel={selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsVerifyOptionFromUrl}
+                  ariaLabel={
+                    selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsVerifyOptionFromUrl
+                  }
                 />
               </InlineFieldRow>
 
