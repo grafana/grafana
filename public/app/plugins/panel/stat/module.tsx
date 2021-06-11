@@ -4,7 +4,7 @@ import {
   commonOptionsBuilder,
   sharedSingleStatMigrationHandler,
 } from '@grafana/ui';
-import { FieldConfigProperty, PanelPlugin } from '@grafana/data';
+import { PanelPlugin } from '@grafana/data';
 import { addOrientationOption, addStandardDataReduceOptions, StatPanelOptions } from './types';
 import { StatPanel } from './StatPanel';
 import { statPanelChangedHandler } from './StatMigrations';
