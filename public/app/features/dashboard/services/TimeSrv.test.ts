@@ -11,17 +11,17 @@ jest.mock('app/core/core', () => ({
 
 describe('timeSrv', () => {
   let timeSrv: TimeSrv;
-
-  const _dashboard: any = {
-    time: { from: 'now-6h', to: 'now' },
-    getTimezone: jest.fn(() => 'browser'),
-    timeRangeUpdated: jest.fn(() => {}),
-  };
+  let _dashboard: any;
 
   beforeEach(() => {
+    _dashboard = {
+      time: { from: 'now-6h', to: 'now' },
+      getTimezone: jest.fn(() => 'browser'),
+      refresh: false,
+      timeRangeUpdated: jest.fn(() => {}),
+    };
     timeSrv = new TimeSrv(new ContextSrvStub() as any);
     timeSrv.init(_dashboard);
-    _dashboard.refresh = false;
   });
 
   describe('timeRange', () => {
@@ -128,6 +128,17 @@ describe('timeSrv', () => {
       timeSrv.init(_dashboard);
       expect(timeSrv.time.from).toEqual('now-6h');
       expect(timeSrv.time.to).toEqual('now');
+    });
+
+    it('should handle refresh_intervals=null when refresh is enabled', () => {
+      locationService.push('/d/id?refresh=30s');
+
+      timeSrv = new TimeSrv(new ContextSrvStub() as any);
+
+      _dashboard.timepicker = {
+        refresh_intervals: null,
+      };
+      expect(() => timeSrv.init(_dashboard)).not.toThrow();
     });
 
     describe('data point windowing', () => {
