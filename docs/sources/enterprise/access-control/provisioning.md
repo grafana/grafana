@@ -94,7 +94,7 @@ deleteRoles:
 
 To assign roles to built-in roles, add said built-in roles to the `builtInRoles` section of your roles. To remove a specific assignment, remove it from the list.
 
-> Assignments are updated if the version of the role is greater or equal to the one stored internally. You don't need to increment the version number of the role to update its assignments.
+> **Note:** Assignments are updated if the version of the role is greater or equal to the one stored internally. You don’t need to increment the version number of the role to update its assignments.
 
 For example, the following role is assigned to an organization editor or an organization administrator:
 
