@@ -977,7 +977,7 @@ function upgradeValueMappings(oldMappings: any, thresholds?: ThresholdsConfig): 
   const newMappings: ValueMapping[] = [];
 
   for (const old of oldMappings) {
-    // when migrating singlestat to stat/gauge, mappings are already handled by angular-> react migration
+    // when migrating singlestat to stat/gauge, mappings are already handled by panel type change handler used in that migration
     if (old.type && old.options) {
       newMappings.push(old);
       continue;
