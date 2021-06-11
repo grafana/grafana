@@ -15,6 +15,30 @@ import (
 
 func TestResponseParser(t *testing.T) {
 	t.Run("Elasticsearch response parser test", func(t *testing.T) {
+		t.Run("Boot Up", func(t *testing.T) {
+			// This happens when ES is booting up.
+			// the response is somehow incomplete, Grafana shouldn't panic in this case.
+			targets := map[string]string{
+				"A": `{
+					"timeField": "@timestamp",
+					"metrics": [{ "type": "count", "id": "1" }],
+          			"bucketAggs": [{ "type": "date_histogram", "field": "@timestamp", "id": "2" }]
+				}`,
+			}
+			response := `{
+        		"responses": [
+					{
+						"aggregations": null
+					}
+				]
+			}`
+			rp, err := newResponseParserForTest(targets, response)
+			require.NoError(t, err)
+			result, err := rp.getTimeSeries()
+			require.NoError(t, err)
+			require.Len(t, result.Results, 1)
+		})
+
 		t.Run("Simple query and count", func(t *testing.T) {
 			targets := map[string]string{
 				"A": `{
