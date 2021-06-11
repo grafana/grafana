@@ -249,7 +249,7 @@ func (hs *HTTPServer) registerRoutes() {
 		apiRoute.Group("/auth/keys", func(keysRoute routing.RouteRegister) {
 			keysRoute.Get("/", authorize(reqOrgAdmin, accesscontrol.ActionApiKeyList, accesscontrol.ScopeUsersAll), routing.Wrap(GetAPIKeys))
 			keysRoute.Post("/", authorize(reqOrgAdmin, accesscontrol.ActionApiKeyAdd), quota("api_key"), bind(models.AddApiKeyCommand{}), routing.Wrap(hs.AddAPIKey))
-			keysRoute.Delete("/:id", authorize(reqOrgAdmin, accesscontrol.ActionApiKeyDelete, accesscontrol.ScopeUsersAll), routing.Wrap(DeleteAPIKey))
+			keysRoute.Delete("/:id", authorize(reqOrgAdmin, accesscontrol.ActionApiKeyDelete), routing.Wrap(DeleteAPIKey))
 		})
 
 		// Preferences
