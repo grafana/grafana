@@ -10,6 +10,7 @@ import {
   DataFrame,
   parseLiveChannelAddress,
   StreamingFrameOptions,
+  StreamingFrameAction,
 } from '@grafana/data';
 import { merge, Observable, of } from 'rxjs';
 import { catchError, switchMap } from 'rxjs/operators';
@@ -140,7 +141,8 @@ class DataSourceWithBackend<
           const rsp = toDataQueryResponse(raw, queries as DataQuery[]);
           // Check if any response should subscribe to a live stream
           if (rsp.data?.length && rsp.data.find((f: DataFrame) => f.meta?.channel)) {
-            return toStreamingDataResponse(request, rsp);
+            const buffer = this.getStreamingFrameOptions(request);
+            return toStreamingDataResponse(buffer, rsp);
           }
           return of(rsp);
         }),
@@ -171,6 +173,22 @@ class DataSourceWithBackend<
   applyTemplateVariables(query: TQuery, scopedVars: ScopedVars): Record<string, any> {
     return query;
   }
+
+  /**
+   * Optionally override the streaming behavior
+   */
+  getStreamingFrameOptions = (request: DataQueryRequest<TQuery>) => {
+    const buffer: StreamingFrameOptions = {
+      maxLength: request.maxDataPoints ?? 500,
+      action: StreamingFrameAction.Append,
+    };
+
+    // For recent queries, clamp to the current time range
+    if (request.rangeRaw?.to === 'now') {
+      buffer.maxDelta = request.range.to.valueOf() - request.range.from.valueOf();
+    }
+    return buffer;
+  };
 
   /**
    * Make a GET request to the datasource resource path
@@ -219,21 +237,12 @@ class DataSourceWithBackend<
 }
 
 export function toStreamingDataResponse(
-  request: DataQueryRequest,
+  buffer: StreamingFrameOptions,
   rsp: DataQueryResponse
 ): Observable<DataQueryResponse> {
   const live = getGrafanaLiveSrv();
   if (!live) {
     return of(rsp); // add warning?
-  }
-
-  const buffer: StreamingFrameOptions = {
-    maxLength: request.maxDataPoints ?? 500,
-  };
-
-  // For recent queries, clamp to the current time range
-  if (request.rangeRaw?.to === 'now') {
-    buffer.maxDelta = request.range.to.valueOf() - request.range.from.valueOf();
   }
 
   const staticdata: DataFrame[] = [];
