@@ -230,7 +230,6 @@ const getStyles = (theme: GrafanaTheme) => {
     actionsRow: css`
       display: flex;
       flex-direction: row;
-      column-gap: ${theme.spacing.sm};
       height: 100%;
 
       > div {
@@ -239,6 +238,7 @@ const getStyles = (theme: GrafanaTheme) => {
         background: ${theme.colors.bg2};
         border-radius: ${theme.border.radius.sm};
         color: ${theme.colors.text};
+        margin-right: ${theme.spacing.sm};
         width: 100%;
         display: flex;
         flex-direction: column;
@@ -258,9 +258,12 @@ const getStyles = (theme: GrafanaTheme) => {
     actionsWrapper: css`
       display: flex;
       flex-direction: column;
-      row-gap: ${theme.spacing.sm};
       padding: 0 ${theme.spacing.sm} ${theme.spacing.sm} ${theme.spacing.sm};
       height: 100%;
+
+      > div {
+        margin-bottom: ${theme.spacing.sm};
+      }
     `,
     headerRow: css`
       display: flex;
