@@ -397,6 +397,7 @@ type Cfg struct {
 
 	// Alertting
 	AlertingMaxAttempts int
+	AlertingMinInterval int64
 }
 
 // IsLiveConfigEnabled returns true if live should be able to save configs to SQL tables
@@ -1350,8 +1351,11 @@ func (cfg *Cfg) readAlertingSettings(iniFile *ini.File) error {
 	notificationTimeoutSeconds := alerting.Key("notification_timeout_seconds").MustInt64(30)
 	AlertingNotificationTimeout = time.Second * time.Duration(notificationTimeoutSeconds)
 	AlertingMaxAttempts = alerting.Key("max_attempts").MustInt(3)
-	cfg.AlertingMaxAttempts = AlertingMaxAttempts
-	AlertingMinInterval = alerting.Key("min_interval_seconds").MustInt64(1)
+	AlertingMinInterval = alerting.Key("min_interval_seconds").MustInt64(int64(1))
+	if cfg.IsNgAlertEnabled() && AlertingMinInterval < 10 {
+		AlertingMinInterval = 10
+	}
+	cfg.AlertingMinInterval = AlertingMinInterval
 
 	return nil
 }
