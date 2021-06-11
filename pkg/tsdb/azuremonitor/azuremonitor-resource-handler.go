@@ -27,19 +27,32 @@ type httpServiceProxy struct{}
 func (s *httpServiceProxy) Do(rw http.ResponseWriter, req *http.Request, cli *http.Client) http.ResponseWriter {
 	res, err := cli.Do(req)
 	if err != nil {
-		rw.Write([]byte(fmt.Sprintf("unexpected error %v", err)))
+		_, err = rw.Write([]byte(fmt.Sprintf("unexpected error %v", err)))
+		if err != nil {
+			azlog.Error("Unable to write HTTP response", "error", err)
+		}
 		rw.WriteHeader(http.StatusInternalServerError)
 		return nil
 	}
-	defer res.Body.Close()
+	defer func() {
+		if err := res.Body.Close(); err != nil {
+			azlog.Warn("Failed to close response body", "err", err)
+		}
+	}()
 
 	body, err := ioutil.ReadAll(res.Body)
 	if err != nil {
-		rw.Write([]byte(fmt.Sprintf("unexpected error %v", err)))
+		_, err = rw.Write([]byte(fmt.Sprintf("unexpected error %v", err)))
+		if err != nil {
+			azlog.Error("Unable to write HTTP response", "error", err)
+		}
 		rw.WriteHeader(http.StatusInternalServerError)
 		return nil
 	}
-	rw.Write(body)
+	_, err = rw.Write(body)
+	if err != nil {
+		azlog.Error("Unable to write HTTP response", "error", err)
+	}
 
 	for k, v := range res.Header {
 		rw.Header().Set(k, v[0])
@@ -78,28 +91,40 @@ func (s *Service) resourceHandler(rw http.ResponseWriter, req *http.Request) {
 	azlog.Debug("Received resource call", "url", req.URL.String(), "method", req.Method)
 
 	if req.Method != http.MethodGet {
-		rw.Write([]byte(fmt.Sprintf("unexpected method %s", req.Method)))
+		_, err := rw.Write([]byte(fmt.Sprintf("unexpected method %s", req.Method)))
+		if err != nil {
+			azlog.Error("Unable to write HTTP response", "error", err)
+		}
 		rw.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
 	dsName, newPath, err := parseResourcePath(req.URL.Path)
 	if err != nil {
-		rw.Write([]byte(err.Error()))
+		_, err := rw.Write([]byte(err.Error()))
+		if err != nil {
+			azlog.Error("Unable to write HTTP response", "error", err)
+		}
 		rw.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
 	_, service, err := s.getDSAssetsFromHTTPReq(req, dsName)
 	if err != nil {
-		rw.Write([]byte(fmt.Sprintf("unexpected error %v", err)))
+		_, err := rw.Write([]byte(fmt.Sprintf("unexpected error %v", err)))
+		if err != nil {
+			azlog.Error("Unable to write HTTP response", "error", err)
+		}
 		rw.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
 	serviceURL, err := url.Parse(service.URL)
 	if err != nil {
-		rw.Write([]byte(fmt.Sprintf("unexpected error %v", err)))
+		_, err := rw.Write([]byte(fmt.Sprintf("unexpected error %v", err)))
+		if err != nil {
+			azlog.Error("Unable to write HTTP response", "error", err)
+		}
 		rw.WriteHeader(http.StatusInternalServerError)
 		return
 	}

@@ -56,7 +56,10 @@ func Test_proxyRequest(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				w.Header().Add("foo", "bar")
-				w.Write([]byte("result"))
+				_, err := w.Write([]byte("result"))
+				if err != nil {
+					t.Fatal(err)
+				}
 			}))
 			req, err := http.NewRequest(http.MethodGet, srv.URL, nil)
 			if err != nil {
@@ -68,7 +71,12 @@ func Test_proxyRequest(t *testing.T) {
 			if res.Header().Get("foo") != "bar" {
 				t.Errorf("Unexpected headers: %v", res.Header())
 			}
-			body, err := ioutil.ReadAll(rw.Result().Body)
+			result := rw.Result()
+			body, err := ioutil.ReadAll(result.Body)
+			if err != nil {
+				t.Error(err)
+			}
+			err = result.Body.Close()
 			if err != nil {
 				t.Error(err)
 			}
