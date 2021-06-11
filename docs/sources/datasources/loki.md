@@ -148,10 +148,11 @@ Check out the [Templating]({{< relref "../variables/_index.md" >}}) documentatio
 Variable of the type _Query_ allows you to query Loki for a list labels or label values. The Loki data source plugin
 provides the following functions you can use in the `Query` input field.
 
-| Name                  | Description                                                     |
-| --------------------- | --------------------------------------------------------------- |
-| `label_names()`       | Returns a list of label names.                                  |
-| `label_values(label)` | Returns a list of label values for the `label` in every metric. |
+| Name                                       | Description                                                                          |
+| -------------------------------------------| -------------------------------------------------------------------------------------|
+| `label_names()`                            | Returns a list of label names.                                                       |
+| `label_values(label)`                      | Returns a list of label values for the `label`.                                      |
+| `label_values(log stream selector, label)` | Returns a list of label values for the `label` in the specified `log stream selector`.|
 
 ## Annotations
 
