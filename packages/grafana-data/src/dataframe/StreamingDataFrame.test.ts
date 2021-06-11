@@ -378,23 +378,11 @@ describe('Streaming JSON', () => {
     const getSnapshot = (f: StreamingDataFrame) => {
       return {
         values: f.fields[1].values.toArray(),
-        info: f.meta.streamPacket,
+        info: f.packetInfo,
       };
     };
 
-    expect(getSnapshot(stream)).toMatchInlineSnapshot(`
-      Object {
-        "info": Object {
-          "action": "replace",
-          "packet": 1,
-        },
-        "values": Array [
-          1,
-          2,
-          3,
-        ],
-      }
-    `);
+    expect(getSnapshot(stream)).toMatchInlineSnapshot();
 
     stream.push({
       data: {
@@ -404,42 +392,14 @@ describe('Streaming JSON', () => {
         ],
       },
     });
-    expect(getSnapshot(stream)).toMatchInlineSnapshot(`
-      Object {
-        "info": Object {
-          "action": "append",
-          "packet": 2,
-          "pushed": 2,
-        },
-        "values": Array [
-          2,
-          3,
-          4,
-          5,
-        ],
-      }
-    `);
+    expect(getSnapshot(stream)).toMatchInlineSnapshot();
 
     stream.push({
       data: {
         values: [[600], [6]],
       },
     });
-    expect(getSnapshot(stream)).toMatchInlineSnapshot(`
-      Object {
-        "info": Object {
-          "action": "append",
-          "packet": 3,
-          "pushed": 1,
-        },
-        "values": Array [
-          3,
-          4,
-          5,
-          6,
-        ],
-      }
-    `);
+    expect(getSnapshot(stream)).toMatchInlineSnapshot();
   });
 
   /*

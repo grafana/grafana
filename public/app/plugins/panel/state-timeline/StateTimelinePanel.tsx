@@ -65,7 +65,7 @@ export const StateTimelinePanel: React.FC<TimelinePanelProps> = ({
   if (frames.length === 1) {
     const packet = getStreamingDataFramePacket(frames[0]);
     if (packet) {
-      console.log('STREAM Packet', packet);
+      // console.log('STREAM Packet', packet);
     }
   }
 

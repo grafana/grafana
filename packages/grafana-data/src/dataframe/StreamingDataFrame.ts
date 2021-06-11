@@ -70,9 +70,6 @@ export class StreamingDataFrame implements DataFrame {
     action: StreamingFrameAction.Replace,
     length: 0,
   };
-  readonly streamPacket = {
-    info: this.packetInfo,
-  };
 
   constructor(frame: DataFrameJSON, opts?: StreamingFrameOptions) {
     this.options = {
@@ -311,8 +308,8 @@ function closestIdx(num: number, arr: number[], lo?: number, hi?: number) {
 }
 
 export function getStreamingDataFramePacket(frame: DataFrame) {
-  const pi = (frame as StreamingDataFrame).streamPacket;
-  return pi?.info?.action ? pi.info : undefined;
+  const pi = (frame as StreamingDataFrame).packetInfo;
+  return pi?.action ? pi : undefined;
 }
 
 // mutable circular push
