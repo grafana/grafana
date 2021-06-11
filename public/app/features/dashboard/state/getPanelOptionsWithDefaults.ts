@@ -160,7 +160,7 @@ function adaptFieldColorMode(
 
     // When supporting value colors and prefering thresholds, use Thresholds mode.
     // Otherwise keep current mode
-    if (colorSettings.byValueSupport && colorSettings.preferThresholdsMode) {
+    if (colorSettings.byValueSupport && colorSettings.preferThresholdsMode && mode?.id !== FieldColorModeId.Fixed) {
       if (!mode || !mode.isByValue) {
         fieldConfig.defaults.color = { mode: FieldColorModeId.Thresholds };
         return fieldConfig;
