@@ -25,7 +25,7 @@ export enum StreamingFrameAction {
 export interface StreamPacketInfo {
   number: number;
   action: StreamingFrameAction;
-  slicedIndex: number;
+  length: number;
 }
 
 /**
@@ -68,7 +68,10 @@ export class StreamingDataFrame implements DataFrame {
   readonly packetInfo: StreamPacketInfo = {
     number: 0,
     action: StreamingFrameAction.Replace,
-    slicedIndex: 0,
+    length: 0,
+  };
+  readonly streamPacket = {
+    info: this.packetInfo,
   };
 
   constructor(frame: DataFrameJSON, opts?: StreamingFrameOptions) {
@@ -198,22 +201,16 @@ export class StreamingDataFrame implements DataFrame {
       }
 
       let appended = values;
+      this.packetInfo.length = values[0].length;
 
       if (this.alwaysReplace || !this.length) {
         this.packetInfo.action = StreamingFrameAction.Replace;
-        this.packetInfo.slicedIndex = 0;
       } else {
-        appended = this.fields.map((f) => f.values.buffer);
+        this.packetInfo.action = StreamingFrameAction.Append;
 
         // mutates appended
-        this.packetInfo.action = StreamingFrameAction.Append;
-        this.packetInfo.slicedIndex = circPush(
-          appended,
-          values,
-          this.options.maxLength,
-          this.timeFieldIndex,
-          this.options.maxDelta
-        );
+        appended = this.fields.map((f) => f.values.buffer);
+        circPush(appended, values, this.options.maxLength, this.timeFieldIndex, this.options.maxDelta);
       }
 
       appended.forEach((v, i) => {
@@ -314,8 +311,8 @@ function closestIdx(num: number, arr: number[], lo?: number, hi?: number) {
 }
 
 export function getStreamingDataFramePacket(frame: DataFrame) {
-  const pi = (frame as any).packetInfo as StreamPacketInfo;
-  return pi?.action ? pi : undefined;
+  const pi = (frame as StreamingDataFrame).streamPacket;
+  return pi?.info?.action ? pi.info : undefined;
 }
 
 // mutable circular push
