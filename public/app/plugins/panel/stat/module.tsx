@@ -43,9 +43,9 @@ export const plugin = new PanelPlugin<StatPanelOptions>(StatPanel)
         category: mainCategory,
         settings: {
           options: [
+            { value: BigValueColorMode.None, label: 'None' },
             { value: BigValueColorMode.Value, label: 'Value' },
             { value: BigValueColorMode.Background, label: 'Background' },
-            { value: BigValueColorMode.None, label: 'None' },
           ],
         },
       })
