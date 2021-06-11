@@ -246,7 +246,8 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
         <Tooltip content={description} show={this.state.focused} placement="top">
           <div className="slate-query-field" aria-label={selectors.components.QueryField.container}>
             <Editor
-              aria-description={description}
+              //@ts-ignore
+              title={description}
               ref={(editor) => (this.editor = editor!)}
               schema={SCHEMA}
               autoCorrect={false}
