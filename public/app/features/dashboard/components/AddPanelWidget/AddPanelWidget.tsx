@@ -145,12 +145,12 @@ export const AddPanelWidgetUnconnected: React.FC<Props> = ({ panel, dashboard })
           <LibraryPanelsSearch onClick={onAddLibraryPanel} variant={LibraryPanelsSearchVariant.Tight} showPanelFilter />
         ) : (
           <div className={styles.actionsWrapper}>
-            <div className={styles.actionsRow}>
+            <div className={cx(styles.actionsRow, styles.columnGap)}>
               <div onClick={() => onCreateNewPanel()} aria-label={selectors.pages.AddDashboard.addNewPanel}>
                 <Icon name="file-blank" size="xl" />
                 Add an empty panel
               </div>
-              <div onClick={onCreateNewRow}>
+              <div className={styles.rowGap} onClick={onCreateNewRow}>
                 <Icon name="wrap-text" size="xl" />
                 Add a new row
               </div>
@@ -161,7 +161,7 @@ export const AddPanelWidgetUnconnected: React.FC<Props> = ({ panel, dashboard })
                 Add a panel from the panel library
               </div>
               {copiedPanelPlugins.length === 1 && (
-                <div onClick={() => onPasteCopiedPanel(copiedPanelPlugins[0])}>
+                <div className={styles.rowGap} onClick={() => onPasteCopiedPanel(copiedPanelPlugins[0])}>
                   <Icon name="clipboard-alt" size="xl" />
                   Paste panel from clipboard
                 </div>
@@ -227,6 +227,12 @@ const getStyles = (theme: GrafanaTheme) => {
       box-shadow: 0 0 0 2px black, 0 0 0px 4px #1f60c4;
       animation: ${pulsate} 2s ease infinite;
     `,
+    rowGap: css`
+      margin-left: ${theme.spacing.sm};
+    `,
+    columnGap: css`
+      margin-bottom: ${theme.spacing.sm};
+    `,
     actionsRow: css`
       display: flex;
       flex-direction: row;
@@ -238,7 +244,6 @@ const getStyles = (theme: GrafanaTheme) => {
         background: ${theme.colors.bg2};
         border-radius: ${theme.border.radius.sm};
         color: ${theme.colors.text};
-        margin-right: ${theme.spacing.sm};
         width: 100%;
         display: flex;
         flex-direction: column;
@@ -260,10 +265,6 @@ const getStyles = (theme: GrafanaTheme) => {
       flex-direction: column;
       padding: 0 ${theme.spacing.sm} ${theme.spacing.sm} ${theme.spacing.sm};
       height: 100%;
-
-      > div {
-        margin-bottom: ${theme.spacing.sm};
-      }
     `,
     headerRow: css`
       display: flex;
