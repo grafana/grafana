@@ -1,8 +1,6 @@
 package manager
 
 import (
-	"fmt"
-
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
@@ -13,7 +11,6 @@ var logger = log.New("plugin.signature.validator")
 type PluginSignatureValidator struct {
 	cfg                           *setting.Cfg
 	requireSigned                 bool
-	errors                        []error
 	allowUnsignedPluginsCondition unsignedPluginV2ConditionFunc
 }
 
@@ -27,7 +24,7 @@ func newSignatureValidator(cfg *setting.Cfg, requireSigned bool, unsignedCond un
 	}
 }
 
-func (s *PluginSignatureValidator) validate(plugin *plugins.PluginV2) *plugins.PluginError {
+func (s *PluginSignatureValidator) validate(plugin *plugins.PluginV2) error {
 	if plugin.Signature == plugins.PluginSignatureValid {
 		logger.Debug("Plugin has valid signature", "id", plugin.ID)
 		return nil
@@ -60,31 +57,30 @@ func (s *PluginSignatureValidator) validate(plugin *plugins.PluginV2) *plugins.P
 	case plugins.PluginSignatureUnsigned:
 		if allowed := s.allowUnsigned(plugin); !allowed {
 			logger.Debug("Plugin is unsigned", "pluginID", plugin.ID)
-			s.errors = append(s.errors, fmt.Errorf("plugin '%s' is unsigned", plugin.ID))
-			return &plugins.PluginError{
-				ErrorCode: signatureMissing,
+			return &plugins.PluginSignatureError{
+				PluginID:        plugin.ID,
+				SignatureStatus: plugins.PluginSignatureUnsigned,
 			}
 		}
-		logger.Warn("Running an unsigned plugin", "pluginID", plugin.ID, "pluginDir",
-			plugin.PluginDir)
+		logger.Warn("Running an unsigned plugin", "pluginID", plugin.ID, "pluginDir", plugin.PluginDir)
 		return nil
 	case plugins.PluginSignatureInvalid:
 		logger.Debug("Plugin has an invalid signature", "pluginID", plugin.ID)
-		s.errors = append(s.errors, fmt.Errorf("plugin '%s' has an invalid signature", plugin.ID))
-		return &plugins.PluginError{
-			ErrorCode: signatureInvalid,
+		return &plugins.PluginSignatureError{
+			PluginID:        plugin.ID,
+			SignatureStatus: plugins.PluginSignatureInvalid,
 		}
 	case plugins.PluginSignatureModified:
 		logger.Debug("Plugin has a modified signature", "pluginID", plugin.ID)
-		s.errors = append(s.errors, fmt.Errorf("plugin '%s' has a modified signature", plugin.ID))
-		return &plugins.PluginError{
-			ErrorCode: signatureModified,
+		return &plugins.PluginSignatureError{
+			PluginID:        plugin.ID,
+			SignatureStatus: plugins.PluginSignatureModified,
 		}
 	default:
 		logger.Warn("Plugin has an unrecognized plugin signature state", "pluginID", plugin.ID, "signature",
 			plugin.Signature)
-		return &plugins.PluginError{
-			ErrorCode: signatureInvalid,
+		return &plugins.PluginSignatureError{
+			PluginID: plugin.ID,
 		}
 	}
 }

@@ -44,6 +44,24 @@ func (e DuplicatePluginError) Is(err error) bool {
 	return ok
 }
 
+type PluginSignatureError struct {
+	PluginID        string
+	SignatureStatus PluginSignatureStatus
+}
+
+func (e PluginSignatureError) Error() string {
+	switch e.SignatureStatus {
+	case PluginSignatureInvalid:
+		return fmt.Sprintf("plugin '%s' has an invalid signature", e.PluginID)
+	case PluginSignatureModified:
+		return fmt.Sprintf("plugin '%s' has an modified signature", e.PluginID)
+	case PluginSignatureUnsigned:
+		return fmt.Sprintf("plugin '%s' has no signature", e.PluginID)
+	}
+
+	return fmt.Sprintf("plugin '%s' has an unknown signature state", e.PluginID)
+}
+
 // PluginLoader can load a plugin.
 type PluginLoader interface {
 	// Load loads a plugin and returns it.

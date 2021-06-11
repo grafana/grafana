@@ -47,6 +47,7 @@ func (l *Loader) Load(pluginJSONPath string, requireSigned bool) (*plugins.Plugi
 
 func (l *Loader) LoadAll(pluginJSONPaths []string, requireSigned bool) ([]*plugins.PluginV2, error) {
 	var foundPlugins = make(map[string]plugins.JSONData)
+	var loadingErrors = make(map[string]error)
 
 	for _, pluginJSONPath := range pluginJSONPaths {
 		plugin, err := l.readPluginJSON(pluginJSONPath)
@@ -62,7 +63,7 @@ func (l *Loader) LoadAll(pluginJSONPaths []string, requireSigned bool) ([]*plugi
 		// Check if scanning found duplicate plugins
 		if _, dupe := pluginsByID[scannedPlugin.ID]; dupe {
 			l.log.Warn("Skipping plugin as it's a duplicate", "id", scannedPlugin.ID)
-			//scanner.errors = append(scanner.errors, plugins.DuplicatePluginError{PluginID: scannedPlugin.Id, ExistingPluginDir: scannedPlugin.PluginDir})
+			loadingErrors[scannedPlugin.ID] = plugins.DuplicatePluginError{ExistingPluginDir: scannedPluginPath, PluginID: scannedPlugin.ID}
 			delete(foundPlugins, scannedPluginPath)
 			continue
 		}
@@ -120,9 +121,9 @@ func (l *Loader) LoadAll(pluginJSONPaths []string, requireSigned bool) ([]*plugi
 		signingError := newSignatureValidator(l.Cfg, requireSigned, l.allowUnsignedPluginsCondition).validate(plugin)
 		if signingError != nil {
 			l.log.Debug("Failed to validate plugin signature. Will skip loading", "id", plugin.ID,
-				"signature", plugin.Signature, "status", signingError.ErrorCode)
-			//pm.pluginScanningErrors[plugin.Id] = *signingError
-			return nil, nil
+				"signature", plugin.Signature, "status", signingError)
+			loadingErrors[plugin.ID] = signingError
+			continue
 		}
 
 		if plugin.Signature.IsInternal() {
@@ -150,8 +151,15 @@ func (l *Loader) LoadAll(pluginJSONPaths []string, requireSigned bool) ([]*plugi
 		//}
 	}
 
-	res := make([]*plugins.PluginV2, 0, len(loadedPlugins))
+	if len(loadingErrors) > 0 {
+		var errStr []string
+		for _, err := range loadingErrors {
+			errStr = append(errStr, err.Error())
+		}
+		logger.Warn("Some plugin loading errors were found", "errors", strings.Join(errStr, ", "))
+	}
 
+	res := make([]*plugins.PluginV2, 0, len(loadedPlugins))
 	for _, p := range loadedPlugins {
 		res = append(res, p)
 	}
