@@ -77,6 +77,7 @@ export interface QueryResultMeta {
   json?: boolean; // used to keep track of old json doc values
   instant?: boolean;
 }
+
 export interface QueryResultMetaStat extends FieldConfig {
   displayName: string;
   value: number;
