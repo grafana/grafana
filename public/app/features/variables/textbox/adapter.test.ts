@@ -31,6 +31,7 @@ describe('createTextBoxVariableAdapter', () => {
           label: null,
           hide: VariableHide.dontHide,
           skipUrlSync: false,
+          verifyOptionFromUrl: false,
           error: null,
           description: null,
         });
@@ -61,6 +62,7 @@ describe('createTextBoxVariableAdapter', () => {
           label: null,
           hide: VariableHide.dontHide,
           skipUrlSync: false,
+          verifyOptionFromUrl: false,
           error: null,
           description: null,
         });

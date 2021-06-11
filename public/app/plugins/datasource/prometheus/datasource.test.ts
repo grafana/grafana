@@ -499,6 +499,7 @@ describe('PrometheusDatasource', () => {
         label: null,
         hide: VariableHide.dontHide,
         skipUrlSync: false,
+        verifyOptionFromUrl: false,
         index: -1,
         initLock: null,
       };

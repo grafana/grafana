@@ -25,6 +25,7 @@ describe('getPropsWithVariable', () => {
                 refresh: 1,
                 regex: '/.*$unknownVariable.*/',
                 skipUrlSync: false,
+                verifyOptionFromUrl: false,
                 type: 'datasource',
               },
             ],
