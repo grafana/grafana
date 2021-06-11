@@ -16,7 +16,7 @@ export class UnthemedTimeSeries extends React.Component<TimeSeriesProps> {
   static contextType = PanelContextRoot;
   panelContext: PanelContext = {} as PanelContext;
 
-  prepConfig = (alignedFrame: DataFrame, getTimeRange: () => TimeRange, allFrames: DataFrame[]) => {
+  prepConfig = (alignedFrame: DataFrame, allFrames: DataFrame[], getTimeRange: () => TimeRange) => {
     const { eventBus, sync } = this.context;
     const { theme, timeZone } = this.props;
     return preparePlotConfigBuilder({ frame: alignedFrame, theme, timeZone, getTimeRange, eventBus, sync, allFrames });
