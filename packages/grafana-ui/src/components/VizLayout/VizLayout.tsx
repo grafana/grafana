@@ -2,6 +2,7 @@ import React, { FC, CSSProperties, ComponentType } from 'react';
 import { useMeasure } from 'react-use';
 import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
 import { LegendPlacement } from '..';
+import { useTheme2 } from '../../themes';
 
 /**
  * @beta
@@ -30,6 +31,7 @@ export const VizLayout: VizLayoutComponentType = ({ width, height, legend, child
     height: `${height}px`,
   };
   const [legendRef, legendMeasure] = useMeasure();
+  const theme = useTheme2();
 
   if (!legend) {
     return <div style={containerStyle}>{children(width, height)}</div>;
@@ -44,6 +46,10 @@ export const VizLayout: VizLayoutComponentType = ({ width, height, legend, child
   };
 
   const legendStyle: CSSProperties = {};
+
+  const legendSpacing: CSSProperties = {
+    marginLeft: theme.spacing(),
+  };
 
   switch (placement) {
     case 'bottom':
@@ -78,7 +84,9 @@ export const VizLayout: VizLayoutComponentType = ({ width, height, legend, child
     <div style={containerStyle}>
       <div style={vizStyle}>{size && children(size.width, size.height)}</div>
       <div style={legendStyle} ref={legendRef}>
-        <CustomScrollbar hideHorizontalTrack>{legend}</CustomScrollbar>
+        <div style={legendSpacing}>
+          <CustomScrollbar hideHorizontalTrack>{legend}</CustomScrollbar>
+        </div>
       </div>
     </div>
   );
