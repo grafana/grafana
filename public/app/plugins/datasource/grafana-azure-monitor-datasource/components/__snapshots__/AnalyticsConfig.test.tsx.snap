@@ -101,7 +101,7 @@ exports[`Render should disable log analytics credentials form 1`] = `
             class="max-width-30 gf-form-inline"
           >
             <button
-              class="css-17xyotq-button"
+              class="css-191ipe8-button"
               disabled=""
               type="button"
             >
@@ -139,15 +139,15 @@ exports[`Render should enable azure log analytics load workspaces button 1`] = `
         />
       </div>
       <div
-        class="css-mqq7gx"
+        class="css-zmuccj"
       >
         <div
-          class="css-19c9rx9"
+          class="css-hui7p1"
         >
           Deprecated
         </div>
         <div
-          class="css-1r38y0g"
+          class="css-1b0c7i6"
         >
           Using different credentials for Azure Monitor Logs is no longer supported. Authentication information above will be used instead. Please create a new data source with the credentials below.
         </div>
@@ -378,7 +378,7 @@ exports[`Render should enable azure log analytics load workspaces button 1`] = `
             class="max-width-30 gf-form-inline"
           >
             <button
-              class="css-17xyotq-button"
+              class="css-191ipe8-button"
               disabled=""
               type="button"
             >
@@ -497,7 +497,7 @@ exports[`Render should render component 1`] = `
             class="max-width-30 gf-form-inline"
           >
             <button
-              class="css-17xyotq-button"
+              class="css-191ipe8-button"
               disabled=""
               type="button"
             >

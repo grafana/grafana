@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/tokenprovider"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -57,7 +58,7 @@ func ApplyRoute(ctx context.Context, req *http.Request, proxyPath string, route 
 	if tokenProvider, err := getTokenProvider(ctx, cfg, ds, route, data); err != nil {
 		logger.Error("Failed to resolve auth token provider", "error", err)
 	} else if tokenProvider != nil {
-		if token, err := tokenProvider.getAccessToken(); err != nil {
+		if token, err := tokenProvider.GetAccessToken(); err != nil {
 			logger.Error("Failed to get access token", "error", err)
 		} else {
 			req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
@@ -90,7 +91,7 @@ func getTokenProvider(ctx context.Context, cfg *setting.Cfg, ds *models.DataSour
 		if tokenAuth == nil {
 			return nil, fmt.Errorf("'tokenAuth' not configured for authentication type '%s'", authType)
 		}
-		provider := newAzureAccessTokenProvider(ctx, cfg, ds, pluginRoute, tokenAuth)
+		provider := tokenprovider.NewAzureAccessTokenProvider(ctx, cfg, tokenAuth)
 		return provider, nil
 
 	case "gce":
