@@ -69,7 +69,7 @@ func DistDashboardFamily(p BaseLoadPaths) (schema.VersionedCueSchema, error) {
 	if err != nil {
 		return nil, err
 	}
-	scuemap, err := readPanelModels(p)
+	scuemap, err := ReadPanelModels(p)
 	if err != nil {
 		return nil, err
 	}

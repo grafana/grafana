@@ -69,7 +69,7 @@ func mapPanelModel(id string, vcs schema.VersionedCueSchema) cue.Value {
 	return inter.Value().FillPath(cue.MakePath(cue.Str("in"), cue.Str("model")), vcs.CUE()).LookupPath(cue.MakePath(cue.Str(("result"))))
 }
 
-func readPanelModels(p BaseLoadPaths) (map[string]schema.VersionedCueSchema, error) {
+func ReadPanelModels(p BaseLoadPaths) (map[string]schema.VersionedCueSchema, error) {
 	overlay := make(map[string]load.Source)
 
 	if err := toOverlay(prefix, p.BaseCueFS, overlay); err != nil {
