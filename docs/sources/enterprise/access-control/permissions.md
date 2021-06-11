@@ -61,6 +61,7 @@ Actions | Applicable scopes | Descriptions
 `ldap.user:read` | n/a | Get a user via LDAP.
 `ldap.user:sync` | n/a | Sync a user via LDAP.
 `ldap.status:read` | n/a | Verify the LDAP servers’ availability.
+`ldap.config:reload` | n/a | Reload the LDAP configuration.
 `status:accesscontrol` | `service:accesscontrol` | Get access-control enabled status.
 `settings:write` | `settings:**`<br>`settings:auth.saml:*`<br>`settings:auth.saml:enabled` (property level) | Update settings
 
