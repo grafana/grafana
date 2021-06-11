@@ -97,7 +97,7 @@ export const VizLegendTable = <T extends unknown>({
 const getStyles = (theme: GrafanaTheme) => ({
   table: css`
     width: 100%;
-    margin-left: ${theme.spacing.sm};
+    margin-right: ${theme.spacing.sm};
     th:first-child {
       width: 100%;
     }
