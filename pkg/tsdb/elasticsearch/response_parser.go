@@ -240,13 +240,13 @@ func (rp *responseParser) processMetrics(esAgg *simplejson.Json, target *Query, 
 					tags[k] = v
 				}
 
+				tags["field"] = metricField.(string)
+				tags["metric"] = "top_metrics"
+
 				for _, v := range buckets {
 					bucket := simplejson.NewFromAny(v)
 					stats := bucket.GetPath(metric.ID, "top")
 					key := castToFloat(bucket.Get("key"))
-
-					tags["metric"] = "top_metrics"
-					tags["field"] = metricField.(string)
 
 					timeVector = append(timeVector, time.Unix(int64(*key)/1000, 0).UTC())
 
