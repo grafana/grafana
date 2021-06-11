@@ -227,6 +227,7 @@ type UPlotConfigPrepOpts<T extends Record<string, any> = {}> = {
   timeZone: TimeZone;
   getTimeRange: () => TimeRange;
   eventBus: EventBus;
+  allFrames: DataFrame[];
 } & T;
 
 /** @alpha */
