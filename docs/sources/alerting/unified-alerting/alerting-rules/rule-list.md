@@ -7,7 +7,7 @@ weight = 400
 
 # View alert rules
 
-To view alters:
+To view alerts:
 1. In the Grafana menu hover your cursor over the Alerting (bell) icon.
 1. Click **Alert Rules**. You can see all configured Grafana alert rules as well as any rules from Loki or Prometheus data sources. 
 By default, the group view is shown. You can toggle between group or state views by clicking the relevant **View as** buttons in the options area at the top of the page.

@@ -5,7 +5,6 @@ import (
 	"compress/gzip"
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -16,22 +15,14 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/api/pluginproxy"
-	"github.com/grafana/grafana/pkg/components/securejsondata"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/opentracing/opentracing-go"
 	"golang.org/x/net/context/ctxhttp"
 )
 
 // AzureLogAnalyticsDatasource calls the Azure Log Analytics API's
-type AzureLogAnalyticsDatasource struct {
-	pluginManager plugins.Manager
-	cfg           *setting.Cfg
-}
+type AzureLogAnalyticsDatasource struct{}
 
 // AzureLogAnalyticsQuery is the query request that is built from the saved values for
 // from the UI
@@ -170,7 +161,7 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *A
 	}
 
 	azlog.Debug("AzureLogAnalytics", "Request ApiURL", req.URL.String())
-	res, err := ctxhttp.Do(ctx, dsInfo.HTTPClient, req)
+	res, err := ctxhttp.Do(ctx, dsInfo.Services[azureLogAnalytics].HTTPClient, req)
 	if err != nil {
 		return dataResponseErrorWithExecuted(err)
 	}
@@ -220,60 +211,15 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *A
 }
 
 func (e *AzureLogAnalyticsDatasource) createRequest(ctx context.Context, dsInfo datasourceInfo) (*http.Request, error) {
-	// find plugin
-	plugin := e.pluginManager.GetDataSource(dsName)
-	if plugin == nil {
-		return nil, errors.New("unable to find datasource plugin Azure Monitor")
-	}
-
-	logAnalyticsRoute, routeName, err := e.getPluginRoute(plugin, dsInfo)
-	if err != nil {
-		return nil, err
-	}
-
-	u, err := url.Parse(dsInfo.URL)
-	if err != nil {
-		return nil, err
-	}
-	u.Path = path.Join(u.Path, "render")
-
-	req, err := http.NewRequest(http.MethodGet, u.String(), nil)
+	req, err := http.NewRequest(http.MethodGet, dsInfo.Services[azureLogAnalytics].URL, nil)
 	if err != nil {
 		azlog.Debug("Failed to create request", "error", err)
 		return nil, errutil.Wrap("failed to create request", err)
 	}
-
+	req.URL.Path = "/"
 	req.Header.Set("Content-Type", "application/json")
 
-	// TODO: Use backend authentication instead
-	pluginproxy.ApplyRoute(ctx, req, routeName, logAnalyticsRoute, &models.DataSource{
-		JsonData:       simplejson.NewFromAny(dsInfo.JSONData),
-		SecureJsonData: securejsondata.GetEncryptedJsonData(dsInfo.DecryptedSecureJSONData),
-	}, e.cfg)
-
 	return req, nil
-}
-
-func (e *AzureLogAnalyticsDatasource) getPluginRoute(plugin *plugins.DataSourcePlugin, dsInfo datasourceInfo) (*plugins.AppPluginRoute, string, error) {
-	cloud, err := getAzureCloud(e.cfg, dsInfo)
-	if err != nil {
-		return nil, "", err
-	}
-
-	routeName, err := getLogAnalyticsApiRoute(cloud)
-	if err != nil {
-		return nil, "", err
-	}
-
-	var pluginRoute *plugins.AppPluginRoute
-	for _, route := range plugin.Routes {
-		if route.Path == routeName {
-			pluginRoute = route
-			break
-		}
-	}
-
-	return pluginRoute, routeName, nil
 }
 
 // GetPrimaryResultTable returns the first table in the response named "PrimaryResult", or an
