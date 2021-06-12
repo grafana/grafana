@@ -1,8 +1,10 @@
 // eslint-disable-next-line lodash/import-scope
 import _ from 'lodash';
 import { AzureMonitorQuery, AzureDataSourceJsonData, AzureQueryType } from '../types';
-import { ScopedVars } from '@grafana/data';
+import { DataQueryRequest, DataQueryResponse, ScopedVars } from '@grafana/data';
 import { getTemplateSrv, DataSourceWithBackend } from '@grafana/runtime';
+import { from, Observable } from 'rxjs';
+import { mergeMap } from 'rxjs/operators';
 
 export default class AzureResourceGraphDatasource extends DataSourceWithBackend<
   AzureMonitorQuery,
@@ -52,5 +54,42 @@ export default class AzureResourceGraphDatasource extends DataSourceWithBackend<
       return "'" + val + "'";
     });
     return quotedValues.join(',');
+  }
+
+  query(request: DataQueryRequest<AzureMonitorQuery>): Observable<DataQueryResponse> {
+    const metricQueries = request.targets.reduce((prev: Record<string, AzureMonitorQuery>, cur) => {
+      prev[cur.refId] = cur;
+      return prev;
+    }, {});
+
+    return super.query(request).pipe(
+      mergeMap((res: DataQueryResponse) => {
+        return from(this.processResponse(res, metricQueries));
+      })
+    );
+  }
+
+  async processResponse(
+    res: DataQueryResponse,
+    metricQueries: Record<string, AzureMonitorQuery>
+  ): Promise<DataQueryResponse> {
+    if (res.data) {
+      for (const df of res.data) {
+        const metricQuery = metricQueries[df.refId];
+        if (metricQuery && metricQuery.azureMonitor) {
+          const url = 'https://portal.azure.com/#blade/HubsExtension/ArgQueryBlade';
+          for (const field of df.fields) {
+            field.config.links = [
+              {
+                url: url,
+                title: 'View in Azure Portal',
+                targetBlank: true,
+              },
+            ];
+          }
+        }
+      }
+    }
+    return res;
   }
 }
