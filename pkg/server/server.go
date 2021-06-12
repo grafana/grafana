@@ -114,7 +114,7 @@ func (s *Server) init() error {
 	}
 
 	login.Init()
-	social.NewOAuthService()
+	social.NewOAuthService(s.cfg)
 
 	if err := s.sqlStore.Migrate(); err != nil {
 		return err
