@@ -2,7 +2,11 @@ package jwt
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
+	"net/http"
+	"strings"
+	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
@@ -13,6 +17,7 @@ import (
 )
 
 const ServiceName = "AuthService"
+const OidcWellKnowConfigUri = "/.well-known/openid-configuration"
 
 func init() {
 	registry.Register(&registry.Descriptor{
@@ -42,8 +47,35 @@ func (s *AuthService) Init() error {
 	if err := s.initClaimExpectations(); err != nil {
 		return err
 	}
+	if s.Cfg.JWTAuthKeyFile == "" && s.Cfg.JWTAuthJWKSetFile == "" && s.Cfg.JWTAuthJWKSetURL == "" {
+		s.detectJWKSUri()
+	}
 	if err := s.initKeySet(); err != nil {
 		return err
+	}
+
+	return nil
+}
+
+// Auto configure JWKS Url following OIDC standards if the issuer is trusted
+// This can't work if you don't trust any issuers in JWTAuthExpectClaims
+func (s *AuthService) detectJWKSUri() error {
+	if s.expectRegistered.Issuer != "" {
+		oidcConfigURL := strings.TrimSuffix(s.expect["iss"].(string), "/") + OidcWellKnowConfigUri
+		var httpClient = &http.Client{Timeout: 10 * time.Second}
+		r, err := httpClient.Get(oidcConfigURL)
+		if err != nil {
+			return err
+		}
+		defer r.Body.Close()
+
+		var oidcConfig map[string]interface{}
+		json.NewDecoder(r.Body).Decode(&oidcConfig)
+		if err != nil {
+			return err
+		}
+		s.Cfg.JWTAuthJWKSetURL = oidcConfig["jwks_uri"].(string)
+		s.log.Debug("JWKS URL configured with trusted issuer")
 	}
 
 	return nil

@@ -138,6 +138,14 @@ func TestVerifyUsingJWKSetURL(t *testing.T) {
 		_, err := sc.authJWTSvc.Verify(sc.ctx, token)
 		require.Error(t, err)
 	})
+
+	jwkHTTPScenario(t, "verifies a token signed with a key auto-configured with trusted issuer", func(t *testing.T, sc scenarioContext) {
+		//TODO
+	})
+
+	jwkHTTPScenario(t, "verifies a token signed with a key auto-configured with untrusted issuer", func(t *testing.T, sc scenarioContext) {
+		//TODO
+	})
 }
 
 func TestCachingJWKHTTPResponse(t *testing.T) {
