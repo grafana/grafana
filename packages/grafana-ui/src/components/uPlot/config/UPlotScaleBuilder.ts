@@ -39,8 +39,8 @@ export class UPlotScaleBuilder extends PlotConfigBuilder<ScaleProps, Scale> {
       : {};
 
     // uPlot's default ranging config for both min & max is {pad: 0.1, hard: null, soft: 0, mode: 3}
-    let softMinMode: Range.SoftMode = softMin == null ? 3 : softMin === 0 ? 1 : 2;
-    let softMaxMode: Range.SoftMode = softMax == null ? 3 : softMax === 0 ? 1 : 2;
+    let softMinMode: Range.SoftMode = softMin == null ? 3 : 1;
+    let softMaxMode: Range.SoftMode = softMax == null ? 3 : 1;
 
     const rangeConfig: Range.Config = {
       min: {
