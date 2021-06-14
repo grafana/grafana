@@ -69,7 +69,7 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/admin/users/edit/:id", authorize(reqGrafanaAdmin, accesscontrol.ActionUsersRead), hs.Index)
 	r.Get("/admin/orgs", reqGrafanaAdmin, hs.Index)
 	r.Get("/admin/orgs/edit/:id", reqGrafanaAdmin, hs.Index)
-	r.Get("/admin/stats", authorize(reqGrafanaAdmin, accesscontrol.ActionStatsRead), hs.Index)
+	r.Get("/admin/stats", authorize(reqGrafanaAdmin, accesscontrol.ActionServerStatsRead), hs.Index)
 	r.Get("/admin/ldap", authorize(reqGrafanaAdmin, accesscontrol.ActionLDAPStatusRead), hs.Index)
 
 	r.Get("/styleguide", reqSignedIn, hs.Index)
