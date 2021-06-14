@@ -398,6 +398,7 @@ type Cfg struct {
 	// Alertting
 	AlertingMaxAttempts int
 	AlertingMinInterval int64
+	ExecuteAlerts       bool
 }
 
 // IsLiveConfigEnabled returns true if live should be able to save configs to SQL tables
@@ -1341,6 +1342,7 @@ func (cfg *Cfg) readAlertingSettings(iniFile *ini.File) error {
 	alerting := iniFile.Section("alerting")
 	AlertingEnabled = alerting.Key("enabled").MustBool(true)
 	ExecuteAlerts = alerting.Key("execute_alerts").MustBool(true)
+	cfg.ExecuteAlerts = ExecuteAlerts
 	AlertingRenderLimit = alerting.Key("concurrent_render_limit").MustInt(5)
 
 	AlertingErrorOrTimeout = valueAsString(alerting, "error_or_timeout", "alerting")

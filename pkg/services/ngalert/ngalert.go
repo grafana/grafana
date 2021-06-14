@@ -116,9 +116,12 @@ func (ng *AlertNG) Run(ctx context.Context) error {
 	ng.schedule.WarmStateCache(ng.stateManager)
 
 	children, subCtx := errgroup.WithContext(ctx)
-	children.Go(func() error {
-		return ng.schedule.Ticker(subCtx, ng.stateManager)
-	})
+
+	if ng.Cfg.ExecuteAlerts {
+		children.Go(func() error {
+			return ng.schedule.Ticker(subCtx, ng.stateManager)
+		})
+	}
 	children.Go(func() error {
 		return ng.Alertmanager.Run(subCtx)
 	})
