@@ -16,15 +16,15 @@ Grafana includes built-in support for Azure Monitor, the Azure service to maximi
 
 This topic explains configuring, querying, and other options specific to the Azure Monitor data source. Refer to [Add a data source]({{< relref "add-a-data-source.md" >}}) for instructions on how to add a data source to Grafana.
 
-## Azure Monitor settings
+## Azure Monitor configuration
 
-To access Azure Monitor settings, hover your mouse over the **Configuration** (gear) icon, click **Data Sources**, and then click the Azure Monitor data source. If you haven't already, you'll need to [add the Azure Monitor data source]({{< relref "add-a-data-source.md" >}}).
+To access Azure Monitor configuration, hover your mouse over the **Configuration** (gear) icon, click **Data Sources**, and then click the Azure Monitor data source. If you haven't already, you'll need to [add the Azure Monitor data source]({{< relref "add-a-data-source.md" >}}).
 
 You must create an app registration and service principal in Azure AD to authenticate the data source. See the [Azure documentation](https://docs.microsoft.com/en-us/azure/active-directory/develop/howto-create-service-principal-portal#get-tenant-and-app-id-values-for-signing-in) for configuration details. Alternatively, if you are hosting Grafana in Azure (e.g. App Service, or Azure Virtual Machines) you can configure the Azure Monitor data source to use Managed Identity to securely authenticate without entering credentials into Grafana. Refer to [Configuring using Managed Identity](#todo) for more details.
 
 | Name                    | Description                                                                                                                                                                                                                                                                                                             |
 | ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Authentication          | Enables Managed Identity. See [Configuring using Managed Identity](#todo) for more details.                                                                                                                                                                                                                             |
+| Authentication          | Enables Managed Identity. Selecting Managed Identity will hide many of the fields below. See [Configuring using Managed Identity](#todo) for more details.                                                                                                                                                              |
 | Azure Cloud             | The national cloud for your Azure account. For most users, this is the default "Azure". For more information, see [](https://docs.microsoft.com/en-us/azure/active-directory/develop/authentication-national-cloud)                                                                                                     |
 | Directory (tenant) ID   | The directory/tenant ID for the Azure AD app registration to use for authentication. See [Get tenant and app ID values for signing in](https://docs.microsoft.com/en-us/azure/active-directory/develop/howto-create-service-principal-portal#get-tenant-and-app-id-values-for-signing-in) from the Azure documentation. |
 | Application (client) ID | The application/client ID for the Azure AD app registration to use for authentication.                                                                                                                                                                                                                                  |
@@ -161,6 +161,68 @@ To make writing queries easier there are several Grafana macros that can be used
 
 Additionally, Grafana has the built-in `$__interval` macro
 
+### Querying with Azure Resource Graph
+
+Azure Resource Graph (ARG) is a service in Azure that is designed to extend Azure Resource Management by providing efficient and performant resource exploration, with the ability to query at scale across a given set of subscriptions so that you can effectively govern your environment. By querying ARG, you can query resources with complex filtering, iteratively explore resources based on governance requirements, and assess the impact of applying policies in a vast cloud environment.
+
+### Your first Azure Resource Graph query
+
+ARG queries are written in a variant of the [Kusto Query Language](https://docs.microsoft.com/en-us/azure/governance/resource-graph/concepts/query-language), but not all Kusto language features are available in ARG. An Azure Resource Graph query is formatted as table data.
+
+If your credentials give you access to multiple subscriptions, then you can choose multiple subscriptions before entering queries.
+
+#### Sort results by resource properties
+
+Here is an example query that returns all resources in the selected subscriptions, but only the name, type, and location properties:
+
+```kusto
+Resources
+| project name, type, location
+| order by name asc
+```
+
+The query uses `order by` to sort the properties by the `name` property in ascending (`asc`) order. You can change what property to sort by and the order (`asc` or `desc`). The query uses `project` to show only the listed properties in the results. You can add or remove properties.
+
+#### Query resources with complex filtering
+
+Filtering for Azure resources with a tag name of `environment` that have a value of `Internal`. You can change these to any desired tag key and value. The `=~` in the `type` match tells Resource Graph to be case insensitive. You can project by other properties or add/remove more.
+
+For example, a query that returns a list of resources with an `environment` tag value of `Internal`:
+
+```kusto
+Resources
+| where tags.environment=~'internal'
+| project name
+```
+
+#### Group and aggregate the values by property
+
+You can also use `summarize` and `count` to define how to group and aggregate the values by property. For example, returning count of healthy, unhealthy, and not applicable resources per recommendation:
+
+```kusto
+securityresources
+| where type == 'microsoft.security/assessments'
+| extend resourceId=id,
+    recommendationId=name,
+    resourceType=type,
+    recommendationName=properties.displayName,
+    source=properties.resourceDetails.Source,
+    recommendationState=properties.status.code,
+    description=properties.metadata.description,
+    assessmentType=properties.metadata.assessmentType,
+    remediationDescription=properties.metadata.remediationDescription,
+    policyDefinitionId=properties.metadata.policyDefinitionId,
+    implementationEffort=properties.metadata.implementationEffort,
+    recommendationSeverity=properties.metadata.severity,
+    category=properties.metadata.categories,
+    userImpact=properties.metadata.userImpact,
+    threats=properties.metadata.threats,
+    portalLink=properties.links.azurePortal
+| summarize numberOfResources=count(resourceId) by tostring(recommendationName), tostring(recommendationState)
+```
+
+In Azure Resource Graph many nested properties (`properties.displayName`) are of a `dynamic` type, and should be cast to a string with `tostring()` to operate on them.
+
 ## Going further with Azure Monitor
 
 ### Template variables
@@ -211,6 +273,89 @@ Perf
 | summarize avg(CounterValue) by bin(TimeGenerated, $__interval), Computer
 | order by TimeGenerated asc
 ```
+
+### Configuring using Managed Identity
+
+Customers who host Grafana in Azure (e.g. App Service, Azure Virtual Machines) and have managed identity enabled on their VM, will now be able to use the managed identity to configure Azure Monitor in Grafana. This will simplify the data source configuration, requiring the data source to be securely authenticated without having to manually configure credentials via Azure AD App Registrations for each data source. For more details on Azure managed identities, refer to the [Azure documentation](https://docs.microsoft.com/en-us/azure/active-directory/managed-identities-azure-resources/overview).
+
+To enable managed identity for Grafana, set the `managed_identity_enabled` flag in the `[azure]` section of the [Grafana server config](https://grafana.com/docs/grafana/latest/administration/configuration/#azure).
+
+```ini
+[azure]
+managed_identity_enabled = true
+```
+
+Then, in the Azure Monitor data source configuration and set Authentication to Managed Identity. The directory ID, application ID and client secret fields will be hidden and the data source will use managed identity for authenticating to Azure Monitor Metrics, Logs, and Azure Resource Graph.
+
+### Configure the data source with provisioning
+
+You can configure data sources using config files with Grafana’s provisioning system. For more information on how it works and all the settings you can set for data sources on the [provisioning docs page]({{< relref "../administration/provisioning/#datasources" >}})
+
+Here are some provisioning examples for this data source.
+
+#### Azure AD App Registration (client secret)
+
+```yaml
+# config file version
+apiVersion: 1
+
+datasources:
+  - name: Azure Monitor
+    type: grafana-azure-monitor-datasource
+    access: proxy
+    jsonData:
+      azureAuthType: clientsecret
+      cloudName: azuremonitor # See table below
+      tenantId: <tenant-id>
+      clientId: <client-id>
+      subscriptionId: <subscription-id> # Optional, default subscription
+    secureJsonData:
+      clientSecret: <client-secret>
+    version: 1
+```
+
+#### Managed Identity
+
+```yaml
+# config file version
+apiVersion: 1
+
+datasources:
+  - name: Azure Monitor
+    type: grafana-azure-monitor-datasource
+    access: proxy
+    jsonData:
+      azureAuthType: msi
+      subscriptionId: <subscription-id> # Optional, default subscription
+    version: 1
+```
+
+### Supported cloud names
+
+| Azure Cloud                                      | Value                      |
+| ------------------------------------------------ | -------------------------- |
+| Microsoft Azure public cloud                     | `azuremonitor` (_default_) |
+| Microsoft Chinese national cloud                 | `chinaazuremonitor`        |
+| US Government cloud                              | `govazuremonitor`          |
+| Microsoft German national cloud ("Black Forest") | `germanyazuremonitor`      |
+
+## Deprecated Application Insights and Insights Analytics
+
+Application Insights and Insights Analytics are two ways to query the same Azure Application Insights data, which can also be queried from Metrics and Logs. In Grafana 8.0, Application Insights and Insights Analytics are deprecated and made read-only in favor of querying this data through Metrics and Logs. Existing queries will continue to work, but you cannot edit them. New panels are not able to use Application Insights or Insights Analytics.
+
+For Application Insights, new queries can be made with the Metrics query type by selecting the "Application Insights" resource type.
+
+{{< figure src="/static/img/docs/azure-monitor/app-insights-metrics.png" max-width="650px" class="docs-image--no-shadow" caption="Azure Monitor Application Insights example" >}}
+
+For Insights Analaytics, new queries can be written with Kusto in the Logs query type by selecting your Application Insights resource.
+
+{{< figure src="/static/img/docs/azure-monitor/app-insights-logs.png" max-width="650px" class="docs-image--no-shadow" caption="Azure Logs Application Insights example" >}}
+
+The new resource picker for Logs shows all resources on your Azure subscription compatible with Logs.
+
+{{< figure src="/static/img/docs/azure-monitor/app-insights-resource-picker.png" max-width="650px" class="docs-image--no-shadow" caption="Azure Logs Application Insights resource picker" >}}
+
+Azure Monitor Metrics and Azure Monitor Logs do not use Application Insights API keys, so make sure the data source is configured with an Azure AD app registration that has access to Application Insights
 
 ---
 
