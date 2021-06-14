@@ -1,6 +1,10 @@
 package accesscontrol
 
-import "github.com/grafana/grafana/pkg/models"
+import (
+	"sync"
+
+	"github.com/grafana/grafana/pkg/models"
+)
 
 var ldapAdminReadRole = RoleDTO{
 	Name:    ldapAdminRead,
@@ -196,4 +200,50 @@ func ConcatPermissions(permissions ...[]Permission) []Permission {
 		perms = append(perms, p...)
 	}
 	return perms
+}
+
+var (
+	once               sync.Once
+	FixedRolesMap      sync.Map
+	FixedRoleGrantsMap sync.Map
+)
+
+func init() {
+	InitFixedRole()
+}
+
+func InitFixedRole() {
+	once.Do(func() {
+		// Register fixed roles
+		FixedRolesMap.Store(usersAdminRead, usersAdminReadRole)
+		FixedRolesMap.Store(usersAdminEdit, usersAdminEditRole)
+		FixedRolesMap.Store(usersOrgRead, usersOrgReadRole)
+		FixedRolesMap.Store(usersOrgEdit, usersOrgEditRole)
+		FixedRolesMap.Store(ldapAdminRead, ldapAdminReadRole)
+		FixedRolesMap.Store(ldapAdminEdit, ldapAdminEditRole)
+		FixedRolesMap.Store(ldapAdminEdit, ldapAdminEditRole)
+		FixedRolesMap.Store(provisioningAdmin, provisioningAdminRole)
+
+		// Register assignments
+		// Grafana Admin grants
+		FixedRoleGrantsMap.Store(RoleGrafanaAdmin, []string{
+			ldapAdminEdit,
+			ldapAdminRead,
+			provisioningAdmin,
+			usersAdminEdit,
+			usersAdminRead,
+			usersOrgEdit,
+			usersOrgRead,
+		})
+		// Admin grants
+		FixedRoleGrantsMap.Store(models.ROLE_ADMIN, []string{
+			usersOrgEdit,
+			usersOrgRead,
+			provisioningAdmin,
+			usersAdminEdit,
+			usersAdminRead,
+			usersOrgEdit,
+			usersOrgRead,
+		})
+	})
 }

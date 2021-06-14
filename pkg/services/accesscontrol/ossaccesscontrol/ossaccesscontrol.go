@@ -54,6 +54,55 @@ func (ac *OSSAccessControlService) getUsageMetrics() interface{} {
 	return 1
 }
 
+func (ac *OSSAccessControlService) saveFixedRole(role accesscontrol.RoleDTO) error {
+	if value, ok := accesscontrol.FixedRolesMap.Load(role.Name); ok {
+		storedRole := value.(accesscontrol.RoleDTO)
+		if storedRole.Version >= role.Version {
+			return accesscontrol.ErrVersionLE
+		}
+	}
+	// Save role
+	accesscontrol.FixedRolesMap.Store(role.Name, role)
+
+	return nil
+}
+
+func (ac *OSSAccessControlService) assignFixedRole(role accesscontrol.RoleDTO, builtInRoles []string) error {
+	for _, builtInRole := range builtInRoles {
+		assignments := []string{}
+		if value, ok := accesscontrol.FixedRoleGrantsMap.Load(builtInRole); ok {
+			assignments = value.([]string)
+			alreadyAssigned := false
+			for _, assignedRole := range assignments {
+				if assignedRole == role.Name {
+					alreadyAssigned = true
+				}
+			}
+			if alreadyAssigned {
+				return accesscontrol.ErrBuiltinRoleAlreadyAdded
+			}
+		}
+		assignments = append(assignments, role.Name)
+		accesscontrol.FixedRoleGrantsMap.Store(builtInRole, assignments)
+	}
+	return nil
+}
+
+// RegisterFixedRole saves a fixed role and assigns it to built-in roles
+func (ac *OSSAccessControlService) RegisterFixedRole(role accesscontrol.RoleDTO, builtInRoles ...string) error {
+	err := ac.saveFixedRole(role)
+	if err != nil {
+		return err
+	}
+
+	err = ac.assignFixedRole(role, builtInRoles)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // Evaluate evaluates access to the given resource
 func (ac *OSSAccessControlService) Evaluate(ctx context.Context, user *models.SignedInUser, permission string, scope ...string) (bool, error) {
 	return evaluator.Evaluate(ctx, ac, user, permission, scope...)

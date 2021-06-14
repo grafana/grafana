@@ -2,6 +2,8 @@ package ossaccesscontrol
 
 import (
 	"context"
+	"fmt"
+	"sync"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -159,6 +161,129 @@ func TestUsageMetrics(t *testing.T) {
 			assert.Nil(t, err)
 
 			assert.Equal(t, tt.expectedValue, report.Metrics["stats.oss.accesscontrol.enabled.count"])
+		})
+	}
+}
+
+type assignmentTestCase struct {
+	role         accesscontrol.RoleDTO
+	builtInRoles []string
+	wantErr      error
+}
+
+func TestOSSAccessControlService_RegisterFixedRole(t *testing.T) {
+	tests := []struct {
+		name string
+		runs []assignmentTestCase
+	}{
+		{
+			name: "Successfully register role no assignments",
+			runs: []assignmentTestCase{
+				{
+					role: accesscontrol.RoleDTO{
+						Version: 1,
+						Name:    "fixed:test:test",
+					},
+				},
+			},
+		},
+		{
+			name: "Fail to override existing role",
+			runs: []assignmentTestCase{
+				{
+					role: accesscontrol.RoleDTO{
+						Version: 1,
+						Name:    "fixed:test:test",
+					},
+				},
+				{
+					role: accesscontrol.RoleDTO{
+						Version: 1,
+						Name:    "fixed:test:test",
+					},
+					wantErr: accesscontrol.ErrVersionLE,
+				},
+			},
+		},
+		{
+			name: "Successfully register and assign role",
+			runs: []assignmentTestCase{
+				{
+					role: accesscontrol.RoleDTO{
+						Version: 1,
+						Name:    "fixed:test:test",
+					},
+					builtInRoles: []string{"Viewer", "Editor", "Admin"},
+				},
+			},
+		},
+		{
+			name: "Fail to assign role",
+			runs: []assignmentTestCase{
+				{
+					role: accesscontrol.RoleDTO{
+						Version: 1,
+						Name:    "fixed:test:test",
+					},
+					builtInRoles: []string{"Viewer"},
+				},
+				{
+					role: accesscontrol.RoleDTO{
+						Version: 2,
+						Name:    "fixed:test:test",
+					},
+					builtInRoles: []string{"Viewer"},
+					wantErr:      accesscontrol.ErrBuiltinRoleAlreadyAdded,
+				},
+			},
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			ac := &OSSAccessControlService{
+				Cfg:        setting.NewCfg(),
+				UsageStats: &usageStatsMock{t: t, metricsFuncs: make([]usagestats.MetricsFunc, 0)},
+				Log:        log.New("accesscontrol-test"),
+			}
+			// Empty maps
+			accesscontrol.FixedRolesMap = sync.Map{}
+			accesscontrol.FixedRoleGrantsMap = sync.Map{}
+
+			if tc.name == "Fail to assign role" {
+
+				valueReader := func(key, value interface{}) bool {
+					k := key.(string)
+					v := value.(accesscontrol.RoleDTO)
+					fmt.Println(k, v)
+					return true
+				}
+				accesscontrol.FixedRolesMap.Range(valueReader)
+			}
+
+			for _, run := range tc.runs {
+				err := ac.RegisterFixedRole(run.role, run.builtInRoles...)
+				if run.wantErr != nil {
+					assert.ErrorIs(t, err, run.wantErr)
+					return
+				}
+				require.NoError(t, err)
+
+				//Check role has been registered
+				storedRole, ok := accesscontrol.FixedRolesMap.Load(run.role.Name)
+				assert.True(t, ok)
+
+				//Check registered role has not been altered
+				assert.Equal(t, run.role, storedRole)
+
+				//Check assignments
+				for _, br := range run.builtInRoles {
+					value, ok := accesscontrol.FixedRoleGrantsMap.Load(br)
+					assert.True(t, ok)
+
+					assigns := value.([]string)
+					assert.Contains(t, assigns, run.role.Name)
+				}
+			}
 		})
 	}
 }
