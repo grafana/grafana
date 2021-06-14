@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"testing"
@@ -12,7 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/shorturls"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/require"
 )
@@ -23,7 +23,19 @@ func TestShortURLAPIEndpoint(t *testing.T) {
 			Path: "d/TxKARsmGz/new-dashboard?orgId=1&from=1599389322894&to=1599410922894",
 		}
 
-		createShortURLScenario(t, "When calling POST on", "/api/short-urls", "/api/short-urls", cmd,
+		createResp := &models.ShortUrl{
+			Id:    1,
+			OrgId: testOrgID,
+			Uid:   "N1u6L4eGz",
+			Path:  cmd.Path,
+		}
+		service := &fakeShortURLService{
+			createShortURLFunc: func(ctx context.Context, user *models.SignedInUser, path string) (*models.ShortUrl, error) {
+				return createResp, nil
+			},
+		}
+
+		createShortURLScenario(t, "When calling POST on", "/api/short-urls", "/api/short-urls", cmd, service,
 			func(sc *scenarioContext) {
 				callCreateShortURL(sc)
 
@@ -31,7 +43,7 @@ func TestShortURLAPIEndpoint(t *testing.T) {
 				err := json.NewDecoder(sc.resp.Body).Decode(&shortUrl)
 				require.NoError(t, err)
 				require.Equal(t, 200, sc.resp.Code)
-				require.Regexp(t, "/goto/(.+)\\?orgId=(.+)", shortUrl.URL)
+				require.Equal(t, fmt.Sprintf("/goto/%s?orgId=%d", createResp.Uid, createResp.OrgId), shortUrl.URL)
 			})
 	})
 }
@@ -40,17 +52,14 @@ func callCreateShortURL(sc *scenarioContext) {
 	sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
 }
 
-func createShortURLScenario(t *testing.T, desc string, url string, routePattern string, cmd dtos.CreateShortURLCmd, fn scenarioFunc) {
+func createShortURLScenario(t *testing.T, desc string, url string, routePattern string, cmd dtos.CreateShortURLCmd, shortURLService shorturls.Service, fn scenarioFunc) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
 		defer bus.ClearBusHandlers()
 
-		sqlStore := sqlstore.InitTestDB(t)
 		hs := HTTPServer{
-			Cfg: setting.NewCfg(),
-			ShortURLService: &shorturls.ShortURLService{
-				SQLStore: sqlStore,
-			},
-			log: log.New("test"),
+			Cfg:             setting.NewCfg(),
+			ShortURLService: shortURLService,
+			log:             log.New("test"),
 		}
 
 		sc := setupScenarioContext(t, url)
@@ -65,4 +74,28 @@ func createShortURLScenario(t *testing.T, desc string, url string, routePattern 
 
 		fn(sc)
 	})
+}
+
+type fakeShortURLService struct {
+	createShortURLFunc func(ctx context.Context, user *models.SignedInUser, path string) (*models.ShortUrl, error)
+}
+
+func (s *fakeShortURLService) GetShortURLByUID(ctx context.Context, user *models.SignedInUser, uid string) (*models.ShortUrl, error) {
+	return nil, nil
+}
+
+func (s *fakeShortURLService) CreateShortURL(ctx context.Context, user *models.SignedInUser, path string) (*models.ShortUrl, error) {
+	if s.createShortURLFunc != nil {
+		return s.createShortURLFunc(ctx, user, path)
+	}
+
+	return nil, nil
+}
+
+func (s *fakeShortURLService) UpdateLastSeenAt(ctx context.Context, shortURL *models.ShortUrl) error {
+	return nil
+}
+
+func (s *fakeShortURLService) DeleteStaleShortURLs(ctx context.Context, cmd *models.DeleteShortUrlCommand) error {
+	return nil
 }

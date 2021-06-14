@@ -178,7 +178,7 @@ func (pm *PluginManager) initExternalPlugins() error {
 		if p.IsCorePlugin {
 			p.Signature = plugins.PluginSignatureInternal
 		} else {
-			metrics.SetPluginBuildInformation(p.Id, p.Type, p.Info.Version)
+			metrics.SetPluginBuildInformation(p.Id, p.Type, p.Info.Version, string(p.Signature))
 		}
 	}
 
@@ -628,7 +628,7 @@ func (s *PluginScanner) validateSignature(plugin *plugins.PluginBase) *plugins.P
 	switch plugin.Signature {
 	case plugins.PluginSignatureUnsigned:
 		if allowed := s.allowUnsigned(plugin); !allowed {
-			s.log.Debug("Plugin is unsigned", "id", plugin.Id)
+			s.log.Debug("Plugin is unsigned", "pluginID", plugin.Id)
 			s.errors = append(s.errors, fmt.Errorf("plugin '%s' is unsigned", plugin.Id))
 			return &plugins.PluginError{
 				ErrorCode: signatureMissing,
@@ -638,13 +638,13 @@ func (s *PluginScanner) validateSignature(plugin *plugins.PluginBase) *plugins.P
 			plugin.PluginDir)
 		return nil
 	case plugins.PluginSignatureInvalid:
-		s.log.Debug("Plugin '%s' has an invalid signature", plugin.Id)
+		s.log.Debug("Plugin has an invalid signature", "pluginID", plugin.Id)
 		s.errors = append(s.errors, fmt.Errorf("plugin '%s' has an invalid signature", plugin.Id))
 		return &plugins.PluginError{
 			ErrorCode: signatureInvalid,
 		}
 	case plugins.PluginSignatureModified:
-		s.log.Debug("Plugin '%s' has a modified signature", plugin.Id)
+		s.log.Debug("Plugin has a modified signature", "pluginID", plugin.Id)
 		s.errors = append(s.errors, fmt.Errorf("plugin '%s' has a modified signature", plugin.Id))
 		return &plugins.PluginError{
 			ErrorCode: signatureModified,
@@ -718,26 +718,6 @@ func (pm *PluginManager) GetPluginMarkdown(pluginId string, name string) ([]byte
 		return nil, err
 	}
 	return data, nil
-}
-
-// GetDataPlugin gets a DataPlugin with a certain name. If none is found, nil is returned.
-//nolint: staticcheck // plugins.DataPlugin deprecated
-func (pm *PluginManager) GetDataPlugin(id string) plugins.DataPlugin {
-	pm.pluginsMu.RLock()
-	defer pm.pluginsMu.RUnlock()
-
-	if p := pm.GetDataSource(id); p != nil && p.CanHandleDataQueries() {
-		return p
-	}
-
-	// XXX: Might other plugins implement DataPlugin?
-
-	p := pm.BackendPluginManager.GetDataPlugin(id)
-	if p != nil {
-		return p.(plugins.DataPlugin)
-	}
-
-	return nil
 }
 
 func (pm *PluginManager) StaticRoutes() []*plugins.PluginStaticRoute {

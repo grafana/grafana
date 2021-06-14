@@ -28,6 +28,7 @@ import { mergeMap } from 'rxjs/operators';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { getAuthType, getAzureCloud } from '../credentials';
 import { getManagementApiRoute } from '../api/routes';
+import { resourceTypeDisplayNames } from '../azureMetadata';
 
 const defaultDropdownValue = 'select';
 
@@ -392,7 +393,10 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
           });
         }
 
-        return result;
+        return result.map((v) => ({
+          value: v.value,
+          text: resourceTypeDisplayNames[v.value.toLowerCase()] || v.value,
+        }));
       });
   }
 
