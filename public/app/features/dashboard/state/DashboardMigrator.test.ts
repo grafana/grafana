@@ -1276,7 +1276,7 @@ describe('DashboardModel', () => {
               {
                 op: '=',
                 text: '50',
-                value: '30',
+                value: '40',
               },
             ],
           },
@@ -1290,21 +1290,11 @@ describe('DashboardModel', () => {
                 "color": undefined,
                 "text": "test",
               },
-            },
-            "type": "value",
-          },
-          Object {
-            "options": Object {
               "30": Object {
                 "color": undefined,
                 "text": "test1",
               },
-            },
-            "type": "value",
-          },
-          Object {
-            "options": Object {
-              "30": Object {
+              "40": Object {
                 "color": "orange",
                 "text": "50",
               },
