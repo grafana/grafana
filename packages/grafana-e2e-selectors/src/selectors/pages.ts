@@ -32,6 +32,8 @@ export const Pages = {
   AddDashboard: {
     url: '/dashboard/new',
     addNewPanel: 'Add new panel',
+    addNewRow: 'Add new row',
+    addNewPanelLibrary: 'Add new panel from panel library',
   },
   Dashboard: {
     url: (uid: string) => `/d/${uid}`,
