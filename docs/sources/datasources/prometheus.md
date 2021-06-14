@@ -211,9 +211,9 @@ datasources:
     type: prometheus
     # Access mode - proxy (server in the UI) or direct (browser in the UI).
     access: proxy
-    httpMethod: POST
     url: http://localhost:9090
     jsonData:
+      httpMethod: POST
       exemplarTraceIdDestinations:
         # Field with internal link pointing to data source in Grafana.
         # datasourceUid value can be anything, but it should be unique across all defined data source uids.
