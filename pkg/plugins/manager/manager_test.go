@@ -376,7 +376,7 @@ func TestPluginManager_Init(t *testing.T) {
 		t.Cleanup(func() {
 			setting.AppUrl = origAppURL
 		})
-		setting.AppUrl = "http://localhost:3000/"
+		setting.AppUrl = defaultAppURL
 
 		// this needs to be an absolute path otherwise the plugin's dir field will not
 		// provide enough information to compute os.Lstat when verifying the symlink

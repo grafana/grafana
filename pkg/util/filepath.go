@@ -6,7 +6,6 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"syscall"
 )
 
 // ErrWalkSkipDir is the Error returned when we want to skip descending into a directory
@@ -72,21 +71,12 @@ func walk(path string, info os.FileInfo, resolvedPath string, symlinkPathsFollow
 				symlinkPathsFollowed[path2] = true
 			}
 			info2, err := os.Lstat(path2)
-			if err == nil {
-				return walk(path, info2, path2, symlinkPathsFollowed, walkFn)
-			}
-			var pathErr *os.PathError
-			if errors.As(err, &pathErr) && errors.Is(err, syscall.ENOENT) {
-				var err2 error
-				// try to resolve relative symlink path manually
-				absSymlinkPath := filepath.Join(filepath.Dir(resolvedPath), path2)
-				info2, err2 = os.Lstat(absSymlinkPath)
-				if err2 != nil {
-					return err
-				}
+			if err != nil {
+				return err
 			}
 			return walk(path, info2, path2, symlinkPathsFollowed, walkFn)
 		}
+
 		list, err := ioutil.ReadDir(path)
 		if err != nil {
 			return walkFn(resolvedPath, info, err)
