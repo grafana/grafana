@@ -1,7 +1,7 @@
 import { cloneDeep } from 'lodash';
 import { Observable, of } from 'rxjs';
 import { AnnotationEvent, AnnotationQuery, DataFrame, DataFrameView } from '@grafana/data';
-import { toDataQueryError } from '@grafana/runtime';
+import { config, toDataQueryError } from '@grafana/runtime';
 
 import { dispatch } from 'app/store/store';
 import { createErrorNotification } from '../../../../core/copy/appNotification';
@@ -55,7 +55,7 @@ export function translateQueryResult(annotation: AnnotationQuery, results: Annot
 
   for (const item of results) {
     item.source = annotation;
-    item.color = annotation.iconColor;
+    item.color = config.theme2.visualization.getColorByName(annotation.iconColor);
     item.type = annotation.name;
     item.isRegion = Boolean(item.timeEnd && item.time !== item.timeEnd);
 
