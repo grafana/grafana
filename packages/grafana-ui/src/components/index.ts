@@ -24,6 +24,8 @@ export { RefreshPicker, defaultIntervals } from './RefreshPicker/RefreshPicker';
 export { TimeRangePicker } from './TimePicker/TimeRangePicker';
 export { TimeOfDayPicker } from './TimePicker/TimeOfDayPicker';
 export { TimeZonePicker } from './TimePicker/TimeZonePicker';
+export { DatePicker, DatePickerProps } from './DatePicker/DatePicker';
+export { DatePickerWithInput, DatePickerWithInputProps } from './DatePickerWithInput/DatePickerWithInput';
 export { List } from './List/List';
 export { TagsInput } from './TagsInput/TagsInput';
 export { Pagination } from './Pagination/Pagination';
