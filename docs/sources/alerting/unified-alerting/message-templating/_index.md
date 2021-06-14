@@ -76,7 +76,7 @@ Here is an example of a template to render a single alert:
     Silence alert: {{ .SilenceURL }}
   {{ end }}
   {{ if gt (len .DashboardURL ) 0 }}
-    Go to dashboard: {{ .Dashboard URL }}
+    Go to dashboard: {{ .DashboardURL }}
   {{ end }}
 {{ end }}
 ```
