@@ -69,7 +69,7 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/admin/users/edit/:id", authorize(reqGrafanaAdmin, accesscontrol.ActionUsersRead), hs.Index)
 	r.Get("/admin/orgs", reqGrafanaAdmin, hs.Index)
 	r.Get("/admin/orgs/edit/:id", reqGrafanaAdmin, hs.Index)
-	r.Get("/admin/stats", reqGrafanaAdmin, hs.Index)
+	r.Get("/admin/stats", authorize(reqGrafanaAdmin, accesscontrol.ActionStatsRead), hs.Index)
 	r.Get("/admin/ldap", authorize(reqGrafanaAdmin, accesscontrol.ActionLDAPStatusRead), hs.Index)
 
 	r.Get("/styleguide", reqSignedIn, hs.Index)
@@ -434,7 +434,7 @@ func (hs *HTTPServer) registerRoutes() {
 	// admin api
 	r.Group("/api/admin", func(adminRoute routing.RouteRegister) {
 		adminRoute.Get("/settings", reqGrafanaAdmin, routing.Wrap(hs.AdminGetSettings))
-		adminRoute.Get("/stats", reqGrafanaAdmin, routing.Wrap(AdminGetStats))
+		adminRoute.Get("/stats", authorize(reqGrafanaAdmin, accesscontrol.ActionStatsRead), routing.Wrap(AdminGetStats))
 		adminRoute.Post("/pause-all-alerts", reqGrafanaAdmin, bind(dtos.PauseAllAlertsCommand{}), routing.Wrap(PauseAllAlerts))
 
 		adminRoute.Post("/provisioning/dashboards/reload", reqGrafanaAdmin, routing.Wrap(hs.AdminProvisioningReloadDashboards))
