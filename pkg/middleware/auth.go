@@ -162,7 +162,7 @@ func SnapshotPublicModeOrSignedIn(cfg *setting.Cfg) macaron.Handler {
 }
 
 func ReqNotSignedIn(c *models.ReqContext) {
-	if c.IsSignedIn && !c.IsAnonymous {
+	if c.IsSignedIn {
 		c.Redirect(setting.AppSubUrl + "/")
 	}
 }
