@@ -10,7 +10,7 @@ Setting the `ngalert` feature toggle enables the new Grafana 8 alerting system.
 
 >**Note:** It is recommended to backup Grafana's database before enabling this feature. If you are using PostgreSQL as the backend data source, then the minimum required version is 9.5.
 
-At startup, when the feature toggle is enabled, Grafana dashboard alerting is disabled and existing dashboard alerts are migrated into a format that is compatible with the Grafana 8 alerting system. You can view these migrated rules, alongside any new alerts you create after the migration, from the Alerting page of your Grafana installation.
+At startup, when [the feature toggle is enabled]({{< relref "../../administration/configuration.md">}}#feature_toggles), Grafana dashboard alerting is disabled and existing dashboard alerts are migrated into a format that is compatible with the Grafana 8 alerting system. You can view these migrated rules, alongside any new alerts you create after the migration, from the Alerting page of your Grafana installation.
 
 Read and write access to dashboard alerts used to be governed by the dashboard and folder permissions under they lived. Grafana 8 Alerts also live under folders and inherite their permissions. During the migration dashboard alert permissions are matched to the new rules permissions as follows:
 
