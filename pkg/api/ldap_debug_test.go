@@ -581,16 +581,8 @@ func TestPostSyncUserWithLDAPAPIEndpoint_WhenUserNotInLDAP(t *testing.T) {
 // Access control tests for ldap endpoints
 // ***
 
-type ldapAccessControlTestCase struct {
-	expectedCode int
-	desc         string
-	url          string
-	method       string
-	permissions  []*accesscontrol.Permission
-}
-
 func TestLDAP_AccessControl(t *testing.T) {
-	tests := []ldapAccessControlTestCase{
+	tests := []accessControlTestCase{
 		{
 			url:          "/api/admin/ldap/reload",
 			method:       http.MethodPost,
@@ -667,8 +659,6 @@ func TestLDAP_AccessControl(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
-			t.Helper()
-
 			enabled := setting.LDAPEnabled
 			configFile := setting.LDAPConfigFile
 
@@ -685,7 +675,7 @@ func TestLDAP_AccessControl(t *testing.T) {
 			cfg := setting.NewCfg()
 			cfg.LDAPEnabled = true
 
-			sc := setupAccessControlScenarioContext(t, cfg, test.url, test.permissions)
+			sc, _ := setupAccessControlScenarioContext(t, cfg, test.url, test.permissions)
 			sc.resp = httptest.NewRecorder()
 			sc.req, err = http.NewRequest(test.method, test.url, nil)
 			assert.NoError(t, err)
