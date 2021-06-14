@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
-import { connect } from 'react-redux';
+import { connect, ConnectedProps } from 'react-redux';
 import { NavModel } from '@grafana/data';
 import { getNavModel } from 'app/core/selectors/navModel';
 import config from 'app/core/config';
@@ -9,16 +9,7 @@ import { UserProfile } from './UserProfile';
 import { UserPermissions } from './UserPermissions';
 import { UserSessions } from './UserSessions';
 import { UserLdapSyncInfo } from './UserLdapSyncInfo';
-import {
-  StoreState,
-  UserDTO,
-  UserOrg,
-  UserSession,
-  SyncInfo,
-  UserAdminError,
-  AccessControlAction,
-  Dethunked,
-} from 'app/types';
+import { StoreState, UserDTO, UserOrg, UserSession, SyncInfo, UserAdminError, AccessControlAction } from 'app/types';
 import {
   loadAdminUserPage,
   revokeSession,
@@ -38,7 +29,7 @@ import { UserOrgs } from './UserOrgs';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { contextSrv } from 'app/core/core';
 
-interface Props extends GrafanaRouteComponentProps<{ id: string }> {
+interface OwnProps extends GrafanaRouteComponentProps<{ id: string }> {
   navModel: NavModel;
   user?: UserDTO;
   orgs: UserOrg[];
@@ -46,20 +37,6 @@ interface Props extends GrafanaRouteComponentProps<{ id: string }> {
   ldapSyncInfo?: SyncInfo;
   isLoading: boolean;
   error?: UserAdminError;
-
-  loadAdminUserPage: Dethunked<typeof loadAdminUserPage>;
-  revokeSession: Dethunked<typeof revokeSession>;
-  revokeAllSessions: Dethunked<typeof revokeAllSessions>;
-  updateUser: Dethunked<typeof updateUser>;
-  setUserPassword: Dethunked<typeof setUserPassword>;
-  disableUser: Dethunked<typeof disableUser>;
-  enableUser: Dethunked<typeof enableUser>;
-  deleteUser: Dethunked<typeof deleteUser>;
-  updateUserPermissions: Dethunked<typeof updateUserPermissions>;
-  addOrgUser: Dethunked<typeof addOrgUser>;
-  updateOrgUserRole: Dethunked<typeof updateOrgUserRole>;
-  deleteOrgUser: Dethunked<typeof deleteOrgUser>;
-  syncLdapUser: Dethunked<typeof syncLdapUser>;
 }
 
 export class UserAdminPage extends PureComponent<Props> {
@@ -198,4 +175,6 @@ const mapDispatchToProps = {
   syncLdapUser,
 };
 
-export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(UserAdminPage));
+const connector = connect(mapStateToProps, mapDispatchToProps);
+type Props = OwnProps & ConnectedProps<typeof connector>;
+export default hot(module)(connector(UserAdminPage));

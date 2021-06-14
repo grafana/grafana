@@ -17,15 +17,9 @@ import { LdapState, LdapUser, UserAdminState, UserDTO, UserListAdminState } from
 
 const makeInitialLdapState = (): LdapState => ({
   connectionInfo: [],
-  syncInfo: undefined,
-  user: undefined,
-  ldapError: undefined,
-  connectionError: undefined,
-  userError: undefined,
 });
 
 const makeInitialUserAdminState = (): UserAdminState => ({
-  user: undefined,
   sessions: [],
   orgs: [],
   isLoading: true,
