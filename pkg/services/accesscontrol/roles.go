@@ -44,6 +44,7 @@ var settingsAdminReadRole = RoleDTO{
 	Permissions: []Permission{
 		{
 			Action: ActionSettingsRead,
+			Scope:  ScopeSettingsAll,
 		},
 	},
 }

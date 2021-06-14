@@ -89,8 +89,12 @@ const (
 	// Global Scopes
 	ScopeGlobalUsersAll = "global:users:*"
 
+	// Users scopes
 	ScopeUsersSelf = "users:self"
 	ScopeUsersAll  = "users:*"
+
+	// Settings scope
+	ScopeSettingsAll = "settings:**"
 
 	// Services Scopes
 	ScopeServicesAll = "service:*"
