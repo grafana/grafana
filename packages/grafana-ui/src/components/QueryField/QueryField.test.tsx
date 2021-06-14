@@ -1,6 +1,6 @@
 import React from 'react';
 import { shallow } from 'enzyme';
-import { QueryField } from './QueryField';
+import UnthemedQueryField, { QueryField } from './QueryField';
 import { Editor } from 'slate';
 
 describe('<QueryField />', () => {
@@ -24,7 +24,7 @@ describe('<QueryField />', () => {
     const wrapper = shallow(
       <QueryField query="my query" onTypeahead={jest.fn()} onRunQuery={onRun} portalOrigin="mock-origin" />
     );
-    const field = wrapper.instance() as QueryField;
+    const field = wrapper.instance() as UnthemedQueryField;
     expect(onRun.mock.calls.length).toBe(0);
     field.handleBlur(new Event('bogus'), new Editor({}), () => {});
     expect(onRun.mock.calls.length).toBe(1);
@@ -35,7 +35,7 @@ describe('<QueryField />', () => {
     const wrapper = shallow(
       <QueryField query={`my\r clean query `} onTypeahead={jest.fn()} onChange={onChange} portalOrigin="mock-origin" />
     );
-    const field = wrapper.instance() as QueryField;
+    const field = wrapper.instance() as UnthemedQueryField;
     field.runOnChange();
     expect(onChange.mock.calls.length).toBe(1);
     expect(onChange.mock.calls[0][0]).toBe('my clean query ');
@@ -53,7 +53,7 @@ describe('<QueryField />', () => {
         portalOrigin="mock-origin"
       />
     );
-    const field = wrapper.instance() as QueryField;
+    const field = wrapper.instance() as UnthemedQueryField;
     expect(onBlur.mock.calls.length).toBe(0);
     expect(onRun.mock.calls.length).toBe(0);
     field.handleBlur(new Event('bogus'), new Editor({}), () => {});
