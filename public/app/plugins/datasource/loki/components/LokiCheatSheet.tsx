@@ -1,7 +1,8 @@
 import React, { PureComponent } from 'react';
 import { shuffle } from 'lodash';
-import { QueryEditorHelpProps, DataQuery } from '@grafana/data';
+import { QueryEditorHelpProps } from '@grafana/data';
 import LokiLanguageProvider from '../language_provider';
+import { LokiQuery } from '../types';
 
 const DEFAULT_EXAMPLES = ['{job="default/prometheus"}'];
 const PREFERRED_LABELS = ['job', 'app', 'k8s_app'];
@@ -32,7 +33,7 @@ const LOGQL_EXAMPLES = [
   },
 ];
 
-export default class LokiCheatSheet extends PureComponent<QueryEditorHelpProps, { userExamples: string[] }> {
+export default class LokiCheatSheet extends PureComponent<QueryEditorHelpProps<LokiQuery>, { userExamples: string[] }> {
   userLabelTimer: NodeJS.Timeout;
   state = {
     userExamples: DEFAULT_EXAMPLES,
@@ -72,11 +73,7 @@ export default class LokiCheatSheet extends PureComponent<QueryEditorHelpProps, 
     const { onClickExample } = this.props;
 
     return (
-      <div
-        className="cheat-sheet-item__example"
-        key={expr}
-        onClick={(e) => onClickExample({ refId: 'A', expr } as DataQuery)}
-      >
+      <div className="cheat-sheet-item__example" key={expr} onClick={(e) => onClickExample({ refId: 'A', expr })}>
         <code>{expr}</code>
       </div>
     );

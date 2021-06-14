@@ -15,7 +15,7 @@ import { TimeZoneGroup } from './TimeZonePicker/TimeZoneGroup';
 import { formatUtcOffset } from './TimeZonePicker/TimeZoneOffset';
 
 export interface Props {
-  onChange: (timeZone: TimeZone | undefined) => void;
+  onChange: (timeZone?: TimeZone) => void;
   value?: TimeZone;
   width?: number;
   autoFocus?: boolean;
