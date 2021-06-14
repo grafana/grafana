@@ -213,10 +213,6 @@ const alpha = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 // getNewRefID finds first capital letter in the alphabet not in use
 // to use for a new RefID. It errors if it runs out of letters.
-//
-// TODO: Research if there is a limit. If so enforce is by
-// number of queries not letters. If no limit generate more types
-// of refIDs.
 func getNewRefID(refIDs map[string][]int) (string, error) {
 	for _, r := range alpha {
 		sR := string(r)
