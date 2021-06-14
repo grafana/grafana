@@ -414,7 +414,6 @@ func TestPluginManager_Init(t *testing.T) {
 		require.Empty(t, pm.scanningErrors)
 		const pluginID = "test"
 		assert.NotNil(t, pm.plugins[pluginID])
-		assert.NotNil(t, pm.plugins[(pluginID)])
 	})
 }
 
