@@ -10,6 +10,89 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+type getSettingsTestCase struct {
+	desc         string
+	expectedCode int
+	expectedBody string
+	permissions  []*accesscontrol.Permission
+}
+
+func TestAPI_AdminGetSettings(t *testing.T) {
+	tests := []getSettingsTestCase{
+		{
+			desc:         "should return all settings",
+			expectedCode: http.StatusOK,
+			expectedBody: `{"auth.proxy":{"enable_login_token":"false","enabled":"false"},"auth.saml":{"allow_idp_initiated":"false","enabled":"true"}}`,
+			permissions: []*accesscontrol.Permission{
+				{
+					Action: accesscontrol.ActionSettingsRead,
+					Scope:  accesscontrol.ScopeSettingsAll,
+				},
+			},
+		},
+		{
+			desc:         "should only return auth.saml settings",
+			expectedCode: http.StatusOK,
+			expectedBody: `{"auth.saml":{"allow_idp_initiated":"false","enabled":"true"}}`,
+			permissions: []*accesscontrol.Permission{
+				{
+					Action: accesscontrol.ActionSettingsRead,
+					Scope:  "settings:auth.saml:*",
+				},
+			},
+		},
+		{
+			desc:         "should only partial properties from auth.saml and auth.proxy settings",
+			expectedCode: http.StatusOK,
+			expectedBody: `{"auth.proxy":{"enable_login_token":"false"},"auth.saml":{"enabled":"true"}}`,
+			permissions: []*accesscontrol.Permission{
+				{
+					Action: accesscontrol.ActionSettingsRead,
+					Scope:  "settings:auth.saml:enabled",
+				},
+				{
+					Action: accesscontrol.ActionSettingsRead,
+					Scope:  "settings:auth.proxy:enable_login_token",
+				},
+			},
+		},
+	}
+
+	cfg := setting.NewCfg()
+	//seed sections and keys
+	cfg.Raw.DeleteSection("DEFAULT")
+	saml, err := cfg.Raw.NewSection("auth.saml")
+	assert.NoError(t, err)
+	_, err = saml.NewKey("enabled", "true")
+	assert.NoError(t, err)
+	_, err = saml.NewKey("allow_idp_initiated", "false")
+	assert.NoError(t, err)
+
+	proxy, err := cfg.Raw.NewSection("auth.proxy")
+	assert.NoError(t, err)
+	_, err = proxy.NewKey("enabled", "false")
+	assert.NoError(t, err)
+	_, err = proxy.NewKey("enable_login_token", "false")
+	assert.NoError(t, err)
+
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			sc, hs := setupAccessControlScenarioContext(t, cfg, "/api/admin/settings", test.permissions)
+			hs.SettingsProvider = &setting.OSSImpl{Cfg: cfg}
+
+			sc.resp = httptest.NewRecorder()
+			var err error
+			sc.req, err = http.NewRequest(http.MethodGet, "/api/admin/settings", nil)
+			assert.NoError(t, err)
+
+			sc.exec()
+
+			assert.Equal(t, test.expectedCode, sc.resp.Code)
+			assert.Equal(t, test.expectedBody, sc.resp.Body.String())
+		})
+	}
+}
+
 func TestAdmin_AccessControl(t *testing.T) {
 	tests := []accessControlTestCase{
 		{
