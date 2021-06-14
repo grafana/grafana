@@ -53,6 +53,34 @@ describe('preparePlotData', () => {
     `);
   });
 
+  it('converts NaN and Infinty to nulls ', () => {
+    const df = new MutableDataFrame({
+      fields: [
+        { name: 'time', type: FieldType.time, values: [995, 9996, 9997, 9998, 9999] },
+        { name: 'a', values: [-10, NaN, 10, -Infinity, +Infinity] },
+      ],
+    });
+
+    expect(preparePlotData(df)).toMatchInlineSnapshot(`
+      Array [
+        Array [
+          995,
+          9996,
+          9997,
+          9998,
+          9999,
+        ],
+        Array [
+          -10,
+          null,
+          10,
+          null,
+          null,
+        ],
+      ]
+    `);
+  });
+
   describe('stacking', () => {
     it('none', () => {
       const df = new MutableDataFrame({
