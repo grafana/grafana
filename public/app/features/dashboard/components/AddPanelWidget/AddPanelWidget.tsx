@@ -150,13 +150,17 @@ export const AddPanelWidgetUnconnected: React.FC<Props> = ({ panel, dashboard })
                 <Icon name="file-blank" size="xl" />
                 Add an empty panel
               </div>
-              <div className={styles.rowGap} onClick={onCreateNewRow}>
+              <div
+                className={styles.rowGap}
+                onClick={onCreateNewRow}
+                aria-label={selectors.pages.AddDashboard.addNewRow}
+              >
                 <Icon name="wrap-text" size="xl" />
                 Add a new row
               </div>
             </div>
             <div className={styles.actionsRow}>
-              <div onClick={() => setAddPanelView(true)}>
+              <div onClick={() => setAddPanelView(true)} aria-label={selectors.pages.AddDashboard.addNewPanelLibrary}>
                 <Icon name="book-open" size="xl" />
                 Add a panel from the panel library
               </div>
