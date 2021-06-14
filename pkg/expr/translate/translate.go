@@ -294,7 +294,6 @@ func getNewRefID(refIDs map[string][]int) (string, error) {
 			continue
 		}
 		return sR, nil
-
 	}
 	return "", fmt.Errorf("failed to generate unique RefID")
 }
