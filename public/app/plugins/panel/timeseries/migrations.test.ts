@@ -1,7 +1,16 @@
-import { PanelModel } from '@grafana/data';
+import { PanelModel, FieldConfigSource } from '@grafana/data';
 import { graphPanelChangedHandler } from './migrations';
 
 describe('Graph Migrations', () => {
+  let prevFieldConfig: FieldConfigSource;
+
+  beforeEach(() => {
+    prevFieldConfig = {
+      defaults: {},
+      overrides: [],
+    };
+  });
+
   it('simple bars', () => {
     const old: any = {
       angular: {
@@ -9,7 +18,7 @@ describe('Graph Migrations', () => {
       },
     };
     const panel = {} as PanelModel;
-    panel.options = graphPanelChangedHandler(panel, 'graph', old);
+    panel.options = graphPanelChangedHandler(panel, 'graph', old, prevFieldConfig);
     expect(panel).toMatchSnapshot();
   });
 
@@ -18,7 +27,16 @@ describe('Graph Migrations', () => {
       angular: stairscase,
     };
     const panel = {} as PanelModel;
-    panel.options = graphPanelChangedHandler(panel, 'graph', old);
+
+    prevFieldConfig = {
+      defaults: {
+        custom: {},
+        unit: 'areaF2',
+        displayName: 'DISPLAY NAME',
+      },
+      overrides: [],
+    };
+    panel.options = graphPanelChangedHandler(panel, 'graph', old, prevFieldConfig);
     expect(panel).toMatchSnapshot();
   });
 
@@ -27,7 +45,7 @@ describe('Graph Migrations', () => {
       angular: twoYAxis,
     };
     const panel = {} as PanelModel;
-    panel.options = graphPanelChangedHandler(panel, 'graph', old);
+    panel.options = graphPanelChangedHandler(panel, 'graph', old, prevFieldConfig);
     expect(panel).toMatchSnapshot();
   });
 
@@ -36,7 +54,7 @@ describe('Graph Migrations', () => {
       angular: stepedColordLine,
     };
     const panel = {} as PanelModel;
-    panel.options = graphPanelChangedHandler(panel, 'graph', old);
+    panel.options = graphPanelChangedHandler(panel, 'graph', old, prevFieldConfig);
     expect(panel).toMatchSnapshot();
   });
 
@@ -56,7 +74,7 @@ describe('Graph Migrations', () => {
         },
       };
       const panel = {} as PanelModel;
-      panel.options = graphPanelChangedHandler(panel, 'graph', old);
+      panel.options = graphPanelChangedHandler(panel, 'graph', old, prevFieldConfig);
       expect(panel).toMatchSnapshot();
     });
     test('with single value', () => {
@@ -74,7 +92,7 @@ describe('Graph Migrations', () => {
         },
       };
       const panel = {} as PanelModel;
-      panel.options = graphPanelChangedHandler(panel, 'graph', old);
+      panel.options = graphPanelChangedHandler(panel, 'graph', old, prevFieldConfig);
       expect(panel).toMatchSnapshot();
     });
     test('with multiple values', () => {
@@ -82,7 +100,7 @@ describe('Graph Migrations', () => {
         angular: legend,
       };
       const panel = {} as PanelModel;
-      panel.options = graphPanelChangedHandler(panel, 'graph', old);
+      panel.options = graphPanelChangedHandler(panel, 'graph', old, prevFieldConfig);
       expect(panel).toMatchSnapshot();
     });
   });
@@ -93,7 +111,7 @@ describe('Graph Migrations', () => {
         angular: stacking,
       };
       const panel = {} as PanelModel;
-      panel.options = graphPanelChangedHandler(panel, 'graph', old);
+      panel.options = graphPanelChangedHandler(panel, 'graph', old, prevFieldConfig);
       expect(panel).toMatchSnapshot();
     });
     test('groups', () => {
@@ -101,7 +119,7 @@ describe('Graph Migrations', () => {
         angular: stackingGroups,
       };
       const panel = {} as PanelModel;
-      panel.options = graphPanelChangedHandler(panel, 'graph', old);
+      panel.options = graphPanelChangedHandler(panel, 'graph', old, prevFieldConfig);
       expect(panel).toMatchSnapshot();
     });
   });
@@ -131,7 +149,7 @@ describe('Graph Migrations', () => {
         },
       };
       const panel = {} as PanelModel;
-      panel.options = graphPanelChangedHandler(panel, 'graph', old);
+      panel.options = graphPanelChangedHandler(panel, 'graph', old, prevFieldConfig);
       expect(panel.fieldConfig.defaults.custom.thresholdsStyle.mode).toBe('area');
       expect(panel.fieldConfig.defaults.thresholds?.steps).toMatchInlineSnapshot(`
         Array [
@@ -176,7 +194,7 @@ describe('Graph Migrations', () => {
       };
 
       const panel = {} as PanelModel;
-      panel.options = graphPanelChangedHandler(panel, 'graph', old);
+      panel.options = graphPanelChangedHandler(panel, 'graph', old, prevFieldConfig);
       expect(panel.fieldConfig.defaults.custom.thresholdsStyle.mode).toBe('line+area');
       expect(panel.fieldConfig.defaults.thresholds?.steps).toMatchInlineSnapshot(`
         Array [
@@ -213,7 +231,7 @@ describe('Graph Migrations', () => {
       };
 
       const panel = {} as PanelModel;
-      panel.options = graphPanelChangedHandler(panel, 'graph', old);
+      panel.options = graphPanelChangedHandler(panel, 'graph', old, prevFieldConfig);
       expect(panel.fieldConfig.defaults.custom.thresholdsStyle.mode).toBe('line+area');
       expect(panel.fieldConfig.defaults.thresholds?.steps).toMatchInlineSnapshot(`
         Array [
@@ -266,7 +284,7 @@ describe('Graph Migrations', () => {
         ],
       };
 
-      panel.options = graphPanelChangedHandler(panel, 'graph', {});
+      panel.options = graphPanelChangedHandler(panel, 'graph', {}, prevFieldConfig);
       expect(panel.fieldConfig.defaults.custom.hideFrom).toEqual({ viz: false, legend: false, tooltip: false });
       expect(panel.fieldConfig.overrides[0].properties[0].value).toEqual({ viz: true, legend: false, tooltip: false });
     });
@@ -274,14 +292,6 @@ describe('Graph Migrations', () => {
 });
 
 const stairscase = {
-  fieldConfig: {
-    defaults: {
-      custom: {},
-      unit: 'areaF2',
-      displayName: 'DISPLAY NAME',
-    },
-    overrides: [],
-  },
   aliasColors: {},
   dashLength: 10,
   fill: 5,
