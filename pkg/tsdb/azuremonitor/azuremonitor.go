@@ -195,7 +195,7 @@ func (s *Service) Init() error {
 		CallResourceHandler: httpadapter.New(resourceMux),
 	})
 
-	if err := s.BackendPluginManager.RegisterAndStart(context.Background(), dsName, factory); err != nil {
+	if err := s.BackendPluginManager.Register(dsName, factory); err != nil {
 		azlog.Error("Failed to register plugin", "error", err)
 	}
 	return nil

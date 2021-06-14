@@ -90,15 +90,6 @@ func (s *Service) getDSAssetsFromHTTPReq(req *http.Request, dsName string) (data
 func (s *Service) resourceHandler(rw http.ResponseWriter, req *http.Request) {
 	azlog.Debug("Received resource call", "url", req.URL.String(), "method", req.Method)
 
-	if req.Method != http.MethodGet {
-		_, err := rw.Write([]byte(fmt.Sprintf("unexpected method %s", req.Method)))
-		if err != nil {
-			azlog.Error("Unable to write HTTP response", "error", err)
-		}
-		rw.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
 	dsName, newPath, err := parseResourcePath(req.URL.Path)
 	if err != nil {
 		_, err := rw.Write([]byte(err.Error()))
