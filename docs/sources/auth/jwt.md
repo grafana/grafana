@@ -69,7 +69,7 @@ cache_ttl = 60m
 
 Assuming you trusted an issuer (see Validate claims below) for security reasons, you can let `jwk_set_url` (and `jwk_set_file`, `key_file`) empty. In this case, the OIDC JSON config schema
 located at `[iss]/.well-know/openid-configuration` will be used and the JSON filed "jwks_uri" will be
-used to fill `jwk_set_url` automaticaly.
+used to fill `jwk_set_url` automatically.
 
 ### Verify token using a JSON Web Key Set loaded from JSON file
 
