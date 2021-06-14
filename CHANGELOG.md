@@ -1,4 +1,21 @@
 
+<!-- 8.0.2 START -->
+
+# 8.0.2 (2021-06-14)
+
+### Features and enhancements
+
+* **Datasource:** Add support for max_conns_per_host in dataproxy settings. [#35520](https://github.com/grafana/grafana/pull/35520), [@jvrplmlmn](https://github.com/jvrplmlmn)
+
+### Bug fixes
+
+* **Configuration:** Fix changing org preferences in FireFox. [#35549](https://github.com/grafana/grafana/pull/35549), [@hugohaggmark](https://github.com/hugohaggmark)
+* **PieChart:** Fix legend dimension limits. [#35563](https://github.com/grafana/grafana/pull/35563), [@torkelo](https://github.com/torkelo)
+* **Postgres/MySQL/MSSQL:** Fix panic in concurrent map writes. [#35510](https://github.com/grafana/grafana/pull/35510), [@marefr](https://github.com/marefr)
+* **Variables:** Hide default data source if missing from regex. [#35561](https://github.com/grafana/grafana/pull/35561), [@hugohaggmark](https://github.com/hugohaggmark)
+
+<!-- 8.0.2 END -->
+
 <!-- 8.0.1 START -->
 
 # 8.0.1 (2021-06-10)
