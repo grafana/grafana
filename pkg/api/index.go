@@ -214,16 +214,13 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 					Text: "Contact points", Id: "receivers", Url: hs.Cfg.AppSubURL + "/alerting/notifications",
 					Icon: "comment-alt-share",
 				})
+				alertChildNavs = append(alertChildNavs, &dtos.NavLink{Text: "Notification policies", Id: "am-routes", Url: hs.Cfg.AppSubURL + "/alerting/routes", Icon: "sitemap"})
 			} else {
 				alertChildNavs = append(alertChildNavs, &dtos.NavLink{
 					Text: "Notification channels", Id: "channels", Url: hs.Cfg.AppSubURL + "/alerting/notifications",
 					Icon: "comment-alt-share",
 				})
 			}
-		}
-
-		if c.OrgRole == models.ROLE_ADMIN && hs.Cfg.IsNgAlertEnabled() {
-			alertChildNavs = append(alertChildNavs, &dtos.NavLink{Text: "Routes", Id: "am-routes", Url: hs.Cfg.AppSubURL + "/alerting/routes", Icon: "sitemap"})
 		}
 
 		navTree = append(navTree, &dtos.NavLink{
@@ -366,6 +363,11 @@ func (hs *HTTPServer) buildAdminNavLinks(c *models.ReqContext) []*dtos.NavLink {
 		adminNavLinks = append(adminNavLinks, &dtos.NavLink{
 			Text: "Stats", Id: "server-stats", Url: hs.Cfg.AppSubURL + "/admin/stats", Icon: "graph-bar",
 		})
+		if hs.Cfg.PluginAdminEnabled {
+			adminNavLinks = append(adminNavLinks, &dtos.NavLink{
+				Text: "Plugin catalog", Id: "plugin-catalog", Url: hs.Cfg.AppSubURL + "/a/grafana-plugin-admin-app", Icon: "plug",
+			})
+		}
 	}
 
 	if hs.Cfg.LDAPEnabled && hasAccess(ac.ReqGrafanaAdmin, ac.ActionLDAPStatusRead) {

@@ -17,6 +17,8 @@ var (
 	ErrRuleGroupNamespaceNotFound = errors.New("rule group not found under this namespace")
 	// ErrAlertRuleFailedValidation
 	ErrAlertRuleFailedValidation = errors.New("invalid alert rule")
+	// ErrAlertRuleUniqueConstraintViolation
+	ErrAlertRuleUniqueConstraintViolation = errors.New("a conflicting alert rule is found: rule title under the same organisation and folder should be unique")
 )
 
 type NoDataState string
@@ -26,10 +28,9 @@ func (noDataState NoDataState) String() string {
 }
 
 const (
-	Alerting      NoDataState = "Alerting"
-	NoData        NoDataState = "NoData"
-	KeepLastState NoDataState = "KeepLastState"
-	OK            NoDataState = "OK"
+	Alerting NoDataState = "Alerting"
+	NoData   NoDataState = "NoData"
+	OK       NoDataState = "OK"
 )
 
 type ExecutionErrorState string
@@ -39,8 +40,7 @@ func (executionErrorState ExecutionErrorState) String() string {
 }
 
 const (
-	AlertingErrState      ExecutionErrorState = "Alerting"
-	KeepLastStateErrState ExecutionErrorState = "KeepLastState"
+	AlertingErrState ExecutionErrorState = "Alerting"
 )
 
 const (

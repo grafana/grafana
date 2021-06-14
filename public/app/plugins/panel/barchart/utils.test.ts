@@ -91,6 +91,9 @@ describe('BarChart utils', () => {
       tooltip: {
         mode: TooltipDisplayMode.None,
       },
+      text: {
+        valueSize: 10,
+      },
     };
 
     it.each([VizOrientation.Auto, VizOrientation.Horizontal, VizOrientation.Vertical])('orientation', (v) => {
@@ -102,6 +105,7 @@ describe('BarChart utils', () => {
         timeZone: DefaultTimeZone,
         getTimeRange: getDefaultTimeRange,
         eventBus: new EventBusSrv(),
+        allFrames: [frame],
       }).getConfig();
       expect(result).toMatchSnapshot();
     });
@@ -116,6 +120,7 @@ describe('BarChart utils', () => {
           timeZone: DefaultTimeZone,
           getTimeRange: getDefaultTimeRange,
           eventBus: new EventBusSrv(),
+          allFrames: [frame],
         }).getConfig()
       ).toMatchSnapshot();
     });
@@ -130,6 +135,7 @@ describe('BarChart utils', () => {
           timeZone: DefaultTimeZone,
           getTimeRange: getDefaultTimeRange,
           eventBus: new EventBusSrv(),
+          allFrames: [frame],
         }).getConfig()
       ).toMatchSnapshot();
     });

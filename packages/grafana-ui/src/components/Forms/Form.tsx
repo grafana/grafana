@@ -24,7 +24,7 @@ export function Form<T>({
   maxWidth = 600,
   ...htmlProps
 }: FormProps<T>) {
-  const { handleSubmit, register, control, trigger, getValues, formState, watch, setValue } = useForm<T>({
+  const { handleSubmit, trigger, formState, ...rest } = useForm<T>({
     mode: validateOn,
     defaultValues,
   });
@@ -45,7 +45,7 @@ export function Form<T>({
       onSubmit={handleSubmit(onSubmit)}
       {...htmlProps}
     >
-      {children({ register, errors: formState.errors, control, getValues, formState, watch, setValue })}
+      {children({ errors: formState.errors, formState, ...rest })}
     </form>
   );
 }

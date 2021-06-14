@@ -110,6 +110,10 @@ type libraryElementResult struct {
 	Result libraryElement `json:"result"`
 }
 
+type libraryElementArrayResult struct {
+	Result []libraryElement `json:"result"`
+}
+
 type libraryElementsSearch struct {
 	Result libraryElementsSearchResult `json:"result"`
 }
@@ -122,7 +126,7 @@ type libraryElementsSearchResult struct {
 }
 
 func getCreatePanelCommand(folderID int64, name string) CreateLibraryElementCommand {
-	command := getCreateCommandWithModel(folderID, name, Panel, []byte(`
+	command := getCreateCommandWithModel(folderID, name, models.PanelElement, []byte(`
 			{
 			  "datasource": "${DS_GDEV-TESTDATA}",
 			  "id": 1,
@@ -136,7 +140,7 @@ func getCreatePanelCommand(folderID int64, name string) CreateLibraryElementComm
 }
 
 func getCreateVariableCommand(folderID int64, name string) CreateLibraryElementCommand {
-	command := getCreateCommandWithModel(folderID, name, Variable, []byte(`
+	command := getCreateCommandWithModel(folderID, name, models.VariableElement, []byte(`
 			{
 			  "datasource": "${DS_GDEV-TESTDATA}",
 			  "name": "query0",
@@ -148,7 +152,7 @@ func getCreateVariableCommand(folderID int64, name string) CreateLibraryElementC
 	return command
 }
 
-func getCreateCommandWithModel(folderID int64, name string, kind LibraryElementKind, model []byte) CreateLibraryElementCommand {
+func getCreateCommandWithModel(folderID int64, name string, kind models.LibraryElementKind, model []byte) CreateLibraryElementCommand {
 	command := CreateLibraryElementCommand{
 		FolderID: folderID,
 		Name:     name,
@@ -242,6 +246,17 @@ func validateAndUnMarshalResponse(t *testing.T, resp response.Response) libraryE
 	require.Equal(t, 200, resp.Status())
 
 	var result = libraryElementResult{}
+	err := json.Unmarshal(resp.Body(), &result)
+	require.NoError(t, err)
+
+	return result
+}
+
+func validateAndUnMarshalArrayResponse(t *testing.T, resp response.Response) libraryElementArrayResult {
+	t.Helper()
+
+	require.Equal(t, 200, resp.Status())
+	var result = libraryElementArrayResult{}
 	err := json.Unmarshal(resp.Body(), &result)
 	require.NoError(t, err)
 

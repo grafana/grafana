@@ -9,25 +9,20 @@ import (
 )
 
 func TestApplyRoute_interpolateAuthParams(t *testing.T) {
-	pluginRoute := &plugins.AppPluginRoute{
-		Path:   "pathwithjwttoken1",
-		URL:    "https://api.jwt.io/some/path",
-		Method: "GET",
-		TokenAuth: &plugins.JwtTokenAuth{
-			Url: "https://login.server.com/{{.JsonData.tenantId}}/oauth2/token",
-			Scopes: []string{
-				"https://www.testapi.com/auth/Read.All",
-				"https://www.testapi.com/auth/Write.All",
-			},
-			Params: map[string]string{
-				"token_uri":    "{{.JsonData.tokenUri}}",
-				"client_email": "{{.JsonData.clientEmail}}",
-				"private_key":  "{{.SecureJsonData.privateKey}}",
-			},
+	tokenAuth := &plugins.JwtTokenAuth{
+		Url: "https://login.server.com/{{.JsonData.tenantId}}/oauth2/token",
+		Scopes: []string{
+			"https://www.testapi.com/auth/Read.All",
+			"https://www.testapi.com/auth/Write.All",
+		},
+		Params: map[string]string{
+			"token_uri":    "{{.JsonData.tokenUri}}",
+			"client_email": "{{.JsonData.clientEmail | orEmpty}}",
+			"private_key":  "{{.SecureJsonData.privateKey | orEmpty}}",
 		},
 	}
 
-	templateData := templateData{
+	validData := templateData{
 		JsonData: map[string]interface{}{
 			"clientEmail": "test@test.com",
 			"tokenUri":    "login.url.com/token",
@@ -38,8 +33,13 @@ func TestApplyRoute_interpolateAuthParams(t *testing.T) {
 		},
 	}
 
+	emptyData := templateData{
+		JsonData:       map[string]interface{}{},
+		SecureJsonData: map[string]string{},
+	}
+
 	t.Run("should interpolate JwtTokenAuth struct using given JsonData", func(t *testing.T) {
-		interpolated, err := interpolateAuthParams(pluginRoute.TokenAuth, templateData)
+		interpolated, err := interpolateAuthParams(tokenAuth, validData)
 		require.NoError(t, err)
 		require.NotNil(t, interpolated)
 
@@ -55,8 +55,27 @@ func TestApplyRoute_interpolateAuthParams(t *testing.T) {
 	})
 
 	t.Run("should return Nil if given JwtTokenAuth is Nil", func(t *testing.T) {
-		interpolated, err := interpolateAuthParams(pluginRoute.JwtTokenAuth, templateData)
+		interpolated, err := interpolateAuthParams(nil, validData)
 		require.NoError(t, err)
 		require.Nil(t, interpolated)
+	})
+
+	t.Run("when plugin data is empty", func(t *testing.T) {
+		interpolated, err := interpolateAuthParams(tokenAuth, emptyData)
+		require.NoError(t, err)
+		require.NotNil(t, interpolated)
+
+		t.Run("template expressions in url should resolve to <no value>", func(t *testing.T) {
+			assert.Equal(t, "https://login.server.com/<no value>/oauth2/token", interpolated.Url)
+		})
+
+		t.Run("template expressions in params resolve to <no value>", func(t *testing.T) {
+			assert.Equal(t, "<no value>", interpolated.Params["token_uri"])
+		})
+
+		t.Run("template expressions with orEmpty should resolve to empty string", func(t *testing.T) {
+			assert.Equal(t, "", interpolated.Params["client_email"])
+			assert.Equal(t, "", interpolated.Params["private_key"])
+		})
 	})
 }

@@ -3,11 +3,8 @@ package channels
 import (
 	"context"
 	"encoding/json"
-	"path"
 
-	gokit_log "github.com/go-kit/kit/log"
 	"github.com/pkg/errors"
-	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 
@@ -29,7 +26,7 @@ type TeamsNotifier struct {
 }
 
 // NewTeamsNotifier is the constructor for Teams notifier.
-func NewTeamsNotifier(model *models.AlertNotification, t *template.Template) (*TeamsNotifier, error) {
+func NewTeamsNotifier(model *NotificationChannelConfig, t *template.Template) (*TeamsNotifier, error) {
 	if model.Settings == nil {
 		return nil, alerting.ValidationError{Reason: "No Settings Supplied"}
 	}
@@ -40,21 +37,28 @@ func NewTeamsNotifier(model *models.AlertNotification, t *template.Template) (*T
 	}
 
 	return &TeamsNotifier{
-		NotifierBase: old_notifiers.NewNotifierBase(model),
-		URL:          u,
-		Message:      model.Settings.Get("message").MustString(`{{ template "default.message" .}}`),
-		log:          log.New("alerting.notifier.teams"),
-		tmpl:         t,
+		NotifierBase: old_notifiers.NewNotifierBase(&models.AlertNotification{
+			Uid:                   model.UID,
+			Name:                  model.Name,
+			Type:                  model.Type,
+			DisableResolveMessage: model.DisableResolveMessage,
+			Settings:              model.Settings,
+		}),
+		URL:     u,
+		Message: model.Settings.Get("message").MustString(`{{ template "default.message" .}}`),
+		log:     log.New("alerting.notifier.teams"),
+		tmpl:    t,
 	}, nil
 }
 
 // Notify send an alert notification to Microsoft teams.
 func (tn *TeamsNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
-	data := notify.GetTemplateData(ctx, tn.tmpl, as, gokit_log.NewNopLogger())
 	var tmplErr error
-	tmpl := notify.TmplText(tn.tmpl, data, &tmplErr)
+	tmpl, _ := TmplText(ctx, tn.tmpl, as, tn.log, &tmplErr)
 
-	title := getTitleFromTemplateData(data)
+	ruleURL := joinUrlPath(tn.tmpl.ExternalURL.String(), "/alerting/list", tn.log)
+
+	title := tmpl(`{{ template "default.title" . }}`)
 	body := map[string]interface{}{
 		"@type":    "MessageCard",
 		"@context": "http://schema.org/extensions",
@@ -77,7 +81,7 @@ func (tn *TeamsNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 				"targets": []map[string]interface{}{
 					{
 						"os":  "default",
-						"uri": path.Join(tn.tmpl.ExternalURL.String(), "/alerting/list"),
+						"uri": ruleURL,
 					},
 				},
 			},
@@ -85,7 +89,7 @@ func (tn *TeamsNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 	}
 
 	if tmplErr != nil {
-		return false, errors.Wrap(tmplErr, "failed to template Teams message")
+		tn.log.Debug("failed to template Teams message", "err", tmplErr.Error())
 	}
 
 	b, err := json.Marshal(&body)

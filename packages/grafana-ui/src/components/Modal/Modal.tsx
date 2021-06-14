@@ -18,6 +18,7 @@ export interface Props {
   className?: string;
   contentClassName?: string;
   closeOnEscape?: boolean;
+  closeOnBackdropClick?: boolean;
 
   isOpen?: boolean;
   onDismiss?: () => void;
@@ -32,6 +33,7 @@ export function Modal(props: PropsWithChildren<Props>) {
     children,
     isOpen = false,
     closeOnEscape = true,
+    closeOnBackdropClick = true,
     className,
     contentClassName,
     onDismiss: propsOnDismiss,
@@ -79,7 +81,10 @@ export function Modal(props: PropsWithChildren<Props>) {
         </div>
         <div className={cx(styles.modalContent, contentClassName)}>{children}</div>
       </div>
-      <div className={styles.modalBackdrop} onClick={onClickBackdrop || onDismiss} />
+      <div
+        className={styles.modalBackdrop}
+        onClick={onClickBackdrop || (closeOnBackdropClick ? onDismiss : undefined)}
+      />
     </Portal>
   );
 }

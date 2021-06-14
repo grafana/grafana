@@ -54,6 +54,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   viewersCanEdit = false;
   editorsCanAdmin = false;
   disableSanitizeHtml = false;
+  liveEnabled = true;
   theme: GrafanaTheme;
   theme2: GrafanaTheme2;
   pluginsToPreload: string[] = [];
@@ -66,6 +67,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   };
   licenseInfo: LicenseInfo = {} as LicenseInfo;
   rendererAvailable = false;
+  rendererVersion = '';
   http2Enabled = false;
   dateFormats?: SystemDateFormatSettings;
   sentry = {
@@ -74,13 +76,18 @@ export class GrafanaBootConfig implements GrafanaConfig {
     customEndpoint: '',
     sampleRate: 1,
   };
-  marketplaceUrl?: string;
+  pluginCatalogURL = 'https://grafana.com/grafana/plugins/';
+  pluginAdminEnabled = false;
+  pluginAdminExternalManageEnabled = false;
   expressionsEnabled = false;
   customTheme?: any;
   awsAllowedAuthProviders: string[] = [];
   awsAssumeRoleEnabled = false;
   azure: AzureSettings = {
     managedIdentityEnabled: false,
+  };
+  caching = {
+    enabled: false,
   };
 
   constructor(options: GrafanaBootConfig) {

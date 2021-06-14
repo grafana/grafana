@@ -17,7 +17,7 @@ func TestOrgRedirectMiddleware(t *testing.T) {
 			return nil
 		})
 
-		bus.AddHandler("test", func(query *models.GetSignedInUserQuery) error {
+		bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetSignedInUserQuery) error {
 			query.Result = &models.SignedInUser{OrgId: 1, UserId: 12}
 			return nil
 		})
@@ -41,7 +41,7 @@ func TestOrgRedirectMiddleware(t *testing.T) {
 			return fmt.Errorf("")
 		})
 
-		bus.AddHandler("test", func(query *models.GetSignedInUserQuery) error {
+		bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetSignedInUserQuery) error {
 			query.Result = &models.SignedInUser{OrgId: 1, UserId: 12}
 			return nil
 		})

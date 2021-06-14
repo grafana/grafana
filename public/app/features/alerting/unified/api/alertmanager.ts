@@ -6,7 +6,7 @@ import {
   AlertmanagerGroup,
   Silence,
   SilenceCreatePayload,
-  SilenceMatcher,
+  Matcher,
 } from 'app/plugins/datasource/alertmanager/types';
 import { getDatasourceAPIId, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 
@@ -71,10 +71,15 @@ export async function createOrUpdateSilence(
   alertmanagerSourceName: string,
   payload: SilenceCreatePayload
 ): Promise<Silence> {
-  const result = await getBackendSrv().post(
-    `/api/alertmanager/${getDatasourceAPIId(alertmanagerSourceName)}/api/v2/silences`,
-    payload
-  );
+  const result = await getBackendSrv()
+    .fetch<Silence>({
+      url: `/api/alertmanager/${getDatasourceAPIId(alertmanagerSourceName)}/api/v2/silences`,
+      data: payload,
+      showErrorAlert: false,
+      showSuccessAlert: false,
+      method: 'POST',
+    })
+    .toPromise();
   return result.data;
 }
 
@@ -86,7 +91,7 @@ export async function expireSilence(alertmanagerSourceName: string, silenceID: s
 
 export async function fetchAlerts(
   alertmanagerSourceName: string,
-  matchers?: SilenceMatcher[],
+  matchers?: Matcher[],
   silenced = true,
   active = true,
   inhibited = true

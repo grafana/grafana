@@ -54,3 +54,21 @@ import { ErrorWithStack } from '@grafana/ui';
 <ArgsTable of={ErrorWithStack}/>
 
 
+# withErrorBoundary
+
+a HOC to conveniently wrap component in an error boundary
+
+### Usage
+
+```jsx
+import { withErrorBoundary } from '@grafana/ui';
+
+interface MyCompProps {
+  ...
+}
+
+const MyComp = withErrorBoundary((props: MyCompProps) => {
+  return <>...</>
+}, { style: 'page' });
+
+```

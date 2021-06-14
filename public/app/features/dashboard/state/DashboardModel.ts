@@ -42,6 +42,7 @@ import { onTimeRangeUpdated } from 'app/features/variables/state/actions';
 import { dispatch } from '../../../store/store';
 import { isAllVariable } from '../../variables/utils';
 import { DashboardPanelsChangedEvent, RefreshEvent, RenderEvent } from 'app/types/events';
+import { getTimeSrv } from '../services/TimeSrv';
 
 export interface CloneOptions {
   saveVariables?: boolean;
@@ -92,6 +93,7 @@ export class DashboardModel {
   panels: PanelModel[];
   panelInEdit?: PanelModel;
   panelInView?: PanelModel;
+  private hasChangesThatAffectsAllPanels: boolean;
 
   // ------------------
   // not persisted
@@ -114,6 +116,7 @@ export class DashboardModel {
     panelInView: true,
     getVariablesFromState: true,
     formatDate: true,
+    hasChangesThatAffectsAllPanels: true,
   };
 
   constructor(data: any, meta?: DashboardMeta, private getVariablesFromState: GetVariables = getVariables) {
@@ -154,6 +157,7 @@ export class DashboardModel {
 
     this.addBuiltInAnnotationQuery();
     this.sortPanelsByGridPos();
+    this.hasChangesThatAffectsAllPanels = false;
   }
 
   addBuiltInAnnotationQuery() {
@@ -353,6 +357,7 @@ export class DashboardModel {
   }
 
   initEditPanel(sourcePanel: PanelModel): PanelModel {
+    getTimeSrv().pauseAutoRefresh();
     this.panelInEdit = sourcePanel.getEditClone();
     return this.panelInEdit;
   }
@@ -365,11 +370,29 @@ export class DashboardModel {
   exitViewPanel(panel: PanelModel) {
     this.panelInView = undefined;
     panel.setIsViewing(false);
+    this.refreshIfChangeAffectsAllPanels();
   }
 
   exitPanelEditor() {
     this.panelInEdit!.destroy();
     this.panelInEdit = undefined;
+    this.refreshIfChangeAffectsAllPanels();
+    getTimeSrv().resumeAutoRefresh();
+  }
+
+  setChangeAffectsAllPanels() {
+    if (this.panelInEdit || this.panelInView) {
+      this.hasChangesThatAffectsAllPanels = true;
+    }
+  }
+
+  private refreshIfChangeAffectsAllPanels() {
+    if (!this.hasChangesThatAffectsAllPanels) {
+      return;
+    }
+
+    this.hasChangesThatAffectsAllPanels = false;
+    this.startRefresh();
   }
 
   private ensureListExist(data: any) {

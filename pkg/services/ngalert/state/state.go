@@ -12,31 +12,32 @@ type State struct {
 	AlertRuleUID       string
 	OrgID              int64
 	CacheId            string
-	Labels             data.Labels
 	State              eval.State
 	Results            []Evaluation
 	StartsAt           time.Time
 	EndsAt             time.Time
 	LastEvaluationTime time.Time
 	EvaluationDuration time.Duration
+	LastSentAt         time.Time
 	Annotations        map[string]string
+	Labels             data.Labels
 	Error              error
 }
 
 type Evaluation struct {
-	EvaluationTime  time.Time
-	EvaluationState eval.State
+	EvaluationTime   time.Time
+	EvaluationState  eval.State
+	EvaluationString string
 }
 
-func resultNormal(alertState *State, result eval.Result) *State {
-	newState := alertState
-	if alertState.State != eval.Normal {
-		newState.EndsAt = result.EvaluatedAt
-		newState.StartsAt = result.EvaluatedAt
+func (a *State) resultNormal(result eval.Result) *State {
+	if a.State != eval.Normal {
+		a.EndsAt = result.EvaluatedAt
+		a.StartsAt = result.EvaluatedAt
 	}
-	newState.Error = result.Error // should be nil since state is not error
-	newState.State = eval.Normal
-	return newState
+	a.Error = result.Error // should be nil since state is not error
+	a.State = eval.Normal
+	return a
 }
 
 func (a *State) resultAlerting(alertRule *ngModels.AlertRule, result eval.Result) *State {
@@ -86,7 +87,6 @@ func (a *State) resultError(alertRule *ngModels.AlertRule, result eval.Result) *
 	switch alertRule.ExecErrState {
 	case ngModels.AlertingErrState:
 		a.State = eval.Alerting
-	case ngModels.KeepLastStateErrState:
 	}
 	return a
 }
@@ -106,11 +106,20 @@ func (a *State) resultNoData(alertRule *ngModels.AlertRule, result eval.Result) 
 		a.State = eval.Alerting
 	case ngModels.NoData:
 		a.State = eval.NoData
-	case ngModels.KeepLastState:
 	case ngModels.OK:
 		a.State = eval.Normal
 	}
 	return a
+}
+
+func (a *State) NeedsSending(resendDelay time.Duration) bool {
+	if a.State != eval.Alerting {
+		return false
+	}
+
+	// if LastSentAt is before or equal to LastEvaluationTime + resendDelay, send again
+	return a.LastSentAt.Add(resendDelay).Before(a.LastEvaluationTime) ||
+		a.LastSentAt.Add(resendDelay).Equal(a.LastEvaluationTime)
 }
 
 func (a *State) Equals(b *State) bool {
@@ -123,4 +132,18 @@ func (a *State) Equals(b *State) bool {
 		a.EndsAt == b.EndsAt &&
 		a.LastEvaluationTime == b.LastEvaluationTime &&
 		data.Labels(a.Annotations).String() == data.Labels(b.Annotations).String()
+}
+
+func (a *State) TrimResults(alertRule *ngModels.AlertRule) {
+	numBuckets := 2 * (int64(alertRule.For.Seconds()) / alertRule.IntervalSeconds)
+	if numBuckets == 0 {
+		numBuckets = 10 // keep at least 10 evaluations in the event For is set to 0
+	}
+
+	if len(a.Results) < int(numBuckets) {
+		return
+	}
+	newResults := make([]Evaluation, numBuckets)
+	copy(newResults, a.Results[len(a.Results)-int(numBuckets):])
+	a.Results = newResults
 }

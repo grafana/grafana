@@ -298,7 +298,7 @@ export class ElasticQueryBuilder {
       }
 
       const aggField: any = {};
-      let metricAgg: any = null;
+      let metricAgg: any = {};
 
       if (isPipelineAggregation(metric)) {
         if (isPipelineAggregationWithMultipleBucketPaths(metric)) {
@@ -346,38 +346,54 @@ export class ElasticQueryBuilder {
         Object.entries(metric.settings || {})
           .filter(([_, v]) => v !== null)
           .forEach(([k, v]) => {
-            metricAgg[k] = k === 'script' ? getScriptValue(metric as MetricAggregationWithInlineScript) : v;
+            metricAgg[k] =
+              k === 'script' ? this.buildScript(getScriptValue(metric as MetricAggregationWithInlineScript)) : v;
           });
 
         // Elasticsearch isn't generally too picky about the data types in the request body,
         // however some fields are required to be numeric.
         // Users might have already created some of those with before, where the values were numbers.
-        if (metric.type === 'moving_avg') {
-          metricAgg = {
-            ...metricAgg,
-            ...(metricAgg?.window !== undefined && { window: this.toNumber(metricAgg.window) }),
-            ...(metricAgg?.predict !== undefined && { predict: this.toNumber(metricAgg.predict) }),
-            ...(isMovingAverageWithModelSettings(metric) && {
-              settings: {
-                ...metricAgg.settings,
-                ...Object.fromEntries(
-                  Object.entries(metricAgg.settings || {})
-                    // Only format properties that are required to be numbers
-                    .filter(([settingName]) => ['alpha', 'beta', 'gamma', 'period'].includes(settingName))
-                    // omitting undefined
-                    .filter(([_, stringValue]) => stringValue !== undefined)
-                    .map(([_, stringValue]) => [_, this.toNumber(stringValue)])
-                ),
-              },
-            }),
-          };
-        } else if (metric.type === 'serial_diff') {
-          metricAgg = {
-            ...metricAgg,
-            ...(metricAgg.lag !== undefined && {
-              lag: this.toNumber(metricAgg.lag),
-            }),
-          };
+        switch (metric.type) {
+          case 'moving_avg':
+            metricAgg = {
+              ...metricAgg,
+              ...(metricAgg?.window !== undefined && { window: this.toNumber(metricAgg.window) }),
+              ...(metricAgg?.predict !== undefined && { predict: this.toNumber(metricAgg.predict) }),
+              ...(isMovingAverageWithModelSettings(metric) && {
+                settings: {
+                  ...metricAgg.settings,
+                  ...Object.fromEntries(
+                    Object.entries(metricAgg.settings || {})
+                      // Only format properties that are required to be numbers
+                      .filter(([settingName]) => ['alpha', 'beta', 'gamma', 'period'].includes(settingName))
+                      // omitting undefined
+                      .filter(([_, stringValue]) => stringValue !== undefined)
+                      .map(([_, stringValue]) => [_, this.toNumber(stringValue)])
+                  ),
+                },
+              }),
+            };
+            break;
+
+          case 'serial_diff':
+            metricAgg = {
+              ...metricAgg,
+              ...(metricAgg.lag !== undefined && {
+                lag: this.toNumber(metricAgg.lag),
+              }),
+            };
+            break;
+
+          case 'top_metrics':
+            metricAgg = {
+              metrics: metric.settings?.metrics?.map((field) => ({ field })),
+              size: 1,
+            };
+
+            if (metric.settings?.orderBy) {
+              metricAgg.sort = [{ [metric.settings?.orderBy]: metric.settings?.order }];
+            }
+            break;
         }
       }
 
@@ -386,6 +402,16 @@ export class ElasticQueryBuilder {
     }
 
     return query;
+  }
+
+  private buildScript(script: string) {
+    if (gte(this.esVersion, '5.6.0')) {
+      return script;
+    }
+
+    return {
+      inline: script,
+    };
   }
 
   private toNumber(stringValue: unknown): unknown | number {

@@ -26,9 +26,10 @@ interface Props {
   index: number;
   onChange: (index: number, mapping: ValueMappingEditRowModel) => void;
   onRemove: (index: number) => void;
+  onDuplicate: (index: number) => void;
 }
 
-export function ValueMappingEditRow({ mapping, index, onChange, onRemove }: Props) {
+export function ValueMappingEditRow({ mapping, index, onChange, onRemove, onDuplicate: onDupliate }: Props) {
   const { key, result } = mapping;
   const styles = useStyles2(getStyles);
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -175,6 +176,7 @@ export function ValueMappingEditRow({ mapping, index, onChange, onRemove }: Prop
           </td>
           <td className={styles.textAlignCenter}>
             <HorizontalGroup spacing="sm">
+              <IconButton name="copy" onClick={() => onDupliate(index)} data-testid="duplicate-value-mapping" />
               <IconButton name="trash-alt" onClick={() => onRemove(index)} data-testid="remove-value-mapping" />
             </HorizontalGroup>
           </td>
@@ -197,6 +199,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   typeColumn: css({
     textTransform: 'capitalize',
     textAlign: 'center',
+    width: '1%',
   }),
   textAlignCenter: css({
     textAlign: 'center',

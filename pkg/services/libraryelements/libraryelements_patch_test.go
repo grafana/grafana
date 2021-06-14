@@ -5,12 +5,14 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/models"
 )
 
 func TestPatchLibraryElement(t *testing.T) {
 	scenarioWithPanel(t, "When an admin tries to patch a library panel that does not exist, it should fail",
 		func(t *testing.T, sc scenarioContext) {
-			cmd := patchLibraryElementCommand{Kind: int64(Panel)}
+			cmd := patchLibraryElementCommand{Kind: int64(models.PanelElement)}
 			sc.reqContext.ReplaceAllParams(map[string]string{":uid": "unknown"})
 			resp := sc.service.patchHandler(sc.reqContext, cmd)
 			require.Equal(t, 404, resp.Status())
@@ -31,7 +33,7 @@ func TestPatchLibraryElement(t *testing.T) {
 								  "type": "graph"
 								}
 							`),
-				Kind:    int64(Panel),
+				Kind:    int64(models.PanelElement),
 				Version: 1,
 			}
 			sc.reqContext.ReplaceAllParams(map[string]string{":uid": sc.initialResult.Result.UID})
@@ -45,7 +47,7 @@ func TestPatchLibraryElement(t *testing.T) {
 					FolderID:    newFolder.Id,
 					UID:         sc.initialResult.Result.UID,
 					Name:        "Panel - New name",
-					Kind:        int64(Panel),
+					Kind:        int64(models.PanelElement),
 					Type:        "graph",
 					Description: "An updated description",
 					Model: map[string]interface{}{
@@ -83,7 +85,7 @@ func TestPatchLibraryElement(t *testing.T) {
 			newFolder := createFolderWithACL(t, sc.sqlStore, "NewFolder", sc.user, []folderACLItem{})
 			cmd := patchLibraryElementCommand{
 				FolderID: newFolder.Id,
-				Kind:     int64(Panel),
+				Kind:     int64(models.PanelElement),
 				Version:  1,
 			}
 			sc.reqContext.ReplaceAllParams(map[string]string{":uid": sc.initialResult.Result.UID})
@@ -104,7 +106,7 @@ func TestPatchLibraryElement(t *testing.T) {
 			cmd := patchLibraryElementCommand{
 				FolderID: -1,
 				Name:     "New Name",
-				Kind:     int64(Panel),
+				Kind:     int64(models.PanelElement),
 				Version:  1,
 			}
 			sc.reqContext.ReplaceAllParams(map[string]string{":uid": sc.initialResult.Result.UID})
@@ -125,7 +127,7 @@ func TestPatchLibraryElement(t *testing.T) {
 			cmd := patchLibraryElementCommand{
 				FolderID: -1,
 				Model:    []byte(`{ "title": "New Model Title", "name": "New Model Name", "type":"graph", "description": "New description" }`),
-				Kind:     int64(Panel),
+				Kind:     int64(models.PanelElement),
 				Version:  1,
 			}
 			sc.reqContext.ReplaceAllParams(map[string]string{":uid": sc.initialResult.Result.UID})
@@ -152,7 +154,7 @@ func TestPatchLibraryElement(t *testing.T) {
 			cmd := patchLibraryElementCommand{
 				FolderID: -1,
 				Model:    []byte(`{ "description": "New description" }`),
-				Kind:     int64(Panel),
+				Kind:     int64(models.PanelElement),
 				Version:  1,
 			}
 			sc.reqContext.ReplaceAllParams(map[string]string{":uid": sc.initialResult.Result.UID})
@@ -178,7 +180,7 @@ func TestPatchLibraryElement(t *testing.T) {
 			cmd := patchLibraryElementCommand{
 				FolderID: -1,
 				Model:    []byte(`{ "type": "graph" }`),
-				Kind:     int64(Panel),
+				Kind:     int64(models.PanelElement),
 				Version:  1,
 			}
 			sc.reqContext.ReplaceAllParams(map[string]string{":uid": sc.initialResult.Result.UID})
@@ -201,7 +203,7 @@ func TestPatchLibraryElement(t *testing.T) {
 
 	scenarioWithPanel(t, "When another admin tries to patch a library panel, it should change UpdatedBy successfully and return correct result",
 		func(t *testing.T, sc scenarioContext) {
-			cmd := patchLibraryElementCommand{FolderID: -1, Version: 1, Kind: int64(Panel)}
+			cmd := patchLibraryElementCommand{FolderID: -1, Version: 1, Kind: int64(models.PanelElement)}
 			sc.reqContext.UserId = 2
 			sc.reqContext.ReplaceAllParams(map[string]string{":uid": sc.initialResult.Result.UID})
 			resp := sc.service.patchHandler(sc.reqContext, cmd)
@@ -223,7 +225,7 @@ func TestPatchLibraryElement(t *testing.T) {
 			cmd := patchLibraryElementCommand{
 				Name:    "Text - Library Panel",
 				Version: 1,
-				Kind:    int64(Panel),
+				Kind:    int64(models.PanelElement),
 			}
 			sc.reqContext.ReplaceAllParams(map[string]string{":uid": result.Result.UID})
 			resp = sc.service.patchHandler(sc.reqContext, cmd)
@@ -239,7 +241,7 @@ func TestPatchLibraryElement(t *testing.T) {
 			cmd := patchLibraryElementCommand{
 				FolderID: 1,
 				Version:  1,
-				Kind:     int64(Panel),
+				Kind:     int64(models.PanelElement),
 			}
 			sc.reqContext.ReplaceAllParams(map[string]string{":uid": result.Result.UID})
 			resp = sc.service.patchHandler(sc.reqContext, cmd)
@@ -251,7 +253,7 @@ func TestPatchLibraryElement(t *testing.T) {
 			cmd := patchLibraryElementCommand{
 				FolderID: sc.folder.Id,
 				Version:  1,
-				Kind:     int64(Panel),
+				Kind:     int64(models.PanelElement),
 			}
 			sc.reqContext.OrgId = 2
 			sc.reqContext.ReplaceAllParams(map[string]string{":uid": sc.initialResult.Result.UID})
@@ -264,7 +266,7 @@ func TestPatchLibraryElement(t *testing.T) {
 			cmd := patchLibraryElementCommand{
 				FolderID: sc.folder.Id,
 				Version:  1,
-				Kind:     int64(Panel),
+				Kind:     int64(models.PanelElement),
 			}
 			sc.reqContext.ReplaceAllParams(map[string]string{":uid": sc.initialResult.Result.UID})
 			resp := sc.service.patchHandler(sc.reqContext, cmd)
@@ -278,14 +280,14 @@ func TestPatchLibraryElement(t *testing.T) {
 			cmd := patchLibraryElementCommand{
 				FolderID: sc.folder.Id,
 				Version:  1,
-				Kind:     int64(Variable),
+				Kind:     int64(models.VariableElement),
 			}
 			sc.reqContext.ReplaceAllParams(map[string]string{":uid": sc.initialResult.Result.UID})
 			resp := sc.service.patchHandler(sc.reqContext, cmd)
 			require.Equal(t, 200, resp.Status())
 			var result = validateAndUnMarshalResponse(t, resp)
 			sc.initialResult.Result.Type = "text"
-			sc.initialResult.Result.Kind = int64(Panel)
+			sc.initialResult.Result.Kind = int64(models.PanelElement)
 			sc.initialResult.Result.Description = "A description"
 			sc.initialResult.Result.Model = map[string]interface{}{
 				"datasource":  "${DS_GDEV-TESTDATA}",

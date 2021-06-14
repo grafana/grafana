@@ -12,6 +12,7 @@ import { setPluginsSearchQuery } from './state/reducers';
 import { useAsync } from 'react-use';
 import { selectors } from '@grafana/e2e-selectors';
 import { PluginsErrorsInfo } from './PluginsErrorsInfo';
+import { config } from '@grafana/runtime';
 
 const mapStateToProps = (state: StoreState) => ({
   navModel: getNavModel(state.navIndex, 'plugins'),
@@ -40,10 +41,17 @@ export const PluginListPage: React.FC<Props> = ({
     loadPlugins();
   }, [loadPlugins]);
 
+  let actionTarget: string | undefined = '_blank';
   const linkButton = {
     href: 'https://grafana.com/plugins?utm_source=grafana_plugin_list',
     title: 'Find more plugins on Grafana.com',
   };
+
+  if (config.pluginAdminEnabled) {
+    linkButton.href = '/a/grafana-plugin-admin-app/';
+    linkButton.title = 'Install & manage plugins';
+    actionTarget = undefined;
+  }
 
   return (
     <Page navModel={navModel} aria-label={selectors.pages.PluginsList.page}>
@@ -54,18 +62,9 @@ export const PluginListPage: React.FC<Props> = ({
             setSearchQuery={(query) => setPluginsSearchQuery(query)}
             linkButton={linkButton}
             placeholder="Search by name, author, description or type"
-            target="_blank"
+            target={actionTarget}
           />
-
-          <PluginsErrorsInfo>
-            <>
-              <br />
-              <p>
-                Note that <strong>unsigned front-end datasource and panel plugins</strong> are still usable, but this is
-                subject to change in the upcoming releases of Grafana
-              </p>
-            </>
-          </PluginsErrorsInfo>
+          <PluginsErrorsInfo />
           {hasFetched && plugins && <PluginList plugins={plugins} />}
         </>
       </Page.Contents>

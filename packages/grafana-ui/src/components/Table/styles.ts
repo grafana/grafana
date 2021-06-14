@@ -25,6 +25,7 @@ export const getTableStyles = (theme: GrafanaTheme2) => {
 
       ${color ? `color: ${color};` : ''};
       ${background ? `background: ${background};` : ''};
+      background-clip: padding-box;
 
       &:last-child:not(:only-child) {
         border-right: none;
@@ -101,6 +102,12 @@ export const getTableStyles = (theme: GrafanaTheme2) => {
       user-select: text;
       white-space: nowrap;
       text-decoration: underline;
+    `,
+    imageCellLink: css`
+      cursor: pointer;
+      overflow: hidden;
+      width: 100%;
+      height: 100%;
     `,
     headerFilter: css`
       label: headerFilter;

@@ -11,17 +11,17 @@ jest.mock('app/core/core', () => ({
 
 describe('timeSrv', () => {
   let timeSrv: TimeSrv;
-
-  const _dashboard: any = {
-    time: { from: 'now-6h', to: 'now' },
-    getTimezone: jest.fn(() => 'browser'),
-    timeRangeUpdated: jest.fn(() => {}),
-  };
+  let _dashboard: any;
 
   beforeEach(() => {
+    _dashboard = {
+      time: { from: 'now-6h', to: 'now' },
+      getTimezone: jest.fn(() => 'browser'),
+      refresh: false,
+      timeRangeUpdated: jest.fn(() => {}),
+    };
     timeSrv = new TimeSrv(new ContextSrvStub() as any);
     timeSrv.init(_dashboard);
-    _dashboard.refresh = false;
   });
 
   describe('timeRange', () => {
@@ -130,6 +130,17 @@ describe('timeSrv', () => {
       expect(timeSrv.time.to).toEqual('now');
     });
 
+    it('should handle refresh_intervals=null when refresh is enabled', () => {
+      locationService.push('/d/id?refresh=30s');
+
+      timeSrv = new TimeSrv(new ContextSrvStub() as any);
+
+      _dashboard.timepicker = {
+        refresh_intervals: null,
+      };
+      expect(() => timeSrv.init(_dashboard)).not.toThrow();
+    });
+
     describe('data point windowing', () => {
       it('handles time window specfied as interval string', () => {
         locationService.push('/d/id?time=1410337645000&time.window=10s');
@@ -184,6 +195,28 @@ describe('timeSrv', () => {
     it('should keep refresh after relative time range is changed and now delay exists', () => {
       _dashboard.refresh = '10s';
       timeSrv.setTime({ from: 'now-1h', to: 'now-10s' });
+      expect(_dashboard.refresh).toBe('10s');
+    });
+  });
+
+  describe('pauseAutoRefresh', () => {
+    it('should set refresh to empty value', () => {
+      _dashboard.refresh = '10s';
+      timeSrv.pauseAutoRefresh();
+      expect(_dashboard.refresh).toBe('');
+    });
+
+    it('should set previousAutoRefresh value', () => {
+      _dashboard.refresh = '10s';
+      timeSrv.pauseAutoRefresh();
+      expect(timeSrv.previousAutoRefresh).toBe('10s');
+    });
+  });
+
+  describe('resumeAutoRefresh', () => {
+    it('should set refresh to empty value', () => {
+      timeSrv.previousAutoRefresh = '10s';
+      timeSrv.resumeAutoRefresh();
       expect(_dashboard.refresh).toBe('10s');
     });
   });
