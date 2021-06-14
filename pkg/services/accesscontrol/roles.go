@@ -35,8 +35,15 @@ var serverAdminReadRole = RoleDTO{
 		{
 			Action: ActionServerStatsRead,
 		},
+	},
+}
+
+var settingsAdminReadRole = RoleDTO{
+	Version: 1,
+	Name:    settingsAdminRead,
+	Permissions: []Permission{
 		{
-			Action: ActionServerSettingsRead,
+			Action: ActionSettingsRead,
 		},
 	},
 }
@@ -160,6 +167,8 @@ var provisioningAdminRole = RoleDTO{
 var FixedRoles = map[string]RoleDTO{
 	serverAdminRead: serverAdminReadRole,
 
+	settingsAdminRead: settingsAdminReadRole,
+
 	usersAdminRead: usersAdminReadRole,
 	usersAdminEdit: usersAdminEditRole,
 
@@ -174,8 +183,11 @@ var FixedRoles = map[string]RoleDTO{
 
 const (
 	serverAdminRead = "fixed:server:admin:read"
-	usersAdminEdit  = "fixed:users:admin:edit"
-	usersAdminRead  = "fixed:users:admin:read"
+
+	settingsAdminRead = "fixed:settings:admin:read"
+
+	usersAdminEdit = "fixed:users:admin:edit"
+	usersAdminRead = "fixed:users:admin:read"
 
 	usersOrgEdit = "fixed:users:org:edit"
 	usersOrgRead = "fixed:users:org:read"
@@ -191,6 +203,7 @@ const (
 var FixedRoleGrants = map[string][]string{
 	RoleGrafanaAdmin: {
 		serverAdminRead,
+		settingsAdminRead,
 		ldapAdminEdit,
 		ldapAdminRead,
 		provisioningAdmin,

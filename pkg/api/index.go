@@ -364,7 +364,7 @@ func (hs *HTTPServer) buildAdminNavLinks(c *models.ReqContext) []*dtos.NavLink {
 		}
 	}
 
-	if hasAccess(ac.ReqGrafanaAdmin, ac.ActionServerSettingsRead) {
+	if hasAccess(ac.ReqGrafanaAdmin, ac.ActionSettingsRead) {
 		adminNavLinks = append(adminNavLinks, &dtos.NavLink{
 			Text: "Settings", Id: "server-settings", Url: hs.Cfg.AppSubURL + "/admin/settings", Icon: "sliders-v-alt",
 		})

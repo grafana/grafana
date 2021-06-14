@@ -63,7 +63,7 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/dashboard/import/", reqSignedIn, hs.Index)
 	r.Get("/configuration", reqGrafanaAdmin, hs.Index)
 	r.Get("/admin", reqGrafanaAdmin, hs.Index)
-	r.Get("/admin/settings", authorize(reqGrafanaAdmin, accesscontrol.ActionServerSettingsRead), hs.Index)
+	r.Get("/admin/settings", authorize(reqGrafanaAdmin, accesscontrol.ActionSettingsRead), hs.Index)
 	r.Get("/admin/users", authorize(reqGrafanaAdmin, accesscontrol.ActionUsersRead, accesscontrol.ScopeGlobalUsersAll), hs.Index)
 	r.Get("/admin/users/create", authorize(reqGrafanaAdmin, accesscontrol.ActionUsersCreate), hs.Index)
 	r.Get("/admin/users/edit/:id", authorize(reqGrafanaAdmin, accesscontrol.ActionUsersRead), hs.Index)
@@ -433,7 +433,7 @@ func (hs *HTTPServer) registerRoutes() {
 
 	// admin api
 	r.Group("/api/admin", func(adminRoute routing.RouteRegister) {
-		adminRoute.Get("/settings", authorize(reqGrafanaAdmin, accesscontrol.ActionServerSettingsRead), routing.Wrap(hs.AdminGetSettings))
+		adminRoute.Get("/settings", authorize(reqGrafanaAdmin, accesscontrol.ActionSettingsRead), routing.Wrap(hs.AdminGetSettings))
 		adminRoute.Get("/stats", authorize(reqGrafanaAdmin, accesscontrol.ActionServerStatsRead), routing.Wrap(AdminGetStats))
 		adminRoute.Post("/pause-all-alerts", reqGrafanaAdmin, bind(dtos.PauseAllAlertsCommand{}), routing.Wrap(PauseAllAlerts))
 

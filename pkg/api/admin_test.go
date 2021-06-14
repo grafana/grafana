@@ -41,7 +41,7 @@ func TestAdmin_AccessControl(t *testing.T) {
 			method:       http.MethodGet,
 			permissions: []*accesscontrol.Permission{
 				{
-					Action: accesscontrol.ActionServerSettingsRead,
+					Action: accesscontrol.ActionSettingsRead,
 				},
 			},
 		},
