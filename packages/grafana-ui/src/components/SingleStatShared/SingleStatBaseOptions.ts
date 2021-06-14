@@ -107,7 +107,7 @@ function migrateFromAngularSinglestat(panel: PanelModel<Partial<SingleStatBaseOp
   }
 
   // Convert value mappings
-  const mappings = convertOldAngularValueMapping(prevPanel);
+  const mappings = convertOldAngularValueMappings(prevPanel, defaults.thresholds);
   if (mappings && mappings.length) {
     defaults.mappings = mappings;
   }
