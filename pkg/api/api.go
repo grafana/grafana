@@ -23,6 +23,7 @@ var plog = log.New("api")
 func (hs *HTTPServer) registerRoutes() {
 	reqNoAuth := middleware.NoAuth()
 	reqSignedIn := middleware.ReqSignedIn
+	reqNotSignedIn := middleware.ReqNotSignedIn
 	reqSignedInNoAnonymous := middleware.ReqSignedInNoAnonymous
 	reqGrafanaAdmin := middleware.ReqGrafanaAdmin
 	reqEditorRole := middleware.ReqEditorRole
@@ -112,7 +113,7 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Post("/api/user/invite/complete", bind(dtos.CompleteInviteForm{}), routing.Wrap(hs.CompleteInvite))
 
 	// reset password
-	r.Get("/user/password/send-reset-email", hs.Index)
+	r.Get("/user/password/send-reset-email", reqNotSignedIn, hs.Index)
 	r.Get("/user/password/reset", hs.Index)
 
 	r.Post("/api/user/password/send-reset-email", bind(dtos.SendResetPasswordEmailForm{}), routing.Wrap(SendResetPasswordEmail))
