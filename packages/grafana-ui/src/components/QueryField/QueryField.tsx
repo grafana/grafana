@@ -16,11 +16,22 @@ import {
   SuggestionsPlugin,
 } from '../../slate-plugins';
 
-import { makeValue, SCHEMA, CompletionItemGroup, TypeaheadOutput, TypeaheadInput, SuggestionsState } from '../..';
+import {
+  makeValue,
+  SCHEMA,
+  CompletionItemGroup,
+  TypeaheadOutput,
+  TypeaheadInput,
+  SuggestionsState,
+  FieldValidationMessage,
+} from '../..';
 import { selectors } from '@grafana/e2e-selectors';
-import { Tooltip } from '../Tooltip/Tooltip';
+import { css } from '@emotion/css';
+import { stylesFactory, withTheme2 } from '../../themes';
+import { GrafanaTheme2 } from '@grafana/data';
+import { Themeable2 } from '../../types';
 
-export interface QueryFieldProps {
+export interface QueryFieldProps extends Themeable2 {
   additionalPlugins?: Plugin[];
   cleanText?: (text: string) => string;
   disabled?: boolean;
@@ -54,13 +65,21 @@ export interface QueryFieldState {
   focused: boolean;
 }
 
+const getStyles = stylesFactory((theme: GrafanaTheme2) => ({
+  infoBox: css`
+    position: absolute;
+    bottom: -100%;
+    left: 0;
+    z-index: ${theme.zIndex.tooltip};
+  `,
+}));
 /**
  * Renders an editor field.
  * Pass initial value as initialQuery and listen to changes in props.onValueChanged.
  * This component can only process strings. Internally it uses Slate Value.
  * Implement props.onTypeahead to use suggestions, see PromQueryField.tsx as an example.
  */
-export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldState> {
+class UnthemedQueryField extends React.PureComponent<QueryFieldProps, QueryFieldState> {
   plugins: Plugin[];
   runOnChangeDebounced: Function;
   lastExecutedValue: Value | null = null;
@@ -235,7 +254,9 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
   }
 
   render() {
-    const { disabled } = this.props;
+    const { disabled, theme } = this.props;
+
+    const styles = getStyles(theme);
     const wrapperClassName = classnames('slate-query-field__wrapper', {
       'slate-query-field__wrapper--disabled': disabled,
     });
@@ -243,32 +264,34 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
 
     return (
       <div className={wrapperClassName}>
-        <Tooltip content={description} show={this.state.focused} placement="top">
-          <div className="slate-query-field" aria-label={selectors.components.QueryField.container}>
-            <Editor
-              //@ts-ignore
-              title={description}
-              ref={(editor) => (this.editor = editor!)}
-              schema={SCHEMA}
-              autoCorrect={false}
-              readOnly={this.props.disabled}
-              onFocus={this.onFocus}
-              onBlur={this.handleBlur}
-              onClick={this.props.onClick}
-              onKeyDown={this.onKeyDown}
-              onChange={(change: { value: Value }) => {
-                this.onChange(change.value, false);
-              }}
-              placeholder={this.props.placeholder}
-              plugins={this.plugins}
-              spellCheck={false}
-              value={this.state.value}
-            />
-          </div>
-        </Tooltip>
+        {this.state.focused && (
+          <FieldValidationMessage className={styles.infoBox}>{description}</FieldValidationMessage>
+        )}
+        <div className="slate-query-field" aria-label={selectors.components.QueryField.container}>
+          <Editor
+            //@ts-ignore
+            title={description}
+            ref={(editor) => (this.editor = editor!)}
+            schema={SCHEMA}
+            autoCorrect={false}
+            readOnly={this.props.disabled}
+            onFocus={this.onFocus}
+            onBlur={this.handleBlur}
+            onClick={this.props.onClick}
+            onKeyDown={this.onKeyDown}
+            onChange={(change: { value: Value }) => {
+              this.onChange(change.value, false);
+            }}
+            placeholder={this.props.placeholder}
+            plugins={this.plugins}
+            spellCheck={false}
+            value={this.state.value}
+          />
+        </div>
       </div>
     );
   }
 }
 
-export default QueryField;
+export const QueryField = withTheme2(UnthemedQueryField);
+export default UnthemedQueryField;
