@@ -160,7 +160,7 @@ function addRegionMarking(regions: any[], flotOptions: { grid: { markings: any }
 
   each(regions, (region) => {
     if (region.source) {
-      fillColor = region.source.iconColor || defaultColor;
+      fillColor = region.color || defaultColor;
     } else {
       fillColor = defaultColor;
     }
