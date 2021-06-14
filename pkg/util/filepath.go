@@ -68,7 +68,6 @@ func walk(path string, info os.FileInfo, resolvedPath string, symlinkPathsFollow
 		}
 
 		path2, err := filepath.EvalSymlinks(resolvedPath)
-		fmt.Println("path2", path2)
 		if err != nil {
 			return err
 		}
@@ -81,7 +80,6 @@ func walk(path string, info os.FileInfo, resolvedPath string, symlinkPathsFollow
 			symlinkPathsFollowed[path2] = true
 		}
 		info2, err := os.Lstat(path2)
-		fmt.Println("info2", err)
 		if err != nil {
 			return err
 		}
