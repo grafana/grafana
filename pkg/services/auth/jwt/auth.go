@@ -48,7 +48,9 @@ func (s *AuthService) Init() error {
 		return err
 	}
 	if s.Cfg.JWTAuthKeyFile == "" && s.Cfg.JWTAuthJWKSetFile == "" && s.Cfg.JWTAuthJWKSetURL == "" {
-		s.detectJWKSUri()
+		if err := s.detectJWKSUri(); err != nil {
+			s.log.Debug("JWKS uri not detected due to", "err", err)
+		}
 	}
 	if err := s.initKeySet(); err != nil {
 		return err
@@ -67,10 +69,14 @@ func (s *AuthService) detectJWKSUri() error {
 		if err != nil {
 			return err
 		}
-		defer r.Body.Close()
+		defer func() {
+			if err := r.Body.Close(); err != nil {
+				s.log.Warn("Failed to close response body", "err", err)
+			}
+		}()
 
 		var oidcConfig map[string]interface{}
-		json.NewDecoder(r.Body).Decode(&oidcConfig)
+		err = json.NewDecoder(r.Body).Decode(&oidcConfig)
 		if err != nil {
 			return err
 		}
