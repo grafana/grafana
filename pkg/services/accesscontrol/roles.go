@@ -202,11 +202,11 @@ const (
 // to which set of FixedRoles by default. Alphabetically sorted.
 var FixedRoleGrants = map[string][]string{
 	RoleGrafanaAdmin: {
-		serverAdminRead,
-		settingsAdminRead,
 		ldapAdminEdit,
 		ldapAdminRead,
 		provisioningAdmin,
+		serverAdminRead,
+		settingsAdminRead,
 		usersAdminEdit,
 		usersAdminRead,
 		usersOrgEdit,
