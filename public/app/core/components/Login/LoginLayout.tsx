@@ -79,7 +79,7 @@ export const getLoginStyles = (theme: GrafanaTheme2) => {
     `,
     loginLogo: css`
       width: 100%;
-      max-width: 50px;
+      max-width: 60px;
       margin-bottom: 15px;
 
       @media ${styleMixins.mediaUp(theme.v1.breakpoints.sm)} {
@@ -109,7 +109,7 @@ export const getLoginStyles = (theme: GrafanaTheme2) => {
     `,
     loginContent: css`
       max-width: 478px;
-      width: 100%;
+      width: calc(100% - 2rem);
       display: flex;
       align-items: stretch;
       flex-direction: column;
