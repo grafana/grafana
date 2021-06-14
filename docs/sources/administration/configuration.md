@@ -1105,7 +1105,7 @@ Set to `false` to disable alerting engine and hide Alerting in the Grafana UI. D
 
 ### execute_alerts
 
-Turns off alert rule execution, but Alerting is still visible in the Grafana UI.
+Turns off alert rule execution, but Alerting is still visible in the Grafana UI. This configuration is also supported in [Grafana 8 Alerts]({{< relref "../alerting/unified-alerting/_index.md" >}}. Default is `true`.
 
 ### error_or_timeout
 
@@ -1130,11 +1130,11 @@ Sets the alert notification timeout. Default value is `30`.
 
 ### max_attempts
 
-Sets a maximum limit on attempts to sending alert notifications. Default value is `3`.
+Sets a maximum limit on attempts to sending alert notifications. This configuration is also supported in [Grafana 8 Alerts]({{< relref "../alerting/unified-alerting/_index.md" >}}. Default value is `3`.
 
 ### min_interval_seconds
 
-Sets the minimum interval between rule evaluations. Default value is `1`.
+Sets the minimum interval between rule evaluations. This configuration is also supported in Grafana 8 Alerts. For dashboard alerts the default value is `1`, for [Grafana 8 Alerts]({{< relref "../alerting/unified-alerting/_index.md" >}}#min-interval-seconds) the default value is `10` that equals each alerting system's scheduler interval.
 
 > **Note.** This setting has precedence over each individual rule frequency. If a rule frequency is lower than this value, then this value is enforced.
 
