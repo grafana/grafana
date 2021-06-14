@@ -55,27 +55,38 @@ func walk(path string, info os.FileInfo, resolvedPath string, symlinkPathsFollow
 		}
 		return err
 	}
-	// We only want to lstat on directories. If this entry is a symbolic link to a file, no need to recurse.
-	if info.IsDir() {
-		if resolvedPath != "" && info.Mode()&os.ModeSymlink == os.ModeSymlink {
-			path2, err := os.Readlink(resolvedPath)
-			if err != nil {
-				return err
-			}
-			// vout("SymLink Path: %v, links to: %v", resolvedPath, path2)
-			if symlinkPathsFollowed != nil {
-				if _, ok := symlinkPathsFollowed[path2]; ok {
-					errMsg := "potential symLink infinite loop, path: %v, link to: %v"
-					return fmt.Errorf(errMsg, resolvedPath, path2)
-				}
-				symlinkPathsFollowed[path2] = true
-			}
-			info2, err := os.Lstat(path2)
-			if err != nil {
-				return err
-			}
-			return walk(path, info2, path2, symlinkPathsFollowed, walkFn)
+
+	if resolvedPath != "" && info.Mode()&os.ModeSymlink == os.ModeSymlink {
+
+		// We only want to lstat on directories. If this entry is a symbolic link to a file, no need to recurse.
+		statInfo, err := os.Stat(resolvedPath)
+		if err != nil {
+			return err
 		}
+		if !statInfo.IsDir() {
+			return nil
+		}
+
+		path2, err := filepath.EvalSymlinks(resolvedPath)
+		fmt.Println("path2", path2)
+		if err != nil {
+			return err
+		}
+		// vout("SymLink Path: %v, links to: %v", resolvedPath, path2)
+		if symlinkPathsFollowed != nil {
+			if _, ok := symlinkPathsFollowed[path2]; ok {
+				errMsg := "potential symLink infinite loop, path: %v, link to: %v"
+				return fmt.Errorf(errMsg, resolvedPath, path2)
+			}
+			symlinkPathsFollowed[path2] = true
+		}
+		info2, err := os.Lstat(path2)
+		fmt.Println("info2", err)
+		if err != nil {
+			return err
+		}
+		return walk(path, info2, path2, symlinkPathsFollowed, walkFn)
+	} else if info.IsDir() {
 
 		list, err := ioutil.ReadDir(path)
 		if err != nil {

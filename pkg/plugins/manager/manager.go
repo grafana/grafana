@@ -526,6 +526,7 @@ func (s *PluginScanner) walker(currentPath string, f os.FileInfo, err error) err
 	// We scan all the subfolders for plugin.json (with some exceptions) so that we also load embedded plugins, for
 	// example https://github.com/raintank/worldping-app/tree/master/dist/grafana-worldmap-panel worldmap panel plugin
 	// is embedded in worldping app.
+	fmt.Println(currentPath, f.Name())
 	if err != nil {
 		return fmt.Errorf("filepath.Walk reported an error for %q: %w", currentPath, err)
 	}
