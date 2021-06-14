@@ -11,7 +11,7 @@
 
 * **Configuration:** Fix changing org preferences in FireFox. [#35549](https://github.com/grafana/grafana/pull/35549), [@hugohaggmark](https://github.com/hugohaggmark)
 * **PieChart:** Fix legend dimension limits. [#35563](https://github.com/grafana/grafana/pull/35563), [@torkelo](https://github.com/torkelo)
-* **Postgres/MySQL/MSSQL:** Fix concurrent map writes panic. [#35510](https://github.com/grafana/grafana/pull/35510), [@marefr](https://github.com/marefr)
+* **Postgres/MySQL/MSSQL:** Fix panic in concurrent map writes. [#35510](https://github.com/grafana/grafana/pull/35510), [@marefr](https://github.com/marefr)
 * **Variables:** Hide default data source if missing from regex. [#35561](https://github.com/grafana/grafana/pull/35561), [@hugohaggmark](https://github.com/hugohaggmark)
 
 <!-- 8.0.2 END -->
