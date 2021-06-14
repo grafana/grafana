@@ -275,6 +275,13 @@ func (sch *schedule) Ticker(grafanaCtx context.Context, stateManager *state.Mana
 				itemVersion := item.Version
 				newRoutine := !sch.registry.exists(key)
 				ruleInfo := sch.registry.getOrCreateInfo(key, itemVersion)
+
+				// enforce minimum evaluation interval
+				if item.IntervalSeconds < sch.minRuleIntervalSeconds {
+					// sch.log.Debug("alert rule interval will be ignored (fallback to minimum interval): interval should be not be lower than the minimun evaluation", "key", key, "rule interval", item.IntervalSeconds, "mimimum rule evaluation interval", sch.minRuleIntervalSeconds)
+					item.IntervalSeconds = sch.minRuleIntervalSeconds
+				}
+
 				invalidInterval := item.IntervalSeconds%int64(sch.baseInterval.Seconds()) != 0
 
 				if newRoutine && !invalidInterval {
@@ -288,12 +295,6 @@ func (sch *schedule) Ticker(grafanaCtx context.Context, stateManager *state.Mana
 					// given that we validate interval during alert rule updates
 					sch.log.Debug("alert rule with invalid interval will be ignored: interval should be divided exactly by scheduler interval", "key", key, "interval", time.Duration(item.IntervalSeconds)*time.Second, "scheduler interval", sch.baseInterval)
 					continue
-				}
-
-				// enforce minimum evaluation interval
-				if item.IntervalSeconds < sch.minRuleIntervalSeconds {
-					// sch.log.Debug("alert rule interval will be ignored (fallback to minimum interval): interval should be not be lower than the minimun evaluation", "key", key, "rule interval", item.IntervalSeconds, "mimimum rule evaluation interval", sch.minRuleIntervalSeconds)
-					item.IntervalSeconds = sch.minRuleIntervalSeconds
 				}
 
 				itemFrequency := item.IntervalSeconds / int64(sch.baseInterval.Seconds())
