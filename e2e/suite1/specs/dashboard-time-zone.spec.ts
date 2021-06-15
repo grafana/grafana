@@ -1,5 +1,5 @@
 import { e2e } from '@grafana/e2e';
-import { format, parse, addHours, differenceInMinutes } from 'date-fns';
+import { addHours, differenceInMinutes, format, parse } from 'date-fns';
 
 e2e.scenario({
   describeName: 'Dashboard time zone support',
@@ -80,9 +80,6 @@ const isTimeCorrect = (inUtc: string, inTz: string, offset: number): boolean => 
 
   const a = parse(`${reference} ${inUtc}`);
   const b = addHours(parse(`${reference} ${inTz}`), offset);
-
-  console.log('a', a);
-  console.log('b', b);
 
   return differenceInMinutes(a, b) <= 1;
 };
