@@ -145,6 +145,7 @@ func (m *PluginManagerV2) installPlugins(path string, requireSigning bool) error
 	if err != nil {
 		return err
 	}
+	loadedPlugins = m.filterOutDuplicates(loadedPlugins)
 
 	for _, p := range loadedPlugins {
 		err = m.PluginInitializer.Initialize(p)
@@ -157,6 +158,29 @@ func (m *PluginManagerV2) installPlugins(path string, requireSigning bool) error
 	}
 
 	return nil
+}
+
+// Check if loader found duplicate plugins or plugins that are already installed
+func (m *PluginManagerV2) filterOutDuplicates(loadedPlugins []*plugins.PluginV2) []*plugins.PluginV2 {
+	var result []*plugins.PluginV2
+
+	pluginsByID := make(map[string]struct{})
+	for _, scannedPlugin := range loadedPlugins {
+		//TODO make duplicate checking more intelligent
+		if _, dupe := pluginsByID[scannedPlugin.ID]; dupe {
+			m.log.Warn("Skipping plugin as it's a duplicate", "id", scannedPlugin.ID)
+			continue
+		}
+		pluginsByID[scannedPlugin.ID] = struct{}{}
+
+		if existing := m.GetPlugin(scannedPlugin.ID); existing != nil {
+			m.log.Debug("Skipping plugin as it's already installed", "plugin", existing.ID, "version", existing.Info.Version)
+			continue
+		}
+		result = append(result, scannedPlugin)
+	}
+
+	return result
 }
 
 func (m *PluginManagerV2) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {

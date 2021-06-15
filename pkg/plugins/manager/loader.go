@@ -49,6 +49,7 @@ func (l *Loader) LoadAll(pluginJSONPaths []string, requireSigned bool) ([]*plugi
 	var foundPlugins = make(map[string]plugins.JSONData)
 	var loadingErrors = make(map[string]error)
 
+	// load plugin.json files and map directory to JSON data map
 	for _, pluginJSONPath := range pluginJSONPaths {
 		plugin, err := l.readPluginJSON(pluginJSONPath)
 		if err != nil {
@@ -58,56 +59,14 @@ func (l *Loader) LoadAll(pluginJSONPaths []string, requireSigned bool) ([]*plugi
 		foundPlugins[filepath.Dir(pluginJSONPath)] = plugin
 	}
 
-	pluginsByID := make(map[string]struct{})
-	for scannedPluginPath, scannedPlugin := range foundPlugins {
-		// Check if scanning found duplicate plugins
-		if _, dupe := pluginsByID[scannedPlugin.ID]; dupe {
-			l.log.Warn("Skipping plugin as it's a duplicate", "id", scannedPlugin.ID)
-			loadingErrors[scannedPlugin.ID] = plugins.DuplicatePluginError{ExistingPluginDir: scannedPluginPath, PluginID: scannedPlugin.ID}
-			delete(foundPlugins, scannedPluginPath)
-			continue
-		}
-		pluginsByID[scannedPlugin.ID] = struct{}{}
-
-		// Probably move this whole logic to higher-level (let manager decide)
-		// Check if scanning found plugins that are already installed
-		//if existing := pm.GetPlugin(scannedPlugin.ID); existing != nil {
-		//	l.log.Debug("Skipping plugin as it's already installed", "plugin", existing.ID, "version", existing.Info.Version)
-		//	delete(foundPlugins, scannedPluginPath)
-		//}
-	}
-
-	// wire up plugin dependencies
+	// calculate initial signature state
 	loadedPlugins := make(map[string]*plugins.PluginV2)
 	for pluginDir, pluginJSON := range foundPlugins {
-		p := &plugins.PluginV2{
+		plugin := &plugins.PluginV2{
 			JSONData:  pluginJSON,
 			PluginDir: pluginDir,
 		}
 
-		children := strings.Split(p.PluginDir, string(filepath.Separator))
-		children = children[0 : len(children)-1]
-		pluginPath := ""
-
-		if runtime.GOOS != "windows" && filepath.IsAbs(p.PluginDir) {
-			pluginPath = "/"
-		}
-		for _, child := range children {
-			pluginPath = filepath.Join(pluginPath, child)
-			if parentPluginJSON, ok := foundPlugins[pluginPath]; ok {
-				p.Parent = &plugins.PluginV2{
-					JSONData:  parentPluginJSON,
-					PluginDir: pluginPath,
-				}
-				p.Parent.Children = append(p.Parent.Children, p)
-				break
-			}
-		}
-		loadedPlugins[p.PluginDir] = p
-	}
-
-	// start of second pass
-	for _, plugin := range loadedPlugins {
 		signatureState, err := pluginSignatureState(l.log, l.Cfg, plugin)
 		if err != nil {
 			l.log.Warn("Could not get plugin signature state", "pluginID", plugin.ID, "err", err)
@@ -117,7 +76,35 @@ func (l *Loader) LoadAll(pluginJSONPaths []string, requireSigned bool) ([]*plugi
 		plugin.SignatureType = signatureState.Type
 		plugin.SignatureOrg = signatureState.SigningOrg
 
+		loadedPlugins[plugin.PluginDir] = plugin
+	}
+
+	// wire up plugin dependencies
+	for _, plugin := range loadedPlugins {
+		ancestors := strings.Split(plugin.PluginDir, string(filepath.Separator))
+		ancestors = ancestors[0 : len(ancestors)-1]
+		pluginPath := ""
+
+		if runtime.GOOS != "windows" && filepath.IsAbs(plugin.PluginDir) {
+			pluginPath = "/"
+		}
+		for _, ancestor := range ancestors {
+			pluginPath = filepath.Join(pluginPath, ancestor)
+			if parentPlugin, ok := loadedPlugins[pluginPath]; ok {
+				plugin.Parent = &plugins.PluginV2{
+					JSONData:  parentPlugin.JSONData,
+					PluginDir: pluginPath,
+				}
+				plugin.Parent.Children = append(plugin.Parent.Children, plugin)
+				break
+			}
+		}
+
 		l.log.Debug("Found plugin", "id", plugin.ID, "signature", plugin.Signature, "hasParent", plugin.Parent != nil)
+	}
+
+	// validate signatures
+	for _, plugin := range loadedPlugins {
 		signingError := newSignatureValidator(l.Cfg, requireSigned, l.allowUnsignedPluginsCondition).validate(plugin)
 		if signingError != nil {
 			l.log.Debug("Failed to validate plugin signature. Will skip loading", "id", plugin.ID,
@@ -130,7 +117,7 @@ func (l *Loader) LoadAll(pluginJSONPaths []string, requireSigned bool) ([]*plugi
 			plugin.IsCorePlugin = true
 		}
 
-		// External plugins need a module.js file for SystemJS to load
+		// verify module.js exists for SystemJS to load
 		if isExternalPlugin(plugin.PluginDir, l.Cfg) && !plugin.IsRenderer() {
 			module := filepath.Join(plugin.PluginDir, "module.js")
 			if exists, err := fs.Exists(module); err != nil {
@@ -142,13 +129,6 @@ func (l *Loader) LoadAll(pluginJSONPaths []string, requireSigned bool) ([]*plugi
 					"path", module)
 			}
 		}
-
-		logger.Debug("Loaded plugin", "pluginID", plugin.ID)
-
-		//if len(scanner.errors) > 0 {
-		//	l.log.Warn("Some plugins failed to load", "errors", scanner.errors)
-		//	pm.scanningErrors = scanner.errors
-		//}
 	}
 
 	if len(loadingErrors) > 0 {
@@ -156,11 +136,13 @@ func (l *Loader) LoadAll(pluginJSONPaths []string, requireSigned bool) ([]*plugi
 		for _, err := range loadingErrors {
 			errStr = append(errStr, err.Error())
 		}
-		logger.Warn("Some plugin loading errors were found", "errors", strings.Join(errStr, ", "))
+		logger.Warn("Some plugin loading errors occurred", "errors", strings.Join(errStr, ", "))
 	}
 
 	res := make([]*plugins.PluginV2, 0, len(loadedPlugins))
 	for _, p := range loadedPlugins {
+		logger.Debug("Loaded plugin", "pluginID", p.ID)
+
 		res = append(res, p)
 	}
 

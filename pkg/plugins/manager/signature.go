@@ -39,6 +39,8 @@ func (s *PluginSignatureValidator) validate(plugin *plugins.PluginV2) error {
 			logger.Debug("Setting descendant plugin's signature to that of root", "plugin", plugin.ID,
 				"root", plugin.Parent.ID, "signature", plugin.Signature, "rootSignature", plugin.Parent.Signature)
 			plugin.Signature = plugin.Parent.Signature
+			plugin.SignatureType = plugin.Parent.SignatureType
+			plugin.SignatureOrg = plugin.Parent.SignatureOrg
 			if plugin.Signature == plugins.PluginSignatureValid {
 				logger.Debug("Plugin has valid signature (inherited from root)", "id", plugin.ID)
 				return nil
@@ -77,7 +79,7 @@ func (s *PluginSignatureValidator) validate(plugin *plugins.PluginV2) error {
 			SignatureStatus: plugins.PluginSignatureModified,
 		}
 	default:
-		logger.Warn("Plugin has an unrecognized plugin signature state", "pluginID", plugin.ID, "signature",
+		logger.Debug("Plugin has an unrecognized plugin signature state", "pluginID", plugin.ID, "signature",
 			plugin.Signature)
 		return &plugins.PluginSignatureError{
 			PluginID: plugin.ID,
