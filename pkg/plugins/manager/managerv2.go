@@ -251,6 +251,10 @@ func (m *PluginManagerV2) Apps() {
 
 }
 
+func (m *PluginManagerV2) Panels() {
+
+}
+
 func (m *PluginManagerV2) Plugins() {
 
 }

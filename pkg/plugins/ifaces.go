@@ -99,7 +99,7 @@ type PluginInstallerLogger interface {
 
 type PluginFinderV2 interface {
 	// Find tries to discover all plugin.json in the provided directory and then returns their file-system paths.
-	Find(string) ([]string, error)
+	Find(pluginDir string) ([]string, error)
 }
 
 type PluginLoaderV2 interface {
@@ -123,6 +123,7 @@ type PluginManagerV2 interface {
 
 	Plugins()
 	DataSources()
+	Panels()
 	Apps()
 
 	StaticRoutes() []*PluginStaticRoute
@@ -140,7 +141,6 @@ type PluginManagerV2 interface {
 	IsSupported(pluginID string) bool
 	IsEnabled() bool
 
-	Register(*PluginV2) error
 	// IsRegistered checks if a plugin is registered with the manager
 	IsRegistered(pluginID string) bool
 	// RegisterCorePlugin registers and starts a core plugin
