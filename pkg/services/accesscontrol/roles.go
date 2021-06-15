@@ -7,7 +7,7 @@ var datasourceEditorReadRole = RoleDTO{
 	Name:    datasourceEditorRead,
 	Permissions: []Permission{
 		{
-			Action: ActionDatasourceExplore,
+			Action: ActionDatasourcesExplore,
 		},
 	},
 }

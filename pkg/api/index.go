@@ -190,7 +190,7 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 		return c.OrgRole == models.ROLE_ADMIN || c.OrgRole == models.ROLE_EDITOR || setting.ViewersCanEdit
 	}
 
-	if setting.ExploreEnabled && hasAccess(canExplore, ac.ActionDatasourceExplore) {
+	if setting.ExploreEnabled && hasAccess(canExplore, ac.ActionDatasourcesExplore) {
 
 		navTree = append(navTree, &dtos.NavLink{
 			Text:       "Explore",
