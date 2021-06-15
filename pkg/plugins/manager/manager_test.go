@@ -412,9 +412,9 @@ func TestPluginManager_Init(t *testing.T) {
 		})
 		err := pm.Init()
 		require.NoError(t, err)
-		// This plugin should be properly registered, even though it is symlinked to prlugins dir
+		// This plugin should be properly registered, even though it is symlinked to plugins dir
 		require.Empty(t, pm.scanningErrors)
-		const pluginID = "test"
+		const pluginID = "test-app"
 		assert.NotNil(t, pm.plugins[pluginID])
 	})
 }
