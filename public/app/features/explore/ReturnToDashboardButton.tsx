@@ -16,6 +16,7 @@ import { contextSrv } from 'app/core/services/context_srv';
 interface Props {
   exploreId: ExploreId;
   splitted: boolean;
+  hasAccess: boolean;
   queries: DataQuery[];
   originPanelId?: number | null;
   setDashboardQueriesToUpdateOnLoad: typeof setDashboardQueriesToUpdateOnLoad;
@@ -26,20 +27,12 @@ export const UnconnectedReturnToDashboardButton: FC<Props> = ({
   setDashboardQueriesToUpdateOnLoad,
   queries,
   splitted,
+  hasAccess,
 }) => {
   const withOriginId = originPanelId && Number.isInteger(originPanelId);
 
-  // access control can enable users to use explore without the viewersCanEdit flag enabled
-  const hasAccess = (): boolean => {
-    const roles = ['Editor', 'Admin'];
-    if (config.viewersCanEdit) {
-      roles.push('Viewer');
-    }
-    return roles.some((r) => contextSrv.hasRole(r));
-  };
-
-  // If in split mode, or no origin id, escape early and return null
-  if (splitted || !withOriginId || !hasAccess()) {
+  // If in split mode, no origin id, or user does not have access, escape early and return null
+  if (splitted || !withOriginId || !hasAccess) {
     return null;
   }
 
@@ -99,12 +92,21 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: ExploreI
   const splitted = isSplit(state);
   const { datasourceInstance, queries, originPanelId } = explore[exploreId]!;
 
+  const hasAccess = (): boolean => {
+    const roles = ['Editor', 'Admin'];
+    if (config.viewersCanEdit) {
+      roles.push('Viewer');
+    }
+    return roles.some((r) => contextSrv.hasRole(r));
+  };
+
   return {
     exploreId,
     datasourceInstance,
     queries,
     originPanelId,
     splitted,
+    hasAccess: hasAccess(),
   };
 }
 
