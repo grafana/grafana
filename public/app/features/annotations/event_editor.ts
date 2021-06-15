@@ -82,6 +82,39 @@ export class EventEditorCtrl {
         this.close();
       });
   }
+
+  save_with_vars(annotation: string) {
+    if (this.form.$valid) {
+      var t = _.cloneDeep(this.event);
+      t.tags.push(annotation);
+      t.tags.push(this.panelCtrl.datasource.name);
+      (t.time = t.time.valueOf()),
+        (t.timeEnd = 0),
+        t.isRegion && ((t.timeEnd = this.event.timeEnd.valueOf()), t.timeEnd < t.time)
+          ? console.log('invalid time')
+          : t.id
+          ? this.annotationsSrv
+              .updateAnnotationEvent(t)
+              .then(() => {
+                this.panelCtrl.refresh();
+                this.close();
+              })
+              .catch(() => {
+                this.panelCtrl.refresh();
+                this.close();
+              })
+          : this.annotationsSrv
+              .saveAnnotationEvent(t)
+              .then(() => {
+                this.panelCtrl.refresh();
+                this.close();
+              })
+              .catch(() => {
+                this.panelCtrl.refresh();
+                this.close();
+              });
+    }
+  }
 }
 
 function tryEpochToMoment(timestamp: any) {
