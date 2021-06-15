@@ -134,6 +134,7 @@ func (e *GraphiteExecutor) DataQuery(ctx context.Context, dsInfo *models.DataSou
 		Results: make(map[string]plugins.DataQueryResult),
 	}
 	result.Results["A"] = plugins.DataQueryResult{
+		RefID:      "A",
 		Dataframes: plugins.NewDecodedDataFrames(frames),
 	}
 	return result, nil
@@ -266,8 +267,7 @@ func epochMStoGraphiteTime(tr plugins.DataTimeRange) (string, string, error) {
  */
 func parseDataTimePoint(dataTimePoint *plugins.DataTimePoint) (timestamp time.Time, value *float64, error error) {
 	if !dataTimePoint[1].Valid {
-		error = errors.New("failed to parse data point")
-		return
+		return time.Time{}, nil, errors.New("failed to parse data point")
 	}
 	timestamp = time.Unix(int64(dataTimePoint[1].Float64), 0).UTC()
 
