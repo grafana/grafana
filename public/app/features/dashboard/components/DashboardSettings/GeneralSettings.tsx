@@ -8,8 +8,7 @@ import { DashboardModel } from '../../state/DashboardModel';
 import { DeleteDashboardButton } from '../DeleteDashboard/DeleteDashboardButton';
 import { TimePickerSettings } from './TimePickerSettings';
 
-import { updateTimeZoneForSession } from 'app/features/profile/state/reducers';
-import { getTimeSrv } from '../../services/TimeSrv';
+import { updateTimeZoneDashboard } from 'app/features/dashboard/state/actions';
 
 interface OwnProps {
   dashboard: DashboardModel;
@@ -136,10 +135,7 @@ export function GeneralSettingsUnconnected({ dashboard, updateTimeZone }: Props)
 }
 
 const mapDispatchToProps = {
-  updateTimeZone: (timeZone: TimeZone) => {
-    updateTimeZoneForSession(timeZone);
-    getTimeSrv().refreshDashboard();
-  },
+  updateTimeZone: updateTimeZoneDashboard,
 };
 
 const connector = connect(null, mapDispatchToProps);
