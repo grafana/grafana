@@ -8,8 +8,8 @@ import { DashboardModel } from '../../state';
 import { DashboardLink } from '../../state/DashboardModel';
 import { linkIconMap } from '../LinksSettings/LinkSettingsEdit';
 import { useEffectOnce } from 'react-use';
-import { CoreEvents } from 'app/types';
 import { selectors } from '@grafana/e2e-selectors';
+import { TimeRangeUpdatedEvent } from 'app/types/events';
 
 export interface Props {
   dashboard: DashboardModel;
@@ -21,11 +21,8 @@ export const DashboardLinks: FC<Props> = ({ dashboard, links }) => {
   const [, forceUpdate] = useReducer((x) => x + 1, 0);
 
   useEffectOnce(() => {
-    dashboard.on(CoreEvents.timeRangeUpdated, forceUpdate);
-
-    return () => {
-      dashboard.off(CoreEvents.timeRangeUpdated, forceUpdate);
-    };
+    const sub = dashboard.events.subscribe(TimeRangeUpdatedEvent, forceUpdate);
+    return () => sub.unsubscribe();
   });
 
   if (!links.length) {
