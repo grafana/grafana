@@ -261,7 +261,7 @@ func TestOSSAccessControlService_RegisterFixedRole(t *testing.T) {
 			}
 
 			for _, run := range tc.runs {
-				err := ac.RegisterFixedRole(run.role, run.builtInRoles...)
+				err := ac.RegisterFixedRole(context.Background(), run.role, run.builtInRoles...)
 				if run.wantErr != nil {
 					assert.ErrorIs(t, err, run.wantErr)
 					return

@@ -17,7 +17,7 @@ type AccessControl interface {
 	IsDisabled() bool
 
 	// RegisterFixedRole adds a new fixed role to built-in roles
-	RegisterFixedRole(role RoleDTO, builtInRoles ...string) error
+	RegisterFixedRole(ctx context.Context, role RoleDTO, builtInRoles ...string) error
 }
 
 func HasAccess(ac AccessControl, c *models.ReqContext) func(fallback func(*models.ReqContext) bool, permission string, scopes ...string) bool {
