@@ -1,6 +1,8 @@
 package sqlstore
 
 import (
+	"context"
+
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 )
@@ -9,24 +11,26 @@ func init() {
 	bus.AddHandler("sql", StarDashboard)
 	bus.AddHandler("sql", UnstarDashboard)
 	bus.AddHandler("sql", GetUserStars)
-	bus.AddHandler("sql", IsStarredByUser)
+	bus.AddHandlerCtx("sql", IsStarredByUserCtx)
 }
 
-func IsStarredByUser(query *models.IsStarredByUserQuery) error {
-	rawSQL := "SELECT 1 from star where user_id=? and dashboard_id=?"
-	results, err := x.Query(rawSQL, query.UserId, query.DashboardId)
+func IsStarredByUserCtx(ctx context.Context, query *models.IsStarredByUserQuery) error {
+	return withDbSession(ctx, x, func(dbSession *DBSession) error {
+		rawSQL := "SELECT 1 from star where user_id=? and dashboard_id=?"
+		results, err := dbSession.Query(rawSQL, query.UserId, query.DashboardId)
 
-	if err != nil {
-		return err
-	}
+		if err != nil {
+			return err
+		}
 
-	if len(results) == 0 {
+		if len(results) == 0 {
+			return nil
+		}
+
+		query.Result = true
+
 		return nil
-	}
-
-	query.Result = true
-
-	return nil
+	})
 }
 
 func StarDashboard(cmd *models.StarDashboardCommand) error {
