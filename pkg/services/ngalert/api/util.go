@@ -237,7 +237,7 @@ func conditionEval(c *models.ReqContext, cmd ngmodels.EvalAlertConditionCommand,
 		now = timeNow()
 	}
 
-	evaluator := eval.Evaluator{Cfg: cfg}
+	evaluator := eval.Evaluator{Cfg: cfg, Log: c.Logger}
 	evalResults, err := evaluator.ConditionEval(&evalCond, now, dataService)
 	if err != nil {
 		return ErrResp(http.StatusBadRequest, err, "Failed to evaluate conditions")

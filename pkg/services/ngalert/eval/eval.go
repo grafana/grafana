@@ -5,6 +5,7 @@ package eval
 import (
 	"context"
 	"fmt"
+	"runtime/debug"
 	"sort"
 	"time"
 
@@ -24,6 +25,7 @@ const alertingEvaluationTimeout = 30 * time.Second
 
 type Evaluator struct {
 	Cfg *setting.Cfg
+	Log log.Logger
 }
 
 // invalidEvalResultFormatError is an error for invalid format of the alert definition evaluation results.
@@ -106,6 +108,7 @@ func (s State) String() string {
 type AlertExecCtx struct {
 	OrgID              int64
 	ExpressionsEnabled bool
+	Log                log.Logger
 
 	Ctx context.Context
 }
@@ -224,8 +227,13 @@ func executeCondition(ctx AlertExecCtx, c *models.Condition, now time.Time, data
 func executeQueriesAndExpressions(ctx AlertExecCtx, data []models.AlertQuery, now time.Time, dataService *tsdb.Service) (resp *backend.QueryDataResponse, err error) {
 	defer func() {
 		if e := recover(); e != nil {
-			// override the error returned
-			err = fmt.Errorf("alert rule panic: %s", log.Stack(1))
+			ctx.Log.Error("alert rule panic", "error", e, "stack", string(debug.Stack()))
+			panicErr := fmt.Errorf("alert rule panic; please check the logs for the full stack")
+			if err != nil {
+				err = fmt.Errorf("queries and expressions execution failed: %w; %v", err, panicErr.Error())
+			} else {
+				err = panicErr
+			}
 		}
 	}()
 
@@ -418,7 +426,7 @@ func (e *Evaluator) ConditionEval(condition *models.Condition, now time.Time, da
 	alertCtx, cancelFn := context.WithTimeout(context.Background(), alertingEvaluationTimeout)
 	defer cancelFn()
 
-	alertExecCtx := AlertExecCtx{OrgID: condition.OrgID, Ctx: alertCtx, ExpressionsEnabled: e.Cfg.ExpressionsEnabled}
+	alertExecCtx := AlertExecCtx{OrgID: condition.OrgID, Ctx: alertCtx, ExpressionsEnabled: e.Cfg.ExpressionsEnabled, Log: e.Log}
 
 	execResult := executeCondition(alertExecCtx, condition, now, dataService)
 
@@ -431,7 +439,7 @@ func (e *Evaluator) QueriesAndExpressionsEval(orgID int64, data []models.AlertQu
 	alertCtx, cancelFn := context.WithTimeout(context.Background(), alertingEvaluationTimeout)
 	defer cancelFn()
 
-	alertExecCtx := AlertExecCtx{OrgID: orgID, Ctx: alertCtx, ExpressionsEnabled: e.Cfg.ExpressionsEnabled}
+	alertExecCtx := AlertExecCtx{OrgID: orgID, Ctx: alertCtx, ExpressionsEnabled: e.Cfg.ExpressionsEnabled, Log: e.Log}
 
 	execResult, err := executeQueriesAndExpressions(alertExecCtx, data, now, dataService)
 	if err != nil {
