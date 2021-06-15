@@ -33,5 +33,5 @@ export enum AccessControlAction {
   LDAPUsersRead = 'ldap.user:read',
   LDAPUsersSync = 'ldap.user:sync',
   LDAPStatusRead = 'ldap.status:read',
-  DataSourceExplore = 'datasource:explore',
+  DataSourcesExplore = 'datasources:explore',
 }
