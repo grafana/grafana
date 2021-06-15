@@ -41,7 +41,7 @@ echo "Metrics: {
   \"grafana.ci-code.strictLint.noExplicitAny\": \"${STRICT_LINT_EXPLICIT_ANY}\"
   \"grafana.ci-code.bundleFolderSize\": \"${TOTAL_BUNDLE}\",
   \"grafana.ci-code.dependencies.outdated\": \"${OUTDATED_DEPENDENCIES}\",
-  \"grafana.ci-code.dependencies.lowVulnerabilities\": \"${LOW_VULNERABILITIES}\",
-  \"grafana.ci-code.dependencies.mediumVulnerabilities\": \"${MED_VULNERABILITIES}\",
-  \"grafana.ci-code.dependencies.highVulnerabilities\": \"${HIGH_VULNERABILITIES}\",
+  \"grafana.ci-code.dependencies.vulnerabilities.low\": \"${LOW_VULNERABILITIES}\",
+  \"grafana.ci-code.dependencies.vulnerabilities.medium\": \"${MED_VULNERABILITIES}\",
+  \"grafana.ci-code.dependencies.vulnerabilities.high\": \"${HIGH_VULNERABILITIES}\",
 }"
