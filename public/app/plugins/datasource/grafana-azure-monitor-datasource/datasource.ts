@@ -58,6 +58,7 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
       instanceSettings.jsonData.cloudName === 'azuremonitor' ||
       instanceSettings.jsonData.cloudName === 'chinaazuremonitor'
     ) {
+      // AppInsights and InsightAnalytics are only supported for Public and Azure China clouds
       this.appInsightsDatasource = new AppInsightsDatasource(instanceSettings);
       this.insightsAnalyticsDatasource = new InsightsAnalyticsDatasource(instanceSettings);
       pseudoDatasource[AzureQueryType.ApplicationInsights] = this.appInsightsDatasource;
