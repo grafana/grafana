@@ -24,6 +24,11 @@ type Service struct {
 	SocialService *social.Service `inject:""`
 }
 
+type OAuthTokenService interface {
+	GetCurrentOAuthToken(context.Context, *models.SignedInUser) *oauth2.Token
+	IsOAuthPassThruEnabled(*models.DataSource) bool
+}
+
 func (o *Service) Init() error {
 	return nil
 }

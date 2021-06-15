@@ -39,7 +39,7 @@ type DataSourceProxy struct {
 	plugin            *plugins.DataSourcePlugin
 	cfg               *setting.Cfg
 	clientProvider    httpclient.Provider
-	oAuthTokenService *oauthtoken.Service
+	oAuthTokenService oauthtoken.OAuthTokenService
 }
 
 type handleResponseTransport struct {
@@ -72,7 +72,7 @@ func (lw *logWrapper) Write(p []byte) (n int, err error) {
 
 // NewDataSourceProxy creates a new Datasource proxy
 func NewDataSourceProxy(ds *models.DataSource, plugin *plugins.DataSourcePlugin, ctx *models.ReqContext,
-	proxyPath string, cfg *setting.Cfg, clientProvider httpclient.Provider, oAuthTokenService *oauthtoken.Service) (*DataSourceProxy, error) {
+	proxyPath string, cfg *setting.Cfg, clientProvider httpclient.Provider, oAuthTokenService oauthtoken.OAuthTokenService) (*DataSourceProxy, error) {
 	targetURL, err := datasource.ValidateURL(ds.Type, ds.Url)
 	if err != nil {
 		return nil, err

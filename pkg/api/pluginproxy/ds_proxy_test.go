@@ -2,6 +2,7 @@ package pluginproxy
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -16,7 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/components/securejsondata"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
-	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
@@ -424,11 +424,6 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 	})
 
 	t.Run("When proxying a datasource that has OAuth token pass-through enabled", func(t *testing.T) {
-		social.SocialMap["generic_oauth"] = &social.SocialGenericOAuth{
-			SocialBase: &social.SocialBase{
-				Config: &oauth2.Config{},
-			},
-		}
 		origAuthSvc := setting.OAuthService
 		t.Cleanup(func() {
 			setting.OAuthService = origAuthSvc
@@ -467,7 +462,16 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 				Req: macaron.Request{Request: req},
 			},
 		}
-		proxy, err := NewDataSourceProxy(ds, plugin, ctx, "/path/to/folder/", &setting.Cfg{}, httpClientProvider, &oauthtoken.Service{SocialService: &social.Service{}})
+		mockAuthToken := mockOAuthTokenService{
+			token: &oauth2.Token{
+				AccessToken:  "testtoken",
+				RefreshToken: "testrefreshtoken",
+				TokenType:    "Bearer",
+				Expiry:       time.Now().AddDate(0, 0, 1),
+			},
+			oAuthEnabled: true,
+		}
+		proxy, err := NewDataSourceProxy(ds, plugin, ctx, "/path/to/folder/", &setting.Cfg{}, httpClientProvider, &mockAuthToken)
 		require.NoError(t, err)
 		req, err = http.NewRequest(http.MethodGet, "http://grafana.com/sub", nil)
 		require.NoError(t, err)
@@ -935,4 +939,17 @@ func Test_PathCheck(t *testing.T) {
 
 	require.Nil(t, proxy.validateRequest())
 	require.Equal(t, plugin.Routes[1], proxy.route)
+}
+
+type mockOAuthTokenService struct {
+	token        *oauth2.Token
+	oAuthEnabled bool
+}
+
+func (m *mockOAuthTokenService) GetCurrentOAuthToken(ctx context.Context, user *models.SignedInUser) *oauth2.Token {
+	return m.token
+}
+
+func (m *mockOAuthTokenService) IsOAuthPassThruEnabled(ds *models.DataSource) bool {
+	return m.oAuthEnabled
 }
