@@ -33,7 +33,7 @@ The Derived Fields configuration allows you to:
 - Add fields parsed from the log message.
 - Add a link that uses the value of the field.
 
-You can use this functionality to link to your tracing backend directly from your logs, or link to a user profile page if a userId is present in the log line. These links appear in the [log details](/explore/logs-integration/#labels-and-detected-fields).
+You can use this functionality to link to your tracing backend directly from your logs, or link to a user profile page if a userId is present in the log line. These links appear in the [log details]({{< relref "../explore/logs-integration/#labels-and-detected-fields" >}}).
 
 Each derived field consists of:
 
