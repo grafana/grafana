@@ -106,6 +106,9 @@ export class ContextSrv {
   }
 
   hasAccessToExplore() {
+    if (config.featureToggles['accesscontrol']) {
+      return this.hasPermission(AccessControlAction.DataSourceExplore);
+    }
     return (this.isEditor || config.viewersCanEdit) && config.exploreEnabled;
   }
 }
