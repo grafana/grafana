@@ -7,6 +7,7 @@ import {
   Silence,
   SilenceCreatePayload,
   Matcher,
+  AlertmanagerStatus,
 } from 'app/plugins/datasource/alertmanager/types';
 import { getDatasourceAPIId, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 
@@ -123,6 +124,18 @@ export async function fetchAlertGroups(alertmanagerSourceName: string): Promise<
   const result = await getBackendSrv()
     .fetch<AlertmanagerGroup[]>({
       url: `/api/alertmanager/${getDatasourceAPIId(alertmanagerSourceName)}/api/v2/alerts/groups`,
+      showErrorAlert: false,
+      showSuccessAlert: false,
+    })
+    .toPromise();
+
+  return result.data;
+}
+
+export async function fetchStatus(alertManagerSourceName: string): Promise<AlertmanagerStatus> {
+  const result = await getBackendSrv()
+    .fetch<AlertmanagerStatus>({
+      url: `/api/alertmanager/${getDatasourceAPIId(alertManagerSourceName)}/api/v2/status`,
       showErrorAlert: false,
       showSuccessAlert: false,
     })
