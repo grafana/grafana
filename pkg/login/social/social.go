@@ -32,7 +32,148 @@ type Service struct {
 }
 
 func (ss *Service) Init() error {
-	ss.NewOAuthService(ss.Cfg)
+	setting.OAuthService = &setting.OAuther{}
+	setting.OAuthService.OAuthInfos = make(map[string]*setting.OAuthInfo)
+
+	for _, name := range allOauthes {
+		sec := ss.Cfg.Raw.Section("auth." + name)
+
+		info := &setting.OAuthInfo{
+			ClientId:            sec.Key("client_id").String(),
+			ClientSecret:        sec.Key("client_secret").String(),
+			Scopes:              util.SplitString(sec.Key("scopes").String()),
+			AuthUrl:             sec.Key("auth_url").String(),
+			TokenUrl:            sec.Key("token_url").String(),
+			ApiUrl:              sec.Key("api_url").String(),
+			Enabled:             sec.Key("enabled").MustBool(),
+			EmailAttributeName:  sec.Key("email_attribute_name").String(),
+			EmailAttributePath:  sec.Key("email_attribute_path").String(),
+			RoleAttributePath:   sec.Key("role_attribute_path").String(),
+			RoleAttributeStrict: sec.Key("role_attribute_strict").MustBool(),
+			GroupsAttributePath: sec.Key("groups_attribute_path").String(),
+			AllowedDomains:      util.SplitString(sec.Key("allowed_domains").String()),
+			HostedDomain:        sec.Key("hosted_domain").String(),
+			AllowSignup:         sec.Key("allow_sign_up").MustBool(),
+			Name:                sec.Key("name").MustString(name),
+			TlsClientCert:       sec.Key("tls_client_cert").String(),
+			TlsClientKey:        sec.Key("tls_client_key").String(),
+			TlsClientCa:         sec.Key("tls_client_ca").String(),
+			TlsSkipVerify:       sec.Key("tls_skip_verify_insecure").MustBool(),
+		}
+
+		// when empty_scopes parameter exists and is true, overwrite scope with empty value
+		if sec.Key("empty_scopes").MustBool() {
+			info.Scopes = []string{}
+		}
+
+		if !info.Enabled {
+			continue
+		}
+
+		if name == "grafananet" {
+			name = grafanaCom
+		}
+
+		setting.OAuthService.OAuthInfos[name] = info
+
+		config := oauth2.Config{
+			ClientID:     info.ClientId,
+			ClientSecret: info.ClientSecret,
+			Endpoint: oauth2.Endpoint{
+				AuthURL:   info.AuthUrl,
+				TokenURL:  info.TokenUrl,
+				AuthStyle: oauth2.AuthStyleAutoDetect,
+			},
+			RedirectURL: strings.TrimSuffix(ss.Cfg.AppURL, "/") + SocialBaseUrl + name,
+			Scopes:      info.Scopes,
+		}
+
+		// GitHub.
+		if name == "github" {
+			ss.socialMap["github"] = &SocialGithub{
+				SocialBase:           newSocialBase(name, &config, info),
+				apiUrl:               info.ApiUrl,
+				teamIds:              sec.Key("team_ids").Ints(","),
+				allowedOrganizations: util.SplitString(sec.Key("allowed_organizations").String()),
+			}
+		}
+
+		// GitLab.
+		if name == "gitlab" {
+			ss.socialMap["gitlab"] = &SocialGitlab{
+				SocialBase:    newSocialBase(name, &config, info),
+				apiUrl:        info.ApiUrl,
+				allowedGroups: util.SplitString(sec.Key("allowed_groups").String()),
+			}
+		}
+
+		// Google.
+		if name == "google" {
+			ss.socialMap["google"] = &SocialGoogle{
+				SocialBase:   newSocialBase(name, &config, info),
+				hostedDomain: info.HostedDomain,
+				apiUrl:       info.ApiUrl,
+			}
+		}
+
+		// AzureAD.
+		if name == "azuread" {
+			ss.socialMap["azuread"] = &SocialAzureAD{
+				SocialBase:        newSocialBase(name, &config, info),
+				allowedGroups:     util.SplitString(sec.Key("allowed_groups").String()),
+				autoAssignOrgRole: ss.Cfg.AutoAssignOrgRole,
+			}
+		}
+
+		// Okta
+		if name == "okta" {
+			ss.socialMap["okta"] = &SocialOkta{
+				SocialBase:          newSocialBase(name, &config, info),
+				apiUrl:              info.ApiUrl,
+				allowedGroups:       util.SplitString(sec.Key("allowed_groups").String()),
+				roleAttributePath:   info.RoleAttributePath,
+				roleAttributeStrict: info.RoleAttributeStrict,
+			}
+		}
+
+		// Generic - Uses the same scheme as GitHub.
+		if name == "generic_oauth" {
+			ss.socialMap["generic_oauth"] = &SocialGenericOAuth{
+				SocialBase:           newSocialBase(name, &config, info),
+				apiUrl:               info.ApiUrl,
+				emailAttributeName:   info.EmailAttributeName,
+				emailAttributePath:   info.EmailAttributePath,
+				nameAttributePath:    sec.Key("name_attribute_path").String(),
+				roleAttributePath:    info.RoleAttributePath,
+				roleAttributeStrict:  info.RoleAttributeStrict,
+				groupsAttributePath:  info.GroupsAttributePath,
+				loginAttributePath:   sec.Key("login_attribute_path").String(),
+				idTokenAttributeName: sec.Key("id_token_attribute_name").String(),
+				teamIds:              sec.Key("team_ids").Ints(","),
+				allowedOrganizations: util.SplitString(sec.Key("allowed_organizations").String()),
+			}
+		}
+
+		if name == grafanaCom {
+			config = oauth2.Config{
+				ClientID:     info.ClientId,
+				ClientSecret: info.ClientSecret,
+				Endpoint: oauth2.Endpoint{
+					AuthURL:   ss.Cfg.GrafanaComURL + "/oauth2/authorize",
+					TokenURL:  ss.Cfg.GrafanaComURL + "/api/oauth2/token",
+					AuthStyle: oauth2.AuthStyleInHeader,
+				},
+				RedirectURL: strings.TrimSuffix(ss.Cfg.AppURL, "/") + SocialBaseUrl + name,
+				Scopes:      info.Scopes,
+			}
+
+			ss.socialMap[grafanaCom] = &SocialGrafanaCom{
+				SocialBase:           newSocialBase(name, &config, info),
+				url:                  ss.Cfg.GrafanaComURL,
+				allowedOrganizations: util.SplitString(sec.Key("allowed_organizations").String()),
+			}
+		}
+	}
 	return nil
 }
 
@@ -91,151 +232,6 @@ func newSocialBase(name string, config *oauth2.Config, info *setting.OAuthInfo) 
 		log:            logger,
 		allowSignup:    info.AllowSignup,
 		allowedDomains: info.AllowedDomains,
-	}
-}
-
-func (ss *Service) NewOAuthService(cfg *setting.Cfg) {
-	setting.OAuthService = &setting.OAuther{}
-	setting.OAuthService.OAuthInfos = make(map[string]*setting.OAuthInfo)
-
-	for _, name := range allOauthes {
-		sec := cfg.Raw.Section("auth." + name)
-
-		info := &setting.OAuthInfo{
-			ClientId:            sec.Key("client_id").String(),
-			ClientSecret:        sec.Key("client_secret").String(),
-			Scopes:              util.SplitString(sec.Key("scopes").String()),
-			AuthUrl:             sec.Key("auth_url").String(),
-			TokenUrl:            sec.Key("token_url").String(),
-			ApiUrl:              sec.Key("api_url").String(),
-			Enabled:             sec.Key("enabled").MustBool(),
-			EmailAttributeName:  sec.Key("email_attribute_name").String(),
-			EmailAttributePath:  sec.Key("email_attribute_path").String(),
-			RoleAttributePath:   sec.Key("role_attribute_path").String(),
-			RoleAttributeStrict: sec.Key("role_attribute_strict").MustBool(),
-			GroupsAttributePath: sec.Key("groups_attribute_path").String(),
-			AllowedDomains:      util.SplitString(sec.Key("allowed_domains").String()),
-			HostedDomain:        sec.Key("hosted_domain").String(),
-			AllowSignup:         sec.Key("allow_sign_up").MustBool(),
-			Name:                sec.Key("name").MustString(name),
-			TlsClientCert:       sec.Key("tls_client_cert").String(),
-			TlsClientKey:        sec.Key("tls_client_key").String(),
-			TlsClientCa:         sec.Key("tls_client_ca").String(),
-			TlsSkipVerify:       sec.Key("tls_skip_verify_insecure").MustBool(),
-		}
-
-		// when empty_scopes parameter exists and is true, overwrite scope with empty value
-		if sec.Key("empty_scopes").MustBool() {
-			info.Scopes = []string{}
-		}
-
-		if !info.Enabled {
-			continue
-		}
-
-		if name == "grafananet" {
-			name = grafanaCom
-		}
-
-		setting.OAuthService.OAuthInfos[name] = info
-
-		config := oauth2.Config{
-			ClientID:     info.ClientId,
-			ClientSecret: info.ClientSecret,
-			Endpoint: oauth2.Endpoint{
-				AuthURL:   info.AuthUrl,
-				TokenURL:  info.TokenUrl,
-				AuthStyle: oauth2.AuthStyleAutoDetect,
-			},
-			RedirectURL: strings.TrimSuffix(cfg.AppURL, "/") + SocialBaseUrl + name,
-			Scopes:      info.Scopes,
-		}
-
-		// GitHub.
-		if name == "github" {
-			ss.socialMap["github"] = &SocialGithub{
-				SocialBase:           newSocialBase(name, &config, info),
-				apiUrl:               info.ApiUrl,
-				teamIds:              sec.Key("team_ids").Ints(","),
-				allowedOrganizations: util.SplitString(sec.Key("allowed_organizations").String()),
-			}
-		}
-
-		// GitLab.
-		if name == "gitlab" {
-			ss.socialMap["gitlab"] = &SocialGitlab{
-				SocialBase:    newSocialBase(name, &config, info),
-				apiUrl:        info.ApiUrl,
-				allowedGroups: util.SplitString(sec.Key("allowed_groups").String()),
-			}
-		}
-
-		// Google.
-		if name == "google" {
-			ss.socialMap["google"] = &SocialGoogle{
-				SocialBase:   newSocialBase(name, &config, info),
-				hostedDomain: info.HostedDomain,
-				apiUrl:       info.ApiUrl,
-			}
-		}
-
-		// AzureAD.
-		if name == "azuread" {
-			ss.socialMap["azuread"] = &SocialAzureAD{
-				SocialBase:        newSocialBase(name, &config, info),
-				allowedGroups:     util.SplitString(sec.Key("allowed_groups").String()),
-				autoAssignOrgRole: cfg.AutoAssignOrgRole,
-			}
-		}
-
-		// Okta
-		if name == "okta" {
-			ss.socialMap["okta"] = &SocialOkta{
-				SocialBase:          newSocialBase(name, &config, info),
-				apiUrl:              info.ApiUrl,
-				allowedGroups:       util.SplitString(sec.Key("allowed_groups").String()),
-				roleAttributePath:   info.RoleAttributePath,
-				roleAttributeStrict: info.RoleAttributeStrict,
-			}
-		}
-
-		// Generic - Uses the same scheme as GitHub.
-		if name == "generic_oauth" {
-			ss.socialMap["generic_oauth"] = &SocialGenericOAuth{
-				SocialBase:           newSocialBase(name, &config, info),
-				apiUrl:               info.ApiUrl,
-				emailAttributeName:   info.EmailAttributeName,
-				emailAttributePath:   info.EmailAttributePath,
-				nameAttributePath:    sec.Key("name_attribute_path").String(),
-				roleAttributePath:    info.RoleAttributePath,
-				roleAttributeStrict:  info.RoleAttributeStrict,
-				groupsAttributePath:  info.GroupsAttributePath,
-				loginAttributePath:   sec.Key("login_attribute_path").String(),
-				idTokenAttributeName: sec.Key("id_token_attribute_name").String(),
-				teamIds:              sec.Key("team_ids").Ints(","),
-				allowedOrganizations: util.SplitString(sec.Key("allowed_organizations").String()),
-			}
-		}
-
-		if name == grafanaCom {
-			config = oauth2.Config{
-				ClientID:     info.ClientId,
-				ClientSecret: info.ClientSecret,
-				Endpoint: oauth2.Endpoint{
-					AuthURL:   cfg.GrafanaComURL + "/oauth2/authorize",
-					TokenURL:  cfg.GrafanaComURL + "/api/oauth2/token",
-					AuthStyle: oauth2.AuthStyleInHeader,
-				},
-				RedirectURL: strings.TrimSuffix(cfg.AppURL, "/") + SocialBaseUrl + name,
-				Scopes:      info.Scopes,
-			}
-
-			ss.socialMap[grafanaCom] = &SocialGrafanaCom{
-				SocialBase:           newSocialBase(name, &config, info),
-				url:                  cfg.GrafanaComURL,
-				allowedOrganizations: util.SplitString(sec.Key("allowed_organizations").String()),
-			}
-		}
 	}
 }
 
