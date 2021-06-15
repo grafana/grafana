@@ -37,7 +37,11 @@ export const StateTimelineTooltip: React.FC<StateTimelineTooltipProps> = ({
   const value = field.values.get(datapointIdx!);
   const display = fieldFmt(value);
   const fieldDisplayName = dataFrameFieldIndex
-    ? getFieldDisplayName(field, data[dataFrameFieldIndex.frameIndex], data)
+    ? getFieldDisplayName(
+        data[dataFrameFieldIndex.frameIndex].fields[dataFrameFieldIndex.fieldIndex],
+        data[dataFrameFieldIndex.frameIndex],
+        data
+      )
     : null;
 
   const nextStateIdx = findNextStateIndex(field, datapointIdx!);
