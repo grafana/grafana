@@ -1,4 +1,4 @@
-import { createTheme, FieldType, toDataFrame } from '@grafana/data';
+import { createTheme, FieldType, MutableDataFrame, toDataFrame } from '@grafana/data';
 import { prepareGraphableFields } from './utils';
 
 describe('prepare timeseries graph', () => {
@@ -56,6 +56,27 @@ describe('prepare timeseries graph', () => {
         "suffix": undefined,
         "text": "True",
       }
+    `);
+  });
+
+  it('will convert NaN and Infinty to nulls', () => {
+    const df = new MutableDataFrame({
+      fields: [
+        { name: 'time', type: FieldType.time, values: [995, 9996, 9997, 9998, 9999] },
+        { name: 'a', values: [-10, NaN, 10, -Infinity, +Infinity] },
+      ],
+    });
+    const result = prepareGraphableFields([df], createTheme());
+
+    const field = result.frames![0].fields.find((f) => f.name === 'a');
+    expect(field!.values.toArray()).toMatchInlineSnapshot(`
+      Array [
+        -10,
+        null,
+        10,
+        null,
+        null,
+      ]
     `);
   });
 });
