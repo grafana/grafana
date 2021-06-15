@@ -71,7 +71,6 @@ type PluginBase struct {
 	PluginDir       string              `json:"-"`
 	DefaultNavUrl   string              `json:"-"`
 	IsCorePlugin    bool                `json:"-"`
-	Files           []string            `json:"-"`
 	SignatureType   PluginSignatureType `json:"-"`
 	SignatureOrg    string              `json:"-"`
 
