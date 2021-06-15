@@ -65,7 +65,9 @@ func ApplyRoute(ctx context.Context, req *http.Request, proxyPath string, route 
 		}
 	}
 
-	logger.Info("Requesting", "url", req.URL.String())
+	if setting.DataProxyLogging {
+		logger.Debug("Requesting", "url", req.URL.String())
+	}
 }
 
 func getTokenProvider(ctx context.Context, cfg *setting.Cfg, ds *models.DataSource, pluginRoute *plugins.AppPluginRoute,
