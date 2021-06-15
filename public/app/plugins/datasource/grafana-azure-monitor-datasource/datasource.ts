@@ -28,11 +28,13 @@ import AzureResourceGraphDatasource from './azure_resource_graph/azure_resource_
 
 export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDataSourceJsonData> {
   azureMonitorDatasource: AzureMonitorDatasource;
-  appInsightsDatasource: AppInsightsDatasource;
   azureLogAnalyticsDatasource: AzureLogAnalyticsDatasource;
-  insightsAnalyticsDatasource: InsightsAnalyticsDatasource;
   resourcePickerData: ResourcePickerData;
   azureResourceGraphDatasource: AzureResourceGraphDatasource;
+  /** @deprecated */
+  appInsightsDatasource?: AppInsightsDatasource;
+  /** @deprecated */
+  insightsAnalyticsDatasource: InsightsAnalyticsDatasource;
 
   pseudoDatasource: Record<AzureQueryType, DataSourceWithBackend>;
   optionsKey: Record<AzureQueryType, string>;
@@ -43,18 +45,24 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
   ) {
     super(instanceSettings);
     this.azureMonitorDatasource = new AzureMonitorDatasource(instanceSettings);
-    this.appInsightsDatasource = new AppInsightsDatasource(instanceSettings);
     this.azureLogAnalyticsDatasource = new AzureLogAnalyticsDatasource(instanceSettings);
-    this.insightsAnalyticsDatasource = new InsightsAnalyticsDatasource(instanceSettings);
     this.azureResourceGraphDatasource = new AzureResourceGraphDatasource(instanceSettings);
     this.resourcePickerData = new ResourcePickerData(instanceSettings);
 
     const pseudoDatasource: any = {};
-    pseudoDatasource[AzureQueryType.ApplicationInsights] = this.appInsightsDatasource;
     pseudoDatasource[AzureQueryType.AzureMonitor] = this.azureMonitorDatasource;
-    pseudoDatasource[AzureQueryType.InsightsAnalytics] = this.insightsAnalyticsDatasource;
     pseudoDatasource[AzureQueryType.LogAnalytics] = this.azureLogAnalyticsDatasource;
     pseudoDatasource[AzureQueryType.AzureResourceGraph] = this.azureResourceGraphDatasource;
+
+    if (
+      instanceSettings.jsonData.cloudName === 'azuremonitor' ||
+      instanceSettings.jsonData.cloudName === 'chinaazuremonitor'
+    ) {
+      this.appInsightsDatasource = new AppInsightsDatasource(instanceSettings);
+      this.insightsAnalyticsDatasource = new InsightsAnalyticsDatasource(instanceSettings);
+      pseudoDatasource[AzureQueryType.ApplicationInsights] = this.appInsightsDatasource;
+      pseudoDatasource[AzureQueryType.InsightsAnalytics] = this.insightsAnalyticsDatasource;
+    }
     this.pseudoDatasource = pseudoDatasource;
 
     const optionsKey: any = {};
@@ -129,7 +137,7 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
       return Promise.resolve([]);
     }
 
-    const aiResult = this.appInsightsDatasource.metricFindQueryInternal(query);
+    const aiResult = this.appInsightsDatasource?.metricFindQueryInternal(query);
     if (aiResult) {
       return aiResult;
     }
@@ -153,7 +161,7 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
     promises.push(this.azureMonitorDatasource.testDatasource());
     promises.push(this.azureLogAnalyticsDatasource.testDatasource());
 
-    if (this.appInsightsDatasource.isConfigured()) {
+    if (this.appInsightsDatasource?.isConfigured()) {
       promises.push(this.appInsightsDatasource.testDatasource());
     }
 
@@ -241,15 +249,15 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
 
   /* Application Insights API method */
   getAppInsightsMetricNames() {
-    return this.appInsightsDatasource.getMetricNames();
+    return this.appInsightsDatasource?.getMetricNames();
   }
 
   getAppInsightsMetricMetadata(metricName: string) {
-    return this.appInsightsDatasource.getMetricMetadata(metricName);
+    return this.appInsightsDatasource?.getMetricMetadata(metricName);
   }
 
   getAppInsightsColumns(refId: string | number) {
-    return this.appInsightsDatasource.logAnalyticsColumns[refId];
+    return this.appInsightsDatasource?.logAnalyticsColumns[refId];
   }
 
   /*Azure Log Analytics */
