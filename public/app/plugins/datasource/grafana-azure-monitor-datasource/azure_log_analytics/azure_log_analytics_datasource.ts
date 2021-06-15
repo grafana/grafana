@@ -18,8 +18,8 @@ import {
 import { getBackendSrv, getTemplateSrv, DataSourceWithBackend, FetchResponse } from '@grafana/runtime';
 import { Observable, from } from 'rxjs';
 import { mergeMap } from 'rxjs/operators';
-import { getAuthType, getAzureCloud, isLogAnalyticsSameAs } from '../credentials';
-import { getLogAnalyticsApiRoute, getLogAnalyticsManagementApiRoute } from '../api/routes';
+import { getAuthType, getAzureCloud } from '../credentials';
+import { getLogAnalyticsApiRoute, getManagementApiRoute } from '../api/routes';
 import { AzureLogAnalyticsMetadata } from '../types/logAnalyticsMetadata';
 import { isGUIDish } from '../components/ResourcePicker/utils';
 
@@ -51,17 +51,11 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     const logAnalyticsRoute = getLogAnalyticsApiRoute(cloud);
     this.baseUrl = `/${logAnalyticsRoute}`;
 
-    const managementRoute = getLogAnalyticsManagementApiRoute(cloud);
+    const managementRoute = getManagementApiRoute(cloud);
     this.azureMonitorUrl = `/${managementRoute}/subscriptions`;
 
     this.url = instanceSettings.url || '';
-
-    const sameAsMonitor = isLogAnalyticsSameAs(instanceSettings);
-
-    this.defaultSubscriptionId = sameAsMonitor
-      ? instanceSettings.jsonData.subscriptionId
-      : instanceSettings.jsonData.logAnalyticsSubscriptionId;
-
+    this.defaultSubscriptionId = this.instanceSettings.jsonData.subscriptionId || '';
     this.defaultOrFirstWorkspace = this.instanceSettings.jsonData.logAnalyticsDefaultWorkspace || '';
   }
 
@@ -485,14 +479,14 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     const authType = getAuthType(this.instanceSettings);
 
     if (authType === 'clientsecret') {
-      if (!this.isValidConfigField(this.instanceSettings.jsonData.logAnalyticsTenantId)) {
+      if (!this.isValidConfigField(this.instanceSettings.jsonData.tenantId)) {
         return {
           status: 'error',
           message: 'The Tenant Id field is required.',
         };
       }
 
-      if (!this.isValidConfigField(this.instanceSettings.jsonData.logAnalyticsClientId)) {
+      if (!this.isValidConfigField(this.instanceSettings.jsonData.clientId)) {
         return {
           status: 'error',
           message: 'The Client Id field is required.',

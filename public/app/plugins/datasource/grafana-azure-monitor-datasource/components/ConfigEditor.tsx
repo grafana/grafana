@@ -14,7 +14,7 @@ import { InsightsConfig } from './InsightsConfig';
 import ResponseParser from '../azure_monitor/response_parser';
 import { AzureDataSourceJsonData, AzureDataSourceSecureJsonData, AzureDataSourceSettings } from '../types';
 import { getAzureCloud, isAppInsightsConfigured } from '../credentials';
-import { getLogAnalyticsManagementApiRoute, getManagementApiRoute } from '../api/routes';
+import { getManagementApiRoute } from '../api/routes';
 
 export type Props = DataSourcePluginOptionsEditorProps<AzureDataSourceJsonData, AzureDataSourceSecureJsonData>;
 
@@ -77,7 +77,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
     await this.saveOptions();
 
     const cloud = getAzureCloud(this.props.options);
-    const route = getLogAnalyticsManagementApiRoute(cloud);
+    const route = getManagementApiRoute(cloud);
     const url = `/${route}/subscriptions?api-version=2019-03-01`;
 
     const result = await getBackendSrv().datasourceRequest({
@@ -92,7 +92,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
     await this.saveOptions();
 
     const cloud = getAzureCloud(this.props.options);
-    const route = getLogAnalyticsManagementApiRoute(cloud);
+    const route = getManagementApiRoute(cloud);
     const url = `/${route}/subscriptions/${subscriptionId}/providers/Microsoft.OperationalInsights/workspaces?api-version=2017-04-26-preview`;
 
     const result = await getBackendSrv().datasourceRequest({
