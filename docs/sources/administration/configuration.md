@@ -1134,7 +1134,7 @@ Sets a maximum limit on attempts to sending alert notifications. This configurat
 
 ### min_interval_seconds
 
-Sets the minimum interval between rule evaluations. This configuration is also supported in Grafana 8 Alerts. For dashboard alerts the default value is `1`, for [Grafana 8 Alerts]({{< relref "../alerting/unified-alerting/_index.md" >}}#min-interval-seconds) the default value is `10` that equals each alerting system's scheduler interval.
+Sets the minimum interval between rule evaluations. This configuration is also supported in Grafana 8 Alerts. For dashboard alerts the default value is `1`, for [Grafana 8 Alerts]({{< relref "../alerting/unified-alerting/_index.md" >}}#min-interval-seconds) the default value is `10` that equals each alerting system's scheduler interval. For Grafana 8 Alerts, this value should be multiple of `10`, otherwise it fallbacks to `60` which is the default rule evalutation interval.
 
 > **Note.** This setting has precedence over each individual rule frequency. If a rule frequency is lower than this value, then this value is enforced.
 

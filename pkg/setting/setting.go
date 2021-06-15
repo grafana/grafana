@@ -395,7 +395,7 @@ type Cfg struct {
 	// Grafana.com URL
 	GrafanaComURL string
 
-	// Alertting
+	// Alerting
 	AlertingMaxAttempts int
 	AlertingMinInterval int64
 	ExecuteAlerts       bool

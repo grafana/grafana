@@ -156,7 +156,7 @@ func (ng *AlertNG) getRuleMinIntervalSeconds() int64 {
 	}
 
 	if ng.Cfg.AlertingMinInterval%baseIntervalSeconds != 0 {
-		ng.Log.Debug("Configured minimum evaluation interval is not divided exactly by the scheduler interval and it will fallback to default", "alertingMinInterval", ng.Cfg.AlertingMinInterval, "baseIntervalSeconds", baseIntervalSeconds, "defaultIntervalSeconds", defaultIntervalSeconds)
+		ng.Log.Error("Configured minimum evaluation interval is not divided exactly by the scheduler interval and it will fallback to default", "alertingMinInterval", ng.Cfg.AlertingMinInterval, "baseIntervalSeconds", baseIntervalSeconds, "defaultIntervalSeconds", defaultIntervalSeconds)
 		return baseIntervalSeconds // if it's invalid; apply default
 	}
 
