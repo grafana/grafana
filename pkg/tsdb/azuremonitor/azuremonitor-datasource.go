@@ -3,7 +3,6 @@ package azuremonitor
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -15,11 +14,6 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/api/pluginproxy"
-	"github.com/grafana/grafana/pkg/components/securejsondata"
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
 	opentracing "github.com/opentracing/opentracing-go"
@@ -27,10 +21,7 @@ import (
 )
 
 // AzureMonitorDatasource calls the Azure Monitor API - one of the four API's supported
-type AzureMonitorDatasource struct {
-	pluginManager plugins.Manager
-	cfg           *setting.Cfg
-}
+type AzureMonitorDatasource struct{}
 
 var (
 	// 1m, 5m, 15m, 30m, 1h, 6h, 12h, 1d in milliseconds
@@ -189,7 +180,7 @@ func (e *AzureMonitorDatasource) executeQuery(ctx context.Context, query *AzureM
 
 	azlog.Debug("AzureMonitor", "Request ApiURL", req.URL.String())
 	azlog.Debug("AzureMonitor", "Target", query.Target)
-	res, err := ctxhttp.Do(ctx, dsInfo.HTTPClient, req)
+	res, err := ctxhttp.Do(ctx, dsInfo.Services[azureMonitor].HTTPClient, req)
 	if err != nil {
 		dataResponse.Error = err
 		return dataResponse, AzureMonitorResponse{}, nil
@@ -210,61 +201,15 @@ func (e *AzureMonitorDatasource) executeQuery(ctx context.Context, query *AzureM
 }
 
 func (e *AzureMonitorDatasource) createRequest(ctx context.Context, dsInfo datasourceInfo) (*http.Request, error) {
-	// find plugin
-	plugin := e.pluginManager.GetDataSource(dsName)
-	if plugin == nil {
-		return nil, errors.New("unable to find datasource plugin Azure Monitor")
-	}
-
-	azureMonitorRoute, routeName, err := e.getPluginRoute(plugin, dsInfo)
-	if err != nil {
-		return nil, err
-	}
-
-	u, err := url.Parse(dsInfo.URL)
-	if err != nil {
-		return nil, err
-	}
-	u.Path = path.Join(u.Path, "render")
-
-	req, err := http.NewRequest(http.MethodGet, u.String(), nil)
+	req, err := http.NewRequest(http.MethodGet, dsInfo.Services[azureMonitor].URL, nil)
 	if err != nil {
 		azlog.Debug("Failed to create request", "error", err)
 		return nil, errutil.Wrap("Failed to create request", err)
 	}
-
+	req.URL.Path = "/subscriptions"
 	req.Header.Set("Content-Type", "application/json")
 
-	// TODO: Use backend authentication instead
-	proxyPass := fmt.Sprintf("%s/subscriptions", routeName)
-	pluginproxy.ApplyRoute(ctx, req, proxyPass, azureMonitorRoute, &models.DataSource{
-		JsonData:       simplejson.NewFromAny(dsInfo.JSONData),
-		SecureJsonData: securejsondata.GetEncryptedJsonData(dsInfo.DecryptedSecureJSONData),
-	}, e.cfg)
-
 	return req, nil
-}
-
-func (e *AzureMonitorDatasource) getPluginRoute(plugin *plugins.DataSourcePlugin, dsInfo datasourceInfo) (*plugins.AppPluginRoute, string, error) {
-	cloud, err := getAzureCloud(e.cfg, dsInfo)
-	if err != nil {
-		return nil, "", err
-	}
-
-	routeName, err := getManagementApiRoute(cloud)
-	if err != nil {
-		return nil, "", err
-	}
-
-	var pluginRoute *plugins.AppPluginRoute
-	for _, route := range plugin.Routes {
-		if route.Path == routeName {
-			pluginRoute = route
-			break
-		}
-	}
-
-	return pluginRoute, routeName, nil
 }
 
 func (e *AzureMonitorDatasource) unmarshalResponse(res *http.Response) (AzureMonitorResponse, error) {
