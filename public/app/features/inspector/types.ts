@@ -6,5 +6,5 @@ export enum InspectTab {
   JSON = 'json',
   Query = 'query',
   Actions = 'actions', // ALPHA!
-  Share = 'share',
+  BugReport = 'report',
 }

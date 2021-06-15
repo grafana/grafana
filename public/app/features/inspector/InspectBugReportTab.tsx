@@ -20,7 +20,7 @@ interface Props {
   panel: PanelModel;
 }
 
-export function InspectShareTab({ dashboard, panel }: Props): JSX.Element {
+export function InspectBugReportTab({ dashboard, panel }: Props): JSX.Element {
   const [sanitizers, setSanitizers] = useState<Sanitizer[]>([]);
   const { loading, value } = useAsync<string | undefined>(async () => {
     const items = await new InspectCollector().collect({
@@ -42,7 +42,7 @@ export function InspectShareTab({ dashboard, panel }: Props): JSX.Element {
   };
 
   const onClipboardSuccess = () => {
-    appEvents.emit(AppEvents.alertSuccess, ['Shared data copied to clipboard']);
+    appEvents.emit(AppEvents.alertSuccess, ['Collected data copied to clipboard']);
   };
 
   if (loading || !Boolean(value)) {
@@ -51,32 +51,28 @@ export function InspectShareTab({ dashboard, panel }: Props): JSX.Element {
 
   return (
     <VerticalGroup>
-      <Alert title="Sharing data" severity="info">
-        <p>Even though we work hard to minimize errors in Grafana they sometimes appear.</p>
+      <Alert title="Bug report" severity="info">
+        <p>Although we try to minimize errors in Grafana, they can appear in our product from time to time.</p>
         <p>
-          Making an error disappear involves
+          To help us fix an error, go to
           <a href="https://github.com/grafana/grafana/issues/new/choose" target="_blank" rel="noopener noreferrer">
             &nbsp;creating an issue on GitHub&nbsp;
           </a>
-          and then adding enough information and reproducible steps to make the investigation and fixing the error a
-          breeze.
+          and then, add detailed information from here and reproducible steps to help us investigate and fix the error.
         </p>
         <p>
-          This feature will collect information about your <em>OS</em>, <em>Browser</em>, <em>Grafana</em>,&nbsp;
-          <em>Dashboard</em> & <em>Panel</em> and package it in such a way that it will make it easier for you to attach
-          the essential information needed when reporting an issue. The collected data is only available on this page
-          and is not shared or stored in any way.
+          This feature collects relevant information about your <em>OS</em>, <em>Browser</em>, <em>Grafana</em>,&nbsp;
+          <em>Dashboard</em> & <em>Panel</em> and package them so that it makes it easier for you to attach the
+          essential information when reporting an issue. The collected data is only available on this page, it is not
+          shared or stored in any way.
         </p>
         <p>
-          <em>
-            Make sure you remove any sensitive data before you attach it to any issue as it will become public to
-            everyone.
-          </em>
+          <em>Make sure to scrub sensitive data before you attach it to any issue, otherwise it will become public.</em>
         </p>
       </Alert>
       <div className={styles.sanitizeContainer}>
         <Field
-          label="Sanitize data"
+          label="Scrub sensitive data"
           description={
             <span>
               Replaces sensitive information in the collected data with <em>******</em>
@@ -100,11 +96,11 @@ export function InspectShareTab({ dashboard, panel }: Props): JSX.Element {
       </div>
       <HorizontalGroup>
         <Button type="button" icon="download-alt" onClick={onDownloadClick} variant="secondary">
-          Download shared data
+          Download collected data
         </Button>
         <CopyToClipboard text={() => value ?? ''} onSuccess={onClipboardSuccess} elType="div">
           <Button type="button" icon="clipboard-alt">
-            Copy shared data to clipboard
+            Copy collected data to clipboard
           </Button>
         </CopyToClipboard>
       </HorizontalGroup>
