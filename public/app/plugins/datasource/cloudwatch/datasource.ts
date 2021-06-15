@@ -875,21 +875,22 @@ export class CloudWatchDatasource extends DataSourceWithBackend<CloudWatchQuery,
     );
   }
 
-  testDatasource() {
+  async testDatasource() {
     // use billing metrics for test
     const region = this.defaultRegion;
     const namespace = 'AWS/Billing';
     const metricName = 'EstimatedCharges';
     const dimensions = {};
 
-    return this.getDimensionValues(region, namespace, metricName, 'ServiceName', dimensions)
-      .then(() => ({
+    try {
+      await this.getDimensionValues(region, namespace, metricName, 'ServiceName', dimensions);
+      return {
         status: 'success',
         message: 'Data source is working',
-      }))
-      .catch((error) => {
-        return toTestingStatus(error);
-      });
+      };
+    } catch (error) {
+      return toTestingStatus(error);
+    }
   }
 
   awsRequest(url: string, data: MetricRequest): Observable<TSDBResponse> {
