@@ -57,15 +57,8 @@ export function preparePlotData(frame: DataFrame): AlignedData {
       continue;
     }
 
-    const values = f.values.toArray().slice();
-    for (let i = 0; i < values.length; i++) {
-      if (!(Number.isFinite(values[i]) || values[i] == null)) {
-        values[i] = null;
-      }
-    }
-
     collectStackingGroups(f, stackingGroups, seriesIndex);
-    result.push(values);
+    result.push(f.values.toArray());
     seriesIndex++;
   }
 
