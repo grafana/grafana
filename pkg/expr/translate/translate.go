@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 // DashboardAlertConditions turns dashboard alerting conditions into server side expression queries and a
@@ -279,10 +280,6 @@ const alpha = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 // getNewRefID finds first capital letter in the alphabet not in use
 // to use for a new RefID. It errors if it runs out of letters.
-//
-// TODO: Research if there is a limit. If so enforce is by
-// number of queries not letters. If no limit generate more types
-// of refIDs.
 func getNewRefID(refIDs map[string][]int) (string, error) {
 	for _, r := range alpha {
 		sR := string(r)
@@ -291,7 +288,14 @@ func getNewRefID(refIDs map[string][]int) (string, error) {
 		}
 		return sR, nil
 	}
-	return "", fmt.Errorf("ran out of letters when creating expression")
+	for i := 0; i < 20; i++ {
+		sR := util.GenerateShortUID()
+		if _, ok := refIDs[sR]; ok {
+			continue
+		}
+		return sR, nil
+	}
+	return "", fmt.Errorf("failed to generate unique RefID")
 }
 
 // getRelativeDuration turns the alerting durations for dashboard conditions

@@ -535,7 +535,7 @@ func (s *PluginScanner) walker(currentPath string, f os.FileInfo, err error) err
 		return fmt.Errorf("filepath.Walk reported an error for %q: %w", currentPath, err)
 	}
 
-	if f.Name() == "node_modules" || f.Name() == "Chromium.app" {
+	if f.Name() == "node_modules" {
 		return util.ErrWalkSkipDir
 	}
 
@@ -582,12 +582,6 @@ func (s *PluginScanner) loadPlugin(pluginJSONFilePath string) error {
 	}
 
 	pluginCommon.PluginDir = filepath.Dir(pluginJSONFilePath)
-	pluginCommon.Files, err = collectPluginFilesWithin(pluginCommon.PluginDir)
-	if err != nil {
-		s.log.Warn("Could not collect plugin file information in directory", "pluginID", pluginCommon.Id, "dir", pluginCommon.PluginDir)
-		return err
-	}
-
 	signatureState, err := getPluginSignatureState(s.log, &pluginCommon)
 	if err != nil {
 		s.log.Warn("Could not get plugin signature state", "pluginID", pluginCommon.Id, "err", err)
