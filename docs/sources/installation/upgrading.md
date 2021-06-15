@@ -329,8 +329,8 @@ Grafana now requires all plugins to be signed. If a plugin is not signed Grafana
 
 ### Postgres, MySQL, Microsoft SQL Server data sources
 
-Grafana v8.0 changes the underlying data structure to [data frames]({{< relref "../developers/plugins/data-frames.md" >}}) for the Postgres, MySQL, Microsoft SQL Server data sources. This has the implication that  any _Time series_ query result is returned in a [wide format]({{< relref "../developers/plugins/data-frames.md#wide-format" >}}) and that you might have to do some manual migration to make visualizations work as it did before.
+Grafana v8.0 changes the underlying data structure to [data frames]({{< relref "../developers/plugins/data-frames.md" >}}) for the Postgres, MySQL, Microsoft SQL Server data sources. As a result, a _Time series_ query result gets returned in a [wide format]({{< relref "../developers/plugins/data-frames.md#wide-format" >}}). To make the visualizations work as they did before, you might have to do some manual migrations.
 
-For any existing panels/visualizations using a _Time series_ query where the time column is only needed for filtering the time range, e.g. using the bar gauge or pie chart panel, it's suggested to use a _Table query_ instead and not including the time column as a field in the response.
-
-For further detailed instructions and workarounds see this [issue comment](https://github.com/grafana/grafana/issues/35534#issuecomment-861519658).
+		For any existing panels/visualizations using a _Time series_ query, where the time column is only needed for filtering the time range, for example, using the bar gauge or pie chart panel, we recommend that you use a _Table query_ instead and exclude the time column as a field in the response.
+		
+		Refer to this [issue comment](https://github.com/grafana/grafana/issues/35534#issuecomment-861519658) for detailed instructions and workarounds.
