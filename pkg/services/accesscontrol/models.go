@@ -42,7 +42,6 @@ func (p RoleDTO) Role() Role {
 const (
 	// Permission actions
 
-	// Actions
 	// Provisioning actions
 	ActionProvisioningReload = "provisioning:reload"
 
@@ -85,6 +84,9 @@ const (
 
 	// Settings actions
 	ActionSettingsRead = "settings:read"
+
+	// Datasource actions
+	ActionDatasourceExplore = "datasource:explore"
 
 	// Global Scopes
 	ScopeGlobalUsersAll = "global:users:*"
