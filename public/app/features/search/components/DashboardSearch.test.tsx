@@ -28,7 +28,7 @@ const setup = (testProps?: Partial<Props>) => {
     ...testProps,
   };
   render(<DashboardSearch {...props} />);
-  jest.runAllTimers();
+  jest.runOnlyPendingTimers();
 };
 
 /**
@@ -63,7 +63,7 @@ describe('DashboardSearch', () => {
     const input = await screen.findByPlaceholderText('Search dashboards by name');
     await act((async () => {
       await fireEvent.input(input, { target: { value: 'Test' } });
-      jest.runAllTimers();
+      jest.runOnlyPendingTimers();
     }) as any);
 
     expect(mockSearch).toHaveBeenCalledWith({

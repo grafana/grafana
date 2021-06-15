@@ -1,10 +1,9 @@
-package pluginproxy
+package tokenprovider
 
 import (
 	"context"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
@@ -15,7 +14,7 @@ var getAccessTokenFunc func(credential TokenCredential, scopes []string)
 
 type tokenCacheFake struct{}
 
-func (c *tokenCacheFake) GetAccessToken(_ context.Context, credential TokenCredential, scopes []string) (string, error) {
+func (c *tokenCacheFake) GetAccessToken(ctx context.Context, credential TokenCredential, scopes []string) (string, error) {
 	getAccessTokenFunc(credential, scopes)
 	return "4cb83b87-0ffb-4abd-82f6-48a8c08afc53", nil
 }
@@ -24,9 +23,6 @@ func TestAzureTokenProvider_isManagedIdentityCredential(t *testing.T) {
 	ctx := context.Background()
 
 	cfg := &setting.Cfg{}
-
-	ds := &models.DataSource{Id: 1, Version: 2}
-	route := &plugins.AppPluginRoute{}
 
 	authParams := &plugins.JwtTokenAuth{
 		Scopes: []string{
@@ -41,7 +37,7 @@ func TestAzureTokenProvider_isManagedIdentityCredential(t *testing.T) {
 		},
 	}
 
-	provider := newAzureAccessTokenProvider(ctx, cfg, ds, route, authParams)
+	provider := NewAzureAccessTokenProvider(ctx, cfg, authParams)
 
 	t.Run("when managed identities enabled", func(t *testing.T) {
 		cfg.Azure.ManagedIdentityEnabled = true
@@ -114,9 +110,6 @@ func TestAzureTokenProvider_getAccessToken(t *testing.T) {
 
 	cfg := &setting.Cfg{}
 
-	ds := &models.DataSource{Id: 1, Version: 2}
-	route := &plugins.AppPluginRoute{}
-
 	authParams := &plugins.JwtTokenAuth{
 		Scopes: []string{
 			"https://management.azure.com/.default",
@@ -130,7 +123,7 @@ func TestAzureTokenProvider_getAccessToken(t *testing.T) {
 		},
 	}
 
-	provider := newAzureAccessTokenProvider(ctx, cfg, ds, route, authParams)
+	provider := NewAzureAccessTokenProvider(ctx, cfg, authParams)
 
 	original := azureTokenCache
 	azureTokenCache = &tokenCacheFake{}
@@ -148,7 +141,7 @@ func TestAzureTokenProvider_getAccessToken(t *testing.T) {
 				assert.IsType(t, &managedIdentityCredential{}, credential)
 			}
 
-			_, err := provider.getAccessToken()
+			_, err := provider.GetAccessToken()
 			require.NoError(t, err)
 		})
 
@@ -161,7 +154,7 @@ func TestAzureTokenProvider_getAccessToken(t *testing.T) {
 				assert.IsType(t, &clientSecretCredential{}, credential)
 			}
 
-			_, err := provider.getAccessToken()
+			_, err := provider.GetAccessToken()
 			require.NoError(t, err)
 		})
 	})
@@ -178,7 +171,7 @@ func TestAzureTokenProvider_getAccessToken(t *testing.T) {
 				assert.Fail(t, "token cache not expected to be called")
 			}
 
-			_, err := provider.getAccessToken()
+			_, err := provider.GetAccessToken()
 			require.Error(t, err)
 		})
 	})
@@ -188,9 +181,6 @@ func TestAzureTokenProvider_getClientSecretCredential(t *testing.T) {
 	ctx := context.Background()
 
 	cfg := &setting.Cfg{}
-
-	ds := &models.DataSource{Id: 1, Version: 2}
-	route := &plugins.AppPluginRoute{}
 
 	authParams := &plugins.JwtTokenAuth{
 		Scopes: []string{
@@ -205,7 +195,7 @@ func TestAzureTokenProvider_getClientSecretCredential(t *testing.T) {
 		},
 	}
 
-	provider := newAzureAccessTokenProvider(ctx, cfg, ds, route, authParams)
+	provider := NewAzureAccessTokenProvider(ctx, cfg, authParams)
 
 	t.Run("should return clientSecretCredential with values", func(t *testing.T) {
 		result := provider.getClientSecretCredential()
