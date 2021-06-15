@@ -105,6 +105,7 @@ export class InspectJSONTab extends PureComponent<Props, State> {
           appEvents.emit(AppEvents.alertError, ['Unable to apply']);
         } else {
           const updates = JSON.parse(this.state.text);
+          dashboard!.shouldUpdateDashboardPanelFromJSON(updates, panel!);
           panel!.restoreModel(updates);
           panel!.refresh();
           appEvents.emit(AppEvents.alertSuccess, ['Panel model updated']);
