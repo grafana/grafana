@@ -1,4 +1,3 @@
-import { asyncScheduler, Observable, of, scheduled } from 'rxjs';
 import { AlertState, getDefaultTimeRange, LoadingState, PanelData, toDataFrame } from '@grafana/data';
 
 import { DashboardQueryRunnerResult } from './DashboardQueryRunner/types';
@@ -17,47 +16,25 @@ function getTestContext() {
     annotations: [{ id: 'dashData' }],
     alertState: { id: 1, state: AlertState.OK, dashboardId: 1, panelId: 1, newStateDate: '' },
   };
-  const panelObservable: Observable<PanelData> = scheduled(of(panelData), asyncScheduler);
-  const dashObservable: Observable<DashboardQueryRunnerResult> = scheduled(of(dashData), asyncScheduler);
-
-  return { timeRange, panelObservable, dashObservable, panelData, dashData };
-}
-
-// https://rxjs-dev.firebaseapp.com/guide/testing/marble-testing
-function runMarbleTest(args: {
-  panelMarble: string;
-  dashMarble: string;
-  panelValues: { [marble: string]: any };
-  dashValues: { [marble: string]: any };
-  expectedValues: { [marble: string]: any };
-  expectedMarble: string;
-}) {
-  const { expectedValues, expectedMarble, panelMarble, panelValues, dashMarble, dashValues } = args;
   const scheduler: TestScheduler = new TestScheduler((actual, expected) => {
     expect(actual).toEqual(expected);
   });
 
-  scheduler.run(({ cold, expectObservable }) => {
-    const panelObservable = cold(panelMarble, panelValues);
-    const dashObservable = cold(dashMarble, dashValues);
-    const result = mergePanelAndDashData(panelObservable, dashObservable);
-    expectObservable(result).toBe(expectedMarble, expectedValues);
-  });
-  scheduler.flush();
+  return { timeRange, scheduler, panelData, dashData };
 }
 
 describe('mergePanelAndDashboardData', () => {
   describe('when both results are fast', () => {
     it('then just combine the results', () => {
-      const { panelData, dashData, timeRange } = getTestContext();
+      const { panelData, dashData, timeRange, scheduler } = getTestContext();
 
-      runMarbleTest({
-        panelMarble: '10ms a',
-        panelValues: { a: panelData },
-        dashMarble: '10ms a',
-        dashValues: { a: dashData },
-        expectedMarble: '10ms a',
-        expectedValues: {
+      scheduler.run(({ cold, expectObservable }) => {
+        const panelObservable = cold('10ms a', { a: panelData });
+        const dashObservable = cold('10ms a', { a: dashData });
+
+        const result = mergePanelAndDashData(panelObservable, dashObservable);
+
+        expectObservable(result).toBe('10ms a', {
           a: {
             state: LoadingState.Done,
             series: [],
@@ -65,22 +42,24 @@ describe('mergePanelAndDashboardData', () => {
             alertState: { id: 1, state: AlertState.OK, dashboardId: 1, panelId: 1, newStateDate: '' },
             timeRange,
           },
-        },
+        });
       });
+
+      scheduler.flush();
     });
   });
 
   describe('when dashboard results are slow', () => {
     it('then flush panel data first', () => {
-      const { panelData, dashData, timeRange } = getTestContext();
+      const { panelData, dashData, timeRange, scheduler } = getTestContext();
 
-      runMarbleTest({
-        panelMarble: '10ms a',
-        panelValues: { a: panelData },
-        dashMarble: '210ms a',
-        dashValues: { a: dashData },
-        expectedMarble: '200ms a 9ms b',
-        expectedValues: {
+      scheduler.run(({ cold, expectObservable }) => {
+        const panelObservable = cold('10ms a', { a: panelData });
+        const dashObservable = cold('210ms a', { a: dashData });
+
+        const result = mergePanelAndDashData(panelObservable, dashObservable);
+
+        expectObservable(result).toBe('200ms a 9ms b', {
           a: {
             state: LoadingState.Done,
             series: [],
@@ -94,22 +73,24 @@ describe('mergePanelAndDashboardData', () => {
             alertState: { id: 1, state: AlertState.OK, dashboardId: 1, panelId: 1, newStateDate: '' },
             timeRange,
           },
-        },
+        });
       });
+
+      scheduler.flush();
     });
   });
 
   describe('when panel results are slow', () => {
     it('then just combine the results', () => {
-      const { panelData, dashData, timeRange } = getTestContext();
+      const { panelData, dashData, timeRange, scheduler } = getTestContext();
 
-      runMarbleTest({
-        panelMarble: '210ms a',
-        panelValues: { a: panelData },
-        dashMarble: '10ms a',
-        dashValues: { a: dashData },
-        expectedMarble: '210ms a',
-        expectedValues: {
+      scheduler.run(({ cold, expectObservable }) => {
+        const panelObservable = cold('210ms a', { a: panelData });
+        const dashObservable = cold('10ms a', { a: dashData });
+
+        const result = mergePanelAndDashData(panelObservable, dashObservable);
+
+        expectObservable(result).toBe('210ms a', {
           a: {
             state: LoadingState.Done,
             series: [],
@@ -117,22 +98,24 @@ describe('mergePanelAndDashboardData', () => {
             alertState: { id: 1, state: AlertState.OK, dashboardId: 1, panelId: 1, newStateDate: '' },
             timeRange,
           },
-        },
+        });
       });
+
+      scheduler.flush();
     });
   });
 
   describe('when both results are slow', () => {
     it('then flush panel data first', () => {
-      const { panelData, dashData, timeRange } = getTestContext();
+      const { panelData, dashData, timeRange, scheduler } = getTestContext();
 
-      runMarbleTest({
-        panelMarble: '210ms a',
-        panelValues: { a: panelData },
-        dashMarble: '210ms a',
-        dashValues: { a: dashData },
-        expectedMarble: '210ms (ab)',
-        expectedValues: {
+      scheduler.run(({ cold, expectObservable }) => {
+        const panelObservable = cold('210ms a', { a: panelData });
+        const dashObservable = cold('210ms a', { a: dashData });
+
+        const result = mergePanelAndDashData(panelObservable, dashObservable);
+
+        expectObservable(result).toBe('210ms (ab)', {
           a: {
             state: LoadingState.Done,
             series: [],
@@ -146,8 +129,10 @@ describe('mergePanelAndDashboardData', () => {
             alertState: { id: 1, state: AlertState.OK, dashboardId: 1, panelId: 1, newStateDate: '' },
             timeRange,
           },
-        },
+        });
       });
+
+      scheduler.flush();
     });
   });
 });
