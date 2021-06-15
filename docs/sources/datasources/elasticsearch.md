@@ -57,7 +57,7 @@ a time pattern for the index name or a wildcard.
 ### Elasticsearch version
 
 Select the version of your Elasticsearch data source from the version selection dropdown. Different query compositions and functionalities are available in the query editor for different versions.
-Available Elasticsearch versions are `2.x`, `5.x`, `5.6+`, `6.0+`, and `7.0+`. Select the option that best matches your data source version.
+Available Elasticsearch versions are `2.x`, `5.x`, `5.6+`, `6.0+`, `7.0+` and `7.7+`. Select the option that best matches your data source version.
 
 Grafana assumes that you are running the lowest possible version for a specified range. This ensures that new features or breaking changes in a future Elasticsearch release will not affect your configuration.
 

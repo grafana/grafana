@@ -55,8 +55,18 @@ func walk(path string, info os.FileInfo, resolvedPath string, symlinkPathsFollow
 		}
 		return err
 	}
+
 	if resolvedPath != "" && info.Mode()&os.ModeSymlink == os.ModeSymlink {
-		path2, err := os.Readlink(resolvedPath)
+		// We only want to lstat on directories. If this entry is a symbolic link to a file, no need to recurse.
+		statInfo, err := os.Stat(resolvedPath)
+		if err != nil {
+			return err
+		}
+		if !statInfo.IsDir() {
+			return nil
+		}
+
+		path2, err := filepath.EvalSymlinks(resolvedPath)
 		if err != nil {
 			return err
 		}
@@ -73,8 +83,7 @@ func walk(path string, info os.FileInfo, resolvedPath string, symlinkPathsFollow
 			return err
 		}
 		return walk(path, info2, path2, symlinkPathsFollowed, walkFn)
-	}
-	if info.IsDir() {
+	} else if info.IsDir() {
 		list, err := ioutil.ReadDir(path)
 		if err != nil {
 			return walkFn(resolvedPath, info, err)

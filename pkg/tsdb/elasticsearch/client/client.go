@@ -53,6 +53,8 @@ func coerceVersion(v *simplejson.Json) (*semver.Version, error) {
 			return nil, err
 		}
 
+		// Legacy version numbers (before Grafana 8)
+		// valid values were 2,5,56,60,70
 		switch versionNumber {
 		case 2:
 			return semver.NewVersion("2.0.0")

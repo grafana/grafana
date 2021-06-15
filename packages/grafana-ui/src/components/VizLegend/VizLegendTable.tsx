@@ -20,6 +20,7 @@ export const VizLegendTable = <T extends unknown>({
   onLabelClick,
   onLabelMouseEnter,
   onLabelMouseOut,
+  readonly,
 }: VizLegendTableProps<T>): JSX.Element => {
   const styles = useStyles(getStyles);
 
@@ -59,6 +60,7 @@ export const VizLegendTable = <T extends unknown>({
         onLabelClick={onLabelClick}
         onLabelMouseEnter={onLabelMouseEnter}
         onLabelMouseOut={onLabelMouseOut}
+        readonly={readonly}
       />
     );
   }
@@ -95,7 +97,6 @@ export const VizLegendTable = <T extends unknown>({
 const getStyles = (theme: GrafanaTheme) => ({
   table: css`
     width: 100%;
-    margin-left: ${theme.spacing.sm};
     th:first-child {
       width: 100%;
     }

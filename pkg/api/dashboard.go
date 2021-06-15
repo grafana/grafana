@@ -69,9 +69,8 @@ func (hs *HTTPServer) TrimDashboard(c *models.ReqContext, cmd models.TrimDashboa
 }
 
 func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
-	slug := c.Params(":slug")
 	uid := c.Params(":uid")
-	dash, rsp := getDashboardHelper(c.OrgId, slug, 0, uid)
+	dash, rsp := getDashboardHelper(c.OrgId, 0, uid)
 	if rsp != nil {
 		return rsp
 	}
@@ -197,13 +196,13 @@ func getUserLogin(userID int64) string {
 	return query.Result.Login
 }
 
-func getDashboardHelper(orgID int64, slug string, id int64, uid string) (*models.Dashboard, response.Response) {
+func getDashboardHelper(orgID int64, id int64, uid string) (*models.Dashboard, response.Response) {
 	var query models.GetDashboardQuery
 
 	if len(uid) > 0 {
 		query = models.GetDashboardQuery{Uid: uid, Id: id, OrgId: orgID}
 	} else {
-		query = models.GetDashboardQuery{Slug: slug, Id: id, OrgId: orgID}
+		query = models.GetDashboardQuery{Id: id, OrgId: orgID}
 	}
 
 	if err := bus.Dispatch(&query); err != nil {
@@ -232,7 +231,7 @@ func (hs *HTTPServer) DeleteDashboardByUID(c *models.ReqContext) response.Respon
 }
 
 func (hs *HTTPServer) deleteDashboard(c *models.ReqContext) response.Response {
-	dash, rsp := getDashboardHelper(c.OrgId, c.Params(":slug"), 0, c.Params(":uid"))
+	dash, rsp := getDashboardHelper(c.OrgId, 0, c.Params(":uid"))
 	if rsp != nil {
 		return rsp
 	}
@@ -626,7 +625,7 @@ func CalculateDashboardDiff(c *models.ReqContext, apiOptions dtos.CalculateDiffO
 
 // RestoreDashboardVersion restores a dashboard to the given version.
 func (hs *HTTPServer) RestoreDashboardVersion(c *models.ReqContext, apiCmd dtos.RestoreDashboardVersionCommand) response.Response {
-	dash, rsp := getDashboardHelper(c.OrgId, "", c.ParamsInt64(":dashboardId"), "")
+	dash, rsp := getDashboardHelper(c.OrgId, c.ParamsInt64(":dashboardId"), "")
 	if rsp != nil {
 		return rsp
 	}

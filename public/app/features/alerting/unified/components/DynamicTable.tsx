@@ -1,4 +1,4 @@
-import React, { FC, ReactNode } from 'react';
+import React, { ReactNode } from 'react';
 import { css, cx } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 import { IconButton, useStyles2, useTheme2 } from '@grafana/ui';
@@ -27,11 +27,11 @@ export interface DynamicTableProps<T = unknown> {
   isExpandable?: boolean;
   onCollapse?: (id: DynamicTableItemProps<T>) => void;
   onExpand?: (id: DynamicTableItemProps<T>) => void;
-  renderExpandedContent?: (item: DynamicTableItemProps, index: number) => ReactNode;
+  renderExpandedContent?: (item: DynamicTableItemProps<T>, index: number) => ReactNode;
   testIdGenerator?: (item: DynamicTableItemProps<T>) => string;
 }
 
-export const DynamicTable: FC<DynamicTableProps> = ({
+export const DynamicTable = <T extends object>({
   cols,
   items,
   isExpandable = false,
@@ -39,7 +39,7 @@ export const DynamicTable: FC<DynamicTableProps> = ({
   onExpand,
   renderExpandedContent,
   testIdGenerator,
-}) => {
+}: DynamicTableProps<T>) => {
   const styles = useStyles2(getStyles(cols, isExpandable));
   const theme = useTheme2();
   const isMobile = useMedia(`(${theme.breakpoints.down('sm')})`);
@@ -84,7 +84,7 @@ export const DynamicTable: FC<DynamicTableProps> = ({
   );
 };
 
-const getStyles = (cols: DynamicTableColumnProps[], isExpandable: boolean) => {
+const getStyles = <T extends unknown>(cols: Array<DynamicTableColumnProps<T>>, isExpandable: boolean) => {
   const sizes = cols.map((col) => {
     if (!col.size) {
       return 'auto';
