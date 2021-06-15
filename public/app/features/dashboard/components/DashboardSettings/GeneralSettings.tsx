@@ -23,7 +23,7 @@ const GRAPH_TOOLTIP_OPTIONS = [
   { value: 2, label: 'Shared Tooltip' },
 ];
 
-export const GeneralSettingsUnconnected: React.FC<Props> = ({ dashboard, updateTimeZone }) => {
+export function GeneralSettingsUnconnected({ dashboard, updateTimeZone }:Props): JSX.Element {
   const [renderCounter, setRenderCounter] = useState(0);
 
   const onFolderChange = (folder: { id: number; title: string }) => {
