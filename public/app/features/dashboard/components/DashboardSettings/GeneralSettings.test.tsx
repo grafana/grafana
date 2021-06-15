@@ -61,51 +61,6 @@ describe('General Settings', () => {
       );
     });
   });
-  jest.mock('@grafana/runtime', () => ({
-    ...((jest.requireActual('@grafana/runtime') as unknown) as object),
-    getBackendSrv: () => ({
-      search: jest.fn(() => [
-        { title: 'A', id: 'A' },
-        { title: 'B', id: 'B' },
-      ]),
-    }),
-  }));
-
-  jest.mock('app/core/services/context_srv', () => ({
-    contextSrv: {
-      user: { orgId: 1 },
-    },
-  }));
-  jest.mock('@grafana/runtime', () => ({
-    ...((jest.requireActual('@grafana/runtime') as unknown) as object),
-    getBackendSrv: () => ({
-      search: jest.fn(() => [
-        { title: 'A', id: 'A' },
-        { title: 'B', id: 'B' },
-      ]),
-    }),
-  }));
-
-  jest.mock('app/core/services/context_srv', () => ({
-    contextSrv: {
-      user: { orgId: 1 },
-    },
-  }));
-  jest.mock('@grafana/runtime', () => ({
-    ...((jest.requireActual('@grafana/runtime') as unknown) as object),
-    getBackendSrv: () => ({
-      search: jest.fn(() => [
-        { title: 'A', id: 'A' },
-        { title: 'B', id: 'B' },
-      ]),
-    }),
-  }));
-
-  jest.mock('app/core/services/context_srv', () => ({
-    contextSrv: {
-      user: { orgId: 1 },
-    },
-  }));
 
   describe('when timezone is changed', () => {
     it('should call update function', async () => {

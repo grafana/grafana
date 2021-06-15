@@ -23,7 +23,7 @@ const GRAPH_TOOLTIP_OPTIONS = [
   { value: 2, label: 'Shared Tooltip' },
 ];
 
-export function GeneralSettingsUnconnected({ dashboard, updateTimeZone }:Props): JSX.Element {
+export function GeneralSettingsUnconnected({ dashboard, updateTimeZone }: Props): JSX.Element {
   const [renderCounter, setRenderCounter] = useState(0);
 
   const onFolderChange = (folder: { id: number; title: string }) => {
@@ -133,7 +133,7 @@ export function GeneralSettingsUnconnected({ dashboard, updateTimeZone }:Props):
       </div>
     </div>
   );
-};
+}
 
 const mapDispatchToProps = {
   updateTimeZone: (timeZone: TimeZone) => {
