@@ -871,6 +871,36 @@ describe('logSeriesToLogsModel', () => {
       },
     ]);
   });
+
+  it('should correctly get the log level if the message has ANSI color', () => {
+    const logSeries: DataFrame[] = [
+      toDataFrame({
+        fields: [
+          {
+            name: 'ts',
+            type: FieldType.time,
+            values: ['1970-01-01T00:00:01Z'],
+          },
+          {
+            name: 'line',
+            type: FieldType.string,
+            values: ['Line with ANSI \u001B[31mwarn\u001B[0m et dolor'],
+          },
+          {
+            name: 'id',
+            type: FieldType.string,
+            values: ['0'],
+          },
+        ],
+        refId: 'A',
+        meta: {},
+      }),
+    ];
+
+    const logsModel = dataFrameToLogsModel(logSeries, 0);
+    expect(logsModel.rows).toHaveLength(1);
+    expect(logsModel.rows[0].logLevel).toEqual(LogLevel.warn);
+  });
 });
 
 describe('getSeriesProperties()', () => {
