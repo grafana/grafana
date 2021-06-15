@@ -28,6 +28,7 @@ var shadowSearchCounter = prometheus.NewCounterVec(
 func init() {
 	bus.AddHandler("sql", GetDashboard)
 	bus.AddHandler("sql", GetDashboards)
+	bus.AddHandlerCtx("sql", GetDashboardCtx)
 	bus.AddHandler("sql", DeleteDashboard)
 	bus.AddHandler("sql", SearchDashboards)
 	bus.AddHandler("sql", GetDashboardTags)
@@ -230,23 +231,29 @@ func (ss *SQLStore) GetFolderByTitle(orgID int64, title string) (*models.Dashboa
 
 // TODO: Remove me
 func GetDashboard(query *models.GetDashboardQuery) error {
-	if query.Id == 0 && len(query.Slug) == 0 && len(query.Uid) == 0 {
-		return models.ErrDashboardIdentifierNotSet
-	}
+	return GetDashboardCtx(context.Background(), query)
+}
 
-	dashboard := models.Dashboard{Slug: query.Slug, OrgId: query.OrgId, Id: query.Id, Uid: query.Uid}
-	has, err := x.Get(&dashboard)
+func GetDashboardCtx(ctx context.Context, query *models.GetDashboardQuery) error {
+	return withDbSession(ctx, x, func(dbSession *DBSession) error {
+		if query.Id == 0 && len(query.Slug) == 0 && len(query.Uid) == 0 {
+			return models.ErrDashboardIdentifierNotSet
+		}
 
-	if err != nil {
-		return err
-	} else if !has {
-		return models.ErrDashboardNotFound
-	}
+		dashboard := models.Dashboard{Slug: query.Slug, OrgId: query.OrgId, Id: query.Id, Uid: query.Uid}
+		has, err := dbSession.Get(&dashboard)
 
-	dashboard.SetId(dashboard.Id)
-	dashboard.SetUid(dashboard.Uid)
-	query.Result = &dashboard
-	return nil
+		if err != nil {
+			return err
+		} else if !has {
+			return models.ErrDashboardNotFound
+		}
+
+		dashboard.SetId(dashboard.Id)
+		dashboard.SetUid(dashboard.Uid)
+		query.Result = &dashboard
+		return nil
+	})
 }
 
 type DashboardSearchProjection struct {
