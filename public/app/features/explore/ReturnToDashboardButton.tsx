@@ -4,12 +4,14 @@ import { ButtonGroup, ButtonSelect, Icon, ToolbarButton, Tooltip } from '@grafan
 import { DataQuery, urlUtil } from '@grafana/data';
 
 import kbn from '../../core/utils/kbn';
+import config from 'app/core/config';
 import { getDashboardSrv } from '../dashboard/services/DashboardSrv';
 import { StoreState } from 'app/types';
 import { ExploreId } from 'app/types/explore';
 import { setDashboardQueriesToUpdateOnLoad } from '../dashboard/state/reducers';
 import { isSplit } from './state/selectors';
 import { locationService } from '@grafana/runtime';
+import { contextSrv } from 'app/core/services/context_srv';
 
 interface Props {
   exploreId: ExploreId;
@@ -27,8 +29,17 @@ export const UnconnectedReturnToDashboardButton: FC<Props> = ({
 }) => {
   const withOriginId = originPanelId && Number.isInteger(originPanelId);
 
+  // access control can enable users to use explore without the viewersCanEdit flag enabled
+  const hasAccess = (): boolean => {
+    const roles = ['Editor', 'Admin'];
+    if (config.viewersCanEdit) {
+      roles.push('Viewer');
+    }
+    return roles.some((r) => contextSrv.hasRole(r));
+  };
+
   // If in split mode, or no origin id, escape early and return null
-  if (splitted || !withOriginId) {
+  if (splitted || !withOriginId || !hasAccess()) {
     return null;
   }
 
