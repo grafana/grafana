@@ -23,6 +23,7 @@ export const dbClustersStub: DBCluster[] = [
     status: DBClusterStatus.ready,
     finishedSteps: 5,
     totalSteps: 10,
+    expose: true,
   },
   {
     kubernetesClusterName: 'Kubernetes Cluster 2',
@@ -34,6 +35,7 @@ export const dbClustersStub: DBCluster[] = [
     disk: 25,
     finishedSteps: 7,
     totalSteps: 7,
+    expose: false,
   },
   {
     kubernetesClusterName: 'Kubernetes Cluster 1',
@@ -46,6 +48,7 @@ export const dbClustersStub: DBCluster[] = [
     status: DBClusterStatus.ready,
     finishedSteps: 1,
     totalSteps: 2,
+    expose: false,
   },
   {
     kubernetesClusterName: 'Kubernetes Cluster 2',
@@ -59,6 +62,7 @@ export const dbClustersStub: DBCluster[] = [
     message: 'Cluster creation failed',
     finishedSteps: 0,
     totalSteps: 2,
+    expose: false,
   },
   {
     kubernetesClusterName: 'Kubernetes Cluster 1',

@@ -30,7 +30,7 @@ export class Portal extends PureComponent<Props> {
   render() {
     // Default z-index is high to make sure
     return ReactDOM.createPortal(
-      <div style={{ zIndex: 1051, position: 'relative' }} ref={this.props.forwardedRef}>
+      <div style={{ zIndex: 1061, position: 'relative' }} ref={this.props.forwardedRef}>
         {this.props.children}
       </div>,
       this.node

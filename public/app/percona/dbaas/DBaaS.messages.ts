@@ -72,6 +72,7 @@ export const Messages = {
         memory: 'Memory (GB)',
         cpu: 'CPU',
         disk: 'Disk (GB)',
+        expose: 'External Access',
       },
       steps: {
         basicOptions: 'Basic Options',
@@ -99,6 +100,7 @@ export const Messages = {
         disk: 'Disk',
       },
       resourcesInfo: 'Resource calculations are an estimate',
+      exposeTooltip: 'Allows external access to the database cluster',
     },
     deleteModal: {
       cancel: 'Cancel',
@@ -126,6 +128,11 @@ export const Messages = {
         cpu: 'CPU',
         memory: 'Memory',
         disk: 'Disk',
+        expose: {
+          label: 'External Access',
+          enabled: 'Enabled',
+          disabled: 'Disabled',
+        },
       },
       actions: {
         deleteCluster: 'Delete',

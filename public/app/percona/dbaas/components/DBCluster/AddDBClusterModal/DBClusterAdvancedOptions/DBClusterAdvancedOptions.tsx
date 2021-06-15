@@ -26,6 +26,7 @@ import { CPU, Disk, Memory } from '../../../DBaaSIcons';
 import { DBClusterService } from '../../DBCluster.service';
 import { DBClusterAllocatedResources, DBClusterExpectedResources } from '../../DBCluster.types';
 import { newDBClusterService } from '../../DBCluster.utils';
+import { SwitchField } from '../../../Switch/Switch';
 
 export const DBClusterAdvancedOptions: FC<FormRenderProps> = ({ values, form }) => {
   let allocatedTimer: NodeJS.Timeout;
@@ -171,6 +172,11 @@ export const DBClusterAdvancedOptions: FC<FormRenderProps> = ({ values, form }) 
           />
         )}
       </div>
+      <SwitchField
+        name={AddDBClusterFields.expose}
+        label={Messages.dbcluster.addModal.fields.expose}
+        tooltip={Messages.dbcluster.addModal.exposeTooltip}
+      />
       <div className={styles.resourcesRadioWrapper}>
         <RadioButtonGroupField
           name={AddDBClusterFields.resources}

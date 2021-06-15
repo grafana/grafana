@@ -134,6 +134,7 @@ export class PSMDBService extends DBClusterService {
       message: dbCluster.operation?.message,
       finishedSteps: dbCluster.operation?.finished_steps || 0,
       totalSteps: dbCluster.operation?.total_steps || 0,
+      expose: dbCluster.exposed,
     };
   }
 }
@@ -141,6 +142,7 @@ export class PSMDBService extends DBClusterService {
 const toAPI = (dbCluster: DBCluster) => ({
   kubernetes_cluster_name: dbCluster.kubernetesClusterName,
   name: dbCluster.clusterName,
+  expose: dbCluster.expose,
   params: {
     cluster_size: dbCluster.clusterSize,
     replicaset: {
