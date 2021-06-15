@@ -1110,6 +1110,7 @@ steps:
   - yarn install --frozen-lockfile --no-progress
   environment:
     DOCKERIZE_VERSION: 0.6.1
+    DRONE_TARGET_BRANCH: main
   depends_on:
   - clone
 
@@ -1492,6 +1493,8 @@ steps:
   - C:\App\grabpl.exe init-enterprise C:\App\grafana-enterprise
   - cp C:\App\grabpl.exe grabpl.exe
   - .\grabpl.exe verify-drone
+  environment:
+    DRONE_TARGET_BRANCH: main
   depends_on:
   - clone
 
@@ -2018,6 +2021,7 @@ steps:
   - yarn install --frozen-lockfile --no-progress
   environment:
     DOCKERIZE_VERSION: 0.6.1
+    DRONE_TARGET_BRANCH: main
   depends_on:
   - clone
 
@@ -2394,6 +2398,8 @@ steps:
   - C:\App\grabpl.exe init-enterprise C:\App\grafana-enterprise
   - cp C:\App\grabpl.exe grabpl.exe
   - .\grabpl.exe verify-drone
+  environment:
+    DRONE_TARGET_BRANCH: main
   depends_on:
   - clone
 
@@ -2890,6 +2896,7 @@ steps:
   - yarn install --frozen-lockfile --no-progress
   environment:
     DOCKERIZE_VERSION: 0.6.1
+    DRONE_TARGET_BRANCH: main
   depends_on:
   - clone
 
@@ -3270,6 +3277,8 @@ steps:
   - C:\App\grabpl.exe init-enterprise C:\App\grafana-enterprise
   - cp C:\App\grabpl.exe grabpl.exe
   - .\grabpl.exe verify-drone
+  environment:
+    DRONE_TARGET_BRANCH: main
   depends_on:
   - clone
 
