@@ -11,13 +11,14 @@ import { Field } from '@grafana/ui/src/components/Forms/Field';
 import { PanelLibraryOptionsGroup } from 'app/features/library-panels/components/PanelLibraryOptionsGroup/PanelLibraryOptionsGroup';
 import { toggleVizPicker } from './state/reducers';
 import { selectors } from '@grafana/e2e-selectors';
+import { getPanelPluginWithFallback } from '../../state/selectors';
 
 interface Props {
   panel: PanelModel;
 }
 
 export const VisualizationSelectPane: FC<Props> = ({ panel }) => {
-  const plugin = useSelector((state: StoreState) => state.plugins.panels[panel.type]);
+  const plugin = useSelector((state: StoreState) => getPanelPluginWithFallback(state, panel.type));
   const [searchQuery, setSearchQuery] = useState('');
   const [listMode, setListMode] = useState(ListMode.Visualizations);
   const dispatch = useDispatch();

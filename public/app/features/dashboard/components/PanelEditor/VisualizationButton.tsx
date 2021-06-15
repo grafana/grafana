@@ -7,6 +7,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { setPanelEditorUIState, toggleVizPicker } from './state/reducers';
 import { selectors } from '@grafana/e2e-selectors';
 import { PanelModel } from '../../state';
+import { getPanelPluginWithFallback } from '../../state/selectors';
 
 type Props = {
   panel: PanelModel;
@@ -15,7 +16,7 @@ type Props = {
 export const VisualizationButton: FC<Props> = ({ panel }) => {
   const styles = useStyles(getStyles);
   const dispatch = useDispatch();
-  const plugin = useSelector((state: StoreState) => state.plugins.panels[panel.type]);
+  const plugin = useSelector((state: StoreState) => getPanelPluginWithFallback(state, panel.type));
   const isPanelOptionsVisible = useSelector((state: StoreState) => state.panelEditor.ui.isPanelOptionsVisible);
   const isVizPickerOpen = useSelector((state: StoreState) => state.panelEditor.isVizPickerOpen);
 
