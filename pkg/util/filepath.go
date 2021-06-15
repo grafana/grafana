@@ -46,7 +46,7 @@ func Walk(path string, followSymlinks bool, detectSymlinkInfiniteLoop bool, walk
 // If symlinkPathsFollowed is not nil, then we need to detect infinite loop.
 func walk(path string, info os.FileInfo, resolvedPath string, symlinkPathsFollowed map[string]bool, walkFn WalkFunc) error {
 	if info == nil {
-		return errors.New("Walk: Nil FileInfo passed")
+		return errors.New("walk: Nil FileInfo passed")
 	}
 	err := walkFn(resolvedPath, info, nil)
 	if err != nil {

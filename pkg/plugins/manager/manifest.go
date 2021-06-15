@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"net/url"
@@ -210,9 +211,17 @@ func getPluginSignatureState(log log.Logger, plugin *plugins.PluginBase) (plugin
 	}
 
 	if manifest.isV2() {
+		pluginFiles, err := pluginFilesRequiringVerification(plugin)
+		if err != nil {
+			log.Warn("Could not collect plugin file information in directory", "pluginID", plugin.Id, "dir", plugin.PluginDir)
+			return plugins.PluginSignatureState{
+				Status: plugins.PluginSignatureInvalid,
+			}, err
+		}
+
 		// Track files missing from the manifest
 		var unsignedFiles []string
-		for _, f := range plugin.Files {
+		for _, f := range pluginFiles {
 			if _, exists := manifestFiles[f]; !exists {
 				unsignedFiles = append(unsignedFiles, f)
 			}
@@ -233,4 +242,61 @@ func getPluginSignatureState(log log.Logger, plugin *plugins.PluginBase) (plugin
 		Type:       manifest.SignatureType,
 		SigningOrg: manifest.SignedByOrgName,
 	}, nil
+}
+
+// gets plugin filenames that require verification for plugin signing
+// returns filenames as a slice of posix style paths relative to plugin directory
+func pluginFilesRequiringVerification(plugin *plugins.PluginBase) ([]string, error) {
+	var files []string
+	err := filepath.Walk(plugin.PluginDir, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
+		if info.Mode()&os.ModeSymlink == os.ModeSymlink {
+			symlinkPath, err := filepath.EvalSymlinks(path)
+			if err != nil {
+				return err
+			}
+
+			symlink, err := os.Stat(symlinkPath)
+			if err != nil {
+				return err
+			}
+
+			// skip symlink directories
+			if symlink.IsDir() {
+				return nil
+			}
+
+			// verify that symlinked file is within plugin directory
+			p, err := filepath.Rel(plugin.PluginDir, symlinkPath)
+			if err != nil {
+				return err
+			}
+			if strings.HasPrefix(p, ".."+string(filepath.Separator)) {
+				return fmt.Errorf("file '%s' not inside of plugin directory", p)
+			}
+		}
+
+		// skip directories and MANIFEST.txt
+		if info.IsDir() || info.Name() == "MANIFEST.txt" {
+			return nil
+		}
+
+		// verify that file is within plugin directory
+		file, err := filepath.Rel(plugin.PluginDir, path)
+		if err != nil {
+			return err
+		}
+		if strings.HasPrefix(file, ".."+string(filepath.Separator)) {
+			return fmt.Errorf("file '%s' not inside of plugin directory", file)
+		}
+
+		files = append(files, filepath.ToSlash(file))
+
+		return nil
+	})
+
+	return files, err
 }
