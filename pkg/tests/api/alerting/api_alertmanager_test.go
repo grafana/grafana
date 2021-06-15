@@ -1520,7 +1520,7 @@ func TestAlertRuleCRUD(t *testing.T) {
 			}`, body)
 	}
 
-	// update the rule; keep title, condition, interval, for, no data state, error state, queries and expressions if not provided
+	// update the rule; keep title, condition, no data state, error state, queries and expressions if not provided
 	{
 		rules := apimodels.PostableRuleGroupConfig{
 			Name: "arulegroup",
@@ -1575,11 +1575,11 @@ func TestAlertRuleCRUD(t *testing.T) {
 			   "default":[
 			      {
 				 "name":"arulegroup",
-				 "interval":"1m",
+				 "interval":"0m",
 				 "rules":[
 				    {
 				       "expr":"",
-				       "for": "30s",
+				       "for": "0m",
 				       "grafana_alert":{
 					  "id":1,
 					  "orgId":1,

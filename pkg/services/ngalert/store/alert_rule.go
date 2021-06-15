@@ -249,19 +249,11 @@ func (st DBstore) UpsertAlertRules(rules []UpsertRule) error {
 					r.New.Data = r.Existing.Data
 				}
 
-				if r.New.IntervalSeconds == 0 {
-					r.New.IntervalSeconds = r.Existing.IntervalSeconds
-				}
-
 				r.New.ID = r.Existing.ID
 				r.New.OrgID = r.Existing.OrgID
 				r.New.NamespaceUID = r.Existing.NamespaceUID
 				r.New.RuleGroup = r.Existing.RuleGroup
 				r.New.Version = r.Existing.Version + 1
-
-				if r.New.For == 0 {
-					r.New.For = r.Existing.For
-				}
 
 				if r.New.ExecErrState == "" {
 					r.New.ExecErrState = r.Existing.ExecErrState
