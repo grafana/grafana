@@ -397,6 +397,24 @@ func TestPluginManager_Init(t *testing.T) {
 		assert.False(t, pm.plugins[pluginID].IsCorePlugin)
 		assert.NotNil(t, pm.plugins[("test")])
 	})
+
+	t.Run("With back-end plugin that is symlinked to plugins dir", func(t *testing.T) {
+		origAppURL := setting.AppUrl
+		t.Cleanup(func() {
+			setting.AppUrl = origAppURL
+		})
+		setting.AppUrl = defaultAppURL
+
+		pm := createManager(t, func(pm *PluginManager) {
+			pm.Cfg.PluginsPath = "testdata/symbolic-plugin-dirs"
+		})
+		err := pm.Init()
+		require.NoError(t, err)
+		// This plugin should be properly registered, even though it is symlinked to prlugins dir
+		require.Empty(t, pm.scanningErrors)
+		const pluginID = "test"
+		assert.NotNil(t, pm.plugins[pluginID])
+	})
 }
 
 func TestPluginManager_IsBackendOnlyPlugin(t *testing.T) {
