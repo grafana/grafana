@@ -12,6 +12,7 @@ export interface Props {
   onChange: (value: DateTime) => void;
   value?: DateTime;
   showHour?: boolean;
+  showSeconds?: boolean;
   minuteStep?: number;
   size?: FormInputSize;
   disabled?: boolean;
@@ -20,6 +21,7 @@ export interface Props {
 export const TimeOfDayPicker: FC<Props> = ({
   minuteStep = 1,
   showHour = true,
+  showSeconds = false,
   onChange,
   value,
   size = 'auto',
@@ -34,7 +36,7 @@ export const TimeOfDayPicker: FC<Props> = ({
       defaultValue={dateTimeAsMoment()}
       onChange={(value: any) => onChange(dateTime(value))}
       allowEmpty={false}
-      showSecond={false}
+      showSecond={showSeconds}
       value={dateTimeAsMoment(value)}
       showHour={showHour}
       minuteStep={minuteStep}

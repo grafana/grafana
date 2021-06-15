@@ -9,7 +9,7 @@ import { Icon } from '../../Icon/Icon';
 import { Portal } from '../../Portal/Portal';
 import { ClickOutsideWrapper } from '../../ClickOutsideWrapper/ClickOutsideWrapper';
 
-const getStyles = stylesFactory((theme: GrafanaTheme2, isReversed = false) => {
+export const getContainerStyles = stylesFactory((theme: GrafanaTheme2, isReversed = false) => {
   return {
     container: css`
       top: -1px;
@@ -36,6 +36,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2, isReversed = false) => {
     modal: css`
       position: fixed;
       top: 20%;
+      left: 25%;
       width: 100%;
       z-index: ${theme.zIndex.modal};
     `,
@@ -74,7 +75,7 @@ const getFooterStyles = stylesFactory((theme: GrafanaTheme2) => {
   };
 });
 
-const getBodyStyles = stylesFactory((theme: GrafanaTheme2) => {
+export const getBodyStyles = stylesFactory((theme: GrafanaTheme2) => {
   return {
     title: css`
       color: ${theme.colors.text};
@@ -198,7 +199,7 @@ const stopPropagation = (event: React.MouseEvent<HTMLDivElement>) => event.stopP
 
 export const TimePickerCalendar = memo<Props>((props) => {
   const theme = useTheme2();
-  const styles = getStyles(theme, props.isReversed);
+  const styles = getContainerStyles(theme, props.isReversed);
   const { isOpen, isFullscreen } = props;
 
   if (!isOpen) {
