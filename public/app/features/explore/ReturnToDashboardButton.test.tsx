@@ -7,6 +7,7 @@ const createProps = (propsOverride?: Partial<ComponentProps<typeof ReturnToDashb
   const defaultProps = {
     originPanelId: 1,
     splitted: false,
+    hasAccess: true,
     exploreId: ExploreId.left,
     queries: [],
     setDashboardQueriesToUpdateOnLoad: jest.fn(),
@@ -28,6 +29,11 @@ describe('ReturnToDashboardButton', () => {
 
   it('should not render any button if split view', () => {
     render(<ReturnToDashboardButton {...createProps({ splitted: true })} />);
+    expect(screen.queryByTestId(/returnButton/i)).toBeNull();
+  });
+
+  it('should not render any button if user does not have access ', () => {
+    render(<ReturnToDashboardButton {...createProps({ hasAccess: false })} />);
     expect(screen.queryByTestId(/returnButton/i)).toBeNull();
   });
 
