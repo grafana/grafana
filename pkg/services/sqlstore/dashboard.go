@@ -28,6 +28,7 @@ var shadowSearchCounter = prometheus.NewCounterVec(
 func init() {
 	bus.AddHandler("sql", GetDashboard)
 	bus.AddHandler("sql", GetDashboards)
+	bus.AddHandlerCtx("sql", GetDashboardCtx)
 	bus.AddHandler("sql", DeleteDashboard)
 	bus.AddHandler("sql", SearchDashboards)
 	bus.AddHandler("sql", GetDashboardTags)
