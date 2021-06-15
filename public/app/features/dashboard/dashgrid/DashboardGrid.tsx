@@ -1,6 +1,5 @@
 // Libraries
 import React, { PureComponent } from 'react';
-import { hot } from 'react-hot-loader';
 import ReactGridLayout, { ItemCallback } from 'react-grid-layout';
 import classNames from 'classnames';
 // @ts-ignore
@@ -164,9 +163,8 @@ export class DashboardGrid extends PureComponent<Props, State> {
 
     this.props.dashboard.sortPanelsByGridPos();
 
-    // Call render() after any changes.  This is called when the initial layout loads
+    // onLayoutChange is called onMount this marks layout as initialized and we are ready to render panels
     if (!this.state.isLayoutInitialized) {
-      this.forceUpdate();
       this.setState({ isLayoutInitialized: true });
     }
   };
@@ -177,10 +175,6 @@ export class DashboardGrid extends PureComponent<Props, State> {
 
   updateGridPos = (item: ReactGridLayout.Layout, layout: ReactGridLayout.Layout[]) => {
     this.panelMap[item.i!].updateGridPos(item);
-
-    // react-grid-layout has a bug (#670), and onLayoutChange() is only called when the component is mounted.
-    // So it's required to call it explicitly when panel resized or moved to save layout changes.
-    this.onLayoutChange(layout);
   };
 
   onResize: ItemCallback = (layout, oldItem, newItem) => {
@@ -290,5 +284,3 @@ export class DashboardGrid extends PureComponent<Props, State> {
     );
   }
 }
-
-export default hot(module)(DashboardGrid);
