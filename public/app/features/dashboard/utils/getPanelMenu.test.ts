@@ -55,7 +55,7 @@ describe('getPanelMenu', () => {
             },
             Object {
               "onClick": [Function],
-              "text": "Share",
+              "text": "Bug report",
             },
           ],
           "text": "Inspect",
@@ -143,7 +143,7 @@ describe('getPanelMenu', () => {
               },
               Object {
                 "onClick": [Function],
-                "text": "Share",
+                "text": "Bug report",
               },
             ],
             "text": "Inspect",
