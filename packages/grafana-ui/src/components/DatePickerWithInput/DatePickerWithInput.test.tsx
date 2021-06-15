@@ -1,28 +1,15 @@
 import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { DatePickerWithInput } from './DatePickerWithInput';
-import MockDate from 'mockdate';
 
 describe('DatePickerWithInput', () => {
-  beforeEach(() => {
-    const mockDate = new Date(1400000000000);
-    MockDate.set(mockDate);
-  });
-
-  afterEach(() => {
-    MockDate.reset();
-  });
-
   it('renders date input', () => {
-    render(<DatePickerWithInput onChange={jest.fn()} />);
+    render(<DatePickerWithInput onChange={jest.fn()} value={new Date(1400000000000)} />);
 
     expect(screen.getByDisplayValue('2014-05-13')).toBeInTheDocument();
   });
 
   it('renders date input with date passed in', () => {
-    // reset the date so we can use it for the date conversion here
-    MockDate.reset();
-
     render(<DatePickerWithInput value={new Date(1607431703363)} onChange={jest.fn()} />);
 
     expect(screen.getByDisplayValue('2020-12-08')).toBeInTheDocument();

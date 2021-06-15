@@ -1,18 +1,8 @@
 import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { DatePicker } from './DatePicker';
-import MockDate from 'mockdate';
 
 describe('DatePicker', () => {
-  beforeEach(() => {
-    const mockDate = new Date(1400000000000);
-    MockDate.set(mockDate);
-  });
-
-  afterEach(() => {
-    MockDate.reset();
-  });
-
   it('does not render calendar when isOpen is false', () => {
     render(<DatePicker isOpen={false} onChange={jest.fn()} onClose={jest.fn()} />);
 
@@ -26,15 +16,12 @@ describe('DatePicker', () => {
   });
 
   it('renders calendar with default date', () => {
-    render(<DatePicker isOpen={true} onChange={jest.fn()} onClose={jest.fn()} />);
+    render(<DatePicker isOpen={true} onChange={jest.fn()} onClose={jest.fn()} value={new Date(1400000000000)} />);
 
     expect(screen.getByText('May 2014')).toBeInTheDocument();
   });
 
   it('renders calendar with date passed in', () => {
-    // reset the date so we can use it for the date conversion here
-    MockDate.reset();
-
     render(<DatePicker isOpen={true} value={new Date(1607431703363)} onChange={jest.fn()} onClose={jest.fn()} />);
 
     expect(screen.getByText('December 2020')).toBeInTheDocument();

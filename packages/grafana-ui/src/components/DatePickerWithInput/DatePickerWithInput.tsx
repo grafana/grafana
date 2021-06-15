@@ -10,17 +10,19 @@ export const formatDate = (date: Date) => dateTimeFormat(date, { format: 'YYYY-M
 export interface DatePickerWithInputProps extends Omit<InputProps, 'ref' | 'value' | 'onChange'> {
   value?: Date;
   onChange: (value: Date) => void;
-  /** Hide the calendar when  ate is selected */
+  /** Hide the calendar when date is selected */
   closeOnSelect?: boolean;
 }
 
 export const DatePickerWithInput = ({ value, onChange, closeOnSelect, ...rest }: DatePickerWithInputProps) => {
   const [open, setOpen] = React.useState(false);
   const styles = useStyles(getStyles);
+
   return (
     <div className={styles.container}>
       <Input
         type="date"
+        placeholder={'Date'}
         value={value ? formatDate(value) : undefined}
         onClick={() => setOpen(true)}
         onChange={() => {}}
