@@ -3,12 +3,25 @@ import LdapPage from 'app/features/admin/ldap/LdapPage';
 import UserAdminPage from 'app/features/admin/UserAdminPage';
 import { LoginPage } from 'app/core/components/Login/LoginPage';
 import config from 'app/core/config';
-import { DashboardRoutes } from 'app/types';
+import { AccessControlAction, DashboardRoutes } from 'app/types';
 import { SafeDynamicImport } from '../core/components/DynamicImports/SafeDynamicImport';
 import { RouteDescriptor } from '../core/navigation/types';
 import { SignupPage } from 'app/core/components/Signup/SignupPage';
 import { Redirect } from 'react-router-dom';
 import ErrorPage from 'app/core/components/ErrorPage/ErrorPage';
+import { contextSrv } from 'app/core/services/context_srv';
+
+const getExploreRoles = (): string[] => {
+  if (config.featureToggles['accesscontrol'] && contextSrv.hasPermission(AccessControlAction.DataSourceExplore)) {
+    return [];
+  }
+
+  if (config.viewersCanEdit) {
+    return [];
+  }
+
+  return ['Editor', 'Admin'];
+};
 
 export const extraRoutes: RouteDescriptor[] = [];
 
@@ -136,7 +149,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     {
       path: '/explore',
       pageClass: 'page-explore',
-      roles: () => (config.viewersCanEdit ? [] : ['Editor', 'Admin']),
+      roles: getExploreRoles,
       component: SafeDynamicImport(() => import(/* webpackChunkName: "explore" */ 'app/features/explore/Wrapper')),
     },
     {
