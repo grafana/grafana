@@ -77,6 +77,7 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
         show: ticks,
         stroke: gridColor,
         width: 1 / devicePixelRatio,
+        size: 4,
       },
       splits,
       values: values,
