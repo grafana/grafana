@@ -253,7 +253,7 @@ func (f *fakeAccessControl) IsDisabled() bool {
 	return f.isDisabled
 }
 
-func setupAccessControlScenarioContext(t *testing.T, cfg *setting.Cfg, url string, permissions []*accesscontrol.Permission) *scenarioContext {
+func setupAccessControlScenarioContext(t *testing.T, cfg *setting.Cfg, url string, permissions []*accesscontrol.Permission) (*scenarioContext, *HTTPServer) {
 	cfg.FeatureToggles = make(map[string]bool)
 	cfg.FeatureToggles["accesscontrol"] = true
 
@@ -268,5 +268,13 @@ func setupAccessControlScenarioContext(t *testing.T, cfg *setting.Cfg, url strin
 	hs.registerRoutes()
 	hs.RouteRegister.Register(sc.m.Router)
 
-	return sc
+	return sc, hs
+}
+
+type accessControlTestCase struct {
+	expectedCode int
+	desc         string
+	url          string
+	method       string
+	permissions  []*accesscontrol.Permission
 }

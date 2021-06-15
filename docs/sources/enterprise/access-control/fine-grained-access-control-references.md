@@ -22,11 +22,13 @@ Fixed roles | Permissions | Descriptions
 `fixed:users:org:edit` | All permissions from `fixed:users:org:read` and <br>`org.users:add`<br>`org.users:remove`<br>`org.users.role:update` | Allows every read action for user organizations and in addition allows to administer user organizations.
 `fixed:ldap:admin:read` | `ldap.user:read`<br>`ldap.status:read` | Allows to read LDAP information and status.
 `fixed:ldap:admin:edit` | All permissions from `fixed:ldap:admin:read` and <br>`ldap.user:sync`<br>`ldap.config:reload` | Allows every read action for LDAP and in addition allows to administer LDAP.
-`fixed:settings:admin:edit` | `settings:write` | Update all settings
+`fixed:server:admin:read` | `server.stats:read` | Read server stats
+`fixed:settings:admin:read` | `settings:read` | Read settings
+`fixed:settings:admin:edit` | All permissions from `fixed:settings:admin:read` and<br>`settings:write` | Update settings
 
 ## Default built-in role assignments
 
 Built-in roles | Associated roles | Descriptions
 --- | --- | ---
-Grafana Admin | `fixed:permissions:admin:edit`<br>`fixed:permissions:admin:read`<br>`fixed:reporting:admin:edit`<br>`fixed:reporting:admin:read`<br>`fixed:users:admin:edit`<br>`fixed:users:admin:read`<br>`fixed:users:org:edit`<br>`fixed:users:org:read`<br>`fixed:ldap:admin:edit`<br>`fixed:ldap:admin:read`<br>`fixed:settings:admin:edit` | Allows access to resources which [Grafana Server Admin]({{< relref "../../permissions/_index.md#grafana-server-admin-role" >}}) has permissions by default.
+Grafana Admin | `fixed:permissions:admin:edit`<br>`fixed:permissions:admin:read`<br>`fixed:reporting:admin:edit`<br>`fixed:reporting:admin:read`<br>`fixed:users:admin:edit`<br>`fixed:users:admin:read`<br>`fixed:users:org:edit`<br>`fixed:users:org:read`<br>`fixed:ldap:admin:edit`<br>`fixed:ldap:admin:read`<br>`fixed:server:admin:read`<br>`fixed:settings:admin:read`<br>`fixed:settings:admin:edit` | Allows access to resources which [Grafana Server Admin]({{< relref "../../permissions/_index.md#grafana-server-admin-role" >}}) has permissions by default.
 Admin | `fixed:users:org:edit`<br>`fixed:users:org:read`<br>`fixed:reporting:admin:edit`<br>`fixed:reporting:admin:read` | Allows access to resource which [Admin]({{< relref "../../permissions/organization_roles.md" >}}) has permissions by default.
