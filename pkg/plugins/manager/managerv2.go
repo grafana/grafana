@@ -160,7 +160,7 @@ func (m *PluginManagerV2) installPlugins(path string, requireSigning bool) error
 	return nil
 }
 
-// Check if loader found duplicate plugins or plugins that are already installed
+// filterOutDuplicates will strip duplicate plugins or plugins that are already installed
 func (m *PluginManagerV2) filterOutDuplicates(loadedPlugins []*plugins.PluginV2) []*plugins.PluginV2 {
 	var result []*plugins.PluginV2
 
