@@ -2,7 +2,7 @@ import React from 'react';
 import { render, screen, waitFor, waitForElementToBeRemoved } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { getTheme } from '@grafana/ui';
+import { createTheme } from '@grafana/data';
 import {
   buildSelector,
   facetLabels,
@@ -105,7 +105,7 @@ describe('LokiLabelBrowser', () => {
     };
 
     const defaults: BrowserProps = {
-      theme: getTheme(),
+      theme: createTheme(),
       onChange: () => {},
       autoSelect: 0,
       languageProvider: (mockLanguageProvider as unknown) as LokiLanguageProvider,
