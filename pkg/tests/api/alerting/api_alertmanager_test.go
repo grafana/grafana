@@ -1258,7 +1258,7 @@ func TestAlertRuleCRUD(t *testing.T) {
 
 	// update the first rule and completely remove the other
 	{
-		interval, err := model.ParseDuration("30s")
+		forValue, err := model.ParseDuration("30s")
 		require.NoError(t, err)
 
 		rules := apimodels.PostableRuleGroupConfig{
@@ -1266,7 +1266,7 @@ func TestAlertRuleCRUD(t *testing.T) {
 			Rules: []apimodels.PostableExtendedRuleNode{
 				{
 					ApiRuleNode: &apimodels.ApiRuleNode{
-						For: interval,
+						For: forValue,
 						Labels: map[string]string{
 							// delete foo label
 							"label1": "val1", // update label value
@@ -1301,6 +1301,7 @@ func TestAlertRuleCRUD(t *testing.T) {
 					},
 				},
 			},
+			Interval: interval,
 		}
 		buf := bytes.Buffer{}
 		enc := json.NewEncoder(&buf)
@@ -1399,7 +1400,7 @@ func TestAlertRuleCRUD(t *testing.T) {
 
 	// update the rule; delete labels and annotations
 	{
-		interval, err := model.ParseDuration("30s")
+		forValue, err := model.ParseDuration("30s")
 		require.NoError(t, err)
 
 		rules := apimodels.PostableRuleGroupConfig{
@@ -1407,7 +1408,7 @@ func TestAlertRuleCRUD(t *testing.T) {
 			Rules: []apimodels.PostableExtendedRuleNode{
 				{
 					ApiRuleNode: &apimodels.ApiRuleNode{
-						For: interval,
+						For: forValue,
 					},
 					GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
 						UID:       ruleUID, // Including the UID in the payload makes the endpoint update the existing rule.
@@ -1432,6 +1433,7 @@ func TestAlertRuleCRUD(t *testing.T) {
 					},
 				},
 			},
+			Interval: interval,
 		}
 		buf := bytes.Buffer{}
 		enc := json.NewEncoder(&buf)
@@ -1531,6 +1533,7 @@ func TestAlertRuleCRUD(t *testing.T) {
 					},
 				},
 			},
+			Interval: interval,
 		}
 		buf := bytes.Buffer{}
 		enc := json.NewEncoder(&buf)
@@ -1575,11 +1578,10 @@ func TestAlertRuleCRUD(t *testing.T) {
 			   "default":[
 			      {
 				 "name":"arulegroup",
-				 "interval":"0m",
+				 "interval":"1m",
 				 "rules":[
 				    {
 				       "expr":"",
-				       "for": "0m",
 				       "grafana_alert":{
 					  "id":1,
 					  "orgId":1,
