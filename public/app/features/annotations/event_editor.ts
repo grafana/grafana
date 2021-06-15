@@ -87,35 +87,32 @@ export class EventEditorCtrl {
     if (this.form.$valid) {
       var t = _.cloneDeep(this.event);
       t.tags.push(annotation);
-      var nrMaxTemplateVars = this.panelCtrl.dashboard.templating.list.length;
-      for (var i = 0; i < nrMaxTemplateVars; i++) {
-        t.tags.push(this.panelCtrl.dashboard.templating.list[i].current.text);
-      }
+      t.tags.push(this.panelCtrl.datasource.name);
       (t.time = t.time.valueOf()),
         (t.timeEnd = 0),
         t.isRegion && ((t.timeEnd = this.event.timeEnd.valueOf()), t.timeEnd < t.time)
           ? console.log('invalid time')
           : t.id
           ? this.annotationsSrv
-            .updateAnnotationEvent(t)
-            .then(() => {
-              this.panelCtrl.refresh();
-              this.close();
-            })
-            .catch(() => {
-              this.panelCtrl.refresh();
-              this.close();
-            })
+              .updateAnnotationEvent(t)
+              .then(() => {
+                this.panelCtrl.refresh();
+                this.close();
+              })
+              .catch(() => {
+                this.panelCtrl.refresh();
+                this.close();
+              })
           : this.annotationsSrv
-            .saveAnnotationEvent(t)
-            .then(() => {
-              this.panelCtrl.refresh();
-              this.close();
-            })
-            .catch(() => {
-              this.panelCtrl.refresh();
-              this.close();
-            });
+              .saveAnnotationEvent(t)
+              .then(() => {
+                this.panelCtrl.refresh();
+                this.close();
+              })
+              .catch(() => {
+                this.panelCtrl.refresh();
+                this.close();
+              });
     }
   }
 }
