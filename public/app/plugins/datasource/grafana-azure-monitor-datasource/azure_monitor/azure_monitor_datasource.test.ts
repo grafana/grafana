@@ -27,8 +27,7 @@ describe('AzureMonitorDatasource', () => {
     ctx.instanceSettings = ({
       name: 'test',
       url: 'http://azuremonitor.com',
-      jsonData: { subscriptionId: '9935389e-9122-4ef9-95f9-1513dd24753f' },
-      cloudName: 'azuremonitor',
+      jsonData: { subscriptionId: '9935389e-9122-4ef9-95f9-1513dd24753f', cloudName: 'azuremonitor' },
     } as unknown) as DataSourceInstanceSettings<AzureDataSourceJsonData>;
     ctx.ds = new AzureMonitorDatasource(ctx.instanceSettings);
   });

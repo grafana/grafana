@@ -43,17 +43,6 @@ function getDefaultAzureCloud(): string {
   }
 }
 
-export function getAzureCloud(options: AzureDataSourceSettings | AzureDataSourceInstanceSettings): string {
-  const authType = getAuthType(options);
-  switch (authType) {
-    case 'msi':
-      // In case of managed identity, the cloud is always same as where Grafana is hosted
-      return getDefaultAzureCloud();
-    case 'clientsecret':
-      return options.jsonData.cloudName || getDefaultAzureCloud();
-  }
-}
-
 function getSecret(options: AzureDataSourceSettings): undefined | string | ConcealedSecret {
   if (options.secureJsonFields.clientSecret) {
     // The secret is concealed on server

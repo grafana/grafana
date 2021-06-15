@@ -1,5 +1,4 @@
 import { FetchResponse, getBackendSrv } from '@grafana/runtime';
-import { getLogAnalyticsManagementApiRoute } from '../api/routes';
 import {
   locationDisplayNames,
   logsSupportedLocationsKusto,
@@ -8,7 +7,6 @@ import {
 } from '../azureMetadata';
 import { ResourceRowType, ResourceRow, ResourceRowGroup } from '../components/ResourcePicker/types';
 import { parseResourceURI } from '../components/ResourcePicker/utils';
-import { getAzureCloud } from '../credentials';
 import {
   AzureDataSourceInstanceSettings,
   AzureGraphResponse,
@@ -16,16 +14,15 @@ import {
   RawAzureResourceGroupItem,
   RawAzureResourceItem,
 } from '../types';
+import { routeNames } from '../utils/common';
 
 const RESOURCE_GRAPH_URL = '/providers/Microsoft.ResourceGraph/resources?api-version=2021-03-01';
 
 export default class ResourcePickerData {
-  private proxyUrl: string;
-  private cloud: string;
+  private baseURL: string;
 
   constructor(instanceSettings: AzureDataSourceInstanceSettings) {
-    this.proxyUrl = instanceSettings.url!;
-    this.cloud = getAzureCloud(instanceSettings);
+    this.baseURL = instanceSettings.url! + `/${routeNames.azureMonitor}`;
   }
 
   static readonly templateVariableGroupID = '$$grafana-templateVariables$$';
@@ -148,7 +145,7 @@ export default class ResourcePickerData {
     try {
       return await getBackendSrv()
         .fetch<AzureGraphResponse<T>>({
-          url: this.proxyUrl + '/' + getLogAnalyticsManagementApiRoute(this.cloud) + RESOURCE_GRAPH_URL,
+          url: this.baseURL + RESOURCE_GRAPH_URL,
           method: 'POST',
           data: {
             query: query,

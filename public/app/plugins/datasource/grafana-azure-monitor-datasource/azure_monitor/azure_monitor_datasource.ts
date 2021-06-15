@@ -26,9 +26,9 @@ import { from, Observable } from 'rxjs';
 import { mergeMap } from 'rxjs/operators';
 
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { getAuthType, getAzureCloud } from '../credentials';
-import { getManagementApiRoute } from '../api/routes';
+import { getAuthType } from '../credentials';
 import { resourceTypeDisplayNames } from '../azureMetadata';
+import { routeNames } from '../utils/common';
 
 const defaultDropdownValue = 'select';
 
@@ -49,7 +49,6 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
   baseUrl: string;
   resourceGroup: string;
   resourceName: string;
-  url: string;
   supportedMetricNamespaces: string[] = [];
   timeSrv: TimeSrv;
 
@@ -59,12 +58,8 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
     this.timeSrv = getTimeSrv();
     this.defaultSubscriptionId = instanceSettings.jsonData.subscriptionId;
 
-    const cloud = getAzureCloud(instanceSettings);
-    const route = getManagementApiRoute(cloud);
-    this.baseUrl = `/${route}/subscriptions`;
-
-    this.url = instanceSettings.url!;
-    this.supportedMetricNamespaces = new SupportedNamespaces(cloud).get();
+    this.baseUrl = instanceSettings.url! + `/${routeNames.azureMonitor}/subscriptions`;
+    this.supportedMetricNamespaces = new SupportedNamespaces(instanceSettings.jsonData.cloudName).get();
   }
 
   isConfigured(): boolean {
@@ -550,7 +545,7 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
   doRequest<T = any>(url: string, maxRetries = 1): Promise<FetchResponse<T>> {
     return getBackendSrv()
       .datasourceRequest<T>({
-        url: this.url + url,
+        url,
         method: 'GET',
       })
       .catch((error: any) => {

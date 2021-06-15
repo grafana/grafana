@@ -1,12 +1,11 @@
-import { DataQueryRequest, DataSourceInstanceSettings, ScopedVars, MetricFindValue } from '@grafana/data';
+import { DataQueryRequest, DataSourceInstanceSettings, ScopedVars } from '@grafana/data';
 import { getBackendSrv, getTemplateSrv, DataSourceWithBackend } from '@grafana/runtime';
 import { isString } from 'lodash';
 
 import TimegrainConverter from '../time_grain_converter';
 import { AzureDataSourceJsonData, AzureMonitorQuery, AzureQueryType, DatasourceValidationResult } from '../types';
+import { routeNames } from '../utils/common';
 import ResponseParser from './response_parser';
-import { getAzureCloud } from '../credentials';
-import { getAppInsightsApiRoute } from '../api/routes';
 
 export interface LogAnalyticsColumn {
   text: string;
@@ -14,7 +13,6 @@ export interface LogAnalyticsColumn {
 }
 
 export default class AppInsightsDatasource extends DataSourceWithBackend<AzureMonitorQuery, AzureDataSourceJsonData> {
-  url: string;
   baseUrl: string;
   version = 'beta';
   applicationId: string;
@@ -24,11 +22,7 @@ export default class AppInsightsDatasource extends DataSourceWithBackend<AzureMo
     super(instanceSettings);
     this.applicationId = instanceSettings.jsonData.appInsightsAppId || '';
 
-    const cloud = getAzureCloud(instanceSettings);
-    const route = getAppInsightsApiRoute(cloud);
-    this.baseUrl = `/${route}/${this.version}/apps/${this.applicationId}`;
-
-    this.url = instanceSettings.url || '';
+    this.baseUrl = instanceSettings.url || '' + `/${routeNames.appInsights}/${this.version}/apps/${this.applicationId}`;
   }
 
   isConfigured(): boolean {
@@ -111,27 +105,6 @@ export default class AppInsightsDatasource extends DataSourceWithBackend<AzureMo
     };
   }
 
-  /**
-   * This is named differently than DataSourceApi.metricFindQuery
-   * because it's not exposed to Grafana like the main AzureMonitorDataSource.
-   * And some of the azure internal data sources return null in this function, which the
-   * external interface does not support
-   */
-  metricFindQueryInternal(query: string): Promise<MetricFindValue[]> | null {
-    const appInsightsMetricNameQuery = query.match(/^AppInsightsMetricNames\(\)/i);
-    if (appInsightsMetricNameQuery) {
-      return this.getMetricNames();
-    }
-
-    const appInsightsGroupByQuery = query.match(/^AppInsightsGroupBys\(([^\)]+?)(,\s?([^,]+?))?\)/i);
-    if (appInsightsGroupByQuery) {
-      const metricName = appInsightsGroupByQuery[1];
-      return this.getGroupBys(getTemplateSrv().replace(metricName));
-    }
-
-    return null;
-  }
-
   testDatasource(): Promise<DatasourceValidationResult> {
     const url = `${this.baseUrl}/metrics/metadata`;
     return this.doRequest(url)
@@ -171,7 +144,7 @@ export default class AppInsightsDatasource extends DataSourceWithBackend<AzureMo
   doRequest(url: any, maxRetries = 1): Promise<any> {
     return getBackendSrv()
       .datasourceRequest({
-        url: this.url + url,
+        url,
         method: 'GET',
       })
       .catch((error: any) => {
@@ -181,24 +154,6 @@ export default class AppInsightsDatasource extends DataSourceWithBackend<AzureMo
 
         throw error;
       });
-  }
-
-  getMetricNames() {
-    const url = `${this.baseUrl}/metrics/metadata`;
-    return this.doRequest(url).then(ResponseParser.parseMetricNames);
-  }
-
-  getMetricMetadata(metricName: string) {
-    const url = `${this.baseUrl}/metrics/metadata`;
-    return this.doRequest(url).then((result: any) => {
-      return new ResponseParser(result).parseMetadata(metricName);
-    });
-  }
-
-  getGroupBys(metricName: string) {
-    return this.getMetricMetadata(metricName).then((result: any) => {
-      return new ResponseParser(result).parseGroupBys();
-    });
   }
 
   getQuerySchema() {

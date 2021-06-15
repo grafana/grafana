@@ -18,10 +18,10 @@ import {
 import { getBackendSrv, getTemplateSrv, DataSourceWithBackend, FetchResponse } from '@grafana/runtime';
 import { Observable, from } from 'rxjs';
 import { mergeMap } from 'rxjs/operators';
-import { getAuthType, getAzureCloud, isLogAnalyticsSameAs } from '../credentials';
-import { getLogAnalyticsApiRoute, getLogAnalyticsManagementApiRoute } from '../api/routes';
+import { getAuthType, isLogAnalyticsSameAs } from '../credentials';
 import { AzureLogAnalyticsMetadata } from '../types/logAnalyticsMetadata';
 import { isGUIDish } from '../components/ResourcePicker/utils';
+import { routeNames } from '../utils/common';
 
 interface AdhocQuery {
   datasourceId: number;
@@ -33,7 +33,6 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
   AzureMonitorQuery,
   AzureDataSourceJsonData
 > {
-  url: string;
   baseUrl: string;
   applicationId: string;
 
@@ -47,14 +46,8 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     super(instanceSettings);
     this.cache = new Map();
 
-    const cloud = getAzureCloud(instanceSettings);
-    const logAnalyticsRoute = getLogAnalyticsApiRoute(cloud);
-    this.baseUrl = `/${logAnalyticsRoute}`;
-
-    const managementRoute = getLogAnalyticsManagementApiRoute(cloud);
-    this.azureMonitorUrl = `/${managementRoute}/subscriptions`;
-
-    this.url = instanceSettings.url || '';
+    this.baseUrl = instanceSettings.url || '' + `/${routeNames.logAnalytics}`;
+    this.azureMonitorUrl = instanceSettings.url || '' + `/${routeNames.azureMonitor}/subscriptions`;
 
     const sameAsMonitor = isLogAnalyticsSameAs(instanceSettings);
 
@@ -396,7 +389,7 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
       }
 
       const res = await getBackendSrv().datasourceRequest({
-        url: this.url + url,
+        url: url,
         method: 'GET',
       });
 

@@ -28,3 +28,11 @@ export function convertTimeGrainsToMs<T extends { value: string }>(timeGrains: T
   });
   return allowedTimeGrainsMs;
 }
+
+// Route definitions shared with the backend.
+// Check: /pkg/tsdb/azuremonitor/azuremonitor-resource-handler.go <routeNames>
+export const routeNames = {
+  azureMonitor: 'azuremonitor',
+  logAnalytics: 'loganalytics',
+  appInsights: 'appinsights',
+};
