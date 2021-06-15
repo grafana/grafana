@@ -17,19 +17,19 @@ var (
 )
 
 func init() {
-	registry.RegisterService(&OAuthTokenService{})
+	registry.RegisterService(&Service{})
 }
 
-type OAuthTokenService struct {
-	SocialService *social.SocialService `inject:""`
+type Service struct {
+	SocialService *social.Service `inject:""`
 }
 
-func (o *OAuthTokenService) Init() error {
+func (o *Service) Init() error {
 	return nil
 }
 
 // GetCurrentOAuthToken returns the OAuth token, if any, for the authenticated user. Will try to refresh the token if it has expired.
-func (o *OAuthTokenService) GetCurrentOAuthToken(ctx context.Context, user *models.SignedInUser) *oauth2.Token {
+func (o *Service) GetCurrentOAuthToken(ctx context.Context, user *models.SignedInUser) *oauth2.Token {
 	if user == nil {
 		// No user, therefore no token
 		return nil
@@ -91,7 +91,7 @@ func (o *OAuthTokenService) GetCurrentOAuthToken(ctx context.Context, user *mode
 }
 
 // IsOAuthPassThruEnabled returns true if Forward OAuth Identity (oauthPassThru) is enabled for the provided data source.
-func (o *OAuthTokenService) IsOAuthPassThruEnabled(ds *models.DataSource) bool {
+func (o *Service) IsOAuthPassThruEnabled(ds *models.DataSource) bool {
 	return ds.JsonData != nil && ds.JsonData.Get("oauthPassThru").MustBool()
 }
 

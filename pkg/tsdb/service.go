@@ -42,14 +42,14 @@ func init() {
 
 // Service handles data requests to data sources.
 type Service struct {
-	Cfg                    *setting.Cfg                  `inject:""`
-	PostgresService        *postgres.PostgresService     `inject:""`
-	CloudMonitoringService *cloudmonitoring.Service      `inject:""`
-	AzureMonitorService    *azuremonitor.Service         `inject:""`
-	PluginManager          plugins.Manager               `inject:""`
-	BackendPluginManager   backendplugin.Manager         `inject:""`
-	HTTPClientProvider     httpclient.Provider           `inject:""`
-	OAuthService           *oauthtoken.OAuthTokenService `inject:""`
+	Cfg                    *setting.Cfg              `inject:""`
+	PostgresService        *postgres.PostgresService `inject:""`
+	CloudMonitoringService *cloudmonitoring.Service  `inject:""`
+	AzureMonitorService    *azuremonitor.Service     `inject:""`
+	PluginManager          plugins.Manager           `inject:""`
+	BackendPluginManager   backendplugin.Manager     `inject:""`
+	HTTPClientProvider     httpclient.Provider       `inject:""`
+	OAuthTokenService      *oauthtoken.Service       `inject:""`
 
 	//nolint: staticcheck // plugins.DataPlugin deprecated
 	registry map[string]func(*models.DataSource) (plugins.DataPlugin, error)
@@ -83,7 +83,7 @@ func (s *Service) HandleRequest(ctx context.Context, ds *models.DataSource, quer
 		return plugin.DataQuery(ctx, ds, query)
 	}
 
-	return dataPluginQueryAdapter(ds.Type, s.BackendPluginManager, s.OAuthService).DataQuery(ctx, ds, query)
+	return dataPluginQueryAdapter(ds.Type, s.BackendPluginManager, s.OAuthTokenService).DataQuery(ctx, ds, query)
 }
 
 // RegisterQueryHandler registers a query handler factory.

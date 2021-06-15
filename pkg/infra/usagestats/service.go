@@ -39,7 +39,7 @@ type UsageStatsService struct {
 	AlertingUsageStats alerting.UsageStatsQuerier `inject:""`
 	License            models.Licensing           `inject:""`
 	PluginManager      plugins.Manager            `inject:""`
-	SocialService      *social.SocialService      `inject:""`
+	SocialService      *social.Service            `inject:""`
 
 	log log.Logger
 
@@ -49,7 +49,7 @@ type UsageStatsService struct {
 }
 
 func (uss *UsageStatsService) Init() error {
-	uss.oauthProviders = uss.SocialService.GetOAuthProviders(uss.Cfg)
+	uss.oauthProviders = uss.SocialService.GetOAuthProviders()
 	return nil
 }
 

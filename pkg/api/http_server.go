@@ -107,8 +107,8 @@ type HTTPServer struct {
 	Alertmanager           *notifier.Alertmanager                  `inject:""`
 	LibraryPanelService    librarypanels.Service                   `inject:""`
 	LibraryElementService  libraryelements.Service                 `inject:""`
-	SocialService          *social.SocialService                   `inject:""`
-	OAuthTokenService      *oauthtoken.OAuthTokenService           `inject:""`
+	SocialService          *social.Service                         `inject:""`
+	OAuthTokenService      *oauthtoken.Service                     `inject:""`
 	Listener               net.Listener
 }
 

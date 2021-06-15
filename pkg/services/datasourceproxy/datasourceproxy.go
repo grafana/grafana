@@ -28,7 +28,7 @@ type DatasourceProxyService struct {
 	PluginManager          plugins.Manager               `inject:""`
 	Cfg                    *setting.Cfg                  `inject:""`
 	HTTPClientProvider     httpclient.Provider           `inject:""`
-	OAuthService           *oauthtoken.OAuthTokenService `inject:""`
+	OAuthTokenService      *oauthtoken.Service           `inject:""`
 }
 
 func (p *DatasourceProxyService) Init() error {
@@ -70,7 +70,7 @@ func (p *DatasourceProxyService) ProxyDatasourceRequestWithID(c *models.ReqConte
 	}
 
 	proxyPath := getProxyPath(c)
-	proxy, err := pluginproxy.NewDataSourceProxy(ds, plugin, c, proxyPath, p.Cfg, p.HTTPClientProvider, p.OAuthService)
+	proxy, err := pluginproxy.NewDataSourceProxy(ds, plugin, c, proxyPath, p.Cfg, p.HTTPClientProvider, p.OAuthTokenService)
 	if err != nil {
 		if errors.Is(err, datasource.URLValidationError{}) {
 			c.JsonApiErr(http.StatusBadRequest, fmt.Sprintf("Invalid data source URL: %q", ds.Url), err)
