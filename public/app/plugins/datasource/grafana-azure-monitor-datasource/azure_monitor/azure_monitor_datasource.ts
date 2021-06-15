@@ -27,7 +27,7 @@ import { mergeMap } from 'rxjs/operators';
 
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { getAuthType, getAzureCloud } from '../credentials';
-import { getManagementApiRoute } from '../api/routes';
+import { getDeepLinkRoute, getManagementApiRoute } from '../api/routes';
 import { resourceTypeDisplayNames } from '../azureMetadata';
 
 const defaultDropdownValue = 'select';
@@ -47,6 +47,7 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
   apiPreviewVersion = '2017-12-01-preview';
   defaultSubscriptionId?: string;
   baseUrl: string;
+  deepLinkUrl: string;
   resourceGroup: string;
   resourceName: string;
   url: string;
@@ -62,6 +63,7 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
     const cloud = getAzureCloud(instanceSettings);
     const route = getManagementApiRoute(cloud);
     this.baseUrl = `/${route}/subscriptions`;
+    this.deepLinkUrl = getDeepLinkRoute(cloud);
 
     this.url = instanceSettings.url!;
     this.supportedMetricNamespaces = new SupportedNamespaces(cloud).get();
@@ -167,7 +169,7 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
       },
     });
 
-    return `https://portal.azure.com/#blade/Microsoft_Azure_MonitoringMetrics/Metrics.ReactView/Referer/MetricsExplorer/TimeContext/${timeContext}/ChartDefinition/${chartDef}`;
+    return `${this.deepLinkUrl}/#blade/Microsoft_Azure_MonitoringMetrics/Metrics.ReactView/Referer/MetricsExplorer/TimeContext/${timeContext}/ChartDefinition/${chartDef}`;
   }
 
   applyTemplateVariables(target: AzureMonitorQuery, scopedVars: ScopedVars): Record<string, any> {
