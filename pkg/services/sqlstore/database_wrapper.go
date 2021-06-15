@@ -14,7 +14,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/lib/pq"
 	"github.com/mattn/go-sqlite3"
+	"github.com/opentracing/opentracing-go"
+	ol "github.com/opentracing/opentracing-go/log"
 	"github.com/prometheus/client_golang/prometheus"
+	cw "github.com/weaveworks/common/middleware"
 	"xorm.io/core"
 )
 
@@ -70,11 +73,39 @@ func (h *databaseQueryWrapper) Before(ctx context.Context, query string, args ..
 
 // After hook will get the timestamp registered on the Before hook and print the elapsed time
 func (h *databaseQueryWrapper) After(ctx context.Context, query string, args ...interface{}) (context.Context, error) {
+	h.instrument(ctx, "success", query, nil)
+
+	return ctx, nil
+}
+
+func (h *databaseQueryWrapper) instrument(ctx context.Context, status string, query string, err error) {
 	begin := ctx.Value(databaseQueryWrapperKey{}).(time.Time)
 	elapsed := time.Since(begin)
-	databaseQueryHistogram.WithLabelValues("success").Observe(elapsed.Seconds())
-	h.log.Debug("query finished", "status", "success", "elapsed time", elapsed, "sql", query)
-	return ctx, nil
+
+	histogram := databaseQueryHistogram.WithLabelValues(status)
+	if traceID, ok := cw.ExtractSampledTraceID(ctx); ok {
+		// Need to type-convert the Observer to an
+		// ExemplarObserver. This will always work for a
+		// HistogramVec.
+		histogram.(prometheus.ExemplarObserver).ObserveWithExemplar(
+			elapsed.Seconds(), prometheus.Labels{"traceID": traceID},
+		)
+	} else {
+		histogram.Observe(elapsed.Seconds())
+	}
+
+	span, _ := opentracing.StartSpanFromContext(ctx, "database query")
+	defer span.Finish()
+
+	span.LogFields(
+		ol.String("query", query),
+		ol.String("status", status))
+
+	if err != nil {
+		span.LogFields(ol.String("error", err.Error()))
+	}
+
+	h.log.Debug("query finished", "status", status, "elapsed time", elapsed, "sql", query, "error", err)
 }
 
 // OnError will be called if any error happens
@@ -85,10 +116,8 @@ func (h *databaseQueryWrapper) OnError(ctx context.Context, err error, query str
 		status = "success"
 	}
 
-	begin := ctx.Value(databaseQueryWrapperKey{}).(time.Time)
-	elapsed := time.Since(begin)
-	databaseQueryHistogram.WithLabelValues(status).Observe(elapsed.Seconds())
-	h.log.Debug("query finished", "status", status, "elapsed time", elapsed, "sql", query, "error", err)
+	h.instrument(ctx, status, query, err)
+
 	return err
 }
 

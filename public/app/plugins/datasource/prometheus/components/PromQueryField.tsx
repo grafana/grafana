@@ -77,6 +77,8 @@ export function willApplySuggestion(suggestion: string, { typeaheadContext, type
 interface PromQueryFieldProps extends ExploreQueryFieldProps<PrometheusDatasource, PromQuery, PromOptions> {
   history: Array<HistoryItem<PromQuery>>;
   ExtraFieldElement?: ReactNode;
+  placeholder?: string;
+  'data-testid'?: string;
 }
 
 interface PromQueryFieldState {
@@ -151,24 +153,21 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
 
   refreshHint = () => {
     const { datasource, query, data } = this.props;
+    const initHints = datasource.getInitHints();
+    const initHint = initHints.length > 0 ? initHints[0] : null;
 
     if (!data || data.series.length === 0) {
-      this.setState({ hint: null });
+      this.setState({
+        hint: initHint,
+      });
       return;
     }
 
     const result = isDataFrame(data.series[0]) ? data.series.map(toLegacyResponseData) : data.series;
-    const hints = datasource.getQueryHints(query, result);
-    let hint = hints.length > 0 ? hints[0] : null;
+    const queryHints = datasource.getQueryHints(query, result);
+    let queryHint = queryHints.length > 0 ? queryHints[0] : null;
 
-    // Hint for big disabled lookups
-    if (!hint && datasource.lookupsDisabled) {
-      hint = {
-        label: `Labels and metrics lookup was disabled in data source settings.`,
-        type: 'INFO',
-      };
-    }
-    this.setState({ hint });
+    this.setState({ hint: queryHint ?? initHint });
   };
 
   refreshMetrics = async () => {
@@ -271,7 +270,9 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
       datasource: { languageProvider },
       query,
       ExtraFieldElement,
+      placeholder = 'Enter a PromQL query (run with Shift+Enter)',
     } = this.props;
+
     const { labelBrowserVisible, syntaxLoaded, hint } = this.state;
     const cleanText = languageProvider ? languageProvider.cleanText : undefined;
     const hasMetrics = languageProvider.metrics.length > 0;
@@ -280,7 +281,10 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
 
     return (
       <>
-        <div className="gf-form-inline gf-form-inline--xs-view-flex-column flex-grow-1">
+        <div
+          className="gf-form-inline gf-form-inline--xs-view-flex-column flex-grow-1"
+          data-testid={this.props['data-testid']}
+        >
           <button
             className="gf-form-label query-keyword pointer"
             onClick={this.onClickChooserButton}
@@ -300,7 +304,7 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
               onBlur={this.props.onBlur}
               onChange={this.onChangeQuery}
               onRunQuery={this.props.onRunQuery}
-              placeholder="Enter a PromQL query (run with Shift+Enter)"
+              placeholder={placeholder}
               portalOrigin="prometheus"
               syntaxLoaded={syntaxLoaded}
             />

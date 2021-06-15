@@ -11,6 +11,11 @@ export default function createMockQuery(): AzureMonitorQuery {
       workspace: 'e3fe4fde-ad5e-4d60-9974-e2f3562ffdf2',
     },
 
+    azureResourceGraph: {
+      query: 'Resources | summarize count()',
+      resultFormat: 'time_series',
+    },
+
     azureMonitor: {
       // aggOptions: [],
       aggregation: 'Average',
@@ -35,8 +40,8 @@ export default function createMockQuery(): AzureMonitorQuery {
 
     queryType: AzureQueryType.AzureMonitor,
     refId: 'A',
-    subscription: 'abc-123',
-
+    subscription: '99999999-cccc-bbbb-aaaa-9106972f9572',
+    subscriptions: ['99999999-cccc-bbbb-aaaa-9106972f9572'],
     format: 'dunno lol', // unsure what this value should be. It's not there at runtime, but it's in the ts interface
   };
 }

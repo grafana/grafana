@@ -5,6 +5,8 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/models"
 )
 
 func TestCreateLibraryElement(t *testing.T) {
@@ -24,7 +26,7 @@ func TestCreateLibraryElement(t *testing.T) {
 					FolderID:    1,
 					UID:         sc.initialResult.Result.UID,
 					Name:        "Text - Library Panel",
-					Kind:        int64(Panel),
+					Kind:        int64(models.PanelElement),
 					Type:        "text",
 					Description: "A description",
 					Model: map[string]interface{}{
@@ -69,7 +71,7 @@ func TestCreateLibraryElement(t *testing.T) {
 					FolderID:    1,
 					UID:         result.Result.UID,
 					Name:        "Library Panel Name",
-					Kind:        int64(Panel),
+					Kind:        int64(models.PanelElement),
 					Type:        "text",
 					Description: "A description",
 					Model: map[string]interface{}{

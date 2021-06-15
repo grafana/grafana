@@ -17,9 +17,6 @@ export default {
     docs: {
       page: mdx,
     },
-    knobs: {
-      disable: true,
-    },
     controls: {
       exclude: ['className'],
     },
@@ -33,8 +30,13 @@ export default {
     closeOnConfirm: true,
   },
   argTypes: {
-    confirmVariant: { control: { type: 'select' } },
-    size: { control: { type: 'select' } },
+    confirmVariant: {
+      control: {
+        type: 'select',
+      },
+      options: ['primary', 'secondary', 'destructive', 'link'],
+    },
+    size: { control: { type: 'select' }, options: ['xs', 'sm', 'md', 'lg'] },
   },
 } as Meta;
 

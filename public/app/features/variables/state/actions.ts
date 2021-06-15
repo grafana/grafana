@@ -39,7 +39,7 @@ import {
 import { contextSrv } from 'app/core/services/context_srv';
 import { getTemplateSrv, TemplateSrv } from '../../templating/template_srv';
 import { alignCurrentWithMulti } from '../shared/multiOptions';
-import { hasLegacyVariableSupport, hasStandardVariableSupport, isMulti, isQuery } from '../guard';
+import { hasLegacyVariableSupport, hasOptions, hasStandardVariableSupport, isMulti, isQuery } from '../guard';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { DashboardModel } from 'app/features/dashboard/state';
 import { createErrorNotification } from '../../../core/copy/appNotification';
@@ -92,7 +92,7 @@ export const initDashboardTemplating = (list: VariableModel[]): ThunkResult<void
   return (dispatch, getState) => {
     let orderIndex = 0;
     for (let index = 0; index < list.length; index++) {
-      const model = list[index];
+      const model = fixSelectedInconsistency(list[index]);
       if (!variableAdapters.getIfExists(model.type)) {
         continue;
       }
@@ -109,6 +109,32 @@ export const initDashboardTemplating = (list: VariableModel[]): ThunkResult<void
     }
   };
 };
+
+export function fixSelectedInconsistency(model: VariableModel): VariableModel | VariableWithOptions {
+  if (!hasOptions(model)) {
+    return model;
+  }
+
+  let found = false;
+  for (const option of model.options) {
+    option.selected = false;
+    if (Array.isArray(model.current.value)) {
+      for (const value of model.current.value) {
+        if (option.value === value) {
+          option.selected = found = true;
+        }
+      }
+    } else if (option.value === model.current.value) {
+      option.selected = found = true;
+    }
+  }
+
+  if (!found && model.options.length) {
+    model.options[0].selected = true;
+  }
+
+  return model;
+}
 
 export const addSystemTemplateVariables = (dashboard: DashboardModel): ThunkResult<void> => {
   return (dispatch) => {

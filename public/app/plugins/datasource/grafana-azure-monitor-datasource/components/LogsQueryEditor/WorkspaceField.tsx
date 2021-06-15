@@ -19,6 +19,7 @@ const WorkspaceField: React.FC<AzureQueryEditorFieldProps> = ({
   useEffect(() => {
     if (!subscriptionId) {
       workspaces.length > 0 && setWorkspaces([]);
+      return;
     }
 
     datasource

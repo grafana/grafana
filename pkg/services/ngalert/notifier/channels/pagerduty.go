@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"os"
 
-	gokit_log "github.com/go-kit/kit/log"
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
@@ -44,7 +43,7 @@ type PagerdutyNotifier struct {
 }
 
 // NewPagerdutyNotifier is the constructor for the PagerDuty notifier
-func NewPagerdutyNotifier(model *models.AlertNotification, t *template.Template) (*PagerdutyNotifier, error) {
+func NewPagerdutyNotifier(model *NotificationChannelConfig, t *template.Template) (*PagerdutyNotifier, error) {
 	if model.Settings == nil {
 		return nil, alerting.ValidationError{Reason: "No Settings Supplied"}
 	}
@@ -55,8 +54,14 @@ func NewPagerdutyNotifier(model *models.AlertNotification, t *template.Template)
 	}
 
 	return &PagerdutyNotifier{
-		NotifierBase: old_notifiers.NewNotifierBase(model),
-		Key:          key,
+		NotifierBase: old_notifiers.NewNotifierBase(&models.AlertNotification{
+			Uid:                   model.UID,
+			Name:                  model.Name,
+			Type:                  model.Type,
+			DisableResolveMessage: model.DisableResolveMessage,
+			Settings:              model.Settings,
+		}),
+		Key: key,
 		CustomDetails: map[string]string{
 			"firing":       `{{ template "__text_alert_list" .Alerts.Firing }}`,
 			"resolved":     `{{ template "__text_alert_list" .Alerts.Resolved }}`,
@@ -118,9 +123,8 @@ func (pn *PagerdutyNotifier) buildPagerdutyMessage(ctx context.Context, alerts m
 		eventType = pagerDutyEventResolve
 	}
 
-	data := notify.GetTemplateData(ctx, pn.tmpl, as, gokit_log.NewNopLogger())
 	var tmplErr error
-	tmpl := notify.TmplText(pn.tmpl, data, &tmplErr)
+	tmpl, data := TmplText(ctx, pn.tmpl, as, pn.log, &tmplErr)
 
 	details := make(map[string]string, len(pn.CustomDetails))
 	for k, v := range pn.CustomDetails {
@@ -163,7 +167,7 @@ func (pn *PagerdutyNotifier) buildPagerdutyMessage(ctx context.Context, alerts m
 	}
 
 	if tmplErr != nil {
-		return nil, "", fmt.Errorf("failed to template PagerDuty message: %w", tmplErr)
+		pn.log.Debug("failed to template PagerDuty message", "err", tmplErr.Error())
 	}
 
 	return msg, eventType, nil

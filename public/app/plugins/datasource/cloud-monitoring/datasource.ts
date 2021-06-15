@@ -34,6 +34,7 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
     this.authenticationType = instanceSettings.jsonData.authenticationType || 'jwt';
     this.api = new API(`${instanceSettings.url!}/cloudmonitoring/v3/projects/`);
     this.variables = new CloudMonitoringVariableSupport(this);
+    this.intervalMs = 0;
   }
 
   getVariables() {
@@ -250,7 +251,7 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
     }
 
     return this.api.get(`${this.templateSrv.replace(projectName)}/metricDescriptors`, {
-      responseMap: (m: any) => {
+      responseMap: (m: MetricDescriptor) => {
         const [service] = m.type.split('/');
         const [serviceShortName] = service.split('.');
         m.service = service;
@@ -285,7 +286,7 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
     });
   }
 
-  getProjects() {
+  getProjects(): Promise<Array<SelectableValue<string>>> {
     return this.api.get(`projects`, {
       responseMap: ({ projectId, name }: { projectId: string; name: string }) => ({
         value: projectId,
@@ -342,11 +343,13 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
   }
 
   interpolateVariablesInQueries(queries: CloudMonitoringQuery[], scopedVars: ScopedVars): CloudMonitoringQuery[] {
-    return queries.map((query) => this.applyTemplateVariables(query, scopedVars) as CloudMonitoringQuery);
+    return queries.map(
+      (query) => this.applyTemplateVariables(this.migrateQuery(query), scopedVars) as CloudMonitoringQuery
+    );
   }
 
   interpolateFilters(filters: string[], scopedVars: ScopedVars) {
-    const completeFilter = chunk(filters, 4)
+    const completeFilter: Filter[] = chunk(filters, 4)
       .map(([key, operator, value, condition]) => ({
         key,
         operator,

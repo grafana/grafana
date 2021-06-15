@@ -14,7 +14,7 @@ Grafana automatically scales dashboards to any resolution, which makes them perf
 
 You can access the Playlist feature from Grafana's side menu, in the Dashboards submenu.
 
-{{< docs-imagebox img="/img/docs/v50/playlist.png" max-width="25rem">}}
+{{< figure src="/static/img/docs/v50/playlist.png" max-width="25rem">}}
 
 ## Create a playlist
 

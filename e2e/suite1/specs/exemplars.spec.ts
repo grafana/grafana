@@ -65,8 +65,6 @@ describe('Exemplars', () => {
 
     e2e.components.DataSource.Prometheus.exemplarMarker().first().trigger('mouseover');
     e2e().contains('Query with gdev-tempo').click();
-
-    e2e().get('[aria-label="Node: app"]').should('be.visible');
     e2e.components.TraceViewer.spanBar().should('have.length', 11);
   });
 });

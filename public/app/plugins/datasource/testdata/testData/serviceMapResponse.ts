@@ -172,7 +172,7 @@ export const nodes = {
     {
       name: NodeGraphDataFrameFieldNames.arc + 'faults',
       type: FieldType.number,
-      config: { color: { mode: FieldColorModeId.Fixed, fixedColor: 'red' }, displayName: 'faults' },
+      config: { color: { mode: FieldColorModeId.Fixed, fixedColor: 'red' }, displayName: 'Faults' },
       values: [
         0,
         0,

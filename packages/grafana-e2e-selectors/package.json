@@ -45,5 +45,8 @@
     "execa": "4.0.0",
     "typescript": "4.2.4",
     "yaml": "^1.8.3"
+  },
+  "volta": {
+    "extends": "../../package.json"
   }
 }

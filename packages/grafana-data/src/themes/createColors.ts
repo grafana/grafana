@@ -85,10 +85,10 @@ class DarkColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
   mode: ThemeColorsMode = 'dark';
 
   // Used to get more white opacity colors
-  whiteBase = '201, 209, 217';
+  whiteBase = '204, 204, 220';
 
   border = {
-    weak: `rgba(${this.whiteBase}, 0.08)`,
+    weak: `rgba(${this.whiteBase}, 0.07)`,
     medium: `rgba(${this.whiteBase}, 0.15)`,
     strong: `rgba(${this.whiteBase}, 0.25)`,
   };
@@ -257,7 +257,9 @@ export function createColors(colors: ThemeColorsInput): ThemeColors {
 
   function getContrastText(background: string, threshold: number = contrastThreshold) {
     const contrastText =
-      getContrastRatio(dark.text.maxContrast, background) >= threshold ? dark.text.maxContrast : light.text.maxContrast;
+      getContrastRatio(dark.text.maxContrast, background, base.background.primary) >= threshold
+        ? dark.text.maxContrast
+        : light.text.maxContrast;
     // todo, need color framework
     return contrastText;
   }

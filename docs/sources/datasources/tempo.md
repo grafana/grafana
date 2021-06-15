@@ -32,14 +32,18 @@ This is a configuration for the [trace to logs feature]({{< relref "../explore/t
 - **Data source -** Target data source.
 - **Tags -** The tags that will be used in the Loki query. Default is `'cluster', 'hostname', 'namespace', 'pod'`.
 
-![Trace to logs settings](/img/docs/explore/trace-to-logs-settings-7-4.png 'Screenshot of the trace to logs settings')
+![Trace to logs settings](/static/img/docs/explore/trace-to-logs-settings-7-4.png 'Screenshot of the trace to logs settings')
 
 ## Query traces
 
 You can query and display traces from Tempo via [Explore]({{< relref "../explore/_index.md" >}}).
-To query a particular trace, insert its trace ID into the query text input.
+You can search for traces if you set up the trace to logs setting in the data source configuration page. To find traces to visualize, use the [Loki query editor]({{< relref "loki.md#loki-query-editor" >}}). To get search results, you must have [derived fields]({{< relref "loki.md#derived-fields" >}}) configured, which point to this data source.
 
-{{< docs-imagebox img="/img/docs/v73/tempo-query-editor.png" class="docs-image--no-shadow" caption="Screenshot of the Tempo query editor" >}}
+{{< figure src="/static/img/docs/tempo/query-editor-search.png" class="docs-image--no-shadow" caption="Screenshot of the Tempo query editor showing the search tab" >}}
+
+To query a particular trace, select the **TraceID** query type, and then put the ID into the Trace ID field.
+
+{{< figure src="/static/img/docs/tempo/query-editor-traceid.png" class="docs-image--no-shadow" caption="Screenshot of the Tempo TraceID query type" >}}
 
 ## Linking Trace ID from logs
 

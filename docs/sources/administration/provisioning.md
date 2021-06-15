@@ -152,7 +152,7 @@ Since not all datasources have the same configuration settings we only have the 
 | timeInterval            | string  | Prometheus, Elasticsearch, InfluxDB, MySQL, PostgreSQL and MSSQL | Lowest interval/step value that should be used for this data source.                        |
 | httpMode                | string  | Influxdb                                                         | HTTP Method. 'GET', 'POST', defaults to GET                                                 |
 | maxSeries               | number  | Influxdb                                                         | Max number of series/tables that Grafana processes                                          |
-| httpMethod              | string  | Prometheus                                                       | HTTP Method. 'GET', 'POST', defaults to GET                                                 |
+| httpMethod              | string  | Prometheus                                                       | HTTP Method. 'GET', 'POST', defaults to POST                                                 |
 | customQueryParameters   | string  | Prometheus                                                       | Query parameters to add, as a URL-encoded string.                                                 |
 | esVersion               | string  | Elasticsearch                                                    | Elasticsearch version (E.g. `7.0.0`, `7.6.1`)                                            |
 | timeField               | string  | Elasticsearch                                                    | Which field that should be used as timestamp                                                |
@@ -305,7 +305,7 @@ Grafana offers options to export the JSON definition of a dashboard. Either `Cop
 
 Note: The JSON definition in the input field when using `Copy JSON to Clipboard` or `Save JSON to file` will have the `id` field automatically removed to aid the provisioning workflow.
 
-{{< docs-imagebox img="/img/docs/v51/provisioning_cannot_save_dashboard.png" max-width="500px" class="docs-image--no-shadow" >}}
+{{< figure src="/static/img/docs/v51/provisioning_cannot_save_dashboard.png" max-width="500px" class="docs-image--no-shadow" >}}
 
 ### Reusable Dashboard URLs
 
@@ -436,6 +436,14 @@ The following sections detail the supported settings and secure settings for eac
 | expire     |                |
 | sound      |                |
 | okSound    |                |
+
+#### Alert notification `discord`
+
+| Name           | Secure setting |
+| -------------- | -------------- |
+| url            | yes            |
+| avatar_url     |                |
+| message        |                |
 
 #### Alert notification `slack`
 
@@ -575,3 +583,9 @@ The following sections detail the supported settings and secure settings for eac
 | Name |
 | ---- |
 | url  |
+
+## Grafana Enterprise
+
+Grafana Enterprise supports provisioning for the following resources:
+
+- [Access Control Provisioning]({{< relref "../enterprise/access-control/provisioning.md" >}})

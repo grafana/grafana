@@ -1043,6 +1043,169 @@ func TestCloudMonitoring(t *testing.T) {
 			assert.Contains(t, value, `zone=monitoring.regex.full_match("us-central1-a~")`)
 		})
 	})
+
+	t.Run("and query preprocessor is not defined", func(t *testing.T) {
+		tsdbQuery := getBaseQuery()
+		tsdbQuery.Queries[0].Model = simplejson.NewFromAny(map[string]interface{}{
+			"metricType":         "a/metric/type",
+			"crossSeriesReducer": "REDUCE_MIN",
+			"perSeriesAligner":   "REDUCE_SUM",
+			"alignmentPeriod":    "+60s",
+			"groupBys":           []string{"labelname"},
+			"view":               "FULL",
+		})
+
+		qes, err := executor.buildQueryExecutors(tsdbQuery)
+		require.NoError(t, err)
+		queries := getCloudMonitoringQueriesFromInterface(t, qes)
+
+		assert.Equal(t, 1, len(queries))
+		assert.Equal(t, "REDUCE_MIN", queries[0].Params["aggregation.crossSeriesReducer"][0])
+		assert.Equal(t, "REDUCE_SUM", queries[0].Params["aggregation.perSeriesAligner"][0])
+		assert.Equal(t, "+60s", queries[0].Params["aggregation.alignmentPeriod"][0])
+		assert.Equal(t, "labelname", queries[0].Params["aggregation.groupByFields"][0])
+
+		assert.NotContains(t, queries[0].Params, "secondaryAggregation.crossSeriesReducer")
+		assert.NotContains(t, "REDUCE_SUM", queries[0].Params, "secondaryAggregation.perSeriesAligner")
+		assert.NotContains(t, "+60s", queries[0].Params, "secondaryAggregation.alignmentPeriod")
+		assert.NotContains(t, "labelname", queries[0].Params, "secondaryAggregation.groupByFields")
+	})
+
+	t.Run("and query preprocessor is set to none", func(t *testing.T) {
+		tsdbQuery := getBaseQuery()
+		tsdbQuery.Queries[0].Model = simplejson.NewFromAny(map[string]interface{}{
+			"metricType":         "a/metric/type",
+			"crossSeriesReducer": "REDUCE_MIN",
+			"perSeriesAligner":   "REDUCE_SUM",
+			"alignmentPeriod":    "+60s",
+			"groupBys":           []string{"labelname"},
+			"view":               "FULL",
+			"preprocessor":       "none",
+		})
+
+		qes, err := executor.buildQueryExecutors(tsdbQuery)
+		require.NoError(t, err)
+		queries := getCloudMonitoringQueriesFromInterface(t, qes)
+
+		assert.Equal(t, 1, len(queries))
+		assert.Equal(t, "REDUCE_MIN", queries[0].Params["aggregation.crossSeriesReducer"][0])
+		assert.Equal(t, "REDUCE_SUM", queries[0].Params["aggregation.perSeriesAligner"][0])
+		assert.Equal(t, "+60s", queries[0].Params["aggregation.alignmentPeriod"][0])
+		assert.Equal(t, "labelname", queries[0].Params["aggregation.groupByFields"][0])
+
+		assert.NotContains(t, queries[0].Params, "secondaryAggregation.crossSeriesReducer")
+		assert.NotContains(t, "REDUCE_SUM", queries[0].Params, "secondaryAggregation.perSeriesAligner")
+		assert.NotContains(t, "+60s", queries[0].Params, "secondaryAggregation.alignmentPeriod")
+		assert.NotContains(t, "labelname", queries[0].Params, "secondaryAggregation.groupByFields")
+	})
+
+	t.Run("and query preprocessor is set to rate and there's no group bys", func(t *testing.T) {
+		tsdbQuery := getBaseQuery()
+		tsdbQuery.Queries[0].Model = simplejson.NewFromAny(map[string]interface{}{
+			"metricType":         "a/metric/type",
+			"crossSeriesReducer": "REDUCE_SUM",
+			"perSeriesAligner":   "REDUCE_MIN",
+			"alignmentPeriod":    "+60s",
+			"groupBys":           []string{},
+			"view":               "FULL",
+			"preprocessor":       "rate",
+		})
+
+		qes, err := executor.buildQueryExecutors(tsdbQuery)
+		require.NoError(t, err)
+		queries := getCloudMonitoringQueriesFromInterface(t, qes)
+
+		assert.Equal(t, 1, len(queries))
+		assert.Equal(t, "REDUCE_NONE", queries[0].Params["aggregation.crossSeriesReducer"][0])
+		assert.Equal(t, "ALIGN_RATE", queries[0].Params["aggregation.perSeriesAligner"][0])
+		assert.Equal(t, "+60s", queries[0].Params["aggregation.alignmentPeriod"][0])
+
+		assert.Equal(t, "REDUCE_SUM", queries[0].Params["secondaryAggregation.crossSeriesReducer"][0])
+		assert.Equal(t, "REDUCE_MIN", queries[0].Params["secondaryAggregation.perSeriesAligner"][0])
+		assert.Equal(t, "+60s", queries[0].Params["secondaryAggregation.alignmentPeriod"][0])
+	})
+
+	t.Run("and query preprocessor is set to rate and group bys exist", func(t *testing.T) {
+		tsdbQuery := getBaseQuery()
+		tsdbQuery.Queries[0].Model = simplejson.NewFromAny(map[string]interface{}{
+			"metricType":         "a/metric/type",
+			"crossSeriesReducer": "REDUCE_SUM",
+			"perSeriesAligner":   "REDUCE_MIN",
+			"alignmentPeriod":    "+60s",
+			"groupBys":           []string{"labelname"},
+			"view":               "FULL",
+			"preprocessor":       "rate",
+		})
+
+		qes, err := executor.buildQueryExecutors(tsdbQuery)
+		require.NoError(t, err)
+		queries := getCloudMonitoringQueriesFromInterface(t, qes)
+
+		assert.Equal(t, 1, len(queries))
+		assert.Equal(t, "REDUCE_SUM", queries[0].Params["aggregation.crossSeriesReducer"][0])
+		assert.Equal(t, "ALIGN_RATE", queries[0].Params["aggregation.perSeriesAligner"][0])
+		assert.Equal(t, "+60s", queries[0].Params["aggregation.alignmentPeriod"][0])
+		assert.Equal(t, "labelname", queries[0].Params["aggregation.groupByFields"][0])
+
+		assert.Equal(t, "REDUCE_SUM", queries[0].Params["secondaryAggregation.crossSeriesReducer"][0])
+		assert.Equal(t, "REDUCE_MIN", queries[0].Params["secondaryAggregation.perSeriesAligner"][0])
+		assert.Equal(t, "+60s", queries[0].Params["secondaryAggregation.alignmentPeriod"][0])
+		assert.Equal(t, "labelname", queries[0].Params["secondaryAggregation.groupByFields"][0])
+	})
+
+	t.Run("and query preprocessor is set to delta and there's no group bys", func(t *testing.T) {
+		tsdbQuery := getBaseQuery()
+		tsdbQuery.Queries[0].Model = simplejson.NewFromAny(map[string]interface{}{
+			"metricType":         "a/metric/type",
+			"crossSeriesReducer": "REDUCE_MIN",
+			"perSeriesAligner":   "REDUCE_SUM",
+			"alignmentPeriod":    "+60s",
+			"groupBys":           []string{},
+			"view":               "FULL",
+			"preprocessor":       "delta",
+		})
+
+		qes, err := executor.buildQueryExecutors(tsdbQuery)
+		require.NoError(t, err)
+		queries := getCloudMonitoringQueriesFromInterface(t, qes)
+
+		assert.Equal(t, 1, len(queries))
+		assert.Equal(t, "REDUCE_NONE", queries[0].Params["aggregation.crossSeriesReducer"][0])
+		assert.Equal(t, "ALIGN_DELTA", queries[0].Params["aggregation.perSeriesAligner"][0])
+		assert.Equal(t, "+60s", queries[0].Params["aggregation.alignmentPeriod"][0])
+
+		assert.Equal(t, "REDUCE_MIN", queries[0].Params["secondaryAggregation.crossSeriesReducer"][0])
+		assert.Equal(t, "REDUCE_SUM", queries[0].Params["secondaryAggregation.perSeriesAligner"][0])
+		assert.Equal(t, "+60s", queries[0].Params["secondaryAggregation.alignmentPeriod"][0])
+	})
+
+	t.Run("and query preprocessor is set to delta and group bys exist", func(t *testing.T) {
+		tsdbQuery := getBaseQuery()
+		tsdbQuery.Queries[0].Model = simplejson.NewFromAny(map[string]interface{}{
+			"metricType":         "a/metric/type",
+			"crossSeriesReducer": "REDUCE_MIN",
+			"perSeriesAligner":   "REDUCE_SUM",
+			"alignmentPeriod":    "+60s",
+			"groupBys":           []string{"labelname"},
+			"view":               "FULL",
+			"preprocessor":       "delta",
+		})
+
+		qes, err := executor.buildQueryExecutors(tsdbQuery)
+		require.NoError(t, err)
+		queries := getCloudMonitoringQueriesFromInterface(t, qes)
+
+		assert.Equal(t, 1, len(queries))
+		assert.Equal(t, "REDUCE_MIN", queries[0].Params["aggregation.crossSeriesReducer"][0])
+		assert.Equal(t, "ALIGN_DELTA", queries[0].Params["aggregation.perSeriesAligner"][0])
+		assert.Equal(t, "+60s", queries[0].Params["aggregation.alignmentPeriod"][0])
+		assert.Equal(t, "labelname", queries[0].Params["aggregation.groupByFields"][0])
+
+		assert.Equal(t, "REDUCE_MIN", queries[0].Params["secondaryAggregation.crossSeriesReducer"][0])
+		assert.Equal(t, "REDUCE_SUM", queries[0].Params["secondaryAggregation.perSeriesAligner"][0])
+		assert.Equal(t, "+60s", queries[0].Params["secondaryAggregation.alignmentPeriod"][0])
+		assert.Equal(t, "labelname", queries[0].Params["secondaryAggregation.groupByFields"][0])
+	})
 }
 
 func loadTestFile(path string) (cloudMonitoringResponse, error) {

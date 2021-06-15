@@ -176,6 +176,26 @@ export function fixSummariesMetadata(metadata: PromMetricsMetadata): PromMetrics
   const summaryMetadata: PromMetricsMetadata = {};
   for (const metric in metadata) {
     const item = metadata[metric][0];
+    if (item.type === 'histogram') {
+      summaryMetadata[`${metric}_bucket`] = [
+        {
+          type: 'counter',
+          help: `Cumulative counters for the observation buckets (${item.help})`,
+        },
+      ];
+      summaryMetadata[`${metric}_count`] = [
+        {
+          type: 'counter',
+          help: `Count of events that have been observed for the histogram metric (${item.help})`,
+        },
+      ];
+      summaryMetadata[`${metric}_sum`] = [
+        {
+          type: 'counter',
+          help: `Total sum of all observed values for the histogram metric (${item.help})`,
+        },
+      ];
+    }
     if (item.type === 'summary') {
       summaryMetadata[`${metric}_count`] = [
         {
@@ -191,7 +211,17 @@ export function fixSummariesMetadata(metadata: PromMetricsMetadata): PromMetrics
       ];
     }
   }
-  return { ...metadata, ...summaryMetadata };
+  // Synthetic series
+  const syntheticMetadata: PromMetricsMetadata = {};
+  syntheticMetadata['ALERTS'] = [
+    {
+      type: 'counter',
+      help:
+        'Time series showing pending and firing alerts. The sample value is set to 1 as long as the alert is in the indicated active (pending or firing) state.',
+    },
+  ];
+
+  return { ...metadata, ...summaryMetadata, ...syntheticMetadata };
 }
 
 export function roundMsToMin(milliseconds: number): number {

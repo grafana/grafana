@@ -136,38 +136,44 @@ export const AddPanelWidgetUnconnected: React.FC<Props> = ({ panel, dashboard })
   const copiedPanelPlugins = useMemo(() => getCopiedPanelPlugins(), []);
 
   return (
-    <div className={cx('panel-container', styles.wrapper)}>
-      <AddPanelWidgetHandle onCancel={onCancelAddPanel} onBack={addPanelView ? onBack : undefined} styles={styles}>
-        {addPanelView ? 'Add panel from panel library' : 'Add panel'}
-      </AddPanelWidgetHandle>
-      {addPanelView ? (
-        <LibraryPanelsSearch onClick={onAddLibraryPanel} variant={LibraryPanelsSearchVariant.Tight} showPanelFilter />
-      ) : (
-        <div className={styles.actionsWrapper}>
-          <div className={styles.actionsRow}>
-            <div onClick={() => onCreateNewPanel()} aria-label={selectors.pages.AddDashboard.addNewPanel}>
-              <Icon name="file-blank" size="xl" />
-              Add an empty panel
-            </div>
-            <div onClick={onCreateNewRow}>
-              <Icon name="wrap-text" size="xl" />
-              Add a new row
-            </div>
-          </div>
-          <div className={styles.actionsRow}>
-            <div onClick={() => setAddPanelView(true)}>
-              <Icon name="book-open" size="xl" />
-              Add a panel from the panel library
-            </div>
-            {copiedPanelPlugins.length === 1 && (
-              <div onClick={() => onPasteCopiedPanel(copiedPanelPlugins[0])}>
-                <Icon name="clipboard-alt" size="xl" />
-                Paste panel from clipboard
+    <div className={styles.wrapper}>
+      <div className={cx('panel-container', styles.callToAction)}>
+        <AddPanelWidgetHandle onCancel={onCancelAddPanel} onBack={addPanelView ? onBack : undefined} styles={styles}>
+          {addPanelView ? 'Add panel from panel library' : 'Add panel'}
+        </AddPanelWidgetHandle>
+        {addPanelView ? (
+          <LibraryPanelsSearch onClick={onAddLibraryPanel} variant={LibraryPanelsSearchVariant.Tight} showPanelFilter />
+        ) : (
+          <div className={styles.actionsWrapper}>
+            <div className={cx(styles.actionsRow, styles.columnGap)}>
+              <div onClick={() => onCreateNewPanel()} aria-label={selectors.pages.AddDashboard.addNewPanel}>
+                <Icon name="file-blank" size="xl" />
+                Add an empty panel
               </div>
-            )}
+              <div
+                className={styles.rowGap}
+                onClick={onCreateNewRow}
+                aria-label={selectors.pages.AddDashboard.addNewRow}
+              >
+                <Icon name="wrap-text" size="xl" />
+                Add a new row
+              </div>
+            </div>
+            <div className={styles.actionsRow}>
+              <div onClick={() => setAddPanelView(true)} aria-label={selectors.pages.AddDashboard.addNewPanelLibrary}>
+                <Icon name="book-open" size="xl" />
+                Add a panel from the panel library
+              </div>
+              {copiedPanelPlugins.length === 1 && (
+                <div className={styles.rowGap} onClick={() => onPasteCopiedPanel(copiedPanelPlugins[0])}>
+                  <Icon name="clipboard-alt" size="xl" />
+                  Paste panel from clipboard
+                </div>
+              )}
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 };
@@ -213,17 +219,27 @@ const getStyles = (theme: GrafanaTheme) => {
   `;
 
   return {
+    // wrapper is used to make sure box-shadow animation isn't cut off in dashboard page
     wrapper: css`
+      height: 100%;
+      padding-top: ${theme.spacing.xs};
+    `,
+    callToAction: css`
       overflow: hidden;
       outline: 2px dotted transparent;
       outline-offset: 2px;
       box-shadow: 0 0 0 2px black, 0 0 0px 4px #1f60c4;
       animation: ${pulsate} 2s ease infinite;
     `,
+    rowGap: css`
+      margin-left: ${theme.spacing.sm};
+    `,
+    columnGap: css`
+      margin-bottom: ${theme.spacing.sm};
+    `,
     actionsRow: css`
       display: flex;
       flex-direction: row;
-      column-gap: ${theme.spacing.sm};
       height: 100%;
 
       > div {
@@ -251,7 +267,6 @@ const getStyles = (theme: GrafanaTheme) => {
     actionsWrapper: css`
       display: flex;
       flex-direction: column;
-      row-gap: ${theme.spacing.sm};
       padding: 0 ${theme.spacing.sm} ${theme.spacing.sm} ${theme.spacing.sm};
       height: 100%;
     `,

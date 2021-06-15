@@ -4,29 +4,20 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"path"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/api/pluginproxy"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/opentracing/opentracing-go"
 	"golang.org/x/net/context/ctxhttp"
 )
 
-type InsightsAnalyticsDatasource struct {
-	httpClient    *http.Client
-	dsInfo        *models.DataSource
-	pluginManager plugins.Manager
-	cfg           *setting.Cfg
-}
+type InsightsAnalyticsDatasource struct{}
 
 type InsightsAnalyticsQuery struct {
 	RefID string
@@ -40,38 +31,29 @@ type InsightsAnalyticsQuery struct {
 	Target string
 }
 
-//nolint: staticcheck // plugins.DataPlugin deprecated
 func (e *InsightsAnalyticsDatasource) executeTimeSeriesQuery(ctx context.Context,
-	originalQueries []plugins.DataSubQuery, timeRange plugins.DataTimeRange) (plugins.DataResponse, error) {
-	result := plugins.DataResponse{
-		Results: map[string]plugins.DataQueryResult{},
-	}
+	originalQueries []backend.DataQuery, dsInfo datasourceInfo) (*backend.QueryDataResponse, error) {
+	result := backend.NewQueryDataResponse()
 
-	queries, err := e.buildQueries(originalQueries, timeRange)
+	queries, err := e.buildQueries(originalQueries, dsInfo)
 	if err != nil {
-		return plugins.DataResponse{}, err
+		return nil, err
 	}
 
 	for _, query := range queries {
-		result.Results[query.RefID] = e.executeQuery(ctx, query)
+		result.Responses[query.RefID] = e.executeQuery(ctx, query, dsInfo)
 	}
 
 	return result, nil
 }
 
-func (e *InsightsAnalyticsDatasource) buildQueries(queries []plugins.DataSubQuery,
-	timeRange plugins.DataTimeRange) ([]*InsightsAnalyticsQuery, error) {
+func (e *InsightsAnalyticsDatasource) buildQueries(queries []backend.DataQuery, dsInfo datasourceInfo) ([]*InsightsAnalyticsQuery, error) {
 	iaQueries := []*InsightsAnalyticsQuery{}
 
 	for _, query := range queries {
-		queryBytes, err := query.Model.Encode()
-		if err != nil {
-			return nil, fmt.Errorf("failed to re-encode the Azure Application Insights Analytics query into JSON: %w", err)
-		}
-
 		qm := InsightsAnalyticsQuery{}
 		queryJSONModel := insightsAnalyticsJSONQuery{}
-		err = json.Unmarshal(queryBytes, &queryJSONModel)
+		err := json.Unmarshal(query.JSON, &queryJSONModel)
 		if err != nil {
 			return nil, fmt.Errorf("failed to decode the Azure Application Insights Analytics query object from JSON: %w", err)
 		}
@@ -84,7 +66,7 @@ func (e *InsightsAnalyticsDatasource) buildQueries(queries []plugins.DataSubQuer
 			return nil, fmt.Errorf("query is missing query string property")
 		}
 
-		qm.InterpolatedQuery, err = KqlInterpolate(query, timeRange, qm.RawQuery)
+		qm.InterpolatedQuery, err = KqlInterpolate(query, dsInfo, qm.RawQuery)
 		if err != nil {
 			return nil, err
 		}
@@ -98,26 +80,25 @@ func (e *InsightsAnalyticsDatasource) buildQueries(queries []plugins.DataSubQuer
 	return iaQueries, nil
 }
 
-//nolint: staticcheck // plugins.DataPlugin deprecated
-func (e *InsightsAnalyticsDatasource) executeQuery(ctx context.Context, query *InsightsAnalyticsQuery) plugins.DataQueryResult {
-	queryResult := plugins.DataQueryResult{RefID: query.RefID}
+func (e *InsightsAnalyticsDatasource) executeQuery(ctx context.Context, query *InsightsAnalyticsQuery, dsInfo datasourceInfo) backend.DataResponse {
+	dataResponse := backend.DataResponse{}
 
-	queryResultError := func(err error) plugins.DataQueryResult {
-		queryResult.Error = err
-		return queryResult
+	dataResponseError := func(err error) backend.DataResponse {
+		dataResponse.Error = err
+		return dataResponse
 	}
 
-	req, err := e.createRequest(ctx, e.dsInfo)
+	req, err := e.createRequest(ctx, dsInfo)
 	if err != nil {
-		return queryResultError(err)
+		return dataResponseError(err)
 	}
 	req.URL.Path = path.Join(req.URL.Path, "query")
 	req.URL.RawQuery = query.Params.Encode()
 
 	span, ctx := opentracing.StartSpanFromContext(ctx, "application insights analytics query")
 	span.SetTag("target", query.Target)
-	span.SetTag("datasource_id", e.dsInfo.Id)
-	span.SetTag("org_id", e.dsInfo.OrgId)
+	span.SetTag("datasource_id", dsInfo.DatasourceID)
+	span.SetTag("org_id", dsInfo.OrgID)
 
 	defer span.Finish()
 
@@ -131,14 +112,14 @@ func (e *InsightsAnalyticsDatasource) executeQuery(ctx context.Context, query *I
 	}
 
 	azlog.Debug("ApplicationInsights", "Request URL", req.URL.String())
-	res, err := ctxhttp.Do(ctx, e.httpClient, req)
+	res, err := ctxhttp.Do(ctx, dsInfo.Services[appInsights].HTTPClient, req)
 	if err != nil {
-		return queryResultError(err)
+		return dataResponseError(err)
 	}
 
 	body, err := ioutil.ReadAll(res.Body)
 	if err != nil {
-		return queryResultError(err)
+		return dataResponseError(err)
 	}
 	defer func() {
 		if err := res.Body.Close(); err != nil {
@@ -148,27 +129,27 @@ func (e *InsightsAnalyticsDatasource) executeQuery(ctx context.Context, query *I
 
 	if res.StatusCode/100 != 2 {
 		azlog.Debug("Request failed", "status", res.Status, "body", string(body))
-		return queryResultError(fmt.Errorf("request failed, status: %s, body: %s", res.Status, body))
+		return dataResponseError(fmt.Errorf("request failed, status: %s, body: %s", res.Status, body))
 	}
 	var logResponse AzureLogAnalyticsResponse
 	d := json.NewDecoder(bytes.NewReader(body))
 	d.UseNumber()
 	err = d.Decode(&logResponse)
 	if err != nil {
-		return queryResultError(err)
+		return dataResponseError(err)
 	}
 
 	t, err := logResponse.GetPrimaryResultTable()
 	if err != nil {
-		return queryResultError(err)
+		return dataResponseError(err)
 	}
 
-	frame, err := LogTableToFrame(t)
+	frame, err := ResponseTableToFrame(t)
 	if err != nil {
-		return queryResultError(err)
+		return dataResponseError(err)
 	}
 
-	if query.ResultFormat == "time_series" {
+	if query.ResultFormat == timeSeries {
 		tsSchema := frame.TimeSeriesSchema()
 		if tsSchema.Type == data.TimeSeriesTypeLong {
 			wideFrame, err := data.LongToWide(frame, nil)
@@ -182,62 +163,20 @@ func (e *InsightsAnalyticsDatasource) executeQuery(ctx context.Context, query *I
 			}
 		}
 	}
-	frames := data.Frames{frame}
-	queryResult.Dataframes = plugins.NewDecodedDataFrames(frames)
+	dataResponse.Frames = data.Frames{frame}
 
-	return queryResult
+	return dataResponse
 }
 
-func (e *InsightsAnalyticsDatasource) createRequest(ctx context.Context, dsInfo *models.DataSource) (*http.Request, error) {
-	// find plugin
-	plugin := e.pluginManager.GetDataSource(dsInfo.Type)
-	if plugin == nil {
-		return nil, errors.New("unable to find datasource plugin Azure Application Insights")
-	}
+func (e *InsightsAnalyticsDatasource) createRequest(ctx context.Context, dsInfo datasourceInfo) (*http.Request, error) {
+	appInsightsAppID := dsInfo.Settings.AppInsightsAppId
 
-	cloudName := dsInfo.JsonData.Get("cloudName").MustString("azuremonitor")
-	appInsightsRoute, pluginRouteName, err := e.getPluginRoute(plugin, cloudName)
-	if err != nil {
-		return nil, err
-	}
-
-	appInsightsAppID := dsInfo.JsonData.Get("appInsightsAppId").MustString()
-	proxyPass := fmt.Sprintf("%s/v1/apps/%s", pluginRouteName, appInsightsAppID)
-
-	u, err := url.Parse(dsInfo.Url)
-	if err != nil {
-		return nil, fmt.Errorf("unable to parse url for Application Insights Analytics datasource: %w", err)
-	}
-	u.Path = path.Join(u.Path, fmt.Sprintf("/v1/apps/%s", appInsightsAppID))
-
-	req, err := http.NewRequest(http.MethodGet, u.String(), nil)
+	req, err := http.NewRequest(http.MethodGet, dsInfo.Services[insightsAnalytics].URL, nil)
 	if err != nil {
 		azlog.Debug("Failed to create request", "error", err)
 		return nil, errutil.Wrap("Failed to create request", err)
 	}
-
-	req.Header.Set("User-Agent", fmt.Sprintf("Grafana/%s", setting.BuildVersion))
-
-	pluginproxy.ApplyRoute(ctx, req, proxyPass, appInsightsRoute, dsInfo, e.cfg)
-
+	req.Header.Set("X-API-Key", dsInfo.DecryptedSecureJSONData["appInsightsApiKey"])
+	req.URL.Path = fmt.Sprintf("/v1/apps/%s", appInsightsAppID)
 	return req, nil
-}
-
-func (e *InsightsAnalyticsDatasource) getPluginRoute(plugin *plugins.DataSourcePlugin, cloudName string) (
-	*plugins.AppPluginRoute, string, error) {
-	pluginRouteName := "appinsights"
-
-	if cloudName == "chinaazuremonitor" {
-		pluginRouteName = "chinaappinsights"
-	}
-
-	var pluginRoute *plugins.AppPluginRoute
-	for _, route := range plugin.Routes {
-		if route.Path == pluginRouteName {
-			pluginRoute = route
-			break
-		}
-	}
-
-	return pluginRoute, pluginRouteName, nil
 }

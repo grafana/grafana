@@ -175,6 +175,9 @@ var (
 	// StatsTotalAnnotations is a metric of total number of annotations stored in Grafana.
 	StatsTotalAnnotations prometheus.Gauge
 
+	// StatsTotalAlertRules is a metric of total number of alert rules stored in Grafana.
+	StatsTotalAlertRules prometheus.Gauge
+
 	// StatsTotalDashboardVersions is a metric of total number of dashboard versions stored in Grafana.
 	StatsTotalDashboardVersions prometheus.Gauge
 
@@ -182,6 +185,12 @@ var (
 	grafanaBuildVersion *prometheus.GaugeVec
 
 	grafanaPluginBuildInfoDesc *prometheus.GaugeVec
+
+	// StatsTotalLibraryPanels is a metric of total number of library panels stored in Grafana.
+	StatsTotalLibraryPanels prometheus.Gauge
+
+	// StatsTotalLibraryVariables is a metric of total number of library variables stored in Grafana.
+	StatsTotalLibraryVariables prometheus.Gauge
 )
 
 func init() {
@@ -507,7 +516,7 @@ func init() {
 		Name:      "plugin_build_info",
 		Help:      "A metric with a constant '1' value labeled by pluginId, pluginType and version from which Grafana plugin was built",
 		Namespace: ExporterName,
-	}, []string{"plugin_id", "plugin_type", "version"})
+	}, []string{"plugin_id", "plugin_type", "version", "signature_status"})
 
 	StatsTotalDashboardVersions = prometheus.NewGauge(prometheus.GaugeOpts{
 		Name:      "stat_totals_dashboard_versions",
@@ -518,6 +527,12 @@ func init() {
 	StatsTotalAnnotations = prometheus.NewGauge(prometheus.GaugeOpts{
 		Name:      "stat_totals_annotations",
 		Help:      "total amount of annotations in the database",
+		Namespace: ExporterName,
+	})
+
+	StatsTotalAlertRules = prometheus.NewGauge(prometheus.GaugeOpts{
+		Name:      "stat_totals_alert_rules",
+		Help:      "total amount of alert rules in the database",
 		Namespace: ExporterName,
 	})
 
@@ -536,6 +551,18 @@ func init() {
 	MAccessEvaluationCount = prometheus.NewCounter(prometheus.CounterOpts{
 		Name:      "access_evaluation_count",
 		Help:      "number of evaluation calls",
+		Namespace: ExporterName,
+	})
+
+	StatsTotalLibraryPanels = prometheus.NewGauge(prometheus.GaugeOpts{
+		Name:      "stat_totals_library_panels",
+		Help:      "total amount of library panels in the database",
+		Namespace: ExporterName,
+	})
+
+	StatsTotalLibraryVariables = prometheus.NewGauge(prometheus.GaugeOpts{
+		Name:      "stat_totals_library_variables",
+		Help:      "total amount of library variables in the database",
 		Namespace: ExporterName,
 	})
 }
@@ -570,8 +597,8 @@ func SetEnvironmentInformation(labels map[string]string) error {
 	return nil
 }
 
-func SetPluginBuildInformation(pluginID, pluginType, version string) {
-	grafanaPluginBuildInfoDesc.WithLabelValues(pluginID, pluginType, version).Set(1)
+func SetPluginBuildInformation(pluginID, pluginType, version, signatureStatus string) {
+	grafanaPluginBuildInfoDesc.WithLabelValues(pluginID, pluginType, version, signatureStatus).Set(1)
 }
 
 func initMetricVars() {
@@ -631,6 +658,8 @@ func initMetricVars() {
 		StatsTotalDashboardVersions,
 		StatsTotalAnnotations,
 		MAccessEvaluationCount,
+		StatsTotalLibraryPanels,
+		StatsTotalLibraryVariables,
 	)
 }
 

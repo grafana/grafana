@@ -12,6 +12,11 @@ function getStyles() {
       label: LegendItem;
       flex-grow: 0;
     `,
+
+    legend: css`
+      label: Legend;
+      pointer-events: all;
+    `,
   };
 }
 
@@ -33,7 +38,7 @@ export const Legend = function Legend(props: Props) {
     (item) => {
       onSort({
         field: item.data!.field,
-        ascending: item.data!.field === sort?.field ? !sort?.ascending : true,
+        ascending: item.data!.field === sort?.field ? !sort?.ascending : false,
       });
     },
     [sort, onSort]
@@ -41,6 +46,7 @@ export const Legend = function Legend(props: Props) {
 
   return (
     <VizLegend<ItemData>
+      className={styles.legend}
       displayMode={LegendDisplayMode.List}
       placement={'bottom'}
       items={colorItems}
@@ -49,7 +55,7 @@ export const Legend = function Legend(props: Props) {
           <>
             <VizLegendListItem item={item} className={styles.item} onLabelClick={sortable ? onClick : undefined} />
             {sortable &&
-              (sort?.field === item.data!.field ? <Icon name={sort!.ascending ? 'angle-up' : 'angle-down'} /> : '')}
+              (sort?.field === item.data!.field ? <Icon name={sort!.ascending ? 'arrow-up' : 'arrow-down'} /> : '')}
           </>
         );
       }}
@@ -62,6 +68,9 @@ interface ItemData {
 }
 
 function getColorLegendItems(nodes: NodeDatum[], theme: GrafanaTheme): Array<VizLegendItem<ItemData>> {
+  if (!nodes.length) {
+    return [];
+  }
   const fields = [nodes[0].mainStat, nodes[0].secondaryStat].filter(identity) as Field[];
 
   const node = nodes.find((n) => n.arcSections.length > 0);
@@ -71,18 +80,30 @@ function getColorLegendItems(nodes: NodeDatum[], theme: GrafanaTheme): Array<Viz
 
       // Lets collect and deduplicate as there isn't a requirement for 0 size arc section to be defined
       fields.push(...new Set(nodes.map((n) => n.arcSections).flat()));
-    } else {
-      // TODO: probably some sort of gradient which we will have to deal with later
-      return [];
     }
   }
 
+  if (nodes[0].color) {
+    fields.push(nodes[0].color);
+  }
+
   return fields.map((f) => {
-    return {
+    const item: VizLegendItem = {
       label: f.config.displayName || f.name,
-      color: getColorForTheme(f.config.color?.fixedColor || '', theme),
       yAxis: 0,
       data: { field: f },
     };
+    if (f.config.color?.mode === FieldColorModeId.Fixed && f.config.color?.fixedColor) {
+      item.color = getColorForTheme(f.config.color?.fixedColor || '', theme);
+    } else if (f.config.color?.mode) {
+      item.gradient = f.config.color?.mode;
+    }
+
+    if (!(item.color || item.gradient)) {
+      // Defaults to gray color
+      item.color = getColorForTheme('', theme);
+    }
+
+    return item;
   });
 }

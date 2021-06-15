@@ -444,8 +444,8 @@ describe('LokiDatasource', () => {
   });
 
   describe('when calling annotationQuery', () => {
-    const getTestContext = (response: any) => {
-      const query = makeAnnotationQueryRequest();
+    const getTestContext = (response: any, options: any = []) => {
+      const query = makeAnnotationQueryRequest(options);
       fetchMock.mockImplementation(() => of(response));
 
       const ds = createLokiDSForTests();
@@ -491,47 +491,103 @@ describe('LokiDatasource', () => {
       expect(res[1].text).toBe('hello 2');
       expect(res[1].tags).toEqual(['value2']);
     });
+    describe('Formatting', () => {
+      const response: FetchResponse = ({
+        data: {
+          data: {
+            resultType: LokiResultType.Stream,
+            result: [
+              {
+                stream: {
+                  label: 'value',
+                  label2: 'value2',
+                  label3: 'value3',
+                },
+                values: [['1549016857498000000', 'hello']],
+              },
+            ],
+          },
+          status: 'success',
+        },
+      } as unknown) as FetchResponse;
+      describe('When tagKeys is set', () => {
+        it('should only include selected labels', async () => {
+          const { promise } = getTestContext(response, { tagKeys: 'label2,label3' });
+
+          const res = await promise;
+
+          expect(res.length).toBe(1);
+          expect(res[0].text).toBe('hello');
+          expect(res[0].tags).toEqual(['value2', 'value3']);
+        });
+      });
+      describe('When textFormat is set', () => {
+        it('should fromat the text accordingly', async () => {
+          const { promise } = getTestContext(response, { textFormat: 'hello {{label2}}' });
+
+          const res = await promise;
+
+          expect(res.length).toBe(1);
+          expect(res[0].text).toBe('hello value2');
+        });
+      });
+      describe('When titleFormat is set', () => {
+        it('should fromat the title accordingly', async () => {
+          const { promise } = getTestContext(response, { titleFormat: 'Title {{label2}}' });
+
+          const res = await promise;
+
+          expect(res.length).toBe(1);
+          expect(res[0].title).toBe('Title value2');
+          expect(res[0].text).toBe('hello');
+        });
+      });
+    });
   });
 
   describe('metricFindQuery', () => {
     const getTestContext = (mock: LokiDatasource) => {
       const ds = createLokiDSForTests();
-      ds.getVersion = mock.getVersion;
       ds.metadataRequest = mock.metadataRequest;
 
       return { ds };
     };
 
-    const mocks = makeMetadataAndVersionsMocks();
+    const mock = makeMockLokiDatasource(
+      { label1: ['value1', 'value2'], label2: ['value3', 'value4'] },
+      { '{label1="value1", label2="value2"}': [{ label5: 'value5' }] }
+    );
 
-    mocks.forEach((mock, index) => {
-      it(`should return label names for Loki v${index}`, async () => {
-        const { ds } = getTestContext(mock);
+    it(`should return label names for Loki`, async () => {
+      const { ds } = getTestContext(mock);
 
-        const res = await ds.metricFindQuery('label_names()');
+      const res = await ds.metricFindQuery('label_names()');
 
-        expect(res).toEqual([{ text: 'label1' }, { text: 'label2' }]);
-      });
+      expect(res).toEqual([{ text: 'label1' }, { text: 'label2' }]);
     });
 
-    mocks.forEach((mock, index) => {
-      it(`should return label values for Loki v${index}`, async () => {
-        const { ds } = getTestContext(mock);
+    it(`should return label values for Loki when no matcher`, async () => {
+      const { ds } = getTestContext(mock);
 
-        const res = await ds.metricFindQuery('label_values(label1)');
+      const res = await ds.metricFindQuery('label_values(label1)');
 
-        expect(res).toEqual([{ text: 'value1' }, { text: 'value2' }]);
-      });
+      expect(res).toEqual([{ text: 'value1' }, { text: 'value2' }]);
     });
 
-    mocks.forEach((mock, index) => {
-      it(`should return empty array when incorrect query for Loki v${index}`, async () => {
-        const { ds } = getTestContext(mock);
+    it(`should return label values for Loki with matcher`, async () => {
+      const { ds } = getTestContext(mock);
 
-        const res = await ds.metricFindQuery('incorrect_query');
+      const res = await ds.metricFindQuery('label_values({label1="value1", label2="value2"},label5)');
 
-        expect(res).toEqual([]);
-      });
+      expect(res).toEqual([{ text: 'value5' }]);
+    });
+
+    it(`should return empty array when incorrect query for Loki`, async () => {
+      const { ds } = getTestContext(mock);
+
+      const res = await ds.metricFindQuery('incorrect_query');
+
+      expect(res).toEqual([]);
     });
   });
 });
@@ -552,7 +608,7 @@ function createLokiDSForTests(
   return new LokiDatasource(customSettings, templateSrvMock, timeSrvStub as any);
 }
 
-function makeAnnotationQueryRequest(): AnnotationQueryRequest<LokiQuery> {
+function makeAnnotationQueryRequest(options: any): AnnotationQueryRequest<LokiQuery> {
   const timeRange = {
     from: dateTime(),
     to: dateTime(),
@@ -565,6 +621,7 @@ function makeAnnotationQueryRequest(): AnnotationQueryRequest<LokiQuery> {
       enable: true,
       name: 'test-annotation',
       iconColor: 'red',
+      ...options,
     },
     dashboard: {
       id: 1,
@@ -575,14 +632,4 @@ function makeAnnotationQueryRequest(): AnnotationQueryRequest<LokiQuery> {
     },
     rangeRaw: timeRange,
   };
-}
-
-function makeMetadataAndVersionsMocks() {
-  const mocks = [];
-  for (let i = 0; i <= 1; i++) {
-    const mock: LokiDatasource = makeMockLokiDatasource({ label1: ['value1', 'value2'], label2: ['value3', 'value4'] });
-    mock.getVersion = jest.fn().mockReturnValue(`v${i}`);
-    mocks.push(mock);
-  }
-  return mocks;
 }

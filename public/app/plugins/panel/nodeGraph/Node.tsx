@@ -1,7 +1,7 @@
 import React, { MouseEvent, memo } from 'react';
 import cx from 'classnames';
-import { getColorForTheme, GrafanaTheme2 } from '@grafana/data';
-import { useStyles2, useTheme } from '@grafana/ui';
+import { Field, getFieldColorModeForField, GrafanaTheme2 } from '@grafana/data';
+import { useStyles2, useTheme2 } from '@grafana/ui';
 import { NodeDatum } from './types';
 import { css } from 'emotion';
 import tinycolor from 'tinycolor2';
@@ -117,14 +117,14 @@ export const Node = memo(function Node(props: {
 function ColorCircle(props: { node: NodeDatum }) {
   const { node } = props;
   const fullStat = node.arcSections.find((s) => s.values.get(node.dataFrameRowIndex) === 1);
-  const theme = useTheme();
+  const theme = useTheme2();
 
   if (fullStat) {
     // Doing arc with path does not work well so it's better to just do a circle in that case
     return (
       <circle
         fill="none"
-        stroke={getColorForTheme(fullStat.config.color?.fixedColor || '', theme)}
+        stroke={theme.visualization.getColorByName(fullStat.config.color?.fixedColor || '')}
         strokeWidth={2}
         r={nodeR}
         cx={node.x}
@@ -136,7 +136,16 @@ function ColorCircle(props: { node: NodeDatum }) {
   const nonZero = node.arcSections.filter((s) => s.values.get(node.dataFrameRowIndex) !== 0);
   if (nonZero.length === 0) {
     // Fallback if no arc is defined
-    return <circle fill="none" stroke={node.color} strokeWidth={2} r={nodeR} cx={node.x} cy={node.y} />;
+    return (
+      <circle
+        fill="none"
+        stroke={node.color ? getColor(node.color, node.dataFrameRowIndex, theme) : 'gray'}
+        strokeWidth={2}
+        r={nodeR}
+        cx={node.x}
+        cy={node.y}
+      />
+    );
   }
 
   const { elements } = nonZero.reduce(
@@ -151,7 +160,7 @@ function ColorCircle(props: { node: NodeDatum }) {
           y={node.y!}
           startPercent={acc.percent}
           percent={value}
-          color={getColorForTheme(color, theme)}
+          color={theme.visualization.getColorByName(color)}
           strokeWidth={2}
         />
       );
@@ -196,4 +205,12 @@ function ArcSection({
       strokeWidth={strokeWidth}
     />
   );
+}
+
+function getColor(field: Field, index: number, theme: GrafanaTheme2): string {
+  if (!field.config.color) {
+    return field.values.get(index);
+  }
+
+  return getFieldColorModeForField(field).getCalculator(field, theme)(0, field.values.get(index));
 }

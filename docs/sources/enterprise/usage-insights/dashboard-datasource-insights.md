@@ -16,14 +16,14 @@ For every dashboard and data source, you can access usage information.
 
 To see dashboard usage information, go to the top bar and click **Dashboard insights**.
 
-{{< docs-imagebox img="/img/docs/enterprise/dashboard_insights_button.png" max-width="400px" class="docs-image--no-shadow" >}}
+{{< figure src="/static/img/docs/enterprise/dashboard_insights_button.png" max-width="400px" class="docs-image--no-shadow" >}}
 
 Dashboard insights show the following information:
 
 - **Stats:** The number of daily queries and errors for the past 30 days.
 - **Users & activity:** The daily view count for the last 30 days; last activities on the dashboard and recent users (with a limit of 20).
 
-{{< docs-imagebox img="/img/docs/enterprise/dashboard_insights_stats.png" max-width="400px" class="docs-image--no-shadow" >}}{{< docs-imagebox img="/img/docs/enterprise/dashboard_insights_users.png" max-width="400px" class="docs-image--no-shadow" >}}
+{{< figure src="/static/img/docs/enterprise/dashboard_insights_stats.png" max-width="400px" class="docs-image--no-shadow" >}}{{< figure src="/static/img/docs/enterprise/dashboard_insights_users.png" max-width="400px" class="docs-image--no-shadow" >}}
 
 ## Data source insights
 
@@ -34,10 +34,10 @@ Data source insights give you information about how a data source has been used 
 - Queries per day
 - Errors per day
 - Query load time per day (averaged in ms)
- 
+
 To find data source insights:
 1. Go to the Data source list view.
 1. Click on a data source.
 1. Click the **Insights** tab.
 
-{{< docs-imagebox img="/img/docs/enterprise/datasource_insights.png" max-width="650px" class="docs-image--no-shadow" >}}
+{{< figure src="/static/img/docs/enterprise/datasource_insights.png" max-width="650px" class="docs-image--no-shadow" >}}

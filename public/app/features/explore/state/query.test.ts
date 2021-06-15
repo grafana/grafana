@@ -1,5 +1,7 @@
 import {
   addQueryRowAction,
+  addResultsToCache,
+  clearCache,
   cancelQueries,
   cancelQueriesAction,
   queryReducer,
@@ -10,7 +12,17 @@ import {
 } from './query';
 import { ExploreId, ExploreItemState } from 'app/types';
 import { interval, of } from 'rxjs';
-import { ArrayVector, DataQueryResponse, DefaultTimeZone, MutableDataFrame, RawTimeRange, toUtc } from '@grafana/data';
+import {
+  ArrayVector,
+  DataQueryResponse,
+  DefaultTimeZone,
+  MutableDataFrame,
+  RawTimeRange,
+  toUtc,
+  PanelData,
+  DataFrame,
+  LoadingState,
+} from '@grafana/data';
 import { thunkTester } from 'test/core/thunk/thunkTester';
 import { makeExplorePaneState } from './utils';
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
@@ -50,6 +62,7 @@ const defaultInitialState = {
         label: 'Off',
         value: 0,
       },
+      cache: [],
     },
   },
 };
@@ -211,6 +224,97 @@ describe('reducer', () => {
           });
           return true;
         });
+    });
+  });
+
+  describe('caching', () => {
+    it('should add response to cache', async () => {
+      const store = configureStore({
+        ...(defaultInitialState as any),
+        explore: {
+          [ExploreId.left]: {
+            ...defaultInitialState.explore[ExploreId.left],
+            queryResponse: {
+              series: [{ name: 'test name' }] as DataFrame[],
+              state: LoadingState.Done,
+            } as PanelData,
+            absoluteRange: { from: 1621348027000, to: 1621348050000 },
+          },
+        },
+      });
+
+      await store.dispatch(addResultsToCache(ExploreId.left));
+
+      expect(store.getState().explore[ExploreId.left].cache).toEqual([
+        { key: 'from=1621348027000&to=1621348050000', value: { series: [{ name: 'test name' }], state: 'Done' } },
+      ]);
+    });
+
+    it('should not add response to cache if response is still loading', async () => {
+      const store = configureStore({
+        ...(defaultInitialState as any),
+        explore: {
+          [ExploreId.left]: {
+            ...defaultInitialState.explore[ExploreId.left],
+            queryResponse: { series: [{ name: 'test name' }] as DataFrame[], state: LoadingState.Loading } as PanelData,
+            absoluteRange: { from: 1621348027000, to: 1621348050000 },
+          },
+        },
+      });
+
+      await store.dispatch(addResultsToCache(ExploreId.left));
+
+      expect(store.getState().explore[ExploreId.left].cache).toEqual([]);
+    });
+
+    it('should not add duplicate response to cache', async () => {
+      const store = configureStore({
+        ...(defaultInitialState as any),
+        explore: {
+          [ExploreId.left]: {
+            ...defaultInitialState.explore[ExploreId.left],
+            queryResponse: {
+              series: [{ name: 'test name' }] as DataFrame[],
+              state: LoadingState.Done,
+            } as PanelData,
+            absoluteRange: { from: 1621348027000, to: 1621348050000 },
+            cache: [
+              {
+                key: 'from=1621348027000&to=1621348050000',
+                value: { series: [{ name: 'old test name' }], state: LoadingState.Done },
+              },
+            ],
+          },
+        },
+      });
+
+      await store.dispatch(addResultsToCache(ExploreId.left));
+
+      expect(store.getState().explore[ExploreId.left].cache).toHaveLength(1);
+      expect(store.getState().explore[ExploreId.left].cache).toEqual([
+        { key: 'from=1621348027000&to=1621348050000', value: { series: [{ name: 'old test name' }], state: 'Done' } },
+      ]);
+    });
+
+    it('should clear cache', async () => {
+      const store = configureStore({
+        ...(defaultInitialState as any),
+        explore: {
+          [ExploreId.left]: {
+            ...defaultInitialState.explore[ExploreId.left],
+            cache: [
+              {
+                key: 'from=1621348027000&to=1621348050000',
+                value: { series: [{ name: 'old test name' }], state: 'Done' },
+              },
+            ],
+          },
+        },
+      });
+
+      await store.dispatch(clearCache(ExploreId.left));
+
+      expect(store.getState().explore[ExploreId.left].cache).toEqual([]);
     });
   });
 });

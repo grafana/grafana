@@ -30,7 +30,8 @@ func TestPrometheusRules(t *testing.T) {
 	grafanaListedAddr := testinfra.StartGrafana(t, dir, path, store)
 
 	// Create the namespace under default organisation (orgID = 1) where we'll save our alerts to.
-	require.NoError(t, createFolder(t, store, 0, "default"))
+	_, err := createFolder(t, store, 0, "default")
+	require.NoError(t, err)
 
 	// Create a user to make authenticated requests
 	require.NoError(t, createUser(t, store, models.ROLE_EDITOR, "grafana", "password"))
@@ -119,7 +120,7 @@ func TestPrometheusRules(t *testing.T) {
 							},
 						},
 						NoDataState:  apimodels.NoDataState(ngmodels.Alerting),
-						ExecErrState: apimodels.ExecutionErrorState(ngmodels.KeepLastStateErrState),
+						ExecErrState: apimodels.ExecutionErrorState(ngmodels.AlertingErrState),
 					},
 				},
 			},
@@ -168,7 +169,7 @@ func TestPrometheusRules(t *testing.T) {
 			"rules": [{
 				"state": "inactive",
 				"name": "AlwaysFiring",
-				"query": "[{\"refId\":\"A\",\"queryType\":\"\",\"relativeTimeRange\":{\"from\":18000,\"to\":10800},\"datasourceUid\":\"-100\",\"model\":{\"expression\":\"2 + 3 \\u003e 1\",\"intervalMs\":1000,\"maxDataPoints\":100,\"type\":\"math\"}}]",
+				"query": "[{\"refId\":\"A\",\"queryType\":\"\",\"relativeTimeRange\":{\"from\":18000,\"to\":10800},\"datasourceUid\":\"-100\",\"model\":{\"expression\":\"2 + 3 \\u003e 1\",\"intervalMs\":1000,\"maxDataPoints\":43200,\"type\":\"math\"}}]",
 				"duration": 10,
 				"annotations": {
 					"annotation1": "val1"
@@ -184,7 +185,7 @@ func TestPrometheusRules(t *testing.T) {
 			}, {
 				"state": "inactive",
 				"name": "AlwaysFiringButSilenced",
-				"query": "[{\"refId\":\"A\",\"queryType\":\"\",\"relativeTimeRange\":{\"from\":18000,\"to\":10800},\"datasourceUid\":\"-100\",\"model\":{\"expression\":\"2 + 3 \\u003e 1\",\"intervalMs\":1000,\"maxDataPoints\":100,\"type\":\"math\"}}]",
+				"query": "[{\"refId\":\"A\",\"queryType\":\"\",\"relativeTimeRange\":{\"from\":18000,\"to\":10800},\"datasourceUid\":\"-100\",\"model\":{\"expression\":\"2 + 3 \\u003e 1\",\"intervalMs\":1000,\"maxDataPoints\":43200,\"type\":\"math\"}}]",
 				"labels": null,
 				"health": "ok",
 				"lastError": "",
@@ -223,7 +224,7 @@ func TestPrometheusRules(t *testing.T) {
 			"rules": [{
 				"state": "inactive",
 				"name": "AlwaysFiring",
-				"query": "[{\"refId\":\"A\",\"queryType\":\"\",\"relativeTimeRange\":{\"from\":18000,\"to\":10800},\"datasourceUid\":\"-100\",\"model\":{\"expression\":\"2 + 3 \\u003e 1\",\"intervalMs\":1000,\"maxDataPoints\":100,\"type\":\"math\"}}]",
+				"query": "[{\"refId\":\"A\",\"queryType\":\"\",\"relativeTimeRange\":{\"from\":18000,\"to\":10800},\"datasourceUid\":\"-100\",\"model\":{\"expression\":\"2 + 3 \\u003e 1\",\"intervalMs\":1000,\"maxDataPoints\":43200,\"type\":\"math\"}}]",
 				"duration": 10,
 				"annotations": {
 					"annotation1": "val1"
@@ -239,7 +240,7 @@ func TestPrometheusRules(t *testing.T) {
 			}, {
 				"state": "inactive",
 				"name": "AlwaysFiringButSilenced",
-				"query": "[{\"refId\":\"A\",\"queryType\":\"\",\"relativeTimeRange\":{\"from\":18000,\"to\":10800},\"datasourceUid\":\"-100\",\"model\":{\"expression\":\"2 + 3 \\u003e 1\",\"intervalMs\":1000,\"maxDataPoints\":100,\"type\":\"math\"}}]",
+				"query": "[{\"refId\":\"A\",\"queryType\":\"\",\"relativeTimeRange\":{\"from\":18000,\"to\":10800},\"datasourceUid\":\"-100\",\"model\":{\"expression\":\"2 + 3 \\u003e 1\",\"intervalMs\":1000,\"maxDataPoints\":43200,\"type\":\"math\"}}]",
 				"labels": null,
 				"health": "ok",
 				"lastError": "",

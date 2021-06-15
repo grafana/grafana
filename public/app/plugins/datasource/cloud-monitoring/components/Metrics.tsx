@@ -1,10 +1,12 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { startCase, uniqBy } from 'lodash';
 
+import { Select } from '@grafana/ui';
 import { TemplateSrv } from '@grafana/runtime';
 import { SelectableValue } from '@grafana/data';
+import { QueryEditorRow, QueryEditorField } from '.';
 import CloudMonitoringDatasource from '../datasource';
-import { Segment } from '@grafana/ui';
+import { INNER_LABEL_WIDTH, LABEL_WIDTH, SELECT_WIDTH } from '../constants';
 import { MetricDescriptor } from '../types';
 
 export interface Props {
@@ -118,44 +120,39 @@ export function Metrics(props: Props) {
 
   return (
     <>
-      <div className="gf-form-inline">
-        <span className="gf-form-label width-9 query-keyword">Service</span>
-        <Segment
-          onChange={onServiceChange}
-          value={[...services, ...templateVariableOptions].find((s) => s.value === service)}
-          options={[
-            {
-              label: 'Template Variables',
-              options: templateVariableOptions,
-            },
-            ...services,
-          ]}
-          placeholder="Select Services"
-        ></Segment>
-        <div className="gf-form gf-form--grow">
-          <div className="gf-form-label gf-form-label--grow" />
-        </div>
-      </div>
-      <div className="gf-form-inline">
-        <span className="gf-form-label width-9 query-keyword">Metric</span>
+      <QueryEditorRow>
+        <QueryEditorField labelWidth={LABEL_WIDTH} label="Service">
+          <Select
+            width={SELECT_WIDTH}
+            onChange={onServiceChange}
+            value={[...services, ...templateVariableOptions].find((s) => s.value === service)}
+            options={[
+              {
+                label: 'Template Variables',
+                options: templateVariableOptions,
+              },
+              ...services,
+            ]}
+            placeholder="Select Services"
+          ></Select>
+        </QueryEditorField>
+        <QueryEditorField label="Metric name" labelWidth={INNER_LABEL_WIDTH}>
+          <Select
+            width={SELECT_WIDTH}
+            onChange={onMetricTypeChange}
+            value={[...metrics, ...templateVariableOptions].find((s) => s.value === metricType)}
+            options={[
+              {
+                label: 'Template Variables',
+                options: templateVariableOptions,
+              },
+              ...metrics,
+            ]}
+            placeholder="Select Metric"
+          ></Select>
+        </QueryEditorField>
+      </QueryEditorRow>
 
-        <Segment
-          className="query-part"
-          onChange={onMetricTypeChange}
-          value={[...metrics, ...templateVariableOptions].find((s) => s.value === metricType)}
-          options={[
-            {
-              label: 'Template Variables',
-              options: templateVariableOptions,
-            },
-            ...metrics,
-          ]}
-          placeholder="Select Metric"
-        ></Segment>
-        <div className="gf-form gf-form--grow">
-          <div className="gf-form-label gf-form-label--grow" />
-        </div>
-      </div>
       {children(state.metricDescriptor)}
     </>
   );

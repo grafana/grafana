@@ -2,13 +2,13 @@ import { ReducerID } from '@grafana/data';
 import { getTimeRangeForExpression } from './timeRange';
 import { defaultCondition } from 'app/features/expressions/utils/expressionTypes';
 import { ExpressionQuery, ExpressionQueryType } from 'app/features/expressions/types';
-import { GrafanaQuery } from 'app/types/unified-alerting-dto';
+import { AlertQuery } from 'app/types/unified-alerting-dto';
 
 describe('timeRange', () => {
   describe('getTimeRangeForExpression', () => {
     describe('classic condition', () => {
       it('should return referenced query timeRange for classic condition', () => {
-        const expressionQuery: GrafanaQuery = {
+        const expressionQuery: AlertQuery = {
           refId: 'B',
           queryType: 'expression',
           datasourceUid: '-100',
@@ -20,14 +20,14 @@ describe('timeRange', () => {
             type: ExpressionQueryType.classic,
           } as ExpressionQuery,
         };
-        const query: GrafanaQuery = {
+        const query: AlertQuery = {
           refId: 'A',
           relativeTimeRange: { from: 300, to: 0 },
           queryType: 'query',
           datasourceUid: 'dsuid',
           model: { refId: 'A' },
         };
-        const queries: GrafanaQuery[] = [query, expressionQuery];
+        const queries: AlertQuery[] = [query, expressionQuery];
 
         expect(getTimeRangeForExpression(expressionQuery.model as ExpressionQuery, queries)).toEqual({
           from: 300,
@@ -36,7 +36,7 @@ describe('timeRange', () => {
       });
 
       it('should return the min and max time range', () => {
-        const expressionQuery: GrafanaQuery = {
+        const expressionQuery: AlertQuery = {
           refId: 'C',
           queryType: 'expression',
           datasourceUid: '-100',
@@ -51,21 +51,21 @@ describe('timeRange', () => {
             type: ExpressionQueryType.classic,
           } as ExpressionQuery,
         };
-        const queryA: GrafanaQuery = {
+        const queryA: AlertQuery = {
           refId: 'A',
           relativeTimeRange: { from: 300, to: 0 },
           datasourceUid: 'dsuid',
           model: { refId: 'A' },
           queryType: 'query',
         };
-        const queryB: GrafanaQuery = {
+        const queryB: AlertQuery = {
           refId: 'B',
           relativeTimeRange: { from: 600, to: 300 },
           datasourceUid: 'dsuid',
           model: { refId: 'B' },
           queryType: 'query',
         };
-        const queries: GrafanaQuery[] = [queryA, queryB, expressionQuery];
+        const queries: AlertQuery[] = [queryA, queryB, expressionQuery];
 
         expect(getTimeRangeForExpression(expressionQuery.model as ExpressionQuery, queries)).toEqual({
           from: 600,
@@ -76,7 +76,7 @@ describe('timeRange', () => {
   });
   describe('math', () => {
     it('should get timerange for referenced query', () => {
-      const expressionQuery: GrafanaQuery = {
+      const expressionQuery: AlertQuery = {
         refId: 'B',
         queryType: 'expression',
         datasourceUid: '-100',
@@ -89,7 +89,7 @@ describe('timeRange', () => {
         } as ExpressionQuery,
       };
 
-      const query: GrafanaQuery = {
+      const query: AlertQuery = {
         refId: 'A',
         datasourceUid: 'dsuid',
         relativeTimeRange: { from: 300, to: 0 },
@@ -101,7 +101,7 @@ describe('timeRange', () => {
     });
 
     it('should get time ranges for multiple referenced queries', () => {
-      const expressionQuery: GrafanaQuery = {
+      const expressionQuery: AlertQuery = {
         refId: 'C',
         queryType: 'expression',
         datasourceUid: '-100',
@@ -114,7 +114,7 @@ describe('timeRange', () => {
         } as ExpressionQuery,
       };
 
-      const queryA: GrafanaQuery = {
+      const queryA: AlertQuery = {
         refId: 'A',
         relativeTimeRange: { from: 300, to: 0 },
         datasourceUid: 'dsuid',
@@ -122,7 +122,7 @@ describe('timeRange', () => {
         queryType: 'query',
       };
 
-      const queryB: GrafanaQuery = {
+      const queryB: AlertQuery = {
         refId: 'queryB',
         relativeTimeRange: { from: 600, to: 300 },
         datasourceUid: 'dsuid',
@@ -138,7 +138,7 @@ describe('timeRange', () => {
 
   describe('resample', () => {
     it('should get referenced timerange for resample expression', () => {
-      const expressionQuery: GrafanaQuery = {
+      const expressionQuery: AlertQuery = {
         refId: 'B',
         queryType: 'expression',
         datasourceUid: '-100',
@@ -152,7 +152,7 @@ describe('timeRange', () => {
         } as ExpressionQuery,
       };
 
-      const queryA: GrafanaQuery = {
+      const queryA: AlertQuery = {
         refId: 'A',
         relativeTimeRange: { from: 300, to: 0 },
         datasourceUid: 'dsuid',
@@ -171,7 +171,7 @@ describe('timeRange', () => {
 
   describe('reduce', () => {
     it('should get referenced timerange for reduce expression', () => {
-      const expressionQuery: GrafanaQuery = {
+      const expressionQuery: AlertQuery = {
         refId: 'B',
         queryType: 'expression',
         datasourceUid: '-100',
@@ -185,7 +185,7 @@ describe('timeRange', () => {
         } as ExpressionQuery,
       };
 
-      const queryA: GrafanaQuery = {
+      const queryA: AlertQuery = {
         refId: 'A',
         relativeTimeRange: { from: 300, to: 0 },
         datasourceUid: 'dsuid',

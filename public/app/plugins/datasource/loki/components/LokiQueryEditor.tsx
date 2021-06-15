@@ -1,19 +1,14 @@
 // Libraries
-import React, { memo } from 'react';
+import React from 'react';
 
 // Types
-import { QueryEditorProps } from '@grafana/data';
 import { InlineFormLabel } from '@grafana/ui';
-import { LokiDatasource } from '../datasource';
-import { LokiQuery, LokiOptions } from '../types';
 import { LokiQueryField } from './LokiQueryField';
 import { LokiOptionFields } from './LokiOptionFields';
+import { LokiQueryEditorProps } from './types';
 
-type Props = QueryEditorProps<LokiDatasource, LokiQuery, LokiOptions>;
-
-export function LokiQueryEditor(props: Props) {
-  const { range, query, data, datasource, onChange, onRunQuery } = props;
-  const absoluteTimeRange = { from: range!.from!.valueOf(), to: range!.to!.valueOf() }; // Range here is never optional
+export function LokiQueryEditor(props: LokiQueryEditorProps) {
+  const { query, data, datasource, onChange, onRunQuery } = props;
 
   const onLegendChange = (e: React.SyntheticEvent<HTMLInputElement>) => {
     const nextQuery = { ...query, legendFormat: e.currentTarget.value };
@@ -51,7 +46,7 @@ export function LokiQueryEditor(props: Props) {
       onBlur={onRunQuery}
       history={[]}
       data={data}
-      absoluteRange={absoluteTimeRange}
+      data-testid={testIds.editor}
       ExtraFieldElement={
         <>
           <LokiOptionFields
@@ -69,4 +64,6 @@ export function LokiQueryEditor(props: Props) {
   );
 }
 
-export default memo(LokiQueryEditor);
+export const testIds = {
+  editor: 'loki-editor',
+};

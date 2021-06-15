@@ -224,6 +224,9 @@ function formChannelValuesToGrafanaChannelConfig(
     disableResolveMessage:
       values.disableResolveMessage ?? existing?.disableResolveMessage ?? defaults.disableResolveMessage,
   };
+  if (existing) {
+    channel.uid = existing.uid;
+  }
   return channel;
 }
 
