@@ -25,10 +25,11 @@ echo -e "Stories: $STORIES_COUNT"
 echo -e "Documented stories: $MDX_COUNT"
 echo -e "Legacy forms: $LEGACY_FORMS"
 echo -e "TS Explicit any: $STRICT_LINT_EXPLICIT_ANY"
+echo -e "Total bundle folder size: $TOTAL_BUNDLE"
+echo -e "Total outdated depdendencies: $OUTDATED_DEPENDENCIES"
 echo -e "Low vulnerabilities: $LOW_VULNERABILITIES"
 echo -e "Med vulnerabilities: $MED_VULNERABILITIES"
 echo -e "High vulnerabilities: $HIGH_VULNERABILITIES"
-echo -e "Total outdated depdendencies: $OUTDATED_DEPENDENCIES"
 
 echo "Metrics: {
   \"grafana.ci-code.strictErrors\": \"${ERROR_COUNT}\",
@@ -38,9 +39,9 @@ echo "Metrics: {
   \"grafana.ci-code.grafana-ui.mdx\": \"${MDX_COUNT}\",
   \"grafana.ci-code.legacyForms\": \"${LEGACY_FORMS}\",
   \"grafana.ci-code.strictLint.noExplicitAny\": \"${STRICT_LINT_EXPLICIT_ANY}\"
+  \"grafana.ci-code.bundleFolderSize\": \"${TOTAL_BUNDLE}\",
   \"grafana.ci-code.dependencies.outdated\": \"${OUTDATED_DEPENDENCIES}\",
   \"grafana.ci-code.dependencies.lowVulnerabilities\": \"${LOW_VULNERABILITIES}\",
   \"grafana.ci-code.dependencies.mediumVulnerabilities\": \"${MED_VULNERABILITIES}\",
   \"grafana.ci-code.dependencies.highVulnerabilities\": \"${HIGH_VULNERABILITIES}\",
-  \"grafana.ci-code.bundleFolderSize\": \"${TOTAL_BUNDLE}\",
 }"
