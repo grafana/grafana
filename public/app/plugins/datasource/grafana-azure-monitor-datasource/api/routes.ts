@@ -51,3 +51,18 @@ export function getAppInsightsApiRoute(azureCloud: string): string {
       throw new Error('The cloud not supported.');
   }
 }
+
+export function getDeepLinkRoute(azureCloud: string): string {
+  switch (azureCloud) {
+    case 'azuremonitor':
+      return 'https://portal.azure.com';
+    case 'chinaazuremonitor':
+      return 'https://portal.azure.cn';
+    case 'govazuremonitor':
+      return 'https://portal.azure.us';
+    case 'germanyazuremonitor':
+      return 'https://portal.microsoftazure.de';
+    default:
+      throw new Error('The cloud not supported.');
+  }
+}
