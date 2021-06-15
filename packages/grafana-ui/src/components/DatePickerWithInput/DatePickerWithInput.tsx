@@ -7,6 +7,7 @@ import { useStyles } from '../../themes';
 
 export const formatDate = (date: Date) => dateTimeFormat(date, { format: 'YYYY-MM-DD' });
 
+/** @public */
 export interface DatePickerWithInputProps extends Omit<InputProps, 'ref' | 'value' | 'onChange'> {
   value?: Date;
   onChange: (value: Date) => void;
@@ -14,6 +15,7 @@ export interface DatePickerWithInputProps extends Omit<InputProps, 'ref' | 'valu
   closeOnSelect?: boolean;
 }
 
+/** @public */
 export const DatePickerWithInput = ({ value, onChange, closeOnSelect, ...rest }: DatePickerWithInputProps) => {
   const [open, setOpen] = React.useState(false);
   const styles = useStyles(getStyles);

@@ -7,6 +7,7 @@ import { ClickOutsideWrapper } from '../ClickOutsideWrapper/ClickOutsideWrapper'
 import { Icon } from '../Icon/Icon';
 import { getBodyStyles } from '../TimePicker/TimeRangePicker/TimePickerCalendar';
 
+/** @public */
 export interface DatePickerProps {
   isOpen?: boolean;
   onClose: () => void;
@@ -14,6 +15,7 @@ export interface DatePickerProps {
   value?: Date;
 }
 
+/** @public */
 export const DatePicker = memo<DatePickerProps>((props) => {
   const styles = useStyles2(getStyles);
   const { isOpen, onClose } = props;
