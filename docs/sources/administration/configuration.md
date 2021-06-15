@@ -1474,7 +1474,9 @@ Set to `true` if you want to test alpha plugins that are not yet ready for gener
 
 ### allow_loading_unsigned_plugins
 
-Enter a comma-separated list of plugin identifiers to identify plugins that are allowed to be loaded even if they lack a valid signature.
+Enter a comma-separated list of plugin identifiers to identify plugins to load even if they are unsigned. Plugins with modified signatures are never loaded.
+
+We do _not_ recommend using this option. For more information, refer to [Plugin signatures]({{< relref "../plugins/plugin-signatures.md" >}}).
 
 ### plugin_admin_enabled
 
