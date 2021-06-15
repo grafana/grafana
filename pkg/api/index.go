@@ -109,11 +109,19 @@ func (hs *HTTPServer) getAppLinks(c *models.ReqContext) ([]*dtos.NavLink, error)
 			}
 
 			if include.Type == "dashboard" && include.AddToNav {
-				link := &dtos.NavLink{
-					Url:  hs.Cfg.AppSubURL + "/dashboard/db/" + include.Slug,
-					Text: include.Name,
+				dashboards, err := hs.PluginManager.GetPluginDashboards(c.OrgId, plugin.Id)
+				if err != nil {
+					return nil, err
 				}
-				appLink.Children = append(appLink.Children, link)
+				for _, dashboard := range dashboards {
+					if dashboard.ImportedUri == "db/"+include.Slug {
+						link := &dtos.NavLink{
+							Url:  hs.Cfg.AppSubURL + dashboard.ImportedUrl,
+							Text: include.Name,
+						}
+						appLink.Children = append(appLink.Children, link)
+					}
+				}
 			}
 		}
 
