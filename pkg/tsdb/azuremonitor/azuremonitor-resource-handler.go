@@ -10,14 +10,21 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
 )
 
+// Route definitions shared with the frontend.
+// Check: /public/app/plugins/datasource/grafana-azure-monitor-datasource/utils/common.ts <routeNames>
+var routeNames = map[string]string{
+	"azuremonitor": azureMonitor,
+	"appinsights":  appInsights,
+	"loganalytics": azureLogAnalytics,
+}
+
 func parseResourcePath(original string) (dsName string, target string, err error) {
 	splittedPath := strings.Split(original, "/")
-	if len(splittedPath) < 4 {
+	if len(splittedPath) < 3 {
 		err = fmt.Errorf("the request should contain the service on its path")
 		return
 	}
-	// TODO: Verify if this can vary
-	dsName = azureMonitor
+	dsName = routeNames[splittedPath[1]]
 	target = fmt.Sprintf("/%s", strings.Join(splittedPath[2:], "/"))
 	return
 }
@@ -27,11 +34,11 @@ type httpServiceProxy struct{}
 func (s *httpServiceProxy) Do(rw http.ResponseWriter, req *http.Request, cli *http.Client) http.ResponseWriter {
 	res, err := cli.Do(req)
 	if err != nil {
+		rw.WriteHeader(http.StatusInternalServerError)
 		_, err = rw.Write([]byte(fmt.Sprintf("unexpected error %v", err)))
 		if err != nil {
 			azlog.Error("Unable to write HTTP response", "error", err)
 		}
-		rw.WriteHeader(http.StatusInternalServerError)
 		return nil
 	}
 	defer func() {
@@ -42,13 +49,14 @@ func (s *httpServiceProxy) Do(rw http.ResponseWriter, req *http.Request, cli *ht
 
 	body, err := ioutil.ReadAll(res.Body)
 	if err != nil {
+		rw.WriteHeader(http.StatusInternalServerError)
 		_, err = rw.Write([]byte(fmt.Sprintf("unexpected error %v", err)))
 		if err != nil {
 			azlog.Error("Unable to write HTTP response", "error", err)
 		}
-		rw.WriteHeader(http.StatusInternalServerError)
 		return nil
 	}
+	rw.WriteHeader(res.StatusCode)
 	_, err = rw.Write(body)
 	if err != nil {
 		azlog.Error("Unable to write HTTP response", "error", err)
@@ -60,7 +68,6 @@ func (s *httpServiceProxy) Do(rw http.ResponseWriter, req *http.Request, cli *ht
 			rw.Header().Add(k, v)
 		}
 	}
-	rw.WriteHeader(res.StatusCode)
 	// Returning the response write for testing purposes
 	return rw
 }
@@ -92,31 +99,31 @@ func (s *Service) resourceHandler(rw http.ResponseWriter, req *http.Request) {
 
 	dsName, newPath, err := parseResourcePath(req.URL.Path)
 	if err != nil {
+		rw.WriteHeader(http.StatusBadRequest)
 		_, err := rw.Write([]byte(err.Error()))
 		if err != nil {
 			azlog.Error("Unable to write HTTP response", "error", err)
 		}
-		rw.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
 	_, service, err := s.getDSAssetsFromHTTPReq(req, dsName)
 	if err != nil {
+		rw.WriteHeader(http.StatusInternalServerError)
 		_, err := rw.Write([]byte(fmt.Sprintf("unexpected error %v", err)))
 		if err != nil {
 			azlog.Error("Unable to write HTTP response", "error", err)
 		}
-		rw.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
 	serviceURL, err := url.Parse(service.URL)
 	if err != nil {
+		rw.WriteHeader(http.StatusInternalServerError)
 		_, err := rw.Write([]byte(fmt.Sprintf("unexpected error %v", err)))
 		if err != nil {
 			azlog.Error("Unable to write HTTP response", "error", err)
 		}
-		rw.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 	req.URL.Path = newPath

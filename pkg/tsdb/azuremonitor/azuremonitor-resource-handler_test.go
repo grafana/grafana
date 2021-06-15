@@ -6,6 +6,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/require"
 )
 
@@ -26,7 +27,7 @@ func Test_parseResourcePath(t *testing.T) {
 		},
 		{
 			"Malformed path",
-			"/subscriptions/44693801",
+			"/subscriptions?44693801",
 			"",
 			"",
 			require.Error,
@@ -99,14 +100,9 @@ func (s *fakeProxy) Do(rw http.ResponseWriter, req *http.Request, cli *http.Clie
 func Test_resourceHandler(t *testing.T) {
 	proxy := &fakeProxy{}
 	s := Service{
-		Services: map[string]datasourceService{
-			azureMonitor: {
-				URL:        "https://test",
-				HTTPClient: &http.Client{},
-			},
-		},
 		proxy: proxy,
 		im:    &fakeInstance{},
+		Cfg:   &setting.Cfg{},
 	}
 	rw := httptest.NewRecorder()
 	req, err := http.NewRequest(http.MethodGet, "http://foo/azuremonitor/subscriptions/44693801", nil)
@@ -114,7 +110,7 @@ func Test_resourceHandler(t *testing.T) {
 		t.Fatalf("Unexpected error %v", err)
 	}
 	s.resourceHandler(rw, req)
-	expectedURL := "https://test/subscriptions/44693801"
+	expectedURL := "https://management.azure.com/subscriptions/44693801"
 	if proxy.requestedURL != expectedURL {
 		t.Errorf("Unexpected result URL. Got %s, expecting %s", proxy.requestedURL, expectedURL)
 	}

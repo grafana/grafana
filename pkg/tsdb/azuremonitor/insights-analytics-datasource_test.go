@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
 )
 
@@ -28,10 +27,7 @@ func TestInsightsAnalyticsCreateRequest(t *testing.T) {
 		{
 			name:        "creates a request",
 			expectedURL: "http://ds/v1/apps/foo",
-			expectedHeaders: http.Header{
-				"X-Api-Key": []string{"key"},
-			},
-			Err: require.NoError,
+			Err:         require.NoError,
 		},
 	}
 
@@ -42,9 +38,6 @@ func TestInsightsAnalyticsCreateRequest(t *testing.T) {
 			tt.Err(t, err)
 			if req.URL.String() != tt.expectedURL {
 				t.Errorf("Expecting %s, got %s", tt.expectedURL, req.URL.String())
-			}
-			if !cmp.Equal(req.Header, tt.expectedHeaders) {
-				t.Errorf("Unexpected HTTP headers: %v", cmp.Diff(req.Header, tt.expectedHeaders))
 			}
 		})
 	}

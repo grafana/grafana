@@ -35,8 +35,7 @@ func init() {
 		Name:         "AzureMonitorService",
 		InitPriority: registry.Low,
 		Instance: &Service{
-			Services: map[string]datasourceService{},
-			proxy:    &httpServiceProxy{},
+			proxy: &httpServiceProxy{},
 		},
 	})
 }
@@ -49,7 +48,6 @@ type Service struct {
 	PluginManager        plugins.Manager       `inject:""`
 	Cfg                  *setting.Cfg          `inject:""`
 	BackendPluginManager backendplugin.Manager `inject:""`
-	Services             map[string]datasourceService
 	im                   instancemgmt.InstanceManager
 
 	proxy serviceProxy
@@ -73,6 +71,7 @@ type datasourceInfo struct {
 	Settings    azureMonitorSettings
 	Routes      map[string]azRoute
 	HTTPCliOpts httpclient.Options
+	Services    map[string]datasourceService
 
 	JSONData                map[string]interface{}
 	DecryptedSecureJSONData map[string]string
@@ -110,6 +109,7 @@ func NewInstanceSettings() datasource.InstanceFactoryFunc {
 			DatasourceID:            settings.ID,
 			Routes:                  routes[azMonitorSettings.CloudName],
 			HTTPCliOpts:             httpCliOpts,
+			Services:                map[string]datasourceService{},
 		}
 		return model, nil
 	}
@@ -130,10 +130,10 @@ func (s *Service) getDataSourceFromPluginReq(req *backend.QueryDataRequest) (dat
 }
 
 func (s *Service) getDatasourceService(ctx context.Context, dsInfo datasourceInfo, routeName string) (datasourceService, error) {
-	srv, ok := s.Services[routeName]
+	srv, ok := dsInfo.Services[routeName]
 	if ok && srv.HTTPClient != nil {
 		// If the service already exists, return it
-		return s.Services[routeName], nil
+		return dsInfo.Services[routeName], nil
 	}
 
 	route := dsInfo.Routes[routeName]
@@ -141,12 +141,12 @@ func (s *Service) getDatasourceService(ctx context.Context, dsInfo datasourceInf
 	if err != nil {
 		return datasourceService{}, err
 	}
-	s.Services[routeName] = datasourceService{
+	dsInfo.Services[routeName] = datasourceService{
 		URL:        dsInfo.Routes[routeName].URL,
 		HTTPClient: client,
 	}
 
-	return s.Services[routeName], nil
+	return dsInfo.Services[routeName], nil
 }
 
 func (s *Service) getDSAssetsFromPluginReq(ctx context.Context, req *backend.QueryDataRequest, dsName string) (datasourceInfo, datasourceService, error) {

@@ -33,6 +33,7 @@ func TestNewInstanceSettings(t *testing.T) {
 				JSONData:                map[string]interface{}{"cloudName": string("azuremonitor")},
 				DatasourceID:            40,
 				DecryptedSecureJSONData: map[string]string{"key": "value"},
+				Services:                map[string]datasourceService{},
 			},
 			Err: require.NoError,
 		},
@@ -54,7 +55,8 @@ type fakeInstance struct{}
 
 func (f *fakeInstance) Get(pluginContext backend.PluginContext) (instancemgmt.Instance, error) {
 	return datasourceInfo{
-		Routes: routes[azureMonitorPublic],
+		Routes:   routes[azureMonitorPublic],
+		Services: map[string]datasourceService{},
 	}, nil
 }
 
@@ -107,9 +109,8 @@ func Test_newMux(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			s := &Service{
-				Services: map[string]datasourceService{},
-				Cfg:      cfg,
-				im:       &fakeInstance{},
+				Cfg: cfg,
+				im:  &fakeInstance{},
 			}
 			mux := s.newMux(map[string]azDatasourceExecutor{
 				tt.queryType: &fakeExecutor{

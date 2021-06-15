@@ -53,5 +53,9 @@ func httpClientProvider(ctx context.Context, route azRoute, model datasourceInfo
 
 func newHTTPClient(ctx context.Context, route azRoute, model datasourceInfo, cfg *setting.Cfg) (*http.Client, error) {
 	model.HTTPCliOpts.Headers = route.Headers
+	// Inject API-Key for AppInsights
+	if _, ok := model.DecryptedSecureJSONData["appInsightsApiKey"]; ok {
+		model.HTTPCliOpts.Headers["X-API-Key"] = model.DecryptedSecureJSONData["appInsightsApiKey"]
+	}
 	return httpClientProvider(ctx, route, model, cfg).New(model.HTTPCliOpts)
 }

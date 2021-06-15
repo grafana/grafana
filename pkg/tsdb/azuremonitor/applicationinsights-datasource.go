@@ -201,8 +201,6 @@ func (e *ApplicationInsightsDatasource) createRequest(ctx context.Context, dsInf
 		azlog.Debug("Failed to create request", "error", err)
 		return nil, errutil.Wrap("Failed to create request", err)
 	}
-	req.Header.Set("X-API-Key", dsInfo.DecryptedSecureJSONData["appInsightsApiKey"])
-
 	req.URL.Path = fmt.Sprintf("/v1/apps/%s", appInsightsAppID)
 
 	return req, nil
