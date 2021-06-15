@@ -124,7 +124,7 @@ def init_steps(edition, platform, ver_mode, is_downstream=False, install_deps=Tr
             committish = '${DRONE_TAG}'
             source_commit = ' ${DRONE_TAG}'
         elif ver_mode == 'test-release':
-            committish = 'master'
+            committish = 'main'
         elif ver_mode == 'release-branch':
             committish = '${DRONE_BRANCH}'
         else:
@@ -1043,7 +1043,7 @@ def get_windows_steps(edition, ver_mode, is_downstream=False):
             'rm -r -force grafana-enterprise',
             'cp grabpl.exe C:\\App\\grabpl.exe',
             'rm -force grabpl.exe',
-            'C:\\App\\grabpl.exe init-enterprise C:\\App\\grafana-enterprise{}'.format(source_commit),
+            'C:\\App\\grabpl.exe init-enterprise C:\\App\\grafana-enterprise {}'.format(committish),
             'cp C:\\App\\grabpl.exe grabpl.exe',
             '.\\grabpl.exe verify-drone',
         ])

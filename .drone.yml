@@ -1490,7 +1490,7 @@ steps:
   - rm -r -force grafana-enterprise
   - cp grabpl.exe C:\App\grabpl.exe
   - rm -force grabpl.exe
-  - C:\App\grabpl.exe init-enterprise C:\App\grafana-enterprise
+  - C:\App\grabpl.exe init-enterprise C:\App\grafana-enterprise ${DRONE_TAG}
   - cp C:\App\grabpl.exe grabpl.exe
   - .\grabpl.exe verify-drone
   environment:
@@ -1999,7 +1999,7 @@ steps:
   - chmod +x bin/grabpl
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
   - cd grafana-enterprise
-  - git checkout master
+  - git checkout main
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -2395,7 +2395,7 @@ steps:
   - rm -r -force grafana-enterprise
   - cp grabpl.exe C:\App\grabpl.exe
   - rm -force grabpl.exe
-  - C:\App\grabpl.exe init-enterprise C:\App\grafana-enterprise
+  - C:\App\grabpl.exe init-enterprise C:\App\grafana-enterprise master
   - cp C:\App\grabpl.exe grabpl.exe
   - .\grabpl.exe verify-drone
   environment:
@@ -3274,7 +3274,7 @@ steps:
   - rm -r -force grafana-enterprise
   - cp grabpl.exe C:\App\grabpl.exe
   - rm -force grabpl.exe
-  - C:\App\grabpl.exe init-enterprise C:\App\grafana-enterprise
+  - C:\App\grabpl.exe init-enterprise C:\App\grafana-enterprise $$env:DRONE_BRANCH
   - cp C:\App\grabpl.exe grabpl.exe
   - .\grabpl.exe verify-drone
   environment:
