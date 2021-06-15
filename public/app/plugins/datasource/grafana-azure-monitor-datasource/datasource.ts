@@ -34,7 +34,7 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
   /** @deprecated */
   appInsightsDatasource?: AppInsightsDatasource;
   /** @deprecated */
-  insightsAnalyticsDatasource: InsightsAnalyticsDatasource;
+  insightsAnalyticsDatasource?: InsightsAnalyticsDatasource;
 
   pseudoDatasource: Record<AzureQueryType, DataSourceWithBackend>;
   optionsKey: Record<AzureQueryType, string>;
