@@ -266,7 +266,7 @@ export const metricAggregationConfig: MetricsConfiguration = {
     supportsMissing: false,
     supportsMultipleBucketPaths: false,
     hasSettings: true,
-    supportsInlineScript: false,
+    supportsInlineScript: true,
     hasMeta: false,
     defaults: {},
   },
