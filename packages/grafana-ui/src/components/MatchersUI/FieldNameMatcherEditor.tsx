@@ -17,10 +17,14 @@ export const FieldNameMatcherEditor = memo<MatcherUIProps<string>>((props) => {
 
   const onChange = useCallback(
     (selection: SelectableValue<string>) => {
-      if (!selection.value || !names.has(selection.value)) {
+      const { value } = selection;
+      if (!value) {
         return;
       }
-      return onChangeFromProps(selection.value);
+      if (names.display.has(value) || names.raw.has(value)) {
+        return;
+      }
+      return onChangeFromProps(value);
     },
     [names, onChangeFromProps]
   );
@@ -50,16 +54,35 @@ const useSelectOptions = (
   currentName: string
 ): Array<SelectableValue<string>> => {
   return useMemo(() => {
-    const vals = Array.from(displayNames).map((n) => ({
-      value: n,
-      label: n,
-    }));
-    if (currentName && !displayNames.has(currentName)) {
-      vals.push({
+    let found = false;
+    const options: Array<SelectableValue<string>> = [];
+    for (const name of displayNames.display) {
+      if (!found && name === currentName) {
+        found = true;
+      }
+      options.push({
+        value: name,
+        label: name,
+      });
+    }
+    for (const name of displayNames.raw) {
+      if (!displayNames.display.has(name)) {
+        if (!found && name === currentName) {
+          found = true;
+        }
+        options.push({
+          value: name,
+          label: `${name} (raw)`,
+        });
+      }
+    }
+
+    if (currentName && !found) {
+      options.push({
         value: currentName,
         label: `${currentName} (not found)`,
       });
     }
-    return vals;
+    return options;
   }, [displayNames, currentName]);
 };
