@@ -1,11 +1,18 @@
 import React, { memo, useMemo, useCallback } from 'react';
 import { MatcherUIProps, FieldMatcherUIRegistryItem } from './types';
-import { FieldMatcherID, fieldMatchers, getFieldDisplayName, SelectableValue, DataFrame } from '@grafana/data';
+import {
+  FieldMatcherID,
+  fieldMatchers,
+  SelectableValue,
+  DataFrame,
+  FrameFieldsDisplayNames,
+  getFrameFieldsDisplayNames,
+} from '@grafana/data';
 import { Select } from '../Select/Select';
 
 export const FieldNameMatcherEditor = memo<MatcherUIProps<string>>((props) => {
   const { data, options, onChange: onChangeFromProps } = props;
-  const names = useFieldDisplayNames(data);
+  const names = useFrameFieldsDisplayNames(data);
   const selectOptions = useSelectOptions(names, options);
 
   const onChange = useCallback(
@@ -32,24 +39,16 @@ export const fieldNameMatcherItem: FieldMatcherUIRegistryItem<string> = {
   optionsToLabel: (options) => options,
 };
 
-export function useFieldDisplayNames(data: DataFrame[]): Set<string> {
+export function useFrameFieldsDisplayNames(data: DataFrame[]): FrameFieldsDisplayNames {
   return useMemo(() => {
-    const names: Set<string> = new Set();
-
-    for (const frame of data) {
-      for (const field of frame.fields) {
-        names.add(getFieldDisplayName(field, frame, data));
-        if (field.name) {
-          names.add(field.name);
-        }
-      }
-    }
-
-    return names;
+    return getFrameFieldsDisplayNames(data);
   }, [data]);
 }
 
-const useSelectOptions = (displayNames: Set<string>, currentName: string): Array<SelectableValue<string>> => {
+const useSelectOptions = (
+  displayNames: FrameFieldsDisplayNames,
+  currentName: string
+): Array<SelectableValue<string>> => {
   return useMemo(() => {
     const vals = Array.from(displayNames).map((n) => ({
       value: n,
