@@ -22,7 +22,7 @@ export interface Props {
 }
 
 export class DashNavTimeControls extends Component<Props> {
-  sub?: Unsubscribable;
+  private sub?: Unsubscribable;
 
   componentDidMount() {
     this.sub = this.props.dashboard.events.subscribe(TimeRangeUpdatedEvent, () => this.forceUpdate());
@@ -31,10 +31,6 @@ export class DashNavTimeControls extends Component<Props> {
   componentWillUnmount() {
     this.sub?.unsubscribe();
   }
-
-  triggerForceUpdate = () => {
-    this.forceUpdate();
-  };
 
   onChangeRefreshInterval = (interval: string) => {
     getTimeSrv().setAutoRefresh(interval);

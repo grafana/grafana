@@ -1,5 +1,5 @@
-import React, { FC, useReducer } from 'react';
-import { Icon, IconName, Tooltip } from '@grafana/ui';
+import React, { FC } from 'react';
+import { Icon, IconName, Tooltip, useForceUpdate } from '@grafana/ui';
 import { sanitizeUrl } from '@grafana/data/src/text/sanitize';
 import { DashboardLinksDashboard } from './DashboardLinksDashboard';
 import { getLinkSrv } from '../../../panel/panellinks/link_srv';
@@ -17,8 +17,7 @@ export interface Props {
 }
 
 export const DashboardLinks: FC<Props> = ({ dashboard, links }) => {
-  // Emulate forceUpdate (https://reactjs.org/docs/hooks-faq.html#is-there-something-like-forceupdate)
-  const [, forceUpdate] = useReducer((x) => x + 1, 0);
+  const forceUpdate = useForceUpdate();
 
   useEffectOnce(() => {
     const sub = dashboard.events.subscribe(TimeRangeUpdatedEvent, forceUpdate);
