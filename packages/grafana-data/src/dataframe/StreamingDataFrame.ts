@@ -307,6 +307,9 @@ function closestIdx(num: number, arr: number[], lo?: number, hi?: number) {
   return hi;
 }
 
+/**
+ * @internal // not exported in yet
+ */
 export function getStreamingDataFramePacket(frame: DataFrame) {
   const pi = (frame as StreamingDataFrame).packetInfo;
   return pi?.action ? pi : undefined;
