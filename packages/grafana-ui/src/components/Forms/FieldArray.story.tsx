@@ -4,7 +4,7 @@ import { withStoryContainer } from '../../utils/storybook/withStoryContainer';
 import { Form, Input, Button, HorizontalGroup } from '@grafana/ui';
 import { FieldArray } from './FieldArray';
 import mdx from './FieldArray.mdx';
-import { Story } from '@storybook/react';
+import { Meta, Story } from '@storybook/react';
 
 export default {
   title: 'Forms/FieldArray',
@@ -18,9 +18,13 @@ export default {
       exclude: ['name', 'keyName', 'control', 'shouldUnregister'],
     },
   },
-};
+  argTypes: {
+    ContainerWidth: { control: { type: 'range', min: 100, max: 500, step: 10 } },
+    ContainerHeight: { control: { type: 'range', min: 100, max: 500, step: 10 } },
+  },
+} as Meta;
 
-export const simple: Story = (args) => {
+export const Simple: Story = (args) => {
   const defaultValues: any = {
     people: [{ firstName: 'Janis', lastName: 'Joplin' }],
   };
@@ -28,7 +32,7 @@ export const simple: Story = (args) => {
     <Form onSubmit={(values) => console.log(values)} defaultValues={defaultValues}>
       {({ control, register }) => (
         <div>
-          <FieldArray control={control} name="people" shouldUnregister={args.shouldUnregister}>
+          <FieldArray control={control} name="people">
             {({ fields, append }) => (
               <>
                 <div style={{ marginBottom: '1rem' }}>
@@ -62,9 +66,8 @@ export const simple: Story = (args) => {
     </Form>
   );
 };
-simple.args = {
-  ContainerWidth: 100,
+Simple.args = {
+  ContainerWidth: 300,
   ContainerHeight: 0,
   showBoundaries: false,
-  shouldUnregister: false,
 };
