@@ -46,8 +46,8 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     super(instanceSettings);
     this.cache = new Map();
 
-    this.baseUrl = instanceSettings.url || '' + `/${routeNames.logAnalytics}`;
-    this.azureMonitorUrl = instanceSettings.url || '' + `/${routeNames.azureMonitor}/subscriptions`;
+    this.baseUrl = instanceSettings.url + `/${routeNames.logAnalytics}`;
+    this.azureMonitorUrl = instanceSettings.url + `/${routeNames.azureMonitor}/subscriptions`;
 
     this.defaultSubscriptionId = this.instanceSettings.jsonData.subscriptionId || '';
     this.defaultOrFirstWorkspace = this.instanceSettings.jsonData.logAnalyticsDefaultWorkspace || '';

@@ -69,9 +69,6 @@ describe('AzureLogAnalyticsDatasource', () => {
       ],
     };
 
-    let workspacesUrl: string;
-    let azureLogAnalyticsUrl: string;
-
     beforeEach(async () => {
       ctx.instanceSettings.jsonData.subscriptionId = 'xxx';
       ctx.instanceSettings.jsonData.tenantId = 'xxx';
@@ -81,10 +78,8 @@ describe('AzureLogAnalyticsDatasource', () => {
 
       datasourceRequestMock.mockImplementation((options: { url: string }) => {
         if (options.url.indexOf('Microsoft.OperationalInsights/workspaces?api-version') > -1) {
-          workspacesUrl = options.url;
           return Promise.resolve({ data: workspaceResponse, status: 200 });
         } else {
-          azureLogAnalyticsUrl = options.url;
           return Promise.resolve({ data: tableResponseWithOneColumn, status: 200 });
         }
       });
