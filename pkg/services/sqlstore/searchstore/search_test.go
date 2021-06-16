@@ -11,14 +11,11 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/permissions"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
-
-var dialect migrator.Dialect
 
 const (
 	limit int64 = 15
@@ -45,7 +42,7 @@ func TestBuilder_EqualResults_Basic(t *testing.T) {
 			searchstore.OrgFilter{OrgId: user.OrgId},
 			searchstore.TitleSorter{},
 		},
-		Dialect: dialect,
+		Dialect: db.Dialect,
 	}
 
 	res := []sqlstore.DashboardSearchProjection{}
@@ -82,7 +79,7 @@ func TestBuilder_Pagination(t *testing.T) {
 			searchstore.OrgFilter{OrgId: user.OrgId},
 			searchstore.TitleSorter{},
 		},
-		Dialect: dialect,
+		Dialect: db.Dialect,
 	}
 
 	resPg1 := []sqlstore.DashboardSearchProjection{}
@@ -130,14 +127,14 @@ func TestBuilder_Permissions(t *testing.T) {
 			searchstore.OrgFilter{OrgId: user.OrgId},
 			searchstore.TitleSorter{},
 			permissions.DashboardPermissionFilter{
-				Dialect:         dialect,
+				Dialect:         db.Dialect,
 				OrgRole:         user.OrgRole,
 				OrgId:           user.OrgId,
 				UserId:          user.UserId,
 				PermissionLevel: level,
 			},
 		},
-		Dialect: dialect,
+		Dialect: db.Dialect,
 	}
 
 	res := []sqlstore.DashboardSearchProjection{}
@@ -153,7 +150,6 @@ func TestBuilder_Permissions(t *testing.T) {
 func setupTestEnvironment(t *testing.T) *sqlstore.SQLStore {
 	t.Helper()
 	store := sqlstore.InitTestDB(t)
-	dialect = store.Dialect
 	return store
 }
 
