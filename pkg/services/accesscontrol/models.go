@@ -80,9 +80,9 @@ const (
 	ActionLDAPStatusRead = "ldap.status:read"
 
 	//API key actions
-	ActionApiKeyList   = "apikey:list"
-	ActionApiKeyAdd    = "apikey:add"
-	ActionApiKeyDelete = "apikey:delete"
+	ActionApikeyList   = "apikey:list"
+	ActionApikeyAdd    = "apikey:add"
+	ActionApikeyRemove = "apikey:remove"
 
 	// Global Scopes
 	ScopeGlobalUsersAll = "global:users:*"
