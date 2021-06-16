@@ -1,5 +1,5 @@
 import { e2e } from '@grafana/e2e';
-import { addHours, differenceInMinutes, format, parse } from 'date-fns';
+import { addDays, addHours, differenceInCalendarDays, differenceInMinutes, format, isBefore, parse } from 'date-fns';
 
 e2e.scenario({
   describeName: 'Dashboard time zone support',
@@ -51,10 +51,8 @@ e2e.scenario({
         e2e.components.Select.option().should('be.visible').contains(toTimeZone).click();
       });
 
-    // click outside the time zone selector to deselect it.
-    e2e.components.BackButton.backArrow().click();
     // click to go back to the dashboard.
-    e2e.components.BackButton.backArrow().click();
+    e2e.components.BackButton.backArrow().click({ force: true }).wait(2000);
 
     for (const title of panelsToCheck) {
       e2e.components.Panels.Panel.containerByTitle(title)
@@ -76,10 +74,19 @@ e2e.scenario({
 });
 
 const isTimeCorrect = (inUtc: string, inTz: string, offset: number): boolean => {
+  if (inUtc === inTz) {
+    // we need to catch issues when timezone isn't changed for some reason like https://github.com/grafana/grafana/issues/35504
+    return false;
+  }
+
   const reference = format(new Date(), 'YYYY-MM-DD');
 
-  const a = parse(`${reference} ${inUtc}`);
-  const b = addHours(parse(`${reference} ${inTz}`), offset);
+  const utcDate = parse(`${reference} ${inUtc}`);
+  const utcDateWithOffset = addHours(parse(`${reference} ${inUtc}`), offset);
+  const dayDifference = differenceInCalendarDays(utcDate, utcDateWithOffset); // if the utcDate +/- offset is the day before/after then we need to adjust reference
+  const dayOffset = isBefore(utcDateWithOffset, utcDate) ? dayDifference * -1 : dayDifference;
+  const tzDate = addDays(parse(`${reference} ${inTz}`), dayOffset); // adjust tzDate with any dayOffset
+  const diff = Math.abs(differenceInMinutes(utcDate, tzDate)); // use Math.abs if tzDate is in future
 
-  return differenceInMinutes(a, b) <= 1;
+  return diff <= Math.abs(offset * 60);
 };
