@@ -44,7 +44,7 @@ export const Condition: FC<Props> = ({ condition, index, onChange, onRemoveCondi
   const onEvalFunctionChange = (evalFunction: SelectableValue<EvalFunction>) => {
     onChange({
       ...condition,
-      evaluator: { params: [], type: evalFunction.value! },
+      evaluator: { params: condition.evaluator.params, type: evalFunction.value! },
     });
   };
 
