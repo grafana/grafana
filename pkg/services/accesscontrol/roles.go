@@ -28,6 +28,27 @@ var ldapAdminEditRole = RoleDTO{
 	}),
 }
 
+var serverAdminReadRole = RoleDTO{
+	Version: 1,
+	Name:    serverAdminRead,
+	Permissions: []Permission{
+		{
+			Action: ActionServerStatsRead,
+		},
+	},
+}
+
+var settingsAdminReadRole = RoleDTO{
+	Version: 1,
+	Name:    settingsAdminRead,
+	Permissions: []Permission{
+		{
+			Action: ActionSettingsRead,
+			Scope:  ScopeSettingsAll,
+		},
+	},
+}
+
 var usersOrgReadRole = RoleDTO{
 	Name:    usersOrgRead,
 	Version: 1,
@@ -145,6 +166,10 @@ var provisioningAdminRole = RoleDTO{
 // resource. FixedRoleGrants lists which built-in roles are
 // assigned which fixed roles in this list.
 var FixedRoles = map[string]RoleDTO{
+	serverAdminRead: serverAdminReadRole,
+
+	settingsAdminRead: settingsAdminReadRole,
+
 	usersAdminRead: usersAdminReadRole,
 	usersAdminEdit: usersAdminEditRole,
 
@@ -158,6 +183,10 @@ var FixedRoles = map[string]RoleDTO{
 }
 
 const (
+	serverAdminRead = "fixed:server:admin:read"
+
+	settingsAdminRead = "fixed:settings:admin:read"
+
 	usersAdminEdit = "fixed:users:admin:edit"
 	usersAdminRead = "fixed:users:admin:read"
 
@@ -177,6 +206,8 @@ var FixedRoleGrants = map[string][]string{
 		ldapAdminEdit,
 		ldapAdminRead,
 		provisioningAdmin,
+		serverAdminRead,
+		settingsAdminRead,
 		usersAdminEdit,
 		usersAdminRead,
 		usersOrgEdit,

@@ -18,7 +18,7 @@ import {
 import { getBackendSrv, getTemplateSrv, DataSourceWithBackend, FetchResponse } from '@grafana/runtime';
 import { Observable, from } from 'rxjs';
 import { mergeMap } from 'rxjs/operators';
-import { getAuthType, isLogAnalyticsSameAs } from '../credentials';
+import { getAuthType } from '../credentials';
 import { AzureLogAnalyticsMetadata } from '../types/logAnalyticsMetadata';
 import { isGUIDish } from '../components/ResourcePicker/utils';
 import { routeNames } from '../utils/common';
@@ -49,12 +49,7 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     this.baseUrl = instanceSettings.url || '' + `/${routeNames.logAnalytics}`;
     this.azureMonitorUrl = instanceSettings.url || '' + `/${routeNames.azureMonitor}/subscriptions`;
 
-    const sameAsMonitor = isLogAnalyticsSameAs(instanceSettings);
-
-    this.defaultSubscriptionId = sameAsMonitor
-      ? instanceSettings.jsonData.subscriptionId
-      : instanceSettings.jsonData.logAnalyticsSubscriptionId;
-
+    this.defaultSubscriptionId = this.instanceSettings.jsonData.subscriptionId || '';
     this.defaultOrFirstWorkspace = this.instanceSettings.jsonData.logAnalyticsDefaultWorkspace || '';
   }
 
@@ -478,14 +473,14 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     const authType = getAuthType(this.instanceSettings);
 
     if (authType === 'clientsecret') {
-      if (!this.isValidConfigField(this.instanceSettings.jsonData.logAnalyticsTenantId)) {
+      if (!this.isValidConfigField(this.instanceSettings.jsonData.tenantId)) {
         return {
           status: 'error',
           message: 'The Tenant Id field is required.',
         };
       }
 
-      if (!this.isValidConfigField(this.instanceSettings.jsonData.logAnalyticsClientId)) {
+      if (!this.isValidConfigField(this.instanceSettings.jsonData.clientId)) {
         return {
           status: 'error',
           message: 'The Client Id field is required.',

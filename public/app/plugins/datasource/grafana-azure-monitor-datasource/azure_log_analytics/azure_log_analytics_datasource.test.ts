@@ -33,7 +33,7 @@ describe('AzureLogAnalyticsDatasource', () => {
 
   beforeEach(() => {
     ctx.instanceSettings = {
-      jsonData: { logAnalyticsSubscriptionId: 'xxx', azureLogAnalyticsSameAs: false },
+      jsonData: { subscriptionId: 'xxx' },
       url: 'http://azureloganalyticsapi',
     };
 

@@ -76,7 +76,7 @@ export class DataSourcePlugin<
     return this;
   }
 
-  setQueryEditorHelp(QueryEditorHelp: ComponentType<QueryEditorHelpProps>) {
+  setQueryEditorHelp(QueryEditorHelp: ComponentType<QueryEditorHelpProps<TQuery>>) {
     this.components.QueryEditorHelp = QueryEditorHelp;
     return this;
   }
@@ -84,7 +84,7 @@ export class DataSourcePlugin<
   /**
    * @deprecated prefer using `setQueryEditorHelp`
    */
-  setExploreStartPage(ExploreStartPage: ComponentType<QueryEditorHelpProps>) {
+  setExploreStartPage(ExploreStartPage: ComponentType<QueryEditorHelpProps<TQuery>>) {
     return this.setQueryEditorHelp(ExploreStartPage);
   }
 
@@ -149,7 +149,7 @@ export interface DataSourcePluginComponents<
   ExploreQueryField?: ComponentType<ExploreQueryFieldProps<DSType, TQuery, TOptions>>;
   ExploreMetricsQueryField?: ComponentType<ExploreQueryFieldProps<DSType, TQuery, TOptions>>;
   ExploreLogsQueryField?: ComponentType<ExploreQueryFieldProps<DSType, TQuery, TOptions>>;
-  QueryEditorHelp?: ComponentType<QueryEditorHelpProps>;
+  QueryEditorHelp?: ComponentType<QueryEditorHelpProps<TQuery>>;
   ConfigEditor?: ComponentType<DataSourcePluginOptionsEditorProps<TOptions, TSecureOptions>>;
   MetadataInspector?: ComponentType<MetadataInspectorProps<DSType, TQuery, TOptions>>;
 }
@@ -210,7 +210,7 @@ abstract class DataSourceApi<
   /**
    * Imports queries from a different datasource
    */
-  async importQueries?(queries: DataQuery[], originDataSource: DataSourceApi): Promise<TQuery[]>;
+  async importQueries?(queries: DataQuery[], originDataSource: DataSourceApi<DataQuery>): Promise<TQuery[]>;
 
   /**
    * Returns configuration for importing queries from other data sources
@@ -387,9 +387,9 @@ export interface ExploreQueryFieldProps<
   exploreId?: any;
 }
 
-export interface QueryEditorHelpProps {
-  datasource: DataSourceApi;
-  onClickExample: (query: DataQuery) => void;
+export interface QueryEditorHelpProps<TQuery extends DataQuery = DataQuery> {
+  datasource: DataSourceApi<TQuery>;
+  onClickExample: (query: TQuery) => void;
   exploreId?: any;
 }
 
