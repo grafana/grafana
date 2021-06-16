@@ -9,9 +9,10 @@ import { CollapseToggle } from '../CollapseToggle';
 
 interface Props {
   group: AlertmanagerGroup;
+  alertManagerSourceName: string;
 }
 
-export const AmNotificationsGroup = ({ group }: Props) => {
+export const AmNotificationsGroup = ({ alertManagerSourceName, group }: Props) => {
   const [isCollapsed, setIsCollapsed] = useState<boolean>(true);
   const styles = useStyles2(getStyles);
 
@@ -21,7 +22,9 @@ export const AmNotificationsGroup = ({ group }: Props) => {
         <CollapseToggle isCollapsed={isCollapsed} onToggle={() => setIsCollapsed(!isCollapsed)} />
         {Object.keys(group.labels).length ? <AlertLabels labels={group.labels} /> : 'No grouping'}
       </div>
-      {!isCollapsed && <AmNotificationsAlertsTable alerts={group.alerts} />}
+      {!isCollapsed && (
+        <AmNotificationsAlertsTable alertManagerSourceName={alertManagerSourceName} alerts={group.alerts} />
+      )}
     </div>
   );
 };
