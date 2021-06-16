@@ -98,7 +98,12 @@ func (ac *OSSAccessControlService) validateFixedRole(role accesscontrol.RoleDTO)
 
 // RegisterFixedRole saves a fixed role and assigns it to built-in roles
 func (ac *OSSAccessControlService) RegisterFixedRole(_ context.Context, role accesscontrol.RoleDTO, builtInRoles ...string) error {
-	err := ac.saveFixedRole(role)
+	err := ac.validateFixedRole(role)
+	if err != nil {
+		return err
+	}
+
+	err = ac.saveFixedRole(role)
 	if err != nil {
 		return err
 	}
