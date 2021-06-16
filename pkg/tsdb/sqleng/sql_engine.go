@@ -303,6 +303,20 @@ func (e *dataPlugin) executeQuery(query plugins.DataSubQuery, wg *sync.WaitGroup
 				errAppendDebug("failed to convert long to wide series when converting from dataframe", err, interpolatedQuery)
 				return
 			}
+
+			// Before 8x, a special metric label was used to name fields
+			// This will migrate special "metric"=name from label to field name
+			if len(frame.Fields) == 2 {
+				for _, field := range frame.Fields {
+					if field.Labels != nil {
+						name, ok := field.Labels["metric"]
+						if ok {
+							field.Name = name
+							delete(field.Labels, "metric")
+						}
+					}
+				}
+			}
 		}
 		if qm.FillMissing != nil {
 			var err error
