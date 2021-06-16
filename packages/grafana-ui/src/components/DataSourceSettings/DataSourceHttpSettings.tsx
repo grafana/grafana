@@ -57,7 +57,7 @@ const HttpAccessHelp = () => (
 );
 
 export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = (props) => {
-  const { defaultUrl, dataSourceConfig, onChange, showAccessOptions, sigV4AuthToggleEnabled } = props;
+  const { defaultUrl, dataSourceConfig, onChange, showAccessOptions, sigV4AuthToggleEnabled, azureSettings } = props;
   let urlTooltip;
   const [isAccessHelpVisible, setIsAccessHelpVisible] = useState(false);
   const theme = useTheme();
@@ -224,10 +224,7 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = (props) => {
           )}
 
           {dataSourceConfig.access === 'proxy' && (
-            <HttpProxySettings
-              dataSourceConfig={dataSourceConfig}
-              onChange={(jsonData) => onSettingsChange({ jsonData })}
-            />
+            <HttpProxySettings {...props} />
           )}
         </div>
         {dataSourceConfig.basicAuth && (
@@ -239,8 +236,8 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = (props) => {
           </>
         )}
 
-        {dataSourceConfig.jsonData.azureAuth && (
-          <AzureAuthSettings dataSourceConfig={dataSourceConfig} onChange={onChange} />
+        {azureSettings && dataSourceConfig.jsonData.azureAuth && (
+          <AzureAuthSettings dataSourceConfig={dataSourceConfig} onChange={onChange} azureSettings={azureSettings} />
         )}
 
         {dataSourceConfig.jsonData.sigV4Auth && <SigV4AuthSettings {...props} />}
