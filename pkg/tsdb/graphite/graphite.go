@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
+	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/opentracing/opentracing-go"
 )
@@ -32,32 +33,26 @@ const (
 	dsName = "grafana-graphite-datasource"
 )
 
-var (
-	glog = log.New("tsdb.graphite")
-)
-
-type graphiteExecutor struct {
-	httpClientProvider httpclient.Provider
-	logsService        log.Logger
-	im                 instancemgmt.InstanceManager
-	cfg                *setting.Cfg
-}
-
 type GraphiteService struct {
 	logger               log.Logger
+	im                   instancemgmt.InstanceManager
 	BackendPluginManager backendplugin.Manager `inject:""`
 	Cfg                  *setting.Cfg          `inject:""`
 	HTTPClientProvider   httpclient.Provider   `inject:""`
 }
 
+func init() {
+	registry.RegisterService(&GraphiteService{})
+}
+
 type datasourceInfo struct {
-	HTTPClient              *http.Client
-	URL                     string
-	JSONData                map[string]interface{}
-	DecryptedSecureJSONData map[string]string
-	BasicAuthEnabled        bool
-	BasicAuthUser           string
-	Id                      int64
+	HTTPClient        *http.Client
+	URL               string
+	BasicAuthPassword string
+	BasicAuthEnabled  bool
+	BasicAuthUser     string
+	Id                int64
+	JSONData          map[string]interface{}
 }
 
 func NewInstanceSettings(httpClientProvider httpclient.Provider) datasource.InstanceFactoryFunc {
@@ -78,17 +73,14 @@ func NewInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 			return nil, fmt.Errorf("error reading settings: %w", err)
 		}
 
-		if err != nil {
-			return nil, fmt.Errorf("error reading settings: %w", err)
-		}
 		model := datasourceInfo{
-			BasicAuthEnabled:        settings.BasicAuthEnabled,
-			HTTPClient:              client,
-			URL:                     settings.URL,
-			JSONData:                jsonData,
-			DecryptedSecureJSONData: settings.DecryptedSecureJSONData,
-			BasicAuthUser:           settings.BasicAuthUser,
-			Id:                      settings.ID,
+			BasicAuthEnabled:  settings.BasicAuthEnabled,
+			HTTPClient:        client,
+			URL:               settings.URL,
+			JSONData:          jsonData,
+			BasicAuthPassword: settings.DecryptedSecureJSONData["basicAuthPassword"],
+			BasicAuthUser:     settings.BasicAuthUser,
+			Id:                settings.ID,
 		}
 
 		return model, nil
@@ -96,27 +88,19 @@ func NewInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 }
 
 func (s *GraphiteService) Init() error {
-	im := datasource.NewInstanceManager(NewInstanceSettings(s.HTTPClientProvider))
+	s.logger = log.New("tsdb.graphite")
+	s.im = datasource.NewInstanceManager(NewInstanceSettings(s.HTTPClientProvider))
 	factory := coreplugin.New(backend.ServeOpts{
-		QueryDataHandler: newExecutor(im, s.logger, s.HTTPClientProvider, s.Cfg),
+		QueryDataHandler: s,
 	})
 
 	if err := s.BackendPluginManager.Register(dsName, factory); err != nil {
-		glog.Error("Failed to register plugin", "error", err)
+		s.logger.Error("Failed to register plugin", "error", err)
 	}
 	return nil
 }
 
-func newExecutor(im instancemgmt.InstanceManager, logger log.Logger, httpC httpclient.Provider, cfg *setting.Cfg) *graphiteExecutor {
-	return &graphiteExecutor{
-		logsService:        logger,
-		im:                 im,
-		cfg:                cfg,
-		httpClientProvider: httpC,
-	}
-}
-
-func (e *graphiteExecutor) getDSInfo(pluginCtx backend.PluginContext) (*datasourceInfo, error) {
+func (e *GraphiteService) getDSInfo(pluginCtx backend.PluginContext) (*datasourceInfo, error) {
 	i, err := e.im.Get(pluginCtx)
 	if err != nil {
 		return nil, err
@@ -125,28 +109,21 @@ func (e *graphiteExecutor) getDSInfo(pluginCtx backend.PluginContext) (*datasour
 	return &instance, nil
 }
 
-func (e *graphiteExecutor) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+func (e *GraphiteService) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	// get datasource info from context
 	dsInfo, err := e.getDSInfo(req.PluginContext)
 	if err != nil {
 		return nil, err
 	}
 
-	// take the first query in the request list?
+	// take the first query in the request list, since all query should share the same timerange
 	q := req.Queries[0]
 
 	/*
-		graphite doc about from and until, with sdk we are getting absolute time
+		graphite doc about from and until, with sdk we are getting absolute instead of relative time
 		https://graphite-api.readthedocs.io/en/latest/api.html#from-until
-		In legacy code, we have to convert string to time.Time, so a lot extra operation, there is no need anymore
 	*/
-	from := fmt.Sprintf("%02d:%02d_%02d%02d%02d", q.TimeRange.From.Hour(), q.TimeRange.From.Minute(),
-		q.TimeRange.From.Year(), q.TimeRange.From.Month(), q.TimeRange.From.Day())
-	until := fmt.Sprintf("%02d:%02d_%02d%02d%02d", q.TimeRange.To.Hour(), q.TimeRange.To.Minute(),
-		q.TimeRange.To.Year(), q.TimeRange.To.Month(), q.TimeRange.To.Day())
-
-	var target string
-
+	from, until := epochMStoGraphiteTime(q.TimeRange)
 	formData := url.Values{
 		"from":          []string{from},
 		"until":         []string{until},
@@ -154,14 +131,15 @@ func (e *graphiteExecutor) QueryData(ctx context.Context, req *backend.QueryData
 		"maxDataPoints": []string{"500"},
 	}
 
-	// Calculate target of Graphite Request
+	// Calculate and get the last target of Graphite Request
+	var target string
 	emptyQueries := make([]string, 0)
 	for _, query := range req.Queries {
 		model, err := simplejson.NewJson(query.JSON)
 		if err != nil {
 			return nil, err
 		}
-		glog.Debug("graphite", "query", model)
+		e.logger.Debug("graphite", "query", model)
 		currTarget := ""
 		if fullTarget, err := model.Get("targetFull").String(); err == nil {
 			currTarget = fullTarget
@@ -169,7 +147,7 @@ func (e *graphiteExecutor) QueryData(ctx context.Context, req *backend.QueryData
 			currTarget = model.Get("target").MustString()
 		}
 		if currTarget == "" {
-			glog.Debug("graphite", "empty query target", model)
+			e.logger.Debug("graphite", "empty query target", model)
 			emptyQueries = append(emptyQueries, fmt.Sprintf("Query: %v has no target", model))
 			continue
 		}
@@ -179,14 +157,14 @@ func (e *graphiteExecutor) QueryData(ctx context.Context, req *backend.QueryData
 	var result *backend.QueryDataResponse
 
 	if target == "" {
-		glog.Error("No targets in query model", "models without targets", strings.Join(emptyQueries, "\n"))
+		e.logger.Error("No targets in query model", "models without targets", strings.Join(emptyQueries, "\n"))
 		return result, errors.New("no query target found for the alert rule")
 	}
 
 	formData["target"] = []string{target}
 
 	if setting.Env == setting.Dev {
-		glog.Debug("Graphite request", "params", formData)
+		e.logger.Debug("Graphite request", "params", formData)
 	}
 
 	graphiteReq, err := e.createRequest(dsInfo, formData)
@@ -222,7 +200,7 @@ func (e *graphiteExecutor) QueryData(ctx context.Context, req *backend.QueryData
 
 	resp := backend.NewQueryDataResponse()
 
-	frames := convertResponseToDataframes(data)
+	frames := e.convertResponseToDataframes(data)
 	respD := resp.Responses["A"]
 	respD.Frames = frames
 	resp.Responses["A"] = respD
@@ -230,7 +208,7 @@ func (e *graphiteExecutor) QueryData(ctx context.Context, req *backend.QueryData
 	return result, nil
 }
 
-func convertResponseToDataframes(resp []TargetResponseDTO) []*data.Frame {
+func (e *GraphiteService) convertResponseToDataframes(resp []TargetResponseDTO) []*data.Frame {
 	var frames []*data.Frame
 	for _, series := range resp {
 		timeVector := make([]time.Time, 0, len(series.DataPoints))
@@ -245,32 +223,32 @@ func convertResponseToDataframes(resp []TargetResponseDTO) []*data.Frame {
 			data.NewField("value", nil, values)))
 
 		if setting.Env == setting.Dev {
-			glog.Debug("Graphite response", "target", series.Target, "datapoints", len(series.DataPoints))
+			e.logger.Debug("Graphite response", "target", series.Target, "datapoints", len(series.DataPoints))
 		}
 	}
 	return frames
 }
 
-func (e *graphiteExecutor) parseResponse(res *http.Response) ([]TargetResponseDTO, error) {
+func (e *GraphiteService) parseResponse(res *http.Response) ([]TargetResponseDTO, error) {
 	body, err := ioutil.ReadAll(res.Body)
 	if err != nil {
 		return nil, err
 	}
 	defer func() {
 		if err := res.Body.Close(); err != nil {
-			glog.Warn("Failed to close response body", "err", err)
+			e.logger.Warn("Failed to close response body", "err", err)
 		}
 	}()
 
 	if res.StatusCode/100 != 2 {
-		glog.Info("Request failed", "status", res.Status, "body", string(body))
+		e.logger.Info("Request failed", "status", res.Status, "body", string(body))
 		return nil, fmt.Errorf("request failed, status: %s", res.Status)
 	}
 
 	var data []TargetResponseDTO
 	err = json.Unmarshal(body, &data)
 	if err != nil {
-		glog.Info("Failed to unmarshal graphite response", "error", err, "status", res.Status, "body", string(body))
+		e.logger.Info("Failed to unmarshal graphite response", "error", err, "status", res.Status, "body", string(body))
 		return nil, err
 	}
 
@@ -283,7 +261,7 @@ func (e *graphiteExecutor) parseResponse(res *http.Response) ([]TargetResponseDT
 	return data, nil
 }
 
-func (e *graphiteExecutor) createRequest(dsInfo *datasourceInfo, data url.Values) (*http.Request, error) {
+func (e *GraphiteService) createRequest(dsInfo *datasourceInfo, data url.Values) (*http.Request, error) {
 	u, err := url.Parse(dsInfo.URL)
 	if err != nil {
 		return nil, err
@@ -292,13 +270,13 @@ func (e *graphiteExecutor) createRequest(dsInfo *datasourceInfo, data url.Values
 
 	req, err := http.NewRequest(http.MethodPost, u.String(), strings.NewReader(data.Encode()))
 	if err != nil {
-		glog.Info("Failed to create request", "error", err)
+		e.logger.Info("Failed to create request", "error", err)
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
 
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	if dsInfo.BasicAuthEnabled {
-		req.SetBasicAuth(dsInfo.BasicAuthUser, dsInfo.DecryptedSecureJSONData["basicAuthPassword"])
+		req.SetBasicAuth(dsInfo.BasicAuthUser, dsInfo.BasicAuthPassword)
 	}
 
 	return req, err
@@ -314,4 +292,8 @@ func fixIntervalFormat(target string) string {
 		return strings.ReplaceAll(M, "M", "mon")
 	})
 	return target
+}
+
+func epochMStoGraphiteTime(tr backend.TimeRange) (string, string) {
+	return fmt.Sprintf("%d", tr.From.UTC().Unix()), fmt.Sprintf("%d", tr.To.UTC().Unix())
 }
