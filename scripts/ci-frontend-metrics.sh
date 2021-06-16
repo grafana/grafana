@@ -14,9 +14,9 @@ STRICT_LINT_EXPLICIT_ANY="$(echo "${STRICT_LINT_RESULTS}" | grep -o "no-explicit
 TOTAL_BUNDLE="$(du -sk ./public/build | cut -f1)"
 OUTDATED_DEPENDENCIES="$(yarn outdated | wc -l | xargs)"
 VULNERABILITY_AUDIT="$(yarn audit | grep 'Severity:' | grep -Eo '[0-9]{1,4}')"
-LOW_VULNERABILITIES="$(echo "${VULNERABILITY_AUDIT}" | cut -d' ' -f1)"
-MED_VULNERABILITIES="$(echo "${VULNERABILITY_AUDIT}" | cut -d' ' -f2)"
-HIGH_VULNERABILITIES="$(echo "${VULNERABILITY_AUDIT}" | cut -d' ' -f3)"
+LOW_VULNERABILITIES="$(echo "${VULNERABILITY_AUDIT}" | sed -n '1p')"
+MED_VULNERABILITIES="$(echo "${VULNERABILITY_AUDIT}" | sed -n '2p')"
+HIGH_VULNERABILITIES="$(echo "${VULNERABILITY_AUDIT}" | sed -n '3p')"
 
 echo -e "Typescript errors: $ERROR_COUNT"
 echo -e "Directives: $DIRECTIVES"
