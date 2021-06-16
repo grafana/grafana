@@ -162,7 +162,7 @@ func TestAPI_AdminProvisioningReload_AccessControl(t *testing.T) {
 			// Check body
 			assert.Equal(t, test.expectedBody, sc.resp.Body.String())
 
-			// Check we actually called the provisioning service to provision dashboards
+			// Check we actually called the provisioning service
 			test.checkCall(*provisioningMock)
 		})
 	}
