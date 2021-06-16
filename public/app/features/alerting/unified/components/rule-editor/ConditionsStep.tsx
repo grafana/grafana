@@ -4,7 +4,7 @@ import { GrafanaTheme, parseDuration, addDurationToDate } from '@grafana/data';
 import { Field, InlineLabel, Input, InputControl, Select, Switch, useStyles } from '@grafana/ui';
 import { useFormContext, RegisterOptions } from 'react-hook-form';
 import { RuleFormType, RuleFormValues } from '../../types/rule-form';
-import { timeOptions, timeValidationPattern } from '../../utils/time';
+import { timeOptions, positiveDurationValidationPattern, durationValidationPattern } from '../../utils/time';
 import { ConditionField } from './ConditionField';
 import { GrafanaAlertStatePicker } from './GrafanaAlertStatePicker';
 import { RuleEditorSection } from './RuleEditorSection';
@@ -12,12 +12,20 @@ import { PreviewRule } from './PreviewRule';
 
 const MIN_TIME_RANGE_STEP_S = 10; // 10 seconds
 
-const timeRangeValidationOptions: RegisterOptions = {
+const forValidationOptions: RegisterOptions = {
   required: {
     value: true,
     message: 'Required.',
   },
-  pattern: timeValidationPattern,
+  pattern: durationValidationPattern,
+};
+
+const evaluateEveryValidationOptions: RegisterOptions = {
+  required: {
+    value: true,
+    message: 'Required.',
+  },
+  pattern: positiveDurationValidationPattern,
   validate: (value: string) => {
     const duration = parseDuration(value);
     if (Object.keys(duration).length) {
@@ -63,7 +71,7 @@ export const ConditionsStep: FC = () => {
                 invalid={!!errors.evaluateEvery?.message}
                 validationMessageHorizontalOverflow={true}
               >
-                <Input width={8} {...register('evaluateEvery', timeRangeValidationOptions)} />
+                <Input width={8} {...register('evaluateEvery', evaluateEveryValidationOptions)} />
               </Field>
               <InlineLabel
                 width={7}
@@ -77,7 +85,7 @@ export const ConditionsStep: FC = () => {
                 invalid={!!errors.evaluateFor?.message}
                 validationMessageHorizontalOverflow={true}
               >
-                <Input width={8} {...register('evaluateFor', timeRangeValidationOptions)} />
+                <Input width={8} {...register('evaluateFor', forValidationOptions)} />
               </Field>
             </div>
           </Field>
