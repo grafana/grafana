@@ -260,6 +260,7 @@ export const metricAggregationConfig: MetricsConfiguration = {
   rate: {
     label: 'Rate',
     xpack: true,
+    versionRange: '>=7.10.0',
     requiresField: true,
     isPipelineAgg: false,
     supportsMissing: false,
