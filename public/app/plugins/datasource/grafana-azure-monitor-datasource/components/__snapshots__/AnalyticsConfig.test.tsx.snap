@@ -65,7 +65,7 @@ exports[`Render should disable log analytics credentials form 1`] = `
                           autocapitalize="none"
                           autocomplete="off"
                           autocorrect="off"
-                          id="react-select-4-input"
+                          id="react-select-3-input"
                           spellcheck="false"
                           style="box-sizing: content-box; width: 2px; border: 0px; opacity: 1; outline: 0; padding: 0px;"
                           tabindex="0"
@@ -128,36 +128,11 @@ exports[`Render should enable azure log analytics load workspaces button 1`] = `
       Azure Monitor Logs
     </h3>
     <div
-      class="gf-form-switch-container-react"
-    >
-      <label
-        class="gf-form gf-form-switch-container "
-        for="2"
-      >
-        <div
-          class="gf-form-label   pointer"
-        >
-          Same details as Azure Monitor API
-        </div>
-        <div
-          class="gf-form-switch  "
-        >
-          <input
-            id="2"
-            type="checkbox"
-          />
-          <span
-            class="gf-form-switch__slider"
-          />
-        </div>
-      </label>
-    </div>
-    <div
-      aria-label="Alert info"
+      aria-label="Alert error"
       class="css-7gef9a"
     >
       <div
-        class="css-ed9azx"
+        class="css-a4coia"
       >
         <div
           class="css-1vzus6i-Icon"
@@ -174,9 +149,7 @@ exports[`Render should enable azure log analytics load workspaces button 1`] = `
         <div
           class="css-1b0c7i6"
         >
-          Using different credentials for Azure Monitor Logs is deprecated and will be removed in a future version.
-          <br />
-          Create a different Data Source if you need to use different credentials.
+          Using different credentials for Azure Monitor Logs is no longer supported. Authentication information above will be used instead. Please create a new data source with the credentials below.
         </div>
       </div>
     </div>
@@ -202,8 +175,9 @@ exports[`Render should enable azure log analytics load workspaces button 1`] = `
             >
               <input
                 class="gf-form-input width-30"
+                disabled=""
                 placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
-                value="e7f3f661-a933-4b3f-8176-51c4f982ec48"
+                value=""
               />
             </div>
           </div>
@@ -228,32 +202,7 @@ exports[`Render should enable azure log analytics load workspaces button 1`] = `
             >
               <input
                 class="gf-form-input width-30"
-                placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
-                value="44693801-6ee6-49de-9b2d-9106972f9572"
-              />
-            </div>
-          </div>
-        </div>
-      </div>
-      <div
-        class="gf-form-inline"
-      >
-        <div
-          class="gf-form"
-        >
-          <label
-            class="width-12 gf-form-label width-10"
-          >
-            Client Secret
-          </label>
-          <div
-            class="width-15"
-          >
-            <div
-              style="flex-grow: 1;"
-            >
-              <input
-                class="gf-form-input width-30"
+                disabled=""
                 placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
                 value=""
               />
@@ -271,6 +220,91 @@ exports[`Render should enable azure log analytics load workspaces button 1`] = `
             class="width-12 gf-form-label width-10"
           >
             Default Subscription
+          </label>
+          <div
+            class="width-25"
+          >
+            <div>
+              <div
+                class="gf-form-input gf-form-input--form-dropdown gf-form-select-box--is-disabled css-1daubv-SelectContainer"
+              >
+                <span
+                  aria-atomic="false"
+                  aria-live="polite"
+                  aria-relevant="additions text"
+                  class="css-1f43avz-a11yText-A11yText"
+                />
+                <div
+                  class="gf-form-select-box__control gf-form-select-box__control--is-disabled css-1g8ily9-Control"
+                >
+                  <div
+                    class="gf-form-select-box__value-container css-pilx6v-ValueContainer"
+                  >
+                    <div
+                      class="gf-form-select-box__placeholder css-ovmm9z-Placeholder"
+                    >
+                      Choose
+                    </div>
+                    <div
+                      class="css-17yls17-Input"
+                    >
+                      <div
+                        class="gf-form-select-box__input"
+                        style="display: inline-block;"
+                      >
+                        <input
+                          aria-autocomplete="list"
+                          autocapitalize="none"
+                          autocomplete="off"
+                          autocorrect="off"
+                          disabled=""
+                          id="react-select-4-input"
+                          spellcheck="false"
+                          style="box-sizing: content-box; width: 2px; border: 0px; opacity: 1; outline: 0; padding: 0px;"
+                          tabindex="0"
+                          type="text"
+                          value=""
+                        />
+                        <div
+                          style="position: absolute; top: 0px; left: 0px; visibility: hidden; height: 0px; overflow: scroll; white-space: pre; font-family: -webkit-small-control; letter-spacing: normal; text-transform: none;"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  <div
+                    class="gf-form-select-box__indicators css-1pmvkci-IndicatorsContainer"
+                  >
+                    <div
+                      class="css-1vzus6i-Icon"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div
+      class="gf-form-group"
+    >
+      <div
+        class="gf-form-inline"
+      >
+        <div
+          class="gf-form"
+        >
+          <label
+            class="width-12 gf-form-label width-10"
+          >
+            Default Workspace
+            <div
+              class="gf-form-help-icon gf-form-help-icon--right-normal"
+            >
+              <div
+                class="css-1vzus6i-Icon"
+              />
+            </div>
           </label>
           <div
             class="width-25"
@@ -351,113 +385,6 @@ exports[`Render should enable azure log analytics load workspaces button 1`] = `
               <span
                 class="css-1mhnkuh"
               >
-                Load Subscriptions
-              </span>
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div
-      class="gf-form-group"
-    >
-      <div
-        class="gf-form-inline"
-      >
-        <div
-          class="gf-form"
-        >
-          <label
-            class="width-12 gf-form-label width-10"
-          >
-            Default Workspace
-            <div
-              class="gf-form-help-icon gf-form-help-icon--right-normal"
-            >
-              <div
-                class="css-1vzus6i-Icon"
-              />
-            </div>
-          </label>
-          <div
-            class="width-25"
-          >
-            <div>
-              <div
-                class="gf-form-input gf-form-input--form-dropdown css-1daubv-SelectContainer"
-              >
-                <span
-                  aria-atomic="false"
-                  aria-live="polite"
-                  aria-relevant="additions text"
-                  class="css-1f43avz-a11yText-A11yText"
-                />
-                <div
-                  class="gf-form-select-box__control css-1g8ily9-Control"
-                >
-                  <div
-                    class="gf-form-select-box__value-container css-pilx6v-ValueContainer"
-                  >
-                    <div
-                      class="gf-form-select-box__placeholder css-ovmm9z-Placeholder"
-                    >
-                      Choose
-                    </div>
-                    <div
-                      class="css-17yls17-Input"
-                    >
-                      <div
-                        class="gf-form-select-box__input"
-                        style="display: inline-block;"
-                      >
-                        <input
-                          aria-autocomplete="list"
-                          autocapitalize="none"
-                          autocomplete="off"
-                          autocorrect="off"
-                          id="react-select-6-input"
-                          spellcheck="false"
-                          style="box-sizing: content-box; width: 2px; border: 0px; opacity: 1; outline: 0; padding: 0px;"
-                          tabindex="0"
-                          type="text"
-                          value=""
-                        />
-                        <div
-                          style="position: absolute; top: 0px; left: 0px; visibility: hidden; height: 0px; overflow: scroll; white-space: pre; font-family: -webkit-small-control; letter-spacing: normal; text-transform: none;"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                  <div
-                    class="gf-form-select-box__indicators css-1pmvkci-IndicatorsContainer"
-                  >
-                    <div
-                      class="css-1vzus6i-Icon"
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div
-        class="gf-form-inline"
-      >
-        <div
-          class="gf-form"
-        >
-          <div
-            class="max-width-30 gf-form-inline"
-          >
-            <button
-              class="css-191ipe8-button"
-              disabled=""
-              type="button"
-            >
-              <span
-                class="css-1mhnkuh"
-              >
                 Load Workspaces
               </span>
             </button>
@@ -478,59 +405,6 @@ exports[`Render should render component 1`] = `
       Azure Monitor Logs
     </h3>
     <div
-      class="gf-form-switch-container-react"
-    >
-      <label
-        class="gf-form gf-form-switch-container "
-        for="1"
-      >
-        <div
-          class="gf-form-label   pointer"
-        >
-          Same details as Azure Monitor API
-        </div>
-        <div
-          class="gf-form-switch  "
-        >
-          <input
-            id="1"
-            type="checkbox"
-          />
-          <span
-            class="gf-form-switch__slider"
-          />
-        </div>
-      </label>
-    </div>
-    <div
-      aria-label="Alert info"
-      class="css-7gef9a"
-    >
-      <div
-        class="css-ed9azx"
-      >
-        <div
-          class="css-1vzus6i-Icon"
-        />
-      </div>
-      <div
-        class="css-zmuccj"
-      >
-        <div
-          class="css-hui7p1"
-        >
-          Deprecated
-        </div>
-        <div
-          class="css-1b0c7i6"
-        >
-          Using different credentials for Azure Monitor Logs is deprecated and will be removed in a future version.
-          <br />
-          Create a different Data Source if you need to use different credentials.
-        </div>
-      </div>
-    </div>
-    <div
       class="gf-form-group"
     >
       <div
@@ -542,85 +416,14 @@ exports[`Render should render component 1`] = `
           <label
             class="width-12 gf-form-label width-10"
           >
-            Directory (tenant) ID
-          </label>
-          <div
-            class="width-15"
-          >
+            Default Workspace
             <div
-              style="flex-grow: 1;"
+              class="gf-form-help-icon gf-form-help-icon--right-normal"
             >
-              <input
-                class="gf-form-input width-30"
-                placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
-                value=""
+              <div
+                class="css-1vzus6i-Icon"
               />
             </div>
-          </div>
-        </div>
-      </div>
-      <div
-        class="gf-form-inline"
-      >
-        <div
-          class="gf-form"
-        >
-          <label
-            class="width-12 gf-form-label width-10"
-          >
-            Application (client) ID
-          </label>
-          <div
-            class="width-15"
-          >
-            <div
-              style="flex-grow: 1;"
-            >
-              <input
-                class="gf-form-input width-30"
-                placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
-                value=""
-              />
-            </div>
-          </div>
-        </div>
-      </div>
-      <div
-        class="gf-form-inline"
-      >
-        <div
-          class="gf-form"
-        >
-          <label
-            class="width-12 gf-form-label width-10"
-          >
-            Client Secret
-          </label>
-          <div
-            class="width-15"
-          >
-            <div
-              style="flex-grow: 1;"
-            >
-              <input
-                class="gf-form-input width-30"
-                placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
-                value=""
-              />
-            </div>
-          </div>
-        </div>
-      </div>
-      <div
-        class="gf-form-inline"
-      >
-        <div
-          class="gf-form"
-        >
-          <label
-            class="width-12 gf-form-label width-10"
-          >
-            Default Subscription
           </label>
           <div
             class="width-25"
@@ -659,113 +462,6 @@ exports[`Render should render component 1`] = `
                           autocomplete="off"
                           autocorrect="off"
                           id="react-select-2-input"
-                          spellcheck="false"
-                          style="box-sizing: content-box; width: 2px; border: 0px; opacity: 1; outline: 0; padding: 0px;"
-                          tabindex="0"
-                          type="text"
-                          value=""
-                        />
-                        <div
-                          style="position: absolute; top: 0px; left: 0px; visibility: hidden; height: 0px; overflow: scroll; white-space: pre; font-family: -webkit-small-control; letter-spacing: normal; text-transform: none;"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                  <div
-                    class="gf-form-select-box__indicators css-1pmvkci-IndicatorsContainer"
-                  >
-                    <div
-                      class="css-1vzus6i-Icon"
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div
-        class="gf-form-inline"
-      >
-        <div
-          class="gf-form"
-        >
-          <div
-            class="max-width-30 gf-form-inline"
-          >
-            <button
-              class="css-191ipe8-button"
-              disabled=""
-              type="button"
-            >
-              <span
-                class="css-1mhnkuh"
-              >
-                Load Subscriptions
-              </span>
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div
-      class="gf-form-group"
-    >
-      <div
-        class="gf-form-inline"
-      >
-        <div
-          class="gf-form"
-        >
-          <label
-            class="width-12 gf-form-label width-10"
-          >
-            Default Workspace
-            <div
-              class="gf-form-help-icon gf-form-help-icon--right-normal"
-            >
-              <div
-                class="css-1vzus6i-Icon"
-              />
-            </div>
-          </label>
-          <div
-            class="width-25"
-          >
-            <div>
-              <div
-                class="gf-form-input gf-form-input--form-dropdown css-1daubv-SelectContainer"
-              >
-                <span
-                  aria-atomic="false"
-                  aria-live="polite"
-                  aria-relevant="additions text"
-                  class="css-1f43avz-a11yText-A11yText"
-                />
-                <div
-                  class="gf-form-select-box__control css-1g8ily9-Control"
-                >
-                  <div
-                    class="gf-form-select-box__value-container css-pilx6v-ValueContainer"
-                  >
-                    <div
-                      class="gf-form-select-box__placeholder css-ovmm9z-Placeholder"
-                    >
-                      Choose
-                    </div>
-                    <div
-                      class="css-17yls17-Input"
-                    >
-                      <div
-                        class="gf-form-select-box__input"
-                        style="display: inline-block;"
-                      >
-                        <input
-                          aria-autocomplete="list"
-                          autocapitalize="none"
-                          autocomplete="off"
-                          autocorrect="off"
-                          id="react-select-3-input"
                           spellcheck="false"
                           style="box-sizing: content-box; width: 2px; border: 0px; opacity: 1; outline: 0; padding: 0px;"
                           tabindex="0"

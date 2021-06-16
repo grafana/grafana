@@ -977,6 +977,20 @@ function upgradeValueMappings(oldMappings: any, thresholds?: ThresholdsConfig): 
   const newMappings: ValueMapping[] = [];
 
   for (const old of oldMappings) {
+    // when migrating singlestat to stat/gauge, mappings are handled by panel type change handler used in that migration
+    if (old.type && old.options) {
+      // collect al value->text mappings in a single value map object. These are migrated by panel change handler as a separate value maps
+      if (old.type === MappingType.ValueToText) {
+        valueMaps.options = {
+          ...valueMaps.options,
+          ...old.options,
+        };
+      } else {
+        newMappings.push(old);
+      }
+      continue;
+    }
+
     // Use the color we would have picked from thesholds
     let color: string | undefined = undefined;
     const numeric = parseFloat(old.text);
