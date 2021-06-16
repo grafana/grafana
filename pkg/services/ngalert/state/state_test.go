@@ -86,7 +86,7 @@ func TestSetEndsAt(t *testing.T) {
 		testResult eval.Result
 	}{
 		{
-			name:      "For: unset Interval: 10s",
+			name:      "For: unset Interval: 10s EndsAt should be evaluation time + 2X IntervalSeconds",
 			expected:  evaluationTime.Add(20 * time.Second),
 			testState: &State{},
 			testRule: &ngmodels.AlertRule{
@@ -97,19 +97,7 @@ func TestSetEndsAt(t *testing.T) {
 			},
 		},
 		{
-			name:      "For: 0s Interval: 10s",
-			expected:  evaluationTime.Add(20 * time.Second),
-			testState: &State{},
-			testRule: &ngmodels.AlertRule{
-				For:             0 * time.Second,
-				IntervalSeconds: 10,
-			},
-			testResult: eval.Result{
-				EvaluatedAt: evaluationTime,
-			},
-		},
-		{
-			name:      "For: 1s Interval: 10s",
+			name:      "For: 0s Interval: 10s EndsAt should be evaluation time + 2X IntervalSeconds",
 			expected:  evaluationTime.Add(20 * time.Second),
 			testState: &State{},
 			testRule: &ngmodels.AlertRule{
@@ -121,7 +109,19 @@ func TestSetEndsAt(t *testing.T) {
 			},
 		},
 		{
-			name:      "For: 10s Interval: 10s",
+			name:      "For: 1s Interval: 10s EndsAt should be evaluation time + 2X IntervalSeconds",
+			expected:  evaluationTime.Add(20 * time.Second),
+			testState: &State{},
+			testRule: &ngmodels.AlertRule{
+				For:             0 * time.Second,
+				IntervalSeconds: 10,
+			},
+			testResult: eval.Result{
+				EvaluatedAt: evaluationTime,
+			},
+		},
+		{
+			name:      "For: 10s Interval: 10s EndsAt should be evaluation time + 2X IntervalSeconds",
 			expected:  evaluationTime.Add(20 * time.Second),
 			testState: &State{},
 			testRule: &ngmodels.AlertRule{
@@ -133,7 +133,7 @@ func TestSetEndsAt(t *testing.T) {
 			},
 		},
 		{
-			name:      "For: 11s Interval: 10s",
+			name:      "For: 11s Interval: 10s EndsAt should be evaluation time + For duration",
 			expected:  evaluationTime.Add(11 * time.Second),
 			testState: &State{},
 			testRule: &ngmodels.AlertRule{
@@ -145,7 +145,7 @@ func TestSetEndsAt(t *testing.T) {
 			},
 		},
 		{
-			name:      "For: 20s Interval: 10s",
+			name:      "For: 20s Interval: 10s EndsAt should be evaluation time + For duration",
 			expected:  evaluationTime.Add(20 * time.Second),
 			testState: &State{},
 			testRule: &ngmodels.AlertRule{
