@@ -1,4 +1,5 @@
 import { e2e } from '@grafana/e2e';
+import { addDays, addHours, differenceInCalendarDays, differenceInMinutes, format, isBefore, parse } from 'date-fns';
 
 e2e.scenario({
   describeName: 'Dashboard time zone support',
@@ -50,7 +51,8 @@ e2e.scenario({
         e2e.components.Select.option().should('be.visible').contains(toTimeZone).click();
       });
 
-    e2e.components.BackButton.backArrow().click();
+    // click to go back to the dashboard.
+    e2e.components.BackButton.backArrow().click({ force: true }).wait(2000);
 
     for (const title of panelsToCheck) {
       e2e.components.Panels.Panel.containerByTitle(title)
@@ -61,9 +63,9 @@ e2e.scenario({
             .should('be.visible')
             .last()
             .should((element) => {
-              const utc = timesInUtc[title];
-              const tz = element.text();
-              const isCorrect = isTimeCorrect(utc, tz, offset);
+              const inUtc = timesInUtc[title];
+              const inTz = element.text();
+              const isCorrect = isTimeCorrect(inUtc, inTz, offset);
               assert.isTrue(isCorrect, `Panel with title: "${title}"`);
             })
         );
@@ -71,12 +73,20 @@ e2e.scenario({
   },
 });
 
-const isTimeCorrect = (utc: string, tz: string, offset: number): boolean => {
-  const minutes = 1000 * 60;
+const isTimeCorrect = (inUtc: string, inTz: string, offset: number): boolean => {
+  if (inUtc === inTz) {
+    // we need to catch issues when timezone isn't changed for some reason like https://github.com/grafana/grafana/issues/35504
+    return false;
+  }
 
-  const a = Cypress.moment(utc, 'HH:mm').set('seconds', 0).set('milliseconds', 0);
+  const reference = format(new Date(), 'YYYY-MM-DD');
 
-  const b = Cypress.moment(tz, 'HH:mm').set('seconds', 0).set('milliseconds', 0).add('hours', offset);
+  const utcDate = parse(`${reference} ${inUtc}`);
+  const utcDateWithOffset = addHours(parse(`${reference} ${inUtc}`), offset);
+  const dayDifference = differenceInCalendarDays(utcDate, utcDateWithOffset); // if the utcDate +/- offset is the day before/after then we need to adjust reference
+  const dayOffset = isBefore(utcDateWithOffset, utcDate) ? dayDifference * -1 : dayDifference;
+  const tzDate = addDays(parse(`${reference} ${inTz}`), dayOffset); // adjust tzDate with any dayOffset
+  const diff = Math.abs(differenceInMinutes(utcDate, tzDate)); // use Math.abs if tzDate is in future
 
-  return a.diff(b, 'minutes') <= 6 * minutes;
+  return diff <= Math.abs(offset * 60);
 };

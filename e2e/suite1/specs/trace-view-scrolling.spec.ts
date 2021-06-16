@@ -4,7 +4,7 @@ describe('Trace view', () => {
   it('Can lazy load big traces', () => {
     e2e.flows.login('admin', 'admin');
     e2e()
-      .intercept('GET', '/api/traces/long-trace', {
+      .intercept('GET', '**/api/traces/long-trace', {
         fixture: 'long-trace-response.json',
       })
       .as('longTrace');
