@@ -129,7 +129,6 @@ export const SettingsEditor = ({ metric, previousMetrics }: Props) => {
               onChange={(e) => dispatch(changeMetricSetting(metric, 'unit', e.value))}
               options={rateAggUnitOptions}
               value={metric.settings?.unit}
-              width={15}
             />
           </InlineField>
 
