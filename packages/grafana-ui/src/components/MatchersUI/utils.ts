@@ -1,4 +1,4 @@
-import React, { memo, useMemo, useCallback } from 'react';
+import { useMemo } from 'react';
 import { DataFrame, getFieldDisplayName } from '@grafana/data';
 
 /**
@@ -37,6 +37,9 @@ export function getFrameFieldsDisplayNames(data: DataFrame[]): FrameFieldsDispla
   return names;
 }
 
+/**
+ * @internal
+ */
 export function useFrameFieldsDisplayNames(data: DataFrame[]): FrameFieldsDisplayNames {
   return useMemo(() => {
     return getFrameFieldsDisplayNames(data);
