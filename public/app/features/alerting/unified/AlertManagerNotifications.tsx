@@ -12,9 +12,7 @@ import { initialAsyncRequestState } from './utils/redux';
 
 import { AmNotificationsGroup } from './components/amnotifications/AmNotificationsGroup';
 
-interface Props {}
-
-const AlertManagerNotifications = (props: Props) => {
+const AlertManagerNotifications = () => {
   const [alertManagerSourceName, setAlertManagerSourceName] = useAlertManagerSourceName();
   const dispatch = useDispatch();
 
@@ -31,8 +29,10 @@ const AlertManagerNotifications = (props: Props) => {
     <AlertingPageWrapper pageId="alertmanager">
       <AlertManagerPicker current={alertManagerSourceName} onChange={setAlertManagerSourceName} />
       {results &&
-        results.map((group, index) => {
-          return <AmNotificationsGroup key={group.id} group={group} />;
+        results.map((group) => {
+          return (
+            <AmNotificationsGroup alertManagerSourceName={alertManagerSourceName || ''} key={group.id} group={group} />
+          );
         })}
     </AlertingPageWrapper>
   );
