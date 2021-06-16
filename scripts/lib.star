@@ -1,4 +1,4 @@
-grabpl_version = '0.5.43'
+grabpl_version = '0.5.58'
 build_image = 'grafana/build-container:1.4.1'
 publish_image = 'grafana/grafana-ci-deploy:1.3.1'
 grafana_docker_image = 'grafana/drone-grafana-docker:0.3.2'
@@ -152,7 +152,6 @@ def init_steps(edition, platform, ver_mode, is_downstream=False, install_deps=Tr
                 'image': build_image,
                 'environment': {
                     'DOCKERIZE_VERSION': dockerize_version,
-                    'DRONE_TARGET_BRANCH':'v7.5.x',
                 },
                 'depends_on': [
                     'clone',
@@ -946,7 +945,6 @@ def get_windows_steps(edition, ver_mode, is_downstream=False):
             'name': 'initialize',
             'image': wix_image,
             'commands': init_cmds,
-            'environment': {},
         },
     ]
     if (ver_mode == 'master' and (edition not in ('enterprise', 'enterprise2') or is_downstream)) or ver_mode in (
@@ -1033,7 +1031,6 @@ def get_windows_steps(edition, ver_mode, is_downstream=False):
             },
             'commands': download_grabpl_cmds + clone_cmds,
         })
-        steps[1]['environment']['DRONE_TARGET_BRANCH'] = 'v7.5.x'
         steps[1]['depends_on'] = [
             'clone',
         ]
@@ -1043,7 +1040,7 @@ def get_windows_steps(edition, ver_mode, is_downstream=False):
             'rm -r -force grafana-enterprise',
             'cp grabpl.exe C:\\App\\grabpl.exe',
             'rm -force grabpl.exe',
-            'C:\\App\\grabpl.exe init-enterprise C:\\App\\grafana-enterprise {}'.format(committish),
+            'C:\\App\\grabpl.exe init-enterprise C:\\App\\grafana-enterprise{}'.format(source_commit),
             'cp C:\\App\\grabpl.exe grabpl.exe',
             '.\\grabpl.exe verify-drone',
         ])
