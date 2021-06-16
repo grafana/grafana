@@ -16,7 +16,7 @@ type Props = {
 export const VisualizationButton: FC<Props> = ({ panel }) => {
   const styles = useStyles(getStyles);
   const dispatch = useDispatch();
-  const plugin = useSelector((state: StoreState) => getPanelPluginWithFallback(state, panel.type));
+  const plugin = useSelector(getPanelPluginWithFallback(panel.type));
   const isPanelOptionsVisible = useSelector((state: StoreState) => state.panelEditor.ui.isPanelOptionsVisible);
   const isVizPickerOpen = useSelector((state: StoreState) => state.panelEditor.isVizPickerOpen);
 

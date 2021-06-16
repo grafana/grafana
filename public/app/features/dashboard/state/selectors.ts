@@ -10,8 +10,7 @@ export function getPanelStateById(state: DashboardState, panelId: number): Panel
   return state.panels[panelId] ?? ({} as PanelState);
 }
 
-export function getPanelPluginWithFallback(state: StoreState, panelType: string): PanelPlugin {
+export const getPanelPluginWithFallback = (panelType: string) => (state: StoreState): PanelPlugin => {
   const plugin = state.plugins.panels[panelType];
-
   return plugin || getPanelPluginNotFound(`Panel plugin not found (${panelType})`, true);
-}
+};

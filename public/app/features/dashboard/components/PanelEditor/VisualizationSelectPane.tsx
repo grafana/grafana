@@ -3,7 +3,6 @@ import { css } from '@emotion/css';
 import { GrafanaTheme, PanelPluginMeta, SelectableValue } from '@grafana/data';
 import { Button, CustomScrollbar, Icon, Input, RadioButtonGroup, useStyles } from '@grafana/ui';
 import { changePanelPlugin } from '../../state/actions';
-import { StoreState } from 'app/types';
 import { PanelModel } from '../../state/PanelModel';
 import { useDispatch, useSelector } from 'react-redux';
 import { filterPluginList, getAllPanelPluginMeta, VizTypePicker } from '../VizTypePicker/VizTypePicker';
@@ -18,7 +17,7 @@ interface Props {
 }
 
 export const VisualizationSelectPane: FC<Props> = ({ panel }) => {
-  const plugin = useSelector((state: StoreState) => getPanelPluginWithFallback(state, panel.type));
+  const plugin = useSelector(getPanelPluginWithFallback(panel.type));
   const [searchQuery, setSearchQuery] = useState('');
   const [listMode, setListMode] = useState(ListMode.Visualizations);
   const dispatch = useDispatch();
