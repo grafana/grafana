@@ -27,18 +27,46 @@ func init() {
 }
 
 type Service struct {
-	Cfg       *setting.Cfg `inject:""`
-	socialMap map[string]SocialConnector
+	Cfg          *setting.Cfg  `inject:""`
+	OAuthService *OAuthService `inject:""`
+	socialMap    map[string]SocialConnector
 }
 
+type OAuthInfo struct {
+	ClientId, ClientSecret string
+	Scopes                 []string
+	AuthUrl, TokenUrl      string
+	Enabled                bool
+	EmailAttributeName     string
+	EmailAttributePath     string
+	RoleAttributePath      string
+	RoleAttributeStrict    bool
+	GroupsAttributePath    string
+	AllowedDomains         []string
+	HostedDomain           string
+	ApiUrl                 string
+	AllowSignup            bool
+	Name                   string
+	TlsClientCert          string
+	TlsClientKey           string
+	TlsClientCa            string
+	TlsSkipVerify          bool
+}
+
+type OAuthService struct {
+	OAuthInfos map[string]*OAuthInfo
+}
+
+// var OAuthService *OAuther
+
 func (ss *Service) Init() error {
-	setting.OAuthService = &setting.OAuther{}
-	setting.OAuthService.OAuthInfos = make(map[string]*setting.OAuthInfo)
+	ss.OAuthService = &OAuthService{}
+	ss.OAuthService.OAuthInfos = make(map[string]*OAuthInfo)
 
 	for _, name := range allOauthes {
 		sec := ss.Cfg.Raw.Section("auth." + name)
 
-		info := &setting.OAuthInfo{
+		info := &OAuthInfo{
 			ClientId:            sec.Key("client_id").String(),
 			ClientSecret:        sec.Key("client_secret").String(),
 			Scopes:              util.SplitString(sec.Key("scopes").String()),
@@ -74,7 +102,7 @@ func (ss *Service) Init() error {
 			name = grafanaCom
 		}
 
-		setting.OAuthService.OAuthInfos[name] = info
+		ss.OAuthService.OAuthInfos[name] = info
 
 		config := oauth2.Config{
 			ClientID:     info.ClientId,
@@ -224,7 +252,7 @@ var (
 	allOauthes    = []string{"github", "gitlab", "google", "generic_oauth", "grafananet", grafanaCom, "azuread", "okta"}
 )
 
-func newSocialBase(name string, config *oauth2.Config, info *setting.OAuthInfo) *SocialBase {
+func newSocialBase(name string, config *oauth2.Config, info *OAuthInfo) *SocialBase {
 	logger := log.New("oauth." + name)
 
 	return &SocialBase{
@@ -259,12 +287,12 @@ func (ss *Service) GetOAuthProviders() map[string]bool {
 }
 
 func (ss *Service) GetOAuthHttpClient(name string) (*http.Client, error) {
-	if setting.OAuthService == nil {
+	if ss.OAuthService == nil {
 		return nil, fmt.Errorf("OAuth not enabled")
 	}
 	// The socialMap keys don't have "oauth_" prefix, but everywhere else in the system does
 	name = strings.TrimPrefix(name, "oauth_")
-	info, ok := setting.OAuthService.OAuthInfos[name]
+	info, ok := ss.OAuthService.OAuthInfos[name]
 	if !ok {
 		return nil, fmt.Errorf("could not find %q in OAuth Settings", name)
 	}

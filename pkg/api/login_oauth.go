@@ -41,7 +41,7 @@ func (hs *HTTPServer) OAuthLogin(ctx *models.ReqContext) {
 	loginInfo := models.LoginInfo{
 		AuthModule: "oauth",
 	}
-	if setting.OAuthService == nil {
+	if hs.SocialService.OAuthService == nil {
 		hs.handleOAuthLoginError(ctx, loginInfo, LoginError{
 			HttpStatus:    http.StatusNotFound,
 			PublicMessage: "OAuth not enabled",
@@ -80,12 +80,12 @@ func (hs *HTTPServer) OAuthLogin(ctx *models.ReqContext) {
 			return
 		}
 
-		hashedState := hashStatecode(state, setting.OAuthService.OAuthInfos[name].ClientSecret)
+		hashedState := hashStatecode(state, hs.SocialService.OAuthService.OAuthInfos[name].ClientSecret)
 		cookies.WriteCookie(ctx.Resp, OauthStateCookieName, hashedState, hs.Cfg.OAuthCookieMaxAge, hs.CookieOptionsFromCfg)
-		if setting.OAuthService.OAuthInfos[name].HostedDomain == "" {
+		if hs.SocialService.OAuthService.OAuthInfos[name].HostedDomain == "" {
 			ctx.Redirect(connect.AuthCodeURL(state, oauth2.AccessTypeOnline))
 		} else {
-			ctx.Redirect(connect.AuthCodeURL(state, oauth2.SetAuthURLParam("hd", setting.OAuthService.OAuthInfos[name].HostedDomain), oauth2.AccessTypeOnline))
+			ctx.Redirect(connect.AuthCodeURL(state, oauth2.SetAuthURLParam("hd", hs.SocialService.OAuthService.OAuthInfos[name].HostedDomain), oauth2.AccessTypeOnline))
 		}
 		return
 	}
@@ -103,7 +103,7 @@ func (hs *HTTPServer) OAuthLogin(ctx *models.ReqContext) {
 		return
 	}
 
-	queryState := hashStatecode(ctx.Query("state"), setting.OAuthService.OAuthInfos[name].ClientSecret)
+	queryState := hashStatecode(ctx.Query("state"), hs.SocialService.OAuthService.OAuthInfos[name].ClientSecret)
 	oauthLogger.Info("state check", "queryState", queryState, "cookieState", cookieState)
 	if cookieState != queryState {
 		hs.handleOAuthLoginError(ctx, loginInfo, LoginError{

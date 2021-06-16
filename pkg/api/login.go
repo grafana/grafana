@@ -91,7 +91,7 @@ func (hs *HTTPServer) LoginView(c *models.ReqContext) {
 	}
 
 	enabledOAuths := make(map[string]interface{})
-	for key, oauth := range setting.OAuthService.OAuthInfos {
+	for key, oauth := range hs.SocialService.OAuthService.OAuthInfos {
 		enabledOAuths[key] = map[string]string{"name": oauth.Name}
 	}
 
@@ -147,12 +147,12 @@ func (hs *HTTPServer) tryOAuthAutoLogin(c *models.ReqContext) bool {
 	if !setting.OAuthAutoLogin {
 		return false
 	}
-	oauthInfos := setting.OAuthService.OAuthInfos
+	oauthInfos := hs.SocialService.OAuthService.OAuthInfos
 	if len(oauthInfos) != 1 {
 		log.Warnf("Skipping OAuth auto login because multiple OAuth providers are configured")
 		return false
 	}
-	for key := range setting.OAuthService.OAuthInfos {
+	for key := range hs.SocialService.OAuthService.OAuthInfos {
 		redirectUrl := hs.Cfg.AppSubURL + "/login/" + key
 		log.Infof("OAuth auto login enabled. Redirecting to " + redirectUrl)
 		c.Redirect(redirectUrl, 307)
