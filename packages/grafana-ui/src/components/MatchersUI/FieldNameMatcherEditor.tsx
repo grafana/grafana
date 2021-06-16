@@ -1,14 +1,8 @@
 import React, { memo, useMemo, useCallback } from 'react';
 import { MatcherUIProps, FieldMatcherUIRegistryItem } from './types';
-import {
-  FieldMatcherID,
-  fieldMatchers,
-  SelectableValue,
-  DataFrame,
-  FrameFieldsDisplayNames,
-  getFrameFieldsDisplayNames,
-} from '@grafana/data';
+import { FieldMatcherID, fieldMatchers, SelectableValue } from '@grafana/data';
 import { Select } from '../Select/Select';
+import { FrameFieldsDisplayNames, useFrameFieldsDisplayNames } from './utils';
 
 export const FieldNameMatcherEditor = memo<MatcherUIProps<string>>((props) => {
   const { data, options, onChange: onChangeFromProps } = props;
@@ -42,12 +36,6 @@ export const fieldNameMatcherItem: FieldMatcherUIRegistryItem<string> = {
   description: 'Set properties for a specific field',
   optionsToLabel: (options) => options,
 };
-
-export function useFrameFieldsDisplayNames(data: DataFrame[]): FrameFieldsDisplayNames {
-  return useMemo(() => {
-    return getFrameFieldsDisplayNames(data);
-  }, [data]);
-}
 
 const useSelectOptions = (
   displayNames: FrameFieldsDisplayNames,

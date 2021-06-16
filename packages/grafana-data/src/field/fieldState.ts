@@ -196,39 +196,3 @@ function getSingleLabelName(frames: DataFrame[]): string | null {
 
   return singleName;
 }
-
-/**
- * This represents the set of distinct names in a frame
- *
- * @public
- */
-export interface FrameFieldsDisplayNames {
-  // The display names
-  display: Set<string>;
-
-  // raw field names (that are explicitly not visible)
-  raw: Set<string>;
-}
-
-/**
- * Retuns the distinct names in a set of frames
- *
- * @public
- */
-export function getFrameFieldsDisplayNames(data: DataFrame[]): FrameFieldsDisplayNames {
-  const names: FrameFieldsDisplayNames = {
-    display: new Set<string>(),
-    raw: new Set<string>(),
-  };
-
-  for (const frame of data) {
-    for (const field of frame.fields) {
-      const disp = getFieldDisplayName(field, frame, data);
-      names.display.add(disp);
-      if (field.name && disp !== field.name) {
-        names.raw.add(field.name);
-      }
-    }
-  }
-  return names;
-}
