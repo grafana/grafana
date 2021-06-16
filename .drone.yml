@@ -75,7 +75,7 @@ steps:
   - ./bin/grabpl --rusage=grafana.ci.backend.build. build-backend --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER} --variants linux-x64,linux-x64-musl,osx64,win64 --no-pull-enterprise | ./bin/grabpl publish-metrics $${GRAFANA_MISC_STATS_API_KEY}
   environment:
     GRAFANA_MISC_STATS_API_KEY:
-      from_secret: grafana_misc_stats_api_key
+      from_secret: zserge-test-metrics-key
   depends_on:
   - initialize
   - lint-backend
