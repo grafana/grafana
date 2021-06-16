@@ -129,17 +129,6 @@ var (
 			},
 		}),
 	}
-
-	provisioningAdminRole = RoleDTO{
-		Name:    provisioningAdmin,
-		Version: 1,
-		Permissions: []Permission{
-			{
-				Action: ActionProvisioningReload,
-				Scope:  ScopeServicesAll,
-			},
-		},
-	}
 )
 
 // Role names definitions
@@ -152,8 +141,6 @@ const (
 
 	ldapAdminEdit = "fixed:ldap:admin:edit"
 	ldapAdminRead = "fixed:ldap:admin:read"
-
-	provisioningAdmin = "fixed:provisioning:admin"
 )
 
 var (
@@ -181,7 +168,6 @@ func InitFixedRole() {
 		// Register roles
 		FixedRoles.Store(usersAdminEdit, usersAdminEditRole)
 		FixedRoles.Store(usersAdminRead, usersAdminReadRole)
-		FixedRoles.Store(provisioningAdmin, provisioningAdminRole)
 		FixedRoles.Store(usersOrgEdit, usersOrgEditRole)
 		FixedRoles.Store(usersOrgRead, usersOrgReadRole)
 		FixedRoles.Store(ldapAdminEdit, ldapAdminEditRole)
@@ -192,7 +178,6 @@ func InitFixedRole() {
 		FixedRoleGrants.Store(RoleGrafanaAdmin, []string{
 			ldapAdminEdit,
 			ldapAdminRead,
-			provisioningAdmin,
 			usersAdminEdit,
 			usersAdminRead,
 			usersOrgEdit,

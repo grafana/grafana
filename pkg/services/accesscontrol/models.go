@@ -43,9 +43,6 @@ const (
 	// Permission actions
 
 	// Actions
-	// Provisioning actions
-	ActionProvisioningReload = "provisioning:reload"
-
 	// Users actions
 	ActionUsersRead     = "users:read"
 	ActionUsersWrite    = "users:write"
@@ -83,9 +80,6 @@ const (
 	ScopeGlobalUsersAll = "global:users:*"
 
 	ScopeUsersAll = "users:*"
-
-	// Services Scopes
-	ScopeServicesAll = "service:*"
 )
 
 const RoleGrafanaAdmin = "Grafana Admin"
