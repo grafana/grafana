@@ -21,17 +21,22 @@ func TestPredefinedRoles(t *testing.T) {
 }
 
 func TestPredefinedRoleGrants(t *testing.T) {
-	for _, v := range FixedRoleGrants {
+	testFixedRoleGrantsMap := func(key, value interface{}) bool {
+		v := value.([]string)
 		assert.True(t,
 			sort.SliceIsSorted(v, func(i, j int) bool {
 				return v[i] < v[j]
 			}),
 			"require role grant lists to be sorted",
 		)
+
 		for _, r := range v {
 			assert.Contains(t, FixedRoles, r)
 		}
+		return true
 	}
+
+	FixedRoleGrantsMap.Range(testFixedRoleGrantsMap)
 }
 
 func TestConcatPermissions(t *testing.T) {

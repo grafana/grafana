@@ -116,7 +116,8 @@ func (ac *OSSAccessControlService) GetUserPermissions(ctx context.Context, user 
 	builtinRoles := ac.GetUserBuiltInRoles(user)
 	permissions := make([]*accesscontrol.Permission, 0)
 	for _, builtin := range builtinRoles {
-		if roleNames, ok := accesscontrol.FixedRoleGrants[builtin]; ok {
+		if values, ok := accesscontrol.FixedRoleGrantsMap.Load(builtin); ok {
+			roleNames := values.([]string)
 			for _, name := range roleNames {
 				r, exists := accesscontrol.FixedRoles[name]
 				if !exists {

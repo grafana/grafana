@@ -173,21 +173,21 @@ const (
 
 // FixedRoleGrants specifies which built-in roles are assigned
 // to which set of FixedRoles by default. Alphabetically sorted.
-var FixedRoleGrants = map[string][]string{
-	RoleGrafanaAdmin: {
-		ldapAdminEdit,
-		ldapAdminRead,
-		provisioningAdmin,
-		usersAdminEdit,
-		usersAdminRead,
-		usersOrgEdit,
-		usersOrgRead,
-	},
-	string(models.ROLE_ADMIN): {
-		usersOrgEdit,
-		usersOrgRead,
-	},
-}
+// var FixedRoleGrants = map[string][]string{
+// 	RoleGrafanaAdmin: {
+// 		ldapAdminEdit,
+// 		ldapAdminRead,
+// 		provisioningAdmin,
+// 		usersAdminEdit,
+// 		usersAdminRead,
+// 		usersOrgEdit,
+// 		usersOrgRead,
+// 	},
+// 	string(models.ROLE_ADMIN): {
+// 		usersOrgEdit,
+// 		usersOrgRead,
+// 	},
+// }
 
 func ConcatPermissions(permissions ...[]Permission) []Permission {
 	if permissions == nil {
@@ -214,15 +214,13 @@ func init() {
 
 func InitFixedRole() {
 	once.Do(func() {
-		// Register fixed roles
-		FixedRolesMap.Store(usersAdminRead, usersAdminReadRole)
 		FixedRolesMap.Store(usersAdminEdit, usersAdminEditRole)
-		FixedRolesMap.Store(usersOrgRead, usersOrgReadRole)
-		FixedRolesMap.Store(usersOrgEdit, usersOrgEditRole)
-		FixedRolesMap.Store(ldapAdminRead, ldapAdminReadRole)
-		FixedRolesMap.Store(ldapAdminEdit, ldapAdminEditRole)
-		FixedRolesMap.Store(ldapAdminEdit, ldapAdminEditRole)
+		FixedRolesMap.Store(usersAdminRead, usersAdminReadRole)
 		FixedRolesMap.Store(provisioningAdmin, provisioningAdminRole)
+		FixedRolesMap.Store(usersOrgEdit, usersOrgEditRole)
+		FixedRolesMap.Store(usersOrgRead, usersOrgReadRole)
+		FixedRolesMap.Store(ldapAdminEdit, ldapAdminEditRole)
+		FixedRolesMap.Store(ldapAdminRead, ldapAdminReadRole)
 
 		// Register assignments
 		// Grafana Admin grants
@@ -237,11 +235,6 @@ func InitFixedRole() {
 		})
 		// Admin grants
 		FixedRoleGrantsMap.Store(models.ROLE_ADMIN, []string{
-			usersOrgEdit,
-			usersOrgRead,
-			provisioningAdmin,
-			usersAdminEdit,
-			usersAdminRead,
 			usersOrgEdit,
 			usersOrgRead,
 		})
