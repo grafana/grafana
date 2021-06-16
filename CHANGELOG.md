@@ -327,6 +327,19 @@ The InfoBox & FeatureInfoBox are now deprecated please use the Alert component i
 
 <!-- 8.0.0-beta1 END -->
 
+<!-- 7.5.8 START -->
+
+# 7.5.8 (2021-06-16)
+
+### Features and enhancements
+
+* **Datasource:** Add support for max_conns_per_host in dataproxy settings. [#35519](https://github.com/grafana/grafana/pull/35519), [@jvrplmlmn](https://github.com/jvrplmlmn)
+* **Datasource:** Add support for max_idle_connections_per_host in dataproxy settings. [#35365](https://github.com/grafana/grafana/pull/35365), [@dsotirakis](https://github.com/dsotirakis)
+* **Instrumentation:** Add metrics for outbound HTTP connections. [#35321](https://github.com/grafana/grafana/pull/35321), [@dsotirakis](https://github.com/dsotirakis)
+* **Snapshots:** Remove dashboard links from dashboard snapshots. [#35567](https://github.com/grafana/grafana/pull/35567), [@torkelo](https://github.com/torkelo)
+
+<!-- 7.5.8 END -->
+
 <!-- 7.5.7 START -->
 
 # 7.5.7 (2021-05-19)
