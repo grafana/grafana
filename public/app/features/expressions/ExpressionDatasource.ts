@@ -15,6 +15,10 @@ export class ExpressionDatasourceApi extends DataSourceWithBackend<ExpressionQue
     return `Expression: ${query.type}`;
   }
 
+  filterQuery() {
+    return true;
+  }
+
   newQuery(query?: Partial<ExpressionQuery>): ExpressionQuery {
     return {
       refId: '--', // Replaced with query

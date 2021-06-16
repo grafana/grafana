@@ -83,9 +83,7 @@ class DataSourceWithBackend<
     const { intervalMs, maxDataPoints, range, requestId } = request;
     let targets = request.targets;
 
-    if (this.filterQuery) {
-      targets = targets.filter((q) => this.filterQuery!(q));
-    }
+    targets = targets.filter((q) => this.filterQuery(q));
 
     const queries = targets.map((q) => {
       let datasourceId = this.id;
@@ -153,11 +151,13 @@ class DataSourceWithBackend<
   /**
    * Override to skip executing a query
    *
-   * @returns false if the query should be skipped
+   * @returns false if the query should be skipped, override to customize logic
    *
    * @virtual
    */
-  filterQuery?(query: TQuery): boolean;
+  filterQuery(query: TQuery): boolean {
+    return !query.hide;
+  }
 
   /**
    * Override to apply template variables.  The result is usually also `TQuery`, but sometimes this can

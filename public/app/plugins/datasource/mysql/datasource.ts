@@ -70,13 +70,6 @@ export class MysqlDatasource extends DataSourceWithBackend<MySQLQuery, MySQLOpti
     return expandedQueries;
   }
 
-  filterQuery(query: MySQLQuery): boolean {
-    if (query.hide) {
-      return false;
-    }
-    return true;
-  }
-
   applyTemplateVariables(target: MySQLQuery, scopedVars: ScopedVars): Record<string, any> {
     const queryModel = new MySQLQueryModel(target, this.templateSrv, scopedVars);
     return {
