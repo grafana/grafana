@@ -119,10 +119,11 @@ func (ac *OSSAccessControlService) GetUserPermissions(ctx context.Context, user 
 		if values, ok := accesscontrol.FixedRoleGrantsMap.Load(builtin); ok {
 			roleNames := values.([]string)
 			for _, name := range roleNames {
-				r, exists := accesscontrol.FixedRoles[name]
+				value, exists := accesscontrol.FixedRolesMap.Load(name)
 				if !exists {
 					continue
 				}
+				r := value.(accesscontrol.RoleDTO)
 				for _, p := range r.Permissions {
 					permission := p
 					permissions = append(permissions, &permission)

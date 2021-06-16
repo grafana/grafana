@@ -9,29 +9,36 @@ import (
 )
 
 func TestPredefinedRoles(t *testing.T) {
-	for name, r := range FixedRoles {
+	testFixedRolesMap := func(key, value interface{}) bool {
+		name := key.(string)
+		role := value.(RoleDTO)
+
 		assert.Truef(t,
 			strings.HasPrefix(name, "fixed:"),
 			"expected all fixed roles to be prefixed by 'fixed:', found role '%s'", name,
 		)
-		assert.Equal(t, name, r.Name)
-		assert.NotZero(t, r.Version)
-		// assert.NotEmpty(t, r.Description)
+		assert.Equal(t, name, role.Name)
+		assert.NotZero(t, role.Version)
+		return true
 	}
+	FixedRolesMap.Range(testFixedRolesMap)
 }
 
 func TestPredefinedRoleGrants(t *testing.T) {
-	testFixedRoleGrantsMap := func(key, value interface{}) bool {
-		v := value.([]string)
+	testFixedRoleGrantsMap := func(_, value interface{}) bool {
+		roles := value.([]string)
+		// Check grants list is sorted
 		assert.True(t,
-			sort.SliceIsSorted(v, func(i, j int) bool {
-				return v[i] < v[j]
+			sort.SliceIsSorted(roles, func(i, j int) bool {
+				return roles[i] < roles[j]
 			}),
 			"require role grant lists to be sorted",
 		)
 
-		for _, r := range v {
-			assert.Contains(t, FixedRoles, r)
+		// Check all granted roles have been registered
+		for _, r := range roles {
+			_, ok := FixedRolesMap.Load(r)
+			assert.True(t, ok)
 		}
 		return true
 	}
