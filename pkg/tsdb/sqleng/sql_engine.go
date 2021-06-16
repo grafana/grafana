@@ -310,11 +310,11 @@ func (e *dataPlugin) executeQuery(query plugins.DataSubQuery, wg *sync.WaitGroup
 			// This will migrate special "metric"=name from label to field name
 			if len(frame.Fields) == 2 {
 				for _, field := range frame.Fields {
-					if field.Labels != nil {
+					if len(field.Labels) == 1 { // 7x only supported one label
 						name, ok := field.Labels["metric"]
 						if ok {
 							field.Name = name
-							delete(field.Labels, "metric")
+							field.Labels = nil
 						}
 					}
 				}
