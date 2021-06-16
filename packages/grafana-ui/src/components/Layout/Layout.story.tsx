@@ -28,8 +28,13 @@ export default {
     align: 'center',
     wrap: false,
     width: '100%',
+    ContainerWidth: 300,
+    ContainerHeight: 0,
+    showBoundaries: false,
   },
   argTypes: {
+    ContainerWidth: { control: { type: 'range', min: 100, max: 500, step: 10 } },
+    ContainerHeight: { control: { type: 'range', min: 100, max: 500, step: 10 } },
     justify: {
       control: {
         type: 'select',
