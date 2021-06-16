@@ -90,7 +90,7 @@ func (ac *OSSAccessControlService) assignFixedRole(role accesscontrol.RoleDTO, b
 }
 
 func (ac *OSSAccessControlService) validateFixedRole(role accesscontrol.RoleDTO) error {
-	if strings.HasPrefix(role.Name, accesscontrol.FixedRolePrefix) {
+	if !strings.HasPrefix(role.Name, accesscontrol.FixedRolePrefix) {
 		return accesscontrol.ErrFixedRolePrefixMissing
 	}
 	return nil

@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 )
 
@@ -34,6 +35,5 @@ func (hs *HTTPServer) registerRoles() {
 		},
 	}
 
-	hs.AccessControl.RegisterFixedRole(context.TODO(), provisioningAdmin, accesscontrol.RoleGrafanaAdmin)
-
+	_ = hs.AccessControl.RegisterFixedRole(context.TODO(), provisioningAdmin, accesscontrol.RoleGrafanaAdmin, string(models.ROLE_ADMIN))
 }
