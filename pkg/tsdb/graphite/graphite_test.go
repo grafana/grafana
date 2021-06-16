@@ -6,23 +6,24 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestFormatTimeRange(t *testing.T) {
-	testCases := []struct {
-		input    string
-		expected string
-	}{
-		{"now", "now"},
-		{"now-1m", "-1min"},
-		{"now-1M", "-1mon"},
-	}
+// not sure about the formattimerange is needed or not, or we can just use absolute time
+// func TestFormatTimeRange(t *testing.T) {
+// 	testCases := []struct {
+// 		input    string
+// 		expected string
+// 	}{
+// 		{"now", "now"},
+// 		{"now-1m", "-1min"},
+// 		{"now-1M", "-1mon"},
+// 	}
 
-	for _, tc := range testCases {
-		t.Run(tc.input, func(t *testing.T) {
-			tr := formatTimeRange(tc.input)
-			assert.Equal(t, tc.expected, tr)
-		})
-	}
-}
+// 	for _, tc := range testCases {
+// 		t.Run(tc.input, func(t *testing.T) {
+// 			tr := formatTimeRange(tc.input)
+// 			assert.Equal(t, tc.expected, tr)
+// 		})
+// 	}
+// }
 
 func TestFixIntervalFormat(t *testing.T) {
 	testCases := []struct {
