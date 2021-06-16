@@ -152,7 +152,7 @@ def init_steps(edition, platform, ver_mode, is_downstream=False, install_deps=Tr
                 'image': build_image,
                 'environment': {
                     'DOCKERIZE_VERSION': dockerize_version,
-                    'DRONE_TARGET_BRANCH':'v7.5.x',
+                    'DRONE_TARGET_BRANCH':'main',
                 },
                 'depends_on': [
                     'clone',
@@ -1033,7 +1033,7 @@ def get_windows_steps(edition, ver_mode, is_downstream=False):
             },
             'commands': download_grabpl_cmds + clone_cmds,
         })
-        steps[1]['environment']['DRONE_TARGET_BRANCH'] = 'v7.5.x'
+        steps[1]['environment']['DRONE_TARGET_BRANCH'] = 'main'
         steps[1]['depends_on'] = [
             'clone',
         ]
