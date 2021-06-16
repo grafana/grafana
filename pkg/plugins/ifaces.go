@@ -99,7 +99,7 @@ type PluginInstallerLogger interface {
 
 type PluginFinderV2 interface {
 	// Find tries to discover all plugin.json in the provided directory and then returns their file-system paths.
-	Find(pluginDir string) ([]string, error)
+	Find(pluginsDir string) ([]string, error)
 }
 
 type PluginLoaderV2 interface {

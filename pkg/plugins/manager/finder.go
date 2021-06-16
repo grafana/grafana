@@ -32,21 +32,21 @@ func (f *Finder) Init() error {
 	return nil
 }
 
-func (f *Finder) Find(pluginsPath string) ([]string, error) {
-	exists, err := fs.Exists(pluginsPath)
+func (f *Finder) Find(pluginsDir string) ([]string, error) {
+	exists, err := fs.Exists(pluginsDir)
 	if err != nil {
 		return nil, err
 	}
 
 	var pluginJSONPaths []string
 	if !exists {
-		if err = os.MkdirAll(pluginsPath, os.ModePerm); err != nil {
-			f.log.Error("Failed to create external plugins directory", "dir", pluginsPath, "error", err)
+		if err = os.MkdirAll(pluginsDir, os.ModePerm); err != nil {
+			f.log.Error("Failed to create plugins directory", "dir", pluginsDir, "error", err)
 		} else {
-			f.log.Info("External plugins directory created", "directory", pluginsPath)
+			f.log.Info("External plugins directory created", "directory", pluginsDir)
 		}
 	} else {
-		pluginJSONPaths, err = f.getPluginJSONPaths(pluginsPath)
+		pluginJSONPaths, err = f.getPluginJSONPaths(pluginsDir)
 		if err != nil {
 			return nil, err
 		}
