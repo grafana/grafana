@@ -228,6 +228,15 @@ export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSour
               value: { mode: StackingMode.Normal, group: v },
             });
             break;
+          case 'color':
+            rule.properties.push({
+              id: 'color',
+              value: {
+                fixedColor: v,
+                mode: FieldColorModeId.Fixed,
+              },
+            });
+            break;
           default:
             console.log('Ignore override migration:', seriesOverride.alias, p, v);
         }

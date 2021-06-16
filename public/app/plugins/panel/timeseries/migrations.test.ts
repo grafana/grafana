@@ -58,6 +58,15 @@ describe('Graph Migrations', () => {
     expect(panel).toMatchSnapshot();
   });
 
+  it('preserves colors in series overrides', () => {
+    const old: any = {
+      angular: customColor,
+    };
+    const panel = {} as PanelModel;
+    panel.options = graphPanelChangedHandler(panel, 'graph', old, prevFieldConfig);
+    expect(panel).toMatchSnapshot();
+  });
+
   describe('legend', () => {
     test('without values', () => {
       const old: any = {
@@ -290,6 +299,89 @@ describe('Graph Migrations', () => {
     });
   });
 });
+
+const customColor = {
+  aliasColors: {},
+  dashLength: 10,
+  fill: 5,
+  fillGradient: 6,
+  legend: {
+    avg: true,
+    current: true,
+    max: true,
+    min: true,
+    show: true,
+    total: true,
+    values: true,
+    alignAsTable: true,
+  },
+  lines: true,
+  linewidth: 1,
+  nullPointMode: 'null',
+  options: {
+    alertThreshold: true,
+  },
+  pointradius: 2,
+  seriesOverrides: [
+    {
+      $$hashKey: 'object:12',
+      alias: 'A-series',
+      color: 'rgba(165, 72, 170, 0.77)',
+    },
+  ],
+  spaceLength: 10,
+  steppedLine: true,
+  thresholds: [],
+  timeRegions: [],
+  title: 'Panel Title',
+  tooltip: {
+    shared: true,
+    sort: 0,
+    value_type: 'individual',
+  },
+  type: 'graph',
+  xaxis: {
+    buckets: null,
+    mode: 'time',
+    name: null,
+    show: true,
+    values: [],
+  },
+  yaxes: [
+    {
+      $$hashKey: 'object:42',
+      format: 'short',
+      label: null,
+      logBase: 1,
+      max: null,
+      min: null,
+      show: false,
+    },
+    {
+      $$hashKey: 'object:43',
+      format: 'short',
+      label: null,
+      logBase: 1,
+      max: null,
+      min: null,
+      show: true,
+    },
+  ],
+  yaxis: {
+    align: false,
+    alignLevel: null,
+  },
+  timeFrom: null,
+  timeShift: null,
+  bars: false,
+  dashes: false,
+  hiddenSeries: false,
+  percentage: false,
+  points: false,
+  stack: false,
+  decimals: 1,
+  datasource: null,
+};
 
 const stairscase = {
   aliasColors: {},
