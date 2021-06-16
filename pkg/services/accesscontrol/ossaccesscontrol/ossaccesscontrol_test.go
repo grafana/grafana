@@ -246,8 +246,8 @@ func TestOSSAccessControlService_RegisterFixedRole(t *testing.T) {
 				Log:        log.New("accesscontrol-test"),
 			}
 			// Empty maps
-			accesscontrol.FixedRolesMap = sync.Map{}
-			accesscontrol.FixedRoleGrantsMap = sync.Map{}
+			accesscontrol.FixedRoles = sync.Map{}
+			accesscontrol.FixedRoleGrants = sync.Map{}
 
 			if tc.name == "Fail to assign role" {
 
@@ -257,7 +257,7 @@ func TestOSSAccessControlService_RegisterFixedRole(t *testing.T) {
 					fmt.Println(k, v)
 					return true
 				}
-				accesscontrol.FixedRolesMap.Range(valueReader)
+				accesscontrol.FixedRoles.Range(valueReader)
 			}
 
 			for _, run := range tc.runs {
@@ -269,7 +269,7 @@ func TestOSSAccessControlService_RegisterFixedRole(t *testing.T) {
 				require.NoError(t, err)
 
 				//Check role has been registered
-				storedRole, ok := accesscontrol.FixedRolesMap.Load(run.role.Name)
+				storedRole, ok := accesscontrol.FixedRoles.Load(run.role.Name)
 				assert.True(t, ok)
 
 				//Check registered role has not been altered
@@ -277,7 +277,7 @@ func TestOSSAccessControlService_RegisterFixedRole(t *testing.T) {
 
 				//Check assignments
 				for _, br := range run.builtInRoles {
-					value, ok := accesscontrol.FixedRoleGrantsMap.Load(br)
+					value, ok := accesscontrol.FixedRoleGrants.Load(br)
 					assert.True(t, ok)
 
 					assigns := value.([]string)

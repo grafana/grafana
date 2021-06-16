@@ -21,7 +21,7 @@ func TestPredefinedRoles(t *testing.T) {
 		assert.NotZero(t, role.Version)
 		return true
 	}
-	FixedRolesMap.Range(testFixedRolesMap)
+	FixedRoles.Range(testFixedRolesMap)
 }
 
 func TestPredefinedRoleGrants(t *testing.T) {
@@ -37,13 +37,13 @@ func TestPredefinedRoleGrants(t *testing.T) {
 
 		// Check all granted roles have been registered
 		for _, r := range roles {
-			_, ok := FixedRolesMap.Load(r)
+			_, ok := FixedRoles.Load(r)
 			assert.True(t, ok)
 		}
 		return true
 	}
 
-	FixedRoleGrantsMap.Range(testFixedRoleGrantsMap)
+	FixedRoleGrants.Range(testFixedRoleGrantsMap)
 }
 
 func TestConcatPermissions(t *testing.T) {

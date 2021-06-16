@@ -165,11 +165,11 @@ var (
 	// new fixed role in this set so that users can access the new
 	// resource. FixedRoleGrants lists which built-in roles are
 	// assigned which fixed roles in this list.
-	FixedRolesMap sync.Map
+	FixedRoles sync.Map
 
 	// FixedRoleGrants specifies which built-in roles are assigned
 	// to which set of FixedRoles by default. Alphabetically sorted.
-	FixedRoleGrantsMap sync.Map
+	FixedRoleGrants sync.Map
 )
 
 func init() {
@@ -179,17 +179,17 @@ func init() {
 func InitFixedRole() {
 	once.Do(func() {
 		// Register roles
-		FixedRolesMap.Store(usersAdminEdit, usersAdminEditRole)
-		FixedRolesMap.Store(usersAdminRead, usersAdminReadRole)
-		FixedRolesMap.Store(provisioningAdmin, provisioningAdminRole)
-		FixedRolesMap.Store(usersOrgEdit, usersOrgEditRole)
-		FixedRolesMap.Store(usersOrgRead, usersOrgReadRole)
-		FixedRolesMap.Store(ldapAdminEdit, ldapAdminEditRole)
-		FixedRolesMap.Store(ldapAdminRead, ldapAdminReadRole)
+		FixedRoles.Store(usersAdminEdit, usersAdminEditRole)
+		FixedRoles.Store(usersAdminRead, usersAdminReadRole)
+		FixedRoles.Store(provisioningAdmin, provisioningAdminRole)
+		FixedRoles.Store(usersOrgEdit, usersOrgEditRole)
+		FixedRoles.Store(usersOrgRead, usersOrgReadRole)
+		FixedRoles.Store(ldapAdminEdit, ldapAdminEditRole)
+		FixedRoles.Store(ldapAdminRead, ldapAdminReadRole)
 
 		// Register assignments
 		// Grafana Admin grants
-		FixedRoleGrantsMap.Store(RoleGrafanaAdmin, []string{
+		FixedRoleGrants.Store(RoleGrafanaAdmin, []string{
 			ldapAdminEdit,
 			ldapAdminRead,
 			provisioningAdmin,
@@ -199,7 +199,7 @@ func InitFixedRole() {
 			usersOrgRead,
 		})
 		// Admin grants
-		FixedRoleGrantsMap.Store(models.ROLE_ADMIN, []string{
+		FixedRoleGrants.Store(models.ROLE_ADMIN, []string{
 			usersOrgEdit,
 			usersOrgRead,
 		})

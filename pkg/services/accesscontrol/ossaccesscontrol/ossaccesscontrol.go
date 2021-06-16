@@ -55,14 +55,14 @@ func (ac *OSSAccessControlService) getUsageMetrics() interface{} {
 }
 
 func (ac *OSSAccessControlService) saveFixedRole(role accesscontrol.RoleDTO) error {
-	if value, ok := accesscontrol.FixedRolesMap.Load(role.Name); ok {
+	if value, ok := accesscontrol.FixedRoles.Load(role.Name); ok {
 		storedRole := value.(accesscontrol.RoleDTO)
 		if storedRole.Version >= role.Version {
 			return accesscontrol.ErrVersionLE
 		}
 	}
 	// Save role
-	accesscontrol.FixedRolesMap.Store(role.Name, role)
+	accesscontrol.FixedRoles.Store(role.Name, role)
 
 	return nil
 }
@@ -70,7 +70,7 @@ func (ac *OSSAccessControlService) saveFixedRole(role accesscontrol.RoleDTO) err
 func (ac *OSSAccessControlService) assignFixedRole(role accesscontrol.RoleDTO, builtInRoles []string) error {
 	for _, builtInRole := range builtInRoles {
 		assignments := []string{}
-		if value, ok := accesscontrol.FixedRoleGrantsMap.Load(builtInRole); ok {
+		if value, ok := accesscontrol.FixedRoleGrants.Load(builtInRole); ok {
 			assignments = value.([]string)
 			alreadyAssigned := false
 			for _, assignedRole := range assignments {
@@ -83,7 +83,7 @@ func (ac *OSSAccessControlService) assignFixedRole(role accesscontrol.RoleDTO, b
 			}
 		}
 		assignments = append(assignments, role.Name)
-		accesscontrol.FixedRoleGrantsMap.Store(builtInRole, assignments)
+		accesscontrol.FixedRoleGrants.Store(builtInRole, assignments)
 	}
 	return nil
 }
@@ -116,10 +116,10 @@ func (ac *OSSAccessControlService) GetUserPermissions(ctx context.Context, user 
 	builtinRoles := ac.GetUserBuiltInRoles(user)
 	permissions := make([]*accesscontrol.Permission, 0)
 	for _, builtin := range builtinRoles {
-		if values, ok := accesscontrol.FixedRoleGrantsMap.Load(builtin); ok {
+		if values, ok := accesscontrol.FixedRoleGrants.Load(builtin); ok {
 			roleNames := values.([]string)
 			for _, name := range roleNames {
-				value, exists := accesscontrol.FixedRolesMap.Load(name)
+				value, exists := accesscontrol.FixedRoles.Load(name)
 				if !exists {
 					continue
 				}
