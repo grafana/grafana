@@ -114,11 +114,9 @@ export const configurePanel = (config: PartialAddPanelConfig | PartialEditPanelC
       }
     }
 
-    e2e().server();
-
     // @todo alias '/**/*.js*' as '@pluginModule' when possible: https://github.com/cypress-io/cypress/issues/1296
 
-    e2e().route(chartData.method, chartData.route).as('chartData');
+    e2e().intercept(chartData.method, chartData.route).as('chartData');
 
     if (dataSourceName) {
       selectOption({

@@ -2,15 +2,9 @@ import React, { FunctionComponent, useEffect, useMemo, useReducer, useState } fr
 import { SelectableValue } from '@grafana/data';
 import { AzureCredentialsForm } from './AzureCredentialsForm';
 import { InlineFormLabel, LegacyForms, Button, Alert } from '@grafana/ui';
-const { Select, Switch } = LegacyForms;
-import { AzureDataSourceSettings, AzureCredentials } from '../types';
-import {
-  getCredentials,
-  getLogAnalyticsCredentials,
-  isCredentialsComplete,
-  updateLogAnalyticsCredentials,
-  updateLogAnalyticsSameAs,
-} from '../credentials';
+const { Select } = LegacyForms;
+import { AzureDataSourceSettings } from '../types';
+import { getCredentials, isCredentialsComplete } from '../credentials';
 
 export interface Props {
   options: AzureDataSourceSettings;
@@ -22,22 +16,16 @@ export interface Props {
 export const AnalyticsConfig: FunctionComponent<Props> = (props: Props) => {
   const { updateOptions, getSubscriptions, getWorkspaces } = props;
   const primaryCredentials = useMemo(() => getCredentials(props.options), [props.options]);
-  const logAnalyticsCredentials = useMemo(() => getLogAnalyticsCredentials(props.options), [props.options]);
 
-  const subscriptionId = logAnalyticsCredentials
-    ? logAnalyticsCredentials.defaultSubscriptionId
-    : primaryCredentials.defaultSubscriptionId;
+  const subscriptionId = primaryCredentials.defaultSubscriptionId;
 
-  // Only show a section for setting LogAnalytics credentials if they were set from before
-  // And the authType is supported
-  const [credentialsUsed, _] = useState(!!logAnalyticsCredentials);
-  const credentialsEnabled = credentialsUsed && primaryCredentials.authType === 'clientsecret';
+  // Only show a section for setting LogAnalytics credentials if
+  // they were set from before with different values and the
+  // authType is supported
+  const logCredentialsEnabled =
+    primaryCredentials.authType === 'clientsecret' && props.options.jsonData.azureLogAnalyticsSameAs === false;
 
-  const hasRequiredFields =
-    subscriptionId &&
-    (logAnalyticsCredentials
-      ? isCredentialsComplete(logAnalyticsCredentials)
-      : isCredentialsComplete(primaryCredentials));
+  const hasRequiredFields = subscriptionId && isCredentialsComplete(primaryCredentials);
 
   const defaultWorkspace = props.options.jsonData.logAnalyticsDefaultWorkspace;
 
@@ -91,18 +79,6 @@ export const AnalyticsConfig: FunctionComponent<Props> = (props: Props) => {
     }
   };
 
-  const [sameAsSwitched, setSameAsSwitched] = useState(false);
-
-  const onCredentialsChange = (updatedCredentials: AzureCredentials) => {
-    updateOptions((options) => updateLogAnalyticsCredentials(options, updatedCredentials));
-  };
-
-  const onLogAnalyticsSameAsChange = (event: React.SyntheticEvent<HTMLInputElement>) => {
-    const sameAs = event.currentTarget.checked;
-    updateOptions((options) => updateLogAnalyticsSameAs(options, sameAs));
-    setSameAsSwitched(true);
-  };
-
   const onDefaultWorkspaceChange = (selected: SelectableValue<string>) => {
     updateOptions((options) => {
       return {
@@ -115,55 +91,29 @@ export const AnalyticsConfig: FunctionComponent<Props> = (props: Props) => {
     });
   };
 
-  const tooltipAttribute = {
-    ...(!logAnalyticsCredentials && {
-      tooltip: 'Workspaces are pulled from default subscription selected above.',
-    }),
-  };
-
-  const showSameAsHelpMsg =
-    credentialsEnabled &&
-    sameAsSwitched &&
-    primaryCredentials.authType === 'clientsecret' &&
-    !primaryCredentials.clientSecret;
-
   return (
     <>
       <h3 className="page-heading">Azure Monitor Logs</h3>
-      {credentialsEnabled && (
+      {logCredentialsEnabled && (
         <>
-          <Switch
-            label="Same details as Azure Monitor API"
-            checked={!logAnalyticsCredentials}
-            onChange={onLogAnalyticsSameAsChange}
-            {...tooltipAttribute}
+          <Alert severity="error" title="Deprecated">
+            Using different credentials for Azure Monitor Logs is no longer supported. Authentication information above
+            will be used instead. Please create a new data source with the credentials below.
+          </Alert>
+
+          <AzureCredentialsForm
+            managedIdentityEnabled={false}
+            credentials={{
+              ...primaryCredentials,
+              authType: 'clientsecret',
+              // Use deprecated Log Analytics credentials read-only
+              // to help with a possible migration
+              tenantId: props.options.jsonData.logAnalyticsTenantId,
+              clientId: props.options.jsonData.logAnalyticsClientId,
+            }}
+            getSubscriptions={getSubscriptions}
+            disabled={true}
           />
-
-          {showSameAsHelpMsg && (
-            <div className="grafana-info-box m-t-2">
-              <div className="alert-body">
-                <p>Re-enter your Azure Monitor Client Secret to use this setting.</p>
-              </div>
-            </div>
-          )}
-
-          {logAnalyticsCredentials && (
-            <>
-              <Alert severity="info" title="Deprecated">
-                Using different credentials for Azure Monitor Logs is deprecated and will be removed in a future
-                version.
-                <br />
-                Create a different Data Source if you need to use different credentials.
-              </Alert>
-
-              <AzureCredentialsForm
-                managedIdentityEnabled={false}
-                credentials={logAnalyticsCredentials}
-                onCredentialsChange={onCredentialsChange}
-                getSubscriptions={getSubscriptions}
-              />
-            </>
-          )}
         </>
       )}
       <div className="gf-form-group">
