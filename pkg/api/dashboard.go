@@ -390,7 +390,7 @@ func (hs *HTTPServer) dashboardSaveErrorToApiResponse(err error) response.Respon
 		if body := dashboardErr.Body(); body != nil {
 			return response.JSON(dashboardErr.StatusCode, body)
 		}
-		if errors.Is(dashboardErr, models.ErrDashboardUpdateAccessDenied) {
+		if dashboardErr.StatusCode != 400 {
 			return response.Error(dashboardErr.StatusCode, dashboardErr.Error(), err)
 		}
 		return response.Error(dashboardErr.StatusCode, dashboardErr.Error(), nil)
@@ -402,7 +402,7 @@ func (hs *HTTPServer) dashboardSaveErrorToApiResponse(err error) response.Respon
 
 	var validationErr alerting.ValidationError
 	if ok := errors.As(err, &validationErr); ok {
-		return response.Error(422, validationErr.Error(), nil)
+		return response.Error(422, validationErr.Error(), err)
 	}
 
 	var pluginErr models.UpdatePluginDashboardError
