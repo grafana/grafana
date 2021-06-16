@@ -5,11 +5,11 @@ import { DatePicker } from '../DatePicker/DatePicker';
 import { Props as InputProps, Input } from '../../Input/Input';
 import { useStyles } from '../../../themes';
 
-export const formatDate = (date: Date) => dateTimeFormat(date, { format: 'L' });
+export const formatDate = (date: Date | string) => dateTimeFormat(date, { format: 'L' });
 
 /** @public */
 export interface DatePickerWithInputProps extends Omit<InputProps, 'ref' | 'value' | 'onChange'> {
-  value?: Date;
+  value?: Date | string;
   onChange: (value: Date | string) => void;
   /** Hide the calendar when date is selected */
   closeOnSelect?: boolean;
@@ -46,7 +46,7 @@ export const DatePickerWithInput = ({
       />
       <DatePicker
         isOpen={open}
-        value={value}
+        value={value && typeof value !== 'string' ? value : new Date()}
         onChange={(ev) => {
           onChange(ev);
           if (closeOnSelect) {

@@ -15,7 +15,7 @@ export default {
 };
 
 export const Basic = () => {
-  const [date, setDate] = useState<Date>(new Date());
+  const [date, setDate] = useState<Date | string>(new Date());
 
-  return <DatePickerWithInput width={40} value={date} onChange={(newDate) => setDate(newDate as Date)} />;
+  return <DatePickerWithInput width={40} value={date} onChange={(newDate) => setDate(newDate)} />;
 };
