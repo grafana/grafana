@@ -15,9 +15,6 @@ export default {
     docs: {
       page: mdx,
     },
-    knobs: {
-      disabled: true,
-    },
     controls: {
       exclude: ['orientation'],
     },
