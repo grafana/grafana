@@ -64,13 +64,13 @@ func ProvideService(cfg *setting.Cfg, dataSourceCache datasources.CacheService, 
 		BaseInterval:  baseInterval,
 		Logger:        logger,
 		MaxAttempts:   maxAttempts,
-		Evaluator:     eval.Evaluator{Cfg: cfg},
+		Evaluator:     eval.Evaluator{Cfg: cfg, Log: logger},
 		InstanceStore: store,
 		RuleStore:     store,
 		Notifier:      alertmanager,
 		Metrics:       m,
 	}
-	schedule := schedule.NewScheduler(schedCfg, dataService)
+	schedule := schedule.NewScheduler(schedCfg, dataService, cfg.AppURL)
 
 	ng := &AlertNG{
 		Cfg:             cfg,

@@ -249,26 +249,18 @@ func (st DBstore) UpsertAlertRules(rules []UpsertRule) error {
 					r.New.Data = r.Existing.Data
 				}
 
-				if r.New.IntervalSeconds == 0 {
-					r.New.IntervalSeconds = r.Existing.IntervalSeconds
-				}
-
 				r.New.ID = r.Existing.ID
 				r.New.OrgID = r.Existing.OrgID
 				r.New.NamespaceUID = r.Existing.NamespaceUID
 				r.New.RuleGroup = r.Existing.RuleGroup
 				r.New.Version = r.Existing.Version + 1
 
-				if r.New.For == 0 {
-					r.New.For = r.Existing.For
+				if r.New.ExecErrState == "" {
+					r.New.ExecErrState = r.Existing.ExecErrState
 				}
 
-				if len(r.New.Annotations) == 0 {
-					r.New.Annotations = r.Existing.Annotations
-				}
-
-				if len(r.New.Labels) == 0 {
-					r.New.Labels = r.Existing.Labels
+				if r.New.NoDataState == "" {
+					r.New.NoDataState = r.Existing.NoDataState
 				}
 
 				if err := st.validateAlertRule(r.New); err != nil {
@@ -280,7 +272,7 @@ func (st DBstore) UpsertAlertRules(rules []UpsertRule) error {
 				}
 
 				// no way to update multiple rules at once
-				if _, err := sess.ID(r.Existing.ID).Update(r.New); err != nil {
+				if _, err := sess.ID(r.Existing.ID).AllCols().Update(r.New); err != nil {
 					return fmt.Errorf("failed to update rule %s: %w", r.New.Title, err)
 				}
 

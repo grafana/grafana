@@ -63,7 +63,9 @@ Actions | Applicable scopes | Descriptions
 `ldap.status:read` | n/a | Verify the LDAP servers’ availability.
 `ldap.config:reload` | n/a | Reload the LDAP configuration.
 `status:accesscontrol` | `service:accesscontrol` | Get access-control enabled status.
+`settings:read` | `settings:**`<br>`settings:auth.saml:*`<br>`settings:auth.saml:enabled` (property level)  | Read settings
 `settings:write` | `settings:**`<br>`settings:auth.saml:*`<br>`settings:auth.saml:enabled` (property level) | Update settings
+`server.stats:read` | n/a | Read server stats
 
 ## Scope definitions
 

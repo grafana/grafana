@@ -42,7 +42,7 @@ export const StateTimelinePanel: React.FC<TimelinePanelProps> = ({
 
       return (
         <StateTimelineTooltip
-          data={data.series}
+          data={frames ?? []}
           alignedData={alignedData}
           seriesIdx={seriesIdx}
           datapointIdx={datapointIdx}
@@ -50,7 +50,7 @@ export const StateTimelinePanel: React.FC<TimelinePanelProps> = ({
         />
       );
     },
-    [timeZone, data]
+    [timeZone, frames]
   );
 
   if (!frames || warn) {

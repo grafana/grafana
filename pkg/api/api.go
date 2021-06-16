@@ -23,6 +23,7 @@ var plog = log.New("api")
 func (hs *HTTPServer) registerRoutes() {
 	reqNoAuth := middleware.NoAuth()
 	reqSignedIn := middleware.ReqSignedIn
+	reqNotSignedIn := middleware.ReqNotSignedIn
 	reqSignedInNoAnonymous := middleware.ReqSignedInNoAnonymous
 	reqGrafanaAdmin := middleware.ReqGrafanaAdmin
 	reqEditorRole := middleware.ReqEditorRole
@@ -63,13 +64,13 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/dashboard/import/", reqSignedIn, hs.Index)
 	r.Get("/configuration", reqGrafanaAdmin, hs.Index)
 	r.Get("/admin", reqGrafanaAdmin, hs.Index)
-	r.Get("/admin/settings", reqGrafanaAdmin, hs.Index)
+	r.Get("/admin/settings", authorize(reqGrafanaAdmin, accesscontrol.ActionSettingsRead), hs.Index)
 	r.Get("/admin/users", authorize(reqGrafanaAdmin, accesscontrol.ActionUsersRead, accesscontrol.ScopeGlobalUsersAll), hs.Index)
 	r.Get("/admin/users/create", authorize(reqGrafanaAdmin, accesscontrol.ActionUsersCreate), hs.Index)
 	r.Get("/admin/users/edit/:id", authorize(reqGrafanaAdmin, accesscontrol.ActionUsersRead), hs.Index)
 	r.Get("/admin/orgs", reqGrafanaAdmin, hs.Index)
 	r.Get("/admin/orgs/edit/:id", reqGrafanaAdmin, hs.Index)
-	r.Get("/admin/stats", reqGrafanaAdmin, hs.Index)
+	r.Get("/admin/stats", authorize(reqGrafanaAdmin, accesscontrol.ActionServerStatsRead), hs.Index)
 	r.Get("/admin/ldap", authorize(reqGrafanaAdmin, accesscontrol.ActionLDAPStatusRead), hs.Index)
 
 	r.Get("/styleguide", reqSignedIn, hs.Index)
@@ -112,7 +113,7 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Post("/api/user/invite/complete", bind(dtos.CompleteInviteForm{}), routing.Wrap(hs.CompleteInvite))
 
 	// reset password
-	r.Get("/user/password/send-reset-email", hs.Index)
+	r.Get("/user/password/send-reset-email", reqNotSignedIn, hs.Index)
 	r.Get("/user/password/reset", hs.Index)
 
 	r.Post("/api/user/password/send-reset-email", bind(dtos.SendResetPasswordEmailForm{}), routing.Wrap(SendResetPasswordEmail))
@@ -433,8 +434,8 @@ func (hs *HTTPServer) registerRoutes() {
 
 	// admin api
 	r.Group("/api/admin", func(adminRoute routing.RouteRegister) {
-		adminRoute.Get("/settings", reqGrafanaAdmin, routing.Wrap(hs.AdminGetSettings))
-		adminRoute.Get("/stats", reqGrafanaAdmin, routing.Wrap(AdminGetStats))
+		adminRoute.Get("/settings", authorize(reqGrafanaAdmin, accesscontrol.ActionSettingsRead), routing.Wrap(hs.AdminGetSettings))
+		adminRoute.Get("/stats", authorize(reqGrafanaAdmin, accesscontrol.ActionServerStatsRead), routing.Wrap(AdminGetStats))
 		adminRoute.Post("/pause-all-alerts", reqGrafanaAdmin, bind(dtos.PauseAllAlertsCommand{}), routing.Wrap(PauseAllAlerts))
 
 		adminRoute.Post("/provisioning/dashboards/reload", reqGrafanaAdmin, routing.Wrap(hs.AdminProvisioningReloadDashboards))
