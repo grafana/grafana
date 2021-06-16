@@ -1,18 +1,19 @@
 import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { DatePickerWithInput } from './DatePickerWithInput';
+import { dateTimeFormat } from '@grafana/data';
 
 describe('DatePickerWithInput', () => {
   it('renders date input', () => {
     render(<DatePickerWithInput onChange={jest.fn()} value={new Date(1400000000000)} />);
 
-    expect(screen.getByDisplayValue('2014-05-13')).toBeInTheDocument();
+    expect(screen.getByDisplayValue(dateTimeFormat(1400000000000, { format: 'L' }))).toBeInTheDocument();
   });
 
   it('renders date input with date passed in', () => {
     render(<DatePickerWithInput value={new Date(1607431703363)} onChange={jest.fn()} />);
 
-    expect(screen.getByDisplayValue('2020-12-08')).toBeInTheDocument();
+    expect(screen.getByDisplayValue(dateTimeFormat(1607431703363, { format: 'L' }))).toBeInTheDocument();
   });
 
   it('does not render calendar', () => {
