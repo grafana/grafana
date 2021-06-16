@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { DatePicker } from './DatePicker';
-import { Button } from '@grafana/ui';
+import { Button } from '../../Button/Button';
 
 export default {
   title: 'Pickers And Editors/DatePicker',
