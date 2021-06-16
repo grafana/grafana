@@ -1,33 +1,46 @@
-import React from 'react';
+import React, { ChangeEvent } from 'react';
 import { css } from '@emotion/css';
 import { dateTimeFormat } from '@grafana/data';
 import { DatePicker } from '../DatePicker/DatePicker';
 import { Props as InputProps, Input } from '../Input/Input';
 import { useStyles } from '../../themes';
 
-export const formatDate = (date: Date) => dateTimeFormat(date, { format: 'YYYY-MM-DD' });
+export const formatDate = (date: Date) => dateTimeFormat(date, { format: 'L' });
 
 /** @public */
 export interface DatePickerWithInputProps extends Omit<InputProps, 'ref' | 'value' | 'onChange'> {
   value?: Date;
-  onChange: (value: Date) => void;
+  onChange: (value: Date | string) => void;
   /** Hide the calendar when date is selected */
   closeOnSelect?: boolean;
+  placeholder?: string;
 }
 
 /** @public */
-export const DatePickerWithInput = ({ value, onChange, closeOnSelect, ...rest }: DatePickerWithInputProps) => {
+export const DatePickerWithInput = ({
+  value,
+  onChange,
+  closeOnSelect,
+  placeholder = 'Date',
+  ...rest
+}: DatePickerWithInputProps) => {
   const [open, setOpen] = React.useState(false);
   const styles = useStyles(getStyles);
 
   return (
     <div className={styles.container}>
       <Input
-        type="date"
-        placeholder={'Date'}
-        value={value ? formatDate(value) : undefined}
+        type="text"
+        autoComplete={'off'}
+        placeholder={placeholder}
+        value={value ? formatDate(value) : value}
         onClick={() => setOpen(true)}
-        onChange={() => {}}
+        onChange={(ev: ChangeEvent<HTMLInputElement>) => {
+          // Allow resetting the date
+          if (ev.target.value === '') {
+            onChange('');
+          }
+        }}
         className={styles.input}
         {...rest}
       />
