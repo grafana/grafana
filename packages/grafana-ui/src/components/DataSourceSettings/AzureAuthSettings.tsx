@@ -1,17 +1,24 @@
-import React, { FunctionComponent } from 'react';
-import { AzureCredentials } from './AzureCredentials';
-import { AzureCredentialsForm } from './AzureCredentialsForm';
+import React, { FunctionComponent, useMemo } from 'react';
 import { HttpSettingsBaseProps } from './types';
+import { KnownAzureClouds, AzureCredentials } from './AzureCredentials';
+import { getCredentials, updateCredentials } from './AzureCredentialsConfig';
+import { AzureCredentialsForm } from './AzureCredentialsForm';
 
 export interface Props extends HttpSettingsBaseProps {}
 
-export const AzureAuthSettings: FunctionComponent<Props> = (props: Props) => {
-  const credentials: AzureCredentials = {
-    authType: 'msi',
-  };
+const config = {
+  azure: {
+    managedIdentityEnabled: true,
+  },
+};
 
-  const onCredentialsChange = () => {
-    // Nothing
+export const AzureAuthSettings: FunctionComponent<Props> = (props: Props) => {
+  const { dataSourceConfig, onChange } = props;
+
+  const credentials = useMemo(() => getCredentials(dataSourceConfig), [dataSourceConfig]);
+
+  const onCredentialsChange = (credentials: AzureCredentials): void => {
+    onChange(updateCredentials(dataSourceConfig, credentials));
   };
 
   return (
@@ -19,8 +26,9 @@ export const AzureAuthSettings: FunctionComponent<Props> = (props: Props) => {
       <h6>Azure Authentication</h6>
       <div className="gf-form-group">
         <AzureCredentialsForm
-          managedIdentityEnabled={true}
+          managedIdentityEnabled={config.azure.managedIdentityEnabled}
           credentials={credentials}
+          azureCloudOptions={KnownAzureClouds}
           onCredentialsChange={onCredentialsChange}
         />
       </div>
