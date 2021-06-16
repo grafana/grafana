@@ -8,6 +8,7 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/go-sql-driver/mysql"
@@ -414,6 +415,7 @@ type ITestDB interface {
 }
 
 var testSQLStore *SQLStore
+var testSQLStoreMutex sync.Mutex
 
 // InitTestDBOpt contains options for InitTestDB.
 type InitTestDBOpt struct {
@@ -424,6 +426,8 @@ type InitTestDBOpt struct {
 // InitTestDB initializes the test DB.
 func InitTestDB(t ITestDB, opts ...InitTestDBOpt) *SQLStore {
 	t.Helper()
+	testSQLStoreMutex.Lock()
+	defer testSQLStoreMutex.Unlock()
 	if testSQLStore == nil {
 		dbType := migrator.SQLite
 
@@ -488,6 +492,11 @@ func InitTestDB(t ITestDB, opts ...InitTestDBOpt) *SQLStore {
 
 		if err := testSQLStore.Migrate(); err != nil {
 			t.Fatalf("Database migration failed: %s", err)
+		}
+
+		t.Log("Truncating DB tables")
+		if err := dialect.TruncateDBTables(); err != nil {
+			t.Fatalf("Failed to truncate test db: %s", err)
 		}
 
 		if err := testSQLStore.Reset(); err != nil {

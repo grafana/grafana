@@ -298,7 +298,7 @@ func TestPluginManager_Init(t *testing.T) {
 		pm := createManager(t, func(pm *PluginManager) {
 			pm.Cfg.PluginsPath = "testdata/valid-v2-pvt-signature-root-url-uri"
 		})
-		err := pm.Init()
+		err := pm.init()
 		require.NoError(t, err)
 		require.Empty(t, pm.scanningErrors)
 
@@ -382,7 +382,7 @@ func TestPluginManager_Init(t *testing.T) {
 		pm := createManager(t, func(pm *PluginManager) {
 			pm.Cfg.PluginsPath = "testdata/includes-symlinks"
 		})
-		err := pm.Init()
+		err := pm.init()
 		require.NoError(t, err)
 		require.Empty(t, pm.scanningErrors)
 
@@ -411,7 +411,7 @@ func TestPluginManager_Init(t *testing.T) {
 		pm := createManager(t, func(pm *PluginManager) {
 			pm.Cfg.PluginsPath = "testdata/symbolic-plugin-dirs"
 		})
-		err := pm.Init()
+		err := pm.init()
 		require.NoError(t, err)
 		// This plugin should be properly registered, even though it is symlinked to plugins dir
 		require.Empty(t, pm.scanningErrors)

@@ -10,6 +10,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/evaluator"
+	"github.com/grafana/grafana/pkg/services/quota"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -231,6 +232,9 @@ func setupAccessControlScenarioContext(t *testing.T, cfg *setting.Cfg, url strin
 		Cfg:           cfg,
 		RouteRegister: routing.NewRouteRegister(),
 		AccessControl: &fakeAccessControl{permissions: permissions},
+		QuotaService: &quota.QuotaService{
+			Cfg: cfg,
+		},
 	}
 
 	sc := setupScenarioContext(t, url)
