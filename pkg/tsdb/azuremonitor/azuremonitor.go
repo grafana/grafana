@@ -34,9 +34,7 @@ func init() {
 	registry.Register(&registry.Descriptor{
 		Name:         "AzureMonitorService",
 		InitPriority: registry.Low,
-		Instance: &Service{
-			proxy: &httpServiceProxy{},
-		},
+		Instance:     &Service{},
 	})
 }
 
@@ -49,8 +47,7 @@ type Service struct {
 	Cfg                  *setting.Cfg          `inject:""`
 	BackendPluginManager backendplugin.Manager `inject:""`
 	im                   instancemgmt.InstanceManager
-
-	proxy serviceProxy
+	executors            map[string]azDatasourceExecutor
 }
 
 type azureMonitorSettings struct {
@@ -84,7 +81,25 @@ type datasourceService struct {
 	HTTPClient *http.Client
 }
 
-func NewInstanceSettings() datasource.InstanceFactoryFunc {
+func getDatasourceService(cfg *setting.Cfg, dsInfo datasourceInfo, routeName string) (datasourceService, error) {
+	srv, ok := dsInfo.Services[routeName]
+	if ok && srv.HTTPClient != nil {
+		// If the service already exists, return it
+		return dsInfo.Services[routeName], nil
+	}
+
+	route := dsInfo.Routes[routeName]
+	client, err := newHTTPClient(route, dsInfo, cfg)
+	if err != nil {
+		return datasourceService{}, err
+	}
+	return datasourceService{
+		URL:        dsInfo.Routes[routeName].URL,
+		HTTPClient: client,
+	}, nil
+}
+
+func NewInstanceSettings(s *Service) datasource.InstanceFactoryFunc {
 	return func(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		jsonData := map[string]interface{}{}
 		err := json.Unmarshal(settings.JSONData, &jsonData)
@@ -111,12 +126,21 @@ func NewInstanceSettings() datasource.InstanceFactoryFunc {
 			HTTPCliOpts:             httpCliOpts,
 			Services:                map[string]datasourceService{},
 		}
+
+		for routeName := range s.executors {
+			service, err := getDatasourceService(s.Cfg, model, routeName)
+			if err != nil {
+				return nil, err
+			}
+			model.Services[routeName] = service
+		}
 		return model, nil
 	}
 }
 
 type azDatasourceExecutor interface {
 	executeTimeSeriesQuery(ctx context.Context, originalQueries []backend.DataQuery, dsInfo datasourceInfo, client *http.Client, url string) (*backend.QueryDataResponse, error)
+	resourceRequest(rw http.ResponseWriter, req *http.Request, cli *http.Client)
 }
 
 func (s *Service) getDataSourceFromPluginReq(req *backend.QueryDataRequest) (datasourceInfo, error) {
@@ -129,48 +153,20 @@ func (s *Service) getDataSourceFromPluginReq(req *backend.QueryDataRequest) (dat
 	return dsInfo, nil
 }
 
-func (s *Service) getDatasourceService(ctx context.Context, dsInfo datasourceInfo, routeName string) (datasourceService, error) {
-	srv, ok := dsInfo.Services[routeName]
-	if ok && srv.HTTPClient != nil {
-		// If the service already exists, return it
-		return dsInfo.Services[routeName], nil
-	}
-
-	route := dsInfo.Routes[routeName]
-	client, err := newHTTPClient(ctx, route, dsInfo, s.Cfg)
-	if err != nil {
-		return datasourceService{}, err
-	}
-	dsInfo.Services[routeName] = datasourceService{
-		URL:        dsInfo.Routes[routeName].URL,
-		HTTPClient: client,
-	}
-
-	return dsInfo.Services[routeName], nil
-}
-
-func (s *Service) getDSAssetsFromPluginReq(ctx context.Context, req *backend.QueryDataRequest, dsName string) (datasourceInfo, datasourceService, error) {
-	dsInfo, err := s.getDataSourceFromPluginReq(req)
-	if err != nil {
-		return datasourceInfo{}, datasourceService{}, err
-	}
-	service, err := s.getDatasourceService(ctx, dsInfo, dsName)
-	if err != nil {
-		return datasourceInfo{}, datasourceService{}, err
-	}
-	return dsInfo, service, nil
-}
-
-func (s *Service) newMux(executors map[string]azDatasourceExecutor) *datasource.QueryTypeMux {
+func (s *Service) newMux() *datasource.QueryTypeMux {
 	mux := datasource.NewQueryTypeMux()
-	for dsType := range executors {
+	for dsType := range s.executors {
 		// Make a copy of the string to keep the reference after the iterator
 		dst := dsType
 		mux.HandleFunc(dsType, func(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-			executor := executors[dst]
-			dsInfo, service, err := s.getDSAssetsFromPluginReq(ctx, req, dst)
+			executor := s.executors[dst]
+			dsInfo, err := s.getDataSourceFromPluginReq(req)
 			if err != nil {
 				return nil, err
+			}
+			service, ok := dsInfo.Services[dst]
+			if !ok {
+				return nil, fmt.Errorf("missing service for %s", dst)
 			}
 			return executor.executeTimeSeriesQuery(ctx, req.Queries, dsInfo, service.HTTPClient, service.URL)
 		})
@@ -179,15 +175,16 @@ func (s *Service) newMux(executors map[string]azDatasourceExecutor) *datasource.
 }
 
 func (s *Service) Init() error {
-	s.im = datasource.NewInstanceManager(NewInstanceSettings())
-	executors := map[string]azDatasourceExecutor{
-		azureMonitor:       &AzureMonitorDatasource{},
-		appInsights:        &ApplicationInsightsDatasource{},
-		azureLogAnalytics:  &AzureLogAnalyticsDatasource{},
-		insightsAnalytics:  &InsightsAnalyticsDatasource{},
-		azureResourceGraph: &AzureResourceGraphDatasource{},
+	proxy := &httpServiceProxy{}
+	s.executors = map[string]azDatasourceExecutor{
+		azureMonitor:       &AzureMonitorDatasource{proxy: proxy},
+		appInsights:        &ApplicationInsightsDatasource{proxy: proxy},
+		azureLogAnalytics:  &AzureLogAnalyticsDatasource{proxy: proxy},
+		insightsAnalytics:  &InsightsAnalyticsDatasource{proxy: proxy},
+		azureResourceGraph: &AzureResourceGraphDatasource{proxy: proxy},
 	}
-	mux := s.newMux(executors)
+	s.im = datasource.NewInstanceManager(NewInstanceSettings(s))
+	mux := s.newMux()
 	resourceMux := http.NewServeMux()
 	s.registerRoutes(resourceMux)
 	factory := coreplugin.New(backend.ServeOpts{

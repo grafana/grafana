@@ -20,7 +20,9 @@ import (
 )
 
 // ApplicationInsightsDatasource calls the application insights query API.
-type ApplicationInsightsDatasource struct{}
+type ApplicationInsightsDatasource struct {
+	proxy serviceProxy
+}
 
 // ApplicationInsightsQuery is the model that holds the information
 // needed to make a metrics query to Application Insights, and the information
@@ -39,6 +41,10 @@ type ApplicationInsightsQuery struct {
 	metricName  string
 	dimensions  []string
 	aggregation string
+}
+
+func (e *ApplicationInsightsDatasource) resourceRequest(rw http.ResponseWriter, req *http.Request, cli *http.Client) {
+	e.proxy.Do(rw, req, cli)
 }
 
 func (e *ApplicationInsightsDatasource) executeTimeSeriesQuery(ctx context.Context,

@@ -21,7 +21,9 @@ import (
 )
 
 // AzureMonitorDatasource calls the Azure Monitor API - one of the four API's supported
-type AzureMonitorDatasource struct{}
+type AzureMonitorDatasource struct {
+	proxy serviceProxy
+}
 
 var (
 	// 1m, 5m, 15m, 30m, 1h, 6h, 12h, 1d in milliseconds
@@ -29,6 +31,10 @@ var (
 )
 
 const azureMonitorAPIVersion = "2018-01-01"
+
+func (e *AzureMonitorDatasource) resourceRequest(rw http.ResponseWriter, req *http.Request, cli *http.Client) {
+	e.proxy.Do(rw, req, cli)
+}
 
 // executeTimeSeriesQuery does the following:
 // 1. build the AzureMonitor url and querystring for each query

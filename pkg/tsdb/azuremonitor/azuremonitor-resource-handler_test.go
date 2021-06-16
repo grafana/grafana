@@ -14,14 +14,12 @@ func Test_parseResourcePath(t *testing.T) {
 	tests := []struct {
 		name           string
 		original       string
-		expectedDS     string
 		expectedTarget string
 		Err            require.ErrorAssertionFunc
 	}{
 		{
 			"Path with a subscription",
 			"/azuremonitor/subscriptions/44693801",
-			azureMonitor,
 			"/subscriptions/44693801",
 			require.NoError,
 		},
@@ -29,16 +27,12 @@ func Test_parseResourcePath(t *testing.T) {
 			"Malformed path",
 			"/subscriptions?44693801",
 			"",
-			"",
 			require.Error,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			dsName, target, err := parseResourcePath(tt.original)
-			if dsName != tt.expectedDS {
-				t.Errorf("Unexpected ds name %s expecting %s", dsName, tt.expectedDS)
-			}
+			target, err := getTarget(tt.original)
 			if target != tt.expectedTarget {
 				t.Errorf("Unexpected target %s expecting %s", target, tt.expectedTarget)
 			}
@@ -100,16 +94,27 @@ func (s *fakeProxy) Do(rw http.ResponseWriter, req *http.Request, cli *http.Clie
 func Test_resourceHandler(t *testing.T) {
 	proxy := &fakeProxy{}
 	s := Service{
-		proxy: proxy,
-		im:    &fakeInstance{},
-		Cfg:   &setting.Cfg{},
+		im: &fakeInstance{
+			services: map[string]datasourceService{
+				azureMonitor: {
+					URL:        routes[azureMonitorPublic][azureMonitor].URL,
+					HTTPClient: &http.Client{},
+				},
+			},
+		},
+		Cfg: &setting.Cfg{},
+		executors: map[string]azDatasourceExecutor{
+			azureMonitor: &AzureMonitorDatasource{
+				proxy: proxy,
+			},
+		},
 	}
 	rw := httptest.NewRecorder()
 	req, err := http.NewRequest(http.MethodGet, "http://foo/azuremonitor/subscriptions/44693801", nil)
 	if err != nil {
 		t.Fatalf("Unexpected error %v", err)
 	}
-	s.resourceHandler(rw, req)
+	s.resourceHandler(azureMonitor)(rw, req)
 	expectedURL := "https://management.azure.com/subscriptions/44693801"
 	if proxy.requestedURL != expectedURL {
 		t.Errorf("Unexpected result URL. Got %s, expecting %s", proxy.requestedURL, expectedURL)

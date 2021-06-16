@@ -17,7 +17,9 @@ import (
 	"golang.org/x/net/context/ctxhttp"
 )
 
-type InsightsAnalyticsDatasource struct{}
+type InsightsAnalyticsDatasource struct {
+	proxy serviceProxy
+}
 
 type InsightsAnalyticsQuery struct {
 	RefID string
@@ -29,6 +31,10 @@ type InsightsAnalyticsQuery struct {
 
 	Params url.Values
 	Target string
+}
+
+func (e *InsightsAnalyticsDatasource) resourceRequest(rw http.ResponseWriter, req *http.Request, cli *http.Client) {
+	e.proxy.Do(rw, req, cli)
 }
 
 func (e *InsightsAnalyticsDatasource) executeTimeSeriesQuery(ctx context.Context,

@@ -17,21 +17,19 @@ var (
 )
 
 type azureAccessTokenProvider struct {
-	ctx        context.Context
 	cfg        *setting.Cfg
 	authParams *plugins.JwtTokenAuth
 }
 
-func NewAzureAccessTokenProvider(ctx context.Context, cfg *setting.Cfg,
+func NewAzureAccessTokenProvider(cfg *setting.Cfg,
 	authParams *plugins.JwtTokenAuth) *azureAccessTokenProvider {
 	return &azureAccessTokenProvider{
-		ctx:        ctx,
 		cfg:        cfg,
 		authParams: authParams,
 	}
 }
 
-func (provider *azureAccessTokenProvider) GetAccessToken() (string, error) {
+func (provider *azureAccessTokenProvider) GetAccessToken(ctx context.Context) (string, error) {
 	var credential TokenCredential
 
 	if provider.isManagedIdentityCredential() {
@@ -45,7 +43,7 @@ func (provider *azureAccessTokenProvider) GetAccessToken() (string, error) {
 		credential = provider.getClientSecretCredential()
 	}
 
-	accessToken, err := azureTokenCache.GetAccessToken(provider.ctx, credential, provider.authParams.Scopes)
+	accessToken, err := azureTokenCache.GetAccessToken(ctx, credential, provider.authParams.Scopes)
 	if err != nil {
 		return "", err
 	}

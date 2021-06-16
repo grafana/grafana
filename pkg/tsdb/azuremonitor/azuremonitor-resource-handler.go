@@ -10,21 +10,12 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
 )
 
-// Route definitions shared with the frontend.
-// Check: /public/app/plugins/datasource/grafana-azure-monitor-datasource/utils/common.ts <routeNames>
-var routeNames = map[string]string{
-	"azuremonitor": azureMonitor,
-	"appinsights":  appInsights,
-	"loganalytics": azureLogAnalytics,
-}
-
-func parseResourcePath(original string) (dsName string, target string, err error) {
+func getTarget(original string) (target string, err error) {
 	splittedPath := strings.Split(original, "/")
 	if len(splittedPath) < 3 {
 		err = fmt.Errorf("the request should contain the service on its path")
 		return
 	}
-	dsName = routeNames[splittedPath[1]]
 	target = fmt.Sprintf("/%s", strings.Join(splittedPath[2:], "/"))
 	return
 }
@@ -82,57 +73,53 @@ func (s *Service) getDataSourceFromHTTPReq(req *http.Request) (datasourceInfo, e
 	return i.(datasourceInfo), nil
 }
 
-func (s *Service) getDSAssetsFromHTTPReq(req *http.Request, dsName string) (datasourceInfo, datasourceService, error) {
-	dsInfo, err := s.getDataSourceFromHTTPReq(req)
-	if err != nil {
-		return datasourceInfo{}, datasourceService{}, err
+func (s *Service) resourceHandler(subDataSource string) func(rw http.ResponseWriter, req *http.Request) {
+	return func(rw http.ResponseWriter, req *http.Request) {
+		azlog.Debug("Received resource call", "url", req.URL.String(), "method", req.Method)
+
+		newPath, err := getTarget(req.URL.Path)
+		if err != nil {
+			rw.WriteHeader(http.StatusBadRequest)
+			_, err := rw.Write([]byte(err.Error()))
+			if err != nil {
+				azlog.Error("Unable to write HTTP response", "error", err)
+			}
+			return
+		}
+
+		dsInfo, err := s.getDataSourceFromHTTPReq(req)
+		if err != nil {
+			rw.WriteHeader(http.StatusInternalServerError)
+			_, err := rw.Write([]byte(fmt.Sprintf("unexpected error %v", err)))
+			if err != nil {
+				azlog.Error("Unable to write HTTP response", "error", err)
+			}
+			return
+		}
+
+		service := dsInfo.Services[subDataSource]
+		serviceURL, err := url.Parse(service.URL)
+		if err != nil {
+			rw.WriteHeader(http.StatusInternalServerError)
+			_, err := rw.Write([]byte(fmt.Sprintf("unexpected error %v", err)))
+			if err != nil {
+				azlog.Error("Unable to write HTTP response", "error", err)
+			}
+			return
+		}
+		req.URL.Path = newPath
+		req.URL.Host = serviceURL.Host
+		req.URL.Scheme = serviceURL.Scheme
+
+		s.executors[subDataSource].resourceRequest(rw, req, service.HTTPClient)
 	}
-	service, err := s.getDatasourceService(req.Context(), dsInfo, dsName)
-	if err != nil {
-		return datasourceInfo{}, datasourceService{}, err
-	}
-	return dsInfo, service, nil
 }
 
-func (s *Service) resourceHandler(rw http.ResponseWriter, req *http.Request) {
-	azlog.Debug("Received resource call", "url", req.URL.String(), "method", req.Method)
-
-	dsName, newPath, err := parseResourcePath(req.URL.Path)
-	if err != nil {
-		rw.WriteHeader(http.StatusBadRequest)
-		_, err := rw.Write([]byte(err.Error()))
-		if err != nil {
-			azlog.Error("Unable to write HTTP response", "error", err)
-		}
-		return
-	}
-
-	_, service, err := s.getDSAssetsFromHTTPReq(req, dsName)
-	if err != nil {
-		rw.WriteHeader(http.StatusInternalServerError)
-		_, err := rw.Write([]byte(fmt.Sprintf("unexpected error %v", err)))
-		if err != nil {
-			azlog.Error("Unable to write HTTP response", "error", err)
-		}
-		return
-	}
-
-	serviceURL, err := url.Parse(service.URL)
-	if err != nil {
-		rw.WriteHeader(http.StatusInternalServerError)
-		_, err := rw.Write([]byte(fmt.Sprintf("unexpected error %v", err)))
-		if err != nil {
-			azlog.Error("Unable to write HTTP response", "error", err)
-		}
-		return
-	}
-	req.URL.Path = newPath
-	req.URL.Host = serviceURL.Host
-	req.URL.Scheme = serviceURL.Scheme
-
-	s.proxy.Do(rw, req, service.HTTPClient)
-}
-
+// Route definitions shared with the frontend.
+// Check: /public/app/plugins/datasource/grafana-azure-monitor-datasource/utils/common.ts <routeNames>
 func (s *Service) registerRoutes(mux *http.ServeMux) {
-	mux.HandleFunc("/", s.resourceHandler)
+	mux.HandleFunc("/azuremonitor/", s.resourceHandler(azureMonitor))
+	mux.HandleFunc("/appinsights/", s.resourceHandler(appInsights))
+	mux.HandleFunc("/loganalytics/", s.resourceHandler(azureLogAnalytics))
+	mux.HandleFunc("/resourcegraph/", s.resourceHandler(azureResourceGraph))
 }

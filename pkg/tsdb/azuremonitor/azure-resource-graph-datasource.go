@@ -22,7 +22,9 @@ import (
 )
 
 // AzureResourceGraphDatasource calls the Azure Resource Graph API's
-type AzureResourceGraphDatasource struct{}
+type AzureResourceGraphDatasource struct {
+	proxy serviceProxy
+}
 
 // AzureResourceGraphQuery is the query request that is built from the saved values for
 // from the UI
@@ -37,6 +39,10 @@ type AzureResourceGraphQuery struct {
 
 const argAPIVersion = "2021-03-01"
 const argQueryProviderName = "/providers/Microsoft.ResourceGraph/resources"
+
+func (e *AzureResourceGraphDatasource) resourceRequest(rw http.ResponseWriter, req *http.Request, cli *http.Client) {
+	e.proxy.Do(rw, req, cli)
+}
 
 // executeTimeSeriesQuery does the following:
 // 1. builds the AzureMonitor url and querystring for each query

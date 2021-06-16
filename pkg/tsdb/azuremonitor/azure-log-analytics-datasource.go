@@ -22,7 +22,9 @@ import (
 )
 
 // AzureLogAnalyticsDatasource calls the Azure Log Analytics API's
-type AzureLogAnalyticsDatasource struct{}
+type AzureLogAnalyticsDatasource struct {
+	proxy serviceProxy
+}
 
 // AzureLogAnalyticsQuery is the query request that is built from the saved values for
 // from the UI
@@ -34,6 +36,10 @@ type AzureLogAnalyticsQuery struct {
 	Params       url.Values
 	Target       string
 	TimeRange    backend.TimeRange
+}
+
+func (e *AzureLogAnalyticsDatasource) resourceRequest(rw http.ResponseWriter, req *http.Request, cli *http.Client) {
+	e.proxy.Do(rw, req, cli)
 }
 
 // executeTimeSeriesQuery does the following:

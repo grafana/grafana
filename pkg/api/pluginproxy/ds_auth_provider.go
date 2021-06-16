@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/tokenprovider"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -89,13 +88,6 @@ func getTokenProvider(ctx context.Context, cfg *setting.Cfg, ds *models.DataSour
 	}
 
 	switch authType {
-	case "azure":
-		if tokenAuth == nil {
-			return nil, fmt.Errorf("'tokenAuth' not configured for authentication type '%s'", authType)
-		}
-		provider := tokenprovider.NewAzureAccessTokenProvider(ctx, cfg, tokenAuth)
-		return provider, nil
-
 	case "gce":
 		if jwtTokenAuth == nil {
 			return nil, fmt.Errorf("'jwtTokenAuth' not configured for authentication type '%s'", authType)
