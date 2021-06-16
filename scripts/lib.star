@@ -124,7 +124,7 @@ def init_steps(edition, platform, ver_mode, is_downstream=False, install_deps=Tr
             committish = '${DRONE_TAG}'
             source_commit = ' ${DRONE_TAG}'
         elif ver_mode == 'test-release':
-            committish = 'main'
+            committish = 'master'
         elif ver_mode == 'release-branch':
             committish = '${DRONE_BRANCH}'
         else:
@@ -152,7 +152,6 @@ def init_steps(edition, platform, ver_mode, is_downstream=False, install_deps=Tr
                 'image': build_image,
                 'environment': {
                     'DOCKERIZE_VERSION': dockerize_version,
-                    'DRONE_TARGET_BRANCH':'main',
                 },
                 'depends_on': [
                     'clone',
@@ -946,7 +945,6 @@ def get_windows_steps(edition, ver_mode, is_downstream=False):
             'name': 'initialize',
             'image': wix_image,
             'commands': init_cmds,
-            'environment': {},
         },
     ]
     if (ver_mode == 'master' and (edition not in ('enterprise', 'enterprise2') or is_downstream)) or ver_mode in (
@@ -1005,7 +1003,7 @@ def get_windows_steps(edition, ver_mode, is_downstream=False):
         if ver_mode == 'release':
             committish = '${DRONE_TAG}'
         elif ver_mode == 'test-release':
-            committish = 'main'
+            committish = 'master'
         elif ver_mode == 'release-branch':
             committish = '$$env:DRONE_BRANCH'
         else:
@@ -1033,7 +1031,6 @@ def get_windows_steps(edition, ver_mode, is_downstream=False):
             },
             'commands': download_grabpl_cmds + clone_cmds,
         })
-        steps[1]['environment']['DRONE_TARGET_BRANCH'] = 'main'
         steps[1]['depends_on'] = [
             'clone',
         ]
@@ -1043,7 +1040,7 @@ def get_windows_steps(edition, ver_mode, is_downstream=False):
             'rm -r -force grafana-enterprise',
             'cp grabpl.exe C:\\App\\grabpl.exe',
             'rm -force grabpl.exe',
-            'C:\\App\\grabpl.exe init-enterprise C:\\App\\grafana-enterprise {}'.format(committish),
+            'C:\\App\\grabpl.exe init-enterprise C:\\App\\grafana-enterprise{}'.format(source_commit),
             'cp C:\\App\\grabpl.exe grabpl.exe',
             '.\\grabpl.exe verify-drone',
         ])
