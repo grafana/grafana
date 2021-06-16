@@ -12,6 +12,7 @@ import { Icon } from '../Icon/Icon';
 import { FormField } from '../FormField/FormField';
 import { InlineFormLabel } from '../FormLabel/FormLabel';
 import { TagsInput } from '../TagsInput/TagsInput';
+import { AzureAuthSettings } from './AzureAuthSettings';
 import { SigV4AuthSettings } from './SigV4AuthSettings';
 import { useTheme } from '../../themes';
 import { HttpSettingsProps } from './types';
@@ -236,6 +237,10 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = (props) => {
               <BasicAuthSettings {...props} />
             </div>
           </>
+        )}
+
+        {dataSourceConfig.jsonData.azureAuth && (
+          <AzureAuthSettings dataSourceConfig={dataSourceConfig} onChange={onChange} />
         )}
 
         {dataSourceConfig.jsonData.sigV4Auth && <SigV4AuthSettings {...props} />}

@@ -40,6 +40,15 @@ export const HttpProxySettings: React.FC<HttpSettingsBaseProps> = ({ dataSourceC
           tooltip="Forward the user's upstream OAuth identity to the data source (Their access token gets passed along)."
         />
       </div>
+      <div className="gf-form-inline">
+        <Switch
+          label="Azure Authentication"
+          labelClass="width-13"
+          checked={dataSourceConfig.jsonData.azureAuth || false}
+          onChange={(event) => onChange({ ...dataSourceConfig.jsonData, azureAuth: event!.currentTarget.checked })}
+          tooltip="Use Azure authentication for Azure endpoint."
+        />
+      </div>
     </>
   );
 };
