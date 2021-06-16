@@ -1996,7 +1996,7 @@ steps:
   - chmod +x bin/grabpl
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
   - cd grafana-enterprise
-  - git checkout master
+  - git checkout main
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -2379,7 +2379,7 @@ steps:
   - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.58/windows/grabpl.exe -OutFile grabpl.exe
   - git clone "https://$$env:GITHUB_TOKEN@github.com/grafana/grafana-enterprise.git"
   - cd grafana-enterprise
-  - git checkout master
+  - git checkout main
   environment:
     GITHUB_TOKEN:
       from_secret: github_token

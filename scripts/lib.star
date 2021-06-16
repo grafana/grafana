@@ -124,7 +124,7 @@ def init_steps(edition, platform, ver_mode, is_downstream=False, install_deps=Tr
             committish = '${DRONE_TAG}'
             source_commit = ' ${DRONE_TAG}'
         elif ver_mode == 'test-release':
-            committish = 'master'
+            committish = 'main'
         elif ver_mode == 'release-branch':
             committish = '${DRONE_BRANCH}'
         else:
@@ -1003,7 +1003,7 @@ def get_windows_steps(edition, ver_mode, is_downstream=False):
         if ver_mode == 'release':
             committish = '${DRONE_TAG}'
         elif ver_mode == 'test-release':
-            committish = 'master'
+            committish = 'main'
         elif ver_mode == 'release-branch':
             committish = '$$env:DRONE_BRANCH'
         else:
