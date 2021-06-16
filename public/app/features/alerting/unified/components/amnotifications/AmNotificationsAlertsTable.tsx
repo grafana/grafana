@@ -9,9 +9,10 @@ import { css } from '@emotion/css';
 
 interface Props {
   alerts: AlertmanagerAlert[];
+  alertManagerSourceName: string;
 }
 
-export const AmNotificationsAlertsTable = ({ alerts }: Props) => {
+export const AmNotificationsAlertsTable = ({ alerts, alertManagerSourceName }: Props) => {
   const tableStyles = useStyles2(getAlertTableStyles);
   const styles = useStyles2(getStyles);
   return (
@@ -33,6 +34,7 @@ export const AmNotificationsAlertsTable = ({ alerts }: Props) => {
               <AmNotificationsAlertsTableRow
                 className={index % 2 === 0 ? tableStyles.evenRow : undefined}
                 alert={alert}
+                alertManagerSourceName={alertManagerSourceName}
                 key={alert.fingerprint}
               />
             );

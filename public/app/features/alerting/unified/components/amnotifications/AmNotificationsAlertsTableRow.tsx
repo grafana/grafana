@@ -1,21 +1,33 @@
 import { AlertmanagerAlert, AlertState } from 'app/plugins/datasource/alertmanager/types';
 
 import React, { useState } from 'react';
-import { GrafanaTheme2, intervalToAbbreviatedDurationString } from '@grafana/data';
+import { GrafanaTheme2, intervalToAbbreviatedDurationString, Labels } from '@grafana/data';
 import { AmAlertStateTag } from '../silences/AmAlertStateTag';
 import { AlertLabels } from '../AlertLabels';
 import { CollapseToggle } from '../CollapseToggle';
-import { Button, LinkButton, useStyles2 } from '@grafana/ui';
+import { LinkButton, useStyles2 } from '@grafana/ui';
 import { css } from '@emotion/css';
+import { makeAMLink } from '../../utils/misc';
 
 interface Props {
   className?: string;
   alert: AlertmanagerAlert;
+  alertManagerSourceName: string;
 }
 
-export const AmNotificationsAlertsTableRow = ({ alert, className }: Props) => {
+export const AmNotificationsAlertsTableRow = ({ alert, alertManagerSourceName, className }: Props) => {
   const [isCollapsed, setIsCollapsed] = useState<boolean>(true);
   const styles = useStyles2(getStyles);
+
+  const getMatcherQueryParams = (labels: Labels) => {
+    return `matchers=${encodeURIComponent(
+      Object.entries(labels)
+        .map(([labelKey, labelValue]) => {
+          return `${labelKey}=${labelValue}`;
+        })
+        .join(',')
+    )}`;
+  };
 
   return (
     <>
@@ -43,9 +55,29 @@ export const AmNotificationsAlertsTableRow = ({ alert, className }: Props) => {
             <td />
             <td colSpan={2}>
               {alert.status.state === AlertState.Suppressed && (
-                <Button className={styles.button} icon={'bell'} size={'sm'}>
-                  Unsilence
-                </Button>
+                <LinkButton
+                  href={`${makeAMLink(
+                    '/alerting/silences',
+                    alertManagerSourceName
+                  )}&silenceIds=${alert.status.silencedBy.join(',')}`}
+                  className={styles.button}
+                  icon={'bell'}
+                  size={'sm'}
+                >
+                  Manage silences
+                </LinkButton>
+              )}
+              {alert.status.state === AlertState.Active && (
+                <LinkButton
+                  href={`${makeAMLink('/alerting/silence/new', alertManagerSourceName)}&${getMatcherQueryParams(
+                    alert.labels
+                  )}`}
+                  className={styles.button}
+                  icon={'bell-slash'}
+                  size={'sm'}
+                >
+                  Silence
+                </LinkButton>
               )}
               {alert.generatorURL && (
                 <LinkButton className={styles.button} href={alert.generatorURL} icon={'chart-line'} size={'sm'}>
