@@ -1,4 +1,4 @@
-import { isString, isArray, isEqual } from 'lodash';
+import { isArray, isEqual } from 'lodash';
 import { ScopedVars, UrlQueryMap, VariableType } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 
@@ -6,6 +6,7 @@ import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from './state/types';
 import { QueryVariableModel, VariableModel, VariableRefresh } from './types';
 import { getTimeSrv } from '../dashboard/services/TimeSrv';
 import { variableAdapters } from './adapters';
+import { safeStringifyValue } from 'app/core/utils/explore';
 
 /*
  * This regex matches 3 types of variable reference with an optional format specifier
@@ -51,7 +52,7 @@ export const getSearchFilterScopedVar = (args: {
 
 export function containsVariable(...args: any[]) {
   const variableName = args[args.length - 1];
-  args[0] = isString(args[0]) ? args[0] : Object['values'](args[0]).join(' ');
+  args[0] = typeof args[0] === 'string' ? args[0] : safeStringifyValue(args[0]);
   const variableString = args.slice(0, -1).join(' ');
   const matches = variableString.match(variableRegex);
   const isMatchingVariable =
