@@ -41,7 +41,7 @@ import { variableAdapters } from 'app/features/variables/adapters';
 import { onTimeRangeUpdated } from 'app/features/variables/state/actions';
 import { dispatch } from '../../../store/store';
 import { isAllVariable } from '../../variables/utils';
-import { DashboardPanelsChangedEvent, RefreshEvent, RenderEvent } from 'app/types/events';
+import { DashboardPanelsChangedEvent, RefreshEvent, RenderEvent, TimeRangeUpdatedEvent } from 'app/types/events';
 import { getTimeSrv } from '../services/TimeSrv';
 
 export interface CloneOptions {
@@ -318,7 +318,7 @@ export class DashboardModel {
   }
 
   timeRangeUpdated(timeRange: TimeRange) {
-    this.events.emit(CoreEvents.timeRangeUpdated, timeRange);
+    this.events.publish(new TimeRangeUpdatedEvent(timeRange));
     dispatch(onTimeRangeUpdated(timeRange));
   }
 
