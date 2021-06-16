@@ -1,6 +1,6 @@
 import React, { FC, useEffect, useState } from 'react';
 import { cx, css, keyframes } from '@emotion/css';
-import { useStyles2 } from '@grafana/ui';
+import { useStyles2, styleMixins } from '@grafana/ui';
 import { Branding } from '../Branding/Branding';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Footer } from '../Footer/Footer';
@@ -79,8 +79,12 @@ export const getLoginStyles = (theme: GrafanaTheme2) => {
     `,
     loginLogo: css`
       width: 100%;
-      max-width: 100px;
+      max-width: 60px;
       margin-bottom: 15px;
+
+      @media ${styleMixins.mediaUp(theme.v1.breakpoints.sm)} {
+        max-width: 100px;
+      }
     `,
     loginLogoWrapper: css`
       display: flex;
@@ -93,7 +97,11 @@ export const getLoginStyles = (theme: GrafanaTheme2) => {
       text-align: center;
     `,
     mainTitle: css`
-      font-size: 32px;
+      font-size: 22px;
+
+      @media ${styleMixins.mediaUp(theme.v1.breakpoints.sm)} {
+        font-size: 32px;
+      }
     `,
     subTitle: css`
       font-size: ${theme.typography.size.md};
@@ -101,18 +109,23 @@ export const getLoginStyles = (theme: GrafanaTheme2) => {
     `,
     loginContent: css`
       max-width: 478px;
-      width: 100%;
+      width: calc(100% - 2rem);
       display: flex;
       align-items: stretch;
       flex-direction: column;
       position: relative;
-      justify-content: center;
+      justify-content: flex-start;
       z-index: 1;
       min-height: 320px;
       border-radius: ${theme.shape.borderRadius(4)};
       padding: ${theme.spacing(2, 0)};
       opacity: 0;
       transition: opacity 0.5s ease-in-out;
+
+      @media ${styleMixins.mediaUp(theme.v1.breakpoints.sm)} {
+        min-height: 320px;
+        justify-content: center;
+      }
     `,
     loginOuterBox: css`
       display: flex;

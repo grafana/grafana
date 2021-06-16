@@ -4,6 +4,7 @@ import { Matcher, Route } from 'app/plugins/datasource/alertmanager/types';
 import { FormAmRoute } from '../types/amroutes';
 import { parseInterval, timeOptions } from './time';
 import { parseMatcher, stringifyMatcher } from './alertmanager';
+import { isUndefined, omitBy } from 'lodash';
 
 const defaultValueAndType: [string, string] = ['', timeOptions[0].value];
 
@@ -51,8 +52,8 @@ export const emptyArrayFieldMatcher: Matcher = {
 
 export const emptyRoute: FormAmRoute = {
   id: '',
-  matchers: [emptyArrayFieldMatcher],
   groupBy: [],
+  matchers: [],
   routes: [],
   continue: false,
   receiver: '',
@@ -133,7 +134,7 @@ export const formAmRouteToAmRoute = (formAmRoute: FormAmRoute, id2ExistingRoute:
     amRoute.receiver = formAmRoute.receiver;
   }
 
-  return amRoute;
+  return omitBy(amRoute, isUndefined);
 };
 
 export const stringToSelectableValue = (str: string): SelectableValue<string> => ({
