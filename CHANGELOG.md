@@ -329,7 +329,7 @@ The InfoBox & FeatureInfoBox are now deprecated please use the Alert component i
 
 <!-- 7.5.8 START -->
 
-# 7.5.8 (2021-06-15)
+# 7.5.8 (2021-06-16)
 
 ### Features and enhancements
 
