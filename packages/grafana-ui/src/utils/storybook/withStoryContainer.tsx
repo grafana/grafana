@@ -1,6 +1,7 @@
 import React from 'react';
 import { css, cx } from '@emotion/css';
 import { RenderFunction } from '../../types';
+import { StoryContext } from '@storybook/react';
 
 const StoryContainer: React.FC<{ width?: number; height?: number; showBoundaries: boolean }> = ({
   children,
@@ -42,9 +43,13 @@ const StoryContainer: React.FC<{ width?: number; height?: number; showBoundaries
   );
 };
 
-export const withStoryContainer = (story: RenderFunction) => {
+export const withStoryContainer = (story: RenderFunction, context: StoryContext) => {
   return (
-    <StoryContainer width={300} height={0} showBoundaries={false}>
+    <StoryContainer
+      width={context.args.containerWidth}
+      height={context.args.ContainerHeight}
+      showBoundaries={context.args.showBoundaries}
+    >
       {story()}
     </StoryContainer>
   );
