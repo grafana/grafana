@@ -7,6 +7,7 @@ import (
 	"testing"
 	"testing/fstest"
 
+	"github.com/grafana/grafana/pkg/schema"
 	"github.com/grafana/grafana/pkg/schema/load"
 	"github.com/laher/mergefs"
 	"github.com/stretchr/testify/assert"
@@ -102,7 +103,7 @@ func TestValidateScuemataBasics(t *testing.T) {
 					require.NoError(t, err, "error while loading base dashboard scuemata")
 
 					err = validateResources(b, baseLoadPaths, load.DistDashboardFamily)
-					require.NoError(t, err, "error while loading base dashboard scuemata")
+					require.NoError(t, err, "error while loading dist dashboard scuemata")
 				})
 			}
 			if d.Name() == "invalid.json" {
@@ -115,6 +116,31 @@ func TestValidateScuemataBasics(t *testing.T) {
 				})
 			}
 
+			return nil
+		}))
+	})
+
+	t.Run("Testing validate resources against devenv directory", func(t *testing.T) {
+		var baseLoadPaths = load.BaseLoadPaths{
+			BaseCueFS:       defaultBaseLoadPaths.BaseCueFS,
+			DistPluginCueFS: defaultBaseLoadPaths.DistPluginCueFS,
+		}
+
+		require.NoError(t, filepath.Walk("../../../../devenv/dev-dashboards/", func(path string, info os.FileInfo, err error) error {
+			require.NoError(t, err)
+			if !info.IsDir() {
+				// Ignore gosec warning G304 since it's a test
+				// nolint:gosec
+				b, err := os.Open(path)
+				require.NoError(t, err, "failed to open resource file")
+
+				err = validateResources(b, baseLoadPaths, load.BaseDashboardFamily)
+				cueError := schema.WrapCUEError(err)
+				require.NoError(t, cueError, "error while loading base dashboard scuemata")
+
+				err = validateResources(b, baseLoadPaths, load.DistDashboardFamily)
+				require.NoError(t, err, "error while loading dist dashboard scuemata")
+			}
 			return nil
 		}))
 	})

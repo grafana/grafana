@@ -430,7 +430,7 @@ func WrapCUEError(err error) error {
 	var cErr errs.Error
 	m := make(map[int]string)
 	if ok := errors.As(err, &cErr); ok {
-		for _, e := range errs.Errors(err) {
+		for _, e := range errs.Errors(cErr) {
 			if e.Position().File() != nil {
 				line := e.Position().Line()
 				m[line] = fmt.Sprintf("%q: in file %s", err, e.Position().File().Name())
