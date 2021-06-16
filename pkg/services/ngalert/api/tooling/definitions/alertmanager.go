@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"reflect"
 
+	"github.com/go-openapi/strfmt"
+	"github.com/pkg/errors"
 	amv2 "github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/alertmanager/config"
 	"gopkg.in/yaml.v3"
@@ -37,6 +39,14 @@ import (
 //
 //     Responses:
 //       200: Ack
+//       400: ValidationError
+
+// swagger:route GET /api/alertmanager/{Recipient}/api/v2/status alertmanager RouteGetAMStatus
+//
+// get alertmanager status and configuration
+//
+//     Responses:
+//       200: GettableStatus
 //       400: ValidationError
 
 // swagger:route GET /api/alertmanager/{Recipient}/api/v2/alerts alertmanager RouteGetAMAlerts
@@ -114,6 +124,79 @@ type GetSilencesParams struct {
 }
 
 // swagger:model
+type GettableStatus struct {
+	// cluster
+	// Required: true
+	Cluster *amv2.ClusterStatus `json:"cluster"`
+
+	// config
+	// Required: true
+	Config *PostableApiAlertingConfig `json:"config"`
+
+	// uptime
+	// Required: true
+	// Format: date-time
+	Uptime *strfmt.DateTime `json:"uptime"`
+
+	// version info
+	// Required: true
+	VersionInfo *amv2.VersionInfo `json:"versionInfo"`
+}
+
+func (s *GettableStatus) UnmarshalJSON(b []byte) error {
+	amStatus := amv2.AlertmanagerStatus{}
+	if err := json.Unmarshal(b, &amStatus); err != nil {
+		return err
+	}
+
+	c := config.Config{}
+	if err := yaml.Unmarshal([]byte(*amStatus.Config.Original), &c); err != nil {
+		return err
+	}
+
+	s.Cluster = amStatus.Cluster
+	s.Config = &PostableApiAlertingConfig{Config: Config{
+		Global:       c.Global,
+		Route:        c.Route,
+		InhibitRules: c.InhibitRules,
+		Templates:    c.Templates,
+	}}
+	s.Uptime = amStatus.Uptime
+	s.VersionInfo = amStatus.VersionInfo
+
+	type overrides struct {
+		Receivers *[]*PostableApiReceiver `yaml:"receivers,omitempty" json:"receivers,omitempty"`
+	}
+
+	if err := yaml.Unmarshal([]byte(*amStatus.Config.Original), &overrides{Receivers: &s.Config.Receivers}); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func NewGettableStatus(cfg *PostableApiAlertingConfig) *GettableStatus {
+	// In Grafana, the only field we support is Config.
+	cs := amv2.ClusterStatusStatusDisabled
+	na := "N/A"
+	return &GettableStatus{
+		Cluster: &amv2.ClusterStatus{
+			Status: &cs,
+			Peers:  []*amv2.PeerStatus{},
+		},
+		VersionInfo: &amv2.VersionInfo{
+			Branch:    &na,
+			BuildDate: &na,
+			BuildUser: &na,
+			GoVersion: &na,
+			Revision:  &na,
+			Version:   &na,
+		},
+		Config: cfg,
+	}
+}
+
+// swagger:model
 type PostableSilence = amv2.PostableSilence
 
 // swagger:model
@@ -182,7 +265,7 @@ type BodyAlertingConfig struct {
 }
 
 // alertmanager routes
-// swagger:parameters RoutePostAlertingConfig RouteGetAlertingConfig RouteDeleteAlertingConfig RouteGetAMAlerts RoutePostAMAlerts RouteGetAMAlertGroups RouteGetSilences RouteCreateSilence RouteGetSilence RouteDeleteSilence RoutePostAlertingConfig
+// swagger:parameters RoutePostAlertingConfig RouteGetAlertingConfig RouteDeleteAlertingConfig RouteGetAMStatus RouteGetAMAlerts RoutePostAMAlerts RouteGetAMAlertGroups RouteGetSilences RouteCreateSilence RouteGetSilence RouteDeleteSilence RoutePostAlertingConfig
 // ruler routes
 // swagger:parameters RouteGetRulesConfig RoutePostNameRulesConfig RouteGetNamespaceRulesConfig RouteDeleteNamespaceRulesConfig RouteGetRulegGroupConfig RouteDeleteRuleGroupConfig
 // prom routes
@@ -484,10 +567,26 @@ func (c *Config) UnmarshalJSON(b []byte) error {
 		}
 	}
 
-	if c.Route != nil {
-		if err := c.Route.UnmarshalYAML(noopUnmarshal); err != nil {
-			return err
-		}
+	if c.Route == nil {
+		return fmt.Errorf("no routes provided")
+	}
+
+	// Route is a recursive structure that includes validation in the yaml unmarshaler.
+	// Therefore, we'll redirect json -> yaml to utilize these.
+	b, err := yaml.Marshal(c.Route)
+	if err != nil {
+		return errors.Wrap(err, "marshaling route to yaml for validation")
+	}
+	err = yaml.Unmarshal(b, c.Route)
+	if err != nil {
+		return errors.Wrap(err, "unmarshaling route for validations")
+	}
+
+	if len(c.Route.Receiver) == 0 {
+		return fmt.Errorf("root route must specify a default receiver")
+	}
+	if len(c.Route.Match) > 0 || len(c.Route.MatchRE) > 0 {
+		return fmt.Errorf("root route must not have any matchers")
 	}
 
 	for _, r := range c.InhibitRules {

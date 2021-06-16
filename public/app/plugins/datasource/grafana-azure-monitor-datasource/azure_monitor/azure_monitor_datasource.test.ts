@@ -3,7 +3,7 @@ import AzureMonitorDatasource from '../datasource';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { DataSourceInstanceSettings } from '@grafana/data';
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
-import { AzureDataSourceJsonData } from '../types';
+import { AzureDataSourceJsonData, DatasourceValidationResult } from '../types';
 
 const templateSrv = new TemplateSrv();
 
@@ -47,17 +47,14 @@ describe('AzureMonitorDatasource', () => {
       };
 
       beforeEach(() => {
-        ctx.instanceSettings.jsonData.tenantId = 'xxx';
-        ctx.instanceSettings.jsonData.clientId = 'xxx';
+        ctx.instanceSettings.jsonData.azureAuthType = 'msi';
         datasourceRequestMock.mockImplementation(() => Promise.reject(error));
       });
 
       it('should return error status and a detailed error message', () => {
-        return ctx.ds.testDatasource().then((results: any) => {
-          expect(results.status).toEqual('error');
-          expect(results.message).toEqual(
-            '1. Azure Monitor: Bad Request: InvalidApiVersionParameter. An error message. '
-          );
+        return ctx.ds.azureMonitorDatasource.testDatasource().then((result: DatasourceValidationResult) => {
+          expect(result.status).toEqual('error');
+          expect(result.message).toEqual('Azure Monitor: Bad Request: InvalidApiVersionParameter. An error message.');
         });
       });
     });
@@ -78,8 +75,8 @@ describe('AzureMonitorDatasource', () => {
       });
 
       it('should return success status', () => {
-        return ctx.ds.testDatasource().then((results: any) => {
-          expect(results.status).toEqual('success');
+        return ctx.ds.azureMonitorDatasource.testDatasource().then((result: DatasourceValidationResult) => {
+          expect(result.status).toEqual('success');
         });
       });
     });
@@ -99,6 +96,7 @@ describe('AzureMonitorDatasource', () => {
       };
 
       beforeEach(() => {
+        ctx.instanceSettings.jsonData.azureAuthType = 'msi';
         datasourceRequestMock.mockImplementation(() => Promise.resolve(response));
       });
 
@@ -187,7 +185,7 @@ describe('AzureMonitorDatasource', () => {
       it('should return a list of namespaces', async () => {
         const results = await ctx.ds.metricFindQuery('Namespaces(nodesapp)');
         expect(results.length).toEqual(1);
-        expect(results[0].text).toEqual('Microsoft.Network/networkInterfaces');
+        expect(results[0].text).toEqual('Network interface');
         expect(results[0].value).toEqual('Microsoft.Network/networkInterfaces');
       });
     });
@@ -218,7 +216,7 @@ describe('AzureMonitorDatasource', () => {
       it('should return a list of namespaces', async () => {
         const results = await ctx.ds.metricFindQuery('namespaces(11112222-eeee-4949-9b2d-9106972f9123, nodesapp)');
         expect(results.length).toEqual(1);
-        expect(results[0].text).toEqual('Microsoft.Network/networkInterfaces');
+        expect(results[0].text).toEqual('Network interface');
         expect(results[0].value).toEqual('Microsoft.Network/networkInterfaces');
       });
     });
@@ -515,10 +513,11 @@ describe('AzureMonitorDatasource', () => {
     };
 
     beforeEach(() => {
+      ctx.instanceSettings.jsonData.azureAuthType = 'msi';
       datasourceRequestMock.mockImplementation(() => Promise.resolve(response));
     });
 
-    it('should return list of Resource Groups', () => {
+    it('should return list of subscriptions', () => {
       return ctx.ds.getSubscriptions().then((results: Array<{ text: string; value: string }>) => {
         expect(results.length).toEqual(1);
         expect(results[0].text).toEqual('Primary Subscription');
@@ -597,11 +596,11 @@ describe('AzureMonitorDatasource', () => {
         .getMetricDefinitions('9935389e-9122-4ef9-95f9-1513dd24753f', 'nodesapp')
         .then((results: Array<{ text: string; value: string }>) => {
           expect(results.length).toEqual(7);
-          expect(results[0].text).toEqual('Microsoft.Network/networkInterfaces');
+          expect(results[0].text).toEqual('Network interface');
           expect(results[0].value).toEqual('Microsoft.Network/networkInterfaces');
-          expect(results[1].text).toEqual('Microsoft.Compute/virtualMachines');
+          expect(results[1].text).toEqual('Virtual machine');
           expect(results[1].value).toEqual('Microsoft.Compute/virtualMachines');
-          expect(results[2].text).toEqual('Microsoft.Storage/storageAccounts');
+          expect(results[2].text).toEqual('Storage account');
           expect(results[2].value).toEqual('Microsoft.Storage/storageAccounts');
           expect(results[3].text).toEqual('Microsoft.Storage/storageAccounts/blobServices');
           expect(results[3].value).toEqual('Microsoft.Storage/storageAccounts/blobServices');

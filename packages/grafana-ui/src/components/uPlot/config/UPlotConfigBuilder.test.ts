@@ -345,9 +345,10 @@ describe('UPlotConfigBuilder', () => {
             "size": [Function],
             "space": [Function],
             "splits": undefined,
-            "stroke": "rgb(201, 209, 217)",
+            "stroke": "rgb(204, 204, 220)",
             "ticks": Object {
               "show": true,
+              "size": 4,
               "stroke": "rgba(240, 250, 255, 0.09)",
               "width": 1,
             },
@@ -405,7 +406,6 @@ describe('UPlotConfigBuilder', () => {
     builder.addSeries({
       drawStyle: DrawStyle.Line,
       scaleKey: 'scale-x',
-      fieldName: 'A-series',
       lineColor: '#0000ff',
       theme: darkTheme,
     });
@@ -418,7 +418,6 @@ describe('UPlotConfigBuilder', () => {
     builder.addSeries({
       drawStyle: DrawStyle.Line,
       scaleKey: 'scale-x',
-      fieldName: 'A-series',
       lineColor: '#FFAABB',
       fillOpacity: 50,
       theme: darkTheme,
@@ -432,7 +431,6 @@ describe('UPlotConfigBuilder', () => {
     builder.addSeries({
       drawStyle: DrawStyle.Line,
       scaleKey: 'scale-x',
-      fieldName: 'A-series',
       lineColor: '#FFAABB',
       fillOpacity: 50,
       fillColor: '#FF0000',
@@ -447,7 +445,6 @@ describe('UPlotConfigBuilder', () => {
     builder.addSeries({
       drawStyle: DrawStyle.Line,
       scaleKey: 'scale-x',
-      fieldName: 'A-series',
       lineColor: '#FFAABB',
       fillOpacity: 50,
       gradientMode: GraphGradientMode.Opacity,
@@ -462,7 +459,6 @@ describe('UPlotConfigBuilder', () => {
     builder.addSeries({
       drawStyle: DrawStyle.Line,
       scaleKey: 'scale-x',
-      fieldName: 'A-series',
       fillOpacity: 50,
       gradientMode: GraphGradientMode.Opacity,
       showPoints: PointVisibility.Auto,
@@ -524,7 +520,6 @@ describe('UPlotConfigBuilder', () => {
       builder.addSeries({
         drawStyle: DrawStyle.Line,
         scaleKey: 'scale-x',
-        fieldName: 'A-series',
         fillOpacity: 50,
         gradientMode: GraphGradientMode.Opacity,
         showPoints: PointVisibility.Auto,
@@ -536,7 +531,6 @@ describe('UPlotConfigBuilder', () => {
       builder.addSeries({
         drawStyle: DrawStyle.Line,
         scaleKey: 'scale-x',
-        fieldName: 'B-series',
         fillOpacity: 50,
         gradientMode: GraphGradientMode.Opacity,
         showPoints: PointVisibility.Auto,
@@ -550,7 +544,6 @@ describe('UPlotConfigBuilder', () => {
       builder.addSeries({
         drawStyle: DrawStyle.Line,
         scaleKey: 'scale-x',
-        fieldName: 'C-series',
         fillOpacity: 50,
         gradientMode: GraphGradientMode.Opacity,
         showPoints: PointVisibility.Auto,

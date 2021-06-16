@@ -137,8 +137,8 @@ region = us-west-2
 
 The CloudWatch data source can query data from both CloudWatch metrics and CloudWatch Logs APIs, each with its own specialized query editor. You select which API you want to query with using the query mode switch on top of the editor.
 
-{{< docs-imagebox img="/img/docs/v70/cloudwatch-metrics-query-field.png" max-width="800px" class="docs-image--left" caption="CloudWatch metrics query field" >}}
-{{< docs-imagebox img="/img/docs/v70/cloudwatch-logs-query-field.png" max-width="800px" class="docs-image--right" caption="CloudWatch Logs query field" >}}
+{{< figure src="/static/img/docs/v70/cloudwatch-metrics-query-field.png" max-width="800px" class="docs-image--left" caption="CloudWatch metrics query field" >}}
+{{< figure src="/static/img/docs/v70/cloudwatch-logs-query-field.png" max-width="800px" class="docs-image--right" caption="CloudWatch Logs query field" >}}
 
 ## Using the Metric Query Editor
 
@@ -150,7 +150,7 @@ To create a valid query, you need to specify the namespace, metric name and at l
 
 In Grafana 6.5 or higher, you’re able to monitor a dynamic list of metrics by using the asterisk (\*) wildcard for one or more dimension values.
 
-{{< docs-imagebox img="/img/docs/v65/cloudwatch-dimension-wildcard.png" max-width="800px" class="docs-image--right" caption="CloudWatch dimension wildcard" >}}
+{{< figure src="/static/img/docs/v65/cloudwatch-dimension-wildcard.png" max-width="800px" class="docs-image--right" caption="CloudWatch dimension wildcard" >}}
 
 In the example, all metrics in the namespace `AWS/EC2` with a metric name of `CPUUtilization` and ANY value for the `InstanceId` dimension are queried. This can help you monitor metrics for AWS resources, like EC2 instances or containers. For example, when new instances get created as part of an auto scaling event, they will automatically appear in the graph without you having to track the new instance IDs. This capability is currently limited to retrieving up to 100 metrics. You can click on `Show Query Preview` to see the search expression that is automatically built to support wildcards. To learn more about search expressions, visit the [CloudWatch documentation](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/search-expression-syntax.html).
 
@@ -184,7 +184,7 @@ If the period field is left blank or set to `auto`, then it calculates automatic
 
 ### Deep linking from Grafana panels to the CloudWatch console
 
-{{< docs-imagebox img="/img/docs/v65/cloudwatch-deep-linking.png" max-width="500px" class="docs-image--right" caption="CloudWatch deep linking" >}}
+{{< figure src="/static/img/docs/v65/cloudwatch-deep-linking.png" max-width="500px" class="docs-image--right" caption="CloudWatch deep linking" >}}
 
 Left clicking a time series in the panel shows a context menu with a link to `View in CloudWatch console`. Clicking that link will open a new tab that will take you to the CloudWatch console and display all the metrics for that query. If you're not currently logged in to the CloudWatch console, the link will forward you to the login page. The provided link is valid for any account but will only display the right metrics if you're logged in to the account that corresponds to the selected data source in Grafana.
 
@@ -198,11 +198,11 @@ To query CloudWatch Logs, select the region and up to 20 log groups which you wa
 
 You can also write queries returning time series data by using the [`stats` command](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CWL_Insights-Visualizing-Log-Data.html). When making `stats` queries in Explore, you have to make sure you are in Metrics Explore mode.
 
-{{< docs-imagebox img="/img/docs/v70/explore-mode-switcher.png" max-width="500px" class="docs-image--right" caption="Explore mode switcher" >}}
+{{< figure src="/static/img/docs/v70/explore-mode-switcher.png" max-width="500px" class="docs-image--right" caption="Explore mode switcher" >}}
 
 To the right of the query input field is a CloudWatch Logs Insights link that opens the CloudWatch Logs Insights console with your query. You can continue exploration there if necessary.
 
-{{< docs-imagebox img="/img/docs/v70/cloudwatch-logs-deep-linking.png" max-width="500px" class="docs-image--right" caption="CloudWatch Logs deep linking" >}}
+{{< figure src="/static/img/docs/v70/cloudwatch-logs-deep-linking.png" max-width="500px" class="docs-image--right" caption="CloudWatch Logs deep linking" >}}
 
 ### Using template variables
 
@@ -211,7 +211,7 @@ See the [Templating]({{< relref "../variables/_index.md" >}}) documentation for 
 
 ### Deep linking from Grafana panels to the CloudWatch console
 
-{{< docs-imagebox img="/img/docs/v70/cloudwatch-logs-deep-linking.png" max-width="500px" class="docs-image--right" caption="CloudWatch Logs deep linking" >}}
+{{< figure src="/static/img/docs/v70/cloudwatch-logs-deep-linking.png" max-width="500px" class="docs-image--right" caption="CloudWatch Logs deep linking" >}}
 If you'd like to view your query in the CloudWatch Logs Insights console, simply click the `CloudWatch Logs Insights` button next to the query editor.
 If you're not currently logged in to the CloudWatch console, the link will forward you to the login page. The provided link is valid for any account but will only display the right metrics if you're logged in to the account that corresponds to the selected data source in Grafana.
 
@@ -232,7 +232,7 @@ The updated CloudWatch data source ships with pre-configured dashboards for five
 
 To import the pre-configured dashboards, go to the configuration page of your CloudWatch data source and click on the `Dashboards` tab. Click `Import` for the dashboard you would like to use. To customize the dashboard, we recommend saving the dashboard under a different name, because otherwise the dashboard will be overwritten when a new version of the dashboard is released.
 
-{{< docs-imagebox img="/img/docs/v65/cloudwatch-dashboard-import.png" caption="CloudWatch dashboard import" >}}
+{{< figure src="/static/img/docs/v65/cloudwatch-dashboard-import.png" caption="CloudWatch dashboard import" >}}
 
 ## Templated queries
 

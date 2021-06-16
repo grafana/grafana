@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"os"
 
-	gokit_log "github.com/go-kit/kit/log"
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
@@ -17,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	old_notifiers "github.com/grafana/grafana/pkg/services/alerting/notifiers"
-	"github.com/grafana/grafana/pkg/services/ngalert/logging"
 )
 
 const (
@@ -125,9 +123,8 @@ func (pn *PagerdutyNotifier) buildPagerdutyMessage(ctx context.Context, alerts m
 		eventType = pagerDutyEventResolve
 	}
 
-	data := notify.GetTemplateData(ctx, pn.tmpl, as, gokit_log.NewLogfmtLogger(logging.NewWrapper(pn.log)))
 	var tmplErr error
-	tmpl := notify.TmplText(pn.tmpl, data, &tmplErr)
+	tmpl, data := TmplText(ctx, pn.tmpl, as, pn.log, &tmplErr)
 
 	details := make(map[string]string, len(pn.CustomDetails))
 	for k, v := range pn.CustomDetails {
@@ -170,7 +167,7 @@ func (pn *PagerdutyNotifier) buildPagerdutyMessage(ctx context.Context, alerts m
 	}
 
 	if tmplErr != nil {
-		return nil, "", fmt.Errorf("failed to template PagerDuty message: %w", tmplErr)
+		pn.log.Debug("failed to template PagerDuty message", "err", tmplErr.Error())
 	}
 
 	return msg, eventType, nil

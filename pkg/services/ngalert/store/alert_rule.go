@@ -249,26 +249,18 @@ func (st DBstore) UpsertAlertRules(rules []UpsertRule) error {
 					r.New.Data = r.Existing.Data
 				}
 
-				if r.New.IntervalSeconds == 0 {
-					r.New.IntervalSeconds = r.Existing.IntervalSeconds
-				}
-
 				r.New.ID = r.Existing.ID
 				r.New.OrgID = r.Existing.OrgID
 				r.New.NamespaceUID = r.Existing.NamespaceUID
 				r.New.RuleGroup = r.Existing.RuleGroup
 				r.New.Version = r.Existing.Version + 1
 
-				if r.New.For == 0 {
-					r.New.For = r.Existing.For
+				if r.New.ExecErrState == "" {
+					r.New.ExecErrState = r.Existing.ExecErrState
 				}
 
-				if len(r.New.Annotations) == 0 {
-					r.New.Annotations = r.Existing.Annotations
-				}
-
-				if len(r.New.Labels) == 0 {
-					r.New.Labels = r.Existing.Labels
+				if r.New.NoDataState == "" {
+					r.New.NoDataState = r.Existing.NoDataState
 				}
 
 				if err := st.validateAlertRule(r.New); err != nil {
@@ -280,7 +272,7 @@ func (st DBstore) UpsertAlertRules(rules []UpsertRule) error {
 				}
 
 				// no way to update multiple rules at once
-				if _, err := sess.ID(r.Existing.ID).Update(r.New); err != nil {
+				if _, err := sess.ID(r.Existing.ID).AllCols().Update(r.New); err != nil {
 					return fmt.Errorf("failed to update rule %s: %w", r.New.Title, err)
 				}
 
@@ -368,16 +360,19 @@ func (st DBstore) GetRuleGroupAlertRules(query *ngmodels.ListRuleGroupAlertRules
 }
 
 // GetNamespaceByTitle is a handler for retrieving a namespace by its title. Alerting rules follow a Grafana folder-like structure which we call namespaces.
-func (st DBstore) GetNamespaceByTitle(namespace string, orgID int64, user *models.SignedInUser, withEdit bool) (*models.Folder, error) {
+func (st DBstore) GetNamespaceByTitle(namespace string, orgID int64, user *models.SignedInUser, withCanSave bool) (*models.Folder, error) {
 	s := dashboards.NewFolderService(orgID, user, st.SQLStore)
 	folder, err := s.GetFolderByTitle(namespace)
 	if err != nil {
 		return nil, err
 	}
 
-	if withEdit {
+	if withCanSave {
 		g := guardian.New(folder.Id, orgID, user)
-		if canAdmin, err := g.CanEdit(); err != nil || !canAdmin {
+		if canSave, err := g.CanSave(); err != nil || !canSave {
+			if err != nil {
+				st.Logger.Error("checking can save permission has failed", "userId", user.UserId, "username", user.Login, "namespace", namespace, "orgId", orgID, "error", err)
+			}
 			return nil, ngmodels.ErrCannotEditNamespace
 		}
 	}
@@ -441,8 +436,8 @@ func (st DBstore) validateAlertRule(alertRule ngmodels.AlertRule) error {
 		return fmt.Errorf("%w: title is empty", ngmodels.ErrAlertRuleFailedValidation)
 	}
 
-	if alertRule.IntervalSeconds%int64(st.BaseInterval.Seconds()) != 0 {
-		return fmt.Errorf("%w: interval (%v) should be divided exactly by scheduler interval: %v", ngmodels.ErrAlertRuleFailedValidation, time.Duration(alertRule.IntervalSeconds)*time.Second, st.BaseInterval)
+	if alertRule.IntervalSeconds%int64(st.BaseInterval.Seconds()) != 0 || alertRule.IntervalSeconds <= 0 {
+		return fmt.Errorf("%w: interval (%v) should be non-zero and divided exactly by scheduler interval: %v", ngmodels.ErrAlertRuleFailedValidation, time.Duration(alertRule.IntervalSeconds)*time.Second, st.BaseInterval)
 	}
 
 	// enfore max name length in SQLite
@@ -519,6 +514,9 @@ func (st DBstore) UpdateRuleGroup(cmd UpdateRuleGroupCmd) error {
 		}
 
 		if err := st.UpsertAlertRules(upsertRules); err != nil {
+			if st.SQLStore.Dialect.IsUniqueConstraintViolation(err) {
+				return ngmodels.ErrAlertRuleUniqueConstraintViolation
+			}
 			return err
 		}
 

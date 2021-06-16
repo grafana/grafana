@@ -72,9 +72,8 @@ describe('FieldDisplay', () => {
     expect(display.map((v) => v.display.numeric)).toEqual([1, 3]); // First 2 are from the first field
   });
 
-  it('should not calculate min max if ensureGlobalRange is false', () => {
+  it('should not calculate min max automatically', () => {
     const options = createDisplayOptions({
-      ensureGlobalRange: false,
       reduceOptions: {
         values: true, //
         limit: 1000,
@@ -84,20 +83,6 @@ describe('FieldDisplay', () => {
     const display = getFieldDisplayValues(options);
     expect(display[0].field.min).toBeUndefined();
     expect(display[0].field.max).toBeUndefined();
-  });
-
-  it('should ensure global min / max on numerical fields', () => {
-    const options = createDisplayOptions({
-      ensureGlobalRange: true,
-      reduceOptions: {
-        values: true, //
-        limit: 1000,
-        calcs: [],
-      },
-    });
-    const display = getFieldDisplayValues(options);
-    expect(display[0].field.min).toEqual(1);
-    expect(display[0].field.max).toEqual(6);
   });
 
   it('Should return field thresholds when there is no data', () => {
@@ -274,6 +259,32 @@ describe('FieldDisplay', () => {
       expect(result[1].display.text).toEqual('20');
     });
 
+    it('With cached display processor', () => {
+      const options = createDisplayOptions({
+        reduceOptions: {
+          values: true,
+          calcs: [],
+        },
+        data: [
+          toDataFrame({
+            fields: [
+              { name: 'Name', values: ['A', 'B'] },
+              { name: 'Value', values: [10, 10] },
+            ],
+          }),
+        ],
+      });
+
+      const cache = { numeric: 10, text: 'Value' };
+      options.data![0].fields[1].display = (v: any) => {
+        return cache;
+      };
+
+      const result = getFieldDisplayValues(options);
+      expect(result[0].display.title).toEqual('A');
+      expect(result[1].display.title).toEqual('B');
+    });
+
     it('Single string field multiple value fields', () => {
       const options = createDisplayOptions({
         reduceOptions: {
@@ -298,6 +309,83 @@ describe('FieldDisplay', () => {
       expect(result[1].display.text).toEqual('20');
       expect(result[2].display.title).toEqual('A SensorB');
       expect(result[3].display.title).toEqual('B SensorB');
+    });
+
+    it('When showing all values set seriesIndex in a way so that values get unique color', () => {
+      const options = createDisplayOptions({
+        reduceOptions: {
+          values: true,
+          calcs: [],
+        },
+        data: [
+          toDataFrame({
+            fields: [
+              {
+                name: 'Name',
+                values: ['A', 'B'],
+              },
+              {
+                name: 'SensorA',
+                values: [10, 20],
+                config: {
+                  color: { mode: 'palette-classic' },
+                },
+              },
+            ],
+          }),
+        ],
+      });
+
+      const result = getFieldDisplayValues(options);
+      expect(result[0].display.color).toEqual('#73BF69');
+      expect(result[1].display.color).toEqual('#F2CC0C');
+    });
+
+    it('When showing all values lookup color via an override', () => {
+      const options = createDisplayOptions({
+        reduceOptions: {
+          values: true,
+          calcs: [],
+        },
+        fieldConfig: {
+          overrides: [
+            {
+              matcher: { id: 'byName', options: 'A' },
+              properties: [
+                {
+                  id: 'color',
+                  value: {
+                    mode: 'fixed',
+                    fixedColor: '#AAA',
+                  },
+                },
+              ],
+            },
+          ],
+          defaults: {},
+        },
+        data: [
+          toDataFrame({
+            fields: [
+              {
+                name: 'Name',
+                values: ['A', 'B'],
+              },
+              {
+                name: 'SensorA',
+                values: [10, 20],
+                config: {
+                  color: { mode: 'palette-classic' },
+                },
+              },
+            ],
+          }),
+        ],
+      });
+
+      const result = getFieldDisplayValues(options);
+      expect(result[0].display.color).toEqual('#AAA');
+      expect(result[1].display.color).toEqual('#F2CC0C');
     });
 
     it('Multiple other string fields', () => {

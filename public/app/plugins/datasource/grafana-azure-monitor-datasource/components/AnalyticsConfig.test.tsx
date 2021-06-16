@@ -1,5 +1,5 @@
 import React from 'react';
-import { shallow } from 'enzyme';
+import { render, screen } from '@testing-library/react';
 import AnalyticsConfig, { Props } from './AnalyticsConfig';
 
 const setup = (propsFunc?: (props: Props) => Props) => {
@@ -22,18 +22,11 @@ const setup = (propsFunc?: (props: Props) => Props) => {
       basicAuthPassword: '',
       withCredentials: false,
       isDefault: false,
-      secureJsonFields: {
-        logAnalyticsClientSecret: false,
-      },
+      secureJsonFields: {},
       jsonData: {
         cloudName: '',
         subscriptionId: '',
-        azureLogAnalyticsSameAs: false,
         logAnalyticsDefaultWorkspace: '',
-        logAnalyticsTenantId: '',
-      },
-      secureJsonData: {
-        logAnalyticsClientSecret: '',
       },
       version: 1,
       readOnly: false,
@@ -47,14 +40,14 @@ const setup = (propsFunc?: (props: Props) => Props) => {
     props = propsFunc(props);
   }
 
-  return shallow(<AnalyticsConfig {...props} />);
+  return render(<AnalyticsConfig {...props} />);
 };
 
 describe('Render', () => {
   it('should render component', () => {
     const wrapper = setup();
 
-    expect(wrapper).toMatchSnapshot();
+    expect(wrapper.baseElement).toMatchSnapshot();
   });
 
   it('should disable log analytics credentials form', () => {
@@ -68,7 +61,7 @@ describe('Render', () => {
         },
       },
     }));
-    expect(wrapper).toMatchSnapshot();
+    expect(wrapper.baseElement).toMatchSnapshot();
   });
 
   it('should enable azure log analytics load workspaces button', () => {
@@ -80,13 +73,33 @@ describe('Render', () => {
           ...props.options.jsonData,
           azureLogAnalyticsSameAs: false,
           logAnalyticsDefaultWorkspace: '',
-          logAnalyticsTenantId: 'e7f3f661-a933-4b3f-8176-51c4f982ec48',
-          logAnalyticsClientId: '44693801-6ee6-49de-9b2d-9106972f9572',
-          logAnalyticsSubscriptionId: 'e3fe4fde-ad5e-4d60-9974-e2f3562ffdf2',
-          logAnalyticsClientSecret: 'cddcc020-2c94-460a-a3d0-df3147ffa792',
+          tenantId: 'e7f3f661-a933-4b3f-8176-51c4f982ec48',
+          clientId: '44693801-6ee6-49de-9b2d-9106972f9572',
+          subscriptionId: 'e3fe4fde-ad5e-4d60-9974-e2f3562ffdf2',
+          clientSecret: 'cddcc020-2c94-460a-a3d0-df3147ffa792',
         },
       },
     }));
-    expect(wrapper).toMatchSnapshot();
+    expect(wrapper.baseElement).toMatchSnapshot();
+  });
+
+  it('should not render the Switch to use different creds for log analytics by default', () => {
+    setup();
+    expect(screen.queryByText('is no longer supported', { exact: false })).not.toBeInTheDocument();
+  });
+
+  // Remove this test with deprecated code
+  it('should not render the Switch if different creds for log analytics were set from before', () => {
+    setup((props) => ({
+      ...props,
+      options: {
+        ...props.options,
+        jsonData: {
+          ...props.options.jsonData,
+          azureLogAnalyticsSameAs: false,
+        },
+      },
+    }));
+    expect(screen.queryByText('is no longer supported', { exact: false })).toBeInTheDocument();
   });
 });

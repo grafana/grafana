@@ -1,4 +1,5 @@
 import React from 'react';
+import { cloneDeep } from 'lodash';
 import { DataFrame, TimeRange } from '@grafana/data';
 import {
   GraphNG,
@@ -19,7 +20,7 @@ export interface BarChartProps
   extends BarChartOptions,
     Omit<GraphNGProps, 'prepConfig' | 'propsToDiff' | 'renderLegend' | 'theme'> {}
 
-const propsToDiff: string[] = ['orientation', 'barWidth', 'groupWidth', 'showValue'];
+const propsToDiff: string[] = ['orientation', 'barWidth', 'groupWidth', 'showValue', 'text'];
 
 export const BarChart: React.FC<BarChartProps> = (props) => {
   const theme = useTheme2();
@@ -33,8 +34,9 @@ export const BarChart: React.FC<BarChartProps> = (props) => {
     return <PlotLegend data={props.frames} config={config} maxHeight="35%" maxWidth="60%" {...props.legend} />;
   };
 
-  const prepConfig = (alignedFrame: DataFrame, getTimeRange: () => TimeRange) => {
-    const { timeZone, orientation, barWidth, showValue, groupWidth, stacking, legend, tooltip } = props;
+  const prepConfig = (alignedFrame: DataFrame, allFrames: DataFrame[], getTimeRange: () => TimeRange) => {
+    const { timeZone, orientation, barWidth, showValue, groupWidth, stacking, legend, tooltip, text } = props;
+
     return preparePlotConfigBuilder({
       frame: alignedFrame,
       getTimeRange,
@@ -48,12 +50,15 @@ export const BarChart: React.FC<BarChartProps> = (props) => {
       stacking,
       legend,
       tooltip,
+      text,
+      allFrames: props.frames,
     });
   };
 
   return (
     <GraphNG
-      {...props}
+      // My heart is bleeding with the clone deep here, but nested options...
+      {...cloneDeep(props)}
       theme={theme}
       frames={props.frames}
       prepConfig={prepConfig}

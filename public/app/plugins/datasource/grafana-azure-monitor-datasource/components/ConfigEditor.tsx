@@ -13,13 +13,14 @@ import { getBackendSrv, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
 import { InsightsConfig } from './InsightsConfig';
 import ResponseParser from '../azure_monitor/response_parser';
 import { AzureDataSourceJsonData, AzureDataSourceSecureJsonData, AzureDataSourceSettings } from '../types';
-import { getAzureCloud } from '../credentials';
-import { getLogAnalyticsManagementApiRoute, getManagementApiRoute } from '../api/routes';
+import { getAzureCloud, isAppInsightsConfigured } from '../credentials';
+import { getManagementApiRoute } from '../api/routes';
 
 export type Props = DataSourcePluginOptionsEditorProps<AzureDataSourceJsonData, AzureDataSourceSecureJsonData>;
 
 export interface State {
   unsaved: boolean;
+  appInsightsInitiallyConfigured: boolean;
 }
 
 export class ConfigEditor extends PureComponent<Props, State> {
@@ -30,6 +31,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
 
     this.state = {
       unsaved: false,
+      appInsightsInitiallyConfigured: isAppInsightsConfigured(props.options),
     };
 
     if (this.props.options.id) {
@@ -75,7 +77,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
     await this.saveOptions();
 
     const cloud = getAzureCloud(this.props.options);
-    const route = getLogAnalyticsManagementApiRoute(cloud);
+    const route = getManagementApiRoute(cloud);
     const url = `/${route}/subscriptions?api-version=2019-03-01`;
 
     const result = await getBackendSrv().datasourceRequest({
@@ -90,7 +92,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
     await this.saveOptions();
 
     const cloud = getAzureCloud(this.props.options);
-    const route = getLogAnalyticsManagementApiRoute(cloud);
+    const route = getManagementApiRoute(cloud);
     const url = `/${route}/subscriptions/${subscriptionId}/providers/Microsoft.OperationalInsights/workspaces?api-version=2017-04-26-preview`;
 
     const result = await getBackendSrv().datasourceRequest({
@@ -121,11 +123,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
   };
 
   render() {
-    // TODO: Clean up
     const { options } = this.props;
-    options.jsonData.cloudName = options.jsonData.cloudName || 'azuremonitor';
-    // This is bad, causes so many messy typing issues everwhere..
-    options.secureJsonData = (options.secureJsonData || {}) as AzureDataSourceSecureJsonData;
 
     return (
       <>
@@ -138,12 +136,14 @@ export class ConfigEditor extends PureComponent<Props, State> {
           getWorkspaces={this.getWorkspaces}
         />
 
-        <InsightsConfig
-          options={options}
-          onUpdateJsonDataOption={this.onUpdateJsonDataOption}
-          onUpdateSecureJsonDataOption={this.onUpdateSecureJsonDataOption}
-          onResetOptionKey={this.resetSecureKey}
-        />
+        {this.state.appInsightsInitiallyConfigured && (
+          <InsightsConfig
+            options={options}
+            onUpdateJsonDataOption={this.onUpdateJsonDataOption}
+            onUpdateSecureJsonDataOption={this.onUpdateSecureJsonDataOption}
+            onResetOptionKey={this.resetSecureKey}
+          />
+        )}
       </>
     );
   }

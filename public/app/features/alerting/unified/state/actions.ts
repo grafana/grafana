@@ -45,7 +45,7 @@ import {
   ruleWithLocationToRuleIdentifier,
   stringifyRuleIdentifier,
 } from '../utils/rules';
-import { addDefaultsToAlertmanagerConfig } from '../utils/alertmanager-config';
+import { addDefaultsToAlertmanagerConfig } from '../utils/alertmanager';
 import { backendSrv } from 'app/core/services/backend_srv';
 
 export const fetchPromRulesAction = createAsyncThunk(
@@ -93,6 +93,17 @@ export function fetchAllPromAndRulerRulesAction(force = false): ThunkResult<void
       }
       if (force || !rulerRules[name]?.loading) {
         dispatch(fetchRulerRulesAction(name));
+      }
+    });
+  };
+}
+
+export function fetchAllPromRulesAction(force = false): ThunkResult<void> {
+  return (dispatch, getStore) => {
+    const { promRules } = getStore().unifiedAlerting;
+    getAllRulesSourceNames().map((name) => {
+      if (force || !promRules[name]?.loading) {
+        dispatch(fetchPromRulesAction(name));
       }
     });
   };

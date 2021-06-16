@@ -3,8 +3,8 @@ package store
 import (
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
-
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
@@ -28,4 +28,5 @@ type DBstore struct {
 	// default alert definiiton interval
 	DefaultIntervalSeconds int64
 	SQLStore               *sqlstore.SQLStore
+	Logger                 log.Logger
 }

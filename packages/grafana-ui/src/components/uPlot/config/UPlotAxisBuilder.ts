@@ -77,6 +77,7 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
         show: ticks,
         stroke: gridColor,
         width: 1 / devicePixelRatio,
+        size: 4,
       },
       splits,
       values: values,
@@ -93,7 +94,7 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
     } else if (isTime) {
       config.values = formatTime;
     } else if (formatValue) {
-      config.values = (u: uPlot, vals: any[]) => vals.map((v) => formatValue!(v));
+      config.values = (u: uPlot, vals: any[]) => vals.map(formatValue!);
     }
 
     // store timezone

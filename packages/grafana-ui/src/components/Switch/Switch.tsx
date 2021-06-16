@@ -54,7 +54,10 @@ export const InlineSwitch = React.forwardRef<HTMLInputElement, InlineSwitchProps
     return (
       <div className={styles.inlineContainer}>
         {showLabel && (
-          <label htmlFor={id} className={cx(styles.inlineLabel, value && styles.inlineLabelEnabled)}>
+          <label
+            htmlFor={id}
+            className={cx(styles.inlineLabel, value && styles.inlineLabelEnabled, 'inline-switch-label')}
+          >
             {label}
           </label>
         )}
@@ -145,6 +148,14 @@ const getSwitchStyles = stylesFactory((theme: GrafanaTheme2, transparent?: boole
       background: ${transparent ? 'transparent' : theme.components.input.background};
       border: 1px solid ${transparent ? 'transparent' : theme.components.input.borderColor};
       border-radius: ${theme.shape.borderRadius()};
+
+      &:hover {
+        border: 1px solid ${transparent ? 'transparent' : theme.components.input.borderHover};
+
+        .inline-switch-label {
+          color: ${theme.colors.text.primary};
+        }
+      }
     `,
     inlineLabel: css`
       cursor: pointer;

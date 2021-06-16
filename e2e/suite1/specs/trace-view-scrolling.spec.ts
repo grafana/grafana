@@ -4,7 +4,7 @@ describe('Trace view', () => {
   it('Can lazy load big traces', () => {
     e2e.flows.login('admin', 'admin');
     e2e()
-      .intercept('GET', '/api/traces/long-trace', {
+      .intercept('GET', '**/api/traces/long-trace', {
         fixture: 'long-trace-response.json',
       })
       .as('longTrace');
@@ -29,7 +29,7 @@ describe('Trace view', () => {
 
     e2e.pages.Explore.General.scrollBar().scrollTo('center');
 
-    // After scrolling we should have 140 spans instead of the first 100
+    // After scrolling we should load more spans
     e2e.components.TraceViewer.spanBar().should('have.length', 140);
   });
 });

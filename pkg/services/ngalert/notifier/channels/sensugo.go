@@ -4,18 +4,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"net/url"
-	"path"
 	"strings"
 	"time"
 
-	gokit_log "github.com/go-kit/kit/log"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	old_notifiers "github.com/grafana/grafana/pkg/services/alerting/notifiers"
-	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
@@ -76,9 +72,8 @@ func NewSensuGoNotifier(model *NotificationChannelConfig, t *template.Template) 
 func (sn *SensuGoNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
 	sn.log.Debug("Sending Sensu Go result")
 
-	data := notify.GetTemplateData(ctx, sn.tmpl, as, gokit_log.NewNopLogger())
 	var tmplErr error
-	tmpl := notify.TmplText(sn.tmpl, data, &tmplErr)
+	tmpl, _ := TmplText(ctx, sn.tmpl, as, sn.log, &tmplErr)
 
 	// Sensu Go alerts require an entity and a check. We set it to the user-specified
 	// value (optional), else we fallback and use the grafana rule anme  and ruleID.
@@ -109,12 +104,7 @@ func (sn *SensuGoNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool
 		handlers = []string{sn.Handler}
 	}
 
-	u, err := url.Parse(sn.tmpl.ExternalURL.String())
-	if err != nil {
-		return false, fmt.Errorf("failed to parse external URL: %w", err)
-	}
-	u.Path = path.Join(u.Path, "/alerting/list")
-	ruleURL := u.String()
+	ruleURL := joinUrlPath(sn.tmpl.ExternalURL.String(), "/alerting/list", sn.log)
 	bodyMsgType := map[string]interface{}{
 		"entity": map[string]interface{}{
 			"metadata": map[string]interface{}{
@@ -139,7 +129,7 @@ func (sn *SensuGoNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool
 	}
 
 	if tmplErr != nil {
-		return false, fmt.Errorf("failed to template sensugo message: %w", tmplErr)
+		sn.log.Debug("failed to template sensugo message", "err", tmplErr.Error())
 	}
 
 	body, err := json.Marshal(bodyMsgType)

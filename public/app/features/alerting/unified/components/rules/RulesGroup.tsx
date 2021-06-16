@@ -1,19 +1,17 @@
 import { CombinedRuleGroup, CombinedRuleNamespace } from 'app/types/unified-alerting';
-import React, { FC, useMemo, useState, Fragment } from 'react';
+import React, { FC, useState } from 'react';
 import { Icon, Tooltip, useStyles2 } from '@grafana/ui';
 import { GrafanaTheme2 } from '@grafana/data';
 import { css } from '@emotion/css';
-import { isAlertingRule, isGrafanaRulerRule } from '../../utils/rules';
-import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
-import { StateColoredText } from '../StateColoredText';
+import { isGrafanaRulerRule } from '../../utils/rules';
 import { CollapseToggle } from '../CollapseToggle';
 import { RulesTable } from './RulesTable';
 import { GRAFANA_RULES_SOURCE_NAME, isCloudRulesSource } from '../../utils/datasource';
 import { ActionIcon } from './ActionIcon';
-import pluralize from 'pluralize';
 import { useHasRuler } from '../../hooks/useHasRuler';
 import kbn from 'app/core/utils/kbn';
 import { useFolder } from '../../hooks/useFolder';
+import { RuleStats } from './RuleStats';
 
 interface Props {
   namespace: CombinedRuleNamespace;
@@ -30,40 +28,6 @@ export const RulesGroup: FC<Props> = React.memo(({ group, namespace }) => {
   const rulerRule = group.rules[0]?.rulerRule;
   const folderUID = (rulerRule && isGrafanaRulerRule(rulerRule) && rulerRule.grafana_alert.namespace_uid) || undefined;
   const { folder } = useFolder(folderUID);
-
-  const stats = useMemo(
-    (): Record<PromAlertingRuleState, number> =>
-      group.rules.reduce<Record<PromAlertingRuleState, number>>(
-        (stats, rule) => {
-          if (rule.promRule && isAlertingRule(rule.promRule)) {
-            stats[rule.promRule.state] += 1;
-          }
-          return stats;
-        },
-        {
-          [PromAlertingRuleState.Firing]: 0,
-          [PromAlertingRuleState.Pending]: 0,
-          [PromAlertingRuleState.Inactive]: 0,
-        }
-      ),
-    [group]
-  );
-
-  const statsComponents: React.ReactNode[] = [];
-  if (stats[PromAlertingRuleState.Firing]) {
-    statsComponents.push(
-      <StateColoredText key="firing" status={PromAlertingRuleState.Firing}>
-        {stats[PromAlertingRuleState.Firing]} firing
-      </StateColoredText>
-    );
-  }
-  if (stats[PromAlertingRuleState.Pending]) {
-    statsComponents.push(
-      <StateColoredText key="pending" status={PromAlertingRuleState.Pending}>
-        {stats[PromAlertingRuleState.Pending]} pending
-      </StateColoredText>
-    );
-  }
 
   const actionIcons: React.ReactNode[] = [];
 
@@ -112,16 +76,7 @@ export const RulesGroup: FC<Props> = React.memo(({ group, namespace }) => {
         <h6 className={styles.heading}>{groupName}</h6>
         <div className={styles.spacer} />
         <div className={styles.headerStats}>
-          {group.rules.length} {pluralize('rule', group.rules.length)}
-          {!!statsComponents.length && (
-            <>
-              :{' '}
-              {statsComponents.reduce<React.ReactNode[]>(
-                (prev, curr, idx) => (prev.length ? [prev, <Fragment key={idx}>, </Fragment>, curr] : [curr]),
-                []
-              )}
-            </>
-          )}
+          <RuleStats showInactive={false} group={group} />
         </div>
         {!!actionIcons.length && (
           <>
@@ -130,7 +85,9 @@ export const RulesGroup: FC<Props> = React.memo(({ group, namespace }) => {
           </>
         )}
       </div>
-      {!isCollapsed && <RulesTable className={styles.rulesTable} showGuidelines={true} rules={group.rules} />}
+      {!isCollapsed && (
+        <RulesTable showSummaryColumn={true} className={styles.rulesTable} showGuidelines={true} rules={group.rules} />
+      )}
     </div>
   );
 });

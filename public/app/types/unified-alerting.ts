@@ -18,7 +18,6 @@ export type Alert = {
   state: PromAlertingRuleState | GrafanaAlertState;
   value: string;
 };
-
 interface RuleBase {
   health: string;
   name: string;
@@ -100,6 +99,13 @@ export interface RuleWithLocation {
   namespace: string;
   group: RulerRuleGroupDTO;
   rule: RulerRuleDTO;
+}
+
+export interface PromRuleWithLocation {
+  rule: AlertingRule;
+  dataSourceName: string;
+  namespaceName: string;
+  groupName: string;
 }
 
 export interface CloudRuleIdentifier {

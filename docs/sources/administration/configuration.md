@@ -414,9 +414,18 @@ The length of time that Grafana will wait for a successful TLS handshake with th
 
 The length of time that Grafana will wait for a datasource’s first response headers after fully writing the request headers, if the request has an “Expect: 100-continue” header. A value of `0` will result in the body being sent immediately. Default is `1` second. For more details check the [Transport.ExpectContinueTimeout](https://golang.org/pkg/net/http/#Transport.ExpectContinueTimeout) documentation.
 
+### max_conns_per_host
+
+Optionally limits the total number of connections per host, including connections in the dialing, active, and idle states. On limit violation, dials are blocked. A value of `0` means that there are no limits. Default is `0`.
+For more details check the [Transport.MaxConnsPerHost](https://golang.org/pkg/net/http/#Transport.MaxConnsPerHost) documentation.
+
 ### max_idle_connections
 
 The maximum number of idle connections that Grafana will maintain. Default is `100`. For more details check the [Transport.MaxIdleConns](https://golang.org/pkg/net/http/#Transport.MaxIdleConns) documentation.
+
+### max_idle_connections_per_host
+
+The maximum number of idle connections per host that Grafana will maintain. Default is `2`. For more details check the [Transport.MaxIdleConnsPerHost](https://golang.org/pkg/net/http/#Transport.MaxIdleConnsPerHost) documentation.
 
 ### idle_conn_timeout_seconds
 
@@ -1465,18 +1474,37 @@ Set to `true` if you want to test alpha plugins that are not yet ready for gener
 
 ### allow_loading_unsigned_plugins
 
-Enter a comma-separated list of plugin identifiers to identify plugins that are allowed to be loaded even if they lack a valid signature.
+Enter a comma-separated list of plugin identifiers to identify plugins to load even if they are unsigned. Plugins with modified signatures are never loaded.
 
-### catalog_url
+We do _not_ recommend using this option. For more information, refer to [Plugin signatures]({{< relref "../plugins/plugin-signatures.md" >}}).
+
+### plugin_admin_enabled
+
+Available to Grafana administrators only, the plugin admin app is set to `false` by default. Set it to `true` to enable the app.
+
+For more information, refer to [Plugin catalog]({{< relref "../plugins/catalog.md" >}}).
+
+### plugin_admin_external_manage_enabled
+
+Set to `true` if you want to enable external management of plugins. Default is `false`. This is only applicable to Grafana Cloud users.
+
+### plugin_catalog_url
 
 Custom install/learn more URL for enterprise plugins. Defaults to https://grafana.com/grafana/plugins/.
 
-### catalog_app_enabled
+<hr>
 
+## [live]
 
-Available to Grafana administrators only, the plugin catalog app is set to `false` by default. Set it to `true` to enable the app.
+### max_connections
 
-For more information, refer to [Plugin catalog]({{< relref "../plugins/catalog.md" >}}).
+> **Note**: Available in Grafana v8.0 and later versions.
+
+The `max_connections` option specifies the maximum number of connections to the Grafana Live WebSocket endpoint per Grafana server instance. Default is `100`.
+
+Refer to [Grafana Live configuration documentation]({{< relref "../live/configure-grafana-live.md" >}}) if you specify a number higher than default since this can require some operating system and infrastructure tuning.
+
+0 disables Grafana Live, -1 means unlimited connections.
 
 <hr>
 

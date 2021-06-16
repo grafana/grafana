@@ -13,6 +13,8 @@ const MAX_LABEL_COUNT = 10000;
 const MAX_VALUE_COUNT = 50000;
 const EMPTY_SELECTOR = '{}';
 const METRIC_LABEL = '__name__';
+const LIST_ITEM_SIZE = 25;
+
 export const LAST_USED_LABELS_KEY = 'grafana.datasources.prometheus.browser.labels';
 
 export interface BrowserProps {
@@ -36,6 +38,7 @@ interface BrowserState {
 interface FacettableValue {
   name: string;
   selected?: boolean;
+  details?: string;
 }
 
 export interface SelectableLabel {
@@ -104,7 +107,7 @@ export function facetLabels(
 const getStyles = stylesFactory((theme: GrafanaTheme) => ({
   wrapper: css`
     background-color: ${theme.colors.bg2};
-    padding: ${theme.spacing.md};
+    padding: ${theme.spacing.sm};
     width: 100%;
   `,
   list: css`
@@ -113,6 +116,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
     flex-wrap: wrap;
     max-height: 200px;
     overflow: auto;
+    align-content: flex-start;
   `,
   section: css`
     & + & {
@@ -176,6 +180,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
  *              to create a single, generic component.
  */
 export class UnthemedPrometheusMetricsBrowser extends React.Component<BrowserProps, BrowserState> {
+  valueListsRef = React.createRef<HTMLDivElement>();
   state: BrowserState = {
     labels: [] as SelectableLabel[],
     labelSearchTerm: '',
@@ -385,7 +390,19 @@ export class UnthemedPrometheusMetricsBrowser extends React.Component<BrowserPro
         rawValues = rawValues.slice(0, MAX_VALUE_COUNT);
         this.setState({ error });
       }
-      const values: FacettableValue[] = rawValues.map((value) => ({ name: value }));
+      const values: FacettableValue[] = [];
+      const { metricsMetadata } = languageProvider;
+      for (const labelValue of rawValues) {
+        const value: FacettableValue = { name: labelValue };
+        // Adding type/help text to metrics
+        if (name === METRIC_LABEL && metricsMetadata) {
+          const meta = metricsMetadata[labelValue]?.[0];
+          if (meta) {
+            value.details = `(${meta.type}) ${meta.help}`;
+          }
+        }
+        values.push(value);
+      }
       this.updateLabelState(name, { values, loading: false });
     } catch (error) {
       console.error(error);
@@ -426,7 +443,7 @@ export class UnthemedPrometheusMetricsBrowser extends React.Component<BrowserPro
     const { languageProvider } = this.props;
     this.setState({ validationStatus: `Validating selector ${selector}`, error: '' });
     const streams = await languageProvider.fetchSeries(selector);
-    this.setState({ validationStatus: `Selector is valid (${streams.length} streams found)` });
+    this.setState({ validationStatus: `Selector is valid (${streams.length} series found)` });
   }
 
   render() {
@@ -466,12 +483,14 @@ export class UnthemedPrometheusMetricsBrowser extends React.Component<BrowserPro
     }
     const selector = buildSelector(this.state.labels);
     const empty = selector === EMPTY_SELECTOR;
+    const metricCount = metrics?.values?.length || 0;
+
     return (
       <div className={styles.wrapper}>
         <HorizontalGroup align="flex-start" spacing="lg">
           <div>
             <div className={styles.section}>
-              <Label description="Which metric do you want to use?">1. Select metric to search in</Label>
+              <Label description="Once a metric is selected only possible labels are shown.">1. Select a metric</Label>
               <div>
                 <Input
                   onChange={this.onChangeMetricSearch}
@@ -481,9 +500,9 @@ export class UnthemedPrometheusMetricsBrowser extends React.Component<BrowserPro
               </div>
               <div role="list" className={styles.valueListWrapper}>
                 <FixedSizeList
-                  height={550}
-                  itemCount={metrics?.values?.length || 0}
-                  itemSize={25}
+                  height={Math.min(450, metricCount * LIST_ITEM_SIZE)}
+                  itemCount={metricCount}
+                  itemSize={LIST_ITEM_SIZE}
                   itemKey={(i) => (metrics!.values as FacettableValue[])[i].name}
                   width={300}
                   className={styles.valueList}
@@ -498,6 +517,7 @@ export class UnthemedPrometheusMetricsBrowser extends React.Component<BrowserPro
                         <PromLabel
                           name={metrics!.name}
                           value={value?.name}
+                          title={value.details}
                           active={value?.selected}
                           onClick={this.onClickMetric}
                           searchTerm={metricSearchTerm}
@@ -512,7 +532,7 @@ export class UnthemedPrometheusMetricsBrowser extends React.Component<BrowserPro
 
           <div>
             <div className={styles.section}>
-              <Label description="Which labels would you like to consider for your search?">
+              <Label description="Once label values are selected, only possible label combinations are shown.">
                 2. Select labels to search in
               </Label>
               <div>
@@ -522,7 +542,8 @@ export class UnthemedPrometheusMetricsBrowser extends React.Component<BrowserPro
                   value={labelSearchTerm}
                 />
               </div>
-              <div className={styles.list}>
+              {/* Using fixed height here to prevent jumpy layout */}
+              <div className={styles.list} style={{ height: 120 }}>
                 {nonMetricLabels.map((label) => (
                   <PromLabel
                     key={label.name}
@@ -538,8 +559,8 @@ export class UnthemedPrometheusMetricsBrowser extends React.Component<BrowserPro
               </div>
             </div>
             <div className={styles.section}>
-              <Label description="Choose the label values that you would like to use for the query. Use the search field to find values across selected labels.">
-                3. Find values for the selected labels
+              <Label description="Use the search field to find values across selected labels.">
+                3. Select (multiple) values for your labels
               </Label>
               <div>
                 <Input
@@ -548,7 +569,7 @@ export class UnthemedPrometheusMetricsBrowser extends React.Component<BrowserPro
                   value={valueSearchTerm}
                 />
               </div>
-              <div className={styles.valueListArea}>
+              <div className={styles.valueListArea} ref={this.valueListsRef}>
                 {selectedLabels.map((label) => (
                   <div
                     role="list"
@@ -568,7 +589,7 @@ export class UnthemedPrometheusMetricsBrowser extends React.Component<BrowserPro
                       />
                     </div>
                     <FixedSizeList
-                      height={200}
+                      height={Math.min(200, LIST_ITEM_SIZE * (label.values?.length || 0))}
                       itemCount={label.values?.length || 0}
                       itemSize={25}
                       itemKey={(i) => (label.values as FacettableValue[])[i].name}
@@ -608,7 +629,7 @@ export class UnthemedPrometheusMetricsBrowser extends React.Component<BrowserPro
           {validationStatus && <div className={styles.validationStatus}>{validationStatus}</div>}
           <HorizontalGroup>
             <Button aria-label="Use selector for query button" disabled={empty} onClick={this.onClickRunQuery}>
-              Run query
+              Use query
             </Button>
             <Button
               aria-label="Use selector as metrics button"
@@ -616,7 +637,7 @@ export class UnthemedPrometheusMetricsBrowser extends React.Component<BrowserPro
               disabled={empty}
               onClick={this.onClickRunRateQuery}
             >
-              Run rate query
+              Use as rate query
             </Button>
             <Button
               aria-label="Validate submit button"

@@ -6,7 +6,7 @@ export { Tooltip, PopoverContent } from './Tooltip/Tooltip';
 export { PopoverController } from './Tooltip/PopoverController';
 export { Popover } from './Tooltip/Popover';
 export { Portal } from './Portal/Portal';
-export { CustomScrollbar } from './CustomScrollbar/CustomScrollbar';
+export { CustomScrollbar, ScrollbarPosition } from './CustomScrollbar/CustomScrollbar';
 export { TabbedContainer, TabConfig } from './TabbedContainer/TabbedContainer';
 
 export { ClipboardButton } from './ClipboardButton/ClipboardButton';
@@ -21,9 +21,14 @@ export { EmptySearchResult } from './EmptySearchResult/EmptySearchResult';
 export { UnitPicker } from './UnitPicker/UnitPicker';
 export { StatsPicker } from './StatsPicker/StatsPicker';
 export { RefreshPicker, defaultIntervals } from './RefreshPicker/RefreshPicker';
-export { TimeRangePicker } from './TimePicker/TimeRangePicker';
-export { TimeOfDayPicker } from './TimePicker/TimeOfDayPicker';
-export { TimeZonePicker } from './TimePicker/TimeZonePicker';
+export { TimeRangePicker, TimeRangePickerProps } from './DateTimePickers/TimeRangePicker';
+export { TimeOfDayPicker } from './DateTimePickers/TimeOfDayPicker';
+export { TimeZonePicker } from './DateTimePickers/TimeZonePicker';
+export { DatePicker, DatePickerProps } from './DateTimePickers/DatePicker/DatePicker';
+export {
+  DatePickerWithInput,
+  DatePickerWithInputProps,
+} from './DateTimePickers/DatePickerWithInput/DatePickerWithInput';
 export { List } from './List/List';
 export { TagsInput } from './TagsInput/TagsInput';
 export { Pagination } from './Pagination/Pagination';
@@ -79,6 +84,7 @@ export {
   VizTooltipOptions,
   TooltipDisplayMode,
   SeriesTableProps,
+  SeriesTableRow,
   SeriesTableRowProps,
 } from './VizTooltip';
 export { VizRepeater, VizRepeaterRenderValueProps } from './VizRepeater/VizRepeater';
@@ -194,8 +200,8 @@ export { Checkbox } from './Forms/Checkbox';
 
 export { TextArea } from './TextArea/TextArea';
 export { FileUpload } from './FileUpload/FileUpload';
-export { TimeRangeInput } from './TimePicker/TimeRangeInput';
-export { RelativeTimeRangePicker } from './TimePicker/RelativeTimeRangePicker/RelativeTimeRangePicker';
+export { TimeRangeInput } from './DateTimePickers/TimeRangeInput';
+export { RelativeTimeRangePicker } from './DateTimePickers/RelativeTimeRangePicker/RelativeTimeRangePicker';
 export { Card, Props as CardProps, getCardStyles } from './Card/Card';
 export { CardContainer, CardContainerProps } from './Card/CardContainer';
 export { FormattedValueDisplay } from './FormattedValueDisplay/FormattedValueDisplay';
@@ -239,6 +245,7 @@ export { PlotLegend } from './uPlot/PlotLegend';
 export * from './uPlot/geometries';
 export * from './uPlot/plugins';
 export { usePlotContext } from './uPlot/context';
+export { PlotTooltipInterpolator } from './uPlot/types';
 export { GraphNG, GraphNGProps, FIXED_UNIT } from './GraphNG/GraphNG';
 export { TimeSeries } from './TimeSeries/TimeSeries';
 export { useGraphNGContext } from './GraphNG/hooks';

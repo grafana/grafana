@@ -55,6 +55,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
       color: ${theme.colors.primary.text};
     }
   `,
+  suggestionsWrapper: css`
+    box-shadow: ${theme.shadows.z2};
+  `,
   // Wrapper with child selector needed.
   // When classnames are applied to the same element as the wrapper, it causes the suggestions to stop working
   wrapperOverrides: css`
@@ -155,7 +158,7 @@ export const DataLinkInput: React.FC<DataLinkInputProps> = memo(
               <Portal>
                 <ReactPopper
                   referenceElement={selectionRef}
-                  placement="top-end"
+                  placement="bottom-end"
                   modifiers={[
                     {
                       name: 'preventOverflow',
@@ -178,7 +181,7 @@ export const DataLinkInput: React.FC<DataLinkInputProps> = memo(
                 >
                   {({ ref, style, placement }) => {
                     return (
-                      <div ref={ref} style={style} data-placement={placement}>
+                      <div ref={ref} style={style} data-placement={placement} className={styles.suggestionsWrapper}>
                         <CustomScrollbar scrollTop={activeIndexPosition} autoHeightMax="300px">
                           <DataLinkSuggestions
                             activeRef={activeRef}
