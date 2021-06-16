@@ -107,7 +107,7 @@ func TestWarmStateCache(t *testing.T) {
 		InstanceStore: dbstore,
 		Metrics:       metrics.NewMetrics(prometheus.NewRegistry()),
 	}
-	sched := schedule.NewScheduler(schedCfg, nil)
+	sched := schedule.NewScheduler(schedCfg, nil, "http://localhost")
 	st := state.NewManager(schedCfg.Logger, nilMetrics)
 	sched.WarmStateCache(st)
 
@@ -153,7 +153,7 @@ func TestAlertingTicker(t *testing.T) {
 		Logger:        log.New("ngalert schedule test"),
 		Metrics:       metrics.NewMetrics(prometheus.NewRegistry()),
 	}
-	sched := schedule.NewScheduler(schedCfg, nil)
+	sched := schedule.NewScheduler(schedCfg, nil, "http://localhost")
 
 	ctx := context.Background()
 
