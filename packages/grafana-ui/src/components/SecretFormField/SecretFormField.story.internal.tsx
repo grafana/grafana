@@ -14,9 +14,6 @@ export default {
     controls: {
       exclude: ['onReset'],
     },
-    knobs: {
-      disable: true,
-    },
   },
   argTypes: {
     labelWidth: { control: { type: 'range', min: 0, max: 30 } },
