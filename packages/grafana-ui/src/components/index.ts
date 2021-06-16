@@ -21,7 +21,7 @@ export { EmptySearchResult } from './EmptySearchResult/EmptySearchResult';
 export { UnitPicker } from './UnitPicker/UnitPicker';
 export { StatsPicker } from './StatsPicker/StatsPicker';
 export { RefreshPicker, defaultIntervals } from './RefreshPicker/RefreshPicker';
-export { TimeRangePicker } from './DateTimePickers/TimeRangePicker';
+export { TimeRangePicker, TimeRangePickerProps } from './DateTimePickers/TimeRangePicker';
 export { TimeOfDayPicker } from './DateTimePickers/TimeOfDayPicker';
 export { TimeZonePicker } from './DateTimePickers/TimeZonePicker';
 export { DatePicker, DatePickerProps } from './DateTimePickers/DatePicker/DatePicker';
