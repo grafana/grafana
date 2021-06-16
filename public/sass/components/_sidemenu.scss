@@ -72,7 +72,7 @@ $mobile-menu-breakpoint: md;
         top: 0px;
         // important to overlap it otherwise it can be hidden
         // again by the mouse getting outside the hover space
-        left: $side-menu-width - 2px;
+        left: $side-menu-width - 3px;
         @include animation('dropdown-anim 150ms ease-in-out 100ms forwards');
         z-index: $zindex-sidemenu;
       }
