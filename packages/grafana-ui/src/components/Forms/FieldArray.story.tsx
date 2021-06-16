@@ -4,6 +4,7 @@ import { withStoryContainer } from '../../utils/storybook/withStoryContainer';
 import { Form, Input, Button, HorizontalGroup } from '@grafana/ui';
 import { FieldArray } from './FieldArray';
 import mdx from './FieldArray.mdx';
+import { Story } from '@storybook/react';
 
 export default {
   title: 'Forms/FieldArray',
@@ -13,10 +14,13 @@ export default {
     docs: {
       page: mdx,
     },
+    controls: {
+      exclude: ['name', 'keyName', 'control', 'shouldUnregister'],
+    },
   },
 };
 
-export const simple = () => {
+export const simple: Story = (args) => {
   const defaultValues: any = {
     people: [{ firstName: 'Janis', lastName: 'Joplin' }],
   };
@@ -24,7 +28,7 @@ export const simple = () => {
     <Form onSubmit={(values) => console.log(values)} defaultValues={defaultValues}>
       {({ control, register }) => (
         <div>
-          <FieldArray control={control} name="people">
+          <FieldArray control={control} name="people" shouldUnregister={args.shouldUnregister}>
             {({ fields, append }) => (
               <>
                 <div style={{ marginBottom: '1rem' }}>
@@ -57,4 +61,10 @@ export const simple = () => {
       )}
     </Form>
   );
+};
+simple.args = {
+  ContainerWidth: 100,
+  ContainerHeight: 0,
+  showBoundaries: false,
+  shouldUnregister: false,
 };
