@@ -8,6 +8,7 @@ import (
 
 	"cuelang.org/go/cue"
 	"cuelang.org/go/cue/load"
+	"github.com/grafana/grafana"
 )
 
 var rt = &cue.Runtime{}
@@ -37,6 +38,13 @@ type BaseLoadPaths struct {
 	// external tools could always create their own dirs shaped like a Grafana
 	// plugin dir, and point to those.
 	InstanceCueFS fs.FS
+}
+
+func GetDefaultLoadPaths() BaseLoadPaths {
+	return BaseLoadPaths{
+		BaseCueFS:       grafana.CoreSchema,
+		DistPluginCueFS: grafana.PluginSchema,
+	}
 }
 
 // toOverlay converts all .cue files in the fs.FS into Source entries in an

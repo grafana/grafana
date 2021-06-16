@@ -96,7 +96,9 @@ class NewDataSourcePage extends PureComponent<Props> {
           <div className="page-action-bar">
             <FilterInput value={searchQuery} onChange={this.onSearchQueryChange} placeholder="Filter by name or type" />
             <div className="page-action-bar__spacer" />
-            <LinkButton href="datasources">Cancel</LinkButton>
+            <LinkButton href="datasources" fill="outline" variant="secondary" icon="arrow-left">
+              Cancel
+            </LinkButton>
           </div>
           {!searchQuery && (
             <PluginsErrorsInfo>

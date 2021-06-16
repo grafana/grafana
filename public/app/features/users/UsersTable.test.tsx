@@ -5,6 +5,12 @@ import { OrgUser } from 'app/types';
 import { getMockUsers } from './__mocks__/userMocks';
 import { ConfirmModal } from '@grafana/ui';
 
+jest.mock('app/core/core', () => ({
+  contextSrv: {
+    hasPermission: () => true,
+  },
+}));
+
 const setup = (propOverrides?: object) => {
   const props: Props = {
     users: [] as OrgUser[],

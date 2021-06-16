@@ -26,6 +26,7 @@ import (
 // NewService returns a new Service.
 func NewService() Service {
 	return Service{
+		//nolint: staticcheck // plugins.DataPlugin deprecated
 		registry: map[string]func(*models.DataSource) (plugins.DataPlugin, error){},
 	}
 }
@@ -47,6 +48,7 @@ type Service struct {
 	AzureMonitorService    *azuremonitor.Service         `inject:""`
 	PluginManager          plugins.Manager               `inject:""`
 
+	//nolint: staticcheck // plugins.DataPlugin deprecated
 	registry map[string]func(*models.DataSource) (plugins.DataPlugin, error)
 }
 
@@ -67,6 +69,7 @@ func (s *Service) Init() error {
 	return nil
 }
 
+//nolint: staticcheck // plugins.DataPlugin deprecated
 func (s *Service) HandleRequest(ctx context.Context, ds *models.DataSource, query plugins.DataQuery) (
 	plugins.DataResponse, error) {
 	plugin := s.PluginManager.GetDataPlugin(ds.Type)
@@ -90,6 +93,7 @@ func (s *Service) HandleRequest(ctx context.Context, ds *models.DataSource, quer
 
 // RegisterQueryHandler registers a query handler factory.
 // This is only exposed for tests!
+//nolint: staticcheck // plugins.DataPlugin deprecated
 func (s *Service) RegisterQueryHandler(name string, factory func(*models.DataSource) (plugins.DataPlugin, error)) {
 	s.registry[name] = factory
 }

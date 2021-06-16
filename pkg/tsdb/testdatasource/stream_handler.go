@@ -38,9 +38,8 @@ func (p *testStreamHandler) SubscribeStream(_ context.Context, req *backend.Subs
 	}
 	p.logger.Debug("Allowing access to stream", "path", req.Path, "user", req.PluginContext.User)
 	return &backend.SubscribeStreamResponse{
-		Status:       backend.SubscribeStreamStatusOK,
-		Data:         schema,
-		UseRunStream: true,
+		Status: backend.SubscribeStreamStatusOK,
+		Data:   schema,
 	}, nil
 }
 

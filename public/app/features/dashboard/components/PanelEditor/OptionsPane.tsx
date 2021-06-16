@@ -74,7 +74,7 @@ const getStyles = (theme: GrafanaTheme) => {
       min-height: 0;
     `,
     vizButtonWrapper: css`
-      padding: 0 ${theme.spacing.sm} ${theme.spacing.md} 0;
+      padding: 0 ${theme.spacing.md} ${theme.spacing.md} 0;
     `,
     legacyOptions: css`
       label: legacy-options;

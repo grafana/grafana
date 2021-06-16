@@ -1,60 +1,53 @@
-import React, { FC, useEffect } from 'react';
-import { GrafanaTheme } from '@grafana/data';
-import { PageToolbar, ToolbarButton, useStyles, CustomScrollbar, Spinner, Alert } from '@grafana/ui';
+import React, { FC, useMemo } from 'react';
+import { GrafanaTheme2, AppEvents } from '@grafana/data';
+import { PageToolbar, Button, useStyles2, CustomScrollbar, Spinner } from '@grafana/ui';
 import { css } from '@emotion/css';
 
 import { AlertTypeStep } from './AlertTypeStep';
 import { ConditionsStep } from './ConditionsStep';
 import { DetailsStep } from './DetailsStep';
 import { QueryStep } from './QueryStep';
-import { useForm, FormContext } from 'react-hook-form';
+import { useForm, FormProvider } from 'react-hook-form';
 
-import { GrafanaAlertState } from 'app/types/unified-alerting-dto';
-//import { locationService } from '@grafana/runtime';
-import { RuleFormValues } from '../../types/rule-form';
-import { SAMPLE_QUERIES } from '../../mocks/grafana-queries';
+import { RuleFormType, RuleFormValues } from '../../types/rule-form';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { initialAsyncRequestState } from '../../utils/redux';
-import { useDispatch } from 'react-redux';
 import { saveRuleFormAction } from '../../state/actions';
-import { cleanUpAction } from 'app/core/actions/cleanUp';
+import { RuleWithLocation } from 'app/types/unified-alerting';
+import { useDispatch } from 'react-redux';
+import { useCleanup } from 'app/core/hooks/useCleanup';
+import { rulerRuleToFormValues, getDefaultFormValues, getDefaultQueries } from '../../utils/rule-form';
+import { Link } from 'react-router-dom';
+import { useQueryParams } from 'app/core/hooks/useQueryParams';
 
-type Props = {};
+import { appEvents } from 'app/core/core';
 
-const defaultValues: RuleFormValues = Object.freeze({
-  name: '',
-  labels: [{ key: '', value: '' }],
-  annotations: [{ key: '', value: '' }],
-  dataSourceName: null,
+type Props = {
+  existing?: RuleWithLocation;
+};
 
-  // threshold
-  folder: null,
-  queries: SAMPLE_QUERIES, // @TODO remove the sample eventually
-  condition: '',
-  noDataState: GrafanaAlertState.NoData,
-  execErrState: GrafanaAlertState.Alerting,
-  evaluateEvery: '1m',
-  evaluateFor: '5m',
-
-  // system
-  expression: '',
-  forTime: 1,
-  forTimeUnit: 'm',
-});
-
-export const AlertRuleForm: FC<Props> = () => {
-  const styles = useStyles(getStyles);
+export const AlertRuleForm: FC<Props> = ({ existing }) => {
+  const styles = useStyles2(getStyles);
   const dispatch = useDispatch();
+  const [queryParams] = useQueryParams();
 
-  useEffect(() => {
-    return () => {
-      dispatch(cleanUpAction({ stateSelector: (state) => state.unifiedAlerting.ruleForm }));
+  const returnTo: string = (queryParams['returnTo'] as string | undefined) ?? '/alerting/list';
+
+  const defaultValues: RuleFormValues = useMemo(() => {
+    if (existing) {
+      return rulerRuleToFormValues(existing);
+    }
+    return {
+      ...getDefaultFormValues(),
+      queries: getDefaultQueries(),
+      ...(queryParams['defaults'] ? JSON.parse(queryParams['defaults'] as string) : {}),
     };
-  }, [dispatch]);
+  }, [existing, queryParams]);
 
   const formAPI = useForm<RuleFormValues>({
     mode: 'onSubmit',
     defaultValues,
+    shouldFocusError: true,
   });
 
   const { handleSubmit, watch } = formAPI;
@@ -62,45 +55,62 @@ export const AlertRuleForm: FC<Props> = () => {
   const type = watch('type');
   const dataSourceName = watch('dataSourceName');
 
-  const showStep2 = Boolean(dataSourceName && type);
+  const showStep2 = Boolean(type && (type === RuleFormType.grafana || !!dataSourceName));
 
   const submitState = useUnifiedAlertingSelector((state) => state.ruleForm.saveRule) || initialAsyncRequestState;
+  useCleanup((state) => state.unifiedAlerting.ruleForm.saveRule);
 
-  const submit = (values: RuleFormValues) => {
+  const submit = (values: RuleFormValues, exitOnSave: boolean) => {
     dispatch(
       saveRuleFormAction({
-        ...values,
-        annotations: values.annotations.filter(({ key }) => !!key),
-        labels: values.labels.filter(({ key }) => !!key),
+        values: {
+          ...defaultValues,
+          ...values,
+          annotations: values.annotations?.filter(({ key, value }) => !!key && !!value) ?? [],
+          labels: values.labels?.filter(({ key }) => !!key) ?? [],
+        },
+        existing,
+        redirectOnSave: exitOnSave ? returnTo : undefined,
       })
     );
   };
 
+  const onInvalid = () => {
+    appEvents.emit(AppEvents.alertError, ['There are errors in the form. Please correct them and try again!']);
+  };
+
   return (
-    <FormContext {...formAPI}>
-      <form onSubmit={handleSubmit(submit)} className={styles.form}>
-        <PageToolbar title="Create alert rule" pageIcon="bell" className={styles.toolbar}>
-          <ToolbarButton variant="default" disabled={submitState.loading}>
-            Cancel
-          </ToolbarButton>
-          <ToolbarButton variant="primary" type="submit" disabled={submitState.loading}>
-            {submitState.loading && <Spinner className={styles.buttonSpiner} inline={true} />}
+    <FormProvider {...formAPI}>
+      <form onSubmit={(e) => e.preventDefault()} className={styles.form}>
+        <PageToolbar title="Create alert rule" pageIcon="bell">
+          <Link to={returnTo}>
+            <Button variant="secondary" disabled={submitState.loading} type="button" fill="outline">
+              Cancel
+            </Button>
+          </Link>
+          <Button
+            variant="secondary"
+            type="button"
+            onClick={handleSubmit((values) => submit(values, false), onInvalid)}
+            disabled={submitState.loading}
+          >
+            {submitState.loading && <Spinner className={styles.buttonSpinner} inline={true} />}
             Save
-          </ToolbarButton>
-          <ToolbarButton variant="primary" disabled={submitState.loading}>
-            {submitState.loading && <Spinner className={styles.buttonSpiner} inline={true} />}
+          </Button>
+          <Button
+            variant="primary"
+            type="button"
+            onClick={handleSubmit((values) => submit(values, true), onInvalid)}
+            disabled={submitState.loading}
+          >
+            {submitState.loading && <Spinner className={styles.buttonSpinner} inline={true} />}
             Save and exit
-          </ToolbarButton>
+          </Button>
         </PageToolbar>
-        <div className={styles.contentOutter}>
-          <CustomScrollbar autoHeightMin="100%">
+        <div className={styles.contentOuter}>
+          <CustomScrollbar autoHeightMin="100%" hideHorizontalTrack={true}>
             <div className={styles.contentInner}>
-              {submitState.error && (
-                <Alert severity="error" title="Error saving rule">
-                  {submitState.error.message || (submitState.error as any)?.data?.message || String(submitState.error)}
-                </Alert>
-              )}
-              <AlertTypeStep />
+              <AlertTypeStep editingExistingRule={!!existing} />
               {showStep2 && (
                 <>
                   <QueryStep />
@@ -112,19 +122,14 @@ export const AlertRuleForm: FC<Props> = () => {
           </CustomScrollbar>
         </div>
       </form>
-    </FormContext>
+    </FormProvider>
   );
 };
 
-const getStyles = (theme: GrafanaTheme) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
-    buttonSpiner: css`
-      margin-right: ${theme.spacing.sm};
-    `,
-    toolbar: css`
-      padding-top: ${theme.spacing.sm};
-      padding-bottom: ${theme.spacing.md};
-      border-bottom: solid 1px ${theme.colors.border2};
+    buttonSpinner: css`
+      margin-right: ${theme.spacing(1)};
     `,
     form: css`
       width: 100%;
@@ -134,18 +139,15 @@ const getStyles = (theme: GrafanaTheme) => {
     `,
     contentInner: css`
       flex: 1;
-      padding: ${theme.spacing.md};
+      padding: ${theme.spacing(2)};
     `,
-    contentOutter: css`
-      background: ${theme.colors.panelBg};
+    contentOuter: css`
+      background: ${theme.colors.background.primary};
+      border: 1px solid ${theme.colors.border.weak};
+      border-radius: ${theme.shape.borderRadius()};
+      margin: ${theme.spacing(2)};
       overflow: hidden;
       flex: 1;
-    `,
-    formInput: css`
-      width: 400px;
-      & + & {
-        margin-left: ${theme.spacing.sm};
-      }
     `,
     flexRow: css`
       display: flex;

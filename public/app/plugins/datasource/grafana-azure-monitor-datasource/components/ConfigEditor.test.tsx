@@ -6,6 +6,7 @@ const setup = () => {
   const props: Props = {
     options: {
       id: 21,
+      uid: 'y',
       orgId: 1,
       name: 'Azure Monitor-10-10',
       type: 'grafana-azure-monitor-datasource',

@@ -346,6 +346,12 @@ type SaveDashboardCommand struct {
 	Result *Dashboard
 }
 
+type TrimDashboardCommand struct {
+	Dashboard *simplejson.Json `json:"dashboard" binding:"Required"`
+	Meta      *simplejson.Json `json:"meta"`
+	Result    *Dashboard
+}
+
 type DashboardProvisioning struct {
 	Id          int64
 	DashboardId int64

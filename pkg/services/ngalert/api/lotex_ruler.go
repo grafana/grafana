@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"net/url"
 
-	apimodels "github.com/grafana/alerting-api/pkg/api"
+	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"gopkg.in/yaml.v3"
 
 	"github.com/grafana/grafana/pkg/api/response"

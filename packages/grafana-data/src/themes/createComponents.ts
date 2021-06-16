@@ -1,4 +1,4 @@
-import { ThemePalette } from './createPalette';
+import { ThemeColors } from './createColors';
 import { ThemeShadows } from './createShadows';
 
 /** @beta */
@@ -9,32 +9,52 @@ export interface ThemeComponents {
     md: number;
     lg: number;
   };
-  form: {
+  input: {
     background: string;
-    border: string;
+    borderColor: string;
     borderHover: string;
     text: string;
+  };
+  tooltip: {
+    text: string;
+    background: string;
   };
   panel: {
     padding: number;
     headerHeight: number;
-    border: string;
+    borderColor: string;
     boxShadow: string;
+    background: string;
+  };
+  dropdown: {
+    background: string;
+  };
+  overlay: {
     background: string;
   };
   dashboard: {
     background: string;
     padding: number;
   };
+  sidemenu: {
+    width: number;
+  };
 }
 
-export function createComponents(palette: ThemePalette, shadows: ThemeShadows): ThemeComponents {
+export function createComponents(colors: ThemeColors, shadows: ThemeShadows): ThemeComponents {
   const panel = {
     padding: 1,
     headerHeight: 4,
-    background: palette.layer1,
-    border: palette.border0,
-    boxShadow: shadows.z0,
+    background: colors.background.primary,
+    borderColor: colors.border.weak,
+    boxShadow: 'none',
+  };
+
+  const input = {
+    borderColor: colors.border.medium,
+    borderHover: colors.border.strong,
+    text: colors.text.primary,
+    background: colors.mode === 'dark' ? colors.background.canvas : colors.background.primary,
   };
 
   return {
@@ -43,24 +63,24 @@ export function createComponents(palette: ThemePalette, shadows: ThemeShadows): 
       md: 4,
       lg: 6,
     },
-    form:
-      palette.mode === 'dark'
-        ? {
-            background: palette.layer0,
-            border: palette.border1,
-            borderHover: palette.border2,
-            text: palette.text.primary,
-          }
-        : {
-            background: palette.layer1,
-            border: palette.border1,
-            borderHover: palette.border2,
-            text: palette.text.primary,
-          },
+    input,
     panel,
+    dropdown: {
+      background: input.background,
+    },
+    tooltip: {
+      background: colors.mode === 'light' ? '#555' : colors.background.secondary,
+      text: colors.mode === 'light' ? '#FFF' : colors.text.primary,
+    },
     dashboard: {
-      background: palette.layer0,
+      background: colors.background.canvas,
       padding: 1,
+    },
+    overlay: {
+      background: colors.mode === 'dark' ? 'rgba(0, 0, 0, 0.45)' : 'rgba(208, 209, 211, 0.24)',
+    },
+    sidemenu: {
+      width: 60,
     },
   };
 }

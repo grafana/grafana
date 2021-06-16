@@ -66,7 +66,7 @@ func (r *logQueryRunner) OnSubscribe(ctx context.Context, user *models.SignedInU
 
 	r.running[e.Channel] = true
 	go func() {
-		if err := r.publishResults(e.Channel); err != nil {
+		if err := r.publishResults(user.OrgId, e.Channel); err != nil {
 			plog.Error(err.Error())
 		}
 	}()
@@ -79,7 +79,7 @@ func (r *logQueryRunner) OnPublish(ctx context.Context, user *models.SignedInUse
 	return models.PublishReply{}, backend.PublishStreamStatusPermissionDenied, nil
 }
 
-func (r *logQueryRunner) publishResults(channelName string) error {
+func (r *logQueryRunner) publishResults(orgID int64, channelName string) error {
 	defer func() {
 		r.service.DeleteResponseChannel(channelName)
 		r.runningMu.Lock()
@@ -98,7 +98,7 @@ func (r *logQueryRunner) publishResults(channelName string) error {
 			return err
 		}
 
-		if err := r.publish(channelName, responseBytes); err != nil {
+		if err := r.publish(orgID, channelName, responseBytes); err != nil {
 			return err
 		}
 	}
@@ -108,6 +108,7 @@ func (r *logQueryRunner) publishResults(channelName string) error {
 
 // executeLiveLogQuery executes a CloudWatch Logs query with live updates over WebSocket.
 // A WebSocket channel is created, which goroutines send responses over.
+//nolint: staticcheck // plugins.DataResponse deprecated
 func (e *cloudWatchExecutor) executeLiveLogQuery(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	responseChannelName := uuid.New().String()
 	responseChannel := make(chan plugins.DataResponse)
@@ -133,6 +134,7 @@ func (e *cloudWatchExecutor) executeLiveLogQuery(ctx context.Context, req *backe
 	return response, nil
 }
 
+//nolint: staticcheck // plugins.DataResponse deprecated
 func (e *cloudWatchExecutor) sendLiveQueriesToChannel(req *backend.QueryDataRequest, responseChannel chan plugins.DataResponse) {
 	defer close(responseChannel)
 
@@ -210,6 +212,7 @@ func (e *cloudWatchExecutor) fetchConcurrentQueriesQuota(region string, pluginCt
 	return defaultConcurrentQueries
 }
 
+//nolint: staticcheck // plugins.DataResponse deprecated
 func (e *cloudWatchExecutor) startLiveQuery(ctx context.Context, responseChannel chan plugins.DataResponse, query backend.DataQuery, timeRange backend.TimeRange, pluginCtx backend.PluginContext) error {
 	model, err := simplejson.NewJson(query.JSON)
 	if err != nil {

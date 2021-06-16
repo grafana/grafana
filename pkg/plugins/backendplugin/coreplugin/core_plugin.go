@@ -43,6 +43,7 @@ func (cp *corePlugin) Logger() log.Logger {
 	return cp.logger
 }
 
+//nolint: staticcheck // plugins.DataResponse deprecated
 func (cp *corePlugin) DataQuery(ctx context.Context, dsInfo *models.DataSource,
 	tsdbQuery plugins.DataQuery) (plugins.DataResponse, error) {
 	// TODO: Inline the adapter, since it shouldn't be necessary
@@ -64,6 +65,14 @@ func (cp *corePlugin) IsManaged() bool {
 }
 
 func (cp *corePlugin) Exited() bool {
+	return false
+}
+
+func (cp *corePlugin) Decommission() error {
+	return nil
+}
+
+func (cp *corePlugin) IsDecommissioned() bool {
 	return false
 }
 

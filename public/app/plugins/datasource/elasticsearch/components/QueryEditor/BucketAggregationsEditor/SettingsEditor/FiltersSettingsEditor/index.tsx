@@ -1,6 +1,6 @@
 import { InlineField, Input, QueryField } from '@grafana/ui';
 import { css } from '@emotion/css';
-import React, { FunctionComponent, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { AddRemove } from '../../../../AddRemove';
 import { useDispatch, useStatelessReducer } from '../../../../../hooks/useStatelessReducer';
 import { Filters } from '../../aggregations';
@@ -13,7 +13,7 @@ interface Props {
   value: Filters;
 }
 
-export const FiltersSettingsEditor: FunctionComponent<Props> = ({ value }) => {
+export const FiltersSettingsEditor = ({ value }: Props) => {
   const upperStateDispatch = useDispatch<BucketAggregationAction<Filters>>();
 
   const dispatch = useStatelessReducer(

@@ -1,7 +1,7 @@
 import { Alert } from 'app/types/unified-alerting';
 import React, { FC } from 'react';
-import { Annotation } from '../Annotation';
-import { DetailsField } from './DetailsField';
+import { AnnotationDetailsField } from '../AnnotationDetailsField';
+import { DetailsField } from '../DetailsField';
 
 interface Props {
   instance: Alert;
@@ -12,13 +12,13 @@ export const AlertInstanceDetails: FC<Props> = ({ instance }) => {
 
   return (
     <div>
-      <DetailsField label="Value" horizontal={true}>
-        {instance.value}
-      </DetailsField>
-      {annotations.map(([key, value]) => (
-        <DetailsField key={key} label={key} horizontal={true}>
-          <Annotation annotationKey={key} value={value} />
+      {instance.value && (
+        <DetailsField label="Value" horizontal={true}>
+          {instance.value}
         </DetailsField>
+      )}
+      {annotations.map(([key, value]) => (
+        <AnnotationDetailsField key={key} annotationKey={key} value={value} />
       ))}
     </div>
   );

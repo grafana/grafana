@@ -27,7 +27,7 @@ export const ChangePasswordPage: FC<Props> = ({ navModel }) => (
       ) => {
         return (
           <Page.Contents>
-            <h3 className="page-sub-heading">Change Your Password</h3>
+            <h3 className="page-heading">Change Your Password</h3>
             {states.loadUser ? (
               <LoadingPlaceholder text="Loading user profile..." />
             ) : (

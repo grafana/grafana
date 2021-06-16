@@ -73,12 +73,29 @@ var pipelineAggType = map[string]string{
 	"bucket_script":  "bucket_script",
 }
 
+var scriptableAggType = map[string]string{
+	"avg":            "avg",
+	"sum":            "sum",
+	"max":            "max",
+	"min":            "min",
+	"extended_stats": "extended_stats",
+	"percentiles":    "percentiles",
+	"bucket_script":  "bucket_script",
+}
+
 var pipelineAggWithMultipleBucketPathsType = map[string]string{
 	"bucket_script": "bucket_script",
 }
 
 func isPipelineAgg(metricType string) bool {
 	if _, ok := pipelineAggType[metricType]; ok {
+		return true
+	}
+	return false
+}
+
+func isMetricAggregationWithInlineScriptSupport(metricType string) bool {
+	if _, ok := scriptableAggType[metricType]; ok {
 		return true
 	}
 	return false

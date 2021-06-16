@@ -47,8 +47,9 @@ func (acs *AnnotationCleanupService) CleanAnnotations(ctx context.Context, cfg *
 	if err != nil {
 		return totalCleanedAnnotations, 0, err
 	}
-
-	affected, err = acs.cleanOrphanedAnnotationTags(ctx)
+	if totalCleanedAnnotations > 0 {
+		affected, err = acs.cleanOrphanedAnnotationTags(ctx)
+	}
 	return totalCleanedAnnotations, affected, err
 }
 

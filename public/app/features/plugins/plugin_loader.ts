@@ -1,3 +1,4 @@
+// eslint-disable-next-line lodash/import-scope
 import _ from 'lodash';
 import * as sdk from 'app/plugins/sdk';
 import kbn from 'app/core/utils/kbn';
@@ -235,7 +236,17 @@ export function importPanelPlugin(id: string): Promise<grafanaData.PanelPlugin> 
     throw new Error(`Plugin ${id} not found`);
   }
 
-  panelCache[id] = importPluginModule(meta.module)
+  panelCache[id] = getPanelPlugin(meta);
+
+  return panelCache[id];
+}
+
+export function importPanelPluginFromMeta(meta: grafanaData.PanelPluginMeta): Promise<grafanaData.PanelPlugin> {
+  return getPanelPlugin(meta);
+}
+
+function getPanelPlugin(meta: grafanaData.PanelPluginMeta): Promise<grafanaData.PanelPlugin> {
+  return importPluginModule(meta.module)
     .then((pluginExports) => {
       if (pluginExports.plugin) {
         return pluginExports.plugin as grafanaData.PanelPlugin;
@@ -252,9 +263,7 @@ export function importPanelPlugin(id: string): Promise<grafanaData.PanelPlugin> 
     })
     .catch((err) => {
       // TODO, maybe a different error plugin
-      console.warn('Error loading panel plugin: ' + id, err);
+      console.warn('Error loading panel plugin: ' + meta.id, err);
       return getPanelPluginLoadError(meta, err);
     });
-
-  return panelCache[id];
 }

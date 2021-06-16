@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import { defaultsDeep, find, map, isString } from 'lodash';
 import { QueryCtrl } from 'app/plugins/sdk';
 import TimegrainConverter from './time_grain_converter';
 import './editor/editor_component';
@@ -27,10 +27,17 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
     { id: AzureQueryType.LogAnalytics, label: 'Logs' },
     { id: AzureQueryType.ApplicationInsights, label: 'Application Insights' },
     { id: AzureQueryType.InsightsAnalytics, label: 'Insights Analytics' },
+    { id: AzureQueryType.AzureResourceGraph, label: 'Azure Resource Graph' },
   ];
 
   // Query types that have been migrated to React
-  reactQueryEditors = [AzureQueryType.AzureMonitor, AzureQueryType.LogAnalytics];
+  reactQueryEditors = [
+    AzureQueryType.AzureMonitor,
+    AzureQueryType.LogAnalytics,
+    AzureQueryType.AzureResourceGraph,
+    // AzureQueryType.ApplicationInsights,
+    // AzureQueryType.InsightsAnalytics,
+  ];
 
   // target: AzureMonitorQuery;
 
@@ -39,11 +46,16 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
     refId: string;
     queryType: AzureQueryType;
     subscription: string;
+    subscriptions: string[];
     azureMonitor: AzureMetricQuery;
     azureLogAnalytics: {
       query: string;
       resultFormat: string;
       workspace: string;
+    };
+    azureResourceGraph: {
+      query: string;
+      resultFormat: string;
     };
     appInsights: {
       // metric style query when rawQuery == false
@@ -100,6 +112,9 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
           ? this.datasource.azureLogAnalyticsDatasource.defaultOrFirstWorkspace
           : '',
     },
+    azureResourceGraph: {
+      resultFormat: 'table',
+    },
     appInsights: {
       metricName: this.defaultDropdownValue,
       // dimension: [],
@@ -112,10 +127,10 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
   };
 
   resultFormats: ResultFormat[];
-  workspaces: any[];
-  showHelp: boolean;
-  showLastQuery: boolean;
-  lastQuery: string;
+  workspaces: any[] = [];
+  showHelp = false;
+  showLastQuery = false;
+  lastQuery = '';
   lastQueryError?: string;
   subscriptions: Array<{ text: string; value: string }>;
 
@@ -123,7 +138,7 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
   constructor($scope: any, $injector: auto.IInjectorService, private templateSrv: TemplateSrv) {
     super($scope, $injector);
 
-    _.defaultsDeep(this.target, this.defaults);
+    defaultsDeep(this.target, this.defaults);
 
     this.migrateTimeGrains();
 
@@ -153,7 +168,7 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
     this.lastQueryError = undefined;
     this.lastQuery = '';
 
-    const anySeriesFromQuery: any = _.find(dataList, { refId: this.target.refId });
+    const anySeriesFromQuery: any = find(dataList, { refId: this.target.refId });
     if (anySeriesFromQuery && anySeriesFromQuery.meta) {
       this.lastQuery = anySeriesFromQuery.meta.query;
     }
@@ -279,7 +294,7 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
       appInsights.dimension = [];
     }
 
-    if (_.isString(appInsights.dimension)) {
+    if (isString(appInsights.dimension)) {
       appInsights.dimension = [appInsights.dimension as string];
     }
   }
@@ -315,11 +330,15 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
       if (!this.target.subscription && this.target.queryType === 'Azure Monitor') {
         this.target.subscription = this.datasource.azureMonitorDatasource.subscriptionId;
       } else if (!this.target.subscription && this.target.queryType === 'Azure Log Analytics') {
-        this.target.subscription = this.datasource.azureLogAnalyticsDatasource.logAnalyticsSubscriptionId;
+        this.target.subscription = this.datasource.azureLogAnalyticsDatasource.subscriptionId;
       }
 
       if (!this.target.subscription && this.subscriptions.length > 0) {
         this.target.subscription = this.subscriptions[0].value;
+      }
+
+      if (!this.target.subscriptions) {
+        this.target.subscriptions = subscriptions.map((sub) => sub.value);
       }
 
       return this.subscriptions;
@@ -336,7 +355,7 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
     if (timeGrain === 'auto') {
       return TimegrainConverter.findClosestTimeGrain(
         '1m',
-        _.map(timeGrains, (o) => TimegrainConverter.createKbnUnitFromISO8601Duration(o.value)) || [
+        map(timeGrains, (o) => TimegrainConverter.createKbnUnitFromISO8601Duration(o.value)) || [
           '1m',
           '5m',
           '15m',
@@ -480,7 +499,7 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
     }
 
     // Return the list of dimensions stored on the query object from the last request :(
-    return _.map(appInsights.dimensions, (option: string) => {
+    return map(appInsights.dimensions, (option: string) => {
       return { text: option, value: option };
     });
   }

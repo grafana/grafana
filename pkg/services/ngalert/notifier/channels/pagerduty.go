@@ -3,11 +3,10 @@ package channels
 import (
 	"context"
 	"encoding/json"
-	"net/url"
+	"fmt"
 	"os"
 
 	gokit_log "github.com/go-kit/kit/log"
-	"github.com/pkg/errors"
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
@@ -18,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	old_notifiers "github.com/grafana/grafana/pkg/services/alerting/notifiers"
+	"github.com/grafana/grafana/pkg/services/ngalert/logging"
 )
 
 const (
@@ -26,7 +26,7 @@ const (
 )
 
 var (
-	pagerdutyEventAPIURL = "https://events.pagerduty.com/v2/enqueue"
+	PagerdutyEventAPIURL = "https://events.pagerduty.com/v2/enqueue"
 )
 
 // PagerdutyNotifier is responsible for sending
@@ -35,7 +35,6 @@ type PagerdutyNotifier struct {
 	old_notifiers.NotifierBase
 	Key           string
 	Severity      string
-	AutoResolve   bool
 	CustomDetails map[string]string
 	Class         string
 	Component     string
@@ -43,11 +42,10 @@ type PagerdutyNotifier struct {
 	Summary       string
 	tmpl          *template.Template
 	log           log.Logger
-	externalUrl   *url.URL
 }
 
 // NewPagerdutyNotifier is the constructor for the PagerDuty notifier
-func NewPagerdutyNotifier(model *models.AlertNotification, t *template.Template, externalUrl *url.URL) (*PagerdutyNotifier, error) {
+func NewPagerdutyNotifier(model *NotificationChannelConfig, t *template.Template) (*PagerdutyNotifier, error) {
 	if model.Settings == nil {
 		return nil, alerting.ValidationError{Reason: "No Settings Supplied"}
 	}
@@ -57,57 +55,52 @@ func NewPagerdutyNotifier(model *models.AlertNotification, t *template.Template,
 		return nil, alerting.ValidationError{Reason: "Could not find integration key property in settings"}
 	}
 
-	customDetails := model.Settings.Get("customDetails").MustMap(map[string]interface{}{
-		"firing":       `{{ template "pagerduty.default.instances" .Alerts.Firing }}`,
-		"resolved":     `{{ template "pagerduty.default.instances" .Alerts.Resolved }}`,
-		"num_firing":   `{{ .Alerts.Firing | len }}`,
-		"num_resolved": `{{ .Alerts.Resolved | len }}`,
-	})
-
-	details := make(map[string]string, len(customDetails))
-	for k, v := range customDetails {
-		if val, ok := v.(string); ok {
-			details[k] = val
-		}
-	}
-
 	return &PagerdutyNotifier{
-		NotifierBase:  old_notifiers.NewNotifierBase(model),
-		Key:           key,
-		CustomDetails: details,
-		Severity:      model.Settings.Get("severity").MustString("critical"),
-		AutoResolve:   model.Settings.Get("autoResolve").MustBool(true),
-		Class:         model.Settings.Get("class").MustString("todo_class"), // TODO
-		Component:     model.Settings.Get("component").MustString("Grafana"),
-		Group:         model.Settings.Get("group").MustString("todo_group"), // TODO
-		Summary:       model.Settings.Get("summary").MustString(`{{ template "pagerduty.default.description" .}}`),
-		tmpl:          t,
-		externalUrl:   externalUrl,
-		log:           log.New("alerting.notifier." + model.Name),
+		NotifierBase: old_notifiers.NewNotifierBase(&models.AlertNotification{
+			Uid:                   model.UID,
+			Name:                  model.Name,
+			Type:                  model.Type,
+			DisableResolveMessage: model.DisableResolveMessage,
+			Settings:              model.Settings,
+		}),
+		Key: key,
+		CustomDetails: map[string]string{
+			"firing":       `{{ template "__text_alert_list" .Alerts.Firing }}`,
+			"resolved":     `{{ template "__text_alert_list" .Alerts.Resolved }}`,
+			"num_firing":   `{{ .Alerts.Firing | len }}`,
+			"num_resolved": `{{ .Alerts.Resolved | len }}`,
+		},
+		Severity:  model.Settings.Get("severity").MustString("critical"),
+		Class:     model.Settings.Get("class").MustString("default"),
+		Component: model.Settings.Get("component").MustString("Grafana"),
+		Group:     model.Settings.Get("group").MustString("default"),
+		Summary:   model.Settings.Get("summary").MustString(`{{ template "default.title" . }}`),
+		tmpl:      t,
+		log:       log.New("alerting.notifier." + model.Name),
 	}, nil
 }
 
 // Notify sends an alert notification to PagerDuty
 func (pn *PagerdutyNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
 	alerts := types.Alerts(as...)
-	if alerts.Status() == model.AlertResolved && !pn.AutoResolve {
-		pn.log.Debug("Not sending a trigger to Pagerduty", "status", alerts.Status(), "auto resolve", pn.AutoResolve)
+	if alerts.Status() == model.AlertResolved && !pn.SendResolved() {
+		pn.log.Debug("Not sending a trigger to Pagerduty", "status", alerts.Status(), "auto resolve", pn.SendResolved())
 		return true, nil
 	}
 
 	msg, eventType, err := pn.buildPagerdutyMessage(ctx, alerts, as)
 	if err != nil {
-		return false, errors.Wrap(err, "build pagerduty message")
+		return false, fmt.Errorf("build pagerduty message: %w", err)
 	}
 
 	body, err := json.Marshal(msg)
 	if err != nil {
-		return false, errors.Wrap(err, "marshal json")
+		return false, fmt.Errorf("marshal json: %w", err)
 	}
 
 	pn.log.Info("Notifying Pagerduty", "event_type", eventType)
 	cmd := &models.SendWebhookSync{
-		Url:        pagerdutyEventAPIURL,
+		Url:        PagerdutyEventAPIURL,
 		Body:       string(body),
 		HttpMethod: "POST",
 		HttpHeader: map[string]string{
@@ -115,7 +108,7 @@ func (pn *PagerdutyNotifier) Notify(ctx context.Context, as ...*types.Alert) (bo
 		},
 	}
 	if err := bus.DispatchCtx(ctx, cmd); err != nil {
-		return false, errors.Wrap(err, "send notification to Pagerduty")
+		return false, fmt.Errorf("send notification to Pagerduty: %w", err)
 	}
 
 	return true, nil
@@ -132,7 +125,7 @@ func (pn *PagerdutyNotifier) buildPagerdutyMessage(ctx context.Context, alerts m
 		eventType = pagerDutyEventResolve
 	}
 
-	data := notify.GetTemplateData(ctx, &template.Template{ExternalURL: pn.externalUrl}, as, gokit_log.NewNopLogger())
+	data := notify.GetTemplateData(ctx, pn.tmpl, as, gokit_log.NewLogfmtLogger(logging.NewWrapper(pn.log)))
 	var tmplErr error
 	tmpl := notify.TmplText(pn.tmpl, data, &tmplErr)
 
@@ -140,22 +133,22 @@ func (pn *PagerdutyNotifier) buildPagerdutyMessage(ctx context.Context, alerts m
 	for k, v := range pn.CustomDetails {
 		detail, err := pn.tmpl.ExecuteTextString(v, data)
 		if err != nil {
-			return nil, "", errors.Wrapf(err, "%q: failed to template %q", k, v)
+			return nil, "", fmt.Errorf("%q: failed to template %q: %w", k, v, err)
 		}
 		details[k] = detail
 	}
 
 	msg := &pagerDutyMessage{
 		Client:      "Grafana",
-		ClientURL:   pn.externalUrl.String(),
+		ClientURL:   pn.tmpl.ExternalURL.String(),
 		RoutingKey:  pn.Key,
 		EventAction: eventType,
 		DedupKey:    key.Hash(),
 		Links: []pagerDutyLink{{
-			HRef: pn.externalUrl.String(),
+			HRef: pn.tmpl.ExternalURL.String(),
 			Text: "External URL",
 		}},
-		Description: getTitleFromTemplateData(data), // TODO: this can be configurable template.
+		Description: tmpl(`{{ template "default.title" . }}`), // TODO: this can be configurable template.
 		Payload: &pagerDutyPayload{
 			Component:     tmpl(pn.Component),
 			Summary:       tmpl(pn.Summary),
@@ -166,20 +159,25 @@ func (pn *PagerdutyNotifier) buildPagerdutyMessage(ctx context.Context, alerts m
 		},
 	}
 
+	if len(msg.Payload.Summary) > 1024 {
+		// This is the Pagerduty limit.
+		msg.Payload.Summary = msg.Payload.Summary[:1021] + "..."
+	}
+
 	if hostname, err := os.Hostname(); err == nil {
 		// TODO: should this be configured like in Prometheus AM?
 		msg.Payload.Source = hostname
 	}
 
 	if tmplErr != nil {
-		return nil, "", errors.Wrap(tmplErr, "failed to template PagerDuty message")
+		return nil, "", fmt.Errorf("failed to template PagerDuty message: %w", tmplErr)
 	}
 
 	return msg, eventType, nil
 }
 
 func (pn *PagerdutyNotifier) SendResolved() bool {
-	return pn.AutoResolve
+	return !pn.GetDisableResolveMessage()
 }
 
 type pagerDutyMessage struct {

@@ -81,7 +81,7 @@ Fill opacity set to 95:
 
 ### Gradient mode
 
-Set the mode of the gradient fill. Fill gradient is based on the line color. To change the color, use the standard [color scheme]({{< relref "../../field-options/standard-field-options.md#color-scheme" >}}) field option.
+Set the mode of the gradient fill. Fill gradient is based on the line color. To change the color, use the standard [color scheme]({{< relref "../../standard-options.md#color-scheme" >}}) field option.
 
 Gradient appearance is influenced by the **Fill opacity** setting. In the screenshots below, **Fill opacity** is set to 50.
 
@@ -132,6 +132,10 @@ Point size set to 20:
 Never show the points.
 
 ![Show points point never example](/img/docs/time-series-panel/bar-graph-show-points-never-7-4.png)
+
+{{< docs/shared "visualizations/stack-series-link.md" >}}
+
+{{< docs/shared "visualizations/change-axis-link.md" >}}
 
 ## Bar graph examples
 

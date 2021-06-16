@@ -1,5 +1,4 @@
 // Libraries
-import _ from 'lodash';
 import React, { PureComponent, ReactNode } from 'react';
 
 // Types

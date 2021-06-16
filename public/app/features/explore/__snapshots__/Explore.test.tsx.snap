@@ -27,10 +27,10 @@ exports[`Explore should render component 1`] = `
         queryInspectorButtonActive={false}
         richHistoryButtonActive={false}
       />
+      <ResponseErrorContainer
+        exploreId="left"
+      />
     </div>
-    <ResponseErrorContainer
-      exploreId="left"
-    />
     <AutoSizer
       disableHeight={true}
       disableWidth={false}

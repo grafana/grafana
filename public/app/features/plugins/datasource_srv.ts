@@ -13,7 +13,12 @@ import { AppEvents, DataSourceApi, DataSourceInstanceSettings, DataSourceSelectI
 import { auto } from 'angular';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
 // Pretend Datasource
-import { expressionDatasource } from 'app/features/expressions/ExpressionDatasource';
+import {
+  dataSource as expressionDatasource,
+  ExpressionDatasourceID,
+  ExpressionDatasourceUID,
+  instanceSettings as expressionInstanceSettings,
+} from 'app/features/expressions/ExpressionDatasource';
 import { DataSourceVariableModel } from '../variables/types';
 import { cloneDeep } from 'lodash';
 
@@ -50,6 +55,10 @@ export class DatasourceSrv implements DataSourceService {
   getInstanceSettings(nameOrUid: string | null | undefined): DataSourceInstanceSettings | undefined {
     if (nameOrUid === 'default' || nameOrUid === null || nameOrUid === undefined) {
       return this.settingsMapByName[this.defaultName];
+    }
+
+    if (nameOrUid === ExpressionDatasourceID || nameOrUid === ExpressionDatasourceUID) {
+      return expressionInstanceSettings;
     }
 
     // Complex logic to support template variable data source names
@@ -112,7 +121,7 @@ export class DatasourceSrv implements DataSourceService {
 
   async loadDatasource(name: string): Promise<DataSourceApi<any, any>> {
     // Expression Datasource (not a real datasource)
-    if (name === expressionDatasource.name) {
+    if (name === ExpressionDatasourceID || name === ExpressionDatasourceUID) {
       this.datasources[name] = expressionDatasource as any;
       return Promise.resolve(expressionDatasource);
     }

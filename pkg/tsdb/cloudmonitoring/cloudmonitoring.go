@@ -57,11 +57,13 @@ var (
 )
 
 const (
-	gceAuthentication string = "gce"
-	jwtAuthentication string = "jwt"
-	metricQueryType   string = "metrics"
-	sloQueryType      string = "slo"
-	mqlEditorMode     string = "mql"
+	gceAuthentication         string = "gce"
+	jwtAuthentication         string = "jwt"
+	metricQueryType           string = "metrics"
+	sloQueryType              string = "slo"
+	mqlEditorMode             string = "mql"
+	crossSeriesReducerDefault string = "REDUCE_NONE"
+	perSeriesAlignerDefault   string = "ALIGN_MEAN"
 )
 
 func init() {
@@ -74,6 +76,7 @@ func init() {
 
 type Service struct {
 	PluginManager plugins.Manager `inject:""`
+	Cfg           *setting.Cfg    `inject:""`
 }
 
 func (s *Service) Init() error {
@@ -85,9 +88,11 @@ type Executor struct {
 	httpClient    *http.Client
 	dsInfo        *models.DataSource
 	pluginManager plugins.Manager
+	cfg           *setting.Cfg
 }
 
 // NewExecutor returns an Executor.
+//nolint: staticcheck // plugins.DataPlugin deprecated
 func (s *Service) NewExecutor(dsInfo *models.DataSource) (plugins.DataPlugin, error) {
 	httpClient, err := dsInfo.GetHttpClient()
 	if err != nil {
@@ -98,6 +103,7 @@ func (s *Service) NewExecutor(dsInfo *models.DataSource) (plugins.DataPlugin, er
 		httpClient:    httpClient,
 		dsInfo:        dsInfo,
 		pluginManager: s.PluginManager,
+		cfg:           s.Cfg,
 	}, nil
 }
 
@@ -108,6 +114,7 @@ func init() {
 // Query takes in the frontend queries, parses them into the CloudMonitoring query format
 // executes the queries against the CloudMonitoring API and parses the response into
 // the time series or table format
+//nolint: staticcheck // plugins.DataPlugin deprecated
 func (e *Executor) DataQuery(ctx context.Context, dsInfo *models.DataSource, tsdbQuery plugins.DataQuery) (
 	plugins.DataResponse, error) {
 	var result plugins.DataResponse
@@ -128,11 +135,14 @@ func (e *Executor) DataQuery(ctx context.Context, dsInfo *models.DataSource, tsd
 	return result, err
 }
 
+//nolint: staticcheck // plugins.DataPlugin deprecated
 func (e *Executor) getGCEDefaultProject(ctx context.Context, tsdbQuery plugins.DataQuery) (plugins.DataResponse, error) {
 	result := plugins.DataResponse{
+		//nolint: staticcheck // plugins.DataPlugin deprecated
 		Results: make(map[string]plugins.DataQueryResult),
 	}
 	refID := tsdbQuery.Queries[0].RefID
+	//nolint: staticcheck // plugins.DataPlugin deprecated
 	queryResult := plugins.DataQueryResult{Meta: simplejson.New(), RefID: refID}
 
 	gceDefaultProject, err := e.getDefaultProject(ctx)
@@ -147,9 +157,11 @@ func (e *Executor) getGCEDefaultProject(ctx context.Context, tsdbQuery plugins.D
 	return result, nil
 }
 
+//nolint: staticcheck // plugins.DataPlugin deprecated
 func (e *Executor) executeTimeSeriesQuery(ctx context.Context, tsdbQuery plugins.DataQuery) (
 	plugins.DataResponse, error) {
 	result := plugins.DataResponse{
+		//nolint: staticcheck // plugins.DataPlugin deprecated
 		Results: make(map[string]plugins.DataQueryResult),
 	}
 
@@ -200,6 +212,7 @@ func (e *Executor) buildQueryExecutors(tsdbQuery plugins.DataQuery) ([]cloudMoni
 		if err := json.Unmarshal(model, &q); err != nil {
 			return nil, fmt.Errorf("could not unmarshal CloudMonitoringQuery json: %w", err)
 		}
+		q.MetricQuery.PreprocessorType = toPreprocessorType(q.MetricQuery.Preprocessor)
 		var target string
 		params := url.Values{}
 		params.Add("interval.startTime", startTime.UTC().Format(time.RFC3339))
@@ -335,16 +348,44 @@ func buildSLOFilterExpression(q sloQuery) string {
 
 func setMetricAggParams(params *url.Values, query *metricQuery, durationSeconds int, intervalMs int64) {
 	if query.CrossSeriesReducer == "" {
-		query.CrossSeriesReducer = "REDUCE_NONE"
+		query.CrossSeriesReducer = crossSeriesReducerDefault
 	}
 
 	if query.PerSeriesAligner == "" {
-		query.PerSeriesAligner = "ALIGN_MEAN"
+		query.PerSeriesAligner = perSeriesAlignerDefault
 	}
 
-	params.Add("aggregation.crossSeriesReducer", query.CrossSeriesReducer)
-	params.Add("aggregation.perSeriesAligner", query.PerSeriesAligner)
-	params.Add("aggregation.alignmentPeriod", calculateAlignmentPeriod(query.AlignmentPeriod, intervalMs, durationSeconds))
+	alignmentPeriod := calculateAlignmentPeriod(query.AlignmentPeriod, intervalMs, durationSeconds)
+
+	// In case a preprocessor is defined, the preprocessor becomes the primary aggregation
+	// and the aggregation that is specified in the UI becomes the secondary aggregation
+	// Rules are specified in this issue: https://github.com/grafana/grafana/issues/30866
+	if query.PreprocessorType != PreprocessorTypeNone {
+		params.Add("secondaryAggregation.alignmentPeriod", alignmentPeriod)
+		params.Add("secondaryAggregation.crossSeriesReducer", query.CrossSeriesReducer)
+		params.Add("secondaryAggregation.perSeriesAligner", query.PerSeriesAligner)
+
+		primaryCrossSeriesReducer := crossSeriesReducerDefault
+		if len(query.GroupBys) > 0 {
+			primaryCrossSeriesReducer = query.CrossSeriesReducer
+		}
+		params.Add("aggregation.crossSeriesReducer", primaryCrossSeriesReducer)
+
+		aligner := "ALIGN_RATE"
+		if query.PreprocessorType == PreprocessorTypeDelta {
+			aligner = "ALIGN_DELTA"
+		}
+		params.Add("aggregation.perSeriesAligner", aligner)
+
+		for _, groupBy := range query.GroupBys {
+			params.Add("secondaryAggregation.groupByFields", groupBy)
+		}
+	} else {
+		params.Add("aggregation.crossSeriesReducer", query.CrossSeriesReducer)
+		params.Add("aggregation.perSeriesAligner", query.PerSeriesAligner)
+	}
+
+	params.Add("aggregation.alignmentPeriod", alignmentPeriod)
 
 	for _, groupBy := range query.GroupBys {
 		params.Add("aggregation.groupByFields", groupBy)
@@ -515,7 +556,7 @@ func (e *Executor) createRequest(ctx context.Context, dsInfo *models.DataSource,
 		}
 	}
 
-	pluginproxy.ApplyRoute(ctx, req, proxyPass, cloudMonitoringRoute, dsInfo)
+	pluginproxy.ApplyRoute(ctx, req, proxyPass, cloudMonitoringRoute, dsInfo, e.cfg)
 
 	return req, nil
 }

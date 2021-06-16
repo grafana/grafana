@@ -23,10 +23,12 @@ RUN apk add --no-cache gcc g++
 
 WORKDIR $GOPATH/src/github.com/grafana/grafana
 
-COPY go.mod go.sum ./
+COPY go.mod go.sum embed.go ./
 
 RUN go mod verify
 
+COPY cue cue
+COPY public/app/plugins public/app/plugins
 COPY pkg pkg
 COPY build.go package.json ./
 
@@ -74,7 +76,7 @@ RUN export GF_GID_NAME=$(getent group $GF_GID | cut -d':' -f1) && \
     chown -R "grafana:$GF_GID_NAME" "$GF_PATHS_DATA" "$GF_PATHS_HOME/.aws" "$GF_PATHS_LOGS" "$GF_PATHS_PLUGINS" "$GF_PATHS_PROVISIONING" && \
     chmod -R 777 "$GF_PATHS_DATA" "$GF_PATHS_HOME/.aws" "$GF_PATHS_LOGS" "$GF_PATHS_PLUGINS" "$GF_PATHS_PROVISIONING"
 
-COPY --from=go-builder /go/src/github.com/grafana/grafana/bin/linux-amd64/grafana-server /go/src/github.com/grafana/grafana/bin/linux-amd64/grafana-cli ./bin/
+COPY --from=go-builder /go/src/github.com/grafana/grafana/bin/*/grafana-server /go/src/github.com/grafana/grafana/bin/*/grafana-cli ./bin/
 COPY --from=js-builder /usr/src/app/public ./public
 COPY --from=js-builder /usr/src/app/tools ./tools
 

@@ -1,8 +1,8 @@
 +++
 title = "With Grafana and MS SQL Server"
-description = "Guide for getting started with Grafana"
+description = "Guide for getting started with Grafana and MS SQL Server"
 keywords = ["grafana", "intro", "guide", "started", "SQL", "MSSQL"]
-aliases = ["/docs/grafana/next/guides/gettingstarted","/docs/grafana/next/guides/getting_started"]
+aliases = ["/docs/grafana/latest/guides/gettingstarted","/docs/grafana/latest/guides/getting_started"]
 weight = 400
 +++
 
@@ -39,7 +39,7 @@ To add MS SQL Server data source:
 `User`         | Database user's login/username.
 `Password`     | Database user's password. 
 
-For installations from the [grafana/grafana](https://github.com/grafana/grafana/tree/master) repository, `gdev-mssql` data source is available. Once you add this data source, you can use the `Datasource tests - MSSQL` dashboard with three panels showing metrics generated from a test database.
+For installations from the [grafana/grafana](https://github.com/grafana/grafana/tree/main) repository, `gdev-mssql` data source is available. Once you add this data source, you can use the `Datasource tests - MSSQL` dashboard with three panels showing metrics generated from a test database.
 
 <img src="/img/docs/getting-started/gdev-sql-dashboard.png" class="no-shadow" width="700px">
 

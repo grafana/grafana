@@ -28,6 +28,7 @@ type AzureLogAnalyticsDatasource struct {
 	httpClient    *http.Client
 	dsInfo        *models.DataSource
 	pluginManager plugins.Manager
+	cfg           *setting.Cfg
 }
 
 // AzureLogAnalyticsQuery is the query request that is built from the saved values for
@@ -45,6 +46,7 @@ type AzureLogAnalyticsQuery struct {
 // 1. build the AzureMonitor url and querystring for each query
 // 2. executes each query by calling the Azure Monitor API
 // 3. parses the responses for each query into the timeseries format
+//nolint: staticcheck // plugins.DataPlugin deprecated
 func (e *AzureLogAnalyticsDatasource) executeTimeSeriesQuery(ctx context.Context, originalQueries []plugins.DataSubQuery,
 	timeRange plugins.DataTimeRange) (plugins.DataResponse, error) {
 	result := plugins.DataResponse{
@@ -84,7 +86,7 @@ func (e *AzureLogAnalyticsDatasource) buildQueries(queries []plugins.DataSubQuer
 
 		resultFormat := azureLogAnalyticsTarget.ResultFormat
 		if resultFormat == "" {
-			resultFormat = "time_series"
+			resultFormat = timeSeries
 		}
 
 		urlComponents := map[string]string{}
@@ -111,6 +113,7 @@ func (e *AzureLogAnalyticsDatasource) buildQueries(queries []plugins.DataSubQuer
 	return azureLogAnalyticsQueries, nil
 }
 
+//nolint: staticcheck // plugins.DataPlugin deprecated
 func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *AzureLogAnalyticsQuery,
 	queries []plugins.DataSubQuery, timeRange plugins.DataTimeRange) plugins.DataQueryResult {
 	queryResult := plugins.DataQueryResult{RefID: query.RefID}
@@ -170,7 +173,7 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *A
 		return queryResultErrorWithExecuted(err)
 	}
 
-	frame, err := LogTableToFrame(t)
+	frame, err := ResponseTableToFrame(t)
 	if err != nil {
 		return queryResultErrorWithExecuted(err)
 	}
@@ -184,7 +187,7 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *A
 		azlog.Warn("failed to add custom metadata to azure log analytics response", err)
 	}
 
-	if query.ResultFormat == "time_series" {
+	if query.ResultFormat == timeSeries {
 		tsSchema := frame.TimeSeriesSchema()
 		if tsSchema.Type == data.TimeSeriesTypeLong {
 			wideFrame, err := data.LongToWide(frame, nil)
@@ -227,7 +230,7 @@ func (e *AzureLogAnalyticsDatasource) createRequest(ctx context.Context, dsInfo 
 	if err != nil {
 		return nil, err
 	}
-	pluginproxy.ApplyRoute(ctx, req, proxypass, logAnalyticsRoute, dsInfo)
+	pluginproxy.ApplyRoute(ctx, req, proxypass, logAnalyticsRoute, dsInfo, e.cfg)
 
 	return req, nil
 }
@@ -256,7 +259,7 @@ func (e *AzureLogAnalyticsDatasource) getPluginRoute(plugin *plugins.DataSourceP
 
 // GetPrimaryResultTable returns the first table in the response named "PrimaryResult", or an
 // error if there is no table by that name.
-func (ar *AzureLogAnalyticsResponse) GetPrimaryResultTable() (*AzureLogAnalyticsTable, error) {
+func (ar *AzureLogAnalyticsResponse) GetPrimaryResultTable() (*AzureResponseTable, error) {
 	for _, t := range ar.Tables {
 		if t.Name == "PrimaryResult" {
 			return &t, nil

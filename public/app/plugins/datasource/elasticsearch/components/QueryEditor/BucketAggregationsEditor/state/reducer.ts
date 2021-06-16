@@ -15,7 +15,7 @@ import {
 import { bucketAggregationConfig } from '../utils';
 import { removeEmpty } from '../../../../utils';
 
-export const reducer = (
+export const createReducer = (defaultTimeField: string) => (
   state: ElasticsearchQuery['bucketAggs'],
   action: BucketAggregationAction | ChangeMetricTypeAction | InitAction
 ): ElasticsearchQuery['bucketAggs'] => {
@@ -78,7 +78,7 @@ export const reducer = (
         // Else, if there are no bucket aggregations we restore a default one.
         // This happens when switching from a metric that requires the absence of bucket aggregations to
         // one that requires it.
-        return [defaultBucketAgg()];
+        return [{ ...defaultBucketAgg('2'), field: defaultTimeField }];
       }
       return state;
 
@@ -105,7 +105,8 @@ export const reducer = (
       if (state?.length || 0 > 0) {
         return state;
       }
-      return [defaultBucketAgg('2')];
+
+      return [{ ...defaultBucketAgg('2'), field: defaultTimeField }];
 
     default:
       return state;

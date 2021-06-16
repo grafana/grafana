@@ -49,8 +49,7 @@ class AppRootPage extends Component<Props, State> {
   shouldComponentUpdate(nextProps: Props) {
     return nextProps.location.pathname.startsWith('/a/');
   }
-
-  async componentDidMount() {
+  async loadPluginSettings() {
     const { params } = this.props.match;
     try {
       const app = await getPluginSettings(params.pluginId).then((info) => {
@@ -62,13 +61,28 @@ class AppRootPage extends Component<Props, State> {
         }
         return importAppPlugin(info);
       });
-      this.setState({ plugin: app, loading: false });
+      this.setState({ plugin: app, loading: false, nav: undefined });
     } catch (err) {
       this.setState({
         plugin: null,
         loading: false,
         nav: process.env.NODE_ENV === 'development' ? getExceptionNav(err) : getNotFoundNav(),
       });
+    }
+  }
+
+  componentDidMount() {
+    this.loadPluginSettings();
+  }
+
+  componentDidUpdate(prevProps: Props) {
+    const { params } = this.props.match;
+
+    if (prevProps.match.params.pluginId !== params.pluginId) {
+      this.setState({
+        loading: true,
+      });
+      this.loadPluginSettings();
     }
   }
 
@@ -104,10 +118,10 @@ class AppRootPage extends Component<Props, State> {
             </Page.Contents>
           </Page>
         ) : (
-          <>
+          <Page>
             <OutPortal node={portalNode} />
             {loading && <PageLoader />}
-          </>
+          </Page>
         )}
       </>
     );

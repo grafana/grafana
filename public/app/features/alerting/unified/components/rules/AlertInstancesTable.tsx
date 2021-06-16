@@ -1,5 +1,5 @@
-import { GrafanaTheme } from '@grafana/data';
-import { useStyles } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import { useStyles2 } from '@grafana/ui';
 import { AlertingRule } from 'app/types/unified-alerting';
 import { css, cx } from '@emotion/css';
 import React, { FC, Fragment, useState } from 'react';
@@ -7,16 +7,16 @@ import { getAlertTableStyles } from '../../styles/table';
 import { alertInstanceKey } from '../../utils/rules';
 import { AlertLabels } from '../AlertLabels';
 import { CollapseToggle } from '../CollapseToggle';
-import { StateTag } from '../StateTag';
 import { AlertInstanceDetails } from './AlertInstanceDetails';
+import { AlertStateTag } from './AlertStateTag';
 
 interface Props {
   instances: AlertingRule['alerts'];
 }
 
 export const AlertInstancesTable: FC<Props> = ({ instances }) => {
-  const styles = useStyles(getStyles);
-  const tableStyles = useStyles(getAlertTableStyles);
+  const styles = useStyles2(getStyles);
+  const tableStyles = useStyles2(getAlertTableStyles);
 
   const [expandedKeys, setExpandedKeys] = useState<string[]>([]);
 
@@ -45,25 +45,32 @@ export const AlertInstancesTable: FC<Props> = ({ instances }) => {
         {instances.map((instance, idx) => {
           const key = alertInstanceKey(instance);
           const isExpanded = expandedKeys.includes(key);
+
+          // don't allow expanding if there's nothing to show
+          const isExpandable = instance.value || !!Object.keys(instance.annotations ?? {}).length;
           return (
             <Fragment key={key}>
               <tr className={idx % 2 === 0 ? tableStyles.evenRow : undefined}>
                 <td>
-                  <CollapseToggle
-                    isCollapsed={!isExpanded}
-                    onToggle={() => toggleExpandedState(key)}
-                    data-testid="alert-collapse-toggle"
-                  />
+                  {isExpandable && (
+                    <CollapseToggle
+                      isCollapsed={!isExpanded}
+                      onToggle={() => toggleExpandedState(key)}
+                      data-testid="alert-collapse-toggle"
+                    />
+                  )}
                 </td>
                 <td>
-                  <StateTag status={instance.state} />
+                  <AlertStateTag state={instance.state} />
                 </td>
                 <td className={styles.labelsCell}>
                   <AlertLabels labels={instance.labels} />
                 </td>
-                <td className={styles.createdCell}>{instance.activeAt.substr(0, 19).replace('T', ' ')}</td>
+                <td className={styles.createdCell}>
+                  {instance.activeAt.startsWith('0001') ? '-' : instance.activeAt.substr(0, 19).replace('T', ' ')}
+                </td>
               </tr>
-              {isExpanded && (
+              {isExpanded && isExpandable && (
                 <tr className={idx % 2 === 0 ? tableStyles.evenRow : undefined}>
                   <td></td>
                   <td colSpan={3}>
@@ -79,7 +86,7 @@ export const AlertInstancesTable: FC<Props> = ({ instances }) => {
   );
 };
 
-export const getStyles = (theme: GrafanaTheme) => ({
+export const getStyles = (theme: GrafanaTheme2) => ({
   colExpand: css`
     width: 36px;
   `,
@@ -87,8 +94,8 @@ export const getStyles = (theme: GrafanaTheme) => ({
     width: 110px;
   `,
   labelsCell: css`
-    padding-top: ${theme.spacing.xs} !important;
-    padding-bottom: ${theme.spacing.xs} !important;
+    padding-top: ${theme.spacing(0.5)} !important;
+    padding-bottom: ${theme.spacing(0.5)} !important;
   `,
   createdCell: css`
     white-space: nowrap;
@@ -96,8 +103,8 @@ export const getStyles = (theme: GrafanaTheme) => ({
   table: css`
     td {
       vertical-align: top;
-      padding-top: ${theme.spacing.sm};
-      padding-bottom: ${theme.spacing.sm};
+      padding-top: ${theme.spacing(1)};
+      padding-bottom: ${theme.spacing(1)};
     }
   `,
 });

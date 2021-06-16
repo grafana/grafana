@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import { clone } from 'lodash';
 
 export class SqlPartDef {
   type: string;
@@ -57,7 +57,7 @@ export class SqlPart {
       this.label = def.label;
     }
 
-    part.params = part.params || _.clone(this.def.defaultParams);
+    part.params = part.params || clone(this.def.defaultParams);
     this.params = part.params;
   }
 

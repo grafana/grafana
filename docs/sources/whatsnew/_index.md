@@ -1,6 +1,6 @@
 +++
 title = "What's new"
-aliases = ["/docs/grafana/next/guides/"]
+aliases = ["/docs/grafana/latest/guides/"]
 weight = 1
 +++
 
@@ -8,6 +8,10 @@ weight = 1
 
 Grafana is changing all the time. For release highlights checkout links below, if you want a complete list of every change, as well
 as info on deprecations, breaking changes and plugin development read the [release notes]({{< relref "../release-notes" >}}).
+
+## Grafana 8
+
+- [What's new in 8.0]({{< relref "whats-new-in-v8-0" >}})
 
 ## Grafana 7
 

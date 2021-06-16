@@ -263,3 +263,37 @@ func TestParseLabels(t *testing.T) {
 		assert.Equal(t, expectedTags, parseLabels(model), fmt.Sprintf("Actual tags in test case %d doesn't match expected tags", i+1))
 	}
 }
+
+func TestReadCSV(t *testing.T) {
+	fBool, err := csvToFieldValues("T, F,F,T  ,")
+	require.NoError(t, err)
+
+	fBool2, err := csvToFieldValues("true,false,T,F,F")
+	require.NoError(t, err)
+
+	fNum, err := csvToFieldValues("1,2,,4,5")
+	require.NoError(t, err)
+
+	fStr, err := csvToFieldValues("a,b,,,c")
+	require.NoError(t, err)
+
+	frame := data.NewFrame("", fBool, fBool2, fNum, fStr)
+	out, err := data.FrameToJSON(frame, true, true)
+	require.NoError(t, err)
+
+	// require.Equal(t, "", string(out))
+
+	require.JSONEq(t, `{"schema":{
+		"fields":[
+			{"type":"boolean","typeInfo":{"frame":"bool","nullable":true}},
+			{"type":"boolean","typeInfo":{"frame":"bool","nullable":true}},
+			{"type":"number","typeInfo":{"frame":"float64","nullable":true}},
+			{"type":"string","typeInfo":{"frame":"string","nullable":true}}
+		]},"data":{
+			"values":[
+				[true,false,false,true,null],
+				[true,false,true,false,false],
+				[1,2,null,4,5],
+				["a","b",null,null,"c"]
+		]}}`, string(out))
+}

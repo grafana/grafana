@@ -1,5 +1,6 @@
 import moment from 'moment'; // eslint-disable-line no-restricted-imports
-import _ from 'lodash';
+// eslint-disable-next-line lodash/import-scope
+import _, { isFunction } from 'lodash';
 import $ from 'jquery';
 import kbn from 'app/core/utils/kbn';
 import { AppEvents, dateMath, UrlQueryValue } from '@grafana/data';
@@ -123,7 +124,7 @@ export class DashboardLoaderSrv {
     );
 
     // Handle async dashboard scripts
-    if (_.isFunction(scriptResult)) {
+    if (isFunction(scriptResult)) {
       return new Promise((resolve) => {
         scriptResult((dashboard: any) => {
           resolve({ data: dashboard });

@@ -203,7 +203,7 @@ function getPhantomPlugin(options: GetPhantomPluginOptions): DataSourcePluginMet
       author: { name: 'Grafana Labs' },
       links: [
         {
-          url: config.marketplaceUrl + options.id,
+          url: config.catalogUrl + options.id,
           name: 'Install now',
         },
       ],

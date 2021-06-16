@@ -2,20 +2,18 @@
 
 exports[`Render should render component 1`] = `
 <div
-  className="panel-container css-bopjp7"
+  className="panel-container css-e4b3m6"
 >
   <AddPanelWidgetHandle
     onCancel={[Function]}
     styles={
       Object {
-        "actionsRow": "css-sxfls",
+        "actionsRow": "css-l02n0m",
         "actionsWrapper": "css-gxxmom",
         "backButton": "css-1cdxa9p",
         "headerRow": "css-3sdqvi",
-        "libraryPanelsWrapper": "css-18m13of",
         "noMargin": "css-u023fv",
-        "panelSearchInput": "css-2ug8g3",
-        "wrapper": "css-bopjp7",
+        "wrapper": "css-e4b3m6",
       }
     }
   >
@@ -25,7 +23,7 @@ exports[`Render should render component 1`] = `
     className="css-gxxmom"
   >
     <div
-      className="css-sxfls"
+      className="css-l02n0m"
     >
       <div
         aria-label="Add new panel"
@@ -45,6 +43,19 @@ exports[`Render should render component 1`] = `
           size="xl"
         />
         Add a new row
+      </div>
+    </div>
+    <div
+      className="css-l02n0m"
+    >
+      <div
+        onClick={[Function]}
+      >
+        <Icon
+          name="book-open"
+          size="xl"
+        />
+        Add a panel from the panel library
       </div>
     </div>
   </div>

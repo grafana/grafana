@@ -2,7 +2,7 @@
 title = "Reporting"
 description = ""
 keywords = ["grafana", "reporting"]
-aliases = ["/docs/grafana/next/administration/reports"]
+aliases = ["/docs/grafana/latest/administration/reports"]
 weight = 400
 +++
 
@@ -29,9 +29,10 @@ Currently only Organization Admins can create reports.
 1. Enter report information. All fields are required unless otherwise indicated.
    - **Name -** Name of the report as you want it to appear in the Reports list.
    - **Source dashboard -** Select the dashboard to generate the report from.
-   - **Recipients -** Enter the emails of the people or teams that you want to receive the report.
+   - **Recipients -** Enter the emails of the people or teams that you want to receive the report, separated by semicolons.
    - **Reply to -** (optional) The address that will appear in the **Reply to** field of the email.
    - **Message -** (optional) Message body in the email with the report.
+   - **Link back to the source dashboard -** Include a link to the dashboard from within the report email. 
    - **Time range -** (optional) Use custom time range for the report. For more information check [Report time range]({{< relref "#report-time-range" >}}).
 1. **Preview PDF** to make sure the report appears as you expect. Update if necessary.
 1. Enter scheduling information. Options vary depending on the frequency you select.
@@ -40,7 +41,7 @@ Currently only Organization Admins can create reports.
 1. **Save** the report.
 1. **Send test email** to verify that the whole configuration is working as expected.
 
-{{< docs-imagebox img="/img/docs/enterprise/reports_create_new.png" max-width="500px" class="docs-image--no-shadow" >}}
+{{< docs-imagebox img="/img/docs/enterprise/reports-create-new-8.0.png" max-width="500px" class="docs-image--no-shadow" >}}
 
 ### Layout and orientation
 

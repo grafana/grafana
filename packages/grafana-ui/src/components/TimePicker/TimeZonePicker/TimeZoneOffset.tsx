@@ -2,7 +2,7 @@ import React, { PropsWithChildren } from 'react';
 import { css, cx } from '@emotion/css';
 import { GrafanaTheme, TimeZone, dateTimeFormat } from '@grafana/data';
 import { useTheme, stylesFactory } from '../../../themes';
-import isString from 'lodash/isString';
+import { isString } from 'lodash';
 
 interface Props {
   timestamp: number;

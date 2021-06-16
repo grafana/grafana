@@ -24,6 +24,7 @@ import (
 type OpenTsdbExecutor struct {
 }
 
+// nolint:staticcheck // plugins.DataQueryResult deprecated
 func NewExecutor(*models.DataSource) (plugins.DataPlugin, error) {
 	return &OpenTsdbExecutor{}, nil
 }
@@ -32,6 +33,7 @@ var (
 	plog = log.New("tsdb.opentsdb")
 )
 
+// nolint:staticcheck // plugins.DataQueryResult deprecated
 func (e *OpenTsdbExecutor) DataQuery(ctx context.Context, dsInfo *models.DataSource,
 	queryContext plugins.DataQuery) (plugins.DataResponse, error) {
 	var tsdbQuery OpenTsdbQuery
@@ -101,6 +103,7 @@ func (e *OpenTsdbExecutor) createRequest(dsInfo *models.DataSource, data OpenTsd
 	return req, nil
 }
 
+// nolint:staticcheck // plugins.DataQueryResult deprecated
 func (e *OpenTsdbExecutor) parseResponse(query OpenTsdbQuery, res *http.Response) (map[string]plugins.DataQueryResult, error) {
 	queryResults := make(map[string]plugins.DataQueryResult)
 	queryRes := plugins.DataQueryResult{}

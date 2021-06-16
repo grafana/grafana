@@ -8,21 +8,10 @@ exports[`Render should disable log analytics credentials form 1`] = `
     Azure Monitor Logs Details
   </h3>
   <Switch
-    checked={false}
+    checked={true}
     label="Same details as Azure Monitor API"
     onChange={[Function]}
-  />
-  <AzureCredentialsForm
-    clientSecret=""
-    clientSecretConfigured={false}
-    onClientIdChange={[Function]}
-    onClientSecretChange={[Function]}
-    onLoadSubscriptions={[Function]}
-    onResetClientSecret={[Function]}
-    onSubscriptionSelectChange={[Function]}
-    onTenantIdChange={[Function]}
-    subscriptionOptions={Array []}
-    tenantId=""
+    tooltip="Workspaces are pulled from default subscription selected above."
   />
   <div
     className="gf-form-group"
@@ -56,7 +45,6 @@ exports[`Render should disable log analytics credentials form 1`] = `
                 "SingleValue": [Function],
               }
             }
-            defaultValue=""
             isClearable={false}
             isDisabled={false}
             isLoading={false}
@@ -109,16 +97,18 @@ exports[`Render should enable azure log analytics load workspaces button 1`] = `
     onChange={[Function]}
   />
   <AzureCredentialsForm
-    clientSecret=""
-    clientSecretConfigured={false}
-    onClientIdChange={[Function]}
-    onClientSecretChange={[Function]}
-    onLoadSubscriptions={[Function]}
-    onResetClientSecret={[Function]}
-    onSubscriptionSelectChange={[Function]}
-    onTenantIdChange={[Function]}
-    subscriptionOptions={Array []}
-    tenantId=""
+    credentials={
+      Object {
+        "azureCloud": "azuremonitor",
+        "clientId": "44693801-6ee6-49de-9b2d-9106972f9572",
+        "clientSecret": undefined,
+        "tenantId": "e7f3f661-a933-4b3f-8176-51c4f982ec48",
+      }
+    }
+    defaultSubscription="e3fe4fde-ad5e-4d60-9974-e2f3562ffdf2"
+    getSubscriptions={[MockFunction]}
+    onCredentialsChange={[Function]}
+    onDefaultSubscriptionChange={[Function]}
   />
   <div
     className="gf-form-group"
@@ -152,7 +142,6 @@ exports[`Render should enable azure log analytics load workspaces button 1`] = `
                 "SingleValue": [Function],
               }
             }
-            defaultValue=""
             isClearable={false}
             isDisabled={false}
             isLoading={false}
@@ -205,16 +194,17 @@ exports[`Render should render component 1`] = `
     onChange={[Function]}
   />
   <AzureCredentialsForm
-    clientSecret=""
-    clientSecretConfigured={false}
-    onClientIdChange={[Function]}
-    onClientSecretChange={[Function]}
-    onLoadSubscriptions={[Function]}
-    onResetClientSecret={[Function]}
-    onSubscriptionSelectChange={[Function]}
-    onTenantIdChange={[Function]}
-    subscriptionOptions={Array []}
-    tenantId=""
+    credentials={
+      Object {
+        "azureCloud": "azuremonitor",
+        "clientId": undefined,
+        "clientSecret": undefined,
+        "tenantId": "",
+      }
+    }
+    getSubscriptions={[MockFunction]}
+    onCredentialsChange={[Function]}
+    onDefaultSubscriptionChange={[Function]}
   />
   <div
     className="gf-form-group"
@@ -248,7 +238,6 @@ exports[`Render should render component 1`] = `
                 "SingleValue": [Function],
               }
             }
-            defaultValue=""
             isClearable={false}
             isDisabled={false}
             isLoading={false}

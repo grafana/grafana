@@ -26,12 +26,14 @@ type GraphiteExecutor struct {
 	HttpClient *http.Client
 }
 
+//nolint: staticcheck // plugins.DataPlugin deprecated
 func NewExecutor(*models.DataSource) (plugins.DataPlugin, error) {
 	return &GraphiteExecutor{}, nil
 }
 
 var glog = log.New("tsdb.graphite")
 
+//nolint: staticcheck // plugins.DataQuery deprecated
 func (e *GraphiteExecutor) DataQuery(ctx context.Context, dsInfo *models.DataSource, tsdbQuery plugins.DataQuery) (
 	plugins.DataResponse, error) {
 	// This logic is used when called from Dashboard Alerting.

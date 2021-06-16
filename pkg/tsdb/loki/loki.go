@@ -3,6 +3,7 @@ package loki
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"regexp"
 	"strings"
 	"time"
@@ -24,6 +25,7 @@ type LokiExecutor struct {
 	intervalCalculator interval.Calculator
 }
 
+//nolint: staticcheck // plugins.DataPlugin deprecated
 func NewExecutor(dsInfo *models.DataSource) (plugins.DataPlugin, error) {
 	return newExecutor(), nil
 }
@@ -40,6 +42,7 @@ var (
 )
 
 // DataQuery executes a Loki query.
+//nolint: staticcheck // plugins.DataPlugin deprecated
 func (e *LokiExecutor) DataQuery(ctx context.Context, dsInfo *models.DataSource,
 	queryContext plugins.DataQuery) (plugins.DataResponse, error) {
 	result := plugins.DataResponse{
@@ -51,12 +54,20 @@ func (e *LokiExecutor) DataQuery(ctx context.Context, dsInfo *models.DataSource,
 		return plugins.DataResponse{}, err
 	}
 
+	transport, err := dsInfo.GetHttpTransport()
+	if err != nil {
+		return plugins.DataResponse{}, err
+	}
+
 	client := &client.DefaultClient{
 		Address:  dsInfo.Url,
 		Username: dsInfo.BasicAuthUser,
 		Password: dsInfo.DecryptedBasicAuthPassword(),
 		TLSConfig: config.TLSConfig{
 			InsecureSkipVerify: tlsConfig.InsecureSkipVerify,
+		},
+		Tripperware: func(t http.RoundTripper) http.RoundTripper {
+			return transport
 		},
 	}
 
@@ -153,6 +164,7 @@ func (e *LokiExecutor) parseQuery(dsInfo *models.DataSource, queryContext plugin
 	return qs, nil
 }
 
+//nolint: staticcheck // plugins.DataPlugin deprecated
 func parseResponse(value *loghttp.QueryResponse, query *lokiQuery) (plugins.DataQueryResult, error) {
 	var queryRes plugins.DataQueryResult
 	frames := data.Frames{}

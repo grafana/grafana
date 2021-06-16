@@ -25,6 +25,7 @@ export const getServerStats = async (): Promise<ServerStat[]> => {
       { name: 'Total dashboard tags', value: res.tags },
       { name: 'Total starred dashboards', value: res.stars },
       { name: 'Total alerts', value: res.alerts },
+      { name: 'Total data sources', value: res.datasources },
     ];
   } catch (error) {
     console.error(error);

@@ -2,24 +2,31 @@ package api
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/services/quota"
 
-	apimodels "github.com/grafana/alerting-api/pkg/api"
 	coreapi "github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/prometheus/common/model"
 )
 
 type RulerSrv struct {
-	store store.RuleStore
-	log   log.Logger
+	store           store.RuleStore
+	DatasourceCache datasources.CacheService
+	QuotaService    *quota.QuotaService
+	manager         *state.Manager
+	log             log.Logger
 }
 
 func (srv RulerSrv) RouteDeleteNamespaceRulesConfig(c *models.ReqContext) response.Response {
@@ -29,9 +36,15 @@ func (srv RulerSrv) RouteDeleteNamespaceRulesConfig(c *models.ReqContext) respon
 		return toNamespaceErrorResponse(err)
 	}
 
-	if err := srv.store.DeleteNamespaceAlertRules(c.SignedInUser.OrgId, namespace.Uid); err != nil {
+	uids, err := srv.store.DeleteNamespaceAlertRules(c.SignedInUser.OrgId, namespace.Uid)
+	if err != nil {
 		return response.Error(http.StatusInternalServerError, "failed to delete namespace alert rules", err)
 	}
+
+	for _, uid := range uids {
+		srv.manager.RemoveByRuleUID(c.SignedInUser.OrgId, uid)
+	}
+
 	return response.JSON(http.StatusAccepted, util.DynMap{"message": "namespace rules deleted"})
 }
 
@@ -42,9 +55,19 @@ func (srv RulerSrv) RouteDeleteRuleGroupConfig(c *models.ReqContext) response.Re
 		return toNamespaceErrorResponse(err)
 	}
 	ruleGroup := c.Params(":Groupname")
-	if err := srv.store.DeleteRuleGroupAlertRules(c.SignedInUser.OrgId, namespace.Uid, ruleGroup); err != nil {
-		return response.Error(http.StatusInternalServerError, "failed to delete group alert rules", err)
+	uids, err := srv.store.DeleteRuleGroupAlertRules(c.SignedInUser.OrgId, namespace.Uid, ruleGroup)
+
+	if err != nil {
+		if errors.Is(err, ngmodels.ErrRuleGroupNamespaceNotFound) {
+			return response.Error(http.StatusNotFound, "failed to delete rule group", err)
+		}
+		return response.Error(http.StatusInternalServerError, "failed to delete rule group", err)
 	}
+
+	for _, uid := range uids {
+		srv.manager.RemoveByRuleUID(c.SignedInUser.OrgId, uid)
+	}
+
 	return response.JSON(http.StatusAccepted, util.DynMap{"message": "rule group deleted"})
 }
 
@@ -135,6 +158,11 @@ func (srv RulerSrv) RouteGetRulesConfig(c *models.ReqContext) response.Response 
 	for _, r := range q.Result {
 		folder, err := srv.store.GetNamespaceByUID(r.NamespaceUID, c.SignedInUser.OrgId, c.SignedInUser)
 		if err != nil {
+			if errors.Is(err, models.ErrFolderAccessDenied) {
+				// do not fail if used does not have access to a specific namespace
+				// just do not include it in the response
+				continue
+			}
 			return toNamespaceErrorResponse(err)
 		}
 		namespace := folder.Title
@@ -183,9 +211,37 @@ func (srv RulerSrv) RoutePostNameRulesConfig(c *models.ReqContext, ruleGroupConf
 		return toNamespaceErrorResponse(err)
 	}
 
-	// TODO check permissions
-	// TODO check quota
+	// quotas are checked in advanced
+	// that is acceptable under the assumption that there will be only one alert rule under the rule group
+	// alternatively we should check the quotas after the rule group update
+	// and rollback the transaction in case of violation
+	limitReached, err := srv.QuotaService.QuotaReached(c, "alert_rule")
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "failed to get quota", err)
+	}
+	if limitReached {
+		return response.Error(http.StatusForbidden, "quota reached", nil)
+	}
+
 	// TODO validate UID uniqueness in the payload
+
+	//TODO: Should this belong in alerting-api?
+	if ruleGroupConfig.Name == "" {
+		return response.Error(http.StatusBadRequest, "rule group name is not valid", nil)
+	}
+
+	var alertRuleUIDs []string
+	for _, r := range ruleGroupConfig.Rules {
+		cond := ngmodels.Condition{
+			Condition: r.GrafanaManagedAlert.Condition,
+			OrgID:     c.SignedInUser.OrgId,
+			Data:      r.GrafanaManagedAlert.Data,
+		}
+		if err := validateCondition(cond, c.SignedInUser, c.SkipCache, srv.DatasourceCache); err != nil {
+			return response.Error(http.StatusBadRequest, fmt.Sprintf("failed to validate alert rule %s", r.GrafanaManagedAlert.Title), err)
+		}
+		alertRuleUIDs = append(alertRuleUIDs, r.GrafanaManagedAlert.UID)
+	}
 
 	if err := srv.store.UpdateRuleGroup(store.UpdateRuleGroupCmd{
 		OrgID:           c.SignedInUser.OrgId,
@@ -194,8 +250,14 @@ func (srv RulerSrv) RoutePostNameRulesConfig(c *models.ReqContext, ruleGroupConf
 	}); err != nil {
 		if errors.Is(err, ngmodels.ErrAlertRuleNotFound) {
 			return response.Error(http.StatusNotFound, "failed to update rule group", err)
+		} else if errors.Is(err, ngmodels.ErrAlertRuleFailedValidation) {
+			return response.Error(http.StatusBadRequest, "failed to update rule group", err)
 		}
 		return response.Error(http.StatusInternalServerError, "failed to update rule group", err)
+	}
+
+	for _, uid := range alertRuleUIDs {
+		srv.manager.RemoveByRuleUID(c.OrgId, uid)
 	}
 
 	return response.JSON(http.StatusAccepted, util.DynMap{"message": "rule group updated successfully"})
@@ -226,26 +288,6 @@ func toGettableExtendedRuleNode(r ngmodels.AlertRule, namespaceID int64) apimode
 		Labels:      r.Labels,
 	}
 	return gettableExtendedRuleNode
-}
-
-func toPostableExtendedRuleNode(r ngmodels.AlertRule) apimodels.PostableExtendedRuleNode {
-	postableExtendedRuleNode := apimodels.PostableExtendedRuleNode{
-		GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
-			OrgID:        r.OrgID,
-			Title:        r.Title,
-			Condition:    r.Condition,
-			Data:         r.Data,
-			UID:          r.UID,
-			NoDataState:  apimodels.NoDataState(r.NoDataState),
-			ExecErrState: apimodels.ExecutionErrorState(r.ExecErrState),
-		},
-	}
-	postableExtendedRuleNode.ApiRuleNode = &apimodels.ApiRuleNode{
-		For:         model.Duration(r.For),
-		Annotations: r.Annotations,
-		Labels:      r.Labels,
-	}
-	return postableExtendedRuleNode
 }
 
 func toNamespaceErrorResponse(err error) response.Response {

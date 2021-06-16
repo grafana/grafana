@@ -1,6 +1,4 @@
-import isString from 'lodash/isString';
-import isArray from 'lodash/isArray';
-import isEqual from 'lodash/isEqual';
+import { isString, isArray, isEqual } from 'lodash';
 import { ScopedVars, UrlQueryMap, VariableType } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 

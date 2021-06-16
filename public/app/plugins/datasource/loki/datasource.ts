@@ -10,6 +10,7 @@ import {
   AnnotationQueryRequest,
   DataFrame,
   DataFrameView,
+  DataQuery,
   DataQueryError,
   DataQueryRequest,
   DataQueryResponse,
@@ -20,7 +21,6 @@ import {
   FieldCache,
   LoadingState,
   LogRowModel,
-  PluginMeta,
   QueryResultMeta,
   ScopedVars,
 } from '@grafana/data';
@@ -292,8 +292,8 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     return { from: timeRange.from.valueOf() * NS_IN_MS, to: timeRange.to.valueOf() * NS_IN_MS };
   }
 
-  async importQueries(queries: LokiQuery[], originMeta: PluginMeta): Promise<LokiQuery[]> {
-    return this.languageProvider.importQueries(queries, originMeta.id);
+  async importQueries(queries: DataQuery[], originDataSource: DataSourceApi): Promise<LokiQuery[]> {
+    return this.languageProvider.importQueries(queries, originDataSource);
   }
 
   async metadataRequest(url: string, params?: Record<string, string | number>) {

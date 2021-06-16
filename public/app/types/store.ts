@@ -12,7 +12,6 @@ import { UserAdminState, UserListAdminState, UsersState, UserState } from './use
 import { OrganizationState } from './organization';
 import { AppNotificationsState } from './appNotifications';
 import { PluginsState } from './plugins';
-import { ApplicationState } from './application';
 import { LdapState } from './ldap';
 import { PanelEditorState } from '../features/dashboard/components/PanelEditor/state/reducers';
 import { ApiKeysState } from './apiKeys';
@@ -35,7 +34,6 @@ export interface StoreState {
   appNotifications: AppNotificationsState;
   user: UserState;
   plugins: PluginsState;
-  application: ApplicationState;
   ldap: LdapState;
   apiKeys: ApiKeysState;
   userAdmin: UserAdminState;

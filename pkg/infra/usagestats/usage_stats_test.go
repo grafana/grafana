@@ -549,15 +549,15 @@ type fakePluginManager struct {
 	panels      map[string]*plugins.PanelPlugin
 }
 
-func (pm fakePluginManager) DataSourceCount() int {
+func (pm *fakePluginManager) DataSourceCount() int {
 	return len(pm.dataSources)
 }
 
-func (pm fakePluginManager) GetDataSource(id string) *plugins.DataSourcePlugin {
+func (pm *fakePluginManager) GetDataSource(id string) *plugins.DataSourcePlugin {
 	return pm.dataSources[id]
 }
 
-func (pm fakePluginManager) PanelCount() int {
+func (pm *fakePluginManager) PanelCount() int {
 	return len(pm.panels)
 }
 

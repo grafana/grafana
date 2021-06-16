@@ -37,20 +37,19 @@ exports[`Render should enable save button 1`] = `
         <div
           className="gf-form-button-row"
         >
-          <button
-            className="btn btn-primary"
+          <Button
             disabled={false}
             type="submit"
           >
             Save
-          </button>
-          <button
-            className="btn btn-danger"
+          </Button>
+          <Button
             disabled={false}
             onClick={[Function]}
+            variant="destructive"
           >
             Delete
-          </button>
+          </Button>
         </div>
       </form>
     </div>
@@ -95,20 +94,19 @@ exports[`Render should render component 1`] = `
         <div
           className="gf-form-button-row"
         >
-          <button
-            className="btn btn-primary"
+          <Button
             disabled={true}
             type="submit"
           >
             Save
-          </button>
-          <button
-            className="btn btn-danger"
+          </Button>
+          <Button
             disabled={false}
             onClick={[Function]}
+            variant="destructive"
           >
             Delete
-          </button>
+          </Button>
         </div>
       </form>
     </div>

@@ -1,11 +1,4 @@
-import {
-  compareArrayValues,
-  compareDataFrameStructures,
-  DataFrame,
-  DataQueryError,
-  LoadingState,
-  PanelData,
-} from '@grafana/data';
+import { DataQueryError, LoadingState, PanelData } from '@grafana/data';
 import { useEffect, useRef, useState } from 'react';
 import { PanelModel } from '../../state';
 import { Unsubscribable } from 'rxjs';
@@ -30,7 +23,7 @@ export const usePanelLatestData = (
   const [latestData, setLatestData] = useState<PanelData>();
 
   useEffect(() => {
-    let last: DataFrame[] = [];
+    let lastRev = -1;
     let lastUpdate = 0;
 
     querySubscription.current = panel
@@ -39,8 +32,7 @@ export const usePanelLatestData = (
       .subscribe({
         next: (data) => {
           if (checkSchema) {
-            const sameStructure = compareArrayValues(last, data.series, compareDataFrameStructures);
-            if (sameStructure) {
+            if (lastRev === data.structureRev) {
               const now = Date.now();
               const elapsed = now - lastUpdate;
               if (elapsed < 10000) {
@@ -48,7 +40,7 @@ export const usePanelLatestData = (
               }
               lastUpdate = now;
             }
-            last = data.series;
+            lastRev = data.structureRev ?? -1;
           }
           setLatestData(data);
         },

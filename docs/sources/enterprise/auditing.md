@@ -20,7 +20,7 @@ Audit logs are JSON objects representing user actions like:
 
 ### Format
 
-Audit logs contain the following fields. The fields followed by **\*** are always available, the others depends on the type of action logged.
+Audit logs contain the following fields. The fields followed by **\*** are always available, the others depend on the type of action logged.
 
 | Field name | Type | Description |
 | ---------- | ---- | ----------- |
@@ -128,7 +128,7 @@ You can choose which exporter to use in the [configuration file]({{< relref "../
 
 Options are `file`, `loki`, and `console`. Use spaces to separate multiple modes, such as `file loki`.
 
-By default, when a user create or update a dashboard, its content will not appear in the logs as it can significantly increase the size of your logs. If this is important information for you and you can handle the amount of data generated, then you can enable this option in the configuration.
+By default, when a user creates or updates a dashboard, its content will not appear in the logs as it can significantly increase the size of your logs. If this is important information for you and you can handle the amount of data generated, then you can enable this option in the configuration.
 
 ```ini
 [auditing]

@@ -1,6 +1,6 @@
 +++
 title = "Developers"
-aliases = ["/docs/grafana/next/plugins/developing/"]
+aliases = ["/docs/grafana/latest/plugins/developing/"]
 weight = 190
 +++
 

@@ -4,6 +4,10 @@ import (
 	"context"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/quota"
+	"golang.org/x/sync/errgroup"
+
+	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 
 	"github.com/benbjohnson/clock"
@@ -19,7 +23,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/schedule"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb"
 )
@@ -43,11 +46,13 @@ type AlertNG struct {
 	RouteRegister   routing.RouteRegister                   `inject:""`
 	SQLStore        *sqlstore.SQLStore                      `inject:""`
 	DataService     *tsdb.Service                           `inject:""`
-	Alertmanager    *notifier.Alertmanager                  `inject:""`
 	DataProxy       *datasourceproxy.DatasourceProxyService `inject:""`
+	QuotaService    *quota.QuotaService                     `inject:""`
+	Metrics         *metrics.Metrics                        `inject:""`
+	Alertmanager    *notifier.Alertmanager
 	Log             log.Logger
 	schedule        schedule.ScheduleService
-	stateTracker    *state.StateTracker
+	stateManager    *state.Manager
 }
 
 func init() {
@@ -57,20 +62,31 @@ func init() {
 // Init initializes the AlertingService.
 func (ng *AlertNG) Init() error {
 	ng.Log = log.New("ngalert")
-	ng.stateTracker = state.NewStateTracker(ng.Log)
+	ng.stateManager = state.NewManager(ng.Log, ng.Metrics)
 	baseInterval := baseIntervalSeconds * time.Second
 
-	store := store.DBstore{BaseInterval: baseInterval, DefaultIntervalSeconds: defaultIntervalSeconds, SQLStore: ng.SQLStore}
+	store := &store.DBstore{
+		BaseInterval:           baseInterval,
+		DefaultIntervalSeconds: defaultIntervalSeconds,
+		SQLStore:               ng.SQLStore,
+	}
+
+	var err error
+	ng.Alertmanager, err = notifier.New(ng.Cfg, store, ng.Metrics)
+	if err != nil {
+		return err
+	}
 
 	schedCfg := schedule.SchedulerCfg{
-		C:            clock.New(),
-		BaseInterval: baseInterval,
-		Logger:       ng.Log,
-		MaxAttempts:  maxAttempts,
-		Evaluator:    eval.Evaluator{Cfg: ng.Cfg},
-		Store:        store,
-		RuleStore:    store,
-		Notifier:     ng.Alertmanager,
+		C:             clock.New(),
+		BaseInterval:  baseInterval,
+		Logger:        ng.Log,
+		MaxAttempts:   maxAttempts,
+		Evaluator:     eval.Evaluator{Cfg: ng.Cfg},
+		InstanceStore: store,
+		RuleStore:     store,
+		Notifier:      ng.Alertmanager,
+		Metrics:       ng.Metrics,
 	}
 	ng.schedule = schedule.NewScheduler(schedCfg, ng.DataService)
 
@@ -81,22 +97,31 @@ func (ng *AlertNG) Init() error {
 		DataService:     ng.DataService,
 		Schedule:        ng.schedule,
 		DataProxy:       ng.DataProxy,
-		Store:           store,
+		QuotaService:    ng.QuotaService,
+		InstanceStore:   store,
 		RuleStore:       store,
 		AlertingStore:   store,
 		Alertmanager:    ng.Alertmanager,
-		StateTracker:    ng.stateTracker,
+		StateManager:    ng.stateManager,
 	}
-	api.RegisterAPIEndpoints()
+	api.RegisterAPIEndpoints(ng.Metrics)
 
 	return nil
 }
 
-// Run starts the scheduler
+// Run starts the scheduler.
 func (ng *AlertNG) Run(ctx context.Context) error {
 	ng.Log.Debug("ngalert starting")
-	ng.schedule.WarmStateCache(ng.stateTracker)
-	return ng.schedule.Ticker(ctx, ng.stateTracker)
+	ng.schedule.WarmStateCache(ng.stateManager)
+
+	children, subCtx := errgroup.WithContext(ctx)
+	children.Go(func() error {
+		return ng.schedule.Ticker(subCtx, ng.stateManager)
+	})
+	children.Go(func() error {
+		return ng.Alertmanager.Run(subCtx)
+	})
+	return children.Wait()
 }
 
 // IsDisabled returns true if the alerting service is disable for this instance.
@@ -105,20 +130,4 @@ func (ng *AlertNG) IsDisabled() bool {
 		return true
 	}
 	return !ng.Cfg.IsNgAlertEnabled()
-}
-
-// AddMigration defines database migrations.
-// If Alerting NG is not enabled does nothing.
-func (ng *AlertNG) AddMigration(mg *migrator.Migrator) {
-	if ng.IsDisabled() {
-		return
-	}
-	store.AddAlertDefinitionMigrations(mg, defaultIntervalSeconds)
-	store.AddAlertDefinitionVersionMigrations(mg)
-	// Create alert_instance table
-	store.AlertInstanceMigration(mg)
-
-	// Create alert_rule
-	store.AddAlertRuleMigrations(mg, defaultIntervalSeconds)
-	store.AddAlertRuleVersionMigrations(mg)
 }

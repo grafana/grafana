@@ -56,11 +56,16 @@ type AzureMonitorResponse struct {
 
 // AzureLogAnalyticsResponse is the json response object from the Azure Log Analytics API.
 type AzureLogAnalyticsResponse struct {
-	Tables []AzureLogAnalyticsTable `json:"tables"`
+	Tables []AzureResponseTable `json:"tables"`
 }
 
-// AzureLogAnalyticsTable is the table format for Log Analytics responses
-type AzureLogAnalyticsTable struct {
+// AzureResourceGraphResponse is the json response object from the Azure Resource Graph Analytics API.
+type AzureResourceGraphResponse struct {
+	Data AzureResponseTable `json:"data"`
+}
+
+// AzureResponseTable is the table format for Azure responses
+type AzureResponseTable struct {
 	Name    string `json:"name"`
 	Columns []struct {
 		Name string `json:"name"`
@@ -135,6 +140,13 @@ type logJSONQuery struct {
 		ResultFormat string `json:"resultFormat"`
 		Workspace    string `json:"workspace"`
 	} `json:"azureLogAnalytics"`
+}
+
+type argJSONQuery struct {
+	AzureResourceGraph struct {
+		Query        string `json:"query"`
+		ResultFormat string `json:"resultFormat"`
+	} `json:"azureResourceGraph"`
 }
 
 // InsightsDimensions will unmarshal from a JSON string, or an array of strings,

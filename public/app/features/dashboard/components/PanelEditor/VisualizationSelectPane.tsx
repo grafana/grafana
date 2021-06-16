@@ -1,17 +1,16 @@
 import React, { FC, useCallback, useEffect, useRef, useState } from 'react';
 import { css } from '@emotion/css';
 import { GrafanaTheme, PanelPluginMeta, SelectableValue } from '@grafana/data';
-import { Icon, Input, RadioButtonGroup, CustomScrollbar, useStyles, Button } from '@grafana/ui';
+import { Button, CustomScrollbar, Icon, Input, RadioButtonGroup, useStyles } from '@grafana/ui';
 import { changePanelPlugin } from '../../state/actions';
 import { StoreState } from 'app/types';
 import { PanelModel } from '../../state/PanelModel';
 import { useDispatch, useSelector } from 'react-redux';
-import { VizTypePicker, getAllPanelPluginMeta, filterPluginList } from '../VizTypePicker/VizTypePicker';
+import { filterPluginList, getAllPanelPluginMeta, VizTypePicker } from '../VizTypePicker/VizTypePicker';
 import { Field } from '@grafana/ui/src/components/Forms/Field';
 import { PanelLibraryOptionsGroup } from 'app/features/library-panels/components/PanelLibraryOptionsGroup/PanelLibraryOptionsGroup';
 import { toggleVizPicker } from './state/reducers';
 import { selectors } from '@grafana/e2e-selectors';
-import { config } from 'app/core/config';
 
 interface Props {
   panel: PanelModel;
@@ -26,11 +25,14 @@ export const VisualizationSelectPane: FC<Props> = ({ panel }) => {
   const searchRef = useRef<HTMLInputElement | null>(null);
 
   const onPluginTypeChange = useCallback(
-    (meta: PanelPluginMeta) => {
-      if (meta.id === plugin.meta.id) {
-        dispatch(toggleVizPicker(false));
-      } else {
+    (meta: PanelPluginMeta, withModKey: boolean) => {
+      if (meta.id !== plugin.meta.id) {
         dispatch(changePanelPlugin(panel, meta.id));
+      }
+
+      // close viz picker unless a mod key is pressed while clicking
+      if (!withModKey) {
+        dispatch(toggleVizPicker(false));
       }
     },
     [dispatch, panel, plugin.meta.id]
@@ -53,8 +55,9 @@ export const VisualizationSelectPane: FC<Props> = ({ panel }) => {
         const query = e.currentTarget.value;
         const plugins = getAllPanelPluginMeta();
         const match = filterPluginList(plugins, query, plugin.meta);
+
         if (match && match.length) {
-          onPluginTypeChange(match[0]);
+          onPluginTypeChange(match[0], true);
         }
       }
     },
@@ -63,7 +66,7 @@ export const VisualizationSelectPane: FC<Props> = ({ panel }) => {
 
   const suffix =
     searchQuery !== '' ? (
-      <Button icon="times" variant="link" size="sm" onClick={() => setSearchQuery('')}>
+      <Button icon="times" fill="text" size="sm" onClick={() => setSearchQuery('')}>
         Clear
       </Button>
     ) : null;
@@ -74,7 +77,11 @@ export const VisualizationSelectPane: FC<Props> = ({ panel }) => {
 
   const radioOptions: Array<SelectableValue<ListMode>> = [
     { label: 'Visualizations', value: ListMode.Visualizations },
-    { label: 'Global panels', value: ListMode.Globals },
+    {
+      label: 'Library panels',
+      value: ListMode.LibraryPanels,
+      description: 'Reusable panels you can share between multiple dashboards.',
+    },
   ];
 
   return (
@@ -99,11 +106,9 @@ export const VisualizationSelectPane: FC<Props> = ({ panel }) => {
             onClick={onCloseVizPicker}
           />
         </div>
-        {config.featureToggles.panelLibrary && (
-          <Field className={styles.customFieldMargin}>
-            <RadioButtonGroup options={radioOptions} value={listMode} onChange={setListMode} fullWidth />
-          </Field>
-        )}
+        <Field className={styles.customFieldMargin}>
+          <RadioButtonGroup options={radioOptions} value={listMode} onChange={setListMode} fullWidth />
+        </Field>
       </div>
       <div className={styles.scrollWrapper}>
         <CustomScrollbar autoHeightMin="100%">
@@ -116,7 +121,7 @@ export const VisualizationSelectPane: FC<Props> = ({ panel }) => {
                 onClose={() => {}}
               />
             )}
-            {listMode === ListMode.Globals && (
+            {listMode === ListMode.LibraryPanels && (
               <PanelLibraryOptionsGroup searchQuery={searchQuery} panel={panel} key="Panel Library" />
             )}
           </div>
@@ -128,7 +133,7 @@ export const VisualizationSelectPane: FC<Props> = ({ panel }) => {
 
 enum ListMode {
   Visualizations,
-  Globals,
+  LibraryPanels,
 }
 
 VisualizationSelectPane.displayName = 'VisualizationSelectPane';

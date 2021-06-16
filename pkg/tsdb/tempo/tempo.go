@@ -18,7 +18,8 @@ type tempoExecutor struct {
 	httpClient *http.Client
 }
 
-// NewExecutor returns a tempoExecutor.
+// NewExecutor returns a tempoExecutor.DataQueryResult
+//nolint: staticcheck // plugins.DataPlugin deprecated
 func NewExecutor(dsInfo *models.DataSource) (plugins.DataPlugin, error) {
 	httpClient, err := dsInfo.GetHttpClient()
 	if err != nil {
@@ -34,6 +35,7 @@ var (
 	tlog = log.New("tsdb.tempo")
 )
 
+//nolint: staticcheck // plugins.DataQuery deprecated
 func (e *tempoExecutor) DataQuery(ctx context.Context, dsInfo *models.DataSource,
 	queryContext plugins.DataQuery) (plugins.DataResponse, error) {
 	refID := queryContext.Queries[0].RefID
@@ -62,7 +64,7 @@ func (e *tempoExecutor) DataQuery(ctx context.Context, dsInfo *models.DataSource
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		queryResult.ErrorString = fmt.Sprintf("failed to get trace with id: %s Status: %s Body: %s", traceID, resp.Status, string(body))
+		queryResult.Error = fmt.Errorf("failed to get trace with id: %s Status: %s Body: %s", traceID, resp.Status, string(body))
 		return plugins.DataResponse{
 			Results: map[string]plugins.DataQueryResult{
 				refID: queryResult,
@@ -70,8 +72,7 @@ func (e *tempoExecutor) DataQuery(ctx context.Context, dsInfo *models.DataSource
 		}, nil
 	}
 
-	otTrace := ot_pdata.NewTraces()
-	err = otTrace.FromOtlpProtoBytes(body)
+	otTrace, err := ot_pdata.TracesFromOtlpProtoBytes(body)
 
 	if err != nil {
 		return plugins.DataResponse{}, fmt.Errorf("failed to convert tempo response to Otlp: %w", err)

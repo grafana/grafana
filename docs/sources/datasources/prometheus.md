@@ -2,7 +2,7 @@
 title = "Prometheus"
 description = "Guide for using Prometheus in Grafana"
 keywords = ["grafana", "prometheus", "guide"]
-aliases = ["/docs/grafana/next/features/datasources/prometheus"]
+aliases = ["/docs/grafana/latest/features/datasources/prometheus"]
 weight = 1300
 +++
 
@@ -212,7 +212,7 @@ To connect the Prometheus data source to Amazon Managed Service for Prometheus u
 
 If you are running Grafana in an Amazon EKS cluster, follow the AWS guide to [Query using Grafana running in an Amazon EKS cluster](https://docs.aws.amazon.com/prometheus/latest/userguide/AMP-onboard-query-grafana-7.3.html).
 
-## Exemplars
+## Configuring exemplars
 
 > **Note:** This feature is available in Prometheus 2.26+ and Grafana 7.4+.
 

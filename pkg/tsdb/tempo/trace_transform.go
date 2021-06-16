@@ -113,7 +113,7 @@ func spanToSpanRow(span pdata.Span, libraryTags pdata.InstrumentationLibrary, re
 
 	// Should get error only if empty in which case we are ok with empty string
 	parentSpanID, _ := spanIDToString(span.ParentSpanID())
-	startTime := float64(span.StartTime()) / 1_000_000
+	startTime := float64(span.StartTimestamp()) / 1_000_000
 	serviceName, serviceTags := resourceToProcess(resource)
 
 	serviceTagsJson, err := json.Marshal(serviceTags)
@@ -139,7 +139,7 @@ func spanToSpanRow(span pdata.Span, libraryTags pdata.InstrumentationLibrary, re
 		serviceName,
 		toJSONString(serviceTagsJson),
 		startTime,
-		float64(span.EndTime()-span.StartTime()) / 1_000_000,
+		float64(span.EndTimestamp()-span.StartTimestamp()) / 1_000_000,
 		toJSONString(logs),
 		toJSONString(spanTags),
 	}, nil
@@ -178,11 +178,12 @@ func resourceToProcess(resource pdata.Resource) (string, []*KeyValue) {
 	}
 
 	tags := make([]*KeyValue, 0, attrs.Len()-1)
-	attrs.ForEach(func(key string, attr pdata.AttributeValue) {
+	attrs.Range(func(key string, attr pdata.AttributeValue) bool {
 		if key == conventions.AttributeServiceName {
 			serviceName = attr.StringVal()
 		}
 		tags = append(tags, &KeyValue{Key: key, Value: getAttributeVal(attr)})
+		return true
 	})
 
 	return serviceName, tags
@@ -212,8 +213,9 @@ func getSpanTags(span pdata.Span, instrumentationLibrary pdata.InstrumentationLi
 	if libraryTags != nil {
 		tags = append(tags, libraryTags...)
 	}
-	span.Attributes().ForEach(func(key string, attr pdata.AttributeValue) {
+	span.Attributes().Range(func(key string, attr pdata.AttributeValue) bool {
 		tags = append(tags, &KeyValue{Key: key, Value: getAttributeVal(attr)})
+		return true
 	})
 
 	status := span.Status()
@@ -328,8 +330,9 @@ func spanEventsToLogs(events pdata.SpanEventSlice) []*TraceLog {
 				Value: event.Name(),
 			})
 		}
-		event.Attributes().ForEach(func(key string, attr pdata.AttributeValue) {
+		event.Attributes().Range(func(key string, attr pdata.AttributeValue) bool {
 			fields = append(fields, &KeyValue{Key: key, Value: getAttributeVal(attr)})
+			return true
 		})
 		logs = append(logs, &TraceLog{
 			Timestamp: float64(event.Timestamp()) / 1_000_000,

@@ -1,6 +1,7 @@
 package contexthandler
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"testing"
@@ -34,20 +35,20 @@ func TestInitContextWithAuthProxy_CachedInvalidUserID(t *testing.T) {
 		cmd.Result = &models.User{Id: userID}
 		return nil
 	}
-	getUserHandler := func(cmd *models.GetSignedInUserQuery) error {
+	getUserHandler := func(ctx context.Context, query *models.GetSignedInUserQuery) error {
 		// Simulate that the cached user ID is stale
-		if cmd.UserId != userID {
+		if query.UserId != userID {
 			return models.ErrUserNotFound
 		}
 
-		cmd.Result = &models.SignedInUser{
+		query.Result = &models.SignedInUser{
 			UserId: userID,
 			OrgId:  orgID,
 		}
 		return nil
 	}
 	bus.AddHandler("", upsertHandler)
-	bus.AddHandler("", getUserHandler)
+	bus.AddHandlerCtx("", getUserHandler)
 	t.Cleanup(func() {
 		bus.ClearBusHandlers()
 	})

@@ -23,7 +23,7 @@ export class UserSessions extends PureComponent<Props> {
     }
 
     return (
-      <>
+      <div>
         {sessions.length > 0 && (
           <>
             <h3 className="page-sub-heading">Sessions</h3>
@@ -59,7 +59,7 @@ export class UserSessions extends PureComponent<Props> {
             </div>
           </>
         )}
-      </>
+      </div>
     );
   }
 }

@@ -64,6 +64,7 @@ export default class SupportedNamespaces {
       'Microsoft.Relay/namespaces',
       'Microsoft.Search/searchServices',
       'Microsoft.ServiceBus/namespaces',
+      'Microsoft.SignalRService/SignalR',
       'Microsoft.Sql/servers/databases',
       'Microsoft.Sql/servers/elasticPools',
       'Microsoft.Sql/managedInstances',

@@ -2,7 +2,7 @@
 title = "Installation"
 description = "Installation guide for Grafana"
 keywords = ["grafana", "installation", "documentation"]
-aliases = ["/docs/grafana/next/installation/installation/", "/docs/grafana/v2.1/installation/install/", "/docs/grafana/next/install"]
+aliases = ["/docs/grafana/latest/installation/installation/", "/docs/grafana/v2.1/installation/install/", "/docs/grafana/latest/install"]
 weight = 30
 +++
 
@@ -21,4 +21,4 @@ This section discusses the hardware and software requirements as well as the pro
 For upgrade instructions, refer to [Upgrade Grafana]({{< relref "upgrading.md" >}}).
 To restart Grafana, refer to [Restart Grafana]({{< relref "restart-grafana.md" >}}).
 
-To install Grafana Enterprise, refer to the instructions for installing Grafana on your system. Then, refer to [Activate an Enterprise license]({{< relref "../enterprise/activate-license.md" >}}).
+To install Grafana Enterprise, refer to the instructions for installing Grafana on your system. Then, refer to [Activate an Enterprise license]({{< relref "../enterprise/license/activate-license.md" >}}).

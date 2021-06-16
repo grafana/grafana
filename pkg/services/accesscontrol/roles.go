@@ -1,5 +1,140 @@
 package accesscontrol
 
+import "github.com/grafana/grafana/pkg/models"
+
+var ldapAdminReadRole = RoleDTO{
+	Name:    ldapAdminRead,
+	Version: 1,
+	Permissions: []Permission{
+		{
+			Action: ActionLDAPUsersRead,
+		},
+		{
+			Action: ActionLDAPStatusRead,
+		},
+	},
+}
+
+var ldapAdminEditRole = RoleDTO{
+	Name:    ldapAdminEdit,
+	Version: 1,
+	Permissions: ConcatPermissions(ldapAdminReadRole.Permissions, []Permission{
+		{
+			Action: ActionLDAPUsersSync,
+		},
+	}),
+}
+
+var usersOrgReadRole = RoleDTO{
+	Name:    usersOrgRead,
+	Version: 1,
+	Permissions: []Permission{
+		{
+			Action: ActionOrgUsersRead,
+			Scope:  ScopeUsersAll,
+		},
+	},
+}
+
+var usersOrgEditRole = RoleDTO{
+	Name:    usersOrgEdit,
+	Version: 1,
+	Permissions: ConcatPermissions(usersOrgReadRole.Permissions, []Permission{
+		{
+			Action: ActionOrgUsersAdd,
+			Scope:  ScopeUsersAll,
+		},
+		{
+			Action: ActionOrgUsersRoleUpdate,
+			Scope:  ScopeUsersAll,
+		},
+		{
+			Action: ActionOrgUsersRemove,
+			Scope:  ScopeUsersAll,
+		},
+	}),
+}
+
+var usersAdminReadRole = RoleDTO{
+	Name:    usersAdminRead,
+	Version: 1,
+	Permissions: []Permission{
+		{
+			Action: ActionUsersRead,
+			Scope:  ScopeGlobalUsersAll,
+		},
+		{
+			Action: ActionUsersTeamRead,
+			Scope:  ScopeGlobalUsersAll,
+		},
+		{
+			Action: ActionUsersAuthTokenList,
+			Scope:  ScopeGlobalUsersAll,
+		},
+		{
+			Action: ActionUsersQuotasList,
+			Scope:  ScopeGlobalUsersAll,
+		},
+	},
+}
+
+var usersAdminEditRole = RoleDTO{
+	Name:    usersAdminEdit,
+	Version: 1,
+	Permissions: ConcatPermissions(usersAdminReadRole.Permissions, []Permission{
+		{
+			Action: ActionUsersPasswordUpdate,
+			Scope:  ScopeGlobalUsersAll,
+		},
+		{
+			Action: ActionUsersCreate,
+		},
+		{
+			Action: ActionUsersWrite,
+			Scope:  ScopeGlobalUsersAll,
+		},
+		{
+			Action: ActionUsersDelete,
+			Scope:  ScopeGlobalUsersAll,
+		},
+		{
+			Action: ActionUsersEnable,
+			Scope:  ScopeGlobalUsersAll,
+		},
+		{
+			Action: ActionUsersDisable,
+			Scope:  ScopeGlobalUsersAll,
+		},
+		{
+			Action: ActionUsersPermissionsUpdate,
+			Scope:  ScopeGlobalUsersAll,
+		},
+		{
+			Action: ActionUsersLogout,
+			Scope:  ScopeGlobalUsersAll,
+		},
+		{
+			Action: ActionUsersAuthTokenUpdate,
+			Scope:  ScopeGlobalUsersAll,
+		},
+		{
+			Action: ActionUsersQuotasUpdate,
+			Scope:  ScopeGlobalUsersAll,
+		},
+	}),
+}
+
+var provisioningAdminRole = RoleDTO{
+	Name:    provisioningAdmin,
+	Version: 1,
+	Permissions: []Permission{
+		{
+			Action: ActionProvisioningReload,
+			Scope:  ScopeServicesAll,
+		},
+	},
+}
+
 // PredefinedRoles provides a map of permission sets/roles which can be
 // assigned to a set of users. When adding a new resource protected by
 // Grafana access control the default permissions should be added to a
@@ -7,107 +142,58 @@ package accesscontrol
 // resource. PredefinedRoleGrants lists which organization roles are
 // assigned which predefined roles in this list.
 var PredefinedRoles = map[string]RoleDTO{
-	// TODO: Add support for inheritance between the predefined roles to
-	// make the admin ⊃ editor ⊃ viewer property hold.
-	usersAdminRead: {
-		Name:    usersAdminRead,
-		Version: 1,
-		Permissions: []Permission{
-			{
-				Action: ActionUsersRead,
-				Scope:  ScopeUsersAll,
-			},
-			{
-				Action: ActionUsersTeamRead,
-				Scope:  ScopeUsersAll,
-			},
-			{
-				Action: ActionUsersAuthTokenList,
-				Scope:  ScopeUsersAll,
-			},
-			{
-				Action: ActionUsersQuotasList,
-				Scope:  ScopeUsersAll,
-			},
-		},
-	},
-	usersAdminEdit: {
-		Name:    usersAdminEdit,
-		Version: 1,
-		Permissions: []Permission{
-			{
-				// Inherited from grafana:roles:users:admin:read
-				Action: ActionUsersRead,
-				Scope:  ScopeUsersAll,
-			},
-			{
-				// Inherited from grafana:roles:users:admin:read
-				Action: ActionUsersTeamRead,
-				Scope:  ScopeUsersAll,
-			},
-			{
-				// Inherited from grafana:roles:users:admin:read
-				Action: ActionUsersAuthTokenList,
-				Scope:  ScopeUsersAll,
-			},
-			{
-				Action: ActionUsersPasswordUpdate,
-				Scope:  ScopeUsersAll,
-			},
-			{
-				Action: ActionUsersCreate,
-			},
-			{
-				Action: ActionUsersWrite,
-				Scope:  ScopeUsersAll,
-			},
-			{
-				Action: ActionUsersDelete,
-				Scope:  ScopeUsersAll,
-			},
-			{
-				Action: ActionUsersEnable,
-				Scope:  ScopeUsersAll,
-			},
-			{
-				Action: ActionUsersDisable,
-				Scope:  ScopeUsersAll,
-			},
-			{
-				Action: ActionUsersPermissionsUpdate,
-				Scope:  ScopeUsersAll,
-			},
-			{
-				Action: ActionUsersLogout,
-				Scope:  ScopeUsersAll,
-			},
-			{
-				Action: ActionUsersAuthTokenUpdate,
-				Scope:  ScopeUsersAll,
-			},
-			{
-				// Inherited from grafana:roles:users:admin:read
-				Action: ActionUsersQuotasList,
-				Scope:  ScopeUsersAll,
-			},
-			{
-				Action: ActionUsersQuotasUpdate,
-				Scope:  ScopeUsersAll,
-			},
-		},
-	},
+	usersAdminRead: usersAdminReadRole,
+	usersAdminEdit: usersAdminEditRole,
+
+	usersOrgRead: usersOrgReadRole,
+	usersOrgEdit: usersOrgEditRole,
+
+	ldapAdminRead: ldapAdminReadRole,
+	ldapAdminEdit: ldapAdminEditRole,
+
+	provisioningAdmin: provisioningAdminRole,
 }
 
 const (
 	usersAdminEdit = "grafana:roles:users:admin:edit"
 	usersAdminRead = "grafana:roles:users:admin:read"
+
+	usersOrgEdit = "grafana:roles:users:org:edit"
+	usersOrgRead = "grafana:roles:users:org:read"
+
+	ldapAdminEdit = "grafana:roles:ldap:admin:edit"
+	ldapAdminRead = "grafana:roles:ldap:admin:read"
+
+	provisioningAdmin = "grafana:roles:provisioning:admin"
 )
 
 // PredefinedRoleGrants specifies which organization roles are assigned
 // to which set of PredefinedRoles by default. Alphabetically sorted.
 var PredefinedRoleGrants = map[string][]string{
 	RoleGrafanaAdmin: {
+		ldapAdminEdit,
+		ldapAdminRead,
+		provisioningAdmin,
 		usersAdminEdit,
 		usersAdminRead,
+		usersOrgEdit,
+		usersOrgRead,
 	},
+	string(models.ROLE_ADMIN): {
+		usersOrgEdit,
+		usersOrgRead,
+	},
+}
+
+func ConcatPermissions(permissions ...[]Permission) []Permission {
+	if permissions == nil {
+		return nil
+	}
+	perms := make([]Permission, 0)
+	for _, p := range permissions {
+		pCopy := make([]Permission, 0, len(p))
+		copy(pCopy, p)
+		perms = append(perms, p...)
+	}
+	return perms
 }

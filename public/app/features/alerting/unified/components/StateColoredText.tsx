@@ -1,5 +1,5 @@
-import { GrafanaTheme } from '@grafana/data';
-import { useStyles } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import { useStyles2 } from '@grafana/ui';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 import { css } from '@emotion/css';
 import React, { FC } from 'react';
@@ -9,19 +9,19 @@ type Props = {
 };
 
 export const StateColoredText: FC<Props> = ({ children, status }) => {
-  const styles = useStyles(getStyles);
+  const styles = useStyles2(getStyles);
 
   return <span className={styles[status]}>{children || status}</span>;
 };
 
-const getStyles = (theme: GrafanaTheme) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   [PromAlertingRuleState.Inactive]: css`
-    color: ${theme.palette.brandSuccess};
+    color: ${theme.colors.success.text};
   `,
   [PromAlertingRuleState.Pending]: css`
-    color: ${theme.palette.brandWarning};
+    color: ${theme.colors.warning.text};
   `,
   [PromAlertingRuleState.Firing]: css`
-    color: ${theme.palette.brandDanger};
+    color: ${theme.colors.error.text};
   `,
 });

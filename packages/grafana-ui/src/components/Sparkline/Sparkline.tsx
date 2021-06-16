@@ -19,11 +19,11 @@ import {
 } from '../uPlot/config';
 import { UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
 import { UPlotChart } from '../uPlot/Plot';
-import { Themeable } from '../../types';
+import { Themeable2 } from '../../types';
 import { preparePlotData } from '../uPlot/utils';
 import { preparePlotFrame } from './utils';
 
-export interface SparklineProps extends Themeable {
+export interface SparklineProps extends Themeable2 {
   width: number;
   height: number;
   config?: FieldConfig<GraphFieldConfig>;
@@ -144,6 +144,7 @@ export class Sparkline extends PureComponent<SparklineProps, State> {
         min: field.config.min,
         max: field.config.max,
       });
+
       builder.addAxis({
         scaleKey,
         theme,
