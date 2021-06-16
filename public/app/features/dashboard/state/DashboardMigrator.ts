@@ -958,7 +958,7 @@ function upgradeValueMappingsForPanel(panel: PanelModel) {
   fieldConfig.defaults.mappings = upgradeValueMappings(fieldConfig.defaults.mappings, fieldConfig.defaults.thresholds);
 
   // Protect against no overrides
-  if (fieldConfig.hasOwnProperty('overrides')) {
+  if (Array.isArray(fieldConfig.overrides)) {
     for (const override of fieldConfig.overrides) {
       for (const prop of override.properties) {
         if (prop.id === 'mappings') {
