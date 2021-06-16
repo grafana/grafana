@@ -338,8 +338,8 @@ describe('PostgreSQLDatasource', () => {
     });
   });
 
-  describe('When performing metricFindQuery', () => {
-    it('should return list of all column values', async () => {
+  describe('When performing metricFindQuery that returns multiple string fields', () => {
+    it('should return list of all string field values', async () => {
       const query = 'select * from atable';
       const response = {
         results: {
@@ -483,6 +483,43 @@ describe('PostgreSQLDatasource', () => {
         { text: 'aTitle', value: 'value1' },
         { text: 'aTitle2', value: 'value2' },
         { text: 'aTitle3', value: 'value3' },
+      ]);
+    });
+  });
+
+  describe('When performing metricFindQuery without key, value columns', () => {
+    it('should return list of all field values as text', async () => {
+      const query = 'select id, values from atable';
+      const response = {
+        results: {
+          tempvar: {
+            refId: 'tempvar',
+            frames: [
+              dataFrameToJSON(
+                new MutableDataFrame({
+                  fields: [
+                    { name: 'id', values: [1, 2, 3] },
+                    { name: 'values', values: ['test1', 'test2', 'test3'] },
+                  ],
+                  meta: {
+                    executedQueryString: 'select id, values from atable',
+                  },
+                })
+              ),
+            ],
+          },
+        },
+      };
+      const { ds } = setupTestContext(response);
+      const results = await ds.metricFindQuery(query, {});
+
+      expect(results).toEqual([
+        { text: 1 },
+        { text: 2 },
+        { text: 3 },
+        { text: 'test1' },
+        { text: 'test2' },
+        { text: 'test3' },
       ]);
     });
   });

@@ -4,10 +4,10 @@ aliases = ["/docs/grafana/latest/alerting/metrics/"]
 weight = 113
 +++
 
-# Grafana 8 alerts
+# Overview of Grafana 8 alerts
 Alerts allow you to know about problems in your systems moments after they occur. Robust and actionable alerts help you identify and resolve issues quickly, minimizing disruption to your services.
 
->**Note:** This information is for the new, Grafana 8 Alerts. This is an [opt-in]({{< relref"./opt-in.md" >}}) feature released in Grafana 8.0. Grafana still supports [dashboard alerts]({{< relref "../old-alerting/_index.md" >}}) out of the box
+>**Note:** This information is for the new, Grafana 8 Alerts. This is an [opt-in]({{< relref"./opt-in.md" >}}) feature released in Grafana 8.0. Grafana still supports [legacy dashboard alerts]({{< relref "../old-alerting/_index.md" >}}) out of the box
 
 Alerts have four main components:
 
@@ -19,6 +19,7 @@ Alerts have four main components:
 ## Alerting tasks
 
 You can perform the following tasks for alerts:
+
 
 - [Create a Grafana managed alert rule]({{< relref "alerting-rules/create-grafana-managed-rule.md" >}})
 - [Create a Cortex or Loki managed alert rule]({{< relref "alerting-rules/create-cortex-loki-managed-rule.md" >}})
@@ -49,7 +50,7 @@ Metric Name | Type | Description
 ---------- | ----------- | ----------
 `alerting.alerts` | gauge | How many alerts by state
 `alerting.request_duration_seconds` | histogram | Histogram of requests to the Alerting API
-`alerting.active_configurations` | gauge | The number of active, non default alertmanager configurations for grafana managed alerts
+`alerting.active_configurations` | gauge | The number of active, non default Alertmanager configurations for grafana managed alerts
 `alerting.rule_evaluations_total` | counter | The total number of rule evaluations
 `alerting.rule_evaluation_failures_total` | counter | The total number of rule evaluation failures
 `alerting.rule_evaluation_duration_seconds` | summary | The duration for a rule to execute

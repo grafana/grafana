@@ -1,5 +1,6 @@
 import React from 'react';
-import { LogRows, CustomScrollbar } from '@grafana/ui';
+import { css } from '@emotion/css';
+import { LogRows, CustomScrollbar, useTheme2 } from '@grafana/ui';
 import { PanelProps, Field } from '@grafana/data';
 import { Options } from './types';
 import { dataFrameToLogsModel, dedupLogRows } from 'app/core/logs_model';
@@ -11,7 +12,9 @@ export const LogsPanel: React.FunctionComponent<LogsPanelProps> = ({
   data,
   timeZone,
   options: { showLabels, showTime, wrapLogMessage, sortOrder, dedupStrategy, enableLogDetails },
+  title,
 }) => {
+  const theme = useTheme2();
   if (!data) {
     return (
       <div className="panel-empty">
@@ -19,6 +22,12 @@ export const LogsPanel: React.FunctionComponent<LogsPanelProps> = ({
       </div>
     );
   }
+
+  const spacing = css`
+    margin-bottom: ${theme.spacing(1.5)};
+    //We can remove this hot-fix when we fix panel menu with no title overflowing top of all panels
+    margin-top: ${theme.spacing(!title ? 2.5 : 0)};
+  `;
 
   const newResults = data ? dataFrameToLogsModel(data.series, data.request?.intervalMs) : null;
   const logRows = newResults?.rows || [];
@@ -30,19 +39,21 @@ export const LogsPanel: React.FunctionComponent<LogsPanelProps> = ({
 
   return (
     <CustomScrollbar autoHide>
-      <LogRows
-        logRows={logRows}
-        deduplicatedRows={deduplicatedRows}
-        dedupStrategy={dedupStrategy}
-        highlighterExpressions={[]}
-        showLabels={showLabels}
-        showTime={showTime}
-        wrapLogMessage={wrapLogMessage}
-        timeZone={timeZone}
-        getFieldLinks={getFieldLinks}
-        logsSortOrder={sortOrder}
-        enableLogDetails={enableLogDetails}
-      />
+      <div className={spacing}>
+        <LogRows
+          logRows={logRows}
+          deduplicatedRows={deduplicatedRows}
+          dedupStrategy={dedupStrategy}
+          highlighterExpressions={[]}
+          showLabels={showLabels}
+          showTime={showTime}
+          wrapLogMessage={wrapLogMessage}
+          timeZone={timeZone}
+          getFieldLinks={getFieldLinks}
+          logsSortOrder={sortOrder}
+          enableLogDetails={enableLogDetails}
+        />
+      </div>
     </CustomScrollbar>
   );
 };
