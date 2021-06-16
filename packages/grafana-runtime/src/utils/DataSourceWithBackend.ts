@@ -63,6 +63,24 @@ export interface HealthCheckResult {
   details: HealthCheckResultDetails;
 }
 
+export type StreamOptionsProvider<TQuery extends DataQuery = DataQuery> = (
+  request: DataQueryRequest<TQuery>,
+  frame: DataFrame
+) => StreamingFrameOptions;
+
+export const standardStreamOptionsProvider: StreamOptionsProvider = (request: DataQueryRequest, frame: DataFrame) => {
+  const buffer: StreamingFrameOptions = {
+    maxLength: request.maxDataPoints ?? 500,
+    action: StreamingFrameAction.Append,
+  };
+
+  // For recent queries, clamp to the current time range
+  if (request.rangeRaw?.to === 'now') {
+    buffer.maxDelta = request.range.to.valueOf() - request.range.from.valueOf();
+  }
+  return buffer;
+};
+
 /**
  * Extend this class to implement a data source plugin that is depending on the Grafana
  * backend API.
@@ -141,7 +159,7 @@ class DataSourceWithBackend<
           const rsp = toDataQueryResponse(raw, queries as DataQuery[]);
           // Check if any response should subscribe to a live stream
           if (rsp.data?.length && rsp.data.find((f: DataFrame) => f.meta?.channel)) {
-            return toStreamingDataResponse(rsp, request, this.getStreamingFrameOptions);
+            return toStreamingDataResponse(rsp, request, this.streamOptionsProvider);
           }
           return of(rsp);
         }),
@@ -176,18 +194,7 @@ class DataSourceWithBackend<
   /**
    * Optionally override the streaming behavior
    */
-  getStreamingFrameOptions = (request: DataQueryRequest<TQuery>, frame: DataFrame) => {
-    const buffer: StreamingFrameOptions = {
-      maxLength: request.maxDataPoints ?? 500,
-      action: StreamingFrameAction.Append,
-    };
-
-    // For recent queries, clamp to the current time range
-    if (request.rangeRaw?.to === 'now') {
-      buffer.maxDelta = request.range.to.valueOf() - request.range.from.valueOf();
-    }
-    return buffer;
-  };
+  streamOptionsProvider: StreamOptionsProvider<TQuery> = standardStreamOptionsProvider;
 
   /**
    * Make a GET request to the datasource resource path
