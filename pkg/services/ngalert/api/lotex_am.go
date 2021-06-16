@@ -16,6 +16,7 @@ import (
 const (
 	amSilencesPath    = "/alertmanager/api/v2/silences"
 	amSilencePath     = "/alertmanager/api/v2/silence/%s"
+	amStatusPath      = "/alertmanager/api/v2/status"
 	amAlertGroupsPath = "/alertmanager/api/v2/alerts/groups"
 	amAlertsPath      = "/alertmanager/api/v2/alerts"
 	amConfigPath      = "/api/v1/alerts"
@@ -31,6 +32,20 @@ func NewLotexAM(proxy *AlertingProxy, log log.Logger) *LotexAM {
 		log:           log,
 		AlertingProxy: proxy,
 	}
+}
+
+func (am *LotexAM) RouteGetAMStatus(ctx *models.ReqContext) response.Response {
+	return am.withReq(
+		ctx,
+		http.MethodGet,
+		withPath(
+			*ctx.Req.URL,
+			amStatusPath,
+		),
+		nil,
+		jsonExtractor(&apimodels.GettableStatus{}),
+		nil,
+	)
 }
 
 func (am *LotexAM) RouteCreateSilence(ctx *models.ReqContext, silenceBody apimodels.PostableSilence) response.Response {

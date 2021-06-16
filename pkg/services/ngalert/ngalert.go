@@ -83,7 +83,7 @@ func (ng *AlertNG) Init() error {
 		BaseInterval:  baseInterval,
 		Logger:        ng.Log,
 		MaxAttempts:   maxAttempts,
-		Evaluator:     eval.Evaluator{Cfg: ng.Cfg},
+		Evaluator:     eval.Evaluator{Cfg: ng.Cfg, Log: ng.Log},
 		InstanceStore: store,
 		RuleStore:     store,
 		Notifier:      ng.Alertmanager,

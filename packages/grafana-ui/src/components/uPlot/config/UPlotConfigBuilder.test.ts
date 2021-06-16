@@ -348,6 +348,7 @@ describe('UPlotConfigBuilder', () => {
             "stroke": "rgb(204, 204, 220)",
             "ticks": Object {
               "show": true,
+              "size": 4,
               "stroke": "rgba(240, 250, 255, 0.09)",
               "width": 1,
             },

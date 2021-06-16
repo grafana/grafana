@@ -1,6 +1,8 @@
 import React from 'react';
 import { shallow } from 'enzyme';
 import AzureCredentialsForm, { Props } from './AzureCredentialsForm';
+import { LegacyForms, Button } from '@grafana/ui';
+const { Input } = LegacyForms;
 
 const setup = (propsFunc?: (props: Props) => Props) => {
   let props: Props = {
@@ -62,5 +64,27 @@ describe('Render', () => {
       },
     }));
     expect(wrapper).toMatchSnapshot();
+  });
+
+  describe('when disabled', () => {
+    it('should disable inputs', () => {
+      const wrapper = setup((props) => ({
+        ...props,
+        disabled: true,
+      }));
+      const inputs = wrapper.find(Input);
+      expect(inputs.length).toBeGreaterThan(1);
+      inputs.forEach((input) => {
+        expect(input.prop('disabled')).toBe(true);
+      });
+    });
+
+    it('should remove buttons', () => {
+      const wrapper = setup((props) => ({
+        ...props,
+        disabled: true,
+      }));
+      expect(wrapper.find(Button).exists()).toBe(false);
+    });
   });
 });
