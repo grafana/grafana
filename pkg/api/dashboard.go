@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -31,7 +32,7 @@ func isDashboardStarredByUser(c *models.ReqContext, dashID int64) (bool, error) 
 	}
 
 	query := models.IsStarredByUserQuery{UserId: c.UserId, DashboardId: dashID}
-	if err := bus.Dispatch(&query); err != nil {
+	if err := bus.DispatchCtx(c.Req.Context(), &query); err != nil {
 		return false, err
 	}
 
@@ -69,9 +70,8 @@ func (hs *HTTPServer) TrimDashboard(c *models.ReqContext, cmd models.TrimDashboa
 }
 
 func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
-	slug := c.Params(":slug")
 	uid := c.Params(":uid")
-	dash, rsp := getDashboardHelper(c.OrgId, slug, 0, uid)
+	dash, rsp := getDashboardHelper(c.Req.Context(), c.OrgId, 0, uid)
 	if rsp != nil {
 		return rsp
 	}
@@ -136,7 +136,7 @@ func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
 	// lookup folder title
 	if dash.FolderId > 0 {
 		query := models.GetDashboardQuery{Id: dash.FolderId, OrgId: c.OrgId}
-		if err := bus.Dispatch(&query); err != nil {
+		if err := bus.DispatchCtx(c.Req.Context(), &query); err != nil {
 			if errors.Is(err, models.ErrFolderNotFound) {
 				return response.Error(404, "Folder not found", err)
 			}
@@ -197,16 +197,16 @@ func getUserLogin(userID int64) string {
 	return query.Result.Login
 }
 
-func getDashboardHelper(orgID int64, slug string, id int64, uid string) (*models.Dashboard, response.Response) {
+func getDashboardHelper(ctx context.Context, orgID int64, id int64, uid string) (*models.Dashboard, response.Response) {
 	var query models.GetDashboardQuery
 
 	if len(uid) > 0 {
 		query = models.GetDashboardQuery{Uid: uid, Id: id, OrgId: orgID}
 	} else {
-		query = models.GetDashboardQuery{Slug: slug, Id: id, OrgId: orgID}
+		query = models.GetDashboardQuery{Id: id, OrgId: orgID}
 	}
 
-	if err := bus.Dispatch(&query); err != nil {
+	if err := bus.DispatchCtx(ctx, &query); err != nil {
 		return nil, response.Error(404, "Dashboard not found", err)
 	}
 
@@ -232,7 +232,7 @@ func (hs *HTTPServer) DeleteDashboardByUID(c *models.ReqContext) response.Respon
 }
 
 func (hs *HTTPServer) deleteDashboard(c *models.ReqContext) response.Response {
-	dash, rsp := getDashboardHelper(c.OrgId, c.Params(":slug"), 0, c.Params(":uid"))
+	dash, rsp := getDashboardHelper(c.Req.Context(), c.OrgId, 0, c.Params(":uid"))
 	if rsp != nil {
 		return rsp
 	}
@@ -390,7 +390,7 @@ func (hs *HTTPServer) dashboardSaveErrorToApiResponse(err error) response.Respon
 		if body := dashboardErr.Body(); body != nil {
 			return response.JSON(dashboardErr.StatusCode, body)
 		}
-		if errors.Is(dashboardErr, models.ErrDashboardUpdateAccessDenied) {
+		if dashboardErr.StatusCode != 400 {
 			return response.Error(dashboardErr.StatusCode, dashboardErr.Error(), err)
 		}
 		return response.Error(dashboardErr.StatusCode, dashboardErr.Error(), nil)
@@ -402,7 +402,7 @@ func (hs *HTTPServer) dashboardSaveErrorToApiResponse(err error) response.Respon
 
 	var validationErr alerting.ValidationError
 	if ok := errors.As(err, &validationErr); ok {
-		return response.Error(422, validationErr.Error(), nil)
+		return response.Error(422, validationErr.Error(), err)
 	}
 
 	var pluginErr models.UpdatePluginDashboardError
@@ -626,7 +626,7 @@ func CalculateDashboardDiff(c *models.ReqContext, apiOptions dtos.CalculateDiffO
 
 // RestoreDashboardVersion restores a dashboard to the given version.
 func (hs *HTTPServer) RestoreDashboardVersion(c *models.ReqContext, apiCmd dtos.RestoreDashboardVersionCommand) response.Response {
-	dash, rsp := getDashboardHelper(c.OrgId, "", c.ParamsInt64(":dashboardId"), "")
+	dash, rsp := getDashboardHelper(c.Req.Context(), c.OrgId, c.ParamsInt64(":dashboardId"), "")
 	if rsp != nil {
 		return rsp
 	}

@@ -38,7 +38,7 @@ export interface GraphNGProps extends Themeable2 {
   fields?: XYFieldMatchers; // default will assume timeseries data
   onLegendClick?: (event: GraphNGLegendEvent) => void;
   children?: (builder: UPlotConfigBuilder, alignedFrame: DataFrame) => React.ReactNode;
-  prepConfig: (alignedFrame: DataFrame, getTimeRange: () => TimeRange) => UPlotConfigBuilder;
+  prepConfig: (alignedFrame: DataFrame, allFrames: DataFrame[], getTimeRange: () => TimeRange) => UPlotConfigBuilder;
   propsToDiff?: string[];
   preparePlotFrame?: (frames: DataFrame[], dimFields: XYFieldMatchers) => DataFrame;
   renderLegend: (config: UPlotConfigBuilder) => React.ReactElement | null;
@@ -105,7 +105,7 @@ export class GraphNG extends React.Component<GraphNGProps, GraphNGState> {
       pluginLog('GraphNG', false, 'data prepared', state.alignedData);
 
       if (withConfig) {
-        state.config = props.prepConfig(alignedFrame, this.getTimeRange);
+        state.config = props.prepConfig(alignedFrame, this.props.frames, this.getTimeRange);
         pluginLog('GraphNG', false, 'config prepared', state.config);
       }
     }
@@ -182,7 +182,7 @@ export class GraphNG extends React.Component<GraphNGProps, GraphNGState> {
           propsChanged;
 
         if (shouldReconfig) {
-          newState.config = this.props.prepConfig(newState.alignedFrame, this.getTimeRange);
+          newState.config = this.props.prepConfig(newState.alignedFrame, this.props.frames, this.getTimeRange);
           pluginLog('GraphNG', false, 'config recreated', newState.config);
         }
       }

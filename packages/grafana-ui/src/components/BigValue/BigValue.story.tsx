@@ -21,9 +21,6 @@ export default {
     docs: {
       page: mdx,
     },
-    knobs: {
-      disable: true,
-    },
     controls: {
       exclude: ['value', 'sparkline', 'onClick', 'className', 'alignmentFactors', 'text', 'count', 'theme'],
     },

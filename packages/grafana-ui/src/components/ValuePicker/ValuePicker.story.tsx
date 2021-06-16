@@ -15,24 +15,27 @@ export default {
     docs: {
       page: mdx,
     },
-    knobs: {
-      disabled: true,
-    },
     controls: {
       exclude: ['onChange', 'options'],
     },
   },
   argTypes: {
     variant: {
+      options: ['primary', 'secondary', 'destructive', 'link'],
       control: {
         type: 'select',
-        options: ['primary', 'secondary', 'destructive', 'link'],
       },
     },
     icon: {
       control: {
         type: 'select',
         options: getAvailableIcons(),
+      },
+    },
+    size: {
+      options: ['sm', 'md', 'lg'],
+      control: {
+        type: 'select',
       },
     },
   },
