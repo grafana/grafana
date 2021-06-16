@@ -200,12 +200,16 @@ func InitFixedRole() {
 		FixedRoles.Store(usersOrgRead, usersOrgReadRole)
 		FixedRoles.Store(ldapAdminEdit, ldapAdminEditRole)
 		FixedRoles.Store(ldapAdminRead, ldapAdminReadRole)
+		FixedRoles.Store(serverAdminRead, serverAdminReadRole)
+		FixedRoles.Store(settingsAdminRead, settingsAdminReadRole)
 
 		// Register assignments
 		// Grafana Admin grants
 		FixedRoleGrants.Store(RoleGrafanaAdmin, []string{
 			ldapAdminEdit,
 			ldapAdminRead,
+			serverAdminRead,
+			settingsAdminRead,
 			usersAdminEdit,
 			usersAdminRead,
 			usersOrgEdit,
