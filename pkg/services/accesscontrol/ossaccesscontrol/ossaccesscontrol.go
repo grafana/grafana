@@ -2,6 +2,7 @@ package ossaccesscontrol
 
 import (
 	"context"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
@@ -84,6 +85,13 @@ func (ac *OSSAccessControlService) assignFixedRole(role accesscontrol.RoleDTO, b
 		}
 		assignments = append(assignments, role.Name)
 		accesscontrol.FixedRoleGrants.Store(builtInRole, assignments)
+	}
+	return nil
+}
+
+func (ac *OSSAccessControlService) validateFixedRole(role accesscontrol.RoleDTO) error {
+	if strings.HasPrefix(role.Name, accesscontrol.FixedRolePrefix) {
+		return accesscontrol.ErrFixedRolePrefixMissing
 	}
 	return nil
 }

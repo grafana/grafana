@@ -82,11 +82,12 @@ const (
 	// Global Scopes
 	ScopeGlobalUsersAll = "global:users:*"
 
-	ScopeUsersSelf = "users:self"
-	ScopeUsersAll  = "users:*"
+	ScopeUsersAll = "users:*"
 
 	// Services Scopes
 	ScopeServicesAll = "service:*"
 )
 
 const RoleGrafanaAdmin = "Grafana Admin"
+
+const FixedRolePrefix = "fixed:"
