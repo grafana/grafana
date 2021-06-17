@@ -145,7 +145,9 @@ export const RulesTable: FC<Props> = ({
 
 export const getStyles = (theme: GrafanaTheme2) => ({
   wrapperMargin: css`
-    margin-left: 36px;
+    ${theme.breakpoints.up('md')} {
+      margin-left: 36px;
+    }
   `,
   emptyMessage: css`
     padding: ${theme.spacing(1)};
@@ -183,6 +185,10 @@ export const getStyles = (theme: GrafanaTheme2) => ({
     left: -19px;
     border-left: 1px solid ${theme.colors.border.medium};
     position: absolute;
+
+    ${theme.breakpoints.down('md')} {
+      display: none;
+    }
   `,
   ruleTopGuideline: css`
     width: 18px;
