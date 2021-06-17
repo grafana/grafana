@@ -58,7 +58,7 @@ describe('Graph Migrations', () => {
     expect(panel).toMatchSnapshot();
   });
 
-  it('preserves colors in series overrides', () => {
+  it('preserves colors from series overrides', () => {
     const old: any = {
       angular: customColor,
     };
