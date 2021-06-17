@@ -15,17 +15,16 @@ import {
   DataSourceInstanceSettings,
   MetricFindValue,
 } from '@grafana/data';
-import { getBackendSrv, getTemplateSrv, DataSourceWithBackend, FetchResponse } from '@grafana/runtime';
+import { getTemplateSrv, DataSourceWithBackend } from '@grafana/runtime';
 import { Observable, from } from 'rxjs';
 import { mergeMap } from 'rxjs/operators';
 import { getAuthType } from '../credentials';
-import { AzureLogAnalyticsMetadata } from '../types/logAnalyticsMetadata';
 import { isGUIDish } from '../components/ResourcePicker/utils';
 import { routeNames } from '../utils/common';
 
 interface AdhocQuery {
   datasourceId: number;
-  url: string;
+  path: string;
   resultFormat: string;
 }
 
@@ -33,12 +32,12 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
   AzureMonitorQuery,
   AzureDataSourceJsonData
 > {
-  baseUrl: string;
+  resourcePath: string;
   applicationId: string;
 
   defaultSubscriptionId?: string;
 
-  azureMonitorUrl: string;
+  azureMonitorPath: string;
   defaultOrFirstWorkspace: string;
   cache: Map<string, any>;
 
@@ -46,8 +45,8 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     super(instanceSettings);
     this.cache = new Map();
 
-    this.baseUrl = instanceSettings.url + `/${routeNames.logAnalytics}`;
-    this.azureMonitorUrl = instanceSettings.url + `/${routeNames.azureMonitor}/subscriptions`;
+    this.resourcePath = `${routeNames.logAnalytics}`;
+    this.azureMonitorPath = `${routeNames.azureMonitor}/subscriptions`;
 
     this.defaultSubscriptionId = this.instanceSettings.jsonData.subscriptionId || '';
     this.defaultOrFirstWorkspace = this.instanceSettings.jsonData.logAnalyticsDefaultWorkspace || '';
@@ -63,8 +62,8 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
       return [];
     }
 
-    const url = `${this.azureMonitorUrl}?api-version=2019-03-01`;
-    return await this.doRequest(url).then((result: any) => {
+    const path = `${this.azureMonitorPath}?api-version=2019-03-01`;
+    return await this.getResource(path).then((result: any) => {
       return ResponseParser.parseSubscriptions(result);
     });
   }
@@ -73,7 +72,7 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     const response = await this.getWorkspaceList(subscription);
 
     return (
-      map(response.data.value, (val: any) => {
+      map(response.value, (val: any) => {
         return { text: val.name, value: val.id };
       }) || []
     );
@@ -83,15 +82,15 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     const subscriptionId = getTemplateSrv().replace(subscription || this.defaultSubscriptionId);
 
     const workspaceListUrl =
-      this.azureMonitorUrl +
+      this.azureMonitorPath +
       `/${subscriptionId}/providers/Microsoft.OperationalInsights/workspaces?api-version=2017-04-26-preview`;
-    return this.doRequest(workspaceListUrl, true);
+    return this.getResource(workspaceListUrl);
   }
 
   async getMetadata(resourceUri: string) {
-    const url = `${this.baseUrl}/v1${resourceUri}/metadata`;
+    const path = `${this.resourcePath}/v1${resourceUri}/metadata`;
 
-    const resp = await this.doRequest<AzureLogAnalyticsMetadata>(url);
+    const resp = await this.getResource(path);
     if (!resp.ok) {
       throw new Error('Unable to get metadata for workspace');
     }
@@ -193,7 +192,7 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     }
     const response = await this.getWorkspaceList(this.defaultSubscriptionId);
 
-    const details = response.data.value.find((o: any) => {
+    const details = response.value.find((o: any) => {
       return o.properties.customerId === workspaceId;
     });
 
@@ -277,14 +276,14 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     );
 
     const querystring = querystringBuilder.generate().uriString;
-    const url = isGUIDish(workspace)
-      ? `${this.baseUrl}/v1/workspaces/${workspace}/query?${querystring}`
-      : `${this.baseUrl}/v1/${workspace}/query?${querystring}`;
+    const path = isGUIDish(workspace)
+      ? `${this.resourcePath}/v1/workspaces/${workspace}/query?${querystring}`
+      : `${this.resourcePath}/v1/${workspace}/query?${querystring}`;
 
     const queries = [
       {
         datasourceId: this.id,
-        url: url,
+        path: path,
         resultFormat: 'table',
       },
     ];
@@ -361,7 +360,7 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
 
   doQueries(queries: AdhocQuery[]) {
     return map(queries, (query) => {
-      return this.doRequest(query.url)
+      return this.getResource(query.path)
         .then((result: any) => {
           return {
             result: result,
@@ -375,31 +374,6 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
           };
         });
     });
-  }
-
-  async doRequest<T = any>(url: string, useCache = false, maxRetries = 1): Promise<FetchResponse<T>> {
-    try {
-      if (useCache && this.cache.has(url)) {
-        return this.cache.get(url);
-      }
-
-      const res = await getBackendSrv().datasourceRequest({
-        url: url,
-        method: 'GET',
-      });
-
-      if (useCache) {
-        this.cache.set(url, res);
-      }
-
-      return res;
-    } catch (error) {
-      if (maxRetries > 0) {
-        return this.doRequest(url, useCache, maxRetries - 1);
-      }
-
-      throw error;
-    }
   }
 
   // TODO: update to be completely resource-centric
@@ -428,11 +402,11 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     }
 
     try {
-      const url = isGUIDish(resourceOrWorkspace)
-        ? `${this.baseUrl}/v1/workspaces/${resourceOrWorkspace}/metadata`
-        : `${this.baseUrl}/v1${resourceOrWorkspace}/metadata`;
+      const path = isGUIDish(resourceOrWorkspace)
+        ? `${this.resourcePath}/v1/workspaces/${resourceOrWorkspace}/metadata`
+        : `${this.resourcePath}/v1/${resourceOrWorkspace}/metadata`;
 
-      return await this.doRequest(url).then<DatasourceValidationResult>((response: any) => {
+      return await this.getResource(path).then<DatasourceValidationResult>((response: any) => {
         if (response.status === 200) {
           return {
             status: 'success',

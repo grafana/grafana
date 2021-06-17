@@ -42,11 +42,6 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
     private readonly templateSrv: TemplateSrv = getTemplateSrv()
   ) {
     super(instanceSettings);
-    if (instanceSettings.url?.includes('proxy')) {
-      // Data source instances created before v8.1 will point to the proxy URL which
-      // is no longer available. Use the resource handler URL instead.
-      instanceSettings.url = '/api/datasources/' + instanceSettings.id + '/resources';
-    }
     this.azureMonitorDatasource = new AzureMonitorDatasource(instanceSettings);
     this.appInsightsDatasource = new AppInsightsDatasource(instanceSettings);
     this.azureLogAnalyticsDatasource = new AzureLogAnalyticsDatasource(instanceSettings);
@@ -132,6 +127,11 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
   async metricFindQuery(query: string) {
     if (!query) {
       return Promise.resolve([]);
+    }
+
+    const aiResult = this.appInsightsDatasource.metricFindQueryInternal(query);
+    if (aiResult) {
+      return aiResult;
     }
 
     const amResult = this.azureMonitorDatasource.metricFindQueryInternal(query);
@@ -237,6 +237,15 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
       this.replaceTemplateVariable(metricNamespace),
       this.replaceTemplateVariable(metricName)
     );
+  }
+
+  /* Application Insights API method */
+  getAppInsightsMetricNames() {
+    return this.appInsightsDatasource.getMetricNames();
+  }
+
+  getAppInsightsMetricMetadata(metricName: string) {
+    return this.appInsightsDatasource.getMetricMetadata(metricName);
   }
 
   getAppInsightsColumns(refId: string | number) {

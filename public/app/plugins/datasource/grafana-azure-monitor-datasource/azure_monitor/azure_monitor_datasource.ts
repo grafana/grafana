@@ -9,7 +9,6 @@ import {
   AzureMonitorMetricDefinitionsResponse,
   AzureMonitorResourceGroupsResponse,
   AzureQueryType,
-  AzureMonitorMetricsMetadataResponse,
   AzureMetricQuery,
   DatasourceValidationResult,
 } from '../types';
@@ -21,7 +20,7 @@ import {
   DataQueryRequest,
   TimeRange,
 } from '@grafana/data';
-import { getBackendSrv, DataSourceWithBackend, getTemplateSrv, FetchResponse } from '@grafana/runtime';
+import { DataSourceWithBackend, getTemplateSrv } from '@grafana/runtime';
 import { from, Observable } from 'rxjs';
 import { mergeMap } from 'rxjs/operators';
 
@@ -46,7 +45,7 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
   apiVersion = '2018-01-01';
   apiPreviewVersion = '2017-12-01-preview';
   defaultSubscriptionId?: string;
-  baseUrl: string;
+  resourcePath: string;
   resourceGroup: string;
   resourceName: string;
   supportedMetricNamespaces: string[] = [];
@@ -58,7 +57,7 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
     this.timeSrv = getTimeSrv();
     this.defaultSubscriptionId = instanceSettings.jsonData.subscriptionId;
 
-    this.baseUrl = instanceSettings.url! + `/${routeNames.azureMonitor}/subscriptions`;
+    this.resourcePath = `${routeNames.azureMonitor}/subscriptions`;
     this.supportedMetricNamespaces = new SupportedNamespaces(instanceSettings.jsonData.cloudName).get();
   }
 
@@ -330,22 +329,23 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
       return [];
     }
 
-    const url = `${this.baseUrl}?api-version=2019-03-01`;
-    return await this.doRequest(url).then((result: any) => {
+    return this.getResource(`${this.resourcePath}?api-version=2019-03-01`).then((result: any) => {
       return ResponseParser.parseSubscriptions(result);
     });
   }
 
   getResourceGroups(subscriptionId: string) {
-    const url = `${this.baseUrl}/${subscriptionId}/resourceGroups?api-version=${this.apiVersion}`;
-    return this.doRequest(url).then((result: AzureMonitorResourceGroupsResponse) => {
+    return this.getResource(
+      `${this.resourcePath}/${subscriptionId}/resourceGroups?api-version=${this.apiVersion}`
+    ).then((result: AzureMonitorResourceGroupsResponse) => {
       return ResponseParser.parseResponseValues(result, 'name', 'name');
     });
   }
 
   getMetricDefinitions(subscriptionId: string, resourceGroup: string) {
-    const url = `${this.baseUrl}/${subscriptionId}/resourceGroups/${resourceGroup}/resources?api-version=${this.apiVersion}`;
-    return this.doRequest(url)
+    return this.getResource(
+      `${this.resourcePath}/${subscriptionId}/resourceGroups/${resourceGroup}/resources?api-version=${this.apiVersion}`
+    )
       .then((result: AzureMonitorMetricDefinitionsResponse) => {
         return ResponseParser.parseResponseValues(result, 'type', 'type');
       })
@@ -396,9 +396,9 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
   }
 
   getResourceNames(subscriptionId: string, resourceGroup: string, metricDefinition: string) {
-    const url = `${this.baseUrl}/${subscriptionId}/resourceGroups/${resourceGroup}/resources?api-version=${this.apiVersion}`;
-
-    return this.doRequest(url).then((result: any) => {
+    return this.getResource(
+      `${this.resourcePath}/${subscriptionId}/resourceGroups/${resourceGroup}/resources?api-version=${this.apiVersion}`
+    ).then((result: any) => {
       if (!startsWith(metricDefinition, 'Microsoft.Storage/storageAccounts/')) {
         return ResponseParser.parseResourceNames(result, metricDefinition);
       }
@@ -415,7 +415,7 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
 
   getMetricNamespaces(subscriptionId: string, resourceGroup: string, metricDefinition: string, resourceName: string) {
     const url = UrlBuilder.buildAzureMonitorGetMetricNamespacesUrl(
-      this.baseUrl,
+      this.resourcePath,
       subscriptionId,
       resourceGroup,
       metricDefinition,
@@ -423,7 +423,7 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
       this.apiPreviewVersion
     );
 
-    return this.doRequest(url).then((result: any) => {
+    return this.getResource(url).then((result: any) => {
       return ResponseParser.parseResponseValues(result, 'name', 'properties.metricNamespaceName');
     });
   }
@@ -436,7 +436,7 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
     metricNamespace: string
   ) {
     const url = UrlBuilder.buildAzureMonitorGetMetricNamesUrl(
-      this.baseUrl,
+      this.resourcePath,
       subscriptionId,
       resourceGroup,
       metricDefinition,
@@ -445,7 +445,7 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
       this.apiVersion
     );
 
-    return this.doRequest(url).then((result: any) => {
+    return this.getResource(url).then((result: any) => {
       return ResponseParser.parseResponseValues(result, 'name.localizedValue', 'name.value');
     });
   }
@@ -459,7 +459,7 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
     metricName: string
   ) {
     const url = UrlBuilder.buildAzureMonitorGetMetricNamesUrl(
-      this.baseUrl,
+      this.resourcePath,
       subscriptionId,
       resourceGroup,
       metricDefinition,
@@ -468,7 +468,7 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
       this.apiVersion
     );
 
-    return this.doRequest<AzureMonitorMetricsMetadataResponse>(url).then((result) => {
+    return this.getResource(url).then((result: any) => {
       return ResponseParser.parseMetadata(result.data, metricName);
     });
   }
@@ -480,9 +480,9 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
     }
 
     try {
-      const url = `${this.baseUrl}?api-version=2019-03-01`;
+      const url = `${this.resourcePath}?api-version=2019-03-01`;
 
-      return await this.doRequest(url).then<DatasourceValidationResult>((response: any) => {
+      return await this.getResource(url).then<DatasourceValidationResult>((response: any) => {
         if (response.status === 200) {
           return {
             status: 'success',
@@ -540,20 +540,5 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
 
   private isValidConfigField(field?: string): boolean {
     return typeof field === 'string' && field.length > 0;
-  }
-
-  doRequest<T = any>(url: string, maxRetries = 1): Promise<FetchResponse<T>> {
-    return getBackendSrv()
-      .datasourceRequest<T>({
-        url,
-        method: 'GET',
-      })
-      .catch((error: any) => {
-        if (maxRetries > 0) {
-          return this.doRequest<T>(url, maxRetries - 1);
-        }
-
-        throw error;
-      });
   }
 }

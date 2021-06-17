@@ -1,4 +1,5 @@
-import { FetchResponse, getBackendSrv } from '@grafana/runtime';
+import { DataSourceWithBackend, FetchResponse } from '@grafana/runtime';
+import { DataSourceInstanceSettings } from '../../../../../../packages/grafana-data/src';
 import {
   locationDisplayNames,
   logsSupportedLocationsKusto,
@@ -8,8 +9,9 @@ import {
 import { ResourceRowType, ResourceRow, ResourceRowGroup } from '../components/ResourcePicker/types';
 import { parseResourceURI } from '../components/ResourcePicker/utils';
 import {
-  AzureDataSourceInstanceSettings,
+  AzureDataSourceJsonData,
   AzureGraphResponse,
+  AzureMonitorQuery,
   AzureResourceSummaryItem,
   RawAzureResourceGroupItem,
   RawAzureResourceItem,
@@ -18,11 +20,12 @@ import { routeNames } from '../utils/common';
 
 const RESOURCE_GRAPH_URL = '/providers/Microsoft.ResourceGraph/resources?api-version=2021-03-01';
 
-export default class ResourcePickerData {
-  private baseURL: string;
+export default class ResourcePickerData extends DataSourceWithBackend<AzureMonitorQuery, AzureDataSourceJsonData> {
+  private resourcePath: string;
 
-  constructor(instanceSettings: AzureDataSourceInstanceSettings) {
-    this.baseURL = instanceSettings.url! + `/${routeNames.azureMonitor}`;
+  constructor(instanceSettings: DataSourceInstanceSettings<AzureDataSourceJsonData>) {
+    super(instanceSettings);
+    this.resourcePath = `${routeNames.resourceGraph}`;
   }
 
   static readonly templateVariableGroupID = '$$grafana-templateVariables$$';
@@ -143,18 +146,12 @@ export default class ResourcePickerData {
     maxRetries = 1
   ): Promise<FetchResponse<AzureGraphResponse<T>>> {
     try {
-      return await getBackendSrv()
-        .fetch<AzureGraphResponse<T>>({
-          url: this.baseURL + RESOURCE_GRAPH_URL,
-          method: 'POST',
-          data: {
-            query: query,
-            options: {
-              resultFormat: 'objectArray',
-            },
-          },
-        })
-        .toPromise();
+      return await this.postResource(this.resourcePath + RESOURCE_GRAPH_URL, {
+        query: query,
+        options: {
+          resultFormat: 'objectArray',
+        },
+      });
     } catch (error) {
       if (maxRetries > 0) {
         return this.makeResourceGraphRequest(query, maxRetries - 1);

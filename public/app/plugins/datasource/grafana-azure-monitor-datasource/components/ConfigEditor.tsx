@@ -34,14 +34,8 @@ export class ConfigEditor extends PureComponent<Props, State> {
       unsaved: false,
       appInsightsInitiallyConfigured: isAppInsightsConfigured(props.options),
     };
-
-    if (this.props.options.id) {
-      const url = '/api/datasources/' + this.props.options.id + '/resources';
-      updateDatasourcePluginOption(this.props, 'url', url);
-      this.props.options.url = url;
-      this.baseURL = url + `/${routeNames.azureMonitor}/subscriptions`;
-    }
-    updateDatasourcePluginOption(this.props, 'access', 'server');
+    // TODO: Can I get resources from here?
+    this.baseURL = `/api/datasources/${this.props.options.id}/resources/${routeNames.azureMonitor}/subscriptions`;
   }
 
   private updateOptions = (optionsFunc: (options: AzureDataSourceSettings) => AzureDataSourceSettings): void => {
