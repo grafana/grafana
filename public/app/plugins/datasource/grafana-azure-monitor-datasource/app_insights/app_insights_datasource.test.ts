@@ -15,7 +15,6 @@ jest.mock('@grafana/runtime', () => ({
 }));
 
 describe('AppInsightsDatasource', () => {
-  const datasourceRequestMock = jest.spyOn(backendSrv, 'datasourceRequest');
   const fetchMock = jest.spyOn(backendSrv, 'fetch');
 
   const ctx: any = {};
@@ -53,8 +52,8 @@ describe('AppInsightsDatasource', () => {
       };
 
       beforeEach(() => {
-        datasourceRequestMock.mockImplementation(() => {
-          return Promise.resolve({ data: response, status: 200 });
+        ctx.ds.getResource = jest.fn().mockImplementation(() => {
+          return Promise.resolve(response);
         });
       });
 
@@ -78,7 +77,7 @@ describe('AppInsightsDatasource', () => {
       };
 
       beforeEach(() => {
-        datasourceRequestMock.mockImplementation(() => {
+        ctx.ds.getResource = jest.fn().mockImplementation(() => {
           return Promise.reject(error);
         });
       });
@@ -106,7 +105,7 @@ describe('AppInsightsDatasource', () => {
       };
 
       beforeEach(() => {
-        datasourceRequestMock.mockImplementation(() => {
+        ctx.ds.getResource = jest.fn().mockImplementation(() => {
           return Promise.reject(error);
         });
       });
@@ -419,9 +418,9 @@ describe('AppInsightsDatasource', () => {
       };
 
       beforeEach(() => {
-        datasourceRequestMock.mockImplementation((options: { url: string }) => {
-          expect(options.url).toContain('/metrics/metadata');
-          return Promise.resolve({ data: response, status: 200 });
+        ctx.ds.getResource = jest.fn().mockImplementation((path) => {
+          expect(path).toContain('/metrics/metadata');
+          return Promise.resolve(response);
         });
       });
 
@@ -457,9 +456,9 @@ describe('AppInsightsDatasource', () => {
       };
 
       beforeEach(() => {
-        datasourceRequestMock.mockImplementation((options: { url: string }) => {
-          expect(options.url).toContain('/metrics/metadata');
-          return Promise.resolve({ data: response, status: 200 });
+        ctx.ds.getResource = jest.fn().mockImplementation((path) => {
+          expect(path).toContain('/metrics/metadata');
+          return Promise.resolve(response);
         });
       });
 
@@ -485,8 +484,8 @@ describe('AppInsightsDatasource', () => {
     };
 
     beforeEach(() => {
-      datasourceRequestMock.mockImplementation((options: { url: string }) => {
-        expect(options.url).toContain('/metrics/metadata');
+      ctx.ds.getResource = jest.fn().mockImplementation((path) => {
+        expect(path).toContain('/metrics/metadata');
         return Promise.resolve({ data: response, status: 200 });
       });
     });
@@ -523,8 +522,8 @@ describe('AppInsightsDatasource', () => {
     };
 
     beforeEach(() => {
-      datasourceRequestMock.mockImplementation((options: { url: string }) => {
-        expect(options.url).toContain('/metrics/metadata');
+      ctx.ds.getResource = jest.fn().mockImplementation((path) => {
+        expect(path).toContain('/metrics/metadata');
         return Promise.resolve({ data: response, status: 200 });
       });
     });

@@ -91,11 +91,7 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     const path = `${this.resourcePath}/v1${resourceUri}/metadata`;
 
     const resp = await this.getResource(path);
-    if (!resp.ok) {
-      throw new Error('Unable to get metadata for workspace');
-    }
-
-    return resp.data;
+    return resp;
   }
 
   async getKustoSchema(resourceUri: string) {
@@ -376,7 +372,6 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     });
   }
 
-  // TODO: update to be completely resource-centric
   async testDatasource(): Promise<DatasourceValidationResult> {
     const validationError = this.validateDatasource();
     if (validationError) {

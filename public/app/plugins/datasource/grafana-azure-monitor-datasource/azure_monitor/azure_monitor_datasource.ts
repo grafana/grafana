@@ -469,7 +469,7 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
     );
 
     return this.getResource(url).then((result: any) => {
-      return ResponseParser.parseMetadata(result.data, metricName);
+      return ResponseParser.parseMetadata(result, metricName);
     });
   }
 

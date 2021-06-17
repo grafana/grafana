@@ -1,4 +1,4 @@
-import { DataSourceWithBackend, FetchResponse } from '@grafana/runtime';
+import { DataSourceWithBackend } from '@grafana/runtime';
 import { DataSourceInstanceSettings } from '../../../../../../packages/grafana-data/src';
 import {
   locationDisplayNames,
@@ -54,29 +54,19 @@ export default class ResourcePickerData extends DataSourceWithBackend<AzureMonit
         | order by subscriptionURI asc
     `;
 
-    const { ok, data: response } = await this.makeResourceGraphRequest<RawAzureResourceGroupItem[]>(query);
-
-    // TODO: figure out desired error handling strategy
-    if (!ok) {
-      throw new Error('unable to fetch resource containers');
-    }
+    const response = await this.makeResourceGraphRequest<RawAzureResourceGroupItem[]>(query);
 
     return formatResourceGroupData(response.data);
   }
 
   async getResourcesForResourceGroup(resourceGroup: ResourceRow) {
-    const { ok, data: response } = await this.makeResourceGraphRequest<RawAzureResourceItem[]>(`
+    const { data: response } = await this.makeResourceGraphRequest<RawAzureResourceItem[]>(`
       resources
       | where id hasprefix "${resourceGroup.id}"
       | where type in (${logsSupportedResourceTypesKusto}) and location in (${logsSupportedLocationsKusto})
     `);
 
-    // TODO: figure out desired error handling strategy
-    if (!ok) {
-      throw new Error('unable to fetch resource containers');
-    }
-
-    return formatResourceGroupChildren(response.data);
+    return formatResourceGroupChildren(response);
   }
 
   async getResourceURIDisplayProperties(resourceURI: string): Promise<AzureResourceSummaryItem> {
@@ -113,38 +103,30 @@ export default class ResourcePickerData extends DataSourceWithBackend<AzureMonit
         | project subscriptionName, resourceGroupName, resourceName
     `;
 
-    const { ok, data: response } = await this.makeResourceGraphRequest<AzureResourceSummaryItem[]>(query);
+    const { data: response } = await this.makeResourceGraphRequest<AzureResourceSummaryItem[]>(query);
 
-    if (!ok || !response.data[0]) {
+    if (!response.length) {
       throw new Error('unable to fetch resource details');
     }
 
-    return response.data[0];
+    return response[0];
   }
 
   async getResourceURIFromWorkspace(workspace: string) {
-    const { ok, data: response } = await this.makeResourceGraphRequest<RawAzureResourceItem[]>(`
+    const { data: response } = await this.makeResourceGraphRequest<RawAzureResourceItem[]>(`
       resources
       | where properties['customerId'] == "${workspace}"
       | project id
     `);
 
-    // TODO: figure out desired error handling strategy
-    if (!ok) {
-      throw new Error('unable to fetch resource containers');
-    }
-
-    if (!response.data.length) {
+    if (!response.length) {
       throw new Error('unable to find resource for workspace ' + workspace);
     }
 
-    return response.data[0].id;
+    return response[0].id;
   }
 
-  async makeResourceGraphRequest<T = unknown>(
-    query: string,
-    maxRetries = 1
-  ): Promise<FetchResponse<AzureGraphResponse<T>>> {
+  async makeResourceGraphRequest<T = unknown>(query: string, maxRetries = 1): Promise<AzureGraphResponse<T>> {
     try {
       return await this.postResource(this.resourcePath + RESOURCE_GRAPH_URL, {
         query: query,
