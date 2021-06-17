@@ -1,7 +1,6 @@
 import { FieldColorMode, FieldColorModeId, GrafanaTheme2, ThresholdsConfig } from '@grafana/data';
 import tinycolor from 'tinycolor2';
 import uPlot from 'uplot';
-import { colors } from '../../../utils';
 import { getCanvasContext } from '../../../utils/measureText';
 
 export function getOpacityGradientFn(
