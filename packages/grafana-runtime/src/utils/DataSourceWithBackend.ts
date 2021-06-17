@@ -224,6 +224,9 @@ class DataSourceWithBackend<
   }
 }
 
+/**
+ * @internal exported for tests
+ */
 export function toStreamingDataResponse<TQuery extends DataQuery = DataQuery>(
   rsp: DataQueryResponse,
   req: DataQueryRequest<TQuery>,
