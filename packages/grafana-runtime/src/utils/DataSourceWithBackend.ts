@@ -265,6 +265,7 @@ export function toStreamingDataResponse<TQuery extends DataQuery = DataQuery>(
 
 /**
  * This allows data sources to customize the streaming connection query
+ *
  * @public
  */
 export type StreamOptionsProvider<TQuery extends DataQuery = DataQuery> = (
