@@ -97,7 +97,14 @@
 
 // Set the backgrounds
 // -------------------------
-.btn-success,
+.btn-success{
+  @include buttonBackground($btn-success-bg, $btn-success-bg-hl);
+}
+
+.btn-warning{
+  @include buttonBackground($btn-warning-bg, $btn-warning-bg-hl);
+}
+
 .btn-primary {
   @include buttonBackground($btn-primary-bg, $btn-primary-bg-hl);
 }

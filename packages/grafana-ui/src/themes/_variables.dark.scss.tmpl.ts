@@ -176,6 +176,9 @@ $btn-secondary-bg-hl: lighten($dark-6, 4%);
 $btn-success-bg: $green-base;
 $btn-success-bg-hl: $green-shade;
 
+$btn-warning-bg: $yellow;
+$btn-warning-bg-hl: $yellow;
+
 $btn-danger-bg: $red-base;
 $btn-danger-bg-hl: $red-shade;
 
