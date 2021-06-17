@@ -4,6 +4,7 @@ export const Components = {
     fromField: 'TimePicker from field',
     toField: 'TimePicker to field',
     applyTimeRange: 'TimePicker submit button',
+    calendar: 'TimePicker calendar',
   },
   DataSource: {
     TestData: {
