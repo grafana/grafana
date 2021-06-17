@@ -75,16 +75,17 @@ func TestFixIntervalFormat(t *testing.T) {
 			{
 				"target": "target",
 				"tags": { "fooTag": "fooValue", "barTag": "barValue" },
-				"datapoints": [[50, 1], [null, 2], [50, 3]]
+				"datapoints": [[50, 1], [null, 2], [100, 3]]
 			}
 		]`
 		a := 50.0
+		b := 100.0
 		expectedFrame := data.NewFrame("target",
 			data.NewField("time", nil, []time.Time{time.Unix(1, 0).UTC(), time.Unix(2, 0).UTC(), time.Unix(3, 0).UTC()}),
 			data.NewField("value", data.Labels{
 				"fooTag": "fooValue",
 				"barTag": "barValue",
-			}, []*float64{&a, nil, &a}).SetConfig(&data.FieldConfig{DisplayNameFromDS: "target"}),
+			}, []*float64{&a, nil, &b}).SetConfig(&data.FieldConfig{DisplayNameFromDS: "target"}),
 		)
 		expectedFrames := data.Frames{expectedFrame}
 
