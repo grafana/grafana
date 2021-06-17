@@ -125,6 +125,9 @@ class UnthemedCodeEditor extends React.PureComponent<Props> {
       tabSize: 2,
       codeLens: false,
       contextmenu: false,
+      glyphMargin: true,
+      lineNumbers: 'on',
+      folding: true,
 
       minimap: {
         enabled: longText && showMiniMap,
