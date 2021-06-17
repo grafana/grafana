@@ -8,8 +8,6 @@ platform:
   arch: amd64
 
 environment:
-  GRABPL_METRICS_API_KEY:
-    from_secret: zserge-test-metrics-key
   GRABPL_METRICS_PREFIX: grafana.ci.
 
 steps:
@@ -45,6 +43,9 @@ steps:
   - ./bin/grabpl --rusage=spellcheck. shellcheck | ./bin/grabpl publish-metrics
   depends_on:
   - initialize
+  environment:
+    GRABPL_METRICS_API_KEY:
+      from_secret: zserge-test-metrics-key
 
 - name: test-backend
   image: grafana/build-container:1.4.1
@@ -54,6 +55,10 @@ steps:
   - ./bin/grabpl --rusage=backend.integration. integration-tests --edition oss | ./bin/grabpl publish-metrics
   depends_on:
   - initialize
+  environment:
+    GRABPL_METRICS_API_KEY:
+      from_secret: zserge-test-metrics-key
+
 
 - name: lint-backend
   image: grafana/build-container:1.4.1
@@ -64,6 +69,10 @@ steps:
   depends_on:
   - initialize
   - test-backend
+  environment:
+    GRABPL_METRICS_API_KEY:
+      from_secret: zserge-test-metrics-key
+
 
 - name: test-frontend
   image: grafana/build-container:1.4.1
@@ -73,6 +82,10 @@ steps:
     TEST_MAX_WORKERS: 50%
   depends_on:
   - initialize
+  environment:
+    GRABPL_METRICS_API_KEY:
+      from_secret: zserge-test-metrics-key
+
 
 - name: build-backend
   image: grafana/build-container:1.4.1
@@ -82,6 +95,10 @@ steps:
   - initialize
   - lint-backend
   - test-backend
+  environment:
+    GRABPL_METRICS_API_KEY:
+      from_secret: zserge-test-metrics-key
+
 
 - name: build-frontend
   image: grafana/build-container:1.4.1
@@ -90,6 +107,10 @@ steps:
   depends_on:
   - initialize
   - test-frontend
+  environment:
+    GRABPL_METRICS_API_KEY:
+      from_secret: zserge-test-metrics-key
+
 
 - name: build-plugins
   image: grafana/build-container:1.4.1
@@ -98,6 +119,10 @@ steps:
   depends_on:
   - initialize
   - lint-backend
+  environment:
+    GRABPL_METRICS_API_KEY:
+      from_secret: zserge-test-metrics-key
+
 
 - name: validate-scuemata
   image: grafana/build-container:1.4.1
@@ -155,6 +180,10 @@ steps:
     NODE_OPTIONS: --max_old_space_size=4096
   depends_on:
   - package
+  environment:
+    GRABPL_METRICS_API_KEY:
+      from_secret: zserge-test-metrics-key
+
 
 - name: build-frontend-docs
   image: grafana/build-container:1.4.1
@@ -203,6 +232,9 @@ steps:
     GRAFANA_TEST_DB: postgres
     PGPASSWORD: grafanatest
     POSTGRES_HOST: postgres
+    GRABPL_METRICS_API_KEY:
+      from_secret: zserge-test-metrics-key
+
   depends_on:
   - test-backend
   - test-frontend
@@ -219,6 +251,8 @@ steps:
   environment:
     GRAFANA_TEST_DB: mysql
     MYSQL_HOST: mysql
+    GRABPL_METRICS_API_KEY:
+      from_secret: zserge-test-metrics-key
   depends_on:
   - test-backend
   - test-frontend
