@@ -1,5 +1,5 @@
-import { AlertmanagerGroup } from 'app/plugins/datasource/alertmanager/types';
-import React, { useState } from 'react';
+import { AlertmanagerGroup, AlertState } from 'app/plugins/datasource/alertmanager/types';
+import React, { useState, useMemo } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 import { css } from '@emotion/css';
@@ -16,11 +16,40 @@ export const AmNotificationsGroup = ({ alertManagerSourceName, group }: Props) =
   const [isCollapsed, setIsCollapsed] = useState<boolean>(true);
   const styles = useStyles2(getStyles);
 
+  const headerSummary = useMemo(() => {
+    const total = group.alerts.length;
+    const countByStatus = group.alerts.reduce((statusObj, alert) => {
+      if (statusObj[alert.status.state]) {
+        statusObj[alert.status.state] += 1;
+      } else {
+        statusObj[alert.status.state] = 1;
+      }
+      return statusObj;
+    }, {} as Record<AlertState, number>);
+
+    return (
+      <div className={styles.summary}>
+        {`${total} alerts: `}
+        {Object.entries(countByStatus).map(([state, count], index) => {
+          return (
+            <span key={`${group.id}-${index}`} className={styles[state as AlertState]}>
+              {index > 0 && ', '}
+              {`${count} ${state}`}
+            </span>
+          );
+        })}
+      </div>
+    );
+  }, [group, styles]);
+
   return (
     <div className={styles.wrapper}>
       <div className={styles.header}>
-        <CollapseToggle isCollapsed={isCollapsed} onToggle={() => setIsCollapsed(!isCollapsed)} />
-        {Object.keys(group.labels).length ? <AlertLabels labels={group.labels} /> : 'No grouping'}
+        <div className={styles.group}>
+          <CollapseToggle isCollapsed={isCollapsed} onToggle={() => setIsCollapsed(!isCollapsed)} />
+          {Object.keys(group.labels).length ? <AlertLabels labels={group.labels} /> : <span>No grouping</span>}
+        </div>
+        {headerSummary}
       </div>
       {!isCollapsed && (
         <AmNotificationsAlertsTable alertManagerSourceName={alertManagerSourceName} alerts={group.alerts} />
@@ -39,10 +68,27 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: flex;
     flex-direction: row;
     align-items: center;
+    justify-content: space-between;
     padding: ${theme.spacing(1, 1, 1, 0)};
     background-color: ${theme.colors.background.secondary};
+    width: 100%;
   `,
-  groupExpand: css`
-    cursor: pointer;
+  group: css`
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+  `,
+  summary: css``,
+  spanElement: css`
+    margin-left: ${theme.spacing(0.5)};
+  `,
+  [AlertState.Active]: css`
+    color: ${theme.colors.error.contrastText};
+  `,
+  [AlertState.Suppressed]: css`
+    color: ${theme.colors.primary.contrastText};
+  `,
+  [AlertState.Unprocessed]: css`
+    color: ${theme.colors.secondary.contrastText};
   `,
 });

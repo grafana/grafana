@@ -87,11 +87,13 @@ export const AmNotificationsAlertsTableRow = ({ alert, alertManagerSourceName, c
             </td>
           </tr>
           {Object.entries(alert.annotations).map(([annotationKey, annotationValue]) => {
-            <tr key={annotationKey} className={className}>
-              <td />
-              <td>{annotationKey}</td>
-              <td>{annotationValue}</td>
-            </tr>;
+            return (
+              <tr key={annotationKey} className={className}>
+                <td />
+                <td>{annotationKey}</td>
+                <td>{annotationValue}</td>
+              </tr>
+            );
           })}
           <tr className={className}>
             <td />
