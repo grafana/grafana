@@ -120,10 +120,10 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
   }
 
   private getLineColor(): Series.Stroke {
-    const { lineColor, gradientMode, colorMode, thresholds } = this.props;
+    const { lineColor, gradientMode, colorMode, thresholds, theme } = this.props;
 
     if (gradientMode === GraphGradientMode.Scheme) {
-      return getScaleGradientFn(1, colorMode, thresholds);
+      return getScaleGradientFn(1, theme, colorMode, thresholds);
     }
 
     return lineColor ?? FALLBACK_COLOR;
@@ -145,7 +145,7 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
       case GraphGradientMode.Hue:
         return getHueGradientFn((fillColor ?? lineColor)!, opacityPercent, theme);
       case GraphGradientMode.Scheme:
-        return getScaleGradientFn(opacityPercent, colorMode, thresholds);
+        return getScaleGradientFn(opacityPercent, theme, colorMode, thresholds);
       default:
         if (opacityPercent > 0) {
           return tinycolor(lineColor).setAlpha(opacityPercent).toString();

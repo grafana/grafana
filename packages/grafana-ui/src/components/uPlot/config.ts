@@ -276,7 +276,7 @@ export const graphFieldOptions = {
     { label: 'None', value: GraphGradientMode.None },
     { label: 'Opacity', value: GraphGradientMode.Opacity },
     { label: 'Hue', value: GraphGradientMode.Hue },
-    //  { label: 'Color scheme', value: GraphGradientMode.Scheme },
+    { label: 'Scheme', value: GraphGradientMode.Scheme },
   ] as Array<SelectableValue<GraphGradientMode>>,
 
   stacking: [

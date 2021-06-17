@@ -1,6 +1,7 @@
-import { FieldColorMode, GrafanaTheme2, ThresholdsConfig } from '@grafana/data';
+import { FieldColorMode, FieldColorModeId, GrafanaTheme2, ThresholdsConfig } from '@grafana/data';
 import tinycolor from 'tinycolor2';
 import uPlot from 'uplot';
+import { colors } from '../../../utils';
 import { getCanvasContext } from '../../../utils/measureText';
 
 export function getOpacityGradientFn(
@@ -45,6 +46,7 @@ export function getHueGradientFn(
  */
 export function getScaleGradientFn(
   opacity: number,
+  theme: GrafanaTheme2,
   colorMode?: FieldColorMode,
   thresholds?: ThresholdsConfig
 ): (self: uPlot, seriesIdx: number) => CanvasGradient {
@@ -60,32 +62,37 @@ export function getScaleGradientFn(
     const ctx = getCanvasContext();
     const gradient = ctx.createLinearGradient(0, plot.bbox.top, 0, plot.bbox.top + plot.bbox.height);
     const series = plot.series[seriesIdx];
-    const scale = plot.scales[series.scale!];
     const range = plot.bbox.height;
-
-    console.log('scale', scale);
-    console.log('series.min', series.min);
-    console.log('series.max', series.max);
-
-    const getColorWithAlpha = (color: string) => {
-      return 'rgb(255, 0, 0)';
-    };
+    const scale = plot.scales[series.scale!];
 
     const addColorStop = (value: number, color: string) => {
       const pos = plot.valToPos(value, series.scale!);
       const percent = pos / range;
+      const realColor = tinycolor(theme.visualization.getColorByName(color)).setAlpha(opacity).toString();
       console.log(`addColorStop(value = ${value}, xPos=${pos})`);
-      gradient.addColorStop(Math.min(percent, 1), getColorWithAlpha(color));
+      gradient.addColorStop(Math.min(percent, 1), realColor);
     };
 
-    for (let idx = 0; idx < thresholds.steps.length; idx++) {
-      const step = thresholds.steps[idx];
-      const value = step.value === -Infinity ? 0 : step.value;
-      addColorStop(value, step.color);
+    if (colorMode.id === FieldColorModeId.Thresholds) {
+      // TODO Add support for percentage based thresholds
+      for (let idx = 0; idx < thresholds.steps.length; idx++) {
+        const step = thresholds.steps[idx];
+        const value = step.value === -Infinity ? 0 : step.value;
+        addColorStop(value, step.color);
 
-      // to make the gradient discrete
-      if (thresholds.steps.length > idx + 1) {
-        addColorStop(thresholds.steps[idx + 1].value - 0.0000001, step.color);
+        // to make the gradient discrete
+        if (thresholds.steps.length > idx + 1) {
+          addColorStop(thresholds.steps[idx + 1].value - 0.0000001, step.color);
+        }
+      }
+    } else if (colorMode.getColors) {
+      const colors = colorMode.getColors(theme);
+      const min = scale.min ?? 0;
+      const max = scale.max ?? 100;
+      const stepValue = (max - min) / colors.length;
+
+      for (let idx = 0; idx < colors.length; idx++) {
+        addColorStop(idx * stepValue, colors[idx]);
       }
     }
 
