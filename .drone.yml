@@ -64,12 +64,11 @@ steps:
   image: grafana/build-container:1.4.1
   commands:
   - ./bin/grabpl --rusage=backend.lint. lint-backend --edition oss | ./bin/grabpl publish-metrics
-  environment:
-    CGO_ENABLED: 1
   depends_on:
   - initialize
   - test-backend
   environment:
+    CGO_ENABLED: 1
     GRABPL_METRICS_API_KEY:
       from_secret: zserge-test-metrics-key
 
@@ -78,11 +77,10 @@ steps:
   image: grafana/build-container:1.4.1
   commands:
   - yarn run ci:test-frontend
-  environment:
-    TEST_MAX_WORKERS: 50%
   depends_on:
   - initialize
   environment:
+    TEST_MAX_WORKERS: 50%
     GRABPL_METRICS_API_KEY:
       from_secret: zserge-test-metrics-key
 
