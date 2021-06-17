@@ -23,6 +23,8 @@ export interface AxisProps {
   timeZone?: TimeZone;
 }
 
+const fontSize = 12;
+
 export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
   merge(props: AxisProps) {
     this.props.size = optMinMax('max', this.props.size, props.size);
@@ -51,7 +53,7 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
       theme,
     } = this.props;
 
-    const font = `12px ${theme.typography.fontFamily}`;
+    const font = `${fontSize}px ${theme.typography.fontFamily}`;
 
     const gridColor = theme.isDark ? 'rgba(240, 250, 255, 0.09)' : 'rgba(0, 10, 23, 0.09)';
 
@@ -120,7 +122,7 @@ function calculateSpace(self: uPlot, axisIdx: number, scaleMin: number, scaleMax
     const maxTicks = plotDim / defaultSpacing;
     const increment = (scaleMax - scaleMin) / maxTicks;
     const sample = formatTime(self, [scaleMin], axisIdx, defaultSpacing, increment);
-    const width = measureText(sample[0], 12).width + 18;
+    const width = measureText(sample[0], fontSize).width + 18;
     return width;
   }
 
@@ -130,22 +132,17 @@ function calculateSpace(self: uPlot, axisIdx: number, scaleMin: number, scaleMax
 /** height of x axis or width of y axis in CSS pixels alloted for values, gap & ticks, but excluding axis label */
 function calculateAxisSize(self: uPlot, values: string[], axisIdx: number) {
   const axis = self.axes[axisIdx];
+
+  let axisSize = axis.ticks!.size!;
+
   if (axis.side === 2) {
-    return 33;
+    axisSize += axis!.gap! + fontSize;
+  } else if (values?.length) {
+    let longestValue = values.reduce((acc, value) => (value.length > acc.length ? value : acc), '');
+    axisSize += axis!.gap! + measureText(longestValue, fontSize).width;
   }
 
-  if (values === null || !values.length) {
-    return 0;
-  }
-
-  let maxLength = values[0];
-  for (let i = 0; i < values.length; i++) {
-    if (values[i].length > maxLength.length) {
-      maxLength = values[i];
-    }
-  }
-
-  return measureText(maxLength, 12).width + 18;
+  return Math.ceil(axisSize);
 }
 
 const timeUnitSize = {
