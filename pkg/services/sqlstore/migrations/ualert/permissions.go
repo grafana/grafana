@@ -11,6 +11,35 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 )
 
+type roleType string
+
+const (
+	ROLE_VIEWER roleType = "Viewer"
+	ROLE_EDITOR roleType = "Editor"
+	ROLE_ADMIN  roleType = "Admin"
+)
+
+func (r roleType) IsValid() bool {
+	return r == ROLE_VIEWER || r == ROLE_ADMIN || r == ROLE_EDITOR
+}
+
+type permissionType int
+
+type dashboardAcl struct {
+	// nolint:stylecheck
+	Id          int64
+	OrgID       int64 `xorm:"org_id"`
+	DashboardID int64 `xorm:"dashboard_id"`
+
+	UserID     int64     `xorm:"user_id"`
+	TeamID     int64     `xorm:"team_id"`
+	Role       *roleType // pointer to be nullable
+	Permission permissionType
+
+	Created time.Time
+	Updated time.Time
+}
+
 // getOrCreateGeneralFolder returns the general folder under the specific organisation
 // If the general folder does not exist it creates it.
 func (m *migration) getOrCreateGeneralFolder(orgID int64) (*dashboard, error) {
@@ -100,7 +129,7 @@ func (m *migration) generateNewDashboardUid(orgId int64) (string, error) {
 
 // based on SQLStore.UpdateDashboardACL()
 // it should be called from inside a transaction
-func (m *migration) setACL(orgID int64, dashboardID int64, items []*models.DashboardAcl) error {
+func (m *migration) setACL(orgID int64, dashboardID int64, items []*dashboardAcl) error {
 	if dashboardID <= 0 {
 		return fmt.Errorf("folder id must be greater than zero for a folder permission")
 	}
@@ -109,6 +138,8 @@ func (m *migration) setACL(orgID int64, dashboardID int64, items []*models.Dashb
 			return models.ErrDashboardAclInfoMissing
 		}
 
+		// unset Id so that the new record will get a different one
+		item.Id = 0
 		item.OrgID = orgID
 		item.DashboardID = dashboardID
 		item.Created = time.Now()
@@ -127,15 +158,16 @@ func (m *migration) setACL(orgID int64, dashboardID int64, items []*models.Dashb
 }
 
 // based on SQLStore.GetDashboardAclInfoList()
-func (m *migration) getACL(orgID, dashboardID int64) ([]*models.DashboardAcl, error) {
+func (m *migration) getACL(orgID, dashboardID int64) ([]*dashboardAcl, error) {
 	var err error
 
 	falseStr := m.mg.Dialect.BooleanStr(false)
 
-	result := make([]*models.DashboardAcl, 0)
+	result := make([]*dashboardAcl, 0)
 	rawSQL := `
 			-- get distinct permissions for the dashboard and its parent folder
 			SELECT DISTINCT
+				da.id,
 				da.user_id,
 				da.team_id,
 				da.permission,
