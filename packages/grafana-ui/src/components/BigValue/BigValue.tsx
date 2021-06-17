@@ -10,6 +10,7 @@ import { FormattedValueDisplay } from '../FormattedValueDisplay/FormattedValueDi
 export enum BigValueColorMode {
   Value = 'value',
   Background = 'background',
+  None = 'none',
 }
 
 export enum BigValueGraphMode {

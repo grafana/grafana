@@ -78,7 +78,7 @@ func newGenericAccessTokenProvider(ds *models.DataSource, pluginRoute *plugins.A
 	}
 }
 
-func (provider *genericAccessTokenProvider) getAccessToken() (string, error) {
+func (provider *genericAccessTokenProvider) GetAccessToken() (string, error) {
 	tokenCache.Lock()
 	defer tokenCache.Unlock()
 	if cachedToken, found := tokenCache.cache[provider.getAccessTokenCacheKey()]; found {

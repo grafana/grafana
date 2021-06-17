@@ -42,7 +42,7 @@ func newJwtAccessTokenProvider(ctx context.Context, ds *models.DataSource, plugi
 	}
 }
 
-func (provider *jwtAccessTokenProvider) getAccessToken() (string, error) {
+func (provider *jwtAccessTokenProvider) GetAccessToken() (string, error) {
 	oauthJwtTokenCache.Lock()
 	defer oauthJwtTokenCache.Unlock()
 	if cachedToken, found := oauthJwtTokenCache.cache[provider.getAccessTokenCacheKey()]; found {
