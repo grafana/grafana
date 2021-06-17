@@ -111,6 +111,10 @@ export class MssqlDatasource extends DataSourceWithBackend<MssqlQuery, MssqlOpti
       .toPromise();
   }
 
+  filterQuery(query: MssqlQuery): boolean {
+    return !query.hide;
+  }
+
   metricFindQuery(query: string, optionalOptions: any): Promise<MetricFindValue[]> {
     let refId = 'tempvar';
     if (optionalOptions && optionalOptions.variable && optionalOptions.variable.name) {

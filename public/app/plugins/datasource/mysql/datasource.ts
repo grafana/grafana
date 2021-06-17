@@ -71,10 +71,7 @@ export class MysqlDatasource extends DataSourceWithBackend<MySQLQuery, MySQLOpti
   }
 
   filterQuery(query: MySQLQuery): boolean {
-    if (query.hide) {
-      return false;
-    }
-    return true;
+    return !query.hide;
   }
 
   applyTemplateVariables(target: MySQLQuery, scopedVars: ScopedVars): Record<string, any> {
