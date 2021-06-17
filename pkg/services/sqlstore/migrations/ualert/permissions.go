@@ -109,6 +109,8 @@ func (m *migration) setACL(orgID int64, dashboardID int64, items []*models.Dashb
 			return models.ErrDashboardAclInfoMissing
 		}
 
+		// unset Id so that the new record will get a different one
+		item.Id = 0
 		item.OrgID = orgID
 		item.DashboardID = dashboardID
 		item.Created = time.Now()
@@ -136,6 +138,7 @@ func (m *migration) getACL(orgID, dashboardID int64) ([]*models.DashboardAcl, er
 	rawSQL := `
 			-- get distinct permissions for the dashboard and its parent folder
 			SELECT DISTINCT
+				da.id,
 				da.user_id,
 				da.team_id,
 				da.permission,
