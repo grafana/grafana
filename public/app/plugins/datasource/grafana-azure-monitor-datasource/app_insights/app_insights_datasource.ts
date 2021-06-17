@@ -130,17 +130,10 @@ export default class AppInsightsDatasource extends DataSourceWithBackend<AzureMo
     const path = `${this.resourcePath}/metrics/metadata`;
     return this.getResource(path)
       .then<DatasourceValidationResult>((response: any) => {
-        if (response.status === 200) {
-          return {
-            status: 'success',
-            message: 'Successfully queried the Application Insights service.',
-            title: 'Success',
-          };
-        }
-
         return {
-          status: 'error',
-          message: 'Application Insights: Returned http status code ' + response.status,
+          status: 'success',
+          message: 'Successfully queried the Application Insights service.',
+          title: 'Success',
         };
       })
       .catch((error: any) => {

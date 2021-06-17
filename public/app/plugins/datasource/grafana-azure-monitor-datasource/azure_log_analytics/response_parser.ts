@@ -11,11 +11,11 @@ export default class ResponseParser {
     let data: any[] = [];
     let columns: any[] = [];
     for (let i = 0; i < this.results.length; i++) {
-      if (this.results[i].result.data.tables.length === 0) {
+      if (this.results[i].result.tables.length === 0) {
         continue;
       }
-      columns = this.results[i].result.data.tables[0].columns;
-      const rows = this.results[i].result.data.tables[0].rows;
+      columns = this.results[i].result.tables[0].columns;
+      const rows = this.results[i].result.tables[0].rows;
 
       if (this.results[i].query.resultFormat === 'time_series') {
         data = concat(data, this.parseTimeSeriesResult(this.results[i].query, columns, rows));
@@ -157,11 +157,11 @@ export default class ResponseParser {
 
     const valueFieldName = 'subscriptionId';
     const textFieldName = 'displayName';
-    for (let i = 0; i < result.data.value.length; i++) {
-      if (!find(list, ['value', get(result.data.value[i], valueFieldName)])) {
+    for (let i = 0; i < result.value.length; i++) {
+      if (!find(list, ['value', get(result.value[i], valueFieldName)])) {
         list.push({
-          text: `${get(result.data.value[i], textFieldName)}`,
-          value: get(result.data.value[i], valueFieldName),
+          text: `${get(result.value[i], textFieldName)}`,
+          value: get(result.value[i], valueFieldName),
         });
       }
     }

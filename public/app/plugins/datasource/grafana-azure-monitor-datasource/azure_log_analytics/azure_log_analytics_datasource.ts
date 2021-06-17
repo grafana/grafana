@@ -407,17 +407,10 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
         : `${this.resourcePath}/v1/${resourceOrWorkspace}/metadata`;
 
       return await this.getResource(path).then<DatasourceValidationResult>((response: any) => {
-        if (response.status === 200) {
-          return {
-            status: 'success',
-            message: 'Successfully queried the Azure Log Analytics service.',
-            title: 'Success',
-          };
-        }
-
         return {
-          status: 'error',
-          message: 'Returned http status code ' + response.status,
+          status: 'success',
+          message: 'Successfully queried the Azure Log Analytics service.',
+          title: 'Success',
         };
       });
     } catch (e) {

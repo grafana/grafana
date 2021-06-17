@@ -483,17 +483,10 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
       const url = `${this.resourcePath}?api-version=2019-03-01`;
 
       return await this.getResource(url).then<DatasourceValidationResult>((response: any) => {
-        if (response.status === 200) {
-          return {
-            status: 'success',
-            message: 'Successfully queried the Azure Monitor service.',
-            title: 'Success',
-          };
-        }
-
         return {
-          status: 'error',
-          message: 'Returned http status code ' + response.status,
+          status: 'success',
+          message: 'Successfully queried the Azure Monitor service.',
+          title: 'Success',
         };
       });
     } catch (e) {

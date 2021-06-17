@@ -186,19 +186,11 @@ export interface AzureMonitorLocalizedValue {
 }
 
 export interface AzureMonitorMetricDefinitionsResponse {
-  data: {
-    value: Array<{ name: string; type: string; location?: string }>;
-  };
-  status: number;
-  statusText: string;
+  value: Array<{ name: string; type: string; location?: string }>;
 }
 
 export interface AzureMonitorResourceGroupsResponse {
-  data: {
-    value: Array<{ name: string }>;
-  };
-  status: number;
-  statusText: string;
+  value: Array<{ name: string }>;
 }
 
 export interface AzureLogsVariable {
