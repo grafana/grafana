@@ -236,33 +236,34 @@ func TestOSSAccessControlService_RegisterFixedRole(t *testing.T) {
 			},
 		},
 	}
+
+	removeRole := func(role string) {
+		accesscontrol.FixedRolesMutex.Lock()
+		delete(accesscontrol.FixedRoles, role)
+		accesscontrol.FixedRolesMutex.Unlock()
+
+		accesscontrol.FixedRoleGrantsMutex.Lock()
+		defer accesscontrol.FixedRoleGrantsMutex.Unlock()
+		for builtInRole, assignments := range accesscontrol.FixedRoleGrants {
+			n := len(assignments)
+			for i := 0; i < n; i++ {
+				r := assignments[i]
+				if r == role {
+					copy(assignments[i:], assignments[i+1:])
+					n--
+					assignments = assignments[:n]
+				}
+			}
+			accesscontrol.FixedRoleGrants[builtInRole] = assignments
+		}
+	}
+
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			ac := &OSSAccessControlService{
 				Cfg:        setting.NewCfg(),
 				UsageStats: &usageStatsMock{t: t, metricsFuncs: make([]usagestats.MetricsFunc, 0)},
 				Log:        log.New("accesscontrol-test"),
-			}
-
-			removeRole := func(role string) {
-				accesscontrol.FixedRolesMutex.Lock()
-				delete(accesscontrol.FixedRoles, role)
-				accesscontrol.FixedRolesMutex.Unlock()
-
-				accesscontrol.FixedRoleGrantsMutex.Lock()
-				defer accesscontrol.FixedRoleGrantsMutex.Unlock()
-				for builtInRole, assignments := range accesscontrol.FixedRoleGrants {
-					n := len(assignments)
-					for i := 0; i < n; i++ {
-						r := assignments[i]
-						if r == role {
-							copy(assignments[i:], assignments[i+1:])
-							n--
-							assignments = assignments[:n]
-						}
-					}
-					accesscontrol.FixedRoleGrants[builtInRole] = assignments
-				}
 			}
 
 			for _, run := range tc.runs {
