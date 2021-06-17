@@ -19,8 +19,8 @@ export default {
     },
   },
   argTypes: {
-    ContainerWidth: { control: { type: 'range', min: 100, max: 500, step: 10 } },
-    ContainerHeight: { control: { type: 'range', min: 100, max: 500, step: 10 } },
+    containerWidth: { control: { type: 'range', min: 100, max: 500, step: 10 } },
+    containerHeight: { control: { type: 'range', min: 100, max: 500, step: 10 } },
   },
 } as Meta;
 
@@ -67,7 +67,7 @@ export const Simple: Story = (args) => {
   );
 };
 Simple.args = {
-  ContainerWidth: 300,
-  ContainerHeight: 0,
+  containerWidth: 300,
+  containerHeight: 0,
   showBoundaries: false,
 };

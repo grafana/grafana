@@ -47,7 +47,7 @@ export const withStoryContainer = (story: RenderFunction, context: StoryContext)
   return (
     <StoryContainer
       width={context.args.containerWidth}
-      height={context.args.ContainerHeight}
+      height={context.args.containerHeight}
       showBoundaries={context.args.showBoundaries}
     >
       {story()}
