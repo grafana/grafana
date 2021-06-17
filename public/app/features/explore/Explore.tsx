@@ -2,7 +2,7 @@ import React from 'react';
 import { hot } from 'react-hot-loader';
 import { css, cx } from '@emotion/css';
 import { compose } from 'redux';
-import { connect } from 'react-redux';
+import { connect, ConnectedProps } from 'react-redux';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import memoizeOne from 'memoize-one';
 import { selectors } from '@grafana/e2e-selectors';
@@ -71,20 +71,14 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
 });
 
 export interface ExploreProps {
-  changeSize: typeof changeSize;
   datasourceInstance: DataSourceApi | null;
   datasourceMissing: boolean;
   exploreId: ExploreId;
-  modifyQueries: typeof modifyQueries;
   scanning?: boolean;
   scanRange?: RawTimeRange;
-  scanStart: typeof scanStart;
-  scanStopAction: typeof scanStopAction;
-  setQueries: typeof setQueries;
   queryKeys: string[];
   isLive: boolean;
   syncedTimes: boolean;
-  updateTimeRange: typeof updateTimeRange;
   graphResult: DataFrame[] | null;
   logsResult?: LogsModel;
   absoluteRange: AbsoluteTimeRange;
@@ -92,7 +86,6 @@ export interface ExploreProps {
   onHiddenSeriesChanged?: (hiddenSeries: string[]) => void;
   queryResponse: PanelData;
   originPanelId: number;
-  addQueryRow: typeof addQueryRow;
   theme: GrafanaTheme;
   loading: boolean;
   showMetrics: boolean;
@@ -100,7 +93,6 @@ export interface ExploreProps {
   showLogs: boolean;
   showTrace: boolean;
   showNodeGraph: boolean;
-  splitOpen: typeof splitOpen;
 }
 
 enum ExploreDrawer {
@@ -111,6 +103,8 @@ enum ExploreDrawer {
 interface ExploreState {
   openDrawer?: ExploreDrawer;
 }
+
+export type Props = ExploreProps & ConnectedProps<typeof connector>;
 
 /**
  * Explore provides an area for quick query iteration for a given datasource.
@@ -136,8 +130,8 @@ interface ExploreState {
  * The result viewers determine some of the query options sent to the datasource, e.g.,
  * `format`, to indicate eventual transformations by the datasources' result transformers.
  */
-export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
-  constructor(props: ExploreProps) {
+export class Explore extends React.PureComponent<Props, ExploreState> {
+  constructor(props: Props) {
     super(props);
     this.state = {
       openDrawer: undefined,
@@ -433,7 +427,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps): Partia
   };
 }
 
-const mapDispatchToProps: Partial<ExploreProps> = {
+const mapDispatchToProps = {
   changeSize,
   modifyQueries,
   scanStart,
@@ -444,8 +438,6 @@ const mapDispatchToProps: Partial<ExploreProps> = {
   splitOpen,
 };
 
-export default compose(
-  hot(module),
-  connect(mapStateToProps, mapDispatchToProps),
-  withTheme
-)(Explore) as React.ComponentType<{ exploreId: ExploreId }>;
+const connector = connect(mapStateToProps, mapDispatchToProps);
+
+export default compose(hot(module), connector, withTheme)(Explore) as React.ComponentType<{ exploreId: ExploreId }>;

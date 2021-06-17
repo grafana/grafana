@@ -2,12 +2,12 @@ import React from 'react';
 import { DataSourceApi, LoadingState, toUtc, DataQueryError, DataQueryRequest, CoreApp } from '@grafana/data';
 import { ExploreId } from 'app/types/explore';
 import { shallow } from 'enzyme';
-import { Explore, ExploreProps } from './Explore';
+import { Explore, Props } from './Explore';
 import { scanStopAction } from './state/query';
 import { SecondaryActions } from './SecondaryActions';
 import { getTheme } from '@grafana/ui';
 
-const dummyProps: ExploreProps = {
+const dummyProps: Props = {
   changeSize: jest.fn(),
   datasourceInstance: {
     meta: {
