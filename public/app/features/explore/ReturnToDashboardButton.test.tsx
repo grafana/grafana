@@ -7,7 +7,7 @@ const createProps = (propsOverride?: Partial<ComponentProps<typeof ReturnToDashb
   const defaultProps = {
     originPanelId: 1,
     splitted: false,
-    hasAccess: true,
+    canEdit: true,
     exploreId: ExploreId.left,
     queries: [],
     setDashboardQueriesToUpdateOnLoad: jest.fn(),
@@ -32,9 +32,9 @@ describe('ReturnToDashboardButton', () => {
     expect(screen.queryByTestId(/returnButton/i)).toBeNull();
   });
 
-  it('should not render any button if user does not have access ', () => {
-    render(<ReturnToDashboardButton {...createProps({ hasAccess: false })} />);
-    expect(screen.queryByTestId(/returnButton/i)).toBeNull();
+  it('should only render return to panel button if user cannot edit panel', () => {
+    render(<ReturnToDashboardButton {...createProps({ canEdit: false })} />);
+    expect(screen.queryByTestId(/returnButton/i)).toHaveLength(1);
   });
 
   it('should show option to return to dashboard with changes', () => {

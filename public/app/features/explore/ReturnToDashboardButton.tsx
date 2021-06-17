@@ -15,8 +15,8 @@ import { contextSrv } from 'app/core/services/context_srv';
 
 interface Props {
   exploreId: ExploreId;
+  canEdit: boolean;
   splitted: boolean;
-  hasAccess: boolean;
   queries: DataQuery[];
   originPanelId?: number | null;
   setDashboardQueriesToUpdateOnLoad: typeof setDashboardQueriesToUpdateOnLoad;
@@ -27,12 +27,12 @@ export const UnconnectedReturnToDashboardButton: FC<Props> = ({
   setDashboardQueriesToUpdateOnLoad,
   queries,
   splitted,
-  hasAccess,
+  canEdit,
 }) => {
   const withOriginId = originPanelId && Number.isInteger(originPanelId);
 
-  // If in split mode, no origin id, or user does not have access, escape early and return null
-  if (splitted || !withOriginId || !hasAccess) {
+  // If in split mode, or no origin id, escape early and return null
+  if (splitted || !withOriginId) {
     return null;
   }
 
@@ -78,11 +78,13 @@ export const UnconnectedReturnToDashboardButton: FC<Props> = ({
           <Icon name="arrow-left" />
         </ToolbarButton>
       </Tooltip>
-      <ButtonSelect
-        data-testid="returnButtonWithChanges"
-        options={[{ label: 'Return to panel with changes', value: '' }]}
-        onChange={() => returnToPanel({ withChanges: true })}
-      />
+      {canEdit && (
+        <ButtonSelect
+          data-testid="returnButtonWithChanges"
+          options={[{ label: 'Return to panel with changes', value: '' }]}
+          onChange={() => returnToPanel({ withChanges: true })}
+        />
+      )}
     </ButtonGroup>
   );
 };
@@ -92,13 +94,10 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: ExploreI
   const splitted = isSplit(state);
   const { datasourceInstance, queries, originPanelId } = explore[exploreId]!;
 
-  const hasAccess = (): boolean => {
-    const roles = ['Editor', 'Admin'];
-    if (config.viewersCanEdit) {
-      roles.push('Viewer');
-    }
-    return roles.some((r) => contextSrv.hasRole(r));
-  };
+  const roles = ['Editor', 'Admin'];
+  if (config.viewersCanEdit) {
+    roles.push('Viewer');
+  }
 
   return {
     exploreId,
@@ -106,7 +105,7 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: ExploreI
     queries,
     originPanelId,
     splitted,
-    hasAccess: hasAccess(),
+    canEdit: roles.some((r) => contextSrv.hasRole(r)),
   };
 }
 
