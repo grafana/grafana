@@ -85,8 +85,10 @@ export default class AzureResourceGraphDatasource extends DataSourceWithBackend<
     if (res.data) {
       for (const df of res.data) {
         const metricQuery = metricQueries[df.refId];
-        if (metricQuery && metricQuery.azureMonitor) {
-          const url = `${getDeepLinkRoute(this.cloud)}/#blade/HubsExtension/ArgQueryBlade`;
+        if (metricQuery && metricQuery.azureResourceGraph) {
+          const url = `${getDeepLinkRoute(this.cloud)}/#blade/HubsExtension/ArgQueryBlade/query/${
+            metricQuery.azureResourceGraph.query
+          }`;
           for (const field of df.fields) {
             field.config.links = [
               {
