@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -110,7 +111,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 
 			state := &testState{}
 
-			bus.AddHandler("test", func(query *models.GetDashboardQuery) error {
+			bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetDashboardQuery) error {
 				query.Result = fakeDash
 				state.dashQueries = append(state.dashQueries, query)
 				return nil
@@ -275,7 +276,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				return nil
 			})
 
-			bus.AddHandler("test", func(query *models.GetDashboardQuery) error {
+			bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetDashboardQuery) error {
 				query.Result = fakeDash
 				state.dashQueries = append(state.dashQueries, query)
 				return nil
@@ -830,7 +831,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 			fakeDash.FolderId = folderID
 			fakeDash.HasAcl = false
 
-			bus.AddHandler("test", func(query *models.GetDashboardQuery) error {
+			bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetDashboardQuery) error {
 				query.Result = fakeDash
 				return nil
 			})
@@ -878,7 +879,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 			fakeDash.Id = 2
 			fakeDash.HasAcl = false
 
-			bus.AddHandler("test", func(query *models.GetDashboardQuery) error {
+			bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetDashboardQuery) error {
 				query.Result = fakeDash
 				return nil
 			})
@@ -926,7 +927,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				query.Result = []*models.Dashboard{{}}
 				return nil
 			})
-			bus.AddHandler("test", func(query *models.GetDashboardQuery) error {
+			bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetDashboardQuery) error {
 				dataValue, err := simplejson.NewJson([]byte(`{"id": 1, "editable": true, "style": "dark"}`))
 				require.NoError(t, err)
 				query.Result = &models.Dashboard{Id: 1, Data: dataValue}

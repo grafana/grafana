@@ -77,7 +77,7 @@ describe('SnapshotWorker', () => {
           source: { enable: true, hide: false, name: 'Test', iconColor: 'pink' },
           timeEnd: undefined,
           time: 1,
-          color: 'pink',
+          color: '#ffc0cb',
           type: 'Test',
           isRegion: false,
         });
@@ -86,7 +86,7 @@ describe('SnapshotWorker', () => {
           source: { enable: true, hide: false, name: 'Test', iconColor: 'pink' },
           timeEnd: 2,
           time: 1,
-          color: 'pink',
+          color: '#ffc0cb',
           type: 'Test',
           isRegion: true,
         });
@@ -95,7 +95,7 @@ describe('SnapshotWorker', () => {
           source: { enable: true, hide: false, name: 'Test', iconColor: 'pink' },
           timeEnd: 1,
           time: 1,
-          color: 'pink',
+          color: '#ffc0cb',
           type: 'Test',
           isRegion: false,
         });
