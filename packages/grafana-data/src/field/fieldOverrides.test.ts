@@ -328,6 +328,33 @@ describe('applyFieldOverrides', () => {
     expect(data.fields[1].config).not.toBe(f0.fields[1].config);
     expect(data.fields[1].config.custom).not.toBe(f0.fields[1].config.custom);
   });
+
+  it('Can modify displayName and have it affect later overrides', () => {
+    const config: FieldConfigSource = {
+      defaults: {},
+      overrides: [
+        {
+          matcher: { id: FieldMatcherID.byName, options: 'value' },
+          properties: [{ id: 'displayName', value: 'Kittens' }],
+        },
+        {
+          matcher: { id: FieldMatcherID.byName, options: 'Kittens' },
+          properties: [{ id: 'displayName', value: 'Kittens improved' }],
+        },
+      ],
+    };
+
+    const data = applyFieldOverrides({
+      data: [f0], // the frame
+      fieldConfig: config,
+      replaceVariables: (str: string) => str,
+      fieldConfigRegistry: customFieldRegistry,
+      theme: createTheme(),
+    })[0];
+
+    expect(data.fields[1].config.displayName).toBe('Kittens improved');
+    expect(getFieldDisplayName(data.fields[1], data)).toBe('Kittens improved');
+  });
 });
 
 describe('setFieldConfigDefaults', () => {
