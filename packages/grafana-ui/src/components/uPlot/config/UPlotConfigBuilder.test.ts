@@ -497,6 +497,7 @@ describe('UPlotConfigBuilder', () => {
             "paths": [Function],
             "points": Object {
               "fill": "#00ff00",
+              "filter": undefined,
               "size": 5,
               "stroke": "#00ff00",
             },
@@ -606,6 +607,7 @@ describe('UPlotConfigBuilder', () => {
               "paths": [Function],
               "points": Object {
                 "fill": undefined,
+                "filter": undefined,
                 "size": undefined,
                 "stroke": undefined,
               },
@@ -621,6 +623,7 @@ describe('UPlotConfigBuilder', () => {
               "paths": [Function],
               "points": Object {
                 "fill": undefined,
+                "filter": undefined,
                 "size": 5,
                 "stroke": undefined,
               },
@@ -636,6 +639,7 @@ describe('UPlotConfigBuilder', () => {
               "paths": [Function],
               "points": Object {
                 "fill": undefined,
+                "filter": undefined,
                 "size": 5,
                 "stroke": undefined,
               },

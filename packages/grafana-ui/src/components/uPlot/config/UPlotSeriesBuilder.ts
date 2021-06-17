@@ -25,6 +25,7 @@ export interface SeriesProps extends LineConfig, BarConfig, FillConfig, PointsCo
   colorMode?: FieldColorMode;
   drawStyle?: DrawStyle;
   pathBuilder?: Series.PathBuilder;
+  pointsFilter?: Series.Points.Filter;
   pointsBuilder?: Series.Points.Show;
   show?: boolean;
   dataFrameFieldIndex?: DataFrameFieldIndex;
@@ -37,6 +38,7 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
       drawStyle,
       pathBuilder,
       pointsBuilder,
+      pointsFilter,
       lineInterpolation,
       lineWidth,
       lineStyle,
@@ -86,6 +88,7 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
         stroke: pointColor,
         fill: pointColor,
         size: pointSize,
+        filter: pointsFilter,
       },
     };
 

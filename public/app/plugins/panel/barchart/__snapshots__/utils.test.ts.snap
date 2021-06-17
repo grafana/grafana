@@ -109,6 +109,7 @@ Object {
       "paths": [Function],
       "points": Object {
         "fill": undefined,
+        "filter": undefined,
         "size": undefined,
         "stroke": undefined,
       },
@@ -233,6 +234,7 @@ Object {
       "paths": [Function],
       "points": Object {
         "fill": undefined,
+        "filter": undefined,
         "size": undefined,
         "stroke": undefined,
       },
@@ -357,6 +359,7 @@ Object {
       "paths": [Function],
       "points": Object {
         "fill": undefined,
+        "filter": undefined,
         "size": undefined,
         "stroke": undefined,
       },
@@ -481,6 +484,7 @@ Object {
       "paths": [Function],
       "points": Object {
         "fill": undefined,
+        "filter": undefined,
         "size": undefined,
         "stroke": undefined,
       },
@@ -605,6 +609,7 @@ Object {
       "paths": [Function],
       "points": Object {
         "fill": undefined,
+        "filter": undefined,
         "size": undefined,
         "stroke": undefined,
       },
@@ -729,6 +734,7 @@ Object {
       "paths": [Function],
       "points": Object {
         "fill": undefined,
+        "filter": undefined,
         "size": undefined,
         "stroke": undefined,
       },
@@ -853,6 +859,7 @@ Object {
       "paths": [Function],
       "points": Object {
         "fill": undefined,
+        "filter": undefined,
         "size": undefined,
         "stroke": undefined,
       },
@@ -977,6 +984,7 @@ Object {
       "paths": [Function],
       "points": Object {
         "fill": undefined,
+        "filter": undefined,
         "size": undefined,
         "stroke": undefined,
       },
