@@ -57,10 +57,6 @@ class DashNav extends PureComponent<Props> {
     super(props);
   }
 
-  onFolderNameClick = () => {
-    locationService.partial({ search: 'open', folder: 'current' });
-  };
-
   onClose = () => {
     locationService.partial({ viewPanel: null });
   };
@@ -94,10 +90,6 @@ class DashNav extends PureComponent<Props> {
   onPlaylistStop = () => {
     playlistSrv.stop();
     this.forceUpdate();
-  };
-
-  onDashboardNameClick = () => {
-    locationService.partial({ search: 'open' });
   };
 
   addCustomContent(actions: DashNavButtonModel[], buttons: ReactNode[]) {
@@ -255,8 +247,8 @@ class DashNav extends PureComponent<Props> {
         pageIcon={isFullscreen ? undefined : 'apps'}
         title={title}
         parent={folderTitle}
-        onClickTitle={this.onDashboardNameClick}
-        onClickParent={this.onFolderNameClick}
+        titleHref="?search=open"
+        parentHref="?search=open&folder=current"
         onGoBack={onGoBack}
         leftItems={this.renderLeftActionsButton()}
       >
