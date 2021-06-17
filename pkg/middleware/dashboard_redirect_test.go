@@ -55,4 +55,21 @@ func TestMiddlewareDashboardRedirect(t *testing.T) {
 			})
 		})
 	})
+
+	Convey("Given the dashboard legacy edit panel middleware", t, func() {
+		bus.ClearBusHandlers()
+
+		middlewareScenario(t, "GET dashboard by legacy edit url", func(sc *scenarioContext) {
+			sc.m.Get("/d/:uid/:slug", RedirectFromLegacyPanelEditURL(), sc.defaultHandler)
+
+			sc.fakeReqWithParams("GET", "/d/asd/dash?orgId=1&panelId=12&fullscreen&edit", map[string]string{}).exec()
+
+			Convey("Should redirect to new dashboard edit url with a 301 Moved Permanently", func() {
+				So(sc.resp.Code, ShouldEqual, 301)
+				redirectURL, _ := sc.resp.Result().Location()
+				So(redirectURL.String(), ShouldEqual, "/d/asd/d/asd/dash?editPanel=12&orgId=1")
+			})
+		})
+	})
+
 }

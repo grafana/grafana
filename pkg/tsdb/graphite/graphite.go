@@ -154,7 +154,10 @@ func (e *GraphiteExecutor) parseResponse(res *http.Response) ([]TargetResponseDT
 }
 
 func (e *GraphiteExecutor) createRequest(dsInfo *models.DataSource, data url.Values) (*http.Request, error) {
-	u, _ := url.Parse(dsInfo.Url)
+	u, err := url.Parse(dsInfo.Url)
+	if err != nil {
+		return nil, err
+	}
 	u.Path = path.Join(u.Path, "render")
 
 	req, err := http.NewRequest(http.MethodPost, u.String(), strings.NewReader(data.Encode()))

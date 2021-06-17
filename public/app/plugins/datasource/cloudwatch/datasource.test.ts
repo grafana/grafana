@@ -14,7 +14,7 @@ describe('datasource', () => {
           },
         ],
       } as any)) as any;
-      expect(response.error.message).toBe('Log group is required');
+      expect(response.error?.message).toBe('Log group is required');
     });
 
     it('should return empty response if queries are hidden', async () => {

@@ -18,22 +18,26 @@ Grafana has a number of configuration options that you can specify in a `.ini` c
 
 ## Config file locations
 
-*Do not* change `defaults.ini`! Grafana defaults are stored in this file. Depending on your OS, make all configuration changes in either `custom.ini` or `grafana.ini`.
+_Do not_ change `defaults.ini`! Grafana defaults are stored in this file. Depending on your OS, make all configuration changes in either `custom.ini` or `grafana.ini`.
 
 - Default configuration from `$WORKING_DIR/conf/defaults.ini`
 - Custom configuration from `$WORKING_DIR/conf/custom.ini`
 - The custom configuration file path can be overridden using the `--config` parameter
 
 ### Linux
+
 If you installed Grafana using the `deb` or `rpm` packages, then your configuration file is located at `/etc/grafana/grafana.ini` and a separate `custom.ini` is not used. This path is specified in the Grafana init.d script using `--config` file parameter.
 
 ### Docker
+
 Refer to [Configure a Grafana Docker image]({{< relref "configure-docker.md" >}}) for information about environmental variables, persistent storage, and building custom Docker images.
 
 ### Windows
+
 `sample.ini` is in the same directory as `defaults.ini` and contains all the settings commented out. Copy `sample.ini` and name it `custom.ini`.
 
 ### MacOS
+
 By default, the configuration file is located at `/usr/local/etc/grafana/grafana.ini`. To configure Grafana, add a configuration file named `custom.ini` to the `conf` folder to override any of the settings defined in `conf/defaults.ini`.
 
 ## Comments in .ini Files
@@ -41,6 +45,7 @@ By default, the configuration file is located at `/usr/local/etc/grafana/grafana
 Semicolons (the `;` char) are the standard way to comment out lines in a `.ini` file. If you want to change a setting, you must delete the semicolon (`;`) in front of the setting before it will work.
 
 **Example**
+
 ```
 # The http port  to use
 ;http_port = 3000
@@ -153,6 +158,7 @@ Another way is put a webserver like Nginx or Apache in front of Grafana and have
 > **Note:** Grafana versions earlier than 3.0 are vulnerable to [POODLE](https://en.wikipedia.org/wiki/POODLE). So we strongly recommend to upgrade to 3.x or use a reverse proxy for ssl termination.
 
 ### socket
+
 Path where the socket should be created when `protocol=socket`. Please make sure that Grafana has appropriate permissions.
 
 ### domain
@@ -174,6 +180,7 @@ callback URL to be correct).
 > case add the subpath to the end of this URL setting.
 
 ### serve_from_sub_path
+
 > Available in 6.3 and above
 
 Serve Grafana from subpath specified in `root_url` setting. By default it is set to `false` for compatibility reasons.
@@ -233,8 +240,7 @@ will be stored.
 ### host
 
 Only applicable to MySQL or Postgres. Includes IP or hostname and port or in case of Unix sockets the path to it.
-For example, for MySQL running on the same host as Grafana: `host =
-127.0.0.1:3306` or with Unix sockets: `host = /var/run/mysqld/mysqld.sock`
+For example, for MySQL running on the same host as Grafana: `host = 127.0.0.1:3306` or with Unix sockets: `host = /var/run/mysqld/mysqld.sock`
 
 ### name
 
@@ -271,9 +277,11 @@ The path to the client cert. Only if server requires client authentication.
 The common name field of the certificate used by the `mysql` or `postgres` server. Not necessary if `ssl_mode` is set to `skip-verify`.
 
 ### max_idle_conn
+
 The maximum number of connections in the idle connection pool.
 
 ### max_open_conn
+
 The maximum number of open connections to the database.
 
 ### conn_max_lifetime
@@ -335,7 +343,7 @@ Defaults to `admin`.
 
 ### admin_password
 
-The password of the default Grafana admin. Set once on first-run.  Defaults to `admin`.
+The password of the default Grafana admin. Set once on first-run. Defaults to `admin`.
 
 ### login_remember_days
 
@@ -361,7 +369,7 @@ Set to `true` if you host Grafana behind HTTPS. Default is `false`.
 
 ### cookie_samesite
 
-Sets the `SameSite` cookie attribute and prevents the browser from sending this cookie along with cross-site requests. The main goal is to mitigate the risk of cross-origin information leakage. This setting also provides some protection against cross-site request forgery attacks (CSRF),  [read more about SameSite here](https://www.owasp.org/index.php/SameSite). Valid values are `lax`, `strict`, `none`, and `disabled`. Default is `lax`. Using value `disabled` does not add any `SameSite` attribute to cookies.
+Sets the `SameSite` cookie attribute and prevents the browser from sending this cookie along with cross-site requests. The main goal is to mitigate the risk of cross-origin information leakage. This setting also provides some protection against cross-site request forgery attacks (CSRF), [read more about SameSite here](https://www.owasp.org/index.php/SameSite). Valid values are `lax`, `strict`, `none`, and `disabled`. Default is `lax`. Using value `disabled` does not add any `SameSite` attribute to cookies.
 
 ### allow_embedding
 
@@ -400,7 +408,7 @@ Set to `false` to disable the X-XSS-Protection header, which tells browsers to s
 ### allow_sign_up
 
 Set to `false` to prohibit users from being able to sign up / create
-user accounts. Defaults to `false`.  The admin user can still create
+user accounts. Defaults to `false`. The admin user can still create
 users from the [Grafana Admin Pages](/reference/admin)
 
 ### allow_org_create
@@ -423,7 +431,7 @@ that this organization already exists.
 ### auto_assign_org_role
 
 The role new users will be assigned for the main organization (if the
-above setting is set to true).  Defaults to `Viewer`, other valid
+above setting is set to true). Defaults to `Viewer`, other valid
 options are `Admin` and `Editor`. e.g. :
 
 `auto_assign_org_role = Viewer`
@@ -495,7 +503,7 @@ value is `true`.
 
 ### google_analytics_ua_id
 
-If you want to track Grafana usage via Google analytics specify *your* Universal
+If you want to track Grafana usage via Google analytics specify _your_ Universal
 Analytics ID here. By default this feature is disabled.
 
 ### check_for_updates
@@ -522,47 +530,61 @@ The interval string is a possibly signed sequence of decimal numbers, followed b
 > This have been replaced with dashboards [provisioning]({{< relref "../administration/provisioning" >}}) in 5.0+
 
 ### enabled
+
 `true` or `false`. Is disabled by default.
 
 ### path
+
 The full path to a directory containing your json dashboards.
 
 ## [smtp]
+
 Email server settings.
 
 ### enabled
+
 defaults to `false`
 
 ### host
+
 defaults to `localhost:25`
 
 ### user
+
 In case of SMTP auth, defaults to `empty`
 
 ### password
+
 In case of SMTP auth, defaults to `empty`
 
 ### cert_file
+
 File path to a cert file, defaults to `empty`
 
 ### key_file
+
 File path to a key file, defaults to `empty`
 
 ### skip_verify
+
 Verify SSL for smtp server? defaults to `false`
 
 ### from_address
+
 Address used when sending out emails, defaults to `admin@grafana.localhost`
 
 ### from_name
+
 Name to be used when sending out emails, defaults to `Grafana`
 
 ### ehlo_identity
+
 Name to be used as client identity for EHLO in SMTP dialog, defaults to instance_name.
 
 ## [log]
 
 ### mode
+
 Either "console", "file", "syslog". Default is "console" and "file".
 Use spaces to separate multiple modes, e.g. `console file`
 
@@ -650,15 +672,19 @@ Syslog tag. By default, the process's `argv[0]` is used.
 For detailed instructions, refer to [Internal Grafana metrics]({{< relref "../administration/metrics.md" >}}).
 
 ### enabled
+
 Enable metrics reporting. defaults true. Available via HTTP API `/metrics`.
 
 ### basic_auth_username
+
 If set configures the username to use for basic authentication on the metrics endpoint.
 
 ### basic_auth_password
+
 If set configures the password to use for basic authentication on the metrics endpoint.
 
 ### disable_total_stats
+
 If set to `true`, then total stats generation (`stat_totals_*` metrics) is disabled. The default is `false`.
 
 ### interval_seconds
@@ -666,111 +692,140 @@ If set to `true`, then total stats generation (`stat_totals_*` metrics) is disab
 Flush/Write interval when sending metrics to external TSDB. Defaults to 10s.
 
 ## [metrics.graphite]
+
 Include this section if you want to send internal Grafana metrics to Graphite.
 
 ### address
+
 Format `<Hostname or ip>`:port
 
 ### prefix
+
 Graphite metric prefix. Defaults to `prod.grafana.%(instance_name)s.`
 
 ## [snapshots]
 
 ### external_enabled
+
 Set to `false` to disable external snapshot publish endpoint (default `true`)
 
 ### external_snapshot_url
+
 Set root URL to a Grafana instance where you want to publish external snapshots (defaults to https://snapshots-origin.raintank.io)
 
 ### external_snapshot_name
+
 Set name for external snapshot button. Defaults to `Publish to snapshot.raintank.io`
 
 ### snapshot_remove_expired
+
 Enabled to automatically remove expired snapshots
 
 ## [external_image_storage]
+
 These options control how images should be made public so they can be shared on services like slack.
 
 ### provider
+
 You can choose between (s3, webdav, gcs, azure_blob, local). If left empty Grafana will ignore the upload action.
 
 ## [external_image_storage.s3]
 
 ### endpoint
+
 Optional endpoint URL (hostname or fully qualified URI) to override the default generated S3 endpoint. If you want to
 keep the default, just leave this empty. You must still provide a `region` value if you specify an endpoint.
 
 ## path_style_access
+
 Set this to true to force path-style addressing in S3 requests, i.e., `http://s3.amazonaws.com/BUCKET/KEY`, instead
 of the default, which is virtual hosted bucket addressing when possible (`http://BUCKET.s3.amazonaws.com/KEY`).
 
 Note: This option is specific to the Amazon S3 service.
 
 ### bucket
+
 Bucket name for S3. e.g. grafana.snapshot.
 
 ### region
+
 Region name for S3. e.g. 'us-east-1', 'cn-north-1', etc.
 
 ### path
+
 Optional extra path inside bucket, useful to apply expiration policies.
 
 ### bucket_url
+
 (for backward compatibility, only works when no bucket or region are configured)
 Bucket URL for S3. AWS region can be specified within URL or defaults to 'us-east-1', e.g.
+
 - http://grafana.s3.amazonaws.com/
 - https://grafana.s3-ap-southeast-2.amazonaws.com/
 
 ### access_key
+
 Access key, e.g. AAAAAAAAAAAAAAAAAAAA.
 
 Access key requires permissions to the S3 bucket for the 's3:PutObject' and 's3:PutObjectAcl' actions.
 
 ### secret_key
+
 Secret key, e.g. AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA.
 
 ## [external_image_storage.webdav]
 
 ### url
+
 URL to where Grafana will send PUT request with images
 
 ### public_url
-Optional parameter. URL to send to users in notifications. If the string contains the sequence ${file}, it will be replaced with the uploaded filename. Otherwise, the file name will be appended to the path part of the URL, leaving any query string unchanged.
+
+Optional parameter. URL to send to users in notifications. If the string contains the sequence \${file}, it will be replaced with the uploaded filename. Otherwise, the file name will be appended to the path part of the URL, leaving any query string unchanged.
 
 ### username
+
 basic auth username
 
 ### password
+
 basic auth password
 
 ## [external_image_storage.gcs]
 
 ### key_file
+
 Path to JSON key file associated with a Google service account to authenticate and authorize.
 Service Account keys can be created and downloaded from https://console.developers.google.com/permissions/serviceaccounts.
 
 Service Account should have "Storage Object Writer" role. The access control model of the bucket needs to be "Set object-level and bucket-level permissions". Grafana itself will make the images public readable.
 
 ### bucket
+
 Bucket Name on Google Cloud Storage.
 
 ### path
+
 Optional extra path inside bucket
 
 ## [external_image_storage.azure_blob]
 
 ### account_name
+
 Storage account name
 
 ### account_key
+
 Storage account key
 
 ### container_name
+
 Container name where to store "Blob" images with random names. Creating the blob container beforehand is required. Only public containers are supported.
 
 ## [alerting]
 
 ### enabled
+
 Defaults to `true`. Set to `false` to disable alerting engine and hide Alerting from UI.
 
 ### execute_alerts
@@ -778,23 +833,24 @@ Defaults to `true`. Set to `false` to disable alerting engine and hide Alerting 
 Makes it possible to turn off alert rule execution.
 
 ### error_or_timeout
+
 > Available in 5.3 and above
 
 Default setting for new alert rules. Defaults to categorize error and timeouts as alerting. (alerting, keep_state)
 
 ### nodata_or_nullvalues
-> Available in 5.3  and above
+
+> Available in 5.3 and above
 
 Default setting for how Grafana handles nodata or null values in alerting. (alerting, no_data, keep_state, ok)
 
 ### concurrent_render_limit
 
-> Available in 5.3  and above
+> Available in 5.3 and above
 
 Alert notifications can include images, but rendering many images at the same time can overload the server.
 This limit will protect the server from render overloading and make sure notifications are sent out quickly. Default
 value is `5`.
-
 
 ### evaluation_timeout_seconds
 
@@ -849,6 +905,7 @@ Set to true if you want to test alpha plugins that are not yet ready for general
 Enter a comma-separated list of plugin identifiers to identify plugins that are allowed to be loaded even if they lack a valid signature.
 
 ## [feature_toggles]
+
 ### enable
 
 Keys of alpha features to enable, separated by space. Available alpha features are: `transformations`
@@ -915,9 +972,11 @@ Setting this to `true` turns off shared RPC spans. Leaving this available is the
 <hr />
 
 # Removed options
+
 Please note that these options have been removed.
 
 ## [session]
+
 **Removed starting from Grafana v6.2. Please use [remote_cache](#remote-cache) option instead.**
 
 ### provider
@@ -931,8 +990,8 @@ session provider you have configured.
 
 - **file:** session file path, e.g. `data/sessions`
 - **mysql:** go-sql-driver/mysql dsn config string, e.g. `user:password@tcp(127.0.0.1:3306)/database_name`
-- **postgres:** ex:  `user=a password=b host=localhost port=5432 dbname=c sslmode=verify-full`
-- **memcache:** ex:  `127.0.0.1:11211`
+- **postgres:** ex: `user=a password=b host=localhost port=5432 dbname=c sslmode=verify-full`
+- **memcache:** ex: `127.0.0.1:11211`
 - **redis:** ex: `addr=127.0.0.1:6379,pool_size=100,prefix=grafana`. For Unix socket, use for example: `network=unix,addr=/var/run/redis/redis.sock,pool_size=100,db=grafana`
 
 Postgres valid `sslmode` are `disable`, `require`, `verify-ca`, and `verify-full` (default).

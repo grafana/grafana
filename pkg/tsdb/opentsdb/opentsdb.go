@@ -79,7 +79,10 @@ func (e *OpenTsdbExecutor) Query(ctx context.Context, dsInfo *models.DataSource,
 }
 
 func (e *OpenTsdbExecutor) createRequest(dsInfo *models.DataSource, data OpenTsdbQuery) (*http.Request, error) {
-	u, _ := url.Parse(dsInfo.Url)
+	u, err := url.Parse(dsInfo.Url)
+	if err != nil {
+		return nil, err
+	}
 	u.Path = path.Join(u.Path, "api/query")
 
 	postData, err := json.Marshal(data)

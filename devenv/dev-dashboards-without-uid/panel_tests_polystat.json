@@ -428,6 +428,14 @@
             {
               "text": "Bitcoin (฿)",
               "value": "currencyBTC"
+            },
+            {
+              "text": "Milli Bitcoin (mBTC)",
+              "value": "currencymBTC"
+            },
+            {
+              "text": "Micro Bitcoin (μBTC)",
+              "value": "currencyμBTC"
             }
           ],
           "text": "currency"

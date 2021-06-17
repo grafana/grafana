@@ -1,7 +1,14 @@
 import { PanelQueryRunner } from './PanelQueryRunner';
 // Importing this way to be able to spy on grafana/data
 import * as grafanaData from '@grafana/data';
-import { DataConfigSource, DataQueryRequest, GrafanaTheme, PanelData, ScopedVars } from '@grafana/data';
+import {
+  DataConfigSource,
+  DataQueryRequest,
+  DataTransformerConfig,
+  GrafanaTheme,
+  PanelData,
+  ScopedVars,
+} from '@grafana/data';
 import { DashboardModel } from './index';
 import { setEchoSrv } from '@grafana/runtime';
 import { Echo } from '../../../core/services/echo/Echo';
@@ -244,7 +251,7 @@ describe('PanelQueryRunner', () => {
     {
       getFieldOverrideOptions: () => undefined,
       // @ts-ignore
-      getTransformations: () => [{}],
+      getTransformations: () => [({} as unknown) as DataTransformerConfig],
     }
   );
 
@@ -288,7 +295,7 @@ describe('PanelQueryRunner', () => {
         theme: {} as GrafanaTheme,
       }),
       // @ts-ignore
-      getTransformations: () => [{}],
+      getTransformations: () => [({} as unknown) as DataTransformerConfig],
     }
   );
 });

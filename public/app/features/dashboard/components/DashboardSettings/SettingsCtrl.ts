@@ -1,4 +1,3 @@
-import $ from 'jquery';
 import _ from 'lodash';
 import angular, { ILocationService, IScope } from 'angular';
 import { selectors } from '@grafana/e2e-selectors';
@@ -10,7 +9,7 @@ import { backendSrv } from 'app/core/services/backend_srv';
 import { DashboardSrv } from '../../services/DashboardSrv';
 import { CoreEvents } from 'app/types';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
-import { AppEvents, locationUtil, TimeZone } from '@grafana/data';
+import { AppEvents, locationUtil, TimeZone, urlUtil } from '@grafana/data';
 import { promiseToDigest } from '../../../../core/utils/promiseToDigest';
 
 export class SettingsCtrl {
@@ -123,8 +122,7 @@ export class SettingsCtrl {
     const url = this.$location.path();
 
     for (const section of this.sections) {
-      const sectionParams = _.defaults({ editview: section.id }, params);
-      section.url = getConfig().appSubUrl + url + '?' + $.param(sectionParams);
+      section.url = locationUtil.assureBaseUrl(urlUtil.renderUrl(url, { ...params, editview: section.id }));
     }
   }
 

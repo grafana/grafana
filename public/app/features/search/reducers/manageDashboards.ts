@@ -53,11 +53,13 @@ const reducer = (state: ManageDashboardsState, action: SearchAction) => {
         ...state,
         results: state.results.map(result => {
           if (folder.id === result.id) {
-            return {
-              ...result,
-              items: [...result.items, ...dashboards.map(db => ({ ...db, checked: false }))],
-              checked: false,
-            };
+            return result.expanded
+              ? {
+                  ...result,
+                  items: [...result.items, ...dashboards.map(db => ({ ...db, checked: false }))],
+                  checked: false,
+                }
+              : result;
           } else {
             return { ...result, items: result.items.filter(item => !uids.includes(item.uid)) };
           }

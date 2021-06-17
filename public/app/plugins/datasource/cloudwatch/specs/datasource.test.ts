@@ -18,7 +18,7 @@ jest.mock('rxjs/operators', () => {
 });
 
 jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
+  ...((jest.requireActual('@grafana/runtime') as unknown) as object),
   getBackendSrv: () => backendSrv,
 }));
 

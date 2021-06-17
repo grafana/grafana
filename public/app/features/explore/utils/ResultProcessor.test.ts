@@ -98,7 +98,7 @@ describe('ResultProcessor', () => {
         const valueField = dataFrames[0].fields[1];
         const theResult = resultProcessor.getGraphResult();
 
-        expect(theResult[0]).toEqual({
+        expect(theResult![0]).toEqual({
           label: 'A-series',
           color: '#7EB26D',
           data: [

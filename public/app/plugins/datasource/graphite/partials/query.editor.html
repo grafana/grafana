@@ -20,7 +20,8 @@
           css-class="query-segment-key"
           get-options="ctrl.getTags($index, $query)"
           on-change="ctrl.tagChanged(tag, $index)"
-        />
+        ></gf-form-dropdown>
+        
         <gf-form-dropdown
           model="tag.operator"
           label-mode="true"
@@ -28,7 +29,7 @@
           get-options="ctrl.getTagOperators()"
           on-change="ctrl.tagChanged(tag, $index)"
           min-input-width="30"
-        />
+        ></gf-form-dropdown>
         <gf-form-dropdown
           model="tag.value"
           allow-custom="true"

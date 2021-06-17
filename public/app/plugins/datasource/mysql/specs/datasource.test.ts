@@ -5,7 +5,7 @@ import { backendSrv } from 'app/core/services/backend_srv'; // will use the vers
 import { TemplateSrv } from 'app/features/templating/template_srv';
 
 jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
+  ...((jest.requireActual('@grafana/runtime') as unknown) as object),
   getBackendSrv: () => backendSrv,
 }));
 

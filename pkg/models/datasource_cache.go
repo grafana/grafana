@@ -51,7 +51,7 @@ func (ds *DataSource) GetHttpClient() (*http.Client, error) {
 	}
 
 	return &http.Client{
-		Timeout:   30 * time.Second,
+		Timeout:   time.Duration(setting.DataProxyTimeout) * time.Second,
 		Transport: transport,
 	}, nil
 }

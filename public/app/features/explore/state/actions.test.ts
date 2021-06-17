@@ -1,5 +1,5 @@
 import { PayloadAction } from '@reduxjs/toolkit';
-import { DataQuery, DefaultTimeZone, ExploreMode, LogsDedupStrategy, RawTimeRange, toUtc } from '@grafana/data';
+import { DataQuery, DefaultTimeZone, ExploreMode, LogsDedupStrategy, toUtc } from '@grafana/data';
 
 import * as Actions from './actions';
 import { changeDatasource, loadDatasource, navigateToExplore, refreshExplore, cancelQueries } from './actions';
@@ -10,11 +10,11 @@ import {
   InitializeExplorePayload,
   loadDatasourcePendingAction,
   loadDatasourceReadyAction,
+  scanStopAction,
   setQueriesAction,
   updateDatasourceInstanceAction,
   updateUIStateAction,
   cancelQueriesAction,
-  scanStopAction,
 } from './actionTypes';
 import { Emitter } from 'app/core/core';
 import { makeInitialUpdateState } from './reducers';
@@ -57,8 +57,8 @@ const testRange = {
   },
 };
 jest.mock('app/core/utils/explore', () => ({
-  ...jest.requireActual('app/core/utils/explore'),
-  getTimeRangeFromUrl: (range: RawTimeRange) => testRange,
+  ...((jest.requireActual('app/core/utils/explore') as unknown) as object),
+  getTimeRangeFromUrl: (range: any) => testRange,
 }));
 
 const setup = (updateOverides?: Partial<ExploreUpdateState>) => {

@@ -34,7 +34,7 @@ export interface DataLink {
   };
 }
 
-export type LinkTarget = '_blank' | '_self';
+export type LinkTarget = '_blank' | '_self' | undefined;
 
 /**
  * Processed Link Model.  The values are ready to use

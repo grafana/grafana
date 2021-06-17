@@ -97,7 +97,7 @@ describe('TraceView', () => {
     header.props().onSearchValueChange('HTTP POST - api_prom_push');
 
     const timeline = wrapper.find(TraceTimelineViewer);
-    expect(timeline.props().findMatchesIDs.has('1ed38015486087ca')).toBeTruthy();
+    expect(timeline.props().findMatchesIDs?.has('1ed38015486087ca')).toBeTruthy();
   });
 
   it('change viewRange', () => {

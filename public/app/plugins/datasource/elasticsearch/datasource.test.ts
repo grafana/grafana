@@ -1,16 +1,14 @@
 import angular from 'angular';
-import { CoreApp, DataQueryRequest, dateMath, Field } from '@grafana/data';
+import { CoreApp, DataQueryRequest, DataSourceInstanceSettings, dateMath, dateTime, Field, toUtc } from '@grafana/data';
 import _ from 'lodash';
 import { ElasticDatasource } from './datasource';
-import { toUtc, dateTime } from '@grafana/data';
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
-import { DataSourceInstanceSettings } from '@grafana/data';
 import { ElasticsearchOptions, ElasticsearchQuery } from './types';
 
 jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
+  ...((jest.requireActual('@grafana/runtime') as unknown) as object),
   getBackendSrv: () => backendSrv,
 }));
 

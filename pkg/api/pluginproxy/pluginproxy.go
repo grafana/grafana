@@ -79,11 +79,9 @@ func NewApiPluginProxy(ctx *models.ReqContext, proxyPath string, route *plugins.
 			return
 		}
 
-		req.Header.Add("X-Grafana-Context", string(ctxJSON))
+		req.Header.Set("X-Grafana-Context", string(ctxJSON))
 
-		if cfg.SendUserHeader && !ctx.SignedInUser.IsAnonymous {
-			req.Header.Add("X-Grafana-User", ctx.SignedInUser.Login)
-		}
+		applyUserHeader(cfg.SendUserHeader, req, ctx.SignedInUser)
 
 		if len(route.Headers) > 0 {
 			headers, err := getHeaders(route, ctx.OrgId, appID)
