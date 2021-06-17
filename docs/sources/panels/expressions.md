@@ -31,7 +31,7 @@ To reference the output of an individual expression or a data source query in an
 
 Expressions work with two types of data.
 
-- A collections of time series.
+- A collection of time series.
 - A collection of numbers, where each collection could be a single series or single number.
 
 Each collection is returned from a single data source query or expression and represented by the RefID. Each collection is a set, where each item in the set is uniquely identified by it dimensions which are stored as [labels]({{< relref "../basics/timeseries-dimensions.md#labels" >}}) or key-value pairs.
