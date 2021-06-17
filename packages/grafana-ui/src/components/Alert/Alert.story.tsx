@@ -17,9 +17,6 @@ export default {
     docs: {
       page: mdx,
     },
-    knobs: {
-      disable: true,
-    },
   },
   argTypes: {
     severity: { control: { type: 'select', options: severities } },

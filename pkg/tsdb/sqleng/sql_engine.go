@@ -206,38 +206,37 @@ func (e *dataPlugin) executeQuery(query plugins.DataSubQuery, wg *sync.WaitGroup
 		timeRange = *queryContext.TimeRange
 	}
 
+	errAppendDebug := func(frameErr string, err error, query string) {
+		var emptyFrame data.Frame
+		emptyFrame.SetMeta(&data.FrameMeta{
+			ExecutedQueryString: query,
+		})
+		queryResult.Error = fmt.Errorf("%s: %w", frameErr, err)
+		queryResult.Dataframes = plugins.NewDecodedDataFrames(data.Frames{&emptyFrame})
+		ch <- queryResult
+	}
+
 	// global substitutions
 	interpolatedQuery, err := Interpolate(query, timeRange, rawSQL)
 	if err != nil {
-		queryResult.Error = err
-		ch <- queryResult
+		errAppendDebug("interpolation failed", e.transformQueryError(err), interpolatedQuery)
 		return
 	}
 
 	// data source specific substitutions
 	interpolatedQuery, err = e.macroEngine.Interpolate(query, timeRange, interpolatedQuery)
 	if err != nil {
-		queryResult.Error = err
-		ch <- queryResult
+		errAppendDebug("interpolation failed", e.transformQueryError(err), interpolatedQuery)
 		return
 	}
 
-	errAppendDebug := func(frameErr string, err error) {
-		var emptyFrame data.Frame
-		emptyFrame.SetMeta(&data.FrameMeta{
-			ExecutedQueryString: interpolatedQuery,
-		})
-		queryResult.Error = fmt.Errorf("%s: %w", frameErr, err)
-		queryResult.Dataframes = plugins.NewDecodedDataFrames(data.Frames{&emptyFrame})
-		ch <- queryResult
-	}
 	session := e.engine.NewSession()
 	defer session.Close()
 	db := session.DB()
 
 	rows, err := db.Query(interpolatedQuery)
 	if err != nil {
-		errAppendDebug("db query error", e.transformQueryError(err))
+		errAppendDebug("db query error", e.transformQueryError(err), interpolatedQuery)
 		return
 	}
 	defer func() {
@@ -248,7 +247,7 @@ func (e *dataPlugin) executeQuery(query plugins.DataSubQuery, wg *sync.WaitGroup
 
 	qm, err := e.newProcessCfg(query, queryContext, rows, interpolatedQuery)
 	if err != nil {
-		errAppendDebug("failed to get configurations", err)
+		errAppendDebug("failed to get configurations", err, interpolatedQuery)
 		return
 	}
 
@@ -256,7 +255,7 @@ func (e *dataPlugin) executeQuery(query plugins.DataSubQuery, wg *sync.WaitGroup
 	stringConverters := e.queryResultTransformer.GetConverterList()
 	frame, err := sqlutil.FrameFromRows(rows.Rows, rowLimit, sqlutil.ToConverters(stringConverters...)...)
 	if err != nil {
-		errAppendDebug("convert frame from rows error", err)
+		errAppendDebug("convert frame from rows error", err, interpolatedQuery)
 		return
 	}
 
@@ -266,12 +265,14 @@ func (e *dataPlugin) executeQuery(query plugins.DataSubQuery, wg *sync.WaitGroup
 
 	// If no rows were returned, no point checking anything else.
 	if frame.Rows() == 0 {
+		queryResult.Dataframes = plugins.NewDecodedDataFrames(data.Frames{frame})
+		ch <- queryResult
 		return
 	}
 
 	if qm.timeIndex != -1 {
 		if err := convertSQLTimeColumnToEpochMS(frame, qm.timeIndex); err != nil {
-			errAppendDebug("db convert time column failed", err)
+			errAppendDebug("db convert time column failed", err, interpolatedQuery)
 			return
 		}
 	}
@@ -279,7 +280,7 @@ func (e *dataPlugin) executeQuery(query plugins.DataSubQuery, wg *sync.WaitGroup
 	if qm.Format == dataQueryFormatSeries {
 		// time series has to have time column
 		if qm.timeIndex == -1 {
-			errAppendDebug("db has no time column", errors.New("no time column found"))
+			errAppendDebug("db has no time column", errors.New("no time column found"), interpolatedQuery)
 			return
 		}
 		for i := range qm.columnNames {
@@ -289,7 +290,7 @@ func (e *dataPlugin) executeQuery(query plugins.DataSubQuery, wg *sync.WaitGroup
 
 			var err error
 			if frame, err = convertSQLValueColumnToFloat(frame, i); err != nil {
-				errAppendDebug("convert value to float failed", err)
+				errAppendDebug("convert value to float failed", err, interpolatedQuery)
 				return
 			}
 		}
@@ -299,7 +300,7 @@ func (e *dataPlugin) executeQuery(query plugins.DataSubQuery, wg *sync.WaitGroup
 			var err error
 			frame, err = data.LongToWide(frame, qm.FillMissing)
 			if err != nil {
-				errAppendDebug("failed to convert long to wide series when converting from dataframe", err)
+				errAppendDebug("failed to convert long to wide series when converting from dataframe", err, interpolatedQuery)
 				return
 			}
 		}

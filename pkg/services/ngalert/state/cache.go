@@ -84,7 +84,7 @@ func (c *cache) getOrCreate(alertRule *ngModels.AlertRule, result eval.Result) *
 }
 
 func attachRuleLabels(m map[string]string, alertRule *ngModels.AlertRule) {
-	m[ngModels.UIDLabel] = alertRule.UID
+	m[ngModels.RuleUIDLabel] = alertRule.UID
 	m[ngModels.NamespaceUIDLabel] = alertRule.NamespaceUID
 	m[prometheusModel.AlertNameLabel] = alertRule.Title
 }

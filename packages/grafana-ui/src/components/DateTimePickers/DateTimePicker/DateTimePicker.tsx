@@ -5,7 +5,7 @@ import { css } from '@emotion/css';
 import { dateTimeFormat, DateTime, dateTime, GrafanaTheme2 } from '@grafana/data';
 import { Button, Field, Icon, Input, Portal } from '../..';
 import { ClickOutsideWrapper } from '../../ClickOutsideWrapper/ClickOutsideWrapper';
-import { getBodyStyles, getContainerStyles } from '../TimeRangePicker/TimePickerCalendar';
+import { getBodyStyles, getStyles as getCalendarStyles } from '../TimeRangePicker/TimePickerCalendar';
 import { useStyles2, useTheme2 } from '../../../themes';
 import { TimeOfDayPicker } from '../TimeOfDayPicker';
 
@@ -22,7 +22,7 @@ export const DateTimePicker: FC<Props> = ({ date, label, onChange }) => {
   const icon = <Button icon="calendar-alt" variant="secondary" onClick={() => setOpen(!isOpen)} />;
   const theme = useTheme2();
   const isFullscreen = useMedia(`(min-width: ${theme.breakpoints.values.lg}px)`);
-  const containerStyles = useStyles2(getContainerStyles);
+  const containerStyles = useStyles2(getCalendarStyles);
 
   const onApply = (date: DateTime) => {
     setOpen(false);
