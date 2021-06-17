@@ -164,7 +164,9 @@ export class MysqlQueryCtrl extends QueryCtrl {
           icon: 'exclamation-triangle',
           yesText: 'Switch',
           onConfirm: () => {
-            this.target.rawQuery = !this.target.rawQuery;
+            this.$scope.$evalAsync(() => {
+              this.target.rawQuery = !this.target.rawQuery;
+            });
           },
         })
       );
