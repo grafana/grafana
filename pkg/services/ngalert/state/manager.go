@@ -83,13 +83,13 @@ func (st *Manager) setNextState(alertRule *ngModels.AlertRule, result eval.Resul
 	st.Log.Debug("setting alert state", "uid", alertRule.UID)
 	switch result.State {
 	case eval.Normal:
-		currentState = currentState.resultNormal(result)
+		currentState.resultNormal(result)
 	case eval.Alerting:
-		currentState = currentState.resultAlerting(alertRule, result)
+		currentState.resultAlerting(alertRule, result)
 	case eval.Error:
-		currentState = currentState.resultError(alertRule, result)
+		currentState.resultError(alertRule, result)
 	case eval.NoData:
-		currentState = currentState.resultNoData(alertRule, result)
+		currentState.resultNoData(alertRule, result)
 	case eval.Pending: // we do not emit results with this state
 	}
 
