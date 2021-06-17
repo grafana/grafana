@@ -10,8 +10,7 @@ platform:
 environment:
   GRABPL_METRICS_API_KEY:
     from_secret: zserge-test-metrics-key
-  GRABPL_METRICS_PREFIX:
-    from_secret: grafana.ci.
+  GRABPL_METRICS_PREFIX: grafana.ci.
 
 steps:
 - name: identify-runner
