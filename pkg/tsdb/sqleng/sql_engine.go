@@ -308,7 +308,6 @@ func (e *dataPlugin) executeQuery(query plugins.DataSubQuery, wg *sync.WaitGroup
 			// Before 8x, a special metric column was used to name time series. The LongToWide transforms that into a metric label on the value field.
 			// But that makes series name have both the value column name AND the metric name. So here we are removing the metric label here and moving it to the
 			// field name to get the same naming for the series as pre v8
-			// This will migrate special "metric"=name from label to field name
 			if len(originalData.Fields) == 3 {
 				for _, field := range frame.Fields {
 					if len(field.Labels) == 1 { // 7x only supported one label
