@@ -63,24 +63,6 @@ export interface HealthCheckResult {
   details: HealthCheckResultDetails;
 }
 
-export type StreamOptionsProvider<TQuery extends DataQuery = DataQuery> = (
-  request: DataQueryRequest<TQuery>,
-  frame: DataFrame
-) => StreamingFrameOptions;
-
-export const standardStreamOptionsProvider: StreamOptionsProvider = (request: DataQueryRequest, frame: DataFrame) => {
-  const buffer: StreamingFrameOptions = {
-    maxLength: request.maxDataPoints ?? 500,
-    action: StreamingFrameAction.Append,
-  };
-
-  // For recent queries, clamp to the current time range
-  if (request.rangeRaw?.to === 'now') {
-    buffer.maxDelta = request.range.to.valueOf() - request.range.from.valueOf();
-  }
-  return buffer;
-};
-
 /**
  * Extend this class to implement a data source plugin that is depending on the Grafana
  * backend API.
@@ -277,6 +259,31 @@ export function toStreamingDataResponse<TQuery extends DataQuery = DataQuery>(
   }
   return merge(...streams);
 }
+
+/**
+ * This allows data sources to customize the streaming connection query
+ * @public
+ */
+export type StreamOptionsProvider<TQuery extends DataQuery = DataQuery> = (
+  request: DataQueryRequest<TQuery>,
+  frame: DataFrame
+) => StreamingFrameOptions;
+
+/**
+ * @public
+ */
+export const standardStreamOptionsProvider: StreamOptionsProvider = (request: DataQueryRequest, frame: DataFrame) => {
+  const buffer: StreamingFrameOptions = {
+    maxLength: request.maxDataPoints ?? 500,
+    action: StreamingFrameAction.Append,
+  };
+
+  // For recent queries, clamp to the current time range
+  if (request.rangeRaw?.to === 'now') {
+    buffer.maxDelta = request.range.to.valueOf() - request.range.from.valueOf();
+  }
+  return buffer;
+};
 
 //@ts-ignore
 DataSourceWithBackend = makeClassES5Compatible(DataSourceWithBackend);
