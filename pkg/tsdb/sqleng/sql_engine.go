@@ -12,6 +12,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
@@ -251,7 +252,6 @@ func (e *dataPlugin) executeQuery(query plugins.DataSubQuery, wg *sync.WaitGroup
 		return
 	}
 
-	// Convert row.Rows to dataframe
 	stringConverters := e.queryResultTransformer.GetConverterList()
 	frame, err := sqlutil.FrameFromRows(rows.Rows, rowLimit, sqlutil.ToConverters(stringConverters...)...)
 	if err != nil {
@@ -870,6 +870,7 @@ func convertSQLValueColumnToFloat(frame *data.Frame, Index int) (*data.Frame, er
 	case data.FieldTypeNullableFloat32:
 		convertNullableFloat32ToFloat64(frame.Fields[Index], newField)
 	default:
+		spew.Dump("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<", valueType)
 		convertUnknownToZero(frame.Fields[Index], newField)
 		frame.Fields[Index] = newField
 		return frame, fmt.Errorf("metricIndex %d type can't be converted to float", Index)

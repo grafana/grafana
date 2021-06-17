@@ -468,7 +468,9 @@ func TestMSSQL(t *testing.T) {
 			require.Equal(t, 1, len(frames))
 			require.Equal(t, tInitial, *frames[0].Fields[0].At(0).(*time.Time))
 		})
+		// t.Run("hen doing a query using tinyint as value column should return metric with value in float64", func(t *testing.T) {
 
+		// })
 		t.Run("When doing a metric query using epoch (int64 nullable) as time column and value column (int64 nullable) should return metric with time in time.Time", func(t *testing.T) {
 			query := plugins.DataQuery{
 				Queries: []plugins.DataSubQuery{
