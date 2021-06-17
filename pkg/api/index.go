@@ -191,7 +191,6 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 	}
 
 	if setting.ExploreEnabled && hasAccess(canExplore, ac.ActionDatasourcesExplore) {
-
 		navTree = append(navTree, &dtos.NavLink{
 			Text:       "Explore",
 			Id:         "explore",
