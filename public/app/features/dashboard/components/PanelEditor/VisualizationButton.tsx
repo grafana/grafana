@@ -1,45 +1,31 @@
 import React, { FC } from 'react';
 import { css } from '@emotion/css';
-import { GrafanaTheme, PanelPlugin } from '@grafana/data';
+import { GrafanaTheme } from '@grafana/data';
 import { ToolbarButton, ButtonGroup, useStyles } from '@grafana/ui';
 import { StoreState } from 'app/types';
-import { connect, MapStateToProps, MapDispatchToProps } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { setPanelEditorUIState, toggleVizPicker } from './state/reducers';
 import { selectors } from '@grafana/e2e-selectors';
 import { PanelModel } from '../../state';
+import { getPanelPluginWithFallback } from '../../state/selectors';
 
-interface OwnProps {
+type Props = {
   panel: PanelModel;
-}
+};
 
-interface ConnectedProps {
-  plugin?: PanelPlugin;
-  isVizPickerOpen: boolean;
-  isPanelOptionsVisible: boolean;
-}
-
-interface DispatchProps {
-  toggleVizPicker: typeof toggleVizPicker;
-  setPanelEditorUIState: typeof setPanelEditorUIState;
-}
-
-type Props = OwnProps & ConnectedProps & DispatchProps;
-
-export const VisualizationButtonUnconnected: FC<Props> = ({
-  plugin,
-  toggleVizPicker,
-  isPanelOptionsVisible,
-  isVizPickerOpen,
-  setPanelEditorUIState,
-}) => {
+export const VisualizationButton: FC<Props> = ({ panel }) => {
   const styles = useStyles(getStyles);
+  const dispatch = useDispatch();
+  const plugin = useSelector(getPanelPluginWithFallback(panel.type));
+  const isPanelOptionsVisible = useSelector((state: StoreState) => state.panelEditor.ui.isPanelOptionsVisible);
+  const isVizPickerOpen = useSelector((state: StoreState) => state.panelEditor.isVizPickerOpen);
 
   const onToggleOpen = () => {
-    toggleVizPicker(!isVizPickerOpen);
+    dispatch(toggleVizPicker(!isVizPickerOpen));
   };
 
   const onToggleOptionsPane = () => {
-    setPanelEditorUIState({ isPanelOptionsVisible: !isPanelOptionsVisible });
+    dispatch(setPanelEditorUIState({ isPanelOptionsVisible: !isPanelOptionsVisible }));
   };
 
   if (!plugin) {
@@ -71,7 +57,7 @@ export const VisualizationButtonUnconnected: FC<Props> = ({
   );
 };
 
-VisualizationButtonUnconnected.displayName = 'VisualizationTabUnconnected';
+VisualizationButton.displayName = 'VisualizationTab';
 
 const getStyles = (theme: GrafanaTheme) => {
   return {
@@ -84,20 +70,3 @@ const getStyles = (theme: GrafanaTheme) => {
     `,
   };
 };
-
-const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (state, props) => {
-  return {
-    plugin: state.plugins.panels[props.panel.type],
-    isPanelOptionsVisible: state.panelEditor.ui.isPanelOptionsVisible,
-    isVizPickerOpen: state.panelEditor.isVizPickerOpen,
-  };
-};
-
-const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
-  toggleVizPicker,
-  setPanelEditorUIState,
-};
-
-export const VisualizationButton = connect(mapStateToProps, mapDispatchToProps, undefined, { forwardRef: true })(
-  VisualizationButtonUnconnected
-);
