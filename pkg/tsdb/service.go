@@ -56,7 +56,6 @@ type Service struct {
 // Init initialises the service.
 func (s *Service) Init() error {
 	s.registry["graphite"] = graphite.New(s.HTTPClientProvider)
-	// s.registry["opentsdb"] = opentsdb.New(s.HTTPClientProvider)
 	s.registry["prometheus"] = prometheus.New(s.HTTPClientProvider)
 	s.registry["influxdb"] = influxdb.New(s.HTTPClientProvider)
 	s.registry["mssql"] = mssql.NewExecutor
