@@ -70,7 +70,6 @@ func (s *OpenTsdbService) Init() error {
 
 func NewInstanceSettings(httpClientProvider httpclient.Provider) datasource.InstanceFactoryFunc {
 	return func(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-
 		opts, err := settings.HTTPClientOptions()
 		if err != nil {
 			return nil, err
@@ -115,15 +114,12 @@ func (e *OpenTsdbExecutor) QueryData(ctx context.Context, req *backend.QueryData
 	var tsdbQuery OpenTsdbQuery
 
 	q := req.Queries[0]
-	model, err := simplejson.NewJson(q.JSON)
-	if err != nil {
-		return nil, err
-	}
-	tsdbQuery.Start = model.Get("start").MustInt64() / int64(time.Millisecond)
-	tsdbQuery.End = model.Get("end").MustInt64() / int64(time.Millisecond)
+
+	tsdbQuery.Start = q.TimeRange.From.UnixNano() / int64(time.Millisecond)
+	tsdbQuery.End = q.TimeRange.To.UnixNano() / int64(time.Millisecond)
 
 	for _, query := range req.Queries {
-		metric := e.buildMetric(&query)
+		metric := e.buildMetric(query)
 		tsdbQuery.Queries = append(tsdbQuery.Queries, metric)
 	}
 
@@ -147,7 +143,7 @@ func (e *OpenTsdbExecutor) QueryData(ctx context.Context, req *backend.QueryData
 		return &backend.QueryDataResponse{}, err
 	}
 
-	result, err := e.parseResponse(req, res)
+	result, err := e.parseResponse(res)
 	if err != nil {
 		return &backend.QueryDataResponse{}, err
 	}
@@ -175,14 +171,14 @@ func (e *OpenTsdbExecutor) createRequest(dsInfo *datasourceInfo, data OpenTsdbQu
 	}
 
 	req.Header.Set("Content-Type", "application/json")
-	// if dsInfo.BasicAuth {
-	// req.SetBasicAuth(dsInfo.BasicAuthUser, dsInfo.DecryptedBasicAuthPassword())
-	// }
+	if dsInfo.BasicAuth {
+		req.SetBasicAuth(dsInfo.BasicAuthUser, dsInfo.BasicAuthPassword)
+	}
 
 	return req, nil
 }
 
-func (e *OpenTsdbExecutor) parseResponse(req *backend.QueryDataRequest, res *http.Response) (*backend.QueryDataResponse, error) {
+func (e *OpenTsdbExecutor) parseResponse(res *http.Response) (*backend.QueryDataResponse, error) {
 	resp := backend.NewQueryDataResponse()
 
 	body, err := ioutil.ReadAll(res.Body)
@@ -232,7 +228,7 @@ func (e *OpenTsdbExecutor) parseResponse(req *backend.QueryDataRequest, res *htt
 	return resp, nil
 }
 
-func (e *OpenTsdbExecutor) buildMetric(query *backend.DataQuery) map[string]interface{} {
+func (e *OpenTsdbExecutor) buildMetric(query backend.DataQuery) map[string]interface{} {
 	metric := make(map[string]interface{})
 
 	model, err := simplejson.NewJson(query.JSON)
