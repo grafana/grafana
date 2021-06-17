@@ -34,7 +34,7 @@ describe('ReturnToDashboardButton', () => {
 
   it('should only render return to panel button if user cannot edit panel', () => {
     render(<ReturnToDashboardButton {...createProps({ canEdit: false })} />);
-    expect(screen.queryByTestId(/returnButton/i)).toHaveLength(1);
+    expect(screen.getAllByTestId(/returnButton/i)).toHaveLength(1);
   });
 
   it('should show option to return to dashboard with changes', () => {
