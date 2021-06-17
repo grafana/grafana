@@ -411,6 +411,36 @@ describe('FieldDisplay', () => {
       expect(result[1].display.title).toEqual('Norway Oslo');
       expect(result[1].display.text).toEqual('20');
     });
+
+    it('When showing all values for field with displayNameFromDS', () => {
+      const options = createDisplayOptions({
+        reduceOptions: {
+          values: true,
+          calcs: [],
+        },
+        fieldConfig: { overrides: [], defaults: {} },
+        data: [
+          toDataFrame({
+            fields: [
+              {
+                name: 'Time',
+                values: [1],
+              },
+              {
+                name: 'Value',
+                values: [10],
+                config: {
+                  displayNameFromDS: 'NewName',
+                },
+              },
+            ],
+          }),
+        ],
+      });
+
+      const result = getFieldDisplayValues(options);
+      expect(result[0].display.title).toEqual('NewName');
+    });
   });
 });
 
