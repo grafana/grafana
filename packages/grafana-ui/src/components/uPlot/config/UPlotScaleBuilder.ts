@@ -64,7 +64,7 @@ export class UPlotScaleBuilder extends PlotConfigBuilder<ScaleProps, Scale> {
     const rangeFn = (u: uPlot, dataMin: number, dataMax: number, scaleKey: string) => {
       const scale = u.scales[scaleKey];
 
-      let minMax = [dataMin, dataMax];
+      let minMax: uPlot.Range.MinMax = [dataMin, dataMax];
 
       if (scale.distr === 1 || scale.distr === 2) {
         // @ts-ignore here we may use hardMin / hardMax to make sure any extra padding is computed from a more accurate delta
