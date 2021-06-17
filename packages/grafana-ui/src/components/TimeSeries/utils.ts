@@ -150,38 +150,42 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
 
     const showPoints = customConfig.drawStyle === DrawStyle.Points ? PointVisibility.Always : customConfig.showPoints;
 
-    const pointsFilter: uPlot.Series.Points.Filter = (u, seriesIdx, show, gaps) => {
-      let filtered = [];
+    let pointsFilter: uPlot.Series.Points.Filter = () => null;
 
-      let series = u.series[seriesIdx];
+    if (customConfig.spanNulls !== true) {
+      pointsFilter = (u, seriesIdx, show, gaps) => {
+        let filtered = [];
 
-      if (!show && gaps && gaps.length) {
-        const [firstIdx, lastIdx] = series.idxs!;
-        const xData = u.data[0];
-        const firstPos = Math.round(u.valToPos(xData[firstIdx], 'x', true));
-        const lastPos = Math.round(u.valToPos(xData[lastIdx], 'x', true));
+        let series = u.series[seriesIdx];
 
-        if (gaps[0][0] === firstPos) {
-          filtered.push(firstIdx);
-        }
+        if (!show && gaps && gaps.length) {
+          const [firstIdx, lastIdx] = series.idxs!;
+          const xData = u.data[0];
+          const firstPos = Math.round(u.valToPos(xData[firstIdx], 'x', true));
+          const lastPos = Math.round(u.valToPos(xData[lastIdx], 'x', true));
 
-        // show single points between consecutive gaps that share end/start
-        for (let i = 0; i < gaps.length; i++) {
-          let thisGap = gaps[i];
-          let nextGap = gaps[i + 1];
+          if (gaps[0][0] === firstPos) {
+            filtered.push(firstIdx);
+          }
 
-          if (nextGap && thisGap[1] === nextGap[0]) {
-            filtered.push(u.posToIdx(thisGap[1], true));
+          // show single points between consecutive gaps that share end/start
+          for (let i = 0; i < gaps.length; i++) {
+            let thisGap = gaps[i];
+            let nextGap = gaps[i + 1];
+
+            if (nextGap && thisGap[1] === nextGap[0]) {
+              filtered.push(u.posToIdx(thisGap[1], true));
+            }
+          }
+
+          if (gaps[gaps.length - 1][1] === lastPos) {
+            filtered.push(lastIdx);
           }
         }
 
-        if (gaps[gaps.length - 1][1] === lastPos) {
-          filtered.push(lastIdx);
-        }
-      }
-
-      return filtered.length ? filtered : null;
-    };
+        return filtered.length ? filtered : null;
+      };
+    }
 
     let { fillOpacity } = customConfig;
 
