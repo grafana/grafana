@@ -1,9 +1,10 @@
 import {
+  ArrayVector,
   DataFrame,
+  Field,
   FieldType,
   formattedValueToString,
   getFieldColorModeForField,
-  getFieldDisplayName,
   getFieldSeriesColor,
   MutableDataFrame,
   VizOrientation,
@@ -75,11 +76,13 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptions> = ({
 
   const config = getConfig(opts, theme);
 
+  builder.setCursor(config.cursor);
+
   builder.addHook('init', config.init);
   builder.addHook('drawClear', config.drawClear);
   builder.addHook('draw', config.draw);
 
-  builder.setTooltipInterpolator(config.interpolateBarChartTooltip);
+  builder.setTooltipInterpolator(config.interpolateTooltip);
 
   builder.addScale({
     scaleKey: 'x',
@@ -134,8 +137,6 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptions> = ({
         fieldIndex: i,
         frameIndex: 0,
       },
-      fieldName: getFieldDisplayName(field, frame),
-      hideInLegend: customConfig.hideFrom?.legend,
     });
 
     // The builder will manage unique scaleKeys and combine where appropriate
@@ -196,4 +197,55 @@ export function preparePlotFrame(data: DataFrame[]) {
   }
 
   return resultFrame;
+}
+
+/** @internal */
+export function prepareGraphableFrames(series: DataFrame[]): { frames?: DataFrame[]; warn?: string } {
+  if (!series?.length) {
+    return { warn: 'No data in response' };
+  }
+
+  const frames: DataFrame[] = [];
+  const firstFrame = series[0];
+
+  if (!firstFrame.fields.some((f) => f.type === FieldType.string)) {
+    return {
+      warn: 'Bar charts requires a string field',
+    };
+  }
+
+  if (!firstFrame.fields.some((f) => f.type === FieldType.number)) {
+    return {
+      warn: 'No numeric fields found',
+    };
+  }
+
+  for (let frame of series) {
+    const fields: Field[] = [];
+    for (const field of frame.fields) {
+      if (field.type === FieldType.number) {
+        let copy = {
+          ...field,
+          values: new ArrayVector(
+            field.values.toArray().map((v) => {
+              if (!(Number.isFinite(v) || v == null)) {
+                return null;
+              }
+              return v;
+            })
+          ),
+        };
+        fields.push(copy);
+      } else {
+        fields.push({ ...field });
+      }
+    }
+
+    frames.push({
+      ...frame,
+      fields,
+    });
+  }
+
+  return { frames };
 }

@@ -35,16 +35,16 @@ describe('Exemplars', () => {
   });
 
   it('should be able to navigate to configured data source', () => {
-    e2e().intercept('POST', '/api/v1/query_exemplars', {
+    e2e().intercept('POST', '**/api/v1/query_exemplars', {
       fixture: 'exemplars-query-response.json',
     });
-    e2e().intercept('POST', '/api/v1/query_range', {
+    e2e().intercept('POST', '**/api/v1/query_range', {
       fixture: 'prometheus-query-range-response.json',
     });
-    e2e().intercept('POST', '/api/v1/query', {
+    e2e().intercept('POST', '**/api/v1/query', {
       fixture: 'prometheus-query-response.json',
     });
-    e2e().intercept('POST', '/api/ds/query', {
+    e2e().intercept('POST', '**/api/ds/query', {
       fixture: 'tempo-response.json',
     });
 
@@ -65,8 +65,6 @@ describe('Exemplars', () => {
 
     e2e.components.DataSource.Prometheus.exemplarMarker().first().trigger('mouseover');
     e2e().contains('Query with gdev-tempo').click();
-
-    e2e().get('[aria-label="Node: app"]').should('be.visible');
     e2e.components.TraceViewer.spanBar().should('have.length', 11);
   });
 });

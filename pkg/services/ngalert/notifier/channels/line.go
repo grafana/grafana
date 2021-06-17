@@ -6,8 +6,6 @@ import (
 	"net/url"
 	"path"
 
-	gokit_log "github.com/go-kit/kit/log"
-	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 
@@ -18,7 +16,7 @@ import (
 	old_notifiers "github.com/grafana/grafana/pkg/services/alerting/notifiers"
 )
 
-const (
+var (
 	LineNotifyURL string = "https://notify-api.line.me/api/notify"
 )
 
@@ -58,9 +56,8 @@ func (ln *LineNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, e
 
 	ruleURL := path.Join(ln.tmpl.ExternalURL.String(), "/alerting/list")
 
-	data := notify.GetTemplateData(ctx, ln.tmpl, as, gokit_log.NewNopLogger())
 	var tmplErr error
-	tmpl := notify.TmplText(ln.tmpl, data, &tmplErr)
+	tmpl, _ := TmplText(ctx, ln.tmpl, as, ln.log, &tmplErr)
 
 	body := fmt.Sprintf(
 		"%s\n%s\n\n%s",
@@ -69,7 +66,7 @@ func (ln *LineNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, e
 		tmpl(`{{ template "default.message" . }}`),
 	)
 	if tmplErr != nil {
-		return false, fmt.Errorf("failed to template Line message: %w", tmplErr)
+		ln.log.Debug("failed to template Line message", "err", tmplErr.Error())
 	}
 
 	form := url.Values{}

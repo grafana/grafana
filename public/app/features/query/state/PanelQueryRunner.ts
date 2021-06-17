@@ -32,6 +32,7 @@ import {
 } from '@grafana/data';
 import { getDashboardQueryRunner } from './DashboardQueryRunner/DashboardQueryRunner';
 import { mergePanelAndDashData } from './mergePanelAndDashData';
+import { PanelModel } from '../../dashboard/state';
 
 export interface QueryRunnerOptions<
   TQuery extends DataQuery = DataQuery,
@@ -255,7 +256,9 @@ export class PanelQueryRunner {
     const dataSupport = this.dataConfigSource.getDataSupport();
 
     if (dataSupport.alertStates || dataSupport.annotations) {
-      panelData = mergePanelAndDashData(observable, getDashboardQueryRunner().getResult(panelId));
+      const panel = (this.dataConfigSource as unknown) as PanelModel;
+      const id = panel.editSourceId ?? panel.id;
+      panelData = mergePanelAndDashData(observable, getDashboardQueryRunner().getResult(id));
     }
 
     this.subscription = panelData.subscribe({

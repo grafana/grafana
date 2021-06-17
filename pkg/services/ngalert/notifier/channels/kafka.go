@@ -2,9 +2,8 @@ package channels
 
 import (
 	"context"
-	"fmt"
+	"strings"
 
-	gokit_log "github.com/go-kit/kit/log"
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
@@ -66,9 +65,8 @@ func (kn *KafkaNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 
 	kn.log.Debug("Notifying Kafka", "alert_state", state)
 
-	data := notify.GetTemplateData(ctx, kn.tmpl, as, gokit_log.NewNopLogger())
 	var tmplErr error
-	tmpl := notify.TmplText(kn.tmpl, data, &tmplErr)
+	tmpl, _ := TmplText(ctx, kn.tmpl, as, kn.log, &tmplErr)
 
 	bodyJSON := simplejson.New()
 	bodyJSON.Set("alert_state", state)
@@ -76,10 +74,7 @@ func (kn *KafkaNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 	bodyJSON.Set("client", "Grafana")
 	bodyJSON.Set("details", tmpl(`{{ template "default.message" . }}`))
 
-	ruleURL, err := joinUrlPath(kn.tmpl.ExternalURL.String(), "/alerting/list")
-	if err != nil {
-		return false, err
-	}
+	ruleURL := joinUrlPath(kn.tmpl.ExternalURL.String(), "/alerting/list", kn.log)
 	bodyJSON.Set("client_url", ruleURL)
 
 	groupKey, err := notify.ExtractGroupKey(ctx)
@@ -95,7 +90,7 @@ func (kn *KafkaNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 	recordJSON.Set("records", []interface{}{valueJSON})
 
 	if tmplErr != nil {
-		return false, fmt.Errorf("failed to template Kafka message: %w", tmplErr)
+		kn.log.Debug("failed to template Kafka message", "err", tmplErr.Error())
 	}
 
 	body, err := recordJSON.MarshalJSON()
@@ -103,7 +98,7 @@ func (kn *KafkaNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 		return false, err
 	}
 
-	topicURL := kn.Endpoint + "/topics/" + kn.Topic
+	topicURL := strings.TrimRight(kn.Endpoint, "/") + "/topics/" + kn.Topic
 
 	cmd := &models.SendWebhookSync{
 		Url:        topicURL,

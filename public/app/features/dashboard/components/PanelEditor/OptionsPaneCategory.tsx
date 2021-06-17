@@ -54,7 +54,6 @@ export const OptionsPaneCategory: FC<OptionsPaneCategoryProps> = React.memo(
     const boxStyles = cx(
       {
         [styles.box]: true,
-        [styles.boxExpanded]: isExpanded,
         [styles.boxNestedExpanded]: isNested && isExpanded,
       },
       className,
@@ -71,7 +70,11 @@ export const OptionsPaneCategory: FC<OptionsPaneCategoryProps> = React.memo(
     });
 
     return (
-      <div className={boxStyles} data-testid="options-category">
+      <div
+        className={boxStyles}
+        data-testid="options-category"
+        aria-label={selectors.components.OptionsGroup.group(id)}
+      >
         <div className={headerStyles} onClick={onToggle} aria-label={selectors.components.OptionsGroup.toggle(id)}>
           <div className={cx(styles.toggle, 'editor-options-group-toggle')}>
             <Icon name={isExpanded ? 'angle-down' : 'angle-right'} />
@@ -89,13 +92,7 @@ export const OptionsPaneCategory: FC<OptionsPaneCategoryProps> = React.memo(
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     box: css`
-      border-bottom: 1px solid ${theme.colors.border.weak};
-      &:last-child {
-        border-bottom: none;
-      }
-    `,
-    boxExpanded: css`
-      border-bottom: 0;
+      border-top: 1px solid ${theme.colors.border.weak};
     `,
     boxNestedExpanded: css`
       margin-bottom: ${theme.spacing(2)};

@@ -11,7 +11,7 @@ Setting up Grafana for high availability is fairly simple. You just need a share
 and other persistent data. So the default embedded SQLite database will not work, you will have to switch to MySQL or Postgres.
 
 <div class="text-center">
-  <img src="/img/docs/tutorials/grafana-high-availability.png"  max-width= "800px" class="center" />
+  <img src="/static/img/docs/tutorials/grafana-high-availability.png"  max-width= "800px" class="center" />
 </div>
 
 ## Configure multiple servers to use the same database
@@ -22,7 +22,7 @@ Grafana will now persist all long term data in the database. How to configure th
 
 ## Alerting
 
-Currently alerting supports a limited form of high availability. [Alert notifications]({{< relref "../alerting/notifications.md" >}}) are deduplicated when running multiple servers. This means all alerts are executed on every server but alert notifications are only sent once per alert. Grafana does not support load distribution between servers.
+Currently alerting supports a limited form of high availability. [Alert notifications]({{< relref "../alerting/old-alerting/notifications.md" >}}) are deduplicated when running multiple servers. This means all alerts are executed on every server but alert notifications are only sent once per alert. Grafana does not support load distribution between servers.
 
 ## User sessions
 

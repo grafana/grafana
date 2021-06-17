@@ -24,6 +24,8 @@ export interface OwnProps {
   isFullscreen: boolean;
   kioskMode: KioskMode;
   hideTimePicker: boolean;
+  folderTitle?: string;
+  title: string;
   onAddPanel: () => void;
 }
 
@@ -245,14 +247,14 @@ class DashNav extends PureComponent<Props> {
   }
 
   render() {
-    const { dashboard, isFullscreen } = this.props;
+    const { isFullscreen, title, folderTitle } = this.props;
     const onGoBack = isFullscreen ? this.onClose : undefined;
 
     return (
       <PageToolbar
         pageIcon={isFullscreen ? undefined : 'apps'}
-        title={dashboard.title}
-        parent={dashboard.meta.folderTitle}
+        title={title}
+        parent={folderTitle}
         onClickTitle={this.onDashboardNameClick}
         onClickParent={this.onFolderNameClick}
         onGoBack={onGoBack}

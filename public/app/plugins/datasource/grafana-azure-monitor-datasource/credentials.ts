@@ -64,20 +64,6 @@ function getSecret(options: AzureDataSourceSettings): undefined | string | Conce
   }
 }
 
-function getLogAnalyticsSecret(options: AzureDataSourceSettings): undefined | string | ConcealedSecret {
-  if (options.secureJsonFields.logAnalyticsClientSecret) {
-    // The secret is concealed on server
-    return concealed;
-  } else {
-    const secret = options.secureJsonData?.logAnalyticsClientSecret;
-    return typeof secret === 'string' && secret.length > 0 ? secret : undefined;
-  }
-}
-
-export function isLogAnalyticsSameAs(options: AzureDataSourceSettings | AzureDataSourceInstanceSettings): boolean {
-  return typeof options.jsonData.azureLogAnalyticsSameAs !== 'boolean' || options.jsonData.azureLogAnalyticsSameAs;
-}
-
 export function isCredentialsComplete(credentials: AzureCredentials): boolean {
   switch (credentials.authType) {
     case 'msi':
@@ -94,6 +80,7 @@ export function getCredentials(options: AzureDataSourceSettings): AzureCredentia
       if (config.azure.managedIdentityEnabled) {
         return {
           authType: 'msi',
+          defaultSubscriptionId: options.jsonData.subscriptionId,
         };
       } else {
         // If authentication type is managed identity but managed identities were disabled in Grafana config,
@@ -110,30 +97,9 @@ export function getCredentials(options: AzureDataSourceSettings): AzureCredentia
         tenantId: options.jsonData.tenantId,
         clientId: options.jsonData.clientId,
         clientSecret: getSecret(options),
+        defaultSubscriptionId: options.jsonData.subscriptionId,
       };
   }
-}
-
-export function getLogAnalyticsCredentials(options: AzureDataSourceSettings): AzureCredentials | undefined {
-  const authType = getAuthType(options);
-
-  if (authType !== 'clientsecret') {
-    // Only app registration (client secret) authentication supports different credentials for Log Analytics
-    // for backward compatibility
-    return undefined;
-  }
-
-  if (isLogAnalyticsSameAs(options)) {
-    return undefined;
-  }
-
-  return {
-    authType: 'clientsecret',
-    azureCloud: options.jsonData.cloudName || getDefaultAzureCloud(),
-    tenantId: options.jsonData.logAnalyticsTenantId,
-    clientId: options.jsonData.logAnalyticsClientId,
-    clientSecret: getLogAnalyticsSecret(options),
-  };
 }
 
 export function updateCredentials(
@@ -151,12 +117,9 @@ export function updateCredentials(
         jsonData: {
           ...options.jsonData,
           azureAuthType: 'msi',
+          subscriptionId: credentials.defaultSubscriptionId,
         },
       };
-
-      if (!isLogAnalyticsSameAs(options)) {
-        options = updateLogAnalyticsSameAs(options, true);
-      }
 
       return options;
 
@@ -169,6 +132,7 @@ export function updateCredentials(
           cloudName: credentials.azureCloud || getDefaultAzureCloud(),
           tenantId: credentials.tenantId,
           clientId: credentials.clientId,
+          subscriptionId: credentials.defaultSubscriptionId,
         },
         secureJsonData: {
           ...options.secureJsonData,
@@ -179,87 +143,14 @@ export function updateCredentials(
         },
         secureJsonFields: {
           ...options.secureJsonFields,
-          clientSecret: typeof credentials.clientSecret === 'object',
+          clientSecret: typeof credentials.clientSecret === 'symbol',
         },
       };
-
-      if (isLogAnalyticsSameAs(options)) {
-        options = updateLogAnalyticsCredentials(options, credentials);
-      }
 
       return options;
   }
 }
 
-export function updateLogAnalyticsCredentials(
-  options: AzureDataSourceSettings,
-  credentials: AzureCredentials
-): AzureDataSourceSettings {
-  // Log Analytics credentials only used if primary credentials are App Registration (client secret)
-  if (credentials.authType === 'clientsecret') {
-    options = {
-      ...options,
-      jsonData: {
-        ...options.jsonData,
-        logAnalyticsTenantId: credentials.tenantId,
-        logAnalyticsClientId: credentials.clientId,
-      },
-      secureJsonData: {
-        ...options.secureJsonData,
-        logAnalyticsClientSecret:
-          typeof credentials.clientSecret === 'string' && credentials.clientSecret.length > 0
-            ? credentials.clientSecret
-            : undefined,
-      },
-      secureJsonFields: {
-        ...options.secureJsonFields,
-        logAnalyticsClientSecret: typeof credentials.clientSecret === 'symbol',
-      },
-    };
-  }
-
-  return options;
-}
-
-export function updateLogAnalyticsSameAs(options: AzureDataSourceSettings, sameAs: boolean): AzureDataSourceSettings {
-  if (sameAs !== isLogAnalyticsSameAs(options)) {
-    // Update the 'Same As' switch
-    options = {
-      ...options,
-      jsonData: {
-        ...options.jsonData,
-        azureLogAnalyticsSameAs: sameAs,
-      },
-    };
-
-    if (sameAs) {
-      // Get the primary credentials
-      let credentials = getCredentials(options);
-
-      // Log Analytics credentials only used if primary credentials are App Registration (client secret)
-      if (credentials.authType === 'clientsecret') {
-        // Check whether the client secret is concealed
-        if (typeof credentials.clientSecret === 'symbol') {
-          // Log Analytics credentials need to be synchronized but the client secret is concealed,
-          // so we have to reset the primary client secret to ensure that user enters a new secret
-          credentials.clientSecret = undefined;
-          options = updateCredentials(options, credentials);
-        }
-
-        // Synchronize the Log Analytics credentials with primary credentials
-        options = updateLogAnalyticsCredentials(options, credentials);
-      }
-
-      // Synchronize default subscription
-      options = {
-        ...options,
-        jsonData: {
-          ...options.jsonData,
-          logAnalyticsSubscriptionId: options.jsonData.subscriptionId,
-        },
-      };
-    }
-  }
-
-  return options;
+export function isAppInsightsConfigured(options: AzureDataSourceSettings) {
+  return !!(options.jsonData.appInsightsAppId && options.secureJsonFields.appInsightsApiKey);
 }

@@ -27,7 +27,6 @@ const (
 	noDataPointsQuery                 queryType = "no_data_points"
 	datapointsOutsideRangeQuery       queryType = "datapoints_outside_range"
 	csvMetricValuesQuery              queryType = "csv_metric_values"
-	manualEntryQuery                  queryType = "manual_entry"
 	predictablePulseQuery             queryType = "predictable_pulse"
 	predictableCSVWaveQuery           queryType = "predictable_csv_wave"
 	streamingClientQuery              queryType = "streaming_client"
@@ -39,7 +38,8 @@ const (
 	serverError500Query               queryType = "server_error_500"
 	logsQuery                         queryType = "logs"
 	nodeGraphQuery                    queryType = "node_graph"
-	categoricalDataQuery              queryType = "categorical_data"
+	csvFileQueryType                  queryType = "csv_file"
+	csvContentQueryType               queryType = "csv_content"
 )
 
 type queryType string
@@ -118,12 +118,6 @@ Timestamps will line up evenly on timeStepSeconds (For example, 60 seconds means
 	})
 
 	p.registerScenario(&Scenario{
-		ID:      string(manualEntryQuery),
-		Name:    "Manual Entry",
-		handler: p.handleManualEntryScenario,
-	})
-
-	p.registerScenario(&Scenario{
 		ID:          string(csvMetricValuesQuery),
 		Name:        "CSV Metric Values",
 		StringInput: "1,20,90,30,5,0",
@@ -190,9 +184,15 @@ Timestamps will line up evenly on timeStepSeconds (For example, 60 seconds means
 	})
 
 	p.registerScenario(&Scenario{
-		ID:      string(categoricalDataQuery),
-		Name:    "Categorical Data",
-		handler: p.handleCategoricalDataScenario,
+		ID:      string(csvFileQueryType),
+		Name:    "CSV File",
+		handler: p.handleCsvFileScenario,
+	})
+
+	p.registerScenario(&Scenario{
+		ID:      string(csvContentQueryType),
+		Name:    "CSV Content",
+		handler: p.handleCsvContentScenario,
 	})
 
 	p.queryMux.HandleFunc("", p.handleFallbackScenario)
@@ -286,97 +286,6 @@ func (p *testDataPlugin) handleDatapointsOutsideRangeScenario(ctx context.Contex
 	return resp, nil
 }
 
-func (p *testDataPlugin) handleManualEntryScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	resp := backend.NewQueryDataResponse()
-
-	for _, q := range req.Queries {
-		model, err := simplejson.NewJson(q.JSON)
-		if err != nil {
-			return nil, fmt.Errorf("error reading query")
-		}
-		points := model.Get("points").MustArray()
-
-		frame := newSeriesForQuery(q, model, 0)
-
-		timeField := data.NewFieldFromFieldType(data.FieldTypeTime, 0)
-		valueField := data.NewFieldFromFieldType(data.FieldTypeNullableFloat64, 0)
-		timeField.Name = data.TimeSeriesTimeFieldName
-		valueField.Name = data.TimeSeriesValueFieldName
-
-		for _, val := range points {
-			pointValues := val.([]interface{})
-
-			var value *float64
-
-			if pointValues[0] != nil {
-				if valueFloat, err := strconv.ParseFloat(string(pointValues[0].(json.Number)), 64); err == nil {
-					value = &valueFloat
-				}
-			}
-
-			timeInt, err := strconv.ParseInt(string(pointValues[1].(json.Number)), 10, 64)
-			if err != nil {
-				continue
-			}
-
-			t := time.Unix(timeInt/int64(1e+3), (timeInt%int64(1e+3))*int64(1e+6))
-
-			timeField.Append(t)
-			valueField.Append(value)
-		}
-
-		frame.Fields = data.Fields{timeField, valueField}
-
-		respD := resp.Responses[q.RefID]
-		respD.Frames = append(respD.Frames, frame)
-		resp.Responses[q.RefID] = respD
-	}
-
-	return resp, nil
-}
-
-func csvToFieldValues(stringInput string) (*data.Field, error) {
-	parts := strings.Split(strings.ReplaceAll(stringInput, " ", ""), ",")
-	if len(parts) < 1 {
-		return nil, fmt.Errorf("csv must have at least one value")
-	}
-
-	first := strings.ToUpper(parts[0])
-	if first == "T" || first == "F" || first == "TRUE" || first == "FALSE" {
-		field := data.NewFieldFromFieldType(data.FieldTypeNullableBool, len(parts))
-		for idx, strVal := range parts {
-			strVal = strings.ToUpper(strVal)
-			if strVal == "NULL" || strVal == "" {
-				continue
-			}
-			field.SetConcrete(idx, strVal == "T" || strVal == "TRUE")
-		}
-		return field, nil
-	}
-
-	// If we can not parse the first value as a number, assume strings
-	_, err := strconv.ParseFloat(first, 64)
-	if err != nil {
-		field := data.NewFieldFromFieldType(data.FieldTypeNullableString, len(parts))
-		for idx, strVal := range parts {
-			if strVal == "null" || strVal == "" {
-				continue
-			}
-			field.SetConcrete(idx, strVal)
-		}
-		return field, nil
-	}
-
-	// Set any valid numbers
-	field := data.NewFieldFromFieldType(data.FieldTypeNullableFloat64, len(parts))
-	for idx, strVal := range parts {
-		if val, err := strconv.ParseFloat(strVal, 64); err == nil {
-			field.SetConcrete(idx, val)
-		}
-	}
-	return field, nil
-}
-
 func (p *testDataPlugin) handleCSVMetricValuesScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	resp := backend.NewQueryDataResponse()
 
@@ -388,7 +297,7 @@ func (p *testDataPlugin) handleCSVMetricValuesScenario(ctx context.Context, req 
 
 		stringInput := model.Get("stringInput").MustString()
 
-		valueField, err := csvToFieldValues(stringInput)
+		valueField, err := csvLineToField(stringInput)
 		if err != nil {
 			return nil, err
 		}
@@ -687,27 +596,6 @@ func (p *testDataPlugin) handleLogsScenario(ctx context.Context, req *backend.Qu
 			to -= q.Interval.Milliseconds()
 		}
 
-		respD := resp.Responses[q.RefID]
-		respD.Frames = append(respD.Frames, frame)
-		resp.Responses[q.RefID] = respD
-	}
-
-	return resp, nil
-}
-
-func (p *testDataPlugin) handleCategoricalDataScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	resp := backend.NewQueryDataResponse()
-	for _, q := range req.Queries {
-		frame := data.NewFrame(q.RefID,
-			data.NewField("location", nil, []string{}),
-			data.NewField("temperature", nil, []int64{}),
-			data.NewField("humidity", nil, []int64{}),
-			data.NewField("pressure", nil, []int64{}),
-		)
-
-		for i := 0; i < len(houseLocations); i++ {
-			frame.AppendRow(houseLocations[i], rand.Int63n(40+40)-40, rand.Int63n(100), rand.Int63n(1020-900)+900)
-		}
 		respD := resp.Responses[q.RefID]
 		respD.Frames = append(respD.Frames, frame)
 		resp.Responses[q.RefID] = respD

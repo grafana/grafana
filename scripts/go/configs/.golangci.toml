@@ -1,9 +1,6 @@
 [run]
 timeout = "10m"
 
-[linters-settings.golint]
-min-confidence = 3
-
 [linters-settings.goconst]
 min-len = 5
 min-occurrences = 5
@@ -33,7 +30,6 @@ enable = [
   "goconst",
   "gocritic",
   "goimports",
-  "golint",
   "goprintffuncname",
   "gosec",
   "gosimple",

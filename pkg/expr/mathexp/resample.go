@@ -13,7 +13,7 @@ func (s Series) Resample(refID string, interval time.Duration, downsampler strin
 	if newSeriesLength <= 0 {
 		return s, fmt.Errorf("the series cannot be sampled further; the time range is shorter than the interval")
 	}
-	resampled := NewSeries(refID, s.GetLabels(), s.TimeIdx, true, s.ValueIdx, true, newSeriesLength+1)
+	resampled := NewSeries(refID, s.GetLabels(), newSeriesLength+1)
 	bookmark := 0
 	var lastSeen *float64
 	idx := 0
@@ -72,8 +72,7 @@ func (s Series) Resample(refID string, interval time.Duration, downsampler strin
 			}
 			value = tmp
 		}
-		tv := t // his is required otherwise all points keep the latest timestamp; anything better?
-		if err := resampled.SetPoint(idx, &tv, value); err != nil {
+		if err := resampled.SetPoint(idx, t, value); err != nil {
 			return resampled, err
 		}
 		t = t.Add(interval)

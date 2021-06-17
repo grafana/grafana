@@ -133,4 +133,54 @@ describe('Azure Monitor QueryEditor', () => {
 
     expect(screen.getByText("The resource namespace 'grafanadev' is invalid.")).toBeInTheDocument();
   });
+
+  it('hides deprecated services', async () => {
+    const mockDatasource = createMockDatasource();
+    const mockQuery = {
+      ...createMockQuery(),
+      queryType: AzureQueryType.AzureMonitor,
+    };
+
+    render(
+      <QueryEditor
+        query={mockQuery}
+        datasource={mockDatasource}
+        variableOptionGroup={variableOptionGroup}
+        onChange={() => {}}
+      />
+    );
+    await waitFor(() => expect(screen.getByTestId('azure-monitor-metrics-query-editor')).toBeInTheDocument());
+
+    const metrics = await screen.findByLabelText('Service');
+    selectEvent.openMenu(metrics);
+
+    expect(screen.queryByText('Application Insights')).not.toBeInTheDocument();
+  });
+
+  it("shows deprecated services when they're selected", async () => {
+    const mockDatasource = createMockDatasource();
+    const mockQuery = {
+      ...createMockQuery(),
+      queryType: AzureQueryType.ApplicationInsights,
+    };
+
+    render(
+      <QueryEditor
+        query={mockQuery}
+        datasource={mockDatasource}
+        variableOptionGroup={variableOptionGroup}
+        onChange={() => {}}
+      />
+    );
+    await waitFor(() =>
+      expect(screen.getByTestId('azure-monitor-application-insights-query-editor')).toBeInTheDocument()
+    );
+
+    expect(screen.queryByText('Application Insights')).toBeInTheDocument();
+
+    const metrics = await screen.findByLabelText('Service');
+    await selectEvent.select(metrics, 'Logs');
+
+    expect(screen.queryByText('Application Insights')).toBeInTheDocument();
+  });
 });

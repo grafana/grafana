@@ -1,11 +1,9 @@
 import uPlot, { Axis, Series } from 'uplot';
 import { pointWithin, Quadtree, Rect } from './quadtree';
 import { distribute, SPACE_BETWEEN } from './distribute';
-import { TooltipInterpolator } from '@grafana/ui/src/components/uPlot/types';
 import { BarValueVisibility, ScaleDirection, ScaleOrientation } from '@grafana/ui/src/components/uPlot/config';
 import { CartesianCoords2D, GrafanaTheme2 } from '@grafana/data';
-import { calculateFontSize, measureText } from '@grafana/ui';
-import { VizTextDisplayOptions } from '@grafana/ui/src/options/builder';
+import { calculateFontSize, measureText, PlotTooltipInterpolator, VizTextDisplayOptions } from '@grafana/ui';
 
 const groupDistr = SPACE_BETWEEN;
 const barDistr = SPACE_BETWEEN;
@@ -72,7 +70,7 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
         walkTwo(groupWidth, barWidth, sidx - 1, numGroups, barsPerGroup, xDim, null, (ix, x0, wid) => {
           let left = Math.round(xOff + (_dir === 1 ? x0 : xDim - x0 - wid));
           let barWid = Math.round(wid);
-          const canvas = u.root.querySelector<HTMLDivElement>('.u-over');
+          const canvas = u.over;
           const bbox = canvas?.getBoundingClientRect();
 
           if (dataY[ix] != null) {
@@ -291,7 +289,7 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
   barMark.style.background = 'rgba(255,255,255,0.4)';
 
   const init = (u: uPlot) => {
-    let over = u.root.querySelector('.u-over')! as HTMLElement;
+    let over = u.over;
     over.style.overflow = 'hidden';
     over.appendChild(barMark);
   };
@@ -311,7 +309,7 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
   };
 
   // handle hover interaction with quadtree probing
-  const interpolateBarChartTooltip: TooltipInterpolator = (
+  const interpolateTooltip: PlotTooltipInterpolator = (
     updateActiveSeriesIdx,
     updateActiveDatapointIdx,
     updateTooltipPosition
@@ -353,6 +351,10 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
   };
 
   return {
+    cursor: {
+      x: false,
+      y: false,
+    },
     // scale & axis opts
     xValues,
     xSplits,
@@ -364,7 +366,7 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
     // hooks
     init,
     drawClear,
-    interpolateBarChartTooltip,
+    interpolateTooltip,
   };
 }
 

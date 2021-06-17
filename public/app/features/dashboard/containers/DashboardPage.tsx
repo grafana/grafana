@@ -29,6 +29,7 @@ import { getKioskMode } from 'app/core/navigation/kiosk';
 import { GrafanaTheme2, UrlQueryValue } from '@grafana/data';
 import { DashboardLoading } from '../components/DashboardLoading/DashboardLoading';
 import { DashboardFailed } from '../components/DashboardLoading/DashboardFailed';
+import { DashboardPrompt } from '../components/DashboardPrompt/DashboardPrompt';
 
 export interface DashboardPageRouteParams {
   uid?: string;
@@ -147,7 +148,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
       const prevUrlParams = prevProps.queryParams;
       const urlParams = this.props.queryParams;
 
-      if (urlParams?.from !== prevUrlParams?.from && urlParams?.to !== prevUrlParams?.to) {
+      if (urlParams?.from !== prevUrlParams?.from || urlParams?.to !== prevUrlParams?.to) {
         getTimeSrv().updateTimeRangeFromUrl();
       }
 
@@ -289,7 +290,8 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
   render() {
     const { dashboard, isInitSlow, initError, isPanelEditorOpen, queryParams, theme } = this.props;
     const { editPanel, viewPanel, scrollTop, updateScrollTop } = this.state;
-    const styles = getStyles(theme);
+    const kioskMode = getKioskMode(queryParams.kiosk);
+    const styles = getStyles(theme, kioskMode);
 
     if (!dashboard) {
       if (isInitSlow) {
@@ -302,7 +304,6 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
     // Only trigger render when the scroll has moved by 25
     const approximateScrollTop = Math.round(scrollTop / 25) * 25;
     const inspectPanel = this.getInspectPanel();
-    const kioskMode = getKioskMode(queryParams.kiosk);
 
     return (
       <div className={styles.dashboardContainer}>
@@ -310,6 +311,8 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
           <div aria-label={selectors.pages.Dashboard.DashNav.nav}>
             <DashNav
               dashboard={dashboard}
+              title={dashboard.title}
+              folderTitle={dashboard.meta.folderTitle}
               isFullscreen={!!viewPanel}
               onAddPanel={this.onAddPanel}
               kioskMode={kioskMode}
@@ -317,6 +320,8 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
             />
           </div>
         )}
+
+        <DashboardPrompt dashboard={dashboard} />
 
         <div className={styles.dashboardScroll}>
           <CustomScrollbar
@@ -372,7 +377,8 @@ const mapDispatchToProps = {
 /*
  * Styles
  */
-export const getStyles = stylesFactory((theme: GrafanaTheme2) => {
+export const getStyles = stylesFactory((theme: GrafanaTheme2, kioskMode) => {
+  const contentPadding = kioskMode !== KioskMode.Full ? theme.spacing(0, 2, 2) : theme.spacing(2);
   return {
     dashboardContainer: css`
       position: absolute;
@@ -391,7 +397,7 @@ export const getStyles = stylesFactory((theme: GrafanaTheme2) => {
       display: flex;
     `,
     dashboardContent: css`
-      padding: ${theme.spacing(2)};
+      padding: ${contentPadding};
       flex-basis: 100%;
       flex-grow: 1;
     `,
