@@ -101,7 +101,7 @@ Object {
 }
 `;
 
-exports[`Graph Migrations preserves colors in series overrides 1`] = `
+exports[`Graph Migrations preserves colors from series overrides 1`] = `
 Object {
   "fieldConfig": Object {
     "defaults": Object {
