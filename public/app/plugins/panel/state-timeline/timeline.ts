@@ -547,6 +547,12 @@ export function getConfig(opts: TimelineCoreOptions) {
 }
 
 function getFillColor(fieldConfig: TimelineFieldConfig, color: string) {
+  // if #rgba with pre-existing alpha. ignore fieldConfig.fillOpacity
+  // e.g. thresholds with opacity
+  if (color[0] === '#' && color.length === 9) {
+    return color;
+  }
+
   const opacityPercent = (fieldConfig.fillOpacity ?? 100) / 100;
   return alpha(color, opacityPercent);
 }
