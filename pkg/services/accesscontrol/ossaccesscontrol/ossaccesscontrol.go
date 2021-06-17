@@ -56,23 +56,27 @@ func (ac *OSSAccessControlService) getUsageMetrics() interface{} {
 }
 
 func (ac *OSSAccessControlService) saveFixedRole(role accesscontrol.RoleDTO) error {
-	if value, ok := accesscontrol.FixedRoles.Load(role.Name); ok {
-		storedRole := value.(accesscontrol.RoleDTO)
+	accesscontrol.FixedRolesMutex.Lock()
+	defer accesscontrol.FixedRolesMutex.Unlock()
+
+	if storedRole, ok := accesscontrol.FixedRoles[role.Name]; ok {
 		if storedRole.Version >= role.Version {
 			return accesscontrol.ErrVersionLE
 		}
 	}
 	// Save role
-	accesscontrol.FixedRoles.Store(role.Name, role)
+	accesscontrol.FixedRoles[role.Name] = role
 
 	return nil
 }
 
 func (ac *OSSAccessControlService) assignFixedRole(role accesscontrol.RoleDTO, builtInRoles []string) error {
+	accesscontrol.FixedRoleGrantsMutex.Lock()
+	defer accesscontrol.FixedRoleGrantsMutex.Unlock()
+
 	for _, builtInRole := range builtInRoles {
 		assignments := []string{}
-		if value, ok := accesscontrol.FixedRoleGrants.Load(builtInRole); ok {
-			assignments = value.([]string)
+		if assignments, ok := accesscontrol.FixedRoleGrants[builtInRole]; ok {
 			alreadyAssigned := false
 			for _, assignedRole := range assignments {
 				if assignedRole == role.Name {
@@ -84,7 +88,7 @@ func (ac *OSSAccessControlService) assignFixedRole(role accesscontrol.RoleDTO, b
 			}
 		}
 		assignments = append(assignments, role.Name)
-		accesscontrol.FixedRoleGrants.Store(builtInRole, assignments)
+		accesscontrol.FixedRoleGrants[builtInRole] = assignments
 	}
 	return nil
 }
@@ -123,21 +127,25 @@ func (ac *OSSAccessControlService) Evaluate(ctx context.Context, user *models.Si
 
 // GetUserPermissions returns user permissions based on built-in roles
 func (ac *OSSAccessControlService) GetUserPermissions(ctx context.Context, user *models.SignedInUser) ([]*accesscontrol.Permission, error) {
+	// Lock fixed role grants and list for reading
+	accesscontrol.FixedRoleGrantsMutex.RLock()
+	defer accesscontrol.FixedRoleGrantsMutex.RUnlock()
+	accesscontrol.FixedRolesMutex.RLock()
+	defer accesscontrol.FixedRolesMutex.RUnlock()
+
 	timer := prometheus.NewTimer(metrics.MAccessPermissionsSummary)
 	defer timer.ObserveDuration()
 
 	builtinRoles := ac.GetUserBuiltInRoles(user)
 	permissions := make([]*accesscontrol.Permission, 0)
 	for _, builtin := range builtinRoles {
-		if values, ok := accesscontrol.FixedRoleGrants.Load(builtin); ok {
-			roleNames := values.([]string)
+		if roleNames, ok := accesscontrol.FixedRoleGrants[builtin]; ok {
 			for _, name := range roleNames {
-				value, exists := accesscontrol.FixedRoles.Load(name)
+				role, exists := accesscontrol.FixedRoles[name]
 				if !exists {
 					continue
 				}
-				r := value.(accesscontrol.RoleDTO)
-				for _, p := range r.Permissions {
+				for _, p := range role.Permissions {
 					permission := p
 					permissions = append(permissions, &permission)
 				}

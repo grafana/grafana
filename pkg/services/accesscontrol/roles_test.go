@@ -9,24 +9,24 @@ import (
 )
 
 func TestPredefinedRoles(t *testing.T) {
-	testFixedRolesMap := func(key, value interface{}) bool {
-		name := key.(string)
-		role := value.(RoleDTO)
+	FixedRolesMutex.RLock()
+	defer FixedRolesMutex.RUnlock()
 
+	for name, role := range FixedRoles {
 		assert.Truef(t,
 			strings.HasPrefix(name, "fixed:"),
 			"expected all fixed roles to be prefixed by 'fixed:', found role '%s'", name,
 		)
 		assert.Equal(t, name, role.Name)
 		assert.NotZero(t, role.Version)
-		return true
 	}
-	FixedRoles.Range(testFixedRolesMap)
 }
 
 func TestPredefinedRoleGrants(t *testing.T) {
-	testFixedRoleGrantsMap := func(_, value interface{}) bool {
-		roles := value.([]string)
+	FixedRoleGrantsMutex.RLock()
+	defer FixedRoleGrantsMutex.RUnlock()
+
+	for _, roles := range FixedRoleGrants {
 		// Check grants list is sorted
 		assert.True(t,
 			sort.SliceIsSorted(roles, func(i, j int) bool {
@@ -36,14 +36,13 @@ func TestPredefinedRoleGrants(t *testing.T) {
 		)
 
 		// Check all granted roles have been registered
+		FixedRolesMutex.RLock()
+		defer FixedRolesMutex.RUnlock()
 		for _, r := range roles {
-			_, ok := FixedRoles.Load(r)
+			_, ok := FixedRoles[r]
 			assert.True(t, ok)
 		}
-		return true
 	}
-
-	FixedRoleGrants.Range(testFixedRoleGrantsMap)
 }
 
 func TestConcatPermissions(t *testing.T) {

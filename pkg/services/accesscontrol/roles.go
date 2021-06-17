@@ -180,11 +180,13 @@ var (
 	// new fixed role in this set so that users can access the new
 	// resource. FixedRoleGrants lists which built-in roles are
 	// assigned which fixed roles in this list.
-	FixedRoles sync.Map
+	FixedRoles      = map[string]RoleDTO{}
+	FixedRolesMutex sync.RWMutex
 
 	// FixedRoleGrants specifies which built-in roles are assigned
 	// to which set of FixedRoles by default. Alphabetically sorted.
-	FixedRoleGrants sync.Map
+	FixedRoleGrants      = map[string][]string{}
+	FixedRoleGrantsMutex sync.RWMutex
 )
 
 func init() {
@@ -194,18 +196,23 @@ func init() {
 func InitFixedRole() {
 	once.Do(func() {
 		// Register roles
-		FixedRoles.Store(usersAdminEdit, usersAdminEditRole)
-		FixedRoles.Store(usersAdminRead, usersAdminReadRole)
-		FixedRoles.Store(usersOrgEdit, usersOrgEditRole)
-		FixedRoles.Store(usersOrgRead, usersOrgReadRole)
-		FixedRoles.Store(ldapAdminEdit, ldapAdminEditRole)
-		FixedRoles.Store(ldapAdminRead, ldapAdminReadRole)
-		FixedRoles.Store(serverAdminRead, serverAdminReadRole)
-		FixedRoles.Store(settingsAdminRead, settingsAdminReadRole)
+		FixedRolesMutex.Lock()
+		defer FixedRolesMutex.Unlock()
+
+		FixedRoles[usersAdminEdit] = usersAdminEditRole
+		FixedRoles[usersAdminRead] = usersAdminReadRole
+		FixedRoles[usersOrgEdit] = usersOrgEditRole
+		FixedRoles[usersOrgRead] = usersOrgReadRole
+		FixedRoles[ldapAdminEdit] = ldapAdminEditRole
+		FixedRoles[ldapAdminRead] = ldapAdminReadRole
+		FixedRoles[serverAdminRead] = serverAdminReadRole
+		FixedRoles[settingsAdminRead] = settingsAdminReadRole
 
 		// Register assignments
 		// Grafana Admin grants
-		FixedRoleGrants.Store(RoleGrafanaAdmin, []string{
+		FixedRoleGrantsMutex.Lock()
+		defer FixedRoleGrantsMutex.Unlock()
+		FixedRoleGrants[RoleGrafanaAdmin] = []string{
 			ldapAdminEdit,
 			ldapAdminRead,
 			serverAdminRead,
@@ -214,12 +221,12 @@ func InitFixedRole() {
 			usersAdminRead,
 			usersOrgEdit,
 			usersOrgRead,
-		})
+		}
 		// Admin grants
-		FixedRoleGrants.Store(models.ROLE_ADMIN, []string{
+		FixedRoleGrants[string(models.ROLE_ADMIN)] = []string{
 			usersOrgEdit,
 			usersOrgRead,
-		})
+		}
 	})
 }
 

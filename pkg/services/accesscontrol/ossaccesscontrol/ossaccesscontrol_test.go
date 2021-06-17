@@ -2,8 +2,6 @@ package ossaccesscontrol
 
 import (
 	"context"
-	"fmt"
-	"sync"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -245,20 +243,6 @@ func TestOSSAccessControlService_RegisterFixedRole(t *testing.T) {
 				UsageStats: &usageStatsMock{t: t, metricsFuncs: make([]usagestats.MetricsFunc, 0)},
 				Log:        log.New("accesscontrol-test"),
 			}
-			// Empty maps
-			accesscontrol.FixedRoles = sync.Map{}
-			accesscontrol.FixedRoleGrants = sync.Map{}
-
-			if tc.name == "Fail to assign role" {
-
-				valueReader := func(key, value interface{}) bool {
-					k := key.(string)
-					v := value.(accesscontrol.RoleDTO)
-					fmt.Println(k, v)
-					return true
-				}
-				accesscontrol.FixedRoles.Range(valueReader)
-			}
 
 			for _, run := range tc.runs {
 				err := ac.RegisterFixedRole(context.Background(), run.role, run.builtInRoles...)
@@ -269,20 +253,23 @@ func TestOSSAccessControlService_RegisterFixedRole(t *testing.T) {
 				require.NoError(t, err)
 
 				//Check role has been registered
-				storedRole, ok := accesscontrol.FixedRoles.Load(run.role.Name)
+				accesscontrol.FixedRolesMutex.RLock()
+				storedRole, ok := accesscontrol.FixedRoles[run.role.Name]
 				assert.True(t, ok)
+				accesscontrol.FixedRolesMutex.RUnlock()
 
 				//Check registered role has not been altered
 				assert.Equal(t, run.role, storedRole)
 
 				//Check assignments
+				accesscontrol.FixedRoleGrantsMutex.RLock()
 				for _, br := range run.builtInRoles {
-					value, ok := accesscontrol.FixedRoleGrants.Load(br)
+					assigns, ok := accesscontrol.FixedRoleGrants[br]
 					assert.True(t, ok)
 
-					assigns := value.([]string)
 					assert.Contains(t, assigns, run.role.Name)
 				}
+				accesscontrol.FixedRoleGrantsMutex.RUnlock()
 			}
 		})
 	}
