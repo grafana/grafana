@@ -298,6 +298,7 @@ func (e *dataPlugin) executeQuery(query plugins.DataSubQuery, wg *sync.WaitGroup
 		tsSchema := frame.TimeSeriesSchema()
 		if tsSchema.Type == data.TimeSeriesTypeLong {
 			var err error
+			originalData := frame
 			frame, err = data.LongToWide(frame, qm.FillMissing)
 			if err != nil {
 				errAppendDebug("failed to convert long to wide series when converting from dataframe", err, interpolatedQuery)
@@ -308,7 +309,7 @@ func (e *dataPlugin) executeQuery(query plugins.DataSubQuery, wg *sync.WaitGroup
 			// But that makes series name have both the value column name AND the metric name. So here we are removing the metric label here and moving it to the
 			// field name to get the same naming for the series as pre v8
 			// This will migrate special "metric"=name from label to field name
-			if len(frame.Fields) > 1 {
+			if len(originalData.Fields) == 3 {
 				for _, field := range frame.Fields {
 					if len(field.Labels) == 1 { // 7x only supported one label
 						name, ok := field.Labels["metric"]
