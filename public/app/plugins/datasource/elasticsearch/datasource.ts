@@ -35,6 +35,7 @@ import {
 import { bucketAggregationConfig } from './components/QueryEditor/BucketAggregationsEditor/utils';
 import {
   BucketAggregation,
+  BucketAggregationWithField,
   isBucketAggregationWithField,
 } from './components/QueryEditor/BucketAggregationsEditor/aggregations';
 import { generate, Observable, of, throwError } from 'rxjs';
@@ -390,7 +391,23 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
       this.templateSrv.replace(JSON.stringify(expandedQueries), scopedVars)
     );
 
-    return finalQueries;
+    // FIXME: with 8.0 we introduced an undocumented breaking change on how we name frames fields.
+    // Although the introduced behavior is correct, it wasn't documented.
+    // The following lines will restore the previous behaviour for 8.0, to be removed with a proper
+    // changelog in 8.1 by returning `finalQueries` without any further modification
+    return finalQueries.map((q, queryIndex) => ({
+      ...q,
+      bucketAggs: q.bucketAggs?.map((bucketAgg, aggIndex) => {
+        if (isBucketAggregationWithField(bucketAgg)) {
+          return {
+            ...bucketAgg,
+            field: (queries[queryIndex].bucketAggs?.[aggIndex] as BucketAggregationWithField).field,
+          };
+        }
+
+        return bucketAgg;
+      }),
+    }));
   }
 
   testDatasource() {
