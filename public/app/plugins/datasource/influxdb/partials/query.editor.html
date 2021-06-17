@@ -63,6 +63,7 @@
           segment="ctrl.measurementSegment"
           get-options="ctrl.getMeasurements($query)"
           on-change="ctrl.measurementChanged()"
+          debounce="true"
         ></metric-segment>
       </div>
 

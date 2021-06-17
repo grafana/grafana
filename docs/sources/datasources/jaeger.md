@@ -33,17 +33,17 @@ This is a configuration for the [trace to logs feature]({{< relref "../explore/t
 - **Data source -** Target data source.
 - **Tags -** The tags that will be used in the Loki query. Default is `'cluster', 'hostname', 'namespace', 'pod'`.
 
-![Trace to logs settings](/img/docs/explore/trace-to-logs-settings-7-4.png "Screenshot of the trace to logs settings")
+![Trace to logs settings](/static/img/docs/explore/trace-to-logs-settings-7-4.png "Screenshot of the trace to logs settings")
 
 ## Query traces
 
 You can query and display traces from Jaeger via [Explore]({{< relref "../explore/_index.md" >}}).
 
-{{< docs-imagebox img="/img/docs/v70/jaeger-query-editor.png" class="docs-image--no-shadow" caption="Screenshot of the Jaeger query editor" >}}
+{{< figure src="/static/img/docs/v70/jaeger-query-editor.png" class="docs-image--no-shadow" caption="Screenshot of the Jaeger query editor" >}}
 
 The Jaeger query editor allows you to query by trace ID directly or selecting a trace from trace selector. To query by trace ID, insert the ID into the text input.
 
-{{< docs-imagebox img="/img/docs/v70/jaeger-query-editor-open.png" class="docs-image--no-shadow" caption="Screenshot of the Jaeger query editor with trace selector expanded" >}}
+{{< figure src="/static/img/docs/v70/jaeger-query-editor-open.png" class="docs-image--no-shadow" caption="Screenshot of the Jaeger query editor with trace selector expanded" >}}
 
 Use the trace selector to pick particular trace from all traces logged in the time range you have selected in Explore. The trace selector has three levels of nesting:
 
@@ -54,3 +54,35 @@ Use the trace selector to pick particular trace from all traces logged in the ti
 ## Linking Trace ID from logs
 
 You can link to Jaeger trace from logs in Loki by configuring a derived field with internal link. See the [Derived fields]({{< relref "loki.md#derived-fields" >}}) section in the [Loki data source]({{< relref "loki.md" >}}) documentation for details.
+
+## Configure the data source with provisioning
+
+You can set up the data source via configuration files with Grafana’s provisioning system. Refer to [provisioning docs page]({{< relref "../administration/provisioning/#datasources" >}}) for information on various settings and how it works.
+
+Here is an example with basic auth and trace-to-logs field.
+
+```yaml
+apiVersion: 1
+
+datasources:
+  - name: Jaeger
+    type: jaeger
+    uid: jaeger-spectra
+    access: proxy
+    url: http://localhost:16686/
+    basicAuth: true
+    basicAuthUser: my_user
+    editable: true
+    isDefault: false
+    jsonData:
+        tracesToLogs:
+            # Field with internal link pointing to a Loki data source in Grafana.
+            # datasourceUid value must match the `datasourceUid` value of the Loki data source.
+            datasourceUid: loki
+            tags:
+              - cluster
+              - hostname
+              - namespace
+              - pod
+    secureJsonData:
+        basicAuthPassword: my_password

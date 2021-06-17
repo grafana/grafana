@@ -2,13 +2,13 @@
 title = "Google Cloud Monitoring"
 description = "Guide for using Google Cloud Monitoring in Grafana"
 keywords = ["grafana", "stackdriver", "google", "guide", "cloud", "monitoring"]
-aliases = ["/docs/grafana/latest/features/datasources/stackdriver", "/docs/grafana/next/datasources/cloudmonitoring/", "/docs/grafana/next/features/datasources/cloudmonitoring/"]
+aliases = ["/docs/grafana/latest/features/datasources/stackdriver", "/docs/grafana/latest/datasources/cloudmonitoring/", "/docs/grafana/latest/features/datasources/cloudmonitoring/"]
 weight = 200
 +++
 
 # Using Google Cloud Monitoring in Grafana
 
-Grafana ships with built-in support for Google Cloud Monitoring. Just add it as a data source and you are ready to build dashboards for your Google Cloud Monitoring metrics.  Refer to [Add a data source]({{< relref "../add-a-data-source.md" >}}) for instructions on how to add a data source to Grafana. Only users with the organization admin role can add data sources.
+Grafana ships with built-in support for Google Cloud Monitoring. Add it as a data source to build dashboards for your Google Cloud Monitoring metrics. For instructions on how to add a data source, refer to [Add a data source]({{< relref "../add-a-data-source.md" >}}). Only users with the organization admin role can add data sources.
 
 > **Note** Before Grafana v7.1, Google Cloud Monitoring was referred to as Google Stackdriver.
 
@@ -16,11 +16,11 @@ Grafana ships with built-in support for Google Cloud Monitoring. Just add it as 
 
 To access Google Cloud Monitoring settings, hover your mouse over the **Configuration** (gear) icon, then click **Data Sources**, and then click the Google Cloud Monitoring data source.
 
-| Name                  | Description                                                                           |
-| --------------------- | ------------------------------------------------------------------------------------- |
-| `Name`                | The data source name. This is how you refer to the data source in panels and queries. |
-| `Default`             | Default data source means that it will be pre-selected for new panels.                |
-| `Service Account Key` | Upload or paste in the Service Account Key file for a GCP Project. Refer to [Using a Google Service Account Key File](#using-a-google-service-account-key-file) for details.|
+| Name                  | Description                                                                                                                                                                            |
+| --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Name`                | The data source name. This is how you refer to the data source in panels and queries.                                                                                                  |
+| `Default`             | Default data source means that it is pre-selected for new panels.                                                                                                                      |
+| `Service Account Key` | Upload or paste in the Service Account Key file for a GCP Project. For more information, refer to [Using a Google Service Account Key File](#using-a-google-service-account-key-file). |
 
 ## Authentication
 
@@ -39,31 +39,31 @@ The following APIs need to be enabled first:
 
 Click on the links above and click the `Enable` button:
 
-{{< docs-imagebox img="/img/docs/v71/cloudmonitoring_enable_api.png" max-width="450px" class="docs-image--no-shadow" caption="Enable GCP APIs" >}}
+{{< figure src="/static/img/docs/v71/cloudmonitoring_enable_api.png" max-width="450px" class="docs-image--no-shadow" caption="Enable GCP APIs" >}}
 
 #### Create a GCP Service Account for a Project
 
 1. Navigate to the [APIs and Services Credentials page](https://console.cloud.google.com/apis/credentials).
 1. Click on the `Create credentials` dropdown/button and choose the `Service account key` option.
 
-   {{< docs-imagebox img="/img/docs/v71/cloudmonitoring_create_service_account_button.png" max-width="500px" class="docs-image--no-shadow" caption="Create service account button" >}}
+   {{< figure src="/static/img/docs/v71/cloudmonitoring_create_service_account_button.png" max-width="500px" class="docs-image--no-shadow" caption="Create service account button" >}}
 
 1. On the `Create service account key` page, choose key type `JSON`. Then in the `Service Account` dropdown, choose the `New service account` option:
 
-   {{< docs-imagebox img="/img/docs/v71/cloudmonitoring_create_service_account_key.png" max-width="500px" class="docs-image--no-shadow" caption="Create service account key" >}}
+   {{< figure src="/static/img/docs/v71/cloudmonitoring_create_service_account_key.png" max-width="500px" class="docs-image--no-shadow" caption="Create service account key" >}}
 
 1. Some new fields will appear. Fill in a name for the service account in the `Service account name` field and then choose the `Monitoring Viewer` role from the `Role` dropdown:
 
-   {{< docs-imagebox img="/img/docs/v71/cloudmonitoring_service_account_choose_role.png" max-width="600px" class="docs-image--no-shadow" caption="Choose role" >}}
+   {{< figure src="/static/img/docs/v71/cloudmonitoring_service_account_choose_role.png" max-width="600px" class="docs-image--no-shadow" caption="Choose role" >}}
 
 1. Click the Create button. A JSON key file will be created and downloaded to your computer. Store this file in a secure place as it allows access to your Google Cloud Monitoring data.
 1. Upload it to Grafana on the data source Configuration page. You can either upload the file or paste in the contents of the file.
 
-   {{< docs-imagebox img="/img/docs/v71/cloudmonitoring_grafana_upload_key.png" max-width="550px" class="docs-image--no-shadow" caption="Upload service key file to Grafana" >}}
+   {{< figure src="/static/img/docs/v71/cloudmonitoring_grafana_upload_key.png" max-width="550px" class="docs-image--no-shadow" caption="Upload service key file to Grafana" >}}
 
 1. The file contents will be encrypted and saved in the Grafana database. Don't forget to save after uploading the file!
 
-   {{< docs-imagebox img="/img/docs/v71/cloudmonitoring_grafana_key_uploaded.png" max-width="600px" class="docs-image--no-shadow" caption="Service key file is uploaded to Grafana" >}}
+   {{< figure src="/static/img/docs/v71/cloudmonitoring_grafana_key_uploaded.png" max-width="600px" class="docs-image--no-shadow" caption="Service key file is uploaded to Grafana" >}}
 
 ### Using GCE Default Service Account
 
@@ -81,7 +81,7 @@ The Google Cloud Monitoring query editor allows you to build two types of querie
 
 ### Metric Queries
 
-{{< docs-imagebox img="/img/docs/v70/metric-query-builder.png" max-width= "400px" class="docs-image--right" >}}
+{{< figure src="/static/img/docs/v70/metric-query-builder.png" max-width= "400px" class="docs-image--right" >}}
 
 The metric query editor allows you to select metrics, group/aggregate by labels and by time, and use filters to specify which time series you want in the results.
 
@@ -93,7 +93,7 @@ To create a metric query, follow these steps:
 1. Choose a metric from the **Metric** dropdown.
 1. Use the plus and minus icons in the filter and group by sections to add/remove filters or group by clauses. This step is optional.
 
-Google Cloud Monitoring metrics can be of different kinds (GAUGE, DELTA, CUMULATIVE) and these kinds have support for different aggregation options (reducers and aligners). The Grafana query editor shows the list of available aggregation methods for a selected metric and sets a default reducer and aligner when you select the metric. Units for the Y-axis are also automatically selected by the query editor.
+Google Cloud Monitoring supports different kinds of metrics like `GAUGE`, `DELTA,` and `CUMULATIVE`. They support different aggregation options, for example, reducers and aligners. The Grafana query editor displays the list of available aggregation methods for a selected metric and sets a default reducer and aligner when you select the metric.
 
 #### Filter
 
@@ -122,7 +122,7 @@ The option is called `cloud monitoring auto` and the defaults are:
 - 5m for time ranges >= 23 hours and < 6 days
 - 1h for time ranges >= 6 days
 
-The other automatic option is `grafana auto`. This will automatically set the group by time depending on the time range chosen and the width of the graph panel. For more information about grafana auto, refer to the [interval variable](http://docs.grafana.org/variables/templates-and-variables/#the-interval-variable).
+The other automatic option is `grafana auto`. This will automatically set the group by time depending on the time range chosen and the width of the time series panel. For more information about grafana auto, refer to the [interval variable](http://docs.grafana.org/variables/templates-and-variables/#the-interval-variable).
 
 It is also possible to choose fixed time intervals to group by, like `1h` or `1d`.
 
@@ -177,16 +177,20 @@ Example Result: `gce_instance - compute.googleapis.com/instance/cpu/usage_time`
 
 > **Note:** Available in Grafana v7.1 and later versions.
 
-{{< docs-imagebox img="/img/docs/v71/cloudmonitoring_deep_linking.png" max-width="500px" class="docs-image--right" caption="Google Cloud Monitoring deep linking" >}}
+{{< figure src="/static/img/docs/v71/cloudmonitoring_deep_linking.png" max-width="500px" class="docs-image--right" caption="Google Cloud Monitoring deep linking" >}}
 
 Click on a time series in the panel to see a context menu with a link to View in Metrics Explorer in Google Cloud Console. Clicking that link opens the Metrics Explorer in the Google Cloud Console and runs the query from the Grafana panel there.
 The link navigates the user first to the Google Account Chooser and after successfully selecting an account, the user is redirected to the Metrics Explorer. The provided link is valid for any account, but it only displays the query if your account has access to the GCP project specified in the query.
+
+#### Automatic unit detection
+
+Grafana issues one query to the Cloud Monitoring API per query editor row, and each API response includes a unit. Grafana will attempt to convert the returned unit into a unit that is understood by the Grafana time series panel. If the conversion was successful, then the unit will be displayed on the Y-axis on the panel. If the query editor rows returned different units, then the unit from the last query editor row is used in the time series panel.
 
 ### SLO (Service Level Objective) queries
 
 > **Note:** Available in Grafana v7.0 and later versions.
 
-{{< docs-imagebox img="/img/docs/v70/slo-query-builder.png" max-width= "400px" class="docs-image--right" >}}
+{{< figure src="/static/img/docs/v70/slo-query-builder.png" max-width= "400px" class="docs-image--right" >}}
 
 The SLO query builder in the Google Cloud Monitoring data source allows you to display SLO data in time series format. To get an understanding of the basic concepts in service monitoring, please refer to Google Cloud Monitoring's [official docs](https://cloud.google.com/monitoring/service-monitoring).
 
@@ -281,7 +285,7 @@ Why two ways? The first syntax is easier to read and write but does not allow yo
 
 ## Annotations
 
-{{< docs-imagebox img="/img/docs/v71/cloudmonitoring_annotations_query_editor.png" max-width= "400px" class="docs-image--right" >}}
+{{< figure src="/static/img/docs/v71/cloudmonitoring_annotations_query_editor.png" max-width= "400px" class="docs-image--right" >}}
 
 [Annotations]({{< relref "../../dashboards/annotations.md" >}}) allow you to overlay rich event information on top of graphs. You add annotation
 queries via the Dashboard menu / Annotations view. Annotation rendering is expensive so it is important to limit the number of rows returned. There is no support for showing Google Cloud Monitoring annotations and events yet but it works well with [custom metrics](https://cloud.google.com/monitoring/custom-metrics/) in Google Cloud Monitoring.

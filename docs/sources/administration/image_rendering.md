@@ -7,7 +7,9 @@ weight = 300
 
 # Image rendering
 
-Grafana supports automatic rendering of panels and dashboards as PNG images. This allows Grafana to automatically generate images of your panels to include in [alert notifications]({{< relref "../alerting/notifications.md" >}}).
+Grafana supports automatic rendering of panels as PNG images. This allows Grafana to automatically generate images of your panels to include in [alert notifications]({{< relref "../alerting/notifications.md" >}}).
+
+>**Note:** Image rendering of dashboards is not supported at this time.
 
 While an image is being rendered, the PNG image is temporarily written to the file system. When the image is rendered, the PNG image is temporarily written to the `png` folder in the Grafana `data` folder.
 
@@ -29,7 +31,7 @@ Alert notifications can include images, but rendering many images at the same ti
 
 The [Grafana image renderer plugin](https://grafana.com/grafana/plugins/grafana-image-renderer) is a plugin that runs on the backend and handles rendering panels and dashboards as PNG images using headless Chrome.
 
-To install the plugin, refer to the [Grafana Image Renderer Installation instructions](https://grafana.com/grafana/plugins/grafana-image-renderer/installation).
+To install the plugin, refer to the [Grafana Image Renderer Installation instructions](https://grafana.com/grafana/plugins/grafana-image-renderer/?tab=installation).
 
 ## Run in custom Grafana Docker image
 

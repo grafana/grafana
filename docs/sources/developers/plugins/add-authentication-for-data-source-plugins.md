@@ -1,6 +1,6 @@
 +++
 title = "Add authentication for data source plugins"
-aliases = ["/docs/grafana/latest/plugins/developing/auth-for-datasources/", "/docs/grafana/next/developers/plugins/authentication/"]
+aliases = ["/docs/grafana/latest/plugins/developing/auth-for-datasources/", "/docs/grafana/latest/developers/plugins/authentication/"]
 +++
 
 # Add authentication for data source plugins
@@ -127,6 +127,23 @@ To add URL parameters to proxied requests, use the `urlParams` property.
         "content": "{{ .SecureJsonData.apiKey }}"
       }
     ]
+  }
+]
+```
+
+### Set body content
+
+To set the body content and length of proxied requests, use the `body` property.
+
+```json
+"routes": [
+  {
+    "path": "example",
+    "url": "http://api.example.com",
+    "body": {
+      "username": "{{ .JsonData.username }}",
+      "password": "{{ .SecureJsonData.password }}"
+    }
   }
 ]
 ```

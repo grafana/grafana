@@ -139,8 +139,9 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
   }
 
   // Use this for tab completion features, wont publish response to other components
-  async metadataRequest<T = any>(url: string) {
-    const data: any = {};
+  async metadataRequest<T = any>(url: string, params = {}) {
+    const data: any = params;
+
     for (const [key, value] of this.customQueryParameters) {
       if (data[key] == null) {
         data[key] = value;

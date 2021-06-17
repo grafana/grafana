@@ -39,7 +39,7 @@ Your current data source permissions will keep working as expected, but you'll b
 ### LDAP authentication
 
 - LDAP synchronization is not affected by an expired license.
-- Enhanced LDAP debugging is unavailable.
+- Team sync debugging is unavailable.
 
 ### SAML authentication
 
@@ -71,3 +71,9 @@ Vault integration is not affected by an expired license.
 ### Auditing
 
 Auditing is not affected by an expired license.
+
+### License restrictions
+
+The concurrent session limit remains active for seven days after the expiration date, after which it will be turned off.
+
+The active users limit is turned off immediately.

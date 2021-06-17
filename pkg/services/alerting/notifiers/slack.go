@@ -198,16 +198,12 @@ func (sn *SlackNotifier) Notify(evalContext *alerting.EvalContext) error {
 	}
 
 	fields := make([]map[string]interface{}, 0)
-	fieldLimitCount := 4
-	for index, evt := range evalContext.EvalMatches {
+	for _, evt := range evalContext.EvalMatches {
 		fields = append(fields, map[string]interface{}{
 			"title": evt.Metric,
 			"value": evt.Value,
 			"short": true,
 		})
-		if index > fieldLimitCount {
-			break
-		}
 	}
 
 	if evalContext.Error != nil {

@@ -118,6 +118,9 @@ export class ShareSnapshot extends PureComponent<Props, State> {
     // make relative times absolute
     dash.time = getTimeSrv().timeRange();
 
+    // Remove links
+    dash.links = [];
+
     // remove panel queries & links
     dash.panels.forEach((panel) => {
       panel.targets = [];

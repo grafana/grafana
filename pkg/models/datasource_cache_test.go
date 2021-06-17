@@ -24,6 +24,7 @@ func TestDataSource_GetHttpTransport(t *testing.T) {
 			Id:   1,
 			Url:  "http://k8s:8001",
 			Type: "Kubernetes",
+			Name: "kubernetes",
 		}
 
 		tr1, err := ds.GetHttpTransport()
@@ -54,6 +55,7 @@ func TestDataSource_GetHttpTransport(t *testing.T) {
 			Type:           "Kubernetes",
 			SecureJsonData: map[string][]byte{"tlsCACert": tlsCaCert},
 			Updated:        time.Now().Add(-2 * time.Minute),
+			Name:           "kubernetes",
 		}
 
 		tr1, err := ds.GetHttpTransport()
@@ -91,6 +93,7 @@ func TestDataSource_GetHttpTransport(t *testing.T) {
 			Id:       1,
 			Url:      "http://k8s:8001",
 			Type:     "Kubernetes",
+			Name:     "kubernetes",
 			JsonData: json,
 			SecureJsonData: map[string][]byte{
 				"tlsClientCert": tlsClientCert,
@@ -120,6 +123,7 @@ func TestDataSource_GetHttpTransport(t *testing.T) {
 			Id:       1,
 			Url:      "http://k8s:8001",
 			Type:     "Kubernetes",
+			Name:     "kubernetes",
 			JsonData: json,
 			SecureJsonData: map[string][]byte{
 				"tlsCACert": tlsCaCert,
@@ -144,6 +148,7 @@ func TestDataSource_GetHttpTransport(t *testing.T) {
 			Id:       1,
 			Url:      "http://k8s:8001",
 			Type:     "Kubernetes",
+			Name:     "kubernetes",
 			JsonData: json,
 		}
 
@@ -173,6 +178,7 @@ func TestDataSource_GetHttpTransport(t *testing.T) {
 			Id:             1,
 			Url:            "http://k8s:8001",
 			Type:           "Kubernetes",
+			Name:           "kubernetes",
 			JsonData:       json,
 			SecureJsonData: map[string][]byte{"httpHeaderValue1": encryptedData},
 		}
@@ -221,7 +227,9 @@ func TestDataSource_GetHttpTransport(t *testing.T) {
 		setting.SigV4AuthEnabled = true
 		t.Cleanup(func() { setting.SigV4AuthEnabled = origEnabled })
 
-		ds := DataSource{}
+		ds := DataSource{
+			Name: "empty",
+		}
 
 		tr, err := ds.GetHttpTransport()
 		require.NoError(t, err)
@@ -242,6 +250,7 @@ func TestDataSource_GetHttpTransport(t *testing.T) {
 
 		ds := DataSource{
 			JsonData: json,
+			Name:     "empty",
 		}
 
 		tr, err := ds.GetHttpTransport()
@@ -249,6 +258,15 @@ func TestDataSource_GetHttpTransport(t *testing.T) {
 
 		_, ok := tr.next.(*http.Transport)
 		require.True(t, ok)
+	})
+
+	t.Run("Datasource name not set", func(t *testing.T) {
+		clearDSProxyCache(t)
+		ds := DataSource{}
+
+		_, err := ds.GetHttpTransport()
+		require.Error(t, err)
+		require.Equal(t, err.Error(), "label name cannot be empty")
 	})
 }
 
@@ -259,6 +277,7 @@ func TestDataSource_DecryptedValue(t *testing.T) {
 		ds := DataSource{
 			Id:       1,
 			Type:     DS_INFLUXDB_08,
+			Name:     "influx-db",
 			JsonData: simplejson.New(),
 			User:     "user",
 			SecureJsonData: securejsondata.GetEncryptedJsonData(map[string]string{
@@ -286,6 +305,7 @@ func TestDataSource_DecryptedValue(t *testing.T) {
 		ds := DataSource{
 			Id:       1,
 			Type:     DS_INFLUXDB_08,
+			Name:     "influx-db",
 			JsonData: simplejson.New(),
 			User:     "user",
 			SecureJsonData: securejsondata.GetEncryptedJsonData(map[string]string{

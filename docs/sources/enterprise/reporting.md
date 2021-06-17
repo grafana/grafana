@@ -12,7 +12,7 @@ Reporting allows you to automatically generate PDFs from any of your dashboards 
 
 > Only available in Grafana Enterprise v6.4+.
 
-{{< docs-imagebox img="/img/docs/enterprise/reports_list.png" max-width="500px" class="docs-image--no-shadow" >}}
+{{< figure src="/static/img/docs/enterprise/reports_list.png" max-width="500px" class="docs-image--no-shadow" >}}
 
 Any changes you make to a dashboard used in a report are reflected the next time the report is sent. For example, if you change the time range in the dashboard, then the time range in the report changes as well.
 
@@ -29,7 +29,7 @@ Currently only Organization Admins can create reports.
 1. Enter report information. All fields are required unless otherwise indicated.
    - **Name -** Name of the report as you want it to appear in the Reports list.
    - **Source dashboard -** Select the dashboard to generate the report from.
-   - **Recipients -** Enter the emails of the people or teams that you want to receive the report.
+   - **Recipients -** Enter the emails of the people or teams that you want to receive the report, separated by semicolons.
    - **Reply to -** (optional) The address that will appear in the **Reply to** field of the email.
    - **Message -** (optional) Message body in the email with the report.
    - **Time range -** (optional) Use custom time range for the report. For more information check [Report time range]({{< relref "#report-time-range" >}}).
@@ -40,7 +40,7 @@ Currently only Organization Admins can create reports.
 1. **Save** the report.
 1. **Send test email** to verify that the whole configuration is working as expected.
 
-{{< docs-imagebox img="/img/docs/enterprise/reports_create_new.png" max-width="500px" class="docs-image--no-shadow" >}}
+{{< figure src="/static/img/docs/enterprise/reports_create_new.png" max-width="500px" class="docs-image--no-shadow" >}}
 
 ### Layout and orientation
 
@@ -48,10 +48,10 @@ Currently only Organization Admins can create reports.
 
 Layout | Orientation | Support | Description | Preview
 ------ | ----------- | ------- | ----------- | -------
-Simple | Portrait | v6.4+ | Generates an A4 page in portrait mode with three panels per page. | {{< docs-imagebox img="/img/docs/enterprise/reports_portrait_preview.png" max-width="500px" max-height="500px" class="docs-image--no-shadow" >}}
-Simple | Landscape | v6.7+ | Generates an A4 page in landscape mode with a single panel per page. | {{< docs-imagebox img="/img/docs/enterprise/reports_landscape_preview.png" max-width="500px" class="docs-image--no-shadow" >}}
-Grid | Portrait | v7.2+ | Generates an A4 page in portrait mode with panels arranged in the same way as at the original dashboard. | {{< docs-imagebox img="/img/docs/enterprise/reports_grid_portrait_preview.png" max-width="500px" max-height="500px" class="docs-image--no-shadow" >}}
-Grid | Landscape | v7.2+ | Generates an A4 page in landscape mode with panels arranged in the same way as at the original dashboard. | {{< docs-imagebox img="/img/docs/enterprise/reports_grid_landscape_preview.png" max-width="500px" class="docs-image--no-shadow" >}}
+Simple | Portrait | v6.4+ | Generates an A4 page in portrait mode with three panels per page. | {{< figure src="/static/img/docs/enterprise/reports_portrait_preview.png" max-width="500px" max-height="500px" class="docs-image--no-shadow" >}}
+Simple | Landscape | v6.7+ | Generates an A4 page in landscape mode with a single panel per page. | {{< figure src="/static/img/docs/enterprise/reports_landscape_preview.png" max-width="500px" class="docs-image--no-shadow" >}}
+Grid | Portrait | v7.2+ | Generates an A4 page in portrait mode with panels arranged in the same way as at the original dashboard. | {{< figure src="/static/img/docs/enterprise/reports_grid_portrait_preview.png" max-width="500px" max-height="500px" class="docs-image--no-shadow" >}}
+Grid | Landscape | v7.2+ | Generates an A4 page in landscape mode with panels arranged in the same way as at the original dashboard. | {{< figure src="/static/img/docs/enterprise/reports_grid_landscape_preview.png" max-width="500px" class="docs-image--no-shadow" >}}
 
 ### Scheduling
 
@@ -108,7 +108,7 @@ If you want to use email addresses from the report, then select the **Use emails
 
 The last saved version of the report will be sent to selected emails. You can use this to verify emails are working and to make sure the report is generated and displayed as you expect.
 
-{{< docs-imagebox img="/img/docs/enterprise/reports_send_test_mail.png" max-width="500px" class="docs-image--no-shadow" >}}
+{{< figure src="/static/img/docs/enterprise/reports_send_test_mail.png" max-width="500px" class="docs-image--no-shadow" >}}
 
 ## Send report via the API
 
@@ -157,9 +157,9 @@ If the time zone is set differently between your Grafana server and its remote i
 
 ## Choose template variables
 
-> ** Note:** Available in Grafana Enterprise version 7.5+ (behind `templateVariables` feature flag).
+> ** Note:** Available in Grafana Enterprise version 7.5+ (behind `reportVariables` feature flag).
 
-You can configure report-specific template variables for the dashboard on the report page. The variables that you select will override the variables from the dashboard, and they are used when rendering a PDF file of the report. For detailed information about using template variables, refer to the [Templates and variables]({{< relref "../variables/_index.md" >}}) section. 
+You can configure report-specific template variables for the dashboard on the report page. The variables that you select will override the variables from the dashboard, and they are used when rendering a PDF file of the report. For detailed information about using template variables, refer to the [Templates and variables]({{< relref "../variables/_index.md" >}}) section.
 
 ## Reports settings
 
@@ -178,7 +178,7 @@ Email branding:
 - **Footer link text** - Text for the link in the report email footer. Defaults to "Grafana".
 - **Footer link URL** - Link for the report email footer.
 
-{{< docs-imagebox img="/img/docs/enterprise/reports_settings.png" max-width="500px" class="docs-image--no-shadow" >}}
+{{< figure src="/static/img/docs/enterprise/reports_settings.png" max-width="500px" class="docs-image--no-shadow" >}}
 
 ## Troubleshoot reporting
 

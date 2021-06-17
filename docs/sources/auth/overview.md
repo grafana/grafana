@@ -122,7 +122,7 @@ oauth_auto_login = true
 
 ### Hide sign-out menu
 
-Set the option detailed below to true to hide sign-out menu link. Useful if you use an auth proxy.
+Set the option detailed below to true to hide sign-out menu link. Useful if you use an auth proxy or JWT authentication.
 
 ```bash
 [auth]

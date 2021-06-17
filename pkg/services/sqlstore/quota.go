@@ -9,6 +9,8 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
+const dashboardTarget = "dashboard"
+
 func init() {
 	bus.AddHandler("sql", GetOrgQuotaByTarget)
 	bus.AddHandler("sql", GetOrgQuotas)
@@ -36,7 +38,13 @@ func GetOrgQuotaByTarget(query *models.GetOrgQuotaByTargetQuery) error {
 	}
 
 	// get quota used.
-	rawSQL := fmt.Sprintf("SELECT COUNT(*) as count from %s where org_id=?", dialect.Quote(query.Target))
+	rawSQL := fmt.Sprintf("SELECT COUNT(*) AS count FROM %s WHERE org_id=?",
+		dialect.Quote(query.Target))
+
+	if query.Target == dashboardTarget {
+		rawSQL += fmt.Sprintf(" AND is_folder=%s", dialect.BooleanStr(false))
+	}
+
 	resp := make([]*targetCount, 0)
 	if err := x.SQL(rawSQL, query.OrgId).Find(&resp); err != nil {
 		return err
@@ -231,7 +239,13 @@ func UpdateUserQuota(cmd *models.UpdateUserQuotaCmd) error {
 
 func GetGlobalQuotaByTarget(query *models.GetGlobalQuotaByTargetQuery) error {
 	// get quota used.
-	rawSQL := fmt.Sprintf("SELECT COUNT(*) as count from %s", dialect.Quote(query.Target))
+	rawSQL := fmt.Sprintf("SELECT COUNT(*) AS count FROM %s",
+		dialect.Quote(query.Target))
+
+	if query.Target == dashboardTarget {
+		rawSQL += fmt.Sprintf(" WHERE is_folder=%s", dialect.BooleanStr(false))
+	}
+
 	resp := make([]*targetCount, 0)
 	if err := x.SQL(rawSQL).Find(&resp); err != nil {
 		return err

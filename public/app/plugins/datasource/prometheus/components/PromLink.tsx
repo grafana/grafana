@@ -3,7 +3,7 @@ import React, { FC, useEffect, useState, memo } from 'react';
 
 import { PrometheusDatasource } from '../datasource';
 import { PromQuery } from '../types';
-import { DataQueryRequest, PanelData } from '@grafana/data';
+import { DataQueryRequest, PanelData, textUtil } from '@grafana/data';
 
 interface Props {
   datasource: PrometheusDatasource;
@@ -54,7 +54,7 @@ const PromLink: FC<Props> = ({ panelData, query, datasource }) => {
   }, [panelData]);
 
   return (
-    <a href={href} target="_blank" rel="noopener noreferrer">
+    <a href={textUtil.sanitizeUrl(href)} target="_blank" rel="noopener noreferrer">
       Prometheus
     </a>
   );

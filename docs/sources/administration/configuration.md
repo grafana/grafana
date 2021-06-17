@@ -36,7 +36,7 @@ Refer to [Configure a Grafana Docker image]({{< relref "configure-docker.md" >}}
 
 ### macOS
 
-By default, the configuration file is located at `/usr/local/etc/grafana/grafana.ini`. To configure Grafana, add a configuration file named `custom.ini` to the `conf` folder to override any of the settings defined in `conf/defaults.ini`.
+By default, the configuration file is located at `/usr/local/etc/grafana/grafana.ini`. For a Grafana instance installed using Homebrew, edit the `grafana.ini` file directly. Otherwise, add a configuration file named `custom.ini` to the `conf` folder to override any of the settings defined in `conf/defaults.ini`.
 
 ## Comments in .ini Files
 
@@ -266,7 +266,7 @@ Path where the socket should be created when `protocol=socket`. Make sure that G
 Specify a full HTTP URL address to the root of your Grafana CDN assets. Grafana will add edition and version paths.
 
 For example, given a cdn url like `https://cdn.myserver.com` grafana will try to load a javascript file from
-`http://cdn.myserver.com/grafana-oss/v7.4.0/public/build/app.<hash>.js`.
+`http://cdn.myserver.com/grafana-oss/7.4.0/public/build/app.<hash>.js`.
 
 ### read_timeout
 
@@ -328,6 +328,10 @@ Set to `true` to log the sql calls and execution times.
 
 For Postgres, use either `disable`, `require` or `verify-full`.
 For MySQL, use either `true`, `false`, or `skip-verify`.
+
+### isolation_level
+
+Only the MySQL driver supports isolation levels in Grafana. In case the value is empty, the driver's default isolation level is applied. Available options are "READ-UNCOMMITTED", "READ-COMMITTED", "REPEATABLE-READ" or "SERIALIZABLE".
 
 ### ca_cert_path
 
@@ -409,6 +413,11 @@ The length of time that Grafana will wait for a successful TLS handshake with th
 ### expect_continue_timeout_seconds
 
 The length of time that Grafana will wait for a datasource’s first response headers after fully writing the request headers, if the request has an “Expect: 100-continue” header. A value of `0` will result in the body being sent immediately. Default is `1` second. For more details check the [Transport.ExpectContinueTimeout](https://golang.org/pkg/net/http/#Transport.ExpectContinueTimeout) documentation.
+
+### max_conns_per_host
+
+Optionally limits the total number of connections per host, including connections in the dialing, active, and idle states. On limit violation, dials are blocked. A value of `0` means that there are no limits. Default is `0`.
+For more details check the [Transport.MaxConnsPerHost](https://golang.org/pkg/net/http/#Transport.MaxConnsPerHost) documentation.
 
 ### max_idle_connections
 
@@ -800,6 +809,12 @@ If this option is disabled, the **Assume Role** and the **External Id** field ar
 ### list_metrics_page_limit
 
 Use the [List Metrics API](https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_ListMetrics.html) option to load metrics for custom namespaces in the CloudWatch data source. By default, the page limit is 500.
+
+<hr />
+
+## [auth.jwt]
+
+Refer to [JWT authentication]({{< relref "../auth/jwt.md" >}}) for more information.
 
 <hr />
 
@@ -1526,7 +1541,7 @@ For more information about Grafana Enterprise, refer to [Grafana Enterprise]({{<
 
 ### enable
 
-Keys of alpha features to enable, separated by space. Available alpha features are: `transformations`,`ngalert`
+Keys of alpha features to enable, separated by space. Available alpha features are: `ngalert`
 
 ## [date_formats]
 

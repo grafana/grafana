@@ -10,13 +10,15 @@ weight = 900
 
 Grafana ships with a built-in Microsoft SQL Server (MS SQL) data source plugin that allows you to query and visualize data from any Microsoft SQL Server 2005 or newer, including Microsoft Azure SQL Database. This topic explains options, variables, querying, and other options specific to the MS SQL data source. Refer to [Add a data source]({{< relref "add-a-data-source.md" >}}) for instructions on how to add a data source to Grafana. Only users with the organization admin role can add data sources.
 
-### Data source options
+## Data source options
+
+To access data source settings, hover your mouse over the **Configuration** (gear) icon, then click **Data Sources**, and then click the data source.
 
 | Name             | Description                                                                                                                           |
 | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
 | `Name`           | The data source name. This is how you refer to the data source in panels and queries.                                                 |
 | `Default`        | Default data source means that it will be pre-selected for new panels.                                                                |
-| `Host`           | The IP address/hostname and optional port of your MS SQL instance. If port is omitted, default 1433 will be used.                     |
+| `Host`           | The IP address/hostname and optional port of your MS SQL instance. If the port is omitted, the driver default will be used (0).       |
 | `Database`       | Name of your MS SQL database.                                                                                                         |
 | `Authentication` | Authentication mode. Either using SQL Server Authentication or Windows Authentication (single sign on for Windows users).             |
 | `User`           | Database user's login/username                                                                                                        |
@@ -67,7 +69,7 @@ If possible, we recommend you to use the latest service pack available for optim
 
 ## Query Editor
 
-{{< docs-imagebox img="/img/docs/v51/mssql_query_editor.png" class="docs-image--no-shadow" >}}
+{{< figure src="/static/img/docs/v51/mssql_query_editor.png" class="docs-image--no-shadow" >}}
 
 You will find the MSSQL query editor in the metrics tab in Graph, Singlestat or Table panel's edit mode. You enter edit mode by clicking the
 panel title, then edit. The editor allows you to define a SQL query to select data to be visualized.
@@ -143,7 +145,7 @@ SELECT
 
 Query editor with example query:
 
-{{< docs-imagebox img="/img/docs/v51/mssql_table_query.png" max-width="500px" class="docs-image--no-shadow" >}}
+{{< figure src="/static/img/docs/v51/mssql_table_query.png" max-width="500px" class="docs-image--no-shadow" >}}
 
 The query:
 
@@ -162,7 +164,7 @@ FROM
 
 The resulting table panel:
 
-{{< docs-imagebox img="/img/docs/v51/mssql_table_result.png" max-width="1489px" class="docs-image--no-shadow" >}}
+{{< figure src="/static/img/docs/v51/mssql_table_result.png" max-width="1489px" class="docs-image--no-shadow" >}}
 
 ## Time series queries
 
@@ -197,7 +199,7 @@ INSERT metric_values (time, measurement, valueOne, valueTwo) VALUES('2018-03-15 
 
 ```
 
-{{< docs-imagebox img="/img/docs/v51/mssql_time_series_one.png" class="docs-image--no-shadow docs-image--right" >}}
+{{< figure src="/static/img/docs/v51/mssql_time_series_one.png" class="docs-image--no-shadow docs-image--right" >}}
 
 **Example with one `value` and one `metric` column.**
 
@@ -217,7 +219,7 @@ When the above query is used in a graph panel, it will produce two series named 
 
 <div class="clearfix"></div>
 
-{{< docs-imagebox img="/img/docs/v51/mssql_time_series_two.png" class="docs-image--no-shadow docs-image--right" >}}
+{{< figure src="/static/img/docs/v51/mssql_time_series_two.png" class="docs-image--no-shadow docs-image--right" >}}
 
 **Example with multiple `value` columns:**
 
@@ -237,7 +239,7 @@ When the above query is used in a graph panel, it will produce two series named 
 
 <div class="clearfix"></div>
 
-{{< docs-imagebox img="/img/docs/v51/mssql_time_series_three.png" class="docs-image--no-shadow docs-image--right" >}}
+{{< figure src="/static/img/docs/v51/mssql_time_series_three.png" class="docs-image--no-shadow docs-image--right" >}}
 
 **Example using the \$\_\_timeGroup macro:**
 
@@ -261,7 +263,7 @@ Any two series lacking a value in a three-minute window will render a line betwe
 
 <div class="clearfix"></div>
 
-{{< docs-imagebox img="/img/docs/v51/mssql_time_series_four.png" class="docs-image--no-shadow docs-image--right" >}}
+{{< figure src="/static/img/docs/v51/mssql_time_series_four.png" class="docs-image--no-shadow docs-image--right" >}}
 
 **Example using the \$\_\_timeGroup macro with fill parameter set to zero:**
 
@@ -438,7 +440,7 @@ Please note that any macro function will not work inside a stored procedure.
 
 ### Examples
 
-{{< docs-imagebox img="/img/docs/v51/mssql_metrics_graph.png" class="docs-image--no-shadow docs-image--right" >}}
+{{< figure src="/static/img/docs/v51/mssql_metrics_graph.png" class="docs-image--no-shadow docs-image--right" >}}
 For the following examples, the database table is defined in [Time series queries](#time-series-queries). Let's say that we want to visualize four series in a graph panel, such as all combinations of columns `valueOne`, `valueTwo` and `measurement`. Graph panel to the right visualizes what we want to achieve. To solve this, we need to use two queries:
 
 **First query:**
