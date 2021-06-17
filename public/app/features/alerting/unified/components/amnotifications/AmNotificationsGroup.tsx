@@ -17,6 +17,32 @@ export const AmNotificationsGroup = ({ alertManagerSourceName, group }: Props) =
   const [isCollapsed, setIsCollapsed] = useState<boolean>(true);
   const styles = useStyles2(getStyles);
 
+  const headerSummary = useMemo(() => {
+    const total = group.alerts.length;
+    const countByStatus = group.alerts.reduce((statusObj, alert) => {
+      if (statusObj[alert.status.state]) {
+        statusObj[alert.status.state] += 1;
+      } else {
+        statusObj[alert.status.state] = 1;
+      }
+      return statusObj;
+    }, {} as Record<AlertState, number>);
+
+    return (
+      <div className={styles.summary}>
+        {`${total} alerts: `}
+        {Object.entries(countByStatus).map(([state, count], index) => {
+          return (
+            <span key={`${group.id}-${index}`} className={styles[state as AlertState]}>
+              {index > 0 && ', '}
+              {`${count} ${state}`}
+            </span>
+          );
+        })}
+      </div>
+    );
+  }, [group, styles]);
+
   return (
     <div className={styles.wrapper}>
       <div className={styles.header}>
