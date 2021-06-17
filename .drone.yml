@@ -7,6 +7,12 @@ platform:
   os: linux
   arch: amd64
 
+environment:
+  GRABPL_METRICS_API_KEY:
+    from_secret: zserge-test-metrics-key
+  GRABPL_METRICS_PREFIX:
+    from_secret: grafana.ci.
+
 steps:
 - name: identify-runner
   image: alpine:3.13
@@ -37,7 +43,7 @@ steps:
 - name: shellcheck
   image: grafana/build-container:1.4.1
   commands:
-  - ./bin/grabpl shellcheck
+  - ./bin/grabpl --rusage=spellcheck. shellcheck | ./bin/grabpl publish-metrics
   depends_on:
   - initialize
 
@@ -45,15 +51,15 @@ steps:
   image: grafana/build-container:1.4.1
   commands:
   - "[ $(grep FocusConvey -R pkg | wc -l) -eq \"0\" ] || exit 1"
-  - ./bin/grabpl test-backend --edition oss
-  - ./bin/grabpl integration-tests --edition oss
+  - ./bin/grabpl --rusage=backend.test. test-backend --edition oss | ./bin/grabpl publish-metrics
+  - ./bin/grabpl --rusage=backend.integration. integration-tests --edition oss | ./bin/grabpl publish-metrics
   depends_on:
   - initialize
 
 - name: lint-backend
   image: grafana/build-container:1.4.1
   commands:
-  - ./bin/grabpl lint-backend --edition oss
+  - ./bin/grabpl --rusage=backend.lint. lint-backend --edition oss | ./bin/grabpl publish-metrics
   environment:
     CGO_ENABLED: 1
   depends_on:
@@ -72,10 +78,7 @@ steps:
 - name: build-backend
   image: grafana/build-container:1.4.1
   commands:
-  - ./bin/grabpl --rusage=grafana.ci.backend.build. build-backend --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER} --variants linux-x64,linux-x64-musl,osx64,win64 --no-pull-enterprise | ./bin/grabpl publish-metrics $${GRAFANA_MISC_STATS_API_KEY}
-  environment:
-    GRAFANA_MISC_STATS_API_KEY:
-      from_secret: zserge-test-metrics-key
+  - ./bin/grabpl --rusage=backend.build. build-backend --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER} --variants linux-x64,linux-x64-musl,osx64,win64 --no-pull-enterprise | ./bin/grabpl publish-metrics
   depends_on:
   - initialize
   - lint-backend
@@ -84,7 +87,7 @@ steps:
 - name: build-frontend
   image: grafana/build-container:1.4.1
   commands:
-  - ./bin/grabpl build-frontend --jobs 8 --no-install-deps --edition oss --build-id ${DRONE_BUILD_NUMBER} --no-pull-enterprise
+  - ./bin/grabpl --rusage=frontend.build. build-frontend --jobs 8 --no-install-deps --edition oss --build-id ${DRONE_BUILD_NUMBER} --no-pull-enterprise | ./bin/grabpl publish-metrics
   depends_on:
   - initialize
   - test-frontend
@@ -92,7 +95,7 @@ steps:
 - name: build-plugins
   image: grafana/build-container:1.4.1
   commands:
-  - ./bin/grabpl build-plugins --jobs 8 --edition oss --no-install-deps
+  - ./bin/grabpl --rusage=plugins.build. build-plugins --jobs 8 --edition oss --no-install-deps | ./grabpl publish-metrics
   depends_on:
   - initialize
   - lint-backend
@@ -138,7 +141,7 @@ steps:
   image: grafana/ci-e2e:12.19.0-1
   commands:
   - ./node_modules/.bin/cypress install
-  - ./bin/grabpl e2e-tests --port 3001
+  - ./bin/grabpl --rusage=e2e. e2e-tests --port 3001 | ./bin/grabpl publish-metrics
   environment:
     HOST: end-to-end-tests-server
   depends_on:
@@ -148,7 +151,7 @@ steps:
   image: grafana/build-container:1.4.1
   commands:
   - yarn storybook:build
-  - ./bin/grabpl verify-storybook
+  - ./bin/grabpl --rusage=storybook. verify-storybook | ./bin/grabpl publish-metrics
   environment:
     NODE_OPTIONS: --max_old_space_size=4096
   depends_on:
@@ -196,7 +199,7 @@ steps:
   - ./bin/dockerize -wait tcp://postgres:5432 -timeout 120s
   - psql -p 5432 -h postgres -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
   - go clean -testcache
-  - ./bin/grabpl integration-tests --database postgres
+  - ./bin/grabpl --rusage=testpostgres. integration-tests --database postgres | ./bin/grabpl publish-metrics
   environment:
     GRAFANA_TEST_DB: postgres
     PGPASSWORD: grafanatest
@@ -213,7 +216,7 @@ steps:
   - ./bin/dockerize -wait tcp://mysql:3306 -timeout 120s
   - cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root -prootpass
   - go clean -testcache
-  - ./bin/grabpl integration-tests --database mysql
+  - ./bin/grabpl --rusage=testmysql. integration-tests --database mysql | ./bin/grabpl publish-metrics
   environment:
     GRAFANA_TEST_DB: mysql
     MYSQL_HOST: mysql
