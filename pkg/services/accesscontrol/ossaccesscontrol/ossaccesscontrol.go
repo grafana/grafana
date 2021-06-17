@@ -77,14 +77,11 @@ func (ac *OSSAccessControlService) assignFixedRole(role accesscontrol.RoleDTO, b
 	for _, builtInRole := range builtInRoles {
 		assignments := []string{}
 		if assignments, ok := accesscontrol.FixedRoleGrants[builtInRole]; ok {
-			alreadyAssigned := false
+			// Check if role has not already been assigned to built-in role
 			for _, assignedRole := range assignments {
 				if assignedRole == role.Name {
-					alreadyAssigned = true
+					return accesscontrol.ErrBuiltinRoleAlreadyAdded
 				}
-			}
-			if alreadyAssigned {
-				return accesscontrol.ErrBuiltinRoleAlreadyAdded
 			}
 		}
 		assignments = append(assignments, role.Name)
