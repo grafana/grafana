@@ -21,8 +21,8 @@
     "bundle": "rollup -c rollup.config.ts",
     "clean": "rimraf ./dist ./compiled",
     "docsExtract": "mkdir -p ../../reports/docs && api-extractor run 2>&1 | tee ../../reports/docs/$(basename $(pwd)).log",
-    "storybook": "start-storybook -p 9001 -c .storybook -s ../../public/img:public/img",
-    "storybook:build": "build-storybook -o ./dist/storybook -c .storybook -s ../../public/img:public/img",
+    "storybook": "start-storybook -p 9001 -c .storybook -s ../../public/img:public/img,../../public/lib:public/lib",
+    "storybook:build": "build-storybook -o ./dist/storybook -c .storybook -s ../../public/img:public/img,../../public/lib:public/lib",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
