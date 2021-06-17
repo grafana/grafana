@@ -25,6 +25,7 @@ import InsightsAnalyticsDatasource from './insights_analytics/insights_analytics
 import { migrateMetricsDimensionFilters } from './query_ctrl';
 import { map } from 'rxjs/operators';
 import AzureResourceGraphDatasource from './azure_resource_graph/azure_resource_graph_datasource';
+import { getAzureCloud } from './credentials';
 
 export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDataSourceJsonData> {
   azureMonitorDatasource: AzureMonitorDatasource;
@@ -54,10 +55,8 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
     pseudoDatasource[AzureQueryType.LogAnalytics] = this.azureLogAnalyticsDatasource;
     pseudoDatasource[AzureQueryType.AzureResourceGraph] = this.azureResourceGraphDatasource;
 
-    if (
-      instanceSettings.jsonData.cloudName === 'azuremonitor' ||
-      instanceSettings.jsonData.cloudName === 'chinaazuremonitor'
-    ) {
+    const cloud = getAzureCloud(instanceSettings);
+    if (cloud === 'azuremonitor' || cloud === 'chinaazuremonitor') {
       // AppInsights and InsightAnalytics are only supported for Public and Azure China clouds
       this.appInsightsDatasource = new AppInsightsDatasource(instanceSettings);
       this.insightsAnalyticsDatasource = new InsightsAnalyticsDatasource(instanceSettings);
