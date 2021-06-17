@@ -14,7 +14,7 @@ export default {
       page: mdx,
     },
     controls: {
-      exclude: ['monacoOptions', 'onEditorDidMount', 'onBlur', 'onSave', 'getSuggestions'],
+      exclude: ['monacoOptions', 'onEditorDidMount', 'onBlur', 'onSave', 'getSuggestions', 'showLineNumbers'],
     },
   },
   argTypes: {
