@@ -138,14 +138,14 @@ export const fieldReducers = new Registry<FieldReducerInfo>(() => [
   {
     id: ReducerID.last,
     name: 'Last',
-    description: 'Last Value',
+    description: 'Last value',
     standard: true,
     reduce: calculateLast,
   },
   { id: ReducerID.first, name: 'First', description: 'First Value', standard: true, reduce: calculateFirst },
   {
     id: ReducerID.firstNotNull,
-    name: 'First (not null)',
+    name: 'First*',
     description: 'First non-null value',
     standard: true,
     reduce: calculateFirstNotNull,
