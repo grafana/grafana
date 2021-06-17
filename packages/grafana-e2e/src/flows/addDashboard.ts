@@ -103,7 +103,7 @@ const addAnnotation = (config: AddAnnotationConfig, isFirst: boolean) => {
   if (isFirst) {
     e2e.pages.Dashboard.Settings.Annotations.List.addAnnotationCTA().click();
   } else {
-    e2e.pages.Dashboard.Settings.Annotations.List.newButton().click();
+    cy.contains('New query').click();
   }
 
   const { dataSource, dataSourceForm, name } = config;
