@@ -244,7 +244,29 @@ func TestOSSAccessControlService_RegisterFixedRole(t *testing.T) {
 				Log:        log.New("accesscontrol-test"),
 			}
 
+			removeRole := func(role string) {
+				accesscontrol.FixedRolesMutex.Lock()
+				delete(accesscontrol.FixedRoles, role)
+				accesscontrol.FixedRolesMutex.Unlock()
+
+				accesscontrol.FixedRoleGrantsMutex.Lock()
+				defer accesscontrol.FixedRoleGrantsMutex.Unlock()
+				for builtInRole, assignments := range accesscontrol.FixedRoleGrants {
+					n := len(assignments)
+					for i := 0; i < n; i++ {
+						r := assignments[i]
+						if r == role {
+							copy(assignments[i:], assignments[i+1:])
+							n--
+							assignments = assignments[:n]
+						}
+					}
+					accesscontrol.FixedRoleGrants[builtInRole] = assignments
+				}
+			}
+
 			for _, run := range tc.runs {
+				defer removeRole(run.role.Name)
 				err := ac.RegisterFixedRole(context.Background(), run.role, run.builtInRoles...)
 				if run.wantErr != nil {
 					assert.ErrorIs(t, err, run.wantErr)
