@@ -7,7 +7,9 @@ aliases = ["/docs/grafana/latest/http_api/alerting/"]
 
 # Alerting API
 
->**Note:** This information is for the [legacy dashboard alerts]({{< relref "../alerting/old-alerting/_index.md" >}}). A preview of Grafana 8 Alerts API specification can be found [here](https://editor.swagger.io/?url=https://raw.githubusercontent.com/grafana/grafana/main/pkg/services/ngalert/api/tooling/post.json).
+>**Note:** This topic is relevant for the [legacy dashboard alerts]({{< relref "../alerting/old-alerting/_index.md" >}}) only. 
+
+You can find Grafana 8 alerts API specification details [here](https://editor.swagger.io/?url=https://raw.githubusercontent.com/grafana/grafana/main/pkg/services/ngalert/api/tooling/post.json).  Also, refer to [Grafana 8 alerts documentation]({{< relref "../alerting/unified-alerting/_index.md" >}}) for details on how to create and manage new alerts.
 
 You can use the Alerting API to get information about alerts and their states but this API cannot be used to modify the alert.
 To create new alerts or modify them you need to update the dashboard json that contains the alerts.
