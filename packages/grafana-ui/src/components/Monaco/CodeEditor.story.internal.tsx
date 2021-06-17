@@ -47,13 +47,13 @@ Basic.args = {
   width: 300,
   height: 400,
   value: `CREATE TABLE Persons (
-            PersonID int,
-            LastName varchar(255),
-            FirstName varchar(255),
-            Address varchar(255),
-            City varchar(255)
-          );
-          SELECT * FROM Persons LIMIT 10 '
+  PersonID int,
+  LastName varchar(255),
+  FirstName varchar(255),
+  Address varchar(255),
+  City varchar(255)
+);
+SELECT * FROM Persons LIMIT 10 '
   `,
   language: 'sql',
   showLineNumbers: false,
