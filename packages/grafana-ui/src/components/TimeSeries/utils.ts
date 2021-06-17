@@ -153,8 +153,19 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
     const pointsFilter: uPlot.Series.Points.Filter = (u, seriesIdx, show, gaps) => {
       let filtered = [];
 
+      let series = u.series[seriesIdx];
+
       if (!show && gaps && gaps.length) {
-        // show points between consecutive gaps that share end/start
+        const [firstIdx, lastIdx] = series.idxs!;
+        const xData = u.data[0];
+        const firstPos = Math.round(u.valToPos(xData[firstIdx], 'x', true));
+        const lastPos = Math.round(u.valToPos(xData[lastIdx], 'x', true));
+
+        if (gaps[0][0] === firstPos) {
+          filtered.push(firstIdx);
+        }
+
+        // show single points between consecutive gaps that share end/start
         for (let i = 0; i < gaps.length; i++) {
           let thisGap = gaps[i];
           let nextGap = gaps[i + 1];
@@ -162,6 +173,10 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
           if (nextGap && thisGap[1] === nextGap[0]) {
             filtered.push(u.posToIdx(thisGap[1], true));
           }
+        }
+
+        if (gaps[gaps.length - 1][1] === lastPos) {
+          filtered.push(lastIdx);
         }
       }
 
