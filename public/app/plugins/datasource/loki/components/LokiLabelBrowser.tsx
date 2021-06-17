@@ -1,12 +1,12 @@
 import React, { ChangeEvent } from 'react';
-import { Button, HorizontalGroup, Input, Label, LoadingPlaceholder, stylesFactory, withTheme } from '@grafana/ui';
+import { Button, HorizontalGroup, Input, Label, LoadingPlaceholder, withTheme2 } from '@grafana/ui';
 import LokiLanguageProvider from '../language_provider';
 import PromQlLanguageProvider from '../../prometheus/language_provider';
 import { css, cx } from '@emotion/css';
 import store from 'app/core/store';
 import { FixedSizeList } from 'react-window';
 
-import { GrafanaTheme } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { LokiLabel } from './LokiLabel';
 
 // Hard limit on labels to render
@@ -20,7 +20,7 @@ export interface BrowserProps {
   // TODO #33976: Is it possible to use a common interface here? For example: LabelsLanguageProvider
   languageProvider: LokiLanguageProvider | PromQlLanguageProvider;
   onChange: (selector: string) => void;
-  theme: GrafanaTheme;
+  theme: GrafanaTheme2;
   autoSelect?: number;
   hide?: () => void;
 }
@@ -90,14 +90,14 @@ export function facetLabels(
   });
 }
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   wrapper: css`
-    background-color: ${theme.colors.bg2};
-    padding: ${theme.spacing.md};
+    background-color: ${theme.colors.background.secondary};
+    padding: ${theme.spacing(2)};
     width: 100%;
   `,
   list: css`
-    margin-top: ${theme.spacing.sm};
+    margin-top: ${theme.spacing(1)};
     display: flex;
     flex-wrap: wrap;
     max-height: 200px;
@@ -105,17 +105,17 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
   `,
   section: css`
     & + & {
-      margin: ${theme.spacing.md} 0;
+      margin: ${theme.spacing(2, 0)};
     }
     position: relative;
   `,
   selector: css`
-    font-family: ${theme.typography.fontFamily.monospace};
-    margin-bottom: ${theme.spacing.sm};
+    font-family: ${theme.typography.fontFamilyMonospace};
+    margin-bottom: ${theme.spacing(1)};
   `,
   status: css`
-    padding: ${theme.spacing.xs};
-    color: ${theme.colors.textSemiWeak};
+    padding: ${theme.spacing(0.5)};
+    color: ${theme.colors.text.secondary};
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -131,34 +131,34 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
     opacity: 1;
   `,
   error: css`
-    color: ${theme.palette.brandDanger};
+    color: ${theme.colors.error.main};
   `,
   valueList: css`
-    margin-right: ${theme.spacing.sm};
+    margin-right: ${theme.spacing(1)};
   `,
   valueListWrapper: css`
-    border-left: 1px solid ${theme.colors.border2};
-    margin: ${theme.spacing.sm} 0;
-    padding: ${theme.spacing.sm} 0 ${theme.spacing.sm} ${theme.spacing.sm};
+    border-left: 1px solid ${theme.colors.border.medium};
+    margin: ${theme.spacing(1, 0)};
+    padding: ${theme.spacing(1, 0, 1, 1)};
   `,
   valueListArea: css`
     display: flex;
     flex-wrap: wrap;
-    margin-top: ${theme.spacing.sm};
+    margin-top: ${theme.spacing(1)};
   `,
   valueTitle: css`
-    margin-left: -${theme.spacing.xs};
-    margin-bottom: ${theme.spacing.sm};
+    margin-left: -${theme.spacing(0.5)};
+    margin-bottom: ${theme.spacing(1)};
   `,
   validationStatus: css`
-    padding: ${theme.spacing.xs};
-    margin-bottom: ${theme.spacing.sm};
-    color: ${theme.colors.textStrong};
+    padding: ${theme.spacing(0.5)};
+    margin-bottom: ${theme.spacing(1)};
+    color: ${theme.colors.text.maxContrast};
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   `,
-}));
+});
 
 export class UnthemedLokiLabelBrowser extends React.Component<BrowserProps, BrowserState> {
   state: BrowserState = {
@@ -497,4 +497,4 @@ export class UnthemedLokiLabelBrowser extends React.Component<BrowserProps, Brow
   }
 }
 
-export const LokiLabelBrowser = withTheme(UnthemedLokiLabelBrowser);
+export const LokiLabelBrowser = withTheme2(UnthemedLokiLabelBrowser);
