@@ -35,7 +35,12 @@ export class InsightsConfig extends PureComponent<Props> {
               </div>
               <div className="gf-form">
                 <div className="max-width-30 gf-form-inline">
-                  <Button variant="secondary" type="button" onClick={this.onAppInsightsResetApiKey}>
+                  <Button
+                    variant="secondary"
+                    type="button"
+                    onClick={this.onAppInsightsResetApiKey}
+                    disabled={this.props.options.readOnly}
+                  >
                     reset
                   </Button>
                 </div>
@@ -51,6 +56,7 @@ export class InsightsConfig extends PureComponent<Props> {
                     placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
                     value={options.secureJsonData!.appInsightsApiKey || ''}
                     onChange={onUpdateSecureJsonDataOption('appInsightsApiKey')}
+                    disabled={this.props.options.readOnly}
                   />
                 </div>
               </div>
@@ -64,6 +70,7 @@ export class InsightsConfig extends PureComponent<Props> {
                   className="width-30"
                   value={options.jsonData.appInsightsAppId || ''}
                   onChange={onUpdateJsonDataOption('appInsightsAppId')}
+                  disabled={this.props.options.readOnly}
                 />
               </div>
             </div>
