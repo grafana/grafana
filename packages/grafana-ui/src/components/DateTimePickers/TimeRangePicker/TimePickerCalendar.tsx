@@ -9,7 +9,7 @@ import { Icon } from '../../Icon/Icon';
 import { Portal } from '../../Portal/Portal';
 import { ClickOutsideWrapper } from '../../ClickOutsideWrapper/ClickOutsideWrapper';
 
-const getStyles = stylesFactory((theme: GrafanaTheme2, isReversed = false) => {
+export const getStyles = stylesFactory((theme: GrafanaTheme2, isReversed = false) => {
   return {
     container: css`
       top: -1px;
@@ -74,7 +74,7 @@ const getFooterStyles = stylesFactory((theme: GrafanaTheme2) => {
   };
 });
 
-const getBodyStyles = stylesFactory((theme: GrafanaTheme2) => {
+export const getBodyStyles = stylesFactory((theme: GrafanaTheme2) => {
   return {
     title: css`
       color: ${theme.colors.text};
@@ -245,7 +245,7 @@ const Header = memo<Props>(({ onClose }) => {
 
 Header.displayName = 'Header';
 
-const Body = memo<Props>(({ onChange, from, to, timeZone }) => {
+export const Body = memo<Props>(({ onChange, from, to, timeZone }) => {
   const value = inputToValue(from, to);
   const theme = useTheme2();
   const onCalendarChange = useOnCalendarChange(onChange, timeZone);

@@ -278,7 +278,7 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     const querystring = querystringBuilder.generate().uriString;
     const path = isGUIDish(workspace)
       ? `${this.resourcePath}/v1/workspaces/${workspace}/query?${querystring}`
-      : `${this.resourcePath}/v1/${workspace}/query?${querystring}`;
+      : `${this.resourcePath}/v1${workspace}/query?${querystring}`;
 
     const queries = [
       {
