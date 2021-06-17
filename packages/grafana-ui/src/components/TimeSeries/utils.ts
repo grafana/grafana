@@ -25,6 +25,7 @@ import {
   ScaleOrientation,
 } from '../uPlot/config';
 import { collectStackingGroups } from '../uPlot/utils';
+import uPlot from 'uplot';
 
 const defaultFormatter = (v: any) => (v == null ? '-' : v.toFixed(1));
 
@@ -149,6 +150,24 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
 
     const showPoints = customConfig.drawStyle === DrawStyle.Points ? PointVisibility.Always : customConfig.showPoints;
 
+    const pointsFilter: uPlot.Series.Points.Filter = (u, seriesIdx, show, gaps) => {
+      let filtered = [];
+
+      if (!show && gaps && gaps.length) {
+        // show points between consecutive gaps that share end/start
+        for (let i = 0; i < gaps.length; i++) {
+          let thisGap = gaps[i];
+          let nextGap = gaps[i + 1];
+
+          if (nextGap && thisGap[1] === nextGap[0]) {
+            filtered.push(u.posToIdx(thisGap[1], true));
+          }
+        }
+      }
+
+      return filtered.length ? filtered : null;
+    };
+
     let { fillOpacity } = customConfig;
 
     if (customConfig.fillBelowTo && field.state?.origin) {
@@ -175,6 +194,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
     builder.addSeries({
       scaleKey,
       showPoints,
+      pointsFilter,
       colorMode,
       fillOpacity,
       theme,
