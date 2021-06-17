@@ -196,18 +196,20 @@ export class PostgresQueryCtrl extends QueryCtrl {
           icon: 'exclamation-triangle',
           yesText: 'Switch',
           onConfirm: () => {
-            this.target.rawQuery = !this.target.rawQuery;
-            // This function is always called from React so need to digest here for UI to update
-            this.$scope.$digest();
+            // This could be called from React, so wrap in $evalAsync.
+            // Will then either run as part of the current digest cycle or trigger a new one.
+            this.$scope.$evalAsync(() => {
+              this.target.rawQuery = !this.target.rawQuery;
+            });
           },
         })
       );
     } else {
-      this.target.rawQuery = !this.target.rawQuery;
-      // Here we are sometimes called from angular so need to check if we are in digest cycle already
-      if (!this.$scope.$root.$$phase) {
-        this.$scope.$digest();
-      }
+      // This could be called from React, so wrap in $evalAsync.
+      // Will then either run as part of the current digest cycle or trigger a new one.
+      this.$scope.$evalAsync(() => {
+        this.target.rawQuery = !this.target.rawQuery;
+      });
     }
   }
 
