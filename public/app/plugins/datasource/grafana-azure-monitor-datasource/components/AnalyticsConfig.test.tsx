@@ -102,4 +102,15 @@ describe('Render', () => {
     }));
     expect(screen.queryByText('is no longer supported', { exact: false })).toBeInTheDocument();
   });
+
+  it('should disable inputs', () => {
+    setup((props) => ({
+      ...props,
+      options: {
+        ...props.options,
+        readOnly: true,
+      },
+    }));
+    expect(screen.queryByText('Load Workspaces')?.closest('button')).toBeDisabled();
+  });
 });
