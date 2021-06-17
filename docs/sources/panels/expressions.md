@@ -11,7 +11,7 @@ Server-side expressions allow you to manipulate data returned from queries with 
 
 ## Using expressions
 
-The primary use case for expressions is for use with the new [Grafana 8 alerting]({{< relref "../alerting/unified-alerting/" >}}). Like alerting, processing is done server-side, so expressions can operate without a browser session. However, expressions can be used with backend data sources and visualization as well.
+Expressions are primarily used by the new [Grafana 8 alerts]({{< relref "../alerting/unified-alerting/" >}}). The processing is done server-side, so expressions can operate without a browser session. However, expressions can also be used with backend data sources and visualization.
 
 > **Note:** Expressions do not work with legacy dashboard alerts.
 
