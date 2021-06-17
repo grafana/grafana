@@ -117,8 +117,8 @@ export const TimeRangeForm: React.FC<Props> = (props) => {
       <TimePickerCalendar
         isFullscreen={isFullscreen}
         isOpen={isOpen}
-        from={dateTimeParse(from.value, { timeZone })}
-        to={dateTimeParse(to.value, { timeZone })}
+        from={dateTimeParse(from.value)}
+        to={dateTimeParse(to.value)}
         onApply={onApply}
         onClose={() => setOpen(false)}
         onChange={onChange}
