@@ -165,11 +165,17 @@ export class MysqlQueryCtrl extends QueryCtrl {
           yesText: 'Switch',
           onConfirm: () => {
             this.target.rawQuery = !this.target.rawQuery;
+            // This function is always called from React so need to digest here for UI to update
+            this.$scope.$digest();
           },
         })
       );
     } else {
       this.target.rawQuery = !this.target.rawQuery;
+      // Here we are sometimes called from angular so need to check if we are in digest cycle already
+      if (!this.$scope.$root.$$phase) {
+        this.$scope.$digest();
+      }
     }
   }
 
