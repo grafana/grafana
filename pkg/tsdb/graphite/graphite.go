@@ -29,10 +29,6 @@ import (
 	"github.com/opentracing/opentracing-go"
 )
 
-const (
-	dsName = "grafana-graphite-datasource"
-)
-
 type GraphiteService struct {
 	logger               log.Logger
 	im                   instancemgmt.InstanceManager
@@ -42,7 +38,11 @@ type GraphiteService struct {
 }
 
 func init() {
-	registry.RegisterService(&GraphiteService{})
+	registry.Register(&registry.Descriptor{
+		Name:         "GraphiteService",
+		InitPriority: registry.Low,
+		Instance:     &GraphiteService{},
+	})
 }
 
 type datasourceInfo struct {
@@ -94,7 +94,7 @@ func (s *GraphiteService) Init() error {
 		QueryDataHandler: s,
 	})
 
-	if err := s.BackendPluginManager.Register(dsName, factory); err != nil {
+	if err := s.BackendPluginManager.RegisterAndStart(context.Background(), "graphite", factory); err != nil {
 		s.logger.Error("Failed to register plugin", "error", err)
 	}
 	return nil
@@ -154,11 +154,11 @@ func (e *GraphiteService) QueryData(ctx context.Context, req *backend.QueryDataR
 		target = fixIntervalFormat(currTarget)
 	}
 
-	var result *backend.QueryDataResponse
+	var result = backend.QueryDataResponse{}
 
 	if target == "" {
 		e.logger.Error("No targets in query model", "models without targets", strings.Join(emptyQueries, "\n"))
-		return result, errors.New("no query target found for the alert rule")
+		return &result, errors.New("no query target found for the alert rule")
 	}
 
 	formData["target"] = []string{target}
@@ -169,7 +169,7 @@ func (e *GraphiteService) QueryData(ctx context.Context, req *backend.QueryDataR
 
 	graphiteReq, err := e.createRequest(dsInfo, formData)
 	if err != nil {
-		return result, err
+		return &result, err
 	}
 
 	span, ctx := opentracing.StartSpanFromContext(ctx, "graphite query")
@@ -185,17 +185,17 @@ func (e *GraphiteService) QueryData(ctx context.Context, req *backend.QueryDataR
 		span.Context(),
 		opentracing.HTTPHeaders,
 		opentracing.HTTPHeadersCarrier(graphiteReq.Header)); err != nil {
-		return result, err
+		return &result, err
 	}
 
 	res, err := ctxhttp.Do(ctx, dsInfo.HTTPClient, graphiteReq)
 	if err != nil {
-		return result, err
+		return &result, err
 	}
 
 	data, err := e.parseResponse(res)
 	if err != nil {
-		return result, err
+		return &result, err
 	}
 
 	resp := backend.NewQueryDataResponse()
@@ -205,7 +205,7 @@ func (e *GraphiteService) QueryData(ctx context.Context, req *backend.QueryDataR
 	respD.Frames = frames
 	resp.Responses["A"] = respD
 
-	return result, nil
+	return &result, nil
 }
 
 func (e *GraphiteService) convertResponseToDataframes(resp []TargetResponseDTO) []*data.Frame {
