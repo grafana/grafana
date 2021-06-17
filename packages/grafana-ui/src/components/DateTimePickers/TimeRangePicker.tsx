@@ -26,6 +26,7 @@ import { Themeable } from '../../types';
 import { otherOptions, quickOptions } from './rangeOptions';
 import { ButtonGroup, ToolbarButton } from '../Button';
 
+/** @public */
 export interface TimeRangePickerProps extends Themeable {
   hideText?: boolean;
   value: TimeRange;
@@ -179,6 +180,7 @@ const formattedRange = (value: TimeRange, timeZone?: TimeZone) => {
   return rangeUtil.describeTimeRange(adjustedTimeRange, timeZone);
 };
 
+/** @public */
 export const TimeRangePicker = withTheme(UnthemedTimeRangePicker);
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {

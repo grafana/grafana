@@ -306,7 +306,7 @@ The database table _temp\_user_, that tracks user invites, is subject to a datab
 
 ### Snapshots database migration
 
-The database table _dashboard\_snapshot_, that stores dashboard snapshots, adds a new column _dashboard\_encrypted_ for storing an encrypted snapshot. 
+The database table _dashboard\_snapshot_, that stores dashboard snapshots, adds a new column _dashboard\_encrypted_ for storing an encrypted snapshot.
 NOTE: Only snapshots created on Grafana 7.3 or later will use this column to store snapshot data as encrypted. Snapshots created before this version will be unaffected and remain unencrypted.
 
 ### Use of the root group in the Docker images
@@ -326,3 +326,11 @@ For example, if you want an alert to be `INFO`-level in VictorOps, create a tag 
 ### Plugins
 
 Grafana now requires all plugins to be signed. If a plugin is not signed Grafana will not load/start it. This is an additional security measure to make sure plugin files and binaries haven't been tampered with. All Grafana Labs authored plugins, including Enterprise plugins, are now signed. It's possible to allow unsigned plugins using a configuration setting, but is something we strongly advise against doing. For more information about this setting, refer to [allow loading unsigned plugins]({{< relref "../administration/#allow_loading_unsigned_plugins" >}}).
+
+### Postgres, MySQL, Microsoft SQL Server data sources
+
+Grafana v8.0 changes the underlying data structure to [data frames]({{< relref "../developers/plugins/data-frames.md" >}}) for the Postgres, MySQL, Microsoft SQL Server data sources. As a result, a _Time series_ query result gets returned in a [wide format]({{< relref "../developers/plugins/data-frames.md#wide-format" >}}). To make the visualizations work as they did before, you might have to do some manual migrations.
+
+For any existing panels/visualizations using a _Time series_ query, where the time column is only needed for filtering the time range, for example, using the bar gauge or pie chart panel, we recommend that you use a _Table query_ instead and exclude the time column as a field in the response.
+		
+Refer to this [issue comment](https://github.com/grafana/grafana/issues/35534#issuecomment-861519658) for detailed instructions and workarounds.

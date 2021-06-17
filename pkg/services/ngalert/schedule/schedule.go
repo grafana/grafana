@@ -88,7 +88,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRul
 
 				processedStates := stateManager.ProcessEvalResults(alertRule, results)
 				sch.saveAlertStates(processedStates)
-				alerts := FromAlertStateToPostableAlerts(processedStates, stateManager)
+				alerts := FromAlertStateToPostableAlerts(sch.log, processedStates, stateManager, sch.appURL)
 				sch.log.Debug("sending alerts to notifier", "count", len(alerts.PostableAlerts), "alerts", alerts.PostableAlerts)
 				err = sch.sendAlerts(alerts)
 				if err != nil {
@@ -160,6 +160,8 @@ type schedule struct {
 
 	dataService *tsdb.Service
 
+	appURL string
+
 	notifier Notifier
 	metrics  *metrics.Metrics
 }
@@ -180,7 +182,7 @@ type SchedulerCfg struct {
 }
 
 // NewScheduler returns a new schedule.
-func NewScheduler(cfg SchedulerCfg, dataService *tsdb.Service) *schedule {
+func NewScheduler(cfg SchedulerCfg, dataService *tsdb.Service, appURL string) *schedule {
 	ticker := alerting.NewTicker(cfg.C.Now(), time.Second*0, cfg.C, int64(cfg.BaseInterval.Seconds()))
 	sch := schedule{
 		registry:        alertRuleRegistry{alertRuleInfo: make(map[models.AlertRuleKey]alertRuleInfo)},
@@ -197,6 +199,7 @@ func NewScheduler(cfg SchedulerCfg, dataService *tsdb.Service) *schedule {
 		dataService:     dataService,
 		notifier:        cfg.Notifier,
 		metrics:         cfg.Metrics,
+		appURL:          appURL,
 	}
 	return &sch
 }
