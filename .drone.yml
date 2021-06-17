@@ -174,11 +174,10 @@ steps:
   commands:
   - yarn storybook:build
   - ./bin/grabpl --rusage=storybook. verify-storybook | ./bin/grabpl publish-metrics
-  environment:
-    NODE_OPTIONS: --max_old_space_size=4096
   depends_on:
   - package
   environment:
+    NODE_OPTIONS: --max_old_space_size=4096
     GRABPL_METRICS_API_KEY:
       from_secret: zserge-test-metrics-key
 
