@@ -20,6 +20,7 @@ export default {
   argTypes: {
     width: { control: { type: 'range', min: 100, max: 500, step: 10 } },
     height: { control: { type: 'range', min: 100, max: 800, step: 10 } },
+    language: { control: { type: 'select' }, options: ['sql', 'json'] },
   },
 } as Meta;
 
@@ -45,7 +46,15 @@ export const Basic: Story = (args) => {
 Basic.args = {
   width: 300,
   height: 400,
-  value: 'SELECT * FROM table LIMIT 10',
+  value: `CREATE TABLE Persons (
+            PersonID int,
+            LastName varchar(255),
+            FirstName varchar(255),
+            Address varchar(255),
+            City varchar(255)
+          );
+          SELECT * FROM Persons LIMIT 10 '
+  `,
   language: 'sql',
   showLineNumbers: false,
   showMiniMap: false,
