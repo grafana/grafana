@@ -354,7 +354,7 @@ export const saveRuleFormAction = createAsyncThunk(
             locationService.push(redirectOnSave);
           } else {
             // redirect to edit page
-            const newLocation = `/alerting/${ruleId.stringify(identifier, true)}/edit`;
+            const newLocation = `/alerting/${encodeURIComponent(ruleId.stringifyIdentifier(identifier))}/edit`;
             if (locationService.getLocation().pathname !== newLocation) {
               locationService.replace(newLocation);
             }

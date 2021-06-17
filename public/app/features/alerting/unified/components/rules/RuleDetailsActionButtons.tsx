@@ -131,7 +131,7 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource }) => {
     const sourceName = getRulesSourceName(rulesSource);
     const identifier = ruleId.fromRulerRule(sourceName, namespace.name, group.name, rulerRule);
 
-    const editURL = urlUtil.renderUrl(`/alerting/${ruleId.stringify(identifier, true)}/edit`, {
+    const editURL = urlUtil.renderUrl(`/alerting/${encodeURIComponent(ruleId.stringifyIdentifier(identifier))}/edit`, {
       returnTo,
     });
 

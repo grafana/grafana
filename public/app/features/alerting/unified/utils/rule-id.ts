@@ -128,14 +128,7 @@ export function tryParse(value: string | undefined, decodeFromUri = false): Rule
   }
 }
 
-export function stringify(identifier: RuleIdentifier, encodeForUri = false): string {
-  if (encodeForUri) {
-    return encodeURIComponent(stringifyIdentifier(identifier));
-  }
-  return stringifyIdentifier(identifier);
-}
-
-function stringifyIdentifier(identifier: RuleIdentifier): string {
+export function stringifyIdentifier(identifier: RuleIdentifier): string {
   if (isGrafanaRuleIdentifier(identifier)) {
     return identifier.uid;
   }

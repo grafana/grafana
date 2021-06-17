@@ -2,9 +2,9 @@ import { DataQuery, DataSourceInstanceSettings } from '@grafana/data';
 import { LokiQuery } from 'app/plugins/datasource/loki/types';
 import { PromQuery } from 'app/plugins/datasource/prometheus/types';
 import { CombinedRule } from 'app/types/unified-alerting';
-import { AlertQuery, RulerAlertingRuleDTO } from 'app/types/unified-alerting-dto';
+import { AlertQuery } from 'app/types/unified-alerting-dto';
 import { isCloudRulesSource, isGrafanaRulesSource } from './datasource';
-import { isAlertingRulerRule, isGrafanaRulerRule } from './rules';
+import { isGrafanaRulerRule } from './rules';
 
 export function alertRuleToQueries(combinedRule: CombinedRule | undefined | null): AlertQuery[] {
   if (!combinedRule) {
@@ -21,31 +21,29 @@ export function alertRuleToQueries(combinedRule: CombinedRule | undefined | null
   }
 
   if (isCloudRulesSource(rulesSource)) {
-    if (isAlertingRulerRule(rulerRule)) {
-      const model = cloudAlertRuleToModel(rulesSource, rulerRule);
+    const model = cloudAlertRuleToModel(rulesSource, combinedRule);
 
-      return [
-        {
-          refId: model.refId,
-          datasourceUid: rulesSource.uid,
-          queryType: '',
-          model,
-        },
-      ];
-    }
+    return [
+      {
+        refId: model.refId,
+        datasourceUid: rulesSource.uid,
+        queryType: '',
+        model,
+      },
+    ];
   }
 
   return [];
 }
 
-function cloudAlertRuleToModel(dsSettings: DataSourceInstanceSettings, rule: RulerAlertingRuleDTO): DataQuery {
+function cloudAlertRuleToModel(dsSettings: DataSourceInstanceSettings, rule: CombinedRule): DataQuery {
   const refId = 'A';
 
   switch (dsSettings.type) {
     case 'prometheus': {
       const query: PromQuery = {
         refId,
-        expr: rule.expr,
+        expr: rule.query,
       };
 
       return query;
@@ -54,7 +52,7 @@ function cloudAlertRuleToModel(dsSettings: DataSourceInstanceSettings, rule: Rul
     case 'loki': {
       const query: LokiQuery = {
         refId,
-        expr: rule.expr,
+        expr: rule.query,
       };
 
       return query;

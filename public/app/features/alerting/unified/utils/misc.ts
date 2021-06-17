@@ -7,7 +7,7 @@ import * as ruleId from './rule-id';
 export function createViewLink(ruleSource: RulesSource, rule: CombinedRule, returnTo: string): string {
   const sourceName = getRulesSourceName(ruleSource);
   const identifier = ruleId.fromCombinedRule(sourceName, rule);
-  const paramId = ruleId.stringify(identifier, true);
+  const paramId = ruleId.stringifyIdentifier(identifier);
   const paramSource = encodeURIComponent(sourceName);
 
   return urlUtil.renderUrl(`/alerting/${paramSource}/${paramId}/view`, { returnTo });

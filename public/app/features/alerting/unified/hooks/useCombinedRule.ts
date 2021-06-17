@@ -7,6 +7,7 @@ import { useUnifiedAlertingSelector } from './useUnifiedAlertingSelector';
 import { fetchPromRulesAction, fetchRulerRulesAction } from '../state/actions';
 import { RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 import * as ruleId from '../utils/rule-id';
+import { isRulerNotSupportedResponse } from '../utils/rules';
 
 export function useCombinedRule(
   identifier: RuleIdentifier | undefined,
@@ -92,7 +93,7 @@ function useCombinedRulesLoader(ruleSourceName: string | undefined): AsyncReques
 
   return {
     loading: promRuleRequest.loading || rulerRuleRequest.loading,
-    error: promRuleRequest.error ?? rulerRuleRequest.error,
+    error: promRuleRequest.error ?? isRulerNotSupportedResponse(rulerRuleRequest) ? undefined : rulerRuleRequest.error,
     dispatched: promRuleRequest.dispatched && rulerRuleRequest.dispatched,
   };
 }
