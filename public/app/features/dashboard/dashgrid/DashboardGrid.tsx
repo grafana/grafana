@@ -162,11 +162,7 @@ export class DashboardGrid extends PureComponent<Props, State> {
     }
 
     this.props.dashboard.sortPanelsByGridPos();
-
-    // onLayoutChange is called onMount this marks layout as initialized and we are ready to render panels
-    if (!this.state.isLayoutInitialized) {
-      this.setState({ isLayoutInitialized: true });
-    }
+    this.forceUpdate();
   };
 
   triggerForceUpdate = () => {
