@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { css } from '@emotion/css';
-import { GrafanaTheme2, PanelPluginMeta } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { GrafanaTheme2 } from '@grafana/data';
 import { Icon, Link, useStyles2 } from '@grafana/ui';
-
 import { LibraryElementDTO } from '../../types';
 import { PanelTypeCard } from 'app/features/dashboard/components/VizTypePicker/PanelTypeCard';
 import { DeleteLibraryPanelModal } from '../DeleteLibraryPanelModal/DeleteLibraryPanelModal';
+import { config } from '@grafana/runtime';
+import { getPanelPluginNotFound } from 'app/features/dashboard/dashgrid/PanelPluginError';
 
 export interface LibraryPanelCardProps {
   libraryPanel: LibraryElementDTO;
@@ -28,7 +28,7 @@ export const LibraryPanelCard: React.FC<LibraryPanelCardProps & { children?: JSX
     setShowDeletionModal(false);
   };
 
-  const panelPlugin = config.panels[libraryPanel.model.type] ?? ({} as PanelPluginMeta);
+  const panelPlugin = config.panels[libraryPanel.model.type] ?? getPanelPluginNotFound(libraryPanel.model.type).meta;
 
   return (
     <>
