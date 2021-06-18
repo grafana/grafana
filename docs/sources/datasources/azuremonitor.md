@@ -223,6 +223,8 @@ securityresources
 
 In Azure Resource Graph many nested properties (`properties.displayName`) are of a `dynamic` type, and should be cast to a string with `tostring()` to operate on them.
 
+The Azure documentation also hosts [many sample queries](https://docs.microsoft.com/en-gb/azure/governance/resource-graph/samples/starter) to help you get started
+
 ## Going further with Azure Monitor
 
 ### Template variables
