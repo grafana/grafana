@@ -102,7 +102,6 @@ export interface State {
 }
 export class DashboardGrid extends PureComponent<Props, State> {
   private panelMap: { [id: string]: PanelModel } = {};
-  private panelRef: { [id: string]: HTMLElement } = {};
   private eventSubs = new Subscription();
 
   constructor(props: Props) {
@@ -226,7 +225,7 @@ export class DashboardGrid extends PureComponent<Props, State> {
       panel.isInView = this.isInView(panel);
 
       panelElements.push(
-        <div key={id} className={panelClasses} data-panelid={id} ref={(elem) => elem && (this.panelRef[id] = elem)}>
+        <div key={id} className={panelClasses} data-panelid={id}>
           {this.renderPanel(panel)}
         </div>
       );
