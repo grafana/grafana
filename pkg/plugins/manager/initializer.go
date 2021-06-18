@@ -119,7 +119,7 @@ func (i *Initializer) Initialize(p *plugins.PluginV2) error {
 }
 
 func (i *Initializer) handleModuleDefaults(p *plugins.PluginV2) {
-	if isExternalPlugin(p.PluginDir, i.Cfg) {
+	if p.IsExternalPlugin() {
 		metrics.SetPluginBuildInformation(p.ID, p.Type, p.Info.Version, string(p.Signature))
 
 		p.Module = path.Join("plugins", p.ID, "module")
@@ -142,7 +142,7 @@ func (i *Initializer) setPathsBasedOnApp(parent *plugins.PluginV2, child *plugin
 	child.IncludedInAppID = parent.ID
 	child.BaseUrl = parent.BaseUrl
 
-	if isExternalPlugin(parent.PluginDir, i.Cfg) {
+	if parent.IsExternalPlugin() {
 		child.Module = util.JoinURLFragments("plugins/"+parent.ID, appSubPath) + "/module"
 	} else {
 		child.Module = util.JoinURLFragments("app/plugins/app/"+parent.ID, appSubPath) + "/module"
@@ -159,10 +159,6 @@ func getPluginLogoUrl(pluginType, path, baseUrl string) string {
 
 func defaultLogoPath(pluginType string) string {
 	return "public/img/icn-" + pluginType + ".svg"
-}
-
-func isExternalPlugin(pluginDir string, cfg *setting.Cfg) bool {
-	return !strings.Contains(pluginDir, cfg.StaticRootPath)
 }
 
 func evalRelativePluginUrlPath(pathStr, baseUrl, pluginType string) string {

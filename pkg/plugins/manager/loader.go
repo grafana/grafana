@@ -115,7 +115,7 @@ func (l *Loader) LoadAll(pluginJSONPaths []string, class plugins.PluginClass) ([
 		}
 
 		// verify module.js exists for SystemJS to load
-		if isExternalPlugin(plugin.PluginDir, l.Cfg) && !plugin.IsRenderer() {
+		if plugin.IsExternalPlugin() && !plugin.IsRenderer() {
 			module := filepath.Join(plugin.PluginDir, "module.js")
 			if exists, err := fs.Exists(module); err != nil {
 				return nil, err
