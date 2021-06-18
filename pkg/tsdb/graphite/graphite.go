@@ -266,7 +266,6 @@ func epochMStoGraphiteTime(tr plugins.DataTimeRange) (string, string, error) {
  * Graphite should always return timestamp as a number but values might be nil when data is missing
  */
 func parseDataTimePoint(dataTimePoint plugins.DataTimePoint) (time.Time, *float64, error) {
-
 	if !dataTimePoint[1].Valid {
 		return time.Time{}, nil, errors.New("failed to parse data point timestamp")
 	}
