@@ -1,5 +1,6 @@
 import React, { PureComponent } from 'react';
 import L from 'leaflet';
+import * as EL from 'esri-leaflet';
 
 interface BaseMapProps {
   width: number;
@@ -11,7 +12,7 @@ interface BaseMapProps {
 import 'leaflet/dist/leaflet.css';
 import { GeomapPanelOptions } from '../types';
 
-export class Map extends PureComponent<BaseMapProps> {
+export class BaseMap extends PureComponent<BaseMapProps> {
   private divRef = React.createRef<HTMLDivElement>();
   map: L.Map;
 
@@ -24,14 +25,20 @@ export class Map extends PureComponent<BaseMapProps> {
 
     this.map = L.map(this.divRef.current!, {
       zoomControl: options.showZoomControl,
-      center: [49.8419, 24.0315],
-      zoom: 16,
-      layers: [
-        L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
-          attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors',
-        }),
-      ],
+
+      center: [37.75, -122.23],
+      zoom: 10,
     });
+
+    const streets = EL.basemapLayer('Streets');
+    const baseMaps = {
+      Streets: streets,
+      Imagery: EL.basemapLayer('Imagery'),
+    };
+    const overlayMaps = {}; // none?
+
+    streets.addTo(this.map);
+    L.control.layers(baseMaps, overlayMaps).addTo(this.map);
   }
 
   componentDidUpdate(oldProps: BaseMapProps) {
