@@ -2,6 +2,7 @@ package ossaccesscontrol
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -91,9 +92,23 @@ func (ac *OSSAccessControlService) validateFixedRole(role accesscontrol.RoleDTO)
 	return nil
 }
 
+func (ac *OSSAccessControlService) validateBuiltInRoles(builtInRoles []string) error {
+	for _, br := range builtInRoles {
+		if !models.RoleType(br).IsValid() && br != "Grafana Admin" {
+			return fmt.Errorf("'%s' %w", br, accesscontrol.ErrInvalidBuiltinRole)
+		}
+	}
+	return nil
+}
+
 // RegisterFixedRole saves a fixed role and assigns it to built-in roles
 func (ac *OSSAccessControlService) RegisterFixedRole(_ context.Context, role accesscontrol.RoleDTO, builtInRoles ...string) error {
 	err := ac.validateFixedRole(role)
+	if err != nil {
+		return err
+	}
+
+	err = ac.validateBuiltInRoles(builtInRoles)
 	if err != nil {
 		return err
 	}
