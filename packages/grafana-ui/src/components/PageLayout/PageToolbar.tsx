@@ -65,7 +65,7 @@ export const PageToolbar: FC<Props> = React.memo(
         )}
         {parent && parentHref && (
           <>
-            <Link className={cx(styles.titleText, styles.parentLink, styles.titleLink)} href={parentHref} partial>
+            <Link className={cx(styles.titleText, styles.parentLink, styles.titleLink)} href={parentHref}>
               {parent} <span className={styles.parentIcon}></span>
             </Link>
             {titleHref && (
@@ -76,7 +76,7 @@ export const PageToolbar: FC<Props> = React.memo(
           </>
         )}
         {titleHref && (
-          <Link className={cx(styles.titleText, styles.titleLink)} href={titleHref} partial>
+          <Link className={cx(styles.titleText, styles.titleLink)} href={titleHref}>
             {title}
           </Link>
         )}
