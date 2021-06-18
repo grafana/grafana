@@ -162,16 +162,18 @@ export class DashboardGrid extends PureComponent<Props, State> {
       panel.isInView = this.isInView(panel);
 
       panelElements.push(
-        <div key={id} className={panelClasses} data-panelid={id}>
-          {this.renderPanel(panel)}
-        </div>
+        <GridItem key={id} className={panelClasses} data-panelid={id}>
+          {(width: number, height: number) => {
+            return this.renderPanel(panel, width, height);
+          }}
+        </GridItem>
       );
     }
 
     return panelElements;
   }
 
-  renderPanel(panel: PanelModel) {
+  renderPanel(panel: PanelModel, width: any, height: any) {
     if (panel.type === 'row') {
       return <DashboardRow panel={panel} dashboard={this.props.dashboard} />;
     }
@@ -179,10 +181,6 @@ export class DashboardGrid extends PureComponent<Props, State> {
     if (panel.type === 'add-panel') {
       return <AddPanelWidget panel={panel} dashboard={this.props.dashboard} />;
     }
-
-    const colWidth = (this.gridWidth - GRID_CELL_VMARGIN * (GRID_COLUMN_COUNT - 1)) / GRID_COLUMN_COUNT;
-    const width = Math.round(colWidth * panel.gridPos.w + Math.max(0, panel.gridPos.w - 1) * GRID_CELL_VMARGIN);
-    const height = Math.round(panel.gridPos.h * (GRID_CELL_HEIGHT + GRID_CELL_VMARGIN) - GRID_CELL_VMARGIN);
 
     return (
       <DashboardPanel
@@ -241,4 +239,18 @@ export class DashboardGrid extends PureComponent<Props, State> {
       </AutoSizer>
     );
   }
+}
+
+function GridItem(props: any) {
+  // RGL passes width and height directly to children as style props.
+  const width = parseFloat(props.style.width);
+  const height = parseFloat(props.style.height);
+
+  // props.children[0] is our main children. RGL adds the drag handle at props.children[1]
+  return (
+    <div {...props}>
+      {/* Pass width and height to children as render props */}
+      {[props.children[0](width, height), props.children.slice(1)]}
+    </div>
+  );
 }
