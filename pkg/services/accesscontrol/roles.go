@@ -180,14 +180,47 @@ var (
 	// new fixed role in this set so that users can access the new
 	// resource. FixedRoleGrants lists which built-in roles are
 	// assigned which fixed roles in this list.
-	FixedRoles      = map[string]RoleDTO{}
-	FixedRolesMutex sync.RWMutex
+	FixedRoles = FixedRolesMap{roles: map[string]RoleDTO{}}
 
 	// FixedRoleGrants specifies which built-in roles are assigned
 	// to which set of FixedRoles by default. Alphabetically sorted.
 	FixedRoleGrants      = map[string][]string{}
 	FixedRoleGrantsMutex sync.RWMutex
 )
+
+type FixedRolesMap struct {
+	roles map[string]RoleDTO
+	mx    sync.RWMutex
+}
+
+func (f *FixedRolesMap) Store(name string, role RoleDTO) {
+	f.mx.Lock()
+	defer f.mx.Unlock()
+	f.roles[name] = role
+}
+
+func (f *FixedRolesMap) Load(name string) (RoleDTO, bool) {
+	f.mx.RLock()
+	defer f.mx.RUnlock()
+	role, exists := f.roles[name]
+	return role, exists
+}
+
+func (f *FixedRolesMap) Range(fn func(name string, role RoleDTO) bool) {
+	f.mx.Lock()
+	defer f.mx.Unlock()
+	for k, v := range f.roles {
+		if !fn(k, v) {
+			return
+		}
+	}
+}
+
+func (f *FixedRolesMap) Delete(name string) {
+	f.mx.Lock()
+	defer f.mx.Unlock()
+	delete(f.roles, name)
+}
 
 func init() {
 	InitFixedRole()
@@ -196,17 +229,14 @@ func init() {
 func InitFixedRole() {
 	once.Do(func() {
 		// Register roles
-		FixedRolesMutex.Lock()
-		defer FixedRolesMutex.Unlock()
-
-		FixedRoles[usersAdminEdit] = usersAdminEditRole
-		FixedRoles[usersAdminRead] = usersAdminReadRole
-		FixedRoles[usersOrgEdit] = usersOrgEditRole
-		FixedRoles[usersOrgRead] = usersOrgReadRole
-		FixedRoles[ldapAdminEdit] = ldapAdminEditRole
-		FixedRoles[ldapAdminRead] = ldapAdminReadRole
-		FixedRoles[serverAdminRead] = serverAdminReadRole
-		FixedRoles[settingsAdminRead] = settingsAdminReadRole
+		FixedRoles.Store(usersAdminEdit, usersAdminEditRole)
+		FixedRoles.Store(usersAdminRead, usersAdminReadRole)
+		FixedRoles.Store(usersOrgEdit, usersOrgEditRole)
+		FixedRoles.Store(usersOrgRead, usersOrgReadRole)
+		FixedRoles.Store(ldapAdminEdit, ldapAdminEditRole)
+		FixedRoles.Store(ldapAdminRead, ldapAdminReadRole)
+		FixedRoles.Store(serverAdminRead, serverAdminReadRole)
+		FixedRoles.Store(settingsAdminRead, settingsAdminReadRole)
 
 		// Register assignments
 		// Grafana Admin grants

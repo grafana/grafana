@@ -56,16 +56,13 @@ func (ac *OSSAccessControlService) getUsageMetrics() interface{} {
 }
 
 func (ac *OSSAccessControlService) saveFixedRole(role accesscontrol.RoleDTO) error {
-	accesscontrol.FixedRolesMutex.Lock()
-	defer accesscontrol.FixedRolesMutex.Unlock()
-
-	if storedRole, ok := accesscontrol.FixedRoles[role.Name]; ok {
+	if storedRole, ok := accesscontrol.FixedRoles.Load(role.Name); ok {
 		if storedRole.Version >= role.Version {
 			return accesscontrol.ErrVersionLE
 		}
 	}
 	// Save role
-	accesscontrol.FixedRoles[role.Name] = role
+	accesscontrol.FixedRoles.Store(role.Name, role)
 
 	return nil
 }
@@ -127,8 +124,6 @@ func (ac *OSSAccessControlService) GetUserPermissions(ctx context.Context, user 
 	// Lock fixed role grants and list for reading
 	accesscontrol.FixedRoleGrantsMutex.RLock()
 	defer accesscontrol.FixedRoleGrantsMutex.RUnlock()
-	accesscontrol.FixedRolesMutex.RLock()
-	defer accesscontrol.FixedRolesMutex.RUnlock()
 
 	timer := prometheus.NewTimer(metrics.MAccessPermissionsSummary)
 	defer timer.ObserveDuration()
@@ -138,7 +133,7 @@ func (ac *OSSAccessControlService) GetUserPermissions(ctx context.Context, user 
 	for _, builtin := range builtinRoles {
 		if roleNames, ok := accesscontrol.FixedRoleGrants[builtin]; ok {
 			for _, name := range roleNames {
-				role, exists := accesscontrol.FixedRoles[name]
+				role, exists := accesscontrol.FixedRoles.Load(name)
 				if !exists {
 					continue
 				}

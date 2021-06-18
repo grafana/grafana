@@ -9,17 +9,17 @@ import (
 )
 
 func TestPredefinedRoles(t *testing.T) {
-	FixedRolesMutex.RLock()
-	defer FixedRolesMutex.RUnlock()
-
-	for name, role := range FixedRoles {
+	validateFixedRole := func(name string, role RoleDTO) bool {
 		assert.Truef(t,
 			strings.HasPrefix(name, "fixed:"),
 			"expected all fixed roles to be prefixed by 'fixed:', found role '%s'", name,
 		)
 		assert.Equal(t, name, role.Name)
 		assert.NotZero(t, role.Version)
+		return true
 	}
+
+	FixedRoles.Range(validateFixedRole)
 }
 
 func TestPredefinedRoleGrants(t *testing.T) {
@@ -36,10 +36,8 @@ func TestPredefinedRoleGrants(t *testing.T) {
 		)
 
 		// Check all granted roles have been registered
-		FixedRolesMutex.RLock()
-		defer FixedRolesMutex.RUnlock()
 		for _, r := range roles {
-			_, ok := FixedRoles[r]
+			_, ok := FixedRoles.Load(r)
 			assert.True(t, ok)
 		}
 	}

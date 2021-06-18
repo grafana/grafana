@@ -238,9 +238,7 @@ func TestOSSAccessControlService_RegisterFixedRole(t *testing.T) {
 	}
 
 	removeRole := func(role string) {
-		accesscontrol.FixedRolesMutex.Lock()
-		delete(accesscontrol.FixedRoles, role)
-		accesscontrol.FixedRolesMutex.Unlock()
+		accesscontrol.FixedRoles.Delete(role)
 
 		accesscontrol.FixedRoleGrantsMutex.Lock()
 		defer accesscontrol.FixedRoleGrantsMutex.Unlock()
@@ -278,10 +276,8 @@ func TestOSSAccessControlService_RegisterFixedRole(t *testing.T) {
 				require.NoError(t, err)
 
 				//Check role has been registered
-				accesscontrol.FixedRolesMutex.RLock()
-				storedRole, ok := accesscontrol.FixedRoles[run.role.Name]
+				storedRole, ok := accesscontrol.FixedRoles.Load(run.role.Name)
 				assert.True(t, ok)
-				accesscontrol.FixedRolesMutex.RUnlock()
 
 				//Check registered role has not been altered
 				assert.Equal(t, run.role, storedRole)
