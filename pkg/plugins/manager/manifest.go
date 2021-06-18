@@ -244,15 +244,10 @@ func getPluginSignatureState(log log.Logger, plugin *plugins.PluginBase) (plugin
 	}, nil
 }
 
-// should add more secure checks
-func isCorePlugin(cfg *setting.Cfg, p *plugins.PluginV2) bool {
-	return strings.Contains(p.PluginDir, filepath.Join(cfg.StaticRootPath, "app/plugins"))
-}
-
-func pluginSignatureState(log log.Logger, cfg *setting.Cfg, plugin *plugins.PluginV2) (plugins.PluginSignatureState, error) {
+func pluginSignatureState(log log.Logger, plugin *plugins.PluginV2) (plugins.PluginSignatureState, error) {
 	log.Debug("Getting signature state of plugin", "plugin", plugin.ID, "isBackend", plugin.Backend)
 
-	if isCorePlugin(cfg, plugin) {
+	if plugin.IsCorePlugin() {
 		return plugins.PluginSignatureState{
 			Status: plugins.PluginSignatureInternal,
 		}, nil

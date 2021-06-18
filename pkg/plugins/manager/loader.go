@@ -68,7 +68,7 @@ func (l *Loader) LoadAll(pluginJSONPaths []string, class plugins.PluginClass) ([
 			Class:     class,
 		}
 
-		signatureState, err := pluginSignatureState(l.log, l.Cfg, plugin)
+		signatureState, err := pluginSignatureState(l.log, plugin)
 		if err != nil {
 			l.log.Warn("Could not get plugin signature state", "pluginID", plugin.ID, "err", err)
 			return nil, err
