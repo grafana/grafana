@@ -8,7 +8,7 @@ weight = 300
 
 # Azure Monitor data source
 
-Grafana includes built-in support for Azure Monitor, the Azure service to maximise availablity and performance of your applications and services in the Azure Cloud. The Azure Monitor data source supports visualising data from three Azure services:
+Grafana includes built-in support for Azure Monitor, the Azure service to maximise availability and performance of your applications and services in the Azure Cloud. The Azure Monitor data source supports visualising data from three Azure services:
 
 - **Azure Monitor Metrics** to collect numeric data from resources in your Azure account
 - **Azure Monitor Logs** to collect log and performance data from your Azure account, and query using the powerful Kusto Language
@@ -25,12 +25,12 @@ You must create an app registration and service principal in Azure AD to authent
 | Name                    | Description                                                                                                                                                                                                                                                                                                             |
 | ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Authentication          | Enables Managed Identity. Selecting Managed Identity will hide many of the fields below. See [Configuring using Managed Identity](#configuring-using-managed-identity) for more details.                                                                                                                                |
-| Azure Cloud             | The national cloud for your Azure account. For most users, this is the default "Azure". For more information, see [](https://docs.microsoft.com/en-us/azure/active-directory/develop/authentication-national-cloud)                                                                                                     |
+| Azure Cloud             | The national cloud for your Azure account. For most users, this is the default "Azure". For more information, see [the Azure documentation.](https://docs.microsoft.com/en-us/azure/active-directory/develop/authentication-national-cloud)                                                                             |
 | Directory (tenant) ID   | The directory/tenant ID for the Azure AD app registration to use for authentication. See [Get tenant and app ID values for signing in](https://docs.microsoft.com/en-us/azure/active-directory/develop/howto-create-service-principal-portal#get-tenant-and-app-id-values-for-signing-in) from the Azure documentation. |
 | Application (client) ID | The application/client ID for the Azure AD app registration to use for authentication.                                                                                                                                                                                                                                  |
 | Client secret           | The application client secret for the Azure AD app registration to use for authentication. See [Create a new application secret](https://docs.microsoft.com/en-us/azure/active-directory/develop/howto-create-service-principal-portal#option-2-create-a-new-application-secret) from the Azure documentation.          |
-| Default subscription    | (optional)                                                                                                                                                                                                                                                                                                              |
-| Default workspace       | (optional)                                                                                                                                                                                                                                                                                                              |
+| Default subscription    | _(optional)_ Sets a default subscription for template variables to use                                                                                                                                                                                                                                                  |
+| Default workspace       | _(optional)_ Sets a default workspace for Log Analytics-based template variable queries to use                                                                                                                                                                                                                          |
 
 ## Azure Monitor query editor
 
@@ -38,15 +38,15 @@ The Azure Monitor data source has three different modes depending on which Azure
 
 - **Metrics** for [Azure Monitor Metrics](https://docs.microsoft.com/en-us/azure/azure-monitor/essentials/data-platform-metrics)
 - **Logs** for [Azure Monitor Logs](https://docs.microsoft.com/en-us/azure/azure-monitor/logs/data-platform-logs)
-- Azure Resource Graph
+- [**Azure Resource Graph**](https://docs.microsoft.com/en-gb/azure/governance/resource-graph/overview)
 
 ### Querying Azure Monitor Metrics
 
-Azure Monitor Metrics collects numeric data from [supported resources](https://docs.microsoft.com/en-us/azure/azure-monitor/monitor-reference) and allows you to query them to investigate the health and utilisation of your resources to maximise availability and performance.
+Azure Monitor Metrics collects numeric data from [supported resources](https://docs.microsoft.com/en-us/azure/azure-monitor/monitor-reference) and allows you to query them to investigate the health and utilization of your resources to maximise availability and performance.
 
-Metrics are more lightweight than data in Azure Monitior Logs and only stores numeric data in a particular structure. Metrics is capable for supporting near real-time scenarios making it useful for fast detection of issues. Azure Monitor Logs can store a variety of different data types each with their own structure.
+Metrics are a lightweight format that only stores simple numeric data in a particular structure. Metrics is capable for supporting near real-time scenarios making it useful for fast detection of issues. Azure Monitor Logs can store a variety of different data types each with their own structure.
 
-> metrics screenshot
+> TODO: metrics screenshot
 
 #### Your first Azure Monitor Metrics query
 
@@ -61,7 +61,7 @@ Optionally, you can apply further aggregations or filter by dimensions for furth
 1. Set a specific custom time grain. By default Grafana will automatically select a time grain interval based on your selected time range.
 1. For metrics that have multiple dimensions, you can split and filter further the returned metrics. For example, the Application Insights dependency calls metric supports returning multiple time series for successful vs unsuccessful calls.
 
-The options available will change depending on what is most relevent to the selected metric.
+The options available will change depending on what is most relevant to the selected metric.
 
 #### Legend alias formatting
 
@@ -88,7 +88,7 @@ Not all metrics returned by the Azure Monitor Metrics API have values. To make i
 
 Azure Monitor Logs collects and organises log and performance data from [supported resources](https://docs.microsoft.com/en-us/azure/azure-monitor/monitor-reference) and makes many sources of data available to query together with the sophisticated [Kusto Query Language (KQL)](https://docs.microsoft.com/en-us/azure/data-explorer/kusto/query/).
 
-Wheras Azure Monitor Metrics can only store numeric data in a simplified structure, Logs can store different data types each with their own strucutre and can perform complexe analysis of data using KQL.
+While Azure Monitor Metrics only stores simplified numerical data, Logs can store different data types each with their own structure and can perform complexe analysis of data using KQL.
 
 #### Your first Azure Monitor Logs query
 
