@@ -2,8 +2,6 @@ package graphite
 
 import (
 	"encoding/json"
-	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/stretchr/testify/require"
 	"io/ioutil"
 	"net/http"
 	"reflect"
@@ -11,7 +9,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestFormatTimeRange(t *testing.T) {
