@@ -24,11 +24,20 @@ const INTERVAL_FACTOR_OPTIONS: Array<SelectableValue<number>> = map([1, 2, 3, 4,
   label: '1/' + value,
 }));
 
+const STEP_OPTIONS: Array<SelectableValue<number>> = map([0, 1, 2], (value: number) => {
+  const labels = ['min', 'standard', 'max'];
+  return {
+    value,
+    label: labels[value],
+  };
+});
+
 interface State {
   legendFormat?: string;
   formatOption: SelectableValue<string>;
   interval?: string;
   intervalFactorOption: SelectableValue<number>;
+  stepOption: SelectableValue<number>;
   instant: boolean;
   exemplar: boolean;
 }
@@ -52,6 +61,8 @@ export class PromQueryEditor extends PureComponent<PromQueryEditorProps, State> 
       formatOption: FORMAT_OPTIONS.find((option) => option.value === query.format) || FORMAT_OPTIONS[0],
       intervalFactorOption:
         INTERVAL_FACTOR_OPTIONS.find((option) => option.value === query.intervalFactor) || INTERVAL_FACTOR_OPTIONS[0],
+      // Step option
+      stepOption: STEP_OPTIONS.find((option) => option.value === query.stepOption) || STEP_OPTIONS[0],
       // Switch options
       instant: Boolean(query.instant),
       exemplar: Boolean(query.exemplar),
@@ -105,7 +116,7 @@ export class PromQueryEditor extends PureComponent<PromQueryEditorProps, State> 
 
   render() {
     const { datasource, query, range, data } = this.props;
-    const { formatOption, instant, interval, intervalFactorOption, legendFormat, exemplar } = this.state;
+    const { formatOption, instant, interval, intervalFactorOption, stepOption, legendFormat, exemplar } = this.state;
 
     return (
       <PromQueryField
@@ -139,7 +150,7 @@ export class PromQueryEditor extends PureComponent<PromQueryEditorProps, State> 
 
             <div className="gf-form">
               <InlineFormLabel
-                width={7}
+                width={5}
                 tooltip={
                   <>
                     An additional lower limit for the step parameter of the Prometheus query and for the{' '}
@@ -148,8 +159,14 @@ export class PromQueryEditor extends PureComponent<PromQueryEditorProps, State> 
                   </>
                 }
               >
-                Min step
+                Step
               </InlineFormLabel>
+              <Select
+                isSearchable={false}
+                options={STEP_OPTIONS}
+                onChange={this.onIntervalFactorChange}
+                value={stepOption}
+              />
               <input
                 type="text"
                 className="gf-form-input width-8"
