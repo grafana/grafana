@@ -179,7 +179,7 @@ func (e *GraphiteExecutor) toDataFrames(response *http.Response) (frames data.Fr
 		name := series.Target
 
 		for _, dataPoint := range series.DataPoints {
-			var timestamp, value, err = parseDataTimePoint(&dataPoint)
+			var timestamp, value, err = parseDataTimePoint(dataPoint)
 			if err != nil {
 				return nil, err
 			}
@@ -265,7 +265,7 @@ func epochMStoGraphiteTime(tr plugins.DataTimeRange) (string, string, error) {
 /**
  * Graphite should always return timestamp as a number but values might be nil when data is missing
  */
-func parseDataTimePoint(dataTimePoint *plugins.DataTimePoint) (time.Time, *float64, error) {
+func parseDataTimePoint(dataTimePoint plugins.DataTimePoint) (time.Time, *float64, error) {
 
 	if !dataTimePoint[1].Valid {
 		return time.Time{}, nil, errors.New("failed to parse data point timestamp")
