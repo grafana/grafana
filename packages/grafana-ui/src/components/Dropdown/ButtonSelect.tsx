@@ -1,7 +1,7 @@
 import React, { useState, HTMLAttributes } from 'react';
 import { PopoverContent } from '../Tooltip/Tooltip';
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { ToolbarButtonVariant, ToolbarButton } from '../Button';
+import { ToolbarButtonVariant, ToolbarButton, ButtonGroup } from '../Button';
 import { ClickOutsideWrapper } from '../ClickOutsideWrapper/ClickOutsideWrapper';
 import { css } from '@emotion/css';
 import { useStyles2 } from '../../themes/ThemeContext';
@@ -43,7 +43,7 @@ export const ButtonSelect = React.memo(<T,>(props: Props<T>) => {
   };
 
   return (
-    <div className={styles.wrapper}>
+    <ButtonGroup className={styles.wrapper}>
       <ToolbarButton
         className={className}
         isOpen={isOpen}
@@ -71,7 +71,7 @@ export const ButtonSelect = React.memo(<T,>(props: Props<T>) => {
           </ClickOutsideWrapper>
         </div>
       )}
-    </div>
+    </ButtonGroup>
   );
 });
 

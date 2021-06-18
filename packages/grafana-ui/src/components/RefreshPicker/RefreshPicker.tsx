@@ -65,28 +65,26 @@ export class RefreshPicker extends PureComponent<Props> {
     }
 
     return (
-      <div className="refresh-picker">
-        <ButtonGroup className="refresh-picker-buttons">
-          <ToolbarButton
-            tooltip={tooltip}
-            onClick={onRefresh}
+      <ButtonGroup className="refresh-picker">
+        <ToolbarButton
+          tooltip={tooltip}
+          onClick={onRefresh}
+          variant={variant}
+          icon={isLoading ? 'fa fa-spinner' : 'sync'}
+          aria-label={selectors.components.RefreshPicker.runButton}
+        >
+          {text}
+        </ToolbarButton>
+        {!noIntervalPicker && (
+          <ButtonSelect
+            value={selectedValue}
+            options={options}
+            onChange={this.onChangeSelect as any}
             variant={variant}
-            icon={isLoading ? 'fa fa-spinner' : 'sync'}
-            aria-label={selectors.components.RefreshPicker.runButton}
-          >
-            {text}
-          </ToolbarButton>
-          {!noIntervalPicker && (
-            <ButtonSelect
-              value={selectedValue}
-              options={options}
-              onChange={this.onChangeSelect as any}
-              variant={variant}
-              aria-label={selectors.components.RefreshPicker.intervalButton}
-            />
-          )}
-        </ButtonGroup>
-      </div>
+            aria-label={selectors.components.RefreshPicker.intervalButton}
+          />
+        )}
+      </ButtonGroup>
     );
   }
 }

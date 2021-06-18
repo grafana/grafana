@@ -1,13 +1,12 @@
 // Libraries
 import React, { Component } from 'react';
 import { dateMath, TimeRange, TimeZone } from '@grafana/data';
-import { css } from '@emotion/css';
 
 // Types
 import { DashboardModel } from '../../state';
 
 // Components
-import { defaultIntervals, RefreshPicker, stylesFactory } from '@grafana/ui';
+import { defaultIntervals, RefreshPicker, ToolbarButtonRow } from '@grafana/ui';
 import { TimePickerWithHistory } from 'app/core/components/TimePicker/TimePickerWithHistory';
 
 // Utils & Services
@@ -82,11 +81,10 @@ export class DashNavTimeControls extends Component<Props> {
 
     const timePickerValue = getTimeSrv().timeRange();
     const timeZone = dashboard.getTimezone();
-    const styles = getStyles();
     const hideIntervalPicker = dashboard.panelInEdit?.isEditing;
 
     return (
-      <div className={styles.container}>
+      <ToolbarButtonRow>
         <TimePickerWithHistory
           value={timePickerValue}
           onChange={this.onChangeTimePicker}
@@ -104,16 +102,7 @@ export class DashNavTimeControls extends Component<Props> {
           tooltip="Refresh dashboard"
           noIntervalPicker={hideIntervalPicker}
         />
-      </div>
+      </ToolbarButtonRow>
     );
   }
 }
-
-const getStyles = stylesFactory(() => {
-  return {
-    container: css`
-      position: relative;
-      display: flex;
-    `,
-  };
-});
