@@ -104,9 +104,9 @@ type PluginFinderV2 interface {
 
 type PluginLoaderV2 interface {
 	// LoadAll loads a list plugins and returns them.
-	LoadAll(pluginJSONPaths []string, requireSigned bool) ([]*PluginV2, error)
+	LoadAll(pluginJSONPaths []string, class PluginClass) ([]*PluginV2, error)
 	// Load loads a plugin and returns it.
-	Load(pluginJSONPath string, requireSigned bool) (*PluginV2, error)
+	Load(pluginJSONPath string, class PluginClass) (*PluginV2, error)
 }
 
 type PluginInitializerV2 interface {

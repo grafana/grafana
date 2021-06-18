@@ -36,8 +36,8 @@ func (l *Loader) Init() error {
 	return nil
 }
 
-func (l *Loader) Load(pluginJSONPath string, requireSigned bool) (*plugins.PluginV2, error) {
-	p, err := l.LoadAll([]string{pluginJSONPath}, requireSigned)
+func (l *Loader) Load(pluginJSONPath string, class plugins.PluginClass) (*plugins.PluginV2, error) {
+	p, err := l.LoadAll([]string{pluginJSONPath}, class)
 	if err != nil {
 		return nil, err
 	}
@@ -45,7 +45,7 @@ func (l *Loader) Load(pluginJSONPath string, requireSigned bool) (*plugins.Plugi
 	return p[0], nil
 }
 
-func (l *Loader) LoadAll(pluginJSONPaths []string, requireSigned bool) ([]*plugins.PluginV2, error) {
+func (l *Loader) LoadAll(pluginJSONPaths []string, class plugins.PluginClass) ([]*plugins.PluginV2, error) {
 	var foundPlugins = make(map[string]plugins.JSONData)
 	var loadingErrors = make(map[string]error)
 
@@ -65,6 +65,7 @@ func (l *Loader) LoadAll(pluginJSONPaths []string, requireSigned bool) ([]*plugi
 		plugin := &plugins.PluginV2{
 			JSONData:  pluginJSON,
 			PluginDir: pluginDir,
+			Class:     class,
 		}
 
 		signatureState, err := pluginSignatureState(l.log, l.Cfg, plugin)
@@ -105,16 +106,12 @@ func (l *Loader) LoadAll(pluginJSONPaths []string, requireSigned bool) ([]*plugi
 
 	// validate signatures
 	for _, plugin := range loadedPlugins {
-		signingError := newSignatureValidator(l.Cfg, requireSigned, l.allowUnsignedPluginsCondition).validate(plugin)
+		signingError := newSignatureValidator(l.Cfg, class, l.allowUnsignedPluginsCondition).validate(plugin)
 		if signingError != nil {
 			l.log.Debug("Failed to validate plugin signature. Will skip loading", "id", plugin.ID,
 				"signature", plugin.Signature, "status", signingError)
 			loadingErrors[plugin.ID] = signingError
 			continue
-		}
-
-		if plugin.Signature.IsInternal() {
-			plugin.IsCorePlugin = true
 		}
 
 		// verify module.js exists for SystemJS to load

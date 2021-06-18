@@ -88,12 +88,8 @@ func (i *Initializer) Initialize(p *plugins.PluginV2) error {
 		}
 	}
 
-	if !p.IsCorePlugin {
-		pluginType := "external"
-		if strings.HasPrefix(p.PluginDir, i.Cfg.BundledPluginsPath) {
-			pluginType = "bundled"
-		}
-		i.log.Info(fmt.Sprintf("Successfully added %s plugin", pluginType), "pluginID", p.ID)
+	if !p.IsCorePlugin() {
+		i.log.Info(fmt.Sprintf("Successfully added %s plugin", p.Class), "pluginID", p.ID)
 	}
 
 	if p.Backend {

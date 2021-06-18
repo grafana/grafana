@@ -12,8 +12,8 @@ import (
 type PluginV2 struct {
 	JSONData
 
-	PluginDir    string
-	IsCorePlugin bool
+	PluginDir string
+	Class     PluginClass
 
 	// app fields
 	IncludedInAppID string
@@ -199,6 +199,14 @@ func (p *PluginV2) IsRenderer() bool {
 	return p.Type == "renderer"
 }
 
+func (p *PluginV2) IsCorePlugin() bool {
+	return p.Class == Core
+}
+
+func (p *PluginV2) IsExternalPlugin() bool {
+	return p.Class == External
+}
+
 type PluginClient interface {
 	backend.QueryDataHandler
 	backend.CollectMetricsHandler
@@ -206,3 +214,11 @@ type PluginClient interface {
 	backend.CallResourceHandler
 	backend.StreamHandler
 }
+
+type PluginClass string
+
+const (
+	Core     PluginClass = "core"
+	Bundled  PluginClass = "bundled"
+	External PluginClass = "external"
+)

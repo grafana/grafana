@@ -59,13 +59,13 @@ func (m *PluginManagerV2) Init() error {
 	m.pluginInstaller = installer.New(false, m.Cfg.BuildVersion, NewInstallerLogger("plugin.installer", true))
 
 	// install Core plugins
-	//err := m.installPlugins(filepath.Join(m.Cfg.StaticRootPath, "app/plugins"), false)
+	//err := m.installPlugins(filepath.Join(m.Cfg.StaticRootPath, "app/plugins"), plugins.Core)
 	//if err != nil {
 	//	return err
 	//}
 
 	// install Bundled plugins
-	err := m.installPlugins(m.Cfg.BundledPluginsPath, false)
+	err := m.installPlugins(m.Cfg.BundledPluginsPath, plugins.Bundled)
 	if err != nil {
 		return err
 	}
@@ -82,7 +82,7 @@ func (m *PluginManagerV2) Init() error {
 			m.log.Error("Failed to create plugins directory", "dir", externalPluginsDir, "error", err)
 		}
 	}
-	err = m.installPlugins(m.Cfg.PluginsPath, true)
+	err = m.installPlugins(m.Cfg.PluginsPath, plugins.External)
 	if err != nil {
 		return err
 	}
@@ -104,7 +104,7 @@ func (m *PluginManagerV2) IsDisabled() bool {
 func (m *PluginManagerV2) RegisterCorePlugin(ctx context.Context, pluginJSONPath string, factory backendplugin.PluginFactoryFunc) error {
 	fullPath := filepath.Join(m.Cfg.StaticRootPath, "app/plugins", pluginJSONPath)
 
-	plugin, err := m.PluginLoader.Load(fullPath, false)
+	plugin, err := m.PluginLoader.Load(fullPath, plugins.Core)
 	if err != nil {
 		return err
 	}
@@ -126,7 +126,7 @@ func (m *PluginManagerV2) RegisterCorePlugin(ctx context.Context, pluginJSONPath
 	return nil
 }
 
-func (m *PluginManagerV2) installPlugins(path string, requireSigning bool) error {
+func (m *PluginManagerV2) installPlugins(path string, class plugins.PluginClass) error {
 	exists, err := fs.Exists(path)
 	if err != nil {
 		return err
@@ -141,7 +141,7 @@ func (m *PluginManagerV2) installPlugins(path string, requireSigning bool) error
 		return err
 	}
 
-	loadedPlugins, err := m.PluginLoader.LoadAll(pluginJSONPaths, requireSigning)
+	loadedPlugins, err := m.PluginLoader.LoadAll(pluginJSONPaths, class)
 	if err != nil {
 		return err
 	}
@@ -567,7 +567,7 @@ func (m *PluginManagerV2) IsSupported(pluginID string) bool {
 func (m *PluginManagerV2) Install(ctx context.Context, pluginID, version string) error {
 	plugin := m.GetPlugin(pluginID)
 	if plugin != nil {
-		if plugin.IsCorePlugin {
+		if !plugin.IsExternalPlugin() {
 			return plugins.ErrInstallCorePlugin
 		}
 
@@ -590,7 +590,7 @@ func (m *PluginManagerV2) Install(ctx context.Context, pluginID, version string)
 		return err
 	}
 
-	err = m.installPlugins(m.Cfg.PluginsPath, true)
+	err = m.installPlugins(m.Cfg.PluginsPath, plugins.External)
 	if err != nil {
 		return err
 	}
@@ -604,7 +604,7 @@ func (m *PluginManagerV2) Uninstall(ctx context.Context, pluginID string) error 
 		return plugins.ErrPluginNotInstalled
 	}
 
-	if plugin.IsCorePlugin {
+	if !plugin.IsExternalPlugin() {
 		return plugins.ErrUninstallCorePlugin
 	}
 

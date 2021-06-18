@@ -10,16 +10,16 @@ var logger = log.New("plugin.signature.validator")
 
 type PluginSignatureValidator struct {
 	cfg                           *setting.Cfg
-	requireSigned                 bool
+	pluginClass                   plugins.PluginClass
 	allowUnsignedPluginsCondition unsignedPluginV2ConditionFunc
 }
 
 type unsignedPluginV2ConditionFunc = func(plugin *plugins.PluginV2) bool
 
-func newSignatureValidator(cfg *setting.Cfg, requireSigned bool, unsignedCond unsignedPluginV2ConditionFunc) *PluginSignatureValidator {
+func newSignatureValidator(cfg *setting.Cfg, pluginClass plugins.PluginClass, unsignedCond unsignedPluginV2ConditionFunc) *PluginSignatureValidator {
 	return &PluginSignatureValidator{
 		cfg:                           cfg,
-		requireSigned:                 requireSigned,
+		pluginClass:                   pluginClass,
 		allowUnsignedPluginsCondition: unsignedCond,
 	}
 }
@@ -32,7 +32,7 @@ func (s *PluginSignatureValidator) validate(plugin *plugins.PluginV2) error {
 
 	if plugin.Parent != nil {
 		// If a descendant plugin with invalid signature, set signature to that of root
-		if plugin.IsCorePlugin || plugin.Signature == plugins.PluginSignatureInternal {
+		if plugin.IsCorePlugin() || plugin.Signature == plugins.PluginSignatureInternal {
 			logger.Debug("Not setting descendant plugin's signature to that of root since it's core or internal",
 				"plugin", plugin.ID, "signature", plugin.Signature, "isCore", plugin.IsCorePlugin)
 		} else {
@@ -51,7 +51,7 @@ func (s *PluginSignatureValidator) validate(plugin *plugins.PluginV2) error {
 			"state", plugin.Signature)
 	}
 
-	if !s.requireSigned {
+	if plugin.IsCorePlugin() || plugin.IsExternalPlugin() {
 		return nil
 	}
 
