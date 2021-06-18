@@ -16,15 +16,7 @@ import {
   SuggestionsPlugin,
 } from '../../slate-plugins';
 
-import {
-  makeValue,
-  SCHEMA,
-  CompletionItemGroup,
-  TypeaheadOutput,
-  TypeaheadInput,
-  SuggestionsState,
-  FieldValidationMessage,
-} from '../..';
+import { makeValue, SCHEMA, CompletionItemGroup, TypeaheadOutput, TypeaheadInput, SuggestionsState } from '../..';
 import { selectors } from '@grafana/e2e-selectors';
 import { css } from '@emotion/css';
 import { stylesFactory, withTheme2 } from '../../themes';
