@@ -14,7 +14,6 @@ import {
   dataFrameFromJSON,
 } from '@grafana/data';
 import { FetchError, FetchResponse } from '../services';
-import { TestingStatus } from '../../../../public/app/types';
 
 /**
  * Single response object from a backend data source. Properties are optional but response should contain at least
@@ -134,8 +133,10 @@ export function toDataQueryResponse(
  *
  * If possible, this should be avoided in favor of implementing /health endpoint
  * and testing data source with DataSourceWithBackend.testDataSource()
+ *
+ * @returns {TestingStatus}
  */
-export function toTestingStatus(err: FetchError): TestingStatus {
+export function toTestingStatus(err: FetchError): any {
   const queryResponse = toDataQueryResponse(err);
   // POST api/ds/query errors returned as { message: string, error: string } objects
   if (queryResponse.error?.data?.message && queryResponse.error?.data?.error) {
