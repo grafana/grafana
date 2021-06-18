@@ -732,8 +732,8 @@ func TestMySQL(t *testing.T) {
 			frames, _ := queryResult.Dataframes.Decoded()
 			require.Len(t, frames, 1)
 			require.Len(t, frames[0].Fields, 3)
-			require.Equal(t, data.Labels{"metric": "Metric A - value one"}, frames[0].Fields[1].Labels)
-			require.Equal(t, data.Labels{"metric": "Metric B - value one"}, frames[0].Fields[2].Labels)
+			require.Equal(t, "Metric A - value one", frames[0].Fields[1].Name)
+			require.Equal(t, "Metric B - value one", frames[0].Fields[2].Name)
 		})
 
 		t.Run("When doing a metric query with metric column and multiple value columns", func(t *testing.T) {
