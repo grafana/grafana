@@ -1,7 +1,6 @@
 // Libraries
 import React, { PureComponent } from 'react';
 import classNames from 'classnames';
-import AutoSizer from 'react-virtualized-auto-sizer';
 import { connect, ConnectedProps } from 'react-redux';
 
 // Components
@@ -24,6 +23,8 @@ export interface OwnProps {
   isEditing: boolean;
   isViewing: boolean;
   isInView: boolean;
+  width: number;
+  height: number;
 }
 
 export interface State {
@@ -69,44 +70,34 @@ export class DashboardPanelUnconnected extends PureComponent<Props, State> {
   }
 
   renderPanel(plugin: PanelPlugin) {
-    const { dashboard, panel, isViewing, isInView, isEditing } = this.props;
+    const { dashboard, panel, isViewing, isInView, isEditing, width, height } = this.props;
+
+    if (plugin.angularPanelCtrl) {
+      return (
+        <PanelChromeAngular
+          plugin={plugin}
+          panel={panel}
+          dashboard={dashboard}
+          isViewing={isViewing}
+          isEditing={isEditing}
+          isInView={isInView}
+          width={width}
+          height={height}
+        />
+      );
+    }
 
     return (
-      <AutoSizer>
-        {({ width, height }) => {
-          if (width === 0) {
-            return null;
-          }
-
-          if (plugin.angularPanelCtrl) {
-            return (
-              <PanelChromeAngular
-                plugin={plugin}
-                panel={panel}
-                dashboard={dashboard}
-                isViewing={isViewing}
-                isEditing={isEditing}
-                isInView={isInView}
-                width={width}
-                height={height}
-              />
-            );
-          }
-
-          return (
-            <PanelChrome
-              plugin={plugin}
-              panel={panel}
-              dashboard={dashboard}
-              isViewing={isViewing}
-              isEditing={isEditing}
-              isInView={isInView}
-              width={width}
-              height={height}
-            />
-          );
-        }}
-      </AutoSizer>
+      <PanelChrome
+        plugin={plugin}
+        panel={panel}
+        dashboard={dashboard}
+        isViewing={isViewing}
+        isEditing={isEditing}
+        isInView={isInView}
+        width={width}
+        height={height}
+      />
     );
   }
 

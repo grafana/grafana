@@ -31,7 +31,7 @@ export class DashboardGrid extends PureComponent<Props, State> {
   private panelMap: { [id: string]: PanelModel } = {};
   private eventSubs = new Subscription();
   private windowHeight = 1200;
-  private width = 0;
+  private gridWidth = 0;
 
   constructor(props: Props) {
     super(props);
@@ -144,13 +144,14 @@ export class DashboardGrid extends PureComponent<Props, State> {
     return !this.props.dashboard.otherPanelInFullscreen(panel);
   }
 
-  renderPanels(width: number) {
+  renderPanels(gridWidth: number) {
     const panelElements = [];
 
     // This is to avoid layout re-flows, accessing window.innerHeight can trigger re-flow
     // We assume here that if width change height might have changed as well
-    if (this.width !== width) {
+    if (this.gridWidth !== gridWidth) {
       this.windowHeight = window.innerHeight ?? 1000;
+      this.gridWidth = gridWidth;
     }
 
     for (const panel of this.props.dashboard.panels) {
@@ -179,6 +180,10 @@ export class DashboardGrid extends PureComponent<Props, State> {
       return <AddPanelWidget panel={panel} dashboard={this.props.dashboard} />;
     }
 
+    const colWidth = (this.gridWidth - GRID_CELL_VMARGIN * (GRID_COLUMN_COUNT - 1)) / GRID_COLUMN_COUNT;
+    const width = Math.round(colWidth * panel.gridPos.w + Math.max(0, panel.gridPos.w - 1) * GRID_CELL_VMARGIN);
+    const height = Math.round(panel.gridPos.h * (GRID_CELL_HEIGHT + GRID_CELL_VMARGIN) - GRID_CELL_VMARGIN);
+
     return (
       <DashboardPanel
         panel={panel}
@@ -186,6 +191,8 @@ export class DashboardGrid extends PureComponent<Props, State> {
         isEditing={panel.isEditing}
         isViewing={panel.isViewing}
         isInView={panel.isInView}
+        width={width}
+        height={height}
       />
     );
   }
