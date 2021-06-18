@@ -23,11 +23,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   wrapper: css`
     display: flex;
 
-    .button-group > .button-group,
-    .toolbar-button {
-      margin-left: 0;
-    }
-
     > .button-group:not(:first-child) > button,
     > button:not(:first-child) {
       border-top-left-radius: 0;
