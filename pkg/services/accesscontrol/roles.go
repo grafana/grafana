@@ -184,8 +184,7 @@ var (
 
 	// FixedRoleGrants specifies which built-in roles are assigned
 	// to which set of FixedRoles by default. Alphabetically sorted.
-	FixedRoleGrants      = map[string][]string{}
-	FixedRoleGrantsMutex sync.RWMutex
+	FixedRoleGrants = FixedRoleGrantsMap{grants: map[string][]string{}}
 )
 
 type FixedRolesMap struct {
@@ -207,8 +206,8 @@ func (f *FixedRolesMap) Load(name string) (RoleDTO, bool) {
 }
 
 func (f *FixedRolesMap) Range(fn func(name string, role RoleDTO) bool) {
-	f.mx.Lock()
-	defer f.mx.Unlock()
+	f.mx.RLock()
+	defer f.mx.RUnlock()
 	for k, v := range f.roles {
 		if !fn(k, v) {
 			return
@@ -220,6 +219,40 @@ func (f *FixedRolesMap) Delete(name string) {
 	f.mx.Lock()
 	defer f.mx.Unlock()
 	delete(f.roles, name)
+}
+
+type FixedRoleGrantsMap struct {
+	grants map[string][]string
+	mx     sync.RWMutex
+}
+
+func (f *FixedRoleGrantsMap) Store(builtInRole string, grants []string) {
+	f.mx.Lock()
+	defer f.mx.Unlock()
+	f.grants[builtInRole] = grants
+}
+
+func (f *FixedRoleGrantsMap) Load(builtInRole string) ([]string, bool) {
+	f.mx.RLock()
+	defer f.mx.RUnlock()
+	grants, exists := f.grants[builtInRole]
+	return grants, exists
+}
+
+func (f *FixedRoleGrantsMap) Range(fn func(builtInRole string, grants []string) bool) {
+	f.mx.RLock()
+	defer f.mx.RUnlock()
+	for k, v := range f.grants {
+		if !fn(k, v) {
+			return
+		}
+	}
+}
+
+func (f *FixedRoleGrantsMap) Delete(builtInRole string) {
+	f.mx.Lock()
+	defer f.mx.Unlock()
+	delete(f.grants, builtInRole)
 }
 
 func init() {
@@ -240,9 +273,7 @@ func InitFixedRole() {
 
 		// Register assignments
 		// Grafana Admin grants
-		FixedRoleGrantsMutex.Lock()
-		defer FixedRoleGrantsMutex.Unlock()
-		FixedRoleGrants[RoleGrafanaAdmin] = []string{
+		FixedRoleGrants.Store(RoleGrafanaAdmin, []string{
 			ldapAdminEdit,
 			ldapAdminRead,
 			serverAdminRead,
@@ -251,12 +282,12 @@ func InitFixedRole() {
 			usersAdminRead,
 			usersOrgEdit,
 			usersOrgRead,
-		}
+		})
 		// Admin grants
-		FixedRoleGrants[string(models.ROLE_ADMIN)] = []string{
+		FixedRoleGrants.Store(string(models.ROLE_ADMIN), []string{
 			usersOrgEdit,
 			usersOrgRead,
-		}
+		})
 	})
 }
 

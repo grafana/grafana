@@ -23,24 +23,23 @@ func TestPredefinedRoles(t *testing.T) {
 }
 
 func TestPredefinedRoleGrants(t *testing.T) {
-	FixedRoleGrantsMutex.RLock()
-	defer FixedRoleGrantsMutex.RUnlock()
-
-	for _, roles := range FixedRoleGrants {
+	validateGrants := func(builtInRole string, grants []string) bool {
 		// Check grants list is sorted
 		assert.True(t,
-			sort.SliceIsSorted(roles, func(i, j int) bool {
-				return roles[i] < roles[j]
+			sort.SliceIsSorted(grants, func(i, j int) bool {
+				return grants[i] < grants[j]
 			}),
 			"require role grant lists to be sorted",
 		)
 
 		// Check all granted roles have been registered
-		for _, r := range roles {
+		for _, r := range grants {
 			_, ok := FixedRoles.Load(r)
 			assert.True(t, ok)
 		}
+		return true
 	}
+	FixedRoleGrants.Range(validateGrants)
 }
 
 func TestConcatPermissions(t *testing.T) {

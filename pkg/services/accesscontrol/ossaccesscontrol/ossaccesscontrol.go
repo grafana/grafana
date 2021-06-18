@@ -68,12 +68,9 @@ func (ac *OSSAccessControlService) saveFixedRole(role accesscontrol.RoleDTO) err
 }
 
 func (ac *OSSAccessControlService) assignFixedRole(role accesscontrol.RoleDTO, builtInRoles []string) error {
-	accesscontrol.FixedRoleGrantsMutex.Lock()
-	defer accesscontrol.FixedRoleGrantsMutex.Unlock()
-
 	for _, builtInRole := range builtInRoles {
 		assignments := []string{}
-		if assignments, ok := accesscontrol.FixedRoleGrants[builtInRole]; ok {
+		if assignments, ok := accesscontrol.FixedRoleGrants.Load(builtInRole); ok {
 			// Check if role has not already been assigned to built-in role
 			for _, assignedRole := range assignments {
 				if assignedRole == role.Name {
@@ -82,7 +79,7 @@ func (ac *OSSAccessControlService) assignFixedRole(role accesscontrol.RoleDTO, b
 			}
 		}
 		assignments = append(assignments, role.Name)
-		accesscontrol.FixedRoleGrants[builtInRole] = assignments
+		accesscontrol.FixedRoleGrants.Store(builtInRole, assignments)
 	}
 	return nil
 }
@@ -121,17 +118,13 @@ func (ac *OSSAccessControlService) Evaluate(ctx context.Context, user *models.Si
 
 // GetUserPermissions returns user permissions based on built-in roles
 func (ac *OSSAccessControlService) GetUserPermissions(ctx context.Context, user *models.SignedInUser) ([]*accesscontrol.Permission, error) {
-	// Lock fixed role grants and list for reading
-	accesscontrol.FixedRoleGrantsMutex.RLock()
-	defer accesscontrol.FixedRoleGrantsMutex.RUnlock()
-
 	timer := prometheus.NewTimer(metrics.MAccessPermissionsSummary)
 	defer timer.ObserveDuration()
 
 	builtinRoles := ac.GetUserBuiltInRoles(user)
 	permissions := make([]*accesscontrol.Permission, 0)
 	for _, builtin := range builtinRoles {
-		if roleNames, ok := accesscontrol.FixedRoleGrants[builtin]; ok {
+		if roleNames, ok := accesscontrol.FixedRoleGrants.Load(builtin); ok {
 			for _, name := range roleNames {
 				role, exists := accesscontrol.FixedRoles.Load(name)
 				if !exists {

@@ -240,19 +240,26 @@ func TestOSSAccessControlService_RegisterFixedRole(t *testing.T) {
 	removeRole := func(role string) {
 		accesscontrol.FixedRoles.Delete(role)
 
-		accesscontrol.FixedRoleGrantsMutex.Lock()
-		defer accesscontrol.FixedRoleGrantsMutex.Unlock()
-		for builtInRole, assignments := range accesscontrol.FixedRoleGrants {
-			n := len(assignments)
+		// Compute new grants removing any appearance of the role in the list
+		replaceGrants := map[string][]string{}
+		computeNewGrants := func(builtInRole string, grants []string) bool {
+			n := len(grants)
 			for i := 0; i < n; i++ {
-				r := assignments[i]
+				r := grants[i]
 				if r == role {
-					copy(assignments[i:], assignments[i+1:])
+					copy(grants[i:], grants[i+1:])
 					n--
-					assignments = assignments[:n]
+					grants = grants[:n]
 				}
 			}
-			accesscontrol.FixedRoleGrants[builtInRole] = assignments
+			replaceGrants[builtInRole] = grants
+			return true
+		}
+		accesscontrol.FixedRoleGrants.Range(computeNewGrants)
+
+		// Replace grants
+		for br, grants := range replaceGrants {
+			accesscontrol.FixedRoleGrants.Store(br, grants)
 		}
 	}
 
@@ -283,14 +290,12 @@ func TestOSSAccessControlService_RegisterFixedRole(t *testing.T) {
 				assert.Equal(t, run.role, storedRole)
 
 				//Check assignments
-				accesscontrol.FixedRoleGrantsMutex.RLock()
 				for _, br := range run.builtInRoles {
-					assigns, ok := accesscontrol.FixedRoleGrants[br]
+					assigns, ok := accesscontrol.FixedRoleGrants.Load(br)
 					assert.True(t, ok)
 
 					assert.Contains(t, assigns, run.role.Name)
 				}
-				accesscontrol.FixedRoleGrantsMutex.RUnlock()
 			}
 		})
 	}
