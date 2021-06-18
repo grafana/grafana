@@ -30,6 +30,7 @@ import { css } from '@emotion/css';
 import { stylesFactory, withTheme2 } from '../../themes';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Themeable2 } from '../../types';
+import { getFocusStyles } from '../../themes/mixins';
 
 export interface QueryFieldProps extends Themeable2 {
   additionalPlugins?: Plugin[];
@@ -65,14 +66,6 @@ export interface QueryFieldState {
   focused: boolean;
 }
 
-const getStyles = stylesFactory((theme: GrafanaTheme2) => ({
-  infoBox: css`
-    position: absolute;
-    bottom: -100%;
-    left: 0;
-    z-index: ${theme.zIndex.tooltip};
-  `,
-}));
 /**
  * Renders an editor field.
  * Pass initial value as initialQuery and listen to changes in props.onValueChanged.
@@ -255,22 +248,20 @@ class UnthemedQueryField extends React.PureComponent<QueryFieldProps, QueryField
 
   render() {
     const { disabled, theme } = this.props;
+    const { focused } = this.state;
 
     const styles = getStyles(theme);
-    const wrapperClassName = classnames('slate-query-field__wrapper', {
+    const wrapperClassName = classnames(!focused || styles.focusStyle, 'slate-query-field__wrapper', {
       'slate-query-field__wrapper--disabled': disabled,
     });
-    const description = 'Edit your queries. Press escape to stop editing.';
+    const DESCRIPTION = 'Edit your queries. Press escape to stop editing.';
 
     return (
       <div className={wrapperClassName}>
-        {this.state.focused && (
-          <FieldValidationMessage className={styles.infoBox}>{description}</FieldValidationMessage>
-        )}
         <div className="slate-query-field" aria-label={selectors.components.QueryField.container}>
           <Editor
             //@ts-ignore
-            title={description}
+            title={DESCRIPTION}
             ref={(editor) => (this.editor = editor!)}
             schema={SCHEMA}
             autoCorrect={false}
@@ -292,6 +283,12 @@ class UnthemedQueryField extends React.PureComponent<QueryFieldProps, QueryField
     );
   }
 }
+
+const getStyles = stylesFactory((theme: GrafanaTheme2) => ({
+  focusStyle: css`
+    ${getFocusStyles(theme)}
+  `,
+}));
 
 export const QueryField = withTheme2(UnthemedQueryField);
 export default UnthemedQueryField;
