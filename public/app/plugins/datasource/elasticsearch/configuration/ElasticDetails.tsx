@@ -151,11 +151,22 @@ export const ElasticDetails = ({ value, onChange }: Props) => {
             onChange={jsonDataSwitchChangeHandler('xpack', value, onChange)}
           />
         </div>
+
+        {gte(value.jsonData.esVersion, '6.6.0') && value.jsonData.xpack && (
+          <div className="gf-form-inline">
+            <Switch
+              label="Include Frozen Indices"
+              checked={value.jsonData.includeFrozen ?? false}
+              onChange={jsonDataSwitchChangeHandler('includeFrozen', value, onChange)}
+            />
+          </div>
+        )}
       </div>
     </>
   );
 };
 
+// TODO: Use change handlers from @grafana/data
 const changeHandler = (
   key: keyof DataSourceSettings<ElasticsearchOptions>,
   value: Props['value'],
@@ -167,6 +178,7 @@ const changeHandler = (
   });
 };
 
+// TODO: Use change handlers from @grafana/data
 const jsonDataChangeHandler = (key: keyof ElasticsearchOptions, value: Props['value'], onChange: Props['onChange']) => (
   event: React.SyntheticEvent<HTMLInputElement | HTMLSelectElement>
 ) => {
