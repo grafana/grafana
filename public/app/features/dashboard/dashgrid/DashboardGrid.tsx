@@ -162,7 +162,11 @@ export class DashboardGrid extends PureComponent<Props, State> {
     }
 
     this.props.dashboard.sortPanelsByGridPos();
-    this.forceUpdate();
+
+    // This is called on grid mount as it can correct invalid initial grid positions
+    if (!this.state.isLayoutInitialized) {
+      this.setState({ isLayoutInitialized: true });
+    }
   };
 
   triggerForceUpdate = () => {
@@ -190,18 +194,8 @@ export class DashboardGrid extends PureComponent<Props, State> {
       return true;
     }
 
-    // elem is set *after* the first render
-    const elem = this.panelRef[panel.id.toString()];
-    if (!elem) {
-      // NOTE the gridPos is also not valid until after the first render
-      // since it is passed to the layout engine and made to be valid
-      // for example, you can have Y=0 for everything and it will stack them
-      // down vertically in the second call
-      return false;
-    }
-
-    const top = elem.offsetTop;
-    const height = panel.gridPos.h * GRID_CELL_HEIGHT + 40;
+    const top = panel.gridPos.y * (GRID_CELL_HEIGHT + GRID_CELL_VMARGIN);
+    const height = panel.gridPos.h * (GRID_CELL_HEIGHT + GRID_CELL_VMARGIN) - GRID_CELL_VMARGIN;
     const bottom = top + height;
 
     // Show things that are almost in the view
@@ -263,6 +257,7 @@ export class DashboardGrid extends PureComponent<Props, State> {
 
   render() {
     const { dashboard, viewPanel } = this.props;
+
     return (
       <SizedReactLayoutGrid
         className={classNames({ layout: true })}
