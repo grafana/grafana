@@ -2,8 +2,7 @@
 import React, { PureComponent } from 'react';
 import ReactGridLayout, { ItemCallback } from 'react-grid-layout';
 import classNames from 'classnames';
-// @ts-ignore
-import sizeMe from 'react-sizeme';
+import AutoSizer from 'react-virtualized-auto-sizer';
 
 // Components
 import { AddPanelWidget } from '../components/AddPanelWidget';
@@ -16,79 +15,6 @@ import { DashboardModel, PanelModel } from '../state';
 import { Subscription } from 'rxjs';
 import { DashboardPanelsChangedEvent } from 'app/types/events';
 
-let lastGridWidth = 1200;
-let ignoreNextWidthChange = false;
-
-interface GridWrapperProps {
-  size: { width: number };
-  layout: ReactGridLayout.Layout[];
-  onLayoutChange: (layout: ReactGridLayout.Layout[]) => void;
-  children: JSX.Element | JSX.Element[];
-  onDragStop: ItemCallback;
-  onResize: ItemCallback;
-  onResizeStop: ItemCallback;
-  className: string;
-  isResizable?: boolean;
-  isDraggable?: boolean;
-  viewPanel: PanelModel | null;
-}
-
-function GridWrapper({
-  size,
-  layout,
-  onLayoutChange,
-  children,
-  onDragStop,
-  onResize,
-  onResizeStop,
-  className,
-  isResizable,
-  isDraggable,
-  viewPanel,
-}: GridWrapperProps) {
-  const width = size.width > 0 ? size.width : lastGridWidth;
-
-  // logic to ignore width changes (optimization)
-  if (width !== lastGridWidth) {
-    if (ignoreNextWidthChange) {
-      ignoreNextWidthChange = false;
-    } else if (!viewPanel && Math.abs(width - lastGridWidth) > 8) {
-      lastGridWidth = width;
-    }
-  }
-
-  /*
-    Disable draggable if mobile device, solving an issue with unintentionally
-     moving panels. https://github.com/grafana/grafana/issues/18497
-     theme.breakpoints.md = 769
-  */
-  const draggable = width <= 769 ? false : isDraggable;
-
-  return (
-    <ReactGridLayout
-      width={lastGridWidth}
-      className={className}
-      isDraggable={draggable}
-      isResizable={isResizable}
-      containerPadding={[0, 0]}
-      useCSSTransforms={false}
-      margin={[GRID_CELL_VMARGIN, GRID_CELL_VMARGIN]}
-      cols={GRID_COLUMN_COUNT}
-      rowHeight={GRID_CELL_HEIGHT}
-      draggableHandle=".grid-drag-handle"
-      layout={layout}
-      onResize={onResize}
-      onResizeStop={onResizeStop}
-      onDragStop={onDragStop}
-      onLayoutChange={onLayoutChange}
-    >
-      {children}
-    </ReactGridLayout>
-  );
-}
-
-const SizedReactLayoutGrid = sizeMe({ monitorWidth: true })(GridWrapper);
-
 export interface Props {
   dashboard: DashboardModel;
   editPanel: PanelModel | null;
@@ -100,6 +26,7 @@ export interface Props {
 export interface State {
   isLayoutInitialized: boolean;
 }
+
 export class DashboardGrid extends PureComponent<Props, State> {
   private panelMap: { [id: string]: PanelModel } = {};
   private eventSubs = new Subscription();
@@ -258,19 +185,42 @@ export class DashboardGrid extends PureComponent<Props, State> {
     const { dashboard, viewPanel } = this.props;
 
     return (
-      <SizedReactLayoutGrid
-        className={classNames({ layout: true })}
-        layout={this.buildLayout()}
-        isResizable={dashboard.meta.canEdit}
-        isDraggable={dashboard.meta.canEdit}
-        onLayoutChange={this.onLayoutChange}
-        onDragStop={this.onDragStop}
-        onResize={this.onResize}
-        onResizeStop={this.onResizeStop}
-        viewPanel={viewPanel}
-      >
-        {this.renderPanels()}
-      </SizedReactLayoutGrid>
+      <AutoSizer>
+        {({ width, height }) => {
+          if (width === 0) {
+            return null;
+          }
+
+          const draggable = width <= 769 ? false : dashboard.meta.canEdit;
+
+          /*
+            Disable draggable if mobile device, solving an issue with unintentionally
+            moving panels. https://github.com/grafana/grafana/issues/18497
+            theme.breakpoints.md = 769      
+          */
+
+          return (
+            <ReactGridLayout
+              width={width}
+              isDraggable={draggable}
+              isResizable={dashboard.meta.canEdit}
+              containerPadding={[0, 0]}
+              useCSSTransforms={false}
+              margin={[GRID_CELL_VMARGIN, GRID_CELL_VMARGIN]}
+              cols={GRID_COLUMN_COUNT}
+              rowHeight={GRID_CELL_HEIGHT}
+              draggableHandle=".grid-drag-handle"
+              layout={this.buildLayout()}
+              onDragStop={this.onDragStop}
+              onResize={this.onResize}
+              onResizeStop={this.onResizeStop}
+              onLayoutChange={this.onLayoutChange}
+            >
+              {this.renderPanels()}
+            </ReactGridLayout>
+          );
+        }}
+      </AutoSizer>
     );
   }
 }
