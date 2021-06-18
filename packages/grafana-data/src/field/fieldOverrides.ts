@@ -116,7 +116,6 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
     };
 
     for (const field of newFrame.fields) {
-      const fieldScopedVars = { ...scopedVars };
       const config = field.config;
 
       field.state!.scopedVars = {
@@ -192,7 +191,13 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
       }
 
       // Attach data links supplier
-      field.getLinks = getLinksSupplier(newFrame, field, fieldScopedVars, context.replaceVariables, options.timeZone);
+      field.getLinks = getLinksSupplier(
+        newFrame,
+        field,
+        field.state!.scopedVars,
+        context.replaceVariables,
+        options.timeZone
+      );
     }
 
     return newFrame;
@@ -269,12 +274,12 @@ export function setFieldConfigDefaults(config: FieldConfig, defaults: FieldConfi
   validateFieldConfig(config);
 }
 
-const processFieldConfigValue = (
+function processFieldConfigValue(
   destination: Record<string, any>, // it's mutable
   source: Record<string, any>,
   fieldConfigProperty: FieldConfigPropertyItem,
   context: FieldOverrideEnv
-) => {
+) {
   const currentConfig = get(destination, fieldConfigProperty.path);
   if (currentConfig === null || currentConfig === undefined) {
     const item = context.fieldConfigRegistry.getIfExists(fieldConfigProperty.id);
@@ -289,7 +294,7 @@ const processFieldConfigValue = (
       }
     }
   }
-};
+}
 
 /**
  * This checks that all options on FieldConfig make sense.  It mutates any value that needs
