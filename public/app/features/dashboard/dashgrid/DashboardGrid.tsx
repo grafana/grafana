@@ -30,6 +30,8 @@ export interface State {
 export class DashboardGrid extends PureComponent<Props, State> {
   private panelMap: { [id: string]: PanelModel } = {};
   private eventSubs = new Subscription();
+  private windowHeight = 1200;
+  private width = 0;
 
   constructor(props: Props) {
     super(props);
@@ -115,36 +117,41 @@ export class DashboardGrid extends PureComponent<Props, State> {
     this.updateGridPos(newItem, layout);
   };
 
-  isInView = (panel: PanelModel): boolean => {
+  isInView(panel: PanelModel) {
     if (panel.isViewing || panel.isEditing) {
       return true;
     }
 
-    const top = panel.gridPos.y * (GRID_CELL_HEIGHT + GRID_CELL_VMARGIN);
-    const height = panel.gridPos.h * (GRID_CELL_HEIGHT + GRID_CELL_VMARGIN) - GRID_CELL_VMARGIN;
-    const bottom = top + height;
+    const scrollTop = this.props.scrollTop;
+    const panelTop = panel.gridPos.y * (GRID_CELL_HEIGHT + GRID_CELL_VMARGIN);
+    const panelBottom = panelTop + panel.gridPos.h * (GRID_CELL_HEIGHT + GRID_CELL_VMARGIN) - GRID_CELL_VMARGIN;
 
     // Show things that are almost in the view
-    const buffer = 250;
+    const buffer = 100;
 
-    const viewTop = this.props.scrollTop;
-    if (viewTop > bottom + buffer) {
-      return false; // The panel is above the viewport
+    // The panel is above the viewport
+    if (scrollTop > panelBottom + buffer) {
+      return false;
     }
 
-    // Use the whole browser height (larger than real value)
-    // TODO? is there a better way
-    const viewHeight = isNaN(window.innerHeight) ? (window as any).clientHeight : window.innerHeight;
-    const viewBot = viewTop + viewHeight;
-    if (top > viewBot + buffer) {
+    const scrollViewBottom = scrollTop + this.windowHeight;
+
+    // Panel is below view
+    if (panelTop > scrollViewBottom + buffer) {
       return false;
     }
 
     return !this.props.dashboard.otherPanelInFullscreen(panel);
-  };
+  }
 
-  renderPanels() {
+  renderPanels(width: number) {
     const panelElements = [];
+
+    // This is to avoid layout re-flows, accessing window.innerHeight can trigger re-flow
+    // We assume here that if width change height might have changed as well
+    if (this.width !== width) {
+      this.windowHeight = window.innerHeight ?? 1000;
+    }
 
     for (const panel of this.props.dashboard.panels) {
       const panelClasses = classNames({ 'react-grid-item--fullscreen': panel.isViewing });
@@ -184,9 +191,11 @@ export class DashboardGrid extends PureComponent<Props, State> {
   render() {
     const { dashboard, viewPanel } = this.props;
 
+    const autoSizerStyle = !!viewPanel ? { width: '100%', height: '100%' } : undefined;
+
     return (
-      <AutoSizer>
-        {({ width, height }) => {
+      <AutoSizer style={autoSizerStyle} disableHeight>
+        {({ width }) => {
           if (width === 0) {
             return null;
           }
@@ -216,7 +225,7 @@ export class DashboardGrid extends PureComponent<Props, State> {
               onResizeStop={this.onResizeStop}
               onLayoutChange={this.onLayoutChange}
             >
-              {this.renderPanels()}
+              {this.renderPanels(width)}
             </ReactGridLayout>
           );
         }}
