@@ -46,7 +46,7 @@ Azure Monitor Metrics collects numeric data from [supported resources](https://d
 
 Metrics are a lightweight format that only stores simple numeric data in a particular structure. Metrics is capable for supporting near real-time scenarios making it useful for fast detection of issues. Azure Monitor Logs can store a variety of different data types each with their own structure.
 
-> TODO: metrics screenshot
+{{< figure src="/static/img/docs/azure-monitor/query-editor-metrics.png" max-width="800px" class="docs-image--no-shadow" caption="Azure Logs Metrics sample query visualizing CPU percentage over time" >}}
 
 #### Your first Azure Monitor Metrics query
 
@@ -61,6 +61,8 @@ Optionally, you can apply further aggregations or filter by dimensions for furth
 1. Set a specific custom time grain. By default Grafana will automatically select a time grain interval based on your selected time range.
 1. For metrics that have multiple dimensions, you can split and filter further the returned metrics. For example, the Application Insights dependency calls metric supports returning multiple time series for successful vs unsuccessful calls.
 
+{{< figure src="/static/img/docs/azure-monitor/query-editor-metrics-dimensions.png" max-width="800px" class="docs-image--no-shadow" caption="Azure Monitor Metrics screenshot showing Dimensions" >}}
+
 The options available will change depending on what is most relevant to the selected metric.
 
 #### Legend alias formatting
@@ -70,15 +72,15 @@ The legend label for Metrics can be changed using aliases. In the Legend Format 
 - `Blob Type: {{ blobtype }}` becomes `Blob Type: PageBlob`, `Blob Type: BlockBlob`
 - `{{ resourcegroup }} - {{ resourcename }}` becomes `production - web_server`
 
-| Alias pattern               | Description                                                                                 |
-| --------------------------- | ------------------------------------------------------------------------------------------- |
-| {{ resourcegroup }}         | Replaced with the the resource group                                                        |
-| {{ namespace  }}            | Replaced with the resource type / namespace (e.g. Microsoft.Compute/virtualMachines)        |
-| {{ resourcename  }}         | Replaced with the resource name                                                             |
-| {{ metric  }}               | Replaced with the metric name (e.g. Percentage CPU)                                         |
-| _{{ arbitaryDimensionID }}_ | Replaced with the value of the specified dimension. (e.g. {{ blobtype }} becomes BlockBlob) |
-| {{ dimensionname  }}        | _(Legacy for backwards compatibility)_ Replaced with the name of the first dimension        |
-| {{ dimensionvalue  }}       | _(Legacy for backwards compatibility)_ Replaced with the value of the first dimension       |
+| Alias pattern                 | Description                                                                                 |
+| ----------------------------- | ------------------------------------------------------------------------------------------- |
+| `{{ resourcegroup }}`         | Replaced with the the resource group                                                        |
+| `{{ namespace }}`             | Replaced with the resource type / namespace (e.g. Microsoft.Compute/virtualMachines)        |
+| `{{ resourcename }}`          | Replaced with the resource name                                                             |
+| `{{ metric }}`                | Replaced with the metric name (e.g. Percentage CPU)                                         |
+| _`{{ arbitaryDimensionID }}`_ | Replaced with the value of the specified dimension. (e.g. {{ blobtype }} becomes BlockBlob) |
+| `{{ dimensionname }}`         | _(Legacy for backwards compatibility)_ Replaced with the name of the first dimension        |
+| `{{ dimensionvalue }}`        | _(Legacy for backwards compatibility)_ Replaced with the value of the first dimension       |
 
 #### Supported Azure Monitor metrics
 
@@ -89,6 +91,8 @@ Not all metrics returned by the Azure Monitor Metrics API have values. To make i
 Azure Monitor Logs collects and organises log and performance data from [supported resources](https://docs.microsoft.com/en-us/azure/azure-monitor/monitor-reference) and makes many sources of data available to query together with the sophisticated [Kusto Query Language (KQL)](https://docs.microsoft.com/en-us/azure/data-explorer/kusto/query/).
 
 While Azure Monitor Metrics only stores simplified numerical data, Logs can store different data types each with their own structure and can perform complexe analysis of data using KQL.
+
+{{< figure src="/static/img/docs/azure-monitor/query-editor-logs.png" max-width="800px" class="docs-image--no-shadow" caption="Azure Monitor Logs sample query comparing successful requests to failed requests" >}}
 
 #### Your first Azure Monitor Logs query
 
@@ -165,6 +169,8 @@ Additionally, Grafana has the built-in `$__interval` macro
 
 Azure Resource Graph (ARG) is a service in Azure that is designed to extend Azure Resource Management by providing efficient and performant resource exploration, with the ability to query at scale across a given set of subscriptions so that you can effectively govern your environment. By querying ARG, you can query resources with complex filtering, iteratively explore resources based on governance requirements, and assess the impact of applying policies in a vast cloud environment.
 
+{{< figure src="/static/img/docs/azure-monitor/query-editor-arg.png" max-width="800px" class="docs-image--no-shadow" caption="Azure Resource Graph sample query listing virtual machines on an account" >}}
+
 ### Your first Azure Resource Graph query
 
 ARG queries are written in a variant of the [Kusto Query Language](https://docs.microsoft.com/en-us/azure/governance/resource-graph/concepts/query-language), but not all Kusto language features are available in ARG. An Azure Resource Graph query is formatted as table data.
@@ -227,54 +233,11 @@ The Azure documentation also hosts [many sample queries](https://docs.microsoft.
 
 ## Going further with Azure Monitor
 
-### Template variables
+See the following topics to learn more about the Azure Monitor data source:
 
-Instead of hard-coding values for fields like resource group or resource name in your queries, you can use variables in their place to create more interactive, dynamic, and reusable dashboards.
-
-Check out the [Templating]({{< relref "../variables/_index.md" >}}) documentation for an introduction to the templating feature and the different
-types of template variables.
-
-> **Note:** Azure Monitor Metrics does not support multiple values. To visualize multiple time series (for example, metrics for two servers), add multiple queries to view them in the same panel
-
-The Azure Monitor data source provides the following queries you can specify in the Query field in the Variable edit view
-
-| Name                                                                         | Description                                                                                            |
-| ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
-| `Subscriptions()`                                                            | Returns subscriptions.                                                                                 |
-| `ResourceGroups()`                                                           | Returns resource groups.                                                                               |
-| `ResourceGroups(subscriptionID)`                                             | Returns resource groups for a specified subscription.                                                  |
-| `Namespaces(aResourceGroup)`                                                 | Returns namespaces for the default subscription and specified resource group.                          |
-| `Namespaces(subscriptionID, aResourceGroup)`                                 | Returns namespaces for the specified subscription and resource group.                                  |
-| `ResourceNames(aResourceGroup, aNamespace)`                                  | Returns a list of resource names.                                                                      |
-| `ResourceNames(subscriptionID, aResourceGroup, aNamespace)`                  | Returns a list of resource names for a specified subscription.                                         |
-| `MetricNamespace(aResourceGroup, aNamespace, aResourceName)`                 | Returns a list of metric namespaces.                                                                   |
-| `MetricNamespace(subscriptionID, aResourceGroup, aNamespace, aResourceName)` | Returns a list of metric namespaces for a specified subscription.                                      |
-| `MetricNames(aResourceGroup, aNamespace, aResourceName)`                     | Returns a list of metric names.                                                                        |
-| `MetricNames(subscriptionID, aResourceGroup, aNamespace, aResourceName)`     | Returns a list of metric names for a specified subscription.                                           |
-| `workspaces()`                                                               | Returns a list of workspaces for the default subscription.                                             |
-| `workspaces(subscriptionID)`                                                 | Returns a list of workspaces for the specified subscription (the parameter can be quoted or unquoted). |
-
-Where a subscription ID is not specified, a default subscription must be specified in the data source configuration, which will be used.
-
-Any Log Analytics KQL query that returns a single list of values can also be used in the Query field. For example:
-
-| Query                                                                                   | Description                                               |
-| --------------------------------------------------------------------------------------- | --------------------------------------------------------- |
-| `workspace("myWorkspace").Heartbeat \| distinct Computer`                               | Returns a list of Virtual Machines                        |
-| `workspace("$workspace").Heartbeat \| distinct Computer`                                | Returns a list of Virtual Machines with template variable |
-| `workspace("$workspace").Perf \| distinct ObjectName`                                   | Returns a list of objects from the Perf table             |
-| `workspace("$workspace").Perf \| where ObjectName == "$object" \| distinct CounterName` | Returns a list of metric names from the Perf table        |
-
-Example of a time series query using variables:
-
-```kusto
-Perf
-| where ObjectName == "$object" and CounterName == "$metric"
-| where TimeGenerated >= $__timeFrom() and TimeGenerated <= $__timeTo()
-| where  $__contains(Computer, $computer)
-| summarize avg(CounterValue) by bin(TimeGenerated, $__interval), Computer
-| order by TimeGenerated asc
-```
+- [Azure Monitor template variables]({{< relref "./template-variables.md" >}}) for more interactive, dynamic, and reusable dashboards.
+- [Provisioning Azure Monitor]({{< relref "./provisioning.md" >}}) for configuring the Azure Monitor data source using YAML files
+- [Deprecating Application Insights]({{< relref "./provisioning.md" >}}) and migrating to Metrics and Logs queries
 
 ### Configuring using Managed Identity
 
@@ -289,72 +252,4 @@ managed_identity_enabled = true
 
 Then, in the Azure Monitor data source configuration and set Authentication to Managed Identity. The directory ID, application ID and client secret fields will be hidden and the data source will use managed identity for authenticating to Azure Monitor Metrics, Logs, and Azure Resource Graph.
 
-### Configure the data source with provisioning
-
-You can configure data sources using config files with Grafana’s provisioning system. For more information on how it works and all the settings you can set for data sources on the [provisioning docs page]({{< relref "../administration/provisioning/#datasources" >}})
-
-Here are some provisioning examples for this data source.
-
-#### Azure AD App Registration (client secret)
-
-```yaml
-# config file version
-apiVersion: 1
-
-datasources:
-  - name: Azure Monitor
-    type: grafana-azure-monitor-datasource
-    access: proxy
-    jsonData:
-      azureAuthType: clientsecret
-      cloudName: azuremonitor # See table below
-      tenantId: <tenant-id>
-      clientId: <client-id>
-      subscriptionId: <subscription-id> # Optional, default subscription
-    secureJsonData:
-      clientSecret: <client-secret>
-    version: 1
-```
-
-#### Managed Identity
-
-```yaml
-# config file version
-apiVersion: 1
-
-datasources:
-  - name: Azure Monitor
-    type: grafana-azure-monitor-datasource
-    access: proxy
-    jsonData:
-      azureAuthType: msi
-      subscriptionId: <subscription-id> # Optional, default subscription
-    version: 1
-```
-
-### Supported cloud names
-
-| Azure Cloud                                      | Value                      |
-| ------------------------------------------------ | -------------------------- |
-| Microsoft Azure public cloud                     | `azuremonitor` (_default_) |
-| Microsoft Chinese national cloud                 | `chinaazuremonitor`        |
-| US Government cloud                              | `govazuremonitor`          |
-| Microsoft German national cloud ("Black Forest") | `germanyazuremonitor`      |
-
-## Deprecated Application Insights and Insights Analytics
-
-Application Insights and Insights Analytics are two ways to query the same Azure Application Insights data, which can also be queried from Metrics and Logs. In Grafana 8.0, Application Insights and Insights Analytics are deprecated and made read-only in favor of querying this data through Metrics and Logs. Existing queries will continue to work, but you cannot edit them. New panels are not able to use Application Insights or Insights Analytics.
-
-For Application Insights, new queries can be made with the Metrics query type by selecting the "Application Insights" resource type.
-
-{{< figure src="/static/img/docs/azure-monitor/app-insights-metrics.png" max-width="650px" class="docs-image--no-shadow" caption="Azure Monitor Application Insights example" >}}
-
-For Insights Analaytics, new queries can be written with Kusto in the Logs query type by selecting your Application Insights resource.
-
-{{< figure src="/static/img/docs/azure-monitor/app-insights-logs.png" max-width="650px" class="docs-image--no-shadow" caption="Azure Logs Application Insights example" >}}
-
-The new resource picker for Logs shows all resources on your Azure subscription compatible with Logs.
-
-{{< figure src="/static/img/docs/azure-monitor/app-insights-resource-picker.png" max-width="650px" class="docs-image--no-shadow" caption="Azure Logs Application Insights resource picker" >}}
-
-Azure Monitor Metrics and Azure Monitor Logs do not use Application Insights API keys, so make sure the data source is configured with an Azure AD app registration that has access to Application Insights
+{{< figure src="/static/img/docs/azure-monitor/managed-identity.png" max-width="800px" class="docs-image--no-shadow" caption="Azure Monitor Metrics screenshot showing Dimensions" >}}
