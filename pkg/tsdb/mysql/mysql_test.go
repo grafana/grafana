@@ -33,7 +33,7 @@ import (
 // devenv/README.md for setup instructions.
 func TestMySQL(t *testing.T) {
 	// change to true to run the MySQL tests
-	runMySQLTests := true
+	runMySQLTests := false
 	// runMySqlTests := true
 
 	if !(sqlstore.IsTestDbMySQL() || runMySQLTests) {
@@ -508,7 +508,7 @@ func TestMySQL(t *testing.T) {
 			require.True(t, tInitial.Equal(*frames[0].Fields[0].At(0).(*time.Time)))
 		})
 
-		t.Run("When doing a metric query using tinyint as value column should return metric with value in float64", func(t *testing.T) {
+		t.Run("When doing a metric query using tinyint as value column should return metric with value in *float64", func(t *testing.T) {
 			query := plugins.DataQuery{
 				Queries: []plugins.DataSubQuery{
 					{
@@ -532,7 +532,7 @@ func TestMySQL(t *testing.T) {
 			require.Equal(t, float64(6), *frames[0].Fields[1].At(0).(*float64))
 		})
 
-		t.Run("When doing a metric query using smallint as value column should return metric with value in float64", func(t *testing.T) {
+		t.Run("When doing a metric query using smallint as value column should return metric with value in *float64", func(t *testing.T) {
 			query := plugins.DataQuery{
 				Queries: []plugins.DataSubQuery{
 					{
