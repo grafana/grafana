@@ -156,6 +156,8 @@ export class DashboardGrid extends PureComponent<Props, State> {
     for (const panel of this.props.dashboard.panels) {
       const panelClasses = classNames({ 'react-grid-item--fullscreen': panel.isViewing });
       const id = panel.id.toString();
+
+      // Update is in view state
       panel.isInView = this.isInView(panel);
 
       panelElements.push(
