@@ -1,11 +1,13 @@
 import React, { PureComponent } from 'react';
+import { MapLayerConfig } from '@grafana/data';
+import { geomapLayerRegistry } from '../layers/registry';
 import L from 'leaflet';
-import * as EL from 'esri-leaflet';
 
 interface BaseMapProps {
   width: number;
   height: number;
   options: GeomapPanelOptions;
+  basemaps: MapLayerConfig[];
 }
 
 // Load the leaflet CSS
@@ -30,15 +32,43 @@ export class BaseMap extends PureComponent<BaseMapProps> {
       zoom: 10,
     });
 
-    const streets = EL.basemapLayer('Streets');
-    const baseMaps = {
-      Streets: streets,
-      Imagery: EL.basemapLayer('Imagery'),
-    };
-    const overlayMaps = {}; // none?
+    const baseMaps: L.Control.LayersObject = {};
+    const overlayMaps: L.Control.LayersObject = {};
 
-    streets.addTo(this.map);
-    L.control.layers(baseMaps, overlayMaps).addTo(this.map);
+    let basemaps = this.props.basemaps;
+    if (!basemaps || !basemaps.length) {
+      // all basemaps
+      basemaps = geomapLayerRegistry
+        .list()
+        .filter((v) => v.isBaseMap)
+        .map((v) => ({ type: v.id }));
+
+      // basemaps = [
+      //   { type: 'esri-basemap-streets' },
+      //   { type: 'esri-basemap-imagery' },
+      //   { type: 'esri-basemap-topo' }, //
+      // ];
+    }
+
+    let baseLayerCount = 0;
+    for (const cfg of basemaps) {
+      const item = geomapLayerRegistry.getIfExists(cfg.type);
+      if (!item) {
+        console.warn('missing layer ???', cfg);
+        continue;
+      }
+      const layer = item.create(cfg).init();
+      if (baseLayerCount === 0) {
+        layer.addTo(this.map);
+      }
+      baseLayerCount++;
+      const name = cfg.name ?? item.name;
+      baseMaps[name] = layer;
+    }
+
+    if (baseLayerCount > 1) {
+      L.control.layers(baseMaps, overlayMaps).addTo(this.map);
+    }
   }
 
   componentDidUpdate(oldProps: BaseMapProps) {
