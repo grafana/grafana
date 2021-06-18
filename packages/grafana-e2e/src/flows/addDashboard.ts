@@ -3,6 +3,7 @@ import { e2e } from '../index';
 import { getDashboardUid } from '../support/url';
 import { setDashboardTimeRange, TimeRangeConfig } from './setDashboardTimeRange';
 import { v4 as uuidv4 } from 'uuid';
+import { selectOption } from './selectOption';
 
 export interface AddAnnotationConfig {
   dataSource: string;
@@ -102,24 +103,21 @@ const addAnnotation = (config: AddAnnotationConfig, isFirst: boolean) => {
   if (isFirst) {
     e2e.pages.Dashboard.Settings.Annotations.List.addAnnotationCTA().click();
   } else {
-    // @todo add to e2e-selectors and `aria-label`
-    e2e().contains('.btn', 'New').click();
+    cy.contains('New query').click();
   }
 
   const { dataSource, dataSourceForm, name } = config;
 
-  // @todo add to e2e-selectors and `aria-label`
-  e2e().contains('.gf-form', 'Data source').find('select').select(dataSource);
+  selectOption({
+    container: e2e.components.DataSourcePicker.container(),
+    optionText: dataSource,
+  });
 
-  // @todo add to e2e-selectors and `aria-label`
-  e2e().contains('.gf-form', 'Name').find('input').type(name);
+  e2e.pages.Dashboard.Settings.Annotations.Settings.name().clear().type(name);
 
   if (dataSourceForm) {
     dataSourceForm();
   }
-
-  // @todo add to e2e-selectors and `aria-label`
-  e2e().contains('.btn', 'Add').click();
 };
 
 const addAnnotations = (configs: AddAnnotationConfig[]) => {
