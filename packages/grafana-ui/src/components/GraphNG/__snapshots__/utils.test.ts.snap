@@ -127,6 +127,7 @@ Object {
       "paths": [Function],
       "points": Object {
         "fill": "#808080",
+        "filter": [Function],
         "show": true,
         "size": undefined,
         "stroke": "#808080",
@@ -147,6 +148,7 @@ Object {
       "paths": [Function],
       "points": Object {
         "fill": "#808080",
+        "filter": [Function],
         "show": true,
         "size": undefined,
         "stroke": "#808080",
@@ -167,6 +169,7 @@ Object {
       "paths": [Function],
       "points": Object {
         "fill": "#808080",
+        "filter": [Function],
         "show": true,
         "size": undefined,
         "stroke": "#808080",
@@ -187,6 +190,7 @@ Object {
       "paths": [Function],
       "points": Object {
         "fill": "#808080",
+        "filter": [Function],
         "show": true,
         "size": undefined,
         "stroke": "#808080",
@@ -207,6 +211,7 @@ Object {
       "paths": [Function],
       "points": Object {
         "fill": "#808080",
+        "filter": [Function],
         "show": true,
         "size": undefined,
         "stroke": "#808080",
