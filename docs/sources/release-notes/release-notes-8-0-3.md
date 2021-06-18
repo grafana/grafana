@@ -21,7 +21,7 @@ list = false
 * **AzureMonitor:** Fix KQL template variable queries without default workspace. [#35836](https://github.com/grafana/grafana/pull/35836), [@joshhunt](https://github.com/joshhunt)
 * **CloudWatch/Logs:** Fix missing response data for log queries. [#35724](https://github.com/grafana/grafana/pull/35724), [@aocenas](https://github.com/aocenas)
 * **Elasticsearch:** Restore previous field naming strategy when using variables. [#35624](https://github.com/grafana/grafana/pull/35624), [@Elfo404](https://github.com/Elfo404)
-* **LibraryPanels:** Fix crash in libray panels list when panel plugin is not found. [#35907](https://github.com/grafana/grafana/pull/35907), [@torkelo](https://github.com/torkelo)
+* **LibraryPanels:** Fix crash in library panels list when panel plugin is not found. [#35907](https://github.com/grafana/grafana/pull/35907), [@torkelo](https://github.com/torkelo)
 * **LogsPanel:** Fix performance drop when moving logs panel in dashboard. [#35379](https://github.com/grafana/grafana/pull/35379), [@aocenas](https://github.com/aocenas)
 * **Loki:** parse log levels when ANSI colouring is enabled. [#35607](https://github.com/grafana/grafana/pull/35607), [@olbo98](https://github.com/olbo98)
 * **MSSQL:** Fix issue with hidden queries still being executed. [#35787](https://github.com/grafana/grafana/pull/35787), [@torkelo](https://github.com/torkelo)
