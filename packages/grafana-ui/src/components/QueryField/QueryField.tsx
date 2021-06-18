@@ -134,12 +134,13 @@ class UnthemedQueryField extends React.PureComponent<QueryFieldProps, QueryField
   onKeyDown = (keyEvent: Event, editor: CoreEditor, next: Function) => {
     const event = keyEvent as KeyboardEvent;
     if (event.key === 'Esc' || (event.key === 'Tab' && !this.state.dirty)) {
-      editor.blur();
+      editor.blur(); // This doesn't run handleBlur
     } else if (event.key !== 'Tab') {
       this.setState({
         dirty: true,
       });
     }
+
     return next();
   };
 
@@ -152,7 +153,7 @@ class UnthemedQueryField extends React.PureComponent<QueryFieldProps, QueryField
         }),
       0
     );
-    next();
+    return next();
   };
   /**
    * Update local state, propagate change upstream and optionally run the query afterwards.
@@ -228,7 +229,6 @@ class UnthemedQueryField extends React.PureComponent<QueryFieldProps, QueryField
       dirty: false,
       focused: false,
     });
-
     return next();
   };
 
