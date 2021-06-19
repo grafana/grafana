@@ -48,6 +48,7 @@ export const fieldColorModeRegistry = new Registry<FieldColorMode>(() => {
         return theme.visualization.palette;
       },
     }),
+    getUniqueColorsByValue(),
     new FieldColorSchemeMode({
       id: 'continuous-GrYlRd',
       name: 'Green-Yellow-Red',
@@ -232,5 +233,28 @@ export function getFieldSeriesColor(field: Field, theme: GrafanaTheme2): ColorSc
 function getFixedColor(field: Field, theme: GrafanaTheme2) {
   return () => {
     return theme.visualization.getColorByName(field.config.color?.fixedColor ?? FALLBACK_COLOR);
+  };
+}
+
+function getUniqueColorsByValue(): FieldColorMode {
+  return {
+    id: 'unique-colors-by-value',
+    name: 'Unique colors by value',
+    description: 'Assigns each value a unique color',
+
+    getCalculator: (_field, theme) => {
+      let assigned: Map<any, number> = new Map<number, number>();
+      let next = 0;
+      let colors = theme.visualization.palette.map(theme.visualization.getColorByName);
+
+      return (value, percent, threshold) => {
+        if (!assigned.has(value)) {
+          assigned.set(value, next);
+          next = (next + 1) % colors.length;
+        }
+
+        return colors[assigned.get(value) || 0];
+      };
+    },
   };
 }
