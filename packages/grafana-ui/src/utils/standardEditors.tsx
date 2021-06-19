@@ -22,6 +22,7 @@ import {
   FieldColor,
   FieldColorConfigSettings,
   StatsPickerConfigSettings,
+  displayNameOverrideProcessor,
 } from '@grafana/data';
 
 import { Switch } from '../components/Switch/Switch';
@@ -55,7 +56,7 @@ export const getStandardFieldConfigs = () => {
     description: 'Change the field or series name',
     editor: standardEditorsRegistry.get('text').editor as any,
     override: standardEditorsRegistry.get('text').editor as any,
-    process: stringOverrideProcessor,
+    process: displayNameOverrideProcessor,
     settings: {
       placeholder: 'none',
       expandTemplateVars: true,
