@@ -134,10 +134,10 @@ func (m *migration) setACL(orgID int64, dashboardID int64, items []*dashboardAcl
 		return fmt.Errorf("folder id must be greater than zero for a folder permission")
 	}
 
-	// userMap is a map keeping the highest permission per user
+	// userPermissionsMap is a map keeping the highest permission per user
 	// for handling conficting inherited (folder) and non-inherited (dashboard) user permissions
 	userPermissionsMap := make(map[int64]*dashboardAcl, len(items))
-	// teamMap is a map keeping the highest permission per team
+	// teamPermissionsMap is a map keeping the highest permission per team
 	// for handling conficting inherited (folder) and non-inherited (dashboard) team permissions
 	teamPermissionsMap := make(map[int64]*dashboardAcl, len(items))
 	for _, item := range items {
@@ -167,12 +167,20 @@ func (m *migration) setACL(orgID int64, dashboardID int64, items []*dashboardAcl
 		}
 	}
 
+	type keyType struct {
+		UserID     int64 `xorm:"user_id"`
+		TeamID     int64 `xorm:"team_id"`
+		Role       roleType
+		Permission permissionType
+	}
+	// seen keeps track of inserted perrmissions to avoid duplicates (due to inheritance)
+	seen := make(map[keyType]struct{}, len(items))
 	for _, item := range items {
 		if item.UserID == 0 && item.TeamID == 0 && (item.Role == nil || !item.Role.IsValid()) {
 			return models.ErrDashboardAclInfoMissing
 		}
 
-		// ignore dupicate user permissions
+		// ignore duplicate user permissions
 		if item.UserID != 0 {
 			acl, ok := userPermissionsMap[item.UserID]
 			if ok {
@@ -182,7 +190,7 @@ func (m *migration) setACL(orgID int64, dashboardID int64, items []*dashboardAcl
 			}
 		}
 
-		// ignore dupicate team permissions
+		// ignore duplicate team permissions
 		if item.TeamID != 0 {
 			acl, ok := teamPermissionsMap[item.TeamID]
 			if ok {
@@ -190,6 +198,14 @@ func (m *migration) setACL(orgID int64, dashboardID int64, items []*dashboardAcl
 					continue
 				}
 			}
+		}
+
+		key := keyType{UserID: item.UserID, TeamID: item.TeamID, Role: "", Permission: item.Permission}
+		if item.Role != nil {
+			key.Role = *item.Role
+		}
+		if _, ok := seen[key]; ok {
+			continue
 		}
 
 		// unset Id so that the new record will get a different one
@@ -203,6 +219,7 @@ func (m *migration) setACL(orgID int64, dashboardID int64, items []*dashboardAcl
 		if _, err := m.sess.Insert(item); err != nil {
 			return err
 		}
+		seen[key] = struct{}{}
 	}
 
 	// Update dashboard HasAcl flag
