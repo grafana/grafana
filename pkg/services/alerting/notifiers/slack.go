@@ -387,7 +387,7 @@ func (sn *SlackNotifier) sendRequest(ctx context.Context, data []byte) error {
 		var rslt map[string]interface{}
 		// Slack responds to some requests with a JSON document, that might contain an error
 		if err := json.Unmarshal(body, &rslt); err == nil {
-			if !rslt["ok"].(bool) {
+			if !rslt["success"].(bool) {
 				errMsg := rslt["error"].(string)
 				sn.log.Warn("Sending Slack API request failed", "url", sn.url.String(), "statusCode", resp.Status,
 					"err", errMsg)
