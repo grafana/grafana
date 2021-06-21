@@ -1,4 +1,4 @@
-import { DataQuery, DataSourceInstanceSettings } from '@grafana/data';
+import { DataQuery, DataSourceInstanceSettings, getDefaultRelativeTimeRange } from '@grafana/data';
 import { LokiQuery } from 'app/plugins/datasource/loki/types';
 import { PromQuery } from 'app/plugins/datasource/prometheus/types';
 import { CombinedRule } from 'app/types/unified-alerting';
@@ -29,6 +29,7 @@ export function alertRuleToQueries(combinedRule: CombinedRule | undefined | null
         datasourceUid: rulesSource.uid,
         queryType: '',
         model,
+        relativeTimeRange: getDefaultRelativeTimeRange(),
       },
     ];
   }
