@@ -65,7 +65,7 @@ export function getScaleGradientFn(
     const scale = plot.scales[series.scale!];
 
     const addColorStop = (value: number, color: string) => {
-      const pos = plot.valToPos(value, series.scale!);
+      const pos = plot.valToPos(value, series.scale!, true);
       const percent = pos / range;
       const realColor = tinycolor(theme.visualization.getColorByName(color)).setAlpha(opacity).toString();
       console.log(`addColorStop(value = ${value}, xPos=${pos})`);
