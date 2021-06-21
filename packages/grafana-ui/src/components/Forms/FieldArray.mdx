@@ -12,21 +12,21 @@ import { FieldArray } from './FieldArray';
 ```jsx
 import { Form, FieldArray } from '@grafana/ui';
 
-<Form>
+<Form onSubmit={() => console.log('form submitted')}>
   ({control, register}) => (
-  <FieldArray control={control} name="People">
-    {({ fields, append }) => (
-        <div>
-            {fields.map((field, index) => (
-                <div key={field.id}>
-                    <Input key={index} ref={register()} name=`people[${index}].firstName` value={field.firstName} />
-                    <Input ref={register()} name=`people[${index}].lastName` value={field.lastName} />
-                </div>
-            ))}
-            <Button onClick={() => append({firstName: 'Roger', lastName: 'Waters'})}>Append</Button>
-        </div>
-    )}
-  </FieldArray>
+    <FieldArray control={control} name="People">
+      {({ fields, append }) => (
+          <div>
+              {fields.map((field, index) => (
+                  <div key={field.id}>
+                      <Input key={index} {...register(`people[${index}].firstName` as const)} value={field.firstName} />
+                      <Input {...register(`people[${index}].lastName` as const)} value={field.lastName} />
+                  </div>
+              ))}
+              <Button onClick={() => append({firstName: 'Roger', lastName: 'Waters'})}>Append</Button>
+          </div>
+      )}
+    </FieldArray>
   )
 </Form>;
 ```

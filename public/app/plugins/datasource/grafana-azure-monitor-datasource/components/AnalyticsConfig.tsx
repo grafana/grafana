@@ -130,6 +130,7 @@ export const AnalyticsConfig: FunctionComponent<Props> = (props: Props) => {
                 value={workspaces.find((opt) => opt.value === defaultWorkspace)}
                 options={workspaces}
                 onChange={onDefaultWorkspaceChange}
+                isDisabled={props.options.readOnly}
               />
             </div>
           </div>
@@ -142,7 +143,7 @@ export const AnalyticsConfig: FunctionComponent<Props> = (props: Props) => {
                 size="sm"
                 type="button"
                 onClick={onLoadWorkspaces}
-                disabled={!hasRequiredFields}
+                disabled={!hasRequiredFields || props.options.readOnly}
               >
                 Load Workspaces
               </Button>

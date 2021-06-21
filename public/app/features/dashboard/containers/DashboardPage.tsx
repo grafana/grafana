@@ -148,7 +148,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
       const prevUrlParams = prevProps.queryParams;
       const urlParams = this.props.queryParams;
 
-      if (urlParams?.from !== prevUrlParams?.from && urlParams?.to !== prevUrlParams?.to) {
+      if (urlParams?.from !== prevUrlParams?.from || urlParams?.to !== prevUrlParams?.to) {
         getTimeSrv().updateTimeRangeFromUrl();
       }
 
