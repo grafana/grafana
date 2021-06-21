@@ -1,4 +1,4 @@
-import { Value, Editor as CoreEditor } from 'slate';
+import { Editor as CoreEditor, Value } from 'slate';
 import { SearchFunctionType } from '../utils';
 
 /**
@@ -135,6 +135,9 @@ export interface TypeaheadInput {
   editor?: CoreEditor;
 }
 
+/**
+ * @alpha
+ */
 export interface SuggestionsState {
   groupedItems: CompletionItemGroup[];
   typeaheadPrefix: string;
