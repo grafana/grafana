@@ -270,8 +270,7 @@ func (s *SocialGenericOAuth) extractFromAPI(client *http.Client) *UserInfoJson {
 
 	var data UserInfoJson
 	if err := json.Unmarshal(rawJSON, &data); err != nil {
-		s.log.Error("Error decoding user info response", "raw_json", rawJSON, "error", err)
-		return nil
+		s.log.Debug("Error decoding user info response into UserInfoJson", "raw_json", string(rawJSON), "error", err)
 	}
 
 	data.rawJSON = rawJSON
