@@ -48,6 +48,11 @@ export function addDurationToDate(date: Date | number, duration: Duration): Date
   return add(date, duration);
 }
 
+export function durationToMilliseconds(duration: Duration): number {
+  const now = new Date();
+  return addDurationToDate(now, duration).getTime() - now.getTime();
+}
+
 export function isValidDate(dateString: string) {
   return !isNaN(Date.parse(dateString));
 }
