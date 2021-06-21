@@ -151,6 +151,7 @@ export const getStyles = (theme: GrafanaTheme2) => ({
   ruleContentGuideline: css`
     top: 0;
     bottom: 0;
+    left: -49px !important;
   `,
   headerGuideline: css`
     top: -24px;

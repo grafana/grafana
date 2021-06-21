@@ -200,7 +200,7 @@ const getStyles = <T extends unknown>(
     `,
     expandedContentRow: css`
       grid-column-end: ${sizes.length + 1};
-      grid-column-start: 2;
+      grid-column-start: ${hasPrefixCell ? 3 : 2};
       grid-row: 2;
       padding: 0 ${theme.spacing(3)} 0 ${theme.spacing(1)};
       position: relative;
