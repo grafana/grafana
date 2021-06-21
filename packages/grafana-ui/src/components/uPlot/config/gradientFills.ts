@@ -66,10 +66,16 @@ export function getScaleGradientFn(
 
     const addColorStop = (value: number, color: string) => {
       const pos = plot.valToPos(value, series.scale!, true);
-      const percent = pos / range;
+      // when above range we get negative values here
+      if (pos < 0) {
+        return;
+      }
+
+      const percent = Math.max(pos / range, 0);
       const realColor = tinycolor(theme.visualization.getColorByName(color)).setAlpha(opacity).toString();
+      const colorStopPos = Math.min(percent, 1);
       console.log(`addColorStop(value = ${value}, xPos=${pos})`);
-      gradient.addColorStop(Math.min(percent, 1), realColor);
+      gradient.addColorStop(colorStopPos, realColor);
     };
 
     if (colorMode.id === FieldColorModeId.Thresholds) {
