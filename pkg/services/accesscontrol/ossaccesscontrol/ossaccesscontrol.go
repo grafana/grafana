@@ -2,6 +2,7 @@ package ossaccesscontrol
 
 import (
 	"context"
+	"errors"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
@@ -96,12 +97,12 @@ func (ac *OSSAccessControlService) RegisterFixedRole(_ context.Context, role acc
 	}
 
 	err = ac.saveFixedRole(role)
-	if err != nil {
+	if err != nil && !errors.Is(err, accesscontrol.ErrVersionLE) {
 		return err
 	}
 
 	err = ac.assignFixedRole(role, builtInRoles)
-	if err != nil {
+	if err != nil && !errors.Is(err, accesscontrol.ErrBuiltinRoleAlreadyAdded) {
 		return err
 	}
 
