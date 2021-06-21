@@ -83,12 +83,12 @@ const getStyles = (theme: GrafanaTheme2) => ({
     margin-left: ${theme.spacing(0.5)};
   `,
   [AlertState.Active]: css`
-    color: ${theme.colors.error.contrastText};
+    color: ${theme.colors.error.main};
   `,
   [AlertState.Suppressed]: css`
-    color: ${theme.colors.primary.contrastText};
+    color: ${theme.colors.primary.main};
   `,
   [AlertState.Unprocessed]: css`
-    color: ${theme.colors.secondary.contrastText};
+    color: ${theme.colors.secondary.main};
   `,
 });
