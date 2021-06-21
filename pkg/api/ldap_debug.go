@@ -165,7 +165,7 @@ func (hs *HTTPServer) PostSyncUserWithLDAP(c *models.ReqContext) response.Respon
 
 	query := models.GetUserByIdQuery{Id: userId}
 
-	if err := bus.Dispatch(&query); err != nil { // validate the userId exists
+	if err := bus.DispatchCtx(c.Req.Context(), &query); err != nil { // validate the userId exists
 		if errors.Is(err, models.ErrUserNotFound) {
 			return response.Error(404, models.ErrUserNotFound.Error(), nil)
 		}
