@@ -45,10 +45,13 @@ func TestNotificationChannels(t *testing.T) {
 	os, opa, ot, opu, ogb, ol, oth := channels.SlackAPIEndpoint, channels.PagerdutyEventAPIURL,
 		channels.TelegramAPIURL, channels.PushoverEndpoint, channels.GetBoundary,
 		channels.LineNotifyURL, channels.ThreemaGwBaseURL
+	originalTemplate := channels.DefaultTemplateString
+	channels.DefaultTemplateString = channels.TemplateForTestsString
 	t.Cleanup(func() {
 		channels.SlackAPIEndpoint, channels.PagerdutyEventAPIURL,
 			channels.TelegramAPIURL, channels.PushoverEndpoint, channels.GetBoundary,
 			channels.LineNotifyURL, channels.ThreemaGwBaseURL = os, opa, ot, opu, ogb, ol, oth
+		channels.DefaultTemplateString = originalTemplate
 	})
 	channels.SlackAPIEndpoint = fmt.Sprintf("http://%s/slack_recvX/slack_testX", mockChannel.server.Addr)
 	channels.PagerdutyEventAPIURL = fmt.Sprintf("http://%s/pagerduty_recvX/pagerduty_testX", mockChannel.server.Addr)
