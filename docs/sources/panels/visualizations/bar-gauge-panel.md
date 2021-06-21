@@ -1,12 +1,12 @@
 +++
-title = "Bar gauge panel"
-description = "Bar gauge panel docs"
+title = "Bar gauge"
+description = "Bar gauge panel options"
 keywords = ["grafana", "bar", "bar gauge"]
 aliases =["/docs/grafana/latest/features/panels/bar_gauge/"]
 weight = 200
 +++
 
-# Bar gauge panel
+# Bar gauge
 
 The bar gauge simplifies your data by reducing every field to a single value. You choose how Grafana calculates the reduction.
 
@@ -14,28 +14,48 @@ This panel can show one or more bar gauges depending on how many series, rows, o
 
 {{< figure src="/static/img/docs/v66/bar_gauge_cover.png" max-width="1025px" caption="Stat panel" >}}
 
-## Data and field options
+## Value options
 
-Bar gauge visualizations allow you to apply:
+Use the following options to refine how your visualization displays the value:
 
-- [Data transformations]({{< relref "../transformations/_index.md" >}})
-- [Field overrides]({{< relref "../field-overrides.md" >}})
-- [Thresholds]({{< relref "../thresholds.md" >}})
+### Show
 
-## Display options
+Choose how Grafana displays your data.
+  
+#### Calculate
 
-Use the following options to refine your visualization:
+Show a calculated value based on all rows.
 
-- **Show -** Choose how Grafana displays your data.
-  - **Calculate -** Show a calculated value based on all rows. For a list of available calculations, refer to [List of calculations]({{< relref "../calculations-list.md" >}}).
-  - **All values -** Show a separate stat for every row. If you select this option, then you can also select a **Limit**, or the maximum number of rows to display.
-- **Value -** Select a reducer function that Grafana will use to reduce many fields to a single value. Click the **Value** list to see functions and brief descriptions.
-- **Orientation -** Choose a stacking direction.
-  - **Auto -** Grafana selects what it thinks is the best orientation.
-  - **Horizontal -** Bars stretch horizontally, left to right.
-  - **Vertical -** Bars stretch vertically, top to bottom.
-- **Display mode -** Choose a display mode.
-  - **Gradient -** Threshold levels define a gradient.
-  - **Retro LCD -** The gauge is split into small cells that are lit or unlit.
-  - **Basic -** Single color based on the matching threshold.
-- **Show unfilled area -** Select this if you want to render the unfilled region of the bars as dark gray. Not applicable to Retro LCD display mode.
+- **Calculation -** Select a reducer function that Grafana will use to reduce many fields to a single value. For a list of available calculations, refer to [List of calculations]({{< relref "../calculations-list.md" >}}).
+- **Fields -** Select the fields display in the panel.
+
+#### All values
+
+Show a separate stat for every row. If you select this option, then you can also limit the number of rows to display.
+
+- **Limit -** The maximum number of rows to display. Default is 5,000.
+- **Fields -** Select the fields display in the panel.
+
+## Bar gauge options
+
+Adjust how the bar gauge is displayed.
+
+### Orientation
+
+Choose a stacking direction.
+
+- **Auto -** Grafana selects what it thinks is the best orientation.
+- **Horizontal -** Bars stretch horizontally, left to right.
+- **Vertical -** Bars stretch vertically, top to bottom.
+
+### Display mode
+
+Choose a display mode.
+
+- **Gradient -** Threshold levels define a gradient.
+- **Retro LCD -** The gauge is split into small cells that are lit or unlit.
+- **Basic -** Single color based on the matching threshold.
+
+### Show unfilled area
+
+Select this if you want to render the unfilled region of the bars as dark gray. Not applicable to Retro LCD display mode.
