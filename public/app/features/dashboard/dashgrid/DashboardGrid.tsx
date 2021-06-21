@@ -1,5 +1,5 @@
 // Libraries
-import React, { PureComponent } from 'react';
+import React, { PureComponent, CSSProperties } from 'react';
 import ReactGridLayout, { ItemCallback } from 'react-grid-layout';
 import classNames from 'classnames';
 import AutoSizer from 'react-virtualized-auto-sizer';
@@ -14,6 +14,8 @@ import { DashboardPanel } from './DashboardPanel';
 import { DashboardModel, PanelModel } from '../state';
 import { Subscription } from 'rxjs';
 import { DashboardPanelsChangedEvent } from 'app/types/events';
+import { GridPos } from '../state/PanelModel';
+import { config } from '@grafana/runtime';
 
 export interface Props {
   dashboard: DashboardModel;
@@ -162,11 +164,19 @@ export class DashboardGrid extends PureComponent<Props, State> {
       panel.isInView = this.isInView(panel);
 
       panelElements.push(
-        <GridItemWithDimensions key={itemKey} className={panelClasses} data-panelid={itemKey}>
+        <GrafanaGridItem
+          key={itemKey}
+          className={panelClasses}
+          data-panelid={itemKey}
+          gridPos={panel.gridPos}
+          gridWidth={gridWidth}
+          windowHeight={this.windowHeight}
+          isViewing={panel.isViewing}
+        >
           {(width: number, height: number) => {
             return this.renderPanel(panel, width, height, itemKey);
           }}
-        </GridItemWithDimensions>
+        </GrafanaGridItem>
       );
     }
 
@@ -197,9 +207,12 @@ export class DashboardGrid extends PureComponent<Props, State> {
   }
 
   render() {
-    const { dashboard, viewPanel } = this.props;
+    const { dashboard } = this.props;
 
-    const autoSizerStyle = !!viewPanel ? { width: '100%', height: '100%' } : undefined;
+    const autoSizerStyle: CSSProperties = {
+      width: '100%',
+      height: '100%',
+    };
 
     return (
       <AutoSizer style={autoSizerStyle} disableHeight>
@@ -242,21 +255,48 @@ export class DashboardGrid extends PureComponent<Props, State> {
   }
 }
 
+interface GrafanaGridItemProps extends Record<string, any> {
+  gridWidth?: number;
+  gridPos?: GridPos;
+  isViewing: string;
+  windowHeight: number;
+  children: any;
+}
+
 /**
  * A hacky way to intercept the react-layout-grid item dimensions and pass them to DashboardPanel
  */
-const GridItemWithDimensions = React.forwardRef<HTMLDivElement, any>((props, ref) => {
-  // RGL passes width and height directly to children as style props.
-  const width = parseFloat(props.style.width);
-  const height = parseFloat(props.style.height);
+const GrafanaGridItem = React.forwardRef<HTMLDivElement, GrafanaGridItemProps>((props, ref) => {
+  const theme = config.theme2;
+  let width = 100;
+  let height = 100;
+
+  const { gridWidth, gridPos, isViewing, windowHeight, ...divProps } = props;
+  const style: CSSProperties = props.style ?? {};
+
+  if (isViewing) {
+    width = props.gridWidth!;
+    height = windowHeight * 0.85;
+    style.height = height;
+    style.width = '100%';
+  } else if (props.gridWidth! < theme.breakpoints.values.md) {
+    width = props.gridWidth!;
+    height = props.gridPos!.h * (GRID_CELL_HEIGHT + GRID_CELL_VMARGIN) - GRID_CELL_VMARGIN;
+    style.height = height;
+    style.width = '100%';
+  } else {
+    // RGL passes width and height directly to children as style props.
+    width = parseFloat(props.style.width);
+    height = parseFloat(props.style.height);
+  }
 
   // props.children[0] is our main children. RGL adds the drag handle at props.children[1]
   return (
-    <div {...props} ref={ref}>
+    <div {...divProps} ref={ref}>
       {/* Pass width and height to children as render props */}
       {[props.children[0](width, height), props.children.slice(1)]}
     </div>
   );
 });
 
-GridItemWithDimensions.displayName = 'GridItemWithDimensions';
+GrafanaGridItem.displayName = 'GridItemWithDimensions';
