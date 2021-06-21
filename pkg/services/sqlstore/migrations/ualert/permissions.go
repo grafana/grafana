@@ -163,7 +163,6 @@ func (m *migration) setACL(orgID int64, dashboardID int64, items []*dashboardAcl
 					teamPermissionsMap[item.TeamID] = item
 				}
 			}
-
 		}
 	}
 
