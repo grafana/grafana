@@ -11,23 +11,23 @@ var _ Evaluator = new(permission)
 
 func Permission(actions string, scope string) Evaluator {
 	return &permission{
-		Action: actions,
-		Scope:  scope,
+		action: actions,
+		scope:  scope,
 	}
 }
 
 type permission struct {
-	Action string
-	Scope  string
+	action string
+	scope  string
 }
 
 func (p *permission) Evaluate(permissions map[string]map[string]struct{}) (bool, error) {
-	scopes, ok := permissions[p.Action]
+	scopes, ok := permissions[p.action]
 	if !ok {
 		return false, nil
 	}
 
-	if p.Scope == ScopeNone {
+	if p.scope == ScopeNone {
 		return true, nil
 	}
 
@@ -36,7 +36,7 @@ func (p *permission) Evaluate(permissions map[string]map[string]struct{}) (bool,
 		if err != nil {
 			return false, err
 		}
-		if rule.Match(p.Scope) {
+		if rule.Match(p.scope) {
 			return true, nil
 		}
 	}
@@ -44,7 +44,7 @@ func (p *permission) Evaluate(permissions map[string]map[string]struct{}) (bool,
 }
 
 func (p *permission) Inject(params map[string]string) error {
-	tmpl, err := template.New("scope").Parse(p.Scope)
+	tmpl, err := template.New("scope").Parse(p.scope)
 	if err != nil {
 		return err
 	}
@@ -52,6 +52,6 @@ func (p *permission) Inject(params map[string]string) error {
 	if err = tmpl.Execute(&buf, params); err != nil {
 		return err
 	}
-	p.Scope = buf.String()
+	p.scope = buf.String()
 	return nil
 }
