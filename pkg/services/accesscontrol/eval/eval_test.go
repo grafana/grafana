@@ -8,16 +8,16 @@ import (
 
 type combinedTestCase struct {
 	desc        string
-	combined    Evaluator
+	evaluator   Evaluator
 	expected    bool
 	permissions map[string]map[string]struct{}
 }
 
-func TestCombined(t *testing.T) {
+func TestEval(t *testing.T) {
 	tests := []combinedTestCase{
 		{
 			desc: "should return true when first is true",
-			combined: Any(
+			evaluator: Any(
 				Permission("settings:write", Combine("settings", ScopeWildcard)),
 				All(
 					Permission("settings:write", "settings:auth.saml:enabled"),
@@ -31,7 +31,7 @@ func TestCombined(t *testing.T) {
 		},
 		{
 			desc: "should return true when first is false and all is true",
-			combined: Any(
+			evaluator: Any(
 				Permission("settings:write", Combine("settings", ScopeWildcard)),
 				All(
 					Permission("settings:write", "settings:auth.saml:enabled"),
@@ -48,7 +48,7 @@ func TestCombined(t *testing.T) {
 		},
 		{
 			desc: "should return false when both is false",
-			combined: Any(
+			evaluator: Any(
 				Permission("settings:write", Combine("settings", ScopeWildcard)),
 				All(
 					Permission("settings:write", "settings:auth.saml:enabled"),
@@ -66,7 +66,7 @@ func TestCombined(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
-			ok, err := test.combined.Evaluate(test.permissions)
+			ok, err := test.evaluator.Evaluate(test.permissions)
 			assert.NoError(t, err)
 			assert.Equal(t, test.expected, ok)
 		})
