@@ -1,4 +1,4 @@
-import { QueryRunners } from './queryRunners';
+import { QueryRunners, variableDummyRefId } from './queryRunners';
 import { getDefaultTimeRange, VariableSupportType } from '@grafana/data';
 import { VariableRefresh } from '../types';
 import { of } from 'rxjs';
@@ -292,6 +292,14 @@ describe('QueryRunners', () => {
         const { runner, datasource, variable } = getDatasourceTestContext();
         const target = runner.getTarget({ datasource, variable });
         expect(target).toEqual({ refId: 'A', query: 'A query' });
+      });
+      describe('and ref id is missing', () => {
+        it('then it should return correct target with dummy ref id', () => {
+          const { runner, datasource, variable } = getDatasourceTestContext();
+          delete variable.query.refId;
+          const target = runner.getTarget({ datasource, variable });
+          expect(target).toEqual({ refId: variableDummyRefId, query: 'A query' });
+        });
       });
     });
 
