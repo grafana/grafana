@@ -2,13 +2,14 @@ package accesscontrol
 
 import (
 	"context"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/dsl"
 
 	"github.com/grafana/grafana/pkg/models"
 )
 
 type AccessControl interface {
-	// Evaluate evaluates access to the given resource.
-	Evaluate(ctx context.Context, user *models.SignedInUser, permission string, scope ...string) (bool, error)
+	// Evaluate evaluates access to the given resources.
+	Evaluate(ctx context.Context, user *models.SignedInUser, eval dsl.Eval) (bool, error)
 
 	// GetUserPermissions returns user permissions.
 	GetUserPermissions(ctx context.Context, user *models.SignedInUser) ([]*Permission, error)
@@ -17,13 +18,13 @@ type AccessControl interface {
 	IsDisabled() bool
 }
 
-func HasAccess(ac AccessControl, c *models.ReqContext) func(fallback func(*models.ReqContext) bool, permission string, scopes ...string) bool {
-	return func(fallback func(*models.ReqContext) bool, permission string, scopes ...string) bool {
+func HasAccess(ac AccessControl, c *models.ReqContext) func(fallback func(*models.ReqContext) bool, eval dsl.Eval) bool {
+	return func(fallback func(*models.ReqContext) bool, eval dsl.Eval) bool {
 		if ac.IsDisabled() {
 			return fallback(c)
 		}
 
-		hasAccess, err := ac.Evaluate(c.Req.Context(), c.SignedInUser, permission, scopes...)
+		hasAccess, err := ac.Evaluate(c.Req.Context(), c.SignedInUser, eval)
 		if err != nil {
 			c.Logger.Error("Error from access control system", "error", err)
 			return false
@@ -48,4 +49,17 @@ func BuildPermissionsMap(permissions []*Permission) map[string]bool {
 	}
 
 	return permissionsMap
+}
+
+// GroupPermissions will group scopes on action
+func GroupPermissions(permissions []*Permission) map[string]map[string]struct{} {
+	m := make(map[string]map[string]struct{})
+	for _, p := range permissions {
+		if _, ok := m[p.Action]; ok {
+			m[p.Action][p.Scope] = struct{}{}
+		} else {
+			m[p.Action] = map[string]struct{}{p.Scope: {}}
+		}
+	}
+	return m
 }
