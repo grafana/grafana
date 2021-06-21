@@ -48,12 +48,13 @@ export const AmNotificationsAlertsTableRow = ({ alert, alertManagerSourceName, c
         <td>
           <AlertLabels labels={alert.labels} />
         </td>
+        <td />
       </tr>
       {!isCollapsed && (
         <>
           <tr className={className}>
             <td />
-            <td colSpan={2}>
+            <td className={styles.actionsRow} colSpan={2}>
               {alert.status.state === AlertState.Suppressed && (
                 <LinkButton
                   href={`${makeAMLink(
@@ -85,13 +86,15 @@ export const AmNotificationsAlertsTableRow = ({ alert, alertManagerSourceName, c
                 </LinkButton>
               )}
             </td>
+            <td />
           </tr>
           {Object.entries(alert.annotations).map(([annotationKey, annotationValue]) => {
             return (
-              <tr key={annotationKey} className={className}>
+              <tr key={`${alert.fingerprint}-${annotationKey}`} className={className}>
                 <td />
-                <td>{annotationKey}</td>
-                <td>{annotationValue}</td>
+                <td className={styles.annotationKey}>{annotationKey}</td>
+                <td className={styles.annotationValue}>{annotationValue}</td>
+                <td />
               </tr>
             );
           })}
@@ -107,6 +110,7 @@ export const AmNotificationsAlertsTableRow = ({ alert, alertManagerSourceName, c
                 }
               }, '')}
             </td>
+            <td />
           </tr>
         </>
       )}
@@ -122,5 +126,15 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
   duration: css`
     margin-left: ${theme.spacing(1)};
+  `,
+  actionsRow: css`
+    padding: ${theme.spacing(2, 1)} !important;
+    border-bottom: 1px solid ${theme.colors.border.medium};
+  `,
+  annotationKey: css`
+    color: ${theme.colors.text.primary};
+  `,
+  annotationValue: css`
+    color: ${theme.colors.text.secondary};
   `,
 });
