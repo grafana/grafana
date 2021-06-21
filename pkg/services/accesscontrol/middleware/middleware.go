@@ -27,12 +27,8 @@ func Middleware(ac accesscontrol.AccessControl) func(macaron.Handler, eval.Evalu
 			}
 
 			hasAccess, err := ac.Evaluate(c.Req.Context(), c.SignedInUser, evaluator)
-			if err != nil {
+			if !hasAccess || err != nil {
 				Deny(c, err)
-				return
-			}
-			if !hasAccess {
-				Deny(c, nil)
 				return
 			}
 		}
