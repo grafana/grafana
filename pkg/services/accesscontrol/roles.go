@@ -1,6 +1,8 @@
 package accesscontrol
 
 import (
+	"fmt"
+	"strings"
 	"sync"
 
 	"github.com/grafana/grafana/pkg/models"
@@ -302,4 +304,22 @@ func ConcatPermissions(permissions ...[]Permission) []Permission {
 		perms = append(perms, p...)
 	}
 	return perms
+}
+
+// ValidateFixedRole errors when a fixed role does match expected pattern
+func ValidateFixedRole(role RoleDTO) error {
+	if !strings.HasPrefix(role.Name, FixedRolePrefix) {
+		return ErrFixedRolePrefixMissing
+	}
+	return nil
+}
+
+// ValidateBuiltInRoles errors when a built-in role does match expected pattern
+func ValidateBuiltInRoles(builtInRoles []string) error {
+	for _, br := range builtInRoles {
+		if !models.RoleType(br).IsValid() && br != "Grafana Admin" {
+			return fmt.Errorf("'%s' %w", br, ErrInvalidBuiltinRole)
+		}
+	}
+	return nil
 }
