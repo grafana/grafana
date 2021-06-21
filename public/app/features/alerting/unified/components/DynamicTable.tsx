@@ -153,7 +153,8 @@ const getStyles = <T extends unknown>(cols: Array<DynamicTableColumnProps<T>>, i
     `,
     cell: css`
       align-items: center;
-      display: grid;
+      overflow: hidden;
+      word-break: break-all;
       padding: ${theme.spacing(1)};
 
       ${theme.breakpoints.down('sm')} {
@@ -168,6 +169,8 @@ const getStyles = <T extends unknown>(cols: Array<DynamicTableColumnProps<T>>, i
 
         &::before {
           content: attr(data-column);
+          display: block;
+          color: ${theme.colors.text.primary};
         }
       }
     `,
