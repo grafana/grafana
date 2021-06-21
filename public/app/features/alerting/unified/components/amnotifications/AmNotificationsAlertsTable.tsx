@@ -22,11 +22,13 @@ export const AmNotificationsAlertsTable = ({ alerts, alertManagerSourceName }: P
           <col className={tableStyles.colExpand} />
           <col className={styles.stateCol} />
           <col />
+          <col className={styles.buffer} />
         </colgroup>
         <thead>
           <th></th>
           <th>State</th>
           <th>Labels</th>
+          <th />
         </thead>
         <tbody>
           {alerts.map((alert, index) => {
@@ -54,5 +56,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
   labelsCol: css`
     width: 60%;
+  `,
+  buffer: css`
+    width: ${theme.spacing(4.5)};
   `,
 });
