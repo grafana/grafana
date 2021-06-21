@@ -2,9 +2,9 @@ package accesscontrol
 
 import (
 	"context"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/dsl"
 
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/dsl"
 )
 
 type AccessControl interface {

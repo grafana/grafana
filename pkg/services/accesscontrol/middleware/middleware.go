@@ -2,16 +2,15 @@ package middleware
 
 import (
 	"fmt"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/dsl"
 	"net/http"
 	"time"
-
-	"github.com/grafana/grafana/pkg/util"
 
 	"gopkg.in/macaron.v1"
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/dsl"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 // TODO: add tests
