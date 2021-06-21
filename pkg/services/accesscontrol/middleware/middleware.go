@@ -1,68 +1,51 @@
 package middleware
 
 import (
-	"bytes"
 	"fmt"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/dsl"
 	"net/http"
-	"text/template"
 	"time"
 
 	"github.com/grafana/grafana/pkg/util"
 
-	macaron "gopkg.in/macaron.v1"
+	"gopkg.in/macaron.v1"
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 )
 
-func Middleware(ac accesscontrol.AccessControl) func(macaron.Handler, string, ...string) macaron.Handler {
-	return func(fallback macaron.Handler, permission string, scopes ...string) macaron.Handler {
+// TODO: add tests
+func Middleware(ac accesscontrol.AccessControl) func(macaron.Handler, dsl.Eval) macaron.Handler {
+	return func(fallback macaron.Handler, eval dsl.Eval) macaron.Handler {
 		if ac.IsDisabled() {
 			return fallback
 		}
 
 		return func(c *models.ReqContext) {
-			// We need this otherwise templated scopes get initialized only once, during the first call
-			runtimeScope := make([]string, len(scopes))
-			for i, scope := range scopes {
-				var buf bytes.Buffer
-
-				tmpl, err := template.New("scope").Parse(scope)
-				if err != nil {
-					c.JsonApiErr(http.StatusInternalServerError, "Internal server error", err)
-					return
-				}
-				err = tmpl.Execute(&buf, c.AllParams())
-				if err != nil {
-					c.JsonApiErr(http.StatusInternalServerError, "Internal server error", err)
-					return
-				}
-				runtimeScope[i] = buf.String()
+			if err := eval.Inject(c.AllParams()); err != nil {
+				c.JsonApiErr(http.StatusInternalServerError, "Internal server error", err)
+				return
 			}
 
-			hasAccess, err := ac.Evaluate(c.Req.Context(), c.SignedInUser, permission, runtimeScope...)
+			hasAccess, err := ac.Evaluate(c.Req.Context(), c.SignedInUser, eval)
 			if err != nil {
-				Deny(c, permission, runtimeScope, err)
+				Deny(c, err)
 				return
 			}
 			if !hasAccess {
-				Deny(c, permission, runtimeScope, nil)
+				Deny(c, nil)
 				return
 			}
 		}
 	}
 }
 
-func Deny(c *models.ReqContext, permission string, scopes []string, err error) {
+func Deny(c *models.ReqContext, err error) {
 	id := newID()
 	if err != nil {
 		c.Logger.Error("Error from access control system", "error", err, "accessErrorID", id)
 	} else {
-		c.Logger.Info("Access denied",
-			"userID", c.UserId,
-			"permission", permission,
-			"scopes", scopes,
-			"accessErrorID", id)
+		c.Logger.Info("Access denied", "userID", c.UserId, "accessErrorID", id)
 	}
 
 	// If the user triggers an error in the access control system, we
