@@ -63,6 +63,7 @@ With a Grafana Enterprise license, you get access to premium data sources, inclu
 - [DataDog](https://grafana.com/plugins/grafana-datadog-datasource)
 - [Dynatrace](https://grafana.com/plugins/grafana-dynatrace-datasource)
 - [Gitlab](https://grafana.com/grafana/plugins/grafana-gitlab-datasource)
+- [Honeycomb](https://grafana.com/grafana/plugins/grafana-honeycomb-datasource)
 - [Jira](https://grafana.com/grafana/plugins/grafana-jira-datasource)
 - [MongoDB](https://grafana.com/grafana/plugins/grafana-mongodb-datasource)
 - [New Relic](https://grafana.com/plugins/grafana-newrelic-datasource)
