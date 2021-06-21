@@ -265,7 +265,7 @@ function useColumns(showSummaryColumn: boolean, showGroupColumn: boolean) {
         label: 'Health',
         // eslint-disable-next-line react/display-name
         renderCell: ({ data: { promRule } }) => (promRule ? <RuleHealth rule={promRule} /> : null),
-        size: '70px',
+        size: '75px',
       },
     ];
     if (showSummaryColumn) {

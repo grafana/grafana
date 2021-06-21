@@ -1,8 +1,7 @@
 import React, { ReactNode, useState } from 'react';
 import { css, cx } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
-import { IconButton, useStyles2, useTheme2 } from '@grafana/ui';
-import { useMedia } from 'react-use';
+import { IconButton, useStyles2 } from '@grafana/ui';
 
 export interface DynamicTableColumnProps<T = unknown> {
   id: string | number;
@@ -50,8 +49,6 @@ export const DynamicTable = <T extends object>({
     throw new Error('either both isExpanded and renderExpandedContent must be provided, or neither');
   }
   const styles = useStyles2(getStyles(cols, isExpandable));
-  const theme = useTheme2();
-  const isMobile = useMedia(`(${theme.breakpoints.down('sm')})`);
 
   const [expandedIds, setExpandedIds] = useState<Array<DynamicTableItemProps['id']>>([]);
 
@@ -82,7 +79,7 @@ export const DynamicTable = <T extends object>({
             {isExpandable && (
               <div className={cx(styles.cell, styles.expandCell)}>
                 <IconButton
-                  size={isMobile ? 'xl' : 'md'}
+                  size="xl"
                   className={styles.expandButton}
                   name={isItemExpanded ? 'angle-down' : 'angle-right'}
                   onClick={() => toggleExpanded(item)}
