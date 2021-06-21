@@ -68,7 +68,7 @@ type userTestCase struct {
 }
 
 type endpointTestCase struct {
-	eval dsl.Eval
+	eval accesscontrol.Eval
 }
 
 func TestEvaluatingPermissions(t *testing.T) {

@@ -9,13 +9,12 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/dsl"
 	"github.com/grafana/grafana/pkg/util"
 )
 
 // TODO: add tests
-func Middleware(ac accesscontrol.AccessControl) func(macaron.Handler, dsl.Eval) macaron.Handler {
-	return func(fallback macaron.Handler, eval dsl.Eval) macaron.Handler {
+func Middleware(ac accesscontrol.AccessControl) func(macaron.Handler, accesscontrol.Eval) macaron.Handler {
+	return func(fallback macaron.Handler, eval accesscontrol.Eval) macaron.Handler {
 		if ac.IsDisabled() {
 			return fallback
 		}

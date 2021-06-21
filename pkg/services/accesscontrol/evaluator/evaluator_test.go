@@ -15,7 +15,7 @@ import (
 
 type evaluateTestCase struct {
 	desc        string
-	toEval      dsl.Eval
+	toEval      accesscontrol.Eval
 	expected    bool
 	permissions []*accesscontrol.Permission
 }
@@ -58,7 +58,7 @@ type fakeAccessControl struct {
 	permissions []*accesscontrol.Permission
 }
 
-func (f *fakeAccessControl) Evaluate(ctx context.Context, user *models.SignedInUser, eval dsl.Eval) (bool, error) {
+func (f *fakeAccessControl) Evaluate(ctx context.Context, user *models.SignedInUser, eval accesscontrol.Eval) (bool, error) {
 	return Evaluate(ctx, f, user, eval)
 }
 

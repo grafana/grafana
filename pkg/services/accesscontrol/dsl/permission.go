@@ -4,12 +4,14 @@ import (
 	"bytes"
 	"html/template"
 
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+
 	"github.com/gobwas/glob"
 )
 
-var _ Eval = new(permission)
+var _ accesscontrol.Eval = new(permission)
 
-func Permission(actions string, scope string) Eval {
+func Permission(actions string, scope string) accesscontrol.Eval {
 	return &permission{
 		Action: actions,
 		Scope:  scope,

@@ -4,12 +4,18 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/dsl"
 )
+
+type Eval interface {
+	// Evaluate permission that are grouped by action
+	Evaluate(permissions map[string]map[string]struct{}) (bool, error)
+	// Inject params into templated scopes. Eg. "settings:" + dsl.Parameters(":id")
+	Inject(params map[string]string) error
+}
 
 type AccessControl interface {
 	// Evaluate evaluates access to the given resources.
-	Evaluate(ctx context.Context, user *models.SignedInUser, eval dsl.Eval) (bool, error)
+	Evaluate(ctx context.Context, user *models.SignedInUser, eval Eval) (bool, error)
 
 	// GetUserPermissions returns user permissions.
 	GetUserPermissions(ctx context.Context, user *models.SignedInUser) ([]*Permission, error)
@@ -18,8 +24,8 @@ type AccessControl interface {
 	IsDisabled() bool
 }
 
-func HasAccess(ac AccessControl, c *models.ReqContext) func(fallback func(*models.ReqContext) bool, eval dsl.Eval) bool {
-	return func(fallback func(*models.ReqContext) bool, eval dsl.Eval) bool {
+func HasAccess(ac AccessControl, c *models.ReqContext) func(fallback func(*models.ReqContext) bool, eval Eval) bool {
+	return func(fallback func(*models.ReqContext) bool, eval Eval) bool {
 		if ac.IsDisabled() {
 			return fallback(c)
 		}
