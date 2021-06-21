@@ -71,28 +71,12 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
 });
 
 export interface ExploreProps {
-  datasourceInstance: DataSourceApi | null;
-  datasourceMissing: boolean;
   exploreId: ExploreId;
   scanning?: boolean;
   scanRange?: RawTimeRange;
-  queryKeys: string[];
-  isLive: boolean;
-  syncedTimes: boolean;
-  graphResult: DataFrame[] | null;
-  logsResult?: LogsModel;
-  absoluteRange: AbsoluteTimeRange;
-  timeZone: TimeZone;
   onHiddenSeriesChanged?: (hiddenSeries: string[]) => void;
-  queryResponse: PanelData;
   originPanelId: number;
   theme: GrafanaTheme;
-  loading: boolean;
-  showMetrics: boolean;
-  showTable: boolean;
-  showLogs: boolean;
-  showTrace: boolean;
-  showNodeGraph: boolean;
 }
 
 enum ExploreDrawer {
@@ -385,7 +369,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
   }
 }
 
-function mapStateToProps(state: StoreState, { exploreId }: ExploreProps): Partial<ExploreProps> {
+function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
   const explore = state.explore;
   const { syncedTimes } = explore;
   const item: ExploreItemState = explore[exploreId]!;
