@@ -2,7 +2,6 @@ package ossaccesscontrol
 
 import (
 	"context"
-	"errors"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
@@ -55,33 +54,35 @@ func (ac *OSSAccessControlService) getUsageMetrics() interface{} {
 	return 1
 }
 
-func (ac *OSSAccessControlService) saveFixedRole(role accesscontrol.RoleDTO) error {
+func (ac *OSSAccessControlService) saveFixedRole(role accesscontrol.RoleDTO) {
 	if storedRole, ok := accesscontrol.FixedRoles.Load(role.Name); ok {
+		// Don't overwrite role with greater version
 		if storedRole.Version >= role.Version {
-			return accesscontrol.ErrVersionLE
+			return
 		}
 	}
 	// Save role
 	accesscontrol.FixedRoles.Store(role.Name, role)
-
-	return nil
 }
 
-func (ac *OSSAccessControlService) assignFixedRole(role accesscontrol.RoleDTO, builtInRoles []string) error {
+func (ac *OSSAccessControlService) assignFixedRole(role accesscontrol.RoleDTO, builtInRoles []string) {
 	for _, builtInRole := range builtInRoles {
 		assignments := []string{}
+
+		// Only record new assignments
+		alreadyAssigned := false
 		if assignments, ok := accesscontrol.FixedRoleGrants.Load(builtInRole); ok {
-			// Check if role has not already been assigned to built-in role
 			for _, assignedRole := range assignments {
 				if assignedRole == role.Name {
-					return accesscontrol.ErrBuiltinRoleAlreadyAdded
+					alreadyAssigned = true
 				}
 			}
 		}
-		assignments = append(assignments, role.Name)
-		accesscontrol.FixedRoleGrants.Store(builtInRole, assignments)
+		if !alreadyAssigned {
+			assignments = append(assignments, role.Name)
+			accesscontrol.FixedRoleGrants.Store(builtInRole, assignments)
+		}
 	}
-	return nil
 }
 
 // RegisterFixedRole saves a fixed role and assigns it to built-in roles
@@ -96,15 +97,9 @@ func (ac *OSSAccessControlService) RegisterFixedRole(_ context.Context, role acc
 		return err
 	}
 
-	err = ac.saveFixedRole(role)
-	if err != nil && !errors.Is(err, accesscontrol.ErrVersionLE) {
-		return err
-	}
+	ac.saveFixedRole(role)
 
-	err = ac.assignFixedRole(role, builtInRoles)
-	if err != nil && !errors.Is(err, accesscontrol.ErrBuiltinRoleAlreadyAdded) {
-		return err
-	}
+	ac.assignFixedRole(role, builtInRoles)
 
 	return nil
 }

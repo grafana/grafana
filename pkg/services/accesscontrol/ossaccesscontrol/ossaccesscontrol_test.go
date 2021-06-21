@@ -2,6 +2,7 @@ package ossaccesscontrol
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -186,7 +187,7 @@ func TestOSSAccessControlService_RegisterFixedRole(t *testing.T) {
 			},
 		},
 		{
-			name: "Fail to override existing role",
+			name: "Successfully ignore overwriting existing role",
 			runs: []assignmentTestCase{
 				{
 					role: accesscontrol.RoleDTO{
@@ -199,7 +200,6 @@ func TestOSSAccessControlService_RegisterFixedRole(t *testing.T) {
 						Version: 1,
 						Name:    "fixed:test:test",
 					},
-					wantErr: accesscontrol.ErrVersionLE,
 				},
 			},
 		},
@@ -216,7 +216,7 @@ func TestOSSAccessControlService_RegisterFixedRole(t *testing.T) {
 			},
 		},
 		{
-			name: "Fail to assign role",
+			name: "Successfully ignore unchanged assignment",
 			runs: []assignmentTestCase{
 				{
 					role: accesscontrol.RoleDTO{
@@ -231,10 +231,40 @@ func TestOSSAccessControlService_RegisterFixedRole(t *testing.T) {
 						Name:    "fixed:test:test",
 					},
 					builtInRoles: []string{"Viewer"},
-					wantErr:      accesscontrol.ErrBuiltinRoleAlreadyAdded,
 				},
 			},
 		},
+		{
+			name: "Successfully add a new assignment",
+			runs: []assignmentTestCase{
+				{
+					role: accesscontrol.RoleDTO{
+						Version: 1,
+						Name:    "fixed:test:test",
+					},
+					builtInRoles: []string{"Viewer"},
+				},
+				{
+					role: accesscontrol.RoleDTO{
+						Version: 1,
+						Name:    "fixed:test:test",
+					},
+					builtInRoles: []string{"Editor"},
+				},
+			},
+		},
+	}
+
+	// Check all runs performed so far to get the number of assignments seeder
+	// should have recorded
+	getTotalAssignCount := func(curRunIdx int, runs []assignmentTestCase) int {
+		builtIns := map[string]struct{}{}
+		for i := 0; i < curRunIdx+1; i++ {
+			for _, br := range runs[i].builtInRoles {
+				builtIns[br] = struct{}{}
+			}
+		}
+		return len(builtIns)
 	}
 
 	removeRole := func(role string) {
@@ -271,7 +301,7 @@ func TestOSSAccessControlService_RegisterFixedRole(t *testing.T) {
 				Log:        log.New("accesscontrol-test"),
 			}
 
-			for _, run := range tc.runs {
+			for i, run := range tc.runs {
 				// Remove any inserted role after the test case has been run
 				t.Cleanup(func() { removeRole(run.role.Name) })
 
@@ -284,17 +314,29 @@ func TestOSSAccessControlService_RegisterFixedRole(t *testing.T) {
 
 				//Check role has been registered
 				storedRole, ok := accesscontrol.FixedRoles.Load(run.role.Name)
-				assert.True(t, ok)
+				assert.True(t, ok, "role should have been registered")
 
 				//Check registered role has not been altered
-				assert.Equal(t, run.role, storedRole)
+				assert.Equal(t, run.role, storedRole, "role should not have been altered")
 
 				//Check assignments
+				// Count number of times the role has been assigned
+				assignCnt := 0
+				accesscontrol.FixedRoleGrants.Range(func(_ string, grants []string) bool {
+					for _, r := range grants {
+						if r == run.role.Name {
+							assignCnt++
+						}
+					}
+					return true
+				})
+				assert.Equal(t, getTotalAssignCount(i, tc.runs), assignCnt, "assignments should only be added, never removed")
+
 				for _, br := range run.builtInRoles {
 					assigns, ok := accesscontrol.FixedRoleGrants.Load(br)
-					assert.True(t, ok)
+					assert.True(t, ok, fmt.Sprintf("role %s should have been assigned to %s", run.role.Name, br))
 
-					assert.Contains(t, assigns, run.role.Name)
+					assert.Contains(t, assigns, run.role.Name, fmt.Sprintf("role %s should have been assigned to %s", run.role.Name, br))
 				}
 			}
 		})
