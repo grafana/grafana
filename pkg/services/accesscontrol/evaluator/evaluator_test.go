@@ -1,103 +1,71 @@
 package evaluator
 
 import (
+	"context"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/services/accesscontrol/dsl"
+
+	"github.com/grafana/grafana/pkg/models"
+
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 )
 
-func TestExtractPermission(t *testing.T) {
-	const targetPermission = "permissions:create"
-	userPermissions := []*accesscontrol.Permission{
-		{
-			Action: "permissions:create",
-			Scope:  "teams:*/permissions:*",
-		},
-		{
-			Action: "permissions:remove",
-			Scope:  "permissions:*",
-		},
-	}
-	expectedScopes := map[string]struct{}{
-		"teams:*/permissions:*": {},
-	}
-	ok, scopes := extractScopes(userPermissions, targetPermission)
-	assert.True(t, ok)
-	assert.Equal(t, expectedScopes, scopes)
+type evaluateTestCase struct {
+	desc        string
+	toEval      dsl.Eval
+	expected    bool
+	permissions []*accesscontrol.Permission
 }
 
-func TestEvaluatePermissions(t *testing.T) {
-	tests := []struct {
-		Name         string
-		HasScopes    map[string]struct{}
-		NeedAnyScope []string
-		Valid        bool
-	}{
+func TestEvaluate(t *testing.T) {
+	tests := []evaluateTestCase{
 		{
-			Name:         "Base",
-			HasScopes:    map[string]struct{}{},
-			NeedAnyScope: []string{},
-			Valid:        true,
-		},
-		{
-			Name: "No expected scope always returns true",
-			HasScopes: map[string]struct{}{
-				"teams:*/permissions:*": {},
-				"users:*":               {},
-				"permissions:delegate":  {},
+			desc:     "expect to evaluate to true",
+			expected: true,
+			toEval:   dsl.Permission("settings:write", "settings:auth.saml:enabled"),
+			permissions: []*accesscontrol.Permission{
+				{
+					Action: "settings:write",
+					Scope:  "settings:**",
+				},
+				{
+					Action: "settings:read",
+					Scope:  "settings:auth.saml:*",
+				},
+				{
+					Action: "datasources:explore",
+				},
 			},
-			NeedAnyScope: []string{},
-			Valid:        true,
-		},
-		{
-			Name: "Single scope from  list",
-			HasScopes: map[string]struct{}{
-				"teams:1/permissions:delegate": {},
-			},
-			NeedAnyScope: []string{"teams:1/permissions:delegate"},
-			Valid:        true,
-		},
-		{
-			Name: "Single scope from glob list",
-			HasScopes: map[string]struct{}{
-				"teams:*/permissions:*": {},
-				"users:*":               {},
-				"permissions:delegate":  {},
-			},
-			NeedAnyScope: []string{"teams:1/permissions:delegate"},
-			Valid:        true,
-		},
-		{
-			Name: "Either of two scopes from glob list",
-			HasScopes: map[string]struct{}{
-				"teams:*/permissions:*": {},
-				"users:*":               {},
-				"permissions:delegate":  {},
-			},
-			NeedAnyScope: []string{"global:admin", "permissions:delegate"},
-			Valid:        true,
-		},
-		{
-			Name: "No match found",
-			HasScopes: map[string]struct{}{
-				"teams:*/permissions:*": {},
-				"users:*":               {},
-				"permissions:delegate":  {},
-			},
-			NeedAnyScope: []string{"teams1/permissions:delegate"},
-			Valid:        false,
 		},
 	}
 
-	for _, tc := range tests {
-		tc := tc
-		t.Run(tc.Name, func(t *testing.T) {
-			ok, err := evaluateScope(tc.HasScopes, tc.NeedAnyScope...)
-			require.NoError(t, err)
-			assert.Equal(t, tc.Valid, ok)
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			ac := &fakeAccessControl{permissions: test.permissions}
+			ok, err := Evaluate(context.Background(), ac, &models.SignedInUser{}, test.toEval)
+			assert.NoError(t, err)
+			assert.True(t, ok)
 		})
 	}
+}
+
+var _ accesscontrol.AccessControl = new(fakeAccessControl)
+
+type fakeAccessControl struct {
+	permissions []*accesscontrol.Permission
+}
+
+func (f *fakeAccessControl) Evaluate(ctx context.Context, user *models.SignedInUser, eval dsl.Eval) (bool, error) {
+	return Evaluate(ctx, f, user, eval)
+}
+
+func (f *fakeAccessControl) GetUserPermissions(ctx context.Context, user *models.SignedInUser) ([]*accesscontrol.Permission, error) {
+	return f.permissions, nil
+}
+
+func (f *fakeAccessControl) IsDisabled() bool {
+	return false
 }
