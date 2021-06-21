@@ -29,7 +29,9 @@ export interface DynamicTableProps<T = unknown> {
   isExpanded?: (item: DynamicTableItemProps<T>) => boolean;
 
   renderExpandedContent?: (item: DynamicTableItemProps<T>, index: number) => ReactNode;
-  testIdGenerator?: (item: DynamicTableItemProps<T>) => string;
+  testIdGenerator?: (item: DynamicTableItemProps<T>, index: number) => string;
+  renderPrefixHeader?: () => ReactNode;
+  renderPrefixCell?: (item: DynamicTableItemProps<T>, index: number) => ReactNode;
 }
 
 export const DynamicTable = <T extends object>({
@@ -41,6 +43,11 @@ export const DynamicTable = <T extends object>({
   isExpanded,
   renderExpandedContent,
   testIdGenerator,
+
+  // render a cell BEFORE expand icon for header/ each row.
+  // currently use by RuleList to render guidelines
+  renderPrefixCell,
+  renderPrefixHeader,
 }: DynamicTableProps<T>) => {
   if ((onCollapse || onExpand || isExpanded) && !(onCollapse && onExpand && isExpanded)) {
     throw new Error('either all of onCollapse, onExpand, isExpanded must be provided, or none');
@@ -48,7 +55,7 @@ export const DynamicTable = <T extends object>({
   if ((isExpandable || renderExpandedContent) && !(isExpandable && renderExpandedContent)) {
     throw new Error('either both isExpanded and renderExpandedContent must be provided, or neither');
   }
-  const styles = useStyles2(getStyles(cols, isExpandable));
+  const styles = useStyles2(getStyles(cols, isExpandable, !!renderPrefixHeader));
 
   const [expandedIds, setExpandedIds] = useState<Array<DynamicTableItemProps['id']>>([]);
 
@@ -62,8 +69,9 @@ export const DynamicTable = <T extends object>({
     }
   };
   return (
-    <div className={styles.container}>
-      <div className={styles.row}>
+    <div className={styles.container} data-testid="dynamic-table">
+      <div className={styles.row} data-testid="header">
+        {renderPrefixHeader && renderPrefixHeader()}
         {isExpandable && <div className={styles.cell} />}
         {cols.map((col) => (
           <div className={styles.cell} key={col.id}>
@@ -75,11 +83,13 @@ export const DynamicTable = <T extends object>({
       {items.map((item, index) => {
         const isItemExpanded = isExpanded ? isExpanded(item) : expandedIds.includes(item.id);
         return (
-          <div className={styles.row} key={item.id} data-testid={testIdGenerator?.(item)}>
+          <div className={styles.row} key={item.id} data-testid={testIdGenerator?.(item, index) ?? 'row'}>
+            {renderPrefixCell && renderPrefixCell(item, index)}
             {isExpandable && (
               <div className={cx(styles.cell, styles.expandCell)}>
                 <IconButton
                   size="xl"
+                  data-testid="collapse-toggle"
                   className={styles.expandButton}
                   name={isItemExpanded ? 'angle-down' : 'angle-right'}
                   onClick={() => toggleExpanded(item)}
@@ -93,7 +103,9 @@ export const DynamicTable = <T extends object>({
               </div>
             ))}
             {isItemExpanded && renderExpandedContent && (
-              <div className={styles.expandedContentRow}>{renderExpandedContent(item, index)}</div>
+              <div className={styles.expandedContentRow} data-testid="expanded-content">
+                {renderExpandedContent(item, index)}
+              </div>
             )}
           </div>
         );
@@ -102,7 +114,11 @@ export const DynamicTable = <T extends object>({
   );
 };
 
-const getStyles = <T extends unknown>(cols: Array<DynamicTableColumnProps<T>>, isExpandable: boolean) => {
+const getStyles = <T extends unknown>(
+  cols: Array<DynamicTableColumnProps<T>>,
+  isExpandable: boolean,
+  hasPrefixCell: boolean
+) => {
   const sizes = cols.map((col) => {
     if (!col.size) {
       return 'auto';
@@ -117,6 +133,9 @@ const getStyles = <T extends unknown>(cols: Array<DynamicTableColumnProps<T>>, i
 
   if (isExpandable) {
     sizes.unshift('calc(1em + 16px)');
+  }
+  if (hasPrefixCell) {
+    sizes.unshift('0');
   }
 
   return (theme: GrafanaTheme2) => ({
@@ -150,8 +169,6 @@ const getStyles = <T extends unknown>(cols: Array<DynamicTableColumnProps<T>>, i
     `,
     cell: css`
       align-items: center;
-      overflow: hidden;
-      word-break: break-all;
       padding: ${theme.spacing(1)};
 
       ${theme.breakpoints.down('sm')} {
@@ -160,6 +177,8 @@ const getStyles = <T extends unknown>(cols: Array<DynamicTableColumnProps<T>>, i
       }
     `,
     bodyCell: css`
+      overflow: hidden;
+      word-break: break-all;
       ${theme.breakpoints.down('sm')} {
         grid-column-end: right;
         grid-column-start: right;
@@ -184,6 +203,7 @@ const getStyles = <T extends unknown>(cols: Array<DynamicTableColumnProps<T>>, i
       grid-column-start: 2;
       grid-row: 2;
       padding: 0 ${theme.spacing(3)} 0 ${theme.spacing(1)};
+      position: relative;
 
       ${theme.breakpoints.down('sm')} {
         border-top: 1px solid ${theme.colors.border.strong};

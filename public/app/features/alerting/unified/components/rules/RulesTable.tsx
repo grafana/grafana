@@ -32,7 +32,6 @@ export const RulesTable: FC<Props> = ({
   showSummaryColumn = false,
 }) => {
   const styles = useStyles2(getStyles);
-  const columns = useColumns(showSummaryColumn, showGroupColumn);
 
   const wrapperClass = cx(styles.wrapper, className, { [styles.wrapperMargin]: showGuidelines });
 
@@ -51,117 +50,44 @@ export const RulesTable: FC<Props> = ({
     });
   }, [rules]);
 
+  const columns = useColumns(showSummaryColumn, showGroupColumn, showGuidelines, items.length);
+
   if (!rules.length) {
     return <div className={cx(wrapperClass, styles.emptyMessage)}>{emptyMessage}</div>;
   }
 
   return (
-    <div className={wrapperClass}>
+    <div className={wrapperClass} data-testid="rules-table">
       <DynamicTable
         cols={columns}
         isExpandable={true}
         items={items}
-        renderExpandedContent={({ data: rule }) => <RuleDetails rule={rule} />}
+        renderExpandedContent={({ data: rule }, index) => (
+          <>
+            {!(index === rules.length - 1) && showGuidelines ? (
+              <div className={cx(styles.ruleContentGuideline, styles.guideline)} />
+            ) : null}
+            <RuleDetails rule={rule} />
+          </>
+        )}
+        renderPrefixHeader={() =>
+          showGuidelines ? (
+            <div className={styles.relative}>
+              <div className={cx(styles.headerGuideline, styles.guideline)} />
+            </div>
+          ) : null
+        }
+        renderPrefixCell={(_, index) =>
+          showGuidelines ? (
+            <div className={styles.relative}>
+              <div className={cx(styles.ruleTopGuideline, styles.guideline)} />
+              {!(index === rules.length - 1) && <div className={cx(styles.ruleBottomGuideline, styles.guideline)} />}
+            </div>
+          ) : null
+        }
       />
     </div>
   );
-
-  /*
-  return (
-    <div className={wrapperClass}>
-      <table className={tableStyles.table} data-testid="rules-table">
-        <colgroup>
-          <col className={tableStyles.colExpand} />
-          <col className={styles.state} />
-          <col />
-          <col />
-          {showSummaryColumn && <col />}
-          {showGroupColumn && <col />}
-        </colgroup>
-        <thead>
-          <tr>
-            <th className={styles.relative}>
-              {showGuidelines && <div className={cx(styles.headerGuideline, styles.guideline)} />}
-            </th>
-            <th>State</th>
-            <th>Name</th>
-            <th>Health</th>
-            {showSummaryColumn && <th>Summary</th>}
-            {showGroupColumn && <th>Group</th>}
-          </tr>
-        </thead>
-        <tbody>
-          {(() => {
-            const seenKeys: string[] = [];
-            return rules.map((rule, ruleIdx) => {
-              const { namespace, group } = rule;
-              const { rulesSource } = namespace;
-              let key = JSON.stringify([rule.promRule?.type, rule.labels, rule.query, rule.name, rule.annotations]);
-              if (seenKeys.includes(key)) {
-                key += `-${ruleIdx}`;
-              }
-              seenKeys.push(key);
-              const isExpanded = expandedKeys.includes(key);
-              const { promRule, rulerRule } = rule;
-              const isDeleting = !!(hasRuler(rulesSource) && promRule && !rulerRule);
-              const isCreating = !!(hasRuler(rulesSource) && rulerRule && !promRule);
-
-              let detailsColspan = 3;
-              if (showGroupColumn) {
-                detailsColspan += 1;
-              }
-              if (showSummaryColumn) {
-                detailsColspan += 1;
-              }
-              return (
-                <Fragment key={key}>
-                  <tr className={ruleIdx % 2 === 0 ? tableStyles.evenRow : undefined}>
-                    <td className={styles.relative}>
-                      {showGuidelines && (
-                        <>
-                          <div className={cx(styles.ruleTopGuideline, styles.guideline)} />
-                          {!(ruleIdx === rules.length - 1) && (
-                            <div className={cx(styles.ruleBottomGuideline, styles.guideline)} />
-                          )}
-                        </>
-                      )}
-                      <CollapseToggle
-                        isCollapsed={!isExpanded}
-                        onToggle={() => toggleExpandedState(key)}
-                        data-testid="rule-collapse-toggle"
-                      />
-                    </td>
-                    <td>
-                      <RuleState rule={rule} isDeleting={isDeleting} isCreating={isCreating} />
-                    </td>
-                    <td>{rule.name}</td>
-                    <td>{promRule && <RuleHealth rule={promRule} />}</td>
-                    {showSummaryColumn && <td>{rule.annotations[Annotation.summary] ?? ''}</td>}
-                    {showGroupColumn && (
-                      <td>{isCloudRulesSource(rulesSource) ? `${namespace.name} > ${group.name}` : namespace.name}</td>
-                    )}
-                  </tr>
-                  {isExpanded && (
-                    <tr className={ruleIdx % 2 === 0 ? tableStyles.evenRow : undefined}>
-                      <td className={styles.relative}>
-                        {!(ruleIdx === rules.length - 1) && showGuidelines && (
-                          <div className={cx(styles.ruleContentGuideline, styles.guideline)} />
-                        )}
-                      </td>
-                      <td colSpan={detailsColspan}>
-                        <RuleDetails rulesSource={rulesSource} rule={rule} />
-                      </td>
-                    </tr>
-                  )}
-                </Fragment>
-              );
-            });
-          })()}
-        </tbody>
-      </table>
-    </div>
-  );
-    */
 };
 
 export const getStyles = (theme: GrafanaTheme2) => ({
@@ -201,6 +127,7 @@ export const getStyles = (theme: GrafanaTheme2) => ({
   `,
   relative: css`
     position: relative;
+    height: 100%;
   `,
   guideline: css`
     left: -19px;
@@ -234,8 +161,9 @@ export const getStyles = (theme: GrafanaTheme2) => ({
   `,
 });
 
-function useColumns(showSummaryColumn: boolean, showGroupColumn: boolean) {
+function useColumns(showSummaryColumn: boolean, showGroupColumn: boolean, showGuidelines: boolean, totalRules: number) {
   const hasRuler = useHasRuler();
+  const styles = useStyles2(getStyles);
 
   return useMemo((): RuleTableColumnProps[] => {
     const columns: RuleTableColumnProps[] = [
@@ -243,13 +171,25 @@ function useColumns(showSummaryColumn: boolean, showGroupColumn: boolean) {
         id: 'state',
         label: 'State',
         // eslint-disable-next-line react/display-name
-        renderCell: ({ data: rule }) => {
+        renderCell: ({ data: rule }, ruleIdx) => {
           const { namespace } = rule;
           const { rulesSource } = namespace;
           const { promRule, rulerRule } = rule;
           const isDeleting = !!(hasRuler(rulesSource) && promRule && !rulerRule);
           const isCreating = !!(hasRuler(rulesSource) && rulerRule && !promRule);
-          return <RuleState rule={rule} isDeleting={isDeleting} isCreating={isCreating} />;
+          return (
+            <>
+              {showGuidelines && (
+                <>
+                  <div className={cx(styles.ruleTopGuideline, styles.guideline)} />
+                  {!(ruleIdx === totalRules - 1) && (
+                    <div className={cx(styles.ruleBottomGuideline, styles.guideline)} />
+                  )}
+                </>
+              )}
+              <RuleState rule={rule} isDeleting={isDeleting} isCreating={isCreating} />
+            </>
+          );
         },
         size: '165px',
       },
@@ -291,5 +231,5 @@ function useColumns(showSummaryColumn: boolean, showGroupColumn: boolean) {
       });
     }
     return columns;
-  }, [hasRuler, showSummaryColumn, showGroupColumn]);
+  }, [hasRuler, showSummaryColumn, showGroupColumn, showGuidelines, totalRules, styles]);
 }
