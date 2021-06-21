@@ -57,7 +57,7 @@ export const SimpleEditor: React.FC<StandardEditorProps<number, Settings>>  = ({
 
   // Default values
   const from = item.settings?.from ?? 1;
-  const to = item.settings?.from ?? 10;
+  const to = item.settings?.to ?? 10;
 
   for (let i = from; i <= to; i++) {
     options.push({
