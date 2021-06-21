@@ -14,19 +14,19 @@ import (
 )
 
 // TODO: add tests
-func Middleware(ac accesscontrol.AccessControl) func(macaron.Handler, eval.Eval) macaron.Handler {
-	return func(fallback macaron.Handler, eval eval.Eval) macaron.Handler {
+func Middleware(ac accesscontrol.AccessControl) func(macaron.Handler, eval.Evaluator) macaron.Handler {
+	return func(fallback macaron.Handler, evaluator eval.Evaluator) macaron.Handler {
 		if ac.IsDisabled() {
 			return fallback
 		}
 
 		return func(c *models.ReqContext) {
-			if err := eval.Inject(c.AllParams()); err != nil {
+			if err := evaluator.Inject(c.AllParams()); err != nil {
 				c.JsonApiErr(http.StatusInternalServerError, "Internal server error", err)
 				return
 			}
 
-			hasAccess, err := ac.Evaluate(c.Req.Context(), c.SignedInUser, eval)
+			hasAccess, err := ac.Evaluate(c.Req.Context(), c.SignedInUser, evaluator)
 			if err != nil {
 				Deny(c, err)
 				return

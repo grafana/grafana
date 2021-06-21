@@ -8,7 +8,7 @@ import (
 
 type allTestCase struct {
 	desc        string
-	all         Eval
+	all         Evaluator
 	expected    bool
 	permissions map[string]map[string]struct{}
 }

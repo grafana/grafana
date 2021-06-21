@@ -7,9 +7,9 @@ import (
 	"github.com/gobwas/glob"
 )
 
-var _ Eval = new(permission)
+var _ Evaluator = new(permission)
 
-func Permission(actions string, scope string) Eval {
+func Permission(actions string, scope string) Evaluator {
 	return &permission{
 		Action: actions,
 		Scope:  scope,

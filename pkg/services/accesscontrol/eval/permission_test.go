@@ -8,7 +8,7 @@ import (
 
 type permissionTestCase struct {
 	desc        string
-	permission  Eval
+	permission  Evaluator
 	expected    bool
 	permissions map[string]map[string]struct{}
 }
@@ -48,7 +48,7 @@ func TestPermission(t *testing.T) {
 
 type permissionInjectTestCase struct {
 	desc        string
-	eval        Eval
+	eval        Evaluator
 	expected    bool
 	params      map[string]string
 	permissions map[string]map[string]struct{}

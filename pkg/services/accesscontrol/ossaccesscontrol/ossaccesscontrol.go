@@ -55,7 +55,7 @@ func (ac *OSSAccessControlService) getUsageMetrics() interface{} {
 }
 
 // Evaluate evaluates access to the given resource
-func (ac *OSSAccessControlService) Evaluate(ctx context.Context, user *models.SignedInUser, eval eval.Eval) (bool, error) {
+func (ac *OSSAccessControlService) Evaluate(ctx context.Context, user *models.SignedInUser, evaluator eval.Evaluator) (bool, error) {
 	timer := prometheus.NewTimer(metrics.MAccessEvaluationsSummary)
 	defer timer.ObserveDuration()
 	metrics.MAccessEvaluationCount.Inc()
@@ -64,7 +64,7 @@ func (ac *OSSAccessControlService) Evaluate(ctx context.Context, user *models.Si
 	if err != nil {
 		return false, err
 	}
-	return eval.Evaluate(accesscontrol.GroupPermissions(permissions))
+	return evaluator.Evaluate(accesscontrol.GroupPermissions(permissions))
 }
 
 // GetUserPermissions returns user permissions based on built-in roles

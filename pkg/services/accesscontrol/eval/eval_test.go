@@ -8,7 +8,7 @@ import (
 
 type combinedTestCase struct {
 	desc        string
-	combined    Eval
+	combined    Evaluator
 	expected    bool
 	permissions map[string]map[string]struct{}
 }

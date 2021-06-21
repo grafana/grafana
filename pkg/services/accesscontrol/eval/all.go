@@ -1,13 +1,13 @@
 package eval
 
-var _ Eval = new(all)
+var _ Evaluator = new(all)
 
-func All(allOf ...Eval) Eval {
+func All(allOf ...Evaluator) Evaluator {
 	return all{allOf: allOf}
 }
 
 type all struct {
-	allOf []Eval
+	allOf []Evaluator
 }
 
 func (a all) Evaluate(permissions map[string]map[string]struct{}) (bool, error) {
