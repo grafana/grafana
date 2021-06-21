@@ -1,4 +1,4 @@
-import { CombinedRule, RulesSource } from 'app/types/unified-alerting';
+import { CombinedRule } from 'app/types/unified-alerting';
 import React, { FC, useMemo } from 'react';
 import { useStyles } from '@grafana/ui';
 import { css, cx } from '@emotion/css';
@@ -16,13 +16,15 @@ import { RuleDetailsActionButtons } from './RuleDetailsActionButtons';
 
 interface Props {
   rule: CombinedRule;
-  rulesSource: RulesSource;
 }
 
-export const RuleDetails: FC<Props> = ({ rule, rulesSource }) => {
+export const RuleDetails: FC<Props> = ({ rule }) => {
   const styles = useStyles(getStyles);
 
-  const { promRule } = rule;
+  const {
+    promRule,
+    namespace: { rulesSource },
+  } = rule;
 
   const annotations = Object.entries(rule.annotations).filter(([_, value]) => !!value.trim());
 

@@ -1,4 +1,4 @@
-import React, { ReactNode } from 'react';
+import React, { ReactNode, useState } from 'react';
 import { css, cx } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 import { IconButton, useStyles2, useTheme2 } from '@grafana/ui';
@@ -8,16 +8,14 @@ export interface DynamicTableColumnProps<T = unknown> {
   id: string | number;
   label: string;
 
-  renderCell?: (item: DynamicTableItemProps<T>, index: number) => ReactNode;
+  renderCell: (item: DynamicTableItemProps<T>, index: number) => ReactNode;
   size?: number | string;
 }
 
 export interface DynamicTableItemProps<T = unknown> {
   id: string | number;
   data: T;
-
   renderExpandedContent?: () => ReactNode;
-  isExpanded?: boolean;
 }
 
 export interface DynamicTableProps<T = unknown> {
@@ -25,8 +23,12 @@ export interface DynamicTableProps<T = unknown> {
   items: Array<DynamicTableItemProps<T>>;
 
   isExpandable?: boolean;
-  onCollapse?: (id: DynamicTableItemProps<T>) => void;
-  onExpand?: (id: DynamicTableItemProps<T>) => void;
+
+  // provide these to manually control expanded status
+  onCollapse?: (item: DynamicTableItemProps<T>) => void;
+  onExpand?: (item: DynamicTableItemProps<T>) => void;
+  isExpanded?: (item: DynamicTableItemProps<T>) => boolean;
+
   renderExpandedContent?: (item: DynamicTableItemProps<T>, index: number) => ReactNode;
   testIdGenerator?: (item: DynamicTableItemProps<T>) => string;
 }
@@ -37,13 +39,31 @@ export const DynamicTable = <T extends object>({
   isExpandable = false,
   onCollapse,
   onExpand,
+  isExpanded,
   renderExpandedContent,
   testIdGenerator,
 }: DynamicTableProps<T>) => {
+  if ((onCollapse || onExpand || isExpanded) && !(onCollapse && onExpand && isExpanded)) {
+    throw new Error('either all of onCollapse, onExpand, isExpanded must be provided, or none');
+  }
+  if ((isExpandable || renderExpandedContent) && !(isExpandable && renderExpandedContent)) {
+    throw new Error('either both isExpanded and renderExpandedContent must be provided, or neither');
+  }
   const styles = useStyles2(getStyles(cols, isExpandable));
   const theme = useTheme2();
   const isMobile = useMedia(`(${theme.breakpoints.down('sm')})`);
 
+  const [expandedIds, setExpandedIds] = useState<Array<DynamicTableItemProps['id']>>([]);
+
+  const toggleExpanded = (item: DynamicTableItemProps<T>) => {
+    if (isExpanded && onCollapse && onExpand) {
+      isExpanded(item) ? onCollapse(item) : onExpand(item);
+    } else {
+      setExpandedIds(
+        expandedIds.includes(item.id) ? expandedIds.filter((itemId) => itemId !== item.id) : [...expandedIds, item.id]
+      );
+    }
+  };
   return (
     <div className={styles.container}>
       <div className={styles.row}>
@@ -55,31 +75,32 @@ export const DynamicTable = <T extends object>({
         ))}
       </div>
 
-      {items.map((item, index) => (
-        <div className={styles.row} key={item.id} data-testid={testIdGenerator?.(item)}>
-          {isExpandable && (
-            <div className={cx(styles.cell, styles.expandCell)}>
-              <IconButton
-                size={isMobile ? 'xl' : 'md'}
-                className={styles.expandButton}
-                name={item.isExpanded ? 'angle-down' : 'angle-right'}
-                onClick={() => (item.isExpanded ? onCollapse?.(item) : onExpand?.(item))}
-                type="button"
-              />
-            </div>
-          )}
-          {cols.map((col) => (
-            <div className={cx(styles.cell, styles.bodyCell)} data-column={col.label} key={`${item.id}-${col.id}`}>
-              {col.renderCell?.(item, index)}
-            </div>
-          ))}
-          {item.isExpanded && (
-            <div className={styles.expandedContentRow}>
-              {item.renderExpandedContent ? item.renderExpandedContent() : renderExpandedContent?.(item, index)}
-            </div>
-          )}
-        </div>
-      ))}
+      {items.map((item, index) => {
+        const isItemExpanded = isExpanded ? isExpanded(item) : expandedIds.includes(item.id);
+        return (
+          <div className={styles.row} key={item.id} data-testid={testIdGenerator?.(item)}>
+            {isExpandable && (
+              <div className={cx(styles.cell, styles.expandCell)}>
+                <IconButton
+                  size={isMobile ? 'xl' : 'md'}
+                  className={styles.expandButton}
+                  name={isItemExpanded ? 'angle-down' : 'angle-right'}
+                  onClick={() => toggleExpanded(item)}
+                  type="button"
+                />
+              </div>
+            )}
+            {cols.map((col) => (
+              <div className={cx(styles.cell, styles.bodyCell)} data-column={col.label} key={`${item.id}-${col.id}`}>
+                {col.renderCell(item, index)}
+              </div>
+            ))}
+            {isItemExpanded && renderExpandedContent && (
+              <div className={styles.expandedContentRow}>{renderExpandedContent(item, index)}</div>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 };
