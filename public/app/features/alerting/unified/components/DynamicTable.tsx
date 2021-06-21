@@ -134,6 +134,7 @@ const getStyles = <T extends unknown>(
   if (isExpandable) {
     sizes.unshift('calc(1em + 16px)');
   }
+
   if (hasPrefixCell) {
     sizes.unshift('0');
   }
@@ -165,6 +166,14 @@ const getStyles = <T extends unknown>(
         &:first-child {
           display: none;
         }
+
+        ${hasPrefixCell
+          ? `
+            & > *:first-child {
+              display: none;
+            }
+          `
+          : ''}
       }
     `,
     cell: css`
@@ -206,6 +215,7 @@ const getStyles = <T extends unknown>(
       position: relative;
 
       ${theme.breakpoints.down('sm')} {
+        grid-column-start: 2;
         border-top: 1px solid ${theme.colors.border.strong};
         grid-row: auto;
         padding: ${theme.spacing(1)} 0 0 0;
