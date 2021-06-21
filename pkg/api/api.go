@@ -58,7 +58,7 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/datasources/edit/*", reqOrgAdmin, hs.Index)
 	r.Get("/org/users", authorize(reqOrgAdmin, dsl.Permission(accesscontrol.ActionOrgUsersRead, accesscontrol.ScopeUsersAll)), hs.Index)
 	r.Get("/org/users/new", reqOrgAdmin, hs.Index)
-	r.Get("/org/users/invite", authorize(reqOrgAdmin, dsl.Permission(accesscontrol.ActionUsersCreate, "")), hs.Index)
+	r.Get("/org/users/invite", authorize(reqOrgAdmin, dsl.Permission(accesscontrol.ActionUsersCreate, dsl.ScopeNone)), hs.Index)
 	r.Get("/org/teams", reqCanAccessTeams, hs.Index)
 	r.Get("/org/teams/*", reqCanAccessTeams, hs.Index)
 	r.Get("/org/apikeys/", reqOrgAdmin, hs.Index)

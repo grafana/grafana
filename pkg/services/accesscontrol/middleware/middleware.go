@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/accesscontrol/dsl"
+
 	"gopkg.in/macaron.v1"
 
 	"github.com/grafana/grafana/pkg/models"
@@ -13,8 +15,8 @@ import (
 )
 
 // TODO: add tests
-func Middleware(ac accesscontrol.AccessControl) func(macaron.Handler, accesscontrol.Eval) macaron.Handler {
-	return func(fallback macaron.Handler, eval accesscontrol.Eval) macaron.Handler {
+func Middleware(ac accesscontrol.AccessControl) func(macaron.Handler, dsl.Eval) macaron.Handler {
+	return func(fallback macaron.Handler, eval dsl.Eval) macaron.Handler {
 		if ac.IsDisabled() {
 			return fallback
 		}

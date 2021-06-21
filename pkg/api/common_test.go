@@ -240,8 +240,9 @@ type fakeAccessControl struct {
 	permissions []*accesscontrol.Permission
 }
 
-func (f *fakeAccessControl) Evaluate(ctx context.Context, user *models.SignedInUser, eval accesscontrol.Eval) (bool, error) {
-	return dsl.Evaluate(ctx, f, user, eval)
+func (f *fakeAccessControl) Evaluate(ctx context.Context, user *models.SignedInUser, eval dsl.Eval) (bool, error) {
+	permissions, _ := f.GetUserPermissions(ctx, user)
+	return eval.Evaluate(accesscontrol.GroupPermissions(permissions))
 }
 
 func (f *fakeAccessControl) GetUserPermissions(ctx context.Context, user *models.SignedInUser) ([]*accesscontrol.Permission, error) {

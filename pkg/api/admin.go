@@ -37,7 +37,7 @@ func (hs *HTTPServer) getAuthorizedSettings(ctx context.Context, user *models.Si
 	}
 
 	eval := func(scope string) (bool, error) {
-		return dsl.Evaluate(ctx, hs.AccessControl, user, dsl.Permission(accesscontrol.ActionSettingsRead, scope))
+		return hs.AccessControl.Evaluate(ctx, user, dsl.Permission(accesscontrol.ActionSettingsRead, scope))
 	}
 
 	ok, err := eval(accesscontrol.ScopeSettingsAll)

@@ -1,5 +1,6 @@
 package dsl
 
+/*
 import (
 	"context"
 
@@ -22,3 +23,4 @@ func Evaluate(ctx context.Context, ac accesscontrol.AccessControl, user *models.
 
 	return eval.Evaluate(accesscontrol.GroupPermissions(permissions))
 }
+*/

@@ -55,8 +55,12 @@ func (ac *OSSAccessControlService) getUsageMetrics() interface{} {
 }
 
 // Evaluate evaluates access to the given resource
-func (ac *OSSAccessControlService) Evaluate(ctx context.Context, user *models.SignedInUser, eval accesscontrol.Eval) (bool, error) {
-	return dsl.Evaluate(ctx, ac, user, eval)
+func (ac *OSSAccessControlService) Evaluate(ctx context.Context, user *models.SignedInUser, eval dsl.Eval) (bool, error) {
+	permissions, err := ac.GetUserPermissions(ctx, user)
+	if err != nil {
+		return false, err
+	}
+	return eval.Evaluate(accesscontrol.GroupPermissions(permissions))
 }
 
 // GetUserPermissions returns user permissions based on built-in roles

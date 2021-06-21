@@ -1,15 +1,13 @@
 package dsl
 
-import "github.com/grafana/grafana/pkg/services/accesscontrol"
+var _ Eval = new(all)
 
-var _ accesscontrol.Eval = new(all)
-
-func All(allOf ...accesscontrol.Eval) accesscontrol.Eval {
+func All(allOf ...Eval) Eval {
 	return all{allOf: allOf}
 }
 
 type all struct {
-	allOf []accesscontrol.Eval
+	allOf []Eval
 }
 
 func (a all) Evaluate(permissions map[string]map[string]struct{}) (bool, error) {

@@ -22,6 +22,9 @@ func Combine(scopes ...string) string {
 	return b.String()
 }
 
+// "settings:" + Parameter(":id")
+// "settings:{{ index . ":roleID" }}"
+
 func Parameter(key string) string {
 	return fmt.Sprintf(`{{ index . "%s" }}`, key)
 }
