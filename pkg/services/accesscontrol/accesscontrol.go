@@ -2,14 +2,14 @@ package accesscontrol
 
 import (
 	"context"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/dsl"
 
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/eval"
 )
 
 type AccessControl interface {
 	// Evaluate evaluates access to the given resources.
-	Evaluate(ctx context.Context, user *models.SignedInUser, eval dsl.Eval) (bool, error)
+	Evaluate(ctx context.Context, user *models.SignedInUser, eval eval.Eval) (bool, error)
 
 	// GetUserPermissions returns user permissions.
 	GetUserPermissions(ctx context.Context, user *models.SignedInUser) ([]*Permission, error)
@@ -18,8 +18,8 @@ type AccessControl interface {
 	IsDisabled() bool
 }
 
-func HasAccess(ac AccessControl, c *models.ReqContext) func(fallback func(*models.ReqContext) bool, eval dsl.Eval) bool {
-	return func(fallback func(*models.ReqContext) bool, eval dsl.Eval) bool {
+func HasAccess(ac AccessControl, c *models.ReqContext) func(fallback func(*models.ReqContext) bool, eval eval.Eval) bool {
+	return func(fallback func(*models.ReqContext) bool, eval eval.Eval) bool {
 		if ac.IsDisabled() {
 			return fallback(c)
 		}

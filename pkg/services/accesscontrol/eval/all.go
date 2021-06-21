@@ -1,4 +1,4 @@
-package dsl
+package eval
 
 var _ Eval = new(all)
 
