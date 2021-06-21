@@ -304,7 +304,6 @@ func checkOrigin(r *http.Request, appURL *url.URL) bool {
 		logger.Warn("Request Origin is not authorized", "origin", origin, "appUrl", appURL.String())
 		return false
 	}
-	logger.Debug("Authorized request with Origin", "origin", origin)
 	return true
 }
 
