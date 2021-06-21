@@ -156,34 +156,35 @@ export class DashboardGrid extends PureComponent<Props, State> {
 
     for (const panel of this.props.dashboard.panels) {
       const panelClasses = classNames({ 'react-grid-item--fullscreen': panel.isViewing });
-      const id = panel.id.toString();
+      const itemKey = panel.id.toString();
 
       // Update is in view state
       panel.isInView = this.isInView(panel);
 
       panelElements.push(
-        <GridItem key={id} className={panelClasses} data-panelid={id}>
+        <GridItemWithDimensions key={itemKey} className={panelClasses} data-panelid={itemKey}>
           {(width: number, height: number) => {
-            return this.renderPanel(panel, width, height);
+            return this.renderPanel(panel, width, height, itemKey);
           }}
-        </GridItem>
+        </GridItemWithDimensions>
       );
     }
 
     return panelElements;
   }
 
-  renderPanel(panel: PanelModel, width: any, height: any) {
+  renderPanel(panel: PanelModel, width: any, height: any, itemKey: string) {
     if (panel.type === 'row') {
-      return <DashboardRow panel={panel} dashboard={this.props.dashboard} />;
+      return <DashboardRow key={itemKey} panel={panel} dashboard={this.props.dashboard} />;
     }
 
     if (panel.type === 'add-panel') {
-      return <AddPanelWidget panel={panel} dashboard={this.props.dashboard} />;
+      return <AddPanelWidget key={itemKey} panel={panel} dashboard={this.props.dashboard} />;
     }
 
     return (
       <DashboardPanel
+        key={itemKey}
         panel={panel}
         dashboard={this.props.dashboard}
         isEditing={panel.isEditing}
@@ -241,16 +242,21 @@ export class DashboardGrid extends PureComponent<Props, State> {
   }
 }
 
-function GridItem(props: any) {
+/**
+ * A hacky way to intercept the react-layout-grid item dimensions and pass them to DashboardPanel
+ */
+const GridItemWithDimensions = React.forwardRef<HTMLDivElement, any>((props, ref) => {
   // RGL passes width and height directly to children as style props.
   const width = parseFloat(props.style.width);
   const height = parseFloat(props.style.height);
 
   // props.children[0] is our main children. RGL adds the drag handle at props.children[1]
   return (
-    <div {...props}>
+    <div {...props} ref={ref}>
       {/* Pass width and height to children as render props */}
       {[props.children[0](width, height), props.children.slice(1)]}
     </div>
   );
-}
+});
+
+GridItemWithDimensions.displayName = 'GridItemWithDimensions';
