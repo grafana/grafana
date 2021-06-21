@@ -9,7 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/dsl"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/eval"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -37,7 +37,7 @@ func (hs *HTTPServer) getAuthorizedSettings(ctx context.Context, user *models.Si
 	}
 
 	eval := func(scope string) (bool, error) {
-		return hs.AccessControl.Evaluate(ctx, user, dsl.Permission(accesscontrol.ActionSettingsRead, scope))
+		return hs.AccessControl.Evaluate(ctx, user, eval.Permission(accesscontrol.ActionSettingsRead, scope))
 	}
 
 	ok, err := eval(accesscontrol.ScopeSettingsAll)
