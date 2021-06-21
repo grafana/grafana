@@ -1,7 +1,8 @@
-package evaluator
+package dsl
 
 import (
 	"context"
+
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -9,8 +10,6 @@ import (
 )
 
 // Evaluate evaluates access to the given resource, using provided AccessControl instance.
-// Scopes are evaluated with an `OR` relationship.
-// TODO: merge with dsl and rename package?
 func Evaluate(ctx context.Context, ac accesscontrol.AccessControl, user *models.SignedInUser, eval accesscontrol.Eval) (bool, error) {
 	timer := prometheus.NewTimer(metrics.MAccessEvaluationsSummary)
 	defer timer.ObserveDuration()

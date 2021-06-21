@@ -6,6 +6,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 )
 
+// TODO: find better name
 type Eval interface {
 	// Evaluate permission that are grouped by action
 	Evaluate(permissions map[string]map[string]struct{}) (bool, error)

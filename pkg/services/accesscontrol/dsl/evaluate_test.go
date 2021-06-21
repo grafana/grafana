@@ -1,15 +1,12 @@
-package evaluator
+package dsl
 
 import (
 	"context"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/services/accesscontrol/dsl"
-
-	"github.com/grafana/grafana/pkg/models"
-
 	"github.com/stretchr/testify/assert"
 
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 )
 
@@ -25,7 +22,7 @@ func TestEvaluate(t *testing.T) {
 		{
 			desc:     "expect to evaluate to true",
 			expected: true,
-			toEval:   dsl.Permission("settings:write", "settings:auth.saml:enabled"),
+			toEval:   Permission("settings:write", "settings:auth.saml:enabled"),
 			permissions: []*accesscontrol.Permission{
 				{
 					Action: "settings:write",

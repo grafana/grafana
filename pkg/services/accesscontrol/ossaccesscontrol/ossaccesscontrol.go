@@ -8,7 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/evaluator"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/dsl"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/prometheus/client_golang/prometheus"
 )
@@ -56,7 +56,7 @@ func (ac *OSSAccessControlService) getUsageMetrics() interface{} {
 
 // Evaluate evaluates access to the given resource
 func (ac *OSSAccessControlService) Evaluate(ctx context.Context, user *models.SignedInUser, eval accesscontrol.Eval) (bool, error) {
-	return evaluator.Evaluate(ctx, ac, user, eval)
+	return dsl.Evaluate(ctx, ac, user, eval)
 }
 
 // GetUserPermissions returns user permissions based on built-in roles
