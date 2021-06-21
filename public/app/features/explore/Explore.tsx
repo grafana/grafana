@@ -14,18 +14,7 @@ import {
   Collapse,
   TooltipDisplayMode,
 } from '@grafana/ui';
-import {
-  AbsoluteTimeRange,
-  DataQuery,
-  DataSourceApi,
-  GrafanaTheme,
-  LoadingState,
-  PanelData,
-  RawTimeRange,
-  TimeZone,
-  LogsModel,
-  DataFrame,
-} from '@grafana/data';
+import { AbsoluteTimeRange, DataQuery, GrafanaTheme, LoadingState, RawTimeRange, DataFrame } from '@grafana/data';
 
 import LogsContainer from './LogsContainer';
 import QueryRows from './QueryRows';
