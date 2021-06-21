@@ -28,8 +28,7 @@ export async function fetchAlertManagerConfig(alertManagerSourceName: string): P
     // if no config has been uploaded to grafana, it returns error instead of latest config
     if (
       alertManagerSourceName === GRAFANA_RULES_SOURCE_NAME &&
-      (e.data?.message?.includes('failed to get latest configuration') ||
-        e.data?.message?.includes('could not find an Alertmanager configuration'))
+      e.data?.message?.includes('could not find an Alertmanager configuration')
     ) {
       return {
         template_files: {},

@@ -1,6 +1,5 @@
 // Libraries
 import React, { PureComponent } from 'react';
-import { hot } from 'react-hot-loader';
 import ReactGridLayout, { ItemCallback } from 'react-grid-layout';
 import classNames from 'classnames';
 // @ts-ignore
@@ -98,10 +97,21 @@ export interface Props {
   isPanelEditorOpen?: boolean;
 }
 
-export class DashboardGrid extends PureComponent<Props> {
+export interface State {
+  isLayoutInitialized: boolean;
+}
+export class DashboardGrid extends PureComponent<Props, State> {
   private panelMap: { [id: string]: PanelModel } = {};
   private panelRef: { [id: string]: HTMLElement } = {};
   private eventSubs = new Subscription();
+
+  constructor(props: Props) {
+    super(props);
+
+    this.state = {
+      isLayoutInitialized: false,
+    };
+  }
 
   componentDidMount() {
     const { dashboard } = this.props;
@@ -152,8 +162,6 @@ export class DashboardGrid extends PureComponent<Props> {
     }
 
     this.props.dashboard.sortPanelsByGridPos();
-
-    // Call render() after any changes.  This is called when the layout loads
     this.forceUpdate();
   };
 
@@ -163,10 +171,6 @@ export class DashboardGrid extends PureComponent<Props> {
 
   updateGridPos = (item: ReactGridLayout.Layout, layout: ReactGridLayout.Layout[]) => {
     this.panelMap[item.i!].updateGridPos(item);
-
-    // react-grid-layout has a bug (#670), and onLayoutChange() is only called when the component is mounted.
-    // So it's required to call it explicitly when panel resized or moved to save layout changes.
-    this.onLayoutChange(layout);
   };
 
   onResize: ItemCallback = (layout, oldItem, newItem) => {
@@ -259,7 +263,6 @@ export class DashboardGrid extends PureComponent<Props> {
 
   render() {
     const { dashboard, viewPanel } = this.props;
-
     return (
       <SizedReactLayoutGrid
         className={classNames({ layout: true })}
@@ -277,5 +280,3 @@ export class DashboardGrid extends PureComponent<Props> {
     );
   }
 }
-
-export default hot(module)(DashboardGrid);

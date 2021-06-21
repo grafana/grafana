@@ -229,13 +229,14 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     );
   }
 
-  renderGraphPanel() {
-    const { graphResult, absoluteRange, timeZone, splitOpen, queryResponse, loading } = this.props;
+  renderGraphPanel(width: number) {
+    const { graphResult, absoluteRange, timeZone, splitOpen, queryResponse, loading, theme } = this.props;
     return (
       <Collapse label="Graph" loading={loading} isOpen>
         <ExploreGraphNGPanel
           data={graphResult!}
           height={400}
+          width={width - theme.panelPadding * 2}
           tooltipDisplayMode={TooltipDisplayMode.Single}
           absoluteRange={absoluteRange}
           timeZone={timeZone}
@@ -259,12 +260,14 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     );
   }
 
-  renderLogsPanel() {
-    const { exploreId, syncedTimes } = this.props;
+  renderLogsPanel(width: number) {
+    const { exploreId, syncedTimes, theme } = this.props;
+
     return (
       <LogsContainer
         exploreId={exploreId}
         syncedTimes={syncedTimes}
+        width={width - theme.panelPadding * 2}
         onClickFilterLabel={this.onClickFilterLabel}
         onClickFilterOutLabel={this.onClickFilterOutLabel}
         onStartScanning={this.onStartScanning}
@@ -357,10 +360,10 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
                       {showPanels && (
                         <>
                           {showMetrics && graphResult && (
-                            <ErrorBoundaryAlert>{this.renderGraphPanel()}</ErrorBoundaryAlert>
+                            <ErrorBoundaryAlert>{this.renderGraphPanel(width)}</ErrorBoundaryAlert>
                           )}
                           {showTable && <ErrorBoundaryAlert>{this.renderTablePanel(width)}</ErrorBoundaryAlert>}
-                          {showLogs && <ErrorBoundaryAlert>{this.renderLogsPanel()}</ErrorBoundaryAlert>}
+                          {showLogs && <ErrorBoundaryAlert>{this.renderLogsPanel(width)}</ErrorBoundaryAlert>}
                           {showNodeGraph && <ErrorBoundaryAlert>{this.renderNodeGraphPanel()}</ErrorBoundaryAlert>}
                           {showTrace && <ErrorBoundaryAlert>{this.renderTraceViewPanel()}</ErrorBoundaryAlert>}
                         </>

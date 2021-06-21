@@ -39,3 +39,15 @@ Alert instances that have labels that match all of the "Matching Labels" specifi
 1. To end the silence, click the **Unsilence** option next to the listed silence. Silences that have ended are still listed and are automatically removed after 5 days. There is no method for manual removal.
 1. To edit a silence, click the pencil icon next to the listed silence. Edit the silence using instructions on how to create a silence.
 1. Click **Submit** to save your changes.
+
+## Manage silences for an external Alertmanager
+
+Grafana alerting UI supports managing external Alertmanager silences. Once you add an [Alertmanager data source]({{< relref "../../datasources/alertmanager.md" >}}), a dropdown displays at the top of the page where you can select either `Grafana` or an external Alertmanager as your data source. 
+
+## Create a URL to silence form with defaults filled in
+
+When linking to silence form, you can provide default matching labels and comment via `matchers` and `comment` query parameters. `matchers` expects one more matching labels of type `[label][operator][value]` joined by a comma. `operator` can be one of `=` (equals, not regex), `!=` (not equals, not regex), `=~` (equals, regex), `!~` (not equals, not regex).
+
+For example, to link to silence form with matching labels `severity=critical` & `cluster!~europe-.*` and comment `Silence critical EU alerts`, create a URL `https://mygrafana/aleting/silence/new?matchers=severity%3Dcritical%2Ccluster!~europe-*&comment=Silence%20critical%20EU%20alert`. 
+
+To link to a new silence page for an [external Alertmanager]({{< relref "../../datasources/alertmanager.md" >}}), add a `alertmanager` query parameter with the Alertmanager data source name.

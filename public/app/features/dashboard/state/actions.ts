@@ -11,12 +11,14 @@ import {
 } from './reducers';
 import { notifyApp } from 'app/core/actions';
 import { loadPanelPlugin } from 'app/features/plugins/state/actions';
+import { updateTimeZoneForSession } from 'app/features/profile/state/reducers';
 // Types
 import { DashboardAcl, DashboardAclUpdateDTO, NewDashboardAclItem, PermissionLevel, ThunkResult } from 'app/types';
 import { PanelModel } from './PanelModel';
 import { cancelVariables } from '../../variables/state/actions';
 import { getPanelPluginNotFound } from '../dashgrid/PanelPluginError';
 import { getTimeSrv } from '../services/TimeSrv';
+import { TimeZone } from '@grafana/data';
 
 export function getDashboardPermissions(id: number): ThunkResult<void> {
   return async (dispatch) => {
@@ -180,4 +182,9 @@ export const cleanUpDashboardAndVariables = (): ThunkResult<void> => (dispatch, 
 
   dispatch(cleanUpDashboard());
   dispatch(cancelVariables());
+};
+
+export const updateTimeZoneDashboard = (timeZone: TimeZone): ThunkResult<void> => (dispatch) => {
+  dispatch(updateTimeZoneForSession(timeZone));
+  getTimeSrv().refreshDashboard();
 };

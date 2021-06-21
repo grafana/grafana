@@ -34,7 +34,7 @@ import {
   lokiStreamsToDataFrames,
   processRangeQueryResponse,
 } from './result_transformer';
-import { getHighlighterExpressionsFromQuery } from './query_utils';
+import { getHighlighterExpressionsFromQuery, queryHasPipeParser, addParsedLabelToQuery } from './query_utils';
 
 import {
   LokiOptions,
@@ -313,30 +313,53 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     const labelNamesRegex = /^label_names\(\)\s*$/;
     const labelValuesRegex = /^label_values\((?:(.+),\s*)?([a-zA-Z_][a-zA-Z0-9_]*)\)\s*$/;
 
-    const params = this.getTimeRangeParams();
     const labelNames = query.match(labelNamesRegex);
     if (labelNames) {
-      return await this.labelNamesQuery(params);
+      return await this.labelNamesQuery();
     }
 
     const labelValues = query.match(labelValuesRegex);
     if (labelValues) {
-      return await this.labelValuesQuery(labelValues[2], params);
+      // If we have query expr, use /series endpoint
+      if (labelValues[1]) {
+        return await this.labelValuesSeriesQuery(labelValues[1], labelValues[2]);
+      }
+      return await this.labelValuesQuery(labelValues[2]);
     }
 
     return Promise.resolve([]);
   }
 
-  async labelNamesQuery(params?: Record<string, string | number>) {
+  async labelNamesQuery() {
     const url = `${LOKI_ENDPOINT}/label`;
+    const params = this.getTimeRangeParams();
     const result = await this.metadataRequest(url, params);
     return result.map((value: string) => ({ text: value }));
   }
 
-  async labelValuesQuery(label: string, params?: Record<string, string | number>) {
+  async labelValuesQuery(label: string) {
+    const params = this.getTimeRangeParams();
     const url = `${LOKI_ENDPOINT}/label/${label}/values`;
     const result = await this.metadataRequest(url, params);
     return result.map((value: string) => ({ text: value }));
+  }
+
+  async labelValuesSeriesQuery(expr: string, label: string) {
+    const timeParams = this.getTimeRangeParams();
+    const params = {
+      ...timeParams,
+      match: expr,
+    };
+    const url = `${LOKI_ENDPOINT}/series`;
+    const streams = new Set();
+    const result = await this.metadataRequest(url, params);
+    result.forEach((stream: { [key: string]: string }) => {
+      if (stream[label]) {
+        streams.add({ text: stream[label] });
+      }
+    });
+
+    return Array.from(streams);
   }
 
   interpolateQueryExpr(value: any, variable: any) {
@@ -357,11 +380,21 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     let expression = query.expr ?? '';
     switch (action.type) {
       case 'ADD_FILTER': {
-        expression = addLabelToQuery(expression, action.key, action.value, undefined, true);
+        // Temporary fix for log queries that use parser. We don't know which labels are parsed and which are actual labels.
+        // If query has parser, we treat all labels as parsed and use | key="value" syntax (same in ADD_FILTER_OUT)
+        if (queryHasPipeParser(expression) && !isMetricsQuery(expression)) {
+          expression = addParsedLabelToQuery(expression, action.key, action.value, '=');
+        } else {
+          expression = addLabelToQuery(expression, action.key, action.value, undefined, true);
+        }
         break;
       }
       case 'ADD_FILTER_OUT': {
-        expression = addLabelToQuery(expression, action.key, action.value, '!=', true);
+        if (queryHasPipeParser(expression) && !isMetricsQuery(expression)) {
+          expression = addParsedLabelToQuery(expression, action.key, action.value, '!=');
+        } else {
+          expression = addLabelToQuery(expression, action.key, action.value, '!=', true);
+        }
         break;
       }
       default:

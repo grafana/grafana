@@ -33,7 +33,7 @@ The Derived Fields configuration allows you to:
 - Add fields parsed from the log message.
 - Add a link that uses the value of the field.
 
-You can use this functionality to link to your tracing backend directly from your logs, or link to a user profile page if a userId is present in the log line. These links appear in the [log details](/explore/logs-integration/#labels-and-detected-fields).
+You can use this functionality to link to your tracing backend directly from your logs, or link to a user profile page if a userId is present in the log line. These links appear in the [log details]({{< relref "../explore/logs-integration/#labels-and-detected-fields" >}}).
 
 Each derived field consists of:
 
@@ -148,10 +148,11 @@ Check out the [Templating]({{< relref "../variables/_index.md" >}}) documentatio
 Variable of the type _Query_ allows you to query Loki for a list labels or label values. The Loki data source plugin
 provides the following functions you can use in the `Query` input field.
 
-| Name                  | Description                                                     |
-| --------------------- | --------------------------------------------------------------- |
-| `label_names()`       | Returns a list of label names.                                  |
-| `label_values(label)` | Returns a list of label values for the `label` in every metric. |
+| Name                                       | Description                                                                          |
+| -------------------------------------------| -------------------------------------------------------------------------------------|
+| `label_names()`                            | Returns a list of label names.                                                       |
+| `label_values(label)`                      | Returns a list of label values for the `label`.                                      |
+| `label_values(log stream selector, label)` | Returns a list of label values for the `label` in the specified `log stream selector`.|
 
 ## Annotations
 

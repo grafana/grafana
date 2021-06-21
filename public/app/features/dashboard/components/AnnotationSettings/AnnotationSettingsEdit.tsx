@@ -6,6 +6,7 @@ import { getDataSourceSrv, DataSourcePicker } from '@grafana/runtime';
 import { useAsync } from 'react-use';
 import StandardAnnotationQueryEditor from 'app/features/annotations/components/StandardAnnotationQueryEditor';
 import { AngularEditorLoader } from './AngularEditorLoader';
+import { selectors } from '@grafana/e2e-selectors';
 
 export const newAnnotation: AnnotationQuery = {
   name: 'New annotation',
@@ -68,6 +69,7 @@ export const AnnotationSettingsEdit: React.FC<Props> = ({ editIdx, dashboard }) 
     <div>
       <Field label="Name">
         <Input
+          aria-label={selectors.pages.Dashboard.Settings.Annotations.Settings.name}
           name="name"
           id="name"
           autoFocus={isNewAnnotation}
