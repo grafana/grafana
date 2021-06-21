@@ -56,6 +56,10 @@ func (ac *OSSAccessControlService) getUsageMetrics() interface{} {
 
 // Evaluate evaluates access to the given resource
 func (ac *OSSAccessControlService) Evaluate(ctx context.Context, user *models.SignedInUser, eval dsl.Eval) (bool, error) {
+	timer := prometheus.NewTimer(metrics.MAccessEvaluationsSummary)
+	defer timer.ObserveDuration()
+	metrics.MAccessEvaluationCount.Inc()
+
 	permissions, err := ac.GetUserPermissions(ctx, user)
 	if err != nil {
 		return false, err
