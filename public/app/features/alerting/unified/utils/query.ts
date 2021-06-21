@@ -29,7 +29,10 @@ export function alertRuleToQueries(combinedRule: CombinedRule | undefined | null
         datasourceUid: rulesSource.uid,
         queryType: '',
         model,
-        relativeTimeRange: getDefaultRelativeTimeRange(),
+        relativeTimeRange: {
+          from: 360,
+          to: 0,
+        },
       },
     ];
   }
