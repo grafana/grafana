@@ -34,16 +34,12 @@ Where a subscription ID is not specified, a default subscription must be specifi
 
 Any Log Analytics KQL query that returns a single list of values can also be used in the Query field. For example:
 
-| Query                                                     | Description                                               |
-| --------------------------------------------------------- | --------------------------------------------------------- |
-| `workspace("myWorkspace").Heartbeat \| distinct Computer` | Returns a list of Virtual Machines                        |
-| `workspace("$workspace").Heartbeat \| distinct Computer`  | Returns a list of Virtual Machines with template variable |
-| `workspace("$workspace").Perf \| distinct ObjectName`     | Returns a list of objects from the Perf table             |
-| `foo \| bar \| baz`                                       | Returns a list of metric names from the Perf table        |
-
-| hi                  | world |
-| ------------------- | ----- |
-| `foo \| bar \| baz` | hehe  |
+| Query                                                                                     | Description                                               |
+| ----------------------------------------------------------------------------------------- | --------------------------------------------------------- |
+| `workspace("myWorkspace").Heartbeat \| distinct Computer`                                 | Returns a list of Virtual Machines                        |
+| `workspace("$workspace").Heartbeat \| distinct Computer`                                  | Returns a list of Virtual Machines with template variable |
+| `workspace("$workspace").Perf \| distinct ObjectName`                                     | Returns a list of objects from the Perf table             |
+| `workspace("$workspace").Perf \| where ObjectName == "$object"` `\| distinct CounterName` | Returns a list of metric names from the Perf table        |
 
 Example of a time series query using variables:
 
