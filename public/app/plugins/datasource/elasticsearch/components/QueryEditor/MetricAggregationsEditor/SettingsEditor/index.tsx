@@ -35,7 +35,7 @@ export const SettingsEditor = ({ metric, previousMetrics }: Props) => {
   const query = useQuery();
 
   const rateAggUnitOptions = [
-    { value: 'second', label: 'Seconds' },
+    { value: 'second', label: 'Second' },
     { value: 'minute', label: 'Minute' },
     { value: 'hour', label: 'Hour' },
     { value: 'day', label: 'Day' },
