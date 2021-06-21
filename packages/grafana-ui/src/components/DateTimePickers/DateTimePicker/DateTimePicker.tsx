@@ -1,4 +1,4 @@
-import React, { FC, ReactNode, useState } from 'react';
+import React, { FC, FormEvent, ReactNode, useCallback, useState } from 'react';
 import { useMedia } from 'react-use';
 import Calendar from 'react-calendar/dist/entry.nostyle';
 import { css } from '@emotion/css';
@@ -18,8 +18,7 @@ export interface Props {
 const stopPropagation = (event: React.MouseEvent<HTMLDivElement>) => event.stopPropagation();
 
 export const DateTimePicker: FC<Props> = ({ date, label, onChange }) => {
-  const [isOpen, setOpen] = useState<boolean>(false);
-  const icon = <Button icon="calendar-alt" variant="secondary" onClick={() => setOpen(!isOpen)} />;
+  const [isOpen, setOpen] = useState(false);
   const theme = useTheme2();
   const isFullscreen = useMedia(`(min-width: ${theme.breakpoints.values.lg}px)`);
   const containerStyles = useStyles2(getCalendarStyles);
@@ -29,15 +28,44 @@ export const DateTimePicker: FC<Props> = ({ date, label, onChange }) => {
     onChange(date);
   };
 
+  const onOpen = useCallback(
+    (event: FormEvent<HTMLElement>) => {
+      event.preventDefault();
+      setOpen(true);
+    },
+    [setOpen]
+  );
+
+  const onFocus = useCallback(
+    (event: FormEvent<HTMLElement>) => {
+      if (!isFullscreen) {
+        return;
+      }
+      onOpen(event);
+    },
+    [isFullscreen, onOpen]
+  );
+
+  const icon = <Button icon="calendar-alt" variant="secondary" onClick={onOpen} />;
   console.log(isOpen);
   return (
     <>
       <Field label={label}>
-        <Input onClick={stopPropagation} onChange={() => {}} addonAfter={icon} value={dateTimeFormat(date)} />
+        <Input
+          onClick={stopPropagation}
+          onChange={() => {}}
+          addonAfter={icon}
+          value={dateTimeFormat(date)}
+          onFocus={onFocus}
+        />
       </Field>
       {isOpen &&
         (isFullscreen ? (
-          <ClickOutsideWrapper onClick={() => {}}>
+          <ClickOutsideWrapper
+            onClick={() => {
+              setOpen(false);
+            }}
+          >
             <DateTimeCalendar date={date} onChange={onApply} />
           </ClickOutsideWrapper>
         ) : (
@@ -63,7 +91,7 @@ const DateTimeCalendar: FC<DateTimeCalendarProps> = ({ date, onChange }) => {
   const [internalDate, setInternalDate] = useState<Date>(date.toDate() || Date.now());
 
   return (
-    <div className={styles.container}>
+    <div className={styles.container} onClick={stopPropagation}>
       <Calendar
         next2Label={null}
         prev2Label={null}
