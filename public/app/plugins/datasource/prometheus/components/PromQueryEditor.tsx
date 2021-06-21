@@ -95,6 +95,11 @@ export class PromQueryEditor extends PureComponent<PromQueryEditorProps, State> 
     this.setState({ intervalFactorOption: option }, this.onRunQuery);
   };
 
+  onStepChange = (option: SelectableValue<number>) => {
+    this.query.stepOption = option.value;
+    this.setState({ stepOption: option }, this.onRunQuery);
+  };
+
   onLegendChange = (e: React.SyntheticEvent<HTMLInputElement>) => {
     const legendFormat = e.currentTarget.value;
     this.query.legendFormat = legendFormat;
@@ -161,12 +166,7 @@ export class PromQueryEditor extends PureComponent<PromQueryEditorProps, State> 
               >
                 Step
               </InlineFormLabel>
-              <Select
-                isSearchable={false}
-                options={STEP_OPTIONS}
-                onChange={this.onIntervalFactorChange}
-                value={stepOption}
-              />
+              <Select isSearchable={false} options={STEP_OPTIONS} onChange={this.onStepChange} value={stepOption} />
               <input
                 type="text"
                 className="gf-form-input width-8"
