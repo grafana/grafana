@@ -146,11 +146,11 @@ func TestMySQL(t *testing.T) {
 			require.Len(t, frames, 1)
 			frameOne := frames[0]
 			require.Len(t, frames[0].Fields, 31)
-			require.Equal(t, int8(1), frameOne.Fields[0].At(0).(int8))
+			require.Equal(t, int64(1), *(frameOne.Fields[0].At(0).(*int64)))
 			require.Equal(t, "abc", *frameOne.Fields[1].At(0).(*string))
 			require.Equal(t, "def", *frameOne.Fields[2].At(0).(*string))
 			require.Equal(t, int32(1), frameOne.Fields[3].At(0).(int32))
-			require.Equal(t, int16(10), frameOne.Fields[4].At(0).(int16))
+			require.Equal(t, int64(10), *(frameOne.Fields[4].At(0).(*int64)))
 			require.Equal(t, int64(100), *(frameOne.Fields[5].At(0).(*int64)))
 			require.Equal(t, int64(1420070400), *(frameOne.Fields[6].At(0).(*int64)))
 			require.Equal(t, 1.11, *frameOne.Fields[7].At(0).(*float64))
@@ -422,6 +422,8 @@ func TestMySQL(t *testing.T) {
 			Measurement         string
 			ValueOne            int64 `xorm:"integer 'valueOne'"`
 			ValueTwo            int64 `xorm:"integer 'valueTwo'"`
+			ValueThree          int64 `xorm:"tinyint(1) null 'valueThree'"`
+			ValueFour           int64 `xorm:"smallint(1) null 'valueFour'"`
 		}
 
 		exists, err := sess.IsTableExist(metric_values{})
@@ -465,11 +467,15 @@ func TestMySQL(t *testing.T) {
 				Measurement:         "Metric A",
 				ValueOne:            rnd(0, 100),
 				ValueTwo:            rnd(0, 100),
+				ValueThree:          int64(6),
+				ValueFour:           int64(8),
 			}
 			second := first
 			second.Measurement = "Metric B"
 			second.ValueOne = rnd(0, 100)
 			second.ValueTwo = rnd(0, 100)
+			second.ValueThree = int64(6)
+			second.ValueFour = int64(8)
 
 			series = append(series, &first)
 			series = append(series, &second)
@@ -500,6 +506,54 @@ func TestMySQL(t *testing.T) {
 			require.NoError(t, err)
 			require.Len(t, frames, 1)
 			require.True(t, tInitial.Equal(*frames[0].Fields[0].At(0).(*time.Time)))
+		})
+
+		t.Run("When doing a metric query using tinyint as value column should return metric with value in *float64", func(t *testing.T) {
+			query := plugins.DataQuery{
+				Queries: []plugins.DataSubQuery{
+					{
+						Model: simplejson.NewFromAny(map[string]interface{}{
+							"rawSql": `SELECT time, valueThree FROM metric_values ORDER BY time LIMIT 1`,
+							"format": "time_series",
+						}),
+						RefID: "A",
+					},
+				},
+			}
+
+			resp, err := exe.DataQuery(context.Background(), nil, query)
+			require.NoError(t, err)
+			queryResult := resp.Results["A"]
+			require.NoError(t, queryResult.Error)
+
+			frames, err := queryResult.Dataframes.Decoded()
+			require.NoError(t, err)
+			require.Len(t, frames, 1)
+			require.Equal(t, float64(6), *frames[0].Fields[1].At(0).(*float64))
+		})
+
+		t.Run("When doing a metric query using smallint as value column should return metric with value in *float64", func(t *testing.T) {
+			query := plugins.DataQuery{
+				Queries: []plugins.DataSubQuery{
+					{
+						Model: simplejson.NewFromAny(map[string]interface{}{
+							"rawSql": `SELECT time, valueFour FROM metric_values ORDER BY time LIMIT 1`,
+							"format": "time_series",
+						}),
+						RefID: "A",
+					},
+				},
+			}
+
+			resp, err := exe.DataQuery(context.Background(), nil, query)
+			require.NoError(t, err)
+			queryResult := resp.Results["A"]
+			require.NoError(t, queryResult.Error)
+
+			frames, err := queryResult.Dataframes.Decoded()
+			require.NoError(t, err)
+			require.Len(t, frames, 1)
+			require.Equal(t, float64(8), *frames[0].Fields[1].At(0).(*float64))
 		})
 
 		t.Run("When doing a metric query using time (nullable) as time column should return metric with time in time.Time", func(t *testing.T) {
