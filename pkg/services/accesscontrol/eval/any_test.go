@@ -9,7 +9,7 @@ import (
 func TestAny_Evaluate(t *testing.T) {
 	tests := []evaluateTestCase{
 		{
-			desc: "should return true for for one that matches",
+			desc: "should return true for one that matches",
 			evaluator: Any(
 				Permission("settings:write", Combine("settings", ScopeWildcard)),
 			),
