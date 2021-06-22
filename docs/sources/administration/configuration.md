@@ -826,7 +826,7 @@ Azure cloud environment where Grafana is hosted:
 
 | Azure Cloud                                      | Value                  |
 | ------------------------------------------------ | ---------------------- |
-| Microsoft Azure public cloud                     | AzureCloud (_default_) |
+| Microsoft Azure public cloud                     | AzureCloud (*default*) |
 | Microsoft Chinese national cloud                 | AzureChinaCloud        |
 | US Government cloud                              | AzureUSGovernment      |
 | Microsoft German national cloud ("Black Forest") | AzureGermanCloud       |
