@@ -186,7 +186,6 @@ export class StreamingDataFrame implements DataFrame {
 
     // parse labels
     const parsedLabels: Labels = {};
-
     if (label.length) {
       label.split(',').forEach((kv) => {
         const [key, val] = kv.trim().split('=');
