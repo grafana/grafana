@@ -23,6 +23,7 @@ import { AsyncRequestState } from './redux';
 import { RULER_NOT_SUPPORTED_MSG } from './constants';
 import { capitalize } from 'lodash';
 import { State } from '../components/StateTag';
+import { GRAFANA_RULES_SOURCE_NAME } from './datasource';
 
 export function isAlertingRule(rule: Rule | undefined): rule is AlertingRule {
   return typeof rule === 'object' && rule.type === PromRuleType.Alerting;

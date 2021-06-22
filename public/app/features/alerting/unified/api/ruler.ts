@@ -75,7 +75,7 @@ async function rulerGetRequest<T>(url: string, empty: T): Promise<T> {
       .toPromise();
     return response.data;
   } catch (e) {
-    if (e?.status === 404 || e?.data?.message?.includes('group does not exist')) {
+    if (e?.status === 404 && e?.data?.message?.includes('group does not exist')) {
       return empty;
     } else if (
       e?.status === 500 &&
