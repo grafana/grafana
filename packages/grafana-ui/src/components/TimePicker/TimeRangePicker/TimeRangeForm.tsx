@@ -73,10 +73,6 @@ export const TimeRangeForm: React.FC<Props> = (props) => {
       const raw: RawTimeRange = { from: from.value, to: to.value };
       const timeRange = rangeUtil.convertRawToRange(raw, timeZone);
 
-      if (!timeRange.from.isBefore(timeRange.to)) {
-        return;
-      }
-
       onApplyFromProps(timeRange);
     },
     [from.invalid, from.value, onApplyFromProps, timeZone, to.invalid, to.value]
@@ -90,6 +86,28 @@ export const TimeRangeForm: React.FC<Props> = (props) => {
     [timeZone]
   );
 
+  const onFromChange = useCallback(
+    (event: FormEvent<HTMLInputElement>) => {
+      const newState = eventToState(event, false, timeZone);
+      const invalid = validateRange(newState, to, timeZone);
+
+      newState.invalid = newState.invalid || invalid;
+      setFrom(newState);
+    },
+    [timeZone, to, setFrom]
+  );
+
+  const onToChange = useCallback(
+    (event: FormEvent<HTMLInputElement>) => {
+      const newState = eventToState(event, false, timeZone);
+      const invalid = validateRange(from, newState, timeZone);
+
+      setFrom({ value: from.value, invalid: invalid || !isValid(from.value, false, timeZone) });
+      setTo(newState);
+    },
+    [timeZone, from, setFrom, setTo]
+  );
+
   const icon = isFullscreen ? null : <Button icon="calendar-alt" variant="secondary" onClick={onOpen} />;
 
   return (
@@ -98,7 +116,7 @@ export const TimeRangeForm: React.FC<Props> = (props) => {
         <Input
           onClick={(event) => event.stopPropagation()}
           onFocus={onFocus}
-          onChange={(event) => setFrom(eventToState(event, false, timeZone))}
+          onChange={onFromChange}
           addonAfter={icon}
           aria-label={selectors.components.TimePicker.fromField}
           value={from.value}
@@ -108,7 +126,7 @@ export const TimeRangeForm: React.FC<Props> = (props) => {
         <Input
           onClick={(event) => event.stopPropagation()}
           onFocus={onFocus}
-          onChange={(event) => setTo(eventToState(event, true, timeZone))}
+          onChange={onToChange}
           addonAfter={icon}
           aria-label={selectors.components.TimePicker.toField}
           value={to.value}
@@ -132,6 +150,14 @@ export const TimeRangeForm: React.FC<Props> = (props) => {
     </>
   );
 };
+
+function validateRange(from: InputState, to: InputState, timezone?: string): boolean {
+  const raw: RawTimeRange = { from: from.value, to: to.value };
+  const timeRange = rangeUtil.convertRawToRange(raw, timezone);
+  const valid = timeRange.from.isSame(timeRange.to) || timeRange.from.isBefore(timeRange.to);
+
+  return !valid;
+}
 
 function eventToState(event: FormEvent<HTMLInputElement>, roundup?: boolean, timeZone?: TimeZone): InputState {
   return valueToState(event.currentTarget.value, roundup, timeZone);
