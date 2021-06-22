@@ -70,20 +70,26 @@ export const RulesTable: FC<Props> = ({
             <RuleDetails rule={rule} />
           </>
         )}
-        renderPrefixHeader={() =>
-          showGuidelines ? (
-            <div className={styles.relative}>
-              <div className={cx(styles.headerGuideline, styles.guideline)} />
-            </div>
-          ) : null
+        renderPrefixHeader={
+          showGuidelines
+            ? () => (
+                <div className={styles.relative}>
+                  <div className={cx(styles.headerGuideline, styles.guideline)} />
+                </div>
+              )
+            : undefined
         }
-        renderPrefixCell={(_, index) =>
-          showGuidelines ? (
-            <div className={styles.relative}>
-              <div className={cx(styles.ruleTopGuideline, styles.guideline)} />
-              {!(index === rules.length - 1) && <div className={cx(styles.ruleBottomGuideline, styles.guideline)} />}
-            </div>
-          ) : null
+        renderPrefixCell={
+          showGuidelines
+            ? (_, index) => (
+                <div className={styles.relative}>
+                  <div className={cx(styles.ruleTopGuideline, styles.guideline)} />
+                  {!(index === rules.length - 1) && (
+                    <div className={cx(styles.ruleBottomGuideline, styles.guideline)} />
+                  )}
+                </div>
+              )
+            : undefined
         }
       />
     </div>
