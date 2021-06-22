@@ -13,7 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-// TODO: add tests
 func Middleware(ac accesscontrol.AccessControl) func(macaron.Handler, eval.Evaluator) macaron.Handler {
 	return func(fallback macaron.Handler, evaluator eval.Evaluator) macaron.Handler {
 		if ac.IsDisabled() {
@@ -21,14 +20,15 @@ func Middleware(ac accesscontrol.AccessControl) func(macaron.Handler, eval.Evalu
 		}
 
 		return func(c *models.ReqContext) {
-			if err := evaluator.Inject(c.AllParams()); err != nil {
+			injected, err := evaluator.Inject(c.AllParams())
+			if err != nil {
 				c.JsonApiErr(http.StatusInternalServerError, "Internal server error", err)
 				return
 			}
 
-			hasAccess, err := ac.Evaluate(c.Req.Context(), c.SignedInUser, evaluator)
+			hasAccess, err := ac.Evaluate(c.Req.Context(), c.SignedInUser, injected)
 			if !hasAccess || err != nil {
-				Deny(c, evaluator, err)
+				Deny(c, injected, err)
 				return
 			}
 		}
@@ -44,7 +44,6 @@ func Deny(c *models.ReqContext, evaluator eval.Evaluator, err error) {
 			"Access denied",
 			"userID", c.UserId,
 			"accessErrorID", id,
-			"permissions", evaluator.Failed(),
 		)
 	}
 

@@ -97,55 +97,11 @@ func TestAny_Inject(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
-			assert.NoError(t, test.evaluator.Inject(test.params))
-			ok, err := test.evaluator.Evaluate(test.permissions)
+			injected, err := test.evaluator.Inject(test.params)
+			assert.NoError(t, err)
+			ok, err := injected.Evaluate(test.permissions)
 			assert.NoError(t, err)
 			assert.Equal(t, test.expected, ok)
-		})
-	}
-}
-
-func TestAny_Failed(t *testing.T) {
-	tests := []failedTestCase{
-		{
-			desc:   "should all as failed permissions",
-			failed: 3,
-			evaluator: Any(
-				Permission("reports:read", "reports:2"),
-				Permission("reports:read", "reports:3"),
-				Permission("reports:read", "reports:4"),
-			),
-			permissions: map[string]map[string]struct{}{
-				"reports:read": {
-					"reports:1": struct{}{},
-				},
-			},
-		},
-		{
-			desc:   "should not be any failed",
-			failed: 0,
-			evaluator: All(
-				Permission("reports:read", "reports:2"),
-				Permission("reports:read", "reports:3"),
-				Permission("reports:read", "reports:4"),
-			),
-			permissions: map[string]map[string]struct{}{
-				"reports:read": {
-					"reports:2": struct{}{},
-					"reports:3": struct{}{},
-					"reports:4": struct{}{},
-				},
-			},
-		},
-	}
-
-	for _, test := range tests {
-		t.Run(test.desc, func(t *testing.T) {
-			_, err := test.evaluator.Evaluate(test.permissions)
-			assert.NoError(t, err)
-			if test.failed != 0 {
-				assert.Len(t, test.evaluator.Failed(), test.failed)
-			}
 		})
 	}
 }

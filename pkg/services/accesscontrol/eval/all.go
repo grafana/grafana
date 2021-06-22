@@ -19,19 +19,14 @@ func (a all) Evaluate(permissions map[string]map[string]struct{}) (bool, error) 
 	return true, nil
 }
 
-func (a all) Inject(params map[string]string) error {
+func (a all) Inject(params map[string]string) (Evaluator, error) {
+	var injected []Evaluator
 	for _, e := range a.allOf {
-		if err := e.Inject(params); err != nil {
-			return err
+		i, err := e.Inject(params)
+		if err != nil {
+			return nil, err
 		}
+		injected = append(injected, i)
 	}
-	return nil
-}
-
-func (a all) Failed() []permission {
-	var failed []permission
-	for _, e := range a.allOf {
-		failed = append(failed, e.Failed()...)
-	}
-	return failed
+	return All(injected...), nil
 }

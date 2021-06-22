@@ -84,46 +84,11 @@ func TestPermission_Inject(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
-			assert.NoError(t, test.evaluator.Inject(test.params))
-			ok, err := test.evaluator.Evaluate(test.permissions)
+			injected, err := test.evaluator.Inject(test.params)
+			assert.NoError(t, err)
+			ok, err := injected.Evaluate(test.permissions)
 			assert.NoError(t, err)
 			assert.Equal(t, test.expected, ok)
-		})
-	}
-}
-
-func TestPermission_Failed(t *testing.T) {
-	tests := []failedTestCase{
-		{
-			desc:      "should be returned as failed",
-			failed:    1,
-			evaluator: Permission("reports:read", "reports:2"),
-			permissions: map[string]map[string]struct{}{
-				"reports:read": {
-					"reports:1": struct{}{},
-				},
-			},
-		},
-		{
-			desc:      "should not be returned as failed",
-			failed:    0,
-			evaluator: Permission("reports:read", "reports:1"),
-			permissions: map[string]map[string]struct{}{
-				"reports:read": {
-					"reports:1": struct{}{},
-				},
-			},
-		},
-	}
-
-	for _, test := range tests {
-		t.Run(test.desc, func(t *testing.T) {
-			ok, err := test.evaluator.Evaluate(test.permissions)
-			assert.NoError(t, err)
-			assert.Equal(t, test.failed == 0, ok)
-			if test.failed != 0 {
-				assert.Len(t, test.evaluator.Failed(), test.failed)
-			}
 		})
 	}
 }

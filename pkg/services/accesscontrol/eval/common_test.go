@@ -14,10 +14,3 @@ type injectTestCase struct {
 	params      map[string]string
 	permissions map[string]map[string]struct{}
 }
-
-type failedTestCase struct {
-	desc        string
-	failed      int
-	evaluator   Evaluator
-	permissions map[string]map[string]struct{}
-}
