@@ -19,7 +19,7 @@ func TestAny_Evaluate(t *testing.T) {
 			expected: true,
 		},
 		{
-			desc: "should return true for when at least one matches",
+			desc: "should return true when at least one matches",
 			evaluator: Any(
 				Permission("settings:write", Combine("settings", "auth.saml", ScopeAll)),
 				Permission("report:read", Combine("reports", "1")),
