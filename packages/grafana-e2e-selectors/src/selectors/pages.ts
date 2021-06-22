@@ -61,7 +61,10 @@ export const Pages = {
       },
       Annotations: {
         List: {
-          addAnnotationCTA: Components.CallToActionCard.button('Add Annotation Query'),
+          addAnnotationCTA: Components.CallToActionCard.button('Add annotation query'),
+        },
+        Settings: {
+          name: 'Annotations settings name input',
         },
       },
       Variables: {
