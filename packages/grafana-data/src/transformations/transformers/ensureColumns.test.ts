@@ -55,9 +55,7 @@ describe('ensureColumns transformer', () => {
             Object {
               "config": Object {},
               "name": "TheTime",
-              "state": Object {
-                "displayName": "TheTime",
-              },
+              "state": Object {},
               "type": "time",
               "values": Array [
                 1000,

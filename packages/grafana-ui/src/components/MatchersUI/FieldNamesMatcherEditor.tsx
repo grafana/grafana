@@ -1,21 +1,15 @@
-import React, { memo, useMemo, useCallback } from 'react';
+import React, { memo, useCallback } from 'react';
 import { MatcherUIProps, FieldMatcherUIRegistryItem } from './types';
-import {
-  FieldMatcherID,
-  fieldMatchers,
-  getFieldDisplayName,
-  SelectableValue,
-  DataFrame,
-  ByNamesMatcherOptions,
-} from '@grafana/data';
+import { FieldMatcherID, fieldMatchers, SelectableValue, ByNamesMatcherOptions } from '@grafana/data';
 import { MultiSelect } from '../Select/Select';
 import { Input } from '../Input/Input';
+import { useFieldDisplayNames, useSelectOptions, frameHasName } from './utils';
 
 export const FieldNamesMatcherEditor = memo<MatcherUIProps<ByNamesMatcherOptions>>((props) => {
   const { data, options, onChange: onChangeFromProps } = props;
   const { readOnly, prefix } = options;
   const names = useFieldDisplayNames(data);
-  const selectOptions = useSelectOptions(names);
+  const selectOptions = useSelectOptions(names, undefined);
 
   const onChange = useCallback(
     (selections: Array<SelectableValue<string>>) => {
@@ -26,10 +20,10 @@ export const FieldNamesMatcherEditor = memo<MatcherUIProps<ByNamesMatcherOptions
       return onChangeFromProps({
         ...options,
         names: selections.reduce((all: string[], current) => {
-          if (!current?.value || !names.has(current.value)) {
+          if (!frameHasName(current.value, names)) {
             return all;
           }
-          all.push(current.value);
+          all.push(current.value!);
           return all;
         }, []),
       });
@@ -54,27 +48,4 @@ export const fieldNamesMatcherItem: FieldMatcherUIRegistryItem<ByNamesMatcherOpt
   description: 'Set properties for a specific field',
   optionsToLabel: (options) => (options.names ?? []).join(', '),
   excludeFromPicker: true,
-};
-
-const useFieldDisplayNames = (data: DataFrame[]): Set<string> => {
-  return useMemo(() => {
-    const names: Set<string> = new Set();
-
-    for (const frame of data) {
-      for (const field of frame.fields) {
-        names.add(getFieldDisplayName(field, frame, data));
-      }
-    }
-
-    return names;
-  }, [data]);
-};
-
-const useSelectOptions = (displayNames: Set<string>): Array<SelectableValue<string>> => {
-  return useMemo(() => {
-    return Array.from(displayNames).map((n) => ({
-      value: n,
-      label: n,
-    }));
-  }, [displayNames]);
 };

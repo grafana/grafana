@@ -90,6 +90,33 @@ describe('Field Name Matcher', () => {
     }
   });
 
+  it('Match name or displayName', () => {
+    const seriesWithNames = toDataFrame({
+      fields: [{ name: 'a', config: { displayName: 'LongerName' } }],
+    });
+    const field = seriesWithNames.fields[0];
+    expect(
+      getFieldMatcher({
+        id: FieldMatcherID.byName,
+        options: 'c',
+      })(field, seriesWithNames, [seriesWithNames])
+    ).toBe(false); // No match
+
+    expect(
+      getFieldMatcher({
+        id: FieldMatcherID.byName,
+        options: 'a',
+      })(field, seriesWithNames, [seriesWithNames])
+    ).toBe(true);
+
+    expect(
+      getFieldMatcher({
+        id: FieldMatcherID.byName,
+        options: 'LongerName',
+      })(field, seriesWithNames, [seriesWithNames])
+    ).toBe(true);
+  });
+
   it('Match none of the field names', () => {
     const seriesWithNames = toDataFrame({
       fields: [{ name: 'some.instance.path' }, { name: '112' }, { name: '13' }],
