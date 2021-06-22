@@ -15,10 +15,10 @@ import (
 )
 
 func TestOpenTsdbExecutor(t *testing.T) {
-	exec := &OpenTsdbExecutor{}
+	service := &Service{}
 
 	t.Run("create request", func(t *testing.T) {
-		req, err := exec.createRequest(&datasourceInfo{}, OpenTsdbQuery{})
+		req, err := service.createRequest(&datasourceInfo{}, OpenTsdbQuery{})
 		require.NoError(t, err)
 
 		assert.Equal(t, "POST", req.Method)
@@ -32,7 +32,7 @@ func TestOpenTsdbExecutor(t *testing.T) {
 	t.Run("Parse response should handle invalid JSON", func(t *testing.T) {
 		response := `{ invalid }`
 
-		result, err := exec.parseResponse(&http.Response{Body: ioutil.NopCloser(strings.NewReader(response))})
+		result, err := service.parseResponse(&http.Response{Body: ioutil.NopCloser(strings.NewReader(response))})
 		require.Nil(t, result)
 		require.Error(t, err)
 	})
@@ -58,7 +58,7 @@ func TestOpenTsdbExecutor(t *testing.T) {
 
 		resp := http.Response{Body: ioutil.NopCloser(strings.NewReader(response))}
 		resp.StatusCode = 200
-		result, err := exec.parseResponse(&resp)
+		result, err := service.parseResponse(&resp)
 		require.NoError(t, err)
 
 		frame := result.Responses["A"]
@@ -82,7 +82,7 @@ func TestOpenTsdbExecutor(t *testing.T) {
 			),
 		}
 
-		metric := exec.buildMetric(query)
+		metric := service.buildMetric(query)
 
 		require.Len(t, metric, 3)
 		require.Equal(t, "cpu.average.percent", metric["metric"])
@@ -104,7 +104,7 @@ func TestOpenTsdbExecutor(t *testing.T) {
 			),
 		}
 
-		metric := exec.buildMetric(query)
+		metric := service.buildMetric(query)
 
 		require.Len(t, metric, 2)
 		require.Equal(t, "cpu.average.percent", metric["metric"])
@@ -125,7 +125,7 @@ func TestOpenTsdbExecutor(t *testing.T) {
 			),
 		}
 
-		metric := exec.buildMetric(query)
+		metric := service.buildMetric(query)
 
 		require.Len(t, metric, 3)
 		require.Equal(t, "cpu.average.percent", metric["metric"])
@@ -151,7 +151,7 @@ func TestOpenTsdbExecutor(t *testing.T) {
 			),
 		}
 
-		metric := exec.buildMetric(query)
+		metric := service.buildMetric(query)
 
 		require.Len(t, metric, 3)
 		require.Equal(t, "cpu.average.percent", metric["metric"])
@@ -182,7 +182,7 @@ func TestOpenTsdbExecutor(t *testing.T) {
 			),
 		}
 
-		metric := exec.buildMetric(query)
+		metric := service.buildMetric(query)
 
 		require.Len(t, metric, 5)
 		require.Equal(t, "cpu.average.percent", metric["metric"])
@@ -217,7 +217,7 @@ func TestOpenTsdbExecutor(t *testing.T) {
 			),
 		}
 
-		metric := exec.buildMetric(query)
+		metric := service.buildMetric(query)
 
 		require.Len(t, metric, 5)
 		require.Equal(t, "cpu.average.percent", metric["metric"])

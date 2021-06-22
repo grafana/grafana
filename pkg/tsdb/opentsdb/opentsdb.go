@@ -27,17 +27,12 @@ import (
 	"golang.org/x/net/context/ctxhttp"
 )
 
-type OpenTsdbExecutor struct {
-	httpClientProvider httpclient.Provider
-
-	im  instancemgmt.InstanceManager
-	cfg *setting.Cfg
-}
-
-type OpenTsdbService struct {
+type Service struct {
 	HTTPClientProvider   httpclient.Provider   `inject:""`
 	Cfg                  *setting.Cfg          `inject:""`
 	BackendPluginManager backendplugin.Manager `inject:""`
+
+	im instancemgmt.InstanceManager
 }
 
 type datasourceInfo struct {
@@ -51,14 +46,14 @@ type datasourceInfo struct {
 type DsAccess string
 
 func init() {
-	registry.Register(&registry.Descriptor{Instance: &OpenTsdbService{}})
+	registry.Register(&registry.Descriptor{Instance: &Service{}})
 }
 
-func (s *OpenTsdbService) Init() error {
-	im := datasource.NewInstanceManager(NewInstanceSettings(s.HTTPClientProvider))
+func (s *Service) Init() error {
+	s.im = datasource.NewInstanceManager(NewInstanceSettings(s.HTTPClientProvider))
 
 	factory := coreplugin.New(backend.ServeOpts{
-		QueryDataHandler: newExecutor(im, s.Cfg, s.HTTPClientProvider),
+		QueryDataHandler: s,
 	})
 
 	if err := s.BackendPluginManager.Register("opentsdb", factory); err != nil {
@@ -85,24 +80,20 @@ func NewInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 		if err != nil {
 			return nil, fmt.Errorf("error reading settings: %w", err)
 		}
+		basicAuthPassword := settings.DecryptedSecureJSONData["basicAuthPassword"]
+		if basicAuthPassword == "" {
+			basicAuthPassword = jsonData.BasicAuthPassword
+		}
 
 		model := datasourceInfo{
 			HTTPClient:        client,
 			Url:               jsonData.Url,
 			BasicAuth:         jsonData.BasicAuth,
 			BasicAuthUser:     jsonData.BasicAuthUser,
-			BasicAuthPassword: jsonData.BasicAuthPassword,
+			BasicAuthPassword: basicAuthPassword,
 		}
 
 		return model, nil
-	}
-}
-
-func newExecutor(im instancemgmt.InstanceManager, cfg *setting.Cfg, httpClientProvider httpclient.Provider) *OpenTsdbExecutor {
-	return &OpenTsdbExecutor{
-		im:                 im,
-		cfg:                cfg,
-		httpClientProvider: httpClientProvider,
 	}
 }
 
@@ -110,7 +101,7 @@ var (
 	plog = log.New("tsdb.opentsdb")
 )
 
-func (e *OpenTsdbExecutor) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	var tsdbQuery OpenTsdbQuery
 
 	q := req.Queries[0]
@@ -119,7 +110,7 @@ func (e *OpenTsdbExecutor) QueryData(ctx context.Context, req *backend.QueryData
 	tsdbQuery.End = q.TimeRange.To.UnixNano() / int64(time.Millisecond)
 
 	for _, query := range req.Queries {
-		metric := e.buildMetric(query)
+		metric := s.buildMetric(query)
 		tsdbQuery.Queries = append(tsdbQuery.Queries, metric)
 	}
 
@@ -128,12 +119,12 @@ func (e *OpenTsdbExecutor) QueryData(ctx context.Context, req *backend.QueryData
 		plog.Debug("OpenTsdb request", "params", tsdbQuery)
 	}
 
-	dsInfo, err := e.getDSInfo(req.PluginContext)
+	dsInfo, err := s.getDSInfo(req.PluginContext)
 	if err != nil {
 		return nil, err
 	}
 
-	request, err := e.createRequest(dsInfo, tsdbQuery)
+	request, err := s.createRequest(dsInfo, tsdbQuery)
 	if err != nil {
 		return &backend.QueryDataResponse{}, err
 	}
@@ -143,7 +134,7 @@ func (e *OpenTsdbExecutor) QueryData(ctx context.Context, req *backend.QueryData
 		return &backend.QueryDataResponse{}, err
 	}
 
-	result, err := e.parseResponse(res)
+	result, err := s.parseResponse(res)
 	if err != nil {
 		return &backend.QueryDataResponse{}, err
 	}
@@ -151,7 +142,7 @@ func (e *OpenTsdbExecutor) QueryData(ctx context.Context, req *backend.QueryData
 	return result, nil
 }
 
-func (e *OpenTsdbExecutor) createRequest(dsInfo *datasourceInfo, data OpenTsdbQuery) (*http.Request, error) {
+func (s *Service) createRequest(dsInfo *datasourceInfo, data OpenTsdbQuery) (*http.Request, error) {
 	u, err := url.Parse(dsInfo.Url)
 	if err != nil {
 		return nil, err
@@ -178,7 +169,7 @@ func (e *OpenTsdbExecutor) createRequest(dsInfo *datasourceInfo, data OpenTsdbQu
 	return req, nil
 }
 
-func (e *OpenTsdbExecutor) parseResponse(res *http.Response) (*backend.QueryDataResponse, error) {
+func (s *Service) parseResponse(res *http.Response) (*backend.QueryDataResponse, error) {
 	resp := backend.NewQueryDataResponse()
 
 	body, err := ioutil.ReadAll(res.Body)
@@ -228,7 +219,7 @@ func (e *OpenTsdbExecutor) parseResponse(res *http.Response) (*backend.QueryData
 	return resp, nil
 }
 
-func (e *OpenTsdbExecutor) buildMetric(query backend.DataQuery) map[string]interface{} {
+func (s *Service) buildMetric(query backend.DataQuery) map[string]interface{} {
 	metric := make(map[string]interface{})
 
 	model, err := simplejson.NewJson(query.JSON)
@@ -293,8 +284,8 @@ func (e *OpenTsdbExecutor) buildMetric(query backend.DataQuery) map[string]inter
 	return metric
 }
 
-func (e *OpenTsdbExecutor) getDSInfo(pluginCtx backend.PluginContext) (*datasourceInfo, error) {
-	i, err := e.im.Get(pluginCtx)
+func (s *Service) getDSInfo(pluginCtx backend.PluginContext) (*datasourceInfo, error) {
+	i, err := s.im.Get(pluginCtx)
 	if err != nil {
 		return nil, err
 	}
