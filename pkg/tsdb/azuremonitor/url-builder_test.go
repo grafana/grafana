@@ -56,5 +56,17 @@ func TestURLBuilder(t *testing.T) {
 			url := ub.Build()
 			So(url, ShouldEqual, "default-sub/resourceGroups/rg/providers/Microsoft.Storage/storageAccounts/rn1/fileServices/default/providers/microsoft.insights/metrics")
 		})
+
+		Convey("when metric definition is Microsoft.NetApp/netAppAccounts/capacityPools/volumes", func() {
+			ub := &urlBuilder{
+				DefaultSubscription: "default-sub",
+				ResourceGroup:       "rg",
+				MetricDefinition:    "Microsoft.NetApp/netAppAccounts/capacityPools/volumes",
+				ResourceName:        "rn1/rn2/rn3",
+			}
+
+			url := ub.Build()
+			So(url, ShouldEqual, "default-sub/resourceGroups/rg/providers/Microsoft.NetApp/netAppAccounts/rn1/capacityPools/rn2/volumes/rn3/providers/microsoft.insights/metrics")
+		})
 	})
 }

@@ -21,7 +21,7 @@ func TestUserTokenAPIEndpoint(t *testing.T) {
 		revokeUserAuthTokenScenario(t, "Should return not found when calling POST on", "/api/user/revoke-auth-token",
 			"/api/user/revoke-auth-token", cmd, 200, func(sc *scenarioContext) {
 				var userID int64
-				bus.AddHandler("test", func(cmd *models.GetUserByIdQuery) error {
+				bus.AddHandlerCtx("test", func(ctx context.Context, cmd *models.GetUserByIdQuery) error {
 					userID = cmd.Id
 					return models.ErrUserNotFound
 				})
@@ -35,7 +35,7 @@ func TestUserTokenAPIEndpoint(t *testing.T) {
 	t.Run("When current user gets auth tokens for a non-existing user", func(t *testing.T) {
 		getUserAuthTokensScenario(t, "Should return not found when calling GET on", "/api/user/auth-tokens", "/api/user/auth-tokens", 200, func(sc *scenarioContext) {
 			var userID int64
-			bus.AddHandler("test", func(cmd *models.GetUserByIdQuery) error {
+			bus.AddHandlerCtx("test", func(ctx context.Context, cmd *models.GetUserByIdQuery) error {
 				userID = cmd.Id
 				return models.ErrUserNotFound
 			})
@@ -49,7 +49,7 @@ func TestUserTokenAPIEndpoint(t *testing.T) {
 	t.Run("When logging out an existing user from all devices", func(t *testing.T) {
 		logoutUserFromAllDevicesInternalScenario(t, "Should be successful", 1, func(sc *scenarioContext) {
 			const userID int64 = 200
-			bus.AddHandler("test", func(cmd *models.GetUserByIdQuery) error {
+			bus.AddHandlerCtx("test", func(ctx context.Context, cmd *models.GetUserByIdQuery) error {
 				cmd.Result = &models.User{Id: userID}
 				return nil
 			})
@@ -61,7 +61,7 @@ func TestUserTokenAPIEndpoint(t *testing.T) {
 
 	t.Run("When logout a non-existing user from all devices", func(t *testing.T) {
 		logoutUserFromAllDevicesInternalScenario(t, "Should return not found", testUserID, func(sc *scenarioContext) {
-			bus.AddHandler("test", func(cmd *models.GetUserByIdQuery) error {
+			bus.AddHandlerCtx("test", func(ctx context.Context, cmd *models.GetUserByIdQuery) error {
 				return models.ErrUserNotFound
 			})
 
@@ -75,7 +75,7 @@ func TestUserTokenAPIEndpoint(t *testing.T) {
 		token := &models.UserToken{Id: 1}
 
 		revokeUserAuthTokenInternalScenario(t, "Should be successful", cmd, 200, token, func(sc *scenarioContext) {
-			bus.AddHandler("test", func(cmd *models.GetUserByIdQuery) error {
+			bus.AddHandlerCtx("test", func(ctx context.Context, cmd *models.GetUserByIdQuery) error {
 				cmd.Result = &models.User{Id: 200}
 				return nil
 			})
@@ -93,7 +93,7 @@ func TestUserTokenAPIEndpoint(t *testing.T) {
 		token := &models.UserToken{Id: 2}
 
 		revokeUserAuthTokenInternalScenario(t, "Should not be successful", cmd, testUserID, token, func(sc *scenarioContext) {
-			bus.AddHandler("test", func(cmd *models.GetUserByIdQuery) error {
+			bus.AddHandlerCtx("test", func(ctx context.Context, cmd *models.GetUserByIdQuery) error {
 				cmd.Result = &models.User{Id: testUserID}
 				return nil
 			})
@@ -110,7 +110,7 @@ func TestUserTokenAPIEndpoint(t *testing.T) {
 		currentToken := &models.UserToken{Id: 1}
 
 		getUserAuthTokensInternalScenario(t, "Should be successful", currentToken, func(sc *scenarioContext) {
-			bus.AddHandler("test", func(cmd *models.GetUserByIdQuery) error {
+			bus.AddHandlerCtx("test", func(ctx context.Context, cmd *models.GetUserByIdQuery) error {
 				cmd.Result = &models.User{Id: testUserID}
 				return nil
 			})
