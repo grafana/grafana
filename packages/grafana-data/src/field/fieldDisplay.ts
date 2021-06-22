@@ -274,7 +274,7 @@ function getSmartDisplayNameForRow(
   }
 
   if (otherNumericFields || parts.length === 0) {
-    parts.push(getFieldDisplayName(field));
+    parts.push(getFieldDisplayName(field, frame));
   }
 
   return parts.join(' ');
