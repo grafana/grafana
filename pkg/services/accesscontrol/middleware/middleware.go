@@ -28,14 +28,14 @@ func Middleware(ac accesscontrol.AccessControl) func(macaron.Handler, eval.Evalu
 
 			hasAccess, err := ac.Evaluate(c.Req.Context(), c.SignedInUser, injected)
 			if !hasAccess || err != nil {
-				Deny(c, injected, err)
+				Deny(c, err)
 				return
 			}
 		}
 	}
 }
 
-func Deny(c *models.ReqContext, evaluator eval.Evaluator, err error) {
+func Deny(c *models.ReqContext, err error) {
 	id := newID()
 	if err != nil {
 		c.Logger.Error("Error from access control system", "error", err, "accessErrorID", id)

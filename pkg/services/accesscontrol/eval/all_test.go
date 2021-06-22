@@ -11,7 +11,7 @@ func TestAll_Evaluate(t *testing.T) {
 		{
 			desc: "should return true for one that matches",
 			evaluator: All(
-				Permission("settings:write", Combine("settings", ScopeWildcard)),
+				Permission("settings:write", Combine("settings", ScopeAll)),
 			),
 			permissions: map[string]map[string]struct{}{
 				"settings:write": {"settings:**": struct{}{}},
@@ -21,7 +21,7 @@ func TestAll_Evaluate(t *testing.T) {
 		{
 			desc: "should return true for several that matches",
 			evaluator: All(
-				Permission("settings:write", Combine("settings", ScopeWildcard)),
+				Permission("settings:write", Combine("settings", ScopeAll)),
 				Permission("settings:read", Combine("settings", "auth.saml", ScopeAll)),
 			),
 			permissions: map[string]map[string]struct{}{
@@ -33,7 +33,7 @@ func TestAll_Evaluate(t *testing.T) {
 		{
 			desc: "should return false if one does not match",
 			evaluator: All(
-				Permission("settings:write", Combine("settings", ScopeWildcard)),
+				Permission("settings:write", Combine("settings", ScopeAll)),
 				Permission("settings:read", Combine("settings", "auth.saml", ScopeAll)),
 				Permission("report:read", Combine("reports", ScopeAll)),
 			),

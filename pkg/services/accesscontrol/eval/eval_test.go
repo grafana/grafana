@@ -18,7 +18,7 @@ func TestEval(t *testing.T) {
 		{
 			desc: "should return true when first is true",
 			evaluator: Any(
-				Permission("settings:write", Combine("settings", ScopeWildcard)),
+				Permission("settings:write", Combine("settings", ScopeAll)),
 				All(
 					Permission("settings:write", "settings:auth.saml:enabled"),
 					Permission("settings:write", "settings:auth.saml:max_issue_delay"),
@@ -32,7 +32,7 @@ func TestEval(t *testing.T) {
 		{
 			desc: "should return true when first is false and all is true",
 			evaluator: Any(
-				Permission("settings:write", Combine("settings", ScopeWildcard)),
+				Permission("settings:write", Combine("settings", ScopeAll)),
 				All(
 					Permission("settings:write", "settings:auth.saml:enabled"),
 					Permission("settings:write", "settings:auth.saml:max_issue_delay"),
@@ -49,7 +49,7 @@ func TestEval(t *testing.T) {
 		{
 			desc: "should return false when both are false",
 			evaluator: Any(
-				Permission("settings:write", Combine("settings", ScopeWildcard)),
+				Permission("settings:write", Combine("settings", ScopeAll)),
 				All(
 					Permission("settings:write", "settings:auth.saml:enabled"),
 					Permission("settings:write", "settings:auth.saml:max_issue_delay"),

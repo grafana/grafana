@@ -6,9 +6,8 @@ import (
 )
 
 const (
-	ScopeNone     = ""
-	ScopeAll      = "*"
-	ScopeWildcard = "**"
+	ScopeNone = ""
+	ScopeAll  = "*"
 )
 
 func Combine(scopes ...string) string {

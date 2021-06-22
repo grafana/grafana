@@ -11,7 +11,7 @@ func TestAny_Evaluate(t *testing.T) {
 		{
 			desc: "should return true for one that matches",
 			evaluator: Any(
-				Permission("settings:write", Combine("settings", ScopeWildcard)),
+				Permission("settings:write", Combine("settings", ScopeAll)),
 			),
 			permissions: map[string]map[string]struct{}{
 				"settings:write": {"settings:**": struct{}{}},
