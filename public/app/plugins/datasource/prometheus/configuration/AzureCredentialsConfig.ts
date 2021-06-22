@@ -1,31 +1,31 @@
 import { DataSourceSettings } from '@grafana/data';
-import { AzureSettings } from './types';
+import { config } from '@grafana/runtime';
 import { AzureAuthType, AzureCloud, AzureCredentials, ConcealedSecret } from './AzureCredentials';
 
 const concealed: ConcealedSecret = Symbol('Concealed client secret');
 
-function getAuthType(options: DataSourceSettings<any, any>, settings: AzureSettings): AzureAuthType {
+function getAuthType(options: DataSourceSettings<any, any>): AzureAuthType {
   if (!options.jsonData.azureAuthType) {
     // For newly created datasource with no configuration, managed identity is the default authentication type
     // if they are enabled in Grafana config
-    return settings.managedIdentityEnabled ? 'msi' : 'clientsecret';
+    return config.azure.managedIdentityEnabled ? 'msi' : 'clientsecret';
   }
 
   return options.jsonData.azureAuthType;
 }
 
-function getDefaultAzureCloud(settings: AzureSettings): string {
-  return settings.cloud || AzureCloud.Public;
+function getDefaultAzureCloud(): string {
+  return config.azure.cloud || AzureCloud.Public;
 }
 
-export function getAzureCloud(options: DataSourceSettings<any, any>, settings: AzureSettings): string {
-  const authType = getAuthType(options, settings);
+export function getAzureCloud(options: DataSourceSettings<any, any>): string {
+  const authType = getAuthType(options);
   switch (authType) {
     case 'msi':
       // In case of managed identity, the cloud is always same as where Grafana is hosted
-      return getDefaultAzureCloud(settings);
+      return getDefaultAzureCloud();
     case 'clientsecret':
-      return options.jsonData.azureCloud || getDefaultAzureCloud(settings);
+      return options.jsonData.azureCloud || getDefaultAzureCloud();
   }
 }
 
@@ -39,11 +39,11 @@ function getSecret(options: DataSourceSettings<any, any>): undefined | string | 
   }
 }
 
-export function getCredentials(options: DataSourceSettings<any, any>, settings: AzureSettings): AzureCredentials {
-  const authType = getAuthType(options, settings);
+export function getCredentials(options: DataSourceSettings<any, any>): AzureCredentials {
+  const authType = getAuthType(options);
   switch (authType) {
     case 'msi':
-      if (settings.managedIdentityEnabled) {
+      if (config.azure.managedIdentityEnabled) {
         return {
           authType: 'msi',
         };
@@ -52,13 +52,13 @@ export function getCredentials(options: DataSourceSettings<any, any>, settings: 
         // then we should fallback to an empty app registration (client secret) configuration
         return {
           authType: 'clientsecret',
-          azureCloud: getDefaultAzureCloud(settings),
+          azureCloud: getDefaultAzureCloud(),
         };
       }
     case 'clientsecret':
       return {
         authType: 'clientsecret',
-        azureCloud: options.jsonData.azureCloud || getDefaultAzureCloud(settings),
+        azureCloud: options.jsonData.azureCloud || getDefaultAzureCloud(),
         tenantId: options.jsonData.azureTenantId,
         clientId: options.jsonData.azureClientId,
         clientSecret: getSecret(options),
@@ -68,12 +68,11 @@ export function getCredentials(options: DataSourceSettings<any, any>, settings: 
 
 export function updateCredentials(
   options: DataSourceSettings<any, any>,
-  credentials: AzureCredentials,
-  settings: AzureSettings
+  credentials: AzureCredentials
 ): DataSourceSettings<any, any> {
   switch (credentials.authType) {
     case 'msi':
-      if (!settings.managedIdentityEnabled) {
+      if (!config.azure.managedIdentityEnabled) {
         throw new Error('Managed Identity authentication is not enabled in Grafana config.');
       }
 
@@ -93,7 +92,7 @@ export function updateCredentials(
         jsonData: {
           ...options.jsonData,
           azureAuthType: 'clientsecret',
-          azureCloud: credentials.azureCloud || getDefaultAzureCloud(settings),
+          azureCloud: credentials.azureCloud || getDefaultAzureCloud(),
           azureTenantId: credentials.tenantId,
           azureClientId: credentials.clientId,
         },

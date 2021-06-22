@@ -1,10 +1,5 @@
 import { DataSourceSettings } from '@grafana/data';
 
-export interface AzureSettings {
-  cloud?: string;
-  managedIdentityEnabled: boolean;
-}
-
 export interface HttpSettingsBaseProps {
   /** The configuration object of the data source */
   dataSourceConfig: DataSourceSettings<any, any>;
@@ -19,6 +14,4 @@ export interface HttpSettingsProps extends HttpSettingsBaseProps {
   showAccessOptions?: boolean;
   /** Show the SigV4 auth toggle option */
   sigV4AuthToggleEnabled?: boolean;
-  /** Azure settings **/
-  azureSettings?: AzureSettings;
 }

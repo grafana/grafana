@@ -1,20 +1,18 @@
 import React, { useState, useCallback } from 'react';
 import { css, cx } from '@emotion/css';
 import { DataSourceSettings, SelectableValue } from '@grafana/data';
-import { BasicAuthSettings } from './BasicAuthSettings';
-import { HttpProxySettings } from './HttpProxySettings';
-import { TLSAuthSettings } from './TLSAuthSettings';
-import { CustomHeadersSettings } from './CustomHeadersSettings';
-import { Select } from '../Forms/Legacy/Select/Select';
-import { Input } from '../Forms/Legacy/Input/Input';
-import { Switch } from '../Forms/Legacy/Switch/Switch';
-import { Icon } from '../Icon/Icon';
-import { FormField } from '../FormField/FormField';
-import { InlineFormLabel } from '../FormLabel/FormLabel';
-import { TagsInput } from '../TagsInput/TagsInput';
-import { SigV4AuthSettings } from './SigV4AuthSettings';
-import { useTheme } from '../../themes';
-import { HttpSettingsProps } from './types';
+import { Icon, InlineFormLabel, LegacyForms, TLSAuthSettings, TagsInput, useTheme } from '@grafana/ui';
+// TODO: Fix @grafana/ui imports
+import { BasicAuthSettings } from '@grafana/ui/src/components/DataSourceSettings/BasicAuthSettings';
+import { CustomHeadersSettings } from '@grafana/ui/src/components/DataSourceSettings/CustomHeadersSettings';
+import { FormField } from '@grafana/ui/src/components/FormField/FormField';
+import { SigV4AuthSettings } from '@grafana/ui/src/components/DataSourceSettings/SigV4AuthSettings';
+import { HttpSettingsProps } from '@grafana/ui/src/components/DataSourceSettings/types';
+import { AzureAuthSettings } from './AzureAuthSettings';
+import { PrometheusProxySettings } from './PrometheusProxySettings';
+const { Select, Input, Switch } = LegacyForms;
+
+export interface PrometheusSettingsProps extends HttpSettingsProps {}
 
 const ACCESS_OPTIONS: Array<SelectableValue<string>> = [
   {
@@ -55,7 +53,7 @@ const HttpAccessHelp = () => (
   </div>
 );
 
-export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = (props) => {
+export const PrometheusHttpSettings: React.FC<PrometheusSettingsProps> = (props) => {
   const { defaultUrl, dataSourceConfig, onChange, showAccessOptions, sigV4AuthToggleEnabled } = props;
   let urlTooltip;
   const [isAccessHelpVisible, setIsAccessHelpVisible] = useState(false);
@@ -222,12 +220,7 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = (props) => {
             </div>
           )}
 
-          {dataSourceConfig.access === 'proxy' && (
-            <HttpProxySettings
-              dataSourceConfig={dataSourceConfig}
-              onChange={(jsonData) => onSettingsChange({ jsonData })}
-            />
-          )}
+          {dataSourceConfig.access === 'proxy' && <PrometheusProxySettings {...props} />}
         </div>
         {dataSourceConfig.basicAuth && (
           <>
@@ -236,6 +229,10 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = (props) => {
               <BasicAuthSettings {...props} />
             </div>
           </>
+        )}
+
+        {dataSourceConfig.jsonData.azureAuth && (
+          <AzureAuthSettings dataSourceConfig={dataSourceConfig} onChange={onChange} />
         )}
 
         {dataSourceConfig.jsonData.sigV4Auth && <SigV4AuthSettings {...props} />}

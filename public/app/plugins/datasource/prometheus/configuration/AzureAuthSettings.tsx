@@ -1,6 +1,6 @@
 import React, { FunctionComponent, useMemo } from 'react';
 import { DataSourceSettings } from '@grafana/data';
-import { AzureSettings } from './types';
+import { config } from '@grafana/runtime';
 import { KnownAzureClouds, AzureCredentials } from './AzureCredentials';
 import { getCredentials, updateCredentials } from './AzureCredentialsConfig';
 import { AzureCredentialsForm } from './AzureCredentialsForm';
@@ -8,16 +8,15 @@ import { AzureCredentialsForm } from './AzureCredentialsForm';
 export interface Props {
   dataSourceConfig: DataSourceSettings<any, any>;
   onChange: (config: DataSourceSettings) => void;
-  azureSettings: AzureSettings;
 }
 
 export const AzureAuthSettings: FunctionComponent<Props> = (props: Props) => {
-  const { dataSourceConfig, onChange, azureSettings } = props;
+  const { dataSourceConfig, onChange } = props;
 
-  const credentials = useMemo(() => getCredentials(dataSourceConfig, azureSettings), [dataSourceConfig]);
+  const credentials = useMemo(() => getCredentials(dataSourceConfig), [dataSourceConfig]);
 
   const onCredentialsChange = (credentials: AzureCredentials): void => {
-    onChange(updateCredentials(dataSourceConfig, credentials, azureSettings));
+    onChange(updateCredentials(dataSourceConfig, credentials));
   };
 
   return (
@@ -25,7 +24,7 @@ export const AzureAuthSettings: FunctionComponent<Props> = (props: Props) => {
       <h6>Azure Authentication</h6>
       <div className="gf-form-group">
         <AzureCredentialsForm
-          managedIdentityEnabled={azureSettings.managedIdentityEnabled}
+          managedIdentityEnabled={config.azure.managedIdentityEnabled}
           credentials={credentials}
           azureCloudOptions={KnownAzureClouds}
           onCredentialsChange={onCredentialsChange}
