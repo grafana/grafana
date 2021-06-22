@@ -451,7 +451,7 @@ func (hs *HTTPServer) registerRoutes() {
 
 	// Administering users
 	r.Group("/api/admin/users", func(adminUserRoute routing.RouteRegister) {
-		userIDScope := eval.Combine("global:users", eval.Parameter(":id"))
+		userIDScope := eval.Combine("global", "users", eval.Parameter(":id"))
 
 		adminUserRoute.Post("/", authorize(reqGrafanaAdmin, eval.Permission(accesscontrol.ActionUsersCreate, "")), bind(dtos.AdminCreateUserForm{}), routing.Wrap(hs.AdminCreateUser))
 		adminUserRoute.Put("/:id/password", authorize(reqGrafanaAdmin, eval.Permission(accesscontrol.ActionUsersPasswordUpdate, userIDScope)), bind(dtos.AdminUpdateUserPasswordForm{}), routing.Wrap(AdminUpdateUserPassword))
