@@ -1,12 +1,12 @@
 import React, { PureComponent } from 'react';
-import { connect } from 'react-redux';
+import { connect, ConnectedProps } from 'react-redux';
 import { hot } from 'react-hot-loader';
 import classNames from 'classnames';
 import { css } from '@emotion/css';
 
 import { ExploreId, ExploreItemState } from 'app/types/explore';
 import { Icon, IconButton, SetInterval, ToolbarButton, ToolbarButtonRow, Tooltip } from '@grafana/ui';
-import { DataSourceInstanceSettings, RawTimeRange, TimeRange, TimeZone } from '@grafana/data';
+import { DataSourceInstanceSettings, RawTimeRange } from '@grafana/data';
 import { DataSourcePicker } from '@grafana/runtime';
 import { StoreState } from 'app/types/store';
 import { createAndCopyShortLink } from 'app/core/utils/shortLinks';
@@ -28,36 +28,7 @@ interface OwnProps {
   onChangeTime: (range: RawTimeRange, changedByScanner?: boolean) => void;
 }
 
-interface StateProps {
-  datasourceMissing: boolean;
-  loading: boolean;
-  range: TimeRange;
-  timeZone: TimeZone;
-  splitted: boolean;
-  syncedTimes: boolean;
-  refreshInterval?: string;
-  hasLiveOption: boolean;
-  isLive: boolean;
-  isPaused: boolean;
-  datasourceLoading?: boolean | null;
-  containerWidth: number;
-  datasourceName?: string;
-}
-
-interface DispatchProps {
-  changeDatasource: typeof changeDatasource;
-  clearAll: typeof clearQueries;
-  cancelQueries: typeof cancelQueries;
-  runQueries: typeof runQueries;
-  closeSplit: typeof splitClose;
-  split: typeof splitOpen;
-  syncTimes: typeof syncTimes;
-  changeRefreshInterval: typeof changeRefreshInterval;
-  onChangeTimeZone: typeof updateTimeZoneForSession;
-  clearCache: typeof clearCache;
-}
-
-type Props = StateProps & DispatchProps & OwnProps;
+type Props = OwnProps & ConnectedProps<typeof connector>;
 
 export class UnConnectedExploreToolbar extends PureComponent<Props> {
   onChangeDatasource = async (dsSettings: DataSourceInstanceSettings) => {
@@ -236,7 +207,7 @@ export class UnConnectedExploreToolbar extends PureComponent<Props> {
   }
 }
 
-const mapStateToProps = (state: StoreState, { exploreId }: OwnProps): StateProps => {
+const mapStateToProps = (state: StoreState, { exploreId }: OwnProps) => {
   const syncedTimes = state.explore.syncedTimes;
   const exploreItem: ExploreItemState = state.explore[exploreId]!;
   const {
@@ -268,7 +239,7 @@ const mapStateToProps = (state: StoreState, { exploreId }: OwnProps): StateProps
   };
 };
 
-const mapDispatchToProps: DispatchProps = {
+const mapDispatchToProps = {
   changeDatasource,
   changeRefreshInterval,
   clearAll: clearQueries,
@@ -281,4 +252,6 @@ const mapDispatchToProps: DispatchProps = {
   clearCache,
 };
 
-export const ExploreToolbar = hot(module)(connect(mapStateToProps, mapDispatchToProps)(UnConnectedExploreToolbar));
+const connector = connect(mapStateToProps, mapDispatchToProps);
+
+export const ExploreToolbar = hot(module)(connector(UnConnectedExploreToolbar));
