@@ -140,7 +140,7 @@ func (pn *PushoverNotifier) genPushoverBody(ctx context.Context, as ...*types.Al
 	}
 
 	// Add the user token
-	err := w.WriteField("user", pn.UserKey)
+	err := w.WriteField("user", tmpl(pn.UserKey))
 	if err != nil {
 		return nil, b, err
 	}
@@ -175,16 +175,16 @@ func (pn *PushoverNotifier) genPushoverBody(ctx context.Context, as ...*types.Al
 
 	// Add device
 	if pn.Device != "" {
-		err = w.WriteField("device", pn.Device)
+		err = w.WriteField("device", tmpl(pn.Device))
 		if err != nil {
 			return nil, b, err
 		}
 	}
 
 	// Add sound
-	sound := pn.AlertingSound
+	sound := tmpl(pn.AlertingSound)
 	if alerts.Status() == model.AlertResolved {
-		sound = pn.OKSound
+		sound = tmpl(pn.OKSound)
 	}
 	if sound != "default" {
 		err = w.WriteField("sound", sound)

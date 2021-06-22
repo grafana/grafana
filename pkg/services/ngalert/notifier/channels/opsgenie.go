@@ -201,7 +201,7 @@ func (on *OpsgenieNotifier) buildOpsgenieMessage(ctx context.Context, alerts mod
 
 	bodyJSON.Set("tags", tags)
 	bodyJSON.Set("details", details)
-	apiURL = on.APIUrl
+	apiURL = tmpl(on.APIUrl)
 
 	if tmplErr != nil {
 		on.log.Debug("failed to template Opsgenie message", "err", tmplErr.Error())

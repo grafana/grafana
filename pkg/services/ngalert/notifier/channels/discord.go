@@ -93,6 +93,7 @@ func (d DiscordNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 
 	bodyJSON.Set("embeds", []interface{}{embed})
 
+	u := tmpl(d.WebhookURL)
 	if tmplErr != nil {
 		d.log.Debug("failed to template Discord message", "err", tmplErr.Error())
 	}
@@ -102,7 +103,7 @@ func (d DiscordNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 		return false, err
 	}
 	cmd := &models.SendWebhookSync{
-		Url:         d.WebhookURL,
+		Url:         u,
 		HttpMethod:  "POST",
 		ContentType: "application/json",
 		Body:        string(body),
