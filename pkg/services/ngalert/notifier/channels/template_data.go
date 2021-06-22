@@ -48,6 +48,9 @@ type ExtendedData struct {
 func removePrivateItems(kv template.KV) template.KV {
 	for key := range kv {
 		if strings.HasPrefix(key, "__") && strings.HasSuffix(key, "__") {
+			if key == "__value__" {
+				continue
+			}
 			kv = kv.Remove([]string{key})
 		}
 	}
