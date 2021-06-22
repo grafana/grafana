@@ -1,19 +1,11 @@
-import { CombinedRule } from 'app/types/unified-alerting';
-import { GrafanaAlertStateDecision } from 'app/types/unified-alerting-dto';
+import { DataSourceJsonData, PluginMeta } from '@grafana/data';
 import { alertRuleToQueries } from './query';
 import { GRAFANA_RULES_SOURCE_NAME } from './datasource';
+import { CombinedRule } from 'app/types/unified-alerting';
+import { GrafanaAlertStateDecision } from 'app/types/unified-alerting-dto';
 
 describe('alertRuleToQueries', () => {
   it('it should convert grafana alert', () => {
-    const grafanaAlert = {
-      condition: 'B',
-      exec_err_state: GrafanaAlertStateDecision.Alerting,
-      namespace_uid: 'v6Jq2DrGz',
-      no_data_state: GrafanaAlertStateDecision.NoData,
-      title: 'Prom up alert',
-      uid: 'cbGHWBqMz',
-      data: [],
-    };
     const combinedRule: CombinedRule = {
       name: 'Test alert',
       query: 'up',
@@ -29,7 +21,7 @@ describe('alertRuleToQueries', () => {
         groups: [],
       },
       rulerRule: {
-        for: '5m',
+        for: '',
         annotations: {},
         labels: {},
         grafana_alert: grafanaAlert,
@@ -37,8 +29,90 @@ describe('alertRuleToQueries', () => {
     };
 
     const result = alertRuleToQueries(combinedRule);
-    expect(result).toEqual(grafanaAlert);
+    expect(result).toEqual(grafanaAlert.data);
   });
 
-  it('shoulds convert cloud alert', () => {});
+  it('shoulds convert cloud alert', () => {
+    const combinedRule: CombinedRule = {
+      name: 'cloud test',
+      labels: {},
+      query: 'up == 0',
+      annotations: {},
+      group: {
+        name: 'test',
+        rules: [],
+      },
+      namespace: {
+        name: 'prom test alerts',
+        groups: [],
+        rulesSource: {
+          name: 'prom test',
+          type: 'prometheus',
+          uid: 'asdf23',
+          id: 1,
+          meta: {} as PluginMeta,
+          jsonData: {} as DataSourceJsonData,
+        },
+      },
+    };
+
+    const result = alertRuleToQueries(combinedRule);
+    expect(result).toEqual([
+      {
+        refId: 'A',
+        datasourceUid: 'asdf23',
+        queryType: '',
+        model: {
+          refId: 'A',
+          expr: 'up == 0',
+        },
+        relativeTimeRange: {
+          from: 360,
+          to: 0,
+        },
+      },
+    ]);
+  });
 });
+
+const grafanaAlert = {
+  condition: 'B',
+  exec_err_state: GrafanaAlertStateDecision.Alerting,
+  namespace_uid: 'namespaceuid123',
+  no_data_state: GrafanaAlertStateDecision.NoData,
+  title: 'Test alert',
+  uid: 'asdf23',
+  data: [
+    {
+      refId: 'A',
+      queryType: '',
+      relativeTimeRange: { from: 600, to: 0 },
+      datasourceUid: 'asdf51',
+      model: {
+        expr: 'up',
+        refId: 'A',
+      },
+    },
+    {
+      refId: 'B',
+      queryType: '',
+      relativeTimeRange: { from: 0, to: 0 },
+      datasourceUid: '-100',
+      model: {
+        conditions: [
+          {
+            evaluator: { params: [1], type: 'lt' },
+            operator: { type: 'and' },
+            query: { params: ['A'] },
+            reducer: { params: [], type: 'last' },
+            type: 'query',
+          },
+        ],
+        datasource: '__expr__',
+        hide: false,
+        refId: 'B',
+        type: 'classic_conditions',
+      },
+    },
+  ],
+};

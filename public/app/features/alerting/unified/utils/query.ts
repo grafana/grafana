@@ -10,7 +10,6 @@ export function alertRuleToQueries(combinedRule: CombinedRule | undefined | null
   if (!combinedRule) {
     return [];
   }
-
   const { namespace, rulerRule } = combinedRule;
   const { rulesSource } = namespace;
 
