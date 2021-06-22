@@ -31,7 +31,11 @@ const AlertManagerNotifications = () => {
       {results &&
         results.map((group) => {
           return (
-            <AmNotificationsGroup alertManagerSourceName={alertManagerSourceName || ''} key={group.id} group={group} />
+            <AmNotificationsGroup
+              alertManagerSourceName={alertManagerSourceName || ''}
+              key={JSON.stringify(group.labels)}
+              group={group}
+            />
           );
         })}
     </AlertingPageWrapper>
