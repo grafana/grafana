@@ -65,14 +65,14 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/dashboard/import/", reqSignedIn, hs.Index)
 	r.Get("/configuration", reqGrafanaAdmin, hs.Index)
 	r.Get("/admin", reqGrafanaAdmin, hs.Index)
-	r.Get("/admin/settings", authorize(reqGrafanaAdmin, eval.Permission(accesscontrol.ActionSettingsRead, "")), hs.Index)
+	r.Get("/admin/settings", authorize(reqGrafanaAdmin, eval.Permission(accesscontrol.ActionSettingsRead, eval.ScopeNone)), hs.Index)
 	r.Get("/admin/users", authorize(reqGrafanaAdmin, eval.Permission(accesscontrol.ActionUsersRead, accesscontrol.ScopeGlobalUsersAll)), hs.Index)
-	r.Get("/admin/users/create", authorize(reqGrafanaAdmin, eval.Permission(accesscontrol.ActionUsersCreate, "")), hs.Index)
-	r.Get("/admin/users/edit/:id", authorize(reqGrafanaAdmin, eval.Permission(accesscontrol.ActionUsersRead, "")), hs.Index)
+	r.Get("/admin/users/create", authorize(reqGrafanaAdmin, eval.Permission(accesscontrol.ActionUsersCreate, eval.ScopeNone)), hs.Index)
+	r.Get("/admin/users/edit/:id", authorize(reqGrafanaAdmin, eval.Permission(accesscontrol.ActionUsersRead, eval.ScopeNone)), hs.Index)
 	r.Get("/admin/orgs", reqGrafanaAdmin, hs.Index)
 	r.Get("/admin/orgs/edit/:id", reqGrafanaAdmin, hs.Index)
-	r.Get("/admin/stats", authorize(reqGrafanaAdmin, eval.Permission(accesscontrol.ActionServerStatsRead, "")), hs.Index)
-	r.Get("/admin/ldap", authorize(reqGrafanaAdmin, eval.Permission(accesscontrol.ActionLDAPStatusRead, "")), hs.Index)
+	r.Get("/admin/stats", authorize(reqGrafanaAdmin, eval.Permission(accesscontrol.ActionServerStatsRead, eval.ScopeNone)), hs.Index)
+	r.Get("/admin/ldap", authorize(reqGrafanaAdmin, eval.Permission(accesscontrol.ActionLDAPStatusRead, eval.ScopeNone)), hs.Index)
 
 	r.Get("/styleguide", reqSignedIn, hs.Index)
 
@@ -207,9 +207,9 @@ func (hs *HTTPServer) registerRoutes() {
 			orgRoute.Delete("/users/:userId", authorize(reqOrgAdmin, eval.Permission(accesscontrol.ActionOrgUsersRemove, userIDScope)), routing.Wrap(RemoveOrgUserForCurrentOrg))
 
 			// invites
-			orgRoute.Get("/invites", authorize(reqOrgAdmin, eval.Permission(accesscontrol.ActionUsersCreate, "")), routing.Wrap(GetPendingOrgInvites))
-			orgRoute.Post("/invites", authorize(reqOrgAdmin, eval.Permission(accesscontrol.ActionUsersCreate, "")), quota("user"), bind(dtos.AddInviteForm{}), routing.Wrap(AddOrgInvite))
-			orgRoute.Patch("/invites/:code/revoke", authorize(reqOrgAdmin, eval.Permission(accesscontrol.ActionUsersCreate, "")), routing.Wrap(RevokeInvite))
+			orgRoute.Get("/invites", authorize(reqOrgAdmin, eval.Permission(accesscontrol.ActionUsersCreate, eval.ScopeNone)), routing.Wrap(GetPendingOrgInvites))
+			orgRoute.Post("/invites", authorize(reqOrgAdmin, eval.Permission(accesscontrol.ActionUsersCreate, eval.ScopeNone)), quota("user"), bind(dtos.AddInviteForm{}), routing.Wrap(AddOrgInvite))
+			orgRoute.Patch("/invites/:code/revoke", authorize(reqOrgAdmin, eval.Permission(accesscontrol.ActionUsersCreate, eval.ScopeNone)), routing.Wrap(RevokeInvite))
 
 			// prefs
 			orgRoute.Get("/preferences", reqOrgAdmin, routing.Wrap(GetOrgPreferences))
@@ -435,25 +435,25 @@ func (hs *HTTPServer) registerRoutes() {
 
 	// admin api
 	r.Group("/api/admin", func(adminRoute routing.RouteRegister) {
-		adminRoute.Get("/settings", authorize(reqGrafanaAdmin, eval.Permission(accesscontrol.ActionSettingsRead, "")), routing.Wrap(hs.AdminGetSettings))
-		adminRoute.Get("/stats", authorize(reqGrafanaAdmin, eval.Permission(accesscontrol.ActionServerStatsRead, "")), routing.Wrap(AdminGetStats))
+		adminRoute.Get("/settings", authorize(reqGrafanaAdmin, eval.Permission(accesscontrol.ActionSettingsRead, eval.ScopeNone)), routing.Wrap(hs.AdminGetSettings))
+		adminRoute.Get("/stats", authorize(reqGrafanaAdmin, eval.Permission(accesscontrol.ActionServerStatsRead, eval.ScopeNone)), routing.Wrap(AdminGetStats))
 		adminRoute.Post("/pause-all-alerts", reqGrafanaAdmin, bind(dtos.PauseAllAlertsCommand{}), routing.Wrap(PauseAllAlerts))
 
 		adminRoute.Post("/provisioning/dashboards/reload", reqGrafanaAdmin, routing.Wrap(hs.AdminProvisioningReloadDashboards))
 		adminRoute.Post("/provisioning/plugins/reload", reqGrafanaAdmin, routing.Wrap(hs.AdminProvisioningReloadPlugins))
 		adminRoute.Post("/provisioning/datasources/reload", reqGrafanaAdmin, routing.Wrap(hs.AdminProvisioningReloadDatasources))
 		adminRoute.Post("/provisioning/notifications/reload", reqGrafanaAdmin, routing.Wrap(hs.AdminProvisioningReloadNotifications))
-		adminRoute.Post("/ldap/reload", authorize(reqGrafanaAdmin, eval.Permission(accesscontrol.ActionLDAPConfigReload, "")), routing.Wrap(hs.ReloadLDAPCfg))
-		adminRoute.Post("/ldap/sync/:id", authorize(reqGrafanaAdmin, eval.Permission(accesscontrol.ActionLDAPUsersSync, "")), routing.Wrap(hs.PostSyncUserWithLDAP))
-		adminRoute.Get("/ldap/:username", authorize(reqGrafanaAdmin, eval.Permission(accesscontrol.ActionLDAPUsersRead, "")), routing.Wrap(hs.GetUserFromLDAP))
-		adminRoute.Get("/ldap/status", authorize(reqGrafanaAdmin, eval.Permission(accesscontrol.ActionLDAPStatusRead, "")), routing.Wrap(hs.GetLDAPStatus))
+		adminRoute.Post("/ldap/reload", authorize(reqGrafanaAdmin, eval.Permission(accesscontrol.ActionLDAPConfigReload, eval.ScopeNone)), routing.Wrap(hs.ReloadLDAPCfg))
+		adminRoute.Post("/ldap/sync/:id", authorize(reqGrafanaAdmin, eval.Permission(accesscontrol.ActionLDAPUsersSync, eval.ScopeNone)), routing.Wrap(hs.PostSyncUserWithLDAP))
+		adminRoute.Get("/ldap/:username", authorize(reqGrafanaAdmin, eval.Permission(accesscontrol.ActionLDAPUsersRead, eval.ScopeNone)), routing.Wrap(hs.GetUserFromLDAP))
+		adminRoute.Get("/ldap/status", authorize(reqGrafanaAdmin, eval.Permission(accesscontrol.ActionLDAPStatusRead, eval.ScopeNone)), routing.Wrap(hs.GetLDAPStatus))
 	})
 
 	// Administering users
 	r.Group("/api/admin/users", func(adminUserRoute routing.RouteRegister) {
 		userIDScope := eval.Combine("global", "users", eval.Parameter(":id"))
 
-		adminUserRoute.Post("/", authorize(reqGrafanaAdmin, eval.Permission(accesscontrol.ActionUsersCreate, "")), bind(dtos.AdminCreateUserForm{}), routing.Wrap(hs.AdminCreateUser))
+		adminUserRoute.Post("/", authorize(reqGrafanaAdmin, eval.Permission(accesscontrol.ActionUsersCreate, eval.ScopeNone)), bind(dtos.AdminCreateUserForm{}), routing.Wrap(hs.AdminCreateUser))
 		adminUserRoute.Put("/:id/password", authorize(reqGrafanaAdmin, eval.Permission(accesscontrol.ActionUsersPasswordUpdate, userIDScope)), bind(dtos.AdminUpdateUserPasswordForm{}), routing.Wrap(AdminUpdateUserPassword))
 		adminUserRoute.Put("/:id/permissions", authorize(reqGrafanaAdmin, eval.Permission(accesscontrol.ActionUsersPermissionsUpdate, userIDScope)), bind(dtos.AdminUpdateUserPermissionsForm{}), routing.Wrap(hs.AdminUpdateUserPermissions))
 		adminUserRoute.Delete("/:id", authorize(reqGrafanaAdmin, eval.Permission(accesscontrol.ActionUsersDelete, userIDScope)), routing.Wrap(AdminDeleteUser))
