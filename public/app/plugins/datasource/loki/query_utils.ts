@@ -38,11 +38,15 @@ export function getHighlighterExpressionsFromQuery(input: string): string[] {
     }
 
     // Unwrap the filter term by removing quotes
-    const quotedTerm = filterTerm.match(/^"((?:[^\\"]|\\")*)"$/);
+    const quotedTerm = filterTerm.match(/"(.*?)"/);
+    const backslashTerm = filterTerm.match(/`(.*?)`/);
+    const term = quotedTerm || backslashTerm;
 
-    if (quotedTerm) {
-      const unwrappedFilterTerm = quotedTerm[1];
+    if (term) {
+      const unwrappedFilterTerm = term[1];
       const regexOperator = filterOperator === '|~';
+      console.log('unwrappedFil', unwrappedFilterTerm);
+      console.log('escapeRegExp', escapeRegExp(unwrappedFilterTerm));
       results.push(regexOperator ? unwrappedFilterTerm : escapeRegExp(unwrappedFilterTerm));
     } else {
       return [];
