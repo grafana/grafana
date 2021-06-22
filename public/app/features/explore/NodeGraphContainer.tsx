@@ -1,7 +1,7 @@
 import React from 'react';
 import { useToggle } from 'react-use';
 import { Badge, Collapse, useStyles2, useTheme2 } from '@grafana/ui';
-import { applyFieldOverrides, DataFrame, GrafanaTheme2, TimeRange } from '@grafana/data';
+import { applyFieldOverrides, DataFrame, GrafanaTheme2 } from '@grafana/data';
 import { css } from '@emotion/css';
 import { ExploreId, StoreState } from '../../types';
 import { splitOpen } from './state/main';
@@ -22,11 +22,10 @@ interface Props {
   // Edges and Nodes are separate frames
   dataFrames: DataFrame[];
   exploreId: ExploreId;
-  range: TimeRange;
-  splitOpen: typeof splitOpen;
   // When showing the node graph together with trace view we do some changes so it works better.
   withTraceView?: boolean;
 }
+
 export function UnconnectedNodeGraphContainer(props: Props & ConnectedProps<typeof connector>) {
   const { dataFrames, range, splitOpen, withTraceView } = props;
   const getLinks = useLinks(range, splitOpen);
