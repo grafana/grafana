@@ -1,4 +1,4 @@
-import { FALLBACK_COLOR, Field, FieldColorModeId, Threshold } from '../types';
+import { FALLBACK_COLOR, Field, FieldColorModeId, FieldType, Threshold } from '../types';
 import { RegistryItem } from '../utils';
 import { Registry } from '../utils/Registry';
 import { interpolateRgbBasis } from 'd3-interpolate';
@@ -243,18 +243,36 @@ function getUniqueColorsByValue(): FieldColorMode {
     description: 'Assigns each value a unique color',
 
     getCalculator: (_field, theme) => {
-      let assigned: Map<any, number> = new Map<number, number>();
-      let next = 0;
-      let colors = theme.visualization.palette.map(theme.visualization.getColorByName);
+      if (_field.type === FieldType.boolean) {
+        const on = theme.visualization.getColorByName('green');
+        const off = theme.visualization.getColorByName('red');
+        return (value, percent, threshold) => {
+          return value ? on : off;
+        };
+      }
 
+      const colors = theme.visualization.palette.map(theme.visualization.getColorByName);
       return (value, percent, threshold) => {
-        if (!assigned.has(value)) {
-          assigned.set(value, next);
-          next = (next + 1) % colors.length;
+        console.log('BEFORE', _field.type, value);
+        if (typeof value === 'string') {
+          value = strHashCode((value as unknown) as string);
+        } else if (value < 0) {
+          value = value * -2000; // mod (%) only works with positive numbers
+        } else {
+          value = value * 1000; // the large number allows allows small changes to make an affect
         }
-
-        return colors[assigned.get(value) || 0];
+        const idx = Math.floor(value % colors.length);
+        console.log('UNIQUE', _field.type, value, idx);
+        return colors[idx || 0];
       };
     },
   };
+}
+
+/**
+ * Converts a string into a numeric value -- we just need it to be different
+ * enough so that it has a reasonable distribution across a color pallet
+ */
+function strHashCode(str: string) {
+  return str.split('').reduce((prevHash, currVal) => ((prevHash << 5) - prevHash + currVal.charCodeAt(0)) | 0, 0);
 }
