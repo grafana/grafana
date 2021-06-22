@@ -43,8 +43,9 @@ func TestFlightPathScenario(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, rsp)
 		for k, v := range rsp.Responses {
+			dr := &v
 			filePath := filepath.Join("testdata", fmt.Sprintf("flight-simple-%s.txt", k))
-			err = experimental.CheckGoldenDataResponse(filePath, &v, true)
+			err = experimental.CheckGoldenDataResponse(filePath, dr, true)
 			require.NoError(t, err)
 		}
 	})
