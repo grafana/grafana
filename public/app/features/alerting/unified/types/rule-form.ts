@@ -1,15 +1,8 @@
-import { GrafanaQuery, GrafanaAlertState } from 'app/types/unified-alerting-dto';
+import { AlertQuery, GrafanaAlertStateDecision } from 'app/types/unified-alerting-dto';
 
 export enum RuleFormType {
-  threshold = 'threshold',
-  system = 'system',
-}
-
-export enum TimeOptions {
-  seconds = 's',
-  minutes = 'm',
-  hours = 'h',
-  days = 'd',
+  grafana = 'grafana',
+  cloud = 'cloud',
 }
 
 export interface RuleFormValues {
@@ -21,16 +14,16 @@ export interface RuleFormValues {
   labels: Array<{ key: string; value: string }>;
   annotations: Array<{ key: string; value: string }>;
 
-  // threshold alerts
-  queries: GrafanaQuery[];
+  // grafana rules
+  queries: AlertQuery[];
   condition: string | null; // refId of the query that gets alerted on
-  noDataState: GrafanaAlertState;
-  execErrState: GrafanaAlertState;
+  noDataState: GrafanaAlertStateDecision;
+  execErrState: GrafanaAlertStateDecision;
   folder: { title: string; id: number } | null;
   evaluateEvery: string;
   evaluateFor: string;
 
-  // system alerts
+  // cortex / loki rules
   namespace: string;
   group: string;
   forTime: number;

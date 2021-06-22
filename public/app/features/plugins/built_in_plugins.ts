@@ -42,7 +42,8 @@ const alertmanagerPlugin = async () =>
 
 import * as textPanel from 'app/plugins/panel/text/module';
 import * as timeseriesPanel from 'app/plugins/panel/timeseries/module';
-import * as timelinePanel from 'app/plugins/panel/timeline/module';
+import * as stateTimelinePanel from 'app/plugins/panel/state-timeline/module';
+import * as statusHistoryPanel from 'app/plugins/panel/status-history/module';
 import * as graphPanel from 'app/plugins/panel/graph/module';
 import * as xyChartPanel from 'app/plugins/panel/xychart/module';
 import * as dashListPanel from 'app/plugins/panel/dashlist/module';
@@ -64,6 +65,7 @@ import * as livePanel from 'app/plugins/panel/live/module';
 import * as debugPanel from 'app/plugins/panel/debug/module';
 import * as welcomeBanner from 'app/plugins/panel/welcome/module';
 import * as nodeGraph from 'app/plugins/panel/nodeGraph/module';
+import * as histogramPanel from 'app/plugins/panel/histogram/module';
 
 const builtInPlugins: any = {
   'app/plugins/datasource/graphite/module': graphitePlugin,
@@ -89,7 +91,8 @@ const builtInPlugins: any = {
 
   'app/plugins/panel/text/module': textPanel,
   'app/plugins/panel/timeseries/module': timeseriesPanel,
-  'app/plugins/panel/timeline/module': timelinePanel,
+  'app/plugins/panel/state-timeline/module': stateTimelinePanel,
+  'app/plugins/panel/status-history/module': statusHistoryPanel,
   'app/plugins/panel/graph/module': graphPanel,
   'app/plugins/panel/xychart/module': xyChartPanel,
   'app/plugins/panel/dashlist/module': dashListPanel,
@@ -111,6 +114,7 @@ const builtInPlugins: any = {
   'app/plugins/panel/logs/module': logsPanel,
   'app/plugins/panel/welcome/module': welcomeBanner,
   'app/plugins/panel/nodeGraph/module': nodeGraph,
+  'app/plugins/panel/histogram/module': histogramPanel,
 };
 
 export default builtInPlugins;

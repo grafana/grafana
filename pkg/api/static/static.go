@@ -165,12 +165,12 @@ func staticHandler(ctx *macaron.Context, log *log.Logger, opt StaticOptions) boo
 		}
 
 		file = path.Join(file, opt.IndexFile)
-		f, err = opt.FileSystem.Open(file)
+		indexFile, err := opt.FileSystem.Open(file)
 		if err != nil {
 			return false // Discard error.
 		}
 		defer func() {
-			if err := f.Close(); err != nil {
+			if err := indexFile.Close(); err != nil {
 				log.Printf("Failed to close file: %s", err)
 			}
 		}()

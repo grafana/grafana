@@ -39,11 +39,11 @@ export class GraphiteQueryCtrl extends QueryCtrl {
   static templateUrl = 'partials/query.editor.html';
 
   queryModel: GraphiteQuery;
-  segments: any[];
-  addTagSegments: any[];
+  segments: any[] = [];
+  addTagSegments: any[] = [];
   removeTagValue: string;
-  supportsTags: boolean;
-  paused: boolean;
+  supportsTags = false;
+  paused = false;
 
   private state: GraphiteQueryEditorState;
   private readonly dispatch: GraphiteActionDispatcher;

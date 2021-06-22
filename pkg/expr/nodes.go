@@ -10,8 +10,13 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/expr/classic"
 	"github.com/grafana/grafana/pkg/expr/mathexp"
+	"github.com/grafana/grafana/pkg/infra/log"
 
 	"gonum.org/v1/gonum/graph/simple"
+)
+
+var (
+	logger = log.New("expr")
 )
 
 // baseNode includes commmon properties used across DPNodes.
@@ -21,10 +26,11 @@ type baseNode struct {
 }
 
 type rawNode struct {
-	RefID     string `json:"refId"`
-	Query     map[string]interface{}
-	QueryType string
-	TimeRange backend.TimeRange
+	RefID         string `json:"refId"`
+	Query         map[string]interface{}
+	QueryType     string
+	TimeRange     TimeRange
+	DatasourceUID string
 }
 
 func (rn *rawNode) GetDatasourceName() (string, error) {
@@ -37,18 +43,6 @@ func (rn *rawNode) GetDatasourceName() (string, error) {
 		return "", fmt.Errorf("expted datasource identifier to be a string, got %T", rawDs)
 	}
 	return dsName, nil
-}
-
-func (rn *rawNode) GetDatasourceUid() (string, error) {
-	rawDs, ok := rn.Query["datasourceUid"]
-	if !ok {
-		return "", nil
-	}
-	dsUID, ok := rawDs.(string)
-	if !ok {
-		return "", fmt.Errorf("expected datasource identifier to be a string, got %T", rawDs)
-	}
-	return dsUID, nil
 }
 
 func (rn *rawNode) GetCommandType() (c CommandType, err error) {
@@ -64,7 +58,7 @@ func (rn *rawNode) GetCommandType() (c CommandType, err error) {
 }
 
 // String returns a string representation of the node. In particular for
-// %v formating in error messages.
+// %v formatting in error messages.
 func (b *baseNode) String() string {
 	return b.refID
 }
@@ -109,6 +103,7 @@ func buildCMDNode(dp *simple.DirectedGraph, rn *rawNode) (*CMDNode, error) {
 			id:    dp.NewNode().ID(),
 			refID: rn.RefID,
 		},
+		CMDType: commandType,
 	}
 
 	switch commandType {
@@ -144,7 +139,7 @@ type DSNode struct {
 
 	orgID      int64
 	queryType  string
-	timeRange  backend.TimeRange
+	timeRange  TimeRange
 	intervalMS int64
 	maxDP      int64
 }
@@ -182,15 +177,10 @@ func (s *Service) buildDSNode(dp *simple.DirectedGraph, rn *rawNode, orgID int64
 		}
 		dsNode.datasourceID = int64(floatDsID)
 	default:
-		rawDsUID, ok := rn.Query["datasourceUid"]
-		if !ok {
+		if rn.DatasourceUID == "" {
 			return nil, fmt.Errorf("neither datasourceId or datasourceUid in expression data source request for refId %v", rn.RefID)
 		}
-		strDsUID, ok := rawDsUID.(string)
-		if !ok {
-			return nil, fmt.Errorf("expected datasourceUid to be a string, got type %T for refId %v", rawDsUID, rn.RefID)
-		}
-		dsNode.datasourceUID = strDsUID
+		dsNode.datasourceUID = rn.DatasourceUID
 	}
 
 	var floatIntervalMS float64
@@ -230,8 +220,11 @@ func (dn *DSNode) Execute(ctx context.Context, vars mathexp.Vars, s *Service) (m
 			MaxDataPoints: dn.maxDP,
 			Interval:      time.Duration(int64(time.Millisecond) * dn.intervalMS),
 			JSON:          dn.query,
-			TimeRange:     dn.timeRange,
-			QueryType:     dn.queryType,
+			TimeRange: backend.TimeRange{
+				From: dn.timeRange.From,
+				To:   dn.timeRange.To,
+			},
+			QueryType: dn.queryType,
 		},
 	}
 
@@ -253,7 +246,7 @@ func (dn *DSNode) Execute(ctx context.Context, vars mathexp.Vars, s *Service) (m
 		if len(qr.Frames) == 1 {
 			frame := qr.Frames[0]
 			if frame.TimeSeriesSchema().Type == data.TimeSeriesTypeNot && isNumberTable(frame) {
-				backend.Logger.Debug("expression datasource query (numberSet)", "query", refID)
+				logger.Debug("expression datasource query (numberSet)", "query", refID)
 				numberSet, err := extractNumberSet(frame)
 				if err != nil {
 					return mathexp.Results{}, err
@@ -269,7 +262,7 @@ func (dn *DSNode) Execute(ctx context.Context, vars mathexp.Vars, s *Service) (m
 		}
 
 		for _, frame := range qr.Frames {
-			backend.Logger.Debug("expression datasource query (seriesSet)", "query", refID)
+			logger.Debug("expression datasource query (seriesSet)", "query", refID)
 			series, err := WideToMany(frame)
 			if err != nil {
 				return mathexp.Results{}, err

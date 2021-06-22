@@ -13,7 +13,7 @@ import (
 func (hs *HTTPServer) GetDashboardPermissionList(c *models.ReqContext) response.Response {
 	dashID := c.ParamsInt64(":dashboardId")
 
-	_, rsp := getDashboardHelper(c.OrgId, "", dashID, "")
+	_, rsp := getDashboardHelper(c.Req.Context(), c.OrgId, dashID, "")
 	if rsp != nil {
 		return rsp
 	}
@@ -24,7 +24,7 @@ func (hs *HTTPServer) GetDashboardPermissionList(c *models.ReqContext) response.
 		return dashboardGuardianResponse(err)
 	}
 
-	acl, err := g.GetAcl()
+	acl, err := g.GetACLWithoutDuplicates()
 	if err != nil {
 		return response.Error(500, "Failed to get dashboard permissions", err)
 	}
@@ -57,7 +57,7 @@ func (hs *HTTPServer) UpdateDashboardPermissions(c *models.ReqContext, apiCmd dt
 
 	dashID := c.ParamsInt64(":dashboardId")
 
-	_, rsp := getDashboardHelper(c.OrgId, "", dashID, "")
+	_, rsp := getDashboardHelper(c.Req.Context(), c.OrgId, dashID, "")
 	if rsp != nil {
 		return rsp
 	}

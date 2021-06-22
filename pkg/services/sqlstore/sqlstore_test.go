@@ -3,18 +3,21 @@
 package sqlstore
 
 import (
+	"errors"
+	"net/url"
 	"testing"
 
-	. "github.com/smartystreets/goconvey/convey"
-
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/stretchr/testify/require"
 )
 
 type sqlStoreTest struct {
 	name          string
 	dbType        string
 	dbHost        string
+	dbURL         string
 	connStrValues []string
+	err           error
 }
 
 var sqlStoreTestCases = []sqlStoreTest{
@@ -66,44 +69,47 @@ var sqlStoreTestCases = []sqlStoreTest{
 		dbHost:        "[::1]",
 		connStrValues: []string{"host=::1", "port=5432"},
 	},
+	{
+		name:  "Invalid database URL",
+		dbURL: "://invalid.com/",
+		err:   &url.Error{Op: "parse", URL: "://invalid.com/", Err: errors.New("missing protocol scheme")},
+	},
 }
 
 func TestSQLConnectionString(t *testing.T) {
-	Convey("Testing SQL Connection Strings", t, func() {
-		t.Helper()
+	for _, testCase := range sqlStoreTestCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			sqlstore := &SQLStore{}
+			sqlstore.Cfg = makeSQLStoreTestConfig(t, testCase.dbType, testCase.dbHost, testCase.dbURL)
+			connStr, err := sqlstore.buildConnectionString()
+			require.Equal(t, testCase.err, err)
 
-		for _, testCase := range sqlStoreTestCases {
-			Convey(testCase.name, func() {
-				sqlstore := &SQLStore{}
-				sqlstore.Cfg = makeSQLStoreTestConfig(testCase.dbType, testCase.dbHost)
-				sqlstore.readConfig()
-
-				connStr, err := sqlstore.buildConnectionString()
-
-				So(err, ShouldBeNil)
-				for _, connSubStr := range testCase.connStrValues {
-					So(connStr, ShouldContainSubstring, connSubStr)
-				}
-			})
-		}
-	})
+			for _, connSubStr := range testCase.connStrValues {
+				require.Contains(t, connStr, connSubStr)
+			}
+		})
+	}
 }
 
-func makeSQLStoreTestConfig(dbType string, host string) *setting.Cfg {
+func makeSQLStoreTestConfig(t *testing.T, dbType, host, dbURL string) *setting.Cfg {
+	t.Helper()
+
 	cfg := setting.NewCfg()
 
 	sec, err := cfg.Raw.NewSection("database")
-	So(err, ShouldBeNil)
+	require.NoError(t, err)
 	_, err = sec.NewKey("type", dbType)
-	So(err, ShouldBeNil)
+	require.NoError(t, err)
 	_, err = sec.NewKey("host", host)
-	So(err, ShouldBeNil)
+	require.NoError(t, err)
+	_, err = sec.NewKey("url", dbURL)
+	require.NoError(t, err)
 	_, err = sec.NewKey("user", "user")
-	So(err, ShouldBeNil)
+	require.NoError(t, err)
 	_, err = sec.NewKey("name", "test_db")
-	So(err, ShouldBeNil)
+	require.NoError(t, err)
 	_, err = sec.NewKey("password", "pass")
-	So(err, ShouldBeNil)
+	require.NoError(t, err)
 
 	return cfg
 }

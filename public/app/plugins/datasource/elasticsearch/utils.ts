@@ -4,6 +4,7 @@ import {
   MetricAggregationWithInlineScript,
 } from './components/QueryEditor/MetricAggregationsEditor/aggregations';
 import { metricAggregationConfig } from './components/QueryEditor/MetricAggregationsEditor/utils';
+import { valid } from 'semver';
 
 export const describeMetric = (metric: MetricAggregation) => {
   if (!isMetricAggregationWithField(metric)) {
@@ -91,3 +92,28 @@ export const convertOrderByToMetricId = (orderBy: string): string | undefined =>
  */
 export const getScriptValue = (metric: MetricAggregationWithInlineScript) =>
   (typeof metric.settings?.script === 'object' ? metric.settings?.script?.inline : metric.settings?.script) || '';
+
+/**
+ * Coerces the a version string/number to a valid semver string.
+ * It takes care of also converting from the legacy format (numeric) to the new one.
+ * @param version
+ */
+export const coerceESVersion = (version: string | number): string => {
+  if (typeof version === 'string') {
+    return valid(version) || '5.0.0';
+  }
+
+  switch (version) {
+    case 2:
+      return '2.0.0';
+    case 56:
+      return '5.6.0';
+    case 60:
+      return '6.0.0';
+    case 70:
+      return '7.0.0';
+    case 5:
+    default:
+      return '5.0.0';
+  }
+};

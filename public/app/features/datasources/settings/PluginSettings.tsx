@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react';
-import _ from 'lodash';
+import { cloneDeep } from 'lodash';
 import {
   DataQuery,
   DataSourceApi,
@@ -31,7 +31,7 @@ export class PluginSettings extends PureComponent<Props> {
     super(props);
 
     this.scopeProps = {
-      ctrl: { datasourceMeta: props.dataSourceMeta, current: _.cloneDeep(props.dataSource) },
+      ctrl: { datasourceMeta: props.dataSourceMeta, current: cloneDeep(props.dataSource) },
       onModelChanged: this.onModelChanged,
     };
     this.onModelChanged = this.onModelChanged.bind(this);
@@ -57,7 +57,7 @@ export class PluginSettings extends PureComponent<Props> {
   componentDidUpdate(prevProps: Props) {
     const { plugin } = this.props;
     if (!plugin.components.ConfigEditor && this.props.dataSource !== prevProps.dataSource) {
-      this.scopeProps.ctrl.current = _.cloneDeep(this.props.dataSource);
+      this.scopeProps.ctrl.current = cloneDeep(this.props.dataSource);
 
       this.component?.digest();
     }

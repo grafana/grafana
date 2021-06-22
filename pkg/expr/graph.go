@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 
 	"gonum.org/v1/gonum/graph"
@@ -22,6 +21,17 @@ const (
 	// TypeDatasourceNode is a NodeType for datasource queries.
 	TypeDatasourceNode
 )
+
+func (nt NodeType) String() string {
+	switch nt {
+	case TypeCMDNode:
+		return "Expression"
+	case TypeDatasourceNode:
+		return "Datasource"
+	default:
+		return "Unknown"
+	}
+}
 
 // Node is a node in a Data Pipeline. Node is either a expression command or a datasource query.
 type Node interface {
@@ -52,7 +62,7 @@ func (dp *DataPipeline) execute(c context.Context, s *Service) (mathexp.Vars, er
 
 // BuildPipeline builds a graph of the nodes, and returns the nodes in an
 // executable order.
-func (s *Service) buildPipeline(req *backend.QueryDataRequest) (DataPipeline, error) {
+func (s *Service) buildPipeline(req *Request) (DataPipeline, error) {
 	graph, err := s.buildDependencyGraph(req)
 	if err != nil {
 		return nil, err
@@ -67,7 +77,7 @@ func (s *Service) buildPipeline(req *backend.QueryDataRequest) (DataPipeline, er
 }
 
 // buildDependencyGraph returns a dependency graph for a set of queries.
-func (s *Service) buildDependencyGraph(req *backend.QueryDataRequest) (*simple.DirectedGraph, error) {
+func (s *Service) buildDependencyGraph(req *Request) (*simple.DirectedGraph, error) {
 	graph, err := s.buildGraph(req)
 	if err != nil {
 		return nil, err
@@ -113,20 +123,26 @@ func buildNodeRegistry(g *simple.DirectedGraph) map[string]Node {
 }
 
 // buildGraph creates a new graph populated with nodes for every query.
-func (s *Service) buildGraph(req *backend.QueryDataRequest) (*simple.DirectedGraph, error) {
+func (s *Service) buildGraph(req *Request) (*simple.DirectedGraph, error) {
 	dp := simple.NewDirectedGraph()
 
 	for _, query := range req.Queries {
 		rawQueryProp := make(map[string]interface{})
-		err := json.Unmarshal(query.JSON, &rawQueryProp)
+		queryBytes, err := query.JSON.MarshalJSON()
 		if err != nil {
 			return nil, err
 		}
+		err = json.Unmarshal(queryBytes, &rawQueryProp)
+		if err != nil {
+			return nil, err
+		}
+
 		rn := &rawNode{
-			Query:     rawQueryProp,
-			RefID:     query.RefID,
-			TimeRange: query.TimeRange,
-			QueryType: query.QueryType,
+			Query:         rawQueryProp,
+			RefID:         query.RefID,
+			TimeRange:     query.TimeRange,
+			QueryType:     query.QueryType,
+			DatasourceUID: query.DatasourceUID,
 		}
 
 		dsName, err := rn.GetDatasourceName()
@@ -134,17 +150,14 @@ func (s *Service) buildGraph(req *backend.QueryDataRequest) (*simple.DirectedGra
 			return nil, err
 		}
 
-		dsUID, err := rn.GetDatasourceUid()
-		if err != nil {
-			return nil, err
-		}
+		dsUID := rn.DatasourceUID
 
 		var node graph.Node
 		switch {
 		case dsName == DatasourceName || dsUID == DatasourceUID:
 			node, err = buildCMDNode(dp, rn)
 		default: // If it's not an expression query, it's a data source query.
-			node, err = s.buildDSNode(dp, rn, req.PluginContext.OrgID)
+			node, err = s.buildDSNode(dp, rn, req.OrgId)
 		}
 		if err != nil {
 			return nil, err
@@ -177,6 +190,18 @@ func buildGraphEdges(dp *simple.DirectedGraph, registry map[string]Node) error {
 
 			if neededNode.ID() == cmdNode.ID() {
 				return fmt.Errorf("can not add self referencing node for var '%v' ", neededVar)
+			}
+
+			if cmdNode.CMDType == TypeClassicConditions {
+				if neededNode.NodeType() != TypeDatasourceNode {
+					return fmt.Errorf("only data source queries may be inputs to a classic condition, %v is a %v", neededVar, neededNode.NodeType())
+				}
+			}
+
+			if neededNode.NodeType() == TypeCMDNode {
+				if neededNode.(*CMDNode).CMDType == TypeClassicConditions {
+					return fmt.Errorf("classic conditions may not be the input for other expressions, but %v is the input for %v", neededVar, cmdNode.RefID())
+				}
 			}
 
 			edge := dp.NewEdge(neededNode, cmdNode)

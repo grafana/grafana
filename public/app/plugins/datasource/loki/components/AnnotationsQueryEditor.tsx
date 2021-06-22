@@ -1,9 +1,9 @@
 // Libraries
 import React, { memo } from 'react';
-
 // Types
 import { LokiQuery } from '../types';
-import { LokiQueryFieldForm } from './LokiQueryFieldForm';
+import { LokiQueryField } from './LokiQueryField';
+import { LokiOptionFields } from './LokiOptionFields';
 import LokiDatasource from '../datasource';
 
 interface Props {
@@ -17,12 +17,6 @@ interface Props {
 export const LokiAnnotationsQueryEditor = memo(function LokiAnnotationQueryEditor(props: Props) {
   const { expr, maxLines, instant, datasource, onChange } = props;
 
-  // Timerange to get existing labels from. Hard coding like this seems to be good enough right now.
-  const absolute = {
-    from: Date.now() - 10000,
-    to: Date.now(),
-  };
-
   const queryWithRefId: LokiQuery = {
     refId: '',
     expr,
@@ -31,13 +25,22 @@ export const LokiAnnotationsQueryEditor = memo(function LokiAnnotationQueryEdito
   };
   return (
     <div className="gf-form-group">
-      <LokiQueryFieldForm
+      <LokiQueryField
         datasource={datasource}
         query={queryWithRefId}
         onChange={onChange}
         onRunQuery={() => {}}
+        onBlur={() => {}}
         history={[]}
-        absoluteRange={absolute}
+        ExtraFieldElement={
+          <LokiOptionFields
+            queryType={queryWithRefId.instant ? 'instant' : 'range'}
+            lineLimitValue={queryWithRefId?.maxLines?.toString() || ''}
+            query={queryWithRefId}
+            onRunQuery={() => {}}
+            onChange={onChange}
+          />
+        }
       />
     </div>
   );

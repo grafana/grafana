@@ -7,7 +7,7 @@ describe('LocationService', () => {
 
       expect(locationService.getSearchObject()).toEqual({
         query1: false,
-        query2: 123,
+        query2: '123',
         query3: 'text',
       });
     });
@@ -34,6 +34,21 @@ describe('LocationService', () => {
       locationService.partial({ servers: ['A', 'B', 'C'] });
 
       expect(locationService.getLocation().search).toBe('?servers=A&servers=B&servers=C');
+    });
+
+    it('persist state', () => {
+      locationService.push({
+        pathname: '/d/123',
+        state: {
+          some: 'stateToPersist',
+        },
+      });
+      locationService.partial({ q: 1 });
+
+      expect(locationService.getLocation().search).toBe('?q=1');
+      expect(locationService.getLocation().state).toEqual({
+        some: 'stateToPersist',
+      });
     });
   });
 });

@@ -1,4 +1,3 @@
-import { TimeZone } from '@grafana/data';
 import { OrgRole } from '.';
 
 export interface OrgUser {
@@ -69,11 +68,6 @@ export interface UsersState {
   hasFetched: boolean;
 }
 
-export interface UserState {
-  orgId: number;
-  timeZone: TimeZone;
-}
-
 export interface UserSession {
   id: number;
   createdAt: string;
@@ -94,11 +88,11 @@ export interface UserOrg {
 }
 
 export interface UserAdminState {
-  user: UserDTO | null;
+  user?: UserDTO;
   sessions: UserSession[];
   orgs: UserOrg[];
   isLoading: boolean;
-  error?: UserAdminError | null;
+  error?: UserAdminError;
 }
 
 export interface UserAdminError {

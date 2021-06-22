@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import { defaultsDeep } from 'lodash';
 import { AnnotationQuery } from './types';
 
 export class CloudWatchAnnotationsQueryCtrl {
@@ -9,7 +9,7 @@ export class CloudWatchAnnotationsQueryCtrl {
   constructor($scope: any) {
     this.annotation = $scope.ctrl.annotation;
 
-    _.defaultsDeep(this.annotation, {
+    defaultsDeep(this.annotation, {
       namespace: '',
       metricName: '',
       expression: '',

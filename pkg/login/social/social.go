@@ -79,12 +79,13 @@ func newSocialBase(name string, config *oauth2.Config, info *setting.OAuthInfo) 
 	}
 }
 
-func NewOAuthService() {
+func NewOAuthService(cfg *setting.Cfg) {
 	setting.OAuthService = &setting.OAuther{}
 	setting.OAuthService.OAuthInfos = make(map[string]*setting.OAuthInfo)
 
 	for _, name := range allOauthes {
-		sec := setting.Raw.Section("auth." + name)
+		sec := cfg.Raw.Section("auth." + name)
+
 		info := &setting.OAuthInfo{
 			ClientId:            sec.Key("client_id").String(),
 			ClientSecret:        sec.Key("client_secret").String(),
@@ -107,6 +108,11 @@ func NewOAuthService() {
 			TlsSkipVerify:       sec.Key("tls_skip_verify_insecure").MustBool(),
 		}
 
+		// when empty_scopes parameter exists and is true, overwrite scope with empty value
+		if sec.Key("empty_scopes").MustBool() {
+			info.Scopes = []string{}
+		}
+
 		if !info.Enabled {
 			continue
 		}
@@ -125,7 +131,7 @@ func NewOAuthService() {
 				TokenURL:  info.TokenUrl,
 				AuthStyle: oauth2.AuthStyleAutoDetect,
 			},
-			RedirectURL: strings.TrimSuffix(setting.AppUrl, "/") + SocialBaseUrl + name,
+			RedirectURL: strings.TrimSuffix(cfg.AppURL, "/") + SocialBaseUrl + name,
 			Scopes:      info.Scopes,
 		}
 
@@ -160,8 +166,9 @@ func NewOAuthService() {
 		// AzureAD.
 		if name == "azuread" {
 			SocialMap["azuread"] = &SocialAzureAD{
-				SocialBase:    newSocialBase(name, &config, info),
-				allowedGroups: util.SplitString(sec.Key("allowed_groups").String()),
+				SocialBase:        newSocialBase(name, &config, info),
+				allowedGroups:     util.SplitString(sec.Key("allowed_groups").String()),
+				autoAssignOrgRole: cfg.AutoAssignOrgRole,
 			}
 		}
 
@@ -198,17 +205,17 @@ func NewOAuthService() {
 				ClientID:     info.ClientId,
 				ClientSecret: info.ClientSecret,
 				Endpoint: oauth2.Endpoint{
-					AuthURL:   setting.GrafanaComUrl + "/oauth2/authorize",
-					TokenURL:  setting.GrafanaComUrl + "/api/oauth2/token",
+					AuthURL:   cfg.GrafanaComURL + "/oauth2/authorize",
+					TokenURL:  cfg.GrafanaComURL + "/api/oauth2/token",
 					AuthStyle: oauth2.AuthStyleInHeader,
 				},
-				RedirectURL: strings.TrimSuffix(setting.AppUrl, "/") + SocialBaseUrl + name,
+				RedirectURL: strings.TrimSuffix(cfg.AppURL, "/") + SocialBaseUrl + name,
 				Scopes:      info.Scopes,
 			}
 
 			SocialMap[grafanaCom] = &SocialGrafanaCom{
 				SocialBase:           newSocialBase(name, &config, info),
-				url:                  setting.GrafanaComUrl,
+				url:                  cfg.GrafanaComURL,
 				allowedOrganizations: util.SplitString(sec.Key("allowed_organizations").String()),
 			}
 		}

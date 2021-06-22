@@ -22,7 +22,14 @@ type DashboardGuardian interface {
 	CanAdmin() (bool, error)
 	HasPermission(permission models.PermissionType) (bool, error)
 	CheckPermissionBeforeUpdate(permission models.PermissionType, updatePermissions []*models.DashboardAcl) (bool, error)
+
+	// GetAcl returns ACL.
 	GetAcl() ([]*models.DashboardAclInfoDTO, error)
+
+	// GetACLWithoutDuplicates returns ACL and strips any permission
+	// that already has an inherited permission with higher or equal
+	// permission.
+	GetACLWithoutDuplicates() ([]*models.DashboardAclInfoDTO, error)
 	GetHiddenACL(*setting.Cfg) ([]*models.DashboardAcl, error)
 }
 
@@ -202,6 +209,42 @@ func (g *dashboardGuardianImpl) GetAcl() ([]*models.DashboardAclInfoDTO, error) 
 	return g.acl, nil
 }
 
+func (g *dashboardGuardianImpl) GetACLWithoutDuplicates() ([]*models.DashboardAclInfoDTO, error) {
+	acl, err := g.GetAcl()
+	if err != nil {
+		return nil, err
+	}
+
+	nonInherited := []*models.DashboardAclInfoDTO{}
+	inherited := []*models.DashboardAclInfoDTO{}
+	for _, aclItem := range acl {
+		if aclItem.Inherited {
+			inherited = append(inherited, aclItem)
+		} else {
+			nonInherited = append(nonInherited, aclItem)
+		}
+	}
+
+	result := []*models.DashboardAclInfoDTO{}
+	for _, nonInheritedAclItem := range nonInherited {
+		duplicate := false
+		for _, inheritedAclItem := range inherited {
+			if nonInheritedAclItem.IsDuplicateOf(inheritedAclItem) && nonInheritedAclItem.Permission <= inheritedAclItem.Permission {
+				duplicate = true
+				break
+			}
+		}
+
+		if !duplicate {
+			result = append(result, nonInheritedAclItem)
+		}
+	}
+
+	result = append(inherited, result...)
+
+	return result, nil
+}
+
 func (g *dashboardGuardianImpl) getTeams() ([]*models.TeamDTO, error) {
 	if g.teams != nil {
 		return g.teams, nil
@@ -288,6 +331,10 @@ func (g *FakeDashboardGuardian) CheckPermissionBeforeUpdate(permission models.Pe
 
 func (g *FakeDashboardGuardian) GetAcl() ([]*models.DashboardAclInfoDTO, error) {
 	return g.GetAclValue, nil
+}
+
+func (g *FakeDashboardGuardian) GetACLWithoutDuplicates() ([]*models.DashboardAclInfoDTO, error) {
+	return g.GetAcl()
 }
 
 func (g *FakeDashboardGuardian) GetHiddenACL(cfg *setting.Cfg) ([]*models.DashboardAcl, error) {

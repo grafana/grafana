@@ -5,6 +5,7 @@
   max-width: 100%;
   line-height: 22px;
   background-color: $input-bg;
+  border: 1px solid $input-border-color;
 
   input {
     display: inline-block;

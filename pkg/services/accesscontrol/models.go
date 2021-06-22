@@ -42,6 +42,11 @@ func (p RoleDTO) Role() Role {
 const (
 	// Permission actions
 
+	// Actions
+	// Provisioning actions
+	ActionProvisioningReload = "provisioning:reload"
+
+	// Users actions
 	ActionUsersRead     = "users:read"
 	ActionUsersWrite    = "users:write"
 	ActionUsersTeamRead = "users.teams:read"
@@ -63,9 +68,36 @@ const (
 	ActionUsersQuotasList        = "users.quotas:list"
 	ActionUsersQuotasUpdate      = "users.quotas:update"
 
+	// Org actions
+	ActionOrgUsersRead       = "org.users:read"
+	ActionOrgUsersAdd        = "org.users:add"
+	ActionOrgUsersRemove     = "org.users:remove"
+	ActionOrgUsersRoleUpdate = "org.users.role:update"
+
+	// LDAP actions
+	ActionLDAPUsersRead    = "ldap.user:read"
+	ActionLDAPUsersSync    = "ldap.user:sync"
+	ActionLDAPStatusRead   = "ldap.status:read"
+	ActionLDAPConfigReload = "ldap.config:reload"
+
+	// Server actions
+	ActionServerStatsRead = "server.stats:read"
+
+	// Settings actions
+	ActionSettingsRead = "settings:read"
+
 	// Global Scopes
-	ScopeUsersAll  = "users:*"
+	ScopeGlobalUsersAll = "global:users:*"
+
+	// Users scopes
 	ScopeUsersSelf = "users:self"
+	ScopeUsersAll  = "users:*"
+
+	// Settings scope
+	ScopeSettingsAll = "settings:**"
+
+	// Services Scopes
+	ScopeServicesAll = "service:*"
 )
 
 const RoleGrafanaAdmin = "Grafana Admin"

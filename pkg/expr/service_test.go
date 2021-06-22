@@ -19,9 +19,10 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// nolint:staticcheck // plugins.DataPlugin deprecated
 func TestService(t *testing.T) {
 	dsDF := data.NewFrame("test",
-		data.NewField("time", nil, []*time.Time{utp(1)}),
+		data.NewField("time", nil, []time.Time{time.Unix(1, 0)}),
 		data.NewField("value", nil, []*float64{fp(2)}))
 
 	dataSvc := tsdb.NewService()
@@ -40,7 +41,7 @@ func TestService(t *testing.T) {
 		return nil
 	})
 
-	queries := []backend.DataQuery{
+	queries := []Query{
 		{
 			RefID: "A",
 			JSON:  json.RawMessage(`{ "datasource": "test", "datasourceId": 1, "orgId": 1, "intervalMs": 1000, "maxDataPoints": 1000 }`),
@@ -51,7 +52,7 @@ func TestService(t *testing.T) {
 		},
 	}
 
-	req := &backend.QueryDataRequest{Queries: queries}
+	req := &Request{Queries: queries}
 
 	pl, err := s.BuildPipeline(req)
 	require.NoError(t, err)
@@ -60,7 +61,7 @@ func TestService(t *testing.T) {
 	require.NoError(t, err)
 
 	bDF := data.NewFrame("",
-		data.NewField("Time", nil, []*time.Time{utp(1)}),
+		data.NewField("Time", nil, []time.Time{time.Unix(1, 0)}),
 		data.NewField("B", nil, []*float64{fp(4)}))
 	bDF.RefID = "B"
 
@@ -89,11 +90,6 @@ func TestService(t *testing.T) {
 	}
 }
 
-func utp(sec int64) *time.Time {
-	t := time.Unix(sec, 0)
-	return &t
-}
-
 func fp(f float64) *float64 {
 	return &f
 }
@@ -102,6 +98,7 @@ type mockEndpoint struct {
 	Frames data.Frames
 }
 
+// nolint:staticcheck // plugins.DataQueryResult deprecated
 func (me *mockEndpoint) DataQuery(ctx context.Context, ds *models.DataSource, query plugins.DataQuery) (
 	plugins.DataResponse, error) {
 	return plugins.DataResponse{
@@ -115,8 +112,4 @@ func (me *mockEndpoint) DataQuery(ctx context.Context, ds *models.DataSource, qu
 
 type fakeBackendPM struct {
 	backendplugin.Manager
-}
-
-func (pm fakeBackendPM) GetDataPlugin(string) interface{} {
-	return nil
 }

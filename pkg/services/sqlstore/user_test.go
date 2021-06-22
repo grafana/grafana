@@ -27,7 +27,7 @@ func TestUserDataAccess(t *testing.T) {
 		require.NoError(t, err)
 
 		query := models.GetUserByIdQuery{Id: user.Id}
-		err = GetUserById(&query)
+		err = GetUserById(context.Background(), &query)
 		require.Nil(t, err)
 
 		require.Equal(t, query.Result.Email, "usertest@test.com")
@@ -37,7 +37,7 @@ func TestUserDataAccess(t *testing.T) {
 		require.False(t, query.Result.IsDisabled)
 
 		query = models.GetUserByIdQuery{Id: user.Id}
-		err = GetUserById(&query)
+		err = GetUserById(context.Background(), &query)
 		require.Nil(t, err)
 
 		require.Equal(t, query.Result.Email, "usertest@test.com")
@@ -60,7 +60,7 @@ func TestUserDataAccess(t *testing.T) {
 		require.Nil(t, err)
 
 		query := models.GetUserByIdQuery{Id: user.Id}
-		err = GetUserById(&query)
+		err = GetUserById(context.Background(), &query)
 		require.Nil(t, err)
 
 		require.Equal(t, query.Result.Email, "usertest@test.com")
@@ -94,7 +94,7 @@ func TestUserDataAccess(t *testing.T) {
 		require.Nil(t, err)
 
 		query := models.GetUserByIdQuery{Id: user.Id}
-		err = GetUserById(&query)
+		err = GetUserById(context.Background(), &query)
 		require.Nil(t, err)
 
 		require.Equal(t, query.Result.Email, "usertest@test.com")
@@ -346,14 +346,14 @@ func TestUserDataAccess(t *testing.T) {
 		ss.CacheService.Flush()
 
 		query3 := &models.GetSignedInUserQuery{OrgId: users[1].OrgId, UserId: users[1].Id}
-		err = ss.GetSignedInUserWithCache(query3)
+		err = ss.GetSignedInUserWithCacheCtx(context.Background(), query3)
 		require.Nil(t, err)
 		require.NotNil(t, query3.Result)
 		require.Equal(t, query3.OrgId, users[1].OrgId)
 		err = SetUsingOrg(&models.SetUsingOrgCommand{UserId: users[1].Id, OrgId: users[0].OrgId})
 		require.Nil(t, err)
 		query4 := &models.GetSignedInUserQuery{OrgId: 0, UserId: users[1].Id}
-		err = ss.GetSignedInUserWithCache(query4)
+		err = ss.GetSignedInUserWithCacheCtx(context.Background(), query4)
 		require.Nil(t, err)
 		require.NotNil(t, query4.Result)
 		require.Equal(t, query4.Result.OrgId, users[0].OrgId)
@@ -363,7 +363,7 @@ func TestUserDataAccess(t *testing.T) {
 		require.True(t, found)
 
 		disableCmd := models.BatchDisableUsersCommand{
-			UserIds:    []int64{1, 2, 3, 4, 5},
+			UserIds:    []int64{users[0].Id, users[1].Id, users[2].Id, users[3].Id, users[4].Id},
 			IsDisabled: true,
 		}
 
@@ -406,7 +406,7 @@ func TestUserDataAccess(t *testing.T) {
 
 	t.Run("Testing DB - enable all users", func(t *testing.T) {
 
-		createFiveTestUsers(t, ss, func(i int) *models.CreateUserCommand {
+		users := createFiveTestUsers(t, ss, func(i int) *models.CreateUserCommand {
 			return &models.CreateUserCommand{
 				Email:      fmt.Sprint("user", i, "@test.com"),
 				Name:       fmt.Sprint("user", i),
@@ -416,7 +416,7 @@ func TestUserDataAccess(t *testing.T) {
 		})
 
 		disableCmd := models.BatchDisableUsersCommand{
-			UserIds:    []int64{1, 2, 3, 4, 5},
+			UserIds:    []int64{users[0].Id, users[1].Id, users[2].Id, users[3].Id, users[4].Id},
 			IsDisabled: false,
 		}
 
@@ -607,12 +607,12 @@ func TestUserDataAccess(t *testing.T) {
 		require.Nil(t, err)
 
 		// Cannot make themselves a non-admin
-		updatePermsError := ss.UpdateUserPermissions(1, false)
+		updatePermsError := ss.UpdateUserPermissions(user.Id, false)
 
 		require.Equal(t, updatePermsError, models.ErrLastGrafanaAdmin)
 
 		query := models.GetUserByIdQuery{Id: user.Id}
-		getUserError := GetUserById(&query)
+		getUserError := GetUserById(context.Background(), &query)
 		require.Nil(t, getUserError)
 
 		require.True(t, query.Result.IsAdmin)

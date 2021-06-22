@@ -1,34 +1,9 @@
 import React from 'react';
-import { number, text, boolean } from '@storybook/addon-knobs';
+import { Meta, Story } from '@storybook/react';
 import { action } from '@storybook/addon-actions';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import mdx from './CodeEditor.mdx';
 import { CodeEditor } from './CodeEditorLazy';
-
-const getKnobs = () => {
-  const CONTAINER_GROUP = 'Container options';
-  // ---
-  const containerWidth = number(
-    'Container width',
-    300,
-    {
-      range: true,
-      min: 100,
-      max: 500,
-      step: 10,
-    },
-    CONTAINER_GROUP
-  );
-
-  return {
-    containerWidth,
-    text: text('Body', 'SELECT * FROM table LIMIT 10'),
-    language: text('Language', 'sql'),
-    showLineNumbers: boolean('Show line numbers', false),
-    showMiniMap: boolean('Show mini map', false),
-    readOnly: boolean('readonly', false),
-  };
-};
 
 export default {
   title: 'CodeEditor',
@@ -38,26 +13,50 @@ export default {
     docs: {
       page: mdx,
     },
+    controls: {
+      exclude: ['monacoOptions', 'onEditorDidMount', 'onBlur', 'onSave', 'getSuggestions', 'showLineNumbers'],
+    },
   },
-};
+  argTypes: {
+    width: { control: { type: 'range', min: 100, max: 500, step: 10 } },
+    height: { control: { type: 'range', min: 100, max: 800, step: 10 } },
+    language: { control: { type: 'select' }, options: ['sql', 'json'] },
+  },
+} as Meta;
 
-export const basic = () => {
-  const { containerWidth, text, language, showLineNumbers, showMiniMap, readOnly } = getKnobs();
+export const Basic: Story = (args) => {
   return (
     <CodeEditor
-      width={containerWidth}
-      height={400}
-      value={text}
-      language={language}
+      width={args.width}
+      height={args.height}
+      value={args.value}
+      language={args.language}
       onBlur={(text: string) => {
         action('code blur')(text);
       }}
       onSave={(text: string) => {
         action('code saved')(text);
       }}
-      showLineNumbers={showLineNumbers}
-      showMiniMap={showMiniMap}
-      readOnly={readOnly}
+      showLineNumbers={args.showLineNumbers}
+      showMiniMap={args.showMiniMap}
+      readOnly={args.readOnly}
     />
   );
+};
+Basic.args = {
+  width: 300,
+  height: 400,
+  value: `CREATE TABLE Persons (
+  PersonID int,
+  LastName varchar(255),
+  FirstName varchar(255),
+  Address varchar(255),
+  City varchar(255)
+);
+SELECT * FROM Persons LIMIT 10 '
+  `,
+  language: 'sql',
+  showLineNumbers: false,
+  showMiniMap: false,
+  readOnly: false,
 };

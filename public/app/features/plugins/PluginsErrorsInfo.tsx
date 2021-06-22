@@ -5,24 +5,24 @@ import { StoreState } from '../../types';
 import { getAllPluginsErrors } from './state/selectors';
 import { loadPlugins, loadPluginsErrors } from './state/actions';
 import useAsync from 'react-use/lib/useAsync';
-import { connect, MapDispatchToProps, MapStateToProps } from 'react-redux';
+import { connect, ConnectedProps } from 'react-redux';
 import { hot } from 'react-hot-loader';
-import { PluginError, PluginErrorCode, PluginSignatureStatus } from '@grafana/data';
+import { PluginErrorCode, PluginSignatureStatus } from '@grafana/data';
 import { css } from '@emotion/css';
 
-interface ConnectedProps {
-  errors: PluginError[];
-}
+const mapStateToProps = (state: StoreState) => ({
+  errors: getAllPluginsErrors(state.plugins),
+});
 
-interface DispatchProps {
-  loadPluginsErrors: typeof loadPluginsErrors;
-}
+const mapDispatchToProps = {
+  loadPluginsErrors,
+};
 
 interface OwnProps {
   children?: React.ReactNode;
 }
-
-type PluginsErrorsInfoProps = ConnectedProps & DispatchProps & OwnProps;
+const connector = connect(mapStateToProps, mapDispatchToProps);
+type PluginsErrorsInfoProps = ConnectedProps<typeof connector> & OwnProps;
 
 export const PluginsErrorsInfoUnconnected: React.FC<PluginsErrorsInfoProps> = ({
   loadPluginsErrors,
@@ -47,16 +47,8 @@ export const PluginsErrorsInfoUnconnected: React.FC<PluginsErrorsInfoProps> = ({
     >
       <div>
         <p>
-          We have encountered{' '}
-          <a
-            href="https://grafana.com/docs/grafana/latest/developers/plugins/backend/"
-            target="_blank"
-            rel="noreferrer"
-          >
-            data source backend plugins
-          </a>{' '}
-          that are unsigned. Grafana Labs cannot guarantee the integrity of unsigned plugins and recommends using signed
-          plugins only.
+          Unsigned plugins were found during plugin initialization. Grafana Labs cannot guarantee the integrity of these
+          plugins. We recommend only using signed plugins.
         </p>
         The following plugins are disabled and not shown in the list below:
         <List
@@ -86,16 +78,6 @@ export const PluginsErrorsInfoUnconnected: React.FC<PluginsErrorsInfoProps> = ({
       </div>
     </InfoBox>
   );
-};
-
-const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (state: StoreState) => {
-  return {
-    errors: getAllPluginsErrors(state.plugins),
-  };
-};
-
-const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
-  loadPluginsErrors,
 };
 
 export const PluginsErrorsInfo = hot(module)(

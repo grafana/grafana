@@ -14,6 +14,7 @@ func TestExecutor_parseToAnnotations(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, d.TimeSeries, 3)
 
+	//nolint: staticcheck // plugins.DataPlugin deprecated
 	res := &plugins.DataQueryResult{Meta: simplejson.New(), RefID: "annotationQuery"}
 	query := &cloudMonitoringTimeSeriesFilter{}
 
@@ -30,6 +31,7 @@ func TestExecutor_parseToAnnotations(t *testing.T) {
 }
 
 func TestCloudMonitoringExecutor_parseToAnnotations_emptyTimeSeries(t *testing.T) {
+	//nolint: staticcheck // plugins.DataPlugin deprecated
 	res := &plugins.DataQueryResult{Meta: simplejson.New(), RefID: "annotationQuery"}
 	query := &cloudMonitoringTimeSeriesFilter{}
 
@@ -46,6 +48,7 @@ func TestCloudMonitoringExecutor_parseToAnnotations_emptyTimeSeries(t *testing.T
 }
 
 func TestCloudMonitoringExecutor_parseToAnnotations_noPointsInSeries(t *testing.T) {
+	//nolint: staticcheck // plugins.DataPlugin deprecated
 	res := &plugins.DataQueryResult{Meta: simplejson.New(), RefID: "annotationQuery"}
 	query := &cloudMonitoringTimeSeriesFilter{}
 

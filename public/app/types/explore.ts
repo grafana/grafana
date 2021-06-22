@@ -6,8 +6,6 @@ import {
   DataQueryRequest,
   DataSourceApi,
   HistoryItem,
-  LogLevel,
-  LogsDedupStrategy,
   LogsModel,
   PanelData,
   QueryHint,
@@ -120,16 +118,6 @@ export interface ExploreItemState {
   queryKeys: string[];
 
   /**
-   * Current logs deduplication strategy
-   */
-  dedupStrategy: LogsDedupStrategy;
-
-  /**
-   * Currently hidden log series
-   */
-  hiddenLogLevels?: LogLevel[];
-
-  /**
    * How often query should be refreshed
    */
   refreshInterval?: string;
@@ -161,6 +149,13 @@ export interface ExploreItemState {
   showTable?: boolean;
   showTrace?: boolean;
   showNodeGraph?: boolean;
+
+  /**
+   * We are using caching to store query responses of queries run from logs navigation.
+   * In logs navigation, we do pagination and we don't want our users to unnecessarily run the same queries that they've run just moments before.
+   * We are currently caching last 5 query responses.
+   */
+  cache: Array<{ key: string; value: PanelData }>;
 }
 
 export interface ExploreUpdateState {

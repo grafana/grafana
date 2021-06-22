@@ -1,8 +1,7 @@
 import React, { FC, ReactNode, useCallback, useEffect, useState } from 'react';
 import { css, cx } from '@emotion/css';
-import _ from 'lodash';
-import { GrafanaTheme } from '@grafana/data';
-import { Counter, Icon, useStyles } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import { Counter, Icon, useStyles2 } from '@grafana/ui';
 import { PANEL_EDITOR_UI_STATE_STORAGE_KEY } from './state/reducers';
 import { useLocalStorage } from 'react-use';
 import { selectors } from '@grafana/e2e-selectors';
@@ -25,7 +24,7 @@ export const OptionsPaneCategory: FC<OptionsPaneCategoryProps> = React.memo(
       isExpanded: isOpenDefault !== false,
     });
     const [isExpanded, setIsExpanded] = useState(savedState.isExpanded);
-    const styles = useStyles(getStyles);
+    const styles = useStyles2(getStyles);
 
     useEffect(() => {
       if (!isExpanded && forceOpen && forceOpen > 0) {
@@ -55,7 +54,6 @@ export const OptionsPaneCategory: FC<OptionsPaneCategoryProps> = React.memo(
     const boxStyles = cx(
       {
         [styles.box]: true,
-        [styles.boxExpanded]: isExpanded,
         [styles.boxNestedExpanded]: isNested && isExpanded,
       },
       className,
@@ -72,7 +70,11 @@ export const OptionsPaneCategory: FC<OptionsPaneCategoryProps> = React.memo(
     });
 
     return (
-      <div className={boxStyles} data-testid="options-category">
+      <div
+        className={boxStyles}
+        data-testid="options-category"
+        aria-label={selectors.components.OptionsGroup.group(id)}
+      >
         <div className={headerStyles} onClick={onToggle} aria-label={selectors.components.OptionsGroup.toggle(id)}>
           <div className={cx(styles.toggle, 'editor-options-group-toggle')}>
             <Icon name={isExpanded ? 'angle-down' : 'angle-right'} />
@@ -87,23 +89,17 @@ export const OptionsPaneCategory: FC<OptionsPaneCategoryProps> = React.memo(
   }
 );
 
-const getStyles = (theme: GrafanaTheme) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     box: css`
-      border-bottom: 1px solid ${theme.v2.palette.border.weak};
-      &:last-child {
-        border-bottom: none;
-      }
-    `,
-    boxExpanded: css`
-      border-bottom: 0;
+      border-top: 1px solid ${theme.colors.border.weak};
     `,
     boxNestedExpanded: css`
-      margin-bottom: ${theme.spacing.formSpacingBase * 2}px;
+      margin-bottom: ${theme.spacing(2)};
     `,
     toggle: css`
-      color: ${theme.v2.palette.text.secondary};
-      margin-right: ${theme.spacing.sm};
+      color: ${theme.colors.text.secondary};
+      margin-right: ${theme.spacing(1)};
     `,
     title: css`
       flex-grow: 1;
@@ -113,22 +109,22 @@ const getStyles = (theme: GrafanaTheme) => {
       display: flex;
       cursor: pointer;
       align-items: baseline;
-      padding: ${theme.v2.spacing(1)};
-      color: ${theme.v2.palette.text.primary};
-      font-weight: ${theme.v2.typography.fontWeightMedium};
+      padding: ${theme.spacing(1)};
+      color: ${theme.colors.text.primary};
+      font-weight: ${theme.typography.fontWeightMedium};
 
       &:hover {
-        background: ${theme.v2.palette.emphasize(theme.v2.palette.background.primary, 0.03)};
+        background: ${theme.colors.emphasize(theme.colors.background.primary, 0.03)};
       }
     `,
     headerExpanded: css`
-      color: ${theme.v2.palette.text.primary};
+      color: ${theme.colors.text.primary};
     `,
     headerNested: css`
-      padding: ${theme.v2.spacing(0.5, 0, 0.5, 0)};
+      padding: ${theme.spacing(0.5, 0, 0.5, 0)};
     `,
     body: css`
-      padding: ${theme.v2.spacing(1, 2, 1, 4)};
+      padding: ${theme.spacing(1, 2, 1, 4)};
     `,
     bodyNested: css`
       position: relative;
@@ -140,7 +136,7 @@ const getStyles = (theme: GrafanaTheme) => {
         left: 8px;
         width: 1px;
         height: 100%;
-        background: ${theme.v2.palette.border.weak};
+        background: ${theme.colors.border.weak};
       }
     `,
   };

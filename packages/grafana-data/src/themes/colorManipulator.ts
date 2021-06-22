@@ -175,12 +175,13 @@ export function recomposeColor(color: DecomposeColor) {
  * Formula: https://www.w3.org/TR/WCAG20-TECHS/G17.html#G17-tests
  * @param foreground - CSS color, i.e. one of: #nnn, #nnnnnn, rgb(), rgba(), hsl(), hsla()
  * @param background - CSS color, i.e. one of: #nnn, #nnnnnn, rgb(), rgba(), hsl(), hsla()
+ * @param canvas - A CSS color that alpha based backgrounds blends into
  * @returns A contrast ratio value in the range 0 - 21.
  * @beta
  */
-export function getContrastRatio(foreground: string, background: string) {
+export function getContrastRatio(foreground: string, background: string, canvas?: string) {
   const lumA = getLuminance(foreground);
-  const lumB = getLuminance(background);
+  const lumB = getLuminance(background, canvas);
   return (Math.max(lumA, lumB) + 0.05) / (Math.min(lumA, lumB) + 0.05);
 }
 
@@ -190,13 +191,23 @@ export function getContrastRatio(foreground: string, background: string) {
  *
  * Formula: https://www.w3.org/TR/WCAG20-TECHS/G17.html#G17-tests
  * @param color - CSS color, i.e. one of: #nnn, #nnnnnn, rgb(), rgba(), hsl(), hsla(), color()
+ * @param background - CSS color that needs to be take in to account to calculate luminance for colors with opacity
  * @returns The relative brightness of the color in the range 0 - 1
  * @beta
  */
-export function getLuminance(color: string) {
+export function getLuminance(color: string, background?: string) {
   const parts = decomposeColor(color);
 
   let rgb = parts.type === 'hsl' ? decomposeColor(hslToRgb(color)).values : parts.values;
+
+  if (background && parts.type === 'rgba') {
+    const backgroundParts = decomposeColor(background);
+    const alpha = rgb[3];
+    rgb[0] = rgb[0] * alpha + backgroundParts.values[0] * (1 - alpha);
+    rgb[1] = rgb[1] * alpha + backgroundParts.values[1] * (1 - alpha);
+    rgb[2] = rgb[2] * alpha + backgroundParts.values[2] * (1 - alpha);
+  }
+
   const rgbNumbers = rgb.map((val: any) => {
     if (parts.type !== 'color') {
       val /= 255; // normalized
@@ -229,12 +240,29 @@ export function emphasize(color: string, coefficient = 0.15) {
  * @beta
  */
 export function alpha(color: string, value: number) {
-  const parts = decomposeColor(color);
   value = clamp(value);
 
-  if (parts.type === 'rgb' || parts.type === 'hsl') {
-    parts.type += 'a';
+  // hex 6, hex 8 (w/alpha)
+  if (color[0] === '#') {
+    if (color.length === 9) {
+      color = color.substring(0, 7);
+    }
+
+    return color + Math.round(value * 255).toString(16);
   }
+  // rgb(, hsl(
+  else if (color[3] === '(') {
+    // rgb() and hsl() do not require the "a" suffix to accept alpha values in modern browsers:
+    // https://developer.mozilla.org/en-US/docs/Web/CSS/color_value/rgb()#accepts_alpha_value
+    return color.replace(')', `, ${value})`);
+  }
+  // rgba(, hsla(
+  else if (color[4] === '(') {
+    return color.substring(0, color.lastIndexOf(',')) + `, ${value})`;
+  }
+
+  const parts = decomposeColor(color);
+
   if (parts.type === 'color') {
     parts.values[3] = `/${value}`;
   } else {

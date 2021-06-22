@@ -6,19 +6,21 @@ import { useAsync } from 'react-use';
 import { selectors as editorSelectors } from '@grafana/e2e-selectors';
 import { Input, InlineFieldRow, InlineField, Select, TextArea, InlineSwitch } from '@grafana/ui';
 import { QueryEditorProps, SelectableValue } from '@grafana/data';
-import { StreamingClientEditor, ManualEntryEditor, RandomWalkEditor } from './components';
+import { StreamingClientEditor, RandomWalkEditor } from './components';
 
 // Types
 import { TestDataDataSource } from './datasource';
-import { TestDataQuery, Scenario, NodesQuery } from './types';
+import { TestDataQuery, Scenario, NodesQuery, CSVWave } from './types';
 import { PredictablePulseEditor } from './components/PredictablePulseEditor';
-import { CSVWaveEditor } from './components/CSVWaveEditor';
+import { CSVWavesEditor } from './components/CSVWaveEditor';
 import { defaultCSVWaveQuery, defaultPulseQuery, defaultQuery } from './constants';
 import { GrafanaLiveEditor } from './components/GrafanaLiveEditor';
 import { NodeGraphEditor } from './components/NodeGraphEditor';
 import { defaultStreamQuery } from './runStreams';
+import { CSVFileEditor } from './components/CSVFileEditor';
+import { CSVContentEditor } from './components/CSVContentEditor';
 
-const showLabelsFor = ['random_walk', 'predictable_pulse', 'predictable_csv_wave'];
+const showLabelsFor = ['random_walk', 'predictable_pulse'];
 const endpoints = [
   { value: 'datasources', label: 'Data Sources' },
   { value: 'search', label: 'Search' },
@@ -38,6 +40,20 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
   query = { ...defaultQuery, ...query };
 
   const { loading, value: scenarioList } = useAsync<Scenario[]>(async () => {
+    // migrate manual_entry (unusable since 7, removed in 8)
+    if (query.scenarioId === 'manual_entry' && (query as any).points) {
+      let csvContent = 'Time,Value\n';
+      for (const point of (query as any).points) {
+        csvContent += `${point[1]},${point[0]}\n`;
+      }
+      onChange({
+        refId: query.refId,
+        datasource: query.datasource,
+        scenarioId: 'csv_content',
+        csvContent,
+      });
+    }
+
     return datasource.getScenarios();
   }, []);
 
@@ -114,7 +130,7 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
       newValue = Number(value);
     }
 
-    onUpdate({ ...query, [field]: { ...query[field as keyof TestDataQuery], [name]: newValue } });
+    onUpdate({ ...query, [field]: { ...(query as any)[field], [name]: newValue } });
   };
 
   const onEndPointChange = ({ value }: SelectableValue) => {
@@ -123,7 +139,10 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
 
   const onStreamClientChange = onFieldChange('stream');
   const onPulseWaveChange = onFieldChange('pulseWave');
-  const onCSVWaveChange = onFieldChange('csvWave');
+
+  const onCSVWaveChange = (csvWave?: CSVWave[]) => {
+    onUpdate({ ...query, csvWave });
+  };
 
   const options = useMemo(
     () =>
@@ -202,10 +221,11 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
         )}
       </InlineFieldRow>
 
-      {scenarioId === 'manual_entry' && <ManualEntryEditor onChange={onUpdate} query={query} onRunQuery={onRunQuery} />}
       {scenarioId === 'random_walk' && <RandomWalkEditor onChange={onInputChange} query={query} />}
       {scenarioId === 'streaming_client' && <StreamingClientEditor onChange={onStreamClientChange} query={query} />}
       {scenarioId === 'live' && <GrafanaLiveEditor onChange={onUpdate} query={query} />}
+      {scenarioId === 'csv_file' && <CSVFileEditor onChange={onUpdate} query={query} />}
+      {scenarioId === 'csv_content' && <CSVContentEditor onChange={onUpdate} query={query} />}
       {scenarioId === 'logs' && (
         <InlineFieldRow>
           <InlineField label="Lines" labelWidth={14}>
@@ -248,7 +268,7 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
       )}
 
       {scenarioId === 'predictable_pulse' && <PredictablePulseEditor onChange={onPulseWaveChange} query={query} />}
-      {scenarioId === 'predictable_csv_wave' && <CSVWaveEditor onChange={onCSVWaveChange} query={query} />}
+      {scenarioId === 'predictable_csv_wave' && <CSVWavesEditor onChange={onCSVWaveChange} waves={query.csvWave} />}
       {scenarioId === 'node_graph' && (
         <NodeGraphEditor onChange={(val: NodesQuery) => onChange({ ...query, nodes: val })} query={query} />
       )}

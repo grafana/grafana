@@ -1,7 +1,7 @@
 const fs = require('fs-extra');
 const path = require('path');
 
-const MonacoWebpackPlugin = require('monaco-editor-webpack-plugin');
+const CopyWebpackPlugin = require('copy-webpack-plugin');
 const getBabelConfig = require('./babel.config');
 
 class CopyUniconsPlugin {
@@ -24,7 +24,7 @@ function shouldExclude(filename) {
     return false;
   }
 
-  const packagesToProcessbyBabel = ['debug', 'lru-cache', 'yallist', 'react-hook-form', 'rc-trigger', 'monaco-editor'];
+  const packagesToProcessbyBabel = ['debug', 'lru-cache', 'yallist', 'react-hook-form', 'rc-trigger'];
   for (const package of packagesToProcessbyBabel) {
     if (filename.indexOf(`node_modules/${package}`) > 0) {
       return false;
@@ -75,51 +75,23 @@ module.exports = {
   },
   plugins: [
     new CopyUniconsPlugin(),
-    new MonacoWebpackPlugin({
-      // available options are documented at https://github.com/Microsoft/monaco-editor-webpack-plugin#options
-      filename: 'monaco-[name].worker.js',
-      languages: ['json', 'markdown', 'html', 'sql', 'mysql', 'pgsql', 'javascript'],
-      features: [
-        '!accessibilityHelp',
-        'bracketMatching',
-        'caretOperations',
-        '!clipboard',
-        '!codeAction',
-        '!codelens',
-        '!colorDetector',
-        '!comment',
-        '!contextmenu',
-        '!coreCommands',
-        '!cursorUndo',
-        '!dnd',
-        '!find',
-        'folding',
-        '!fontZoom',
-        '!format',
-        '!gotoError',
-        '!gotoLine',
-        '!gotoSymbol',
-        '!hover',
-        '!iPadShowKeyboard',
-        '!inPlaceReplace',
-        '!inspectTokens',
-        '!linesOperations',
-        '!links',
-        '!multicursor',
-        'parameterHints',
-        '!quickCommand',
-        '!quickOutline',
-        '!referenceSearch',
-        '!rename',
-        '!smartSelect',
-        '!snippets',
-        'suggest',
-        '!toggleHighContrast',
-        '!toggleTabFocusMode',
-        '!transpose',
-        '!wordHighlighter',
-        '!wordOperations',
-        '!wordPartOperations',
+    new CopyWebpackPlugin({
+      patterns: [
+        {
+          context: path.resolve(__dirname, '../../node_modules/monaco-editor/'),
+          from: 'min/vs/**',
+          to: '../lib/monaco/', // inside the public/build folder
+          globOptions: {
+            ignore: [
+              '**/language/typescript/**', // 10mb
+              '**/*.map', // debug files
+            ],
+          },
+        },
+        {
+          from: './node_modules/@kusto/monaco-kusto/release/min/',
+          to: '../lib/monaco/min/vs/language/kusto/',
+        },
       ],
     }),
   ],
@@ -173,7 +145,6 @@ module.exports = {
       },
       {
         test: /\.css$/,
-        // include: MONACO_DIR, // https://github.com/react-monaco-editor/react-monaco-editor
         use: ['style-loader', 'css-loader'],
       },
       // for pre-caching SVGs as part of the JS bundles
@@ -185,6 +156,15 @@ module.exports = {
         test: /\.(svg|ico|jpg|jpeg|png|gif|eot|otf|webp|ttf|woff|woff2|cur|ani|pdf)(\?.*)?$/,
         loader: 'file-loader',
         options: { name: 'static/img/[name].[hash:8].[ext]' },
+      },
+      {
+        test: /\.worker\.js$/,
+        use: {
+          loader: 'worker-loader',
+          options: {
+            inline: 'fallback',
+          },
+        },
       },
     ],
   },

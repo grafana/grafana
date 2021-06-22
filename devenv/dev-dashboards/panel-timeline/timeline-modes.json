@@ -15,6 +15,7 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
+  "id": 329,
   "links": [],
   "panels": [
     {
@@ -23,6 +24,10 @@
         "defaults": {
           "color": {
             "mode": "palette-classic"
+          },
+          "custom": {
+            "fillOpacity": 70,
+            "lineWidth": 1
           },
           "mappings": [],
           "thresholds": {
@@ -42,20 +47,21 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 11,
+        "h": 10,
         "w": 24,
         "x": 0,
         "y": 0
       },
       "id": 8,
       "options": {
+        "alignValue": "left",
         "colWidth": 0.9,
         "legend": {
           "calcs": [],
           "displayMode": "list",
           "placement": "bottom"
         },
-        "mode": "spans",
+        "mergeValues": true,
         "rowHeight": 0.9,
         "showValue": "always"
       },
@@ -187,8 +193,8 @@
           "scenarioId": "manual_entry"
         }
       ],
-      "title": "Spans Mode",
-      "type": "timeline"
+      "title": "State timeline",
+      "type": "state-timeline"
     },
     {
       "datasource": null,
@@ -197,6 +203,10 @@
           "color": {
             "mode": "palette-classic"
           },
+          "custom": {
+            "fillOpacity": 70,
+            "lineWidth": 1
+          },
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
@@ -204,6 +214,80 @@
               {
                 "color": "green",
                 "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 11,
+        "w": 24,
+        "x": 0,
+        "y": 10
+      },
+      "id": 9,
+      "options": {
+        "alignValue": "left",
+        "colWidth": 0.9,
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "mergeValues": true,
+        "rowHeight": 0.9,
+        "showValue": "always"
+      },
+      "pluginVersion": "7.5.0-pre",
+      "targets": [
+        {
+          "alias": "",
+          "refId": "A",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "a,a,b,b,b,b,c,a,a,d,d,d,d,d"
+        },
+        {
+          "alias": "",
+          "refId": "B",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "null,null,e,e,e,null,null,e,null,null,e,null,e,e,e,e"
+        },
+        {
+          "refId": "C",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "true,null,false,null,true,false"
+        }
+      ],
+      "title": "State timeline (strings & booleans)",
+      "type": "state-timeline"
+    },
+    {
+      "datasource": null,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "fillOpacity": 70,
+            "lineWidth": 1
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "percentage",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "#EAB839",
+                "value": 60
               },
               {
                 "color": "red",
@@ -219,7 +303,7 @@
         "h": 11,
         "w": 24,
         "x": 0,
-        "y": 11
+        "y": 21
       },
       "id": 4,
       "interval": null,
@@ -231,7 +315,6 @@
           "displayMode": "list",
           "placement": "bottom"
         },
-        "mode": "grid",
         "rowHeight": 0.9,
         "showValue": "always"
       },
@@ -266,14 +349,17 @@
           "stringInput": ""
         }
       ],
-      "title": "Grid Mode",
-      "type": "timeline"
+      "title": "Status grid",
+      "type": "status-history"
     }
   ],
   "refresh": false,
-  "schemaVersion": 27,
+  "schemaVersion": 30,
   "style": "dark",
-  "tags": [],
+  "tags": [
+    "gdev",
+    "panel-tests"
+  ],
   "templating": {
     "list": []
   },
@@ -285,5 +371,5 @@
   "timezone": "utc",
   "title": "Timeline Modes",
   "uid": "mIJjFy8Gz",
-  "version": 1
+  "version": 12
 }

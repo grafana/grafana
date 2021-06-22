@@ -80,7 +80,7 @@
           "displayMode": "list",
           "placement": "bottom"
         },
-        "tooltipOptions": {
+        "tooltip": {
           "mode": "single"
         }
       },
@@ -184,7 +184,7 @@
           "displayMode": "list",
           "placement": "bottom"
         },
-        "tooltipOptions": {
+        "tooltip": {
           "mode": "single"
         }
       },
@@ -289,7 +289,7 @@
           "displayMode": "list",
           "placement": "bottom"
         },
-        "tooltipOptions": {
+        "tooltip": {
           "mode": "single"
         }
       },
@@ -393,7 +393,7 @@
           "displayMode": "list",
           "placement": "bottom"
         },
-        "tooltipOptions": {
+        "tooltip": {
           "mode": "single"
         }
       },
@@ -490,7 +490,7 @@
           "placement": "bottom"
         },
         "stacking": "none",
-        "tooltipOptions": {
+        "tooltip": {
           "mode": "single"
         }
       },
@@ -587,7 +587,7 @@
           "placement": "bottom"
         },
         "stacking": "none",
-        "tooltipOptions": {
+        "tooltip": {
           "mode": "single"
         }
       },
@@ -684,7 +684,7 @@
           "placement": "bottom"
         },
         "stacking": "none",
-        "tooltipOptions": {
+        "tooltip": {
           "mode": "single"
         }
       },
@@ -843,7 +843,7 @@
           "placement": "bottom"
         },
         "stacking": "none",
-        "tooltipOptions": {
+        "tooltip": {
           "mode": "single"
         }
       },

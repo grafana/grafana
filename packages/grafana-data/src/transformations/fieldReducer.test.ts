@@ -1,4 +1,4 @@
-import difference from 'lodash/difference';
+import { difference } from 'lodash';
 
 import { fieldReducers, ReducerID, reduceField } from './fieldReducer';
 

@@ -1,4 +1,4 @@
-import React, { Dispatch, FC, FormEvent, SetStateAction } from 'react';
+import React, { FC, FormEvent } from 'react';
 import { css } from '@emotion/css';
 import { HorizontalGroup, RadioButtonGroup, stylesFactory, useTheme, Checkbox } from '@grafana/ui';
 import { GrafanaTheme, SelectableValue } from '@grafana/data';
@@ -14,12 +14,11 @@ export const layoutOptions = [
 
 const searchSrv = new SearchSrv();
 
-type onSelectChange = (value: SelectableValue) => void;
 interface Props {
-  onLayoutChange: Dispatch<SetStateAction<string>>;
-  onSortChange: onSelectChange;
+  onLayoutChange: (layout: SearchLayout) => void;
+  onSortChange: (value: SelectableValue) => void;
   onStarredFilterChange?: (event: FormEvent<HTMLInputElement>) => void;
-  onTagFilterChange: onSelectChange;
+  onTagFilterChange: (tags: string[]) => void;
   query: DashboardQuery;
   showStarredFilter?: boolean;
   hideLayout?: boolean;

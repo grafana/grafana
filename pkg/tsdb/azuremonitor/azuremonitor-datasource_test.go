@@ -1,9 +1,11 @@
 package azuremonitor
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"net/http"
 	"net/url"
 	"path/filepath"
 	"testing"
@@ -11,24 +13,30 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/stretchr/testify/require"
 	ptr "github.com/xorcare/pointer"
 )
 
 func TestAzureMonitorBuildQueries(t *testing.T) {
 	datasource := &AzureMonitorDatasource{}
+	dsInfo := datasourceInfo{
+		Settings: azureMonitorSettings{
+			SubscriptionId: "default-subscription",
+		},
+	}
+
 	fromStart := time.Date(2018, 3, 15, 13, 0, 0, 0, time.UTC).In(time.Local)
+	duration, _ := time.ParseDuration("400s")
 
 	tests := []struct {
 		name                         string
 		azureMonitorVariedProperties map[string]interface{}
 		azureMonitorQueryTarget      string
 		expectedInterval             string
-		queryIntervalMS              int64
+		queryInterval                time.Duration
 	}{
 		{
 			name: "Parse queries from frontend and build AzureMonitor API queries",
@@ -45,7 +53,7 @@ func TestAzureMonitorBuildQueries(t *testing.T) {
 				"timeGrain": "auto",
 				"top":       "10",
 			},
-			queryIntervalMS:         400000,
+			queryInterval:           duration,
 			expectedInterval:        "PT15M",
 			azureMonitorQueryTarget: "aggregation=Average&api-version=2018-01-01&interval=PT15M&metricnames=Percentage+CPU&metricnamespace=Microsoft.Compute-virtualMachines&timespan=2018-03-15T13%3A00%3A00Z%2F2018-03-15T13%3A34%3A00Z",
 		},
@@ -56,7 +64,7 @@ func TestAzureMonitorBuildQueries(t *testing.T) {
 				"allowedTimeGrainsMs": []int64{60000, 300000},
 				"top":                 "10",
 			},
-			queryIntervalMS:         400000,
+			queryInterval:           duration,
 			expectedInterval:        "PT5M",
 			azureMonitorQueryTarget: "aggregation=Average&api-version=2018-01-01&interval=PT5M&metricnames=Percentage+CPU&metricnamespace=Microsoft.Compute-virtualMachines&timespan=2018-03-15T13%3A00%3A00Z%2F2018-03-15T13%3A34%3A00Z",
 		},
@@ -68,7 +76,7 @@ func TestAzureMonitorBuildQueries(t *testing.T) {
 				"dimensionFilter": "*",
 				"top":             "30",
 			},
-			queryIntervalMS:         400000,
+			queryInterval:           duration,
 			expectedInterval:        "PT1M",
 			azureMonitorQueryTarget: "%24filter=blob+eq+%27%2A%27&aggregation=Average&api-version=2018-01-01&interval=PT1M&metricnames=Percentage+CPU&metricnamespace=Microsoft.Compute-virtualMachines&timespan=2018-03-15T13%3A00%3A00Z%2F2018-03-15T13%3A34%3A00Z&top=30",
 		},
@@ -80,7 +88,7 @@ func TestAzureMonitorBuildQueries(t *testing.T) {
 				"dimensionFilter": "*",
 				"top":             "10",
 			},
-			queryIntervalMS:         400000,
+			queryInterval:           duration,
 			expectedInterval:        "PT1M",
 			azureMonitorQueryTarget: "aggregation=Average&api-version=2018-01-01&interval=PT1M&metricnames=Percentage+CPU&metricnamespace=Microsoft.Compute-virtualMachines&timespan=2018-03-15T13%3A00%3A00Z%2F2018-03-15T13%3A34%3A00Z",
 		},
@@ -91,7 +99,7 @@ func TestAzureMonitorBuildQueries(t *testing.T) {
 				"dimensionFilters": []azureMonitorDimensionFilter{{"blob", "eq", "*"}},
 				"top":              "30",
 			},
-			queryIntervalMS:         400000,
+			queryInterval:           duration,
 			expectedInterval:        "PT1M",
 			azureMonitorQueryTarget: "%24filter=blob+eq+%27%2A%27&aggregation=Average&api-version=2018-01-01&interval=PT1M&metricnames=Percentage+CPU&metricnamespace=Microsoft.Compute-virtualMachines&timespan=2018-03-15T13%3A00%3A00Z%2F2018-03-15T13%3A34%3A00Z&top=30",
 		},
@@ -102,7 +110,7 @@ func TestAzureMonitorBuildQueries(t *testing.T) {
 				"dimensionFilters": []azureMonitorDimensionFilter{{"blob", "eq", "*"}, {"tier", "eq", "*"}},
 				"top":              "30",
 			},
-			queryIntervalMS:         400000,
+			queryInterval:           duration,
 			expectedInterval:        "PT1M",
 			azureMonitorQueryTarget: "%24filter=blob+eq+%27%2A%27+and+tier+eq+%27%2A%27&aggregation=Average&api-version=2018-01-01&interval=PT1M&metricnames=Percentage+CPU&metricnamespace=Microsoft.Compute-virtualMachines&timespan=2018-03-15T13%3A00%3A00Z%2F2018-03-15T13%3A34%3A00Z&top=30",
 		},
@@ -125,25 +133,18 @@ func TestAzureMonitorBuildQueries(t *testing.T) {
 			for k, v := range commonAzureModelProps {
 				tt.azureMonitorVariedProperties[k] = v
 			}
-			tsdbQuery := plugins.DataQuery{
-				TimeRange: &plugins.DataTimeRange{
-					From: fmt.Sprintf("%v", fromStart.Unix()*1000),
-					To:   fmt.Sprintf("%v", fromStart.Add(34*time.Minute).Unix()*1000),
-				},
-				Queries: []plugins.DataSubQuery{
-					{
-						DataSource: &models.DataSource{
-							JsonData: simplejson.NewFromAny(map[string]interface{}{
-								"subscriptionId": "default-subscription",
-							}),
-						},
-						Model: simplejson.NewFromAny(map[string]interface{}{
+			azureMonitorJSON, _ := json.Marshal(tt.azureMonitorVariedProperties)
+			tsdbQuery := []backend.DataQuery{
+				{
+					JSON: []byte(fmt.Sprintf(`{
 							"subscription": "12345678-aaaa-bbbb-cccc-123456789abc",
-							"azureMonitor": tt.azureMonitorVariedProperties,
-						},
-						),
-						RefID:      "A",
-						IntervalMS: tt.queryIntervalMS,
+							"azureMonitor": %s
+						}`, string(azureMonitorJSON))),
+					RefID:    "A",
+					Interval: tt.queryInterval,
+					TimeRange: backend.TimeRange{
+						From: fromStart,
+						To:   fromStart.Add(34 * time.Minute),
 					},
 				},
 			}
@@ -159,9 +160,13 @@ func TestAzureMonitorBuildQueries(t *testing.T) {
 				Target: tt.azureMonitorQueryTarget,
 				RefID:  "A",
 				Alias:  "testalias",
+				TimeRange: backend.TimeRange{
+					From: fromStart,
+					To:   fromStart.Add(34 * time.Minute),
+				},
 			}
 
-			queries, err := datasource.buildQueries(tsdbQuery.Queries, *tsdbQuery.TimeRange)
+			queries, err := datasource.buildQueries(tsdbQuery, dsInfo)
 			require.NoError(t, err)
 			if diff := cmp.Diff(azureMonitorQuery, queries[0], cmpopts.IgnoreUnexported(simplejson.Json{}), cmpopts.IgnoreFields(AzureMonitorQuery{}, "Params")); diff != "" {
 				t.Errorf("Result mismatch (-want +got):\n%s", diff)
@@ -433,15 +438,11 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			azData := loadTestFile(t, "azuremonitor/"+tt.responseFile)
-			res := plugins.DataQueryResult{Meta: simplejson.New(), RefID: "A"}
-			require.NotNil(t, res)
 			dframes, err := datasource.parseResponse(azData, tt.mockQuery)
 			require.NoError(t, err)
 			require.NotNil(t, dframes)
 
-			frames, err := dframes.Decoded()
-			require.NoError(t, err)
-			if diff := cmp.Diff(tt.expectedFrames, frames, data.FrameTestCompareOptions()...); diff != "" {
+			if diff := cmp.Diff(tt.expectedFrames, dframes, data.FrameTestCompareOptions()...); diff != "" {
 				t.Errorf("Result mismatch (-want +got):\n%s", diff)
 			}
 		})
@@ -509,4 +510,43 @@ func loadTestFile(t *testing.T, name string) AzureMonitorResponse {
 	err = json.Unmarshal(jsonBody, &azData)
 	require.NoError(t, err)
 	return azData
+}
+
+func TestAzureMonitorCreateRequest(t *testing.T) {
+	ctx := context.Background()
+	dsInfo := datasourceInfo{
+		Services: map[string]datasourceService{
+			azureMonitor: {URL: "http://ds"},
+		},
+	}
+
+	tests := []struct {
+		name            string
+		expectedURL     string
+		expectedHeaders http.Header
+		Err             require.ErrorAssertionFunc
+	}{
+		{
+			name:        "creates a request",
+			expectedURL: "http://ds/subscriptions",
+			expectedHeaders: http.Header{
+				"Content-Type": []string{"application/json"},
+			},
+			Err: require.NoError,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ds := AzureMonitorDatasource{}
+			req, err := ds.createRequest(ctx, dsInfo)
+			tt.Err(t, err)
+			if req.URL.String() != tt.expectedURL {
+				t.Errorf("Expecting %s, got %s", tt.expectedURL, req.URL.String())
+			}
+			if !cmp.Equal(req.Header, tt.expectedHeaders) {
+				t.Errorf("Unexpected HTTP headers: %v", cmp.Diff(req.Header, tt.expectedHeaders))
+			}
+		})
+	}
 }

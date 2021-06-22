@@ -1,4 +1,12 @@
-import { BusEventBase, BusEventWithPayload, eventFactory, GrafanaTheme, TimeRange } from '@grafana/data';
+import {
+  AnnotationQuery,
+  BusEventBase,
+  BusEventWithPayload,
+  eventFactory,
+  GrafanaTheme2,
+  TimeRange,
+} from '@grafana/data';
+import { IconName } from '@grafana/ui';
 
 /**
  * Event Payloads
@@ -35,7 +43,7 @@ export interface ShowConfirmModalPayload {
   altActionText?: string;
   yesText?: string;
   noText?: string;
-  icon?: string;
+  icon?: IconName;
 
   onConfirm?: () => void;
   onAltAction?: () => void;
@@ -82,29 +90,17 @@ export interface PanelChangeViewPayload {}
  * Events
  */
 
-export const dashLinksUpdated = eventFactory('dash-links-updated');
-export const searchQuery = eventFactory('search-query');
-
 export const dsRequestResponse = eventFactory<DataSourceResponsePayload>('ds-request-response');
 export const dsRequestError = eventFactory<any>('ds-request-error');
-
 export const toggleSidemenuMobile = eventFactory('toggle-sidemenu-mobile');
 export const toggleSidemenuHidden = eventFactory('toggle-sidemenu-hidden');
-
-export const toggleKioskMode = eventFactory<ToggleKioskModePayload>('toggle-kiosk-mode');
-
-export const timeRangeUpdated = eventFactory<TimeRange>('time-range-updated');
 export const templateVariableValueUpdated = eventFactory('template-variable-value-updated');
-
 export const graphClicked = eventFactory<GraphClickedPayload>('graph-click');
 
+/**
+ * @internal
+ */
 export const thresholdChanged = eventFactory<ThresholdChangedPayload>('threshold-changed');
-
-export const zoomOut = eventFactory<number>('zoom-out');
-
-export const shiftTime = eventFactory<number>('shift-time');
-
-export const routeUpdated = eventFactory('$routeUpdate');
 
 /**
  * Used for syncing queries badge count in panel edit queries tab
@@ -140,11 +136,15 @@ export class RefreshEvent extends BusEventBase {
   static type = 'refresh';
 }
 
+export class PanelDirectiveReadyEvent extends BusEventBase {
+  static type = 'panel-directive-ready';
+}
+
 export class RenderEvent extends BusEventBase {
   static type = 'render';
 }
 
-export class ThemeChangedEvent extends BusEventWithPayload<GrafanaTheme> {
+export class ThemeChangedEvent extends BusEventWithPayload<GrafanaTheme2> {
   static type = 'theme-changed';
 }
 
@@ -164,6 +164,9 @@ export class RemovePanelEvent extends BusEventWithPayload<number> {
   static type = 'remove-panel';
 }
 
+/**
+ * @deprecated use ShowModalReactEvent instead that has this capability built in
+ */
 export class ShowModalEvent extends BusEventWithPayload<ShowModalPayload> {
   static type = 'show-modal';
 }
@@ -176,10 +179,25 @@ export class ShowModalReactEvent extends BusEventWithPayload<ShowModalReactPaylo
   static type = 'show-react-modal';
 }
 
+/**
+ * @deprecated use ShowModalReactEvent instead that has this capability built in
+ */
 export class HideModalEvent extends BusEventBase {
   static type = 'hide-modal';
 }
 
 export class DashboardSavedEvent extends BusEventBase {
   static type = 'dashboard-saved';
+}
+
+export class AnnotationQueryStarted extends BusEventWithPayload<AnnotationQuery> {
+  static type = 'annotation-query-started';
+}
+
+export class AnnotationQueryFinished extends BusEventWithPayload<AnnotationQuery> {
+  static type = 'annotation-query-finished';
+}
+
+export class TimeRangeUpdatedEvent extends BusEventWithPayload<TimeRange> {
+  static type = 'time-range-updated';
 }

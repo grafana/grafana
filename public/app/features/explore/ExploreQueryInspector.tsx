@@ -1,30 +1,29 @@
 import React from 'react';
 import { TabbedContainer, TabConfig } from '@grafana/ui';
-import { PanelData, TimeZone } from '@grafana/data';
+import { TimeZone } from '@grafana/data';
 import { runQueries } from './state/query';
 import { StoreState, ExploreItemState, ExploreId } from 'app/types';
 import { hot } from 'react-hot-loader';
-import { connect } from 'react-redux';
+import { connect, ConnectedProps } from 'react-redux';
 import { ExploreDrawer } from 'app/features/explore/ExploreDrawer';
 import { InspectJSONTab } from 'app/features/inspector/InspectJSONTab';
 import { QueryInspector } from 'app/features/inspector/QueryInspector';
 import { InspectStatsTab } from 'app/features/inspector/InspectStatsTab';
 import { InspectDataTab } from 'app/features/inspector/InspectDataTab';
+import { InspectErrorTab } from 'app/features/inspector/InspectErrorTab';
 
 interface DispatchProps {
-  runQueries: typeof runQueries;
-}
-interface Props extends DispatchProps {
-  loading: boolean;
   width: number;
   exploreId: ExploreId;
-  queryResponse?: PanelData;
   onClose: () => void;
 }
+
+type Props = DispatchProps & ConnectedProps<typeof connector>;
 
 export function ExploreQueryInspector(props: Props) {
   const { loading, width, onClose, queryResponse } = props;
   const dataFrames = queryResponse?.series || [];
+  const error = queryResponse?.error;
 
   const statsTab: TabConfig = {
     label: 'Stats',
@@ -53,14 +52,23 @@ export function ExploreQueryInspector(props: Props) {
     ),
   };
 
-  const queryInspectorTab: TabConfig = {
-    label: 'Query Inspector',
-    value: 'query_inspector',
+  const queryTab: TabConfig = {
+    label: 'Query',
+    value: 'query',
     icon: 'info-circle',
     content: <QueryInspector data={dataFrames} onRefreshQuery={() => props.runQueries(props.exploreId)} />,
   };
 
-  const tabs = [statsTab, queryInspectorTab, jsonTab, dataTab];
+  const tabs = [statsTab, queryTab, jsonTab, dataTab];
+  if (error) {
+    const errorTab: TabConfig = {
+      label: 'Error',
+      value: 'error',
+      icon: 'exclamation-triangle',
+      content: <InspectErrorTab error={error} />,
+    };
+    tabs.push(errorTab);
+  }
   return (
     <ExploreDrawer width={width} onResize={() => {}}>
       <TabbedContainer tabs={tabs} onClose={onClose} closeIconTooltip="Close query inspector" />
@@ -79,8 +87,10 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: ExploreI
   };
 }
 
-const mapDispatchToProps: DispatchProps = {
+const mapDispatchToProps = {
   runQueries,
 };
 
-export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(ExploreQueryInspector));
+const connector = connect(mapStateToProps, mapDispatchToProps);
+
+export default hot(module)(connector(ExploreQueryInspector));

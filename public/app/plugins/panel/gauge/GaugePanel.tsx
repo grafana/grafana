@@ -56,7 +56,7 @@ export class GaugePanel extends PureComponent<PanelProps<GaugeOptions>> {
       fieldConfig,
       reduceOptions: options.reduceOptions,
       replaceVariables,
-      theme: config.theme,
+      theme: config.theme2,
       data: data.series,
       timeZone,
     });

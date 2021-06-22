@@ -6,6 +6,7 @@ import (
 	"path"
 	"strconv"
 	"strings"
+	"time"
 
 	"golang.org/x/net/context/ctxhttp"
 
@@ -14,7 +15,8 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/grafana/grafana/pkg/components/null"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -22,16 +24,24 @@ import (
 )
 
 type OpenTsdbExecutor struct {
+	httpClientProvider httpclient.Provider
 }
 
-func NewExecutor(*models.DataSource) (plugins.DataPlugin, error) {
-	return &OpenTsdbExecutor{}, nil
+//nolint: staticcheck // plugins.DataPlugin deprecated
+func New(httpClientProvider httpclient.Provider) func(*models.DataSource) (plugins.DataPlugin, error) {
+	//nolint: staticcheck // plugins.DataPlugin deprecated
+	return func(*models.DataSource) (plugins.DataPlugin, error) {
+		return &OpenTsdbExecutor{
+			httpClientProvider: httpClientProvider,
+		}, nil
+	}
 }
 
 var (
 	plog = log.New("tsdb.opentsdb")
 )
 
+// nolint:staticcheck // plugins.DataQueryResult deprecated
 func (e *OpenTsdbExecutor) DataQuery(ctx context.Context, dsInfo *models.DataSource,
 	queryContext plugins.DataQuery) (plugins.DataResponse, error) {
 	var tsdbQuery OpenTsdbQuery
@@ -54,7 +64,7 @@ func (e *OpenTsdbExecutor) DataQuery(ctx context.Context, dsInfo *models.DataSou
 		return plugins.DataResponse{}, err
 	}
 
-	httpClient, err := dsInfo.GetHttpClient()
+	httpClient, err := dsInfo.GetHTTPClient(e.httpClientProvider)
 	if err != nil {
 		return plugins.DataResponse{}, err
 	}
@@ -101,6 +111,7 @@ func (e *OpenTsdbExecutor) createRequest(dsInfo *models.DataSource, data OpenTsd
 	return req, nil
 }
 
+// nolint:staticcheck // plugins.DataQueryResult deprecated
 func (e *OpenTsdbExecutor) parseResponse(query OpenTsdbQuery, res *http.Response) (map[string]plugins.DataQueryResult, error) {
 	queryResults := make(map[string]plugins.DataQueryResult)
 	queryRes := plugins.DataQueryResult{}
@@ -120,32 +131,33 @@ func (e *OpenTsdbExecutor) parseResponse(query OpenTsdbQuery, res *http.Response
 		return nil, fmt.Errorf("request failed, status: %s", res.Status)
 	}
 
-	var data []OpenTsdbResponse
-	err = json.Unmarshal(body, &data)
+	var responseData []OpenTsdbResponse
+	err = json.Unmarshal(body, &responseData)
 	if err != nil {
 		plog.Info("Failed to unmarshal opentsdb response", "error", err, "status", res.Status, "body", string(body))
 		return nil, err
 	}
 
-	for _, val := range data {
-		series := plugins.DataTimeSeries{
-			Name: val.Metric,
-		}
+	frames := data.Frames{}
+	for _, val := range responseData {
+		timeVector := make([]time.Time, 0, len(val.DataPoints))
+		values := make([]float64, 0, len(val.DataPoints))
+		name := val.Metric
 
 		for timeString, value := range val.DataPoints {
-			timestamp, err := strconv.ParseFloat(timeString, 64)
+			timestamp, err := strconv.ParseInt(timeString, 10, 64)
 			if err != nil {
 				plog.Info("Failed to unmarshal opentsdb timestamp", "timestamp", timeString)
 				return nil, err
 			}
-			series.Points = append(series.Points, plugins.DataTimePoint{
-				null.FloatFrom(value), null.FloatFrom(timestamp),
-			})
+			timeVector = append(timeVector, time.Unix(timestamp, 0).UTC())
+			values = append(values, value)
 		}
-
-		queryRes.Series = append(queryRes.Series, series)
+		frames = append(frames, data.NewFrame(name,
+			data.NewField("time", nil, timeVector),
+			data.NewField("value", nil, values)))
 	}
-
+	queryRes.Dataframes = plugins.NewDecodedDataFrames(frames)
 	queryResults["A"] = queryRes
 	return queryResults, nil
 }

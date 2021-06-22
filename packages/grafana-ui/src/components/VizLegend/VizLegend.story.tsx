@@ -11,11 +11,6 @@ export default {
   title: 'Visualizations/VizLegend',
   component: VizLegend,
   decorators: [withCenteredStory],
-  parameters: {
-    knobs: {
-      disable: true,
-    },
-  },
   args: {
     containerWidth: '100%',
     seriesCount: 5,
@@ -53,21 +48,6 @@ const LegendStoryDemo: FC<LegendStoryDemoProps> = ({ displayMode, seriesCount, n
     setItems(generateLegendItems(seriesCount, theme, stats));
   }, [seriesCount, theme, stats]);
 
-  const onSeriesColorChange = (label: string, color: string) => {
-    setItems(
-      items.map((item) => {
-        if (item.label === label) {
-          return {
-            ...item,
-            color: color,
-          };
-        }
-
-        return item;
-      })
-    );
-  };
-
   const onLabelClick = (clickItem: VizLegendItem) => {
     setItems(
       items.map((item) => {
@@ -89,13 +69,7 @@ const LegendStoryDemo: FC<LegendStoryDemoProps> = ({ displayMode, seriesCount, n
   return (
     <p style={{ marginBottom: '32px' }}>
       <h3 style={{ marginBottom: '32px' }}>{name}</h3>
-      <VizLegend
-        displayMode={displayMode}
-        items={items}
-        placement={placement}
-        onSeriesColorChange={onSeriesColorChange}
-        onLabelClick={onLabelClick}
-      />
+      <VizLegend displayMode={displayMode} items={items} placement={placement} onLabelClick={onLabelClick} />
     </p>
   );
 };

@@ -1,7 +1,7 @@
 import { Field, DataFrame, DataFrameDTO, FieldDTO, FieldType } from '../types/dataFrame';
 import { QueryResultMeta } from '../types/data';
 import { guessFieldTypeFromValue, guessFieldTypeForField, toDataFrameDTO } from './processDataFrame';
-import isString from 'lodash/isString';
+import { isString } from 'lodash';
 import { makeFieldParser } from '../utils/fieldParser';
 import { MutableVector, Vector } from '../types/vector';
 import { ArrayVector } from '../vector/ArrayVector';

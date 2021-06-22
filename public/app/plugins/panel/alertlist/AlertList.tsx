@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import sortBy from 'lodash/sortBy';
+import { sortBy } from 'lodash';
 import { dateMath, dateTime, GrafanaTheme, PanelProps } from '@grafana/data';
 import { Card, CustomScrollbar, Icon, stylesFactory, useStyles } from '@grafana/ui';
 import { css, cx } from '@emotion/css';
@@ -128,6 +128,7 @@ export function AlertList(props: PanelProps<AlertListOptions>) {
     props.options.stateFilter.paused,
     props.options.stateFilter.pending,
     props.options.dashboardAlerts,
+    props.options.sortOrder,
   ]);
 
   const styles = useStyles(getStyles);

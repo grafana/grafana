@@ -17,5 +17,9 @@ func (p *PanelPlugin) Load(decoder *json.Decoder, base *PluginBase, backendPlugi
 		return nil, err
 	}
 
+	if p.Id == "grafana-piechart-panel" {
+		p.Name = "Pie Chart (old)"
+	}
+
 	return p, nil
 }

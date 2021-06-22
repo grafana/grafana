@@ -44,6 +44,6 @@ Images are currently hosted in the grafana/website repo.
 
 ## Deploy changes to grafana.com
 
-When a PR is merged to master with changes in the `docs/sources` directory, those changes are automatically synced to the grafana/website repo and published to the staging site.
+When a PR is merged to main with changes in the `docs/sources` directory, those changes are automatically synced to the grafana/website repo and published to the staging site.
 
 Generally, someone from marketing will publish to production each day: so as long as the sync is successful your docs edits will be published. Alternatively, you can refer to [publishing to production](https://github.com/grafana/website#publishing-to-production-grafanacom) if you'd like to do it yourself.

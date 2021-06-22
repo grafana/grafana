@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import _ from 'lodash';
+import { isNumber, sortBy, toLower, uniqBy } from 'lodash';
 import { DataSourceApi, MetricFindValue, stringToJsRegex } from '@grafana/data';
 
 import {
@@ -9,17 +9,16 @@ import {
   VariableQueryEditorType,
   VariableRefresh,
   VariableSort,
-  VariableTag,
 } from '../types';
 
 import {
   ALL_VARIABLE_TEXT,
   ALL_VARIABLE_VALUE,
   getInstanceState,
+  initialVariablesState,
   NONE_VARIABLE_TEXT,
   NONE_VARIABLE_VALUE,
   VariablePayload,
-  initialVariablesState,
   VariablesState,
 } from '../state/types';
 
@@ -40,16 +39,12 @@ export const initialQueryVariableModelState: QueryVariableModel = {
   query: '',
   regex: '',
   sort: VariableSort.disabled,
-  refresh: VariableRefresh.never,
+  refresh: VariableRefresh.onDashboardLoad,
   multi: false,
   includeAll: false,
   allValue: null,
   options: [],
   current: {} as VariableOption,
-  tags: [],
-  useTags: false,
-  tagsQuery: '',
-  tagValuesQuery: '',
   definition: '',
 };
 
@@ -62,9 +57,9 @@ export const sortVariableValues = (options: any[], sortOrder: VariableSort) => {
   const reverseSort = sortOrder % 2 === 0;
 
   if (sortType === 1) {
-    options = _.sortBy(options, 'text');
+    options = sortBy(options, 'text');
   } else if (sortType === 2) {
-    options = _.sortBy(options, (opt) => {
+    options = sortBy(options, (opt) => {
       if (!opt.text) {
         return -1;
       }
@@ -77,8 +72,8 @@ export const sortVariableValues = (options: any[], sortOrder: VariableSort) => {
       }
     });
   } else if (sortType === 3) {
-    options = _.sortBy(options, (opt) => {
-      return _.toLower(opt.text);
+    options = sortBy(options, (opt) => {
+      return toLower(opt.text);
     });
   }
 
@@ -118,11 +113,11 @@ export const metricNamesToVariableValues = (variableRegEx: string, sort: Variabl
     let text = item.text === undefined || item.text === null ? item.value : item.text;
     let value = item.value === undefined || item.value === null ? item.text : item.value;
 
-    if (_.isNumber(value)) {
+    if (isNumber(value)) {
       value = value.toString();
     }
 
-    if (_.isNumber(text)) {
+    if (isNumber(text)) {
       text = text.toString();
     }
 
@@ -155,7 +150,7 @@ export const metricNamesToVariableValues = (variableRegEx: string, sort: Variabl
     options.push({ text: text, value: value, selected: false });
   }
 
-  options = _.uniqBy(options, 'value');
+  options = uniqBy(options, 'value');
   return sortVariableValues(options, sort);
 };
 
@@ -179,19 +174,9 @@ export const queryVariableSlice = createSlice({
 
       instanceState.options = options;
     },
-    updateVariableTags: (state: VariablesState, action: PayloadAction<VariablePayload<any[]>>) => {
-      const instanceState = getInstanceState<QueryVariableModel>(state, action.payload.id);
-      const results = action.payload.data;
-      const tags: VariableTag[] = [];
-      for (let i = 0; i < results.length; i++) {
-        tags.push({ text: results[i].text, selected: false });
-      }
-
-      instanceState.tags = tags;
-    },
   },
 });
 
 export const queryVariableReducer = queryVariableSlice.reducer;
 
-export const { updateVariableOptions, updateVariableTags } = queryVariableSlice.actions;
+export const { updateVariableOptions } = queryVariableSlice.actions;

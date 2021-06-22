@@ -2,9 +2,11 @@ import { useMemo } from 'react';
 
 import { CombinedRuleGroup, CombinedRuleNamespace, RuleFilterState } from 'app/types/unified-alerting';
 import { isCloudRulesSource } from '../utils/datasource';
-import { isAlertingRule } from '../utils/rules';
+import { isAlertingRule, isGrafanaRulerRule } from '../utils/rules';
 import { getFiltersFromUrlParams } from '../utils/misc';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
+import { RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';
+import { getDataSourceSrv } from '@grafana/runtime';
 
 export const useFilteredRules = (namespaces: CombinedRuleNamespace[]) => {
   const [queryParams] = useQueryParams();
@@ -45,7 +47,9 @@ const reduceNamespaces = (filters: RuleFilterState) => {
 const reduceGroups = (filters: RuleFilterState) => {
   return (groupAcc: CombinedRuleGroup[], group: CombinedRuleGroup) => {
     const rules = group.rules.filter((rule) => {
-      let shouldKeep = true;
+      if (filters.dataSource && isGrafanaRulerRule(rule.rulerRule) && !isQueryingDataSource(rule.rulerRule, filters)) {
+        return false;
+      }
       // Query strings can match alert name, label keys, and label values
       if (filters.queryString) {
         const normalizedQueryString = filters.queryString.toLocaleLowerCase();
@@ -56,16 +60,17 @@ const reduceGroups = (filters: RuleFilterState) => {
             key.toLocaleLowerCase().includes(normalizedQueryString) ||
             value.toLocaleLowerCase().includes(normalizedQueryString)
         );
-        shouldKeep = doesNameContainsQueryString || doLabelsContainQueryString;
+        if (!(doesNameContainsQueryString || doLabelsContainQueryString)) {
+          return false;
+        }
       }
-      if (filters.alertState) {
-        const matchesAlertState = Boolean(
-          rule.promRule && isAlertingRule(rule.promRule) && rule.promRule.state === filters.alertState
-        );
-
-        shouldKeep = shouldKeep && matchesAlertState;
+      if (
+        filters.alertState &&
+        !(rule.promRule && isAlertingRule(rule.promRule) && rule.promRule.state === filters.alertState)
+      ) {
+        return false;
       }
-      return shouldKeep;
+      return true;
     });
     // Add rules to the group that match the rule list filters
     if (rules.length) {
@@ -76,4 +81,18 @@ const reduceGroups = (filters: RuleFilterState) => {
     }
     return groupAcc;
   };
+};
+
+const isQueryingDataSource = (rulerRule: RulerGrafanaRuleDTO, filter: RuleFilterState): boolean => {
+  if (!filter.dataSource) {
+    return true;
+  }
+
+  return !!rulerRule.grafana_alert.data.find((query) => {
+    if (!query.datasourceUid) {
+      return false;
+    }
+    const ds = getDataSourceSrv().getInstanceSettings(query.datasourceUid);
+    return ds?.name === filter.dataSource;
+  });
 };

@@ -100,7 +100,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
 
   exportLogsAsTxt = () => {
     const { data, panel } = this.props;
-    const logsModel = dataFrameToLogsModel(data || [], undefined, 'utc');
+    const logsModel = dataFrameToLogsModel(data || [], undefined);
     let textToDownload = '';
 
     logsModel.meta?.forEach((metaItem) => {
@@ -131,11 +131,11 @@ export class InspectDataTab extends PureComponent<Props, State> {
     });
   };
 
-  toggleDownloadForExcel() {
+  toggleDownloadForExcel = () => {
     this.setState((prevState) => ({
       downloadForExcel: !prevState.downloadForExcel,
     }));
-  }
+  };
 
   getProcessedData(): DataFrame[] {
     const { options, panel } = this.props;
@@ -149,7 +149,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
     // That's because transformers create new fields and data frames, so i.e. display processor is no longer there
     return applyFieldOverrides({
       data,
-      theme: config.theme,
+      theme: config.theme2,
       fieldConfig: panel.fieldConfig,
       replaceVariables: (value: string) => {
         return value;

@@ -5,7 +5,7 @@ import { VizOrientation, ThresholdsMode, Field, FieldType, getDisplayProcessor }
 import { Props } from './BarGauge';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import mdx from './BarGauge.mdx';
-import { useTheme } from '../../themes';
+import { useTheme2 } from '../../themes';
 
 export default {
   title: 'Visualizations/BarGauge',
@@ -14,9 +14,6 @@ export default {
   parameters: {
     docs: {
       page: mdx,
-    },
-    knobs: {
-      disable: true,
     },
     controls: {
       exclude: [
@@ -72,7 +69,7 @@ interface StoryProps extends Partial<Props> {
 }
 
 const AddBarGaugeStory = (storyProps: StoryProps) => {
-  const theme = useTheme();
+  const theme = useTheme2();
 
   const field: Partial<Field> = {
     type: FieldType.number,
@@ -89,7 +86,7 @@ const AddBarGaugeStory = (storyProps: StoryProps) => {
       },
     },
   };
-  field.display = getDisplayProcessor({ field });
+  field.display = getDisplayProcessor({ field, theme });
 
   const props: Partial<Props> = {
     theme,

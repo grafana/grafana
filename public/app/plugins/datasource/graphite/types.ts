@@ -10,6 +10,7 @@ export interface GraphiteOptions extends DataSourceJsonData {
   graphiteVersion: string;
   graphiteType: GraphiteType;
   rollupIndicatorEnabled?: boolean;
+  importConfiguration: GraphiteQueryImportConfiguration;
 }
 
 export enum GraphiteType {
@@ -37,6 +38,23 @@ export interface MetricTankMeta {
   request: MetricTankRequestMeta;
   info: MetricTankSeriesMeta[];
 }
+
+export type GraphiteQueryImportConfiguration = {
+  loki: GraphiteToLokiQueryImportConfiguration;
+};
+
+export type GraphiteToLokiQueryImportConfiguration = {
+  mappings: GraphiteLokiMapping[];
+};
+
+export type GraphiteLokiMapping = {
+  matchers: GraphiteMetricLokiMatcher[];
+};
+
+export type GraphiteMetricLokiMatcher = {
+  value: string;
+  labelName?: string;
+};
 
 export type GraphiteSegment = {
   value: string;

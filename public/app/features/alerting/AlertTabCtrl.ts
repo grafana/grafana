@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import { find, map, reduce, remove } from 'lodash';
 import coreModule from 'app/core/core_module';
 import { ThresholdMapper } from './state/ThresholdMapper';
 import { QueryPart } from 'app/core/components/query_part/query_part';
@@ -95,7 +95,7 @@ export class AlertTabCtrl {
       getBackendSrv()
         .get(`/api/annotations?dashboardId=${this.panelCtrl.dashboard.id}&panelId=${this.panel.id}&limit=50&type=alert`)
         .then((res: any) => {
-          this.alertHistory = _.map(res, (ah) => {
+          this.alertHistory = map(res, (ah) => {
             ah.time = this.dashboardSrv.getCurrent()?.formatDate(ah.time, 'MMM D, YYYY HH:mm:ss');
             ah.stateModel = alertDef.getStateDisplayModel(ah.newState);
             ah.info = alertDef.getAlertAnnotationInfo(ah);
@@ -140,7 +140,7 @@ export class AlertTabCtrl {
   }
 
   notificationAdded() {
-    const model: any = _.find(this.notifications, {
+    const model: any = find(this.notifications, {
       name: this.addNotificationSegment.value,
     });
     if (!model) {
@@ -155,7 +155,7 @@ export class AlertTabCtrl {
     });
 
     // avoid duplicates using both id and uid to be backwards compatible.
-    if (!_.find(this.alert.notifications, (n) => n.id === model.id || n.uid === model.uid)) {
+    if (!find(this.alert.notifications, (n) => n.id === model.id || n.uid === model.uid)) {
       this.alert.notifications.push({ uid: model.uid });
     }
 
@@ -168,8 +168,8 @@ export class AlertTabCtrl {
   removeNotification(an: any) {
     // remove notifiers referred to by id and uid to support notifiers added
     // before and after we added support for uid
-    _.remove(this.alert.notifications, (n: any) => n.uid === an.uid || n.id === an.id);
-    _.remove(this.alertNotifications, (n: any) => n.uid === an.uid || n.id === an.id);
+    remove(this.alert.notifications, (n: any) => n.uid === an.uid || n.id === an.id);
+    remove(this.alertNotifications, (n: any) => n.uid === an.uid || n.id === an.id);
   }
 
   addAlertRuleTag() {
@@ -208,7 +208,7 @@ export class AlertTabCtrl {
     const defaultName = this.panel.title + ' alert';
     alert.name = alert.name || defaultName;
 
-    this.conditionModels = _.reduce(
+    this.conditionModels = reduce(
       alert.conditions,
       (memo, value) => {
         memo.push(this.buildConditionModel(value));
@@ -222,12 +222,12 @@ export class AlertTabCtrl {
     for (const addedNotification of alert.notifications) {
       let identifier = addedNotification.uid;
       // lookup notifier type by uid
-      let model: any = _.find(this.notifications, { uid: identifier });
+      let model: any = find(this.notifications, { uid: identifier });
 
       // fallback using id if uid is missing
       if (!model && addedNotification.id) {
         identifier = addedNotification.id;
-        model = _.find(this.notifications, { id: identifier });
+        model = find(this.notifications, { id: identifier });
       }
 
       if (!model) {

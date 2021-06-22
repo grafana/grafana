@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import { map, find, forEach, sortBy } from 'lodash';
 import $ from 'jquery';
 // @ts-ignore
 import Drop from 'tether-drop';
@@ -27,7 +27,7 @@ export function graphiteAddFunc($compile: any) {
 
       // TODO: ctrl.state is not ready yet when link is called. This can be moved to an action.
       ctrl.datasource.getFuncDefs().then((funcDefs: FuncDef[]) => {
-        const allFunctions = _.map(funcDefs, 'name').sort();
+        const allFunctions = map(funcDefs, 'name').sort();
 
         $scope.functionMenu = createFunctionDropDownMenu(funcDefs);
 
@@ -41,7 +41,7 @@ export function graphiteAddFunc($compile: any) {
             if (!funcDef) {
               // try find close match
               value = value.toLowerCase();
-              funcDef = _.find(allFunctions, (funcName) => {
+              funcDef = find(allFunctions, (funcName) => {
                 return funcName.toLowerCase().indexOf(value) === 0;
               });
 
@@ -139,7 +139,7 @@ coreModule.directive('graphiteAddFunc', graphiteAddFunc);
 function createFunctionDropDownMenu(funcDefs: FuncDef[]) {
   const categories: any = {};
 
-  _.forEach(funcDefs, (funcDef) => {
+  forEach(funcDefs, (funcDef) => {
     if (!funcDef.category) {
       return;
     }
@@ -152,11 +152,11 @@ function createFunctionDropDownMenu(funcDefs: FuncDef[]) {
     });
   });
 
-  return _.sortBy(
-    _.map(categories, (submenu, category) => {
+  return sortBy(
+    map(categories, (submenu, category) => {
       return {
         text: category,
-        submenu: _.sortBy(submenu, 'text'),
+        submenu: sortBy(submenu, 'text'),
       };
     }),
     'text'
