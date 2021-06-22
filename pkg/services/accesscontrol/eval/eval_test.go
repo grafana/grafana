@@ -47,7 +47,7 @@ func TestEval(t *testing.T) {
 			},
 		},
 		{
-			desc: "should return false when both is false",
+			desc: "should return false when both are false",
 			evaluator: Any(
 				Permission("settings:write", Combine("settings", ScopeWildcard)),
 				All(
