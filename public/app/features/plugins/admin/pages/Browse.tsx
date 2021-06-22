@@ -1,6 +1,6 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { css } from '@emotion/css';
-import { AppRootProps, SelectableValue, dateTimeParse } from '@grafana/data';
+import { SelectableValue, dateTimeParse } from '@grafana/data';
 import { Field, LoadingPlaceholder, Select } from '@grafana/ui';
 import { useLocation } from 'react-router-dom';
 import { locationSearchToObject } from '@grafana/runtime';
@@ -11,10 +11,11 @@ import { HorizontalGroup } from '../components/HorizontalGroup';
 import { usePlugins } from '../hooks/usePlugins';
 import { useHistory } from '../hooks/useHistory';
 import { Plugin } from '../types';
-import { Page } from 'components/Page';
+import { Page as PluginPage } from '../components/Page';
 import { CatalogTab, getCatalogNavModel } from './nav';
+import { Page } from 'app/core/components/Page/Page';
 
-export const Browse = ({ meta, onNavChanged, basename }: AppRootProps) => {
+export default function Browse(): JSX.Element | null {
   const location = useLocation();
   const query = locationSearchToObject(location.search);
 
@@ -24,10 +25,6 @@ export const Browse = ({ meta, onNavChanged, basename }: AppRootProps) => {
 
   const plugins = usePlugins();
   const history = useHistory();
-
-  useEffect(() => {
-    onNavChanged(getCatalogNavModel(CatalogTab.Browse, basename));
-  }, [onNavChanged, basename]);
 
   const onSortByChange = (value: SelectableValue<string>) => {
     history.push({ query: { sortBy: value.value } });
@@ -53,54 +50,58 @@ export const Browse = ({ meta, onNavChanged, basename }: AppRootProps) => {
   filteredPlugins.sort(sorters[sortBy || 'name']);
 
   return (
-    <Page>
-      <SearchField value={q} onSearch={onSearch} />
-      <HorizontalGroup>
-        <div>
-          {plugins.isLoading ? (
-            <LoadingPlaceholder
-              className={css`
-                margin-bottom: 0;
-              `}
-              text="Loading results"
-            />
-          ) : (
-            `${filteredPlugins.length} ${filteredPlugins.length > 1 ? 'results' : 'result'}`
-          )}
-        </div>
-        <Field label="Show">
-          <Select
-            width={15}
-            value={filterBy || 'all'}
-            onChange={onFilterByChange}
-            options={[
-              { value: 'all', label: 'All' },
-              { value: 'panel', label: 'Panels' },
-              { value: 'datasource', label: 'Data sources' },
-              { value: 'app', label: 'Apps' },
-            ]}
-          />
-        </Field>
-        <Field label="Sort by">
-          <Select
-            width={20}
-            value={sortBy || 'name'}
-            onChange={onSortByChange}
-            options={[
-              { value: 'name', label: 'Name' },
-              { value: 'popularity', label: 'Popularity' },
-              { value: 'updated', label: 'Updated date' },
-              { value: 'published', label: 'Published date' },
-              { value: 'downloads', label: 'Downloads' },
-            ]}
-          />
-        </Field>
-      </HorizontalGroup>
+    <Page navModel={getCatalogNavModel(CatalogTab.Browse, '/plugins')}>
+      <Page.Contents>
+        <PluginPage>
+          <SearchField value={q} onSearch={onSearch} />
+          <HorizontalGroup>
+            <div>
+              {plugins.isLoading ? (
+                <LoadingPlaceholder
+                  className={css`
+                    margin-bottom: 0;
+                  `}
+                  text="Loading results"
+                />
+              ) : (
+                `${filteredPlugins.length} ${filteredPlugins.length > 1 ? 'results' : 'result'}`
+              )}
+            </div>
+            <Field label="Show">
+              <Select
+                width={15}
+                value={filterBy || 'all'}
+                onChange={onFilterByChange}
+                options={[
+                  { value: 'all', label: 'All' },
+                  { value: 'panel', label: 'Panels' },
+                  { value: 'datasource', label: 'Data sources' },
+                  { value: 'app', label: 'Apps' },
+                ]}
+              />
+            </Field>
+            <Field label="Sort by">
+              <Select
+                width={20}
+                value={sortBy || 'name'}
+                onChange={onSortByChange}
+                options={[
+                  { value: 'name', label: 'Name' },
+                  { value: 'popularity', label: 'Popularity' },
+                  { value: 'updated', label: 'Updated date' },
+                  { value: 'published', label: 'Published date' },
+                  { value: 'downloads', label: 'Downloads' },
+                ]}
+              />
+            </Field>
+          </HorizontalGroup>
 
-      {!plugins.isLoading && <PluginList plugins={filteredPlugins} />}
+          {!plugins.isLoading && <PluginList plugins={filteredPlugins} />}
+        </PluginPage>
+      </Page.Contents>
     </Page>
   );
-};
+}
 
 const sorters: { [name: string]: (a: Plugin, b: Plugin) => number } = {
   name: (a: Plugin, b: Plugin) => a.name.localeCompare(b.name),

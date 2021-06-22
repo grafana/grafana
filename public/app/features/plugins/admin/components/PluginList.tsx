@@ -4,7 +4,6 @@ import { css } from '@emotion/css';
 import { Card } from '../components/Card';
 import { Grid } from '../components/Grid';
 
-import { PLUGIN_ROOT } from '../constants';
 import { Plugin } from '../types';
 import { GrafanaTheme2 } from '@grafana/data';
 
@@ -23,7 +22,7 @@ export const PluginList = ({ plugins }: Props) => {
         return (
           <Card
             key={`${orgName}-${name}-${typeCode}`}
-            href={`${PLUGIN_ROOT}/plugin/${slug}`}
+            href={`/plugins/${slug}`}
             image={
               <img
                 src={`https://grafana.com/api/plugins/${slug}/versions/${version}/logos/small`}

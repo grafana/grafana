@@ -11,7 +11,7 @@ import { api } from '../api';
 
 // This isn't exported in the sdk yet
 // @ts-ignore
-import appEvents from 'grafana/app/core/app_events';
+import appEvents from 'app/core/app_events';
 import { isGrafanaAdmin } from '../helpers';
 
 interface Props {
