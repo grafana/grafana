@@ -22,6 +22,7 @@ export const AmNotificationsAlertsTableRow = ({ alert, alertManagerSourceName, c
   const getMatcherQueryParams = (labels: Labels) => {
     return `matchers=${encodeURIComponent(
       Object.entries(labels)
+        .filter(([labelKey]) => !(labelKey.startsWith('__') && labelKey.endsWith('__')))
         .map(([labelKey, labelValue]) => {
           return `${labelKey}=${labelValue}`;
         })
@@ -82,7 +83,7 @@ export const AmNotificationsAlertsTableRow = ({ alert, alertManagerSourceName, c
               )}
               {alert.generatorURL && (
                 <LinkButton className={styles.button} href={alert.generatorURL} icon={'chart-line'} size={'sm'}>
-                  See graph
+                  See source
                 </LinkButton>
               )}
             </td>
