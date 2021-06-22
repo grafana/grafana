@@ -61,10 +61,6 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
 
 export interface ExploreProps {
   exploreId: ExploreId;
-  scanning?: boolean;
-  scanRange?: RawTimeRange;
-  onHiddenSeriesChanged?: (hiddenSeries: string[]) => void;
-  originPanelId: number;
   theme: GrafanaTheme;
 }
 
