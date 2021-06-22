@@ -6,19 +6,12 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-type permissionTestCase struct {
-	desc        string
-	permission  Evaluator
-	expected    bool
-	permissions map[string]map[string]struct{}
-}
-
-func TestPermission(t *testing.T) {
-	tests := []permissionTestCase{
+func TestPermission_Evaluate(t *testing.T) {
+	tests := []evaluateTestCase{
 		{
-			desc:       "should evaluate to true",
-			expected:   true,
-			permission: Permission("reports:read", "reports:1"),
+			desc:      "should evaluate to true",
+			expected:  true,
+			evaluator: Permission("reports:read", "reports:1"),
 			permissions: map[string]map[string]struct{}{
 				"reports:read": {
 					"reports:1": struct{}{},
@@ -26,9 +19,9 @@ func TestPermission(t *testing.T) {
 			},
 		},
 		{
-			desc:       "should evaluate to true for empty scope",
-			expected:   true,
-			permission: Permission("reports:read", ScopeNone),
+			desc:      "should evaluate to true for empty scope",
+			expected:  true,
+			evaluator: Permission("reports:read", ScopeNone),
 			permissions: map[string]map[string]struct{}{
 				"reports:read": {
 					"reports:1": struct{}{},
@@ -39,27 +32,19 @@ func TestPermission(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
-			ok, err := test.permission.Evaluate(test.permissions)
+			ok, err := test.evaluator.Evaluate(test.permissions)
 			assert.NoError(t, err)
 			assert.Equal(t, test.expected, ok)
 		})
 	}
 }
 
-type permissionInjectTestCase struct {
-	desc        string
-	eval        Evaluator
-	expected    bool
-	params      map[string]string
-	permissions map[string]map[string]struct{}
-}
-
 func TestPermission_Inject(t *testing.T) {
-	tests := []permissionInjectTestCase{
+	tests := []injectTestCase{
 		{
-			desc:     "should inject correct param",
-			expected: true,
-			eval:     Permission("reports:read", Combine("reports", Parameter(":reportId"))),
+			desc:      "should inject correct param",
+			expected:  true,
+			evaluator: Permission("reports:read", Combine("reports", Parameter(":reportId"))),
 			params: map[string]string{
 				":id":       "10",
 				":reportId": "1",
@@ -71,10 +56,10 @@ func TestPermission_Inject(t *testing.T) {
 			},
 		},
 		{
-			desc:     "should should fail for nil params",
-			expected: false,
-			eval:     Permission("reports:read", Combine("reports", Parameter(":reportId"))),
-			params:   nil,
+			desc:      "should should fail for nil params",
+			expected:  false,
+			evaluator: Permission("reports:read", Combine("reports", Parameter(":reportId"))),
+			params:    nil,
 			permissions: map[string]map[string]struct{}{
 				"reports:read": {
 					"reports:1": struct{}{},
@@ -82,29 +67,9 @@ func TestPermission_Inject(t *testing.T) {
 			},
 		},
 		{
-			desc:     "all should be injected with correct params",
-			expected: true,
-			eval: All(
-				Permission("reports:read", Combine("reports", Parameter(":reportId"))),
-				Permission("settings:read", Combine("settings", Parameter(":settingsId"))),
-			),
-			params: map[string]string{
-				":settingsId": "setting",
-				":reportId":   "report",
-			},
-			permissions: map[string]map[string]struct{}{
-				"reports:read": {
-					"reports:report": struct{}{},
-				},
-				"settings:read": {
-					"settings:setting": struct{}{},
-				},
-			},
-		},
-		{
-			desc:     "should inject several parameters to one permission",
-			expected: true,
-			eval:     Permission("reports:read", Combine("reports", Parameter(":reportId"), Parameter(":reportId2"))),
+			desc:      "should inject several parameters to one permission",
+			expected:  true,
+			evaluator: Permission("reports:read", Combine("reports", Parameter(":reportId"), Parameter(":reportId2"))),
 			params: map[string]string{
 				":reportId":  "report",
 				":reportId2": "report2",
@@ -119,10 +84,46 @@ func TestPermission_Inject(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
-			assert.NoError(t, test.eval.Inject(test.params))
-			ok, err := test.eval.Evaluate(test.permissions)
+			assert.NoError(t, test.evaluator.Inject(test.params))
+			ok, err := test.evaluator.Evaluate(test.permissions)
 			assert.NoError(t, err)
 			assert.Equal(t, test.expected, ok)
+		})
+	}
+}
+
+func TestPermission_Failed(t *testing.T) {
+	tests := []failedTestCase{
+		{
+			desc:      "should be returned as failed",
+			failed:    1,
+			evaluator: Permission("reports:read", "reports:2"),
+			permissions: map[string]map[string]struct{}{
+				"reports:read": {
+					"reports:1": struct{}{},
+				},
+			},
+		},
+		{
+			desc:      "should not be returned as failed",
+			failed:    0,
+			evaluator: Permission("reports:read", "reports:1"),
+			permissions: map[string]map[string]struct{}{
+				"reports:read": {
+					"reports:1": struct{}{},
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			ok, err := test.evaluator.Evaluate(test.permissions)
+			assert.NoError(t, err)
+			assert.Equal(t, test.failed == 0, ok)
+			if test.failed != 0 {
+				assert.Len(t, test.evaluator.Failed(), test.failed)
+			}
 		})
 	}
 }

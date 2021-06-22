@@ -27,3 +27,11 @@ func (a all) Inject(params map[string]string) error {
 	}
 	return nil
 }
+
+func (a all) Failed() []permission {
+	var failed []permission
+	for _, e := range a.allOf {
+		failed = append(failed, e.Failed()...)
+	}
+	return failed
+}

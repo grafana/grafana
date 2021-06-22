@@ -31,3 +31,11 @@ func (a any) Inject(params map[string]string) error {
 	}
 	return nil
 }
+
+func (a any) Failed() []permission {
+	var failed []permission
+	for _, e := range a.anyOf {
+		failed = append(failed, e.Failed()...)
+	}
+	return failed
+}

@@ -11,40 +11,40 @@ var _ Evaluator = new(permission)
 
 func Permission(action string, scope string) Evaluator {
 	return &permission{
-		action: action,
-		scope:  scope,
+		Action: action,
+		Scope:  scope,
 	}
 }
 
 type permission struct {
-	action string
-	scope  string
+	Action string
+	Scope  string
+	failed bool
 }
 
 func (p *permission) Evaluate(permissions map[string]map[string]struct{}) (bool, error) {
-	scopes, ok := permissions[p.action]
-	if !ok {
-		return false, nil
-	}
-
-	if p.scope == ScopeNone {
-		return true, nil
-	}
-
-	for s := range scopes {
-		rule, err := glob.Compile(s, ':', '/')
-		if err != nil {
-			return false, err
-		}
-		if rule.Match(p.scope) {
+	scopes, ok := permissions[p.Action]
+	if ok {
+		if p.Scope == ScopeNone {
 			return true, nil
 		}
+
+		for s := range scopes {
+			rule, err := glob.Compile(s, ':', '/')
+			if err != nil {
+				return false, err
+			}
+			if rule.Match(p.Scope) {
+				return true, nil
+			}
+		}
 	}
+	p.failed = true
 	return false, nil
 }
 
 func (p *permission) Inject(params map[string]string) error {
-	tmpl, err := template.New("scope").Parse(p.scope)
+	tmpl, err := template.New("scope").Parse(p.Scope)
 	if err != nil {
 		return err
 	}
@@ -52,6 +52,13 @@ func (p *permission) Inject(params map[string]string) error {
 	if err = tmpl.Execute(&buf, params); err != nil {
 		return err
 	}
-	p.scope = buf.String()
+	p.Scope = buf.String()
+	return nil
+}
+
+func (p *permission) Failed() []permission {
+	if p.failed {
+		return []permission{*p}
+	}
 	return nil
 }
