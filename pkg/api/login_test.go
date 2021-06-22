@@ -106,11 +106,7 @@ func TestLoginErrorCookieAPIEndpoint(t *testing.T) {
 		Cfg:              cfg,
 		SettingsProvider: &setting.OSSImpl{Cfg: cfg},
 		License:          &licensing.OSSLicensingService{},
-		SocialService: &social.Service{
-			OAuthService: &social.OAuthService{
-				OAuthInfos: oAuthInfos,
-			},
-		},
+		SocialService:    &mockSocialService{},
 	}
 
 	sc.defaultHandler = routing.Wrap(func(w http.ResponseWriter, c *models.ReqContext) {
@@ -153,16 +149,11 @@ func TestLoginViewRedirect(t *testing.T) {
 	fakeViewIndex(t)
 	sc := setupScenarioContext(t, "/login")
 	cfg := setting.NewCfg()
-	oAuthInfos := make(map[string]*social.OAuthInfo)
 	hs := &HTTPServer{
 		Cfg:              cfg,
 		SettingsProvider: &setting.OSSImpl{Cfg: cfg},
 		License:          &licensing.OSSLicensingService{},
-		SocialService: &social.Service{
-			OAuthService: &social.OAuthService{
-				OAuthInfos: oAuthInfos,
-			},
-		},
+		SocialService:    &mockSocialService{},
 	}
 	hs.Cfg.CookieSecure = true
 
@@ -497,15 +488,21 @@ func TestLoginOAuthRedirect(t *testing.T) {
 		AllowSignup:  true,
 		Name:         "github",
 	}
+	mock := &mockSocialService{
+		oAuthInfo: &social.OAuthInfo{
+			ClientId:     "fake",
+			ClientSecret: "fakefake",
+			Enabled:      true,
+			AllowSignup:  true,
+			Name:         "github",
+		},
+		oAuthInfos: oAuthInfos,
+	}
 	hs := &HTTPServer{
 		Cfg:              cfg,
 		SettingsProvider: &setting.OSSImpl{Cfg: cfg},
 		License:          &licensing.OSSLicensingService{},
-		SocialService: &social.Service{
-			OAuthService: &social.OAuthService{
-				OAuthInfos: oAuthInfos,
-			},
-		},
+		SocialService:    mock,
 	}
 
 	sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) {
@@ -539,11 +536,6 @@ func TestLoginInternal(t *testing.T) {
 		Cfg:     setting.NewCfg(),
 		License: &licensing.OSSLicensingService{},
 		log:     log.New("test"),
-		SocialService: &social.Service{
-			OAuthService: &social.OAuthService{
-				OAuthInfos: oAuthInfos,
-			},
-		},
 	}
 
 	sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) {
@@ -588,18 +580,13 @@ func setupAuthProxyLoginTest(t *testing.T, enableLoginToken bool) *scenarioConte
 
 	sc := setupScenarioContext(t, "/login")
 	sc.cfg.LoginCookieName = "grafana_session"
-	oAuthInfos := make(map[string]*social.OAuthInfo)
 	hs := &HTTPServer{
 		Cfg:              sc.cfg,
 		SettingsProvider: &setting.OSSImpl{Cfg: sc.cfg},
 		License:          &licensing.OSSLicensingService{},
 		AuthTokenService: auth.NewFakeUserAuthTokenService(),
 		log:              log.New("hello"),
-		SocialService: &social.Service{
-			OAuthService: &social.OAuthService{
-				OAuthInfos: oAuthInfos,
-			},
-		},
+		SocialService:    &mockSocialService{},
 	}
 
 	sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) {
@@ -724,4 +711,33 @@ func TestLoginPostRunLokingHook(t *testing.T) {
 			}
 		})
 	}
+}
+
+type mockSocialService struct {
+	oAuthInfo       *social.OAuthInfo
+	oAuthInfos      map[string]*social.OAuthInfo
+	oAuthProviders  map[string]bool
+	httpClient      *http.Client
+	socialConnector social.SocialConnector
+	err             error
+}
+
+func (m *mockSocialService) GetOAuthInfoProvider(name string) *social.OAuthInfo {
+	return m.oAuthInfo
+}
+
+func (m *mockSocialService) GetOAuthInfoProviders() map[string]*social.OAuthInfo {
+	return m.oAuthInfos
+}
+
+func (m *mockSocialService) GetOAuthProviders() map[string]bool {
+	return m.oAuthProviders
+}
+
+func (m *mockSocialService) GetOAuthHttpClient(name string) (*http.Client, error) {
+	return m.httpClient, m.err
+}
+
+func (m *mockSocialService) GetConnector(string) (social.SocialConnector, error) {
+	return m.socialConnector, m.err
 }

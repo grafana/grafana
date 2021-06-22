@@ -23,13 +23,14 @@ var (
 )
 
 func init() {
-	registry.RegisterService(&Service{})
+	registry.RegisterService(&SocialService{})
 }
 
-type Service struct {
-	Cfg          *setting.Cfg  `inject:""`
-	OAuthService *OAuthService `inject:""`
-	socialMap    map[string]SocialConnector
+type SocialService struct {
+	Cfg *setting.Cfg `inject:""`
+
+	socialMap     map[string]SocialConnector
+	oAuthProvider map[string]*OAuthInfo
 }
 
 type OAuthInfo struct {
@@ -53,15 +54,8 @@ type OAuthInfo struct {
 	TlsSkipVerify          bool
 }
 
-type OAuthService struct {
-	OAuthInfos map[string]*OAuthInfo
-}
-
-// var OAuthService *OAuther
-
-func (ss *Service) Init() error {
-	ss.OAuthService = &OAuthService{}
-	ss.OAuthService.OAuthInfos = make(map[string]*OAuthInfo)
+func (ss *SocialService) Init() error {
+	ss.oAuthProvider = make(map[string]*OAuthInfo)
 
 	for _, name := range allOauthes {
 		sec := ss.Cfg.Raw.Section("auth." + name)
@@ -102,7 +96,7 @@ func (ss *Service) Init() error {
 			name = grafanaCom
 		}
 
-		ss.OAuthService.OAuthInfos[name] = info
+		ss.oAuthProvider[name] = info
 
 		config := oauth2.Config{
 			ClientID:     info.ClientId,
@@ -252,6 +246,14 @@ var (
 	allOauthes    = []string{"github", "gitlab", "google", "generic_oauth", "grafananet", grafanaCom, "azuread", "okta"}
 )
 
+type Service interface {
+	GetOAuthProviders() map[string]bool
+	GetOAuthHttpClient(string) (*http.Client, error)
+	GetConnector(string) (SocialConnector, error)
+	GetOAuthInfoProvider(string) *OAuthInfo
+	GetOAuthInfoProviders() map[string]*OAuthInfo
+}
+
 func newSocialBase(name string, config *oauth2.Config, info *OAuthInfo) *SocialBase {
 	logger := log.New("oauth." + name)
 
@@ -264,7 +266,7 @@ func newSocialBase(name string, config *oauth2.Config, info *OAuthInfo) *SocialB
 }
 
 // GetOAuthProviders returns available oauth providers and if they're enabled or not
-func (ss *Service) GetOAuthProviders() map[string]bool {
+func (ss *SocialService) GetOAuthProviders() map[string]bool {
 	result := map[string]bool{}
 
 	if ss.Cfg == nil || ss.Cfg.Raw == nil {
@@ -286,13 +288,13 @@ func (ss *Service) GetOAuthProviders() map[string]bool {
 	return result
 }
 
-func (ss *Service) GetOAuthHttpClient(name string) (*http.Client, error) {
-	if ss.OAuthService == nil {
+func (ss *SocialService) GetOAuthHttpClient(name string) (*http.Client, error) {
+	if ss.oAuthProvider[name] == nil {
 		return nil, fmt.Errorf("OAuth not enabled")
 	}
 	// The socialMap keys don't have "oauth_" prefix, but everywhere else in the system does
 	name = strings.TrimPrefix(name, "oauth_")
-	info, ok := ss.OAuthService.OAuthInfos[name]
+	info, ok := ss.oAuthProvider[name]
 	if !ok {
 		return nil, fmt.Errorf("could not find %q in OAuth Settings", name)
 	}
@@ -331,7 +333,7 @@ func (ss *Service) GetOAuthHttpClient(name string) (*http.Client, error) {
 	return oauthClient, nil
 }
 
-func (ss *Service) GetConnector(name string) (SocialConnector, error) {
+func (ss *SocialService) GetConnector(name string) (SocialConnector, error) {
 	// The socialMap keys don't have "oauth_" prefix, but everywhere else in the system does
 	provider := strings.TrimPrefix(name, "oauth_")
 	connector, ok := ss.socialMap[provider]
@@ -339,4 +341,12 @@ func (ss *Service) GetConnector(name string) (SocialConnector, error) {
 		return nil, fmt.Errorf("failed to find oauth provider for %q", name)
 	}
 	return connector, nil
+}
+
+func (ss *SocialService) GetOAuthInfoProvider(name string) *OAuthInfo {
+	return ss.oAuthProvider[name]
+}
+
+func (ss *SocialService) GetOAuthInfoProviders() map[string]*OAuthInfo {
+	return ss.oAuthProvider
 }

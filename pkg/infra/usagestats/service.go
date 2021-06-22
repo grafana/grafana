@@ -39,7 +39,7 @@ type UsageStatsService struct {
 	AlertingUsageStats alerting.UsageStatsQuerier `inject:""`
 	License            models.Licensing           `inject:""`
 	PluginManager      plugins.Manager            `inject:""`
-	SocialService      *social.Service            `inject:""`
+	SocialService      social.Service             `inject:""`
 
 	log log.Logger
 

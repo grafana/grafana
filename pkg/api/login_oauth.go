@@ -41,7 +41,10 @@ func (hs *HTTPServer) OAuthLogin(ctx *models.ReqContext) {
 	loginInfo := models.LoginInfo{
 		AuthModule: "oauth",
 	}
-	if hs.SocialService.OAuthService == nil {
+	name := ctx.Params(":name")
+	loginInfo.AuthModule = name
+	provider := hs.SocialService.GetOAuthInfoProvider(name)
+	if provider == nil {
 		hs.handleOAuthLoginError(ctx, loginInfo, LoginError{
 			HttpStatus:    http.StatusNotFound,
 			PublicMessage: "OAuth not enabled",
@@ -49,8 +52,6 @@ func (hs *HTTPServer) OAuthLogin(ctx *models.ReqContext) {
 		return
 	}
 
-	name := ctx.Params(":name")
-	loginInfo.AuthModule = name
 	connect, err := hs.SocialService.GetConnector(name)
 	if err != nil {
 		hs.handleOAuthLoginError(ctx, loginInfo, LoginError{
@@ -80,12 +81,12 @@ func (hs *HTTPServer) OAuthLogin(ctx *models.ReqContext) {
 			return
 		}
 
-		hashedState := hashStatecode(state, hs.SocialService.OAuthService.OAuthInfos[name].ClientSecret)
+		hashedState := hashStatecode(state, provider.ClientSecret)
 		cookies.WriteCookie(ctx.Resp, OauthStateCookieName, hashedState, hs.Cfg.OAuthCookieMaxAge, hs.CookieOptionsFromCfg)
-		if hs.SocialService.OAuthService.OAuthInfos[name].HostedDomain == "" {
+		if provider.HostedDomain == "" {
 			ctx.Redirect(connect.AuthCodeURL(state, oauth2.AccessTypeOnline))
 		} else {
-			ctx.Redirect(connect.AuthCodeURL(state, oauth2.SetAuthURLParam("hd", hs.SocialService.OAuthService.OAuthInfos[name].HostedDomain), oauth2.AccessTypeOnline))
+			ctx.Redirect(connect.AuthCodeURL(state, oauth2.SetAuthURLParam("hd", provider.HostedDomain), oauth2.AccessTypeOnline))
 		}
 		return
 	}
@@ -103,7 +104,7 @@ func (hs *HTTPServer) OAuthLogin(ctx *models.ReqContext) {
 		return
 	}
 
-	queryState := hashStatecode(ctx.Query("state"), hs.SocialService.OAuthService.OAuthInfos[name].ClientSecret)
+	queryState := hashStatecode(ctx.Query("state"), provider.ClientSecret)
 	oauthLogger.Info("state check", "queryState", queryState, "cookieState", cookieState)
 	if cookieState != queryState {
 		hs.handleOAuthLoginError(ctx, loginInfo, LoginError{

@@ -21,7 +21,7 @@ func init() {
 }
 
 type Service struct {
-	SocialService *social.Service `inject:""`
+	SocialService social.Service `inject:""`
 }
 
 type OAuthTokenService interface {
