@@ -31,7 +31,7 @@ func TestAny_Evaluate(t *testing.T) {
 			expected: true,
 		},
 		{
-			desc: "should return false when there is no matches",
+			desc: "should return false when there is no match",
 			evaluator: Any(
 				Permission("settings:write", Combine("settings", "auth.saml", ScopeAll)),
 				Permission("report:read", Combine("reports", "1")),
