@@ -36,11 +36,11 @@ func (hs *HTTPServer) getAuthorizedSettings(ctx context.Context, user *models.Si
 		return bag, nil
 	}
 
-	eval := func(scope string) (bool, error) {
+	evaluate := func(scope string) (bool, error) {
 		return hs.AccessControl.Evaluate(ctx, user, eval.Permission(accesscontrol.ActionSettingsRead, scope))
 	}
 
-	ok, err := eval(accesscontrol.ScopeSettingsAll)
+	ok, err := evaluate(accesscontrol.ScopeSettingsAll)
 	if err != nil {
 		return nil, err
 	}
@@ -51,7 +51,7 @@ func (hs *HTTPServer) getAuthorizedSettings(ctx context.Context, user *models.Si
 	authorizedBag := make(setting.SettingsBag)
 
 	for section, keys := range bag {
-		ok, err := eval(getSettingsScope(section, "*"))
+		ok, err := evaluate(getSettingsScope(section, "*"))
 		if err != nil {
 			return nil, err
 		}
@@ -61,7 +61,7 @@ func (hs *HTTPServer) getAuthorizedSettings(ctx context.Context, user *models.Si
 		}
 
 		for key := range keys {
-			ok, err := eval(getSettingsScope(section, key))
+			ok, err := evaluate(getSettingsScope(section, key))
 			if err != nil {
 				return nil, err
 			}
