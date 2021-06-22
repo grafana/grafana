@@ -119,7 +119,7 @@ Panel data source query options:
 | Example             | Time shift field |
 | ------------------- | --------------------|
 | Last entire week    | `1w/w`              |
-| Two entire week ago | `2w/w`              |
+| Two entire weeks ago | `2w/w`              |
 | Last entire month   | `1M/M`              |
 | This entire year    | `1d/y`              |
 | Last entire year    | `1y/y`              |   
