@@ -41,6 +41,7 @@
     "@visx/scale": "1.4.0",
     "@visx/shape": "1.4.0",
     "@visx/tooltip": "1.7.2",
+    "ansicolor": "1.1.95",
     "classnames": "2.2.6",
     "d3": "5.15.0",
     "hoist-non-react-statics": "3.3.2",

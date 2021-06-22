@@ -8,7 +8,7 @@ export * from './table';
 export * from './measureText';
 export * from './useForceUpdate';
 export { SearchFunctionType } from './searchFunctions';
-export { default as ansicolor } from './ansicolor';
+export { ansicolor } from 'ansicolor';
 
 import * as DOMUtil from './dom'; // includes Element.closest polyfill
 export { DOMUtil };
