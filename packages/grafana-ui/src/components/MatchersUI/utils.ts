@@ -78,7 +78,7 @@ export function useSelectOptions(
         }
         options.push({
           value: name,
-          label: `${name} (raw)`,
+          label: `${name} (base field name)`,
         });
       }
     }
