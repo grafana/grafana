@@ -7,7 +7,8 @@
     { "type": "dashboard", "name": "Azure Monitor Storage Insights", "path": "dashboards/storage.json" },
     { "type": "dashboard", "name": "Azure Monitor CosmosDB Insights", "path": "dashboards/cosmosdb.json" },
     { "type": "dashboard", "name": "Azure Monitor Key Vault Insights", "path": "dashboards/keyvault.json" },
-    { "type": "dashboard", "name": "Azure SQL Database Insights", "path": "dashboards/sqldb.json" }
+    { "type": "dashboard", "name": "Azure SQL Database Insights", "path": "dashboards/sqldb.json" },
+    { "type": "dashboard", "name": "Azure Data Explorer Insights", "path": "dashboards/adx.json" }
   ],
 
   "info": {
