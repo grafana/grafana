@@ -8,6 +8,7 @@ import { SecondaryActions } from './SecondaryActions';
 import { getTheme } from '@grafana/ui';
 
 const dummyProps: Props = {
+  logsResult: undefined,
   changeSize: jest.fn(),
   datasourceInstance: {
     meta: {
