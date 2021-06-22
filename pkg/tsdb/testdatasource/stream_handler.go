@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"math/rand"
+	"strings"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -36,6 +37,16 @@ func (p *testStreamHandler) SubscribeStream(_ context.Context, req *backend.Subs
 	if err != nil {
 		return nil, err
 	}
+
+	// For flight simulations, send the more complex schema
+	if strings.HasPrefix(req.Path, "flight") {
+		ff := newFlightConfig().initFields()
+		initialData, err = backend.NewInitialFrame(ff.frame, data.IncludeSchemaOnly)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	return &backend.SubscribeStreamResponse{
 		Status:      backend.SubscribeStreamStatusOK,
 		InitialData: initialData,
@@ -66,6 +77,11 @@ func (p *testStreamHandler) RunStream(ctx context.Context, request *backend.RunS
 		conf = testStreamConfig{
 			Interval: 50 * time.Millisecond,
 		}
+	case "flight-5hz-stream":
+		conf = testStreamConfig{
+			Interval: 200 * time.Millisecond,
+			Flight:   newFlightConfig(),
+		}
 	default:
 		return fmt.Errorf("testdata plugin does not support path: %s", request.Path)
 	}
@@ -75,9 +91,54 @@ func (p *testStreamHandler) RunStream(ctx context.Context, request *backend.RunS
 type testStreamConfig struct {
 	Interval time.Duration
 	Drop     float64
+	Flight   *flightConfig
 }
 
 func (p *testStreamHandler) runTestStream(ctx context.Context, path string, conf testStreamConfig, sender *backend.StreamSender) error {
+	spread := 50.0
+	walker := rand.Float64() * 100
+
+	ticker := time.NewTicker(conf.Interval)
+	defer ticker.Stop()
+
+	var flight *flightFields
+	if conf.Flight != nil {
+		flight = conf.Flight.initFields()
+		flight.append(conf.Flight.getNextPoint(time.Now()))
+	}
+
+	for {
+		select {
+		case <-ctx.Done():
+			p.logger.Debug("Stop streaming data for path", "path", path)
+			return ctx.Err()
+		case t := <-ticker.C:
+			if rand.Float64() < conf.Drop {
+				continue
+			}
+
+			if flight != nil {
+				flight.set(0, conf.Flight.getNextPoint(t))
+				if err := sender.SendFrame(flight.frame, data.IncludeDataOnly); err != nil {
+					return err
+				}
+			} else {
+				delta := rand.Float64() - 0.5
+				walker += delta
+
+				p.frame.Fields[0].Set(0, t)
+				p.frame.Fields[1].Set(0, walker)                                // Value
+				p.frame.Fields[2].Set(0, walker-((rand.Float64()*spread)+0.01)) // Min
+				p.frame.Fields[3].Set(0, walker+((rand.Float64()*spread)+0.01)) // Max
+				if err := sender.SendFrame(p.frame, data.IncludeDataOnly); err != nil {
+					return err
+				}
+			}
+		}
+	}
+}
+
+func (p *testStreamHandler) runFlightStream(ctx context.Context, path string, conf testStreamConfig, sender *backend.StreamSender) error {
 	spread := 50.0
 	walker := rand.Float64() * 100
 

@@ -15,7 +15,7 @@ func (p *testDataPlugin) handleFlightPathScenario(ctx context.Context, req *back
 	resp := backend.NewQueryDataResponse()
 
 	for _, q := range req.Queries {
-		model, err := simplejson.NewJson(q.JSON)
+		_, err := simplejson.NewJson(q.JSON)
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse query json: %v", err)
 		}
@@ -24,22 +24,22 @@ func (p *testDataPlugin) handleFlightPathScenario(ctx context.Context, req *back
 		to := q.TimeRange.To.UnixNano() / int64(time.Millisecond)
 		stepMillis := q.Interval.Milliseconds()
 
-		cfg := flightConfig{
-			centerLat:   model.Get("lat").MustFloat64(37.773972),
-			centerLng:   model.Get("lng").MustFloat64(-122.431297),
-			radius:      0.1, // raw gps degrees
-			altitudeMin: 350,
-			altitudeMax: 400,
-			periodS:     model.Get("period").MustFloat64(10),
-		}
+		cfg := newFlightConfig()
 
 		maxPoints := q.MaxDataPoints * 2
-		f := cfg.newFrame()
+		f := cfg.initFields()
 		for i := int64(0); i < maxPoints && timeWalkerMs < to; i++ {
 			t := time.Unix(timeWalkerMs/int64(1e+3), (timeWalkerMs%int64(1e+3))*int64(1e+6))
 			f.append(cfg.getNextPoint(t))
 
 			timeWalkerMs += stepMillis
+		}
+
+		// When close to now, link to the live streaming channel
+		if q.TimeRange.To.Add(time.Second * 2).After(time.Now()) {
+			f.frame.Meta = &data.FrameMeta{
+				Channel: "plugin/testdata/flight-5hz-stream",
+			}
 		}
 
 		respD := resp.Responses[q.RefID]
@@ -67,6 +67,17 @@ type flightConfig struct {
 	periodS     float64 // angular speed
 }
 
+func newFlightConfig() *flightConfig {
+	return &flightConfig{
+		centerLat:   37.773972, // San francisco
+		centerLng:   -122.431297,
+		radius:      0.1, // raw gps degrees
+		altitudeMin: 350,
+		altitudeMax: 400,
+		periodS:     10, //model.Get("period").MustFloat64(10),
+	}
+}
+
 type flightFields struct {
 	time     *data.Field
 	lat      *data.Field
@@ -77,8 +88,8 @@ type flightFields struct {
 	frame *data.Frame
 }
 
-func (f *flightConfig) newFrame() flightFields {
-	ff := flightFields{
+func (f *flightConfig) initFields() *flightFields {
+	ff := &flightFields{
 		time:     data.NewFieldFromFieldType(data.FieldTypeTime, 0),
 		lat:      data.NewFieldFromFieldType(data.FieldTypeFloat64, 0),
 		lng:      data.NewFieldFromFieldType(data.FieldTypeFloat64, 0),
@@ -97,6 +108,14 @@ func (f *flightConfig) newFrame() flightFields {
 
 func (f *flightFields) append(v flightDataPoint) {
 	f.frame.AppendRow(v.time, v.lat, v.lng, v.heading, v.altitude)
+}
+
+func (f *flightFields) set(idx int, v flightDataPoint) {
+	f.time.Set(idx, v.time)
+	f.lat.Set(idx, v.lat)
+	f.lng.Set(idx, v.lng)
+	f.heading.Set(idx, v.heading)
+	f.altitude.Set(idx, v.altitude)
 }
 
 func (f *flightConfig) getNextPoint(t time.Time) flightDataPoint {
