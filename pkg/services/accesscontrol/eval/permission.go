@@ -9,7 +9,7 @@ import (
 
 var _ Evaluator = new(permission)
 
-func Permission(actions string, scope string) Evaluator {
+func Permission(action string, scope string) Evaluator {
 	return &permission{
 		action: actions,
 		scope:  scope,
