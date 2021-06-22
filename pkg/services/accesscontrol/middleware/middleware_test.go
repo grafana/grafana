@@ -57,7 +57,6 @@ func TestMiddleware(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
-
 			fallbackCalled := false
 			fallback := func(c *models.ReqContext) {
 				fallbackCalled = true
@@ -84,7 +83,6 @@ func TestMiddleware(t *testing.T) {
 			assert.Equal(t, test.expectEndpoint, endpointCalled)
 		})
 	}
-
 }
 
 func contextProvider() macaron.Handler {
