@@ -51,7 +51,7 @@ func (hs *HTTPServer) getAuthorizedSettings(ctx context.Context, user *models.Si
 	authorizedBag := make(setting.SettingsBag)
 
 	for section, keys := range bag {
-		ok, err := evaluate(getSettingsScope(section, "*"))
+		ok, err := evaluate(getSettingsScope(section, eval.ScopeAll))
 		if err != nil {
 			return nil, err
 		}
