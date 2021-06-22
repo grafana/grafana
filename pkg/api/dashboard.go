@@ -107,10 +107,10 @@ func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
 	// Finding creator and last updater of the dashboard
 	updater, creator := anonString, anonString
 	if dash.UpdatedBy > 0 {
-		updater = getUserLogin(dash.UpdatedBy)
+		updater = getUserLogin(c.Req.Context(), dash.UpdatedBy)
 	}
 	if dash.CreatedBy > 0 {
-		creator = getUserLogin(dash.CreatedBy)
+		creator = getUserLogin(c.Req.Context(), dash.CreatedBy)
 	}
 
 	meta := dtos.DashboardMeta{
@@ -188,9 +188,9 @@ func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
 	return response.JSON(200, dto)
 }
 
-func getUserLogin(userID int64) string {
+func getUserLogin(ctx context.Context, userID int64) string {
 	query := models.GetUserByIdQuery{Id: userID}
-	err := bus.Dispatch(&query)
+	err := bus.DispatchCtx(ctx, &query)
 	if err != nil {
 		return anonString
 	}
@@ -562,7 +562,7 @@ func GetDashboardVersion(c *models.ReqContext) response.Response {
 
 	creator := anonString
 	if query.Result.CreatedBy > 0 {
-		creator = getUserLogin(query.Result.CreatedBy)
+		creator = getUserLogin(c.Req.Context(), query.Result.CreatedBy)
 	}
 
 	dashVersionMeta := &models.DashboardVersionMeta{
