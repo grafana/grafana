@@ -1,6 +1,9 @@
 package notifier
 
-import "github.com/grafana/grafana/pkg/services/alerting"
+import (
+	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels"
+)
 
 // GetAvailableNotifiers returns the metadata of all the notification channels that can be configured.
 func GetAvailableNotifiers() []*alerting.NotifierPlugin {
@@ -139,6 +142,30 @@ func GetAvailableNotifiers() []*alerting.NotifierPlugin {
 			},
 		},
 		{
+			Type:        "kafka",
+			Name:        "Kafka REST Proxy",
+			Description: "Sends notifications to Kafka Rest Proxy",
+			Heading:     "Kafka settings",
+			Options: []alerting.NotifierOption{
+				{
+					Label:        "Kafka REST Proxy",
+					Element:      alerting.ElementTypeInput,
+					InputType:    alerting.InputTypeText,
+					Placeholder:  "http://localhost:8082",
+					PropertyName: "kafkaRestProxy",
+					Required:     true,
+				},
+				{
+					Label:        "Topic",
+					Element:      alerting.ElementTypeInput,
+					InputType:    alerting.InputTypeText,
+					Placeholder:  "topic1",
+					PropertyName: "kafkaTopic",
+					Required:     true,
+				},
+			},
+		},
+		{
 			Type:        "email",
 			Name:        "Email",
 			Description: "Sends notifications using Grafana server configured SMTP settings",
@@ -231,6 +258,36 @@ func GetAvailableNotifiers() []*alerting.NotifierPlugin {
 					Element:      alerting.ElementTypeTextArea,
 					Placeholder:  `{{ template "default.message" . }}`,
 					PropertyName: "summary",
+				},
+			},
+		},
+		{
+			Type:        "victorops",
+			Name:        "VictorOps",
+			Description: "Sends notifications to VictorOps",
+			Heading:     "VictorOps settings",
+			Options: []alerting.NotifierOption{
+				{
+					Label:        "Url",
+					Element:      alerting.ElementTypeInput,
+					InputType:    alerting.InputTypeText,
+					Placeholder:  "VictorOps url",
+					PropertyName: "url",
+					Required:     true,
+				},
+				{ // New in 8.0.
+					Label:        "Message Type",
+					Element:      alerting.ElementTypeSelect,
+					PropertyName: "messageType",
+					SelectOptions: []alerting.SelectOption{
+						{
+							Value: "CRITICAL",
+							Label: "CRITICAL"},
+						{
+							Value: "WARNING",
+							Label: "WARNING",
+						},
+					},
 				},
 			},
 		},
@@ -581,7 +638,7 @@ func GetAvailableNotifiers() []*alerting.NotifierPlugin {
 			},
 		},
 		{
-			Type:        "alertmanager",
+			Type:        "prometheus-alertmanager",
 			Name:        "Alertmanager",
 			Description: "Sends notifications to Alertmanager",
 			Heading:     "Alertmanager Settings",
@@ -593,6 +650,176 @@ func GetAvailableNotifiers() []*alerting.NotifierPlugin {
 					Placeholder:  "http://localhost:9093",
 					PropertyName: "url",
 					Required:     true,
+				},
+				{
+					Label:        "Basic Auth User",
+					Element:      alerting.ElementTypeInput,
+					InputType:    alerting.InputTypeText,
+					PropertyName: "basicAuthUser",
+				},
+				{
+					Label:        "Basic Auth Password",
+					Element:      alerting.ElementTypeInput,
+					InputType:    alerting.InputTypePassword,
+					PropertyName: "basicAuthPassword",
+					Secure:       true,
+				},
+			},
+		},
+		{
+			Type:        "discord",
+			Name:        "Discord",
+			Heading:     "Discord settings",
+			Description: "Sends notifications to Discord",
+			Options: []alerting.NotifierOption{
+				{
+					Label:        "Message Content",
+					Description:  "Mention a group using @ or a user using <@ID> when notifying in a channel",
+					Element:      alerting.ElementTypeInput,
+					InputType:    alerting.InputTypeText,
+					Placeholder:  `{{ template "default.message" . }}`,
+					PropertyName: "message",
+				},
+				{
+					Label:        "Webhook URL",
+					Element:      alerting.ElementTypeInput,
+					InputType:    alerting.InputTypeText,
+					Placeholder:  "Discord webhook URL",
+					PropertyName: "url",
+					Required:     true,
+				},
+				{
+					Label:        "Avatar URL",
+					Element:      alerting.ElementTypeInput,
+					InputType:    alerting.InputTypeText,
+					PropertyName: "avatar_url",
+				},
+			},
+		},
+		{
+			Type:        "googlechat",
+			Name:        "Google Hangouts Chat",
+			Description: "Sends notifications to Google Hangouts Chat via webhooks based on the official JSON message format",
+			Heading:     "Google Hangouts Chat settings",
+			Options: []alerting.NotifierOption{
+				{
+					Label:        "Url",
+					Element:      alerting.ElementTypeInput,
+					InputType:    alerting.InputTypeText,
+					Placeholder:  "Google Hangouts Chat incoming webhook url",
+					PropertyName: "url",
+					Required:     true,
+				},
+			},
+		},
+		{
+			Type:        "LINE",
+			Name:        "LINE",
+			Description: "Send notifications to LINE notify",
+			Heading:     "LINE notify settings",
+			Options: []alerting.NotifierOption{
+				{
+					Label:        "Token",
+					Element:      alerting.ElementTypeInput,
+					InputType:    alerting.InputTypeText,
+					Placeholder:  "LINE notify token key",
+					PropertyName: "token",
+					Required:     true,
+					Secure:       true,
+				}},
+		},
+		{
+			Type:        "threema",
+			Name:        "Threema Gateway",
+			Description: "Sends notifications to Threema using Threema Gateway (Basic IDs)",
+			Heading:     "Threema Gateway settings",
+			Info: "Notifications can be configured for any Threema Gateway ID of type \"Basic\". End-to-End IDs are not currently supported." +
+				"The Threema Gateway ID can be set up at https://gateway.threema.ch/.",
+			Options: []alerting.NotifierOption{
+				{
+					Label:          "Gateway ID",
+					Element:        alerting.ElementTypeInput,
+					InputType:      alerting.InputTypeText,
+					Placeholder:    "*3MAGWID",
+					Description:    "Your 8 character Threema Gateway Basic ID (starting with a *).",
+					PropertyName:   "gateway_id",
+					Required:       true,
+					ValidationRule: "\\*[0-9A-Z]{7}",
+				},
+				{
+					Label:          "Recipient ID",
+					Element:        alerting.ElementTypeInput,
+					InputType:      alerting.InputTypeText,
+					Placeholder:    "YOUR3MID",
+					Description:    "The 8 character Threema ID that should receive the alerts.",
+					PropertyName:   "recipient_id",
+					Required:       true,
+					ValidationRule: "[0-9A-Z]{8}",
+				},
+				{
+					Label:        "API Secret",
+					Element:      alerting.ElementTypeInput,
+					InputType:    alerting.InputTypeText,
+					Description:  "Your Threema Gateway API secret.",
+					PropertyName: "api_secret",
+					Required:     true,
+					Secure:       true,
+				},
+			},
+		},
+		{
+			Type:        "opsgenie",
+			Name:        "OpsGenie",
+			Description: "Sends notifications to OpsGenie",
+			Heading:     "OpsGenie settings",
+			Options: []alerting.NotifierOption{
+				{
+					Label:        "API Key",
+					Element:      alerting.ElementTypeInput,
+					InputType:    alerting.InputTypeText,
+					Placeholder:  "OpsGenie API Key",
+					PropertyName: "apiKey",
+					Required:     true,
+					Secure:       true,
+				},
+				{
+					Label:        "Alert API Url",
+					Element:      alerting.ElementTypeInput,
+					InputType:    alerting.InputTypeText,
+					Placeholder:  "https://api.opsgenie.com/v2/alerts",
+					PropertyName: "apiUrl",
+					Required:     true,
+				},
+				{
+					Label:        "Auto close incidents",
+					Element:      alerting.ElementTypeCheckbox,
+					Description:  "Automatically close alerts in OpsGenie once the alert goes back to ok.",
+					PropertyName: "autoClose",
+				}, {
+					Label:        "Override priority",
+					Element:      alerting.ElementTypeCheckbox,
+					Description:  "Allow the alert priority to be set using the og_priority annotation",
+					PropertyName: "overridePriority",
+				},
+				{
+					Label:   "Send notification tags as",
+					Element: alerting.ElementTypeSelect,
+					SelectOptions: []alerting.SelectOption{
+						{
+							Value: channels.OpsgenieSendTags,
+							Label: "Tags",
+						},
+						{
+							Value: channels.OpsgenieSendDetails,
+							Label: "Extra Properties",
+						},
+						{
+							Value: channels.OpsgenieSendBoth,
+							Label: "Tags & Extra Properties",
+						},
+					},
+					Description:  "Send the common annotations to Opsgenie as either Extra Properties, Tags or both",
+					PropertyName: "sendTagsAs",
 				},
 			},
 		},

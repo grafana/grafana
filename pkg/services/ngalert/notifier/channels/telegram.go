@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"mime/multipart"
 
-	gokit_log "github.com/go-kit/kit/log"
-	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 
@@ -16,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	old_notifiers "github.com/grafana/grafana/pkg/services/alerting/notifiers"
-	"github.com/grafana/grafana/pkg/services/ngalert/logging"
 )
 
 var (
@@ -82,6 +79,13 @@ func (tn *TelegramNotifier) Notify(ctx context.Context, as ...*types.Alert) (boo
 			tn.log.Warn("Failed to close writer", "err", err)
 		}
 	}()
+	boundary := GetBoundary()
+	if boundary != "" {
+		err = w.SetBoundary(boundary)
+		if err != nil {
+			return false, err
+		}
+	}
 
 	for k, v := range msg {
 		if err := writeField(w, k, v); err != nil {
@@ -95,7 +99,7 @@ func (tn *TelegramNotifier) Notify(ctx context.Context, as ...*types.Alert) (boo
 		return false, err
 	}
 
-	tn.log.Info("sending telegram notification", "chat_id", tn.ChatID)
+	tn.log.Info("sending telegram notification", "chat_id", msg["chat_id"])
 	cmd := &models.SendWebhookSync{
 		Url:        fmt.Sprintf(TelegramAPIURL, tn.BotToken),
 		Body:       body.String(),
@@ -114,17 +118,16 @@ func (tn *TelegramNotifier) Notify(ctx context.Context, as ...*types.Alert) (boo
 }
 
 func (tn *TelegramNotifier) buildTelegramMessage(ctx context.Context, as []*types.Alert) (map[string]string, error) {
-	msg := map[string]string{}
-	msg["chat_id"] = tn.ChatID
-	msg["parse_mode"] = "html"
-
-	data := notify.GetTemplateData(ctx, &template.Template{ExternalURL: tn.tmpl.ExternalURL}, as, gokit_log.NewLogfmtLogger(logging.NewWrapper(tn.log)))
 	var tmplErr error
-	tmpl := notify.TmplText(tn.tmpl, data, &tmplErr)
+	tmpl, _ := TmplText(ctx, tn.tmpl, as, tn.log, &tmplErr)
+
+	msg := map[string]string{}
+	msg["chat_id"] = tmpl(tn.ChatID)
+	msg["parse_mode"] = "html"
 
 	message := tmpl(tn.Message)
 	if tmplErr != nil {
-		return nil, tmplErr
+		tn.log.Debug("failed to template Telegram message", "err", tmplErr.Error())
 	}
 
 	msg["text"] = message

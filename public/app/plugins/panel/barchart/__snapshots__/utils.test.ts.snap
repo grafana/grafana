@@ -18,9 +18,10 @@ Object {
       "size": [Function],
       "space": [Function],
       "splits": [Function],
-      "stroke": "rgb(201, 209, 217)",
+      "stroke": "rgb(204, 204, 220)",
       "ticks": Object {
         "show": false,
+        "size": 4,
         "stroke": "rgba(240, 250, 255, 0.09)",
         "width": 1,
       },
@@ -42,9 +43,10 @@ Object {
       "size": [Function],
       "space": [Function],
       "splits": undefined,
-      "stroke": "rgb(201, 209, 217)",
+      "stroke": "rgb(204, 204, 220)",
       "ticks": Object {
         "show": true,
+        "size": 4,
         "stroke": "rgba(240, 250, 255, 0.09)",
         "width": 1,
       },
@@ -65,8 +67,13 @@ Object {
       "stroke": [Function],
       "width": [Function],
     },
+    "x": false,
+    "y": false,
   },
   "hooks": Object {
+    "draw": Array [
+      [Function],
+    ],
     "drawClear": Array [
       [Function],
     ],
@@ -102,7 +109,7 @@ Object {
       "paths": [Function],
       "points": Object {
         "fill": undefined,
-        "show": [Function],
+        "filter": undefined,
         "size": undefined,
         "stroke": undefined,
       },
@@ -136,9 +143,10 @@ Object {
       "size": [Function],
       "space": [Function],
       "splits": [Function],
-      "stroke": "rgb(201, 209, 217)",
+      "stroke": "rgb(204, 204, 220)",
       "ticks": Object {
         "show": false,
+        "size": 4,
         "stroke": "rgba(240, 250, 255, 0.09)",
         "width": 1,
       },
@@ -160,9 +168,10 @@ Object {
       "size": [Function],
       "space": [Function],
       "splits": undefined,
-      "stroke": "rgb(201, 209, 217)",
+      "stroke": "rgb(204, 204, 220)",
       "ticks": Object {
         "show": true,
+        "size": 4,
         "stroke": "rgba(240, 250, 255, 0.09)",
         "width": 1,
       },
@@ -183,8 +192,13 @@ Object {
       "stroke": [Function],
       "width": [Function],
     },
+    "x": false,
+    "y": false,
   },
   "hooks": Object {
+    "draw": Array [
+      [Function],
+    ],
     "drawClear": Array [
       [Function],
     ],
@@ -220,7 +234,7 @@ Object {
       "paths": [Function],
       "points": Object {
         "fill": undefined,
-        "show": [Function],
+        "filter": undefined,
         "size": undefined,
         "stroke": undefined,
       },
@@ -254,9 +268,10 @@ Object {
       "size": [Function],
       "space": [Function],
       "splits": [Function],
-      "stroke": "rgb(201, 209, 217)",
+      "stroke": "rgb(204, 204, 220)",
       "ticks": Object {
         "show": false,
+        "size": 4,
         "stroke": "rgba(240, 250, 255, 0.09)",
         "width": 1,
       },
@@ -278,9 +293,10 @@ Object {
       "size": [Function],
       "space": [Function],
       "splits": undefined,
-      "stroke": "rgb(201, 209, 217)",
+      "stroke": "rgb(204, 204, 220)",
       "ticks": Object {
         "show": true,
+        "size": 4,
         "stroke": "rgba(240, 250, 255, 0.09)",
         "width": 1,
       },
@@ -301,8 +317,13 @@ Object {
       "stroke": [Function],
       "width": [Function],
     },
+    "x": false,
+    "y": false,
   },
   "hooks": Object {
+    "draw": Array [
+      [Function],
+    ],
     "drawClear": Array [
       [Function],
     ],
@@ -338,7 +359,7 @@ Object {
       "paths": [Function],
       "points": Object {
         "fill": undefined,
-        "show": [Function],
+        "filter": undefined,
         "size": undefined,
         "stroke": undefined,
       },
@@ -372,9 +393,10 @@ Object {
       "size": [Function],
       "space": [Function],
       "splits": [Function],
-      "stroke": "rgb(201, 209, 217)",
+      "stroke": "rgb(204, 204, 220)",
       "ticks": Object {
         "show": false,
+        "size": 4,
         "stroke": "rgba(240, 250, 255, 0.09)",
         "width": 1,
       },
@@ -396,9 +418,10 @@ Object {
       "size": [Function],
       "space": [Function],
       "splits": undefined,
-      "stroke": "rgb(201, 209, 217)",
+      "stroke": "rgb(204, 204, 220)",
       "ticks": Object {
         "show": true,
+        "size": 4,
         "stroke": "rgba(240, 250, 255, 0.09)",
         "width": 1,
       },
@@ -419,8 +442,13 @@ Object {
       "stroke": [Function],
       "width": [Function],
     },
+    "x": false,
+    "y": false,
   },
   "hooks": Object {
+    "draw": Array [
+      [Function],
+    ],
     "drawClear": Array [
       [Function],
     ],
@@ -456,7 +484,7 @@ Object {
       "paths": [Function],
       "points": Object {
         "fill": undefined,
-        "show": [Function],
+        "filter": undefined,
         "size": undefined,
         "stroke": undefined,
       },
@@ -490,9 +518,10 @@ Object {
       "size": [Function],
       "space": [Function],
       "splits": [Function],
-      "stroke": "rgb(201, 209, 217)",
+      "stroke": "rgb(204, 204, 220)",
       "ticks": Object {
         "show": false,
+        "size": 4,
         "stroke": "rgba(240, 250, 255, 0.09)",
         "width": 1,
       },
@@ -514,9 +543,10 @@ Object {
       "size": [Function],
       "space": [Function],
       "splits": undefined,
-      "stroke": "rgb(201, 209, 217)",
+      "stroke": "rgb(204, 204, 220)",
       "ticks": Object {
         "show": true,
+        "size": 4,
         "stroke": "rgba(240, 250, 255, 0.09)",
         "width": 1,
       },
@@ -537,8 +567,13 @@ Object {
       "stroke": [Function],
       "width": [Function],
     },
+    "x": false,
+    "y": false,
   },
   "hooks": Object {
+    "draw": Array [
+      [Function],
+    ],
     "drawClear": Array [
       [Function],
     ],
@@ -574,7 +609,7 @@ Object {
       "paths": [Function],
       "points": Object {
         "fill": undefined,
-        "show": [Function],
+        "filter": undefined,
         "size": undefined,
         "stroke": undefined,
       },
@@ -608,9 +643,10 @@ Object {
       "size": [Function],
       "space": [Function],
       "splits": [Function],
-      "stroke": "rgb(201, 209, 217)",
+      "stroke": "rgb(204, 204, 220)",
       "ticks": Object {
         "show": false,
+        "size": 4,
         "stroke": "rgba(240, 250, 255, 0.09)",
         "width": 1,
       },
@@ -632,9 +668,10 @@ Object {
       "size": [Function],
       "space": [Function],
       "splits": undefined,
-      "stroke": "rgb(201, 209, 217)",
+      "stroke": "rgb(204, 204, 220)",
       "ticks": Object {
         "show": true,
+        "size": 4,
         "stroke": "rgba(240, 250, 255, 0.09)",
         "width": 1,
       },
@@ -655,8 +692,13 @@ Object {
       "stroke": [Function],
       "width": [Function],
     },
+    "x": false,
+    "y": false,
   },
   "hooks": Object {
+    "draw": Array [
+      [Function],
+    ],
     "drawClear": Array [
       [Function],
     ],
@@ -692,7 +734,7 @@ Object {
       "paths": [Function],
       "points": Object {
         "fill": undefined,
-        "show": [Function],
+        "filter": undefined,
         "size": undefined,
         "stroke": undefined,
       },
@@ -726,9 +768,10 @@ Object {
       "size": [Function],
       "space": [Function],
       "splits": [Function],
-      "stroke": "rgb(201, 209, 217)",
+      "stroke": "rgb(204, 204, 220)",
       "ticks": Object {
         "show": false,
+        "size": 4,
         "stroke": "rgba(240, 250, 255, 0.09)",
         "width": 1,
       },
@@ -750,9 +793,10 @@ Object {
       "size": [Function],
       "space": [Function],
       "splits": undefined,
-      "stroke": "rgb(201, 209, 217)",
+      "stroke": "rgb(204, 204, 220)",
       "ticks": Object {
         "show": true,
+        "size": 4,
         "stroke": "rgba(240, 250, 255, 0.09)",
         "width": 1,
       },
@@ -773,8 +817,13 @@ Object {
       "stroke": [Function],
       "width": [Function],
     },
+    "x": false,
+    "y": false,
   },
   "hooks": Object {
+    "draw": Array [
+      [Function],
+    ],
     "drawClear": Array [
       [Function],
     ],
@@ -810,7 +859,7 @@ Object {
       "paths": [Function],
       "points": Object {
         "fill": undefined,
-        "show": [Function],
+        "filter": undefined,
         "size": undefined,
         "stroke": undefined,
       },
@@ -844,9 +893,10 @@ Object {
       "size": [Function],
       "space": [Function],
       "splits": [Function],
-      "stroke": "rgb(201, 209, 217)",
+      "stroke": "rgb(204, 204, 220)",
       "ticks": Object {
         "show": false,
+        "size": 4,
         "stroke": "rgba(240, 250, 255, 0.09)",
         "width": 1,
       },
@@ -868,9 +918,10 @@ Object {
       "size": [Function],
       "space": [Function],
       "splits": undefined,
-      "stroke": "rgb(201, 209, 217)",
+      "stroke": "rgb(204, 204, 220)",
       "ticks": Object {
         "show": true,
+        "size": 4,
         "stroke": "rgba(240, 250, 255, 0.09)",
         "width": 1,
       },
@@ -891,8 +942,13 @@ Object {
       "stroke": [Function],
       "width": [Function],
     },
+    "x": false,
+    "y": false,
   },
   "hooks": Object {
+    "draw": Array [
+      [Function],
+    ],
     "drawClear": Array [
       [Function],
     ],
@@ -928,7 +984,7 @@ Object {
       "paths": [Function],
       "points": Object {
         "fill": undefined,
-        "show": [Function],
+        "filter": undefined,
         "size": undefined,
         "stroke": undefined,
       },

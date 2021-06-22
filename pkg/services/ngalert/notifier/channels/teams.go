@@ -3,11 +3,8 @@ package channels
 import (
 	"context"
 	"encoding/json"
-	"path"
 
-	gokit_log "github.com/go-kit/kit/log"
 	"github.com/pkg/errors"
-	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 
@@ -16,7 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	old_notifiers "github.com/grafana/grafana/pkg/services/alerting/notifiers"
-	"github.com/grafana/grafana/pkg/services/ngalert/logging"
 )
 
 // TeamsNotifier is responsible for sending
@@ -57,9 +53,10 @@ func NewTeamsNotifier(model *NotificationChannelConfig, t *template.Template) (*
 
 // Notify send an alert notification to Microsoft teams.
 func (tn *TeamsNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
-	data := notify.GetTemplateData(ctx, tn.tmpl, as, gokit_log.NewLogfmtLogger(logging.NewWrapper(tn.log)))
 	var tmplErr error
-	tmpl := notify.TmplText(tn.tmpl, data, &tmplErr)
+	tmpl, _ := TmplText(ctx, tn.tmpl, as, tn.log, &tmplErr)
+
+	ruleURL := joinUrlPath(tn.tmpl.ExternalURL.String(), "/alerting/list", tn.log)
 
 	title := tmpl(`{{ template "default.title" . }}`)
 	body := map[string]interface{}{
@@ -84,22 +81,23 @@ func (tn *TeamsNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 				"targets": []map[string]interface{}{
 					{
 						"os":  "default",
-						"uri": path.Join(tn.tmpl.ExternalURL.String(), "/alerting/list"),
+						"uri": ruleURL,
 					},
 				},
 			},
 		},
 	}
 
+	u := tmpl(tn.URL)
 	if tmplErr != nil {
-		return false, errors.Wrap(tmplErr, "failed to template Teams message")
+		tn.log.Debug("failed to template Teams message", "err", tmplErr.Error())
 	}
 
 	b, err := json.Marshal(&body)
 	if err != nil {
 		return false, errors.Wrap(err, "marshal json")
 	}
-	cmd := &models.SendWebhookSync{Url: tn.URL, Body: string(b)}
+	cmd := &models.SendWebhookSync{Url: u, Body: string(b)}
 
 	if err := bus.DispatchCtx(ctx, cmd); err != nil {
 		return false, errors.Wrap(err, "send notification to Teams")

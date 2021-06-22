@@ -418,15 +418,29 @@ func (am *Alertmanager) buildReceiverIntegrations(receiver *apimodels.PostableAp
 			n, err = channels.NewSlackNotifier(cfg, tmpl)
 		case "telegram":
 			n, err = channels.NewTelegramNotifier(cfg, tmpl)
+		case "victorops":
+			n, err = channels.NewVictoropsNotifier(cfg, tmpl)
 		case "teams":
 			n, err = channels.NewTeamsNotifier(cfg, tmpl)
 		case "dingding":
 			n, err = channels.NewDingDingNotifier(cfg, tmpl)
+		case "kafka":
+			n, err = channels.NewKafkaNotifier(cfg, tmpl)
 		case "webhook":
 			n, err = channels.NewWebHookNotifier(cfg, tmpl)
 		case "sensugo":
 			n, err = channels.NewSensuGoNotifier(cfg, tmpl)
-		case "alertmanager":
+		case "discord":
+			n, err = channels.NewDiscordNotifier(cfg, tmpl)
+		case "googlechat":
+			n, err = channels.NewGoogleChatNotifier(cfg, tmpl)
+		case "line":
+			n, err = channels.NewLineNotifier(cfg, tmpl)
+		case "threema":
+			n, err = channels.NewThreemaNotifier(cfg, tmpl)
+		case "opsgenie":
+			n, err = channels.NewOpsgenieNotifier(cfg, tmpl)
+		case "prometheus-alertmanager":
 			n, err = channels.NewAlertmanagerNotifier(cfg, tmpl)
 		default:
 			return nil, fmt.Errorf("notifier %s is not supported", r.Type)
@@ -434,7 +448,7 @@ func (am *Alertmanager) buildReceiverIntegrations(receiver *apimodels.PostableAp
 		if err != nil {
 			return nil, err
 		}
-		integrations = append(integrations, notify.NewIntegration(n, n, r.Name, i))
+		integrations = append(integrations, notify.NewIntegration(n, n, r.Type, i))
 	}
 
 	return integrations, nil

@@ -1,9 +1,10 @@
 import {
+  ArrayVector,
   DataFrame,
+  Field,
   FieldType,
   formattedValueToString,
   getFieldColorModeForField,
-  getFieldDisplayName,
   getFieldSeriesColor,
   MutableDataFrame,
   VizOrientation,
@@ -12,7 +13,6 @@ import { BarChartFieldConfig, BarChartOptions, defaultBarChartFieldConfig } from
 import { BarsOptions, getConfig } from './bars';
 import {
   AxisPlacement,
-  BarValueVisibility,
   FIXED_UNIT,
   ScaleDirection,
   ScaleDistribution,
@@ -47,6 +47,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptions> = ({
   showValue,
   groupWidth,
   barWidth,
+  text,
 }) => {
   const builder = new UPlotConfigBuilder();
   const defaultValueFormatter = (seriesIdx: number, value: any) =>
@@ -55,7 +56,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptions> = ({
   // bar orientation -> x scale orientation & direction
   const vizOrientation = getBarCharScaleOrientation(orientation);
 
-  const formatValue = showValue !== BarValueVisibility.Never ? defaultValueFormatter : undefined;
+  const formatValue = defaultValueFormatter;
 
   // Use bar width when only one field
   if (frame.fields.length === 2) {
@@ -69,13 +70,19 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptions> = ({
     groupWidth,
     barWidth,
     formatValue,
+    text,
+    showValue,
   };
 
-  const config = getConfig(opts);
+  const config = getConfig(opts, theme);
+
+  builder.setCursor(config.cursor);
 
   builder.addHook('init', config.init);
   builder.addHook('drawClear', config.drawClear);
-  builder.setTooltipInterpolator(config.interpolateBarChartTooltip);
+  builder.addHook('draw', config.draw);
+
+  builder.setTooltipInterpolator(config.interpolateTooltip);
 
   builder.addScale({
     scaleKey: 'x',
@@ -117,12 +124,10 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptions> = ({
       pxAlign: false,
       lineWidth: customConfig.lineWidth,
       lineColor: seriesColor,
-      //lineStyle: customConfig.lineStyle,
       fillOpacity: customConfig.fillOpacity,
       theme,
       colorMode,
       pathBuilder: config.drawBars,
-      pointsBuilder: config.drawPoints,
       show: !customConfig.hideFrom?.viz,
       gradientMode: customConfig.gradientMode,
       thresholds: field.config.thresholds,
@@ -132,8 +137,6 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptions> = ({
         fieldIndex: i,
         frameIndex: 0,
       },
-      fieldName: getFieldDisplayName(field, frame),
-      hideInLegend: customConfig.hideFrom?.legend,
     });
 
     // The builder will manage unique scaleKeys and combine where appropriate
@@ -194,4 +197,55 @@ export function preparePlotFrame(data: DataFrame[]) {
   }
 
   return resultFrame;
+}
+
+/** @internal */
+export function prepareGraphableFrames(series: DataFrame[]): { frames?: DataFrame[]; warn?: string } {
+  if (!series?.length) {
+    return { warn: 'No data in response' };
+  }
+
+  const frames: DataFrame[] = [];
+  const firstFrame = series[0];
+
+  if (!firstFrame.fields.some((f) => f.type === FieldType.string)) {
+    return {
+      warn: 'Bar charts requires a string field',
+    };
+  }
+
+  if (!firstFrame.fields.some((f) => f.type === FieldType.number)) {
+    return {
+      warn: 'No numeric fields found',
+    };
+  }
+
+  for (let frame of series) {
+    const fields: Field[] = [];
+    for (const field of frame.fields) {
+      if (field.type === FieldType.number) {
+        let copy = {
+          ...field,
+          values: new ArrayVector(
+            field.values.toArray().map((v) => {
+              if (!(Number.isFinite(v) || v == null)) {
+                return null;
+              }
+              return v;
+            })
+          ),
+        };
+        fields.push(copy);
+      } else {
+        fields.push({ ...field });
+      }
+    }
+
+    frames.push({
+      ...frame,
+      fields,
+    });
+  }
+
+  return { frames };
 }

@@ -109,6 +109,47 @@ var expAvailableChannelJsonOutput = `
     ]
   },
   {
+    "type": "kafka",
+    "name": "Kafka REST Proxy",
+    "heading": "Kafka settings",
+    "description": "Sends notifications to Kafka Rest Proxy",
+    "info": "",
+    "options": [
+      {
+        "element": "input",
+        "inputType": "text",
+        "label": "Kafka REST Proxy",
+        "description": "",
+        "placeholder": "http://localhost:8082",
+        "propertyName": "kafkaRestProxy",
+        "selectOptions": null,
+        "showWhen": {
+          "field": "",
+          "is": ""
+        },
+        "required": true,
+        "validationRule": "",
+        "secure": false
+      },
+      {
+        "element": "input",
+        "inputType": "text",
+        "label": "Topic",
+        "description": "",
+        "placeholder": "topic1",
+        "propertyName": "kafkaTopic",
+        "selectOptions": null,
+        "showWhen": {
+          "field": "",
+          "is": ""
+        },
+        "required": true,
+        "validationRule": "",
+        "secure": false
+      }
+    ]
+  },
+  {
     "type": "email",
     "name": "Email",
     "heading": "Email settings",
@@ -277,6 +318,56 @@ var expAvailableChannelJsonOutput = `
         "placeholder": "{{ template \"default.message\" . }}",
         "propertyName": "summary",
         "selectOptions": null,
+        "showWhen": {
+          "field": "",
+          "is": ""
+        },
+        "required": false,
+        "validationRule": "",
+        "secure": false
+      }
+    ]
+  },
+  {
+    "type": "victorops",
+    "name": "VictorOps",
+    "heading": "VictorOps settings",
+    "description": "Sends notifications to VictorOps",
+    "info": "",
+    "options": [
+      {
+        "element": "input",
+        "inputType": "text",
+        "label": "Url",
+        "description": "",
+        "placeholder": "VictorOps url",
+        "propertyName": "url",
+        "selectOptions": null,
+        "showWhen": {
+          "field": "",
+          "is": ""
+        },
+        "required": true,
+        "validationRule": "",
+        "secure": false
+      },
+      {
+        "element": "select",
+        "inputType": "",
+        "label": "Message Type",
+        "description": "",
+        "placeholder": "",
+        "propertyName": "messageType",
+        "selectOptions": [
+          {
+            "value": "CRITICAL",
+            "label": "CRITICAL"
+          },
+          {
+            "value": "WARNING",
+            "label": "WARNING"
+          }
+        ],
         "showWhen": {
           "field": "",
           "is": ""
@@ -1200,7 +1291,7 @@ var expAvailableChannelJsonOutput = `
     ]
   },
   {
-    "type": "alertmanager",
+    "type": "prometheus-alertmanager",
     "name": "Alertmanager",
     "heading": "Alertmanager Settings",
     "description": "Sends notifications to Alertmanager",
@@ -1219,6 +1310,304 @@ var expAvailableChannelJsonOutput = `
           "is": ""
         },
         "required": true,
+        "validationRule": "",
+        "secure": false
+      },
+      {
+        "element": "input",
+        "inputType": "text",
+        "label": "Basic Auth User",
+        "description": "",
+	"placeholder": "",
+        "propertyName": "basicAuthUser",
+        "selectOptions": null,
+        "showWhen": {
+          "field": "",
+          "is": ""
+        },
+        "required": false,
+        "validationRule": "",
+        "secure": false
+      },
+      {
+        "element": "input",
+        "inputType": "password",
+        "label": "Basic Auth Password",
+        "description": "",
+	"placeholder": "",
+        "propertyName": "basicAuthPassword",
+        "selectOptions": null,
+        "showWhen": {
+          "field": "",
+          "is": ""
+        },
+        "required": false,
+        "validationRule": "",
+        "secure": true
+      }
+    ]
+  },
+  {
+	"type": "discord",
+	"name": "Discord",
+	"heading": "Discord settings",
+	"description": "Sends notifications to Discord",
+	"info": "",
+	"options": [
+      {
+		"label": "Message Content",
+		"description": "Mention a group using @ or a user using <@ID> when notifying in a channel",
+		"element": "input",
+		"inputType": "text",
+		"placeholder": "{{ template \"default.message\" . }}",
+		"propertyName": "message",
+		"selectOptions": null,
+		"showWhen": {
+		  "field": "",
+		  "is": ""
+		},
+		"required": false,
+		"validationRule": "",
+		"secure": false
+	  },
+	  {
+		"label": "Webhook URL",
+		"description": "",
+		"element": "input",
+		"inputType": "text",
+		"placeholder": "Discord webhook URL",
+		"propertyName": "url",
+		"selectOptions": null,
+		"showWhen": {
+		  "field": "",
+		  "is": ""
+		},
+		"required": true,
+		"validationRule": "",
+		"secure": false
+	  },
+	  {
+		"label": "Avatar URL",
+		"description": "",
+		"element": "input",
+		"inputType": "text",
+		"placeholder": "",
+		"propertyName": "avatar_url",
+		"selectOptions": null,
+		"showWhen": {
+		  "field": "",
+		  "is": ""
+		},
+		"required": false,
+		"validationRule": "",
+		"secure": false
+	  }
+	]
+  },
+  {
+    "type": "googlechat",
+    "name": "Google Hangouts Chat",
+    "heading": "Google Hangouts Chat settings",
+    "description": "Sends notifications to Google Hangouts Chat via webhooks based on the official JSON message format",
+    "info": "",
+    "options": [
+      {
+        "element": "input",
+        "inputType": "text",
+        "label": "Url",
+        "description": "",
+        "placeholder": "Google Hangouts Chat incoming webhook url",
+        "propertyName": "url",
+        "selectOptions": null,
+        "showWhen": {
+          "field": "",
+          "is": ""
+        },
+        "required": true,
+        "validationRule": "",
+        "secure": false
+      }
+    ]
+  },
+  {
+    "type": "LINE",
+    "name": "LINE",
+    "heading": "LINE notify settings",
+    "description": "Send notifications to LINE notify",
+    "info": "",
+    "options": [
+      {
+        "element": "input",
+        "inputType": "text",
+        "label": "Token",
+        "description": "",
+        "placeholder": "LINE notify token key",
+        "propertyName": "token",
+        "selectOptions": null,
+        "showWhen": {
+          "field": "",
+          "is": ""
+        },
+        "required": true,
+        "validationRule": "",
+        "secure": true
+      }
+    ]
+  },
+  {
+    "type": "threema",
+    "name": "Threema Gateway",
+    "heading": "Threema Gateway settings",
+    "description": "Sends notifications to Threema using Threema Gateway (Basic IDs)",
+    "info": "Notifications can be configured for any Threema Gateway ID of type \"Basic\". End-to-End IDs are not currently supported.The Threema Gateway ID can be set up at https://gateway.threema.ch/.",
+    "options": [
+      {
+        "element": "input",
+        "inputType": "text",
+        "label": "Gateway ID",
+        "description": "Your 8 character Threema Gateway Basic ID (starting with a *).",
+        "placeholder": "*3MAGWID",
+        "propertyName": "gateway_id",
+        "selectOptions": null,
+        "showWhen": {
+          "field": "",
+          "is": ""
+        },
+        "required": true,
+        "validationRule": "\\*[0-9A-Z]{7}",
+        "secure": false
+      },
+      {
+        "element": "input",
+        "inputType": "text",
+        "label": "Recipient ID",
+        "description": "The 8 character Threema ID that should receive the alerts.",
+        "placeholder": "YOUR3MID",
+        "propertyName": "recipient_id",
+        "selectOptions": null,
+        "showWhen": {
+          "field": "",
+          "is": ""
+        },
+        "required": true,
+        "validationRule": "[0-9A-Z]{8}",
+        "secure": false
+      },
+      {
+        "element": "input",
+        "inputType": "text",
+        "label": "API Secret",
+        "description": "Your Threema Gateway API secret.",
+        "placeholder": "",
+        "propertyName": "api_secret",
+        "selectOptions": null,
+        "showWhen": {
+          "field": "",
+          "is": ""
+        },
+        "required": true,
+        "validationRule": "",
+        "secure": true
+      }
+    ]
+  },
+  {
+    "type": "opsgenie",
+    "name": "OpsGenie",
+    "heading": "OpsGenie settings",
+    "description": "Sends notifications to OpsGenie",
+    "info": "",
+    "options": [
+      {
+        "element": "input",
+        "inputType": "text",
+        "label": "API Key",
+        "description": "",
+        "placeholder": "OpsGenie API Key",
+        "propertyName": "apiKey",
+        "selectOptions": null,
+        "showWhen": {
+          "field": "",
+          "is": ""
+        },
+        "required": true,
+        "validationRule": "",
+        "secure": true
+      },
+      {
+        "element": "input",
+        "inputType": "text",
+        "label": "Alert API Url",
+        "description": "",
+        "placeholder": "https://api.opsgenie.com/v2/alerts",
+        "propertyName": "apiUrl",
+        "selectOptions": null,
+        "showWhen": {
+          "field": "",
+          "is": ""
+        },
+        "required": true,
+        "validationRule": "",
+        "secure": false
+      },
+      {
+        "element": "checkbox",
+        "inputType": "",
+        "label": "Auto close incidents",
+        "description": "Automatically close alerts in OpsGenie once the alert goes back to ok.",
+        "placeholder": "",
+        "propertyName": "autoClose",
+        "selectOptions": null,
+        "showWhen": {
+          "field": "",
+          "is": ""
+        },
+        "required": false,
+        "validationRule": "",
+        "secure": false
+      },
+      {
+        "element": "checkbox",
+        "inputType": "",
+        "label": "Override priority",
+        "description": "Allow the alert priority to be set using the og_priority annotation",
+        "placeholder": "",
+        "propertyName": "overridePriority",
+        "selectOptions": null,
+        "showWhen": {
+          "field": "",
+          "is": ""
+        },
+        "required": false,
+        "validationRule": "",
+        "secure": false
+      },
+      {
+        "element": "select",
+        "inputType": "",
+        "label": "Send notification tags as",
+        "description": "Send the common annotations to Opsgenie as either Extra Properties, Tags or both",
+        "placeholder": "",
+        "propertyName": "sendTagsAs",
+        "selectOptions": [
+          {
+            "value": "tags",
+            "label": "Tags"
+          },
+          {
+            "value": "details",
+            "label": "Extra Properties"
+          },
+          {
+            "value": "both",
+            "label": "Tags & Extra Properties"
+          }
+        ],
+        "showWhen": {
+          "field": "",
+          "is": ""
+        },
+        "required": false,
         "validationRule": "",
         "secure": false
       }

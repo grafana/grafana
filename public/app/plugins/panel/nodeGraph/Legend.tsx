@@ -12,6 +12,11 @@ function getStyles() {
       label: LegendItem;
       flex-grow: 0;
     `,
+
+    legend: css`
+      label: Legend;
+      pointer-events: all;
+    `,
   };
 }
 
@@ -33,7 +38,7 @@ export const Legend = function Legend(props: Props) {
     (item) => {
       onSort({
         field: item.data!.field,
-        ascending: item.data!.field === sort?.field ? !sort?.ascending : true,
+        ascending: item.data!.field === sort?.field ? !sort?.ascending : false,
       });
     },
     [sort, onSort]
@@ -41,6 +46,7 @@ export const Legend = function Legend(props: Props) {
 
   return (
     <VizLegend<ItemData>
+      className={styles.legend}
       displayMode={LegendDisplayMode.List}
       placement={'bottom'}
       items={colorItems}
@@ -49,7 +55,7 @@ export const Legend = function Legend(props: Props) {
           <>
             <VizLegendListItem item={item} className={styles.item} onLabelClick={sortable ? onClick : undefined} />
             {sortable &&
-              (sort?.field === item.data!.field ? <Icon name={sort!.ascending ? 'angle-up' : 'angle-down'} /> : '')}
+              (sort?.field === item.data!.field ? <Icon name={sort!.ascending ? 'arrow-up' : 'arrow-down'} /> : '')}
           </>
         );
       }}

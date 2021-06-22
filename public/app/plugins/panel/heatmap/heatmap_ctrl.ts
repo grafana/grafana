@@ -16,9 +16,10 @@ import { auto } from 'angular';
 import { getProcessedDataFrames } from 'app/features/query/state/runRequest';
 import { DataProcessor } from '../graph/data_processor';
 import { LegacyResponseData, PanelEvents, DataFrame, rangeUtil } from '@grafana/data';
-import { CoreEvents } from 'app/types';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import appEvents from 'app/core/app_events';
+import { ZoomOutEvent } from 'app/types/events';
 
 const X_BUCKET_NUMBER_DEFAULT = 30;
 const Y_BUCKET_NUMBER_DEFAULT = 10;
@@ -160,14 +161,10 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
   }
 
   zoomOut(evt: any) {
-    this.publishAppEvent(CoreEvents.zoomOut, 2);
+    appEvents.publish(new ZoomOutEvent(2));
   }
 
   onRender() {
-    if (!this.range || !this.series) {
-      return;
-    }
-
     if (this.panel.dataFormat === 'tsbuckets') {
       this.convertHistogramToHeatmapData();
     } else {
@@ -176,6 +173,10 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
   }
 
   convertTimeSeriesToHeatmapData() {
+    if (!this.range || !this.series) {
+      return;
+    }
+
     let xBucketSize, yBucketSize, bucketsData, heatmapStats;
     const logBase = this.panel.yAxis.logBase;
 
@@ -235,6 +236,10 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
   }
 
   convertHistogramToHeatmapData() {
+    if (!this.range || !this.series) {
+      return;
+    }
+
     const panelDatasource = this.getPanelDataSourceType();
     let xBucketSize, yBucketSize, bucketsData, tsBuckets;
 

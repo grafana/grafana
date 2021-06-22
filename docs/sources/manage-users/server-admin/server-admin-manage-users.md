@@ -27,7 +27,7 @@ Grafana displays all user accounts on the server, listed in alphabetical order b
 - **Server Admin status -** If the user account has **Grafana Admin** option set, then a shield icon is displayed.
 - **Account status -** If the account is disabled, then the **Disabled** label is displayed.
 
-![Server Admin user list](/img/docs/manage-users/server-user-list-7-3.png)
+![Server Admin user list](/static/img/docs/manage-users/server-user-list-7-3.png)
 
 ## View user account details
 
@@ -49,25 +49,25 @@ This section of the account contains basic user information. Users can change va
 - **Username**
 - **Password**
 
-![Server Admin user information section](/img/docs/manage-users/server-admin-user-information-7-3.png)
+![Server Admin user information section](/static/img/docs/manage-users/server-admin-user-information-7-3.png)
 
 ### Permissions
 
 This indicates whether the user account has the Grafana Admin flag applied or not. If it is **Yes**, then the user is a Grafana Server Admin.
 
-![Server Admin Permissions section](/img/docs/manage-users/server-admin-permissions-7-3.png)
+![Server Admin Permissions section](/static/img/docs/manage-users/server-admin-permissions-7-3.png)
 
 ### Organisations
 
 This section lists the organizations the user account belongs to and the roles they hold within each organization.
 
-![Server Admin Organizations section](/img/docs/manage-users/server-admin-organisations-7-3.png)
+![Server Admin Organizations section](/static/img/docs/manage-users/server-admin-organisations-7-3.png)
 
 ### Sessions
 
 See recent sessions that the user was logged on, including when they logged on and information about the system the logged on with. You can force logouts if necessary.
 
-![Server Admin Sessions section](/img/docs/manage-users/server-admin-sessions-7-3.png)
+![Server Admin Sessions section](/static/img/docs/manage-users/server-admin-sessions-7-3.png)
 
 ## Add a user account
 

@@ -1,16 +1,10 @@
 import React, { FunctionComponent, useEffect, useMemo, useReducer, useState } from 'react';
 import { SelectableValue } from '@grafana/data';
 import { AzureCredentialsForm } from './AzureCredentialsForm';
-import { InlineFormLabel, LegacyForms, Button } from '@grafana/ui';
-const { Select, Switch } = LegacyForms;
-import { AzureDataSourceSettings, AzureCredentials } from '../types';
-import {
-  getCredentials,
-  getLogAnalyticsCredentials,
-  isCredentialsComplete,
-  updateLogAnalyticsCredentials,
-  updateLogAnalyticsSameAs,
-} from '../credentials';
+import { InlineFormLabel, LegacyForms, Button, Alert } from '@grafana/ui';
+const { Select } = LegacyForms;
+import { AzureDataSourceSettings } from '../types';
+import { getCredentials, isCredentialsComplete } from '../credentials';
 
 export interface Props {
   options: AzureDataSourceSettings;
@@ -22,16 +16,16 @@ export interface Props {
 export const AnalyticsConfig: FunctionComponent<Props> = (props: Props) => {
   const { updateOptions, getSubscriptions, getWorkspaces } = props;
   const primaryCredentials = useMemo(() => getCredentials(props.options), [props.options]);
-  const logAnalyticsCredentials = useMemo(() => getLogAnalyticsCredentials(props.options), [props.options]);
-  const subscriptionId = logAnalyticsCredentials
-    ? props.options.jsonData.logAnalyticsSubscriptionId
-    : props.options.jsonData.subscriptionId;
 
-  const hasRequiredFields =
-    subscriptionId &&
-    (logAnalyticsCredentials
-      ? isCredentialsComplete(logAnalyticsCredentials)
-      : isCredentialsComplete(primaryCredentials));
+  const subscriptionId = primaryCredentials.defaultSubscriptionId;
+
+  // Only show a section for setting LogAnalytics credentials if
+  // they were set from before with different values and the
+  // authType is supported
+  const logCredentialsEnabled =
+    primaryCredentials.authType === 'clientsecret' && props.options.jsonData.azureLogAnalyticsSameAs === false;
+
+  const hasRequiredFields = subscriptionId && isCredentialsComplete(primaryCredentials);
 
   const defaultWorkspace = props.options.jsonData.logAnalyticsDefaultWorkspace;
 
@@ -85,30 +79,6 @@ export const AnalyticsConfig: FunctionComponent<Props> = (props: Props) => {
     }
   };
 
-  const [sameAsSwitched, setSameAsSwitched] = useState(false);
-
-  const onCredentialsChange = (updatedCredentials: AzureCredentials) => {
-    updateOptions((options) => updateLogAnalyticsCredentials(options, updatedCredentials));
-  };
-
-  const onLogAnalyticsSameAsChange = (event: React.SyntheticEvent<HTMLInputElement>) => {
-    const sameAs = event.currentTarget.checked;
-    updateOptions((options) => updateLogAnalyticsSameAs(options, sameAs));
-    setSameAsSwitched(true);
-  };
-
-  const onLogAnalyticsDefaultSubscriptionChange = (subscriptionId: string | undefined) => {
-    updateOptions((options) => {
-      return {
-        ...options,
-        jsonData: {
-          ...options.jsonData,
-          logAnalyticsSubscriptionId: subscriptionId || '',
-        },
-      };
-    });
-  };
-
   const onDefaultWorkspaceChange = (selected: SelectableValue<string>) => {
     updateOptions((options) => {
       return {
@@ -121,38 +91,30 @@ export const AnalyticsConfig: FunctionComponent<Props> = (props: Props) => {
     });
   };
 
-  const tooltipAttribute = {
-    ...(!logAnalyticsCredentials && {
-      tooltip: 'Workspaces are pulled from default subscription selected above.',
-    }),
-  };
-
-  const showSameAsHelpMsg = sameAsSwitched && !primaryCredentials.clientSecret;
-
   return (
     <>
-      <h3 className="page-heading">Azure Monitor Logs Details</h3>
-      <Switch
-        label="Same details as Azure Monitor API"
-        checked={!logAnalyticsCredentials}
-        onChange={onLogAnalyticsSameAsChange}
-        {...tooltipAttribute}
-      />
-      {showSameAsHelpMsg && (
-        <div className="grafana-info-box m-t-2">
-          <div className="alert-body">
-            <p>Re-enter your Azure Monitor Client Secret to use this setting.</p>
-          </div>
-        </div>
-      )}
-      {logAnalyticsCredentials && (
-        <AzureCredentialsForm
-          credentials={logAnalyticsCredentials}
-          defaultSubscription={subscriptionId}
-          onCredentialsChange={onCredentialsChange}
-          onDefaultSubscriptionChange={onLogAnalyticsDefaultSubscriptionChange}
-          getSubscriptions={getSubscriptions}
-        />
+      <h3 className="page-heading">Azure Monitor Logs</h3>
+      {logCredentialsEnabled && (
+        <>
+          <Alert severity="error" title="Deprecated">
+            Using different credentials for Azure Monitor Logs is no longer supported. Authentication information above
+            will be used instead. Please create a new data source with the credentials below.
+          </Alert>
+
+          <AzureCredentialsForm
+            managedIdentityEnabled={false}
+            credentials={{
+              ...primaryCredentials,
+              authType: 'clientsecret',
+              // Use deprecated Log Analytics credentials read-only
+              // to help with a possible migration
+              tenantId: props.options.jsonData.logAnalyticsTenantId,
+              clientId: props.options.jsonData.logAnalyticsClientId,
+            }}
+            getSubscriptions={getSubscriptions}
+            disabled={true}
+          />
+        </>
       )}
       <div className="gf-form-group">
         <div className="gf-form-inline">
@@ -168,6 +130,7 @@ export const AnalyticsConfig: FunctionComponent<Props> = (props: Props) => {
                 value={workspaces.find((opt) => opt.value === defaultWorkspace)}
                 options={workspaces}
                 onChange={onDefaultWorkspaceChange}
+                isDisabled={props.options.readOnly}
               />
             </div>
           </div>
@@ -180,7 +143,7 @@ export const AnalyticsConfig: FunctionComponent<Props> = (props: Props) => {
                 size="sm"
                 type="button"
                 onClick={onLoadWorkspaces}
-                disabled={!hasRequiredFields}
+                disabled={!hasRequiredFields || props.options.readOnly}
               >
                 Load Workspaces
               </Button>

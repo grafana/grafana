@@ -5,31 +5,24 @@ import (
 	"compress/gzip"
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"path"
+	"regexp"
+	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/api/pluginproxy"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/opentracing/opentracing-go"
 	"golang.org/x/net/context/ctxhttp"
 )
 
 // AzureLogAnalyticsDatasource calls the Azure Log Analytics API's
-type AzureLogAnalyticsDatasource struct {
-	httpClient    *http.Client
-	dsInfo        *models.DataSource
-	pluginManager plugins.Manager
-	cfg           *setting.Cfg
-}
+type AzureLogAnalyticsDatasource struct{}
 
 // AzureLogAnalyticsQuery is the query request that is built from the saved values for
 // from the UI
@@ -37,46 +30,60 @@ type AzureLogAnalyticsQuery struct {
 	RefID        string
 	ResultFormat string
 	URL          string
-	Model        *simplejson.Json
+	JSON         json.RawMessage
 	Params       url.Values
 	Target       string
+	TimeRange    backend.TimeRange
 }
 
 // executeTimeSeriesQuery does the following:
 // 1. build the AzureMonitor url and querystring for each query
 // 2. executes each query by calling the Azure Monitor API
-// 3. parses the responses for each query into the timeseries format
-//nolint: staticcheck // plugins.DataPlugin deprecated
-func (e *AzureLogAnalyticsDatasource) executeTimeSeriesQuery(ctx context.Context, originalQueries []plugins.DataSubQuery,
-	timeRange plugins.DataTimeRange) (plugins.DataResponse, error) {
-	result := plugins.DataResponse{
-		Results: map[string]plugins.DataQueryResult{},
-	}
+// 3. parses the responses for each query into data frames
+func (e *AzureLogAnalyticsDatasource) executeTimeSeriesQuery(ctx context.Context, originalQueries []backend.DataQuery, dsInfo datasourceInfo) (*backend.QueryDataResponse, error) {
+	result := backend.NewQueryDataResponse()
 
-	queries, err := e.buildQueries(originalQueries, timeRange)
+	queries, err := e.buildQueries(originalQueries, dsInfo)
 	if err != nil {
-		return plugins.DataResponse{}, err
+		return nil, err
 	}
 
 	for _, query := range queries {
-		result.Results[query.RefID] = e.executeQuery(ctx, query, originalQueries, timeRange)
+		result.Responses[query.RefID] = e.executeQuery(ctx, query, dsInfo)
 	}
 
 	return result, nil
 }
 
-func (e *AzureLogAnalyticsDatasource) buildQueries(queries []plugins.DataSubQuery,
-	timeRange plugins.DataTimeRange) ([]*AzureLogAnalyticsQuery, error) {
+func getApiURL(queryJSONModel logJSONQuery) string {
+	// Legacy queries only specify a Workspace GUID, which we need to use the old workspace-centric
+	// API URL for, and newer queries specifying a resource URI should use resource-centric API.
+	// However, legacy workspace queries using a `workspaces()` template variable will be resolved
+	// to a resource URI, so they should use the new resource-centric.
+	azureLogAnalyticsTarget := queryJSONModel.AzureLogAnalytics
+	var resourceOrWorkspace string
+
+	if azureLogAnalyticsTarget.Resource != "" {
+		resourceOrWorkspace = azureLogAnalyticsTarget.Resource
+	} else {
+		resourceOrWorkspace = azureLogAnalyticsTarget.Workspace
+	}
+
+	matchesResourceURI, _ := regexp.MatchString("^/subscriptions/", resourceOrWorkspace)
+
+	if matchesResourceURI {
+		return fmt.Sprintf("v1%s/query", resourceOrWorkspace)
+	} else {
+		return fmt.Sprintf("v1/workspaces/%s/query", resourceOrWorkspace)
+	}
+}
+
+func (e *AzureLogAnalyticsDatasource) buildQueries(queries []backend.DataQuery, dsInfo datasourceInfo) ([]*AzureLogAnalyticsQuery, error) {
 	azureLogAnalyticsQueries := []*AzureLogAnalyticsQuery{}
 
 	for _, query := range queries {
-		queryBytes, err := query.Model.Encode()
-		if err != nil {
-			return nil, fmt.Errorf("failed to re-encode the Azure Log Analytics query into JSON: %w", err)
-		}
-
 		queryJSONModel := logJSONQuery{}
-		err = json.Unmarshal(queryBytes, &queryJSONModel)
+		err := json.Unmarshal(query.JSON, &queryJSONModel)
 		if err != nil {
 			return nil, fmt.Errorf("failed to decode the Azure Log Analytics query object from JSON: %w", err)
 		}
@@ -89,12 +96,10 @@ func (e *AzureLogAnalyticsDatasource) buildQueries(queries []plugins.DataSubQuer
 			resultFormat = timeSeries
 		}
 
-		urlComponents := map[string]string{}
-		urlComponents["workspace"] = azureLogAnalyticsTarget.Workspace
-		apiURL := fmt.Sprintf("%s/query", urlComponents["workspace"])
+		apiURL := getApiURL(queryJSONModel)
 
 		params := url.Values{}
-		rawQuery, err := KqlInterpolate(query, timeRange, azureLogAnalyticsTarget.Query, "TimeGenerated")
+		rawQuery, err := KqlInterpolate(query, dsInfo, azureLogAnalyticsTarget.Query, "TimeGenerated")
 		if err != nil {
 			return nil, err
 		}
@@ -104,23 +109,22 @@ func (e *AzureLogAnalyticsDatasource) buildQueries(queries []plugins.DataSubQuer
 			RefID:        query.RefID,
 			ResultFormat: resultFormat,
 			URL:          apiURL,
-			Model:        query.Model,
+			JSON:         query.JSON,
 			Params:       params,
 			Target:       params.Encode(),
+			TimeRange:    query.TimeRange,
 		})
 	}
 
 	return azureLogAnalyticsQueries, nil
 }
 
-//nolint: staticcheck // plugins.DataPlugin deprecated
-func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *AzureLogAnalyticsQuery,
-	queries []plugins.DataSubQuery, timeRange plugins.DataTimeRange) plugins.DataQueryResult {
-	queryResult := plugins.DataQueryResult{RefID: query.RefID}
+func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *AzureLogAnalyticsQuery, dsInfo datasourceInfo) backend.DataResponse {
+	dataResponse := backend.DataResponse{}
 
-	queryResultErrorWithExecuted := func(err error) plugins.DataQueryResult {
-		queryResult.Error = err
-		frames := data.Frames{
+	dataResponseErrorWithExecuted := func(err error) backend.DataResponse {
+		dataResponse.Error = err
+		dataResponse.Frames = data.Frames{
 			&data.Frame{
 				RefID: query.RefID,
 				Meta: &data.FrameMeta{
@@ -128,14 +132,13 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *A
 				},
 			},
 		}
-		queryResult.Dataframes = plugins.NewDecodedDataFrames(frames)
-		return queryResult
+		return dataResponse
 	}
 
-	req, err := e.createRequest(ctx, e.dsInfo)
+	req, err := e.createRequest(ctx, dsInfo)
 	if err != nil {
-		queryResult.Error = err
-		return queryResult
+		dataResponse.Error = err
+		return dataResponse
 	}
 
 	req.URL.Path = path.Join(req.URL.Path, query.URL)
@@ -143,10 +146,10 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *A
 
 	span, ctx := opentracing.StartSpanFromContext(ctx, "azure log analytics query")
 	span.SetTag("target", query.Target)
-	span.SetTag("from", timeRange.From)
-	span.SetTag("until", timeRange.To)
-	span.SetTag("datasource_id", e.dsInfo.Id)
-	span.SetTag("org_id", e.dsInfo.OrgId)
+	span.SetTag("from", query.TimeRange.From.UnixNano()/int64(time.Millisecond))
+	span.SetTag("until", query.TimeRange.To.UnixNano()/int64(time.Millisecond))
+	span.SetTag("datasource_id", dsInfo.DatasourceID)
+	span.SetTag("org_id", dsInfo.OrgID)
 
 	defer span.Finish()
 
@@ -154,34 +157,39 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *A
 		span.Context(),
 		opentracing.HTTPHeaders,
 		opentracing.HTTPHeadersCarrier(req.Header)); err != nil {
-		return queryResultErrorWithExecuted(err)
+		return dataResponseErrorWithExecuted(err)
 	}
 
 	azlog.Debug("AzureLogAnalytics", "Request ApiURL", req.URL.String())
-	res, err := ctxhttp.Do(ctx, e.httpClient, req)
+	res, err := ctxhttp.Do(ctx, dsInfo.Services[azureLogAnalytics].HTTPClient, req)
 	if err != nil {
-		return queryResultErrorWithExecuted(err)
+		return dataResponseErrorWithExecuted(err)
 	}
 
 	logResponse, err := e.unmarshalResponse(res)
 	if err != nil {
-		return queryResultErrorWithExecuted(err)
+		return dataResponseErrorWithExecuted(err)
 	}
 
 	t, err := logResponse.GetPrimaryResultTable()
 	if err != nil {
-		return queryResultErrorWithExecuted(err)
+		return dataResponseErrorWithExecuted(err)
 	}
 
 	frame, err := ResponseTableToFrame(t)
 	if err != nil {
-		return queryResultErrorWithExecuted(err)
+		return dataResponseErrorWithExecuted(err)
+	}
+
+	model, err := simplejson.NewJson(query.JSON)
+	if err != nil {
+		return dataResponseErrorWithExecuted(err)
 	}
 
 	err = setAdditionalFrameMeta(frame,
 		query.Params.Get("query"),
-		query.Model.Get("subscriptionId").MustString(),
-		query.Model.Get("azureLogAnalytics").Get("workspace").MustString())
+		model.Get("subscriptionId").MustString(),
+		model.Get("azureLogAnalytics").Get("workspace").MustString())
 	if err != nil {
 		frame.AppendNotices(data.Notice{Severity: data.NoticeSeverityWarning, Text: "could not add custom metadata: " + err.Error()})
 		azlog.Warn("failed to add custom metadata to azure log analytics response", err)
@@ -198,63 +206,20 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *A
 			}
 		}
 	}
-	frames := data.Frames{frame}
-	queryResult.Dataframes = plugins.NewDecodedDataFrames(frames)
-	return queryResult
+	dataResponse.Frames = data.Frames{frame}
+	return dataResponse
 }
 
-func (e *AzureLogAnalyticsDatasource) createRequest(ctx context.Context, dsInfo *models.DataSource) (*http.Request, error) {
-	u, err := url.Parse(dsInfo.Url)
-	if err != nil {
-		return nil, err
-	}
-	u.Path = path.Join(u.Path, "render")
-
-	req, err := http.NewRequest(http.MethodGet, u.String(), nil)
+func (e *AzureLogAnalyticsDatasource) createRequest(ctx context.Context, dsInfo datasourceInfo) (*http.Request, error) {
+	req, err := http.NewRequest(http.MethodGet, dsInfo.Services[azureLogAnalytics].URL, nil)
 	if err != nil {
 		azlog.Debug("Failed to create request", "error", err)
 		return nil, errutil.Wrap("failed to create request", err)
 	}
-
+	req.URL.Path = "/"
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("User-Agent", fmt.Sprintf("Grafana/%s", setting.BuildVersion))
-
-	// find plugin
-	plugin := e.pluginManager.GetDataSource(dsInfo.Type)
-	if plugin == nil {
-		return nil, errors.New("unable to find datasource plugin Azure Monitor")
-	}
-
-	logAnalyticsRoute, routeName, err := e.getPluginRoute(plugin)
-	if err != nil {
-		return nil, err
-	}
-
-	pluginproxy.ApplyRoute(ctx, req, routeName, logAnalyticsRoute, dsInfo, e.cfg)
 
 	return req, nil
-}
-
-func (e *AzureLogAnalyticsDatasource) getPluginRoute(plugin *plugins.DataSourcePlugin) (*plugins.AppPluginRoute, string, error) {
-	cloud, err := getAzureCloud(e.cfg, e.dsInfo.JsonData)
-	if err != nil {
-		return nil, "", err
-	}
-
-	routeName, err := getLogAnalyticsApiRoute(cloud)
-	if err != nil {
-		return nil, "", err
-	}
-
-	var pluginRoute *plugins.AppPluginRoute
-	for _, route := range plugin.Routes {
-		if route.Path == routeName {
-			pluginRoute = route
-			break
-		}
-	}
-
-	return pluginRoute, routeName, nil
 }
 
 // GetPrimaryResultTable returns the first table in the response named "PrimaryResult", or an

@@ -11,18 +11,20 @@ import (
 )
 
 type Manager struct {
-	cache   *cache
-	quit    chan struct{}
-	Log     log.Logger
-	metrics *metrics.Metrics
+	cache       *cache
+	quit        chan struct{}
+	ResendDelay time.Duration
+	Log         log.Logger
+	metrics     *metrics.Metrics
 }
 
 func NewManager(logger log.Logger, metrics *metrics.Metrics) *Manager {
 	manager := &Manager{
-		cache:   newCache(logger, metrics),
-		quit:    make(chan struct{}),
-		Log:     logger,
-		metrics: metrics,
+		cache:       newCache(logger, metrics),
+		quit:        make(chan struct{}),
+		ResendDelay: 1 * time.Minute, // TODO: make this configurable
+		Log:         logger,
+		metrics:     metrics,
 	}
 	go manager.recordMetrics()
 	return manager
@@ -65,7 +67,6 @@ func (st *Manager) ProcessEvalResults(alertRule *ngModels.AlertRule, results eva
 	return states
 }
 
-//TODO: When calculating if an alert should not be firing anymore, we should take into account the re-send delay if any. We don't want to send every firing alert every time, we should have a fixed delay across all alerts to avoid saturating the notification system
 //Set the current state based on evaluation results
 func (st *Manager) setNextState(alertRule *ngModels.AlertRule, result eval.Result) *State {
 	currentState := st.getOrCreate(alertRule, result)
@@ -82,13 +83,13 @@ func (st *Manager) setNextState(alertRule *ngModels.AlertRule, result eval.Resul
 	st.Log.Debug("setting alert state", "uid", alertRule.UID)
 	switch result.State {
 	case eval.Normal:
-		currentState = resultNormal(currentState, result)
+		currentState.resultNormal(result)
 	case eval.Alerting:
-		currentState = currentState.resultAlerting(alertRule, result)
+		currentState.resultAlerting(alertRule, result)
 	case eval.Error:
-		currentState = currentState.resultError(alertRule, result)
+		currentState.resultError(alertRule, result)
 	case eval.NoData:
-		currentState = currentState.resultNoData(alertRule, result)
+		currentState.resultNoData(alertRule, result)
 	case eval.Pending: // we do not emit results with this state
 	}
 

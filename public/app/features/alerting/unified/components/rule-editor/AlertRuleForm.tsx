@@ -4,7 +4,6 @@ import { PageToolbar, Button, useStyles2, CustomScrollbar, Spinner } from '@graf
 import { css } from '@emotion/css';
 
 import { AlertTypeStep } from './AlertTypeStep';
-import { ConditionsStep } from './ConditionsStep';
 import { DetailsStep } from './DetailsStep';
 import { QueryStep } from './QueryStep';
 import { useForm, FormProvider } from 'react-hook-form';
@@ -21,6 +20,8 @@ import { Link } from 'react-router-dom';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 
 import { appEvents } from 'app/core/core';
+import { CloudConditionsStep } from './CloudConditionsStep';
+import { GrafanaConditionsStep } from './GrafanaConditionsStep';
 
 type Props = {
   existing?: RuleWithLocation;
@@ -66,8 +67,14 @@ export const AlertRuleForm: FC<Props> = ({ existing }) => {
         values: {
           ...defaultValues,
           ...values,
-          annotations: values.annotations?.filter(({ key, value }) => !!key && !!value) ?? [],
-          labels: values.labels?.filter(({ key }) => !!key) ?? [],
+          annotations:
+            values.annotations
+              ?.map(({ key, value }) => ({ key: key.trim(), value: value.trim() }))
+              .filter(({ key, value }) => !!key && !!value) ?? [],
+          labels:
+            values.labels
+              ?.map(({ key, value }) => ({ key: key.trim(), value: value.trim() }))
+              .filter(({ key }) => !!key) ?? [],
         },
         existing,
         redirectOnSave: exitOnSave ? returnTo : undefined,
@@ -114,7 +121,7 @@ export const AlertRuleForm: FC<Props> = ({ existing }) => {
               {showStep2 && (
                 <>
                   <QueryStep />
-                  <ConditionsStep />
+                  {type === RuleFormType.cloud ? <CloudConditionsStep /> : <GrafanaConditionsStep />}
                   <DetailsStep />
                 </>
               )}
@@ -145,7 +152,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       background: ${theme.colors.background.primary};
       border: 1px solid ${theme.colors.border.weak};
       border-radius: ${theme.shape.borderRadius()};
-      margin: ${theme.spacing(2)};
+      margin: ${theme.spacing(0, 2, 2)};
       overflow: hidden;
       flex: 1;
     `,

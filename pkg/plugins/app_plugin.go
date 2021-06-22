@@ -71,7 +71,7 @@ func (app *AppPlugin) Load(decoder *json.Decoder, base *PluginBase, backendPlugi
 	if app.Backend {
 		cmd := ComposePluginStartCommand(app.Executable)
 		fullpath := filepath.Join(base.PluginDir, cmd)
-		factory := grpcplugin.NewBackendPlugin(app.Id, fullpath, grpcplugin.PluginStartFuncs{})
+		factory := grpcplugin.NewBackendPlugin(app.Id, fullpath)
 		if err := backendPluginManager.RegisterAndStart(context.Background(), app.Id, factory); err != nil {
 			return nil, errutil.Wrapf(err, "failed to register backend plugin")
 		}
@@ -83,11 +83,6 @@ func (app *AppPlugin) Load(decoder *json.Decoder, base *PluginBase, backendPlugi
 func (app *AppPlugin) InitApp(panels map[string]*PanelPlugin, dataSources map[string]*DataSourcePlugin,
 	cfg *setting.Cfg) []*PluginStaticRoute {
 	staticRoutes := app.InitFrontendPlugin(cfg)
-
-	// force enable bundled catalog app
-	if app.Id == "grafana-plugin-catalog-app" && cfg.CatalogAppEnabled {
-		app.AutoEnabled = true
-	}
 
 	// check if we have child panels
 	for _, panel := range panels {

@@ -59,7 +59,7 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
 
     return (
       <Route
-        exact
+        exact={route.exact === undefined ? true : route.exact}
         path={route.path}
         key={route.path}
         render={(props) => {

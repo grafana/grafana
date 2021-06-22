@@ -3,7 +3,6 @@ package channels
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"net/url"
 	"testing"
 	"time"
@@ -41,7 +40,7 @@ func TestSensuGoNotifier(t *testing.T) {
 				{
 					Alert: model.Alert{
 						Labels:      model.LabelSet{"__alert_rule_uid__": "rule uid", "alertname": "alert1", "lbl1": "val1"},
-						Annotations: model.LabelSet{"ann1": "annv1"},
+						Annotations: model.LabelSet{"ann1": "annv1", "__dashboardUid__": "abcd", "__panelId__": "efgh"},
 					},
 				},
 			},
@@ -59,7 +58,7 @@ func TestSensuGoNotifier(t *testing.T) {
 							"ruleURL": "http://localhost/alerting/list",
 						},
 					},
-					"output":   "\n**Firing**\nLabels:\n - alertname = alert1\n - __alert_rule_uid__ = rule uid\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSource: \n\n\n\n\n",
+					"output":   "**Firing**\n\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matchers=alertname%3Dalert1%2Clbl1%3Dval1\nDashboard: http://localhost/d/abcd\nPanel: http://localhost/d/abcd?viewPanel=efgh\n",
 					"issued":   time.Now().Unix(),
 					"interval": 86400,
 					"status":   2,
@@ -129,14 +128,6 @@ func TestSensuGoNotifier(t *testing.T) {
 				"url": "http://sensu-api.local:8080"
 			}`,
 			expInitError: alerting.ValidationError{Reason: "Could not find the API key property in settings"},
-		}, {
-			name: "Error in building message",
-			settings: `{
-				"url": "http://sensu-api.local:8080",
-				"apikey": "<apikey>",
-				"message": "{{ .Status }"
-			}`,
-			expMsgError: errors.New("failed to template sensugo message: template: :1: unexpected \"}\" in operand"),
 		},
 	}
 

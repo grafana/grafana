@@ -17,12 +17,36 @@ var ldapAdminReadRole = RoleDTO{
 
 var ldapAdminEditRole = RoleDTO{
 	Name:    ldapAdminEdit,
-	Version: 1,
+	Version: 2,
 	Permissions: ConcatPermissions(ldapAdminReadRole.Permissions, []Permission{
 		{
 			Action: ActionLDAPUsersSync,
 		},
+		{
+			Action: ActionLDAPConfigReload,
+		},
 	}),
+}
+
+var serverAdminReadRole = RoleDTO{
+	Version: 1,
+	Name:    serverAdminRead,
+	Permissions: []Permission{
+		{
+			Action: ActionServerStatsRead,
+		},
+	},
+}
+
+var settingsAdminReadRole = RoleDTO{
+	Version: 1,
+	Name:    settingsAdminRead,
+	Permissions: []Permission{
+		{
+			Action: ActionSettingsRead,
+			Scope:  ScopeSettingsAll,
+		},
+	},
 }
 
 var usersOrgReadRole = RoleDTO{
@@ -135,13 +159,17 @@ var provisioningAdminRole = RoleDTO{
 	},
 }
 
-// PredefinedRoles provides a map of permission sets/roles which can be
+// FixedRoles provides a map of permission sets/roles which can be
 // assigned to a set of users. When adding a new resource protected by
 // Grafana access control the default permissions should be added to a
-// new predefined role in this set so that users can access the new
-// resource. PredefinedRoleGrants lists which organization roles are
-// assigned which predefined roles in this list.
-var PredefinedRoles = map[string]RoleDTO{
+// new fixed role in this set so that users can access the new
+// resource. FixedRoleGrants lists which built-in roles are
+// assigned which fixed roles in this list.
+var FixedRoles = map[string]RoleDTO{
+	serverAdminRead: serverAdminReadRole,
+
+	settingsAdminRead: settingsAdminReadRole,
+
 	usersAdminRead: usersAdminReadRole,
 	usersAdminEdit: usersAdminEditRole,
 
@@ -155,25 +183,31 @@ var PredefinedRoles = map[string]RoleDTO{
 }
 
 const (
-	usersAdminEdit = "grafana:roles:users:admin:edit"
-	usersAdminRead = "grafana:roles:users:admin:read"
+	serverAdminRead = "fixed:server:admin:read"
 
-	usersOrgEdit = "grafana:roles:users:org:edit"
-	usersOrgRead = "grafana:roles:users:org:read"
+	settingsAdminRead = "fixed:settings:admin:read"
 
-	ldapAdminEdit = "grafana:roles:ldap:admin:edit"
-	ldapAdminRead = "grafana:roles:ldap:admin:read"
+	usersAdminEdit = "fixed:users:admin:edit"
+	usersAdminRead = "fixed:users:admin:read"
 
-	provisioningAdmin = "grafana:roles:provisioning:admin"
+	usersOrgEdit = "fixed:users:org:edit"
+	usersOrgRead = "fixed:users:org:read"
+
+	ldapAdminEdit = "fixed:ldap:admin:edit"
+	ldapAdminRead = "fixed:ldap:admin:read"
+
+	provisioningAdmin = "fixed:provisioning:admin"
 )
 
-// PredefinedRoleGrants specifies which organization roles are assigned
-// to which set of PredefinedRoles by default. Alphabetically sorted.
-var PredefinedRoleGrants = map[string][]string{
+// FixedRoleGrants specifies which built-in roles are assigned
+// to which set of FixedRoles by default. Alphabetically sorted.
+var FixedRoleGrants = map[string][]string{
 	RoleGrafanaAdmin: {
 		ldapAdminEdit,
 		ldapAdminRead,
 		provisioningAdmin,
+		serverAdminRead,
+		settingsAdminRead,
 		usersAdminEdit,
 		usersAdminRead,
 		usersOrgEdit,

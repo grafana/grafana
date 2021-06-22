@@ -58,32 +58,23 @@ func (e *BadRequestError) Error() string {
 }
 
 type ErrVersionUnsupported struct {
-	PluginID           string
-	RequestedVersion   string
-	RecommendedVersion string
+	PluginID         string
+	RequestedVersion string
+	SystemInfo       string
 }
 
 func (e ErrVersionUnsupported) Error() string {
-	if len(e.RecommendedVersion) > 0 {
-		return fmt.Sprintf("%s v%s is not supported on your architecture and OS, latest suitable version is %s",
-			e.PluginID, e.RequestedVersion, e.RecommendedVersion)
-	}
-	return fmt.Sprintf("%s v%s is not supported on your architecture and OS", e.PluginID, e.RequestedVersion)
+	return fmt.Sprintf("%s v%s is not supported on your system (%s)", e.PluginID, e.RequestedVersion, e.SystemInfo)
 }
 
 type ErrVersionNotFound struct {
-	PluginID           string
-	RequestedVersion   string
-	RecommendedVersion string
+	PluginID         string
+	RequestedVersion string
+	SystemInfo       string
 }
 
 func (e ErrVersionNotFound) Error() string {
-	if len(e.RecommendedVersion) > 0 {
-		return fmt.Sprintf("%s v%s is not supported on your architecture and OS, latest suitable version is %s",
-			e.PluginID, e.RequestedVersion, e.RecommendedVersion)
-	}
-	return fmt.Sprintf("could not find a version %s for %s. The latest suitable version is %s", e.RequestedVersion,
-		e.PluginID, e.RecommendedVersion)
+	return fmt.Sprintf("%s v%s either does not exist or is not supported on your system (%s)", e.PluginID, e.RequestedVersion, e.SystemInfo)
 }
 
 func New(skipTLSVerify bool, grafanaVersion string, logger plugins.PluginInstallerLogger) *Installer {
@@ -114,7 +105,7 @@ func (i *Installer) Install(ctx context.Context, pluginID, version, pluginsDir, 
 			return err
 		}
 
-		v, err := selectVersion(&plugin, version)
+		v, err := i.selectVersion(&plugin, version)
 		if err != nil {
 			return err
 		}
@@ -429,7 +420,7 @@ func normalizeVersion(version string) string {
 // selectVersion returns latest version if none is specified or the specified version. If the version string is not
 // matched to existing version it errors out. It also errors out if version that is matched is not available for current
 // os and platform. It expects plugin.Versions to be sorted so the newest version is first.
-func selectVersion(plugin *Plugin, version string) (*Version, error) {
+func (i *Installer) selectVersion(plugin *Plugin, version string) (*Version, error) {
 	var ver Version
 
 	latestForArch := latestSupportedVersion(plugin)
@@ -437,6 +428,7 @@ func selectVersion(plugin *Plugin, version string) (*Version, error) {
 		return nil, ErrVersionUnsupported{
 			PluginID:         plugin.ID,
 			RequestedVersion: version,
+			SystemInfo:       i.fullSystemInfoString(),
 		}
 	}
 
@@ -451,22 +443,30 @@ func selectVersion(plugin *Plugin, version string) (*Version, error) {
 	}
 
 	if len(ver.Version) == 0 {
+		i.log.Debugf("Requested plugin version %s v%s not found but potential fallback version '%s' was found",
+			plugin.ID, version, latestForArch.Version)
 		return nil, ErrVersionNotFound{
-			PluginID:           plugin.ID,
-			RequestedVersion:   version,
-			RecommendedVersion: latestForArch.Version,
+			PluginID:         plugin.ID,
+			RequestedVersion: version,
+			SystemInfo:       i.fullSystemInfoString(),
 		}
 	}
 
 	if !supportsCurrentArch(&ver) {
+		i.log.Debugf("Requested plugin version %s v%s not found but potential fallback version '%s' was found",
+			plugin.ID, version, latestForArch.Version)
 		return nil, ErrVersionUnsupported{
-			PluginID:           plugin.ID,
-			RequestedVersion:   version,
-			RecommendedVersion: latestForArch.Version,
+			PluginID:         plugin.ID,
+			RequestedVersion: version,
+			SystemInfo:       i.fullSystemInfoString(),
 		}
 	}
 
 	return &ver, nil
+}
+
+func (i *Installer) fullSystemInfoString() string {
+	return fmt.Sprintf("Grafana v%s %s", i.grafanaVersion, osAndArchString())
 }
 
 func osAndArchString() string {

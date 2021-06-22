@@ -2,17 +2,17 @@ import React, { PureComponent } from 'react';
 import { css } from '@emotion/css';
 
 import {
-  Select,
-  Field,
-  Form,
-  Tooltip,
-  Icon,
-  stylesFactory,
-  Label,
   Button,
-  RadioButtonGroup,
+  Field,
   FieldSet,
+  Form,
+  Icon,
+  Label,
+  RadioButtonGroup,
+  Select,
+  stylesFactory,
   TimeZonePicker,
+  Tooltip,
 } from '@grafana/ui';
 import { SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -90,7 +90,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
 
   onSubmitForm = async () => {
     const { homeDashboardId, theme, timezone } = this.state;
-    this.service.update({ homeDashboardId, theme, timezone });
+    await this.service.update({ homeDashboardId, theme, timezone });
     window.location.reload();
   };
 
@@ -98,7 +98,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
     this.setState({ theme: value });
   };
 
-  onTimeZoneChanged = (timezone: string) => {
+  onTimeZoneChanged = (timezone?: string) => {
     if (!timezone) {
       return;
     }
@@ -109,7 +109,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
     this.setState({ homeDashboardId: dashboardId });
   };
 
-  getFullDashName = (dashboard: DashboardSearchHit) => {
+  getFullDashName = (dashboard: SelectableValue<DashboardSearchHit>) => {
     if (typeof dashboard.folderTitle === 'undefined' || dashboard.folderTitle === '') {
       return dashboard.title;
     }
@@ -142,12 +142,15 @@ export class SharedPreferences extends PureComponent<Props, State> {
                     </Tooltip>
                   </Label>
                 }
+                aria-label="User preferences home dashboard drop down"
               >
                 <Select
                   value={dashboards.find((dashboard) => dashboard.id === homeDashboardId)}
                   getOptionValue={(i) => i.id}
                   getOptionLabel={this.getFullDashName}
-                  onChange={(dashboard: DashboardSearchHit) => this.onHomeDashboardChanged(dashboard.id)}
+                  onChange={(dashboard: SelectableValue<DashboardSearchHit>) =>
+                    this.onHomeDashboardChanged(dashboard.id)
+                  }
                   options={dashboards}
                   placeholder="Choose default dashboard"
                 />
@@ -157,7 +160,9 @@ export class SharedPreferences extends PureComponent<Props, State> {
                 <TimeZonePicker includeInternal={true} value={timezone} onChange={this.onTimeZoneChanged} />
               </Field>
               <div className="gf-form-button-row">
-                <Button variant="primary">Save</Button>
+                <Button variant="primary" aria-label="User preferences save button">
+                  Save
+                </Button>
               </div>
             </FieldSet>
           );

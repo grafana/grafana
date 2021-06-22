@@ -6,6 +6,8 @@ import (
 	"net/url"
 	"strings"
 	"time"
+
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 )
 
 // AzureMonitorQuery is the query for all the services as they have similar queries
@@ -17,6 +19,7 @@ type AzureMonitorQuery struct {
 	Params        url.Values
 	RefID         string
 	Alias         string
+	TimeRange     backend.TimeRange
 }
 
 // AzureMonitorResponse is the json response from the Azure Monitor API
@@ -138,7 +141,10 @@ type logJSONQuery struct {
 	AzureLogAnalytics struct {
 		Query        string `json:"query"`
 		ResultFormat string `json:"resultFormat"`
-		Workspace    string `json:"workspace"`
+		Resource     string `json:"resource"`
+
+		// Deprecated: Queries should be migrated to use Resource instead
+		Workspace string `json:"workspace"`
 	} `json:"azureLogAnalytics"`
 }
 
