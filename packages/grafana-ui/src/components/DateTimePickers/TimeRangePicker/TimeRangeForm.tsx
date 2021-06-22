@@ -89,7 +89,7 @@ export const TimeRangeForm: React.FC<Props> = (props) => {
   const onFromChange = useCallback(
     (event: FormEvent<HTMLInputElement>) => {
       const newState = eventToState(event, false, timeZone);
-      const invalid = validateRange(newState, to, timeZone);
+      const invalid = isRangeInvalid(newState, to, timeZone);
 
       newState.invalid = newState.invalid || invalid;
       setFrom(newState);
@@ -100,7 +100,7 @@ export const TimeRangeForm: React.FC<Props> = (props) => {
   const onToChange = useCallback(
     (event: FormEvent<HTMLInputElement>) => {
       const newState = eventToState(event, false, timeZone);
-      const invalid = validateRange(from, newState, timeZone);
+      const invalid = isRangeInvalid(from, newState, timeZone);
 
       setFrom({ value: from.value, invalid: invalid || !isValid(from.value, false, timeZone) });
       setTo(newState);
@@ -151,7 +151,7 @@ export const TimeRangeForm: React.FC<Props> = (props) => {
   );
 };
 
-function validateRange(from: InputState, to: InputState, timezone?: string): boolean {
+function isRangeInvalid(from: InputState, to: InputState, timezone?: string): boolean {
   const raw: RawTimeRange = { from: from.value, to: to.value };
   const timeRange = rangeUtil.convertRawToRange(raw, timezone);
   const valid = timeRange.from.isSame(timeRange.to) || timeRange.from.isBefore(timeRange.to);
