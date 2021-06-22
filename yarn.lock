@@ -5920,6 +5920,11 @@ ansi-to-html@^0.6.11:
   dependencies:
     entities "^1.1.2"
 
+ansicolor@1.1.95:
+  version "1.1.95"
+  resolved "https://registry.yarnpkg.com/ansicolor/-/ansicolor-1.1.95.tgz#978c494f04793d6c58115ba13a50f56593f736c6"
+  integrity sha512-R4yTmrfQZ2H9Wr5TZoM2iOz0+T6TNHqztpld7ZToaN8EaUj/06NG4r5UHQfegA9/+K/OY3E+WumprcglbcTMRA==
+
 any-observable@^0.3.0:
   version "0.3.0"
   resolved "https://registry.yarnpkg.com/any-observable/-/any-observable-0.3.0.tgz#af933475e5806a67d0d7df090dd5e8bef65d119b"
