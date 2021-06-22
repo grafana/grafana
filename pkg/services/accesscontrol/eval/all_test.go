@@ -31,7 +31,7 @@ func TestAll_Evaluate(t *testing.T) {
 			expected: true,
 		},
 		{
-			desc: "should return false for if one does not match",
+			desc: "should return false if one does not match",
 			evaluator: All(
 				Permission("settings:write", Combine("settings", ScopeWildcard)),
 				Permission("settings:read", Combine("settings", "auth.saml", ScopeAll)),
