@@ -24,7 +24,7 @@ function shouldExclude(filename) {
     return false;
   }
 
-  const packagesToProcessbyBabel = ['debug', 'lru-cache', 'yallist', 'react-hook-form', 'rc-trigger', 'monaco-editor'];
+  const packagesToProcessbyBabel = ['debug', 'lru-cache', 'yallist', 'react-hook-form', 'rc-trigger'];
   for (const package of packagesToProcessbyBabel) {
     if (filename.indexOf(`node_modules/${package}`) > 0) {
       return false;
@@ -145,7 +145,6 @@ module.exports = {
       },
       {
         test: /\.css$/,
-        // include: MONACO_DIR, // https://github.com/react-monaco-editor/react-monaco-editor
         use: ['style-loader', 'css-loader'],
       },
       // for pre-caching SVGs as part of the JS bundles
