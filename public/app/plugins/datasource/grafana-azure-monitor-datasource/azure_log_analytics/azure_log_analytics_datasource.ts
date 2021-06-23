@@ -18,7 +18,7 @@ import {
 import { getBackendSrv, getTemplateSrv, DataSourceWithBackend, FetchResponse } from '@grafana/runtime';
 import { Observable, from } from 'rxjs';
 import { mergeMap } from 'rxjs/operators';
-import { getAuthType, getAzureCloud } from '../credentials';
+import { getAuthType, getAzureCloud, getAzurePortalUrl } from '../credentials';
 import { getLogAnalyticsApiRoute, getManagementApiRoute } from '../api/routes';
 import { AzureLogAnalyticsMetadata } from '../types/logAnalyticsMetadata';
 import { isGUIDish } from '../components/ResourcePicker/utils';
@@ -35,6 +35,7 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
 > {
   url: string;
   baseUrl: string;
+  azurePortalUrl: string;
   applicationId: string;
 
   defaultSubscriptionId?: string;
@@ -50,6 +51,7 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     const cloud = getAzureCloud(instanceSettings);
     const logAnalyticsRoute = getLogAnalyticsApiRoute(cloud);
     this.baseUrl = `/${logAnalyticsRoute}`;
+    this.azurePortalUrl = getAzurePortalUrl(cloud);
 
     const managementRoute = getManagementApiRoute(cloud);
     this.azureMonitorUrl = `/${managementRoute}/subscriptions`;
@@ -185,7 +187,7 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     }
 
     const url =
-      `https://portal.azure.com/#blade/Microsoft_OperationsManagementSuite_Workspace/` +
+      `${this.azurePortalUrl}/#blade/Microsoft_OperationsManagementSuite_Workspace/` +
       `AnalyticsBlade/initiator/AnalyticsShareLinkToQuery/isQueryEditorVisible/true/scope/` +
       `%7B%22resources%22%3A%5B%7B%22resourceId%22%3A%22%2Fsubscriptions%2F${subscription}` +
       `%2Fresourcegroups%2F${details.resourceGroup}%2Fproviders%2Fmicrosoft.operationalinsights%2Fworkspaces%2F${details.workspace}` +
