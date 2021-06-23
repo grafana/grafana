@@ -56,7 +56,6 @@ const zoneInfo = "ZONEINFO"
 // and DataProxyMaxIdleConnsPerHost
 const (
 	MaxIdleConnsPerHost = 2
-	MaxIdleConns        = 100
 )
 
 var (
