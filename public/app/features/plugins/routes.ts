@@ -37,7 +37,7 @@ export function getPluginsAdminRoutes(cfg = config): RouteDescriptor[] {
   return [
     {
       path: '/plugins',
-      component: SafeDynamicImport(() => import(/* webpackChunkName: "PluginListPage" */ './admin/pages/Browse')),
+      component: SafeDynamicImport(() => import(/* webpackChunkName: "PluginLibraryPage" */ './admin/pages/Library')),
     },
     {
       path: '/plugins/browse',
