@@ -18,7 +18,9 @@ module.exports = (on, config) => {
   });
 
   on('task', {
-    pa11y: pa11y(), // calling the function is important
+    pa11y: pa11y((pa11yReport) => {
+      console.log(pa11yReport); // raw pa11y reports
+    }),
   });
 
   // Always extend with this library's config and return for diffing

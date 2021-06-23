@@ -15,5 +15,6 @@ e2e.scenario({
       .get(`[data-panelid=6] [aria-label^="${selectors.components.Panels.Visualization.BarGauge.value}"]`)
       .should('have.css', 'color', 'rgb(242, 73, 92)')
       .contains('100');
+    e2e().pa11y();
   },
 });
