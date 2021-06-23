@@ -437,17 +437,14 @@ export class DashboardModel {
       return this.panelInEdit;
     }
 
-    const panel = this.panels.find((p) => p.id === id);
-
-    if (panel) {
-      return panel;
-    }
-
-    const rows = this.panels.filter((p) => p.type === 'row');
-    for (const row of rows) {
-      const rowPanel: any = row.panels?.find((p: any) => p.id === id);
-      if (rowPanel) {
-        return new PanelModel(rowPanel);
+    for (const panel of this.panels) {
+      if (panel.id === id) {
+        return panel;
+      } else if (panel.type === 'row') {
+        const rowPanel: any = panel.panels?.find((p: any) => p.id === id);
+        if (rowPanel) {
+          return new PanelModel(rowPanel);
+        }
       }
     }
 
@@ -877,6 +874,7 @@ export class DashboardModel {
 
   toggleRow(row: PanelModel) {
     const rowIndex = indexOf(this.panels, row);
+    let sharedPanelsToRefresh = new Set<PanelModel>();
 
     if (row.collapsed) {
       row.collapsed = false;
@@ -908,7 +906,7 @@ export class DashboardModel {
           );
 
           for (const sharedPanel of sharedDashboardPanels) {
-            sharedPanel.refresh();
+            sharedPanelsToRefresh.add(sharedPanel);
           }
         }
 
@@ -924,6 +922,8 @@ export class DashboardModel {
         if (hasRepeat) {
           this.processRowRepeats(row);
         }
+
+        sharedPanelsToRefresh.forEach((p) => p.refresh());
       }
 
       // sort panels
