@@ -7,11 +7,10 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/models"
-	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestSavingTags(t *testing.T) {
-	Convey("Testing tags saving", t, func() {
+	t.Run("Testing tags saving", func(t *testing.T) {
 		InitTestDB(t)
 
 		tagPairs := []*models.Tag{
@@ -22,7 +21,7 @@ func TestSavingTags(t *testing.T) {
 		}
 		tags, err := EnsureTagsExist(newSession(context.Background()), tagPairs)
 
-		So(err, ShouldBeNil)
-		So(len(tags), ShouldEqual, 4)
+		require.NoError(t, err)
+		require.Equal(t, 4, len(tags))
 	})
 }

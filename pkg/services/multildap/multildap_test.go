@@ -6,24 +6,24 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/ldap"
-	. "github.com/smartystreets/goconvey/convey"
+	"github.com/stretchr/testify/require"
 )
 
 func TestMultiLDAP(t *testing.T) {
-	Convey("Multildap", t, func() {
-		Convey("Ping()", func() {
-			Convey("Should return error for absent config list", func() {
+	t.Run("Multildap", func(t *testing.T) {
+		t.Run("Ping()", func(t *testing.T) {
+			t.Run("Should return error for absent config list", func(t *testing.T) {
 				setup()
 
 				multi := New([]*ldap.ServerConfig{})
 				_, err := multi.Ping()
 
 				So(err, ShouldBeError)
-				So(err, ShouldEqual, ErrNoLDAPServers)
+				require.Equal(t, ErrNoLDAPServers, err)
 
 				teardown()
 			})
-			Convey("Should return an unavailable status on dial error", func() {
+			t.Run("Should return an unavailable status on dial error", func(t *testing.T) {
 				mock := setup()
 
 				expectedErr := errors.New("Dial error")
@@ -35,16 +35,16 @@ func TestMultiLDAP(t *testing.T) {
 
 				statuses, err := multi.Ping()
 
-				So(err, ShouldBeNil)
-				So(statuses[0].Host, ShouldEqual, "10.0.0.1")
-				So(statuses[0].Port, ShouldEqual, 361)
+				require.NoError(t, err)
+				require.Equal(t, "10.0.0.1", statuses[0].Host)
+				require.Equal(t, 361, statuses[0].Port)
 				So(statuses[0].Available, ShouldBeFalse)
-				So(statuses[0].Error, ShouldEqual, expectedErr)
-				So(mock.closeCalledTimes, ShouldEqual, 0)
+				require.Equal(t, expectedErr, statuses[0].Error)
+				require.Equal(t, 0, mock.closeCalledTimes)
 
 				teardown()
 			})
-			Convey("Should get the LDAP server statuses", func() {
+			t.Run("Should get the LDAP server statuses", func(t *testing.T) {
 				mock := setup()
 
 				multi := New([]*ldap.ServerConfig{
@@ -53,30 +53,30 @@ func TestMultiLDAP(t *testing.T) {
 
 				statuses, err := multi.Ping()
 
-				So(err, ShouldBeNil)
-				So(statuses[0].Host, ShouldEqual, "10.0.0.1")
-				So(statuses[0].Port, ShouldEqual, 361)
-				So(statuses[0].Available, ShouldBeTrue)
+				require.NoError(t, err)
+				require.Equal(t, "10.0.0.1", statuses[0].Host)
+				require.Equal(t, 361, statuses[0].Port)
+				require.True(t, statuses[0].Available)
 				So(statuses[0].Error, ShouldBeNil)
-				So(mock.closeCalledTimes, ShouldEqual, 1)
+				require.Equal(t, 1, mock.closeCalledTimes)
 
 				teardown()
 			})
 		})
-		Convey("Login()", func() {
-			Convey("Should return error for absent config list", func() {
+		t.Run("Login()", func(t *testing.T) {
+			t.Run("Should return error for absent config list", func(t *testing.T) {
 				setup()
 
 				multi := New([]*ldap.ServerConfig{})
 				_, err := multi.Login(&models.LoginUserQuery{})
 
 				So(err, ShouldBeError)
-				So(err, ShouldEqual, ErrNoLDAPServers)
+				require.Equal(t, ErrNoLDAPServers, err)
 
 				teardown()
 			})
 
-			Convey("Should return a dial error", func() {
+			t.Run("Should return a dial error", func(t *testing.T) {
 				mock := setup()
 
 				expected := errors.New("Dial error")
@@ -89,12 +89,12 @@ func TestMultiLDAP(t *testing.T) {
 				_, err := multi.Login(&models.LoginUserQuery{})
 
 				So(err, ShouldBeError)
-				So(err, ShouldEqual, expected)
+				require.Equal(t, expected, err)
 
 				teardown()
 			})
 
-			Convey("Should call underlying LDAP methods", func() {
+			t.Run("Should call underlying LDAP methods", func(t *testing.T) {
 				mock := setup()
 
 				multi := New([]*ldap.ServerConfig{
@@ -102,16 +102,16 @@ func TestMultiLDAP(t *testing.T) {
 				})
 				_, err := multi.Login(&models.LoginUserQuery{})
 
-				So(mock.dialCalledTimes, ShouldEqual, 2)
-				So(mock.loginCalledTimes, ShouldEqual, 2)
-				So(mock.closeCalledTimes, ShouldEqual, 2)
+				require.Equal(t, 2, mock.dialCalledTimes)
+				require.Equal(t, 2, mock.loginCalledTimes)
+				require.Equal(t, 2, mock.closeCalledTimes)
 
-				So(err, ShouldEqual, ErrInvalidCredentials)
+				require.Equal(t, ErrInvalidCredentials, err)
 
 				teardown()
 			})
 
-			Convey("Should get login result", func() {
+			t.Run("Should get login result", func(t *testing.T) {
 				mock := setup()
 
 				mock.loginReturn = &models.ExternalUserInfo{
@@ -123,17 +123,17 @@ func TestMultiLDAP(t *testing.T) {
 				})
 				result, err := multi.Login(&models.LoginUserQuery{})
 
-				So(mock.dialCalledTimes, ShouldEqual, 1)
-				So(mock.loginCalledTimes, ShouldEqual, 1)
-				So(mock.closeCalledTimes, ShouldEqual, 1)
+				require.Equal(t, 1, mock.dialCalledTimes)
+				require.Equal(t, 1, mock.loginCalledTimes)
+				require.Equal(t, 1, mock.closeCalledTimes)
 
-				So(result.Login, ShouldEqual, "killa")
-				So(err, ShouldBeNil)
+				require.Equal(t, "killa", result.Login)
+				require.NoError(t, err)
 
 				teardown()
 			})
 
-			Convey("Should still call a second error for invalid not found error", func() {
+			t.Run("Should still call a second error for invalid not found error", func(t *testing.T) {
 				mock := setup()
 
 				mock.loginErrReturn = ErrCouldNotFindUser
@@ -143,16 +143,16 @@ func TestMultiLDAP(t *testing.T) {
 				})
 				_, err := multi.Login(&models.LoginUserQuery{})
 
-				So(mock.dialCalledTimes, ShouldEqual, 2)
-				So(mock.loginCalledTimes, ShouldEqual, 2)
-				So(mock.closeCalledTimes, ShouldEqual, 2)
+				require.Equal(t, 2, mock.dialCalledTimes)
+				require.Equal(t, 2, mock.loginCalledTimes)
+				require.Equal(t, 2, mock.closeCalledTimes)
 
-				So(err, ShouldEqual, ErrInvalidCredentials)
+				require.Equal(t, ErrInvalidCredentials, err)
 
 				teardown()
 			})
 
-			Convey("Should still try to auth with the second server after receiving an invalid credentials error from the first", func() {
+			t.Run("Should still try to auth with the second server after receiving an invalid credentials error from the first", func(t *testing.T) {
 				mock := setup()
 
 				mock.loginErrReturn = ErrInvalidCredentials
@@ -162,16 +162,16 @@ func TestMultiLDAP(t *testing.T) {
 				})
 				_, err := multi.Login(&models.LoginUserQuery{})
 
-				So(mock.dialCalledTimes, ShouldEqual, 2)
-				So(mock.loginCalledTimes, ShouldEqual, 2)
-				So(mock.closeCalledTimes, ShouldEqual, 2)
+				require.Equal(t, 2, mock.dialCalledTimes)
+				require.Equal(t, 2, mock.loginCalledTimes)
+				require.Equal(t, 2, mock.closeCalledTimes)
 
-				So(err, ShouldEqual, ErrInvalidCredentials)
+				require.Equal(t, ErrInvalidCredentials, err)
 
 				teardown()
 			})
 
-			Convey("Should still try to auth with the second server after receiving a dial error from the first", func() {
+			t.Run("Should still try to auth with the second server after receiving a dial error from the first", func(t *testing.T) {
 				mock := setup()
 
 				expectedError := errors.New("Dial error")
@@ -182,14 +182,14 @@ func TestMultiLDAP(t *testing.T) {
 				})
 				_, err := multi.Login(&models.LoginUserQuery{})
 
-				So(mock.dialCalledTimes, ShouldEqual, 2)
+				require.Equal(t, 2, mock.dialCalledTimes)
 
-				So(err, ShouldEqual, expectedError)
+				require.Equal(t, expectedError, err)
 
 				teardown()
 			})
 
-			Convey("Should return unknown error", func() {
+			t.Run("Should return unknown error", func(t *testing.T) {
 				mock := setup()
 
 				expected := errors.New("Something unknown")
@@ -200,30 +200,30 @@ func TestMultiLDAP(t *testing.T) {
 				})
 				_, err := multi.Login(&models.LoginUserQuery{})
 
-				So(mock.dialCalledTimes, ShouldEqual, 1)
-				So(mock.loginCalledTimes, ShouldEqual, 1)
-				So(mock.closeCalledTimes, ShouldEqual, 1)
+				require.Equal(t, 1, mock.dialCalledTimes)
+				require.Equal(t, 1, mock.loginCalledTimes)
+				require.Equal(t, 1, mock.closeCalledTimes)
 
-				So(err, ShouldEqual, expected)
+				require.Equal(t, expected, err)
 
 				teardown()
 			})
 		})
 
-		Convey("User()", func() {
-			Convey("Should return error for absent config list", func() {
+		t.Run("User()", func(t *testing.T) {
+			t.Run("Should return error for absent config list", func(t *testing.T) {
 				setup()
 
 				multi := New([]*ldap.ServerConfig{})
 				_, _, err := multi.User("test")
 
 				So(err, ShouldBeError)
-				So(err, ShouldEqual, ErrNoLDAPServers)
+				require.Equal(t, ErrNoLDAPServers, err)
 
 				teardown()
 			})
 
-			Convey("Should return a dial error", func() {
+			t.Run("Should return a dial error", func(t *testing.T) {
 				mock := setup()
 
 				expected := errors.New("Dial error")
@@ -236,12 +236,12 @@ func TestMultiLDAP(t *testing.T) {
 				_, _, err := multi.User("test")
 
 				So(err, ShouldBeError)
-				So(err, ShouldEqual, expected)
+				require.Equal(t, expected, err)
 
 				teardown()
 			})
 
-			Convey("Should call underlying LDAP methods", func() {
+			t.Run("Should call underlying LDAP methods", func(t *testing.T) {
 				mock := setup()
 
 				multi := New([]*ldap.ServerConfig{
@@ -249,16 +249,16 @@ func TestMultiLDAP(t *testing.T) {
 				})
 				_, _, err := multi.User("test")
 
-				So(mock.dialCalledTimes, ShouldEqual, 2)
-				So(mock.usersCalledTimes, ShouldEqual, 2)
-				So(mock.closeCalledTimes, ShouldEqual, 2)
+				require.Equal(t, 2, mock.dialCalledTimes)
+				require.Equal(t, 2, mock.usersCalledTimes)
+				require.Equal(t, 2, mock.closeCalledTimes)
 
-				So(err, ShouldEqual, ErrDidNotFindUser)
+				require.Equal(t, ErrDidNotFindUser, err)
 
 				teardown()
 			})
 
-			Convey("Should return some error", func() {
+			t.Run("Should return some error", func(t *testing.T) {
 				mock := setup()
 
 				expected := errors.New("Killa Gorilla")
@@ -269,16 +269,16 @@ func TestMultiLDAP(t *testing.T) {
 				})
 				_, _, err := multi.User("test")
 
-				So(mock.dialCalledTimes, ShouldEqual, 1)
-				So(mock.usersCalledTimes, ShouldEqual, 1)
-				So(mock.closeCalledTimes, ShouldEqual, 1)
+				require.Equal(t, 1, mock.dialCalledTimes)
+				require.Equal(t, 1, mock.usersCalledTimes)
+				require.Equal(t, 1, mock.closeCalledTimes)
 
-				So(err, ShouldEqual, expected)
+				require.Equal(t, expected, err)
 
 				teardown()
 			})
 
-			Convey("Should get only one user", func() {
+			t.Run("Should get only one user", func(t *testing.T) {
 				mock := setup()
 
 				mock.usersFirstReturn = []*models.ExternalUserInfo{
@@ -296,17 +296,17 @@ func TestMultiLDAP(t *testing.T) {
 				})
 				user, _, err := multi.User("test")
 
-				So(mock.dialCalledTimes, ShouldEqual, 1)
-				So(mock.usersCalledTimes, ShouldEqual, 1)
-				So(mock.closeCalledTimes, ShouldEqual, 1)
+				require.Equal(t, 1, mock.dialCalledTimes)
+				require.Equal(t, 1, mock.usersCalledTimes)
+				require.Equal(t, 1, mock.closeCalledTimes)
 
-				So(err, ShouldBeNil)
-				So(user.Login, ShouldEqual, "one")
+				require.NoError(t, err)
+				require.Equal(t, "one", user.Login)
 
 				teardown()
 			})
 
-			Convey("Should still try to auth with the second server after receiving a dial error from the first", func() {
+			t.Run("Should still try to auth with the second server after receiving a dial error from the first", func(t *testing.T) {
 				mock := setup()
 
 				expectedError := errors.New("Dial error")
@@ -317,15 +317,15 @@ func TestMultiLDAP(t *testing.T) {
 				})
 				_, _, err := multi.User("test")
 
-				So(mock.dialCalledTimes, ShouldEqual, 2)
-				So(err, ShouldEqual, expectedError)
+				require.Equal(t, 2, mock.dialCalledTimes)
+				require.Equal(t, expectedError, err)
 
 				teardown()
 			})
 		})
 
-		Convey("Users()", func() {
-			Convey("Should still try to auth with the second server after receiving a dial error from the first", func() {
+		t.Run("Users()", func(t *testing.T) {
+			t.Run("Should still try to auth with the second server after receiving a dial error from the first", func(t *testing.T) {
 				mock := setup()
 
 				expectedError := errors.New("Dial error")
@@ -336,24 +336,24 @@ func TestMultiLDAP(t *testing.T) {
 				})
 				_, err := multi.Users([]string{"test"})
 
-				So(mock.dialCalledTimes, ShouldEqual, 2)
-				So(err, ShouldEqual, expectedError)
+				require.Equal(t, 2, mock.dialCalledTimes)
+				require.Equal(t, expectedError, err)
 
 				teardown()
 			})
-			Convey("Should return error for absent config list", func() {
+			t.Run("Should return error for absent config list", func(t *testing.T) {
 				setup()
 
 				multi := New([]*ldap.ServerConfig{})
 				_, err := multi.Users([]string{"test"})
 
 				So(err, ShouldBeError)
-				So(err, ShouldEqual, ErrNoLDAPServers)
+				require.Equal(t, ErrNoLDAPServers, err)
 
 				teardown()
 			})
 
-			Convey("Should return a dial error", func() {
+			t.Run("Should return a dial error", func(t *testing.T) {
 				mock := setup()
 
 				expected := errors.New("Dial error")
@@ -366,12 +366,12 @@ func TestMultiLDAP(t *testing.T) {
 				_, err := multi.Users([]string{"test"})
 
 				So(err, ShouldBeError)
-				So(err, ShouldEqual, expected)
+				require.Equal(t, expected, err)
 
 				teardown()
 			})
 
-			Convey("Should call underlying LDAP methods", func() {
+			t.Run("Should call underlying LDAP methods", func(t *testing.T) {
 				mock := setup()
 
 				multi := New([]*ldap.ServerConfig{
@@ -379,16 +379,16 @@ func TestMultiLDAP(t *testing.T) {
 				})
 				_, err := multi.Users([]string{"test"})
 
-				So(mock.dialCalledTimes, ShouldEqual, 2)
-				So(mock.usersCalledTimes, ShouldEqual, 2)
-				So(mock.closeCalledTimes, ShouldEqual, 2)
+				require.Equal(t, 2, mock.dialCalledTimes)
+				require.Equal(t, 2, mock.usersCalledTimes)
+				require.Equal(t, 2, mock.closeCalledTimes)
 
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
 				teardown()
 			})
 
-			Convey("Should return some error", func() {
+			t.Run("Should return some error", func(t *testing.T) {
 				mock := setup()
 
 				expected := errors.New("Killa Gorilla")
@@ -399,16 +399,16 @@ func TestMultiLDAP(t *testing.T) {
 				})
 				_, err := multi.Users([]string{"test"})
 
-				So(mock.dialCalledTimes, ShouldEqual, 1)
-				So(mock.usersCalledTimes, ShouldEqual, 1)
-				So(mock.closeCalledTimes, ShouldEqual, 1)
+				require.Equal(t, 1, mock.dialCalledTimes)
+				require.Equal(t, 1, mock.usersCalledTimes)
+				require.Equal(t, 1, mock.closeCalledTimes)
 
-				So(err, ShouldEqual, expected)
+				require.Equal(t, expected, err)
 
 				teardown()
 			})
 
-			Convey("Should get users", func() {
+			t.Run("Should get users", func(t *testing.T) {
 				mock := setup()
 
 				mock.usersFirstReturn = []*models.ExternalUserInfo{
@@ -432,14 +432,14 @@ func TestMultiLDAP(t *testing.T) {
 				})
 				users, err := multi.Users([]string{"test"})
 
-				So(mock.dialCalledTimes, ShouldEqual, 2)
-				So(mock.usersCalledTimes, ShouldEqual, 2)
-				So(mock.closeCalledTimes, ShouldEqual, 2)
+				require.Equal(t, 2, mock.dialCalledTimes)
+				require.Equal(t, 2, mock.usersCalledTimes)
+				require.Equal(t, 2, mock.closeCalledTimes)
 
-				So(err, ShouldBeNil)
-				So(users[0].Login, ShouldEqual, "one")
-				So(users[1].Login, ShouldEqual, "two")
-				So(users[2].Login, ShouldEqual, "three")
+				require.NoError(t, err)
+				require.Equal(t, "one", users[0].Login)
+				require.Equal(t, "two", users[1].Login)
+				require.Equal(t, "three", users[2].Login)
 
 				teardown()
 			})

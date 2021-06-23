@@ -8,11 +8,10 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
-	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestDashboardProvisioningTest(t *testing.T) {
-	Convey("Testing Dashboard provisioning", t, func() {
+	t.Run("Testing Dashboard provisioning", func(t *testing.T) {
 		sqlStore := InitTestDB(t)
 
 		folderCmd := models.SaveDashboardCommand{
@@ -26,7 +25,7 @@ func TestDashboardProvisioningTest(t *testing.T) {
 		}
 
 		dash, err := sqlStore.SaveDashboard(folderCmd)
-		So(err, ShouldBeNil)
+		require.NoError(t, err)
 
 		saveDashboardCmd := models.SaveDashboardCommand{
 			OrgId:    1,
@@ -38,7 +37,7 @@ func TestDashboardProvisioningTest(t *testing.T) {
 			}),
 		}
 
-		Convey("Saving dashboards with provisioning meta data", func() {
+		t.Run("Saving dashboards with provisioning meta data", func(t *testing.T) {
 			now := time.Now()
 
 			provisioning := &models.DashboardProvisioning{
@@ -48,12 +47,12 @@ func TestDashboardProvisioningTest(t *testing.T) {
 			}
 
 			dash, err := sqlStore.SaveProvisionedDashboard(saveDashboardCmd, provisioning)
-			So(err, ShouldBeNil)
+			require.NoError(t, err)
 			So(dash, ShouldNotBeNil)
-			So(dash.Id, ShouldNotEqual, 0)
+			require.NotEqual(t, 0, dash.Id)
 			dashId := dash.Id
 
-			Convey("Deleting orphaned provisioned dashboards", func() {
+			t.Run("Deleting orphaned provisioned dashboards", func(t *testing.T) {
 				saveCmd := models.SaveDashboardCommand{
 					OrgId:    1,
 					IsFolder: false,
@@ -70,11 +69,11 @@ func TestDashboardProvisioningTest(t *testing.T) {
 				}
 
 				anotherDash, err := sqlStore.SaveProvisionedDashboard(saveCmd, provisioning)
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
 				query := &models.GetDashboardsQuery{DashboardIds: []int64{anotherDash.Id}}
 				err = GetDashboards(query)
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 				So(query.Result, ShouldNotBeNil)
 
 				deleteCmd := &models.DeleteOrphanedProvisionedDashboardsCommand{ReaderNames: []string{"default"}}
@@ -82,35 +81,35 @@ func TestDashboardProvisioningTest(t *testing.T) {
 
 				query = &models.GetDashboardsQuery{DashboardIds: []int64{dash.Id, anotherDash.Id}}
 				err = GetDashboards(query)
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
-				So(len(query.Result), ShouldEqual, 1)
-				So(query.Result[0].Id, ShouldEqual, dashId)
+				require.Equal(t, 1, len(query.Result))
+				require.Equal(t, dashId, query.Result[0].Id)
 			})
 
-			Convey("Can query for provisioned dashboards", func() {
+			t.Run("Can query for provisioned dashboards", func(t *testing.T) {
 				rslt, err := sqlStore.GetProvisionedDashboardData("default")
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
-				So(len(rslt), ShouldEqual, 1)
-				So(rslt[0].DashboardId, ShouldEqual, dashId)
-				So(rslt[0].Updated, ShouldEqual, now.Unix())
+				require.Equal(t, 1, len(rslt))
+				require.Equal(t, dashId, rslt[0].DashboardId)
+				require.Equal(t, now.Unix(), rslt[0].Updated)
 			})
 
-			Convey("Can query for one provisioned dashboard", func() {
+			t.Run("Can query for one provisioned dashboard", func(t *testing.T) {
 				data, err := sqlStore.GetProvisionedDataByDashboardID(dash.Id)
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
 				So(data, ShouldNotBeNil)
 			})
 
-			Convey("Can query for none provisioned dashboard", func() {
+			t.Run("Can query for none provisioned dashboard", func(t *testing.T) {
 				data, err := sqlStore.GetProvisionedDataByDashboardID(3000)
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 				So(data, ShouldBeNil)
 			})
 
-			Convey("Deleting folder should delete provision meta data", func() {
+			t.Run("Deleting folder should delete provision meta data", func(t *testing.T) {
 				deleteCmd := &models.DeleteDashboardCommand{
 					Id:    dash.Id,
 					OrgId: 1,
@@ -119,11 +118,11 @@ func TestDashboardProvisioningTest(t *testing.T) {
 				So(DeleteDashboard(deleteCmd), ShouldBeNil)
 
 				data, err := sqlStore.GetProvisionedDataByDashboardID(dash.Id)
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 				So(data, ShouldBeNil)
 			})
 
-			Convey("UnprovisionDashboard should delete provisioning metadata", func() {
+			t.Run("UnprovisionDashboard should delete provisioning metadata", func(t *testing.T) {
 				unprovisionCmd := &models.UnprovisionDashboardCommand{
 					Id: dashId,
 				}
@@ -131,7 +130,7 @@ func TestDashboardProvisioningTest(t *testing.T) {
 				So(UnprovisionDashboard(unprovisionCmd), ShouldBeNil)
 
 				data, err := sqlStore.GetProvisionedDataByDashboardID(dashId)
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 				So(data, ShouldBeNil)
 			})
 		})

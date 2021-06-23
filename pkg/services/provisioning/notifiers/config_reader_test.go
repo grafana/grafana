@@ -10,7 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/alerting/notifiers"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
-	. "github.com/smartystreets/goconvey/convey"
+	"github.com/stretchr/testify/require"
 )
 
 var (
@@ -29,13 +29,13 @@ var (
 func TestNotificationAsConfig(t *testing.T) {
 	logger := log.New("fake.log")
 
-	Convey("Testing notification as configuration", t, func() {
+	t.Run("Testing notification as configuration", func(t *testing.T) {
 		sqlstore.InitTestDB(t)
 
 		for i := 1; i < 5; i++ {
 			orgCommand := models.CreateOrgCommand{Name: fmt.Sprintf("Main Org. %v", i)}
 			err := sqlstore.CreateOrg(&orgCommand)
-			So(err, ShouldBeNil)
+			require.NoError(t, err)
 		}
 
 		alerting.RegisterNotifier(&alerting.NotifierPlugin{
@@ -50,7 +50,7 @@ func TestNotificationAsConfig(t *testing.T) {
 			Factory: notifiers.NewEmailNotifier,
 		})
 
-		Convey("Can read correct properties", func() {
+		t.Run("Can read correct properties", func(t *testing.T) {
 			_ = os.Setenv("TEST_VAR", "default")
 			cfgProvider := &configReader{log: log.New("test logger")}
 			cfg, err := cfgProvider.readConfig(correctProperties)
@@ -58,73 +58,73 @@ func TestNotificationAsConfig(t *testing.T) {
 			if err != nil {
 				t.Fatalf("readConfig return an error %v", err)
 			}
-			So(len(cfg), ShouldEqual, 1)
+			require.Equal(t, 1, len(cfg))
 
 			ntCfg := cfg[0]
 			nts := ntCfg.Notifications
-			So(len(nts), ShouldEqual, 4)
+			require.Equal(t, 4, len(nts))
 
 			nt := nts[0]
-			So(nt.Name, ShouldEqual, "default-slack-notification")
-			So(nt.Type, ShouldEqual, "slack")
-			So(nt.OrgID, ShouldEqual, 2)
-			So(nt.UID, ShouldEqual, "notifier1")
-			So(nt.IsDefault, ShouldBeTrue)
+			require.Equal(t, "default-slack-notification", nt.Name)
+			require.Equal(t, "slack", nt.Type)
+			require.Equal(t, 2, nt.OrgID)
+			require.Equal(t, "notifier1", nt.UID)
+			require.True(t, nt.IsDefault)
 			So(nt.Settings, ShouldResemble, map[string]interface{}{
 				"recipient": "XXX", "token": "xoxb", "uploadImage": true, "url": "https://slack.com",
 			})
 			So(nt.SecureSettings, ShouldResemble, map[string]string{
 				"token": "xoxbsecure", "url": "https://slack.com/secure",
 			})
-			So(nt.SendReminder, ShouldBeTrue)
-			So(nt.Frequency, ShouldEqual, "1h")
+			require.True(t, nt.SendReminder)
+			require.Equal(t, "1h", nt.Frequency)
 
 			nt = nts[1]
-			So(nt.Name, ShouldEqual, "another-not-default-notification")
-			So(nt.Type, ShouldEqual, "email")
-			So(nt.OrgID, ShouldEqual, 3)
-			So(nt.UID, ShouldEqual, "notifier2")
+			require.Equal(t, "another-not-default-notification", nt.Name)
+			require.Equal(t, "email", nt.Type)
+			require.Equal(t, 3, nt.OrgID)
+			require.Equal(t, "notifier2", nt.UID)
 			So(nt.IsDefault, ShouldBeFalse)
 
 			nt = nts[2]
-			So(nt.Name, ShouldEqual, "check-unset-is_default-is-false")
-			So(nt.Type, ShouldEqual, "slack")
-			So(nt.OrgID, ShouldEqual, 3)
-			So(nt.UID, ShouldEqual, "notifier3")
+			require.Equal(t, "check-unset-is_default-is-false", nt.Name)
+			require.Equal(t, "slack", nt.Type)
+			require.Equal(t, 3, nt.OrgID)
+			require.Equal(t, "notifier3", nt.UID)
 			So(nt.IsDefault, ShouldBeFalse)
 
 			nt = nts[3]
-			So(nt.Name, ShouldEqual, "Added notification with whitespaces in name")
-			So(nt.Type, ShouldEqual, "email")
-			So(nt.UID, ShouldEqual, "notifier4")
-			So(nt.OrgID, ShouldEqual, 3)
+			require.Equal(t, "Added notification with whitespaces in name", nt.Name)
+			require.Equal(t, "email", nt.Type)
+			require.Equal(t, "notifier4", nt.UID)
+			require.Equal(t, 3, nt.OrgID)
 
 			deleteNts := ntCfg.DeleteNotifications
-			So(len(deleteNts), ShouldEqual, 4)
+			require.Equal(t, 4, len(deleteNts))
 
 			deleteNt := deleteNts[0]
-			So(deleteNt.Name, ShouldEqual, "default-slack-notification")
-			So(deleteNt.UID, ShouldEqual, "notifier1")
-			So(deleteNt.OrgID, ShouldEqual, 2)
+			require.Equal(t, "default-slack-notification", deleteNt.Name)
+			require.Equal(t, "notifier1", deleteNt.UID)
+			require.Equal(t, 2, deleteNt.OrgID)
 
 			deleteNt = deleteNts[1]
-			So(deleteNt.Name, ShouldEqual, "deleted-notification-without-orgId")
-			So(deleteNt.OrgID, ShouldEqual, 1)
-			So(deleteNt.UID, ShouldEqual, "notifier2")
+			require.Equal(t, "deleted-notification-without-orgId", deleteNt.Name)
+			require.Equal(t, 1, deleteNt.OrgID)
+			require.Equal(t, "notifier2", deleteNt.UID)
 
 			deleteNt = deleteNts[2]
-			So(deleteNt.Name, ShouldEqual, "deleted-notification-with-0-orgId")
-			So(deleteNt.OrgID, ShouldEqual, 1)
-			So(deleteNt.UID, ShouldEqual, "notifier3")
+			require.Equal(t, "deleted-notification-with-0-orgId", deleteNt.Name)
+			require.Equal(t, 1, deleteNt.OrgID)
+			require.Equal(t, "notifier3", deleteNt.UID)
 
 			deleteNt = deleteNts[3]
-			So(deleteNt.Name, ShouldEqual, "Deleted notification with whitespaces in name")
-			So(deleteNt.OrgID, ShouldEqual, 1)
-			So(deleteNt.UID, ShouldEqual, "notifier4")
+			require.Equal(t, "Deleted notification with whitespaces in name", deleteNt.Name)
+			require.Equal(t, 1, deleteNt.OrgID)
+			require.Equal(t, "notifier4", deleteNt.UID)
 		})
 
-		Convey("One configured notification", func() {
-			Convey("no notification in database", func() {
+		t.Run("One configured notification", func(t *testing.T) {
+			t.Run("no notification in database", func(t *testing.T) {
 				dc := newNotificationProvisioner(logger)
 				err := dc.applyChanges(twoNotificationsConfig)
 				if err != nil {
@@ -132,12 +132,12 @@ func TestNotificationAsConfig(t *testing.T) {
 				}
 				notificationsQuery := models.GetAllAlertNotificationsQuery{OrgId: 1}
 				err = sqlstore.GetAllAlertNotifications(&notificationsQuery)
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 				So(notificationsQuery.Result, ShouldNotBeNil)
-				So(len(notificationsQuery.Result), ShouldEqual, 2)
+				require.Equal(t, 2, len(notificationsQuery.Result))
 			})
 
-			Convey("One notification in database with same name and uid", func() {
+			t.Run("One notification in database with same name and uid", func(t *testing.T) {
 				existingNotificationCmd := models.CreateAlertNotificationCommand{
 					Name:  "channel1",
 					OrgId: 1,
@@ -145,56 +145,56 @@ func TestNotificationAsConfig(t *testing.T) {
 					Type:  "slack",
 				}
 				err := sqlstore.CreateAlertNotificationCommand(&existingNotificationCmd)
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 				So(existingNotificationCmd.Result, ShouldNotBeNil)
 				notificationsQuery := models.GetAllAlertNotificationsQuery{OrgId: 1}
 				err = sqlstore.GetAllAlertNotifications(&notificationsQuery)
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 				So(notificationsQuery.Result, ShouldNotBeNil)
-				So(len(notificationsQuery.Result), ShouldEqual, 1)
+				require.Equal(t, 1, len(notificationsQuery.Result))
 
-				Convey("should update one notification", func() {
+				t.Run("should update one notification", func(t *testing.T) {
 					dc := newNotificationProvisioner(logger)
 					err = dc.applyChanges(twoNotificationsConfig)
 					if err != nil {
 						t.Fatalf("applyChanges return an error %v", err)
 					}
 					err = sqlstore.GetAllAlertNotifications(&notificationsQuery)
-					So(err, ShouldBeNil)
+					require.NoError(t, err)
 					So(notificationsQuery.Result, ShouldNotBeNil)
-					So(len(notificationsQuery.Result), ShouldEqual, 2)
+					require.Equal(t, 2, len(notificationsQuery.Result))
 
 					nts := notificationsQuery.Result
 					nt1 := nts[0]
-					So(nt1.Type, ShouldEqual, "email")
-					So(nt1.Name, ShouldEqual, "channel1")
-					So(nt1.Uid, ShouldEqual, "notifier1")
+					require.Equal(t, "email", nt1.Type)
+					require.Equal(t, "channel1", nt1.Name)
+					require.Equal(t, "notifier1", nt1.Uid)
 
 					nt2 := nts[1]
-					So(nt2.Type, ShouldEqual, "slack")
-					So(nt2.Name, ShouldEqual, "channel2")
-					So(nt2.Uid, ShouldEqual, "notifier2")
+					require.Equal(t, "slack", nt2.Type)
+					require.Equal(t, "channel2", nt2.Name)
+					require.Equal(t, "notifier2", nt2.Uid)
 				})
 			})
-			Convey("Two notifications with is_default", func() {
+			t.Run("Two notifications with is_default", func(t *testing.T) {
 				dc := newNotificationProvisioner(logger)
 				err := dc.applyChanges(doubleNotificationsConfig)
-				Convey("should both be inserted", func() {
-					So(err, ShouldBeNil)
+				t.Run("should both be inserted", func(t *testing.T) {
+					require.NoError(t, err)
 					notificationsQuery := models.GetAllAlertNotificationsQuery{OrgId: 1}
 					err = sqlstore.GetAllAlertNotifications(&notificationsQuery)
-					So(err, ShouldBeNil)
+					require.NoError(t, err)
 					So(notificationsQuery.Result, ShouldNotBeNil)
-					So(len(notificationsQuery.Result), ShouldEqual, 2)
+					require.Equal(t, 2, len(notificationsQuery.Result))
 
-					So(notificationsQuery.Result[0].IsDefault, ShouldBeTrue)
-					So(notificationsQuery.Result[1].IsDefault, ShouldBeTrue)
+					require.True(t, notificationsQuery.Result[0].IsDefault)
+					require.True(t, notificationsQuery.Result[1].IsDefault)
 				})
 			})
 		})
 
-		Convey("Two configured notification", func() {
-			Convey("two other notifications in database", func() {
+		t.Run("Two configured notification", func(t *testing.T) {
+			t.Run("two other notifications in database", func(t *testing.T) {
 				existingNotificationCmd := models.CreateAlertNotificationCommand{
 					Name:  "channel0",
 					OrgId: 1,
@@ -202,7 +202,7 @@ func TestNotificationAsConfig(t *testing.T) {
 					Type:  "slack",
 				}
 				err := sqlstore.CreateAlertNotificationCommand(&existingNotificationCmd)
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 				existingNotificationCmd = models.CreateAlertNotificationCommand{
 					Name:  "channel3",
 					OrgId: 1,
@@ -210,15 +210,15 @@ func TestNotificationAsConfig(t *testing.T) {
 					Type:  "slack",
 				}
 				err = sqlstore.CreateAlertNotificationCommand(&existingNotificationCmd)
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
 				notificationsQuery := models.GetAllAlertNotificationsQuery{OrgId: 1}
 				err = sqlstore.GetAllAlertNotifications(&notificationsQuery)
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 				So(notificationsQuery.Result, ShouldNotBeNil)
-				So(len(notificationsQuery.Result), ShouldEqual, 2)
+				require.Equal(t, 2, len(notificationsQuery.Result))
 
-				Convey("should have two new notifications", func() {
+				t.Run("should have two new notifications", func(t *testing.T) {
 					dc := newNotificationProvisioner(logger)
 					err := dc.applyChanges(twoNotificationsConfig)
 					if err != nil {
@@ -226,21 +226,21 @@ func TestNotificationAsConfig(t *testing.T) {
 					}
 					notificationsQuery = models.GetAllAlertNotificationsQuery{OrgId: 1}
 					err = sqlstore.GetAllAlertNotifications(&notificationsQuery)
-					So(err, ShouldBeNil)
+					require.NoError(t, err)
 					So(notificationsQuery.Result, ShouldNotBeNil)
-					So(len(notificationsQuery.Result), ShouldEqual, 4)
+					require.Equal(t, 4, len(notificationsQuery.Result))
 				})
 			})
 		})
 
-		Convey("Can read correct properties with orgName instead of orgId", func() {
+		t.Run("Can read correct properties with orgName instead of orgId", func(t *testing.T) {
 			existingOrg1 := models.GetOrgByNameQuery{Name: "Main Org. 1"}
 			err := sqlstore.GetOrgByName(&existingOrg1)
-			So(err, ShouldBeNil)
+			require.NoError(t, err)
 			So(existingOrg1.Result, ShouldNotBeNil)
 			existingOrg2 := models.GetOrgByNameQuery{Name: "Main Org. 2"}
 			err = sqlstore.GetOrgByName(&existingOrg2)
-			So(err, ShouldBeNil)
+			require.NoError(t, err)
 			So(existingOrg2.Result, ShouldNotBeNil)
 
 			existingNotificationCmd := models.CreateAlertNotificationCommand{
@@ -250,7 +250,7 @@ func TestNotificationAsConfig(t *testing.T) {
 				Type:  "slack",
 			}
 			err = sqlstore.CreateAlertNotificationCommand(&existingNotificationCmd)
-			So(err, ShouldBeNil)
+			require.NoError(t, err)
 
 			dc := newNotificationProvisioner(logger)
 			err = dc.applyChanges(correctPropertiesWithOrgName)
@@ -260,19 +260,19 @@ func TestNotificationAsConfig(t *testing.T) {
 
 			notificationsQuery := models.GetAllAlertNotificationsQuery{OrgId: existingOrg2.Result.Id}
 			err = sqlstore.GetAllAlertNotifications(&notificationsQuery)
-			So(err, ShouldBeNil)
+			require.NoError(t, err)
 			So(notificationsQuery.Result, ShouldNotBeNil)
-			So(len(notificationsQuery.Result), ShouldEqual, 1)
+			require.Equal(t, 1, len(notificationsQuery.Result))
 
 			nt := notificationsQuery.Result[0]
-			So(nt.Name, ShouldEqual, "default-notification-create")
-			So(nt.OrgId, ShouldEqual, existingOrg2.Result.Id)
+			require.Equal(t, "default-notification-create", nt.Name)
+			require.Equal(t, existingOrg2.Result.Id, nt.OrgId)
 		})
 
-		Convey("Config doesn't contain required field", func() {
+		t.Run("Config doesn't contain required field", func(t *testing.T) {
 			dc := newNotificationProvisioner(logger)
 			err := dc.applyChanges(noRequiredFields)
-			So(err, ShouldNotBeNil)
+			require.Error(t, err)
 
 			errString := err.Error()
 			So(errString, ShouldContainSubstring, "Deleted alert notification item 1 in configuration doesn't contain required field uid")
@@ -281,8 +281,8 @@ func TestNotificationAsConfig(t *testing.T) {
 			So(errString, ShouldContainSubstring, "Added alert notification item 2 in configuration doesn't contain required field uid")
 		})
 
-		Convey("Empty yaml file", func() {
-			Convey("should have not changed repo", func() {
+		t.Run("Empty yaml file", func(t *testing.T) {
+			t.Run("should have not changed repo", func(t *testing.T) {
 				dc := newNotificationProvisioner(logger)
 				err := dc.applyChanges(emptyFile)
 				if err != nil {
@@ -290,38 +290,38 @@ func TestNotificationAsConfig(t *testing.T) {
 				}
 				notificationsQuery := models.GetAllAlertNotificationsQuery{OrgId: 1}
 				err = sqlstore.GetAllAlertNotifications(&notificationsQuery)
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 				So(notificationsQuery.Result, ShouldBeEmpty)
 			})
 		})
 
-		Convey("Broken yaml should return error", func() {
+		t.Run("Broken yaml should return error", func(t *testing.T) {
 			reader := &configReader{log: log.New("test logger")}
 			_, err := reader.readConfig(brokenYaml)
-			So(err, ShouldNotBeNil)
+			require.Error(t, err)
 		})
 
-		Convey("Skip invalid directory", func() {
+		t.Run("Skip invalid directory", func(t *testing.T) {
 			cfgProvider := &configReader{log: log.New("test logger")}
 			cfg, err := cfgProvider.readConfig(emptyFolder)
 			if err != nil {
 				t.Fatalf("readConfig return an error %v", err)
 			}
-			So(len(cfg), ShouldEqual, 0)
+			require.Equal(t, 0, len(cfg))
 		})
 
-		Convey("Unknown notifier should return error", func() {
+		t.Run("Unknown notifier should return error", func(t *testing.T) {
 			cfgProvider := &configReader{log: log.New("test logger")}
 			_, err := cfgProvider.readConfig(unknownNotifier)
-			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldEqual, `unsupported notification type "nonexisting"`)
+			require.Error(t, err)
+			require.Equal(t, `unsupported notification type "nonexisting"`, err.Error())
 		})
 
-		Convey("Read incorrect properties", func() {
+		t.Run("Read incorrect properties", func(t *testing.T) {
 			cfgProvider := &configReader{log: log.New("test logger")}
 			_, err := cfgProvider.readConfig(incorrectSettings)
-			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldEqual, "alert validation error: token must be specified when using the Slack chat API")
+			require.Error(t, err)
+			require.Equal(t, "alert validation error: token must be specified when using the Slack chat API", err.Error())
 		})
 	})
 }

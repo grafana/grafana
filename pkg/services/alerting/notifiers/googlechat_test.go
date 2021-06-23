@@ -5,13 +5,13 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
-	. "github.com/smartystreets/goconvey/convey"
+	"github.com/stretchr/testify/require"
 )
 
 func TestGoogleChatNotifier(t *testing.T) {
-	Convey("Google Hangouts Chat notifier tests", t, func() {
-		Convey("Parsing alert notification from settings", func() {
-			Convey("empty settings should return error", func() {
+	t.Run("Google Hangouts Chat notifier tests", func(t *testing.T) {
+		t.Run("Parsing alert notification from settings", func(t *testing.T) {
+			t.Run("empty settings should return error", func(t *testing.T) {
 				json := `{ }`
 
 				settingsJSON, _ := simplejson.NewJson([]byte(json))
@@ -22,10 +22,10 @@ func TestGoogleChatNotifier(t *testing.T) {
 				}
 
 				_, err := newGoogleChatNotifier(model)
-				So(err, ShouldNotBeNil)
+				require.Error(t, err)
 			})
 
-			Convey("from settings", func() {
+			t.Run("from settings", func(t *testing.T) {
 				json := `
 				{
           			"url": "http://google.com"
@@ -41,10 +41,10 @@ func TestGoogleChatNotifier(t *testing.T) {
 				not, err := newGoogleChatNotifier(model)
 				webhookNotifier := not.(*GoogleChatNotifier)
 
-				So(err, ShouldBeNil)
-				So(webhookNotifier.Name, ShouldEqual, "ops")
-				So(webhookNotifier.Type, ShouldEqual, "googlechat")
-				So(webhookNotifier.URL, ShouldEqual, "http://google.com")
+				require.NoError(t, err)
+				require.Equal(t, "ops", webhookNotifier.Name)
+				require.Equal(t, "googlechat", webhookNotifier.Type)
+				require.Equal(t, "http://google.com", webhookNotifier.URL)
 			})
 		})
 	})

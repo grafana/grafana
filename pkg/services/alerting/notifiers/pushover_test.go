@@ -6,18 +6,18 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/services/validations"
+	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/services/alerting"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
-	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestPushoverNotifier(t *testing.T) {
-	Convey("Pushover notifier tests", t, func() {
-		Convey("Parsing alert notification from settings", func() {
-			Convey("empty settings should return error", func() {
+	t.Run("Pushover notifier tests", func(t *testing.T) {
+		t.Run("Parsing alert notification from settings", func(t *testing.T) {
+			t.Run("empty settings should return error", func(t *testing.T) {
 				json := `{ }`
 
 				settingsJSON, _ := simplejson.NewJson([]byte(json))
@@ -28,10 +28,10 @@ func TestPushoverNotifier(t *testing.T) {
 				}
 
 				_, err := NewPushoverNotifier(model)
-				So(err, ShouldNotBeNil)
+				require.Error(t, err)
 			})
 
-			Convey("from settings", func() {
+			t.Run("from settings", func(t *testing.T) {
 				json := `
 				{
 					"apiToken": "4SrUFQL4A5V5TQ1z5Pg9nxHXPXSTve",
@@ -52,47 +52,47 @@ func TestPushoverNotifier(t *testing.T) {
 				not, err := NewPushoverNotifier(model)
 				pushoverNotifier := not.(*PushoverNotifier)
 
-				So(err, ShouldBeNil)
-				So(pushoverNotifier.Name, ShouldEqual, "Pushover")
-				So(pushoverNotifier.Type, ShouldEqual, "pushover")
-				So(pushoverNotifier.APIToken, ShouldEqual, "4SrUFQL4A5V5TQ1z5Pg9nxHXPXSTve")
-				So(pushoverNotifier.UserKey, ShouldEqual, "tzNZYf36y0ohWwXo4XoUrB61rz1A4o")
-				So(pushoverNotifier.AlertingPriority, ShouldEqual, 1)
-				So(pushoverNotifier.OKPriority, ShouldEqual, 2)
-				So(pushoverNotifier.AlertingSound, ShouldEqual, "pushover")
-				So(pushoverNotifier.OKSound, ShouldEqual, "magic")
+				require.NoError(t, err)
+				require.Equal(t, "Pushover", pushoverNotifier.Name)
+				require.Equal(t, "pushover", pushoverNotifier.Type)
+				require.Equal(t, "4SrUFQL4A5V5TQ1z5Pg9nxHXPXSTve", pushoverNotifier.APIToken)
+				require.Equal(t, "tzNZYf36y0ohWwXo4XoUrB61rz1A4o", pushoverNotifier.UserKey)
+				require.Equal(t, 1, pushoverNotifier.AlertingPriority)
+				require.Equal(t, 2, pushoverNotifier.OKPriority)
+				require.Equal(t, "pushover", pushoverNotifier.AlertingSound)
+				require.Equal(t, "magic", pushoverNotifier.OKSound)
 			})
 		})
 	})
 }
 
 func TestGenPushoverBody(t *testing.T) {
-	Convey("Pushover body generation tests", t, func() {
-		Convey("Given common sounds", func() {
+	t.Run("Pushover body generation tests", func(t *testing.T) {
+		t.Run("Given common sounds", func(t *testing.T) {
 			sirenSound := "siren_sound_tst"
 			successSound := "success_sound_tst"
 			notifier := &PushoverNotifier{AlertingSound: sirenSound, OKSound: successSound}
 
-			Convey("When alert is firing - should use siren sound", func() {
+			t.Run("When alert is firing - should use siren sound", func(t *testing.T) {
 				evalContext := alerting.NewEvalContext(context.Background(),
 					&alerting.Rule{
 						State: models.AlertStateAlerting,
 					}, &validations.OSSPluginRequestValidator{})
 				_, pushoverBody, err := notifier.genPushoverBody(evalContext, "", "")
 
-				So(err, ShouldBeNil)
-				So(strings.Contains(pushoverBody.String(), sirenSound), ShouldBeTrue)
+				require.NoError(t, err)
+				require.True(t, strings.Contains(pushoverBody.String(), sirenSound))
 			})
 
-			Convey("When alert is ok - should use success sound", func() {
+			t.Run("When alert is ok - should use success sound", func(t *testing.T) {
 				evalContext := alerting.NewEvalContext(context.Background(),
 					&alerting.Rule{
 						State: models.AlertStateOK,
 					}, &validations.OSSPluginRequestValidator{})
 				_, pushoverBody, err := notifier.genPushoverBody(evalContext, "", "")
 
-				So(err, ShouldBeNil)
-				So(strings.Contains(pushoverBody.String(), successSound), ShouldBeTrue)
+				require.NoError(t, err)
+				require.True(t, strings.Contains(pushoverBody.String(), successSound))
 			})
 		})
 	})

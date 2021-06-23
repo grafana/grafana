@@ -7,15 +7,15 @@ import (
 	"github.com/grafana/grafana/pkg/dashboards"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/guardian"
-	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestDashboardService(t *testing.T) {
-	Convey("Dashboard service tests", t, func() {
+	t.Run("Dashboard service tests", func(t *testing.T) {
 		bus.ClearBusHandlers()
 
 		fakeStore := fakeDashboardStore{}
@@ -27,33 +27,33 @@ func TestDashboardService(t *testing.T) {
 		origNewDashboardGuardian := guardian.New
 		guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanSaveValue: true})
 
-		Convey("Save dashboard validation", func() {
+		t.Run("Save dashboard validation", func(t *testing.T) {
 			dto := &SaveDashboardDTO{}
 
-			Convey("When saving a dashboard with empty title it should return error", func() {
+			t.Run("When saving a dashboard with empty title it should return error", func(t *testing.T) {
 				titles := []string{"", " ", "   \t   "}
 
 				for _, title := range titles {
 					dto.Dashboard = models.NewDashboard(title)
 					_, err := service.SaveDashboard(dto, false)
-					So(err, ShouldEqual, models.ErrDashboardTitleEmpty)
+					require.Equal(t, models.ErrDashboardTitleEmpty, err)
 				}
 			})
 
-			Convey("Should return validation error if it's a folder and have a folder id", func() {
+			t.Run("Should return validation error if it's a folder and have a folder id", func(t *testing.T) {
 				dto.Dashboard = models.NewDashboardFolder("Folder")
 				dto.Dashboard.FolderId = 1
 				_, err := service.SaveDashboard(dto, false)
-				So(err, ShouldEqual, models.ErrDashboardFolderCannotHaveParent)
+				require.Equal(t, models.ErrDashboardFolderCannotHaveParent, err)
 			})
 
-			Convey("Should return validation error if folder is named General", func() {
+			t.Run("Should return validation error if folder is named General", func(t *testing.T) {
 				dto.Dashboard = models.NewDashboardFolder("General")
 				_, err := service.SaveDashboard(dto, false)
-				So(err, ShouldEqual, models.ErrDashboardFolderNameExists)
+				require.Equal(t, models.ErrDashboardFolderNameExists, err)
 			})
 
-			Convey("When saving a dashboard should validate uid", func() {
+			t.Run("When saving a dashboard should validate uid", func(t *testing.T) {
 				origValidateAlerts := validateAlerts
 				t.Cleanup(func() {
 					validateAlerts = origValidateAlerts
@@ -81,11 +81,11 @@ func TestDashboardService(t *testing.T) {
 					dto.User = &models.SignedInUser{}
 
 					_, err := service.buildSaveDashboardCommand(dto, true, false)
-					So(err, ShouldEqual, tc.Error)
+					require.Equal(t, tc.Error, err)
 				}
 			})
 
-			Convey("Should return validation error if dashboard is provisioned", func() {
+			t.Run("Should return validation error if dashboard is provisioned", func(t *testing.T) {
 				t.Cleanup(func() {
 					fakeStore.provisionedData = nil
 				})
@@ -103,10 +103,10 @@ func TestDashboardService(t *testing.T) {
 				dto.Dashboard.SetId(3)
 				dto.User = &models.SignedInUser{UserId: 1}
 				_, err := service.SaveDashboard(dto, false)
-				So(err, ShouldEqual, models.ErrDashboardCannotSaveProvisionedDashboard)
+				require.Equal(t, models.ErrDashboardCannotSaveProvisionedDashboard, err)
 			})
 
-			Convey("Should not return validation error if dashboard is provisioned but UI updates allowed", func() {
+			t.Run("Should not return validation error if dashboard is provisioned but UI updates allowed", func(t *testing.T) {
 				origValidateAlerts := validateAlerts
 				t.Cleanup(func() {
 					validateAlerts = origValidateAlerts
@@ -119,10 +119,10 @@ func TestDashboardService(t *testing.T) {
 				dto.Dashboard.SetId(3)
 				dto.User = &models.SignedInUser{UserId: 1}
 				_, err := service.SaveDashboard(dto, true)
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 			})
 
-			Convey("Should return validation error if alert data is invalid", func() {
+			t.Run("Should return validation error if alert data is invalid", func(t *testing.T) {
 				origValidateAlerts := validateAlerts
 				t.Cleanup(func() {
 					validateAlerts = origValidateAlerts
@@ -133,14 +133,14 @@ func TestDashboardService(t *testing.T) {
 
 				dto.Dashboard = models.NewDashboard("Dash")
 				_, err := service.SaveDashboard(dto, false)
-				So(err.Error(), ShouldEqual, "alert validation error")
+				require.Equal(t, "alert validation error", err.Error())
 			})
 		})
 
-		Convey("Save provisioned dashboard validation", func() {
+		t.Run("Save provisioned dashboard validation", func(t *testing.T) {
 			dto := &SaveDashboardDTO{}
 
-			Convey("Should not return validation error if dashboard is provisioned", func() {
+			t.Run("Should not return validation error if dashboard is provisioned", func(t *testing.T) {
 				origUpdateAlerting := UpdateAlerting
 				t.Cleanup(func() {
 					UpdateAlerting = origUpdateAlerting
@@ -162,10 +162,10 @@ func TestDashboardService(t *testing.T) {
 				dto.Dashboard.SetId(3)
 				dto.User = &models.SignedInUser{UserId: 1}
 				_, err := service.SaveProvisionedDashboard(dto, nil)
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 			})
 
-			Convey("Should override invalid refresh interval if dashboard is provisioned", func() {
+			t.Run("Should override invalid refresh interval if dashboard is provisioned", func(t *testing.T) {
 				oldRefreshInterval := setting.MinRefreshInterval
 				setting.MinRefreshInterval = "5m"
 				defer func() { setting.MinRefreshInterval = oldRefreshInterval }()
@@ -192,15 +192,15 @@ func TestDashboardService(t *testing.T) {
 				dto.User = &models.SignedInUser{UserId: 1}
 				dto.Dashboard.Data.Set("refresh", "1s")
 				_, err := service.SaveProvisionedDashboard(dto, nil)
-				So(err, ShouldBeNil)
-				So(dto.Dashboard.Data.Get("refresh").MustString(), ShouldEqual, "5m")
+				require.NoError(t, err)
+				require.Equal(t, "5m", dto.Dashboard.Data.Get("refresh").MustString())
 			})
 		})
 
-		Convey("Import dashboard validation", func() {
+		t.Run("Import dashboard validation", func(t *testing.T) {
 			dto := &SaveDashboardDTO{}
 
-			Convey("Should return validation error if dashboard is provisioned", func() {
+			t.Run("Should return validation error if dashboard is provisioned", func(t *testing.T) {
 				t.Cleanup(func() {
 					fakeStore.provisionedData = nil
 				})
@@ -227,39 +227,39 @@ func TestDashboardService(t *testing.T) {
 				dto.Dashboard.SetId(3)
 				dto.User = &models.SignedInUser{UserId: 1}
 				_, err := service.ImportDashboard(dto)
-				So(err, ShouldEqual, models.ErrDashboardCannotSaveProvisionedDashboard)
+				require.Equal(t, models.ErrDashboardCannotSaveProvisionedDashboard, err)
 			})
 		})
 
-		Convey("Given provisioned dashboard", func() {
+		t.Run("Given provisioned dashboard", func(t *testing.T) {
 			result := setupDeleteHandlers(t, &fakeStore, true)
 
-			Convey("DeleteProvisionedDashboard should delete it", func() {
+			t.Run("DeleteProvisionedDashboard should delete it", func(t *testing.T) {
 				err := service.DeleteProvisionedDashboard(1, 1)
-				So(err, ShouldBeNil)
-				So(result.deleteWasCalled, ShouldBeTrue)
+				require.NoError(t, err)
+				require.True(t, result.deleteWasCalled)
 			})
 
-			Convey("DeleteDashboard should fail to delete it", func() {
+			t.Run("DeleteDashboard should fail to delete it", func(t *testing.T) {
 				err := service.DeleteDashboard(1, 1)
-				So(err, ShouldEqual, models.ErrDashboardCannotDeleteProvisionedDashboard)
+				require.Equal(t, models.ErrDashboardCannotDeleteProvisionedDashboard, err)
 				So(result.deleteWasCalled, ShouldBeFalse)
 			})
 		})
 
-		Convey("Given non provisioned dashboard", func() {
+		t.Run("Given non provisioned dashboard", func(t *testing.T) {
 			result := setupDeleteHandlers(t, &fakeStore, false)
 
-			Convey("DeleteProvisionedDashboard should delete it", func() {
+			t.Run("DeleteProvisionedDashboard should delete it", func(t *testing.T) {
 				err := service.DeleteProvisionedDashboard(1, 1)
-				So(err, ShouldBeNil)
-				So(result.deleteWasCalled, ShouldBeTrue)
+				require.NoError(t, err)
+				require.True(t, result.deleteWasCalled)
 			})
 
-			Convey("DeleteDashboard should delete it", func() {
+			t.Run("DeleteDashboard should delete it", func(t *testing.T) {
 				err := service.DeleteDashboard(1, 1)
-				So(err, ShouldBeNil)
-				So(result.deleteWasCalled, ShouldBeTrue)
+				require.NoError(t, err)
+				require.True(t, result.deleteWasCalled)
 			})
 		})
 
@@ -285,8 +285,8 @@ func setupDeleteHandlers(t *testing.T, fakeStore *fakeDashboardStore, provisione
 
 	result := &Result{}
 	bus.AddHandler("test", func(cmd *models.DeleteDashboardCommand) error {
-		So(cmd.Id, ShouldEqual, 1)
-		So(cmd.OrgId, ShouldEqual, 1)
+		require.Equal(t, 1, cmd.Id)
+		require.Equal(t, 1, cmd.OrgId)
 		result.deleteWasCalled = true
 		return nil
 	})

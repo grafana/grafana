@@ -5,11 +5,11 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/setting"
-	. "github.com/smartystreets/goconvey/convey"
+	"github.com/stretchr/testify/require"
 )
 
 func TestCleanUpTmpFiles(t *testing.T) {
-	Convey("Cleanup service tests", t, func() {
+	t.Run("Cleanup service tests", func(t *testing.T) {
 		cfg := setting.Cfg{}
 		cfg.TempDataLifetime, _ = time.ParseDuration("24h")
 		service := CleanUpService{
@@ -20,20 +20,20 @@ func TestCleanUpTmpFiles(t *testing.T) {
 		twoDaysAgo := now.Add(-time.Second * 3600 * 24 * 2)
 		weekAgo := now.Add(-time.Second * 3600 * 24 * 7)
 
-		Convey("Should not cleanup recent files", func() {
+		t.Run("Should not cleanup recent files", func(t *testing.T) {
 			So(service.shouldCleanupTempFile(secondAgo, now), ShouldBeFalse)
 		})
 
-		Convey("Should cleanup older files", func() {
-			So(service.shouldCleanupTempFile(twoDaysAgo, now), ShouldBeTrue)
+		t.Run("Should cleanup older files", func(t *testing.T) {
+			require.True(t, service.shouldCleanupTempFile(twoDaysAgo, now))
 		})
 
-		Convey("After increasing temporary files lifetime, older files should be kept", func() {
+		t.Run("After increasing temporary files lifetime, older files should be kept", func(t *testing.T) {
 			cfg.TempDataLifetime, _ = time.ParseDuration("1000h")
 			So(service.shouldCleanupTempFile(weekAgo, now), ShouldBeFalse)
 		})
 
-		Convey("If lifetime is 0, files should never be cleaned up", func() {
+		t.Run("If lifetime is 0, files should never be cleaned up", func(t *testing.T) {
 			cfg.TempDataLifetime = 0
 			So(service.shouldCleanupTempFile(weekAgo, now), ShouldBeFalse)
 		})

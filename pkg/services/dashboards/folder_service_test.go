@@ -7,21 +7,20 @@ import (
 	"github.com/grafana/grafana/pkg/dashboards"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/services/guardian"
-
-	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestFolderService(t *testing.T) {
-	Convey("Folder service tests", t, func() {
+	t.Run("Folder service tests", func(t *testing.T) {
 		service := dashboardServiceImpl{
 			orgId:          1,
 			user:           &models.SignedInUser{UserId: 1},
 			dashboardStore: &fakeDashboardStore{},
 		}
 
-		Convey("Given user has no permissions", func() {
+		t.Run("Given user has no permissions", func(t *testing.T) {
 			origNewGuardian := guardian.New
 			guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{})
 
@@ -38,33 +37,33 @@ func TestFolderService(t *testing.T) {
 				validationError: models.ErrDashboardUpdateAccessDenied,
 			}
 
-			Convey("When get folder by id should return access denied error", func() {
+			t.Run("When get folder by id should return access denied error", func(t *testing.T) {
 				_, err := service.GetFolderByID(1)
-				So(err, ShouldEqual, models.ErrFolderAccessDenied)
+				require.Equal(t, models.ErrFolderAccessDenied, err)
 			})
 
-			Convey("When get folder by uid should return access denied error", func() {
+			t.Run("When get folder by uid should return access denied error", func(t *testing.T) {
 				_, err := service.GetFolderByUID("uid")
-				So(err, ShouldEqual, models.ErrFolderAccessDenied)
+				require.Equal(t, models.ErrFolderAccessDenied, err)
 			})
 
-			Convey("When creating folder should return access denied error", func() {
+			t.Run("When creating folder should return access denied error", func(t *testing.T) {
 				_, err := service.CreateFolder("Folder", "")
-				So(err, ShouldEqual, models.ErrFolderAccessDenied)
+				require.Equal(t, models.ErrFolderAccessDenied, err)
 			})
 
-			Convey("When updating folder should return access denied error", func() {
+			t.Run("When updating folder should return access denied error", func(t *testing.T) {
 				err := service.UpdateFolder("uid", &models.UpdateFolderCommand{
 					Uid:   "uid",
 					Title: "Folder",
 				})
-				So(err, ShouldEqual, models.ErrFolderAccessDenied)
+				require.Equal(t, models.ErrFolderAccessDenied, err)
 			})
 
-			Convey("When deleting folder by uid should return access denied error", func() {
+			t.Run("When deleting folder by uid should return access denied error", func(t *testing.T) {
 				_, err := service.DeleteFolder("uid")
-				So(err, ShouldNotBeNil)
-				So(err, ShouldEqual, models.ErrFolderAccessDenied)
+				require.Error(t, err)
+				require.Equal(t, models.ErrFolderAccessDenied, err)
 			})
 
 			Reset(func() {
@@ -72,7 +71,7 @@ func TestFolderService(t *testing.T) {
 			})
 		})
 
-		Convey("Given user has permission to save", func() {
+		t.Run("Given user has permission to save", func(t *testing.T) {
 			origNewGuardian := guardian.New
 			guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanSaveValue: true})
 
@@ -102,22 +101,22 @@ func TestFolderService(t *testing.T) {
 				return nil
 			})
 
-			Convey("When creating folder should not return access denied error", func() {
+			t.Run("When creating folder should not return access denied error", func(t *testing.T) {
 				_, err := service.CreateFolder("Folder", "")
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 			})
 
-			Convey("When updating folder should not return access denied error", func() {
+			t.Run("When updating folder should not return access denied error", func(t *testing.T) {
 				err := service.UpdateFolder("uid", &models.UpdateFolderCommand{
 					Uid:   "uid",
 					Title: "Folder",
 				})
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 			})
 
-			Convey("When deleting folder by uid should not return access denied error", func() {
+			t.Run("When deleting folder by uid should not return access denied error", func(t *testing.T) {
 				_, err := service.DeleteFolder("uid")
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 			})
 
 			Reset(func() {
@@ -125,7 +124,7 @@ func TestFolderService(t *testing.T) {
 			})
 		})
 
-		Convey("Given user has permission to view", func() {
+		t.Run("Given user has permission to view", func(t *testing.T) {
 			origNewGuardian := guardian.New
 			guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanViewValue: true})
 
@@ -138,18 +137,18 @@ func TestFolderService(t *testing.T) {
 				return nil
 			})
 
-			Convey("When get folder by id should return folder", func() {
+			t.Run("When get folder by id should return folder", func(t *testing.T) {
 				f, _ := service.GetFolderByID(1)
-				So(f.Id, ShouldEqual, dashFolder.Id)
-				So(f.Uid, ShouldEqual, dashFolder.Uid)
-				So(f.Title, ShouldEqual, dashFolder.Title)
+				require.Equal(t, dashFolder.Id, f.Id)
+				require.Equal(t, dashFolder.Uid, f.Uid)
+				require.Equal(t, dashFolder.Title, f.Title)
 			})
 
-			Convey("When get folder by uid should return folder", func() {
+			t.Run("When get folder by uid should return folder", func(t *testing.T) {
 				f, _ := service.GetFolderByUID("uid")
-				So(f.Id, ShouldEqual, dashFolder.Id)
-				So(f.Uid, ShouldEqual, dashFolder.Uid)
-				So(f.Title, ShouldEqual, dashFolder.Title)
+				require.Equal(t, dashFolder.Id, f.Id)
+				require.Equal(t, dashFolder.Uid, f.Uid)
+				require.Equal(t, dashFolder.Title, f.Title)
 			})
 
 			Reset(func() {
@@ -157,7 +156,7 @@ func TestFolderService(t *testing.T) {
 			})
 		})
 
-		Convey("Should map errors correct", func() {
+		t.Run("Should map errors correct", func(t *testing.T) {
 			testCases := []struct {
 				ActualError   error
 				ExpectedError error

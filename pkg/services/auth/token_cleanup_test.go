@@ -6,11 +6,11 @@ import (
 	"testing"
 	"time"
 
-	. "github.com/smartystreets/goconvey/convey"
+	"github.com/stretchr/testify/require"
 )
 
 func TestUserAuthTokenCleanup(t *testing.T) {
-	Convey("Test user auth token cleanup", t, func() {
+	t.Run("Test user auth token cleanup", func(t *testing.T) {
 		ctx := createTestContext(t)
 		maxInactiveLifetime, _ := time.ParseDuration("168h")
 		maxLifetime, _ := time.ParseDuration("720h")
@@ -20,7 +20,7 @@ func TestUserAuthTokenCleanup(t *testing.T) {
 		insertToken := func(token string, prev string, createdAt, rotatedAt int64) {
 			ut := userAuthToken{AuthToken: token, PrevAuthToken: prev, CreatedAt: createdAt, RotatedAt: rotatedAt, UserAgent: "", ClientIp: ""}
 			_, err := ctx.sqlstore.NewSession(context.Background()).Insert(&ut)
-			So(err, ShouldBeNil)
+			require.NoError(t, err)
 		}
 
 		t := time.Date(2018, 12, 13, 13, 45, 0, 0, time.UTC)
@@ -28,7 +28,7 @@ func TestUserAuthTokenCleanup(t *testing.T) {
 			return t
 		}
 
-		Convey("should delete tokens where token rotation age is older than or equal 7 days", func() {
+		t.Run("should delete tokens where token rotation age is older than or equal 7 days", func(t *testing.T) {
 			from := t.Add(-168 * time.Hour)
 
 			// insert three old tokens that should be deleted
@@ -43,11 +43,11 @@ func TestUserAuthTokenCleanup(t *testing.T) {
 			}
 
 			affected, err := ctx.tokenService.deleteExpiredTokens(context.Background(), 168*time.Hour, 30*24*time.Hour)
-			So(err, ShouldBeNil)
-			So(affected, ShouldEqual, 3)
+			require.NoError(t, err)
+			require.Equal(t, 3, affected)
 		})
 
-		Convey("should delete tokens where token age is older than or equal 30 days", func() {
+		t.Run("should delete tokens where token age is older than or equal 30 days", func(t *testing.T) {
 			from := t.Add(-30 * 24 * time.Hour)
 			fromRotate := t.Add(-time.Second)
 
@@ -63,8 +63,8 @@ func TestUserAuthTokenCleanup(t *testing.T) {
 			}
 
 			affected, err := ctx.tokenService.deleteExpiredTokens(context.Background(), 7*24*time.Hour, 30*24*time.Hour)
-			So(err, ShouldBeNil)
-			So(affected, ShouldEqual, 3)
+			require.NoError(t, err)
+			require.Equal(t, 3, affected)
 		})
 	})
 }

@@ -5,13 +5,13 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
-	. "github.com/smartystreets/goconvey/convey"
+	"github.com/stretchr/testify/require"
 )
 
 func TestEmailNotifier(t *testing.T) {
-	Convey("Email notifier tests", t, func() {
-		Convey("Parsing alert notification from settings", func() {
-			Convey("empty settings should return error", func() {
+	t.Run("Email notifier tests", func(t *testing.T) {
+		t.Run("Parsing alert notification from settings", func(t *testing.T) {
+			t.Run("empty settings should return error", func(t *testing.T) {
 				json := `{ }`
 
 				settingsJSON, _ := simplejson.NewJson([]byte(json))
@@ -22,10 +22,10 @@ func TestEmailNotifier(t *testing.T) {
 				}
 
 				_, err := NewEmailNotifier(model)
-				So(err, ShouldNotBeNil)
+				require.Error(t, err)
 			})
 
-			Convey("from settings", func() {
+			t.Run("from settings", func(t *testing.T) {
 				json := `
 				{
 					"addresses": "ops@grafana.org"
@@ -41,20 +41,20 @@ func TestEmailNotifier(t *testing.T) {
 				not, err := NewEmailNotifier(model)
 				emailNotifier := not.(*EmailNotifier)
 
-				So(err, ShouldBeNil)
-				So(emailNotifier.Name, ShouldEqual, "ops")
-				So(emailNotifier.Type, ShouldEqual, "email")
-				So(emailNotifier.Addresses[0], ShouldEqual, "ops@grafana.org")
+				require.NoError(t, err)
+				require.Equal(t, "ops", emailNotifier.Name)
+				require.Equal(t, "email", emailNotifier.Type)
+				require.Equal(t, "ops@grafana.org", emailNotifier.Addresses[0])
 			})
 
-			Convey("from settings with two emails", func() {
+			t.Run("from settings with two emails", func(t *testing.T) {
 				json := `
 				{
 					"addresses": "ops@grafana.org;dev@grafana.org"
 				}`
 
 				settingsJSON, err := simplejson.NewJson([]byte(json))
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
 				model := &models.AlertNotification{
 					Name:     "ops",
@@ -65,13 +65,13 @@ func TestEmailNotifier(t *testing.T) {
 				not, err := NewEmailNotifier(model)
 				emailNotifier := not.(*EmailNotifier)
 
-				So(err, ShouldBeNil)
-				So(emailNotifier.Name, ShouldEqual, "ops")
-				So(emailNotifier.Type, ShouldEqual, "email")
-				So(len(emailNotifier.Addresses), ShouldEqual, 2)
+				require.NoError(t, err)
+				require.Equal(t, "ops", emailNotifier.Name)
+				require.Equal(t, "email", emailNotifier.Type)
+				require.Equal(t, 2, len(emailNotifier.Addresses))
 
-				So(emailNotifier.Addresses[0], ShouldEqual, "ops@grafana.org")
-				So(emailNotifier.Addresses[1], ShouldEqual, "dev@grafana.org")
+				require.Equal(t, "ops@grafana.org", emailNotifier.Addresses[0])
+				require.Equal(t, "dev@grafana.org", emailNotifier.Addresses[1])
 			})
 		})
 	})

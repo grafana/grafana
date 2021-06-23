@@ -12,21 +12,20 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/setting"
-	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestEngineTimeouts(t *testing.T) {
-	Convey("Alerting engine timeout tests", t, func() {
+	t.Run("Alerting engine timeout tests", func(t *testing.T) {
 		engine := &AlertEngine{}
 		err := engine.Init()
-		So(err, ShouldBeNil)
+		require.NoError(t, err)
 		setting.AlertingNotificationTimeout = 30 * time.Second
 		setting.AlertingMaxAttempts = 3
 		engine.resultHandler = &FakeResultHandler{}
 		job := &Job{running: true, Rule: &Rule{}}
 
-		Convey("Should trigger as many retries as needed", func() {
-			Convey("pended alert for datasource -> result handler should be worked", func() {
+		t.Run("Should trigger as many retries as needed", func(t *testing.T) {
+			t.Run("pended alert for datasource -> result handler should be worked", func(t *testing.T) {
 				// reduce alert timeout to test quickly
 				setting.AlertingEvaluationTimeout = 30 * time.Second
 				transportTimeoutInterval := 2 * time.Second
@@ -38,10 +37,10 @@ func TestEngineTimeouts(t *testing.T) {
 				engine.resultHandler = resultHandler
 
 				err := engine.processJobWithRetry(context.TODO(), job)
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
-				So(evalHandler.EvalSucceed, ShouldEqual, true)
-				So(resultHandler.ResultHandleSucceed, ShouldEqual, true)
+				require.Equal(t, true, evalHandler.EvalSucceed)
+				require.Equal(t, true, resultHandler.ResultHandleSucceed)
 
 				// initialize for other tests.
 				setting.AlertingEvaluationTimeout = 2 * time.Second

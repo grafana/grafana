@@ -5,18 +5,18 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/services/validations"
+	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
-	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestOpsGenieNotifier(t *testing.T) {
-	Convey("OpsGenie notifier tests", t, func() {
-		Convey("Parsing alert notification from settings", func() {
-			Convey("empty settings should return error", func() {
+	t.Run("OpsGenie notifier tests", func(t *testing.T) {
+		t.Run("Parsing alert notification from settings", func(t *testing.T) {
+			t.Run("empty settings should return error", func(t *testing.T) {
 				json := `{ }`
 
 				settingsJSON, _ := simplejson.NewJson([]byte(json))
@@ -27,10 +27,10 @@ func TestOpsGenieNotifier(t *testing.T) {
 				}
 
 				_, err := NewOpsGenieNotifier(model)
-				So(err, ShouldNotBeNil)
+				require.Error(t, err)
 			})
 
-			Convey("settings should trigger incident", func() {
+			t.Run("settings should trigger incident", func(t *testing.T) {
 				json := `
 				{
           "apiKey": "abcdefgh0123456789"
@@ -46,15 +46,15 @@ func TestOpsGenieNotifier(t *testing.T) {
 				not, err := NewOpsGenieNotifier(model)
 				opsgenieNotifier := not.(*OpsGenieNotifier)
 
-				So(err, ShouldBeNil)
-				So(opsgenieNotifier.Name, ShouldEqual, "opsgenie_testing")
-				So(opsgenieNotifier.Type, ShouldEqual, "opsgenie")
-				So(opsgenieNotifier.APIKey, ShouldEqual, "abcdefgh0123456789")
+				require.NoError(t, err)
+				require.Equal(t, "opsgenie_testing", opsgenieNotifier.Name)
+				require.Equal(t, "opsgenie", opsgenieNotifier.Type)
+				require.Equal(t, "abcdefgh0123456789", opsgenieNotifier.APIKey)
 			})
 		})
 
-		Convey("Handling notification tags", func() {
-			Convey("invalid sendTagsAs value should return error", func() {
+		t.Run("Handling notification tags", func(t *testing.T) {
+			t.Run("invalid sendTagsAs value should return error", func(t *testing.T) {
 				json := `{
           "apiKey": "abcdefgh0123456789",
           "sendTagsAs": "not_a_valid_value"
@@ -68,12 +68,12 @@ func TestOpsGenieNotifier(t *testing.T) {
 				}
 
 				_, err := NewOpsGenieNotifier(model)
-				So(err, ShouldNotBeNil)
+				require.Error(t, err)
 				So(err, ShouldHaveSameTypeAs, alerting.ValidationError{})
 				So(err.Error(), ShouldEndWith, "Invalid value for sendTagsAs: \"not_a_valid_value\"")
 			})
 
-			Convey("alert payload should include tag pairs only as an array in the tags key when sendAsTags is not set", func() {
+			t.Run("alert payload should include tag pairs only as an array in the tags key when sendAsTags is not set", func(t *testing.T) {
 				json := `{
           "apiKey": "abcdefgh0123456789"
 				}`
@@ -122,7 +122,7 @@ func TestOpsGenieNotifier(t *testing.T) {
 				So(details, ShouldResemble, map[string]interface{}{"url": ""})
 			})
 
-			Convey("alert payload should include tag pairs only as a map in the details key when sendAsTags=details", func() {
+			t.Run("alert payload should include tag pairs only as a map in the details key when sendAsTags=details", func(t *testing.T) {
 				json := `{
           "apiKey": "abcdefgh0123456789",
           "sendTagsAs": "details"
@@ -172,7 +172,7 @@ func TestOpsGenieNotifier(t *testing.T) {
 				So(details, ShouldResemble, map[string]interface{}{"keyOnly": "", "aKey": "aValue", "url": ""})
 			})
 
-			Convey("alert payload should include tag pairs as both a map in the details key and an array in the tags key when sendAsTags=both", func() {
+			t.Run("alert payload should include tag pairs as both a map in the details key and an array in the tags key when sendAsTags=both", func(t *testing.T) {
 				json := `{
           "apiKey": "abcdefgh0123456789",
           "sendTagsAs": "both"

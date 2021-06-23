@@ -8,7 +8,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
-	. "github.com/smartystreets/goconvey/convey"
 )
 
 func mockTimeNow() {
@@ -29,12 +28,12 @@ func TestAlertingDataAccess(t *testing.T) {
 	mockTimeNow()
 	defer resetTimeNow()
 
-	Convey("Testing Alerting data access", t, func() {
+	t.Run("Testing Alerting data access", func(t *testing.T) {
 		sqlStore := InitTestDB(t)
 
 		testDash := insertTestDashboard(t, sqlStore, "dashboard with alerts", 1, 0, false, "alert")
 		evalData, err := simplejson.NewJson([]byte(`{"test": "test"}`))
-		So(err, ShouldBeNil)
+		require.NoError(t, err)
 		items := []*models.Alert{
 			{
 				PanelId:     1,
@@ -57,11 +56,11 @@ func TestAlertingDataAccess(t *testing.T) {
 
 		err = SaveAlerts(&cmd)
 
-		Convey("Can create one alert", func() {
-			So(err, ShouldBeNil)
+		t.Run("Can create one alert", func(t *testing.T) {
+			require.NoError(t, err)
 		})
 
-		Convey("Can set new states", func() {
+		t.Run("Can set new states", func(t *testing.T) {
 
 			// Get alert so we can use its ID in tests
 			alertQuery := models.GetAlertsQuery{DashboardIDs: []int64{testDash.Id}, PanelId: 1, OrgId: 1, User: &models.SignedInUser{OrgRole: models.ROLE_ADMIN}}
@@ -70,48 +69,48 @@ func TestAlertingDataAccess(t *testing.T) {
 
 			insertedAlert := alertQuery.Result[0]
 
-			Convey("new state ok", func() {
+			t.Run("new state ok", func(t *testing.T) {
 				cmd := &models.SetAlertStateCommand{
 					AlertId: insertedAlert.Id,
 					State:   models.AlertStateOK,
 				}
 
 				err = SetAlertState(cmd)
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 			})
 
 			alert, _ := getAlertById(insertedAlert.Id)
 			stateDateBeforePause := alert.NewStateDate
 
-			Convey("can pause all alerts", func() {
+			t.Run("can pause all alerts", func(t *testing.T) {
 				err := pauseAllAlerts(true)
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
-				Convey("cannot updated paused alert", func() {
+				t.Run("cannot updated paused alert", func(t *testing.T) {
 					cmd := &models.SetAlertStateCommand{
 						AlertId: insertedAlert.Id,
 						State:   models.AlertStateOK,
 					}
 
 					err = SetAlertState(cmd)
-					So(err, ShouldNotBeNil)
+					require.Error(t, err)
 				})
 
-				Convey("alert is paused", func() {
+				t.Run("alert is paused", func(t *testing.T) {
 					alert, _ = getAlertById(insertedAlert.Id)
 					currentState := alert.State
-					So(currentState, ShouldEqual, "paused")
+					require.Equal(t, "paused", currentState)
 				})
 
-				Convey("pausing alerts should update their NewStateDate", func() {
+				t.Run("pausing alerts should update their NewStateDate", func(t *testing.T) {
 					alert, _ = getAlertById(insertedAlert.Id)
 					stateDateAfterPause := alert.NewStateDate
 					So(stateDateBeforePause, ShouldHappenBefore, stateDateAfterPause)
 				})
 
-				Convey("unpausing alerts should update their NewStateDate again", func() {
+				t.Run("unpausing alerts should update their NewStateDate again", func(t *testing.T) {
 					err := pauseAllAlerts(false)
-					So(err, ShouldBeNil)
+					require.NoError(t, err)
 					alert, _ = getAlertById(insertedAlert.Id)
 					stateDateAfterUnpause := alert.NewStateDate
 					So(stateDateBeforePause, ShouldHappenBefore, stateDateAfterUnpause)
@@ -119,27 +118,27 @@ func TestAlertingDataAccess(t *testing.T) {
 			})
 		})
 
-		Convey("Can read properties", func() {
+		t.Run("Can read properties", func(t *testing.T) {
 			alertQuery := models.GetAlertsQuery{DashboardIDs: []int64{testDash.Id}, PanelId: 1, OrgId: 1, User: &models.SignedInUser{OrgRole: models.ROLE_ADMIN}}
 			err2 := HandleAlertsQuery(&alertQuery)
 
 			alert := alertQuery.Result[0]
 			So(err2, ShouldBeNil)
 			So(alert.Id, ShouldBeGreaterThan, 0)
-			So(alert.DashboardId, ShouldEqual, testDash.Id)
-			So(alert.PanelId, ShouldEqual, 1)
-			So(alert.Name, ShouldEqual, "Alerting title")
-			So(alert.State, ShouldEqual, models.AlertStateUnknown)
+			require.Equal(t, testDash.Id, alert.DashboardId)
+			require.Equal(t, 1, alert.PanelId)
+			require.Equal(t, "Alerting title", alert.Name)
+			require.Equal(t, models.AlertStateUnknown, alert.State)
 			So(alert.NewStateDate, ShouldNotBeNil)
 			So(alert.EvalData, ShouldNotBeNil)
-			So(alert.EvalData.Get("test").MustString(), ShouldEqual, "test")
+			require.Equal(t, "test", alert.EvalData.Get("test").MustString())
 			So(alert.EvalDate, ShouldNotBeNil)
-			So(alert.ExecutionError, ShouldEqual, "")
+			require.Equal(t, "", alert.ExecutionError)
 			So(alert.DashboardUid, ShouldNotBeNil)
-			So(alert.DashboardSlug, ShouldEqual, "dashboard-with-alerts")
+			require.Equal(t, "dashboard-with-alerts", alert.DashboardSlug)
 		})
 
-		Convey("Viewer can read alerts", func() {
+		t.Run("Viewer can read alerts", func(t *testing.T) {
 			viewerUser := &models.SignedInUser{OrgRole: models.ROLE_VIEWER, OrgId: 1}
 			alertQuery := models.GetAlertsQuery{DashboardIDs: []int64{testDash.Id}, PanelId: 1, OrgId: 1, User: viewerUser}
 			err2 := HandleAlertsQuery(&alertQuery)
@@ -148,7 +147,7 @@ func TestAlertingDataAccess(t *testing.T) {
 			So(alertQuery.Result, ShouldHaveLength, 1)
 		})
 
-		Convey("Alerts with same dashboard id and panel id should update", func() {
+		t.Run("Alerts with same dashboard id and panel id should update", func(t *testing.T) {
 			modifiedItems := items
 			modifiedItems[0].Name = "Name"
 
@@ -161,30 +160,30 @@ func TestAlertingDataAccess(t *testing.T) {
 
 			err := SaveAlerts(&modifiedCmd)
 
-			Convey("Can save alerts with same dashboard and panel id", func() {
-				So(err, ShouldBeNil)
+			t.Run("Can save alerts with same dashboard and panel id", func(t *testing.T) {
+				require.NoError(t, err)
 			})
 
-			Convey("Alerts should be updated", func() {
+			t.Run("Alerts should be updated", func(t *testing.T) {
 				query := models.GetAlertsQuery{DashboardIDs: []int64{testDash.Id}, OrgId: 1, User: &models.SignedInUser{OrgRole: models.ROLE_ADMIN}}
 				err2 := HandleAlertsQuery(&query)
 
 				So(err2, ShouldBeNil)
-				So(len(query.Result), ShouldEqual, 1)
-				So(query.Result[0].Name, ShouldEqual, "Name")
+				require.Equal(t, 1, len(query.Result))
+				require.Equal(t, "Name", query.Result[0].Name)
 
-				Convey("Alert state should not be updated", func() {
-					So(query.Result[0].State, ShouldEqual, models.AlertStateUnknown)
+				t.Run("Alert state should not be updated", func(t *testing.T) {
+					require.Equal(t, models.AlertStateUnknown, query.Result[0].State)
 				})
 			})
 
-			Convey("Updates without changes should be ignored", func() {
+			t.Run("Updates without changes should be ignored", func(t *testing.T) {
 				err3 := SaveAlerts(&modifiedCmd)
 				So(err3, ShouldBeNil)
 			})
 		})
 
-		Convey("Multiple alerts per dashboard", func() {
+		t.Run("Multiple alerts per dashboard", func(t *testing.T) {
 			multipleItems := []*models.Alert{
 				{
 					DashboardId: testDash.Id,
@@ -212,32 +211,32 @@ func TestAlertingDataAccess(t *testing.T) {
 			cmd.Alerts = multipleItems
 			err = SaveAlerts(&cmd)
 
-			Convey("Should save 3 dashboards", func() {
-				So(err, ShouldBeNil)
+			t.Run("Should save 3 dashboards", func(t *testing.T) {
+				require.NoError(t, err)
 
 				queryForDashboard := models.GetAlertsQuery{DashboardIDs: []int64{testDash.Id}, OrgId: 1, User: &models.SignedInUser{OrgRole: models.ROLE_ADMIN}}
 				err2 := HandleAlertsQuery(&queryForDashboard)
 
 				So(err2, ShouldBeNil)
-				So(len(queryForDashboard.Result), ShouldEqual, 3)
+				require.Equal(t, 3, len(queryForDashboard.Result))
 			})
 
-			Convey("should updated two dashboards and delete one", func() {
+			t.Run("should updated two dashboards and delete one", func(t *testing.T) {
 				missingOneAlert := multipleItems[:2]
 
 				cmd.Alerts = missingOneAlert
 				err = SaveAlerts(&cmd)
 
-				Convey("should delete the missing alert", func() {
+				t.Run("should delete the missing alert", func(t *testing.T) {
 					query := models.GetAlertsQuery{DashboardIDs: []int64{testDash.Id}, OrgId: 1, User: &models.SignedInUser{OrgRole: models.ROLE_ADMIN}}
 					err2 := HandleAlertsQuery(&query)
 					So(err2, ShouldBeNil)
-					So(len(query.Result), ShouldEqual, 2)
+					require.Equal(t, 2, len(query.Result))
 				})
 			})
 		})
 
-		Convey("When dashboard is removed", func() {
+		t.Run("When dashboard is removed", func(t *testing.T) {
 			items := []*models.Alert{
 				{
 					PanelId:     1,
@@ -255,20 +254,20 @@ func TestAlertingDataAccess(t *testing.T) {
 			}
 
 			err = SaveAlerts(&cmd)
-			So(err, ShouldBeNil)
+			require.NoError(t, err)
 
 			err = DeleteDashboard(&models.DeleteDashboardCommand{
 				OrgId: 1,
 				Id:    testDash.Id,
 			})
-			So(err, ShouldBeNil)
+			require.NoError(t, err)
 
-			Convey("Alerts should be removed", func() {
+			t.Run("Alerts should be removed", func(t *testing.T) {
 				query := models.GetAlertsQuery{DashboardIDs: []int64{testDash.Id}, OrgId: 1, User: &models.SignedInUser{OrgRole: models.ROLE_ADMIN}}
 				err2 := HandleAlertsQuery(&query)
 
 				So(err2, ShouldBeNil)
-				So(len(query.Result), ShouldEqual, 0)
+				require.Equal(t, 0, len(query.Result))
 			})
 		})
 	})
@@ -278,12 +277,12 @@ func TestPausingAlerts(t *testing.T) {
 	mockTimeNow()
 	defer resetTimeNow()
 
-	Convey("Given an alert", t, func() {
+	t.Run("Given an alert", func(t *testing.T) {
 		sqlStore := InitTestDB(t)
 
 		testDash := insertTestDashboard(t, sqlStore, "dashboard with alerts", 1, 0, false, "alert")
 		alert, err := insertTestAlert("Alerting title", "Alerting message", testDash.OrgId, testDash.Id, simplejson.New())
-		So(err, ShouldBeNil)
+		require.NoError(t, err)
 
 		stateDateBeforePause := alert.NewStateDate
 		stateDateAfterPause := stateDateBeforePause
@@ -295,26 +294,26 @@ func TestPausingAlerts(t *testing.T) {
 
 		insertedAlert := alertQuery.Result[0]
 
-		Convey("when paused", func() {
+		t.Run("when paused", func(t *testing.T) {
 			_, err := pauseAlert(testDash.OrgId, insertedAlert.Id, true)
-			So(err, ShouldBeNil)
+			require.NoError(t, err)
 
-			Convey("the NewStateDate should be updated", func() {
+			t.Run("the NewStateDate should be updated", func(t *testing.T) {
 				alert, err := getAlertById(insertedAlert.Id)
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
 				stateDateAfterPause = alert.NewStateDate
 				So(stateDateBeforePause, ShouldHappenBefore, stateDateAfterPause)
 			})
 		})
 
-		Convey("when unpaused", func() {
+		t.Run("when unpaused", func(t *testing.T) {
 			_, err := pauseAlert(testDash.OrgId, insertedAlert.Id, false)
-			So(err, ShouldBeNil)
+			require.NoError(t, err)
 
-			Convey("the NewStateDate should be updated again", func() {
+			t.Run("the NewStateDate should be updated again", func(t *testing.T) {
 				alert, err := getAlertById(insertedAlert.Id)
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
 				stateDateAfterUnpause := alert.NewStateDate
 				So(stateDateAfterPause, ShouldHappenBefore, stateDateAfterUnpause)
@@ -329,7 +328,7 @@ func pauseAlert(orgId int64, alertId int64, pauseState bool) (int64, error) {
 		Paused:   pauseState,
 	}
 	err := PauseAlert(cmd)
-	So(err, ShouldBeNil)
+	require.NoError(t, err)
 	return cmd.ResultCount, err
 }
 func insertTestAlert(title string, message string, orgId int64, dashId int64, settings *simplejson.Json) (*models.Alert, error) {
@@ -361,7 +360,7 @@ func getAlertById(id int64) (*models.Alert, error) {
 		Id: id,
 	}
 	err := GetAlertById(q)
-	So(err, ShouldBeNil)
+	require.NoError(t, err)
 	return q.Result, err
 }
 
@@ -370,6 +369,6 @@ func pauseAllAlerts(pauseState bool) error {
 		Paused: pauseState,
 	}
 	err := PauseAllAlerts(cmd)
-	So(err, ShouldBeNil)
+	require.NoError(t, err)
 	return err
 }

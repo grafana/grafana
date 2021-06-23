@@ -14,8 +14,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"gopkg.in/ini.v1"
-
-	. "github.com/smartystreets/goconvey/convey"
 )
 
 const (
@@ -23,26 +21,26 @@ const (
 )
 
 func TestLoadingSettings(t *testing.T) {
-	Convey("Testing loading settings from ini file", t, func() {
+	t.Run("Testing loading settings from ini file", func(t *testing.T) {
 		skipStaticRootValidation = true
 
-		Convey("Given the default ini files", func() {
+		t.Run("Given the default ini files", func(t *testing.T) {
 			cfg := NewCfg()
 			err := cfg.Load(&CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"})
-			So(err, ShouldBeNil)
+			require.NoError(t, err)
 
-			So(cfg.AdminUser, ShouldEqual, "admin")
-			So(cfg.RendererCallbackUrl, ShouldEqual, "http://localhost:3000/")
+			require.Equal(t, "admin", cfg.AdminUser)
+			require.Equal(t, "http://localhost:3000/", cfg.RendererCallbackUrl)
 		})
 
-		Convey("default.ini should have no semi-colon commented entries", func() {
+		t.Run("default.ini should have no semi-colon commented entries", func(t *testing.T) {
 			file, err := os.Open("../../conf/defaults.ini")
 			if err != nil {
 				t.Errorf("failed to load defaults.ini file: %v", err)
 			}
 			defer func() {
 				err := file.Close()
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 			}()
 
 			scanner := bufio.NewScanner(file)
@@ -54,73 +52,73 @@ func TestLoadingSettings(t *testing.T) {
 			}
 		})
 
-		Convey("Should be able to override via environment variables", func() {
+		t.Run("Should be able to override via environment variables", func(t *testing.T) {
 			err := os.Setenv("GF_SECURITY_ADMIN_USER", "superduper")
 			require.NoError(t, err)
 
 			cfg := NewCfg()
 			err = cfg.Load(&CommandLineArgs{HomePath: "../../"})
-			So(err, ShouldBeNil)
+			require.NoError(t, err)
 
-			So(cfg.AdminUser, ShouldEqual, "superduper")
-			So(cfg.DataPath, ShouldEqual, filepath.Join(HomePath, "data"))
-			So(cfg.LogsPath, ShouldEqual, filepath.Join(cfg.DataPath, "log"))
+			require.Equal(t, "superduper", cfg.AdminUser)
+			require.Equal(t, filepath.Join(HomePath, "data"), cfg.DataPath)
+			require.Equal(t, filepath.Join(cfg.DataPath, "log"), cfg.LogsPath)
 		})
 
-		Convey("Should replace password when defined in environment", func() {
+		t.Run("Should replace password when defined in environment", func(t *testing.T) {
 			err := os.Setenv("GF_SECURITY_ADMIN_PASSWORD", "supersecret")
 			require.NoError(t, err)
 
 			cfg := NewCfg()
 			err = cfg.Load(&CommandLineArgs{HomePath: "../../"})
-			So(err, ShouldBeNil)
+			require.NoError(t, err)
 
 			So(appliedEnvOverrides, ShouldContain, "GF_SECURITY_ADMIN_PASSWORD=*********")
 		})
 
-		Convey("Should replace password in URL when url environment is defined", func() {
+		t.Run("Should replace password in URL when url environment is defined", func(t *testing.T) {
 			err := os.Setenv("GF_DATABASE_URL", "mysql://user:secret@localhost:3306/database")
 			require.NoError(t, err)
 
 			cfg := NewCfg()
 			err = cfg.Load(&CommandLineArgs{HomePath: "../../"})
-			So(err, ShouldBeNil)
+			require.NoError(t, err)
 
 			So(appliedEnvOverrides, ShouldContain, "GF_DATABASE_URL=mysql://user:xxxxx@localhost:3306/database")
 		})
 
-		Convey("Should get property map from command line args array", func() {
+		t.Run("Should get property map from command line args array", func(t *testing.T) {
 			props := getCommandLineProperties([]string{"cfg:test=value", "cfg:map.test=1"})
 
-			So(len(props), ShouldEqual, 2)
-			So(props["test"], ShouldEqual, "value")
-			So(props["map.test"], ShouldEqual, "1")
+			require.Equal(t, 2, len(props))
+			require.Equal(t, "value", props["test"])
+			require.Equal(t, "1", props["map.test"])
 		})
 
-		Convey("Should be able to override via command line", func() {
+		t.Run("Should be able to override via command line", func(t *testing.T) {
 			if runtime.GOOS == windows {
 				cfg := NewCfg()
 				err := cfg.Load(&CommandLineArgs{
 					HomePath: "../../",
 					Args:     []string{`cfg:paths.data=c:\tmp\data`, `cfg:paths.logs=c:\tmp\logs`},
 				})
-				So(err, ShouldBeNil)
-				So(cfg.DataPath, ShouldEqual, `c:\tmp\data`)
-				So(cfg.LogsPath, ShouldEqual, `c:\tmp\logs`)
+				require.NoError(t, err)
+				require.Equal(t, `c:\tmp\data`, cfg.DataPath)
+				require.Equal(t, `c:\tmp\logs`, cfg.LogsPath)
 			} else {
 				cfg := NewCfg()
 				err := cfg.Load(&CommandLineArgs{
 					HomePath: "../../",
 					Args:     []string{"cfg:paths.data=/tmp/data", "cfg:paths.logs=/tmp/logs"},
 				})
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
-				So(cfg.DataPath, ShouldEqual, "/tmp/data")
-				So(cfg.LogsPath, ShouldEqual, "/tmp/logs")
+				require.Equal(t, "/tmp/data", cfg.DataPath)
+				require.Equal(t, "/tmp/logs", cfg.LogsPath)
 			}
 		})
 
-		Convey("Should be able to override defaults via command line", func() {
+		t.Run("Should be able to override defaults via command line", func(t *testing.T) {
 			cfg := NewCfg()
 			err := cfg.Load(&CommandLineArgs{
 				HomePath: "../../",
@@ -129,12 +127,12 @@ func TestLoadingSettings(t *testing.T) {
 				},
 				Config: filepath.Join(HomePath, "pkg/setting/testdata/override.ini"),
 			})
-			So(err, ShouldBeNil)
+			require.NoError(t, err)
 
-			So(cfg.Domain, ShouldEqual, "test2")
+			require.Equal(t, "test2", cfg.Domain)
 		})
 
-		Convey("Defaults can be overridden in specified config file", func() {
+		t.Run("Defaults can be overridden in specified config file", func(t *testing.T) {
 			if runtime.GOOS == windows {
 				cfg := NewCfg()
 				err := cfg.Load(&CommandLineArgs{
@@ -142,9 +140,9 @@ func TestLoadingSettings(t *testing.T) {
 					Config:   filepath.Join(HomePath, "pkg/setting/testdata/override_windows.ini"),
 					Args:     []string{`cfg:default.paths.data=c:\tmp\data`},
 				})
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
-				So(cfg.DataPath, ShouldEqual, `c:\tmp\override`)
+				require.Equal(t, `c:\tmp\override`, cfg.DataPath)
 			} else {
 				cfg := NewCfg()
 				err := cfg.Load(&CommandLineArgs{
@@ -152,13 +150,13 @@ func TestLoadingSettings(t *testing.T) {
 					Config:   filepath.Join(HomePath, "pkg/setting/testdata/override.ini"),
 					Args:     []string{"cfg:default.paths.data=/tmp/data"},
 				})
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
-				So(cfg.DataPath, ShouldEqual, "/tmp/override")
+				require.Equal(t, "/tmp/override", cfg.DataPath)
 			}
 		})
 
-		Convey("Command line overrides specified config file", func() {
+		t.Run("Command line overrides specified config file", func(t *testing.T) {
 			if runtime.GOOS == windows {
 				cfg := NewCfg()
 				err := cfg.Load(&CommandLineArgs{
@@ -166,9 +164,9 @@ func TestLoadingSettings(t *testing.T) {
 					Config:   filepath.Join(HomePath, "pkg/setting/testdata/override_windows.ini"),
 					Args:     []string{`cfg:paths.data=c:\tmp\data`},
 				})
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
-				So(cfg.DataPath, ShouldEqual, `c:\tmp\data`)
+				require.Equal(t, `c:\tmp\data`, cfg.DataPath)
 			} else {
 				cfg := NewCfg()
 				err := cfg.Load(&CommandLineArgs{
@@ -176,13 +174,13 @@ func TestLoadingSettings(t *testing.T) {
 					Config:   filepath.Join(HomePath, "pkg/setting/testdata/override.ini"),
 					Args:     []string{"cfg:paths.data=/tmp/data"},
 				})
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
-				So(cfg.DataPath, ShouldEqual, "/tmp/data")
+				require.Equal(t, "/tmp/data", cfg.DataPath)
 			}
 		})
 
-		Convey("Can use environment variables in config values", func() {
+		t.Run("Can use environment variables in config values", func(t *testing.T) {
 			if runtime.GOOS == windows {
 				err := os.Setenv("GF_DATA_PATH", `c:\tmp\env_override`)
 				require.NoError(t, err)
@@ -191,9 +189,9 @@ func TestLoadingSettings(t *testing.T) {
 					HomePath: "../../",
 					Args:     []string{"cfg:paths.data=${GF_DATA_PATH}"},
 				})
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
-				So(cfg.DataPath, ShouldEqual, `c:\tmp\env_override`)
+				require.Equal(t, `c:\tmp\env_override`, cfg.DataPath)
 			} else {
 				err := os.Setenv("GF_DATA_PATH", "/tmp/env_override")
 				require.NoError(t, err)
@@ -202,92 +200,92 @@ func TestLoadingSettings(t *testing.T) {
 					HomePath: "../../",
 					Args:     []string{"cfg:paths.data=${GF_DATA_PATH}"},
 				})
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
-				So(cfg.DataPath, ShouldEqual, "/tmp/env_override")
+				require.Equal(t, "/tmp/env_override", cfg.DataPath)
 			}
 		})
 
-		Convey("instance_name default to hostname even if hostname env is empty", func() {
+		t.Run("instance_name default to hostname even if hostname env is empty", func(t *testing.T) {
 			cfg := NewCfg()
 			err := cfg.Load(&CommandLineArgs{
 				HomePath: "../../",
 			})
-			So(err, ShouldBeNil)
+			require.NoError(t, err)
 
 			hostname, err := os.Hostname()
-			So(err, ShouldBeNil)
-			So(InstanceName, ShouldEqual, hostname)
+			require.NoError(t, err)
+			require.Equal(t, hostname, InstanceName)
 		})
 
-		Convey("Reading callback_url should add trailing slash", func() {
+		t.Run("Reading callback_url should add trailing slash", func(t *testing.T) {
 			cfg := NewCfg()
 			err := cfg.Load(&CommandLineArgs{
 				HomePath: "../../",
 				Args:     []string{"cfg:rendering.callback_url=http://myserver/renderer"},
 			})
-			So(err, ShouldBeNil)
+			require.NoError(t, err)
 
-			So(cfg.RendererCallbackUrl, ShouldEqual, "http://myserver/renderer/")
+			require.Equal(t, "http://myserver/renderer/", cfg.RendererCallbackUrl)
 		})
 
-		Convey("Only sync_ttl should return the value sync_ttl", func() {
+		t.Run("Only sync_ttl should return the value sync_ttl", func(t *testing.T) {
 			cfg := NewCfg()
 			err := cfg.Load(&CommandLineArgs{
 				HomePath: "../../",
 				Args:     []string{"cfg:auth.proxy.sync_ttl=2"},
 			})
-			So(err, ShouldBeNil)
+			require.NoError(t, err)
 
-			So(cfg.AuthProxySyncTTL, ShouldEqual, 2)
+			require.Equal(t, 2, cfg.AuthProxySyncTTL)
 		})
 
-		Convey("Only ldap_sync_ttl should return the value ldap_sync_ttl", func() {
+		t.Run("Only ldap_sync_ttl should return the value ldap_sync_ttl", func(t *testing.T) {
 			cfg := NewCfg()
 			err := cfg.Load(&CommandLineArgs{
 				HomePath: "../../",
 				Args:     []string{"cfg:auth.proxy.ldap_sync_ttl=5"},
 			})
-			So(err, ShouldBeNil)
+			require.NoError(t, err)
 
-			So(cfg.AuthProxySyncTTL, ShouldEqual, 5)
+			require.Equal(t, 5, cfg.AuthProxySyncTTL)
 		})
 
-		Convey("ldap_sync should override ldap_sync_ttl that is default value", func() {
+		t.Run("ldap_sync should override ldap_sync_ttl that is default value", func(t *testing.T) {
 			cfg := NewCfg()
 			err := cfg.Load(&CommandLineArgs{
 				HomePath: "../../",
 				Args:     []string{"cfg:auth.proxy.sync_ttl=5"},
 			})
-			So(err, ShouldBeNil)
+			require.NoError(t, err)
 
-			So(cfg.AuthProxySyncTTL, ShouldEqual, 5)
+			require.Equal(t, 5, cfg.AuthProxySyncTTL)
 		})
 
-		Convey("ldap_sync should not override ldap_sync_ttl that is different from default value", func() {
+		t.Run("ldap_sync should not override ldap_sync_ttl that is different from default value", func(t *testing.T) {
 			cfg := NewCfg()
 			err := cfg.Load(&CommandLineArgs{
 				HomePath: "../../",
 				Args:     []string{"cfg:auth.proxy.ldap_sync_ttl=12", "cfg:auth.proxy.sync_ttl=5"},
 			})
-			So(err, ShouldBeNil)
+			require.NoError(t, err)
 
-			So(cfg.AuthProxySyncTTL, ShouldEqual, 12)
+			require.Equal(t, 12, cfg.AuthProxySyncTTL)
 		})
 	})
 
-	Convey("Test reading string values from .ini file", t, func() {
+	t.Run("Test reading string values from .ini file", func(t *testing.T) {
 		iniFile, err := ini.Load(path.Join(HomePath, "pkg/setting/testdata/invalid.ini"))
-		So(err, ShouldBeNil)
+		require.NoError(t, err)
 
-		Convey("If key is found - should return value from ini file", func() {
+		t.Run("If key is found - should return value from ini file", func(t *testing.T) {
 			value := valueAsString(iniFile.Section("server"), "alt_url", "")
-			So(value, ShouldEqual, "https://grafana.com/")
+			require.Equal(t, "https://grafana.com/", value)
 		})
 
-		Convey("If key is not found - should return default value", func() {
+		t.Run("If key is not found - should return default value", func(t *testing.T) {
 			value := valueAsString(iniFile.Section("server"), "extra_url", "default_url_val")
-			So(value, ShouldEqual, "default_url_val")
+			require.Equal(t, "default_url_val", value)
 		})
 	})
 }

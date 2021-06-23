@@ -7,16 +7,14 @@ import (
 	"fmt"
 	"testing"
 
-	. "github.com/smartystreets/goconvey/convey"
-
 	"github.com/grafana/grafana/pkg/models"
 )
 
 func TestTeamCommandsAndQueries(t *testing.T) {
-	Convey("Testing Team commands & queries", t, func() {
+	t.Run("Testing Team commands & queries", func(t *testing.T) {
 		sqlStore := InitTestDB(t)
 
-		Convey("Given saved users and two teams", func() {
+		t.Run("Given saved users and two teams", func(t *testing.T) {
 			var userIds []int64
 			for i := 0; i < 5; i++ {
 				userCmd := models.CreateUserCommand{
@@ -25,105 +23,105 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 					Login: fmt.Sprint("loginuser", i),
 				}
 				user, err := sqlStore.CreateUser(context.Background(), userCmd)
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 				userIds = append(userIds, user.Id)
 			}
 
 			const testOrgID int64 = 1
 			team1, err := sqlStore.CreateTeam("group1 name", "test1@test.com", testOrgID)
-			So(err, ShouldBeNil)
+			require.NoError(t, err)
 			team2, err := sqlStore.CreateTeam("group2 name", "test2@test.com", testOrgID)
-			So(err, ShouldBeNil)
+			require.NoError(t, err)
 
-			Convey("Should be able to create teams and add users", func() {
+			t.Run("Should be able to create teams and add users", func(t *testing.T) {
 				query := &models.SearchTeamsQuery{OrgId: testOrgID, Name: "group1 name", Page: 1, Limit: 10}
 				err = SearchTeams(query)
-				So(err, ShouldBeNil)
-				So(query.Page, ShouldEqual, 1)
+				require.NoError(t, err)
+				require.Equal(t, 1, query.Page)
 
 				team1 := query.Result.Teams[0]
-				So(team1.Name, ShouldEqual, "group1 name")
-				So(team1.Email, ShouldEqual, "test1@test.com")
-				So(team1.OrgId, ShouldEqual, testOrgID)
-				So(team1.MemberCount, ShouldEqual, 0)
+				require.Equal(t, "group1 name", team1.Name)
+				require.Equal(t, "test1@test.com", team1.Email)
+				require.Equal(t, testOrgID, team1.OrgId)
+				require.Equal(t, 0, team1.MemberCount)
 
 				err = sqlStore.AddTeamMember(userIds[0], testOrgID, team1.Id, false, 0)
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 				err = sqlStore.AddTeamMember(userIds[1], testOrgID, team1.Id, true, 0)
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
 				q1 := &models.GetTeamMembersQuery{OrgId: testOrgID, TeamId: team1.Id}
 				err = GetTeamMembers(q1)
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 				So(q1.Result, ShouldHaveLength, 2)
-				So(q1.Result[0].TeamId, ShouldEqual, team1.Id)
-				So(q1.Result[0].Login, ShouldEqual, "loginuser0")
-				So(q1.Result[0].OrgId, ShouldEqual, testOrgID)
-				So(q1.Result[1].TeamId, ShouldEqual, team1.Id)
-				So(q1.Result[1].Login, ShouldEqual, "loginuser1")
-				So(q1.Result[1].OrgId, ShouldEqual, testOrgID)
-				So(q1.Result[1].External, ShouldEqual, true)
+				require.Equal(t, team1.Id, q1.Result[0].TeamId)
+				require.Equal(t, "loginuser0", q1.Result[0].Login)
+				require.Equal(t, testOrgID, q1.Result[0].OrgId)
+				require.Equal(t, team1.Id, q1.Result[1].TeamId)
+				require.Equal(t, "loginuser1", q1.Result[1].Login)
+				require.Equal(t, testOrgID, q1.Result[1].OrgId)
+				require.Equal(t, true, q1.Result[1].External)
 
 				q2 := &models.GetTeamMembersQuery{OrgId: testOrgID, TeamId: team1.Id, External: true}
 				err = GetTeamMembers(q2)
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 				So(q2.Result, ShouldHaveLength, 1)
-				So(q2.Result[0].TeamId, ShouldEqual, team1.Id)
-				So(q2.Result[0].Login, ShouldEqual, "loginuser1")
-				So(q2.Result[0].OrgId, ShouldEqual, testOrgID)
-				So(q2.Result[0].External, ShouldEqual, true)
+				require.Equal(t, team1.Id, q2.Result[0].TeamId)
+				require.Equal(t, "loginuser1", q2.Result[0].Login)
+				require.Equal(t, testOrgID, q2.Result[0].OrgId)
+				require.Equal(t, true, q2.Result[0].External)
 
 				err = SearchTeams(query)
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 				team1 = query.Result.Teams[0]
-				So(team1.MemberCount, ShouldEqual, 2)
+				require.Equal(t, 2, team1.MemberCount)
 
 				getTeamQuery := &models.GetTeamByIdQuery{OrgId: testOrgID, Id: team1.Id}
 				err = GetTeamById(getTeamQuery)
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 				team1 = getTeamQuery.Result
-				So(team1.Name, ShouldEqual, "group1 name")
-				So(team1.Email, ShouldEqual, "test1@test.com")
-				So(team1.OrgId, ShouldEqual, testOrgID)
-				So(team1.MemberCount, ShouldEqual, 2)
+				require.Equal(t, "group1 name", team1.Name)
+				require.Equal(t, "test1@test.com", team1.Email)
+				require.Equal(t, testOrgID, team1.OrgId)
+				require.Equal(t, 2, team1.MemberCount)
 			})
 
-			Convey("Should return latest auth module for users when getting team members", func() {
+			t.Run("Should return latest auth module for users when getting team members", func(t *testing.T) {
 				userId := userIds[1]
 				err := SetAuthInfo(&models.SetAuthInfoCommand{UserId: userId, AuthModule: "oauth_github", AuthId: "1234567"})
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
 				teamQuery := &models.SearchTeamsQuery{OrgId: testOrgID, Name: "group1 name", Page: 1, Limit: 10}
 				err = SearchTeams(teamQuery)
-				So(err, ShouldBeNil)
-				So(teamQuery.Page, ShouldEqual, 1)
+				require.NoError(t, err)
+				require.Equal(t, 1, teamQuery.Page)
 
 				team1 := teamQuery.Result.Teams[0]
 
 				err = sqlStore.AddTeamMember(userId, testOrgID, team1.Id, true, 0)
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
 				memberQuery := &models.GetTeamMembersQuery{OrgId: testOrgID, TeamId: team1.Id, External: true}
 				err = GetTeamMembers(memberQuery)
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 				So(memberQuery.Result, ShouldHaveLength, 1)
-				So(memberQuery.Result[0].TeamId, ShouldEqual, team1.Id)
-				So(memberQuery.Result[0].Login, ShouldEqual, "loginuser1")
-				So(memberQuery.Result[0].OrgId, ShouldEqual, testOrgID)
-				So(memberQuery.Result[0].External, ShouldEqual, true)
-				So(memberQuery.Result[0].AuthModule, ShouldEqual, "oauth_github")
+				require.Equal(t, team1.Id, memberQuery.Result[0].TeamId)
+				require.Equal(t, "loginuser1", memberQuery.Result[0].Login)
+				require.Equal(t, testOrgID, memberQuery.Result[0].OrgId)
+				require.Equal(t, true, memberQuery.Result[0].External)
+				require.Equal(t, "oauth_github", memberQuery.Result[0].AuthModule)
 			})
 
-			Convey("Should be able to update users in a team", func() {
+			t.Run("Should be able to update users in a team", func(t *testing.T) {
 				userId := userIds[0]
 				team := team1
 				err = sqlStore.AddTeamMember(userId, testOrgID, team.Id, false, 0)
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
 				qBeforeUpdate := &models.GetTeamMembersQuery{OrgId: testOrgID, TeamId: team.Id}
 				err = GetTeamMembers(qBeforeUpdate)
-				So(err, ShouldBeNil)
-				So(qBeforeUpdate.Result[0].Permission, ShouldEqual, 0)
+				require.NoError(t, err)
+				require.Equal(t, 0, qBeforeUpdate.Result[0].Permission)
 
 				err = UpdateTeamMember(&models.UpdateTeamMemberCommand{
 					UserId:     userId,
@@ -132,24 +130,24 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 					Permission: models.PERMISSION_ADMIN,
 				})
 
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
 				qAfterUpdate := &models.GetTeamMembersQuery{OrgId: testOrgID, TeamId: team.Id}
 				err = GetTeamMembers(qAfterUpdate)
-				So(err, ShouldBeNil)
-				So(qAfterUpdate.Result[0].Permission, ShouldEqual, models.PERMISSION_ADMIN)
+				require.NoError(t, err)
+				require.Equal(t, models.PERMISSION_ADMIN, qAfterUpdate.Result[0].Permission)
 			})
 
-			Convey("Should default to member permission level when updating a user with invalid permission level", func() {
+			t.Run("Should default to member permission level when updating a user with invalid permission level", func(t *testing.T) {
 				userID := userIds[0]
 				team := team1
 				err = sqlStore.AddTeamMember(userID, testOrgID, team.Id, false, 0)
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
 				qBeforeUpdate := &models.GetTeamMembersQuery{OrgId: testOrgID, TeamId: team.Id}
 				err = GetTeamMembers(qBeforeUpdate)
-				So(err, ShouldBeNil)
-				So(qBeforeUpdate.Result[0].Permission, ShouldEqual, 0)
+				require.NoError(t, err)
+				require.Equal(t, 0, qBeforeUpdate.Result[0].Permission)
 
 				invalidPermissionLevel := models.PERMISSION_EDIT
 				err = UpdateTeamMember(&models.UpdateTeamMemberCommand{
@@ -159,15 +157,15 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 					Permission: invalidPermissionLevel,
 				})
 
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
 				qAfterUpdate := &models.GetTeamMembersQuery{OrgId: testOrgID, TeamId: team.Id}
 				err = GetTeamMembers(qAfterUpdate)
-				So(err, ShouldBeNil)
-				So(qAfterUpdate.Result[0].Permission, ShouldEqual, 0)
+				require.NoError(t, err)
+				require.Equal(t, 0, qAfterUpdate.Result[0].Permission)
 			})
 
-			Convey("Shouldn't be able to update a user not in the team.", func() {
+			t.Run("Shouldn't be able to update a user not in the team.", func(t *testing.T) {
 				err = UpdateTeamMember(&models.UpdateTeamMemberCommand{
 					UserId:     1,
 					OrgId:      testOrgID,
@@ -175,149 +173,149 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 					Permission: models.PERMISSION_ADMIN,
 				})
 
-				So(err, ShouldEqual, models.ErrTeamMemberNotFound)
+				require.Equal(t, models.ErrTeamMemberNotFound, err)
 			})
 
-			Convey("Should be able to search for teams", func() {
+			t.Run("Should be able to search for teams", func(t *testing.T) {
 				query := &models.SearchTeamsQuery{OrgId: testOrgID, Query: "group", Page: 1}
 				err = SearchTeams(query)
-				So(err, ShouldBeNil)
-				So(len(query.Result.Teams), ShouldEqual, 2)
-				So(query.Result.TotalCount, ShouldEqual, 2)
+				require.NoError(t, err)
+				require.Equal(t, 2, len(query.Result.Teams))
+				require.Equal(t, 2, query.Result.TotalCount)
 
 				query2 := &models.SearchTeamsQuery{OrgId: testOrgID, Query: ""}
 				err = SearchTeams(query2)
-				So(err, ShouldBeNil)
-				So(len(query2.Result.Teams), ShouldEqual, 2)
+				require.NoError(t, err)
+				require.Equal(t, 2, len(query2.Result.Teams))
 			})
 
-			Convey("Should be able to return all teams a user is member of", func() {
+			t.Run("Should be able to return all teams a user is member of", func(t *testing.T) {
 				groupId := team2.Id
 				err := sqlStore.AddTeamMember(userIds[0], testOrgID, groupId, false, 0)
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
 				query := &models.GetTeamsByUserQuery{OrgId: testOrgID, UserId: userIds[0]}
 				err = GetTeamsByUser(query)
-				So(err, ShouldBeNil)
-				So(len(query.Result), ShouldEqual, 1)
-				So(query.Result[0].Name, ShouldEqual, "group2 name")
-				So(query.Result[0].Email, ShouldEqual, "test2@test.com")
+				require.NoError(t, err)
+				require.Equal(t, 1, len(query.Result))
+				require.Equal(t, "group2 name", query.Result[0].Name)
+				require.Equal(t, "test2@test.com", query.Result[0].Email)
 			})
 
-			Convey("Should be able to remove users from a group", func() {
+			t.Run("Should be able to remove users from a group", func(t *testing.T) {
 				err = sqlStore.AddTeamMember(userIds[0], testOrgID, team1.Id, false, 0)
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
 				err = RemoveTeamMember(&models.RemoveTeamMemberCommand{OrgId: testOrgID, TeamId: team1.Id, UserId: userIds[0]})
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
 				q2 := &models.GetTeamMembersQuery{OrgId: testOrgID, TeamId: team1.Id}
 				err = GetTeamMembers(q2)
-				So(err, ShouldBeNil)
-				So(len(q2.Result), ShouldEqual, 0)
+				require.NoError(t, err)
+				require.Equal(t, 0, len(q2.Result))
 			})
 
-			Convey("When ProtectLastAdmin is set to true", func() {
+			t.Run("When ProtectLastAdmin is set to true", func(t *testing.T) {
 				err = sqlStore.AddTeamMember(userIds[0], testOrgID, team1.Id, false, models.PERMISSION_ADMIN)
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
-				Convey("A user should not be able to remove the last admin", func() {
+				t.Run("A user should not be able to remove the last admin", func(t *testing.T) {
 					err = RemoveTeamMember(&models.RemoveTeamMemberCommand{OrgId: testOrgID, TeamId: team1.Id, UserId: userIds[0], ProtectLastAdmin: true})
-					So(err, ShouldEqual, models.ErrLastTeamAdmin)
+					require.Equal(t, models.ErrLastTeamAdmin, err)
 				})
 
-				Convey("A user should be able to remove an admin if there are other admins", func() {
+				t.Run("A user should be able to remove an admin if there are other admins", func(t *testing.T) {
 					err = sqlStore.AddTeamMember(userIds[1], testOrgID, team1.Id, false, models.PERMISSION_ADMIN)
-					So(err, ShouldBeNil)
+					require.NoError(t, err)
 					err = RemoveTeamMember(&models.RemoveTeamMemberCommand{OrgId: testOrgID, TeamId: team1.Id, UserId: userIds[0], ProtectLastAdmin: true})
-					So(err, ShouldBeNil)
+					require.NoError(t, err)
 				})
 
-				Convey("A user should not be able to remove the admin permission for the last admin", func() {
+				t.Run("A user should not be able to remove the admin permission for the last admin", func(t *testing.T) {
 					err = UpdateTeamMember(&models.UpdateTeamMemberCommand{OrgId: testOrgID, TeamId: team1.Id, UserId: userIds[0], Permission: 0, ProtectLastAdmin: true})
 					So(err, ShouldBeError, models.ErrLastTeamAdmin)
 				})
 
-				Convey("A user should be able to remove the admin permission if there are other admins", func() {
+				t.Run("A user should be able to remove the admin permission if there are other admins", func(t *testing.T) {
 					err = sqlStore.AddTeamMember(userIds[1], testOrgID, team1.Id, false, models.PERMISSION_ADMIN)
-					So(err, ShouldBeNil)
+					require.NoError(t, err)
 					err = UpdateTeamMember(&models.UpdateTeamMemberCommand{OrgId: testOrgID, TeamId: team1.Id, UserId: userIds[0], Permission: 0, ProtectLastAdmin: true})
-					So(err, ShouldBeNil)
+					require.NoError(t, err)
 				})
 			})
 
-			Convey("Should be able to remove a group with users and permissions", func() {
+			t.Run("Should be able to remove a group with users and permissions", func(t *testing.T) {
 				groupId := team2.Id
 				err := sqlStore.AddTeamMember(userIds[1], testOrgID, groupId, false, 0)
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 				err = sqlStore.AddTeamMember(userIds[2], testOrgID, groupId, false, 0)
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 				err = testHelperUpdateDashboardAcl(t, sqlStore, 1, models.DashboardAcl{
 					DashboardID: 1, OrgID: testOrgID, Permission: models.PERMISSION_EDIT, TeamID: groupId,
 				})
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 				err = DeleteTeam(&models.DeleteTeamCommand{OrgId: testOrgID, Id: groupId})
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
 				query := &models.GetTeamByIdQuery{OrgId: testOrgID, Id: groupId}
 				err = GetTeamById(query)
-				So(err, ShouldEqual, models.ErrTeamNotFound)
+				require.Equal(t, models.ErrTeamNotFound, err)
 
 				permQuery := &models.GetDashboardAclInfoListQuery{DashboardID: 1, OrgID: testOrgID}
 				err = GetDashboardAclInfoList(permQuery)
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
-				So(len(permQuery.Result), ShouldEqual, 0)
+				require.Equal(t, 0, len(permQuery.Result))
 			})
 
-			Convey("Should be able to return if user is admin of teams or not", func() {
+			t.Run("Should be able to return if user is admin of teams or not", func(t *testing.T) {
 				groupId := team2.Id
 				err := sqlStore.AddTeamMember(userIds[0], testOrgID, groupId, false, 0)
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 				err = sqlStore.AddTeamMember(userIds[1], testOrgID, groupId, false, models.PERMISSION_ADMIN)
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
 				query := &models.IsAdminOfTeamsQuery{SignedInUser: &models.SignedInUser{OrgId: testOrgID, UserId: userIds[0]}}
 				err = IsAdminOfTeams(query)
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 				So(query.Result, ShouldBeFalse)
 
 				query = &models.IsAdminOfTeamsQuery{SignedInUser: &models.SignedInUser{OrgId: testOrgID, UserId: userIds[1]}}
 				err = IsAdminOfTeams(query)
-				So(err, ShouldBeNil)
-				So(query.Result, ShouldBeTrue)
+				require.NoError(t, err)
+				require.True(t, query.Result)
 			})
 
-			Convey("Should not return hidden users in team member count", func() {
+			t.Run("Should not return hidden users in team member count", func(t *testing.T) {
 				signedInUser := &models.SignedInUser{Login: "loginuser0"}
 				hiddenUsers := map[string]struct{}{"loginuser0": {}, "loginuser1": {}}
 
 				teamId := team1.Id
 				err = sqlStore.AddTeamMember(userIds[0], testOrgID, teamId, false, 0)
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 				err = sqlStore.AddTeamMember(userIds[1], testOrgID, teamId, false, 0)
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 				err = sqlStore.AddTeamMember(userIds[2], testOrgID, teamId, false, 0)
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
 				searchQuery := &models.SearchTeamsQuery{OrgId: testOrgID, Page: 1, Limit: 10, SignedInUser: signedInUser, HiddenUsers: hiddenUsers}
 				err = SearchTeams(searchQuery)
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 				So(searchQuery.Result.Teams, ShouldHaveLength, 2)
 				team1 := searchQuery.Result.Teams[0]
-				So(team1.MemberCount, ShouldEqual, 2)
+				require.Equal(t, 2, team1.MemberCount)
 
 				searchQueryFilteredByUser := &models.SearchTeamsQuery{OrgId: testOrgID, Page: 1, Limit: 10, UserIdFilter: userIds[0], SignedInUser: signedInUser, HiddenUsers: hiddenUsers}
 				err = SearchTeams(searchQueryFilteredByUser)
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 				So(searchQueryFilteredByUser.Result.Teams, ShouldHaveLength, 1)
 				team1 = searchQuery.Result.Teams[0]
-				So(team1.MemberCount, ShouldEqual, 2)
+				require.Equal(t, 2, team1.MemberCount)
 
 				getTeamQuery := &models.GetTeamByIdQuery{OrgId: testOrgID, Id: teamId, SignedInUser: signedInUser, HiddenUsers: hiddenUsers}
 				err = GetTeamById(getTeamQuery)
-				So(err, ShouldBeNil)
-				So(getTeamQuery.Result.MemberCount, ShouldEqual, 2)
+				require.NoError(t, err)
+				require.Equal(t, 2, getTeamQuery.Result.MemberCount)
 			})
 		})
 	})

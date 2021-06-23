@@ -15,105 +15,104 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 
-	. "github.com/smartystreets/goconvey/convey"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestDashboardDataAccess(t *testing.T) {
-	Convey("Testing DB", t, func() {
+	t.Run("Testing DB", func(t *testing.T) {
 		sqlStore := InitTestDB(t)
 
-		Convey("Given saved dashboard", func() {
+		t.Run("Given saved dashboard", func(t *testing.T) {
 			savedFolder := insertTestDashboard(t, sqlStore, "1 test dash folder", 1, 0, true, "prod", "webapp")
 			savedDash := insertTestDashboard(t, sqlStore, "test dash 23", 1, savedFolder.Id, false, "prod", "webapp")
 			insertTestDashboard(t, sqlStore, "test dash 45", 1, savedFolder.Id, false, "prod")
 			savedDash2 := insertTestDashboard(t, sqlStore, "test dash 67", 1, 0, false, "prod")
 
-			Convey("Should return dashboard model", func() {
-				So(savedDash.Title, ShouldEqual, "test dash 23")
-				So(savedDash.Slug, ShouldEqual, "test-dash-23")
-				So(savedDash.Id, ShouldNotEqual, 0)
+			t.Run("Should return dashboard model", func(t *testing.T) {
+				require.Equal(t, "test dash 23", savedDash.Title)
+				require.Equal(t, "test-dash-23", savedDash.Slug)
+				require.NotEqual(t, 0, savedDash.Id)
 				So(savedDash.IsFolder, ShouldBeFalse)
 				So(savedDash.FolderId, ShouldBeGreaterThan, 0)
 				So(len(savedDash.Uid), ShouldBeGreaterThan, 0)
 
-				So(savedFolder.Title, ShouldEqual, "1 test dash folder")
-				So(savedFolder.Slug, ShouldEqual, "1-test-dash-folder")
-				So(savedFolder.Id, ShouldNotEqual, 0)
-				So(savedFolder.IsFolder, ShouldBeTrue)
-				So(savedFolder.FolderId, ShouldEqual, 0)
+				require.Equal(t, "1 test dash folder", savedFolder.Title)
+				require.Equal(t, "1-test-dash-folder", savedFolder.Slug)
+				require.NotEqual(t, 0, savedFolder.Id)
+				require.True(t, savedFolder.IsFolder)
+				require.Equal(t, 0, savedFolder.FolderId)
 				So(len(savedFolder.Uid), ShouldBeGreaterThan, 0)
 			})
 
-			Convey("Should be able to get dashboard by id", func() {
+			t.Run("Should be able to get dashboard by id", func(t *testing.T) {
 				query := models.GetDashboardQuery{
 					Id:    savedDash.Id,
 					OrgId: 1,
 				}
 
 				err := GetDashboard(&query)
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
-				So(query.Result.Title, ShouldEqual, "test dash 23")
-				So(query.Result.Slug, ShouldEqual, "test-dash-23")
-				So(query.Result.Id, ShouldEqual, savedDash.Id)
-				So(query.Result.Uid, ShouldEqual, savedDash.Uid)
+				require.Equal(t, "test dash 23", query.Result.Title)
+				require.Equal(t, "test-dash-23", query.Result.Slug)
+				require.Equal(t, savedDash.Id, query.Result.Id)
+				require.Equal(t, savedDash.Uid, query.Result.Uid)
 				So(query.Result.IsFolder, ShouldBeFalse)
 			})
 
-			Convey("Should be able to get dashboard by slug", func() {
+			t.Run("Should be able to get dashboard by slug", func(t *testing.T) {
 				query := models.GetDashboardQuery{
 					Slug:  "test-dash-23",
 					OrgId: 1,
 				}
 
 				err := GetDashboard(&query)
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
-				So(query.Result.Title, ShouldEqual, "test dash 23")
-				So(query.Result.Slug, ShouldEqual, "test-dash-23")
-				So(query.Result.Id, ShouldEqual, savedDash.Id)
-				So(query.Result.Uid, ShouldEqual, savedDash.Uid)
+				require.Equal(t, "test dash 23", query.Result.Title)
+				require.Equal(t, "test-dash-23", query.Result.Slug)
+				require.Equal(t, savedDash.Id, query.Result.Id)
+				require.Equal(t, savedDash.Uid, query.Result.Uid)
 				So(query.Result.IsFolder, ShouldBeFalse)
 			})
 
-			Convey("Should be able to get dashboard by uid", func() {
+			t.Run("Should be able to get dashboard by uid", func(t *testing.T) {
 				query := models.GetDashboardQuery{
 					Uid:   savedDash.Uid,
 					OrgId: 1,
 				}
 
 				err := GetDashboard(&query)
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
-				So(query.Result.Title, ShouldEqual, "test dash 23")
-				So(query.Result.Slug, ShouldEqual, "test-dash-23")
-				So(query.Result.Id, ShouldEqual, savedDash.Id)
-				So(query.Result.Uid, ShouldEqual, savedDash.Uid)
+				require.Equal(t, "test dash 23", query.Result.Title)
+				require.Equal(t, "test-dash-23", query.Result.Slug)
+				require.Equal(t, savedDash.Id, query.Result.Id)
+				require.Equal(t, savedDash.Uid, query.Result.Uid)
 				So(query.Result.IsFolder, ShouldBeFalse)
 			})
 
-			Convey("Shouldn't be able to get a dashboard with just an OrgID", func() {
+			t.Run("Shouldn't be able to get a dashboard with just an OrgID", func(t *testing.T) {
 				query := models.GetDashboardQuery{
 					OrgId: 1,
 				}
 
 				err := GetDashboard(&query)
-				So(err, ShouldEqual, models.ErrDashboardIdentifierNotSet)
+				require.Equal(t, models.ErrDashboardIdentifierNotSet, err)
 			})
 
-			Convey("Should be able to delete dashboard", func() {
+			t.Run("Should be able to delete dashboard", func(t *testing.T) {
 				dash := insertTestDashboard(t, sqlStore, "delete me", 1, 0, false, "delete this")
 
 				err := DeleteDashboard(&models.DeleteDashboardCommand{
 					Id:    dash.Id,
 					OrgId: 1,
 				})
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 			})
 
-			Convey("Should retry generation of uid once if it fails.", func() {
+			t.Run("Should retry generation of uid once if it fails.", func(t *testing.T) {
 				timesCalled := 0
 				generateNewUid = func() string {
 					timesCalled += 1
@@ -130,12 +129,12 @@ func TestDashboardDataAccess(t *testing.T) {
 					}),
 				}
 				_, err := sqlStore.SaveDashboard(cmd)
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
 				generateNewUid = util.GenerateShortUID
 			})
 
-			Convey("Should be able to create dashboard", func() {
+			t.Run("Should be able to create dashboard", func(t *testing.T) {
 				cmd := models.SaveDashboardCommand{
 					OrgId: 1,
 					Dashboard: simplejson.NewFromAny(map[string]interface{}{
@@ -145,14 +144,14 @@ func TestDashboardDataAccess(t *testing.T) {
 					UserId: 100,
 				}
 				dashboard, err := sqlStore.SaveDashboard(cmd)
-				So(err, ShouldBeNil)
-				So(dashboard.CreatedBy, ShouldEqual, 100)
+				require.NoError(t, err)
+				require.Equal(t, 100, dashboard.CreatedBy)
 				So(dashboard.Created.IsZero(), ShouldBeFalse)
-				So(dashboard.UpdatedBy, ShouldEqual, 100)
+				require.Equal(t, 100, dashboard.UpdatedBy)
 				So(dashboard.Updated.IsZero(), ShouldBeFalse)
 			})
 
-			Convey("Should be able to update dashboard by id and remove folderId", func() {
+			t.Run("Should be able to update dashboard by id and remove folderId", func(t *testing.T) {
 				cmd := models.SaveDashboardCommand{
 					OrgId: 1,
 					Dashboard: simplejson.NewFromAny(map[string]interface{}{
@@ -165,8 +164,8 @@ func TestDashboardDataAccess(t *testing.T) {
 					UserId:    100,
 				}
 				dash, err := sqlStore.SaveDashboard(cmd)
-				So(err, ShouldBeNil)
-				So(dash.FolderId, ShouldEqual, 2)
+				require.NoError(t, err)
+				require.Equal(t, 2, dash.FolderId)
 
 				cmd = models.SaveDashboardCommand{
 					OrgId: 1,
@@ -180,7 +179,7 @@ func TestDashboardDataAccess(t *testing.T) {
 					UserId:    100,
 				}
 				_, err = sqlStore.SaveDashboard(cmd)
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
 				query := models.GetDashboardQuery{
 					Id:    savedDash.Id,
@@ -188,26 +187,26 @@ func TestDashboardDataAccess(t *testing.T) {
 				}
 
 				err = GetDashboard(&query)
-				So(err, ShouldBeNil)
-				So(query.Result.FolderId, ShouldEqual, 0)
-				So(query.Result.CreatedBy, ShouldEqual, savedDash.CreatedBy)
+				require.NoError(t, err)
+				require.Equal(t, 0, query.Result.FolderId)
+				require.Equal(t, savedDash.CreatedBy, query.Result.CreatedBy)
 				So(query.Result.Created, ShouldHappenWithin, 3*time.Second, savedDash.Created)
-				So(query.Result.UpdatedBy, ShouldEqual, 100)
+				require.Equal(t, 100, query.Result.UpdatedBy)
 				So(query.Result.Updated.IsZero(), ShouldBeFalse)
 			})
 
-			Convey("Should be able to delete empty folder", func() {
+			t.Run("Should be able to delete empty folder", func(t *testing.T) {
 				emptyFolder := insertTestDashboard(t, sqlStore, "2 test dash folder", 1, 0, true, "prod", "webapp")
 
 				deleteCmd := &models.DeleteDashboardCommand{Id: emptyFolder.Id}
 				err := DeleteDashboard(deleteCmd)
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 			})
 
-			Convey("Should be able to delete a dashboard folder and its children", func() {
+			t.Run("Should be able to delete a dashboard folder and its children", func(t *testing.T) {
 				deleteCmd := &models.DeleteDashboardCommand{Id: savedFolder.Id}
 				err := DeleteDashboard(deleteCmd)
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
 				query := search.FindPersistedDashboardsQuery{
 					OrgId:        1,
@@ -216,12 +215,12 @@ func TestDashboardDataAccess(t *testing.T) {
 				}
 
 				err = SearchDashboards(&query)
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
-				So(len(query.Result), ShouldEqual, 0)
+				require.Equal(t, 0, len(query.Result))
 			})
 
-			Convey("Should return error if no dashboard is found for update when dashboard id is greater than zero", func() {
+			t.Run("Should return error if no dashboard is found for update when dashboard id is greater than zero", func(t *testing.T) {
 				cmd := models.SaveDashboardCommand{
 					OrgId:     1,
 					Overwrite: true,
@@ -233,10 +232,10 @@ func TestDashboardDataAccess(t *testing.T) {
 				}
 
 				_, err := sqlStore.SaveDashboard(cmd)
-				So(err, ShouldEqual, models.ErrDashboardNotFound)
+				require.Equal(t, models.ErrDashboardNotFound, err)
 			})
 
-			Convey("Should not return error if no dashboard is found for update when dashboard id is zero", func() {
+			t.Run("Should not return error if no dashboard is found for update when dashboard id is zero", func(t *testing.T) {
 				cmd := models.SaveDashboardCommand{
 					OrgId:     1,
 					Overwrite: true,
@@ -247,19 +246,19 @@ func TestDashboardDataAccess(t *testing.T) {
 					}),
 				}
 				_, err := sqlStore.SaveDashboard(cmd)
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 			})
 
-			Convey("Should be able to get dashboard tags", func() {
+			t.Run("Should be able to get dashboard tags", func(t *testing.T) {
 				query := models.GetDashboardTagsQuery{OrgId: 1}
 
 				err := GetDashboardTags(&query)
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
-				So(len(query.Result), ShouldEqual, 2)
+				require.Equal(t, 2, len(query.Result))
 			})
 
-			Convey("Should be able to search for dashboard folder", func() {
+			t.Run("Should be able to search for dashboard folder", func(t *testing.T) {
 				query := search.FindPersistedDashboardsQuery{
 					Title:        "1 test dash folder",
 					OrgId:        1,
@@ -267,16 +266,16 @@ func TestDashboardDataAccess(t *testing.T) {
 				}
 
 				err := SearchDashboards(&query)
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
-				So(len(query.Result), ShouldEqual, 1)
+				require.Equal(t, 1, len(query.Result))
 				hit := query.Result[0]
-				So(hit.Type, ShouldEqual, search.DashHitFolder)
-				So(hit.URL, ShouldEqual, fmt.Sprintf("/dashboards/f/%s/%s", savedFolder.Uid, savedFolder.Slug))
-				So(hit.FolderTitle, ShouldEqual, "")
+				require.Equal(t, search.DashHitFolder, hit.Type)
+				require.Equal(t, fmt.Sprintf("/dashboards/f/%s/%s", savedFolder.Uid, savedFolder.Slug), hit.URL)
+				require.Equal(t, "", hit.FolderTitle)
 			})
 
-			Convey("Should be able to limit search", func() {
+			t.Run("Should be able to limit search", func(t *testing.T) {
 				query := search.FindPersistedDashboardsQuery{
 					OrgId:        1,
 					Limit:        1,
@@ -284,13 +283,13 @@ func TestDashboardDataAccess(t *testing.T) {
 				}
 
 				err := SearchDashboards(&query)
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
-				So(len(query.Result), ShouldEqual, 1)
-				So(query.Result[0].Title, ShouldEqual, "1 test dash folder")
+				require.Equal(t, 1, len(query.Result))
+				require.Equal(t, "1 test dash folder", query.Result[0].Title)
 			})
 
-			Convey("Should be able to search beyond limit using paging", func() {
+			t.Run("Should be able to search beyond limit using paging", func(t *testing.T) {
 				query := search.FindPersistedDashboardsQuery{
 					OrgId:        1,
 					Limit:        1,
@@ -299,13 +298,13 @@ func TestDashboardDataAccess(t *testing.T) {
 				}
 
 				err := SearchDashboards(&query)
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
-				So(len(query.Result), ShouldEqual, 1)
-				So(query.Result[0].Title, ShouldEqual, "test dash 23")
+				require.Equal(t, 1, len(query.Result))
+				require.Equal(t, "test dash 23", query.Result[0].Title)
 			})
 
-			Convey("Should be able to filter by tag and type", func() {
+			t.Run("Should be able to filter by tag and type", func(t *testing.T) {
 				query := search.FindPersistedDashboardsQuery{
 					OrgId:        1,
 					Type:         "dash-db",
@@ -314,13 +313,13 @@ func TestDashboardDataAccess(t *testing.T) {
 				}
 
 				err := SearchDashboards(&query)
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
-				So(len(query.Result), ShouldEqual, 3)
-				So(query.Result[0].Title, ShouldEqual, "test dash 23")
+				require.Equal(t, 3, len(query.Result))
+				require.Equal(t, "test dash 23", query.Result[0].Title)
 			})
 
-			Convey("Should be able to search for a dashboard folder's children", func() {
+			t.Run("Should be able to search for a dashboard folder's children", func(t *testing.T) {
 				query := search.FindPersistedDashboardsQuery{
 					OrgId:        1,
 					FolderIds:    []int64{savedFolder.Id},
@@ -328,82 +327,82 @@ func TestDashboardDataAccess(t *testing.T) {
 				}
 
 				err := SearchDashboards(&query)
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
-				So(len(query.Result), ShouldEqual, 2)
+				require.Equal(t, 2, len(query.Result))
 				hit := query.Result[0]
-				So(hit.ID, ShouldEqual, savedDash.Id)
-				So(hit.URL, ShouldEqual, fmt.Sprintf("/d/%s/%s", savedDash.Uid, savedDash.Slug))
-				So(hit.FolderID, ShouldEqual, savedFolder.Id)
-				So(hit.FolderUID, ShouldEqual, savedFolder.Uid)
-				So(hit.FolderTitle, ShouldEqual, savedFolder.Title)
-				So(hit.FolderURL, ShouldEqual, fmt.Sprintf("/dashboards/f/%s/%s", savedFolder.Uid, savedFolder.Slug))
+				require.Equal(t, savedDash.Id, hit.ID)
+				require.Equal(t, fmt.Sprintf("/d/%s/%s", savedDash.Uid, savedDash.Slug), hit.URL)
+				require.Equal(t, savedFolder.Id, hit.FolderID)
+				require.Equal(t, savedFolder.Uid, hit.FolderUID)
+				require.Equal(t, savedFolder.Title, hit.FolderTitle)
+				require.Equal(t, fmt.Sprintf("/dashboards/f/%s/%s", savedFolder.Uid, savedFolder.Slug), hit.FolderURL)
 			})
 
-			Convey("Should be able to search for dashboard by dashboard ids", func() {
-				Convey("should be able to find two dashboards by id", func() {
+			t.Run("Should be able to search for dashboard by dashboard ids", func(t *testing.T) {
+				t.Run("should be able to find two dashboards by id", func(t *testing.T) {
 					query := search.FindPersistedDashboardsQuery{
 						DashboardIds: []int64{savedDash.Id, savedDash2.Id},
 						SignedInUser: &models.SignedInUser{OrgId: 1, OrgRole: models.ROLE_EDITOR},
 					}
 
 					err := SearchDashboards(&query)
-					So(err, ShouldBeNil)
+					require.NoError(t, err)
 
-					So(len(query.Result), ShouldEqual, 2)
+					require.Equal(t, 2, len(query.Result))
 
 					hit := query.Result[0]
-					So(len(hit.Tags), ShouldEqual, 2)
+					require.Equal(t, 2, len(hit.Tags))
 
 					hit2 := query.Result[1]
-					So(len(hit2.Tags), ShouldEqual, 1)
+					require.Equal(t, 1, len(hit2.Tags))
 				})
 			})
 
-			Convey("Given two dashboards, one is starred dashboard by user 10, other starred by user 1", func() {
+			t.Run("Given two dashboards, one is starred dashboard by user 10, other starred by user 1", func(t *testing.T) {
 				starredDash := insertTestDashboard(t, sqlStore, "starred dash", 1, 0, false)
 				err := StarDashboard(&models.StarDashboardCommand{
 					DashboardId: starredDash.Id,
 					UserId:      10,
 				})
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
 				err = StarDashboard(&models.StarDashboardCommand{
 					DashboardId: savedDash.Id,
 					UserId:      1,
 				})
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
-				Convey("Should be able to search for starred dashboards", func() {
+				t.Run("Should be able to search for starred dashboards", func(t *testing.T) {
 					query := search.FindPersistedDashboardsQuery{
 						SignedInUser: &models.SignedInUser{UserId: 10, OrgId: 1, OrgRole: models.ROLE_EDITOR},
 						IsStarred:    true,
 					}
 					err := SearchDashboards(&query)
 
-					So(err, ShouldBeNil)
-					So(len(query.Result), ShouldEqual, 1)
-					So(query.Result[0].Title, ShouldEqual, "starred dash")
+					require.NoError(t, err)
+					require.Equal(t, 1, len(query.Result))
+					require.Equal(t, "starred dash", query.Result[0].Title)
 				})
 			})
 		})
 
-		Convey("Given a plugin with imported dashboards", func() {
+		t.Run("Given a plugin with imported dashboards", func(t *testing.T) {
 			pluginId := "test-app"
 
 			appFolder := insertTestDashboardForPlugin(t, sqlStore, "app-test", 1, 0, true, pluginId)
 			insertTestDashboardForPlugin(t, sqlStore, "app-dash1", 1, appFolder.Id, false, pluginId)
 			insertTestDashboardForPlugin(t, sqlStore, "app-dash2", 1, appFolder.Id, false, pluginId)
 
-			Convey("Should return imported dashboard", func() {
+			t.Run("Should return imported dashboard", func(t *testing.T) {
 				query := models.GetDashboardsByPluginIdQuery{
 					PluginId: pluginId,
 					OrgId:    1,
 				}
 
 				err := GetDashboardsByPluginId(&query)
-				So(err, ShouldBeNil)
-				So(len(query.Result), ShouldEqual, 2)
+				require.NoError(t, err)
+				require.Equal(t, 2, len(query.Result))
 			})
 		})
 	})
@@ -411,7 +410,7 @@ func TestDashboardDataAccess(t *testing.T) {
 
 func TestDashboard_SortingOptions(t *testing.T) {
 	// insertTestDashboard uses GoConvey's assertions. Workaround.
-	Convey("test with multiple sorting options", t, func() {
+	t.Run("test with multiple sorting options", func(t *testing.T) {
 		sqlStore := InitTestDB(t)
 		dashB := insertTestDashboard(t, sqlStore, "Beta", 1, 0, false)
 		dashA := insertTestDashboard(t, sqlStore, "Alfa", 1, 0, false)
@@ -476,7 +475,7 @@ func insertTestDashboardForPlugin(t *testing.T, sqlStore *SQLStore, title string
 	}
 
 	dash, err := sqlStore.SaveDashboard(cmd)
-	So(err, ShouldBeNil)
+	require.NoError(t, err)
 
 	return dash
 }

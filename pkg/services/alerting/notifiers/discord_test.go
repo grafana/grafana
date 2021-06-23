@@ -5,13 +5,13 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
-	. "github.com/smartystreets/goconvey/convey"
+	"github.com/stretchr/testify/require"
 )
 
 func TestDiscordNotifier(t *testing.T) {
-	Convey("Discord notifier tests", t, func() {
-		Convey("Parsing alert notification from settings", func() {
-			Convey("empty settings should return error", func() {
+	t.Run("Discord notifier tests", func(t *testing.T) {
+		t.Run("Parsing alert notification from settings", func(t *testing.T) {
+			t.Run("empty settings should return error", func(t *testing.T) {
 				json := `{ }`
 
 				settingsJSON, _ := simplejson.NewJson([]byte(json))
@@ -22,10 +22,10 @@ func TestDiscordNotifier(t *testing.T) {
 				}
 
 				_, err := newDiscordNotifier(model)
-				So(err, ShouldNotBeNil)
+				require.Error(t, err)
 			})
 
-			Convey("settings should trigger incident", func() {
+			t.Run("settings should trigger incident", func(t *testing.T) {
 				json := `
 				{
 					"avatar_url": "https://grafana.com/img/fav32.png",
@@ -43,12 +43,12 @@ func TestDiscordNotifier(t *testing.T) {
 				not, err := newDiscordNotifier(model)
 				discordNotifier := not.(*DiscordNotifier)
 
-				So(err, ShouldBeNil)
-				So(discordNotifier.Name, ShouldEqual, "discord_testing")
-				So(discordNotifier.Type, ShouldEqual, "discord")
-				So(discordNotifier.AvatarURL, ShouldEqual, "https://grafana.com/img/fav32.png")
-				So(discordNotifier.Content, ShouldEqual, "@everyone Please check this notification")
-				So(discordNotifier.WebhookURL, ShouldEqual, "https://web.hook/")
+				require.NoError(t, err)
+				require.Equal(t, "discord_testing", discordNotifier.Name)
+				require.Equal(t, "discord", discordNotifier.Type)
+				require.Equal(t, "https://grafana.com/img/fav32.png", discordNotifier.AvatarURL)
+				require.Equal(t, "@everyone Please check this notification", discordNotifier.Content)
+				require.Equal(t, "https://web.hook/", discordNotifier.WebhookURL)
 			})
 		})
 	})

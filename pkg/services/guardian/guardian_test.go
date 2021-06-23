@@ -9,7 +9,6 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
-	. "github.com/smartystreets/goconvey/convey"
 	"github.com/stretchr/testify/require"
 )
 
@@ -680,7 +679,7 @@ func (sc *scenarioContext) verifyUpdateChildDashboardPermissionsWithOverrideShou
 }
 
 func TestGuardianGetHiddenACL(t *testing.T) {
-	Convey("Get hidden ACL tests", t, func() {
+	t.Run("Get hidden ACL tests", func(t *testing.T) {
 		bus.ClearBusHandlers()
 
 		bus.AddHandler("test", func(query *models.GetDashboardAclInfoListQuery) error {
@@ -695,7 +694,7 @@ func TestGuardianGetHiddenACL(t *testing.T) {
 		cfg := setting.NewCfg()
 		cfg.HiddenUsers = map[string]struct{}{"user2": {}}
 
-		Convey("Should get hidden acl", func() {
+		t.Run("Should get hidden acl", func(t *testing.T) {
 			user := &models.SignedInUser{
 				OrgId:  orgID,
 				UserId: 1,
@@ -704,13 +703,13 @@ func TestGuardianGetHiddenACL(t *testing.T) {
 			g := New(dashboardID, orgID, user)
 
 			hiddenACL, err := g.GetHiddenACL(cfg)
-			So(err, ShouldBeNil)
+			require.NoError(t, err)
 
 			So(hiddenACL, ShouldHaveLength, 1)
-			So(hiddenACL[0].UserID, ShouldEqual, 2)
+			require.Equal(t, 2, hiddenACL[0].UserID)
 		})
 
-		Convey("Grafana admin should not get hidden acl", func() {
+		t.Run("Grafana admin should not get hidden acl", func(t *testing.T) {
 			user := &models.SignedInUser{
 				OrgId:          orgID,
 				UserId:         1,
@@ -720,7 +719,7 @@ func TestGuardianGetHiddenACL(t *testing.T) {
 			g := New(dashboardID, orgID, user)
 
 			hiddenACL, err := g.GetHiddenACL(cfg)
-			So(err, ShouldBeNil)
+			require.NoError(t, err)
 
 			So(hiddenACL, ShouldHaveLength, 0)
 		})

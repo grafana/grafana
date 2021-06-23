@@ -14,9 +14,9 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	. "github.com/smartystreets/goconvey/convey"
 )
 
 const (
@@ -31,7 +31,7 @@ const (
 var fakeService *fakeDashboardProvisioningService
 
 func TestCreatingNewDashboardFileReader(t *testing.T) {
-	Convey("creating new dashboard file reader", t, func() {
+	t.Run("creating new dashboard file reader", func(t *testing.T) {
 		cfg := &config{
 			Name:    "Default",
 			Type:    "file",
@@ -40,29 +40,29 @@ func TestCreatingNewDashboardFileReader(t *testing.T) {
 			Options: map[string]interface{}{},
 		}
 
-		Convey("using path parameter", func() {
+		t.Run("using path parameter", func(t *testing.T) {
 			cfg.Options["path"] = defaultDashboards
 			reader, err := NewDashboardFileReader(cfg, log.New("test-logger"), nil)
-			So(err, ShouldBeNil)
-			So(reader.Path, ShouldNotEqual, "")
+			require.NoError(t, err)
+			require.NotEqual(t, "", reader.Path)
 		})
 
-		Convey("using folder as options", func() {
+		t.Run("using folder as options", func(t *testing.T) {
 			cfg.Options["folder"] = defaultDashboards
 			reader, err := NewDashboardFileReader(cfg, log.New("test-logger"), nil)
-			So(err, ShouldBeNil)
-			So(reader.Path, ShouldNotEqual, "")
+			require.NoError(t, err)
+			require.NotEqual(t, "", reader.Path)
 		})
 
-		Convey("using foldersFromFilesStructure as options", func() {
+		t.Run("using foldersFromFilesStructure as options", func(t *testing.T) {
 			cfg.Options["path"] = foldersFromFilesStructure
 			cfg.Options["foldersFromFilesStructure"] = true
 			reader, err := NewDashboardFileReader(cfg, log.New("test-logger"), nil)
-			So(err, ShouldBeNil)
-			So(reader.Path, ShouldNotEqual, "")
+			require.NoError(t, err)
+			require.NotEqual(t, "", reader.Path)
 		})
 
-		Convey("using full path", func() {
+		t.Run("using full path", func(t *testing.T) {
 			fullPath := "/var/lib/grafana/dashboards"
 			if runtime.GOOS == "windows" {
 				fullPath = `c:\var\lib\grafana`
@@ -70,25 +70,25 @@ func TestCreatingNewDashboardFileReader(t *testing.T) {
 
 			cfg.Options["folder"] = fullPath
 			reader, err := NewDashboardFileReader(cfg, log.New("test-logger"), nil)
-			So(err, ShouldBeNil)
+			require.NoError(t, err)
 
-			So(reader.Path, ShouldEqual, fullPath)
-			So(filepath.IsAbs(reader.Path), ShouldBeTrue)
+			require.Equal(t, fullPath, reader.Path)
+			require.True(t, filepath.IsAbs(reader.Path))
 		})
 
-		Convey("using relative path", func() {
+		t.Run("using relative path", func(t *testing.T) {
 			cfg.Options["folder"] = defaultDashboards
 			reader, err := NewDashboardFileReader(cfg, log.New("test-logger"), nil)
-			So(err, ShouldBeNil)
+			require.NoError(t, err)
 
 			resolvedPath := reader.resolvedPath()
-			So(filepath.IsAbs(resolvedPath), ShouldBeTrue)
+			require.True(t, filepath.IsAbs(resolvedPath))
 		})
 	})
 }
 
 func TestDashboardFileReader(t *testing.T) {
-	Convey("Dashboard file reader", t, func() {
+	t.Run("Dashboard file reader", func(t *testing.T) {
 		bus.ClearBusHandlers()
 		origNewDashboardProvisioningService := dashboards.NewProvisioningService
 		Reset(func() {
@@ -99,7 +99,7 @@ func TestDashboardFileReader(t *testing.T) {
 		bus.AddHandler("test", mockGetDashboardQuery)
 		logger := log.New("test.logger")
 
-		Convey("Reading dashboards from disk", func() {
+		t.Run("Reading dashboards from disk", func(t *testing.T) {
 			cfg := &config{
 				Name:    "Default",
 				Type:    "file",
@@ -108,15 +108,15 @@ func TestDashboardFileReader(t *testing.T) {
 				Options: map[string]interface{}{},
 			}
 
-			Convey("Can read default dashboard", func() {
+			t.Run("Can read default dashboard", func(t *testing.T) {
 				cfg.Options["path"] = defaultDashboards
 				cfg.Folder = "Team A"
 
 				reader, err := NewDashboardFileReader(cfg, logger, nil)
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
 				err = reader.walkDisk()
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
 				folders := 0
 				dashboards := 0
@@ -129,11 +129,11 @@ func TestDashboardFileReader(t *testing.T) {
 					}
 				}
 
-				So(folders, ShouldEqual, 1)
-				So(dashboards, ShouldEqual, 2)
+				require.Equal(t, 1, folders)
+				require.Equal(t, 2, dashboards)
 			})
 
-			Convey("Can read default dashboard and replace old version in database", func() {
+			t.Run("Can read default dashboard and replace old version in database", func(t *testing.T) {
 				cfg.Options["path"] = oneDashboard
 
 				stat, _ := os.Stat(oneDashboard + "/dashboard1.json")
@@ -144,28 +144,28 @@ func TestDashboardFileReader(t *testing.T) {
 				})
 
 				reader, err := NewDashboardFileReader(cfg, logger, nil)
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
 				err = reader.walkDisk()
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
-				So(len(fakeService.inserted), ShouldEqual, 1)
+				require.Equal(t, 1, len(fakeService.inserted))
 			})
 
-			Convey("Dashboard with older timestamp and the same checksum will not replace imported dashboard", func() {
+			t.Run("Dashboard with older timestamp and the same checksum will not replace imported dashboard", func(t *testing.T) {
 				cfg.Options["path"] = oneDashboard
 				absPath, err := filepath.Abs(oneDashboard + "/dashboard1.json")
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 				stat, err := os.Stat(oneDashboard + "/dashboard1.json")
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 				file, err := os.Open(filepath.Clean(absPath))
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 				t.Cleanup(func() {
 					_ = file.Close()
 				})
 
 				checksum, err := util.Md5Sum(file)
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
 				fakeService.provisioned = map[string][]*models.DashboardProvisioning{
 					"Default": {
@@ -179,19 +179,19 @@ func TestDashboardFileReader(t *testing.T) {
 				}
 
 				reader, err := NewDashboardFileReader(cfg, logger, nil)
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
 				err = reader.walkDisk()
-				So(err, ShouldBeNil)
-				So(len(fakeService.inserted), ShouldEqual, 0)
+				require.NoError(t, err)
+				require.Equal(t, 0, len(fakeService.inserted))
 			})
 
-			Convey("Dashboard with older timestamp and different checksum will replace imported dashboard", func() {
+			t.Run("Dashboard with older timestamp and different checksum will replace imported dashboard", func(t *testing.T) {
 				cfg.Options["path"] = oneDashboard
 				absPath, err := filepath.Abs(oneDashboard + "/dashboard1.json")
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 				stat, err := os.Stat(oneDashboard + "/dashboard1.json")
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
 				fakeService.provisioned = map[string][]*models.DashboardProvisioning{
 					"Default": {
@@ -205,27 +205,27 @@ func TestDashboardFileReader(t *testing.T) {
 				}
 
 				reader, err := NewDashboardFileReader(cfg, logger, nil)
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
 				err = reader.walkDisk()
-				So(err, ShouldBeNil)
-				So(len(fakeService.inserted), ShouldEqual, 1)
+				require.NoError(t, err)
+				require.Equal(t, 1, len(fakeService.inserted))
 			})
 
-			Convey("Dashboard with newer timestamp and the same checksum will not replace imported dashboard", func() {
+			t.Run("Dashboard with newer timestamp and the same checksum will not replace imported dashboard", func(t *testing.T) {
 				cfg.Options["path"] = oneDashboard
 				absPath, err := filepath.Abs(oneDashboard + "/dashboard1.json")
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 				stat, err := os.Stat(oneDashboard + "/dashboard1.json")
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 				file, err := os.Open(filepath.Clean(absPath))
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 				t.Cleanup(func() {
 					_ = file.Close()
 				})
 
 				checksum, err := util.Md5Sum(file)
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
 				fakeService.provisioned = map[string][]*models.DashboardProvisioning{
 					"Default": {
@@ -239,19 +239,19 @@ func TestDashboardFileReader(t *testing.T) {
 				}
 
 				reader, err := NewDashboardFileReader(cfg, logger, nil)
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
 				err = reader.walkDisk()
-				So(err, ShouldBeNil)
-				So(len(fakeService.inserted), ShouldEqual, 0)
+				require.NoError(t, err)
+				require.Equal(t, 0, len(fakeService.inserted))
 			})
 
-			Convey("Dashboard with newer timestamp and different checksum should replace imported dashboard", func() {
+			t.Run("Dashboard with newer timestamp and different checksum should replace imported dashboard", func(t *testing.T) {
 				cfg.Options["path"] = oneDashboard
 				absPath, err := filepath.Abs(oneDashboard + "/dashboard1.json")
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 				stat, err := os.Stat(oneDashboard + "/dashboard1.json")
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
 				fakeService.provisioned = map[string][]*models.DashboardProvisioning{
 					"Default": {
@@ -265,36 +265,36 @@ func TestDashboardFileReader(t *testing.T) {
 				}
 
 				reader, err := NewDashboardFileReader(cfg, logger, nil)
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
 				err = reader.walkDisk()
-				So(err, ShouldBeNil)
-				So(len(fakeService.inserted), ShouldEqual, 1)
+				require.NoError(t, err)
+				require.Equal(t, 1, len(fakeService.inserted))
 			})
 
-			Convey("Overrides id from dashboard.json files", func() {
+			t.Run("Overrides id from dashboard.json files", func(t *testing.T) {
 				cfg.Options["path"] = containingID
 
 				reader, err := NewDashboardFileReader(cfg, logger, nil)
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
 				err = reader.walkDisk()
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
-				So(len(fakeService.inserted), ShouldEqual, 1)
+				require.Equal(t, 1, len(fakeService.inserted))
 			})
 
-			Convey("Get folder from files structure", func() {
+			t.Run("Get folder from files structure", func(t *testing.T) {
 				cfg.Options["path"] = foldersFromFilesStructure
 				cfg.Options["foldersFromFilesStructure"] = true
 
 				reader, err := NewDashboardFileReader(cfg, logger, nil)
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
 				err = reader.walkDisk()
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
-				So(len(fakeService.inserted), ShouldEqual, 5)
+				require.Equal(t, 5, len(fakeService.inserted))
 
 				foldersCount := 0
 				for _, d := range fakeService.inserted {
@@ -302,7 +302,7 @@ func TestDashboardFileReader(t *testing.T) {
 						foldersCount++
 					}
 				}
-				So(foldersCount, ShouldEqual, 2)
+				require.Equal(t, 2, foldersCount)
 
 				foldersAndDashboards := make(map[string]struct{}, 5)
 				for _, d := range fakeService.inserted {
@@ -313,7 +313,7 @@ func TestDashboardFileReader(t *testing.T) {
 
 					switch title {
 					case "folderOne", "folderTwo":
-						So(d.Dashboard.IsFolder, ShouldBeTrue)
+						require.True(t, d.Dashboard.IsFolder)
 					case "Grafana1", "Grafana2", "RootDashboard":
 						So(d.Dashboard.IsFolder, ShouldBeFalse)
 					default:
@@ -324,7 +324,7 @@ func TestDashboardFileReader(t *testing.T) {
 				}
 			})
 
-			Convey("Invalid configuration should return error", func() {
+			t.Run("Invalid configuration should return error", func(t *testing.T) {
 				cfg := &config{
 					Name:   "Default",
 					Type:   "file",
@@ -333,31 +333,31 @@ func TestDashboardFileReader(t *testing.T) {
 				}
 
 				_, err := NewDashboardFileReader(cfg, logger, nil)
-				So(err, ShouldNotBeNil)
+				require.Error(t, err)
 			})
 
-			Convey("Broken dashboards should not cause error", func() {
+			t.Run("Broken dashboards should not cause error", func(t *testing.T) {
 				cfg.Options["path"] = brokenDashboards
 
 				_, err := NewDashboardFileReader(cfg, logger, nil)
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 			})
 
-			Convey("Two dashboard providers should be able to provisioned the same dashboard without uid", func() {
+			t.Run("Two dashboard providers should be able to provisioned the same dashboard without uid", func(t *testing.T) {
 				cfg1 := &config{Name: "1", Type: "file", OrgID: 1, Folder: "f1", Options: map[string]interface{}{"path": containingID}}
 				cfg2 := &config{Name: "2", Type: "file", OrgID: 1, Folder: "f2", Options: map[string]interface{}{"path": containingID}}
 
 				reader1, err := NewDashboardFileReader(cfg1, logger, nil)
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
 				err = reader1.walkDisk()
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
 				reader2, err := NewDashboardFileReader(cfg2, logger, nil)
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
 				err = reader2.walkDisk()
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
 				var folderCount int
 				var dashCount int
@@ -369,12 +369,12 @@ func TestDashboardFileReader(t *testing.T) {
 					}
 				}
 
-				So(folderCount, ShouldEqual, 2)
-				So(dashCount, ShouldEqual, 2)
+				require.Equal(t, 2, folderCount)
+				require.Equal(t, 2, dashCount)
 			})
 		})
 
-		Convey("Should not create new folder if folder name is missing", func() {
+		t.Run("Should not create new folder if folder name is missing", func(t *testing.T) {
 			cfg := &config{
 				Name:   "Default",
 				Type:   "file",
@@ -386,10 +386,10 @@ func TestDashboardFileReader(t *testing.T) {
 			}
 
 			_, err := getOrCreateFolderID(cfg, fakeService, cfg.Folder)
-			So(err, ShouldEqual, ErrFolderNameMissing)
+			require.Equal(t, ErrFolderNameMissing, err)
 		})
 
-		Convey("can get or Create dashboard folder", func() {
+		t.Run("can get or Create dashboard folder", func(t *testing.T) {
 			cfg := &config{
 				Name:   "Default",
 				Type:   "file",
@@ -401,32 +401,32 @@ func TestDashboardFileReader(t *testing.T) {
 			}
 
 			folderID, err := getOrCreateFolderID(cfg, fakeService, cfg.Folder)
-			So(err, ShouldBeNil)
+			require.NoError(t, err)
 			inserted := false
 			for _, d := range fakeService.inserted {
 				if d.Dashboard.IsFolder && d.Dashboard.Id == folderID {
 					inserted = true
 				}
 			}
-			So(len(fakeService.inserted), ShouldEqual, 1)
-			So(inserted, ShouldBeTrue)
+			require.Equal(t, 1, len(fakeService.inserted))
+			require.True(t, inserted)
 		})
 
-		Convey("Walking the folder with dashboards", func() {
+		t.Run("Walking the folder with dashboards", func(t *testing.T) {
 			noFiles := map[string]os.FileInfo{}
 
-			Convey("should skip dirs that starts with .", func() {
+			t.Run("should skip dirs that starts with .", func(t *testing.T) {
 				shouldSkip := createWalkFn(noFiles)("path", &FakeFileInfo{isDirectory: true, name: ".folder"}, nil)
-				So(shouldSkip, ShouldEqual, filepath.SkipDir)
+				require.Equal(t, filepath.SkipDir, shouldSkip)
 			})
 
-			Convey("should keep walking if file is not .json", func() {
+			t.Run("should keep walking if file is not .json", func(t *testing.T) {
 				shouldSkip := createWalkFn(noFiles)("path", &FakeFileInfo{isDirectory: true, name: "folder"}, nil)
 				So(shouldSkip, ShouldBeNil)
 			})
 		})
 
-		Convey("Given missing dashboard file", func() {
+		t.Run("Given missing dashboard file", func(t *testing.T) {
 			cfg := &config{
 				Name:  "Default",
 				Type:  "file",
@@ -442,10 +442,10 @@ func TestDashboardFileReader(t *testing.T) {
 			}
 
 			absPath1, err := filepath.Abs(unprovision + "/dashboard1.json")
-			So(err, ShouldBeNil)
+			require.NoError(t, err)
 			// This one does not exist on disk, simulating a deleted file
 			absPath2, err := filepath.Abs(unprovision + "/dashboard2.json")
-			So(err, ShouldBeNil)
+			require.NoError(t, err)
 
 			fakeService.provisioned = map[string][]*models.DashboardProvisioning{
 				"Default": {
@@ -454,30 +454,30 @@ func TestDashboardFileReader(t *testing.T) {
 				},
 			}
 
-			Convey("Missing dashboard should be unprovisioned if DisableDeletion = true", func() {
+			t.Run("Missing dashboard should be unprovisioned if DisableDeletion = true", func(t *testing.T) {
 				cfg.DisableDeletion = true
 
 				reader, err := NewDashboardFileReader(cfg, logger, nil)
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
 				err = reader.walkDisk()
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
-				So(len(fakeService.provisioned["Default"]), ShouldEqual, 1)
-				So(fakeService.provisioned["Default"][0].ExternalId, ShouldEqual, absPath1)
+				require.Equal(t, 1, len(fakeService.provisioned["Default"]))
+				require.Equal(t, absPath1, fakeService.provisioned["Default"][0].ExternalId)
 			})
 
-			Convey("Missing dashboard should be deleted if DisableDeletion = false", func() {
+			t.Run("Missing dashboard should be deleted if DisableDeletion = false", func(t *testing.T) {
 				reader, err := NewDashboardFileReader(cfg, logger, nil)
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
 				err = reader.walkDisk()
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
-				So(len(fakeService.provisioned["Default"]), ShouldEqual, 1)
-				So(fakeService.provisioned["Default"][0].ExternalId, ShouldEqual, absPath1)
-				So(len(fakeService.inserted), ShouldEqual, 1)
-				So(fakeService.inserted[0].Dashboard.Id, ShouldEqual, 1)
+				require.Equal(t, 1, len(fakeService.provisioned["Default"]))
+				require.Equal(t, absPath1, fakeService.provisioned["Default"][0].ExternalId)
+				require.Equal(t, 1, len(fakeService.inserted))
+				require.Equal(t, 1, fakeService.inserted[0].Dashboard.Id)
 			})
 		})
 	})

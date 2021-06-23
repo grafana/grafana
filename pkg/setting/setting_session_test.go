@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	. "github.com/smartystreets/goconvey/convey"
+	"github.com/stretchr/testify/require"
 )
 
 type testLogger struct {
@@ -19,10 +19,10 @@ func (stub *testLogger) Warn(testMessage string, ctx ...interface{}) {
 	stub.warnMessage = testMessage
 }
 func TestSessionSettings(t *testing.T) {
-	Convey("session config", t, func() {
+	t.Run("session config", func(t *testing.T) {
 		skipStaticRootValidation = true
 
-		Convey("Reading session should log error ", func() {
+		t.Run("Reading session should log error ", func(t *testing.T) {
 			var (
 				cfg      = NewCfg()
 				homePath = "../../"
@@ -35,9 +35,9 @@ func TestSessionSettings(t *testing.T) {
 				HomePath: homePath,
 				Config:   filepath.Join(homePath, "pkg/setting/testdata/session.ini"),
 			})
-			So(err, ShouldBeNil)
+			require.NoError(t, err)
 
-			So(stub.warnCalled, ShouldEqual, true)
+			require.Equal(t, true, stub.warnCalled)
 			So(len(stub.warnMessage), ShouldBeGreaterThan, 0)
 		})
 	})

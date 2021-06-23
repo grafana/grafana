@@ -4,55 +4,55 @@ import (
 	"math"
 	"testing"
 
-	. "github.com/smartystreets/goconvey/convey"
+	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/plugins"
 )
 
 func TestSimpleReducer(t *testing.T) {
-	Convey("Test simple reducer by calculating", t, func() {
-		Convey("sum", func() {
+	t.Run("Test simple reducer by calculating", func(t *testing.T) {
+		t.Run("sum", func(t *testing.T) {
 			result := testReducer("sum", 1, 2, 3)
-			So(result, ShouldEqual, float64(6))
+			require.Equal(t, float64(6), result)
 		})
 
-		Convey("min", func() {
+		t.Run("min", func(t *testing.T) {
 			result := testReducer("min", 3, 2, 1)
-			So(result, ShouldEqual, float64(1))
+			require.Equal(t, float64(1), result)
 		})
 
-		Convey("max", func() {
+		t.Run("max", func(t *testing.T) {
 			result := testReducer("max", 1, 2, 3)
-			So(result, ShouldEqual, float64(3))
+			require.Equal(t, float64(3), result)
 		})
 
-		Convey("count", func() {
+		t.Run("count", func(t *testing.T) {
 			result := testReducer("count", 1, 2, 3000)
-			So(result, ShouldEqual, float64(3))
+			require.Equal(t, float64(3), result)
 		})
 
-		Convey("last", func() {
+		t.Run("last", func(t *testing.T) {
 			result := testReducer("last", 1, 2, 3000)
-			So(result, ShouldEqual, float64(3000))
+			require.Equal(t, float64(3000), result)
 		})
 
-		Convey("median odd amount of numbers", func() {
+		t.Run("median odd amount of numbers", func(t *testing.T) {
 			result := testReducer("median", 1, 2, 3000)
-			So(result, ShouldEqual, float64(2))
+			require.Equal(t, float64(2), result)
 		})
 
-		Convey("median even amount of numbers", func() {
+		t.Run("median even amount of numbers", func(t *testing.T) {
 			result := testReducer("median", 1, 2, 4, 3000)
-			So(result, ShouldEqual, float64(3))
+			require.Equal(t, float64(3), result)
 		})
 
-		Convey("median with one values", func() {
+		t.Run("median with one values", func(t *testing.T) {
 			result := testReducer("median", 1)
-			So(result, ShouldEqual, float64(1))
+			require.Equal(t, float64(1), result)
 		})
 
-		Convey("median should ignore null values", func() {
+		t.Run("median should ignore null values", func(t *testing.T) {
 			reducer := newSimpleReducer("median")
 			series := plugins.DataTimeSeries{
 				Name: "test time series",
@@ -66,27 +66,27 @@ func TestSimpleReducer(t *testing.T) {
 			series.Points = append(series.Points, plugins.DataTimePoint{null.FloatFrom(float64(3)), null.FloatFrom(6)})
 
 			result := reducer.Reduce(series)
-			So(result.Valid, ShouldEqual, true)
-			So(result.Float64, ShouldEqual, float64(2))
+			require.Equal(t, true, result.Valid)
+			require.Equal(t, float64(2), result.Float64)
 		})
 
-		Convey("avg", func() {
+		t.Run("avg", func(t *testing.T) {
 			result := testReducer("avg", 1, 2, 3)
-			So(result, ShouldEqual, float64(2))
+			require.Equal(t, float64(2), result)
 		})
 
-		Convey("avg with only nulls", func() {
+		t.Run("avg with only nulls", func(t *testing.T) {
 			reducer := newSimpleReducer("avg")
 			series := plugins.DataTimeSeries{
 				Name: "test time series",
 			}
 
 			series.Points = append(series.Points, plugins.DataTimePoint{null.FloatFromPtr(nil), null.FloatFrom(1)})
-			So(reducer.Reduce(series).Valid, ShouldEqual, false)
+			require.Equal(t, false, reducer.Reduce(series).Valid)
 		})
 
-		Convey("count_non_null", func() {
-			Convey("with null values and real values", func() {
+		t.Run("count_non_null", func(t *testing.T) {
+			t.Run("with null values and real values", func(t *testing.T) {
 				reducer := newSimpleReducer("count_non_null")
 				series := plugins.DataTimeSeries{
 					Name: "test time series",
@@ -97,11 +97,11 @@ func TestSimpleReducer(t *testing.T) {
 				series.Points = append(series.Points, plugins.DataTimePoint{null.FloatFrom(3), null.FloatFrom(3)})
 				series.Points = append(series.Points, plugins.DataTimePoint{null.FloatFrom(3), null.FloatFrom(4)})
 
-				So(reducer.Reduce(series).Valid, ShouldEqual, true)
-				So(reducer.Reduce(series).Float64, ShouldEqual, 2)
+				require.Equal(t, true, reducer.Reduce(series).Valid)
+				require.Equal(t, 2, reducer.Reduce(series).Float64)
 			})
 
-			Convey("with null values", func() {
+			t.Run("with null values", func(t *testing.T) {
 				reducer := newSimpleReducer("count_non_null")
 				series := plugins.DataTimeSeries{
 					Name: "test time series",
@@ -110,11 +110,11 @@ func TestSimpleReducer(t *testing.T) {
 				series.Points = append(series.Points, plugins.DataTimePoint{null.FloatFromPtr(nil), null.FloatFrom(1)})
 				series.Points = append(series.Points, plugins.DataTimePoint{null.FloatFromPtr(nil), null.FloatFrom(2)})
 
-				So(reducer.Reduce(series).Valid, ShouldEqual, false)
+				require.Equal(t, false, reducer.Reduce(series).Valid)
 			})
 		})
 
-		Convey("avg of number values and null values should ignore nulls", func() {
+		t.Run("avg of number values and null values should ignore nulls", func(t *testing.T) {
 			reducer := newSimpleReducer("avg")
 			series := plugins.DataTimeSeries{
 				Name: "test time series",
@@ -125,61 +125,61 @@ func TestSimpleReducer(t *testing.T) {
 			series.Points = append(series.Points, plugins.DataTimePoint{null.FloatFromPtr(nil), null.FloatFrom(3)})
 			series.Points = append(series.Points, plugins.DataTimePoint{null.FloatFrom(3), null.FloatFrom(4)})
 
-			So(reducer.Reduce(series).Float64, ShouldEqual, float64(3))
+			require.Equal(t, float64(3), reducer.Reduce(series).Float64)
 		})
 
 		// diff function Test Suite
-		Convey("diff of one positive point", func() {
+		t.Run("diff of one positive point", func(t *testing.T) {
 			result := testReducer("diff", 30)
-			So(result, ShouldEqual, float64(0))
+			require.Equal(t, float64(0), result)
 		})
 
-		Convey("diff of one negative point", func() {
+		t.Run("diff of one negative point", func(t *testing.T) {
 			result := testReducer("diff", -30)
-			So(result, ShouldEqual, float64(0))
+			require.Equal(t, float64(0), result)
 		})
 
-		Convey("diff of two positive points[1]", func() {
+		t.Run("diff of two positive points[1]", func(t *testing.T) {
 			result := testReducer("diff", 30, 40)
-			So(result, ShouldEqual, float64(10))
+			require.Equal(t, float64(10), result)
 		})
 
-		Convey("diff of two positive points[2]", func() {
+		t.Run("diff of two positive points[2]", func(t *testing.T) {
 			result := testReducer("diff", 30, 20)
-			So(result, ShouldEqual, float64(-10))
+			require.Equal(t, float64(-10), result)
 		})
 
-		Convey("diff of two negative points[1]", func() {
+		t.Run("diff of two negative points[1]", func(t *testing.T) {
 			result := testReducer("diff", -30, -40)
-			So(result, ShouldEqual, float64(-10))
+			require.Equal(t, float64(-10), result)
 		})
 
-		Convey("diff of two negative points[2]", func() {
+		t.Run("diff of two negative points[2]", func(t *testing.T) {
 			result := testReducer("diff", -30, -10)
-			So(result, ShouldEqual, float64(20))
+			require.Equal(t, float64(20), result)
 		})
 
-		Convey("diff of one positive and one negative point", func() {
+		t.Run("diff of one positive and one negative point", func(t *testing.T) {
 			result := testReducer("diff", 30, -40)
-			So(result, ShouldEqual, float64(-70))
+			require.Equal(t, float64(-70), result)
 		})
 
-		Convey("diff of one negative and one positive point", func() {
+		t.Run("diff of one negative and one positive point", func(t *testing.T) {
 			result := testReducer("diff", -30, 40)
-			So(result, ShouldEqual, float64(70))
+			require.Equal(t, float64(70), result)
 		})
 
-		Convey("diff of three positive points", func() {
+		t.Run("diff of three positive points", func(t *testing.T) {
 			result := testReducer("diff", 30, 40, 50)
-			So(result, ShouldEqual, float64(20))
+			require.Equal(t, float64(20), result)
 		})
 
-		Convey("diff of three negative points", func() {
+		t.Run("diff of three negative points", func(t *testing.T) {
 			result := testReducer("diff", -30, -40, -50)
-			So(result, ShouldEqual, float64(-20))
+			require.Equal(t, float64(-20), result)
 		})
 
-		Convey("diff with only nulls", func() {
+		t.Run("diff with only nulls", func(t *testing.T) {
 			reducer := newSimpleReducer("diff")
 			series := plugins.DataTimeSeries{
 				Name: "test time series",
@@ -188,61 +188,61 @@ func TestSimpleReducer(t *testing.T) {
 			series.Points = append(series.Points, plugins.DataTimePoint{null.FloatFromPtr(nil), null.FloatFrom(1)})
 			series.Points = append(series.Points, plugins.DataTimePoint{null.FloatFromPtr(nil), null.FloatFrom(2)})
 
-			So(reducer.Reduce(series).Valid, ShouldEqual, false)
+			require.Equal(t, false, reducer.Reduce(series).Valid)
 		})
 
 		// diff_abs function Test Suite
-		Convey("diff_abs of one positive point", func() {
+		t.Run("diff_abs of one positive point", func(t *testing.T) {
 			result := testReducer("diff_abs", 30)
-			So(result, ShouldEqual, float64(0))
+			require.Equal(t, float64(0), result)
 		})
 
-		Convey("diff_abs of one negative point", func() {
+		t.Run("diff_abs of one negative point", func(t *testing.T) {
 			result := testReducer("diff_abs", -30)
-			So(result, ShouldEqual, float64(0))
+			require.Equal(t, float64(0), result)
 		})
 
-		Convey("diff_abs of two positive points[1]", func() {
+		t.Run("diff_abs of two positive points[1]", func(t *testing.T) {
 			result := testReducer("diff_abs", 30, 40)
-			So(result, ShouldEqual, float64(10))
+			require.Equal(t, float64(10), result)
 		})
 
-		Convey("diff_abs of two positive points[2]", func() {
+		t.Run("diff_abs of two positive points[2]", func(t *testing.T) {
 			result := testReducer("diff_abs", 30, 20)
-			So(result, ShouldEqual, float64(10))
+			require.Equal(t, float64(10), result)
 		})
 
-		Convey("diff_abs of two negative points[1]", func() {
+		t.Run("diff_abs of two negative points[1]", func(t *testing.T) {
 			result := testReducer("diff_abs", -30, -40)
-			So(result, ShouldEqual, float64(10))
+			require.Equal(t, float64(10), result)
 		})
 
-		Convey("diff_abs of two negative points[2]", func() {
+		t.Run("diff_abs of two negative points[2]", func(t *testing.T) {
 			result := testReducer("diff_abs", -30, -10)
-			So(result, ShouldEqual, float64(20))
+			require.Equal(t, float64(20), result)
 		})
 
-		Convey("diff_abs of one positive and one negative point", func() {
+		t.Run("diff_abs of one positive and one negative point", func(t *testing.T) {
 			result := testReducer("diff_abs", 30, -40)
-			So(result, ShouldEqual, float64(70))
+			require.Equal(t, float64(70), result)
 		})
 
-		Convey("diff_abs of one negative and one positive point", func() {
+		t.Run("diff_abs of one negative and one positive point", func(t *testing.T) {
 			result := testReducer("diff_abs", -30, 40)
-			So(result, ShouldEqual, float64(70))
+			require.Equal(t, float64(70), result)
 		})
 
-		Convey("diff_abs of three positive points", func() {
+		t.Run("diff_abs of three positive points", func(t *testing.T) {
 			result := testReducer("diff_abs", 30, 40, 50)
-			So(result, ShouldEqual, float64(20))
+			require.Equal(t, float64(20), result)
 		})
 
-		Convey("diff_abs of three negative points", func() {
+		t.Run("diff_abs of three negative points", func(t *testing.T) {
 			result := testReducer("diff_abs", -30, -40, -50)
-			So(result, ShouldEqual, float64(20))
+			require.Equal(t, float64(20), result)
 		})
 
-		Convey("diff_abs with only nulls", func() {
+		t.Run("diff_abs with only nulls", func(t *testing.T) {
 			reducer := newSimpleReducer("diff_abs")
 			series := plugins.DataTimeSeries{
 				Name: "test time series",
@@ -251,61 +251,61 @@ func TestSimpleReducer(t *testing.T) {
 			series.Points = append(series.Points, plugins.DataTimePoint{null.FloatFromPtr(nil), null.FloatFrom(1)})
 			series.Points = append(series.Points, plugins.DataTimePoint{null.FloatFromPtr(nil), null.FloatFrom(2)})
 
-			So(reducer.Reduce(series).Valid, ShouldEqual, false)
+			require.Equal(t, false, reducer.Reduce(series).Valid)
 		})
 
 		// percent_diff function Test Suite
-		Convey("percent_diff of one positive point", func() {
+		t.Run("percent_diff of one positive point", func(t *testing.T) {
 			result := testReducer("percent_diff", 30)
-			So(result, ShouldEqual, float64(0))
+			require.Equal(t, float64(0), result)
 		})
 
-		Convey("percent_diff of one negative point", func() {
+		t.Run("percent_diff of one negative point", func(t *testing.T) {
 			result := testReducer("percent_diff", -30)
-			So(result, ShouldEqual, float64(0))
+			require.Equal(t, float64(0), result)
 		})
 
-		Convey("percent_diff of two positive points[1]", func() {
+		t.Run("percent_diff of two positive points[1]", func(t *testing.T) {
 			result := testReducer("percent_diff", 30, 40)
-			So(result, ShouldEqual, float64(33.33333333333333))
+			require.Equal(t, float64(33.33333333333333), result)
 		})
 
-		Convey("percent_diff of two positive points[2]", func() {
+		t.Run("percent_diff of two positive points[2]", func(t *testing.T) {
 			result := testReducer("percent_diff", 30, 20)
-			So(result, ShouldEqual, float64(-33.33333333333333))
+			require.Equal(t, float64(-33.33333333333333), result)
 		})
 
-		Convey("percent_diff of two negative points[1]", func() {
+		t.Run("percent_diff of two negative points[1]", func(t *testing.T) {
 			result := testReducer("percent_diff", -30, -40)
-			So(result, ShouldEqual, float64(-33.33333333333333))
+			require.Equal(t, float64(-33.33333333333333), result)
 		})
 
-		Convey("percent_diff of two negative points[2]", func() {
+		t.Run("percent_diff of two negative points[2]", func(t *testing.T) {
 			result := testReducer("percent_diff", -30, -10)
-			So(result, ShouldEqual, float64(66.66666666666666))
+			require.Equal(t, float64(66.66666666666666), result)
 		})
 
-		Convey("percent_diff of one positive and one negative point", func() {
+		t.Run("percent_diff of one positive and one negative point", func(t *testing.T) {
 			result := testReducer("percent_diff", 30, -40)
-			So(result, ShouldEqual, float64(-233.33333333333334))
+			require.Equal(t, float64(-233.33333333333334), result)
 		})
 
-		Convey("percent_diff of one negative and one positive point", func() {
+		t.Run("percent_diff of one negative and one positive point", func(t *testing.T) {
 			result := testReducer("percent_diff", -30, 40)
-			So(result, ShouldEqual, float64(233.33333333333334))
+			require.Equal(t, float64(233.33333333333334), result)
 		})
 
-		Convey("percent_diff of three positive points", func() {
+		t.Run("percent_diff of three positive points", func(t *testing.T) {
 			result := testReducer("percent_diff", 30, 40, 50)
-			So(result, ShouldEqual, float64(66.66666666666666))
+			require.Equal(t, float64(66.66666666666666), result)
 		})
 
-		Convey("percent_diff of three negative points", func() {
+		t.Run("percent_diff of three negative points", func(t *testing.T) {
 			result := testReducer("percent_diff", -30, -40, -50)
-			So(result, ShouldEqual, float64(-66.66666666666666))
+			require.Equal(t, float64(-66.66666666666666), result)
 		})
 
-		Convey("percent_diff with only nulls", func() {
+		t.Run("percent_diff with only nulls", func(t *testing.T) {
 			reducer := newSimpleReducer("percent_diff")
 			series := plugins.DataTimeSeries{
 				Name: "test time series",
@@ -314,61 +314,61 @@ func TestSimpleReducer(t *testing.T) {
 			series.Points = append(series.Points, plugins.DataTimePoint{null.FloatFromPtr(nil), null.FloatFrom(1)})
 			series.Points = append(series.Points, plugins.DataTimePoint{null.FloatFromPtr(nil), null.FloatFrom(2)})
 
-			So(reducer.Reduce(series).Valid, ShouldEqual, false)
+			require.Equal(t, false, reducer.Reduce(series).Valid)
 		})
 
 		// percent_diff_abs function Test Suite
-		Convey("percent_diff_abs_abs of one positive point", func() {
+		t.Run("percent_diff_abs_abs of one positive point", func(t *testing.T) {
 			result := testReducer("percent_diff_abs", 30)
-			So(result, ShouldEqual, float64(0))
+			require.Equal(t, float64(0), result)
 		})
 
-		Convey("percent_diff_abs of one negative point", func() {
+		t.Run("percent_diff_abs of one negative point", func(t *testing.T) {
 			result := testReducer("percent_diff_abs", -30)
-			So(result, ShouldEqual, float64(0))
+			require.Equal(t, float64(0), result)
 		})
 
-		Convey("percent_diff_abs of two positive points[1]", func() {
+		t.Run("percent_diff_abs of two positive points[1]", func(t *testing.T) {
 			result := testReducer("percent_diff_abs", 30, 40)
-			So(result, ShouldEqual, float64(33.33333333333333))
+			require.Equal(t, float64(33.33333333333333), result)
 		})
 
-		Convey("percent_diff_abs of two positive points[2]", func() {
+		t.Run("percent_diff_abs of two positive points[2]", func(t *testing.T) {
 			result := testReducer("percent_diff_abs", 30, 20)
-			So(result, ShouldEqual, float64(33.33333333333333))
+			require.Equal(t, float64(33.33333333333333), result)
 		})
 
-		Convey("percent_diff_abs of two negative points[1]", func() {
+		t.Run("percent_diff_abs of two negative points[1]", func(t *testing.T) {
 			result := testReducer("percent_diff_abs", -30, -40)
-			So(result, ShouldEqual, float64(33.33333333333333))
+			require.Equal(t, float64(33.33333333333333), result)
 		})
 
-		Convey("percent_diff_abs of two negative points[2]", func() {
+		t.Run("percent_diff_abs of two negative points[2]", func(t *testing.T) {
 			result := testReducer("percent_diff_abs", -30, -10)
-			So(result, ShouldEqual, float64(66.66666666666666))
+			require.Equal(t, float64(66.66666666666666), result)
 		})
 
-		Convey("percent_diff_abs of one positive and one negative point", func() {
+		t.Run("percent_diff_abs of one positive and one negative point", func(t *testing.T) {
 			result := testReducer("percent_diff_abs", 30, -40)
-			So(result, ShouldEqual, float64(233.33333333333334))
+			require.Equal(t, float64(233.33333333333334), result)
 		})
 
-		Convey("percent_diff_abs of one negative and one positive point", func() {
+		t.Run("percent_diff_abs of one negative and one positive point", func(t *testing.T) {
 			result := testReducer("percent_diff_abs", -30, 40)
-			So(result, ShouldEqual, float64(233.33333333333334))
+			require.Equal(t, float64(233.33333333333334), result)
 		})
 
-		Convey("percent_diff_abs of three positive points", func() {
+		t.Run("percent_diff_abs of three positive points", func(t *testing.T) {
 			result := testReducer("percent_diff_abs", 30, 40, 50)
-			So(result, ShouldEqual, float64(66.66666666666666))
+			require.Equal(t, float64(66.66666666666666), result)
 		})
 
-		Convey("percent_diff_abs of three negative points", func() {
+		t.Run("percent_diff_abs of three negative points", func(t *testing.T) {
 			result := testReducer("percent_diff_abs", -30, -40, -50)
-			So(result, ShouldEqual, float64(66.66666666666666))
+			require.Equal(t, float64(66.66666666666666), result)
 		})
 
-		Convey("percent_diff_abs with only nulls", func() {
+		t.Run("percent_diff_abs with only nulls", func(t *testing.T) {
 			reducer := newSimpleReducer("percent_diff_abs")
 			series := plugins.DataTimeSeries{
 				Name: "test time series",
@@ -377,20 +377,20 @@ func TestSimpleReducer(t *testing.T) {
 			series.Points = append(series.Points, plugins.DataTimePoint{null.FloatFromPtr(nil), null.FloatFrom(1)})
 			series.Points = append(series.Points, plugins.DataTimePoint{null.FloatFromPtr(nil), null.FloatFrom(2)})
 
-			So(reducer.Reduce(series).Valid, ShouldEqual, false)
+			require.Equal(t, false, reducer.Reduce(series).Valid)
 		})
 
-		Convey("min should work with NaNs", func() {
+		t.Run("min should work with NaNs", func(t *testing.T) {
 			result := testReducer("min", math.NaN(), math.NaN(), math.NaN())
-			So(result, ShouldEqual, float64(0))
+			require.Equal(t, float64(0), result)
 		})
 
-		Convey("isValid should treat NaN as invalid", func() {
+		t.Run("isValid should treat NaN as invalid", func(t *testing.T) {
 			result := isValid(null.FloatFrom(math.NaN()))
 			So(result, ShouldBeFalse)
 		})
 
-		Convey("isValid should treat invalid null.Float as invalid", func() {
+		t.Run("isValid should treat invalid null.Float as invalid", func(t *testing.T) {
 			result := isValid(null.FloatFromPtr(nil))
 			So(result, ShouldBeFalse)
 		})

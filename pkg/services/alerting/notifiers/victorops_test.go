@@ -5,12 +5,12 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/services/validations"
+	"github.com/stretchr/testify/require"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
-	. "github.com/smartystreets/goconvey/convey"
 )
 
 func presenceComparerInt(a, b int64) bool {
@@ -23,9 +23,9 @@ func presenceComparerInt(a, b int64) bool {
 	return a == b
 }
 func TestVictoropsNotifier(t *testing.T) {
-	Convey("Victorops notifier tests", t, func() {
-		Convey("Parsing alert notification from settings", func() {
-			Convey("empty settings should return error", func() {
+	t.Run("Victorops notifier tests", func(t *testing.T) {
+		t.Run("Parsing alert notification from settings", func(t *testing.T) {
+			t.Run("empty settings should return error", func(t *testing.T) {
 				json := `{ }`
 
 				settingsJSON, _ := simplejson.NewJson([]byte(json))
@@ -36,10 +36,10 @@ func TestVictoropsNotifier(t *testing.T) {
 				}
 
 				_, err := NewVictoropsNotifier(model)
-				So(err, ShouldNotBeNil)
+				require.Error(t, err)
 			})
 
-			Convey("from settings", func() {
+			t.Run("from settings", func(t *testing.T) {
 				json := `
 				{
           "url": "http://google.com"
@@ -55,20 +55,20 @@ func TestVictoropsNotifier(t *testing.T) {
 				not, err := NewVictoropsNotifier(model)
 				victoropsNotifier := not.(*VictoropsNotifier)
 
-				So(err, ShouldBeNil)
-				So(victoropsNotifier.Name, ShouldEqual, "victorops_testing")
-				So(victoropsNotifier.Type, ShouldEqual, "victorops")
-				So(victoropsNotifier.URL, ShouldEqual, "http://google.com")
+				require.NoError(t, err)
+				require.Equal(t, "victorops_testing", victoropsNotifier.Name)
+				require.Equal(t, "victorops", victoropsNotifier.Type)
+				require.Equal(t, "http://google.com", victoropsNotifier.URL)
 			})
 
-			Convey("should return properly formatted event payload when using severity override tag", func() {
+			t.Run("should return properly formatted event payload when using severity override tag", func(t *testing.T) {
 				json := `
 				{
 					"url": "http://google.com"
 				}`
 
 				settingsJSON, err := simplejson.NewJson([]byte(json))
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
 				model := &models.AlertNotification{
 					Name:     "victorops_testing",
@@ -77,7 +77,7 @@ func TestVictoropsNotifier(t *testing.T) {
 				}
 
 				not, err := NewVictoropsNotifier(model)
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
 				victoropsNotifier := not.(*VictoropsNotifier)
 
@@ -94,7 +94,7 @@ func TestVictoropsNotifier(t *testing.T) {
 				evalContext.IsTestRun = true
 
 				payload, err := victoropsNotifier.buildEventPayload(evalContext)
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
 				diff := cmp.Diff(map[string]interface{}{
 					"alert_url":           "",
@@ -109,14 +109,14 @@ func TestVictoropsNotifier(t *testing.T) {
 				}, payload.Interface(), cmp.Comparer(presenceComparerInt))
 				So(diff, ShouldBeEmpty)
 			})
-			Convey("resolving with severity works properly", func() {
+			t.Run("resolving with severity works properly", func(t *testing.T) {
 				json := `
 				{
 					"url": "http://google.com"
 				}`
 
 				settingsJSON, err := simplejson.NewJson([]byte(json))
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
 				model := &models.AlertNotification{
 					Name:     "victorops_testing",
@@ -125,7 +125,7 @@ func TestVictoropsNotifier(t *testing.T) {
 				}
 
 				not, err := NewVictoropsNotifier(model)
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
 				victoropsNotifier := not.(*VictoropsNotifier)
 
@@ -142,7 +142,7 @@ func TestVictoropsNotifier(t *testing.T) {
 				evalContext.IsTestRun = true
 
 				payload, err := victoropsNotifier.buildEventPayload(evalContext)
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
 				diff := cmp.Diff(map[string]interface{}{
 					"alert_url":           "",

@@ -5,12 +5,12 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
-	. "github.com/smartystreets/goconvey/convey"
+	"github.com/stretchr/testify/require"
 )
 
 func TestLineNotifier(t *testing.T) {
-	Convey("Line notifier tests", t, func() {
-		Convey("empty settings should return error", func() {
+	t.Run("Line notifier tests", func(t *testing.T) {
+		t.Run("empty settings should return error", func(t *testing.T) {
 			json := `{ }`
 
 			settingsJSON, _ := simplejson.NewJson([]byte(json))
@@ -21,9 +21,9 @@ func TestLineNotifier(t *testing.T) {
 			}
 
 			_, err := NewLINENotifier(model)
-			So(err, ShouldNotBeNil)
+			require.Error(t, err)
 		})
-		Convey("settings should trigger incident", func() {
+		t.Run("settings should trigger incident", func(t *testing.T) {
 			json := `
 			{
   "token": "abcdefgh0123456789"
@@ -38,10 +38,10 @@ func TestLineNotifier(t *testing.T) {
 			not, err := NewLINENotifier(model)
 			lineNotifier := not.(*LineNotifier)
 
-			So(err, ShouldBeNil)
-			So(lineNotifier.Name, ShouldEqual, "line_testing")
-			So(lineNotifier.Type, ShouldEqual, "line")
-			So(lineNotifier.Token, ShouldEqual, "abcdefgh0123456789")
+			require.NoError(t, err)
+			require.Equal(t, "line_testing", lineNotifier.Name)
+			require.Equal(t, "line", lineNotifier.Type)
+			require.Equal(t, "abcdefgh0123456789", lineNotifier.Token)
 		})
 	})
 }

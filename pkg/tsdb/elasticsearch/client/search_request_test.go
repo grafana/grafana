@@ -8,213 +8,212 @@ import (
 	"github.com/Masterminds/semver"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/tsdb/interval"
-
-	. "github.com/smartystreets/goconvey/convey"
+	"github.com/stretchr/testify/require"
 )
 
 func TestSearchRequest(t *testing.T) {
-	Convey("Test elasticsearch search request", t, func() {
+	t.Run("Test elasticsearch search request", func(t *testing.T) {
 		timeField := "@timestamp"
-		Convey("Given new search request builder for es version 5", func() {
+		t.Run("Given new search request builder for es version 5", func(t *testing.T) {
 			version5, _ := semver.NewVersion("5.0.0")
 			b := NewSearchRequestBuilder(version5, interval.Interval{Value: 15 * time.Second, Text: "15s"})
 
-			Convey("When building search request", func() {
+			t.Run("When building search request", func(t *testing.T) {
 				sr, err := b.Build()
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
-				Convey("Should have size of zero", func() {
-					So(sr.Size, ShouldEqual, 0)
+				t.Run("Should have size of zero", func(t *testing.T) {
+					require.Equal(t, 0, sr.Size)
 				})
 
-				Convey("Should have no sorting", func() {
+				t.Run("Should have no sorting", func(t *testing.T) {
 					So(sr.Sort, ShouldHaveLength, 0)
 				})
 
-				Convey("When marshal to JSON should generate correct json", func() {
+				t.Run("When marshal to JSON should generate correct json", func(t *testing.T) {
 					body, err := json.Marshal(sr)
-					So(err, ShouldBeNil)
+					require.NoError(t, err)
 					json, err := simplejson.NewJson(body)
-					So(err, ShouldBeNil)
-					So(json.Get("size").MustInt(500), ShouldEqual, 0)
+					require.NoError(t, err)
+					require.Equal(t, 0, json.Get("size").MustInt(500))
 					So(json.Get("sort").Interface(), ShouldBeNil)
 					So(json.Get("aggs").Interface(), ShouldBeNil)
 					So(json.Get("query").Interface(), ShouldBeNil)
 				})
 			})
 
-			Convey("When adding size, sort, filters", func() {
+			t.Run("When adding size, sort, filters", func(t *testing.T) {
 				b.Size(200)
 				b.SortDesc(timeField, "boolean")
 				filters := b.Query().Bool().Filter()
 				filters.AddDateRangeFilter(timeField, "$timeTo", "$timeFrom", DateFormatEpochMS)
 				filters.AddQueryStringFilter("test", true)
 
-				Convey("When building search request", func() {
+				t.Run("When building search request", func(t *testing.T) {
 					sr, err := b.Build()
-					So(err, ShouldBeNil)
+					require.NoError(t, err)
 
-					Convey("Should have correct size", func() {
-						So(sr.Size, ShouldEqual, 200)
+					t.Run("Should have correct size", func(t *testing.T) {
+						require.Equal(t, 200, sr.Size)
 					})
 
-					Convey("Should have correct sorting", func() {
+					t.Run("Should have correct sorting", func(t *testing.T) {
 						sort, ok := sr.Sort[timeField].(map[string]string)
-						So(ok, ShouldBeTrue)
-						So(sort["order"], ShouldEqual, "desc")
-						So(sort["unmapped_type"], ShouldEqual, "boolean")
+						require.True(t, ok)
+						require.Equal(t, "desc", sort["order"])
+						require.Equal(t, "boolean", sort["unmapped_type"])
 					})
 
-					Convey("Should have range filter", func() {
+					t.Run("Should have range filter", func(t *testing.T) {
 						f, ok := sr.Query.Bool.Filters[0].(*RangeFilter)
-						So(ok, ShouldBeTrue)
-						So(f.Gte, ShouldEqual, "$timeFrom")
-						So(f.Lte, ShouldEqual, "$timeTo")
-						So(f.Format, ShouldEqual, "epoch_millis")
+						require.True(t, ok)
+						require.Equal(t, "$timeFrom", f.Gte)
+						require.Equal(t, "$timeTo", f.Lte)
+						require.Equal(t, "epoch_millis", f.Format)
 					})
 
-					Convey("Should have query string filter", func() {
+					t.Run("Should have query string filter", func(t *testing.T) {
 						f, ok := sr.Query.Bool.Filters[1].(*QueryStringFilter)
-						So(ok, ShouldBeTrue)
-						So(f.Query, ShouldEqual, "test")
-						So(f.AnalyzeWildcard, ShouldBeTrue)
+						require.True(t, ok)
+						require.Equal(t, "test", f.Query)
+						require.True(t, f.AnalyzeWildcard)
 					})
 
-					Convey("When marshal to JSON should generate correct json", func() {
+					t.Run("When marshal to JSON should generate correct json", func(t *testing.T) {
 						body, err := json.Marshal(sr)
-						So(err, ShouldBeNil)
+						require.NoError(t, err)
 						json, err := simplejson.NewJson(body)
-						So(err, ShouldBeNil)
-						So(json.Get("size").MustInt(0), ShouldEqual, 200)
+						require.NoError(t, err)
+						require.Equal(t, 200, json.Get("size").MustInt(0))
 
 						sort := json.GetPath("sort", timeField)
-						So(sort.Get("order").MustString(), ShouldEqual, "desc")
-						So(sort.Get("unmapped_type").MustString(), ShouldEqual, "boolean")
+						require.Equal(t, "desc", sort.Get("order").MustString())
+						require.Equal(t, "boolean", sort.Get("unmapped_type").MustString())
 
 						timeRangeFilter := json.GetPath("query", "bool", "filter").GetIndex(0).Get("range").Get(timeField)
-						So(timeRangeFilter.Get("gte").MustString(""), ShouldEqual, "$timeFrom")
-						So(timeRangeFilter.Get("lte").MustString(""), ShouldEqual, "$timeTo")
-						So(timeRangeFilter.Get("format").MustString(""), ShouldEqual, DateFormatEpochMS)
+						require.Equal(t, "$timeFrom", timeRangeFilter.Get("gte").MustString(""))
+						require.Equal(t, "$timeTo", timeRangeFilter.Get("lte").MustString(""))
+						require.Equal(t, DateFormatEpochMS, timeRangeFilter.Get("format").MustString(""))
 
 						queryStringFilter := json.GetPath("query", "bool", "filter").GetIndex(1).Get("query_string")
-						So(queryStringFilter.Get("analyze_wildcard").MustBool(false), ShouldEqual, true)
-						So(queryStringFilter.Get("query").MustString(""), ShouldEqual, "test")
+						require.Equal(t, true, queryStringFilter.Get("analyze_wildcard").MustBool(false))
+						require.Equal(t, "test", queryStringFilter.Get("query").MustString(""))
 					})
 				})
 			})
 
-			Convey("When adding doc value field", func() {
+			t.Run("When adding doc value field", func(t *testing.T) {
 				b.AddDocValueField(timeField)
 
-				Convey("should set correct props", func() {
+				t.Run("should set correct props", func(t *testing.T) {
 					So(b.customProps["fields"], ShouldBeNil)
 
 					scriptFields, ok := b.customProps["script_fields"].(map[string]interface{})
-					So(ok, ShouldBeTrue)
+					require.True(t, ok)
 					So(scriptFields, ShouldHaveLength, 0)
 
 					docValueFields, ok := b.customProps["docvalue_fields"].([]string)
-					So(ok, ShouldBeTrue)
+					require.True(t, ok)
 					So(docValueFields, ShouldHaveLength, 1)
-					So(docValueFields[0], ShouldEqual, timeField)
+					require.Equal(t, timeField, docValueFields[0])
 				})
 
-				Convey("When building search request", func() {
+				t.Run("When building search request", func(t *testing.T) {
 					sr, err := b.Build()
-					So(err, ShouldBeNil)
+					require.NoError(t, err)
 
-					Convey("When marshal to JSON should generate correct json", func() {
+					t.Run("When marshal to JSON should generate correct json", func(t *testing.T) {
 						body, err := json.Marshal(sr)
-						So(err, ShouldBeNil)
+						require.NoError(t, err)
 						json, err := simplejson.NewJson(body)
-						So(err, ShouldBeNil)
+						require.NoError(t, err)
 
 						scriptFields, err := json.Get("script_fields").Map()
-						So(err, ShouldBeNil)
+						require.NoError(t, err)
 						So(scriptFields, ShouldHaveLength, 0)
 
 						_, err = json.Get("fields").StringArray()
-						So(err, ShouldNotBeNil)
+						require.Error(t, err)
 
 						docValueFields, err := json.Get("docvalue_fields").StringArray()
-						So(err, ShouldBeNil)
+						require.NoError(t, err)
 						So(docValueFields, ShouldHaveLength, 1)
-						So(docValueFields[0], ShouldEqual, timeField)
+						require.Equal(t, timeField, docValueFields[0])
 					})
 				})
 			})
 
-			Convey("and adding multiple top level aggs", func() {
+			t.Run("and adding multiple top level aggs", func(t *testing.T) {
 				aggBuilder := b.Agg()
 				aggBuilder.Terms("1", "@hostname", nil)
 				aggBuilder.DateHistogram("2", "@timestamp", nil)
 
-				Convey("When building search request", func() {
+				t.Run("When building search request", func(t *testing.T) {
 					sr, err := b.Build()
-					So(err, ShouldBeNil)
+					require.NoError(t, err)
 
-					Convey("Should have 2 top level aggs", func() {
+					t.Run("Should have 2 top level aggs", func(t *testing.T) {
 						aggs := sr.Aggs
 						So(aggs, ShouldHaveLength, 2)
-						So(aggs[0].Key, ShouldEqual, "1")
-						So(aggs[0].Aggregation.Type, ShouldEqual, "terms")
-						So(aggs[1].Key, ShouldEqual, "2")
-						So(aggs[1].Aggregation.Type, ShouldEqual, "date_histogram")
+						require.Equal(t, "1", aggs[0].Key)
+						require.Equal(t, "terms", aggs[0].Aggregation.Type)
+						require.Equal(t, "2", aggs[1].Key)
+						require.Equal(t, "date_histogram", aggs[1].Aggregation.Type)
 					})
 
-					Convey("When marshal to JSON should generate correct json", func() {
+					t.Run("When marshal to JSON should generate correct json", func(t *testing.T) {
 						body, err := json.Marshal(sr)
-						So(err, ShouldBeNil)
+						require.NoError(t, err)
 						json, err := simplejson.NewJson(body)
-						So(err, ShouldBeNil)
+						require.NoError(t, err)
 
 						So(json.Get("aggs").MustMap(), ShouldHaveLength, 2)
-						So(json.GetPath("aggs", "1", "terms", "field").MustString(), ShouldEqual, "@hostname")
-						So(json.GetPath("aggs", "2", "date_histogram", "field").MustString(), ShouldEqual, "@timestamp")
+						require.Equal(t, "@hostname", json.GetPath("aggs", "1", "terms", "field").MustString())
+						require.Equal(t, "@timestamp", json.GetPath("aggs", "2", "date_histogram", "field").MustString())
 					})
 				})
 			})
 
-			Convey("and adding top level agg with child agg", func() {
+			t.Run("and adding top level agg with child agg", func(t *testing.T) {
 				aggBuilder := b.Agg()
 				aggBuilder.Terms("1", "@hostname", func(a *TermsAggregation, ib AggBuilder) {
 					ib.DateHistogram("2", "@timestamp", nil)
 				})
 
-				Convey("When building search request", func() {
+				t.Run("When building search request", func(t *testing.T) {
 					sr, err := b.Build()
-					So(err, ShouldBeNil)
+					require.NoError(t, err)
 
-					Convey("Should have 1 top level agg and one child agg", func() {
+					t.Run("Should have 1 top level agg and one child agg", func(t *testing.T) {
 						aggs := sr.Aggs
 						So(aggs, ShouldHaveLength, 1)
 
 						topAgg := aggs[0]
-						So(topAgg.Key, ShouldEqual, "1")
-						So(topAgg.Aggregation.Type, ShouldEqual, "terms")
+						require.Equal(t, "1", topAgg.Key)
+						require.Equal(t, "terms", topAgg.Aggregation.Type)
 						So(topAgg.Aggregation.Aggs, ShouldHaveLength, 1)
 
 						childAgg := aggs[0].Aggregation.Aggs[0]
-						So(childAgg.Key, ShouldEqual, "2")
-						So(childAgg.Aggregation.Type, ShouldEqual, "date_histogram")
+						require.Equal(t, "2", childAgg.Key)
+						require.Equal(t, "date_histogram", childAgg.Aggregation.Type)
 					})
 
-					Convey("When marshal to JSON should generate correct json", func() {
+					t.Run("When marshal to JSON should generate correct json", func(t *testing.T) {
 						body, err := json.Marshal(sr)
-						So(err, ShouldBeNil)
+						require.NoError(t, err)
 						json, err := simplejson.NewJson(body)
-						So(err, ShouldBeNil)
+						require.NoError(t, err)
 
 						So(json.Get("aggs").MustMap(), ShouldHaveLength, 1)
 						firstLevelAgg := json.GetPath("aggs", "1")
 						secondLevelAgg := firstLevelAgg.GetPath("aggs", "2")
-						So(firstLevelAgg.GetPath("terms", "field").MustString(), ShouldEqual, "@hostname")
-						So(secondLevelAgg.GetPath("date_histogram", "field").MustString(), ShouldEqual, "@timestamp")
+						require.Equal(t, "@hostname", firstLevelAgg.GetPath("terms", "field").MustString())
+						require.Equal(t, "@timestamp", secondLevelAgg.GetPath("date_histogram", "field").MustString())
 					})
 				})
 			})
 
-			Convey("and adding two top level aggs with child agg", func() {
+			t.Run("and adding two top level aggs with child agg", func(t *testing.T) {
 				aggBuilder := b.Agg()
 				aggBuilder.Histogram("1", "@hostname", func(a *HistogramAgg, ib AggBuilder) {
 					ib.DateHistogram("2", "@timestamp", nil)
@@ -223,53 +222,53 @@ func TestSearchRequest(t *testing.T) {
 					ib.Terms("4", "@test", nil)
 				})
 
-				Convey("When building search request", func() {
+				t.Run("When building search request", func(t *testing.T) {
 					sr, err := b.Build()
-					So(err, ShouldBeNil)
+					require.NoError(t, err)
 
-					Convey("Should have 2 top level aggs with one child agg each", func() {
+					t.Run("Should have 2 top level aggs with one child agg each", func(t *testing.T) {
 						aggs := sr.Aggs
 						So(aggs, ShouldHaveLength, 2)
 
 						topAggOne := aggs[0]
-						So(topAggOne.Key, ShouldEqual, "1")
-						So(topAggOne.Aggregation.Type, ShouldEqual, "histogram")
+						require.Equal(t, "1", topAggOne.Key)
+						require.Equal(t, "histogram", topAggOne.Aggregation.Type)
 						So(topAggOne.Aggregation.Aggs, ShouldHaveLength, 1)
 
 						topAggOnechildAgg := topAggOne.Aggregation.Aggs[0]
-						So(topAggOnechildAgg.Key, ShouldEqual, "2")
-						So(topAggOnechildAgg.Aggregation.Type, ShouldEqual, "date_histogram")
+						require.Equal(t, "2", topAggOnechildAgg.Key)
+						require.Equal(t, "date_histogram", topAggOnechildAgg.Aggregation.Type)
 
 						topAggTwo := aggs[1]
-						So(topAggTwo.Key, ShouldEqual, "3")
-						So(topAggTwo.Aggregation.Type, ShouldEqual, "filters")
+						require.Equal(t, "3", topAggTwo.Key)
+						require.Equal(t, "filters", topAggTwo.Aggregation.Type)
 						So(topAggTwo.Aggregation.Aggs, ShouldHaveLength, 1)
 
 						topAggTwochildAgg := topAggTwo.Aggregation.Aggs[0]
-						So(topAggTwochildAgg.Key, ShouldEqual, "4")
-						So(topAggTwochildAgg.Aggregation.Type, ShouldEqual, "terms")
+						require.Equal(t, "4", topAggTwochildAgg.Key)
+						require.Equal(t, "terms", topAggTwochildAgg.Aggregation.Type)
 					})
 
-					Convey("When marshal to JSON should generate correct json", func() {
+					t.Run("When marshal to JSON should generate correct json", func(t *testing.T) {
 						body, err := json.Marshal(sr)
-						So(err, ShouldBeNil)
+						require.NoError(t, err)
 						json, err := simplejson.NewJson(body)
-						So(err, ShouldBeNil)
+						require.NoError(t, err)
 
 						topAggOne := json.GetPath("aggs", "1")
-						So(topAggOne.GetPath("histogram", "field").MustString(), ShouldEqual, "@hostname")
+						require.Equal(t, "@hostname", topAggOne.GetPath("histogram", "field").MustString())
 						topAggOnechildAgg := topAggOne.GetPath("aggs", "2")
-						So(topAggOnechildAgg.GetPath("date_histogram", "field").MustString(), ShouldEqual, "@timestamp")
+						require.Equal(t, "@timestamp", topAggOnechildAgg.GetPath("date_histogram", "field").MustString())
 
 						topAggTwo := json.GetPath("aggs", "3")
 						topAggTwochildAgg := topAggTwo.GetPath("aggs", "4")
 						So(topAggTwo.GetPath("filters").MustArray(), ShouldHaveLength, 0)
-						So(topAggTwochildAgg.GetPath("terms", "field").MustString(), ShouldEqual, "@test")
+						require.Equal(t, "@test", topAggTwochildAgg.GetPath("terms", "field").MustString())
 					})
 				})
 			})
 
-			Convey("and adding top level agg with child agg with child agg", func() {
+			t.Run("and adding top level agg with child agg with child agg", func(t *testing.T) {
 				aggBuilder := b.Agg()
 				aggBuilder.Terms("1", "@hostname", func(a *TermsAggregation, ib AggBuilder) {
 					ib.Terms("2", "@app", func(a *TermsAggregation, ib AggBuilder) {
@@ -277,47 +276,47 @@ func TestSearchRequest(t *testing.T) {
 					})
 				})
 
-				Convey("When building search request", func() {
+				t.Run("When building search request", func(t *testing.T) {
 					sr, err := b.Build()
-					So(err, ShouldBeNil)
+					require.NoError(t, err)
 
-					Convey("Should have 1 top level agg with one child having a child", func() {
+					t.Run("Should have 1 top level agg with one child having a child", func(t *testing.T) {
 						aggs := sr.Aggs
 						So(aggs, ShouldHaveLength, 1)
 
 						topAgg := aggs[0]
-						So(topAgg.Key, ShouldEqual, "1")
-						So(topAgg.Aggregation.Type, ShouldEqual, "terms")
+						require.Equal(t, "1", topAgg.Key)
+						require.Equal(t, "terms", topAgg.Aggregation.Type)
 						So(topAgg.Aggregation.Aggs, ShouldHaveLength, 1)
 
 						childAgg := topAgg.Aggregation.Aggs[0]
-						So(childAgg.Key, ShouldEqual, "2")
-						So(childAgg.Aggregation.Type, ShouldEqual, "terms")
+						require.Equal(t, "2", childAgg.Key)
+						require.Equal(t, "terms", childAgg.Aggregation.Type)
 
 						childChildAgg := childAgg.Aggregation.Aggs[0]
-						So(childChildAgg.Key, ShouldEqual, "3")
-						So(childChildAgg.Aggregation.Type, ShouldEqual, "date_histogram")
+						require.Equal(t, "3", childChildAgg.Key)
+						require.Equal(t, "date_histogram", childChildAgg.Aggregation.Type)
 					})
 
-					Convey("When marshal to JSON should generate correct json", func() {
+					t.Run("When marshal to JSON should generate correct json", func(t *testing.T) {
 						body, err := json.Marshal(sr)
-						So(err, ShouldBeNil)
+						require.NoError(t, err)
 						json, err := simplejson.NewJson(body)
-						So(err, ShouldBeNil)
+						require.NoError(t, err)
 
 						topAgg := json.GetPath("aggs", "1")
-						So(topAgg.GetPath("terms", "field").MustString(), ShouldEqual, "@hostname")
+						require.Equal(t, "@hostname", topAgg.GetPath("terms", "field").MustString())
 
 						childAgg := topAgg.GetPath("aggs", "2")
-						So(childAgg.GetPath("terms", "field").MustString(), ShouldEqual, "@app")
+						require.Equal(t, "@app", childAgg.GetPath("terms", "field").MustString())
 
 						childChildAgg := childAgg.GetPath("aggs", "3")
-						So(childChildAgg.GetPath("date_histogram", "field").MustString(), ShouldEqual, "@timestamp")
+						require.Equal(t, "@timestamp", childChildAgg.GetPath("date_histogram", "field").MustString())
 					})
 				})
 			})
 
-			Convey("and adding bucket and metric aggs", func() {
+			t.Run("and adding bucket and metric aggs", func(t *testing.T) {
 				aggBuilder := b.Agg()
 				aggBuilder.Terms("1", "@hostname", func(a *TermsAggregation, ib AggBuilder) {
 					ib.Terms("2", "@app", func(a *TermsAggregation, ib AggBuilder) {
@@ -329,116 +328,116 @@ func TestSearchRequest(t *testing.T) {
 					})
 				})
 
-				Convey("When building search request", func() {
+				t.Run("When building search request", func(t *testing.T) {
 					sr, err := b.Build()
-					So(err, ShouldBeNil)
+					require.NoError(t, err)
 
-					Convey("Should have 1 top level agg with one child having a child", func() {
+					t.Run("Should have 1 top level agg with one child having a child", func(t *testing.T) {
 						aggs := sr.Aggs
 						So(aggs, ShouldHaveLength, 1)
 
 						topAgg := aggs[0]
-						So(topAgg.Key, ShouldEqual, "1")
-						So(topAgg.Aggregation.Type, ShouldEqual, "terms")
+						require.Equal(t, "1", topAgg.Key)
+						require.Equal(t, "terms", topAgg.Aggregation.Type)
 						So(topAgg.Aggregation.Aggs, ShouldHaveLength, 1)
 
 						childAgg := topAgg.Aggregation.Aggs[0]
-						So(childAgg.Key, ShouldEqual, "2")
-						So(childAgg.Aggregation.Type, ShouldEqual, "terms")
+						require.Equal(t, "2", childAgg.Key)
+						require.Equal(t, "terms", childAgg.Aggregation.Type)
 
 						childChildOneAgg := childAgg.Aggregation.Aggs[0]
-						So(childChildOneAgg.Key, ShouldEqual, "4")
-						So(childChildOneAgg.Aggregation.Type, ShouldEqual, "avg")
+						require.Equal(t, "4", childChildOneAgg.Key)
+						require.Equal(t, "avg", childChildOneAgg.Aggregation.Type)
 
 						childChildTwoAgg := childAgg.Aggregation.Aggs[1]
-						So(childChildTwoAgg.Key, ShouldEqual, "3")
-						So(childChildTwoAgg.Aggregation.Type, ShouldEqual, "date_histogram")
+						require.Equal(t, "3", childChildTwoAgg.Key)
+						require.Equal(t, "date_histogram", childChildTwoAgg.Aggregation.Type)
 
 						childChildTwoChildOneAgg := childChildTwoAgg.Aggregation.Aggs[0]
-						So(childChildTwoChildOneAgg.Key, ShouldEqual, "4")
-						So(childChildTwoChildOneAgg.Aggregation.Type, ShouldEqual, "avg")
+						require.Equal(t, "4", childChildTwoChildOneAgg.Key)
+						require.Equal(t, "avg", childChildTwoChildOneAgg.Aggregation.Type)
 
 						childChildTwoChildTwoAgg := childChildTwoAgg.Aggregation.Aggs[1]
-						So(childChildTwoChildTwoAgg.Key, ShouldEqual, "5")
-						So(childChildTwoChildTwoAgg.Aggregation.Type, ShouldEqual, "max")
+						require.Equal(t, "5", childChildTwoChildTwoAgg.Key)
+						require.Equal(t, "max", childChildTwoChildTwoAgg.Aggregation.Type)
 					})
 
-					Convey("When marshal to JSON should generate correct json", func() {
+					t.Run("When marshal to JSON should generate correct json", func(t *testing.T) {
 						body, err := json.Marshal(sr)
-						So(err, ShouldBeNil)
+						require.NoError(t, err)
 						json, err := simplejson.NewJson(body)
-						So(err, ShouldBeNil)
+						require.NoError(t, err)
 
 						termsAgg := json.GetPath("aggs", "1")
-						So(termsAgg.GetPath("terms", "field").MustString(), ShouldEqual, "@hostname")
+						require.Equal(t, "@hostname", termsAgg.GetPath("terms", "field").MustString())
 
 						termsAggTwo := termsAgg.GetPath("aggs", "2")
-						So(termsAggTwo.GetPath("terms", "field").MustString(), ShouldEqual, "@app")
+						require.Equal(t, "@app", termsAggTwo.GetPath("terms", "field").MustString())
 
 						termsAggTwoAvg := termsAggTwo.GetPath("aggs", "4")
-						So(termsAggTwoAvg.GetPath("avg", "field").MustString(), ShouldEqual, "@value")
+						require.Equal(t, "@value", termsAggTwoAvg.GetPath("avg", "field").MustString())
 
 						dateHistAgg := termsAggTwo.GetPath("aggs", "3")
-						So(dateHistAgg.GetPath("date_histogram", "field").MustString(), ShouldEqual, "@timestamp")
+						require.Equal(t, "@timestamp", dateHistAgg.GetPath("date_histogram", "field").MustString())
 
 						avgAgg := dateHistAgg.GetPath("aggs", "4")
-						So(avgAgg.GetPath("avg", "field").MustString(), ShouldEqual, "@value")
+						require.Equal(t, "@value", avgAgg.GetPath("avg", "field").MustString())
 
 						maxAgg := dateHistAgg.GetPath("aggs", "5")
-						So(maxAgg.GetPath("max", "field").MustString(), ShouldEqual, "@value")
+						require.Equal(t, "@value", maxAgg.GetPath("max", "field").MustString())
 					})
 				})
 			})
 		})
 
-		Convey("Given new search request builder for es version 2", func() {
+		t.Run("Given new search request builder for es version 2", func(t *testing.T) {
 			version2, _ := semver.NewVersion("2.0.0")
 			b := NewSearchRequestBuilder(version2, interval.Interval{Value: 15 * time.Second, Text: "15s"})
 
-			Convey("When adding doc value field", func() {
+			t.Run("When adding doc value field", func(t *testing.T) {
 				b.AddDocValueField(timeField)
 
-				Convey("should set correct props", func() {
+				t.Run("should set correct props", func(t *testing.T) {
 					fields, ok := b.customProps["fields"].([]string)
-					So(ok, ShouldBeTrue)
+					require.True(t, ok)
 					So(fields, ShouldHaveLength, 2)
-					So(fields[0], ShouldEqual, "*")
-					So(fields[1], ShouldEqual, "_source")
+					require.Equal(t, "*", fields[0])
+					require.Equal(t, "_source", fields[1])
 
 					scriptFields, ok := b.customProps["script_fields"].(map[string]interface{})
-					So(ok, ShouldBeTrue)
+					require.True(t, ok)
 					So(scriptFields, ShouldHaveLength, 0)
 
 					fieldDataFields, ok := b.customProps["fielddata_fields"].([]string)
-					So(ok, ShouldBeTrue)
+					require.True(t, ok)
 					So(fieldDataFields, ShouldHaveLength, 1)
-					So(fieldDataFields[0], ShouldEqual, timeField)
+					require.Equal(t, timeField, fieldDataFields[0])
 				})
 
-				Convey("When building search request", func() {
+				t.Run("When building search request", func(t *testing.T) {
 					sr, err := b.Build()
-					So(err, ShouldBeNil)
+					require.NoError(t, err)
 
-					Convey("When marshal to JSON should generate correct json", func() {
+					t.Run("When marshal to JSON should generate correct json", func(t *testing.T) {
 						body, err := json.Marshal(sr)
-						So(err, ShouldBeNil)
+						require.NoError(t, err)
 						json, err := simplejson.NewJson(body)
-						So(err, ShouldBeNil)
+						require.NoError(t, err)
 
 						scriptFields, err := json.Get("script_fields").Map()
-						So(err, ShouldBeNil)
+						require.NoError(t, err)
 						So(scriptFields, ShouldHaveLength, 0)
 
 						fields, err := json.Get("fields").StringArray()
-						So(err, ShouldBeNil)
+						require.NoError(t, err)
 						So(fields, ShouldHaveLength, 2)
-						So(fields[0], ShouldEqual, "*")
-						So(fields[1], ShouldEqual, "_source")
+						require.Equal(t, "*", fields[0])
+						require.Equal(t, "_source", fields[1])
 
 						fieldDataFields, err := json.Get("fielddata_fields").StringArray()
-						So(err, ShouldBeNil)
+						require.NoError(t, err)
 						So(fieldDataFields, ShouldHaveLength, 1)
-						So(fieldDataFields[0], ShouldEqual, timeField)
+						require.Equal(t, timeField, fieldDataFields[0])
 					})
 				})
 			})
@@ -447,28 +446,28 @@ func TestSearchRequest(t *testing.T) {
 }
 
 func TestMultiSearchRequest(t *testing.T) {
-	Convey("Test elasticsearch multi search request", t, func() {
-		Convey("Given new multi search request builder", func() {
+	t.Run("Test elasticsearch multi search request", func(t *testing.T) {
+		t.Run("Given new multi search request builder", func(t *testing.T) {
 			version2, _ := semver.NewVersion("2.0.0")
 			b := NewMultiSearchRequestBuilder(version2)
 
-			Convey("When adding one search request", func() {
+			t.Run("When adding one search request", func(t *testing.T) {
 				b.Search(interval.Interval{Value: 15 * time.Second, Text: "15s"})
 
-				Convey("When building search request should contain one search request", func() {
+				t.Run("When building search request should contain one search request", func(t *testing.T) {
 					mr, err := b.Build()
-					So(err, ShouldBeNil)
+					require.NoError(t, err)
 					So(mr.Requests, ShouldHaveLength, 1)
 				})
 			})
 
-			Convey("When adding two search requests", func() {
+			t.Run("When adding two search requests", func(t *testing.T) {
 				b.Search(interval.Interval{Value: 15 * time.Second, Text: "15s"})
 				b.Search(interval.Interval{Value: 15 * time.Second, Text: "15s"})
 
-				Convey("When building search request should contain two search requests", func() {
+				t.Run("When building search request should contain two search requests", func(t *testing.T) {
 					mr, err := b.Build()
-					So(err, ShouldBeNil)
+					require.NoError(t, err)
 					So(mr.Requests, ShouldHaveLength, 2)
 				})
 			})

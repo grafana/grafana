@@ -4,11 +4,11 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/setting"
-	. "github.com/smartystreets/goconvey/convey"
+	"github.com/stretchr/testify/require"
 )
 
 func TestFrontendPlugin(t *testing.T) {
-	Convey("When setting paths based on App on Windows", t, func() {
+	t.Run("When setting paths based on App on Windows", func(t *testing.T) {
 		setting.StaticRootPath = "c:\\grafana\\public"
 
 		fp := &FrontendPluginBase{
@@ -29,6 +29,6 @@ func TestFrontendPlugin(t *testing.T) {
 		cfg := setting.NewCfg()
 		fp.setPathsBasedOnApp(app, cfg)
 
-		So(fp.Module, ShouldEqual, "app/plugins/app/testdata/datasources/datasource/module")
+		require.Equal(t, "app/plugins/app/testdata/datasources/datasource/module", fp.Module)
 	})
 }

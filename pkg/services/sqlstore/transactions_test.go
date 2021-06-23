@@ -7,8 +7,6 @@ import (
 	"errors"
 	"testing"
 
-	. "github.com/smartystreets/goconvey/convey"
-
 	"github.com/grafana/grafana/pkg/models"
 )
 
@@ -17,25 +15,25 @@ var ErrProvokedError = errors.New("testing error")
 func TestTransaction(t *testing.T) {
 	ss := InitTestDB(t)
 
-	Convey("InTransaction", t, func() {
+	t.Run("InTransaction", func(t *testing.T) {
 		cmd := &models.AddApiKeyCommand{Key: "secret-key", Name: "key", OrgId: 1}
 
 		err := AddApiKey(cmd)
-		So(err, ShouldBeNil)
+		require.NoError(t, err)
 
-		Convey("can update key", func() {
+		t.Run("can update key", func(t *testing.T) {
 			err := ss.WithTransactionalDbSession(context.Background(), func(sess *DBSession) error {
 				return deleteAPIKey(sess, cmd.Result.Id, 1)
 			})
 
-			So(err, ShouldBeNil)
+			require.NoError(t, err)
 
 			query := &models.GetApiKeyByIdQuery{ApiKeyId: cmd.Result.Id}
 			err = GetApiKeyById(query)
-			So(err, ShouldEqual, models.ErrInvalidApiKey)
+			require.Equal(t, models.ErrInvalidApiKey, err)
 		})
 
-		Convey("won't update if one handler fails", func() {
+		t.Run("won't update if one handler fails", func(t *testing.T) {
 			err := ss.WithTransactionalDbSession(context.Background(), func(sess *DBSession) error {
 				err := deleteAPIKey(sess, cmd.Result.Id, 1)
 				if err != nil {
@@ -45,12 +43,12 @@ func TestTransaction(t *testing.T) {
 				return ErrProvokedError
 			})
 
-			So(err, ShouldEqual, ErrProvokedError)
+			require.Equal(t, ErrProvokedError, err)
 
 			query := &models.GetApiKeyByIdQuery{ApiKeyId: cmd.Result.Id}
 			err = GetApiKeyById(query)
-			So(err, ShouldBeNil)
-			So(query.Result.Id, ShouldEqual, cmd.Result.Id)
+			require.NoError(t, err)
+			require.Equal(t, cmd.Result.Id, query.Result.Id)
 		})
 	})
 }

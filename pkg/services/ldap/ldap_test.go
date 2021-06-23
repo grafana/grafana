@@ -5,13 +5,13 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	. "github.com/smartystreets/goconvey/convey"
+	"github.com/stretchr/testify/require"
 	"gopkg.in/ldap.v3"
 )
 
 func TestPublicAPI(t *testing.T) {
-	Convey("New()", t, func() {
-		Convey("Should return ", func() {
+	t.Run("New()", func(t *testing.T) {
+		t.Run("Should return ", func(t *testing.T) {
 			result := New(&ServerConfig{
 				Attr:          AttributeMap{},
 				SearchBaseDNs: []string{"BaseDNHere"},
@@ -21,8 +21,8 @@ func TestPublicAPI(t *testing.T) {
 		})
 	})
 
-	Convey("Close()", t, func() {
-		Convey("Should close the connection", func() {
+	t.Run("Close()", func(t *testing.T) {
+		t.Run("Should close the connection", func(t *testing.T) {
 			connection := &MockConnection{}
 
 			server := &Server{
@@ -34,10 +34,10 @@ func TestPublicAPI(t *testing.T) {
 			}
 
 			So(server.Close, ShouldNotPanic)
-			So(connection.CloseCalled, ShouldBeTrue)
+			require.True(t, connection.CloseCalled)
 		})
 
-		Convey("Should panic if no connection is established", func() {
+		t.Run("Should panic if no connection is established", func(t *testing.T) {
 			server := &Server{
 				Config: &ServerConfig{
 					Attr:          AttributeMap{},
@@ -49,8 +49,8 @@ func TestPublicAPI(t *testing.T) {
 			So(server.Close, ShouldPanic)
 		})
 	})
-	Convey("Users()", t, func() {
-		Convey("Finds one user", func() {
+	t.Run("Users()", func(t *testing.T) {
+		t.Run("Finds one user", func(t *testing.T) {
 			MockConnection := &MockConnection{}
 			entry := ldap.Entry{
 				DN: "dn", Attributes: []*ldap.EntryAttribute{
@@ -79,17 +79,17 @@ func TestPublicAPI(t *testing.T) {
 
 			searchResult, err := server.Users([]string{"roelgerrits"})
 
-			So(err, ShouldBeNil)
+			require.NoError(t, err)
 			So(searchResult, ShouldNotBeNil)
 
 			// User should be searched in ldap
-			So(MockConnection.SearchCalled, ShouldBeTrue)
+			require.True(t, MockConnection.SearchCalled)
 
 			// No empty attributes should be added to the search request
-			So(len(MockConnection.SearchAttributes), ShouldEqual, 3)
+			require.Equal(t, 3, len(MockConnection.SearchAttributes))
 		})
 
-		Convey("Handles a error", func() {
+		t.Run("Handles a error", func(t *testing.T) {
 			expected := errors.New("Killa-gorilla")
 			MockConnection := &MockConnection{}
 			MockConnection.setSearchError(expected)
@@ -105,10 +105,10 @@ func TestPublicAPI(t *testing.T) {
 
 			_, err := server.Users([]string{"roelgerrits"})
 
-			So(err, ShouldEqual, expected)
+			require.Equal(t, expected, err)
 		})
 
-		Convey("Should return empty slice if none were found", func() {
+		t.Run("Should return empty slice if none were found", func(t *testing.T) {
 			MockConnection := &MockConnection{}
 			result := ldap.SearchResult{Entries: []*ldap.Entry{}}
 			MockConnection.setSearchResult(&result)
@@ -124,13 +124,13 @@ func TestPublicAPI(t *testing.T) {
 
 			searchResult, err := server.Users([]string{"roelgerrits"})
 
-			So(err, ShouldBeNil)
+			require.NoError(t, err)
 			So(searchResult, ShouldBeEmpty)
 		})
 	})
 
-	Convey("UserBind()", t, func() {
-		Convey("Should use provided DN and password", func() {
+	t.Run("UserBind()", func(t *testing.T) {
+		t.Run("Should use provided DN and password", func(t *testing.T) {
 			connection := &MockConnection{}
 			var actualUsername, actualPassword string
 			connection.BindProvider = func(username, password string) error {
@@ -148,12 +148,12 @@ func TestPublicAPI(t *testing.T) {
 			dn := "cn=user,ou=users,dc=grafana,dc=org"
 			err := server.UserBind(dn, "pwd")
 
-			So(err, ShouldBeNil)
-			So(actualUsername, ShouldEqual, dn)
-			So(actualPassword, ShouldEqual, "pwd")
+			require.NoError(t, err)
+			require.Equal(t, dn, actualUsername)
+			require.Equal(t, "pwd", actualPassword)
 		})
 
-		Convey("Should handle an error", func() {
+		t.Run("Should handle an error", func(t *testing.T) {
 			connection := &MockConnection{}
 			expected := &ldap.Error{
 				ResultCode: uint16(25),
@@ -169,12 +169,12 @@ func TestPublicAPI(t *testing.T) {
 				log: log.New("test-logger"),
 			}
 			err := server.UserBind("user", "pwd")
-			So(err, ShouldEqual, expected)
+			require.Equal(t, expected, err)
 		})
 	})
 
-	Convey("AdminBind()", t, func() {
-		Convey("Should use admin DN and password", func() {
+	t.Run("AdminBind()", func(t *testing.T) {
+		t.Run("Should use admin DN and password", func(t *testing.T) {
 			connection := &MockConnection{}
 			var actualUsername, actualPassword string
 			connection.BindProvider = func(username, password string) error {
@@ -195,12 +195,12 @@ func TestPublicAPI(t *testing.T) {
 
 			err := server.AdminBind()
 
-			So(err, ShouldBeNil)
-			So(actualUsername, ShouldEqual, dn)
-			So(actualPassword, ShouldEqual, "pwd")
+			require.NoError(t, err)
+			require.Equal(t, dn, actualUsername)
+			require.Equal(t, "pwd", actualPassword)
 		})
 
-		Convey("Should handle an error", func() {
+		t.Run("Should handle an error", func(t *testing.T) {
 			connection := &MockConnection{}
 			expected := &ldap.Error{
 				ResultCode: uint16(25),
@@ -221,7 +221,7 @@ func TestPublicAPI(t *testing.T) {
 			}
 
 			err := server.AdminBind()
-			So(err, ShouldEqual, expected)
+			require.Equal(t, expected, err)
 		})
 	})
 }

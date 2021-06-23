@@ -6,8 +6,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/validations"
-
-	. "github.com/smartystreets/goconvey/convey"
+	"github.com/stretchr/testify/require"
 )
 
 type conditionStub struct {
@@ -22,10 +21,10 @@ func (c *conditionStub) Eval(context *EvalContext, reqHandler plugins.DataReques
 }
 
 func TestAlertingEvaluationHandler(t *testing.T) {
-	Convey("Test alert evaluation handler", t, func() {
+	t.Run("Test alert evaluation handler", func(t *testing.T) {
 		handler := NewEvalHandler(nil)
 
-		Convey("Show return triggered with single passing condition", func() {
+		t.Run("Show return triggered with single passing condition", func(t *testing.T) {
 			context := NewEvalContext(context.TODO(), &Rule{
 				Conditions: []Condition{&conditionStub{
 					firing: true,
@@ -33,21 +32,21 @@ func TestAlertingEvaluationHandler(t *testing.T) {
 			}, &validations.OSSPluginRequestValidator{})
 
 			handler.Eval(context)
-			So(context.Firing, ShouldEqual, true)
-			So(context.ConditionEvals, ShouldEqual, "true = true")
+			require.Equal(t, true, context.Firing)
+			require.Equal(t, "true = true", context.ConditionEvals)
 		})
 
-		Convey("Show return triggered with single passing condition2", func() {
+		t.Run("Show return triggered with single passing condition2", func(t *testing.T) {
 			context := NewEvalContext(context.TODO(), &Rule{
 				Conditions: []Condition{&conditionStub{firing: true, operator: "and"}},
 			}, &validations.OSSPluginRequestValidator{})
 
 			handler.Eval(context)
-			So(context.Firing, ShouldEqual, true)
-			So(context.ConditionEvals, ShouldEqual, "true = true")
+			require.Equal(t, true, context.Firing)
+			require.Equal(t, "true = true", context.ConditionEvals)
 		})
 
-		Convey("Show return false with not passing asdf", func() {
+		t.Run("Show return false with not passing asdf", func(t *testing.T) {
 			context := NewEvalContext(context.TODO(), &Rule{
 				Conditions: []Condition{
 					&conditionStub{firing: true, operator: "and", matches: []*EvalMatch{{}, {}}},
@@ -56,11 +55,11 @@ func TestAlertingEvaluationHandler(t *testing.T) {
 			}, &validations.OSSPluginRequestValidator{})
 
 			handler.Eval(context)
-			So(context.Firing, ShouldEqual, false)
-			So(context.ConditionEvals, ShouldEqual, "[true AND false] = false")
+			require.Equal(t, false, context.Firing)
+			require.Equal(t, "[true AND false] = false", context.ConditionEvals)
 		})
 
-		Convey("Show return true if any of the condition is passing with OR operator", func() {
+		t.Run("Show return true if any of the condition is passing with OR operator", func(t *testing.T) {
 			context := NewEvalContext(context.TODO(), &Rule{
 				Conditions: []Condition{
 					&conditionStub{firing: true, operator: "and"},
@@ -69,11 +68,11 @@ func TestAlertingEvaluationHandler(t *testing.T) {
 			}, &validations.OSSPluginRequestValidator{})
 
 			handler.Eval(context)
-			So(context.Firing, ShouldEqual, true)
-			So(context.ConditionEvals, ShouldEqual, "[true OR false] = true")
+			require.Equal(t, true, context.Firing)
+			require.Equal(t, "[true OR false] = true", context.ConditionEvals)
 		})
 
-		Convey("Show return false if any of the condition is failing with AND operator", func() {
+		t.Run("Show return false if any of the condition is failing with AND operator", func(t *testing.T) {
 			context := NewEvalContext(context.TODO(), &Rule{
 				Conditions: []Condition{
 					&conditionStub{firing: true, operator: "and"},
@@ -82,11 +81,11 @@ func TestAlertingEvaluationHandler(t *testing.T) {
 			}, &validations.OSSPluginRequestValidator{})
 
 			handler.Eval(context)
-			So(context.Firing, ShouldEqual, false)
-			So(context.ConditionEvals, ShouldEqual, "[true AND false] = false")
+			require.Equal(t, false, context.Firing)
+			require.Equal(t, "[true AND false] = false", context.ConditionEvals)
 		})
 
-		Convey("Show return true if one condition is failing with nested OR operator", func() {
+		t.Run("Show return true if one condition is failing with nested OR operator", func(t *testing.T) {
 			context := NewEvalContext(context.TODO(), &Rule{
 				Conditions: []Condition{
 					&conditionStub{firing: true, operator: "and"},
@@ -96,11 +95,11 @@ func TestAlertingEvaluationHandler(t *testing.T) {
 			}, &validations.OSSPluginRequestValidator{})
 
 			handler.Eval(context)
-			So(context.Firing, ShouldEqual, true)
-			So(context.ConditionEvals, ShouldEqual, "[[true AND true] OR false] = true")
+			require.Equal(t, true, context.Firing)
+			require.Equal(t, "[[true AND true] OR false] = true", context.ConditionEvals)
 		})
 
-		Convey("Show return false if one condition is passing with nested OR operator", func() {
+		t.Run("Show return false if one condition is passing with nested OR operator", func(t *testing.T) {
 			context := NewEvalContext(context.TODO(), &Rule{
 				Conditions: []Condition{
 					&conditionStub{firing: true, operator: "and"},
@@ -110,11 +109,11 @@ func TestAlertingEvaluationHandler(t *testing.T) {
 			}, &validations.OSSPluginRequestValidator{})
 
 			handler.Eval(context)
-			So(context.Firing, ShouldEqual, false)
-			So(context.ConditionEvals, ShouldEqual, "[[true AND false] OR false] = false")
+			require.Equal(t, false, context.Firing)
+			require.Equal(t, "[[true AND false] OR false] = false", context.ConditionEvals)
 		})
 
-		Convey("Show return false if a condition is failing with nested AND operator", func() {
+		t.Run("Show return false if a condition is failing with nested AND operator", func(t *testing.T) {
 			context := NewEvalContext(context.TODO(), &Rule{
 				Conditions: []Condition{
 					&conditionStub{firing: true, operator: "and"},
@@ -124,11 +123,11 @@ func TestAlertingEvaluationHandler(t *testing.T) {
 			}, &validations.OSSPluginRequestValidator{})
 
 			handler.Eval(context)
-			So(context.Firing, ShouldEqual, false)
-			So(context.ConditionEvals, ShouldEqual, "[[true AND false] AND true] = false")
+			require.Equal(t, false, context.Firing)
+			require.Equal(t, "[[true AND false] AND true] = false", context.ConditionEvals)
 		})
 
-		Convey("Show return true if a condition is passing with nested OR operator", func() {
+		t.Run("Show return true if a condition is passing with nested OR operator", func(t *testing.T) {
 			context := NewEvalContext(context.TODO(), &Rule{
 				Conditions: []Condition{
 					&conditionStub{firing: true, operator: "and"},
@@ -138,11 +137,11 @@ func TestAlertingEvaluationHandler(t *testing.T) {
 			}, &validations.OSSPluginRequestValidator{})
 
 			handler.Eval(context)
-			So(context.Firing, ShouldEqual, true)
-			So(context.ConditionEvals, ShouldEqual, "[[true OR false] OR true] = true")
+			require.Equal(t, true, context.Firing)
+			require.Equal(t, "[[true OR false] OR true] = true", context.ConditionEvals)
 		})
 
-		Convey("Should return false if no condition is firing using OR operator", func() {
+		t.Run("Should return false if no condition is firing using OR operator", func(t *testing.T) {
 			context := NewEvalContext(context.TODO(), &Rule{
 				Conditions: []Condition{
 					&conditionStub{firing: false, operator: "or"},
@@ -152,12 +151,12 @@ func TestAlertingEvaluationHandler(t *testing.T) {
 			}, &validations.OSSPluginRequestValidator{})
 
 			handler.Eval(context)
-			So(context.Firing, ShouldEqual, false)
-			So(context.ConditionEvals, ShouldEqual, "[[false OR false] OR false] = false")
+			require.Equal(t, false, context.Firing)
+			require.Equal(t, "[[false OR false] OR false] = false", context.ConditionEvals)
 		})
 
 		// FIXME: What should the actual test case name be here?
-		Convey("Should not return NoDataFound if all conditions have data and using OR", func() {
+		t.Run("Should not return NoDataFound if all conditions have data and using OR", func(t *testing.T) {
 			context := NewEvalContext(context.TODO(), &Rule{
 				Conditions: []Condition{
 					&conditionStub{operator: "or", noData: false},
@@ -170,7 +169,7 @@ func TestAlertingEvaluationHandler(t *testing.T) {
 			So(context.NoDataFound, ShouldBeFalse)
 		})
 
-		Convey("Should return NoDataFound if one condition has no data", func() {
+		t.Run("Should return NoDataFound if one condition has no data", func(t *testing.T) {
 			context := NewEvalContext(context.TODO(), &Rule{
 				Conditions: []Condition{
 					&conditionStub{operator: "and", noData: true},
@@ -178,11 +177,11 @@ func TestAlertingEvaluationHandler(t *testing.T) {
 			}, &validations.OSSPluginRequestValidator{})
 
 			handler.Eval(context)
-			So(context.Firing, ShouldEqual, false)
-			So(context.NoDataFound, ShouldBeTrue)
+			require.Equal(t, false, context.Firing)
+			require.True(t, context.NoDataFound)
 		})
 
-		Convey("Should not return no data if at least one condition has no data and using AND", func() {
+		t.Run("Should not return no data if at least one condition has no data and using AND", func(t *testing.T) {
 			context := NewEvalContext(context.TODO(), &Rule{
 				Conditions: []Condition{
 					&conditionStub{operator: "and", noData: true},
@@ -194,7 +193,7 @@ func TestAlertingEvaluationHandler(t *testing.T) {
 			So(context.NoDataFound, ShouldBeFalse)
 		})
 
-		Convey("Should return no data if at least one condition has no data and using OR", func() {
+		t.Run("Should return no data if at least one condition has no data and using OR", func(t *testing.T) {
 			context := NewEvalContext(context.TODO(), &Rule{
 				Conditions: []Condition{
 					&conditionStub{operator: "or", noData: true},
@@ -203,7 +202,7 @@ func TestAlertingEvaluationHandler(t *testing.T) {
 			}, &validations.OSSPluginRequestValidator{})
 
 			handler.Eval(context)
-			So(context.NoDataFound, ShouldBeTrue)
+			require.True(t, context.NoDataFound)
 		})
 	})
 }

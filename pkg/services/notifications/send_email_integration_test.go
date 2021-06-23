@@ -7,11 +7,11 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
-	. "github.com/smartystreets/goconvey/convey"
+	"github.com/stretchr/testify/require"
 )
 
 func TestEmailIntegrationTest(t *testing.T) {
-	SkipConvey("Given the notifications service", t, func() {
+	Skipt.Run("Given the notifications service", func(t *testing.T) {
 		setting.StaticRootPath = "../../../public/"
 		setting.BuildVersion = "4.0.0"
 
@@ -24,9 +24,9 @@ func TestEmailIntegrationTest(t *testing.T) {
 		ns.Cfg.Smtp.FromName = "Grafana Admin"
 
 		err := ns.Init()
-		So(err, ShouldBeNil)
+		require.NoError(t, err)
 
-		Convey("When sending reset email password", func() {
+		t.Run("When sending reset email password", func(t *testing.T) {
 			cmd := &models.SendEmailCommand{
 
 				Data: map[string]interface{}{
@@ -56,13 +56,13 @@ func TestEmailIntegrationTest(t *testing.T) {
 			}
 
 			err := ns.sendEmailCommandHandler(cmd)
-			So(err, ShouldBeNil)
+			require.NoError(t, err)
 
 			sentMsg := <-ns.mailQueue
-			So(sentMsg.From, ShouldEqual, "Grafana Admin <from@address.com>")
-			So(sentMsg.To[0], ShouldEqual, "asdf@asdf.com")
+			require.Equal(t, "Grafana Admin <from@address.com>", sentMsg.From)
+			require.Equal(t, "asdf@asdf.com", sentMsg.To[0])
 			err = ioutil.WriteFile("../../../tmp/test_email.html", []byte(sentMsg.Body), 0777)
-			So(err, ShouldBeNil)
+			require.NoError(t, err)
 		})
 	})
 }

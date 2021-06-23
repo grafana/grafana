@@ -7,13 +7,13 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
-	. "github.com/smartystreets/goconvey/convey"
+	"github.com/stretchr/testify/require"
 )
 
 func TestThreemaNotifier(t *testing.T) {
-	Convey("Threema notifier tests", t, func() {
-		Convey("Parsing alert notification from settings", func() {
-			Convey("empty settings should return error", func() {
+	t.Run("Threema notifier tests", func(t *testing.T) {
+		t.Run("Parsing alert notification from settings", func(t *testing.T) {
+			t.Run("empty settings should return error", func(t *testing.T) {
 				json := `{ }`
 
 				settingsJSON, _ := simplejson.NewJson([]byte(json))
@@ -24,10 +24,10 @@ func TestThreemaNotifier(t *testing.T) {
 				}
 
 				_, err := NewThreemaNotifier(model)
-				So(err, ShouldNotBeNil)
+				require.Error(t, err)
 			})
 
-			Convey("valid settings should be parsed successfully", func() {
+			t.Run("valid settings should be parsed successfully", func(t *testing.T) {
 				json := `
 				{
 					"gateway_id": "*3MAGWID",
@@ -43,18 +43,18 @@ func TestThreemaNotifier(t *testing.T) {
 				}
 
 				not, err := NewThreemaNotifier(model)
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 				threemaNotifier := not.(*ThreemaNotifier)
 
-				So(err, ShouldBeNil)
-				So(threemaNotifier.Name, ShouldEqual, "threema_testing")
-				So(threemaNotifier.Type, ShouldEqual, "threema")
-				So(threemaNotifier.GatewayID, ShouldEqual, "*3MAGWID")
-				So(threemaNotifier.RecipientID, ShouldEqual, "ECHOECHO")
-				So(threemaNotifier.APISecret, ShouldEqual, "1234")
+				require.NoError(t, err)
+				require.Equal(t, "threema_testing", threemaNotifier.Name)
+				require.Equal(t, "threema", threemaNotifier.Type)
+				require.Equal(t, "*3MAGWID", threemaNotifier.GatewayID)
+				require.Equal(t, "ECHOECHO", threemaNotifier.RecipientID)
+				require.Equal(t, "1234", threemaNotifier.APISecret)
 			})
 
-			Convey("invalid Threema Gateway IDs should be rejected (prefix)", func() {
+			t.Run("invalid Threema Gateway IDs should be rejected (prefix)", func(t *testing.T) {
 				json := `
 				{
 					"gateway_id": "ECHOECHO",
@@ -72,11 +72,11 @@ func TestThreemaNotifier(t *testing.T) {
 				not, err := NewThreemaNotifier(model)
 				So(not, ShouldBeNil)
 				var valErr alerting.ValidationError
-				So(errors.As(err, &valErr), ShouldBeTrue)
-				So(valErr.Reason, ShouldEqual, "Invalid Threema Gateway ID: Must start with a *")
+				require.True(t, errors.As(err, &valErr))
+				require.Equal(t, "Invalid Threema Gateway ID: Must start with a *", valErr.Reason)
 			})
 
-			Convey("invalid Threema Gateway IDs should be rejected (length)", func() {
+			t.Run("invalid Threema Gateway IDs should be rejected (length)", func(t *testing.T) {
 				json := `
 				{
 					"gateway_id": "*ECHOECHO",
@@ -94,11 +94,11 @@ func TestThreemaNotifier(t *testing.T) {
 				not, err := NewThreemaNotifier(model)
 				So(not, ShouldBeNil)
 				var valErr alerting.ValidationError
-				So(errors.As(err, &valErr), ShouldBeTrue)
-				So(valErr.Reason, ShouldEqual, "Invalid Threema Gateway ID: Must be 8 characters long")
+				require.True(t, errors.As(err, &valErr))
+				require.Equal(t, "Invalid Threema Gateway ID: Must be 8 characters long", valErr.Reason)
 			})
 
-			Convey("invalid Threema Recipient IDs should be rejected (length)", func() {
+			t.Run("invalid Threema Recipient IDs should be rejected (length)", func(t *testing.T) {
 				json := `
 				{
 					"gateway_id": "*3MAGWID",
@@ -116,8 +116,8 @@ func TestThreemaNotifier(t *testing.T) {
 				not, err := NewThreemaNotifier(model)
 				So(not, ShouldBeNil)
 				var valErr alerting.ValidationError
-				So(errors.As(err, &valErr), ShouldBeTrue)
-				So(valErr.Reason, ShouldEqual, "Invalid Threema Recipient ID: Must be 8 characters long")
+				require.True(t, errors.As(err, &valErr))
+				require.Equal(t, "Invalid Threema Recipient ID: Must be 8 characters long", valErr.Reason)
 			})
 		})
 	})

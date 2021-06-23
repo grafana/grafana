@@ -8,11 +8,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/validations"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
-	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestShouldSendAlertNotification(t *testing.T) {
@@ -186,7 +186,7 @@ func TestShouldSendAlertNotification(t *testing.T) {
 }
 
 func TestBaseNotifier(t *testing.T) {
-	Convey("default constructor for notifiers", t, func() {
+	t.Run("default constructor for notifiers", func(t *testing.T) {
 		bJSON := simplejson.New()
 
 		model := &models.AlertNotification{
@@ -196,26 +196,26 @@ func TestBaseNotifier(t *testing.T) {
 			Settings: bJSON,
 		}
 
-		Convey("can parse false value", func() {
+		t.Run("can parse false value", func(t *testing.T) {
 			bJSON.Set("uploadImage", false)
 
 			base := NewNotifierBase(model)
 			So(base.UploadImage, ShouldBeFalse)
 		})
 
-		Convey("can parse true value", func() {
+		t.Run("can parse true value", func(t *testing.T) {
 			bJSON.Set("uploadImage", true)
 
 			base := NewNotifierBase(model)
-			So(base.UploadImage, ShouldBeTrue)
+			require.True(t, base.UploadImage)
 		})
 
-		Convey("default value should be true for backwards compatibility", func() {
+		t.Run("default value should be true for backwards compatibility", func(t *testing.T) {
 			base := NewNotifierBase(model)
-			So(base.UploadImage, ShouldBeTrue)
+			require.True(t, base.UploadImage)
 		})
 
-		Convey("default value should be false for backwards compatibility", func() {
+		t.Run("default value should be false for backwards compatibility", func(t *testing.T) {
 			base := NewNotifierBase(model)
 			So(base.DisableResolveMessage, ShouldBeFalse)
 		})

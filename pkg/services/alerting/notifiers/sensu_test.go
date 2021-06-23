@@ -5,13 +5,13 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
-	. "github.com/smartystreets/goconvey/convey"
+	"github.com/stretchr/testify/require"
 )
 
 func TestSensuNotifier(t *testing.T) {
-	Convey("Sensu notifier tests", t, func() {
-		Convey("Parsing alert notification from settings", func() {
-			Convey("empty settings should return error", func() {
+	t.Run("Sensu notifier tests", func(t *testing.T) {
+		t.Run("Parsing alert notification from settings", func(t *testing.T) {
+			t.Run("empty settings should return error", func(t *testing.T) {
 				json := `{ }`
 
 				settingsJSON, _ := simplejson.NewJson([]byte(json))
@@ -22,10 +22,10 @@ func TestSensuNotifier(t *testing.T) {
 				}
 
 				_, err := NewSensuNotifier(model)
-				So(err, ShouldNotBeNil)
+				require.Error(t, err)
 			})
 
-			Convey("from settings", func() {
+			t.Run("from settings", func(t *testing.T) {
 				json := `
 				{
 					"url": "http://sensu-api.example.com:4567/results",
@@ -43,12 +43,12 @@ func TestSensuNotifier(t *testing.T) {
 				not, err := NewSensuNotifier(model)
 				sensuNotifier := not.(*SensuNotifier)
 
-				So(err, ShouldBeNil)
-				So(sensuNotifier.Name, ShouldEqual, "sensu")
-				So(sensuNotifier.Type, ShouldEqual, "sensu")
-				So(sensuNotifier.URL, ShouldEqual, "http://sensu-api.example.com:4567/results")
-				So(sensuNotifier.Source, ShouldEqual, "grafana_instance_01")
-				So(sensuNotifier.Handler, ShouldEqual, "myhandler")
+				require.NoError(t, err)
+				require.Equal(t, "sensu", sensuNotifier.Name)
+				require.Equal(t, "sensu", sensuNotifier.Type)
+				require.Equal(t, "http://sensu-api.example.com:4567/results", sensuNotifier.URL)
+				require.Equal(t, "grafana_instance_01", sensuNotifier.Source)
+				require.Equal(t, "myhandler", sensuNotifier.Handler)
 			})
 		})
 	})

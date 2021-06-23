@@ -17,7 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/alerting"
-	. "github.com/smartystreets/goconvey/convey"
 	"github.com/stretchr/testify/require"
 	"github.com/xorcare/pointer"
 )
@@ -33,144 +32,144 @@ func newTimeSeriesPointsFromArgs(values ...float64) plugins.DataTimeSeriesPoints
 }
 
 func TestQueryCondition(t *testing.T) {
-	Convey("when evaluating query condition", t, func() {
+	t.Run("when evaluating query condition", func(t *testing.T) {
 		queryConditionScenario("Given avg() and > 100", func(ctx *queryConditionTestContext) {
 			ctx.reducer = `{"type": "avg"}`
 			ctx.evaluator = `{"type": "gt", "params": [100]}`
 
-			Convey("Can read query condition from json model", func() {
+			t.Run("Can read query condition from json model", func(t *testing.T) {
 				_, err := ctx.exec()
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
-				So(ctx.condition.Query.From, ShouldEqual, "5m")
-				So(ctx.condition.Query.To, ShouldEqual, "now")
-				So(ctx.condition.Query.DatasourceID, ShouldEqual, 1)
+				require.Equal(t, "5m", ctx.condition.Query.From)
+				require.Equal(t, "now", ctx.condition.Query.To)
+				require.Equal(t, 1, ctx.condition.Query.DatasourceID)
 
-				Convey("Can read query reducer", func() {
+				t.Run("Can read query reducer", func(t *testing.T) {
 					reducer := ctx.condition.Reducer
-					So(reducer.Type, ShouldEqual, "avg")
+					require.Equal(t, "avg", reducer.Type)
 				})
 
-				Convey("Can read evaluator", func() {
+				t.Run("Can read evaluator", func(t *testing.T) {
 					evaluator, ok := ctx.condition.Evaluator.(*thresholdEvaluator)
-					So(ok, ShouldBeTrue)
-					So(evaluator.Type, ShouldEqual, "gt")
+					require.True(t, ok)
+					require.Equal(t, "gt", evaluator.Type)
 				})
 			})
 
-			Convey("should fire when avg is above 100", func() {
+			t.Run("should fire when avg is above 100", func(t *testing.T) {
 				points := newTimeSeriesPointsFromArgs(120, 0)
 				ctx.series = plugins.DataTimeSeriesSlice{plugins.DataTimeSeries{Name: "test1", Points: points}}
 				cr, err := ctx.exec()
 
-				So(err, ShouldBeNil)
-				So(cr.Firing, ShouldBeTrue)
+				require.NoError(t, err)
+				require.True(t, cr.Firing)
 			})
 
-			Convey("should fire when avg is above 100 on dataframe", func() {
+			t.Run("should fire when avg is above 100 on dataframe", func(t *testing.T) {
 				ctx.frame = data.NewFrame("",
 					data.NewField("time", nil, []time.Time{time.Now(), time.Now()}),
 					data.NewField("val", nil, []int64{120, 150}),
 				)
 				cr, err := ctx.exec()
 
-				So(err, ShouldBeNil)
-				So(cr.Firing, ShouldBeTrue)
+				require.NoError(t, err)
+				require.True(t, cr.Firing)
 			})
 
-			Convey("Should not fire when avg is below 100", func() {
+			t.Run("Should not fire when avg is below 100", func(t *testing.T) {
 				points := newTimeSeriesPointsFromArgs(90, 0)
 				ctx.series = plugins.DataTimeSeriesSlice{plugins.DataTimeSeries{Name: "test1", Points: points}}
 				cr, err := ctx.exec()
 
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 				So(cr.Firing, ShouldBeFalse)
 			})
 
-			Convey("Should not fire when avg is below 100 on dataframe", func() {
+			t.Run("Should not fire when avg is below 100 on dataframe", func(t *testing.T) {
 				ctx.frame = data.NewFrame("",
 					data.NewField("time", nil, []time.Time{time.Now(), time.Now()}),
 					data.NewField("val", nil, []int64{12, 47}),
 				)
 				cr, err := ctx.exec()
 
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 				So(cr.Firing, ShouldBeFalse)
 			})
 
-			Convey("Should fire if only first series matches", func() {
+			t.Run("Should fire if only first series matches", func(t *testing.T) {
 				ctx.series = plugins.DataTimeSeriesSlice{
 					plugins.DataTimeSeries{Name: "test1", Points: newTimeSeriesPointsFromArgs(120, 0)},
 					plugins.DataTimeSeries{Name: "test2", Points: newTimeSeriesPointsFromArgs(0, 0)},
 				}
 				cr, err := ctx.exec()
 
-				So(err, ShouldBeNil)
-				So(cr.Firing, ShouldBeTrue)
+				require.NoError(t, err)
+				require.True(t, cr.Firing)
 			})
 
-			Convey("No series", func() {
-				Convey("Should set NoDataFound when condition is gt", func() {
+			t.Run("No series", func(t *testing.T) {
+				t.Run("Should set NoDataFound when condition is gt", func(t *testing.T) {
 					ctx.series = plugins.DataTimeSeriesSlice{}
 					cr, err := ctx.exec()
 
-					So(err, ShouldBeNil)
+					require.NoError(t, err)
 					So(cr.Firing, ShouldBeFalse)
-					So(cr.NoDataFound, ShouldBeTrue)
+					require.True(t, cr.NoDataFound)
 				})
 
-				Convey("Should be firing when condition is no_value", func() {
+				t.Run("Should be firing when condition is no_value", func(t *testing.T) {
 					ctx.evaluator = `{"type": "no_value", "params": []}`
 					ctx.series = plugins.DataTimeSeriesSlice{}
 					cr, err := ctx.exec()
 
-					So(err, ShouldBeNil)
-					So(cr.Firing, ShouldBeTrue)
+					require.NoError(t, err)
+					require.True(t, cr.Firing)
 				})
 			})
 
-			Convey("Empty series", func() {
-				Convey("Should set Firing if eval match", func() {
+			t.Run("Empty series", func(t *testing.T) {
+				t.Run("Should set Firing if eval match", func(t *testing.T) {
 					ctx.evaluator = `{"type": "no_value", "params": []}`
 					ctx.series = plugins.DataTimeSeriesSlice{
 						plugins.DataTimeSeries{Name: "test1", Points: newTimeSeriesPointsFromArgs()},
 					}
 					cr, err := ctx.exec()
 
-					So(err, ShouldBeNil)
-					So(cr.Firing, ShouldBeTrue)
+					require.NoError(t, err)
+					require.True(t, cr.Firing)
 				})
 
-				Convey("Should set NoDataFound both series are empty", func() {
+				t.Run("Should set NoDataFound both series are empty", func(t *testing.T) {
 					ctx.series = plugins.DataTimeSeriesSlice{
 						plugins.DataTimeSeries{Name: "test1", Points: newTimeSeriesPointsFromArgs()},
 						plugins.DataTimeSeries{Name: "test2", Points: newTimeSeriesPointsFromArgs()},
 					}
 					cr, err := ctx.exec()
 
-					So(err, ShouldBeNil)
-					So(cr.NoDataFound, ShouldBeTrue)
+					require.NoError(t, err)
+					require.True(t, cr.NoDataFound)
 				})
 
-				Convey("Should set NoDataFound both series contains null", func() {
+				t.Run("Should set NoDataFound both series contains null", func(t *testing.T) {
 					ctx.series = plugins.DataTimeSeriesSlice{
 						plugins.DataTimeSeries{Name: "test1", Points: plugins.DataTimeSeriesPoints{plugins.DataTimePoint{null.FloatFromPtr(nil), null.FloatFrom(0)}}},
 						plugins.DataTimeSeries{Name: "test2", Points: plugins.DataTimeSeriesPoints{plugins.DataTimePoint{null.FloatFromPtr(nil), null.FloatFrom(0)}}},
 					}
 					cr, err := ctx.exec()
 
-					So(err, ShouldBeNil)
-					So(cr.NoDataFound, ShouldBeTrue)
+					require.NoError(t, err)
+					require.True(t, cr.NoDataFound)
 				})
 
-				Convey("Should not set NoDataFound if one series is empty", func() {
+				t.Run("Should not set NoDataFound if one series is empty", func(t *testing.T) {
 					ctx.series = plugins.DataTimeSeriesSlice{
 						plugins.DataTimeSeries{Name: "test1", Points: newTimeSeriesPointsFromArgs()},
 						plugins.DataTimeSeries{Name: "test2", Points: newTimeSeriesPointsFromArgs(120, 0)},
 					}
 					cr, err := ctx.exec()
 
-					So(err, ShouldBeNil)
+					require.NoError(t, err)
 					So(cr.NoDataFound, ShouldBeFalse)
 				})
 			})
@@ -201,10 +200,10 @@ func (ctx *queryConditionTestContext) exec() (*alerting.ConditionResult, error) 
             "reducer":` + ctx.reducer + `,
             "evaluator":` + ctx.evaluator + `
           }`))
-	So(err, ShouldBeNil)
+	require.NoError(t, err)
 
 	condition, err := newQueryCondition(jsonModel, 0)
-	So(err, ShouldBeNil)
+	require.NoError(t, err)
 
 	ctx.condition = condition
 

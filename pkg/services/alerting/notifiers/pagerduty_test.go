@@ -6,13 +6,13 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/services/validations"
+	"github.com/stretchr/testify/require"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
-	. "github.com/smartystreets/goconvey/convey"
 )
 
 func presenceComparer(a, b string) bool {
@@ -26,13 +26,13 @@ func presenceComparer(a, b string) bool {
 }
 
 func TestPagerdutyNotifier(t *testing.T) {
-	Convey("Pagerduty notifier tests", t, func() {
-		Convey("Parsing alert notification from settings", func() {
-			Convey("empty settings should return error", func() {
+	t.Run("Pagerduty notifier tests", func(t *testing.T) {
+		t.Run("Parsing alert notification from settings", func(t *testing.T) {
+			t.Run("empty settings should return error", func(t *testing.T) {
 				json := `{ }`
 
 				settingsJSON, err := simplejson.NewJson([]byte(json))
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
 				model := &models.AlertNotification{
 					Name:     "pageduty_testing",
@@ -41,14 +41,14 @@ func TestPagerdutyNotifier(t *testing.T) {
 				}
 
 				_, err = NewPagerdutyNotifier(model)
-				So(err, ShouldNotBeNil)
+				require.Error(t, err)
 			})
 
-			Convey("severity should override default", func() {
+			t.Run("severity should override default", func(t *testing.T) {
 				json := `{ "integrationKey": "abcdefgh0123456789", "severity": "info", "tags": ["foo"]}`
 
 				settingsJSON, err := simplejson.NewJson([]byte(json))
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
 				model := &models.AlertNotification{
 					Name:     "pagerduty_testing",
@@ -59,19 +59,19 @@ func TestPagerdutyNotifier(t *testing.T) {
 				not, err := NewPagerdutyNotifier(model)
 				pagerdutyNotifier := not.(*PagerdutyNotifier)
 
-				So(err, ShouldBeNil)
-				So(pagerdutyNotifier.Name, ShouldEqual, "pagerduty_testing")
-				So(pagerdutyNotifier.Type, ShouldEqual, "pagerduty")
-				So(pagerdutyNotifier.Key, ShouldEqual, "abcdefgh0123456789")
-				So(pagerdutyNotifier.Severity, ShouldEqual, "info")
+				require.NoError(t, err)
+				require.Equal(t, "pagerduty_testing", pagerdutyNotifier.Name)
+				require.Equal(t, "pagerduty", pagerdutyNotifier.Type)
+				require.Equal(t, "abcdefgh0123456789", pagerdutyNotifier.Key)
+				require.Equal(t, "info", pagerdutyNotifier.Severity)
 				So(pagerdutyNotifier.AutoResolve, ShouldBeFalse)
 			})
 
-			Convey("auto resolve and severity should have expected defaults", func() {
+			t.Run("auto resolve and severity should have expected defaults", func(t *testing.T) {
 				json := `{ "integrationKey": "abcdefgh0123456789" }`
 
 				settingsJSON, err := simplejson.NewJson([]byte(json))
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
 				model := &models.AlertNotification{
 					Name:     "pagerduty_testing",
@@ -82,15 +82,15 @@ func TestPagerdutyNotifier(t *testing.T) {
 				not, err := NewPagerdutyNotifier(model)
 				pagerdutyNotifier := not.(*PagerdutyNotifier)
 
-				So(err, ShouldBeNil)
-				So(pagerdutyNotifier.Name, ShouldEqual, "pagerduty_testing")
-				So(pagerdutyNotifier.Type, ShouldEqual, "pagerduty")
-				So(pagerdutyNotifier.Key, ShouldEqual, "abcdefgh0123456789")
-				So(pagerdutyNotifier.Severity, ShouldEqual, "critical")
+				require.NoError(t, err)
+				require.Equal(t, "pagerduty_testing", pagerdutyNotifier.Name)
+				require.Equal(t, "pagerduty", pagerdutyNotifier.Type)
+				require.Equal(t, "abcdefgh0123456789", pagerdutyNotifier.Key)
+				require.Equal(t, "critical", pagerdutyNotifier.Severity)
 				So(pagerdutyNotifier.AutoResolve, ShouldBeFalse)
 			})
 
-			Convey("settings should trigger incident", func() {
+			t.Run("settings should trigger incident", func(t *testing.T) {
 				json := `
 				{
 		  			"integrationKey": "abcdefgh0123456789",
@@ -98,7 +98,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 				}`
 
 				settingsJSON, err := simplejson.NewJson([]byte(json))
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
 				model := &models.AlertNotification{
 					Name:     "pagerduty_testing",
@@ -109,21 +109,21 @@ func TestPagerdutyNotifier(t *testing.T) {
 				not, err := NewPagerdutyNotifier(model)
 				pagerdutyNotifier := not.(*PagerdutyNotifier)
 
-				So(err, ShouldBeNil)
-				So(pagerdutyNotifier.Name, ShouldEqual, "pagerduty_testing")
-				So(pagerdutyNotifier.Type, ShouldEqual, "pagerduty")
-				So(pagerdutyNotifier.Key, ShouldEqual, "abcdefgh0123456789")
+				require.NoError(t, err)
+				require.Equal(t, "pagerduty_testing", pagerdutyNotifier.Name)
+				require.Equal(t, "pagerduty", pagerdutyNotifier.Type)
+				require.Equal(t, "abcdefgh0123456789", pagerdutyNotifier.Key)
 				So(pagerdutyNotifier.AutoResolve, ShouldBeFalse)
 			})
 
-			Convey("should return properly formatted default v2 event payload", func() {
+			t.Run("should return properly formatted default v2 event payload", func(t *testing.T) {
 				json := `{
 					"integrationKey": "abcdefgh0123456789",
 					"autoResolve": false
 				}`
 
 				settingsJSON, err := simplejson.NewJson([]byte(json))
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
 				model := &models.AlertNotification{
 					Name:     "pagerduty_testing",
@@ -132,7 +132,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 				}
 
 				not, err := NewPagerdutyNotifier(model)
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
 				pagerdutyNotifier := not.(*PagerdutyNotifier)
 				evalContext := alerting.NewEvalContext(context.Background(), &alerting.Rule{
@@ -144,9 +144,9 @@ func TestPagerdutyNotifier(t *testing.T) {
 				evalContext.IsTestRun = true
 
 				payloadJSON, err := pagerdutyNotifier.buildEventPayload(evalContext)
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 				payload, err := simplejson.NewJson(payloadJSON)
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
 				diff := cmp.Diff(map[string]interface{}{
 					"client":       "Grafana",
@@ -173,14 +173,14 @@ func TestPagerdutyNotifier(t *testing.T) {
 				So(diff, ShouldBeEmpty)
 			})
 
-			Convey("should return properly formatted default v2 event payload with empty message", func() {
+			t.Run("should return properly formatted default v2 event payload with empty message", func(t *testing.T) {
 				json := `{
 					"integrationKey": "abcdefgh0123456789",
 					"autoResolve": false
 				}`
 
 				settingsJSON, err := simplejson.NewJson([]byte(json))
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
 				model := &models.AlertNotification{
 					Name:     "pagerduty_testing",
@@ -189,7 +189,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 				}
 
 				not, err := NewPagerdutyNotifier(model)
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
 				pagerdutyNotifier := not.(*PagerdutyNotifier)
 				evalContext := alerting.NewEvalContext(context.Background(), &alerting.Rule{
@@ -200,9 +200,9 @@ func TestPagerdutyNotifier(t *testing.T) {
 				evalContext.IsTestRun = true
 
 				payloadJSON, err := pagerdutyNotifier.buildEventPayload(evalContext)
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 				payload, err := simplejson.NewJson(payloadJSON)
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
 				diff := cmp.Diff(map[string]interface{}{
 					"client":       "Grafana",
@@ -229,7 +229,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 				So(diff, ShouldBeEmpty)
 			})
 
-			Convey("should return properly formatted payload with message moved to details", func() {
+			t.Run("should return properly formatted payload with message moved to details", func(t *testing.T) {
 				json := `{
 					"integrationKey": "abcdefgh0123456789",
 					"autoResolve": false,
@@ -237,7 +237,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 				}`
 
 				settingsJSON, err := simplejson.NewJson([]byte(json))
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
 				model := &models.AlertNotification{
 					Name:     "pagerduty_testing",
@@ -246,7 +246,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 				}
 
 				not, err := NewPagerdutyNotifier(model)
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
 				pagerdutyNotifier := not.(*PagerdutyNotifier)
 				evalContext := alerting.NewEvalContext(context.Background(), &alerting.Rule{
@@ -267,9 +267,9 @@ func TestPagerdutyNotifier(t *testing.T) {
 				}
 
 				payloadJSON, err := pagerdutyNotifier.buildEventPayload(evalContext)
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 				payload, err := simplejson.NewJson(payloadJSON)
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
 				diff := cmp.Diff(map[string]interface{}{
 					"client":       "Grafana",
@@ -300,14 +300,14 @@ func TestPagerdutyNotifier(t *testing.T) {
 				So(diff, ShouldBeEmpty)
 			})
 
-			Convey("should return properly formatted v2 event payload when using override tags", func() {
+			t.Run("should return properly formatted v2 event payload when using override tags", func(t *testing.T) {
 				json := `{
 					"integrationKey": "abcdefgh0123456789",
 					"autoResolve": false
 				}`
 
 				settingsJSON, err := simplejson.NewJson([]byte(json))
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
 				model := &models.AlertNotification{
 					Name:     "pagerduty_testing",
@@ -316,7 +316,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 				}
 
 				not, err := NewPagerdutyNotifier(model)
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
 				pagerdutyNotifier := not.(*PagerdutyNotifier)
 
@@ -338,9 +338,9 @@ func TestPagerdutyNotifier(t *testing.T) {
 				evalContext.IsTestRun = true
 
 				payloadJSON, err := pagerdutyNotifier.buildEventPayload(evalContext)
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 				payload, err := simplejson.NewJson(payloadJSON)
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
 				diff := cmp.Diff(map[string]interface{}{
 					"client":       "Grafana",
@@ -380,14 +380,14 @@ func TestPagerdutyNotifier(t *testing.T) {
 				So(diff, ShouldBeEmpty)
 			})
 
-			Convey("should support multiple levels of severity", func() {
+			t.Run("should support multiple levels of severity", func(t *testing.T) {
 				json := `{
 					"integrationKey": "abcdefgh0123456789",
 					"autoResolve": false
 				}`
 
 				settingsJSON, err := simplejson.NewJson([]byte(json))
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
 				model := &models.AlertNotification{
 					Name:     "pagerduty_testing",
@@ -396,7 +396,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 				}
 
 				not, err := NewPagerdutyNotifier(model)
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
 				pagerdutyNotifier := not.(*PagerdutyNotifier)
 
@@ -417,9 +417,9 @@ func TestPagerdutyNotifier(t *testing.T) {
 				evalContext.IsTestRun = true
 
 				payloadJSON, err := pagerdutyNotifier.buildEventPayload(evalContext)
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 				payload, err := simplejson.NewJson(payloadJSON)
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
 				diff := cmp.Diff(map[string]interface{}{
 					"client":       "Grafana",
@@ -458,7 +458,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 				So(diff, ShouldBeEmpty)
 			})
 
-			Convey("should ignore invalid severity for PD but keep the tag", func() {
+			t.Run("should ignore invalid severity for PD but keep the tag", func(t *testing.T) {
 				json := `{
 					"integrationKey": "abcdefgh0123456789",
 					"autoResolve": false,
@@ -466,7 +466,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 				}`
 
 				settingsJSON, err := simplejson.NewJson([]byte(json))
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
 				model := &models.AlertNotification{
 					Name:     "pagerduty_testing",
@@ -475,7 +475,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 				}
 
 				not, err := NewPagerdutyNotifier(model)
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
 				pagerdutyNotifier := not.(*PagerdutyNotifier)
 
@@ -496,9 +496,9 @@ func TestPagerdutyNotifier(t *testing.T) {
 				evalContext.IsTestRun = true
 
 				payloadJSON, err := pagerdutyNotifier.buildEventPayload(evalContext)
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 				payload, err := simplejson.NewJson(payloadJSON)
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
 				diff := cmp.Diff(map[string]interface{}{
 					"client":       "Grafana",
