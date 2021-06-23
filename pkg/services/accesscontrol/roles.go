@@ -3,7 +3,6 @@ package accesscontrol
 import (
 	"fmt"
 	"strings"
-	"sync"
 
 	"github.com/grafana/grafana/pkg/models"
 )
@@ -174,8 +173,6 @@ const (
 )
 
 var (
-	once sync.Once
-
 	// FixedRoles provides a map of permission sets/roles which can be
 	// assigned to a set of users. When adding a new resource protected by
 	// Grafana access control the default permissions should be added to a
