@@ -58,7 +58,7 @@ export function getScaleGradientFn(
   }
 
   return (plot: uPlot, seriesIdx: number) => {
-    // Some times this function is called with undefined bbox
+    // A uplot bug (I think) where this is called before there is bbox
     if (plot.bbox.top == null) {
       return '#FFFFFF';
     }
