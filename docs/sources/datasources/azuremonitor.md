@@ -360,7 +360,7 @@ You can use Grafana macros when constructing a query. Use the macros in the wher
 
 - `$__timeTo()` - Returns the To datetime from the Grafana picker. Example: `datetime(2018-06-05T20:09:58.907Z)`.
 
-- `$__escapeMulti($myVar)` - Use with multi-value template variables that contain illegal characters. If `$myVar` has the following two values as a string `'\\grafana-vm\Network(eth0)\Total','\\hello!'`, then it expands to: `@'\\grafana-vm\Network(eth0)\Total', @'\\hello!'`. If you are using single value variables, then there is no need for this macro, simply escape the variable inline instead - `@'\$myVar'`.
+- `$__escapeMulti($myVar)` - Use with multi-value template variables that contain illegal characters. If `$myVar` has the two values as a string `'\\grafana-vm\Network(eth0)\Total','\\hello!'`, then it expands to: `@'\\grafana-vm\Network(eth0)\Total', @'\\hello!'`. If you are using single value variables, then there is no need for this macro, simply escape the variable inline instead - `@'\$myVar'`.
 
 - `$__contains(colName, $myVar)` - Use with multi-value template variables. If `$myVar` has the value `'value1','value2'`, the it expands to: `colName in ('value1','value2')`.
 
