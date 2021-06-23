@@ -1242,6 +1242,146 @@ describe('DashboardModel', () => {
       `);
     });
   });
+
+  describe('when migrating singlestat value mappings', () => {
+    it('should migrate value mapping', () => {
+      const model = new DashboardModel({
+        panels: [
+          {
+            type: 'singlestat',
+            legend: true,
+            thresholds: '10,20,30',
+            colors: ['#FF0000', 'green', 'orange'],
+            aliasYAxis: { test: 2 },
+            grid: { min: 1, max: 10 },
+            targets: [{ refId: 'A' }, {}],
+            mappingType: 1,
+            mappingTypes: [
+              {
+                name: 'value to text',
+                value: 1,
+              },
+            ],
+            valueMaps: [
+              {
+                op: '=',
+                text: 'test',
+                value: '20',
+              },
+              {
+                op: '=',
+                text: 'test1',
+                value: '30',
+              },
+              {
+                op: '=',
+                text: '50',
+                value: '40',
+              },
+            ],
+          },
+        ],
+      });
+      expect(model.panels[0].fieldConfig.defaults.mappings).toMatchInlineSnapshot(`
+        Array [
+          Object {
+            "options": Object {
+              "20": Object {
+                "color": undefined,
+                "text": "test",
+              },
+              "30": Object {
+                "color": undefined,
+                "text": "test1",
+              },
+              "40": Object {
+                "color": "orange",
+                "text": "50",
+              },
+            },
+            "type": "value",
+          },
+        ]
+      `);
+    });
+
+    it('should migrate range mapping', () => {
+      const model = new DashboardModel({
+        panels: [
+          {
+            type: 'singlestat',
+            legend: true,
+            thresholds: '10,20,30',
+            colors: ['#FF0000', 'green', 'orange'],
+            aliasYAxis: { test: 2 },
+            grid: { min: 1, max: 10 },
+            targets: [{ refId: 'A' }, {}],
+            mappingType: 2,
+            mappingTypes: [
+              {
+                name: 'range to text',
+                value: 2,
+              },
+            ],
+            rangeMaps: [
+              {
+                from: '20',
+                to: '25',
+                text: 'text1',
+              },
+              {
+                from: '1',
+                to: '5',
+                text: 'text2',
+              },
+              {
+                from: '5',
+                to: '10',
+                text: '50',
+              },
+            ],
+          },
+        ],
+      });
+      expect(model.panels[0].fieldConfig.defaults.mappings).toMatchInlineSnapshot(`
+        Array [
+          Object {
+            "options": Object {
+              "from": 20,
+              "result": Object {
+                "color": undefined,
+                "text": "text1",
+              },
+              "to": 25,
+            },
+            "type": "range",
+          },
+          Object {
+            "options": Object {
+              "from": 1,
+              "result": Object {
+                "color": undefined,
+                "text": "text2",
+              },
+              "to": 5,
+            },
+            "type": "range",
+          },
+          Object {
+            "options": Object {
+              "from": 5,
+              "result": Object {
+                "color": "orange",
+                "text": "50",
+              },
+              "to": 10,
+            },
+            "type": "range",
+          },
+        ]
+      `);
+    });
+  });
 });
 
 function createRow(options: any, panelDescriptions: any[]) {
