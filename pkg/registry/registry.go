@@ -138,12 +138,12 @@ type DatabaseMigrator interface {
 	AddMigration(mg *migrator.Migrator)
 }
 
-// RoleRegistrant allows the caller to add roles
-// to the accesscontrol service passed as argument
+// RoleRegistrant allows the caller to get the list of roles
+// the service needs to register
 type RoleRegistrant interface {
-	// RegisterFixedRole allows the service to add fixed roles
-	// to the access control service
-	RegisterFixedRoles(ac accesscontrol.AccessControl) error
+	// GetFixedRoleRegistrations returns the list of roles
+	// the service needs to register
+	GetFixedRoleRegistrations() []accesscontrol.RoleRegistration
 }
 
 // IsDisabled returns whether a service is disabled.

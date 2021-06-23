@@ -1,8 +1,6 @@
 package api
 
 import (
-	"context"
-
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 )
 
@@ -20,19 +18,25 @@ const (
 	ScopeServicesNotifications = "services:notifications"
 )
 
-// registerRoles creates Grafana Fixed roles and grants them to organization roles ("Viewer", "Editor", "Admin") or "Grafana Admin"
-func (hs *HTTPServer) RegisterFixedRoles(ac accesscontrol.AccessControl) error {
-	provisioningAdmin := accesscontrol.RoleDTO{
-		Version:     1,
-		Name:        "fixed:provisioning:admin",
-		Description: "Reload provisioning services",
-		Permissions: []accesscontrol.Permission{
-			{
-				Action: ActionProvisioningReload,
-				Scope:  ScopeServicesAll,
+// GetFixedRoleRegistrations returns the list of fixed roles and their grants to organization roles
+// ("Viewer", "Editor", "Admin") or "Grafana Admin" that HTTPServer needs
+func (hs *HTTPServer) GetFixedRoleRegistrations() []accesscontrol.RoleRegistration {
+	registrations := []accesscontrol.RoleRegistration{
+		{
+			Role: accesscontrol.RoleDTO{
+				Version:     1,
+				Name:        "fixed:provisioning:admin",
+				Description: "Reload provisioning services",
+				Permissions: []accesscontrol.Permission{
+					{
+						Action: ActionProvisioningReload,
+						Scope:  ScopeServicesAll,
+					},
+				},
 			},
+			Grants: []string{accesscontrol.RoleGrafanaAdmin},
 		},
 	}
 
-	return ac.RegisterFixedRole(context.TODO(), provisioningAdmin, accesscontrol.RoleGrafanaAdmin)
+	return registrations
 }

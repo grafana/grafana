@@ -4,6 +4,13 @@ import (
 	"time"
 )
 
+// RoleRegistration stores a role and its assignments to built-in roles
+// (Viewer, Editor, Admin, Grafana Admin)
+type RoleRegistration struct {
+	Role   RoleDTO
+	Grants []string
+}
+
 type Role struct {
 	Version     int64  `json:"version"`
 	UID         string `json:"uid"`

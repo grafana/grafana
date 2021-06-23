@@ -15,9 +15,6 @@ type AccessControl interface {
 
 	// Middleware checks if service disabled or not to switch to fallback authorization.
 	IsDisabled() bool
-
-	// RegisterFixedRole adds a new fixed role to built-in roles
-	RegisterFixedRole(ctx context.Context, role RoleDTO, builtInRoles ...string) error
 }
 
 func HasAccess(ac AccessControl, c *models.ReqContext) func(fallback func(*models.ReqContext) bool, permission string, scopes ...string) bool {

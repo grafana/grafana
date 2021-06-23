@@ -303,7 +303,7 @@ func TestOSSAccessControlService_RegisterFixedRole(t *testing.T) {
 				// Remove any inserted role after the test case has been run
 				t.Cleanup(func() { removeRole(run.role.Name) })
 
-				err := ac.RegisterFixedRole(context.Background(), run.role, run.builtInRoles...)
+				err := ac.registerFixedRole(context.Background(), run.role, run.builtInRoles)
 				if run.wantErr != nil {
 					assert.ErrorIs(t, err, run.wantErr)
 					return

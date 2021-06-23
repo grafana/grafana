@@ -249,10 +249,6 @@ func (f *fakeAccessControl) GetUserPermissions(ctx context.Context, user *models
 	return f.permissions, nil
 }
 
-func (f *fakeAccessControl) RegisterFixedRole(ctx context.Context, role accesscontrol.RoleDTO, builtInRoles ...string) error {
-	return nil
-}
-
 func (f *fakeAccessControl) IsDisabled() bool {
 	return f.isDisabled
 }
