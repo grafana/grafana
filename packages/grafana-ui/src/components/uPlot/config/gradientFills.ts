@@ -48,7 +48,7 @@ export function getScaleGradientFn(
   theme: GrafanaTheme2,
   colorMode?: FieldColorMode,
   thresholds?: ThresholdsConfig
-): (self: uPlot, seriesIdx: number) => CanvasGradient {
+): (self: uPlot, seriesIdx: number) => CanvasGradient | string {
   if (!colorMode) {
     throw Error('Missing colorMode required for color scheme gradients');
   }
@@ -58,6 +58,11 @@ export function getScaleGradientFn(
   }
 
   return (plot: uPlot, seriesIdx: number) => {
+    // Some times this function is called with undefined bbox
+    if (plot.bbox.top == null) {
+      return '#FFFFFF';
+    }
+
     const ctx = getCanvasContext();
     const gradient = ctx.createLinearGradient(0, plot.bbox.top, 0, plot.bbox.top + plot.bbox.height);
     const series = plot.series[seriesIdx];

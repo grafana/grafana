@@ -137,7 +137,6 @@ export enum GraphGradientMode {
 export interface PointsConfig {
   showPoints?: PointVisibility;
   pointSize?: number;
-  pointColor?: string;
   pointSymbol?: string; // eventually dot,star, etc
 }
 

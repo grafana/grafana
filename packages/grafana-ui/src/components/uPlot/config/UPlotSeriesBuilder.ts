@@ -46,7 +46,6 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
       barWidthFactor,
       barMaxWidth,
       showPoints,
-      pointColor,
       pointSize,
       scaleKey,
       pxAlign,
@@ -55,15 +54,16 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
     } = this.props;
 
     let lineConfig: Partial<Series> = {};
+    const lineColor = this.getLineColor();
 
     if (pathBuilder != null) {
       lineConfig.paths = pathBuilder;
-      lineConfig.stroke = this.getLineColor();
+      lineConfig.stroke = lineColor;
       lineConfig.width = lineWidth;
     } else if (drawStyle === DrawStyle.Points) {
       lineConfig.paths = () => null;
     } else if (drawStyle != null) {
-      lineConfig.stroke = this.getLineColor();
+      lineConfig.stroke = lineColor;
       lineConfig.width = lineWidth;
       if (lineStyle && lineStyle.fill !== 'solid') {
         if (lineStyle.fill === 'dot') {
@@ -85,8 +85,8 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
 
     const pointsConfig: Partial<Series> = {
       points: {
-        stroke: pointColor,
-        fill: pointColor,
+        stroke: lineColor,
+        fill: lineColor,
         size: pointSize,
         filter: pointsFilter,
       },
