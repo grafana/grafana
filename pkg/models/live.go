@@ -98,3 +98,76 @@ type GetLiveMessageQuery struct {
 	OrgId   int64
 	Channel string
 }
+
+// LiveChannelPlainConfig contains various channel configuration options.
+type LiveChannelPlainConfig struct {
+	// RemoteWriteEnabled to enable remote write for a channel.
+	RemoteWriteEnabled bool `json:"remoteWriteEnabled,omitempty"`
+	// RemoteWriteEndpoint to send streaming frames to.
+	RemoteWriteEndpoint string `json:"remoteWriteEndpoint,omitempty"`
+	// RemoteWriteSampleMilliseconds allow setting minimal time before
+	// different remote writes for a channel. 0 means no sampling interval.
+	RemoteWriteSampleMilliseconds int64 `json:"remoteWriteSampleMilliseconds,omitempty"`
+}
+
+// LiveChannelSecureConfig contains various channel configuration options
+// which are encrypted in database.
+type LiveChannelSecureConfig struct {
+	// RemoteWriteUser is a user for remote write request.
+	RemoteWriteUser string `json:"remoteWriteUser,omitempty"`
+	// RemoteWritePassword is a password/token for remote write request.
+	RemoteWritePassword string `json:"remoteWritePassword,omitempty"`
+}
+
+// LiveChannel represents channel metadata saved in database.
+type LiveChannelConfig struct {
+	Id      int64                   `json:"id"`
+	OrgId   int64                   `json:"orgId"`
+	Version int                     `json:"version"`
+	Channel string                  `json:"channel"`
+	Created time.Time               `json:"-"`
+	Config  LiveChannelPlainConfig  `json:"config"`
+	Secure  LiveChannelSecureConfig `json:"secure"`
+}
+
+// Also acts as api DTO.
+type CreateLiveChannelConfigCommand struct {
+	OrgId   int64                   `json:"orgId" binding:"Required"`
+	Channel string                  `json:"channel" binding:"Required"`
+	Config  LiveChannelPlainConfig  `json:"config" binding:"Required"`
+	Secure  LiveChannelSecureConfig `json:"secure"`
+
+	Result *LiveChannelConfig
+}
+
+// Also acts as api DTO.
+type UpdateLiveChannelConfigCommand struct {
+	Id      int64                   `json:"id" binding:"Required"`
+	Version int                     `json:"version"`
+	Channel string                  `json:"channel"`
+	Config  LiveChannelPlainConfig  `json:"config"`
+	Secure  LiveChannelSecureConfig `json:"secure"`
+
+	Result *LiveChannelConfig
+}
+
+// Also acts as api DTO.
+type DeleteLiveChannelConfigCommand struct {
+	Id    int64 `json:"id" binding:"Required"`
+	OrgId int64 `json:"orgId"`
+}
+
+// Also acts as api DTO.
+type ListLiveChannelConfigCommand struct {
+	OrgId int64 `json:"orgId"`
+
+	Result []*LiveChannelConfig
+}
+
+// GetLiveChannelConfigCommand ...
+type GetLiveChannelConfigCommand struct {
+	Id    int64
+	OrgId int64
+
+	Result *LiveChannelConfig
+}

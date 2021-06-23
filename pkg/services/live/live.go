@@ -21,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/plugincontext"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/live/channelconfig"
 	"github.com/grafana/grafana/pkg/services/live/database"
 	"github.com/grafana/grafana/pkg/services/live/features"
 	"github.com/grafana/grafana/pkg/services/live/livecontext"
@@ -100,6 +101,8 @@ type GrafanaLive struct {
 	contextGetter    *pluginContextGetter
 	runStreamManager *runstream.Manager
 	storage          *database.Storage
+
+	channelConfigCache *channelconfig.Cache
 }
 
 func (g *GrafanaLive) getStreamPlugin(pluginID string) (backend.StreamHandler, error) {
@@ -120,7 +123,8 @@ func (g *GrafanaLive) AddMigration(mg *migrator.Migrator) {
 	if g == nil || g.Cfg == nil || !g.Cfg.IsLiveConfigEnabled() {
 		return
 	}
-	database.AddLiveChannelMigrations(mg)
+	database.AddLiveMessageMigrations(mg)
+	database.AddLiveChannelConfigMigrations(mg)
 }
 
 func (g *GrafanaLive) Run(ctx context.Context) error {
@@ -160,6 +164,7 @@ func (g *GrafanaLive) Init() error {
 	channelSender := newPluginChannelSender(node)
 	presenceGetter := newPluginPresenceGetter(node)
 	g.runStreamManager = runstream.NewManager(channelSender, presenceGetter, g.contextGetter)
+	g.channelConfigCache = channelconfig.NewCache(channelconfig.Fixtures)
 
 	// Initialize the main features
 	dash := &features.DashboardHandler{
