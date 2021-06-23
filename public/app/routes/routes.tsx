@@ -435,9 +435,7 @@ export function getAppRoutes(): RouteDescriptor[] {
       path: '/alerting/alertmanager/',
       component: SafeDynamicImport(
         () =>
-          import(
-            /* webpackChunkName: "AlertManagerNotifications" */ 'app/features/alerting/unified/AlertManagerNotifications'
-          )
+          import(/* webpackChunkName: "AlertManagerNotifications" */ 'app/features/alerting/unified/AmNotifications')
       ),
     },
     {

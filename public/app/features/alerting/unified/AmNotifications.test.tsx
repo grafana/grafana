@@ -7,7 +7,7 @@ import { fetchAlertGroups } from './api/alertmanager';
 import { byTestId } from 'testing-library-selector';
 import { configureStore } from 'app/store/configureStore';
 import { typeAsJestMock } from 'test/helpers/typeAsJestMock';
-import AlertManagerNotifications from './AlertManagerNotifications';
+import AmNotifications from './AmNotifications';
 import { mockAlertGroup, mockAlertmanagerAlert, mockDataSource, MockDataSourceSrv } from './mocks';
 import { DataSourceType } from './utils/datasource';
 
@@ -25,7 +25,7 @@ const renderAmNotifications = () => {
   return render(
     <Provider store={store}>
       <Router history={locationService.getHistory()}>
-        <AlertManagerNotifications />
+        <AmNotifications />
       </Router>
     </Provider>
   );
