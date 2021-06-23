@@ -40,7 +40,10 @@ func (ac *OSSAccessControlService) RegisterRegistrantsRoles() error {
 
 		registrations := registrant.GetFixedRoleRegistrations()
 		for _, r := range registrations {
-			ac.registerFixedRole(context.TODO(), r.Role, r.Grants)
+			err := ac.registerFixedRole(context.TODO(), r.Role, r.Grants)
+			if err != nil {
+				return err
+			}
 		}
 	}
 	return nil
