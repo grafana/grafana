@@ -1,32 +1,88 @@
 import React, { PureComponent } from 'react';
-import { MapLayerConfig } from '@grafana/data';
 import { geomapLayerRegistry } from '../layers/registry';
 import L from 'leaflet';
+import { cloneDeep } from 'lodash';
 
 interface BaseMapProps {
-  width: number;
   height: number;
   options: GeomapPanelOptions;
-  basemaps: MapLayerConfig[];
+  data: PanelData;
 }
 
 // Load the leaflet CSS
 import 'leaflet/dist/leaflet.css';
 import { GeomapPanelOptions } from '../types';
+import { PanelData } from '@grafana/data';
 
 export class BaseMap extends PureComponent<BaseMapProps> {
-  private divRef = React.createRef<HTMLDivElement>();
   map: L.Map;
 
   constructor(props: BaseMapProps) {
     super(props);
   }
 
-  componentDidMount() {
+  componentDidUpdate(oldProps: BaseMapProps) {
+    if (!this.map) {
+      console.log('SKIPPING????');
+      return; // not yet initalized
+    }
+
+    if (this.props.height !== oldProps.height) {
+      this.map.invalidateSize();
+    }
+
+    // External configuraiton changed
+    if (this.props.options !== oldProps.options) {
+      console.log('OOOOOOOOO', cloneDeep(this.props.options), cloneDeep(oldProps.options));
+      this.optionsChanged(oldProps.options);
+    }
+
+    // External data changed
+    if (this.props.data !== oldProps.data) {
+      this.dataChanged(oldProps.data);
+    }
+  }
+
+  /**
+   * Called when the panel options change
+   */
+  optionsChanged(oldOptions: GeomapPanelOptions) {
+    const { options } = this.props;
+    const controls = options.controls ?? {};
+    const oldControls = oldOptions.controls ?? {};
+    console.log('options changed!', controls, oldControls, controls === oldControls);
+
+    // Check controls
+    if (controls.hideZoom !== oldControls.hideZoom) {
+      console.log('zoom changed', controls.hideZoom);
+      if (controls.hideZoom) {
+        this.map.removeControl(this.map.zoomControl);
+      } else {
+        this.map.addControl(this.map.zoomControl);
+      }
+    }
+  }
+
+  /**
+   * Called when PanelData changes (query results etc)
+   */
+  dataChanged(data: PanelData) {
+    //  console.log('data changed?', data.structureRev, this.props.data.structureRev);
+  }
+
+  initMapRef = (div: HTMLDivElement) => {
+    if (!div) {
+      if (this.map) {
+        this.map.remove();
+      }
+      this.map = (undefined as unknown) as L.Map;
+      return;
+    }
+
     const { options } = this.props;
 
-    this.map = L.map(this.divRef.current!, {
-      zoomControl: options.showZoomControl,
+    this.map = L.map(div, {
+      zoomControl: !options.controls?.hideZoom,
 
       center: [37.75, -122.23],
       zoom: 10,
@@ -35,7 +91,7 @@ export class BaseMap extends PureComponent<BaseMapProps> {
     const baseMaps: L.Control.LayersObject = {};
     const overlayMaps: L.Control.LayersObject = {};
 
-    let basemaps = this.props.basemaps;
+    let basemaps = this.props.options.basemaps;
     if (!basemaps || !basemaps.length) {
       // all basemaps
       basemaps = geomapLayerRegistry
@@ -69,31 +125,9 @@ export class BaseMap extends PureComponent<BaseMapProps> {
     if (baseLayerCount > 1) {
       L.control.layers(baseMaps, overlayMaps).addTo(this.map);
     }
-  }
-
-  componentDidUpdate(oldProps: BaseMapProps) {
-    const { width, height, options } = this.props;
-    const { map } = this;
-    if (width !== oldProps.width || height !== oldProps.height) {
-      map.invalidateSize();
-    }
-
-    // Check the options
-    const oldOptions = oldProps.options;
-    if (options !== oldOptions) {
-      // Check controls
-      if (options.showZoomControl !== oldOptions.showZoomControl) {
-        if (options.showZoomControl) {
-          map.addControl(map.zoomControl);
-        } else {
-          map.removeControl(map.zoomControl);
-        }
-      }
-    }
-  }
+  };
 
   render() {
-    const { width, height } = this.props;
-    return <div style={{ width, height }} ref={this.divRef}></div>;
+    return <div style={{ width: '100%', height: this.props.height }} ref={this.initMapRef}></div>;
   }
 }

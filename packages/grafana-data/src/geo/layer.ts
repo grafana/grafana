@@ -14,13 +14,8 @@ import { PanelData } from '../types';
  */
 export interface MapLayerConfig<TCustom = any> {
   type: string;
-
-  url?: string; // tile server path
-  name?: string; // custom display name
-  maxZoom?: number;
-  minZoom?: number;
-  attributoin?: string;
-  bounds?: L.BoundsLiteral;
+  name?: string; // configured display name
+  hidden?: boolean; // in TOC, but not shown
 
   // Layer transparency
   transparency?: number;

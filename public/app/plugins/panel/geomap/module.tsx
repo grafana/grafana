@@ -7,8 +7,15 @@ export const plugin = new PanelPlugin<GeomapPanelOptions>(GeomapPanel)
   .useFieldConfig()
   .setPanelOptions((builder) => {
     builder.addBooleanSwitch({
-      path: 'showZoomControl',
-      name: 'Show zoom control',
-      defaultValue: true,
+      category: ['Map Controls'],
+      path: 'controls.hideZoom',
+      name: 'Hide zoom control',
+      defaultValue: false,
+    });
+    builder.addBooleanSwitch({
+      category: ['Map Controls'],
+      path: 'controls.hideAttribution',
+      name: 'Hide attribution',
+      defaultValue: false,
     });
   });

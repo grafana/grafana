@@ -1,3 +1,12 @@
+import { MapLayerConfig } from '@grafana/data';
+
+export interface ControlsOptions {
+  hideZoom?: boolean;
+  hideAttribution?: boolean;
+}
+
 export interface GeomapPanelOptions {
-  showZoomControl: boolean;
+  controls: ControlsOptions;
+  basemaps: MapLayerConfig[]; // empty === auto
+  layers: MapLayerConfig[]; // empty == auto
 }
