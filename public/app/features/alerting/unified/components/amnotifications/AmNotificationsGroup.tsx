@@ -20,8 +20,12 @@ export const AmNotificationsGroup = ({ alertManagerSourceName, group }: Props) =
   return (
     <div className={styles.wrapper}>
       <div className={styles.header}>
-        <div className={styles.group}>
-          <CollapseToggle isCollapsed={isCollapsed} onToggle={() => setIsCollapsed(!isCollapsed)} />
+        <div className={styles.group} data-testid="notifications-group">
+          <CollapseToggle
+            isCollapsed={isCollapsed}
+            onToggle={() => setIsCollapsed(!isCollapsed)}
+            data-testid="notifications-group-collapse-toggle"
+          />
           {Object.keys(group.labels).length ? <AlertLabels labels={group.labels} /> : <span>No grouping</span>}
         </div>
         <AmNotificationsGroupHeader group={group} />
