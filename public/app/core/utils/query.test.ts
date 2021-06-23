@@ -1,15 +1,15 @@
 import { DataQuery } from '@grafana/data';
 import { getNextRefIdChar } from './query';
 
-function _dataQueryHelper(ids: string[]): DataQuery[] {
+function dataQueryHelper(ids: string[]): DataQuery[] {
   return ids.map((letter) => {
     return { refId: letter };
   });
 }
 
-const singleDataQuery: DataQuery[] = _dataQueryHelper('ABCDE'.split(''));
-const outOfOrderDataQuery: DataQuery[] = _dataQueryHelper('ABD'.split(''));
-const singleExtendedDataQuery: DataQuery[] = _dataQueryHelper('ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split(''));
+const singleDataQuery: DataQuery[] = dataQueryHelper('ABCDE'.split(''));
+const outOfOrderDataQuery: DataQuery[] = dataQueryHelper('ABD'.split(''));
+const singleExtendedDataQuery: DataQuery[] = dataQueryHelper('ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split(''));
 
 describe('Get next refId char', () => {
   it('should return next char', () => {
