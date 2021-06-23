@@ -70,7 +70,7 @@ export const getStyles = (theme: GrafanaTheme2) => ({
     left: -49px !important;
   `,
   headerGuideline: css`
-    top: -24px;
+    top: -25px;
     bottom: 0;
   `,
 });

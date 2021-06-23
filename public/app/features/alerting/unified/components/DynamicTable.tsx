@@ -231,6 +231,7 @@ const getStyles = <T extends unknown>(
     `,
     expandButton: css`
       margin-right: 0;
+      display: block;
     `,
   });
 };

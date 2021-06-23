@@ -26,7 +26,11 @@ export const AmNotificationsGroup = ({ alertManagerSourceName, group }: Props) =
             onToggle={() => setIsCollapsed(!isCollapsed)}
             data-testid="notifications-group-collapse-toggle"
           />
-          {Object.keys(group.labels).length ? <AlertLabels labels={group.labels} /> : <span>No grouping</span>}
+          {Object.keys(group.labels).length ? (
+            <AlertLabels className={styles.headerLabels} labels={group.labels} />
+          ) : (
+            <span>No grouping</span>
+          )}
         </div>
         <AmNotificationsGroupHeader group={group} />
       </div>
@@ -43,9 +47,14 @@ const getStyles = (theme: GrafanaTheme2) => ({
       margin-top: ${theme.spacing(2)};
     }
   `,
+  headerLabels: css`
+    padding-bottom: 0 !important;
+    margin-bottom: -${theme.spacing(0.5)};
+  `,
   header: css`
     display: flex;
     flex-direction: row;
+    flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;
     padding: ${theme.spacing(1, 1, 1, 0)};

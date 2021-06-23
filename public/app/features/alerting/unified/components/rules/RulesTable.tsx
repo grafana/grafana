@@ -118,7 +118,7 @@ function useColumns(showSummaryColumn: boolean, showGroupColumn: boolean) {
         id: 'state',
         label: 'State',
         // eslint-disable-next-line react/display-name
-        renderCell: ({ data: rule }, ruleIdx) => {
+        renderCell: ({ data: rule }) => {
           const { namespace } = rule;
           const { rulesSource } = namespace;
           const { promRule, rulerRule } = rule;
