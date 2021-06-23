@@ -848,15 +848,12 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	DataProxyExpectContinueTimeout = dataproxy.Key("expect_continue_timeout_seconds").MustInt(1)
 	DataProxyMaxConnsPerHost = dataproxy.Key("max_conns_per_host").MustInt(0)
 	DataProxyMaxIdleConns = dataproxy.Key("max_idle_connections").MustInt()
-	DataProxyMaxIdleConnsPerHost = dataproxy.Key("max_idle_connections_per_host").MustInt()
+	DataProxyMaxIdleConnsPerHost = dataproxy.Key("max_idle_connections_per_host").MustInt(MaxIdleConnsPerHost)
 	DataProxyIdleConnTimeout = dataproxy.Key("idle_conn_timeout_seconds").MustInt(90)
 	cfg.SendUserHeader = dataproxy.Key("send_user_header").MustBool(false)
 
-	if DataProxyMaxIdleConns != MaxIdleConns || DataProxyMaxConnsPerHost != MaxIdleConnsPerHost {
-		cfg.Logger.Warn("[Deprecated] the configuration settings 'max_idle_connections' and 'max_idle_connections_per_host' are deprecated, please use 'dataproxy_max_idle_connections' instead")
-	} else {
-		dataProxyMaxIdleConnections := dataproxy.Key("dataproxy_max_idle_connections").MustInt()
-		DataProxyMaxIdleConns = dataProxyMaxIdleConnections
+	if DataProxyMaxConnsPerHost != MaxIdleConnsPerHost {
+		cfg.Logger.Warn("[Deprecated] the configuration setting 'max_idle_connections_per_host' is deprecated, please use 'max_idle_connections' instead")
 	}
 
 	if err := readSecuritySettings(iniFile, cfg); err != nil {

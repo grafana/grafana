@@ -94,7 +94,7 @@ func (ds *DataSource) HTTPClientOptions() sdkhttpclient.Options {
 		MaxIdleConns:          setting.DataProxyMaxIdleConns,
 		IdleConnTimeout:       time.Duration(setting.DataProxyIdleConnTimeout) * time.Second,
 	}
-	if setting.DataProxyMaxIdleConns != setting.MaxIdleConns || setting.DataProxyMaxConnsPerHost != setting.MaxIdleConnsPerHost {
+	if setting.DataProxyMaxConnsPerHost != setting.MaxIdleConnsPerHost {
 		timeouts.MaxIdleConnsPerHost = setting.DataProxyMaxIdleConnsPerHost
 	}
 	opts := sdkhttpclient.Options{

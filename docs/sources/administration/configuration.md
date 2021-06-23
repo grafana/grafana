@@ -420,22 +420,13 @@ Optionally limits the total number of connections per host, including connection
 For more details check the [Transport.MaxConnsPerHost](https://golang.org/pkg/net/http/#Transport.MaxConnsPerHost) documentation.
 
 ### max_idle_connections
-[Deprecated - use dataproxy_max_idle_connections instead]
 
 The maximum number of idle connections that Grafana will maintain. Default is `100`. For more details check the [Transport.MaxIdleConns](https://golang.org/pkg/net/http/#Transport.MaxIdleConns) documentation.
 
 ### max_idle_connections_per_host
-[Deprecated - use dataproxy_max_idle_connections instead]
+[Deprecated - use max_idle_connections instead]
 
 The maximum number of idle connections per host that Grafana will maintain. Default is `2`. For more details check the [Transport.MaxIdleConnsPerHost](https://golang.org/pkg/net/http/#Transport.MaxIdleConnsPerHost) documentation.
-
-### dataproxy_max_idle_connections
-
-The maximum number of idle connections per dataproxy that Grafana will keep alive. Default is `100`. This configuration variable is used for both
-`Transport.MaxIdleConnsPerHost` and `Transport.MaxIdleConns`
-For more details check:
-* [Transport.MaxIdleConnsPerHost](https://golang.org/pkg/net/http/#Transport.MaxIdleConnsPerHost).
-* [Transport.MaxIdleConns](https://golang.org/pkg/net/http/#Transport.MaxIdleConns)
 
 ### idle_conn_timeout_seconds
 
