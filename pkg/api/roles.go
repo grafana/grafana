@@ -21,7 +21,7 @@ const (
 )
 
 // registerRoles creates Grafana Fixed roles and grants them to organization roles ("Viewer", "Editor", "Admin") or "Grafana Admin"
-func (hs *HTTPServer) registerRoles() error {
+func (hs *HTTPServer) RegisterFixedRole(ac accesscontrol.AccessControl) error {
 	provisioningAdmin := accesscontrol.RoleDTO{
 		Version:     1,
 		Name:        "fixed:provisioning:admin",
@@ -34,5 +34,5 @@ func (hs *HTTPServer) registerRoles() error {
 		},
 	}
 
-	return hs.AccessControl.RegisterFixedRole(context.TODO(), provisioningAdmin, accesscontrol.RoleGrafanaAdmin)
+	return ac.RegisterFixedRole(context.TODO(), provisioningAdmin, accesscontrol.RoleGrafanaAdmin)
 }

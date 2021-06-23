@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/evaluator"
 	"github.com/grafana/grafana/pkg/setting"
@@ -26,6 +27,21 @@ func (ac *OSSAccessControlService) Init() error {
 
 	ac.registerUsageMetrics()
 
+	return ac.registerRoles()
+}
+
+func (ac *OSSAccessControlService) registerRoles() error {
+	services := registry.GetServices()
+	for _, svc := range services {
+		registrant, ok := svc.Instance.(registry.RoleRegistrant)
+		if !ok {
+			continue
+		}
+
+		if err := registrant.RegisterFixedRole(ac); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 

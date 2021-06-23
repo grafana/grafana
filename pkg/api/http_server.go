@@ -112,9 +112,6 @@ func (hs *HTTPServer) Init() error {
 	hs.log = log.New("http.server")
 
 	hs.macaron = hs.newMacaron()
-	if err := hs.registerRoles(); err != nil {
-		return err
-	}
 	hs.registerRoutes()
 
 	return nil
