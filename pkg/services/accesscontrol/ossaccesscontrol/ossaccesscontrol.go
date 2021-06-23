@@ -72,13 +72,14 @@ func (ac *OSSAccessControlService) getUsageMetrics() interface{} {
 
 func (ac *OSSAccessControlService) saveFixedRole(role accesscontrol.RoleDTO) {
 	if storedRole, ok := accesscontrol.FixedRoles[role.Name]; ok {
-		// Don't overwrite role with greater version
+		// If a package wants to override another package's role, the version
+		// needs to be increased. Hence, we don't overwrite a role with a
+		// greater version.
 		if storedRole.Version >= role.Version {
 			return
 		}
 	}
 	// Save role
-	// If a package wants to override another package's role, the version needs to be increased
 	accesscontrol.FixedRoles[role.Name] = role
 }
 
