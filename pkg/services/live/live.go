@@ -21,7 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/plugincontext"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/live/channelconfig"
+	"github.com/grafana/grafana/pkg/services/live/channelrule"
 	"github.com/grafana/grafana/pkg/services/live/database"
 	"github.com/grafana/grafana/pkg/services/live/features"
 	"github.com/grafana/grafana/pkg/services/live/livecontext"
@@ -69,7 +69,7 @@ type CoreGrafanaScope struct {
 }
 
 // GrafanaLive manages live real-time connections to Grafana (over WebSocket at this moment).
-// The main concept here is Channel. Connections can subscribe to many channels. Each channel
+// The main concept here is Pattern. Connections can subscribe to many channels. Each channel
 // can have different permissions and properties but once a connection subscribed to a channel
 // it starts receiving all messages published into this channel. Thus GrafanaLive is a PUB/SUB
 // server.
@@ -98,11 +98,11 @@ type GrafanaLive struct {
 
 	ManagedStreamRunner *managedstream.Runner
 
-	contextGetter    *pluginContextGetter
-	runStreamManager *runstream.Manager
-	storage          *database.Storage
-
-	channelConfigCache *channelconfig.Cache
+	contextGetter      *pluginContextGetter
+	runStreamManager   *runstream.Manager
+	messageStorage     *database.MessageStorage
+	channelRuleStorage *database.ChannelRuleStorage
+	channelConfigCache *channelrule.Cache
 }
 
 func (g *GrafanaLive) getStreamPlugin(pluginID string) (backend.StreamHandler, error) {
@@ -117,6 +117,14 @@ func (g *GrafanaLive) getStreamPlugin(pluginID string) (backend.StreamHandler, e
 	return streamHandler, nil
 }
 
+func (g *GrafanaLive) MessageStorage() *database.MessageStorage {
+	return g.messageStorage
+}
+
+func (g *GrafanaLive) ChannelRuleStorage() *database.ChannelRuleStorage {
+	return g.channelRuleStorage
+}
+
 // AddMigration defines database migrations.
 // This is an implementation of registry.DatabaseMigrator.
 func (g *GrafanaLive) AddMigration(mg *migrator.Migrator) {
@@ -124,7 +132,7 @@ func (g *GrafanaLive) AddMigration(mg *migrator.Migrator) {
 		return
 	}
 	database.AddLiveMessageMigrations(mg)
-	database.AddLiveChannelConfigMigrations(mg)
+	database.AddLiveChannelRuleMigrations(mg)
 }
 
 func (g *GrafanaLive) Run(ctx context.Context) error {
@@ -160,21 +168,26 @@ func (g *GrafanaLive) Init() error {
 	}
 	g.node = node
 
+	g.messageStorage = database.NewMessageStorage(g.SQLStore, g.CacheService)
+	g.channelRuleStorage, err = database.NewChannelStorage(g.SQLStore)
+	if err != nil {
+		return err
+	}
+
 	g.contextGetter = newPluginContextGetter(g.PluginContextProvider)
 	channelSender := newPluginChannelSender(node)
 	presenceGetter := newPluginPresenceGetter(node)
 	g.runStreamManager = runstream.NewManager(channelSender, presenceGetter, g.contextGetter)
-	g.channelConfigCache = channelconfig.NewCache(channelconfig.Fixtures)
+	g.channelConfigCache = channelrule.NewCache(g.channelRuleStorage)
 
 	// Initialize the main features
 	dash := &features.DashboardHandler{
 		Publisher:   g.Publish,
 		ClientCount: g.ClientCount,
 	}
-	g.storage = database.NewStorage(g.SQLStore, g.CacheService)
 	g.GrafanaScope.Dashboards = dash
 	g.GrafanaScope.Features["dashboard"] = dash
-	g.GrafanaScope.Features["broadcast"] = features.NewBroadcastRunner(g.storage)
+	g.GrafanaScope.Features["broadcast"] = features.NewBroadcastRunner(g.messageStorage)
 
 	g.ManagedStreamRunner = managedstream.NewRunner(g.Publish)
 

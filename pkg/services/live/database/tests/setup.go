@@ -14,7 +14,7 @@ import (
 
 // SetupTestStorage initializes a storage to used by the integration tests.
 // This is required to properly register and execute migrations.
-func SetupTestStorage(t *testing.T) *database.Storage {
+func SetupTestStorage(t *testing.T) *database.MessageStorage {
 	cfg := setting.NewCfg()
 	// Live is disabled by default and only if it's enabled its database migrations run
 	// and the related database tables are created.
@@ -40,5 +40,5 @@ func SetupTestStorage(t *testing.T) *database.Storage {
 	// Now we can use sql.Store.
 	sqlStore := sqlstore.InitTestDB(t)
 	localCache := localcache.New(time.Hour, time.Hour)
-	return database.NewStorage(sqlStore, localCache)
+	return database.NewMessageStorage(sqlStore, localCache)
 }

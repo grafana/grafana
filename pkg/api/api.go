@@ -271,6 +271,15 @@ func (hs *HTTPServer) registerRoutes() {
 			datasourceRoute.Get("/name/:name", routing.Wrap(GetDataSourceByName))
 		}, reqOrgAdmin)
 
+		// Live channels.
+		apiRoute.Group("/channel-rules", func(channelsRoute routing.RouteRegister) {
+			channelsRoute.Get("/", routing.Wrap(hs.ListChannelRules))
+			channelsRoute.Post("/", bind(models.CreateLiveChannelRuleCommand{}), routing.Wrap(hs.CreateChannelRule))
+			channelsRoute.Put("/:id", bind(models.UpdateLiveChannelRuleCommand{}), routing.Wrap(hs.UpdateChannelRule))
+			channelsRoute.Delete("/:id", routing.Wrap(hs.DeleteChannelRuleById))
+			channelsRoute.Get("/:id", routing.Wrap(hs.GetChannelRuleById))
+		}, reqOrgAdmin)
+
 		apiRoute.Get("/datasources/id/:name", routing.Wrap(GetDataSourceIdByName), reqSignedIn)
 
 		apiRoute.Get("/plugins", routing.Wrap(hs.GetPluginList))

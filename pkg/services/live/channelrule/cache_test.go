@@ -1,4 +1,4 @@
-package channelconfig
+package channelrule
 
 import (
 	"testing"
