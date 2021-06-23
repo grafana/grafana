@@ -77,12 +77,12 @@ func (sn *SensuGoNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool
 
 	// Sensu Go alerts require an entity and a check. We set it to the user-specified
 	// value (optional), else we fallback and use the grafana rule anme  and ruleID.
-	entity := sn.Entity
+	entity := tmpl(sn.Entity)
 	if entity == "" {
 		entity = "default"
 	}
 
-	check := sn.Check
+	check := tmpl(sn.Check)
 	if check == "" {
 		check = "default"
 	}
@@ -94,14 +94,14 @@ func (sn *SensuGoNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool
 		status = 2
 	}
 
-	namespace := sn.Namespace
+	namespace := tmpl(sn.Namespace)
 	if namespace == "" {
 		namespace = "default"
 	}
 
 	var handlers []string
 	if sn.Handler != "" {
-		handlers = []string{sn.Handler}
+		handlers = []string{tmpl(sn.Handler)}
 	}
 
 	ruleURL := joinUrlPath(sn.tmpl.ExternalURL.String(), "/alerting/list", sn.log)

@@ -32,12 +32,12 @@ import { ContextMenuPlugin } from 'app/plugins/panel/timeseries/plugins/ContextM
 import { ExemplarsPlugin } from 'app/plugins/panel/timeseries/plugins/ExemplarsPlugin';
 import { css, cx } from '@emotion/css';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { splitOpen } from './state/main';
 import { getFieldLinksForExplore } from './utils/links';
 import { usePrevious } from 'react-use';
 import appEvents from 'app/core/app_events';
 import { seriesVisibilityConfigFactory } from '../dashboard/dashgrid/SeriesVisibilityConfigFactory';
 import { identity } from 'lodash';
+import { SplitOpen } from 'app/types/explore';
 
 const MAX_NUMBER_OF_TIME_SERIES = 20;
 
@@ -51,7 +51,7 @@ interface Props {
   onUpdateTimeRange: (absoluteRange: AbsoluteTimeRange) => void;
   onHiddenSeriesChanged?: (hiddenSeries: string[]) => void;
   tooltipDisplayMode: TooltipDisplayMode;
-  splitOpenFn?: typeof splitOpen;
+  splitOpenFn?: SplitOpen;
 }
 
 export function ExploreGraphNGPanel({
