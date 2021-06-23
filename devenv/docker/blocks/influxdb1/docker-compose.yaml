@@ -1,5 +1,5 @@
   influxdb1:
-    image: influxdb:1.8.4-alpine
+    image: influxdb:1.8.6
     container_name: influxdb1
     ports:
       - '2004:2004'
