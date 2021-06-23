@@ -18,7 +18,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
 });
 
-interface Props {
+interface OwnProps {
   // Edges and Nodes are separate frames
   dataFrames: DataFrame[];
   exploreId: ExploreId;
@@ -26,7 +26,9 @@ interface Props {
   withTraceView?: boolean;
 }
 
-export function UnconnectedNodeGraphContainer(props: Props & ConnectedProps<typeof connector>) {
+type Props = OwnProps & ConnectedProps<typeof connector>;
+
+export function UnconnectedNodeGraphContainer(props: Props) {
   const { dataFrames, range, splitOpen, withTraceView } = props;
   const getLinks = useLinks(range, splitOpen);
   const theme = useTheme2();
@@ -74,7 +76,7 @@ export function UnconnectedNodeGraphContainer(props: Props & ConnectedProps<type
   );
 }
 
-function mapStateToProps(state: StoreState, { exploreId }: { exploreId: ExploreId }) {
+function mapStateToProps(state: StoreState, { exploreId }: OwnProps) {
   return {
     range: state.explore[exploreId]!.range,
   };

@@ -12,7 +12,14 @@ import { MetaInfoText } from './MetaInfoText';
 import { FilterItem } from '@grafana/ui/src/components/Table/types';
 import { getFieldLinksForExplore } from './utils/links';
 
-function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }) {
+interface TableContainerProps {
+  ariaLabel?: string;
+  exploreId: ExploreId;
+  width: number;
+  onCellFilterAdded?: (filter: FilterItem) => void;
+}
+
+function mapStateToProps(state: StoreState, { exploreId }: TableContainerProps) {
   const explore = state.explore;
   // @ts-ignore
   const item: ExploreItemState = explore[exploreId];
@@ -27,14 +34,9 @@ const mapDispatchToProps = {
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
 
-interface TableContainerProps extends ConnectedProps<typeof connector> {
-  ariaLabel?: string;
-  exploreId: ExploreId;
-  width: number;
-  onCellFilterAdded?: (filter: FilterItem) => void;
-}
+type Props = TableContainerProps & ConnectedProps<typeof connector>;
 
-export class TableContainer extends PureComponent<TableContainerProps> {
+export class TableContainer extends PureComponent<Props> {
   getTableHeight() {
     const { tableResult } = this.props;
 
