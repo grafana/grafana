@@ -109,6 +109,10 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
             padding-top: 2px;
           }
         }
+
+        .rc-time-picker-panel-combobox {
+          display: flex;
+        }
       }
     `,
     input: css`

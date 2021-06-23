@@ -61,11 +61,7 @@ export const DateTimePicker: FC<Props> = ({ date, label, onChange }) => {
       </Field>
       {isOpen &&
         (isFullscreen ? (
-          <ClickOutsideWrapper
-            onClick={() => {
-              setOpen(false);
-            }}
-          >
+          <ClickOutsideWrapper onClick={() => {}}>
             <DateTimeCalendar date={date} onChange={onApply} />
           </ClickOutsideWrapper>
         ) : (
