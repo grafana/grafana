@@ -1,7 +1,7 @@
 import React, { FC } from 'react';
 import { css, cx } from '@emotion/css';
-import { GrafanaTheme } from '@grafana/data';
-import { useStyles } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import { useStyles2 } from '@grafana/ui';
 
 interface Props {
   label: React.ReactNode;
@@ -10,7 +10,7 @@ interface Props {
 }
 
 export const DetailsField: FC<Props> = ({ className, label, horizontal, children }) => {
-  const styles = useStyles(getStyles);
+  const styles = useStyles2(getStyles);
 
   return (
     <div className={cx(className, styles.field, horizontal ? styles.fieldHorizontal : styles.fieldVertical)}>
@@ -20,27 +20,30 @@ export const DetailsField: FC<Props> = ({ className, label, horizontal, children
   );
 };
 
-const getStyles = (theme: GrafanaTheme) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   fieldHorizontal: css`
     flex-direction: row;
+    ${theme.breakpoints.down('md')} {
+      flex-direction: column;
+    }
   `,
   fieldVertical: css`
     flex-direction: column;
   `,
   field: css`
     display: flex;
-    margin: ${theme.spacing.md} 0;
+    margin: ${theme.spacing(2)} 0;
 
     & > div:first-child {
       width: 110px;
-      padding-right: ${theme.spacing.sm};
+      padding-right: ${theme.spacing(1)};
       font-size: ${theme.typography.size.sm};
-      font-weight: ${theme.typography.weight.semibold};
+      font-weight: ${theme.typography.fontWeightBold};
       line-height: 1.8;
     }
     & > div:nth-child(2) {
       flex: 1;
-      color: ${theme.colors.textSemiWeak};
+      color: ${theme.colors.text.secondary};
     }
   `,
 });
