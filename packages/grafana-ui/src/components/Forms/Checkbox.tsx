@@ -44,12 +44,14 @@ export const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
 
 export const getCheckboxStyles = stylesFactory((theme: GrafanaTheme2) => {
   const labelStyles = getLabelStyles(theme);
-  const checkboxSize = '16px';
+  const checkboxSize = 2;
+  const labelPadding = 1;
+
   return {
     label: cx(
       labelStyles.label,
       css`
-        padding-left: ${theme.spacing(1)};
+        padding-left: ${theme.spacing(labelPadding)};
         white-space: nowrap;
         cursor: pointer;
       `
@@ -58,20 +60,19 @@ export const getCheckboxStyles = stylesFactory((theme: GrafanaTheme2) => {
       labelStyles.description,
       css`
         line-height: ${theme.typography.bodySmall.lineHeight};
-        padding-left: ${theme.spacing(1)};
+        padding-left: ${theme.spacing(checkboxSize + labelPadding)};
       `
     ),
     wrapper: css`
       position: relative;
-      padding-left: ${checkboxSize};
       vertical-align: middle;
-      min-height: ${theme.spacing(3)};
+      font-size: 0;
     `,
     input: css`
       position: absolute;
       top: 0;
       left: 0;
-      width: 100%;
+      width: 100% !important; // global styles unset this
       height: 100%;
       opacity: 0;
 
@@ -125,15 +126,11 @@ export const getCheckboxStyles = stylesFactory((theme: GrafanaTheme2) => {
     `,
     checkmark: css`
       display: inline-block;
-      width: ${checkboxSize};
-      height: ${checkboxSize};
+      width: ${theme.spacing(checkboxSize)};
+      height: ${theme.spacing(checkboxSize)};
       border-radius: ${theme.shape.borderRadius()};
-      margin-right: ${theme.spacing(1)};
       background: ${theme.components.input.background};
       border: 1px solid ${theme.components.input.borderColor};
-      position: absolute;
-      top: 2px;
-      left: 0;
 
       &:hover {
         cursor: pointer;
