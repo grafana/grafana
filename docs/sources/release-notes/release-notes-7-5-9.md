@@ -10,5 +10,4 @@ list = false
 
 ### Bug fixes
 
-* **Login:** Fixes Unauthorized message showing when on login page or snapshot page. [#35880](https://github.com/grafana/grafana/pull/35880), [@torkelo](https://github.com/torkelo)
-
+* **Login:** Fix Unauthorized message that is displayed on sign-in or snapshot page. [#35880](https://github.com/grafana/grafana/pull/35880), [@torkelo](https://github.com/torkelo)
