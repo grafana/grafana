@@ -35,7 +35,7 @@ export const FromSection = ({
     // if `default` does not exist in the list of policies, we add it
     const allPoliciesWithDefault = allPolicies.some((p) => p === 'default')
       ? allPolicies
-      : [DEFAULT_POLICY, allPolicies];
+      : [DEFAULT_POLICY, ...allPolicies];
 
     return allPoliciesWithDefault.map(toSelectableValue);
   };
