@@ -1,5 +1,5 @@
 import { FetchResponse, getBackendSrv } from '@grafana/runtime';
-import { getLogAnalyticsManagementApiRoute } from '../api/routes';
+import { getManagementApiRoute } from '../api/routes';
 import {
   locationDisplayNames,
   logsSupportedLocationsKusto,
@@ -148,7 +148,7 @@ export default class ResourcePickerData {
     try {
       return await getBackendSrv()
         .fetch<AzureGraphResponse<T>>({
-          url: this.proxyUrl + '/' + getLogAnalyticsManagementApiRoute(this.cloud) + RESOURCE_GRAPH_URL,
+          url: this.proxyUrl + '/' + getManagementApiRoute(this.cloud) + RESOURCE_GRAPH_URL,
           method: 'POST',
           data: {
             query: query,

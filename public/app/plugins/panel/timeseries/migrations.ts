@@ -8,7 +8,7 @@ import {
   FieldMatcherID,
   fieldReducers,
   NullValueMode,
-  PanelModel,
+  PanelTypeChangedHandler,
   Threshold,
   ThresholdsMode,
 } from '@grafana/data';
@@ -32,14 +32,18 @@ import { defaultGraphConfig } from './config';
 /**
  * This is called when the panel changes from another panel
  */
-export const graphPanelChangedHandler = (
-  panel: PanelModel<Partial<TimeSeriesOptions>> | any,
-  prevPluginId: string,
-  prevOptions: any
+export const graphPanelChangedHandler: PanelTypeChangedHandler = (
+  panel,
+  prevPluginId,
+  prevOptions,
+  prevFieldConfig
 ) => {
   // Changing from angular/flot panel to react/uPlot
   if (prevPluginId === 'graph' && prevOptions.angular) {
-    const { fieldConfig, options } = flotToGraphOptions(prevOptions.angular);
+    const { fieldConfig, options } = flotToGraphOptions({
+      ...prevOptions.angular,
+      fieldConfig: prevFieldConfig,
+    });
     panel.fieldConfig = fieldConfig; // Mutates the incoming panel
     return options;
   }
@@ -222,6 +226,15 @@ export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSour
             rule.properties.push({
               id: 'custom.stacking',
               value: { mode: StackingMode.Normal, group: v },
+            });
+            break;
+          case 'color':
+            rule.properties.push({
+              id: 'color',
+              value: {
+                fixedColor: v,
+                mode: FieldColorModeId.Fixed,
+              },
             });
             break;
           default:

@@ -1,17 +1,15 @@
 import React from 'react';
 import { css } from '@emotion/css';
 import { useStyles2 } from '@grafana/ui';
-import { CombinedRule } from 'app/types/unified-alerting';
 import { AnnotationDetailsField } from '../AnnotationDetailsField';
 
 type Props = {
-  rule: CombinedRule;
+  annotations: Array<[string, string]>;
 };
 
 export function RuleDetailsAnnotations(props: Props): JSX.Element | null {
-  const { rule } = props;
+  const { annotations } = props;
   const styles = useStyles2(getStyles);
-  const annotations = Object.entries(rule.annotations).filter(([_, value]) => !!value.trim());
 
   if (annotations.length === 0) {
     return null;
