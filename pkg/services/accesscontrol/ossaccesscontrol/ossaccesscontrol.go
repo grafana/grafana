@@ -78,8 +78,7 @@ func (ac *OSSAccessControlService) saveFixedRole(role accesscontrol.RoleDTO) {
 		}
 	}
 	// Save role
-	// If a package wants to override another package's role, the version needs
-	// to be increase
+	// If a package wants to override another package's role, the version needs to be increased
 	accesscontrol.FixedRoles[role.Name] = role
 }
 
