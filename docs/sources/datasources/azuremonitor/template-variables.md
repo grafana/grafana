@@ -25,8 +25,8 @@ The Azure Monitor data source provides the following queries you can specify in 
 | `ResourceNames(subscriptionID, aResourceGroup, aNamespace)`                  | Returns a list of resource names for a specified subscription.                                         |
 | `MetricNamespace(aResourceGroup, aNamespace, aResourceName)`                 | Returns a list of metric namespaces.                                                                   |
 | `MetricNamespace(subscriptionID, aResourceGroup, aNamespace, aResourceName)` | Returns a list of metric namespaces for a specified subscription.                                      |
-| `MetricNames(aResourceGroup, aNamespace, aResourceName)`                     | Returns a list of metric names.                                                                        |
-| `MetricNames(subscriptionID, aResourceGroup, aNamespace, aResourceName)`     | Returns a list of metric names for a specified subscription.                                           |
+| `MetricNames(aResourceGroup, aMetricDefinition, aResourceName, aMetricNamespace)`                     | Returns a list of metric names.                                                                        |
+| `MetricNames(aSubscriptionID, aMetricDefinition, aResourceName, aMetricNamespace)`     | Returns a list of metric names for a specified subscription.                                           |
 | `workspaces()`                                                               | Returns a list of workspaces for the default subscription.                                             |
 | `workspaces(subscriptionID)`                                                 | Returns a list of workspaces for the specified subscription (the parameter can be quoted or unquoted). |
 
