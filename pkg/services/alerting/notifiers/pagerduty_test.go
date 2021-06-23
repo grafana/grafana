@@ -64,7 +64,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 				require.Equal(t, "pagerduty", pagerdutyNotifier.Type)
 				require.Equal(t, "abcdefgh0123456789", pagerdutyNotifier.Key)
 				require.Equal(t, "info", pagerdutyNotifier.Severity)
-				So(pagerdutyNotifier.AutoResolve, ShouldBeFalse)
+				require.False(t, pagerdutyNotifier.AutoResolve)
 			})
 
 			t.Run("auto resolve and severity should have expected defaults", func(t *testing.T) {
@@ -87,7 +87,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 				require.Equal(t, "pagerduty", pagerdutyNotifier.Type)
 				require.Equal(t, "abcdefgh0123456789", pagerdutyNotifier.Key)
 				require.Equal(t, "critical", pagerdutyNotifier.Severity)
-				So(pagerdutyNotifier.AutoResolve, ShouldBeFalse)
+				require.False(t, pagerdutyNotifier.AutoResolve)
 			})
 
 			t.Run("settings should trigger incident", func(t *testing.T) {
@@ -113,7 +113,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 				require.Equal(t, "pagerduty_testing", pagerdutyNotifier.Name)
 				require.Equal(t, "pagerduty", pagerdutyNotifier.Type)
 				require.Equal(t, "abcdefgh0123456789", pagerdutyNotifier.Key)
-				So(pagerdutyNotifier.AutoResolve, ShouldBeFalse)
+				require.False(t, pagerdutyNotifier.AutoResolve)
 			})
 
 			t.Run("should return properly formatted default v2 event payload", func(t *testing.T) {
@@ -170,7 +170,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 					},
 					"routing_key": "abcdefgh0123456789",
 				}, payload.Interface(), cmp.Comparer(presenceComparer))
-				So(diff, ShouldBeEmpty)
+				require.Empty(t, diff)
 			})
 
 			t.Run("should return properly formatted default v2 event payload with empty message", func(t *testing.T) {
@@ -226,7 +226,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 					},
 					"routing_key": "abcdefgh0123456789",
 				}, payload.Interface(), cmp.Comparer(presenceComparer))
-				So(diff, ShouldBeEmpty)
+				require.Empty(t, diff)
 			})
 
 			t.Run("should return properly formatted payload with message moved to details", func(t *testing.T) {
@@ -297,7 +297,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 					},
 					"routing_key": "abcdefgh0123456789",
 				}, payload.Interface(), cmp.Comparer(presenceComparer))
-				So(diff, ShouldBeEmpty)
+				require.Empty(t, diff)
 			})
 
 			t.Run("should return properly formatted v2 event payload when using override tags", func(t *testing.T) {
@@ -377,7 +377,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 					},
 					"routing_key": "abcdefgh0123456789",
 				}, payload.Interface(), cmp.Comparer(presenceComparer))
-				So(diff, ShouldBeEmpty)
+				require.Empty(t, diff)
 			})
 
 			t.Run("should support multiple levels of severity", func(t *testing.T) {
@@ -455,7 +455,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 					},
 					"routing_key": "abcdefgh0123456789",
 				}, payload.Interface(), cmp.Comparer(presenceComparer))
-				So(diff, ShouldBeEmpty)
+				require.Empty(t, diff)
 			})
 
 			t.Run("should ignore invalid severity for PD but keep the tag", func(t *testing.T) {
@@ -534,7 +534,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 					},
 					"routing_key": "abcdefgh0123456789",
 				}, payload.Interface(), cmp.Comparer(presenceComparer))
-				So(diff, ShouldBeEmpty)
+				require.Empty(t, diff)
 			})
 		})
 	})

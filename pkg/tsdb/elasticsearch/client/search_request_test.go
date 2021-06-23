@@ -27,7 +27,7 @@ func TestSearchRequest(t *testing.T) {
 				})
 
 				t.Run("Should have no sorting", func(t *testing.T) {
-					So(sr.Sort, ShouldHaveLength, 0)
+					require.Equal(t, 0, len(sr.Sort))
 				})
 
 				t.Run("When marshal to JSON should generate correct json", func(t *testing.T) {
@@ -36,9 +36,9 @@ func TestSearchRequest(t *testing.T) {
 					json, err := simplejson.NewJson(body)
 					require.NoError(t, err)
 					require.Equal(t, 0, json.Get("size").MustInt(500))
-					So(json.Get("sort").Interface(), ShouldBeNil)
-					So(json.Get("aggs").Interface(), ShouldBeNil)
-					So(json.Get("query").Interface(), ShouldBeNil)
+					require.Nil(t, json.Get("sort").Interface())
+					require.Nil(t, json.Get("aggs").Interface())
+					require.Nil(t, json.Get("query").Interface())
 				})
 			})
 
@@ -106,15 +106,15 @@ func TestSearchRequest(t *testing.T) {
 				b.AddDocValueField(timeField)
 
 				t.Run("should set correct props", func(t *testing.T) {
-					So(b.customProps["fields"], ShouldBeNil)
+					require.Nil(t, b.customProps["fields"])
 
 					scriptFields, ok := b.customProps["script_fields"].(map[string]interface{})
 					require.True(t, ok)
-					So(scriptFields, ShouldHaveLength, 0)
+					require.Equal(t, 0, len(scriptFields))
 
 					docValueFields, ok := b.customProps["docvalue_fields"].([]string)
 					require.True(t, ok)
-					So(docValueFields, ShouldHaveLength, 1)
+					require.Equal(t, 1, len(docValueFields))
 					require.Equal(t, timeField, docValueFields[0])
 				})
 
@@ -130,14 +130,14 @@ func TestSearchRequest(t *testing.T) {
 
 						scriptFields, err := json.Get("script_fields").Map()
 						require.NoError(t, err)
-						So(scriptFields, ShouldHaveLength, 0)
+						require.Equal(t, 0, len(scriptFields))
 
 						_, err = json.Get("fields").StringArray()
 						require.Error(t, err)
 
 						docValueFields, err := json.Get("docvalue_fields").StringArray()
 						require.NoError(t, err)
-						So(docValueFields, ShouldHaveLength, 1)
+						require.Equal(t, 1, len(docValueFields))
 						require.Equal(t, timeField, docValueFields[0])
 					})
 				})
@@ -154,7 +154,7 @@ func TestSearchRequest(t *testing.T) {
 
 					t.Run("Should have 2 top level aggs", func(t *testing.T) {
 						aggs := sr.Aggs
-						So(aggs, ShouldHaveLength, 2)
+						require.Equal(t, 2, len(aggs))
 						require.Equal(t, "1", aggs[0].Key)
 						require.Equal(t, "terms", aggs[0].Aggregation.Type)
 						require.Equal(t, "2", aggs[1].Key)
@@ -167,7 +167,7 @@ func TestSearchRequest(t *testing.T) {
 						json, err := simplejson.NewJson(body)
 						require.NoError(t, err)
 
-						So(json.Get("aggs").MustMap(), ShouldHaveLength, 2)
+						require.Equal(t, 2, len(json.Get("aggs").MustMap()))
 						require.Equal(t, "@hostname", json.GetPath("aggs", "1", "terms", "field").MustString())
 						require.Equal(t, "@timestamp", json.GetPath("aggs", "2", "date_histogram", "field").MustString())
 					})
@@ -186,12 +186,12 @@ func TestSearchRequest(t *testing.T) {
 
 					t.Run("Should have 1 top level agg and one child agg", func(t *testing.T) {
 						aggs := sr.Aggs
-						So(aggs, ShouldHaveLength, 1)
+						require.Equal(t, 1, len(aggs))
 
 						topAgg := aggs[0]
 						require.Equal(t, "1", topAgg.Key)
 						require.Equal(t, "terms", topAgg.Aggregation.Type)
-						So(topAgg.Aggregation.Aggs, ShouldHaveLength, 1)
+						require.Equal(t, 1, len(topAgg.Aggregation.Aggs))
 
 						childAgg := aggs[0].Aggregation.Aggs[0]
 						require.Equal(t, "2", childAgg.Key)
@@ -204,7 +204,7 @@ func TestSearchRequest(t *testing.T) {
 						json, err := simplejson.NewJson(body)
 						require.NoError(t, err)
 
-						So(json.Get("aggs").MustMap(), ShouldHaveLength, 1)
+						require.Equal(t, 1, len(json.Get("aggs").MustMap()))
 						firstLevelAgg := json.GetPath("aggs", "1")
 						secondLevelAgg := firstLevelAgg.GetPath("aggs", "2")
 						require.Equal(t, "@hostname", firstLevelAgg.GetPath("terms", "field").MustString())
@@ -228,12 +228,12 @@ func TestSearchRequest(t *testing.T) {
 
 					t.Run("Should have 2 top level aggs with one child agg each", func(t *testing.T) {
 						aggs := sr.Aggs
-						So(aggs, ShouldHaveLength, 2)
+						require.Equal(t, 2, len(aggs))
 
 						topAggOne := aggs[0]
 						require.Equal(t, "1", topAggOne.Key)
 						require.Equal(t, "histogram", topAggOne.Aggregation.Type)
-						So(topAggOne.Aggregation.Aggs, ShouldHaveLength, 1)
+						require.Equal(t, 1, len(topAggOne.Aggregation.Aggs))
 
 						topAggOnechildAgg := topAggOne.Aggregation.Aggs[0]
 						require.Equal(t, "2", topAggOnechildAgg.Key)
@@ -242,7 +242,7 @@ func TestSearchRequest(t *testing.T) {
 						topAggTwo := aggs[1]
 						require.Equal(t, "3", topAggTwo.Key)
 						require.Equal(t, "filters", topAggTwo.Aggregation.Type)
-						So(topAggTwo.Aggregation.Aggs, ShouldHaveLength, 1)
+						require.Equal(t, 1, len(topAggTwo.Aggregation.Aggs))
 
 						topAggTwochildAgg := topAggTwo.Aggregation.Aggs[0]
 						require.Equal(t, "4", topAggTwochildAgg.Key)
@@ -262,7 +262,7 @@ func TestSearchRequest(t *testing.T) {
 
 						topAggTwo := json.GetPath("aggs", "3")
 						topAggTwochildAgg := topAggTwo.GetPath("aggs", "4")
-						So(topAggTwo.GetPath("filters").MustArray(), ShouldHaveLength, 0)
+						require.Equal(t, 0, len(topAggTwo.GetPath("filters").MustArray()))
 						require.Equal(t, "@test", topAggTwochildAgg.GetPath("terms", "field").MustString())
 					})
 				})
@@ -282,12 +282,12 @@ func TestSearchRequest(t *testing.T) {
 
 					t.Run("Should have 1 top level agg with one child having a child", func(t *testing.T) {
 						aggs := sr.Aggs
-						So(aggs, ShouldHaveLength, 1)
+						require.Equal(t, 1, len(aggs))
 
 						topAgg := aggs[0]
 						require.Equal(t, "1", topAgg.Key)
 						require.Equal(t, "terms", topAgg.Aggregation.Type)
-						So(topAgg.Aggregation.Aggs, ShouldHaveLength, 1)
+						require.Equal(t, 1, len(topAgg.Aggregation.Aggs))
 
 						childAgg := topAgg.Aggregation.Aggs[0]
 						require.Equal(t, "2", childAgg.Key)
@@ -334,12 +334,12 @@ func TestSearchRequest(t *testing.T) {
 
 					t.Run("Should have 1 top level agg with one child having a child", func(t *testing.T) {
 						aggs := sr.Aggs
-						So(aggs, ShouldHaveLength, 1)
+						require.Equal(t, 1, len(aggs))
 
 						topAgg := aggs[0]
 						require.Equal(t, "1", topAgg.Key)
 						require.Equal(t, "terms", topAgg.Aggregation.Type)
-						So(topAgg.Aggregation.Aggs, ShouldHaveLength, 1)
+						require.Equal(t, 1, len(topAgg.Aggregation.Aggs))
 
 						childAgg := topAgg.Aggregation.Aggs[0]
 						require.Equal(t, "2", childAgg.Key)
@@ -400,17 +400,17 @@ func TestSearchRequest(t *testing.T) {
 				t.Run("should set correct props", func(t *testing.T) {
 					fields, ok := b.customProps["fields"].([]string)
 					require.True(t, ok)
-					So(fields, ShouldHaveLength, 2)
+					require.Equal(t, 2, len(fields))
 					require.Equal(t, "*", fields[0])
 					require.Equal(t, "_source", fields[1])
 
 					scriptFields, ok := b.customProps["script_fields"].(map[string]interface{})
 					require.True(t, ok)
-					So(scriptFields, ShouldHaveLength, 0)
+					require.Equal(t, 0, len(scriptFields))
 
 					fieldDataFields, ok := b.customProps["fielddata_fields"].([]string)
 					require.True(t, ok)
-					So(fieldDataFields, ShouldHaveLength, 1)
+					require.Equal(t, 1, len(fieldDataFields))
 					require.Equal(t, timeField, fieldDataFields[0])
 				})
 
@@ -426,17 +426,17 @@ func TestSearchRequest(t *testing.T) {
 
 						scriptFields, err := json.Get("script_fields").Map()
 						require.NoError(t, err)
-						So(scriptFields, ShouldHaveLength, 0)
+						require.Equal(t, 0, len(scriptFields))
 
 						fields, err := json.Get("fields").StringArray()
 						require.NoError(t, err)
-						So(fields, ShouldHaveLength, 2)
+						require.Equal(t, 2, len(fields))
 						require.Equal(t, "*", fields[0])
 						require.Equal(t, "_source", fields[1])
 
 						fieldDataFields, err := json.Get("fielddata_fields").StringArray()
 						require.NoError(t, err)
-						So(fieldDataFields, ShouldHaveLength, 1)
+						require.Equal(t, 1, len(fieldDataFields))
 						require.Equal(t, timeField, fieldDataFields[0])
 					})
 				})
@@ -457,7 +457,7 @@ func TestMultiSearchRequest(t *testing.T) {
 				t.Run("When building search request should contain one search request", func(t *testing.T) {
 					mr, err := b.Build()
 					require.NoError(t, err)
-					So(mr.Requests, ShouldHaveLength, 1)
+					require.Equal(t, 1, len(mr.Requests))
 				})
 			})
 
@@ -468,7 +468,7 @@ func TestMultiSearchRequest(t *testing.T) {
 				t.Run("When building search request should contain two search requests", func(t *testing.T) {
 					mr, err := b.Build()
 					require.NoError(t, err)
-					So(mr.Requests, ShouldHaveLength, 2)
+					require.Equal(t, 2, len(mr.Requests))
 				})
 			})
 		})

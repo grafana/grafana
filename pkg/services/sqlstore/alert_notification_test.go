@@ -29,7 +29,7 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 				query := &models.GetOrCreateNotificationStateQuery{AlertId: alertID, OrgId: orgID, NotifierId: notifierID}
 				err := GetOrCreateAlertNotificationState(context.Background(), query)
 				require.NoError(t, err)
-				So(query.Result, ShouldNotBeNil)
+				require.NotNil(t, query.Result)
 				require.Equal(t, "unknown", query.Result.State)
 				require.Equal(t, 0, query.Result.Version)
 				require.Equal(t, now.Unix(), query.Result.UpdatedAt)
@@ -38,7 +38,7 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 					query2 := &models.GetOrCreateNotificationStateQuery{AlertId: alertID, OrgId: orgID, NotifierId: notifierID}
 					err := GetOrCreateAlertNotificationState(context.Background(), query2)
 					require.NoError(t, err)
-					So(query2.Result, ShouldNotBeNil)
+					require.NotNil(t, query2.Result)
 					require.Equal(t, query.Result.Id, query2.Result.Id)
 					require.Equal(t, now.Unix(), query2.Result.UpdatedAt)
 				})
@@ -150,7 +150,7 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 
 			err := GetAlertNotifications(cmd)
 			require.NoError(t, err)
-			So(cmd.Result, ShouldBeNil)
+			require.Nil(t, cmd.Result)
 		})
 
 		t.Run("Cannot save alert notifier with send reminder = true", func(t *testing.T) {
@@ -224,7 +224,7 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 			require.NotEqual(t, 0, cmd.Result.OrgId)
 			require.Equal(t, "email", cmd.Result.Type)
 			require.Equal(t, 10*time.Second, cmd.Result.Frequency)
-			So(cmd.Result.DisableResolveMessage, ShouldBeFalse)
+			require.False(t, cmd.Result.DisableResolveMessage)
 			So(cmd.Result.Uid, ShouldNotBeEmpty)
 
 			t.Run("Cannot save Alert Notification with the same name", func(t *testing.T) {
@@ -287,7 +287,7 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 				}
 				err := UpdateAlertNotification(newCmd)
 				require.NoError(t, err)
-				So(newCmd.Result.SendReminder, ShouldBeFalse)
+				require.False(t, newCmd.Result.SendReminder)
 			})
 		})
 
@@ -299,11 +299,11 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 
 			otherOrg := models.CreateAlertNotificationCommand{Name: "default", Type: "email", OrgId: 2, SendReminder: true, Frequency: "10s", Settings: simplejson.New()}
 
-			So(CreateAlertNotificationCommand(&cmd1), ShouldBeNil)
-			So(CreateAlertNotificationCommand(&cmd2), ShouldBeNil)
-			So(CreateAlertNotificationCommand(&cmd3), ShouldBeNil)
-			So(CreateAlertNotificationCommand(&cmd4), ShouldBeNil)
-			So(CreateAlertNotificationCommand(&otherOrg), ShouldBeNil)
+			require.Nil(t, CreateAlertNotificationCommand(&cmd1))
+			require.Nil(t, CreateAlertNotificationCommand(&cmd2))
+			require.Nil(t, CreateAlertNotificationCommand(&cmd3))
+			require.Nil(t, CreateAlertNotificationCommand(&cmd4))
+			require.Nil(t, CreateAlertNotificationCommand(&otherOrg))
 
 			t.Run("search", func(t *testing.T) {
 				query := &models.GetAlertNotificationsWithUidToSendQuery{
@@ -340,7 +340,7 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 			}
 
 			notificationByUidErr := GetAlertNotificationsWithUid(byUidQuery)
-			So(notificationByUidErr, ShouldBeNil)
+			require.Nil(t, notificationByUidErr)
 
 			t.Run("Can cache notification Uid", func(t *testing.T) {
 				byIdQuery := &models.GetAlertNotificationUidQuery{
@@ -351,11 +351,11 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 				cacheKey := newAlertNotificationUidCacheKey(byIdQuery.OrgId, byIdQuery.Id)
 
 				resultBeforeCaching, foundBeforeCaching := ss.CacheService.Get(cacheKey)
-				So(foundBeforeCaching, ShouldBeFalse)
-				So(resultBeforeCaching, ShouldBeNil)
+				require.False(t, foundBeforeCaching)
+				require.Nil(t, resultBeforeCaching)
 
 				notificationByIdErr := ss.GetAlertNotificationUidWithId(byIdQuery)
-				So(notificationByIdErr, ShouldBeNil)
+				require.Nil(t, notificationByIdErr)
 
 				resultAfterCaching, foundAfterCaching := ss.CacheService.Get(cacheKey)
 				require.True(t, foundAfterCaching)
@@ -388,8 +388,8 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 
 				cacheKey := newAlertNotificationUidCacheKey(query.OrgId, query.Id)
 				result, found := ss.CacheService.Get(cacheKey)
-				So(found, ShouldBeFalse)
-				So(result, ShouldBeNil)
+				require.False(t, found)
+				require.Nil(t, result)
 			})
 		})
 

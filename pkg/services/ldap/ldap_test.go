@@ -80,7 +80,7 @@ func TestPublicAPI(t *testing.T) {
 			searchResult, err := server.Users([]string{"roelgerrits"})
 
 			require.NoError(t, err)
-			So(searchResult, ShouldNotBeNil)
+			require.NotNil(t, searchResult)
 
 			// User should be searched in ldap
 			require.True(t, MockConnection.SearchCalled)
@@ -125,7 +125,7 @@ func TestPublicAPI(t *testing.T) {
 			searchResult, err := server.Users([]string{"roelgerrits"})
 
 			require.NoError(t, err)
-			So(searchResult, ShouldBeEmpty)
+			require.Empty(t, searchResult)
 		})
 	})
 

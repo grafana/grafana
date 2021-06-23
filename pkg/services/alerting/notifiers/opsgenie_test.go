@@ -116,8 +116,8 @@ func TestOpsGenieNotifier(t *testing.T) {
 
 				alertErr := opsgenieNotifier.createAlert(evalContext)
 
-				So(notifierErr, ShouldBeNil)
-				So(alertErr, ShouldBeNil)
+				require.Nil(t, notifierErr)
+				require.Nil(t, alertErr)
 				So(tags, ShouldResemble, []string{"keyOnly", "aKey:aValue"})
 				So(details, ShouldResemble, map[string]interface{}{"url": ""})
 			})
@@ -166,8 +166,8 @@ func TestOpsGenieNotifier(t *testing.T) {
 
 				alertErr := opsgenieNotifier.createAlert(evalContext)
 
-				So(notifierErr, ShouldBeNil)
-				So(alertErr, ShouldBeNil)
+				require.Nil(t, notifierErr)
+				require.Nil(t, alertErr)
 				So(tags, ShouldResemble, []string{})
 				So(details, ShouldResemble, map[string]interface{}{"keyOnly": "", "aKey": "aValue", "url": ""})
 			})
@@ -216,8 +216,8 @@ func TestOpsGenieNotifier(t *testing.T) {
 
 				alertErr := opsgenieNotifier.createAlert(evalContext)
 
-				So(notifierErr, ShouldBeNil)
-				So(alertErr, ShouldBeNil)
+				require.Nil(t, notifierErr)
+				require.Nil(t, alertErr)
 				So(tags, ShouldResemble, []string{"keyOnly", "aKey:aValue"})
 				So(details, ShouldResemble, map[string]interface{}{"keyOnly": "", "aKey": "aValue", "url": ""})
 			})

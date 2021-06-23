@@ -65,7 +65,7 @@ func TestAlertingDataAccess(t *testing.T) {
 			// Get alert so we can use its ID in tests
 			alertQuery := models.GetAlertsQuery{DashboardIDs: []int64{testDash.Id}, PanelId: 1, OrgId: 1, User: &models.SignedInUser{OrgRole: models.ROLE_ADMIN}}
 			err2 := HandleAlertsQuery(&alertQuery)
-			So(err2, ShouldBeNil)
+			require.Nil(t, err2)
 
 			insertedAlert := alertQuery.Result[0]
 
@@ -123,18 +123,18 @@ func TestAlertingDataAccess(t *testing.T) {
 			err2 := HandleAlertsQuery(&alertQuery)
 
 			alert := alertQuery.Result[0]
-			So(err2, ShouldBeNil)
+			require.Nil(t, err2)
 			So(alert.Id, ShouldBeGreaterThan, 0)
 			require.Equal(t, testDash.Id, alert.DashboardId)
 			require.Equal(t, 1, alert.PanelId)
 			require.Equal(t, "Alerting title", alert.Name)
 			require.Equal(t, models.AlertStateUnknown, alert.State)
-			So(alert.NewStateDate, ShouldNotBeNil)
-			So(alert.EvalData, ShouldNotBeNil)
+			require.NotNil(t, alert.NewStateDate)
+			require.NotNil(t, alert.EvalData)
 			require.Equal(t, "test", alert.EvalData.Get("test").MustString())
-			So(alert.EvalDate, ShouldNotBeNil)
+			require.NotNil(t, alert.EvalDate)
 			require.Equal(t, "", alert.ExecutionError)
-			So(alert.DashboardUid, ShouldNotBeNil)
+			require.NotNil(t, alert.DashboardUid)
 			require.Equal(t, "dashboard-with-alerts", alert.DashboardSlug)
 		})
 
@@ -143,8 +143,8 @@ func TestAlertingDataAccess(t *testing.T) {
 			alertQuery := models.GetAlertsQuery{DashboardIDs: []int64{testDash.Id}, PanelId: 1, OrgId: 1, User: viewerUser}
 			err2 := HandleAlertsQuery(&alertQuery)
 
-			So(err2, ShouldBeNil)
-			So(alertQuery.Result, ShouldHaveLength, 1)
+			require.Nil(t, err2)
+			require.Equal(t, 1, len(alertQuery.Result))
 		})
 
 		t.Run("Alerts with same dashboard id and panel id should update", func(t *testing.T) {
@@ -168,7 +168,7 @@ func TestAlertingDataAccess(t *testing.T) {
 				query := models.GetAlertsQuery{DashboardIDs: []int64{testDash.Id}, OrgId: 1, User: &models.SignedInUser{OrgRole: models.ROLE_ADMIN}}
 				err2 := HandleAlertsQuery(&query)
 
-				So(err2, ShouldBeNil)
+				require.Nil(t, err2)
 				require.Equal(t, 1, len(query.Result))
 				require.Equal(t, "Name", query.Result[0].Name)
 
@@ -179,7 +179,7 @@ func TestAlertingDataAccess(t *testing.T) {
 
 			t.Run("Updates without changes should be ignored", func(t *testing.T) {
 				err3 := SaveAlerts(&modifiedCmd)
-				So(err3, ShouldBeNil)
+				require.Nil(t, err3)
 			})
 		})
 
@@ -217,7 +217,7 @@ func TestAlertingDataAccess(t *testing.T) {
 				queryForDashboard := models.GetAlertsQuery{DashboardIDs: []int64{testDash.Id}, OrgId: 1, User: &models.SignedInUser{OrgRole: models.ROLE_ADMIN}}
 				err2 := HandleAlertsQuery(&queryForDashboard)
 
-				So(err2, ShouldBeNil)
+				require.Nil(t, err2)
 				require.Equal(t, 3, len(queryForDashboard.Result))
 			})
 
@@ -230,7 +230,7 @@ func TestAlertingDataAccess(t *testing.T) {
 				t.Run("should delete the missing alert", func(t *testing.T) {
 					query := models.GetAlertsQuery{DashboardIDs: []int64{testDash.Id}, OrgId: 1, User: &models.SignedInUser{OrgRole: models.ROLE_ADMIN}}
 					err2 := HandleAlertsQuery(&query)
-					So(err2, ShouldBeNil)
+					require.Nil(t, err2)
 					require.Equal(t, 2, len(query.Result))
 				})
 			})
@@ -266,7 +266,7 @@ func TestAlertingDataAccess(t *testing.T) {
 				query := models.GetAlertsQuery{DashboardIDs: []int64{testDash.Id}, OrgId: 1, User: &models.SignedInUser{OrgRole: models.ROLE_ADMIN}}
 				err2 := HandleAlertsQuery(&query)
 
-				So(err2, ShouldBeNil)
+				require.Nil(t, err2)
 				require.Equal(t, 0, len(query.Result))
 			})
 		})
@@ -290,7 +290,7 @@ func TestPausingAlerts(t *testing.T) {
 		// Get alert so we can use its ID in tests
 		alertQuery := models.GetAlertsQuery{DashboardIDs: []int64{testDash.Id}, PanelId: 1, OrgId: 1, User: &models.SignedInUser{OrgRole: models.ROLE_ADMIN}}
 		err2 := HandleAlertsQuery(&alertQuery)
-		So(err2, ShouldBeNil)
+		require.Nil(t, err2)
 
 		insertedAlert := alertQuery.Result[0]
 

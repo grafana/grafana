@@ -377,7 +377,7 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 					}
 					err := HasAdminPermissionInFolders(query)
 					require.NoError(t, err)
-					So(query.Result, ShouldBeFalse)
+					require.False(t, query.Result)
 				})
 			})
 
@@ -432,7 +432,7 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 					}
 					err := HasEditPermissionInFolders(query)
 					require.NoError(t, err)
-					So(query.Result, ShouldBeFalse)
+					require.False(t, query.Result)
 				})
 
 				t.Run("should not have admin permission in folders", func(t *testing.T) {
@@ -441,7 +441,7 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 					}
 					err := HasAdminPermissionInFolders(query)
 					require.NoError(t, err)
-					So(query.Result, ShouldBeFalse)
+					require.False(t, query.Result)
 				})
 
 				t.Run("and admin permission is given for user with org role viewer in one dashboard folder", func(t *testing.T) {

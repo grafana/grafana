@@ -113,7 +113,7 @@ func TestLDAPPrivateMethods(t *testing.T) {
 			result, err := server.serializeUsers(users)
 
 			require.NoError(t, err)
-			So(result[0].IsDisabled, ShouldBeFalse)
+			require.False(t, result[0].IsDisabled)
 			require.Equal(t, "Roel", result[0].Name)
 		})
 
@@ -182,7 +182,7 @@ func TestLDAPPrivateMethods(t *testing.T) {
 
 			result := server.validateGrafanaUser(user)
 
-			So(result, ShouldBeNil)
+			require.Nil(t, result)
 		})
 
 		t.Run("Does not return error when groups are there", func(t *testing.T) {
@@ -206,7 +206,7 @@ func TestLDAPPrivateMethods(t *testing.T) {
 
 			result := server.validateGrafanaUser(user)
 
-			So(result, ShouldBeNil)
+			require.Nil(t, result)
 		})
 	})
 
@@ -230,7 +230,7 @@ func TestLDAPPrivateMethods(t *testing.T) {
 			}
 
 			result := server.shouldAdminBind()
-			So(result, ShouldBeFalse)
+			require.False(t, result)
 		})
 	})
 
@@ -254,7 +254,7 @@ func TestLDAPPrivateMethods(t *testing.T) {
 			}
 
 			result := server.shouldSingleBind()
-			So(result, ShouldBeFalse)
+			require.False(t, result)
 		})
 	})
 

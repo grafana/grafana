@@ -37,10 +37,10 @@ func TestDashboardAclDataAccess(t *testing.T) {
 					defaultPermissionsId := -1
 					require.Equal(t, defaultPermissionsId, query.Result[0].DashboardId)
 					require.Equal(t, models.ROLE_VIEWER, *query.Result[0].Role)
-					So(query.Result[0].Inherited, ShouldBeFalse)
+					require.False(t, query.Result[0].Inherited)
 					require.Equal(t, defaultPermissionsId, query.Result[1].DashboardId)
 					require.Equal(t, models.ROLE_EDITOR, *query.Result[1].Role)
-					So(query.Result[1].Inherited, ShouldBeFalse)
+					require.False(t, query.Result[1].Inherited)
 				})
 
 				t.Run("When reading dashboard acl should include acl for parent folder", func(t *testing.T) {
@@ -112,7 +112,7 @@ func TestDashboardAclDataAccess(t *testing.T) {
 						require.Equal(t, savedFolder.Id, query.Result[0].DashboardId)
 						require.True(t, query.Result[0].Inherited)
 						require.Equal(t, childDash.Id, query.Result[1].DashboardId)
-						So(query.Result[1].Inherited, ShouldBeFalse)
+						require.False(t, query.Result[1].Inherited)
 					})
 				})
 			})
@@ -141,7 +141,7 @@ func TestDashboardAclDataAccess(t *testing.T) {
 					require.Equal(t, models.ROLE_EDITOR, *query.Result[1].Role)
 					require.True(t, query.Result[1].Inherited)
 					require.Equal(t, childDash.Id, query.Result[2].DashboardId)
-					So(query.Result[2].Inherited, ShouldBeFalse)
+					require.False(t, query.Result[2].Inherited)
 				})
 			})
 
@@ -230,10 +230,10 @@ func TestDashboardAclDataAccess(t *testing.T) {
 				defaultPermissionsId := -1
 				require.Equal(t, defaultPermissionsId, query.Result[0].DashboardId)
 				require.Equal(t, models.ROLE_VIEWER, *query.Result[0].Role)
-				So(query.Result[0].Inherited, ShouldBeFalse)
+				require.False(t, query.Result[0].Inherited)
 				require.Equal(t, defaultPermissionsId, query.Result[1].DashboardId)
 				require.Equal(t, models.ROLE_EDITOR, *query.Result[1].Role)
-				So(query.Result[1].Inherited, ShouldBeFalse)
+				require.False(t, query.Result[1].Inherited)
 			})
 		})
 	})

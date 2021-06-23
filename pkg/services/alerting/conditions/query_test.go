@@ -83,7 +83,7 @@ func TestQueryCondition(t *testing.T) {
 				cr, err := ctx.exec()
 
 				require.NoError(t, err)
-				So(cr.Firing, ShouldBeFalse)
+				require.False(t, cr.Firing)
 			})
 
 			t.Run("Should not fire when avg is below 100 on dataframe", func(t *testing.T) {
@@ -94,7 +94,7 @@ func TestQueryCondition(t *testing.T) {
 				cr, err := ctx.exec()
 
 				require.NoError(t, err)
-				So(cr.Firing, ShouldBeFalse)
+				require.False(t, cr.Firing)
 			})
 
 			t.Run("Should fire if only first series matches", func(t *testing.T) {
@@ -114,7 +114,7 @@ func TestQueryCondition(t *testing.T) {
 					cr, err := ctx.exec()
 
 					require.NoError(t, err)
-					So(cr.Firing, ShouldBeFalse)
+					require.False(t, cr.Firing)
 					require.True(t, cr.NoDataFound)
 				})
 
@@ -170,7 +170,7 @@ func TestQueryCondition(t *testing.T) {
 					cr, err := ctx.exec()
 
 					require.NoError(t, err)
-					So(cr.NoDataFound, ShouldBeFalse)
+					require.False(t, cr.NoDataFound)
 				})
 			})
 		})

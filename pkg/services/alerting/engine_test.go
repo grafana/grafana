@@ -61,7 +61,7 @@ func TestEngineProcessJob(t *testing.T) {
 
 					require.Equal(t, i+1, nextAttemptID)
 					require.Equal(t, true, more)
-					So(<-cancelChan, ShouldNotBeNil)
+					require.NotNil(t, <-cancelChan)
 				}
 			})
 
@@ -75,7 +75,7 @@ func TestEngineProcessJob(t *testing.T) {
 
 				require.Equal(t, 0, nextAttemptID)
 				require.Equal(t, false, more)
-				So(<-cancelChan, ShouldNotBeNil)
+				require.NotNil(t, <-cancelChan)
 			})
 
 			t.Run("no error -> no retry", func(t *testing.T) {
@@ -88,7 +88,7 @@ func TestEngineProcessJob(t *testing.T) {
 
 				require.Equal(t, 0, nextAttemptID)
 				require.Equal(t, false, more)
-				So(<-cancelChan, ShouldNotBeNil)
+				require.NotNil(t, <-cancelChan)
 			})
 		})
 

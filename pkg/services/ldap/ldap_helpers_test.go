@@ -21,7 +21,7 @@ func TestLDAPHelpers(t *testing.T) {
 
 		t.Run("Should not find one", func(t *testing.T) {
 			result := isMemberOf([]string{"one", "Two", "three"}, "twos")
-			So(result, ShouldBeFalse)
+			require.False(t, result)
 		})
 	})
 
@@ -45,7 +45,7 @@ func TestLDAPHelpers(t *testing.T) {
 			})
 
 			require.Equal(t, 2, i)
-			So(result, ShouldBeNil)
+			require.Nil(t, result)
 		})
 
 		t.Run("it should execute three times for 1500 users", func(t *testing.T) {
@@ -70,7 +70,7 @@ func TestLDAPHelpers(t *testing.T) {
 			})
 
 			require.Equal(t, 3, i)
-			So(result, ShouldBeNil)
+			require.Nil(t, result)
 		})
 
 		t.Run("it should execute once for 400 users", func(t *testing.T) {
@@ -88,7 +88,7 @@ func TestLDAPHelpers(t *testing.T) {
 			})
 
 			require.Equal(t, 1, i)
-			So(result, ShouldBeNil)
+			require.Nil(t, result)
 		})
 
 		t.Run("it should not execute for 0 users", func(t *testing.T) {
@@ -101,7 +101,7 @@ func TestLDAPHelpers(t *testing.T) {
 			})
 
 			require.Equal(t, 0, i)
-			So(result, ShouldBeNil)
+			require.Nil(t, result)
 		})
 	})
 

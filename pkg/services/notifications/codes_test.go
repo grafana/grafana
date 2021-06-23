@@ -31,7 +31,7 @@ func TestEmailCodes(t *testing.T) {
 			code = "ASD"
 			isValid, err := validateUserEmailCode(user, code)
 			require.NoError(t, err)
-			So(isValid, ShouldBeFalse)
+			require.False(t, isValid)
 		})
 	})
 }

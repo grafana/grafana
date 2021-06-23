@@ -38,7 +38,7 @@ func TestMultiLDAP(t *testing.T) {
 				require.NoError(t, err)
 				require.Equal(t, "10.0.0.1", statuses[0].Host)
 				require.Equal(t, 361, statuses[0].Port)
-				So(statuses[0].Available, ShouldBeFalse)
+				require.False(t, statuses[0].Available)
 				require.Equal(t, expectedErr, statuses[0].Error)
 				require.Equal(t, 0, mock.closeCalledTimes)
 
@@ -57,7 +57,7 @@ func TestMultiLDAP(t *testing.T) {
 				require.Equal(t, "10.0.0.1", statuses[0].Host)
 				require.Equal(t, 361, statuses[0].Port)
 				require.True(t, statuses[0].Available)
-				So(statuses[0].Error, ShouldBeNil)
+				require.Nil(t, statuses[0].Error)
 				require.Equal(t, 1, mock.closeCalledTimes)
 
 				teardown()

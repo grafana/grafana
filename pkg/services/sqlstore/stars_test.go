@@ -35,7 +35,7 @@ func TestUserStarsDataAccess(t *testing.T) {
 				err := IsStarredByUserCtx(context.Background(), &query)
 				require.NoError(t, err)
 
-				So(query.Result, ShouldBeFalse)
+				require.False(t, query.Result)
 			})
 		})
 	})

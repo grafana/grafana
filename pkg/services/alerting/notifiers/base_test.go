@@ -200,7 +200,7 @@ func TestBaseNotifier(t *testing.T) {
 			bJSON.Set("uploadImage", false)
 
 			base := NewNotifierBase(model)
-			So(base.UploadImage, ShouldBeFalse)
+			require.False(t, base.UploadImage)
 		})
 
 		t.Run("can parse true value", func(t *testing.T) {
@@ -217,7 +217,7 @@ func TestBaseNotifier(t *testing.T) {
 
 		t.Run("default value should be false for backwards compatibility", func(t *testing.T) {
 			base := NewNotifierBase(model)
-			So(base.DisableResolveMessage, ShouldBeFalse)
+			require.False(t, base.DisableResolveMessage)
 		})
 	})
 }

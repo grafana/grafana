@@ -53,7 +53,7 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 				q1 := &models.GetTeamMembersQuery{OrgId: testOrgID, TeamId: team1.Id}
 				err = GetTeamMembers(q1)
 				require.NoError(t, err)
-				So(q1.Result, ShouldHaveLength, 2)
+				require.Equal(t, 2, len(q1.Result))
 				require.Equal(t, team1.Id, q1.Result[0].TeamId)
 				require.Equal(t, "loginuser0", q1.Result[0].Login)
 				require.Equal(t, testOrgID, q1.Result[0].OrgId)
@@ -65,7 +65,7 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 				q2 := &models.GetTeamMembersQuery{OrgId: testOrgID, TeamId: team1.Id, External: true}
 				err = GetTeamMembers(q2)
 				require.NoError(t, err)
-				So(q2.Result, ShouldHaveLength, 1)
+				require.Equal(t, 1, len(q2.Result))
 				require.Equal(t, team1.Id, q2.Result[0].TeamId)
 				require.Equal(t, "loginuser1", q2.Result[0].Login)
 				require.Equal(t, testOrgID, q2.Result[0].OrgId)
@@ -104,7 +104,7 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 				memberQuery := &models.GetTeamMembersQuery{OrgId: testOrgID, TeamId: team1.Id, External: true}
 				err = GetTeamMembers(memberQuery)
 				require.NoError(t, err)
-				So(memberQuery.Result, ShouldHaveLength, 1)
+				require.Equal(t, 1, len(memberQuery.Result))
 				require.Equal(t, team1.Id, memberQuery.Result[0].TeamId)
 				require.Equal(t, "loginuser1", memberQuery.Result[0].Login)
 				require.Equal(t, testOrgID, memberQuery.Result[0].OrgId)
@@ -278,7 +278,7 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 				query := &models.IsAdminOfTeamsQuery{SignedInUser: &models.SignedInUser{OrgId: testOrgID, UserId: userIds[0]}}
 				err = IsAdminOfTeams(query)
 				require.NoError(t, err)
-				So(query.Result, ShouldBeFalse)
+				require.False(t, query.Result)
 
 				query = &models.IsAdminOfTeamsQuery{SignedInUser: &models.SignedInUser{OrgId: testOrgID, UserId: userIds[1]}}
 				err = IsAdminOfTeams(query)
@@ -301,14 +301,14 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 				searchQuery := &models.SearchTeamsQuery{OrgId: testOrgID, Page: 1, Limit: 10, SignedInUser: signedInUser, HiddenUsers: hiddenUsers}
 				err = SearchTeams(searchQuery)
 				require.NoError(t, err)
-				So(searchQuery.Result.Teams, ShouldHaveLength, 2)
+				require.Equal(t, 2, len(searchQuery.Result.Teams))
 				team1 := searchQuery.Result.Teams[0]
 				require.Equal(t, 2, team1.MemberCount)
 
 				searchQueryFilteredByUser := &models.SearchTeamsQuery{OrgId: testOrgID, Page: 1, Limit: 10, UserIdFilter: userIds[0], SignedInUser: signedInUser, HiddenUsers: hiddenUsers}
 				err = SearchTeams(searchQueryFilteredByUser)
 				require.NoError(t, err)
-				So(searchQueryFilteredByUser.Result.Teams, ShouldHaveLength, 1)
+				require.Equal(t, 1, len(searchQueryFilteredByUser.Result.Teams))
 				team1 = searchQuery.Result.Teams[0]
 				require.Equal(t, 2, team1.MemberCount)
 

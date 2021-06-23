@@ -705,7 +705,7 @@ func TestGuardianGetHiddenACL(t *testing.T) {
 			hiddenACL, err := g.GetHiddenACL(cfg)
 			require.NoError(t, err)
 
-			So(hiddenACL, ShouldHaveLength, 1)
+			require.Equal(t, 1, len(hiddenACL))
 			require.Equal(t, 2, hiddenACL[0].UserID)
 		})
 
@@ -721,7 +721,7 @@ func TestGuardianGetHiddenACL(t *testing.T) {
 			hiddenACL, err := g.GetHiddenACL(cfg)
 			require.NoError(t, err)
 
-			So(hiddenACL, ShouldHaveLength, 0)
+			require.Equal(t, 0, len(hiddenACL))
 		})
 	})
 }

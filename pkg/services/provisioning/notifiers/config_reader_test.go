@@ -84,14 +84,14 @@ func TestNotificationAsConfig(t *testing.T) {
 			require.Equal(t, "email", nt.Type)
 			require.Equal(t, 3, nt.OrgID)
 			require.Equal(t, "notifier2", nt.UID)
-			So(nt.IsDefault, ShouldBeFalse)
+			require.False(t, nt.IsDefault)
 
 			nt = nts[2]
 			require.Equal(t, "check-unset-is_default-is-false", nt.Name)
 			require.Equal(t, "slack", nt.Type)
 			require.Equal(t, 3, nt.OrgID)
 			require.Equal(t, "notifier3", nt.UID)
-			So(nt.IsDefault, ShouldBeFalse)
+			require.False(t, nt.IsDefault)
 
 			nt = nts[3]
 			require.Equal(t, "Added notification with whitespaces in name", nt.Name)
@@ -133,7 +133,7 @@ func TestNotificationAsConfig(t *testing.T) {
 				notificationsQuery := models.GetAllAlertNotificationsQuery{OrgId: 1}
 				err = sqlstore.GetAllAlertNotifications(&notificationsQuery)
 				require.NoError(t, err)
-				So(notificationsQuery.Result, ShouldNotBeNil)
+				require.NotNil(t, notificationsQuery.Result)
 				require.Equal(t, 2, len(notificationsQuery.Result))
 			})
 
@@ -146,11 +146,11 @@ func TestNotificationAsConfig(t *testing.T) {
 				}
 				err := sqlstore.CreateAlertNotificationCommand(&existingNotificationCmd)
 				require.NoError(t, err)
-				So(existingNotificationCmd.Result, ShouldNotBeNil)
+				require.NotNil(t, existingNotificationCmd.Result)
 				notificationsQuery := models.GetAllAlertNotificationsQuery{OrgId: 1}
 				err = sqlstore.GetAllAlertNotifications(&notificationsQuery)
 				require.NoError(t, err)
-				So(notificationsQuery.Result, ShouldNotBeNil)
+				require.NotNil(t, notificationsQuery.Result)
 				require.Equal(t, 1, len(notificationsQuery.Result))
 
 				t.Run("should update one notification", func(t *testing.T) {
@@ -161,7 +161,7 @@ func TestNotificationAsConfig(t *testing.T) {
 					}
 					err = sqlstore.GetAllAlertNotifications(&notificationsQuery)
 					require.NoError(t, err)
-					So(notificationsQuery.Result, ShouldNotBeNil)
+					require.NotNil(t, notificationsQuery.Result)
 					require.Equal(t, 2, len(notificationsQuery.Result))
 
 					nts := notificationsQuery.Result
@@ -184,7 +184,7 @@ func TestNotificationAsConfig(t *testing.T) {
 					notificationsQuery := models.GetAllAlertNotificationsQuery{OrgId: 1}
 					err = sqlstore.GetAllAlertNotifications(&notificationsQuery)
 					require.NoError(t, err)
-					So(notificationsQuery.Result, ShouldNotBeNil)
+					require.NotNil(t, notificationsQuery.Result)
 					require.Equal(t, 2, len(notificationsQuery.Result))
 
 					require.True(t, notificationsQuery.Result[0].IsDefault)
@@ -215,7 +215,7 @@ func TestNotificationAsConfig(t *testing.T) {
 				notificationsQuery := models.GetAllAlertNotificationsQuery{OrgId: 1}
 				err = sqlstore.GetAllAlertNotifications(&notificationsQuery)
 				require.NoError(t, err)
-				So(notificationsQuery.Result, ShouldNotBeNil)
+				require.NotNil(t, notificationsQuery.Result)
 				require.Equal(t, 2, len(notificationsQuery.Result))
 
 				t.Run("should have two new notifications", func(t *testing.T) {
@@ -227,7 +227,7 @@ func TestNotificationAsConfig(t *testing.T) {
 					notificationsQuery = models.GetAllAlertNotificationsQuery{OrgId: 1}
 					err = sqlstore.GetAllAlertNotifications(&notificationsQuery)
 					require.NoError(t, err)
-					So(notificationsQuery.Result, ShouldNotBeNil)
+					require.NotNil(t, notificationsQuery.Result)
 					require.Equal(t, 4, len(notificationsQuery.Result))
 				})
 			})
@@ -237,11 +237,11 @@ func TestNotificationAsConfig(t *testing.T) {
 			existingOrg1 := models.GetOrgByNameQuery{Name: "Main Org. 1"}
 			err := sqlstore.GetOrgByName(&existingOrg1)
 			require.NoError(t, err)
-			So(existingOrg1.Result, ShouldNotBeNil)
+			require.NotNil(t, existingOrg1.Result)
 			existingOrg2 := models.GetOrgByNameQuery{Name: "Main Org. 2"}
 			err = sqlstore.GetOrgByName(&existingOrg2)
 			require.NoError(t, err)
-			So(existingOrg2.Result, ShouldNotBeNil)
+			require.NotNil(t, existingOrg2.Result)
 
 			existingNotificationCmd := models.CreateAlertNotificationCommand{
 				Name:  "default-notification-delete",
@@ -261,7 +261,7 @@ func TestNotificationAsConfig(t *testing.T) {
 			notificationsQuery := models.GetAllAlertNotificationsQuery{OrgId: existingOrg2.Result.Id}
 			err = sqlstore.GetAllAlertNotifications(&notificationsQuery)
 			require.NoError(t, err)
-			So(notificationsQuery.Result, ShouldNotBeNil)
+			require.NotNil(t, notificationsQuery.Result)
 			require.Equal(t, 1, len(notificationsQuery.Result))
 
 			nt := notificationsQuery.Result[0]
@@ -291,7 +291,7 @@ func TestNotificationAsConfig(t *testing.T) {
 				notificationsQuery := models.GetAllAlertNotificationsQuery{OrgId: 1}
 				err = sqlstore.GetAllAlertNotifications(&notificationsQuery)
 				require.NoError(t, err)
-				So(notificationsQuery.Result, ShouldBeEmpty)
+				require.Empty(t, notificationsQuery.Result)
 			})
 		})
 

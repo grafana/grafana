@@ -166,7 +166,7 @@ func TestAlertingEvaluationHandler(t *testing.T) {
 			}, &validations.OSSPluginRequestValidator{})
 
 			handler.Eval(context)
-			So(context.NoDataFound, ShouldBeFalse)
+			require.False(t, context.NoDataFound)
 		})
 
 		t.Run("Should return NoDataFound if one condition has no data", func(t *testing.T) {
@@ -190,7 +190,7 @@ func TestAlertingEvaluationHandler(t *testing.T) {
 			}, &validations.OSSPluginRequestValidator{})
 
 			handler.Eval(context)
-			So(context.NoDataFound, ShouldBeFalse)
+			require.False(t, context.NoDataFound)
 		})
 
 		t.Run("Should return no data if at least one condition has no data and using OR", func(t *testing.T) {

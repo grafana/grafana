@@ -113,6 +113,7 @@ func TestAlertmanagerNotifier(t *testing.T) {
 				require.NoError(t, err)
 				require.Equal(t, "user", alertmanagerNotifier.BasicAuthUser)
 				require.Equal(t, "password", alertmanagerNotifier.BasicAuthPassword)
+
 				So(alertmanagerNotifier.URL, ShouldResemble, []string{"http://127.0.0.1:9093/"})
 			})
 

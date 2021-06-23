@@ -107,7 +107,7 @@ func TestVictoropsNotifier(t *testing.T) {
 					"state_start_time":    int64(-1),
 					"timestamp":           int64(-1),
 				}, payload.Interface(), cmp.Comparer(presenceComparerInt))
-				So(diff, ShouldBeEmpty)
+				require.Empty(t, diff)
 			})
 			t.Run("resolving with severity works properly", func(t *testing.T) {
 				json := `
@@ -155,7 +155,7 @@ func TestVictoropsNotifier(t *testing.T) {
 					"state_start_time":    int64(-1),
 					"timestamp":           int64(-1),
 				}, payload.Interface(), cmp.Comparer(presenceComparerInt))
-				So(diff, ShouldBeEmpty)
+				require.Empty(t, diff)
 			})
 		})
 	})

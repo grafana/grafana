@@ -70,7 +70,7 @@ func TestThreemaNotifier(t *testing.T) {
 				}
 
 				not, err := NewThreemaNotifier(model)
-				So(not, ShouldBeNil)
+				require.Nil(t, not)
 				var valErr alerting.ValidationError
 				require.True(t, errors.As(err, &valErr))
 				require.Equal(t, "Invalid Threema Gateway ID: Must start with a *", valErr.Reason)
@@ -92,7 +92,7 @@ func TestThreemaNotifier(t *testing.T) {
 				}
 
 				not, err := NewThreemaNotifier(model)
-				So(not, ShouldBeNil)
+				require.Nil(t, not)
 				var valErr alerting.ValidationError
 				require.True(t, errors.As(err, &valErr))
 				require.Equal(t, "Invalid Threema Gateway ID: Must be 8 characters long", valErr.Reason)
@@ -114,7 +114,7 @@ func TestThreemaNotifier(t *testing.T) {
 				}
 
 				not, err := NewThreemaNotifier(model)
-				So(not, ShouldBeNil)
+				require.Nil(t, not)
 				var valErr alerting.ValidationError
 				require.True(t, errors.As(err, &valErr))
 				require.Equal(t, "Invalid Threema Recipient ID: Must be 8 characters long", valErr.Reason)

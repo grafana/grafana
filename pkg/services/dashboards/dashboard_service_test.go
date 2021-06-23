@@ -243,7 +243,7 @@ func TestDashboardService(t *testing.T) {
 			t.Run("DeleteDashboard should fail to delete it", func(t *testing.T) {
 				err := service.DeleteDashboard(1, 1)
 				require.Equal(t, models.ErrDashboardCannotDeleteProvisionedDashboard, err)
-				So(result.deleteWasCalled, ShouldBeFalse)
+				require.False(t, result.deleteWasCalled)
 			})
 		})
 

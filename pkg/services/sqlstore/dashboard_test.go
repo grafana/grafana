@@ -33,7 +33,7 @@ func TestDashboardDataAccess(t *testing.T) {
 				require.Equal(t, "test dash 23", savedDash.Title)
 				require.Equal(t, "test-dash-23", savedDash.Slug)
 				require.NotEqual(t, 0, savedDash.Id)
-				So(savedDash.IsFolder, ShouldBeFalse)
+				require.False(t, savedDash.IsFolder)
 				So(savedDash.FolderId, ShouldBeGreaterThan, 0)
 				So(len(savedDash.Uid), ShouldBeGreaterThan, 0)
 
@@ -58,7 +58,7 @@ func TestDashboardDataAccess(t *testing.T) {
 				require.Equal(t, "test-dash-23", query.Result.Slug)
 				require.Equal(t, savedDash.Id, query.Result.Id)
 				require.Equal(t, savedDash.Uid, query.Result.Uid)
-				So(query.Result.IsFolder, ShouldBeFalse)
+				require.False(t, query.Result.IsFolder)
 			})
 
 			t.Run("Should be able to get dashboard by slug", func(t *testing.T) {
@@ -74,7 +74,7 @@ func TestDashboardDataAccess(t *testing.T) {
 				require.Equal(t, "test-dash-23", query.Result.Slug)
 				require.Equal(t, savedDash.Id, query.Result.Id)
 				require.Equal(t, savedDash.Uid, query.Result.Uid)
-				So(query.Result.IsFolder, ShouldBeFalse)
+				require.False(t, query.Result.IsFolder)
 			})
 
 			t.Run("Should be able to get dashboard by uid", func(t *testing.T) {
@@ -90,7 +90,7 @@ func TestDashboardDataAccess(t *testing.T) {
 				require.Equal(t, "test-dash-23", query.Result.Slug)
 				require.Equal(t, savedDash.Id, query.Result.Id)
 				require.Equal(t, savedDash.Uid, query.Result.Uid)
-				So(query.Result.IsFolder, ShouldBeFalse)
+				require.False(t, query.Result.IsFolder)
 			})
 
 			t.Run("Shouldn't be able to get a dashboard with just an OrgID", func(t *testing.T) {
@@ -146,9 +146,9 @@ func TestDashboardDataAccess(t *testing.T) {
 				dashboard, err := sqlStore.SaveDashboard(cmd)
 				require.NoError(t, err)
 				require.Equal(t, 100, dashboard.CreatedBy)
-				So(dashboard.Created.IsZero(), ShouldBeFalse)
+				require.False(t, dashboard.Created.IsZero())
 				require.Equal(t, 100, dashboard.UpdatedBy)
-				So(dashboard.Updated.IsZero(), ShouldBeFalse)
+				require.False(t, dashboard.Updated.IsZero())
 			})
 
 			t.Run("Should be able to update dashboard by id and remove folderId", func(t *testing.T) {
@@ -192,7 +192,7 @@ func TestDashboardDataAccess(t *testing.T) {
 				require.Equal(t, savedDash.CreatedBy, query.Result.CreatedBy)
 				So(query.Result.Created, ShouldHappenWithin, 3*time.Second, savedDash.Created)
 				require.Equal(t, 100, query.Result.UpdatedBy)
-				So(query.Result.Updated.IsZero(), ShouldBeFalse)
+				require.False(t, query.Result.Updated.IsZero())
 			})
 
 			t.Run("Should be able to delete empty folder", func(t *testing.T) {

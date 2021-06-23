@@ -180,7 +180,7 @@ func TestImageUploaderFactory(t *testing.T) {
 
 			original, ok := uploader.(*LocalUploader)
 			require.True(t, ok)
-			So(original, ShouldNotBeNil)
+			require.NotNil(t, original)
 		})
 	})
 }

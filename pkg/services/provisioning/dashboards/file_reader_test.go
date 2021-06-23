@@ -308,16 +308,16 @@ func TestDashboardFileReader(t *testing.T) {
 				for _, d := range fakeService.inserted {
 					title := d.Dashboard.Title
 					if _, ok := foldersAndDashboards[title]; ok {
-						So(fmt.Errorf("dashboard title %q already exists", title), ShouldBeNil)
+						require.Nil(t, fmt.Errorf("dashboard title %q already exists", title))
 					}
 
 					switch title {
 					case "folderOne", "folderTwo":
 						require.True(t, d.Dashboard.IsFolder)
 					case "Grafana1", "Grafana2", "RootDashboard":
-						So(d.Dashboard.IsFolder, ShouldBeFalse)
+						require.False(t, d.Dashboard.IsFolder)
 					default:
-						So(fmt.Errorf("unknown dashboard title %q", title), ShouldBeNil)
+						require.Nil(t, fmt.Errorf("unknown dashboard title %q", title))
 					}
 
 					foldersAndDashboards[title] = struct{}{}
@@ -422,7 +422,7 @@ func TestDashboardFileReader(t *testing.T) {
 
 			t.Run("should keep walking if file is not .json", func(t *testing.T) {
 				shouldSkip := createWalkFn(noFiles)("path", &FakeFileInfo{isDirectory: true, name: "folder"}, nil)
-				So(shouldSkip, ShouldBeNil)
+				require.Nil(t, shouldSkip)
 			})
 		})
 

@@ -121,7 +121,7 @@ func TestValues(t *testing.T) {
 
 			t.Run("Should ignore empty value", func(t *testing.T) {
 				unmarshalingTest(`val: `, d)
-				So(d.Val.Value(), ShouldBeFalse)
+				require.False(t, d.Val.Value())
 				require.Equal(t, "", d.Val.Raw)
 			})
 		})

@@ -48,7 +48,7 @@ func TestDashboardProvisioningTest(t *testing.T) {
 
 			dash, err := sqlStore.SaveProvisionedDashboard(saveDashboardCmd, provisioning)
 			require.NoError(t, err)
-			So(dash, ShouldNotBeNil)
+			require.NotNil(t, dash)
 			require.NotEqual(t, 0, dash.Id)
 			dashId := dash.Id
 
@@ -74,10 +74,10 @@ func TestDashboardProvisioningTest(t *testing.T) {
 				query := &models.GetDashboardsQuery{DashboardIds: []int64{anotherDash.Id}}
 				err = GetDashboards(query)
 				require.NoError(t, err)
-				So(query.Result, ShouldNotBeNil)
+				require.NotNil(t, query.Result)
 
 				deleteCmd := &models.DeleteOrphanedProvisionedDashboardsCommand{ReaderNames: []string{"default"}}
-				So(DeleteOrphanedProvisionedDashboards(deleteCmd), ShouldBeNil)
+				require.Nil(t, DeleteOrphanedProvisionedDashboards(deleteCmd))
 
 				query = &models.GetDashboardsQuery{DashboardIds: []int64{dash.Id, anotherDash.Id}}
 				err = GetDashboards(query)
@@ -100,13 +100,13 @@ func TestDashboardProvisioningTest(t *testing.T) {
 				data, err := sqlStore.GetProvisionedDataByDashboardID(dash.Id)
 				require.NoError(t, err)
 
-				So(data, ShouldNotBeNil)
+				require.NotNil(t, data)
 			})
 
 			t.Run("Can query for none provisioned dashboard", func(t *testing.T) {
 				data, err := sqlStore.GetProvisionedDataByDashboardID(3000)
 				require.NoError(t, err)
-				So(data, ShouldBeNil)
+				require.Nil(t, data)
 			})
 
 			t.Run("Deleting folder should delete provision meta data", func(t *testing.T) {
@@ -115,11 +115,11 @@ func TestDashboardProvisioningTest(t *testing.T) {
 					OrgId: 1,
 				}
 
-				So(DeleteDashboard(deleteCmd), ShouldBeNil)
+				require.Nil(t, DeleteDashboard(deleteCmd))
 
 				data, err := sqlStore.GetProvisionedDataByDashboardID(dash.Id)
 				require.NoError(t, err)
-				So(data, ShouldBeNil)
+				require.Nil(t, data)
 			})
 
 			t.Run("UnprovisionDashboard should delete provisioning metadata", func(t *testing.T) {
@@ -127,11 +127,11 @@ func TestDashboardProvisioningTest(t *testing.T) {
 					Id: dashId,
 				}
 
-				So(UnprovisionDashboard(unprovisionCmd), ShouldBeNil)
+				require.Nil(t, UnprovisionDashboard(unprovisionCmd))
 
 				data, err := sqlStore.GetProvisionedDataByDashboardID(dashId)
 				require.NoError(t, err)
-				So(data, ShouldBeNil)
+				require.Nil(t, data)
 			})
 		})
 	})

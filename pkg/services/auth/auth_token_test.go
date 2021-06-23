@@ -32,8 +32,8 @@ func TestUserAuthToken(t *testing.T) {
 			userToken, err := userAuthTokenService.CreateToken(context.Background(), user,
 				net.ParseIP("192.168.10.11"), "some user agent")
 			require.NoError(t, err)
-			So(userToken, ShouldNotBeNil)
-			So(userToken.AuthTokenSeen, ShouldBeFalse)
+			require.NotNil(t, userToken)
+			require.False(t, userToken.AuthTokenSeen)
 
 			t.Run("Can count active tokens", func(t *testing.T) {
 				count, err := userAuthTokenService.ActiveTokenCount(context.Background())
@@ -44,20 +44,20 @@ func TestUserAuthToken(t *testing.T) {
 			t.Run("When lookup unhashed token should return user auth token", func(t *testing.T) {
 				userToken, err := userAuthTokenService.LookupToken(context.Background(), userToken.UnhashedToken)
 				require.NoError(t, err)
-				So(userToken, ShouldNotBeNil)
+				require.NotNil(t, userToken)
 				require.Equal(t, userID, userToken.UserId)
 				require.True(t, userToken.AuthTokenSeen)
 
 				storedAuthToken, err := ctx.getAuthTokenByID(userToken.Id)
 				require.NoError(t, err)
-				So(storedAuthToken, ShouldNotBeNil)
+				require.NotNil(t, storedAuthToken)
 				require.True(t, storedAuthToken.AuthTokenSeen)
 			})
 
 			t.Run("When lookup hashed token should return user auth token not found error", func(t *testing.T) {
 				userToken, err := userAuthTokenService.LookupToken(context.Background(), userToken.AuthToken)
 				require.Equal(t, models.ErrUserTokenNotFound, err)
-				So(userToken, ShouldBeNil)
+				require.Nil(t, userToken)
 			})
 
 			t.Run("soft revoking existing token should not delete it", func(t *testing.T) {
@@ -66,7 +66,7 @@ func TestUserAuthToken(t *testing.T) {
 
 				model, err := ctx.getAuthTokenByID(userToken.Id)
 				require.NoError(t, err)
-				So(model, ShouldNotBeNil)
+				require.NotNil(t, model)
 				So(model.RevokedAt, ShouldBeGreaterThan, 0)
 			})
 
@@ -76,7 +76,7 @@ func TestUserAuthToken(t *testing.T) {
 
 				model, err := ctx.getAuthTokenByID(userToken.Id)
 				require.NoError(t, err)
-				So(model, ShouldBeNil)
+				require.Nil(t, model)
 			})
 
 			t.Run("revoking nil token should return error", func(t *testing.T) {
@@ -94,26 +94,26 @@ func TestUserAuthToken(t *testing.T) {
 				userToken2, err := userAuthTokenService.CreateToken(context.Background(), user,
 					net.ParseIP("192.168.10.11"), "some user agent")
 				require.NoError(t, err)
-				So(userToken2, ShouldNotBeNil)
+				require.NotNil(t, userToken2)
 
 				t.Run("Can get first user token", func(t *testing.T) {
 					token, err := userAuthTokenService.GetUserToken(context.Background(), userID, userToken.Id)
 					require.NoError(t, err)
-					So(token, ShouldNotBeNil)
+					require.NotNil(t, token)
 					require.Equal(t, userToken.Id, token.Id)
 				})
 
 				t.Run("Can get second user token", func(t *testing.T) {
 					token, err := userAuthTokenService.GetUserToken(context.Background(), userID, userToken2.Id)
 					require.NoError(t, err)
-					So(token, ShouldNotBeNil)
+					require.NotNil(t, token)
 					require.Equal(t, userToken2.Id, token.Id)
 				})
 
 				t.Run("Can get user tokens", func(t *testing.T) {
 					tokens, err := userAuthTokenService.GetUserTokens(context.Background(), userID)
 					require.NoError(t, err)
-					So(tokens, ShouldHaveLength, 2)
+					require.Equal(t, 2, len(tokens))
 					require.Equal(t, userToken.Id, tokens[0].Id)
 					require.Equal(t, userToken2.Id, tokens[1].Id)
 				})
@@ -124,11 +124,11 @@ func TestUserAuthToken(t *testing.T) {
 
 					model, err := ctx.getAuthTokenByID(userToken.Id)
 					require.NoError(t, err)
-					So(model, ShouldBeNil)
+					require.Nil(t, model)
 
 					model2, err := ctx.getAuthTokenByID(userToken2.Id)
 					require.NoError(t, err)
-					So(model2, ShouldBeNil)
+					require.Nil(t, model2)
 				})
 			})
 
@@ -177,7 +177,7 @@ func TestUserAuthToken(t *testing.T) {
 
 			stillGood, err := userAuthTokenService.LookupToken(context.Background(), userToken.UnhashedToken)
 			require.NoError(t, err)
-			So(stillGood, ShouldNotBeNil)
+			require.NotNil(t, stillGood)
 
 			model, err := ctx.getAuthTokenByID(userToken.Id)
 			require.NoError(t, err)
@@ -189,7 +189,7 @@ func TestUserAuthToken(t *testing.T) {
 
 				stillGood, err = userAuthTokenService.LookupToken(context.Background(), stillGood.UnhashedToken)
 				require.NoError(t, err)
-				So(stillGood, ShouldNotBeNil)
+				require.NotNil(t, stillGood)
 			})
 
 			t.Run("when rotated_at is 7:00:00 ago should return token expired error", func(t *testing.T) {
@@ -199,7 +199,7 @@ func TestUserAuthToken(t *testing.T) {
 
 				notGood, err := userAuthTokenService.LookupToken(context.Background(), userToken.UnhashedToken)
 				So(err, ShouldHaveSameTypeAs, &models.TokenExpiredError{})
-				So(notGood, ShouldBeNil)
+				require.Nil(t, notGood)
 
 				t.Run("should not find active token when expired", func(t *testing.T) {
 					count, err := userAuthTokenService.ActiveTokenCount(context.Background())
@@ -219,7 +219,7 @@ func TestUserAuthToken(t *testing.T) {
 
 				stillGood, err = userAuthTokenService.LookupToken(context.Background(), stillGood.UnhashedToken)
 				require.NoError(t, err)
-				So(stillGood, ShouldNotBeNil)
+				require.NotNil(t, stillGood)
 			})
 
 			t.Run("when rotated_at is 5 days ago and created_at is 30 days ago should return token expired error", func(t *testing.T) {
@@ -233,7 +233,7 @@ func TestUserAuthToken(t *testing.T) {
 
 				notGood, err := userAuthTokenService.LookupToken(context.Background(), userToken.UnhashedToken)
 				So(err, ShouldHaveSameTypeAs, &models.TokenExpiredError{})
-				So(notGood, ShouldBeNil)
+				require.Nil(t, notGood)
 			})
 		})
 
@@ -248,7 +248,7 @@ func TestUserAuthToken(t *testing.T) {
 			rotated, err := userAuthTokenService.TryRotateToken(context.Background(), userToken,
 				net.ParseIP("192.168.10.12"), "a new user agent")
 			require.NoError(t, err)
-			So(rotated, ShouldBeFalse)
+			require.False(t, rotated)
 
 			updated, err := ctx.markAuthTokenAsSeen(userToken.Id)
 			require.NoError(t, err)
@@ -279,7 +279,7 @@ func TestUserAuthToken(t *testing.T) {
 			require.Equal(t, getTime().Unix(), model.RotatedAt)
 			require.Equal(t, "192.168.10.12", model.ClientIp)
 			require.Equal(t, "a new user agent", model.UserAgent)
-			So(model.AuthTokenSeen, ShouldBeFalse)
+			require.False(t, model.AuthTokenSeen)
 			require.Equal(t, 0, model.SeenAt)
 			require.Equal(t, prevToken, model.PrevAuthToken)
 
@@ -287,13 +287,13 @@ func TestUserAuthToken(t *testing.T) {
 
 			lookedUpUserToken, err := userAuthTokenService.LookupToken(context.Background(), model.UnhashedToken)
 			require.NoError(t, err)
-			So(lookedUpUserToken, ShouldNotBeNil)
+			require.NotNil(t, lookedUpUserToken)
 			require.True(t, lookedUpUserToken.AuthTokenSeen)
 			require.Equal(t, getTime().Unix(), lookedUpUserToken.SeenAt)
 
 			lookedUpUserToken, err = userAuthTokenService.LookupToken(context.Background(), unhashedPrev)
 			require.NoError(t, err)
-			So(lookedUpUserToken, ShouldNotBeNil)
+			require.NotNil(t, lookedUpUserToken)
 			require.Equal(t, model.Id, lookedUpUserToken.Id)
 			require.True(t, lookedUpUserToken.AuthTokenSeen)
 
@@ -303,13 +303,13 @@ func TestUserAuthToken(t *testing.T) {
 
 			lookedUpUserToken, err = userAuthTokenService.LookupToken(context.Background(), unhashedPrev)
 			require.NoError(t, err)
-			So(lookedUpUserToken, ShouldNotBeNil)
+			require.NotNil(t, lookedUpUserToken)
 			require.True(t, lookedUpUserToken.AuthTokenSeen)
 
 			lookedUpModel, err := ctx.getAuthTokenByID(lookedUpUserToken.Id)
 			require.NoError(t, err)
-			So(lookedUpModel, ShouldNotBeNil)
-			So(lookedUpModel.AuthTokenSeen, ShouldBeFalse)
+			require.NotNil(t, lookedUpModel)
+			require.False(t, lookedUpModel.AuthTokenSeen)
 
 			rotated, err = userAuthTokenService.TryRotateToken(context.Background(), userToken,
 				net.ParseIP("192.168.10.12"), "a new user agent")
@@ -318,7 +318,7 @@ func TestUserAuthToken(t *testing.T) {
 
 			model, err = ctx.getAuthTokenByID(userToken.Id)
 			require.NoError(t, err)
-			So(model, ShouldNotBeNil)
+			require.NotNil(t, model)
 			require.Equal(t, 0, model.SeenAt)
 		})
 
@@ -326,11 +326,11 @@ func TestUserAuthToken(t *testing.T) {
 			userToken, err := userAuthTokenService.CreateToken(context.Background(), user,
 				net.ParseIP("192.168.10.11"), "some user agent")
 			require.NoError(t, err)
-			So(userToken, ShouldNotBeNil)
+			require.NotNil(t, userToken)
 
 			lookedUpUserToken, err := userAuthTokenService.LookupToken(context.Background(), userToken.UnhashedToken)
 			require.NoError(t, err)
-			So(lookedUpUserToken, ShouldNotBeNil)
+			require.NotNil(t, lookedUpUserToken)
 
 			getTime = func() time.Time {
 				return t.Add(10 * time.Minute)
@@ -348,30 +348,30 @@ func TestUserAuthToken(t *testing.T) {
 
 			currentUserToken, err := userAuthTokenService.LookupToken(context.Background(), userToken.UnhashedToken)
 			require.NoError(t, err)
-			So(currentUserToken, ShouldNotBeNil)
+			require.NotNil(t, currentUserToken)
 
 			prevUserToken, err := userAuthTokenService.LookupToken(context.Background(), prevToken)
 			require.NoError(t, err)
-			So(prevUserToken, ShouldNotBeNil)
+			require.NotNil(t, prevUserToken)
 		})
 
 		t.Run("will not mark token unseen when prev and current are the same", func(t *testing.T) {
 			userToken, err := userAuthTokenService.CreateToken(context.Background(), user,
 				net.ParseIP("192.168.10.11"), "some user agent")
 			require.NoError(t, err)
-			So(userToken, ShouldNotBeNil)
+			require.NotNil(t, userToken)
 
 			lookedUpUserToken, err := userAuthTokenService.LookupToken(context.Background(), userToken.UnhashedToken)
 			require.NoError(t, err)
-			So(lookedUpUserToken, ShouldNotBeNil)
+			require.NotNil(t, lookedUpUserToken)
 
 			lookedUpUserToken, err = userAuthTokenService.LookupToken(context.Background(), userToken.UnhashedToken)
 			require.NoError(t, err)
-			So(lookedUpUserToken, ShouldNotBeNil)
+			require.NotNil(t, lookedUpUserToken)
 
 			lookedUpModel, err := ctx.getAuthTokenByID(lookedUpUserToken.Id)
 			require.NoError(t, err)
-			So(lookedUpModel, ShouldNotBeNil)
+			require.NotNil(t, lookedUpModel)
 			require.True(t, lookedUpModel.AuthTokenSeen)
 		})
 
@@ -379,7 +379,7 @@ func TestUserAuthToken(t *testing.T) {
 			userToken, err := userAuthTokenService.CreateToken(context.Background(), user,
 				net.ParseIP("192.168.10.11"), "some user agent")
 			require.NoError(t, err)
-			So(userToken, ShouldNotBeNil)
+			require.NotNil(t, userToken)
 
 			prevToken := userToken.AuthToken
 
@@ -399,8 +399,8 @@ func TestUserAuthToken(t *testing.T) {
 
 				storedToken, err := ctx.getAuthTokenByID(userToken.Id)
 				require.NoError(t, err)
-				So(storedToken, ShouldNotBeNil)
-				So(storedToken.AuthTokenSeen, ShouldBeFalse)
+				require.NotNil(t, storedToken)
+				require.False(t, storedToken.AuthTokenSeen)
 				require.Equal(t, prevToken, storedToken.PrevAuthToken)
 				require.NotEqual(t, prevToken, storedToken.AuthToken)
 
@@ -421,8 +421,8 @@ func TestUserAuthToken(t *testing.T) {
 
 				storedToken, err = ctx.getAuthTokenByID(userToken.Id)
 				require.NoError(t, err)
-				So(storedToken, ShouldNotBeNil)
-				So(storedToken.AuthTokenSeen, ShouldBeFalse)
+				require.NotNil(t, storedToken)
+				require.False(t, storedToken.AuthTokenSeen)
 				require.Equal(t, prevToken, storedToken.PrevAuthToken)
 				require.NotEqual(t, prevToken, storedToken.AuthToken)
 			})
@@ -441,8 +441,8 @@ func TestUserAuthToken(t *testing.T) {
 
 				storedToken, err := ctx.getAuthTokenByID(userToken.Id)
 				require.NoError(t, err)
-				So(storedToken, ShouldNotBeNil)
-				So(storedToken.AuthTokenSeen, ShouldBeFalse)
+				require.NotNil(t, storedToken)
+				require.False(t, storedToken.AuthTokenSeen)
 				require.Equal(t, prevToken, storedToken.PrevAuthToken)
 				require.NotEqual(t, prevToken, storedToken.AuthToken)
 			})

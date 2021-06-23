@@ -284,7 +284,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			require.Equal(t, "percentiles", percentilesAgg.Aggregation.Type)
 			metricAgg := percentilesAgg.Aggregation.Aggregation.(*es.MetricAggregation)
 			percents := metricAgg.Settings["percents"].([]interface{})
-			So(percents, ShouldHaveLength, 4)
+			require.Equal(t, 4, len(percents))
 			require.Equal(t, "1", percents[0])
 			require.Equal(t, "2", percents[1])
 			require.Equal(t, "3", percents[2])
@@ -480,7 +480,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			firstLevel := sr.Aggs[0]
 			require.Equal(t, "4", firstLevel.Key)
 			require.Equal(t, "date_histogram", firstLevel.Aggregation.Type)
-			So(firstLevel.Aggregation.Aggs, ShouldHaveLength, 2)
+			require.Equal(t, 2, len(firstLevel.Aggregation.Aggs))
 
 			sumAgg := firstLevel.Aggregation.Aggs[0]
 			require.Equal(t, "3", sumAgg.Key)
@@ -518,7 +518,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			firstLevel := sr.Aggs[0]
 			require.Equal(t, "4", firstLevel.Key)
 			require.Equal(t, "date_histogram", firstLevel.Aggregation.Type)
-			So(firstLevel.Aggregation.Aggs, ShouldHaveLength, 1)
+			require.Equal(t, 1, len(firstLevel.Aggregation.Aggs))
 
 			movingAvgAgg := firstLevel.Aggregation.Aggs[0]
 			require.Equal(t, "2", movingAvgAgg.Key)
@@ -555,7 +555,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			require.Equal(t, "5", firstLevel.Key)
 			require.Equal(t, "date_histogram", firstLevel.Aggregation.Type)
 
-			So(firstLevel.Aggregation.Aggs, ShouldHaveLength, 2)
+			require.Equal(t, 2, len(firstLevel.Aggregation.Aggs))
 
 			movingAvgAgg := firstLevel.Aggregation.Aggs[1]
 			require.Equal(t, "2", movingAvgAgg.Key)
@@ -586,7 +586,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			firstLevel := sr.Aggs[0]
 			require.Equal(t, "4", firstLevel.Key)
 			require.Equal(t, "date_histogram", firstLevel.Aggregation.Type)
-			So(firstLevel.Aggregation.Aggs, ShouldHaveLength, 2)
+			require.Equal(t, 2, len(firstLevel.Aggregation.Aggs))
 
 			sumAgg := firstLevel.Aggregation.Aggs[0]
 			require.Equal(t, "3", sumAgg.Key)
@@ -624,7 +624,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			firstLevel := sr.Aggs[0]
 			require.Equal(t, "4", firstLevel.Key)
 			require.Equal(t, "date_histogram", firstLevel.Aggregation.Type)
-			So(firstLevel.Aggregation.Aggs, ShouldHaveLength, 1)
+			require.Equal(t, 1, len(firstLevel.Aggregation.Aggs))
 
 			cumulativeSumAgg := firstLevel.Aggregation.Aggs[0]
 			require.Equal(t, "2", cumulativeSumAgg.Key)
@@ -661,7 +661,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			require.Equal(t, "5", firstLevel.Key)
 			require.Equal(t, "date_histogram", firstLevel.Aggregation.Type)
 
-			So(firstLevel.Aggregation.Aggs, ShouldHaveLength, 2)
+			require.Equal(t, 2, len(firstLevel.Aggregation.Aggs))
 
 			cumulativeSumAgg := firstLevel.Aggregation.Aggs[1]
 			require.Equal(t, "2", cumulativeSumAgg.Key)
@@ -1221,7 +1221,7 @@ func TestTimeSeriesQueryParser(t *testing.T) {
 			require.NoError(t, err)
 			queries, err := p.parse(tsdbQuery)
 			require.NoError(t, err)
-			So(queries, ShouldHaveLength, 1)
+			require.Equal(t, 1, len(queries))
 
 			q := queries[0]
 
@@ -1230,22 +1230,22 @@ func TestTimeSeriesQueryParser(t *testing.T) {
 			require.Equal(t, "{{@hostname}} {{metric}}", q.Alias)
 			require.Equal(t, "10m", q.Interval)
 
-			So(q.Metrics, ShouldHaveLength, 2)
+			require.Equal(t, 2, len(q.Metrics))
 			require.Equal(t, "@value", q.Metrics[0].Field)
 			require.Equal(t, "1", q.Metrics[0].ID)
 			require.Equal(t, "percentiles", q.Metrics[0].Type)
-			So(q.Metrics[0].Hide, ShouldBeFalse)
+			require.False(t, q.Metrics[0].Hide)
 			require.Equal(t, "", q.Metrics[0].PipelineAggregate)
 			require.Equal(t, "90", q.Metrics[0].Settings.Get("percents").MustStringArray()[0])
 
 			require.Equal(t, "select field", q.Metrics[1].Field)
 			require.Equal(t, "4", q.Metrics[1].ID)
 			require.Equal(t, "count", q.Metrics[1].Type)
-			So(q.Metrics[1].Hide, ShouldBeFalse)
+			require.False(t, q.Metrics[1].Hide)
 			require.Equal(t, "", q.Metrics[1].PipelineAggregate)
-			So(q.Metrics[1].Settings.MustMap(), ShouldBeEmpty)
+			require.Empty(t, q.Metrics[1].Settings.MustMap())
 
-			So(q.BucketAggs, ShouldHaveLength, 2)
+			require.Equal(t, 2, len(q.BucketAggs))
 			require.Equal(t, "@hostname", q.BucketAggs[0].Field)
 			require.Equal(t, "3", q.BucketAggs[0].ID)
 			require.Equal(t, "terms", q.BucketAggs[0].Type)

@@ -387,12 +387,12 @@ func TestSimpleReducer(t *testing.T) {
 
 		t.Run("isValid should treat NaN as invalid", func(t *testing.T) {
 			result := isValid(null.FloatFrom(math.NaN()))
-			So(result, ShouldBeFalse)
+			require.False(t, result)
 		})
 
 		t.Run("isValid should treat invalid null.Float as invalid", func(t *testing.T) {
 			result := isValid(null.FloatFromPtr(nil))
-			So(result, ShouldBeFalse)
+			require.False(t, result)
 		})
 	})
 }
