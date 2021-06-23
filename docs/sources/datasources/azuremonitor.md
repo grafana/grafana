@@ -346,7 +346,7 @@ securityresources
 ```
 ### Azure Resource Graph macros
 
-To make writing queries easier, you can use several Grafana macros. Use them in the where clause of a query:
+You can use Grafana macros when constructing a query. Use the macros in the where clause of a query:
 
 - `$__timeFilter()` - Expands to
   `timestamp ≥ datetime(2018-06-05T18:09:58.907Z) and`
