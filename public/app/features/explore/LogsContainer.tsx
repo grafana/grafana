@@ -7,6 +7,7 @@ import { AbsoluteTimeRange, Field, LogRowModel, RawTimeRange } from '@grafana/da
 import { ExploreId, ExploreItemState } from 'app/types/explore';
 import { StoreState } from 'app/types';
 import { splitOpen } from './state/main';
+import { addResultsToCache, clearCache } from './state/query';
 import { updateTimeRange } from './state/time';
 import { getTimeZone } from '../profile/state/selectors';
 import { LiveLogsWithTheme } from './LiveLogs';
@@ -15,10 +16,10 @@ import { LogsCrossFadeTransition } from './utils/LogsCrossFadeTransition';
 import { LiveTailControls } from './useLiveTailControls';
 import { getFieldLinksForExplore } from './utils/links';
 
-interface LogsContainerProps {
+interface LogsContainerProps extends PropsFromRedux {
+  width: number;
   exploreId: ExploreId;
   scanRange?: RawTimeRange;
-  width: number;
   syncedTimes: boolean;
   onClickFilterLabel?: (key: string, value: string) => void;
   onClickFilterOutLabel?: (key: string, value: string) => void;
@@ -26,7 +27,7 @@ interface LogsContainerProps {
   onStopScanning: () => void;
 }
 
-export class LogsContainer extends PureComponent<PropsFromRedux & LogsContainerProps> {
+export class LogsContainer extends PureComponent<LogsContainerProps> {
   onChangeTime = (absoluteRange: AbsoluteTimeRange) => {
     const { exploreId, updateTimeRange } = this.props;
     updateTimeRange({ exploreId, absoluteRange });
@@ -77,6 +78,8 @@ export class LogsContainer extends PureComponent<PropsFromRedux & LogsContainerP
       width,
       isLive,
       exploreId,
+      addResultsToCache,
+      clearCache,
     } = this.props;
 
     if (!logRows) {
@@ -118,6 +121,7 @@ export class LogsContainer extends PureComponent<PropsFromRedux & LogsContainerP
               logsMeta={logsMeta}
               logsSeries={logsSeries}
               logsQueries={logsQueries}
+              width={width}
               highlighterExpressions={logsHighlighterExpressions}
               loading={loading}
               onChangeTime={this.onChangeTime}
@@ -131,9 +135,10 @@ export class LogsContainer extends PureComponent<PropsFromRedux & LogsContainerP
               scanning={scanning}
               scanRange={range.raw}
               showContextToggle={this.showContextToggle}
-              width={width}
               getRowContext={this.getLogRowContext}
               getFieldLinks={this.getFieldLinks}
+              addResultsToCache={() => addResultsToCache(exploreId)}
+              clearCache={() => clearCache(exploreId)}
             />
           </Collapse>
         </LogsCrossFadeTransition>
@@ -180,6 +185,8 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }
 const mapDispatchToProps = {
   updateTimeRange,
   splitOpen,
+  addResultsToCache,
+  clearCache,
 };
 
 const connector = connect(mapStateToProps, mapDispatchToProps);

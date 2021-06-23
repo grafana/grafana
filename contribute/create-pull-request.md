@@ -43,6 +43,11 @@ Pull requests for Redux contributions must:
 - Not contain code that mutates state in reducers or thunks.
 - Not contain code that accesses the reducers state slice directly. Instead, the code should use state selectors to access state.
 
+Pull requests that add or modify unit tests that are written in Jest must adhere to these guidelines:
+
+- Don't add snapshots tests. We are incrementally removing existing snapshot tests, we don't want more.
+- If an existing unit test is written in Enzyme, migrate it to RTL (React Testing Library), unless you’re fixing a bug. Bug fixes usually shouldn't include any bigger refactoring, so it’s ok to skip migrating the test to RTL.
+
 ### Backend-specific guidelines
 
 Please refer to the [backend style guidelines](/contribute/style-guides/backend.md).

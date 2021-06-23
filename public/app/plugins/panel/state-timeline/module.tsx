@@ -1,9 +1,11 @@
 import { FieldColorModeId, FieldConfigProperty, PanelPlugin } from '@grafana/data';
 import { StateTimelinePanel } from './StateTimelinePanel';
 import { TimelineOptions, TimelineFieldConfig, defaultPanelOptions, defaultTimelineFieldConfig } from './types';
-import { BarValueVisibility } from '@grafana/ui';
+import { BarValueVisibility, commonOptionsBuilder } from '@grafana/ui';
+import { timelinePanelChangedHandler } from './migrations';
 
 export const plugin = new PanelPlugin<TimelineOptions, TimelineFieldConfig>(StateTimelinePanel)
+  .setPanelChangeHandler(timelinePanelChangedHandler)
   .useFieldConfig({
     standardOptions: {
       [FieldConfigProperty.Color]: {
@@ -11,7 +13,7 @@ export const plugin = new PanelPlugin<TimelineOptions, TimelineFieldConfig>(Stat
           byValueSupport: true,
         },
         defaultValue: {
-          mode: FieldColorModeId.PaletteClassic,
+          mode: FieldColorModeId.ContinuousGrYlRd,
         },
       },
     },
@@ -81,5 +83,6 @@ export const plugin = new PanelPlugin<TimelineOptions, TimelineFieldConfig>(Stat
         defaultValue: defaultPanelOptions.rowHeight,
       });
 
-    //addLegendOptions(builder);
+    commonOptionsBuilder.addLegendOptions(builder, false);
+    commonOptionsBuilder.addTooltipOptions(builder, true);
   });

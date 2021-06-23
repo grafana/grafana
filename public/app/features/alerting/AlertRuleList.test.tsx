@@ -25,7 +25,6 @@ const setup = (propOverrides?: object) => {
     togglePauseAlertRule: jest.fn(),
     search: '',
     isLoading: false,
-    ngAlertDefinitions: [],
   };
 
   Object.assign(props, propOverrides);

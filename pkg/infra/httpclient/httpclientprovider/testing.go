@@ -13,6 +13,6 @@ type testContext struct {
 func (c *testContext) createRoundTripper(name string) http.RoundTripper {
 	return httpclient.RoundTripperFunc(func(req *http.Request) (*http.Response, error) {
 		c.callChain = append(c.callChain, name)
-		return &http.Response{StatusCode: http.StatusOK}, nil
+		return &http.Response{StatusCode: http.StatusOK, Request: req}, nil
 	})
 }

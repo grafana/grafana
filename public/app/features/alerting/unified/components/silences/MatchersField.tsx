@@ -21,15 +21,14 @@ const MatchersField: FC<Props> = ({ className }) => {
 
   return (
     <div className={cx(className, styles.wrapper)}>
-      <Field label="Matchers" required>
+      <Field label="Matching labels" required>
         <div>
           <div className={styles.matchers}>
             {matchers.map((matcher, index) => {
-              console.log(matcher);
               return (
                 <div className={styles.row} key={`${matcher.id}`}>
                   <Field
-                    label="Name"
+                    label="Label"
                     invalid={!!errors?.matchers?.[index]?.name}
                     error={errors?.matchers?.[index]?.name?.message}
                   >
@@ -38,7 +37,7 @@ const MatchersField: FC<Props> = ({ className }) => {
                         required: { value: true, message: 'Required.' },
                       })}
                       defaultValue={matcher.name}
-                      placeholder="name"
+                      placeholder="label"
                     />
                   </Field>
                   <Field

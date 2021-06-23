@@ -4,6 +4,7 @@ export const Components = {
     fromField: 'TimePicker from field',
     toField: 'TimePicker to field',
     applyTimeRange: 'TimePicker submit button',
+    calendar: 'TimePicker calendar',
   },
   DataSource: {
     TestData: {
@@ -165,7 +166,8 @@ export const Components = {
     backArrow: 'Go Back button',
   },
   OptionsGroup: {
-    toggle: (title?: string) => (title ? `Options group ${title}` : 'Options group'),
+    group: (title?: string) => (title ? `Options group ${title}` : 'Options group'),
+    toggle: (title?: string) => (title ? `Options group ${title} toggle` : 'Options group toggle'),
   },
   PluginVisualization: {
     item: (title: string) => `Plugin visualization item ${title}`,

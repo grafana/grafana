@@ -85,10 +85,10 @@ class DarkColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
   mode: ThemeColorsMode = 'dark';
 
   // Used to get more white opacity colors
-  whiteBase = '201, 209, 217';
+  whiteBase = '204, 204, 220';
 
   border = {
-    weak: `rgba(${this.whiteBase}, 0.08)`,
+    weak: `rgba(${this.whiteBase}, 0.07)`,
     medium: `rgba(${this.whiteBase}, 0.15)`,
     strong: `rgba(${this.whiteBase}, 0.25)`,
   };

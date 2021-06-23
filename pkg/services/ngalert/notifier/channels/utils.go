@@ -9,6 +9,7 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"path"
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -109,4 +110,22 @@ var sendHTTPRequest = func(ctx context.Context, url *url.URL, cfg httpCfg, logge
 
 	logger.Debug("Sending HTTP request succeeded", "url", request.URL.String(), "statusCode", resp.Status)
 	return respBody, nil
+}
+
+func joinUrlPath(base, additionalPath string, logger log.Logger) string {
+	u, err := url.Parse(base)
+	if err != nil {
+		logger.Debug("failed to parse URL while joining URL", "url", base, "err", err.Error())
+		return base
+	}
+
+	u.Path = path.Join(u.Path, additionalPath)
+
+	return u.String()
+}
+
+// GetBoundary is used for overriding the behaviour for tests
+// and set a boundary for multipart body. DO NOT set this outside tests.
+var GetBoundary = func() string {
+	return ""
 }

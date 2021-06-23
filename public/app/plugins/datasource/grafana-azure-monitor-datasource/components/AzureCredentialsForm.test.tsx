@@ -1,6 +1,8 @@
 import React from 'react';
 import { shallow } from 'enzyme';
 import AzureCredentialsForm, { Props } from './AzureCredentialsForm';
+import { LegacyForms, Button } from '@grafana/ui';
+const { Input, Select } = LegacyForms;
 
 const setup = (propsFunc?: (props: Props) => Props) => {
   let props: Props = {
@@ -11,8 +13,8 @@ const setup = (propsFunc?: (props: Props) => Props) => {
       tenantId: 'e7f3f661-a933-3h3f-0294-31c4f962ec48',
       clientId: '34509fad-c0r9-45df-9e25-f1ee34af6900',
       clientSecret: undefined,
+      defaultSubscriptionId: '44987801-6nn6-49he-9b2d-9106972f9789',
     },
-    defaultSubscription: '44987801-6nn6-49he-9b2d-9106972f9789',
     azureCloudOptions: [
       { value: 'azuremonitor', label: 'Azure' },
       { value: 'govazuremonitor', label: 'Azure US Government' },
@@ -20,7 +22,6 @@ const setup = (propsFunc?: (props: Props) => Props) => {
       { value: 'chinaazuremonitor', label: 'Azure China' },
     ],
     onCredentialsChange: jest.fn(),
-    onDefaultSubscriptionChange: jest.fn(),
     getSubscriptions: jest.fn(),
   };
 
@@ -63,5 +64,36 @@ describe('Render', () => {
       },
     }));
     expect(wrapper).toMatchSnapshot();
+  });
+
+  describe('when disabled', () => {
+    it('should disable inputs', () => {
+      const wrapper = setup((props) => ({
+        ...props,
+        disabled: true,
+      }));
+      const inputs = wrapper.find(Input);
+      expect(inputs.length).toBeGreaterThan(1);
+      inputs.forEach((input) => {
+        expect(input.prop('disabled')).toBe(true);
+      });
+    });
+
+    it('should remove buttons', () => {
+      const wrapper = setup((props) => ({
+        ...props,
+        disabled: true,
+      }));
+      expect(wrapper.find(Button).exists()).toBe(false);
+    });
+
+    it('should disable cloud selector', () => {
+      const wrapper = setup((props) => ({
+        ...props,
+        disabled: true,
+      }));
+      const selects = wrapper.find(Select);
+      selects.forEach((s) => expect(s.prop('isDisabled')).toBe(true));
+    });
   });
 });

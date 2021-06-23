@@ -1,5 +1,5 @@
 export class Deferred<T = any> {
-  resolve?: (reason?: T | PromiseLike<T>) => void;
+  resolve?: (reason: T | PromiseLike<T>) => void;
   reject?: (reason?: any) => void;
   promise: Promise<T>;
 

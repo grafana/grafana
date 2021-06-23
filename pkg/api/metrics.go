@@ -251,5 +251,9 @@ func (hs *HTTPServer) GetTestDataRandomWalk(c *models.ReqContext) response.Respo
 		return response.Error(500, "Metric request error", err)
 	}
 
-	return response.JSON(200, &resp)
+	qdr, err := resp.ToBackendDataResponse()
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "error converting results", err)
+	}
+	return toMacronResponse(qdr)
 }

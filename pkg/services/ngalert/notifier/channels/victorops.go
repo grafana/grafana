@@ -2,11 +2,9 @@ package channels
 
 import (
 	"context"
-	"path"
 	"strings"
 	"time"
 
-	gokit_log "github.com/go-kit/kit/log"
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
@@ -46,7 +44,7 @@ func NewVictoropsNotifier(model *NotificationChannelConfig, t *template.Template
 			Settings:              model.Settings,
 		}),
 		URL:         url,
-		MessageType: strings.ToUpper(model.Settings.Get("messageType").MustString()),
+		MessageType: model.Settings.Get("messageType").MustString(),
 		log:         log.New("alerting.notifier.victorops"),
 		tmpl:        t,
 	}, nil
@@ -67,7 +65,10 @@ type VictoropsNotifier struct {
 func (vn *VictoropsNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
 	vn.log.Debug("Executing victorops notification", "notification", vn.Name)
 
-	messageType := vn.MessageType
+	var tmplErr error
+	tmpl, _ := TmplText(ctx, vn.tmpl, as, vn.log, &tmplErr)
+
+	messageType := strings.ToUpper(tmpl(vn.MessageType))
 	if messageType == "" {
 		messageType = victoropsAlertStateCritical
 	}
@@ -75,10 +76,6 @@ func (vn *VictoropsNotifier) Notify(ctx context.Context, as ...*types.Alert) (bo
 	if alerts.Status() == model.AlertResolved {
 		messageType = victoropsAlertStateRecovery
 	}
-
-	data := notify.GetTemplateData(ctx, vn.tmpl, as, gokit_log.NewNopLogger())
-	var tmplErr error
-	tmpl := notify.TmplText(vn.tmpl, data, &tmplErr)
 
 	groupKey, err := notify.ExtractGroupKey(ctx)
 	if err != nil {
@@ -92,14 +89,21 @@ func (vn *VictoropsNotifier) Notify(ctx context.Context, as ...*types.Alert) (bo
 	bodyJSON.Set("timestamp", time.Now().Unix())
 	bodyJSON.Set("state_message", tmpl(`{{ template "default.message" . }}`))
 	bodyJSON.Set("monitoring_tool", "Grafana v"+setting.BuildVersion)
-	bodyJSON.Set("alert_url", path.Join(vn.tmpl.ExternalURL.String(), "/alerting/list"))
+
+	ruleURL := joinUrlPath(vn.tmpl.ExternalURL.String(), "/alerting/list", vn.log)
+	bodyJSON.Set("alert_url", ruleURL)
+
+	u := tmpl(vn.URL)
+	if tmplErr != nil {
+		vn.log.Debug("failed to template VictorOps message", "err", tmplErr.Error())
+	}
 
 	b, err := bodyJSON.MarshalJSON()
 	if err != nil {
 		return false, err
 	}
 	cmd := &models.SendWebhookSync{
-		Url:  vn.URL,
+		Url:  u,
 		Body: string(b),
 	}
 

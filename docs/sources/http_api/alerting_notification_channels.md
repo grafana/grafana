@@ -176,7 +176,7 @@ Content-Type: application/json
 
 ## Create notification channel
 
-You can find the full list of [supported notifiers]({{< relref "../alerting/notifications/#list-of-supported-notifiers" >}}) on the alert notifiers page.
+You can find the full list of [supported notifiers]({{< relref "../alerting/old-alerting/notifications/#list-of-supported-notifiers" >}}) on the alert notifiers page.
 
 `POST /api/alert-notifications`
 

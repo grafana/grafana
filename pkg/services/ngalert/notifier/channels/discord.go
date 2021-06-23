@@ -3,14 +3,9 @@ package channels
 import (
 	"context"
 	"encoding/json"
-	"fmt"
-	"net/url"
-	"path"
 	"strconv"
 	"strings"
 
-	gokit_log "github.com/go-kit/kit/log"
-	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 
@@ -28,6 +23,7 @@ type DiscordNotifier struct {
 	log        log.Logger
 	tmpl       *template.Template
 	Content    string
+	AvatarURL  string
 	WebhookURL string
 }
 
@@ -35,6 +31,8 @@ func NewDiscordNotifier(model *NotificationChannelConfig, t *template.Template) 
 	if model.Settings == nil {
 		return nil, alerting.ValidationError{Reason: "No Settings Supplied"}
 	}
+
+	avatarURL := model.Settings.Get("avatar_url").MustString()
 
 	discordURL := model.Settings.Get("url").MustString()
 	if discordURL == "" {
@@ -53,6 +51,7 @@ func NewDiscordNotifier(model *NotificationChannelConfig, t *template.Template) 
 			SecureSettings:        model.SecureSettings,
 		}),
 		Content:    content,
+		AvatarURL:  avatarURL,
 		WebhookURL: discordURL,
 		log:        log.New("alerting.notifier.discord"),
 		tmpl:       t,
@@ -60,16 +59,20 @@ func NewDiscordNotifier(model *NotificationChannelConfig, t *template.Template) 
 }
 
 func (d DiscordNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
-	data := notify.GetTemplateData(ctx, d.tmpl, as, gokit_log.NewNopLogger())
 	alerts := types.Alerts(as...)
 
 	bodyJSON := simplejson.New()
 	bodyJSON.Set("username", "Grafana")
 
 	var tmplErr error
-	tmpl := notify.TmplText(d.tmpl, data, &tmplErr)
+	tmpl, _ := TmplText(ctx, d.tmpl, as, d.log, &tmplErr)
+
 	if d.Content != "" {
 		bodyJSON.Set("content", tmpl(d.Content))
+	}
+
+	if d.AvatarURL != "" {
+		bodyJSON.Set("avatar_url", tmpl(d.AvatarURL))
 	}
 
 	footer := map[string]interface{}{
@@ -85,18 +88,14 @@ func (d DiscordNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 	color, _ := strconv.ParseInt(strings.TrimLeft(getAlertStatusColor(alerts.Status()), "#"), 16, 0)
 	embed.Set("color", color)
 
-	u, err := url.Parse(d.tmpl.ExternalURL.String())
-	if err != nil {
-		return false, fmt.Errorf("failed to parse external URL: %w", err)
-	}
-	u.Path = path.Join(u.Path, "/alerting/list")
-	ruleURL := u.String()
+	ruleURL := joinUrlPath(d.tmpl.ExternalURL.String(), "/alerting/list", d.log)
 	embed.Set("url", ruleURL)
 
 	bodyJSON.Set("embeds", []interface{}{embed})
 
+	u := tmpl(d.WebhookURL)
 	if tmplErr != nil {
-		return false, fmt.Errorf("failed to template discord message: %w", tmplErr)
+		d.log.Debug("failed to template Discord message", "err", tmplErr.Error())
 	}
 
 	body, err := json.Marshal(bodyJSON)
@@ -104,7 +103,7 @@ func (d DiscordNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 		return false, err
 	}
 	cmd := &models.SendWebhookSync{
-		Url:         d.WebhookURL,
+		Url:         u,
 		HttpMethod:  "POST",
 		ContentType: "application/json",
 		Body:        string(body),

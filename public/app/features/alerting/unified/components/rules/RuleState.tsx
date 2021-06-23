@@ -4,7 +4,7 @@ import { HorizontalGroup, Spinner, useStyles2 } from '@grafana/ui';
 import { CombinedRule } from 'app/types/unified-alerting';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 import React, { FC, useMemo } from 'react';
-import { isAlertingRule, isRecordingRule } from '../../utils/rules';
+import { isAlertingRule, isRecordingRule, getFirstActiveAt } from '../../utils/rules';
 import { AlertStateTag } from './AlertStateTag';
 
 interface Props {
@@ -26,17 +26,9 @@ export const RuleState: FC<Props> = ({ rule, isDeleting, isCreating }) => {
       promRule.state !== PromAlertingRuleState.Inactive
     ) {
       // find earliest alert
-      const firstActiveAt = promRule.alerts.reduce((prev, alert) => {
-        if (alert.activeAt) {
-          const activeAt = new Date(alert.activeAt);
-          if (prev === null || prev.getTime() > activeAt.getTime()) {
-            return activeAt;
-          }
-        }
-        return prev;
-      }, null as Date | null);
+      const firstActiveAt = getFirstActiveAt(promRule);
 
-      // caclulate time elapsed from earliest alert
+      // calculate time elapsed from earliest alert
       if (firstActiveAt) {
         return (
           <span title={String(firstActiveAt)} className={style.for}>
@@ -57,14 +49,14 @@ export const RuleState: FC<Props> = ({ rule, isDeleting, isCreating }) => {
 
   if (isDeleting) {
     return (
-      <HorizontalGroup>
+      <HorizontalGroup align="flex-start">
         <Spinner />
         deleting
       </HorizontalGroup>
     );
   } else if (isCreating) {
     return (
-      <HorizontalGroup>
+      <HorizontalGroup align="flex-start">
         {' '}
         <Spinner />
         creating
@@ -72,7 +64,7 @@ export const RuleState: FC<Props> = ({ rule, isDeleting, isCreating }) => {
     );
   } else if (promRule && isAlertingRule(promRule)) {
     return (
-      <HorizontalGroup>
+      <HorizontalGroup align="flex-start">
         <AlertStateTag state={promRule.state} />
         {forTime}
       </HorizontalGroup>

@@ -220,10 +220,15 @@ func (hs *HTTPServer) ImportDashboard(c *models.ReqContext, apiCmd dtos.ImportDa
 		}
 	}
 
-	dashInfo, err := hs.PluginManager.ImportDashboard(apiCmd.PluginId, apiCmd.Path, c.OrgId, apiCmd.FolderId,
+	dashInfo, dash, err := hs.PluginManager.ImportDashboard(apiCmd.PluginId, apiCmd.Path, c.OrgId, apiCmd.FolderId,
 		apiCmd.Dashboard, apiCmd.Overwrite, apiCmd.Inputs, c.SignedInUser, hs.DataService)
 	if err != nil {
 		return hs.dashboardSaveErrorToApiResponse(err)
+	}
+
+	err = hs.LibraryPanelService.ConnectLibraryPanelsForDashboard(c, dash)
+	if err != nil {
+		return response.Error(500, "Error while connecting library panels", err)
 	}
 
 	return response.JSON(200, dashInfo)

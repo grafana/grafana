@@ -8,9 +8,6 @@ export default {
   title: 'Layout/CallToActionCard',
   component: CallToActionCard,
   parameters: {
-    knobs: {
-      disable: true,
-    },
     controls: {
       exclude: ['className', 'callToActionElement', 'theme'],
     },

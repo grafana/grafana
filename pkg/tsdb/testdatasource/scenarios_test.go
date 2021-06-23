@@ -185,57 +185,6 @@ func TestTestdataScenarios(t *testing.T) {
 			require.True(t, maxNil)
 		})
 	})
-
-	t.Run("manual entry ", func(t *testing.T) {
-		t.Run("should support nulls and return all data", func(t *testing.T) {
-			timeRange := plugins.DataTimeRange{From: "5m", To: "now", Now: time.Now()}
-
-			query := backend.DataQuery{
-				RefID: "A",
-				TimeRange: backend.TimeRange{
-					From: timeRange.MustGetFrom(),
-					To:   timeRange.MustGetTo(),
-				},
-				JSON: []byte(`{ "points": [
-					[
-					  4, 1616557148000
-					],
-					[
-					  null, 1616558756000
-					],
-					[
-					  4, 1616561658000
-					]] }`),
-			}
-
-			req := &backend.QueryDataRequest{
-				PluginContext: backend.PluginContext{},
-				Queries:       []backend.DataQuery{query},
-			}
-
-			resp, err := p.handleManualEntryScenario(context.Background(), req)
-			require.NoError(t, err)
-			require.NotNil(t, resp)
-
-			dResp, exists := resp.Responses[query.RefID]
-			require.True(t, exists)
-			require.NoError(t, dResp.Error)
-
-			require.Len(t, dResp.Frames, 1)
-			frame := dResp.Frames[0]
-			require.Len(t, frame.Fields, 2)
-			require.Equal(t, "Time", frame.Fields[0].Name)
-			require.Equal(t, "Value", frame.Fields[1].Name)
-			require.Equal(t, 3, frame.Rows())
-
-			vals := frame.Fields[1]
-			v, _ := vals.ConcreteAt(0)
-			require.Equal(t, float64(4), v)
-			require.Nil(t, vals.At(1))
-			v, _ = vals.ConcreteAt(2)
-			require.Equal(t, float64(4), v)
-		})
-	})
 }
 
 func TestParseLabels(t *testing.T) {
@@ -262,38 +211,4 @@ func TestParseLabels(t *testing.T) {
 		model := simplejson.NewFromAny(tc.model)
 		assert.Equal(t, expectedTags, parseLabels(model), fmt.Sprintf("Actual tags in test case %d doesn't match expected tags", i+1))
 	}
-}
-
-func TestReadCSV(t *testing.T) {
-	fBool, err := csvToFieldValues("T, F,F,T  ,")
-	require.NoError(t, err)
-
-	fBool2, err := csvToFieldValues("true,false,T,F,F")
-	require.NoError(t, err)
-
-	fNum, err := csvToFieldValues("1,2,,4,5")
-	require.NoError(t, err)
-
-	fStr, err := csvToFieldValues("a,b,,,c")
-	require.NoError(t, err)
-
-	frame := data.NewFrame("", fBool, fBool2, fNum, fStr)
-	out, err := data.FrameToJSON(frame, true, true)
-	require.NoError(t, err)
-
-	// require.Equal(t, "", string(out))
-
-	require.JSONEq(t, `{"schema":{
-		"fields":[
-			{"type":"boolean","typeInfo":{"frame":"bool","nullable":true}},
-			{"type":"boolean","typeInfo":{"frame":"bool","nullable":true}},
-			{"type":"number","typeInfo":{"frame":"float64","nullable":true}},
-			{"type":"string","typeInfo":{"frame":"string","nullable":true}}
-		]},"data":{
-			"values":[
-				[true,false,false,true,null],
-				[true,false,true,false,false],
-				[1,2,null,4,5],
-				["a","b",null,null,"c"]
-		]}}`, string(out))
 }

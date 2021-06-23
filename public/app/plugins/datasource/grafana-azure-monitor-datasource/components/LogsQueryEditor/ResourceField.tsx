@@ -1,5 +1,8 @@
-import { Button, Icon, Modal } from '@grafana/ui';
+import { css } from '@emotion/css';
+import { GrafanaTheme2 } from '@grafana/data';
+import { Button, Icon, Modal, useStyles2 } from '@grafana/ui';
 import React, { useCallback, useEffect, useState } from 'react';
+import Datasource from '../../datasource';
 import { AzureQueryEditorFieldProps, AzureResourceSummaryItem } from '../../types';
 import { Field } from '../Field';
 import ResourcePicker from '../ResourcePicker';
@@ -14,26 +17,17 @@ function parseResourceDetails(resourceURI: string) {
   }
 
   return {
-    id: resourceURI,
     subscriptionName: parsed.subscriptionID,
     resourceGroupName: parsed.resourceGroup,
-    name: parsed.resource,
+    resourceName: parsed.resource,
   };
 }
 
 const ResourceField: React.FC<AzureQueryEditorFieldProps> = ({ query, datasource, onQueryChange }) => {
+  const styles = useStyles2(getStyles);
   const { resource } = query.azureLogAnalytics;
 
-  const [resourceComponents, setResourceComponents] = useState(parseResourceDetails(resource ?? ''));
   const [pickerIsOpen, setPickerIsOpen] = useState(false);
-
-  useEffect(() => {
-    if (resource) {
-      datasource.resourcePickerData.getResource(resource).then(setResourceComponents);
-    } else {
-      setResourceComponents(undefined);
-    }
-  }, [datasource.resourcePickerData, resource]);
 
   const handleOpenPicker = useCallback(() => {
     setPickerIsOpen(true);
@@ -57,12 +51,15 @@ const ResourceField: React.FC<AzureQueryEditorFieldProps> = ({ query, datasource
     [closePicker, onQueryChange, query]
   );
 
+  const templateVariables = datasource.getVariables();
+
   return (
     <>
-      <Modal title="Select a resource" isOpen={pickerIsOpen} onDismiss={closePicker}>
+      <Modal className={styles.modal} title="Select a resource" isOpen={pickerIsOpen} onDismiss={closePicker}>
         <ResourcePicker
           resourcePickerData={datasource.resourcePickerData}
           resourceURI={query.azureLogAnalytics.resource!}
+          templateVariables={templateVariables}
           onApply={handleApply}
           onCancel={closePicker}
         />
@@ -70,28 +67,68 @@ const ResourceField: React.FC<AzureQueryEditorFieldProps> = ({ query, datasource
 
       <Field label="Resource">
         <Button variant="secondary" onClick={handleOpenPicker}>
-          {/* Three mutually exclusive states */}
-          {!resource && 'Select a resource'}
-          {resource && resourceComponents && <FormattedResource resource={resourceComponents} />}
-          {resource && !resourceComponents && resource}
+          <ResourceLabel resource={resource} datasource={datasource} />
         </Button>
       </Field>
     </>
   );
 };
 
+interface ResourceLabelProps {
+  resource: string | undefined;
+  datasource: Datasource;
+}
+
+const ResourceLabel = ({ resource, datasource }: ResourceLabelProps) => {
+  const [resourceComponents, setResourceComponents] = useState(parseResourceDetails(resource ?? ''));
+
+  useEffect(() => {
+    if (resource && parseResourceDetails(resource)) {
+      datasource.resourcePickerData.getResourceURIDisplayProperties(resource).then(setResourceComponents);
+    } else {
+      setResourceComponents(undefined);
+    }
+  }, [datasource.resourcePickerData, resource]);
+
+  if (!resource) {
+    return <>Select a resource</>;
+  }
+
+  if (resourceComponents) {
+    return <FormattedResource resource={resourceComponents} />;
+  }
+
+  if (resource.startsWith('$')) {
+    return (
+      <span>
+        <Icon name="x" /> {resource}
+      </span>
+    );
+  }
+
+  return <>{resource}</>;
+};
+
 interface FormattedResourceProps {
   resource: AzureResourceSummaryItem;
 }
 
-const FormattedResource: React.FC<FormattedResourceProps> = ({ resource }) => {
+const FormattedResource = ({ resource }: FormattedResourceProps) => {
   return (
     <span>
       <Icon name="layer-group" /> {resource.subscriptionName}
-      <Separator />
-      <Icon name="folder" /> {resource.resourceGroupName}
-      <Separator />
-      <Icon name="cube" /> {resource.name}
+      {resource.resourceGroupName && (
+        <>
+          <Separator />
+          <Icon name="folder" /> {resource.resourceGroupName}
+        </>
+      )}
+      {resource.resourceName && (
+        <>
+          <Separator />
+          <Icon name="cube" /> {resource.resourceName}
+        </>
+      )}
     </span>
   );
 };
@@ -105,3 +142,9 @@ const Separator = () => (
 );
 
 export default ResourceField;
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  modal: css({
+    width: theme.breakpoints.values.lg,
+  }),
+});

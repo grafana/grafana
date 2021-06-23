@@ -4,11 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"path"
 	"time"
 
-	gokit_log "github.com/go-kit/kit/log"
-	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 
@@ -53,9 +50,8 @@ func NewGoogleChatNotifier(model *NotificationChannelConfig, t *template.Templat
 func (gcn *GoogleChatNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
 	gcn.log.Debug("Executing Google Chat notification")
 
-	data := notify.GetTemplateData(ctx, gcn.tmpl, as, gokit_log.NewNopLogger())
 	var tmplErr error
-	tmpl := notify.TmplText(gcn.tmpl, data, &tmplErr)
+	tmpl, _ := TmplText(ctx, gcn.tmpl, as, gcn.log, &tmplErr)
 
 	widgets := []widget{}
 
@@ -69,6 +65,7 @@ func (gcn *GoogleChatNotifier) Notify(ctx context.Context, as ...*types.Alert) (
 		})
 	}
 
+	ruleURL := joinUrlPath(gcn.tmpl.ExternalURL.String(), "/alerting/list", gcn.log)
 	// Add a button widget (link to Grafana).
 	widgets = append(widgets, buttonWidget{
 		Buttons: []button{
@@ -77,7 +74,7 @@ func (gcn *GoogleChatNotifier) Notify(ctx context.Context, as ...*types.Alert) (
 					Text: "OPEN IN GRAFANA",
 					OnClick: onClick{
 						OpenLink: openLink{
-							URL: path.Join(gcn.tmpl.ExternalURL.String(), "/alerting/list"),
+							URL: ruleURL,
 						},
 					},
 				},
@@ -110,8 +107,9 @@ func (gcn *GoogleChatNotifier) Notify(ctx context.Context, as ...*types.Alert) (
 		},
 	}
 
+	u := tmpl(gcn.URL)
 	if tmplErr != nil {
-		return false, fmt.Errorf("failed to template GoogleChat message: %w", tmplErr)
+		gcn.log.Debug("failed to template GoogleChat message", "err", tmplErr.Error())
 	}
 
 	body, err := json.Marshal(res)
@@ -120,7 +118,7 @@ func (gcn *GoogleChatNotifier) Notify(ctx context.Context, as ...*types.Alert) (
 	}
 
 	cmd := &models.SendWebhookSync{
-		Url:        gcn.URL,
+		Url:        u,
 		HttpMethod: "POST",
 		HttpHeader: map[string]string{
 			"Content-Type": "application/json; charset=UTF-8",

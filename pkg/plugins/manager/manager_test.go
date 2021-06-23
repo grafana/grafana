@@ -21,6 +21,8 @@ import (
 	"gopkg.in/ini.v1"
 )
 
+const defaultAppURL = "http://localhost:3000/"
+
 func TestPluginManager_Init(t *testing.T) {
 	t.Run("Base case (core + bundled plugins)", func(t *testing.T) {
 		staticRootPath, err := filepath.Abs("../../../public")
@@ -282,12 +284,41 @@ func TestPluginManager_Init(t *testing.T) {
 		assert.Nil(t, pm.plugins[("test")])
 	})
 
+	t.Run("With back-end plugin with valid v2 private signature (plugin root URL ignores trailing slash)", func(t *testing.T) {
+		origAppURL := setting.AppUrl
+		origAppSubURL := setting.AppSubUrl
+		t.Cleanup(func() {
+			setting.AppUrl = origAppURL
+			setting.AppSubUrl = origAppSubURL
+		})
+		setting.AppUrl = defaultAppURL
+		setting.AppSubUrl = "/grafana"
+
+		pm := createManager(t, func(pm *PluginManager) {
+			pm.Cfg.PluginsPath = "testdata/valid-v2-pvt-signature-root-url-uri"
+		})
+		err := pm.Init()
+		require.NoError(t, err)
+		require.Empty(t, pm.scanningErrors)
+
+		const pluginID = "test"
+		assert.NotNil(t, pm.plugins[pluginID])
+		assert.Equal(t, "datasource", pm.plugins[pluginID].Type)
+		assert.Equal(t, "Test", pm.plugins[pluginID].Name)
+		assert.Equal(t, pluginID, pm.plugins[pluginID].Id)
+		assert.Equal(t, "1.0.0", pm.plugins[pluginID].Info.Version)
+		assert.Equal(t, plugins.PluginSignatureValid, pm.plugins[pluginID].Signature)
+		assert.Equal(t, plugins.PrivateType, pm.plugins[pluginID].SignatureType)
+		assert.Equal(t, "Will Browne", pm.plugins[pluginID].SignatureOrg)
+		assert.False(t, pm.plugins[pluginID].IsCorePlugin)
+	})
+
 	t.Run("With back-end plugin with valid v2 private signature", func(t *testing.T) {
 		origAppURL := setting.AppUrl
 		t.Cleanup(func() {
 			setting.AppUrl = origAppURL
 		})
-		setting.AppUrl = "http://localhost:3000/"
+		setting.AppUrl = defaultAppURL
 
 		pm := createManager(t, func(pm *PluginManager) {
 			pm.Cfg.PluginsPath = "testdata/valid-v2-pvt-signature"
@@ -313,7 +344,7 @@ func TestPluginManager_Init(t *testing.T) {
 		t.Cleanup(func() {
 			setting.AppUrl = origAppURL
 		})
-		setting.AppUrl = "http://localhost:3000/"
+		setting.AppUrl = defaultAppURL
 
 		pm := createManager(t, func(pm *PluginManager) {
 			pm.Cfg.PluginsPath = "testdata/invalid-v2-signature"
@@ -329,7 +360,7 @@ func TestPluginManager_Init(t *testing.T) {
 		t.Cleanup(func() {
 			setting.AppUrl = origAppURL
 		})
-		setting.AppUrl = "http://localhost:3000/"
+		setting.AppUrl = defaultAppURL
 
 		pm := createManager(t, func(pm *PluginManager) {
 			pm.Cfg.PluginsPath = "testdata/invalid-v2-signature-2"
@@ -338,6 +369,53 @@ func TestPluginManager_Init(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, []error{fmt.Errorf(`plugin 'test' has a modified signature`)}, pm.scanningErrors)
 		assert.Nil(t, pm.plugins[("test")])
+	})
+
+	t.Run("With plugin that contains symlink file + directory", func(t *testing.T) {
+		origAppURL := setting.AppUrl
+		t.Cleanup(func() {
+			setting.AppUrl = origAppURL
+		})
+		setting.AppUrl = defaultAppURL
+
+		pm := createManager(t, func(pm *PluginManager) {
+			pm.Cfg.PluginsPath = "testdata/includes-symlinks"
+		})
+		err := pm.Init()
+		require.NoError(t, err)
+		require.Empty(t, pm.scanningErrors)
+
+		const pluginID = "test-app"
+		p := pm.GetPlugin(pluginID)
+
+		assert.NotNil(t, p)
+		assert.NotNil(t, pm.GetApp(pluginID))
+		assert.Equal(t, pluginID, p.Id)
+		assert.Equal(t, "app", p.Type)
+		assert.Equal(t, "Test App", p.Name)
+		assert.Equal(t, "1.0.0", p.Info.Version)
+		assert.Equal(t, plugins.PluginSignatureValid, p.Signature)
+		assert.Equal(t, plugins.GrafanaType, p.SignatureType)
+		assert.Equal(t, "Grafana Labs", p.SignatureOrg)
+		assert.False(t, p.IsCorePlugin)
+	})
+
+	t.Run("With back-end plugin that is symlinked to plugins dir", func(t *testing.T) {
+		origAppURL := setting.AppUrl
+		t.Cleanup(func() {
+			setting.AppUrl = origAppURL
+		})
+		setting.AppUrl = defaultAppURL
+
+		pm := createManager(t, func(pm *PluginManager) {
+			pm.Cfg.PluginsPath = "testdata/symbolic-plugin-dirs"
+		})
+		err := pm.Init()
+		require.NoError(t, err)
+		// This plugin should be properly registered, even though it is symlinked to plugins dir
+		require.Empty(t, pm.scanningErrors)
+		const pluginID = "test-app"
+		assert.NotNil(t, pm.plugins[pluginID])
 	})
 }
 
@@ -489,7 +567,7 @@ func verifyCorePluginCatalogue(t *testing.T, pm *PluginManager) {
 		"table-old",
 		"text",
 		"state-timeline",
-		"status-grid",
+		"status-history",
 		"timeseries",
 		"welcome",
 		"xychart",
@@ -533,8 +611,8 @@ func verifyBundledPluginCatalogue(t *testing.T, pm *PluginManager) {
 	t.Helper()
 
 	bundledPlugins := map[string]string{
-		"input":                      "input-datasource",
-		"grafana-plugin-catalog-app": "plugin-catalog-app",
+		"input":                    "input-datasource",
+		"grafana-plugin-admin-app": "plugin-admin-app",
 	}
 
 	for pluginID, pluginDir := range bundledPlugins {
@@ -547,12 +625,10 @@ func verifyBundledPluginCatalogue(t *testing.T, pm *PluginManager) {
 	}
 
 	assert.NotNil(t, pm.dataSources["input"])
-	assert.NotNil(t, pm.apps["grafana-plugin-catalog-app"])
+	assert.NotNil(t, pm.apps["grafana-plugin-admin-app"])
 }
 
 type fakeBackendPluginManager struct {
-	backendplugin.Manager
-
 	registeredPlugins []string
 }
 
@@ -564,6 +640,10 @@ func (f *fakeBackendPluginManager) Register(pluginID string, factory backendplug
 func (f *fakeBackendPluginManager) RegisterAndStart(ctx context.Context, pluginID string, factory backendplugin.PluginFactoryFunc) error {
 	f.registeredPlugins = append(f.registeredPlugins, pluginID)
 	return nil
+}
+
+func (f *fakeBackendPluginManager) Get(pluginID string) (backendplugin.Plugin, bool) {
+	return nil, false
 }
 
 func (f *fakeBackendPluginManager) UnregisterAndStop(ctx context.Context, pluginID string) error {
@@ -600,8 +680,14 @@ func (f *fakeBackendPluginManager) CheckHealth(ctx context.Context, pCtx backend
 	return nil, nil
 }
 
+func (f *fakeBackendPluginManager) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	return nil, nil
+}
+
 func (f *fakeBackendPluginManager) CallResource(pluginConfig backend.PluginContext, ctx *models.ReqContext, path string) {
 }
+
+var _ backendplugin.Manager = &fakeBackendPluginManager{}
 
 type fakePluginInstaller struct {
 	installCount   int

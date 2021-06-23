@@ -7,7 +7,6 @@ import {
   FieldSparkline,
   FieldType,
   getFieldColorModeForField,
-  getFieldDisplayName,
 } from '@grafana/data';
 import {
   AxisPlacement,
@@ -71,20 +70,21 @@ export class Sparkline extends PureComponent<SparklineProps, State> {
 
   componentDidUpdate(prevProps: SparklineProps, prevState: State) {
     const { alignedDataFrame } = this.state;
-    let stateUpdate = {};
+
+    if (!alignedDataFrame) {
+      return;
+    }
+
+    let rebuildConfig = false;
 
     if (prevProps.sparkline !== this.props.sparkline) {
-      if (!alignedDataFrame) {
-        return;
-      }
-      const hasStructureChanged = !compareDataFrameStructures(this.state.alignedDataFrame, prevState.alignedDataFrame);
-      if (hasStructureChanged) {
-        const configBuilder = this.prepareConfig(alignedDataFrame);
-        stateUpdate = { configBuilder };
-      }
+      rebuildConfig = !compareDataFrameStructures(this.state.alignedDataFrame, prevState.alignedDataFrame);
+    } else if (prevProps.config !== this.props.config) {
+      rebuildConfig = true;
     }
-    if (Object.keys(stateUpdate).length > 0) {
-      this.setState(stateUpdate);
+
+    if (rebuildConfig) {
+      this.setState({ configBuilder: this.prepareConfig(alignedDataFrame) });
     }
   }
 
@@ -158,7 +158,6 @@ export class Sparkline extends PureComponent<SparklineProps, State> {
       builder.addSeries({
         scaleKey,
         theme,
-        fieldName: getFieldDisplayName(field, data),
         drawStyle: customConfig.drawStyle!,
         lineColor: customConfig.lineColor ?? seriesColor,
         lineWidth: customConfig.lineWidth,

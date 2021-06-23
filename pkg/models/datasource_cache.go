@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"fmt"
 	"net/http"
+	"strconv"
 	"sync"
 	"time"
 
@@ -17,8 +18,15 @@ func (ds *DataSource) getTimeout() time.Duration {
 	timeout := 0
 	if ds.JsonData != nil {
 		timeout = ds.JsonData.Get("timeout").MustInt()
+		if timeout <= 0 {
+			if timeoutStr := ds.JsonData.Get("timeout").MustString(); timeoutStr != "" {
+				if t, err := strconv.Atoi(timeoutStr); err == nil {
+					timeout = t
+				}
+			}
+		}
 	}
-	if timeout == 0 {
+	if timeout <= 0 {
 		timeout = setting.DataProxyTimeout
 	}
 	return time.Duration(timeout) * time.Second
@@ -50,7 +58,7 @@ func (ds *DataSource) GetHTTPClient(provider httpclient.Provider) (*http.Client,
 	}, nil
 }
 
-func (ds *DataSource) GetHTTPTransport(provider httpclient.Provider) (http.RoundTripper, error) {
+func (ds *DataSource) GetHTTPTransport(provider httpclient.Provider, customMiddlewares ...sdkhttpclient.Middleware) (http.RoundTripper, error) {
 	ptc.Lock()
 	defer ptc.Unlock()
 
@@ -58,7 +66,10 @@ func (ds *DataSource) GetHTTPTransport(provider httpclient.Provider) (http.Round
 		return t.roundTripper, nil
 	}
 
-	rt, err := provider.GetTransport(ds.HTTPClientOptions())
+	opts := ds.HTTPClientOptions()
+	opts.Middlewares = customMiddlewares
+
+	rt, err := provider.GetTransport(opts)
 	if err != nil {
 		return nil, err
 	}
@@ -76,9 +87,11 @@ func (ds *DataSource) HTTPClientOptions() sdkhttpclient.Options {
 	opts := sdkhttpclient.Options{
 		Timeouts: &sdkhttpclient.TimeoutOptions{
 			Timeout:               ds.getTimeout(),
+			DialTimeout:           time.Duration(setting.DataProxyDialTimeout) * time.Second,
 			KeepAlive:             time.Duration(setting.DataProxyKeepAlive) * time.Second,
 			TLSHandshakeTimeout:   time.Duration(setting.DataProxyTLSHandshakeTimeout) * time.Second,
 			ExpectContinueTimeout: time.Duration(setting.DataProxyExpectContinueTimeout) * time.Second,
+			MaxConnsPerHost:       setting.DataProxyMaxConnsPerHost,
 			MaxIdleConns:          setting.DataProxyMaxIdleConns,
 			MaxIdleConnsPerHost:   setting.DataProxyMaxIdleConnsPerHost,
 			IdleConnTimeout:       time.Duration(setting.DataProxyIdleConnTimeout) * time.Second,

@@ -1291,7 +1291,7 @@ var expAvailableChannelJsonOutput = `
     ]
   },
   {
-    "type": "alertmanager",
+    "type": "prometheus-alertmanager",
     "name": "Alertmanager",
     "heading": "Alertmanager Settings",
     "description": "Sends notifications to Alertmanager",
@@ -1312,6 +1312,38 @@ var expAvailableChannelJsonOutput = `
         "required": true,
         "validationRule": "",
         "secure": false
+      },
+      {
+        "element": "input",
+        "inputType": "text",
+        "label": "Basic Auth User",
+        "description": "",
+	"placeholder": "",
+        "propertyName": "basicAuthUser",
+        "selectOptions": null,
+        "showWhen": {
+          "field": "",
+          "is": ""
+        },
+        "required": false,
+        "validationRule": "",
+        "secure": false
+      },
+      {
+        "element": "input",
+        "inputType": "password",
+        "label": "Basic Auth Password",
+        "description": "",
+	"placeholder": "",
+        "propertyName": "basicAuthPassword",
+        "selectOptions": null,
+        "showWhen": {
+          "field": "",
+          "is": ""
+        },
+        "required": false,
+        "validationRule": "",
+        "secure": true
       }
     ]
   },
@@ -1351,6 +1383,22 @@ var expAvailableChannelJsonOutput = `
 		  "is": ""
 		},
 		"required": true,
+		"validationRule": "",
+		"secure": false
+	  },
+	  {
+		"label": "Avatar URL",
+		"description": "",
+		"element": "input",
+		"inputType": "text",
+		"placeholder": "",
+		"propertyName": "avatar_url",
+		"selectOptions": null,
+		"showWhen": {
+		  "field": "",
+		  "is": ""
+		},
+		"required": false,
 		"validationRule": "",
 		"secure": false
 	  }
@@ -1410,14 +1458,14 @@ var expAvailableChannelJsonOutput = `
     "type": "threema",
     "name": "Threema Gateway",
     "heading": "Threema Gateway settings",
-    "description": "Sends notifications to Threema using the Threema Gateway",
+    "description": "Sends notifications to Threema using Threema Gateway (Basic IDs)",
     "info": "Notifications can be configured for any Threema Gateway ID of type \"Basic\". End-to-End IDs are not currently supported.The Threema Gateway ID can be set up at https://gateway.threema.ch/.",
     "options": [
       {
         "element": "input",
         "inputType": "text",
         "label": "Gateway ID",
-        "description": "Your 8 character Threema Gateway ID (starting with a *).",
+        "description": "Your 8 character Threema Gateway Basic ID (starting with a *).",
         "placeholder": "*3MAGWID",
         "propertyName": "gateway_id",
         "selectOptions": null,
@@ -1460,6 +1508,108 @@ var expAvailableChannelJsonOutput = `
         "required": true,
         "validationRule": "",
         "secure": true
+      }
+    ]
+  },
+  {
+    "type": "opsgenie",
+    "name": "OpsGenie",
+    "heading": "OpsGenie settings",
+    "description": "Sends notifications to OpsGenie",
+    "info": "",
+    "options": [
+      {
+        "element": "input",
+        "inputType": "text",
+        "label": "API Key",
+        "description": "",
+        "placeholder": "OpsGenie API Key",
+        "propertyName": "apiKey",
+        "selectOptions": null,
+        "showWhen": {
+          "field": "",
+          "is": ""
+        },
+        "required": true,
+        "validationRule": "",
+        "secure": true
+      },
+      {
+        "element": "input",
+        "inputType": "text",
+        "label": "Alert API Url",
+        "description": "",
+        "placeholder": "https://api.opsgenie.com/v2/alerts",
+        "propertyName": "apiUrl",
+        "selectOptions": null,
+        "showWhen": {
+          "field": "",
+          "is": ""
+        },
+        "required": true,
+        "validationRule": "",
+        "secure": false
+      },
+      {
+        "element": "checkbox",
+        "inputType": "",
+        "label": "Auto close incidents",
+        "description": "Automatically close alerts in OpsGenie once the alert goes back to ok.",
+        "placeholder": "",
+        "propertyName": "autoClose",
+        "selectOptions": null,
+        "showWhen": {
+          "field": "",
+          "is": ""
+        },
+        "required": false,
+        "validationRule": "",
+        "secure": false
+      },
+      {
+        "element": "checkbox",
+        "inputType": "",
+        "label": "Override priority",
+        "description": "Allow the alert priority to be set using the og_priority annotation",
+        "placeholder": "",
+        "propertyName": "overridePriority",
+        "selectOptions": null,
+        "showWhen": {
+          "field": "",
+          "is": ""
+        },
+        "required": false,
+        "validationRule": "",
+        "secure": false
+      },
+      {
+        "element": "select",
+        "inputType": "",
+        "label": "Send notification tags as",
+        "description": "Send the common annotations to Opsgenie as either Extra Properties, Tags or both",
+        "placeholder": "",
+        "propertyName": "sendTagsAs",
+        "selectOptions": [
+          {
+            "value": "tags",
+            "label": "Tags"
+          },
+          {
+            "value": "details",
+            "label": "Extra Properties"
+          },
+          {
+            "value": "both",
+            "label": "Tags & Extra Properties"
+          }
+        ],
+        "showWhen": {
+          "field": "",
+          "is": ""
+        },
+        "required": false,
+        "validationRule": "",
+        "secure": false
       }
     ]
   }

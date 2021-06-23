@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -31,7 +32,7 @@ func isDashboardStarredByUser(c *models.ReqContext, dashID int64) (bool, error) 
 	}
 
 	query := models.IsStarredByUserQuery{UserId: c.UserId, DashboardId: dashID}
-	if err := bus.Dispatch(&query); err != nil {
+	if err := bus.DispatchCtx(c.Req.Context(), &query); err != nil {
 		return false, err
 	}
 
@@ -55,7 +56,7 @@ func (hs *HTTPServer) TrimDashboard(c *models.ReqContext, cmd models.TrimDashboa
 	if !hs.LoadSchemaService.IsDisabled() {
 		trimedResult, err = hs.LoadSchemaService.DashboardTrimDefaults(*dash)
 		if err != nil {
-			return response.Error(500, "Error while trim default value from dashboard json", err)
+			return response.Error(500, "Error while exporting with default values removed", err)
 		}
 	}
 
@@ -69,9 +70,8 @@ func (hs *HTTPServer) TrimDashboard(c *models.ReqContext, cmd models.TrimDashboa
 }
 
 func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
-	slug := c.Params(":slug")
 	uid := c.Params(":uid")
-	dash, rsp := getDashboardHelper(c.OrgId, slug, 0, uid)
+	dash, rsp := getDashboardHelper(c.Req.Context(), c.OrgId, 0, uid)
 	if rsp != nil {
 		return rsp
 	}
@@ -107,10 +107,10 @@ func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
 	// Finding creator and last updater of the dashboard
 	updater, creator := anonString, anonString
 	if dash.UpdatedBy > 0 {
-		updater = getUserLogin(dash.UpdatedBy)
+		updater = getUserLogin(c.Req.Context(), dash.UpdatedBy)
 	}
 	if dash.CreatedBy > 0 {
-		creator = getUserLogin(dash.CreatedBy)
+		creator = getUserLogin(c.Req.Context(), dash.CreatedBy)
 	}
 
 	meta := dtos.DashboardMeta{
@@ -136,9 +136,13 @@ func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
 	// lookup folder title
 	if dash.FolderId > 0 {
 		query := models.GetDashboardQuery{Id: dash.FolderId, OrgId: c.OrgId}
-		if err := bus.Dispatch(&query); err != nil {
+		if err := bus.DispatchCtx(c.Req.Context(), &query); err != nil {
+			if errors.Is(err, models.ErrFolderNotFound) {
+				return response.Error(404, "Folder not found", err)
+			}
 			return response.Error(500, "Dashboard folder could not be read", err)
 		}
+		meta.FolderUid = query.Result.Uid
 		meta.FolderTitle = query.Result.Title
 		meta.FolderUrl = query.Result.GetUrl()
 	}
@@ -184,25 +188,25 @@ func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
 	return response.JSON(200, dto)
 }
 
-func getUserLogin(userID int64) string {
+func getUserLogin(ctx context.Context, userID int64) string {
 	query := models.GetUserByIdQuery{Id: userID}
-	err := bus.Dispatch(&query)
+	err := bus.DispatchCtx(ctx, &query)
 	if err != nil {
 		return anonString
 	}
 	return query.Result.Login
 }
 
-func getDashboardHelper(orgID int64, slug string, id int64, uid string) (*models.Dashboard, response.Response) {
+func getDashboardHelper(ctx context.Context, orgID int64, id int64, uid string) (*models.Dashboard, response.Response) {
 	var query models.GetDashboardQuery
 
 	if len(uid) > 0 {
 		query = models.GetDashboardQuery{Uid: uid, Id: id, OrgId: orgID}
 	} else {
-		query = models.GetDashboardQuery{Slug: slug, Id: id, OrgId: orgID}
+		query = models.GetDashboardQuery{Id: id, OrgId: orgID}
 	}
 
-	if err := bus.Dispatch(&query); err != nil {
+	if err := bus.DispatchCtx(ctx, &query); err != nil {
 		return nil, response.Error(404, "Dashboard not found", err)
 	}
 
@@ -228,7 +232,7 @@ func (hs *HTTPServer) DeleteDashboardByUID(c *models.ReqContext) response.Respon
 }
 
 func (hs *HTTPServer) deleteDashboard(c *models.ReqContext) response.Response {
-	dash, rsp := getDashboardHelper(c.OrgId, c.Params(":slug"), 0, c.Params(":uid"))
+	dash, rsp := getDashboardHelper(c.Req.Context(), c.OrgId, 0, c.Params(":uid"))
 	if rsp != nil {
 		return rsp
 	}
@@ -275,8 +279,20 @@ func (hs *HTTPServer) PostDashboard(c *models.ReqContext, cmd models.SaveDashboa
 	var err error
 	cmd.OrgId = c.OrgId
 	cmd.UserId = c.UserId
+	if cmd.FolderUid != "" {
+		folders := dashboards.NewFolderService(c.OrgId, c.SignedInUser, hs.SQLStore)
+		folder, err := folders.GetFolderByUID(cmd.FolderUid)
+		if err != nil {
+			if errors.Is(err, models.ErrFolderNotFound) {
+				return response.Error(400, "Folder not found", err)
+			}
+			return response.Error(500, "Error while checking folder ID", err)
+		}
+		cmd.FolderId = folder.Id
+	}
+
 	dash := cmd.GetDashboardModel()
-	newDashboard := dash.Id == 0 && dash.Uid == ""
+	newDashboard := dash.Id == 0
 	if newDashboard {
 		limitReached, err := hs.QuotaService.QuotaReached(c, "dashboard")
 		if err != nil {
@@ -374,7 +390,7 @@ func (hs *HTTPServer) dashboardSaveErrorToApiResponse(err error) response.Respon
 		if body := dashboardErr.Body(); body != nil {
 			return response.JSON(dashboardErr.StatusCode, body)
 		}
-		if errors.Is(dashboardErr, models.ErrDashboardUpdateAccessDenied) {
+		if dashboardErr.StatusCode != 400 {
 			return response.Error(dashboardErr.StatusCode, dashboardErr.Error(), err)
 		}
 		return response.Error(dashboardErr.StatusCode, dashboardErr.Error(), nil)
@@ -386,7 +402,7 @@ func (hs *HTTPServer) dashboardSaveErrorToApiResponse(err error) response.Respon
 
 	var validationErr alerting.ValidationError
 	if ok := errors.As(err, &validationErr); ok {
-		return response.Error(422, validationErr.Error(), nil)
+		return response.Error(422, validationErr.Error(), err)
 	}
 
 	var pluginErr models.UpdatePluginDashboardError
@@ -546,7 +562,7 @@ func GetDashboardVersion(c *models.ReqContext) response.Response {
 
 	creator := anonString
 	if query.Result.CreatedBy > 0 {
-		creator = getUserLogin(query.Result.CreatedBy)
+		creator = getUserLogin(c.Req.Context(), query.Result.CreatedBy)
 	}
 
 	dashVersionMeta := &models.DashboardVersionMeta{
@@ -610,7 +626,7 @@ func CalculateDashboardDiff(c *models.ReqContext, apiOptions dtos.CalculateDiffO
 
 // RestoreDashboardVersion restores a dashboard to the given version.
 func (hs *HTTPServer) RestoreDashboardVersion(c *models.ReqContext, apiCmd dtos.RestoreDashboardVersionCommand) response.Response {
-	dash, rsp := getDashboardHelper(c.OrgId, "", c.ParamsInt64(":dashboardId"), "")
+	dash, rsp := getDashboardHelper(c.Req.Context(), c.OrgId, c.ParamsInt64(":dashboardId"), "")
 	if rsp != nil {
 		return rsp
 	}

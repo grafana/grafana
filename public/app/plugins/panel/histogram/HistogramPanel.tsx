@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { PanelProps, buildHistogram, getHistogramFields } from '@grafana/data';
 
-import { Histogram } from './Histogram';
+import { Histogram, getBucketSize } from './Histogram';
 import { PanelOptions } from './models.gen';
 import { useTheme2 } from '@grafana/ui';
 
@@ -26,8 +26,9 @@ export const HistogramPanel: React.FC<Props> = ({ data, options, width, height }
     if (!hist) {
       return undefined;
     }
-    return histogramFieldsToFrame(hist);
-  }, [data.series, options]);
+
+    return histogramFieldsToFrame(hist, theme);
+  }, [data.series, options, theme]);
 
   if (!histogram || !histogram.fields.length) {
     return (
@@ -37,15 +38,22 @@ export const HistogramPanel: React.FC<Props> = ({ data, options, width, height }
     );
   }
 
+  const bucketSize = getBucketSize(histogram);
+
   return (
     <Histogram
       options={options}
       theme={theme}
-      legend={null as any} // TODO!
+      legend={options.legend}
       structureRev={data.structureRev}
       width={width}
       height={height}
       alignedFrame={histogram}
-    />
+      bucketSize={bucketSize}
+    >
+      {(config, alignedFrame) => {
+        return null; // <TooltipPlugin data={alignedFrame} config={config} mode={options.tooltip.mode} timeZone={timeZone} />;
+      }}
+    </Histogram>
   );
 };

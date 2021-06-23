@@ -5,32 +5,21 @@ import (
 	"context"
 	"fmt"
 	"mime/multipart"
-	"net/url"
-	"path"
 	"strconv"
 
-	gokit_log "github.com/go-kit/kit/log"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	old_notifiers "github.com/grafana/grafana/pkg/services/alerting/notifiers"
-	"github.com/pkg/errors"
-	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
 )
 
-const (
-	PUSHOVERENDPOINT = "https://api.pushover.net/1/messages.json"
+var (
+	PushoverEndpoint = "https://api.pushover.net/1/messages.json"
 )
-
-// getBoundary is used for overriding the behaviour for tests
-// and set a boundary
-var getBoundary = func() string {
-	return ""
-}
 
 // PushoverNotifier is responsible for sending
 // alert notifications to Pushover
@@ -53,6 +42,10 @@ type PushoverNotifier struct {
 
 // NewSlackNotifier is the constructor for the Slack notifier
 func NewPushoverNotifier(model *NotificationChannelConfig, t *template.Template) (*PushoverNotifier, error) {
+	if model.Settings == nil {
+		return nil, alerting.ValidationError{Reason: "No settings supplied"}
+	}
+
 	userKey := model.DecryptedValue("userKey", model.Settings.Get("userKey").MustString())
 	APIToken := model.DecryptedValue("apiToken", model.Settings.Get("apiToken").MustString())
 	device := model.Settings.Get("device").MustString()
@@ -110,7 +103,7 @@ func (pn *PushoverNotifier) Notify(ctx context.Context, as ...*types.Alert) (boo
 	}
 
 	cmd := &models.SendWebhookSync{
-		Url:        PUSHOVERENDPOINT,
+		Url:        PushoverEndpoint,
 		HttpMethod: "POST",
 		HttpHeader: headers,
 		Body:       uploadBody.String(),
@@ -130,30 +123,24 @@ func (pn *PushoverNotifier) SendResolved() bool {
 func (pn *PushoverNotifier) genPushoverBody(ctx context.Context, as ...*types.Alert) (map[string]string, bytes.Buffer, error) {
 	var b bytes.Buffer
 
-	u, err := url.Parse(pn.tmpl.ExternalURL.String())
-	if err != nil {
-		return nil, b, fmt.Errorf("failed to parse ")
-	}
-	u.Path = path.Join(u.Path, "/alerting/list")
-	ruleURL := u.String()
+	ruleURL := joinUrlPath(pn.tmpl.ExternalURL.String(), "/alerting/list", pn.log)
 
 	alerts := types.Alerts(as...)
 
 	var tmplErr error
-	data := notify.GetTemplateData(ctx, pn.tmpl, as, gokit_log.NewNopLogger())
-	tmpl := notify.TmplText(pn.tmpl, data, &tmplErr)
+	tmpl, _ := TmplText(ctx, pn.tmpl, as, pn.log, &tmplErr)
 
 	w := multipart.NewWriter(&b)
-	boundary := getBoundary()
+	boundary := GetBoundary()
 	if boundary != "" {
-		err = w.SetBoundary(boundary)
+		err := w.SetBoundary(boundary)
 		if err != nil {
 			return nil, b, err
 		}
 	}
 
 	// Add the user token
-	err = w.WriteField("user", pn.UserKey)
+	err := w.WriteField("user", tmpl(pn.UserKey))
 	if err != nil {
 		return nil, b, err
 	}
@@ -188,16 +175,16 @@ func (pn *PushoverNotifier) genPushoverBody(ctx context.Context, as ...*types.Al
 
 	// Add device
 	if pn.Device != "" {
-		err = w.WriteField("device", pn.Device)
+		err = w.WriteField("device", tmpl(pn.Device))
 		if err != nil {
 			return nil, b, err
 		}
 	}
 
 	// Add sound
-	sound := pn.AlertingSound
+	sound := tmpl(pn.AlertingSound)
 	if alerts.Status() == model.AlertResolved {
-		sound = pn.OKSound
+		sound = tmpl(pn.OKSound)
 	}
 	if sound != "default" {
 		err = w.WriteField("sound", sound)
@@ -230,7 +217,7 @@ func (pn *PushoverNotifier) genPushoverBody(ctx context.Context, as ...*types.Al
 	}
 
 	if tmplErr != nil {
-		return nil, b, errors.Wrap(tmplErr, "failed to template pushover message")
+		pn.log.Debug("failed to template pushover message", "err", tmplErr.Error())
 	}
 
 	// Mark as html message

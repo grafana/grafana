@@ -8,6 +8,7 @@ import (
 	"testing/fstest"
 
 	"github.com/grafana/grafana/pkg/schema/load"
+	"github.com/laher/mergefs"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -35,7 +36,7 @@ func TestValidateScuemataBasics(t *testing.T) {
 		filesystem := fstest.MapFS{
 			"cue/data/gen.cue": &fstest.MapFile{Data: genCue},
 		}
-		mergedFS := Merge(filesystem, defaultBaseLoadPaths.BaseCueFS)
+		mergedFS := mergefs.Merge(filesystem, defaultBaseLoadPaths.BaseCueFS)
 
 		var baseLoadPaths = load.BaseLoadPaths{
 			BaseCueFS:       mergedFS,
@@ -53,7 +54,7 @@ func TestValidateScuemataBasics(t *testing.T) {
 		filesystem := fstest.MapFS{
 			"cue/data/gen.cue": &fstest.MapFile{Data: genCue},
 		}
-		mergedFS := Merge(filesystem, defaultBaseLoadPaths.BaseCueFS)
+		mergedFS := mergefs.Merge(filesystem, defaultBaseLoadPaths.BaseCueFS)
 
 		var baseLoadPaths = load.BaseLoadPaths{
 			BaseCueFS:       mergedFS,
@@ -78,7 +79,7 @@ func TestValidateScuemataBasics(t *testing.T) {
 			"valid.json":   &fstest.MapFile{Data: validPanel},
 			"invalid.json": &fstest.MapFile{Data: invalidPanel},
 		}
-		mergedFS := Merge(filesystem, defaultBaseLoadPaths.BaseCueFS)
+		mergedFS := mergefs.Merge(filesystem, defaultBaseLoadPaths.BaseCueFS)
 
 		var baseLoadPaths = load.BaseLoadPaths{
 			BaseCueFS:       mergedFS,

@@ -1,6 +1,9 @@
 package notifier
 
-import "github.com/grafana/grafana/pkg/services/alerting"
+import (
+	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels"
+)
 
 // GetAvailableNotifiers returns the metadata of all the notification channels that can be configured.
 func GetAvailableNotifiers() []*alerting.NotifierPlugin {
@@ -635,7 +638,7 @@ func GetAvailableNotifiers() []*alerting.NotifierPlugin {
 			},
 		},
 		{
-			Type:        "alertmanager",
+			Type:        "prometheus-alertmanager",
 			Name:        "Alertmanager",
 			Description: "Sends notifications to Alertmanager",
 			Heading:     "Alertmanager Settings",
@@ -647,6 +650,19 @@ func GetAvailableNotifiers() []*alerting.NotifierPlugin {
 					Placeholder:  "http://localhost:9093",
 					PropertyName: "url",
 					Required:     true,
+				},
+				{
+					Label:        "Basic Auth User",
+					Element:      alerting.ElementTypeInput,
+					InputType:    alerting.InputTypeText,
+					PropertyName: "basicAuthUser",
+				},
+				{
+					Label:        "Basic Auth Password",
+					Element:      alerting.ElementTypeInput,
+					InputType:    alerting.InputTypePassword,
+					PropertyName: "basicAuthPassword",
+					Secure:       true,
 				},
 			},
 		},
@@ -671,6 +687,12 @@ func GetAvailableNotifiers() []*alerting.NotifierPlugin {
 					Placeholder:  "Discord webhook URL",
 					PropertyName: "url",
 					Required:     true,
+				},
+				{
+					Label:        "Avatar URL",
+					Element:      alerting.ElementTypeInput,
+					InputType:    alerting.InputTypeText,
+					PropertyName: "avatar_url",
 				},
 			},
 		},
@@ -709,7 +731,7 @@ func GetAvailableNotifiers() []*alerting.NotifierPlugin {
 		{
 			Type:        "threema",
 			Name:        "Threema Gateway",
-			Description: "Sends notifications to Threema using the Threema Gateway",
+			Description: "Sends notifications to Threema using Threema Gateway (Basic IDs)",
 			Heading:     "Threema Gateway settings",
 			Info: "Notifications can be configured for any Threema Gateway ID of type \"Basic\". End-to-End IDs are not currently supported." +
 				"The Threema Gateway ID can be set up at https://gateway.threema.ch/.",
@@ -719,7 +741,7 @@ func GetAvailableNotifiers() []*alerting.NotifierPlugin {
 					Element:        alerting.ElementTypeInput,
 					InputType:      alerting.InputTypeText,
 					Placeholder:    "*3MAGWID",
-					Description:    "Your 8 character Threema Gateway ID (starting with a *).",
+					Description:    "Your 8 character Threema Gateway Basic ID (starting with a *).",
 					PropertyName:   "gateway_id",
 					Required:       true,
 					ValidationRule: "\\*[0-9A-Z]{7}",
@@ -742,6 +764,62 @@ func GetAvailableNotifiers() []*alerting.NotifierPlugin {
 					PropertyName: "api_secret",
 					Required:     true,
 					Secure:       true,
+				},
+			},
+		},
+		{
+			Type:        "opsgenie",
+			Name:        "OpsGenie",
+			Description: "Sends notifications to OpsGenie",
+			Heading:     "OpsGenie settings",
+			Options: []alerting.NotifierOption{
+				{
+					Label:        "API Key",
+					Element:      alerting.ElementTypeInput,
+					InputType:    alerting.InputTypeText,
+					Placeholder:  "OpsGenie API Key",
+					PropertyName: "apiKey",
+					Required:     true,
+					Secure:       true,
+				},
+				{
+					Label:        "Alert API Url",
+					Element:      alerting.ElementTypeInput,
+					InputType:    alerting.InputTypeText,
+					Placeholder:  "https://api.opsgenie.com/v2/alerts",
+					PropertyName: "apiUrl",
+					Required:     true,
+				},
+				{
+					Label:        "Auto close incidents",
+					Element:      alerting.ElementTypeCheckbox,
+					Description:  "Automatically close alerts in OpsGenie once the alert goes back to ok.",
+					PropertyName: "autoClose",
+				}, {
+					Label:        "Override priority",
+					Element:      alerting.ElementTypeCheckbox,
+					Description:  "Allow the alert priority to be set using the og_priority annotation",
+					PropertyName: "overridePriority",
+				},
+				{
+					Label:   "Send notification tags as",
+					Element: alerting.ElementTypeSelect,
+					SelectOptions: []alerting.SelectOption{
+						{
+							Value: channels.OpsgenieSendTags,
+							Label: "Tags",
+						},
+						{
+							Value: channels.OpsgenieSendDetails,
+							Label: "Extra Properties",
+						},
+						{
+							Value: channels.OpsgenieSendBoth,
+							Label: "Tags & Extra Properties",
+						},
+					},
+					Description:  "Send the common annotations to Opsgenie as either Extra Properties, Tags or both",
+					PropertyName: "sendTagsAs",
 				},
 			},
 		},

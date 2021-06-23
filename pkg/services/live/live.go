@@ -2,10 +2,13 @@ package live
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -144,6 +147,7 @@ func (g *GrafanaLive) Init() error {
 	// cfg.LogLevel = centrifuge.LogLevelDebug
 	cfg.LogHandler = handleLog
 	cfg.LogLevel = centrifuge.LogLevelError
+	cfg.MetricsNamespace = "grafana_live"
 
 	// Node is the core object in Centrifuge library responsible for many useful
 	// things. For example Node allows to publish messages to channels from server
@@ -155,9 +159,9 @@ func (g *GrafanaLive) Init() error {
 	g.node = node
 
 	g.contextGetter = newPluginContextGetter(g.PluginContextProvider)
-	packetSender := newPluginPacketSender(node)
+	channelSender := newPluginChannelSender(node)
 	presenceGetter := newPluginPresenceGetter(node)
-	g.runStreamManager = runstream.NewManager(packetSender, presenceGetter, g.contextGetter)
+	g.runStreamManager = runstream.NewManager(channelSender, presenceGetter, g.contextGetter)
 
 	// Initialize the main features
 	dash := &features.DashboardHandler{
@@ -176,6 +180,15 @@ func (g *GrafanaLive) Init() error {
 	// different goroutines (belonging to different client connections). This is also
 	// true for other event handlers.
 	node.OnConnect(func(client *centrifuge.Client) {
+		numConnections := g.node.Hub().NumClients()
+		if g.Cfg.LiveMaxConnections >= 0 && numConnections > g.Cfg.LiveMaxConnections {
+			logger.Warn(
+				"Max number of Live connections reached, increase max_connections in [live] configuration section",
+				"user", client.UserID(), "client", client.ID(), "limit", g.Cfg.LiveMaxConnections,
+			)
+			client.Disconnect(centrifuge.DisconnectConnectionLimit)
+			return
+		}
 		var semaphore chan struct{}
 		if clientConcurrency > 1 {
 			semaphore = make(chan struct{}, clientConcurrency)
@@ -219,15 +232,26 @@ func (g *GrafanaLive) Init() error {
 		return err
 	}
 
+	appURL, err := url.Parse(g.Cfg.AppURL)
+	if err != nil {
+		return fmt.Errorf("error parsing AppURL %s: %w", g.Cfg.AppURL, err)
+	}
+
 	// Use a pure websocket transport.
 	wsHandler := centrifuge.NewWebsocketHandler(node, centrifuge.WebsocketConfig{
 		ReadBufferSize:  1024,
 		WriteBufferSize: 1024,
+		CheckOrigin: func(r *http.Request) bool {
+			return checkOrigin(r, appURL)
+		},
 	})
 
 	pushWSHandler := pushws.NewHandler(g.ManagedStreamRunner, pushws.Config{
 		ReadBufferSize:  1024,
 		WriteBufferSize: 1024,
+		CheckOrigin: func(r *http.Request) bool {
+			return checkOrigin(r, appURL)
+		},
 	})
 
 	g.websocketHandler = func(ctx *models.ReqContext) {
@@ -264,6 +288,23 @@ func (g *GrafanaLive) Init() error {
 	}, middleware.ReqOrgAdmin)
 
 	return nil
+}
+
+func checkOrigin(r *http.Request, appURL *url.URL) bool {
+	origin := r.Header.Get("Origin")
+	if origin == "" {
+		return true
+	}
+	originURL, err := url.Parse(origin)
+	if err != nil {
+		logger.Warn("Failed to parse request origin", "error", err, "origin", origin)
+		return false
+	}
+	if !strings.EqualFold(originURL.Scheme, appURL.Scheme) || !strings.EqualFold(originURL.Host, appURL.Host) {
+		logger.Warn("Request Origin is not authorized", "origin", origin, "appUrl", appURL.String())
+		return false
+	}
+	return true
 }
 
 func runConcurrentlyIfNeeded(ctx context.Context, semaphore chan struct{}, fn func()) error {
@@ -620,22 +661,24 @@ func (g *GrafanaLive) HandleListHTTP(c *models.ReqContext) response.Response {
 	}
 
 	// Hardcode sample streams
-	frame := data.NewFrame("testdata",
+	frameJSON, err := data.FrameToJSON(data.NewFrame("testdata",
 		data.NewField("Time", nil, make([]time.Time, 0)),
 		data.NewField("Value", nil, make([]float64, 0)),
 		data.NewField("Min", nil, make([]float64, 0)),
 		data.NewField("Max", nil, make([]float64, 0)),
-	)
-	channels = append(channels, util.DynMap{
-		"channel": "plugin/testdata/random-2s-stream",
-		"data":    frame,
-	}, util.DynMap{
-		"channel": "plugin/testdata/random-flakey-stream",
-		"data":    frame,
-	}, util.DynMap{
-		"channel": "plugin/testdata/random-20Hz-stream",
-		"data":    frame,
-	})
+	), data.IncludeSchemaOnly)
+	if err == nil {
+		channels = append(channels, util.DynMap{
+			"channel": "plugin/testdata/random-2s-stream",
+			"data":    json.RawMessage(frameJSON),
+		}, util.DynMap{
+			"channel": "plugin/testdata/random-flakey-stream",
+			"data":    json.RawMessage(frameJSON),
+		}, util.DynMap{
+			"channel": "plugin/testdata/random-20Hz-stream",
+			"data":    json.RawMessage(frameJSON),
+		})
+	}
 
 	info["channels"] = channels
 	return response.JSONStreaming(200, info)

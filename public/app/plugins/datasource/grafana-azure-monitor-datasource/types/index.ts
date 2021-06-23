@@ -54,19 +54,24 @@ export type AzureAuthType = 'msi' | 'clientsecret';
 
 export type ConcealedSecret = symbol;
 
-export type AzureCredentials = AzureManagedIdentityCredentials | AzureClientSecretCredentials;
+interface AzureCredentialsBase {
+  authType: AzureAuthType;
+  defaultSubscriptionId?: string;
+}
 
-export interface AzureManagedIdentityCredentials {
+export interface AzureManagedIdentityCredentials extends AzureCredentialsBase {
   authType: 'msi';
 }
 
-export interface AzureClientSecretCredentials {
+export interface AzureClientSecretCredentials extends AzureCredentialsBase {
   authType: 'clientsecret';
   azureCloud?: string;
   tenantId?: string;
   clientId?: string;
   clientSecret?: string | ConcealedSecret;
 }
+
+export type AzureCredentials = AzureManagedIdentityCredentials | AzureClientSecretCredentials;
 
 export interface AzureDataSourceJsonData extends DataSourceJsonData {
   cloudName: string;
@@ -75,14 +80,18 @@ export interface AzureDataSourceJsonData extends DataSourceJsonData {
   // monitor
   tenantId?: string;
   clientId?: string;
-  subscriptionId: string;
+  subscriptionId?: string;
 
   // logs
-  azureLogAnalyticsSameAs?: boolean;
-  logAnalyticsTenantId?: string;
-  logAnalyticsClientId?: string;
-  logAnalyticsSubscriptionId?: string;
   logAnalyticsDefaultWorkspace?: string;
+  /** @deprecated Azure Logs credentials */
+  azureLogAnalyticsSameAs?: boolean;
+  /** @deprecated Azure Logs credentials */
+  logAnalyticsTenantId?: string;
+  /** @deprecated Azure Logs credentials */
+  logAnalyticsClientId?: string;
+  /** @deprecated Azure Logs credentials */
+  logAnalyticsSubscriptionId?: string;
 
   // App Insights
   appInsightsAppId?: string;
@@ -90,7 +99,6 @@ export interface AzureDataSourceJsonData extends DataSourceJsonData {
 
 export interface AzureDataSourceSecureJsonData {
   clientSecret?: string;
-  logAnalyticsClientSecret?: string;
   appInsightsApiKey?: string;
 }
 
@@ -217,7 +225,7 @@ export interface AzureMonitorOption<T = string> {
 export interface AzureQueryEditorFieldProps {
   query: AzureMonitorQuery;
   datasource: Datasource;
-  subscriptionId: string;
+  subscriptionId?: string;
   variableOptionGroup: { label: string; options: AzureMonitorOption[] };
 
   onQueryChange: (newQuery: AzureMonitorQuery) => void;
@@ -225,8 +233,28 @@ export interface AzureQueryEditorFieldProps {
 }
 
 export interface AzureResourceSummaryItem {
+  subscriptionName: string;
+  resourceGroupName: string | undefined;
+  resourceName: string | undefined;
+}
+
+export interface RawAzureResourceGroupItem {
+  subscriptionURI: string;
+  subscriptionName: string;
+
+  resourceGroupURI: string;
+  resourceGroupName: string;
+}
+
+export interface RawAzureResourceItem {
   id: string;
   name: string;
-  subscriptionName: string;
-  resourceGroupName: string;
+  subscriptionId: string;
+  resourceGroup: string;
+  type: string;
+  location: string;
+}
+
+export interface AzureGraphResponse<T = unknown> {
+  data: T;
 }

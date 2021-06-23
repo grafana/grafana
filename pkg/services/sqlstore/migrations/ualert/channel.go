@@ -67,9 +67,6 @@ func (m *migration) getNotificationChannelMap() (map[interface{}]*notificationCh
 }
 
 func (m *migration) updateReceiverAndRoute(allChannels map[interface{}]*notificationChannel, defaultChannels []*notificationChannel, da dashAlert, rule *alertRule, amConfig *PostableUserConfig) error {
-	rule.Labels["alertname"] = da.Name
-	rule.Annotations["message"] = da.Message
-
 	// Create receiver and route for this rule.
 	if allChannels == nil {
 		return nil
@@ -87,10 +84,6 @@ func (m *migration) updateReceiverAndRoute(allChannels map[interface{}]*notifica
 	if err != nil {
 		return err
 	}
-
-	// Attach label for routing.
-	n, v := getLabelForRouteMatching(rule.Uid)
-	rule.Labels[n] = v
 
 	amConfig.AlertmanagerConfig.Receivers = append(amConfig.AlertmanagerConfig.Receivers, recv)
 	amConfig.AlertmanagerConfig.Route.Routes = append(amConfig.AlertmanagerConfig.Route.Routes, route)
@@ -110,7 +103,8 @@ func (m *migration) makeReceiverAndRoute(ruleUid string, channelUids []interface
 
 	addChannel := func(c *notificationChannel) error {
 		if c.Type == "hipchat" || c.Type == "sensu" {
-			return fmt.Errorf("discontinued notification channel found: %s", c.Type)
+			m.mg.Logger.Error("alert migration error: discontinued notification channel found", "type", c.Type, "name", c.Name, "uid", c.Uid)
+			return nil
 		}
 
 		uid, ok := m.generateChannelUID()
@@ -179,7 +173,8 @@ func (m *migration) updateDefaultAndUnmigratedChannels(amConfig *PostableUserCon
 			continue
 		}
 		if c.Type == "hipchat" || c.Type == "sensu" {
-			return fmt.Errorf("discontinued notification channel found: %s", c.Type)
+			m.mg.Logger.Error("alert migration error: discontinued notification channel found", "type", c.Type, "name", c.Name, "uid", c.Uid)
+			continue
 		}
 
 		uid, ok := m.generateChannelUID()
@@ -204,19 +199,6 @@ func (m *migration) updateDefaultAndUnmigratedChannels(amConfig *PostableUserCon
 	}
 
 	// Default route and receiver.
-	if len(defaultChannels) == 0 {
-		// Pick one from the migrated channels. Preference to email channel.
-		for c := range m.migratedChannels {
-			if len(defaultChannels) == 0 {
-				defaultChannels = append(defaultChannels, c)
-			}
-			if c.Type == "email" {
-				defaultChannels[0] = c
-				break
-			}
-		}
-	}
-
 	var channelUids = []interface{}{}
 	for _, c := range defaultChannels {
 		if c.Uid == "" {
