@@ -17,7 +17,7 @@ export const AmNotificationsAlertsTable = ({ alerts, alertManagerSourceName }: P
   const styles = useStyles2(getStyles);
   return (
     <div className={styles.tableWrapper}>
-      <table className={tableStyles.table}>
+      <table className={tableStyles.table} data-testid="notifications-table">
         <colgroup>
           <col className={tableStyles.colExpand} />
           <col className={styles.stateCol} />

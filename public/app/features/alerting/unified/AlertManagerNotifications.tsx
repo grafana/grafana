@@ -26,14 +26,14 @@ const AlertManagerNotifications = () => {
   }, [dispatch, alertManagerSourceName]);
 
   return (
-    <AlertingPageWrapper pageId="alertmanager">
+    <AlertingPageWrapper pageId="notifications">
       <AlertManagerPicker current={alertManagerSourceName} onChange={setAlertManagerSourceName} />
       {results &&
-        results.map((group) => {
+        results.map((group, index) => {
           return (
             <AmNotificationsGroup
               alertManagerSourceName={alertManagerSourceName || ''}
-              key={JSON.stringify(group.labels)}
+              key={`${JSON.stringify(group.labels)}-group-${index}`}
               group={group}
             />
           );
