@@ -40,7 +40,7 @@ func (ac *OSSAccessControlService) RegisterRegistrantsRoles() error {
 
 		registrations := registrant.GetFixedRoleRegistrations()
 		for _, r := range registrations {
-			err := ac.registerFixedRole(context.TODO(), r.Role, r.Grants)
+			err := ac.registerFixedRole(r.Role, r.Grants)
 			if err != nil {
 				return err
 			}
@@ -108,7 +108,7 @@ func (ac *OSSAccessControlService) assignFixedRole(role accesscontrol.RoleDTO, b
 }
 
 // RegisterFixedRole saves a fixed role and assigns it to built-in roles
-func (ac *OSSAccessControlService) registerFixedRole(_ context.Context, role accesscontrol.RoleDTO, builtInRoles []string) error {
+func (ac *OSSAccessControlService) registerFixedRole(role accesscontrol.RoleDTO, builtInRoles []string) error {
 	err := accesscontrol.ValidateFixedRole(role)
 	if err != nil {
 		return err
