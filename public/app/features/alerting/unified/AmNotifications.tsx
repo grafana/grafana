@@ -11,6 +11,7 @@ import { fetchAlertGroupsAction } from './state/actions';
 import { initialAsyncRequestState } from './utils/redux';
 
 import { AmNotificationsGroup } from './components/amnotifications/AmNotificationsGroup';
+import { NOTIFICATIONS_POLL_INTERVAL_MS } from './utils/constants';
 
 const AlertManagerNotifications = () => {
   const [alertManagerSourceName, setAlertManagerSourceName] = useAlertManagerSourceName();
@@ -20,9 +21,16 @@ const AlertManagerNotifications = () => {
   const results: AlertmanagerGroup[] = alertGroups[alertManagerSourceName || '']?.result || [];
 
   useEffect(() => {
-    if (alertManagerSourceName) {
-      dispatch(fetchAlertGroupsAction(alertManagerSourceName));
+    function fetchNotifications() {
+      if (alertManagerSourceName) {
+        dispatch(fetchAlertGroupsAction(alertManagerSourceName));
+      }
     }
+    fetchNotifications();
+    const interval = setInterval(() => fetchNotifications, NOTIFICATIONS_POLL_INTERVAL_MS);
+    return () => {
+      clearInterval(interval);
+    };
   }, [dispatch, alertManagerSourceName]);
 
   return (
