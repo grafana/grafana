@@ -9,6 +9,9 @@ weight = 400
 
 Grafana allows you manage alerting rules for an external Cortex or Loki instance. 
 
+
+For both Cortex and Loki to work with Grafana alerting, ruler API has to be enabled via configuration of the respective service. `local` rule storage type, which is default for Loki, only supports viewing rules. Configure one of the other rule storage types to be able to edit rules. When configuring a Grafana Prometheus datasource to point to Cortex, use the legacy `/api/prom` prefix, not `/prometheus`. Only single-binary mode is currently supported, currently not possible to provide a separate URL for the ruler API. 
+
 ## Add or edit a Cortex or Loki managed alerting rule
 
 1. In the Grafana menu hover your cursor over the Alerting (bell) icon.
