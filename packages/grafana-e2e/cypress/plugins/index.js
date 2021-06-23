@@ -2,6 +2,7 @@ const compareScreenshots = require('./compareScreenshots');
 const extendConfig = require('./extendConfig');
 const readProvisions = require('./readProvisions');
 const typescriptPreprocessor = require('./typescriptPreprocessor');
+const { pa11y, prepareAudit } = require('cypress-audit');
 
 module.exports = (on, config) => {
   on('file:preprocessor', typescriptPreprocessor);
@@ -11,6 +12,13 @@ module.exports = (on, config) => {
       optional ? console.log(message, optional) : console.log(message);
       return null;
     },
+  });
+  on('before:browser:launch', (browser = {}, launchOptions) => {
+    prepareAudit(launchOptions);
+  });
+
+  on('task', {
+    pa11y: pa11y(), // calling the function is important
   });
 
   // Always extend with this library's config and return for diffing

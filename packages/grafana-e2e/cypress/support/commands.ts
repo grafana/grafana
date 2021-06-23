@@ -1,3 +1,4 @@
+import 'cypress-audit/commands';
 import 'cypress-file-upload';
 
 interface CompareScreenshotsConfig {
