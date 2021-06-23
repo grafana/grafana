@@ -411,6 +411,8 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     };
     const range = Math.ceil(end - start);
 
+    const stepOption = target.stepOption || 0;
+
     // options.interval is the dynamically calculated interval
     let interval: number = rangeUtil.intervalToSeconds(options.interval);
     // Minimum interval ("Min step"), if specified for the query, or same as interval otherwise.
@@ -425,7 +427,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
 
     const intervalFactor = target.intervalFactor || 1;
     // Adjust the interval to take into account any specified minimum and interval factor plus Prometheus limits
-    const adjustedInterval = this.adjustInterval(interval, minInterval, range, intervalFactor);
+    const adjustedInterval = this.adjustInterval(interval, minInterval, range, intervalFactor, stepOption);
     let scopedVars = {
       ...options.scopedVars,
       ...this.getRangeScopedVars(options.range),
@@ -478,7 +480,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     return { __rate_interval: { text: rateInterval + 's', value: rateInterval + 's' } };
   }
 
-  adjustInterval(interval: number, minInterval: number, range: number, intervalFactor: number) {
+  adjustInterval(interval: number, minInterval: number, range: number, intervalFactor: number, stepOption: number) {
     // Prometheus will drop queries that might return more than 11000 data points.
     // Calculate a safe interval as an additional minimum to take into account.
     // Fractional safeIntervals are allowed, however serve little purpose if the interval is greater than 1
@@ -487,7 +489,16 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     if (safeInterval > 1) {
       safeInterval = Math.ceil(safeInterval);
     }
-    return Math.max(interval * intervalFactor, minInterval, safeInterval);
+    console.log(interval * intervalFactor, minInterval);
+    let adjustedInterval = Math.max(interval * intervalFactor, minInterval, safeInterval);
+    if (stepOption === 0) {
+      // min step
+      adjustedInterval = Math.max(interval * intervalFactor, minInterval, safeInterval);
+    } else if (stepOption === 2) {
+      // max step
+      adjustedInterval = Math.min(interval * intervalFactor, minInterval);
+    }
+    return adjustedInterval;
   }
 
   performTimeSeriesQuery(query: PromQueryRequest, start: number, end: number) {
