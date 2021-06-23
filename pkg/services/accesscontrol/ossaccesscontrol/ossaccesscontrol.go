@@ -38,7 +38,7 @@ func (ac *OSSAccessControlService) registerRoles() error {
 			continue
 		}
 
-		if err := registrant.RegisterFixedRole(ac); err != nil {
+		if err := registrant.RegisterFixedRoles(ac); err != nil {
 			return err
 		}
 	}
