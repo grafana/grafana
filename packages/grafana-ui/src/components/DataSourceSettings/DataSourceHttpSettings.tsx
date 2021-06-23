@@ -222,12 +222,7 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = (props) => {
             </div>
           )}
 
-          {dataSourceConfig.access === 'proxy' && (
-            <HttpProxySettings
-              dataSourceConfig={dataSourceConfig}
-              onChange={(jsonData) => onSettingsChange({ jsonData })}
-            />
-          )}
+          {dataSourceConfig.access === 'proxy' && <HttpProxySettings {...props} />}
         </div>
         {dataSourceConfig.basicAuth && (
           <>
