@@ -128,7 +128,7 @@ export class PanelModel implements DataConfigSource {
   /* persisted id, used in URL to identify a panel */
   id!: number;
   editSourceId?: number;
-  gridPos: GridPos;
+  gridPos!: GridPos;
   type!: string;
   title!: string;
   alert?: any;
@@ -244,7 +244,6 @@ export class PanelModel implements DataConfigSource {
   }
 
   updateOptions(options: object) {
-    console.log('updateOptions', this.id, this.options === options, options);
     this.options = options;
     this.configRev++;
     this.events.publish(new PanelOptionsChangedEvent());
@@ -252,7 +251,6 @@ export class PanelModel implements DataConfigSource {
   }
 
   updateFieldConfig(config: FieldConfigSource) {
-    console.log('updateFieldConfig', this.id, this.fieldConfig === config, config);
     this.fieldConfig = config;
     this.configRev++;
     this.events.publish(new PanelOptionsChangedEvent());
