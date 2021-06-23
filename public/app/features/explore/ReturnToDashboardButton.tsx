@@ -30,11 +30,9 @@ const mapDispatchToProps = {
 };
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
-type PropsFromRedux = ConnectedProps<typeof connector>;
+type Props = ConnectedProps<typeof connector>;
 
-interface ReturnToDashboardButtonProps extends PropsFromRedux {}
-
-export const UnconnectedReturnToDashboardButton: FC<ReturnToDashboardButtonProps> = ({
+export const UnconnectedReturnToDashboardButton: FC<Props> = ({
   originPanelId,
   setDashboardQueriesToUpdateOnLoad,
   queries,
