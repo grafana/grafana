@@ -47,10 +47,9 @@ export const DateTimePicker: FC<Props> = ({ date, label, onChange }) => {
   );
 
   const icon = <Button icon="calendar-alt" variant="secondary" onClick={onOpen} />;
-  console.log(isOpen);
   return (
-    <>
-      <Field label={label}>
+    <div>
+      <Field label={label} onClick={stopPropagation}>
         <Input
           onClick={stopPropagation}
           onChange={() => {}}
@@ -59,9 +58,9 @@ export const DateTimePicker: FC<Props> = ({ date, label, onChange }) => {
           onFocus={onFocus}
         />
       </Field>
-      {isOpen &&
-        (isFullscreen ? (
-          <ClickOutsideWrapper onClick={() => {}}>
+      {isOpen ? (
+        isFullscreen ? (
+          <ClickOutsideWrapper onClick={() => setOpen(false)}>
             <DateTimeCalendar date={date} onChange={onApply} />
           </ClickOutsideWrapper>
         ) : (
@@ -71,8 +70,9 @@ export const DateTimePicker: FC<Props> = ({ date, label, onChange }) => {
             </div>
             <div className={containerStyles.backdrop} onClick={stopPropagation} />
           </Portal>
-        ))}
-    </>
+        )
+      ) : null}
+    </div>
   );
 };
 
@@ -119,6 +119,9 @@ const DateTimeCalendar: FC<DateTimeCalendarProps> = ({ date, onChange }) => {
 
 const getStyles = (theme: GrafanaTheme2) => ({
   container: css`
+    position: absolute;
+    right: 510px;
+    bottom: 435px;
     padding: ${theme.spacing(1)};
     border: 1px ${theme.colors.border.weak} solid;
     border-radius: ${theme.shape.borderRadius(1)};
