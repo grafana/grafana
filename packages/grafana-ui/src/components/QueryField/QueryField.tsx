@@ -225,10 +225,14 @@ class UnthemedQueryField extends React.PureComponent<QueryFieldProps, QueryField
       }
     }
 
-    this.setState({
-      dirty: false,
-      focused: false,
-    });
+    setTimeout(
+      () =>
+        this.setState({
+          focused: false,
+          dirty: false,
+        }),
+      0
+    );
     return next();
   };
 
