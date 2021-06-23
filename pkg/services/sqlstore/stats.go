@@ -123,7 +123,7 @@ func viewersPermissionsCounterSQL(statName string, isFolder bool, permission mod
 		FROM ` + dialect.Quote("dashboard_acl") + ` AS acl
 			INNER JOIN ` + dialect.Quote("dashboard") + ` AS d
 			ON d.id = acl.dashboard_id
-		WHERE acl.role = "` + string(models.ROLE_VIEWER) + `"
+		WHERE acl.role = '` + string(models.ROLE_VIEWER) + `'
 			AND d.is_folder = ` + dialect.BooleanStr(isFolder) + `
 			AND acl.permission = ` + strconv.FormatInt(int64(permission), 10) + `
 	) AS ` + statName + `, `
