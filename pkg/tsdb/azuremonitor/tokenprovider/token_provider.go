@@ -16,22 +16,26 @@ var (
 	azureTokenCache = NewConcurrentTokenCache()
 )
 
-type azureAccessTokenProvider struct {
+type AzureTokenProvider interface {
+	GetAccessToken() (string, error)
+}
+
+type tokenProviderImpl struct {
 	ctx        context.Context
 	cfg        *setting.Cfg
 	authParams *plugins.JwtTokenAuth
 }
 
 func NewAzureAccessTokenProvider(ctx context.Context, cfg *setting.Cfg,
-	authParams *plugins.JwtTokenAuth) *azureAccessTokenProvider {
-	return &azureAccessTokenProvider{
+	authParams *plugins.JwtTokenAuth) *tokenProviderImpl {
+	return &tokenProviderImpl{
 		ctx:        ctx,
 		cfg:        cfg,
 		authParams: authParams,
 	}
 }
 
-func (provider *azureAccessTokenProvider) GetAccessToken() (string, error) {
+func (provider *tokenProviderImpl) GetAccessToken() (string, error) {
 	var credential TokenCredential
 
 	if provider.isManagedIdentityCredential() {
@@ -53,7 +57,7 @@ func (provider *azureAccessTokenProvider) GetAccessToken() (string, error) {
 	return accessToken, nil
 }
 
-func (provider *azureAccessTokenProvider) isManagedIdentityCredential() bool {
+func (provider *tokenProviderImpl) isManagedIdentityCredential() bool {
 	authType := strings.ToLower(provider.authParams.Params["azure_auth_type"])
 	clientId := provider.authParams.Params["client_id"]
 
@@ -66,13 +70,13 @@ func (provider *azureAccessTokenProvider) isManagedIdentityCredential() bool {
 	return authType == "msi" || (authType == "" && clientId == "" && provider.cfg.Azure.ManagedIdentityEnabled)
 }
 
-func (provider *azureAccessTokenProvider) getManagedIdentityCredential() TokenCredential {
+func (provider *tokenProviderImpl) getManagedIdentityCredential() TokenCredential {
 	clientId := provider.cfg.Azure.ManagedIdentityClientId
 
 	return &managedIdentityCredential{clientId: clientId}
 }
 
-func (provider *azureAccessTokenProvider) getClientSecretCredential() TokenCredential {
+func (provider *tokenProviderImpl) getClientSecretCredential() TokenCredential {
 	authority := provider.resolveAuthorityHost(provider.authParams.Params["azure_cloud"])
 	tenantId := provider.authParams.Params["tenant_id"]
 	clientId := provider.authParams.Params["client_id"]
@@ -81,7 +85,7 @@ func (provider *azureAccessTokenProvider) getClientSecretCredential() TokenCrede
 	return &clientSecretCredential{authority: authority, tenantId: tenantId, clientId: clientId, clientSecret: clientSecret}
 }
 
-func (provider *azureAccessTokenProvider) resolveAuthorityHost(cloudName string) string {
+func (provider *tokenProviderImpl) resolveAuthorityHost(cloudName string) string {
 	// Known Azure clouds
 	switch cloudName {
 	case setting.AzurePublic:

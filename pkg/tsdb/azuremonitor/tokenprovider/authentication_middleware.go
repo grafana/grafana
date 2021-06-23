@@ -3,23 +3,13 @@ package tokenprovider
 import (
 	"fmt"
 	"net/http"
-	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 )
 
-var (
-	// timeNow makes it possible to test usage of time
-	timeNow = time.Now
-)
-
-type TokenProvider interface {
-	GetAccessToken() (string, error)
-}
-
 const authenticationMiddlewareName = "AzureAuthentication"
 
-func AuthMiddleware(tokenProvider TokenProvider) httpclient.Middleware {
+func AuthMiddleware(tokenProvider AzureTokenProvider) httpclient.Middleware {
 	return httpclient.NamedMiddlewareFunc(authenticationMiddlewareName, func(opts httpclient.Options, next http.RoundTripper) http.RoundTripper {
 		return httpclient.RoundTripperFunc(func(req *http.Request) (*http.Response, error) {
 			token, err := tokenProvider.GetAccessToken()

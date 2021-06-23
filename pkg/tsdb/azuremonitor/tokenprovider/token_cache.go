@@ -9,6 +9,11 @@ import (
 	"time"
 )
 
+var (
+	// timeNow makes it possible to test usage of time
+	timeNow = time.Now
+)
+
 type AccessToken struct {
 	Token     string
 	ExpiresOn time.Time
@@ -119,7 +124,7 @@ func (c *scopesCacheEntry) getAccessToken(ctx context.Context) (string, error) {
 
 	c.cond.L.Lock()
 	for {
-		if c.accessToken != nil && c.accessToken.ExpiresOn.After(time.Now().Add(2*time.Minute)) {
+		if c.accessToken != nil && c.accessToken.ExpiresOn.After(timeNow().Add(2*time.Minute)) {
 			// Use the cached token since it's available and not expired yet
 			accessToken = c.accessToken
 			break
