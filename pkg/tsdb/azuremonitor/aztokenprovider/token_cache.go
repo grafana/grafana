@@ -1,4 +1,4 @@
-package tokenprovider
+package aztokenprovider
 
 import (
 	"context"

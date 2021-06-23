@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/aztokenprovider"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/tokenprovider"
 )
 
@@ -40,7 +41,7 @@ func httpClientProvider(ctx context.Context, route azRoute, model datasourceInfo
 				"client_secret":   model.DecryptedSecureJSONData["clientSecret"],
 			},
 		}
-		tokenProvider := tokenprovider.NewAzureAccessTokenProvider(ctx, cfg, tokenAuth)
+		tokenProvider := aztokenprovider.NewAzureAccessTokenProvider(ctx, cfg, tokenAuth)
 		return httpclient.NewProvider(httpclient.ProviderOptions{
 			Middlewares: []httpclient.Middleware{
 				tokenprovider.AuthMiddleware(tokenProvider),
