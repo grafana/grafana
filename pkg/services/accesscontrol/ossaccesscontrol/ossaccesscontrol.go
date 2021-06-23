@@ -71,14 +71,14 @@ func (ac *OSSAccessControlService) getUsageMetrics() interface{} {
 }
 
 func (ac *OSSAccessControlService) saveFixedRole(role accesscontrol.RoleDTO) {
-	if storedRole, ok := accesscontrol.FixedRoles.Load(role.Name); ok {
+	if storedRole, ok := accesscontrol.FixedRoles[role.Name]; ok {
 		// Don't overwrite role with greater version
 		if storedRole.Version >= role.Version {
 			return
 		}
 	}
 	// Save role
-	accesscontrol.FixedRoles.Store(role.Name, role)
+	accesscontrol.FixedRoles[role.Name] = role
 }
 
 func (ac *OSSAccessControlService) assignFixedRole(role accesscontrol.RoleDTO, builtInRoles []string) {
@@ -87,7 +87,7 @@ func (ac *OSSAccessControlService) assignFixedRole(role accesscontrol.RoleDTO, b
 
 		// Only record new assignments
 		alreadyAssigned := false
-		if assignments, ok := accesscontrol.FixedRoleGrants.Load(builtInRole); ok {
+		if assignments, ok := accesscontrol.FixedRoleGrants[builtInRole]; ok {
 			for _, assignedRole := range assignments {
 				if assignedRole == role.Name {
 					alreadyAssigned = true
@@ -96,7 +96,7 @@ func (ac *OSSAccessControlService) assignFixedRole(role accesscontrol.RoleDTO, b
 		}
 		if !alreadyAssigned {
 			assignments = append(assignments, role.Name)
-			accesscontrol.FixedRoleGrants.Store(builtInRole, assignments)
+			accesscontrol.FixedRoleGrants[builtInRole] = assignments
 		}
 	}
 }
@@ -133,9 +133,9 @@ func (ac *OSSAccessControlService) GetUserPermissions(ctx context.Context, user 
 	builtinRoles := ac.GetUserBuiltInRoles(user)
 	permissions := make([]*accesscontrol.Permission, 0)
 	for _, builtin := range builtinRoles {
-		if roleNames, ok := accesscontrol.FixedRoleGrants.Load(builtin); ok {
+		if roleNames, ok := accesscontrol.FixedRoleGrants[builtin]; ok {
 			for _, name := range roleNames {
-				role, exists := accesscontrol.FixedRoles.Load(name)
+				role, exists := accesscontrol.FixedRoles[name]
 				if !exists {
 					continue
 				}

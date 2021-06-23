@@ -9,21 +9,18 @@ import (
 )
 
 func TestPredefinedRoles(t *testing.T) {
-	validateFixedRole := func(name string, role RoleDTO) bool {
+	for name, role := range FixedRoles {
 		assert.Truef(t,
 			strings.HasPrefix(name, "fixed:"),
 			"expected all fixed roles to be prefixed by 'fixed:', found role '%s'", name,
 		)
 		assert.Equal(t, name, role.Name)
 		assert.NotZero(t, role.Version)
-		return true
 	}
-
-	FixedRoles.Range(validateFixedRole)
 }
 
 func TestPredefinedRoleGrants(t *testing.T) {
-	validateGrants := func(builtInRole string, grants []string) bool {
+	for _, grants := range FixedRoleGrants {
 		// Check grants list is sorted
 		assert.True(t,
 			sort.SliceIsSorted(grants, func(i, j int) bool {
@@ -34,12 +31,9 @@ func TestPredefinedRoleGrants(t *testing.T) {
 
 		// Check all granted roles have been registered
 		for _, r := range grants {
-			_, ok := FixedRoles.Load(r)
-			assert.True(t, ok)
+			assert.Contains(t, FixedRoles, r)
 		}
-		return true
 	}
-	FixedRoleGrants.Range(validateGrants)
 }
 
 func TestConcatPermissions(t *testing.T) {

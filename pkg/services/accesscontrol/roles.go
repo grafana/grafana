@@ -182,100 +182,21 @@ var (
 	// new fixed role in this set so that users can access the new
 	// resource. FixedRoleGrants lists which built-in roles are
 	// assigned which fixed roles in this list.
-	FixedRoles = FixedRolesMap{roles: map[string]RoleDTO{}}
+	FixedRoles = map[string]RoleDTO{
+		usersAdminEdit:    usersAdminEditRole,
+		usersAdminRead:    usersAdminReadRole,
+		usersOrgEdit:      usersOrgEditRole,
+		usersOrgRead:      usersOrgReadRole,
+		ldapAdminEdit:     ldapAdminEditRole,
+		ldapAdminRead:     ldapAdminReadRole,
+		serverAdminRead:   serverAdminReadRole,
+		settingsAdminRead: settingsAdminReadRole,
+	}
 
 	// FixedRoleGrants specifies which built-in roles are assigned
 	// to which set of FixedRoles by default. Alphabetically sorted.
-	FixedRoleGrants = FixedRoleGrantsMap{grants: map[string][]string{}}
-)
-
-type FixedRolesMap struct {
-	roles map[string]RoleDTO
-	mx    sync.RWMutex
-}
-
-func (f *FixedRolesMap) Store(name string, role RoleDTO) {
-	f.mx.Lock()
-	defer f.mx.Unlock()
-	f.roles[name] = role
-}
-
-func (f *FixedRolesMap) Load(name string) (RoleDTO, bool) {
-	f.mx.RLock()
-	defer f.mx.RUnlock()
-	role, exists := f.roles[name]
-	return role, exists
-}
-
-func (f *FixedRolesMap) Range(fn func(name string, role RoleDTO) bool) {
-	f.mx.RLock()
-	defer f.mx.RUnlock()
-	for k, v := range f.roles {
-		if !fn(k, v) {
-			return
-		}
-	}
-}
-
-func (f *FixedRolesMap) Delete(name string) {
-	f.mx.Lock()
-	defer f.mx.Unlock()
-	delete(f.roles, name)
-}
-
-type FixedRoleGrantsMap struct {
-	grants map[string][]string
-	mx     sync.RWMutex
-}
-
-func (f *FixedRoleGrantsMap) Store(builtInRole string, grants []string) {
-	f.mx.Lock()
-	defer f.mx.Unlock()
-	f.grants[builtInRole] = grants
-}
-
-func (f *FixedRoleGrantsMap) Load(builtInRole string) ([]string, bool) {
-	f.mx.RLock()
-	defer f.mx.RUnlock()
-	grants, exists := f.grants[builtInRole]
-	return grants, exists
-}
-
-func (f *FixedRoleGrantsMap) Range(fn func(builtInRole string, grants []string) bool) {
-	f.mx.RLock()
-	defer f.mx.RUnlock()
-	for k, v := range f.grants {
-		if !fn(k, v) {
-			return
-		}
-	}
-}
-
-func (f *FixedRoleGrantsMap) Delete(builtInRole string) {
-	f.mx.Lock()
-	defer f.mx.Unlock()
-	delete(f.grants, builtInRole)
-}
-
-func init() {
-	InitFixedRole()
-}
-
-func InitFixedRole() {
-	once.Do(func() {
-		// Register roles
-		FixedRoles.Store(usersAdminEdit, usersAdminEditRole)
-		FixedRoles.Store(usersAdminRead, usersAdminReadRole)
-		FixedRoles.Store(usersOrgEdit, usersOrgEditRole)
-		FixedRoles.Store(usersOrgRead, usersOrgReadRole)
-		FixedRoles.Store(ldapAdminEdit, ldapAdminEditRole)
-		FixedRoles.Store(ldapAdminRead, ldapAdminReadRole)
-		FixedRoles.Store(serverAdminRead, serverAdminReadRole)
-		FixedRoles.Store(settingsAdminRead, settingsAdminReadRole)
-
-		// Register assignments
-		// Grafana Admin grants
-		FixedRoleGrants.Store(RoleGrafanaAdmin, []string{
+	FixedRoleGrants = map[string][]string{
+		RoleGrafanaAdmin: {
 			ldapAdminEdit,
 			ldapAdminRead,
 			serverAdminRead,
@@ -284,14 +205,13 @@ func InitFixedRole() {
 			usersAdminRead,
 			usersOrgEdit,
 			usersOrgRead,
-		})
-		// Admin grants
-		FixedRoleGrants.Store(string(models.ROLE_ADMIN), []string{
+		},
+		string(models.ROLE_ADMIN): {
 			usersOrgEdit,
 			usersOrgRead,
-		})
-	})
-}
+		},
+	}
+)
 
 func ConcatPermissions(permissions ...[]Permission) []Permission {
 	if permissions == nil {

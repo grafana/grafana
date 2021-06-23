@@ -268,11 +268,11 @@ func TestOSSAccessControlService_RegisterFixedRole(t *testing.T) {
 	}
 
 	removeRole := func(role string) {
-		accesscontrol.FixedRoles.Delete(role)
+		delete(accesscontrol.FixedRoles, role)
 
 		// Compute new grants removing any appearance of the role in the list
 		replaceGrants := map[string][]string{}
-		computeNewGrants := func(builtInRole string, grants []string) bool {
+		for builtInRole, grants := range accesscontrol.FixedRoleGrants {
 			n := len(grants)
 			for i := 0; i < n; i++ {
 				r := grants[i]
@@ -283,13 +283,11 @@ func TestOSSAccessControlService_RegisterFixedRole(t *testing.T) {
 				}
 			}
 			replaceGrants[builtInRole] = grants
-			return true
 		}
-		accesscontrol.FixedRoleGrants.Range(computeNewGrants)
 
 		// Replace grants
 		for br, grants := range replaceGrants {
-			accesscontrol.FixedRoleGrants.Store(br, grants)
+			accesscontrol.FixedRoleGrants[br] = grants
 		}
 	}
 
@@ -313,7 +311,7 @@ func TestOSSAccessControlService_RegisterFixedRole(t *testing.T) {
 				require.NoError(t, err)
 
 				//Check role has been registered
-				storedRole, ok := accesscontrol.FixedRoles.Load(run.role.Name)
+				storedRole, ok := accesscontrol.FixedRoles[run.role.Name]
 				assert.True(t, ok, "role should have been registered")
 
 				//Check registered role has not been altered
@@ -322,18 +320,17 @@ func TestOSSAccessControlService_RegisterFixedRole(t *testing.T) {
 				//Check assignments
 				// Count number of times the role has been assigned
 				assignCnt := 0
-				accesscontrol.FixedRoleGrants.Range(func(_ string, grants []string) bool {
+				for _, grants := range accesscontrol.FixedRoleGrants {
 					for _, r := range grants {
 						if r == run.role.Name {
 							assignCnt++
 						}
 					}
-					return true
-				})
+				}
 				assert.Equal(t, getTotalAssignCount(i, tc.runs), assignCnt, "assignments should only be added, never removed")
 
 				for _, br := range run.builtInRoles {
-					assigns, ok := accesscontrol.FixedRoleGrants.Load(br)
+					assigns, ok := accesscontrol.FixedRoleGrants[br]
 					assert.True(t, ok, fmt.Sprintf("role %s should have been assigned to %s", run.role.Name, br))
 
 					assert.Contains(t, assigns, run.role.Name, fmt.Sprintf("role %s should have been assigned to %s", run.role.Name, br))
