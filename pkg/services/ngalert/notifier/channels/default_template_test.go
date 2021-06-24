@@ -129,6 +129,74 @@ Source: http://localhost/alert4
 Silence: http://localhost/grafana/alerting/silence/new?alertmanager=grafana&matchers=alertname%3Dalert1%2Clbl1%3Dval4
 `,
 		},
+		{
+			templateString: `{{ template "teams.default.message" .}}`,
+			expected: `**Firing**
+
+Labels:
+ - alertname = alert1
+ - lbl1 = val1
+
+Annotations:
+ - ann1 = annv1
+
+Source: http://localhost/alert1
+
+Silence: http://localhost/grafana/alerting/silence/new?alertmanager=grafana&matchers=alertname%3Dalert1%2Clbl1%3Dval1
+
+Dashboard: http://localhost/grafana/d/dbuid123
+
+Panel: http://localhost/grafana/d/dbuid123?viewPanel=puid123
+
+
+
+Labels:
+ - alertname = alert1
+ - lbl1 = val2
+
+Annotations:
+ - ann1 = annv2
+
+Source: http://localhost/alert2
+
+Silence: http://localhost/grafana/alerting/silence/new?alertmanager=grafana&matchers=alertname%3Dalert1%2Clbl1%3Dval2
+
+
+
+
+**Resolved**
+
+Labels:
+ - alertname = alert1
+ - lbl1 = val3
+
+Annotations:
+ - ann1 = annv3
+
+Source: http://localhost/alert3
+
+Silence: http://localhost/grafana/alerting/silence/new?alertmanager=grafana&matchers=alertname%3Dalert1%2Clbl1%3Dval3
+
+Dashboard: http://localhost/grafana/d/dbuid456
+
+Panel: http://localhost/grafana/d/dbuid456?viewPanel=puid456
+
+
+
+Labels:
+ - alertname = alert1
+ - lbl1 = val4
+
+Annotations:
+ - ann1 = annv4
+
+Source: http://localhost/alert4
+
+Silence: http://localhost/grafana/alerting/silence/new?alertmanager=grafana&matchers=alertname%3Dalert1%2Clbl1%3Dval4
+
+
+`,
+		},
 	}
 
 	for _, c := range cases {
