@@ -174,7 +174,11 @@ func (e *AzureResourceGraphDatasource) executeQuery(ctx context.Context, query *
 		return dataResponseErrorWithExecuted(err)
 	}
 
-	url := "https://portal.azure.com/#blade/HubsExtension/ArgQueryBlade/query/" + query.InterpolatedQuery
+	azurePortalUrl, err := getAzurePortalUrl(dsInfo.Settings.CloudName)
+	if err != nil {
+		return dataResponseErrorWithExecuted(err)
+	}
+	url := azurePortalUrl + "/#blade/HubsExtension/ArgQueryBlade/query/" + query.InterpolatedQuery
 	frameWithLink := addConfigData(*frame, url)
 	if frameWithLink.Meta == nil {
 		frameWithLink.Meta = &data.FrameMeta{}
@@ -239,4 +243,19 @@ func (e *AzureResourceGraphDatasource) unmarshalResponse(res *http.Response) (Az
 	}
 
 	return data, nil
+}
+
+func getAzurePortalUrl(azureCloud string) (string, error) {
+	switch azureCloud {
+	case "azuremonitor":
+		return "https://portal.azure.com", nil
+	case "chinaazuremonitor":
+		return "https://portal.azure.cn", nil
+	case "govazuremonitor":
+		return "https://portal.azure.us", nil
+	case "germanyazuremonitor":
+		return "https://portal.microsoftazure.de", nil
+	default:
+		return "", fmt.Errorf("The cloud not supported.")
+	}
 }
