@@ -5,7 +5,6 @@ import { GraphTresholdsStyleMode, Select } from '@grafana/ui';
 export const ThresholdsStyleEditor: React.FC<
   FieldOverrideEditorProps<SelectableValue<{ mode: GraphTresholdsStyleMode }>, any>
 > = ({ item, value, onChange }) => {
-  console.log(value);
   const onChangeCb = useCallback(
     (v: SelectableValue<GraphTresholdsStyleMode>) => {
       onChange({
