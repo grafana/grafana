@@ -3,6 +3,7 @@ package imguploader
 import (
 	"context"
 	"net/url"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -31,6 +32,8 @@ func TestPublicURL(t *testing.T) {
 	t.Run("Given a public URL with parameters, and no template", func(t *testing.T) {
 		webdavUploader, _ := NewWebdavImageUploader("http://localhost:8888/webdav/", "test", "test", "http://cloudycloud.me/s/DOIFDOMV/download?files=")
 		parsed, _ := url.Parse(webdavUploader.PublicURL("fileyfile.png"))
+		require.True(t, strings.HasSuffix(parsed.Path, "fileyfile.png"))
+
 		So(parsed.Path, ShouldEndWith, "fileyfile.png")
 	})
 	t.Run("Given a public URL with parameters, and a template", func(t *testing.T) {

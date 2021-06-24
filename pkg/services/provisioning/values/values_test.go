@@ -243,7 +243,7 @@ func TestValues(t *testing.T) {
 			})
 		})
 
-		Reset(func() {
+		t.Cleanup(func() {
 			err := os.Unsetenv("INT")
 			require.NoError(t, err)
 			err = os.Unsetenv("STRING")

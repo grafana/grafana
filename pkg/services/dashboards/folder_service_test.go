@@ -66,7 +66,7 @@ func TestFolderService(t *testing.T) {
 				require.Equal(t, models.ErrFolderAccessDenied, err)
 			})
 
-			Reset(func() {
+			t.Cleanup(func() {
 				guardian.New = origNewGuardian
 			})
 		})
@@ -119,7 +119,7 @@ func TestFolderService(t *testing.T) {
 				require.NoError(t, err)
 			})
 
-			Reset(func() {
+			t.Cleanup(func() {
 				guardian.New = origNewGuardian
 			})
 		})
@@ -151,7 +151,7 @@ func TestFolderService(t *testing.T) {
 				require.Equal(t, dashFolder.Title, f.Title)
 			})
 
-			Reset(func() {
+			t.Cleanup(func() {
 				guardian.New = origNewGuardian
 			})
 		})

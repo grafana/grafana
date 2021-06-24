@@ -70,7 +70,9 @@ func TestOpsGenieNotifier(t *testing.T) {
 
 				_, err := NewOpsGenieNotifier(model)
 				require.Error(t, err)
-				So(err, ShouldHaveSameTypeAs, alerting.ValidationError{})
+
+				_, ok := err.(alerting.ValidationError)
+				require.True(t, ok)
 				So(err.Error(), ShouldEndWith, "Invalid value for sendTagsAs: \"not_a_valid_value\"")
 			})
 

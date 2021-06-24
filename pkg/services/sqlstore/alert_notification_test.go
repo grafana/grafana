@@ -137,7 +137,7 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 				})
 			})
 
-			Reset(func() {
+			t.Cleanup(func() {
 				timeNow = oldTimeNow
 			})
 		})

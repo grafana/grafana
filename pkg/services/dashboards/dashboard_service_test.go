@@ -263,7 +263,7 @@ func TestDashboardService(t *testing.T) {
 			})
 		})
 
-		Reset(func() {
+		t.Cleanup(func() {
 			guardian.New = origNewDashboardGuardian
 		})
 	})

@@ -17,8 +17,7 @@ func TestMultiLDAP(t *testing.T) {
 
 				multi := New([]*ldap.ServerConfig{})
 				_, err := multi.Ping()
-
-				So(err, ShouldBeError)
+				require.Error(t, err)
 				require.Equal(t, ErrNoLDAPServers, err)
 
 				teardown()
@@ -70,7 +69,7 @@ func TestMultiLDAP(t *testing.T) {
 				multi := New([]*ldap.ServerConfig{})
 				_, err := multi.Login(&models.LoginUserQuery{})
 
-				So(err, ShouldBeError)
+				require.Error(t, err)
 				require.Equal(t, ErrNoLDAPServers, err)
 
 				teardown()
@@ -88,7 +87,7 @@ func TestMultiLDAP(t *testing.T) {
 
 				_, err := multi.Login(&models.LoginUserQuery{})
 
-				So(err, ShouldBeError)
+				require.Error(t, err)
 				require.Equal(t, expected, err)
 
 				teardown()
@@ -217,7 +216,7 @@ func TestMultiLDAP(t *testing.T) {
 				multi := New([]*ldap.ServerConfig{})
 				_, _, err := multi.User("test")
 
-				So(err, ShouldBeError)
+				require.Error(t, err)
 				require.Equal(t, ErrNoLDAPServers, err)
 
 				teardown()
@@ -235,7 +234,7 @@ func TestMultiLDAP(t *testing.T) {
 
 				_, _, err := multi.User("test")
 
-				So(err, ShouldBeError)
+				require.Error(t, err)
 				require.Equal(t, expected, err)
 
 				teardown()
@@ -347,7 +346,7 @@ func TestMultiLDAP(t *testing.T) {
 				multi := New([]*ldap.ServerConfig{})
 				_, err := multi.Users([]string{"test"})
 
-				So(err, ShouldBeError)
+				require.Error(t, err)
 				require.Equal(t, ErrNoLDAPServers, err)
 
 				teardown()
@@ -365,7 +364,7 @@ func TestMultiLDAP(t *testing.T) {
 
 				_, err := multi.Users([]string{"test"})
 
-				So(err, ShouldBeError)
+				require.Error(t, err)
 				require.Equal(t, expected, err)
 
 				teardown()

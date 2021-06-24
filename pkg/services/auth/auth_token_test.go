@@ -24,9 +24,9 @@ func TestUserAuthToken(t *testing.T) {
 		user := &models.User{Id: int64(10)}
 		userID := user.Id
 
-		t := time.Date(2018, 12, 13, 13, 45, 0, 0, time.UTC)
+		dt := time.Date(2018, 12, 13, 13, 45, 0, 0, time.UTC)
 		getTime = func() time.Time {
-			return t
+			return dt
 		}
 
 		t.Run("When creating token", func(t *testing.T) {
@@ -165,7 +165,7 @@ func TestUserAuthToken(t *testing.T) {
 			require.NoError(t, err)
 
 			getTime = func() time.Time {
-				return t.Add(time.Hour)
+				return dt.Add(time.Hour)
 			}
 
 			rotated, err := userAuthTokenService.TryRotateToken(context.Background(), userToken,
@@ -199,7 +199,8 @@ func TestUserAuthToken(t *testing.T) {
 				}
 
 				notGood, err := userAuthTokenService.LookupToken(context.Background(), userToken.UnhashedToken)
-				So(err, ShouldHaveSameTypeAs, &models.TokenExpiredError{})
+				_, ok := err.(*models.TokenExpiredError)
+				require.True(t, ok)
 				require.Nil(t, notGood)
 
 				t.Run("should not find active token when expired", func(t *testing.T) {
@@ -233,7 +234,9 @@ func TestUserAuthToken(t *testing.T) {
 				}
 
 				notGood, err := userAuthTokenService.LookupToken(context.Background(), userToken.UnhashedToken)
-				So(err, ShouldHaveSameTypeAs, &models.TokenExpiredError{})
+				_, ok := err.(*models.TokenExpiredError)
+				require.True(t, ok)
+
 				require.Nil(t, notGood)
 			})
 		})
@@ -263,7 +266,7 @@ func TestUserAuthToken(t *testing.T) {
 			require.NoError(t, err)
 
 			getTime = func() time.Time {
-				return t.Add(time.Hour)
+				return dt.Add(time.Hour)
 			}
 
 			rotated, err = userAuthTokenService.TryRotateToken(context.Background(), &tok,
@@ -299,7 +302,7 @@ func TestUserAuthToken(t *testing.T) {
 			require.True(t, lookedUpUserToken.AuthTokenSeen)
 
 			getTime = func() time.Time {
-				return t.Add(time.Hour + (2 * time.Minute))
+				return dt.Add(time.Hour + (2 * time.Minute))
 			}
 
 			lookedUpUserToken, err = userAuthTokenService.LookupToken(context.Background(), unhashedPrev)
@@ -334,7 +337,7 @@ func TestUserAuthToken(t *testing.T) {
 			require.NotNil(t, lookedUpUserToken)
 
 			getTime = func() time.Time {
-				return t.Add(10 * time.Minute)
+				return dt.Add(10 * time.Minute)
 			}
 
 			prevToken := userToken.UnhashedToken
@@ -344,7 +347,7 @@ func TestUserAuthToken(t *testing.T) {
 			require.True(t, rotated)
 
 			getTime = func() time.Time {
-				return t.Add(20 * time.Minute)
+				return dt.Add(20 * time.Minute)
 			}
 
 			currentUserToken, err := userAuthTokenService.LookupToken(context.Background(), userToken.UnhashedToken)
@@ -390,7 +393,7 @@ func TestUserAuthToken(t *testing.T) {
 				require.True(t, updated)
 
 				getTime = func() time.Time {
-					return t.Add(10 * time.Minute)
+					return dt.Add(10 * time.Minute)
 				}
 
 				rotated, err := userAuthTokenService.TryRotateToken(context.Background(), userToken,
@@ -412,7 +415,7 @@ func TestUserAuthToken(t *testing.T) {
 				require.True(t, updated)
 
 				getTime = func() time.Time {
-					return t.Add(20 * time.Minute)
+					return dt.Add(20 * time.Minute)
 				}
 
 				rotated, err = userAuthTokenService.TryRotateToken(context.Background(), userToken,
@@ -432,7 +435,7 @@ func TestUserAuthToken(t *testing.T) {
 				userToken.RotatedAt = getTime().Add(-2 * time.Minute).Unix()
 
 				getTime = func() time.Time {
-					return t.Add(2 * time.Minute)
+					return dt.Add(2 * time.Minute)
 				}
 
 				rotated, err := userAuthTokenService.TryRotateToken(context.Background(), userToken,
@@ -515,7 +518,7 @@ func TestUserAuthToken(t *testing.T) {
 			require.True(t, cmp.Equal(utMap, uatMap))
 		})
 
-		Reset(func() {
+		t.Cleanup(func() {
 			getTime = time.Now
 		})
 	})

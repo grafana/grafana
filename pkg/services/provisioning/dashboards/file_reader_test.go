@@ -91,7 +91,7 @@ func TestDashboardFileReader(t *testing.T) {
 	t.Run("Dashboard file reader", func(t *testing.T) {
 		bus.ClearBusHandlers()
 		origNewDashboardProvisioningService := dashboards.NewProvisioningService
-		Reset(func() {
+		t.Cleanup(func() {
 			dashboards.NewProvisioningService = origNewDashboardProvisioningService
 		})
 		fakeService = mockDashboardProvisioningService()
