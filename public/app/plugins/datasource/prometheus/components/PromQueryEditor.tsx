@@ -25,7 +25,7 @@ const INTERVAL_FACTOR_OPTIONS: Array<SelectableValue<number>> = map([1, 2, 3, 4,
 }));
 
 const STEP_OPTIONS: Array<SelectableValue<number>> = map([0, 1, 2], (value: number) => {
-  const labels = ['min', 'standard', 'max'];
+  const labels = ['min', 'exact', 'max'];
   return {
     value,
     label: labels[value],
