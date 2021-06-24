@@ -1,11 +1,11 @@
 import GraphiteQuery from './graphite_query';
 import { getTemplateSrv } from '@grafana/runtime';
-import _ from 'lodash';
+import { each, eachRight, map, remove } from 'lodash';
 import { dispatch } from '../../../store/store';
 import { notifyApp } from '../../../core/reducers/appNotification';
 import { createErrorNotification } from '../../../core/copy/appNotification';
 import { GraphiteQueryEditorState } from './state';
-import { GraphiteQueryEditorAngularDependencies } from './types';
+import { GraphiteQueryEditorAngularDependencies, GraphiteTagOperator } from './types';
 
 const GRAPHITE_TAG_OPERATORS = ['=', '!=', '=~', '!=~'];
 const TAG_PREFIX = 'tag: ';
@@ -58,7 +58,7 @@ export async function toggleEditorMode(state: GraphiteQueryEditorState) {
 async function buildSegments(state: GraphiteQueryEditorState, modifyLastSegment = true) {
   state = { ...state };
 
-  state.segments = _.map(state.queryModel.segments, (segment) => {
+  state.segments = map(state.queryModel.segments, (segment) => {
     return state.uiSegmentSrv.newSegment(segment);
   });
 
@@ -121,7 +121,7 @@ async function checkOtherSegments(state: GraphiteQueryEditorState, fromIndex: nu
 
 async function setSegmentFocus(state: GraphiteQueryEditorState, segmentIndex: any) {
   state = { ...state };
-  _.each(state.segments, (segment, index) => {
+  each(state.segments, (segment, index) => {
     segment.focus = segmentIndex === index;
   });
   return state;
@@ -146,7 +146,7 @@ export async function getAltSegments(
 
   try {
     const segments = await state.datasource.metricFindQuery(query, options);
-    const altSegments = _.map(segments, (segment) => {
+    const altSegments = map(segments, (segment) => {
       return state.uiSegmentSrv.newSegment({
         value: segment.text,
         expandable: segment.expandable,
@@ -164,7 +164,7 @@ export async function getAltSegments(
 
     // add query references
     if (index === 0) {
-      _.eachRight(state.panelCtrl.panel.targets, (target) => {
+      eachRight(state.panelCtrl.panel.targets, (target) => {
         if (target.refId === state.queryModel.target.refId) {
           return;
         }
@@ -180,7 +180,7 @@ export async function getAltSegments(
     }
 
     // add template variables
-    _.eachRight(state.templateSrv.getVariables(), (variable) => {
+    eachRight(state.templateSrv.getVariables(), (variable) => {
       altSegments.unshift(
         state.uiSegmentSrv.newSegment({
           type: 'template',
@@ -218,7 +218,7 @@ async function addAltTagSegments(
   state = { ...state };
   state = await getTagsAsSegments(state, prefix);
 
-  state.tagSegments = _.map(state.tagsAsSegments, (segment) => {
+  state.tagSegments = map(state.tagsAsSegments, (segment) => {
     segment.value = TAG_PREFIX + segment.value;
     return segment;
   });
@@ -228,7 +228,7 @@ async function addAltTagSegments(
 }
 
 function removeTaggedEntry(altSegments: any[]) {
-  _.remove(altSegments, (s) => s.value === '_tagged');
+  remove(altSegments, (s) => s.value === '_tagged');
 }
 
 export async function segmentValueChanged(
@@ -409,7 +409,7 @@ export async function getTags(
     const tagExpressions = state.queryModel.renderTagExpressions(index);
     const values = await state.datasource.getTagsAutoComplete(tagExpressions, tagPrefix);
 
-    const altTags = _.map(values, 'text');
+    const altTags = map(values, 'text');
     altTags.splice(0, 0, state.removeTagValue);
     state.allTags = mapToDropdownOptions(altTags);
   } catch (err) {
@@ -428,7 +428,7 @@ export async function getTagsAsSegments(
   try {
     const tagExpressions = state.queryModel.renderTagExpressions();
     const values = await state.datasource.getTagsAutoComplete(tagExpressions, tagPrefix);
-    state.tagsAsSegments = _.map(values, (val) => {
+    state.tagsAsSegments = map(values, (val) => {
       return state.uiSegmentSrv.newSegment({
         value: val.text,
         type: 'tag',
@@ -461,9 +461,9 @@ export async function getTagValues(
   const tagExpressions = state.queryModel.renderTagExpressions(index);
   const tagKey = tag.key;
   const values = await state.datasource.getTagValuesAutoComplete(tagExpressions, tagKey, valuePrefix, {});
-  const altValues = _.map(values, 'text');
+  const altValues = map(values, 'text');
   // Add template variables as additional values
-  _.eachRight(state.templateSrv.getVariables(), (variable) => {
+  eachRight(state.templateSrv.getVariables(), (variable) => {
     altValues.push('${' + variable.name + ':regex}');
   });
 
@@ -491,7 +491,7 @@ export async function addNewTag(
   state = { ...state };
 
   const newTagKey = segment.value;
-  const newTag = { key: newTagKey, operator: '=', value: '' };
+  const newTag = { key: newTagKey, operator: '=' as GraphiteTagOperator, value: '' };
   state.queryModel.addTag(newTag);
   state = await targetChanged(state);
   state = await fixTagSegments(state);
@@ -550,7 +550,7 @@ async function handleMetricsAutoCompleteError(
 
 // TODO: move to util.ts
 function mapToDropdownOptions(results: any[]) {
-  return _.map(results, (value) => {
+  return map(results, (value) => {
     return { text: value, value: value };
   });
 }
