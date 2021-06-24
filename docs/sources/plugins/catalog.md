@@ -8,6 +8,8 @@ weight = 1
 
 The plugin catalog allows you to browse and manage plugins from within Grafana. Only a Grafana server administrator can access and use the catalog.
 
+> **Note:** The plugin catalog is designed to work with a single Grafana server instance only. Support for Grafana clusters will be added in future Grafana releases.
+
 <div class="medium-6 columns">
   <video width="700" height="600" controls>
     <source src="/static/assets/videos/plugins-catalog-install-8-0.mp4" type="video/mp4">
