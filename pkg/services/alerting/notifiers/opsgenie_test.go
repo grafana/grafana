@@ -2,6 +2,7 @@ package notifiers
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -73,7 +74,7 @@ func TestOpsGenieNotifier(t *testing.T) {
 
 				_, ok := err.(alerting.ValidationError)
 				require.True(t, ok)
-				So(err.Error(), ShouldEndWith, "Invalid value for sendTagsAs: \"not_a_valid_value\"")
+				require.True(t, strings.HasSuffix(err.Error(), "Invalid value for sendTagsAs: \"not_a_valid_value\""))
 			})
 
 			t.Run("alert payload should include tag pairs only as an array in the tags key when sendAsTags is not set", func(t *testing.T) {

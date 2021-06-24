@@ -9,7 +9,8 @@ import (
 )
 
 func TestUploadToS3(t *testing.T) {
-	Skipt.Run("[Integration test] for external_image_store.s3", func(t *testing.T) {
+	t.Run("[Integration test] for external_image_store.s3", func(t *testing.T) {
+		t.Skip("Skip test [Integration test] for external_image_store.s3")
 		cfg := setting.NewCfg()
 		err := cfg.Load(&setting.CommandLineArgs{
 			HomePath: "../../../",

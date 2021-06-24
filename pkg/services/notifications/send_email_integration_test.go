@@ -11,7 +11,8 @@ import (
 )
 
 func TestEmailIntegrationTest(t *testing.T) {
-	Skipt.Run("Given the notifications service", func(t *testing.T) {
+	t.Run("Given the notifications service", func(t *testing.T) {
+		t.Skip("Skip test Given the notifications service")
 		setting.StaticRootPath = "../../../public/"
 		setting.BuildVersion = "4.0.0"
 
