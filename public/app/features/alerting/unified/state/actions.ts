@@ -22,6 +22,7 @@ import {
   fetchSilences,
   createOrUpdateSilence,
   updateAlertManagerConfig,
+  fetchStatus,
 } from '../api/alertmanager';
 import { fetchRules } from '../api/prometheus';
 import {
@@ -46,6 +47,7 @@ import {
 import { addDefaultsToAlertmanagerConfig } from '../utils/alertmanager';
 import { backendSrv } from 'app/core/services/backend_srv';
 import * as ruleId from '../utils/rule-id';
+import { isEmpty } from 'lodash';
 
 export const fetchPromRulesAction = createAsyncThunk(
   'unifiedalerting/fetchPromRules',
@@ -55,7 +57,18 @@ export const fetchPromRulesAction = createAsyncThunk(
 export const fetchAlertManagerConfigAction = createAsyncThunk(
   'unifiedalerting/fetchAmConfig',
   (alertManagerSourceName: string): Promise<AlertManagerCortexConfig> =>
-    withSerializedError(fetchAlertManagerConfig(alertManagerSourceName))
+    withSerializedError(
+      fetchAlertManagerConfig(alertManagerSourceName).then((result) => {
+        // if user config is empty for cortex alertmanager, try to get config from status endpoint
+        if (isEmpty(result.alertmanager_config) && alertManagerSourceName !== GRAFANA_RULES_SOURCE_NAME) {
+          return fetchStatus(alertManagerSourceName).then((status) => ({
+            alertmanager_config: status.config,
+            template_files: {},
+          }));
+        }
+        return result;
+      })
+    )
 );
 
 export const fetchRulerRulesAction = createAsyncThunk(
