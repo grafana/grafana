@@ -124,7 +124,7 @@ func TestAlertingDataAccess(t *testing.T) {
 
 			alert := alertQuery.Result[0]
 			require.Nil(t, err2)
-			So(alert.Id, ShouldBeGreaterThan, 0)
+			require.Greater(t, alert.Id, 0)
 			require.Equal(t, testDash.Id, alert.DashboardId)
 			require.Equal(t, 1, alert.PanelId)
 			require.Equal(t, "Alerting title", alert.Name)

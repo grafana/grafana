@@ -166,7 +166,7 @@ func TestDeleteExpiredVersions(t *testing.T) {
 			// Ensure we have at least versionsToKeep versions
 			So(len(query.Result), ShouldBeGreaterThanOrEqualTo, versionsToKeep)
 			// Ensure we haven't deleted more than perBatch * maxBatches rows
-			So(versionsToWriteBigNumber-len(query.Result), ShouldBeLessThanOrEqualTo, perBatch*maxBatches)
+			require.LessOrEqual(t, versionsToWriteBigNumber-len(query.Result), perBatch*maxBatches)
 		})
 	})
 }

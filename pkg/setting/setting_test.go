@@ -73,7 +73,7 @@ func TestLoadingSettings(t *testing.T) {
 			err = cfg.Load(&CommandLineArgs{HomePath: "../../"})
 			require.NoError(t, err)
 
-			So(appliedEnvOverrides, ShouldContain, "GF_SECURITY_ADMIN_PASSWORD=*********")
+			require.Contains(t, appliedEnvOverrides, "GF_SECURITY_ADMIN_PASSWORD=*********")
 		})
 
 		t.Run("Should replace password in URL when url environment is defined", func(t *testing.T) {
@@ -84,7 +84,7 @@ func TestLoadingSettings(t *testing.T) {
 			err = cfg.Load(&CommandLineArgs{HomePath: "../../"})
 			require.NoError(t, err)
 
-			So(appliedEnvOverrides, ShouldContain, "GF_DATABASE_URL=mysql://user:xxxxx@localhost:3306/database")
+			require.Contains(t, appliedEnvOverrides, "GF_DATABASE_URL=mysql://user:xxxxx@localhost:3306/database")
 		})
 
 		t.Run("Should get property map from command line args array", func(t *testing.T) {

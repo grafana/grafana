@@ -68,7 +68,7 @@ func TestUserAuthToken(t *testing.T) {
 				model, err := ctx.getAuthTokenByID(userToken.Id)
 				require.NoError(t, err)
 				require.NotNil(t, model)
-				So(model.RevokedAt, ShouldBeGreaterThan, 0)
+				require.Greater(t, model.RevokedAt, 0)
 			})
 
 			t.Run("revoking existing token should delete it", func(t *testing.T) {

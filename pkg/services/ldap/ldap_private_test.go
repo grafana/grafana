@@ -82,7 +82,7 @@ func TestLDAPPrivateMethods(t *testing.T) {
 			require.NoError(t, err)
 			require.Equal(t, "roelgerrits", result[0].Login)
 			require.Equal(t, "roel@test.com", result[0].Email)
-			So(result[0].Groups, ShouldContain, "admins")
+			require.Contains(t, result[0].Groups, "admins")
 		})
 
 		t.Run("without lastname", func(t *testing.T) {

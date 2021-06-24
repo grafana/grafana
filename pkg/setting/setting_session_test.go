@@ -38,7 +38,7 @@ func TestSessionSettings(t *testing.T) {
 			require.NoError(t, err)
 
 			require.Equal(t, true, stub.warnCalled)
-			So(len(stub.warnMessage), ShouldBeGreaterThan, 0)
+			require.Greater(t, len(stub.warnMessage), 0)
 		})
 	})
 }

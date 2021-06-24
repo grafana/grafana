@@ -240,12 +240,12 @@ func validateDatasource(dsCfg *configs) {
 	require.True(t, ds.Editable)
 	require.Equal(t, 10, ds.Version)
 
-	So(len(ds.JSONData), ShouldBeGreaterThan, 2)
+	require.Greater(t, len(ds.JSONData), 2)
 	require.Equal(t, "1.1", ds.JSONData["graphiteVersion"])
 	require.Equal(t, true, ds.JSONData["tlsAuth"])
 	require.Equal(t, true, ds.JSONData["tlsAuthWithCACert"])
 
-	So(len(ds.SecureJSONData), ShouldBeGreaterThan, 2)
+	require.Greater(t, len(ds.SecureJSONData), 2)
 	require.Equal(t, "MjNOcW9RdkbUDHZmpco2HCYzVq9dE+i6Yi+gmUJotq5CDA==", ds.SecureJSONData["tlsCACert"])
 	require.Equal(t, "ckN0dGlyMXN503YNfjTcf9CV+GGQneN+xmAclQ==", ds.SecureJSONData["tlsClientCert"])
 	require.Equal(t, "ZkN4aG1aNkja/gKAB1wlnKFIsy2SRDq4slrM0A==", ds.SecureJSONData["tlsClientKey"])

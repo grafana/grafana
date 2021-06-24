@@ -62,7 +62,7 @@ func TestTelegramNotifier(t *testing.T) {
 					}, &validations.OSSPluginRequestValidator{})
 
 				caption := generateImageCaption(evalContext, "http://grafa.url/abcdef", "")
-				So(len(caption), ShouldBeLessThanOrEqualTo, 1024)
+				require.LessOrEqual(t, len(caption), 1024)
 				require.Contains(t, caption, "Some kind of message.")
 				require.Contains(t, caption, "[OK] This is an alarm")
 				require.Contains(t, caption, "http://grafa.url/abcdef")
@@ -80,11 +80,11 @@ func TestTelegramNotifier(t *testing.T) {
 					caption := generateImageCaption(evalContext,
 						"http://grafa.url/abcdefaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
 						"foo bar")
-					So(len(caption), ShouldBeLessThanOrEqualTo, 1024)
+					require.LessOrEqual(t, len(caption), 1024)
 					require.Contains(t, caption, "Some kind of message.")
 					require.Contains(t, caption, "[OK] This is an alarm")
 					require.Contains(t, caption, "foo bar")
-					So(caption, ShouldNotContainSubstring, "http")
+					require.NotContains(t, caption, "http")
 				})
 
 				t.Run("Message should be trimmed if it's too long", func(t *testing.T) {
@@ -98,9 +98,9 @@ func TestTelegramNotifier(t *testing.T) {
 					caption := generateImageCaption(evalContext,
 						"http://grafa.url/foo",
 						"")
-					So(len(caption), ShouldBeLessThanOrEqualTo, 1024)
+					require.LessOrEqual(t, len(caption), 1024)
 					require.Contains(t, caption, "[OK] This is an alarm")
-					So(caption, ShouldNotContainSubstring, "http")
+					require.NotContains(t, caption, "http")
 					require.Contains(t, caption, "Some kind of message that is too long for appending to our pretty little message, this line is actually exactly 197 chars long and I will get there in the end I promise I will. Yes siree that's it. But suddenly Telegram increased the length so now we need some lorem ipsum to fix this test. Here we go: Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus consectetur molestie cursus. Donec suscipit egestas nisi. Proin ut efficitur ex. Mauris mi augue, volutpat a nisi vel, euismod dictum arcu. Sed quis tempor eros, sed malesuada dolor. Ut orci augue, viverra sit amet blandit quis, faucibus sit amet ex. Duis condimentum efficitur lectus, id dignissim quam tempor id. Morbi sollicitudin rhoncus diam, id tincidunt lectus scelerisque vitae. Etiam imperdiet semper sem, vel eleifend ligula mollis eget. Etiam ultrices fringilla lacus, sit amet pharetra ex blandit quis. Suspendisse in egestas neque, et posuere lectus. Vestibulum eu ex dui. Sed molestie nulla a lobortis sceleri")
 				})
 
@@ -115,10 +115,10 @@ func TestTelegramNotifier(t *testing.T) {
 					caption := generateImageCaption(evalContext,
 						"http://grafa.url/foo",
 						"foo bar long song")
-					So(len(caption), ShouldBeLessThanOrEqualTo, 1024)
+					require.LessOrEqual(t, len(caption), 1024)
 					require.Contains(t, caption, "[OK] This is an alarm")
-					So(caption, ShouldNotContainSubstring, "http")
-					So(caption, ShouldNotContainSubstring, "foo bar")
+					require.NotContains(t, caption, "http")
+					require.NotContains(t, caption, "foo bar")
 				})
 			})
 		})

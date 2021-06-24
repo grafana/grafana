@@ -34,15 +34,15 @@ func TestDashboardDataAccess(t *testing.T) {
 				require.Equal(t, "test-dash-23", savedDash.Slug)
 				require.NotEqual(t, 0, savedDash.Id)
 				require.False(t, savedDash.IsFolder)
-				So(savedDash.FolderId, ShouldBeGreaterThan, 0)
-				So(len(savedDash.Uid), ShouldBeGreaterThan, 0)
+				require.Greater(t, savedDash.FolderId, 0)
+				require.Greater(t, len(savedDash.Uid), 0)
 
 				require.Equal(t, "1 test dash folder", savedFolder.Title)
 				require.Equal(t, "1-test-dash-folder", savedFolder.Slug)
 				require.NotEqual(t, 0, savedFolder.Id)
 				require.True(t, savedFolder.IsFolder)
 				require.Equal(t, 0, savedFolder.FolderId)
-				So(len(savedFolder.Uid), ShouldBeGreaterThan, 0)
+				require.Greater(t, len(savedFolder.Uid), 0)
 			})
 
 			t.Run("Should be able to get dashboard by id", func(t *testing.T) {
