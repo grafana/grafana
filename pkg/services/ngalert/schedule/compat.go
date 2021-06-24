@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/go-openapi/strfmt"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/prometheus/alertmanager/api/v2/models"
 
@@ -29,8 +30,10 @@ func FromAlertStateToPostableAlerts(logger log.Logger, firingStates []*state.Sta
 	for _, alertState := range firingStates {
 		if alertState.NeedsSending(stateManager.ResendDelay) {
 			nL := alertState.Labels.Copy()
+			nA := data.Labels(alertState.Annotations).Copy()
+
 			if len(alertState.Results) > 0 {
-				nL["__value__"] = alertState.Results[0].EvaluationString
+				nA["__value_string__"] = alertState.Results[0].EvaluationString
 			}
 
 			genURL := appURL
@@ -42,7 +45,7 @@ func FromAlertStateToPostableAlerts(logger log.Logger, firingStates []*state.Sta
 			}
 
 			alerts.PostableAlerts = append(alerts.PostableAlerts, models.PostableAlert{
-				Annotations: alertState.Annotations,
+				Annotations: models.LabelSet(nA),
 				StartsAt:    strfmt.DateTime(alertState.StartsAt),
 				EndsAt:      strfmt.DateTime(alertState.EndsAt),
 				Alert: models.Alert{

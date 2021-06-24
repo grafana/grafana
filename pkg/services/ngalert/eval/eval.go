@@ -166,7 +166,7 @@ func executeCondition(ctx AlertExecCtx, c *models.Condition, now time.Time, data
 		return ExecutionResults{Error: err}
 	}
 
-	// eval captures for the '__value__' label.
+	// eval captures for the '__value_string__' annotation and the Value property of the API response.
 	captures := make([]NumberValueCapture, 0, len(execResp.Responses))
 
 	captureVal := func(refID string, labels data.Labels, value *float64) {
