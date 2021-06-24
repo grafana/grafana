@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -20,7 +21,6 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/interval"
 
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/plugins"
 	"golang.org/x/net/context/ctxhttp"
 )
 
@@ -75,7 +75,7 @@ func coerceVersion(v *simplejson.Json) (*semver.Version, error) {
 }
 
 // NewClient creates a new elasticsearch client
-var NewClient = func(ctx context.Context, httpClientProvider httpclient.Provider, ds *models.DataSource, timeRange plugins.DataTimeRange) (Client, error) {
+var NewClient = func(ctx context.Context, httpClientProvider httpclient.Provider, ds *models.DataSource, dataQuery *backend.DataQuery) (Client, error) {
 	version, err := coerceVersion(ds.JsonData.Get("esVersion"))
 
 	if err != nil {
@@ -93,7 +93,7 @@ var NewClient = func(ctx context.Context, httpClientProvider httpclient.Provider
 		return nil, err
 	}
 
-	indices, err := ip.GetIndices(timeRange)
+	indices, err := ip.GetIndices(dataQuery.TimeRange)
 	if err != nil {
 		return nil, err
 	}
@@ -107,7 +107,7 @@ var NewClient = func(ctx context.Context, httpClientProvider httpclient.Provider
 		version:            version,
 		timeField:          timeField,
 		indices:            indices,
-		timeRange:          timeRange,
+		timeRange:          dataQuery.TimeRange,
 	}, nil
 }
 
@@ -118,7 +118,7 @@ type baseClientImpl struct {
 	version            *semver.Version
 	timeField          string
 	indices            []string
-	timeRange          plugins.DataTimeRange
+	timeRange          backend.TimeRange
 	debugEnabled       bool
 }
 

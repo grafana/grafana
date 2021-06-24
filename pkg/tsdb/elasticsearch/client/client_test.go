@@ -3,7 +3,7 @@ package es
 import (
 	"bytes"
 	"context"
-	"fmt"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -13,7 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/tsdb/interval"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -25,7 +24,7 @@ func TestNewClient(t *testing.T) {
 			JsonData: simplejson.NewFromAny(make(map[string]interface{})),
 		}
 
-		_, err := NewClient(context.Background(), httpclient.NewProvider(), ds, plugins.DataTimeRange{})
+		_, err := NewClient(context.Background(), httpclient.NewProvider(), ds, &backend.DataQuery{})
 		require.Error(t, err)
 	})
 
@@ -36,7 +35,7 @@ func TestNewClient(t *testing.T) {
 			}),
 		}
 
-		_, err := NewClient(context.Background(), httpclient.NewProvider(), ds, plugins.DataTimeRange{})
+		_, err := NewClient(context.Background(), httpclient.NewProvider(), ds, &backend.DataQuery{})
 		require.Error(t, err)
 	})
 
@@ -49,7 +48,7 @@ func TestNewClient(t *testing.T) {
 				}),
 			}
 
-			_, err := NewClient(context.Background(), httpclient.NewProvider(), ds, plugins.DataTimeRange{})
+			_, err := NewClient(context.Background(), httpclient.NewProvider(), ds, &backend.DataQuery{})
 			require.Error(t, err)
 		})
 
@@ -61,7 +60,7 @@ func TestNewClient(t *testing.T) {
 				}),
 			}
 
-			c, err := NewClient(context.Background(), httpclient.NewProvider(), ds, plugins.DataTimeRange{})
+			c, err := NewClient(context.Background(), httpclient.NewProvider(), ds, &backend.DataQuery{})
 			require.NoError(t, err)
 			assert.Equal(t, "2.0.0", c.GetVersion().String())
 		})
@@ -74,7 +73,7 @@ func TestNewClient(t *testing.T) {
 				}),
 			}
 
-			c, err := NewClient(context.Background(), httpclient.NewProvider(), ds, plugins.DataTimeRange{})
+			c, err := NewClient(context.Background(), httpclient.NewProvider(), ds, &backend.DataQuery{})
 			require.NoError(t, err)
 			assert.Equal(t, "5.0.0", c.GetVersion().String())
 		})
@@ -87,7 +86,7 @@ func TestNewClient(t *testing.T) {
 				}),
 			}
 
-			c, err := NewClient(context.Background(), httpclient.NewProvider(), ds, plugins.DataTimeRange{})
+			c, err := NewClient(context.Background(), httpclient.NewProvider(), ds, &backend.DataQuery{})
 			require.NoError(t, err)
 			assert.Equal(t, "5.6.0", c.GetVersion().String())
 		})
@@ -100,7 +99,7 @@ func TestNewClient(t *testing.T) {
 				}),
 			}
 
-			c, err := NewClient(context.Background(), httpclient.NewProvider(), ds, plugins.DataTimeRange{})
+			c, err := NewClient(context.Background(), httpclient.NewProvider(), ds, &backend.DataQuery{})
 			require.NoError(t, err)
 			assert.Equal(t, "6.0.0", c.GetVersion().String())
 		})
@@ -113,7 +112,7 @@ func TestNewClient(t *testing.T) {
 				}),
 			}
 
-			c, err := NewClient(context.Background(), httpclient.NewProvider(), ds, plugins.DataTimeRange{})
+			c, err := NewClient(context.Background(), httpclient.NewProvider(), ds, &backend.DataQuery{})
 			require.NoError(t, err)
 			assert.Equal(t, "7.0.0", c.GetVersion().String())
 		})
@@ -128,7 +127,7 @@ func TestNewClient(t *testing.T) {
 			}),
 		}
 
-		c, err := NewClient(context.Background(), httpclient.NewProvider(), ds, plugins.DataTimeRange{})
+		c, err := NewClient(context.Background(), httpclient.NewProvider(), ds, &backend.DataQuery{})
 		require.NoError(t, err)
 		assert.Equal(t, version, c.GetVersion().String())
 	})
@@ -142,7 +141,7 @@ func TestNewClient(t *testing.T) {
 			}),
 		}
 
-		_, err := NewClient(context.Background(), httpclient.NewProvider(), ds, plugins.DataTimeRange{})
+		_, err := NewClient(context.Background(), httpclient.NewProvider(), ds, &backend.DataQuery{})
 		require.Error(t, err)
 	})
 }
@@ -405,11 +404,15 @@ func httpClientScenario(t *testing.T, desc string, ds *models.DataSource, fn sce
 
 		from := time.Date(2018, 5, 15, 17, 50, 0, 0, time.UTC)
 		to := time.Date(2018, 5, 15, 17, 55, 0, 0, time.UTC)
-		fromStr := fmt.Sprintf("%d", from.UnixNano()/int64(time.Millisecond))
-		toStr := fmt.Sprintf("%d", to.UnixNano()/int64(time.Millisecond))
-		timeRange := plugins.NewDataTimeRange(fromStr, toStr)
+		timeRange := backend.TimeRange{
+			From: from,
+			To:   to,
+		}
+		dataQuery := backend.DataQuery{
+			TimeRange: timeRange,
+		}
 
-		c, err := NewClient(context.Background(), httpclient.NewProvider(), ds, timeRange)
+		c, err := NewClient(context.Background(), httpclient.NewProvider(), ds, &dataQuery)
 		require.NoError(t, err)
 		require.NotNil(t, c)
 		sc.client = c

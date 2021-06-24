@@ -1,17 +1,17 @@
 package elasticsearch
 
 import (
+	"encoding/json"
 	"fmt"
 	"testing"
 	"time"
 
 	"github.com/Masterminds/semver"
-	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	es "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client"
 	"github.com/grafana/grafana/pkg/tsdb/interval"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -940,12 +940,12 @@ func TestSettingsCasting(t *testing.T) {
 			_, err := executeTsdbQuery(c, `{
 				"timeField": "@timestamp",
 				"bucketAggs": [
-					{ 
+					{
 						"type": "date_histogram",
 						"field": "@timestamp",
 						"id": "2",
 						"settings": {
-							"min_doc_count": "1" 
+							"min_doc_count": "1"
 						}
 					}
 				],
@@ -975,7 +975,7 @@ func TestSettingsCasting(t *testing.T) {
 			_, err := executeTsdbQuery(c, `{
 				"timeField": "@timestamp",
 				"bucketAggs": [
-					{ 
+					{
 						"type": "date_histogram",
 						"field": "@timestamp",
 						"id": "2",
@@ -1059,7 +1059,7 @@ func TestSettingsCasting(t *testing.T) {
 							"script": "my_script"
 						}
 					},
-					{ 
+					{
 						"id": "3",
 						"type": "avg",
 						"settings": {
@@ -1126,15 +1126,11 @@ func (c *fakeClient) MultiSearch() *es.MultiSearchRequestBuilder {
 	return c.builder
 }
 
-func newDataQuery(body string) (plugins.DataQuery, error) {
-	json, err := simplejson.NewJson([]byte(body))
-	if err != nil {
-		return plugins.DataQuery{}, err
-	}
-	return plugins.DataQuery{
-		Queries: []plugins.DataSubQuery{
+func newDataQuery(body string) (backend.QueryDataRequest, error) {
+	return backend.QueryDataRequest{
+		Queries: []backend.DataQuery{
 			{
-				Model: json,
+				JSON: json.RawMessage(body),
 			},
 		},
 	}, nil
@@ -1142,23 +1138,20 @@ func newDataQuery(body string) (plugins.DataQuery, error) {
 
 // nolint:staticcheck // plugins.DataQueryResult deprecated
 func executeTsdbQuery(c es.Client, body string, from, to time.Time, minInterval time.Duration) (
-	plugins.DataResponse, error) {
-	json, err := simplejson.NewJson([]byte(body))
-	if err != nil {
-		return plugins.DataResponse{}, err
+	*backend.QueryDataResponse, error) {
+	timeRange := backend.TimeRange{
+		From: from,
+		To:   to,
 	}
-	fromStr := fmt.Sprintf("%d", from.UnixNano()/int64(time.Millisecond))
-	toStr := fmt.Sprintf("%d", to.UnixNano()/int64(time.Millisecond))
-	timeRange := plugins.NewDataTimeRange(fromStr, toStr)
-	tsdbQuery := plugins.DataQuery{
-		Queries: []plugins.DataSubQuery{
+	dataRequest := backend.QueryDataRequest{
+		Queries: []backend.DataQuery{
 			{
-				Model: json,
+				JSON:      json.RawMessage(body),
+				TimeRange: timeRange,
 			},
 		},
-		TimeRange: &timeRange,
 	}
-	query := newTimeSeriesQuery(c, tsdbQuery, interval.NewCalculator(interval.CalculatorOptions{MinInterval: minInterval}))
+	query := newTimeSeriesQuery(c, dataRequest.Queries, interval.NewCalculator(interval.CalculatorOptions{MinInterval: minInterval}))
 	return query.execute()
 }
 
@@ -1217,9 +1210,9 @@ func TestTimeSeriesQueryParser(t *testing.T) {
 					}
 				]
 			}`
-			tsdbQuery, err := newDataQuery(body)
+			dataQuery, err := newDataQuery(body)
 			So(err, ShouldBeNil)
-			queries, err := p.parse(tsdbQuery)
+			queries, err := p.parse(dataQuery.Queries)
 			So(err, ShouldBeNil)
 			So(queries, ShouldHaveLength, 1)
 

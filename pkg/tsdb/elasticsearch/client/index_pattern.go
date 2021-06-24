@@ -2,11 +2,10 @@ package es
 
 import (
 	"fmt"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"regexp"
 	"strings"
 	"time"
-
-	"github.com/grafana/grafana/pkg/plugins"
 )
 
 const (
@@ -19,7 +18,7 @@ const (
 )
 
 type indexPattern interface {
-	GetIndices(timeRange plugins.DataTimeRange) ([]string, error)
+	GetIndices(timeRange backend.TimeRange) ([]string, error)
 }
 
 var newIndexPattern = func(interval string, pattern string) (indexPattern, error) {
@@ -34,7 +33,7 @@ type staticIndexPattern struct {
 	indexName string
 }
 
-func (ip *staticIndexPattern) GetIndices(timeRange plugins.DataTimeRange) ([]string, error) {
+func (ip *staticIndexPattern) GetIndices(timeRange backend.TimeRange) ([]string, error) {
 	return []string{ip.indexName}, nil
 }
 
@@ -73,9 +72,9 @@ func newDynamicIndexPattern(interval, pattern string) (*dynamicIndexPattern, err
 	}, nil
 }
 
-func (ip *dynamicIndexPattern) GetIndices(timeRange plugins.DataTimeRange) ([]string, error) {
-	from := timeRange.GetFromAsTimeUTC()
-	to := timeRange.GetToAsTimeUTC()
+func (ip *dynamicIndexPattern) GetIndices(timeRange backend.TimeRange) ([]string, error) {
+	from := timeRange.From.UTC()
+	to := timeRange.To.UTC()
 	intervals := ip.intervalGenerator.Generate(from, to)
 	indices := make([]string, 0)
 

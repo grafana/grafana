@@ -12,7 +12,7 @@ import (
 )
 
 var (
-	defaultRes         int64 = 1500
+	DefaultRes         int64 = 1500
 	defaultMinInterval       = time.Millisecond * 1
 	year                     = time.Hour * 24 * 365
 	day                      = time.Hour * 24
@@ -56,13 +56,13 @@ func (i *Interval) Milliseconds() int64 {
 func (ic *intervalCalculator) Calculate(timerange plugins.DataTimeRange, minInterval time.Duration) Interval {
 	to := timerange.MustGetTo().UnixNano()
 	from := timerange.MustGetFrom().UnixNano()
-	interval := time.Duration((to - from) / defaultRes)
+	interval := time.Duration((to - from) / DefaultRes)
 
 	if interval < minInterval {
 		return Interval{Text: FormatDuration(minInterval), Value: minInterval}
 	}
 
-	rounded := roundInterval(interval)
+	rounded := RoundInterval(interval)
 	return Interval{Text: FormatDuration(rounded), Value: rounded}
 }
 
@@ -135,7 +135,7 @@ func FormatDuration(inter time.Duration) string {
 }
 
 //nolint: gocyclo
-func roundInterval(interval time.Duration) time.Duration {
+func RoundInterval(interval time.Duration) time.Duration {
 	switch {
 	// 0.015s
 	case interval <= 15*time.Millisecond:
