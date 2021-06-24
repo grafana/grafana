@@ -2,12 +2,10 @@ package live
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -26,10 +24,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/live/database"
 	"github.com/grafana/grafana/pkg/services/live/features"
 	"github.com/grafana/grafana/pkg/services/live/livecontext"
+	"github.com/grafana/grafana/pkg/services/live/liveplugin"
 	"github.com/grafana/grafana/pkg/services/live/managedstream"
 	"github.com/grafana/grafana/pkg/services/live/orgchannel"
 	"github.com/grafana/grafana/pkg/services/live/pushws"
 	"github.com/grafana/grafana/pkg/services/live/runstream"
+	"github.com/grafana/grafana/pkg/services/live/survey"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
@@ -38,8 +38,8 @@ import (
 
 	"github.com/centrifugal/centrifuge"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/live"
+	"gopkg.in/redis.v5"
 )
 
 var (
@@ -84,7 +84,8 @@ type GrafanaLive struct {
 	DatasourceCache       datasources.CacheService `inject:""`
 	SQLStore              *sqlstore.SQLStore       `inject:""`
 
-	node *centrifuge.Node
+	node         *centrifuge.Node
+	surveyCaller *survey.Caller
 
 	// Websocket handlers
 	websocketHandler     interface{}
@@ -99,7 +100,7 @@ type GrafanaLive struct {
 
 	ManagedStreamRunner *managedstream.Runner
 
-	contextGetter    *pluginContextGetter
+	contextGetter    *liveplugin.ContextGetter
 	runStreamManager *runstream.Manager
 	storage          *database.Storage
 }
@@ -128,17 +129,22 @@ func (g *GrafanaLive) AddMigration(mg *migrator.Migrator) {
 func (g *GrafanaLive) Run(ctx context.Context) error {
 	if g.runStreamManager != nil {
 		// Only run stream manager if GrafanaLive properly initialized.
-		return g.runStreamManager.Run(ctx)
+		_ = g.runStreamManager.Run(ctx)
+		return g.node.Shutdown(context.Background())
 	}
 	return nil
 }
 
 var clientConcurrency = 8
 
+func (g *GrafanaLive) IsHA() bool {
+	return g.Cfg != nil && g.Cfg.LiveHAEngine != ""
+}
+
 // Init initializes Live service.
 // Required to implement the registry.Service interface.
 func (g *GrafanaLive) Init() error {
-	logger.Debug("GrafanaLive initialization")
+	logger.Debug("GrafanaLive initialization", "ha", g.IsHA())
 
 	// We use default config here as starting point. Default config contains
 	// reasonable values for available options.
@@ -158,10 +164,57 @@ func (g *GrafanaLive) Init() error {
 	}
 	g.node = node
 
-	g.contextGetter = newPluginContextGetter(g.PluginContextProvider)
-	channelSender := newPluginChannelSender(node)
-	presenceGetter := newPluginPresenceGetter(node)
-	g.runStreamManager = runstream.NewManager(channelSender, presenceGetter, g.contextGetter)
+	if g.IsHA() {
+		// Configure HA with Redis. In this case Centrifuge nodes
+		// will be connected over Redis PUB/SUB. Presence will work
+		// globally since kept inside Redis.
+		redisAddress := g.Cfg.LiveHAEngineAddress
+		redisShardConfigs := []centrifuge.RedisShardConfig{
+			{Address: redisAddress},
+		}
+		var redisShards []*centrifuge.RedisShard
+		for _, redisConf := range redisShardConfigs {
+			redisShard, err := centrifuge.NewRedisShard(node, redisConf)
+			if err != nil {
+				return fmt.Errorf("error connecting to Live Redis: %v", err)
+			}
+			redisShards = append(redisShards, redisShard)
+		}
+
+		broker, err := centrifuge.NewRedisBroker(node, centrifuge.RedisBrokerConfig{
+			Prefix: "gf_live",
+
+			// We are using Redis streams here for history. Require Redis >= 5.
+			UseStreams: true,
+
+			// Use reasonably large expiration interval for stream meta key,
+			// much bigger than maximum HistoryLifetime value in Node config.
+			// This way stream meta data will expire, in some cases you may want
+			// to prevent its expiration setting this to zero value.
+			HistoryMetaTTL: 7 * 24 * time.Hour,
+
+			// And configure a couple of shards to use.
+			Shards: redisShards,
+		})
+		if err != nil {
+			return fmt.Errorf("error creating Live Redis broker: %v", err)
+		}
+		node.SetBroker(broker)
+
+		presenceManager, err := centrifuge.NewRedisPresenceManager(node, centrifuge.RedisPresenceManagerConfig{
+			Prefix: "gf_live",
+			Shards: redisShards,
+		})
+		if err != nil {
+			return fmt.Errorf("error creating Live Redis presence manager: %v", err)
+		}
+		node.SetPresenceManager(presenceManager)
+	}
+
+	g.contextGetter = liveplugin.NewContextGetter(g.PluginContextProvider)
+	channelLocalPublisher := liveplugin.NewChannelLocalPublisher(node)
+	numLocalSubscribersGetter := liveplugin.NewNumLocalSubscribersGetter(node)
+	g.runStreamManager = runstream.NewManager(channelLocalPublisher, numLocalSubscribersGetter, g.contextGetter)
 
 	// Initialize the main features
 	dash := &features.DashboardHandler{
@@ -173,7 +226,32 @@ func (g *GrafanaLive) Init() error {
 	g.GrafanaScope.Features["dashboard"] = dash
 	g.GrafanaScope.Features["broadcast"] = features.NewBroadcastRunner(g.storage)
 
-	g.ManagedStreamRunner = managedstream.NewRunner(g.Publish)
+	var managedStreamRunner *managedstream.Runner
+	if g.IsHA() {
+		redisClient := redis.NewClient(&redis.Options{
+			Addr: g.Cfg.LiveHAEngineAddress,
+		})
+		cmd := redisClient.Ping()
+		if _, err := cmd.Result(); err != nil {
+			return fmt.Errorf("error pinging Redis: %v", err)
+		}
+		managedStreamRunner = managedstream.NewRunner(
+			g.Publish,
+			managedstream.NewRedisFrameCache(redisClient),
+		)
+	} else {
+		managedStreamRunner = managedstream.NewRunner(
+			g.Publish,
+			managedstream.NewMemoryFrameCache(),
+		)
+	}
+
+	g.ManagedStreamRunner = managedStreamRunner
+	g.surveyCaller = survey.NewCaller(managedStreamRunner, node)
+	err = g.surveyCaller.SetupHandlers()
+	if err != nil {
+		return err
+	}
 
 	// Set ConnectHandler called when client successfully connected to Node. Your code
 	// inside handler must be synchronized since it will be called concurrently from
@@ -222,6 +300,9 @@ func (g *GrafanaLive) Init() error {
 			reason := "normal"
 			if e.Disconnect != nil {
 				reason = e.Disconnect.Reason
+				if e.Disconnect.Code == 3001 { // Shutdown
+					return
+				}
 			}
 			logger.Debug("Client disconnected", "user", client.UserID(), "client", client.ID(), "reason", reason, "elapsed", time.Since(connectedAt))
 		})
@@ -581,14 +662,7 @@ func (g *GrafanaLive) handleStreamScope(u *models.SignedInUser, namespace string
 func (g *GrafanaLive) handleDatasourceScope(user *models.SignedInUser, namespace string) (models.ChannelHandlerFactory, error) {
 	ds, err := g.DatasourceCache.GetDatasourceByUID(namespace, user, false)
 	if err != nil {
-		// the namespace may be an ID
-		id, _ := strconv.ParseInt(namespace, 10, 64)
-		if id > 0 {
-			ds, err = g.DatasourceCache.GetDatasource(id, user, false)
-		}
-		if err != nil {
-			return nil, fmt.Errorf("error getting datasource: %w", err)
-		}
+		return nil, fmt.Errorf("error getting datasource: %w", err)
 	}
 	streamHandler, err := g.getStreamPlugin(ds.Type)
 	if err != nil {
@@ -603,13 +677,13 @@ func (g *GrafanaLive) handleDatasourceScope(user *models.SignedInUser, namespace
 	), nil
 }
 
-// Publish sends the data to the channel without checking permissions etc
+// Publish sends the data to the channel without checking permissions etc.
 func (g *GrafanaLive) Publish(orgID int64, channel string, data []byte) error {
 	_, err := g.node.Publish(orgchannel.PrependOrgID(orgID, channel), data)
 	return err
 }
 
-// ClientCount returns the number of clients
+// ClientCount returns the number of clients.
 func (g *GrafanaLive) ClientCount(orgID int64, channel string) (int, error) {
 	p, err := g.node.Presence(orgchannel.PrependOrgID(orgID, channel))
 	if err != nil {
@@ -652,35 +726,25 @@ func (g *GrafanaLive) HandleHTTPPublish(ctx *models.ReqContext, cmd dtos.LivePub
 	return response.JSON(http.StatusOK, dtos.LivePublishResponse{})
 }
 
+type streamChannelListResponse struct {
+	Channels []*managedstream.ManagedChannel `json:"channels"`
+}
+
 // HandleListHTTP returns metadata so the UI can build a nice form
 func (g *GrafanaLive) HandleListHTTP(c *models.ReqContext) response.Response {
-	info := util.DynMap{}
-	channels := make([]util.DynMap, 0)
-	for k, v := range g.ManagedStreamRunner.Streams(c.SignedInUser.OrgId) {
-		channels = append(channels, v.ListChannels(c.SignedInUser.OrgId, "stream/"+k+"/")...)
+	var channels []*managedstream.ManagedChannel
+	var err error
+	if g.IsHA() {
+		channels, err = g.surveyCaller.CallManagedStreams(c.SignedInUser.OrgId)
+	} else {
+		channels, err = g.ManagedStreamRunner.GetManagedChannels(c.SignedInUser.OrgId)
 	}
-
-	// Hardcode sample streams
-	frameJSON, err := data.FrameToJSON(data.NewFrame("testdata",
-		data.NewField("Time", nil, make([]time.Time, 0)),
-		data.NewField("Value", nil, make([]float64, 0)),
-		data.NewField("Min", nil, make([]float64, 0)),
-		data.NewField("Max", nil, make([]float64, 0)),
-	), data.IncludeSchemaOnly)
-	if err == nil {
-		channels = append(channels, util.DynMap{
-			"channel": "plugin/testdata/random-2s-stream",
-			"data":    json.RawMessage(frameJSON),
-		}, util.DynMap{
-			"channel": "plugin/testdata/random-flakey-stream",
-			"data":    json.RawMessage(frameJSON),
-		}, util.DynMap{
-			"channel": "plugin/testdata/random-20Hz-stream",
-			"data":    json.RawMessage(frameJSON),
-		})
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, http.StatusText(http.StatusInternalServerError), err)
 	}
-
-	info["channels"] = channels
+	info := streamChannelListResponse{
+		Channels: channels,
+	}
 	return response.JSONStreaming(200, info)
 }
 
@@ -695,4 +759,28 @@ func (g *GrafanaLive) HandleInfoHTTP(ctx *models.ReqContext) response.Response {
 	return response.JSONStreaming(404, util.DynMap{
 		"message": "Info is not supported for this channel",
 	})
+}
+
+// Write to the standard log15 logger
+func handleLog(msg centrifuge.LogEntry) {
+	arr := make([]interface{}, 0)
+	for k, v := range msg.Fields {
+		if v == nil {
+			v = "<nil>"
+		} else if v == "" {
+			v = "<empty>"
+		}
+		arr = append(arr, k, v)
+	}
+
+	switch msg.Level {
+	case centrifuge.LogLevelDebug:
+		loggerCF.Debug(msg.Message, arr...)
+	case centrifuge.LogLevelError:
+		loggerCF.Error(msg.Message, arr...)
+	case centrifuge.LogLevelInfo:
+		loggerCF.Info(msg.Message, arr...)
+	default:
+		loggerCF.Debug(msg.Message, arr...)
+	}
 }
