@@ -410,13 +410,12 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
       end: 0,
     };
     const range = Math.ceil(end - start);
-
+    // target.stepOption specifies whether to use min, max or exact step
     const stepOption = target.stepOption || 0;
-
     // options.interval is the dynamically calculated interval
     let interval: number = rangeUtil.intervalToSeconds(options.interval);
     // Minimum interval ("Min step"), if specified for the query, or same as interval otherwise.
-    const minInterval = rangeUtil.intervalToSeconds(
+    const stepInterval = rangeUtil.intervalToSeconds(
       this.templateSrv.replace(target.interval || options.interval, options.scopedVars)
     );
     // Scrape interval as specified for the query ("Min step") or otherwise taken from the datasource.
@@ -427,7 +426,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
 
     const intervalFactor = target.intervalFactor || 1;
     // Adjust the interval to take into account any specified minimum and interval factor plus Prometheus limits
-    const adjustedInterval = this.adjustInterval(interval, minInterval, range, intervalFactor, stepOption);
+    const adjustedInterval = this.adjustInterval(interval, stepInterval, range, intervalFactor, stepOption);
     let scopedVars = {
       ...options.scopedVars,
       ...this.getRangeScopedVars(options.range),
@@ -480,7 +479,13 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     return { __rate_interval: { text: rateInterval + 's', value: rateInterval + 's' } };
   }
 
-  adjustInterval(interval: number, minInterval: number, range: number, intervalFactor: number, stepOption: number) {
+  adjustInterval(
+    dynamicInterval: number,
+    stepInterval: number,
+    range: number,
+    intervalFactor: number,
+    stepOption: number
+  ) {
     // Prometheus will drop queries that might return more than 11000 data points.
     // Calculate a safe interval as an additional minimum to take into account.
     // Fractional safeIntervals are allowed, however serve little purpose if the interval is greater than 1
@@ -489,14 +494,14 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     if (safeInterval > 1) {
       safeInterval = Math.ceil(safeInterval);
     }
-    console.log(interval * intervalFactor, minInterval);
-    let adjustedInterval = Math.max(interval * intervalFactor, minInterval, safeInterval);
+
+    let adjustedInterval = Math.max(dynamicInterval * intervalFactor, stepInterval, safeInterval);
     if (stepOption === 0) {
       // min step
-      adjustedInterval = Math.max(interval * intervalFactor, minInterval, safeInterval);
+      adjustedInterval = Math.max(dynamicInterval * intervalFactor, stepInterval, safeInterval);
     } else if (stepOption === 2) {
       // max step
-      adjustedInterval = Math.min(interval * intervalFactor, minInterval);
+      adjustedInterval = Math.min(dynamicInterval * intervalFactor, stepInterval);
     }
     return adjustedInterval;
   }
