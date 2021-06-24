@@ -226,7 +226,15 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
 
       // Calculate final labels positions according to unified text size
       const textMeasurement = measureText(label.formattedValue, fontSize * devicePixelRatio);
-      const actualLineHeight = textMeasurement.actualBoundingBoxAscent + textMeasurement.actualBoundingBoxDescent;
+
+      let actualLineHeight = textMeasurement.actualBoundingBoxAscent + textMeasurement.actualBoundingBoxDescent;
+
+      // fontBoundingBoxAscent is only supported in chrome & safari at the moment. (see: https://caniuse.com/?search=fontBoundingBoxAscent)
+      // @ts-ignore
+      if (textMeasurement.fontBoundingBoxAscent && textMeasurement.fontBoundingBoxDescent) {
+        // @ts-ignore
+        actualLineHeight = textMeasurement.fontBoundingBoxAscent + textMeasurement.fontBoundingBoxDescent;
+      }
 
       if (ori === ScaleOrientation.Horizontal) {
         x = label.x + label.barWidth / 2;
