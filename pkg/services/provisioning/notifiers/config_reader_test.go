@@ -27,17 +27,18 @@ var (
 	unknownNotifier              = "./testdata/test-configs/unknown-notifier"
 )
 
+func resetSQLStore(t *testing.T) {
+	sqlstore.InitTestDB(t)
+	for i := 1; i < 5; i++ {
+		orgCommand := models.CreateOrgCommand{Name: fmt.Sprintf("Main Org. %v", i)}
+		err := sqlstore.CreateOrg(&orgCommand)
+		require.NoError(t, err)
+	}
+}
+
 func TestNotificationAsConfig(t *testing.T) {
 	logger := log.New("fake.log")
-
 	t.Run("Testing notification as configuration", func(t *testing.T) {
-		sqlstore.InitTestDB(t)
-
-		for i := 1; i < 5; i++ {
-			orgCommand := models.CreateOrgCommand{Name: fmt.Sprintf("Main Org. %v", i)}
-			err := sqlstore.CreateOrg(&orgCommand)
-			require.NoError(t, err)
-		}
 
 		alerting.RegisterNotifier(&alerting.NotifierPlugin{
 			Type:    "slack",
@@ -52,6 +53,7 @@ func TestNotificationAsConfig(t *testing.T) {
 		})
 
 		t.Run("Can read correct properties", func(t *testing.T) {
+			resetSQLStore(t)
 			_ = os.Setenv("TEST_VAR", "default")
 			cfgProvider := &configReader{log: log.New("test logger")}
 			cfg, err := cfgProvider.readConfig(correctProperties)
@@ -90,7 +92,7 @@ func TestNotificationAsConfig(t *testing.T) {
 			nt = nts[2]
 			require.Equal(t, "check-unset-is_default-is-false", nt.Name)
 			require.Equal(t, "slack", nt.Type)
-			require.Equal(t, 3, nt.OrgID)
+			require.Equal(t, int64(3), nt.OrgID)
 			require.Equal(t, "notifier3", nt.UID)
 			require.False(t, nt.IsDefault)
 
@@ -98,7 +100,7 @@ func TestNotificationAsConfig(t *testing.T) {
 			require.Equal(t, "Added notification with whitespaces in name", nt.Name)
 			require.Equal(t, "email", nt.Type)
 			require.Equal(t, "notifier4", nt.UID)
-			require.Equal(t, 3, nt.OrgID)
+			require.Equal(t, int64(3), nt.OrgID)
 
 			deleteNts := ntCfg.DeleteNotifications
 			require.Equal(t, 4, len(deleteNts))
@@ -106,26 +108,27 @@ func TestNotificationAsConfig(t *testing.T) {
 			deleteNt := deleteNts[0]
 			require.Equal(t, "default-slack-notification", deleteNt.Name)
 			require.Equal(t, "notifier1", deleteNt.UID)
-			require.Equal(t, 2, deleteNt.OrgID)
+			require.Equal(t, int64(2), deleteNt.OrgID)
 
 			deleteNt = deleteNts[1]
 			require.Equal(t, "deleted-notification-without-orgId", deleteNt.Name)
-			require.Equal(t, 1, deleteNt.OrgID)
+			require.Equal(t, int64(1), deleteNt.OrgID)
 			require.Equal(t, "notifier2", deleteNt.UID)
 
 			deleteNt = deleteNts[2]
 			require.Equal(t, "deleted-notification-with-0-orgId", deleteNt.Name)
-			require.Equal(t, 1, deleteNt.OrgID)
+			require.Equal(t, int64(1), deleteNt.OrgID)
 			require.Equal(t, "notifier3", deleteNt.UID)
 
 			deleteNt = deleteNts[3]
 			require.Equal(t, "Deleted notification with whitespaces in name", deleteNt.Name)
-			require.Equal(t, 1, deleteNt.OrgID)
+			require.Equal(t, int64(1), deleteNt.OrgID)
 			require.Equal(t, "notifier4", deleteNt.UID)
 		})
 
 		t.Run("One configured notification", func(t *testing.T) {
 			t.Run("no notification in database", func(t *testing.T) {
+				resetSQLStore(t)
 				dc := newNotificationProvisioner(logger)
 				err := dc.applyChanges(twoNotificationsConfig)
 				if err != nil {
@@ -139,6 +142,7 @@ func TestNotificationAsConfig(t *testing.T) {
 			})
 
 			t.Run("One notification in database with same name and uid", func(t *testing.T) {
+				resetSQLStore(t)
 				existingNotificationCmd := models.CreateAlertNotificationCommand{
 					Name:  "channel1",
 					OrgId: 1,
@@ -178,6 +182,7 @@ func TestNotificationAsConfig(t *testing.T) {
 				})
 			})
 			t.Run("Two notifications with is_default", func(t *testing.T) {
+				resetSQLStore(t)
 				dc := newNotificationProvisioner(logger)
 				err := dc.applyChanges(doubleNotificationsConfig)
 				t.Run("should both be inserted", func(t *testing.T) {
@@ -196,6 +201,7 @@ func TestNotificationAsConfig(t *testing.T) {
 
 		t.Run("Two configured notification", func(t *testing.T) {
 			t.Run("two other notifications in database", func(t *testing.T) {
+				resetSQLStore(t)
 				existingNotificationCmd := models.CreateAlertNotificationCommand{
 					Name:  "channel0",
 					OrgId: 1,
@@ -284,6 +290,7 @@ func TestNotificationAsConfig(t *testing.T) {
 
 		t.Run("Empty yaml file", func(t *testing.T) {
 			t.Run("should have not changed repo", func(t *testing.T) {
+				resetSQLStore(t)
 				dc := newNotificationProvisioner(logger)
 				err := dc.applyChanges(emptyFile)
 				if err != nil {
