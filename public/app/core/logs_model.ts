@@ -359,6 +359,7 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
       const hasUnescapedContent = !!message.match(/\\n|\\t|\\r/);
 
       const searchWords = series.meta && series.meta.searchWords ? series.meta.searchWords : [];
+      const entry = hasAnsi ? ansicolor.strip(message) : message;
 
       let logLevel = LogLevel.unknown;
       if (logLevelField && logLevelField.values.get(j)) {
@@ -366,7 +367,7 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
       } else if (seriesLogLevel) {
         logLevel = seriesLogLevel;
       } else {
-        logLevel = getLogLevel(message);
+        logLevel = getLogLevel(entry);
       }
       rows.push({
         entryFieldIndex: stringField.index,
@@ -382,7 +383,7 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
         hasAnsi,
         hasUnescapedContent,
         searchWords,
-        entry: hasAnsi ? ansicolor.strip(message) : message,
+        entry,
         raw: message,
         labels: stringField.labels || {},
         uid: idField ? idField.values.get(j) : j.toString(),

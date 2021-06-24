@@ -33,7 +33,7 @@ describe('AzureLogAnalyticsDatasource', () => {
 
   beforeEach(() => {
     ctx.instanceSettings = {
-      jsonData: { logAnalyticsSubscriptionId: 'xxx', azureLogAnalyticsSameAs: false },
+      jsonData: { subscriptionId: 'xxx' },
       url: 'http://azureloganalyticsapi',
     };
 
@@ -93,7 +93,7 @@ describe('AzureLogAnalyticsDatasource', () => {
     it('should use the loganalyticsazure plugin route', async () => {
       await ctx.ds.metricFindQuery('workspace("aworkspace").AzureActivity  | distinct Category');
 
-      expect(workspacesUrl).toContain('workspacesloganalytics');
+      expect(workspacesUrl).toContain('azuremonitor');
       expect(azureLogAnalyticsUrl).toContain('loganalyticsazure');
     });
   });
