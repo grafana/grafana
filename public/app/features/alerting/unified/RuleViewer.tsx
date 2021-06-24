@@ -97,7 +97,7 @@ export function RuleViewer({ match }: RuleViewerProps) {
       </RuleViewerLayout>
     );
   }
-
+  const annotations = Object.entries(rule.annotations).filter(([_, value]) => !!value.trim());
   return (
     <RuleViewerLayout wrapInContent={false}>
       <RuleViewerLayoutContent>
@@ -120,8 +120,8 @@ export function RuleViewer({ match }: RuleViewerProps) {
                 <AlertLabels labels={rule.labels} />
               </DetailsField>
             )}
-            <RuleDetailsExpression rulesSource={rulesSource} rule={rule} />
-            <RuleDetailsAnnotations rule={rule} />
+            <RuleDetailsExpression rulesSource={rulesSource} rule={rule} annotations={annotations} />
+            <RuleDetailsAnnotations annotations={annotations} />
           </div>
           <div className={styles.rightSide}>
             <RuleDetailsDataSources rule={rule} rulesSource={rulesSource} />
