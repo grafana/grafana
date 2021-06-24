@@ -163,6 +163,9 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *A
 	azlog.Debug("AzureLogAnalytics", "Request ApiURL", req.URL.String())
 	res, err := ctxhttp.Do(ctx, dsInfo.Services[azureLogAnalytics].HTTPClient, req)
 	if err != nil {
+		if !dsInfo.Settings.AzureLogAnalyticsSameAs {
+			return dataResponseErrorWithExecuted(fmt.Errorf("Log analytics credentials are not being used. Go to the data source configuration to update it. Got error %v", err))
+		}
 		return dataResponseErrorWithExecuted(err)
 	}
 
@@ -206,6 +209,11 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *A
 			}
 		}
 	}
+
+	if !dsInfo.Settings.AzureLogAnalyticsSameAs {
+		frame.AppendNotices(data.Notice{Severity: data.NoticeSeverityWarning, Text: "Log analytics credentials are not being used. Go to the data source configuration to update it."})
+	}
+
 	dataResponse.Frames = data.Frames{frame}
 	return dataResponse
 }
