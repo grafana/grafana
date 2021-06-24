@@ -33,9 +33,10 @@ func newTimeSeriesPointsFromArgs(values ...float64) plugins.DataTimeSeriesPoints
 
 func TestQueryCondition(t *testing.T) {
 	t.Run("when evaluating query condition", func(t *testing.T) {
-		queryConditionScenario("Given avg() and > 100", func(ctx *queryConditionTestContext) {
+		queryConditionScenario("Given avg() and > 100", t, func(ctx *queryConditionTestContext) {
 			ctx.reducer = `{"type": "avg"}`
 			ctx.evaluator = `{"type": "gt", "params": [100]}`
+			ctx.tctx = t
 
 			t.Run("Can read query condition from json model", func(t *testing.T) {
 				_, err := ctx.exec()
@@ -184,6 +185,7 @@ type queryConditionTestContext struct {
 	frame     *data.Frame
 	result    *alerting.EvalContext
 	condition *QueryCondition
+	tctx      *testing.T
 }
 
 type queryConditionScenarioFunc func(c *queryConditionTestContext)
@@ -200,10 +202,10 @@ func (ctx *queryConditionTestContext) exec() (*alerting.ConditionResult, error) 
             "reducer":` + ctx.reducer + `,
             "evaluator":` + ctx.evaluator + `
           }`))
-	require.NoError(t, err)
+	require.NoError(ctx.tctx, err)
 
 	condition, err := newQueryCondition(jsonModel, 0)
-	require.NoError(t, err)
+	require.NoError(ctx.tctx, err)
 
 	ctx.condition = condition
 
@@ -238,8 +240,8 @@ func (rh fakeReqHandler) HandleRequest(context.Context, *models.DataSource, plug
 	return rh.response, nil
 }
 
-func queryConditionScenario(desc string, fn queryConditionScenarioFunc) {
-	Convey(desc, func() {
+func queryConditionScenario(desc string, t *testing.T, fn queryConditionScenarioFunc) {
+	t.Run(desc, func(t *testing.T) {
 		bus.AddHandler("test", func(query *models.GetDataSourceQuery) error {
 			query.Result = &models.DataSource{Id: 1, Type: "graphite"}
 			return nil

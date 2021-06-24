@@ -276,7 +276,6 @@ func TestNotificationAsConfig(t *testing.T) {
 			require.Error(t, err)
 
 			errString := err.Error()
-			require.Contains(t, errString)
 			require.Contains(t, errString, "Deleted alert notification item 1 in configuration doesn't contain required field uid")
 			require.Contains(t, errString, "Deleted alert notification item 2 in configuration doesn't contain required field name")
 			require.Contains(t, errString, "Added alert notification item 1 in configuration doesn't contain required field name")

@@ -183,7 +183,7 @@ func TestValues(t *testing.T) {
 					"anchored":  "1",
 				}))
 
-				require.True(t, cmp.Equal(Val.Raw, stringMap{
+				require.True(t, cmp.Equal(d.Val.Raw, stringMap{
 					"one": 1,
 					"two": "$STRING",
 					"three": []interface{}{

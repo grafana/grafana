@@ -9,7 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 )
 
-func evaluatorScenario(json string, reducedValue float64, datapoints ...float64) bool {
+func evaluatorScenario(json string, reducedValue float64, t *testing.T, datapoints ...float64) bool {
 	jsonModel, err := simplejson.NewJson([]byte(json))
 	require.NoError(t, err)
 
@@ -21,32 +21,32 @@ func evaluatorScenario(json string, reducedValue float64, datapoints ...float64)
 
 func TestEvaluators(t *testing.T) {
 	t.Run("greater then", func(t *testing.T) {
-		require.True(t, evaluatorScenario(`{"type": "gt", "params": [1] }`, 3))
-		require.False(t, evaluatorScenario(`{"type": "gt", "params": [3] }`, 1))
+		require.True(t, evaluatorScenario(`{"type": "gt", "params": [1] }`, 3, t))
+		require.False(t, evaluatorScenario(`{"type": "gt", "params": [3] }`, 1, t))
 	})
 
 	t.Run("less then", func(t *testing.T) {
-		require.False(t, evaluatorScenario(`{"type": "lt", "params": [1] }`, 3))
-		require.True(t, evaluatorScenario(`{"type": "lt", "params": [3] }`, 1))
+		require.False(t, evaluatorScenario(`{"type": "lt", "params": [1] }`, 3, t))
+		require.True(t, evaluatorScenario(`{"type": "lt", "params": [3] }`, 1, t))
 	})
 
 	t.Run("within_range", func(t *testing.T) {
-		require.True(t, evaluatorScenario(`{"type": "within_range", "params": [1, 100] }`, 3))
-		require.False(t, evaluatorScenario(`{"type": "within_range", "params": [1, 100] }`, 300))
-		require.True(t, evaluatorScenario(`{"type": "within_range", "params": [100, 1] }`, 3))
-		require.False(t, evaluatorScenario(`{"type": "within_range", "params": [100, 1] }`, 300))
+		require.True(t, evaluatorScenario(`{"type": "within_range", "params": [1, 100] }`, 3, t))
+		require.False(t, evaluatorScenario(`{"type": "within_range", "params": [1, 100] }`, 300, t))
+		require.True(t, evaluatorScenario(`{"type": "within_range", "params": [100, 1] }`, 3, t))
+		require.False(t, evaluatorScenario(`{"type": "within_range", "params": [100, 1] }`, 300, t))
 	})
 
 	t.Run("outside_range", func(t *testing.T) {
-		require.True(t, evaluatorScenario(`{"type": "outside_range", "params": [1, 100] }`, 1000))
-		require.False(t, evaluatorScenario(`{"type": "outside_range", "params": [1, 100] }`, 50))
-		require.True(t, evaluatorScenario(`{"type": "outside_range", "params": [100, 1] }`, 1000))
-		require.False(t, evaluatorScenario(`{"type": "outside_range", "params": [100, 1] }`, 50))
+		require.True(t, evaluatorScenario(`{"type": "outside_range", "params": [1, 100] }`, 1000, t))
+		require.False(t, evaluatorScenario(`{"type": "outside_range", "params": [1, 100] }`, 50, t))
+		require.True(t, evaluatorScenario(`{"type": "outside_range", "params": [100, 1] }`, 1000, t))
+		require.False(t, evaluatorScenario(`{"type": "outside_range", "params": [100, 1] }`, 50, t))
 	})
 
 	t.Run("no_value", func(t *testing.T) {
 		t.Run("should be false if series have values", func(t *testing.T) {
-			require.False(t, evaluatorScenario(`{"type": "no_value", "params": [] }`, 50))
+			require.False(t, evaluatorScenario(`{"type": "no_value", "params": [] }`, 50, t))
 		})
 
 		t.Run("should be true when the series have no value", func(t *testing.T) {
