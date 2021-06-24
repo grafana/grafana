@@ -12,7 +12,7 @@ import (
 )
 
 func TestLiveMessage(t *testing.T) {
-	storage := SetupTestStorage(t)
+	storage := SetupTestMessageStorage(t)
 
 	getQuery := &models.GetLiveMessageQuery{
 		OrgId:   1,

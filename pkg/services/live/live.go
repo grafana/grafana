@@ -177,7 +177,7 @@ func (g *GrafanaLive) Init() error {
 	g.node = node
 
 	g.messageStorage = database.NewMessageStorage(g.SQLStore, g.CacheService)
-	g.channelRuleStorage, err = database.NewChannelStorage(g.SQLStore)
+	g.channelRuleStorage, err = database.NewChannelRuleStorage(g.SQLStore)
 	if err != nil {
 		return err
 	}

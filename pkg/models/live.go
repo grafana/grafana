@@ -8,6 +8,8 @@ import (
 	"errors"
 	"time"
 
+	"github.com/grafana/grafana/pkg/components/securejsondata"
+
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 )
 
@@ -108,6 +110,8 @@ type LiveChannelRulePlainConfig struct {
 	RemoteWriteEnabled bool `json:"remoteWriteEnabled,omitempty"`
 	// RemoteWriteEndpoint to send streaming frames to.
 	RemoteWriteEndpoint string `json:"remoteWriteEndpoint,omitempty"`
+	// RemoteWriteUser is a user for remote write request.
+	RemoteWriteUser string `json:"remoteWriteUser,omitempty"`
 	// RemoteWriteSampleMilliseconds allow setting minimal time before
 	// different remote writes for a channel. 0 means no sampling interval.
 	RemoteWriteSampleMilliseconds int64 `json:"remoteWriteSampleMilliseconds,omitempty"`
@@ -116,8 +120,6 @@ type LiveChannelRulePlainConfig struct {
 var (
 	_ driver.Valuer = LiveChannelRulePlainConfig{}
 	_ sql.Scanner   = &LiveChannelRulePlainConfig{}
-	_ driver.Valuer = LiveChannelRuleSecureConfig{}
-	_ sql.Scanner   = &LiveChannelRuleSecureConfig{}
 )
 
 func (a LiveChannelRulePlainConfig) Value() (driver.Value, error) {
@@ -136,69 +138,20 @@ func (a *LiveChannelRulePlainConfig) Scan(value interface{}) error {
 	return json.Unmarshal([]byte(b), &a)
 }
 
-// LiveChannelRuleSecureConfig contains various channel configuration options
-// which are encrypted in database.
-type LiveChannelRuleSecureConfig struct {
-	// RemoteWriteUser is a user for remote write request.
-	RemoteWriteUser string `json:"remoteWriteUser,omitempty"`
-	// RemoteWritePassword is a password/token for remote write request.
-	RemoteWritePassword string `json:"remoteWritePassword,omitempty"`
-}
-
-func (a LiveChannelRuleSecureConfig) Value() (driver.Value, error) {
-	d, err := json.Marshal(a)
-	if err != nil {
-		return nil, err
-	}
-	return string(d), nil
-}
-
-func (a *LiveChannelRuleSecureConfig) Scan(value interface{}) error {
-	b, ok := value.(string)
-	if !ok {
-		return errors.New("type assertion to string failed")
-	}
-	return json.Unmarshal([]byte(b), &a)
-}
-
 // LiveChannelRule represents channel rules saved in database.
 type LiveChannelRule struct {
-	Id      int64                       `json:"id"`
-	OrgId   int64                       `json:"orgId"`
-	Version int                         `json:"version"`
-	Pattern string                      `json:"pattern"`
-	Created time.Time                   `json:"-"`
-	Updated time.Time                   `json:"-"`
-	Config  LiveChannelRulePlainConfig  `json:"config"`
-	Secure  LiveChannelRuleSecureConfig `json:"secure"`
+	Id      int64                         `json:"id"`
+	OrgId   int64                         `json:"orgId"`
+	Version int                           `json:"version"`
+	Pattern string                        `json:"pattern"`
+	Created time.Time                     `json:"-"`
+	Updated time.Time                     `json:"-"`
+	Config  LiveChannelRulePlainConfig    `json:"config"`
+	Secure  securejsondata.SecureJsonData `json:"secure"`
 }
 
 // Also acts as api DTO.
-type CreateLiveChannelRuleCommand struct {
-	OrgId   int64                       `json:"orgId" binding:"Required"`
-	Pattern string                      `json:"pattern" binding:"Required"`
-	Config  LiveChannelRulePlainConfig  `json:"config" binding:"Required"`
-	Secure  LiveChannelRuleSecureConfig `json:"secure"`
-}
-
-// Also acts as api DTO.
-type UpdateLiveChannelRuleCommand struct {
-	Id      int64                       `json:"id" binding:"Required"`
-	OrgId   int64                       `json:"orgId" binding:"Required"`
-	Version int                         `json:"version"`
-	Pattern string                      `json:"pattern"`
-	Config  LiveChannelRulePlainConfig  `json:"config"`
-	Secure  LiveChannelRuleSecureConfig `json:"secure"`
-}
-
-// Also acts as api DTO.
-type DeleteLiveChannelRuleCommand struct {
-	Id    int64 `json:"id" binding:"Required"`
-	OrgId int64 `json:"orgId"`
-}
-
-// Also acts as api DTO.
-type ListLiveChannelRulesCommand struct {
+type ListLiveChannelRuleCommand struct {
 	OrgId int64 `json:"orgId"`
 }
 
@@ -208,7 +161,32 @@ type GetLiveChannelRuleCommand struct {
 	OrgId int64 `json:"orgId"`
 }
 
+// Also acts as api DTO.
+type CreateLiveChannelRuleCommand struct {
+	OrgId   int64                      `json:"orgId" binding:"Required"`
+	Pattern string                     `json:"pattern" binding:"Required"`
+	Config  LiveChannelRulePlainConfig `json:"config"`
+	Secure  map[string]string          `json:"secure"`
+}
+
+// Also acts as api DTO.
+type UpdateLiveChannelRuleCommand struct {
+	Id      int64                      `json:"id" binding:"Required"`
+	OrgId   int64                      `json:"orgId" binding:"Required"`
+	Version int                        `json:"version"`
+	Pattern string                     `json:"pattern"`
+	Config  LiveChannelRulePlainConfig `json:"config"`
+	Secure  map[string]string          `json:"secure"`
+}
+
+// Also acts as api DTO.
+type DeleteLiveChannelRuleCommand struct {
+	Id    int64 `json:"id" binding:"Required"`
+	OrgId int64 `json:"orgId"`
+}
+
 var (
 	ErrLiveChannelRuleExists             = errors.New("channel rule with the same pattern already exists")
 	ErrLiveChannelRuleUpdatingOldVersion = errors.New("trying to update old version of live channel rule")
+	ErrLiveChannelRuleNotFound           = errors.New("channel rule not found")
 )
