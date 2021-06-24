@@ -87,19 +87,24 @@ function getTimeRangeFromSpan(span: TraceSpan, traceToLogsOptions?: TraceToLogsO
     : span.startTime / 1000;
   const from = dateTime(adjustedStartTime);
   const spanEndMs = (span.startTime + span.duration) / 1000;
-  const adjustedEndTime = traceToLogsOptions?.spanEndTimeShift
+  let adjustedEndTime = traceToLogsOptions?.spanEndTimeShift
     ? spanEndMs + rangeUtil.intervalToMs(traceToLogsOptions.spanEndTimeShift)
     : spanEndMs;
+
+  // Because we can only pass milliseconds in the url we need to round it and check if they equal.
+  // We need end time to be later than start time
+  if (Math.floor(adjustedStartTime) === Math.floor(adjustedEndTime)) {
+    adjustedEndTime++;
+  }
   const to = dateTime(adjustedEndTime);
 
+  // Beware that public/app/features/explore/state/main.ts SplitOpen fn uses the range from here. No matter what is in the url.
   return {
     from,
     to,
-    // Weirdly Explore does not handle ISO string which would have been the default stringification if passed as object
-    // and we have to use this custom format :( .
     raw: {
-      from: from.utc().format('YYYYMMDDTHHmmss'),
-      to: to.utc().format('YYYYMMDDTHHmmss'),
+      from,
+      to,
     },
   };
 }
