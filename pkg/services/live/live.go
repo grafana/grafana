@@ -6,7 +6,9 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -175,15 +177,26 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 		return nil, err
 	}
 
+	appURL, err := url.Parse(g.Cfg.AppURL)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing AppURL %s: %w", g.Cfg.AppURL, err)
+	}
+
 	// Use a pure websocket transport.
 	wsHandler := centrifuge.NewWebsocketHandler(node, centrifuge.WebsocketConfig{
 		ReadBufferSize:  1024,
 		WriteBufferSize: 1024,
+		CheckOrigin: func(r *http.Request) bool {
+			return checkOrigin(r, appURL)
+		},
 	})
 
 	pushWSHandler := pushws.NewHandler(g.ManagedStreamRunner, pushws.Config{
 		ReadBufferSize:  1024,
 		WriteBufferSize: 1024,
+		CheckOrigin: func(r *http.Request) bool {
+			return checkOrigin(r, appURL)
+		},
 	})
 
 	g.websocketHandler = func(ctx *models.ReqContext) {
@@ -284,6 +297,23 @@ func (g *GrafanaLive) Run(ctx context.Context) error {
 		return g.runStreamManager.Run(ctx)
 	}
 	return nil
+}
+
+func checkOrigin(r *http.Request, appURL *url.URL) bool {
+	origin := r.Header.Get("Origin")
+	if origin == "" {
+		return true
+	}
+	originURL, err := url.Parse(origin)
+	if err != nil {
+		logger.Warn("Failed to parse request origin", "error", err, "origin", origin)
+		return false
+	}
+	if !strings.EqualFold(originURL.Scheme, appURL.Scheme) || !strings.EqualFold(originURL.Host, appURL.Host) {
+		logger.Warn("Request Origin is not authorized", "origin", origin, "appUrl", appURL.String())
+		return false
+	}
+	return true
 }
 
 var clientConcurrency = 8

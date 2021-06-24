@@ -83,10 +83,8 @@ type testState struct {
 }
 
 func newTestLive(t *testing.T) *live.GrafanaLive {
-	var err error
-	gLive := live.NewGrafanaLive()
-	gLive.RouteRegister = routing.NewRouteRegister()
-	gLive, err = live.ProvideService(nil, nil, gLive.RouteRegister, nil, nil, nil, nil, sqlstore.InitTestDB(t))
+	cfg := &setting.Cfg{AppURL: "http://localhost:3000/"}
+	gLive, err := live.ProvideService(nil, cfg, routing.NewRouteRegister(), nil, nil, nil, nil, sqlstore.InitTestDB(t))
 	require.NoError(t, err)
 	return gLive
 }

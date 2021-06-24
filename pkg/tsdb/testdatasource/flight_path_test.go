@@ -16,8 +16,8 @@ import (
 
 func TestFlightPathScenario(t *testing.T) {
 	cfg := setting.NewCfg()
-	p := &testDataPlugin{
-		Cfg: cfg,
+	p := &TestDataPlugin{
+		cfg: cfg,
 	}
 
 	t.Run("simple flight", func(t *testing.T) {
