@@ -2,6 +2,7 @@ package alerting
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -15,6 +16,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 
@@ -40,19 +42,22 @@ func TestNotificationChannels(t *testing.T) {
 
 	mockChannel := newMockNotificationChannel(t, grafanaListedAddr)
 	amConfig := getAlertmanagerConfig(mockChannel.server.Addr)
+	mockEmail := &mockEmailHandler{}
 
 	// Overriding some URLs to send to the mock channel.
 	os, opa, ot, opu, ogb, ol, oth := channels.SlackAPIEndpoint, channels.PagerdutyEventAPIURL,
 		channels.TelegramAPIURL, channels.PushoverEndpoint, channels.GetBoundary,
 		channels.LineNotifyURL, channels.ThreemaGwBaseURL
 	originalTemplate := channels.DefaultTemplateString
-	channels.DefaultTemplateString = channels.TemplateForTestsString
+	originalEmailBus := bus.GetHandlerCtx("SendEmailCommandSync")
 	t.Cleanup(func() {
 		channels.SlackAPIEndpoint, channels.PagerdutyEventAPIURL,
 			channels.TelegramAPIURL, channels.PushoverEndpoint, channels.GetBoundary,
 			channels.LineNotifyURL, channels.ThreemaGwBaseURL = os, opa, ot, opu, ogb, ol, oth
 		channels.DefaultTemplateString = originalTemplate
+		bus.AddHandlerCtx("", originalEmailBus)
 	})
+	channels.DefaultTemplateString = channels.TemplateForTestsString
 	channels.SlackAPIEndpoint = fmt.Sprintf("http://%s/slack_recvX/slack_testX", mockChannel.server.Addr)
 	channels.PagerdutyEventAPIURL = fmt.Sprintf("http://%s/pagerduty_recvX/pagerduty_testX", mockChannel.server.Addr)
 	channels.TelegramAPIURL = fmt.Sprintf("http://%s/telegram_recv/bot%%s", mockChannel.server.Addr)
@@ -60,6 +65,7 @@ func TestNotificationChannels(t *testing.T) {
 	channels.LineNotifyURL = fmt.Sprintf("http://%s/line_recv/line_test", mockChannel.server.Addr)
 	channels.ThreemaGwBaseURL = fmt.Sprintf("http://%s/threema_recv/threema_test", mockChannel.server.Addr)
 	channels.GetBoundary = func() string { return "abcd" }
+	bus.AddHandlerCtx("", mockEmail.sendEmailCommandHandlerSync)
 
 	// Create a user to make authenticated requests
 	require.NoError(t, createUser(t, s, models.ROLE_EDITOR, "grafana", "password"))
@@ -110,11 +116,11 @@ func TestNotificationChannels(t *testing.T) {
 	// Eventually, we'll get all the desired alerts.
 	// nolint:gosec
 	require.Eventually(t, func() bool {
-		return mockChannel.totalNotifications() == len(alertNames)
+		return mockChannel.totalNotifications() >= len(nonEmailAlertNames) && len(mockEmail.emails) >= 1
 	}, 30*time.Second, 1*time.Second)
 
-	mockChannel.matchesExpNotifications(t, expNotifications)
-
+	mockChannel.matchesExpNotifications(t, expNonEmailNotifications)
+	require.Equal(t, expEmailNotifications, mockEmail.emails)
 	require.NoError(t, mockChannel.Close())
 }
 
@@ -126,11 +132,9 @@ func getExpAlertmanagerConfigFromAPI(channelAddr string) string {
 	return strings.ReplaceAll(expAlertmanagerConfigFromAPI, "CHANNEL_ADDR", channelAddr)
 }
 
-// alertNames are name of alerts to be sent. This should be in sync with
+// nonEmailAlertNames are name of alerts to be sent for non-email channels. This should be in sync with
 // the routes that we define in Alertmanager config.
-// EmailAlert and TelegramAlert are missing because they don't
-// send a JSON. Email and POST body are yet to be supported in the tests.
-var alertNames = []string{
+var nonEmailAlertNames = []string{
 	"AlertmanagerAlert",
 	"OpsGenieAlert",
 	"VictorOpsAlert",
@@ -150,6 +154,12 @@ var alertNames = []string{
 	"WebhookAlert",
 }
 
+// emailAlertNames are name of alerts to be sent via email. This should be in sync with
+// the routes that we define in Alertmanager config.
+var emailAlertNames = []string{
+	"EmailAlert",
+}
+
 func getRulesConfig(t *testing.T) string {
 	t.Helper()
 	interval, err := model.ParseDuration("10s")
@@ -160,7 +170,7 @@ func getRulesConfig(t *testing.T) string {
 	}
 
 	// Create rules that will fire as quickly as possible for all the routes.
-	for _, alertName := range alertNames {
+	for _, alertName := range append(nonEmailAlertNames, emailAlertNames...) {
 		rules.Rules = append(rules.Rules, apimodels.PostableExtendedRuleNode{
 			GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
 				Title:     alertName,
@@ -336,6 +346,21 @@ func multipartEqual(t *testing.T, exp, act string) {
 
 func (nc *mockNotificationChannel) Close() error {
 	return nc.server.Close()
+}
+
+type mockEmailHandler struct {
+	emails []*models.SendEmailCommandSync
+}
+
+func (e *mockEmailHandler) sendEmailCommandHandlerSync(_ context.Context, cmd *models.SendEmailCommandSync) error {
+	// We 0 out the start time since that is a variable that we cannot predict.
+	alerts := cmd.Data["Alerts"].(channels.ExtendedAlerts)
+	for i := range alerts {
+		alerts[i].StartsAt = time.Time{}
+	}
+
+	e.emails = append(e.emails, cmd)
+	return nil
 }
 
 // alertmanagerConfig has the config for all the notification channels
@@ -1315,10 +1340,46 @@ var expAlertmanagerConfigFromAPI = `
 }
 `
 
-// expNotifications is all the expected notifications.
+var expEmailNotifications = []*models.SendEmailCommandSync{
+	{
+		SendEmailCommand: models.SendEmailCommand{
+			To:          []string{"test@email.com"},
+			SingleEmail: true,
+			Template:    "ng_alert_notification.html",
+			Subject:     "[FIRING:1] EmailAlert ",
+			Data: map[string]interface{}{
+				"Title":   "[FIRING:1] EmailAlert ",
+				"Message": "",
+				"Status":  "firing",
+				"Alerts": channels.ExtendedAlerts{
+					{
+						Status:       "firing",
+						Labels:       template.KV{"alertname": "EmailAlert"},
+						Annotations:  template.KV{},
+						StartsAt:     time.Time{},
+						EndsAt:       time.Time{},
+						GeneratorURL: "http://localhost:3000/alerting/UID_EmailAlert/edit",
+						Fingerprint:  "09710b1d77cc8d36",
+						SilenceURL:   "http://localhost:3000/alerting/silence/new?alertmanager=grafana&matchers=alertname%3DEmailAlert",
+						DashboardURL: "",
+						PanelURL:     "",
+					},
+				},
+				"GroupLabels":       template.KV{"alertname": "EmailAlert"},
+				"CommonLabels":      template.KV{"alertname": "EmailAlert"},
+				"CommonAnnotations": template.KV{},
+				"ExternalURL":       "http://localhost:3000/",
+				"RuleUrl":           "http://localhost:3000/alerting/list",
+				"AlertPageUrl":      "http://localhost:3000/alerting/list?alertState=firing&view=state",
+			},
+		},
+	},
+}
+
+// expNonEmailNotifications is all the expected notifications (except email).
 // The key for the map is taken from the URL. The last 2 components of URL
 // split with "/" forms the key for that route.
-var expNotifications = map[string][]string{
+var expNonEmailNotifications = map[string][]string{
 	"slack_recv1/slack_test_without_token": {
 		`{
 		  "channel": "#test-channel",
