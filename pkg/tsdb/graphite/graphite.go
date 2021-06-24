@@ -271,12 +271,12 @@ func parseDataTimePoint(dataTimePoint plugins.DataTimePoint) (time.Time, *float6
 	}
 
 	timestamp := time.Unix(int64(dataTimePoint[1].Float64), 0).UTC()
-	var value *float64
 
 	if dataTimePoint[0].Valid {
-		value = new(float64)
+		var value = new(float64)
 		*value = dataTimePoint[0].Float64
+		return timestamp, value, nil
+	} else {
+		return timestamp, nil, nil
 	}
-
-	return timestamp, value, nil
 }
