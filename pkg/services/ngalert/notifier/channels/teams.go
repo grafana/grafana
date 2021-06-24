@@ -45,7 +45,7 @@ func NewTeamsNotifier(model *NotificationChannelConfig, t *template.Template) (*
 			Settings:              model.Settings,
 		}),
 		URL:     u,
-		Message: model.Settings.Get("message").MustString(`{{ template "default.message" .}}`),
+		Message: model.Settings.Get("message").MustString(`{{ template "teams.default.message" .}}`),
 		log:     log.New("alerting.notifier.teams"),
 		tmpl:    t,
 	}, nil
