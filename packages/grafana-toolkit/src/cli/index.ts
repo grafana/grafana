@@ -148,6 +148,8 @@ export const run = (includeInternalScripts = false) => {
     .command('plugin:build')
     .option('--maxJestWorkers <num>|<string>', 'Limit number of Jest workers spawned')
     .option('--coverage', 'Run code coverage', false)
+    .option('--skipTest', 'Skip running tests (for pipelines that run it separate)', false)
+    .option('--skipLint', 'Skip running lint (for pipelines that run it separate)', false)
     .option('--preserveConsole', 'Preserves console calls', false)
     .description('Prepares plugin dist package')
     .action(async (cmd) => {
@@ -156,6 +158,8 @@ export const run = (includeInternalScripts = false) => {
         silent: true,
         maxJestWorkers: cmd.maxJestWorkers,
         preserveConsole: cmd.preserveConsole,
+        skipLint: cmd.skipLint,
+        skipTest: cmd.skipTest,
       });
     });
 
