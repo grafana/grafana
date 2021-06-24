@@ -2,7 +2,7 @@ import React, { FC, FormEvent, ReactNode, useCallback, useState } from 'react';
 import { useMedia } from 'react-use';
 import Calendar from 'react-calendar/dist/entry.nostyle';
 import { css } from '@emotion/css';
-import { dateTimeFormat, DateTime, dateTime, GrafanaTheme2 } from '@grafana/data';
+import { dateTimeFormat, DateTime, dateTime, GrafanaTheme2, isDateTime } from '@grafana/data';
 import { Button, Field, Icon, Input, Portal } from '../..';
 import { ClickOutsideWrapper } from '../../ClickOutsideWrapper/ClickOutsideWrapper';
 import { getBodyStyles, getStyles as getCalendarStyles } from '../TimeRangePicker/TimePickerCalendar';
@@ -46,18 +46,9 @@ export const DateTimePicker: FC<Props> = ({ date, label, onChange }) => {
     [isFullscreen, onOpen]
   );
 
-  const icon = <Button icon="calendar-alt" variant="secondary" onClick={onOpen} />;
   return (
     <div>
-      <Field label={label} onClick={stopPropagation}>
-        <Input
-          onClick={stopPropagation}
-          onChange={() => {}}
-          addonAfter={icon}
-          value={dateTimeFormat(date)}
-          onFocus={onFocus}
-        />
-      </Field>
+      <DateTimeInput date={date} onChange={onChange} onOpen={onOpen} onFocus={onFocus} />
       {isOpen ? (
         isFullscreen ? (
           <ClickOutsideWrapper onClick={() => setOpen(false)}>
@@ -80,6 +71,41 @@ interface DateTimeCalendarProps {
   date: DateTime;
   onChange: (date: DateTime) => void;
 }
+
+interface InputProps {
+  label?: string;
+  date: DateTime;
+  onChange: (date: DateTime) => void;
+  onFocus: (event: FormEvent<HTMLElement>) => void;
+  onOpen: (event: FormEvent<HTMLElement>) => void;
+}
+
+type InputState = {
+  value: string;
+  invalid: boolean;
+};
+
+const DateTimeInput: FC<InputProps> = ({ date, label, onChange, onFocus, onOpen }) => {
+  const icon = <Button icon="calendar-alt" variant="secondary" onClick={onOpen} />;
+  const [internalDate, setInternalDate] = useState<InputState>({ value: dateTimeFormat(date), invalid: false });
+
+  return (
+    <Field label={label} onClick={stopPropagation} invalid={internalDate.invalid} error="Incorrect date format">
+      <Input
+        onClick={stopPropagation}
+        onChange={(event) => {
+          setInternalDate({
+            value: event.currentTarget.value,
+            invalid: isDateTime(event.currentTarget.value),
+          });
+        }}
+        addonAfter={icon}
+        value={internalDate.value}
+        onFocus={onFocus}
+      />
+    </Field>
+  );
+};
 
 const DateTimeCalendar: FC<DateTimeCalendarProps> = ({ date, onChange }) => {
   const calendarStyles = useStyles2(getBodyStyles);
