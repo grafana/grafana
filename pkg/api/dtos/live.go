@@ -14,7 +14,7 @@ type LivePublishCmd struct {
 type LivePublishResponse struct {
 }
 
-type LiveChannelConfig struct {
+type LiveChannelRule struct {
 	Id               int64                             `json:"id"`
 	Version          int                               `json:"version"`
 	OrgId            int64                             `json:"orgId"`
@@ -23,7 +23,7 @@ type LiveChannelConfig struct {
 	SecureJsonFields map[string]bool                   `json:"secureJsonFields"`
 }
 
-type LiveChannelListItem struct {
+type LiveChannelRuleListItem struct {
 	Id      int64  `json:"id"`
 	Version int    `json:"version"`
 	OrgId   int64  `json:"orgId"`

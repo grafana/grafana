@@ -25,7 +25,7 @@ func getLiveMessageCacheKey(orgID int64, channel string) string {
 func (s *MessageStorage) SaveLiveMessage(query *models.SaveLiveMessageQuery) error {
 	// Come back to saving into database after evaluating database structure.
 	//err := s.store.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-	//	params := []interface{}{query.OrgId, query.Pattern, query.Data, time.Now()}
+	//	params := []interface{}{query.OrgId, query.Channel, query.Data, time.Now()}
 	//	upsertSQL := s.store.Dialect.UpsertSQL(
 	//		"live_message",
 	//		[]string{"org_id", "channel"},
@@ -50,7 +50,7 @@ func (s *MessageStorage) GetLiveMessage(query *models.GetLiveMessageQuery) (mode
 	//var exists bool
 	//err := s.store.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 	//	var err error
-	//	exists, err = sess.Where("org_id=? AND channel=?", query.OrgId, query.Pattern).Get(&msg)
+	//	exists, err = sess.Where("org_id=? AND channel=?", query.OrgId, query.Channel).Get(&msg)
 	//	return err
 	//})
 	//return msg, exists, err

@@ -17,10 +17,10 @@ func (hs *HTTPServer) ListChannelRules(c *models.ReqContext) response.Response {
 		return response.Error(500, "Failed to query channel rules", err)
 	}
 
-	items := make([]dtos.LiveChannelListItem, 0, len(result))
+	items := make([]dtos.LiveChannelRuleListItem, 0, len(result))
 
 	for _, ch := range result {
-		item := dtos.LiveChannelListItem{
+		item := dtos.LiveChannelRuleListItem{
 			Id:      ch.Id,
 			OrgId:   ch.OrgId,
 			Version: ch.Version,
@@ -31,13 +31,19 @@ func (hs *HTTPServer) ListChannelRules(c *models.ReqContext) response.Response {
 	return response.JSON(200, &items)
 }
 
-func liveChannelToDTO(ch *models.LiveChannelRule) dtos.LiveChannelConfig {
-	item := dtos.LiveChannelConfig{
-		Id:      ch.Id,
-		OrgId:   ch.OrgId,
-		Version: ch.Version,
-		Pattern: ch.Pattern,
-		Config:  ch.Config,
+func liveChannelToDTO(ch *models.LiveChannelRule) dtos.LiveChannelRule {
+	item := dtos.LiveChannelRule{
+		Id:               ch.Id,
+		OrgId:            ch.OrgId,
+		Version:          ch.Version,
+		Pattern:          ch.Pattern,
+		Config:           ch.Config,
+		SecureJsonFields: map[string]bool{},
+	}
+	for k, v := range ch.Secure {
+		if len(v) > 0 {
+			item.SecureJsonFields[k] = true
+		}
 	}
 	return item
 }
@@ -77,15 +83,38 @@ func (hs *HTTPServer) CreateChannelRule(c *models.ReqContext, cmd models.CreateL
 	})
 }
 
+func (hs *HTTPServer) fillChannelRuleWithSecureJSONData(cmd *models.UpdateLiveChannelRuleCommand) error {
+	if len(cmd.Secure) == 0 {
+		return nil
+	}
+
+	rule, err := hs.Live.ChannelRuleStorage().GetChannelRule(models.GetLiveChannelRuleCommand{
+		OrgId: cmd.Id,
+		Id:    cmd.Id,
+	})
+	if err != nil {
+		return err
+	}
+
+	secureJSONData := rule.Secure.Decrypt()
+	for k, v := range secureJSONData {
+		if _, ok := cmd.Secure[k]; !ok {
+			cmd.Secure[k] = v
+		}
+	}
+
+	return nil
+}
+
 func (hs *HTTPServer) UpdateChannelRule(c *models.ReqContext, cmd models.UpdateLiveChannelRuleCommand) response.Response {
 	cmd.Id = c.ParamsInt64(":id")
 
-	//err := fillWithSecureJSONData(&cmd)
-	//if err != nil {
-	//	return response.Error(500, "Failed to update channel rule", err)
-	//}
+	err := hs.fillChannelRuleWithSecureJSONData(&cmd)
+	if err != nil {
+		return response.Error(500, "Failed to update channel rule", err)
+	}
 
-	_, err := hs.Live.ChannelRuleStorage().UpdateChannelRule(cmd)
+	_, err = hs.Live.ChannelRuleStorage().UpdateChannelRule(cmd)
 	if err != nil {
 		if errors.Is(err, models.ErrLiveChannelRuleNotFound) {
 			return response.Error(404, "Channel rule not found", nil)
