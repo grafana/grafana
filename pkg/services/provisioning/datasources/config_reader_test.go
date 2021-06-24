@@ -44,8 +44,8 @@ func TestDatasourceAsConfig(t *testing.T) {
 			}
 
 			require.Equal(t, 1, len(fakeRepo.inserted))
-			require.Equal(t, 1, fakeRepo.inserted[0].OrgId)
-			require.Equal(t, "proxy", fakeRepo.inserted[0].Access)
+			require.Equal(t, int64(1), fakeRepo.inserted[0].OrgId)
+			require.Equal(t, models.DsAccess("proxy"), fakeRepo.inserted[0].Access)
 		})
 
 		t.Run("One configured datasource", func(t *testing.T) {
@@ -179,7 +179,7 @@ func TestDatasourceAsConfig(t *testing.T) {
 
 			dsCfg := cfg[0]
 
-			require.Equal(t, 1, dsCfg.APIVersion)
+			require.Equal(t, int64(1), dsCfg.APIVersion)
 
 			validateDatasourceV1(dsCfg, t)
 			validateDeleteDatasources(dsCfg, t)
@@ -207,7 +207,7 @@ func TestDatasourceAsConfig(t *testing.T) {
 
 			dsCfg := cfg[0]
 
-			require.Equal(t, 0, dsCfg.APIVersion)
+			require.Equal(t, int64(0), dsCfg.APIVersion)
 
 			validateDatasource(dsCfg, t)
 			validateDeleteDatasources(dsCfg, t)
@@ -227,7 +227,7 @@ func validateDatasource(dsCfg *configs, t *testing.T) {
 	require.Equal(t, "name", ds.Name)
 	require.Equal(t, "type", ds.Type)
 	require.Equal(t, models.DS_ACCESS_PROXY, ds.Access)
-	require.Equal(t, 2, ds.OrgID)
+	require.Equal(t, int64(2), ds.OrgID)
 	require.Equal(t, "url", ds.URL)
 	require.Equal(t, "user", ds.User)
 	require.Equal(t, "password", ds.Password)

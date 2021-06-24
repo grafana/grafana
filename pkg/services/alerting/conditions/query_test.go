@@ -36,7 +36,6 @@ func TestQueryCondition(t *testing.T) {
 		queryConditionScenario("Given avg() and > 100", t, func(ctx *queryConditionTestContext) {
 			ctx.reducer = `{"type": "avg"}`
 			ctx.evaluator = `{"type": "gt", "params": [100]}`
-			ctx.tctx = t
 
 			t.Run("Can read query condition from json model", func(t *testing.T) {
 				_, err := ctx.exec()
@@ -44,7 +43,7 @@ func TestQueryCondition(t *testing.T) {
 
 				require.Equal(t, "5m", ctx.condition.Query.From)
 				require.Equal(t, "now", ctx.condition.Query.To)
-				require.Equal(t, 1, ctx.condition.Query.DatasourceID)
+				require.Equal(t, int64(1), ctx.condition.Query.DatasourceID)
 
 				t.Run("Can read query reducer", func(t *testing.T) {
 					reducer := ctx.condition.Reducer
@@ -72,6 +71,11 @@ func TestQueryCondition(t *testing.T) {
 					data.NewField("time", nil, []time.Time{time.Now(), time.Now()}),
 					data.NewField("val", nil, []int64{120, 150}),
 				)
+
+				t.Cleanup(func() {
+					ctx.frame = nil
+				})
+
 				cr, err := ctx.exec()
 
 				require.NoError(t, err)
@@ -92,8 +96,12 @@ func TestQueryCondition(t *testing.T) {
 					data.NewField("time", nil, []time.Time{time.Now(), time.Now()}),
 					data.NewField("val", nil, []int64{12, 47}),
 				)
-				cr, err := ctx.exec()
 
+				t.Cleanup(func() {
+					ctx.frame = nil
+				})
+
+				cr, err := ctx.exec()
 				require.NoError(t, err)
 				require.False(t, cr.Firing)
 			})
@@ -185,7 +193,6 @@ type queryConditionTestContext struct {
 	frame     *data.Frame
 	result    *alerting.EvalContext
 	condition *QueryCondition
-	tctx      *testing.T
 }
 
 type queryConditionScenarioFunc func(c *queryConditionTestContext)
@@ -202,10 +209,14 @@ func (ctx *queryConditionTestContext) exec() (*alerting.ConditionResult, error) 
             "reducer":` + ctx.reducer + `,
             "evaluator":` + ctx.evaluator + `
           }`))
-	require.NoError(ctx.tctx, err)
+	if err != nil {
+		return nil, err
+	}
 
 	condition, err := newQueryCondition(jsonModel, 0)
-	require.NoError(ctx.tctx, err)
+	if err != nil {
+		return nil, err
+	}
 
 	ctx.condition = condition
 

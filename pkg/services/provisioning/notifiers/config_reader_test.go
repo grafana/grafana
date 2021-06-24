@@ -68,7 +68,7 @@ func TestNotificationAsConfig(t *testing.T) {
 			nt := nts[0]
 			require.Equal(t, "default-slack-notification", nt.Name)
 			require.Equal(t, "slack", nt.Type)
-			require.Equal(t, 2, nt.OrgID)
+			require.Equal(t, int64(2), nt.OrgID)
 			require.Equal(t, "notifier1", nt.UID)
 			require.True(t, nt.IsDefault)
 			require.True(t, cmp.Equal(nt.Settings, map[string]interface{}{
@@ -83,7 +83,7 @@ func TestNotificationAsConfig(t *testing.T) {
 			nt = nts[1]
 			require.Equal(t, "another-not-default-notification", nt.Name)
 			require.Equal(t, "email", nt.Type)
-			require.Equal(t, 3, nt.OrgID)
+			require.Equal(t, int64(3), nt.OrgID)
 			require.Equal(t, "notifier2", nt.UID)
 			require.False(t, nt.IsDefault)
 

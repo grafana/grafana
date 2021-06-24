@@ -98,7 +98,7 @@ func TestSimpleReducer(t *testing.T) {
 				series.Points = append(series.Points, plugins.DataTimePoint{null.FloatFrom(3), null.FloatFrom(4)})
 
 				require.Equal(t, true, reducer.Reduce(series).Valid)
-				require.Equal(t, 2, reducer.Reduce(series).Float64)
+				require.Equal(t, float64(2), reducer.Reduce(series).Float64)
 			})
 
 			t.Run("with null values", func(t *testing.T) {

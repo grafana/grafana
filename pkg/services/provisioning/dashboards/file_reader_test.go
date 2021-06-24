@@ -57,6 +57,12 @@ func TestCreatingNewDashboardFileReader(t *testing.T) {
 		t.Run("using foldersFromFilesStructure as options", func(t *testing.T) {
 			cfg.Options["path"] = foldersFromFilesStructure
 			cfg.Options["foldersFromFilesStructure"] = true
+
+			t.Cleanup(func() {
+				delete(cfg.Options, "path")
+				cfg.Options["foldersFromFilesStructure"] = false
+			})
+
 			reader, err := NewDashboardFileReader(cfg, log.New("test-logger"), nil)
 			require.NoError(t, err)
 			require.NotEqual(t, "", reader.Path)
@@ -479,6 +485,7 @@ func TestDashboardFileReader(t *testing.T) {
 				require.Equal(t, 1, len(fakeService.inserted))
 				require.Equal(t, 1, fakeService.inserted[0].Dashboard.Id)
 			})
+
 		})
 	})
 }

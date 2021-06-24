@@ -39,7 +39,7 @@ func TestUserAuthToken(t *testing.T) {
 			t.Run("Can count active tokens", func(t *testing.T) {
 				count, err := userAuthTokenService.ActiveTokenCount(context.Background())
 				require.NoError(t, err)
-				require.Equal(t, 1, count)
+				require.Equal(t, int64(1), count)
 			})
 
 			t.Run("When lookup unhashed token should return user auth token", func(t *testing.T) {
@@ -68,7 +68,7 @@ func TestUserAuthToken(t *testing.T) {
 				model, err := ctx.getAuthTokenByID(userToken.Id)
 				require.NoError(t, err)
 				require.NotNil(t, model)
-				require.Greater(t, model.RevokedAt, 0)
+				require.Greater(t, model.RevokedAt, int64(0))
 			})
 
 			t.Run("revoking existing token should delete it", func(t *testing.T) {
@@ -206,7 +206,7 @@ func TestUserAuthToken(t *testing.T) {
 				t.Run("should not find active token when expired", func(t *testing.T) {
 					count, err := userAuthTokenService.ActiveTokenCount(context.Background())
 					require.NoError(t, err)
-					require.Equal(t, 0, count)
+					require.Equal(t, int64(0), count)
 				})
 			})
 
@@ -323,7 +323,7 @@ func TestUserAuthToken(t *testing.T) {
 			model, err = ctx.getAuthTokenByID(userToken.Id)
 			require.NoError(t, err)
 			require.NotNil(t, model)
-			require.Equal(t, 0, model.SeenAt)
+			require.Equal(t, int64(0), model.SeenAt)
 		})
 
 		t.Run("keeps prev token valid for 1 minute after it is confirmed", func(t *testing.T) {

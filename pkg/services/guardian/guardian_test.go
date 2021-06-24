@@ -706,7 +706,7 @@ func TestGuardianGetHiddenACL(t *testing.T) {
 			require.NoError(t, err)
 
 			require.Equal(t, 1, len(hiddenACL))
-			require.Equal(t, 2, hiddenACL[0].UserID)
+			require.Equal(t, int64(2), hiddenACL[0].UserID)
 		})
 
 		t.Run("Grafana admin should not get hidden acl", func(t *testing.T) {

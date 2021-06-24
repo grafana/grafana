@@ -44,7 +44,7 @@ func TestUserAuthTokenCleanup(t *testing.T) {
 
 			affected, err := ctx.tokenService.deleteExpiredTokens(context.Background(), 168*time.Hour, 30*24*time.Hour)
 			require.NoError(t, err)
-			require.Equal(t, 3, affected)
+			require.Equal(t, int64(3), affected)
 		})
 
 		t.Run("should delete tokens where token age is older than or equal 30 days", func(t *testing.T) {

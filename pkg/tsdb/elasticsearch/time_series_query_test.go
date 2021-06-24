@@ -1250,7 +1250,7 @@ func TestTimeSeriesQueryParser(t *testing.T) {
 			require.Equal(t, "@hostname", q.BucketAggs[0].Field)
 			require.Equal(t, "3", q.BucketAggs[0].ID)
 			require.Equal(t, "terms", q.BucketAggs[0].Type)
-			require.Equal(t, 1, q.BucketAggs[0].Settings.Get("min_doc_count").MustInt64())
+			require.Equal(t, int64(1), q.BucketAggs[0].Settings.Get("min_doc_count").MustInt64())
 			require.Equal(t, "desc", q.BucketAggs[0].Settings.Get("order").MustString())
 			require.Equal(t, "_term", q.BucketAggs[0].Settings.Get("orderBy").MustString())
 			require.Equal(t, "10", q.BucketAggs[0].Settings.Get("size").MustString())
