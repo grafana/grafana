@@ -4,14 +4,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/registry"
@@ -21,15 +21,6 @@ import (
 )
 
 var eslog = log.New("tsdb.cloudwatch")
-
-type DatasourceInfo struct {
-	esVersion                  string
-	logLevelField              string
-	maxConcurrentShardRequests int64
-	timeField                  string
-	interval                   string
-	database                   string
-}
 
 func init() {
 	registry.Register(&registry.Descriptor{
@@ -82,6 +73,9 @@ func (e *executor) QueryData(ctx context.Context, req *backend.QueryDataRequest)
 	}
 
 	dsInfo, err := e.getDSInfo(req.PluginContext)
+	if err != nil {
+		return &backend.QueryDataResponse{}, err
+	}
 
 	client, err := es.NewClient(ctx, e.httpClientProvider, dsInfo, &req.Queries[0])
 	if err != nil {

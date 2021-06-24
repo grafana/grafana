@@ -2,10 +2,10 @@ package es
 
 import (
 	"fmt"
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	. "github.com/smartystreets/goconvey/convey"
 )
 

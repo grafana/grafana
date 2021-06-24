@@ -3,10 +3,10 @@ package elasticsearch
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	es "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -1073,7 +1073,6 @@ func newResponseParserForTest(tsdbQueries map[string]string, responseBody string
 	}
 
 	for refID, tsdbQueryBody := range tsdbQueries {
-
 		tsdbQuery.Queries = append(tsdbQuery.Queries, backend.DataQuery{
 			TimeRange: timeRange,
 			RefID:     refID,

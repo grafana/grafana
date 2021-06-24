@@ -2,10 +2,11 @@ package es
 
 import (
 	"fmt"
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"regexp"
 	"strings"
 	"time"
+
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 )
 
 const (
