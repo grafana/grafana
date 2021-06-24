@@ -7,14 +7,16 @@ import { Icon } from '../Icon/Icon';
 import { styleMixins } from '../../themes';
 import { IconButton } from '../IconButton/IconButton';
 import { selectors } from '@grafana/e2e-selectors';
+import { Link } from '..';
+import { getFocusStyles } from '../../themes/mixins';
 
 export interface Props {
   pageIcon?: IconName;
   title: string;
   parent?: string;
   onGoBack?: () => void;
-  onClickTitle?: () => void;
-  onClickParent?: () => void;
+  titleHref?: string;
+  parentHref?: string;
   leftItems?: ReactNode[];
   children?: ReactNode;
   className?: string;
@@ -23,18 +25,7 @@ export interface Props {
 
 /** @alpha */
 export const PageToolbar: FC<Props> = React.memo(
-  ({
-    title,
-    parent,
-    pageIcon,
-    onGoBack,
-    children,
-    onClickTitle,
-    onClickParent,
-    leftItems,
-    isFullscreen,
-    className,
-  }) => {
+  ({ title, parent, pageIcon, onGoBack, children, titleHref, parentHref, leftItems, isFullscreen, className }) => {
     const styles = useStyles2(getStyles);
 
     /**
@@ -56,7 +47,7 @@ export const PageToolbar: FC<Props> = React.memo(
       <div className={mainStyle}>
         {pageIcon && !onGoBack && (
           <div className={styles.pageIcon}>
-            <Icon name={pageIcon} size="lg" />
+            <Icon name={pageIcon} size="lg" aria-hidden />
           </div>
         )}
         {onGoBack && (
@@ -72,17 +63,24 @@ export const PageToolbar: FC<Props> = React.memo(
             />
           </div>
         )}
-        {parent && onClickParent && (
-          <button onClick={onClickParent} className={cx(styles.titleText, styles.parentLink)}>
-            {parent} <span className={styles.parentIcon}>/</span>
-          </button>
+        {parent && parentHref && (
+          <>
+            <Link className={cx(styles.titleText, styles.parentLink, styles.titleLink)} href={parentHref}>
+              {parent} <span className={styles.parentIcon}></span>
+            </Link>
+            {titleHref && (
+              <span className={cx(styles.titleText, styles.titleDivider, styles.parentLink)} aria-hidden>
+                /
+              </span>
+            )}
+          </>
         )}
-        {onClickTitle && (
-          <button onClick={onClickTitle} className={styles.titleText}>
+        {titleHref && (
+          <Link className={cx(styles.titleText, styles.titleLink)} href={titleHref}>
             {title}
-          </button>
+          </Link>
         )}
-        {!onClickTitle && <div className={styles.titleText}>{title}</div>}
+        {!titleHref && <div className={styles.titleText}>{title}</div>}
         {leftItems?.map((child, index) => (
           <div className={styles.leftActionItem} key={index}>
             {child}
@@ -109,21 +107,18 @@ PageToolbar.displayName = 'PageToolbar';
 const getStyles = (theme: GrafanaTheme2) => {
   const { spacing, typography } = theme;
 
-  const titleStyles = `
-      font-size: ${typography.size.lg};
-      padding: ${spacing(0.5, 1, 0.5, 1)};
-      white-space: nowrap;
-      text-overflow: ellipsis;
-      overflow: hidden;
-      max-width: 240px;
+  const focusStyle = getFocusStyles(theme);
+  const titleStyles = css`
+    font-size: ${typography.size.lg};
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    max-width: 240px;
+    border-radius: 2px;
 
-      // clear default button styles
-      background: none;
-      border: none;
-
-      @media ${styleMixins.mediaUp(theme.v1.breakpoints.xl)} {
-        max-width: unset;
-      }
+    @media ${styleMixins.mediaUp(theme.v1.breakpoints.xl)} {
+      max-width: unset;
+    }
   `;
 
   return {
@@ -142,6 +137,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: none;
       @media ${styleMixins.mediaUp(theme.v1.breakpoints.md)} {
         display: flex;
+        padding-right: ${theme.spacing(1)};
         align-items: center;
       }
     `,
@@ -154,12 +150,17 @@ const getStyles = (theme: GrafanaTheme2) => {
     parentIcon: css`
       margin-left: ${theme.spacing(0.5)};
     `,
-    titleText: css`
-      ${titleStyles};
+    titleText: titleStyles,
+    titleLink: css`
+      &:focus-visible {
+        ${focusStyle}
+      }
+    `,
+    titleDivider: css`
+      padding: ${spacing(0, 0.5, 0, 0.5)};
     `,
     parentLink: css`
       display: none;
-      padding-right: 0;
       @media ${styleMixins.mediaUp(theme.v1.breakpoints.md)} {
         display: unset;
       }

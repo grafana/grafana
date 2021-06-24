@@ -172,10 +172,12 @@ export const getStyles = (theme: GrafanaTheme2) => ({
     display: flex;
     flex-direction: row;
     justify-content: space-between;
+    flex-wrap: wrap;
     border-bottom: solid 1px ${theme.colors.border.medium};
   `,
   button: css`
     height: 24px;
+    margin-top: ${theme.spacing(1)};
     font-size: ${theme.typography.size.sm};
   `,
 });
