@@ -226,7 +226,15 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
 
       // Calculate final labels positions according to unified text size
       const textMeasurement = measureText(label.formattedValue, fontSize * devicePixelRatio);
-      const actualLineHeight = textMeasurement.fontBoundingBoxAscent + textMeasurement.fontBoundingBoxDescent;
+
+      let actualLineHeight = textMeasurement.actualBoundingBoxAscent + textMeasurement.actualBoundingBoxDescent;
+
+      // fontBoundingBoxAscent is only supported in chrome & safari at the moment. (see: https://caniuse.com/?search=fontBoundingBoxAscent)
+      // @ts-ignore
+      if (textMeasurement.fontBoundingBoxAscent && textMeasurement.fontBoundingBoxDescent) {
+        // @ts-ignore
+        actualLineHeight = textMeasurement.fontBoundingBoxAscent + textMeasurement.fontBoundingBoxDescent;
+      }
 
       if (ori === ScaleOrientation.Horizontal) {
         x = label.x + label.barWidth / 2;
@@ -281,7 +289,7 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
 
   const xValues: Axis.Values = (u) => u.data[0];
 
-  let hovered: Rect | null = null;
+  let hovered: Rect | undefined = undefined;
 
   let barMark = document.createElement('div');
   barMark.classList.add('bar-mark');
@@ -315,7 +323,7 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
     updateTooltipPosition
   ) => {
     return (u: uPlot) => {
-      let found: Rect | null = null;
+      let found: Rect | undefined;
       let cx = u.cursor.left! * devicePixelRatio;
       let cy = u.cursor.top! * devicePixelRatio;
 
@@ -329,20 +337,20 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
         // prettier-ignore
         if (found !== hovered) {
           barMark.style.display = '';
-          barMark.style.left   = found!.x / devicePixelRatio + 'px';
-          barMark.style.top    = found!.y / devicePixelRatio + 'px';
-          barMark.style.width  = found!.w / devicePixelRatio + 'px';
-          barMark.style.height = found!.h / devicePixelRatio + 'px';
+          barMark.style.left   = found.x / devicePixelRatio + 'px';
+          barMark.style.top    = found.y / devicePixelRatio + 'px';
+          barMark.style.width  = found.w / devicePixelRatio + 'px';
+          barMark.style.height = found.h / devicePixelRatio + 'px';
           hovered = found;
-          updateActiveSeriesIdx(hovered!.sidx);
-          updateActiveDatapointIdx(hovered!.didx);
+          updateActiveSeriesIdx(hovered.sidx);
+          updateActiveDatapointIdx(hovered.didx);
           updateTooltipPosition();
         }
-      } else if (hovered != null) {
+      } else if (hovered !== undefined) {
         updateActiveSeriesIdx(hovered!.sidx);
         updateActiveDatapointIdx(hovered!.didx);
         updateTooltipPosition();
-        hovered = null;
+        hovered = undefined;
         barMark.style.display = 'none';
       } else {
         updateTooltipPosition(true);
