@@ -28,7 +28,6 @@ var (
 
 func TestDatasourceAsConfig(t *testing.T) {
 	t.Run("Testing datasource as configuration", func(t *testing.T) {
-		fakeRepo = &fakeRepository{}
 		bus.ClearBusHandlers()
 		bus.AddHandler("test", mockDelete)
 		bus.AddHandler("test", mockInsert)
@@ -37,6 +36,7 @@ func TestDatasourceAsConfig(t *testing.T) {
 		bus.AddHandler("test", mockGetOrg)
 
 		t.Run("apply default values when missing", func(t *testing.T) {
+			fakeRepo = &fakeRepository{}
 			dc := newDatasourceProvisioner(logger)
 			err := dc.applyChanges(withoutDefaults)
 			if err != nil {
@@ -50,6 +50,7 @@ func TestDatasourceAsConfig(t *testing.T) {
 
 		t.Run("One configured datasource", func(t *testing.T) {
 			t.Run("no datasource in database", func(t *testing.T) {
+				fakeRepo = &fakeRepository{}
 				dc := newDatasourceProvisioner(logger)
 				err := dc.applyChanges(twoDatasourcesConfig)
 				if err != nil {
@@ -62,6 +63,7 @@ func TestDatasourceAsConfig(t *testing.T) {
 			})
 
 			t.Run("One datasource in database with same name", func(t *testing.T) {
+				fakeRepo = &fakeRepository{}
 				fakeRepo.loadAll = []*models.DataSource{
 					{Name: "Graphite", OrgId: 1, Id: 1},
 				}
@@ -89,20 +91,22 @@ func TestDatasourceAsConfig(t *testing.T) {
 		})
 
 		t.Run("Multiple datasources in different organizations with isDefault in each organization", func(t *testing.T) {
+			fakeRepo = &fakeRepository{}
 			dc := newDatasourceProvisioner(logger)
 			err := dc.applyChanges(multipleOrgsWithDefault)
 			t.Run("should not raise error", func(t *testing.T) {
 				require.NoError(t, err)
 				require.Equal(t, 4, len(fakeRepo.inserted))
 				require.True(t, fakeRepo.inserted[0].IsDefault)
-				require.Equal(t, 1, fakeRepo.inserted[0].OrgId)
+				require.Equal(t, int64(1), fakeRepo.inserted[0].OrgId)
 				require.True(t, fakeRepo.inserted[2].IsDefault)
-				require.Equal(t, 2, fakeRepo.inserted[2].OrgId)
+				require.Equal(t, int64(2), fakeRepo.inserted[2].OrgId)
 			})
 		})
 
 		t.Run("Two configured datasource and purge others ", func(t *testing.T) {
 			t.Run("two other datasources in database", func(t *testing.T) {
+				fakeRepo = &fakeRepository{}
 				fakeRepo.loadAll = []*models.DataSource{
 					{Name: "old-graphite", OrgId: 1, Id: 1},
 					{Name: "old-graphite2", OrgId: 1, Id: 2},
@@ -124,6 +128,7 @@ func TestDatasourceAsConfig(t *testing.T) {
 
 		t.Run("Two configured datasource and purge others = false", func(t *testing.T) {
 			t.Run("two other datasources in database", func(t *testing.T) {
+				fakeRepo = &fakeRepository{}
 				fakeRepo.loadAll = []*models.DataSource{
 					{Name: "Graphite", OrgId: 1, Id: 1},
 					{Name: "old-graphite2", OrgId: 1, Id: 2},
@@ -219,7 +224,7 @@ func validateDeleteDatasources(dsCfg *configs, t *testing.T) {
 	require.Equal(t, 1, len(dsCfg.DeleteDatasources))
 	deleteDs := dsCfg.DeleteDatasources[0]
 	require.Equal(t, "old-graphite3", deleteDs.Name)
-	require.Equal(t, 2, deleteDs.OrgID)
+	require.Equal(t, int64(2), deleteDs.OrgID)
 }
 
 func validateDatasource(dsCfg *configs, t *testing.T) {
