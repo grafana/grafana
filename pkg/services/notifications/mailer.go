@@ -78,8 +78,8 @@ func (ns *NotificationService) dialAndSend(messages ...*Message) (int, error) {
 			m.SetAddressHeader("Reply-To", replyTo, "")
 		}
 
-		/* loop over content types from settings in reverse order as they are ordered in according to descending
-		preference while the alternatives should be ordered according to ascending preference */
+		// loop over content types from settings in reverse order as they are ordered in according to descending
+		// preference while the alternatives should be ordered according to ascending preference
 		for i := len(ns.Cfg.Smtp.ContentTypes) - 1; i >= 0; i-- {
 			if i == len(ns.Cfg.Smtp.ContentTypes)-1 {
 				m.SetBody(ns.Cfg.Smtp.ContentTypes[i], msg.Body[ns.Cfg.Smtp.ContentTypes[i]])
