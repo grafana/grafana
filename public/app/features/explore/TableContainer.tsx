@@ -84,4 +84,4 @@ export class TableContainer extends PureComponent<Props> {
   }
 }
 
-export default hot(module)(connector)(TableContainer);
+export default hot(module)(connector(TableContainer));
