@@ -181,8 +181,8 @@ func TestDatasourceAsConfig(t *testing.T) {
 
 			require.Equal(t, 1, dsCfg.APIVersion)
 
-			validateDatasourceV1(dsCfg)
-			validateDeleteDatasources(dsCfg)
+			validateDatasourceV1(dsCfg, t)
+			validateDeleteDatasources(dsCfg, t)
 
 			dsCount := 0
 			delDsCount := 0
@@ -209,20 +209,20 @@ func TestDatasourceAsConfig(t *testing.T) {
 
 			require.Equal(t, 0, dsCfg.APIVersion)
 
-			validateDatasource(dsCfg)
-			validateDeleteDatasources(dsCfg)
+			validateDatasource(dsCfg, t)
+			validateDeleteDatasources(dsCfg, t)
 		})
 	})
 }
 
-func validateDeleteDatasources(dsCfg *configs) {
+func validateDeleteDatasources(dsCfg *configs, t *testing.T) {
 	require.Equal(t, 1, len(dsCfg.DeleteDatasources))
 	deleteDs := dsCfg.DeleteDatasources[0]
 	require.Equal(t, "old-graphite3", deleteDs.Name)
 	require.Equal(t, 2, deleteDs.OrgID)
 }
 
-func validateDatasource(dsCfg *configs) {
+func validateDatasource(dsCfg *configs, t *testing.T) {
 	ds := dsCfg.Datasources[0]
 	require.Equal(t, "name", ds.Name)
 	require.Equal(t, "type", ds.Type)
@@ -251,8 +251,8 @@ func validateDatasource(dsCfg *configs) {
 	require.Equal(t, "ZkN4aG1aNkja/gKAB1wlnKFIsy2SRDq4slrM0A==", ds.SecureJSONData["tlsClientKey"])
 }
 
-func validateDatasourceV1(dsCfg *configs) {
-	validateDatasource(dsCfg)
+func validateDatasourceV1(dsCfg *configs, t *testing.T) {
+	validateDatasource(dsCfg, t)
 	ds := dsCfg.Datasources[0]
 	require.Equal(t, "test_uid", ds.UID)
 }

@@ -35,19 +35,19 @@ func TestValues(t *testing.T) {
 			d := &Data{}
 
 			t.Run("Should unmarshal simple number", func(t *testing.T) {
-				unmarshalingTest(`val: 1`, d)
+				unmarshalingTest(`val: 1`, d, t)
 				require.Equal(t, 1, d.Val.Value())
 				require.Equal(t, "1", d.Val.Raw)
 			})
 
 			t.Run("Should unmarshal env var", func(t *testing.T) {
-				unmarshalingTest(`val: $INT`, d)
+				unmarshalingTest(`val: $INT`, d, t)
 				require.Equal(t, 1, d.Val.Value())
 				require.Equal(t, "$INT", d.Val.Raw)
 			})
 
 			t.Run("Should ignore empty value", func(t *testing.T) {
-				unmarshalingTest(`val: `, d)
+				unmarshalingTest(`val: `, d, t)
 				require.Equal(t, 0, d.Val.Value())
 				require.Equal(t, "", d.Val.Raw)
 			})
@@ -60,37 +60,37 @@ func TestValues(t *testing.T) {
 			d := &Data{}
 
 			t.Run("Should unmarshal simple string", func(t *testing.T) {
-				unmarshalingTest(`val: test`, d)
+				unmarshalingTest(`val: test`, d, t)
 				require.Equal(t, "test", d.Val.Value())
 				require.Equal(t, "test", d.Val.Raw)
 			})
 
 			t.Run("Should unmarshal env var", func(t *testing.T) {
-				unmarshalingTest(`val: $STRING`, d)
+				unmarshalingTest(`val: $STRING`, d, t)
 				require.Equal(t, "test", d.Val.Value())
 				require.Equal(t, "$STRING", d.Val.Raw)
 			})
 
 			t.Run("Should ignore empty value", func(t *testing.T) {
-				unmarshalingTest(`val: `, d)
+				unmarshalingTest(`val: `, d, t)
 				require.Equal(t, "", d.Val.Value())
 				require.Equal(t, "", d.Val.Raw)
 			})
 
 			t.Run("empty var should have empty value", func(t *testing.T) {
-				unmarshalingTest(`val: $EMPTYSTRING`, d)
+				unmarshalingTest(`val: $EMPTYSTRING`, d, t)
 				require.Equal(t, "", d.Val.Value())
 				require.Equal(t, "$EMPTYSTRING", d.Val.Raw)
 			})
 
 			t.Run("$$ should be a literal $", func(t *testing.T) {
-				unmarshalingTest(`val: $$`, d)
+				unmarshalingTest(`val: $$`, d, t)
 				require.Equal(t, "$", d.Val.Value())
 				require.Equal(t, "$$", d.Val.Raw)
 			})
 
 			t.Run("$$ should be a literal $ and not expanded within a string", func(t *testing.T) {
-				unmarshalingTest(`val: mY,Passwo$$rd`, d)
+				unmarshalingTest(`val: mY,Passwo$$rd`, d, t)
 				require.Equal(t, "mY,Passwo$rd", d.Val.Value())
 				require.Equal(t, "mY,Passwo$$rd", d.Val.Raw)
 			})
@@ -103,25 +103,25 @@ func TestValues(t *testing.T) {
 			d := &Data{}
 
 			t.Run("Should unmarshal bool value", func(t *testing.T) {
-				unmarshalingTest(`val: true`, d)
+				unmarshalingTest(`val: true`, d, t)
 				require.True(t, d.Val.Value())
 				require.Equal(t, "true", d.Val.Raw)
 			})
 
 			t.Run("Should unmarshal explicit string", func(t *testing.T) {
-				unmarshalingTest(`val: "true"`, d)
+				unmarshalingTest(`val: "true"`, d, t)
 				require.True(t, d.Val.Value())
 				require.Equal(t, "true", d.Val.Raw)
 			})
 
 			t.Run("Should unmarshal env var", func(t *testing.T) {
-				unmarshalingTest(`val: $BOOL`, d)
+				unmarshalingTest(`val: $BOOL`, d, t)
 				require.True(t, d.Val.Value())
 				require.Equal(t, "$BOOL", d.Val.Raw)
 			})
 
 			t.Run("Should ignore empty value", func(t *testing.T) {
-				unmarshalingTest(`val: `, d)
+				unmarshalingTest(`val: `, d, t)
 				require.False(t, d.Val.Value())
 				require.Equal(t, "", d.Val.Raw)
 			})
@@ -153,7 +153,7 @@ func TestValues(t *testing.T) {
                    anchor: &label $INT
                    anchored: *label
                `
-				unmarshalingTest(doc, d)
+				unmarshalingTest(doc, d, t)
 
 				type stringMap = map[string]interface{}
 				require.True(t, cmp.Equal(d.Val.Value(), stringMap{
@@ -226,7 +226,7 @@ func TestValues(t *testing.T) {
                    three: $STRING
                    four: true
                `
-				unmarshalingTest(doc, d)
+				unmarshalingTest(doc, d, t)
 				require.True(t, cmp.Equal(d.Val.Value(), map[string]string{
 					"one":   "1",
 					"two":   "test string",
@@ -256,7 +256,7 @@ func TestValues(t *testing.T) {
 	})
 }
 
-func unmarshalingTest(document string, out interface{}) {
+func unmarshalingTest(document string, out interface{}, t *testing.T) {
 	err := yaml.Unmarshal([]byte(document), out)
 	require.NoError(t, err)
 }

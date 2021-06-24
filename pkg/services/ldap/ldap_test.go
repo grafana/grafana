@@ -17,7 +17,7 @@ func TestPublicAPI(t *testing.T) {
 				SearchBaseDNs: []string{"BaseDNHere"},
 			})
 
-			So(result, ShouldImplement, (*IServer)(nil))
+			require.Implements(t, (*IServer)(nil), result)
 		})
 	})
 
@@ -33,7 +33,7 @@ func TestPublicAPI(t *testing.T) {
 				Connection: connection,
 			}
 
-			So(server.Close, ShouldNotPanic)
+			require.NotPanics(t, server.Close)
 			require.True(t, connection.CloseCalled)
 		})
 
@@ -46,7 +46,7 @@ func TestPublicAPI(t *testing.T) {
 				Connection: nil,
 			}
 
-			So(server.Close, ShouldPanic)
+			require.Panics(t, server.Close)
 		})
 	})
 	t.Run("Users()", func(t *testing.T) {

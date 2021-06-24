@@ -23,13 +23,13 @@ func TestUserAuthTokenCleanup(t *testing.T) {
 			require.NoError(t, err)
 		}
 
-		t := time.Date(2018, 12, 13, 13, 45, 0, 0, time.UTC)
+		dt := time.Date(2018, 12, 13, 13, 45, 0, 0, time.UTC)
 		getTime = func() time.Time {
-			return t
+			return dt
 		}
 
 		t.Run("should delete tokens where token rotation age is older than or equal 7 days", func(t *testing.T) {
-			from := t.Add(-168 * time.Hour)
+			from := dt.Add(-168 * time.Hour)
 
 			// insert three old tokens that should be deleted
 			for i := 0; i < 3; i++ {
@@ -48,8 +48,8 @@ func TestUserAuthTokenCleanup(t *testing.T) {
 		})
 
 		t.Run("should delete tokens where token age is older than or equal 30 days", func(t *testing.T) {
-			from := t.Add(-30 * 24 * time.Hour)
-			fromRotate := t.Add(-time.Second)
+			from := dt.Add(-30 * 24 * time.Hour)
+			fromRotate := dt.Add(-time.Second)
 
 			// insert three old tokens that should be deleted
 			for i := 0; i < 3; i++ {

@@ -11,12 +11,12 @@ import (
 
 func TestIndexPattern(t *testing.T) {
 	t.Run("Static index patterns", func(t *testing.T) {
-		indexPatternScenario(noInterval, "data-*", plugins.DataTimeRange{}, func(indices []string) {
+		indexPatternScenario(noInterval, "data-*", plugins.DataTimeRange{}, t, func(indices []string) {
 			require.Equal(t, 1, len(indices))
 			require.Equal(t, "data-*", indices[0])
 		})
 
-		indexPatternScenario(noInterval, "es-index-name", plugins.DataTimeRange{}, func(indices []string) {
+		indexPatternScenario(noInterval, "es-index-name", plugins.DataTimeRange{}, t, func(indices []string) {
 			require.Equal(t, 1, len(indices))
 			require.Equal(t, "es-index-name", indices[0])
 		})
@@ -26,62 +26,62 @@ func TestIndexPattern(t *testing.T) {
 		from := fmt.Sprintf("%d", time.Date(2018, 5, 15, 17, 50, 0, 0, time.UTC).UnixNano()/int64(time.Millisecond))
 		to := fmt.Sprintf("%d", time.Date(2018, 5, 15, 17, 55, 0, 0, time.UTC).UnixNano()/int64(time.Millisecond))
 
-		indexPatternScenario(intervalHourly, "[data-]YYYY.MM.DD.HH", plugins.NewDataTimeRange(from, to), func(indices []string) {
+		indexPatternScenario(intervalHourly, "[data-]YYYY.MM.DD.HH", plugins.NewDataTimeRange(from, to), t, func(indices []string) {
 			require.Equal(t, 1, len(indices))
 			require.Equal(t, "data-2018.05.15.17", indices[0])
 		})
 
-		indexPatternScenario(intervalHourly, "YYYY.MM.DD.HH[-data]", plugins.NewDataTimeRange(from, to), func(indices []string) {
+		indexPatternScenario(intervalHourly, "YYYY.MM.DD.HH[-data]", plugins.NewDataTimeRange(from, to), t, func(indices []string) {
 			require.Equal(t, 1, len(indices))
 			require.Equal(t, "2018.05.15.17-data", indices[0])
 		})
 
-		indexPatternScenario(intervalDaily, "[data-]YYYY.MM.DD", plugins.NewDataTimeRange(from, to), func(indices []string) {
+		indexPatternScenario(intervalDaily, "[data-]YYYY.MM.DD", plugins.NewDataTimeRange(from, to), t, func(indices []string) {
 			require.Equal(t, 1, len(indices))
 			require.Equal(t, "data-2018.05.15", indices[0])
 		})
 
-		indexPatternScenario(intervalDaily, "YYYY.MM.DD[-data]", plugins.NewDataTimeRange(from, to), func(indices []string) {
+		indexPatternScenario(intervalDaily, "YYYY.MM.DD[-data]", plugins.NewDataTimeRange(from, to), t, func(indices []string) {
 			require.Equal(t, 1, len(indices))
 			require.Equal(t, "2018.05.15-data", indices[0])
 		})
 
-		indexPatternScenario(intervalWeekly, "[data-]GGGG.WW", plugins.NewDataTimeRange(from, to), func(indices []string) {
+		indexPatternScenario(intervalWeekly, "[data-]GGGG.WW", plugins.NewDataTimeRange(from, to), t, func(indices []string) {
 			require.Equal(t, 1, len(indices))
 			require.Equal(t, "data-2018.20", indices[0])
 		})
 
-		indexPatternScenario(intervalWeekly, "GGGG.WW[-data]", plugins.NewDataTimeRange(from, to), func(indices []string) {
+		indexPatternScenario(intervalWeekly, "GGGG.WW[-data]", plugins.NewDataTimeRange(from, to), t, func(indices []string) {
 			require.Equal(t, 1, len(indices))
 			require.Equal(t, "2018.20-data", indices[0])
 		})
 
-		indexPatternScenario(intervalMonthly, "[data-]YYYY.MM", plugins.NewDataTimeRange(from, to), func(indices []string) {
+		indexPatternScenario(intervalMonthly, "[data-]YYYY.MM", plugins.NewDataTimeRange(from, to), t, func(indices []string) {
 			require.Equal(t, 1, len(indices))
 			require.Equal(t, "data-2018.05", indices[0])
 		})
 
-		indexPatternScenario(intervalMonthly, "YYYY.MM[-data]", plugins.NewDataTimeRange(from, to), func(indices []string) {
+		indexPatternScenario(intervalMonthly, "YYYY.MM[-data]", plugins.NewDataTimeRange(from, to), t, func(indices []string) {
 			require.Equal(t, 1, len(indices))
 			require.Equal(t, "2018.05-data", indices[0])
 		})
 
-		indexPatternScenario(intervalYearly, "[data-]YYYY", plugins.NewDataTimeRange(from, to), func(indices []string) {
+		indexPatternScenario(intervalYearly, "[data-]YYYY", plugins.NewDataTimeRange(from, to), t, func(indices []string) {
 			require.Equal(t, 1, len(indices))
 			require.Equal(t, "data-2018", indices[0])
 		})
 
-		indexPatternScenario(intervalYearly, "YYYY[-data]", plugins.NewDataTimeRange(from, to), func(indices []string) {
+		indexPatternScenario(intervalYearly, "YYYY[-data]", plugins.NewDataTimeRange(from, to), t, func(indices []string) {
 			require.Equal(t, 1, len(indices))
 			require.Equal(t, "2018-data", indices[0])
 		})
 
-		indexPatternScenario(intervalDaily, "YYYY[-data-]MM.DD", plugins.NewDataTimeRange(from, to), func(indices []string) {
+		indexPatternScenario(intervalDaily, "YYYY[-data-]MM.DD", plugins.NewDataTimeRange(from, to), t, func(indices []string) {
 			require.Equal(t, 1, len(indices))
 			require.Equal(t, "2018-data-05.15", indices[0])
 		})
 
-		indexPatternScenario(intervalDaily, "[data-]YYYY[-moredata-]MM.DD", plugins.NewDataTimeRange(from, to), func(indices []string) {
+		indexPatternScenario(intervalDaily, "[data-]YYYY[-moredata-]MM.DD", plugins.NewDataTimeRange(from, to), t, func(indices []string) {
 			require.Equal(t, 1, len(indices))
 			require.Equal(t, "data-2018-moredata-05.15", indices[0])
 		})
@@ -89,7 +89,7 @@ func TestIndexPattern(t *testing.T) {
 		t.Run("Should return 01 week", func(t *testing.T) {
 			from = fmt.Sprintf("%d", time.Date(2018, 1, 15, 17, 50, 0, 0, time.UTC).UnixNano()/int64(time.Millisecond))
 			to = fmt.Sprintf("%d", time.Date(2018, 1, 15, 17, 55, 0, 0, time.UTC).UnixNano()/int64(time.Millisecond))
-			indexPatternScenario(intervalWeekly, "[data-]GGGG.WW", plugins.NewDataTimeRange(from, to), func(indices []string) {
+			indexPatternScenario(intervalWeekly, "[data-]GGGG.WW", plugins.NewDataTimeRange(from, to), t, func(indices []string) {
 				require.Equal(t, 1, len(indices))
 				require.Equal(t, "data-2018.03", indices[0])
 			})
@@ -275,8 +275,8 @@ func TestIndexPattern(t *testing.T) {
 	})
 }
 
-func indexPatternScenario(interval string, pattern string, timeRange plugins.DataTimeRange, fn func(indices []string)) {
-	Convey(fmt.Sprintf("Index pattern (interval=%s, index=%s", interval, pattern), func() {
+func indexPatternScenario(interval string, pattern string, timeRange plugins.DataTimeRange, t *testing.T, fn func(indices []string)) {
+	t.Run(fmt.Sprintf("Index pattern (interval=%s, index=%s", interval, pattern), func(t *testing.T) {
 		ip, err := newIndexPattern(interval, pattern)
 		require.NoError(t, err)
 		require.NotNil(t, ip)
