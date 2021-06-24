@@ -5,12 +5,9 @@
 
 [[ .Alerts | len ]] alert[[ if gt (len .Alerts) 1 ]]s[[ end ]] for
 [[ range .GroupLabels.SortedPairs ]]
-[[ .Name ]]=[[ .Value ]]
+[[ .Name ]] = [[ .Value ]]
 [[ end ]]
-
-[[ if gt (len .Alerts.Firing) 0 ]]
-([[ .Alerts.Firing | len ]]) Firing
-[[ end ]]
+[[ if gt (len .Alerts.Firing) 0 ]]([[ .Alerts.Firing | len ]]) Firing[[ end ]]
 [[ range .Alerts.Firing ]]
 Labels:
 [[ range .Labels.SortedPairs ]]
@@ -22,11 +19,7 @@ Annotations:
 [[ range .Annotations.SortedPairs ]]
 [[ .Name ]] = [[ .Value ]]
 [[ end ]]
-[[ end ]]
-
-[[ if gt (len .Alerts.Resolved) 0 ]]
-([[ .Alerts.Resolved | len ]]) Resolved
-[[ end ]]
+[[ end ]][[ if gt (len .Alerts.Resolved) 0 ]]([[ .Alerts.Resolved | len ]]) Resolved[[ end ]]
 [[ range .Alerts.Resolved ]]
 Labels:
 [[ range .Labels.SortedPairs ]]
@@ -38,9 +31,7 @@ Annotations:
 [[ range .Annotations.SortedPairs ]]
 [[ .Name ]] = [[ .Value ]]
 [[ end ]]
-[[ end ]]
-
-View your Alert rule:
+[[ end ]]View your Alert rule:
 [[.RuleUrl]]
 
 Go to the Alerts page:
