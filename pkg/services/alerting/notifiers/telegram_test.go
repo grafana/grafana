@@ -63,9 +63,9 @@ func TestTelegramNotifier(t *testing.T) {
 
 				caption := generateImageCaption(evalContext, "http://grafa.url/abcdef", "")
 				So(len(caption), ShouldBeLessThanOrEqualTo, 1024)
-				So(caption, ShouldContainSubstring, "Some kind of message.")
-				So(caption, ShouldContainSubstring, "[OK] This is an alarm")
-				So(caption, ShouldContainSubstring, "http://grafa.url/abcdef")
+				require.Contains(t, caption, "Some kind of message.")
+				require.Contains(t, caption, "[OK] This is an alarm")
+				require.Contains(t, caption, "http://grafa.url/abcdef")
 			})
 
 			t.Run("When generating a message", func(t *testing.T) {
@@ -81,9 +81,9 @@ func TestTelegramNotifier(t *testing.T) {
 						"http://grafa.url/abcdefaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
 						"foo bar")
 					So(len(caption), ShouldBeLessThanOrEqualTo, 1024)
-					So(caption, ShouldContainSubstring, "Some kind of message.")
-					So(caption, ShouldContainSubstring, "[OK] This is an alarm")
-					So(caption, ShouldContainSubstring, "foo bar")
+					require.Contains(t, caption, "Some kind of message.")
+					require.Contains(t, caption, "[OK] This is an alarm")
+					require.Contains(t, caption, "foo bar")
 					So(caption, ShouldNotContainSubstring, "http")
 				})
 
@@ -99,9 +99,9 @@ func TestTelegramNotifier(t *testing.T) {
 						"http://grafa.url/foo",
 						"")
 					So(len(caption), ShouldBeLessThanOrEqualTo, 1024)
-					So(caption, ShouldContainSubstring, "[OK] This is an alarm")
+					require.Contains(t, caption, "[OK] This is an alarm")
 					So(caption, ShouldNotContainSubstring, "http")
-					So(caption, ShouldContainSubstring, "Some kind of message that is too long for appending to our pretty little message, this line is actually exactly 197 chars long and I will get there in the end I promise I will. Yes siree that's it. But suddenly Telegram increased the length so now we need some lorem ipsum to fix this test. Here we go: Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus consectetur molestie cursus. Donec suscipit egestas nisi. Proin ut efficitur ex. Mauris mi augue, volutpat a nisi vel, euismod dictum arcu. Sed quis tempor eros, sed malesuada dolor. Ut orci augue, viverra sit amet blandit quis, faucibus sit amet ex. Duis condimentum efficitur lectus, id dignissim quam tempor id. Morbi sollicitudin rhoncus diam, id tincidunt lectus scelerisque vitae. Etiam imperdiet semper sem, vel eleifend ligula mollis eget. Etiam ultrices fringilla lacus, sit amet pharetra ex blandit quis. Suspendisse in egestas neque, et posuere lectus. Vestibulum eu ex dui. Sed molestie nulla a lobortis sceleri")
+					require.Contains(t, caption, "Some kind of message that is too long for appending to our pretty little message, this line is actually exactly 197 chars long and I will get there in the end I promise I will. Yes siree that's it. But suddenly Telegram increased the length so now we need some lorem ipsum to fix this test. Here we go: Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus consectetur molestie cursus. Donec suscipit egestas nisi. Proin ut efficitur ex. Mauris mi augue, volutpat a nisi vel, euismod dictum arcu. Sed quis tempor eros, sed malesuada dolor. Ut orci augue, viverra sit amet blandit quis, faucibus sit amet ex. Duis condimentum efficitur lectus, id dignissim quam tempor id. Morbi sollicitudin rhoncus diam, id tincidunt lectus scelerisque vitae. Etiam imperdiet semper sem, vel eleifend ligula mollis eget. Etiam ultrices fringilla lacus, sit amet pharetra ex blandit quis. Suspendisse in egestas neque, et posuere lectus. Vestibulum eu ex dui. Sed molestie nulla a lobortis sceleri")
 				})
 
 				t.Run("Metrics should be skipped if they don't fit", func(t *testing.T) {
@@ -116,7 +116,7 @@ func TestTelegramNotifier(t *testing.T) {
 						"http://grafa.url/foo",
 						"foo bar long song")
 					So(len(caption), ShouldBeLessThanOrEqualTo, 1024)
-					So(caption, ShouldContainSubstring, "[OK] This is an alarm")
+					require.Contains(t, caption, "[OK] This is an alarm")
 					So(caption, ShouldNotContainSubstring, "http")
 					So(caption, ShouldNotContainSubstring, "foo bar")
 				})

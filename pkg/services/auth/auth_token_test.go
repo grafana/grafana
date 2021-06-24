@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/go-cmp/cmp"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/require"
@@ -478,7 +479,7 @@ func TestUserAuthToken(t *testing.T) {
 			require.NoError(t, err)
 			uatMap := uatJSON.MustMap()
 
-			So(uatMap, ShouldResemble, utMap)
+			require.True(t, cmp.Equal(uatMap, utMap))
 		})
 
 		t.Run("When populating userToken from userAuthToken should copy all properties", func(t *testing.T) {
@@ -511,7 +512,7 @@ func TestUserAuthToken(t *testing.T) {
 			require.NoError(t, err)
 			utMap := utJSON.MustMap()
 
-			So(utMap, ShouldResemble, uatMap)
+			require.True(t, cmp.Equal(utMap, uatMap))
 		})
 
 		Reset(func() {

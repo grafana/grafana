@@ -7,6 +7,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
 	"github.com/grafana/grafana/pkg/setting"
 	"gopkg.in/ini.v1"
 
@@ -155,7 +156,7 @@ func TestValues(t *testing.T) {
 				unmarshalingTest(doc, d)
 
 				type stringMap = map[string]interface{}
-				So(d.Val.Value(), ShouldResemble, stringMap{
+				require.True(t, cmp.Equal(d.Val.Value(), stringMap{
 					"one": 1,
 					"two": "test",
 					"three": []interface{}{
@@ -180,9 +181,9 @@ func TestValues(t *testing.T) {
 					"multiline": "Some text with test\n",
 					"anchor":    "1",
 					"anchored":  "1",
-				})
+				}))
 
-				So(d.Val.Raw, ShouldResemble, stringMap{
+				require.True(t, cmp.Equal(Val.Raw, stringMap{
 					"one": 1,
 					"two": "$STRING",
 					"three": []interface{}{
@@ -207,7 +208,7 @@ func TestValues(t *testing.T) {
 					"multiline": "Some text with $STRING\n",
 					"anchor":    "$INT",
 					"anchored":  "$INT",
-				})
+				}))
 			})
 		})
 
@@ -226,19 +227,19 @@ func TestValues(t *testing.T) {
                    four: true
                `
 				unmarshalingTest(doc, d)
-				So(d.Val.Value(), ShouldResemble, map[string]string{
+				require.True(t, cmp.Equal(d.Val.Value(), map[string]string{
 					"one":   "1",
 					"two":   "test string",
 					"three": "test",
 					"four":  "true",
-				})
+				}))
 
-				So(d.Val.Raw, ShouldResemble, map[string]string{
+				require.True(t, cmp.Equal(d.Val.Raw, map[string]string{
 					"one":   "1",
 					"two":   "test string",
 					"three": "$STRING",
 					"four":  "true",
-				})
+				}))
 			})
 		})
 

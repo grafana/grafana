@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
 	"github.com/grafana/grafana/pkg/services/validations"
 
 	"github.com/stretchr/testify/assert"
@@ -114,7 +115,7 @@ func TestAlertmanagerNotifier(t *testing.T) {
 				require.Equal(t, "user", alertmanagerNotifier.BasicAuthUser)
 				require.Equal(t, "password", alertmanagerNotifier.BasicAuthPassword)
 
-				So(alertmanagerNotifier.URL, ShouldResemble, []string{"http://127.0.0.1:9093/"})
+				require.True(t, cmp.Equal(alertmanagerNotifier.URL, []string{"http://127.0.0.1:9093/"}))
 			})
 
 			t.Run("from settings with multiple alertmanager", func(t *testing.T) {
@@ -131,7 +132,7 @@ func TestAlertmanagerNotifier(t *testing.T) {
 				alertmanagerNotifier := not.(*AlertmanagerNotifier)
 
 				require.NoError(t, err)
-				So(alertmanagerNotifier.URL, ShouldResemble, []string{"http://alertmanager1:9093", "http://alertmanager2:9093"})
+				require.True(t, cmp.Equal(alertmanagerNotifier.URL, []string{"http://alertmanager1:9093", "http://alertmanager2:9093"}))
 			})
 		})
 	})

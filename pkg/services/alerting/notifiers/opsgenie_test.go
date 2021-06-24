@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
 	"github.com/grafana/grafana/pkg/services/validations"
 	"github.com/stretchr/testify/require"
 
@@ -118,8 +119,8 @@ func TestOpsGenieNotifier(t *testing.T) {
 
 				require.Nil(t, notifierErr)
 				require.Nil(t, alertErr)
-				So(tags, ShouldResemble, []string{"keyOnly", "aKey:aValue"})
-				So(details, ShouldResemble, map[string]interface{}{"url": ""})
+				require.True(t, cmp.Equal(tags, []string{"keyOnly", "aKey:aValue"}))
+				require.True(t, cmp.Equal(details, map[string]interface{}{"url": ""}))
 			})
 
 			t.Run("alert payload should include tag pairs only as a map in the details key when sendAsTags=details", func(t *testing.T) {
@@ -168,8 +169,8 @@ func TestOpsGenieNotifier(t *testing.T) {
 
 				require.Nil(t, notifierErr)
 				require.Nil(t, alertErr)
-				So(tags, ShouldResemble, []string{})
-				So(details, ShouldResemble, map[string]interface{}{"keyOnly": "", "aKey": "aValue", "url": ""})
+				require.True(t, cmp.Equal(tags, []string{}))
+				require.True(t, cmp.Equal(details, map[string]interface{}{"keyOnly": "", "aKey": "aValue", "url": ""}))
 			})
 
 			t.Run("alert payload should include tag pairs as both a map in the details key and an array in the tags key when sendAsTags=both", func(t *testing.T) {
@@ -218,8 +219,8 @@ func TestOpsGenieNotifier(t *testing.T) {
 
 				require.Nil(t, notifierErr)
 				require.Nil(t, alertErr)
-				So(tags, ShouldResemble, []string{"keyOnly", "aKey:aValue"})
-				So(details, ShouldResemble, map[string]interface{}{"keyOnly": "", "aKey": "aValue", "url": ""})
+				require.True(t, cmp.Equal(tags, []string{"keyOnly", "aKey:aValue"}))
+				require.True(t, cmp.Equal(details, map[string]interface{}{"keyOnly": "", "aKey": "aValue", "url": ""}))
 			})
 		})
 	})

@@ -3,6 +3,7 @@ package ldap
 import (
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/ldap.v3"
 )
@@ -155,7 +156,7 @@ func TestLDAPHelpers(t *testing.T) {
 
 			result := getArrayAttribute("dn", entry)
 
-			So(result, ShouldResemble, []string{"test"})
+			require.True(t, cmp.Equal(result, []string{"test"}))
 		})
 
 		t.Run("Should get username", func(t *testing.T) {
@@ -170,7 +171,7 @@ func TestLDAPHelpers(t *testing.T) {
 
 			result := getArrayAttribute("username", entry)
 
-			So(result, ShouldResemble, value)
+			require.True(t, cmp.Equal(result, value))
 		})
 
 		t.Run("Should not get anything", func(t *testing.T) {
@@ -185,7 +186,7 @@ func TestLDAPHelpers(t *testing.T) {
 
 			result := getArrayAttribute("something", entry)
 
-			So(result, ShouldResemble, []string{})
+			require.True(t, cmp.Equal(result, []string{}))
 		})
 	})
 }

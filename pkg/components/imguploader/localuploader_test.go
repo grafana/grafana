@@ -13,6 +13,6 @@ func TestUploadToLocal(t *testing.T) {
 		path, err := localUploader.Upload(context.Background(), "../../../public/img/logo_transparent_400x.png")
 
 		require.NoError(t, err)
-		So(path, ShouldContainSubstring, "/public/img/attachments")
+		require.Contains(t, path, "/public/img/attachments")
 	})
 }

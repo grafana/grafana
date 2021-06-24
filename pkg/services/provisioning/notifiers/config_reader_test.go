@@ -5,6 +5,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
@@ -70,12 +71,12 @@ func TestNotificationAsConfig(t *testing.T) {
 			require.Equal(t, 2, nt.OrgID)
 			require.Equal(t, "notifier1", nt.UID)
 			require.True(t, nt.IsDefault)
-			So(nt.Settings, ShouldResemble, map[string]interface{}{
+			require.True(t, cmp.Equal(nt.Settings, map[string]interface{}{
 				"recipient": "XXX", "token": "xoxb", "uploadImage": true, "url": "https://slack.com",
-			})
-			So(nt.SecureSettings, ShouldResemble, map[string]string{
+			}))
+			require.True(t, cmp.Equal(nt.SecureSettings, map[string]string{
 				"token": "xoxbsecure", "url": "https://slack.com/secure",
-			})
+			}))
 			require.True(t, nt.SendReminder)
 			require.Equal(t, "1h", nt.Frequency)
 
@@ -275,10 +276,11 @@ func TestNotificationAsConfig(t *testing.T) {
 			require.Error(t, err)
 
 			errString := err.Error()
-			So(errString, ShouldContainSubstring, "Deleted alert notification item 1 in configuration doesn't contain required field uid")
-			So(errString, ShouldContainSubstring, "Deleted alert notification item 2 in configuration doesn't contain required field name")
-			So(errString, ShouldContainSubstring, "Added alert notification item 1 in configuration doesn't contain required field name")
-			So(errString, ShouldContainSubstring, "Added alert notification item 2 in configuration doesn't contain required field uid")
+			require.Contains(t, errString)
+			require.Contains(t, errString, "Deleted alert notification item 1 in configuration doesn't contain required field uid")
+			require.Contains(t, errString, "Deleted alert notification item 2 in configuration doesn't contain required field name")
+			require.Contains(t, errString, "Added alert notification item 1 in configuration doesn't contain required field name")
+			require.Contains(t, errString, "Added alert notification item 2 in configuration doesn't contain required field uid")
 		})
 
 		t.Run("Empty yaml file", func(t *testing.T) {

@@ -3,6 +3,7 @@ package ldap
 import (
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/stretchr/testify/require"
@@ -28,7 +29,7 @@ func TestLDAPPrivateMethods(t *testing.T) {
 
 			result := server.getSearchRequest("killa", []string{"gorilla"})
 
-			So(result, ShouldResemble, &ldap.SearchRequest{
+			require.True(t, cmp.Equal(result, &ldap.SearchRequest{
 				BaseDN:       "killa",
 				Scope:        2,
 				DerefAliases: 0,
@@ -44,7 +45,7 @@ func TestLDAPPrivateMethods(t *testing.T) {
 					"gansta",
 				},
 				Controls: nil,
-			})
+			}))
 		})
 	})
 

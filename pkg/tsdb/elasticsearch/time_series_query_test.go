@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/Masterminds/semver"
+	"github.com/google/go-cmp/cmp"
 	"github.com/grafana/grafana/pkg/plugins"
 	es "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client"
 	"github.com/grafana/grafana/pkg/tsdb/interval"
@@ -816,10 +817,10 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			bucketScriptAgg := firstLevel.Aggregation.Aggs[2]
 			require.Equal(t, "2", bucketScriptAgg.Key)
 			plAgg := bucketScriptAgg.Aggregation.Aggregation.(*es.PipelineAggregation)
-			So(plAgg.BucketPath.(map[string]interface{}), ShouldResemble, map[string]interface{}{
+			require.True(t, cmp.Equal(plAgg.BucketPath.(map[string]interface{}), map[string]interface{}{
 				"var1": "3",
 				"var2": "5",
-			})
+			}))
 		})
 
 		t.Run("With bucket_script doc count", func(t *testing.T) {
@@ -851,9 +852,9 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			bucketScriptAgg := firstLevel.Aggregation.Aggs[0]
 			require.Equal(t, "2", bucketScriptAgg.Key)
 			plAgg := bucketScriptAgg.Aggregation.Aggregation.(*es.PipelineAggregation)
-			So(plAgg.BucketPath.(map[string]interface{}), ShouldResemble, map[string]interface{}{
+			require.True(t, cmp.Equal(plAgg.BucketPath.(map[string]interface{}), map[string]interface{}{
 				"var1": "_count",
-			})
+			}))
 		})
 	})
 }
