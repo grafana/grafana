@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
-import { connect } from 'react-redux';
-import { DataFrame, TimeRange, ValueLinkConfig } from '@grafana/data';
+import { connect, ConnectedProps } from 'react-redux';
+import { ValueLinkConfig } from '@grafana/data';
 import { Collapse, Table } from '@grafana/ui';
 import { ExploreId, ExploreItemState } from 'app/types/explore';
 import { StoreState } from 'app/types';
@@ -15,15 +15,28 @@ import { getFieldLinksForExplore } from './utils/links';
 interface TableContainerProps {
   ariaLabel?: string;
   exploreId: ExploreId;
-  loading: boolean;
   width: number;
   onCellFilterAdded?: (filter: FilterItem) => void;
-  tableResult?: DataFrame;
-  splitOpen: typeof splitOpen;
-  range: TimeRange;
 }
 
-export class TableContainer extends PureComponent<TableContainerProps> {
+function mapStateToProps(state: StoreState, { exploreId }: TableContainerProps) {
+  const explore = state.explore;
+  // @ts-ignore
+  const item: ExploreItemState = explore[exploreId];
+  const { loading: loadingInState, tableResult, range } = item;
+  const loading = tableResult && tableResult.length > 0 ? false : loadingInState;
+  return { loading, tableResult, range };
+}
+
+const mapDispatchToProps = {
+  splitOpen,
+};
+
+const connector = connect(mapStateToProps, mapDispatchToProps);
+
+type Props = TableContainerProps & ConnectedProps<typeof connector>;
+
+export class TableContainer extends PureComponent<Props> {
   getTableHeight() {
     const { tableResult } = this.props;
 
@@ -71,17 +84,4 @@ export class TableContainer extends PureComponent<TableContainerProps> {
   }
 }
 
-function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }) {
-  const explore = state.explore;
-  // @ts-ignore
-  const item: ExploreItemState = explore[exploreId];
-  const { loading: loadingInState, tableResult, range } = item;
-  const loading = tableResult && tableResult.length > 0 ? false : loadingInState;
-  return { loading, tableResult, range };
-}
-
-const mapDispatchToProps = {
-  splitOpen,
-};
-
-export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(TableContainer));
+export default hot(module)(connector)(TableContainer);
