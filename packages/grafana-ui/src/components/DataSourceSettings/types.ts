@@ -14,6 +14,6 @@ export interface HttpSettingsProps extends HttpSettingsBaseProps {
   showAccessOptions?: boolean;
   /** Show the SigV4 auth toggle option */
   sigV4AuthToggleEnabled?: boolean;
-  /** Show the Forward OAuth identity option */
-  showForwardOAuthIdentityOption?: boolean;
+  /** Hide the Forward OAuth identity option */
+  hideForwardOAuthIdentityOption?: boolean;
 }

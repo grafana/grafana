@@ -5,7 +5,7 @@ import { Switch } from '../Forms/Legacy/Switch/Switch';
 export const HttpProxySettings: React.FC<HttpSettingsProps> = ({
   dataSourceConfig,
   onChange,
-  showForwardOAuthIdentityOption,
+  hideForwardOAuthIdentityOption,
 }) => {
   return (
     <>
@@ -35,7 +35,7 @@ export const HttpProxySettings: React.FC<HttpSettingsProps> = ({
           onChange={(event) => onChange({ ...dataSourceConfig.jsonData, tlsSkipVerify: event!.currentTarget.checked })}
         />
       </div>
-      {showForwardOAuthIdentityOption && (
+      {!hideForwardOAuthIdentityOption && (
         <div className="gf-form-inline">
           <Switch
             label="Forward OAuth Identity"
