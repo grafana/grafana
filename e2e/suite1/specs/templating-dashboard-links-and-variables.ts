@@ -8,15 +8,14 @@ e2e.scenario({
   skipScenario: false,
   scenario: () => {
     e2e.flows.openDashboard({ uid: 'yBCC3aKGk' });
-    e2e().server();
     e2e()
-      .route({
+      .intercept({
         method: 'GET',
         url: '/api/search?tag=templating&limit=100',
       })
       .as('tagsTemplatingSearch');
     e2e()
-      .route({
+      .intercept({
         method: 'GET',
         url: '/api/search?tag=demo&limit=100',
       })

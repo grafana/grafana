@@ -2,6 +2,7 @@ package commands
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"os"
 
@@ -42,7 +43,7 @@ func resetPasswordCommand(c utils.CommandLine, sqlStore *sqlstore.SQLStore) erro
 
 	userQuery := models.GetUserByIdQuery{Id: AdminUserId}
 
-	if err := bus.Dispatch(&userQuery); err != nil {
+	if err := bus.DispatchCtx(context.Background(), &userQuery); err != nil {
 		return fmt.Errorf("could not read user from database. Error: %v", err)
 	}
 
