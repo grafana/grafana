@@ -70,6 +70,7 @@ import { createTextBoxVariableAdapter } from './features/variables/textbox/adapt
 import { createConstantVariableAdapter } from './features/variables/constant/adapter';
 import { createDataSourceVariableAdapter } from './features/variables/datasource/adapter';
 import { createIntervalVariableAdapter } from './features/variables/interval/adapter';
+import { createDateTimeVariableAdapter } from './features/variables/datetime/adapter';
 import { createAdHocVariableAdapter } from './features/variables/adhoc/adapter';
 import { createSystemVariableAdapter } from './features/variables/system/adapter';
 
@@ -114,6 +115,7 @@ export class GrafanaApp {
         createConstantVariableAdapter(),
         createDataSourceVariableAdapter(),
         createIntervalVariableAdapter(),
+        createDateTimeVariableAdapter(),
         createAdHocVariableAdapter(),
         createSystemVariableAdapter(),
       ]);
