@@ -97,8 +97,9 @@ Content-Type: application/json
     "user":"root"
   },
   "emails":{
-    "templates_pattern":"emails/*.html",
-    "welcome_email_on_sign_up":"false"
+    "templates_pattern":"emails/*.html, emails/*.txt",
+    "welcome_email_on_sign_up":"false",
+    "content_types":"text/html"
   },
   "log":{
     "buffer_len":"10000",
