@@ -7,6 +7,8 @@ weight = 500
 
 # Graph panel (old)
 
+> **Note:** [Time series panel](time-series/) visualization is going to replace the Graph panel visualization in a future release.
+
 The graph panel can render metrics as a line, a path of dots, or a series of bars. This type of graph is versatile enough to display almost any time-series data.
 
 ## Data and field options
