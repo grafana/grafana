@@ -173,13 +173,31 @@ func (e *AzureResourceGraphDatasource) executeQuery(ctx context.Context, query *
 	if err != nil {
 		return dataResponseErrorWithExecuted(err)
 	}
-	if frame.Meta == nil {
-		frame.Meta = &data.FrameMeta{}
-	}
-	frame.Meta.ExecutedQueryString = req.URL.RawQuery
 
-	dataResponse.Frames = data.Frames{frame}
+	url := "https://portal.azure.com/#blade/HubsExtension/ArgQueryBlade/query/" + query.InterpolatedQuery
+	frameWithLink := addConfigData(*frame, url)
+	if frameWithLink.Meta == nil {
+		frameWithLink.Meta = &data.FrameMeta{}
+	}
+	frameWithLink.Meta.ExecutedQueryString = req.URL.RawQuery
+
+	dataResponse.Frames = data.Frames{&frameWithLink}
 	return dataResponse
+}
+
+func addConfigData(frame data.Frame, dl string) data.Frame {
+	for i := range frame.Fields {
+		if frame.Fields[i].Config == nil {
+			frame.Fields[i].Config = &data.FieldConfig{}
+		}
+		deepLink := data.DataLink{
+			Title:       "View in Azure Portal",
+			TargetBlank: true,
+			URL:         dl,
+		}
+		frame.Fields[i].Config.Links = append(frame.Fields[i].Config.Links, deepLink)
+	}
+	return frame
 }
 
 func (e *AzureResourceGraphDatasource) createRequest(ctx context.Context, dsInfo datasourceInfo, reqBody []byte) (*http.Request, error) {

@@ -64,43 +64,4 @@ export default class AzureResourceGraphDatasource extends DataSourceWithBackend<
     });
     return quotedValues.join(',');
   }
-
-  query(request: DataQueryRequest<AzureMonitorQuery>): Observable<DataQueryResponse> {
-    const metricQueries = request.targets.reduce((prev: Record<string, AzureMonitorQuery>, cur) => {
-      prev[cur.refId] = cur;
-      return prev;
-    }, {});
-
-    return super.query(request).pipe(
-      mergeMap((res: DataQueryResponse) => {
-        return from(this.processResponse(res, metricQueries));
-      })
-    );
-  }
-
-  async processResponse(
-    res: DataQueryResponse,
-    metricQueries: Record<string, AzureMonitorQuery>
-  ): Promise<DataQueryResponse> {
-    if (res.data) {
-      for (const df of res.data) {
-        const metricQuery = metricQueries[df.refId];
-        if (metricQuery && metricQuery.azureResourceGraph) {
-          const url = `${getDeepLinkRoute(this.cloud)}/#blade/HubsExtension/ArgQueryBlade/query/${
-            metricQuery.azureResourceGraph.query
-          }`;
-          for (const field of df.fields) {
-            field.config.links = [
-              {
-                url: url,
-                title: 'View in Azure Portal',
-                targetBlank: true,
-              },
-            ];
-          }
-        }
-      }
-    }
-    return res;
-  }
 }
