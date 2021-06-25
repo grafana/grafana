@@ -6,6 +6,7 @@ import { useDispatch } from '../../../../hooks/useStatelessReducer';
 import { SelectableValue } from '@grafana/data';
 import { changeBucketAggregationSetting } from '../state/actions';
 import { inlineFieldProps } from '.';
+import { uniqueId } from 'lodash';
 
 type IntervalOption = SelectableValue<string>;
 
@@ -67,7 +68,7 @@ export const DateHistogramSettingsEditor = ({ bucketAgg }: Props) => {
     <>
       <InlineField label="Interval" {...inlineFieldProps}>
         <Select<string>
-          inputId="asd"
+          inputId={uniqueId('es-date_histogram-interval')}
           onChange={(e) => handleIntervalChange(e.value!)}
           options={intervalOptions}
           value={bucketAgg.settings?.interval || bucketAggregationConfig[bucketAgg.type].defaultSettings?.interval}
