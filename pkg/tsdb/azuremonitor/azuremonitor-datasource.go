@@ -249,7 +249,7 @@ func (e *AzureMonitorDatasource) parseResponse(amr AzureMonitorResponse, query *
 		frame := data.NewFrameOfFieldTypes("", len(series.Data), data.FieldTypeTime, data.FieldTypeNullableFloat64)
 		frame.RefID = query.RefID
 		timeField := frame.Fields[0]
-		timeField.Name = "Time"
+		timeField.Name = data.TimeSeriesTimeFieldName
 		dataField := frame.Fields[1]
 		dataField.Name = amr.Value[0].Name.LocalizedValue
 		dataField.Labels = labels
