@@ -1,5 +1,6 @@
 import { PanelModel, FieldConfigSource } from '@grafana/data';
 import { graphPanelChangedHandler } from './migrations';
+import { cloneDeep } from 'lodash';
 
 describe('Graph Migrations', () => {
   let prevFieldConfig: FieldConfigSource;
@@ -61,6 +62,15 @@ describe('Graph Migrations', () => {
   it('preserves colors from series overrides', () => {
     const old: any = {
       angular: customColor,
+    };
+    const panel = {} as PanelModel;
+    panel.options = graphPanelChangedHandler(panel, 'graph', old, prevFieldConfig);
+    expect(panel).toMatchSnapshot();
+  });
+
+  it('preserves series overrides using a regex alias', () => {
+    const old: any = {
+      angular: customColorRegex,
     };
     const panel = {} as PanelModel;
     panel.options = graphPanelChangedHandler(panel, 'graph', old, prevFieldConfig);
@@ -382,6 +392,9 @@ const customColor = {
   decimals: 1,
   datasource: null,
 };
+
+const customColorRegex = cloneDeep(customColor);
+customColorRegex.seriesOverrides[0].alias = '/^A-/';
 
 const stairscase = {
   aliasColors: {},
