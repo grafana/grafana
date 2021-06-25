@@ -1,7 +1,11 @@
 import React from 'react';
-import { shallow, ShallowWrapper } from 'enzyme';
-import { UnthemedDashboardPage, mapStateToProps, Props, State } from './DashboardPage';
+import { Provider } from 'react-redux';
+import { render, screen } from '@testing-library/react';
+import { UnthemedDashboardPage, mapStateToProps, Props } from './DashboardPage';
+import { Router } from 'react-router-dom';
+import { locationService } from '@grafana/runtime';
 import { DashboardModel } from '../state';
+import { configureStore } from '../../../store/configureStore';
 import { mockToolkitActionCreator } from 'test/core/redux/mocks';
 import { DashboardInitPhase, DashboardRoutes } from 'app/types';
 import { notifyApp } from 'app/core/actions';
@@ -10,14 +14,32 @@ import { selectors } from '@grafana/e2e-selectors';
 import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
 import { createTheme } from '@grafana/data';
 
-jest.mock('app/features/dashboard/components/DashboardSettings/GeneralSettings', () => ({}));
+jest.mock('app/features/dashboard/components/DashboardSettings/GeneralSettings', () => {
+  class GeneralSettings extends React.Component<{}, {}> {
+    render() {
+      return <>general settings</>;
+    }
+  }
+
+  return { GeneralSettings };
+});
+
+jest.mock('app/core/core', () => ({
+  appEvents: {
+    subscribe: () => {
+      return { unsubscribe: () => {} };
+    },
+  },
+}));
 
 interface ScenarioContext {
   cleanUpDashboardAndVariablesMock: typeof cleanUpDashboardAndVariables;
   dashboard?: DashboardModel | null;
   setDashboardProp: (overrides?: any, metaOverrides?: any) => void;
-  wrapper?: ShallowWrapper<Props, State, UnthemedDashboardPage>;
+  wrapper?: HTMLElement;
   mount: (propOverrides?: Partial<Props>) => void;
+  unmount: () => void;
+  rerender: (propOverrides?: Partial<Props>) => void;
   setup: (fn: () => void) => void;
 }
 
@@ -52,9 +74,9 @@ function dashboardPageScenario(description: string, scenarioFn: (ctx: ScenarioCo
       },
       setDashboardProp: (overrides?: any, metaOverrides?: any) => {
         ctx.dashboard = getTestDashboard(overrides, metaOverrides);
-        ctx.wrapper?.setProps({ dashboard: ctx.dashboard });
       },
       mount: (propOverrides?: Partial<Props>) => {
+        const store = configureStore();
         const props: Props = {
           ...getRouteComponentProps({
             match: { params: { slug: 'my-dash', uid: '11' } } as any,
@@ -74,8 +96,30 @@ function dashboardPageScenario(description: string, scenarioFn: (ctx: ScenarioCo
         Object.assign(props, propOverrides);
 
         ctx.dashboard = props.dashboard;
-        ctx.wrapper = shallow(<UnthemedDashboardPage {...props} />);
+        const { container, rerender, unmount } = render(
+          <Provider store={store}>
+            <Router history={locationService.getHistory()}>
+              <UnthemedDashboardPage {...props} />
+            </Router>
+          </Provider>
+        );
+        ctx.wrapper = container;
+        ctx.rerender = (newProps?: Partial<Props>) => {
+          Object.assign(props, newProps);
+          rerender(
+            <Provider store={store}>
+              <Router history={locationService.getHistory()}>
+                <UnthemedDashboardPage {...props} />
+              </Router>
+            </Provider>
+          );
+        };
+        ctx.unmount = unmount;
       },
+      rerender: () => {
+        // will be replaced while mount() is called
+      },
+      unmount: () => {},
     };
 
     beforeEach(() => {
@@ -100,10 +144,11 @@ describe('DashboardPage', () => {
   dashboardPageScenario('Dashboard is fetching slowly', (ctx) => {
     ctx.setup(() => {
       ctx.mount();
-      ctx.wrapper?.setProps({
+      ctx.setDashboardProp({
         isInitSlow: true,
         initPhase: DashboardInitPhase.Fetching,
       });
+      ctx.rerender({ dashboard: ctx.dashboard });
     });
 
     it('Should render slow init state', () => {
@@ -114,11 +159,14 @@ describe('DashboardPage', () => {
   dashboardPageScenario('Dashboard init completed ', (ctx) => {
     ctx.setup(() => {
       ctx.mount();
-      ctx.setDashboardProp();
+      ctx.setDashboardProp({
+        title: 'My dashboard - Grafana',
+      });
+      ctx.rerender({ dashboard: ctx.dashboard });
     });
 
     it('Should update title', () => {
-      expect(document.title).toBe('My dashboard - Grafana');
+      expect(screen.getByText('My dashboard - Grafana')).toBeInTheDocument();
     });
 
     it('Should render dashboard grid', () => {
@@ -126,47 +174,15 @@ describe('DashboardPage', () => {
     });
   });
 
-  dashboardPageScenario('When user goes into panel edit', (ctx) => {
-    ctx.setup(() => {
-      ctx.mount();
-      ctx.setDashboardProp();
-      ctx.wrapper?.setProps({
-        queryParams: { editPanel: '1' },
-      });
-    });
-
-    it('Should update component state to fullscreen and edit', () => {
-      const state = ctx.wrapper?.state();
-      expect(state).not.toBe(null);
-      expect(state?.editPanel).toBeDefined();
-    });
-  });
-
-  dashboardPageScenario('When user goes into panel edit but has no edit permissions', (ctx) => {
-    ctx.setup(() => {
-      ctx.mount();
-      ctx.setDashboardProp({}, { canEdit: false });
-      ctx.wrapper?.setProps({
-        queryParams: { editPanel: '1' },
-      });
-    });
-
-    it('Should update component state to fullscreen and edit', () => {
-      const state = ctx.wrapper?.state();
-      expect(state?.editPanel).toBe(null);
-    });
-  });
   dashboardPageScenario('When user goes back to dashboard from edit panel', (ctx) => {
     ctx.setup(() => {
       ctx.mount();
       ctx.setDashboardProp();
-      ctx.wrapper?.setState({ scrollTop: 100 });
-      ctx.wrapper?.setProps({
-        queryParams: { editPanel: '1' },
-      });
-      ctx.wrapper?.setProps({
+      ctx.setDashboardProp({ scrollTop: 100, queryParams: { editPanel: '1' } });
+      ctx.setDashboardProp({
         queryParams: {},
       });
+      ctx.rerender({ dashboard: ctx.dashboard });
     });
 
     it('Should update model state normal state', () => {
@@ -174,67 +190,19 @@ describe('DashboardPage', () => {
       // @ts-ignore typescript doesn't understand that dashboard must be defined to reach the row below
       expect(ctx.dashboard.panelInEdit).toBeUndefined();
     });
-
-    it('Should update component state to normal and restore scrollTop', () => {
-      const state = ctx.wrapper?.state();
-      expect(ctx.wrapper).not.toBe(null);
-      expect(state).not.toBe(null);
-      expect(state?.editPanel).toBe(null);
-      expect(state?.scrollTop).toBe(100);
-    });
   });
 
   dashboardPageScenario('When dashboard has editview url state', (ctx) => {
     ctx.setup(() => {
-      ctx.mount();
-      ctx.setDashboardProp();
-      ctx.wrapper?.setProps({
+      ctx.mount({
         queryParams: { editview: 'settings' },
       });
+      ctx.setDashboardProp();
+      ctx.rerender({ dashboard: ctx.dashboard });
     });
 
     it('should render settings view', () => {
       expect(ctx.wrapper).toMatchSnapshot();
-    });
-  });
-
-  dashboardPageScenario('When adding panel', (ctx) => {
-    ctx.setup(() => {
-      ctx.mount();
-      ctx.setDashboardProp();
-      ctx.wrapper?.setState({ scrollTop: 100 });
-      ctx.wrapper?.instance().onAddPanel();
-    });
-
-    it('should set scrollTop to 0', () => {
-      expect(ctx.wrapper).not.toBe(null);
-      expect(ctx.wrapper?.state()).not.toBe(null);
-      expect(ctx.wrapper?.state().updateScrollTop).toBe(0);
-    });
-
-    it('should add panel widget to dashboard panels', () => {
-      expect(ctx.dashboard).not.toBe(null);
-      expect(ctx.dashboard?.panels[0].type).toBe('add-panel');
-    });
-  });
-
-  dashboardPageScenario('Given panel with id 0', (ctx) => {
-    ctx.setup(() => {
-      ctx.mount();
-      ctx.setDashboardProp({
-        panels: [{ id: 0, type: 'graph' }],
-        schemaVersion: 17,
-      });
-      ctx.wrapper?.setProps({
-        queryParams: { editPanel: '0' },
-      });
-    });
-
-    it('Should go into edit mode', () => {
-      const state = ctx.wrapper?.state();
-      expect(ctx.wrapper).not.toBe(null);
-      expect(state).not.toBe(null);
-      expect(state?.editPanel).not.toBe(null);
     });
   });
 
@@ -245,7 +213,7 @@ describe('DashboardPage', () => {
         panels: [{ id: 0, type: 'graph' }],
         schemaVersion: 17,
       });
-      ctx.wrapper?.unmount();
+      ctx.unmount();
     });
 
     it('Should call clean up action', () => {
@@ -262,11 +230,12 @@ describe('DashboardPage', () => {
         panels: [{ id: 0, type: 'graph' }],
         schemaVersion: 17,
       });
+      ctx.rerender({ dashboard: ctx.dashboard });
     });
 
     it('should not render dashboard navigation ', () => {
-      expect(ctx.wrapper?.find(`[aria-label="${selectors.pages.Dashboard.DashNav.nav}"]`)).toHaveLength(1);
-      expect(ctx.wrapper?.find(`[aria-label="${selectors.pages.Dashboard.SubMenu.submenu}"]`)).toHaveLength(1);
+      expect(screen.queryAllByLabelText(selectors.pages.Dashboard.DashNav.nav)).toHaveLength(1);
+      expect(screen.queryAllByLabelText(selectors.pages.Dashboard.SubMenu.submenu)).toHaveLength(1);
     });
   });
 
@@ -279,11 +248,12 @@ describe('DashboardPage', () => {
         panels: [{ id: 0, type: 'graph' }],
         schemaVersion: 17,
       });
+      ctx.rerender({ dashboard: ctx.dashboard });
     });
 
     it('should not render dashboard navigation ', () => {
-      expect(ctx.wrapper?.find(`[aria-label="${selectors.pages.Dashboard.DashNav.nav}"]`)).toHaveLength(1);
-      expect(ctx.wrapper?.find(`[aria-label="${selectors.pages.Dashboard.SubMenu.submenu}"]`)).toHaveLength(0);
+      expect(screen.queryAllByLabelText(selectors.pages.Dashboard.DashNav.nav)).toHaveLength(1);
+      expect(screen.queryAllByLabelText(selectors.pages.Dashboard.SubMenu.submenu)).toHaveLength(0);
     });
   });
 
@@ -296,11 +266,12 @@ describe('DashboardPage', () => {
         panels: [{ id: 0, type: 'graph' }],
         schemaVersion: 17,
       });
+      ctx.rerender({ dashboard: ctx.dashboard });
     });
 
     it('should not render dashboard navigation and submenu', () => {
-      expect(ctx.wrapper?.find(`[aria-label="${selectors.pages.Dashboard.DashNav.nav}"]`)).toHaveLength(0);
-      expect(ctx.wrapper?.find(`[aria-label="${selectors.pages.Dashboard.SubMenu.submenu}"]`)).toHaveLength(0);
+      expect(screen.queryAllByLabelText(selectors.pages.Dashboard.DashNav.nav)).toHaveLength(0);
+      expect(screen.queryAllByLabelText(selectors.pages.Dashboard.SubMenu.submenu)).toHaveLength(0);
     });
   });
 
