@@ -4,6 +4,7 @@ import 'regenerator-runtime/runtime';
 
 import 'whatwg-fetch'; // fetch polyfill needed for PhantomJs rendering
 import 'abortcontroller-polyfill/dist/polyfill-patch-fetch'; // fetch polyfill needed for PhantomJs rendering
+import './polyfill/polyfill';
 import 'file-saver';
 import 'jquery';
 
