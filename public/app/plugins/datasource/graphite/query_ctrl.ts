@@ -96,7 +96,7 @@ export class GraphiteQueryCtrl extends QueryCtrl {
   }
 
   async dispatchSegmentValueChanged(segment: GraphiteSegment, index: number) {
-    this.dispatch(actions.segmentValueChanged(segment, index));
+    await this.dispatch(actions.segmentValueChanged(segment, index));
   }
 
   async dispatchAndHandleGetTags(index: number, query: string): Promise<AngularDropdownOptions[]> {
@@ -104,8 +104,8 @@ export class GraphiteQueryCtrl extends QueryCtrl {
     return this.state.allTags;
   }
 
-  dispatchTagChanged(tag: GraphiteTag, index: number) {
-    this.dispatch(actions.tagChanged(tag, index));
+  async dispatchTagChanged(tag: GraphiteTag, index: number) {
+    await this.dispatch(actions.tagChanged(tag, index));
   }
 
   async dispatchAndHandleGetTagValues(tag: GraphiteTag, index: number, query: string) {
@@ -123,23 +123,23 @@ export class GraphiteQueryCtrl extends QueryCtrl {
     return this.state.tagsAsSegments;
   }
 
-  dispatchAddNewTag(segment: GraphiteSegment) {
-    this.dispatch(actions.addNewTag(segment));
+  async dispatchAddNewTag(segment: GraphiteSegment) {
+    await this.dispatch(actions.addNewTag(segment));
   }
 
-  dispatchUnpause() {
-    this.dispatch(actions.unpause());
+  async dispatchUnpause() {
+    await this.dispatch(actions.unpause());
   }
 
-  dispatchAddFunction(name: string) {
-    this.dispatch(actions.addFunction(name));
+  async dispatchAddFunction(name: string) {
+    await this.dispatch(actions.addFunction(name));
   }
 
-  dispatchTargetChanged() {
-    this.dispatch(actions.targetChanged());
+  async dispatchTargetChanged() {
+    await this.dispatch(actions.targetChanged());
   }
 
-  toggleEditorMode() {
-    this.dispatch(actions.toggleEditorMode());
+  async toggleEditorMode() {
+    await this.dispatch(actions.toggleEditorMode());
   }
 }
