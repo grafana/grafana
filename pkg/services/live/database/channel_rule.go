@@ -52,10 +52,10 @@ func (s *ChannelRuleStorage) loadFixtures() error {
 	return nil
 }
 
-func (s *ChannelRuleStorage) ListChannelRules(query models.ListLiveChannelRuleCommand) ([]*models.LiveChannelRule, error) {
+func (s *ChannelRuleStorage) ListChannelRules(cmd models.ListLiveChannelRuleCommand) ([]*models.LiveChannelRule, error) {
 	var result []*models.LiveChannelRule
 	err := s.store.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		return sess.Where("org_id=?", query.OrgId).Find(&result)
+		return sess.Where("org_id=?", cmd.OrgId).Find(&result)
 	})
 	return result, err
 }

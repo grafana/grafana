@@ -9,10 +9,24 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-func (hs *HTTPServer) ListChannelRules(c *models.ReqContext) response.Response {
+//go:generate mockgen -destination=live_channel_rule_mock.go -package=api github.com/grafana/grafana/pkg/api ChannelRuleStorage
+
+type ChannelRuleStorage interface {
+	ListChannelRules(cmd models.ListLiveChannelRuleCommand) ([]*models.LiveChannelRule, error)
+	GetChannelRule(cmd models.GetLiveChannelRuleCommand) (*models.LiveChannelRule, error)
+	CreateChannelRule(cmd models.CreateLiveChannelRuleCommand) (*models.LiveChannelRule, error)
+	UpdateChannelRule(cmd models.UpdateLiveChannelRuleCommand) (*models.LiveChannelRule, error)
+	DeleteChannelRule(cmd models.DeleteLiveChannelRuleCommand) error
+}
+
+type channelRuleAPI struct {
+	storage ChannelRuleStorage
+}
+
+func (a *channelRuleAPI) ListChannelRules(c *models.ReqContext) response.Response {
 	query := models.ListLiveChannelRuleCommand{OrgId: c.OrgId}
 
-	result, err := hs.Live.ChannelRuleStorage().ListChannelRules(query)
+	result, err := a.storage.ListChannelRules(query)
 	if err != nil {
 		return response.Error(500, "Failed to query channel rules", err)
 	}
@@ -48,13 +62,13 @@ func liveChannelToDTO(ch *models.LiveChannelRule) dtos.LiveChannelRule {
 	return item
 }
 
-func (hs *HTTPServer) GetChannelRuleById(c *models.ReqContext) response.Response {
+func (a *channelRuleAPI) GetChannelRuleById(c *models.ReqContext) response.Response {
 	query := models.GetLiveChannelRuleCommand{
 		Id:    c.ParamsInt64(":id"),
 		OrgId: c.OrgId,
 	}
 
-	result, err := hs.Live.ChannelRuleStorage().GetChannelRule(query)
+	result, err := a.storage.GetChannelRule(query)
 	if err != nil {
 		if errors.Is(err, models.ErrLiveChannelRuleNotFound) {
 			return response.Error(404, "Channel rule not found", nil)
@@ -65,10 +79,10 @@ func (hs *HTTPServer) GetChannelRuleById(c *models.ReqContext) response.Response
 	return response.JSON(200, &item)
 }
 
-func (hs *HTTPServer) CreateChannelRule(c *models.ReqContext, cmd models.CreateLiveChannelRuleCommand) response.Response {
+func (a *channelRuleAPI) CreateChannelRule(c *models.ReqContext, cmd models.CreateLiveChannelRuleCommand) response.Response {
 	cmd.OrgId = c.OrgId
 
-	result, err := hs.Live.ChannelRuleStorage().CreateChannelRule(cmd)
+	result, err := a.storage.CreateChannelRule(cmd)
 	if err != nil {
 		if errors.Is(err, models.ErrLiveChannelRuleExists) {
 			return response.Error(409, err.Error(), err)
@@ -83,12 +97,12 @@ func (hs *HTTPServer) CreateChannelRule(c *models.ReqContext, cmd models.CreateL
 	})
 }
 
-func (hs *HTTPServer) fillChannelRuleWithSecureJSONData(cmd *models.UpdateLiveChannelRuleCommand) error {
+func (a *channelRuleAPI) fillChannelRuleWithSecureJSONData(cmd *models.UpdateLiveChannelRuleCommand) error {
 	if len(cmd.Secure) == 0 {
 		return nil
 	}
 
-	rule, err := hs.Live.ChannelRuleStorage().GetChannelRule(models.GetLiveChannelRuleCommand{
+	rule, err := a.storage.GetChannelRule(models.GetLiveChannelRuleCommand{
 		OrgId: cmd.Id,
 		Id:    cmd.Id,
 	})
@@ -106,15 +120,15 @@ func (hs *HTTPServer) fillChannelRuleWithSecureJSONData(cmd *models.UpdateLiveCh
 	return nil
 }
 
-func (hs *HTTPServer) UpdateChannelRule(c *models.ReqContext, cmd models.UpdateLiveChannelRuleCommand) response.Response {
+func (a *channelRuleAPI) UpdateChannelRule(c *models.ReqContext, cmd models.UpdateLiveChannelRuleCommand) response.Response {
 	cmd.Id = c.ParamsInt64(":id")
 
-	err := hs.fillChannelRuleWithSecureJSONData(&cmd)
+	err := a.fillChannelRuleWithSecureJSONData(&cmd)
 	if err != nil {
 		return response.Error(500, "Failed to update channel rule", err)
 	}
 
-	_, err = hs.Live.ChannelRuleStorage().UpdateChannelRule(cmd)
+	_, err = a.storage.UpdateChannelRule(cmd)
 	if err != nil {
 		if errors.Is(err, models.ErrLiveChannelRuleNotFound) {
 			return response.Error(404, "Channel rule not found", nil)
@@ -130,7 +144,7 @@ func (hs *HTTPServer) UpdateChannelRule(c *models.ReqContext, cmd models.UpdateL
 		OrgId: c.OrgId,
 	}
 
-	result, err := hs.Live.ChannelRuleStorage().GetChannelRule(getCmd)
+	result, err := a.storage.GetChannelRule(getCmd)
 	if err != nil {
 		if errors.Is(err, models.ErrLiveChannelRuleNotFound) {
 			return response.Error(404, "Channel rule not found", nil)
@@ -145,7 +159,7 @@ func (hs *HTTPServer) UpdateChannelRule(c *models.ReqContext, cmd models.UpdateL
 	})
 }
 
-func (hs *HTTPServer) DeleteChannelRuleById(c *models.ReqContext) response.Response {
+func (a *channelRuleAPI) DeleteChannelRuleById(c *models.ReqContext) response.Response {
 	id := c.ParamsInt64(":id")
 
 	if id <= 0 {
@@ -156,7 +170,7 @@ func (hs *HTTPServer) DeleteChannelRuleById(c *models.ReqContext) response.Respo
 		Id:    id,
 		OrgId: c.OrgId,
 	}
-	_, err := hs.Live.ChannelRuleStorage().GetChannelRule(getCmd)
+	_, err := a.storage.GetChannelRule(getCmd)
 	if err != nil {
 		if errors.Is(err, models.ErrLiveChannelRuleNotFound) {
 			return response.Error(404, "Channel rule not found", nil)
@@ -165,7 +179,7 @@ func (hs *HTTPServer) DeleteChannelRuleById(c *models.ReqContext) response.Respo
 	}
 
 	cmd := models.DeleteLiveChannelRuleCommand{Id: id, OrgId: c.OrgId}
-	err = hs.Live.ChannelRuleStorage().DeleteChannelRule(cmd)
+	err = a.storage.DeleteChannelRule(cmd)
 	if err != nil {
 		return response.Error(500, "Failed to delete channel rule", err)
 	}
