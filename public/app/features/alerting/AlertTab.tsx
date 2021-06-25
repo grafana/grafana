@@ -14,6 +14,15 @@ import { PanelModel } from '../dashboard/state/PanelModel';
 import { TestRuleResult } from './TestRuleResult';
 import { AppNotificationSeverity, StoreState } from 'app/types';
 import { PanelNotSupported } from '../dashboard/components/PanelEditor/PanelNotSupported';
+import { AlertState } from '../../plugins/datasource/alertmanager/types';
+import { EventBusSrv } from '@grafana/data';
+
+interface AngularPanelController {
+  _enableAlert: () => void;
+  alertState: AlertState | null;
+  render: () => void;
+  refresh: () => void;
+}
 
 interface OwnProps {
   dashboard: DashboardModel;
@@ -36,9 +45,9 @@ interface State {
 }
 
 class UnConnectedAlertTab extends PureComponent<Props, State> {
-  element: any;
-  component: AngularComponent;
-  panelCtrl: any;
+  element?: HTMLDivElement | null;
+  component?: AngularComponent;
+  panelCtrl?: AngularPanelController;
 
   state: State = {
     validationMessage: '',
@@ -68,24 +77,28 @@ class UnConnectedAlertTab extends PureComponent<Props, State> {
   async loadAlertTab() {
     const { panel, angularPanelComponent } = this.props;
 
-    if (!this.element || !angularPanelComponent || this.component) {
+    if (!this.element || this.component) {
       return;
     }
 
-    const scope = angularPanelComponent.getScope();
+    if (angularPanelComponent) {
+      const scope = angularPanelComponent.getScope();
 
-    // When full page reloading in edit mode the angular panel has on fully compiled & instantiated yet
-    if (!scope.$$childHead) {
-      setTimeout(() => {
-        this.forceUpdate();
-      });
-      return;
+      // When full page reloading in edit mode the angular panel has on fully compiled & instantiated yet
+      if (!scope.$$childHead) {
+        setTimeout(() => {
+          this.forceUpdate();
+        });
+        return;
+      }
+
+      this.panelCtrl = scope.$$childHead.ctrl;
+    } else {
+      this.panelCtrl = this.getReactAlertPanelCtrl();
     }
 
-    this.panelCtrl = scope.$$childHead.ctrl;
     const loader = getAngularLoader();
     const template = '<alert-tab />';
-
     const scopeProps = { ctrl: this.panelCtrl };
 
     this.component = loader.load(this.element, scopeProps, template);
@@ -102,9 +115,19 @@ class UnConnectedAlertTab extends PureComponent<Props, State> {
     }
   }
 
+  getReactAlertPanelCtrl() {
+    return {
+      panel: this.props.panel,
+      events: new EventBusSrv(),
+      render: () => {
+        this.props.panel.render();
+      },
+    } as any;
+  }
+
   onAddAlert = () => {
-    this.panelCtrl._enableAlert();
-    this.component.digest();
+    this.panelCtrl?._enableAlert();
+    this.component?.digest();
     this.forceUpdate();
   };
 
@@ -148,14 +171,16 @@ class UnConnectedAlertTab extends PureComponent<Props, State> {
             <small>You need to save dashboard for the delete to take effect.</small>
           </div>
         }
-        confirmText="Delete Alert"
+        confirmText="Delete alert"
         onDismiss={onDismiss}
         onConfirm={() => {
           delete panel.alert;
           panel.thresholds = [];
-          this.panelCtrl.alertState = null;
-          this.panelCtrl.render();
-          this.component.digest();
+          if (this.panelCtrl) {
+            this.panelCtrl.alertState = null;
+            this.panelCtrl.render();
+          }
+          this.component?.digest();
           onDismiss();
         }}
       />
@@ -175,7 +200,7 @@ class UnConnectedAlertTab extends PureComponent<Props, State> {
         <StateHistory
           dashboard={dashboard}
           panelId={panel.editSourceId ?? panel.id}
-          onRefresh={() => this.panelCtrl.refresh()}
+          onRefresh={() => this.panelCtrl?.refresh()}
         />
       </Modal>
     );

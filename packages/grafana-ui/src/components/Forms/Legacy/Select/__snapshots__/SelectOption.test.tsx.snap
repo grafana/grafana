@@ -2,7 +2,7 @@
 
 exports[`SelectOption renders correctly 1`] = `
 <div
-  className="css-qtwcag-Option"
+  className="css-o8533i-Option"
   id=""
   onClick={[MockFunction]}
   onMouseMove={[MockFunction]}

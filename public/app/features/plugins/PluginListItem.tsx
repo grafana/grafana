@@ -1,6 +1,6 @@
 import React, { FC } from 'react';
 import { PluginMeta } from '@grafana/data';
-import { PluginSignatureBadge } from './PluginSignatureBadge';
+import { PluginSignatureBadge } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
 
 interface Props {

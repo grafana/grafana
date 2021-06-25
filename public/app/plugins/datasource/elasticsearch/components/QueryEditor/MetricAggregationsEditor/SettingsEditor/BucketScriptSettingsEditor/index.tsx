@@ -1,8 +1,8 @@
-import React, { Fragment, FunctionComponent, useEffect } from 'react';
+import React, { Fragment, useEffect } from 'react';
 import { Input, InlineLabel } from '@grafana/ui';
 import { MetricAggregationAction } from '../../state/types';
 import { changeMetricAttribute } from '../../state/actions';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { AddRemove } from '../../../../AddRemove';
 import { useStatelessReducer, useDispatch } from '../../../../../hooks/useStatelessReducer';
 import { MetricPicker } from '../../../../MetricPicker';
@@ -15,13 +15,14 @@ import {
 } from './state/actions';
 import { SettingField } from '../SettingField';
 import { BucketScript, MetricAggregation } from '../../aggregations';
+import { uniqueId } from 'lodash';
 
 interface Props {
   value: BucketScript;
   previousMetrics: MetricAggregation[];
 }
 
-export const BucketScriptSettingsEditor: FunctionComponent<Props> = ({ value, previousMetrics }) => {
+export const BucketScriptSettingsEditor = ({ value, previousMetrics }: Props) => {
   const upperStateDispatch = useDispatch<MetricAggregationAction<BucketScript>>();
 
   const dispatch = useStatelessReducer(
@@ -36,7 +37,7 @@ export const BucketScriptSettingsEditor: FunctionComponent<Props> = ({ value, pr
     if (!value.pipelineVariables?.length) {
       dispatch(addPipelineVariable());
     }
-  }, []);
+  }, [dispatch, value.pipelineVariables?.length]);
 
   return (
     <>
@@ -55,7 +56,14 @@ export const BucketScriptSettingsEditor: FunctionComponent<Props> = ({ value, pr
           `}
         >
           {value.pipelineVariables!.map((pipelineVar, index) => (
-            <Fragment key={pipelineVar.name}>
+            // index as a key doesn't work here since removing an element
+            // in the middle of the list, will cause the next element to obtain the same key as the removed one.
+            // this will cause react to "drop" the last element of the list instead of the just removed one,
+            // and the default value for the input won't match the model as the DOM won't get updated.
+            // using pipelineVar.name is not an option since it might be duplicated by the user.
+            // generating a unique key on every render, while is probably not the best solution in terms of performance
+            // ensures the UI is in a correct state. We might want to optimize this if we see perf issue in the future.
+            <Fragment key={uniqueId('es-bs-')}>
               <div
                 className={css`
                   display: grid;

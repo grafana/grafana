@@ -10,8 +10,14 @@ Make sure you have the following dependencies installed before setting up your d
 
 - [Git](https://git-scm.com/)
 - [Go](https://golang.org/dl/) (see [go.mod](../go.mod#L3) for minimum required version)
-- [Node.js (Long Term Support)](https://nodejs.org)
-- [Yarn](https://yarnpkg.com)
+
+Additionally you'll need:
+
+- [Node.js](https://nodejs.org) (see `volta.node` property in [package.json](../package.json) for the correct version).
+- [Yarn](https://yarnpkg.com) (see `volta.yarn` property in [package.json](../package.json) for the correct version).
+
+We recommend using [Volta](https://github.com/volta-cli/volta) to manage your JS toolchain.
+Refer to the [Volta Getting Started Guide](https://docs.volta.sh/guide/getting-started) for setup instructions for your operating system.
 
 ### macOS
 
@@ -20,14 +26,11 @@ We recommend using [Homebrew](https://brew.sh/) for installing any missing depen
 ```
 brew install git
 brew install go
-brew install node@14
-
-npm install -g yarn
 ```
 
 ### Windows
 
-If you are running Grafana on Windows 10, we recommend installing the Windows Subsystem for Linux (WSL). For installation instructions, refer to the [Microsoft WSL Installation Guide](https://docs.microsoft.com/en-us/windows/wsl/install-win10).
+If you are running Grafana on Windows 10, we recommend installing the Windows Subsystem for Linux (WSL). For installation instructions, refer to our [Grafana setup guide for Windows environment](https://grafana.com/blog/2021/03/03/how-to-set-up-a-grafana-development-environment-on-a-windows-pc-using-wsl/).
 
 ## Download Grafana
 
@@ -177,7 +180,7 @@ make devenv sources=influxdb,loki
 
 The script generates a Docker Compose file with the databases you specify as `sources`, and runs them in the background.
 
-See the repository for all the [available data sources](/devenv/docker/blocks). Note that some data sources have specific Docker images for macOS, e.g. `prometheus_mac`.
+See the repository for all the [available data sources](/devenv/docker/blocks). Note that some data sources have specific Docker images for macOS, e.g. `nginx_proxy_mac`.
 
 ## Build a Docker image
 

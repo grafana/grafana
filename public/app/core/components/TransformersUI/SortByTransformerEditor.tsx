@@ -24,7 +24,7 @@ export const SortByTransformerEditor: React.FC<TransformerUIProps<SortByTransfor
     (idx: number, cfg: SortByField) => {
       onChange({ ...options, sort: [cfg] });
     },
-    [options]
+    [onChange, options]
   );
 
   const sorts = options.sort?.length ? options.sort : [{} as SortByField];

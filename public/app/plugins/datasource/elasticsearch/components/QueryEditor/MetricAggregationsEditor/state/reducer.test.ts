@@ -14,6 +14,7 @@ import { Derivative, ExtendedStats, MetricAggregation } from '../aggregations';
 import { defaultMetricAgg } from '../../../../query_def';
 import { metricAggregationConfig } from '../utils';
 import { initQuery } from '../../state';
+import { ElasticsearchQuery } from 'app/plugins/datasource/elasticsearch/types';
 
 describe('Metric Aggregations Reducer', () => {
   it('should correctly add new aggregations', () => {
@@ -26,7 +27,7 @@ describe('Metric Aggregations Reducer', () => {
       type: 'count',
     };
 
-    reducerTester()
+    reducerTester<ElasticsearchQuery['metrics']>()
       .givenReducer(reducer, [])
       .whenActionIsDispatched(addMetric(firstAggregation.id))
       .thenStateShouldEqual([firstAggregation])
@@ -45,7 +46,7 @@ describe('Metric Aggregations Reducer', () => {
         type: 'count',
       };
 
-      reducerTester()
+      reducerTester<ElasticsearchQuery['metrics']>()
         .givenReducer(reducer, [firstAggregation, secondAggregation])
         .whenActionIsDispatched(removeMetric(firstAggregation.id))
         .thenStateShouldEqual([secondAggregation]);
@@ -54,7 +55,7 @@ describe('Metric Aggregations Reducer', () => {
     it('Should insert a default aggregation when the last one is removed', () => {
       const initialState: MetricAggregation[] = [{ id: '2', type: 'avg' }];
 
-      reducerTester()
+      reducerTester<ElasticsearchQuery['metrics']>()
         .givenReducer(reducer, initialState)
         .whenActionIsDispatched(removeMetric(initialState[0].id))
         .thenStateShouldEqual([defaultMetricAgg()]);
@@ -74,7 +75,7 @@ describe('Metric Aggregations Reducer', () => {
 
       const expectedSecondAggregation: MetricAggregation = { ...secondAggregation, type: 'avg' };
 
-      reducerTester()
+      reducerTester<ElasticsearchQuery['metrics']>()
         .givenReducer(reducer, [firstAggregation, secondAggregation])
         .whenActionIsDispatched(changeMetricType(secondAggregation.id, expectedSecondAggregation.type))
         .thenStateShouldEqual([firstAggregation, { ...secondAggregation, type: expectedSecondAggregation.type }]);
@@ -96,7 +97,7 @@ describe('Metric Aggregations Reducer', () => {
         ...metricAggregationConfig['raw_data'].defaults,
       };
 
-      reducerTester()
+      reducerTester<ElasticsearchQuery['metrics']>()
         .givenReducer(reducer, [firstAggregation, secondAggregation])
         .whenActionIsDispatched(changeMetricType(secondAggregation.id, expectedAggregation.type))
         .thenStateShouldEqual([expectedAggregation]);
@@ -124,7 +125,7 @@ describe('Metric Aggregations Reducer', () => {
       field: 'new field',
     };
 
-    reducerTester()
+    reducerTester<ElasticsearchQuery['metrics']>()
       .givenReducer(reducer, [firstAggregation, secondAggregation])
       // When changing a a pipelineAggregation field we set both pipelineAgg and field
       .whenActionIsDispatched(changeMetricField(secondAggregation.id, expectedSecondAggregation.field))
@@ -145,7 +146,7 @@ describe('Metric Aggregations Reducer', () => {
       type: 'count',
     };
 
-    reducerTester()
+    reducerTester<ElasticsearchQuery['metrics']>()
       .givenReducer(reducer, [firstAggregation, secondAggregation])
       .whenActionIsDispatched(toggleMetricVisibility(firstAggregation.id))
       .thenStateShouldEqual([{ ...firstAggregation, hide: true }, secondAggregation])
@@ -170,7 +171,7 @@ describe('Metric Aggregations Reducer', () => {
       unit: 'Changed unit',
     };
 
-    reducerTester()
+    reducerTester<ElasticsearchQuery['metrics']>()
       .givenReducer(reducer, [firstAggregation, secondAggregation])
       .whenActionIsDispatched(changeMetricSetting(firstAggregation, 'unit', expectedSettings.unit!))
       .thenStateShouldEqual([{ ...firstAggregation, settings: expectedSettings }, secondAggregation]);
@@ -193,7 +194,7 @@ describe('Metric Aggregations Reducer', () => {
       avg: false,
     };
 
-    reducerTester()
+    reducerTester<ElasticsearchQuery['metrics']>()
       .givenReducer(reducer, [firstAggregation, secondAggregation])
       .whenActionIsDispatched(changeMetricMeta(firstAggregation, 'avg', expectedMeta.avg!))
       .thenStateShouldEqual([{ ...firstAggregation, meta: expectedMeta }, secondAggregation]);
@@ -211,7 +212,7 @@ describe('Metric Aggregations Reducer', () => {
 
     const expectedHide: typeof firstAggregation['hide'] = false;
 
-    reducerTester()
+    reducerTester<ElasticsearchQuery['metrics']>()
       .givenReducer(reducer, [firstAggregation, secondAggregation])
       .whenActionIsDispatched(changeMetricAttribute(firstAggregation, 'hide', expectedHide))
       .thenStateShouldEqual([{ ...firstAggregation, hide: expectedHide }, secondAggregation]);
@@ -225,14 +226,14 @@ describe('Metric Aggregations Reducer', () => {
       },
     ];
 
-    reducerTester()
+    reducerTester<ElasticsearchQuery['metrics']>()
       .givenReducer(reducer, initialState)
       .whenActionIsDispatched({ type: 'THIS ACTION SHOULD NOT HAVE ANY EFFECT IN THIS REDUCER' })
       .thenStateShouldEqual(initialState);
   });
 
   it('Should correctly initialize first Metric Aggregation', () => {
-    reducerTester()
+    reducerTester<ElasticsearchQuery['metrics']>()
       .givenReducer(reducer, [])
       .whenActionIsDispatched(initQuery())
       .thenStateShouldEqual([defaultMetricAgg('1')]);

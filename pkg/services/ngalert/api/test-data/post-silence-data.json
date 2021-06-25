@@ -1,0 +1,23 @@
+{
+    "id": "id",
+    "status": {
+        "state": "active"
+    },
+    "updatedAt": "2021-03-11T13:50:42.218+02:00",
+    "comment": "comment",
+    "createdBy": "created by",
+    "endsAt": "2021-03-11T15:50:42.218+02:00",
+    "matchers": [
+        {
+            "isRegex": false,
+            "name": "name",
+            "value": "value"
+        },
+        {
+            "isRegex": false,
+            "name": "name2",
+            "value": "value2"
+        }
+    ],
+    "startsAt": "2021-03-11T14:50:42.218+02:00"
+}

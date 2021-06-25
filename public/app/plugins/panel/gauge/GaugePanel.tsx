@@ -39,7 +39,7 @@ export class GaugePanel extends PureComponent<PanelProps<GaugeOptions>> {
 
     if (hasLinks && getLinks) {
       return (
-        <DataLinksContextMenu links={getLinks}>
+        <DataLinksContextMenu links={getLinks} config={value.field}>
           {(api) => {
             return this.renderComponent(valueProps, api);
           }}
@@ -56,7 +56,7 @@ export class GaugePanel extends PureComponent<PanelProps<GaugeOptions>> {
       fieldConfig,
       reduceOptions: options.reduceOptions,
       replaceVariables,
-      theme: config.theme,
+      theme: config.theme2,
       data: data.series,
       timeZone,
     });

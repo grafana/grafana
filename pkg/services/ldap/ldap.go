@@ -114,6 +114,8 @@ func (server *Server) Dial() error {
 		}
 	}
 	for _, host := range strings.Split(server.Config.Host, " ") {
+		// Remove any square brackets enclosing IPv6 addresses, a format we support for backwards compatibility
+		host = strings.TrimSuffix(strings.TrimPrefix(host, "["), "]")
 		address := net.JoinHostPort(host, strconv.Itoa(server.Config.Port))
 		if server.Config.UseSSL {
 			tlsCfg := &tls.Config{

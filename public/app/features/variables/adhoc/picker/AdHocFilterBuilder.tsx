@@ -40,7 +40,7 @@ export const AdHocFilterBuilder: FC<Props> = ({ datasource, appendBefore, onComp
       setKey(null);
       setOperator('=');
     },
-    [onCompleted, key, setKey, setOperator]
+    [onCompleted, operator, key]
   );
 
   if (key === null) {

@@ -2,7 +2,6 @@ import {
   GraphSeriesValue,
   Field,
   formattedValueToString,
-  getDisplayProcessor,
   getFieldDisplayName,
   TimeZone,
   dateTimeFormat,
@@ -85,8 +84,7 @@ export const getMultiSeriesGraphHoverInfo = (
       minTime = time.display ? formattedValueToString(time.display(pointTime)) : pointTime;
     }
 
-    const display = field.display ?? getDisplayProcessor({ field, timeZone });
-    const disp = display(field.values.get(hoverIndex));
+    const disp = field.display!(field.values.get(hoverIndex));
 
     results.push({
       value: formattedValueToString(disp),
@@ -123,13 +121,13 @@ export const graphTimeFormat = (ticks: number | null, min: number | null, max: n
     if (secPerTick <= 45) {
       return systemDateFormats.interval.second;
     }
-    if (secPerTick <= 7200 || range <= oneDay) {
+    if (range <= oneDay) {
       return systemDateFormats.interval.minute;
     }
     if (secPerTick <= 80000) {
       return systemDateFormats.interval.hour;
     }
-    if (secPerTick <= 2419200 || range <= oneYear) {
+    if (range <= oneYear) {
       return systemDateFormats.interval.day;
     }
     if (secPerTick <= 31536000) {

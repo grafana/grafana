@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import React from 'react';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { createStyle } from '../../Theme';
 
 const getStyles = createStyle(() => {

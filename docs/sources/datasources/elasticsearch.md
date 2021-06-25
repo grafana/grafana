@@ -49,16 +49,19 @@ http.cors.allow-origin: "*"
 
 ### Index settings
 
-![Elasticsearch data source details](/img/docs/elasticsearch/elasticsearch-ds-details-7-4.png)
+![Elasticsearch data source details](/static/img/docs/elasticsearch/elasticsearch-ds-details-7-4.png)
 
 Here you can specify a default for the `time field` and specify the name of your Elasticsearch index. You can use
 a time pattern for the index name or a wildcard.
 
 ### Elasticsearch version
 
-Be sure to specify your Elasticsearch version in the version selection dropdown. This is very important as there are differences on how queries are composed.
-Currently the versions available are `2.x`, `5.x`, `5.6+`, `6.0+` or `7.0+`. The value `5.6+` means version 5.6 or higher, but lower than  6.0. The value `6.0+` means
-version 6.0 or higher, but lower than 7.0. Finally, `7.0+` means version 7.0 or higher, but lower than 8.0.
+Select the version of your Elasticsearch data source from the version selection dropdown. Different query compositions and functionalities are available in the query editor for different versions.
+Available Elasticsearch versions are `2.x`, `5.x`, `5.6+`, `6.0+`, `7.0+` and `7.7+`. Select the option that best matches your data source version.
+
+Grafana assumes that you are running the lowest possible version for a specified range. This ensures that new features or breaking changes in a future Elasticsearch release will not affect your configuration.
+
+For example, suppose you are running Elasticsearch `7.6.1` and you selected `7.0+`. If a new feature is made available for Elasticsearch `7.5.0` or newer releases, then a `7.5+` option will be available.  However, your configuration will not be affected until you explicitly select the new `7.5+` option in your settings.
 
 ### Min time interval
 
@@ -77,9 +80,7 @@ number followed by a valid time identifier, e.g. `1m` (1 minute) or `30s` (30 se
 | `s`        | second      |
 | `ms`       | millisecond |
 
-### Logs (BETA)
-
-> Only available in Grafana v6.3+.
+### Logs
 
 There are two parameters, `Message field name` and `Level field name`, that can optionally be configured from the data source settings page that determine
 which fields will be used for log messages and log levels when visualizing logs in [Explore]({{< relref "../explore" >}}).
@@ -100,7 +101,7 @@ Each data link configuration consists of:
 
 ## Metric Query editor
 
-![Elasticsearch Query Editor](/img/docs/elasticsearch/query-editor-7-4.png)
+![Elasticsearch Query Editor](/static/img/docs/elasticsearch/query-editor-7-4.png)
 
 The Elasticsearch query editor allows you to select multiple metrics and group by multiple terms or filters. Use the plus and minus icons to the right to add/remove
 metrics or group by clauses. Some metrics and group by clauses haves options, click the option text to expand the row to view and edit metric or group by options.
@@ -119,7 +120,7 @@ You can control the name for time series via the `Alias` input field.
 
 Some metric aggregations are called Pipeline aggregations, for example, *Moving Average* and *Derivative*. Elasticsearch pipeline metrics require another metric to be based on. Use the eye icon next to the metric to hide metrics from appearing in the graph. This is useful for metrics you only have in the query for use in a pipeline metric.
 
-![Pipeline aggregation editor](/img/docs/elasticsearch/pipeline-aggregation-editor-7-4.png)
+![Pipeline aggregation editor](/static/img/docs/elasticsearch/pipeline-aggregation-editor-7-4.png)
 
 ## Templating
 
@@ -169,7 +170,7 @@ There are two syntaxes:
 Why two ways? The first syntax is easier to read and write but does not allow you to use a variable in the middle of a word. When the *Multi-value* or *Include all value*
 options are enabled, Grafana converts the labels from plain text to a lucene compatible condition.
 
-![Query with template variables](/img/docs/elasticsearch/elastic-templating-query-7-4.png)
+![Query with template variables](/static/img/docs/elasticsearch/elastic-templating-query-7-4.png)
 
 In the above example, we have a lucene query that filters documents based on the `@hostname`  property using a variable named `$hostname`. It is also using
 a variable in the *Terms* group by field input box. This allows you to use a variable to quickly change how the data is grouped.
@@ -191,18 +192,18 @@ for annotation events.
 | `Text`     | Event description field.                                                                                                                   |
 | `Tags`     | Optional field name to use for event tags (can be an array or a CSV string).                                                               |
 
-## Querying Logs (BETA)
-
-> Only available in Grafana v6.3+.
+## Querying Logs
 
 Querying and displaying log data from Elasticsearch is available in [Explore]({{< relref "../explore" >}}), and in the [logs panel]({{< relref "../panels/visualizations/logs-panel.md" >}}) in dashboards.
 Select the Elasticsearch data source, and then optionally enter a lucene query to display your logs.
+
+When switching from a Prometheus or Loki data source in Explore, your query is translated to an Elasticsearch log query with a correct Lucene filter.
 
 ### Log Queries
 
 Once the result is returned, the log panel shows a list of log rows and a bar chart where the x-axis shows the time and the y-axis shows the frequency/count.
 
-Note that the fields used for log message and level is based on an [optional data source configuration](#logs-beta).
+Note that the fields used for log message and level is based on an [optional data source configuration](#logs).
 
 ### Filter Log Messages
 
@@ -242,9 +243,13 @@ datasources:
     jsonData:
       interval: Daily
       timeField: "@timestamp"
-      esVersion: 70
+      esVersion: "7.0.0"
       logMessageField: message
       logLevelField: fields.level
+      dataLinks:
+        - datasourceUid: my_jaeger_uid # Target UID needs to be known
+          field: traceID
+          url: "$${__value.raw}" # Careful about the double "$$" because of env var expansion
 ```
 
 ## Amazon Elasticsearch Service
@@ -261,4 +266,4 @@ In order to sign requests to your Amazon Elasticsearch Service domain, SigV4 can
 
 Once AWS SigV4 is enabled, it can be configured on the Elasticsearch data source configuration page. Refer to [Cloudwatch authentication]({{<relref "./cloudwatch.md#authentication" >}}) for more information about authentication options.
 
-{{< docs-imagebox img="/img/docs/v73/elasticsearch-sigv4-config-editor.png" max-width="500px" class="docs-image--no-shadow" caption="SigV4 configuration for AWS Elasticsearch Service" >}}
+{{< figure src="/static/img/docs/v73/elasticsearch-sigv4-config-editor.png" max-width="500px" class="docs-image--no-shadow" caption="SigV4 configuration for AWS Elasticsearch Service" >}}

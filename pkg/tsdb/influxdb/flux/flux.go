@@ -5,9 +5,10 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/tsdb"
+	"github.com/grafana/grafana/pkg/plugins"
 	influxdb2 "github.com/influxdata/influxdb-client-go/v2"
 	"github.com/influxdata/influxdb-client-go/v2/api"
 )
@@ -21,21 +22,23 @@ func init() {
 }
 
 // Query builds flux queries, executes them, and returns the results.
-func Query(ctx context.Context, dsInfo *models.DataSource, tsdbQuery *tsdb.TsdbQuery) (*tsdb.Response, error) {
-	glog.Debug("Received a query", "query", *tsdbQuery)
-	tRes := &tsdb.Response{
-		Results: make(map[string]*tsdb.QueryResult),
+//nolint: staticcheck // plugins.DataQuery deprecated
+func Query(ctx context.Context, httpClientProvider httpclient.Provider, dsInfo *models.DataSource, tsdbQuery plugins.DataQuery) (
+	plugins.DataResponse, error) {
+	glog.Debug("Received a query", "query", tsdbQuery)
+	tRes := plugins.DataResponse{
+		Results: make(map[string]plugins.DataQueryResult),
 	}
-	r, err := runnerFromDataSource(dsInfo)
+	r, err := runnerFromDataSource(httpClientProvider, dsInfo)
 	if err != nil {
-		return nil, err
+		return plugins.DataResponse{}, err
 	}
 	defer r.client.Close()
 
 	for _, query := range tsdbQuery.Queries {
-		qm, err := getQueryModelTSDB(query, tsdbQuery.TimeRange, dsInfo)
+		qm, err := getQueryModelTSDB(query, *tsdbQuery.TimeRange, dsInfo)
 		if err != nil {
-			tRes.Results[query.RefId] = &tsdb.QueryResult{Error: err}
+			tRes.Results[query.RefID] = plugins.DataQueryResult{Error: err}
 			continue
 		}
 
@@ -43,7 +46,7 @@ func Query(ctx context.Context, dsInfo *models.DataSource, tsdbQuery *tsdb.TsdbQ
 		maxSeries := dsInfo.JsonData.Get("maxSeries").MustInt(1000)
 		res := executeQuery(ctx, *qm, r, maxSeries)
 
-		tRes.Results[query.RefId] = backendDataResponseToTSDBResponse(&res, query.RefId)
+		tRes.Results[query.RefID] = backendDataResponseToDataResponse(&res, query.RefID)
 	}
 	return tRes, nil
 }
@@ -67,7 +70,7 @@ func (r *runner) runQuery(ctx context.Context, fluxQuery string) (*api.QueryTabl
 }
 
 // runnerFromDataSource creates a runner from the datasource model (the datasource instance's configuration).
-func runnerFromDataSource(dsInfo *models.DataSource) (*runner, error) {
+func runnerFromDataSource(httpClientProvider httpclient.Provider, dsInfo *models.DataSource) (*runner, error) {
 	org := dsInfo.JsonData.Get("organization").MustString("")
 	if org == "" {
 		return nil, fmt.Errorf("missing organization in datasource configuration")
@@ -83,7 +86,7 @@ func runnerFromDataSource(dsInfo *models.DataSource) (*runner, error) {
 	}
 
 	opts := influxdb2.DefaultOptions()
-	hc, err := dsInfo.GetHttpClient()
+	hc, err := dsInfo.GetHTTPClient(httpClientProvider)
 	if err != nil {
 		return nil, err
 	}
@@ -94,16 +97,17 @@ func runnerFromDataSource(dsInfo *models.DataSource) (*runner, error) {
 	}, nil
 }
 
-// backendDataResponseToTSDBResponse takes the SDK's style response and changes it into a
-// tsdb.QueryResult. This is a wrapper so less of existing code needs to be changed. This should
+// backendDataResponseToDataResponse takes the SDK's style response and changes it into a
+// plugins.DataQueryResult. This is a wrapper so less of existing code needs to be changed. This should
 // be able to be removed in the near future https://github.com/grafana/grafana/pull/25472.
-func backendDataResponseToTSDBResponse(dr *backend.DataResponse, refID string) *tsdb.QueryResult {
-	qr := &tsdb.QueryResult{RefId: refID}
-
-	qr.Error = dr.Error
-
+//nolint: staticcheck // plugins.DataQueryResult deprecated
+func backendDataResponseToDataResponse(dr *backend.DataResponse, refID string) plugins.DataQueryResult {
+	qr := plugins.DataQueryResult{
+		RefID: refID,
+		Error: dr.Error,
+	}
 	if dr.Frames != nil {
-		qr.Dataframes = tsdb.NewDecodedDataFrames(dr.Frames)
+		qr.Dataframes = plugins.NewDecodedDataFrames(dr.Frames)
 	}
 	return qr
 }

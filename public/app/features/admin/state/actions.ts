@@ -1,8 +1,7 @@
-import { updateLocation } from 'app/core/actions';
 import config from 'app/core/config';
 import { dateTimeFormat, dateTimeFormatTimeAgo } from '@grafana/data';
-import { getBackendSrv } from '@grafana/runtime';
-import { ThunkResult, LdapUser, UserSession, UserDTO } from 'app/types';
+import { getBackendSrv, locationService } from '@grafana/runtime';
+import { ThunkResult, LdapUser, UserSession, UserDTO, AccessControlAction } from 'app/types';
 
 import {
   userAdminPageLoadedAction,
@@ -22,6 +21,7 @@ import {
   pageChanged,
 } from './reducers';
 import { debounce } from 'lodash';
+import { contextSrv } from 'app/core/core';
 
 // UserAdminPage
 
@@ -74,8 +74,7 @@ export function setUserPassword(userId: number, password: string): ThunkResult<v
 export function disableUser(userId: number): ThunkResult<void> {
   return async (dispatch) => {
     await getBackendSrv().post(`/api/admin/users/${userId}/disable`);
-    // dispatch(loadAdminUserPage(userId));
-    dispatch(updateLocation({ path: '/admin/users' }));
+    locationService.push('/admin/users');
   };
 }
 
@@ -89,7 +88,7 @@ export function enableUser(userId: number): ThunkResult<void> {
 export function deleteUser(userId: number): ThunkResult<void> {
   return async (dispatch) => {
     await getBackendSrv().delete(`/api/admin/users/${userId}`);
-    dispatch(updateLocation({ path: '/admin/users' }));
+    locationService.push('/admin/users');
   };
 }
 
@@ -136,6 +135,10 @@ export function deleteOrgUser(userId: number, orgId: number): ThunkResult<void> 
 
 export function loadUserSessions(userId: number): ThunkResult<void> {
   return async (dispatch) => {
+    if (!contextSrv.hasPermission(AccessControlAction.UsersAuthTokenList)) {
+      return;
+    }
+
     const tokens = await getBackendSrv().get(`/api/admin/users/${userId}/auth-tokens`);
     tokens.reverse();
     const sessions = tokens.map((session: UserSession) => {
@@ -176,7 +179,8 @@ export function revokeAllSessions(userId: number): ThunkResult<void> {
 export function loadLdapSyncStatus(): ThunkResult<void> {
   return async (dispatch) => {
     // Available only in enterprise
-    if (config.licenseInfo.hasLicense) {
+    const canReadLDAPStatus = contextSrv.hasPermission(AccessControlAction.LDAPStatusRead);
+    if (config.licenseInfo.hasLicense && canReadLDAPStatus) {
       const syncStatus = await getBackendSrv().get(`/api/admin/ldap-sync-status`);
       dispatch(ldapSyncStatusLoadedAction(syncStatus));
     }
@@ -194,6 +198,10 @@ export function syncLdapUser(userId: number): ThunkResult<void> {
 
 export function loadLdapState(): ThunkResult<void> {
   return async (dispatch) => {
+    if (!contextSrv.hasPermission(AccessControlAction.LDAPStatusRead)) {
+      return;
+    }
+
     try {
       const connectionInfo = await getBackendSrv().get(`/api/admin/ldap/status`);
       dispatch(ldapConnectionInfoLoadedAction(connectionInfo));

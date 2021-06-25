@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -17,7 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/components/dashdiffs"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/metrics"
-	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -32,7 +32,7 @@ func isDashboardStarredByUser(c *models.ReqContext, dashID int64) (bool, error) 
 	}
 
 	query := models.IsStarredByUserQuery{UserId: c.UserId, DashboardId: dashID}
-	if err := bus.Dispatch(&query); err != nil {
+	if err := bus.DispatchCtx(c.Req.Context(), &query); err != nil {
 		return false, err
 	}
 
@@ -47,10 +47,31 @@ func dashboardGuardianResponse(err error) response.Response {
 	return response.Error(403, "Access denied to this dashboard", nil)
 }
 
+func (hs *HTTPServer) TrimDashboard(c *models.ReqContext, cmd models.TrimDashboardCommand) response.Response {
+	var err error
+	dash := cmd.Dashboard
+	meta := cmd.Meta
+
+	trimedResult := *dash
+	if !hs.LoadSchemaService.IsDisabled() {
+		trimedResult, err = hs.LoadSchemaService.DashboardTrimDefaults(*dash)
+		if err != nil {
+			return response.Error(500, "Error while exporting with default values removed", err)
+		}
+	}
+
+	dto := dtos.TrimDashboardFullWithMeta{
+		Dashboard: &trimedResult,
+		Meta:      meta,
+	}
+
+	c.TimeRequest(metrics.MApiDashboardGet)
+	return response.JSON(200, dto)
+}
+
 func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
-	slug := c.Params(":slug")
 	uid := c.Params(":uid")
-	dash, rsp := getDashboardHelper(c.OrgId, slug, 0, uid)
+	dash, rsp := getDashboardHelper(c.Req.Context(), c.OrgId, 0, uid)
 	if rsp != nil {
 		return rsp
 	}
@@ -86,10 +107,10 @@ func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
 	// Finding creator and last updater of the dashboard
 	updater, creator := anonString, anonString
 	if dash.UpdatedBy > 0 {
-		updater = getUserLogin(dash.UpdatedBy)
+		updater = getUserLogin(c.Req.Context(), dash.UpdatedBy)
 	}
 	if dash.CreatedBy > 0 {
-		creator = getUserLogin(dash.CreatedBy)
+		creator = getUserLogin(c.Req.Context(), dash.CreatedBy)
 	}
 
 	meta := dtos.DashboardMeta{
@@ -115,14 +136,19 @@ func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
 	// lookup folder title
 	if dash.FolderId > 0 {
 		query := models.GetDashboardQuery{Id: dash.FolderId, OrgId: c.OrgId}
-		if err := bus.Dispatch(&query); err != nil {
+		if err := bus.DispatchCtx(c.Req.Context(), &query); err != nil {
+			if errors.Is(err, models.ErrFolderNotFound) {
+				return response.Error(404, "Folder not found", err)
+			}
 			return response.Error(500, "Dashboard folder could not be read", err)
 		}
+		meta.FolderUid = query.Result.Uid
 		meta.FolderTitle = query.Result.Title
 		meta.FolderUrl = query.Result.GetUrl()
 	}
 
-	provisioningData, err := dashboards.NewProvisioningService().GetProvisionedDashboardDataByDashboardID(dash.Id)
+	svc := dashboards.NewProvisioningService(hs.SQLStore)
+	provisioningData, err := svc.GetProvisionedDashboardDataByDashboardID(dash.Id)
 	if err != nil {
 		return response.Error(500, "Error while checking if dashboard is provisioned", err)
 	}
@@ -147,12 +173,10 @@ func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
 	// make sure db version is in sync with json model version
 	dash.Data.Set("version", dash.Version)
 
-	if hs.Cfg.IsPanelLibraryEnabled() {
-		// load library panels JSON for this dashboard
-		err = hs.LibraryPanelService.LoadLibraryPanelsForDashboard(dash)
-		if err != nil {
-			return response.Error(500, "Error while loading library panels", err)
-		}
+	// load library panels JSON for this dashboard
+	err = hs.LibraryPanelService.LoadLibraryPanelsForDashboard(c, dash)
+	if err != nil {
+		return response.Error(500, "Error while loading library panels", err)
 	}
 
 	dto := dtos.DashboardFullWithMeta{
@@ -164,25 +188,25 @@ func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
 	return response.JSON(200, dto)
 }
 
-func getUserLogin(userID int64) string {
+func getUserLogin(ctx context.Context, userID int64) string {
 	query := models.GetUserByIdQuery{Id: userID}
-	err := bus.Dispatch(&query)
+	err := bus.DispatchCtx(ctx, &query)
 	if err != nil {
 		return anonString
 	}
 	return query.Result.Login
 }
 
-func getDashboardHelper(orgID int64, slug string, id int64, uid string) (*models.Dashboard, response.Response) {
+func getDashboardHelper(ctx context.Context, orgID int64, id int64, uid string) (*models.Dashboard, response.Response) {
 	var query models.GetDashboardQuery
 
 	if len(uid) > 0 {
 		query = models.GetDashboardQuery{Uid: uid, Id: id, OrgId: orgID}
 	} else {
-		query = models.GetDashboardQuery{Slug: slug, Id: id, OrgId: orgID}
+		query = models.GetDashboardQuery{Id: id, OrgId: orgID}
 	}
 
-	if err := bus.Dispatch(&query); err != nil {
+	if err := bus.DispatchCtx(ctx, &query); err != nil {
 		return nil, response.Error(404, "Dashboard not found", err)
 	}
 
@@ -208,7 +232,7 @@ func (hs *HTTPServer) DeleteDashboardByUID(c *models.ReqContext) response.Respon
 }
 
 func (hs *HTTPServer) deleteDashboard(c *models.ReqContext) response.Response {
-	dash, rsp := getDashboardHelper(c.OrgId, c.Params(":slug"), 0, c.Params(":uid"))
+	dash, rsp := getDashboardHelper(c.Req.Context(), c.OrgId, 0, c.Params(":uid"))
 	if rsp != nil {
 		return rsp
 	}
@@ -218,15 +242,14 @@ func (hs *HTTPServer) deleteDashboard(c *models.ReqContext) response.Response {
 		return dashboardGuardianResponse(err)
 	}
 
-	if hs.Cfg.IsPanelLibraryEnabled() {
-		// disconnect all library panels for this dashboard
-		err := hs.LibraryPanelService.DisconnectLibraryPanelsForDashboard(dash)
-		if err != nil {
-			hs.log.Error("Failed to disconnect library panels", "dashboard", dash.Id, "user", c.SignedInUser.UserId, "error", err)
-		}
+	// disconnect all library elements for this dashboard
+	err := hs.LibraryElementService.DisconnectElementsFromDashboard(c, dash.Id)
+	if err != nil {
+		hs.log.Error("Failed to disconnect library elements", "dashboard", dash.Id, "user", c.SignedInUser.UserId, "error", err)
 	}
 
-	err := dashboards.NewService().DeleteDashboard(dash.Id, c.OrgId)
+	svc := dashboards.NewService(hs.SQLStore)
+	err = svc.DeleteDashboard(dash.Id, c.OrgId)
 	if err != nil {
 		var dashboardErr models.DashboardErr
 		if ok := errors.As(err, &dashboardErr); ok {
@@ -238,6 +261,13 @@ func (hs *HTTPServer) deleteDashboard(c *models.ReqContext) response.Response {
 		return response.Error(500, "Failed to delete dashboard", err)
 	}
 
+	if hs.Live != nil {
+		err := hs.Live.GrafanaScope.Dashboards.DashboardDeleted(c.OrgId, c.ToUserDisplayDTO(), dash.Uid)
+		if err != nil {
+			hs.log.Error("Failed to broadcast delete info", "dashboard", dash.Uid, "error", err)
+		}
+	}
+
 	return response.JSON(200, util.DynMap{
 		"title":   dash.Title,
 		"message": fmt.Sprintf("Dashboard %s deleted", dash.Title),
@@ -246,12 +276,23 @@ func (hs *HTTPServer) deleteDashboard(c *models.ReqContext) response.Response {
 }
 
 func (hs *HTTPServer) PostDashboard(c *models.ReqContext, cmd models.SaveDashboardCommand) response.Response {
+	var err error
 	cmd.OrgId = c.OrgId
 	cmd.UserId = c.UserId
+	if cmd.FolderUid != "" {
+		folders := dashboards.NewFolderService(c.OrgId, c.SignedInUser, hs.SQLStore)
+		folder, err := folders.GetFolderByUID(cmd.FolderUid)
+		if err != nil {
+			if errors.Is(err, models.ErrFolderNotFound) {
+				return response.Error(400, "Folder not found", err)
+			}
+			return response.Error(500, "Error while checking folder ID", err)
+		}
+		cmd.FolderId = folder.Id
+	}
 
 	dash := cmd.GetDashboardModel()
-
-	newDashboard := dash.Id == 0 && dash.Uid == ""
+	newDashboard := dash.Id == 0
 	if newDashboard {
 		limitReached, err := hs.QuotaService.QuotaReached(c, "dashboard")
 		if err != nil {
@@ -262,7 +303,8 @@ func (hs *HTTPServer) PostDashboard(c *models.ReqContext, cmd models.SaveDashboa
 		}
 	}
 
-	provisioningData, err := dashboards.NewProvisioningService().GetProvisionedDashboardDataByDashboardID(dash.Id)
+	svc := dashboards.NewProvisioningService(hs.SQLStore)
+	provisioningData, err := svc.GetProvisionedDashboardDataByDashboardID(dash.Id)
 	if err != nil {
 		return response.Error(500, "Error while checking if dashboard is provisioned", err)
 	}
@@ -272,12 +314,10 @@ func (hs *HTTPServer) PostDashboard(c *models.ReqContext, cmd models.SaveDashboa
 		allowUiUpdate = hs.ProvisioningService.GetAllowUIUpdatesFromConfig(provisioningData.Name)
 	}
 
-	if hs.Cfg.IsPanelLibraryEnabled() {
-		// clean up all unnecessary library panels JSON properties so we store a minimum JSON
-		err = hs.LibraryPanelService.CleanLibraryPanelsForDashboard(dash)
-		if err != nil {
-			return response.Error(500, "Error while cleaning library panels", err)
-		}
+	// clean up all unnecessary library panels JSON properties so we store a minimum JSON
+	err = hs.LibraryPanelService.CleanLibraryPanelsForDashboard(dash)
+	if err != nil {
+		return response.Error(500, "Error while cleaning library panels", err)
 	}
 
 	dashItem := &dashboards.SaveDashboardDTO{
@@ -288,36 +328,49 @@ func (hs *HTTPServer) PostDashboard(c *models.ReqContext, cmd models.SaveDashboa
 		Overwrite: cmd.Overwrite,
 	}
 
-	dashboard, err := dashboards.NewService().SaveDashboard(dashItem, allowUiUpdate)
+	dashSvc := dashboards.NewService(hs.SQLStore)
+	dashboard, err := dashSvc.SaveDashboard(dashItem, allowUiUpdate)
+
+	if hs.Live != nil {
+		// Tell everyone listening that the dashboard changed
+		if dashboard == nil {
+			dashboard = dash // the original request
+		}
+
+		// This will broadcast all save requets only if a `gitops` observer exists.
+		// gitops is useful when trying to save dashboards in an environment where the user can not save
+		channel := hs.Live.GrafanaScope.Dashboards
+		liveerr := channel.DashboardSaved(c.SignedInUser.OrgId, c.SignedInUser.ToUserDisplayDTO(), cmd.Message, dashboard, err)
+
+		// When an error exists, but the value broadcast to a gitops listener return 202
+		if liveerr == nil && err != nil && channel.HasGitOpsObserver(c.SignedInUser.OrgId) {
+			return response.JSON(202, util.DynMap{
+				"status":  "pending",
+				"message": "changes were broadcast to the gitops listener",
+			})
+		}
+
+		if liveerr != nil {
+			hs.log.Warn("unable to broadcast save event", "uid", dashboard.Uid, "error", err)
+		}
+	}
+
 	if err != nil {
-		return dashboardSaveErrorToApiResponse(err)
+		return hs.dashboardSaveErrorToApiResponse(err)
 	}
 
 	if hs.Cfg.EditorsCanAdmin && newDashboard {
 		inFolder := cmd.FolderId > 0
-		err := dashboards.MakeUserAdmin(hs.Bus, cmd.OrgId, cmd.UserId, dashboard.Id, !inFolder)
+		err := dashSvc.MakeUserAdmin(cmd.OrgId, cmd.UserId, dashboard.Id, !inFolder)
 		if err != nil {
 			hs.log.Error("Could not make user admin", "dashboard", dashboard.Title, "user", c.SignedInUser.UserId, "error", err)
 		}
 	}
 
-	// Tell everyone listening that the dashboard changed
-	if hs.Live.IsEnabled() {
-		err := hs.Live.GrafanaScope.Dashboards.DashboardSaved(
-			dashboard.Uid,
-			c.UserId,
-		)
-		if err != nil {
-			hs.log.Warn("unable to broadcast save event", "uid", dashboard.Uid, "error", err)
-		}
-	}
-
-	if hs.Cfg.IsPanelLibraryEnabled() {
-		// connect library panels for this dashboard after the dashboard is stored and has an ID
-		err = hs.LibraryPanelService.ConnectLibraryPanelsForDashboard(c, dashboard)
-		if err != nil {
-			return response.Error(500, "Error while connecting library panels", err)
-		}
+	// connect library panels for this dashboard after the dashboard is stored and has an ID
+	err = hs.LibraryPanelService.ConnectLibraryPanelsForDashboard(c, dashboard)
+	if err != nil {
+		return response.Error(500, "Error while connecting library panels", err)
 	}
 
 	c.TimeRequest(metrics.MApiDashboardSave)
@@ -331,13 +384,13 @@ func (hs *HTTPServer) PostDashboard(c *models.ReqContext, cmd models.SaveDashboa
 	})
 }
 
-func dashboardSaveErrorToApiResponse(err error) response.Response {
+func (hs *HTTPServer) dashboardSaveErrorToApiResponse(err error) response.Response {
 	var dashboardErr models.DashboardErr
 	if ok := errors.As(err, &dashboardErr); ok {
 		if body := dashboardErr.Body(); body != nil {
 			return response.JSON(dashboardErr.StatusCode, body)
 		}
-		if errors.Is(dashboardErr, models.ErrDashboardUpdateAccessDenied) {
+		if dashboardErr.StatusCode != 400 {
 			return response.Error(dashboardErr.StatusCode, dashboardErr.Error(), err)
 		}
 		return response.Error(dashboardErr.StatusCode, dashboardErr.Error(), nil)
@@ -349,14 +402,14 @@ func dashboardSaveErrorToApiResponse(err error) response.Response {
 
 	var validationErr alerting.ValidationError
 	if ok := errors.As(err, &validationErr); ok {
-		return response.Error(422, validationErr.Error(), nil)
+		return response.Error(422, validationErr.Error(), err)
 	}
 
 	var pluginErr models.UpdatePluginDashboardError
 	if ok := errors.As(err, &pluginErr); ok {
 		message := fmt.Sprintf("The dashboard belongs to plugin %s.", pluginErr.PluginId)
 		// look up plugin name
-		if pluginDef, exist := plugins.Plugins[pluginErr.PluginId]; exist {
+		if pluginDef := hs.PluginManager.GetPlugin(pluginErr.PluginId); pluginDef != nil {
 			message = fmt.Sprintf("The dashboard belongs to plugin %s.", pluginDef.Name)
 		}
 		return response.JSON(412, util.DynMap{"status": "plugin-dashboard", "message": message})
@@ -368,8 +421,15 @@ func dashboardSaveErrorToApiResponse(err error) response.Response {
 // GetHomeDashboard returns the home dashboard.
 func (hs *HTTPServer) GetHomeDashboard(c *models.ReqContext) response.Response {
 	prefsQuery := models.GetPreferencesWithDefaultsQuery{User: c.SignedInUser}
+	homePage := hs.Cfg.HomePage
+
 	if err := hs.Bus.Dispatch(&prefsQuery); err != nil {
 		return response.Error(500, "Failed to get preferences", err)
+	}
+
+	if prefsQuery.Result.HomeDashboardId == 0 && len(homePage) > 0 {
+		homePageRedirect := dtos.DashboardRedirect{RedirectUri: homePage}
+		return response.JSON(200, &homePageRedirect)
 	}
 
 	if prefsQuery.Result.HomeDashboardId != 0 {
@@ -502,7 +562,7 @@ func GetDashboardVersion(c *models.ReqContext) response.Response {
 
 	creator := anonString
 	if query.Result.CreatedBy > 0 {
-		creator = getUserLogin(query.Result.CreatedBy)
+		creator = getUserLogin(c.Req.Context(), query.Result.CreatedBy)
 	}
 
 	dashVersionMeta := &models.DashboardVersionMeta{
@@ -558,15 +618,15 @@ func CalculateDashboardDiff(c *models.ReqContext, apiOptions dtos.CalculateDiffO
 	}
 
 	if options.DiffType == dashdiffs.DiffDelta {
-		return response.Respond(200, result.Delta).Header("Content-Type", "application/json")
+		return response.Respond(200, result.Delta).SetHeader("Content-Type", "application/json")
 	}
 
-	return response.Respond(200, result.Delta).Header("Content-Type", "text/html")
+	return response.Respond(200, result.Delta).SetHeader("Content-Type", "text/html")
 }
 
 // RestoreDashboardVersion restores a dashboard to the given version.
 func (hs *HTTPServer) RestoreDashboardVersion(c *models.ReqContext, apiCmd dtos.RestoreDashboardVersionCommand) response.Response {
-	dash, rsp := getDashboardHelper(c.OrgId, "", c.ParamsInt64(":dashboardId"), "")
+	dash, rsp := getDashboardHelper(c.Req.Context(), c.OrgId, c.ParamsInt64(":dashboardId"), "")
 	if rsp != nil {
 		return rsp
 	}

@@ -1,14 +1,14 @@
 import React from 'react';
 import { Icon } from '../Icon/Icon';
 import { IconName } from '../../types/icon';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 
 // @ts-ignore
 import RCCascader from 'rc-cascader';
 import { CascaderOption } from '../Cascader/Cascader';
 import { onChangeCascader, onLoadDataCascader } from '../Cascader/optionMappings';
-import { stylesFactory, useTheme } from '../../themes';
-import { GrafanaTheme } from '@grafana/data';
+import { stylesFactory, useTheme2 } from '../../themes';
+import { GrafanaTheme2 } from '@grafana/data';
 
 export interface ButtonCascaderProps {
   options: CascaderOption[];
@@ -23,7 +23,7 @@ export interface ButtonCascaderProps {
   className?: string;
 }
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => {
+const getStyles = stylesFactory((theme: GrafanaTheme2) => {
   return {
     popup: css`
       label: popup;
@@ -42,7 +42,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
 
 export const ButtonCascader: React.FC<ButtonCascaderProps> = (props) => {
   const { onChange, className, loadData, icon, ...rest } = props;
-  const theme = useTheme();
+  const theme = useTheme2();
   const styles = getStyles(theme);
 
   return (

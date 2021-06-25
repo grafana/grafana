@@ -1,5 +1,5 @@
 import 'vendor/flot/jquery.flot';
-import _ from 'lodash';
+import { map } from 'lodash';
 import { getColorForTheme, dateTime, DateTime, AbsoluteTimeRange, GrafanaTheme } from '@grafana/data';
 import { config } from 'app/core/config';
 
@@ -35,7 +35,7 @@ export const colorModes: any = {
 };
 
 export function getColorModes() {
-  return _.map(Object.keys(colorModes), (key) => {
+  return map(Object.keys(colorModes), (key) => {
     return {
       key,
       value: colorModes[key].title,

@@ -1,5 +1,5 @@
 import React, { FC } from 'react';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { useTheme } from '../../themes';
 
 export interface Props {

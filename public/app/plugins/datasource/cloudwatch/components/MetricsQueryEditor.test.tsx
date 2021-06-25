@@ -7,11 +7,12 @@ import { TemplateSrv } from 'app/features/templating/template_srv';
 import { MetricsQueryEditor, normalizeQuery, Props } from './MetricsQueryEditor';
 import { CloudWatchDatasource } from '../datasource';
 import { CustomVariableModel, initialVariableModelState } from '../../../../features/variables/types';
+import { CloudWatchJsonData } from '../types';
 
 const setup = () => {
   const instanceSettings = {
     jsonData: { defaultRegion: 'us-east-1' },
-  } as DataSourceInstanceSettings;
+  } as DataSourceInstanceSettings<CloudWatchJsonData>;
 
   const templateSrv = new TemplateSrv();
   const variable: CustomVariableModel = {

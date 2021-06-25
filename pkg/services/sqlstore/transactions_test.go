@@ -23,11 +23,9 @@ func TestTransaction(t *testing.T) {
 		err := AddApiKey(cmd)
 		So(err, ShouldBeNil)
 
-		deleteApiKeyCmd := &models.DeleteApiKeyCommand{Id: cmd.Result.Id, OrgId: 1}
-
 		Convey("can update key", func() {
-			err := ss.InTransaction(context.Background(), func(ctx context.Context) error {
-				return DeleteApiKeyCtx(ctx, deleteApiKeyCmd)
+			err := ss.WithTransactionalDbSession(context.Background(), func(sess *DBSession) error {
+				return deleteAPIKey(sess, cmd.Result.Id, 1)
 			})
 
 			So(err, ShouldBeNil)
@@ -38,8 +36,8 @@ func TestTransaction(t *testing.T) {
 		})
 
 		Convey("won't update if one handler fails", func() {
-			err := ss.InTransaction(context.Background(), func(ctx context.Context) error {
-				err := DeleteApiKeyCtx(ctx, deleteApiKeyCmd)
+			err := ss.WithTransactionalDbSession(context.Background(), func(sess *DBSession) error {
+				err := deleteAPIKey(sess, cmd.Result.Id, 1)
 				if err != nil {
 					return err
 				}

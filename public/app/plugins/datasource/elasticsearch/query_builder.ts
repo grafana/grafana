@@ -1,3 +1,4 @@
+import { gte, lt } from 'semver';
 import {
   Filters,
   Histogram,
@@ -7,18 +8,21 @@ import {
 import {
   isMetricAggregationWithField,
   isMetricAggregationWithSettings,
+  isMovingAverageWithModelSettings,
   isPipelineAggregation,
   isPipelineAggregationWithMultipleBucketPaths,
+  MetricAggregation,
+  MetricAggregationWithInlineScript,
 } from './components/QueryEditor/MetricAggregationsEditor/aggregations';
-import { defaultBucketAgg, defaultMetricAgg, findMetricById } from './query_def';
+import { defaultBucketAgg, defaultMetricAgg, findMetricById, highlightTags } from './query_def';
 import { ElasticsearchQuery } from './types';
-import { convertOrderByToMetricId } from './utils';
+import { convertOrderByToMetricId, getScriptValue } from './utils';
 
 export class ElasticQueryBuilder {
   timeField: string;
-  esVersion: number;
+  esVersion: string;
 
-  constructor(options: { timeField: string; esVersion: number }) {
+  constructor(options: { timeField: string; esVersion: string }) {
     this.timeField = options.timeField;
     this.esVersion = options.esVersion;
   }
@@ -47,7 +51,7 @@ export class ElasticQueryBuilder {
 
     if (aggDef.settings.orderBy !== void 0) {
       queryNode.terms.order = {};
-      if (aggDef.settings.orderBy === '_term' && this.esVersion >= 60) {
+      if (aggDef.settings.orderBy === '_term' && gte(this.esVersion, '6.0.0')) {
         queryNode.terms.order['_key'] = aggDef.settings.order;
       } else {
         queryNode.terms.order[aggDef.settings.orderBy] = aggDef.settings.order;
@@ -144,7 +148,7 @@ export class ElasticQueryBuilder {
     ];
 
     // fields field not supported on ES 5.x
-    if (this.esVersion < 5) {
+    if (lt(this.esVersion, '5.0.0')) {
       query.fields = ['*', '_source'];
     }
 
@@ -204,8 +208,9 @@ export class ElasticQueryBuilder {
     target.metrics = target.metrics || [defaultMetricAgg()];
     target.bucketAggs = target.bucketAggs || [defaultBucketAgg()];
     target.timeField = this.timeField;
+    let metric: MetricAggregation;
 
-    let i, j, pv, nestedAggs, metric;
+    let i, j, pv, nestedAggs;
     const query = {
       size: 0,
       query: {
@@ -293,7 +298,7 @@ export class ElasticQueryBuilder {
       }
 
       const aggField: any = {};
-      let metricAgg: any = null;
+      let metricAgg: any = {};
 
       if (isPipelineAggregation(metric)) {
         if (isPipelineAggregationWithMultipleBucketPaths(metric)) {
@@ -340,7 +345,56 @@ export class ElasticQueryBuilder {
       if (isMetricAggregationWithSettings(metric)) {
         Object.entries(metric.settings || {})
           .filter(([_, v]) => v !== null)
-          .forEach(([k, v]) => (metricAgg[k] = v));
+          .forEach(([k, v]) => {
+            metricAgg[k] =
+              k === 'script' ? this.buildScript(getScriptValue(metric as MetricAggregationWithInlineScript)) : v;
+          });
+
+        // Elasticsearch isn't generally too picky about the data types in the request body,
+        // however some fields are required to be numeric.
+        // Users might have already created some of those with before, where the values were numbers.
+        switch (metric.type) {
+          case 'moving_avg':
+            metricAgg = {
+              ...metricAgg,
+              ...(metricAgg?.window !== undefined && { window: this.toNumber(metricAgg.window) }),
+              ...(metricAgg?.predict !== undefined && { predict: this.toNumber(metricAgg.predict) }),
+              ...(isMovingAverageWithModelSettings(metric) && {
+                settings: {
+                  ...metricAgg.settings,
+                  ...Object.fromEntries(
+                    Object.entries(metricAgg.settings || {})
+                      // Only format properties that are required to be numbers
+                      .filter(([settingName]) => ['alpha', 'beta', 'gamma', 'period'].includes(settingName))
+                      // omitting undefined
+                      .filter(([_, stringValue]) => stringValue !== undefined)
+                      .map(([_, stringValue]) => [_, this.toNumber(stringValue)])
+                  ),
+                },
+              }),
+            };
+            break;
+
+          case 'serial_diff':
+            metricAgg = {
+              ...metricAgg,
+              ...(metricAgg.lag !== undefined && {
+                lag: this.toNumber(metricAgg.lag),
+              }),
+            };
+            break;
+
+          case 'top_metrics':
+            metricAgg = {
+              metrics: metric.settings?.metrics?.map((field) => ({ field })),
+              size: 1,
+            };
+
+            if (metric.settings?.orderBy) {
+              metricAgg.sort = [{ [metric.settings?.orderBy]: metric.settings?.order }];
+            }
+            break;
+        }
       }
 
       aggField[metric.type] = metricAgg;
@@ -348,6 +402,25 @@ export class ElasticQueryBuilder {
     }
 
     return query;
+  }
+
+  private buildScript(script: string) {
+    if (gte(this.esVersion, '5.6.0')) {
+      return script;
+    }
+
+    return {
+      inline: script,
+    };
+  }
+
+  private toNumber(stringValue: unknown): unknown | number {
+    const parsedValue = parseFloat(`${stringValue}`);
+    if (isNaN(parsedValue)) {
+      return stringValue;
+    }
+
+    return parsedValue;
   }
 
   getTermsQuery(queryDef: any) {
@@ -397,7 +470,7 @@ export class ElasticQueryBuilder {
     switch (orderBy) {
       case 'key':
       case 'term':
-        const keyname = this.esVersion >= 60 ? '_key' : '_term';
+        const keyname = gte(this.esVersion, '6.0.0') ? '_key' : '_term';
         query.aggs['1'].terms.order[keyname] = order;
         break;
       case 'doc_count':
@@ -410,7 +483,7 @@ export class ElasticQueryBuilder {
     return query;
   }
 
-  getLogsQuery(target: ElasticsearchQuery, adhocFilters?: any, querystring?: string) {
+  getLogsQuery(target: ElasticsearchQuery, limit: number, adhocFilters?: any, querystring?: string) {
     let query: any = {
       size: 0,
       query: {
@@ -431,11 +504,19 @@ export class ElasticQueryBuilder {
       });
     }
 
-    query = this.documentQuery(query, 500);
+    query = this.documentQuery(query, limit);
 
     return {
       ...query,
       aggs: this.build(target, null, querystring).aggs,
+      highlight: {
+        fields: {
+          '*': {},
+        },
+        pre_tags: [highlightTags.pre],
+        post_tags: [highlightTags.post],
+        fragment_size: 2147483647,
+      },
     };
   }
 }

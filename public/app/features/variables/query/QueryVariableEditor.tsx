@@ -1,9 +1,9 @@
-import React, { ChangeEvent, PureComponent } from 'react';
-import { css } from 'emotion';
-import { MapDispatchToProps, MapStateToProps } from 'react-redux';
+import React, { FormEvent, PureComponent } from 'react';
+import { connect, ConnectedProps } from 'react-redux';
+import { css } from '@emotion/css';
 import { InlineField, InlineFieldRow, VerticalGroup } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
-import { getTemplateSrv } from '@grafana/runtime';
+import { DataSourcePicker, getTemplateSrv } from '@grafana/runtime';
 import { DataSourceInstanceSettings, LoadingState, SelectableValue } from '@grafana/data';
 
 import { SelectionOptionsEditor } from '../editor/SelectionOptionsEditor';
@@ -13,32 +13,31 @@ import { changeQueryVariableDataSource, changeQueryVariableQuery, initQueryVaria
 import { VariableEditorState } from '../editor/reducer';
 import { OnPropChangeArguments, VariableEditorProps } from '../editor/types';
 import { StoreState } from '../../../types';
-import { connectWithStore } from '../../../core/utils/connectWithReduxStore';
 import { toVariableIdentifier } from '../state/types';
 import { changeVariableMultiValue } from '../state/actions';
 import { getTimeSrv } from '../../dashboard/services/TimeSrv';
 import { isLegacyQueryEditor, isQueryEditor } from '../guard';
 import { VariableSectionHeader } from '../editor/VariableSectionHeader';
 import { VariableTextField } from '../editor/VariableTextField';
-import { VariableSwitchField } from '../editor/VariableSwitchField';
 import { QueryVariableRefreshSelect } from './QueryVariableRefreshSelect';
 import { QueryVariableSortSelect } from './QueryVariableSortSelect';
-import { DataSourcePicker } from 'app/core/components/Select/DataSourcePicker';
+
+const mapStateToProps = (state: StoreState) => ({
+  editor: state.templating.editor as VariableEditorState<QueryVariableEditorState>,
+});
+
+const mapDispatchToProps = {
+  initQueryVariableEditor,
+  changeQueryVariableDataSource,
+  changeQueryVariableQuery,
+  changeVariableMultiValue,
+};
+
+const connector = connect(mapStateToProps, mapDispatchToProps);
 
 export interface OwnProps extends VariableEditorProps<QueryVariableModel> {}
 
-interface ConnectedProps {
-  editor: VariableEditorState<QueryVariableEditorState>;
-}
-
-interface DispatchProps {
-  initQueryVariableEditor: typeof initQueryVariableEditor;
-  changeQueryVariableDataSource: typeof changeQueryVariableDataSource;
-  changeQueryVariableQuery: typeof changeQueryVariableQuery;
-  changeVariableMultiValue: typeof changeVariableMultiValue;
-}
-
-export type Props = OwnProps & ConnectedProps & DispatchProps;
+export type Props = OwnProps & ConnectedProps<typeof connector>;
 
 export interface State {
   regex: string | null;
@@ -67,7 +66,6 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
   }
 
   onDataSourceChange = (dsSettings: DataSourceInstanceSettings) => {
-    this.props.onPropChange({ propName: 'query', propValue: '' });
     this.props.onPropChange({
       propName: 'datasource',
       propValue: dsSettings.isDefault ? null : dsSettings.name,
@@ -92,36 +90,14 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
     }
   };
 
-  onRegExChange = (event: ChangeEvent<HTMLInputElement>) => {
-    this.setState({ regex: event.target.value });
+  onRegExChange = (event: FormEvent<HTMLInputElement>) => {
+    this.setState({ regex: event.currentTarget.value });
   };
 
-  onRegExBlur = async (event: ChangeEvent<HTMLInputElement>) => {
-    const regex = event.target.value;
+  onRegExBlur = async (event: FormEvent<HTMLInputElement>) => {
+    const regex = event.currentTarget.value;
     if (this.props.variable.regex !== regex) {
       this.props.onPropChange({ propName: 'regex', propValue: regex, updateOptions: true });
-    }
-  };
-
-  onTagsQueryChange = async (event: ChangeEvent<HTMLInputElement>) => {
-    this.setState({ tagsQuery: event.target.value });
-  };
-
-  onTagsQueryBlur = async (event: ChangeEvent<HTMLInputElement>) => {
-    const tagsQuery = event.target.value;
-    if (this.props.variable.tagsQuery !== tagsQuery) {
-      this.props.onPropChange({ propName: 'tagsQuery', propValue: tagsQuery, updateOptions: true });
-    }
-  };
-
-  onTagValuesQueryChange = async (event: ChangeEvent<HTMLInputElement>) => {
-    this.setState({ tagValuesQuery: event.target.value });
-  };
-
-  onTagValuesQueryBlur = async (event: ChangeEvent<HTMLInputElement>) => {
-    const tagValuesQuery = event.target.value;
-    if (this.props.variable.tagValuesQuery !== tagValuesQuery) {
-      this.props.onPropChange({ propName: 'tagValuesQuery', propValue: tagValuesQuery, updateOptions: true });
     }
   };
 
@@ -135,10 +111,6 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
 
   onSelectionOptionsChange = async ({ propValue, propName }: OnPropChangeArguments<VariableWithMultiSupport>) => {
     this.props.onPropChange({ propName, propValue, updateOptions: true });
-  };
-
-  onUseTagsChange = async (event: ChangeEvent<HTMLInputElement>) => {
-    this.props.onPropChange({ propName: 'useTags', propValue: event.target.checked, updateOptions: true });
   };
 
   renderQueryEditor = () => {
@@ -237,65 +209,10 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
             onPropChange={this.onSelectionOptionsChange}
             onMultiChanged={this.props.changeVariableMultiValue}
           />
-
-          <VerticalGroup spacing="none">
-            <h5>Value group tags</h5>
-            <em className="muted p-b-1">Experimental feature, will be deprecated in Grafana v8.</em>
-
-            <VariableSwitchField
-              value={this.props.variable.useTags}
-              name="Enabled"
-              onChange={this.onUseTagsChange}
-              ariaLabel={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.valueGroupsTagsEnabledSwitch}
-            />
-            {this.props.variable.useTags ? (
-              <VerticalGroup spacing="none">
-                <VariableTextField
-                  value={this.state.tagsQuery ?? this.props.variable.tagsQuery}
-                  name="Tags query"
-                  placeholder="metric name or tags query"
-                  onChange={this.onTagsQueryChange}
-                  onBlur={this.onTagsQueryBlur}
-                  ariaLabel={
-                    selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.valueGroupsTagsTagsQueryInput
-                  }
-                  labelWidth={20}
-                  grow
-                />
-                <VariableTextField
-                  value={this.state.tagValuesQuery ?? this.props.variable.tagValuesQuery}
-                  name="Tag values query"
-                  placeholder="apps.$tag.*"
-                  onChange={this.onTagValuesQueryChange}
-                  onBlur={this.onTagValuesQueryBlur}
-                  ariaLabel={
-                    selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.valueGroupsTagsTagsValuesQueryInput
-                  }
-                  labelWidth={20}
-                  grow
-                />
-              </VerticalGroup>
-            ) : null}
-          </VerticalGroup>
         </VerticalGroup>
       </VerticalGroup>
     );
   }
 }
 
-const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (state, ownProps) => ({
-  editor: state.templating.editor as VariableEditorState<QueryVariableEditorState>,
-});
-
-const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
-  initQueryVariableEditor,
-  changeQueryVariableDataSource,
-  changeQueryVariableQuery,
-  changeVariableMultiValue,
-};
-
-export const QueryVariableEditor = connectWithStore(
-  QueryVariableEditorUnConnected,
-  mapStateToProps,
-  mapDispatchToProps
-);
+export const QueryVariableEditor = connector(QueryVariableEditorUnConnected);

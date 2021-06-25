@@ -14,6 +14,7 @@ export const Pages = {
   DataSource: {
     name: 'Data source settings page name input field',
     delete: 'Data source settings page Delete button',
+    readOnly: 'Data source settings page read only message',
     saveAndTest: 'Data source settings page Save and Test button',
     alert: 'Data source settings page Alert',
   },
@@ -31,10 +32,16 @@ export const Pages = {
   AddDashboard: {
     url: '/dashboard/new',
     addNewPanel: 'Add new panel',
+    addNewRow: 'Add new row',
+    addNewPanelLibrary: 'Add new panel from panel library',
   },
   Dashboard: {
     url: (uid: string) => `/d/${uid}`,
+    DashNav: {
+      nav: 'Dashboard navigation',
+    },
     SubMenu: {
+      submenu: 'Dashboard submenu',
       submenuItem: 'Dashboard template variables submenu item',
       submenuItemLabels: (item: string) => `Dashboard template variables submenu Label ${item}`,
       submenuItemValueDropDownValueLinkTexts: (item: string) =>
@@ -54,12 +61,15 @@ export const Pages = {
       },
       Annotations: {
         List: {
-          addAnnotationCTA: 'Call to action button Add Annotation Query',
+          addAnnotationCTA: Components.CallToActionCard.button('Add annotation query'),
+        },
+        Settings: {
+          name: 'Annotations settings name input',
         },
       },
       Variables: {
         List: {
-          addVariableCTA: 'Call to action button Add variable',
+          addVariableCTA: Components.CallToActionCard.button('Add variable'),
           newButton: 'Variable editor New variable button',
           table: 'Variable editor Table',
           tableRowNameFields: (variableName: string) => `Variable editor Table Name field ${variableName}`,
@@ -144,5 +154,15 @@ export const Pages = {
   PluginPage: {
     page: 'Plugin page',
     signatureInfo: 'Plugin signature info',
+  },
+  PlaylistForm: {
+    name: 'Playlist name',
+    interval: 'Playlist interval',
+    itemRow: 'Playlist item row',
+    itemIdType: 'Playlist item dashboard by ID type',
+    itemTagType: 'Playlist item dashboard by Tag type',
+    itemMoveUp: 'Move playlist item order up',
+    itemMoveDown: 'Move playlist item order down',
+    itemDelete: 'Delete playlist item',
   },
 };

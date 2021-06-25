@@ -9,7 +9,6 @@ const createProps = (propsOverride?: Partial<ComponentProps<typeof ReturnToDashb
     splitted: false,
     exploreId: ExploreId.left,
     queries: [],
-    updateLocation: jest.fn(),
     setDashboardQueriesToUpdateOnLoad: jest.fn(),
   };
 

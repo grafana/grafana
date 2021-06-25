@@ -2,12 +2,17 @@ import React, { FC } from 'react';
 import { LoginLayout, InnerBox } from '../Login/LoginLayout';
 import { ChangePassword } from './ChangePassword';
 import LoginCtrl from '../Login/LoginCtrl';
+import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 
-export const ChangePasswordPage: FC = () => {
+interface Props extends GrafanaRouteComponentProps<{}, { code: string }> {}
+
+export const ChangePasswordPage: FC<Props> = (props) => {
   return (
     <LoginLayout>
       <InnerBox>
-        <LoginCtrl>{({ changePassword }) => <ChangePassword onSubmit={changePassword} />}</LoginCtrl>
+        <LoginCtrl resetCode={props.queryParams.code}>
+          {({ changePassword }) => <ChangePassword onSubmit={changePassword} />}
+        </LoginCtrl>
       </InnerBox>
     </LoginLayout>
   );

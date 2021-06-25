@@ -5,10 +5,7 @@ import {
   DataQuery,
   DataQueryRequest,
   DataSourceApi,
-  ExploreUrlState,
   HistoryItem,
-  LogLevel,
-  LogsDedupStrategy,
   LogsModel,
   PanelData,
   QueryHint,
@@ -22,14 +19,15 @@ export enum ExploreId {
   right = 'right',
 }
 
+export type ExploreQueryParams = {
+  left: string;
+  right: string;
+};
+
 /**
  * Global Explore state
  */
 export interface ExploreState {
-  /**
-   * True if split view is active.
-   */
-  split: boolean;
   /**
    * True if time interval for panels are synced. Only possible with split mode.
    */
@@ -41,7 +39,7 @@ export interface ExploreState {
   /**
    * Explore state of the right area in split view.
    */
-  right: ExploreItemState;
+  right?: ExploreItemState;
   /**
    * History of all queries
    */
@@ -120,30 +118,9 @@ export interface ExploreItemState {
   queryKeys: string[];
 
   /**
-   * Current logs deduplication strategy
-   */
-  dedupStrategy: LogsDedupStrategy;
-
-  /**
-   * Currently hidden log series
-   */
-  hiddenLogLevels?: LogLevel[];
-
-  /**
    * How often query should be refreshed
    */
   refreshInterval?: string;
-
-  /**
-   * Copy of the state of the URL which is in store.location.query. This is duplicated here so we can diff the two
-   * after a change to see if we need to sync url state back to redux store (like on clicking Back in browser).
-   */
-  urlState: ExploreUrlState | null;
-
-  /**
-   * Map of what changed between real url and local urlState so we can partially update just the things that are needed.
-   */
-  update: ExploreUpdateState;
 
   latency: number;
 
@@ -156,7 +133,6 @@ export interface ExploreItemState {
    * If true, the live tailing view is paused.
    */
   isPaused: boolean;
-  urlReplaced: boolean;
 
   querySubscription?: Unsubscribable;
 
@@ -173,6 +149,13 @@ export interface ExploreItemState {
   showTable?: boolean;
   showTrace?: boolean;
   showNodeGraph?: boolean;
+
+  /**
+   * We are using caching to store query responses of queries run from logs navigation.
+   * In logs navigation, we do pagination and we don't want our users to unnecessarily run the same queries that they've run just moments before.
+   * We are currently caching last 5 query responses.
+   */
+  cache: Array<{ key: string; value: PanelData }>;
 }
 
 export interface ExploreUpdateState {

@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/guardian"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -128,19 +129,13 @@ func GetAlerts(c *models.ReqContext) response.Response {
 }
 
 // POST /api/alerts/test
-func AlertTest(c *models.ReqContext, dto dtos.AlertTestCommand) response.Response {
+func (hs *HTTPServer) AlertTest(c *models.ReqContext, dto dtos.AlertTestCommand) response.Response {
 	if _, idErr := dto.Dashboard.Get("id").Int64(); idErr != nil {
 		return response.Error(400, "The dashboard needs to be saved at least once before you can test an alert rule", nil)
 	}
 
-	backendCmd := alerting.AlertTestCommand{
-		OrgID:     c.OrgId,
-		Dashboard: dto.Dashboard,
-		PanelID:   dto.PanelId,
-		User:      c.SignedInUser,
-	}
-
-	if err := bus.Dispatch(&backendCmd); err != nil {
+	res, err := hs.AlertEngine.AlertTest(c.OrgId, dto.Dashboard, dto.PanelId, c.SignedInUser)
+	if err != nil {
 		var validationErr alerting.ValidationError
 		if errors.As(err, &validationErr) {
 			return response.Error(422, validationErr.Error(), nil)
@@ -151,7 +146,6 @@ func AlertTest(c *models.ReqContext, dto dtos.AlertTestCommand) response.Respons
 		return response.Error(500, "Failed to test rule", err)
 	}
 
-	res := backendCmd.Result
 	dtoRes := &dtos.AlertTestResult{
 		Firing:         res.Firing,
 		ConditionEvals: res.ConditionEvals,
@@ -186,8 +180,15 @@ func GetAlert(c *models.ReqContext) response.Response {
 	return response.JSON(200, &query.Result)
 }
 
-func GetAlertNotifiers(c *models.ReqContext) response.Response {
-	return response.JSON(200, alerting.GetNotifiers())
+func GetAlertNotifiers(ngalertEnabled bool) func(*models.ReqContext) response.Response {
+	return func(_ *models.ReqContext) response.Response {
+		if ngalertEnabled {
+			return response.JSON(200, notifier.GetAvailableNotifiers())
+		}
+		// TODO(codesome): This wont be required in 8.0 since ngalert
+		// will be enabled by default with no disabling. This is to be removed later.
+		return response.JSON(200, alerting.GetNotifiers())
+	}
 }
 
 func GetAlertNotificationLookup(c *models.ReqContext) response.Response {
@@ -438,6 +439,11 @@ func NotificationTest(c *models.ReqContext, dto dtos.NotificationTestCommand) re
 		if errors.Is(err, models.ErrSmtpNotEnabled) {
 			return response.Error(412, err.Error(), err)
 		}
+		var alertingErr alerting.ValidationError
+		if errors.As(err, &alertingErr) {
+			return response.Error(400, err.Error(), err)
+		}
+
 		return response.Error(500, "Failed to send alert notifications", err)
 	}
 

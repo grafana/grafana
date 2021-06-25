@@ -1,7 +1,6 @@
 import { AnyAction } from 'redux';
-import { UrlQueryMap } from '@grafana/data';
 
-import { getRootReducer, getTemplatingAndLocationRootReducer, getTemplatingRootReducer } from './helpers';
+import { getRootReducer, getTemplatingRootReducer, RootReducerType, TemplatingReducerType } from './helpers';
 import { variableAdapters } from '../adapters';
 import { createQueryVariableAdapter } from '../query/adapter';
 import { createCustomVariableAdapter } from '../custom/adapter';
@@ -13,6 +12,7 @@ import {
   cancelVariables,
   changeVariableMultiValue,
   cleanUpVariables,
+  fixSelectedInconsistency,
   initDashboardTemplating,
   initVariablesTransaction,
   processVariables,
@@ -49,7 +49,6 @@ import {
   initialVariableEditorState,
   setIdInEditor,
 } from '../editor/reducer';
-import { DashboardState, LocationState } from '../../../types';
 import {
   TransactionStatus,
   variablesClearTransaction,
@@ -62,7 +61,9 @@ import { expect } from '../../../../test/lib/common';
 import { ConstantVariableModel, VariableRefresh } from '../types';
 import { updateVariableOptions } from '../query/reducer';
 import { setVariableQueryRunner, VariableQueryRunner } from '../query/VariableQueryRunner';
-import { setDataSourceSrv } from '@grafana/runtime';
+import { setDataSourceSrv, setLocationService } from '@grafana/runtime';
+import { LoadingState } from '@grafana/data';
+import { toAsyncOfResult } from '../../query/state/DashboardQueryRunner/testHelpers';
 
 variableAdapters.setInit(() => [
   createQueryVariableAdapter(),
@@ -145,20 +146,30 @@ describe('shared actions', () => {
       const custom = customBuilder().build();
       const textbox = textboxBuilder().build();
       const list = [query, constant, datasource, custom, textbox];
+      const preloadedState = {
+        templating: ({} as unknown) as TemplatingState,
+      };
+      const locationService: any = { getSearchObject: () => ({}) };
+      setLocationService(locationService);
+      const variableQueryRunner: any = {
+        cancelRequest: jest.fn(),
+        queueRequest: jest.fn(),
+        getResponse: () => toAsyncOfResult({ state: LoadingState.Done, identifier: toVariableIdentifier(query) }),
+        destroy: jest.fn(),
+      };
+      setVariableQueryRunner(variableQueryRunner);
 
-      const tester = await reduxTester<{ templating: TemplatingState; location: { query: UrlQueryMap } }>({
-        preloadedState: { templating: ({} as unknown) as TemplatingState, location: { query: {} } },
-      })
-        .givenRootReducer(getTemplatingAndLocationRootReducer())
+      const tester = await reduxTester<TemplatingReducerType>({ preloadedState })
+        .givenRootReducer(getTemplatingRootReducer())
         .whenActionIsDispatched(variablesInitTransaction({ uid: '' }))
         .whenActionIsDispatched(initDashboardTemplating(list))
         .whenAsyncActionIsDispatched(processVariables(), true);
 
       await tester.thenDispatchedActionsPredicateShouldEqual((dispatchedActions) => {
-        expect(dispatchedActions.length).toEqual(4);
+        expect(dispatchedActions.length).toEqual(5);
 
         expect(dispatchedActions[0]).toEqual(
-          variableStateCompleted(toVariablePayload({ ...query, id: dispatchedActions[0].payload.id }))
+          variableStateFetching(toVariablePayload({ ...query, id: dispatchedActions[0].payload.id }))
         );
 
         expect(dispatchedActions[1]).toEqual(
@@ -171,6 +182,10 @@ describe('shared actions', () => {
 
         expect(dispatchedActions[3]).toEqual(
           variableStateCompleted(toVariablePayload({ ...textbox, id: dispatchedActions[3].payload.id }))
+        );
+
+        expect(dispatchedActions[4]).toEqual(
+          variableStateCompleted(toVariablePayload({ ...query, id: dispatchedActions[4].payload.id }))
         );
 
         return true;
@@ -202,10 +217,14 @@ describe('shared actions', () => {
 
       const list = [stats, substats];
       const query = { orgId: '1', 'var-stats': 'response', 'var-substats': ALL_VARIABLE_TEXT };
-      const tester = await reduxTester<{ templating: TemplatingState; location: { query: UrlQueryMap } }>({
-        preloadedState: { templating: ({} as unknown) as TemplatingState, location: { query } },
-      })
-        .givenRootReducer(getTemplatingAndLocationRootReducer())
+      const locationService: any = { getSearchObject: () => query };
+      setLocationService(locationService);
+      const preloadedState = {
+        templating: ({} as unknown) as TemplatingState,
+      };
+
+      const tester = await reduxTester<TemplatingReducerType>({ preloadedState })
+        .givenRootReducer(getTemplatingRootReducer())
         .whenActionIsDispatched(variablesInitTransaction({ uid: '' }))
         .whenActionIsDispatched(initDashboardTemplating(list))
         .whenAsyncActionIsDispatched(processVariables(), true);
@@ -558,11 +577,6 @@ describe('shared actions', () => {
   });
 
   describe('initVariablesTransaction', () => {
-    type ReducersUsedInContext = {
-      templating: TemplatingState;
-      dashboard: DashboardState;
-      location: LocationState;
-    };
     const constant = constantBuilder().withId('constant').withName('constant').build();
     const templating: any = { list: [constant] };
     const uid = 'uid';
@@ -570,7 +584,7 @@ describe('shared actions', () => {
 
     describe('when called and the previous dashboard has completed', () => {
       it('then correct actions are dispatched', async () => {
-        const tester = await reduxTester<ReducersUsedInContext>()
+        const tester = await reduxTester<RootReducerType>()
           .givenRootReducer(getRootReducer())
           .whenAsyncActionIsDispatched(initVariablesTransaction(uid, dashboard));
 
@@ -598,7 +612,7 @@ describe('shared actions', () => {
       it('then correct actions are dispatched', async () => {
         const transactionState = { uid: 'previous-uid', status: TransactionStatus.Fetching };
 
-        const tester = await reduxTester<ReducersUsedInContext>({
+        const tester = await reduxTester<RootReducerType>({
           preloadedState: ({
             templating: {
               transaction: transactionState,
@@ -606,7 +620,7 @@ describe('shared actions', () => {
               optionsPicker: { ...initialState },
               editor: { ...initialVariableEditorState },
             },
-          } as unknown) as ReducersUsedInContext,
+          } as unknown) as RootReducerType,
         })
           .givenRootReducer(getRootReducer())
           .whenAsyncActionIsDispatched(initVariablesTransaction(uid, dashboard));
@@ -670,6 +684,94 @@ describe('shared actions', () => {
           );
 
         expect(cancelAllInFlightRequestsMock).toHaveBeenCalledTimes(1);
+      });
+    });
+  });
+
+  describe('fixSelectedInconsistency', () => {
+    describe('when called for a single value variable', () => {
+      describe('and there is an inconsistency between current and selected in options', () => {
+        it('then it should set the correct selected', () => {
+          const variable = customBuilder().withId('custom').withCurrent('A').withOptions('A', 'B', 'C').build();
+          variable.options[1].selected = true;
+
+          expect(variable.options).toEqual([
+            { text: 'A', value: 'A', selected: false },
+            { text: 'B', value: 'B', selected: true },
+            { text: 'C', value: 'C', selected: false },
+          ]);
+
+          fixSelectedInconsistency(variable);
+
+          expect(variable.options).toEqual([
+            { text: 'A', value: 'A', selected: true },
+            { text: 'B', value: 'B', selected: false },
+            { text: 'C', value: 'C', selected: false },
+          ]);
+        });
+      });
+
+      describe('and there is no matching option in options', () => {
+        it('then the first option should be selected', () => {
+          const variable = customBuilder().withId('custom').withCurrent('A').withOptions('X', 'Y', 'Z').build();
+
+          expect(variable.options).toEqual([
+            { text: 'X', value: 'X', selected: false },
+            { text: 'Y', value: 'Y', selected: false },
+            { text: 'Z', value: 'Z', selected: false },
+          ]);
+
+          fixSelectedInconsistency(variable);
+
+          expect(variable.options).toEqual([
+            { text: 'X', value: 'X', selected: true },
+            { text: 'Y', value: 'Y', selected: false },
+            { text: 'Z', value: 'Z', selected: false },
+          ]);
+        });
+      });
+    });
+
+    describe('when called for a multi value variable', () => {
+      describe('and there is an inconsistency between current and selected in options', () => {
+        it('then it should set the correct selected', () => {
+          const variable = customBuilder().withId('custom').withCurrent(['A', 'C']).withOptions('A', 'B', 'C').build();
+          variable.options[1].selected = true;
+
+          expect(variable.options).toEqual([
+            { text: 'A', value: 'A', selected: false },
+            { text: 'B', value: 'B', selected: true },
+            { text: 'C', value: 'C', selected: false },
+          ]);
+
+          fixSelectedInconsistency(variable);
+
+          expect(variable.options).toEqual([
+            { text: 'A', value: 'A', selected: true },
+            { text: 'B', value: 'B', selected: false },
+            { text: 'C', value: 'C', selected: true },
+          ]);
+        });
+      });
+
+      describe('and there is no matching option in options', () => {
+        it('then the first option should be selected', () => {
+          const variable = customBuilder().withId('custom').withCurrent(['A', 'C']).withOptions('X', 'Y', 'Z').build();
+
+          expect(variable.options).toEqual([
+            { text: 'X', value: 'X', selected: false },
+            { text: 'Y', value: 'Y', selected: false },
+            { text: 'Z', value: 'Z', selected: false },
+          ]);
+
+          fixSelectedInconsistency(variable);
+
+          expect(variable.options).toEqual([
+            { text: 'X', value: 'X', selected: true },
+            { text: 'Y', value: 'Y', selected: false },
+            { text: 'Z', value: 'Z', selected: false },
+          ]);
+        });
       });
     });
   });

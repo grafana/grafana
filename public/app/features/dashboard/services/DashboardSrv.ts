@@ -2,18 +2,19 @@ import coreModule from 'app/core/core_module';
 import { appEvents } from 'app/core/app_events';
 import { DashboardModel } from '../state/DashboardModel';
 import { removePanel } from '../utils/panel';
-import { CoreEvents, DashboardMeta } from 'app/types';
+import { DashboardMeta } from 'app/types';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { promiseToDigest } from '../../../core/utils/promiseToDigest';
 import { saveDashboard } from 'app/features/manage-dashboards/state/actions';
+import { RemovePanelEvent } from '../../../types/events';
 
 export class DashboardSrv {
-  dashboard: DashboardModel;
+  dashboard?: DashboardModel;
 
   /** @ngInject */
   constructor(private $rootScope: GrafanaRootScope) {
-    appEvents.on(CoreEvents.removePanel, this.onRemovePanel);
+    appEvents.subscribe(RemovePanelEvent, (e) => this.onRemovePanel(e.payload));
   }
 
   create(dashboard: any, meta: DashboardMeta) {
@@ -24,20 +25,25 @@ export class DashboardSrv {
     this.dashboard = dashboard;
   }
 
-  getCurrent(): DashboardModel {
+  getCurrent(): DashboardModel | undefined {
+    if (!this.dashboard) {
+      console.warn('Calling getDashboardSrv().getCurrent() without calling getDashboardSrv().setCurrent() first.');
+    }
     return this.dashboard;
   }
 
   onRemovePanel = (panelId: number) => {
     const dashboard = this.getCurrent();
-    removePanel(dashboard, dashboard.getPanelById(panelId)!, true);
+    if (dashboard) {
+      removePanel(dashboard, dashboard.getPanelById(panelId)!, true);
+    }
   };
 
   saveJSONDashboard(json: string) {
     const parsedJson = JSON.parse(json);
     return saveDashboard({
       dashboard: parsedJson,
-      folderId: this.dashboard.meta.folderId || parsedJson.folderId,
+      folderId: this.dashboard?.meta.folderId || parsedJson.folderId,
     });
   }
 
@@ -70,7 +76,7 @@ export class DashboardSrv {
 coreModule.service('dashboardSrv', DashboardSrv);
 
 //
-// Code below is to export the service to react components
+// Code below is to export the service to React components
 //
 
 let singletonInstance: DashboardSrv;

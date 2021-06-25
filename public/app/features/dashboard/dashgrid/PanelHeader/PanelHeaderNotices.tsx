@@ -1,8 +1,7 @@
 import React, { FC, useCallback } from 'react';
 import { DataFrame, QueryResultMetaNotice } from '@grafana/data';
 import { PanelHeaderNotice } from './PanelHeaderNotice';
-import { useDispatch } from 'react-redux';
-import { updateLocation } from '../../../../core/actions';
+import { locationService } from '@grafana/runtime';
 
 interface Props {
   panelId: number;
@@ -10,17 +9,10 @@ interface Props {
 }
 
 export const PanelHeaderNotices: FC<Props> = ({ frames, panelId }) => {
-  const dispatch = useDispatch();
   const openInspect = useCallback(
     (e: React.SyntheticEvent, tab: string) => {
       e.stopPropagation();
-
-      dispatch(
-        updateLocation({
-          query: { inspect: panelId, inspectTab: tab },
-          partial: true,
-        })
-      );
+      locationService.partial({ inspect: panelId, inspectTab: tab });
     },
     [panelId]
   );

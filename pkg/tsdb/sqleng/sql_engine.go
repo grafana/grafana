@@ -1,26 +1,25 @@
 package sqleng
 
 import (
-	"container/list"
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
-	"math"
+	"net"
 	"regexp"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
 
-	"github.com/grafana/grafana/pkg/setting"
-
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/tsdb"
-
-	"github.com/grafana/grafana/pkg/components/null"
-
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/tsdb/interval"
 	"xorm.io/core"
 	"xorm.io/xorm"
 )
@@ -28,18 +27,20 @@ import (
 // MetaKeyExecutedQueryString is the key where the executed query should get stored
 const MetaKeyExecutedQueryString = "executedQueryString"
 
-// SqlMacroEngine interpolates macros into sql. It takes in the Query to have access to query context and
+var ErrConnectionFailed = errors.New("failed to connect to server - please inspect Grafana server log for details")
+
+// SQLMacroEngine interpolates macros into sql. It takes in the Query to have access to query context and
 // timeRange to be able to generate queries that use from and to.
-type SqlMacroEngine interface {
-	Interpolate(query *tsdb.Query, timeRange *tsdb.TimeRange, sql string) (string, error)
+type SQLMacroEngine interface {
+	Interpolate(query plugins.DataSubQuery, timeRange plugins.DataTimeRange, sql string) (string, error)
 }
 
 // SqlQueryResultTransformer transforms a query result row to RowValues with proper types.
 type SqlQueryResultTransformer interface {
-	// TransformQueryResult transforms a query result row to RowValues with proper types.
-	TransformQueryResult(columnTypes []*sql.ColumnType, rows *core.Rows) (tsdb.RowValues, error)
 	// TransformQueryError transforms a query error.
 	TransformQueryError(err error) error
+
+	GetConverterList() []sqlutil.StringConverter
 }
 
 type engineCacheType struct {
@@ -53,7 +54,7 @@ var engineCache = engineCacheType{
 	versions: make(map[int64]int),
 }
 
-var sqlIntervalCalculator = tsdb.NewIntervalCalculator(nil)
+var sqlIntervalCalculator = interval.NewCalculator()
 
 // NewXormEngine is an xorm.Engine factory, that can be stubbed by tests.
 //nolint:gocritic
@@ -61,10 +62,8 @@ var NewXormEngine = func(driverName string, connectionString string) (*xorm.Engi
 	return xorm.NewEngine(driverName, connectionString)
 }
 
-const timeEndColumnName = "timeend"
-
-type sqlQueryEndpoint struct {
-	macroEngine            SqlMacroEngine
+type dataPlugin struct {
+	macroEngine            SQLMacroEngine
 	queryResultTransformer SqlQueryResultTransformer
 	engine                 *xorm.Engine
 	timeColumnNames        []string
@@ -72,7 +71,7 @@ type sqlQueryEndpoint struct {
 	log                    log.Logger
 }
 
-type SqlQueryEndpointConfiguration struct {
+type DataPluginConfiguration struct {
 	DriverName        string
 	Datasource        *models.DataSource
 	ConnectionString  string
@@ -80,8 +79,25 @@ type SqlQueryEndpointConfiguration struct {
 	MetricColumnTypes []string
 }
 
-var NewSqlQueryEndpoint = func(config *SqlQueryEndpointConfiguration, queryResultTransformer SqlQueryResultTransformer, macroEngine SqlMacroEngine, log log.Logger) (tsdb.TsdbQueryEndpoint, error) {
-	queryEndpoint := sqlQueryEndpoint{
+func (e *dataPlugin) transformQueryError(err error) error {
+	// OpError is the error type usually returned by functions in the net
+	// package. It describes the operation, network type, and address of
+	// an error. We log this error rather than return it to the client
+	// for security purposes.
+	var opErr *net.OpError
+	if errors.As(err, &opErr) {
+		e.log.Error("query error", "err", err)
+		return ErrConnectionFailed
+	}
+
+	return e.queryResultTransformer.TransformQueryError(err)
+}
+
+// NewDataPlugin returns a new plugins.DataPlugin
+//nolint: staticcheck // plugins.DataPlugin deprecated
+func NewDataPlugin(config DataPluginConfiguration, queryResultTransformer SqlQueryResultTransformer,
+	macroEngine SQLMacroEngine, log log.Logger) (plugins.DataPlugin, error) {
+	plugin := dataPlugin{
 		queryResultTransformer: queryResultTransformer,
 		macroEngine:            macroEngine,
 		timeColumnNames:        []string{"time"},
@@ -89,11 +105,11 @@ var NewSqlQueryEndpoint = func(config *SqlQueryEndpointConfiguration, queryResul
 	}
 
 	if len(config.TimeColumnNames) > 0 {
-		queryEndpoint.timeColumnNames = config.TimeColumnNames
+		plugin.timeColumnNames = config.TimeColumnNames
 	}
 
 	if len(config.MetricColumnTypes) > 0 {
-		queryEndpoint.metricColumnTypes = config.MetricColumnTypes
+		plugin.metricColumnTypes = config.MetricColumnTypes
 	}
 
 	engineCache.Lock()
@@ -101,8 +117,8 @@ var NewSqlQueryEndpoint = func(config *SqlQueryEndpointConfiguration, queryResul
 
 	if engine, present := engineCache.cache[config.Datasource.Id]; present {
 		if version := engineCache.versions[config.Datasource.Id]; version == config.Datasource.Version {
-			queryEndpoint.engine = engine
-			return &queryEndpoint, nil
+			plugin.engine = engine
+			return &plugin, nil
 		}
 	}
 
@@ -120,93 +136,213 @@ var NewSqlQueryEndpoint = func(config *SqlQueryEndpointConfiguration, queryResul
 
 	engineCache.versions[config.Datasource.Id] = config.Datasource.Version
 	engineCache.cache[config.Datasource.Id] = engine
-	queryEndpoint.engine = engine
+	plugin.engine = engine
 
-	return &queryEndpoint, nil
+	return &plugin, nil
 }
 
 const rowLimit = 1000000
 
-// Query is the main function for the SqlQueryEndpoint
-func (e *sqlQueryEndpoint) Query(ctx context.Context, dsInfo *models.DataSource, tsdbQuery *tsdb.TsdbQuery) (*tsdb.Response, error) {
-	result := &tsdb.Response{
-		Results: make(map[string]*tsdb.QueryResult),
-	}
-
+// DataQuery queries for data.
+//nolint: staticcheck // plugins.DataPlugin deprecated
+func (e *dataPlugin) DataQuery(ctx context.Context, dsInfo *models.DataSource,
+	queryContext plugins.DataQuery) (plugins.DataResponse, error) {
+	ch := make(chan plugins.DataQueryResult, len(queryContext.Queries))
 	var wg sync.WaitGroup
-
-	for _, query := range tsdbQuery.Queries {
-		rawSQL := query.Model.Get("rawSql").MustString()
-		if rawSQL == "" {
+	// Execute each query in a goroutine and wait for them to finish afterwards
+	for _, query := range queryContext.Queries {
+		if query.Model.Get("rawSql").MustString() == "" {
 			continue
 		}
-
-		queryResult := &tsdb.QueryResult{Meta: simplejson.New(), RefId: query.RefId}
-		result.Results[query.RefId] = queryResult
-
-		// global substitutions
-		rawSQL, err := Interpolate(query, tsdbQuery.TimeRange, rawSQL)
-		if err != nil {
-			queryResult.Error = err
-			continue
-		}
-
-		// datasource specific substitutions
-		rawSQL, err = e.macroEngine.Interpolate(query, tsdbQuery.TimeRange, rawSQL)
-		if err != nil {
-			queryResult.Error = err
-			continue
-		}
-
-		queryResult.Meta.Set(MetaKeyExecutedQueryString, rawSQL)
 
 		wg.Add(1)
-
-		go func(rawSQL string, query *tsdb.Query, queryResult *tsdb.QueryResult) {
-			defer wg.Done()
-			session := e.engine.NewSession()
-			defer session.Close()
-			db := session.DB()
-
-			rows, err := db.Query(rawSQL)
-			if err != nil {
-				queryResult.Error = e.queryResultTransformer.TransformQueryError(err)
-				return
-			}
-			defer func() {
-				if err := rows.Close(); err != nil {
-					e.log.Warn("Failed to close rows", "err", err)
-				}
-			}()
-
-			format := query.Model.Get("format").MustString("time_series")
-
-			switch format {
-			case "time_series":
-				err := e.transformToTimeSeries(query, rows, queryResult, tsdbQuery)
-				if err != nil {
-					queryResult.Error = err
-					return
-				}
-			case "table":
-				err := e.transformToTable(query, rows, queryResult, tsdbQuery)
-				if err != nil {
-					queryResult.Error = err
-					return
-				}
-			}
-		}(rawSQL, query, queryResult)
+		go e.executeQuery(query, &wg, queryContext, ch)
 	}
+
 	wg.Wait()
+
+	// Read results from channels
+	close(ch)
+	result := plugins.DataResponse{
+		Results: make(map[string]plugins.DataQueryResult),
+	}
+	for queryResult := range ch {
+		result.Results[queryResult.RefID] = queryResult
+	}
 
 	return result, nil
 }
 
-// Interpolate provides global macros/substitutions for all sql datasources.
-var Interpolate = func(query *tsdb.Query, timeRange *tsdb.TimeRange, sql string) (string, error) {
-	minInterval, err := tsdb.GetIntervalFrom(query.DataSource, query.Model, time.Second*60)
+//nolint: staticcheck // plugins.DataQueryResult deprecated
+func (e *dataPlugin) executeQuery(query plugins.DataSubQuery, wg *sync.WaitGroup, queryContext plugins.DataQuery,
+	ch chan plugins.DataQueryResult) {
+	defer wg.Done()
+
+	queryResult := plugins.DataQueryResult{
+		Meta:  simplejson.New(),
+		RefID: query.RefID,
+	}
+
+	defer func() {
+		if r := recover(); r != nil {
+			e.log.Error("executeQuery panic", "error", r, "stack", log.Stack(1))
+			if theErr, ok := r.(error); ok {
+				queryResult.Error = theErr
+			} else if theErrString, ok := r.(string); ok {
+				queryResult.Error = fmt.Errorf(theErrString)
+			} else {
+				queryResult.Error = fmt.Errorf("unexpected error, see the server log for details")
+			}
+			ch <- queryResult
+		}
+	}()
+
+	rawSQL := query.Model.Get("rawSql").MustString()
+	if rawSQL == "" {
+		panic("Query model property rawSql should not be empty at this point")
+	}
+	var timeRange plugins.DataTimeRange
+	if queryContext.TimeRange != nil {
+		timeRange = *queryContext.TimeRange
+	}
+
+	errAppendDebug := func(frameErr string, err error, query string) {
+		var emptyFrame data.Frame
+		emptyFrame.SetMeta(&data.FrameMeta{
+			ExecutedQueryString: query,
+		})
+		queryResult.Error = fmt.Errorf("%s: %w", frameErr, err)
+		queryResult.Dataframes = plugins.NewDecodedDataFrames(data.Frames{&emptyFrame})
+		ch <- queryResult
+	}
+
+	// global substitutions
+	interpolatedQuery, err := Interpolate(query, timeRange, rawSQL)
 	if err != nil {
-		return sql, nil
+		errAppendDebug("interpolation failed", e.transformQueryError(err), interpolatedQuery)
+		return
+	}
+
+	// data source specific substitutions
+	interpolatedQuery, err = e.macroEngine.Interpolate(query, timeRange, interpolatedQuery)
+	if err != nil {
+		errAppendDebug("interpolation failed", e.transformQueryError(err), interpolatedQuery)
+		return
+	}
+
+	session := e.engine.NewSession()
+	defer session.Close()
+	db := session.DB()
+
+	rows, err := db.Query(interpolatedQuery)
+	if err != nil {
+		errAppendDebug("db query error", e.transformQueryError(err), interpolatedQuery)
+		return
+	}
+	defer func() {
+		if err := rows.Close(); err != nil {
+			e.log.Warn("Failed to close rows", "err", err)
+		}
+	}()
+
+	qm, err := e.newProcessCfg(query, queryContext, rows, interpolatedQuery)
+	if err != nil {
+		errAppendDebug("failed to get configurations", err, interpolatedQuery)
+		return
+	}
+
+	// Convert row.Rows to dataframe
+	stringConverters := e.queryResultTransformer.GetConverterList()
+	frame, err := sqlutil.FrameFromRows(rows.Rows, rowLimit, sqlutil.ToConverters(stringConverters...)...)
+	if err != nil {
+		errAppendDebug("convert frame from rows error", err, interpolatedQuery)
+		return
+	}
+
+	frame.SetMeta(&data.FrameMeta{
+		ExecutedQueryString: interpolatedQuery,
+	})
+
+	// If no rows were returned, no point checking anything else.
+	if frame.Rows() == 0 {
+		queryResult.Dataframes = plugins.NewDecodedDataFrames(data.Frames{frame})
+		ch <- queryResult
+		return
+	}
+
+	if qm.timeIndex != -1 {
+		if err := convertSQLTimeColumnToEpochMS(frame, qm.timeIndex); err != nil {
+			errAppendDebug("db convert time column failed", err, interpolatedQuery)
+			return
+		}
+	}
+
+	if qm.Format == dataQueryFormatSeries {
+		// time series has to have time column
+		if qm.timeIndex == -1 {
+			errAppendDebug("db has no time column", errors.New("no time column found"), interpolatedQuery)
+			return
+		}
+		for i := range qm.columnNames {
+			if i == qm.timeIndex || i == qm.metricIndex {
+				continue
+			}
+
+			var err error
+			if frame, err = convertSQLValueColumnToFloat(frame, i); err != nil {
+				errAppendDebug("convert value to float failed", err, interpolatedQuery)
+				return
+			}
+		}
+
+		tsSchema := frame.TimeSeriesSchema()
+		if tsSchema.Type == data.TimeSeriesTypeLong {
+			var err error
+			originalData := frame
+			frame, err = data.LongToWide(frame, qm.FillMissing)
+			if err != nil {
+				errAppendDebug("failed to convert long to wide series when converting from dataframe", err, interpolatedQuery)
+				return
+			}
+
+			// Before 8x, a special metric column was used to name time series. The LongToWide transforms that into a metric label on the value field.
+			// But that makes series name have both the value column name AND the metric name. So here we are removing the metric label here and moving it to the
+			// field name to get the same naming for the series as pre v8
+			if len(originalData.Fields) == 3 {
+				for _, field := range frame.Fields {
+					if len(field.Labels) == 1 { // 7x only supported one label
+						name, ok := field.Labels["metric"]
+						if ok {
+							field.Name = name
+							field.Labels = nil
+						}
+					}
+				}
+			}
+		}
+		if qm.FillMissing != nil {
+			var err error
+			frame, err = resample(frame, *qm)
+			if err != nil {
+				e.log.Error("Failed to resample dataframe", "err", err)
+				frame.AppendNotices(data.Notice{Text: "Failed to resample dataframe", Severity: data.NoticeSeverityWarning})
+			}
+			if err := trim(frame, *qm); err != nil {
+				e.log.Error("Failed to trim dataframe", "err", err)
+				frame.AppendNotices(data.Notice{Text: "Failed to trim dataframe", Severity: data.NoticeSeverityWarning})
+			}
+		}
+	}
+
+	queryResult.Dataframes = plugins.NewDecodedDataFrames(data.Frames{frame})
+	ch <- queryResult
+}
+
+// Interpolate provides global macros/substitutions for all sql datasources.
+var Interpolate = func(query plugins.DataSubQuery, timeRange plugins.DataTimeRange, sql string) (string, error) {
+	minInterval, err := interval.GetIntervalFrom(query.DataSource, query.Model, time.Second*60)
+	if err != nil {
+		return "", err
 	}
 	interval := sqlIntervalCalculator.Calculate(timeRange, minInterval)
 
@@ -218,68 +354,9 @@ var Interpolate = func(query *tsdb.Query, timeRange *tsdb.TimeRange, sql string)
 	return sql, nil
 }
 
-func (e *sqlQueryEndpoint) transformToTable(query *tsdb.Query, rows *core.Rows, result *tsdb.QueryResult, tsdbQuery *tsdb.TsdbQuery) error {
-	columnNames, err := rows.Columns()
-	columnCount := len(columnNames)
-
-	if err != nil {
-		return err
-	}
-
-	rowCount := 0
-	timeIndex := -1
-	timeEndIndex := -1
-
-	table := &tsdb.Table{
-		Columns: make([]tsdb.TableColumn, columnCount),
-		Rows:    make([]tsdb.RowValues, 0),
-	}
-
-	for i, name := range columnNames {
-		table.Columns[i].Text = name
-
-		for _, tc := range e.timeColumnNames {
-			if name == tc {
-				timeIndex = i
-				break
-			}
-
-			if timeIndex >= 0 && name == timeEndColumnName {
-				timeEndIndex = i
-				break
-			}
-		}
-	}
-
-	columnTypes, err := rows.ColumnTypes()
-	if err != nil {
-		return err
-	}
-
-	for ; rows.Next(); rowCount++ {
-		if rowCount > rowLimit {
-			return fmt.Errorf("query row limit exceeded, limit %d", rowLimit)
-		}
-
-		values, err := e.queryResultTransformer.TransformQueryResult(columnTypes, rows)
-		if err != nil {
-			return err
-		}
-
-		// converts column named time and timeend to unix timestamp in milliseconds
-		// to make native mssql datetime types and epoch dates work in
-		// annotation and table queries.
-		ConvertSqlTimeColumnToEpochMs(values, timeIndex)
-		ConvertSqlTimeColumnToEpochMs(values, timeEndIndex)
-		table.Rows = append(table.Rows, values)
-	}
-
-	result.Tables = append(result.Tables, table)
-	result.Meta.Set("rowCount", rowCount)
-	return nil
-}
-
-func newProcessCfg(query *tsdb.Query, tsdbQuery *tsdb.TsdbQuery, rows *core.Rows) (*processCfg, error) {
+//nolint: staticcheck // plugins.DataPlugin deprecated
+func (e *dataPlugin) newProcessCfg(query plugins.DataSubQuery, queryContext plugins.DataQuery,
+	rows *core.Rows, interpolatedQuery string) (*dataQueryModel, error) {
 	columnNames, err := rows.Columns()
 	if err != nil {
 		return nil, err
@@ -289,396 +366,536 @@ func newProcessCfg(query *tsdb.Query, tsdbQuery *tsdb.TsdbQuery, rows *core.Rows
 		return nil, err
 	}
 
-	fillMissing := query.Model.Get("fill").MustBool(false)
-
-	cfg := &processCfg{
-		rowCount:           0,
-		columnTypes:        columnTypes,
-		columnNames:        columnNames,
-		rows:               rows,
-		timeIndex:          -1,
-		metricIndex:        -1,
-		metricPrefix:       false,
-		fillMissing:        fillMissing,
-		seriesByQueryOrder: list.New(),
-		pointsBySeries:     make(map[string]*tsdb.TimeSeries),
-		tsdbQuery:          tsdbQuery,
-	}
-	return cfg, nil
-}
-
-func (e *sqlQueryEndpoint) transformToTimeSeries(query *tsdb.Query, rows *core.Rows, result *tsdb.QueryResult,
-	tsdbQuery *tsdb.TsdbQuery) error {
-	cfg, err := newProcessCfg(query, tsdbQuery, rows)
-	if err != nil {
-		return err
+	qm := &dataQueryModel{
+		columnTypes:  columnTypes,
+		columnNames:  columnNames,
+		rows:         rows,
+		timeIndex:    -1,
+		metricIndex:  -1,
+		metricPrefix: false,
+		queryContext: queryContext,
 	}
 
-	// check columns of resultset: a column named time is mandatory
-	// the first text column is treated as metric name unless a column named metric is present
-	for i, col := range cfg.columnNames {
+	if query.Model.Get("fill").MustBool(false) {
+		qm.FillMissing = &data.FillMissing{}
+		qm.Interval = time.Duration(query.Model.Get("fillInterval").MustFloat64() * float64(time.Second))
+		switch strings.ToLower(query.Model.Get("fillMode").MustString()) {
+		case "null":
+			qm.FillMissing.Mode = data.FillModeNull
+		case "previous":
+			qm.FillMissing.Mode = data.FillModePrevious
+		case "value":
+			qm.FillMissing.Mode = data.FillModeValue
+			qm.FillMissing.Value = query.Model.Get("fillValue").MustFloat64()
+		default:
+		}
+	}
+	//nolint: staticcheck // plugins.DataPlugin deprecated
+
+	if queryContext.TimeRange != nil {
+		qm.TimeRange.From = queryContext.TimeRange.GetFromAsTimeUTC()
+		qm.TimeRange.To = queryContext.TimeRange.GetToAsTimeUTC()
+	}
+
+	format := query.Model.Get("format").MustString("time_series")
+	switch format {
+	case "time_series":
+		qm.Format = dataQueryFormatSeries
+	case "table":
+		qm.Format = dataQueryFormatTable
+	default:
+		panic(fmt.Sprintf("Unrecognized query model format: %q", format))
+	}
+
+	for i, col := range qm.columnNames {
 		for _, tc := range e.timeColumnNames {
 			if col == tc {
-				cfg.timeIndex = i
-				continue
+				qm.timeIndex = i
+				break
 			}
 		}
 		switch col {
 		case "metric":
-			cfg.metricIndex = i
+			qm.metricIndex = i
 		default:
-			if cfg.metricIndex == -1 {
-				columnType := cfg.columnTypes[i].DatabaseTypeName()
-
+			if qm.metricIndex == -1 {
+				columnType := qm.columnTypes[i].DatabaseTypeName()
 				for _, mct := range e.metricColumnTypes {
 					if columnType == mct {
-						cfg.metricIndex = i
+						qm.metricIndex = i
 						continue
 					}
 				}
 			}
 		}
 	}
-
-	// use metric column as prefix with multiple value columns
-	if cfg.metricIndex != -1 && len(cfg.columnNames) > 3 {
-		cfg.metricPrefix = true
-	}
-
-	if cfg.timeIndex == -1 {
-		return fmt.Errorf("found no column named %q", strings.Join(e.timeColumnNames, " or "))
-	}
-
-	if cfg.fillMissing {
-		cfg.fillInterval = query.Model.Get("fillInterval").MustFloat64() * 1000
-		switch query.Model.Get("fillMode").MustString() {
-		case "null":
-		case "previous":
-			cfg.fillPrevious = true
-		case "value":
-			cfg.fillValue.Float64 = query.Model.Get("fillValue").MustFloat64()
-			cfg.fillValue.Valid = true
-		}
-	}
-
-	for rows.Next() {
-		if err := e.processRow(cfg); err != nil {
-			return err
-		}
-	}
-
-	for elem := cfg.seriesByQueryOrder.Front(); elem != nil; elem = elem.Next() {
-		key := elem.Value.(string)
-		result.Series = append(result.Series, cfg.pointsBySeries[key])
-		if !cfg.fillMissing {
-			continue
-		}
-
-		series := cfg.pointsBySeries[key]
-		// fill in values from last fetched value till interval end
-		intervalStart := series.Points[len(series.Points)-1][1].Float64
-		intervalEnd := float64(tsdbQuery.TimeRange.MustGetTo().UnixNano() / 1e6)
-
-		if cfg.fillPrevious {
-			if len(series.Points) > 0 {
-				cfg.fillValue = series.Points[len(series.Points)-1][0]
-			} else {
-				cfg.fillValue.Valid = false
-			}
-		}
-
-		// align interval start
-		intervalStart = math.Floor(intervalStart/cfg.fillInterval) * cfg.fillInterval
-		for i := intervalStart + cfg.fillInterval; i < intervalEnd; i += cfg.fillInterval {
-			series.Points = append(series.Points, tsdb.TimePoint{cfg.fillValue, null.FloatFrom(i)})
-			cfg.rowCount++
-		}
-	}
-
-	result.Meta.Set("rowCount", cfg.rowCount)
-	return nil
+	qm.InterpolatedQuery = interpolatedQuery
+	return qm, nil
 }
 
-type processCfg struct {
-	rowCount           int
-	columnTypes        []*sql.ColumnType
-	columnNames        []string
-	rows               *core.Rows
-	timeIndex          int
-	metricIndex        int
-	metricPrefix       bool
-	metricPrefixValue  string
-	fillMissing        bool
-	pointsBySeries     map[string]*tsdb.TimeSeries
-	seriesByQueryOrder *list.List
-	fillValue          null.Float
-	tsdbQuery          *tsdb.TsdbQuery
-	fillInterval       float64
-	fillPrevious       bool
+// dataQueryFormat is the type of query.
+type dataQueryFormat string
+
+const (
+	// dataQueryFormatTable identifies a table query (default).
+	dataQueryFormatTable dataQueryFormat = "table"
+	// dataQueryFormatSeries identifies a time series query.
+	dataQueryFormatSeries dataQueryFormat = "time_series"
+)
+
+type dataQueryModel struct {
+	InterpolatedQuery string // property not set until after Interpolate()
+	Format            dataQueryFormat
+	TimeRange         backend.TimeRange
+	FillMissing       *data.FillMissing // property not set until after Interpolate()
+	Interval          time.Duration
+	columnNames       []string
+	columnTypes       []*sql.ColumnType
+	timeIndex         int
+	metricIndex       int
+	rows              *core.Rows
+	metricPrefix      bool
+	queryContext      plugins.DataQuery
 }
 
-func (e *sqlQueryEndpoint) processRow(cfg *processCfg) error {
-	var timestamp float64
-	var value null.Float
-	var metric string
-
-	if cfg.rowCount > rowLimit {
-		return fmt.Errorf("query row limit exceeded, limit %d", rowLimit)
+func convertInt64ToFloat64(origin *data.Field, newField *data.Field) {
+	valueLength := origin.Len()
+	for i := 0; i < valueLength; i++ {
+		value := float64(origin.At(i).(int64))
+		newField.Append(&value)
 	}
+}
 
-	values, err := e.queryResultTransformer.TransformQueryResult(cfg.columnTypes, cfg.rows)
-	if err != nil {
-		return err
-	}
-
-	// converts column named time to unix timestamp in milliseconds to make
-	// native mysql datetime types and epoch dates work in
-	// annotation and table queries.
-	ConvertSqlTimeColumnToEpochMs(values, cfg.timeIndex)
-
-	switch columnValue := values[cfg.timeIndex].(type) {
-	case int64:
-		timestamp = float64(columnValue)
-	case float64:
-		timestamp = columnValue
-	default:
-		return fmt.Errorf("invalid type for column time, must be of type timestamp or unix timestamp, got: %T %v",
-			columnValue, columnValue)
-	}
-
-	if cfg.metricIndex >= 0 {
-		if columnValue, ok := values[cfg.metricIndex].(string); ok {
-			if cfg.metricPrefix {
-				cfg.metricPrefixValue = columnValue
-			} else {
-				metric = columnValue
-			}
+func convertNullableInt64ToFloat64(origin *data.Field, newField *data.Field) {
+	valueLength := origin.Len()
+	for i := 0; i < valueLength; i++ {
+		iv := origin.At(i).(*int64)
+		if iv == nil {
+			newField.Append(nil)
 		} else {
-			return fmt.Errorf("column metric must be of type %s. metric column name: %s type: %s but datatype is %T",
-				strings.Join(e.metricColumnTypes, ", "), cfg.columnNames[cfg.metricIndex],
-				cfg.columnTypes[cfg.metricIndex].DatabaseTypeName(), values[cfg.metricIndex])
+			value := float64(*iv)
+			newField.Append(&value)
 		}
 	}
-
-	for i, col := range cfg.columnNames {
-		if i == cfg.timeIndex || i == cfg.metricIndex {
-			continue
-		}
-
-		if value, err = ConvertSqlValueColumnToFloat(col, values[i]); err != nil {
-			return err
-		}
-
-		if cfg.metricIndex == -1 {
-			metric = col
-		} else if cfg.metricPrefix {
-			metric = cfg.metricPrefixValue + " " + col
-		}
-
-		series, exist := cfg.pointsBySeries[metric]
-		if !exist {
-			series = &tsdb.TimeSeries{Name: metric}
-			cfg.pointsBySeries[metric] = series
-			cfg.seriesByQueryOrder.PushBack(metric)
-		}
-
-		if cfg.fillMissing {
-			var intervalStart float64
-			if !exist {
-				intervalStart = float64(cfg.tsdbQuery.TimeRange.MustGetFrom().UnixNano() / 1e6)
-			} else {
-				intervalStart = series.Points[len(series.Points)-1][1].Float64 + cfg.fillInterval
-			}
-
-			if cfg.fillPrevious {
-				if len(series.Points) > 0 {
-					cfg.fillValue = series.Points[len(series.Points)-1][0]
-				} else {
-					cfg.fillValue.Valid = false
-				}
-			}
-
-			// align interval start
-			intervalStart = math.Floor(intervalStart/cfg.fillInterval) * cfg.fillInterval
-
-			for i := intervalStart; i < timestamp; i += cfg.fillInterval {
-				series.Points = append(series.Points, tsdb.TimePoint{cfg.fillValue, null.FloatFrom(i)})
-				cfg.rowCount++
-			}
-		}
-
-		series.Points = append(series.Points, tsdb.TimePoint{value, null.FloatFrom(timestamp)})
-
-		if setting.Env == setting.Dev {
-			e.log.Debug("Rows", "metric", metric, "time", timestamp, "value", value)
-		}
-	}
-
-	return nil
 }
 
-// ConvertSqlTimeColumnToEpochMs converts column named time to unix timestamp in milliseconds
+func convertUInt64ToFloat64(origin *data.Field, newField *data.Field) {
+	valueLength := origin.Len()
+	for i := 0; i < valueLength; i++ {
+		value := float64(origin.At(i).(uint64))
+		newField.Append(&value)
+	}
+}
+
+func convertNullableUInt64ToFloat64(origin *data.Field, newField *data.Field) {
+	valueLength := origin.Len()
+	for i := 0; i < valueLength; i++ {
+		iv := origin.At(i).(*uint64)
+		if iv == nil {
+			newField.Append(nil)
+		} else {
+			value := float64(*iv)
+			newField.Append(&value)
+		}
+	}
+}
+
+func convertInt32ToFloat64(origin *data.Field, newField *data.Field) {
+	valueLength := origin.Len()
+	for i := 0; i < valueLength; i++ {
+		value := float64(origin.At(i).(int32))
+		newField.Append(&value)
+	}
+}
+
+func convertNullableInt32ToFloat64(origin *data.Field, newField *data.Field) {
+	valueLength := origin.Len()
+	for i := 0; i < valueLength; i++ {
+		iv := origin.At(i).(*int32)
+		if iv == nil {
+			newField.Append(nil)
+		} else {
+			value := float64(*iv)
+			newField.Append(&value)
+		}
+	}
+}
+
+func convertUInt32ToFloat64(origin *data.Field, newField *data.Field) {
+	valueLength := origin.Len()
+	for i := 0; i < valueLength; i++ {
+		value := float64(origin.At(i).(uint32))
+		newField.Append(&value)
+	}
+}
+
+func convertNullableUInt32ToFloat64(origin *data.Field, newField *data.Field) {
+	valueLength := origin.Len()
+	for i := 0; i < valueLength; i++ {
+		iv := origin.At(i).(*uint32)
+		if iv == nil {
+			newField.Append(nil)
+		} else {
+			value := float64(*iv)
+			newField.Append(&value)
+		}
+	}
+}
+
+func convertInt16ToFloat64(origin *data.Field, newField *data.Field) {
+	valueLength := origin.Len()
+	for i := 0; i < valueLength; i++ {
+		value := float64(origin.At(i).(int16))
+		newField.Append(&value)
+	}
+}
+
+func convertNullableInt16ToFloat64(origin *data.Field, newField *data.Field) {
+	valueLength := origin.Len()
+	for i := 0; i < valueLength; i++ {
+		iv := origin.At(i).(*int16)
+		if iv == nil {
+			newField.Append(nil)
+		} else {
+			value := float64(*iv)
+			newField.Append(&value)
+		}
+	}
+}
+
+func convertUInt16ToFloat64(origin *data.Field, newField *data.Field) {
+	valueLength := origin.Len()
+	for i := 0; i < valueLength; i++ {
+		value := float64(origin.At(i).(uint16))
+		newField.Append(&value)
+	}
+}
+
+func convertNullableUInt16ToFloat64(origin *data.Field, newField *data.Field) {
+	valueLength := origin.Len()
+	for i := 0; i < valueLength; i++ {
+		iv := origin.At(i).(*uint16)
+		if iv == nil {
+			newField.Append(nil)
+		} else {
+			value := float64(*iv)
+			newField.Append(&value)
+		}
+	}
+}
+
+func convertInt8ToFloat64(origin *data.Field, newField *data.Field) {
+	valueLength := origin.Len()
+	for i := 0; i < valueLength; i++ {
+		value := float64(origin.At(i).(int8))
+		newField.Append(&value)
+	}
+}
+
+func convertNullableInt8ToFloat64(origin *data.Field, newField *data.Field) {
+	valueLength := origin.Len()
+	for i := 0; i < valueLength; i++ {
+		iv := origin.At(i).(*int8)
+		if iv == nil {
+			newField.Append(nil)
+		} else {
+			value := float64(*iv)
+			newField.Append(&value)
+		}
+	}
+}
+
+func convertUInt8ToFloat64(origin *data.Field, newField *data.Field) {
+	valueLength := origin.Len()
+	for i := 0; i < valueLength; i++ {
+		value := float64(origin.At(i).(uint8))
+		newField.Append(&value)
+	}
+}
+
+func convertNullableUInt8ToFloat64(origin *data.Field, newField *data.Field) {
+	valueLength := origin.Len()
+	for i := 0; i < valueLength; i++ {
+		iv := origin.At(i).(*uint8)
+		if iv == nil {
+			newField.Append(nil)
+		} else {
+			value := float64(*iv)
+			newField.Append(&value)
+		}
+	}
+}
+
+func convertUnknownToZero(origin *data.Field, newField *data.Field) {
+	valueLength := origin.Len()
+	for i := 0; i < valueLength; i++ {
+		value := float64(0)
+		newField.Append(&value)
+	}
+}
+
+func convertNullableFloat32ToFloat64(origin *data.Field, newField *data.Field) {
+	valueLength := origin.Len()
+	for i := 0; i < valueLength; i++ {
+		iv := origin.At(i).(*float32)
+		if iv == nil {
+			newField.Append(nil)
+		} else {
+			value := float64(*iv)
+			newField.Append(&value)
+		}
+	}
+}
+
+func convertFloat32ToFloat64(origin *data.Field, newField *data.Field) {
+	valueLength := origin.Len()
+	for i := 0; i < valueLength; i++ {
+		value := float64(origin.At(i).(float32))
+		newField.Append(&value)
+	}
+}
+
+func convertInt64ToEpochMS(origin *data.Field, newField *data.Field) {
+	valueLength := origin.Len()
+	for i := 0; i < valueLength; i++ {
+		value := time.Unix(0, int64(epochPrecisionToMS(float64(origin.At(i).(int64))))*int64(time.Millisecond))
+		newField.Append(&value)
+	}
+}
+
+func convertNullableInt64ToEpochMS(origin *data.Field, newField *data.Field) {
+	valueLength := origin.Len()
+	for i := 0; i < valueLength; i++ {
+		iv := origin.At(i).(*int64)
+		if iv == nil {
+			newField.Append(nil)
+		} else {
+			value := time.Unix(0, int64(epochPrecisionToMS(float64(*iv)))*int64(time.Millisecond))
+			newField.Append(&value)
+		}
+	}
+}
+
+func convertUInt64ToEpochMS(origin *data.Field, newField *data.Field) {
+	valueLength := origin.Len()
+	for i := 0; i < valueLength; i++ {
+		value := time.Unix(0, int64(epochPrecisionToMS(float64(origin.At(i).(uint64))))*int64(time.Millisecond))
+		newField.Append(&value)
+	}
+}
+
+func convertNullableUInt64ToEpochMS(origin *data.Field, newField *data.Field) {
+	valueLength := origin.Len()
+	for i := 0; i < valueLength; i++ {
+		iv := origin.At(i).(*uint64)
+		if iv == nil {
+			newField.Append(nil)
+		} else {
+			value := time.Unix(0, int64(epochPrecisionToMS(float64(*iv)))*int64(time.Millisecond))
+			newField.Append(&value)
+		}
+	}
+}
+
+func convertInt32ToEpochMS(origin *data.Field, newField *data.Field) {
+	valueLength := origin.Len()
+	for i := 0; i < valueLength; i++ {
+		value := time.Unix(0, int64(epochPrecisionToMS(float64(origin.At(i).(int32))))*int64(time.Millisecond))
+		newField.Append(&value)
+	}
+}
+
+func convertNullableInt32ToEpochMS(origin *data.Field, newField *data.Field) {
+	valueLength := origin.Len()
+	for i := 0; i < valueLength; i++ {
+		iv := origin.At(i).(*int32)
+		if iv == nil {
+			newField.Append(nil)
+		} else {
+			value := time.Unix(0, int64(epochPrecisionToMS(float64(*iv)))*int64(time.Millisecond))
+			newField.Append(&value)
+		}
+	}
+}
+
+func convertUInt32ToEpochMS(origin *data.Field, newField *data.Field) {
+	valueLength := origin.Len()
+	for i := 0; i < valueLength; i++ {
+		value := time.Unix(0, int64(epochPrecisionToMS(float64(origin.At(i).(uint32))))*int64(time.Millisecond))
+		newField.Append(&value)
+	}
+}
+
+func convertNullableUInt32ToEpochMS(origin *data.Field, newField *data.Field) {
+	valueLength := origin.Len()
+	for i := 0; i < valueLength; i++ {
+		iv := origin.At(i).(*uint32)
+		if iv == nil {
+			newField.Append(nil)
+		} else {
+			value := time.Unix(0, int64(epochPrecisionToMS(float64(*iv)))*int64(time.Millisecond))
+			newField.Append(&value)
+		}
+	}
+}
+
+func convertFloat64ToEpochMS(origin *data.Field, newField *data.Field) {
+	valueLength := origin.Len()
+	for i := 0; i < valueLength; i++ {
+		value := time.Unix(0, int64(epochPrecisionToMS(origin.At(i).(float64)))*int64(time.Millisecond))
+		newField.Append(&value)
+	}
+}
+
+func convertNullableFloat64ToEpochMS(origin *data.Field, newField *data.Field) {
+	valueLength := origin.Len()
+	for i := 0; i < valueLength; i++ {
+		iv := origin.At(i).(*float64)
+		if iv == nil {
+			newField.Append(nil)
+		} else {
+			value := time.Unix(0, int64(epochPrecisionToMS(*iv))*int64(time.Millisecond))
+			newField.Append(&value)
+		}
+	}
+}
+
+func convertFloat32ToEpochMS(origin *data.Field, newField *data.Field) {
+	valueLength := origin.Len()
+	for i := 0; i < valueLength; i++ {
+		value := time.Unix(0, int64(epochPrecisionToMS(float64(origin.At(i).(float32))))*int64(time.Millisecond))
+		newField.Append(&value)
+	}
+}
+
+func convertNullableFloat32ToEpochMS(origin *data.Field, newField *data.Field) {
+	valueLength := origin.Len()
+	for i := 0; i < valueLength; i++ {
+		iv := origin.At(i).(*float32)
+		if iv == nil {
+			newField.Append(nil)
+		} else {
+			value := time.Unix(0, int64(epochPrecisionToMS(float64(*iv)))*int64(time.Millisecond))
+			newField.Append(&value)
+		}
+	}
+}
+
+// convertSQLTimeColumnToEpochMS converts column named time to unix timestamp in milliseconds
 // to make native datetime types and epoch dates work in annotation and table queries.
-func ConvertSqlTimeColumnToEpochMs(values tsdb.RowValues, timeIndex int) {
-	if timeIndex >= 0 {
-		switch value := values[timeIndex].(type) {
-		case time.Time:
-			values[timeIndex] = float64(value.UnixNano()) / float64(time.Millisecond)
-		case *time.Time:
-			if value != nil {
-				values[timeIndex] = float64(value.UnixNano()) / float64(time.Millisecond)
-			}
-		case int64:
-			values[timeIndex] = int64(tsdb.EpochPrecisionToMs(float64(value)))
-		case *int64:
-			if value != nil {
-				values[timeIndex] = int64(tsdb.EpochPrecisionToMs(float64(*value)))
-			}
-		case uint64:
-			values[timeIndex] = int64(tsdb.EpochPrecisionToMs(float64(value)))
-		case *uint64:
-			if value != nil {
-				values[timeIndex] = int64(tsdb.EpochPrecisionToMs(float64(*value)))
-			}
-		case int32:
-			values[timeIndex] = int64(tsdb.EpochPrecisionToMs(float64(value)))
-		case *int32:
-			if value != nil {
-				values[timeIndex] = int64(tsdb.EpochPrecisionToMs(float64(*value)))
-			}
-		case uint32:
-			values[timeIndex] = int64(tsdb.EpochPrecisionToMs(float64(value)))
-		case *uint32:
-			if value != nil {
-				values[timeIndex] = int64(tsdb.EpochPrecisionToMs(float64(*value)))
-			}
-		case float64:
-			values[timeIndex] = tsdb.EpochPrecisionToMs(value)
-		case *float64:
-			if value != nil {
-				values[timeIndex] = tsdb.EpochPrecisionToMs(*value)
-			}
-		case float32:
-			values[timeIndex] = tsdb.EpochPrecisionToMs(float64(value))
-		case *float32:
-			if value != nil {
-				values[timeIndex] = tsdb.EpochPrecisionToMs(float64(*value))
-			}
-		}
+func convertSQLTimeColumnToEpochMS(frame *data.Frame, timeIndex int) error {
+	if timeIndex < 0 || timeIndex >= len(frame.Fields) {
+		return fmt.Errorf("timeIndex %d is out of range", timeIndex)
 	}
-}
 
-// ConvertSqlValueColumnToFloat converts timeseries value column to float.
-//nolint: gocyclo
-func ConvertSqlValueColumnToFloat(columnName string, columnValue interface{}) (null.Float, error) {
-	var value null.Float
+	origin := frame.Fields[timeIndex]
+	valueType := origin.Type()
+	if valueType == data.FieldTypeTime || valueType == data.FieldTypeNullableTime {
+		return nil
+	}
 
-	switch typedValue := columnValue.(type) {
-	case int:
-		value = null.FloatFrom(float64(typedValue))
-	case *int:
-		if typedValue == nil {
-			value.Valid = false
-		} else {
-			value = null.FloatFrom(float64(*typedValue))
-		}
-	case int64:
-		value = null.FloatFrom(float64(typedValue))
-	case *int64:
-		if typedValue == nil {
-			value.Valid = false
-		} else {
-			value = null.FloatFrom(float64(*typedValue))
-		}
-	case int32:
-		value = null.FloatFrom(float64(typedValue))
-	case *int32:
-		if typedValue == nil {
-			value.Valid = false
-		} else {
-			value = null.FloatFrom(float64(*typedValue))
-		}
-	case int16:
-		value = null.FloatFrom(float64(typedValue))
-	case *int16:
-		if typedValue == nil {
-			value.Valid = false
-		} else {
-			value = null.FloatFrom(float64(*typedValue))
-		}
-	case int8:
-		value = null.FloatFrom(float64(typedValue))
-	case *int8:
-		if typedValue == nil {
-			value.Valid = false
-		} else {
-			value = null.FloatFrom(float64(*typedValue))
-		}
-	case uint:
-		value = null.FloatFrom(float64(typedValue))
-	case *uint:
-		if typedValue == nil {
-			value.Valid = false
-		} else {
-			value = null.FloatFrom(float64(*typedValue))
-		}
-	case uint64:
-		value = null.FloatFrom(float64(typedValue))
-	case *uint64:
-		if typedValue == nil {
-			value.Valid = false
-		} else {
-			value = null.FloatFrom(float64(*typedValue))
-		}
-	case uint32:
-		value = null.FloatFrom(float64(typedValue))
-	case *uint32:
-		if typedValue == nil {
-			value.Valid = false
-		} else {
-			value = null.FloatFrom(float64(*typedValue))
-		}
-	case uint16:
-		value = null.FloatFrom(float64(typedValue))
-	case *uint16:
-		if typedValue == nil {
-			value.Valid = false
-		} else {
-			value = null.FloatFrom(float64(*typedValue))
-		}
-	case uint8:
-		value = null.FloatFrom(float64(typedValue))
-	case *uint8:
-		if typedValue == nil {
-			value.Valid = false
-		} else {
-			value = null.FloatFrom(float64(*typedValue))
-		}
-	case float64:
-		value = null.FloatFrom(typedValue)
-	case *float64:
-		value = null.FloatFromPtr(typedValue)
-	case float32:
-		value = null.FloatFrom(float64(typedValue))
-	case *float32:
-		if typedValue == nil {
-			value.Valid = false
-		} else {
-			value = null.FloatFrom(float64(*typedValue))
-		}
-	case nil:
-		value.Valid = false
+	newField := data.NewFieldFromFieldType(data.FieldTypeNullableTime, 0)
+	newField.Name = origin.Name
+	newField.Labels = origin.Labels
+
+	switch valueType {
+	case data.FieldTypeInt64:
+		convertInt64ToEpochMS(frame.Fields[timeIndex], newField)
+	case data.FieldTypeNullableInt64:
+		convertNullableInt64ToEpochMS(frame.Fields[timeIndex], newField)
+	case data.FieldTypeUint64:
+		convertUInt64ToEpochMS(frame.Fields[timeIndex], newField)
+	case data.FieldTypeNullableUint64:
+		convertNullableUInt64ToEpochMS(frame.Fields[timeIndex], newField)
+	case data.FieldTypeInt32:
+		convertInt32ToEpochMS(frame.Fields[timeIndex], newField)
+	case data.FieldTypeNullableInt32:
+		convertNullableInt32ToEpochMS(frame.Fields[timeIndex], newField)
+	case data.FieldTypeUint32:
+		convertUInt32ToEpochMS(frame.Fields[timeIndex], newField)
+	case data.FieldTypeNullableUint32:
+		convertNullableUInt32ToEpochMS(frame.Fields[timeIndex], newField)
+	case data.FieldTypeFloat64:
+		convertFloat64ToEpochMS(frame.Fields[timeIndex], newField)
+	case data.FieldTypeNullableFloat64:
+		convertNullableFloat64ToEpochMS(frame.Fields[timeIndex], newField)
+	case data.FieldTypeFloat32:
+		convertFloat32ToEpochMS(frame.Fields[timeIndex], newField)
+	case data.FieldTypeNullableFloat32:
+		convertNullableFloat32ToEpochMS(frame.Fields[timeIndex], newField)
 	default:
-		return null.NewFloat(0, false), fmt.Errorf(
-			"value column must have numeric datatype, column: %s, type: %T, value: %v",
-			columnName, typedValue, typedValue,
-		)
+		return fmt.Errorf("column type %q is not convertible to time.Time", valueType)
 	}
+	frame.Fields[timeIndex] = newField
 
-	return value, nil
+	return nil
 }
 
-func SetupFillmode(query *tsdb.Query, interval time.Duration, fillmode string) error {
+// convertSQLValueColumnToFloat converts timeseries value column to float.
+//nolint: gocyclo
+func convertSQLValueColumnToFloat(frame *data.Frame, Index int) (*data.Frame, error) {
+	if Index < 0 || Index >= len(frame.Fields) {
+		return frame, fmt.Errorf("metricIndex %d is out of range", Index)
+	}
+
+	origin := frame.Fields[Index]
+	valueType := origin.Type()
+	if valueType == data.FieldTypeFloat64 || valueType == data.FieldTypeNullableFloat64 {
+		return frame, nil
+	}
+
+	newField := data.NewFieldFromFieldType(data.FieldTypeNullableFloat64, 0)
+	newField.Name = origin.Name
+	newField.Labels = origin.Labels
+
+	switch valueType {
+	case data.FieldTypeInt64:
+		convertInt64ToFloat64(frame.Fields[Index], newField)
+	case data.FieldTypeNullableInt64:
+		convertNullableInt64ToFloat64(frame.Fields[Index], newField)
+	case data.FieldTypeUint64:
+		convertUInt64ToFloat64(frame.Fields[Index], newField)
+	case data.FieldTypeNullableUint64:
+		convertNullableUInt64ToFloat64(frame.Fields[Index], newField)
+	case data.FieldTypeInt32:
+		convertInt32ToFloat64(frame.Fields[Index], newField)
+	case data.FieldTypeNullableInt32:
+		convertNullableInt32ToFloat64(frame.Fields[Index], newField)
+	case data.FieldTypeUint32:
+		convertUInt32ToFloat64(frame.Fields[Index], newField)
+	case data.FieldTypeNullableUint32:
+		convertNullableUInt32ToFloat64(frame.Fields[Index], newField)
+	case data.FieldTypeInt16:
+		convertInt16ToFloat64(frame.Fields[Index], newField)
+	case data.FieldTypeNullableInt16:
+		convertNullableInt16ToFloat64(frame.Fields[Index], newField)
+	case data.FieldTypeUint16:
+		convertUInt16ToFloat64(frame.Fields[Index], newField)
+	case data.FieldTypeNullableUint16:
+		convertNullableUInt16ToFloat64(frame.Fields[Index], newField)
+	case data.FieldTypeInt8:
+		convertInt8ToFloat64(frame.Fields[Index], newField)
+	case data.FieldTypeNullableInt8:
+		convertNullableInt8ToFloat64(frame.Fields[Index], newField)
+	case data.FieldTypeUint8:
+		convertUInt8ToFloat64(frame.Fields[Index], newField)
+	case data.FieldTypeNullableUint8:
+		convertNullableUInt8ToFloat64(frame.Fields[Index], newField)
+	case data.FieldTypeFloat32:
+		convertFloat32ToFloat64(frame.Fields[Index], newField)
+	case data.FieldTypeNullableFloat32:
+		convertNullableFloat32ToFloat64(frame.Fields[Index], newField)
+	default:
+		convertUnknownToZero(frame.Fields[Index], newField)
+		frame.Fields[Index] = newField
+		return frame, fmt.Errorf("metricIndex %d type can't be converted to float", Index)
+	}
+	frame.Fields[Index] = newField
+
+	return frame, nil
+}
+
+func SetupFillmode(query plugins.DataSubQuery, interval time.Duration, fillmode string) error {
 	query.Model.Set("fill", true)
 	query.Model.Set("fillInterval", interval.Seconds())
 	switch fillmode {
@@ -698,13 +915,13 @@ func SetupFillmode(query *tsdb.Query, interval time.Duration, fillmode string) e
 	return nil
 }
 
-type SqlMacroEngineBase struct{}
+type SQLMacroEngineBase struct{}
 
-func NewSqlMacroEngineBase() *SqlMacroEngineBase {
-	return &SqlMacroEngineBase{}
+func NewSQLMacroEngineBase() *SQLMacroEngineBase {
+	return &SQLMacroEngineBase{}
 }
 
-func (m *SqlMacroEngineBase) ReplaceAllStringSubmatchFunc(re *regexp.Regexp, str string, repl func([]string) string) string {
+func (m *SQLMacroEngineBase) ReplaceAllStringSubmatchFunc(re *regexp.Regexp, str string, repl func([]string) string) string {
 	result := ""
 	lastIndex := 0
 
@@ -719,4 +936,19 @@ func (m *SqlMacroEngineBase) ReplaceAllStringSubmatchFunc(re *regexp.Regexp, str
 	}
 
 	return result + str[lastIndex:]
+}
+
+// epochPrecisionToMS converts epoch precision to millisecond, if needed.
+// Only seconds to milliseconds supported right now
+func epochPrecisionToMS(value float64) float64 {
+	s := strconv.FormatFloat(value, 'e', -1, 64)
+	if strings.HasSuffix(s, "e+09") {
+		return value * float64(1e3)
+	}
+
+	if strings.HasSuffix(s, "e+18") {
+		return value / float64(time.Millisecond)
+	}
+
+	return value
 }

@@ -6,8 +6,8 @@ import { useAsyncFn } from 'react-use';
 import { appEvents } from 'app/core/core';
 import { useNavModel } from 'app/core/hooks/useNavModel';
 import { HorizontalGroup, Button, LinkButton } from '@grafana/ui';
-import { CoreEvents } from 'app/types';
 import { AlertNotification } from 'app/types/alerting';
+import { ShowConfirmModalEvent } from '../../types/events';
 
 const NotificationsListPage: FC = () => {
   const navModel = useNavModel('channels');
@@ -23,20 +23,22 @@ const NotificationsListPage: FC = () => {
     fetchNotifications().then((res) => {
       setNotifications(res);
     });
-  }, []);
+  }, [fetchNotifications]);
 
   const deleteNotification = (id: number) => {
-    appEvents.emit(CoreEvents.showConfirmModal, {
-      title: 'Delete',
-      text: 'Do you want to delete this notification channel?',
-      text2: `Deleting this notification channel will not delete from alerts any references to it`,
-      icon: 'trash-alt',
-      confirmText: 'Delete',
-      yesText: 'Delete',
-      onConfirm: async () => {
-        deleteNotificationConfirmed(id);
-      },
-    });
+    appEvents.publish(
+      new ShowConfirmModalEvent({
+        title: 'Delete',
+        text: 'Do you want to delete this notification channel?',
+        text2: `Deleting this notification channel will not delete from alerts any references to it`,
+        icon: 'trash-alt',
+        confirmText: 'Delete',
+        yesText: 'Delete',
+        onConfirm: async () => {
+          deleteNotificationConfirmed(id);
+        },
+      })
+    );
   };
 
   const deleteNotificationConfirmed = async (id: number) => {

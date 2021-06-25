@@ -1,20 +1,28 @@
 import React, { FC } from 'react';
+import { css } from '@emotion/css';
+import { Button, Field, Form, HorizontalGroup, Input, LinkButton } from '@grafana/ui';
+
 import config from 'app/core/config';
-import { Button, LinkButton, Form, Field, Input, HorizontalGroup } from '@grafana/ui';
-import { ChangePasswordFields } from 'app/core/utils/UserProvider';
-import { css } from 'emotion';
+import { UserDTO } from 'app/types';
+import { ChangePasswordFields } from './types';
 
 export interface Props {
+  user: UserDTO;
   isSaving: boolean;
   onChangePassword: (payload: ChangePasswordFields) => void;
 }
 
-export const ChangePasswordForm: FC<Props> = ({ onChangePassword, isSaving }) => {
-  const { ldapEnabled, authProxyEnabled } = config;
+export const ChangePasswordForm: FC<Props> = ({ user, onChangePassword, isSaving }) => {
+  const { ldapEnabled, authProxyEnabled, disableLoginForm } = config;
+  const authSource = user.authLabels?.length && user.authLabels[0];
 
   if (ldapEnabled || authProxyEnabled) {
-    return <p>You cannot change password when ldap or auth proxy authentication is enabled.</p>;
+    return <p>You cannot change password when LDAP or auth proxy authentication is enabled.</p>;
   }
+  if (authSource && disableLoginForm) {
+    return <p>Password cannot be changed here.</p>;
+  }
+
   return (
     <div
       className={css`
@@ -26,14 +34,13 @@ export const ChangePasswordForm: FC<Props> = ({ onChangePassword, isSaving }) =>
           return (
             <>
               <Field label="Old password" invalid={!!errors.oldPassword} error={errors?.oldPassword?.message}>
-                <Input type="password" name="oldPassword" ref={register({ required: 'Old password is required' })} />
+                <Input type="password" {...register('oldPassword', { required: 'Old password is required' })} />
               </Field>
 
               <Field label="New password" invalid={!!errors.newPassword} error={errors?.newPassword?.message}>
                 <Input
                   type="password"
-                  name="newPassword"
-                  ref={register({
+                  {...register('newPassword', {
                     required: 'New password is required',
                     validate: {
                       confirm: (v) => v === getValues().confirmNew || 'Passwords must match',
@@ -46,8 +53,7 @@ export const ChangePasswordForm: FC<Props> = ({ onChangePassword, isSaving }) =>
               <Field label="Confirm password" invalid={!!errors.confirmNew} error={errors?.confirmNew?.message}>
                 <Input
                   type="password"
-                  name="confirmNew"
-                  ref={register({
+                  {...register('confirmNew', {
                     required: 'New password confirmation is required',
                     validate: (v) => v === getValues().newPassword || 'Passwords must match',
                   })}
@@ -57,7 +63,7 @@ export const ChangePasswordForm: FC<Props> = ({ onChangePassword, isSaving }) =>
                 <Button variant="primary" disabled={isSaving}>
                   Change Password
                 </Button>
-                <LinkButton variant="secondary" href={`${config.appSubUrl}/profile`}>
+                <LinkButton variant="secondary" href={`${config.appSubUrl}/profile`} fill="outline">
                   Cancel
                 </LinkButton>
               </HorizontalGroup>

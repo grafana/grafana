@@ -10,7 +10,7 @@ list = false
 
 # What's new in Grafana v7.4
 
-This topic includes the release notes for Grafana v7.4 beta. For all details, read the full [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md).
+This topic includes the release notes for Grafana v7.4. For all details, read the full [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md).
 
 Check out the [New Features in 7.4](https://play.grafana.org/d/nP8rcffGk/1-new-features-in-v7-4?orgId=1) dashboard on Grafana Play!
 
@@ -26,7 +26,7 @@ The Time series beta panel implements the majority of the functionalities availa
 
 Apart from major performance improvements, the new Time series panel implements new features like line interpolation modes, support for more than two Y-axes, soft min and max axis limits, automatic points display based on data density, and gradient fill modes.
 
-{{< figure src="/img/docs/v74/timeseries_panel.png" max-width="900px" caption="Time series panel" >}}
+{{< figure src="/static/img/docs/v74/timeseries_panel.png" max-width="900px" caption="Time series panel" >}}
 
 The following documentation topics were added for this feature:
 
@@ -68,7 +68,7 @@ For more information, refer to [Filter data by value]({{< relref "../panels/tran
 
 On the Overrides tab, you can now set properties for fields returned by a specific query.
 
-For more information, refer to [Add a field override]({{< relref "../panels/field-options/configure-specific-fields.md#add-a-field-override" >}}).
+For more information, refer to [Field overrides]({{< relref "../panels/field-overrides.md" >}}).
 
 ### Exemplar support
 
@@ -76,7 +76,7 @@ Grafana graphs now support Prometheus _exemplars_. They are displayed as diamond
 
 > **Note:** Support for exemplars will be added in version Prometheus 2.25+.
 
-{{< figure src="/img/docs/v74/exemplars.png" max-width="900px" caption="Exemplar example" >}}
+{{< figure src="/static/img/docs/v74/exemplars.png" max-width="900px" caption="Exemplar example" >}}
 
 For more information, refer to [Exemplars]({{< relref "../datasources/prometheus.md#exemplars" >}}).
 
@@ -95,7 +95,7 @@ The following topics were updated as a result of this feature:
 
 _Server-side expressions_ is an experimental feature that allows you to manipulate data returned from backend data source queries. Expressions allow you to manipulate data with math and other operations when the data source is a backend data source or a **--Mixed--** data source.
 
-The main use case is for [multi-dimensional]({{< relref "../getting-started/timeseries-dimensions.md" >}}) data sources used with the upcoming next generation alerting, but expressions can be used with backend data sources and visualization as well.
+The main use case is for [multi-dimensional]({{< relref "../basics/timeseries-dimensions.md" >}}) data sources used with the upcoming next generation alerting, but expressions can be used with backend data sources and visualization as well.
 
 > **Note:** Queries built with this feature might break with minor version upgrades until Grafana 8 is released. This feature does not work with the current Grafana alerting.
 
@@ -105,9 +105,9 @@ For more information, refer to [Expressions]({{< relref "../panels/expressions.m
 
 You can now provide detailed information to alert notification recipients by injecting alert label data as template variables into an alert notification. Labels that exist from the evaluation of the alert query can be used in the alert rule name and in the alert notification message fields using the `${Label}` syntax. The alert label data is automatically injected into the notification fields when the alert is in the alerting state. When there are multiple unique values for the same label, the values are comma-separated.
 
-{{< figure src="/img/docs/alerting/alert-notification-template-7-4.png" max-width="700px" caption="Variable support in alert notifications" >}}
+{{< figure src="/static/img/docs/alerting/alert-notification-template-7-4.png" max-width="700px" caption="Variable support in alert notifications" >}}
 
-For more information, refer to the [alert notification docs]({{< relref "../alerting/notifications.md#notification-templating" >}}).
+For more information, refer to the [alert notification docs]({{< relref "../alerting/old-alerting/notifications.md#notification-templating" >}}).
 
 ### Content security policy support
 
@@ -160,7 +160,7 @@ Many thanks to [mtanda](https://github.com/mtanda) this contribution!
 
 Google Cloud Monitoring data source ships with pre-configured dashboards for some of the most popular GCP services. These curated dashboards are based on similar dashboards in the GCP dashboard samples repository. In this release, we have expanded the set of pre-configured dashboards.
 
-{{< docs-imagebox img="/img/docs/google-cloud-monitoring/curated-dashboards-7-4.png" max-width= "650px" >}}
+{{< figure src="/static/img/docs/google-cloud-monitoring/curated-dashboards-7-4.png" max-width= "650px" >}}
 
 If you want to customize a dashboard, we recommend that you save it under a different name. Otherwise the dashboard will be overwritten when a new version of the dashboard is released.
 
@@ -186,13 +186,13 @@ These features are included in the Grafana Enterprise edition.
 
 ### Licensing changes
 
-When determining a user’s role for billing purposes, a user who has the ability to edit and save dashboards is considered an Editor. This includes any user who is an Editor or Admin at the Org level, and who has granted Admin or Edit permissions via [Dashboard and folder permissions]({{< relref "../permissions/dashboard_folder_permissions.md">}}).
+When determining a user’s role for billing purposes, a user who has the ability to edit and save dashboards is considered an Editor. This includes any user who is an Editor or Admin at the Org level, and who has granted Admin or Edit permissions via [Dashboard and folder permissions]({{< relref "../permissions/dashboard-folder-permissions.md">}}).
 
 After the number of Viewers or Editors has reached its license limit, only Admins will see a banner in Grafana indicating that the license limit has been reached. Previously, all users saw the banner.
 
 Grafana Enterprise license tokens update automatically on a daily basis, which means you no longer need to manually update your license, and the process for adding additional users to a license is smoother than it was before.
 
-Refer to [Licensing restrictions]({{< relref "../enterprise/license-restrictions.md" >}}) for more information.
+Refer to [Licensing restrictions]({{< relref "../enterprise/license/license-restrictions.md" >}}) for more information.
 
 ### Export usage insights to Loki
 

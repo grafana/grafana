@@ -13,7 +13,7 @@ export const AdminOrgsTable: FC<Props> = ({ orgs, onDelete }) => {
     <table className="filter-table form-inline filter-table--hover">
       <thead>
         <tr>
-          <th>Id</th>
+          <th>ID</th>
           <th>Name</th>
           <th style={{ width: '1%' }}></th>
         </tr>

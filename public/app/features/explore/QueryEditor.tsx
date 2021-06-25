@@ -21,7 +21,7 @@ interface QueryEditorProps {
 
 export default class QueryEditor extends PureComponent<QueryEditorProps, any> {
   element: any;
-  component: AngularComponent;
+  component?: AngularComponent;
   angularScope: any;
 
   async componentDidMount() {
@@ -29,7 +29,7 @@ export default class QueryEditor extends PureComponent<QueryEditorProps, any> {
       return;
     }
 
-    const { datasource, initialQuery, exploreEvents } = this.props;
+    const { datasource, initialQuery, exploreEvents, range } = this.props;
 
     const loader = getAngularLoader();
     const template = '<plugin-component type="query-ctrl"> </plugin-component>';
@@ -38,8 +38,15 @@ export default class QueryEditor extends PureComponent<QueryEditorProps, any> {
       ctrl: {
         datasource,
         target,
+        range,
         refresh: () => {
           setTimeout(() => {
+            // the "hide" attribute of the quries can be changed from the "outside",
+            // it will be applied to "this.props.initialQuery.hide", but not to "target.hide".
+            // so we have to apply it.
+            if (target.hide !== this.props.initialQuery.hide) {
+              target.hide = this.props.initialQuery.hide;
+            }
             this.props.onQueryChange?.(target);
             this.props.onExecuteQuery?.();
           }, 1);
@@ -71,6 +78,10 @@ export default class QueryEditor extends PureComponent<QueryEditorProps, any> {
     if (this.component) {
       if (hasToggledEditorMode && this.angularScope && this.angularScope.toggleEditorMode) {
         this.angularScope.toggleEditorMode();
+      }
+
+      if (this.angularScope) {
+        this.angularScope.range = this.props.range;
       }
 
       if (hasNewError || hasToggledEditorMode) {

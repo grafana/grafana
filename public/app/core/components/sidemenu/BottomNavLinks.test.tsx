@@ -2,10 +2,11 @@ import React from 'react';
 import { shallow } from 'enzyme';
 import BottomNavLinks from './BottomNavLinks';
 import appEvents from '../../app_events';
-import { CoreEvents } from 'app/types';
+import { ShowModalReactEvent } from '../../../types/events';
+import { HelpModal } from '../help/HelpModal';
 
 jest.mock('../../app_events', () => ({
-  emit: jest.fn(),
+  publish: jest.fn(),
 }));
 
 const setup = (propOverrides?: object) => {
@@ -94,7 +95,7 @@ describe('Functions', () => {
       const instance = wrapper.instance() as BottomNavLinks;
       instance.onOpenShortcuts();
 
-      expect(appEvents.emit).toHaveBeenCalledWith(CoreEvents.showModal, { templateHtml: '<help-modal></help-modal>' });
+      expect(appEvents.publish).toHaveBeenCalledWith(new ShowModalReactEvent({ component: HelpModal }));
     });
   });
 });

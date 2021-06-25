@@ -9,7 +9,7 @@ import 'vendor/flot/jquery.flot.dashes';
 import './jquery.flot.events';
 
 import $ from 'jquery';
-import _ from 'lodash';
+import { min as _min, max as _max, clone, find, isUndefined, map, toNumber, sortBy as _sortBy, flatten } from 'lodash';
 import { tickStep } from 'app/core/utils/ticks';
 import { coreModule, updateLegendValues } from 'app/core/core';
 import GraphTooltip from './graph_tooltip';
@@ -24,8 +24,8 @@ import ReactDOM from 'react-dom';
 import { GraphLegendProps, Legend } from './Legend/Legend';
 
 import { GraphCtrl } from './module';
-import { graphTickFormatter, graphTimeFormat, IconName, MenuItem, MenuItemsGroup } from '@grafana/ui';
-import { getCurrentTheme, provideTheme } from 'app/core/utils/ConfigProvider';
+import { graphTickFormatter, graphTimeFormat, IconName, MenuItemProps, MenuItemsGroup } from '@grafana/ui';
+import { provideTheme } from 'app/core/utils/ConfigProvider';
 import {
   DataFrame,
   DataFrameView,
@@ -60,10 +60,10 @@ class GraphElement {
   panel: any;
   plot: any;
   sortedSeries?: any[];
-  data: any[];
+  data: any[] = [];
   panelWidth: number;
   eventManager: EventManager;
-  thresholdManager: ThresholdManager;
+  thresholdManager?: ThresholdManager;
   timeRegionManager: TimeRegionManager;
   legendElem: HTMLElement;
 
@@ -76,7 +76,10 @@ class GraphElement {
 
     this.panelWidth = 0;
     this.eventManager = new EventManager(this.ctrl);
-    this.thresholdManager = new ThresholdManager(this.ctrl);
+    // unified alerting does not support threshold for graphs, at least for now
+    if (!config.featureToggles.ngalert) {
+      this.thresholdManager = new ThresholdManager(this.ctrl);
+    }
     this.timeRegionManager = new TimeRegionManager(this.ctrl);
     // @ts-ignore
     this.tooltip = new GraphTooltip(this.elem, this.ctrl.dashboard, this.scope, () => {
@@ -207,6 +210,7 @@ class GraphElement {
               items: [
                 {
                   label: 'Add annotation',
+                  ariaLabel: 'Add annotation',
                   icon: 'comment-alt',
                   onClick: () => this.eventManager.updateTime({ from: flotPosition.x, to: null }),
                 },
@@ -221,9 +225,10 @@ class GraphElement {
 
       const dataLinks = [
         {
-          items: linksSupplier.getLinks(this.panel.replaceVariables).map<MenuItem>((link) => {
+          items: linksSupplier.getLinks(this.panel.replaceVariables).map<MenuItemProps>((link) => {
             return {
               label: link.title,
+              ariaLabel: link.title,
               url: link.href,
               target: link.target,
               icon: `${link.target === '_self' ? 'link' : 'external-link-alt'}` as IconName,
@@ -284,7 +289,7 @@ class GraphElement {
         };
         const fieldDisplay = getDisplayProcessor({
           field: { config: fieldConfig, type: FieldType.number },
-          theme: getCurrentTheme(),
+          theme: config.theme2,
           timeZone: this.dashboard.getTimezone(),
         })(field.values.get(dataIndex));
         linksSupplier = links.length
@@ -377,8 +382,9 @@ class GraphElement {
       }
       msg.appendTo(this.elem);
     }
-
-    this.thresholdManager.draw(plot);
+    if (this.thresholdManager) {
+      this.thresholdManager.draw(plot);
+    }
     this.timeRegionManager.draw(plot);
   }
 
@@ -449,7 +455,9 @@ class GraphElement {
     }
 
     // give space to alert editing
-    this.thresholdManager.prepare(this.elem, this.data);
+    if (this.thresholdManager) {
+      this.thresholdManager.prepare(this.elem, this.data);
+    }
 
     // un-check dashes if lines are unchecked
     this.panel.dashes = this.panel.lines ? this.panel.dashes : false;
@@ -458,7 +466,9 @@ class GraphElement {
     const options: any = this.buildFlotOptions(this.panel);
     this.prepareXAxis(options, this.panel);
     this.configureYAxisOptions(this.data, options);
-    this.thresholdManager.addFlotOptions(options, this.panel);
+    if (this.thresholdManager) {
+      this.thresholdManager.addFlotOptions(options, this.panel);
+    }
     this.timeRegionManager.addFlotOptions(options, this.panel);
     this.eventManager.addFlotEvents(this.annotations, options);
     this.sortedSeries = this.sortSeries(this.data, this.panel);
@@ -471,7 +481,7 @@ class GraphElement {
       series.data = series.getFlotPairs(series.nullPointMode || this.panel.nullPointMode);
 
       if (series.transform === 'constant') {
-        series.data = getFlotPairsConstant(series.data, this.ctrl.range);
+        series.data = getFlotPairsConstant(series.data, this.ctrl.range!);
       }
 
       // if hidden remove points and disable stack
@@ -500,8 +510,8 @@ class GraphElement {
         let bucketSize: number;
 
         if (this.data.length) {
-          let histMin = _.min(_.map(this.data, (s) => s.stats.min));
-          let histMax = _.max(_.map(this.data, (s) => s.stats.max));
+          let histMin = _min(map(this.data, (s) => s.stats.min));
+          let histMax = _max(map(this.data, (s) => s.stats.max));
           const ticks = panel.xaxis.buckets || this.panelWidth / 50;
           if (panel.xaxis.min != null) {
             const isInvalidXaxisMin = tickStep(panel.xaxis.min, histMax, ticks) <= 0;
@@ -630,9 +640,9 @@ class GraphElement {
     const sortDesc = panel.legend.sortDesc === true ? -1 : 1;
 
     if (shouldSortBy) {
-      return _.sortBy(series, (s) => s.stats[sortBy] * sortDesc);
+      return _sortBy(series, (s) => s.stats[sortBy] * sortDesc);
     } else {
-      return _.sortBy(series, (s) => s.zindex);
+      return _sortBy(series, (s) => s.zindex);
     }
   }
 
@@ -656,8 +666,8 @@ class GraphElement {
 
   addTimeAxis(options: any) {
     const ticks = this.panelWidth / 100;
-    const min = _.isUndefined(this.ctrl.range.from) ? null : this.ctrl.range.from.valueOf();
-    const max = _.isUndefined(this.ctrl.range.to) ? null : this.ctrl.range.to.valueOf();
+    const min = isUndefined(this.ctrl.range!.from) ? null : this.ctrl.range!.from.valueOf();
+    const max = isUndefined(this.ctrl.range!.to) ? null : this.ctrl.range!.to.valueOf();
 
     options.xaxis = {
       timezone: this.dashboard.getTimezone(),
@@ -673,7 +683,7 @@ class GraphElement {
   }
 
   addXSeriesAxis(options: any) {
-    const ticks = _.map(this.data, (series, index) => {
+    const ticks = map(this.data, (series, index) => {
       return [index + 1, series.alias];
     });
 
@@ -705,8 +715,8 @@ class GraphElement {
       }
 
       ticks = Object.keys(tickValues).map((v) => Number(v));
-      min = _.min(ticks)!;
-      max = _.max(ticks)!;
+      min = _min(ticks)!;
+      max = _max(ticks)!;
 
       // Adjust tick step
       let tickStep = bucketSize;
@@ -747,14 +757,14 @@ class GraphElement {
   }
 
   addXTableAxis(options: any) {
-    let ticks = _.map(this.data, (series, seriesIndex) => {
-      return _.map(series.datapoints, (point, pointIndex) => {
+    let ticks = map(this.data, (series, seriesIndex) => {
+      return map(series.datapoints, (point, pointIndex) => {
         const tickIndex = seriesIndex * series.datapoints.length + pointIndex;
         return [tickIndex + 1, point[1]];
       });
     });
-    // @ts-ignore, potential bug? is this _.flattenDeep?
-    ticks = _.flatten(ticks, true);
+    // @ts-ignore, potential bug? is this flattenDeep?
+    ticks = flatten(ticks, true);
 
     options.xaxis = {
       timezone: this.dashboard.getTimezone(),
@@ -780,8 +790,8 @@ class GraphElement {
 
     options.yaxes.push(defaults);
 
-    if (_.find(data, { yaxis: 2 })) {
-      const secondY = _.clone(defaults);
+    if (find(data, { yaxis: 2 })) {
+      const secondY = clone(defaults);
       secondY.index = 2;
       secondY.show = this.panel.yaxes[1].show;
       secondY.logBase = this.panel.yaxes[1].logBase || 1;
@@ -811,7 +821,7 @@ class GraphElement {
       return null;
     }
 
-    return _.toNumber(value);
+    return toNumber(value);
   }
 
   applyLogScale(axis: any, data: any) {

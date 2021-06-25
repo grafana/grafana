@@ -1,8 +1,6 @@
 // Libaries
-import flattenDeep from 'lodash/flattenDeep';
-import cloneDeep from 'lodash/cloneDeep';
+import { cloneDeep, flattenDeep } from 'lodash';
 // Components
-import './editor_ctrl';
 import coreModule from 'app/core/core_module';
 // Utils & Services
 import { dedupAnnotations } from './events_processing';
@@ -26,6 +24,7 @@ import { AnnotationQueryOptions, AnnotationQueryResponse } from './types';
 import { standardAnnotationSupport } from './standardAnnotationSupport';
 import { runRequest } from '../query/state/runRequest';
 import { RefreshEvent } from 'app/types/events';
+import { deleteAnnotation, saveAnnotation, updateAnnotation } from './api';
 
 let counter = 100;
 function getNextRequestId() {
@@ -55,12 +54,12 @@ export class AnnotationsSrv {
       .then((results) => {
         // combine the annotations and flatten results
         let annotations: AnnotationEvent[] = flattenDeep(results[0]);
-        // when in edit mode we need to use this function to get the saved id
+        // when in edit mode we need to use this function to get the saved ID
         let panelFilterId = options.panel.getSavedId();
 
         // filter out annotations that do not belong to requesting panel
         annotations = annotations.filter((item) => {
-          // if event has panel id and query is of type dashboard then panel and requesting panel id must match
+          // if event has panel ID and query is of type dashboard then panel and requesting panel ID must match
           if (item.panelId && item.source.type === 'dashboard') {
             return item.panelId === panelFilterId;
           }
@@ -154,7 +153,7 @@ export class AnnotationsSrv {
                 dashboard: dashboard,
               });
             }
-            // Note: future annotatoin lifecycle will use observables directly
+            // Note: future annotation lifecycle will use observables directly
             return executeAnnotationQuery(options, datasource, annotation)
               .toPromise()
               .then((res) => {
@@ -178,19 +177,17 @@ export class AnnotationsSrv {
 
   saveAnnotationEvent(annotation: AnnotationEvent) {
     this.globalAnnotationsPromise = null;
-    return getBackendSrv().post('/api/annotations', annotation);
+    return saveAnnotation(annotation);
   }
 
   updateAnnotationEvent(annotation: AnnotationEvent) {
     this.globalAnnotationsPromise = null;
-    return getBackendSrv().put(`/api/annotations/${annotation.id}`, annotation);
+    return updateAnnotation(annotation);
   }
 
   deleteAnnotationEvent(annotation: AnnotationEvent) {
     this.globalAnnotationsPromise = null;
-    const deleteUrl = `/api/annotations/${annotation.id}`;
-
-    return getBackendSrv().delete(deleteUrl);
+    return deleteAnnotation(annotation);
   }
 
   translateQueryResult(annotation: any, results: any) {

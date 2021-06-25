@@ -1,7 +1,5 @@
 // Libraries
 import React, { PureComponent } from 'react';
-import classNames from 'classnames';
-import AutoSizer from 'react-virtualized-auto-sizer';
 import { connect, ConnectedProps } from 'react-redux';
 
 // Components
@@ -22,6 +20,8 @@ export interface OwnProps {
   isEditing: boolean;
   isViewing: boolean;
   isInView: boolean;
+  width: number;
+  height: number;
 }
 
 export interface State {
@@ -66,61 +66,43 @@ export class DashboardPanelUnconnected extends PureComponent<Props, State> {
     }
   }
 
-  onMouseEnter = () => {
-    this.props.dashboard.setPanelFocus(this.props.panel.id);
-  };
-
-  onMouseLeave = () => {
-    this.props.dashboard.setPanelFocus(0);
-  };
-
   renderPanel(plugin: PanelPlugin) {
-    const { dashboard, panel, isViewing, isInView, isEditing } = this.props;
+    const { dashboard, panel, isViewing, isInView, isEditing, width, height } = this.props;
+
+    if (plugin.angularPanelCtrl) {
+      return (
+        <PanelChromeAngular
+          plugin={plugin}
+          panel={panel}
+          dashboard={dashboard}
+          isViewing={isViewing}
+          isEditing={isEditing}
+          isInView={isInView}
+          width={width}
+          height={height}
+        />
+      );
+    }
 
     return (
-      <AutoSizer>
-        {({ width, height }) => {
-          if (width === 0) {
-            return null;
-          }
-
-          if (plugin.angularPanelCtrl) {
-            return (
-              <PanelChromeAngular
-                plugin={plugin}
-                panel={panel}
-                dashboard={dashboard}
-                isViewing={isViewing}
-                isEditing={isEditing}
-                isInView={isInView}
-                width={width}
-                height={height}
-              />
-            );
-          }
-
-          return (
-            <PanelChrome
-              plugin={plugin}
-              panel={panel}
-              dashboard={dashboard}
-              isViewing={isViewing}
-              isEditing={isEditing}
-              isInView={isInView}
-              width={width}
-              height={height}
-            />
-          );
-        }}
-      </AutoSizer>
+      <PanelChrome
+        plugin={plugin}
+        panel={panel}
+        dashboard={dashboard}
+        isViewing={isViewing}
+        isEditing={isEditing}
+        isInView={isInView}
+        width={width}
+        height={height}
+      />
     );
   }
 
   render() {
-    const { isViewing, plugin } = this.props;
+    const { plugin } = this.props;
     const { isLazy } = this.state;
 
-    // if we have not loaded plugin exports yet, wait
+    // If we have not loaded plugin exports yet, wait
     if (!plugin) {
       return null;
     }
@@ -130,16 +112,7 @@ export class DashboardPanelUnconnected extends PureComponent<Props, State> {
       return null;
     }
 
-    const panelWrapperClass = classNames({
-      'panel-wrapper': true,
-      'panel-wrapper--view': isViewing,
-    });
-
-    return (
-      <div className={panelWrapperClass} onMouseEnter={this.onMouseEnter} onMouseLeave={this.onMouseLeave}>
-        {this.renderPanel(plugin)}
-      </div>
-    );
+    return this.renderPanel(plugin);
   }
 }
 

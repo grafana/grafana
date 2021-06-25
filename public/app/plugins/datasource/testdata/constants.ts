@@ -1,7 +1,6 @@
-import { defaultQuery as defaultStreamQuery } from './runStreams';
-import { TestDataQuery } from './types';
+import { CSVWave, TestDataQuery } from './types';
 
-export const defaultPulse: any = {
+export const defaultPulseQuery: any = {
   timeStep: 60,
   onCount: 3,
   onValue: 2,
@@ -9,19 +8,14 @@ export const defaultPulse: any = {
   offValue: 1,
 };
 
-export const defaultCSVWave: any = {
-  timeStep: 60,
-  valuesCSV: '0,0,2,2,1,1',
-};
+export const defaultCSVWaveQuery: CSVWave[] = [
+  {
+    timeStep: 60,
+    valuesCSV: '0,0,2,2,1,1',
+  },
+];
 
 export const defaultQuery: TestDataQuery = {
-  points: [],
-  stream: defaultStreamQuery,
-  pulseWave: defaultPulse,
-  csvWave: defaultCSVWave,
-  stringInput: '',
   scenarioId: 'random_walk',
-  lines: 10,
   refId: '',
-  alias: '',
 };

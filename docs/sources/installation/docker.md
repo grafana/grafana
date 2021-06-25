@@ -28,7 +28,7 @@ This image is based on [Ubuntu](https://ubuntu.com/), available in [the Ubuntu o
 > **Note:** The `grafana/grafana:<version>-ubuntu` image is available for Grafana version 6.5.0 and later.
 
 ## Run Grafana
-You can run the latest Grafana version, run a specific version, or run an unstable version based on the master branch of the [grafana/grafana GitHub repository](https://github.com/grafana/grafana).
+You can run the latest Grafana version, run a specific version, or run an unstable version based on the main branch of the [grafana/grafana GitHub repository](https://github.com/grafana/grafana).
 
 ### Run the latest stable version of Grafana
 
@@ -51,11 +51,11 @@ docker run -d -p 3000:3000 --name grafana grafana/grafana:<version number>
 docker run -d -p 3000:3000 --name grafana grafana/grafana:6.5.0
 ```
 
-### Run the Grafana master branch
+### Run the Grafana main branch
 
-For every successful build of the master branch, we update the `grafana/grafana:master` and `grafana/grafana:master-ubuntu` tags. Additionally, two new tags are created, `grafana/grafana-dev:<version>-<build ID>pre` and `grafana/grafana-dev:<version>-<build ID>pre-ubuntu`, where *version* is the next version of Grafana and *build ID* is the ID of the corresponding CI build. Use these to get access to the latest master builds of Grafana.
+For every successful build of the main branch, we update the `grafana/grafana:main` and `grafana/grafana:main-ubuntu` tags. Additionally, two new tags are created, `grafana/grafana-dev:<version>-<build ID>pre` and `grafana/grafana-dev:<version>-<build ID>pre-ubuntu`, where *version* is the next version of Grafana and *build ID* is the ID of the corresponding CI build. Use these to get access to the latest main builds of Grafana.
 
-When running Grafana master in production, we *strongly* recommend that you use the `grafana/grafana-dev:<version>-<build ID>pre` tag. This tag guarantees that you use a specific version of Grafana instead of whatever was the most recent commit at the time.
+When running Grafana main in production, we *strongly* recommend that you use the `grafana/grafana-dev:<version>-<build ID>pre` tag. This tag guarantees that you use a specific version of Grafana instead of whatever was the most recent commit at the time.
 
 For a list of available tags, check out [grafana/grafana](https://hub.docker.com/r/grafana/grafana/tags/) and [grafana/grafana-dev](https://hub.docker.com/r/grafana/grafana-dev/tags/).
 
@@ -81,13 +81,13 @@ docker run -d \
 
 > Only available in Grafana v5.3.1 and later.
 
-You can install plugins from custom URLs by specifying the URL like this: `GF_INSTALL_PLUGINS=<url to plugin zip>;<plugin name>`.
+You can install a plugin from a custom URL by specifying the URL like this: `GF_INSTALL_PLUGINS=<url to plugin zip>;<plugin install folder name>`.
 
 ```bash
 docker run -d \
   -p 3000:3000 \
   --name=grafana \
-  -e "GF_INSTALL_PLUGINS=http://plugin-domain.com/my-custom-plugin.zip;custom-plugin" \
+  -e "GF_INSTALL_PLUGINS=http://plugin-domain.com/my-custom-plugin.zip;custom-plugin,grafana-clock-panel" \
   grafana/grafana
 ```
 
@@ -107,6 +107,20 @@ cd packaging/docker/custom
 docker build \
   --build-arg "GRAFANA_VERSION=latest" \
   --build-arg "GF_INSTALL_PLUGINS=grafana-clock-panel,grafana-simple-json-datasource" \
+  -t grafana-custom -f Dockerfile .
+
+docker run -d -p 3000:3000 --name=grafana grafana-custom
+```
+
+### Build with pre-installed plugins from other sources
+
+You can build a Docker image with plugins from other sources by specifying the URL like this: `GF_INSTALL_PLUGINS=<url to plugin zip>;<plugin install folder name>`.
+
+```bash
+cd packaging/docker/custom
+docker build \
+  --build-arg "GRAFANA_VERSION=latest" \
+  --build-arg "GF_INSTALL_PLUGINS=http://plugin-domain.com/my-custom-plugin.zip;custom-plugin,grafana-clock-panel" \
   -t grafana-custom -f Dockerfile .
 
 docker run -d -p 3000:3000 --name=grafana grafana-custom
@@ -179,7 +193,7 @@ Version | User    | User ID | Group | Group ID
 --------|---------|---------|---------|---------
 < 5.1   | grafana | 104 | grafana | 107
 \>= 5.1  | grafana | 472 | grafana | 472
-\>= 7.3  | grafana | 472 | root | 1
+\>= 7.3  | grafana | 472 | root | 0
 
 There are two possible solutions to this problem. Either you start the new container as the root user and change ownership from `104` to `472`, or you start the upgraded container as user `104`.
 
@@ -226,5 +240,4 @@ Refer to [Configure a Grafana Docker image]({{< relref "../administration/config
 ## Configure Grafana
 
 Refer to the [Configuration]({{< relref "../administration/configuration.md" >}}) page for details on options for customizing your environment, logging, database, and so on.
-
 

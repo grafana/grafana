@@ -32,7 +32,7 @@ export const RepeatRowSelect: FC<Props> = ({ repeat, onChange }) => {
     });
 
     return options;
-  }, variables);
+  }, [variables]);
 
   const onSelectChange = useCallback((option: SelectableValue<string | null>) => onChange(option.value), [onChange]);
 

@@ -1,11 +1,12 @@
-import React, { FC, HTMLAttributes, ReactNode } from 'react';
-import { css } from 'emotion';
-import { GrafanaTheme } from '@grafana/data';
+import React, { HTMLAttributes, ReactNode } from 'react';
+import { css, cx } from '@emotion/css';
+import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { useTheme } from '../../themes';
+import { useTheme2 } from '../../themes';
 import { Icon } from '../Icon/Icon';
 import { IconName } from '../../types/icon';
-import { getColorsFromSeverity } from '../../utils/colors';
+import { IconButton } from '../IconButton/IconButton';
+import { Button } from '../Button/Button';
 
 export type AlertVariant = 'success' | 'warning' | 'error' | 'info';
 
@@ -15,14 +16,9 @@ export interface Props extends HTMLAttributes<HTMLDivElement> {
   onRemove?: (event: React.MouseEvent) => void;
   severity?: AlertVariant;
   children?: ReactNode;
-  /** Custom component or text for alert button */
-  buttonContent?: ReactNode | string;
-  /** @deprecated */
-  /** Deprecated use onRemove instead */
-  onButtonClick?: (event: React.MouseEvent) => void;
-  /** @deprecated */
-  /** Deprecated use buttonContent instead */
-  buttonText?: string;
+  elevated?: boolean;
+  buttonContent?: React.ReactNode | string;
+  bottomSpacing?: number;
 }
 
 function getIconFromSeverity(severity: AlertVariant): string {
@@ -39,30 +35,41 @@ function getIconFromSeverity(severity: AlertVariant): string {
   }
 }
 
-export const Alert: FC<Props> = React.forwardRef<HTMLDivElement, Props>(
-  ({ title, buttonText, onButtonClick, onRemove, children, buttonContent, severity = 'error', ...restProps }, ref) => {
-    const theme = useTheme();
-    const styles = getStyles(theme, severity, !!buttonContent);
+export const Alert = React.forwardRef<HTMLDivElement, Props>(
+  (
+    { title, onRemove, children, buttonContent, elevated, bottomSpacing, className, severity = 'error', ...restProps },
+    ref
+  ) => {
+    const theme = useTheme2();
+    const styles = getStyles(theme, severity, elevated, bottomSpacing);
 
     return (
-      <div ref={ref} className={styles.alert} aria-label={selectors.components.Alert.alert(severity)} {...restProps}>
+      <div
+        ref={ref}
+        className={cx(styles.alert, className)}
+        aria-label={selectors.components.Alert.alert(severity)}
+        {...restProps}
+      >
         <div className={styles.icon}>
           <Icon size="xl" name={getIconFromSeverity(severity) as IconName} />
         </div>
         <div className={styles.body}>
           <div className={styles.title}>{title}</div>
-          {children && <div>{children}</div>}
+          {children && <div className={styles.content}>{children}</div>}
         </div>
         {/* If onRemove is specified, giving preference to onRemove */}
-        {onRemove ? (
-          <button type="button" className={styles.close} onClick={onRemove}>
-            {buttonContent || <Icon name="times" size="lg" />}
-          </button>
-        ) : onButtonClick ? (
-          <button type="button" className="btn btn-outline-danger" onClick={onButtonClick}>
-            {buttonText}
-          </button>
-        ) : null}
+        {onRemove && !buttonContent && (
+          <div className={styles.close}>
+            <IconButton name="times" onClick={onRemove} size="lg" type="button" />
+          </div>
+        )}
+        {onRemove && buttonContent && (
+          <div className={styles.buttonWrapper}>
+            <Button variant="secondary" onClick={onRemove} type="button">
+              {buttonContent}
+            </Button>
+          </div>
+        )}
       </div>
     );
   }
@@ -70,54 +77,70 @@ export const Alert: FC<Props> = React.forwardRef<HTMLDivElement, Props>(
 
 Alert.displayName = 'Alert';
 
-const getStyles = (theme: GrafanaTheme, severity: AlertVariant, outline: boolean) => {
-  const { white } = theme.palette;
-  const severityColors = getColorsFromSeverity(severity, theme);
-  const background = css`
-    background: linear-gradient(90deg, ${severityColors[0]}, ${severityColors[0]});
-  `;
+const getStyles = (theme: GrafanaTheme2, severity: AlertVariant, elevated?: boolean, bottomSpacing?: number) => {
+  const color = theme.colors[severity];
+  const borderRadius = theme.shape.borderRadius();
 
   return {
     alert: css`
       flex-grow: 1;
-      padding: 15px 20px;
-      margin-bottom: ${theme.spacing.xs};
       position: relative;
-      color: ${white};
-      text-shadow: 0 1px 0 rgba(0, 0, 0, 0.2);
-      border-radius: ${theme.border.radius.md};
+      border-radius: ${borderRadius};
       display: flex;
       flex-direction: row;
-      align-items: center;
-      ${background}
+      align-items: stretch;
+      background: ${theme.colors.background.secondary};
+      box-shadow: ${elevated ? theme.shadows.z3 : theme.shadows.z1};
+      margin-bottom: ${theme.spacing(bottomSpacing ?? 2)};
+
+      &:before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        right: 0;
+        background: ${theme.colors.background.primary};
+        z-index: -1;
+      }
     `,
     icon: css`
-      padding: 0 ${theme.spacing.md} 0 0;
+      padding: ${theme.spacing(2, 3)};
+      background: ${color.main};
+      border-radius: ${borderRadius} 0 0 ${borderRadius};
+      color: ${color.contrastText};
       display: flex;
       align-items: center;
       justify-content: center;
-      width: 35px;
     `,
     title: css`
-      font-weight: ${theme.typography.weight.semibold};
+      font-weight: ${theme.typography.fontWeightMedium};
+      color: ${theme.colors.text.primary};
     `,
     body: css`
+      color: ${theme.colors.text.secondary};
+      padding: ${theme.spacing(2)};
       flex-grow: 1;
-      margin: 0 ${theme.spacing.md} 0 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
       overflow-wrap: break-word;
       word-break: break-word;
-
-      a {
-        color: ${white};
-        text-decoration: underline;
-      }
     `,
-    close: css`
+    content: css`
+      color: ${theme.colors.text.secondary};
+      padding-top: ${theme.spacing(1)};
+    `,
+    buttonWrapper: css`
+      padding: ${theme.spacing(1)};
       background: none;
       display: flex;
       align-items: center;
-      border: ${outline ? `1px solid ${white}` : 'none'};
-      border-radius: ${theme.border.radius.sm};
+    `,
+    close: css`
+      padding: ${theme.spacing(2, 1)};
+      background: none;
+      display: flex;
     `,
   };
 };

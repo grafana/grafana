@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import React from 'react';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 
 import SpanDetail from './SpanDetail';
 import DetailState from './SpanDetail/DetailState';
@@ -21,7 +21,7 @@ import SpanTreeOffset from './SpanTreeOffset';
 import TimelineRow from './TimelineRow';
 import { autoColor, createStyle, Theme, withTheme } from '../Theme';
 
-import { TraceLog, TraceSpan, TraceKeyValuePair, TraceLink } from '@grafana/data';
+import { TraceLog, TraceSpan, TraceKeyValuePair, TraceLink } from '../types/trace';
 import { CreateSpanLink } from './types';
 
 const getStyles = createStyle((theme: Theme) => {
@@ -58,7 +58,7 @@ const getStyles = createStyle((theme: Theme) => {
       }
     `,
     infoWrapper: css`
-      background: ${autoColor(theme, '#f5f5f5')};
+      label: infoWrapper;
       border: 1px solid ${autoColor(theme, '#d3d3d3')};
       border-top: 3px solid;
       padding: 0.75rem;
@@ -123,7 +123,7 @@ export class UnthemedSpanDetailRow extends React.PureComponent<SpanDetailRowProp
     const styles = getStyles(theme);
     return (
       <TimelineRow>
-        <TimelineRow.Cell width={columnDivision}>
+        <TimelineRow.Cell width={columnDivision} style={{ overflow: 'hidden' }}>
           <SpanTreeOffset
             span={span}
             showChildrenIcon={false}

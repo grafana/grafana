@@ -1,7 +1,7 @@
 import React, { PropsWithChildren, ReactElement } from 'react';
 import { InlineFormLabel, Select, useStyles } from '@grafana/ui';
 import { GrafanaTheme, SelectableValue } from '@grafana/data';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 
 interface VariableSelectFieldProps<T> {
   name: string;

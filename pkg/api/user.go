@@ -213,7 +213,7 @@ func (hs *HTTPServer) ChangeActiveOrgAndRedirectToHome(c *models.ReqContext) {
 		hs.NotFoundHandler(c)
 	}
 
-	c.Redirect(setting.AppSubUrl + "/")
+	c.Redirect(hs.Cfg.AppSubURL + "/")
 }
 
 func ChangeUserPassword(c *models.ReqContext, cmd models.ChangeUserPasswordCommand) response.Response {
@@ -223,7 +223,7 @@ func ChangeUserPassword(c *models.ReqContext, cmd models.ChangeUserPasswordComma
 
 	userQuery := models.GetUserByIdQuery{Id: c.UserId}
 
-	if err := bus.Dispatch(&userQuery); err != nil {
+	if err := bus.DispatchCtx(c.Req.Context(), &userQuery); err != nil {
 		return response.Error(500, "Could not read user from database", err)
 	}
 

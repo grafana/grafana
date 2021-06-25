@@ -1,6 +1,7 @@
 package api
 
 import (
+	"errors"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -59,7 +60,7 @@ func PostAnnotation(c *models.ReqContext, cmd dtos.PostAnnotationsCmd) response.
 
 	if cmd.Text == "" {
 		err := &CreateAnnotationError{"text field should not be empty"}
-		return response.Error(500, "Failed to save annotation", err)
+		return response.Error(400, "Failed to save annotation", err)
 	}
 
 	item := annotations.Item{
@@ -75,6 +76,9 @@ func PostAnnotation(c *models.ReqContext, cmd dtos.PostAnnotationsCmd) response.
 	}
 
 	if err := repo.Save(&item); err != nil {
+		if errors.Is(err, annotations.ErrTimerangeMissing) {
+			return response.Error(400, "Failed to save annotation", err)
+		}
 		return response.Error(500, "Failed to save annotation", err)
 	}
 
@@ -99,7 +103,7 @@ func PostGraphiteAnnotation(c *models.ReqContext, cmd dtos.PostGraphiteAnnotatio
 
 	if cmd.What == "" {
 		err := &CreateAnnotationError{"what field should not be empty"}
-		return response.Error(500, "Failed to save Graphite annotation", err)
+		return response.Error(400, "Failed to save Graphite annotation", err)
 	}
 
 	text := formatGraphiteAnnotation(cmd.What, cmd.Data)
@@ -119,12 +123,12 @@ func PostGraphiteAnnotation(c *models.ReqContext, cmd dtos.PostGraphiteAnnotatio
 				tagsArray = append(tagsArray, tagStr)
 			} else {
 				err := &CreateAnnotationError{"tag should be a string"}
-				return response.Error(500, "Failed to save Graphite annotation", err)
+				return response.Error(400, "Failed to save Graphite annotation", err)
 			}
 		}
 	default:
 		err := &CreateAnnotationError{"unsupported tags format"}
-		return response.Error(500, "Failed to save Graphite annotation", err)
+		return response.Error(400, "Failed to save Graphite annotation", err)
 	}
 
 	item := annotations.Item{

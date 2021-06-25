@@ -32,23 +32,6 @@ type Folder struct {
 	HasAcl    bool
 }
 
-// GetDashboardModel turns the command into the saveable model
-func (cmd *CreateFolderCommand) GetDashboardModel(orgId int64, userId int64) *Dashboard {
-	dashFolder := NewDashboardFolder(strings.TrimSpace(cmd.Title))
-	dashFolder.OrgId = orgId
-	dashFolder.SetUid(strings.TrimSpace(cmd.Uid))
-
-	if userId == 0 {
-		userId = -1
-	}
-
-	dashFolder.CreatedBy = userId
-	dashFolder.UpdatedBy = userId
-	dashFolder.UpdateSlug()
-
-	return dashFolder
-}
-
 // UpdateDashboardModel updates an existing model from command into model for update
 func (cmd *UpdateFolderCommand) UpdateDashboardModel(dashFolder *Dashboard, orgId int64, userId int64) {
 	dashFolder.OrgId = orgId

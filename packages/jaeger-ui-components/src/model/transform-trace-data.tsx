@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import _isEqual from 'lodash/isEqual';
+import { isEqual as _isEqual } from 'lodash';
 
 // @ts-ignore
 import { getTraceSpanIdsAsTree } from '../selectors/trace';
 import { getConfigValue } from '../utils/config/get-config';
-import { TraceKeyValuePair, TraceSpan, Trace, TraceViewData } from '@grafana/data';
+import { TraceKeyValuePair, TraceSpan, Trace, TraceResponse } from '../types/trace';
 // @ts-ignore
 import TreeNode from '../utils/TreeNode';
 
@@ -71,7 +71,7 @@ export function orderTags(spanTags: TraceKeyValuePair[], topPrefixes?: string[])
  * NOTE: Mutates `data` - Transform the HTTP response data into the form the app
  * generally requires.
  */
-export default function transformTraceData(data: TraceViewData | undefined): Trace | null {
+export default function transformTraceData(data: TraceResponse | undefined): Trace | null {
   if (!data?.traceID) {
     return null;
   }

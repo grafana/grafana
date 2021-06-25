@@ -1,121 +1,107 @@
 import {
-  dateMath,
-  DateTime,
-  MutableDataFrame,
-  DataSourceApi,
-  DataSourceInstanceSettings,
+  DataQuery,
   DataQueryRequest,
   DataQueryResponse,
-  DataQuery,
-  FieldType,
+  DataSourceApi,
+  DataSourceInstanceSettings,
 } from '@grafana/data';
-import { getBackendSrv, BackendSrvRequest } from '@grafana/runtime';
-import { Observable, from, of } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { DataSourceWithBackend } from '@grafana/runtime';
+import { TraceToLogsData, TraceToLogsOptions } from 'app/core/components/TraceToLogsSettings';
+import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
+import { from, merge, Observable, throwError } from 'rxjs';
+import { map, mergeMap } from 'rxjs/operators';
+import { LokiOptions } from '../loki/types';
+import { transformTrace, transformTraceList } from './resultTransformer';
 
-import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { serializeParams } from 'app/core/utils/fetch';
+export type TempoQueryType = 'search' | 'traceId';
 
 export type TempoQuery = {
   query: string;
+  // Query to find list of traces, e.g., via Loki
+  linkedQuery?: DataQuery;
+  queryType: TempoQueryType;
 } & DataQuery;
 
-export class TempoDatasource extends DataSourceApi<TempoQuery> {
-  constructor(private instanceSettings: DataSourceInstanceSettings, private readonly timeSrv: TimeSrv = getTimeSrv()) {
-    super(instanceSettings);
-  }
+export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TraceToLogsData> {
+  tracesToLogs?: TraceToLogsOptions;
 
-  async metadataRequest(url: string, params?: Record<string, any>): Promise<any> {
-    const res = await this._request(url, params, { hideFromInspector: true }).toPromise();
-    return res.data.data;
+  constructor(instanceSettings: DataSourceInstanceSettings<TraceToLogsData>) {
+    super(instanceSettings);
+    this.tracesToLogs = instanceSettings.jsonData.tracesToLogs;
   }
 
   query(options: DataQueryRequest<TempoQuery>): Observable<DataQueryResponse> {
-    // At this moment we expect only one target. In case we somehow change the UI to be able to show multiple
-    // traces at one we need to change this.
-    const id = options.targets[0]?.query;
-    if (id) {
-      return this._request(`/api/traces/${encodeURIComponent(id)}`).pipe(
-        map((response) => {
-          return {
-            data: [
-              new MutableDataFrame({
-                fields: [
-                  {
-                    name: 'trace',
-                    type: FieldType.trace,
-                    values: response?.data?.data || [],
-                  },
-                ],
-                meta: {
-                  preferredVisualisationType: 'trace',
-                },
-              }),
-            ],
-          };
-        })
+    const subQueries: Array<Observable<DataQueryResponse>> = [];
+    const filteredTargets = options.targets.filter((target) => !target.hide);
+    const searchTargets = filteredTargets.filter((target) => target.queryType === 'search');
+    const traceTargets = filteredTargets.filter(
+      (target) => target.queryType === 'traceId' || target.queryType === undefined
+    );
+
+    // Run search queries on linked datasource
+    if (this.tracesToLogs?.datasourceUid && searchTargets.length > 0) {
+      const dsSrv = getDatasourceSrv();
+      subQueries.push(
+        from(dsSrv.get(this.tracesToLogs.datasourceUid)).pipe(
+          mergeMap((linkedDatasource: DataSourceApi) => {
+            // Wrap linked query into a data request based on original request
+            const linkedRequest: DataQueryRequest = { ...options, targets: searchTargets.map((t) => t.linkedQuery!) };
+            // Find trace matchers in derived fields of the linked datasource that's identical to this datasource
+            const settings: DataSourceInstanceSettings<LokiOptions> = (linkedDatasource as any).instanceSettings;
+            const traceLinkMatcher: string[] =
+              settings.jsonData.derivedFields
+                ?.filter((field) => field.datasourceUid === this.uid && field.matcherRegex)
+                .map((field) => field.matcherRegex) || [];
+            if (!traceLinkMatcher || traceLinkMatcher.length === 0) {
+              return throwError(
+                'No Loki datasource configured for search. Set up Derived Fields for traces in a Loki datasource settings and link it to this Tempo datasource.'
+              );
+            } else {
+              return (linkedDatasource.query(linkedRequest) as Observable<DataQueryResponse>).pipe(
+                map((response) =>
+                  response.error ? response : transformTraceList(response, this.uid, this.name, traceLinkMatcher)
+                )
+              );
+            }
+          })
+        )
       );
-    } else {
-      return of({
-        data: [
-          new MutableDataFrame({
-            fields: [
-              {
-                name: 'trace',
-                type: FieldType.trace,
-                values: [],
-              },
-            ],
-            meta: {
-              preferredVisualisationType: 'trace',
-            },
-          }),
-        ],
-      });
     }
+
+    if (traceTargets.length > 0) {
+      const traceRequest: DataQueryRequest<TempoQuery> = { ...options, targets: traceTargets };
+      subQueries.push(
+        super.query(traceRequest).pipe(
+          map((response) => {
+            if (response.error) {
+              return response;
+            }
+            return transformTrace(response);
+          })
+        )
+      );
+    }
+
+    return merge(...subQueries);
   }
 
   async testDatasource(): Promise<any> {
-    try {
-      await this._request(`/api/traces/random`).toPromise();
-    } catch (e) {
-      // If all went well this request will get back with 400 - Bad request
-      if (e?.status !== 400) {
-        throw e;
-      }
-    }
-    return { status: 'success', message: 'Data source is working' };
-  }
+    // to test Tempo we send a dummy traceID and verify Tempo answers with 'trace not found'
+    const response = await super.query({ targets: [{ query: '0' }] } as any).toPromise();
 
-  getTimeRange(): { start: number; end: number } {
-    const range = this.timeSrv.timeRange();
-    return {
-      start: getTime(range.from, false),
-      end: getTime(range.to, true),
-    };
+    const errorMessage = response.error?.message;
+    if (
+      errorMessage &&
+      errorMessage.startsWith('failed to get trace') &&
+      errorMessage.endsWith('trace not found in Tempo')
+    ) {
+      return { status: 'success', message: 'Data source is working' };
+    }
+
+    return { status: 'error', message: 'Data source is not working' + (errorMessage ? `: ${errorMessage}` : '') };
   }
 
   getQueryDisplayText(query: TempoQuery) {
     return query.query;
   }
-
-  private _request(apiUrl: string, data?: any, options?: Partial<BackendSrvRequest>): Observable<Record<string, any>> {
-    // Hack for proxying metadata requests
-    const baseUrl = `/api/datasources/proxy/${this.instanceSettings.id}`;
-    const params = data ? serializeParams(data) : '';
-    const url = `${baseUrl}${apiUrl}${params.length ? `?${params}` : ''}`;
-    const req = {
-      ...options,
-      url,
-    };
-
-    return from(getBackendSrv().datasourceRequest(req));
-  }
-}
-
-function getTime(date: string | DateTime, roundUp: boolean) {
-  if (typeof date === 'string') {
-    date = dateMath.parse(date, roundUp)!;
-  }
-  return date.valueOf() * 1000;
 }

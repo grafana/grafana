@@ -1,5 +1,5 @@
 import React, { useMemo, useCallback } from 'react';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import {
   DataTransformerID,
   standardTransformers,
@@ -13,7 +13,7 @@ import {
   valueMatchers,
 } from '@grafana/data';
 import { Button, RadioButtonGroup, stylesFactory } from '@grafana/ui';
-import cloneDeep from 'lodash/cloneDeep';
+import { cloneDeep } from 'lodash';
 import {
   FilterByValueFilter,
   FilterByValueMatch,
@@ -59,7 +59,7 @@ export const FilterByValueTransformerEditor: React.FC<TransformerUIProps<FilterB
       },
     });
     onChange({ ...options, filters });
-  }, [onChange, options, valueMatchers, input]);
+  }, [onChange, options, input]);
 
   const onDeleteFilter = useCallback(
     (index: number) => {

@@ -7,10 +7,6 @@ import (
 )
 
 func StarDashboard(c *models.ReqContext) response.Response {
-	if !c.IsSignedIn {
-		return response.Error(412, "You need to sign in to star dashboards", nil)
-	}
-
 	cmd := models.StarDashboardCommand{UserId: c.UserId, DashboardId: c.ParamsInt64(":id")}
 
 	if cmd.DashboardId <= 0 {

@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/auth"
+	"github.com/grafana/grafana/pkg/services/auth/jwt"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/contexthandler/authproxy"
 	"github.com/grafana/grafana/pkg/services/rendering"
@@ -202,7 +203,7 @@ func TestMiddlewareContext(t *testing.T) {
 
 		sc.withTokenSessionCookie("token")
 
-		bus.AddHandler("test", func(query *models.GetSignedInUserQuery) error {
+		bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetSignedInUserQuery) error {
 			query.Result = &models.SignedInUser{OrgId: 2, UserId: userID}
 			return nil
 		})
@@ -230,7 +231,7 @@ func TestMiddlewareContext(t *testing.T) {
 
 		sc.withTokenSessionCookie("token")
 
-		bus.AddHandler("test", func(query *models.GetSignedInUserQuery) error {
+		bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetSignedInUserQuery) error {
 			query.Result = &models.SignedInUser{OrgId: 2, UserId: userID}
 			return nil
 		})
@@ -362,7 +363,7 @@ func TestMiddlewareContext(t *testing.T) {
 		const group = "grafana-core-team"
 
 		middlewareScenario(t, "Should not sync the user if it's in the cache", func(t *testing.T, sc *scenarioContext) {
-			bus.AddHandler("test", func(query *models.GetSignedInUserQuery) error {
+			bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetSignedInUserQuery) error {
 				query.Result = &models.SignedInUser{OrgId: orgID, UserId: query.UserId}
 				return nil
 			})
@@ -405,7 +406,7 @@ func TestMiddlewareContext(t *testing.T) {
 		})
 
 		middlewareScenario(t, "Should create an user from a header", func(t *testing.T, sc *scenarioContext) {
-			bus.AddHandler("test", func(query *models.GetSignedInUserQuery) error {
+			bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetSignedInUserQuery) error {
 				if query.UserId > 0 {
 					query.Result = &models.SignedInUser{OrgId: orgID, UserId: userID}
 					return nil
@@ -435,7 +436,7 @@ func TestMiddlewareContext(t *testing.T) {
 			const userID int64 = 12
 			const orgID int64 = 2
 
-			bus.AddHandler("test", func(query *models.GetSignedInUserQuery) error {
+			bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetSignedInUserQuery) error {
 				query.Result = &models.SignedInUser{OrgId: orgID, UserId: userID}
 				return nil
 			})
@@ -458,7 +459,7 @@ func TestMiddlewareContext(t *testing.T) {
 		})
 
 		middlewareScenario(t, "Should allow the request from whitelist IP", func(t *testing.T, sc *scenarioContext) {
-			bus.AddHandler("test", func(query *models.GetSignedInUserQuery) error {
+			bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetSignedInUserQuery) error {
 				query.Result = &models.SignedInUser{OrgId: orgID, UserId: userID}
 				return nil
 			})
@@ -483,7 +484,7 @@ func TestMiddlewareContext(t *testing.T) {
 		})
 
 		middlewareScenario(t, "Should not allow the request from whitelisted IP", func(t *testing.T, sc *scenarioContext) {
-			bus.AddHandler("test", func(query *models.GetSignedInUserQuery) error {
+			bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetSignedInUserQuery) error {
 				query.Result = &models.SignedInUser{OrgId: orgID, UserId: userID}
 				return nil
 			})
@@ -520,7 +521,7 @@ func TestMiddlewareContext(t *testing.T) {
 		}, configure)
 
 		middlewareScenario(t, "Should return 407 status code if there is cache mishap", func(t *testing.T, sc *scenarioContext) {
-			bus.AddHandler("Do not have the user", func(query *models.GetSignedInUserQuery) error {
+			bus.AddHandlerCtx("Do not have the user", func(ctx context.Context, query *models.GetSignedInUserQuery) error {
 				return errors.New("Do not add user")
 			})
 
@@ -576,6 +577,7 @@ func middlewareScenario(t *testing.T, desc string, fn scenarioFunc, cbs ...func(
 		sc.m.Use(OrgRedirect(sc.cfg))
 
 		sc.userAuthTokenService = ctxHdlr.AuthTokenService.(*auth.FakeUserAuthTokenService)
+		sc.jwtAuthService = ctxHdlr.JWTAuthService.(*models.FakeJWTService)
 		sc.remoteCacheService = ctxHdlr.RemoteCache
 
 		sc.defaultHandler = func(c *models.ReqContext) {
@@ -611,6 +613,7 @@ func getContextHandler(t *testing.T, cfg *setting.Cfg) *contexthandler.ContextHa
 	}
 	userAuthTokenSvc := auth.NewFakeUserAuthTokenService()
 	renderSvc := &fakeRenderService{}
+	authJWTSvc := models.NewFakeJWTService()
 	ctxHdlr := &contexthandler.ContextHandler{}
 
 	err := registry.BuildServiceGraph([]interface{}{cfg}, []*registry.Descriptor{
@@ -629,6 +632,10 @@ func getContextHandler(t *testing.T, cfg *setting.Cfg) *contexthandler.ContextHa
 		{
 			Name:     rendering.ServiceName,
 			Instance: renderSvc,
+		},
+		{
+			Name:     jwt.ServiceName,
+			Instance: authJWTSvc,
 		},
 		{
 			Name:     contexthandler.ServiceName,

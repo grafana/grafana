@@ -1,5 +1,5 @@
 import React, { PureComponent, ChangeEvent } from 'react';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import {
   Threshold,
   sortThresholds,
@@ -16,7 +16,6 @@ import { stylesFactory } from '../../themes';
 import { Icon } from '../Icon/Icon';
 import { RadioButtonGroup } from '../Forms/RadioButtonGroup/RadioButtonGroup';
 import { Button } from '../Button';
-import { FullWidthButtonContainer } from '../Button/FullWidthButtonContainer';
 import { Label } from '../Forms/Label';
 import { isNumber } from 'lodash';
 
@@ -206,7 +205,7 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
     return (
       <ThemeContext.Consumer>
         {(theme) => {
-          const styles = getStyles(theme);
+          const styles = getStyles(theme.v1);
           return (
             <div className={styles.wrapper}>
               <Button
@@ -232,9 +231,7 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
 
               <div>
                 <Label description="Percentage means thresholds relative to min & max">Thresholds mode</Label>
-                <FullWidthButtonContainer>
-                  <RadioButtonGroup size="sm" options={modes} onChange={this.onModeChanged} value={thresholds.mode} />
-                </FullWidthButtonContainer>
+                <RadioButtonGroup options={modes} onChange={this.onModeChanged} value={thresholds.mode} />
               </div>
             </div>
           );

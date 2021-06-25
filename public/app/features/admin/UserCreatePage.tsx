@@ -7,11 +7,10 @@ import { getBackendSrv } from '@grafana/runtime';
 import { StoreState } from '../../types';
 import { getNavModel } from '../../core/selectors/navModel';
 import Page from 'app/core/components/Page/Page';
-import { updateLocation } from 'app/core/actions';
+import { useHistory } from 'react-router-dom';
 
 interface UserCreatePageProps {
   navModel: NavModel;
-  updateLocation: typeof updateLocation;
 }
 interface UserDTO {
   name: string;
@@ -22,11 +21,16 @@ interface UserDTO {
 
 const createUser = async (user: UserDTO) => getBackendSrv().post('/api/admin/users', user);
 
-const UserCreatePage: React.FC<UserCreatePageProps> = ({ navModel, updateLocation }) => {
-  const onSubmit = useCallback(async (data: UserDTO) => {
-    await createUser(data);
-    updateLocation({ path: '/admin/users' });
-  }, []);
+const UserCreatePage: React.FC<UserCreatePageProps> = ({ navModel }) => {
+  const history = useHistory();
+
+  const onSubmit = useCallback(
+    async (data: UserDTO) => {
+      await createUser(data);
+      history.push('/admin/users');
+    },
+    [history]
+  );
 
   return (
     <Page navModel={navModel}>
@@ -42,15 +46,15 @@ const UserCreatePage: React.FC<UserCreatePageProps> = ({ navModel, updateLocatio
                   invalid={!!errors.name}
                   error={errors.name ? 'Name is required' : undefined}
                 >
-                  <Input name="name" ref={register({ required: true })} />
+                  <Input {...register('name', { required: true })} />
                 </Field>
 
-                <Field label="E-mail">
-                  <Input name="email" ref={register} />
+                <Field label="Email">
+                  <Input {...register('email')} />
                 </Field>
 
                 <Field label="Username">
-                  <Input name="login" ref={register} />
+                  <Input {...register('login')} />
                 </Field>
                 <Field
                   label="Password"
@@ -59,11 +63,10 @@ const UserCreatePage: React.FC<UserCreatePageProps> = ({ navModel, updateLocatio
                   error={errors.password ? 'Password is required and must contain at least 4 characters' : undefined}
                 >
                   <Input
-                    type="password"
-                    name="password"
-                    ref={register({
+                    {...register('password', {
                       validate: (value) => value.trim() !== '' && value.length >= 4,
                     })}
+                    type="password"
                   />
                 </Field>
                 <Button type="submit">Create user</Button>
@@ -80,7 +83,4 @@ const mapStateToProps = (state: StoreState) => ({
   navModel: getNavModel(state.navIndex, 'global-users'),
 });
 
-const mapDispatchToProps = {
-  updateLocation,
-};
-export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(UserCreatePage));
+export default hot(module)(connect(mapStateToProps)(UserCreatePage));

@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"testing"
@@ -48,7 +49,7 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 				cmd:          cmd,
 				fn: func(sc *scenarioContext) {
 					setUp()
-					callUpdateDashboardPermissions(sc)
+					callUpdateDashboardPermissions(t, sc)
 					assert.Equal(t, 404, sc.resp.Code)
 				},
 			}, hs)
@@ -65,7 +66,7 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 			getDashboardQueryResult := models.NewDashboard("Dash")
 
 			setUp := func() {
-				bus.AddHandler("test", func(query *models.GetDashboardQuery) error {
+				bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetDashboardQuery) error {
 					query.Result = getDashboardQueryResult
 					return nil
 				})
@@ -91,7 +92,7 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 				cmd:          cmd,
 				fn: func(sc *scenarioContext) {
 					setUp()
-					callUpdateDashboardPermissions(sc)
+					callUpdateDashboardPermissions(t, sc)
 					assert.Equal(t, 403, sc.resp.Code)
 				},
 			}, hs)
@@ -117,7 +118,7 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 
 			setUp := func() {
 				getDashboardQueryResult := models.NewDashboard("Dash")
-				bus.AddHandler("test", func(query *models.GetDashboardQuery) error {
+				bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetDashboardQuery) error {
 					query.Result = getDashboardQueryResult
 					return nil
 				})
@@ -151,7 +152,7 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 				cmd:          cmd,
 				fn: func(sc *scenarioContext) {
 					setUp()
-					callUpdateDashboardPermissions(sc)
+					callUpdateDashboardPermissions(t, sc)
 					assert.Equal(t, 200, sc.resp.Code)
 				},
 			}, hs)
@@ -170,7 +171,7 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 
 			setUp := func() {
 				getDashboardQueryResult := models.NewDashboard("Dash")
-				bus.AddHandler("test", func(query *models.GetDashboardQuery) error {
+				bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetDashboardQuery) error {
 					query.Result = getDashboardQueryResult
 					return nil
 				})
@@ -189,7 +190,7 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 				cmd:          cmd,
 				fn: func(sc *scenarioContext) {
 					setUp()
-					callUpdateDashboardPermissions(sc)
+					callUpdateDashboardPermissions(t, sc)
 					assert.Equal(t, 400, sc.resp.Code)
 				},
 			}, hs)
@@ -217,7 +218,7 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 					routePattern: "/api/dashboards/id/:id/permissions",
 					cmd:          cmd,
 					fn: func(sc *scenarioContext) {
-						callUpdateDashboardPermissions(sc)
+						callUpdateDashboardPermissions(t, sc)
 						assert.Equal(t, 400, sc.resp.Code)
 						respJSON, err := jsonMap(sc.resp.Body.Bytes())
 						require.NoError(t, err)
@@ -241,7 +242,7 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 
 			setUp := func() {
 				getDashboardQueryResult := models.NewDashboard("Dash")
-				bus.AddHandler("test", func(query *models.GetDashboardQuery) error {
+				bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetDashboardQuery) error {
 					query.Result = getDashboardQueryResult
 					return nil
 				})
@@ -260,7 +261,7 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 				cmd:          cmd,
 				fn: func(sc *scenarioContext) {
 					setUp()
-					callUpdateDashboardPermissions(sc)
+					callUpdateDashboardPermissions(t, sc)
 					assert.Equal(t, 400, sc.resp.Code)
 				},
 			}, hs)
@@ -292,7 +293,7 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 
 			setUp := func() {
 				getDashboardQueryResult := models.NewDashboard("Dash")
-				bus.AddHandler("test", func(query *models.GetDashboardQuery) error {
+				bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetDashboardQuery) error {
 					query.Result = getDashboardQueryResult
 					return nil
 				})
@@ -335,13 +336,20 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 				cmd:          cmd,
 				fn: func(sc *scenarioContext) {
 					setUp()
-					bus.AddHandler("test", func(cmd *models.UpdateDashboardAclCommand) error {
-						assert.Len(t, cmd.Items, 4)
-						return nil
+					// TODO: Replace this fake with a fake SQLStore instead (once we can use an interface in its stead)
+					origUpdateDashboardACL := updateDashboardACL
+					t.Cleanup(func() {
+						updateDashboardACL = origUpdateDashboardACL
 					})
+					var gotItems []*models.DashboardAcl
+					updateDashboardACL = func(hs *HTTPServer, folderID int64, items []*models.DashboardAcl) error {
+						gotItems = items
+						return nil
+					}
 
 					sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
 					assert.Equal(t, 200, sc.resp.Code)
+					assert.Len(t, gotItems, 4)
 				},
 			}, hs)
 		})
@@ -353,10 +361,16 @@ func callGetDashboardPermissions(sc *scenarioContext, hs *HTTPServer) {
 	sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
 }
 
-func callUpdateDashboardPermissions(sc *scenarioContext) {
-	bus.AddHandler("test", func(cmd *models.UpdateDashboardAclCommand) error {
-		return nil
+func callUpdateDashboardPermissions(t *testing.T, sc *scenarioContext) {
+	t.Helper()
+
+	origUpdateDashboardACL := updateDashboardACL
+	t.Cleanup(func() {
+		updateDashboardACL = origUpdateDashboardACL
 	})
+	updateDashboardACL = func(hs *HTTPServer, dashID int64, items []*models.DashboardAcl) error {
+		return nil
+	}
 
 	sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
 }

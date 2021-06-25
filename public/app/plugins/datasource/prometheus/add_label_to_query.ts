@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import { chain, isEqual } from 'lodash';
 
 const keywords = 'by|without|on|ignoring|group_left|group_right|bool';
 const logicalOperators = 'or|and|unless';
@@ -95,8 +95,8 @@ export function addLabelToSelector(selector: string, labelKey: string, labelValu
   parsedLabels.push({ key: labelKey, operator: operatorForLabelKey, value: `"${labelValue}"` });
 
   // Sort labels by key and put them together
-  const formatted = _.chain(parsedLabels)
-    .uniqWith(_.isEqual)
+  const formatted = chain(parsedLabels)
+    .uniqWith(isEqual)
     .compact()
     .sortBy('key')
     .map(({ key, operator, value }) => `${key}${operator}${value}`)

@@ -7,6 +7,7 @@ const webpack = require('webpack');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const HtmlWebpackHarddiskPlugin = require('html-webpack-harddisk-plugin');
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
+const getBabelConfig = require('./babel.config');
 
 module.exports = merge(common, {
   mode: 'development',
@@ -55,39 +56,7 @@ module.exports = merge(common, {
         use: [
           {
             loader: 'babel-loader',
-            options: {
-              cacheDirectory: true,
-              babelrc: false,
-              // Note: order is top-to-bottom and/or left-to-right
-              plugins: [
-                [
-                  require('@rtsao/plugin-proposal-class-properties'),
-                  {
-                    loose: true,
-                  },
-                ],
-                '@babel/plugin-proposal-nullish-coalescing-operator',
-                '@babel/plugin-proposal-optional-chaining',
-                '@babel/plugin-syntax-dynamic-import', // needed for `() => import()` in routes.ts
-                'angularjs-annotate',
-                'react-hot-loader/babel',
-              ],
-              // Note: order is bottom-to-top and/or right-to-left
-              presets: [
-                [
-                  '@babel/preset-env',
-                  {
-                    targets: {
-                      browsers: 'last 3 versions',
-                    },
-                    useBuiltIns: 'entry',
-                    modules: false,
-                  },
-                ],
-                '@babel/preset-typescript',
-                '@babel/preset-react',
-              ],
-            },
+            options: getBabelConfig(),
           },
         ],
       },

@@ -1,5 +1,5 @@
 import React, { FunctionComponent, Fragment, useState, useEffect } from 'react';
-import isEqual from 'lodash/isEqual';
+import { isEqual } from 'lodash';
 import { SelectableValue } from '@grafana/data';
 import { SegmentAsync, Icon } from '@grafana/ui';
 import { SelectableStrings } from '../types';
@@ -28,7 +28,7 @@ export const Dimensions: FunctionComponent<Props> = ({ dimensions, loadValues, l
     if (!isEqual(completeDimensions, dimensions)) {
       onChange(completeDimensions);
     }
-  }, [data]);
+  }, [data, dimensions, onChange]);
 
   const excludeUsedKeys = (options: SelectableStrings) => {
     return options.filter(({ value }) => !Object.keys(data).includes(value!));

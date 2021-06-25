@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/setting"
@@ -26,6 +27,8 @@ type AlertEngine struct {
 	RenderService    rendering.Service             `inject:""`
 	Bus              bus.Bus                       `inject:""`
 	RequestValidator models.PluginRequestValidator `inject:""`
+	DataService      plugins.DataRequestHandler    `inject:""`
+	Cfg              *setting.Cfg                  `inject:""`
 
 	execQueue     chan *Job
 	ticker        *Ticker
@@ -42,7 +45,7 @@ func init() {
 
 // IsDisabled returns true if the alerting service is disable for this instance.
 func (e *AlertEngine) IsDisabled() bool {
-	return !setting.AlertingEnabled || !setting.ExecuteAlerts
+	return !setting.AlertingEnabled || !setting.ExecuteAlerts || e.Cfg.IsNgAlertEnabled()
 }
 
 // Init initializes the AlertingService.
@@ -50,7 +53,7 @@ func (e *AlertEngine) Init() error {
 	e.ticker = NewTicker(time.Now(), time.Second*0, clock.New(), 1)
 	e.execQueue = make(chan *Job, 1000)
 	e.scheduler = newScheduler()
-	e.evalHandler = NewEvalHandler()
+	e.evalHandler = NewEvalHandler(e.DataService)
 	e.ruleReader = newRuleReader()
 	e.log = log.New("alerting.engine")
 	e.resultHandler = newResultHandler(e.RenderService)

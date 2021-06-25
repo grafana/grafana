@@ -7,7 +7,7 @@ import (
 )
 
 var (
-	sortAlphaAsc = SortOption{
+	SortAlphaAsc = SortOption{
 		Name:        "alpha-asc",
 		DisplayName: "Alphabetically (A–Z)",
 		Description: "Sort results in an alphabetically ascending order",
@@ -16,7 +16,7 @@ var (
 			searchstore.TitleSorter{},
 		},
 	}
-	sortAlphaDesc = SortOption{
+	SortAlphaDesc = SortOption{
 		Name:        "alpha-desc",
 		DisplayName: "Alphabetically (Z–A)",
 		Description: "Sort results in an alphabetically descending order",

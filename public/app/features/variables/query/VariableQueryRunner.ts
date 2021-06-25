@@ -20,13 +20,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { getTimeSrv } from '../../dashboard/services/TimeSrv';
 import { QueryRunners } from './queryRunners';
 import { runRequest } from '../../query/state/runRequest';
-import {
-  runUpdateTagsRequest,
-  toMetricFindValues,
-  updateOptionsState,
-  updateTagsState,
-  validateVariableSelection,
-} from './operators';
+import { toMetricFindValues, updateOptionsState, validateVariableSelection } from './operators';
 
 interface UpdateOptionsArgs {
   identifier: VariableIdentifier;
@@ -119,7 +113,7 @@ export class VariableQueryRunner {
         .runRequest(runnerArgs, request)
         .pipe(
           filter(() => {
-            // lets check if we started another batch during the execution of the observable. If so we just want to abort the rest.
+            // Lets check if we started another batch during the execution of the observable. If so we just want to abort the rest.
             const afterUid = getState().templating.transaction.uid;
             return beforeUid === afterUid;
           }),
@@ -133,8 +127,6 @@ export class VariableQueryRunner {
           }),
           toMetricFindValues(),
           updateOptionsState({ variable, dispatch, getTemplatedRegexFunc }),
-          runUpdateTagsRequest({ variable, datasource, searchFilter }),
-          updateTagsState({ variable, dispatch }),
           validateVariableSelection({ variable, dispatch, searchFilter }),
           takeUntil(
             merge(this.updateOptionsRequests, this.cancelRequests).pipe(

@@ -14,7 +14,7 @@ import {
   standardTransformers,
 } from '@grafana/data';
 
-import isString from 'lodash/isString';
+import { isString } from 'lodash';
 
 export const standardAnnotationSupport: AnnotationSupport = {
   /**
@@ -35,8 +35,8 @@ export const standardAnnotationSupport: AnnotationSupport = {
   },
 
   /**
-   * Convert the stored JSON model and environment to a standard datasource query object.
-   * This query will be executed in the datasource and the results converted into events.
+   * Convert the stored JSON model and environment to a standard data source query object.
+   * This query will be executed in the data source and the results converted into events.
    * Returning an undefined result will quietly skip query execution
    */
   prepareQuery: (anno: AnnotationQuery) => anno.target,

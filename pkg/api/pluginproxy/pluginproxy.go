@@ -20,7 +20,8 @@ type templateData struct {
 }
 
 // NewApiPluginProxy create a plugin proxy
-func NewApiPluginProxy(ctx *models.ReqContext, proxyPath string, route *plugins.AppPluginRoute, appID string, cfg *setting.Cfg) *httputil.ReverseProxy {
+func NewApiPluginProxy(ctx *models.ReqContext, proxyPath string, route *plugins.AppPluginRoute,
+	appID string, cfg *setting.Cfg) *httputil.ReverseProxy {
 	director := func(req *http.Request) {
 		query := models.GetPluginSettingByIdQuery{OrgId: ctx.OrgId, PluginId: appID}
 		if err := bus.Dispatch(&query); err != nil {
@@ -68,6 +69,10 @@ func NewApiPluginProxy(ctx *models.ReqContext, proxyPath string, route *plugins.
 		if err := addHeaders(&req.Header, route, data); err != nil {
 			ctx.JsonApiErr(500, "Failed to render plugin headers", err)
 			return
+		}
+
+		if err := setBodyContent(req, route, data); err != nil {
+			logger.Error("Failed to set plugin route body content", "error", err)
 		}
 	}
 

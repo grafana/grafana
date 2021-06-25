@@ -1,13 +1,15 @@
 +++
-title = "Graph panel"
+title = "Graph panel (old)"
 keywords = ["grafana", "graph panel", "documentation", "guide", "graph"]
 aliases = ["/docs/grafana/latest/reference/graph/", "/docs/grafana/latest/features/panels/graph/"]
 weight = 500
 +++
 
-# Graph panel
+# Graph panel (old)
 
-This visualization is the most-used in the Grafana ecosystem. It can render as a line, a path of dots, or a series of bars. This type of graph is versatile enough to display almost any time-series data.
+> **Note:** [Time series panel](time-series/) visualization is going to replace the Graph panel visualization in a future release.
+
+The graph panel can render metrics as a line, a path of dots, or a series of bars. This type of graph is versatile enough to display almost any time-series data.
 
 ## Data and field options
 
@@ -15,7 +17,7 @@ Graph visualizations allow you to apply:
 
 - [Alerts]({{< relref "../../alerting/_index.md" >}}) - This is the only type of visualization that allows you to set alerts.
 - [Data transformations]({{< relref "../transformations/_index.md" >}})
-- [Field options and overrides]({{< relref "../field-options/_index.md" >}})
+- [Field overrides]({{< relref "../field-overrides.md" >}})
 - [Thresholds]({{< relref "../thresholds.md" >}})
 
 ## Display options
@@ -120,7 +122,7 @@ Options are identical for both Y-axes.
     - **Value -**  The aggregation type to use for the values. The default is total (summing the values together).
   - **Histogram -** Converts the graph into a histogram. A histogram is a kind of bar chart that groups numbers into ranges, often called buckets or bins. Taller bars show that more data falls in that range.
 
-    For more information about histograms, refer to [Introduction to histograms and heatmaps]({{< relref "../../getting-started/intro-histograms.md" >}}).
+    For more information about histograms, refer to [Introduction to histograms and heatmaps]({{< relref "../../basics/intro-histograms.md" >}}).
     - **Buckets -** The number of buckets to group the values by. If left empty, then Grafana tries to calculate a suitable number of buckets.
     - **X-Min -** Filters out values from the histogram that are under this minimum limit.
     - **X-Max -** Filters out values that are greater than this maximum limit.

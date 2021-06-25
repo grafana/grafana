@@ -1,9 +1,9 @@
-import _ from 'lodash';
+import { map } from 'lodash';
 import React, { FC, useEffect, useState, memo } from 'react';
 
 import { PrometheusDatasource } from '../datasource';
 import { PromQuery } from '../types';
-import { DataQueryRequest, PanelData } from '@grafana/data';
+import { DataQueryRequest, PanelData, textUtil } from '@grafana/data';
 
 interface Props {
   datasource: PrometheusDatasource;
@@ -43,7 +43,7 @@ const PromLink: FC<Props> = ({ panelData, query, datasource }) => {
           'g0.tab': 0,
         };
 
-        const args = _.map(expr, (v: string, k: string) => {
+        const args = map(expr, (v: string, k: string) => {
           return k + '=' + encodeURIComponent(v);
         }).join('&');
         return `${datasource.directUrl}/graph?${args}`;
@@ -51,10 +51,10 @@ const PromLink: FC<Props> = ({ panelData, query, datasource }) => {
 
       setHref(getExternalLink());
     }
-  }, [panelData]);
+  }, [datasource, panelData, query]);
 
   return (
-    <a href={href} target="_blank" rel="noopener noreferrer">
+    <a href={textUtil.sanitizeUrl(href)} target="_blank" rel="noopener noreferrer">
       Prometheus
     </a>
   );

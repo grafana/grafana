@@ -15,13 +15,13 @@
 import * as React from 'react';
 import IoIosArrowDown from 'react-icons/lib/io/ios-arrow-down';
 import IoIosArrowRight from 'react-icons/lib/io/ios-arrow-right';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import cx from 'classnames';
 
 import * as markers from './AccordianKeyValues.markers';
 import KeyValuesTable from './KeyValuesTable';
 import { TNil } from '../../types';
-import { TraceKeyValuePair, TraceLink } from '@grafana/data';
+import { TraceKeyValuePair, TraceLink } from '../../types/trace';
 import { autoColor, createStyle, Theme, useTheme } from '../../Theme';
 import { uAlignIcon, uTxEllipsis } from '../../uberUtilityStyles';
 

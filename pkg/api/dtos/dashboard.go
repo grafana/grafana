@@ -26,6 +26,7 @@ type DashboardMeta struct {
 	HasAcl                bool      `json:"hasAcl"`
 	IsFolder              bool      `json:"isFolder"`
 	FolderId              int64     `json:"folderId"`
+	FolderUid             string    `json:"folderUid"`
 	FolderTitle           string    `json:"folderTitle"`
 	FolderUrl             string    `json:"folderUrl"`
 	Provisioned           bool      `json:"provisioned"`
@@ -34,6 +35,11 @@ type DashboardMeta struct {
 
 type DashboardFullWithMeta struct {
 	Meta      DashboardMeta    `json:"meta"`
+	Dashboard *simplejson.Json `json:"dashboard"`
+}
+
+type TrimDashboardFullWithMeta struct {
+	Meta      *simplejson.Json `json:"meta"`
 	Dashboard *simplejson.Json `json:"dashboard"`
 }
 

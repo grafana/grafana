@@ -1,6 +1,6 @@
 import { parse, SearchParserResult } from 'search-query-parser';
 import { IconName } from '@grafana/ui';
-import { UrlQueryMap, UrlQueryValue } from '@grafana/data';
+import { UrlQueryMap } from '@grafana/data';
 import { DashboardQuery, DashboardSection, DashboardSectionItem, SearchAction, UidsToDelete } from './types';
 import { NO_ID_SECTIONS, SECTION_STORAGE_KEY } from './constants';
 import { getDashboardSrv } from '../dashboard/services/DashboardSrv';
@@ -138,7 +138,7 @@ export const getCheckedDashboards = (sections: DashboardSection[]): DashboardSec
 
   return sections.reduce((uids, section) => {
     return section.items ? [...uids, ...section.items.filter((item) => item.checked)] : uids;
-  }, []);
+  }, [] as DashboardSectionItem[]);
 };
 
 /**
@@ -166,11 +166,11 @@ export const getCheckedUids = (sections: DashboardSection[]): UidsToDelete => {
 
   return sections.reduce((result, section) => {
     if (section?.id !== 0 && section.checked) {
-      return { ...result, folders: [...result.folders, section.uid] };
+      return { ...result, folders: [...result.folders, section.uid] } as UidsToDelete;
     } else {
-      return { ...result, dashboards: getCheckedDashboardsUids(sections) };
+      return { ...result, dashboards: getCheckedDashboardsUids(sections) } as UidsToDelete;
     }
-  }, emptyResults) as UidsToDelete;
+  }, emptyResults);
 };
 
 /**
@@ -189,9 +189,9 @@ export const getParsedQuery = (query: DashboardQuery, queryParsing = false) => {
 
   if (parseQuery(query.query).folder === 'current') {
     try {
-      const { folderId } = getDashboardSrv().getCurrent()?.meta;
-      if (folderId) {
-        folderIds = [folderId];
+      const dash = getDashboardSrv().getCurrent();
+      if (dash?.meta.folderId) {
+        folderIds = [dash?.meta.folderId];
       }
     } catch (e) {
       console.error(e);
@@ -239,7 +239,7 @@ export const getSectionStorageKey = (title: string) => {
  * @param params
  * @param folder
  */
-export const parseRouteParams = (params: UrlQueryMap, folder?: UrlQueryValue) => {
+export const parseRouteParams = (params: UrlQueryMap) => {
   const cleanedParams = Object.entries(params).reduce((obj, [key, val]) => {
     if (!val) {
       return obj;
@@ -251,11 +251,13 @@ export const parseRouteParams = (params: UrlQueryMap, folder?: UrlQueryValue) =>
     return { ...obj, [key]: val };
   }, {} as Partial<DashboardQuery>);
 
-  if (folder) {
-    const folderStr = `folder:${folder}`;
+  if (params.folder) {
+    const folderStr = `folder:${params.folder}`;
     return {
-      params: { ...cleanedParams, query: `${folderStr} ${(cleanedParams.query ?? '').replace(folderStr, '')}` },
+      ...cleanedParams,
+      query: `${folderStr} ${(cleanedParams.query ?? '').replace(folderStr, '')}`,
     };
   }
-  return { params: cleanedParams };
+
+  return { ...cleanedParams };
 };

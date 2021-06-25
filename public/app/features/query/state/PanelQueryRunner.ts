@@ -12,8 +12,11 @@ import { isSharedDashboardQuery, runSharedRequest } from '../../../plugins/datas
 // Types
 import {
   applyFieldOverrides,
+  compareArrayValues,
+  compareDataFrameStructures,
   CoreApp,
   DataConfigSource,
+  DataFrame,
   DataQuery,
   DataQueryRequest,
   DataSourceApi,
@@ -27,6 +30,9 @@ import {
   TimeZone,
   transformDataFrame,
 } from '@grafana/data';
+import { getDashboardQueryRunner } from './DashboardQueryRunner/DashboardQueryRunner';
+import { mergePanelAndDashData } from './mergePanelAndDashData';
+import { PanelModel } from '../../dashboard/state';
 
 export interface QueryRunnerOptions<
   TQuery extends DataQuery = DataQuery,
@@ -43,12 +49,11 @@ export interface QueryRunnerOptions<
   minInterval: string | undefined | null;
   scopedVars?: ScopedVars;
   cacheTimeout?: string;
-  delayStateNotification?: number; // default 100ms.
   transformations?: DataTransformerConfig[];
 }
 
 let counter = 100;
-function getNextRequestId() {
+export function getNextRequestId() {
   return 'Q' + counter++;
 }
 
@@ -73,30 +78,82 @@ export class PanelQueryRunner {
    */
   getData(options: GetDataOptions): Observable<PanelData> {
     const { withFieldConfig, withTransforms } = options;
+    let structureRev = 1;
+    let lastData: DataFrame[] = [];
+    let processedCount = 0;
+    let lastConfigRev = -1;
+    const fastCompare = (a: DataFrame, b: DataFrame) => {
+      return compareDataFrameStructures(a, b, true);
+    };
 
     return this.subject.pipe(
       this.getTransformationsStream(withTransforms),
       map((data: PanelData) => {
         let processedData = data;
+        let sameStructure = false;
 
-        if (withFieldConfig) {
-          // Apply field defaults & overrides
-          const fieldConfig = this.dataConfigSource.getFieldOverrideOptions();
-          const timeZone = data.request?.timezone ?? 'browser';
+        if (withFieldConfig && data.series?.length) {
+          // Apply field defaults and overrides
+          let fieldConfig = this.dataConfigSource.getFieldOverrideOptions();
+          let processFields = fieldConfig != null;
 
-          if (fieldConfig) {
+          // If the shape is the same, we can skip field overrides
+          if (
+            data.state === LoadingState.Streaming &&
+            processFields &&
+            processedCount > 0 &&
+            lastData.length &&
+            lastConfigRev === this.dataConfigSource.configRev
+          ) {
+            const sameTypes = compareArrayValues(lastData, processedData.series, fastCompare);
+            if (sameTypes) {
+              // Keep the previous field config settings
+              processedData = {
+                ...processedData,
+                series: lastData.map((frame, frameIndex) => ({
+                  ...frame,
+                  length: data.series[frameIndex].length,
+                  fields: frame.fields.map((field, fieldIndex) => ({
+                    ...field,
+                    values: data.series[frameIndex].fields[fieldIndex].values,
+                    state: {
+                      ...field.state,
+                      calcs: undefined,
+                      // add global range calculation here? (not optimal for streaming)
+                      range: undefined,
+                    },
+                  })),
+                })),
+              };
+              processFields = false;
+              sameStructure = true;
+            }
+          }
+
+          if (processFields) {
+            lastConfigRev = this.dataConfigSource.configRev!;
+            processedCount++; // results with data
             processedData = {
               ...processedData,
               series: applyFieldOverrides({
-                timeZone: timeZone,
+                timeZone: data.request?.timezone ?? 'browser',
                 data: processedData.series,
-                ...fieldConfig,
+                ...fieldConfig!,
               }),
             };
           }
         }
 
-        return processedData;
+        if (!sameStructure) {
+          sameStructure = compareArrayValues(lastData, processedData.series, compareDataFrameStructures);
+        }
+        if (!sameStructure) {
+          structureRev++;
+        }
+
+        lastData = processedData.series;
+
+        return { ...processedData, structureRev };
       })
     );
   }
@@ -136,7 +193,7 @@ export class PanelQueryRunner {
     } = options;
 
     if (isSharedDashboardQuery(datasource)) {
-      this.pipeToSubject(runSharedRequest(options));
+      this.pipeToSubject(runSharedRequest(options), panelId);
       return;
     }
 
@@ -163,7 +220,7 @@ export class PanelQueryRunner {
     try {
       const ds = await getDataSource(datasource, request.scopedVars);
 
-      // Attach the datasource name to each query
+      // Attach the data source name to each query
       request.targets = request.targets.map((query) => {
         if (!query.datasource) {
           query.datasource = ds.name;
@@ -184,18 +241,27 @@ export class PanelQueryRunner {
       request.interval = norm.interval;
       request.intervalMs = norm.intervalMs;
 
-      this.pipeToSubject(runRequest(ds, request));
+      this.pipeToSubject(runRequest(ds, request), panelId);
     } catch (err) {
       console.error('PanelQueryRunner Error', err);
     }
   }
 
-  private pipeToSubject(observable: Observable<PanelData>) {
+  private pipeToSubject(observable: Observable<PanelData>, panelId?: number) {
     if (this.subscription) {
       this.subscription.unsubscribe();
     }
 
-    this.subscription = observable.subscribe({
+    let panelData = observable;
+    const dataSupport = this.dataConfigSource.getDataSupport();
+
+    if (dataSupport.alertStates || dataSupport.annotations) {
+      const panel = (this.dataConfigSource as unknown) as PanelModel;
+      const id = panel.editSourceId ?? panel.id;
+      panelData = mergePanelAndDashData(observable, getDashboardQueryRunner().getResult(id));
+    }
+
+    this.subscription = panelData.subscribe({
       next: (data) => {
         this.lastResult = preProcessPanelData(data, this.lastResult);
         // Store preprocessed query results for applying overrides later on in the pipeline

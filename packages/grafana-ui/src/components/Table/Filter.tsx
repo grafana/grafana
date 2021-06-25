@@ -1,5 +1,5 @@
 import React, { FC, useCallback, useMemo, useRef, useState } from 'react';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 import { Field, GrafanaTheme } from '@grafana/data';
 
 import { TableStyles } from './styles';

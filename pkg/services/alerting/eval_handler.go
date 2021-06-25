@@ -7,19 +7,22 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
+	"github.com/grafana/grafana/pkg/plugins"
 )
 
 // DefaultEvalHandler is responsible for evaluating the alert rule.
 type DefaultEvalHandler struct {
 	log             log.Logger
 	alertJobTimeout time.Duration
+	requestHandler  plugins.DataRequestHandler
 }
 
 // NewEvalHandler is the `DefaultEvalHandler` constructor.
-func NewEvalHandler() *DefaultEvalHandler {
+func NewEvalHandler(requestHandler plugins.DataRequestHandler) *DefaultEvalHandler {
 	return &DefaultEvalHandler{
 		log:             log.New("alerting.evalHandler"),
 		alertJobTimeout: time.Second * 5,
+		requestHandler:  requestHandler,
 	}
 }
 
@@ -31,7 +34,7 @@ func (e *DefaultEvalHandler) Eval(context *EvalContext) {
 
 	for i := 0; i < len(context.Rule.Conditions); i++ {
 		condition := context.Rule.Conditions[i]
-		cr, err := condition.Eval(context)
+		cr, err := condition.Eval(context, e.requestHandler)
 		if err != nil {
 			context.Error = err
 		}

@@ -11,8 +11,10 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/tsdb"
+	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/tsdb/interval"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -23,7 +25,7 @@ func TestNewClient(t *testing.T) {
 			JsonData: simplejson.NewFromAny(make(map[string]interface{})),
 		}
 
-		_, err := NewClient(context.Background(), ds, nil)
+		_, err := NewClient(context.Background(), httpclient.NewProvider(), ds, plugins.DataTimeRange{})
 		require.Error(t, err)
 	})
 
@@ -34,85 +36,114 @@ func TestNewClient(t *testing.T) {
 			}),
 		}
 
-		_, err := NewClient(context.Background(), ds, nil)
+		_, err := NewClient(context.Background(), httpclient.NewProvider(), ds, plugins.DataTimeRange{})
 		require.Error(t, err)
 	})
 
-	t.Run("When unsupported version set should return error", func(t *testing.T) {
+	t.Run("When using legacy version numbers", func(t *testing.T) {
+		t.Run("When unsupported version set should return error", func(t *testing.T) {
+			ds := &models.DataSource{
+				JsonData: simplejson.NewFromAny(map[string]interface{}{
+					"esVersion": 6,
+					"timeField": "@timestamp",
+				}),
+			}
+
+			_, err := NewClient(context.Background(), httpclient.NewProvider(), ds, plugins.DataTimeRange{})
+			require.Error(t, err)
+		})
+
+		t.Run("When version 2 should return v2 client", func(t *testing.T) {
+			ds := &models.DataSource{
+				JsonData: simplejson.NewFromAny(map[string]interface{}{
+					"esVersion": 2,
+					"timeField": "@timestamp",
+				}),
+			}
+
+			c, err := NewClient(context.Background(), httpclient.NewProvider(), ds, plugins.DataTimeRange{})
+			require.NoError(t, err)
+			assert.Equal(t, "2.0.0", c.GetVersion().String())
+		})
+
+		t.Run("When version 5 should return v5 client", func(t *testing.T) {
+			ds := &models.DataSource{
+				JsonData: simplejson.NewFromAny(map[string]interface{}{
+					"esVersion": 5,
+					"timeField": "@timestamp",
+				}),
+			}
+
+			c, err := NewClient(context.Background(), httpclient.NewProvider(), ds, plugins.DataTimeRange{})
+			require.NoError(t, err)
+			assert.Equal(t, "5.0.0", c.GetVersion().String())
+		})
+
+		t.Run("When version 56 should return v5.6 client", func(t *testing.T) {
+			ds := &models.DataSource{
+				JsonData: simplejson.NewFromAny(map[string]interface{}{
+					"esVersion": 56,
+					"timeField": "@timestamp",
+				}),
+			}
+
+			c, err := NewClient(context.Background(), httpclient.NewProvider(), ds, plugins.DataTimeRange{})
+			require.NoError(t, err)
+			assert.Equal(t, "5.6.0", c.GetVersion().String())
+		})
+
+		t.Run("When version 60 should return v6.0 client", func(t *testing.T) {
+			ds := &models.DataSource{
+				JsonData: simplejson.NewFromAny(map[string]interface{}{
+					"esVersion": 60,
+					"timeField": "@timestamp",
+				}),
+			}
+
+			c, err := NewClient(context.Background(), httpclient.NewProvider(), ds, plugins.DataTimeRange{})
+			require.NoError(t, err)
+			assert.Equal(t, "6.0.0", c.GetVersion().String())
+		})
+
+		t.Run("When version 70 should return v7.0 client", func(t *testing.T) {
+			ds := &models.DataSource{
+				JsonData: simplejson.NewFromAny(map[string]interface{}{
+					"esVersion": 70,
+					"timeField": "@timestamp",
+				}),
+			}
+
+			c, err := NewClient(context.Background(), httpclient.NewProvider(), ds, plugins.DataTimeRange{})
+			require.NoError(t, err)
+			assert.Equal(t, "7.0.0", c.GetVersion().String())
+		})
+	})
+
+	t.Run("When version is a valid semver string should create a client", func(t *testing.T) {
+		version := "7.2.4"
 		ds := &models.DataSource{
 			JsonData: simplejson.NewFromAny(map[string]interface{}{
-				"esVersion": 6,
+				"esVersion": version,
 				"timeField": "@timestamp",
 			}),
 		}
 
-		_, err := NewClient(context.Background(), ds, nil)
+		c, err := NewClient(context.Background(), httpclient.NewProvider(), ds, plugins.DataTimeRange{})
+		require.NoError(t, err)
+		assert.Equal(t, version, c.GetVersion().String())
+	})
+
+	t.Run("When version is NOT a valid semver string should return error", func(t *testing.T) {
+		version := "7.NOT_VALID.4"
+		ds := &models.DataSource{
+			JsonData: simplejson.NewFromAny(map[string]interface{}{
+				"esVersion": version,
+				"timeField": "@timestamp",
+			}),
+		}
+
+		_, err := NewClient(context.Background(), httpclient.NewProvider(), ds, plugins.DataTimeRange{})
 		require.Error(t, err)
-	})
-
-	t.Run("When version 2 should return v2 client", func(t *testing.T) {
-		ds := &models.DataSource{
-			JsonData: simplejson.NewFromAny(map[string]interface{}{
-				"esVersion": 2,
-				"timeField": "@timestamp",
-			}),
-		}
-
-		c, err := NewClient(context.Background(), ds, nil)
-		require.NoError(t, err)
-		assert.Equal(t, 2, c.GetVersion())
-	})
-
-	t.Run("When version 5 should return v5 client", func(t *testing.T) {
-		ds := &models.DataSource{
-			JsonData: simplejson.NewFromAny(map[string]interface{}{
-				"esVersion": 5,
-				"timeField": "@timestamp",
-			}),
-		}
-
-		c, err := NewClient(context.Background(), ds, nil)
-		require.NoError(t, err)
-		assert.Equal(t, 5, c.GetVersion())
-	})
-
-	t.Run("When version 56 should return v5.6 client", func(t *testing.T) {
-		ds := &models.DataSource{
-			JsonData: simplejson.NewFromAny(map[string]interface{}{
-				"esVersion": 56,
-				"timeField": "@timestamp",
-			}),
-		}
-
-		c, err := NewClient(context.Background(), ds, nil)
-		require.NoError(t, err)
-		assert.Equal(t, 56, c.GetVersion())
-	})
-
-	t.Run("When version 60 should return v6.0 client", func(t *testing.T) {
-		ds := &models.DataSource{
-			JsonData: simplejson.NewFromAny(map[string]interface{}{
-				"esVersion": 60,
-				"timeField": "@timestamp",
-			}),
-		}
-
-		c, err := NewClient(context.Background(), ds, nil)
-		require.NoError(t, err)
-		assert.Equal(t, 60, c.GetVersion())
-	})
-
-	t.Run("When version 70 should return v7.0 client", func(t *testing.T) {
-		ds := &models.DataSource{
-			JsonData: simplejson.NewFromAny(map[string]interface{}{
-				"esVersion": 70,
-				"timeField": "@timestamp",
-			}),
-		}
-
-		c, err := NewClient(context.Background(), ds, nil)
-		require.NoError(t, err)
-		assert.Equal(t, 70, c.GetVersion())
 	})
 }
 
@@ -329,7 +360,7 @@ func createMultisearchForTest(t *testing.T, c Client) (*MultiSearchRequest, erro
 	t.Helper()
 
 	msb := c.MultiSearch()
-	s := msb.Search(tsdb.Interval{Value: 15 * time.Second, Text: "15s"})
+	s := msb.Search(interval.Interval{Value: 15 * time.Second, Text: "15s"})
 	s.Agg().DateHistogram("2", "@timestamp", func(a *DateHistogramAgg, ab AggBuilder) {
 		a.Interval = "$__interval"
 
@@ -365,7 +396,7 @@ func httpClientScenario(t *testing.T, desc string, ds *models.DataSource, fn sce
 
 			sc.requestBody = bytes.NewBuffer(buf)
 
-			rw.Header().Set("Content-Type", "application/json")
+			rw.Header().Set("Content-Type", "application/x-ndjson")
 			_, err = rw.Write([]byte(sc.responseBody))
 			require.NoError(t, err)
 			rw.WriteHeader(sc.responseStatus)
@@ -376,16 +407,16 @@ func httpClientScenario(t *testing.T, desc string, ds *models.DataSource, fn sce
 		to := time.Date(2018, 5, 15, 17, 55, 0, 0, time.UTC)
 		fromStr := fmt.Sprintf("%d", from.UnixNano()/int64(time.Millisecond))
 		toStr := fmt.Sprintf("%d", to.UnixNano()/int64(time.Millisecond))
-		timeRange := tsdb.NewTimeRange(fromStr, toStr)
+		timeRange := plugins.NewDataTimeRange(fromStr, toStr)
 
-		c, err := NewClient(context.Background(), ds, timeRange)
+		c, err := NewClient(context.Background(), httpclient.NewProvider(), ds, timeRange)
 		require.NoError(t, err)
 		require.NotNil(t, c)
 		sc.client = c
 
 		currentNewDatasourceHTTPClient := newDatasourceHttpClient
 
-		newDatasourceHttpClient = func(ds *models.DataSource) (*http.Client, error) {
+		newDatasourceHttpClient = func(httpClientProvider httpclient.Provider, ds *models.DataSource) (*http.Client, error) {
 			return ts.Client(), nil
 		}
 

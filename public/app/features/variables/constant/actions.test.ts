@@ -1,9 +1,8 @@
 import { variableAdapters } from '../adapters';
 import { createConstantVariableAdapter } from './adapter';
 import { reduxTester } from '../../../../test/core/redux/reduxTester';
-import { TemplatingState } from 'app/features/variables/state/reducers';
 import { updateConstantVariableOptions } from './actions';
-import { getRootReducer } from '../state/helpers';
+import { getRootReducer, RootReducerType } from '../state/helpers';
 import { ConstantVariableModel, initialVariableModelState, VariableOption } from '../types';
 import { toVariablePayload } from '../state/types';
 import { createConstantOptionsFromQuery } from './reducer';
@@ -35,19 +34,15 @@ describe('constant actions', () => {
         query: 'A',
       };
 
-      const tester = await reduxTester<{ templating: TemplatingState }>()
+      const tester = await reduxTester<RootReducerType>()
         .givenRootReducer(getRootReducer())
         .whenActionIsDispatched(addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
         .whenAsyncActionIsDispatched(updateConstantVariableOptions(toVariablePayload(variable)), true);
 
-      tester.thenDispatchedActionsPredicateShouldEqual((actions) => {
-        const [createAction, setCurrentAction] = actions;
-        const expectedNumberOfActions = 2;
-
-        expect(createAction).toEqual(createConstantOptionsFromQuery(toVariablePayload(variable)));
-        expect(setCurrentAction).toEqual(setCurrentVariableValue(toVariablePayload(variable, { option })));
-        return actions.length === expectedNumberOfActions;
-      });
+      tester.thenDispatchedActionsShouldEqual(
+        createConstantOptionsFromQuery(toVariablePayload(variable)),
+        setCurrentVariableValue(toVariablePayload(variable, { option }))
+      );
     });
   });
 });

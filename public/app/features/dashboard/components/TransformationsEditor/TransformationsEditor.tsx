@@ -4,26 +4,24 @@ import {
   Button,
   Container,
   CustomScrollbar,
-  stylesFactory,
   Themeable,
-  FeatureInfoBox,
-  useTheme,
   VerticalGroup,
   withTheme,
   Input,
   IconButton,
+  useStyles2,
 } from '@grafana/ui';
 import {
   DataFrame,
   DataTransformerConfig,
   DocsId,
-  GrafanaTheme,
+  GrafanaTheme2,
   PanelData,
   SelectableValue,
   standardTransformersRegistry,
 } from '@grafana/data';
 import { Card, CardProps } from '../../../../core/components/Card/Card';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { selectors } from '@grafana/e2e-selectors';
 import { Unsubscribable } from 'rxjs';
 import { PanelModel } from '../../state';
@@ -126,7 +124,7 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
     this.props.panel.setTransformations(transformations.map((t) => t.transformation));
   }
 
-  // Transformation uid are stored in a name-X form. name is NOT unique hence we need to parse the ids and increase X
+  // Transformation UIDs are stored in a name-X form. name is NOT unique hence we need to parse the IDs and increase X
   // for transformations with the same name
   getTransformationNextId = (name: string) => {
     const { transformations } = this.state;
@@ -264,24 +262,29 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
                 }
 
                 return (
-                  <FeatureInfoBox
+                  <Alert
                     title="Transformations"
-                    className={css`
-                      margin-bottom: ${this.props.theme.spacing.lg};
-                    `}
-                    onDismiss={() => {
+                    onRemove={() => {
                       onDismiss(true);
                     }}
-                    url={getDocsLink(DocsId.Transformations)}
+                    severity="info"
                   >
                     <p>
-                      Transformations allow you to join, calculate, re-order, hide and rename your query results before
-                      being visualized. <br />
-                      Many transforms are not suitable if you&apos;re using the Graph visualization as it currently only
-                      supports time series. <br />
-                      It can help to switch to Table visualization to understand what a transformation is doing. <br />
+                      Transformations allow you to join, calculate, re-order, hide, and rename your query results before
+                      they are visualized. <br />
+                      Many transforms are not suitable if you&apos;re using the Graph visualization, as it currently
+                      only only supports time series data. <br />
+                      It can help to switch to the Table visualization to understand what a transformation is doing.{' '}
                     </p>
-                  </FeatureInfoBox>
+                    <a
+                      href={getDocsLink(DocsId.Transformations)}
+                      className="external-link"
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      Read more
+                    </a>
+                  </Alert>
                 );
               }}
             </LocalStorageValueProvider>
@@ -361,18 +364,17 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
 }
 
 const TransformationCard: React.FC<CardProps> = (props) => {
-  const theme = useTheme();
-  const styles = getTransformationCardStyles(theme);
+  const styles = useStyles2(getStyles);
   return <Card {...props} className={styles.card} />;
 };
 
-const getTransformationCardStyles = stylesFactory((theme: GrafanaTheme) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     card: css`
-      background: ${theme.colors.bg2};
+      background: ${theme.colors.background.secondary};
       width: 100%;
       border: none;
-      padding: ${theme.spacing.sm};
+      padding: ${theme.spacing(1)};
 
       // hack because these cards use classes from a very different card for some reason
       .add-data-source-item-text {
@@ -380,12 +382,12 @@ const getTransformationCardStyles = stylesFactory((theme: GrafanaTheme) => {
       }
 
       &:hover {
-        background: ${theme.colors.bg3};
+        background: ${theme.colors.action.hover};
         box-shadow: none;
         border: none;
       }
     `,
   };
-});
+};
 
 export const TransformationsEditor = withTheme(UnThemedTransformationsEditor);

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"flag"
 	"fmt"
@@ -9,6 +10,7 @@ import (
 	"os"
 	"os/signal"
 	"runtime"
+	"runtime/debug"
 	"runtime/trace"
 	"strconv"
 	"syscall"
@@ -27,17 +29,19 @@ import (
 	_ "github.com/grafana/grafana/pkg/tsdb/elasticsearch"
 	_ "github.com/grafana/grafana/pkg/tsdb/graphite"
 	_ "github.com/grafana/grafana/pkg/tsdb/influxdb"
+	_ "github.com/grafana/grafana/pkg/tsdb/loki"
 	_ "github.com/grafana/grafana/pkg/tsdb/mysql"
 	_ "github.com/grafana/grafana/pkg/tsdb/opentsdb"
 	_ "github.com/grafana/grafana/pkg/tsdb/postgres"
 	_ "github.com/grafana/grafana/pkg/tsdb/prometheus"
+	_ "github.com/grafana/grafana/pkg/tsdb/tempo"
 	_ "github.com/grafana/grafana/pkg/tsdb/testdatasource"
 )
 
 // The following variables cannot be constants, since they can be overridden through the -X link flag
-var version = "5.0.0"
+var version = "7.5.0"
 var commit = "NA"
-var buildBranch = "master"
+var buildBranch = "main"
 var buildstamp string
 
 type exitWithCode struct {
@@ -57,6 +61,7 @@ func main() {
 		packaging  = flag.String("packaging", "unknown", "describes the way Grafana was installed")
 
 		v           = flag.Bool("v", false, "prints current version and exits")
+		vv          = flag.Bool("vv", false, "prints current version, all dependencies and exits")
 		profile     = flag.Bool("profile", false, "Turn on pprof profiling")
 		profilePort = flag.Uint64("profile-port", 6060, "Define custom port for profiling")
 		tracing     = flag.Bool("tracing", false, "Turn on tracing")
@@ -65,8 +70,16 @@ func main() {
 
 	flag.Parse()
 
-	if *v {
+	if *v || *vv {
 		fmt.Printf("Version %s (commit: %s, branch: %s)\n", version, commit, buildBranch)
+		if *vv {
+			fmt.Println("Dependencies:")
+			if info, ok := debug.ReadBuildInfo(); ok {
+				for _, dep := range info.Deps {
+					fmt.Println(dep.Path, dep.Version)
+				}
+			}
+		}
 		os.Exit(0)
 	}
 
@@ -154,7 +167,9 @@ func executeServer(configFile, homePath, pidFile, packaging string, traceDiagnos
 		return err
 	}
 
-	go listenToSystemSignals(s)
+	ctx := context.Background()
+
+	go listenToSystemSignals(ctx, s)
 
 	if err := s.Run(); err != nil {
 		code := s.ExitCode(err)
@@ -177,7 +192,7 @@ func validPackaging(packaging string) string {
 	return "unknown"
 }
 
-func listenToSystemSignals(s *server.Server) {
+func listenToSystemSignals(ctx context.Context, s *server.Server) {
 	signalChan := make(chan os.Signal, 1)
 	sighupChan := make(chan os.Signal, 1)
 
@@ -191,7 +206,12 @@ func listenToSystemSignals(s *server.Server) {
 				fmt.Fprintf(os.Stderr, "Failed to reload loggers: %s\n", err)
 			}
 		case sig := <-signalChan:
-			s.Shutdown(fmt.Sprintf("System signal: %s", sig))
+			ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
+			defer cancel()
+			if err := s.Shutdown(ctx, fmt.Sprintf("System signal: %s", sig)); err != nil {
+				fmt.Fprintf(os.Stderr, "Timed out waiting for server to shut down\n")
+			}
+			return
 		}
 	}
 }

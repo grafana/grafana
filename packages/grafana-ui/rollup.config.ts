@@ -28,12 +28,10 @@ const buildCjsPackage = ({ env }) => {
     external: [
       'react',
       'react-dom',
+      '@grafana/aws-sdk',
       '@grafana/data',
       '@grafana/e2e-selectors',
       'moment',
-      'monaco-editor', // Monaco should not be used directly
-      'monaco-editor/esm/vs/editor/editor.api', // Monaco should not be used directly
-      'react-monaco-editor',
       'jquery', // required to use jquery.plot, which is assigned externally
     ],
     plugins: [

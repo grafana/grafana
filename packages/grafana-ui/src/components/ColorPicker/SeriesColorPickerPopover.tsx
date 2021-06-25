@@ -3,8 +3,9 @@ import React, { FunctionComponent } from 'react';
 import { ColorPickerPopover, ColorPickerProps } from './ColorPickerPopover';
 import { PopoverContentProps } from '../Tooltip/Tooltip';
 import { Switch } from '../Forms/Legacy/Switch/Switch';
-import { css } from 'emotion';
-import { withTheme, useStyles } from '../../themes';
+import { css } from '@emotion/css';
+import { withTheme2, useStyles } from '../../themes';
+import { Button } from '../Button';
 
 export interface SeriesColorPickerPopoverProps extends ColorPickerProps, PopoverContentProps {
   yaxis?: number;
@@ -70,25 +71,25 @@ export class AxisSelector extends React.PureComponent<AxisSelectorProps, AxisSel
   }
 
   render() {
-    const leftButtonClass = this.state.yaxis === 1 ? 'btn-primary' : 'btn-inverse';
-    const rightButtonClass = this.state.yaxis === 2 ? 'btn-primary' : 'btn-inverse';
+    const leftButtonVariant = this.state.yaxis === 1 ? 'primary' : 'secondary';
+    const rightButtonVariant = this.state.yaxis === 2 ? 'primary' : 'secondary';
 
     return (
       <div className="p-b-1">
         <label className="small p-r-1">Y Axis:</label>
-        <button onClick={this.onToggleAxis} className={'btn btn-small ' + leftButtonClass}>
+        <Button onClick={this.onToggleAxis} size="sm" variant={leftButtonVariant}>
           Left
-        </button>
-        <button onClick={this.onToggleAxis} className={'btn btn-small ' + rightButtonClass}>
+        </Button>
+        <Button onClick={this.onToggleAxis} size="sm" variant={rightButtonVariant}>
           Right
-        </button>
+        </Button>
       </div>
     );
   }
 }
 
 // This component is to enable SeriesColorPickerPopover usage via series-color-picker-popover directive
-export const SeriesColorPickerPopoverWithTheme = withTheme(SeriesColorPickerPopover);
+export const SeriesColorPickerPopoverWithTheme = withTheme2(SeriesColorPickerPopover);
 
 const getStyles = () => {
   return {

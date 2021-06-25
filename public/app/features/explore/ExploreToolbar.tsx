@@ -1,13 +1,13 @@
 import React, { PureComponent } from 'react';
-import { connect } from 'react-redux';
+import { connect, ConnectedProps } from 'react-redux';
 import { hot } from 'react-hot-loader';
 import classNames from 'classnames';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 
 import { ExploreId, ExploreItemState } from 'app/types/explore';
 import { Icon, IconButton, SetInterval, ToolbarButton, ToolbarButtonRow, Tooltip } from '@grafana/ui';
-import { DataSourceInstanceSettings, RawTimeRange, TimeRange, TimeZone } from '@grafana/data';
-import { DataSourcePicker } from 'app/core/components/Select/DataSourcePicker';
+import { DataSourceInstanceSettings, RawTimeRange } from '@grafana/data';
+import { DataSourcePicker } from '@grafana/runtime';
 import { StoreState } from 'app/types/store';
 import { createAndCopyShortLink } from 'app/core/utils/shortLinks';
 import { changeDatasource } from './state/datasource';
@@ -19,43 +19,16 @@ import { ExploreTimeControls } from './ExploreTimeControls';
 import { LiveTailButton } from './LiveTailButton';
 import { RunButton } from './RunButton';
 import { LiveTailControls } from './useLiveTailControls';
-import { cancelQueries, clearQueries, runQueries } from './state/query';
+import { cancelQueries, clearQueries, runQueries, clearCache } from './state/query';
 import ReturnToDashboardButton from './ReturnToDashboardButton';
+import { isSplit } from './state/selectors';
 
 interface OwnProps {
   exploreId: ExploreId;
   onChangeTime: (range: RawTimeRange, changedByScanner?: boolean) => void;
 }
 
-interface StateProps {
-  datasourceMissing: boolean;
-  loading: boolean;
-  range: TimeRange;
-  timeZone: TimeZone;
-  splitted: boolean;
-  syncedTimes: boolean;
-  refreshInterval?: string;
-  hasLiveOption: boolean;
-  isLive: boolean;
-  isPaused: boolean;
-  datasourceLoading?: boolean | null;
-  containerWidth: number;
-  datasourceName?: string;
-}
-
-interface DispatchProps {
-  changeDatasource: typeof changeDatasource;
-  clearAll: typeof clearQueries;
-  cancelQueries: typeof cancelQueries;
-  runQueries: typeof runQueries;
-  closeSplit: typeof splitClose;
-  split: typeof splitOpen;
-  syncTimes: typeof syncTimes;
-  changeRefreshInterval: typeof changeRefreshInterval;
-  onChangeTimeZone: typeof updateTimeZoneForSession;
-}
-
-type Props = StateProps & DispatchProps & OwnProps;
+type Props = OwnProps & ConnectedProps<typeof connector>;
 
 export class UnConnectedExploreToolbar extends PureComponent<Props> {
   onChangeDatasource = async (dsSettings: DataSourceInstanceSettings) => {
@@ -67,10 +40,13 @@ export class UnConnectedExploreToolbar extends PureComponent<Props> {
   };
 
   onRunQuery = (loading = false) => {
+    const { clearCache, runQueries, cancelQueries, exploreId } = this.props;
     if (loading) {
-      return this.props.cancelQueries(this.props.exploreId);
+      return cancelQueries(exploreId);
     } else {
-      return this.props.runQueries(this.props.exploreId);
+      // We want to give user a chance tu re-run the query even if it is saved in cache
+      clearCache(exploreId);
+      return runQueries(exploreId);
     }
   };
 
@@ -127,7 +103,12 @@ export class UnConnectedExploreToolbar extends PureComponent<Props> {
               )}
             </div>
             {splitted && (
-              <IconButton className="explore-toolbar-header-close" onClick={() => closeSplit(exploreId)} name="times" />
+              <IconButton
+                title="Close split pane"
+                className="explore-toolbar-header-close"
+                onClick={() => closeSplit(exploreId)}
+                name="times"
+              />
             )}
           </div>
         </div>
@@ -226,10 +207,9 @@ export class UnConnectedExploreToolbar extends PureComponent<Props> {
   }
 }
 
-const mapStateToProps = (state: StoreState, { exploreId }: OwnProps): StateProps => {
-  const splitted = state.explore.split;
+const mapStateToProps = (state: StoreState, { exploreId }: OwnProps) => {
   const syncedTimes = state.explore.syncedTimes;
-  const exploreItem: ExploreItemState = state.explore[exploreId];
+  const exploreItem: ExploreItemState = state.explore[exploreId]!;
   const {
     datasourceInstance,
     datasourceMissing,
@@ -249,7 +229,7 @@ const mapStateToProps = (state: StoreState, { exploreId }: OwnProps): StateProps
     loading,
     range,
     timeZone: getTimeZone(state.user),
-    splitted,
+    splitted: isSplit(state),
     refreshInterval,
     hasLiveOption,
     isLive,
@@ -259,7 +239,7 @@ const mapStateToProps = (state: StoreState, { exploreId }: OwnProps): StateProps
   };
 };
 
-const mapDispatchToProps: DispatchProps = {
+const mapDispatchToProps = {
   changeDatasource,
   changeRefreshInterval,
   clearAll: clearQueries,
@@ -269,6 +249,9 @@ const mapDispatchToProps: DispatchProps = {
   split: splitOpen,
   syncTimes,
   onChangeTimeZone: updateTimeZoneForSession,
+  clearCache,
 };
 
-export const ExploreToolbar = hot(module)(connect(mapStateToProps, mapDispatchToProps)(UnConnectedExploreToolbar));
+const connector = connect(mapStateToProps, mapDispatchToProps);
+
+export const ExploreToolbar = hot(module)(connector(UnConnectedExploreToolbar));

@@ -71,13 +71,18 @@ function getJoinMatcher(options: JoinOptions): FieldMatcher {
  */
 export function outerJoinDataFrames(options: JoinOptions): DataFrame | undefined {
   if (!options.frames?.length) {
-    return undefined;
+    return;
   }
 
   if (options.frames.length === 1) {
     let frame = options.frames[0];
+    let frameCopy = frame;
+
+    const joinFieldMatcher = getJoinMatcher(options);
+    let joinIndex = frameCopy.fields.findIndex((f) => joinFieldMatcher(f, frameCopy, options.frames));
+
     if (options.keepOriginIndices) {
-      frame = {
+      frameCopy = {
         ...frame,
         fields: frame.fields.map((f, fieldIndex) => {
           const copy = { ...f };
@@ -93,17 +98,42 @@ export function outerJoinDataFrames(options: JoinOptions): DataFrame | undefined
           return copy;
         }),
       };
+
+      // Make sure the join field is first
+      if (joinIndex > 0) {
+        const joinField = frameCopy.fields[joinIndex];
+        const fields = frameCopy.fields.filter((f, idx) => idx !== joinIndex);
+        fields.unshift(joinField);
+        frameCopy.fields = fields;
+        joinIndex = 0;
+      }
     }
+
     if (options.enforceSort) {
-      const joinFieldMatcher = getJoinMatcher(options);
-      const joinIndex = frame.fields.findIndex((f) => joinFieldMatcher(f, frame, options.frames));
       if (joinIndex >= 0) {
-        if (!isLikelyAscendingVector(frame.fields[joinIndex].values)) {
-          return sortDataFrame(frame, joinIndex);
+        if (!isLikelyAscendingVector(frameCopy.fields[joinIndex].values)) {
+          frameCopy = sortDataFrame(frameCopy, joinIndex);
         }
       }
     }
-    return frame;
+
+    if (options.keep) {
+      let fields = frameCopy.fields.filter(
+        (f, fieldIdx) => fieldIdx === joinIndex || options.keep!(f, frameCopy, options.frames)
+      );
+
+      // mutate already copied frame
+      if (frame !== frameCopy) {
+        frameCopy.fields = fields;
+      } else {
+        frameCopy = {
+          ...frame,
+          fields,
+        };
+      }
+    }
+
+    return frameCopy;
   }
 
   const nullModes: JoinNullMode[][] = [];
@@ -134,7 +164,8 @@ export function outerJoinDataFrames(options: JoinOptions): DataFrame | undefined
         }
 
         // Support the standard graph span nulls field config
-        nullModesFrame.push(field.config.custom?.spanNulls ? NULL_REMOVE : NULL_EXPAND);
+        let spanNulls = field.config.custom?.spanNulls;
+        nullModesFrame.push(spanNulls === true ? NULL_REMOVE : spanNulls === -1 ? NULL_RETAIN : NULL_EXPAND);
 
         let labels = field.labels ?? {};
         if (frame.name) {
@@ -177,6 +208,7 @@ export function outerJoinDataFrames(options: JoinOptions): DataFrame | undefined
   }
 
   const joined = join(allData, nullModes);
+
   return {
     // ...options.data[0], // keep name, meta?
     length: joined[0].length,
@@ -194,7 +226,7 @@ export function outerJoinDataFrames(options: JoinOptions): DataFrame | undefined
 //--------------------------------------------------------------------------------
 
 // Copied from uplot
-type AlignedData = [number[], ...Array<Array<number | null>>];
+export type AlignedData = [number[], ...Array<Array<number | null | undefined>>];
 
 // nullModes
 const NULL_REMOVE = 0; // nulls are converted to undefined (e.g. for spanGaps: true)
@@ -223,7 +255,7 @@ function nullExpand(yVals: Array<number | null>, nullIdxs: number[], alignedLen:
 }
 
 // nullModes is a tables-matched array indicating how to treat nulls in each series
-function join(tables: AlignedData[], nullModes: number[][]) {
+export function join(tables: AlignedData[], nullModes?: number[][]) {
   const xVals = new Set<number>();
 
   for (let ti = 0; ti < tables.length; ti++) {
@@ -263,7 +295,7 @@ function join(tables: AlignedData[], nullModes: number[][]) {
         let yVal = ys[i];
         let alignedIdx = xIdxs.get(xs[i]);
 
-        if (yVal == null) {
+        if (yVal === null) {
           if (nullMode !== NULL_REMOVE) {
             yVals[alignedIdx] = yVal;
 

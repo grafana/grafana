@@ -6,16 +6,16 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/api/datasource"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/datasource/wrapper"
+	"github.com/grafana/grafana/pkg/plugins/adapters"
 	"github.com/grafana/grafana/pkg/util"
+
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 )
 
 var datasourcesLogger = log.New("datasources")
@@ -36,6 +36,7 @@ func (hs *HTTPServer) GetDataSources(c *models.ReqContext) response.Response {
 			Name:      ds.Name,
 			Url:       ds.Url,
 			Type:      ds.Type,
+			TypeName:  ds.Type,
 			Access:    ds.Access,
 			Password:  ds.Password,
 			Database:  ds.Database,
@@ -46,8 +47,9 @@ func (hs *HTTPServer) GetDataSources(c *models.ReqContext) response.Response {
 			ReadOnly:  ds.ReadOnly,
 		}
 
-		if plugin, exists := plugins.DataSources[ds.Type]; exists {
+		if plugin := hs.PluginManager.GetDataSource(ds.Type); plugin != nil {
 			dsItem.TypeLogoUrl = plugin.Info.Logos.Small
+			dsItem.TypeName = plugin.Name
 		} else {
 			dsItem.TypeLogoUrl = "public/img/icn-datasource.svg"
 		}
@@ -70,6 +72,9 @@ func GetDataSourceById(c *models.ReqContext) response.Response {
 		if errors.Is(err, models.ErrDataSourceNotFound) {
 			return response.Error(404, "Data source not found", nil)
 		}
+		if errors.Is(err, models.ErrDataSourceIdentifierNotSet) {
+			return response.Error(400, "Datasource id is missing", nil)
+		}
 		return response.Error(500, "Failed to query datasources", err)
 	}
 
@@ -79,7 +84,7 @@ func GetDataSourceById(c *models.ReqContext) response.Response {
 	return response.JSON(200, &dtos)
 }
 
-func DeleteDataSourceById(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) DeleteDataSourceById(c *models.ReqContext) response.Response {
 	id := c.ParamsInt64(":id")
 
 	if id <= 0 {
@@ -105,6 +110,8 @@ func DeleteDataSourceById(c *models.ReqContext) response.Response {
 		return response.Error(500, "Failed to delete datasource", err)
 	}
 
+	hs.Live.HandleDatasourceDelete(c.OrgId, ds.Uid)
+
 	return response.Success("Data source deleted")
 }
 
@@ -124,7 +131,7 @@ func GetDataSourceByUID(c *models.ReqContext) response.Response {
 }
 
 // DELETE /api/datasources/uid/:uid
-func DeleteDataSourceByUID(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) DeleteDataSourceByUID(c *models.ReqContext) response.Response {
 	uid := c.Params(":uid")
 
 	if uid == "" {
@@ -150,10 +157,12 @@ func DeleteDataSourceByUID(c *models.ReqContext) response.Response {
 		return response.Error(500, "Failed to delete datasource", err)
 	}
 
+	hs.Live.HandleDatasourceDelete(c.OrgId, ds.Uid)
+
 	return response.Success("Data source deleted")
 }
 
-func DeleteDataSourceByName(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) DeleteDataSourceByName(c *models.ReqContext) response.Response {
 	name := c.Params(":name")
 
 	if name == "" {
@@ -177,6 +186,8 @@ func DeleteDataSourceByName(c *models.ReqContext) response.Response {
 	if err != nil {
 		return response.Error(500, "Failed to delete datasource", err)
 	}
+
+	hs.Live.HandleDatasourceDelete(c.OrgId, getCmd.Result.Uid)
 
 	return response.JSON(200, util.DynMap{
 		"message": "Data source deleted",
@@ -220,7 +231,7 @@ func AddDataSource(c *models.ReqContext, cmd models.AddDataSourceCommand) respon
 	})
 }
 
-func UpdateDataSource(c *models.ReqContext, cmd models.UpdateDataSourceCommand) response.Response {
+func (hs *HTTPServer) UpdateDataSource(c *models.ReqContext, cmd models.UpdateDataSourceCommand) response.Response {
 	datasourcesLogger.Debug("Received command to update data source", "url", cmd.Url)
 	cmd.OrgId = c.OrgId
 	cmd.Id = c.ParamsInt64(":id")
@@ -236,7 +247,7 @@ func UpdateDataSource(c *models.ReqContext, cmd models.UpdateDataSourceCommand) 
 	err = bus.Dispatch(&cmd)
 	if err != nil {
 		if errors.Is(err, models.ErrDataSourceUpdatingOldVersion) {
-			return response.Error(500, "Failed to update datasource. Reload new version and try again", err)
+			return response.Error(409, "Datasource has already been updated by someone else. Please reload and try again", err)
 		}
 		return response.Error(500, "Failed to update datasource", err)
 	}
@@ -250,16 +261,18 @@ func UpdateDataSource(c *models.ReqContext, cmd models.UpdateDataSourceCommand) 
 		if errors.Is(err, models.ErrDataSourceNotFound) {
 			return response.Error(404, "Data source not found", nil)
 		}
-		return response.Error(500, "Failed to query datasources", err)
+		return response.Error(500, "Failed to query datasource", err)
 	}
 
-	dtos := convertModelToDtos(query.Result)
+	datasourceDTO := convertModelToDtos(query.Result)
+
+	hs.Live.HandleDatasourceUpdate(c.OrgId, datasourceDTO.UID)
 
 	return response.JSON(200, util.DynMap{
 		"message":    "Datasource updated",
 		"id":         cmd.Id,
 		"name":       cmd.Name,
-		"datasource": dtos,
+		"datasource": datasourceDTO,
 	})
 }
 
@@ -361,19 +374,19 @@ func (hs *HTTPServer) CallDatasourceResource(c *models.ReqContext) {
 	}
 
 	// find plugin
-	plugin, ok := plugins.DataSources[ds.Type]
-	if !ok {
+	plugin := hs.PluginManager.GetDataSource(ds.Type)
+	if plugin == nil {
 		c.JsonApiErr(500, "Unable to find datasource plugin", err)
 		return
 	}
 
-	dsInstanceSettings, err := wrapper.ModelToInstanceSettings(ds)
+	dsInstanceSettings, err := adapters.ModelToInstanceSettings(ds)
 	if err != nil {
 		c.JsonApiErr(500, "Unable to process datasource instance model", err)
 	}
 
 	pCtx := backend.PluginContext{
-		User:                       wrapper.BackendUserFromSignedInUser(c.SignedInUser),
+		User:                       adapters.BackendUserFromSignedInUser(c.SignedInUser),
 		OrgID:                      c.OrgId,
 		PluginID:                   plugin.Id,
 		DataSourceInstanceSettings: dsInstanceSettings,
@@ -426,17 +439,17 @@ func (hs *HTTPServer) CheckDatasourceHealth(c *models.ReqContext) response.Respo
 		return response.Error(500, "Unable to load datasource metadata", err)
 	}
 
-	plugin, ok := hs.PluginManager.GetDatasource(ds.Type)
-	if !ok {
+	plugin := hs.PluginManager.GetDataSource(ds.Type)
+	if plugin == nil {
 		return response.Error(500, "Unable to find datasource plugin", err)
 	}
 
-	dsInstanceSettings, err := wrapper.ModelToInstanceSettings(ds)
+	dsInstanceSettings, err := adapters.ModelToInstanceSettings(ds)
 	if err != nil {
 		return response.Error(500, "Unable to get datasource model", err)
 	}
 	pCtx := backend.PluginContext{
-		User:                       wrapper.BackendUserFromSignedInUser(c.SignedInUser),
+		User:                       adapters.BackendUserFromSignedInUser(c.SignedInUser),
 		OrgID:                      c.OrgId,
 		PluginID:                   plugin.Id,
 		DataSourceInstanceSettings: dsInstanceSettings,

@@ -55,6 +55,20 @@ describe('IndexPattern', () => {
         expect(pattern.getIndexList(from, to)).toEqual(expected);
       });
     });
+
+    describe('weekly', () => {
+      it('should return correct index list', () => {
+        const pattern = new IndexPattern('[asd-]YYYY.WW', 'Weekly');
+        // Sunday, February 21, 2021 1:00:00 AM
+        const from = dateTime(new Date(1613869200000));
+        // Friday, March 5, 2021 1:00:00 AM
+        const to = dateTime(new Date(1614906000000));
+
+        const expected = ['asd-2021.07', 'asd-2021.08', 'asd-2021.09'];
+
+        expect(pattern.getIndexList(from, to)).toEqual(expected);
+      });
+    });
   });
 
   describe('when getting index list from single date', () => {

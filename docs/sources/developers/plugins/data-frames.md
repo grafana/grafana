@@ -72,7 +72,7 @@ A data transformation is any function that accepts a data frame as input, and re
 
 A data frame with at least one time field is considered a _time series_.
 
-For more information on time series, refer to our [Introduction to time series]({{< relref "../../getting-started/timeseries.md" >}}).
+For more information on time series, refer to our [Introduction to time series]({{< relref "../../basics/timeseries.md" >}}).
 
 ### Wide format
 
@@ -173,7 +173,7 @@ The data frame structure is inspired by, and uses the [Apache Arrow Project](htt
 
 ### Javascript
 
-The Javascript implementation of data frames is in the [`/src/dataframe` folder](https://github.com/grafana/grafana/tree/master/packages/grafana-data/src/dataframe) and [`/src/types/dataframe.ts`](https://github.com/grafana/grafana/blob/master/packages/grafana-data/src/types/dataFrame.ts) of the [`@grafana/data` package](https://github.com/grafana/grafana/tree/master/packages/grafana-data).
+The Javascript implementation of data frames is in the [`/src/dataframe` folder](https://github.com/grafana/grafana/tree/main/packages/grafana-data/src/dataframe) and [`/src/types/dataframe.ts`](https://github.com/grafana/grafana/blob/main/packages/grafana-data/src/types/dataFrame.ts) of the [`@grafana/data` package](https://github.com/grafana/grafana/tree/main/packages/grafana-data).
 
 ### Go
 

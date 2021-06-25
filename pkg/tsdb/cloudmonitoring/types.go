@@ -5,17 +5,20 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/grafana/grafana/pkg/tsdb"
+	"github.com/grafana/grafana/pkg/plugins"
 )
 
 type (
 	cloudMonitoringQueryExecutor interface {
-		run(ctx context.Context, tsdbQuery *tsdb.TsdbQuery, e *CloudMonitoringExecutor) (*tsdb.QueryResult, cloudMonitoringResponse, string, error)
-		parseResponse(queryRes *tsdb.QueryResult, data cloudMonitoringResponse, executedQueryString string) error
-		parseToAnnotations(queryRes *tsdb.QueryResult, data cloudMonitoringResponse, title string, text string, tags string) error
+		//nolint: staticcheck // plugins.DataPlugin deprecated
+		run(ctx context.Context, tsdbQuery plugins.DataQuery, e *Executor) (
+			plugins.DataQueryResult, cloudMonitoringResponse, string, error)
+		//nolint: staticcheck // plugins.DataPlugin deprecated
+		parseResponse(queryRes *plugins.DataQueryResult, data cloudMonitoringResponse, executedQueryString string) error
+		//nolint: staticcheck // plugins.DataPlugin deprecated
+		parseToAnnotations(queryRes *plugins.DataQueryResult, data cloudMonitoringResponse, title string, text string, tags string) error
 		buildDeepLink() string
 		getRefID() string
-		getUnit() string
 	}
 
 	// Used to build time series filters
@@ -29,7 +32,6 @@ type (
 		Selector    string
 		Service     string
 		Slo         string
-		Unit        string
 	}
 
 	// Used to build MQL queries
@@ -39,8 +41,7 @@ type (
 		Query       string
 		IntervalMS  int64
 		AliasBy     string
-		timeRange   *tsdb.TimeRange
-		Unit        string
+		timeRange   plugins.DataTimeRange
 	}
 
 	metricQuery struct {
@@ -55,7 +56,8 @@ type (
 		View               string
 		EditorMode         string
 		Query              string
-		Unit               string
+		Preprocessor       string
+		PreprocessorType   preprocessorType
 	}
 
 	sloQuery struct {
@@ -96,6 +98,7 @@ type (
 		TimeSeries           []timeSeries         `json:"timeSeries"`
 		TimeSeriesDescriptor timeSeriesDescriptor `json:"timeSeriesDescriptor"`
 		TimeSeriesData       timeSeriesData       `json:"timeSeriesData"`
+		Unit                 string               `json:"unit"`
 	}
 )
 

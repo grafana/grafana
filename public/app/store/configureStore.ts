@@ -1,9 +1,7 @@
 import { configureStore as reduxConfigureStore, getDefaultMiddleware } from '@reduxjs/toolkit';
-import { createLogger } from 'redux-logger';
 import { ThunkMiddleware } from 'redux-thunk';
 import { setStore } from './store';
 import { StoreState } from 'app/types/store';
-import { toggleLogActionsMiddleware } from 'app/core/middlewares/application';
 import { addReducer, createRootReducer } from '../core/reducers/root';
 import { buildInitialState } from '../core/reducers/navModel';
 
@@ -15,14 +13,6 @@ export function addRootReducer(reducers: any) {
 }
 
 export function configureStore(initialState?: Partial<StoreState>) {
-  const logger = createLogger({
-    predicate: (getState) => {
-      return getState().application.logActions;
-    },
-  });
-
-  const middleware = process.env.NODE_ENV !== 'production' ? [toggleLogActionsMiddleware, logger] : [];
-
   const reduxDefaultMiddleware = getDefaultMiddleware<StoreState>({
     thunk: true,
     serializableCheck: false,
@@ -31,7 +21,7 @@ export function configureStore(initialState?: Partial<StoreState>) {
 
   const store = reduxConfigureStore<StoreState>({
     reducer: createRootReducer(),
-    middleware: [...reduxDefaultMiddleware, ...middleware] as [ThunkMiddleware<StoreState>],
+    middleware: (reduxDefaultMiddleware as unknown) as [ThunkMiddleware<StoreState>],
     devTools: process.env.NODE_ENV !== 'production',
     preloadedState: {
       navIndex: buildInitialState(),

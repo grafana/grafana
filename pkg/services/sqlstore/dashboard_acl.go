@@ -1,24 +1,26 @@
 package sqlstore
 
 import (
+	"context"
+	"fmt"
+
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 )
 
 func init() {
-	bus.AddHandler("sql", UpdateDashboardAcl)
 	bus.AddHandler("sql", GetDashboardAclInfoList)
 }
 
-func UpdateDashboardAcl(cmd *models.UpdateDashboardAclCommand) error {
-	return inTransaction(func(sess *DBSession) error {
+func (ss *SQLStore) UpdateDashboardACL(dashboardID int64, items []*models.DashboardAcl) error {
+	return ss.WithTransactionalDbSession(context.Background(), func(sess *DBSession) error {
 		// delete existing items
-		_, err := sess.Exec("DELETE FROM dashboard_acl WHERE dashboard_id=?", cmd.DashboardID)
+		_, err := sess.Exec("DELETE FROM dashboard_acl WHERE dashboard_id=?", dashboardID)
 		if err != nil {
-			return err
+			return fmt.Errorf("deleting from dashboard_acl failed: %w", err)
 		}
 
-		for _, item := range cmd.Items {
+		for _, item := range items {
 			if item.UserID == 0 && item.TeamID == 0 && (item.Role == nil || !item.Role.IsValid()) {
 				return models.ErrDashboardAclInfoMissing
 			}
@@ -35,7 +37,7 @@ func UpdateDashboardAcl(cmd *models.UpdateDashboardAclCommand) error {
 
 		// Update dashboard HasAcl flag
 		dashboard := models.Dashboard{HasAcl: true}
-		_, err = sess.Cols("has_acl").Where("id=?", cmd.DashboardID).Update(&dashboard)
+		_, err = sess.Cols("has_acl").Where("id=?", dashboardID).Update(&dashboard)
 		return err
 	})
 }

@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react';
-import ansicolor from '../../utils/ansicolor';
+import ansicolor from 'ansicolor';
 
 interface Style {
   [key: string]: string;
@@ -64,7 +64,7 @@ export class LogMessageAnsi extends PureComponent<Props, State> {
 
     return chunks.map((chunk, index) =>
       chunk.style ? (
-        <span key={index} style={chunk.style}>
+        <span key={index} style={chunk.style} data-testid="ansiLogLine">
           {chunk.text}
         </span>
       ) : (

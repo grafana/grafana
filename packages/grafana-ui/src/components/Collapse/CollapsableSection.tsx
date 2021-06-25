@@ -1,8 +1,8 @@
 import React, { FC, ReactNode, useState } from 'react';
-import { css, cx } from 'emotion';
-import { GrafanaTheme } from '@grafana/data';
-import { useStyles } from '../../themes';
+import { css } from '@emotion/css';
+import { useStyles2 } from '../../themes';
 import { Icon } from '..';
+import { GrafanaTheme2 } from '@grafana/data';
 
 export interface Props {
   label: string;
@@ -12,17 +12,13 @@ export interface Props {
 
 export const CollapsableSection: FC<Props> = ({ label, isOpen, children }) => {
   const [open, toggleOpen] = useState<boolean>(isOpen);
-  const styles = useStyles(collapsableSectionStyles);
-  const headerClass = cx({
-    [styles.header]: true,
-    [styles.headerCollapsed]: !open,
-  });
-
+  const styles = useStyles2(collapsableSectionStyles);
+  const headerStyle = open ? styles.header : styles.headerCollapsed;
   const tooltip = `Click to ${open ? 'collapse' : 'expand'}`;
 
   return (
     <div>
-      <div onClick={() => toggleOpen(!open)} className={headerClass} title={tooltip}>
+      <div onClick={() => toggleOpen(!open)} className={headerStyle} title={tooltip}>
         {label}
         <Icon name={open ? 'angle-down' : 'angle-right'} size="xl" className={styles.icon} />
       </div>
@@ -31,23 +27,23 @@ export const CollapsableSection: FC<Props> = ({ label, isOpen, children }) => {
   );
 };
 
-const collapsableSectionStyles = (theme: GrafanaTheme) => {
-  return {
-    header: css`
-      display: flex;
-      justify-content: space-between;
-      font-size: ${theme.typography.size.lg};
-      line-height: ${theme.spacing.base * 5}px;
-      cursor: pointer;
-    `,
-    headerCollapsed: css`
-      border-bottom: 1px solid ${theme.colors.border2};
-    `,
-    icon: css`
-      color: ${theme.colors.textWeak};
-    `,
-    content: css`
-      padding: ${theme.spacing.md} 0;
-    `,
-  };
+const collapsableSectionStyles = (theme: GrafanaTheme2) => {
+  const header = css({
+    display: 'flex',
+    justifyContent: 'space-between',
+    fontSize: theme.typography.size.lg,
+    padding: `${theme.spacing(0.5)} 0`,
+    cursor: 'pointer',
+  });
+  const headerCollapsed = css(header, {
+    borderBottom: `1px solid ${theme.colors.border.weak}`,
+  });
+  const icon = css({
+    color: theme.colors.text.secondary,
+  });
+  const content = css({
+    padding: `${theme.spacing(2)} 0`,
+  });
+
+  return { header, headerCollapsed, icon, content };
 };

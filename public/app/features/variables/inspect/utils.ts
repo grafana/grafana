@@ -1,12 +1,9 @@
-// @ts-ignore
-import vis from 'visjs-network';
-
 import { variableAdapters } from '../adapters';
 import { DashboardModel } from '../../dashboard/state';
 import { isAdHoc } from '../guard';
 import { safeStringifyValue } from '../../../core/utils/explore';
 import { VariableModel } from '../types';
-import { containsVariable, variableRegex } from '../utils';
+import { containsVariable, variableRegex, variableRegexExec } from '../utils';
 
 export interface GraphNode {
   id: string;
@@ -52,20 +49,17 @@ export const createDependencyEdges = (variables: VariableModel[]): GraphEdge[] =
   return edges;
 };
 
-export const toVisNetworkNodes = (nodes: GraphNode[]): any[] => {
-  const nodesWithStyle: any[] = nodes.map((node) => ({
-    ...node,
-    shape: 'box',
-  }));
-  return new vis.DataSet(nodesWithStyle);
-};
-
-export const toVisNetworkEdges = (edges: GraphEdge[]): any[] => {
-  const edgesWithStyle: any[] = edges.map((edge) => ({ ...edge, arrows: 'to', dashes: true }));
-  return new vis.DataSet(edgesWithStyle);
-};
+function getVariableName(expression: string) {
+  const match = variableRegexExec(expression);
+  if (!match) {
+    return null;
+  }
+  const variableName = match.slice(1).find((match) => match !== undefined);
+  return variableName;
+}
 
 export const getUnknownVariableStrings = (variables: VariableModel[], model: any) => {
+  variableRegex.lastIndex = 0;
   const unknownVariableNames: string[] = [];
   const modelAsString = safeStringifyValue(model, 2);
   const matches = modelAsString.match(variableRegex);
@@ -84,12 +78,17 @@ export const getUnknownVariableStrings = (variables: VariableModel[], model: any
       continue;
     }
 
+    if (match.indexOf('${__') !== -1) {
+      // ignore builtin variables
+      continue;
+    }
+
     if (match.indexOf('$hashKey') !== -1) {
       // ignore Angular props
       continue;
     }
 
-    const variableName = match.slice(1);
+    const variableName = getVariableName(match);
 
     if (variables.some((variable) => variable.id === variableName)) {
       // ignore defined variables
@@ -100,16 +99,32 @@ export const getUnknownVariableStrings = (variables: VariableModel[], model: any
       continue;
     }
 
-    unknownVariableNames.push(variableName);
+    if (variableName) {
+      unknownVariableNames.push(variableName);
+    }
   }
 
   return unknownVariableNames;
 };
 
+const validVariableNames: Record<string, RegExp[]> = {
+  alias: [/^m$/, /^measurement$/, /^col$/, /^tag_\w+|\d+$/],
+  query: [/^timeFilter$/],
+};
+
 export const getPropsWithVariable = (variableId: string, parent: { key: string; value: any }, result: any) => {
   const stringValues = Object.keys(parent.value).reduce((all, key) => {
     const value = parent.value[key];
-    if (value && typeof value === 'string' && containsVariable(value, variableId)) {
+    if (!value || typeof value !== 'string') {
+      return all;
+    }
+
+    const isValidName = validVariableNames[key]
+      ? validVariableNames[key].find((regex: RegExp) => regex.test(variableId))
+      : undefined;
+    const hasVariable = containsVariable(value, variableId);
+
+    if (!isValidName && hasVariable) {
       all = {
         ...all,
         [key]: value,
@@ -146,10 +161,15 @@ export const getPropsWithVariable = (variableId: string, parent: { key: string; 
   return result;
 };
 
+export interface VariableUsageTree {
+  variable: VariableModel;
+  tree: any;
+}
+
 export interface VariableUsages {
   unUsed: VariableModel[];
-  unknown: Array<{ variable: VariableModel; tree: any }>;
-  usages: Array<{ variable: VariableModel; tree: any }>;
+  unknown: VariableUsageTree[];
+  usages: VariableUsageTree[];
 }
 
 export const createUsagesNetwork = (variables: VariableModel[], dashboard: DashboardModel | null): VariableUsages => {
@@ -158,8 +178,8 @@ export const createUsagesNetwork = (variables: VariableModel[], dashboard: Dashb
   }
 
   const unUsed: VariableModel[] = [];
-  let usages: Array<{ variable: VariableModel; tree: any }> = [];
-  let unknown: Array<{ variable: VariableModel; tree: any }> = [];
+  let usages: VariableUsageTree[] = [];
+  let unknown: VariableUsageTree[] = [];
   const model = dashboard.getSaveModelClone();
 
   const unknownVariables = getUnknownVariableStrings(variables, model);
@@ -220,7 +240,7 @@ export const traverseTree = (usage: UsagesToNetwork, parent: { id: string; value
   return usage;
 };
 
-export const transformUsagesToNetwork = (usages: Array<{ variable: VariableModel; tree: any }>): UsagesToNetwork[] => {
+export const transformUsagesToNetwork = (usages: VariableUsageTree[]): UsagesToNetwork[] => {
   const results: UsagesToNetwork[] = [];
 
   for (const usage of usages) {
@@ -249,12 +269,7 @@ const countLeaves = (object: any): number => {
   return (total as unknown) as number;
 };
 
-export const getVariableUsages = (
-  variableId: string,
-  variables: VariableModel[],
-  dashboard: DashboardModel | null
-): number => {
-  const { usages } = createUsagesNetwork(variables, dashboard);
+export const getVariableUsages = (variableId: string, usages: VariableUsageTree[]): number => {
   const usage = usages.find((usage) => usage.variable.id === variableId);
   if (!usage) {
     return 0;

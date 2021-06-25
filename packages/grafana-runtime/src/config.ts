@@ -1,17 +1,22 @@
-import merge from 'lodash/merge';
-import { getTheme } from '@grafana/ui';
+import { merge } from 'lodash';
 import {
   BuildInfo,
+  createTheme,
   DataSourceInstanceSettings,
   FeatureToggles,
   GrafanaConfig,
   GrafanaTheme,
-  GrafanaThemeType,
+  GrafanaTheme2,
   LicenseInfo,
   PanelPluginMeta,
   systemDateFormats,
   SystemDateFormatSettings,
 } from '@grafana/data';
+
+export interface AzureSettings {
+  cloud?: string;
+  managedIdentityEnabled: boolean;
+}
 
 export class GrafanaBootConfig implements GrafanaConfig {
   datasources: { [str: string]: DataSourceInstanceSettings } = {};
@@ -49,16 +54,20 @@ export class GrafanaBootConfig implements GrafanaConfig {
   viewersCanEdit = false;
   editorsCanAdmin = false;
   disableSanitizeHtml = false;
+  liveEnabled = true;
   theme: GrafanaTheme;
+  theme2: GrafanaTheme2;
   pluginsToPreload: string[] = [];
   featureToggles: FeatureToggles = {
-    live: false,
     meta: false,
     ngalert: false,
-    panelLibrary: false,
+    reportVariables: false,
+    accesscontrol: false,
+    trimDefaults: false,
   };
   licenseInfo: LicenseInfo = {} as LicenseInfo;
   rendererAvailable = false;
+  rendererVersion = '';
   http2Enabled = false;
   dateFormats?: SystemDateFormatSettings;
   sentry = {
@@ -67,11 +76,24 @@ export class GrafanaBootConfig implements GrafanaConfig {
     customEndpoint: '',
     sampleRate: 1,
   };
-  marketplaceUrl?: string;
+  pluginCatalogURL = 'https://grafana.com/grafana/plugins/';
+  pluginAdminEnabled = false;
+  pluginAdminExternalManageEnabled = false;
   expressionsEnabled = false;
+  customTheme?: any;
+  awsAllowedAuthProviders: string[] = [];
+  awsAssumeRoleEnabled = false;
+  azure: AzureSettings = {
+    managedIdentityEnabled: false,
+  };
+  caching = {
+    enabled: false,
+  };
 
   constructor(options: GrafanaBootConfig) {
-    this.theme = options.bootData.user.lightTheme ? getTheme(GrafanaThemeType.Light) : getTheme(GrafanaThemeType.Dark);
+    const mode = options.bootData.user.lightTheme ? 'light' : 'dark';
+    this.theme2 = createTheme({ colors: { mode } });
+    this.theme = this.theme2.v1;
 
     const defaults = {
       datasources: {},

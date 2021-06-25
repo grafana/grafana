@@ -1,5 +1,5 @@
 import React from 'react';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 import { GrafanaTheme } from '@grafana/data';
 import { stylesFactory, Button, HorizontalGroup, useTheme } from '@grafana/ui';
 
@@ -54,7 +54,7 @@ export function SecondaryActions(props: Props) {
           onClick={props.onClickQueryInspectorButton}
           icon="info-circle"
         >
-          Query inspector
+          Inspector
         </Button>
       </HorizontalGroup>
     </div>

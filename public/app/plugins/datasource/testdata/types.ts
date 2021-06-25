@@ -6,27 +6,20 @@ export interface Scenario {
   stringInput: string;
 }
 
-export type PointValue = number;
-
-export interface NewPoint {
-  newPointValue: string;
-  newPointTime: string;
-}
-export type Points = PointValue[][];
-
 export interface TestDataQuery extends DataQuery {
   alias?: string;
   scenarioId: string;
-  stringInput: string;
-  points: Points;
+  stringInput?: string;
   stream?: StreamingQuery;
   pulseWave?: PulseWaveQuery;
-  csvWave: any;
+  csvWave?: CSVWave[];
   labels?: string;
   lines?: number;
   levelColumn?: boolean;
   channel?: string; // for grafana live
   nodes?: NodesQuery;
+  csvFileName?: string;
+  csvContent?: string;
 }
 
 export interface NodesQuery {
@@ -49,4 +42,10 @@ export interface PulseWaveQuery {
   offCount?: number;
   onValue?: number;
   offValue?: number;
+}
+export interface CSVWave {
+  timeStep?: number;
+  name?: string;
+  valuesCSV?: string;
+  labels?: string;
 }

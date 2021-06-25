@@ -5,7 +5,7 @@ import { reducer } from './reducer';
 
 describe('Filters Bucket Aggregation Settings Reducer', () => {
   it('Should correctly add new filter', () => {
-    reducerTester()
+    reducerTester<Filter[]>()
       .givenReducer(reducer, [])
       .whenActionIsDispatched(addFilter())
       .thenStatePredicateShouldEqual((state: Filter[]) => state.length === 1);
@@ -22,7 +22,7 @@ describe('Filters Bucket Aggregation Settings Reducer', () => {
       query: '*',
     };
 
-    reducerTester()
+    reducerTester<Filter[]>()
       .givenReducer(reducer, [firstFilter, secondFilter])
       .whenActionIsDispatched(removeFilter(0))
       .thenStateShouldEqual([secondFilter]);
@@ -44,7 +44,7 @@ describe('Filters Bucket Aggregation Settings Reducer', () => {
       query: 'Changed query',
     };
 
-    reducerTester()
+    reducerTester<Filter[]>()
       .givenReducer(reducer, [firstFilter, secondFilter])
       .whenActionIsDispatched(changeFilter(1, expectedSecondFilter))
       .thenStateShouldEqual([firstFilter, expectedSecondFilter]);

@@ -1,13 +1,14 @@
-import React, { useContext, useRef, useState, useLayoutEffect, useEffect } from 'react';
-import { GrafanaTheme, DataQueryError, LogRowModel } from '@grafana/data';
-import { css, cx } from 'emotion';
+import React, { useRef, useState, useLayoutEffect, useEffect } from 'react';
+import { GrafanaTheme, DataQueryError, LogRowModel, textUtil } from '@grafana/data';
+import { css, cx } from '@emotion/css';
 
 import { Alert } from '../Alert/Alert';
 import { LogRowContextRows, LogRowContextQueryErrors, HasMoreContextRows } from './LogRowContextProvider';
-import { ThemeContext } from '../../themes/ThemeContext';
+import { useStyles } from '../../themes/ThemeContext';
 import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
 import { List } from '../List/List';
 import { ClickOutsideWrapper } from '../ClickOutsideWrapper/ClickOutsideWrapper';
+import { LogMessageAnsi } from './LogMessageAnsi';
 
 interface LogRowContextProps {
   row: LogRowModel;
@@ -65,8 +66,7 @@ const LogRowContextGroupHeader: React.FunctionComponent<LogRowContextGroupHeader
   onLoadMoreContext,
   canLoadMoreRows,
 }) => {
-  const theme = useContext(ThemeContext);
-  const { header } = getLogRowContextStyles(theme);
+  const { header } = useStyles(getLogRowContextStyles);
 
   return (
     <div className={header}>
@@ -95,7 +95,7 @@ const LogRowContextGroupHeader: React.FunctionComponent<LogRowContextGroupHeader
   );
 };
 
-const LogRowContextGroup: React.FunctionComponent<LogRowContextGroupProps> = ({
+export const LogRowContextGroup: React.FunctionComponent<LogRowContextGroupProps> = ({
   row,
   rows,
   error,
@@ -104,8 +104,7 @@ const LogRowContextGroup: React.FunctionComponent<LogRowContextGroupProps> = ({
   canLoadMoreRows,
   onLoadMoreContext,
 }) => {
-  const theme = useContext(ThemeContext);
-  const { commonStyles, logs } = getLogRowContextStyles(theme);
+  const { commonStyles, logs } = useStyles(getLogRowContextStyles);
   const [scrollTop, setScrollTop] = useState(0);
   const listContainerRef = useRef<HTMLDivElement>() as React.RefObject<HTMLDivElement>;
 
@@ -139,7 +138,7 @@ const LogRowContextGroup: React.FunctionComponent<LogRowContextGroupProps> = ({
                         padding: 5px 0;
                       `}
                     >
-                      {item}
+                      {typeof item === 'string' && textUtil.hasAnsiCodes(item) ? <LogMessageAnsi value={item} /> : item}
                     </div>
                   );
                 }}

@@ -11,14 +11,20 @@ import { ExemplarsSettings } from './ExemplarsSettings';
 const { Select, Input, FormField, Switch } = LegacyForms;
 
 const httpOptions = [
-  { value: 'GET', label: 'GET' },
   { value: 'POST', label: 'POST' },
+  { value: 'GET', label: 'GET' },
 ];
 
 type Props = Pick<DataSourcePluginOptionsEditorProps<PromOptions>, 'options' | 'onOptionsChange'>;
 
 export const PromSettings = (props: Props) => {
   const { options, onOptionsChange } = props;
+
+  // We are explicitly adding httpMethod so it is correctly displayed in dropdown. This way, it is more predictable for users.
+
+  if (!options.jsonData.httpMethod) {
+    options.jsonData.httpMethod = 'POST';
+  }
 
   return (
     <>
@@ -64,7 +70,7 @@ export const PromSettings = (props: Props) => {
         <div className="gf-form">
           <InlineFormLabel
             width={13}
-            tooltip="Specify the HTTP Method to query Prometheus. (POST is only available in Prometheus >= v2.1.0)"
+            tooltip="You can use either POST or GET HTTP method to query your Prometheus data source. POST is the recommended method as it allows bigger queries. Change this to GET if you have a Prometheus version older than 2.1 or if POST requests are restricted in your network."
           >
             HTTP Method
           </InlineFormLabel>

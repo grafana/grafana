@@ -20,7 +20,7 @@ We use the standard following linters:
 
 In addition to the standard linters, we also use:
 
-- [revive](https://revive.run/) with a [custom config](https://github.com/grafana/grafana/blob/master/conf/revive.toml)
+- [revive](https://revive.run/) with a [custom config](https://github.com/grafana/grafana/blob/main/conf/revive.toml)
 - [GolangCI-Lint](https://github.com/golangci/golangci-lint)
 - [gosec](https://github.com/securego/gosec)
 

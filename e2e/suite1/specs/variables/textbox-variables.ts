@@ -5,32 +5,16 @@ const PAGE_UNDER_TEST = 'AejrN1AMz';
 describe('TextBox - load options scenarios', function () {
   it('default options should be correct', function () {
     e2e.flows.login('admin', 'admin');
-    e2e.flows.openDashboard({ uid: PAGE_UNDER_TEST });
-    e2e().server();
-    e2e()
-      .route({
-        method: 'GET',
-        url: `/api/dashboards/uid/${PAGE_UNDER_TEST}`,
-      })
-      .as('dash');
-
-    e2e().wait('@dash');
+    e2e.flows.openDashboard({ uid: `${PAGE_UNDER_TEST}/templating-textbox-e2e-scenarios?orgId=1` });
 
     validateTextboxAndMarkup('default value');
   });
 
   it('loading variable from url should be correct', function () {
     e2e.flows.login('admin', 'admin');
-    e2e.flows.openDashboard({ uid: `${PAGE_UNDER_TEST}?var-text=not default value` });
-    e2e().server();
-    e2e()
-      .route({
-        method: 'GET',
-        url: `/api/dashboards/uid/${PAGE_UNDER_TEST}`,
-      })
-      .as('dash');
-
-    e2e().wait('@dash');
+    e2e.flows.openDashboard({
+      uid: `${PAGE_UNDER_TEST}/templating-textbox-e2e-scenarios?orgId=1&var-text=not default value`,
+    });
 
     validateTextboxAndMarkup('not default value');
   });
@@ -140,26 +124,25 @@ describe.skip('TextBox - change picker value scenarios', function () {
 
 function copyExistingDashboard() {
   e2e.flows.login('admin', 'admin');
-  e2e().server();
   e2e()
-    .route({
+    .intercept({
       method: 'GET',
       url: '/api/search?query=&type=dash-folder&permission=Edit',
     })
     .as('dash-settings');
   e2e()
-    .route({
+    .intercept({
       method: 'POST',
       url: '/api/dashboards/db/',
     })
     .as('save-dash');
   e2e()
-    .route({
+    .intercept({
       method: 'GET',
       url: /\/api\/dashboards\/uid\/(?!AejrN1AMz)\w+/,
     })
     .as('load-dash');
-  e2e.flows.openDashboard({ uid: `${PAGE_UNDER_TEST}?editview=settings&orgId=1` });
+  e2e.flows.openDashboard({ uid: `${PAGE_UNDER_TEST}/templating-textbox-e2e-scenarios?orgId=1&editview=settings` });
 
   e2e().wait('@dash-settings');
 

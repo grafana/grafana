@@ -1,5 +1,5 @@
 import React, { FC } from 'react';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { GrafanaTheme, LoadingState } from '@grafana/data';
 import { Icon, Tooltip, useStyles } from '@grafana/ui';
 

@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import * as React from 'react';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 
 import { TUpdateViewRangeTimeFunction, ViewRangeTime, ViewRangeTimeUpdate } from '../types';
 import { TNil } from '../../types';

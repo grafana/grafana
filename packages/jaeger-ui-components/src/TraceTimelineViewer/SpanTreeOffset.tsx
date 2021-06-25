@@ -13,13 +13,13 @@
 // limitations under the License.
 
 import React from 'react';
-import _get from 'lodash/get';
+import { get as _get } from 'lodash';
 import IoChevronRight from 'react-icons/lib/io/chevron-right';
 import IoIosArrowDown from 'react-icons/lib/io/ios-arrow-down';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import cx from 'classnames';
 
-import { TraceSpan } from '@grafana/data';
+import { TraceSpan } from '../types/trace';
 import spanAncestorIds from '../utils/span-ancestor-ids';
 
 import { autoColor, createStyle, Theme, withTheme } from '../Theme';
@@ -34,7 +34,6 @@ export const getStyles = createStyle((theme: Theme) => {
     SpanTreeOffsetParent: css`
       label: SpanTreeOffsetParent;
       &:hover {
-        background-color: ${autoColor(theme, '#e8e8e8')};
         cursor: pointer;
       }
     `,

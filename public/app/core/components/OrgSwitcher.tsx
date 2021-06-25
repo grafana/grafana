@@ -2,10 +2,11 @@ import React from 'react';
 
 import { getBackendSrv } from '@grafana/runtime';
 import { UserOrgDTO } from '@grafana/data';
-import { Modal, Button } from '@grafana/ui';
+import { Modal, Button, CustomScrollbar } from '@grafana/ui';
 
 import { contextSrv } from 'app/core/services/context_srv';
 import config from 'app/core/config';
+import { css } from '@emotion/css';
 
 interface Props {
   onDismiss: () => void;
@@ -43,35 +44,47 @@ export class OrgSwitcher extends React.PureComponent<Props, State> {
     const { orgs } = this.state;
 
     const currentOrgId = contextSrv.user.orgId;
+    const contentClassName = css({
+      display: 'flex',
+      maxHeight: 'calc(85vh - 42px)',
+    });
 
     return (
-      <Modal title="Switch Organization" icon="arrow-random" onDismiss={onDismiss} isOpen={true}>
-        <table className="filter-table form-inline">
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Role</th>
-              <th />
-            </tr>
-          </thead>
-          <tbody>
-            {orgs.map((org) => (
-              <tr key={org.orgId}>
-                <td>{org.name}</td>
-                <td>{org.role}</td>
-                <td className="text-right">
-                  {org.orgId === currentOrgId ? (
-                    <Button size="sm">Current</Button>
-                  ) : (
-                    <Button variant="secondary" size="sm" onClick={() => this.setCurrentOrg(org)}>
-                      Switch to
-                    </Button>
-                  )}
-                </td>
+      <Modal
+        title="Switch Organization"
+        icon="arrow-random"
+        onDismiss={onDismiss}
+        isOpen={true}
+        contentClassName={contentClassName}
+      >
+        <CustomScrollbar autoHeightMin="100%">
+          <table className="filter-table form-inline">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Role</th>
+                <th />
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {orgs.map((org) => (
+                <tr key={org.orgId}>
+                  <td>{org.name}</td>
+                  <td>{org.role}</td>
+                  <td className="text-right">
+                    {org.orgId === currentOrgId ? (
+                      <Button size="sm">Current</Button>
+                    ) : (
+                      <Button variant="secondary" size="sm" onClick={() => this.setCurrentOrg(org)}>
+                        Switch to
+                      </Button>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </CustomScrollbar>
       </Modal>
     );
   }

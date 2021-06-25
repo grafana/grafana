@@ -1,14 +1,14 @@
 import React, { useCallback, useMemo } from 'react';
 
 import config from 'app/core/config';
-import VizTypePickerPlugin from './VizTypePickerPlugin';
+import { VizTypePickerPlugin } from './VizTypePickerPlugin';
 import { EmptySearchResult, stylesFactory, useTheme } from '@grafana/ui';
 import { GrafanaTheme, PanelPluginMeta, PluginState } from '@grafana/data';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 
 export interface Props {
   current: PanelPluginMeta;
-  onTypeChange: (newType: PanelPluginMeta) => void;
+  onTypeChange: (newType: PanelPluginMeta, withModKey?: boolean) => void;
   searchQuery: string;
   onClose: () => void;
 }
@@ -35,21 +35,26 @@ export function filterPluginList(
       return true;
     });
   }
+
   const query = searchQuery.toLowerCase();
   const first: PanelPluginMeta[] = [];
   const match: PanelPluginMeta[] = [];
+
   for (const item of pluginsList) {
     if (item.state === PluginState.deprecated && current.id !== item.id) {
       continue;
     }
+
     const name = item.name.toLowerCase();
     const idx = name.indexOf(query);
+
     if (idx === 0) {
       first.push(item);
     } else if (idx > 0) {
       match.push(item);
     }
   }
+
   return first.concat(match);
 }
 
@@ -62,7 +67,7 @@ export const VizTypePicker: React.FC<Props> = ({ searchQuery, onTypeChange, curr
 
   const getFilteredPluginList = useCallback((): PanelPluginMeta[] => {
     return filterPluginList(pluginsList, searchQuery, current);
-  }, [searchQuery]);
+  }, [current, pluginsList, searchQuery]);
 
   const renderVizPlugin = (plugin: PanelPluginMeta, index: number) => {
     const isCurrent = plugin.id === current.id;
@@ -75,7 +80,7 @@ export const VizTypePicker: React.FC<Props> = ({ searchQuery, onTypeChange, curr
         key={plugin.id}
         isCurrent={isCurrent}
         plugin={plugin}
-        onClick={() => onTypeChange(plugin)}
+        onClick={(e) => onTypeChange(plugin, e.metaKey || e.ctrlKey || e.altKey)}
       />
     );
   };
@@ -107,8 +112,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     grid: css`
       max-width: 100%;
       display: grid;
-      grid-gap: ${theme.spacing.md};
-      grid-template-columns: repeat(auto-fit, minmax(116px, 1fr));
+      grid-gap: ${theme.spacing.sm};
     `,
   };
 });

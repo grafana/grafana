@@ -1,26 +1,15 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { ApplyFieldOverrideOptions, DataTransformerConfig, dateTime, FieldColorModeId } from '@grafana/data';
+import { dateTime } from '@grafana/data';
 import alertDef from './alertDef';
 import {
-  AlertDefinition,
-  AlertDefinitionDTO,
-  AlertDefinitionQueryModel,
-  AlertDefinitionState,
-  AlertDefinitionUiState,
   AlertRule,
   AlertRuleDTO,
   AlertRulesState,
   NotificationChannelOption,
   NotificationChannelState,
   NotifierDTO,
-  QueryGroupOptions,
 } from 'app/types';
-import store from 'app/core/store';
-import { config } from '@grafana/runtime';
-import { PanelQueryRunner } from '../../query/state/PanelQueryRunner';
-
-export const ALERT_DEFINITION_UI_STATE_STORAGE_KEY = 'grafana.alerting.alertDefinition.ui';
-const DEFAULT_ALERT_DEFINITION_UI_STATE: AlertDefinitionUiState = { rightPaneSize: 400, topPaneSize: 0.45 };
+import unifiedAlertingReducer from '../unified/state/reducers';
 
 export const initialState: AlertRulesState = {
   items: [],
@@ -32,41 +21,6 @@ export const initialChannelState: NotificationChannelState = {
   notificationChannelTypes: [],
   notificationChannel: {},
   notifiers: [],
-};
-
-const options: ApplyFieldOverrideOptions = {
-  fieldConfig: {
-    defaults: {
-      color: {
-        mode: FieldColorModeId.PaletteClassic,
-      },
-    },
-    overrides: [],
-  },
-  replaceVariables: (v: string) => v,
-  theme: config.theme,
-};
-
-const dataConfig = {
-  getTransformations: () => [] as DataTransformerConfig[],
-  getFieldOverrideOptions: () => options,
-};
-
-export const initialAlertDefinitionState: AlertDefinitionState = {
-  alertDefinition: {
-    id: 0,
-    uid: '',
-    title: '',
-    description: '',
-    condition: '',
-    data: [],
-    intervalSeconds: 60,
-  },
-  queryOptions: { maxDataPoints: 100, dataSource: { name: '-- Mixed --' }, queries: [] },
-  queryRunner: new PanelQueryRunner(dataConfig),
-  uiState: { ...store.getObject(ALERT_DEFINITION_UI_STATE_STORAGE_KEY, DEFAULT_ALERT_DEFINITION_UI_STATE) },
-  data: [],
-  alertDefinitions: [] as AlertDefinition[],
 };
 
 function convertToAlertRule(dto: AlertRuleDTO, state: string): AlertRule {
@@ -155,46 +109,6 @@ const notificationChannelSlice = createSlice({
   },
 });
 
-const alertDefinitionSlice = createSlice({
-  name: 'alertDefinition',
-  initialState: initialAlertDefinitionState,
-  reducers: {
-    setAlertDefinition: (state: AlertDefinitionState, action: PayloadAction<AlertDefinitionDTO>) => {
-      return {
-        ...state,
-        alertDefinition: {
-          title: action.payload.title,
-          id: action.payload.id,
-          uid: action.payload.uid,
-          condition: action.payload.condition,
-          intervalSeconds: action.payload.intervalSeconds,
-          data: action.payload.data,
-          description: '',
-        },
-        queryOptions: {
-          ...state.queryOptions,
-          queries: action.payload.data.map((q: AlertDefinitionQueryModel) => ({ ...q.model })),
-        },
-      };
-    },
-    updateAlertDefinitionOptions: (state: AlertDefinitionState, action: PayloadAction<Partial<AlertDefinition>>) => {
-      return { ...state, alertDefinition: { ...state.alertDefinition, ...action.payload } };
-    },
-    setUiState: (state: AlertDefinitionState, action: PayloadAction<AlertDefinitionUiState>) => {
-      return { ...state, uiState: { ...state.uiState, ...action.payload } };
-    },
-    setQueryOptions: (state: AlertDefinitionState, action: PayloadAction<QueryGroupOptions>) => {
-      return {
-        ...state,
-        queryOptions: action.payload,
-      };
-    },
-    setAlertDefinitions: (state: AlertDefinitionState, action: PayloadAction<AlertDefinition[]>) => {
-      return { ...state, alertDefinitions: action.payload };
-    },
-  },
-});
-
 export const { loadAlertRules, loadedAlertRules, setSearchQuery } = alertRulesSlice.actions;
 
 export const {
@@ -203,22 +117,13 @@ export const {
   resetSecureField,
 } = notificationChannelSlice.actions;
 
-export const {
-  setUiState,
-  updateAlertDefinitionOptions,
-  setQueryOptions,
-  setAlertDefinitions,
-  setAlertDefinition,
-} = alertDefinitionSlice.actions;
-
 export const alertRulesReducer = alertRulesSlice.reducer;
 export const notificationChannelReducer = notificationChannelSlice.reducer;
-export const alertDefinitionsReducer = alertDefinitionSlice.reducer;
 
 export default {
   alertRules: alertRulesReducer,
   notificationChannel: notificationChannelReducer,
-  alertDefinition: alertDefinitionsReducer,
+  unifiedAlerting: unifiedAlertingReducer,
 };
 
 function migrateSecureFields(

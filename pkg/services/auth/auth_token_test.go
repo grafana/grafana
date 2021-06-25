@@ -60,8 +60,18 @@ func TestUserAuthToken(t *testing.T) {
 				So(userToken, ShouldBeNil)
 			})
 
-			Convey("revoking existing token should delete token", func() {
-				err = userAuthTokenService.RevokeToken(context.Background(), userToken)
+			Convey("soft revoking existing token should not delete it", func() {
+				err = userAuthTokenService.RevokeToken(context.Background(), userToken, true)
+				So(err, ShouldBeNil)
+
+				model, err := ctx.getAuthTokenByID(userToken.Id)
+				So(err, ShouldBeNil)
+				So(model, ShouldNotBeNil)
+				So(model.RevokedAt, ShouldBeGreaterThan, 0)
+			})
+
+			Convey("revoking existing token should delete it", func() {
+				err = userAuthTokenService.RevokeToken(context.Background(), userToken, false)
 				So(err, ShouldBeNil)
 
 				model, err := ctx.getAuthTokenByID(userToken.Id)
@@ -70,13 +80,13 @@ func TestUserAuthToken(t *testing.T) {
 			})
 
 			Convey("revoking nil token should return error", func() {
-				err = userAuthTokenService.RevokeToken(context.Background(), nil)
+				err = userAuthTokenService.RevokeToken(context.Background(), nil, false)
 				So(err, ShouldEqual, models.ErrUserTokenNotFound)
 			})
 
 			Convey("revoking non-existing token should return error", func() {
 				userToken.Id = 1000
-				err = userAuthTokenService.RevokeToken(context.Background(), userToken)
+				err = userAuthTokenService.RevokeToken(context.Background(), userToken, false)
 				So(err, ShouldEqual, models.ErrUserTokenNotFound)
 			})
 
@@ -537,7 +547,7 @@ type testContext struct {
 }
 
 func (c *testContext) getAuthTokenByID(id int64) (*userAuthToken, error) {
-	sess := c.sqlstore.NewSession()
+	sess := c.sqlstore.NewSession(context.Background())
 	var t userAuthToken
 	found, err := sess.ID(id).Get(&t)
 	if err != nil || !found {
@@ -548,7 +558,7 @@ func (c *testContext) getAuthTokenByID(id int64) (*userAuthToken, error) {
 }
 
 func (c *testContext) markAuthTokenAsSeen(id int64) (bool, error) {
-	sess := c.sqlstore.NewSession()
+	sess := c.sqlstore.NewSession(context.Background())
 	res, err := sess.Exec("UPDATE user_auth_token SET auth_token_seen = ? WHERE id = ?", c.sqlstore.Dialect.BooleanStr(true), id)
 	if err != nil {
 		return false, err
@@ -562,7 +572,7 @@ func (c *testContext) markAuthTokenAsSeen(id int64) (bool, error) {
 }
 
 func (c *testContext) updateRotatedAt(id, rotatedAt int64) (bool, error) {
-	sess := c.sqlstore.NewSession()
+	sess := c.sqlstore.NewSession(context.Background())
 	res, err := sess.Exec("UPDATE user_auth_token SET rotated_at = ? WHERE id = ?", rotatedAt, id)
 	if err != nil {
 		return false, err

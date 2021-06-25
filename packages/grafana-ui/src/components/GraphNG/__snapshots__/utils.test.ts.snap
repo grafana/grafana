@@ -1,0 +1,229 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`GraphNG utils preparePlotConfigBuilder 1`] = `
+Object {
+  "axes": Array [
+    Object {
+      "font": "12px \\"Roboto\\", \\"Helvetica\\", \\"Arial\\", sans-serif",
+      "gap": 5,
+      "grid": Object {
+        "show": true,
+        "stroke": "rgba(240, 250, 255, 0.09)",
+        "width": 1,
+      },
+      "labelFont": "12px \\"Roboto\\", \\"Helvetica\\", \\"Arial\\", sans-serif",
+      "scale": "x",
+      "show": true,
+      "side": 2,
+      "size": [Function],
+      "space": [Function],
+      "splits": undefined,
+      "stroke": "rgb(204, 204, 220)",
+      "ticks": Object {
+        "show": true,
+        "size": 4,
+        "stroke": "rgba(240, 250, 255, 0.09)",
+        "width": 1,
+      },
+      "timeZone": "utc",
+      "values": [Function],
+    },
+    Object {
+      "font": "12px \\"Roboto\\", \\"Helvetica\\", \\"Arial\\", sans-serif",
+      "gap": 5,
+      "grid": Object {
+        "show": true,
+        "stroke": "rgba(240, 250, 255, 0.09)",
+        "width": 1,
+      },
+      "labelFont": "12px \\"Roboto\\", \\"Helvetica\\", \\"Arial\\", sans-serif",
+      "scale": "__fixed",
+      "show": true,
+      "side": 3,
+      "size": [Function],
+      "space": [Function],
+      "splits": undefined,
+      "stroke": "rgb(204, 204, 220)",
+      "ticks": Object {
+        "show": true,
+        "size": 4,
+        "stroke": "rgba(240, 250, 255, 0.09)",
+        "width": 1,
+      },
+      "timeZone": undefined,
+      "values": [Function],
+    },
+  ],
+  "bands": Array [
+    Object {
+      "series": Array [
+        2,
+        1,
+      ],
+    },
+    Object {
+      "series": Array [
+        4,
+        3,
+      ],
+    },
+  ],
+  "cursor": Object {
+    "drag": Object {
+      "setScale": false,
+    },
+    "focus": Object {
+      "prox": 30,
+    },
+    "points": Object {
+      "fill": [Function],
+      "size": [Function],
+      "stroke": [Function],
+      "width": [Function],
+    },
+    "sync": Object {
+      "filters": Object {
+        "pub": [Function],
+      },
+      "key": "__global_",
+      "match": Array [
+        [Function],
+        [Function],
+      ],
+      "scales": Array [
+        "x",
+        "__fixed",
+      ],
+    },
+  },
+  "hooks": Object {},
+  "scales": Object {
+    "__fixed": Object {
+      "auto": true,
+      "dir": 1,
+      "distr": 1,
+      "log": undefined,
+      "ori": 1,
+      "range": [Function],
+      "time": undefined,
+    },
+    "x": Object {
+      "auto": false,
+      "dir": 1,
+      "ori": 0,
+      "range": [Function],
+      "time": true,
+    },
+  },
+  "select": undefined,
+  "series": Array [
+    Object {},
+    Object {
+      "dash": Array [
+        1,
+        2,
+      ],
+      "fill": [Function],
+      "paths": [Function],
+      "points": Object {
+        "fill": "#808080",
+        "filter": [Function],
+        "show": true,
+        "size": undefined,
+        "stroke": "#808080",
+      },
+      "pxAlign": undefined,
+      "scale": "__fixed",
+      "show": true,
+      "spanGaps": false,
+      "stroke": "#ff0000",
+      "width": 2,
+    },
+    Object {
+      "dash": Array [
+        1,
+        2,
+      ],
+      "fill": [Function],
+      "paths": [Function],
+      "points": Object {
+        "fill": "#808080",
+        "filter": [Function],
+        "show": true,
+        "size": undefined,
+        "stroke": "#808080",
+      },
+      "pxAlign": undefined,
+      "scale": "__fixed",
+      "show": true,
+      "spanGaps": false,
+      "stroke": "#ff0000",
+      "width": 2,
+    },
+    Object {
+      "dash": Array [
+        1,
+        2,
+      ],
+      "fill": [Function],
+      "paths": [Function],
+      "points": Object {
+        "fill": "#808080",
+        "filter": [Function],
+        "show": true,
+        "size": undefined,
+        "stroke": "#808080",
+      },
+      "pxAlign": undefined,
+      "scale": "__fixed",
+      "show": true,
+      "spanGaps": false,
+      "stroke": "#ff0000",
+      "width": 2,
+    },
+    Object {
+      "dash": Array [
+        1,
+        2,
+      ],
+      "fill": [Function],
+      "paths": [Function],
+      "points": Object {
+        "fill": "#808080",
+        "filter": [Function],
+        "show": true,
+        "size": undefined,
+        "stroke": "#808080",
+      },
+      "pxAlign": undefined,
+      "scale": "__fixed",
+      "show": true,
+      "spanGaps": false,
+      "stroke": "#ff0000",
+      "width": 2,
+    },
+    Object {
+      "dash": Array [
+        1,
+        2,
+      ],
+      "fill": [Function],
+      "paths": [Function],
+      "points": Object {
+        "fill": "#808080",
+        "filter": [Function],
+        "show": true,
+        "size": undefined,
+        "stroke": "#808080",
+      },
+      "pxAlign": undefined,
+      "scale": "__fixed",
+      "show": true,
+      "spanGaps": false,
+      "stroke": "#ff0000",
+      "width": 2,
+    },
+  ],
+  "tzDate": [Function],
+}
+`;

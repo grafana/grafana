@@ -1,12 +1,12 @@
 import React, { PureComponent } from 'react';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { GrafanaTheme } from '@grafana/data';
 import { GroupProps } from 'react-select';
 import { stylesFactory, withTheme } from '../../themes';
 import { Themeable } from '../../types';
 import { Icon } from '../Icon/Icon';
 
-interface ExtendedGroupProps extends GroupProps<any>, Themeable {
+interface ExtendedGroupProps extends Omit<GroupProps<any, any>, 'theme'>, Themeable {
   data: {
     label: string;
     expanded: boolean;

@@ -22,6 +22,7 @@ func (lw *logWrapper) Println(v ...interface{}) {
 func init() {
 	registry.RegisterService(&InternalMetricsService{})
 	initMetricVars()
+	initFrontendMetrics()
 }
 
 type InternalMetricsService struct {

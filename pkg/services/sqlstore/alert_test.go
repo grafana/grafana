@@ -30,10 +30,11 @@ func TestAlertingDataAccess(t *testing.T) {
 	defer resetTimeNow()
 
 	Convey("Testing Alerting data access", t, func() {
-		InitTestDB(t)
+		sqlStore := InitTestDB(t)
 
-		testDash := insertTestDashboard(t, "dashboard with alerts", 1, 0, false, "alert")
-		evalData, _ := simplejson.NewJson([]byte(`{"test": "test"}`))
+		testDash := insertTestDashboard(t, sqlStore, "dashboard with alerts", 1, 0, false, "alert")
+		evalData, err := simplejson.NewJson([]byte(`{"test": "test"}`))
+		So(err, ShouldBeNil)
 		items := []*models.Alert{
 			{
 				PanelId:     1,
@@ -54,16 +55,24 @@ func TestAlertingDataAccess(t *testing.T) {
 			UserId:      1,
 		}
 
-		err := SaveAlerts(&cmd)
+		err = SaveAlerts(&cmd)
 
 		Convey("Can create one alert", func() {
 			So(err, ShouldBeNil)
 		})
 
 		Convey("Can set new states", func() {
+
+			// Get alert so we can use its ID in tests
+			alertQuery := models.GetAlertsQuery{DashboardIDs: []int64{testDash.Id}, PanelId: 1, OrgId: 1, User: &models.SignedInUser{OrgRole: models.ROLE_ADMIN}}
+			err2 := HandleAlertsQuery(&alertQuery)
+			So(err2, ShouldBeNil)
+
+			insertedAlert := alertQuery.Result[0]
+
 			Convey("new state ok", func() {
 				cmd := &models.SetAlertStateCommand{
-					AlertId: 1,
+					AlertId: insertedAlert.Id,
 					State:   models.AlertStateOK,
 				}
 
@@ -71,7 +80,7 @@ func TestAlertingDataAccess(t *testing.T) {
 				So(err, ShouldBeNil)
 			})
 
-			alert, _ := getAlertById(1)
+			alert, _ := getAlertById(insertedAlert.Id)
 			stateDateBeforePause := alert.NewStateDate
 
 			Convey("can pause all alerts", func() {
@@ -80,7 +89,7 @@ func TestAlertingDataAccess(t *testing.T) {
 
 				Convey("cannot updated paused alert", func() {
 					cmd := &models.SetAlertStateCommand{
-						AlertId: 1,
+						AlertId: insertedAlert.Id,
 						State:   models.AlertStateOK,
 					}
 
@@ -89,13 +98,13 @@ func TestAlertingDataAccess(t *testing.T) {
 				})
 
 				Convey("alert is paused", func() {
-					alert, _ = getAlertById(1)
+					alert, _ = getAlertById(insertedAlert.Id)
 					currentState := alert.State
 					So(currentState, ShouldEqual, "paused")
 				})
 
 				Convey("pausing alerts should update their NewStateDate", func() {
-					alert, _ = getAlertById(1)
+					alert, _ = getAlertById(insertedAlert.Id)
 					stateDateAfterPause := alert.NewStateDate
 					So(stateDateBeforePause, ShouldHappenBefore, stateDateAfterPause)
 				})
@@ -103,7 +112,7 @@ func TestAlertingDataAccess(t *testing.T) {
 				Convey("unpausing alerts should update their NewStateDate again", func() {
 					err := pauseAllAlerts(false)
 					So(err, ShouldBeNil)
-					alert, _ = getAlertById(1)
+					alert, _ = getAlertById(insertedAlert.Id)
 					stateDateAfterUnpause := alert.NewStateDate
 					So(stateDateBeforePause, ShouldHappenBefore, stateDateAfterUnpause)
 				})
@@ -258,7 +267,6 @@ func TestAlertingDataAccess(t *testing.T) {
 				query := models.GetAlertsQuery{DashboardIDs: []int64{testDash.Id}, OrgId: 1, User: &models.SignedInUser{OrgRole: models.ROLE_ADMIN}}
 				err2 := HandleAlertsQuery(&query)
 
-				So(testDash.Id, ShouldEqual, 1)
 				So(err2, ShouldBeNil)
 				So(len(query.Result), ShouldEqual, 0)
 			})
@@ -271,19 +279,28 @@ func TestPausingAlerts(t *testing.T) {
 	defer resetTimeNow()
 
 	Convey("Given an alert", t, func() {
-		InitTestDB(t)
+		sqlStore := InitTestDB(t)
 
-		testDash := insertTestDashboard(t, "dashboard with alerts", 1, 0, false, "alert")
-		alert, _ := insertTestAlert("Alerting title", "Alerting message", testDash.OrgId, testDash.Id, simplejson.New())
+		testDash := insertTestDashboard(t, sqlStore, "dashboard with alerts", 1, 0, false, "alert")
+		alert, err := insertTestAlert("Alerting title", "Alerting message", testDash.OrgId, testDash.Id, simplejson.New())
+		So(err, ShouldBeNil)
 
 		stateDateBeforePause := alert.NewStateDate
 		stateDateAfterPause := stateDateBeforePause
+
+		// Get alert so we can use its ID in tests
+		alertQuery := models.GetAlertsQuery{DashboardIDs: []int64{testDash.Id}, PanelId: 1, OrgId: 1, User: &models.SignedInUser{OrgRole: models.ROLE_ADMIN}}
+		err2 := HandleAlertsQuery(&alertQuery)
+		So(err2, ShouldBeNil)
+
+		insertedAlert := alertQuery.Result[0]
+
 		Convey("when paused", func() {
-			_, err := pauseAlert(testDash.OrgId, 1, true)
+			_, err := pauseAlert(testDash.OrgId, insertedAlert.Id, true)
 			So(err, ShouldBeNil)
 
 			Convey("the NewStateDate should be updated", func() {
-				alert, err := getAlertById(1)
+				alert, err := getAlertById(insertedAlert.Id)
 				So(err, ShouldBeNil)
 
 				stateDateAfterPause = alert.NewStateDate
@@ -292,11 +309,11 @@ func TestPausingAlerts(t *testing.T) {
 		})
 
 		Convey("when unpaused", func() {
-			_, err := pauseAlert(testDash.OrgId, 1, false)
+			_, err := pauseAlert(testDash.OrgId, insertedAlert.Id, false)
 			So(err, ShouldBeNil)
 
 			Convey("the NewStateDate should be updated again", func() {
-				alert, err := getAlertById(1)
+				alert, err := getAlertById(insertedAlert.Id)
 				So(err, ShouldBeNil)
 
 				stateDateAfterUnpause := alert.NewStateDate

@@ -44,6 +44,8 @@ func createExternalDashboardSnapshot(cmd models.CreateDashboardSnapshotCommand) 
 		"name":      cmd.Name,
 		"expires":   cmd.Expires,
 		"dashboard": cmd.Dashboard,
+		"key":       cmd.Key,
+		"deleteKey": cmd.DeleteKey,
 	}
 
 	messageBytes, err := simplejson.NewFromAny(message).Encode()
@@ -175,7 +177,7 @@ func GetDashboardSnapshot(c *models.ReqContext) response.Response {
 
 	metrics.MApiDashboardSnapshotGet.Inc()
 
-	return response.JSON(200, dto).Header("Cache-Control", "public, max-age=3600")
+	return response.JSON(200, dto).SetHeader("Cache-Control", "public, max-age=3600")
 }
 
 func deleteExternalDashboardSnapshot(externalUrl string) error {

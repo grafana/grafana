@@ -2,6 +2,7 @@ import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
 import { NavModel, renderMarkdown } from '@grafana/data';
+import { HorizontalGroup, Pagination, VerticalGroup } from '@grafana/ui';
 
 import Page from 'app/core/components/Page/Page';
 import UsersActionBar from './UsersActionBar';
@@ -10,19 +11,21 @@ import InviteesTable from './InviteesTable';
 import { Invitee, OrgUser, OrgRole } from 'app/types';
 import { loadInvitees, loadUsers, removeUser, updateUser } from './state/actions';
 import { getNavModel } from 'app/core/selectors/navModel';
-import { getInvitees, getUsers, getUsersSearchQuery } from './state/selectors';
-import { setUsersSearchQuery } from './state/reducers';
+import { getInvitees, getUsers, getUsersSearchQuery, getUsersSearchPage } from './state/selectors';
+import { setUsersSearchQuery, setUsersSearchPage } from './state/reducers';
 
 export interface Props {
   navModel: NavModel;
   invitees: Invitee[];
   users: OrgUser[];
   searchQuery: string;
+  searchPage: number;
   externalUserMngInfo: string;
   hasFetched: boolean;
   loadUsers: typeof loadUsers;
   loadInvitees: typeof loadInvitees;
   setUsersSearchQuery: typeof setUsersSearchQuery;
+  setUsersSearchPage: typeof setUsersSearchPage;
   updateUser: typeof updateUser;
   removeUser: typeof removeUser;
 }
@@ -30,6 +33,8 @@ export interface Props {
 export interface State {
   showInvites: boolean;
 }
+
+const pageLimit = 30;
 
 export class UsersListPage extends PureComponent<Props, State> {
   externalUserMngInfoHtml: string;
@@ -71,18 +76,35 @@ export class UsersListPage extends PureComponent<Props, State> {
     }));
   };
 
+  getPaginatedUsers = (users: OrgUser[]) => {
+    const offset = (this.props.searchPage - 1) * pageLimit;
+    return users.slice(offset, offset + pageLimit);
+  };
+
   renderTable() {
-    const { invitees, users } = this.props;
+    const { invitees, users, setUsersSearchPage } = this.props;
+    const paginatedUsers = this.getPaginatedUsers(users);
+    const totalPages = Math.ceil(users.length / pageLimit);
 
     if (this.state.showInvites) {
       return <InviteesTable invitees={invitees} />;
     } else {
       return (
-        <UsersTable
-          users={users}
-          onRoleChange={(role, user) => this.onRoleChange(role, user)}
-          onRemoveUser={(user) => this.props.removeUser(user.userId)}
-        />
+        <VerticalGroup spacing="md">
+          <UsersTable
+            users={paginatedUsers}
+            onRoleChange={(role, user) => this.onRoleChange(role, user)}
+            onRemoveUser={(user) => this.props.removeUser(user.userId)}
+          />
+          <HorizontalGroup justify="flex-end">
+            <Pagination
+              onNavigate={setUsersSearchPage}
+              currentPage={this.props.searchPage}
+              numberOfPages={totalPages}
+              hideWhenSinglePage={true}
+            />
+          </HorizontalGroup>
+        </VerticalGroup>
       );
     }
   }
@@ -112,6 +134,7 @@ function mapStateToProps(state: any) {
     navModel: getNavModel(state.navIndex, 'users'),
     users: getUsers(state.users),
     searchQuery: getUsersSearchQuery(state.users),
+    searchPage: getUsersSearchPage(state.users),
     invitees: getInvitees(state.users),
     externalUserMngInfo: state.users.externalUserMngInfo,
     hasFetched: state.users.hasFetched,
@@ -122,6 +145,7 @@ const mapDispatchToProps = {
   loadUsers,
   loadInvitees,
   setUsersSearchQuery,
+  setUsersSearchPage,
   updateUser,
   removeUser,
 };

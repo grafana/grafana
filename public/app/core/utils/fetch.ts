@@ -1,5 +1,5 @@
 import { BackendSrvRequest } from '@grafana/runtime';
-import omitBy from 'lodash/omitBy';
+import { omitBy } from 'lodash';
 import { deprecationWarning } from '@grafana/data';
 
 export const parseInitFromOptions = (options: BackendSrvRequest): RequestInit => {
@@ -53,8 +53,9 @@ const parseHeaderByMethodFactory = (methodPredicate: string): HeaderParser => ({
 
 const postHeaderParser: HeaderParser = parseHeaderByMethodFactory('post');
 const putHeaderParser: HeaderParser = parseHeaderByMethodFactory('put');
+const patchHeaderParser: HeaderParser = parseHeaderByMethodFactory('patch');
 
-const headerParsers = [postHeaderParser, putHeaderParser, defaultHeaderParser];
+const headerParsers = [postHeaderParser, putHeaderParser, patchHeaderParser, defaultHeaderParser];
 
 export const parseHeaders = (options: BackendSrvRequest) => {
   const headers = options?.headers ? new Headers(options.headers) : new Headers();

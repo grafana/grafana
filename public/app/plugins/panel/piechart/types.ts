@@ -1,6 +1,39 @@
-import { PieChartType, SingleStatBaseOptions, PieChartLabelOptions } from '@grafana/ui';
+import { OptionsWithTooltip, SingleStatBaseOptions, VizLegendOptions } from '@grafana/ui';
 
-export interface PieChartOptions extends SingleStatBaseOptions {
+/**
+ * @beta
+ */
+export enum PieChartType {
+  Pie = 'pie',
+  Donut = 'donut',
+}
+
+/**
+ * @beta
+ */
+export enum PieChartLegendValues {
+  Value = 'value',
+  Percent = 'percent',
+}
+
+/**
+ * @beta
+ */
+export enum PieChartLabels {
+  Name = 'name',
+  Value = 'value',
+  Percent = 'percent',
+}
+
+/**
+ * @beta
+ */
+export interface PieChartLegendOptions extends VizLegendOptions {
+  values: PieChartLegendValues[];
+}
+
+export interface PieChartOptions extends SingleStatBaseOptions, OptionsWithTooltip {
   pieType: PieChartType;
-  labelOptions: PieChartLabelOptions;
+  displayLabels: PieChartLabels[];
+  legend: PieChartLegendOptions;
 }

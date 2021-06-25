@@ -1,11 +1,11 @@
 import { e2e } from '@grafana/e2e';
 
-const PAGE_UNDER_TEST = '-Y-tnEDWk';
+const PAGE_UNDER_TEST = '-Y-tnEDWk/templating-nested-template-variables';
 
 describe('Variables - Add variable', () => {
   it('query variable should be default and default fields should be correct', () => {
     e2e.flows.login('admin', 'admin');
-    e2e.flows.openDashboard({ uid: `${PAGE_UNDER_TEST}?editview=templating` });
+    e2e.flows.openDashboard({ uid: `${PAGE_UNDER_TEST}?orgId=1&editview=templating` });
 
     e2e.pages.Dashboard.Settings.Variables.List.newButton().should('be.visible').click();
 
@@ -48,7 +48,7 @@ describe('Variables - Add variable', () => {
     e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsRefreshSelect()
       .should('be.visible')
       .within((select) => {
-        e2e.components.Select.singleValue().should('have.text', 'Never');
+        e2e.components.Select.singleValue().should('have.text', 'On dashboard load');
       });
     e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsRegExInput()
       .should('be.visible')
@@ -65,15 +65,13 @@ describe('Variables - Add variable', () => {
     e2e.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsMultiSwitch().should('not.be.checked');
     e2e.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsIncludeAllSwitch().should('not.be.checked');
 
-    e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.valueGroupsTagsEnabledSwitch().should('not.be.checked');
-
     e2e.pages.Dashboard.Settings.Variables.Edit.General.previewOfValuesOption().should('not.exist');
     e2e.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsCustomAllInput().should('not.exist');
   });
 
   it('adding a single value query variable', () => {
     e2e.flows.login('admin', 'admin');
-    e2e.flows.openDashboard({ uid: `${PAGE_UNDER_TEST}?editview=templating` });
+    e2e.flows.openDashboard({ uid: `${PAGE_UNDER_TEST}?orgId=1&editview=templating` });
 
     e2e.pages.Dashboard.Settings.Variables.List.newButton().should('be.visible').click();
 
@@ -127,7 +125,7 @@ describe('Variables - Add variable', () => {
 
   it('adding a multi value query variable', () => {
     e2e.flows.login('admin', 'admin');
-    e2e.flows.openDashboard({ uid: `${PAGE_UNDER_TEST}?editview=templating` });
+    e2e.flows.openDashboard({ uid: `${PAGE_UNDER_TEST}?orgId=1&editview=templating` });
 
     e2e.pages.Dashboard.Settings.Variables.List.newButton().should('be.visible').click();
 

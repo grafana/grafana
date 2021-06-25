@@ -1,10 +1,11 @@
-FROM node:14.15.1-alpine3.12 as js-builder
+FROM node:14.16.0-alpine3.13 as js-builder
 
 WORKDIR /usr/src/app/
 
 COPY package.json yarn.lock ./
 COPY packages packages
 
+RUN apk --no-cache add git
 RUN yarn install --pure-lockfile --no-progress
 
 COPY tsconfig.json .eslintrc .editorconfig .browserslistrc .prettierrc.js ./
@@ -16,23 +17,25 @@ COPY emails emails
 ENV NODE_ENV production
 RUN yarn build
 
-FROM golang:1.15.1-alpine3.12 as go-builder
+FROM golang:1.16.1-alpine3.13 as go-builder
 
 RUN apk add --no-cache gcc g++
 
 WORKDIR $GOPATH/src/github.com/grafana/grafana
 
-COPY go.mod go.sum ./
+COPY go.mod go.sum embed.go ./
 
 RUN go mod verify
 
+COPY cue cue
+COPY public/app/plugins public/app/plugins
 COPY pkg pkg
 COPY build.go package.json ./
 
 RUN go run build.go build
 
 # Final stage
-FROM alpine:3.12
+FROM alpine:3.13
 
 LABEL maintainer="Grafana team <hello@grafana.com>"
 
@@ -65,6 +68,7 @@ RUN export GF_GID_NAME=$(getent group $GF_GID | cut -d':' -f1) && \
              "$GF_PATHS_PROVISIONING/dashboards" \
              "$GF_PATHS_PROVISIONING/notifiers" \
              "$GF_PATHS_PROVISIONING/plugins" \
+             "$GF_PATHS_PROVISIONING/access-control" \
              "$GF_PATHS_LOGS" \
              "$GF_PATHS_PLUGINS" \
              "$GF_PATHS_DATA" && \
@@ -73,7 +77,7 @@ RUN export GF_GID_NAME=$(getent group $GF_GID | cut -d':' -f1) && \
     chown -R "grafana:$GF_GID_NAME" "$GF_PATHS_DATA" "$GF_PATHS_HOME/.aws" "$GF_PATHS_LOGS" "$GF_PATHS_PLUGINS" "$GF_PATHS_PROVISIONING" && \
     chmod -R 777 "$GF_PATHS_DATA" "$GF_PATHS_HOME/.aws" "$GF_PATHS_LOGS" "$GF_PATHS_PLUGINS" "$GF_PATHS_PROVISIONING"
 
-COPY --from=go-builder /go/src/github.com/grafana/grafana/bin/linux-amd64/grafana-server /go/src/github.com/grafana/grafana/bin/linux-amd64/grafana-cli ./bin/
+COPY --from=go-builder /go/src/github.com/grafana/grafana/bin/*/grafana-server /go/src/github.com/grafana/grafana/bin/*/grafana-cli ./bin/
 COPY --from=js-builder /usr/src/app/public ./public
 COPY --from=js-builder /usr/src/app/tools ./tools
 

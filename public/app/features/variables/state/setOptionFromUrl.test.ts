@@ -17,15 +17,15 @@ describe('when setOptionFromUrl is dispatched with a custom variable (no refresh
     ${['B']}      | ${false} | ${'B'}
     ${'X'}        | ${false} | ${'X'}
     ${''}         | ${false} | ${''}
-    ${null}       | ${false} | ${null}
-    ${undefined}  | ${false} | ${undefined}
+    ${null}       | ${false} | ${''}
+    ${undefined}  | ${false} | ${''}
     ${'B'}        | ${true}  | ${['B']}
     ${['B']}      | ${true}  | ${['B']}
     ${'X'}        | ${true}  | ${['X']}
     ${''}         | ${true}  | ${['']}
     ${['A', 'B']} | ${true}  | ${['A', 'B']}
-    ${null}       | ${true}  | ${[null]}
-    ${undefined}  | ${true}  | ${[undefined]}
+    ${null}       | ${true}  | ${['']}
+    ${undefined}  | ${true}  | ${['']}
   `('and urlValue is $urlValue then correct actions are dispatched', async ({ urlValue, expected, isMulti }) => {
     const custom = customBuilder().withId('0').withMulti(isMulti).withOptions('A', 'B', 'C').withCurrent('A').build();
 

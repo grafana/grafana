@@ -3,13 +3,14 @@ package es
 import (
 	"strings"
 
-	"github.com/grafana/grafana/pkg/tsdb"
+	"github.com/Masterminds/semver"
+	"github.com/grafana/grafana/pkg/tsdb/interval"
 )
 
 // SearchRequestBuilder represents a builder which can build a search request
 type SearchRequestBuilder struct {
-	version      int
-	interval     tsdb.Interval
+	version      *semver.Version
+	interval     interval.Interval
 	index        string
 	size         int
 	sort         map[string]interface{}
@@ -19,7 +20,7 @@ type SearchRequestBuilder struct {
 }
 
 // NewSearchRequestBuilder create a new search request builder
-func NewSearchRequestBuilder(version int, interval tsdb.Interval) *SearchRequestBuilder {
+func NewSearchRequestBuilder(version *semver.Version, interval interval.Interval) *SearchRequestBuilder {
 	builder := &SearchRequestBuilder{
 		version:     version,
 		interval:    interval,
@@ -87,17 +88,14 @@ func (b *SearchRequestBuilder) SortDesc(field, unmappedType string) *SearchReque
 // AddDocValueField adds a doc value field to the search request
 func (b *SearchRequestBuilder) AddDocValueField(field string) *SearchRequestBuilder {
 	// fields field not supported on version >= 5
-	if b.version < 5 {
+	if b.version.Major() < 5 {
 		b.customProps["fields"] = []string{"*", "_source"}
-	}
-
-	b.customProps["script_fields"] = make(map[string]interface{})
-
-	if b.version < 5 {
 		b.customProps["fielddata_fields"] = []string{field}
 	} else {
 		b.customProps["docvalue_fields"] = []string{field}
 	}
+
+	b.customProps["script_fields"] = make(map[string]interface{})
 
 	return b
 }
@@ -119,19 +117,19 @@ func (b *SearchRequestBuilder) Agg() AggBuilder {
 
 // MultiSearchRequestBuilder represents a builder which can build a multi search request
 type MultiSearchRequestBuilder struct {
-	version         int
+	version         *semver.Version
 	requestBuilders []*SearchRequestBuilder
 }
 
 // NewMultiSearchRequestBuilder creates a new multi search request builder
-func NewMultiSearchRequestBuilder(version int) *MultiSearchRequestBuilder {
+func NewMultiSearchRequestBuilder(version *semver.Version) *MultiSearchRequestBuilder {
 	return &MultiSearchRequestBuilder{
 		version: version,
 	}
 }
 
 // Search initiates and returns a new search request builder
-func (m *MultiSearchRequestBuilder) Search(interval tsdb.Interval) *SearchRequestBuilder {
+func (m *MultiSearchRequestBuilder) Search(interval interval.Interval) *SearchRequestBuilder {
 	b := NewSearchRequestBuilder(m.version, interval)
 	m.requestBuilders = append(m.requestBuilders, b)
 	return b
@@ -275,10 +273,10 @@ type AggBuilder interface {
 type aggBuilderImpl struct {
 	AggBuilder
 	aggDefs []*aggDef
-	version int
+	version *semver.Version
 }
 
-func newAggBuilder(version int) *aggBuilderImpl {
+func newAggBuilder(version *semver.Version) *aggBuilderImpl {
 	return &aggBuilderImpl{
 		aggDefs: make([]*aggDef, 0),
 		version: version,
@@ -367,7 +365,7 @@ func (b *aggBuilderImpl) Terms(key, field string, fn func(a *TermsAggregation, b
 		fn(innerAgg, builder)
 	}
 
-	if b.version >= 60 && len(innerAgg.Order) > 0 {
+	if b.version.Major() >= 6 && len(innerAgg.Order) > 0 {
 		if orderBy, exists := innerAgg.Order[termsOrderTerm]; exists {
 			innerAgg.Order["_key"] = orderBy
 			delete(innerAgg.Order, termsOrderTerm)
@@ -421,9 +419,11 @@ func (b *aggBuilderImpl) GeoHashGrid(key, field string, fn func(a *GeoHashGridAg
 
 func (b *aggBuilderImpl) Metric(key, metricType, field string, fn func(a *MetricAggregation)) AggBuilder {
 	innerAgg := &MetricAggregation{
+		Type:     metricType,
 		Field:    field,
 		Settings: make(map[string]interface{}),
 	}
+
 	aggDef := newAggDef(key, &aggContainer{
 		Type:        metricType,
 		Aggregation: innerAgg,

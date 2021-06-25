@@ -2,125 +2,159 @@ package azuremonitor
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"regexp"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/tsdb"
+	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
+	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana/pkg/setting"
+)
+
+const (
+	timeSeries = "time_series"
+	dsName     = "grafana-azure-monitor-datasource"
 )
 
 var (
-	azlog           log.Logger
-	legendKeyFormat *regexp.Regexp
+	azlog           = log.New("tsdb.azuremonitor")
+	legendKeyFormat = regexp.MustCompile(`\{\{\s*(.+?)\s*\}\}`)
 )
 
-// AzureMonitorExecutor executes queries for the Azure Monitor datasource - all four services
-type AzureMonitorExecutor struct {
-	httpClient *http.Client
-	dsInfo     *models.DataSource
-}
-
-// NewAzureMonitorExecutor initializes a http client
-func NewAzureMonitorExecutor(dsInfo *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
-	httpClient, err := dsInfo.GetHttpClient()
-	if err != nil {
-		return nil, err
-	}
-
-	return &AzureMonitorExecutor{
-		httpClient: httpClient,
-		dsInfo:     dsInfo,
-	}, nil
-}
-
 func init() {
-	azlog = log.New("tsdb.azuremonitor")
-	tsdb.RegisterTsdbQueryEndpoint("grafana-azure-monitor-datasource", NewAzureMonitorExecutor)
-	legendKeyFormat = regexp.MustCompile(`\{\{\s*(.+?)\s*\}\}`)
+	registry.Register(&registry.Descriptor{
+		Name:         "AzureMonitorService",
+		InitPriority: registry.Low,
+		Instance:     &Service{},
+	})
 }
 
-// Query takes in the frontend queries, parses them into the query format
-// expected by chosen Azure Monitor service (Azure Monitor, App Insights etc.)
-// executes the queries against the API and parses the response into
-// the right format
-func (e *AzureMonitorExecutor) Query(ctx context.Context, dsInfo *models.DataSource, tsdbQuery *tsdb.TsdbQuery) (*tsdb.Response, error) {
-	var err error
+type Service struct {
+	PluginManager        plugins.Manager       `inject:""`
+	Cfg                  *setting.Cfg          `inject:""`
+	BackendPluginManager backendplugin.Manager `inject:""`
+}
 
-	var azureMonitorQueries []*tsdb.Query
-	var applicationInsightsQueries []*tsdb.Query
-	var azureLogAnalyticsQueries []*tsdb.Query
-	var insightsAnalyticsQueries []*tsdb.Query
+type azureMonitorSettings struct {
+	AppInsightsAppId             string `json:"appInsightsAppId"`
+	AzureLogAnalyticsSameAs      bool   `json:"azureLogAnalyticsSameAs"`
+	ClientId                     string `json:"clientId"`
+	CloudName                    string `json:"cloudName"`
+	LogAnalyticsClientId         string `json:"logAnalyticsClientId"`
+	LogAnalyticsDefaultWorkspace string `json:"logAnalyticsDefaultWorkspace"`
+	LogAnalyticsSubscriptionId   string `json:"logAnalyticsSubscriptionId"`
+	LogAnalyticsTenantId         string `json:"logAnalyticsTenantId"`
+	SubscriptionId               string `json:"subscriptionId"`
+	TenantId                     string `json:"tenantId"`
+	AzureAuthType                string `json:"azureAuthType,omitempty"`
+}
 
-	for _, query := range tsdbQuery.Queries {
-		queryType := query.Model.Get("queryType").MustString("")
+type datasourceInfo struct {
+	Settings    azureMonitorSettings
+	Services    map[string]datasourceService
+	Routes      map[string]azRoute
+	HTTPCliOpts httpclient.Options
 
-		switch queryType {
-		case "Azure Monitor":
-			azureMonitorQueries = append(azureMonitorQueries, query)
-		case "Application Insights":
-			applicationInsightsQueries = append(applicationInsightsQueries, query)
-		case "Azure Log Analytics":
-			azureLogAnalyticsQueries = append(azureLogAnalyticsQueries, query)
-		case "Insights Analytics":
-			insightsAnalyticsQueries = append(insightsAnalyticsQueries, query)
-		default:
-			return nil, fmt.Errorf("alerting not supported for %q", queryType)
+	JSONData                map[string]interface{}
+	DecryptedSecureJSONData map[string]string
+	DatasourceID            int64
+	OrgID                   int64
+}
+
+type datasourceService struct {
+	URL        string
+	HTTPClient *http.Client
+}
+
+func NewInstanceSettings() datasource.InstanceFactoryFunc {
+	return func(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+		jsonData := map[string]interface{}{}
+		err := json.Unmarshal(settings.JSONData, &jsonData)
+		if err != nil {
+			return nil, fmt.Errorf("error reading settings: %w", err)
 		}
-	}
 
-	azDatasource := &AzureMonitorDatasource{
-		httpClient: e.httpClient,
-		dsInfo:     e.dsInfo,
-	}
+		azMonitorSettings := azureMonitorSettings{}
+		err = json.Unmarshal(settings.JSONData, &azMonitorSettings)
+		if err != nil {
+			return nil, fmt.Errorf("error reading settings: %w", err)
+		}
+		httpCliOpts, err := settings.HTTPClientOptions()
+		if err != nil {
+			return nil, fmt.Errorf("error getting http options: %w", err)
+		}
 
-	aiDatasource := &ApplicationInsightsDatasource{
-		httpClient: e.httpClient,
-		dsInfo:     e.dsInfo,
+		model := datasourceInfo{
+			Settings:                azMonitorSettings,
+			JSONData:                jsonData,
+			DecryptedSecureJSONData: settings.DecryptedSecureJSONData,
+			DatasourceID:            settings.ID,
+			Services:                map[string]datasourceService{},
+			Routes:                  routes[azMonitorSettings.CloudName],
+			HTTPCliOpts:             httpCliOpts,
+		}
+		return model, nil
 	}
+}
 
-	alaDatasource := &AzureLogAnalyticsDatasource{
-		httpClient: e.httpClient,
-		dsInfo:     e.dsInfo,
+type azDatasourceExecutor interface {
+	executeTimeSeriesQuery(ctx context.Context, originalQueries []backend.DataQuery, dsInfo datasourceInfo) (*backend.QueryDataResponse, error)
+}
+
+func newExecutor(im instancemgmt.InstanceManager, cfg *setting.Cfg, executors map[string]azDatasourceExecutor) *datasource.QueryTypeMux {
+	mux := datasource.NewQueryTypeMux()
+	for dsType := range executors {
+		// Make a copy of the string to keep the reference after the iterator
+		dst := dsType
+		mux.HandleFunc(dsType, func(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+			i, err := im.Get(req.PluginContext)
+			if err != nil {
+				return nil, err
+			}
+			dsInfo := i.(datasourceInfo)
+			dsInfo.OrgID = req.PluginContext.OrgID
+			ds := executors[dst]
+			if _, ok := dsInfo.Services[dst]; !ok {
+				// Create an HTTP Client if it has not been created before
+				route := dsInfo.Routes[dst]
+				client, err := newHTTPClient(ctx, route, dsInfo, cfg)
+				if err != nil {
+					return nil, err
+				}
+				dsInfo.Services[dst] = datasourceService{
+					URL:        dsInfo.Routes[dst].URL,
+					HTTPClient: client,
+				}
+			}
+			return ds.executeTimeSeriesQuery(ctx, req.Queries, dsInfo)
+		})
 	}
+	return mux
+}
 
-	iaDatasource := &InsightsAnalyticsDatasource{
-		httpClient: e.httpClient,
-		dsInfo:     e.dsInfo,
+func (s *Service) Init() error {
+	im := datasource.NewInstanceManager(NewInstanceSettings())
+	executors := map[string]azDatasourceExecutor{
+		azureMonitor:       &AzureMonitorDatasource{},
+		appInsights:        &ApplicationInsightsDatasource{},
+		azureLogAnalytics:  &AzureLogAnalyticsDatasource{},
+		insightsAnalytics:  &InsightsAnalyticsDatasource{},
+		azureResourceGraph: &AzureResourceGraphDatasource{},
 	}
+	factory := coreplugin.New(backend.ServeOpts{
+		QueryDataHandler: newExecutor(im, s.Cfg, executors),
+	})
 
-	azResult, err := azDatasource.executeTimeSeriesQuery(ctx, azureMonitorQueries, tsdbQuery.TimeRange)
-	if err != nil {
-		return nil, err
+	if err := s.BackendPluginManager.Register(dsName, factory); err != nil {
+		azlog.Error("Failed to register plugin", "error", err)
 	}
-
-	aiResult, err := aiDatasource.executeTimeSeriesQuery(ctx, applicationInsightsQueries, tsdbQuery.TimeRange)
-	if err != nil {
-		return nil, err
-	}
-
-	alaResult, err := alaDatasource.executeTimeSeriesQuery(ctx, azureLogAnalyticsQueries, tsdbQuery.TimeRange)
-	if err != nil {
-		return nil, err
-	}
-
-	iaResult, err := iaDatasource.executeTimeSeriesQuery(ctx, insightsAnalyticsQueries, tsdbQuery.TimeRange)
-	if err != nil {
-		return nil, err
-	}
-
-	for k, v := range aiResult.Results {
-		azResult.Results[k] = v
-	}
-
-	for k, v := range alaResult.Results {
-		azResult.Results[k] = v
-	}
-
-	for k, v := range iaResult.Results {
-		azResult.Results[k] = v
-	}
-
-	return azResult, nil
+	return nil
 }

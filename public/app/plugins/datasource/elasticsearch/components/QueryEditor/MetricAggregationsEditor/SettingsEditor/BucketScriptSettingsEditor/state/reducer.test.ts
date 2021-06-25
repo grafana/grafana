@@ -9,16 +9,32 @@ import {
 import { reducer } from './reducer';
 
 describe('BucketScript Settings Reducer', () => {
-  it('Should correctly add new pipeline variable', () => {
-    const expectedPipelineVar: PipelineVariable = {
+  it('Should correctly add new pipeline variables', () => {
+    const var1: PipelineVariable = {
       name: 'var1',
       pipelineAgg: '',
     };
 
-    reducerTester()
+    const var2: PipelineVariable = {
+      name: 'var2',
+      pipelineAgg: '',
+    };
+
+    const var3: PipelineVariable = {
+      name: 'var3',
+      pipelineAgg: '',
+    };
+
+    reducerTester<PipelineVariable[]>()
       .givenReducer(reducer, [])
       .whenActionIsDispatched(addPipelineVariable())
-      .thenStateShouldEqual([expectedPipelineVar]);
+      .thenStateShouldEqual([var1])
+      .whenActionIsDispatched(addPipelineVariable())
+      .thenStateShouldEqual([var1, var2])
+      .whenActionIsDispatched(removePipelineVariable(0))
+      .thenStateShouldEqual([var2])
+      .whenActionIsDispatched(addPipelineVariable())
+      .thenStateShouldEqual([var2, var3]);
   });
 
   it('Should correctly remove pipeline variables', () => {
@@ -32,7 +48,7 @@ describe('BucketScript Settings Reducer', () => {
       pipelineAgg: '',
     };
 
-    reducerTester()
+    reducerTester<PipelineVariable[]>()
       .givenReducer(reducer, [firstVar, secondVar])
       .whenActionIsDispatched(removePipelineVariable(0))
       .thenStateShouldEqual([secondVar]);
@@ -54,7 +70,7 @@ describe('BucketScript Settings Reducer', () => {
       name: 'new name',
     };
 
-    reducerTester()
+    reducerTester<PipelineVariable[]>()
       .givenReducer(reducer, [firstVar, secondVar])
       .whenActionIsDispatched(renamePipelineVariable(expectedSecondVar.name, 1))
       .thenStateShouldEqual([firstVar, expectedSecondVar]);
@@ -76,7 +92,7 @@ describe('BucketScript Settings Reducer', () => {
       pipelineAgg: 'some new agg',
     };
 
-    reducerTester()
+    reducerTester<PipelineVariable[]>()
       .givenReducer(reducer, [firstVar, secondVar])
       .whenActionIsDispatched(changePipelineVariableMetric(expectedSecondVar.pipelineAgg, 1))
       .thenStateShouldEqual([firstVar, expectedSecondVar]);
@@ -94,7 +110,7 @@ describe('BucketScript Settings Reducer', () => {
       },
     ];
 
-    reducerTester()
+    reducerTester<PipelineVariable[]>()
       .givenReducer(reducer, initialState)
       .whenActionIsDispatched({ type: 'THIS ACTION SHOULD NOT HAVE ANY EFFECT IN THIS REDUCER' })
       .thenStateShouldEqual(initialState);

@@ -147,21 +147,24 @@ Since not all datasources have the same configuration settings we only have the 
 | tlsAuthWithCACert       | boolean | _All_                                                            | Enable TLS authentication using CA cert                                                     |
 | tlsSkipVerify           | boolean | _All_                                                            | Controls whether a client verifies the server's certificate chain and host name.            |
 | serverName              | string  | _All_                                                            | Optional. Controls the server name used for certificate common name/subject alternative name verification. Defaults to using the data source URL. |
+| timeout                 | string  | _All_                                                            | Request timeout in seconds. Overrides dataproxy.timeout option                              |
 | graphiteVersion         | string  | Graphite                                                         | Graphite version                                                                            |
-| timeInterval            | string  | Prometheus, Elasticsearch, InfluxDB, MySQL, PostgreSQL and MSSQL | Lowest interval/step value that should be used for this data source.                         |
+| timeInterval            | string  | Prometheus, Elasticsearch, InfluxDB, MySQL, PostgreSQL and MSSQL | Lowest interval/step value that should be used for this data source.                        |
 | httpMode                | string  | Influxdb                                                         | HTTP Method. 'GET', 'POST', defaults to GET                                                 |
-| httpMethod              | string  | Prometheus                                                       | HTTP Method. 'GET', 'POST', defaults to GET                                                 |
-| esVersion               | number  | Elasticsearch                                                    | Elasticsearch version as a number (2/5/56/60/70)                                            |
+| maxSeries               | number  | Influxdb                                                         | Max number of series/tables that Grafana processes                                          |
+| httpMethod              | string  | Prometheus                                                       | HTTP Method. 'GET', 'POST', defaults to POST                                                 |
+| customQueryParameters   | string  | Prometheus                                                       | Query parameters to add, as a URL-encoded string.                                                 |
+| esVersion               | string  | Elasticsearch                                                    | Elasticsearch version (E.g. `7.0.0`, `7.6.1`)                                            |
 | timeField               | string  | Elasticsearch                                                    | Which field that should be used as timestamp                                                |
 | interval                | string  | Elasticsearch                                                    | Index date time format. nil(No Pattern), 'Hourly', 'Daily', 'Weekly', 'Monthly' or 'Yearly' |
 | logMessageField         | string  | Elasticsearch                                                    | Which field should be used as the log message                                               |
 | logLevelField           | string  | Elasticsearch                                                    | Which field should be used to indicate the priority of the log message                      |
-| sigV4Auth               | boolean | Elasticsearch                                                    | Enable usage of SigV4                                                                       |
-| sigV4AuthType           | string  | Elasticsearch                                                    | SigV4 auth provider. default/credentials/keys                                               |
-| sigV4ExternalId         | string  | Elasticsearch                                                    | Optional SigV4 External ID                                                                  |
-| sigV4AssumeRoleArn      | string  | Elasticsearch                                                    | Optional SigV4 ARN role to assume                                                           |
-| sigV4Region             | string  | Elasticsearch                                                    | SigV4 AWS region                                                                            |
-| sigV4Profile            | string  | Elasticsearch                                                    | Optional SigV4  credentials profile                                                         |
+| sigV4Auth               | boolean | Elasticsearch and Prometheus                                     | Enable usage of SigV4                                                                       |
+| sigV4AuthType           | string  | Elasticsearch and Prometheus                                     | SigV4 auth provider. default/credentials/keys                                               |
+| sigV4ExternalId         | string  | Elasticsearch and Prometheus                                     | Optional SigV4 External ID                                                                  |
+| sigV4AssumeRoleArn      | string  | Elasticsearch and Prometheus                                     | Optional SigV4 ARN role to assume                                                           |
+| sigV4Region             | string  | Elasticsearch and Prometheus                                     | SigV4 AWS region                                                                            |
+| sigV4Profile            | string  | Elasticsearch and Prometheus                                     | Optional SigV4  credentials profile                                                         |
 | authType                | string  | Cloudwatch                                                       | Auth provider. default/credentials/keys                                                     |
 | externalId              | string  | Cloudwatch                                                       | Optional External ID                                                                        |
 | assumeRoleArn           | string  | Cloudwatch                                                       | Optional ARN role to assume                                                                 |
@@ -171,6 +174,7 @@ Since not all datasources have the same configuration settings we only have the 
 | tsdbVersion             | string  | OpenTSDB                                                         | Version                                                                                     |
 | tsdbResolution          | string  | OpenTSDB                                                         | Resolution                                                                                  |
 | sslmode                 | string  | PostgreSQL                                                       | SSLmode. 'disable', 'require', 'verify-ca' or 'verify-full'                                 |
+| tlsConfigurationMethod  | string  | PostgreSQL                                        | SSL Certificate configuration, either by 'file-path' or 'file-content'                       |
 | sslRootCertFile         | string  | PostgreSQL                                                       | SSL server root certificate file, must be readable by the Grafana user                      |
 | sslCertFile             | string  | PostgreSQL                                                       | SSL client certificate file, must be readable by the Grafana user                           |
 | sslKeyFile              | string  | PostgreSQL                                                       | SSL client key file, must be readable by _only_ the Grafana user                            |
@@ -196,8 +200,8 @@ Secure json data is a map of settings that will be encrypted with [secret key]({
 | basicAuthPassword | string | _All_      | password for basic authentication       |
 | accessKey         | string | Cloudwatch | Access key for connecting to Cloudwatch |
 | secretKey         | string | Cloudwatch | Secret key for connecting to Cloudwatch |
-| sigV4AccessKey    | string | Elasticsearch | SigV4 access key. Required when using keys auth provider |
-| sigV4SecretKey    | string | Elasticsearch | SigV4 secret key. Required when using keys auth provider |
+| sigV4AccessKey    | string | Elasticsearch and Prometheus | SigV4 access key. Required when using keys auth provider |
+| sigV4SecretKey    | string | Elasticsearch and Prometheus | SigV4 secret key. Required when using keys auth provider |
 
 #### Custom HTTP headers for datasources
 
@@ -301,13 +305,13 @@ Grafana offers options to export the JSON definition of a dashboard. Either `Cop
 
 Note: The JSON definition in the input field when using `Copy JSON to Clipboard` or `Save JSON to file` will have the `id` field automatically removed to aid the provisioning workflow.
 
-{{< docs-imagebox img="/img/docs/v51/provisioning_cannot_save_dashboard.png" max-width="500px" class="docs-image--no-shadow" >}}
+{{< figure src="/static/img/docs/v51/provisioning_cannot_save_dashboard.png" max-width="500px" class="docs-image--no-shadow" >}}
 
 ### Reusable Dashboard URLs
 
-If the dashboard in the json file contains an [uid](/reference/dashboard/#json-fields), Grafana will force insert/update on that uid. This allows you to migrate dashboards between Grafana instances and provisioning Grafana from configuration without breaking the URLs given since the new dashboard URL uses the uid as identifier.
-When Grafana starts, it will update/insert all dashboards available in the configured folders. If you modify the file, the dashboard will also be updated.
-By default, Grafana will delete dashboards in the database if the file is removed. You can disable this behavior using the `disableDeletion` setting.
+If the dashboard in the JSON file contains an [UID]({{< relref "../dashboards/json-model.md" >}}), Grafana forces insert/update on that UID. This allows you to migrate dashboards between Grafana instances and provisioning Grafana from configuration without breaking the URLs given because the new dashboard URL uses the UID as identifier.
+When Grafana starts, it updates/inserts all dashboards available in the configured folders. If you modify the file, then the dashboard is also updated.
+By default, Grafana deletes dashboards in the database if the file is removed. You can disable this behavior using the `disableDeletion` setting.
 
 > **Note:** Provisioning allows you to overwrite existing dashboards
 > which leads to problems if you re-use settings that are supposed to be unique.
@@ -433,6 +437,14 @@ The following sections detail the supported settings and secure settings for eac
 | sound      |                |
 | okSound    |                |
 
+#### Alert notification `discord`
+
+| Name           | Secure setting |
+| -------------- | -------------- |
+| url            | yes            |
+| avatar_url     |                |
+| message        |                |
+
 #### Alert notification `slack`
 
 | Name           | Secure setting |
@@ -539,6 +551,7 @@ The following sections detail the supported settings and secure settings for eac
 | apiUrl           |                |
 | autoClose        |                |
 | overridePriority |                |
+| sendTagsAs       |                |
 
 #### Alert notification `telegram`
 
@@ -570,3 +583,9 @@ The following sections detail the supported settings and secure settings for eac
 | Name |
 | ---- |
 | url  |
+
+## Grafana Enterprise
+
+Grafana Enterprise supports provisioning for the following resources:
+
+- [Access Control Provisioning]({{< relref "../enterprise/access-control/provisioning.md" >}})

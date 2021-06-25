@@ -1,5 +1,5 @@
 import React, { FC, memo } from 'react';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
 import { Checkbox, stylesFactory } from '@grafana/ui';
 
 interface Props {

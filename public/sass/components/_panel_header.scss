@@ -181,8 +181,11 @@ $panel-header-no-title-zindex: 1;
 
   code {
     white-space: normal;
-    display: block;
     word-wrap: break-word;
+  }
+
+  pre > code {
+    display: block;
   }
 
   .panel-info-corner-links {

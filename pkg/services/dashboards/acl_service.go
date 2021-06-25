@@ -3,11 +3,10 @@ package dashboards
 import (
 	"time"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 )
 
-func MakeUserAdmin(bus bus.Bus, orgID int64, userID int64, dashboardID int64, setViewAndEditPermissions bool) error {
+func (dr *dashboardServiceImpl) MakeUserAdmin(orgID int64, userID int64, dashboardID int64, setViewAndEditPermissions bool) error {
 	rtEditor := models.ROLE_EDITOR
 	rtViewer := models.ROLE_VIEWER
 
@@ -43,12 +42,7 @@ func MakeUserAdmin(bus bus.Bus, orgID int64, userID int64, dashboardID int64, se
 		)
 	}
 
-	aclCmd := &models.UpdateDashboardAclCommand{
-		DashboardID: dashboardID,
-		Items:       items,
-	}
-
-	if err := bus.Dispatch(aclCmd); err != nil {
+	if err := dr.dashboardStore.UpdateDashboardACL(dashboardID, items); err != nil {
 		return err
 	}
 
