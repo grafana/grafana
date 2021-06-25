@@ -11,7 +11,7 @@ Grafana dashboards can be exported and imported, either using the UI or from the
 
 ## Exporting a dashboard
 
-Dashboards are exported in Grafana JSON format, and contain everything you need (layout, variables, styles, data sources, queries, etc) to import the dashboard at a later time.
+Dashboards are exported in Grafana JSON format, and contain everything you need (layout, variables, styles, data sources, queries, and so on) to import the dashboard at a later time.
 
 The export feature is accessed in the share window which you open by clicking the share button in the dashboard menu.
 
