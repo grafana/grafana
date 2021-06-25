@@ -5,6 +5,7 @@ import { PanelProps, Field, Labels, GrafanaTheme2 } from '@grafana/data';
 import { Options } from './types';
 import { dataFrameToLogsModel, dedupLogRows } from 'app/core/logs_model';
 import { getFieldLinksForExplore } from 'app/features/explore/utils/links';
+import { COMMON_LABELS } from '../../../core/logs_model';
 
 interface LogsPanelProps extends PanelProps<Options> {}
 
@@ -20,7 +21,7 @@ export const LogsPanel: React.FunctionComponent<LogsPanelProps> = ({
   const [logRows, deduplicatedRows, commonLabels] = useMemo(() => {
     const newResults = data ? dataFrameToLogsModel(data.series, data.request?.intervalMs) : null;
     const logRows = newResults?.rows || [];
-    const commonLabels = newResults?.meta?.find((m) => m.label === 'Common labels');
+    const commonLabels = newResults?.meta?.find((m) => m.label === COMMON_LABELS);
     const deduplicatedRows = dedupLogRows(logRows, dedupStrategy);
     return [logRows, deduplicatedRows, commonLabels];
   }, [data, dedupStrategy]);
@@ -43,10 +44,12 @@ export const LogsPanel: React.FunctionComponent<LogsPanelProps> = ({
   return (
     <CustomScrollbar autoHide>
       <div className={style.container}>
-        {showCommonLabels && commonLabels && (
-          <div className={style.labelsContainer}>
-            <span className={style.label}>{commonLabels.label}:</span>
-            <LogLabels labels={commonLabels.value as Labels} />
+        {showCommonLabels && (
+          <div className={style.labelContainer}>
+            <span className={style.label}>Common labels:</span>
+            <LogLabels
+              labels={commonLabels ? (commonLabels.value as Labels) : ({ labels: '(no common labels)' } as Labels)}
+            />
           </div>
         )}
         <LogRows
@@ -72,13 +75,14 @@ const getStyles = (title: string) => (theme: GrafanaTheme2) => ({
     //We can remove this hot-fix when we fix panel menu with no title overflowing top of all panels
     margin-top: ${theme.spacing(!title ? 2.5 : 0)};
   `,
+  labelContainer: css`
+    margin: ${theme.spacing(0, 0, 0.5, 0.5)};
+    display: flex;
+    align-items: center;
+  `,
   label: css`
     margin-right: ${theme.spacing(0.5)};
     font-size: ${theme.typography.bodySmall.fontSize};
     font-weight: ${theme.typography.fontWeightMedium};
-  `,
-  labelsContainer: css`
-    margin: ${theme.spacing(0, 0, 0.5, 0.5)};
-    display: flex;
   `,
 });
