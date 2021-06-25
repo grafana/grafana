@@ -367,7 +367,7 @@ The default is `1`.
 
 When storing cache data in-memory, this setting defines how often a background process cleans up stale data from the in-memory cache. More frequent "garbage collection" can keep memory usage from climbing but will increase CPU usage.
 
-The default is `1m`
+The default is `1m`.
 
 ### max_size_mb
 
