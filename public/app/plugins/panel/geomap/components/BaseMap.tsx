@@ -24,6 +24,9 @@ import 'ol-layerswitcher/dist/ol-layerswitcher.css';
 import { ControlsOptions, GeomapPanelOptions } from '../types';
 import { defaultFrameConfig, newDynamicLayerHandler } from '../layers/dynamic';
 import { defaultGrafanaThemedMap } from '../layers/basemaps/theme';
+import { InfoControl } from './InfoControl';
+
+// https://openlayers.org/en/latest/examples/select-hover-features.html
 
 export class BaseMap extends Component<BaseMapProps> {
   map: GeoMap;
@@ -169,6 +172,8 @@ export class BaseMap extends Component<BaseMapProps> {
         })
       );
     }
+
+    this.map.addControl(new InfoControl());
   }
 
   render() {
