@@ -1,7 +1,7 @@
 import React from 'react';
 import { useTheme2, stylesFactory } from '../../../themes';
 import { GrafanaTheme2 } from '@grafana/data';
-import { css, cx } from '@emotion/css';
+import { css } from '@emotion/css';
 import { getPropertiesForButtonSize } from '../commonStyles';
 import { getFocusStyles, getMouseFocusStyles } from '../../../themes/mixins';
 
@@ -36,14 +36,14 @@ export const RadioButton: React.FC<RadioButtonProps> = ({
     <>
       <input
         type="radio"
-        className={cx(styles.radio)}
+        className={styles.radio}
         onChange={onChange}
         disabled={disabled}
         id={id}
         checked={active}
         name={name}
       />
-      <label className={cx(styles.radioLabel)} htmlFor={id} title={description}>
+      <label className={styles.radioLabel} htmlFor={id} title={description}>
         {children}
       </label>
     </>
@@ -83,7 +83,6 @@ const getRadioButtonStyles = stylesFactory((theme: GrafanaTheme2, size: RadioBut
       }
 
       &:disabled + label {
-        cursor: default;
         color: ${theme.colors.text.disabled};
         cursor: not-allowed;
       }
@@ -104,6 +103,7 @@ const getRadioButtonStyles = stylesFactory((theme: GrafanaTheme2, size: RadioBut
       flex: ${fullWidth ? `1 0 0` : 'none'};
       text-align: center;
       user-select: none;
+      white-space: nowrap;
 
       &:hover {
         color: ${textColorHover};

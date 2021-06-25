@@ -44,7 +44,7 @@ const (
 )
 
 const (
-	UIDLabel          = "__alert_rule_uid__"
+	RuleUIDLabel      = "__alert_rule_uid__"
 	NamespaceUIDLabel = "__alert_rule_namespace_uid__"
 )
 
