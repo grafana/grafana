@@ -20,7 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/interval"
 )
 
-var eslog = log.New("tsdb.cloudwatch")
+var eslog = log.New("tsdb.elasticsearch")
 
 func init() {
 	registry.Register(&registry.Descriptor{
