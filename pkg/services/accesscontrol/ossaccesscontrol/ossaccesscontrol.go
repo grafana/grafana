@@ -7,7 +7,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/evaluator"
 	"github.com/grafana/grafana/pkg/setting"
@@ -27,26 +26,7 @@ func (ac *OSSAccessControlService) Init() error {
 
 	ac.registerUsageMetrics()
 
-	return ac.RegisterRegistrantsRoles()
-}
-
-func (ac *OSSAccessControlService) RegisterRegistrantsRoles() error {
-	services := registry.GetServices()
-	for _, svc := range services {
-		registrant, ok := svc.Instance.(registry.RoleRegistrant)
-		if !ok {
-			continue
-		}
-
-		registrations := registrant.GetFixedRoleRegistrations()
-		for _, r := range registrations {
-			err := ac.registerFixedRole(r.Role, r.Grants)
-			if err != nil {
-				return err
-			}
-		}
-	}
-	return nil
+	return RegisterRegistrantsRoles(ac)
 }
 
 func (ac *OSSAccessControlService) IsDisabled() bool {
@@ -108,7 +88,7 @@ func (ac *OSSAccessControlService) assignFixedRole(role accesscontrol.RoleDTO, b
 }
 
 // RegisterFixedRole saves a fixed role and assigns it to built-in roles
-func (ac *OSSAccessControlService) registerFixedRole(role accesscontrol.RoleDTO, builtInRoles []string) error {
+func (ac *OSSAccessControlService) RegisterFixedRole(_ context.Context, role accesscontrol.RoleDTO, builtInRoles []string) error {
 	err := accesscontrol.ValidateFixedRole(role)
 	if err != nil {
 		return err
