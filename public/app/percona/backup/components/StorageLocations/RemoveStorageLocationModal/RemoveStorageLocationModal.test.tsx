@@ -7,7 +7,7 @@ import { LocationType, StorageLocation } from '../StorageLocations.types';
 
 import { RemoveStorageLocationModal } from './RemoveStorageLocationModal';
 
-describe('RemoveStorageLocationModal', () => {
+xdescribe('RemoveStorageLocationModal', () => {
   it('should have a WarningBlock and CheckboxField', () => {
     const location: StorageLocation = {
       locationID: 'ID1',

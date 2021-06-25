@@ -6,7 +6,7 @@ import { Field } from 'react-final-form';
 import { Icon, Tooltip, Switch, useStyles } from '@grafana/ui';
 
 import { getStyles } from './Switch.styles';
-import { SwitchFieldProps, SwitchFieldRenderProps } from './Switch.types';
+import { SwitchFieldRenderProps, SwitchFieldProps } from './Switch.types';
 
 export const SwitchField: FC<SwitchFieldProps> = ({
   disabled,
