@@ -1,6 +1,17 @@
-import React, { PureComponent } from 'react';
+import React, { Component } from 'react';
 import { geomapLayerRegistry } from '../layers/registry';
-import L from 'leaflet';
+import { Map as GeoMap, View } from 'ol';
+import LayerGroup from 'ol/layer/Group';
+import TileLayer from 'ol/layer/Tile';
+import OSM from 'ol/source/OSM';
+import Attribution from 'ol/control/Attribution';
+import Zoom from 'ol/control/Zoom';
+import ScaleLine from 'ol/control/ScaleLine';
+import OverviewMap from 'ol/control/OverviewMap';
+
+import LayerSwitcher from 'ol-layerswitcher';
+import BaseLayer from 'ol/layer/Base';
+
 import { PanelData, MapLayerHandler, MapLayerConfig } from '@grafana/data';
 
 interface BaseMapProps {
@@ -9,38 +20,52 @@ interface BaseMapProps {
   data: PanelData;
 }
 
-// Load the leaflet CSS
-import 'leaflet/dist/leaflet.css';
-
-// function addCSSRule(sheet: any, selector: string, rules: string, index: number) {
-//   if ('insertRule' in sheet) {
-//     sheet.insertRule(selector + '{' + rules + '}', index);
-//   } else if ('addRule' in sheet) {
-//     sheet.addRule(selector, rules, index);
-//   }
-// }
-
-// // .leaflet-default-icon-path {
-// // 	background-image: url(images/marker-icon.png);
-// // 	}
-
-// addCSSRule(
-//   document.styleSheets[0],
-//   '.leaflet-default-icon-path',
-//   'background-image: url(images/marker-iconXXXXX.png);',
-//   0
-// );
+import 'ol/ol.css';
+import 'ol-layerswitcher/dist/ol-layerswitcher.css';
 
 import { GeomapPanelOptions } from '../types';
 import { defaultFrameConfig, newDynamicLayerHandler } from '../layers/dynamic';
 
-export class BaseMap extends PureComponent<BaseMapProps> {
-  map: L.Map;
+export class BaseMap extends Component<BaseMapProps> {
+  map: GeoMap;
   handlers = new Map<MapLayerConfig, MapLayerHandler>();
 
   constructor(props: BaseMapProps) {
     super(props);
   }
+
+  // componentDidMount() {
+  //   // create feature layer and vector source
+  //   var featuresLayer = new ol.layer.Vector({
+  //     source: new ol.source.Vector({
+  //       features: [],
+  //     }),
+  //   });
+
+  //   // create map object with feature layer
+  //   var map = new ol.Map({
+  //     target: this.refs.mapContainer,
+  //     layers: [
+  //       //default OSM layer
+  //       new ol.layer.Tile({
+  //         source: new ol.source.OSM(),
+  //       }),
+  //       featuresLayer,
+  //     ],
+  //     view: new ol.View({
+  //       center: [-11718716.28195593, 4869217.172379018], //Boulder
+  //       zoom: 13,
+  //     }),
+  //   });
+
+  //   map.on('click', this.handleMapClick.bind(this));
+
+  //   // save map and layer references to local state
+  //   this.setState({
+  //     map: map,
+  //     featuresLayer: featuresLayer,
+  //   });
+  // }
 
   componentDidUpdate(oldProps: BaseMapProps) {
     if (!this.map) {
@@ -49,13 +74,13 @@ export class BaseMap extends PureComponent<BaseMapProps> {
     }
 
     if (this.props.height !== oldProps.height) {
-      this.map.invalidateSize();
+      this.map.updateSize();
     }
 
-    // External configuraiton changed
-    if (this.props.options !== oldProps.options) {
-      this.optionsChanged(oldProps.options);
-    }
+    // // External configuraiton changed
+    // if (this.props.options !== oldProps.options) {
+    //   this.optionsChanged(oldProps.options);
+    // }
 
     // External data changed
     if (this.props.data !== oldProps.data) {
@@ -63,25 +88,25 @@ export class BaseMap extends PureComponent<BaseMapProps> {
     }
   }
 
-  /**
-   * Called when the panel options change
-   */
-  optionsChanged(oldOptions: GeomapPanelOptions) {
-    const { options } = this.props;
-    const controls = options.controls ?? {};
-    const oldControls = oldOptions.controls ?? {};
-    console.log('options changed!', controls, oldControls, controls === oldControls);
+  // /**
+  //  * Called when the panel options change
+  //  */
+  // optionsChanged(oldOptions: GeomapPanelOptions) {
+  //   const { options } = this.props;
+  //   const controls = options.controls ?? {};
+  //   const oldControls = oldOptions.controls ?? {};
+  //   console.log('options changed!', controls, oldControls, controls === oldControls);
 
-    // Check controls
-    if (controls.hideZoom !== oldControls.hideZoom) {
-      console.log('zoom changed', controls.hideZoom);
-      if (controls.hideZoom) {
-        this.map.removeControl(this.map.zoomControl);
-      } else {
-        this.map.addControl(this.map.zoomControl);
-      }
-    }
-  }
+  //   // Check controls
+  //   if (controls.hideZoom !== oldControls.hideZoom) {
+  //     console.log('zoom changed', controls.hideZoom);
+  //     if (controls.hideZoom) {
+  //       this.map.removeControl(this.map.zoomControl);
+  //     } else {
+  //       this.map.addControl(this.map.zoomControl);
+  //     }
+  //   }
+  // }
 
   /**
    * Called when PanelData changes (query results etc)
@@ -99,24 +124,65 @@ export class BaseMap extends PureComponent<BaseMapProps> {
   initMapRef = (div: HTMLDivElement) => {
     if (!div) {
       if (this.map) {
-        this.map.remove();
+        this.map.dispose();
       }
-      this.map = (undefined as unknown) as L.Map;
+      this.map = (undefined as unknown) as GeoMap;
       return;
     }
 
-    const { options } = this.props;
+    // const osm = new TileLayer({
+    //   title: 'OSM',
+    //   type: 'base',
+    //   visible: true,
+    //   source: new OSM(),
+    // } as any);
 
-    this.map = L.map(div, {
-      zoomControl: !options.controls?.hideZoom,
+    // const watercolor = new TileLayer({
+    //   title: 'Water color',
+    //   type: 'base',
+    //   visible: false,
+    //   source: new Stamen({
+    //     layer: 'watercolor',
+    //   }),
+    // } as any);
 
-      center: [37.75, -122.23],
-      zoom: 10,
+    // const baseMaps = new LayerGroup({
+    //   title: 'Base maps',
+    //   layers: [osm, watercolor],
+    // } as any);
+
+    // const { options } = this.props;
+
+    this.map = new GeoMap({
+      view: new View({
+        center: [0, 0],
+        zoom: 1,
+      }),
+      pixelRatio: 1, // or zoom?
+      layers: [], // delay...
+      controls: [
+        new Zoom({}),
+        new ScaleLine({
+          bar: false,
+        }),
+        new Attribution({
+          collapsible: true,
+          collapsed: true,
+        }),
+        new OverviewMap({
+          collapsed: false,
+          collapsible: true,
+          layers: [
+            new TileLayer({
+              source: new OSM(),
+            }),
+          ],
+        }),
+      ],
+      target: div,
     });
 
-    const baseMaps: L.Control.LayersObject = {};
-    const overlayMaps: L.Control.LayersObject = {};
-
+    const iiiii: BaseLayer[] = [];
     let basemaps = this.props.options.basemaps;
     if (!basemaps || !basemaps.length) {
       // all basemaps
@@ -132,33 +198,47 @@ export class BaseMap extends PureComponent<BaseMapProps> {
       // ];
     }
 
-    let baseLayerCount = 0;
     for (const cfg of basemaps) {
       const item = geomapLayerRegistry.getIfExists(cfg.type);
       if (!item) {
         console.warn('missing layer ???', cfg);
         continue;
       }
-      const layer = item.create(cfg).init();
-      if (baseLayerCount === 0) {
-        layer.addTo(this.map);
+      const layer = item.create(this.map, cfg).init();
+      layer.set('title', cfg.name ?? item.name); // for ol-layerswitcher
+      if (item.isBaseMap) {
+        layer.set('type', 'base'); // for ol-layerswitcher
       }
-      baseLayerCount++;
-      const name = cfg.name ?? item.name;
-      baseMaps[name] = layer;
+      iiiii.push(layer);
     }
 
+    const baseMaps = new LayerGroup({
+      title: 'Base maps', // required for layer switcher
+      layers: iiiii,
+    } as any);
+
+    this.map.addLayer(baseMaps);
+
+    const layerSwitcher = new LayerSwitcher({
+      tipLabel: 'Légende', // Optional label for button
+      startActive: false,
+      activationMode: 'click',
+      reverse: true, // show them in the order we add
+    });
+    this.map.addControl(layerSwitcher);
+
     if (true) {
-      const handler = newDynamicLayerHandler(defaultFrameConfig);
+      const handler = newDynamicLayerHandler(this.map, defaultFrameConfig);
       const layer = handler.init();
-      layer.addTo(this.map);
-      overlayMaps['data'] = layer;
+      console.log('HELLO', layer);
+      this.map.addLayer(layer);
+
       this.handlers.set(defaultFrameConfig, handler);
     }
 
-    if (baseLayerCount > 1) {
-      L.control.layers(baseMaps, overlayMaps).addTo(this.map);
-    }
+    // if (baseLayerCount > 1) {
+    //   L.control.layers(baseMaps, overlayMaps).addTo(this.map);
+    // }
   };
 
   render() {

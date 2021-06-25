@@ -1,5 +1,6 @@
-import { Registry, RegistryItemWithOptions } from '../utils/Registry';
-import L from 'leaflet';
+import { RegistryItemWithOptions } from '../utils/Registry';
+import BaseLayer from 'ol/layer/Base';
+import Map from 'ol/Map';
 import { PanelData } from '../types';
 
 /**
@@ -28,8 +29,8 @@ export interface MapLayerConfig<TCustom = any> {
  * @alpha
  */
 export interface MapLayerHandler {
-  init: () => L.Layer;
-  update?: (map: L.Map, data: PanelData) => void;
+  init: () => BaseLayer;
+  update?: (map: Map, data: PanelData) => void;
 }
 
 /**
@@ -45,5 +46,5 @@ export interface MapLayerRegistryItem<TConfig = MapLayerConfig> extends Registry
    * Function that configures transformation and returns a transformer
    * @param options
    */
-  create: (options: MapLayerConfig<TConfig>) => MapLayerHandler;
+  create: (map: Map, options: MapLayerConfig<TConfig>) => MapLayerHandler;
 }
