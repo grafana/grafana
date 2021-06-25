@@ -4,12 +4,13 @@ import { render, waitFor } from '@testing-library/react';
 import { Provider } from 'react-redux';
 import { Router } from 'react-router-dom';
 import { fetchAlertGroups } from './api/alertmanager';
-import { byTestId } from 'testing-library-selector';
+import { byTestId, byText } from 'testing-library-selector';
 import { configureStore } from 'app/store/configureStore';
 import { typeAsJestMock } from 'test/helpers/typeAsJestMock';
 import AmNotifications from './AmNotifications';
 import { mockAlertGroup, mockAlertmanagerAlert, mockDataSource, MockDataSourceSrv } from './mocks';
 import { DataSourceType } from './utils/datasource';
+import userEvent from '@testing-library/user-event';
 
 jest.mock('./api/alertmanager');
 
@@ -42,6 +43,10 @@ const ui = {
   group: byTestId('notifications-group'),
   groupCollapseToggle: byTestId('notifications-group-collapse-toggle'),
   notificationsTable: byTestId('notifications-table'),
+  row: byTestId('row'),
+  collapseToggle: byTestId('collapse-toggle'),
+  silenceButton: byText('Silence'),
+  sourceButton: byText('See source'),
 };
 
 describe('AmNotifications', () => {
@@ -68,5 +73,12 @@ describe('AmNotifications', () => {
     expect(groups).toHaveLength(2);
     expect(groups[0]).toHaveTextContent('No grouping');
     expect(groups[1]).toHaveTextContent('severity=warningregion=US-Central');
+
+    userEvent.click(ui.groupCollapseToggle.get(groups[0]));
+    expect(ui.notificationsTable.get()).toBeDefined();
+
+    userEvent.click(ui.collapseToggle.get(ui.notificationsTable.get()));
+    expect(ui.silenceButton.get(ui.notificationsTable.get())).toBeDefined();
+    expect(ui.sourceButton.get(ui.notificationsTable.get())).toBeDefined();
   });
 });
