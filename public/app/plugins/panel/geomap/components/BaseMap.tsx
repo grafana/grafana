@@ -15,6 +15,7 @@ import BaseLayer from 'ol/layer/Base';
 import { PanelData, MapLayerHandler, MapLayerConfig } from '@grafana/data';
 
 interface BaseMapProps {
+  width: number;
   height: number;
   options: GeomapPanelOptions;
   data: PanelData;
@@ -23,7 +24,7 @@ interface BaseMapProps {
 import 'ol/ol.css';
 import 'ol-layerswitcher/dist/ol-layerswitcher.css';
 
-import { GeomapPanelOptions } from '../types';
+import { ControlsOptions, GeomapPanelOptions } from '../types';
 import { defaultFrameConfig, newDynamicLayerHandler } from '../layers/dynamic';
 
 export class BaseMap extends Component<BaseMapProps> {
@@ -73,14 +74,15 @@ export class BaseMap extends Component<BaseMapProps> {
       return; // not yet initalized
     }
 
-    if (this.props.height !== oldProps.height) {
+    // Check for resize
+    if (this.props.height !== oldProps.height || this.props.width !== oldProps.width) {
       this.map.updateSize();
     }
 
-    // // External configuraiton changed
-    // if (this.props.options !== oldProps.options) {
-    //   this.optionsChanged(oldProps.options);
-    // }
+    // External configuraiton changed
+    if (this.props.options !== oldProps.options) {
+      this.optionsChanged(oldProps.options);
+    }
 
     // External data changed
     if (this.props.data !== oldProps.data) {
@@ -88,25 +90,21 @@ export class BaseMap extends Component<BaseMapProps> {
     }
   }
 
-  // /**
-  //  * Called when the panel options change
-  //  */
-  // optionsChanged(oldOptions: GeomapPanelOptions) {
-  //   const { options } = this.props;
-  //   const controls = options.controls ?? {};
-  //   const oldControls = oldOptions.controls ?? {};
-  //   console.log('options changed!', controls, oldControls, controls === oldControls);
+  /**
+   * Called when the panel options change
+   */
+  optionsChanged(oldOptions: GeomapPanelOptions) {
+    const { options } = this.props;
+    const controls = options.controls ?? {};
+    const oldControls = oldOptions.controls ?? {};
+    console.log('options changed!', controls, oldControls, controls === oldControls);
 
-  //   // Check controls
-  //   if (controls.hideZoom !== oldControls.hideZoom) {
-  //     console.log('zoom changed', controls.hideZoom);
-  //     if (controls.hideZoom) {
-  //       this.map.removeControl(this.map.zoomControl);
-  //     } else {
-  //       this.map.addControl(this.map.zoomControl);
-  //     }
-  //   }
-  // }
+    // Check controls
+    if (true) {
+      //controls !== oldControls) {
+      this.initControls(controls);
+    }
+  }
 
   /**
    * Called when PanelData changes (query results etc)
@@ -122,36 +120,14 @@ export class BaseMap extends Component<BaseMapProps> {
   }
 
   initMapRef = (div: HTMLDivElement) => {
+    if (this.map) {
+      this.map.dispose();
+    }
+
     if (!div) {
-      if (this.map) {
-        this.map.dispose();
-      }
       this.map = (undefined as unknown) as GeoMap;
       return;
     }
-
-    // const osm = new TileLayer({
-    //   title: 'OSM',
-    //   type: 'base',
-    //   visible: true,
-    //   source: new OSM(),
-    // } as any);
-
-    // const watercolor = new TileLayer({
-    //   title: 'Water color',
-    //   type: 'base',
-    //   visible: false,
-    //   source: new Stamen({
-    //     layer: 'watercolor',
-    //   }),
-    // } as any);
-
-    // const baseMaps = new LayerGroup({
-    //   title: 'Base maps',
-    //   layers: [osm, watercolor],
-    // } as any);
-
-    // const { options } = this.props;
 
     this.map = new GeoMap({
       view: new View({
@@ -160,27 +136,11 @@ export class BaseMap extends Component<BaseMapProps> {
       }),
       pixelRatio: 1, // or zoom?
       layers: [], // delay...
-      controls: [
-        new Zoom({}),
-        new ScaleLine({
-          bar: false,
-        }),
-        new Attribution({
-          collapsible: true,
-          collapsed: true,
-        }),
-        new OverviewMap({
-          collapsed: false,
-          collapsible: true,
-          layers: [
-            new TileLayer({
-              source: new OSM(),
-            }),
-          ],
-        }),
-      ],
+      controls: [], // empty
       target: div,
     });
+    // init the controls
+    this.initControls(this.props.options.controls);
 
     const iiiii: BaseLayer[] = [];
     let basemaps = this.props.options.basemaps;
@@ -190,12 +150,6 @@ export class BaseMap extends Component<BaseMapProps> {
         .list()
         .filter((v) => v.isBaseMap)
         .map((v) => ({ type: v.id }));
-
-      // basemaps = [
-      //   { type: 'esri-basemap-streets' },
-      //   { type: 'esri-basemap-imagery' },
-      //   { type: 'esri-basemap-topo' }, //
-      // ];
     }
 
     for (const cfg of basemaps) {
@@ -230,16 +184,49 @@ export class BaseMap extends Component<BaseMapProps> {
     if (true) {
       const handler = newDynamicLayerHandler(this.map, defaultFrameConfig);
       const layer = handler.init();
-      console.log('HELLO', layer);
       this.map.addLayer(layer);
 
       this.handlers.set(defaultFrameConfig, handler);
     }
-
-    // if (baseLayerCount > 1) {
-    //   L.control.layers(baseMaps, overlayMaps).addTo(this.map);
-    // }
   };
+
+  initControls(options: ControlsOptions) {
+    this.map.getControls().clear();
+
+    if (options.showZoom) {
+      this.map.addControl(new Zoom());
+    }
+
+    if (options.showScale) {
+      this.map.addControl(
+        new ScaleLine({
+          units: options.scaleUnits,
+          bar: options.scaleShowBar,
+          minWidth: 100,
+        })
+      );
+    }
+
+    if (options.showAttribution) {
+      this.map.addControl(new Attribution({ collapsed: true, collapsible: true }));
+    }
+
+    if (options.showOverview) {
+      this.map.addControl(
+        new OverviewMap({
+          collapsed: false,
+          collapsible: false,
+          layers: [
+            new TileLayer({
+              source: new OSM(), // TODO, get selected baselayer
+            }),
+          ],
+        })
+      );
+    }
+
+    console.log('CONTROLS', options, this.map.getControls());
+  }
 
   render() {
     return <div style={{ width: '100%', height: this.props.height }} ref={this.initMapRef}></div>;

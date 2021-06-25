@@ -27,26 +27,6 @@ const terrain: MapLayerRegistryItem = {
   }),
 };
 
-const watercolor: MapLayerRegistryItem = {
-  id: 'stamen-watercolor',
-  name: 'Stamen - Watercolor',
-  isBaseMap: true,
-
-  /**
-   * Function that configures transformation and returns a transformer
-   * @param options
-   */
-  create: (map: Map, options: MapLayerConfig) => ({
-    init: () => {
-      return new TileLayer({
-        source: new Stamen({
-          layer: 'watercolor',
-        }),
-      });
-    },
-  }),
-};
-
 const toner: MapLayerRegistryItem = {
   id: 'stamen-toner',
   name: 'Stamen - Toner',
@@ -67,4 +47,4 @@ const toner: MapLayerRegistryItem = {
   }),
 };
 
-export const stamenLayers = [toner, terrain, watercolor];
+export const stamenLayers = [toner, terrain];
