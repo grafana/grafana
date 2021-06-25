@@ -19,7 +19,7 @@ The export feature is accessed in the share window which you open by clicking th
 
 ### Making a dashboard portable
 
-If you want to export a dashboard for others to use then it could be a good idea to
+If you want to export a dashboard for others to use, then you might
 add template variables for things like a metric prefix (use constant variable) and server name.
 
 A template variable of the type `Constant` will automatically be hidden in
