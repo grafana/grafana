@@ -5,16 +5,16 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/services/validations"
+	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
-	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestDingDingNotifier(t *testing.T) {
-	Convey("Dingding notifier tests", t, func() {
-		Convey("empty settings should return error", func() {
+	t.Run("Dingding notifier tests", func(t *testing.T) {
+		t.Run("empty settings should return error", func(t *testing.T) {
 			json := `{ }`
 
 			settingsJSON, _ := simplejson.NewJson([]byte(json))
@@ -25,9 +25,9 @@ func TestDingDingNotifier(t *testing.T) {
 			}
 
 			_, err := newDingDingNotifier(model)
-			So(err, ShouldNotBeNil)
+			require.Error(t, err)
 		})
-		Convey("settings should trigger incident", func() {
+		t.Run("settings should trigger incident", func(t *testing.T) {
 			json := `{ "url": "https://www.google.com" }`
 
 			settingsJSON, _ := simplejson.NewJson([]byte(json))
@@ -40,19 +40,19 @@ func TestDingDingNotifier(t *testing.T) {
 			not, err := newDingDingNotifier(model)
 			notifier := not.(*DingDingNotifier)
 
-			So(err, ShouldBeNil)
-			So(notifier.Name, ShouldEqual, "dingding_testing")
-			So(notifier.Type, ShouldEqual, "dingding")
-			So(notifier.URL, ShouldEqual, "https://www.google.com")
+			require.NoError(t, err)
+			require.Equal(t, "dingding_testing", notifier.Name)
+			require.Equal(t, "dingding", notifier.Type)
+			require.Equal(t, "https://www.google.com", notifier.URL)
 
-			Convey("genBody should not panic", func() {
+			t.Run("genBody should not panic", func(t *testing.T) {
 				evalContext := alerting.NewEvalContext(context.Background(),
 					&alerting.Rule{
 						State:   models.AlertStateAlerting,
 						Message: `{host="localhost"}`,
 					}, &validations.OSSPluginRequestValidator{})
 				_, err = notifier.genBody(evalContext, "")
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 			})
 		})
 	})

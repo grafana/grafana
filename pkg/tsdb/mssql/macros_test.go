@@ -10,12 +10,11 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/plugins"
-	. "github.com/smartystreets/goconvey/convey"
 	"github.com/stretchr/testify/require"
 )
 
 func TestMacroEngine(t *testing.T) {
-	Convey("MacroEngine", t, func() {
+	t.Run("MacroEngine", func(t *testing.T) {
 		engine := &msSQLMacroEngine{}
 		query := plugins.DataSubQuery{
 			Model: simplejson.New(),
@@ -23,205 +22,205 @@ func TestMacroEngine(t *testing.T) {
 
 		dfltTimeRange := plugins.DataTimeRange{}
 
-		Convey("Given a time range between 2018-04-12 00:00 and 2018-04-12 00:05", func() {
+		t.Run("Given a time range between 2018-04-12 00:00 and 2018-04-12 00:05", func(t *testing.T) {
 			from := time.Date(2018, 4, 12, 18, 0, 0, 0, time.UTC)
 			to := from.Add(5 * time.Minute)
 			timeRange := plugins.DataTimeRange{From: "5m", Now: to, To: "now"}
 
-			Convey("interpolate __time function", func() {
+			t.Run("interpolate __time function", func(t *testing.T) {
 				sql, err := engine.Interpolate(query, dfltTimeRange, "select $__time(time_column)")
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
-				So(sql, ShouldEqual, "select time_column AS time")
+				require.Equal(t, "select time_column AS time", sql)
 			})
 
-			Convey("interpolate __timeEpoch function", func() {
+			t.Run("interpolate __timeEpoch function", func(t *testing.T) {
 				sql, err := engine.Interpolate(query, dfltTimeRange, "select $__timeEpoch(time_column)")
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
-				So(sql, ShouldEqual, "select DATEDIFF(second, '1970-01-01', time_column) AS time")
+				require.Equal(t, "select DATEDIFF(second, '1970-01-01', time_column) AS time", sql)
 			})
 
-			Convey("interpolate __timeEpoch function wrapped in aggregation", func() {
+			t.Run("interpolate __timeEpoch function wrapped in aggregation", func(t *testing.T) {
 				sql, err := engine.Interpolate(query, dfltTimeRange, "select min($__timeEpoch(time_column))")
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
-				So(sql, ShouldEqual, "select min(DATEDIFF(second, '1970-01-01', time_column) AS time)")
+				require.Equal(t, "select min(DATEDIFF(second, '1970-01-01', time_column) AS time)", sql)
 			})
 
-			Convey("interpolate __timeFilter function", func() {
+			t.Run("interpolate __timeFilter function", func(t *testing.T) {
 				sql, err := engine.Interpolate(query, timeRange, "WHERE $__timeFilter(time_column)")
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
-				So(sql, ShouldEqual, fmt.Sprintf("WHERE time_column BETWEEN '%s' AND '%s'", from.Format(time.RFC3339), to.Format(time.RFC3339)))
+				require.Equal(t, fmt.Sprintf("WHERE time_column BETWEEN '%s' AND '%s'", from.Format(time.RFC3339), to.Format(time.RFC3339)), sql)
 			})
 
-			Convey("interpolate __timeFrom function", func() {
+			t.Run("interpolate __timeFrom function", func(t *testing.T) {
 				sql, err := engine.Interpolate(query, timeRange, "select $__timeFrom()")
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
-				So(sql, ShouldEqual, "select '2018-04-12T18:00:00Z'")
+				require.Equal(t, "select '2018-04-12T18:00:00Z'", sql)
 			})
 
-			Convey("interpolate __timeTo function", func() {
+			t.Run("interpolate __timeTo function", func(t *testing.T) {
 				sql, err := engine.Interpolate(query, timeRange, "select $__timeTo()")
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
-				So(sql, ShouldEqual, "select '2018-04-12T18:05:00Z'")
+				require.Equal(t, "select '2018-04-12T18:05:00Z'", sql)
 			})
 
-			Convey("interpolate __timeGroup function", func() {
+			t.Run("interpolate __timeGroup function", func(t *testing.T) {
 				sql, err := engine.Interpolate(query, timeRange, "GROUP BY $__timeGroup(time_column,'5m')")
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 				sql2, err := engine.Interpolate(query, timeRange, "GROUP BY $__timeGroupAlias(time_column,'5m')")
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
-				So(sql, ShouldEqual, "GROUP BY FLOOR(DATEDIFF(second, '1970-01-01', time_column)/300)*300")
-				So(sql2, ShouldEqual, sql+" AS [time]")
+				require.Equal(t, "GROUP BY FLOOR(DATEDIFF(second, '1970-01-01', time_column)/300)*300", sql)
+				require.Equal(t, sql+" AS [time]", sql2)
 			})
 
-			Convey("interpolate __timeGroup function with spaces around arguments", func() {
+			t.Run("interpolate __timeGroup function with spaces around arguments", func(t *testing.T) {
 				sql, err := engine.Interpolate(query, timeRange, "GROUP BY $__timeGroup(time_column , '5m')")
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 				sql2, err := engine.Interpolate(query, timeRange, "GROUP BY $__timeGroupAlias(time_column , '5m')")
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
-				So(sql, ShouldEqual, "GROUP BY FLOOR(DATEDIFF(second, '1970-01-01', time_column)/300)*300")
-				So(sql2, ShouldEqual, sql+" AS [time]")
+				require.Equal(t, "GROUP BY FLOOR(DATEDIFF(second, '1970-01-01', time_column)/300)*300", sql)
+				require.Equal(t, sql+" AS [time]", sql2)
 			})
 
-			Convey("interpolate __timeGroup function with fill (value = NULL)", func() {
+			t.Run("interpolate __timeGroup function with fill (value = NULL)", func(t *testing.T) {
 				_, err := engine.Interpolate(query, timeRange, "GROUP BY $__timeGroup(time_column,'5m', NULL)")
 
 				fill := query.Model.Get("fill").MustBool()
 				fillMode := query.Model.Get("fillMode").MustString()
 				fillInterval := query.Model.Get("fillInterval").MustInt()
 
-				So(err, ShouldBeNil)
-				So(fill, ShouldBeTrue)
-				So(fillMode, ShouldEqual, "null")
-				So(fillInterval, ShouldEqual, 5*time.Minute.Seconds())
+				require.NoError(t, err)
+				require.True(t, fill)
+				require.Equal(t, "null", fillMode)
+				require.Equal(t, 5*time.Minute.Seconds(), fillInterval)
 			})
 
-			Convey("interpolate __timeGroup function with fill (value = previous)", func() {
+			t.Run("interpolate __timeGroup function with fill (value = previous)", func(t *testing.T) {
 				_, err := engine.Interpolate(query, timeRange, "GROUP BY $__timeGroup(time_column,'5m', previous)")
 
 				fill := query.Model.Get("fill").MustBool()
 				fillMode := query.Model.Get("fillMode").MustString()
 				fillInterval := query.Model.Get("fillInterval").MustInt()
 
-				So(err, ShouldBeNil)
-				So(fill, ShouldBeTrue)
-				So(fillMode, ShouldEqual, "previous")
-				So(fillInterval, ShouldEqual, 5*time.Minute.Seconds())
+				require.NoError(t, err)
+				require.True(t, fill)
+				require.Equal(t, "previous", fillMode)
+				require.Equal(t, 5*time.Minute.Seconds(), fillInterval)
 			})
 
-			Convey("interpolate __timeGroup function with fill (value = float)", func() {
+			t.Run("interpolate __timeGroup function with fill (value = float)", func(t *testing.T) {
 				_, err := engine.Interpolate(query, timeRange, "GROUP BY $__timeGroup(time_column,'5m', 1.5)")
 
 				fill := query.Model.Get("fill").MustBool()
 				fillValue := query.Model.Get("fillValue").MustFloat64()
 				fillInterval := query.Model.Get("fillInterval").MustInt()
 
-				So(err, ShouldBeNil)
-				So(fill, ShouldBeTrue)
-				So(fillValue, ShouldEqual, 1.5)
-				So(fillInterval, ShouldEqual, 5*time.Minute.Seconds())
+				require.NoError(t, err)
+				require.True(t, fill)
+				require.Equal(t, 1.5, fillValue)
+				require.Equal(t, 5*time.Minute.Seconds(), fillInterval)
 			})
 
-			Convey("interpolate __unixEpochFilter function", func() {
+			t.Run("interpolate __unixEpochFilter function", func(t *testing.T) {
 				sql, err := engine.Interpolate(query, timeRange, "select $__unixEpochFilter(time_column)")
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
-				So(sql, ShouldEqual, fmt.Sprintf("select time_column >= %d AND time_column <= %d", from.Unix(), to.Unix()))
+				require.Equal(t, fmt.Sprintf("select time_column >= %d AND time_column <= %d", from.Unix(), to.Unix()), sql)
 			})
 
-			Convey("interpolate __unixEpochNanoFilter function", func() {
+			t.Run("interpolate __unixEpochNanoFilter function", func(t *testing.T) {
 				sql, err := engine.Interpolate(query, timeRange, "select $__unixEpochNanoFilter(time_column)")
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
-				So(sql, ShouldEqual, fmt.Sprintf("select time_column >= %d AND time_column <= %d", from.UnixNano(), to.UnixNano()))
+				require.Equal(t, fmt.Sprintf("select time_column >= %d AND time_column <= %d", from.UnixNano(), to.UnixNano()), sql)
 			})
-			Convey("interpolate __unixEpochNanoFrom function", func() {
+			t.Run("interpolate __unixEpochNanoFrom function", func(t *testing.T) {
 				sql, err := engine.Interpolate(query, timeRange, "select $__unixEpochNanoFrom()")
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
-				So(sql, ShouldEqual, fmt.Sprintf("select %d", from.UnixNano()))
+				require.Equal(t, fmt.Sprintf("select %d", from.UnixNano()), sql)
 			})
 
-			Convey("interpolate __unixEpochNanoTo function", func() {
+			t.Run("interpolate __unixEpochNanoTo function", func(t *testing.T) {
 				sql, err := engine.Interpolate(query, timeRange, "select $__unixEpochNanoTo()")
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
-				So(sql, ShouldEqual, fmt.Sprintf("select %d", to.UnixNano()))
+				require.Equal(t, fmt.Sprintf("select %d", to.UnixNano()), sql)
 			})
 
-			Convey("interpolate __unixEpochGroup function", func() {
+			t.Run("interpolate __unixEpochGroup function", func(t *testing.T) {
 				sql, err := engine.Interpolate(query, timeRange, "SELECT $__unixEpochGroup(time_column,'5m')")
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 				sql2, err := engine.Interpolate(query, timeRange, "SELECT $__unixEpochGroupAlias(time_column,'5m')")
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
-				So(sql, ShouldEqual, "SELECT FLOOR(time_column/300)*300")
-				So(sql2, ShouldEqual, sql+" AS [time]")
+				require.Equal(t, "SELECT FLOOR(time_column/300)*300", sql)
+				require.Equal(t, sql+" AS [time]", sql2)
 			})
 		})
 
-		Convey("Given a time range between 1960-02-01 07:00 and 1965-02-03 08:00", func() {
+		t.Run("Given a time range between 1960-02-01 07:00 and 1965-02-03 08:00", func(t *testing.T) {
 			from := time.Date(1960, 2, 1, 7, 0, 0, 0, time.UTC)
 			to := time.Date(1965, 2, 3, 8, 0, 0, 0, time.UTC)
 			timeRange := plugins.NewDataTimeRange(
 				strconv.FormatInt(from.UnixNano()/int64(time.Millisecond), 10),
 				strconv.FormatInt(to.UnixNano()/int64(time.Millisecond), 10))
 
-			Convey("interpolate __timeFilter function", func() {
+			t.Run("interpolate __timeFilter function", func(t *testing.T) {
 				sql, err := engine.Interpolate(query, timeRange, "WHERE $__timeFilter(time_column)")
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
-				So(sql, ShouldEqual, fmt.Sprintf("WHERE time_column BETWEEN '%s' AND '%s'", from.Format(time.RFC3339), to.Format(time.RFC3339)))
+				require.Equal(t, fmt.Sprintf("WHERE time_column BETWEEN '%s' AND '%s'", from.Format(time.RFC3339), to.Format(time.RFC3339)), sql)
 			})
 
-			Convey("interpolate __unixEpochFilter function", func() {
+			t.Run("interpolate __unixEpochFilter function", func(t *testing.T) {
 				sql, err := engine.Interpolate(query, timeRange, "select $__unixEpochFilter(time_column)")
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
-				So(sql, ShouldEqual, fmt.Sprintf("select time_column >= %d AND time_column <= %d", from.Unix(), to.Unix()))
+				require.Equal(t, fmt.Sprintf("select time_column >= %d AND time_column <= %d", from.Unix(), to.Unix()), sql)
 			})
 
-			Convey("interpolate __unixEpochNanoFilter function", func() {
+			t.Run("interpolate __unixEpochNanoFilter function", func(t *testing.T) {
 				sql, err := engine.Interpolate(query, timeRange, "select $__unixEpochNanoFilter(time_column)")
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
-				So(sql, ShouldEqual, fmt.Sprintf("select time_column >= %d AND time_column <= %d", from.UnixNano(), to.UnixNano()))
+				require.Equal(t, fmt.Sprintf("select time_column >= %d AND time_column <= %d", from.UnixNano(), to.UnixNano()), sql)
 			})
 		})
 
-		Convey("Given a time range between 1960-02-01 07:00 and 1980-02-03 08:00", func() {
+		t.Run("Given a time range between 1960-02-01 07:00 and 1980-02-03 08:00", func(t *testing.T) {
 			from := time.Date(1960, 2, 1, 7, 0, 0, 0, time.UTC)
 			to := time.Date(1980, 2, 3, 8, 0, 0, 0, time.UTC)
 			timeRange := plugins.NewDataTimeRange(
 				strconv.FormatInt(from.UnixNano()/int64(time.Millisecond), 10),
 				strconv.FormatInt(to.UnixNano()/int64(time.Millisecond), 10))
 
-			Convey("interpolate __timeFilter function", func() {
+			t.Run("interpolate __timeFilter function", func(t *testing.T) {
 				sql, err := engine.Interpolate(query, timeRange, "WHERE $__timeFilter(time_column)")
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
-				So(sql, ShouldEqual, fmt.Sprintf("WHERE time_column BETWEEN '%s' AND '%s'", from.Format(time.RFC3339), to.Format(time.RFC3339)))
+				require.Equal(t, fmt.Sprintf("WHERE time_column BETWEEN '%s' AND '%s'", from.Format(time.RFC3339), to.Format(time.RFC3339)), sql)
 			})
 
-			Convey("interpolate __unixEpochFilter function", func() {
+			t.Run("interpolate __unixEpochFilter function", func(t *testing.T) {
 				sql, err := engine.Interpolate(query, timeRange, "select $__unixEpochFilter(time_column)")
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
-				So(sql, ShouldEqual, fmt.Sprintf("select time_column >= %d AND time_column <= %d", from.Unix(), to.Unix()))
+				require.Equal(t, fmt.Sprintf("select time_column >= %d AND time_column <= %d", from.Unix(), to.Unix()), sql)
 			})
 
-			Convey("interpolate __unixEpochNanoFilter function", func() {
+			t.Run("interpolate __unixEpochNanoFilter function", func(t *testing.T) {
 				sql, err := engine.Interpolate(query, timeRange, "select $__unixEpochNanoFilter(time_column)")
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
-				So(sql, ShouldEqual, fmt.Sprintf("select time_column >= %d AND time_column <= %d", from.UnixNano(), to.UnixNano()))
+				require.Equal(t, fmt.Sprintf("select time_column >= %d AND time_column <= %d", from.UnixNano(), to.UnixNano()), sql)
 			})
 		})
 	})

@@ -3,30 +3,31 @@ package ldap
 import (
 	"testing"
 
-	. "github.com/smartystreets/goconvey/convey"
+	"github.com/google/go-cmp/cmp"
+	"github.com/stretchr/testify/require"
 	"gopkg.in/ldap.v3"
 )
 
 func TestLDAPHelpers(t *testing.T) {
-	Convey("isMemberOf()", t, func() {
-		Convey("Wildcard", func() {
+	t.Run("isMemberOf()", func(t *testing.T) {
+		t.Run("Wildcard", func(t *testing.T) {
 			result := isMemberOf([]string{}, "*")
-			So(result, ShouldBeTrue)
+			require.True(t, result)
 		})
 
-		Convey("Should find one", func() {
+		t.Run("Should find one", func(t *testing.T) {
 			result := isMemberOf([]string{"one", "Two", "three"}, "two")
-			So(result, ShouldBeTrue)
+			require.True(t, result)
 		})
 
-		Convey("Should not find one", func() {
+		t.Run("Should not find one", func(t *testing.T) {
 			result := isMemberOf([]string{"one", "Two", "three"}, "twos")
-			So(result, ShouldBeFalse)
+			require.False(t, result)
 		})
 	})
 
-	Convey("getUsersIteration()", t, func() {
-		Convey("it should execute twice for 600 users", func() {
+	t.Run("getUsersIteration()", func(t *testing.T) {
+		t.Run("it should execute twice for 600 users", func(t *testing.T) {
 			logins := make([]string, 600)
 			i := 0
 
@@ -34,21 +35,21 @@ func TestLDAPHelpers(t *testing.T) {
 				i++
 
 				if i == 1 {
-					So(previous, ShouldEqual, 0)
-					So(current, ShouldEqual, 500)
+					require.Equal(t, 0, previous)
+					require.Equal(t, 500, current)
 				} else {
-					So(previous, ShouldEqual, 500)
-					So(current, ShouldEqual, 600)
+					require.Equal(t, 500, previous)
+					require.Equal(t, 600, current)
 				}
 
 				return nil
 			})
 
-			So(i, ShouldEqual, 2)
-			So(result, ShouldBeNil)
+			require.Equal(t, 2, i)
+			require.Nil(t, result)
 		})
 
-		Convey("it should execute three times for 1500 users", func() {
+		t.Run("it should execute three times for 1500 users", func(t *testing.T) {
 			logins := make([]string, 1500)
 			i := 0
 
@@ -56,42 +57,42 @@ func TestLDAPHelpers(t *testing.T) {
 				i++
 				switch i {
 				case 1:
-					So(previous, ShouldEqual, 0)
-					So(current, ShouldEqual, 500)
+					require.Equal(t, 0, previous)
+					require.Equal(t, 500, current)
 				case 2:
-					So(previous, ShouldEqual, 500)
-					So(current, ShouldEqual, 1000)
+					require.Equal(t, 500, previous)
+					require.Equal(t, 1000, current)
 				default:
-					So(previous, ShouldEqual, 1000)
-					So(current, ShouldEqual, 1500)
+					require.Equal(t, 1000, previous)
+					require.Equal(t, 1500, current)
 				}
 
 				return nil
 			})
 
-			So(i, ShouldEqual, 3)
-			So(result, ShouldBeNil)
+			require.Equal(t, 3, i)
+			require.Nil(t, result)
 		})
 
-		Convey("it should execute once for 400 users", func() {
+		t.Run("it should execute once for 400 users", func(t *testing.T) {
 			logins := make([]string, 400)
 			i := 0
 
 			result := getUsersIteration(logins, func(previous, current int) error {
 				i++
 				if i == 1 {
-					So(previous, ShouldEqual, 0)
-					So(current, ShouldEqual, 400)
+					require.Equal(t, 0, previous)
+					require.Equal(t, 400, current)
 				}
 
 				return nil
 			})
 
-			So(i, ShouldEqual, 1)
-			So(result, ShouldBeNil)
+			require.Equal(t, 1, i)
+			require.Nil(t, result)
 		})
 
-		Convey("it should not execute for 0 users", func() {
+		t.Run("it should not execute for 0 users", func(t *testing.T) {
 			logins := make([]string, 0)
 			i := 0
 
@@ -100,23 +101,23 @@ func TestLDAPHelpers(t *testing.T) {
 				return nil
 			})
 
-			So(i, ShouldEqual, 0)
-			So(result, ShouldBeNil)
+			require.Equal(t, 0, i)
+			require.Nil(t, result)
 		})
 	})
 
-	Convey("getAttribute()", t, func() {
-		Convey("Should get DN", func() {
+	t.Run("getAttribute()", func(t *testing.T) {
+		t.Run("Should get DN", func(t *testing.T) {
 			entry := &ldap.Entry{
 				DN: "test",
 			}
 
 			result := getAttribute("dn", entry)
 
-			So(result, ShouldEqual, "test")
+			require.Equal(t, "test", result)
 		})
 
-		Convey("Should get username", func() {
+		t.Run("Should get username", func(t *testing.T) {
 			value := []string{"roelgerrits"}
 			entry := &ldap.Entry{
 				Attributes: []*ldap.EntryAttribute{
@@ -128,10 +129,10 @@ func TestLDAPHelpers(t *testing.T) {
 
 			result := getAttribute("username", entry)
 
-			So(result, ShouldEqual, value[0])
+			require.Equal(t, value[0], result)
 		})
 
-		Convey("Should not get anything", func() {
+		t.Run("Should not get anything", func(t *testing.T) {
 			value := []string{"roelgerrits"}
 			entry := &ldap.Entry{
 				Attributes: []*ldap.EntryAttribute{
@@ -143,22 +144,22 @@ func TestLDAPHelpers(t *testing.T) {
 
 			result := getAttribute("username", entry)
 
-			So(result, ShouldEqual, "")
+			require.Equal(t, "", result)
 		})
 	})
 
-	Convey("getArrayAttribute()", t, func() {
-		Convey("Should get DN", func() {
+	t.Run("getArrayAttribute()", func(t *testing.T) {
+		t.Run("Should get DN", func(t *testing.T) {
 			entry := &ldap.Entry{
 				DN: "test",
 			}
 
 			result := getArrayAttribute("dn", entry)
 
-			So(result, ShouldResemble, []string{"test"})
+			require.True(t, cmp.Equal(result, []string{"test"}))
 		})
 
-		Convey("Should get username", func() {
+		t.Run("Should get username", func(t *testing.T) {
 			value := []string{"roelgerrits"}
 			entry := &ldap.Entry{
 				Attributes: []*ldap.EntryAttribute{
@@ -170,10 +171,10 @@ func TestLDAPHelpers(t *testing.T) {
 
 			result := getArrayAttribute("username", entry)
 
-			So(result, ShouldResemble, value)
+			require.True(t, cmp.Equal(result, value))
 		})
 
-		Convey("Should not get anything", func() {
+		t.Run("Should not get anything", func(t *testing.T) {
 			value := []string{"roelgerrits"}
 			entry := &ldap.Entry{
 				Attributes: []*ldap.EntryAttribute{
@@ -185,7 +186,7 @@ func TestLDAPHelpers(t *testing.T) {
 
 			result := getArrayAttribute("something", entry)
 
-			So(result, ShouldResemble, []string{})
+			require.True(t, cmp.Equal(result, []string{}))
 		})
 	})
 }

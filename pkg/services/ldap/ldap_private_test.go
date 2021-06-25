@@ -3,15 +3,16 @@ package ldap
 import (
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	. "github.com/smartystreets/goconvey/convey"
+	"github.com/stretchr/testify/require"
 	"gopkg.in/ldap.v3"
 )
 
 func TestLDAPPrivateMethods(t *testing.T) {
-	Convey("getSearchRequest()", t, func() {
-		Convey("with enabled GroupSearchFilterUserAttribute setting", func() {
+	t.Run("getSearchRequest()", func(t *testing.T) {
+		t.Run("with enabled GroupSearchFilterUserAttribute setting", func(t *testing.T) {
 			server := &Server{
 				Config: &ServerConfig{
 					Attr: AttributeMap{
@@ -28,7 +29,7 @@ func TestLDAPPrivateMethods(t *testing.T) {
 
 			result := server.getSearchRequest("killa", []string{"gorilla"})
 
-			So(result, ShouldResemble, &ldap.SearchRequest{
+			require.True(t, cmp.Equal(result, &ldap.SearchRequest{
 				BaseDN:       "killa",
 				Scope:        2,
 				DerefAliases: 0,
@@ -44,12 +45,12 @@ func TestLDAPPrivateMethods(t *testing.T) {
 					"gansta",
 				},
 				Controls: nil,
-			})
+			}))
 		})
 	})
 
-	Convey("serializeUsers()", t, func() {
-		Convey("simple case", func() {
+	t.Run("serializeUsers()", func(t *testing.T) {
+		t.Run("simple case", func(t *testing.T) {
 			server := &Server{
 				Config: &ServerConfig{
 					Attr: AttributeMap{
@@ -78,13 +79,13 @@ func TestLDAPPrivateMethods(t *testing.T) {
 
 			result, err := server.serializeUsers(users)
 
-			So(err, ShouldBeNil)
-			So(result[0].Login, ShouldEqual, "roelgerrits")
-			So(result[0].Email, ShouldEqual, "roel@test.com")
-			So(result[0].Groups, ShouldContain, "admins")
+			require.NoError(t, err)
+			require.Equal(t, "roelgerrits", result[0].Login)
+			require.Equal(t, "roel@test.com", result[0].Email)
+			require.Contains(t, result[0].Groups, "admins")
 		})
 
-		Convey("without lastname", func() {
+		t.Run("without lastname", func(t *testing.T) {
 			server := &Server{
 				Config: &ServerConfig{
 					Attr: AttributeMap{
@@ -112,12 +113,12 @@ func TestLDAPPrivateMethods(t *testing.T) {
 
 			result, err := server.serializeUsers(users)
 
-			So(err, ShouldBeNil)
-			So(result[0].IsDisabled, ShouldBeFalse)
-			So(result[0].Name, ShouldEqual, "Roel")
+			require.NoError(t, err)
+			require.False(t, result[0].IsDisabled)
+			require.Equal(t, "Roel", result[0].Name)
 		})
 
-		Convey("a user without matching groups should be marked as disabled", func() {
+		t.Run("a user without matching groups should be marked as disabled", func(t *testing.T) {
 			server := &Server{
 				Config: &ServerConfig{
 					Groups: []*GroupToOrgRole{{
@@ -140,14 +141,14 @@ func TestLDAPPrivateMethods(t *testing.T) {
 
 			result, err := server.serializeUsers(users)
 
-			So(err, ShouldBeNil)
-			So(len(result), ShouldEqual, 1)
-			So(result[0].IsDisabled, ShouldBeTrue)
+			require.NoError(t, err)
+			require.Equal(t, 1, len(result))
+			require.True(t, result[0].IsDisabled)
 		})
 	})
 
-	Convey("validateGrafanaUser()", t, func() {
-		Convey("Returns error when user does not belong in any of the specified LDAP groups", func() {
+	t.Run("validateGrafanaUser()", func(t *testing.T) {
+		t.Run("Returns error when user does not belong in any of the specified LDAP groups", func(t *testing.T) {
 			server := &Server{
 				Config: &ServerConfig{
 					Groups: []*GroupToOrgRole{
@@ -165,10 +166,10 @@ func TestLDAPPrivateMethods(t *testing.T) {
 
 			result := server.validateGrafanaUser(user)
 
-			So(result, ShouldEqual, ErrInvalidCredentials)
+			require.Equal(t, ErrInvalidCredentials, result)
 		})
 
-		Convey("Does not return error when group config is empty", func() {
+		t.Run("Does not return error when group config is empty", func(t *testing.T) {
 			server := &Server{
 				Config: &ServerConfig{
 					Groups: []*GroupToOrgRole{},
@@ -182,10 +183,10 @@ func TestLDAPPrivateMethods(t *testing.T) {
 
 			result := server.validateGrafanaUser(user)
 
-			So(result, ShouldBeNil)
+			require.Nil(t, result)
 		})
 
-		Convey("Does not return error when groups are there", func() {
+		t.Run("Does not return error when groups are there", func(t *testing.T) {
 			server := &Server{
 				Config: &ServerConfig{
 					Groups: []*GroupToOrgRole{
@@ -206,12 +207,12 @@ func TestLDAPPrivateMethods(t *testing.T) {
 
 			result := server.validateGrafanaUser(user)
 
-			So(result, ShouldBeNil)
+			require.Nil(t, result)
 		})
 	})
 
-	Convey("shouldAdminBind()", t, func() {
-		Convey("it should require admin userBind", func() {
+	t.Run("shouldAdminBind()", func(t *testing.T) {
+		t.Run("it should require admin userBind", func(t *testing.T) {
 			server := &Server{
 				Config: &ServerConfig{
 					BindPassword: "test",
@@ -219,10 +220,10 @@ func TestLDAPPrivateMethods(t *testing.T) {
 			}
 
 			result := server.shouldAdminBind()
-			So(result, ShouldBeTrue)
+			require.True(t, result)
 		})
 
-		Convey("it should not require admin userBind", func() {
+		t.Run("it should not require admin userBind", func(t *testing.T) {
 			server := &Server{
 				Config: &ServerConfig{
 					BindPassword: "",
@@ -230,12 +231,12 @@ func TestLDAPPrivateMethods(t *testing.T) {
 			}
 
 			result := server.shouldAdminBind()
-			So(result, ShouldBeFalse)
+			require.False(t, result)
 		})
 	})
 
-	Convey("shouldSingleBind()", t, func() {
-		Convey("it should allow single bind", func() {
+	t.Run("shouldSingleBind()", func(t *testing.T) {
+		t.Run("it should allow single bind", func(t *testing.T) {
 			server := &Server{
 				Config: &ServerConfig{
 					BindDN: "cn=%s,dc=grafana,dc=org",
@@ -243,10 +244,10 @@ func TestLDAPPrivateMethods(t *testing.T) {
 			}
 
 			result := server.shouldSingleBind()
-			So(result, ShouldBeTrue)
+			require.True(t, result)
 		})
 
-		Convey("it should not allow single bind", func() {
+		t.Run("it should not allow single bind", func(t *testing.T) {
 			server := &Server{
 				Config: &ServerConfig{
 					BindDN: "cn=admin,dc=grafana,dc=org",
@@ -254,12 +255,12 @@ func TestLDAPPrivateMethods(t *testing.T) {
 			}
 
 			result := server.shouldSingleBind()
-			So(result, ShouldBeFalse)
+			require.False(t, result)
 		})
 	})
 
-	Convey("singleBindDN()", t, func() {
-		Convey("it should allow single bind", func() {
+	t.Run("singleBindDN()", func(t *testing.T) {
+		t.Run("it should allow single bind", func(t *testing.T) {
 			server := &Server{
 				Config: &ServerConfig{
 					BindDN: "cn=%s,dc=grafana,dc=org",
@@ -267,7 +268,7 @@ func TestLDAPPrivateMethods(t *testing.T) {
 			}
 
 			result := server.singleBindDN("test")
-			So(result, ShouldEqual, "cn=test,dc=grafana,dc=org")
+			require.Equal(t, "cn=test,dc=grafana,dc=org", result)
 		})
 	})
 }

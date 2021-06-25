@@ -7,14 +7,13 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/models"
-	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestTempUserCommandsAndQueries(t *testing.T) {
-	Convey("Testing Temp User commands & queries", t, func() {
+	t.Run("Testing Temp User commands & queries", func(t *testing.T) {
 		InitTestDB(t)
 
-		Convey("Given saved api key", func() {
+		t.Run("Given saved api key", func(t *testing.T) {
 			cmd := models.CreateTempUserCommand{
 				OrgId:  2256,
 				Name:   "hello",
@@ -23,64 +22,64 @@ func TestTempUserCommandsAndQueries(t *testing.T) {
 				Status: models.TmpUserInvitePending,
 			}
 			err := CreateTempUser(&cmd)
-			So(err, ShouldBeNil)
+			require.NoError(t, err)
 
-			Convey("Should be able to get temp users by org id", func() {
+			t.Run("Should be able to get temp users by org id", func(t *testing.T) {
 				query := models.GetTempUsersQuery{OrgId: 2256, Status: models.TmpUserInvitePending}
 				err = GetTempUsersQuery(&query)
 
-				So(err, ShouldBeNil)
-				So(len(query.Result), ShouldEqual, 1)
+				require.NoError(t, err)
+				require.Equal(t, 1, len(query.Result))
 			})
 
-			Convey("Should be able to get temp users by email", func() {
+			t.Run("Should be able to get temp users by email", func(t *testing.T) {
 				query := models.GetTempUsersQuery{Email: "e@as.co", Status: models.TmpUserInvitePending}
 				err = GetTempUsersQuery(&query)
 
-				So(err, ShouldBeNil)
-				So(len(query.Result), ShouldEqual, 1)
+				require.NoError(t, err)
+				require.Equal(t, 1, len(query.Result))
 			})
 
-			Convey("Should be able to get temp users by code", func() {
+			t.Run("Should be able to get temp users by code", func(t *testing.T) {
 				query := models.GetTempUserByCodeQuery{Code: "asd"}
 				err = GetTempUserByCode(&query)
 
-				So(err, ShouldBeNil)
-				So(query.Result.Name, ShouldEqual, "hello")
+				require.NoError(t, err)
+				require.Equal(t, "hello", query.Result.Name)
 			})
 
-			Convey("Should be able update status", func() {
+			t.Run("Should be able update status", func(t *testing.T) {
 				cmd2 := models.UpdateTempUserStatusCommand{Code: "asd", Status: models.TmpUserRevoked}
 				err := UpdateTempUserStatus(&cmd2)
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 			})
 
-			Convey("Should be able update email sent and email sent on", func() {
+			t.Run("Should be able update email sent and email sent on", func(t *testing.T) {
 				cmd2 := models.UpdateTempUserWithEmailSentCommand{Code: cmd.Result.Code}
 				err := UpdateTempUserWithEmailSent(&cmd2)
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
 				query := models.GetTempUsersQuery{OrgId: 2256, Status: models.TmpUserInvitePending}
 				err = GetTempUsersQuery(&query)
 
-				So(err, ShouldBeNil)
-				So(query.Result[0].EmailSent, ShouldBeTrue)
+				require.NoError(t, err)
+				require.True(t, query.Result[0].EmailSent)
 				So(query.Result[0].EmailSentOn.UTC(), ShouldHappenOnOrAfter, query.Result[0].Created.UTC())
 			})
 
-			Convey("Should be able expire temp user", func() {
+			t.Run("Should be able expire temp user", func(t *testing.T) {
 				createdAt := time.Unix(cmd.Result.Created, 0)
 				cmd2 := models.ExpireTempUsersCommand{OlderThan: createdAt.Add(1 * time.Second)}
 				err := ExpireOldUserInvites(&cmd2)
-				So(err, ShouldBeNil)
-				So(cmd2.NumExpired, ShouldEqual, int64(1))
+				require.NoError(t, err)
+				require.Equal(t, int64(1), cmd2.NumExpired)
 
-				Convey("Should do nothing when no temp users to expire", func() {
+				t.Run("Should do nothing when no temp users to expire", func(t *testing.T) {
 					createdAt := time.Unix(cmd.Result.Created, 0)
 					cmd2 := models.ExpireTempUsersCommand{OlderThan: createdAt.Add(1 * time.Second)}
 					err := ExpireOldUserInvites(&cmd2)
-					So(err, ShouldBeNil)
-					So(cmd2.NumExpired, ShouldEqual, int64(0))
+					require.NoError(t, err)
+					require.Equal(t, int64(0), cmd2.NumExpired)
 				})
 			})
 		})

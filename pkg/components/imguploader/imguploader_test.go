@@ -5,183 +5,182 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/imguploader/gcs"
 	"github.com/grafana/grafana/pkg/setting"
-
-	. "github.com/smartystreets/goconvey/convey"
+	"github.com/stretchr/testify/require"
 )
 
 func TestImageUploaderFactory(t *testing.T) {
-	Convey("Can create image uploader for ", t, func() {
-		Convey("S3ImageUploader config", func() {
+	t.Run("Can create image uploader for ", func(t *testing.T) {
+		t.Run("S3ImageUploader config", func(t *testing.T) {
 			cfg := setting.NewCfg()
 			err := cfg.Load(&setting.CommandLineArgs{
 				HomePath: "../../../",
 			})
-			So(err, ShouldBeNil)
+			require.NoError(t, err)
 
 			setting.ImageUploadProvider = "s3"
 
-			Convey("with bucket url https://foo.bar.baz.s3-us-east-2.amazonaws.com", func() {
+			t.Run("with bucket url https://foo.bar.baz.s3-us-east-2.amazonaws.com", func(t *testing.T) {
 				s3sec, err := setting.Raw.GetSection("external_image_storage.s3")
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 				_, err = s3sec.NewKey("bucket_url", "https://foo.bar.baz.s3-us-east-2.amazonaws.com")
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 				_, err = s3sec.NewKey("access_key", "access_key")
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 				_, err = s3sec.NewKey("secret_key", "secret_key")
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
 				uploader, err := NewImageUploader()
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
 				original, ok := uploader.(*S3Uploader)
-				So(ok, ShouldBeTrue)
-				So(original.region, ShouldEqual, "us-east-2")
-				So(original.bucket, ShouldEqual, "foo.bar.baz")
-				So(original.accessKey, ShouldEqual, "access_key")
-				So(original.secretKey, ShouldEqual, "secret_key")
+				require.True(t, ok)
+				require.Equal(t, "us-east-2", original.region)
+				require.Equal(t, "foo.bar.baz", original.bucket)
+				require.Equal(t, "access_key", original.accessKey)
+				require.Equal(t, "secret_key", original.secretKey)
 			})
 
-			Convey("with bucket url https://s3.amazonaws.com/mybucket", func() {
+			t.Run("with bucket url https://s3.amazonaws.com/mybucket", func(t *testing.T) {
 				s3sec, err := setting.Raw.GetSection("external_image_storage.s3")
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 				_, err = s3sec.NewKey("bucket_url", "https://s3.amazonaws.com/my.bucket.com")
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 				_, err = s3sec.NewKey("access_key", "access_key")
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 				_, err = s3sec.NewKey("secret_key", "secret_key")
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
 				uploader, err := NewImageUploader()
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
 				original, ok := uploader.(*S3Uploader)
-				So(ok, ShouldBeTrue)
-				So(original.region, ShouldEqual, "us-east-1")
-				So(original.bucket, ShouldEqual, "my.bucket.com")
-				So(original.accessKey, ShouldEqual, "access_key")
-				So(original.secretKey, ShouldEqual, "secret_key")
+				require.True(t, ok)
+				require.Equal(t, "us-east-1", original.region)
+				require.Equal(t, "my.bucket.com", original.bucket)
+				require.Equal(t, "access_key", original.accessKey)
+				require.Equal(t, "secret_key", original.secretKey)
 			})
 
-			Convey("with bucket url https://s3-us-west-2.amazonaws.com/mybucket", func() {
+			t.Run("with bucket url https://s3-us-west-2.amazonaws.com/mybucket", func(t *testing.T) {
 				s3sec, err := setting.Raw.GetSection("external_image_storage.s3")
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 				_, err = s3sec.NewKey("bucket_url", "https://s3-us-west-2.amazonaws.com/my.bucket.com")
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 				_, err = s3sec.NewKey("access_key", "access_key")
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 				_, err = s3sec.NewKey("secret_key", "secret_key")
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
 				uploader, err := NewImageUploader()
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
 				original, ok := uploader.(*S3Uploader)
-				So(ok, ShouldBeTrue)
-				So(original.region, ShouldEqual, "us-west-2")
-				So(original.bucket, ShouldEqual, "my.bucket.com")
-				So(original.accessKey, ShouldEqual, "access_key")
-				So(original.secretKey, ShouldEqual, "secret_key")
+				require.True(t, ok)
+				require.Equal(t, "us-west-2", original.region)
+				require.Equal(t, "my.bucket.com", original.bucket)
+				require.Equal(t, "access_key", original.accessKey)
+				require.Equal(t, "secret_key", original.secretKey)
 			})
 		})
 
-		Convey("Webdav uploader", func() {
+		t.Run("Webdav uploader", func(t *testing.T) {
 			cfg := setting.NewCfg()
 			err := cfg.Load(&setting.CommandLineArgs{
 				HomePath: "../../../",
 			})
-			So(err, ShouldBeNil)
+			require.NoError(t, err)
 
 			setting.ImageUploadProvider = "webdav"
 
 			webdavSec, err := cfg.Raw.GetSection("external_image_storage.webdav")
-			So(err, ShouldBeNil)
+			require.NoError(t, err)
 			_, err = webdavSec.NewKey("url", "webdavUrl")
-			So(err, ShouldBeNil)
+			require.NoError(t, err)
 			_, err = webdavSec.NewKey("username", "username")
-			So(err, ShouldBeNil)
+			require.NoError(t, err)
 			_, err = webdavSec.NewKey("password", "password")
-			So(err, ShouldBeNil)
+			require.NoError(t, err)
 
 			uploader, err := NewImageUploader()
-			So(err, ShouldBeNil)
+			require.NoError(t, err)
 			original, ok := uploader.(*WebdavUploader)
 
-			So(ok, ShouldBeTrue)
-			So(original.url, ShouldEqual, "webdavUrl")
-			So(original.username, ShouldEqual, "username")
-			So(original.password, ShouldEqual, "password")
+			require.True(t, ok)
+			require.Equal(t, "webdavUrl", original.url)
+			require.Equal(t, "username", original.username)
+			require.Equal(t, "password", original.password)
 		})
 
-		Convey("GCS uploader", func() {
+		t.Run("GCS uploader", func(t *testing.T) {
 			cfg := setting.NewCfg()
 			err := cfg.Load(&setting.CommandLineArgs{
 				HomePath: "../../../",
 			})
-			So(err, ShouldBeNil)
+			require.NoError(t, err)
 
 			setting.ImageUploadProvider = "gcs"
 
 			gcpSec, err := cfg.Raw.GetSection("external_image_storage.gcs")
-			So(err, ShouldBeNil)
+			require.NoError(t, err)
 			_, err = gcpSec.NewKey("key_file", "/etc/secrets/project-79a52befa3f6.json")
-			So(err, ShouldBeNil)
+			require.NoError(t, err)
 			_, err = gcpSec.NewKey("bucket", "project-grafana-east")
-			So(err, ShouldBeNil)
+			require.NoError(t, err)
 
 			uploader, err := NewImageUploader()
-			So(err, ShouldBeNil)
+			require.NoError(t, err)
 
 			original, ok := uploader.(*gcs.Uploader)
-			So(ok, ShouldBeTrue)
-			So(original.KeyFile, ShouldEqual, "/etc/secrets/project-79a52befa3f6.json")
-			So(original.Bucket, ShouldEqual, "project-grafana-east")
+			require.True(t, ok)
+			require.Equal(t, "/etc/secrets/project-79a52befa3f6.json", original.KeyFile)
+			require.Equal(t, "project-grafana-east", original.Bucket)
 		})
 
-		Convey("AzureBlobUploader config", func() {
+		t.Run("AzureBlobUploader config", func(t *testing.T) {
 			cfg := setting.NewCfg()
 			err := cfg.Load(&setting.CommandLineArgs{
 				HomePath: "../../../",
 			})
-			So(err, ShouldBeNil)
+			require.NoError(t, err)
 
 			setting.ImageUploadProvider = "azure_blob"
 
-			Convey("with container name", func() {
+			t.Run("with container name", func(t *testing.T) {
 				azureBlobSec, err := cfg.Raw.GetSection("external_image_storage.azure_blob")
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 				_, err = azureBlobSec.NewKey("account_name", "account_name")
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 				_, err = azureBlobSec.NewKey("account_key", "account_key")
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 				_, err = azureBlobSec.NewKey("container_name", "container_name")
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
 				uploader, err := NewImageUploader()
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
 				original, ok := uploader.(*AzureBlobUploader)
-				So(ok, ShouldBeTrue)
-				So(original.account_name, ShouldEqual, "account_name")
-				So(original.account_key, ShouldEqual, "account_key")
-				So(original.container_name, ShouldEqual, "container_name")
+				require.True(t, ok)
+				require.Equal(t, "account_name", original.account_name)
+				require.Equal(t, "account_key", original.account_key)
+				require.Equal(t, "container_name", original.container_name)
 			})
 		})
 
-		Convey("Local uploader", func() {
+		t.Run("Local uploader", func(t *testing.T) {
 			cfg := setting.NewCfg()
 			err := cfg.Load(&setting.CommandLineArgs{
 				HomePath: "../../../",
 			})
-			So(err, ShouldBeNil)
+			require.NoError(t, err)
 
 			setting.ImageUploadProvider = "local"
 
 			uploader, err := NewImageUploader()
-			So(err, ShouldBeNil)
+			require.NoError(t, err)
 
 			original, ok := uploader.(*LocalUploader)
-			So(ok, ShouldBeTrue)
-			So(original, ShouldNotBeNil)
+			require.True(t, ok)
+			require.NotNil(t, original)
 		})
 	})
 }

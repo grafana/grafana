@@ -4,7 +4,7 @@ import (
 	"errors"
 	"testing"
 
-	. "github.com/smartystreets/goconvey/convey"
+	"github.com/stretchr/testify/require"
 	"gopkg.in/ldap.v3"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -18,8 +18,8 @@ func TestLDAPLogin(t *testing.T) {
 		IpAddress: "192.168.1.1:56433",
 	}
 
-	Convey("Login()", t, func() {
-		Convey("Should get invalid credentials when userBind fails", func() {
+	t.Run("Login()", func(t *testing.T) {
+		t.Run("Should get invalid credentials when userBind fails", func(t *testing.T) {
 			connection := &MockConnection{}
 			entry := ldap.Entry{}
 			result := ldap.SearchResult{Entries: []*ldap.Entry{&entry}}
@@ -40,10 +40,10 @@ func TestLDAPLogin(t *testing.T) {
 
 			_, err := server.Login(defaultLogin)
 
-			So(err, ShouldEqual, ErrInvalidCredentials)
+			require.Equal(t, ErrInvalidCredentials, err)
 		})
 
-		Convey("Returns an error when search didn't find anything", func() {
+		t.Run("Returns an error when search didn't find anything", func(t *testing.T) {
 			connection := &MockConnection{}
 			result := ldap.SearchResult{Entries: []*ldap.Entry{}}
 			connection.setSearchResult(&result)
@@ -61,10 +61,10 @@ func TestLDAPLogin(t *testing.T) {
 
 			_, err := server.Login(defaultLogin)
 
-			So(err, ShouldEqual, ErrCouldNotFindUser)
+			require.Equal(t, ErrCouldNotFindUser, err)
 		})
 
-		Convey("When search returns an error", func() {
+		t.Run("When search returns an error", func(t *testing.T) {
 			connection := &MockConnection{}
 			expected := errors.New("Killa-gorilla")
 			connection.setSearchError(expected)
@@ -82,10 +82,10 @@ func TestLDAPLogin(t *testing.T) {
 
 			_, err := server.Login(defaultLogin)
 
-			So(err, ShouldEqual, expected)
+			require.Equal(t, expected, err)
 		})
 
-		Convey("When login with valid credentials", func() {
+		t.Run("When login with valid credentials", func(t *testing.T) {
 			connection := &MockConnection{}
 			entry := ldap.Entry{
 				DN: "dn", Attributes: []*ldap.EntryAttribute{
@@ -117,11 +117,11 @@ func TestLDAPLogin(t *testing.T) {
 
 			resp, err := server.Login(defaultLogin)
 
-			So(err, ShouldBeNil)
-			So(resp.Login, ShouldEqual, "markelog")
+			require.NoError(t, err)
+			require.Equal(t, "markelog", resp.Login)
 		})
 
-		Convey("Should perform unauthenticated bind without admin", func() {
+		t.Run("Should perform unauthenticated bind without admin", func(t *testing.T) {
 			connection := &MockConnection{}
 			entry := ldap.Entry{
 				DN: "test",
@@ -142,12 +142,12 @@ func TestLDAPLogin(t *testing.T) {
 
 			user, err := server.Login(defaultLogin)
 
-			So(err, ShouldBeNil)
-			So(user.AuthId, ShouldEqual, "test")
-			So(connection.UnauthenticatedBindCalled, ShouldBeTrue)
+			require.NoError(t, err)
+			require.Equal(t, "test", user.AuthId)
+			require.True(t, connection.UnauthenticatedBindCalled)
 		})
 
-		Convey("Should perform authenticated binds", func() {
+		t.Run("Should perform authenticated binds", func(t *testing.T) {
 			connection := &MockConnection{}
 			entry := ldap.Entry{
 				DN: "test",
@@ -187,18 +187,18 @@ func TestLDAPLogin(t *testing.T) {
 
 			user, err := server.Login(defaultLogin)
 
-			So(err, ShouldBeNil)
+			require.NoError(t, err)
 
-			So(user.AuthId, ShouldEqual, "test")
-			So(connection.BindCalled, ShouldBeTrue)
+			require.Equal(t, "test", user.AuthId)
+			require.True(t, connection.BindCalled)
 
-			So(adminUsername, ShouldEqual, "killa")
-			So(adminPassword, ShouldEqual, "gorilla")
+			require.Equal(t, "killa", adminUsername)
+			require.Equal(t, "gorilla", adminPassword)
 
-			So(username, ShouldEqual, "test")
-			So(password, ShouldEqual, "pwd")
+			require.Equal(t, "test", username)
+			require.Equal(t, "pwd", password)
 		})
-		Convey("Should bind with user if %s exists in the bind_dn", func() {
+		t.Run("Should bind with user if %s exists in the bind_dn", func(t *testing.T) {
 			connection := &MockConnection{}
 			entry := ldap.Entry{
 				DN: "test",
@@ -224,11 +224,11 @@ func TestLDAPLogin(t *testing.T) {
 
 			_, err := server.Login(defaultLogin)
 
-			So(err, ShouldBeNil)
+			require.NoError(t, err)
 
-			So(authBindUser, ShouldEqual, "cn=user,ou=users,dc=grafana,dc=org")
-			So(authBindPassword, ShouldEqual, "pwd")
-			So(connection.BindCalled, ShouldBeTrue)
+			require.Equal(t, "cn=user,ou=users,dc=grafana,dc=org", authBindUser)
+			require.Equal(t, "pwd", authBindPassword)
+			require.True(t, connection.BindCalled)
 		})
 	})
 }

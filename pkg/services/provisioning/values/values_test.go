@@ -7,133 +7,133 @@ import (
 	"os"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
 	"github.com/grafana/grafana/pkg/setting"
 	"gopkg.in/ini.v1"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	. "github.com/smartystreets/goconvey/convey"
 	"gopkg.in/yaml.v2"
 )
 
 func TestValues(t *testing.T) {
-	Convey("Values", t, func() {
+	t.Run("Values", func(t *testing.T) {
 		err := os.Setenv("INT", "1")
-		So(err, ShouldBeNil)
+		require.NoError(t, err)
 		err = os.Setenv("STRING", "test")
-		So(err, ShouldBeNil)
+		require.NoError(t, err)
 		err = os.Setenv("EMPTYSTRING", "")
-		So(err, ShouldBeNil)
+		require.NoError(t, err)
 		err = os.Setenv("BOOL", "true")
-		So(err, ShouldBeNil)
+		require.NoError(t, err)
 
-		Convey("IntValue", func() {
+		t.Run("IntValue", func(t *testing.T) {
 			type Data struct {
 				Val IntValue `yaml:"val"`
 			}
 			d := &Data{}
 
-			Convey("Should unmarshal simple number", func() {
-				unmarshalingTest(`val: 1`, d)
-				So(d.Val.Value(), ShouldEqual, 1)
-				So(d.Val.Raw, ShouldEqual, "1")
+			t.Run("Should unmarshal simple number", func(t *testing.T) {
+				unmarshalingTest(`val: 1`, d, t)
+				require.Equal(t, 1, d.Val.Value())
+				require.Equal(t, "1", d.Val.Raw)
 			})
 
-			Convey("Should unmarshal env var", func() {
-				unmarshalingTest(`val: $INT`, d)
-				So(d.Val.Value(), ShouldEqual, 1)
-				So(d.Val.Raw, ShouldEqual, "$INT")
+			t.Run("Should unmarshal env var", func(t *testing.T) {
+				unmarshalingTest(`val: $INT`, d, t)
+				require.Equal(t, 1, d.Val.Value())
+				require.Equal(t, "$INT", d.Val.Raw)
 			})
 
-			Convey("Should ignore empty value", func() {
-				unmarshalingTest(`val: `, d)
-				So(d.Val.Value(), ShouldEqual, 0)
-				So(d.Val.Raw, ShouldEqual, "")
+			t.Run("Should ignore empty value", func(t *testing.T) {
+				unmarshalingTest(`val: `, d, t)
+				require.Equal(t, 0, d.Val.Value())
+				require.Equal(t, "", d.Val.Raw)
 			})
 		})
 
-		Convey("StringValue", func() {
+		t.Run("StringValue", func(t *testing.T) {
 			type Data struct {
 				Val StringValue `yaml:"val"`
 			}
 			d := &Data{}
 
-			Convey("Should unmarshal simple string", func() {
-				unmarshalingTest(`val: test`, d)
-				So(d.Val.Value(), ShouldEqual, "test")
-				So(d.Val.Raw, ShouldEqual, "test")
+			t.Run("Should unmarshal simple string", func(t *testing.T) {
+				unmarshalingTest(`val: test`, d, t)
+				require.Equal(t, "test", d.Val.Value())
+				require.Equal(t, "test", d.Val.Raw)
 			})
 
-			Convey("Should unmarshal env var", func() {
-				unmarshalingTest(`val: $STRING`, d)
-				So(d.Val.Value(), ShouldEqual, "test")
-				So(d.Val.Raw, ShouldEqual, "$STRING")
+			t.Run("Should unmarshal env var", func(t *testing.T) {
+				unmarshalingTest(`val: $STRING`, d, t)
+				require.Equal(t, "test", d.Val.Value())
+				require.Equal(t, "$STRING", d.Val.Raw)
 			})
 
-			Convey("Should ignore empty value", func() {
-				unmarshalingTest(`val: `, d)
-				So(d.Val.Value(), ShouldEqual, "")
-				So(d.Val.Raw, ShouldEqual, "")
+			t.Run("Should ignore empty value", func(t *testing.T) {
+				unmarshalingTest(`val: `, d, t)
+				require.Equal(t, "", d.Val.Value())
+				require.Equal(t, "", d.Val.Raw)
 			})
 
-			Convey("empty var should have empty value", func() {
-				unmarshalingTest(`val: $EMPTYSTRING`, d)
-				So(d.Val.Value(), ShouldEqual, "")
-				So(d.Val.Raw, ShouldEqual, "$EMPTYSTRING")
+			t.Run("empty var should have empty value", func(t *testing.T) {
+				unmarshalingTest(`val: $EMPTYSTRING`, d, t)
+				require.Equal(t, "", d.Val.Value())
+				require.Equal(t, "$EMPTYSTRING", d.Val.Raw)
 			})
 
-			Convey("$$ should be a literal $", func() {
-				unmarshalingTest(`val: $$`, d)
-				So(d.Val.Value(), ShouldEqual, "$")
-				So(d.Val.Raw, ShouldEqual, "$$")
+			t.Run("$$ should be a literal $", func(t *testing.T) {
+				unmarshalingTest(`val: $$`, d, t)
+				require.Equal(t, "$", d.Val.Value())
+				require.Equal(t, "$$", d.Val.Raw)
 			})
 
-			Convey("$$ should be a literal $ and not expanded within a string", func() {
-				unmarshalingTest(`val: mY,Passwo$$rd`, d)
-				So(d.Val.Value(), ShouldEqual, "mY,Passwo$rd")
-				So(d.Val.Raw, ShouldEqual, "mY,Passwo$$rd")
+			t.Run("$$ should be a literal $ and not expanded within a string", func(t *testing.T) {
+				unmarshalingTest(`val: mY,Passwo$$rd`, d, t)
+				require.Equal(t, "mY,Passwo$rd", d.Val.Value())
+				require.Equal(t, "mY,Passwo$$rd", d.Val.Raw)
 			})
 		})
 
-		Convey("BoolValue", func() {
+		t.Run("BoolValue", func(t *testing.T) {
 			type Data struct {
 				Val BoolValue `yaml:"val"`
 			}
 			d := &Data{}
 
-			Convey("Should unmarshal bool value", func() {
-				unmarshalingTest(`val: true`, d)
-				So(d.Val.Value(), ShouldBeTrue)
-				So(d.Val.Raw, ShouldEqual, "true")
+			t.Run("Should unmarshal bool value", func(t *testing.T) {
+				unmarshalingTest(`val: true`, d, t)
+				require.True(t, d.Val.Value())
+				require.Equal(t, "true", d.Val.Raw)
 			})
 
-			Convey("Should unmarshal explicit string", func() {
-				unmarshalingTest(`val: "true"`, d)
-				So(d.Val.Value(), ShouldBeTrue)
-				So(d.Val.Raw, ShouldEqual, "true")
+			t.Run("Should unmarshal explicit string", func(t *testing.T) {
+				unmarshalingTest(`val: "true"`, d, t)
+				require.True(t, d.Val.Value())
+				require.Equal(t, "true", d.Val.Raw)
 			})
 
-			Convey("Should unmarshal env var", func() {
-				unmarshalingTest(`val: $BOOL`, d)
-				So(d.Val.Value(), ShouldBeTrue)
-				So(d.Val.Raw, ShouldEqual, "$BOOL")
+			t.Run("Should unmarshal env var", func(t *testing.T) {
+				unmarshalingTest(`val: $BOOL`, d, t)
+				require.True(t, d.Val.Value())
+				require.Equal(t, "$BOOL", d.Val.Raw)
 			})
 
-			Convey("Should ignore empty value", func() {
-				unmarshalingTest(`val: `, d)
-				So(d.Val.Value(), ShouldBeFalse)
-				So(d.Val.Raw, ShouldEqual, "")
+			t.Run("Should ignore empty value", func(t *testing.T) {
+				unmarshalingTest(`val: `, d, t)
+				require.False(t, d.Val.Value())
+				require.Equal(t, "", d.Val.Raw)
 			})
 		})
 
-		Convey("JSONValue", func() {
+		t.Run("JSONValue", func(t *testing.T) {
 			type Data struct {
 				Val JSONValue `yaml:"val"`
 			}
 			d := &Data{}
 
-			Convey("Should unmarshal variable nesting", func() {
+			t.Run("Should unmarshal variable nesting", func(t *testing.T) {
 				doc := `
                  val:
                    one: 1
@@ -153,10 +153,10 @@ func TestValues(t *testing.T) {
                    anchor: &label $INT
                    anchored: *label
                `
-				unmarshalingTest(doc, d)
+				unmarshalingTest(doc, d, t)
 
 				type stringMap = map[string]interface{}
-				So(d.Val.Value(), ShouldResemble, stringMap{
+				require.True(t, cmp.Equal(d.Val.Value(), stringMap{
 					"one": 1,
 					"two": "test",
 					"three": []interface{}{
@@ -181,9 +181,9 @@ func TestValues(t *testing.T) {
 					"multiline": "Some text with test\n",
 					"anchor":    "1",
 					"anchored":  "1",
-				})
+				}))
 
-				So(d.Val.Raw, ShouldResemble, stringMap{
+				require.True(t, cmp.Equal(d.Val.Raw, stringMap{
 					"one": 1,
 					"two": "$STRING",
 					"three": []interface{}{
@@ -208,17 +208,17 @@ func TestValues(t *testing.T) {
 					"multiline": "Some text with $STRING\n",
 					"anchor":    "$INT",
 					"anchored":  "$INT",
-				})
+				}))
 			})
 		})
 
-		Convey("StringMapValue", func() {
+		t.Run("StringMapValue", func(t *testing.T) {
 			type Data struct {
 				Val StringMapValue `yaml:"val"`
 			}
 			d := &Data{}
 
-			Convey("Should unmarshal mapping", func() {
+			t.Run("Should unmarshal mapping", func(t *testing.T) {
 				doc := `
                  val:
                    one: 1
@@ -226,39 +226,39 @@ func TestValues(t *testing.T) {
                    three: $STRING
                    four: true
                `
-				unmarshalingTest(doc, d)
-				So(d.Val.Value(), ShouldResemble, map[string]string{
+				unmarshalingTest(doc, d, t)
+				require.True(t, cmp.Equal(d.Val.Value(), map[string]string{
 					"one":   "1",
 					"two":   "test string",
 					"three": "test",
 					"four":  "true",
-				})
+				}))
 
-				So(d.Val.Raw, ShouldResemble, map[string]string{
+				require.True(t, cmp.Equal(d.Val.Raw, map[string]string{
 					"one":   "1",
 					"two":   "test string",
 					"three": "$STRING",
 					"four":  "true",
-				})
+				}))
 			})
 		})
 
-		Reset(func() {
+		t.Cleanup(func() {
 			err := os.Unsetenv("INT")
-			So(err, ShouldBeNil)
+			require.NoError(t, err)
 			err = os.Unsetenv("STRING")
-			So(err, ShouldBeNil)
+			require.NoError(t, err)
 			err = os.Unsetenv("EMPTYSTRING")
-			So(err, ShouldBeNil)
+			require.NoError(t, err)
 			err = os.Unsetenv("BOOL")
-			So(err, ShouldBeNil)
+			require.NoError(t, err)
 		})
 	})
 }
 
-func unmarshalingTest(document string, out interface{}) {
+func unmarshalingTest(document string, out interface{}, t *testing.T) {
 	err := yaml.Unmarshal([]byte(document), out)
-	So(err, ShouldBeNil)
+	require.NoError(t, err)
 }
 
 func TestValues_readFile(t *testing.T) {
