@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import { geomapLayerRegistry } from '../layers/registry';
 import L from 'leaflet';
-import { cloneDeep } from 'lodash';
+import { PanelData, MapLayerHandler, MapLayerConfig } from '@grafana/data';
 
 interface BaseMapProps {
   height: number;
@@ -11,11 +11,32 @@ interface BaseMapProps {
 
 // Load the leaflet CSS
 import 'leaflet/dist/leaflet.css';
+
+// function addCSSRule(sheet: any, selector: string, rules: string, index: number) {
+//   if ('insertRule' in sheet) {
+//     sheet.insertRule(selector + '{' + rules + '}', index);
+//   } else if ('addRule' in sheet) {
+//     sheet.addRule(selector, rules, index);
+//   }
+// }
+
+// // .leaflet-default-icon-path {
+// // 	background-image: url(images/marker-icon.png);
+// // 	}
+
+// addCSSRule(
+//   document.styleSheets[0],
+//   '.leaflet-default-icon-path',
+//   'background-image: url(images/marker-iconXXXXX.png);',
+//   0
+// );
+
 import { GeomapPanelOptions } from '../types';
-import { PanelData } from '@grafana/data';
+import { defaultFrameConfig, newDynamicLayerHandler } from '../layers/dynamic';
 
 export class BaseMap extends PureComponent<BaseMapProps> {
   map: L.Map;
+  handlers = new Map<MapLayerConfig, MapLayerHandler>();
 
   constructor(props: BaseMapProps) {
     super(props);
@@ -33,7 +54,6 @@ export class BaseMap extends PureComponent<BaseMapProps> {
 
     // External configuraiton changed
     if (this.props.options !== oldProps.options) {
-      console.log('OOOOOOOOO', cloneDeep(this.props.options), cloneDeep(oldProps.options));
       this.optionsChanged(oldProps.options);
     }
 
@@ -67,7 +87,13 @@ export class BaseMap extends PureComponent<BaseMapProps> {
    * Called when PanelData changes (query results etc)
    */
   dataChanged(data: PanelData) {
-    //  console.log('data changed?', data.structureRev, this.props.data.structureRev);
+    console.log('data changed?', data.structureRev, this.props.data.structureRev);
+    // Pass all data to each layer
+    for (const [key, handler] of this.handlers.entries()) {
+      if (handler.update && key) {
+        handler.update(this.map, data);
+      }
+    }
   }
 
   initMapRef = (div: HTMLDivElement) => {
@@ -120,6 +146,14 @@ export class BaseMap extends PureComponent<BaseMapProps> {
       baseLayerCount++;
       const name = cfg.name ?? item.name;
       baseMaps[name] = layer;
+    }
+
+    if (true) {
+      const handler = newDynamicLayerHandler(defaultFrameConfig);
+      const layer = handler.init();
+      layer.addTo(this.map);
+      overlayMaps['data'] = layer;
+      this.handlers.set(defaultFrameConfig, handler);
     }
 
     if (baseLayerCount > 1) {

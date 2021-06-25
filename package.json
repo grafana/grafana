@@ -230,6 +230,7 @@
     "@sentry/types": "5.24.2",
     "@sentry/utils": "5.24.2",
     "@types/esri-leaflet": "^2.1.8",
+    "@types/geojson": "^7946.0.7",
     "@welldone-software/why-did-you-render": "4.0.6",
     "abortcontroller-polyfill": "1.4.0",
     "angular": "1.8.2",
