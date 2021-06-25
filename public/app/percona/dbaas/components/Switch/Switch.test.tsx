@@ -4,7 +4,7 @@ import { Field } from 'react-final-form';
 import { dataQa, FormWrapper } from '@percona/platform-core';
 import { SwitchField } from './Switch';
 
-describe('SwitchField::', () => {
+xdescribe('SwitchField::', () => {
   it('should render an input element of type checkbox', () => {
     const wrapper = mount(
       <FormWrapper>

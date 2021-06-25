@@ -46,12 +46,12 @@
     "storybook": "yarn workspace @grafana/ui storybook --ci",
     "storybook:build": "yarn workspace @grafana/ui storybook:build",
     "themes:generate": "ts-node --transpile-only --project ./scripts/cli/tsconfig.json ./scripts/cli/generateSassVariableFiles.ts",
+    "test-percona": "jest public/app/percona --notify --watch",
     "typecheck": "tsc --noEmit && yarn run packages:typecheck",
     "plugins:build-bundled": "grafana-toolkit plugin:bundle-managed",
     "watch": "yarn start -d watch,start core:start --watchTheme",
     "ci:test-frontend": "yarn run test:ci && yarn grafana-toolkit node-version-check",
     "postinstall": "husky install",
-    "test-percona": "echo NOT IMPLEMENTED",
     "ci:test-percona-frontend": "yarn run prettier:check && yarn run packages:typecheck && yarn run typecheck && yarn run test-percona"
   },
   "grafana": {
