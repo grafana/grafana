@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/evaluator"
+	acregistry "github.com/grafana/grafana/pkg/services/accesscontrol/registry"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/prometheus/client_golang/prometheus"
 )
@@ -26,7 +27,7 @@ func (ac *OSSAccessControlService) Init() error {
 
 	ac.registerUsageMetrics()
 
-	return RegisterRegistrantsRoles(ac)
+	return acregistry.RegisterRegistrantsRoles(context.TODO(), ac)
 }
 
 func (ac *OSSAccessControlService) IsDisabled() bool {
