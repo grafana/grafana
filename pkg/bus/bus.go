@@ -174,6 +174,11 @@ func (b *InProcBus) AddHandlerCtx(handler HandlerFunc) {
 	b.handlersWithCtx[queryTypeName] = handler
 }
 
+// GetHandlerCtx returns the handler function for the given struct name.
+func (b *InProcBus) GetHandlerCtx(name string) HandlerFunc {
+	return b.handlersWithCtx[name]
+}
+
 func (b *InProcBus) AddEventListener(handler HandlerFunc) {
 	handlerType := reflect.TypeOf(handler)
 	eventName := handlerType.In(0).Elem().Name()
@@ -212,6 +217,10 @@ func DispatchCtx(ctx context.Context, msg Msg) error {
 
 func Publish(msg Msg) error {
 	return globalBus.Publish(msg)
+}
+
+func GetHandlerCtx(name string) HandlerFunc {
+	return globalBus.GetHandlerCtx(name)
 }
 
 func ClearBusHandlers() {
