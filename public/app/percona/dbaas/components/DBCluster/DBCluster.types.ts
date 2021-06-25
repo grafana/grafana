@@ -56,6 +56,10 @@ export type DatabaseOperatorsMap = {
   [key in Operators]: Databases;
 };
 
+export type ActiveOperatorsMap = {
+  [key in Operators]?: boolean;
+};
+
 export interface DBClusterConnection {
   host: string;
   password: string;
