@@ -127,7 +127,6 @@ func (r *SQLAnnotationRepo) Find(query *annotations.ItemQuery) ([]*annotations.I
 			annotation.epoch as time,
 			annotation.epoch_end as time_end,
 			annotation.dashboard_id,
-			dashboard.uid as dashboard_uid,
 			annotation.panel_id,
 			annotation.new_state,
 			annotation.prev_state,
@@ -137,6 +136,7 @@ func (r *SQLAnnotationRepo) Find(query *annotations.ItemQuery) ([]*annotations.I
 			annotation.data,
 			annotation.created,
 			annotation.updated,
+			dashboard.uid as dashboard_uid,
 			usr.email,
 			usr.login,
 			alert.name as alert_name

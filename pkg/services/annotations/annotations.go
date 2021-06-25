@@ -98,13 +98,13 @@ type ItemDTO struct {
 	AlertId      int64            `json:"alertId"`
 	AlertName    string           `json:"alertName"`
 	DashboardId  int64            `json:"dashboardId"`
-	DashboardUid string           `json:"dashboardUid"`
 	PanelId      int64            `json:"panelId"`
 	UserId       int64            `json:"userId"`
 	NewState     string           `json:"newState"`
 	PrevState    string           `json:"prevState"`
 	Created      int64            `json:"created"`
 	Updated      int64            `json:"updated"`
+	DashboardUid string           `json:"dashboardUid"`
 	Time         int64            `json:"time"`
 	TimeEnd      int64            `json:"timeEnd"`
 	Text         string           `json:"text"`
