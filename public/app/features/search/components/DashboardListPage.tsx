@@ -1,4 +1,4 @@
-import React, { FC, memo } from 'react';
+import React, { FC, memo, useState } from 'react';
 import { useAsync } from 'react-use';
 import { connect, MapStateToProps } from 'react-redux';
 import { NavModel, locationUtil } from '@grafana/data';
@@ -9,6 +9,7 @@ import Page from 'app/core/components/Page/Page';
 import { loadFolderPage } from '../loaders';
 import ManageDashboards from './ManageDashboards';
 import { GrafanaRouteComponentProps } from '../../../core/navigation/types';
+import { Checkbox } from '@grafana/ui';
 
 export interface DashboardListPageRouteParams {
   uid?: string;
@@ -39,9 +40,15 @@ export const DashboardListPage: FC<Props> = memo(({ navModel, match, location })
     });
   }, [match.params.uid]);
 
+  const [testState, setTestState] = useState(false);
+
   return (
     <Page navModel={value?.pageNavModel ?? navModel}>
       <Page.Contents isLoading={loading}>
+        <Checkbox
+          value={testState}
+          onChange={(ev: React.ChangeEvent<HTMLInputElement>) => setTestState(ev.target.checked)}
+        />
         <ManageDashboards folder={value?.folder} />
       </Page.Contents>
     </Page>
