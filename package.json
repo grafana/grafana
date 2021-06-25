@@ -46,7 +46,7 @@
     "storybook": "yarn workspace @grafana/ui storybook --ci",
     "storybook:build": "yarn workspace @grafana/ui storybook:build",
     "themes:generate": "ts-node --transpile-only --project ./scripts/cli/tsconfig.json ./scripts/cli/generateSassVariableFiles.ts",
-    "test-percona": "jest public/app/percona --notify --watch",
+    "test-percona": "jest public/app/percona --notify",
     "typecheck": "tsc --noEmit && yarn run packages:typecheck",
     "plugins:build-bundled": "grafana-toolkit plugin:bundle-managed",
     "watch": "yarn start -d watch,start core:start --watchTheme",
