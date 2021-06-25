@@ -6,7 +6,7 @@ import { ActiveOperatorsMap } from '../DBCluster/DBCluster.types';
 import { DATABASE_OPERATORS, DATABASE_OPTIONS } from '../DBCluster/DBCluster.constants';
 
 export const isKubernetesListUnavailable = (kubernetes: Kubernetes[]) =>
-  !!!kubernetes.find(k => k.status === KubernetesClusterStatus.ok);
+  !!!kubernetes.find((k) => k.status === KubernetesClusterStatus.ok);
 
 export const getActiveOperators = (kubernetes: Kubernetes[]): Operators[] => {
   const activeOperatorsMap: ActiveOperatorsMap = {};

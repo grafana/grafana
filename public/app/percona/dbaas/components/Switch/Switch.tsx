@@ -3,9 +3,8 @@ import { Field } from 'react-final-form';
 import { cx } from 'emotion';
 import { Icon, Tooltip, Switch, useStyles } from '@grafana/ui';
 import { compose } from '@percona/platform-core/dist/shared/validators';
-import { SwitchFieldProps } from './Switch.types';
+import { SwitchFieldRenderProps, SwitchFieldProps } from './Switch.types';
 import { getStyles } from './Switch.styles';
-import { SwitchFieldRenderProps } from './Switch.types';
 
 export const SwitchField: FC<SwitchFieldProps> = ({
   disabled,
