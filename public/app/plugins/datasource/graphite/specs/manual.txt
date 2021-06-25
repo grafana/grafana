@@ -2,6 +2,7 @@ Adding metrics
 Adding custom metrics
 Removing metrics
 Editing metrics
+Next metric is in focus after selecting value (press down to open the dropdown)
 !! No debouncing on segments
 
 Adding tags

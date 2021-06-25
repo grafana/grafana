@@ -6,10 +6,10 @@ import { createErrorNotification } from '../../../core/copy/appNotification';
 export const GRAPHITE_TAG_OPERATORS = ['=', '!=', '=~', '!=~'];
 export const TAG_PREFIX = 'tag: ';
 
-export async function handleMetricsAutoCompleteError(
+export function handleMetricsAutoCompleteError(
   state: GraphiteQueryEditorState,
   error: Error
-): Promise<GraphiteQueryEditorState> {
+): GraphiteQueryEditorState {
   console.error(error);
   if (!state._metricAutoCompleteErrorShown) {
     state._metricAutoCompleteErrorShown = true;
@@ -18,10 +18,7 @@ export async function handleMetricsAutoCompleteError(
   return state;
 }
 
-export async function handleTagsAutoCompleteError(
-  state: GraphiteQueryEditorState,
-  error: Error
-): Promise<GraphiteQueryEditorState> {
+export function handleTagsAutoCompleteError(state: GraphiteQueryEditorState, error: Error): GraphiteQueryEditorState {
   console.error(error);
   if (!state._tagsAutoCompleteErrorShown) {
     state._tagsAutoCompleteErrorShown = true;
