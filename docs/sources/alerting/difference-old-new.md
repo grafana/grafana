@@ -5,7 +5,7 @@ keywords = ["grafana", "alerting", "guide"]
 weight = 112
 +++
 
-# Differences between Grafana 8 alerts and legacy alerts
+# What's New with Grafana 8 Alerts
 The Alerts released with Grafana 8.0 are an opt-in feature that centralizes alerting information for Grafana managed alerts and alerts from Prometheus-compatible datasources in one UI and API. You are able to create and edit alerting rules for Grafana managed alerts, Cortex alerts, and Loki alerts as well as see alerting information from prometheus-compatible datasources in a single, searchable view.
 
 ## Multi-dimensional alerting

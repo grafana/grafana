@@ -27,7 +27,7 @@ func newGceAccessTokenProvider(ctx context.Context, ds *models.DataSource, plugi
 	}
 }
 
-func (provider *gceAccessTokenProvider) getAccessToken() (string, error) {
+func (provider *gceAccessTokenProvider) GetAccessToken() (string, error) {
 	tokenSrc, err := google.DefaultTokenSource(provider.ctx, provider.authParams.Scopes...)
 	if err != nil {
 		logger.Error("Failed to get default token from meta data server", "error", err)

@@ -548,41 +548,135 @@ describe('LokiDatasource', () => {
   describe('metricFindQuery', () => {
     const getTestContext = (mock: LokiDatasource) => {
       const ds = createLokiDSForTests();
-      ds.getVersion = mock.getVersion;
       ds.metadataRequest = mock.metadataRequest;
 
       return { ds };
     };
 
-    const mocks = makeMetadataAndVersionsMocks();
+    const mock = makeMockLokiDatasource(
+      { label1: ['value1', 'value2'], label2: ['value3', 'value4'] },
+      { '{label1="value1", label2="value2"}': [{ label5: 'value5' }] }
+    );
 
-    mocks.forEach((mock, index) => {
-      it(`should return label names for Loki v${index}`, async () => {
-        const { ds } = getTestContext(mock);
+    it(`should return label names for Loki`, async () => {
+      const { ds } = getTestContext(mock);
 
-        const res = await ds.metricFindQuery('label_names()');
+      const res = await ds.metricFindQuery('label_names()');
 
-        expect(res).toEqual([{ text: 'label1' }, { text: 'label2' }]);
+      expect(res).toEqual([{ text: 'label1' }, { text: 'label2' }]);
+    });
+
+    it(`should return label values for Loki when no matcher`, async () => {
+      const { ds } = getTestContext(mock);
+
+      const res = await ds.metricFindQuery('label_values(label1)');
+
+      expect(res).toEqual([{ text: 'value1' }, { text: 'value2' }]);
+    });
+
+    it(`should return label values for Loki with matcher`, async () => {
+      const { ds } = getTestContext(mock);
+
+      const res = await ds.metricFindQuery('label_values({label1="value1", label2="value2"},label5)');
+
+      expect(res).toEqual([{ text: 'value5' }]);
+    });
+
+    it(`should return empty array when incorrect query for Loki`, async () => {
+      const { ds } = getTestContext(mock);
+
+      const res = await ds.metricFindQuery('incorrect_query');
+
+      expect(res).toEqual([]);
+    });
+  });
+
+  describe('modifyQuery', () => {
+    describe('when called with ADD_FILTER', () => {
+      describe('and query has no parser', () => {
+        it('then the correct label should be added for logs query', () => {
+          const query: LokiQuery = { refId: 'A', expr: '{bar="baz"}' };
+          const action = { key: 'job', value: 'grafana', type: 'ADD_FILTER' };
+          const ds = createLokiDSForTests();
+          const result = ds.modifyQuery(query, action);
+
+          expect(result.refId).toEqual('A');
+          expect(result.expr).toEqual('{bar="baz",job="grafana"}');
+        });
+
+        it('then the correct label should be added for metrics query', () => {
+          const query: LokiQuery = { refId: 'A', expr: 'rate({bar="baz"}[5m])' };
+          const action = { key: 'job', value: 'grafana', type: 'ADD_FILTER' };
+          const ds = createLokiDSForTests();
+          const result = ds.modifyQuery(query, action);
+
+          expect(result.refId).toEqual('A');
+          expect(result.expr).toEqual('rate({bar="baz",job="grafana"}[5m])');
+        });
+        describe('and query has parser', () => {
+          it('then the correct label should be added for logs query', () => {
+            const query: LokiQuery = { refId: 'A', expr: '{bar="baz"} | logfmt' };
+            const action = { key: 'job', value: 'grafana', type: 'ADD_FILTER' };
+            const ds = createLokiDSForTests();
+            const result = ds.modifyQuery(query, action);
+
+            expect(result.refId).toEqual('A');
+            expect(result.expr).toEqual('{bar="baz"} | logfmt | job="grafana"');
+          });
+          it('then the correct label should be added for metrics query', () => {
+            const query: LokiQuery = { refId: 'A', expr: 'rate({bar="baz"} | logfmt [5m])' };
+            const action = { key: 'job', value: 'grafana', type: 'ADD_FILTER' };
+            const ds = createLokiDSForTests();
+            const result = ds.modifyQuery(query, action);
+
+            expect(result.refId).toEqual('A');
+            expect(result.expr).toEqual('rate({bar="baz",job="grafana"} | logfmt [5m])');
+          });
+        });
       });
     });
 
-    mocks.forEach((mock, index) => {
-      it(`should return label values for Loki v${index}`, async () => {
-        const { ds } = getTestContext(mock);
+    describe('when called with ADD_FILTER_OUT', () => {
+      describe('and query has no parser', () => {
+        it('then the correct label should be added for logs query', () => {
+          const query: LokiQuery = { refId: 'A', expr: '{bar="baz"}' };
+          const action = { key: 'job', value: 'grafana', type: 'ADD_FILTER_OUT' };
+          const ds = createLokiDSForTests();
+          const result = ds.modifyQuery(query, action);
 
-        const res = await ds.metricFindQuery('label_values(label1)');
+          expect(result.refId).toEqual('A');
+          expect(result.expr).toEqual('{bar="baz",job!="grafana"}');
+        });
 
-        expect(res).toEqual([{ text: 'value1' }, { text: 'value2' }]);
-      });
-    });
+        it('then the correct label should be added for metrics query', () => {
+          const query: LokiQuery = { refId: 'A', expr: 'rate({bar="baz"}[5m])' };
+          const action = { key: 'job', value: 'grafana', type: 'ADD_FILTER_OUT' };
+          const ds = createLokiDSForTests();
+          const result = ds.modifyQuery(query, action);
 
-    mocks.forEach((mock, index) => {
-      it(`should return empty array when incorrect query for Loki v${index}`, async () => {
-        const { ds } = getTestContext(mock);
+          expect(result.refId).toEqual('A');
+          expect(result.expr).toEqual('rate({bar="baz",job!="grafana"}[5m])');
+        });
+        describe('and query has parser', () => {
+          it('then the correct label should be added for logs query', () => {
+            const query: LokiQuery = { refId: 'A', expr: '{bar="baz"} | logfmt' };
+            const action = { key: 'job', value: 'grafana', type: 'ADD_FILTER_OUT' };
+            const ds = createLokiDSForTests();
+            const result = ds.modifyQuery(query, action);
 
-        const res = await ds.metricFindQuery('incorrect_query');
+            expect(result.refId).toEqual('A');
+            expect(result.expr).toEqual('{bar="baz"} | logfmt | job!="grafana"');
+          });
+          it('then the correct label should be added for metrics query', () => {
+            const query: LokiQuery = { refId: 'A', expr: 'rate({bar="baz"} | logfmt [5m])' };
+            const action = { key: 'job', value: 'grafana', type: 'ADD_FILTER_OUT' };
+            const ds = createLokiDSForTests();
+            const result = ds.modifyQuery(query, action);
 
-        expect(res).toEqual([]);
+            expect(result.refId).toEqual('A');
+            expect(result.expr).toEqual('rate({bar="baz",job!="grafana"} | logfmt [5m])');
+          });
+        });
       });
     });
   });
@@ -628,14 +722,4 @@ function makeAnnotationQueryRequest(options: any): AnnotationQueryRequest<LokiQu
     },
     rangeRaw: timeRange,
   };
-}
-
-function makeMetadataAndVersionsMocks() {
-  const mocks = [];
-  for (let i = 0; i <= 1; i++) {
-    const mock: LokiDatasource = makeMockLokiDatasource({ label1: ['value1', 'value2'], label2: ['value3', 'value4'] });
-    mock.getVersion = jest.fn().mockReturnValue(`v${i}`);
-    mocks.push(mock);
-  }
-  return mocks;
 }

@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"time"
+	"strings"
 
 	pb "github.com/prometheus/alertmanager/silence/silencepb"
 	"xorm.io/xorm"
@@ -218,7 +218,14 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 			return err
 		}
 
-		_, err = m.sess.Insert(rule)
+		if strings.HasPrefix(mg.Dialect.DriverName(), migrator.Postgres) {
+			err = mg.InTransaction(func(sess *xorm.Session) error {
+				_, err = sess.Insert(rule)
+				return err
+			})
+		} else {
+			_, err = m.sess.Insert(rule)
+		}
 		if err != nil {
 			// TODO better error handling, if constraint
 			rule.Title += fmt.Sprintf(" %v", rule.Uid)
@@ -288,7 +295,7 @@ type AlertConfiguration struct {
 
 	AlertmanagerConfiguration string
 	ConfigurationVersion      string
-	CreatedAt                 time.Time `xorm:"created"`
+	CreatedAt                 int64 `xorm:"created"`
 }
 
 type rmMigration struct {

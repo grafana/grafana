@@ -75,15 +75,26 @@ const (
 	ActionOrgUsersRoleUpdate = "org.users.role:update"
 
 	// LDAP actions
-	ActionLDAPUsersRead  = "ldap.user:read"
-	ActionLDAPUsersSync  = "ldap.user:sync"
-	ActionLDAPStatusRead = "ldap.status:read"
+	ActionLDAPUsersRead    = "ldap.user:read"
+	ActionLDAPUsersSync    = "ldap.user:sync"
+	ActionLDAPStatusRead   = "ldap.status:read"
+	ActionLDAPConfigReload = "ldap.config:reload"
+
+	// Server actions
+	ActionServerStatsRead = "server.stats:read"
+
+	// Settings actions
+	ActionSettingsRead = "settings:read"
 
 	// Global Scopes
 	ScopeGlobalUsersAll = "global:users:*"
 
+	// Users scopes
 	ScopeUsersSelf = "users:self"
 	ScopeUsersAll  = "users:*"
+
+	// Settings scope
+	ScopeSettingsAll = "settings:**"
 
 	// Services Scopes
 	ScopeServicesAll = "service:*"

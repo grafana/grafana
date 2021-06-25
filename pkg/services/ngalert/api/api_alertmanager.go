@@ -21,6 +21,10 @@ type AlertmanagerSrv struct {
 	log   log.Logger
 }
 
+func (srv AlertmanagerSrv) RouteGetAMStatus(c *models.ReqContext) response.Response {
+	return response.JSON(http.StatusOK, srv.am.GetStatus())
+}
+
 func (srv AlertmanagerSrv) RouteCreateSilence(c *models.ReqContext, postableSilence apimodels.PostableSilence) response.Response {
 	if !c.HasUserRole(models.ROLE_EDITOR) {
 		return ErrResp(http.StatusForbidden, errors.New("permission denied"), "")
@@ -192,11 +196,14 @@ func (srv AlertmanagerSrv) RoutePostAlertingConfig(c *models.ReqContext, body ap
 		}
 	}
 
-	currentConfig, err := notifier.Load([]byte(query.Result.AlertmanagerConfiguration))
-	if err != nil {
-		return ErrResp(http.StatusInternalServerError, err, "failed to load lastest configuration")
+	currentReceiverMap := make(map[string]*apimodels.PostableGrafanaReceiver)
+	if query.Result != nil {
+		currentConfig, err := notifier.Load([]byte(query.Result.AlertmanagerConfiguration))
+		if err != nil {
+			return ErrResp(http.StatusInternalServerError, err, "failed to load lastest configuration")
+		}
+		currentReceiverMap = currentConfig.GetGrafanaReceiverMap()
 	}
-	currentReceiverMap := currentConfig.GetGrafanaReceiverMap()
 
 	// Copy the previously known secure settings
 	for i, r := range body.AlertmanagerConfig.Receivers {

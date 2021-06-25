@@ -172,7 +172,7 @@ export function getMappedValue(valueMappings: LegacyValueMapping[], value: any):
  * @alpha
  * Converts the old Angular value mappings to new react style
  */
-export function convertOldAngularValueMappings(panel: any): ValueMapping[] {
+export function convertOldAngularValueMappings(panel: any, migratedThresholds?: ThresholdsConfig): ValueMapping[] {
   const mappings: ValueMapping[] = [];
 
   // Guess the right type based on options
@@ -184,7 +184,6 @@ export function convertOldAngularValueMappings(panel: any): ValueMapping[] {
       mappingType = 2;
     }
   }
-
   if (mappingType === 1) {
     for (let i = 0; i < panel.valueMaps.length; i++) {
       const map = panel.valueMaps[i];
@@ -195,7 +194,7 @@ export function convertOldAngularValueMappings(panel: any): ValueMapping[] {
             id: i, // used for order
             type: MappingType.ValueToText,
           },
-          panel.fieldConfig?.defaults?.thresholds
+          panel.fieldConfig?.defaults?.thresholds || migratedThresholds
         )
       );
     }
@@ -209,7 +208,7 @@ export function convertOldAngularValueMappings(panel: any): ValueMapping[] {
             id: i, // used for order
             type: MappingType.RangeToText,
           },
-          panel.fieldConfig?.defaults?.thresholds
+          panel.fieldConfig?.defaults?.thresholds || migratedThresholds
         )
       );
     }

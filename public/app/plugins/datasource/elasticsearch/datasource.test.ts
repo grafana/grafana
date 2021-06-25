@@ -478,7 +478,7 @@ describe('ElasticDatasource', function (this: any) {
     it('should return number fields', async () => {
       const { ds } = getTestContext({ data, jsonData: { esVersion: 50 }, database: 'metricbeat' });
 
-      await expect(ds.getFields('number')).toEmitValuesWith((received) => {
+      await expect(ds.getFields(['number'])).toEmitValuesWith((received) => {
         expect(received.length).toBe(1);
         const fieldObjects = received[0];
         const fields = map(fieldObjects, 'text');
@@ -490,7 +490,7 @@ describe('ElasticDatasource', function (this: any) {
     it('should return date fields', async () => {
       const { ds } = getTestContext({ data, jsonData: { esVersion: 50 }, database: 'metricbeat' });
 
-      await expect(ds.getFields('date')).toEmitValuesWith((received) => {
+      await expect(ds.getFields(['date'])).toEmitValuesWith((received) => {
         expect(received.length).toBe(1);
         const fieldObjects = received[0];
         const fields = map(fieldObjects, 'text');
@@ -686,6 +686,16 @@ describe('ElasticDatasource', function (this: any) {
       },
     };
 
+    const dateFields = ['@timestamp_millis'];
+    const numberFields = [
+      'justification_blob.overall_vote_score',
+      'justification_blob.shallow.jsi.sdb.dsel2.bootlegged-gille.botness',
+      'justification_blob.shallow.jsi.sdb.dsel2.bootlegged-gille.general_algorithm_score',
+      'justification_blob.shallow.jsi.sdb.dsel2.uncombed-boris.botness',
+      'justification_blob.shallow.jsi.sdb.dsel2.uncombed-boris.general_algorithm_score',
+      'overall_vote_score',
+    ];
+
     it('should return nested fields', async () => {
       const { ds } = getTestContext({ data, database: 'genuine.es7._mapping.response', jsonData: { esVersion: 70 } });
 
@@ -716,31 +726,24 @@ describe('ElasticDatasource', function (this: any) {
     it('should return number fields', async () => {
       const { ds } = getTestContext({ data, database: 'genuine.es7._mapping.response', jsonData: { esVersion: 70 } });
 
-      await expect(ds.getFields('number')).toEmitValuesWith((received) => {
+      await expect(ds.getFields(['number'])).toEmitValuesWith((received) => {
         expect(received.length).toBe(1);
 
         const fieldObjects = received[0];
         const fields = map(fieldObjects, 'text');
-        expect(fields).toEqual([
-          'justification_blob.overall_vote_score',
-          'justification_blob.shallow.jsi.sdb.dsel2.bootlegged-gille.botness',
-          'justification_blob.shallow.jsi.sdb.dsel2.bootlegged-gille.general_algorithm_score',
-          'justification_blob.shallow.jsi.sdb.dsel2.uncombed-boris.botness',
-          'justification_blob.shallow.jsi.sdb.dsel2.uncombed-boris.general_algorithm_score',
-          'overall_vote_score',
-        ]);
+        expect(fields).toEqual(numberFields);
       });
     });
 
     it('should return date fields', async () => {
       const { ds } = getTestContext({ data, database: 'genuine.es7._mapping.response', jsonData: { esVersion: 70 } });
 
-      await expect(ds.getFields('date')).toEmitValuesWith((received) => {
+      await expect(ds.getFields(['date'])).toEmitValuesWith((received) => {
         expect(received.length).toBe(1);
 
         const fieldObjects = received[0];
         const fields = map(fieldObjects, 'text');
-        expect(fields).toEqual(['@timestamp_millis']);
+        expect(fields).toEqual(dateFields);
       });
     });
   });

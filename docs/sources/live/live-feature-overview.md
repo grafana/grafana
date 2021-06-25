@@ -15,7 +15,7 @@ As soon as there is a change to the dashboard layout, it is automatically reflec
 
 ## Data streaming from plugins
 
-With Grafana Live data source, plugins can stream data updates in the form of Grafana data frames to a frontend.
+With Grafana Live, backend data source plugins can stream updates to frontend panels.
 
 For data source plugin channels Grafana uses `ds` scope. Namespace in the case of data source channels is a data source unique ID (UID) which is issued by Grafana at the moment of data source creation. The path is a custom string that plugin authors free to choose themselves (just make sure it consists of allowed symbols).
 
