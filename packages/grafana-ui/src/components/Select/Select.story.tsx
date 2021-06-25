@@ -5,10 +5,10 @@ import { Icon, Select, AsyncSelect, MultiSelect, AsyncMultiSelect } from '@grafa
 import { getAvailableIcons, IconName } from '../../types';
 import { SelectCommonProps } from './types';
 import { Meta, Story } from '@storybook/react';
-import { kebabCase } from 'lodash';
 import { generateOptions } from './mockOptions';
 import mdx from './Select.mdx';
 import { auto } from '@popperjs/core';
+import { action } from '@storybook/addon-actions';
 
 export default {
   title: 'Forms/Select',
@@ -94,6 +94,7 @@ export const Basic: Story<StoryProps> = (args) => {
         value={value}
         onChange={(v) => {
           setValue(v);
+          action('onChange')(v);
         }}
         prefix={getPrefix(args.icon)}
         {...args}
@@ -113,6 +114,7 @@ export const BasicSelectPlainValue: Story<StoryProps> = (args) => {
         value={value}
         onChange={(v) => {
           setValue(v.value);
+          action('onChange')(v);
         }}
         prefix={getPrefix(args.icon)}
         {...args}
@@ -145,6 +147,7 @@ export const SelectWithOptionDescriptions: Story = (args) => {
         value={value}
         onChange={(v) => {
           setValue(v.value);
+          action('onChange')(v);
         }}
         prefix={getPrefix(args.icon)}
         {...args}
@@ -187,6 +190,7 @@ export const MultiSelectWithOptionGroups: Story = (args) => {
         value={value}
         onChange={(v) => {
           setValue(v.map((v: any) => v.value));
+          action('onChange')(v);
         }}
         prefix={getPrefix(args.icon)}
         {...args}
@@ -205,6 +209,7 @@ export const MultiSelectBasic: Story = (args) => {
         value={value}
         onChange={(v) => {
           setValue(v);
+          action('onChange')(v);
         }}
         prefix={getPrefix(args.icon)}
         {...args}
@@ -228,6 +233,7 @@ export const MultiSelectAsync: Story = (args) => {
       value={value}
       onChange={(v) => {
         setValue(v);
+        action('onChange')(v);
       }}
       prefix={getPrefix(args.icon)}
       {...args}
@@ -248,6 +254,7 @@ export const BasicSelectAsync: Story = (args) => {
       value={value}
       onChange={(v) => {
         setValue(v);
+        action('onChange')(v);
       }}
       prefix={getPrefix(args.icon)}
       {...args}
@@ -266,6 +273,7 @@ export const AutoMenuPlacement: Story = (args) => {
           value={value}
           onChange={(v) => {
             setValue(v);
+            action('onChange')(v);
           }}
           prefix={getPrefix(args.icon)}
           {...args}
@@ -289,12 +297,14 @@ export const CustomValueCreation: Story = (args) => {
         value={value}
         onChange={(v) => {
           setValue(v);
+          action('onChange')(v);
         }}
         allowCustomValue={args.allowCustomValue}
         onCreateOption={(v) => {
-          const customValue: SelectableValue<string> = { value: kebabCase(v), label: v };
+          const customValue: SelectableValue<string> = { value: v, label: v };
           setCustomOptions([...customOptions, customValue]);
           setValue(customValue);
+          action('onCreateOption')(v);
         }}
         prefix={getPrefix(args.icon)}
         {...args}

@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { ComponentProps, useCallback } from 'react';
 import { default as ReactSelect } from 'react-select';
 import Creatable from 'react-select/creatable';
 import { default as ReactAsyncSelect } from 'react-select/async';
@@ -134,6 +134,7 @@ export function SelectBase<T>({
   tabSelectsValue = true,
   value,
   width,
+  isValidNewOption,
 }: SelectBaseProps<T>) {
   const theme = useTheme2();
   const styles = getSelectStyles(theme);
@@ -149,7 +150,7 @@ export function SelectBase<T>({
 
   let ReactSelectComponent = ReactSelect;
 
-  const creatableProps: any = {};
+  const creatableProps: ComponentProps<typeof Creatable> = {};
   let asyncSelectProps: any = {};
   let selectedValue;
   if (isMulti && loadOptions) {
@@ -218,6 +219,7 @@ export function SelectBase<T>({
     ReactSelectComponent = Creatable as any;
     creatableProps.formatCreateLabel = formatCreateLabel ?? ((input: string) => `Create: ${input}`);
     creatableProps.onCreateOption = onCreateOption;
+    creatableProps.isValidNewOption = isValidNewOption;
   }
 
   // Instead of having AsyncSelect, as a separate component we render ReactAsyncSelect
