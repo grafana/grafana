@@ -4,6 +4,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import selectEvent from 'react-select-event';
 import { SelectBase } from './SelectBase';
+import { SelectBaseProps } from './types';
 import { SelectableValue } from '@grafana/data';
 import { MultiValueContainer } from './MultiValue';
 
@@ -211,6 +212,55 @@ describe('SelectBase', () => {
         label: 'Option 2',
         value: 2,
       });
+    });
+  });
+
+  describe('When allowCustomValue is set to true', () => {
+    it('Should allow creating a new option', async () => {
+      const valueIsStrictlyEqual: SelectBaseProps<string>['filterOption'] = (option, value) => option.value === value;
+      const valueIsStrictlyNotEqual: SelectBaseProps<string>['isValidNewOption'] = (newOption, _, options) =>
+        options.every(({ value }) => value !== newOption);
+
+      const spy = jest.fn();
+      render(
+        <SelectBase
+          onChange={spy}
+          isOpen
+          allowCustomValue
+          filterOption={valueIsStrictlyEqual}
+          isValidNewOption={valueIsStrictlyNotEqual}
+        />
+      );
+
+      const textBox = screen.getByRole('textbox');
+      userEvent.type(textBox, 'NOT AN OPTION');
+
+      let creatableOption = screen.getByLabelText('Select option');
+      expect(creatableOption).toBeInTheDocument();
+      expect(creatableOption).toHaveTextContent('Create: NOT AN OPTION');
+
+      userEvent.click(creatableOption);
+      expect(spy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          label: 'NOT AN OPTION',
+          value: 'NOT AN OPTION',
+        })
+      );
+
+      // Should also create options in a case-insensitive way.
+      userEvent.type(textBox, 'not an option');
+
+      creatableOption = screen.getByLabelText('Select option');
+      expect(creatableOption).toBeInTheDocument();
+      expect(creatableOption).toHaveTextContent('Create: not an option');
+
+      userEvent.click(creatableOption);
+      expect(spy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          label: 'not an option',
+          value: 'not an option',
+        })
+      );
     });
   });
 });
