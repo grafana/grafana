@@ -17,7 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/securejsondata"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/tsdb/influxdb/datasource"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/xorcare/pointer"
@@ -223,9 +223,8 @@ func TestRealQuery(t *testing.T) {
 		json := simplejson.New()
 		json.Set("organization", "test-org")
 
-		dsInfo := &models.DataSource{
-			Url:      "http://localhost:9999", // NOTE! no api/v2
-			JsonData: json,
+		dsInfo := &datasource.Info{
+			Url: "http://localhost:9999", // NOTE! no api/v2
 			SecureJsonData: securejsondata.GetEncryptedJsonData(map[string]string{
 				"token": "PjSEcM5oWhqg2eI6IXcqYJFe5UbMM_xt-UNlAL0BRYJqLeVpcdMWidiPfWxGhu4Xrh6wioRR-CiadCg-ady68Q==",
 			}),

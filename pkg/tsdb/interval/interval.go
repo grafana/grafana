@@ -66,6 +66,15 @@ func (ic *intervalCalculator) Calculate(timerange plugins.DataTimeRange, minInte
 	return Interval{Text: FormatDuration(rounded), Value: rounded}
 }
 
+func (ic *intervalCalculator) CalculateSDK(interval time.Duration, minInterval time.Duration) Interval {
+	if interval < minInterval {
+		return Interval{Text: FormatDuration(minInterval), Value: minInterval}
+	}
+
+	rounded := roundInterval(interval)
+	return Interval{Text: FormatDuration(rounded), Value: rounded}
+}
+
 func GetIntervalFrom(dsInfo *models.DataSource, queryModel *simplejson.Json, defaultInterval time.Duration) (time.Duration, error) {
 	interval := queryModel.Get("interval").MustString("")
 
