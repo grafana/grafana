@@ -20,6 +20,6 @@ export interface ControlsOptions {
 
 export interface GeomapPanelOptions {
   controls: ControlsOptions;
-  basemaps: MapLayerConfig[]; // empty === auto
-  layers: MapLayerConfig[]; // empty == auto
+  basemap: MapLayerConfig; // auto
+  // layers: MapLayerConfig[]; // empty == auto
 }

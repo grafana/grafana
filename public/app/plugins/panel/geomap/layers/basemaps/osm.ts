@@ -5,7 +5,7 @@ import TileLayer from 'ol/layer/Tile';
 
 const standard: MapLayerRegistryItem = {
   id: 'osm-standard',
-  name: 'Open Street Map - Mapnik',
+  name: 'Open Street Map',
   isBaseMap: true,
 
   /**

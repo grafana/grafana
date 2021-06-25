@@ -1,15 +1,12 @@
 import React, { Component } from 'react';
 import { geomapLayerRegistry } from '../layers/registry';
 import { Map as GeoMap, View } from 'ol';
-import LayerGroup from 'ol/layer/Group';
 import TileLayer from 'ol/layer/Tile';
 import OSM from 'ol/source/OSM';
 import Attribution from 'ol/control/Attribution';
 import Zoom from 'ol/control/Zoom';
 import ScaleLine from 'ol/control/ScaleLine';
 import OverviewMap from 'ol/control/OverviewMap';
-
-import LayerSwitcher from 'ol-layerswitcher';
 import BaseLayer from 'ol/layer/Base';
 
 import { PanelData, MapLayerHandler, MapLayerConfig } from '@grafana/data';
@@ -26,47 +23,18 @@ import 'ol-layerswitcher/dist/ol-layerswitcher.css';
 
 import { ControlsOptions, GeomapPanelOptions } from '../types';
 import { defaultFrameConfig, newDynamicLayerHandler } from '../layers/dynamic';
+import { defaultGrafanaThemedMap } from '../layers/basemaps/theme';
 
 export class BaseMap extends Component<BaseMapProps> {
   map: GeoMap;
   handlers = new Map<MapLayerConfig, MapLayerHandler>();
 
+  // The basemap
+  basemap: BaseLayer;
+
   constructor(props: BaseMapProps) {
     super(props);
   }
-
-  // componentDidMount() {
-  //   // create feature layer and vector source
-  //   var featuresLayer = new ol.layer.Vector({
-  //     source: new ol.source.Vector({
-  //       features: [],
-  //     }),
-  //   });
-
-  //   // create map object with feature layer
-  //   var map = new ol.Map({
-  //     target: this.refs.mapContainer,
-  //     layers: [
-  //       //default OSM layer
-  //       new ol.layer.Tile({
-  //         source: new ol.source.OSM(),
-  //       }),
-  //       featuresLayer,
-  //     ],
-  //     view: new ol.View({
-  //       center: [-11718716.28195593, 4869217.172379018], //Boulder
-  //       zoom: 13,
-  //     }),
-  //   });
-
-  //   map.on('click', this.handleMapClick.bind(this));
-
-  //   // save map and layer references to local state
-  //   this.setState({
-  //     map: map,
-  //     featuresLayer: featuresLayer,
-  //   });
-  // }
 
   componentDidUpdate(oldProps: BaseMapProps) {
     if (!this.map) {
@@ -99,10 +67,12 @@ export class BaseMap extends Component<BaseMapProps> {
     const oldControls = oldOptions.controls ?? {};
     console.log('options changed!', controls, oldControls, controls === oldControls);
 
-    // Check controls
     if (true) {
-      //controls !== oldControls) {
       this.initControls(controls);
+    }
+
+    if (true) {
+      this.initBasemap(options.basemap);
     }
   }
 
@@ -128,7 +98,6 @@ export class BaseMap extends Component<BaseMapProps> {
       this.map = (undefined as unknown) as GeoMap;
       return;
     }
-
     this.map = new GeoMap({
       view: new View({
         center: [0, 0],
@@ -141,45 +110,7 @@ export class BaseMap extends Component<BaseMapProps> {
     });
     // init the controls
     this.initControls(this.props.options.controls);
-
-    const iiiii: BaseLayer[] = [];
-    let basemaps = this.props.options.basemaps;
-    if (!basemaps || !basemaps.length) {
-      // all basemaps
-      basemaps = geomapLayerRegistry
-        .list()
-        .filter((v) => v.isBaseMap)
-        .map((v) => ({ type: v.id }));
-    }
-
-    for (const cfg of basemaps) {
-      const item = geomapLayerRegistry.getIfExists(cfg.type);
-      if (!item) {
-        console.warn('missing layer ???', cfg);
-        continue;
-      }
-      const layer = item.create(this.map, cfg).init();
-      layer.set('title', cfg.name ?? item.name); // for ol-layerswitcher
-      if (item.isBaseMap) {
-        layer.set('type', 'base'); // for ol-layerswitcher
-      }
-      iiiii.push(layer);
-    }
-
-    const baseMaps = new LayerGroup({
-      title: 'Base maps', // required for layer switcher
-      layers: iiiii,
-    } as any);
-
-    this.map.addLayer(baseMaps);
-
-    const layerSwitcher = new LayerSwitcher({
-      tipLabel: 'Légende', // Optional label for button
-      startActive: false,
-      activationMode: 'click',
-      reverse: true, // show them in the order we add
-    });
-    this.map.addControl(layerSwitcher);
+    this.initBasemap(this.props.options.basemap);
 
     if (true) {
       const handler = newDynamicLayerHandler(this.map, defaultFrameConfig);
@@ -189,6 +120,20 @@ export class BaseMap extends Component<BaseMapProps> {
       this.handlers.set(defaultFrameConfig, handler);
     }
   };
+
+  initBasemap(cfg: MapLayerConfig) {
+    if (!cfg) {
+      cfg = { type: defaultGrafanaThemedMap.id };
+    }
+    const item = geomapLayerRegistry.getIfExists(cfg.type) ?? defaultGrafanaThemedMap;
+    const layer = item.create(this.map, cfg).init();
+    if (this.basemap) {
+      this.map.removeLayer(this.basemap);
+      this.basemap.dispose();
+    }
+    this.basemap = layer;
+    this.map.getLayers().insertAt(0, this.basemap);
+  }
 
   initControls(options: ControlsOptions) {
     this.map.getControls().clear();
@@ -224,11 +169,10 @@ export class BaseMap extends Component<BaseMapProps> {
         })
       );
     }
-
-    console.log('CONTROLS', options, this.map.getControls());
   }
 
   render() {
-    return <div style={{ width: '100%', height: this.props.height }} ref={this.initMapRef}></div>;
+    const { width, height } = this.props;
+    return <div style={{ width, height }} ref={this.initMapRef}></div>;
   }
 }

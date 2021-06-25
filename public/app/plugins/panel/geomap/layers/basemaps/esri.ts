@@ -4,24 +4,6 @@ import TileLayer from 'ol/layer/Tile';
 import Map from 'ol/Map';
 import XYZ from 'ol/source/XYZ';
 
-export interface EsriLayerOptions {
-  token?: string;
-}
-
-// Streets
-// Topographic
-// NationalGeographic
-// Oceans
-// Gray
-// DarkGray
-// Imagery
-// ImageryClarity (added in 2.1.3)
-// ImageryFirefly (added in 2.2.0)
-// ShadedRelief
-// Terrain
-// USATopo (added in 2.0.0)
-// Physical (added in 2.2.0)
-
 // https://services.arcgisonline.com/arcgis/rest/services
 export const esriLayers = [
   { name: 'Streets', service: 'World_Street_Map' },
@@ -40,7 +22,7 @@ export const esriLayers = [
    * Function that configures transformation and returns a transformer
    * @param options
    */
-  create: (map: Map, options: MapLayerConfig<EsriLayerOptions>) => ({
+  create: (map: Map, options: MapLayerConfig) => ({
     init: () => {
       return new TileLayer({
         source: new XYZ({

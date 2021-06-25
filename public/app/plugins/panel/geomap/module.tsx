@@ -1,4 +1,5 @@
 import { PanelPlugin } from '@grafana/data';
+import { BaseLayerEditor } from './BaseLayerEditor';
 import { GeomapPanel } from './GeomapPanel';
 import { GeomapPanelOptions } from './types';
 
@@ -6,6 +7,15 @@ export const plugin = new PanelPlugin<GeomapPanelOptions>(GeomapPanel)
   .setNoPadding()
   .useFieldConfig()
   .setPanelOptions((builder) => {
+    builder.addCustomEditor({
+      category: ['Base Layer'],
+      id: 'basemap',
+      path: 'basemap',
+      name: 'Base Layer',
+      editor: BaseLayerEditor,
+    });
+
+    // The controls section
     let category = ['Map Controls'];
     builder
       .addBooleanSwitch({
@@ -27,7 +37,7 @@ export const plugin = new PanelPlugin<GeomapPanelOptions>(GeomapPanel)
         path: 'controls.showOverview',
         name: 'Show overview map',
         description: 'Show an overview map in the lower left',
-        defaultValue: true,
+        defaultValue: false,
       })
       .addBooleanSwitch({
         category,
