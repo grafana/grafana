@@ -14,6 +14,22 @@ import {
 import { FiltersSettingsEditor } from './FiltersSettingsEditor';
 import { useDescription } from './useDescription';
 import { useQuery } from '../../ElasticsearchQueryContext';
+import { SelectableValue } from '@grafana/data';
+
+const isValidNewOption: ComponentProps<typeof Select>['isValidNewOption'] = (
+  inputValue,
+  _,
+  options: Array<SelectableValue<string>>
+) => {
+  // TODO: would be extremely nice here to allow only template variables and values that are
+  // valid date histogram's Interval options
+  const valueExists = options.some(({ value }) => value === inputValue);
+  // we also don't want users to create "empty" values
+  return !valueExists && inputValue.trim().length > 0;
+};
+
+const optionStartsWithValue: ComponentProps<typeof Select>['filterOption'] = (option: SelectableValue<string>, value) =>
+  option.value?.startsWith(value) || false;
 
 const inlineFieldProps: Partial<ComponentProps<typeof InlineField>> = {
   labelWidth: 16,
@@ -98,6 +114,8 @@ export const SettingsEditor = ({ bucketAgg }: Props) => {
               options={intervalOptions}
               value={bucketAgg.settings?.interval || bucketAggregationConfig[bucketAgg.type].defaultSettings?.interval}
               allowCustomValue
+              isValidNewOption={isValidNewOption}
+              filterOption={optionStartsWithValue}
             />
           </InlineField>
 
