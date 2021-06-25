@@ -12,12 +12,15 @@ import { initialAsyncRequestState } from './utils/redux';
 
 import { AmNotificationsGroup } from './components/amnotifications/AmNotificationsGroup';
 import { NOTIFICATIONS_POLL_INTERVAL_MS } from './utils/constants';
+import { Alert, LoadingPlaceholder } from '../../../../../packages/grafana-ui/src';
 
 const AlertManagerNotifications = () => {
   const [alertManagerSourceName, setAlertManagerSourceName] = useAlertManagerSourceName();
   const dispatch = useDispatch();
 
   const alertGroups = useUnifiedAlertingSelector((state) => state.amAlertGroups) || initialAsyncRequestState;
+  const loading = alertGroups[alertManagerSourceName || '']?.loading;
+  const error = alertGroups[alertManagerSourceName || '']?.error;
   const results: AlertmanagerGroup[] = alertGroups[alertManagerSourceName || '']?.result || [];
 
   useEffect(() => {
@@ -36,6 +39,12 @@ const AlertManagerNotifications = () => {
   return (
     <AlertingPageWrapper pageId="notifications">
       <AlertManagerPicker current={alertManagerSourceName} onChange={setAlertManagerSourceName} />
+      {loading && <LoadingPlaceholder text="Loading notifications" />}
+      {error && !loading && (
+        <Alert title={'Error loading notifications'} severity={'error'}>
+          {error.message || 'Unknown error'}
+        </Alert>
+      )}
       {results &&
         results.map((group, index) => {
           return (
