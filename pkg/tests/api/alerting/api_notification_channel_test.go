@@ -45,10 +45,13 @@ func TestNotificationChannels(t *testing.T) {
 	os, opa, ot, opu, ogb, ol, oth := channels.SlackAPIEndpoint, channels.PagerdutyEventAPIURL,
 		channels.TelegramAPIURL, channels.PushoverEndpoint, channels.GetBoundary,
 		channels.LineNotifyURL, channels.ThreemaGwBaseURL
+	originalTemplate := channels.DefaultTemplateString
+	channels.DefaultTemplateString = channels.TemplateForTestsString
 	t.Cleanup(func() {
 		channels.SlackAPIEndpoint, channels.PagerdutyEventAPIURL,
 			channels.TelegramAPIURL, channels.PushoverEndpoint, channels.GetBoundary,
 			channels.LineNotifyURL, channels.ThreemaGwBaseURL = os, opa, ot, opu, ogb, ol, oth
+		channels.DefaultTemplateString = originalTemplate
 	})
 	channels.SlackAPIEndpoint = fmt.Sprintf("http://%s/slack_recvX/slack_testX", mockChannel.server.Addr)
 	channels.PagerdutyEventAPIURL = fmt.Sprintf("http://%s/pagerduty_recvX/pagerduty_testX", mockChannel.server.Addr)
@@ -1452,9 +1455,10 @@ var expNotifications = map[string][]string{
 			  },
 			  "annotations": {},
 			  "startsAt": "%s",
+        "valueString": "[ var='A' labels={} value=1 ]",
 			  "endsAt": "0001-01-01T00:00:00Z",
 			  "generatorURL": "http://localhost:3000/alerting/UID_WebhookAlert/edit",
-			  "fingerprint": "7611eef9e67f6e50",
+			  "fingerprint": "929467973978d053",
 			  "silenceURL": "http://localhost:3000/alerting/silence/new?alertmanager=grafana&matchers=alertname%%3DWebhookAlert",
 			  "dashboardURL": "",
 			  "panelURL": ""
@@ -1618,10 +1622,11 @@ var expNotifications = map[string][]string{
 		  {
 			"labels": {
 			  "__alert_rule_uid__": "UID_AlertmanagerAlert",
-              "__value__": "[ var='A' labels={} value=1 ]",
 			  "alertname": "AlertmanagerAlert"
 			},
-			"annotations": {},
+			"annotations": {
+        "__value_string__": "[ var='A' labels={} value=1 ]"
+      },
 			"startsAt": "%s",
 			"endsAt": "0001-01-01T00:00:00Z",
 			"generatorURL": "http://localhost:3000/alerting/UID_AlertmanagerAlert/edit",

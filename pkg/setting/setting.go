@@ -386,6 +386,11 @@ type Cfg struct {
 	// Grafana Live ws endpoint (per Grafana server instance). 0 disables
 	// Live, -1 means unlimited connections.
 	LiveMaxConnections int
+	// LiveHAEngine is a type of engine to use to achieve HA with Grafana Live.
+	// Zero value means in-memory single node setup.
+	LiveHAEngine string
+	// LiveHAEngineAddress is a connection address for Live HA engine.
+	LiveHAEngineAddress string
 
 	// Grafana.com URL
 	GrafanaComURL string
@@ -1447,5 +1452,12 @@ func (cfg *Cfg) readLiveSettings(iniFile *ini.File) error {
 	if cfg.LiveMaxConnections < -1 {
 		return fmt.Errorf("unexpected value %d for [live] max_connections", cfg.LiveMaxConnections)
 	}
+	cfg.LiveHAEngine = section.Key("ha_engine").MustString("")
+	switch cfg.LiveHAEngine {
+	case "", "redis":
+	default:
+		return fmt.Errorf("unsupported live HA engine type: %s", cfg.LiveHAEngine)
+	}
+	cfg.LiveHAEngineAddress = section.Key("ha_engine_address").MustString("127.0.0.1:6379")
 	return nil
 }

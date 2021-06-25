@@ -298,10 +298,26 @@ func (e *dataPlugin) executeQuery(query plugins.DataSubQuery, wg *sync.WaitGroup
 		tsSchema := frame.TimeSeriesSchema()
 		if tsSchema.Type == data.TimeSeriesTypeLong {
 			var err error
+			originalData := frame
 			frame, err = data.LongToWide(frame, qm.FillMissing)
 			if err != nil {
 				errAppendDebug("failed to convert long to wide series when converting from dataframe", err, interpolatedQuery)
 				return
+			}
+
+			// Before 8x, a special metric column was used to name time series. The LongToWide transforms that into a metric label on the value field.
+			// But that makes series name have both the value column name AND the metric name. So here we are removing the metric label here and moving it to the
+			// field name to get the same naming for the series as pre v8
+			if len(originalData.Fields) == 3 {
+				for _, field := range frame.Fields {
+					if len(field.Labels) == 1 { // 7x only supported one label
+						name, ok := field.Labels["metric"]
+						if ok {
+							field.Name = name
+							field.Labels = nil
+						}
+					}
+				}
 			}
 		}
 		if qm.FillMissing != nil {

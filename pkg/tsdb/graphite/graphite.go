@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/registry"
@@ -29,7 +30,7 @@ import (
 	"github.com/opentracing/opentracing-go"
 )
 
-type GraphiteService struct {
+type Service struct {
 	logger               log.Logger
 	im                   instancemgmt.InstanceManager
 	BackendPluginManager backendplugin.Manager `inject:""`
@@ -41,7 +42,7 @@ func init() {
 	registry.Register(&registry.Descriptor{
 		Name:         "GraphiteService",
 		InitPriority: registry.Low,
-		Instance:     &GraphiteService{},
+		Instance:     &Service{},
 	})
 }
 
@@ -55,7 +56,7 @@ type datasourceInfo struct {
 	JSONData          map[string]interface{}
 }
 
-func NewInstanceSettings(httpClientProvider httpclient.Provider) datasource.InstanceFactoryFunc {
+func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.InstanceFactoryFunc {
 	return func(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		opts, err := settings.HTTPClientOptions()
 		if err != nil {
@@ -87,9 +88,10 @@ func NewInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 	}
 }
 
-func (s *GraphiteService) Init() error {
+func (s *Service) Init() error {
 	s.logger = log.New("tsdb.graphite")
-	s.im = datasource.NewInstanceManager(NewInstanceSettings(s.HTTPClientProvider))
+	s.im = datasource.NewInstanceManager(newInstanceSettings(s.HTTPClientProvider))
+
 	factory := coreplugin.New(backend.ServeOpts{
 		QueryDataHandler: s,
 	})
@@ -100,7 +102,7 @@ func (s *GraphiteService) Init() error {
 	return nil
 }
 
-func (e *GraphiteService) getDSInfo(pluginCtx backend.PluginContext) (*datasourceInfo, error) {
+func (e *Service) getDSInfo(pluginCtx backend.PluginContext) (*datasourceInfo, error) {
 	i, err := e.im.Get(pluginCtx)
 	if err != nil {
 		return nil, err
@@ -109,7 +111,7 @@ func (e *GraphiteService) getDSInfo(pluginCtx backend.PluginContext) (*datasourc
 	return &instance, nil
 }
 
-func (e *GraphiteService) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+func (e *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	// get datasource info from context
 	dsInfo, err := e.getDSInfo(req.PluginContext)
 	if err != nil {
@@ -193,43 +195,23 @@ func (e *GraphiteService) QueryData(ctx context.Context, req *backend.QueryDataR
 		return &result, err
 	}
 
-	data, err := e.parseResponse(res)
+	frames, err := e.toDataFrames(res)
 	if err != nil {
 		return &result, err
 	}
 
-	resp := backend.NewQueryDataResponse()
+	result = backend.QueryDataResponse{
+		Responses: make(backend.Responses),
+	}
 
-	frames := e.convertResponseToDataframes(data)
-	respD := resp.Responses["A"]
-	respD.Frames = frames
-	resp.Responses["A"] = respD
+	result.Responses["A"] = backend.DataResponse{
+		Frames: frames,
+	}
 
 	return &result, nil
 }
 
-func (e *GraphiteService) convertResponseToDataframes(resp []TargetResponseDTO) []*data.Frame {
-	var frames []*data.Frame
-	for _, series := range resp {
-		timeVector := make([]time.Time, 0, len(series.DataPoints))
-		values := make([]float64, 0, len(series.DataPoints))
-
-		for _, k := range series.DataPoints {
-			timeVector = append(timeVector, time.Unix(int64(k[0].Float64), 0).UTC())
-			values = append(values, k[1].Float64)
-		}
-		frames = append(frames, data.NewFrame(series.Target,
-			data.NewField("time", nil, timeVector),
-			data.NewField("value", nil, values)))
-
-		if setting.Env == setting.Dev {
-			e.logger.Debug("Graphite response", "target", series.Target, "datapoints", len(series.DataPoints))
-		}
-	}
-	return frames
-}
-
-func (e *GraphiteService) parseResponse(res *http.Response) ([]TargetResponseDTO, error) {
+func (e *Service) parseResponse(res *http.Response) ([]TargetResponseDTO, error) {
 	body, err := ioutil.ReadAll(res.Body)
 	if err != nil {
 		return nil, err
@@ -252,16 +234,42 @@ func (e *GraphiteService) parseResponse(res *http.Response) ([]TargetResponseDTO
 		return nil, err
 	}
 
-	for si := range data {
-		// Convert Response to timestamps MS
-		for pi, point := range data[si].DataPoints {
-			data[si].DataPoints[pi][1].Float64 = point[1].Float64 * 1000
-		}
-	}
 	return data, nil
 }
 
-func (e *GraphiteService) createRequest(dsInfo *datasourceInfo, data url.Values) (*http.Request, error) {
+func (e *Service) toDataFrames(response *http.Response) (frames data.Frames, error error) {
+	responseData, err := e.parseResponse(response)
+	if err != nil {
+		return nil, err
+	}
+
+	frames = data.Frames{}
+	for _, series := range responseData {
+		timeVector := make([]time.Time, 0, len(series.DataPoints))
+		values := make([]*float64, 0, len(series.DataPoints))
+		name := series.Target
+
+		for _, dataPoint := range series.DataPoints {
+			var timestamp, value, err = parseDataTimePoint(dataPoint)
+			if err != nil {
+				return nil, err
+			}
+			timeVector = append(timeVector, timestamp)
+			values = append(values, value)
+		}
+
+		frames = append(frames, data.NewFrame(name,
+			data.NewField("time", nil, timeVector),
+			data.NewField("value", series.Tags, values).SetConfig(&data.FieldConfig{DisplayNameFromDS: name})))
+
+		if setting.Env == setting.Dev {
+			e.logger.Debug("Graphite response", "target", series.Target, "datapoints", len(series.DataPoints))
+		}
+	}
+	return
+}
+
+func (e *Service) createRequest(dsInfo *datasourceInfo, data url.Values) (*http.Request, error) {
 	u, err := url.Parse(dsInfo.URL)
 	if err != nil {
 		return nil, err
@@ -296,4 +304,23 @@ func fixIntervalFormat(target string) string {
 
 func epochMStoGraphiteTime(tr backend.TimeRange) (string, string) {
 	return fmt.Sprintf("%d", tr.From.UTC().Unix()), fmt.Sprintf("%d", tr.To.UTC().Unix())
+}
+
+/**
+ * Graphite should always return timestamp as a number but values might be nil when data is missing
+ */
+func parseDataTimePoint(dataTimePoint plugins.DataTimePoint) (time.Time, *float64, error) {
+	if !dataTimePoint[1].Valid {
+		return time.Time{}, nil, errors.New("failed to parse data point timestamp")
+	}
+
+	timestamp := time.Unix(int64(dataTimePoint[1].Float64), 0).UTC()
+
+	if dataTimePoint[0].Valid {
+		var value = new(float64)
+		*value = dataTimePoint[0].Float64
+		return timestamp, value, nil
+	} else {
+		return timestamp, nil, nil
+	}
 }
