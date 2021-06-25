@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/stretchr/testify/require"
 )
 
 func mockTime(mock time.Time) time.Time {

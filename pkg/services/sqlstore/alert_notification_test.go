@@ -11,6 +11,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/stretchr/testify/require"
 )
 
 func TestAlertNotificationSQLAccess(t *testing.T) {
@@ -171,8 +172,8 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 				cmd.Frequency = "invalid duration"
 
 				err := CreateAlertNotificationCommand(cmd)
-				So(regexp.MustCompile(`^time: invalid duration "?invalid duration"?$`).MatchString(
-					err.Error()), ShouldBeTrue)
+				require.True(t, regexp.MustCompile(`^time: invalid duration "?invalid duration"?$`).MatchString(
+					err.Error()))
 			})
 		})
 
@@ -203,8 +204,8 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 
 				err := UpdateAlertNotification(updateCmd)
 				require.Error(t, err)
-				So(regexp.MustCompile(`^time: invalid duration "?invalid duration"?$`).MatchString(
-					err.Error()), ShouldBeTrue)
+				require.True(t, regexp.MustCompile(`^time: invalid duration "?invalid duration"?$`).MatchString(
+					err.Error()))
 			})
 		})
 
@@ -225,7 +226,7 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 			require.Equal(t, "email", cmd.Result.Type)
 			require.Equal(t, 10*time.Second, cmd.Result.Frequency)
 			require.False(t, cmd.Result.DisableResolveMessage)
-			So(cmd.Result.Uid, ShouldNotBeEmpty)
+			require.NotEmpty(t, cmd.Result.Uid)
 
 			t.Run("Cannot save Alert Notification with the same name", func(t *testing.T) {
 				err = CreateAlertNotificationCommand(cmd)

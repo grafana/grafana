@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/stretchr/testify/require"
 )
 
 func mockTimeNow() {
@@ -79,11 +80,11 @@ func TestAlertingDataAccess(t *testing.T) {
 				require.NoError(t, err)
 			})
 
-			alert, _ := getAlertById(insertedAlert.Id)
+			alert, _ := getAlertById(insertedAlert.Id, t)
 			stateDateBeforePause := alert.NewStateDate
 
 			t.Run("can pause all alerts", func(t *testing.T) {
-				err := pauseAllAlerts(true)
+				err := pauseAllAlerts(true, t)
 				require.NoError(t, err)
 
 				t.Run("cannot updated paused alert", func(t *testing.T) {
@@ -97,23 +98,23 @@ func TestAlertingDataAccess(t *testing.T) {
 				})
 
 				t.Run("alert is paused", func(t *testing.T) {
-					alert, _ = getAlertById(insertedAlert.Id)
+					alert, _ = getAlertById(insertedAlert.Id, t)
 					currentState := alert.State
 					require.Equal(t, "paused", currentState)
 				})
 
 				t.Run("pausing alerts should update their NewStateDate", func(t *testing.T) {
-					alert, _ = getAlertById(insertedAlert.Id)
+					alert, _ = getAlertById(insertedAlert.Id, t)
 					stateDateAfterPause := alert.NewStateDate
-					So(stateDateBeforePause, ShouldHappenBefore, stateDateAfterPause)
+					require.True(t, stateDateBeforePause.Before(stateDateAfterPause))
 				})
 
 				t.Run("unpausing alerts should update their NewStateDate again", func(t *testing.T) {
-					err := pauseAllAlerts(false)
+					err := pauseAllAlerts(false, t)
 					require.NoError(t, err)
-					alert, _ = getAlertById(insertedAlert.Id)
+					alert, _ = getAlertById(insertedAlert.Id, t)
 					stateDateAfterUnpause := alert.NewStateDate
-					So(stateDateBeforePause, ShouldHappenBefore, stateDateAfterUnpause)
+					require.True(t, stateDateBeforePause.Before(stateDateAfterUnpause))
 				})
 			})
 		})
@@ -295,33 +296,34 @@ func TestPausingAlerts(t *testing.T) {
 		insertedAlert := alertQuery.Result[0]
 
 		t.Run("when paused", func(t *testing.T) {
-			_, err := pauseAlert(testDash.OrgId, insertedAlert.Id, true)
+			_, err := pauseAlert(testDash.OrgId, insertedAlert.Id, true, t)
 			require.NoError(t, err)
 
 			t.Run("the NewStateDate should be updated", func(t *testing.T) {
-				alert, err := getAlertById(insertedAlert.Id)
+				alert, err := getAlertById(insertedAlert.Id, t)
 				require.NoError(t, err)
 
 				stateDateAfterPause = alert.NewStateDate
-				So(stateDateBeforePause, ShouldHappenBefore, stateDateAfterPause)
+				require.True(t, stateDateBeforePause.Before(stateDateAfterPause))
 			})
 		})
 
 		t.Run("when unpaused", func(t *testing.T) {
-			_, err := pauseAlert(testDash.OrgId, insertedAlert.Id, false)
+			_, err := pauseAlert(testDash.OrgId, insertedAlert.Id, false, t)
 			require.NoError(t, err)
 
 			t.Run("the NewStateDate should be updated again", func(t *testing.T) {
-				alert, err := getAlertById(insertedAlert.Id)
+				alert, err := getAlertById(insertedAlert.Id, t)
 				require.NoError(t, err)
 
 				stateDateAfterUnpause := alert.NewStateDate
-				So(stateDateAfterPause, ShouldHappenBefore, stateDateAfterUnpause)
+				require.True(t, stateDateAfterPause.Before(stateDateAfterUnpause))
 			})
 		})
 	})
 }
-func pauseAlert(orgId int64, alertId int64, pauseState bool) (int64, error) {
+
+func pauseAlert(orgId int64, alertId int64, pauseState bool, t *testing.T) (int64, error) {
 	cmd := &models.PauseAlertCommand{
 		OrgId:    orgId,
 		AlertIds: []int64{alertId},
@@ -331,6 +333,7 @@ func pauseAlert(orgId int64, alertId int64, pauseState bool) (int64, error) {
 	require.NoError(t, err)
 	return cmd.ResultCount, err
 }
+
 func insertTestAlert(title string, message string, orgId int64, dashId int64, settings *simplejson.Json) (*models.Alert, error) {
 	items := []*models.Alert{
 		{
@@ -355,7 +358,7 @@ func insertTestAlert(title string, message string, orgId int64, dashId int64, se
 	return cmd.Alerts[0], err
 }
 
-func getAlertById(id int64) (*models.Alert, error) {
+func getAlertById(id int64, t *testing.T) (*models.Alert, error) {
 	q := &models.GetAlertByIdQuery{
 		Id: id,
 	}
@@ -364,7 +367,7 @@ func getAlertById(id int64) (*models.Alert, error) {
 	return q.Result, err
 }
 
-func pauseAllAlerts(pauseState bool) error {
+func pauseAllAlerts(pauseState bool, t *testing.T) error {
 	cmd := &models.PauseAllAlertCommand{
 		Paused: pauseState,
 	}

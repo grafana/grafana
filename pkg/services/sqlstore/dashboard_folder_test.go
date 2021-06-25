@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/search"
+	"github.com/stretchr/testify/require"
 )
 
 func TestDashboardFolderDataAccess(t *testing.T) {
