@@ -1,7 +1,8 @@
 import React, { FC, SyntheticEvent } from 'react';
-import { Tooltip, Form, Field, Input, VerticalGroup, Button } from '@grafana/ui';
+import { Tooltip, Form, Field, VerticalGroup, Button } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
 import { submitButton } from '../Login/LoginForm';
+import { PasswordField } from '../PasswordField';
 interface Props {
   onSubmit: (pw: string) => void;
   onSkip?: (event?: SyntheticEvent) => void;
@@ -21,21 +22,25 @@ export const ChangePassword: FC<Props> = ({ onSubmit, onSkip }) => {
       {({ errors, register, getValues }) => (
         <>
           <Field label="New password" invalid={!!errors.newPassword} error={errors?.newPassword?.message}>
-            <Input
+            <PasswordField
+              id="new-password"
               autoFocus
-              type="password"
-              {...register('newPassword', {
-                required: 'New password required',
-              })}
+              autoComplete="new-password"
+              register={register('newPassword', { required: 'Password is required' }) as any}
             />
           </Field>
           <Field label="Confirm new password" invalid={!!errors.confirmNew} error={errors?.confirmNew?.message}>
-            <Input
-              type="password"
-              {...register('confirmNew', {
-                required: 'Confirmed password is required',
-                validate: (v: string) => v === getValues().newPassword || 'Passwords must match!',
-              })}
+            <PasswordField
+              id="new-password"
+              autoComplete="new-password"
+              register={
+                {
+                  ...register('confirmNew', {
+                    required: 'Confirmed password is required',
+                    validate: (v: string) => v === getValues().newPassword || 'Passwords must match!',
+                  }),
+                } as any
+              }
             />
           </Field>
           <VerticalGroup>
