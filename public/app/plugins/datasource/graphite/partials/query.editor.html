@@ -18,7 +18,7 @@
           debounce="true"
           placeholder="Tag key"
           css-class="query-segment-key"
-          get-options="ctrl.dispatchAndHandleGetTags($index, $query)"
+          get-options="ctrl.getTags($index, $query)"
           on-change="ctrl.dispatchTagChanged(tag, $index)"
         ></gf-form-dropdown>
 
@@ -26,7 +26,7 @@
           model="tag.operator"
           label-mode="true"
           css-class="query-segment-operator"
-          get-options="ctrl.dispatchAndHandleGetTagOperators()"
+          get-options="ctrl.getTagOperators()"
           on-change="ctrl.dispatchTagChanged(tag, $index)"
           min-input-width="30"
         ></gf-form-dropdown>
@@ -37,18 +37,18 @@
           debounce="true"
           css-class="query-segment-value"
           placeholder="Tag value"
-          get-options="ctrl.dispatchAndHandleGetTagValues(tag, $index, $query)"
+          get-options="ctrl.getTagValues(tag, $index, $query)"
           on-change="ctrl.dispatchTagChanged(tag, $index)"
         ></gf-form-dropdown>
         <label class="gf-form-label query-keyword" ng-if="$index !== ctrl.state.queryModel.tags.length - 1">AND</label>
       </div>
 
       <div ng-if="ctrl.state.queryModel.seriesByTagUsed" ng-repeat="segment in ctrl.state.addTagSegments" role="menuitem" class="gf-form">
-        <metric-segment segment="segment" get-options="ctrl.dispatchAndHandleGetTagsAsSegments($query)" on-change="ctrl.dispatchAddNewTag(segment)" debounce="true" />
+        <metric-segment segment="segment" get-options="ctrl.getTagsAsSegments($query)" on-change="ctrl.dispatchAddNewTag(segment)" debounce="true" />
       </div>
 
       <div ng-if="!ctrl.state.queryModel.seriesByTagUsed" ng-repeat="segment in ctrl.state.segments" role="menuitem" class="gf-form">
-        <metric-segment segment="segment" get-options="ctrl.dispatchAndHandleGetAltSegments($index, $query)" on-change="ctrl.dispatchSegmentValueChanged(segment, $index)" />
+        <metric-segment segment="segment" get-options="ctrl.getAltSegments($index, $query)" on-change="ctrl.dispatchSegmentValueChanged(segment, $index)" />
       </div>
 
       <div ng-if="ctrl.state.paused" class="gf-form">

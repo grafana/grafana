@@ -1,0 +1,26 @@
+Adding metrics
+Adding custom metrics
+Removing metrics
+Editing metrics
+!! No debouncing on segments
+
+Adding tags
+Adding custom tags
+Removing tags
+Editing tags: name, operator (no custom values), value
+!! Debouncing edits on tags names, values, operators
+
+Adding functions
+Moving functions
+Editing function params: changing, adding, removing
+Showing function descriptions
+
+Pausing on tags being added
+Smart aliasing by * node
+
+Switching between raw and visual editor
+
+Bugs: removing all tags breaks the editor
+
+
+Tags are using dropdowns. It seems like it's a simpler data structure (list of tags) instead of list with list of segments? Or tag containing 3 segments inside.

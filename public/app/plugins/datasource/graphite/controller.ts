@@ -1,14 +1,9 @@
 import GraphiteQuery from './graphite_query';
 import { getTemplateSrv } from '@grafana/runtime';
-import { each, eachRight, map, remove } from 'lodash';
-import { dispatch } from '../../../store/store';
-import { notifyApp } from '../../../core/reducers/appNotification';
-import { createErrorNotification } from '../../../core/copy/appNotification';
+import { each, map } from 'lodash';
 import { GraphiteQueryEditorState } from './state';
 import { GraphiteQueryEditorAngularDependencies, GraphiteTagOperator } from './types';
-
-const GRAPHITE_TAG_OPERATORS = ['=', '!=', '=~', '!=~'];
-const TAG_PREFIX = 'tag: ';
+import { handleMetricsAutoCompleteError, TAG_PREFIX } from './common';
 
 /**
  * XXX: Work in progress.
@@ -125,110 +120,6 @@ async function setSegmentFocus(state: GraphiteQueryEditorState, segmentIndex: an
     segment.focus = segmentIndex === index;
   });
   return state;
-}
-
-// TODO: UI fetch every time a segment is opened, not only once
-export async function getAltSegments(
-  state: GraphiteQueryEditorState,
-  index: number,
-  prefix: string
-): Promise<GraphiteQueryEditorState> {
-  state = { ...state };
-
-  let query = prefix && prefix.length > 0 ? '*' + prefix + '*' : '*';
-  if (index > 0) {
-    query = state.queryModel.getSegmentPathUpTo(index) + '.' + query;
-  }
-  const options = {
-    range: state.panelCtrl.range,
-    requestId: 'get-alt-segments',
-  };
-
-  try {
-    const segments = await state.datasource.metricFindQuery(query, options);
-    const altSegments = map(segments, (segment) => {
-      return state.uiSegmentSrv.newSegment({
-        value: segment.text,
-        expandable: segment.expandable,
-      });
-    });
-
-    if (index > 0 && altSegments.length === 0) {
-      // state.altSegments = altSegments;
-      // return state;
-      return {
-        ...state,
-        altSegments,
-      };
-    }
-
-    // add query references
-    if (index === 0) {
-      eachRight(state.panelCtrl.panel.targets, (target) => {
-        if (target.refId === state.queryModel.target.refId) {
-          return;
-        }
-
-        altSegments.unshift(
-          state.uiSegmentSrv.newSegment({
-            type: 'series-ref',
-            value: '#' + target.refId,
-            expandable: false,
-          })
-        );
-      });
-    }
-
-    // add template variables
-    eachRight(state.templateSrv.getVariables(), (variable) => {
-      altSegments.unshift(
-        state.uiSegmentSrv.newSegment({
-          type: 'template',
-          value: '$' + variable.name,
-          expandable: true,
-        })
-      );
-    });
-
-    // add wildcard option
-    altSegments.unshift(state.uiSegmentSrv.newSegment('*'));
-
-    if (state.supportsTags && index === 0) {
-      removeTaggedEntry(altSegments);
-      state = await addAltTagSegments(state, prefix, altSegments);
-    } else {
-      return {
-        ...state,
-        altSegments,
-      };
-    }
-  } catch (err) {
-    state = await handleMetricsAutoCompleteError(state, err);
-    state.altSegments = [];
-  }
-
-  return state;
-}
-
-async function addAltTagSegments(
-  state: GraphiteQueryEditorState,
-  prefix: string,
-  altSegments: any[]
-): Promise<GraphiteQueryEditorState> {
-  state = { ...state };
-  state = await getTagsAsSegments(state, prefix);
-
-  state.tagSegments = map(state.tagsAsSegments, (segment) => {
-    segment.value = TAG_PREFIX + segment.value;
-    return segment;
-  });
-
-  state.altSegments = altSegments.concat(...state.tagSegments);
-  return state;
-}
-
-function removeTaggedEntry(altSegments: any[]) {
-  remove(altSegments, (s) => s.value === '_tagged');
 }
 
 export async function segmentValueChanged(
@@ -398,79 +289,6 @@ async function smartlyHandleNewAliasByNode(
   return state;
 }
 
-export async function getTags(
-  state: GraphiteQueryEditorState,
-  index: number,
-  tagPrefix: any
-): Promise<GraphiteQueryEditorState> {
-  state = { ...state };
-
-  try {
-    const tagExpressions = state.queryModel.renderTagExpressions(index);
-    const values = await state.datasource.getTagsAutoComplete(tagExpressions, tagPrefix);
-
-    const altTags = map(values, 'text');
-    altTags.splice(0, 0, state.removeTagValue);
-    state.allTags = mapToDropdownOptions(altTags);
-  } catch (err) {
-    state = await handleTagsAutoCompleteError(state, err);
-  }
-
-  return state;
-}
-
-export async function getTagsAsSegments(
-  state: GraphiteQueryEditorState,
-  tagPrefix: string
-): Promise<GraphiteQueryEditorState> {
-  state = { ...state };
-
-  try {
-    const tagExpressions = state.queryModel.renderTagExpressions();
-    const values = await state.datasource.getTagsAutoComplete(tagExpressions, tagPrefix);
-    state.tagsAsSegments = map(values, (val) => {
-      return state.uiSegmentSrv.newSegment({
-        value: val.text,
-        type: 'tag',
-        expandable: false,
-      });
-    });
-  } catch (err) {
-    state.tagsAsSegments = [];
-    state = await handleTagsAutoCompleteError(state, err);
-  }
-
-  return state;
-}
-
-export async function getTagOperators(state: GraphiteQueryEditorState): Promise<GraphiteQueryEditorState> {
-  return {
-    ...state,
-    tagOperators: mapToDropdownOptions(GRAPHITE_TAG_OPERATORS),
-  };
-}
-
-export async function getTagValues(
-  state: GraphiteQueryEditorState,
-  tag: { key: any },
-  index: number,
-  valuePrefix: any
-): Promise<GraphiteQueryEditorState> {
-  state = { ...state };
-
-  const tagExpressions = state.queryModel.renderTagExpressions(index);
-  const tagKey = tag.key;
-  const values = await state.datasource.getTagValuesAutoComplete(tagExpressions, tagKey, valuePrefix, {});
-  const altValues = map(values, 'text');
-  // Add template variables as additional values
-  eachRight(state.templateSrv.getVariables(), (variable) => {
-    altValues.push('${' + variable.name + ':regex}');
-  });
-
-  state.tagValues = mapToDropdownOptions(altValues);
-  return state;
-}
-
 export async function tagChanged(
   state: GraphiteQueryEditorState,
   tag: any,
@@ -522,37 +340,6 @@ export async function unpause(state: GraphiteQueryEditorState) {
   state.panelCtrl.refresh();
 
   return state;
-}
-
-async function handleTagsAutoCompleteError(
-  state: GraphiteQueryEditorState,
-  error: Error
-): Promise<GraphiteQueryEditorState> {
-  console.error(error);
-  if (!state._tagsAutoCompleteErrorShown) {
-    state._tagsAutoCompleteErrorShown = true;
-    dispatch(notifyApp(createErrorNotification(`Fetching tags failed: ${error.message}.`)));
-  }
-  return state;
-}
-
-async function handleMetricsAutoCompleteError(
-  state: GraphiteQueryEditorState,
-  error: Error
-): Promise<GraphiteQueryEditorState> {
-  console.error(error);
-  if (!state._metricAutoCompleteErrorShown) {
-    state._metricAutoCompleteErrorShown = true;
-    dispatch(notifyApp(createErrorNotification(`Fetching metrics failed: ${error.message}.`)));
-  }
-  return state;
-}
-
-// TODO: move to util.ts
-function mapToDropdownOptions(results: any[]) {
-  return map(results, (value) => {
-    return { text: value, value: value };
-  });
 }
 
 // TODO: move to util.ts

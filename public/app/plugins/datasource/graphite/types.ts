@@ -60,6 +60,8 @@ export type GraphiteSegment = {
   value: string;
   type: 'tag' | 'metric';
   expandable: boolean;
+  focus: boolean;
+  fake: boolean;
 };
 
 export type GraphiteTagOperator = '=' | '!=' | '=~' | '!=~';

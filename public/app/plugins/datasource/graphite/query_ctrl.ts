@@ -6,6 +6,7 @@ import { QueryCtrl } from 'app/plugins/sdk';
 import { auto } from 'angular';
 import { TemplateSrv } from '@grafana/runtime';
 import { actions } from './actions';
+import { getAltSegments, getTagOperators, getTags, getTagsAsSegments, getTagValues } from './providers';
 import { createStore, GraphiteQueryEditorState } from './state';
 import {
   AngularDropdownOptions,
@@ -90,37 +91,55 @@ export class GraphiteQueryCtrl extends QueryCtrl {
     this.dispatch(actions.init(deps as GraphiteQueryEditorAngularDependencies));
   }
 
-  async dispatchAndHandleGetAltSegments(index: number, text: string) {
-    await this.dispatch(actions.getAltSegments(index, text));
-    return this.state.altSegments;
+  /**
+   * Get list of options for an empty segment or a segment with metric when it's clicked/opened.
+   *
+   * This is used for new segments and segments with metrics selected.
+   */
+  async getAltSegments(index: number, text: string): Promise<GraphiteSegment[]> {
+    return await getAltSegments(this.state, index, text);
   }
 
+  /**
+   * Apply changes to a given metric segment
+   */
   async dispatchSegmentValueChanged(segment: GraphiteSegment, index: number) {
     await this.dispatch(actions.segmentValueChanged(segment, index));
   }
 
-  async dispatchAndHandleGetTags(index: number, query: string): Promise<AngularDropdownOptions[]> {
-    await this.dispatch(actions.getTags(index, query));
-    return this.state.allTags;
+  /**
+   * Get list of tags for a tag segment
+   */
+  async getTags(index: number, query: string): Promise<AngularDropdownOptions[]> {
+    return await getTags(this.state, index, query);
   }
 
+  /**
+   * Apply changes when a tag is changed
+   */
   async dispatchTagChanged(tag: GraphiteTag, index: number) {
     await this.dispatch(actions.tagChanged(tag, index));
   }
 
-  async dispatchAndHandleGetTagValues(tag: GraphiteTag, index: number, query: string) {
-    await this.dispatch(actions.getTagValues(tag, index, query));
-    return this.state.tagValues;
+  /**
+   * Get list of available tag values
+   */
+  async getTagValues(tag: GraphiteTag, index: number, query: string): Promise<AngularDropdownOptions[]> {
+    return await getTagValues(this.state, tag, index, query);
   }
 
-  async dispatchAndHandleGetTagOperators() {
-    await this.dispatch(actions.getTagOperators());
-    return this.state.tagOperators;
+  /**
+   * Get list of available tag operators
+   */
+  getTagOperators(): AngularDropdownOptions[] {
+    return getTagOperators();
   }
 
-  async dispatchAndHandleGetTagsAsSegments(query: string) {
-    await this.dispatch(actions.getTagsAsSegments(query));
-    return this.state.tagsAsSegments;
+  /**
+   * Get tag list when a new tag is added
+   */
+  async getTagsAsSegments(query: string): Promise<GraphiteSegment[]> {
+    return await getTagsAsSegments(this.state, query);
   }
 
   async dispatchAddNewTag(segment: GraphiteSegment) {

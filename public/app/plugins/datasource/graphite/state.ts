@@ -2,11 +2,6 @@ import GraphiteQuery from './graphite_query';
 import {
   addFunction,
   addNewTag,
-  getAltSegments,
-  getTagOperators,
-  getTags,
-  getTagsAsSegments,
-  getTagValues,
   init,
   moveFunction,
   removeFunction,
@@ -16,7 +11,7 @@ import {
   toggleEditorMode,
   unpause,
 } from './controller';
-import { AngularDropdownOptions, GraphiteActionDispatcher, GraphiteSegment } from './types';
+import { GraphiteActionDispatcher, GraphiteSegment } from './types';
 import { GraphiteDatasource } from './datasource';
 import { TemplateSrv } from '../../../features/templating/template_srv';
 
@@ -27,15 +22,10 @@ import { TemplateSrv } from '../../../features/templating/template_srv';
  * internally received and processed by directives without modifying the state.
  */
 export type GraphiteQueryEditorState = {
-  tagOperators: AngularDropdownOptions[];
-  tagValues: AngularDropdownOptions[];
-  allTags: AngularDropdownOptions[];
-  allTagValues: AngularDropdownOptions[];
-
+  /**
+   * Extra segment with plus button when tags are rendered
+   */
   addTagSegments: GraphiteSegment[];
-
-  tagsAsSegments: GraphiteSegment[];
-  tagSegments: GraphiteSegment[];
 
   supportsTags: boolean;
   paused: boolean;
@@ -49,8 +39,7 @@ export type GraphiteQueryEditorState = {
 
   target: { target: string; textEditor: boolean };
 
-  altSegments: GraphiteSegment[];
-  segments: any;
+  segments: GraphiteSegment[];
   queryModel: GraphiteQuery;
 
   error: Error | null;
@@ -70,25 +59,25 @@ const reducer = async (action: Action, state: GraphiteQueryEditorState): Promise
       state = await init(state, action.payload);
       break;
     case 'GET_ALT_SEGMENTS':
-      state = await getAltSegments(state, action.payload.segmentIndex, action.payload.text);
+      // state = await getAltSegments(state, action.payload.segmentIndex, action.payload.text);
       break;
     case 'SEGMENT_VALUE_CHANGED':
       state = await segmentValueChanged(state, action.payload.segment, action.payload.index);
       break;
     case 'GET_TAGS':
-      state = await getTags(state, action.payload.index, action.payload.query);
+      // state = await getTags(state, action.payload.index, action.payload.query);
       break;
     case 'TAG_CHANGED':
       state = await tagChanged(state, action.payload.tag, action.payload.index);
       break;
     case 'GET_TAG_VALUES':
-      state = await getTagValues(state, action.payload.tag, action.payload.index, action.payload.query);
+      // state = await getTagValues(state, action.payload.tag, action.payload.index, action.payload.query);
       break;
     case 'GET_TAG_OPERATORS':
-      state = await getTagOperators(state);
+      // state = await getTagOperators(state);
       break;
     case 'GET_TAGS_AS_SEGMENTS':
-      state = await getTagsAsSegments(state, action.payload.query);
+      // state = await getTagsAsSegments(state, action.payload.query);
       break;
     case 'ADD_NEW_TAG':
       state = await addNewTag(state, action.payload.segment);
