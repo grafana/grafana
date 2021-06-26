@@ -69,7 +69,7 @@ type flightConfig struct {
 
 func newFlightConfig() *flightConfig {
 	return &flightConfig{
-		centerLat:   37.82608, // San francisco
+		centerLat:   37.83, // San francisco
 		centerLng:   -122.42487,
 		radius:      0.01, // raw gps degrees
 		altitudeMin: 350,
