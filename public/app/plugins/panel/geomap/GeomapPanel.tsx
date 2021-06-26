@@ -8,7 +8,7 @@ type Props = PanelProps<GeomapPanelOptions>;
 
 export class GeomapPanel extends Component<Props> {
   render() {
-    const { height, options, data } = this.props;
-    return <BaseMap height={height} options={options} data={data} />;
+    const { width, height, options, data } = this.props;
+    return <BaseMap height={height} width={width} options={options} data={data} />;
   }
 }
