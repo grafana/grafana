@@ -1,4 +1,4 @@
-import React, { ComponentProps, useState } from 'react';
+import React, { ComponentProps } from 'react';
 import { InlineField, Input, Select } from '@grafana/ui';
 import { DateHistogram } from '../aggregations';
 import { bucketAggregationConfig } from '../utils';
@@ -7,8 +7,9 @@ import { SelectableValue } from '@grafana/data';
 import { changeBucketAggregationSetting } from '../state/actions';
 import { inlineFieldProps } from '.';
 import { uniqueId } from 'lodash';
+import { useCustomValue } from '../../../hooks/useCustomValue';
 
-type IntervalOption = SelectableValue<string>;
+type IntervalOption = Required<Pick<SelectableValue<string>, 'label' | 'value'>>;
 
 const defaultIntervalOptions: IntervalOption[] = [
   { label: 'auto', value: 'auto' },
@@ -42,43 +43,25 @@ interface Props {
   bucketAgg: DateHistogram;
 }
 
-const getInitialState = (initialValue?: string): IntervalOption[] => {
-  return defaultIntervalOptions.concat(
-    defaultIntervalOptions.some(hasValue(initialValue))
-      ? []
-      : {
-          value: initialValue,
-          label: initialValue,
-        }
-  );
-};
-
 export const DateHistogramSettingsEditor = ({ bucketAgg }: Props) => {
   const dispatch = useDispatch();
-
-  const [intervalOptions, setIntervalOptions] = useState<IntervalOption[]>(
-    getInitialState(bucketAgg.settings?.interval)
-  );
-
-  const addIntervalOption = (value: string) => setIntervalOptions([...intervalOptions, { value, label: value }]);
 
   const handleIntervalChange = (v: string) => dispatch(changeBucketAggregationSetting(bucketAgg, 'interval', v));
 
   return (
     <>
       <InlineField label="Interval" {...inlineFieldProps}>
-        <Select<string>
+        <Select
           inputId={uniqueId('es-date_histogram-interval')}
-          onChange={(e) => handleIntervalChange(e.value!)}
-          options={intervalOptions}
-          value={bucketAgg.settings?.interval || bucketAggregationConfig[bucketAgg.type].defaultSettings?.interval}
-          allowCustomValue
           isValidNewOption={isValidNewOption}
           filterOption={optionStartsWithValue}
-          onCreateOption={(value) => {
-            addIntervalOption(value);
-            handleIntervalChange(value);
-          }}
+          {...useCustomValue({
+            options: defaultIntervalOptions,
+            value: bucketAgg.settings?.interval || bucketAggregationConfig[bucketAgg.type].defaultSettings?.interval,
+            onChange(value) {
+              handleIntervalChange(value);
+            },
+          })}
         />
       </InlineField>
 
