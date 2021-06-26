@@ -58,9 +58,7 @@ export const DateHistogramSettingsEditor = ({ bucketAgg }: Props) => {
           {...useCustomValue({
             options: defaultIntervalOptions,
             value: bucketAgg.settings?.interval || bucketAggregationConfig[bucketAgg.type].defaultSettings?.interval,
-            onChange(value) {
-              handleIntervalChange(value);
-            },
+            onChange: handleIntervalChange,
           })}
         />
       </InlineField>
