@@ -1,7 +1,6 @@
-import React, { FC, useMemo } from 'react';
-import { css, cx } from '@emotion/css';
+import React, { FC } from 'react';
 import { Select } from '@grafana/ui';
-import { GrafanaTheme, StandardEditorProps, MapLayerConfig } from '@grafana/data';
+import { StandardEditorProps, MapLayerConfig } from '@grafana/data';
 import { GeomapPanelOptions } from './types';
 import { geomapLayerRegistry } from './layers/registry';
 import { defaultGrafanaThemedMap } from './layers/basemaps/theme';
