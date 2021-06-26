@@ -228,7 +228,6 @@
     "@sentry/browser": "5.25.0",
     "@sentry/types": "5.24.2",
     "@sentry/utils": "5.24.2",
-    "@types/geojson": "^7946.0.7",
     "@types/ol": "^6.5.1",
     "@welldone-software/why-did-you-render": "4.0.6",
     "abortcontroller-polyfill": "1.4.0",
