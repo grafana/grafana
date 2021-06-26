@@ -69,9 +69,9 @@ type flightConfig struct {
 
 func newFlightConfig() *flightConfig {
 	return &flightConfig{
-		centerLat:   37.773972, // San francisco
-		centerLng:   -122.431297,
-		radius:      0.1, // raw gps degrees
+		centerLat:   37.82608, // San francisco
+		centerLng:   -122.42487,
+		radius:      0.01, // raw gps degrees
 		altitudeMin: 350,
 		altitudeMax: 400,
 		periodS:     10, //model.Get("period").MustFloat64(10),

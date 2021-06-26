@@ -4,6 +4,7 @@ import { Select } from '@grafana/ui';
 import { GrafanaTheme, StandardEditorProps, MapLayerConfig } from '@grafana/data';
 import { GeomapPanelOptions } from './types';
 import { geomapLayerRegistry } from './layers/registry';
+import { defaultGrafanaThemedMap } from './layers/basemaps/theme';
 
 export const BaseLayerEditor: FC<StandardEditorProps<MapLayerConfig, any, GeomapPanelOptions>> = ({
   value,
@@ -11,7 +12,12 @@ export const BaseLayerEditor: FC<StandardEditorProps<MapLayerConfig, any, Geomap
   context,
 }) => {
   // all basemaps
-  const opts = geomapLayerRegistry.selectOptions(value?.type ? [value.type] : undefined, (v) => v.isBaseMap);
+  const opts = geomapLayerRegistry.selectOptions(
+    value?.type // the selected value
+      ? [value.type] // as an array
+      : [defaultGrafanaThemedMap.id],
+    (v) => v.isBaseMap
+  );
 
   // const language = useMemo(() => context.options?.mode ?? TextMode.Markdown, [context]);
   // const theme = useTheme();

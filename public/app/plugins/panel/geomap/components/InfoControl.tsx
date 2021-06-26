@@ -17,23 +17,36 @@ export class InfoControl extends Control {
     });
 
     this.element.className = 'ol-control ' + this.styles.infoWrap;
+    console.log('New INFO control');
   }
 
   setMap(map: PluggableMap) {
-    super.setMap(map);
-    console.log('SETMAP!!!');
+    // Cleanup old listeners
+    if (!map) {
+      const t = this.getMap();
+      if (t) {
+        t.un('moveend', this.doReactRender);
+      }
+    }
 
-    map.on('moveend', (e) => {
+    super.setMap(map);
+    if (map) {
+      map.on('moveend', this.doReactRender);
       this.doReactRender();
-    });
-    this.doReactRender();
+    }
   }
 
-  doReactRender() {
+  doReactRender = () => {
     if (!this.element) {
       return;
     }
-    var view = this.getMap().getView();
+    const map = this.getMap();
+    if (!map) {
+      console.log('no map????');
+      return;
+    }
+
+    var view = map.getView();
     const zoom = view.getZoom();
     const center = transform(view.getCenter()!, view.getProjection(), 'EPSG:4326');
 
@@ -43,7 +56,7 @@ export class InfoControl extends Control {
       </div>,
       this.element
     );
-  }
+  };
 }
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => ({
