@@ -12,9 +12,11 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 
 	"golang.org/x/net/context/ctxhttp"
 
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -123,7 +125,7 @@ func (e *GraphiteExecutor) DataQuery(ctx context.Context, dsInfo *models.DataSou
 		return plugins.DataResponse{}, err
 	}
 
-	data, err := e.parseResponse(res)
+	frames, err := e.toDataFrames(res)
 	if err != nil {
 		return plugins.DataResponse{}, err
 	}
@@ -131,19 +133,10 @@ func (e *GraphiteExecutor) DataQuery(ctx context.Context, dsInfo *models.DataSou
 	result := plugins.DataResponse{
 		Results: make(map[string]plugins.DataQueryResult),
 	}
-	queryRes := plugins.DataQueryResult{}
-	for _, series := range data {
-		queryRes.Series = append(queryRes.Series, plugins.DataTimeSeries{
-			Name:   series.Target,
-			Points: series.DataPoints,
-		})
-
-		if setting.Env == setting.Dev {
-			glog.Debug("Graphite response", "target", series.Target, "datapoints", len(series.DataPoints))
-		}
+	result.Results["A"] = plugins.DataQueryResult{
+		RefID:      "A",
+		Dataframes: plugins.NewDecodedDataFrames(frames),
 	}
-
-	result.Results["A"] = queryRes
 	return result, nil
 }
 
@@ -170,13 +163,39 @@ func (e *GraphiteExecutor) parseResponse(res *http.Response) ([]TargetResponseDT
 		return nil, err
 	}
 
-	for si := range data {
-		// Convert Response to timestamps MS
-		for pi, point := range data[si].DataPoints {
-			data[si].DataPoints[pi][1].Float64 = point[1].Float64 * 1000
+	return data, nil
+}
+
+func (e *GraphiteExecutor) toDataFrames(response *http.Response) (frames data.Frames, error error) {
+	responseData, err := e.parseResponse(response)
+	if err != nil {
+		return nil, err
+	}
+
+	frames = data.Frames{}
+	for _, series := range responseData {
+		timeVector := make([]time.Time, 0, len(series.DataPoints))
+		values := make([]*float64, 0, len(series.DataPoints))
+		name := series.Target
+
+		for _, dataPoint := range series.DataPoints {
+			var timestamp, value, err = parseDataTimePoint(dataPoint)
+			if err != nil {
+				return nil, err
+			}
+			timeVector = append(timeVector, timestamp)
+			values = append(values, value)
+		}
+
+		frames = append(frames, data.NewFrame(name,
+			data.NewField("time", nil, timeVector),
+			data.NewField("value", series.Tags, values).SetConfig(&data.FieldConfig{DisplayNameFromDS: name})))
+
+		if setting.Env == setting.Dev {
+			glog.Debug("Graphite response", "target", series.Target, "datapoints", len(series.DataPoints))
 		}
 	}
-	return data, nil
+	return
 }
 
 func (e *GraphiteExecutor) createRequest(dsInfo *models.DataSource, data url.Values) (*http.Request, error) {
@@ -241,4 +260,23 @@ func epochMStoGraphiteTime(tr plugins.DataTimeRange) (string, string, error) {
 	}
 
 	return fmt.Sprintf("%d", from/1000), fmt.Sprintf("%d", to/1000), nil
+}
+
+/**
+ * Graphite should always return timestamp as a number but values might be nil when data is missing
+ */
+func parseDataTimePoint(dataTimePoint plugins.DataTimePoint) (time.Time, *float64, error) {
+	if !dataTimePoint[1].Valid {
+		return time.Time{}, nil, errors.New("failed to parse data point timestamp")
+	}
+
+	timestamp := time.Unix(int64(dataTimePoint[1].Float64), 0).UTC()
+
+	if dataTimePoint[0].Valid {
+		var value = new(float64)
+		*value = dataTimePoint[0].Float64
+		return timestamp, value, nil
+	} else {
+		return timestamp, nil, nil
+	}
 }
