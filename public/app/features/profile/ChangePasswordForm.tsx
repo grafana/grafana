@@ -5,7 +5,7 @@ import { Button, Field, Form, HorizontalGroup, LinkButton } from '@grafana/ui';
 import config from 'app/core/config';
 import { UserDTO } from 'app/types';
 import { ChangePasswordFields } from './types';
-import { PasswordField } from '../../core/components/PasswordField';
+import { PasswordField } from '../../core/components/PasswordField/PasswordField';
 
 export interface Props {
   user: UserDTO;
@@ -35,11 +35,10 @@ export const ChangePasswordForm: FC<Props> = ({ user, onChangePassword, isSaving
           return (
             <>
               <Field label="Old password" invalid={!!errors.oldPassword} error={errors?.oldPassword?.message}>
-                {/* <Input type="password" {...register('oldPassword', { required: 'Old password is required' })} /> */}
                 <PasswordField
                   id="current-password"
                   autoComplete="current-password"
-                  register={register('oldPassword', { required: 'Old password is required' }) as any}
+                  {...register('oldPassword', { required: 'Old password is required' })}
                 />
               </Field>
 
@@ -47,28 +46,24 @@ export const ChangePasswordForm: FC<Props> = ({ user, onChangePassword, isSaving
                 <PasswordField
                   id="new-password"
                   autoComplete="new-password"
-                  register={
-                    register('newPassword', {
-                      required: 'New password is required',
-                      validate: {
-                        confirm: (v) => v === getValues().confirmNew || 'Passwords must match',
-                        old: (v) => v !== getValues().oldPassword || `New password can't be the same as the old one.`,
-                      },
-                    }) as any
-                  }
+                  {...register('newPassword', {
+                    required: 'New password is required',
+                    validate: {
+                      confirm: (v) => v === getValues().confirmNew || 'Passwords must match',
+                      old: (v) => v !== getValues().oldPassword || `New password can't be the same as the old one.`,
+                    },
+                  })}
                 />
               </Field>
 
               <Field label="Confirm password" invalid={!!errors.confirmNew} error={errors?.confirmNew?.message}>
                 <PasswordField
-                  id="new-password"
+                  id="confirm-new-password"
                   autoComplete="new-password"
-                  register={
-                    register('confirmNew', {
-                      required: 'New password confirmation is required',
-                      validate: (v) => v === getValues().newPassword || 'Passwords must match',
-                    }) as any
-                  }
+                  {...register('confirmNew', {
+                    required: 'New password confirmation is required',
+                    validate: (v) => v === getValues().newPassword || 'Passwords must match',
+                  })}
                 />
               </Field>
               <HorizontalGroup>

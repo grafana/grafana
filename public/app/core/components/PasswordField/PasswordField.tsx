@@ -8,28 +8,27 @@ export interface Props {
   autoComplete?: string;
   id?: string;
   passwordHint?: string;
-  register: any;
 }
 
-export const PasswordField: FC<Props> = ({ autoComplete, autoFocus, id, passwordHint, register }) => {
-  const [isShowPassword, setIsShowPassword] = useState(false);
+export const PasswordField: FC<Props> = ({ autoComplete, autoFocus, id, passwordHint, ...props }) => {
+  const [showPassword, setShowPassword] = useState(false);
 
   return (
     <Input
       id={id}
       autoFocus={autoFocus}
       autoComplete={autoComplete}
-      {...register}
-      type={isShowPassword ? 'text' : 'password'}
+      {...props}
+      type={showPassword ? 'text' : 'password'}
       placeholder={passwordHint}
       aria-label={selectors.pages.Login.password}
       suffix={
         <IconButton
-          name={isShowPassword ? 'eye-slash' : 'eye'}
+          name={showPassword ? 'eye-slash' : 'eye'}
           surface="header"
           onClick={(e) => {
             e.preventDefault();
-            setIsShowPassword(!isShowPassword);
+            setShowPassword(!showPassword);
           }}
         />
       }
