@@ -233,7 +233,7 @@ func Test_executeQueryErrorWithDifferentLogAnalyticsCreds(t *testing.T) {
 	if res.Error == nil {
 		t.Fatal("expecting an error")
 	}
-	if !strings.Contains(res.Error.Error(), "Log Analytics credentials are not being used") {
+	if !strings.Contains(res.Error.Error(), "Log Analytics credentials are no longer supported") {
 		t.Error("expecting the error to inform of bad credentials")
 	}
 }
