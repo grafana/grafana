@@ -8,6 +8,7 @@ import { ContextMenuPlugin } from './plugins/ContextMenuPlugin';
 import { ExemplarsPlugin } from './plugins/ExemplarsPlugin';
 import { TimeSeriesOptions } from './types';
 import { prepareGraphableFields } from './utils';
+import { AnnotationEditorPlugin } from './plugins/AnnotationEditorPlugin';
 
 interface TimeSeriesPanelProps extends PanelProps<TimeSeriesOptions> {}
 
@@ -37,6 +38,7 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
     );
   }
 
+  // const defaultMenuItems: Array<MenuItemsGroup<ContextMenuItemClickPayload>> = ;
   return (
     <TimeSeries
       frames={frames}
@@ -51,18 +53,14 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
         return (
           <>
             <ZoomPlugin config={config} onZoom={onChangeTimeRange} />
+
             <TooltipPlugin
               data={alignedDataFrame}
               config={config}
               mode={sync === DashboardCursorSync.Tooltip ? TooltipDisplayMode.Multi : options.tooltip.mode}
               timeZone={timeZone}
             />
-            <ContextMenuPlugin
-              data={alignedDataFrame}
-              config={config}
-              timeZone={timeZone}
-              replaceVariables={replaceVariables}
-            />
+
             {data.annotations && (
               <AnnotationsPlugin annotations={data.annotations} config={config} timeZone={timeZone} />
             )}
@@ -75,6 +73,43 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
                 getFieldLinks={getFieldLinks}
               />
             )}
+
+            <AnnotationEditorPlugin
+              data={alignedDataFrame}
+              timeZone={timeZone}
+              config={config}
+              onAnnotationCreate={() => {
+                console.log('onAnnotationCreate');
+              }}
+            >
+              {({ startAnnotating }) => {
+                return (
+                  <ContextMenuPlugin
+                    data={alignedDataFrame}
+                    config={config}
+                    timeZone={timeZone}
+                    replaceVariables={replaceVariables}
+                    defaultItems={[
+                      {
+                        items: [
+                          {
+                            label: 'Add annotation',
+                            ariaLabel: 'Add annotation',
+                            icon: 'comment-alt',
+                            onClick: (e, p) => {
+                              if (!p) {
+                                return;
+                              }
+                              startAnnotating({ coords: p.coords });
+                            },
+                          },
+                        ],
+                      },
+                    ]}
+                  />
+                );
+              }}
+            </AnnotationEditorPlugin>
           </>
         );
       }}
