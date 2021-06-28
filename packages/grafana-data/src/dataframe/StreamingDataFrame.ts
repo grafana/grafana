@@ -48,7 +48,7 @@ export class StreamingDataFrame implements DataFrame {
       maxDelta: Infinity,
       ...opts,
     };
-
+    this.name = frame.schema?.name;
     this.push(frame);
   }
 
