@@ -8,7 +8,8 @@
     },
     "openapi": {
       "service": "grafana#Grafana",
-      "protocol": "aws.protocols#restJson1"
+      "protocol": "aws.protocols#restJson1",
+      "tags": true
     }
   }
 }

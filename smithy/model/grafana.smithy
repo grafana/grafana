@@ -6,11 +6,18 @@ use aws.protocols#restJson1
 @restJson1
 service Grafana {
     version: "2021-04-07",
-    operations: [QueryMetricsV2]
+    resources: [
+      Alert,
+    ],
+    operations: [
+      QueryMetricsV2,
+      AlertTest,
+    ],
 }
 
 @readonly
 @http(method: "POST", uri: "/api/ds/query")
+@documentation("Query for metrics.")
 operation QueryMetricsV2 {
   output: QueryDataResponse,
   input: QueryMetricsInput
