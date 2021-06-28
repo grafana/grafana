@@ -186,11 +186,12 @@ export class StreamingDataFrame implements DataFrame {
 
     // parse labels
     const parsedLabels: Labels = {};
-
-    label.split(',').forEach((kv) => {
-      const [key, val] = kv.trim().split('=');
-      parsedLabels[key] = val;
-    });
+    if (label.length) {
+      label.split(',').forEach((kv) => {
+        const [key, val] = kv.trim().split('=');
+        parsedLabels[key] = val;
+      });
+    }
 
     if (labelCount === 0) {
       // mutate existing fields and add labels
