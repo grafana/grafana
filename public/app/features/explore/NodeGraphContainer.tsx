@@ -1,7 +1,7 @@
 import React from 'react';
 import { useToggle } from 'react-use';
 import { Badge, Collapse, useStyles2, useTheme2 } from '@grafana/ui';
-import { applyFieldOverrides, DataFrame, GrafanaTheme2, TimeRange } from '@grafana/data';
+import { applyFieldOverrides, DataFrame, GrafanaTheme2 } from '@grafana/data';
 import { css } from '@emotion/css';
 import { ExploreId, StoreState } from '../../types';
 import { splitOpen } from './state/main';
@@ -18,16 +18,17 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
 });
 
-interface Props {
+interface OwnProps {
   // Edges and Nodes are separate frames
   dataFrames: DataFrame[];
   exploreId: ExploreId;
-  range: TimeRange;
-  splitOpen: typeof splitOpen;
   // When showing the node graph together with trace view we do some changes so it works better.
   withTraceView?: boolean;
 }
-export function UnconnectedNodeGraphContainer(props: Props & ConnectedProps<typeof connector>) {
+
+type Props = OwnProps & ConnectedProps<typeof connector>;
+
+export function UnconnectedNodeGraphContainer(props: Props) {
   const { dataFrames, range, splitOpen, withTraceView } = props;
   const getLinks = useLinks(range, splitOpen);
   const theme = useTheme2();
@@ -75,7 +76,7 @@ export function UnconnectedNodeGraphContainer(props: Props & ConnectedProps<type
   );
 }
 
-function mapStateToProps(state: StoreState, { exploreId }: { exploreId: ExploreId }) {
+function mapStateToProps(state: StoreState, { exploreId }: OwnProps) {
   return {
     range: state.explore[exploreId]!.range,
   };
