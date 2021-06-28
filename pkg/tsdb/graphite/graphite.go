@@ -104,6 +104,10 @@ func (s *Service) getDSInfo(pluginCtx backend.PluginContext) (*datasourceInfo, e
 }
 
 func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	if len(req.Queries) == 0 {
+		return nil, fmt.Errorf("query contains no queries")
+	}
+
 	// get datasource info from context
 	dsInfo, err := s.getDSInfo(req.PluginContext)
 	if err != nil {
