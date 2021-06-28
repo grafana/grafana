@@ -376,6 +376,95 @@ describe('Streaming JSON', () => {
     `); // speed+light 4  ¯\_(ツ)_/¯ better than undefined labels
   });
 
+  describe('keep track of packets', () => {
+    const json: DataFrameJSON = {
+      schema: {
+        fields: [
+          { name: 'time', type: FieldType.time },
+          { name: 'value', type: FieldType.number },
+        ],
+      },
+      data: {
+        values: [
+          [100, 200, 300],
+          [1, 2, 3],
+        ],
+      },
+    };
+
+    const stream = new StreamingDataFrame(json, {
+      maxLength: 4,
+      maxDelta: 300,
+    });
+
+    const getSnapshot = (f: StreamingDataFrame) => {
+      return {
+        values: f.fields[1].values.toArray(),
+        info: f.packetInfo,
+      };
+    };
+
+    expect(getSnapshot(stream)).toMatchInlineSnapshot(`
+      Object {
+        "info": Object {
+          "action": "replace",
+          "length": 3,
+          "number": 1,
+        },
+        "values": Array [
+          1,
+          2,
+          3,
+        ],
+      }
+    `);
+
+    stream.push({
+      data: {
+        values: [
+          [400, 500],
+          [4, 5],
+        ],
+      },
+    });
+    expect(getSnapshot(stream)).toMatchInlineSnapshot(`
+      Object {
+        "info": Object {
+          "action": "append",
+          "length": 2,
+          "number": 2,
+        },
+        "values": Array [
+          2,
+          3,
+          4,
+          5,
+        ],
+      }
+    `);
+
+    stream.push({
+      data: {
+        values: [[600], [6]],
+      },
+    });
+    expect(getSnapshot(stream)).toMatchInlineSnapshot(`
+      Object {
+        "info": Object {
+          "action": "append",
+          "length": 1,
+          "number": 3,
+        },
+        "values": Array [
+          3,
+          4,
+          5,
+          6,
+        ],
+      }
+    `);
+  });
+
   /*
   describe('transpose vertical records', () => {
     let vrecsA = [
