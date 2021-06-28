@@ -36,11 +36,10 @@ type Service struct {
 }
 
 type datasourceInfo struct {
-	HTTPClient        *http.Client
-	Url               string `json:"url"`
-	BasicAuth         bool   `json:"basicAuth"`
-	BasicAuthUser     string `json:"basicAuthUser"`
-	BasicAuthPassword string `json:"basicAuthPassword"`
+	HTTPClient    *http.Client
+	URL           string
+	BasicAuth     bool
+	BasicAuthUser string
 }
 
 type DsAccess string
@@ -50,7 +49,7 @@ func init() {
 }
 
 func (s *Service) Init() error {
-	s.im = datasource.NewInstanceManager(NewInstanceSettings(s.HTTPClientProvider))
+	s.im = datasource.NewInstanceManager(newInstanceSettings(s.HTTPClientProvider))
 
 	factory := coreplugin.New(backend.ServeOpts{
 		QueryDataHandler: s,
@@ -63,7 +62,7 @@ func (s *Service) Init() error {
 	return nil
 }
 
-func NewInstanceSettings(httpClientProvider httpclient.Provider) datasource.InstanceFactoryFunc {
+func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.InstanceFactoryFunc {
 	return func(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		opts, err := settings.HTTPClientOptions()
 		if err != nil {
@@ -75,22 +74,11 @@ func NewInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 			return nil, err
 		}
 
-		jsonData := datasourceInfo{}
-		err = json.Unmarshal(settings.JSONData, &jsonData)
-		if err != nil {
-			return nil, fmt.Errorf("error reading settings: %w", err)
-		}
-		basicAuthPassword := settings.DecryptedSecureJSONData["basicAuthPassword"]
-		if basicAuthPassword == "" {
-			basicAuthPassword = jsonData.BasicAuthPassword
-		}
-
-		model := datasourceInfo{
-			HTTPClient:        client,
-			Url:               jsonData.Url,
-			BasicAuth:         jsonData.BasicAuth,
-			BasicAuthUser:     jsonData.BasicAuthUser,
-			BasicAuthPassword: basicAuthPassword,
+		model := &datasourceInfo{
+			HTTPClient:    client,
+			URL:           settings.URL,
+			BasicAuth:     settings.BasicAuthEnabled,
+			BasicAuthUser: settings.BasicAuthUser,
 		}
 
 		return model, nil
@@ -143,7 +131,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 }
 
 func (s *Service) createRequest(dsInfo *datasourceInfo, data OpenTsdbQuery) (*http.Request, error) {
-	u, err := url.Parse(dsInfo.Url)
+	u, err := url.Parse(dsInfo.URL)
 	if err != nil {
 		return nil, err
 	}
@@ -162,10 +150,6 @@ func (s *Service) createRequest(dsInfo *datasourceInfo, data OpenTsdbQuery) (*ht
 	}
 
 	req.Header.Set("Content-Type", "application/json")
-	if dsInfo.BasicAuth {
-		req.SetBasicAuth(dsInfo.BasicAuthUser, dsInfo.BasicAuthPassword)
-	}
-
 	return req, nil
 }
 
@@ -290,7 +274,10 @@ func (s *Service) getDSInfo(pluginCtx backend.PluginContext) (*datasourceInfo, e
 		return nil, err
 	}
 
-	instance := i.(datasourceInfo)
+	instance, ok := i.(*datasourceInfo)
+	if !ok {
+		return nil, fmt.Errorf("failed to cast datsource info")
+	}
 
-	return &instance, nil
+	return instance, nil
 }
