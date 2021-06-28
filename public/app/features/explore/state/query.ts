@@ -264,7 +264,7 @@ export const importQueries = (
     let importedQueries = queries;
     // Check if queries can be imported from previously selected datasource
     if (sourceDataSource.meta?.id === targetDataSource.meta?.id) {
-      // Keep same queries if same type of datasource, but delete datasource query property to prevent miss-match of new and old data source instance
+      // Keep same queries if same type of datasource, but delete datasource query property to prevent mismatch of new and old data source instance
       importedQueries = queries.map(({ datasource, ...query }) => query);
     } else if (targetDataSource.importQueries) {
       // Datasource-specific importers
