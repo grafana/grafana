@@ -292,7 +292,7 @@ func (r *SQLAnnotationRepo) FindTags(query *annotations.TagsQuery) ([]*annotatio
 	sql.WriteString(`where annotation.org_id = ?`)
 	params = append(params, query.OrgID)
 
-	sql.WriteString(`and (` + tagKey + dialect.LikeStr() + ` ? or ` + tagValue + dialect.LikeStr() + ` ?)`)
+	sql.WriteString(` and (` + tagKey + ` ` + dialect.LikeStr() + ` ? or ` + tagValue + ` ` + dialect.LikeStr() + ` ?)`)
 	params = append(params, `%`+query.Tag+`%`, `%`+query.Tag+`%`)
 
 	sql.WriteString(` ORDER BY ` + tagKey + `,` + tagValue + ` ` + dialect.Limit(query.Limit))
