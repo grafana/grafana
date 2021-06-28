@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useContext, useState } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 import { TimeZone } from '@grafana/data';
-import { TagsInput, Input, Field, CollapsableSection, RadioButtonGroup } from '@grafana/ui';
+import { CollapsableSection, Field, Input, RadioButtonGroup, Switch, TagsInput } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { DashboardModel } from '../../state/DashboardModel';
@@ -9,6 +9,7 @@ import { DeleteDashboardButton } from '../DeleteDashboard/DeleteDashboardButton'
 import { TimePickerSettings } from './TimePickerSettings';
 
 import { updateTimeZoneDashboard } from 'app/features/dashboard/state/actions';
+import { GorillaContext, GorillaMode } from '../../gorilla/types';
 
 interface OwnProps {
   dashboard: DashboardModel;
@@ -24,6 +25,10 @@ const GRAPH_TOOLTIP_OPTIONS = [
 
 export function GeneralSettingsUnconnected({ dashboard, updateTimeZone }: Props): JSX.Element {
   const [renderCounter, setRenderCounter] = useState(0);
+  const {
+    onChangeConfig,
+    config: { dashNav },
+  } = useContext(GorillaContext);
 
   const onFolderChange = (folder: { id: number; title: string }) => {
     dashboard.meta.folderId = folder.id;
@@ -117,6 +122,17 @@ export function GeneralSettingsUnconnected({ dashboard, updateTimeZone }: Props)
         nowDelay={dashboard.timepicker.nowDelay}
         timezone={dashboard.timezone}
       />
+
+      <Field label="Hide DashNav">
+        <Switch
+          value={dashNav.mode === GorillaMode.hidden}
+          onChange={() =>
+            onChangeConfig({
+              dashNav: { mode: GorillaMode.hidden, timePicker: { mode: GorillaMode.hidden } },
+            })
+          }
+        />
+      </Field>
 
       <CollapsableSection label="Panel options" isOpen={true}>
         <Field

@@ -1,2 +1,3 @@
-import DashNav from './DashNav';
-export { DashNav };
+import DashNav, { OwnProps } from './DashNav';
+
+export { DashNav, OwnProps };
