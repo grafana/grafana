@@ -198,7 +198,7 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 			},
 			expectedFrames: data.Frames{
 				data.NewFrame("",
-					data.NewField("", nil,
+					data.NewField("Time", nil,
 						makeDates(time.Date(2019, 2, 8, 10, 13, 0, 0, time.UTC), 5, time.Minute)),
 					data.NewField("Percentage CPU", nil, []*float64{
 						ptr.Float64(2.0875), ptr.Float64(2.1525), ptr.Float64(2.155), ptr.Float64(3.6925), ptr.Float64(2.44),
@@ -218,7 +218,7 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 			},
 			expectedFrames: data.Frames{
 				data.NewFrame("",
-					data.NewField("", nil,
+					data.NewField("Time", nil,
 						makeDates(time.Date(2019, 2, 9, 13, 29, 0, 0, time.UTC), 5, time.Minute)),
 					data.NewField("Percentage CPU", nil, []*float64{
 						ptr.Float64(8.26), ptr.Float64(8.7), ptr.Float64(14.82), ptr.Float64(10.07), ptr.Float64(8.52),
@@ -238,7 +238,7 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 			},
 			expectedFrames: data.Frames{
 				data.NewFrame("",
-					data.NewField("", nil,
+					data.NewField("Time", nil,
 						makeDates(time.Date(2019, 2, 9, 14, 26, 0, 0, time.UTC), 5, time.Minute)),
 					data.NewField("Percentage CPU", nil, []*float64{
 						ptr.Float64(3.07), ptr.Float64(2.92), ptr.Float64(2.87), ptr.Float64(2.27), ptr.Float64(2.52),
@@ -258,7 +258,7 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 			},
 			expectedFrames: data.Frames{
 				data.NewFrame("",
-					data.NewField("", nil,
+					data.NewField("Time", nil,
 						makeDates(time.Date(2019, 2, 9, 14, 43, 0, 0, time.UTC), 5, time.Minute)),
 					data.NewField("Percentage CPU", nil, []*float64{
 						ptr.Float64(1.51), ptr.Float64(2.38), ptr.Float64(1.69), ptr.Float64(2.27), ptr.Float64(1.96),
@@ -278,7 +278,7 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 			},
 			expectedFrames: data.Frames{
 				data.NewFrame("",
-					data.NewField("", nil,
+					data.NewField("Time", nil,
 						makeDates(time.Date(2019, 2, 9, 14, 44, 0, 0, time.UTC), 5, time.Minute)),
 					data.NewField("Percentage CPU", nil, []*float64{
 						ptr.Float64(4), ptr.Float64(4), ptr.Float64(4), ptr.Float64(4), ptr.Float64(4),
@@ -298,19 +298,19 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 			},
 			expectedFrames: data.Frames{
 				data.NewFrame("",
-					data.NewField("", nil,
+					data.NewField("Time", nil,
 						makeDates(time.Date(2019, 2, 9, 15, 21, 0, 0, time.UTC), 6, time.Hour)),
 					data.NewField("Blob Count", data.Labels{"blobtype": "PageBlob"},
 						[]*float64{ptr.Float64(3), ptr.Float64(3), ptr.Float64(3), ptr.Float64(3), ptr.Float64(3), nil}).SetConfig(&data.FieldConfig{Unit: "short"})),
 
 				data.NewFrame("",
-					data.NewField("", nil,
+					data.NewField("Time", nil,
 						makeDates(time.Date(2019, 2, 9, 15, 21, 0, 0, time.UTC), 6, time.Hour)),
 					data.NewField("Blob Count", data.Labels{"blobtype": "BlockBlob"},
 						[]*float64{ptr.Float64(1), ptr.Float64(1), ptr.Float64(1), ptr.Float64(1), ptr.Float64(1), nil}).SetConfig(&data.FieldConfig{Unit: "short"})),
 
 				data.NewFrame("",
-					data.NewField("", nil,
+					data.NewField("Time", nil,
 						makeDates(time.Date(2019, 2, 9, 15, 21, 0, 0, time.UTC), 6, time.Hour)),
 					data.NewField("Blob Count", data.Labels{"blobtype": "Azure Data Lake Storage"},
 						[]*float64{ptr.Float64(0), ptr.Float64(0), ptr.Float64(0), ptr.Float64(0), ptr.Float64(0), nil}).SetConfig(&data.FieldConfig{Unit: "short"})),
@@ -330,7 +330,7 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 			},
 			expectedFrames: data.Frames{
 				data.NewFrame("",
-					data.NewField("", nil,
+					data.NewField("Time", nil,
 						makeDates(time.Date(2019, 2, 9, 13, 29, 0, 0, time.UTC), 5, time.Minute)),
 					data.NewField("Percentage CPU", nil, []*float64{
 						ptr.Float64(8.26), ptr.Float64(8.7), ptr.Float64(14.82), ptr.Float64(10.07), ptr.Float64(8.52),
@@ -351,20 +351,20 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 			},
 			expectedFrames: data.Frames{
 				data.NewFrame("",
-					data.NewField("", nil,
+					data.NewField("Time", nil,
 						makeDates(time.Date(2019, 2, 9, 15, 21, 0, 0, time.UTC), 6, time.Hour)),
 					data.NewField("Blob Count", data.Labels{"blobtype": "PageBlob"},
 						[]*float64{ptr.Float64(3), ptr.Float64(3), ptr.Float64(3), ptr.Float64(3), ptr.Float64(3), nil}).SetConfig(&data.FieldConfig{Unit: "short", DisplayName: "blobtype=PageBlob"})),
 
 				data.NewFrame("",
-					data.NewField("", nil,
+					data.NewField("Time", nil,
 						makeDates(time.Date(2019, 2, 9, 15, 21, 0, 0, time.UTC), 6, time.Hour)),
 					data.NewField("Blob Count", data.Labels{"blobtype": "BlockBlob"}, []*float64{
 						ptr.Float64(1), ptr.Float64(1), ptr.Float64(1), ptr.Float64(1), ptr.Float64(1), nil,
 					}).SetConfig(&data.FieldConfig{Unit: "short", DisplayName: "blobtype=BlockBlob"})),
 
 				data.NewFrame("",
-					data.NewField("", nil,
+					data.NewField("Time", nil,
 						makeDates(time.Date(2019, 2, 9, 15, 21, 0, 0, time.UTC), 6, time.Hour)),
 					data.NewField("Blob Count", data.Labels{"blobtype": "Azure Data Lake Storage"}, []*float64{
 						ptr.Float64(0), ptr.Float64(0), ptr.Float64(0), ptr.Float64(0), ptr.Float64(0), nil,
@@ -385,21 +385,21 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 			},
 			expectedFrames: data.Frames{
 				data.NewFrame("",
-					data.NewField("", nil,
+					data.NewField("Time", nil,
 						makeDates(time.Date(2020, 06, 30, 9, 58, 0, 0, time.UTC), 3, time.Hour)),
 					data.NewField("Blob Capacity", data.Labels{"blobtype": "PageBlob", "tier": "Standard"},
 						[]*float64{ptr.Float64(675530), ptr.Float64(675530), ptr.Float64(675530)}).SetConfig(
 						&data.FieldConfig{Unit: "decbytes", DisplayName: "danieltest {Blob Type=PageBlob, Tier=Standard}"})),
 
 				data.NewFrame("",
-					data.NewField("", nil,
+					data.NewField("Time", nil,
 						makeDates(time.Date(2020, 06, 30, 9, 58, 0, 0, time.UTC), 3, time.Hour)),
 					data.NewField("Blob Capacity", data.Labels{"blobtype": "BlockBlob", "tier": "Hot"},
 						[]*float64{ptr.Float64(0), ptr.Float64(0), ptr.Float64(0)}).SetConfig(
 						&data.FieldConfig{Unit: "decbytes", DisplayName: "danieltest {Blob Type=BlockBlob, Tier=Hot}"})),
 
 				data.NewFrame("",
-					data.NewField("", nil,
+					data.NewField("Time", nil,
 						makeDates(time.Date(2020, 06, 30, 9, 58, 0, 0, time.UTC), 3, time.Hour)),
 					data.NewField("Blob Capacity", data.Labels{"blobtype": "Azure Data Lake Storage", "tier": "Cool"},
 						[]*float64{ptr.Float64(0), ptr.Float64(0), ptr.Float64(0)}).SetConfig(
@@ -420,7 +420,7 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 			},
 			expectedFrames: data.Frames{
 				data.NewFrame("",
-					data.NewField("", nil,
+					data.NewField("Time", nil,
 						[]time.Time{time.Date(2019, 2, 8, 10, 13, 0, 0, time.UTC)}),
 					data.NewField("Percentage CPU", nil, []*float64{
 						ptr.Float64(2.0875),
