@@ -7,11 +7,11 @@ weight = 800
 
 # Export and import
 
-Grafana Dashboards can easily be exported and imported, either from the UI or from the [HTTP API]({{< relref "../../http_api/dashboard.md#create-update-dashboard" >}}).
+Grafana dashboards can be exported and imported, either using the UI or from the [HTTP API]({{< relref "../../http_api/dashboard.md#create-update-dashboard" >}}).
 
 ## Exporting a dashboard
 
-Dashboards are exported in Grafana JSON format, and contain everything you need (layout, variables, styles, data sources, queries, etc) to import the dashboard at a later time.
+Dashboards are exported in Grafana JSON format, and contain everything you need (layout, variables, styles, data sources, queries, and so on) to import the dashboard at a later time.
 
 The export feature is accessed in the share window which you open by clicking the share button in the dashboard menu.
 
@@ -19,7 +19,7 @@ The export feature is accessed in the share window which you open by clicking th
 
 ### Making a dashboard portable
 
-If you want to export a dashboard for others to use then it could be a good idea to
+If you want to export a dashboard for others to use, then you might
 add template variables for things like a metric prefix (use constant variable) and server name.
 
 A template variable of the type `Constant` will automatically be hidden in
@@ -27,7 +27,7 @@ the dashboard, and will also be added as a required input when the dashboard is 
 
 ## Import dashboard
 
-To import a dashboard click the + icon in the side menu, and then click **Import**.
+To import a dashboard, click the + icon in the side menu, and then click **Import**.
 
 {{< figure src="/static/img/docs/v70/import_step1.png" max-width="700px" >}}
 
