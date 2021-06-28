@@ -28,13 +28,11 @@ func TestFlightPathScenario(t *testing.T) {
 					RefID: "X",
 					TimeRange: backend.TimeRange{
 						From: start,
-						To:   start.Add(time.Minute * 10),
+						To:   start.Add(time.Second * 10),
 					},
-					Interval:      time.Minute,
+					Interval:      time.Second,
 					MaxDataPoints: 10,
-					JSON: json.RawMessage(`{
-						"period": 600
-					}`),
+					JSON:          json.RawMessage(`{}`), // always 10s?
 				},
 			},
 		}
