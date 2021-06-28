@@ -64,6 +64,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
     reportVariables: false,
     accesscontrol: false,
     trimDefaults: false,
+    customKiosk: false,
   };
   licenseInfo: LicenseInfo = {} as LicenseInfo;
   rendererAvailable = false;

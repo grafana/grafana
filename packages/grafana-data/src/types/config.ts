@@ -54,6 +54,7 @@ export interface FeatureToggles {
    */
   meta: boolean;
   reportVariables: boolean;
+  customKiosk: boolean;
 }
 
 /**

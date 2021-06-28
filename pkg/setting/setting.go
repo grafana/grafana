@@ -423,6 +423,11 @@ func (cfg Cfg) IsHTTPRequestHistogramDisabled() bool {
 	return cfg.FeatureToggles["disable_http_request_histogram"]
 }
 
+// IsCustomKioskEnabled returns whether the custom kiosk feature is enabled.
+func (cfg Cfg) IsCustomKioskEnabled() bool {
+	return cfg.FeatureToggles["customKiosk"]
+}
+
 type CommandLineArgs struct {
 	Config   string
 	HomePath string
