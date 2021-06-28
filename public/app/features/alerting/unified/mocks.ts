@@ -9,7 +9,11 @@ import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-
 import { AlertingRule, Alert, RecordingRule, RuleGroup, RuleNamespace } from 'app/types/unified-alerting';
 import DatasourceSrv from 'app/features/plugins/datasource_srv';
 import { DataSourceSrv, GetDataSourceListFilters } from '@grafana/runtime';
-import { AlertManagerCortexConfig, GrafanaManagedReceiverConfig } from 'app/plugins/datasource/alertmanager/types';
+import {
+  AlertManagerCortexConfig,
+  AlertmanagerStatus,
+  GrafanaManagedReceiverConfig,
+} from 'app/plugins/datasource/alertmanager/types';
 import { of } from 'rxjs';
 
 let nextDataSourceId = 1;
@@ -201,6 +205,37 @@ export const someGrafanaAlertManagerConfig: AlertManagerCortexConfig = {
       {
         name: 'critical',
         grafana_managed_receiver_configs: [mockGrafanaReceiver('slack'), mockGrafanaReceiver('pagerduty')],
+      },
+    ],
+  },
+};
+
+export const someCloudAlertManagerStatus: AlertmanagerStatus = {
+  cluster: {
+    peers: [],
+    status: 'ok',
+  },
+  uptime: '10 hours',
+  versionInfo: {
+    branch: '',
+    version: '',
+    goVersion: '',
+    buildDate: '',
+    buildUser: '',
+    revision: '',
+  },
+  config: {
+    route: {
+      receiver: 'default-email',
+    },
+    receivers: [
+      {
+        name: 'default-email',
+        email_configs: [
+          {
+            to: 'example@example.com',
+          },
+        ],
       },
     ],
   },

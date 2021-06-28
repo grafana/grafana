@@ -40,6 +40,7 @@ import {
 } from './getPanelOptionsWithDefaults';
 import { QueryGroupOptions } from 'app/types';
 import { PanelModelLibraryPanel } from '../../library-panels/types';
+
 export interface GridPos {
   x: number;
   y: number;
