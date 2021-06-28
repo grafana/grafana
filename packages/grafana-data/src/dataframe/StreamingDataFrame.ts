@@ -1,5 +1,4 @@
-import { Field, DataFrame, FieldType } from '../types/dataFrame';
-import { Labels, QueryResultMeta } from '../types';
+import { Field, DataFrame, FieldType, Labels, QueryResultMeta } from '../types';
 import { ArrayVector } from '../vector';
 import { DataFrameJSON, decodeFieldValueEntities, FieldSchema } from './DataFrameJSON';
 import { guessFieldTypeFromValue } from './processDataFrame';
@@ -7,11 +6,35 @@ import { join } from '../transformations/transformers/joinDataFrames';
 import { AlignedData } from 'uplot';
 
 /**
+ * Indicate if the frame is appened or replace
+ *
+ * @public -- but runtime
+ */
+export enum StreamingFrameAction {
+  Append = 'append',
+  Replace = 'replace',
+}
+
+/**
+ * Stream packet info is attached to StreamingDataFrames and indicate how many
+ * rows were added to the end of the frame.  The number of discarded rows can be
+ * calculated from previous state
+ *
+ * @public -- but runtime
+ */
+export interface StreamPacketInfo {
+  number: number;
+  action: StreamingFrameAction;
+  length: number;
+}
+
+/**
  * @alpha
  */
 export interface StreamingFrameOptions {
   maxLength?: number; // 1000
   maxDelta?: number; // how long to keep things
+  action?: StreamingFrameAction; // default will append
 }
 
 enum PushMode {
@@ -28,7 +51,7 @@ enum PushMode {
 export class StreamingDataFrame implements DataFrame {
   name?: string;
   refId?: string;
-  meta?: QueryResultMeta;
+  meta: QueryResultMeta = {};
 
   fields: Array<Field<any, ArrayVector<any>>> = [];
   length = 0;
@@ -38,9 +61,15 @@ export class StreamingDataFrame implements DataFrame {
   private schemaFields: FieldSchema[] = [];
   private timeFieldIndex = -1;
   private pushMode = PushMode.wide;
+  private alwaysReplace = false;
 
   // current labels
   private labels: Set<string> = new Set();
+  readonly packetInfo: StreamPacketInfo = {
+    number: 0,
+    action: StreamingFrameAction.Replace,
+    length: 0,
+  };
 
   constructor(frame: DataFrameJSON, opts?: StreamingFrameOptions) {
     this.options = {
@@ -48,6 +77,7 @@ export class StreamingDataFrame implements DataFrame {
       maxDelta: Infinity,
       ...opts,
     };
+    this.alwaysReplace = this.options.action === StreamingFrameAction.Replace;
 
     this.push(frame);
   }
@@ -58,6 +88,8 @@ export class StreamingDataFrame implements DataFrame {
    */
   push(msg: DataFrameJSON) {
     const { schema, data } = msg;
+
+    this.packetInfo.number++;
 
     if (schema) {
       this.pushMode = PushMode.wide;
@@ -74,7 +106,9 @@ export class StreamingDataFrame implements DataFrame {
       const niceSchemaFields = this.pushMode === PushMode.labels ? schema.fields.slice(1) : schema.fields;
 
       this.refId = schema.refId;
-      this.meta = schema.meta;
+      if (schema.meta) {
+        this.meta = { ...schema.meta };
+      }
 
       if (hasSameStructure(this.schemaFields, niceSchemaFields)) {
         const len = niceSchemaFields.length;
@@ -163,9 +197,18 @@ export class StreamingDataFrame implements DataFrame {
         });
       }
 
-      let curValues = this.fields.map((f) => f.values.buffer);
+      let appended = values;
+      this.packetInfo.length = values[0].length;
 
-      let appended = circPush(curValues, values, this.options.maxLength, this.timeFieldIndex, this.options.maxDelta);
+      if (this.alwaysReplace || !this.length) {
+        this.packetInfo.action = StreamingFrameAction.Replace;
+      } else {
+        this.packetInfo.action = StreamingFrameAction.Append;
+
+        // mutates appended
+        appended = this.fields.map((f) => f.values.buffer);
+        circPush(appended, values, this.options.maxLength, this.timeFieldIndex, this.options.maxDelta);
+      }
 
       appended.forEach((v, i) => {
         const { state, values } = this.fields[i];
@@ -265,6 +308,14 @@ function closestIdx(num: number, arr: number[], lo?: number, hi?: number) {
   return hi;
 }
 
+/**
+ * @internal // not exported in yet
+ */
+export function getLastStreamingDataFramePacket(frame: DataFrame) {
+  const pi = (frame as StreamingDataFrame).packetInfo;
+  return pi?.action ? pi : undefined;
+}
+
 // mutable circular push
 function circPush(data: number[][], newData: number[][], maxLength = Infinity, deltaIdx = 0, maxDelta = Infinity) {
   for (let i = 0; i < data.length; i++) {
@@ -296,7 +347,7 @@ function circPush(data: number[][], newData: number[][], maxLength = Infinity, d
     }
   }
 
-  return data;
+  return sliceIdx;
 }
 
 function hasSameStructure(a: FieldSchema[], b: FieldSchema[]): boolean {

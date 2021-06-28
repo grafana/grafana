@@ -1,5 +1,5 @@
 import { BackendSrv, BackendSrvRequest } from 'src/services';
-import { DataSourceWithBackend, toStreamingDataResponse } from './DataSourceWithBackend';
+import { DataSourceWithBackend, standardStreamOptionsProvider, toStreamingDataResponse } from './DataSourceWithBackend';
 import {
   DataSourceJsonData,
   DataQuery,
@@ -92,7 +92,7 @@ describe('DataSourceWithBackend', () => {
     };
 
     // Simple empty query
-    let obs = toStreamingDataResponse(request, rsp);
+    let obs = toStreamingDataResponse(rsp, request, standardStreamOptionsProvider);
     expect(obs).toBeDefined();
 
     let frame = new MutableDataFrame();
@@ -100,7 +100,7 @@ describe('DataSourceWithBackend', () => {
       channel: 'a/b/c',
     };
     rsp.data = [frame];
-    obs = toStreamingDataResponse(request, rsp);
+    obs = toStreamingDataResponse(rsp, request, standardStreamOptionsProvider);
     expect(obs).toBeDefined();
   });
 });
