@@ -44,5 +44,3 @@ data source you want the dashboard to use and specify any metric prefixes (if th
 Find dashboards for common server applications at [Grafana.com/dashboards](https://grafana.com/dashboards).
 
 {{< figure src="/static/img/docs/v50/gcom_dashboard_list.png" max-width="700px" >}}
-
->**Note:** In Grafana v5.3.4 and later versions, the export modal has new checkbox for sharing for external use (other instances). If the checkbox is not checked then the `__inputs` section will not be included in the exported JSON file.
