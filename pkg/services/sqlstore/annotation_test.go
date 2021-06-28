@@ -251,5 +251,41 @@ func TestAnnotations(t *testing.T) {
 			require.NoError(t, err)
 			assert.Empty(t, items)
 		})
+
+		t.Run("Should find tags by key", func(t *testing.T) {
+			items, err := repo.FindTags(&annotations.TagsQuery{
+				OrgID: 1,
+				Tag:   "server",
+			})
+			require.NoError(t, err)
+			require.Len(t, items, 1)
+		})
+
+		t.Run("Should find tags by value", func(t *testing.T) {
+			items, err := repo.FindTags(&annotations.TagsQuery{
+				OrgID: 1,
+				Tag:   "server-1",
+			})
+			require.NoError(t, err)
+			require.Len(t, items, 1)
+		})
+
+		t.Run("Should not find tags in other org", func(t *testing.T) {
+			items, err := repo.FindTags(&annotations.TagsQuery{
+				OrgID: 0,
+				Tag:   "server-1",
+			})
+			require.NoError(t, err)
+			require.Len(t, items, 0)
+		})
+
+		t.Run("Should not find tags that do not exist", func(t *testing.T) {
+			items, err := repo.FindTags(&annotations.TagsQuery{
+				OrgID: 0,
+				Tag:   "donald duck",
+			})
+			require.NoError(t, err)
+			require.Len(t, items, 0)
+		})
 	})
 }

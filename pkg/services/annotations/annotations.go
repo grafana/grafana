@@ -17,6 +17,7 @@ type Repository interface {
 	Update(item *Item) error
 	Find(query *ItemQuery) ([]*ItemDTO, error)
 	Delete(params *DeleteParams) error
+	FindTags(query *TagsQuery) ([]*TagsDTO, error)
 }
 
 // AnnotationCleaner is responsible for cleaning up old annotations
@@ -38,6 +39,19 @@ type ItemQuery struct {
 	MatchAny     bool     `json:"matchAny"`
 
 	Limit int64 `json:"limit"`
+}
+
+type TagsQuery struct {
+	OrgID int64  `json:"orgId"`
+	Tag   string `json:"tag"`
+
+	Limit int64 `json:"limit"`
+}
+
+type TagsDTO struct {
+	ID    int64  `json:"id"`
+	Key   string `json:"Key"`
+	Value string `json:"Value"`
 }
 
 type DeleteParams struct {
