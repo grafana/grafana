@@ -37,11 +37,11 @@ To learn more about specific endpoints where you can use access control, refer t
 ## Enable fine-grained access control
 
 Fine-grained access control is available behind the `accesscontrol` feature toggle in Grafana Enterprise 8.0+.
-You can enable it either in a [config file](({{< relref "../../administration/configuration.md#fconfig-file-locations" >}})) or by [configuring an environment variable](http://localhost:3002/docs/grafana/next/administration/configuration/#configure-with-environment-variables).
+You can enable it either in a [config file]({{< relref "../../administration/configuration.md#config-file-locations" >}}) or by [configuring an environment variable]({{< relref "../../administration/configuration/#configure-with-environment-variables" >}}).
 
 ### Enable in config file
 
-In your [config file](({{< relref "../../administration/configuration.md#config-file-locations" >}})), add `accesscontrol` as a [feature_toggle](({{< relref "../../administration/configuration.md#feature_toggle" >}})).
+In your [config file]({{< relref "../../administration/configuration.md#config-file-locations" >}}), add `accesscontrol` as a [feature_toggle]({{< relref "../../administration/configuration.md#feature_toggle" >}}).
 
 ```
 [feature_toggles]
