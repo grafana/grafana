@@ -1,5 +1,7 @@
-import { ArrayVector, FieldType, toDataFrame } from '@grafana/data';
+import { ArrayVector, createTheme, FieldType, toDataFrame } from '@grafana/data';
 import { findNextStateIndex, prepareTimelineFields } from './utils';
+
+const theme = createTheme();
 
 describe('prepare timeline graph', () => {
   it('errors with no time fields', () => {
@@ -11,7 +13,7 @@ describe('prepare timeline graph', () => {
         ],
       }),
     ];
-    const info = prepareTimelineFields(frames, true);
+    const info = prepareTimelineFields(frames, true, theme);
     expect(info.warn).toEqual('Data does not have a time field');
   });
 
@@ -24,7 +26,7 @@ describe('prepare timeline graph', () => {
         ],
       }),
     ];
-    const info = prepareTimelineFields(frames, true);
+    const info = prepareTimelineFields(frames, true, theme);
     expect(info.warn).toEqual('No graphable fields');
   });
 
@@ -37,7 +39,7 @@ describe('prepare timeline graph', () => {
         ],
       }),
     ];
-    const info = prepareTimelineFields(frames, true);
+    const info = prepareTimelineFields(frames, true, theme);
     expect(info.warn).toBeUndefined();
 
     const out = info.frames![0];
