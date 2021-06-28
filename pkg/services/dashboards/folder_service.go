@@ -61,7 +61,7 @@ func (dr *dashboardServiceImpl) GetFolders(limit int64) ([]*models.Folder, error
 }
 
 func (dr *dashboardServiceImpl) GetFolderByID(id int64) (*models.Folder, error) {
-	query := models.GetDashboardQuery{OrgId: dr.orgId, Id: id}
+	query := models.GetDashboardQuery{OrgId: dr.orgId, Id: id, IsFolder: true}
 	dashFolder, err := getFolder(query)
 	if err != nil {
 		return nil, toFolderError(err)

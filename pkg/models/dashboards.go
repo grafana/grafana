@@ -376,10 +376,11 @@ type DeleteOrphanedProvisionedDashboardsCommand struct {
 //
 
 type GetDashboardQuery struct {
-	Slug  string // required if no Id or Uid is specified
-	Id    int64  // optional if slug is set
-	Uid   string // optional if slug is set
-	OrgId int64
+	Slug     string // required if no Id or Uid is specified
+	Id       int64  // optional if slug is set
+	Uid      string // optional if slug is set
+	OrgId    int64
+	IsFolder bool
 
 	Result *Dashboard
 }
