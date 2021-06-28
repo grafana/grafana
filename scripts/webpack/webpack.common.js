@@ -24,7 +24,7 @@ function shouldExclude(filename) {
     return false;
   }
 
-  const packagesToProcessbyBabel = ['debug', 'lru-cache', 'yallist', 'react-hook-form', 'rc-trigger', 'monaco-editor'];
+  const packagesToProcessbyBabel = ['debug', 'lru-cache', 'yallist', 'react-hook-form', 'rc-trigger'];
   for (const package of packagesToProcessbyBabel) {
     if (filename.indexOf(`node_modules/${package}`) > 0) {
       return false;
@@ -88,10 +88,10 @@ module.exports = {
             ],
           },
         },
-        // {
-        //   from: './node_modules/@kusto/monaco-kusto/release/min/',
-        //   to: 'monaco/min/vs/language/kusto/',
-        // },
+        {
+          from: './node_modules/@kusto/monaco-kusto/release/min/',
+          to: '../lib/monaco/min/vs/language/kusto/',
+        },
       ],
     }),
   ],
@@ -145,7 +145,6 @@ module.exports = {
       },
       {
         test: /\.css$/,
-        // include: MONACO_DIR, // https://github.com/react-monaco-editor/react-monaco-editor
         use: ['style-loader', 'css-loader'],
       },
       // for pre-caching SVGs as part of the JS bundles
@@ -157,6 +156,15 @@ module.exports = {
         test: /\.(svg|ico|jpg|jpeg|png|gif|eot|otf|webp|ttf|woff|woff2|cur|ani|pdf)(\?.*)?$/,
         loader: 'file-loader',
         options: { name: 'static/img/[name].[hash:8].[ext]' },
+      },
+      {
+        test: /\.worker\.js$/,
+        use: {
+          loader: 'worker-loader',
+          options: {
+            inline: 'fallback',
+          },
+        },
       },
     ],
   },

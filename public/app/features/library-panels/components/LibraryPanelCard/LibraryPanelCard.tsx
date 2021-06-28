@@ -1,17 +1,17 @@
 import React, { useState } from 'react';
 import { css } from '@emotion/css';
-import { GrafanaTheme2, PanelPluginMeta } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { GrafanaTheme2 } from '@grafana/data';
 import { Icon, Link, useStyles2 } from '@grafana/ui';
-
-import { LibraryPanelDTO } from '../../types';
+import { LibraryElementDTO } from '../../types';
 import { PanelTypeCard } from 'app/features/dashboard/components/VizTypePicker/PanelTypeCard';
 import { DeleteLibraryPanelModal } from '../DeleteLibraryPanelModal/DeleteLibraryPanelModal';
+import { config } from '@grafana/runtime';
+import { getPanelPluginNotFound } from 'app/features/dashboard/dashgrid/PanelPluginError';
 
 export interface LibraryPanelCardProps {
-  libraryPanel: LibraryPanelDTO;
-  onClick: (panel: LibraryPanelDTO) => void;
-  onDelete?: (panel: LibraryPanelDTO) => void;
+  libraryPanel: LibraryElementDTO;
+  onClick: (panel: LibraryElementDTO) => void;
+  onDelete?: (panel: LibraryElementDTO) => void;
   showSecondaryActions?: boolean;
 }
 
@@ -28,7 +28,7 @@ export const LibraryPanelCard: React.FC<LibraryPanelCardProps & { children?: JSX
     setShowDeletionModal(false);
   };
 
-  const panelPlugin = config.panels[libraryPanel.model.type] ?? ({} as PanelPluginMeta);
+  const panelPlugin = config.panels[libraryPanel.model.type] ?? getPanelPluginNotFound(libraryPanel.model.type).meta;
 
   return (
     <>
@@ -54,7 +54,7 @@ export const LibraryPanelCard: React.FC<LibraryPanelCardProps & { children?: JSX
 };
 
 interface FolderLinkProps {
-  libraryPanel: LibraryPanelDTO;
+  libraryPanel: LibraryElementDTO;
 }
 
 function FolderLink({ libraryPanel }: FolderLinkProps): JSX.Element {
@@ -64,18 +64,18 @@ function FolderLink({ libraryPanel }: FolderLinkProps): JSX.Element {
     return (
       <span className={styles.metaContainer}>
         <Icon name={'folder'} size="sm" />
-        {libraryPanel.meta.folderName}
+        <span>{libraryPanel.meta.folderName}</span>
       </span>
     );
   }
 
   return (
-    <Link href={`/dashboards/f/${libraryPanel.meta.folderUid}`}>
-      <span className={styles.metaContainer}>
+    <span className={styles.metaContainer}>
+      <Link href={`/dashboards/f/${libraryPanel.meta.folderUid}`}>
         <Icon name={'folder-upload'} size="sm" />
-        {libraryPanel.meta.folderName}
-      </span>
-    </Link>
+        <span>{libraryPanel.meta.folderName}</span>
+      </Link>
+    </span>
   );
 }
 

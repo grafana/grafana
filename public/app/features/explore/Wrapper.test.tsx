@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import Wrapper from './Wrapper';
 import { configureStore } from '../../store/configureStore';
 import { Provider } from 'react-redux';
@@ -25,6 +25,7 @@ import userEvent from '@testing-library/user-event';
 import { splitOpen } from './state/main';
 import { Route, Router } from 'react-router-dom';
 import { GrafanaRoute } from 'app/core/navigation/GrafanaRoute';
+import { initialUserState } from '../profile/state/reducers';
 
 type Mock = jest.Mock;
 
@@ -52,7 +53,7 @@ describe('Wrapper', () => {
 
     // At this point url should be initialised to some defaults
     expect(locationService.getSearchObject()).toEqual({
-      orgId: 1,
+      orgId: '1',
       left: JSON.stringify(['now-1h', 'now', 'loki', {}]),
     });
     expect(datasources.loki.query).not.toBeCalled();
@@ -74,7 +75,7 @@ describe('Wrapper', () => {
 
     // We did not change the url
     expect(locationService.getSearchObject()).toEqual({
-      orgId: 1,
+      orgId: '1',
       ...query,
     });
 
@@ -141,7 +142,7 @@ describe('Wrapper', () => {
     await screen.findByText('elastic Editor input:');
     expect(datasources.elastic.query).not.toBeCalled();
     expect(locationService.getSearchObject()).toEqual({
-      orgId: 1,
+      orgId: '1',
       left: JSON.stringify(['now-1h', 'now', 'elastic', {}]),
     });
   });
@@ -183,7 +184,7 @@ describe('Wrapper', () => {
 
     // We did not change the url
     expect(locationService.getSearchObject()).toEqual({
-      orgId: 1,
+      orgId: '1',
       ...query,
     });
 
@@ -252,6 +253,11 @@ describe('Wrapper', () => {
     await screen.findByText(`elastic Editor input: error`);
     await screen.findByText(`loki Editor input: { label="value"}`);
   });
+
+  it('changes the document title of the explore page', async () => {
+    setup({ datasources: [] });
+    await waitFor(() => expect(document.title).toEqual('Explore - Grafana'));
+  });
 });
 
 type DatasourceSetup = { settings: DataSourceInstanceSettings; api: DataSourceApi };
@@ -293,8 +299,19 @@ function setup(options?: SetupOptions): { datasources: { [name: string]: DataSou
 
   const store = configureStore();
   store.getState().user = {
+    ...initialUserState,
     orgId: 1,
     timeZone: 'utc',
+  };
+
+  store.getState().navIndex = {
+    explore: {
+      id: 'explore',
+      text: 'Explore',
+      subTitle: 'Explore your data',
+      icon: 'compass',
+      url: '/explore',
+    },
   };
 
   locationService.push({ pathname: '/explore' });

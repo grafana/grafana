@@ -193,7 +193,7 @@ export class PanelChromeAngularUnconnected extends PureComponent<Props, State> {
     const { errorMessage, data } = this.state;
     const { transparent } = panel;
 
-    let alertState = data.alertState?.state;
+    let alertState = config.featureToggles.ngalert ? undefined : data.alertState?.state;
 
     const containerClassNames = classNames({
       'panel-container': true,

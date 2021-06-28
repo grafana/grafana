@@ -1,4 +1,4 @@
-import React, { PureComponent } from 'react';
+import React, { PureComponent, createRef } from 'react';
 import { css } from '@emotion/css';
 import { capitalize } from 'lodash';
 import memoizeOne from 'memoize-one';
@@ -14,11 +14,11 @@ import {
   LogsDedupDescription,
   LogsMetaItem,
   LogsSortOrder,
-  GraphSeriesXY,
   LinkModel,
   Field,
   GrafanaTheme,
   DataQuery,
+  DataFrame,
 } from '@grafana/data';
 import {
   RadioButtonGroup,
@@ -29,14 +29,14 @@ import {
   InlineSwitch,
   withTheme,
   stylesFactory,
-  CustomScrollbar,
+  TooltipDisplayMode,
 } from '@grafana/ui';
 import store from 'app/core/store';
 import { dedupLogRows, filterLogLevels } from 'app/core/logs_model';
-import { ExploreGraphPanel } from './ExploreGraphPanel';
 import { LogsMetaRow } from './LogsMetaRow';
 import LogsNavigation from './LogsNavigation';
 import { RowContextOptions } from '@grafana/ui/src/components/Logs/LogRowContextProvider';
+import { ExploreGraphNGPanel } from './ExploreGraphNGPanel';
 
 const SETTINGS_KEYS = {
   showLabels: 'grafana.explore.logs.showLabels',
@@ -45,11 +45,12 @@ const SETTINGS_KEYS = {
 };
 
 interface Props {
+  width: number;
   logRows: LogRowModel[];
   logsMeta?: LogsMetaItem[];
-  logsSeries?: GraphSeriesXY[];
+  logsSeries?: DataFrame[];
+  logsQueries?: DataQuery[];
   visibleRange?: AbsoluteTimeRange;
-  width: number;
   theme: GrafanaTheme;
   highlighterExpressions?: string[];
   loading: boolean;
@@ -57,7 +58,6 @@ interface Props {
   timeZone: TimeZone;
   scanning?: boolean;
   scanRange?: RawTimeRange;
-  queries: DataQuery[];
   showContextToggle?: (row?: LogRowModel) => boolean;
   onChangeTime: (range: AbsoluteTimeRange) => void;
   onClickFilterLabel?: (key: string, value: string) => void;
@@ -66,6 +66,8 @@ interface Props {
   onStopScanning?: () => void;
   getRowContext?: (row: LogRowModel, options?: RowContextOptions) => Promise<any>;
   getFieldLinks: (field: Field, rowIndex: number) => Array<LinkModel<Field>>;
+  addResultsToCache: () => void;
+  clearCache: () => void;
 }
 
 interface State {
@@ -81,8 +83,9 @@ interface State {
 }
 
 export class UnthemedLogs extends PureComponent<Props, State> {
-  flipOrderTimer: NodeJS.Timeout;
-  cancelFlippingTimer: NodeJS.Timeout;
+  flipOrderTimer?: number;
+  cancelFlippingTimer?: number;
+  topLogsRef = createRef<HTMLDivElement>();
 
   state: State = {
     showLabels: store.getBool(SETTINGS_KEYS.showLabels, false),
@@ -97,14 +100,19 @@ export class UnthemedLogs extends PureComponent<Props, State> {
   };
 
   componentWillUnmount() {
-    clearTimeout(this.flipOrderTimer);
-    clearTimeout(this.cancelFlippingTimer);
+    if (this.flipOrderTimer) {
+      window.clearTimeout(this.flipOrderTimer);
+    }
+
+    if (this.cancelFlippingTimer) {
+      window.clearTimeout(this.cancelFlippingTimer);
+    }
   }
 
   onChangeLogsSortOrder = () => {
     this.setState({ isFlipping: true });
     // we are using setTimeout here to make sure that disabled button is rendered before the rendering of reordered logs
-    this.flipOrderTimer = setTimeout(() => {
+    this.flipOrderTimer = window.setTimeout(() => {
       this.setState((prevState) => {
         if (prevState.logsSortOrder === null || prevState.logsSortOrder === LogsSortOrder.Descending) {
           return { logsSortOrder: LogsSortOrder.Ascending };
@@ -112,7 +120,7 @@ export class UnthemedLogs extends PureComponent<Props, State> {
         return { logsSortOrder: LogsSortOrder.Descending };
       });
     }, 0);
-    this.cancelFlippingTimer = setTimeout(() => this.setState({ isFlipping: false }), 1000);
+    this.cancelFlippingTimer = window.setTimeout(() => this.setState({ isFlipping: false }), 1000);
   };
 
   onEscapeNewlines = () => {
@@ -222,8 +230,11 @@ export class UnthemedLogs extends PureComponent<Props, State> {
     return filterLogLevels(logRows, new Set(hiddenLogLevels));
   });
 
+  scrollToTopLogs = () => this.topLogsRef.current?.scrollIntoView();
+
   render() {
     const {
+      width,
       logRows,
       logsMeta,
       logsSeries,
@@ -236,12 +247,13 @@ export class UnthemedLogs extends PureComponent<Props, State> {
       scanning,
       scanRange,
       showContextToggle,
-      width,
       absoluteRange,
       onChangeTime,
       getFieldLinks,
       theme,
-      queries,
+      logsQueries,
+      clearCache,
+      addResultsToCache,
     } = this.props;
 
     const {
@@ -267,20 +279,22 @@ export class UnthemedLogs extends PureComponent<Props, State> {
 
     return (
       <>
-        <ExploreGraphPanel
-          series={logsSeries || []}
-          width={width}
-          onHiddenSeriesChanged={this.onToggleLogLevel}
-          loading={loading}
-          absoluteRange={visibleRange || absoluteRange}
-          isStacked={true}
-          showPanel={false}
-          timeZone={timeZone}
-          showBars={true}
-          showLines={false}
-          onUpdateTimeRange={onChangeTime}
-        />
-        <div className={styles.logOptions}>
+        <div className={styles.infoText}>
+          This datasource does not support full-range histograms. The graph is based on the logs seen in the response.
+        </div>
+        {logsSeries && logsSeries.length ? (
+          <ExploreGraphNGPanel
+            data={logsSeries}
+            height={150}
+            width={width}
+            tooltipDisplayMode={TooltipDisplayMode.Multi}
+            absoluteRange={visibleRange || absoluteRange}
+            timeZone={timeZone}
+            onUpdateTimeRange={onChangeTime}
+            onHiddenSeriesChanged={this.onToggleLogLevel}
+          />
+        ) : undefined}
+        <div className={styles.logOptions} ref={this.topLogsRef}>
           <InlineFieldRow>
             <InlineField label="Time" transparent>
               <InlineSwitch value={showTime} onChange={this.onChangeTime} transparent />
@@ -327,7 +341,7 @@ export class UnthemedLogs extends PureComponent<Props, State> {
           clearDetectedFields={this.clearDetectedFields}
         />
         <div className={styles.logsSection}>
-          <CustomScrollbar autoHide>
+          <div className={styles.logRows}>
             <LogRows
               logRows={logRows}
               deduplicatedRows={dedupedRows}
@@ -339,6 +353,7 @@ export class UnthemedLogs extends PureComponent<Props, State> {
               showContextToggle={showContextToggle}
               showLabels={showLabels}
               showTime={showTime}
+              enableLogDetails={true}
               forceEscape={forceEscape}
               wrapLogMessage={wrapLogMessage}
               timeZone={timeZone}
@@ -348,15 +363,18 @@ export class UnthemedLogs extends PureComponent<Props, State> {
               onClickShowDetectedField={this.showDetectedField}
               onClickHideDetectedField={this.hideDetectedField}
             />
-          </CustomScrollbar>
+          </div>
           <LogsNavigation
             logsSortOrder={logsSortOrder}
-            visibleRange={visibleRange}
+            visibleRange={visibleRange ?? absoluteRange}
             absoluteRange={absoluteRange}
             timeZone={timeZone}
             onChangeTime={onChangeTime}
             loading={loading}
-            queries={queries}
+            queries={logsQueries ?? []}
+            scrollToTopLogs={this.scrollToTopLogs}
+            addResultsToCache={addResultsToCache}
+            clearCache={clearCache}
           />
         </div>
         {!loading && !hasData && !scanning && (
@@ -410,7 +428,14 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     logsSection: css`
       display: flex;
       flex-direction: row;
-      max-height: 95vh;
+      justify-content: space-between;
+    `,
+    logRows: css`
+      overflow-x: scroll;
+    `,
+    infoText: css`
+      font-size: ${theme.typography.size.sm};
+      color: ${theme.colors.textWeak};
     `,
   };
 });

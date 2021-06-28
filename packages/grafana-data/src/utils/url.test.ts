@@ -37,16 +37,52 @@ describe('parseKeyValue', () => {
 
   it('should parse numeric params', () => {
     const obj = urlUtil.parseKeyValue('num1=12&num2=12.2');
-    expect(obj).toEqual({ num1: 12, num2: 12.2 });
+    expect(obj).toEqual({ num1: '12', num2: '12.2' });
   });
 
-  it('should not parse empty strinhg as number', () => {
+  it('should not parse empty string as number', () => {
     const obj = urlUtil.parseKeyValue('num1=&num2=12.2');
-    expect(obj).toEqual({ num1: '', num2: 12.2 });
+    expect(obj).toEqual({ num1: '', num2: '12.2' });
   });
 
   it('should parse boolean params', () => {
     const obj = urlUtil.parseKeyValue('bool1&bool2=true&bool3=false');
     expect(obj).toEqual({ bool1: true, bool2: true, bool3: false });
+  });
+
+  it('should parse number like params as strings', () => {
+    const obj = urlUtil.parseKeyValue('custom=&custom1=001&custom2=002&custom3');
+    expect(obj).toEqual({ custom: '', custom1: '001', custom2: '002', custom3: true });
+  });
+});
+
+describe('getUrlSearchParams', () => {
+  const { location } = window;
+  // @ts-ignore
+  delete window.location;
+
+  window.location = {
+    ...location,
+    hash: '#hash',
+    host: 'www.domain.com:9877',
+    hostname: 'www.domain.com',
+    href: 'http://www.domain.com:9877/path/b?var1=a&var2=b&var2=c&var2=d&var3=a&var3=d&z#hash',
+    origin: 'http://www.domain.com:9877',
+    pathname: '/path/b',
+    port: '9877',
+    protocol: 'http:',
+    search: '?var1=a&var2=b&var2=c&var2=d&var3=a&var3=d&z',
+  };
+
+  let expectedParams = {
+    var1: ['a'],
+    var2: ['b', 'c', 'd'],
+    var3: ['a', 'd'],
+    z: true,
+  };
+
+  it('should take into account multi-value and boolean parameters', () => {
+    const params = urlUtil.getUrlSearchParams();
+    expect(params).toStrictEqual(expectedParams);
   });
 });

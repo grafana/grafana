@@ -365,6 +365,8 @@ export class GraphiteDatasource extends DataSourceApi<
 
   metricFindQuery(query: string, optionalOptions?: any): Promise<MetricFindValue[]> {
     const options: any = optionalOptions || {};
+
+    // First attempt to check for tag-related functions (using empty wildcard for interpolation)
     let interpolatedQuery = this.templateSrv.replace(
       query,
       getSearchFilterScopedVar({ query, wildcardChar: '', options: optionalOptions })
@@ -386,26 +388,60 @@ export class GraphiteDatasource extends DataSourceApi<
       return this.getTagsAutoComplete(expressions, undefined, options);
     }
 
+    // If no tag-related query was found, perform metric-based search (using * as the wildcard for interpolation)
+    let useExpand = query.match(/^expand\((.*)\)$/);
+    query = useExpand ? useExpand[1] : query;
+
     interpolatedQuery = this.templateSrv.replace(
       query,
       getSearchFilterScopedVar({ query, wildcardChar: '*', options: optionalOptions })
     );
 
+    let range;
+    if (options.range) {
+      range = {
+        from: this.translateTime(options.range.from, false, options.timezone),
+        until: this.translateTime(options.range.to, true, options.timezone),
+      };
+    }
+
+    if (useExpand) {
+      return this.requestMetricExpand(interpolatedQuery, options.requestId, range);
+    } else {
+      return this.requestMetricFind(interpolatedQuery, options.requestId, range);
+    }
+  }
+
+  /**
+   * Search for metrics matching giving pattern using /metrics/find endpoint. It will
+   * return all possible values at the last level of the query, for example:
+   *
+   * metrics: prod.servers.001.cpu, prod.servers.002.cpu
+   * query: *.servers.*
+   * result: 001, 002
+   *
+   * For more complex searches use requestMetricExpand
+   */
+  private requestMetricFind(
+    query: string,
+    requestId: string,
+    range?: { from: any; until: any }
+  ): Promise<MetricFindValue[]> {
     const httpOptions: any = {
       method: 'POST',
       url: '/metrics/find',
       params: {},
-      data: `query=${interpolatedQuery}`,
+      data: `query=${query}`,
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
       },
       // for cancellations
-      requestId: options.requestId,
+      requestId: requestId,
     };
 
-    if (options.range) {
-      httpOptions.params.from = this.translateTime(options.range.from, false, options.timezone);
-      httpOptions.params.until = this.translateTime(options.range.to, true, options.timezone);
+    if (range) {
+      httpOptions.params.from = range.from;
+      httpOptions.params.until = range.until;
     }
 
     return this.doGraphiteRequest(httpOptions)
@@ -415,6 +451,46 @@ export class GraphiteDatasource extends DataSourceApi<
             return {
               text: metric.text,
               expandable: metric.expandable ? true : false,
+            };
+          });
+        })
+      )
+      .toPromise();
+  }
+
+  /**
+   * Search for metrics matching giving pattern using /metrics/expand endpoint.
+   * The result will contain all metrics (with full name) matching provided query.
+   * It's a more flexible version of /metrics/find endpoint (@see requestMetricFind)
+   */
+  private requestMetricExpand(
+    query: string,
+    requestId: string,
+    range?: { from: any; until: any }
+  ): Promise<MetricFindValue[]> {
+    const httpOptions: any = {
+      method: 'GET',
+      url: '/metrics/expand',
+      params: { query },
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      // for cancellations
+      requestId,
+    };
+
+    if (range) {
+      httpOptions.params.from = range.from;
+      httpOptions.params.until = range.until;
+    }
+
+    return this.doGraphiteRequest(httpOptions)
+      .pipe(
+        map((results: any) => {
+          return _map(results.data.results, (metric) => {
+            return {
+              text: metric,
+              expandable: false,
             };
           });
         })

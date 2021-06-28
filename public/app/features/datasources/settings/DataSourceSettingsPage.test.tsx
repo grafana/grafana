@@ -23,7 +23,7 @@ const getProps = (): Props => ({
   },
   dataSource: getMockDataSource(),
   dataSourceMeta: getMockPlugin(),
-  dataSourceId: 1,
+  dataSourceId: 'x',
   deleteDataSource: jest.fn(),
   loadDataSource: jest.fn(),
   setDataSourceName,

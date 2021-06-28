@@ -3,6 +3,7 @@ package commands
 import (
 	"archive/zip"
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -60,7 +61,7 @@ func (cmd Command) installCommand(c utils.CommandLine) error {
 	skipTLSVerify := c.Bool("insecure")
 
 	i := installer.New(skipTLSVerify, services.GrafanaVersion, services.Logger)
-	return i.Install(pluginID, version, c.PluginDirectory(), c.PluginURL(), c.PluginRepoURL())
+	return i.Install(context.Background(), pluginID, version, c.PluginDirectory(), c.PluginURL(), c.PluginRepoURL())
 }
 
 // InstallPlugin downloads the plugin code as a zip file from the Grafana.com API

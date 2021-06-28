@@ -254,7 +254,7 @@ func TestPostgres(t *testing.T) {
 			require.Len(t, frames, 1)
 			require.Len(t, frames[0].Fields, 17)
 
-			require.Equal(t, int16(1), *frames[0].Fields[0].At(0).(*int16))
+			require.Equal(t, int16(1), frames[0].Fields[0].At(0).(int16))
 			require.Equal(t, int32(2), *frames[0].Fields[1].At(0).(*int32))
 			require.Equal(t, int64(3), *frames[0].Fields[2].At(0).(*int64))
 
@@ -795,8 +795,8 @@ func TestPostgres(t *testing.T) {
 			frames, _ := queryResult.Dataframes.Decoded()
 			require.Equal(t, 1, len(frames))
 			require.Equal(t, 3, len(frames[0].Fields))
-			require.Equal(t, data.Labels{"metric": "Metric A - value one"}, frames[0].Fields[1].Labels)
-			require.Equal(t, data.Labels{"metric": "Metric B - value one"}, frames[0].Fields[2].Labels)
+			require.Equal(t, "Metric A - value one", frames[0].Fields[1].Name)
+			require.Equal(t, "Metric B - value one", frames[0].Fields[2].Name)
 		})
 
 		t.Run("When doing a metric query with metric column and multiple value columns", func(t *testing.T) {

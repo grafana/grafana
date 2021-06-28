@@ -18,9 +18,10 @@ Object {
       "size": [Function],
       "space": [Function],
       "splits": undefined,
-      "stroke": "rgb(201, 209, 217)",
+      "stroke": "rgb(204, 204, 220)",
       "ticks": Object {
         "show": true,
+        "size": 4,
         "stroke": "rgba(240, 250, 255, 0.09)",
         "width": 1,
       },
@@ -42,9 +43,10 @@ Object {
       "size": [Function],
       "space": [Function],
       "splits": undefined,
-      "stroke": "rgb(201, 209, 217)",
+      "stroke": "rgb(204, 204, 220)",
       "ticks": Object {
         "show": true,
+        "size": 4,
         "stroke": "rgba(240, 250, 255, 0.09)",
         "width": 1,
       },
@@ -79,6 +81,20 @@ Object {
       "stroke": [Function],
       "width": [Function],
     },
+    "sync": Object {
+      "filters": Object {
+        "pub": [Function],
+      },
+      "key": "__global_",
+      "match": Array [
+        [Function],
+        [Function],
+      ],
+      "scales": Array [
+        "x",
+        "__fixed",
+      ],
+    },
   },
   "hooks": Object {},
   "scales": Object {
@@ -111,6 +127,7 @@ Object {
       "paths": [Function],
       "points": Object {
         "fill": "#808080",
+        "filter": [Function],
         "show": true,
         "size": undefined,
         "stroke": "#808080",
@@ -131,6 +148,7 @@ Object {
       "paths": [Function],
       "points": Object {
         "fill": "#808080",
+        "filter": [Function],
         "show": true,
         "size": undefined,
         "stroke": "#808080",
@@ -151,6 +169,7 @@ Object {
       "paths": [Function],
       "points": Object {
         "fill": "#808080",
+        "filter": [Function],
         "show": true,
         "size": undefined,
         "stroke": "#808080",
@@ -171,6 +190,7 @@ Object {
       "paths": [Function],
       "points": Object {
         "fill": "#808080",
+        "filter": [Function],
         "show": true,
         "size": undefined,
         "stroke": "#808080",
@@ -191,6 +211,7 @@ Object {
       "paths": [Function],
       "points": Object {
         "fill": "#808080",
+        "filter": [Function],
         "show": true,
         "size": undefined,
         "stroke": "#808080",

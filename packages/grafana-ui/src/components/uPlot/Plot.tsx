@@ -1,7 +1,7 @@
-import React, { createRef } from 'react';
+import React, { createRef, MutableRefObject } from 'react';
 import uPlot, { Options } from 'uplot';
 import { PlotContext, PlotContextType } from './context';
-import { DEFAULT_PLOT_CONFIG } from './utils';
+import { DEFAULT_PLOT_CONFIG, pluginLog } from './utils';
 import { PlotProps } from './types';
 
 function sameDims(prevProps: PlotProps, nextProps: PlotProps) {
@@ -28,6 +28,7 @@ type UPlotChartState = {
  */
 export class UPlotChart extends React.Component<PlotProps, UPlotChartState> {
   plotContainer = createRef<HTMLDivElement>();
+  plotCanvasBBox = createRef<DOMRect>();
 
   constructor(props: PlotProps) {
     super(props);
@@ -35,20 +36,34 @@ export class UPlotChart extends React.Component<PlotProps, UPlotChartState> {
     this.state = {
       ctx: {
         plot: null,
+        getCanvasBoundingBox: () => {
+          return this.plotCanvasBBox.current;
+        },
       },
     };
   }
 
   reinitPlot() {
     let { ctx } = this.state;
+    let { width, height, plotRef } = this.props;
 
     ctx.plot?.destroy();
-
-    let { width, height } = this.props;
 
     if (width === 0 && height === 0) {
       return;
     }
+
+    this.props.config.addHook('syncRect', (u, rect) => {
+      (this.plotCanvasBBox as MutableRefObject<any>).current = rect;
+    });
+
+    this.props.config.addHook('setSize', (u) => {
+      const canvas = u.over;
+      if (!canvas) {
+        return;
+      }
+      (this.plotCanvasBBox as MutableRefObject<any>).current = canvas.getBoundingClientRect();
+    });
 
     const config: Options = {
       ...DEFAULT_PLOT_CONFIG,
@@ -58,11 +73,20 @@ export class UPlotChart extends React.Component<PlotProps, UPlotChartState> {
       ...this.props.config.getConfig(),
     };
 
-    this.setState({
+    pluginLog('UPlot', false, 'Reinitializing plot');
+    const plot = new uPlot(config, this.props.data, this.plotContainer!.current!);
+
+    if (plotRef) {
+      plotRef(plot);
+    }
+
+    this.setState((s) => ({
+      ...s,
       ctx: {
-        plot: new uPlot(config, this.props.data, this.plotContainer!.current!),
+        ...s.ctx,
+        plot,
       },
-    });
+    }));
   }
 
   componentDidMount() {
@@ -82,7 +106,7 @@ export class UPlotChart extends React.Component<PlotProps, UPlotChartState> {
     );
   }
 
-  componentDidUpdate(prevProps: PlotProps, prevState: object) {
+  componentDidUpdate(prevProps: PlotProps) {
     let { ctx } = this.state;
 
     if (!sameDims(prevProps, this.props)) {

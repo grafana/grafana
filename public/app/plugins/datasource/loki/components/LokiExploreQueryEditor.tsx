@@ -11,8 +11,7 @@ import { LokiOptionFields } from './LokiOptionFields';
 type Props = ExploreQueryFieldProps<LokiDatasource, LokiQuery, LokiOptions>;
 
 export function LokiExploreQueryEditor(props: Props) {
-  const { range, query, data, datasource, history, onChange, onRunQuery } = props;
-  const absoluteTimeRange = { from: range!.from!.valueOf(), to: range!.to!.valueOf() }; // Range here is never optional
+  const { query, data, datasource, history, onChange, onRunQuery } = props;
 
   return (
     <LokiQueryField
@@ -23,7 +22,6 @@ export function LokiExploreQueryEditor(props: Props) {
       onRunQuery={onRunQuery}
       history={history}
       data={data}
-      absoluteRange={absoluteTimeRange}
       ExtraFieldElement={
         <LokiOptionFields
           queryType={query.instant ? 'instant' : 'range'}

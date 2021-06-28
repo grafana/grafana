@@ -8,50 +8,17 @@ import (
 	"strings"
 	"time"
 
-	"github.com/opentracing/opentracing-go"
-
-	"net/http"
-
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/tsdb/interval"
+	"github.com/opentracing/opentracing-go"
 	"github.com/prometheus/client_golang/api"
 	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/prometheus/common/model"
 )
-
-type PrometheusExecutor struct {
-	Transport http.RoundTripper
-
-	intervalCalculator interval.Calculator
-}
-
-type basicAuthTransport struct {
-	Transport http.RoundTripper
-
-	username string
-	password string
-}
-
-func (bat basicAuthTransport) RoundTrip(req *http.Request) (*http.Response, error) {
-	req.SetBasicAuth(bat.username, bat.password)
-	return bat.Transport.RoundTrip(req)
-}
-
-//nolint: staticcheck // plugins.DataPlugin deprecated
-func NewExecutor(dsInfo *models.DataSource) (plugins.DataPlugin, error) {
-	transport, err := dsInfo.GetHttpTransport()
-	if err != nil {
-		return nil, err
-	}
-
-	return &PrometheusExecutor{
-		Transport:          transport,
-		intervalCalculator: interval.NewCalculator(interval.CalculatorOptions{MinInterval: time.Second * 1}),
-	}, nil
-}
 
 var (
 	plog         log.Logger
@@ -62,26 +29,34 @@ func init() {
 	plog = log.New("tsdb.prometheus")
 }
 
-func (e *PrometheusExecutor) getClient(dsInfo *models.DataSource) (apiv1.API, error) {
-	cfg := api.Config{
-		Address:      dsInfo.Url,
-		RoundTripper: e.Transport,
-	}
+type PrometheusExecutor struct {
+	client             apiv1.API
+	intervalCalculator interval.Calculator
+}
 
-	if dsInfo.BasicAuth {
-		cfg.RoundTripper = basicAuthTransport{
-			Transport: e.Transport,
-			username:  dsInfo.BasicAuthUser,
-			password:  dsInfo.DecryptedBasicAuthPassword(),
+//nolint: staticcheck // plugins.DataPlugin deprecated
+func New(provider httpclient.Provider) func(*models.DataSource) (plugins.DataPlugin, error) {
+	return func(dsInfo *models.DataSource) (plugins.DataPlugin, error) {
+		transport, err := dsInfo.GetHTTPTransport(provider, customQueryParametersMiddleware(plog))
+		if err != nil {
+			return nil, err
 		}
-	}
 
-	client, err := api.NewClient(cfg)
-	if err != nil {
-		return nil, err
-	}
+		cfg := api.Config{
+			Address:      dsInfo.Url,
+			RoundTripper: transport,
+		}
 
-	return apiv1.NewAPI(client), nil
+		client, err := api.NewClient(cfg)
+		if err != nil {
+			return nil, err
+		}
+
+		return &PrometheusExecutor{
+			intervalCalculator: interval.NewCalculator(interval.CalculatorOptions{MinInterval: time.Second * 1}),
+			client:             apiv1.NewAPI(client),
+		}, nil
+	}
 }
 
 //nolint: staticcheck // plugins.DataResponse deprecated
@@ -89,11 +64,6 @@ func (e *PrometheusExecutor) DataQuery(ctx context.Context, dsInfo *models.DataS
 	tsdbQuery plugins.DataQuery) (plugins.DataResponse, error) {
 	result := plugins.DataResponse{
 		Results: map[string]plugins.DataQueryResult{},
-	}
-
-	client, err := e.getClient(dsInfo)
-	if err != nil {
-		return result, err
 	}
 
 	queries, err := e.parseQuery(dsInfo, tsdbQuery)
@@ -110,13 +80,13 @@ func (e *PrometheusExecutor) DataQuery(ctx context.Context, dsInfo *models.DataS
 
 		plog.Debug("Sending query", "start", timeRange.Start, "end", timeRange.End, "step", timeRange.Step, "query", query.Expr)
 
-		span, ctx := opentracing.StartSpanFromContext(ctx, "alerting.prometheus")
+		span, ctx := opentracing.StartSpanFromContext(ctx, "datasource.prometheus")
 		span.SetTag("expr", query.Expr)
 		span.SetTag("start_unixnano", query.Start.UnixNano())
 		span.SetTag("stop_unixnano", query.End.UnixNano())
 		defer span.Finish()
 
-		value, _, err := client.QueryRange(ctx, query.Expr, timeRange)
+		value, _, err := e.client.QueryRange(ctx, query.Expr, timeRange)
 
 		if err != nil {
 			return result, err

@@ -1,4 +1,5 @@
 import { SelectableValue } from '@grafana/data';
+import { ScaleDistribution } from './models.gen';
 
 /**
  * @alpha
@@ -52,10 +53,10 @@ export enum BarAlignment {
 /**
  * @alpha
  */
-export enum ScaleDistribution {
-  Linear = 'linear',
-  Logarithmic = 'log',
-  Ordinal = 'ordinal',
+export enum BarValueVisibility {
+  Auto = 'auto',
+  Never = 'never',
+  Always = 'always',
 }
 
 /**
@@ -107,6 +108,8 @@ export interface LineConfig {
  */
 export interface BarConfig {
   barAlignment?: BarAlignment;
+  barWidthFactor?: number;
+  barMaxWidth?: number;
 }
 
 /**
@@ -195,6 +198,13 @@ export interface StackingConfig {
 /**
  * @alpha
  */
+export interface StackableFieldConfig {
+  stacking?: StackingConfig;
+}
+
+/**
+ * @alpha
+ */
 export enum GraphTresholdsStyleMode {
   Off = 'off',
   Line = 'line',
@@ -219,10 +229,10 @@ export interface GraphFieldConfig
     PointsConfig,
     AxisConfig,
     BarConfig,
+    StackableFieldConfig,
     HideableFieldConfig {
   drawStyle?: DrawStyle;
   gradientMode?: GraphGradientMode;
-  stacking?: StackingConfig;
   thresholdsStyle?: GraphThresholdsStyleConfig;
 }
 

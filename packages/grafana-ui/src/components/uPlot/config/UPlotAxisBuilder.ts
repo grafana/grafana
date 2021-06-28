@@ -1,4 +1,4 @@
-import { dateTimeFormat, GrafanaTheme2, systemDateFormats, TimeZone } from '@grafana/data';
+import { dateTimeFormat, GrafanaTheme2, isBooleanUnit, systemDateFormats, TimeZone } from '@grafana/data';
 import uPlot, { Axis } from 'uplot';
 import { PlotConfigBuilder } from '../types';
 import { measureText } from '../../../utils/measureText';
@@ -16,11 +16,14 @@ export interface AxisProps {
   grid?: boolean;
   ticks?: boolean;
   formatValue?: (v: any) => string;
+  incrs?: Axis.Incrs;
   splits?: Axis.Splits;
   values?: any;
   isTime?: boolean;
   timeZone?: TimeZone;
 }
+
+const fontSize = 12;
 
 export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
   merge(props: AxisProps) {
@@ -34,7 +37,7 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
   }
 
   getConfig(): Axis {
-    const {
+    let {
       scaleKey,
       label,
       show = true,
@@ -50,9 +53,13 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
       theme,
     } = this.props;
 
-    const font = `12px ${theme.typography.fontFamily}`;
+    const font = `${fontSize}px ${theme.typography.fontFamily}`;
 
     const gridColor = theme.isDark ? 'rgba(240, 250, 255, 0.09)' : 'rgba(0, 10, 23, 0.09)';
+
+    if (isBooleanUnit(scaleKey)) {
+      splits = [0, 1];
+    }
 
     let config: Axis = {
       scale: scaleKey,
@@ -72,6 +79,7 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
         show: ticks,
         stroke: gridColor,
         width: 1 / devicePixelRatio,
+        size: 4,
       },
       splits,
       values: values,
@@ -88,7 +96,7 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
     } else if (isTime) {
       config.values = formatTime;
     } else if (formatValue) {
-      config.values = (u: uPlot, vals: any[]) => vals.map((v) => formatValue(v));
+      config.values = (u: uPlot, vals: any[]) => vals.map(formatValue!);
     }
 
     // store timezone
@@ -114,7 +122,7 @@ function calculateSpace(self: uPlot, axisIdx: number, scaleMin: number, scaleMax
     const maxTicks = plotDim / defaultSpacing;
     const increment = (scaleMax - scaleMin) / maxTicks;
     const sample = formatTime(self, [scaleMin], axisIdx, defaultSpacing, increment);
-    const width = measureText(sample[0], 12).width + 18;
+    const width = measureText(sample[0], fontSize).width + 18;
     return width;
   }
 
@@ -124,22 +132,17 @@ function calculateSpace(self: uPlot, axisIdx: number, scaleMin: number, scaleMax
 /** height of x axis or width of y axis in CSS pixels alloted for values, gap & ticks, but excluding axis label */
 function calculateAxisSize(self: uPlot, values: string[], axisIdx: number) {
   const axis = self.axes[axisIdx];
+
+  let axisSize = axis.ticks!.size!;
+
   if (axis.side === 2) {
-    return 33;
+    axisSize += axis!.gap! + fontSize;
+  } else if (values?.length) {
+    let longestValue = values.reduce((acc, value) => (value.length > acc.length ? value : acc), '');
+    axisSize += axis!.gap! + measureText(longestValue, fontSize).width;
   }
 
-  if (values === null || !values.length) {
-    return 0;
-  }
-
-  let maxLength = values[0];
-  for (let i = 0; i < values.length; i++) {
-    if (values[i].length > maxLength.length) {
-      maxLength = values[i];
-    }
-  }
-
-  return measureText(maxLength, 12).width + 18;
+  return Math.ceil(axisSize);
 }
 
 const timeUnitSize = {

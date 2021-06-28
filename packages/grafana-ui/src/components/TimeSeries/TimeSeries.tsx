@@ -6,37 +6,30 @@ import { PlotLegend } from '../uPlot/PlotLegend';
 import { LegendDisplayMode } from '../VizLegend/models.gen';
 import { preparePlotConfigBuilder } from './utils';
 import { withTheme2 } from '../../themes/ThemeContext';
+import { PanelContext, PanelContextRoot } from '../PanelChrome/PanelContext';
 
 const propsToDiff: string[] = [];
 
 type TimeSeriesProps = Omit<GraphNGProps, 'prepConfig' | 'propsToDiff' | 'renderLegend'>;
 
 export class UnthemedTimeSeries extends React.Component<TimeSeriesProps> {
-  prepConfig = (alignedFrame: DataFrame, getTimeRange: () => TimeRange) => {
-    return preparePlotConfigBuilder({
-      frame: alignedFrame,
-      getTimeRange,
-      ...this.props,
-    });
+  static contextType = PanelContextRoot;
+  panelContext: PanelContext = {} as PanelContext;
+
+  prepConfig = (alignedFrame: DataFrame, allFrames: DataFrame[], getTimeRange: () => TimeRange) => {
+    const { eventBus, sync } = this.context;
+    const { theme, timeZone } = this.props;
+    return preparePlotConfigBuilder({ frame: alignedFrame, theme, timeZone, getTimeRange, eventBus, sync, allFrames });
   };
 
   renderLegend = (config: UPlotConfigBuilder) => {
-    const { legend, onLegendClick, frames } = this.props;
+    const { legend, frames } = this.props;
 
     if (!config || (legend && legend.displayMode === LegendDisplayMode.Hidden)) {
-      return;
+      return null;
     }
 
-    return (
-      <PlotLegend
-        data={frames}
-        config={config}
-        onLegendClick={onLegendClick}
-        maxHeight="35%"
-        maxWidth="60%"
-        {...legend}
-      />
-    );
+    return <PlotLegend data={frames} config={config} {...legend} />;
   };
 
   render() {

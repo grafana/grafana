@@ -3,9 +3,11 @@ package postgres
 import (
 	"fmt"
 	"strconv"
+	"sync"
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/stretchr/testify/require"
 )
@@ -91,25 +93,25 @@ func TestMacroEngine(t *testing.T) {
 		t.Run("interpolate __timeGroup function with TimescaleDB enabled", func(t *testing.T) {
 			sql, err := engineTS.Interpolate(query, timeRange, "GROUP BY $__timeGroup(time_column,'5m')")
 			require.NoError(t, err)
-			require.Equal(t, "GROUP BY time_bucket('300.0s',time_column)", sql)
+			require.Equal(t, "GROUP BY time_bucket('300.000s',time_column)", sql)
 		})
 
 		t.Run("interpolate __timeGroup function with spaces between args and TimescaleDB enabled", func(t *testing.T) {
 			sql, err := engineTS.Interpolate(query, timeRange, "GROUP BY $__timeGroup(time_column , '5m')")
 			require.NoError(t, err)
-			require.Equal(t, "GROUP BY time_bucket('300.0s',time_column)", sql)
+			require.Equal(t, "GROUP BY time_bucket('300.000s',time_column)", sql)
 		})
 
 		t.Run("interpolate __timeGroup function with large time range as an argument and TimescaleDB enabled", func(t *testing.T) {
 			sql, err := engineTS.Interpolate(query, timeRange, "GROUP BY $__timeGroup(time_column , '12d')")
 			require.NoError(t, err)
-			require.Equal(t, "GROUP BY time_bucket('1036800.0s',time_column)", sql)
+			require.Equal(t, "GROUP BY time_bucket('1036800.000s',time_column)", sql)
 		})
 
 		t.Run("interpolate __timeGroup function with small time range as an argument and TimescaleDB enabled", func(t *testing.T) {
-			sql, err := engineTS.Interpolate(query, timeRange, "GROUP BY $__timeGroup(time_column , '200ms')")
+			sql, err := engineTS.Interpolate(query, timeRange, "GROUP BY $__timeGroup(time_column , '20ms')")
 			require.NoError(t, err)
-			require.Equal(t, "GROUP BY time_bucket('0.2s',time_column)", sql)
+			require.Equal(t, "GROUP BY time_bucket('0.020s',time_column)", sql)
 		})
 
 		t.Run("interpolate __unixEpochFilter function", func(t *testing.T) {
@@ -213,4 +215,34 @@ func TestMacroEngine(t *testing.T) {
 			require.Equal(t, fmt.Sprintf("WHERE time_column BETWEEN '%s' AND '%s'", from.Format(time.RFC3339Nano), to.Format(time.RFC3339Nano)), sql)
 		})
 	})
+}
+
+func TestMacroEngineConcurrency(t *testing.T) {
+	engine := newPostgresMacroEngine(false)
+	query1 := plugins.DataSubQuery{
+		Model: simplejson.New(),
+	}
+	query2 := plugins.DataSubQuery{
+		Model: simplejson.New(),
+	}
+	from := time.Date(2018, 4, 12, 18, 0, 0, 0, time.UTC)
+	to := from.Add(5 * time.Minute)
+	timeRange := plugins.DataTimeRange{From: "5m", To: "now", Now: to}
+
+	var wg sync.WaitGroup
+	wg.Add(2)
+
+	go func(query plugins.DataSubQuery) {
+		defer wg.Done()
+		_, err := engine.Interpolate(query, timeRange, "SELECT $__timeGroup(time_column,'5m')")
+		require.NoError(t, err)
+	}(query1)
+
+	go func(query plugins.DataSubQuery) {
+		_, err := engine.Interpolate(query, timeRange, "SELECT $__timeGroup(time_column,'5m')")
+		require.NoError(t, err)
+		defer wg.Done()
+	}(query2)
+
+	wg.Wait()
 }

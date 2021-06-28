@@ -49,7 +49,7 @@ export function addStandardDataReduceOptions<T extends SingleStatBaseOptions>(
     description: 'Max number of rows to display',
     category: valueOptionsCategory,
     settings: {
-      placeholder: '5000',
+      placeholder: '25',
       integer: true,
       min: 1,
       max: 5000,
@@ -117,33 +117,5 @@ export function addOrientationOption<T extends SingleStatBaseOptions>(
       ],
     },
     defaultValue: VizOrientation.Auto,
-  });
-}
-
-export function addTextSizeOptions<T extends SingleStatBaseOptions>(builder: PanelOptionsEditorBuilder<T>) {
-  builder.addNumberInput({
-    path: 'text.titleSize',
-    category: ['Text size'],
-    name: 'Title',
-    settings: {
-      placeholder: 'Auto',
-      integer: false,
-      min: 1,
-      max: 200,
-    },
-    defaultValue: undefined,
-  });
-
-  builder.addNumberInput({
-    path: 'text.valueSize',
-    category: ['Text size'],
-    name: 'Value',
-    settings: {
-      placeholder: 'Auto',
-      integer: false,
-      min: 1,
-      max: 200,
-    },
-    defaultValue: undefined,
   });
 }

@@ -1,8 +1,9 @@
 import React from 'react';
 import { EventsWithValidation, regexValidation, LegacyForms } from '@grafana/ui';
-const { Select, Input, FormField } = LegacyForms;
+const { Switch, Select, Input, FormField } = LegacyForms;
 import { ElasticsearchOptions, Interval } from '../types';
 import { DataSourceSettings, SelectableValue } from '@grafana/data';
+import { gte, lt } from 'semver';
 
 const indexPatternTypes = [
   { label: 'No pattern', value: 'none' },
@@ -14,20 +15,20 @@ const indexPatternTypes = [
 ];
 
 const esVersions = [
-  { label: '2.x', value: 2 },
-  { label: '5.x', value: 5 },
-  { label: '5.6+', value: 56 },
-  { label: '6.0+', value: 60 },
-  { label: '7.0+', value: 70 },
+  { label: '2.x', value: '2.0.0' },
+  { label: '5.x', value: '5.0.0' },
+  { label: '5.6+', value: '5.6.0' },
+  { label: '6.0+', value: '6.0.0' },
+  { label: '7.0+', value: '7.0.0' },
+  { label: '7.7+', value: '7.7.0' },
+  { label: '7.10+', value: '7.10.0' },
 ];
 
 type Props = {
   value: DataSourceSettings<ElasticsearchOptions>;
   onChange: (value: DataSourceSettings<ElasticsearchOptions>) => void;
 };
-export const ElasticDetails = (props: Props) => {
-  const { value, onChange } = props;
-
+export const ElasticDetails = ({ value, onChange }: Props) => {
   return (
     <>
       <h3 className="page-heading">Elasticsearch details</h3>
@@ -101,7 +102,7 @@ export const ElasticDetails = (props: Props) => {
             }
           />
         </div>
-        {value.jsonData.esVersion >= 56 && (
+        {gte(value.jsonData.esVersion, '5.6.0') && (
           <div className="gf-form max-width-30">
             <FormField
               aria-label={'Max concurrent Shard Requests input'}
@@ -142,6 +143,14 @@ export const ElasticDetails = (props: Props) => {
             />
           </div>
         </div>
+        <div className="gf-form-inline">
+          <Switch
+            label="X-Pack Enabled"
+            labelClass="width-13"
+            checked={value.jsonData.xpack || false}
+            onChange={jsonDataSwitchChangeHandler('xpack', value, onChange)}
+          />
+        </div>
       </div>
     </>
   );
@@ -166,6 +175,20 @@ const jsonDataChangeHandler = (key: keyof ElasticsearchOptions, value: Props['va
     jsonData: {
       ...value.jsonData,
       [key]: event.currentTarget.value,
+    },
+  });
+};
+
+const jsonDataSwitchChangeHandler = (
+  key: keyof ElasticsearchOptions,
+  value: Props['value'],
+  onChange: Props['onChange']
+) => (event: React.SyntheticEvent<HTMLInputElement>) => {
+  onChange({
+    ...value,
+    jsonData: {
+      ...value.jsonData,
+      [key]: event.currentTarget.checked,
     },
   });
 };
@@ -207,18 +230,18 @@ const intervalHandler = (value: Props['value'], onChange: Props['onChange']) => 
   }
 };
 
-function getMaxConcurrenShardRequestOrDefault(maxConcurrentShardRequests: number | undefined, version: number): number {
-  if (maxConcurrentShardRequests === 5 && version < 70) {
+function getMaxConcurrenShardRequestOrDefault(maxConcurrentShardRequests: number | undefined, version: string): number {
+  if (maxConcurrentShardRequests === 5 && lt(version, '7.0.0')) {
     return 256;
   }
 
-  if (maxConcurrentShardRequests === 256 && version >= 70) {
+  if (maxConcurrentShardRequests === 256 && gte(version, '7.0.0')) {
     return 5;
   }
 
   return maxConcurrentShardRequests || defaultMaxConcurrentShardRequests(version);
 }
 
-export function defaultMaxConcurrentShardRequests(version: number) {
-  return version >= 70 ? 5 : 256;
+export function defaultMaxConcurrentShardRequests(version: string) {
+  return gte(version, '7.0.0') ? 5 : 256;
 }

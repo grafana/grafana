@@ -8,7 +8,7 @@ import {
   FieldMatcherID,
   fieldReducers,
   NullValueMode,
-  PanelModel,
+  PanelTypeChangedHandler,
   Threshold,
   ThresholdsMode,
 } from '@grafana/data';
@@ -25,29 +25,36 @@ import {
   StackingMode,
   TooltipDisplayMode,
 } from '@grafana/ui';
-import { Options } from './types';
-import { omitBy, isNil, isNumber, isString } from 'lodash';
+import { TimeSeriesOptions } from './types';
+import { omitBy, pickBy, isNil, isNumber, isString } from 'lodash';
 import { defaultGraphConfig } from './config';
 
 /**
  * This is called when the panel changes from another panel
  */
-export const graphPanelChangedHandler = (
-  panel: PanelModel<Partial<Options>> | any,
-  prevPluginId: string,
-  prevOptions: any
+export const graphPanelChangedHandler: PanelTypeChangedHandler = (
+  panel,
+  prevPluginId,
+  prevOptions,
+  prevFieldConfig
 ) => {
   // Changing from angular/flot panel to react/uPlot
   if (prevPluginId === 'graph' && prevOptions.angular) {
-    const { fieldConfig, options } = flotToGraphOptions(prevOptions.angular);
+    const { fieldConfig, options } = flotToGraphOptions({
+      ...prevOptions.angular,
+      fieldConfig: prevFieldConfig,
+    });
     panel.fieldConfig = fieldConfig; // Mutates the incoming panel
     return options;
   }
 
+  //fixes graph -> viz renaming in custom.hideFrom field config by mutation.
+  migrateHideFrom(panel);
+
   return {};
 };
 
-export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSource; options: Options } {
+export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSource; options: TimeSeriesOptions } {
   const overrides: ConfigOverrideRule[] = angular.fieldConfig?.overrides ?? [];
   const yaxes = angular.yaxes ?? [];
   let y1 = getFieldConfigFromOldAxis(yaxes[0]);
@@ -105,9 +112,10 @@ export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSour
       if (!seriesOverride.alias) {
         continue; // the matcher config
       }
+      const aliasIsRegex = seriesOverride.alias.startsWith('/') && seriesOverride.alias.endsWith('/');
       const rule: ConfigOverrideRule = {
         matcher: {
-          id: FieldMatcherID.byName,
+          id: aliasIsRegex ? FieldMatcherID.byRegexp : FieldMatcherID.byName,
           options: seriesOverride.alias,
         },
         properties: [],
@@ -221,6 +229,15 @@ export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSour
               value: { mode: StackingMode.Normal, group: v },
             });
             break;
+          case 'color':
+            rule.properties.push({
+              id: 'color',
+              value: {
+                fixedColor: v,
+                mode: FieldColorModeId.Fixed,
+              },
+            });
+            break;
           default:
             console.log('Ignore override migration:', seriesOverride.alias, p, v);
         }
@@ -286,13 +303,13 @@ export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSour
   y1.custom = omitBy(graph, isNil);
   y1.nullValueMode = angular.nullPointMode as NullValueMode;
 
-  const options: Options = {
+  const options: TimeSeriesOptions = {
     legend: {
       displayMode: LegendDisplayMode.List,
       placement: 'bottom',
       calcs: [],
     },
-    tooltipOptions: {
+    tooltip: {
       mode: TooltipDisplayMode.Single,
     },
   };
@@ -311,7 +328,8 @@ export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSour
     }
 
     if (angular.legend.values) {
-      options.legend.calcs = getReducersFromLegend(angular.legend);
+      const enabledLegendValues = pickBy(angular.legend);
+      options.legend.calcs = getReducersFromLegend(enabledLegendValues);
     }
   }
 
@@ -512,4 +530,25 @@ function getReducersFromLegend(obj: Record<string, any>): string[] {
     }
   }
   return ids;
+}
+
+function migrateHideFrom(panel: {
+  fieldConfig?: { defaults?: { custom?: { hideFrom?: any } }; overrides: ConfigOverrideRule[] };
+}) {
+  if (panel.fieldConfig?.defaults?.custom?.hideFrom?.graph !== undefined) {
+    panel.fieldConfig.defaults.custom.hideFrom.viz = panel.fieldConfig.defaults.custom.hideFrom.graph;
+    delete panel.fieldConfig.defaults.custom.hideFrom.graph;
+  }
+  if (panel.fieldConfig?.overrides) {
+    panel.fieldConfig.overrides = panel.fieldConfig.overrides.map((fr) => {
+      fr.properties = fr.properties.map((p) => {
+        if (p.id === 'custom.hideFrom' && p.value.graph) {
+          p.value.viz = p.value.graph;
+          delete p.value.graph;
+        }
+        return p;
+      });
+      return fr;
+    });
+  }
 }

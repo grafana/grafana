@@ -3,27 +3,23 @@ package channels
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"io"
 	"net/http"
 	"net/url"
 	"testing"
 
 	"github.com/prometheus/alertmanager/notify"
-	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 )
 
 func TestSlackNotifier(t *testing.T) {
-	tmpl, err := template.FromGlobs("templates/default.tmpl")
-	require.NoError(t, err)
+	tmpl := templateForTests(t)
 
 	externalURL, err := url.Parse("http://localhost")
 	require.NoError(t, err)
@@ -48,7 +44,7 @@ func TestSlackNotifier(t *testing.T) {
 				{
 					Alert: model.Alert{
 						Labels:      model.LabelSet{"alertname": "alert1", "lbl1": "val1"},
-						Annotations: model.LabelSet{"ann1": "annv1"},
+						Annotations: model.LabelSet{"ann1": "annv1", "__dashboardUid__": "abcd", "__panelId__": "efgh"},
 					},
 				},
 			},
@@ -59,8 +55,8 @@ func TestSlackNotifier(t *testing.T) {
 				Attachments: []attachment{
 					{
 						Title:      "[FIRING:1]  (val1)",
-						TitleLink:  "http:/localhost/alerting/list",
-						Text:       "",
+						TitleLink:  "http://localhost/alerting/list",
+						Text:       "**Firing**\n\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matchers=alertname%3Dalert1%2Clbl1%3Dval1\nDashboard: http://localhost/d/abcd\nPanel: http://localhost/d/abcd?viewPanel=efgh\n",
 						Fallback:   "[FIRING:1]  (val1)",
 						Fields:     nil,
 						Footer:     "Grafana v",
@@ -95,8 +91,8 @@ func TestSlackNotifier(t *testing.T) {
 				Attachments: []attachment{
 					{
 						Title:      "[FIRING:1]  (val1)",
-						TitleLink:  "http:/localhost/alerting/list",
-						Text:       "",
+						TitleLink:  "http://localhost/alerting/list",
+						Text:       "**Firing**\n\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matchers=alertname%3Dalert1%2Clbl1%3Dval1\n",
 						Fallback:   "[FIRING:1]  (val1)",
 						Fields:     nil,
 						Footer:     "Grafana v",
@@ -138,8 +134,8 @@ func TestSlackNotifier(t *testing.T) {
 				Attachments: []attachment{
 					{
 						Title:      "2 firing, 0 resolved",
-						TitleLink:  "http:/localhost/alerting/list",
-						Text:       "",
+						TitleLink:  "http://localhost/alerting/list",
+						Text:       "**Firing**\n\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matchers=alertname%3Dalert1%2Clbl1%3Dval1\n\nLabels:\n - alertname = alert1\n - lbl1 = val2\nAnnotations:\n - ann1 = annv2\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matchers=alertname%3Dalert1%2Clbl1%3Dval2\n",
 						Fallback:   "2 firing, 0 resolved",
 						Fields:     nil,
 						Footer:     "Grafana v",
@@ -163,13 +159,6 @@ func TestSlackNotifier(t *testing.T) {
 				"token": "1234"
 			}`,
 			expInitError: alerting.ValidationError{Reason: "recipient must be specified when using the Slack chat API"},
-		}, {
-			name: "Error in building message",
-			settings: `{
-				"url": "https://test.slack.com",
-				"title": "{{ .BrokenTemplate }"
-			}`,
-			expMsgError: errors.New("build slack message: failed to template Slack message: template: :1: unexpected \"}\" in operand"),
 		},
 	}
 
@@ -178,7 +167,7 @@ func TestSlackNotifier(t *testing.T) {
 			settingsJSON, err := simplejson.NewJson([]byte(c.settings))
 			require.NoError(t, err)
 
-			m := &models.AlertNotification{
+			m := &NotificationChannelConfig{
 				Name:     "slack_testing",
 				Type:     "slack",
 				Settings: settingsJSON,
@@ -229,7 +218,7 @@ func TestSlackNotifier(t *testing.T) {
 			expBody, err := json.Marshal(c.expMsg)
 			require.NoError(t, err)
 
-			require.Equal(t, string(expBody), body)
+			require.JSONEq(t, string(expBody), body)
 		})
 	}
 }

@@ -95,6 +95,13 @@ steps:
   - initialize
   - lint-backend
 
+- name: validate-scuemata
+  image: grafana/build-container:1.4.1
+  commands:
+  - ./bin/linux-amd64/grafana-cli cue validate-schema
+  depends_on:
+  - build-backend
+
 - name: gen-version
   image: grafana/build-container:1.4.1
   commands:
@@ -354,6 +361,13 @@ steps:
   depends_on:
   - initialize
   - lint-backend
+
+- name: validate-scuemata
+  image: grafana/build-container:1.4.1
+  commands:
+  - ./bin/linux-amd64/grafana-cli cue validate-schema
+  depends_on:
+  - build-backend
 
 - name: gen-version
   image: grafana/build-container:1.4.1
@@ -674,7 +688,7 @@ steps:
   image: plugins/slack
   settings:
     channel: grafana-ci-notifications
-    template: "Build {{build.number}} failed for commit: <https://github.com/{{repo.owner}}/{{repo.name}}/commit/{{build.commit}}|{{ truncate build.commit 8 }}>: {{build.link}}\nAuthor: {{build.author}}"
+    template: "Build {{build.number}} failed for commit: <https://github.com/{{repo.owner}}/{{repo.name}}/commit/{{build.commit}}|{{ truncate build.commit 8 }}>: {{build.link}}\nBranch: <https://github.com/{{ repo.owner }}/{{ repo.name }}/commits/{{ build.branch }}|{{ build.branch }}>\nAuthor: {{build.author}}"
     webhook:
       from_secret: slack_webhook
 
@@ -740,8 +754,8 @@ steps:
   image: grafana/build-container:1.4.1
   commands:
   - "[ $(grep FocusConvey -R pkg | wc -l) -eq \"0\" ] || exit 1"
-  - ./bin/grabpl test-backend --edition oss
-  - ./bin/grabpl integration-tests --edition oss
+  - ./bin/grabpl test-backend --edition oss --tries 5
+  - ./bin/grabpl integration-tests --edition oss --tries 5
   depends_on:
   - initialize
 
@@ -794,6 +808,13 @@ steps:
   depends_on:
   - initialize
   - lint-backend
+
+- name: validate-scuemata
+  image: grafana/build-container:1.4.1
+  commands:
+  - ./bin/linux-amd64/grafana-cli cue validate-schema
+  depends_on:
+  - build-backend
 
 - name: gen-version
   image: grafana/build-container:1.4.1
@@ -1076,6 +1097,7 @@ steps:
   - rmdir bin
   - mv grafana-enterprise /tmp/
   - /tmp/grabpl init-enterprise /tmp/grafana-enterprise ${DRONE_TAG}
+  - mv /tmp/grafana-enterprise/deployment_tools_config.json deployment_tools_config.json
   - mkdir bin
   - mv /tmp/grabpl bin/
   - ./bin/grabpl verify-drone
@@ -1108,8 +1130,8 @@ steps:
   image: grafana/build-container:1.4.1
   commands:
   - "[ $(grep FocusConvey -R pkg | wc -l) -eq \"0\" ] || exit 1"
-  - ./bin/grabpl test-backend --edition enterprise
-  - ./bin/grabpl integration-tests --edition enterprise
+  - ./bin/grabpl test-backend --edition enterprise --tries 5
+  - ./bin/grabpl integration-tests --edition enterprise --tries 5
   depends_on:
   - initialize
 
@@ -1163,12 +1185,19 @@ steps:
   - initialize
   - lint-backend
 
+- name: validate-scuemata
+  image: grafana/build-container:1.4.1
+  commands:
+  - ./bin/linux-amd64/grafana-cli cue validate-schema
+  depends_on:
+  - build-backend
+
 - name: test-backend-enterprise2
   image: grafana/build-container:1.4.1
   commands:
   - "[ $(grep FocusConvey -R pkg | wc -l) -eq \"0\" ] || exit 1"
-  - ./bin/grabpl test-backend --edition enterprise2
-  - ./bin/grabpl integration-tests --edition enterprise2
+  - ./bin/grabpl test-backend --edition enterprise2 --tries 5
+  - ./bin/grabpl integration-tests --edition enterprise2 --tries 5
   depends_on:
   - initialize
 
@@ -1447,6 +1476,9 @@ services:
 - name: memcached
   image: memcached:1.6.9-alpine
 
+image_pull_secrets:
+- dockerconfigjson
+
 trigger:
   ref:
   - refs/tags/v*
@@ -1513,6 +1545,9 @@ steps:
       from_secret: gcp_key
   depends_on:
   - initialize
+
+image_pull_secrets:
+- dockerconfigjson
 
 trigger:
   ref:
@@ -1609,7 +1644,7 @@ steps:
   image: plugins/slack
   settings:
     channel: grafana-ci-notifications
-    template: "Build {{build.number}} failed for commit: <https://github.com/{{repo.owner}}/{{repo.name}}/commit/{{build.commit}}|{{ truncate build.commit 8 }}>: {{build.link}}\nAuthor: {{build.author}}"
+    template: "Build {{build.number}} failed for commit: <https://github.com/{{repo.owner}}/{{repo.name}}/commit/{{build.commit}}|{{ truncate build.commit 8 }}>: {{build.link}}\nBranch: <https://github.com/{{ repo.owner }}/{{ repo.name }}/commits/{{ build.branch }}|{{ build.branch }}>\nAuthor: {{build.author}}"
     webhook:
       from_secret: slack_webhook
 
@@ -1675,8 +1710,8 @@ steps:
   image: grafana/build-container:1.4.1
   commands:
   - "[ $(grep FocusConvey -R pkg | wc -l) -eq \"0\" ] || exit 1"
-  - ./bin/grabpl test-backend --edition oss
-  - ./bin/grabpl integration-tests --edition oss
+  - ./bin/grabpl test-backend --edition oss --tries 5
+  - ./bin/grabpl integration-tests --edition oss --tries 5
   depends_on:
   - initialize
 
@@ -1729,6 +1764,13 @@ steps:
   depends_on:
   - initialize
   - lint-backend
+
+- name: validate-scuemata
+  image: grafana/build-container:1.4.1
+  commands:
+  - ./bin/linux-amd64/grafana-cli cue validate-schema
+  depends_on:
+  - build-backend
 
 - name: gen-version
   image: grafana/build-container:1.4.1
@@ -2000,6 +2042,7 @@ steps:
   - rmdir bin
   - mv grafana-enterprise /tmp/
   - /tmp/grabpl init-enterprise /tmp/grafana-enterprise
+  - mv /tmp/grafana-enterprise/deployment_tools_config.json deployment_tools_config.json
   - mkdir bin
   - mv /tmp/grabpl bin/
   - ./bin/grabpl verify-drone
@@ -2032,8 +2075,8 @@ steps:
   image: grafana/build-container:1.4.1
   commands:
   - "[ $(grep FocusConvey -R pkg | wc -l) -eq \"0\" ] || exit 1"
-  - ./bin/grabpl test-backend --edition enterprise
-  - ./bin/grabpl integration-tests --edition enterprise
+  - ./bin/grabpl test-backend --edition enterprise --tries 5
+  - ./bin/grabpl integration-tests --edition enterprise --tries 5
   depends_on:
   - initialize
 
@@ -2087,12 +2130,19 @@ steps:
   - initialize
   - lint-backend
 
+- name: validate-scuemata
+  image: grafana/build-container:1.4.1
+  commands:
+  - ./bin/linux-amd64/grafana-cli cue validate-schema
+  depends_on:
+  - build-backend
+
 - name: test-backend-enterprise2
   image: grafana/build-container:1.4.1
   commands:
   - "[ $(grep FocusConvey -R pkg | wc -l) -eq \"0\" ] || exit 1"
-  - ./bin/grabpl test-backend --edition enterprise2
-  - ./bin/grabpl integration-tests --edition enterprise2
+  - ./bin/grabpl test-backend --edition enterprise2 --tries 5
+  - ./bin/grabpl integration-tests --edition enterprise2 --tries 5
   depends_on:
   - initialize
 
@@ -2365,6 +2415,9 @@ services:
 - name: memcached
   image: memcached:1.6.9-alpine
 
+image_pull_secrets:
+- dockerconfigjson
+
 trigger:
   event:
   - custom
@@ -2431,6 +2484,9 @@ steps:
       from_secret: gcp_key
   depends_on:
   - initialize
+
+image_pull_secrets:
+- dockerconfigjson
 
 trigger:
   event:
@@ -2527,7 +2583,7 @@ steps:
   image: plugins/slack
   settings:
     channel: grafana-ci-notifications
-    template: "Build {{build.number}} failed for commit: <https://github.com/{{repo.owner}}/{{repo.name}}/commit/{{build.commit}}|{{ truncate build.commit 8 }}>: {{build.link}}\nAuthor: {{build.author}}"
+    template: "Build {{build.number}} failed for commit: <https://github.com/{{repo.owner}}/{{repo.name}}/commit/{{build.commit}}|{{ truncate build.commit 8 }}>: {{build.link}}\nBranch: <https://github.com/{{ repo.owner }}/{{ repo.name }}/commits/{{ build.branch }}|{{ build.branch }}>\nAuthor: {{build.author}}"
     webhook:
       from_secret: slack_webhook
 
@@ -2643,6 +2699,13 @@ steps:
   depends_on:
   - initialize
   - lint-backend
+
+- name: validate-scuemata
+  image: grafana/build-container:1.4.1
+  commands:
+  - ./bin/linux-amd64/grafana-cli cue validate-schema
+  depends_on:
+  - build-backend
 
 - name: gen-version
   image: grafana/build-container:1.4.1
@@ -2889,6 +2952,7 @@ steps:
   - rmdir bin
   - mv grafana-enterprise /tmp/
   - /tmp/grabpl init-enterprise /tmp/grafana-enterprise
+  - mv /tmp/grafana-enterprise/deployment_tools_config.json deployment_tools_config.json
   - mkdir bin
   - mv /tmp/grabpl bin/
   - ./bin/grabpl verify-drone
@@ -2971,6 +3035,13 @@ steps:
   depends_on:
   - initialize
   - lint-backend
+
+- name: validate-scuemata
+  image: grafana/build-container:1.4.1
+  commands:
+  - ./bin/linux-amd64/grafana-cli cue validate-schema
+  depends_on:
+  - build-backend
 
 - name: test-backend-enterprise2
   image: grafana/build-container:1.4.1
@@ -3257,6 +3328,9 @@ services:
 - name: memcached
   image: memcached:1.6.9-alpine
 
+image_pull_secrets:
+- dockerconfigjson
+
 trigger:
   ref:
   - refs/heads/v*
@@ -3320,6 +3394,9 @@ steps:
   depends_on:
   - initialize
 
+image_pull_secrets:
+- dockerconfigjson
+
 trigger:
   ref:
   - refs/heads/v*
@@ -3341,7 +3418,7 @@ steps:
   image: plugins/slack
   settings:
     channel: grafana-ci-notifications
-    template: "Build {{build.number}} failed for commit: <https://github.com/{{repo.owner}}/{{repo.name}}/commit/{{build.commit}}|{{ truncate build.commit 8 }}>: {{build.link}}\nAuthor: {{build.author}}"
+    template: "Build {{build.number}} failed for commit: <https://github.com/{{repo.owner}}/{{repo.name}}/commit/{{build.commit}}|{{ truncate build.commit 8 }}>: {{build.link}}\nBranch: <https://github.com/{{ repo.owner }}/{{ repo.name }}/commits/{{ build.branch }}|{{ build.branch }}>\nAuthor: {{build.author}}"
     webhook:
       from_secret: slack_webhook
 
@@ -3356,5 +3433,72 @@ depends_on:
 - oss-windows-release-branch
 - enterprise-build-release-branch
 - enterprise-windows-release-branch
+
+---
+kind: pipeline
+type: docker
+name: scan-docker-images
+
+platform:
+  os: linux
+  arch: amd64
+
+steps:
+- name: scan-docker-images-unkown-low-medium-vulnerabilities
+  image: aquasec/trivy:0.18.3
+  commands:
+  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/grafana:latest
+  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/grafana:main
+  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/grafana:latest-ubuntu
+  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/grafana:main-ubuntu
+
+- name: scan-docker-images-high-critical-vulnerabilities
+  image: aquasec/trivy:0.18.3
+  commands:
+  - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/grafana:latest
+  - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/grafana:main
+  - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/grafana:latest-ubuntu
+  - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/grafana:main-ubuntu
+
+- name: slack-notify-failure
+  image: plugins/slack
+  settings:
+    channel: grafana-backend
+    template: "Nightly docker image scan job for {{repo.name}} failed: {{build.link}}"
+    webhook:
+      from_secret: slack_webhook_backend
+  when:
+    status:
+    - failure
+
+trigger:
+  cron:
+  - nightly
+  event:
+  - cron
+
+---
+kind: secret
+name: dockerconfigjson
+
+get:
+  path: secret/data/common/gcr
+  name: .dockerconfigjson
+
+---
+kind: secret
+name: github_token
+
+get:
+  path: infra/data/ci/github/grafanabot
+  name: pat
+
+---
+kind: secret
+name: drone_token
+
+get:
+  path: infra/data/ci/drone
+  name: machine-user-token
 
 ...

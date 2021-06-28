@@ -1,24 +1,26 @@
 import React, { ChangeEvent } from 'react';
-import { Button, HorizontalGroup, Input, Label, LoadingPlaceholder, stylesFactory, withTheme } from '@grafana/ui';
+import { Button, HorizontalGroup, Input, Label, LoadingPlaceholder, withTheme2 } from '@grafana/ui';
 import LokiLanguageProvider from '../language_provider';
+import PromQlLanguageProvider from '../../prometheus/language_provider';
 import { css, cx } from '@emotion/css';
 import store from 'app/core/store';
 import { FixedSizeList } from 'react-window';
 
-import { GrafanaTheme } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { LokiLabel } from './LokiLabel';
 
 // Hard limit on labels to render
-const MAX_LABEL_COUNT = 100;
+const MAX_LABEL_COUNT = 1000;
 const MAX_VALUE_COUNT = 10000;
 const MAX_AUTO_SELECT = 4;
 const EMPTY_SELECTOR = '{}';
 export const LAST_USED_LABELS_KEY = 'grafana.datasources.loki.browser.labels';
 
 export interface BrowserProps {
-  languageProvider: LokiLanguageProvider;
+  // TODO #33976: Is it possible to use a common interface here? For example: LabelsLanguageProvider
+  languageProvider: LokiLanguageProvider | PromQlLanguageProvider;
   onChange: (selector: string) => void;
-  theme: GrafanaTheme;
+  theme: GrafanaTheme2;
   autoSelect?: number;
   hide?: () => void;
 }
@@ -88,14 +90,14 @@ export function facetLabels(
   });
 }
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   wrapper: css`
-    background-color: ${theme.colors.bg2};
-    padding: ${theme.spacing.md};
+    background-color: ${theme.colors.background.secondary};
+    padding: ${theme.spacing(2)};
     width: 100%;
   `,
   list: css`
-    margin-top: ${theme.spacing.sm};
+    margin-top: ${theme.spacing(1)};
     display: flex;
     flex-wrap: wrap;
     max-height: 200px;
@@ -103,17 +105,17 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
   `,
   section: css`
     & + & {
-      margin: ${theme.spacing.md} 0;
+      margin: ${theme.spacing(2, 0)};
     }
     position: relative;
   `,
   selector: css`
-    font-family: ${theme.typography.fontFamily.monospace};
-    margin-bottom: ${theme.spacing.sm};
+    font-family: ${theme.typography.fontFamilyMonospace};
+    margin-bottom: ${theme.spacing(1)};
   `,
   status: css`
-    padding: ${theme.spacing.xs};
-    color: ${theme.colors.textSemiWeak};
+    padding: ${theme.spacing(0.5)};
+    color: ${theme.colors.text.secondary};
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -129,37 +131,37 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
     opacity: 1;
   `,
   error: css`
-    color: ${theme.palette.brandDanger};
+    color: ${theme.colors.error.main};
   `,
   valueList: css`
-    margin-right: ${theme.spacing.sm};
+    margin-right: ${theme.spacing(1)};
   `,
   valueListWrapper: css`
-    border-left: 1px solid ${theme.colors.border2};
-    margin: ${theme.spacing.sm} 0;
-    padding: ${theme.spacing.sm} 0 ${theme.spacing.sm} ${theme.spacing.sm};
+    border-left: 1px solid ${theme.colors.border.medium};
+    margin: ${theme.spacing(1, 0)};
+    padding: ${theme.spacing(1, 0, 1, 1)};
   `,
   valueListArea: css`
     display: flex;
     flex-wrap: wrap;
-    margin-top: ${theme.spacing.sm};
+    margin-top: ${theme.spacing(1)};
   `,
   valueTitle: css`
-    margin-left: -${theme.spacing.xs};
-    margin-bottom: ${theme.spacing.sm};
+    margin-left: -${theme.spacing(0.5)};
+    margin-bottom: ${theme.spacing(1)};
   `,
   validationStatus: css`
-    padding: ${theme.spacing.xs};
-    margin-bottom: ${theme.spacing.sm};
-    color: ${theme.colors.textStrong};
+    padding: ${theme.spacing(0.5)};
+    margin-bottom: ${theme.spacing(1)};
+    color: ${theme.colors.text.maxContrast};
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   `,
-}));
+});
 
 export class UnthemedLokiLabelBrowser extends React.Component<BrowserProps, BrowserState> {
-  state = {
+  state: BrowserState = {
     labels: [] as SelectableLabel[],
     searchTerm: '',
     status: 'Ready',
@@ -267,7 +269,7 @@ export class UnthemedLokiLabelBrowser extends React.Component<BrowserProps, Brow
         this.setState({ labels }, () => {
           this.state.labels.forEach((label) => {
             if (label.selected) {
-              this.fetchValues(label.name);
+              this.fetchValues(label.name, EMPTY_SELECTOR);
             }
           });
         });
@@ -285,7 +287,7 @@ export class UnthemedLokiLabelBrowser extends React.Component<BrowserProps, Brow
     if (label.selected) {
       // Refetch values for newly selected label...
       if (!label.values) {
-        this.fetchValues(name);
+        this.fetchValues(name, buildSelector(this.state.labels));
       }
     } else {
       // Only need to facet when deselecting labels
@@ -302,7 +304,7 @@ export class UnthemedLokiLabelBrowser extends React.Component<BrowserProps, Brow
       });
       this.setState({ labels }, () => {
         // Get fresh set of values
-        this.state.labels.forEach((label) => label.selected && this.fetchValues(label.name));
+        this.state.labels.forEach((label) => label.selected && this.fetchValues(label.name, selector));
       });
     } else {
       // Do facetting
@@ -310,18 +312,23 @@ export class UnthemedLokiLabelBrowser extends React.Component<BrowserProps, Brow
     }
   };
 
-  async fetchValues(name: string) {
+  async fetchValues(name: string, selector: string) {
     const { languageProvider } = this.props;
     this.updateLabelState(name, { loading: true }, `Fetching values for ${name}`);
     try {
       let rawValues = await languageProvider.getLabelValues(name);
+      // If selector changed, clear loading state and discard result by returning early
+      if (selector !== buildSelector(this.state.labels)) {
+        this.updateLabelState(name, { loading: false }, '');
+        return;
+      }
       if (rawValues.length > MAX_VALUE_COUNT) {
         const error = `Too many values for ${name} (showing only ${MAX_VALUE_COUNT} of ${rawValues.length})`;
         rawValues = rawValues.slice(0, MAX_VALUE_COUNT);
         this.setState({ error });
       }
       const values: FacettableValue[] = rawValues.map((value) => ({ name: value }));
-      this.updateLabelState(name, { values, loading: false }, '');
+      this.updateLabelState(name, { values, loading: false });
     } catch (error) {
       console.error(error);
     }
@@ -333,7 +340,14 @@ export class UnthemedLokiLabelBrowser extends React.Component<BrowserProps, Brow
       this.updateLabelState(lastFacetted, { loading: true }, `Facetting labels for ${selector}`);
     }
     try {
-      const possibleLabels = await languageProvider.fetchSeriesLabels(selector);
+      const possibleLabels = await languageProvider.fetchSeriesLabels(selector, true);
+      // If selector changed, clear loading state and discard result by returning early
+      if (selector !== buildSelector(this.state.labels)) {
+        if (lastFacetted) {
+          this.updateLabelState(lastFacetted, { loading: false });
+        }
+        return;
+      }
       if (Object.keys(possibleLabels).length === 0) {
         // Sometimes the backend does not return a valid set
         console.error('No results for label combination, but should not occur.');
@@ -366,7 +380,6 @@ export class UnthemedLokiLabelBrowser extends React.Component<BrowserProps, Brow
     const styles = getStyles(theme);
     let selectedLabels = labels.filter((label) => label.selected && label.values);
     if (searchTerm) {
-      // TODO extract from render() and debounce
       selectedLabels = selectedLabels.map((label) => ({
         ...label,
         values: label.values?.filter((value) => value.selected || value.name.includes(searchTerm)),
@@ -484,4 +497,4 @@ export class UnthemedLokiLabelBrowser extends React.Component<BrowserProps, Brow
   }
 }
 
-export const LokiLabelBrowser = withTheme(UnthemedLokiLabelBrowser);
+export const LokiLabelBrowser = withTheme2(UnthemedLokiLabelBrowser);

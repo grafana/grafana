@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/bus"
 	_ "github.com/grafana/grafana/pkg/extensions"
+	"github.com/grafana/grafana/pkg/infra/httpclient/httpclientprovider"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
@@ -149,7 +150,7 @@ func (s *Server) init() error {
 	}
 
 	login.Init()
-	social.NewOAuthService()
+	social.NewOAuthService(s.cfg)
 
 	services := s.serviceRegistry.GetServices()
 	if err := s.buildServiceGraph(services); err != nil {
@@ -281,6 +282,7 @@ func (s *Server) buildServiceGraph(services []*registry.Descriptor) error {
 		s.cfg,
 		routing.NewRouteRegister(middleware.ProvideRouteOperationName, middleware.RequestMetrics(s.cfg)),
 		localcache.New(5*time.Minute, 10*time.Minute),
+		httpclientprovider.New(s.cfg),
 		s,
 	}
 	return registry.BuildServiceGraph(objs, services)

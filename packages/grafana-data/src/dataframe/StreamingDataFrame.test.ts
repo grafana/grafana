@@ -1,4 +1,5 @@
 import { reduceField, ReducerID } from '..';
+import { getFieldDisplayName } from '../field';
 import { DataFrame, FieldType } from '../types/dataFrame';
 import { DataFrameJSON } from './DataFrameJSON';
 import { StreamingDataFrame } from './StreamingDataFrame';
@@ -214,4 +215,323 @@ describe('Streaming JSON', () => {
     const copy = ({ ...stream } as any) as DataFrame;
     expect(copy.length).toEqual(2);
   });
+
+  describe('streaming labels column', () => {
+    const stream = new StreamingDataFrame(
+      {
+        schema: {
+          fields: [
+            { name: 'labels', type: FieldType.string },
+            { name: 'time', type: FieldType.time },
+            { name: 'speed', type: FieldType.number },
+            { name: 'light', type: FieldType.number },
+          ],
+        },
+      },
+      {
+        maxLength: 4,
+      }
+    );
+
+    stream.push({
+      data: {
+        values: [
+          ['sensor=A', 'sensor=B'],
+          [100, 100],
+          [10, 15],
+          [1, 2],
+        ],
+      },
+    });
+
+    stream.push({
+      data: {
+        values: [
+          ['sensor=B', 'sensor=C'],
+          [200, 200],
+          [20, 25],
+          [3, 4],
+        ],
+      },
+    });
+
+    stream.push({
+      data: {
+        values: [
+          ['sensor=A', 'sensor=C'],
+          [300, 400],
+          [30, 40],
+          [5, 6],
+        ],
+      },
+    });
+
+    expect(stream.fields.map((f) => ({ name: f.name, labels: f.labels, values: f.values.buffer })))
+      .toMatchInlineSnapshot(`
+      Array [
+        Object {
+          "labels": undefined,
+          "name": "time",
+          "values": Array [
+            100,
+            200,
+            300,
+            400,
+          ],
+        },
+        Object {
+          "labels": Object {
+            "sensor": "A",
+          },
+          "name": "speed",
+          "values": Array [
+            10,
+            undefined,
+            30,
+            undefined,
+          ],
+        },
+        Object {
+          "labels": Object {
+            "sensor": "A",
+          },
+          "name": "light",
+          "values": Array [
+            1,
+            undefined,
+            5,
+            undefined,
+          ],
+        },
+        Object {
+          "labels": Object {
+            "sensor": "B",
+          },
+          "name": "speed",
+          "values": Array [
+            15,
+            20,
+            undefined,
+            undefined,
+          ],
+        },
+        Object {
+          "labels": Object {
+            "sensor": "B",
+          },
+          "name": "light",
+          "values": Array [
+            2,
+            3,
+            undefined,
+            undefined,
+          ],
+        },
+        Object {
+          "labels": Object {
+            "sensor": "C",
+          },
+          "name": "speed",
+          "values": Array [
+            undefined,
+            25,
+            undefined,
+            40,
+          ],
+        },
+        Object {
+          "labels": Object {
+            "sensor": "C",
+          },
+          "name": "light",
+          "values": Array [
+            undefined,
+            4,
+            undefined,
+            6,
+          ],
+        },
+      ]
+    `);
+
+    // Push value with empty labels
+    stream.push({
+      data: {
+        values: [[''], [500], [50], [7]],
+      },
+    });
+
+    expect(stream.fields.map((f) => getFieldDisplayName(f, stream, [stream]))).toMatchInlineSnapshot(`
+      Array [
+        "time",
+        "speed A",
+        "light A",
+        "speed B",
+        "light B",
+        "speed C",
+        "light C",
+        "speed 4",
+        "light 4",
+      ]
+    `); // speed+light 4  ¯\_(ツ)_/¯ better than undefined labels
+  });
+
+  describe('keep track of packets', () => {
+    const json: DataFrameJSON = {
+      schema: {
+        fields: [
+          { name: 'time', type: FieldType.time },
+          { name: 'value', type: FieldType.number },
+        ],
+      },
+      data: {
+        values: [
+          [100, 200, 300],
+          [1, 2, 3],
+        ],
+      },
+    };
+
+    const stream = new StreamingDataFrame(json, {
+      maxLength: 4,
+      maxDelta: 300,
+    });
+
+    const getSnapshot = (f: StreamingDataFrame) => {
+      return {
+        values: f.fields[1].values.toArray(),
+        info: f.packetInfo,
+      };
+    };
+
+    expect(getSnapshot(stream)).toMatchInlineSnapshot(`
+      Object {
+        "info": Object {
+          "action": "replace",
+          "length": 3,
+          "number": 1,
+        },
+        "values": Array [
+          1,
+          2,
+          3,
+        ],
+      }
+    `);
+
+    stream.push({
+      data: {
+        values: [
+          [400, 500],
+          [4, 5],
+        ],
+      },
+    });
+    expect(getSnapshot(stream)).toMatchInlineSnapshot(`
+      Object {
+        "info": Object {
+          "action": "append",
+          "length": 2,
+          "number": 2,
+        },
+        "values": Array [
+          2,
+          3,
+          4,
+          5,
+        ],
+      }
+    `);
+
+    stream.push({
+      data: {
+        values: [[600], [6]],
+      },
+    });
+    expect(getSnapshot(stream)).toMatchInlineSnapshot(`
+      Object {
+        "info": Object {
+          "action": "append",
+          "length": 1,
+          "number": 3,
+        },
+        "values": Array [
+          3,
+          4,
+          5,
+          6,
+        ],
+      }
+    `);
+  });
+
+  /*
+  describe('transpose vertical records', () => {
+    let vrecsA = [
+      ['sensor=A', 'sensor=B'],
+      [100, 100],
+      [10, 15],
+    ];
+
+    let vrecsB = [
+      ['sensor=B', 'sensor=C'],
+      [200, 200],
+      [20, 25],
+    ];
+
+    let vrecsC = [
+      ['sensor=A', 'sensor=C'],
+      [300, 400],
+      [30, 40],
+    ];
+
+    let cTables = transpose(vrecsC);
+
+    expect(cTables).toMatchInlineSnapshot(`
+      Array [
+        Array [
+          "sensor=A",
+          "sensor=C",
+        ],
+        Array [
+          Array [
+            Array [
+              300,
+            ],
+            Array [
+              30,
+            ],
+          ],
+          Array [
+            Array [
+              400,
+            ],
+            Array [
+              40,
+            ],
+          ],
+        ],
+      ]
+    `);
+
+    let cJoined = join(cTables[1]);
+
+    expect(cJoined).toMatchInlineSnapshot(`
+      Array [
+        Array [
+          300,
+          400,
+        ],
+        Array [
+          30,
+          undefined,
+        ],
+        Array [
+          undefined,
+          40,
+        ],
+      ]
+    `);
+  });
+*/
 });

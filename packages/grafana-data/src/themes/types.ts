@@ -8,6 +8,7 @@ import { ThemeSpacing } from './createSpacing';
 import { ThemeTransitions } from './createTransitions';
 import { ThemeTypography } from './createTypography';
 import { ThemeZIndices } from './zIndex';
+import { ThemeVisualizationColors } from './createVisualizationColors';
 
 /**
  * @beta
@@ -25,6 +26,7 @@ export interface GrafanaTheme2 {
   typography: ThemeTypography;
   zIndex: ThemeZIndices;
   shadows: ThemeShadows;
+  visualization: ThemeVisualizationColors;
   transitions: ThemeTransitions;
   v1: GrafanaTheme;
 }

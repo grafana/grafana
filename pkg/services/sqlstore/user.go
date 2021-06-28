@@ -16,9 +16,9 @@ import (
 )
 
 func (ss *SQLStore) addUserQueryAndCommandHandlers() {
-	ss.Bus.AddHandler(ss.GetSignedInUserWithCache)
+	ss.Bus.AddHandlerCtx(ss.GetSignedInUserWithCacheCtx)
 
-	bus.AddHandler("sql", GetUserById)
+	bus.AddHandlerCtx("sql", GetUserById)
 	bus.AddHandler("sql", UpdateUser)
 	bus.AddHandler("sql", ChangeUserPassword)
 	bus.AddHandler("sql", GetUserByLogin)
@@ -280,19 +280,21 @@ func (ss *SQLStore) CreateUser(ctx context.Context, cmd models.CreateUserCommand
 	return user, err
 }
 
-func GetUserById(query *models.GetUserByIdQuery) error {
-	user := new(models.User)
-	has, err := x.Id(query.Id).Get(user)
+func GetUserById(ctx context.Context, query *models.GetUserByIdQuery) error {
+	return withDbSession(ctx, x, func(sess *DBSession) error {
+		user := new(models.User)
+		has, err := sess.ID(query.Id).Get(user)
 
-	if err != nil {
-		return err
-	} else if !has {
-		return models.ErrUserNotFound
-	}
+		if err != nil {
+			return err
+		} else if !has {
+			return models.ErrUserNotFound
+		}
 
-	query.Result = user
+		query.Result = user
 
-	return nil
+		return nil
+	})
 }
 
 func GetUserByLogin(query *models.GetUserByLoginQuery) error {
@@ -490,14 +492,14 @@ func newSignedInUserCacheKey(orgID, userID int64) string {
 	return fmt.Sprintf("signed-in-user-%d-%d", userID, orgID)
 }
 
-func (ss *SQLStore) GetSignedInUserWithCache(query *models.GetSignedInUserQuery) error {
+func (ss *SQLStore) GetSignedInUserWithCacheCtx(ctx context.Context, query *models.GetSignedInUserQuery) error {
 	cacheKey := newSignedInUserCacheKey(query.OrgId, query.UserId)
 	if cached, found := ss.CacheService.Get(cacheKey); found {
 		query.Result = cached.(*models.SignedInUser)
 		return nil
 	}
 
-	err := GetSignedInUser(query)
+	err := GetSignedInUser(ctx, query)
 	if err != nil {
 		return err
 	}
@@ -507,7 +509,7 @@ func (ss *SQLStore) GetSignedInUserWithCache(query *models.GetSignedInUserQuery)
 	return nil
 }
 
-func GetSignedInUser(query *models.GetSignedInUserQuery) error {
+func GetSignedInUser(ctx context.Context, query *models.GetSignedInUserQuery) error {
 	orgId := "u.org_id"
 	if query.OrgId > 0 {
 		orgId = strconv.FormatInt(query.OrgId, 10)
@@ -530,6 +532,7 @@ func GetSignedInUser(query *models.GetSignedInUserQuery) error {
 		LEFT OUTER JOIN org on org.id = org_user.org_id `
 
 	sess := x.Table("user")
+	sess = sess.Context(ctx)
 	switch {
 	case query.UserId > 0:
 		sess.SQL(rawSQL+"WHERE u.id=?", query.UserId)

@@ -12,6 +12,7 @@ import {
   LiveChannelScope,
   LoadingState,
   TimeRange,
+  ScopedVars,
 } from '@grafana/data';
 import { Scenario, TestDataQuery } from './types';
 import { DataSourceWithBackend, getBackendSrv, getGrafanaLiveSrv, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
@@ -42,6 +43,8 @@ export class TestDataDataSource extends DataSourceWithBackend<TestDataQuery> {
         continue;
       }
 
+      this.resolveTemplateVariables(target, options.scopedVars);
+
       switch (target.scenarioId) {
         case 'live':
           streams.push(runGrafanaLiveQuery(target, options));
@@ -61,7 +64,24 @@ export class TestDataDataSource extends DataSourceWithBackend<TestDataQuery> {
         case 'node_graph':
           streams.push(this.nodesQuery(target, options));
           break;
+
+        // Unusable since 7, removed in 8
+        case 'manual_entry': {
+          let csvContent = 'Time,Value\n';
+          if ((target as any).points) {
+            for (const point of (target as any).points) {
+              csvContent += `${point[1]},${point[0]}\n`;
+            }
+          }
+          target.scenarioId = 'csv_content';
+          target.csvContent = csvContent;
+        }
+
         default:
+          if (target.alias) {
+            target.alias = this.templateSrv.replace(target.alias, options.scopedVars);
+          }
+
           backendQueries.push(target);
       }
     }
@@ -79,6 +99,10 @@ export class TestDataDataSource extends DataSourceWithBackend<TestDataQuery> {
     }
 
     return merge(...streams);
+  }
+
+  resolveTemplateVariables(query: TestDataQuery, scopedVars: ScopedVars) {
+    query.labels = this.templateSrv.replace(query.labels!, scopedVars);
   }
 
   annotationDataTopicTest(target: TestDataQuery, req: DataQueryRequest<TestDataQuery>): Observable<DataQueryResponse> {

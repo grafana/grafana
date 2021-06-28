@@ -22,6 +22,12 @@ export const plugin = new PanelPlugin<PanelOptions>(LogsPanel).setPanelOptions((
       description: '',
       defaultValue: defaultPanelOptions.wrapLogMessage,
     })
+    .addBooleanSwitch({
+      path: 'enableLogDetails',
+      name: 'Enable log details',
+      description: '',
+      defaultValue: true,
+    })
     .addRadio({
       path: 'dedupStrategy',
       name: 'Deduplication',

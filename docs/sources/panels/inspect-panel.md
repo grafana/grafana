@@ -5,8 +5,6 @@ weight = 400
 
 # Inspect a panel
 
-> **Note:** This documentation refers to a feature only available in Grafana 7.0+.
-
 The panel inspector helps you understand and troubleshoot your panels. You can inspect the raw data for any Grafana panel, export that data to a comma-separated values (CSV) file, view query requests, and export panel and data JSON.
 
 ## Panel inspector UI
@@ -67,9 +65,9 @@ Grafana generates a CSV file in your default browser download location. You can 
 
 To download a CSV file specifically formatted for Excel, expand the **Data options** panel and enable the **Download for Excel** toggle before clicking **Download CSV**.
 
-### Download log results as TXT
+### Download log results
 
-Grafana generates a text file in your default browser download location. You can open the log in the viewer of your choice.
+Grafana generates a text (.txt) file in your default browser download location. You can open the log in the viewer of your choice.
 
 1. Open the panel inspector.
 1. Inspect the log query results as described above.

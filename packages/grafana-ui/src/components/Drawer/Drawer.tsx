@@ -67,6 +67,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2, scrollableContent: boolea
     titleWrapper: css`
       margin-bottom: ${theme.spacing(3)};
       padding: ${theme.spacing(0, 1, 0, 3)};
+      overflow-wrap: break-word;
     `,
     titleSpacing: css`
       margin-bottom: ${theme.spacing(2)};

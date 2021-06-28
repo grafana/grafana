@@ -3,7 +3,7 @@ import { DashboardModel } from '../state/DashboardModel';
 import { PanelModel } from '../state/PanelModel';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN } from 'app/core/constants';
 import { expect } from 'test/lib/common';
-import { DataLinkBuiltInVars } from '@grafana/data';
+import { DataLinkBuiltInVars, MappingType } from '@grafana/data';
 import { VariableHide } from '../../variables/types';
 import { config } from 'app/core/config';
 import { getPanelPlugin } from 'app/features/plugins/__mocks__/pluginMocks';
@@ -162,7 +162,7 @@ describe('DashboardModel', () => {
     });
 
     it('dashboard schema version should be set to latest', () => {
-      expect(model.schemaVersion).toBe(29);
+      expect(model.schemaVersion).toBe(30);
     });
 
     it('graph thresholds should be migrated', () => {
@@ -1066,6 +1066,320 @@ describe('DashboardModel', () => {
       expect(model.templating.list[11].refresh).toBeUndefined();
       expect(model.templating.list[12].refresh).toBeUndefined();
       expect(model.templating.list[13].refresh).toBeUndefined();
+    });
+  });
+
+  describe('when migrating old value mapping model', () => {
+    let model: DashboardModel;
+
+    beforeEach(() => {
+      model = new DashboardModel({
+        panels: [
+          {
+            id: 1,
+            type: 'timeseries',
+            fieldConfig: {
+              defaults: {
+                thresholds: {
+                  mode: 'absolute',
+                  steps: [
+                    {
+                      color: 'green',
+                      value: null,
+                    },
+                    {
+                      color: 'red',
+                      value: 80,
+                    },
+                  ],
+                },
+                mappings: [
+                  {
+                    id: 0,
+                    text: '1',
+                    type: 1,
+                    value: 'up',
+                  },
+                  {
+                    id: 1,
+                    text: 'BAD',
+                    type: 1,
+                    value: 'down',
+                  },
+                  {
+                    from: '0',
+                    id: 2,
+                    text: 'below 30',
+                    to: '30',
+                    type: 2,
+                  },
+                  {
+                    from: '30',
+                    id: 3,
+                    text: '100',
+                    to: '100',
+                    type: 2,
+                  },
+                  {
+                    type: 1,
+                    value: 'null',
+                    text: 'it is null',
+                  },
+                ],
+              },
+              overrides: [
+                {
+                  matcher: { id: 'byName', options: 'D-series' },
+                  properties: [
+                    {
+                      id: 'mappings',
+                      value: [
+                        {
+                          id: 0,
+                          text: 'OverrideText',
+                          type: 1,
+                          value: 'up',
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          },
+        ],
+      });
+    });
+
+    it('should migrate value mapping model', () => {
+      expect(model.panels[0].fieldConfig.defaults.mappings).toEqual([
+        {
+          type: MappingType.ValueToText,
+          options: {
+            down: { text: 'BAD', color: undefined },
+            up: { text: '1', color: 'green' },
+          },
+        },
+        {
+          type: MappingType.RangeToText,
+          options: {
+            from: 0,
+            to: 30,
+            result: { text: 'below 30' },
+          },
+        },
+        {
+          type: MappingType.RangeToText,
+          options: {
+            from: 30,
+            to: 100,
+            result: { text: '100', color: 'red' },
+          },
+        },
+        {
+          type: MappingType.SpecialValue,
+          options: {
+            match: 'null',
+            result: { text: 'it is null', color: undefined },
+          },
+        },
+      ]);
+
+      expect(model.panels[0].fieldConfig.overrides).toEqual([
+        {
+          matcher: { id: 'byName', options: 'D-series' },
+          properties: [
+            {
+              id: 'mappings',
+              value: [
+                {
+                  type: MappingType.ValueToText,
+                  options: {
+                    up: { text: 'OverrideText' },
+                  },
+                },
+              ],
+            },
+          ],
+        },
+      ]);
+    });
+  });
+
+  describe('when migrating tooltipOptions to tooltip', () => {
+    it('should rename options.tooltipOptions to options.tooltip', () => {
+      const model = new DashboardModel({
+        panels: [
+          {
+            type: 'timeseries',
+            legend: true,
+            options: {
+              tooltipOptions: { mode: 'multi' },
+            },
+          },
+          {
+            type: 'xychart',
+            legend: true,
+            options: {
+              tooltipOptions: { mode: 'single' },
+            },
+          },
+        ],
+      });
+      expect(model.panels[0].options).toMatchInlineSnapshot(`
+        Object {
+          "tooltip": Object {
+            "mode": "multi",
+          },
+        }
+      `);
+      expect(model.panels[1].options).toMatchInlineSnapshot(`
+        Object {
+          "tooltip": Object {
+            "mode": "single",
+          },
+        }
+      `);
+    });
+  });
+
+  describe('when migrating singlestat value mappings', () => {
+    it('should migrate value mapping', () => {
+      const model = new DashboardModel({
+        panels: [
+          {
+            type: 'singlestat',
+            legend: true,
+            thresholds: '10,20,30',
+            colors: ['#FF0000', 'green', 'orange'],
+            aliasYAxis: { test: 2 },
+            grid: { min: 1, max: 10 },
+            targets: [{ refId: 'A' }, {}],
+            mappingType: 1,
+            mappingTypes: [
+              {
+                name: 'value to text',
+                value: 1,
+              },
+            ],
+            valueMaps: [
+              {
+                op: '=',
+                text: 'test',
+                value: '20',
+              },
+              {
+                op: '=',
+                text: 'test1',
+                value: '30',
+              },
+              {
+                op: '=',
+                text: '50',
+                value: '40',
+              },
+            ],
+          },
+        ],
+      });
+      expect(model.panels[0].fieldConfig.defaults.mappings).toMatchInlineSnapshot(`
+        Array [
+          Object {
+            "options": Object {
+              "20": Object {
+                "color": undefined,
+                "text": "test",
+              },
+              "30": Object {
+                "color": undefined,
+                "text": "test1",
+              },
+              "40": Object {
+                "color": "orange",
+                "text": "50",
+              },
+            },
+            "type": "value",
+          },
+        ]
+      `);
+    });
+
+    it('should migrate range mapping', () => {
+      const model = new DashboardModel({
+        panels: [
+          {
+            type: 'singlestat',
+            legend: true,
+            thresholds: '10,20,30',
+            colors: ['#FF0000', 'green', 'orange'],
+            aliasYAxis: { test: 2 },
+            grid: { min: 1, max: 10 },
+            targets: [{ refId: 'A' }, {}],
+            mappingType: 2,
+            mappingTypes: [
+              {
+                name: 'range to text',
+                value: 2,
+              },
+            ],
+            rangeMaps: [
+              {
+                from: '20',
+                to: '25',
+                text: 'text1',
+              },
+              {
+                from: '1',
+                to: '5',
+                text: 'text2',
+              },
+              {
+                from: '5',
+                to: '10',
+                text: '50',
+              },
+            ],
+          },
+        ],
+      });
+      expect(model.panels[0].fieldConfig.defaults.mappings).toMatchInlineSnapshot(`
+        Array [
+          Object {
+            "options": Object {
+              "from": 20,
+              "result": Object {
+                "color": undefined,
+                "text": "text1",
+              },
+              "to": 25,
+            },
+            "type": "range",
+          },
+          Object {
+            "options": Object {
+              "from": 1,
+              "result": Object {
+                "color": undefined,
+                "text": "text2",
+              },
+              "to": 5,
+            },
+            "type": "range",
+          },
+          Object {
+            "options": Object {
+              "from": 5,
+              "result": Object {
+                "color": "orange",
+                "text": "50",
+              },
+              "to": 10,
+            },
+            "type": "range",
+          },
+        ]
+      `);
     });
   });
 });

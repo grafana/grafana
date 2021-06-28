@@ -1,6 +1,7 @@
 package plugins
 
 import (
+	"context"
 	"encoding/json"
 	"path/filepath"
 	"strings"
@@ -70,8 +71,8 @@ func (app *AppPlugin) Load(decoder *json.Decoder, base *PluginBase, backendPlugi
 	if app.Backend {
 		cmd := ComposePluginStartCommand(app.Executable)
 		fullpath := filepath.Join(base.PluginDir, cmd)
-		factory := grpcplugin.NewBackendPlugin(app.Id, fullpath, grpcplugin.PluginStartFuncs{})
-		if err := backendPluginManager.Register(app.Id, factory); err != nil {
+		factory := grpcplugin.NewBackendPlugin(app.Id, fullpath)
+		if err := backendPluginManager.RegisterAndStart(context.Background(), app.Id, factory); err != nil {
 			return nil, errutil.Wrapf(err, "failed to register backend plugin")
 		}
 	}

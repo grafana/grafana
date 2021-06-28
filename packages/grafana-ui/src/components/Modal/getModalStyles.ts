@@ -68,9 +68,7 @@ export const getModalStyles = stylesFactory((theme: GrafanaTheme2) => {
     `,
     modalContent: css`
       padding: ${theme.spacing(3)};
-      overflow: auto;
       width: 100%;
-      max-height: calc(90vh - ${theme.spacing(4)});
     `,
     modalButtonRow: css`
       padding-top: ${theme.spacing(3)};

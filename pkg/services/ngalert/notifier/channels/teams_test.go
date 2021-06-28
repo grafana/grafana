@@ -3,12 +3,10 @@ package channels
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"net/url"
 	"testing"
 
 	"github.com/prometheus/alertmanager/notify"
-	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
@@ -20,8 +18,7 @@ import (
 )
 
 func TestTeamsNotifier(t *testing.T) {
-	tmpl, err := template.FromGlobs("templates/default.tmpl")
-	require.NoError(t, err)
+	tmpl := templateForTests(t)
 
 	externalURL, err := url.Parse("http://localhost")
 	require.NoError(t, err)
@@ -42,20 +39,20 @@ func TestTeamsNotifier(t *testing.T) {
 				{
 					Alert: model.Alert{
 						Labels:      model.LabelSet{"alertname": "alert1", "lbl1": "val1"},
-						Annotations: model.LabelSet{"ann1": "annv1"},
+						Annotations: model.LabelSet{"ann1": "annv1", "__dashboardUid__": "abcd", "__panelId__": "efgh"},
 					},
 				},
 			},
 			expMsg: map[string]interface{}{
 				"@type":      "MessageCard",
 				"@context":   "http://schema.org/extensions",
-				"summary":    "[firing:1]  (val1)",
-				"title":      "[firing:1]  (val1)",
+				"summary":    "[FIRING:1]  (val1)",
+				"title":      "[FIRING:1]  (val1)",
 				"themeColor": "#D63232",
 				"sections": []map[string]interface{}{
 					{
 						"title": "Details",
-						"text":  "\n**Firing**\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSource: \n\n\n\n\n",
+						"text":  "**Firing**\n\nLabels:\n - alertname = alert1\n - lbl1 = val1\nAnnotations:\n - ann1 = annv1\nSilence: http://localhost/alerting/silence/new?alertmanager=grafana&matchers=alertname%3Dalert1%2Clbl1%3Dval1\nDashboard: http://localhost/d/abcd\nPanel: http://localhost/d/abcd?viewPanel=efgh\n",
 					},
 				},
 				"potentialAction": []map[string]interface{}{
@@ -63,7 +60,7 @@ func TestTeamsNotifier(t *testing.T) {
 						"@context": "http://schema.org",
 						"@type":    "OpenUri",
 						"name":     "View Rule",
-						"targets":  []map[string]interface{}{{"os": "default", "uri": "http:/localhost/alerting/list"}},
+						"targets":  []map[string]interface{}{{"os": "default", "uri": "http://localhost/alerting/list"}},
 					},
 				},
 			},
@@ -91,8 +88,8 @@ func TestTeamsNotifier(t *testing.T) {
 			expMsg: map[string]interface{}{
 				"@type":      "MessageCard",
 				"@context":   "http://schema.org/extensions",
-				"summary":    "[firing:2]  ",
-				"title":      "[firing:2]  ",
+				"summary":    "[FIRING:2]  ",
+				"title":      "[FIRING:2]  ",
 				"themeColor": "#D63232",
 				"sections": []map[string]interface{}{
 					{
@@ -105,7 +102,7 @@ func TestTeamsNotifier(t *testing.T) {
 						"@context": "http://schema.org",
 						"@type":    "OpenUri",
 						"name":     "View Rule",
-						"targets":  []map[string]interface{}{{"os": "default", "uri": "http:/localhost/alerting/list"}},
+						"targets":  []map[string]interface{}{{"os": "default", "uri": "http://localhost/alerting/list"}},
 					},
 				},
 			},
@@ -115,13 +112,6 @@ func TestTeamsNotifier(t *testing.T) {
 			name:         "Error in initing",
 			settings:     `{}`,
 			expInitError: alerting.ValidationError{Reason: "Could not find url property in settings"},
-		}, {
-			name: "Error in building message",
-			settings: `{
-				"url": "http://localhost",
-				"message": "{{ .Status }"
-			}`,
-			expMsgError: errors.New("failed to template Teams message: template: :1: unexpected \"}\" in operand"),
 		},
 	}
 
@@ -130,7 +120,7 @@ func TestTeamsNotifier(t *testing.T) {
 			settingsJSON, err := simplejson.NewJson([]byte(c.settings))
 			require.NoError(t, err)
 
-			m := &models.AlertNotification{
+			m := &NotificationChannelConfig{
 				Name:     "teams_testing",
 				Type:     "teams",
 				Settings: settingsJSON,

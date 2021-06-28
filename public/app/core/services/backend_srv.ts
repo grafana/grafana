@@ -403,10 +403,6 @@ export class BackendSrv implements BackendService {
     return this.get('/api/search', query);
   }
 
-  getDashboardBySlug(slug: string) {
-    return this.get(`/api/dashboards/db/${slug}`);
-  }
-
   getDashboardByUid(uid: string) {
     return this.get(`/api/dashboards/uid/${uid}`);
   }

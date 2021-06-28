@@ -44,6 +44,7 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
     "refresh": "25s"
   },
   "folderId": 0,
+  "folderUid": "l3KqBxCMz",
   "message": "Made changes to xyz",
   "overwrite": false
 }
@@ -55,6 +56,7 @@ JSON Body schema:
 - **dashboard.id** – id = null to create a new dashboard.
 - **dashboard.uid** – Optional unique identifier when creating a dashboard. uid = null will generate a new uid.
 - **folderId** – The id of the folder to save the dashboard in.
+- **folderUid** – The UID of the folder to save the dashboard in. Overrides the `folderId`.
 - **overwrite** – Set to true if you want to overwrite existing dashboard with newer version, same dashboard title in folder or same dashboard uid.
 - **message** - Set a commit message for the version history.
 - **refresh** - Set the dashboard refresh interval. If this is lower than [the minimum refresh interval]({{< relref "../administration/configuration.md#min_refresh_interval">}}), then Grafana will ignore it and will enforce the minimum refresh interval.
@@ -268,7 +270,7 @@ In case of title already exists the `status` property will be `name-exists`.
 
 `GET /api/dashboards/uid/:uid`
 
-Will return the dashboard given the dashboard unique identifier (uid).
+Will return the dashboard given the dashboard unique identifier (uid). Information about the unique identifier of a folder containing the requested dashboard might be found in the metadata.
 
 **Example Request**:
 
@@ -298,6 +300,8 @@ Content-Type: application/json
   "meta": {
     "isStarred": false,
     "url": "/d/cIBgcSjkk/production-overview",
+    "folderId": 2,
+    "folderUid": "l3KqBxCMz",
     "slug": "production-overview" //deprecated in Grafana v5.0
   }
 }
@@ -435,105 +439,3 @@ Content-Type: application/json
 
 ## Dashboard Search
 See [Folder/Dashboard Search API]({{< relref "folder_dashboard_search.md" >}}).
-
-## Deprecated resources
-Please note that these resource have been deprecated and will be removed in a future release.
-
-### Get dashboard by slug
-**Deprecated starting from Grafana v5.0. Please update to use the new *Get dashboard by uid* resource instead**
-
-`GET /api/dashboards/db/:slug`
-
-Will return the dashboard given the dashboard slug. Slug is the URL friendly version of the dashboard title.
-If there exists multiple dashboards with the same slug, one of them will be returned in the response.
-
-**Example Request**:
-
-```http
-GET /api/dashboards/db/production-overview HTTP/1.1
-Accept: application/json
-Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
-```
-
-**Example Response**:
-
-```http
-HTTP/1.1 200
-Content-Type: application/json
-
-{
-  "dashboard": {
-    "id": 1,
-    "uid": "cIBgcSjkk",
-    "title": "Production Overview",
-    "tags": [ "templated" ],
-    "timezone": "browser",
-    "schemaVersion": 16,
-    "version": 0
-  },
-  "meta": {
-    "isStarred": false,
-    "url": "/d/cIBgcSjkk/production-overview",
-    "slug": "production-overview" // deprecated in Grafana v5.0
-  }
-}
-```
-
-Status Codes:
-
-- **200** – Found
-- **401** – Unauthorized
-- **403** – Access denied
-- **404** – Not found
-
-### Delete dashboard by slug
-**Deprecated starting from Grafana v5.0. Please update to use the *Delete dashboard by uid* resource instead.**
-
-`DELETE /api/dashboards/db/:slug`
-
-Will delete the dashboard given the specified slug. Slug is the URL friendly version of the dashboard title.
-
-**Example Request**:
-
-```http
-DELETE /api/dashboards/db/test HTTP/1.1
-Accept: application/json
-Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
-```
-
-**Example Response**:
-
-```http
-HTTP/1.1 200
-Content-Type: application/json
-
-{
-  "title": "Production Overview",
-  "message": "Dashboard Production Overview deleted",
-  "id": 2
-}
-```
-
-Status Codes:
-
-- **200** – Deleted
-- **401** – Unauthorized
-- **403** – Access denied
-- **404** – Not found
-- **412** – Precondition failed
-
-The **412** status code is used when there exists multiple dashboards with the same slug.
-The response body will look like this:
-
-```http
-HTTP/1.1 412 Precondition Failed
-Content-Type: application/json; charset=UTF-8
-Content-Length: 97
-
-{
-  "message": "Multiple dashboards with the same slug exists",
-  "status": "multiple-slugs-exists"
-}
-```

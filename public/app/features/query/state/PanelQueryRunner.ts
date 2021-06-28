@@ -32,6 +32,7 @@ import {
 } from '@grafana/data';
 import { getDashboardQueryRunner } from './DashboardQueryRunner/DashboardQueryRunner';
 import { mergePanelAndDashData } from './mergePanelAndDashData';
+import { PanelModel } from '../../dashboard/state';
 
 export interface QueryRunnerOptions<
   TQuery extends DataQuery = DataQuery,
@@ -98,6 +99,7 @@ export class PanelQueryRunner {
 
           // If the shape is the same, we can skip field overrides
           if (
+            data.state === LoadingState.Streaming &&
             processFields &&
             processedCount > 0 &&
             lastData.length &&
@@ -114,7 +116,12 @@ export class PanelQueryRunner {
                   fields: frame.fields.map((field, fieldIndex) => ({
                     ...field,
                     values: data.series[frameIndex].fields[fieldIndex].values,
-                    state: {},
+                    state: {
+                      ...field.state,
+                      calcs: undefined,
+                      // add global range calculation here? (not optimal for streaming)
+                      range: undefined,
+                    },
                   })),
                 })),
               };
@@ -249,7 +256,9 @@ export class PanelQueryRunner {
     const dataSupport = this.dataConfigSource.getDataSupport();
 
     if (dataSupport.alertStates || dataSupport.annotations) {
-      panelData = mergePanelAndDashData(observable, getDashboardQueryRunner().getResult(panelId));
+      const panel = (this.dataConfigSource as unknown) as PanelModel;
+      const id = panel.editSourceId ?? panel.id;
+      panelData = mergePanelAndDashData(observable, getDashboardQueryRunner().getResult(id));
     }
 
     this.subscription = panelData.subscribe({

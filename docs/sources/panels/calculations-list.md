@@ -1,6 +1,6 @@
 +++
 title = "Calculations list"
-weight = 300
+weight = 460
 +++
 
 # List of calculations

@@ -1,7 +1,7 @@
 import React, { FC, useCallback, useEffect, useMemo, useState } from 'react';
 import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
-import { Alert, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
+import { Alert, LoadingPlaceholder, useStyles2, withErrorBoundary } from '@grafana/ui';
 import { useDispatch } from 'react-redux';
 import { Redirect } from 'react-router-dom';
 import { Receiver } from 'app/plugins/datasource/alertmanager/types';
@@ -39,7 +39,7 @@ const AmRoutes: FC = () => {
     (alertManagerSourceName && amConfigs[alertManagerSourceName]) || initialAsyncRequestState;
 
   const config = result?.alertmanager_config;
-  const routes = useMemo(() => amRouteToFormAmRoute(config?.route), [config?.route]);
+  const [rootRoute, id2ExistingRoute] = useMemo(() => amRouteToFormAmRoute(config?.route), [config?.route]);
 
   const receivers = stringsToSelectableValues(
     (config?.receivers ?? []).map((receiver: Receiver) => receiver.name)
@@ -54,15 +54,14 @@ const AmRoutes: FC = () => {
   };
 
   useCleanup((state) => state.unifiedAlerting.saveAMConfig);
-  const { loading: saving, error: savingError, dispatched: savingDispatched } = useUnifiedAlertingSelector(
-    (state) => state.saveAMConfig
-  );
-
   const handleSave = (data: Partial<FormAmRoute>) => {
-    const newData = formAmRouteToAmRoute({
-      ...routes,
-      ...data,
-    });
+    const newData = formAmRouteToAmRoute(
+      {
+        ...rootRoute,
+        ...data,
+      },
+      id2ExistingRoute
+    );
 
     if (isRootRouteEditMode) {
       exitRootRouteEditMode();
@@ -80,15 +79,10 @@ const AmRoutes: FC = () => {
         oldConfig: result,
         alertManagerSourceName: alertManagerSourceName!,
         successMessage: 'Saved',
+        refetch: true,
       })
     );
   };
-
-  useEffect(() => {
-    if (savingDispatched && !saving && !savingError) {
-      fetchConfig();
-    }
-  }, [fetchConfig, savingDispatched, saving, savingError]);
 
   if (!alertManagerSourceName) {
     return <Redirect to="/alerting/routes" />;
@@ -97,11 +91,6 @@ const AmRoutes: FC = () => {
   return (
     <AlertingPageWrapper pageId="am-routes">
       <AlertManagerPicker current={alertManagerSourceName} onChange={setAlertManagerSourceName} />
-      {savingError && !saving && (
-        <Alert severity="error" title="Error saving alert manager config">
-          {savingError.message || 'Unknown error.'}
-        </Alert>
-      )}
       {resultError && !resultLoading && (
         <Alert severity="error" title="Error loading alert manager config">
           {resultError.message || 'Unknown error.'}
@@ -117,14 +106,14 @@ const AmRoutes: FC = () => {
             onEnterEditMode={enterRootRouteEditMode}
             onExitEditMode={exitRootRouteEditMode}
             receivers={receivers}
-            routes={routes}
+            routes={rootRoute}
           />
           <div className={styles.break} />
           <AmSpecificRouting
             onChange={handleSave}
             onRootRouteEdit={enterRootRouteEditMode}
             receivers={receivers}
-            routes={routes}
+            routes={rootRoute}
           />
         </>
       )}
@@ -132,7 +121,7 @@ const AmRoutes: FC = () => {
   );
 };
 
-export default AmRoutes;
+export default withErrorBoundary(AmRoutes, { style: 'page' });
 
 const getStyles = (theme: GrafanaTheme2) => ({
   break: css`

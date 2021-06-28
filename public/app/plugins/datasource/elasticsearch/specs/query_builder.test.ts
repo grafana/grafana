@@ -1,14 +1,16 @@
+import { gte, lt } from 'semver';
 import { ElasticQueryBuilder } from '../query_builder';
 import { ElasticsearchQuery } from '../types';
 
 describe('ElasticQueryBuilder', () => {
-  const builder = new ElasticQueryBuilder({ timeField: '@timestamp', esVersion: 2 });
-  const builder5x = new ElasticQueryBuilder({ timeField: '@timestamp', esVersion: 5 });
-  const builder56 = new ElasticQueryBuilder({ timeField: '@timestamp', esVersion: 56 });
-  const builder6x = new ElasticQueryBuilder({ timeField: '@timestamp', esVersion: 60 });
-  const builder7x = new ElasticQueryBuilder({ timeField: '@timestamp', esVersion: 70 });
+  const builder = new ElasticQueryBuilder({ timeField: '@timestamp', esVersion: '2.0.0' });
+  const builder5x = new ElasticQueryBuilder({ timeField: '@timestamp', esVersion: '5.0.0' });
+  const builder56 = new ElasticQueryBuilder({ timeField: '@timestamp', esVersion: '5.6.0' });
+  const builder6x = new ElasticQueryBuilder({ timeField: '@timestamp', esVersion: '6.0.0' });
+  const builder7x = new ElasticQueryBuilder({ timeField: '@timestamp', esVersion: '7.0.0' });
+  const builder77 = new ElasticQueryBuilder({ timeField: '@timestamp', esVersion: '7.7.0' });
 
-  const allBuilders = [builder, builder5x, builder56, builder6x, builder7x];
+  const allBuilders = [builder, builder5x, builder56, builder6x, builder7x, builder77];
 
   allBuilders.forEach((builder) => {
     describe(`version ${builder.esVersion}`, () => {
@@ -91,7 +93,7 @@ describe('ElasticQueryBuilder', () => {
         const query = builder.build(target, 100, '1000');
         const firstLevel = query.aggs['2'];
 
-        if (builder.esVersion >= 60) {
+        if (gte(builder.esVersion, '6.0.0')) {
           expect(firstLevel.terms.order._key).toBe('asc');
         } else {
           expect(firstLevel.terms.order._term).toBe('asc');
@@ -432,6 +434,36 @@ describe('ElasticQueryBuilder', () => {
         expect(firstLevel.aggs['4']).toBe(undefined);
       });
 
+      it('with top_metrics', () => {
+        const query = builder.build({
+          refId: 'A',
+          metrics: [
+            {
+              id: '2',
+              type: 'top_metrics',
+              settings: {
+                order: 'desc',
+                orderBy: '@timestamp',
+                metrics: ['@value'],
+              },
+            },
+          ],
+          bucketAggs: [{ type: 'date_histogram', field: '@timestamp', id: '3' }],
+        });
+
+        const firstLevel = query.aggs['3'];
+
+        expect(firstLevel.aggs['2']).not.toBe(undefined);
+        expect(firstLevel.aggs['2'].top_metrics).not.toBe(undefined);
+        expect(firstLevel.aggs['2'].top_metrics.metrics).not.toBe(undefined);
+        expect(firstLevel.aggs['2'].top_metrics.size).not.toBe(undefined);
+        expect(firstLevel.aggs['2'].top_metrics.sort).not.toBe(undefined);
+        expect(firstLevel.aggs['2'].top_metrics.metrics.length).toBe(1);
+        expect(firstLevel.aggs['2'].top_metrics.metrics).toEqual([{ field: '@value' }]);
+        expect(firstLevel.aggs['2'].top_metrics.sort).toEqual([{ '@timestamp': 'desc' }]);
+        expect(firstLevel.aggs['2'].top_metrics.size).toBe(1);
+      });
+
       it('with derivative', () => {
         const query = builder.build({
           refId: 'A',
@@ -642,7 +674,7 @@ describe('ElasticQueryBuilder', () => {
         }
 
         function checkSort(order: any, expected: string) {
-          if (builder.esVersion < 60) {
+          if (lt(builder.esVersion, '6.0.0')) {
             expect(order._term).toBe(expected);
             expect(order._key).toBeUndefined();
           } else {

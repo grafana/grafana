@@ -15,9 +15,6 @@ export default {
     docs: {
       page: mdx,
     },
-    knobs: {
-      disabled: true,
-    },
     controls: {
       exclude: ['orientation'],
     },
@@ -28,8 +25,13 @@ export default {
     align: 'center',
     wrap: false,
     width: '100%',
+    containerWidth: 300,
+    containerHeight: 0,
+    showBoundaries: false,
   },
   argTypes: {
+    containerWidth: { control: { type: 'range', min: 100, max: 500, step: 10 } },
+    containerHeight: { control: { type: 'range', min: 100, max: 500, step: 10 } },
     justify: {
       control: {
         type: 'select',

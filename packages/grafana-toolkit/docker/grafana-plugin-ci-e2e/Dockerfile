@@ -1,4 +1,4 @@
-FROM debian:testing-20210111-slim
+FROM debian:buster-slim
 
 ENV DEBIAN_FRONTEND=noninteractive
 

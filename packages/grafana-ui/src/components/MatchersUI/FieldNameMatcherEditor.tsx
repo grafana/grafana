@@ -1,7 +1,8 @@
-import React, { memo, useMemo, useCallback } from 'react';
+import React, { memo, useCallback } from 'react';
 import { MatcherUIProps, FieldMatcherUIRegistryItem } from './types';
-import { FieldMatcherID, fieldMatchers, getFieldDisplayName, SelectableValue, DataFrame } from '@grafana/data';
+import { FieldMatcherID, fieldMatchers, SelectableValue } from '@grafana/data';
 import { Select } from '../Select/Select';
+import { useFieldDisplayNames, useSelectOptions, frameHasName } from './utils';
 
 export const FieldNameMatcherEditor = memo<MatcherUIProps<string>>((props) => {
   const { data, options, onChange: onChangeFromProps } = props;
@@ -10,10 +11,10 @@ export const FieldNameMatcherEditor = memo<MatcherUIProps<string>>((props) => {
 
   const onChange = useCallback(
     (selection: SelectableValue<string>) => {
-      if (!selection.value || !names.has(selection.value)) {
+      if (!frameHasName(selection.value, names)) {
         return;
       }
-      return onChangeFromProps(selection.value);
+      return onChangeFromProps(selection.value!);
     },
     [names, onChangeFromProps]
   );
@@ -30,34 +31,4 @@ export const fieldNameMatcherItem: FieldMatcherUIRegistryItem<string> = {
   name: 'Fields with name',
   description: 'Set properties for a specific field',
   optionsToLabel: (options) => options,
-};
-
-const useFieldDisplayNames = (data: DataFrame[]): Set<string> => {
-  return useMemo(() => {
-    const names: Set<string> = new Set();
-
-    for (const frame of data) {
-      for (const field of frame.fields) {
-        names.add(getFieldDisplayName(field, frame, data));
-      }
-    }
-
-    return names;
-  }, [data]);
-};
-
-const useSelectOptions = (displayNames: Set<string>, currentName: string): Array<SelectableValue<string>> => {
-  return useMemo(() => {
-    const vals = Array.from(displayNames).map((n) => ({
-      value: n,
-      label: n,
-    }));
-    if (currentName && !displayNames.has(currentName)) {
-      vals.push({
-        value: currentName,
-        label: `${currentName} (not found)`,
-      });
-    }
-    return vals;
-  }, [displayNames, currentName]);
 };

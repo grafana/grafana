@@ -10,6 +10,7 @@ export interface PanelOptions {
   showLabels: boolean;
   showTime: boolean;
   wrapLogMessage: boolean;
+  enableLogDetails: boolean;
   sortOrder: LogsSortOrder;
   dedupStrategy: LogsDedupStrategy;
 }
@@ -18,6 +19,7 @@ export const defaultPanelOptions: PanelOptions = {
   showLabels: false,
   showTime: false,
   wrapLogMessage: false,
+  enableLogDetails: true,
   sortOrder: LogsSortOrder.Descending,
   dedupStrategy: LogsDedupStrategy.none,
 };

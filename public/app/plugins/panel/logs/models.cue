@@ -12,6 +12,7 @@ Family: {
                     showLabels: bool | false
                     showTime: bool | false
                     wrapLogMessage: bool | false
+                    enableLogDetails: bool | true
                     sortOrder: ui.LogsSortOrder | *ui.LogsSortOrder.Descending
                     dedupStrategy: ui.LogsDedupStrategy | *ui.LogsDedupStrategy.none
                 }

@@ -54,10 +54,11 @@ export function ValuePicker<T>({
       {!isPicking && (isFullWidth ? <FullWidthButtonContainer>{buttonEl}</FullWidthButtonContainer> : buttonEl)}
 
       {isPicking && (
-        <span aria-label={selectors.components.ValuePicker.select(label)}>
+        <span>
           <Select
             placeholder={label}
             options={options}
+            aria-label={selectors.components.ValuePicker.select(label)}
             isOpen
             onCloseMenu={() => setIsPicking(false)}
             autoFocus={true}

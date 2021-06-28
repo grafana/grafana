@@ -13,7 +13,12 @@ import { notifyApp } from 'app/core/actions';
 export const usePanelSave = () => {
   const dispatch = useDispatch();
   const [state, saveLibraryPanel] = useAsyncFn(async (panel: PanelModel, folderId: number) => {
-    return await saveAndRefreshLibraryPanel(panel, folderId);
+    try {
+      return await saveAndRefreshLibraryPanel(panel, folderId);
+    } catch (err) {
+      err.isHandled = true;
+      throw new Error(err.data.message);
+    }
   }, []);
 
   useEffect(() => {

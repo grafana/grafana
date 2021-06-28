@@ -7,9 +7,9 @@ import {
   VizOrientation,
 } from '@grafana/data';
 import { BarChartPanel } from './BarChartPanel';
-import { BarChartFieldConfig, BarChartOptions, StackingMode, BarValueVisibility, graphFieldOptions } from '@grafana/ui';
-import { addAxisConfig, addHideFrom, addLegendOptions } from '../timeseries/config';
-import { defaultBarChartFieldConfig } from '@grafana/ui/src/components/BarChart/types';
+import { StackingMode, BarValueVisibility, graphFieldOptions, commonOptionsBuilder } from '@grafana/ui';
+
+import { BarChartFieldConfig, BarChartOptions, defaultBarChartFieldConfig } from 'app/plugins/panel/barchart/types';
 
 export const plugin = new PanelPlugin<BarChartOptions, BarChartFieldConfig>(BarChartPanel)
   .useFieldConfig({
@@ -56,8 +56,8 @@ export const plugin = new PanelPlugin<BarChartOptions, BarChartFieldConfig>(BarC
           },
         });
 
-      addAxisConfig(builder, cfg, true);
-      addHideFrom(builder);
+      commonOptionsBuilder.addAxisConfig(builder, cfg, true);
+      commonOptionsBuilder.addHideFrom(builder);
     },
   })
   .setPanelOptions((builder) => {
@@ -113,7 +113,9 @@ export const plugin = new PanelPlugin<BarChartOptions, BarChartFieldConfig>(BarC
         },
       });
 
-    addLegendOptions(builder);
+    commonOptionsBuilder.addTooltipOptions(builder);
+    commonOptionsBuilder.addLegendOptions(builder);
+    commonOptionsBuilder.addTextSizeOptions(builder, false);
   });
 
 function countNumberFields(data?: DataFrame[]): number {

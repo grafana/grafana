@@ -2,7 +2,14 @@ import { cloneDeep, upperFirst } from 'lodash';
 import AzureMonitorDatasource from './azure_monitor/azure_monitor_datasource';
 import AppInsightsDatasource from './app_insights/app_insights_datasource';
 import AzureLogAnalyticsDatasource from './azure_log_analytics/azure_log_analytics_datasource';
-import { AzureDataSourceJsonData, AzureMonitorQuery, AzureQueryType, InsightsAnalyticsQuery } from './types';
+import ResourcePickerData from './resourcePicker/resourcePickerData';
+import {
+  AzureDataSourceJsonData,
+  AzureMonitorQuery,
+  AzureQueryType,
+  DatasourceValidationResult,
+  InsightsAnalyticsQuery,
+} from './types';
 import {
   DataFrame,
   DataQueryRequest,
@@ -17,12 +24,18 @@ import { DataSourceWithBackend, getTemplateSrv, TemplateSrv } from '@grafana/run
 import InsightsAnalyticsDatasource from './insights_analytics/insights_analytics_datasource';
 import { migrateMetricsDimensionFilters } from './query_ctrl';
 import { map } from 'rxjs/operators';
+import AzureResourceGraphDatasource from './azure_resource_graph/azure_resource_graph_datasource';
+import { getAzureCloud } from './credentials';
 
 export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDataSourceJsonData> {
   azureMonitorDatasource: AzureMonitorDatasource;
-  appInsightsDatasource: AppInsightsDatasource;
   azureLogAnalyticsDatasource: AzureLogAnalyticsDatasource;
-  insightsAnalyticsDatasource: InsightsAnalyticsDatasource;
+  resourcePickerData: ResourcePickerData;
+  azureResourceGraphDatasource: AzureResourceGraphDatasource;
+  /** @deprecated */
+  appInsightsDatasource?: AppInsightsDatasource;
+  /** @deprecated */
+  insightsAnalyticsDatasource?: InsightsAnalyticsDatasource;
 
   pseudoDatasource: Record<AzureQueryType, DataSourceWithBackend>;
   optionsKey: Record<AzureQueryType, string>;
@@ -33,15 +46,23 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
   ) {
     super(instanceSettings);
     this.azureMonitorDatasource = new AzureMonitorDatasource(instanceSettings);
-    this.appInsightsDatasource = new AppInsightsDatasource(instanceSettings);
     this.azureLogAnalyticsDatasource = new AzureLogAnalyticsDatasource(instanceSettings);
-    this.insightsAnalyticsDatasource = new InsightsAnalyticsDatasource(instanceSettings);
+    this.azureResourceGraphDatasource = new AzureResourceGraphDatasource(instanceSettings);
+    this.resourcePickerData = new ResourcePickerData(instanceSettings);
 
     const pseudoDatasource: any = {};
-    pseudoDatasource[AzureQueryType.ApplicationInsights] = this.appInsightsDatasource;
     pseudoDatasource[AzureQueryType.AzureMonitor] = this.azureMonitorDatasource;
-    pseudoDatasource[AzureQueryType.InsightsAnalytics] = this.insightsAnalyticsDatasource;
     pseudoDatasource[AzureQueryType.LogAnalytics] = this.azureLogAnalyticsDatasource;
+    pseudoDatasource[AzureQueryType.AzureResourceGraph] = this.azureResourceGraphDatasource;
+
+    const cloud = getAzureCloud(instanceSettings);
+    if (cloud === 'azuremonitor' || cloud === 'chinaazuremonitor') {
+      // AppInsights and InsightAnalytics are only supported for Public and Azure China clouds
+      this.appInsightsDatasource = new AppInsightsDatasource(instanceSettings);
+      this.insightsAnalyticsDatasource = new InsightsAnalyticsDatasource(instanceSettings);
+      pseudoDatasource[AzureQueryType.ApplicationInsights] = this.appInsightsDatasource;
+      pseudoDatasource[AzureQueryType.InsightsAnalytics] = this.insightsAnalyticsDatasource;
+    }
     this.pseudoDatasource = pseudoDatasource;
 
     const optionsKey: any = {};
@@ -49,6 +70,7 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
     optionsKey[AzureQueryType.AzureMonitor] = 'azureMonitor';
     optionsKey[AzureQueryType.InsightsAnalytics] = 'insightsAnalytics';
     optionsKey[AzureQueryType.LogAnalytics] = 'azureLogAnalytics';
+    optionsKey[AzureQueryType.AzureResourceGraph] = 'azureResourceGraph';
     this.optionsKey = optionsKey;
   }
 
@@ -115,7 +137,7 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
       return Promise.resolve([]);
     }
 
-    const aiResult = this.appInsightsDatasource.metricFindQueryInternal(query);
+    const aiResult = this.appInsightsDatasource?.metricFindQueryInternal(query);
     if (aiResult) {
       return aiResult;
     }
@@ -133,31 +155,18 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
     return Promise.resolve([]);
   }
 
-  async testDatasource() {
-    const promises: any[] = [];
+  async testDatasource(): Promise<DatasourceValidationResult> {
+    const promises: Array<Promise<DatasourceValidationResult>> = [];
 
-    if (this.azureMonitorDatasource.isConfigured()) {
-      promises.push(this.azureMonitorDatasource.testDatasource());
-    }
+    promises.push(this.azureMonitorDatasource.testDatasource());
+    promises.push(this.azureLogAnalyticsDatasource.testDatasource());
 
-    if (this.appInsightsDatasource.isConfigured()) {
+    if (this.appInsightsDatasource?.isConfigured()) {
       promises.push(this.appInsightsDatasource.testDatasource());
     }
 
-    if (this.azureLogAnalyticsDatasource.isConfigured()) {
-      promises.push(this.azureLogAnalyticsDatasource.testDatasource());
-    }
-
-    if (promises.length === 0) {
-      return {
-        status: 'error',
-        message: `Nothing configured. At least one of the API's must be configured.`,
-        title: 'Error',
-      };
-    }
-
-    return Promise.all(promises).then((results) => {
-      let status = 'success';
+    return await Promise.all(promises).then((results) => {
+      let status: 'success' | 'error' = 'success';
       let message = '';
 
       for (let i = 0; i < results.length; i++) {
@@ -240,15 +249,15 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
 
   /* Application Insights API method */
   getAppInsightsMetricNames() {
-    return this.appInsightsDatasource.getMetricNames();
+    return this.appInsightsDatasource?.getMetricNames();
   }
 
   getAppInsightsMetricMetadata(metricName: string) {
-    return this.appInsightsDatasource.getMetricMetadata(metricName);
+    return this.appInsightsDatasource?.getMetricMetadata(metricName);
   }
 
   getAppInsightsColumns(refId: string | number) {
-    return this.appInsightsDatasource.logAnalyticsColumns[refId];
+    return this.appInsightsDatasource?.logAnalyticsColumns[refId];
   }
 
   /*Azure Log Analytics */

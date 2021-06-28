@@ -96,7 +96,7 @@ export const SignupInvitedPage: FC<Props> = ({ match }) => {
                 />
               </Field>
 
-              <Button type="submit">Sign Up</Button>
+              <Button type="submit">Sign up</Button>
             </>
           )}
         </Form>

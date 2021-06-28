@@ -5,9 +5,12 @@ package eval
 import (
 	"context"
 	"fmt"
+	"runtime/debug"
 	"sort"
 	"time"
 
+	"github.com/grafana/grafana/pkg/expr/classic"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 
 	"github.com/grafana/grafana/pkg/setting"
@@ -22,6 +25,7 @@ const alertingEvaluationTimeout = 30 * time.Second
 
 type Evaluator struct {
 	Cfg *setting.Cfg
+	Log log.Logger
 }
 
 // invalidEvalResultFormatError is an error for invalid format of the alert definition evaluation results.
@@ -63,6 +67,11 @@ type Result struct {
 	Error              error
 	EvaluatedAt        time.Time
 	EvaluationDuration time.Duration
+
+	// EvaluationSring is a string representation of evaluation data such
+	// as EvalMatches (from "classic condition"), and in the future from operations
+	// like SSE "math".
+	EvaluationString string
 }
 
 // State is an enum of the evaluation State for an alert instance.
@@ -99,6 +108,7 @@ func (s State) String() string {
 type AlertExecCtx struct {
 	OrgID              int64
 	ExpressionsEnabled bool
+	Log                log.Logger
 
 	Ctx context.Context
 }
@@ -141,6 +151,12 @@ func GetExprRequest(ctx AlertExecCtx, data []models.AlertQuery, now time.Time) (
 	return req, nil
 }
 
+type NumberValueCapture struct {
+	Var    string // RefID
+	Labels data.Labels
+	Value  *float64
+}
+
 func executeCondition(ctx AlertExecCtx, c *models.Condition, now time.Time, dataService *tsdb.Service) ExecutionResults {
 	result := ExecutionResults{}
 
@@ -150,17 +166,77 @@ func executeCondition(ctx AlertExecCtx, c *models.Condition, now time.Time, data
 		return ExecutionResults{Error: err}
 	}
 
+	// eval captures for the '__value_string__' annotation and the Value property of the API response.
+	captures := make([]NumberValueCapture, 0, len(execResp.Responses))
+
+	captureVal := func(refID string, labels data.Labels, value *float64) {
+		captures = append(captures, NumberValueCapture{
+			Var:    refID,
+			Value:  value,
+			Labels: labels.Copy(),
+		})
+	}
+
 	for refID, res := range execResp.Responses {
-		if refID != c.Condition {
-			continue
+		// for each frame within each response, the response can contain several data types including time-series data.
+		// For now, we favour simplicity and only care about single scalar values.
+		for _, frame := range res.Frames {
+			if len(frame.Fields) != 1 || frame.Fields[0].Type() != data.FieldTypeNullableFloat64 {
+				continue
+			}
+			var v *float64
+			if frame.Fields[0].Len() == 1 {
+				v = frame.At(0, 0).(*float64) // type checked above
+			}
+			captureVal(frame.RefID, frame.Fields[0].Labels, v)
 		}
-		result.Results = res.Frames
+
+		if refID == c.Condition {
+			result.Results = res.Frames
+		}
+	}
+
+	// add capture values as data frame metadata to each result (frame) that has matching labels.
+	for _, frame := range result.Results {
+		// classic conditions already have metadata set and only have one value, there's no need to add anything in this case.
+		if frame.Meta != nil && frame.Meta.Custom != nil {
+			if _, ok := frame.Meta.Custom.([]classic.EvalMatch); ok {
+				continue // do not overwrite EvalMatch from classic condition.
+			}
+		}
+
+		frame.SetMeta(&data.FrameMeta{}) // overwrite metadata
+
+		if len(frame.Fields) == 1 {
+			theseLabels := frame.Fields[0].Labels
+			for _, cap := range captures {
+				// matching labels are equal labels, or when one set of labels includes the labels of the other.
+				if theseLabels.Equals(cap.Labels) || theseLabels.Contains(cap.Labels) || cap.Labels.Contains(theseLabels) {
+					if frame.Meta.Custom == nil {
+						frame.Meta.Custom = []NumberValueCapture{}
+					}
+					frame.Meta.Custom = append(frame.Meta.Custom.([]NumberValueCapture), cap)
+				}
+			}
+		}
 	}
 
 	return result
 }
 
-func executeQueriesAndExpressions(ctx AlertExecCtx, data []models.AlertQuery, now time.Time, dataService *tsdb.Service) (*backend.QueryDataResponse, error) {
+func executeQueriesAndExpressions(ctx AlertExecCtx, data []models.AlertQuery, now time.Time, dataService *tsdb.Service) (resp *backend.QueryDataResponse, err error) {
+	defer func() {
+		if e := recover(); e != nil {
+			ctx.Log.Error("alert rule panic", "error", e, "stack", string(debug.Stack()))
+			panicErr := fmt.Errorf("alert rule panic; please check the logs for the full stack")
+			if err != nil {
+				err = fmt.Errorf("queries and expressions execution failed: %w; %v", err, panicErr.Error())
+			} else {
+				err = panicErr
+			}
+		}
+	}()
+
 	queryDataReq, err := GetExprRequest(ctx, data, now)
 	if err != nil {
 		return nil, err
@@ -265,6 +341,7 @@ func evaluateExecutionResult(execResults ExecutionResults, ts time.Time) Results
 			Instance:           f.Fields[0].Labels,
 			EvaluatedAt:        ts,
 			EvaluationDuration: time.Since(ts),
+			EvaluationString:   extractEvalString(f),
 		}
 
 		switch {
@@ -325,12 +402,21 @@ func (evalResults Results) AsDataFrame() data.Frame {
 		frame.Fields = append(frame.Fields, data.NewField(lKey, nil, make([]string, fieldLen)))
 	}
 	frame.Fields = append(frame.Fields, data.NewField("State", nil, make([]string, fieldLen)))
+	frame.Fields = append(frame.Fields, data.NewField("Info", nil, make([]string, fieldLen)))
 
 	for evalIdx, evalResult := range evalResults {
 		for lIdx, v := range labelColumns {
 			frame.Set(lIdx, evalIdx, evalResult.Instance[v])
 		}
+
 		frame.Set(len(labelColumns), evalIdx, evalResult.State.String())
+
+		switch {
+		case evalResult.Error != nil:
+			frame.Set(len(labelColumns)+1, evalIdx, evalResult.Error.Error())
+		case evalResult.EvaluationString != "":
+			frame.Set(len(labelColumns)+1, evalIdx, evalResult.EvaluationString)
+		}
 	}
 	return *frame
 }
@@ -340,7 +426,7 @@ func (e *Evaluator) ConditionEval(condition *models.Condition, now time.Time, da
 	alertCtx, cancelFn := context.WithTimeout(context.Background(), alertingEvaluationTimeout)
 	defer cancelFn()
 
-	alertExecCtx := AlertExecCtx{OrgID: condition.OrgID, Ctx: alertCtx, ExpressionsEnabled: e.Cfg.ExpressionsEnabled}
+	alertExecCtx := AlertExecCtx{OrgID: condition.OrgID, Ctx: alertCtx, ExpressionsEnabled: e.Cfg.ExpressionsEnabled, Log: e.Log}
 
 	execResult := executeCondition(alertExecCtx, condition, now, dataService)
 
@@ -353,7 +439,7 @@ func (e *Evaluator) QueriesAndExpressionsEval(orgID int64, data []models.AlertQu
 	alertCtx, cancelFn := context.WithTimeout(context.Background(), alertingEvaluationTimeout)
 	defer cancelFn()
 
-	alertExecCtx := AlertExecCtx{OrgID: orgID, Ctx: alertCtx, ExpressionsEnabled: e.Cfg.ExpressionsEnabled}
+	alertExecCtx := AlertExecCtx{OrgID: orgID, Ctx: alertCtx, ExpressionsEnabled: e.Cfg.ExpressionsEnabled, Log: e.Log}
 
 	execResult, err := executeQueriesAndExpressions(alertExecCtx, data, now, dataService)
 	if err != nil {

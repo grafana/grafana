@@ -7,8 +7,14 @@ import { locationService, setDataSourceSrv } from '@grafana/runtime';
 import { act, render } from '@testing-library/react';
 import { getAllDataSources } from './utils/config';
 import { typeAsJestMock } from 'test/helpers/typeAsJestMock';
-import { updateAlertManagerConfig, fetchAlertManagerConfig } from './api/alertmanager';
-import { mockDataSource, MockDataSourceSrv, someCloudAlertManagerConfig, someGrafanaAlertManagerConfig } from './mocks';
+import { updateAlertManagerConfig, fetchAlertManagerConfig, fetchStatus } from './api/alertmanager';
+import {
+  mockDataSource,
+  MockDataSourceSrv,
+  someCloudAlertManagerConfig,
+  someCloudAlertManagerStatus,
+  someGrafanaAlertManagerConfig,
+} from './mocks';
 import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
 import { fetchNotifiers } from './api/grafana';
 import { grafanaNotifiersMock } from './mocks/grafana-notifiers';
@@ -16,6 +22,7 @@ import { byLabelText, byRole, byTestId, byText } from 'testing-library-selector'
 import userEvent from '@testing-library/user-event';
 import { ALERTMANAGER_NAME_LOCAL_STORAGE_KEY, ALERTMANAGER_NAME_QUERY_KEY } from './utils/constants';
 import store from 'app/core/store';
+import { contextSrv } from 'app/core/services/context_srv';
 
 jest.mock('./api/alertmanager');
 jest.mock('./api/grafana');
@@ -26,6 +33,7 @@ const mocks = {
 
   api: {
     fetchConfig: typeAsJestMock(fetchAlertManagerConfig),
+    fetchStatus: typeAsJestMock(fetchStatus),
     updateConfig: typeAsJestMock(updateAlertManagerConfig),
     fetchNotifiers: typeAsJestMock(fetchNotifiers),
   },
@@ -95,6 +103,7 @@ describe('Receivers', () => {
     mocks.getAllDataSources.mockReturnValue(Object.values(dataSources));
     mocks.api.fetchNotifiers.mockResolvedValue(grafanaNotifiersMock);
     setDataSourceSrv(new MockDataSourceSrv(dataSources));
+    contextSrv.isEditor = true;
     store.delete(ALERTMANAGER_NAME_LOCAL_STORAGE_KEY);
   });
 
@@ -191,10 +200,8 @@ describe('Receivers', () => {
                 disableResolveMessage: false,
                 name: 'my new receiver',
                 secureSettings: {},
-                sendReminder: true,
                 settings: {
                   apiKey: 'foobarbaz',
-                  roomid: '',
                   url: 'http://hipchat',
                 },
                 type: 'hipchat',
@@ -302,4 +309,25 @@ describe('Receivers', () => {
       },
     });
   }, 10000);
+
+  it('Loads config from status endpoint if there is no user config', async () => {
+    // loading an empty config with make it fetch config from status endpoint
+    mocks.api.fetchConfig.mockResolvedValue({
+      template_files: {},
+      alertmanager_config: {},
+    });
+    mocks.api.fetchStatus.mockResolvedValue(someCloudAlertManagerStatus);
+    await renderReceivers('CloudManager');
+
+    // check that receiver from the default config is represented
+    const receiversTable = await ui.receiversTable.find();
+    const receiverRows = receiversTable.querySelectorAll<HTMLTableRowElement>('tbody tr');
+    expect(receiverRows[0]).toHaveTextContent('default-email');
+
+    // check that both config and status endpoints were called
+    expect(mocks.api.fetchConfig).toHaveBeenCalledTimes(1);
+    expect(mocks.api.fetchConfig).toHaveBeenLastCalledWith('CloudManager');
+    expect(mocks.api.fetchStatus).toHaveBeenCalledTimes(1);
+    expect(mocks.api.fetchStatus).toHaveBeenLastCalledWith('CloudManager');
+  });
 });

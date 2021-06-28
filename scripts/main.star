@@ -29,11 +29,12 @@ load(
     'publish_storybook_step',
     'release_canary_npm_packages_step',
     'upload_packages_step',
-    'deploy_to_kubernetes_step',
+    'push_to_deployment_tools_step',
     'publish_packages_step',
     'notify_pipeline',
     'integration_test_services',
-    'upload_cdn'
+    'upload_cdn',
+    'validate_scuemata'
 )
 
 ver_mode = 'main'
@@ -52,6 +53,7 @@ def get_steps(edition, is_downstream=False):
         build_backend_step(edition=edition, ver_mode=ver_mode, is_downstream=is_downstream),
         build_frontend_step(edition=edition, ver_mode=ver_mode, is_downstream=is_downstream),
         build_plugins_step(edition=edition, sign=True),
+        validate_scuemata(),
     ]
 
     # Have to insert Enterprise2 steps before they're depended on (in the gen-version step)
@@ -85,7 +87,7 @@ def get_steps(edition, is_downstream=False):
     steps.extend([
         release_canary_npm_packages_step(edition),
         upload_packages_step(edition=edition, ver_mode=ver_mode, is_downstream=is_downstream),
-        deploy_to_kubernetes_step(edition=edition, is_downstream=is_downstream),
+        push_to_deployment_tools_step(edition=edition, is_downstream=is_downstream),
         upload_cdn(edition=edition)
     ])
 

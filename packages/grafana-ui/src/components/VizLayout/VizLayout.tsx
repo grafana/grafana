@@ -9,7 +9,7 @@ import { LegendPlacement } from '..';
 export interface VizLayoutProps {
   width: number;
   height: number;
-  legend?: React.ReactElement<VizLayoutLegendProps>;
+  legend?: React.ReactElement<VizLayoutLegendProps> | null;
   children: (width: number, height: number) => React.ReactNode;
 }
 
@@ -35,7 +35,7 @@ export const VizLayout: VizLayoutComponentType = ({ width, height, legend, child
     return <div style={containerStyle}>{children(width, height)}</div>;
   }
 
-  const { placement, maxHeight, maxWidth } = legend.props;
+  const { placement, maxHeight = '35%', maxWidth = '60%' } = legend.props;
 
   let size: VizSize | null = null;
 

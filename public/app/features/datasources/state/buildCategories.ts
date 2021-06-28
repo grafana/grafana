@@ -156,6 +156,18 @@ function getEnterprisePhantomPlugins(): DataSourcePluginMeta[] {
       name: 'AppDynamics',
       imgUrl: 'public/img/plugins/appdynamics.svg',
     }),
+    getPhantomPlugin({
+      id: 'grafana-saphana-datasource',
+      description: 'SAP HANA® integration and data source',
+      name: 'SAP HANA®',
+      imgUrl: 'public/img/plugins/sap_hana.png',
+    }),
+    getPhantomPlugin({
+      id: 'grafana-honeycomb-datasource',
+      description: 'Honeycomb integration ad datasource',
+      name: 'Honeycomb',
+      imgUrl: 'public/img/plugins/honeycomb.png',
+    }),
   ];
 }
 
@@ -203,7 +215,7 @@ function getPhantomPlugin(options: GetPhantomPluginOptions): DataSourcePluginMet
       author: { name: 'Grafana Labs' },
       links: [
         {
-          url: config.marketplaceUrl + options.id,
+          url: config.pluginCatalogURL + options.id,
           name: 'Install now',
         },
       ],
