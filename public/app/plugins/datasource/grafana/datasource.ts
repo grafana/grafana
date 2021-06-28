@@ -31,12 +31,7 @@ export class GrafanaDatasource extends DataSourceApi<GrafanaQuery> {
       }
       if (target.queryType === GrafanaQueryType.LiveMeasurements) {
         let channel = templateSrv.replace(target.channel, request.scopedVars);
-        let { filter } = target;
-        if (filter?.fields) {
-          filter = {
-            fields: filter.fields.map((f) => templateSrv.replace(f, request.scopedVars)),
-          };
-        }
+        const { filter } = target;
 
         // Help migrate pre-release channel paths saved in dashboards
         // NOTE: this should be removed before V8 is released
