@@ -1,6 +1,6 @@
 +++
 title = "Thresholds"
-weight = 600
+weight = 440
 +++
 
 # Thresholds
