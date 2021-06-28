@@ -4,12 +4,11 @@ import (
 	"context"
 	"crypto/sha256"
 	"fmt"
-	"strings"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
-	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/azcredentials"
 )
 
 var (
@@ -21,32 +20,39 @@ type AzureTokenProvider interface {
 }
 
 type tokenProviderImpl struct {
-	cfg        *setting.Cfg
-	authParams *plugins.JwtTokenAuth
+	cfg         *setting.Cfg
+	credentials azcredentials.AzureCredentials
+	scopes      []string
 }
 
-func NewAzureAccessTokenProvider(cfg *setting.Cfg, authParams *plugins.JwtTokenAuth) *tokenProviderImpl {
+func NewAzureAccessTokenProvider(cfg *setting.Cfg, credentials azcredentials.AzureCredentials, scopes []string) *tokenProviderImpl {
 	return &tokenProviderImpl{
-		cfg:        cfg,
-		authParams: authParams,
+		cfg:         cfg,
+		credentials: credentials,
+		scopes:      scopes,
 	}
 }
 
 func (provider *tokenProviderImpl) GetAccessToken(ctx context.Context) (string, error) {
 	var credential TokenCredential
 
-	if provider.isManagedIdentityCredential() {
+	// TODO: Move to provider initialization and reuse for each GetAccessToken call
+	switch c := provider.credentials.(type) {
+	case *azcredentials.AzureManagedIdentityCredentials:
 		if !provider.cfg.Azure.ManagedIdentityEnabled {
 			err := fmt.Errorf("managed identity authentication is not enabled in Grafana config")
 			return "", err
 		} else {
-			credential = provider.getManagedIdentityCredential()
+			credential = provider.getManagedIdentityCredential(c)
 		}
-	} else {
-		credential = provider.getClientSecretCredential()
+	case *azcredentials.AzureClientSecretCredentials:
+		credential = provider.getClientSecretCredential(c)
+	default:
+		err := fmt.Errorf("credentials of type '%s' not supported by authentication provider", c.AzureAuthType())
+		return "", err
 	}
 
-	accessToken, err := azureTokenCache.GetAccessToken(ctx, credential, provider.authParams.Scopes)
+	accessToken, err := azureTokenCache.GetAccessToken(ctx, credential, provider.scopes)
 	if err != nil {
 		return "", err
 	}
@@ -54,35 +60,34 @@ func (provider *tokenProviderImpl) GetAccessToken(ctx context.Context) (string, 
 	return accessToken, nil
 }
 
-func (provider *tokenProviderImpl) isManagedIdentityCredential() bool {
-	authType := strings.ToLower(provider.authParams.Params["azure_auth_type"])
-	clientId := provider.authParams.Params["client_id"]
-
-	// Type of authentication being determined by the following logic:
-	// * If authType is set to 'msi' then user explicitly selected the managed identity authentication
-	// * If authType isn't set but other fields are configured then it's a datasource which was configured
-	//   before managed identities where introduced, therefore use client secret authentication
-	// * If authType and other fields aren't set then it means the datasource never been configured
-	//   and managed identity is the default authentication choice as long as managed identities are enabled
-	return authType == "msi" || (authType == "" && clientId == "" && provider.cfg.Azure.ManagedIdentityEnabled)
+func (provider *tokenProviderImpl) getManagedIdentityCredential(credentials *azcredentials.AzureManagedIdentityCredentials) TokenCredential {
+	var clientId string
+	if credentials.ClientId != "" {
+		clientId = credentials.ClientId
+	} else {
+		clientId = provider.cfg.Azure.ManagedIdentityClientId
+	}
+	return &managedIdentityCredential{
+		clientId: clientId,
+	}
 }
 
-func (provider *tokenProviderImpl) getManagedIdentityCredential() TokenCredential {
-	clientId := provider.cfg.Azure.ManagedIdentityClientId
-
-	return &managedIdentityCredential{clientId: clientId}
+func (provider *tokenProviderImpl) getClientSecretCredential(credentials *azcredentials.AzureClientSecretCredentials) TokenCredential {
+	var authority string
+	if credentials.Authority != "" {
+		authority = credentials.Authority
+	} else {
+		authority = provider.resolveAuthorityForCloud(credentials.AzureCloud)
+	}
+	return &clientSecretCredential{
+		authority:    authority,
+		tenantId:     credentials.TenantId,
+		clientId:     credentials.ClientId,
+		clientSecret: credentials.ClientSecret,
+	}
 }
 
-func (provider *tokenProviderImpl) getClientSecretCredential() TokenCredential {
-	authority := provider.resolveAuthorityHost(provider.authParams.Params["azure_cloud"])
-	tenantId := provider.authParams.Params["tenant_id"]
-	clientId := provider.authParams.Params["client_id"]
-	clientSecret := provider.authParams.Params["client_secret"]
-
-	return &clientSecretCredential{authority: authority, tenantId: tenantId, clientId: clientId, clientSecret: clientSecret}
-}
-
-func (provider *tokenProviderImpl) resolveAuthorityHost(cloudName string) string {
+func (provider *tokenProviderImpl) resolveAuthorityForCloud(cloudName string) string {
 	// Known Azure clouds
 	switch cloudName {
 	case setting.AzurePublic:
@@ -93,9 +98,9 @@ func (provider *tokenProviderImpl) resolveAuthorityHost(cloudName string) string
 		return azidentity.AzureGovernment
 	case setting.AzureGermany:
 		return azidentity.AzureGermany
+	default:
+		return ""
 	}
-	// Fallback to direct URL
-	return provider.authParams.Url
 }
 
 type managedIdentityCredential struct {
