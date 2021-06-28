@@ -102,8 +102,8 @@ func (s *Service) Init() error {
 	return nil
 }
 
-func (e *Service) getDSInfo(pluginCtx backend.PluginContext) (*datasourceInfo, error) {
-	i, err := e.im.Get(pluginCtx)
+func (s *Service) getDSInfo(pluginCtx backend.PluginContext) (*datasourceInfo, error) {
+	i, err := s.im.Get(pluginCtx)
 	if err != nil {
 		return nil, err
 	}
@@ -111,9 +111,9 @@ func (e *Service) getDSInfo(pluginCtx backend.PluginContext) (*datasourceInfo, e
 	return &instance, nil
 }
 
-func (e *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	// get datasource info from context
-	dsInfo, err := e.getDSInfo(req.PluginContext)
+	dsInfo, err := s.getDSInfo(req.PluginContext)
 	if err != nil {
 		return nil, err
 	}
@@ -141,7 +141,7 @@ func (e *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		if err != nil {
 			return nil, err
 		}
-		e.logger.Debug("graphite", "query", model)
+		s.logger.Debug("graphite", "query", model)
 		currTarget := ""
 		if fullTarget, err := model.Get("targetFull").String(); err == nil {
 			currTarget = fullTarget
@@ -149,7 +149,7 @@ func (e *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 			currTarget = model.Get("target").MustString()
 		}
 		if currTarget == "" {
-			e.logger.Debug("graphite", "empty query target", model)
+			s.logger.Debug("graphite", "empty query target", model)
 			emptyQueries = append(emptyQueries, fmt.Sprintf("Query: %v has no target", model))
 			continue
 		}
@@ -159,17 +159,17 @@ func (e *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	var result = backend.QueryDataResponse{}
 
 	if target == "" {
-		e.logger.Error("No targets in query model", "models without targets", strings.Join(emptyQueries, "\n"))
+		s.logger.Error("No targets in query model", "models without targets", strings.Join(emptyQueries, "\n"))
 		return &result, errors.New("no query target found for the alert rule")
 	}
 
 	formData["target"] = []string{target}
 
 	if setting.Env == setting.Dev {
-		e.logger.Debug("Graphite request", "params", formData)
+		s.logger.Debug("Graphite request", "params", formData)
 	}
 
-	graphiteReq, err := e.createRequest(dsInfo, formData)
+	graphiteReq, err := s.createRequest(dsInfo, formData)
 	if err != nil {
 		return &result, err
 	}
@@ -195,7 +195,7 @@ func (e *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		return &result, err
 	}
 
-	frames, err := e.toDataFrames(res)
+	frames, err := s.toDataFrames(res)
 	if err != nil {
 		return &result, err
 	}
@@ -211,34 +211,34 @@ func (e *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	return &result, nil
 }
 
-func (e *Service) parseResponse(res *http.Response) ([]TargetResponseDTO, error) {
+func (s *Service) parseResponse(res *http.Response) ([]TargetResponseDTO, error) {
 	body, err := ioutil.ReadAll(res.Body)
 	if err != nil {
 		return nil, err
 	}
 	defer func() {
 		if err := res.Body.Close(); err != nil {
-			e.logger.Warn("Failed to close response body", "err", err)
+			s.logger.Warn("Failed to close response body", "err", err)
 		}
 	}()
 
 	if res.StatusCode/100 != 2 {
-		e.logger.Info("Request failed", "status", res.Status, "body", string(body))
+		s.logger.Info("Request failed", "status", res.Status, "body", string(body))
 		return nil, fmt.Errorf("request failed, status: %s", res.Status)
 	}
 
 	var data []TargetResponseDTO
 	err = json.Unmarshal(body, &data)
 	if err != nil {
-		e.logger.Info("Failed to unmarshal graphite response", "error", err, "status", res.Status, "body", string(body))
+		s.logger.Info("Failed to unmarshal graphite response", "error", err, "status", res.Status, "body", string(body))
 		return nil, err
 	}
 
 	return data, nil
 }
 
-func (e *Service) toDataFrames(response *http.Response) (frames data.Frames, error error) {
-	responseData, err := e.parseResponse(response)
+func (s *Service) toDataFrames(response *http.Response) (frames data.Frames, error error) {
+	responseData, err := s.parseResponse(response)
 	if err != nil {
 		return nil, err
 	}
@@ -263,13 +263,13 @@ func (e *Service) toDataFrames(response *http.Response) (frames data.Frames, err
 			data.NewField("value", series.Tags, values).SetConfig(&data.FieldConfig{DisplayNameFromDS: name})))
 
 		if setting.Env == setting.Dev {
-			e.logger.Debug("Graphite response", "target", series.Target, "datapoints", len(series.DataPoints))
+			s.logger.Debug("Graphite response", "target", series.Target, "datapoints", len(series.DataPoints))
 		}
 	}
 	return
 }
 
-func (e *Service) createRequest(dsInfo *datasourceInfo, data url.Values) (*http.Request, error) {
+func (s *Service) createRequest(dsInfo *datasourceInfo, data url.Values) (*http.Request, error) {
 	u, err := url.Parse(dsInfo.URL)
 	if err != nil {
 		return nil, err
@@ -278,7 +278,7 @@ func (e *Service) createRequest(dsInfo *datasourceInfo, data url.Values) (*http.
 
 	req, err := http.NewRequest(http.MethodPost, u.String(), strings.NewReader(data.Encode()))
 	if err != nil {
-		e.logger.Info("Failed to create request", "error", err)
+		s.logger.Info("Failed to create request", "error", err)
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
 
