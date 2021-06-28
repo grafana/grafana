@@ -4,7 +4,7 @@ import React, { PureComponent } from 'react';
 // Types
 import { InlineFormLabel, LegacyForms, Select } from '@grafana/ui';
 import { SelectableValue } from '@grafana/data';
-import { PromQuery } from '../types';
+import { PromQuery, StepType } from '../types';
 
 import PromQueryField from './PromQueryField';
 import PromLink from './PromLink';
@@ -24,20 +24,27 @@ const INTERVAL_FACTOR_OPTIONS: Array<SelectableValue<number>> = map([1, 2, 3, 4,
   label: '1/' + value,
 }));
 
-const STEP_OPTIONS: Array<SelectableValue<number>> = map([0, 1, 2], (value: number) => {
-  const labels = ['min', 'exact', 'max'];
-  return {
-    value,
-    label: labels[value],
-  };
-});
+const STEP_OPTIONS: Array<SelectableValue<StepType>> = [
+  {
+    value: 'min',
+    label: 'min',
+  },
+  {
+    value: 'max',
+    label: 'max',
+  },
+  {
+    value: 'exact',
+    label: 'exact',
+  },
+];
 
 interface State {
   legendFormat?: string;
   formatOption: SelectableValue<string>;
   interval?: string;
   intervalFactorOption: SelectableValue<number>;
-  stepOption: SelectableValue<number>;
+  stepOption: SelectableValue<StepType>;
   instant: boolean;
   exemplar: boolean;
 }
@@ -95,7 +102,7 @@ export class PromQueryEditor extends PureComponent<PromQueryEditorProps, State> 
     this.setState({ intervalFactorOption: option }, this.onRunQuery);
   };
 
-  onStepChange = (option: SelectableValue<number>) => {
+  onStepChange = (option: SelectableValue<StepType>) => {
     this.query.stepOption = option.value;
     this.setState({ stepOption: option }, this.onRunQuery);
   };

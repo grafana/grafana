@@ -38,6 +38,7 @@ import {
   PromQueryRequest,
   PromScalarData,
   PromVectorData,
+  StepType,
 } from './types';
 import { PrometheusVariableSupport } from './variables';
 import PrometheusMetricFindQuery from './metric_find_query';
@@ -411,7 +412,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     };
     const range = Math.ceil(end - start);
     // target.stepOption specifies whether to use min, max or exact step
-    const stepOption = target.stepOption || 0;
+    const stepOption = target.stepOption || 'min';
     // options.interval is the dynamically calculated interval
     let interval: number = rangeUtil.intervalToSeconds(options.interval);
     // Minimum interval ("Min step"), if specified for the query, or same as interval otherwise.
@@ -484,7 +485,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     stepInterval: number,
     range: number,
     intervalFactor: number,
-    stepOption: number
+    stepOption: StepType
   ) {
     // Prometheus will drop queries that might return more than 11000 data points.
     // Calculate a safe interval as an additional minimum to take into account.
@@ -496,10 +497,10 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     }
 
     let adjustedInterval = Math.max(dynamicInterval * intervalFactor, stepInterval, safeInterval);
-    if (stepOption === 0) {
+    if (stepOption === 'min') {
       // min step
       adjustedInterval = Math.max(dynamicInterval * intervalFactor, stepInterval, safeInterval);
-    } else if (stepOption === 2) {
+    } else if (stepOption === 'max') {
       // max step
       adjustedInterval = Math.min(dynamicInterval * intervalFactor, stepInterval);
     }
