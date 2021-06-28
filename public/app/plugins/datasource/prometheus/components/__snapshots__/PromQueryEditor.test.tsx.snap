@@ -43,10 +43,36 @@ exports[`Render PromQueryEditor with basic options should render 1`] = `
                variables. The limit is absolute and not modified by the "Resolution" setting.
             </React.Fragment>
           }
-          width={7}
+          width={5}
         >
-          Min step
+          Step
         </FormLabel>
+        <Select
+          isSearchable={false}
+          onChange={[Function]}
+          options={
+            Array [
+              Object {
+                "label": "min",
+                "value": "min",
+              },
+              Object {
+                "label": "max",
+                "value": "max",
+              },
+              Object {
+                "label": "exact",
+                "value": "exact",
+              },
+            ]
+          }
+          value={
+            Object {
+              "label": "min",
+              "value": "min",
+            }
+          }
+        />
         <input
           className="gf-form-input width-8"
           onBlur={[Function]}
