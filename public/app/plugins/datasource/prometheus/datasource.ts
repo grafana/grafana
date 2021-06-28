@@ -498,10 +498,8 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
 
     let adjustedInterval = Math.max(dynamicInterval * intervalFactor, stepInterval, safeInterval);
     if (stepOption === 'min') {
-      // min step
       adjustedInterval = Math.max(dynamicInterval * intervalFactor, stepInterval, safeInterval);
     } else if (stepOption === 'max') {
-      // max step
       adjustedInterval = Math.min(dynamicInterval * intervalFactor, stepInterval);
     }
     return adjustedInterval;

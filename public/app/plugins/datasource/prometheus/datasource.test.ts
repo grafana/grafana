@@ -1668,6 +1668,34 @@ describe('PrometheusDatasource', () => {
       templateSrvStub.replace = jest.fn((a: string) => a);
     });
   });
+
+  describe('adjustInterval', () => {
+    const dynamicInterval = 15;
+    const stepInterval = 35;
+    const range = 1642;
+    describe('when max step option is used', () => {
+      it('should return the minimum interval', () => {
+        let intervalFactor = 1;
+        let interval = ds.adjustInterval(dynamicInterval, stepInterval, range, intervalFactor, 'max');
+        expect(interval).toBe(dynamicInterval * intervalFactor);
+
+        intervalFactor = 3;
+        interval = ds.adjustInterval(dynamicInterval, stepInterval, range, intervalFactor, 'max');
+        expect(interval).toBe(stepInterval);
+      });
+    });
+    describe('when min step option is used', () => {
+      it('should return the maximum interval', () => {
+        let intervalFactor = 1;
+        let interval = ds.adjustInterval(dynamicInterval, stepInterval, range, intervalFactor, 'min');
+        expect(interval).toBe(stepInterval);
+
+        intervalFactor = 3;
+        interval = ds.adjustInterval(dynamicInterval, stepInterval, range, intervalFactor, 'min');
+        expect(interval).toBe(dynamicInterval * intervalFactor);
+      });
+    });
+  });
 });
 
 describe('PrometheusDatasource for POST', () => {
