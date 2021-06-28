@@ -104,6 +104,7 @@ The current team members are:
 - Torkel Ödegaard ([Grafana Labs](https://grafana.com/))
 - Utkarsh Bhatnagar ([Tinder](https://www.tinder.com/))
 - Will Browne ([Grafana Labs](https://grafana.com/))
+- Zoltán Bedi ([Grafana Labs](https://grafana.com/))
 
 ### Maintainers
 
