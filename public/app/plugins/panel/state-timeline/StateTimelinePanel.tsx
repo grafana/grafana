@@ -5,7 +5,7 @@ import { TimelineMode, TimelineOptions } from './types';
 import { TimelineChart } from './TimelineChart';
 import { prepareTimelineFields, prepareTimelineLegendItems } from './utils';
 import { StateTimelineTooltip } from './StateTimelineTooltip';
-import { getStreamingDataFramePacket } from '@grafana/data/src/dataframe/StreamingDataFrame';
+import { getLastStreamingDataFramePacket } from '@grafana/data/src/dataframe/StreamingDataFrame';
 
 interface TimelinePanelProps extends PanelProps<TimelineOptions> {}
 
@@ -63,7 +63,7 @@ export const StateTimelinePanel: React.FC<TimelinePanelProps> = ({
   }
 
   if (frames.length === 1) {
-    const packet = getStreamingDataFramePacket(frames[0]);
+    const packet = getLastStreamingDataFramePacket(frames[0]);
     if (packet) {
       // console.log('STREAM Packet', packet);
     }
