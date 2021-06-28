@@ -1,4 +1,5 @@
 import { reduceField, ReducerID } from '..';
+import { getFieldDisplayName } from '../field';
 import { DataFrame, FieldType } from '../types/dataFrame';
 import { DataFrameJSON } from './DataFrameJSON';
 import { StreamingDataFrame } from './StreamingDataFrame';
@@ -352,6 +353,27 @@ describe('Streaming JSON', () => {
         },
       ]
     `);
+
+    // Push value with empty labels
+    stream.push({
+      data: {
+        values: [[''], [500], [50], [7]],
+      },
+    });
+
+    expect(stream.fields.map((f) => getFieldDisplayName(f, stream, [stream]))).toMatchInlineSnapshot(`
+      Array [
+        "time",
+        "speed A",
+        "light A",
+        "speed B",
+        "light B",
+        "speed C",
+        "light C",
+        "speed 4",
+        "light 4",
+      ]
+    `); // speed+light 4  ¯\_(ツ)_/¯ better than undefined labels
   });
 
   /*

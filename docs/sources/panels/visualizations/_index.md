@@ -1,6 +1,6 @@
 +++
 title = "Visualization options"
-weight = 400
+weight = 420
 +++
 
 # Visualization options
