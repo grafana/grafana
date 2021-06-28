@@ -99,7 +99,7 @@ func (tn *TelegramNotifier) Notify(ctx context.Context, as ...*types.Alert) (boo
 		return false, err
 	}
 
-	tn.log.Info("sending telegram notification", "chat_id", tn.ChatID)
+	tn.log.Info("sending telegram notification", "chat_id", msg["chat_id"])
 	cmd := &models.SendWebhookSync{
 		Url:        fmt.Sprintf(TelegramAPIURL, tn.BotToken),
 		Body:       body.String(),
@@ -118,19 +118,16 @@ func (tn *TelegramNotifier) Notify(ctx context.Context, as ...*types.Alert) (boo
 }
 
 func (tn *TelegramNotifier) buildTelegramMessage(ctx context.Context, as []*types.Alert) (map[string]string, error) {
-	msg := map[string]string{}
-	msg["chat_id"] = tn.ChatID
-	msg["parse_mode"] = "html"
-
 	var tmplErr error
-	tmpl, _, err := TmplText(ctx, tn.tmpl, as, tn.log, &tmplErr)
-	if err != nil {
-		return nil, err
-	}
+	tmpl, _ := TmplText(ctx, tn.tmpl, as, tn.log, &tmplErr)
+
+	msg := map[string]string{}
+	msg["chat_id"] = tmpl(tn.ChatID)
+	msg["parse_mode"] = "html"
 
 	message := tmpl(tn.Message)
 	if tmplErr != nil {
-		return nil, tmplErr
+		tn.log.Debug("failed to template Telegram message", "err", tmplErr.Error())
 	}
 
 	msg["text"] = message

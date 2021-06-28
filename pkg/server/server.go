@@ -151,7 +151,7 @@ func (s *Server) init() error {
 	}
 
 	login.Init()
-	social.NewOAuthService()
+	social.NewOAuthService(s.cfg)
 
 	services := s.serviceRegistry.GetServices()
 	if err := s.buildServiceGraph(services); err != nil {

@@ -4,6 +4,7 @@ import { withStoryContainer } from '../../utils/storybook/withStoryContainer';
 import { Form, Input, Button, HorizontalGroup } from '@grafana/ui';
 import { FieldArray } from './FieldArray';
 import mdx from './FieldArray.mdx';
+import { Meta, Story } from '@storybook/react';
 
 export default {
   title: 'Forms/FieldArray',
@@ -13,10 +14,17 @@ export default {
     docs: {
       page: mdx,
     },
+    controls: {
+      exclude: ['name', 'keyName', 'control', 'shouldUnregister'],
+    },
   },
-};
+  argTypes: {
+    containerWidth: { control: { type: 'range', min: 100, max: 500, step: 10 } },
+    containerHeight: { control: { type: 'range', min: 100, max: 500, step: 10 } },
+  },
+} as Meta;
 
-export const simple = () => {
+export const Simple: Story = (args) => {
   const defaultValues: any = {
     people: [{ firstName: 'Janis', lastName: 'Joplin' }],
   };
@@ -57,4 +65,9 @@ export const simple = () => {
       )}
     </Form>
   );
+};
+Simple.args = {
+  containerWidth: 300,
+  containerHeight: 0,
+  showBoundaries: false,
 };

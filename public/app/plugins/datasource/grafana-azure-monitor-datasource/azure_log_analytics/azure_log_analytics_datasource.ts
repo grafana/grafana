@@ -18,8 +18,8 @@ import {
 import { getBackendSrv, getTemplateSrv, DataSourceWithBackend, FetchResponse } from '@grafana/runtime';
 import { Observable, from } from 'rxjs';
 import { mergeMap } from 'rxjs/operators';
-import { getAuthType, getAzureCloud } from '../credentials';
-import { getLogAnalyticsApiRoute, getLogAnalyticsManagementApiRoute } from '../api/routes';
+import { getAuthType, getAzureCloud, getAzurePortalUrl } from '../credentials';
+import { getLogAnalyticsApiRoute, getManagementApiRoute } from '../api/routes';
 import { AzureLogAnalyticsMetadata } from '../types/logAnalyticsMetadata';
 import { isGUIDish } from '../components/ResourcePicker/utils';
 
@@ -35,6 +35,7 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
 > {
   url: string;
   baseUrl: string;
+  azurePortalUrl: string;
   applicationId: string;
 
   defaultSubscriptionId?: string;
@@ -50,12 +51,13 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     const cloud = getAzureCloud(instanceSettings);
     const logAnalyticsRoute = getLogAnalyticsApiRoute(cloud);
     this.baseUrl = `/${logAnalyticsRoute}`;
+    this.azurePortalUrl = getAzurePortalUrl(cloud);
 
-    const managementRoute = getLogAnalyticsManagementApiRoute(cloud);
+    const managementRoute = getManagementApiRoute(cloud);
     this.azureMonitorUrl = `/${managementRoute}/subscriptions`;
 
     this.url = instanceSettings.url || '';
-    this.defaultSubscriptionId = this.instanceSettings.jsonData.logAnalyticsSubscriptionId || '';
+    this.defaultSubscriptionId = this.instanceSettings.jsonData.subscriptionId || '';
     this.defaultOrFirstWorkspace = this.instanceSettings.jsonData.logAnalyticsDefaultWorkspace || '';
   }
 
@@ -185,7 +187,7 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     }
 
     const url =
-      `https://portal.azure.com/#blade/Microsoft_OperationsManagementSuite_Workspace/` +
+      `${this.azurePortalUrl}/#blade/Microsoft_OperationsManagementSuite_Workspace/` +
       `AnalyticsBlade/initiator/AnalyticsShareLinkToQuery/isQueryEditorVisible/true/scope/` +
       `%7B%22resources%22%3A%5B%7B%22resourceId%22%3A%22%2Fsubscriptions%2F${subscription}` +
       `%2Fresourcegroups%2F${details.resourceGroup}%2Fproviders%2Fmicrosoft.operationalinsights%2Fworkspaces%2F${details.workspace}` +
@@ -228,8 +230,14 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
   metricFindQueryInternal(query: string): Promise<MetricFindValue[]> {
     // workspaces() - Get workspaces in the default subscription
     const workspacesQuery = query.match(/^workspaces\(\)/i);
-    if (workspacesQuery && this.defaultSubscriptionId) {
-      return this.getWorkspaces(this.defaultSubscriptionId);
+    if (workspacesQuery) {
+      if (this.defaultSubscriptionId) {
+        return this.getWorkspaces(this.defaultSubscriptionId);
+      } else {
+        throw new Error(
+          'No subscription ID. Specify a default subscription ID in the data source config to use workspaces() without a subscription ID'
+        );
+      }
     }
 
     // workspaces("abc-def-etc") - Get workspaces a specified subscription
@@ -279,7 +287,7 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     const querystring = querystringBuilder.generate().uriString;
     const url = isGUIDish(workspace)
       ? `${this.baseUrl}/v1/workspaces/${workspace}/query?${querystring}`
-      : `${this.baseUrl}/v1/${workspace}/query?${querystring}`;
+      : `${this.baseUrl}/v1${workspace}/query?${querystring}`;
 
     const queries = [
       {
@@ -473,14 +481,14 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     const authType = getAuthType(this.instanceSettings);
 
     if (authType === 'clientsecret') {
-      if (!this.isValidConfigField(this.instanceSettings.jsonData.logAnalyticsTenantId)) {
+      if (!this.isValidConfigField(this.instanceSettings.jsonData.tenantId)) {
         return {
           status: 'error',
           message: 'The Tenant Id field is required.',
         };
       }
 
-      if (!this.isValidConfigField(this.instanceSettings.jsonData.logAnalyticsClientId)) {
+      if (!this.isValidConfigField(this.instanceSettings.jsonData.clientId)) {
         return {
           status: 'error',
           message: 'The Client Id field is required.',

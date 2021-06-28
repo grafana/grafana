@@ -124,21 +124,20 @@ describe.skip('TextBox - change picker value scenarios', function () {
 
 function copyExistingDashboard() {
   e2e.flows.login('admin', 'admin');
-  e2e().server();
   e2e()
-    .route({
+    .intercept({
       method: 'GET',
       url: '/api/search?query=&type=dash-folder&permission=Edit',
     })
     .as('dash-settings');
   e2e()
-    .route({
+    .intercept({
       method: 'POST',
       url: '/api/dashboards/db/',
     })
     .as('save-dash');
   e2e()
-    .route({
+    .intercept({
       method: 'GET',
       url: /\/api\/dashboards\/uid\/(?!AejrN1AMz)\w+/,
     })
