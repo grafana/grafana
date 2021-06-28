@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -49,7 +50,7 @@ func TestFixIntervalFormat(t *testing.T) {
 		})
 	}
 
-	executor := &Service{}
+	executor := &Service{logger: log.New("tsdb.graphite")}
 
 	t.Run("Converts response to data frames", func(*testing.T) {
 		body := `
