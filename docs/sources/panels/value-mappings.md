@@ -1,6 +1,6 @@
 +++
 title = "Value mappings"
-weight = 600
+weight = 450
 +++
 
 # Value mappings
