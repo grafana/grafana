@@ -53,7 +53,6 @@ type datasourceInfo struct {
 	BasicAuthEnabled  bool
 	BasicAuthUser     string
 	Id                int64
-	JSONData          map[string]interface{}
 }
 
 func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.InstanceFactoryFunc {
@@ -68,17 +67,10 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 			return nil, err
 		}
 
-		jsonData := map[string]interface{}{}
-		err = json.Unmarshal(settings.JSONData, &jsonData)
-		if err != nil {
-			return nil, fmt.Errorf("error reading settings: %w", err)
-		}
-
 		model := datasourceInfo{
 			BasicAuthEnabled:  settings.BasicAuthEnabled,
 			HTTPClient:        client,
 			URL:               settings.URL,
-			JSONData:          jsonData,
 			BasicAuthPassword: settings.DecryptedSecureJSONData["basicAuthPassword"],
 			BasicAuthUser:     settings.BasicAuthUser,
 			Id:                settings.ID,
