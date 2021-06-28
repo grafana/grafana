@@ -6,6 +6,7 @@ import {
   cancelQueriesAction,
   queryReducer,
   removeQueryRowAction,
+  importQueries,
   runQueries,
   scanStartAction,
   scanStopAction,
@@ -22,6 +23,9 @@ import {
   PanelData,
   DataFrame,
   LoadingState,
+  DataSourceApi,
+  DataSourceJsonData,
+  DataQuery,
 } from '@grafana/data';
 import { thunkTester } from 'test/core/thunk/thunkTester';
 import { makeExplorePaneState } from './utils';
@@ -121,6 +125,39 @@ describe('running queries', () => {
       .whenThunkIsDispatched(exploreId);
 
     expect(dispatchedActions).toEqual([scanStopAction({ exploreId }), cancelQueriesAction({ exploreId })]);
+  });
+});
+
+describe('importing queries', () => {
+  describe('when importing queries between the same type of data source', () => {
+    it('remove datasource property from all of the queries', async () => {
+      const store = configureStore({
+        ...(defaultInitialState as any),
+        explore: {
+          [ExploreId.left]: {
+            ...defaultInitialState.explore[ExploreId.left],
+            datasourceInstance: { name: 'testDs', type: 'postgres' },
+          },
+        },
+      });
+
+      await store.dispatch(
+        importQueries(
+          ExploreId.left,
+          [
+            { datasource: 'postgres1', refId: 'refId_A' },
+            { datasource: 'postgres1', refId: 'refId_B' },
+          ],
+          { name: 'Postgres1', type: 'postgres' } as DataSourceApi<DataQuery, DataSourceJsonData, {}>,
+          { name: 'Postgres2', type: 'postgres' } as DataSourceApi<DataQuery, DataSourceJsonData, {}>
+        )
+      );
+
+      expect(store.getState().explore[ExploreId.left].queries[0]).toHaveProperty('refId', 'refId_A');
+      expect(store.getState().explore[ExploreId.left].queries[1]).toHaveProperty('refId', 'refId_B');
+      expect(store.getState().explore[ExploreId.left].queries[0]).not.toHaveProperty('datasource');
+      expect(store.getState().explore[ExploreId.left].queries[1]).not.toHaveProperty('datasource');
+    });
   });
 });
 
