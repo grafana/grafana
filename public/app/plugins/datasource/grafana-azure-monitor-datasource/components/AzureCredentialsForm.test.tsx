@@ -2,7 +2,7 @@ import React from 'react';
 import { shallow } from 'enzyme';
 import AzureCredentialsForm, { Props } from './AzureCredentialsForm';
 import { LegacyForms, Button } from '@grafana/ui';
-const { Input } = LegacyForms;
+const { Input, Select } = LegacyForms;
 
 const setup = (propsFunc?: (props: Props) => Props) => {
   let props: Props = {
@@ -85,6 +85,15 @@ describe('Render', () => {
         disabled: true,
       }));
       expect(wrapper.find(Button).exists()).toBe(false);
+    });
+
+    it('should disable cloud selector', () => {
+      const wrapper = setup((props) => ({
+        ...props,
+        disabled: true,
+      }));
+      const selects = wrapper.find(Select);
+      selects.forEach((s) => expect(s.prop('isDisabled')).toBe(true));
     });
   });
 });

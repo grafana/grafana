@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"errors"
 	"fmt"
 
@@ -42,7 +43,7 @@ func (hs *HTTPServer) GetFolderByUID(c *models.ReqContext) response.Response {
 	}
 
 	g := guardian.New(folder.Id, c.OrgId, c.SignedInUser)
-	return response.JSON(200, toFolderDto(g, folder))
+	return response.JSON(200, toFolderDto(c.Req.Context(), g, folder))
 }
 
 func (hs *HTTPServer) GetFolderByID(c *models.ReqContext) response.Response {
@@ -53,7 +54,7 @@ func (hs *HTTPServer) GetFolderByID(c *models.ReqContext) response.Response {
 	}
 
 	g := guardian.New(folder.Id, c.OrgId, c.SignedInUser)
-	return response.JSON(200, toFolderDto(g, folder))
+	return response.JSON(200, toFolderDto(c.Req.Context(), g, folder))
 }
 
 func (hs *HTTPServer) CreateFolder(c *models.ReqContext, cmd models.CreateFolderCommand) response.Response {
@@ -71,7 +72,7 @@ func (hs *HTTPServer) CreateFolder(c *models.ReqContext, cmd models.CreateFolder
 	}
 
 	g := guardian.New(folder.Id, c.OrgId, c.SignedInUser)
-	return response.JSON(200, toFolderDto(g, folder))
+	return response.JSON(200, toFolderDto(c.Req.Context(), g, folder))
 }
 
 func (hs *HTTPServer) UpdateFolder(c *models.ReqContext, cmd models.UpdateFolderCommand) response.Response {
@@ -82,7 +83,7 @@ func (hs *HTTPServer) UpdateFolder(c *models.ReqContext, cmd models.UpdateFolder
 	}
 
 	g := guardian.New(cmd.Result.Id, c.OrgId, c.SignedInUser)
-	return response.JSON(200, toFolderDto(g, cmd.Result))
+	return response.JSON(200, toFolderDto(c.Req.Context(), g, cmd.Result))
 }
 
 func (hs *HTTPServer) DeleteFolder(c *models.ReqContext) response.Response { // temporarily adding this function to HTTPServer, will be removed from HTTPServer when librarypanels featuretoggle is removed
@@ -107,7 +108,7 @@ func (hs *HTTPServer) DeleteFolder(c *models.ReqContext) response.Response { // 
 	})
 }
 
-func toFolderDto(g guardian.DashboardGuardian, folder *models.Folder) dtos.Folder {
+func toFolderDto(ctx context.Context, g guardian.DashboardGuardian, folder *models.Folder) dtos.Folder {
 	canEdit, _ := g.CanEdit()
 	canSave, _ := g.CanSave()
 	canAdmin, _ := g.CanAdmin()
@@ -115,10 +116,10 @@ func toFolderDto(g guardian.DashboardGuardian, folder *models.Folder) dtos.Folde
 	// Finding creator and last updater of the folder
 	updater, creator := anonString, anonString
 	if folder.CreatedBy > 0 {
-		creator = getUserLogin(folder.CreatedBy)
+		creator = getUserLogin(ctx, folder.CreatedBy)
 	}
 	if folder.UpdatedBy > 0 {
-		updater = getUserLogin(folder.UpdatedBy)
+		updater = getUserLogin(ctx, folder.UpdatedBy)
 	}
 
 	return dtos.Folder{

@@ -160,6 +160,7 @@ export const AzureCredentialsForm: FunctionComponent<Props> = (props: Props) => 
               value={authTypeOptions.find((opt) => opt.value === credentials.authType)}
               options={authTypeOptions}
               onChange={onAuthTypeChange}
+              isDisabled={disabled}
             />
           </div>
         </div>
@@ -177,6 +178,7 @@ export const AzureCredentialsForm: FunctionComponent<Props> = (props: Props) => 
                   value={azureCloudOptions.find((opt) => opt.value === credentials.azureCloud)}
                   options={azureCloudOptions}
                   onChange={onAzureCloudChange}
+                  isDisabled={disabled}
                 />
               </div>
             </div>
