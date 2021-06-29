@@ -78,7 +78,7 @@ module.exports = (env = {}) =>
         inject: false,
         chunksSortMode: 'none',
         excludeChunks: ['dark', 'light'],
-        templateParameters: templateParametersGenerator,
+        // templateParameters: templateParametersGenerator,
       }),
       new HtmlWebpackPlugin({
         filename: path.resolve(__dirname, '../../public/views/index.html'),
@@ -87,7 +87,7 @@ module.exports = (env = {}) =>
         inject: false,
         chunksSortMode: 'none',
         excludeChunks: ['dark', 'light'],
-        templateParameters: templateParametersGenerator,
+        // templateParameters: templateParametersGenerator,
       }),
       new HotModuleReplacementPlugin(),
       new DefinePlugin({

@@ -69,7 +69,7 @@ module.exports = merge(common, {
             loader: 'postcss-loader',
             options: {
               config: {
-                path: __dirname + '/postcss.config.js',
+                config: path.resolve(__dirname),
               },
             },
           },
