@@ -34,6 +34,7 @@ export const CandlestickFieldMappingsEditor: FC<StandardEditorProps<CandlestickF
             <Select
               value={selectedOption}
               options={selectOptions}
+              placeholder={`${k} (default)`}
               onChange={(selection: SelectableValue<string>) => {
                 onChange({
                   ...value,
@@ -41,7 +42,6 @@ export const CandlestickFieldMappingsEditor: FC<StandardEditorProps<CandlestickF
                 });
               }}
             />
-            <br />
           </div>
         );
       })}
@@ -54,6 +54,6 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
     text-transform: capitalize;
   `,
   section: css`
-    margin-bottom: 2px;
+    margin-bottom: 8px;
   `,
 }));
