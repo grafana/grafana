@@ -6,7 +6,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/tokenprovider"
+	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/aztokenprovider"
 )
 
 // Azure cloud names specific to Azure Monitor
@@ -39,10 +39,10 @@ func httpClientProvider(route azRoute, model datasourceInfo, cfg *setting.Cfg) *
 				"client_secret":   model.DecryptedSecureJSONData["clientSecret"],
 			},
 		}
-		tokenProvider := tokenprovider.NewAzureAccessTokenProvider(cfg, tokenAuth)
+		tokenProvider := aztokenprovider.NewAzureAccessTokenProvider(cfg, tokenAuth)
 		return httpclient.NewProvider(httpclient.ProviderOptions{
 			Middlewares: []httpclient.Middleware{
-				tokenprovider.AuthMiddleware(tokenProvider),
+				aztokenprovider.AuthMiddleware(tokenProvider),
 			},
 		})
 	} else {

@@ -25,7 +25,7 @@ import { from, Observable } from 'rxjs';
 import { mergeMap } from 'rxjs/operators';
 
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { getAuthType } from '../credentials';
+import { getAuthType, getAzureCloud, getAzurePortalUrl } from '../credentials';
 import { resourceTypeDisplayNames } from '../azureMetadata';
 import { routeNames } from '../utils/common';
 
@@ -46,6 +46,7 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
   apiPreviewVersion = '2017-12-01-preview';
   defaultSubscriptionId?: string;
   resourcePath: string;
+  azurePortalUrl: string;
   resourceGroup: string;
   resourceName: string;
   supportedMetricNamespaces: string[] = [];
@@ -57,8 +58,10 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
     this.timeSrv = getTimeSrv();
     this.defaultSubscriptionId = instanceSettings.jsonData.subscriptionId;
 
+    const cloud = getAzureCloud(instanceSettings);
     this.resourcePath = `${routeNames.azureMonitor}/subscriptions`;
-    this.supportedMetricNamespaces = new SupportedNamespaces(instanceSettings.jsonData.cloudName).get();
+    this.supportedMetricNamespaces = new SupportedNamespaces(cloud).get();
+    this.azurePortalUrl = getAzurePortalUrl(cloud);
   }
 
   isConfigured(): boolean {
@@ -161,7 +164,7 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
       },
     });
 
-    return `https://portal.azure.com/#blade/Microsoft_Azure_MonitoringMetrics/Metrics.ReactView/Referer/MetricsExplorer/TimeContext/${timeContext}/ChartDefinition/${chartDef}`;
+    return `${this.azurePortalUrl}/#blade/Microsoft_Azure_MonitoringMetrics/Metrics.ReactView/Referer/MetricsExplorer/TimeContext/${timeContext}/ChartDefinition/${chartDef}`;
   }
 
   applyTemplateVariables(target: AzureMonitorQuery, scopedVars: ScopedVars): Record<string, any> {

@@ -42,6 +42,14 @@ const assureBaseUrl = (url: string): string => {
   return url;
 };
 
+const updateSearchParams = (href: string, searchParams: string) => {
+  const curURL = new URL(href);
+  const urlSearchParams = new URLSearchParams(searchParams);
+  urlSearchParams.forEach((val, key) => curURL.searchParams.set(key, val));
+
+  return curURL.href;
+};
+
 interface LocationUtilDependencies {
   config: GrafanaConfig;
   getTimeRangeForUrl: () => RawTimeRange;
@@ -63,6 +71,7 @@ export const locationUtil = {
   },
   stripBaseFromUrl,
   assureBaseUrl,
+  updateSearchParams,
   getTimeRangeUrlParams: () => {
     if (!getTimeRangeUrlParams) {
       return null;

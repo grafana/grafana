@@ -79,7 +79,7 @@ func (dd *DingDingNotifier) Notify(ctx context.Context, as ...*types.Alert) (boo
 	title := tmpl(`{{ template "default.title" . }}`)
 
 	var bodyMsg map[string]interface{}
-	if dd.MsgType == "actionCard" {
+	if tmpl(dd.MsgType) == "actionCard" {
 		bodyMsg = map[string]interface{}{
 			"msgtype": "actionCard",
 			"actionCard": map[string]string{
@@ -102,6 +102,7 @@ func (dd *DingDingNotifier) Notify(ctx context.Context, as ...*types.Alert) (boo
 		}
 	}
 
+	u := tmpl(dd.URL)
 	if tmplErr != nil {
 		dd.log.Debug("failed to template DingDing message", "err", tmplErr.Error())
 	}
@@ -112,7 +113,7 @@ func (dd *DingDingNotifier) Notify(ctx context.Context, as ...*types.Alert) (boo
 	}
 
 	cmd := &models.SendWebhookSync{
-		Url:  dd.URL,
+		Url:  u,
 		Body: string(body),
 	}
 

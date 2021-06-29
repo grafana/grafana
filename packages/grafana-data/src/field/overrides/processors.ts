@@ -24,6 +24,16 @@ export const numberOverrideProcessor = (
   return parseFloat(value);
 };
 
+export const displayNameOverrideProcessor = (
+  value: any,
+  context: FieldOverrideContext,
+  settings?: StringFieldConfigSettings
+) => {
+  // clear the cached display name
+  delete context.field?.state?.displayName;
+  return stringOverrideProcessor(value, context, settings);
+};
+
 export interface SliderFieldConfigSettings {
   min: number;
   max: number;

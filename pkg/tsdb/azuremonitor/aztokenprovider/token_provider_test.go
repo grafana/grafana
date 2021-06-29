@@ -1,4 +1,4 @@
-package tokenprovider
+package aztokenprovider
 
 import (
 	"context"
@@ -14,7 +14,7 @@ var getAccessTokenFunc func(credential TokenCredential, scopes []string)
 
 type tokenCacheFake struct{}
 
-func (c *tokenCacheFake) GetAccessToken(ctx context.Context, credential TokenCredential, scopes []string) (string, error) {
+func (c *tokenCacheFake) GetAccessToken(_ context.Context, credential TokenCredential, scopes []string) (string, error) {
 	getAccessTokenFunc(credential, scopes)
 	return "4cb83b87-0ffb-4abd-82f6-48a8c08afc53", nil
 }
