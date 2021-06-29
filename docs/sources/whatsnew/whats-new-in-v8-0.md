@@ -100,7 +100,7 @@ The Time series is out of beta! We are removing the `Beta` tag and graduating th
 
 ### Node graph visualization updates
 
-You can now expand the node graph for the displayed trace when using the Trace to logs feature.. Depending on the data source, this can show spans of the trace as nodes in the graph, or as some additional context like service map based on the current trace.
+You can now expand the node graph for the displayed trace when using the Trace to logs feature. Depending on the data source, this can show spans of the trace as nodes in the graph, or as some additional context like service map based on the current trace.
 
 We also added a grid view and the ability to explore hidden nodes.
 
