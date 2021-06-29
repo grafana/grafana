@@ -1,16 +1,7 @@
 import React from 'react';
 import { AlignedData } from 'uplot';
 import { DataFrame, GrafanaTheme2 } from '@grafana/data';
-import {
-  Themeable2,
-  UPlotConfigBuilder,
-  VizLegendOptions,
-  UPlotChart,
-  VizLayout,
-  ScaleDirection,
-  ScaleOrientation,
-  LegendDisplayMode,
-} from '@grafana/ui';
+import { Themeable2, UPlotConfigBuilder, UPlotChart, VizLayout, ScaleDirection, ScaleOrientation } from '@grafana/ui';
 
 import { PanelOptions } from './models.gen';
 import { ScaleDistribution } from '@grafana/ui/src/components/uPlot/models.gen';

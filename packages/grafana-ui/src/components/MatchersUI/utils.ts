@@ -60,35 +60,45 @@ export function useSelectOptions(
   currentName?: string
 ): Array<SelectableValue<string>> {
   return useMemo(() => {
-    let found = false;
-    const options: Array<SelectableValue<string>> = [];
-    for (const name of displayNames.display) {
+    return getSelectOptions(displayNames, currentName);
+  }, [displayNames, currentName]);
+}
+
+/**
+ * @internal
+ */
+export function getSelectOptions(
+  displayNames: FrameFieldsDisplayNames,
+  currentName?: string
+): Array<SelectableValue<string>> {
+  let found = false;
+  const options: Array<SelectableValue<string>> = [];
+  for (const name of displayNames.display) {
+    if (!found && name === currentName) {
+      found = true;
+    }
+    options.push({
+      value: name,
+      label: name,
+    });
+  }
+  for (const name of displayNames.raw) {
+    if (!displayNames.display.has(name)) {
       if (!found && name === currentName) {
         found = true;
       }
       options.push({
         value: name,
-        label: name,
+        label: `${name} (base field name)`,
       });
     }
-    for (const name of displayNames.raw) {
-      if (!displayNames.display.has(name)) {
-        if (!found && name === currentName) {
-          found = true;
-        }
-        options.push({
-          value: name,
-          label: `${name} (base field name)`,
-        });
-      }
-    }
+  }
 
-    if (currentName && !found) {
-      options.push({
-        value: currentName,
-        label: `${currentName} (not found)`,
-      });
-    }
-    return options;
-  }, [displayNames, currentName]);
+  if (currentName && !found) {
+    options.push({
+      value: currentName,
+      label: `${currentName} (not found)`,
+    });
+  }
+  return options;
 }
