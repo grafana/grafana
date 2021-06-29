@@ -67,7 +67,6 @@ describe('useCreatableSelectPersistedBehaviour', () => {
     // we open the menu
     userEvent.click(input);
 
-    // default options don't have 1M but 1m
     const option1 = screen.getByText('Option 1');
     expect(option1).toBeInTheDocument();
 
@@ -106,6 +105,7 @@ describe('useCreatableSelectPersistedBehaviour', () => {
     // we open the menu
     userEvent.click(input);
 
+    // we expect 2 elemnts having "Option 2": the input itself and the option.
     expect(screen.getAllByText('Option 2')).toHaveLength(2);
   });
 });
