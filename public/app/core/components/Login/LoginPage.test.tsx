@@ -1,5 +1,5 @@
 import React from 'react';
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { LoginPage } from './LoginPage';
 
@@ -34,38 +34,43 @@ jest.mock('app/core/config', () => {
 
 describe('Login Page', () => {
   it('renders correctly', () => {
-    const { container } = render(<LoginPage />);
-    expect(container).toMatchSnapshot();
+    render(<LoginPage />);
+
+    expect(screen.getByRole('heading', { name: 'Welcome to Grafana' })).toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: 'Username input field' })).toBeInTheDocument();
+    expect(screen.getByLabelText('Password input field')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Login button' })).toBeInTheDocument();
+
+    expect(screen.getByRole('link', { name: 'Forgot your password?' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Forgot your password?' })).toHaveAttribute(
+      'href',
+      '/user/password/send-reset-email'
+    );
+
+    expect(screen.getByRole('link', { name: 'Sign up' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Sign up' })).toHaveAttribute('href', '/signup');
   });
   it('should pass validation checks for username field', async () => {
     render(<LoginPage />);
-    // when
+
+    fireEvent.click(screen.getByRole('button', { name: 'Login button' }));
+    expect(await screen.findByText('Email or username is required')).toBeInTheDocument();
+
     await act(async () => {
-      fireEvent.click(screen.getByLabelText('Login button'));
+      await userEvent.type(screen.getByRole('textbox', { name: 'Username input field' }), 'admin');
+      expect(screen.queryByText('Email or username is required')).not.toBeInTheDocument();
     });
-    // then
-    expect(screen.queryByText('Email or username is required')).toBeInTheDocument();
-    // when
-    await act(async () => {
-      userEvent.type(screen.getByLabelText('Username input field'), 'admin');
-    });
-    // then
-    expect(screen.queryByText('Email or username is required')).not.toBeInTheDocument();
   });
   it('should pass validation checks for password field', async () => {
     render(<LoginPage />);
-    // when
+
+    fireEvent.click(screen.getByRole('button', { name: 'Login button' }));
+    expect(await screen.findByText('Password is required')).toBeInTheDocument();
+
     await act(async () => {
-      fireEvent.click(screen.getByLabelText('Login button'));
+      await userEvent.type(screen.getByLabelText('Password input field'), 'admin');
+      expect(screen.queryByText('Password is required')).not.toBeInTheDocument();
     });
-    // then
-    expect(screen.queryByText('Password is required')).toBeInTheDocument();
-    // when
-    await act(async () => {
-      userEvent.type(screen.getByLabelText('Password input field'), 'admin');
-    });
-    // then
-    expect(screen.queryByText('Password is required')).not.toBeInTheDocument();
   });
   it('should navigate to default url if credentials is valid', async () => {
     Object.defineProperty(window, 'location', {
@@ -75,14 +80,12 @@ describe('Login Page', () => {
     });
     postMock.mockResolvedValueOnce({ message: 'Logged in' });
     render(<LoginPage />);
-    // when
-    await act(async () => {
-      userEvent.type(screen.getByLabelText('Username input field'), 'admin');
-      userEvent.type(screen.getByLabelText('Password input field'), 'test');
-      fireEvent.click(screen.getByLabelText('Login button'));
-    });
-    // then
-    expect(postMock).toHaveBeenCalledWith('/login', { password: 'test', user: 'admin' });
+
+    await userEvent.type(screen.getByLabelText('Username input field'), 'admin');
+    await userEvent.type(screen.getByLabelText('Password input field'), 'test');
+    fireEvent.click(screen.getByLabelText('Login button'));
+
+    await waitFor(() => expect(postMock).toHaveBeenCalledWith('/login', { password: 'test', user: 'admin' }));
     expect(window.location.assign).toHaveBeenCalledWith('/');
   });
 });
