@@ -354,7 +354,6 @@ export interface QueryEditorProps<
   TOptions extends DataSourceJsonData = DataSourceJsonData,
   TVQuery extends DataQuery = TQuery
 > {
-  annotation?: AnnotationQuery<DataQuery>;
   datasource: DSType;
   query: TVQuery;
   onRunQuery: () => void;

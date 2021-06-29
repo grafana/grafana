@@ -42,34 +42,34 @@ const limitOptions = [10, 50, 100, 200, 300, 500, 1000, 2000].map((limit) => ({
 }));
 
 interface Props {
-  annotation: GrafanaAnnotationQuery;
+  query: GrafanaAnnotationQuery;
   onChange: (newValue: GrafanaAnnotationQuery) => void;
 }
 
-export default function AnnotationQuery({ annotation, onChange }: Props) {
-  const { limit = 100, matchAny = false, tags = [], type = GrafanaAnnotationType.Tags } = annotation;
+export default function AnnotationQuery({ query, onChange }: Props) {
+  const { limit = 100, matchAny = false, tags = [], type = GrafanaAnnotationType.Tags } = query;
 
   const onFilterByChange = (newValue: SelectableValue<GrafanaAnnotationType>) =>
     onChange({
-      ...annotation,
+      ...query,
       type: newValue.value!,
     });
 
   const onMaxLimitChange = (newValue: SelectableValue<number>) =>
     onChange({
-      ...annotation,
+      ...query,
       limit: newValue.value!,
     });
 
   const onMatchAnyChange = (newValue: React.ChangeEvent<HTMLInputElement>) =>
     onChange({
-      ...annotation,
+      ...query,
       matchAny: newValue.target.checked,
     });
 
   const onTagsChange = (tags: string[]) =>
     onChange({
-      ...annotation,
+      ...query,
       tags,
     });
 
@@ -84,7 +84,7 @@ export default function AnnotationQuery({ annotation, onChange }: Props) {
         </InlineField>
       </div>
       <div className="gf-form-inline">
-        {annotation.type === 'tags' && (
+        {query.type === 'tags' && (
           <>
             <InlineField label="Match any" labelWidth={18} tooltip={matchTooltipContent}>
               <div className="gf-form-switch">
