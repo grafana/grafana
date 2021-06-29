@@ -17,7 +17,7 @@ module.exports = merge(common, {
 
   output: {
     path: path.resolve(__dirname, '../../public/build'),
-    filename: '[name].[hash].js',
+    filename: '[name].[fullhash].js',
     publicPath: '/public/build/',
     pathinfo: false,
   },
