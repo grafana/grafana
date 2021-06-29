@@ -2,6 +2,7 @@ import { RegistryItemWithOptions } from '../utils/Registry';
 import BaseLayer from 'ol/layer/Base';
 import Map from 'ol/Map';
 import { PanelData } from '../types';
+import { GrafanaTheme2 } from '../themes';
 
 /**
  * This gets saved in panel json
@@ -46,5 +47,5 @@ export interface MapLayerRegistryItem<TConfig = MapLayerConfig> extends Registry
    * Function that configures transformation and returns a transformer
    * @param options
    */
-  create: (map: Map, options: MapLayerConfig<TConfig>) => MapLayerHandler;
+  create: (map: Map, options: MapLayerConfig<TConfig>, theme: GrafanaTheme2) => MapLayerHandler;
 }

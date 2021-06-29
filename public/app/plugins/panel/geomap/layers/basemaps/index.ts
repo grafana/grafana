@@ -1,3 +1,4 @@
+import { cartoLayers } from './carto';
 import { esriLayers } from './esri';
 import { osmLayers } from './osm';
 import { stamenLayers } from './stamen';
@@ -10,5 +11,6 @@ export const basemapLayers = [
   defaultGrafanaThemedMap,
   ...esriLayers,
   ...osmLayers,
-  ...stamenLayers, //
+  ...stamenLayers, // keeps indent
+  ...cartoLayers,
 ];

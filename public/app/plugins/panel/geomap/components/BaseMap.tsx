@@ -10,6 +10,7 @@ import OverviewMap from 'ol/control/OverviewMap';
 import BaseLayer from 'ol/layer/Base';
 
 import { PanelData, MapLayerHandler, MapLayerConfig } from '@grafana/data';
+import { config } from '@grafana/runtime';
 
 interface BaseMapProps {
   width: number;
@@ -21,7 +22,7 @@ interface BaseMapProps {
 import 'ol/ol.css';
 
 import { ControlsOptions, GeomapPanelOptions } from '../types';
-import { defaultFrameConfig, newDynamicLayerHandler } from '../layers/dynamic';
+import { defaultFrameConfig, newDynamicLayerHandler } from '../layers/overlay/dynamic';
 import { defaultGrafanaThemedMap } from '../layers/basemaps/theme';
 import { InfoControl } from './InfoControl';
 
@@ -129,7 +130,7 @@ export class BaseMap extends Component<BaseMapProps> {
       cfg = { type: defaultGrafanaThemedMap.id };
     }
     const item = geomapLayerRegistry.getIfExists(cfg.type) ?? defaultGrafanaThemedMap;
-    const layer = item.create(this.map, cfg).init();
+    const layer = item.create(this.map, cfg, config.theme2).init();
     if (this.basemap) {
       this.map.removeLayer(this.basemap);
       this.basemap.dispose();
