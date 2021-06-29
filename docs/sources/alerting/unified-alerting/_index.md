@@ -31,7 +31,7 @@ You can perform the following tasks for alerts:
 
 ## Clustering
 
-The current alerting system doesn't support high availability. Alert notifications are not deduplicated and load balancing is not supported between instances e.g. silences from one instance will not appear in the other. The Grafana team aims to have this feature by Grafana version 8.2+.
+The current alerting system doesn't support high availability. Alert notifications are not deduplicated and load balancing is not supported between instances e.g. silences from one instance will not appear in the other. The Grafana team aims to have this feature by Grafana version 8.1+.
 
 ## Alert evaluation
 
