@@ -5,6 +5,9 @@ resource Alert {
   identifiers: { id: AlertId },
   read: GetAlert,
   list: ListAlerts,
+  operations: [
+    PauseAlert,
+  ],
 }
 
 @pattern("^[0-9]+$")
@@ -16,7 +19,7 @@ string AlertId
 operation GetAlert {
   input: GetAlertInput,
   output: GetAlertOutput,
-  errors: [NoSuchResource],
+  errors: [NoSuchResource, Forbidden],
 }
 
 structure GetAlertInput {
@@ -24,6 +27,8 @@ structure GetAlertInput {
   @httpLabel
   @documentation("The alert ID.")
   id: AlertId,
+  @httpHeader("X-Grafana-Org-Id")
+  orgId: Long,
 }
 
 @references([{resource: Alert}])
@@ -100,7 +105,7 @@ list AlertSummaries {
 }
 
 @readonly
-@http(method: "POST", uri: "/api/alerts/test")
+@http(method: "POST", uri: "/api/alert-test")
 @documentation("Make a test alert.")
 operation AlertTest {
   input: AlertTestInput,
@@ -149,4 +154,39 @@ structure EvalMatch {
   metric: String,
   @required
   value: BoxedFloat,
+}
+
+// TODO: Add a trait stating that editor role is required
+@http(method: "POST", uri: "/api/alerts/{id}/pause")
+@documentation("Pause an alert.")
+operation PauseAlert {
+  input: PauseAlertInput,
+  output: PauseAlertOutput,
+  errors: [Forbidden, InternalServerError],
+}
+
+@references([{resource: Alert}])
+structure PauseAlertInput {
+  @required
+  @httpLabel
+  @documentation("The alert ID.")
+  id: AlertId,
+  @required
+  @documentation("Whether to pause.")
+  paused: Bool,
+  @httpHeader("X-Grafana-Org-Id")
+  orgId: Long,
+}
+
+@references([{resource: Alert}])
+structure PauseAlertOutput {
+  @required
+  @documentation("The alert ID.")
+  id: AlertId,
+  @required
+  @documentation("Alert state.")
+  state: String,
+  @required
+  @documentation("Message.")
+  message: String,
 }
