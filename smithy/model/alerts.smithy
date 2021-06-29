@@ -113,6 +113,8 @@ structure AlertTestInput {
   dashboard: Document,
   @required
   panelId: Long,
+  @httpHeader("X-Grafana-Org-Id")
+  orgId: Long,
 }
 
 structure AlertTestOutput {
