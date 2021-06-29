@@ -17,6 +17,7 @@ service Grafana {
     operations: [
       QueryMetricsV2,
       AlertTest,
+      GetAlertStatesForDashboard,
     ],
 }
 

@@ -42,7 +42,7 @@ structure GetAlertOutput {
   @required
   dashboardId:    Long,
   @required
-  panelId:        Long,
+  panelId:        PanelId,
   @required
   name:           String,
   @required
@@ -117,7 +117,7 @@ structure AlertTestInput {
   @required
   dashboard: Document,
   @required
-  panelId: Long,
+  panelId: PanelId,
   @httpHeader("X-Grafana-Org-Id")
   orgId: Long,
 }
@@ -189,4 +189,45 @@ structure PauseAlertOutput {
   @required
   @documentation("Message.")
   message: String,
+}
+
+@readonly
+@http(method: "GET", uri: "/api/alert-states-for-dashboard")
+@documentation("Get alert states for a dashboard.")
+operation GetAlertStatesForDashboard {
+  input: GetAlertStatesForDashboardInput,
+  output: GetAlertStatesForDashboardOutput,
+  errors: [BadRequest, InternalServerError],
+}
+
+structure GetAlertStatesForDashboardInput {
+  @required
+  @httpQuery("dashboardId")
+  @documentation("The dashboard ID.")
+  dashboardId: DashboardId,
+  @httpHeader("X-Grafana-Org-Id")
+  @documentation("Organization ID.")
+  orgId: Long,
+}
+
+structure GetAlertStatesForDashboardOutput {
+  @required
+  @documentation("The found alert states.")
+  items:             AlertStateInfos,
+}
+
+list AlertStateInfos {
+  member: AlertStateInfo,
+}
+
+structure AlertStateInfo {
+  @documentation("Alert ID.")
+	id: Long,
+  @documentation("Corresponding dashboard ID.")
+	dashboardId: DashboardId,
+  @documentation("Corresponding panel ID.")
+	panelId: PanelId,
+  @documentation("State.")
+	State: String,
+	NewStateDate: Timestamp,
 }
