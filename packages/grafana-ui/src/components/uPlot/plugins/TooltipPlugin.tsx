@@ -116,7 +116,12 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
     }
   }, [plotCtx, config, setFocusedPointIdx, setFocusedSeriesIdx, setCoords]);
 
-  if (!plotInstance || focusedPointIdx === null || mode === TooltipDisplayMode.None) {
+  if (
+    !plotInstance ||
+    focusedPointIdx === null ||
+    (focusedSeriesIdx && focusedSeriesIdx > otherProps.data.fields.length - 1) ||
+    mode === TooltipDisplayMode.None
+  ) {
     return null;
   }
 
