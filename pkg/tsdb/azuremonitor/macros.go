@@ -113,7 +113,7 @@ func (m *kqlMacroEngine) evaluateMacro(name string, defaultTimeField string, arg
 				it = defaultInterval
 			} else {
 				it, err = interval.GetIntervalFrom(&models.DataSource{
-					JsonData: simplejson.NewFromAny(dsInfo.JSONData),
+					JsonData: dsInfo.JSONData,
 				}, model, defaultInterval)
 				if err != nil {
 					azlog.Warn("Unable to get interval from query", "model", model)

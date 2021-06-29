@@ -11,12 +11,14 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/azcredentials"
 )
 
 const (
@@ -58,12 +60,14 @@ type azureMonitorSettings struct {
 }
 
 type datasourceInfo struct {
+	Cloud       string
+	Credentials azcredentials.AzureCredentials
 	Settings    azureMonitorSettings
 	Services    map[string]datasourceService
 	Routes      map[string]azRoute
 	HTTPCliOpts httpclient.Options
 
-	JSONData                map[string]interface{}
+	JSONData                *simplejson.Json
 	DecryptedSecureJSONData map[string]string
 	DatasourceID            int64
 	OrgID                   int64
@@ -74,10 +78,9 @@ type datasourceService struct {
 	HTTPClient *http.Client
 }
 
-func NewInstanceSettings() datasource.InstanceFactoryFunc {
+func NewInstanceSettings(cfg *setting.Cfg) datasource.InstanceFactoryFunc {
 	return func(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-		jsonData := map[string]interface{}{}
-		err := json.Unmarshal(settings.JSONData, &jsonData)
+		jsonData, err := simplejson.NewJson(settings.JSONData)
 		if err != nil {
 			return nil, fmt.Errorf("error reading settings: %w", err)
 		}
@@ -87,20 +90,34 @@ func NewInstanceSettings() datasource.InstanceFactoryFunc {
 		if err != nil {
 			return nil, fmt.Errorf("error reading settings: %w", err)
 		}
+
+		cloud, err := getAzureCloud(cfg, jsonData)
+		if err != nil {
+			return nil, fmt.Errorf("error getting credentials: %w", err)
+		}
+
+		credentials, err := getAzureCredentials(cfg, jsonData, settings.DecryptedSecureJSONData)
+		if err != nil {
+			return nil, fmt.Errorf("error getting credentials: %w", err)
+		}
+
 		httpCliOpts, err := settings.HTTPClientOptions()
 		if err != nil {
 			return nil, fmt.Errorf("error getting http options: %w", err)
 		}
 
 		model := datasourceInfo{
+			Cloud:                   cloud,
+			Credentials:             credentials,
 			Settings:                azMonitorSettings,
 			JSONData:                jsonData,
 			DecryptedSecureJSONData: settings.DecryptedSecureJSONData,
 			DatasourceID:            settings.ID,
 			Services:                map[string]datasourceService{},
-			Routes:                  routes[azMonitorSettings.CloudName],
+			Routes:                  routes[cloud],
 			HTTPCliOpts:             httpCliOpts,
 		}
+
 		return model, nil
 	}
 }
@@ -141,7 +158,7 @@ func newExecutor(im instancemgmt.InstanceManager, cfg *setting.Cfg, executors ma
 }
 
 func (s *Service) Init() error {
-	im := datasource.NewInstanceManager(NewInstanceSettings())
+	im := datasource.NewInstanceManager(NewInstanceSettings(s.Cfg))
 	executors := map[string]azDatasourceExecutor{
 		azureMonitor:       &AzureMonitorDatasource{},
 		appInsights:        &ApplicationInsightsDatasource{},

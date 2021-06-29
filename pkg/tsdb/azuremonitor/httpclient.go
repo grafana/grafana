@@ -12,12 +12,7 @@ func httpClientProvider(route azRoute, model datasourceInfo, cfg *setting.Cfg) (
 	var clientProvider *httpclient.Provider
 
 	if len(route.Scopes) > 0 {
-		credentials, err := getAzureCredentials(cfg, model)
-		if err != nil {
-			return nil, err
-		}
-
-		tokenProvider := aztokenprovider.NewAzureAccessTokenProvider(cfg, credentials, route.Scopes)
+		tokenProvider := aztokenprovider.NewAzureAccessTokenProvider(cfg, model.Credentials, route.Scopes)
 
 		clientProvider = httpclient.NewProvider(httpclient.ProviderOptions{
 			Middlewares: []httpclient.Middleware{
