@@ -1,5 +1,5 @@
 import React from 'react';
-import { InlineField, InlineFieldRow, Select, Switch } from '@grafana/ui';
+import { InlineField, InlineFieldRow, InlineSwitch, Select } from '@grafana/ui';
 import { TagFilter } from 'app/core/components/TagFilter/TagFilter';
 import { SelectableValue } from '@grafana/data';
 import { GrafanaAnnotationQuery, GrafanaAnnotationType } from '../types';
@@ -87,9 +87,7 @@ export default function AnnotationQuery({ query, onChange }: Props) {
       {type === GrafanaAnnotationType.Tags && (
         <InlineFieldRow>
           <InlineField label="Match any" labelWidth={18} tooltip={matchTooltipContent}>
-            <div className="gf-form-switch">
-              <Switch value={matchAny} onChange={onMatchAnyChange} />
-            </div>
+            <InlineSwitch value={matchAny} onChange={onMatchAnyChange} />
           </InlineField>
           <InlineField label="Tags" labelWidth="auto" tooltip={tagsTooltipContent}>
             <TagFilter onChange={onTagsChange} tagOptions={getAnnotationTags} tags={tags} />
