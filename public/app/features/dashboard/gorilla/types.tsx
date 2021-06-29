@@ -1,8 +1,10 @@
-import React, { useContext, useMemo, useState } from 'react';
+import React, { ReactElement, useContext, useMemo, useState } from 'react';
+import { get } from 'lodash';
 import { DashNav, OwnProps as DashNavProps } from '../components/DashNav';
 import { selectors } from '@grafana/e2e-selectors';
 import { getConfig } from '../../../core/config';
-import { PageToolbar, PageToolbarProps } from '@grafana/ui';
+import { PageToolbar, PageToolbarProps, ToolbarButton, ToolbarButtonProps } from '@grafana/ui';
+import { DashNavTimeControls, Props as DashNavTimeControlsProps } from '../components/DashNav/DashNavTimeControls';
 
 export enum GorillaMode {
   hidden = 'hidden',
@@ -17,6 +19,7 @@ export interface GorillaContextItem {
 export interface GorillaDashNavItem extends GorillaContextItem {
   timePicker: GorillaContextItem;
   title: GorillaContextItem;
+  tvToggle: GorillaContextItem;
 }
 
 export interface GorillaContextType {
@@ -37,6 +40,9 @@ export const defaultValues: GorillaContextConfiguration = {
       mode: GorillaMode.editable,
     },
     title: {
+      mode: GorillaMode.editable,
+    },
+    tvToggle: {
       mode: GorillaMode.editable,
     },
   },
@@ -81,7 +87,7 @@ export function GorillaDashNav(props: DashNavProps): JSX.Element | null {
   }
 }
 
-export function GorillaPageToolbar(props: PageToolbarProps): React.ReactElement {
+export function GorillaPageToolbar(props: PageToolbarProps): ReactElement {
   const {
     dashNav: { title },
   } = useGorillaConfig();
@@ -108,6 +114,44 @@ export function GorillaPageToolbar(props: PageToolbarProps): React.ReactElement 
     default: {
       return <PageToolbar {...props} />;
     }
+  }
+}
+
+export function GorillaDashNavTimeControls(props: DashNavTimeControlsProps): ReactElement | null {
+  const {
+    dashNav: { timePicker },
+  } = useGorillaConfig();
+
+  if (!getConfig().featureToggles.customKiosk) {
+    return <DashNavTimeControls {...props} />;
+  }
+
+  switch (timePicker.mode) {
+    case GorillaMode.hidden: {
+      return null;
+    }
+
+    default: {
+      return <DashNavTimeControls {...props} />;
+    }
+  }
+}
+
+export function GorillaToolbarButton(props: ToolbarButtonProps & { configPath: string }): ReactElement | null {
+  const config = useGorillaConfig();
+  const { configPath } = props;
+  const value = get(config, configPath) as GorillaContextItem | undefined;
+
+  if (!getConfig().featureToggles.customKiosk) {
+    return <ToolbarButton {...props} />;
+  }
+
+  switch (value?.mode) {
+    case GorillaMode.hidden:
+      return null;
+
+    default:
+      return <ToolbarButton {...props} />;
   }
 }
 

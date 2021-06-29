@@ -10,6 +10,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { Link } from '..';
 import { getFocusStyles } from '../../themes/mixins';
 
+/** @alpha */
 export interface PageToolbarProps {
   pageIcon?: IconName;
   title: string;

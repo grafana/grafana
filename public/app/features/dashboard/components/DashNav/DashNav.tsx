@@ -18,7 +18,7 @@ import { SaveDashboardModalProxy } from 'app/features/dashboard/components/SaveD
 import { locationService } from '@grafana/runtime';
 import { toggleKioskMode } from 'app/core/navigation/kiosk';
 import { getDashboardSrv } from '../../services/DashboardSrv';
-import { GorillaPageToolbar } from '../../gorilla/types';
+import { GorillaDashNavTimeControls, GorillaPageToolbar, GorillaToolbarButton } from '../../gorilla/types';
 
 export interface OwnProps {
   dashboard: DashboardModel;
@@ -180,7 +180,13 @@ class DashNav extends PureComponent<Props> {
     const snapshotUrl = snapshot && snapshot.originalUrl;
     const buttons: ReactNode[] = [];
     const tvButton = (
-      <ToolbarButton tooltip="Cycle view mode" icon="monitor" onClick={this.onToggleTVMode} key="tv-button" />
+      <GorillaToolbarButton
+        configPath="dashNav.tvToggle"
+        tooltip="Cycle view mode"
+        icon="monitor"
+        onClick={this.onToggleTVMode}
+        key="tv-button"
+      />
     );
 
     if (this.isPlaylistRunning()) {
@@ -188,7 +194,14 @@ class DashNav extends PureComponent<Props> {
     }
 
     if (kioskMode === KioskMode.TV) {
-      return [this.renderTimeControls(), tvButton];
+      return [
+        <GorillaDashNavTimeControls
+          dashboard={dashboard}
+          onChangeTimeZone={updateTimeZoneForSession}
+          key="time-controls"
+        />,
+        tvButton,
+      ];
     }
 
     if (canEdit && !isFullscreen) {

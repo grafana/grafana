@@ -133,6 +133,7 @@ export function GeneralSettingsUnconnected({ dashboard, updateTimeZone }: Props)
                     mode: GorillaMode.editable,
                     timePicker: { mode: GorillaMode.editable },
                     title: { mode: GorillaMode.hidden },
+                    tvToggle: { mode: GorillaMode.editable },
                   },
                 })
               : onChangeConfig({
@@ -140,6 +141,7 @@ export function GeneralSettingsUnconnected({ dashboard, updateTimeZone }: Props)
                     mode: GorillaMode.hidden,
                     timePicker: { mode: GorillaMode.hidden },
                     title: { mode: GorillaMode.hidden },
+                    tvToggle: { mode: GorillaMode.hidden },
                   },
                 })
           }
