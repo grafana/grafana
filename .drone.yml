@@ -332,7 +332,7 @@ steps:
       from_secret: grafana_misc_stats_api_key
   failure: ignore
   depends_on:
-  - initialize
+  - build-frontend
 
 - name: build-backend
   image: grafana/build-container:1.4.1
