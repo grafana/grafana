@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { ReactElement } from 'react';
 import { css } from '@emotion/css';
 import { SelectableValue, dateTimeParse } from '@grafana/data';
 import { Field, LoadingPlaceholder, Select } from '@grafana/ui';
@@ -15,7 +15,7 @@ import { Page as PluginPage } from '../components/Page';
 import { CatalogTab, getCatalogNavModel } from './nav';
 import { Page } from 'app/core/components/Page/Page';
 
-export default function Browse(): JSX.Element | null {
+export default function Browse(): ReactElement {
   const location = useLocation();
   const query = locationSearchToObject(location.search);
 
