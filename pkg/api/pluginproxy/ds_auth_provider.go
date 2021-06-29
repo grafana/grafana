@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/tokenprovider"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -93,7 +92,7 @@ func getTokenProvider(ctx context.Context, cfg *setting.Cfg, ds *models.DataSour
 		if tokenAuth == nil {
 			return nil, fmt.Errorf("'tokenAuth' not configured for authentication type '%s'", authType)
 		}
-		provider := tokenprovider.NewAzureAccessTokenProvider(ctx, cfg, tokenAuth)
+		provider := newAzureAccessTokenProvider(ctx, cfg, tokenAuth)
 		return provider, nil
 
 	case "gce":

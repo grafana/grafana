@@ -125,7 +125,7 @@ func newExecutor(im instancemgmt.InstanceManager, cfg *setting.Cfg, executors ma
 			if _, ok := dsInfo.Services[dst]; !ok {
 				// Create an HTTP Client if it has not been created before
 				route := dsInfo.Routes[dst]
-				client, err := newHTTPClient(ctx, route, dsInfo, cfg)
+				client, err := newHTTPClient(route, dsInfo, cfg)
 				if err != nil {
 					return nil, err
 				}

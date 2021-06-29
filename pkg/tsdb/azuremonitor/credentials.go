@@ -1,13 +1,12 @@
 package azuremonitor
 
 import (
-	"context"
 	"net/http"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/tokenprovider"
+	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/aztokenprovider"
 )
 
 // Azure cloud names specific to Azure Monitor
@@ -27,7 +26,7 @@ const (
 	azureResourceGraph = "Azure Resource Graph"
 )
 
-func httpClientProvider(ctx context.Context, route azRoute, model datasourceInfo, cfg *setting.Cfg) *httpclient.Provider {
+func httpClientProvider(route azRoute, model datasourceInfo, cfg *setting.Cfg) *httpclient.Provider {
 	if len(route.Scopes) > 0 {
 		tokenAuth := &plugins.JwtTokenAuth{
 			Url:    route.URL,
@@ -40,10 +39,10 @@ func httpClientProvider(ctx context.Context, route azRoute, model datasourceInfo
 				"client_secret":   model.DecryptedSecureJSONData["clientSecret"],
 			},
 		}
-		tokenProvider := tokenprovider.NewAzureAccessTokenProvider(ctx, cfg, tokenAuth)
+		tokenProvider := aztokenprovider.NewAzureAccessTokenProvider(cfg, tokenAuth)
 		return httpclient.NewProvider(httpclient.ProviderOptions{
 			Middlewares: []httpclient.Middleware{
-				tokenprovider.AuthMiddleware(tokenProvider),
+				aztokenprovider.AuthMiddleware(tokenProvider),
 			},
 		})
 	} else {
@@ -51,7 +50,7 @@ func httpClientProvider(ctx context.Context, route azRoute, model datasourceInfo
 	}
 }
 
-func newHTTPClient(ctx context.Context, route azRoute, model datasourceInfo, cfg *setting.Cfg) (*http.Client, error) {
+func newHTTPClient(route azRoute, model datasourceInfo, cfg *setting.Cfg) (*http.Client, error) {
 	model.HTTPCliOpts.Headers = route.Headers
-	return httpClientProvider(ctx, route, model, cfg).New(model.HTTPCliOpts)
+	return httpClientProvider(route, model, cfg).New(model.HTTPCliOpts)
 }

@@ -1,7 +1,6 @@
 package azuremonitor
 
 import (
-	"context"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/setting"
@@ -9,7 +8,6 @@ import (
 )
 
 func Test_httpCliProvider(t *testing.T) {
-	ctx := context.TODO()
 	cfg := &setting.Cfg{}
 	model := datasourceInfo{
 		Settings:                azureMonitorSettings{},
@@ -43,7 +41,7 @@ func Test_httpCliProvider(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cli := httpClientProvider(ctx, tt.route, model, cfg)
+			cli := httpClientProvider(tt.route, model, cfg)
 			// Cannot test that the cli middleware works properly since the azcore sdk
 			// rejects the TLS certs (if provided)
 			if len(cli.Opts.Middlewares) != tt.expectedMiddlewares {
