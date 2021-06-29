@@ -27,7 +27,7 @@ export const SettingsEditor = ({ bucketAgg }: Props) => {
     <SettingsEditorContainer label={settingsDescription}>
       {bucketAgg.type === 'terms' && <TermsSettingsEditor bucketAgg={bucketAgg} />}
       {bucketAgg.type === 'date_histogram' && <DateHistogramSettingsEditor bucketAgg={bucketAgg} />}
-      {bucketAgg.type === 'filters' && <FiltersSettingsEditor value={bucketAgg} />}
+      {bucketAgg.type === 'filters' && <FiltersSettingsEditor bucketAgg={bucketAgg} />}
 
       {bucketAgg.type === 'geohash_grid' && (
         <InlineField label="Precision" {...inlineFieldProps}>
