@@ -84,6 +84,7 @@ type testState struct {
 func newTestLive(t *testing.T) *live.GrafanaLive {
 	gLive := live.NewGrafanaLive()
 	gLive.RouteRegister = routing.NewRouteRegister()
+	gLive.Cfg = &setting.Cfg{AppURL: "http://localhost:3000/"}
 	err := gLive.Init()
 	require.NoError(t, err)
 	return gLive

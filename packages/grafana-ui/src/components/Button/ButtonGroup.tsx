@@ -23,22 +23,17 @@ const getStyles = (theme: GrafanaTheme2) => ({
   wrapper: css`
     display: flex;
 
-    > button {
-      border-radius: 0;
+    > .button-group:not(:first-child) > button,
+    > button:not(:first-child) {
+      border-top-left-radius: 0;
+      border-bottom-left-radius: 0;
+    }
+
+    > .button-group:not(:last-child) > button,
+    > button:not(:last-child) {
+      border-top-right-radius: 0;
+      border-bottom-right-radius: 0;
       border-right-width: 0;
-
-      &.toolbar-button {
-        margin-left: 0;
-      }
-
-      &:last-of-type {
-        border-radius: 0 ${theme.shape.borderRadius()} ${theme.shape.borderRadius()} 0;
-        border-right-width: 1px;
-      }
-
-      &:first-child {
-        border-radius: ${theme.shape.borderRadius()} 0 0 ${theme.shape.borderRadius()};
-      }
     }
   `,
 });
