@@ -167,6 +167,7 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
     return (
       <>
         <QueryEditor
+          annotation={annotation}
           key={datasource?.name}
           query={query}
           datasource={datasource}
