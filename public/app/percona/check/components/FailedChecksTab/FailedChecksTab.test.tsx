@@ -21,14 +21,14 @@ describe('FailedChecksTab::', () => {
   afterEach(() => getAlertsSpy.mockClear());
 
   it('should fetch active alerts at startup', async () => {
-    const wrapper = await getMount(<FailedChecksTab hasNoAccess={false} />);
+    const wrapper = await getMount(<FailedChecksTab />);
 
     wrapper.update();
     expect(CheckService.getActiveAlerts).toHaveBeenCalledTimes(1);
   });
 
   it('should render a spinner at startup, while loading', async () => {
-    const wrapper = await getMount(<FailedChecksTab hasNoAccess={false} />);
+    const wrapper = await getMount(<FailedChecksTab />);
 
     expect(wrapper.find(dataQa('db-checks-failed-checks-spinner'))).toHaveLength(1);
     wrapper.update();
@@ -41,7 +41,7 @@ describe('FailedChecksTab::', () => {
     });
     const loggerSpy = spyOn(logger, 'error');
 
-    const wrapper = await getMount(<FailedChecksTab hasNoAccess={false} />);
+    const wrapper = await getMount(<FailedChecksTab />);
     wrapper.update();
 
     expect(loggerSpy).toBeCalledTimes(1);
@@ -52,7 +52,7 @@ describe('FailedChecksTab::', () => {
       throw Error('test');
     });
     const loggerSpy = spyOn(logger, 'error');
-    const wrapper = await getMount(<FailedChecksTab hasNoAccess={false} />);
+    const wrapper = await getMount(<FailedChecksTab />);
     wrapper.update();
     const runChecksButton = wrapper.find(LoaderButton);
 
@@ -63,7 +63,7 @@ describe('FailedChecksTab::', () => {
 
   it('should call the API to run checks when the "run checks" button gets clicked', async () => {
     const runChecksSpy = jest.spyOn(CheckService, 'runDbChecks');
-    const wrapper = await getMount(<FailedChecksTab hasNoAccess={false} />);
+    const wrapper = await getMount(<FailedChecksTab />);
     wrapper.update();
     const runChecksButton = wrapper.find(LoaderButton);
 
@@ -75,7 +75,7 @@ describe('FailedChecksTab::', () => {
   });
 
   it('should render a table after having fetched the alerts', async () => {
-    const wrapper = await getMount(<FailedChecksTab hasNoAccess={false} />);
+    const wrapper = await getMount(<FailedChecksTab />);
     expect(wrapper.find(Table)).toHaveLength(0);
     wrapper.update();
 

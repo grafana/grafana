@@ -11,6 +11,7 @@ import { Communication } from './components/Communication/Communication';
 import PageWrapper from '../shared/components/PageWrapper/PageWrapper';
 import { ContentTab, TabbedContent, TabOrientation } from '../shared/components/Elements/TabbedContent';
 import { useCancelToken } from '../shared/components/hooks/cancelToken.hook';
+import { EmptyBlock } from '../shared/components/Elements/EmptyBlock';
 
 export const SettingsPanel: FC = () => {
   const { path: basePath } = PAGE_MODEL;
@@ -18,6 +19,7 @@ export const SettingsPanel: FC = () => {
 
   const theme = useTheme();
   const [loading, setLoading] = useState(true);
+  const [hasNoAccess, setHasNoAccess] = useState(false);
   const styles = getSettingsStyles(theme);
   const { metrics, advanced, ssh, alertManager, perconaPlatform, communication } = Messages.tabs;
   const [settings, setSettings] = useState<Settings>();
@@ -52,9 +54,12 @@ export const SettingsPanel: FC = () => {
   const getSettings = async () => {
     try {
       setLoading(true);
-      const settings = await SettingsService.getSettings(generateToken(GET_SETTINGS_CANCEL_TOKEN));
+      const settings = await SettingsService.getSettings(generateToken(GET_SETTINGS_CANCEL_TOKEN), true);
       setSettings(settings);
     } catch (e) {
+      if (e.response?.status === 401) {
+        setHasNoAccess(true);
+      }
       logger.error(e);
     } finally {
       setLoading(false);
@@ -136,20 +141,27 @@ export const SettingsPanel: FC = () => {
   return (
     <PageWrapper pageModel={PAGE_MODEL}>
       <div className={styles.settingsWrapper}>
-        {loading ? (
-          <Spinner />
-        ) : (
-          <TabbedContent
-            className={styles.tabsWrapper}
-            tabs={tabs}
-            basePath={basePath}
-            orientation={TabOrientation.Vertical}
-            tabsDataQa="settings-tabs"
-            contentDataQa="settings-tab-content"
-            renderTab={({ Content }) => <Content className={styles.tabContentWrapper} />}
-          ></TabbedContent>
+        {(loading || hasNoAccess) && (
+          <div className={styles.emptyBlock}>
+            <EmptyBlock dataQa="empty-block">
+              {loading ? <Spinner /> : hasNoAccess && <div data-qa="unauthorized">{Messages.unauthorized}</div>}
+            </EmptyBlock>
+          </div>
         )}
-        <Diagnostics />
+        {!loading && !hasNoAccess && (
+          <>
+            <TabbedContent
+              className={styles.tabsWrapper}
+              tabs={tabs}
+              basePath={basePath}
+              orientation={TabOrientation.Vertical}
+              tabsDataQa="settings-tabs"
+              contentDataQa="settings-tab-content"
+              renderTab={({ Content }) => <Content className={styles.tabContentWrapper} />}
+            />
+            <Diagnostics />
+          </>
+        )}
       </div>
     </PageWrapper>
   );

@@ -3,6 +3,7 @@ import { useStyles } from '@grafana/ui';
 import { Agents, NodesTab, Services } from './Tabs';
 import { getStyles } from './Inventory.styles';
 import PageWrapper from '../shared/components/PageWrapper/PageWrapper';
+import { CheckPermissions } from '../shared/components/Elements/CheckPermissions/CheckPermissions';
 import { TabbedContent, ContentTab } from '../shared/components/Elements/TabbedContent';
 import { PAGE_MODEL } from './Inventory.constants';
 import { TabKeys } from './Inventory.types';
@@ -38,7 +39,15 @@ export const InventoryPanel = () => {
   return (
     <PageWrapper pageModel={PAGE_MODEL}>
       <div className={styles.inventoryWrapper}>
-        <TabbedContent tabs={tabs} basePath={basePath} />
+        <TabbedContent
+          tabs={tabs}
+          basePath={basePath}
+          renderTab={({ Content }) => (
+            <CheckPermissions>
+              <Content />
+            </CheckPermissions>
+          )}
+        />
       </div>
     </PageWrapper>
   );

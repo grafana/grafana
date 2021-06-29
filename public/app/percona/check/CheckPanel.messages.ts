@@ -6,5 +6,4 @@ export const Messages = {
   stt: 'Security Threat Tool',
   pmmSettings: 'PMM Settings.',
   readMore: 'Read more',
-  unauthorized: 'Insufficient access rights.',
 };

@@ -1,11 +1,12 @@
-import React, { FC, useMemo } from 'react';
+import React, { FC, useCallback, useMemo, useState } from 'react';
 import { useTheme } from '@grafana/ui';
 import { Database } from 'app/percona/shared/components/Elements/Icons/Database';
 import { getStyles } from './AddInstance.styles';
 import { Messages } from './AddInstance.messages';
 import { AddInstanceProps, SelectInstanceProps } from './AddInstance.types';
 import { InstanceTypes } from '../../panel.types';
-import { useAzure } from './AddInstance.hooks';
+import { Settings } from 'app/percona/settings/Settings.types';
+import { CheckPermissions } from 'app/percona/shared/components/Elements/CheckPermissions/CheckPermissions';
 
 export const SelectInstance: FC<SelectInstanceProps> = ({ type, selectInstanceType, title }) => {
   const theme = useTheme();
@@ -28,8 +29,10 @@ export const SelectInstance: FC<SelectInstanceProps> = ({ type, selectInstanceTy
 export const AddInstance: FC<AddInstanceProps> = ({ onSelectInstanceType }) => {
   const theme = useTheme();
   const styles = getStyles(theme);
-  const [showAzure] = useAzure();
-
+  const [showAzure, setShowAzure] = useState(false);
+  const onSettingsLoadSuccess = useCallback((settings: Settings) => {
+    setShowAzure(!!settings.azureDiscoverEnabled);
+  }, []);
   const instanceList = useMemo(
     () => [
       { type: InstanceTypes.rds, title: Messages.titles.rds },
@@ -47,19 +50,21 @@ export const AddInstance: FC<AddInstanceProps> = ({ onSelectInstanceType }) => {
   const selectInstanceType = (type: string) => () => onSelectInstanceType({ type });
 
   return (
-    <section className={styles.content}>
-      <nav className={styles.navigationPanel}>
-        {instanceList
-          .filter(({ isHidden }) => !isHidden)
-          .map((item) => (
-            <SelectInstance
-              selectInstanceType={selectInstanceType}
-              type={item.type}
-              title={item.title}
-              key={item.type}
-            />
-          ))}
-      </nav>
-    </section>
+    <CheckPermissions onSettingsLoadSuccess={onSettingsLoadSuccess}>
+      <section className={styles.content}>
+        <nav className={styles.navigationPanel}>
+          {instanceList
+            .filter(({ isHidden }) => !isHidden)
+            .map((item) => (
+              <SelectInstance
+                selectInstanceType={selectInstanceType}
+                type={item.type}
+                title={item.title}
+                key={item.type}
+              />
+            ))}
+        </nav>
+      </section>
+    </CheckPermissions>
   );
 };

@@ -56,7 +56,7 @@ const AddInstancePanel = () => {
 
   return (
     <PageWrapper pageModel={PAGE_MODEL}>
-      <div className={cx(styles.content, styles.contentPadding)}>
+      <div className={cx(styles.content)}>
         {!selectedInstance.type ? <AddInstance onSelectInstanceType={selectInstance} /> : <InstanceForm />}
       </div>
     </PageWrapper>

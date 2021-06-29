@@ -8,25 +8,12 @@ import { TableBody } from './TableBody';
 interface TableProps {
   columns: Column[];
   data?: ActiveCheck[];
-  hasNoAccess?: boolean;
 }
 
-export const Table: FC<TableProps> = ({ columns, data = [], hasNoAccess = false }) => {
+export const Table: FC<TableProps> = ({ columns, data = [] }) => {
   const theme = useTheme();
   const styles = getStyles(theme);
   const isEmpty = !data.length;
-
-  if (hasNoAccess) {
-    return (
-      <>
-        <div className={styles.wrapper}>
-          <div className={styles.empty} data-qa="db-check-panel-no-access">
-            Insufficient access rights.
-          </div>
-        </div>
-      </>
-    );
-  }
 
   return (
     <>

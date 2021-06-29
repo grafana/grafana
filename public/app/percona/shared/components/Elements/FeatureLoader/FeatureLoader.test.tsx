@@ -1,5 +1,7 @@
 import React from 'react';
+import { dataQa } from '@percona/platform-core';
 import { FeatureLoader } from './FeatureLoader';
+import { Messages } from './FeatureLoader.messages';
 import { SettingsService } from 'app/percona/settings/Settings.service';
 import { EmptyBlock } from '../EmptyBlock';
 import { getMount } from 'app/percona/shared/helpers/testUtils';
@@ -49,5 +51,17 @@ describe('FeatureLoader', () => {
     const wrapper = await getMount(<FeatureLoader featureName="IA" featureFlag="alertingEnabled" onError={spy} />);
     wrapper.update();
     expect(spy).toHaveBeenCalledWith(errorObj);
+  });
+
+  it('should show insufficient access permissions message', async () => {
+    const errorObj = { response: { status: 401 } };
+    jest.spyOn(SettingsService, 'getSettings').mockImplementationOnce(() => {
+      throw errorObj;
+    });
+
+    const wrapper = await getMount(<FeatureLoader featureName="IA" featureFlag="alertingEnabled" onError={() => {}} />);
+    wrapper.update();
+
+    expect(wrapper.find(dataQa('unauthorized')).text()).toBe(Messages.unauthorized);
   });
 });
