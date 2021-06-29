@@ -64,14 +64,16 @@ module.exports = {
       // we need full path to root node_modules for grafana-enterprise symlink to work
       path.resolve('node_modules'),
     ],
+    fallback: {
+      fs: false,
+      stream: false,
+    },
   },
+  ignoreWarnings: [/export .* was not found in/],
   stats: {
     children: false,
-    warningsFilter: /export .* was not found in/,
     source: false,
-  },
-  node: {
-    fs: 'empty',
+    errorDetails: true,
   },
   plugins: [
     new CopyUniconsPlugin(),
@@ -114,16 +116,10 @@ module.exports = {
       },
       {
         test: require.resolve('jquery'),
-        use: [
-          {
-            loader: 'expose-loader',
-            query: 'jQuery',
-          },
-          {
-            loader: 'expose-loader',
-            query: '$',
-          },
-        ],
+        loader: 'expose-loader',
+        options: {
+          exposes: ['$', 'jQuery'],
+        },
       },
       {
         test: /\.html$/,
@@ -135,10 +131,11 @@ module.exports = {
           {
             loader: 'html-loader',
             options: {
-              attrs: [],
-              minimize: true,
-              removeComments: false,
-              collapseWhitespace: false,
+              sources: false,
+              minimize: {
+                removeComments: false,
+                collapseWhitespace: false,
+              },
             },
           },
         ],
@@ -170,7 +167,7 @@ module.exports = {
   },
   // https://webpack.js.org/plugins/split-chunks-plugin/#split-chunks-example-3
   optimization: {
-    moduleIds: 'hashed',
+    moduleIds: 'named',
     runtimeChunk: 'single',
     splitChunks: {
       chunks: 'all',
@@ -194,7 +191,7 @@ module.exports = {
           priority: 50,
           enforce: true,
         },
-        vendors: {
+        defaultVendors: {
           test: /[\\/]node_modules[\\/].*[jt]sx?$/,
           chunks: 'initial',
           priority: -10,

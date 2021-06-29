@@ -1,9 +1,9 @@
 'use strict';
 
-const merge = require('webpack-merge');
+const { merge } = require('webpack-merge');
 const common = require('./webpack.common.js');
 const path = require('path');
-const webpack = require('webpack');
+const { HotModuleReplacementPlugin, DefinePlugin } = require('webpack');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
@@ -50,7 +50,7 @@ module.exports = (env = {}) =>
     plugins: [
       new CleanWebpackPlugin(),
       env.noTsCheck
-        ? new webpack.DefinePlugin({}) // bogus plugin to satisfy webpack API
+        ? new DefinePlugin({}) // bogus plugin to satisfy webpack API
         : new ForkTsCheckerWebpackPlugin({
             eslint: {
               enabled: true,
@@ -78,17 +78,19 @@ module.exports = (env = {}) =>
         inject: false,
         chunksSortMode: 'none',
         excludeChunks: ['dark', 'light'],
+        templateParameters: templateParametersGenerator,
       }),
       new HtmlWebpackPlugin({
         filename: path.resolve(__dirname, '../../public/views/index.html'),
         template: path.resolve(__dirname, '../../public/views/index-template.html'),
+        hash: true,
         inject: false,
         chunksSortMode: 'none',
         excludeChunks: ['dark', 'light'],
+        templateParameters: templateParametersGenerator,
       }),
-      new webpack.NamedModulesPlugin(),
-      new webpack.HotModuleReplacementPlugin(),
-      new webpack.DefinePlugin({
+      new HotModuleReplacementPlugin(),
+      new DefinePlugin({
         'process.env': {
           NODE_ENV: JSON.stringify('development'),
         },
@@ -98,3 +100,16 @@ module.exports = (env = {}) =>
       // })
     ],
   });
+
+function templateParametersGenerator(compilation, assets, assetTags, options) {
+  console.log(assets);
+  return {
+    compilation: compilation,
+    webpackConfig: compilation.options,
+    htmlWebpackPlugin: {
+      tags: assetTags,
+      files: assets,
+      options: options,
+    },
+  };
+}
