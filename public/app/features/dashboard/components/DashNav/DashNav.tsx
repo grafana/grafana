@@ -1,12 +1,12 @@
 // Libaries
-import React, { PureComponent, FC, ReactNode } from 'react';
+import React, { FC, PureComponent, ReactNode } from 'react';
 import { connect, MapDispatchToProps } from 'react-redux';
 // Utils & Services
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 // Components
 import { DashNavButton } from './DashNavButton';
 import { DashNavTimeControls } from './DashNavTimeControls';
-import { ButtonGroup, ModalsController, ToolbarButton, PageToolbar } from '@grafana/ui';
+import { ButtonGroup, ModalsController, ToolbarButton } from '@grafana/ui';
 import { locationUtil, textUtil } from '@grafana/data';
 // State
 import { updateTimeZoneForSession } from 'app/features/profile/state/reducers';
@@ -18,6 +18,7 @@ import { SaveDashboardModalProxy } from 'app/features/dashboard/components/SaveD
 import { locationService } from '@grafana/runtime';
 import { toggleKioskMode } from 'app/core/navigation/kiosk';
 import { getDashboardSrv } from '../../services/DashboardSrv';
+import { GorillaPageToolbar } from '../../gorilla/types';
 
 export interface OwnProps {
   dashboard: DashboardModel;
@@ -246,7 +247,7 @@ class DashNav extends PureComponent<Props> {
     const parentHref = locationUtil.updateSearchParams(window.location.href, '?search=open&folder=current');
 
     return (
-      <PageToolbar
+      <GorillaPageToolbar
         pageIcon={isFullscreen ? undefined : 'apps'}
         title={title}
         parent={folderTitle}
@@ -256,7 +257,7 @@ class DashNav extends PureComponent<Props> {
         leftItems={this.renderLeftActionsButton()}
       >
         {this.renderRightActionsButton()}
-      </PageToolbar>
+      </GorillaPageToolbar>
     );
   }
 }

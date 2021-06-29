@@ -29,7 +29,7 @@ import { GrafanaTheme2, UrlQueryValue } from '@grafana/data';
 import { DashboardLoading } from '../components/DashboardLoading/DashboardLoading';
 import { DashboardFailed } from '../components/DashboardLoading/DashboardFailed';
 import { DashboardPrompt } from '../components/DashboardPrompt/DashboardPrompt';
-import { GorillaDashNav, GorillaProvider } from '../gorilla/types';
+import { GorillaDashNav } from '../gorilla/types';
 
 export interface DashboardPageRouteParams {
   uid?: string;
@@ -306,52 +306,50 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
     const inspectPanel = this.getInspectPanel();
 
     return (
-      <GorillaProvider>
-        <div className={styles.dashboardContainer}>
-          <GorillaDashNav
-            dashboard={dashboard}
-            title={dashboard.title}
-            folderTitle={dashboard.meta.folderTitle}
-            isFullscreen={!!viewPanel}
-            onAddPanel={this.onAddPanel}
-            kioskMode={kioskMode}
-            hideTimePicker={dashboard.timepicker.hidden}
-          />
+      <div className={styles.dashboardContainer}>
+        <GorillaDashNav
+          dashboard={dashboard}
+          title={dashboard.title}
+          folderTitle={dashboard.meta.folderTitle}
+          isFullscreen={!!viewPanel}
+          onAddPanel={this.onAddPanel}
+          kioskMode={kioskMode}
+          hideTimePicker={dashboard.timepicker.hidden}
+        />
 
-          <DashboardPrompt dashboard={dashboard} />
+        <DashboardPrompt dashboard={dashboard} />
 
-          <div className={styles.dashboardScroll}>
-            <CustomScrollbar
-              autoHeightMin="100%"
-              setScrollTop={this.setScrollTop}
-              scrollTop={updateScrollTop}
-              hideHorizontalTrack={true}
-              updateAfterMountMs={500}
-            >
-              <div className={styles.dashboardContent}>
-                {initError && <DashboardFailed />}
-                {!editPanel && kioskMode === KioskMode.Off && (
-                  <div aria-label={selectors.pages.Dashboard.SubMenu.submenu}>
-                    <SubMenu dashboard={dashboard} annotations={dashboard.annotations.list} links={dashboard.links} />
-                  </div>
-                )}
+        <div className={styles.dashboardScroll}>
+          <CustomScrollbar
+            autoHeightMin="100%"
+            setScrollTop={this.setScrollTop}
+            scrollTop={updateScrollTop}
+            hideHorizontalTrack={true}
+            updateAfterMountMs={500}
+          >
+            <div className={styles.dashboardContent}>
+              {initError && <DashboardFailed />}
+              {!editPanel && kioskMode === KioskMode.Off && (
+                <div aria-label={selectors.pages.Dashboard.SubMenu.submenu}>
+                  <SubMenu dashboard={dashboard} annotations={dashboard.annotations.list} links={dashboard.links} />
+                </div>
+              )}
 
-                <DashboardGrid
-                  dashboard={dashboard}
-                  viewPanel={viewPanel}
-                  editPanel={editPanel}
-                  scrollTop={approximateScrollTop}
-                  isPanelEditorOpen={isPanelEditorOpen}
-                />
-              </div>
-            </CustomScrollbar>
-          </div>
-
-          {inspectPanel && <PanelInspector dashboard={dashboard} panel={inspectPanel} />}
-          {editPanel && <PanelEditor dashboard={dashboard} sourcePanel={editPanel} tab={this.props.queryParams.tab} />}
-          {queryParams.editview && <DashboardSettings dashboard={dashboard} editview={queryParams.editview} />}
+              <DashboardGrid
+                dashboard={dashboard}
+                viewPanel={viewPanel}
+                editPanel={editPanel}
+                scrollTop={approximateScrollTop}
+                isPanelEditorOpen={isPanelEditorOpen}
+              />
+            </div>
+          </CustomScrollbar>
         </div>
-      </GorillaProvider>
+
+        {inspectPanel && <PanelInspector dashboard={dashboard} panel={inspectPanel} />}
+        {editPanel && <PanelEditor dashboard={dashboard} sourcePanel={editPanel} tab={this.props.queryParams.tab} />}
+        {queryParams.editview && <DashboardSettings dashboard={dashboard} editview={queryParams.editview} />}
+      </div>
     );
   }
 }

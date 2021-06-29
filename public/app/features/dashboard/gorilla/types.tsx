@@ -1,6 +1,8 @@
 import React, { useContext, useMemo, useState } from 'react';
 import { DashNav, OwnProps as DashNavProps } from '../components/DashNav';
 import { selectors } from '@grafana/e2e-selectors';
+import { getConfig } from '../../../core/config';
+import { PageToolbar, PageToolbarProps } from '@grafana/ui';
 
 export enum GorillaMode {
   hidden = 'hidden',
@@ -14,6 +16,7 @@ export interface GorillaContextItem {
 
 export interface GorillaDashNavItem extends GorillaContextItem {
   timePicker: GorillaContextItem;
+  title: GorillaContextItem;
 }
 
 export interface GorillaContextType {
@@ -31,6 +34,9 @@ export const defaultValues: GorillaContextConfiguration = {
   dashNav: {
     mode: GorillaMode.editable,
     timePicker: {
+      mode: GorillaMode.editable,
+    },
+    title: {
       mode: GorillaMode.editable,
     },
   },
@@ -53,6 +59,14 @@ export function GorillaDashNav(props: DashNavProps): JSX.Element | null {
     config: { dashNav },
   } = useContext(GorillaContext);
 
+  if (!getConfig().featureToggles.customKiosk) {
+    return (
+      <div aria-label={selectors.pages.Dashboard.DashNav.nav}>
+        <DashNav {...props} />
+      </div>
+    );
+  }
+
   switch (dashNav.mode) {
     case GorillaMode.editable: {
       return (
@@ -64,6 +78,36 @@ export function GorillaDashNav(props: DashNavProps): JSX.Element | null {
 
     default:
       return null;
+  }
+}
+
+export function GorillaPageToolbar(props: PageToolbarProps): React.ReactElement {
+  const {
+    dashNav: { title },
+  } = useGorillaConfig();
+
+  if (!getConfig().featureToggles.customKiosk) {
+    return <PageToolbar {...props} />;
+  }
+
+  switch (title.mode) {
+    case GorillaMode.hidden: {
+      return (
+        <PageToolbar
+          {...props}
+          title={''}
+          titleHref={undefined}
+          onGoBack={undefined}
+          parent={undefined}
+          parentHref={undefined}
+          pageIcon={undefined}
+        />
+      );
+    }
+
+    default: {
+      return <PageToolbar {...props} />;
+    }
   }
 }
 
@@ -79,4 +123,9 @@ export function GorillaConfigChanger({ children }: GorillaConfigChangerProps): J
 export function useGorillaConfigChanger(): GorillaChangeConfigCallback {
   const { onChangeConfig } = useContext(GorillaContext);
   return onChangeConfig;
+}
+
+export function useGorillaConfig(): GorillaContextConfiguration {
+  const { config } = useContext(GorillaContext);
+  return config;
 }

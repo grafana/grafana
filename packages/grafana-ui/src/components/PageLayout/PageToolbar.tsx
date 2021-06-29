@@ -10,7 +10,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { Link } from '..';
 import { getFocusStyles } from '../../themes/mixins';
 
-export interface Props {
+export interface PageToolbarProps {
   pageIcon?: IconName;
   title: string;
   parent?: string;
@@ -24,7 +24,7 @@ export interface Props {
 }
 
 /** @alpha */
-export const PageToolbar: FC<Props> = React.memo(
+export const PageToolbar: FC<PageToolbarProps> = React.memo(
   ({ title, parent, pageIcon, onGoBack, children, titleHref, parentHref, leftItems, isFullscreen, className }) => {
     const styles = useStyles2(getStyles);
 

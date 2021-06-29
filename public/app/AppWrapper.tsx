@@ -1,5 +1,5 @@
 import React, { ComponentType } from 'react';
-import { Router, Route, Redirect, Switch } from 'react-router-dom';
+import { Redirect, Route, Router, Switch } from 'react-router-dom';
 import { config, locationService, navigationLogger } from '@grafana/runtime';
 import { Provider } from 'react-redux';
 import { store } from 'app/store/store';
@@ -14,6 +14,7 @@ import { GrafanaRoute } from './core/navigation/GrafanaRoute';
 import { AppNotificationList } from './core/components/AppNotifications/AppNotificationList';
 import { SearchWrapper } from 'app/features/search';
 import { LiveConnectionWarning } from './features/live/LiveConnectionWarning';
+import { GorillaProvider } from './features/dashboard/gorilla/types';
 
 interface AppWrapperProps {
   app: GrafanaApp;
@@ -93,28 +94,30 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
           <ConfigContext.Provider value={config}>
             <ThemeProvider>
               <ModalsProvider>
-                <GlobalStyles />
-                <div className="grafana-app">
-                  <Router history={locationService.getHistory()}>
-                    <SideMenu />
-                    <div className="main-view">
-                      <div
-                        ref={this.container}
-                        dangerouslySetInnerHTML={{
-                          __html: appSeed,
-                        }}
-                      />
-                      <AppNotificationList />
-                      <SearchWrapper />
-                      {this.state.ngInjector && this.container && this.renderRoutes()}
-                      {bodyRenderHooks.map((Hook, index) => (
-                        <Hook key={index.toString()} />
-                      ))}
-                    </div>
-                  </Router>
-                </div>
-                <LiveConnectionWarning />
-                <ModalRoot />
+                <GorillaProvider>
+                  <GlobalStyles />
+                  <div className="grafana-app">
+                    <Router history={locationService.getHistory()}>
+                      <SideMenu />
+                      <div className="main-view">
+                        <div
+                          ref={this.container}
+                          dangerouslySetInnerHTML={{
+                            __html: appSeed,
+                          }}
+                        />
+                        <AppNotificationList />
+                        <SearchWrapper />
+                        {this.state.ngInjector && this.container && this.renderRoutes()}
+                        {bodyRenderHooks.map((Hook, index) => (
+                          <Hook key={index.toString()} />
+                        ))}
+                      </div>
+                    </Router>
+                  </div>
+                  <LiveConnectionWarning />
+                  <ModalRoot />
+                </GorillaProvider>
               </ModalsProvider>
             </ThemeProvider>
           </ConfigContext.Provider>

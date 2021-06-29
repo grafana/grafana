@@ -127,9 +127,21 @@ export function GeneralSettingsUnconnected({ dashboard, updateTimeZone }: Props)
         <Switch
           value={dashNav.mode === GorillaMode.hidden}
           onChange={() =>
-            onChangeConfig({
-              dashNav: { mode: GorillaMode.hidden, timePicker: { mode: GorillaMode.hidden } },
-            })
+            dashNav.mode === GorillaMode.hidden
+              ? onChangeConfig({
+                  dashNav: {
+                    mode: GorillaMode.editable,
+                    timePicker: { mode: GorillaMode.editable },
+                    title: { mode: GorillaMode.hidden },
+                  },
+                })
+              : onChangeConfig({
+                  dashNav: {
+                    mode: GorillaMode.hidden,
+                    timePicker: { mode: GorillaMode.hidden },
+                    title: { mode: GorillaMode.hidden },
+                  },
+                })
           }
         />
       </Field>
