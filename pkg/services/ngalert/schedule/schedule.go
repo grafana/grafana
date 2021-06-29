@@ -278,7 +278,6 @@ func (sch *schedule) Ticker(grafanaCtx context.Context, stateManager *state.Mana
 
 				// enforce minimum evaluation interval
 				if item.IntervalSeconds < sch.minRuleIntervalSeconds {
-					// sch.log.Debug("alert rule interval will be ignored (fallback to minimum interval): interval should be not be lower than the minimun evaluation", "key", key, "rule interval", item.IntervalSeconds, "mimimum rule evaluation interval", sch.minRuleIntervalSeconds)
 					item.IntervalSeconds = sch.minRuleIntervalSeconds
 				}
 
