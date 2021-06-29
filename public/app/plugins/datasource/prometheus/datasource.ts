@@ -496,11 +496,17 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
       safeInterval = Math.ceil(safeInterval);
     }
 
+    //Calculate adjusted interval based on the current step option
     let adjustedInterval = Math.max(dynamicInterval * intervalFactor, stepInterval, safeInterval);
     if (stepOption === 'min') {
       adjustedInterval = Math.max(dynamicInterval * intervalFactor, stepInterval, safeInterval);
     } else if (stepOption === 'max') {
       adjustedInterval = Math.min(dynamicInterval * intervalFactor, stepInterval);
+      if (adjustedInterval < safeInterval) {
+        adjustedInterval = safeInterval;
+      }
+    } else if (stepOption === 'exact') {
+      adjustedInterval = Math.max(stepInterval, safeInterval);
     }
     return adjustedInterval;
   }
