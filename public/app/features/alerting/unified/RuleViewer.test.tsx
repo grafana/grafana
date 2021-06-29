@@ -14,6 +14,14 @@ import { CombinedRule } from 'app/types/unified-alerting';
 import { GrafanaAlertStateDecision } from 'app/types/unified-alerting-dto';
 
 jest.mock('./hooks/useCombinedRule');
+jest.mock('@grafana/runtime', () => ({
+  ...(jest.requireActual('@grafana/runtime') as any),
+  getDataSourceSrv: () => {
+    return {
+      getInstanceSettings: () => ({ name: 'prometheus' }),
+    };
+  },
+}));
 
 const store = configureStore();
 const renderRuleViewer = () => {
