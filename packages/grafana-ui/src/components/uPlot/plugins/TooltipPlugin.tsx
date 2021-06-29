@@ -165,6 +165,7 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
         const frame = otherProps.data;
         const field = frame.fields[i];
         if (
+          !field ||
           field === xField ||
           field.type === FieldType.time ||
           field.type !== FieldType.number ||
