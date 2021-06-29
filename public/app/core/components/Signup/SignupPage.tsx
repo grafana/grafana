@@ -4,6 +4,7 @@ import { getConfig } from 'app/core/config';
 import { getBackendSrv } from '@grafana/runtime';
 import appEvents from 'app/core/app_events';
 import { AppEvents } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { InnerBox, LoginLayout } from '../Login/LoginLayout';
 
@@ -46,9 +47,9 @@ export const SignupPage: FC<Props> = (props) => {
       });
 
     if (response.code === 'redirect-to-select-org') {
-      window.location.href = getConfig().appSubUrl + '/profile/select-org?signup=1';
+      window.location.assign(getConfig().appSubUrl + '/profile/select-org?signup=1');
     }
-    window.location.href = getConfig().appSubUrl + '/';
+    window.location.assign(getConfig().appSubUrl + '/');
   };
 
   const defaultValues = {
@@ -63,10 +64,11 @@ export const SignupPage: FC<Props> = (props) => {
           {({ errors, register, getValues }: FormAPI<SignupDTO>) => (
             <>
               <Field label="Your name">
-                <Input {...register('name')} placeholder="(optional)" />
+                <Input aria-label={selectors.pages.Signup.name} {...register('name')} placeholder="(optional)" />
               </Field>
               <Field label="Email" invalid={!!errors.email} error={errors.email?.message}>
                 <Input
+                  aria-label={selectors.pages.Signup.email}
                   {...register('email', {
                     required: 'Email is required',
                     pattern: {
@@ -80,16 +82,21 @@ export const SignupPage: FC<Props> = (props) => {
               </Field>
               {!getConfig().autoAssignOrg && (
                 <Field label="Org. name">
-                  <Input {...register('orgName')} placeholder="Org. name" />
+                  <Input aria-label={selectors.pages.Signup.orgName} {...register('orgName')} placeholder="Org. name" />
                 </Field>
               )}
               {getConfig().verifyEmailEnabled && (
                 <Field label="Email verification code (sent to your email)">
-                  <Input {...register('code')} placeholder="Code" />
+                  <Input
+                    aria-label={selectors.pages.Signup.verificationCode}
+                    {...register('code')}
+                    placeholder="Code"
+                  />
                 </Field>
               )}
               <Field label="Password" invalid={!!errors.password} error={errors?.password?.message}>
                 <Input
+                  aria-label={selectors.pages.Signup.password}
                   {...register('password', {
                     required: 'Password is required',
                   })}
@@ -99,6 +106,7 @@ export const SignupPage: FC<Props> = (props) => {
               </Field>
               <Field label="Confirm password" invalid={!!errors.confirm} error={errors?.confirm?.message}>
                 <Input
+                  aria-label={selectors.pages.Signup.confirmPassword}
                   {...register('confirm', {
                     required: 'Confirmed password is required',
                     validate: (v) => v === getValues().password || 'Passwords must match!',
@@ -108,7 +116,9 @@ export const SignupPage: FC<Props> = (props) => {
               </Field>
 
               <HorizontalGroup>
-                <Button type="submit">Submit</Button>
+                <Button type="submit" aria-label={selectors.pages.Signup.submit}>
+                  Submit
+                </Button>
                 <LinkButton fill="text" href={getConfig().appSubUrl + '/login'}>
                   Back to login
                 </LinkButton>

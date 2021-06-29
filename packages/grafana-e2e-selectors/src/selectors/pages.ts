@@ -8,6 +8,15 @@ export const Pages = {
     submit: 'Login button',
     skip: 'Skip change password button',
   },
+  Signup: {
+    name: 'Name input field',
+    email: 'Email input field',
+    orgName: 'Organization name input field',
+    verificationCode: 'Verification code input field',
+    password: 'Password input field',
+    confirmPassword: 'Confirm Password input field',
+    submit: 'Signup button',
+  },
   Home: {
     url: '/',
   },
