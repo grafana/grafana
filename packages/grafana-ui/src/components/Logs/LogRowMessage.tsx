@@ -52,6 +52,15 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
   };
 });
 
+function isJson(str: string) {
+  try {
+    JSON.parse(str);
+  } catch (e) {
+    return false;
+  }
+  return true;
+}
+
 class UnThemedLogRowMessage extends PureComponent<Props> {
   onContextToggle = (e: React.SyntheticEvent<HTMLElement>) => {
     e.stopPropagation();
@@ -75,6 +84,7 @@ class UnThemedLogRowMessage extends PureComponent<Props> {
 
     const style = getLogRowStyles(theme, row.logLevel);
     const { entry, hasAnsi, raw } = row;
+    const jsonEntry = isJson(entry) ? JSON.stringify(entry, undefined, 2) : entry;
 
     const previewHighlights = highlighterExpressions?.length && !isEqual(highlighterExpressions, row.searchWords);
     const highlights = previewHighlights ? highlighterExpressions : row.searchWords;
@@ -113,7 +123,7 @@ class UnThemedLogRowMessage extends PureComponent<Props> {
             ) : hasAnsi ? (
               <LogMessageAnsi value={raw} />
             ) : (
-              entry
+              jsonEntry
             )}
           </span>
           {showContextToggle?.(row) && (
