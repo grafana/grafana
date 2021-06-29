@@ -256,6 +256,6 @@ func getAzurePortalUrl(azureCloud string) (string, error) {
 	case "germanyazuremonitor":
 		return "https://portal.microsoftazure.de", nil
 	default:
-		return "", fmt.Errorf("The cloud not supported.")
+		return "", fmt.Errorf("The cloud not supported")
 	}
 }
