@@ -123,6 +123,7 @@ export class TimePickerSettings extends PureComponent<Props, State> {
               />
             </Tooltip>
           </div>
+
           <div className="gf-form">
             <span className="gf-form-label width-7">Max time range</span>
             <Tooltip
