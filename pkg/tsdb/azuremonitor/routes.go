@@ -1,5 +1,22 @@
 package azuremonitor
 
+// Azure cloud names specific to Azure Monitor
+const (
+	azureMonitorPublic       = "azuremonitor"
+	azureMonitorChina        = "chinaazuremonitor"
+	azureMonitorUSGovernment = "govazuremonitor"
+	azureMonitorGermany      = "germanyazuremonitor"
+)
+
+// Azure cloud query types
+const (
+	azureMonitor       = "Azure Monitor"
+	appInsights        = "Application Insights"
+	azureLogAnalytics  = "Azure Log Analytics"
+	insightsAnalytics  = "Insights Analytics"
+	azureResourceGraph = "Azure Resource Graph"
+)
+
 type azRoute struct {
 	URL     string
 	Scopes  []string
