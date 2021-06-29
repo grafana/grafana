@@ -33,13 +33,13 @@ function shouldExclude(filename) {
   return true;
 }
 
-console.log(path.resolve());
 module.exports = {
   target: 'web',
   entry: {
     app: './public/app/index.ts',
   },
   output: {
+    clean: true,
     path: path.resolve(__dirname, '../../public/build'),
     filename: '[name].[fullhash].js',
     // Keep publicPath relative for host.com/grafana/ deployments

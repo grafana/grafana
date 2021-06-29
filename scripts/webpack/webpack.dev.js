@@ -5,7 +5,6 @@ const common = require('./webpack.common.js');
 const path = require('path');
 const { HotModuleReplacementPlugin, DefinePlugin } = require('webpack');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
-const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 const ESLintPlugin = require('eslint-webpack-plugin');
 const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
@@ -14,7 +13,7 @@ const getBabelConfig = require('./babel.config');
 
 module.exports = (env = {}) =>
   merge(common, {
-    devtool: 'inline-source-map',
+    devtool: 'eval-source-map',
     mode: 'development',
 
     entry: {
@@ -59,6 +58,8 @@ module.exports = (env = {}) =>
       parseInt(env.noTsCheck, 10)
         ? new DefinePlugin({}) // bogus plugin to satisfy webpack API
         : new ForkTsCheckerWebpackPlugin({
+            // enabling eslint blocks type checking which results in slow dev builds
+            // https://github.com/TypeStrong/fork-ts-checker-webpack-plugin/issues/612
             typescript: {
               mode: 'write-references',
               memoryLimit: 4096,
