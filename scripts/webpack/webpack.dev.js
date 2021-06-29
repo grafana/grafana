@@ -47,9 +47,16 @@ module.exports = (env = {}) =>
       ],
     },
 
+    cache: {
+      type: 'filesystem',
+      buildDependencies: {
+        config: [__filename],
+      },
+    },
+
     plugins: [
       new CleanWebpackPlugin(),
-      env.noTsCheck
+      parseInt(env.noTsCheck, 10)
         ? new DefinePlugin({}) // bogus plugin to satisfy webpack API
         : new ForkTsCheckerWebpackPlugin({
             eslint: {
@@ -70,7 +77,7 @@ module.exports = (env = {}) =>
             },
           }),
       new MiniCssExtractPlugin({
-        filename: 'grafana.[name].[hash].css',
+        filename: 'grafana.[name].[fullhash].css',
       }),
       new HtmlWebpackPlugin({
         filename: path.resolve(__dirname, '../../public/views/error.html'),
