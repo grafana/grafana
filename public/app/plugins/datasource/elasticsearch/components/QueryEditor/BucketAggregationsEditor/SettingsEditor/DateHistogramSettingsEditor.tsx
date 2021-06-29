@@ -57,7 +57,7 @@ export const DateHistogramSettingsEditor = ({ bucketAgg }: Props) => {
           filterOption={optionStartsWithValue}
           {...useCreatableSelectPersistedBehaviour({
             options: defaultIntervalOptions,
-            value: bucketAgg.settings?.interval || bucketAggregationConfig[bucketAgg.type].defaultSettings?.interval,
+            value: bucketAgg.settings?.interval || bucketAggregationConfig.date_histogram.defaultSettings?.interval,
             onChange: handleIntervalChange,
           })}
         />
@@ -67,7 +67,7 @@ export const DateHistogramSettingsEditor = ({ bucketAgg }: Props) => {
         <Input
           onBlur={(e) => dispatch(changeBucketAggregationSetting(bucketAgg, 'min_doc_count', e.target.value!))}
           defaultValue={
-            bucketAgg.settings?.min_doc_count || bucketAggregationConfig[bucketAgg.type].defaultSettings?.min_doc_count
+            bucketAgg.settings?.min_doc_count || bucketAggregationConfig.date_histogram.defaultSettings?.min_doc_count
           }
         />
       </InlineField>
@@ -76,7 +76,7 @@ export const DateHistogramSettingsEditor = ({ bucketAgg }: Props) => {
         <Input
           onBlur={(e) => dispatch(changeBucketAggregationSetting(bucketAgg, 'trimEdges', e.target.value!))}
           defaultValue={
-            bucketAgg.settings?.trimEdges || bucketAggregationConfig[bucketAgg.type].defaultSettings?.trimEdges
+            bucketAgg.settings?.trimEdges || bucketAggregationConfig.date_histogram.defaultSettings?.trimEdges
           }
         />
       </InlineField>
@@ -88,7 +88,7 @@ export const DateHistogramSettingsEditor = ({ bucketAgg }: Props) => {
       >
         <Input
           onBlur={(e) => dispatch(changeBucketAggregationSetting(bucketAgg, 'offset', e.target.value!))}
-          defaultValue={bucketAgg.settings?.offset || bucketAggregationConfig[bucketAgg.type].defaultSettings?.offset}
+          defaultValue={bucketAgg.settings?.offset || bucketAggregationConfig.date_histogram.defaultSettings?.offset}
         />
       </InlineField>
     </>
