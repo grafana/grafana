@@ -24,6 +24,7 @@ interface Props extends Themeable {
   hasMoreContextRows?: HasMoreContextRows;
   contextIsOpen: boolean;
   wrapLogMessage: boolean;
+  prettifyLogMessage: boolean;
   errors?: LogRowContextQueryErrors;
   context?: LogRowContextRows;
   showContextToggle?: (row?: LogRowModel) => boolean;
@@ -71,6 +72,7 @@ class UnThemedLogRowMessage extends PureComponent<Props> {
       contextIsOpen,
       showContextToggle,
       wrapLogMessage,
+      prettifyLogMessage,
       onToggleContext,
     } = this.props;
 
