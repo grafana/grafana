@@ -3,6 +3,7 @@ import { InlineField, Select, Switch } from '@grafana/ui';
 import { TagFilter } from 'app/core/components/TagFilter/TagFilter';
 import { SelectableValue } from '@grafana/data';
 import { GrafanaAnnotationQuery, GrafanaAnnotationType } from '../types';
+import { getAnnotationTags } from 'app/features/annotations/api';
 
 const filterTooltipContent = (
   <ul>
@@ -92,7 +93,7 @@ export default function AnnotationQuery({ query, onChange }: Props) {
               </div>
             </InlineField>
             <InlineField label="Tags" labelWidth="auto" tooltip={tagsTooltipContent}>
-              <TagFilter onChange={onTagsChange} tagOptions={() => Promise.resolve([])} tags={tags} />
+              <TagFilter onChange={onTagsChange} tagOptions={getAnnotationTags} tags={tags} />
             </InlineField>
           </>
         )}

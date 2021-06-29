@@ -18,3 +18,14 @@ export interface AnnotationQueryResponse {
    */
   panelData?: PanelData;
 }
+
+export interface AnnotationTagsResponse {
+  /**
+   * The tag name
+   */
+  tag: string;
+  /**
+   * The number of occurences of that tag
+   */
+  count: number;
+}
