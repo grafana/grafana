@@ -87,6 +87,16 @@ type redirectCase struct {
 	redirectURL string
 }
 
+var oAuthInfos = map[string]*social.OAuthInfo{
+	"github": {
+		ClientId:     "fake",
+		ClientSecret: "fakefake",
+		Enabled:      true,
+		AllowSignup:  true,
+		Name:         "github",
+	},
+}
+
 func TestLoginErrorCookieAPIEndpoint(t *testing.T) {
 	fakeSetIndexViewData(t)
 
@@ -94,14 +104,6 @@ func TestLoginErrorCookieAPIEndpoint(t *testing.T) {
 
 	sc := setupScenarioContext(t, "/login")
 	cfg := setting.NewCfg()
-	oAuthInfos := make(map[string]*social.OAuthInfo)
-	oAuthInfos["github"] = &social.OAuthInfo{
-		ClientId:     "fake",
-		ClientSecret: "fakefake",
-		Enabled:      true,
-		AllowSignup:  true,
-		Name:         "github",
-	}
 	hs := &HTTPServer{
 		Cfg:              cfg,
 		SettingsProvider: &setting.OSSImpl{Cfg: cfg},
@@ -480,14 +482,6 @@ func TestLoginOAuthRedirect(t *testing.T) {
 
 	sc := setupScenarioContext(t, "/login")
 	cfg := setting.NewCfg()
-	oAuthInfos := make(map[string]*social.OAuthInfo)
-	oAuthInfos["github"] = &social.OAuthInfo{
-		ClientId:     "fake",
-		ClientSecret: "fakefake",
-		Enabled:      true,
-		AllowSignup:  true,
-		Name:         "github",
-	}
 	mock := &mockSocialService{
 		oAuthInfo: &social.OAuthInfo{
 			ClientId:     "fake",
@@ -524,14 +518,6 @@ func TestLoginInternal(t *testing.T) {
 
 	fakeViewIndex(t)
 	sc := setupScenarioContext(t, "/login")
-	oAuthInfos := make(map[string]*social.OAuthInfo)
-	oAuthInfos["github"] = &social.OAuthInfo{
-		ClientId:     "fake",
-		ClientSecret: "fakefake",
-		Enabled:      true,
-		AllowSignup:  true,
-		Name:         "github",
-	}
 	hs := &HTTPServer{
 		Cfg:     setting.NewCfg(),
 		License: &licensing.OSSLicensingService{},

@@ -56,6 +56,7 @@ type OAuthInfo struct {
 
 func (ss *SocialService) Init() error {
 	ss.oAuthProvider = make(map[string]*OAuthInfo)
+	ss.socialMap = make(map[string]SocialConnector)
 
 	for _, name := range allOauthes {
 		sec := ss.Cfg.Raw.Section("auth." + name)
