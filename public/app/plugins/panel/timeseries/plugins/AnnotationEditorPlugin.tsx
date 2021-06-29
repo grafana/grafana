@@ -1,7 +1,7 @@
 import React, { useLayoutEffect, useState, useCallback } from 'react';
-import { UPlotConfigBuilder, PlotSelection, usePlotContext, useStyles2 } from '@grafana/ui';
-import { css } from '@emotion/css';
-import { CartesianCoords2D, DataFrame, GrafanaTheme2, TimeZone } from '@grafana/data';
+
+import { UPlotConfigBuilder, PlotSelection, usePlotContext } from '@grafana/ui';
+import { CartesianCoords2D, DataFrame, TimeZone } from '@grafana/data';
 import { AnnotationEditor } from './AnnotationEditor';
 
 type StartAnnotatingFn = (props: {
@@ -20,15 +20,8 @@ interface AnnotationEditorPluginProps {
 /**
  * @alpha
  */
-export const AnnotationEditorPlugin: React.FC<AnnotationEditorPluginProps> = ({
-  onAnnotationCreate,
-  data,
-  timeZone,
-  config,
-  children,
-}) => {
+export const AnnotationEditorPlugin: React.FC<AnnotationEditorPluginProps> = ({ data, timeZone, config, children }) => {
   const plotCtx = usePlotContext();
-  const styles = useStyles2(getStyles);
   const [isAddingAnnotation, setIsAddingAnnotation] = useState(false);
   const [selection, setSelection] = useState<PlotSelection | null>(null);
 
@@ -139,34 +132,15 @@ export const AnnotationEditorPlugin: React.FC<AnnotationEditorPluginProps> = ({
   return (
     <>
       {isAddingAnnotation && selection && (
-        <>
-          <div className={styles.backdrop} />
-          <AnnotationEditor
-            selection={selection}
-            onDismiss={clearSelection}
-            onSave={() => {
-              clearSelection();
-              onAnnotationCreate();
-            }}
-            data={data}
-            timeZone={timeZone}
-          />
-        </>
+        <AnnotationEditor
+          selection={selection}
+          onDismiss={clearSelection}
+          onSave={clearSelection}
+          data={data}
+          timeZone={timeZone}
+        />
       )}
       {children ? children({ startAnnotating }) : null}
     </>
   );
-};
-
-const getStyles = (theme: GrafanaTheme2) => {
-  return {
-    backdrop: css`
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      z-index: ${theme.zIndex.navbarFixed};
-    `,
-  };
 };
