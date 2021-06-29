@@ -34,11 +34,15 @@ type Service struct {
 	BackendPluginManager backendplugin.Manager `inject:""`
 	Cfg                  *setting.Cfg          `inject:""`
 	HTTPClientProvider   httpclient.Provider   `inject:""`
+	httpClientProvider   httpclient.Provider
+	intervalCalculator   interval.Calculator
+	im                   instancemgmt.InstanceManager
+	cfg                  *setting.Cfg
 }
 
 func (s *Service) Init() error {
 	eslog.Debug("initializing")
-	im := datasource.NewInstanceManager(NewInstanceSettings())
+	im := datasource.NewInstanceManager(newInstanceSettings())
 	factory := coreplugin.New(backend.ServeOpts{
 		QueryDataHandler: newExecutor(im, s.Cfg, s.HTTPClientProvider),
 	})
@@ -48,45 +52,35 @@ func (s *Service) Init() error {
 	return nil
 }
 
-// executor represents a handler for handling elasticsearch datasource request
-type executor struct {
-	httpClientProvider httpclient.Provider
-	intervalCalculator interval.Calculator
-	im                 instancemgmt.InstanceManager
-	cfg                *setting.Cfg
-}
-
 // newExecutor creates a new executor func.
-// nolint:staticcheck // plugins.DataPlugin deprecated
-func newExecutor(im instancemgmt.InstanceManager, cfg *setting.Cfg, httpClientProvider httpclient.Provider) *executor {
-	// nolint:staticcheck // plugins.DataPlugin deprecated
-	return &executor{
+func newExecutor(im instancemgmt.InstanceManager, cfg *setting.Cfg, httpClientProvider httpclient.Provider) *Service {
+	return &Service{
 		im:                 im,
 		cfg:                cfg,
 		httpClientProvider: httpClientProvider,
 	}
 }
 
-func (e *executor) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	if len(req.Queries) == 0 {
 		return &backend.QueryDataResponse{}, fmt.Errorf("query contains no queries")
 	}
 
-	dsInfo, err := e.getDSInfo(req.PluginContext)
+	dsInfo, err := s.getDSInfo(req.PluginContext)
 	if err != nil {
 		return &backend.QueryDataResponse{}, err
 	}
 
-	client, err := es.NewClient(ctx, e.httpClientProvider, dsInfo, req.Queries[0].TimeRange)
+	client, err := es.NewClient(ctx, s.httpClientProvider, dsInfo, req.Queries[0].TimeRange)
 	if err != nil {
 		return &backend.QueryDataResponse{}, err
 	}
 
-	query := newTimeSeriesQuery(client, req.Queries, e.intervalCalculator)
+	query := newTimeSeriesQuery(client, req.Queries, s.intervalCalculator)
 	return query.execute()
 }
 
-func NewInstanceSettings() datasource.InstanceFactoryFunc {
+func newInstanceSettings() datasource.InstanceFactoryFunc {
 	return func(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		jsonData := map[string]interface{}{}
 		err := json.Unmarshal(settings.JSONData, &jsonData)
@@ -102,8 +96,8 @@ func NewInstanceSettings() datasource.InstanceFactoryFunc {
 	}
 }
 
-func (e *executor) getDSInfo(pluginCtx backend.PluginContext) (*models.DataSource, error) {
-	i, err := e.im.Get(pluginCtx)
+func (s *Service) getDSInfo(pluginCtx backend.PluginContext) (*models.DataSource, error) {
+	i, err := s.im.Get(pluginCtx)
 	if err != nil {
 		return nil, err
 	}
