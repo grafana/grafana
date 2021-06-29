@@ -4,6 +4,11 @@ use aws.protocols#restJson1
 
 /// The Grafana server.
 @restJson1
+@httpBasicAuth
+@httpApiKeyAuth(name: "Authorization", in: "header")
+@auth([httpApiKeyAuth, httpBasicAuth])
+// TODO: Support cookie auth
+// TODO: Support JWT auth
 service Grafana {
     version: "2021-04-07",
     resources: [
