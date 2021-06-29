@@ -40,6 +40,7 @@ interface Props extends Themeable {
   showLabels: boolean;
   showTime: boolean;
   wrapLogMessage: boolean;
+  prettifyLogMessage: boolean;
   timeZone: TimeZone;
   enableLogDetails: boolean;
   logsSortOrder?: LogsSortOrder | null;
@@ -139,6 +140,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
       showTime,
       showDetectedFields,
       wrapLogMessage,
+      prettifyLogMessage,
       theme,
       getFieldLinks,
       forceEscape,
@@ -201,6 +203,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
               contextIsOpen={showContext}
               showContextToggle={showContextToggle}
               wrapLogMessage={wrapLogMessage}
+              prettifyLogMessage={prettifyLogMessage}
               onToggleContext={this.toggleContext}
             />
           )}

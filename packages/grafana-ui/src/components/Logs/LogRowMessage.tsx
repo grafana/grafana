@@ -23,6 +23,7 @@ interface Props extends Themeable {
   hasMoreContextRows?: HasMoreContextRows;
   contextIsOpen: boolean;
   wrapLogMessage: boolean;
+  prettifyLogMessage: boolean;
   errors?: LogRowContextQueryErrors;
   context?: LogRowContextRows;
   showContextToggle?: (row?: LogRowModel) => boolean;
@@ -79,12 +80,13 @@ class UnThemedLogRowMessage extends PureComponent<Props> {
       contextIsOpen,
       showContextToggle,
       wrapLogMessage,
+      prettifyLogMessage,
       onToggleContext,
     } = this.props;
 
     const style = getLogRowStyles(theme, row.logLevel);
     const { entry, hasAnsi, raw } = row;
-    const jsonEntry = isJson(entry) ? JSON.stringify(entry, undefined, 2) : entry;
+    const jsonEntry = prettifyLogMessage && isJson(entry) ? JSON.stringify(JSON.parse(entry), undefined, 2) : entry;
 
     const previewHighlights = highlighterExpressions?.length && !isEqual(highlighterExpressions, row.searchWords);
     const highlights = previewHighlights ? highlighterExpressions : row.searchWords;
