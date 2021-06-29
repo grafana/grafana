@@ -117,7 +117,7 @@ export class BaseMap extends Component<BaseMapProps> {
     this.initBasemap(this.props.options.basemap);
 
     if (true) {
-      const handler = newDynamicLayerHandler(this.map, defaultFrameConfig);
+      const handler = newDynamicLayerHandler(this.map, defaultFrameConfig, config.theme2);
       const layer = handler.init();
       this.map.addLayer(layer);
 

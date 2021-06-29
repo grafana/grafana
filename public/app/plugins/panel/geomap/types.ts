@@ -18,7 +18,16 @@ export interface ControlsOptions {
   showOverview?: boolean;
 }
 
+export interface MapViewConfig {
+  centerLat: number;
+  centerLng: number;
+  zoomLevel: number;
+  minZoom?: number;
+  maxZoom?: number;
+}
+
 export interface GeomapPanelOptions {
+  view: MapViewConfig;
   controls: ControlsOptions;
   basemap: MapLayerConfig; // auto
   // layers: MapLayerConfig[]; // empty == auto

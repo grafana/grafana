@@ -1,6 +1,7 @@
 import { PanelPlugin } from '@grafana/data';
 import { BaseLayerEditor } from './BaseLayerEditor';
 import { GeomapPanel } from './GeomapPanel';
+import { MapViewEditor } from './MapViewEditor';
 import { GeomapPanelOptions } from './types';
 
 export const plugin = new PanelPlugin<GeomapPanelOptions>(GeomapPanel)
@@ -13,6 +14,15 @@ export const plugin = new PanelPlugin<GeomapPanelOptions>(GeomapPanel)
       path: 'basemap',
       name: 'Base Layer',
       editor: BaseLayerEditor,
+    });
+
+    // Nested
+    builder.addCustomEditor({
+      category: ['Map View'],
+      id: 'view',
+      path: 'view',
+      name: 'Map View',
+      editor: MapViewEditor,
     });
 
     // The controls section
