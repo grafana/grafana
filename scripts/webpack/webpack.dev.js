@@ -13,7 +13,7 @@ const getBabelConfig = require('./babel.config');
 
 module.exports = (env = {}) =>
   merge(common, {
-    devtool: 'eval-source-map',
+    devtool: 'inline-source-map',
     mode: 'development',
 
     entry: {
@@ -32,13 +32,12 @@ module.exports = (env = {}) =>
       rules: [
         {
           test: /\.tsx?$/,
+          loader: 'esbuild-loader',
+          options: {
+            loader: 'tsx',
+            target: 'es2015',
+          },
           exclude: /node_modules/,
-          use: [
-            {
-              loader: 'babel-loader',
-              options: getBabelConfig({ BABEL_ENV: 'dev' }),
-            },
-          ],
         },
         require('./sass.rule.js')({
           sourceMap: false,

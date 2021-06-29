@@ -151,6 +151,7 @@
     "es-abstract": "1.18.0-next.1",
     "es6-promise": "4.2.8",
     "es6-shim": "0.35.5",
+    "esbuild-loader": "2.13.1",
     "eslint": "7.21.0",
     "eslint-config-prettier": "7.2.0",
     "eslint-plugin-jsdoc": "31.6.1",
