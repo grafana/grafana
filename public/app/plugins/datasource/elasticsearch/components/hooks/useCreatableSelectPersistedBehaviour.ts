@@ -15,16 +15,20 @@ const getInitialState = <T extends SelectableValue>(initialOptions: T[], initial
   );
 };
 
-interface UseCustomValue<T extends SelectableValue> {
+interface Params<T extends SelectableValue> {
   options: T[];
   value?: T['value'];
   onChange?: (value: T['value']) => void;
 }
-export const useCustomValue = <T extends SelectableValue>({
+
+/**
+ *
+ */
+export const useCreatableSelectPersistedBehaviour = <T extends SelectableValue>({
   options: initialOptions,
   value,
   onChange,
-}: UseCustomValue<T>): Pick<
+}: Params<T>): Pick<
   ComponentProps<typeof Select>,
   'onChange' | 'onCreateOption' | 'options' | 'allowCustomValue' | 'value'
 > => {

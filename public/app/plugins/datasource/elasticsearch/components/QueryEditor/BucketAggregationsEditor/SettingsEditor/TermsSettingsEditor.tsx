@@ -4,7 +4,7 @@ import { Terms } from '../aggregations';
 import { useDispatch } from '../../../../hooks/useStatelessReducer';
 import { inlineFieldProps } from '.';
 import { bucketAggregationConfig, createOrderByOptionsFromMetrics, orderOptions, sizeOptions } from '../utils';
-import { useCustomValue } from '../../../hooks/useCustomValue';
+import { useCreatableSelectPersistedBehaviour } from '../../../hooks/useCreatableSelectPersistedBehaviour';
 import { changeBucketAggregationSetting } from '../state/actions';
 import { useQuery } from '../../ElasticsearchQueryContext';
 
@@ -31,7 +31,7 @@ export const TermsSettingsEditor = ({ bucketAgg }: Props) => {
       <InlineField label="Size" {...inlineFieldProps}>
         <Select
           // TODO: isValidNewOption should only allow numbers & template variables
-          {...useCustomValue({
+          {...useCreatableSelectPersistedBehaviour({
             options: sizeOptions,
             value: bucketAgg.settings?.size || bucketAggregationConfig.terms.defaultSettings?.size,
             onChange(value) {

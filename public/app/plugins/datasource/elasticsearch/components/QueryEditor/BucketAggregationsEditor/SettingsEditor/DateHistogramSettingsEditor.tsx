@@ -7,7 +7,7 @@ import { SelectableValue } from '@grafana/data';
 import { changeBucketAggregationSetting } from '../state/actions';
 import { inlineFieldProps } from '.';
 import { uniqueId } from 'lodash';
-import { useCustomValue } from '../../../hooks/useCustomValue';
+import { useCreatableSelectPersistedBehaviour } from '../../../hooks/useCreatableSelectPersistedBehaviour';
 
 type IntervalOption = Required<Pick<SelectableValue<string>, 'label' | 'value'>>;
 
@@ -55,7 +55,7 @@ export const DateHistogramSettingsEditor = ({ bucketAgg }: Props) => {
           inputId={uniqueId('es-date_histogram-interval')}
           isValidNewOption={isValidNewOption}
           filterOption={optionStartsWithValue}
-          {...useCustomValue({
+          {...useCreatableSelectPersistedBehaviour({
             options: defaultIntervalOptions,
             value: bucketAgg.settings?.interval || bucketAggregationConfig[bucketAgg.type].defaultSettings?.interval,
             onChange: handleIntervalChange,
