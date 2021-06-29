@@ -1,4 +1,4 @@
-import { isArray } from 'lodash';
+import { cloneDeep, isArray } from 'lodash';
 import { PanelCtrl } from 'app/features/panel/panel_ctrl';
 import { applyPanelTimeOverrides } from 'app/features/dashboard/utils/panel';
 import { ContextSrv } from 'app/core/services/context_srv';
@@ -20,11 +20,12 @@ import { PanelQueryRunner } from '../query/state/PanelQueryRunner';
 
 class MetricsPanelCtrl extends PanelCtrl {
   declare datasource: DataSourceApi;
+  declare range: TimeRange;
+
   contextSrv: ContextSrv;
   datasourceSrv: any;
   timeSrv: any;
   templateSrv: any;
-  declare range: TimeRange;
   interval: any;
   intervalMs: any;
   resolution: any;
@@ -98,7 +99,6 @@ class MetricsPanelCtrl extends PanelCtrl {
     // load datasource service
     return this.datasourceSrv
       .get(this.panel.datasource, this.panel.scopedVars)
-      .then(this.updateTimeRange.bind(this))
       .then(this.issueQueries.bind(this))
       .catch((err: any) => {
         this.processDataError(err);
@@ -173,7 +173,7 @@ class MetricsPanelCtrl extends PanelCtrl {
 
   updateTimeRange(datasource?: DataSourceApi) {
     this.datasource = datasource || this.datasource;
-    this.range = this.timeSrv.timeRange();
+    this.range = cloneDeep(this.timeSrv.timeRange());
 
     const newTimeData = applyPanelTimeOverrides(this.panel, this.range);
     this.timeInfo = newTimeData.timeInfo;
@@ -183,6 +183,8 @@ class MetricsPanelCtrl extends PanelCtrl {
   }
 
   issueQueries(datasource: DataSourceApi) {
+    this.updateTimeRange(datasource);
+
     this.datasource = datasource;
 
     const panel = this.panel as PanelModel;
