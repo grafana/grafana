@@ -262,6 +262,16 @@ export class SettingsCtrl {
     this.renderCount++;
   };
 
+   onMaxTimeRangeChange = (maxTimeRange: string) => {
+    this.dashboard.timepicker.maxTimeRange = maxTimeRange;
+    this.renderCount++;
+  };
+
+  onOldestFromChange = (oldestFrom: string) => {
+    this.dashboard.timepicker.oldestFrom = oldestFrom;
+    this.renderCount++;
+  };
+
   onHideTimePickerChange = (hide: boolean) => {
     this.dashboard.timepicker.hidden = hide;
     this.renderCount++;
