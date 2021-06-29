@@ -15,14 +15,22 @@ import (
 
 	"github.com/Masterminds/semver"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/tsdb/interval"
+	"github.com/grafana/grafana/pkg/tsdb"
 
-	"github.com/grafana/grafana/pkg/models"
 	"golang.org/x/net/context/ctxhttp"
 )
+
+type DatasourceInfo struct {
+	Id          int64
+	HTTPCliOpts sdkhttpclient.Options
+	Url         string           `json:"url"`
+	JsonData    *simplejson.Json `json:"jsonData"`
+	Database    string
+}
 
 const loggerName = "tsdb.elasticsearch.client"
 
@@ -30,8 +38,8 @@ var (
 	clientLog = log.New(loggerName)
 )
 
-var newDatasourceHttpClient = func(httpClientProvider httpclient.Provider, ds *models.DataSource) (*http.Client, error) {
-	return ds.GetHTTPClient(httpClientProvider)
+var newDatasourceHttpClient = func(httpClientProvider httpclient.Provider, ds *DatasourceInfo) (*http.Client, error) {
+	return httpClientProvider.New(ds.HTTPCliOpts)
 }
 
 // Client represents a client which can interact with elasticsearch api
@@ -75,7 +83,7 @@ func coerceVersion(v *simplejson.Json) (*semver.Version, error) {
 }
 
 // NewClient creates a new elasticsearch client
-var NewClient = func(ctx context.Context, httpClientProvider httpclient.Provider, ds *models.DataSource, timeRange backend.TimeRange) (Client, error) {
+var NewClient = func(ctx context.Context, httpClientProvider httpclient.Provider, ds *DatasourceInfo, timeRange backend.TimeRange) (Client, error) {
 	version, err := coerceVersion(ds.JsonData.Get("esVersion"))
 
 	if err != nil {
@@ -114,7 +122,7 @@ var NewClient = func(ctx context.Context, httpClientProvider httpclient.Provider
 type baseClientImpl struct {
 	ctx                context.Context
 	httpClientProvider httpclient.Provider
-	ds                 *models.DataSource
+	ds                 *DatasourceInfo
 	version            *semver.Version
 	timeField          string
 	indices            []string
@@ -131,7 +139,8 @@ func (c *baseClientImpl) GetTimeField() string {
 }
 
 func (c *baseClientImpl) GetMinInterval(queryInterval string) (time.Duration, error) {
-	return interval.GetIntervalFrom(c.ds, simplejson.NewFromAny(map[string]interface{}{
+	timeInterval := c.ds.JsonData.Get("timeInterval").MustString("")
+	return tsdb.GetIntervalFrom(queryInterval, timeInterval, simplejson.NewFromAny(map[string]interface{}{
 		"interval": queryInterval,
 	}), 5*time.Second)
 }
@@ -143,7 +152,7 @@ func (c *baseClientImpl) getSettings() *simplejson.Json {
 type multiRequest struct {
 	header   map[string]interface{}
 	body     interface{}
-	interval interval.Interval
+	interval tsdb.Interval
 }
 
 func (c *baseClientImpl) executeBatchRequest(uriPath, uriQuery string, requests []*multiRequest) (*response, error) {

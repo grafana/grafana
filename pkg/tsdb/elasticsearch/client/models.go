@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/tsdb/interval"
+	"github.com/grafana/grafana/pkg/tsdb"
 )
 
 type response struct {
@@ -32,7 +32,7 @@ type SearchDebugInfo struct {
 // SearchRequest represents a search request
 type SearchRequest struct {
 	Index       string
-	Interval    interval.Interval
+	Interval    tsdb.Interval
 	Size        int
 	Sort        map[string]interface{}
 	Query       *Query

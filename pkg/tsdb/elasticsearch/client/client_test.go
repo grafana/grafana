@@ -12,15 +12,14 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/tsdb/interval"
+	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestNewClient(t *testing.T) {
 	t.Run("When no version set should return error", func(t *testing.T) {
-		ds := &models.DataSource{
+		ds := &DatasourceInfo{
 			JsonData: simplejson.NewFromAny(make(map[string]interface{})),
 		}
 
@@ -29,7 +28,7 @@ func TestNewClient(t *testing.T) {
 	})
 
 	t.Run("When no time field name set should return error", func(t *testing.T) {
-		ds := &models.DataSource{
+		ds := &DatasourceInfo{
 			JsonData: simplejson.NewFromAny(map[string]interface{}{
 				"esVersion": 5,
 			}),
@@ -41,7 +40,7 @@ func TestNewClient(t *testing.T) {
 
 	t.Run("When using legacy version numbers", func(t *testing.T) {
 		t.Run("When unsupported version set should return error", func(t *testing.T) {
-			ds := &models.DataSource{
+			ds := &DatasourceInfo{
 				JsonData: simplejson.NewFromAny(map[string]interface{}{
 					"esVersion": 6,
 					"timeField": "@timestamp",
@@ -53,7 +52,7 @@ func TestNewClient(t *testing.T) {
 		})
 
 		t.Run("When version 2 should return v2 client", func(t *testing.T) {
-			ds := &models.DataSource{
+			ds := &DatasourceInfo{
 				JsonData: simplejson.NewFromAny(map[string]interface{}{
 					"esVersion": 2,
 					"timeField": "@timestamp",
@@ -66,7 +65,7 @@ func TestNewClient(t *testing.T) {
 		})
 
 		t.Run("When version 5 should return v5 client", func(t *testing.T) {
-			ds := &models.DataSource{
+			ds := &DatasourceInfo{
 				JsonData: simplejson.NewFromAny(map[string]interface{}{
 					"esVersion": 5,
 					"timeField": "@timestamp",
@@ -79,7 +78,7 @@ func TestNewClient(t *testing.T) {
 		})
 
 		t.Run("When version 56 should return v5.6 client", func(t *testing.T) {
-			ds := &models.DataSource{
+			ds := &DatasourceInfo{
 				JsonData: simplejson.NewFromAny(map[string]interface{}{
 					"esVersion": 56,
 					"timeField": "@timestamp",
@@ -92,7 +91,7 @@ func TestNewClient(t *testing.T) {
 		})
 
 		t.Run("When version 60 should return v6.0 client", func(t *testing.T) {
-			ds := &models.DataSource{
+			ds := &DatasourceInfo{
 				JsonData: simplejson.NewFromAny(map[string]interface{}{
 					"esVersion": 60,
 					"timeField": "@timestamp",
@@ -105,7 +104,7 @@ func TestNewClient(t *testing.T) {
 		})
 
 		t.Run("When version 70 should return v7.0 client", func(t *testing.T) {
-			ds := &models.DataSource{
+			ds := &DatasourceInfo{
 				JsonData: simplejson.NewFromAny(map[string]interface{}{
 					"esVersion": 70,
 					"timeField": "@timestamp",
@@ -120,7 +119,7 @@ func TestNewClient(t *testing.T) {
 
 	t.Run("When version is a valid semver string should create a client", func(t *testing.T) {
 		version := "7.2.4"
-		ds := &models.DataSource{
+		ds := &DatasourceInfo{
 			JsonData: simplejson.NewFromAny(map[string]interface{}{
 				"esVersion": version,
 				"timeField": "@timestamp",
@@ -134,7 +133,7 @@ func TestNewClient(t *testing.T) {
 
 	t.Run("When version is NOT a valid semver string should return error", func(t *testing.T) {
 		version := "7.NOT_VALID.4"
-		ds := &models.DataSource{
+		ds := &DatasourceInfo{
 			JsonData: simplejson.NewFromAny(map[string]interface{}{
 				"esVersion": version,
 				"timeField": "@timestamp",
@@ -147,7 +146,7 @@ func TestNewClient(t *testing.T) {
 }
 
 func TestClient_ExecuteMultisearch(t *testing.T) {
-	httpClientScenario(t, "Given a fake http client and a v2.x client with response", &models.DataSource{
+	httpClientScenario(t, "Given a fake http client and a v2.x client with response", &DatasourceInfo{
 		Database: "[metrics-]YYYY.MM.DD",
 		JsonData: simplejson.NewFromAny(map[string]interface{}{
 			"esVersion": 2,
@@ -197,7 +196,7 @@ func TestClient_ExecuteMultisearch(t *testing.T) {
 		require.Len(t, res.Responses, 1)
 	})
 
-	httpClientScenario(t, "Given a fake http client and a v5.x client with response", &models.DataSource{
+	httpClientScenario(t, "Given a fake http client and a v5.x client with response", &DatasourceInfo{
 		Database: "[metrics-]YYYY.MM.DD",
 		JsonData: simplejson.NewFromAny(map[string]interface{}{
 			"esVersion":                  5,
@@ -249,7 +248,7 @@ func TestClient_ExecuteMultisearch(t *testing.T) {
 		require.Len(t, res.Responses, 1)
 	})
 
-	httpClientScenario(t, "Given a fake http client and a v5.6 client with response", &models.DataSource{
+	httpClientScenario(t, "Given a fake http client and a v5.6 client with response", &DatasourceInfo{
 		Database: "[metrics-]YYYY.MM.DD",
 		JsonData: simplejson.NewFromAny(map[string]interface{}{
 			"esVersion":                  56,
@@ -301,7 +300,7 @@ func TestClient_ExecuteMultisearch(t *testing.T) {
 		require.Len(t, res.Responses, 1)
 	})
 
-	httpClientScenario(t, "Given a fake http client and a v7.0 client with response", &models.DataSource{
+	httpClientScenario(t, "Given a fake http client and a v7.0 client with response", &DatasourceInfo{
 		Database: "[metrics-]YYYY.MM.DD",
 		JsonData: simplejson.NewFromAny(map[string]interface{}{
 			"esVersion":                  70,
@@ -359,7 +358,7 @@ func createMultisearchForTest(t *testing.T, c Client) (*MultiSearchRequest, erro
 	t.Helper()
 
 	msb := c.MultiSearch()
-	s := msb.Search(interval.Interval{Value: 15 * time.Second, Text: "15s"})
+	s := msb.Search(tsdb.Interval{Value: 15 * time.Second, Text: "15s"})
 	s.Agg().DateHistogram("2", "@timestamp", func(a *DateHistogramAgg, ab AggBuilder) {
 		a.Interval = "$__interval"
 
@@ -380,7 +379,7 @@ type scenarioContext struct {
 
 type scenarioFunc func(*scenarioContext)
 
-func httpClientScenario(t *testing.T, desc string, ds *models.DataSource, fn scenarioFunc) {
+func httpClientScenario(t *testing.T, desc string, ds *DatasourceInfo, fn scenarioFunc) {
 	t.Helper()
 
 	t.Run(desc, func(t *testing.T) {
@@ -416,7 +415,7 @@ func httpClientScenario(t *testing.T, desc string, ds *models.DataSource, fn sce
 
 		currentNewDatasourceHTTPClient := newDatasourceHttpClient
 
-		newDatasourceHttpClient = func(httpClientProvider httpclient.Provider, ds *models.DataSource) (*http.Client, error) {
+		newDatasourceHttpClient = func(httpClientProvider httpclient.Provider, ds *DatasourceInfo) (*http.Client, error) {
 			return ts.Client(), nil
 		}
 

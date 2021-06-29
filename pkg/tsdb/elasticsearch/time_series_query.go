@@ -9,6 +9,7 @@ import (
 	"github.com/Masterminds/semver"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/tsdb"
 	es "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client"
 	"github.com/grafana/grafana/pkg/tsdb/interval"
 )
@@ -16,11 +17,11 @@ import (
 type timeSeriesQuery struct {
 	client             es.Client
 	dataQueries        []backend.DataQuery
-	intervalCalculator interval.Calculator
+	intervalCalculator tsdb.Calculator
 }
 
 var newTimeSeriesQuery = func(client es.Client, dataQuery []backend.DataQuery,
-	intervalCalculator interval.Calculator) *timeSeriesQuery {
+	intervalCalculator tsdb.Calculator) *timeSeriesQuery {
 	return &timeSeriesQuery{
 		client:             client,
 		dataQueries:        dataQuery,
@@ -63,17 +64,17 @@ func (e *timeSeriesQuery) execute() (*backend.QueryDataResponse, error) {
 	return rp.getTimeSeries()
 }
 
-func Calculate(timerange backend.TimeRange, minInterval time.Duration) interval.Interval {
+func Calculate(timerange backend.TimeRange, minInterval time.Duration) tsdb.Interval {
 	to := timerange.To.Unix()
 	from := timerange.From.Unix()
 	intrvl := time.Duration((to - from) / interval.DefaultRes)
 
 	if intrvl < minInterval {
-		return interval.Interval{Text: interval.FormatDuration(minInterval), Value: minInterval}
+		return tsdb.Interval{Text: interval.FormatDuration(minInterval), Value: minInterval}
 	}
 
 	rounded := interval.RoundInterval(intrvl)
-	return interval.Interval{Text: interval.FormatDuration(rounded), Value: rounded}
+	return tsdb.Interval{Text: interval.FormatDuration(rounded), Value: rounded}
 }
 
 // nolint:staticcheck // plugins.DataQueryResult deprecated
