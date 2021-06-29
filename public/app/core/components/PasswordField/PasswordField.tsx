@@ -10,28 +10,35 @@ export interface Props {
   passwordHint?: string;
 }
 
-export const PasswordField: FC<Props> = ({ autoComplete, autoFocus, id, passwordHint, ...props }) => {
-  const [showPassword, setShowPassword] = useState(false);
+export const PasswordField: FC<Props> = React.forwardRef<HTMLInputElement, Props>(
+  ({ autoComplete, autoFocus, id, passwordHint, ...props }, ref) => {
+    const [showPassword, setShowPassword] = useState(false);
 
-  return (
-    <Input
-      id={id}
-      autoFocus={autoFocus}
-      autoComplete={autoComplete}
-      {...props}
-      type={showPassword ? 'text' : 'password'}
-      placeholder={passwordHint}
-      aria-label={selectors.pages.Login.password}
-      suffix={
-        <IconButton
-          name={showPassword ? 'eye-slash' : 'eye'}
-          surface="header"
-          onClick={(e) => {
-            e.preventDefault();
-            setShowPassword(!showPassword);
-          }}
-        />
-      }
-    />
-  );
-};
+    return (
+      <Input
+        id={id}
+        autoFocus={autoFocus}
+        autoComplete={autoComplete}
+        {...props}
+        type={showPassword ? 'text' : 'password'}
+        placeholder={passwordHint}
+        aria-label={selectors.pages.Login.password}
+        ref={ref}
+        suffix={
+          <IconButton
+            name={showPassword ? 'eye-slash' : 'eye'}
+            surface="header"
+            aria-controls={id}
+            aria-expanded={showPassword}
+            onClick={(e) => {
+              e.preventDefault();
+              setShowPassword(!showPassword);
+            }}
+          />
+        }
+      />
+    );
+  }
+);
+
+PasswordField.displayName = 'PasswordField';
