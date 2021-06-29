@@ -290,9 +290,6 @@ func (ss *SocialService) GetOAuthProviders() map[string]bool {
 }
 
 func (ss *SocialService) GetOAuthHttpClient(name string) (*http.Client, error) {
-	if ss.oAuthProvider[name] == nil {
-		return nil, fmt.Errorf("OAuth not enabled")
-	}
 	// The socialMap keys don't have "oauth_" prefix, but everywhere else in the system does
 	name = strings.TrimPrefix(name, "oauth_")
 	info, ok := ss.oAuthProvider[name]
