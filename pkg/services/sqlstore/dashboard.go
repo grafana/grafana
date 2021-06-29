@@ -236,7 +236,7 @@ func GetDashboard(query *models.GetDashboardQuery) error {
 
 func GetDashboardCtx(ctx context.Context, query *models.GetDashboardQuery) error {
 	return withDbSession(ctx, x, func(dbSession *DBSession) error {
-		if query.Id == 0 && len(query.Slug) == 0 && len(query.Uid) == 0 && !query.IsFolder {
+		if query.Id == 0 && len(query.Slug) == 0 && len(query.Uid) == 0 {
 			return models.ErrDashboardIdentifierNotSet
 		}
 
