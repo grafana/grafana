@@ -137,7 +137,7 @@ func (ng *AlertNG) IsDisabled() bool {
 }
 
 // getRuleDefaultIntervalSeconds returns the default rule interval if the interval is not set.
-// If this constanst (1 minute) is lower than the configured minimum evaluation interval then
+// If this constant (1 minute) is lower than the configured minimum evaluation interval then
 // this configuration is returned.
 func (ng *AlertNG) getRuleDefaultIntervalSeconds() int64 {
 	ruleMinIntervalSeconds := ng.getRuleMinIntervalSeconds()
