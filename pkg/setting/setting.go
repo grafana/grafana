@@ -396,9 +396,10 @@ type Cfg struct {
 	GrafanaComURL string
 
 	// Alerting
-	AlertingMaxAttempts int
-	AlertingMinInterval int64
-	ExecuteAlerts       bool
+	AlertingMaxAttempts       int
+	AlertingMinInterval       int64
+	AlertingEvaluationTimeout time.Duration
+	ExecuteAlerts             bool
 }
 
 // IsLiveConfigEnabled returns true if live should be able to save configs to SQL tables
@@ -1350,6 +1351,7 @@ func (cfg *Cfg) readAlertingSettings(iniFile *ini.File) error {
 
 	evaluationTimeoutSeconds := alerting.Key("evaluation_timeout_seconds").MustInt64(30)
 	AlertingEvaluationTimeout = time.Second * time.Duration(evaluationTimeoutSeconds)
+	cfg.AlertingEvaluationTimeout = AlertingEvaluationTimeout
 	notificationTimeoutSeconds := alerting.Key("notification_timeout_seconds").MustInt64(30)
 	AlertingNotificationTimeout = time.Second * time.Duration(notificationTimeoutSeconds)
 	AlertingMaxAttempts = alerting.Key("max_attempts").MustInt(3)
