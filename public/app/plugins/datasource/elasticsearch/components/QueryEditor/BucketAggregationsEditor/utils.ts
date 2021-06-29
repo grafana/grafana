@@ -76,17 +76,6 @@ export const orderByOptions = [
   { label: 'Doc Count', value: '_count' },
 ];
 
-export const intervalOptions = [
-  { label: 'auto', value: 'auto' },
-  { label: '10s', value: '10s' },
-  { label: '1m', value: '1m' },
-  { label: '5m', value: '5m' },
-  { label: '10m', value: '10m' },
-  { label: '20m', value: '20m' },
-  { label: '1h', value: '1h' },
-  { label: '1d', value: '1d' },
-];
-
 /**
  * This returns the valid options for each of the enabled extended stat
  */
