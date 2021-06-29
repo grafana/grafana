@@ -38,8 +38,6 @@ type Service struct {
 type datasourceInfo struct {
 	HTTPClient    *http.Client
 	URL           string
-	BasicAuth     bool
-	BasicAuthUser string
 }
 
 type DsAccess string
