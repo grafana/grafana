@@ -6,6 +6,7 @@ const path = require('path');
 const { HotModuleReplacementPlugin, DefinePlugin } = require('webpack');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
+const ESLintPlugin = require('eslint-webpack-plugin');
 const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const getBabelConfig = require('./babel.config');
@@ -55,27 +56,22 @@ module.exports = (env = {}) =>
     },
 
     plugins: [
-      new CleanWebpackPlugin(),
       parseInt(env.noTsCheck, 10)
         ? new DefinePlugin({}) // bogus plugin to satisfy webpack API
         : new ForkTsCheckerWebpackPlugin({
-            eslint: {
-              enabled: true,
-              files: ['public/app/**/*.{ts,tsx}', 'packages/*/src/**/*.{ts,tsx}'],
-              options: {
-                cache: true,
-              },
-              memoryLimit: 4096,
-            },
             typescript: {
               mode: 'write-references',
               memoryLimit: 4096,
               diagnosticOptions: {
-                semantic: true,
+                semantic: false,
                 syntactic: true,
               },
             },
           }),
+      new ESLintPlugin({
+        lintDirtyModulesOnly: true,
+        extensions: ['.ts', '.tsx'],
+      }),
       new MiniCssExtractPlugin({
         filename: 'grafana.[name].[fullhash].css',
       }),
