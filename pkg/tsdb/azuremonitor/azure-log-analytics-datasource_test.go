@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strings"
 	"testing"
 	"time"
 
@@ -212,5 +213,27 @@ func TestLogAnalyticsCreateRequest(t *testing.T) {
 				t.Errorf("Unexpected HTTP headers: %v", cmp.Diff(req.Header, tt.expectedHeaders))
 			}
 		})
+	}
+}
+
+func Test_executeQueryErrorWithDifferentLogAnalyticsCreds(t *testing.T) {
+	ds := AzureLogAnalyticsDatasource{}
+	dsInfo := datasourceInfo{
+		Services: map[string]datasourceService{
+			azureLogAnalytics: {URL: "http://ds"},
+		},
+		Settings: azureMonitorSettings{AzureLogAnalyticsSameAs: false},
+	}
+	ctx := context.TODO()
+	query := &AzureLogAnalyticsQuery{
+		Params:    url.Values{},
+		TimeRange: backend.TimeRange{},
+	}
+	res := ds.executeQuery(ctx, query, dsInfo)
+	if res.Error == nil {
+		t.Fatal("expecting an error")
+	}
+	if !strings.Contains(res.Error.Error(), "Log Analytics credentials are no longer supported") {
+		t.Error("expecting the error to inform of bad credentials")
 	}
 }
