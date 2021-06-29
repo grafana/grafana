@@ -224,10 +224,6 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
       return this.runLiveQuery(target, maxDataPoints);
     }
     const query = this.createRangeQuery(target, options, maxDataPoints);
-    const scopedVars = {
-      ...(options as DataQueryRequest<LokiQuery>).scopedVars,
-      ...this.getRangeScopedVars(options.range),
-    };
 
     return this._request(RANGE_QUERY_ENDPOINT, query).pipe(
       catchError((err: any) => this.throwUnless(err, err.status === 404, target)),
@@ -239,7 +235,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
           responseListLength,
           maxDataPoints,
           this.instanceSettings.jsonData,
-          scopedVars,
+          (options as DataQueryRequest<LokiQuery>).scopedVars,
           (options as DataQueryRequest<LokiQuery>).reverse
         )
       )
@@ -326,7 +322,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
       return Promise.resolve([]);
     }
 
-    const interpolated = this.templateSrv.replace(query, this.getRangeScopedVars(), this.interpolateQueryExpr);
+    const interpolated = this.templateSrv.replace(query, {}, this.interpolateQueryExpr);
     return await this.processMetricFindQuery(interpolated);
   }
 
