@@ -77,8 +77,6 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 		model := &datasourceInfo{
 			HTTPClient:    client,
 			URL:           settings.URL,
-			BasicAuth:     settings.BasicAuthEnabled,
-			BasicAuthUser: settings.BasicAuthUser,
 		}
 
 		return model, nil
