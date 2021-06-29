@@ -48,10 +48,15 @@ type TagsQuery struct {
 	Limit int64 `json:"limit"`
 }
 
+type Tags struct {
+	Key   string
+	Value string
+	Count int64
+}
+
 type TagsDTO struct {
-	ID    int64  `json:"id"`
-	Key   string `json:"Key"`
-	Value string `json:"Value"`
+	Tag   string `json:"tag"`
+	Count int64  `json:"count"`
 }
 
 type DeleteParams struct {

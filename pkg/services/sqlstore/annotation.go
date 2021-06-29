@@ -280,28 +280,41 @@ func (r *SQLAnnotationRepo) FindTags(query *annotations.TagsQuery) ([]*annotatio
 	tagValue := `tag.` + dialect.Quote("value")
 
 	sql.WriteString(`
-		select distinct
-			tag.id,
+		SELECT
 			` + tagKey + `,
-			` + tagValue + `
-		from tag
-		inner join annotation_tag on tag.id = annotation_tag.tag_id
-		inner join annotation on annotation_tag.annotation_id = annotation.id
+			` + tagValue + `,
+			count(*) as count
+		FROM tag
+		INNER JOIN annotation_tag ON tag.id = annotation_tag.tag_id
+		INNER JOIN annotation ON annotation_tag.annotation_id = annotation.id
 `)
 
-	sql.WriteString(`where annotation.org_id = ?`)
+	sql.WriteString(`WHERE annotation.org_id = ?`)
 	params = append(params, query.OrgID)
 
-	sql.WriteString(` and (` + tagKey + ` ` + dialect.LikeStr() + ` ? or ` + tagValue + ` ` + dialect.LikeStr() + ` ?)`)
+	sql.WriteString(` AND (` + tagKey + ` ` + dialect.LikeStr() + ` ? OR ` + tagValue + ` ` + dialect.LikeStr() + ` ?)`)
 	params = append(params, `%`+query.Tag+`%`, `%`+query.Tag+`%`)
 
-	sql.WriteString(` ORDER BY ` + tagKey + `,` + tagValue + ` ` + dialect.Limit(query.Limit))
+	sql.WriteString(` GROUP BY ` + tagKey + `,` + tagValue)
+	sql.WriteString(` ORDER BY ` + tagKey + `,` + tagValue)
+	sql.WriteString(` ` + dialect.Limit(query.Limit))
 
-	items := make([]*annotations.TagsDTO, 0)
-
+	var items []*annotations.Tags
 	if err := x.SQL(sql.String(), params...).Find(&items); err != nil {
 		return nil, err
 	}
 
-	return items, nil
+	tags := make([]*annotations.TagsDTO, 0)
+	for _, item := range items {
+		tag := item.Key
+		if len(item.Value) > 0 {
+			tag = item.Key + ":" + item.Value
+		}
+		tags = append(tags, &annotations.TagsDTO{
+			Tag:   tag,
+			Count: item.Count,
+		})
+	}
+
+	return tags, nil
 }

@@ -259,15 +259,21 @@ func TestAnnotations(t *testing.T) {
 			})
 			require.NoError(t, err)
 			require.Len(t, items, 1)
+			require.Equal(t, "server:server-1", items[0].Tag)
+			require.Equal(t, int64(1), items[0].Count)
 		})
 
 		t.Run("Should find tags by value", func(t *testing.T) {
 			items, err := repo.FindTags(&annotations.TagsQuery{
 				OrgID: 1,
-				Tag:   "server-1",
+				Tag:   "outage",
 			})
 			require.NoError(t, err)
-			require.Len(t, items, 1)
+			require.Len(t, items, 2)
+			require.Equal(t, "outage", items[0].Tag)
+			require.Equal(t, "type:outage", items[1].Tag)
+			require.Equal(t, int64(1), items[0].Count)
+			require.Equal(t, int64(1), items[1].Count)
 		})
 
 		t.Run("Should not find tags in other org", func(t *testing.T) {
