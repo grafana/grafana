@@ -36,8 +36,8 @@ type Service struct {
 }
 
 type datasourceInfo struct {
-	HTTPClient    *http.Client
-	URL           string
+	HTTPClient *http.Client
+	URL        string
 }
 
 type DsAccess string
@@ -73,8 +73,8 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 		}
 
 		model := &datasourceInfo{
-			HTTPClient:    client,
-			URL:           settings.URL,
+			HTTPClient: client,
+			URL:        settings.URL,
 		}
 
 		return model, nil
