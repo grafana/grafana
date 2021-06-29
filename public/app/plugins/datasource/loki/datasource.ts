@@ -289,7 +289,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
 
   getTimeRangeParams() {
     const timeRange = this.timeSrv.timeRange();
-    return { from: timeRange.from.valueOf() * NS_IN_MS, to: timeRange.to.valueOf() * NS_IN_MS };
+    return { start: timeRange.from.valueOf() * NS_IN_MS, end: timeRange.to.valueOf() * NS_IN_MS };
   }
 
   async importQueries(queries: DataQuery[], originDataSource: DataSourceApi): Promise<LokiQuery[]> {
