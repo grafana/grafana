@@ -1,5 +1,5 @@
 import React from 'react';
-import { InlineField, Select, Switch } from '@grafana/ui';
+import { InlineField, InlineFieldRow, Select, Switch } from '@grafana/ui';
 import { TagFilter } from 'app/core/components/TagFilter/TagFilter';
 import { SelectableValue } from '@grafana/data';
 import { GrafanaAnnotationQuery, GrafanaAnnotationType } from '../types';
@@ -76,28 +76,26 @@ export default function AnnotationQuery({ query, onChange }: Props) {
 
   return (
     <div className="gf-form-group">
-      <div className="gf-form-inline">
+      <InlineFieldRow>
         <InlineField label="Filter by" labelWidth={18} tooltip={filterTooltipContent}>
           <Select width={16} options={annotationTypes} value={type} onChange={onFilterByChange} />
         </InlineField>
         <InlineField label="Max limit">
           <Select width={16} options={limitOptions} value={limit} onChange={onMaxLimitChange} />
         </InlineField>
-      </div>
-      <div className="gf-form-inline">
-        {query.type === 'tags' && (
-          <>
-            <InlineField label="Match any" labelWidth={18} tooltip={matchTooltipContent}>
-              <div className="gf-form-switch">
-                <Switch value={matchAny} onChange={onMatchAnyChange} />
-              </div>
-            </InlineField>
-            <InlineField label="Tags" labelWidth="auto" tooltip={tagsTooltipContent}>
-              <TagFilter onChange={onTagsChange} tagOptions={getAnnotationTags} tags={tags} />
-            </InlineField>
-          </>
-        )}
-      </div>
+      </InlineFieldRow>
+      {type === GrafanaAnnotationType.Tags && (
+        <InlineFieldRow>
+          <InlineField label="Match any" labelWidth={18} tooltip={matchTooltipContent}>
+            <div className="gf-form-switch">
+              <Switch value={matchAny} onChange={onMatchAnyChange} />
+            </div>
+          </InlineField>
+          <InlineField label="Tags" labelWidth="auto" tooltip={tagsTooltipContent}>
+            <TagFilter onChange={onTagsChange} tagOptions={getAnnotationTags} tags={tags} />
+          </InlineField>
+        </InlineFieldRow>
+      )}
     </div>
   );
 }
