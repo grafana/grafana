@@ -1,41 +1,10 @@
-import { getDefaultTimeRange } from '@grafana/data';
-import { render, screen } from '@testing-library/react';
+import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { ElasticDatasource } from 'app/plugins/datasource/elasticsearch/datasource';
+import { renderWithESProvider } from 'app/plugins/datasource/elasticsearch/test-helpers/render';
 import { ElasticsearchQuery } from 'app/plugins/datasource/elasticsearch/types';
-import React, { ComponentProps, ReactNode } from 'react';
-import { ElasticsearchProvider } from '../../ElasticsearchQueryContext';
+import React from 'react';
 import { DateHistogram } from '../aggregations';
 import { DateHistogramSettingsEditor } from './DateHistogramSettingsEditor';
-
-const renderWithESProvider = (
-  ui: ReactNode,
-  {
-    providerProps: {
-      datasource = {} as ElasticDatasource,
-      query = { refId: 'A' },
-      onChange = () => void 0,
-      onRunQuery = () => void 0,
-      range = getDefaultTimeRange(),
-    } = {},
-    ...renderOptions
-  }: { providerProps?: Partial<Omit<ComponentProps<typeof ElasticsearchProvider>, 'children'>> } & Parameters<
-    typeof render
-  >[1]
-) => {
-  return render(
-    <ElasticsearchProvider
-      query={query}
-      onChange={onChange}
-      datasource={datasource}
-      onRunQuery={onRunQuery}
-      range={range}
-    >
-      {ui}
-    </ElasticsearchProvider>,
-    renderOptions
-  );
-};
 
 describe('DateHistogram Settings Editor', () => {
   describe('Custom options for interval', () => {
