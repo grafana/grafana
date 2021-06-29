@@ -323,17 +323,6 @@ steps:
   depends_on:
   - initialize
 
-- name: publish-frontend-metrics
-  image: grafana/build-container:1.4.1
-  commands:
-  - ./scripts/ci-frontend-metrics.sh | ./bin/grabpl publish-metrics $${GRAFANA_MISC_STATS_API_KEY}
-  environment:
-    GRAFANA_MISC_STATS_API_KEY:
-      from_secret: grafana_misc_stats_api_key
-  failure: ignore
-  depends_on:
-  - initialize
-
 - name: build-backend
   image: grafana/build-container:1.4.1
   commands:
@@ -442,6 +431,17 @@ steps:
   depends_on:
   - build-storybook
   - end-to-end-tests
+
+- name: publish-frontend-metrics
+  image: grafana/build-container:1.4.1
+  commands:
+  - ./scripts/ci-frontend-metrics.sh | ./bin/grabpl publish-metrics $${GRAFANA_MISC_STATS_API_KEY}
+  environment:
+    GRAFANA_MISC_STATS_API_KEY:
+      from_secret: grafana_misc_stats_api_key
+  failure: ignore
+  depends_on:
+  - build-frontend
 
 - name: build-frontend-docs
   image: grafana/build-container:1.4.1

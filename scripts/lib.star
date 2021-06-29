@@ -480,7 +480,7 @@ def frontend_metrics_step(edition):
         'name': 'publish-frontend-metrics',
         'image': build_image,
         'depends_on': [
-            'initialize',
+            'build-frontend',
         ],
         'environment': {
             'GRAFANA_MISC_STATS_API_KEY': from_secret('grafana_misc_stats_api_key'),
