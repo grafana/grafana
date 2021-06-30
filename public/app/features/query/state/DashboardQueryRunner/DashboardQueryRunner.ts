@@ -39,7 +39,7 @@ class DashboardQueryRunnerImpl implements DashboardQueryRunner {
     this.cancel = this.cancel.bind(this);
     this.destroy = this.destroy.bind(this);
     this.executeRun = this.executeRun.bind(this);
-    this.results = new ReplaySubject<DashboardQueryRunnerWorkerResult>();
+    this.results = new ReplaySubject<DashboardQueryRunnerWorkerResult>(1);
     this.runs = new Subject<DashboardQueryRunnerOptions>();
     this.cancellationStream = new Subject<any>();
     this.runsSubscription = this.runs.subscribe((options) => this.executeRun(options));
