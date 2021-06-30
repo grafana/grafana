@@ -24,6 +24,7 @@ export interface AxisProps {
 }
 
 const fontSize = 12;
+const labelPad = 8;
 
 export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
   merge(props: AxisProps) {
@@ -67,9 +68,12 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
       stroke: theme.colors.text.primary,
       side: getUPlotSideFromAxis(placement),
       font,
-      labelFont: font,
       size: this.props.size ?? calculateAxisSize,
       gap,
+
+      // @ts-ignore (TODO: remove once uPlot adds this in 1.6.15)
+      labelGap: 0,
+
       grid: {
         show: grid,
         stroke: gridColor,
@@ -86,9 +90,12 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
       space: calculateSpace,
     };
 
-    if (label !== undefined && label !== null && label.length > 0) {
+    if (label != null && label.length > 0) {
       config.label = label;
-      config.labelSize = 18;
+      config.labelSize = fontSize + labelPad;
+      config.labelFont = font;
+      // @ts-ignore (TODO: remove once uPlot adds this in 1.6.15)
+      config.labelGap = labelPad;
     }
 
     if (values) {
@@ -139,7 +146,8 @@ function calculateAxisSize(self: uPlot, values: string[], axisIdx: number) {
     axisSize += axis!.gap! + fontSize;
   } else if (values?.length) {
     let longestValue = values.reduce((acc, value) => (value.length > acc.length ? value : acc), '');
-    axisSize += axis!.gap! + measureText(longestValue, fontSize).width;
+    // @ts-ignore (TODO: remove axis!.labelGap! once uPlot adds this in 1.6.15)
+    axisSize += axis!.gap! + axis!.labelGap! + measureText(longestValue, fontSize).width;
   }
 
   return Math.ceil(axisSize);
