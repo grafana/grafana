@@ -99,21 +99,6 @@ module.exports = {
   ],
   module: {
     rules: [
-      /**
-       * Some npm packages are bundled with es2015 syntax, ie. debug
-       * To make them work with PhantomJS we need to transpile them
-       * to get rid of unsupported syntax.
-       */
-      {
-        test: /\.js$/,
-        exclude: shouldExclude,
-        use: [
-          {
-            loader: 'babel-loader',
-            options: getBabelConfig(),
-          },
-        ],
-      },
       {
         test: require.resolve('jquery'),
         loader: 'expose-loader',
