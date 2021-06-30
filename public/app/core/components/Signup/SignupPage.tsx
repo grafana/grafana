@@ -81,7 +81,7 @@ export const SignupPage: FC<Props> = (props) => {
               </Field>
               {!getConfig().autoAssignOrg && (
                 <Field label="Org. name">
-                  <Input id="org_name" {...register('orgName')} placeholder="Org. name" />
+                  <Input id="org-name" {...register('orgName')} placeholder="Org. name" />
                 </Field>
               )}
               {getConfig().verifyEmailEnabled && (
@@ -111,9 +111,7 @@ export const SignupPage: FC<Props> = (props) => {
               </Field>
 
               <HorizontalGroup>
-                <Button type="submit" id="submit">
-                  Submit
-                </Button>
+                <Button type="submit">Submit</Button>
                 <LinkButton fill="text" href={getConfig().appSubUrl + '/login'}>
                   Back to login
                 </LinkButton>
