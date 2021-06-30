@@ -1,8 +1,8 @@
 {
   "__inputs": [
     {
-      "name": "DS_GDEV-PROMETHEUS",
-      "label": "gdev-prometheus",
+      "name": "DS_PROMETHEUS",
+      "label": "Prometheus",
       "description": "",
       "type": "datasource",
       "pluginId": "prometheus",
@@ -88,7 +88,7 @@
   "panels": [
     {
       "cacheTimeout": null,
-      "datasource": "${DS_GDEV-PROMETHEUS}",
+      "datasource": "${DS_PROMETHEUS}",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -165,7 +165,7 @@
     },
     {
       "cacheTimeout": null,
-      "datasource": "${DS_GDEV-PROMETHEUS}",
+      "datasource": "${DS_PROMETHEUS}",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -238,7 +238,7 @@
     },
     {
       "cacheTimeout": null,
-      "datasource": "${DS_GDEV-PROMETHEUS}",
+      "datasource": "${DS_PROMETHEUS}",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -311,7 +311,7 @@
     },
     {
       "cacheTimeout": null,
-      "datasource": "${DS_GDEV-PROMETHEUS}",
+      "datasource": "${DS_PROMETHEUS}",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -384,7 +384,7 @@
     },
     {
       "columns": [],
-      "datasource": "${DS_GDEV-PROMETHEUS}",
+      "datasource": "${DS_PROMETHEUS}",
       "fontSize": "100%",
       "gridPos": {
         "h": 5,
@@ -438,7 +438,7 @@
       "type": "table-old"
     },
     {
-      "datasource": "${DS_GDEV-PROMETHEUS}",
+      "datasource": "${DS_PROMETHEUS}",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -558,7 +558,7 @@
       "type": "timeseries"
     },
     {
-      "datasource": "${DS_GDEV-PROMETHEUS}",
+      "datasource": "${DS_PROMETHEUS}",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -694,7 +694,7 @@
     },
     {
       "columns": [],
-      "datasource": "${DS_GDEV-PROMETHEUS}",
+      "datasource": "${DS_PROMETHEUS}",
       "fontSize": "100%",
       "gridPos": {
         "h": 10,
@@ -749,7 +749,7 @@
       "type": "table-old"
     },
     {
-      "datasource": "${DS_GDEV-PROMETHEUS}",
+      "datasource": "${DS_PROMETHEUS}",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -868,7 +868,7 @@
       "type": "timeseries"
     },
     {
-      "datasource": "${DS_GDEV-PROMETHEUS}",
+      "datasource": "${DS_PROMETHEUS}",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1017,7 +1017,7 @@
       "type": "timeseries"
     },
     {
-      "datasource": "${DS_GDEV-PROMETHEUS}",
+      "datasource": "${DS_PROMETHEUS}",
       "description": "Aggregated over all Grafana nodes.",
       "fieldConfig": {
         "defaults": {
