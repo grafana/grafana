@@ -3,6 +3,7 @@ import { isEqual } from 'lodash';
 import tinycolor from 'tinycolor2';
 import { css, cx } from '@emotion/css';
 import { LogRowModel, findHighlightChunksInText, GrafanaTheme } from '@grafana/data';
+import { safeStringifyValue } from '../../../../../public/app/core/utils/explore';
 
 // @ts-ignore
 import Highlighter from 'react-highlight-words';
@@ -75,6 +76,7 @@ class UnThemedLogRowMessage extends PureComponent<Props> {
 
     const style = getLogRowStyles(theme, row.logLevel);
     const { entry, hasAnsi, raw } = row;
+    const jsonEntry = prettifyLogMessage ? safeStringifyValue(entry, 2) : entry;
 
     const previewHighlights = highlighterExpressions?.length && !isEqual(highlighterExpressions, row.searchWords);
     const highlights = previewHighlights ? highlighterExpressions : row.searchWords;
