@@ -40,6 +40,10 @@ export const AnnotationsPlugin: React.FC<AnnotationsPluginProps> = ({ annotation
       if (!ctx) {
         return;
       }
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(u.bbox.left, u.bbox.top, u.bbox.width, u.bbox.height);
+      ctx.clip();
 
       const renderLine = (x: number, color: string) => {
         ctx.beginPath();
@@ -64,20 +68,12 @@ export const AnnotationsPlugin: React.FC<AnnotationsPluginProps> = ({ annotation
           let x0 = u.valToPos(annotation.time, 'x', true);
           const color = theme.visualization.getColorByName(annotation.color);
 
-          if (x0 < u.bbox.left) {
-            x0 = u.bbox.left;
-          } else {
-            renderLine(x0, color);
-          }
+          renderLine(x0, color);
 
           if (annotation.isRegion && annotation.timeEnd) {
             let x1 = u.valToPos(annotation.timeEnd, 'x', true);
 
-            if (x1 > u.bbox.width) {
-              x1 = u.bbox.width + u.bbox.left;
-            } else {
-              renderLine(x1, color);
-            }
+            renderLine(x1, color);
 
             ctx.fillStyle = colorManipulator.alpha(color, 0.1);
             ctx.rect(x0, u.bbox.top, x1 - x0, u.bbox.height);
@@ -85,6 +81,7 @@ export const AnnotationsPlugin: React.FC<AnnotationsPluginProps> = ({ annotation
           }
         }
       }
+      ctx.restore();
       return;
     });
   }, [config, theme]);
