@@ -3,7 +3,7 @@ import React from 'react';
 import { GrafanaAnnotationType, GrafanaAnnotationQuery } from '../types';
 import AnnotationQueryEditor from './AnnotationQueryEditor';
 
-describe('AnnotationQuery', () => {
+describe('AnnotationQueryEditor', () => {
   const mockOnChange = jest.fn();
   let mockQuery: GrafanaAnnotationQuery;
 
@@ -27,6 +27,20 @@ describe('AnnotationQuery', () => {
     expect(maxLimit).toBeInTheDocument();
   });
 
+  describe('when the query type is "Tags"', () => {
+    it('has a "Match any" toggle', () => {
+      render(<AnnotationQueryEditor query={mockQuery} onChange={mockOnChange} />);
+      const matchAny = screen.getByLabelText('Match any');
+      expect(matchAny).toBeInTheDocument();
+    });
+
+    it('has a "Tags" input', () => {
+      render(<AnnotationQueryEditor query={mockQuery} onChange={mockOnChange} />);
+      const tags = screen.getByLabelText('Tags');
+      expect(tags).toBeInTheDocument();
+    });
+  });
+
   describe('when the query type is "Dashboard"', () => {
     beforeEach(() => {
       mockQuery.type = GrafanaAnnotationType.Dashboard;
@@ -42,20 +56,6 @@ describe('AnnotationQuery', () => {
       render(<AnnotationQueryEditor query={mockQuery} onChange={mockOnChange} />);
       const tags = screen.queryByLabelText('Tags');
       expect(tags).toBeNull();
-    });
-  });
-
-  describe('when the query type is "Tags"', () => {
-    it('has a "Match any" toggle', () => {
-      render(<AnnotationQueryEditor query={mockQuery} onChange={mockOnChange} />);
-      const matchAny = screen.getByLabelText('Match any');
-      expect(matchAny).toBeInTheDocument();
-    });
-
-    it('has a "Tags" input', () => {
-      render(<AnnotationQueryEditor query={mockQuery} onChange={mockOnChange} />);
-      const tags = screen.getByLabelText('Tags');
-      expect(tags).toBeInTheDocument();
     });
   });
 });
