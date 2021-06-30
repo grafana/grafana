@@ -1,5 +1,5 @@
 import React from 'react';
-import { InlineField, InlineFieldRow, InlineSwitch, Select } from '@grafana/ui';
+import { FieldSet, InlineField, InlineFieldRow, InlineSwitch, Select } from '@grafana/ui';
 import { TagFilter } from 'app/core/components/TagFilter/TagFilter';
 import { SelectableValue } from '@grafana/data';
 import { GrafanaAnnotationQuery, GrafanaAnnotationType } from '../types';
@@ -75,7 +75,7 @@ export default function AnnotationQueryEditor({ query, onChange }: Props) {
     });
 
   return (
-    <div className="gf-form-group">
+    <FieldSet>
       <InlineFieldRow>
         <InlineField label="Filter by" labelWidth={18} tooltip={filterTooltipContent}>
           <Select
@@ -112,6 +112,6 @@ export default function AnnotationQueryEditor({ query, onChange }: Props) {
           </InlineField>
         </InlineFieldRow>
       )}
-    </div>
+    </FieldSet>
   );
 }
