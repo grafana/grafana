@@ -21,7 +21,7 @@ const startTaskRunner: TaskRunner<StartTaskOptions> = async ({ watchThemes, noTs
           name: 'Dev server',
         }
       : {
-          command: `node --trace-deprecation node_modules/webpack/bin/webpack.js --progress --color --watch --env noTsCheck=${noTsCheckArg} --config scripts/webpack/webpack.dev.js`,
+          command: `webpack --progress --color --watch --env noTsCheck=${noTsCheckArg} --config scripts/webpack/webpack.dev.js`,
           name: 'Webpack',
         },
   ];
