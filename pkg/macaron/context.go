@@ -15,8 +15,6 @@
 package macaron
 
 import (
-	"crypto/sha256"
-	"encoding/hex"
 	"html/template"
 	"io"
 	"io/ioutil"
@@ -33,7 +31,6 @@ import (
 
 	"github.com/go-macaron/inject"
 	"github.com/unknwon/com"
-	"golang.org/x/crypto/pbkdf2"
 )
 
 // Locale reprents a localization interface.
@@ -440,44 +437,6 @@ var defaultCookieSecret string
 // SetDefaultCookieSecret sets global default secure cookie secret.
 func (m *Macaron) SetDefaultCookieSecret(secret string) {
 	defaultCookieSecret = secret
-}
-
-// SetSecureCookie sets given cookie value to response header with default secret string.
-func (ctx *Context) SetSecureCookie(name, value string, others ...interface{}) {
-	ctx.SetSuperSecureCookie(defaultCookieSecret, name, value, others...)
-}
-
-// GetSecureCookie returns given cookie value from request header with default secret string.
-func (ctx *Context) GetSecureCookie(key string) (string, bool) {
-	return ctx.GetSuperSecureCookie(defaultCookieSecret, key)
-}
-
-// SetSuperSecureCookie sets given cookie value to response header with secret string.
-func (ctx *Context) SetSuperSecureCookie(secret, name, value string, others ...interface{}) {
-	key := pbkdf2.Key([]byte(secret), []byte(secret), 1000, 16, sha256.New)
-	text, err := com.AESGCMEncrypt(key, []byte(value))
-	if err != nil {
-		panic("error encrypting cookie: " + err.Error())
-	}
-
-	ctx.SetCookie(name, hex.EncodeToString(text), others...)
-}
-
-// GetSuperSecureCookie returns given cookie value from request header with secret string.
-func (ctx *Context) GetSuperSecureCookie(secret, name string) (string, bool) {
-	val := ctx.GetCookie(name)
-	if val == "" {
-		return "", false
-	}
-
-	text, err := hex.DecodeString(val)
-	if err != nil {
-		return "", false
-	}
-
-	key := pbkdf2.Key([]byte(secret), []byte(secret), 1000, 16, sha256.New)
-	text, err = com.AESGCMDecrypt(key, text)
-	return string(text), err == nil
 }
 
 func (ctx *Context) setRawContentHeader() {
