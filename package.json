@@ -52,7 +52,7 @@
     "watch": "yarn start -d watch,start core:start --watchTheme",
     "ci:test-frontend": "yarn run test:ci && yarn grafana-toolkit node-version-check",
     "postinstall": "husky install",
-    "ci:test-percona-frontend": "yarn run prettier:check && yarn run packages:typecheck && yarn run typecheck && yarn run test-percona"
+    "ci:test-percona-frontend": "yarn run prettier:check && yarn run packages:typecheck && yarn run typecheck && yarn run jest-percona-ci"
   },
   "grafana": {
     "whatsNewUrl": "https://grafana.com/docs/grafana/next/whatsnew/whats-new-in-v8-3/",
