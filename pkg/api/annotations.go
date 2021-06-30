@@ -288,3 +288,19 @@ func canSave(c *models.ReqContext, repo annotations.Repository, annotationID int
 
 	return nil
 }
+
+func GetAnnotationTags(c *models.ReqContext) response.Response {
+	query := &annotations.TagsQuery{
+		OrgID: c.OrgId,
+		Tag:   c.Query("tag"),
+		Limit: c.QueryInt64("limit"),
+	}
+
+	repo := annotations.GetRepository()
+	result, err := repo.FindTags(query)
+	if err != nil {
+		return response.Error(500, "Failed to find annotation tags", err)
+	}
+
+	return response.JSON(200, util.DynMap{"result": result})
+}
