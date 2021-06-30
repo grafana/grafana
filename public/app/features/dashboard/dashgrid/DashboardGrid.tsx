@@ -226,7 +226,7 @@ export class DashboardGrid extends PureComponent<Props, State> {
           /*
             Disable draggable if mobile device, solving an issue with unintentionally
             moving panels. https://github.com/grafana/grafana/issues/18497
-            theme.breakpoints.md = 769      
+            theme.breakpoints.md = 769
           */
 
           return (
