@@ -4,7 +4,6 @@ import { getConfig } from 'app/core/config';
 import { getBackendSrv } from '@grafana/runtime';
 import appEvents from 'app/core/app_events';
 import { AppEvents } from '@grafana/data';
-import { selectors } from '@grafana/e2e-selectors';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { InnerBox, LoginLayout } from '../Login/LoginLayout';
 
@@ -64,11 +63,11 @@ export const SignupPage: FC<Props> = (props) => {
           {({ errors, register, getValues }: FormAPI<SignupDTO>) => (
             <>
               <Field label="Your name">
-                <Input aria-label={selectors.pages.Signup.name} {...register('name')} placeholder="(optional)" />
+                <Input id="user-name" {...register('name')} placeholder="(optional)" />
               </Field>
               <Field label="Email" invalid={!!errors.email} error={errors.email?.message}>
                 <Input
-                  aria-label={selectors.pages.Signup.email}
+                  id="email"
                   {...register('email', {
                     required: 'Email is required',
                     pattern: {
@@ -82,21 +81,17 @@ export const SignupPage: FC<Props> = (props) => {
               </Field>
               {!getConfig().autoAssignOrg && (
                 <Field label="Org. name">
-                  <Input aria-label={selectors.pages.Signup.orgName} {...register('orgName')} placeholder="Org. name" />
+                  <Input id="org_name" {...register('orgName')} placeholder="Org. name" />
                 </Field>
               )}
               {getConfig().verifyEmailEnabled && (
                 <Field label="Email verification code (sent to your email)">
-                  <Input
-                    aria-label={selectors.pages.Signup.verificationCode}
-                    {...register('code')}
-                    placeholder="Code"
-                  />
+                  <Input id="verification-code" {...register('code')} placeholder="Code" />
                 </Field>
               )}
               <Field label="Password" invalid={!!errors.password} error={errors?.password?.message}>
                 <Input
-                  aria-label={selectors.pages.Signup.password}
+                  id="new-password"
                   {...register('password', {
                     required: 'Password is required',
                   })}
@@ -106,7 +101,7 @@ export const SignupPage: FC<Props> = (props) => {
               </Field>
               <Field label="Confirm password" invalid={!!errors.confirm} error={errors?.confirm?.message}>
                 <Input
-                  aria-label={selectors.pages.Signup.confirmPassword}
+                  id="confirm-new-password"
                   {...register('confirm', {
                     required: 'Confirmed password is required',
                     validate: (v) => v === getValues().password || 'Passwords must match!',
@@ -116,7 +111,7 @@ export const SignupPage: FC<Props> = (props) => {
               </Field>
 
               <HorizontalGroup>
-                <Button type="submit" aria-label={selectors.pages.Signup.submit}>
+                <Button type="submit" id="submit">
                   Submit
                 </Button>
                 <LinkButton fill="text" href={getConfig().appSubUrl + '/login'}>

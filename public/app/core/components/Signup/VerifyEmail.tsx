@@ -48,7 +48,7 @@ export const VerifyEmail: FC = () => {
             error={errors.email?.message}
           >
             <Input
-              aria-label="Email input field"
+              id="email"
               {...register('email', {
                 required: 'Email is required',
                 pattern: {

@@ -46,15 +46,15 @@ describe('Signup Page', () => {
     render(<SignupPage {...props} />);
     expect(screen.getByRole('heading', { name: 'Welcome to Grafana' })).toBeInTheDocument();
 
-    expect(screen.getByRole('textbox', { name: 'Name input field' })).toBeInTheDocument();
-    expect(screen.getByRole('textbox', { name: 'Email input field' })).toBeInTheDocument();
-    expect(screen.getByRole('textbox', { name: 'Organization name input field' })).toBeInTheDocument();
-    expect(screen.getByRole('textbox', { name: 'Verification code input field' })).toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: 'Your name' })).toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: 'Email' })).toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: 'Org. name' })).toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: /Email verification code/i })).toBeInTheDocument();
 
-    expect(screen.getByLabelText('Password input field')).toBeInTheDocument();
-    expect(screen.getByLabelText('Confirm Password input field')).toBeInTheDocument();
+    expect(screen.getByLabelText('Password')).toBeInTheDocument();
+    expect(screen.getByLabelText('Confirm password')).toBeInTheDocument();
 
-    expect(screen.getByRole('button', { name: 'Signup button' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Submit' })).toBeInTheDocument();
 
     expect(screen.getByRole('link', { name: 'Back to login' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Back to login' })).toHaveAttribute('href', '/login');
@@ -62,30 +62,30 @@ describe('Signup Page', () => {
   it('should pass validation checks for email field', async () => {
     render(<SignupPage {...props} />);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Signup button' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Submit' }));
     expect(await screen.findByText('Email is required')).toBeInTheDocument();
 
     await act(async () => {
-      await userEvent.type(screen.getByRole('textbox', { name: 'Email input field' }), 'test');
+      await userEvent.type(screen.getByRole('textbox', { name: 'Email' }), 'test');
       expect(screen.queryByText('Email is invalid')).toBeInTheDocument();
 
-      await userEvent.type(screen.getByRole('textbox', { name: 'Email input field' }), 'test@gmail.com');
+      await userEvent.type(screen.getByRole('textbox', { name: 'Email' }), 'test@gmail.com');
       expect(screen.queryByText('Email is invalid')).not.toBeInTheDocument();
     });
   });
   it('should pass validation checks for password and confirm password field', async () => {
     render(<SignupPage {...props} />);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Signup button' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Submit' }));
     expect(await screen.findByText('Password is required')).toBeInTheDocument();
     expect(await screen.findByText('Confirmed password is required')).toBeInTheDocument();
 
     await act(async () => {
-      await userEvent.type(screen.getByLabelText('Password input field'), 'admin');
-      await userEvent.type(screen.getByLabelText('Confirm Password input field'), 'a');
+      await userEvent.type(screen.getByLabelText('Password'), 'admin');
+      await userEvent.type(screen.getByLabelText('Confirm password'), 'a');
       expect(screen.queryByText('Passwords must match!')).toBeInTheDocument();
 
-      await userEvent.type(screen.getByLabelText('Confirm Password input field'), 'dmin');
+      await userEvent.type(screen.getByLabelText('Confirm password'), 'dmin');
       expect(screen.queryByText('Passwords must match!')).not.toBeInTheDocument();
     });
   });
@@ -98,11 +98,11 @@ describe('Signup Page', () => {
     postMock.mockResolvedValueOnce({ message: 'Logged in' });
     render(<SignupPage {...props} />);
 
-    await userEvent.type(screen.getByRole('textbox', { name: 'Name input field' }), 'test-user');
-    await userEvent.type(screen.getByRole('textbox', { name: 'Email input field' }), 'test@gmail.com');
-    await userEvent.type(screen.getByLabelText('Password input field'), 'admin');
-    await userEvent.type(screen.getByLabelText('Confirm Password input field'), 'admin');
-    fireEvent.click(screen.getByRole('button', { name: 'Signup button' }));
+    await userEvent.type(screen.getByRole('textbox', { name: 'Your name' }), 'test-user');
+    await userEvent.type(screen.getByRole('textbox', { name: 'Email' }), 'test@gmail.com');
+    await userEvent.type(screen.getByLabelText('Password'), 'admin');
+    await userEvent.type(screen.getByLabelText('Confirm password'), 'admin');
+    fireEvent.click(screen.getByRole('button', { name: 'Submit' }));
 
     await waitFor(() =>
       expect(postMock).toHaveBeenCalledWith('/api/user/signup/step2', {
