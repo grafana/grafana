@@ -174,6 +174,7 @@ export function AnnotationMarker({ annotation, timeZone }: Props) {
     if (x0 < 0) {
       x0 = 0;
     }
+
     if (x1 > plotCtx.plot!.bbox.width / window.devicePixelRatio) {
       x1 = plotCtx.plot!.bbox.width / window.devicePixelRatio;
     }

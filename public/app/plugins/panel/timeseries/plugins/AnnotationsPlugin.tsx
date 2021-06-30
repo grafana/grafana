@@ -64,7 +64,7 @@ export const AnnotationsPlugin: React.FC<AnnotationsPluginProps> = ({ annotation
           let x0 = u.valToPos(annotation.time, 'x', true);
           const color = theme.visualization.getColorByName(annotation.color);
 
-          if (x0 < 0) {
+          if (x0 < u.bbox.left) {
             x0 = u.bbox.left;
           } else {
             renderLine(x0, color);
