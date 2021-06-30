@@ -24,21 +24,12 @@ import (
 // Injector represents an interface for mapping and injecting dependencies into structs
 // and function arguments.
 type Injector interface {
-	Applicator
 	Invoker
 	TypeMapper
 	// SetParent sets the parent of the injector. If the injector cannot find a
 	// dependency in its Type map it will check its parent before returning an
 	// error.
 	SetParent(Injector)
-}
-
-// Applicator represents an interface for mapping dependencies to a struct.
-type Applicator interface {
-	// Maps dependencies in the Type map to each field in the struct
-	// that is tagged with 'inject'. Returns an error if the injection
-	// fails.
-	Apply(interface{}) error
 }
 
 // Invoker represents an interface for calling functions via reflection.
@@ -175,40 +166,6 @@ func (inj *injector) callInvoke(f interface{}, t reflect.Type, numIn int) ([]ref
 		}
 	}
 	return reflect.ValueOf(f).Call(in), nil
-}
-
-// Maps dependencies in the Type map to each field in the struct
-// that is tagged with 'inject'.
-// Returns an error if the injection fails.
-func (inj *injector) Apply(val interface{}) error {
-	v := reflect.ValueOf(val)
-
-	for v.Kind() == reflect.Ptr {
-		v = v.Elem()
-	}
-
-	if v.Kind() != reflect.Struct {
-		return nil // Should not panic here ?
-	}
-
-	t := v.Type()
-
-	for i := 0; i < v.NumField(); i++ {
-		f := v.Field(i)
-		structField := t.Field(i)
-		if f.CanSet() && (structField.Tag == "inject" || structField.Tag.Get("inject") != "") {
-			ft := f.Type()
-			v := inj.GetVal(ft)
-			if !v.IsValid() {
-				return fmt.Errorf("Value not found for type %v", ft)
-			}
-
-			f.Set(v)
-		}
-
-	}
-
-	return nil
 }
 
 // Maps the concrete value of val to its dynamic type using reflect.TypeOf,
