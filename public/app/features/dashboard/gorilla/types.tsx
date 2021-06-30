@@ -20,6 +20,10 @@ export interface GorillaDashNavItem extends GorillaContextItem {
   timePicker: GorillaContextItem;
   title: GorillaContextItem;
   tvToggle: GorillaContextItem;
+  addPanelButton: GorillaContextItem;
+  DashboardSettingsButton: GorillaContextItem;
+  saveDasboardButton: GorillaContextItem;
+  snapshotButton: GorillaContextItem;
 }
 
 export interface GorillaContextType {
@@ -43,6 +47,18 @@ export const defaultValues: GorillaContextConfiguration = {
       mode: GorillaMode.editable,
     },
     tvToggle: {
+      mode: GorillaMode.editable,
+    },
+    addPanelButton: {
+      mode: GorillaMode.editable,
+    },
+    DashboardSettingsButton: {
+      mode: GorillaMode.editable,
+    },
+    saveDasboardButton: {
+      mode: GorillaMode.editable,
+    },
+    snapshotButton: {
       mode: GorillaMode.editable,
     },
   },

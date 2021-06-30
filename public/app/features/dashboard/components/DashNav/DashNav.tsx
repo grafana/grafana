@@ -205,11 +205,20 @@ class DashNav extends PureComponent<Props> {
     }
 
     if (canEdit && !isFullscreen) {
-      buttons.push(<ToolbarButton tooltip="Add panel" icon="panel-add" onClick={onAddPanel} key="button-panel-add" />);
+      buttons.push(
+        <GorillaToolbarButton
+          configPath="dashNav.addPanelButton"
+          tooltip="Add panel"
+          icon="panel-add"
+          onClick={onAddPanel}
+          key="button-panel-add"
+        />
+      );
       buttons.push(
         <ModalsController key="button-save">
           {({ showModal, hideModal }) => (
-            <ToolbarButton
+            <GorillaToolbarButton
+              configPath="dashNav.saveDashboardButton"
               tooltip="Save dashboard"
               icon="save"
               onClick={() => {
@@ -226,7 +235,8 @@ class DashNav extends PureComponent<Props> {
 
     if (snapshotUrl) {
       buttons.push(
-        <ToolbarButton
+        <GorillaToolbarButton
+          configPath="dashNav.snapshotButton"
           tooltip="Open original dashboard"
           onClick={() => this.gotoSnapshotOrigin(snapshotUrl)}
           icon="link"
@@ -237,7 +247,13 @@ class DashNav extends PureComponent<Props> {
 
     if (showSettings) {
       buttons.push(
-        <ToolbarButton tooltip="Dashboard settings" icon="cog" onClick={this.onOpenSettings} key="button-settings" />
+        <GorillaToolbarButton
+          configPath="dashNav.dashboardSettingsButton"
+          tooltip="Dashboard settings"
+          icon="cog"
+          onClick={this.onOpenSettings}
+          key="button-settings"
+        />
       );
     }
 
