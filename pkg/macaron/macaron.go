@@ -69,8 +69,6 @@ func validateAndWrapHandler(h Handler) Handler {
 		switch v := h.(type) {
 		case func(*Context):
 			return ContextInvoker(v)
-		case func(*Context, *log.Logger):
-			return LoggerInvoker(v)
 		case func(http.ResponseWriter, *http.Request):
 			return handlerFuncInvoker(v)
 		case func(http.ResponseWriter, error):
