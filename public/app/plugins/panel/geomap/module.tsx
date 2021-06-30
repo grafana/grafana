@@ -44,13 +44,6 @@ export const plugin = new PanelPlugin<GeomapPanelOptions>(GeomapPanel)
       })
       .addBooleanSwitch({
         category,
-        path: 'controls.showOverview',
-        name: 'Show overview map',
-        description: 'Show an overview map in the lower left',
-        defaultValue: false,
-      })
-      .addBooleanSwitch({
-        category,
         path: 'controls.showScale',
         name: 'Show scale',
         description: 'Indicate map scale',
@@ -58,10 +51,10 @@ export const plugin = new PanelPlugin<GeomapPanelOptions>(GeomapPanel)
       })
       .addBooleanSwitch({
         category,
-        path: 'controls.scaleShowBar',
-        name: 'Show scale as bar',
+        path: 'controls.showDebug',
+        name: 'Show debug',
+        description: 'show map info',
         defaultValue: false,
-        showIf: (v) => v.controls.showScale,
       });
   });
 

@@ -1,12 +1,9 @@
 import React, { Component } from 'react';
 import { geomapLayerRegistry } from '../layers/registry';
 import { Map as GeoMap, View } from 'ol';
-import TileLayer from 'ol/layer/Tile';
-import OSM from 'ol/source/OSM';
 import Attribution from 'ol/control/Attribution';
 import Zoom from 'ol/control/Zoom';
 import ScaleLine from 'ol/control/ScaleLine';
-import OverviewMap from 'ol/control/OverviewMap';
 import BaseLayer from 'ol/layer/Base';
 
 import { PanelData, MapLayerHandler, MapLayerConfig } from '@grafana/data';
@@ -150,7 +147,6 @@ export class BaseMap extends Component<BaseMapProps> {
       this.map.addControl(
         new ScaleLine({
           units: options.scaleUnits,
-          bar: options.scaleShowBar,
           minWidth: 100,
         })
       );
@@ -160,21 +156,9 @@ export class BaseMap extends Component<BaseMapProps> {
       this.map.addControl(new Attribution({ collapsed: true, collapsible: true }));
     }
 
-    if (options.showOverview) {
-      this.map.addControl(
-        new OverviewMap({
-          collapsed: false,
-          collapsible: false,
-          layers: [
-            new TileLayer({
-              source: new OSM(), // TODO, get selected baselayer
-            }),
-          ],
-        })
-      );
+    if (options.showDebug) {
+      this.map.addControl(new InfoControl());
     }
-
-    this.map.addControl(new InfoControl());
   }
 
   render() {

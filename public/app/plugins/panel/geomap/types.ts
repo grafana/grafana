@@ -11,11 +11,9 @@ export interface ControlsOptions {
   // Scale options
   showScale?: boolean;
   scaleUnits?: Units;
-  scaleMinWidth?: number;
-  scaleShowBar?: boolean;
 
-  // Overview (same map for now)
-  showOverview?: boolean;
+  // Show debug
+  showDebug?: boolean;
 }
 
 export interface MapViewConfig {

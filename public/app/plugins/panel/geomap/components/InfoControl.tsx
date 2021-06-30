@@ -52,7 +52,18 @@ export class InfoControl extends Control {
 
     ReactDOM.render(
       <div>
-        Zoom: {zoom?.toFixed(1)} CENTER: {center[0].toFixed(5)}, {center[1].toFixed(5)}
+        <table>
+          <tr>
+            <th>Zoom:</th>
+            <td>{zoom?.toFixed(1)}</td>
+          </tr>
+          <tr>
+            <th>Center:&nbsp;</th>
+            <td>
+              {center[0].toFixed(5)}, {center[1].toFixed(5)}
+            </td>
+          </tr>
+        </table>
       </div>,
       this.element
     );
@@ -61,9 +72,10 @@ export class InfoControl extends Control {
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => ({
   infoWrap: css`
-    top: 4px;
-    right: 4px;
-    border: 1px solid green;
-    color: black;
+    top: 8px;
+    right: 8px;
+    color: ${theme.colors.text};
+    background: ${theme.colors.panelBg};
+    padding: 4px;
   `,
 }));
