@@ -107,7 +107,7 @@ export function AnnotationMarker({ annotation, timeZone }: Props) {
       text = annotation.title + '<br />' + (typeof text === 'string' ? text : '');
     }
 
-    if (canAddAnnotations()) {
+    if (canAddAnnotations && canAddAnnotations()) {
       editControls = (
         <div className={styles.editControls}>
           <IconButton

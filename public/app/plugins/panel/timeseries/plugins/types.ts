@@ -1,5 +1,5 @@
 interface AnnotationsDataFrameViewDTO {
-  id: number;
+  id: string;
   time: number;
   timeEnd: number;
   text: string;

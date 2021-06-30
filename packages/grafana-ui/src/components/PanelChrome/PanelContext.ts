@@ -18,10 +18,10 @@ export interface PanelContext {
 
   onToggleSeriesVisibility?: (label: string, mode: SeriesVisibilityChangeMode) => void;
 
-  canAddAnnotations: () => boolean;
+  canAddAnnotations?: () => boolean;
   createAnnotation?: (annotation: AnnotationEventUIModel) => void;
   updateAnnotation?: (annotation: AnnotationEventUIModel) => void;
-  deleteAnnotation?: (id: number) => void;
+  deleteAnnotation?: (id: string) => void;
 }
 
 export const PanelContextRoot = React.createContext<PanelContext>({
