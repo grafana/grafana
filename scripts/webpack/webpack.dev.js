@@ -8,6 +8,7 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 const ESLintPlugin = require('eslint-webpack-plugin');
 const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+const getBabelConfig = require('./babel.config');
 // const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 
 module.exports = (env = {}) =>
@@ -31,10 +32,9 @@ module.exports = (env = {}) =>
       rules: [
         {
           test: /\.tsx?$/,
-          loader: 'esbuild-loader',
-          options: {
-            loader: 'tsx',
-            target: 'es2015',
+          use: {
+            loader: 'babel-loader',
+            options: getBabelConfig({ BABEL_ENV: 'dev' }),
           },
           exclude: /node_modules/,
         },
@@ -68,7 +68,7 @@ module.exports = (env = {}) =>
       // enabling eslint blocks type checking which results in slow dev builds
       // https://github.com/TypeStrong/fork-ts-checker-webpack-plugin/issues/612
       new ESLintPlugin({
-        lintDirtyModulesOnly: true,
+        lintDirtyModulesOnly: true, // don't lint on start, only lint changed files
         extensions: ['.ts', '.tsx'],
       }),
       new MiniCssExtractPlugin({
