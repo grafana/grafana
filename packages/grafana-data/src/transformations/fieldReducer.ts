@@ -129,7 +129,7 @@ export function reduceField(options: ReduceFieldOptions): FieldCalcs {
 export const fieldReducers = new Registry<FieldReducerInfo>(() => [
   {
     id: ReducerID.lastNotNull,
-    name: 'Last',
+    name: 'Last *',
     description: 'Last non-null value',
     standard: true,
     aliasIds: ['current'],
