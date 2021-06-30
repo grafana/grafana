@@ -11,6 +11,7 @@ Notification policies determine how alerts are routed to contact points. Policie
 
 Grafana alerting UI allows you to configure Grafana notification policies as well as notification policies (routes) for an [external Alertmanager if one is configured]({{< relref "../../datasources/alertmanager.md" >}}).
 
+> **Note:** Currently the Alertmanager configuration is shared across organisations. Therefore users are adviced to use the new Grafana 8 Alerts only if they have one organisation otherwise notification policies will be visible by all organizations.
 
 ## Edit notification policies
 
