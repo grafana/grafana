@@ -18,8 +18,6 @@ package macaron
 import (
 	"net/http"
 	"reflect"
-
-	"github.com/go-macaron/inject"
 )
 
 // ReturnHandler is a service that Martini provides that is called
@@ -43,7 +41,7 @@ func isByteSlice(val reflect.Value) bool {
 
 func defaultReturnHandler() ReturnHandler {
 	return func(ctx *Context, vals []reflect.Value) {
-		rv := ctx.GetVal(inject.InterfaceOf((*http.ResponseWriter)(nil)))
+		rv := ctx.GetVal(InterfaceOf((*http.ResponseWriter)(nil)))
 		resp := rv.Interface().(http.ResponseWriter)
 		var respVal reflect.Value
 		if len(vals) > 1 && vals[0].Kind() == reflect.Int {

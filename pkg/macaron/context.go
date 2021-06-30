@@ -26,8 +26,6 @@ import (
 	"strconv"
 	"strings"
 	"time"
-
-	"github.com/go-macaron/inject"
 )
 
 // Locale reprents a localization interface.
@@ -79,7 +77,7 @@ func (invoke ContextInvoker) Invoke(params []interface{}) ([]reflect.Value, erro
 // Context represents the runtime context of current request of Macaron instance.
 // It is the integration of most frequently used middlewares and helper methods.
 type Context struct {
-	inject.Injector
+	Injector
 	handlers []Handler
 	action   Handler
 	index    int

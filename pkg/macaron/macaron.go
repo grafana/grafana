@@ -26,8 +26,6 @@ import (
 	"strconv"
 	"strings"
 	"sync"
-
-	"github.com/go-macaron/inject"
 )
 
 const _VERSION = "1.3.4.0805"
@@ -65,7 +63,7 @@ func validateAndWrapHandler(h Handler) Handler {
 		panic("Macaron handler must be a callable function")
 	}
 
-	if !inject.IsFastInvoker(h) {
+	if !IsFastInvoker(h) {
 		switch v := h.(type) {
 		case func(*Context):
 			return ContextInvoker(v)
@@ -89,7 +87,7 @@ func validateAndWrapHandlers(handlers []Handler, wrappers ...func(Handler) Handl
 	wrappedHandlers := make([]Handler, len(handlers))
 	for i, h := range handlers {
 		h = validateAndWrapHandler(h)
-		if wrapper != nil && !inject.IsFastInvoker(h) {
+		if wrapper != nil && !IsFastInvoker(h) {
 			h = wrapper(h)
 		}
 		wrappedHandlers[i] = h
@@ -99,9 +97,9 @@ func validateAndWrapHandlers(handlers []Handler, wrappers ...func(Handler) Handl
 }
 
 // Macaron represents the top level web application.
-// inject.Injector methods can be invoked to map services on a global level.
+// Injector methods can be invoked to map services on a global level.
 type Macaron struct {
-	inject.Injector
+	Injector
 	befores  []BeforeHandler
 	handlers []Handler
 	action   Handler
@@ -118,7 +116,7 @@ type Macaron struct {
 // You can specify logger output writer with this function.
 func NewWithLogger(out io.Writer) *Macaron {
 	m := &Macaron{
-		Injector: inject.New(),
+		Injector: NewInjector(),
 		action:   func() {},
 		Router:   NewRouter(),
 		logger:   log.New(out, "[Macaron] ", 0),
@@ -174,7 +172,7 @@ func (m *Macaron) Use(handler Handler) {
 
 func (m *Macaron) createContext(rw http.ResponseWriter, req *http.Request) *Context {
 	c := &Context{
-		Injector: inject.New(),
+		Injector: NewInjector(),
 		handlers: m.handlers,
 		action:   m.action,
 		index:    0,
