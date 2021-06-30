@@ -253,45 +253,45 @@ func TestAnnotations(t *testing.T) {
 		})
 
 		t.Run("Should find tags by key", func(t *testing.T) {
-			items, err := repo.FindTags(&annotations.TagsQuery{
+			result, err := repo.FindTags(&annotations.TagsQuery{
 				OrgID: 1,
 				Tag:   "server",
 			})
 			require.NoError(t, err)
-			require.Len(t, items, 1)
-			require.Equal(t, "server:server-1", items[0].Tag)
-			require.Equal(t, int64(1), items[0].Count)
+			require.Len(t, result.Tags, 1)
+			require.Equal(t, "server:server-1", result.Tags[0].Tag)
+			require.Equal(t, int64(1), result.Tags[0].Count)
 		})
 
 		t.Run("Should find tags by value", func(t *testing.T) {
-			items, err := repo.FindTags(&annotations.TagsQuery{
+			result, err := repo.FindTags(&annotations.TagsQuery{
 				OrgID: 1,
 				Tag:   "outage",
 			})
 			require.NoError(t, err)
-			require.Len(t, items, 2)
-			require.Equal(t, "outage", items[0].Tag)
-			require.Equal(t, "type:outage", items[1].Tag)
-			require.Equal(t, int64(1), items[0].Count)
-			require.Equal(t, int64(1), items[1].Count)
+			require.Len(t, result.Tags, 2)
+			require.Equal(t, "outage", result.Tags[0].Tag)
+			require.Equal(t, "type:outage", result.Tags[1].Tag)
+			require.Equal(t, int64(1), result.Tags[0].Count)
+			require.Equal(t, int64(1), result.Tags[1].Count)
 		})
 
 		t.Run("Should not find tags in other org", func(t *testing.T) {
-			items, err := repo.FindTags(&annotations.TagsQuery{
+			result, err := repo.FindTags(&annotations.TagsQuery{
 				OrgID: 0,
 				Tag:   "server-1",
 			})
 			require.NoError(t, err)
-			require.Len(t, items, 0)
+			require.Len(t, result.Tags, 0)
 		})
 
 		t.Run("Should not find tags that do not exist", func(t *testing.T) {
-			items, err := repo.FindTags(&annotations.TagsQuery{
+			result, err := repo.FindTags(&annotations.TagsQuery{
 				OrgID: 0,
-				Tag:   "donald duck",
+				Tag:   "unknown:tag",
 			})
 			require.NoError(t, err)
-			require.Len(t, items, 0)
+			require.Len(t, result.Tags, 0)
 		})
 	})
 }

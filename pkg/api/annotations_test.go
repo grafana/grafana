@@ -259,9 +259,11 @@ func (repo *fakeAnnotationsRepo) Find(query *annotations.ItemQuery) ([]*annotati
 	annotations := []*annotations.ItemDTO{{Id: 1}}
 	return annotations, nil
 }
-func (repo *fakeAnnotationsRepo) FindTags(query *annotations.TagsQuery) ([]*annotations.TagsDTO, error) {
-	tags := []*annotations.TagsDTO{}
-	return tags, nil
+func (repo *fakeAnnotationsRepo) FindTags(query *annotations.TagsQuery) (annotations.FindTagsResult, error) {
+	result := annotations.FindTagsResult{
+		Tags: []*annotations.TagsDTO{},
+	}
+	return result, nil
 }
 
 var fakeAnnoRepo *fakeAnnotationsRepo

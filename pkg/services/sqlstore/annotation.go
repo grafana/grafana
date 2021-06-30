@@ -269,7 +269,7 @@ func (r *SQLAnnotationRepo) Delete(params *annotations.DeleteParams) error {
 	})
 }
 
-func (r *SQLAnnotationRepo) FindTags(query *annotations.TagsQuery) ([]*annotations.TagsDTO, error) {
+func (r *SQLAnnotationRepo) FindTags(query *annotations.TagsQuery) (annotations.FindTagsResult, error) {
 	if query.Limit == 0 {
 		query.Limit = 100
 	}
@@ -286,10 +286,9 @@ func (r *SQLAnnotationRepo) FindTags(query *annotations.TagsQuery) ([]*annotatio
 			count(*) as count
 		FROM tag
 		INNER JOIN annotation_tag ON tag.id = annotation_tag.tag_id
-		INNER JOIN annotation ON annotation_tag.annotation_id = annotation.id
 `)
 
-	sql.WriteString(`WHERE annotation.org_id = ?`)
+	sql.WriteString(`WHERE EXISTS(SELECT 1 FROM annotation WHERE annotation.id = annotation_tag.annotation_id AND annotation.org_id = ?)`)
 	params = append(params, query.OrgID)
 
 	sql.WriteString(` AND (` + tagKey + ` ` + dialect.LikeStr() + ` ? OR ` + tagValue + ` ` + dialect.LikeStr() + ` ?)`)
@@ -301,7 +300,7 @@ func (r *SQLAnnotationRepo) FindTags(query *annotations.TagsQuery) ([]*annotatio
 
 	var items []*annotations.Tags
 	if err := x.SQL(sql.String(), params...).Find(&items); err != nil {
-		return nil, err
+		return annotations.FindTagsResult{Tags: []*annotations.TagsDTO{}}, err
 	}
 
 	tags := make([]*annotations.TagsDTO, 0)
@@ -316,5 +315,5 @@ func (r *SQLAnnotationRepo) FindTags(query *annotations.TagsQuery) ([]*annotatio
 		})
 	}
 
-	return tags, nil
+	return annotations.FindTagsResult{Tags: tags}, nil
 }

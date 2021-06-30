@@ -297,10 +297,10 @@ func GetAnnotationTags(c *models.ReqContext) response.Response {
 	}
 
 	repo := annotations.GetRepository()
-	items, err := repo.FindTags(query)
+	result, err := repo.FindTags(query)
 	if err != nil {
 		return response.Error(500, "Failed to find annotation tags", err)
 	}
 
-	return response.JSON(200, items)
+	return response.JSON(200, util.DynMap{"result": result})
 }
