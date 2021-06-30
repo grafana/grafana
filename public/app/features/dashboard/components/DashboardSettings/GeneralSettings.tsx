@@ -1,7 +1,7 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 import { TimeZone } from '@grafana/data';
-import { CollapsableSection, Field, Input, RadioButtonGroup, Switch, TagsInput } from '@grafana/ui';
+import { CollapsableSection, Field, Input, RadioButtonGroup, TagsInput } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { DashboardModel } from '../../state/DashboardModel';
@@ -9,7 +9,7 @@ import { DeleteDashboardButton } from '../DeleteDashboard/DeleteDashboardButton'
 import { TimePickerSettings } from './TimePickerSettings';
 
 import { updateTimeZoneDashboard } from 'app/features/dashboard/state/actions';
-import { GorillaContext, GorillaMode } from '../../gorilla/types';
+import { GorillaSettings } from '../../gorilla/types';
 
 interface OwnProps {
   dashboard: DashboardModel;
@@ -25,38 +25,6 @@ const GRAPH_TOOLTIP_OPTIONS = [
 
 export function GeneralSettingsUnconnected({ dashboard, updateTimeZone }: Props): JSX.Element {
   const [renderCounter, setRenderCounter] = useState(0);
-  const { onChangeConfig } = useContext(GorillaContext);
-  const [hideDashNav, setHideDashNav] = useState(false);
-  useEffect(() => {
-    if (hideDashNav) {
-      onChangeConfig({
-        dashNav: {
-          mode: GorillaMode.readOnly,
-          timePicker: { mode: GorillaMode.hidden },
-          title: { mode: GorillaMode.hidden },
-          tvToggle: { mode: GorillaMode.hidden },
-          addPanelToggle: { mode: GorillaMode.hidden },
-          dashboardSettingsToggle: { mode: GorillaMode.hidden },
-          saveDashboardToggle: { mode: GorillaMode.hidden },
-          snapshotToggle: { mode: GorillaMode.hidden },
-        },
-      });
-      return;
-    }
-
-    onChangeConfig({
-      dashNav: {
-        mode: GorillaMode.editable,
-        timePicker: { mode: GorillaMode.editable },
-        title: { mode: GorillaMode.editable },
-        tvToggle: { mode: GorillaMode.editable },
-        addPanelToggle: { mode: GorillaMode.editable },
-        dashboardSettingsToggle: { mode: GorillaMode.editable },
-        saveDashboardToggle: { mode: GorillaMode.editable },
-        snapshotToggle: { mode: GorillaMode.editable },
-      },
-    });
-  }, [hideDashNav, onChangeConfig]);
 
   const onFolderChange = (folder: { id: number; title: string }) => {
     dashboard.meta.folderId = folder.id;
@@ -151,10 +119,6 @@ export function GeneralSettingsUnconnected({ dashboard, updateTimeZone }: Props)
         timezone={dashboard.timezone}
       />
 
-      <Field label="Hide DashNav">
-        <Switch value={hideDashNav} onChange={() => setHideDashNav(!hideDashNav)} />
-      </Field>
-
       <CollapsableSection label="Panel options" isOpen={true}>
         <Field
           label="Graph tooltip"
@@ -163,6 +127,8 @@ export function GeneralSettingsUnconnected({ dashboard, updateTimeZone }: Props)
           <RadioButtonGroup onChange={onTooltipChange} options={GRAPH_TOOLTIP_OPTIONS} value={dashboard.graphTooltip} />
         </Field>
       </CollapsableSection>
+
+      <GorillaSettings />
 
       <div className="gf-form-button-row">
         {dashboard.meta.canSave && <DeleteDashboardButton dashboard={dashboard} />}
