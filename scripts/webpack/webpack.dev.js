@@ -80,7 +80,6 @@ module.exports = (env = {}) =>
         inject: false,
         chunksSortMode: 'none',
         excludeChunks: ['dark', 'light'],
-        // templateParameters: templateParametersGenerator,
       }),
       new HtmlWebpackPlugin({
         filename: path.resolve(__dirname, '../../public/views/index.html'),
@@ -89,7 +88,6 @@ module.exports = (env = {}) =>
         inject: false,
         chunksSortMode: 'none',
         excludeChunks: ['dark', 'light'],
-        // templateParameters: templateParametersGenerator,
       }),
       new HotModuleReplacementPlugin(),
       new DefinePlugin({
@@ -102,16 +100,3 @@ module.exports = (env = {}) =>
       // })
     ],
   });
-
-function templateParametersGenerator(compilation, assets, assetTags, options) {
-  console.log(assets);
-  return {
-    compilation: compilation,
-    webpackConfig: compilation.options,
-    htmlWebpackPlugin: {
-      tags: assetTags,
-      files: assets,
-      options: options,
-    },
-  };
-}
