@@ -278,8 +278,13 @@ func UpdateDataSource(cmd *models.UpdateDataSourceCommand) error {
 		}
 
 		err = updateIsDefaultFlag(ds, sess)
-
+		if err != nil {
+			return err
+		}
 		cmd.Result = ds
+
+		event := &models.OutboxEvent{Subject: "datasource_changes", Payload: []byte(ds.Uid)}
+		_, err = sess.Insert(event)
 		return err
 	})
 }
