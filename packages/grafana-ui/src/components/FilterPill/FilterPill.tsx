@@ -2,7 +2,7 @@ import React from 'react';
 import { useStyles2 } from '../../themes';
 import { GrafanaTheme2 } from '@grafana/data';
 import { css, cx } from '@emotion/css';
-import { IconButton } from '../IconButton/IconButton';
+import { Icon } from '../Icon/Icon';
 import { IconName } from '../../types';
 
 export interface FilterPillProps {
@@ -17,17 +17,7 @@ export const FilterPill: React.FC<FilterPillProps> = ({ label, selected, onClick
   return (
     <div className={cx(styles.wrapper, selected && styles.selected)} onClick={onClick}>
       <span>{label}</span>
-      {selected && (
-        <IconButton
-          name={icon}
-          onClick={(e) => {
-            e.stopPropagation();
-            onClick(e);
-          }}
-          className={styles.icon}
-          surface="header"
-        />
-      )}
+      {selected && <Icon name={icon} className={styles.icon} />}
     </div>
   );
 };
@@ -61,7 +51,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       }
     `,
     icon: css`
-      margin: ${theme.spacing(0, 0, 0, 1)};
+      margin-left: ${theme.spacing(0.5)};
     `,
   };
 };
