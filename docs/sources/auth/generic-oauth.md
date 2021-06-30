@@ -244,7 +244,7 @@ role_attribute_path = contains(info.groups[*], 'admin') && 'Admin' || contains(i
 ```
 
 
-### Team mapping
+### Groups mapping
 
 >  Only available in Grafana Enterprise v6.7+
 
