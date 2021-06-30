@@ -80,11 +80,21 @@ const (
 	ActionLDAPStatusRead   = "ldap.status:read"
 	ActionLDAPConfigReload = "ldap.config:reload"
 
+	// Server actions
+	ActionServerStatsRead = "server.stats:read"
+
+	// Settings actions
+	ActionSettingsRead = "settings:read"
+
 	// Global Scopes
 	ScopeGlobalUsersAll = "global:users:*"
 
+	// Users scopes
 	ScopeUsersSelf = "users:self"
 	ScopeUsersAll  = "users:*"
+
+	// Settings scope
+	ScopeSettingsAll = "settings:**"
 
 	// Services Scopes
 	ScopeServicesAll = "service:*"
