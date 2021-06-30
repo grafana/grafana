@@ -90,7 +90,7 @@ export default function AnnotationQuery({ query, onChange }: Props) {
             <InlineSwitch value={matchAny} onChange={onMatchAnyChange} />
           </InlineField>
           <InlineField label="Tags" labelWidth="auto" tooltip={tagsTooltipContent}>
-            <TagFilter onChange={onTagsChange} tagOptions={getAnnotationTags} tags={tags} />
+            <TagFilter allowCustomValue onChange={onTagsChange} tagOptions={getAnnotationTags} tags={tags} />
           </InlineField>
         </InlineFieldRow>
       )}

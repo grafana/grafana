@@ -14,6 +14,7 @@ export interface TermCount {
 }
 
 export interface Props {
+  allowCustomValue?: boolean;
   /** Do not show selected values inside Select. Useful when the values need to be shown in some other components */
   hideValues?: boolean;
   isClearable?: boolean;
@@ -30,6 +31,7 @@ const filterOption = (option: any, searchQuery: string) => {
 };
 
 export const TagFilter: FC<Props> = ({
+  allowCustomValue = false,
   hideValues,
   isClearable,
   onChange,
@@ -60,6 +62,7 @@ export const TagFilter: FC<Props> = ({
   const value = tags.map((tag) => ({ value: tag, label: tag, count: 0 }));
 
   const selectOptions = {
+    allowCustomValue,
     defaultOptions: true,
     filterOption,
     getOptionLabel: (i: any) => i.label,
