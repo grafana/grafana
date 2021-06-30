@@ -22,8 +22,6 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"path"
-	"path/filepath"
 	"reflect"
 	"strconv"
 	"strings"
@@ -442,85 +440,4 @@ var defaultCookieSecret string
 // SetDefaultCookieSecret sets global default secure cookie secret.
 func (m *Macaron) SetDefaultCookieSecret(secret string) {
 	defaultCookieSecret = secret
-}
-
-func (ctx *Context) setRawContentHeader() {
-	ctx.Resp.Header().Set("Content-Description", "Raw content")
-	ctx.Resp.Header().Set("Content-Type", "text/plain")
-	ctx.Resp.Header().Set("Expires", "0")
-	ctx.Resp.Header().Set("Cache-Control", "must-revalidate")
-	ctx.Resp.Header().Set("Pragma", "public")
-}
-
-// ServeContent serves given content to response.
-func (ctx *Context) ServeContent(name string, r io.ReadSeeker, params ...interface{}) {
-	modtime := time.Now()
-	for _, p := range params {
-		switch v := p.(type) {
-		case time.Time:
-			modtime = v
-		}
-	}
-
-	ctx.setRawContentHeader()
-	http.ServeContent(ctx.Resp, ctx.Req.Request, name, modtime, r)
-}
-
-// ServeFileContent serves given file as content to response.
-func (ctx *Context) ServeFileContent(file string, names ...string) {
-	var name string
-	if len(names) > 0 {
-		name = names[0]
-	} else {
-		name = path.Base(file)
-	}
-
-	f, err := os.Open(file)
-	if err != nil {
-		if Env == PROD {
-			http.Error(ctx.Resp, "Internal Server Error", 500)
-		} else {
-			http.Error(ctx.Resp, err.Error(), 500)
-		}
-		return
-	}
-	defer f.Close()
-
-	ctx.setRawContentHeader()
-	http.ServeContent(ctx.Resp, ctx.Req.Request, name, time.Now(), f)
-}
-
-// ServeFile serves given file to response.
-func (ctx *Context) ServeFile(file string, names ...string) {
-	var name string
-	if len(names) > 0 {
-		name = names[0]
-	} else {
-		name = path.Base(file)
-	}
-	ctx.Resp.Header().Set("Content-Description", "File Transfer")
-	ctx.Resp.Header().Set("Content-Type", "application/octet-stream")
-	ctx.Resp.Header().Set("Content-Disposition", "attachment; filename="+name)
-	ctx.Resp.Header().Set("Content-Transfer-Encoding", "binary")
-	ctx.Resp.Header().Set("Expires", "0")
-	ctx.Resp.Header().Set("Cache-Control", "must-revalidate")
-	ctx.Resp.Header().Set("Pragma", "public")
-	http.ServeFile(ctx.Resp, ctx.Req.Request, file)
-}
-
-// ChangeStaticPath changes static path from old to new one.
-func (ctx *Context) ChangeStaticPath(oldPath, newPath string) {
-	if !filepath.IsAbs(oldPath) {
-		oldPath = filepath.Join(Root, oldPath)
-	}
-	dir := statics.Get(oldPath)
-	if dir != nil {
-		statics.Delete(oldPath)
-
-		if !filepath.IsAbs(newPath) {
-			newPath = filepath.Join(Root, newPath)
-		}
-		*dir = http.Dir(newPath)
-		statics.Set(dir)
-	}
 }
