@@ -23,6 +23,7 @@ import { getTimeSrv } from '../../features/dashboard/services/TimeSrv';
 import { toggleTheme } from './toggleTheme';
 import { withFocusedPanel } from './withFocusedPanelId';
 import { HelpModal } from '../components/help/HelpModal';
+import { sonifyPanel } from 'app/features/dashboard/utils/panel';
 
 export class KeybindingSrv {
   modalOpen = false;
@@ -282,6 +283,12 @@ export class KeybindingSrv {
           },
         })
       );
+    });
+
+    // sonify panel
+    this.bindWithPanelId('p a', (panelId) => {
+      const panelInfo = dashboard.getPanelInfoById(panelId)!;
+      sonifyPanel(dashboard, panelInfo.panel);
     });
 
     // toggle panel legend
