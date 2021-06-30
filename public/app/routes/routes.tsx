@@ -6,7 +6,6 @@ import config from 'app/core/config';
 import { DashboardRoutes } from 'app/types';
 import { SafeDynamicImport } from '../core/components/DynamicImports/SafeDynamicImport';
 import { RouteDescriptor } from '../core/navigation/types';
-import { SignupPage } from 'app/core/components/Signup/SignupPage';
 import { Redirect } from 'react-router-dom';
 import ErrorPage from 'app/core/components/ErrorPage/ErrorPage';
 
@@ -280,14 +279,18 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/verify',
-      component: SafeDynamicImport(
-        () => import(/* webpackChunkName "VerifyEmailPage"*/ 'app/core/components/Signup/VerifyEmailPage')
-      ),
+      component: !config.verifyEmailEnabled
+        ? () => <Redirect to="/signup" />
+        : SafeDynamicImport(
+            () => import(/* webpackChunkName "VerifyEmailPage"*/ 'app/core/components/Signup/VerifyEmailPage')
+          ),
       pageClass: 'login-page sidemenu-hidden',
     },
     {
       path: '/signup',
-      component: SignupPage,
+      component: config.disableUserSignUp
+        ? () => <Redirect to="/login" />
+        : SafeDynamicImport(() => import(/* webpackChunkName "SignupPage"*/ 'app/core/components/Signup/SignupPage')),
       pageClass: 'sidemenu-hidden login-page',
     },
     {
