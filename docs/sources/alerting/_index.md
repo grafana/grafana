@@ -21,7 +21,7 @@ You can create and edit alerting rules for Grafana managed alerts, Cortex alerts
 
 As part of the new alert changes, we have introduced a new data source, Alertmanager, which includes built-in support for Prometheus Alertmanager. It is presently in alpha and it not accessible unless alpha plugins are enabled in Grafana settings. For more information, refer to [Alertmanager data source]({{< relref "../datasources/alertmanager.md" >}}).
 
-> **Note:** Currently the Alertmanager configuration is shared across organisations. Therefore users are adviced to use the new Grafana 8 Alerts only if they have one organisation otherwise all contact points, notification policies, silences and templates will be visible by all organizations.
+> **Note:** Currently the Alertmanager configuration is shared across organisations. Therefore users are advised to use the new Grafana 8 Alerts only if they have one organisation otherwise all contact points, notification policies, silences and templates will be visible by all organizations.
 
 > **Note:** Out of the box, Grafana still supports old Grafana alerts. They are legacy alerts at this time, and will be deprecated in a future release. For more information, refer to [Legacy Grafana alerts]({{< relref "./old-alerting/_index.md" >}}).
 

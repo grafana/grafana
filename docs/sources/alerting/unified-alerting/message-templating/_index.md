@@ -10,7 +10,7 @@ weight = 400
 
 Notifications sent via [contact points]({{< relref "../contact-points.md" >}}) are built using templates. Grafana comes with default templates which you can customize. Grafana's notification templates are based on the [Go templating system](https://golang.org/pkg/text/template) where some fields are evaluated as text, while others are evaluated as HTML which can affect escaping. Since most of the contact point fields can be templated, you can create reusable templates and them in multiple contact points. See [template data reference]({{< relref "./template-data.md" >}}) to check what variables are available in the templates.
 
-> **Note:** Currently the Alertmanager configuration is shared across organisations. Therefore users are adviced to use the new Grafana 8 Alerts only if they have one organisation otherwise templates will be visible by all organizations.
+> **Note:** Currently the Alertmanager configuration is shared across organisations. Therefore users are advised to use the new Grafana 8 Alerts only if they have one organisation otherwise templates will be visible by all organizations.
 
 ## Using templating in contact point fields
 
