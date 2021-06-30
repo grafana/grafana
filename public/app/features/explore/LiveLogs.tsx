@@ -1,11 +1,22 @@
-import React, { PureComponent } from 'react';
+import React, { ChangeEvent, PureComponent } from 'react';
 import { css, cx } from '@emotion/css';
 import tinycolor from 'tinycolor2';
 
-import { LogMessageAnsi, getLogRowStyles, Icon, Button, Themeable2, withTheme2 } from '@grafana/ui';
-import { LogRowModel, TimeZone, dateTimeFormat, GrafanaTheme2 } from '@grafana/data';
+import { LogMessageAnsi, getLogRowStyles, Icon, Button, Themeable2, withTheme2, Input } from '@grafana/ui';
+import { LogRowModel, TimeZone, dateTimeFormat, GrafanaTheme2, LogLevel } from '@grafana/data';
 
 import { ElapsedTime } from './ElapsedTime';
+import Sonifier from 'app/core/services/Sonifier';
+
+const LevelMapper = {
+  [LogLevel.unknown]: 'A',
+  [LogLevel.trace]: 'A',
+  [LogLevel.debug]: 'A',
+  [LogLevel.info]: 'A',
+  [LogLevel.error]: 'C',
+  [LogLevel.warning]: 'E',
+  [LogLevel.critical]: 'G',
+};
 
 const getStyles = (theme: GrafanaTheme2) => ({
   logsRowsLive: css`
@@ -59,17 +70,27 @@ export interface Props extends Themeable2 {
 
 interface State {
   logRowsToRender?: LogRowModel[];
+  sonify: boolean;
+  sonifyValue: boolean;
+  sonifyValueExpression: string;
 }
 
 class LiveLogs extends PureComponent<Props, State> {
   private liveEndDiv: HTMLDivElement | null = null;
   private scrollContainerRef = React.createRef<HTMLTableSectionElement>();
+  // HACK will run out of memory
+  private sonifiedLines: any = {};
+  private sonifier: Sonifier;
 
   constructor(props: Props) {
     super(props);
     this.state = {
       logRowsToRender: props.logRows,
+      sonify: false,
+      sonifyValue: false,
+      sonifyValueExpression: '',
     };
+    this.sonifier = new Sonifier();
   }
 
   static getDerivedStateFromProps(nextProps: Props, state: State) {
@@ -84,6 +105,32 @@ class LiveLogs extends PureComponent<Props, State> {
       return null;
     }
   }
+
+  componentDidUpdate() {
+    if (this.state.sonify && !this.props.isPaused) {
+      const { logRowsToRender = [] } = this.state;
+      for (const row of logRowsToRender) {
+        if (!this.sonifiedLines[row.uid]) {
+          if (LevelMapper[row.logLevel] > LevelMapper[LogLevel.info]) {
+            this.sonifier.playNote(LevelMapper[row.logLevel], 200);
+          }
+        }
+        this.sonifiedLines[row.uid] = true;
+      }
+    }
+  }
+
+  onChangeValueExpression = (event: ChangeEvent<HTMLInputElement>) => {
+    this.setState({ sonifyValueExpression: event.target.value });
+  };
+
+  onClickSonify = () => {
+    this.setState((state) => ({ sonify: !state.sonify }));
+  };
+
+  onClickSonifyValue = () => {
+    this.setState((state) => ({ sonifyValue: !state.sonifyValue }));
+  };
 
   /**
    * Handle pausing when user scrolls up so that we stop resetting his position to the bottom when new row arrives.
@@ -111,6 +158,7 @@ class LiveLogs extends PureComponent<Props, State> {
 
   render() {
     const { theme, timeZone, onPause, onResume, isPaused } = this.props;
+    const { sonify, sonifyValue, sonifyValueExpression } = this.state;
     const styles = getStyles(theme);
     const { logsRow, logsRowLocalTime, logsRowMessage } = getLogRowStyles(theme);
 
@@ -152,6 +200,22 @@ class LiveLogs extends PureComponent<Props, State> {
             <Icon name="square-shape" size="lg" type="mono" />
             &nbsp; Exit live mode
           </Button>
+          <Button variant="secondary" onClick={this.onClickSonify} className={styles.button}>
+            <Icon name="bell" />
+            &nbsp; {sonify ? 'Stop level sound' : 'Sonify log level'}
+          </Button>
+          <Button variant="secondary" onClick={this.onClickSonifyValue} className={styles.button}>
+            <Icon name="bell" />
+            &nbsp; {sonifyValue ? 'Stop value sound' : 'Sonify value'}
+          </Button>
+          {sonifyValue && (
+            <Input
+              width={120}
+              placeholder="Example: duration=(\d+)ms"
+              onChange={this.onChangeValueExpression}
+              value={sonifyValueExpression}
+            />
+          )}
           {isPaused || (
             <span>
               Last line received: <ElapsedTime resetKey={this.props.logRows} humanize={true} /> ago
