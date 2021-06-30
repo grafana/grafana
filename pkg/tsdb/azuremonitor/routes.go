@@ -1,12 +1,6 @@
 package azuremonitor
 
-// Azure cloud names specific to Azure Monitor
-const (
-	azureMonitorPublic       = "azuremonitor"
-	azureMonitorChina        = "chinaazuremonitor"
-	azureMonitorUSGovernment = "govazuremonitor"
-	azureMonitorGermany      = "germanyazuremonitor"
-)
+import "github.com/grafana/grafana/pkg/setting"
 
 // Azure cloud query types
 const (
@@ -81,22 +75,22 @@ var (
 	// The different Azure routes are identified by its cloud (e.g. public or gov)
 	// and the service to query (e.g. Azure Monitor or Azure Log Analytics)
 	routes = map[string]map[string]azRoute{
-		azureMonitorPublic: {
+		setting.AzurePublic: {
 			azureMonitor:       azManagement,
 			azureLogAnalytics:  azLogAnalytics,
 			azureResourceGraph: azManagement,
 			appInsights:        azAppInsights,
 			insightsAnalytics:  azAppInsights,
 		},
-		azureMonitorUSGovernment: {
+		setting.AzureUSGovernment: {
 			azureMonitor:       azUSGovManagement,
 			azureLogAnalytics:  azUSGovLogAnalytics,
 			azureResourceGraph: azUSGovManagement,
 		},
-		azureMonitorGermany: {
+		setting.AzureGermany: {
 			azureMonitor: azGermanyManagement,
 		},
-		azureMonitorChina: {
+		setting.AzureChina: {
 			azureMonitor:       azChinaManagement,
 			azureLogAnalytics:  azChinaLogAnalytics,
 			azureResourceGraph: azChinaManagement,

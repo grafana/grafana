@@ -8,6 +8,14 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/azcredentials"
 )
 
+// Azure cloud names specific to Azure Monitor
+const (
+	azureMonitorPublic       = "azuremonitor"
+	azureMonitorChina        = "chinaazuremonitor"
+	azureMonitorUSGovernment = "govazuremonitor"
+	azureMonitorGermany      = "germanyazuremonitor"
+)
+
 func getAuthType(cfg *setting.Cfg, jsonData *simplejson.Json) string {
 	if azureAuthType := jsonData.Get("azureAuthType").MustString(); azureAuthType != "" {
 		return azureAuthType
@@ -32,7 +40,9 @@ func getAuthType(cfg *setting.Cfg, jsonData *simplejson.Json) string {
 }
 
 func getDefaultAzureCloud(cfg *setting.Cfg) (string, error) {
-	switch cfg.Azure.Cloud {
+	// Allow only known cloud names
+	cloudName := cfg.Azure.Cloud
+	switch cloudName {
 	case setting.AzurePublic:
 		return setting.AzurePublic, nil
 	case setting.AzureChina:
@@ -41,8 +51,27 @@ func getDefaultAzureCloud(cfg *setting.Cfg) (string, error) {
 		return setting.AzureUSGovernment, nil
 	case setting.AzureGermany:
 		return setting.AzureGermany, nil
+	case "":
+		// Not set cloud defaults to public
+		return setting.AzurePublic, nil
 	default:
-		err := fmt.Errorf("the cloud '%s' not supported", cfg.Azure.Cloud)
+		err := fmt.Errorf("the cloud '%s' not supported", cloudName)
+		return "", err
+	}
+}
+
+func normalizeAzureCloud(cloudName string) (string, error) {
+	switch cloudName {
+	case azureMonitorPublic:
+		return setting.AzurePublic, nil
+	case azureMonitorChina:
+		return setting.AzureChina, nil
+	case azureMonitorUSGovernment:
+		return setting.AzureUSGovernment, nil
+	case azureMonitorGermany:
+		return setting.AzureGermany, nil
+	default:
+		err := fmt.Errorf("the cloud '%s' not supported", cloudName)
 		return "", err
 	}
 }
@@ -55,7 +84,7 @@ func getAzureCloud(cfg *setting.Cfg, jsonData *simplejson.Json) (string, error) 
 		return getDefaultAzureCloud(cfg)
 	case azcredentials.AzureAuthClientSecret:
 		if cloud := jsonData.Get("cloudName").MustString(); cloud != "" {
-			return cloud, nil
+			return normalizeAzureCloud(cloud)
 		} else {
 			return getDefaultAzureCloud(cfg)
 		}
@@ -67,10 +96,12 @@ func getAzureCloud(cfg *setting.Cfg, jsonData *simplejson.Json) (string, error) 
 
 func getAzureCredentials(cfg *setting.Cfg, jsonData *simplejson.Json, secureJsonData map[string]string) (azcredentials.AzureCredentials, error) {
 	authType := getAuthType(cfg, jsonData)
+
 	switch authType {
 	case azcredentials.AzureAuthManagedIdentity:
 		credentials := &azcredentials.AzureManagedIdentityCredentials{}
 		return credentials, nil
+
 	case azcredentials.AzureAuthClientSecret:
 		cloud, err := getAzureCloud(cfg, jsonData)
 		if err != nil {
@@ -83,6 +114,7 @@ func getAzureCredentials(cfg *setting.Cfg, jsonData *simplejson.Json, secureJson
 			ClientSecret: secureJsonData["clientSecret"],
 		}
 		return credentials, nil
+
 	default:
 		err := fmt.Errorf("the authentication type '%s' not supported", authType)
 		return nil, err
