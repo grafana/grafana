@@ -338,7 +338,8 @@ describe('UPlotConfigBuilder', () => {
             },
             "label": "test label",
             "labelFont": "12px \\"Roboto\\", \\"Helvetica\\", \\"Arial\\", sans-serif",
-            "labelSize": 18,
+            "labelGap": 8,
+            "labelSize": 20,
             "scale": "scale-x",
             "show": true,
             "side": 2,
@@ -348,6 +349,7 @@ describe('UPlotConfigBuilder', () => {
             "stroke": "rgb(204, 204, 220)",
             "ticks": Object {
               "show": true,
+              "size": 4,
               "stroke": "rgba(240, 250, 255, 0.09)",
               "width": 1,
             },
@@ -496,6 +498,7 @@ describe('UPlotConfigBuilder', () => {
             "paths": [Function],
             "points": Object {
               "fill": "#00ff00",
+              "filter": undefined,
               "size": 5,
               "stroke": "#00ff00",
             },
@@ -605,6 +608,7 @@ describe('UPlotConfigBuilder', () => {
               "paths": [Function],
               "points": Object {
                 "fill": undefined,
+                "filter": undefined,
                 "size": undefined,
                 "stroke": undefined,
               },
@@ -620,6 +624,7 @@ describe('UPlotConfigBuilder', () => {
               "paths": [Function],
               "points": Object {
                 "fill": undefined,
+                "filter": undefined,
                 "size": 5,
                 "stroke": undefined,
               },
@@ -635,6 +640,7 @@ describe('UPlotConfigBuilder', () => {
               "paths": [Function],
               "points": Object {
                 "fill": undefined,
+                "filter": undefined,
                 "size": 5,
                 "stroke": undefined,
               },
