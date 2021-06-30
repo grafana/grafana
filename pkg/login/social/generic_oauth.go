@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"net/mail"
 	"regexp"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/util/errutil"
@@ -27,6 +28,7 @@ type SocialGenericOAuth struct {
 	nameAttributePath    string
 	roleAttributePath    string
 	roleAttributeStrict  bool
+	groupsAttributePath  string
 	idTokenAttributeName string
 	teamIds              []int
 }
@@ -150,6 +152,14 @@ func (s *SocialGenericOAuth) UserInfo(client *http.Client, token *oauth2.Token) 
 				s.log.Debug("Setting user info role from extracted role")
 				userInfo.Role = role
 			}
+		}
+
+		groups, err := s.extractGroups(data)
+		if err != nil {
+			s.log.Error("Failed to extract groups", "error", err)
+		} else if len(groups) > 0 {
+			s.log.Debug("Setting user info role from extracted groups")
+			userInfo.Groups = groups
 		}
 	}
 
@@ -341,10 +351,25 @@ func (s *SocialGenericOAuth) extractRole(data *UserInfoJson) (string, error) {
 	}
 
 	role, err := s.searchJSONForAttr(s.roleAttributePath, data.rawJSON)
+
 	if err != nil {
 		return "", err
 	}
 	return role, nil
+}
+
+func (s *SocialGenericOAuth) extractGroups(data *UserInfoJson) ([]string, error) {
+	if s.groupsAttributePath == "" {
+		return []string{}, nil
+	}
+
+	groups, err := s.searchJSONForAttr(s.groupsAttributePath, data.rawJSON)
+
+	if err != nil && len(groups) == 0 {
+		return []string{}, err
+	}
+
+	return strings.Split(groups, ","), nil
 }
 
 func (s *SocialGenericOAuth) FetchPrivateEmail(client *http.Client) (string, error) {
