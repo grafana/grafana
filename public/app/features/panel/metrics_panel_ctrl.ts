@@ -1,4 +1,4 @@
-import { cloneDeep, isArray } from 'lodash';
+import { isArray } from 'lodash';
 import { PanelCtrl } from 'app/features/panel/panel_ctrl';
 import { applyPanelTimeOverrides } from 'app/features/dashboard/utils/panel';
 import { ContextSrv } from 'app/core/services/context_srv';
@@ -173,13 +173,11 @@ class MetricsPanelCtrl extends PanelCtrl {
 
   updateTimeRange(datasource?: DataSourceApi) {
     this.datasource = datasource || this.datasource;
-    this.range = cloneDeep(this.timeSrv.timeRange());
+    this.range = this.timeSrv.timeRange();
 
     const newTimeData = applyPanelTimeOverrides(this.panel, this.range);
     this.timeInfo = newTimeData.timeInfo;
     this.range = newTimeData.timeRange;
-
-    return this.datasource;
   }
 
   issueQueries(datasource: DataSourceApi) {
