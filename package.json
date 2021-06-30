@@ -7,7 +7,7 @@
   "repository": "github:grafana/grafana",
   "scripts": {
     "api-tests": "jest --notify --watch --config=devenv/e2e-api-tests/jest.js",
-    "build": "node ./node_modules/webpack/bin/webpack.js --config scripts/webpack/webpack.prod.js",
+    "build": "node --trace-deprecation ./node_modules/webpack/bin/webpack.js --config scripts/webpack/webpack.prod.js",
     "dev": "webpack --progress --colors --config scripts/webpack/webpack.dev.js",
     "e2e": "./e2e/start-and-run-suite",
     "e2e:debug": "./e2e/start-and-run-suite debug",
