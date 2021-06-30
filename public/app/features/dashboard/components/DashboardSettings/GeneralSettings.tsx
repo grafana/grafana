@@ -134,10 +134,10 @@ export function GeneralSettingsUnconnected({ dashboard, updateTimeZone }: Props)
                     timePicker: { mode: GorillaMode.editable },
                     title: { mode: GorillaMode.hidden },
                     tvToggle: { mode: GorillaMode.editable },
-                    addPanelButton: { mode: GorillaMode.editable },
-                    DashboardSettingsButton: { mode: GorillaMode.editable },
-                    saveDasboardButton: { mode: GorillaMode.editable },
-                    snapshotButton: { mode: GorillaMode.editable },
+                    addPanelToggle: { mode: GorillaMode.editable },
+                    DashboardSettingsToggle: { mode: GorillaMode.editable },
+                    saveDasboardToggle: { mode: GorillaMode.editable },
+                    snapshotToggle: { mode: GorillaMode.editable },
                   },
                 })
               : onChangeConfig({
@@ -146,10 +146,10 @@ export function GeneralSettingsUnconnected({ dashboard, updateTimeZone }: Props)
                     timePicker: { mode: GorillaMode.hidden },
                     title: { mode: GorillaMode.hidden },
                     tvToggle: { mode: GorillaMode.hidden },
-                    addPanelButton: { mode: GorillaMode.editable },
-                    DashboardSettingsButton: { mode: GorillaMode.editable },
-                    saveDasboardButton: { mode: GorillaMode.editable },
-                    snapshotButton: { mode: GorillaMode.editable },
+                    addPanelToggle: { mode: GorillaMode.hidden },
+                    DashboardSettingsToggle: { mode: GorillaMode.hidden },
+                    saveDasboardToggle: { mode: GorillaMode.hidden },
+                    snapshotToggle: { mode: GorillaMode.hidden },
                   },
                 })
           }
