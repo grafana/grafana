@@ -167,8 +167,16 @@ export function AnnotationMarker({ annotation, timeZone }: Props) {
   );
 
   if (isRegionAnnotation && plotCtx.plot) {
-    const x0 = plotCtx.plot!.valToPos(annotation.time, 'x');
-    const x1 = plotCtx.plot!.valToPos(annotation.timeEnd, 'x');
+    let x0 = plotCtx.plot!.valToPos(annotation.time, 'x');
+    let x1 = plotCtx.plot!.valToPos(annotation.timeEnd, 'x');
+
+    // markers are rendered relatively to uPlot canvas overly, not caring about axes width
+    if (x0 < 0) {
+      x0 = 0;
+    }
+    if (x1 > plotCtx.plot!.bbox.width / window.devicePixelRatio) {
+      x1 = plotCtx.plot!.bbox.width / window.devicePixelRatio;
+    }
 
     marker = (
       <div
@@ -207,6 +215,7 @@ export function AnnotationMarker({ annotation, timeZone }: Props) {
 const getAnnotationMarkerStyles = (theme: GrafanaTheme2) => {
   return {
     markerWrapper: css`
+      label: markerWrapper;
       padding: 0 4px 4px 4px;
     `,
     wrapper: css`

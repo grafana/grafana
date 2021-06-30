@@ -61,13 +61,24 @@ export const AnnotationsPlugin: React.FC<AnnotationsPluginProps> = ({ annotation
             continue;
           }
 
-          const x0 = u.valToPos(annotation.time, 'x', true);
+          let x0 = u.valToPos(annotation.time, 'x', true);
           const color = theme.visualization.getColorByName(annotation.color);
-          renderLine(x0, color);
+
+          if (x0 < 0) {
+            x0 = u.bbox.left;
+          } else {
+            renderLine(x0, color);
+          }
 
           if (annotation.isRegion && annotation.timeEnd) {
-            const x1 = u.valToPos(annotation.timeEnd, 'x', true);
-            renderLine(x1, color);
+            let x1 = u.valToPos(annotation.timeEnd, 'x', true);
+
+            if (x1 > u.bbox.width) {
+              x1 = u.bbox.width + u.bbox.left;
+            } else {
+              renderLine(x1, color);
+            }
+
             ctx.fillStyle = colorManipulator.alpha(color, 0.1);
             ctx.rect(x0, u.bbox.top, x1 - x0, u.bbox.height);
             ctx.fill();
@@ -86,9 +97,13 @@ export const AnnotationsPlugin: React.FC<AnnotationsPluginProps> = ({ annotation
       if (!annotation.time || !plotInstance) {
         return undefined;
       }
+      let x = plotInstance.valToPos(annotation.time, 'x');
 
+      if (x < 0) {
+        x = 0;
+      }
       return {
-        x: plotInstance.valToPos(annotation.time, 'x'),
+        x,
         y: plotInstance.bbox.height / window.devicePixelRatio + 4,
       };
     },
