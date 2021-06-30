@@ -19,7 +19,7 @@ export interface AnnotationQueryResponse {
   panelData?: PanelData;
 }
 
-export interface AnnotationTagsResponse {
+export interface AnnotationTag {
   /**
    * The tag name
    */
@@ -28,4 +28,10 @@ export interface AnnotationTagsResponse {
    * The number of occurences of that tag
    */
   count: number;
+}
+
+export interface AnnotationTagsResponse {
+  result: {
+    tags: AnnotationTag[];
+  };
 }

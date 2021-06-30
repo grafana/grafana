@@ -15,8 +15,8 @@ export function deleteAnnotation(annotation: AnnotationEvent) {
 }
 
 export async function getAnnotationTags() {
-  const tags: AnnotationTagsResponse[] = await getBackendSrv().get('/api/annotations/tags');
-  return tags.map(({ tag, count }) => ({
+  const response: AnnotationTagsResponse = await getBackendSrv().get('/api/annotations/tags');
+  return response.result.tags.map(({ tag, count }) => ({
     term: tag,
     count,
   }));
