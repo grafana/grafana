@@ -30,8 +30,6 @@ import (
 	"strings"
 	"sync"
 	"time"
-
-	"github.com/unknwon/com"
 )
 
 const (
@@ -187,7 +185,7 @@ func NewTemplateFileSystem(opt RenderOptions, omitData bool) TplFileSystem {
 	for i := range dirs {
 		// Skip ones that does not exists for symlink test,
 		// but allow non-symlink ones added after start.
-		if !com.IsExist(dirs[i]) {
+		if __, err := os.Stat(dirs[i]); err != nil && os.IsNotExist(err) {
 			continue
 		}
 
@@ -219,7 +217,7 @@ func NewTemplateFileSystem(opt RenderOptions, omitData bool) TplFileSystem {
 				// and read original file is the worst case.
 				for i := range dirs {
 					path = filepath.Join(dirs[i], r)
-					if !com.IsFile(path) {
+					if f, err := os.Stat(path); err != nil || f.IsDir() {
 						continue
 					}
 
@@ -372,7 +370,8 @@ func ParseTplSet(tplSet string) (tplName string, tplDir string) {
 		tplDir = infos[1]
 	}
 
-	if !com.IsDir(tplDir) {
+	dir, err := os.Stat(tplDir)
+	if err != nil || !f.IsDir() {
 		panic("template set path does not exist or is not a directory")
 	}
 	return tplName, tplDir

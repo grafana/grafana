@@ -17,9 +17,8 @@ package macaron
 import (
 	urlpkg "net/url"
 	"regexp"
+	"strconv"
 	"strings"
-
-	"github.com/unknwon/com"
 )
 
 type patternType int8
@@ -157,7 +156,7 @@ func (l *Leaf) URLPath(pairs ...string) string {
 	}
 	for i := 0; i < len(pairs); i += 2 {
 		if len(pairs[i]) == 0 {
-			panic("pair value cannot be empty: " + com.ToStr(i))
+			panic("pair value cannot be empty: " + strconv.Itoa(i))
 		} else if pairs[i][0] != ':' && pairs[i] != "*" && pairs[i] != "*.*" {
 			pairs[i] = ":" + pairs[i]
 		}
@@ -297,7 +296,7 @@ func (t *Tree) matchLeaf(globLevel int, url string, params Params) (Handle, bool
 			return t.leaves[i].handle, true
 		case _PATTERN_MATCH_ALL:
 			params["*"] = url
-			params["*"+com.ToStr(globLevel)] = url
+			params["*"+strconv.Itoa(globLevel)] = url
 			return t.leaves[i].handle, true
 		}
 	}
@@ -336,7 +335,7 @@ func (t *Tree) matchSubtree(globLevel int, segment, url string, params Params) (
 			}
 		case _PATTERN_MATCH_ALL:
 			if handle, ok := t.subtrees[i].matchNextSegment(globLevel+1, url, params); ok {
-				params["*"+com.ToStr(globLevel)] = unescapedSegment
+				params["*"+strconv.Itoa(globLevel)] = unescapedSegment
 				return handle, true
 			}
 		}
@@ -359,7 +358,7 @@ func (t *Tree) matchSubtree(globLevel int, segment, url string, params Params) (
 			return leaf.handle, true
 		} else if leaf.typ == _PATTERN_MATCH_ALL {
 			params["*"] = unescapedURL
-			params["*"+com.ToStr(globLevel)] = unescapedURL
+			params["*"+strconv.Itoa(globLevel)] = unescapedURL
 			return leaf.handle, true
 		}
 	}

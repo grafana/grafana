@@ -23,10 +23,9 @@ import (
 	"net/http"
 	"os"
 	"reflect"
+	"strconv"
 	"strings"
 	"sync"
-
-	"github.com/unknwon/com"
 
 	"github.com/go-macaron/inject"
 )
@@ -224,7 +223,7 @@ func GetDefaultListenInfo() (string, int) {
 	if len(host) == 0 {
 		host = "0.0.0.0"
 	}
-	port := com.StrTo(os.Getenv("PORT")).MustInt()
+	port, _ := strconv.Atoi(os.Getenv("PORT"))
 	if port == 0 {
 		port = 4000
 	}
@@ -250,7 +249,7 @@ func (m *Macaron) Run(args ...interface{}) {
 		}
 	}
 
-	addr := host + ":" + com.ToStr(port)
+	addr := host + ":" + strconv.Itoa(port)
 	logger := m.GetVal(reflect.TypeOf(m.logger)).Interface().(*log.Logger)
 	logger.Printf("listening on %s (%s)\n", addr, safeEnv())
 	logger.Fatalln(http.ListenAndServe(addr, m))

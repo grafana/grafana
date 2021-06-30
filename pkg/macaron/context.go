@@ -30,7 +30,6 @@ import (
 	"time"
 
 	"github.com/go-macaron/inject"
-	"github.com/unknwon/com"
 )
 
 // Locale reprents a localization interface.
@@ -236,12 +235,14 @@ func (ctx *Context) QueryBool(name string) bool {
 
 // QueryInt returns query result in int type.
 func (ctx *Context) QueryInt(name string) int {
-	return com.StrTo(ctx.Query(name)).MustInt()
+	n, _ := strconv.Atoi(ctx.Query(name))
+	return n
 }
 
 // QueryInt64 returns query result in int64 type.
 func (ctx *Context) QueryInt64(name string) int64 {
-	return com.StrTo(ctx.Query(name)).MustInt64()
+	n, _ := strconv.ParseInt(ctx.Query(name), 10, 64)
+	return n
 }
 
 // QueryFloat64 returns query result in float64 type.
@@ -289,13 +290,15 @@ func (ctx *Context) ParamsEscape(name string) string {
 // ParamsInt returns params result in int type.
 // e.g. ctx.ParamsInt(":uid")
 func (ctx *Context) ParamsInt(name string) int {
-	return com.StrTo(ctx.Params(name)).MustInt()
+	n, _ := strconv.Atoi(ctx.Params(name))
+	return n
 }
 
 // ParamsInt64 returns params result in int64 type.
 // e.g. ctx.ParamsInt64(":uid")
 func (ctx *Context) ParamsInt64(name string) int64 {
-	return com.StrTo(ctx.Params(name)).MustInt64()
+	n, _ := strconv.ParseInt(ctx.Params(name), 10, 64)
+	return n
 }
 
 // ParamsFloat64 returns params result in int64 type.
@@ -418,12 +421,14 @@ func (ctx *Context) GetCookie(name string) string {
 
 // GetCookieInt returns cookie result in int type.
 func (ctx *Context) GetCookieInt(name string) int {
-	return com.StrTo(ctx.GetCookie(name)).MustInt()
+	n, _ := strconv.Atoi(ctx.GetCookie(name))
+	return n
 }
 
 // GetCookieInt64 returns cookie result in int64 type.
 func (ctx *Context) GetCookieInt64(name string) int64 {
-	return com.StrTo(ctx.GetCookie(name)).MustInt64()
+	n, _ := strconv.ParseInt(ctx.GetCookie(name), 10, 64)
+	return n
 }
 
 // GetCookieFloat64 returns cookie result in float64 type.
