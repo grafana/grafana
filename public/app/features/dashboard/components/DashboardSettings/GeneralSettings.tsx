@@ -135,8 +135,8 @@ export function GeneralSettingsUnconnected({ dashboard, updateTimeZone }: Props)
                     title: { mode: GorillaMode.hidden },
                     tvToggle: { mode: GorillaMode.editable },
                     addPanelToggle: { mode: GorillaMode.editable },
-                    DashboardSettingsToggle: { mode: GorillaMode.editable },
-                    saveDasboardToggle: { mode: GorillaMode.editable },
+                    dashboardSettingsToggle: { mode: GorillaMode.editable },
+                    saveDashboardToggle: { mode: GorillaMode.editable },
                     snapshotToggle: { mode: GorillaMode.editable },
                   },
                 })
@@ -147,8 +147,8 @@ export function GeneralSettingsUnconnected({ dashboard, updateTimeZone }: Props)
                     title: { mode: GorillaMode.hidden },
                     tvToggle: { mode: GorillaMode.hidden },
                     addPanelToggle: { mode: GorillaMode.hidden },
-                    DashboardSettingsToggle: { mode: GorillaMode.hidden },
-                    saveDasboardToggle: { mode: GorillaMode.hidden },
+                    dashboardSettingsToggle: { mode: GorillaMode.hidden },
+                    saveDashboardToggle: { mode: GorillaMode.hidden },
                     snapshotToggle: { mode: GorillaMode.hidden },
                   },
                 })

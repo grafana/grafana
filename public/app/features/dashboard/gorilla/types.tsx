@@ -21,8 +21,8 @@ export interface GorillaDashNavItem extends GorillaContextItem {
   title: GorillaContextItem;
   tvToggle: GorillaContextItem;
   addPanelToggle: GorillaContextItem;
-  DashboardSettingsToggle: GorillaContextItem;
-  saveDasboardToggle: GorillaContextItem;
+  dashboardSettingsToggle: GorillaContextItem;
+  saveDashboardToggle: GorillaContextItem;
   snapshotToggle: GorillaContextItem;
 }
 
@@ -52,10 +52,10 @@ export const defaultValues: GorillaContextConfiguration = {
     addPanelToggle: {
       mode: GorillaMode.editable,
     },
-    DashboardSettingsToggle: {
+    dashboardSettingsToggle: {
       mode: GorillaMode.editable,
     },
-    saveDasboardToggle: {
+    saveDashboardToggle: {
       mode: GorillaMode.editable,
     },
     snapshotToggle: {
