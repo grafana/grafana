@@ -185,7 +185,7 @@ func NewTemplateFileSystem(opt RenderOptions, omitData bool) TplFileSystem {
 	for i := range dirs {
 		// Skip ones that does not exists for symlink test,
 		// but allow non-symlink ones added after start.
-		if __, err := os.Stat(dirs[i]); err != nil && os.IsNotExist(err) {
+		if _, err := os.Stat(dirs[i]); err != nil && os.IsNotExist(err) {
 			continue
 		}
 
@@ -371,7 +371,7 @@ func ParseTplSet(tplSet string) (tplName string, tplDir string) {
 	}
 
 	dir, err := os.Stat(tplDir)
-	if err != nil || !f.IsDir() {
+	if err != nil || !dir.IsDir() {
 		panic("template set path does not exist or is not a directory")
 	}
 	return tplName, tplDir
