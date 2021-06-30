@@ -61,27 +61,13 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
               timeZone={timeZone}
             />
 
+            {/* Renders annotation markers*/}
             {data.annotations && (
               <AnnotationsPlugin annotations={data.annotations} config={config} timeZone={timeZone} />
             )}
 
-            {data.annotations && (
-              <ExemplarsPlugin
-                config={config}
-                exemplars={data.annotations}
-                timeZone={timeZone}
-                getFieldLinks={getFieldLinks}
-              />
-            )}
-
-            <AnnotationEditorPlugin
-              data={alignedDataFrame}
-              timeZone={timeZone}
-              config={config}
-              onAnnotationCreate={() => {
-                console.log('onAnnotationCreate');
-              }}
-            >
+            {/* Enables annotations creation*/}
+            <AnnotationEditorPlugin data={alignedDataFrame} timeZone={timeZone} config={config}>
               {({ startAnnotating }) => {
                 return (
                   <ContextMenuPlugin
@@ -110,6 +96,15 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
                 );
               }}
             </AnnotationEditorPlugin>
+
+            {data.annotations && (
+              <ExemplarsPlugin
+                config={config}
+                exemplars={data.annotations}
+                timeZone={timeZone}
+                getFieldLinks={getFieldLinks}
+              />
+            )}
           </>
         );
       }}

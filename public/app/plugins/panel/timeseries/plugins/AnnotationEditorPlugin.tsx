@@ -13,7 +13,6 @@ interface AnnotationEditorPluginProps {
   data: DataFrame;
   timeZone: TimeZone;
   config: UPlotConfigBuilder;
-  onAnnotationCreate: () => void;
   children?: (props: { startAnnotating: StartAnnotatingFn }) => React.ReactNode;
 }
 
