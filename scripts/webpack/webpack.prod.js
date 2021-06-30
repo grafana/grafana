@@ -1,11 +1,12 @@
 'use strict';
 
 const { merge } = require('webpack-merge');
-const { ESBuildMinifyPlugin } = require('esbuild-loader');
+const TerserPlugin = require('terser-webpack-plugin');
 const common = require('./webpack.common.js');
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+const OptimizeCSSAssetsPlugin = require('optimize-css-assets-webpack-plugin');
 const getBabelConfig = require('./babel.config');
 
 module.exports = merge(common, {
@@ -39,10 +40,10 @@ module.exports = merge(common, {
   optimization: {
     nodeEnv: 'production',
     minimizer: [
-      new ESBuildMinifyPlugin({
-        target: 'es2015',
-        css: true,
+      new TerserPlugin({
+        parallel: false,
       }),
+      new OptimizeCSSAssetsPlugin({}),
     ],
   },
   plugins: [
