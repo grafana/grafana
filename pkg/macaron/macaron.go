@@ -141,16 +141,6 @@ func New() *Macaron {
 	return NewWithLogger(os.Stdout)
 }
 
-// Classic creates a classic Macaron with some basic default middleware:
-// macaron.Logger, macaron.Recovery and macaron.Static.
-func Classic() *Macaron {
-	m := New()
-	m.Use(Logger())
-	m.Use(Recovery())
-	m.Use(Static("public"))
-	return m
-}
-
 // Handlers sets the entire middleware stack with the given Handlers.
 // This will clear any current middleware handlers,
 // and panics if any of the handlers is not a callable function
