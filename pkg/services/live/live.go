@@ -381,10 +381,6 @@ func checkOrigin(r *http.Request, appURL *url.URL) bool {
 		logger.Warn("Failed to parse request origin", "error", err, "origin", origin)
 		return false
 	}
-	if !strings.EqualFold(originURL.Scheme, appURL.Scheme) || !strings.EqualFold(originURL.Host, appURL.Host) {
-		logger.Warn("Request Origin is not authorized", "origin", origin, "appUrl", appURL.String())
-		return false
-	}
 	return true
 }
 
