@@ -1,4 +1,4 @@
-import React, { useContext, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 import { TimeZone } from '@grafana/data';
 import { CollapsableSection, Field, Input, RadioButtonGroup, Switch, TagsInput } from '@grafana/ui';
@@ -25,10 +25,38 @@ const GRAPH_TOOLTIP_OPTIONS = [
 
 export function GeneralSettingsUnconnected({ dashboard, updateTimeZone }: Props): JSX.Element {
   const [renderCounter, setRenderCounter] = useState(0);
-  const {
-    onChangeConfig,
-    config: { dashNav },
-  } = useContext(GorillaContext);
+  const { onChangeConfig } = useContext(GorillaContext);
+  const [hideDashNav, setHideDashNav] = useState(false);
+  useEffect(() => {
+    if (hideDashNav) {
+      onChangeConfig({
+        dashNav: {
+          mode: GorillaMode.readOnly,
+          timePicker: { mode: GorillaMode.hidden },
+          title: { mode: GorillaMode.hidden },
+          tvToggle: { mode: GorillaMode.hidden },
+          addPanelToggle: { mode: GorillaMode.hidden },
+          dashboardSettingsToggle: { mode: GorillaMode.hidden },
+          saveDashboardToggle: { mode: GorillaMode.hidden },
+          snapshotToggle: { mode: GorillaMode.hidden },
+        },
+      });
+      return;
+    }
+
+    onChangeConfig({
+      dashNav: {
+        mode: GorillaMode.editable,
+        timePicker: { mode: GorillaMode.editable },
+        title: { mode: GorillaMode.editable },
+        tvToggle: { mode: GorillaMode.editable },
+        addPanelToggle: { mode: GorillaMode.editable },
+        dashboardSettingsToggle: { mode: GorillaMode.editable },
+        saveDashboardToggle: { mode: GorillaMode.editable },
+        snapshotToggle: { mode: GorillaMode.editable },
+      },
+    });
+  }, [hideDashNav, onChangeConfig]);
 
   const onFolderChange = (folder: { id: number; title: string }) => {
     dashboard.meta.folderId = folder.id;
@@ -124,36 +152,7 @@ export function GeneralSettingsUnconnected({ dashboard, updateTimeZone }: Props)
       />
 
       <Field label="Hide DashNav">
-        <Switch
-          value={dashNav.mode === GorillaMode.hidden}
-          onChange={() =>
-            dashNav.mode === GorillaMode.hidden
-              ? onChangeConfig({
-                  dashNav: {
-                    mode: GorillaMode.editable,
-                    timePicker: { mode: GorillaMode.editable },
-                    title: { mode: GorillaMode.hidden },
-                    tvToggle: { mode: GorillaMode.editable },
-                    addPanelToggle: { mode: GorillaMode.editable },
-                    dashboardSettingsToggle: { mode: GorillaMode.editable },
-                    saveDashboardToggle: { mode: GorillaMode.editable },
-                    snapshotToggle: { mode: GorillaMode.editable },
-                  },
-                })
-              : onChangeConfig({
-                  dashNav: {
-                    mode: GorillaMode.hidden,
-                    timePicker: { mode: GorillaMode.hidden },
-                    title: { mode: GorillaMode.hidden },
-                    tvToggle: { mode: GorillaMode.hidden },
-                    addPanelToggle: { mode: GorillaMode.hidden },
-                    dashboardSettingsToggle: { mode: GorillaMode.hidden },
-                    saveDashboardToggle: { mode: GorillaMode.hidden },
-                    snapshotToggle: { mode: GorillaMode.hidden },
-                  },
-                })
-          }
-        />
+        <Switch value={hideDashNav} onChange={() => setHideDashNav(!hideDashNav)} />
       </Field>
 
       <CollapsableSection label="Panel options" isOpen={true}>

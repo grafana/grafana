@@ -90,16 +90,16 @@ export function GorillaDashNav(props: DashNavProps): JSX.Element | null {
   }
 
   switch (dashNav.mode) {
-    case GorillaMode.editable: {
+    case GorillaMode.hidden: {
+      return null;
+    }
+
+    default:
       return (
         <div aria-label={selectors.pages.Dashboard.DashNav.nav}>
           <DashNav {...props} />
         </div>
       );
-    }
-
-    default:
-      return null;
   }
 }
 
