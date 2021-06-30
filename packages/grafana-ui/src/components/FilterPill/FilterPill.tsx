@@ -46,10 +46,19 @@ const getStyles = (theme: GrafanaTheme2) => {
       align-items: center;
       height: 32px;
       cursor: pointer;
+
+      &:hover {
+        background: ${theme.colors.action.hover};
+        color: ${theme.colors.text.primary};
+      }
     `,
     selected: css`
       color: ${theme.colors.text.primary};
       background: ${theme.colors.action.selected};
+
+      &:hover {
+        background: ${theme.colors.action.focus};
+      }
     `,
     icon: css`
       margin: ${theme.spacing(0, 0, 0, 1)};
