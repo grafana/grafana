@@ -14,7 +14,7 @@ import { GrafanaQuery, GrafanaAnnotationQuery, GrafanaAnnotationType, GrafanaQue
 import { getBackendSrv, getGrafanaLiveSrv, getTemplateSrv, toDataQueryResponse } from '@grafana/runtime';
 import { Observable, of, merge } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
-import AnnotationQuery from './components/AnnotationQuery';
+import AnnotationQueryEditor from './components/AnnotationQueryEditor';
 
 let counter = 100;
 
@@ -22,7 +22,7 @@ export class GrafanaDatasource extends DataSourceApi<GrafanaQuery> {
   constructor(instanceSettings: DataSourceInstanceSettings) {
     super(instanceSettings);
     this.annotations = {
-      QueryEditor: AnnotationQuery,
+      QueryEditor: AnnotationQueryEditor,
     };
   }
 

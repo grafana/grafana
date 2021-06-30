@@ -47,7 +47,7 @@ interface Props {
   onChange: (newValue: GrafanaAnnotationQuery) => void;
 }
 
-export default function AnnotationQuery({ query, onChange }: Props) {
+export default function AnnotationQueryEditor({ query, onChange }: Props) {
   const { limit = 100, matchAny = false, tags = [], type = GrafanaAnnotationType.Tags } = query;
 
   const onFilterByChange = (newValue: SelectableValue<GrafanaAnnotationType>) =>
@@ -78,19 +78,37 @@ export default function AnnotationQuery({ query, onChange }: Props) {
     <div className="gf-form-group">
       <InlineFieldRow>
         <InlineField label="Filter by" labelWidth={18} tooltip={filterTooltipContent}>
-          <Select width={16} options={annotationTypes} value={type} onChange={onFilterByChange} />
+          <Select
+            inputId="grafana-annotations__filter-by"
+            width={16}
+            options={annotationTypes}
+            value={type}
+            onChange={onFilterByChange}
+          />
         </InlineField>
         <InlineField label="Max limit">
-          <Select width={16} options={limitOptions} value={limit} onChange={onMaxLimitChange} />
+          <Select
+            inputId="grafana-annotations__limit"
+            width={16}
+            options={limitOptions}
+            value={limit}
+            onChange={onMaxLimitChange}
+          />
         </InlineField>
       </InlineFieldRow>
       {type === GrafanaAnnotationType.Tags && (
         <InlineFieldRow>
           <InlineField label="Match any" labelWidth={18} tooltip={matchTooltipContent}>
-            <InlineSwitch value={matchAny} onChange={onMatchAnyChange} />
+            <InlineSwitch id="grafana-annotations__match-any" value={matchAny} onChange={onMatchAnyChange} />
           </InlineField>
           <InlineField label="Tags" labelWidth="auto" tooltip={tagsTooltipContent}>
-            <TagFilter allowCustomValue onChange={onTagsChange} tagOptions={getAnnotationTags} tags={tags} />
+            <TagFilter
+              inputId="grafana-annotations__tags"
+              allowCustomValue
+              onChange={onTagsChange}
+              tagOptions={getAnnotationTags}
+              tags={tags}
+            />
           </InlineField>
         </InlineFieldRow>
       )}
