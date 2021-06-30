@@ -18,7 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/loki"
 	"github.com/grafana/grafana/pkg/tsdb/mssql"
 	"github.com/grafana/grafana/pkg/tsdb/mysql"
-	"github.com/grafana/grafana/pkg/tsdb/opentsdb"
 	"github.com/grafana/grafana/pkg/tsdb/postgres"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus"
 	"github.com/grafana/grafana/pkg/tsdb/tempo"
@@ -57,7 +56,6 @@ type Service struct {
 // Init initialises the service.
 func (s *Service) Init() error {
 	s.registry["graphite"] = graphite.New(s.HTTPClientProvider)
-	s.registry["opentsdb"] = opentsdb.New(s.HTTPClientProvider)
 	s.registry["prometheus"] = prometheus.New(s.HTTPClientProvider)
 	s.registry["influxdb"] = influxdb.New(s.HTTPClientProvider)
 	s.registry["mssql"] = mssql.NewExecutor
