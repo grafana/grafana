@@ -7,20 +7,17 @@ import { Page } from 'app/core/components/Page/Page';
 
 type Props = {
   children: React.ReactNode | React.ReactNode[];
+  title: string;
   wrapInContent?: boolean;
 };
 
 export function RuleViewerLayout(props: Props): JSX.Element | null {
-  const { wrapInContent = true, children } = props;
+  const { wrapInContent = true, children, title } = props;
   const styles = useStyles2(getPageStyles);
 
   return (
     <Page>
-      <PageToolbar
-        title="Alerting / View rule"
-        pageIcon="bell"
-        onGoBack={() => locationService.push('/alerting/list')}
-      />
+      <PageToolbar title={title} pageIcon="bell" onGoBack={() => locationService.push('/alerting/list')} />
       <div className={styles.content}>{wrapInContent ? <RuleViewerLayoutContent {...props} /> : children}</div>
     </Page>
   );

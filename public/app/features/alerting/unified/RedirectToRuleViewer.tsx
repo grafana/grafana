@@ -11,6 +11,7 @@ import { RuleViewerLayout } from './components/rule-viewer/RuleViewerLayout';
 import { AlertLabels } from './components/AlertLabels';
 
 type RedirectToRuleViewerProps = GrafanaRouteComponentProps<{ name?: string; sourceName?: string }>;
+const pageTitle = 'Alerting / Find rule';
 
 export function RedirectToRuleViewer(props: RedirectToRuleViewerProps): JSX.Element | null {
   const { name, sourceName } = props.match.params;
@@ -19,7 +20,7 @@ export function RedirectToRuleViewer(props: RedirectToRuleViewerProps): JSX.Elem
 
   if (error) {
     return (
-      <RuleViewerLayout>
+      <RuleViewerLayout title={pageTitle}>
         <Alert title={`Failed to load rules from ${sourceName}`}>
           <details className={styles.errorMessage}>
             {error.message}
@@ -33,7 +34,7 @@ export function RedirectToRuleViewer(props: RedirectToRuleViewerProps): JSX.Elem
 
   if (loading || !dispatched || !Array.isArray(rules)) {
     return (
-      <RuleViewerLayout>
+      <RuleViewerLayout title={pageTitle}>
         <LoadingPlaceholder text="Loading rule..." />
       </RuleViewerLayout>
     );
@@ -47,7 +48,7 @@ export function RedirectToRuleViewer(props: RedirectToRuleViewerProps): JSX.Elem
 
   if (!rulesSource) {
     return (
-      <RuleViewerLayout>
+      <RuleViewerLayout title={pageTitle}>
         <Alert title="Could not view rule">
           <details className={styles.errorMessage}>{`Could not find data source with name: ${sourceName}.`}</details>
         </Alert>
@@ -61,7 +62,7 @@ export function RedirectToRuleViewer(props: RedirectToRuleViewerProps): JSX.Elem
   }
 
   return (
-    <RuleViewerLayout>
+    <RuleViewerLayout title={pageTitle}>
       <div>
         Several rules in <span className={styles.param}>{sourceName}</span> matched the name{' '}
         <span className={styles.param}>{name}</span>, please select the rule you want to view.

@@ -32,6 +32,7 @@ type RuleViewerProps = GrafanaRouteComponentProps<{ id?: string; sourceName?: st
 
 const errorMessage = 'Could not find data source for rule';
 const errorTitle = 'Could not view rule';
+const pageTitle = 'Alerting / View rule';
 
 export function RuleViewer({ match }: RuleViewerProps) {
   const styles = useStyles2(getStyles);
@@ -58,7 +59,7 @@ export function RuleViewer({ match }: RuleViewerProps) {
 
   if (!sourceName) {
     return (
-      <RuleViewerLayout>
+      <RuleViewerLayout title={pageTitle}>
         <Alert title={errorTitle}>
           <details className={styles.errorMessage}>{errorMessage}</details>
         </Alert>
@@ -70,7 +71,7 @@ export function RuleViewer({ match }: RuleViewerProps) {
 
   if (loading) {
     return (
-      <RuleViewerLayout>
+      <RuleViewerLayout title={pageTitle}>
         <LoadingPlaceholder text="Loading rule..." />
       </RuleViewerLayout>
     );
@@ -78,7 +79,7 @@ export function RuleViewer({ match }: RuleViewerProps) {
 
   if (error || !rulesSource) {
     return (
-      <RuleViewerLayout>
+      <RuleViewerLayout title={pageTitle}>
         <Alert title={errorTitle}>
           <details className={styles.errorMessage}>
             {error?.message ?? errorMessage}
@@ -92,14 +93,14 @@ export function RuleViewer({ match }: RuleViewerProps) {
 
   if (!rule) {
     return (
-      <RuleViewerLayout>
+      <RuleViewerLayout title={pageTitle}>
         <span>Rule could not be found.</span>
       </RuleViewerLayout>
     );
   }
   const annotations = Object.entries(rule.annotations).filter(([_, value]) => !!value.trim());
   return (
-    <RuleViewerLayout wrapInContent={false}>
+    <RuleViewerLayout wrapInContent={false} title={pageTitle}>
       <RuleViewerLayoutContent>
         <div>
           <h4>
