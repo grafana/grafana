@@ -63,6 +63,10 @@ type FindTagsResult struct {
 	Tags []*TagsDTO `json:"tags"`
 }
 
+type GetAnnotationTagsResponse struct {
+	Result FindTagsResult `json:"result"`
+}
+
 type DeleteParams struct {
 	OrgId       int64
 	Id          int64

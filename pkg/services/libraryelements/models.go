@@ -181,3 +181,19 @@ type searchLibraryElementsQuery struct {
 	excludeUID    string
 	folderFilter  string
 }
+
+type LibraryElementResponse struct {
+	Result LibraryElementDTO `json:"result"`
+}
+
+type LibraryElementSearchResponse struct {
+	Result LibraryElementSearchResult `json:"result"`
+}
+
+type LibraryElementArrayResponse struct {
+	Result []LibraryElementDTO `json:"result"`
+}
+
+type LibraryElementConnectionsResponse struct {
+	Result []LibraryElementConnectionDTO `json:"result"`
+}
