@@ -28,9 +28,13 @@ interface Props {
 interface InputState {
   value: string;
   invalid: boolean;
+  errorMessage: string;
 }
 
-const errorMessage = 'Please enter a past date or "now"';
+const ERROR_MESSAGES = {
+  default: 'Please enter a past date or "now"',
+  range: '"From" can\'t be after "To"',
+};
 
 export const TimeRangeForm: React.FC<Props> = (props) => {
   const { value, isFullscreen = false, timeZone, onApply: onApplyFromProps, isReversed } = props;
@@ -93,7 +97,7 @@ export const TimeRangeForm: React.FC<Props> = (props) => {
 
   return (
     <>
-      <Field label="From" invalid={from.invalid} error={errorMessage}>
+      <Field label="From" invalid={from.invalid} error={from.errorMessage}>
         <Input
           onClick={(event) => event.stopPropagation()}
           onFocus={onFocus}
@@ -103,7 +107,7 @@ export const TimeRangeForm: React.FC<Props> = (props) => {
           value={from.value}
         />
       </Field>
-      <Field label="To" invalid={to.invalid} error={errorMessage}>
+      <Field label="To" invalid={to.invalid} error={to.errorMessage}>
         <Input
           onClick={(event) => event.stopPropagation()}
           onFocus={onFocus}
@@ -147,11 +151,18 @@ function valueToState(
 ): [InputState, InputState] {
   const fromValue = valueAsString(rawFrom, timeZone);
   const toValue = valueAsString(rawTo, timeZone);
-  const fromInvalid = !isValid(fromValue, false, timeZone) || isRangeInvalid(fromValue, toValue, timeZone);
+  const fromInvalid = !isValid(fromValue, false, timeZone);
   const toInvalid = !isValid(toValue, true, timeZone);
+  // If "To" is invalid, we should not check the range anyways
+  const rangeInvalid = isRangeInvalid(fromValue, toValue, timeZone) && !toInvalid;
+
   return [
-    { value: fromValue, invalid: fromInvalid },
-    { value: toValue, invalid: toInvalid },
+    {
+      value: fromValue,
+      invalid: fromInvalid || rangeInvalid,
+      errorMessage: rangeInvalid && !fromInvalid ? ERROR_MESSAGES.range : ERROR_MESSAGES.default,
+    },
+    { value: toValue, invalid: toInvalid, errorMessage: ERROR_MESSAGES.default },
   ];
 }
 
