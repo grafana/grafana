@@ -16,6 +16,11 @@ export interface DisplayValue extends FormattedValue {
    */
   color?: string;
   title?: string;
+
+  /**
+   * Used in limited scenarios like legend reducer calculations
+   */
+  description?: string;
 }
 
 /**
