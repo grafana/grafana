@@ -16,6 +16,7 @@ import {
   logSeriesToLogsModel,
   filterLogLevels,
   LIMIT_LABEL,
+  COMMON_LABELS,
 } from './logs_model';
 
 describe('dedupLogRows()', () => {
@@ -322,7 +323,7 @@ describe('dataFrameToLogsModel', () => {
     ]);
     expect(logsModel.meta).toHaveLength(2);
     expect(logsModel.meta![0]).toMatchObject({
-      label: 'Common labels',
+      label: COMMON_LABELS,
       value: series[0].fields[1].labels,
       kind: LogsMetaKind.LabelsMap,
     });
@@ -392,7 +393,7 @@ describe('dataFrameToLogsModel', () => {
     expect(logsModel.series).toHaveLength(2);
     expect(logsModel.meta).toHaveLength(3);
     expect(logsModel.meta![0]).toMatchObject({
-      label: 'Common labels',
+      label: COMMON_LABELS,
       value: series[0].fields[1].labels,
       kind: LogsMetaKind.LabelsMap,
     });
@@ -537,7 +538,7 @@ describe('dataFrameToLogsModel', () => {
     ]);
     expect(logsModel.meta).toHaveLength(1);
     expect(logsModel.meta![0]).toMatchObject({
-      label: 'Common labels',
+      label: COMMON_LABELS,
       value: {
         foo: 'bar',
       },
@@ -686,7 +687,7 @@ describe('dataFrameToLogsModel', () => {
     const logsModel = dataFrameToLogsModel(series, 1, { from: 1556270591353, to: 1556289770991 });
     expect(logsModel.meta).toHaveLength(2);
     expect(logsModel.meta![0]).toMatchObject({
-      label: 'Common labels',
+      label: COMMON_LABELS,
       value: series[0].fields[1].labels,
       kind: LogsMetaKind.LabelsMap,
     });
@@ -798,7 +799,7 @@ describe('logSeriesToLogsModel', () => {
 
     const logsModel = dataFrameToLogsModel(logSeries, 0);
     expect(logsModel.meta).toMatchObject([
-      { kind: 2, label: 'Common labels', value: { foo: 'bar', level: 'dbug' } },
+      { kind: 2, label: COMMON_LABELS, value: { foo: 'bar', level: 'dbug' } },
       { kind: 0, label: LIMIT_LABEL, value: 2000 },
       { kind: 1, label: 'Total bytes processed', value: '194  kB' },
     ]);

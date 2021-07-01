@@ -17,6 +17,12 @@ export const plugin = new PanelPlugin<Options>(LogsPanel).setPanelOptions((build
       defaultValue: false,
     })
     .addBooleanSwitch({
+      path: 'showCommonLabels',
+      name: 'Common labels',
+      description: '',
+      defaultValue: false,
+    })
+    .addBooleanSwitch({
       path: 'wrapLogMessage',
       name: 'Wrap lines',
       description: '',
