@@ -22,7 +22,7 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
   onChangeTimeRange,
   replaceVariables,
 }) => {
-  const { sync } = usePanelContext();
+  const { sync, canAddAnnotations } = usePanelContext();
 
   const getFieldLinks = (field: Field, rowIndex: number) => {
     return getFieldLinksForExplore({ field, rowIndex, range: timeRange });
@@ -38,7 +38,7 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
     );
   }
 
-  // const defaultMenuItems: Array<MenuItemsGroup<ContextMenuItemClickPayload>> = ;
+  const enableAnnotationCreation = Boolean(canAddAnnotations && canAddAnnotations());
   return (
     <TimeSeries
       frames={frames}
@@ -53,19 +53,16 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
         return (
           <>
             <ZoomPlugin config={config} onZoom={onChangeTimeRange} />
-
             <TooltipPlugin
               data={alignedDataFrame}
               config={config}
               mode={sync === DashboardCursorSync.Tooltip ? TooltipDisplayMode.Multi : options.tooltip.mode}
               timeZone={timeZone}
             />
-
             {/* Renders annotation markers*/}
             {data.annotations && (
               <AnnotationsPlugin annotations={data.annotations} config={config} timeZone={timeZone} />
             )}
-
             {/* Enables annotations creation*/}
             <AnnotationEditorPlugin data={alignedDataFrame} timeZone={timeZone} config={config}>
               {({ startAnnotating }) => {
@@ -75,28 +72,31 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
                     config={config}
                     timeZone={timeZone}
                     replaceVariables={replaceVariables}
-                    defaultItems={[
-                      {
-                        items: [
-                          {
-                            label: 'Add annotation',
-                            ariaLabel: 'Add annotation',
-                            icon: 'comment-alt',
-                            onClick: (e, p) => {
-                              if (!p) {
-                                return;
-                              }
-                              startAnnotating({ coords: p.coords });
+                    defaultItems={
+                      enableAnnotationCreation
+                        ? [
+                            {
+                              items: [
+                                {
+                                  label: 'Add annotation',
+                                  ariaLabel: 'Add annotation',
+                                  icon: 'comment-alt',
+                                  onClick: (e, p) => {
+                                    if (!p) {
+                                      return;
+                                    }
+                                    startAnnotating({ coords: p.coords });
+                                  },
+                                },
+                              ],
                             },
-                          },
-                        ],
-                      },
-                    ]}
+                          ]
+                        : []
+                    }
                   />
                 );
               }}
             </AnnotationEditorPlugin>
-
             {data.annotations && (
               <ExemplarsPlugin
                 config={config}

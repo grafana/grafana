@@ -26,7 +26,6 @@ export interface PanelContext {
 
 export const PanelContextRoot = React.createContext<PanelContext>({
   eventBus: new EventBusSrv(),
-  canAddAnnotations: () => false,
 });
 
 /**
