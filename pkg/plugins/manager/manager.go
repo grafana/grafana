@@ -726,11 +726,14 @@ func (pm *PluginManager) StaticRoutes() []*plugins.PluginStaticRoute {
 
 func (pm *PluginManager) Install(ctx context.Context, pluginID, version string) error {
 	plugin := pm.GetPlugin(pluginID)
-
-	installDestDir := pm.Cfg.PluginsPath
 	if plugin != nil {
 		if plugin.IsCorePlugin {
 			return plugins.ErrInstallCorePlugin
+		}
+
+		// if plugin is a dependency of another plugin
+		if plugin.Root != nil {
+			return plugins.ErrUninstallPluginDependency
 		}
 
 		if plugin.Info.Version == version {
@@ -745,12 +748,9 @@ func (pm *PluginManager) Install(ctx context.Context, pluginID, version string) 
 		if err != nil {
 			return err
 		}
-
-		// set destination for install to same location as was previously installed version
-		installDestDir = filepath.Dir(plugin.PluginDir)
 	}
 
-	err := pm.pluginInstaller.Install(ctx, pluginID, version, installDestDir, "", grafanaComURL)
+	err := pm.pluginInstaller.Install(ctx, pluginID, version, pm.Cfg.PluginsPath, "", grafanaComURL)
 	if err != nil {
 		return err
 	}
