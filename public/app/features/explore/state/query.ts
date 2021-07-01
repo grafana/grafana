@@ -264,8 +264,8 @@ export const importQueries = (
     let importedQueries = queries;
     // Check if queries can be imported from previously selected datasource
     if (sourceDataSource.meta?.id === targetDataSource.meta?.id) {
-      // Keep same queries if same type of datasource
-      importedQueries = [...queries];
+      // Keep same queries if same type of datasource, but delete datasource query property to prevent mismatch of new and old data source instance
+      importedQueries = queries.map(({ datasource, ...query }) => query);
     } else if (targetDataSource.importQueries) {
       // Datasource-specific importers
       importedQueries = await targetDataSource.importQueries(queries, sourceDataSource);
@@ -340,7 +340,7 @@ export const runQueries = (exploreId: ExploreId, options?: { replaceUrl?: boolea
           dispatch(queryStreamUpdatedAction({ exploreId, response: data }));
         });
 
-      // If we don't have resuls saved in cache, run new queries
+      // If we don't have results saved in cache, run new queries
     } else {
       if (!hasNonEmptyQuery(queries)) {
         dispatch(clearQueriesAction({ exploreId }));

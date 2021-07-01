@@ -84,24 +84,26 @@ export class SoloPanelPage extends Component<Props, State> {
     }
 
     return (
-      <AutoSizer className="panel-solo">
-        {({ width, height }) => {
-          if (width === 0) {
-            return null;
-          }
-          return (
-            <DashboardPanel
-              width={width}
-              height={height}
-              dashboard={dashboard}
-              panel={panel}
-              isEditing={false}
-              isViewing={false}
-              isInView={true}
-            />
-          );
-        }}
-      </AutoSizer>
+      <div className="panel-solo">
+        <AutoSizer>
+          {({ width, height }) => {
+            if (width === 0) {
+              return null;
+            }
+            return (
+              <DashboardPanel
+                width={width}
+                height={height}
+                dashboard={dashboard}
+                panel={panel}
+                isEditing={false}
+                isViewing={false}
+                isInView={true}
+              />
+            );
+          }}
+        </AutoSizer>
+      </div>
     );
   }
 }

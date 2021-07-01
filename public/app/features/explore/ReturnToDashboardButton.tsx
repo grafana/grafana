@@ -1,5 +1,5 @@
 import React, { FC } from 'react';
-import { connect } from 'react-redux';
+import { connect, ConnectedProps } from 'react-redux';
 import { ButtonGroup, ButtonSelect, Icon, ToolbarButton, Tooltip } from '@grafana/ui';
 import { DataQuery, urlUtil } from '@grafana/data';
 
@@ -11,13 +11,26 @@ import { setDashboardQueriesToUpdateOnLoad } from '../dashboard/state/reducers';
 import { isSplit } from './state/selectors';
 import { locationService } from '@grafana/runtime';
 
-interface Props {
-  exploreId: ExploreId;
-  splitted: boolean;
-  queries: DataQuery[];
-  originPanelId?: number | null;
-  setDashboardQueriesToUpdateOnLoad: typeof setDashboardQueriesToUpdateOnLoad;
+function mapStateToProps(state: StoreState, { exploreId }: { exploreId: ExploreId }) {
+  const explore = state.explore;
+  const splitted = isSplit(state);
+  const { datasourceInstance, queries, originPanelId } = explore[exploreId]!;
+
+  return {
+    exploreId,
+    datasourceInstance,
+    queries,
+    originPanelId,
+    splitted,
+  };
 }
+
+const mapDispatchToProps = {
+  setDashboardQueriesToUpdateOnLoad,
+};
+
+const connector = connect(mapStateToProps, mapDispatchToProps);
+type Props = ConnectedProps<typeof connector>;
 
 export const UnconnectedReturnToDashboardButton: FC<Props> = ({
   originPanelId,
@@ -83,22 +96,4 @@ export const UnconnectedReturnToDashboardButton: FC<Props> = ({
   );
 };
 
-function mapStateToProps(state: StoreState, { exploreId }: { exploreId: ExploreId }) {
-  const explore = state.explore;
-  const splitted = isSplit(state);
-  const { datasourceInstance, queries, originPanelId } = explore[exploreId]!;
-
-  return {
-    exploreId,
-    datasourceInstance,
-    queries,
-    originPanelId,
-    splitted,
-  };
-}
-
-const mapDispatchToProps = {
-  setDashboardQueriesToUpdateOnLoad,
-};
-
-export default connect(mapStateToProps, mapDispatchToProps)(UnconnectedReturnToDashboardButton);
+export default connector(UnconnectedReturnToDashboardButton);
