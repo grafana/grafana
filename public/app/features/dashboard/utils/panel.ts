@@ -4,7 +4,7 @@ import store from 'app/core/store';
 // Models
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
-import { TimeRange, AppEvents, rangeUtil, dateMath, LoadingState, FieldType, DataFrame } from '@grafana/data';
+import { TimeRange, AppEvents, rangeUtil, dateMath, LoadingState, FieldType } from '@grafana/data';
 
 // Utils
 import { isString as _isString } from 'lodash';
@@ -21,7 +21,7 @@ import { ShareModal } from 'app/features/dashboard/components/ShareModal';
 import { ShowConfirmModalEvent, ShowModalReactEvent } from '../../../types/events';
 import { AddLibraryPanelModal } from 'app/features/library-panels/components/AddLibraryPanelModal/AddLibraryPanelModal';
 import { UnlinkModal } from 'app/features/library-panels/components/UnlinkModal/UnlinkModal';
-import Sonifier from 'app/core/services/Sonifier';
+import getSonifier from 'app/core/services/Sonifier';
 
 export const removePanel = (dashboard: DashboardModel, panel: PanelModel, ask: boolean) => {
   // confirm deletion
@@ -72,7 +72,7 @@ export const sonifyPanel = (dashboard: DashboardModel, panel: PanelModel) => {
       const timestamps = (frame.fields.find((f) => f.type === FieldType.time)?.values || []) as number[];
       const values = (frame.fields.find((f) => f.type === FieldType.number)?.values.toArray() || []) as number[];
       const series: any[] = timestamps.map((ts, i) => [ts, values[i]]);
-      const sonifier = new Sonifier();
+      const sonifier = getSonifier();
       sonifier.speak(name);
       sonifier.playSeries(series);
       count++;

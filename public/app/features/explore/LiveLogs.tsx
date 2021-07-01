@@ -6,7 +6,7 @@ import { LogMessageAnsi, getLogRowStyles, Icon, Button, Themeable2, withTheme2, 
 import { LogRowModel, TimeZone, dateTimeFormat, GrafanaTheme2, LogLevel, SelectableValue } from '@grafana/data';
 
 import { ElapsedTime } from './ElapsedTime';
-import Sonifier, { Tuple } from 'app/core/services/Sonifier';
+import getSonifier, { Sonifier } from 'app/core/services/Sonifier';
 
 const LevelMapper = {
   [LogLevel.unknown]: 'A',
@@ -109,7 +109,7 @@ class LiveLogs extends PureComponent<Props, State> {
       sonifyValueMax: '',
       sonifyLevelMin: LogLevel.error,
     };
-    this.sonifier = new Sonifier();
+    this.sonifier = getSonifier();
   }
 
   static getDerivedStateFromProps(nextProps: Props, state: State) {
@@ -133,7 +133,7 @@ class LiveLogs extends PureComponent<Props, State> {
         this.rowsCheckedForSonification = {};
         this.rowsSonified = {};
       }
-      const series: Tuple[] = [];
+      const series: any[] = [];
       for (const row of logRowsToRender) {
         if (!this.rowsCheckedForSonification[row.uid]) {
           if (sonify && LevelMapper[row.logLevel] >= LevelMapper[sonifyLevelMin as LogLevel]) {
