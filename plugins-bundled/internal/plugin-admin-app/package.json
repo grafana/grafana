@@ -1,6 +1,6 @@
 {
   "name": "@grafana-plugins/admin-app",
-  "version": "8.0.3",
+  "version": "8.0.4",
   "description": "Plugins admin",
   "private": true,
   "repository": {
@@ -15,10 +15,10 @@
   },
   "author": "Grafana Labs",
   "devDependencies": {
-    "@grafana/data": "8.0.3",
-    "@grafana/runtime": "8.0.3",
-    "@grafana/toolkit": "8.0.3",
-    "@grafana/ui": "8.0.3"
+    "@grafana/data": "8.0.4",
+    "@grafana/runtime": "8.0.4",
+    "@grafana/toolkit": "8.0.4",
+    "@grafana/ui": "8.0.4"
   },
   "volta": {
     "node": "12.16.2"
