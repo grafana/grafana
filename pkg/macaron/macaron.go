@@ -101,7 +101,6 @@ type Macaron struct {
 	Injector
 	befores  []BeforeHandler
 	handlers []Handler
-	action   Handler
 
 	hasURLPrefix bool
 	urlPrefix    string // For suburl support.
@@ -115,7 +114,6 @@ type Macaron struct {
 func New() *Macaron {
 	m := &Macaron{
 		Injector: NewInjector(),
-		action:   func() {},
 		Router:   NewRouter(),
 		logger:   log.New(os.Stdout, "[Macaron] ", 0),
 	}
@@ -155,7 +153,6 @@ func (m *Macaron) createContext(rw http.ResponseWriter, req *http.Request) *Cont
 	c := &Context{
 		Injector: NewInjector(),
 		handlers: m.handlers,
-		action:   m.action,
 		index:    0,
 		Router:   m.Router,
 		Req:      Request{req},
