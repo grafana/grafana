@@ -6,7 +6,7 @@ import { LogMessageAnsi, getLogRowStyles, Icon, Button, Themeable2, withTheme2, 
 import { LogRowModel, TimeZone, dateTimeFormat, GrafanaTheme2, LogLevel } from '@grafana/data';
 
 import { ElapsedTime } from './ElapsedTime';
-import Sonifier from 'app/core/services/Sonifier';
+import Sonifier, { Tuple } from 'app/core/services/Sonifier';
 
 const LevelMapper = {
   [LogLevel.unknown]: 'A',
@@ -73,12 +73,13 @@ interface State {
   sonify: boolean;
   sonifyValue: boolean;
   sonifyValueExpression: string;
+  sonifyValueMatcher?: RegExp;
+  sonifyValueMax: string;
 }
 
 class LiveLogs extends PureComponent<Props, State> {
   private liveEndDiv: HTMLDivElement | null = null;
   private scrollContainerRef = React.createRef<HTMLTableSectionElement>();
-  // HACK will run out of memory
   private sonifiedLines: any = {};
   private sonifier: Sonifier;
 
@@ -89,6 +90,7 @@ class LiveLogs extends PureComponent<Props, State> {
       sonify: false,
       sonifyValue: false,
       sonifyValueExpression: '',
+      sonifyValueMax: '',
     };
     this.sonifier = new Sonifier();
   }
@@ -107,21 +109,54 @@ class LiveLogs extends PureComponent<Props, State> {
   }
 
   componentDidUpdate() {
-    if (this.state.sonify && !this.props.isPaused) {
-      const { logRowsToRender = [] } = this.state;
+    if ((this.state.sonify || this.state.sonifyValue) && !this.props.isPaused) {
+      const { logRowsToRender = [], sonifyValueMatcher } = this.state;
+      // HACK to not run out of memory
+      if (Object.keys(this.sonifiedLines).length > 1e6) {
+        this.sonifiedLines = {};
+      }
+      const series: Tuple[] = [];
       for (const row of logRowsToRender) {
         if (!this.sonifiedLines[row.uid]) {
-          if (LevelMapper[row.logLevel] > LevelMapper[LogLevel.info]) {
+          if (this.state.sonify && LevelMapper[row.logLevel] > LevelMapper[LogLevel.info]) {
             this.sonifier.playNote(LevelMapper[row.logLevel], 200);
+          } else if (this.state.sonifyValue && sonifyValueMatcher) {
+            const match = row.entry.match(sonifyValueMatcher);
+            if (match) {
+              try {
+                const value = parseFloat(match[0]);
+                series.push([row.timeEpochMs, value]);
+              } catch (error) {}
+            }
           }
         }
         this.sonifiedLines[row.uid] = true;
       }
+      this.sonifier.playSeries(series);
     }
   }
 
+  onChangeValueMax = (event: ChangeEvent<HTMLInputElement>) => {
+    const sonifyValueMax = event.target.value;
+    try {
+      const max = parseFloat(sonifyValueMax);
+      if (max && max > 0) {
+        // TODO reset scale
+        console.log('reset scale, new max value', max);
+      }
+    } catch (error) {}
+    this.setState({ sonifyValueMax });
+  };
+
   onChangeValueExpression = (event: ChangeEvent<HTMLInputElement>) => {
-    this.setState({ sonifyValueExpression: event.target.value });
+    const sonifyValueExpression = event.target.value;
+    let sonifyValueMatcher;
+    try {
+      if (sonifyValueExpression.match(/\(.+\)/)) {
+        sonifyValueMatcher = new RegExp(event.target.value);
+      }
+    } catch (error) {}
+    this.setState({ sonifyValueMatcher, sonifyValueExpression });
   };
 
   onClickSonify = () => {
@@ -158,7 +193,7 @@ class LiveLogs extends PureComponent<Props, State> {
 
   render() {
     const { theme, timeZone, onPause, onResume, isPaused } = this.props;
-    const { sonify, sonifyValue, sonifyValueExpression } = this.state;
+    const { sonify, sonifyValue, sonifyValueExpression, sonifyValueMax } = this.state;
     const styles = getStyles(theme);
     const { logsRow, logsRowLocalTime, logsRowMessage } = getLogRowStyles(theme);
 
@@ -209,12 +244,15 @@ class LiveLogs extends PureComponent<Props, State> {
             &nbsp; {sonifyValue ? 'Stop value sound' : 'Sonify value'}
           </Button>
           {sonifyValue && (
-            <Input
-              width={120}
-              placeholder="Example: duration=(\d+)ms"
-              onChange={this.onChangeValueExpression}
-              value={sonifyValueExpression}
-            />
+            <>
+              <Input
+                width={48}
+                placeholder="Example: duration=(\d+)ms"
+                onChange={this.onChangeValueExpression}
+                value={sonifyValueExpression}
+              />
+              <Input width={12} placeholder="Max value" onChange={this.onChangeValueMax} value={sonifyValueMax} />
+            </>
           )}
           {isPaused || (
             <span>

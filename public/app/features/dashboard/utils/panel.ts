@@ -21,7 +21,7 @@ import { ShareModal } from 'app/features/dashboard/components/ShareModal';
 import { ShowConfirmModalEvent, ShowModalReactEvent } from '../../../types/events';
 import { AddLibraryPanelModal } from 'app/features/library-panels/components/AddLibraryPanelModal/AddLibraryPanelModal';
 import { UnlinkModal } from 'app/features/library-panels/components/UnlinkModal/UnlinkModal';
-import Sonifier, { Tuple, sleep } from 'app/core/services/Sonifier';
+import Sonifier, { Tuple } from 'app/core/services/Sonifier';
 
 export const removePanel = (dashboard: DashboardModel, panel: PanelModel, ask: boolean) => {
   // confirm deletion
@@ -72,7 +72,7 @@ export const sonifyPanel = (dashboard: DashboardModel, panel: PanelModel) => {
       []) as number[];
     const series: Tuple[] = timestamps.map((ts, i) => [ts, values[i]]);
     const sonifier = new Sonifier();
-    sonifier.speak('Series 1');
+    sonifier.speak(name);
     sonifier.playSeries(series);
   }
 };
