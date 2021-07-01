@@ -18,7 +18,7 @@ If you just want to explore your data and do not want to create a dashboard, the
 
 ## Start exploring
 
-In order to access Explore, you must have an editor or an administrator role. Refer to [Organization roles]({{< relref "../permissions/organization_roles.md" >}}) for more information on what each role has access to.
+In order to access Explore, you must have an editor or an administrator role, unless the [viewers_can_edit option](viewers_can_edit) is enabled.  Refer to [Organization roles]({{< relref "../permissions/organization_roles.md" >}}) for more information on what each role has access to.
 
 To access Explore:
 
