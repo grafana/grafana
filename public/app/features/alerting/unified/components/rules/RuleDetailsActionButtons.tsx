@@ -10,8 +10,8 @@ import { useIsRuleEditable } from '../../hooks/useIsRuleEditable';
 import { deleteRuleAction } from '../../state/actions';
 import { Annotation } from '../../utils/constants';
 import { getRulesSourceName, isCloudRulesSource } from '../../utils/datasource';
-import { createExploreLink } from '../../utils/misc';
-import { getRuleIdentifier, stringifyRuleIdentifier } from '../../utils/rules';
+import { createExploreLink, createViewLink } from '../../utils/misc';
+import * as ruleId from '../../utils/rule-id';
 
 interface Props {
   rule: CombinedRule;
@@ -29,19 +29,19 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource }) => {
   const rightButtons: JSX.Element[] = [];
 
   const { isEditable } = useIsRuleEditable(rulerRule);
+  const returnTo = location.pathname + location.search;
+  const isViewMode = inViewMode(location.pathname);
 
   const deleteRule = () => {
     if (ruleToDelete && ruleToDelete.rulerRule) {
-      dispatch(
-        deleteRuleAction(
-          getRuleIdentifier(
-            getRulesSourceName(ruleToDelete.namespace.rulesSource),
-            ruleToDelete.namespace.name,
-            ruleToDelete.group.name,
-            ruleToDelete.rulerRule
-          )
-        )
+      const identifier = ruleId.fromRulerRule(
+        getRulesSourceName(ruleToDelete.namespace.rulesSource),
+        ruleToDelete.namespace.name,
+        ruleToDelete.group.name,
+        ruleToDelete.rulerRule
       );
+
+      dispatch(deleteRuleAction(identifier, { navigateTo: isViewMode ? '/alerting/list' : undefined }));
       setRuleToDelete(undefined);
     }
   };
@@ -112,17 +112,28 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource }) => {
     }
   }
 
-  if (isEditable && rulerRule) {
-    const editURL = urlUtil.renderUrl(
-      `/alerting/${encodeURIComponent(
-        stringifyRuleIdentifier(
-          getRuleIdentifier(getRulesSourceName(rulesSource), namespace.name, group.name, rulerRule)
-        )
-      )}/edit`,
-      {
-        returnTo: location.pathname + location.search,
-      }
+  if (!isViewMode) {
+    rightButtons.push(
+      <LinkButton
+        className={style.button}
+        size="xs"
+        key="view"
+        variant="secondary"
+        icon="eye"
+        href={createViewLink(rulesSource, rule, returnTo)}
+      >
+        View
+      </LinkButton>
     );
+  }
+
+  if (isEditable && rulerRule) {
+    const sourceName = getRulesSourceName(rulesSource);
+    const identifier = ruleId.fromRulerRule(sourceName, namespace.name, group.name, rulerRule);
+
+    const editURL = urlUtil.renderUrl(`/alerting/${encodeURIComponent(ruleId.stringifyIdentifier(identifier))}/edit`, {
+      returnTo,
+    });
 
     rightButtons.push(
       <LinkButton className={style.button} size="xs" key="edit" variant="secondary" icon="pen" href={editURL}>
@@ -165,6 +176,10 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource }) => {
 
   return null;
 };
+
+function inViewMode(pathname: string): boolean {
+  return pathname.endsWith('/view');
+}
 
 export const getStyles = (theme: GrafanaTheme2) => ({
   wrapper: css`
