@@ -126,8 +126,11 @@ export class CloudWatchDatasource extends DataSourceWithBackend<CloudWatchQuery,
 
     const dataQueryResponses: Array<Observable<DataQueryResponse>> = [];
     if (logQueries.length > 0) {
-      dataQueryResponses.push(this.handleLiveLogQueries(logQueries, options));
-      //  dataQueryResponses.push(this.handleLogQueries(logQueries, options));
+      if (config.liveEnabled) {
+        dataQueryResponses.push(this.handleLiveLogQueries(logQueries, options));
+      } else {
+        dataQueryResponses.push(this.handleLogQueries(logQueries, options));
+      }
     }
 
     if (metricsQueries.length > 0) {
