@@ -32,7 +32,7 @@ describe('ReturnToDashboardButton', () => {
     expect(screen.queryByTestId(/returnButton/i)).toBeNull();
   });
 
-  it('should only render return to panel button if user cannot edit panel', () => {
+  it('should not render return to panel with changes button if user cannot edit panel', () => {
     render(<ReturnToDashboardButton {...createProps({ canEdit: false })} />);
     expect(screen.getAllByTestId(/returnButton/i)).toHaveLength(1);
   });
