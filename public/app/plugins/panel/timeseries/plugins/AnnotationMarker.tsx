@@ -111,13 +111,14 @@ export function AnnotationMarker({ annotation, timeZone }: Props) {
       editControls = (
         <div className={styles.editControls}>
           <IconButton
-            name={'pen'}
+            name="pen"
+            size="sm"
             onClick={() => {
               setIsEditing(true);
               setIsOpen(false);
             }}
           />
-          <IconButton name={'trash-alt'} onClick={deleteAnnotation} />
+          <IconButton size="sm" name="trash-alt" onClick={deleteAnnotation} />
         </div>
       );
     }
@@ -238,8 +239,9 @@ const getAnnotationMarkerStyles = (theme: GrafanaTheme2) => {
     editControls: css`
       display: flex;
       align-items: center;
-      > :last-child {
+      > button {
         margin-right: 0;
+        margin-left: ${theme.spacing(1)};
       }
     `,
     avatar: css`
