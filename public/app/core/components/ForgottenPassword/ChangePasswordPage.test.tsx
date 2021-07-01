@@ -49,12 +49,12 @@ describe('ChangePassword Page', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Submit' }));
     expect(await screen.findByText('New password is required')).toBeInTheDocument();
-    expect(await screen.findByText('Confirmed password is required')).toBeInTheDocument();
+    expect(screen.getByText('Confirmed password is required')).toBeInTheDocument();
 
     await act(async () => {
       await userEvent.type(screen.getByLabelText('New password'), 'admin');
       await userEvent.type(screen.getByLabelText('Confirm new password'), 'a');
-      expect(screen.queryByText('Passwords must match!')).toBeInTheDocument();
+      expect(screen.getByText('Passwords must match!')).toBeInTheDocument();
 
       await userEvent.type(screen.getByLabelText('Confirm new password'), 'dmin');
       expect(screen.queryByText('Passwords must match!')).not.toBeInTheDocument();
