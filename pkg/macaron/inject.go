@@ -77,10 +77,6 @@ type TypeMapper interface {
 	// This is really only useful for mapping a value as an interface, as interfaces
 	// cannot at this time be referenced directly without a pointer.
 	MapTo(interface{}, interface{}) TypeMapper
-	// Provides a possibility to directly insert a mapping based on type and value.
-	// This makes it possible to directly map type arguments not possible to instantiate
-	// with reflect like unidirectional channels.
-	Set(reflect.Type, reflect.Value) TypeMapper
 	// Returns the Value that is mapped to the current type. Returns a zeroed Value if
 	// the Type has not been mapped.
 	GetVal(reflect.Type) reflect.Value
@@ -177,13 +173,6 @@ func (i *injector) Map(val interface{}) TypeMapper {
 
 func (i *injector) MapTo(val interface{}, ifacePtr interface{}) TypeMapper {
 	i.values[InterfaceOf(ifacePtr)] = reflect.ValueOf(val)
-	return i
-}
-
-// Maps the given reflect.Type to the given reflect.Value and returns
-// the Typemapper the mapping has been registered in.
-func (i *injector) Set(typ reflect.Type, val reflect.Value) TypeMapper {
-	i.values[typ] = val
 	return i
 }
 
