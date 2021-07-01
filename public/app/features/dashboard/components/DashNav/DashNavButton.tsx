@@ -5,7 +5,7 @@ import { css } from '@emotion/css';
 import { IconName, IconType, IconSize, IconButton, useTheme, stylesFactory } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
 
-interface Props {
+export interface DashNavButtonProps {
   icon?: IconName;
   tooltip: string;
   onClick?: (event: MouseEvent<HTMLButtonElement>) => void;
@@ -15,7 +15,14 @@ interface Props {
   iconSize?: IconSize;
 }
 
-export const DashNavButton: FunctionComponent<Props> = ({ icon, iconType, iconSize, tooltip, onClick, children }) => {
+export const DashNavButton: FunctionComponent<DashNavButtonProps> = ({
+  icon,
+  iconType,
+  iconSize,
+  tooltip,
+  onClick,
+  children,
+}) => {
   const theme = useTheme();
   const styles = getStyles(theme);
 

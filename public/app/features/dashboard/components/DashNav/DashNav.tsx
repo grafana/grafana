@@ -4,7 +4,6 @@ import { connect, MapDispatchToProps } from 'react-redux';
 // Utils & Services
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 // Components
-import { DashNavButton } from './DashNavButton';
 import { DashNavTimeControls } from './DashNavTimeControls';
 import { ButtonGroup, ModalsController, ToolbarButton } from '@grafana/ui';
 import { locationUtil, textUtil } from '@grafana/data';
@@ -18,7 +17,12 @@ import { SaveDashboardModalProxy } from 'app/features/dashboard/components/SaveD
 import { locationService } from '@grafana/runtime';
 import { toggleKioskMode } from 'app/core/navigation/kiosk';
 import { getDashboardSrv } from '../../services/DashboardSrv';
-import { GorillaDashNavTimeControls, GorillaPageToolbar, GorillaToolbarButton } from '../../gorilla/types';
+import {
+  GorillaDashNavTimeControls,
+  GorillaPageToolbar,
+  GorillaToolbarButton,
+  GorillaDashNavButton,
+} from '../../gorilla/types';
 
 export interface OwnProps {
   dashboard: DashboardModel;
@@ -116,7 +120,8 @@ class DashNav extends PureComponent<Props> {
 
     if (canStar) {
       buttons.push(
-        <DashNavButton
+        <GorillaDashNavButton
+          configPath="dashNav.starToggle"
           tooltip="Mark as favorite"
           icon={isStarred ? 'favorite' : 'star'}
           iconType={isStarred ? 'mono' : 'default'}
@@ -131,7 +136,8 @@ class DashNav extends PureComponent<Props> {
       buttons.push(
         <ModalsController key="button-share">
           {({ showModal, hideModal }) => (
-            <DashNavButton
+            <GorillaDashNavButton
+              configPath="dashNav.sharePanelToggle"
               tooltip="Share dashboard or panel"
               icon="share-alt"
               iconSize="lg"

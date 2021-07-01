@@ -17,6 +17,7 @@ import {
 import { DashNavTimeControls, Props as DashNavTimeControlsProps } from '../components/DashNav/DashNavTimeControls';
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { css } from '@emotion/css';
+import { DashNavButton, DashNavButtonProps } from '../components/DashNav/DashNavButton';
 
 export enum GorillaProfile {
   standard = 'standard',
@@ -55,6 +56,12 @@ const standardProfile = {
     snapshotToggle: {
       mode: GorillaMode.editable,
     },
+    starToggle: {
+      mode: GorillaMode.editable,
+    },
+    sharePanelToggle: {
+      mode: GorillaMode.editable,
+    },
   },
 };
 
@@ -81,6 +88,12 @@ const tvProfile = {
       mode: GorillaMode.editable,
     },
     snapshotToggle: {
+      mode: GorillaMode.editable,
+    },
+    starToggle: {
+      mode: GorillaMode.editable,
+    },
+    sharePanelToggle: {
       mode: GorillaMode.editable,
     },
   },
@@ -111,6 +124,12 @@ const customProfile = {
     snapshotToggle: {
       mode: GorillaMode.editable,
     },
+    starToggle: {
+      mode: GorillaMode.editable,
+    },
+    sharePanelToggle: {
+      mode: GorillaMode.editable,
+    },
   },
 };
 
@@ -131,6 +150,8 @@ export interface GorillaDashNavItem extends GorillaContextItem {
   dashboardSettingsToggle: GorillaContextItem;
   saveDashboardToggle: GorillaContextItem;
   snapshotToggle: GorillaContextItem;
+  starToggle: GorillaContextItem;
+  sharePanelToggle: GorillaContextItem;
 }
 
 export interface GorillaContextType {
@@ -252,6 +273,24 @@ export function GorillaToolbarButton(props: ToolbarButtonProps & { configPath: s
   }
 }
 
+export function GorillaDashNavButton(props: DashNavButtonProps & { configPath: string }): ReactElement | null {
+  const config = useGorillaConfig();
+  const { configPath } = props;
+  const value = get(config, configPath) as GorillaContextItem | undefined;
+
+  if (!getConfig().featureToggles.customKiosk) {
+    return <DashNavButton {...props} />;
+  }
+
+  switch (value?.mode) {
+    case GorillaMode.hidden:
+      return null;
+
+    default:
+      return <DashNavButton {...props} />;
+  }
+}
+
 type GorillaSettingsProps = {};
 
 export function GorillaSettings(props: GorillaSettingsProps): ReactElement | null {
@@ -303,6 +342,8 @@ export function GorillaSettings(props: GorillaSettingsProps): ReactElement | nul
     { value: 'dashNav.dashboardSettingsToggle', label: 'Settings button' },
     { value: 'dashNav.saveDashboardToggle', label: 'Save button' },
     { value: 'dashNav.snapshotToggle', label: 'Snapshot Button' },
+    { value: 'dashNav.starToggle', label: 'Star button' },
+    { value: 'dashNav.sharePanelToggle', label: 'Share Dashboard or Panel Button' },
   ];
 
   return (
