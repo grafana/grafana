@@ -8,6 +8,7 @@ import { InlineFormLabel, RadioButtonGroup, InlineField, Input } from '@grafana/
 
 export interface LokiOptionFieldsProps {
   lineLimitValue: string;
+  stepInterval: string;
   queryType: LokiQueryType;
   query: LokiQuery;
   onChange: (value: LokiQuery) => void;
@@ -27,7 +28,7 @@ const queryTypeOptions = [
 ];
 
 export function LokiOptionFields(props: LokiOptionFieldsProps) {
-  const { lineLimitValue, queryType, query, onRunQuery, runOnBlur, onChange } = props;
+  const { lineLimitValue, stepInterval, queryType, query, onRunQuery, runOnBlur, onChange } = props;
 
   function onChangeQueryLimit(value: string) {
     const nextQuery = { ...query, maxLines: preprocessMaxLines(value) };
@@ -68,6 +69,11 @@ export function LokiOptionFields(props: LokiOptionFieldsProps) {
     if (e.key === 'Enter') {
       onRunQuery();
     }
+  }
+
+  function onStepChange(e: React.KeyboardEvent<HTMLInputElement>) {
+    const nextQuery = { ...query, interval: e.currentTarget.value };
+    onChange(nextQuery);
   }
 
   return (
@@ -122,6 +128,9 @@ export function LokiOptionFields(props: LokiOptionFieldsProps) {
               }
             }}
           />
+        </InlineField>
+        <InlineField label="Min step">
+          <Input className="width-4" placeholder="" min={0} onChange={onStepChange} value={stepInterval} />
         </InlineField>
       </div>
     </div>

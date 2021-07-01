@@ -52,6 +52,7 @@ export function LokiQueryEditor(props: LokiQueryEditorProps) {
           <LokiOptionFields
             queryType={query.instant ? 'instant' : 'range'}
             lineLimitValue={query?.maxLines?.toString() || ''}
+            stepInterval={query?.interval || ''}
             query={query}
             onRunQuery={onRunQuery}
             onChange={onChange}

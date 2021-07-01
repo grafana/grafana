@@ -30,6 +30,7 @@ export interface LokiQuery extends DataQuery {
   legendFormat?: string;
   valueWithRefId?: boolean;
   maxLines?: number;
+  interval?: string;
   range?: boolean;
   instant?: boolean;
 }
