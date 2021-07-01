@@ -302,5 +302,5 @@ func GetAnnotationTags(c *models.ReqContext) response.Response {
 		return response.Error(500, "Failed to find annotation tags", err)
 	}
 
-	return response.JSON(200, util.DynMap{"result": result})
+	return response.JSON(200, annotations.GetAnnotationTagsResponse{Result: result})
 }
