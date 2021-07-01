@@ -2,8 +2,8 @@ import React, { PureComponent } from 'react';
 import { isEqual } from 'lodash';
 import tinycolor from 'tinycolor2';
 import { css, cx } from '@emotion/css';
-import { LogRowModel, findHighlightChunksInText, GrafanaTheme } from '@grafana/data';
-import { safeStringifyValue, safeParseJson } from '../../../../../public/app/core/utils/explore';
+import { LogRowModel, findHighlightChunksInText, GrafanaTheme, LogsParser } from '@grafana/data';
+import { getParser } from '../../../../grafana-data/src/utils/logs';
 
 // @ts-ignore
 import Highlighter from 'react-highlight-words';
@@ -54,6 +54,18 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
   };
 });
 
+function restructureLog(line: string, prettifyLogMessage: boolean): string[] {
+  if (prettifyLogMessage) {
+    try {
+      const parser = getParser(line) as LogsParser;
+      return parser.getFields(line);
+    } catch (error) {
+      return [line];
+    }
+  }
+  return [line];
+}
+
 class UnThemedLogRowMessage extends PureComponent<Props> {
   onContextToggle = (e: React.SyntheticEvent<HTMLElement>) => {
     e.stopPropagation();
@@ -78,7 +90,8 @@ class UnThemedLogRowMessage extends PureComponent<Props> {
 
     const style = getLogRowStyles(theme, row.logLevel);
     const { entry, hasAnsi, raw } = row;
-    const jsonEntry = prettifyLogMessage ? safeStringifyValue(safeParseJson(entry), 2) : entry;
+    //const jsonEntry = prettifyLogMessage ? safeStringifyValue(safeParseJson(entry), 2) : entry;
+    const restructuredEntry = restructureLog(entry, prettifyLogMessage);
 
     const previewHighlights = highlighterExpressions?.length && !isEqual(highlighterExpressions, row.searchWords);
     const highlights = previewHighlights ? highlighterExpressions : row.searchWords;
@@ -116,8 +129,10 @@ class UnThemedLogRowMessage extends PureComponent<Props> {
               />
             ) : hasAnsi ? (
               <LogMessageAnsi value={raw} />
+            ) : restructuredEntry.length > 1 ? (
+              restructuredEntry.map((line) => line + '\n')
             ) : (
-              jsonEntry
+              restructuredEntry[0]
             )}
           </span>
           {showContextToggle?.(row) && (
