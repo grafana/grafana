@@ -7,6 +7,7 @@ import { getModalStyles } from './getModalStyles';
 import { ModalHeader } from './ModalHeader';
 import { IconButton } from '../IconButton/IconButton';
 import { HorizontalGroup } from '../Layout/Layout';
+import CustomScrollbar from '../CustomScrollbar/CustomScrollbar';
 
 export interface Props {
   /** @deprecated no longer used */
@@ -79,7 +80,9 @@ export function Modal(props: PropsWithChildren<Props>) {
             <IconButton surface="header" name="times" size="xl" onClick={onDismiss} />
           </div>
         </div>
-        <div className={cx(styles.modalContent, contentClassName)}>{children}</div>
+        <div className={cx(styles.modalContent, contentClassName)}>
+          <CustomScrollbar>{children}</CustomScrollbar>
+        </div>
       </div>
       <div
         className={styles.modalBackdrop}
