@@ -16,24 +16,22 @@ var (
 )
 
 type AzureTokenProvider interface {
-	GetAccessToken(ctx context.Context) (string, error)
+	GetAccessToken(ctx context.Context, scopes []string) (string, error)
 }
 
 type tokenProviderImpl struct {
 	cfg         *setting.Cfg
 	credentials azcredentials.AzureCredentials
-	scopes      []string
 }
 
-func NewAzureAccessTokenProvider(cfg *setting.Cfg, credentials azcredentials.AzureCredentials, scopes []string) *tokenProviderImpl {
+func NewAzureAccessTokenProvider(cfg *setting.Cfg, credentials azcredentials.AzureCredentials) *tokenProviderImpl {
 	return &tokenProviderImpl{
 		cfg:         cfg,
 		credentials: credentials,
-		scopes:      scopes,
 	}
 }
 
-func (provider *tokenProviderImpl) GetAccessToken(ctx context.Context) (string, error) {
+func (provider *tokenProviderImpl) GetAccessToken(ctx context.Context, scopes []string) (string, error) {
 	var credential TokenCredential
 
 	// TODO: Move to provider initialization and reuse for each GetAccessToken call
@@ -52,7 +50,7 @@ func (provider *tokenProviderImpl) GetAccessToken(ctx context.Context) (string, 
 		return "", err
 	}
 
-	accessToken, err := azureTokenCache.GetAccessToken(ctx, credential, provider.scopes)
+	accessToken, err := azureTokenCache.GetAccessToken(ctx, credential, scopes)
 	if err != nil {
 		return "", err
 	}
