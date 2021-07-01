@@ -246,9 +246,9 @@ role_attribute_path = contains(info.groups[*], 'admin') && 'Admin' || contains(i
 
 ### Groups mapping
 
->  Only available in Grafana Enterprise v8.1+
+>  Available in Grafana Enterprise v8.1 and later versions.
 
-With Team Sync you can map your Generic OAuth groups to teams in Grafana so that your users will automatically be added to the correct teams.
+With Team Sync you can map your Generic OAuth groups to teams in Grafana so that the users are automatically added to the correct teams.
 
 Generic OAuth groups can be referenced by group ID, like `8bab1c86-8fba-33e5-2089-1d1c80ec267d` or `myteam`.
 
