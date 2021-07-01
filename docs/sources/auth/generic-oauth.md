@@ -66,9 +66,9 @@ Grafana will also attempt to do role mapping through OAuth as described below.
 
 Check for the presence of a role using the [JMESPath](http://jmespath.org/examples.html) specified via the `role_attribute_path` configuration option. The JSON used for the path lookup is the HTTP response obtained from querying the UserInfo endpoint specified via the `api_url` configuration option. The result after evaluating the `role_attribute_path` JMESPath expression needs to be a valid Grafana role, i.e. `Viewer`, `Editor` or `Admin`.
 
-Grafana will also attempt to do team mapping through OAuth as described below.
+Grafana also attempts to map teams through OAuth as described below.
 
-Check for the presence of groups using the [JMESPath](http://jmespath.org/examples.html) specified via the `groups_attribute_path` configuration option. The JSON used for the path lookup is the HTTP response obtained from querying the UserInfo endpoint specified via the `api_url` configuration option. The result after evaluating the `groups_attribute_path` JMESPath expression needs to return a comma delimited string with group_id's. 
+Check for the presence of groups using the [JMESPath](http://jmespath.org/examples.html) specified via the `groups_attribute_path` configuration option. The JSON used for the path lookup is the HTTP response obtained from querying the UserInfo endpoint specified via the `api_url` configuration option. After evaluating the `groups_attribute_path` JMESPath expression, the result needs to return a comma delimited string with group_id's. 
 
 See [JMESPath examples](#jmespath-examples) for more information.
 
