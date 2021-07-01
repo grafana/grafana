@@ -2,8 +2,8 @@ import React, { ChangeEvent, PureComponent } from 'react';
 import { css, cx } from '@emotion/css';
 import tinycolor from 'tinycolor2';
 
-import { LogMessageAnsi, getLogRowStyles, Icon, Button, Themeable2, withTheme2, Input } from '@grafana/ui';
-import { LogRowModel, TimeZone, dateTimeFormat, GrafanaTheme2, LogLevel } from '@grafana/data';
+import { LogMessageAnsi, getLogRowStyles, Icon, Button, Themeable2, withTheme2, Input, Select } from '@grafana/ui';
+import { LogRowModel, TimeZone, dateTimeFormat, GrafanaTheme2, LogLevel, SelectableValue } from '@grafana/data';
 
 import { ElapsedTime } from './ElapsedTime';
 import Sonifier, { Tuple } from 'app/core/services/Sonifier';
@@ -17,6 +17,15 @@ const LevelMapper = {
   [LogLevel.warning]: 'E',
   [LogLevel.critical]: 'G',
 };
+
+const Levels: SelectableValue[] = [
+  LogLevel.trace,
+  LogLevel.debug,
+  LogLevel.info,
+  LogLevel.error,
+  LogLevel.warning,
+  LogLevel.critical,
+].map((level) => ({ label: level, value: level }));
 
 const getStyles = (theme: GrafanaTheme2) => ({
   logsRowsLive: css`
@@ -44,6 +53,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
         background-color: transparent;
       }
     }
+  `,
+  logsRowSonified: css`
+    color: ${theme.v1.colors.textStrong};
+    background-color: ${tinycolor(theme.v1.palette.red88).setAlpha(0.33).toString()};
+    animation: none;
   `,
   logsRowsIndicator: css`
     font-size: ${theme.typography.h6.fontSize};
@@ -75,12 +89,14 @@ interface State {
   sonifyValueExpression: string;
   sonifyValueMatcher?: RegExp;
   sonifyValueMax: string;
+  sonifyLevelMin: string;
 }
 
 class LiveLogs extends PureComponent<Props, State> {
   private liveEndDiv: HTMLDivElement | null = null;
   private scrollContainerRef = React.createRef<HTMLTableSectionElement>();
-  private sonifiedLines: any = {};
+  private rowsCheckedForSonification: any = {};
+  private rowsSonified: any = {};
   private sonifier: Sonifier;
 
   constructor(props: Props) {
@@ -91,6 +107,7 @@ class LiveLogs extends PureComponent<Props, State> {
       sonifyValue: false,
       sonifyValueExpression: '',
       sonifyValueMax: '',
+      sonifyLevelMin: LogLevel.error,
     };
     this.sonifier = new Sonifier();
   }
@@ -109,28 +126,31 @@ class LiveLogs extends PureComponent<Props, State> {
   }
 
   componentDidUpdate() {
-    if ((this.state.sonify || this.state.sonifyValue) && !this.props.isPaused) {
-      const { logRowsToRender = [], sonifyValueMatcher } = this.state;
+    const { sonify, sonifyValue, sonifyLevelMin, sonifyValueMatcher, logRowsToRender = [] } = this.state;
+    if ((sonify || sonifyValue) && !this.props.isPaused) {
       // HACK to not run out of memory
-      if (Object.keys(this.sonifiedLines).length > 1e6) {
-        this.sonifiedLines = {};
+      if (Object.keys(this.rowsCheckedForSonification).length > 1e6) {
+        this.rowsCheckedForSonification = {};
+        this.rowsSonified = {};
       }
       const series: Tuple[] = [];
       for (const row of logRowsToRender) {
-        if (!this.sonifiedLines[row.uid]) {
-          if (this.state.sonify && LevelMapper[row.logLevel] > LevelMapper[LogLevel.info]) {
+        if (!this.rowsCheckedForSonification[row.uid]) {
+          if (sonify && LevelMapper[row.logLevel] >= LevelMapper[sonifyLevelMin as LogLevel]) {
             this.sonifier.playNote(LevelMapper[row.logLevel], 200);
-          } else if (this.state.sonifyValue && sonifyValueMatcher) {
+            this.rowsSonified[row.uid] = true;
+          } else if (sonifyValue && sonifyValueMatcher) {
             const match = row.entry.match(sonifyValueMatcher);
             if (match) {
               try {
                 const value = parseFloat(match[0]);
                 series.push([row.timeEpochMs, value]);
+                this.rowsSonified[row.uid] = true;
               } catch (error) {}
             }
           }
         }
-        this.sonifiedLines[row.uid] = true;
+        this.rowsCheckedForSonification[row.uid] = true;
       }
       this.sonifier.playSeries(series);
     }
@@ -160,10 +180,18 @@ class LiveLogs extends PureComponent<Props, State> {
   };
 
   onClickSonify = () => {
+    // Stop if currently playing
+    if (this.state.sonify) {
+      this.sonifier.stop();
+    }
     this.setState((state) => ({ sonify: !state.sonify }));
   };
 
   onClickSonifyValue = () => {
+    // Stop if currently playing
+    if (this.state.sonifyValue) {
+      this.sonifier.stop();
+    }
     this.setState((state) => ({ sonifyValue: !state.sonifyValue }));
   };
 
@@ -181,6 +209,10 @@ class LiveLogs extends PureComponent<Props, State> {
     }
   };
 
+  onSelectSonifyLevel = (value: SelectableValue<string>) => {
+    this.setState({ sonifyLevelMin: value.value || LogLevel.error });
+  };
+
   rowsToRender = () => {
     const { isPaused } = this.props;
     let { logRowsToRender: rowsToRender = [] } = this.state;
@@ -193,7 +225,7 @@ class LiveLogs extends PureComponent<Props, State> {
 
   render() {
     const { theme, timeZone, onPause, onResume, isPaused } = this.props;
-    const { sonify, sonifyValue, sonifyValueExpression, sonifyValueMax } = this.state;
+    const { sonify, sonifyValue, sonifyValueExpression, sonifyValueMax, sonifyLevelMin } = this.state;
     const styles = getStyles(theme);
     const { logsRow, logsRowLocalTime, logsRowMessage } = getLogRowStyles(theme);
 
@@ -207,7 +239,10 @@ class LiveLogs extends PureComponent<Props, State> {
           >
             {this.rowsToRender().map((row: LogRowModel) => {
               return (
-                <tr className={cx(logsRow, styles.logsRowFade)} key={row.uid}>
+                <tr
+                  className={cx(logsRow, styles.logsRowFade, this.rowsSonified[row.uid] && styles.logsRowSonified)}
+                  key={row.uid}
+                >
                   <td className={cx(logsRowLocalTime)}>{dateTimeFormat(row.timeEpochMs, { timeZone })}</td>
                   <td className={cx(logsRowMessage)}>{row.hasAnsi ? <LogMessageAnsi value={row.raw} /> : row.entry}</td>
                 </tr>
@@ -239,6 +274,15 @@ class LiveLogs extends PureComponent<Props, State> {
             <Icon name="bell" />
             &nbsp; {sonify ? 'Stop level sound' : 'Sonify log level'}
           </Button>
+          {sonify && (
+            <Select
+              value={sonifyLevelMin}
+              options={Levels}
+              onChange={this.onSelectSonifyLevel}
+              menuPlacement="top"
+              width={12}
+            />
+          )}
           <Button variant="secondary" onClick={this.onClickSonifyValue} className={styles.button}>
             <Icon name="bell" />
             &nbsp; {sonifyValue ? 'Stop value sound' : 'Sonify value'}
