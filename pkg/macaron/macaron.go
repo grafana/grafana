@@ -18,7 +18,6 @@
 package macaron // import "gopkg.in/macaron.v1"
 
 import (
-	"io"
 	"log"
 	"net/http"
 	"os"
@@ -111,15 +110,14 @@ type Macaron struct {
 	logger *log.Logger
 }
 
-// NewWithLogger creates a bare bones Macaron instance.
+// New creates a bare bones Macaron instance.
 // Use this method if you want to have full control over the middleware that is used.
-// You can specify logger output writer with this function.
-func NewWithLogger(out io.Writer) *Macaron {
+func New() *Macaron {
 	m := &Macaron{
 		Injector: NewInjector(),
 		action:   func() {},
 		Router:   NewRouter(),
-		logger:   log.New(out, "[Macaron] ", 0),
+		logger:   log.New(os.Stdout, "[Macaron] ", 0),
 	}
 	m.Router.m = m
 	m.Map(m.logger)
@@ -129,12 +127,6 @@ func NewWithLogger(out io.Writer) *Macaron {
 		http.Error(rw, err.Error(), 500)
 	})
 	return m
-}
-
-// New creates a bare bones Macaron instance.
-// Use this method if you want to have full control over the middleware that is used.
-func New() *Macaron {
-	return NewWithLogger(os.Stdout)
 }
 
 // Handlers sets the entire middleware stack with the given Handlers.
@@ -147,20 +139,9 @@ func (m *Macaron) Handlers(handlers ...Handler) {
 	}
 }
 
-// Action sets the handler that will be called after all the middleware has been invoked.
-// This is set to macaron.Router in a macaron.Classic().
-func (m *Macaron) Action(handler Handler) {
-	handler = validateAndWrapHandler(handler)
-	m.action = handler
-}
-
 // BeforeHandler represents a handler executes at beginning of every request.
 // Macaron stops future process when it returns true.
 type BeforeHandler func(rw http.ResponseWriter, req *http.Request) bool
-
-func (m *Macaron) Before(handler BeforeHandler) {
-	m.befores = append(m.befores, handler)
-}
 
 // Use adds a middleware Handler to the stack,
 // and panics if the handler is not a callable func.
@@ -204,7 +185,7 @@ func (m *Macaron) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	m.Router.ServeHTTP(rw, req)
 }
 
-func GetDefaultListenInfo() (string, int) {
+func getDefaultListenInfo() (string, int) {
 	host := os.Getenv("HOST")
 	if len(host) == 0 {
 		host = "0.0.0.0"
@@ -218,7 +199,7 @@ func GetDefaultListenInfo() (string, int) {
 
 // Run the http server. Listening on os.GetEnv("PORT") or 4000 by default.
 func (m *Macaron) Run(args ...interface{}) {
-	host, port := GetDefaultListenInfo()
+	host, port := getDefaultListenInfo()
 	if len(args) == 1 {
 		switch arg := args[0].(type) {
 		case string:
@@ -301,18 +282,3 @@ func init() {
 		panic("error getting work directory: " + err.Error())
 	}
 }
-
-// SetConfig sets data sources for configuration.
-//func SetConfig(source interface{}, others ...interface{}) (_ *ini.File, err error) {
-//cfg, err = ini.Load(source, others...)
-//return Config(), err
-//}
-
-// Config returns configuration convention object.
-// It returns an empty object if there is no one available.
-//func Config() *ini.File {
-//if cfg == nil {
-//return ini.Empty()
-//}
-//return cfg
-//}
