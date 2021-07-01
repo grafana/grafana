@@ -107,6 +107,7 @@ func (gcn *GoogleChatNotifier) Notify(ctx context.Context, as ...*types.Alert) (
 		},
 	}
 
+	u := tmpl(gcn.URL)
 	if tmplErr != nil {
 		gcn.log.Debug("failed to template GoogleChat message", "err", tmplErr.Error())
 	}
@@ -117,7 +118,7 @@ func (gcn *GoogleChatNotifier) Notify(ctx context.Context, as ...*types.Alert) (
 	}
 
 	cmd := &models.SendWebhookSync{
-		Url:        gcn.URL,
+		Url:        u,
 		HttpMethod: "POST",
 		HttpHeader: map[string]string{
 			"Content-Type": "application/json; charset=UTF-8",

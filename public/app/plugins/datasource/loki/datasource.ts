@@ -34,7 +34,7 @@ import {
   lokiStreamsToDataFrames,
   processRangeQueryResponse,
 } from './result_transformer';
-import { getHighlighterExpressionsFromQuery } from './query_utils';
+import { getHighlighterExpressionsFromQuery, queryHasPipeParser, addParsedLabelToQuery } from './query_utils';
 
 import {
   LokiOptions,
@@ -289,7 +289,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
 
   getTimeRangeParams() {
     const timeRange = this.timeSrv.timeRange();
-    return { from: timeRange.from.valueOf() * NS_IN_MS, to: timeRange.to.valueOf() * NS_IN_MS };
+    return { start: timeRange.from.valueOf() * NS_IN_MS, end: timeRange.to.valueOf() * NS_IN_MS };
   }
 
   async importQueries(queries: DataQuery[], originDataSource: DataSourceApi): Promise<LokiQuery[]> {
@@ -380,11 +380,21 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     let expression = query.expr ?? '';
     switch (action.type) {
       case 'ADD_FILTER': {
-        expression = addLabelToQuery(expression, action.key, action.value, undefined, true);
+        // Temporary fix for log queries that use parser. We don't know which labels are parsed and which are actual labels.
+        // If query has parser, we treat all labels as parsed and use | key="value" syntax (same in ADD_FILTER_OUT)
+        if (queryHasPipeParser(expression) && !isMetricsQuery(expression)) {
+          expression = addParsedLabelToQuery(expression, action.key, action.value, '=');
+        } else {
+          expression = addLabelToQuery(expression, action.key, action.value, undefined, true);
+        }
         break;
       }
       case 'ADD_FILTER_OUT': {
-        expression = addLabelToQuery(expression, action.key, action.value, '!=', true);
+        if (queryHasPipeParser(expression) && !isMetricsQuery(expression)) {
+          expression = addParsedLabelToQuery(expression, action.key, action.value, '!=');
+        } else {
+          expression = addLabelToQuery(expression, action.key, action.value, '!=', true);
+        }
         break;
       }
       default:
