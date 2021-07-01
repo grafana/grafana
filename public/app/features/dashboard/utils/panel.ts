@@ -63,7 +63,7 @@ export const copyPanel = (panel: PanelModel) => {
   appEvents.emit(AppEvents.alertSuccess, ['Panel copied. Click **Add panel** icon to paste.']);
 };
 
-export const sonifyPanel = (dashboard: DashboardModel, panel: PanelModel) => {
+export const sonifyPanel = async (dashboard: DashboardModel, panel: PanelModel) => {
   const panelData = panel.getQueryRunner().getLastResult();
   if (panelData && panelData.state === LoadingState.Done) {
     let count = 1;
@@ -73,8 +73,8 @@ export const sonifyPanel = (dashboard: DashboardModel, panel: PanelModel) => {
       const values = (frame.fields.find((f) => f.type === FieldType.number)?.values.toArray() || []) as number[];
       const series: any[] = timestamps.map((ts, i) => [ts, values[i]]);
       const sonifier = getSonifier();
-      sonifier.speak(name);
-      sonifier.playSeries(series);
+      await sonifier.speak(name);
+      await sonifier.playSeries(series);
       count++;
       if (count > 5) {
         break;
