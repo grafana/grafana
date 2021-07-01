@@ -1,20 +1,41 @@
-import { DataQuery, DataSourceApi, ExploreQueryFieldProps } from '@grafana/data';
+import { css } from '@emotion/css';
+import { ExploreQueryFieldProps } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { getDataSourceSrv } from '@grafana/runtime';
-import { InlineField, InlineFieldRow, InlineLabel, LegacyForms, RadioButtonGroup } from '@grafana/ui';
-import { TraceToLogsOptions } from 'app/core/components/TraceToLogsSettings';
+import {
+  BracesPlugin,
+  InlineField,
+  InlineFieldRow,
+  LegacyForms,
+  QueryField,
+  RadioButtonGroup,
+  SlatePrism,
+  TypeaheadInput,
+  TypeaheadOutput,
+} from '@grafana/ui';
+import Prism from 'prismjs';
 import React from 'react';
-import { LokiQueryField } from '../loki/components/LokiQueryField';
+import { Node } from 'slate';
+import { AdvancedOptions } from './AdvancedOptions';
 import { TempoDatasource, TempoQuery, TempoQueryType } from './datasource';
+import { tokenizer } from './syntax';
 
 type Props = ExploreQueryFieldProps<TempoDatasource, TempoQuery>;
 const DEFAULT_QUERY_TYPE: TempoQueryType = 'traceId';
 interface State {
-  linkedDatasource?: DataSourceApi;
+  syntaxLoaded: boolean;
 }
+
+const PRISM_LANGUAGE = 'tempo';
+const plugins = [
+  BracesPlugin(),
+  SlatePrism({
+    onlyIn: (node: Node) => node.object === 'block' && node.type === 'code_block',
+    getSyntax: () => PRISM_LANGUAGE,
+  }),
+];
 export class TempoQueryField extends React.PureComponent<Props, State> {
   state = {
-    linkedDatasource: undefined,
+    syntaxLoaded: false,
   };
 
   constructor(props: Props) {
@@ -22,34 +43,36 @@ export class TempoQueryField extends React.PureComponent<Props, State> {
   }
 
   async componentDidMount() {
-    const { datasource } = this.props;
-    // Find query field from linked datasource
-    const tracesToLogsOptions: TraceToLogsOptions = datasource.tracesToLogs || {};
-    const linkedDatasourceUid = tracesToLogsOptions.datasourceUid;
-    if (linkedDatasourceUid) {
-      const dsSrv = getDataSourceSrv();
-      const linkedDatasource = await dsSrv.get(linkedDatasourceUid);
-      this.setState({
-        linkedDatasource,
-      });
-    }
+    Prism.languages[PRISM_LANGUAGE] = tokenizer;
+
+    await this.props.datasource.languageProvider.start();
+
+    this.setState({ syntaxLoaded: true });
   }
 
-  onChangeLinkedQuery = (value: DataQuery) => {
-    const { query, onChange } = this.props;
-    onChange({
-      ...query,
-      linkedQuery: { ...value, refId: 'linked' },
-    });
-  };
+  // onChangeLinkedQuery = (value: DataQuery) => {
+  //   const { query, onChange } = this.props;
+  //   onChange({
+  //     ...query,
+  //     linkedQuery: { ...value, refId: 'linked' },
+  //   });
+  // };
 
-  onRunLinkedQuery = () => {
-    this.props.onRunQuery();
+  // onRunLinkedQuery = () => {
+  //   this.props.onRunQuery();
+  // };
+
+  onTypeahead = async (typeahead: TypeaheadInput): Promise<TypeaheadOutput> => {
+    const { datasource } = this.props;
+
+    const languageProvider = datasource.languageProvider;
+
+    return await languageProvider.provideCompletionItems(typeahead);
   };
 
   render() {
     const { query, onChange } = this.props;
-    const { linkedDatasource } = this.state;
+    // const { linkedDatasource } = this.state;
 
     return (
       <>
@@ -71,7 +94,7 @@ export class TempoQueryField extends React.PureComponent<Props, State> {
             />
           </InlineField>
         </InlineFieldRow>
-        {query.queryType === 'search' && linkedDatasource && (
+        {/* {query.queryType === 'search' && linkedDatasource && (
           <>
             <InlineLabel>
               Tempo uses {((linkedDatasource as unknown) as DataSourceApi).name} to find traces.
@@ -88,6 +111,30 @@ export class TempoQueryField extends React.PureComponent<Props, State> {
         )}
         {query.queryType === 'search' && !linkedDatasource && (
           <div className="text-warning">Please set up a Traces-to-logs datasource in the datasource settings.</div>
+        )} */}
+        {query.queryType === 'search' && (
+          <div className={css({ width: '50%' })}>
+            <InlineFieldRow>
+              <InlineField label="Query" labelWidth={21} grow>
+                <QueryField
+                  additionalPlugins={plugins}
+                  query={query.search}
+                  onTypeahead={this.onTypeahead}
+                  onBlur={this.props.onBlur}
+                  onChange={(value) => {
+                    onChange({
+                      ...query,
+                      search: value,
+                    });
+                  }}
+                  onRunQuery={this.props.onRunQuery}
+                  syntaxLoaded={this.state.syntaxLoaded}
+                  portalOrigin="tempo"
+                />
+              </InlineField>
+            </InlineFieldRow>
+            <AdvancedOptions query={query} onChange={onChange} />
+          </div>
         )}
         {query.queryType !== 'search' && (
           <LegacyForms.FormField
@@ -104,7 +151,6 @@ export class TempoQueryField extends React.PureComponent<Props, State> {
                         ...query,
                         query: e.currentTarget.value,
                         queryType: 'traceId',
-                        linkedQuery: undefined,
                       })
                     }
                   />
