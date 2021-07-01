@@ -2,7 +2,7 @@ import React, { useLayoutEffect, useState, useCallback } from 'react';
 
 import { UPlotConfigBuilder, PlotSelection, usePlotContext } from '@grafana/ui';
 import { CartesianCoords2D, DataFrame, TimeZone } from '@grafana/data';
-import { AnnotationEditor } from './AnnotationEditor';
+import { AnnotationEditor } from './annotations/AnnotationEditor';
 
 type StartAnnotatingFn = (props: {
   // pixel coordinates of the clicked point on the uPlot canvas
