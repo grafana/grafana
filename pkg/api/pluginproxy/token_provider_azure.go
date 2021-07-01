@@ -13,18 +13,24 @@ import (
 type azureAccessTokenProvider struct {
 	ctx           context.Context
 	tokenProvider aztokenprovider.AzureTokenProvider
+	scopes        []string
 }
 
-func newAzureAccessTokenProvider(ctx context.Context, cfg *setting.Cfg, authParams *plugins.JwtTokenAuth) *azureAccessTokenProvider {
+func newAzureAccessTokenProvider(ctx context.Context, cfg *setting.Cfg, authParams *plugins.JwtTokenAuth) (*azureAccessTokenProvider, error) {
 	credentials := getAzureCredentials(cfg, authParams)
+	tokenProvider, err := aztokenprovider.NewAzureAccessTokenProvider(cfg, credentials)
+	if err != nil {
+		return nil, err
+	}
 	return &azureAccessTokenProvider{
 		ctx:           ctx,
-		tokenProvider: aztokenprovider.NewAzureAccessTokenProvider(cfg, credentials, authParams.Scopes),
-	}
+		tokenProvider: tokenProvider,
+		scopes:        authParams.Scopes,
+	}, nil
 }
 
 func (provider *azureAccessTokenProvider) GetAccessToken() (string, error) {
-	return provider.tokenProvider.GetAccessToken(provider.ctx)
+	return provider.tokenProvider.GetAccessToken(provider.ctx, provider.scopes)
 }
 
 func getAzureCredentials(cfg *setting.Cfg, authParams *plugins.JwtTokenAuth) azcredentials.AzureCredentials {

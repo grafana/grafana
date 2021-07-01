@@ -20,62 +20,60 @@ type AzureTokenProvider interface {
 }
 
 type tokenProviderImpl struct {
-	cfg         *setting.Cfg
-	credentials azcredentials.AzureCredentials
+	credential TokenCredential
 }
 
-func NewAzureAccessTokenProvider(cfg *setting.Cfg, credentials azcredentials.AzureCredentials) *tokenProviderImpl {
-	return &tokenProviderImpl{
-		cfg:         cfg,
-		credentials: credentials,
+func NewAzureAccessTokenProvider(cfg *setting.Cfg, credentials azcredentials.AzureCredentials) (AzureTokenProvider, error) {
+	var tokenCredential TokenCredential
+
+	switch c := credentials.(type) {
+	case *azcredentials.AzureManagedIdentityCredentials:
+		if !cfg.Azure.ManagedIdentityEnabled {
+			err := fmt.Errorf("managed identity authentication is not enabled in Grafana config")
+			return nil, err
+		} else {
+			tokenCredential = getManagedIdentityCredential(cfg, c)
+		}
+	case *azcredentials.AzureClientSecretCredentials:
+		tokenCredential = getClientSecretCredential(c)
+	default:
+		err := fmt.Errorf("credentials of type '%s' not supported by authentication provider", c.AzureAuthType())
+		return nil, err
 	}
+
+	tokenProvider := &tokenProviderImpl{
+		credential: tokenCredential,
+	}
+
+	return tokenProvider, nil
 }
 
 func (provider *tokenProviderImpl) GetAccessToken(ctx context.Context, scopes []string) (string, error) {
-	var credential TokenCredential
-
-	// TODO: Move to provider initialization and reuse for each GetAccessToken call
-	switch c := provider.credentials.(type) {
-	case *azcredentials.AzureManagedIdentityCredentials:
-		if !provider.cfg.Azure.ManagedIdentityEnabled {
-			err := fmt.Errorf("managed identity authentication is not enabled in Grafana config")
-			return "", err
-		} else {
-			credential = provider.getManagedIdentityCredential(c)
-		}
-	case *azcredentials.AzureClientSecretCredentials:
-		credential = provider.getClientSecretCredential(c)
-	default:
-		err := fmt.Errorf("credentials of type '%s' not supported by authentication provider", c.AzureAuthType())
-		return "", err
-	}
-
-	accessToken, err := azureTokenCache.GetAccessToken(ctx, credential, scopes)
+	accessToken, err := azureTokenCache.GetAccessToken(ctx, provider.credential, scopes)
 	if err != nil {
 		return "", err
 	}
-
 	return accessToken, nil
 }
 
-func (provider *tokenProviderImpl) getManagedIdentityCredential(credentials *azcredentials.AzureManagedIdentityCredentials) TokenCredential {
+func getManagedIdentityCredential(cfg *setting.Cfg, credentials *azcredentials.AzureManagedIdentityCredentials) TokenCredential {
 	var clientId string
 	if credentials.ClientId != "" {
 		clientId = credentials.ClientId
 	} else {
-		clientId = provider.cfg.Azure.ManagedIdentityClientId
+		clientId = cfg.Azure.ManagedIdentityClientId
 	}
 	return &managedIdentityCredential{
 		clientId: clientId,
 	}
 }
 
-func (provider *tokenProviderImpl) getClientSecretCredential(credentials *azcredentials.AzureClientSecretCredentials) TokenCredential {
+func getClientSecretCredential(credentials *azcredentials.AzureClientSecretCredentials) TokenCredential {
 	var authority string
 	if credentials.Authority != "" {
 		authority = credentials.Authority
 	} else {
-		authority = provider.resolveAuthorityForCloud(credentials.AzureCloud)
+		authority = resolveAuthorityForCloud(credentials.AzureCloud)
 	}
 	return &clientSecretCredential{
 		authority:    authority,
@@ -85,7 +83,7 @@ func (provider *tokenProviderImpl) getClientSecretCredential(credentials *azcred
 	}
 }
 
-func (provider *tokenProviderImpl) resolveAuthorityForCloud(cloudName string) string {
+func resolveAuthorityForCloud(cloudName string) string {
 	// Known Azure clouds
 	switch cloudName {
 	case setting.AzurePublic:
