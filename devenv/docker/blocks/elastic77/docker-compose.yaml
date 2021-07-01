@@ -1,7 +1,7 @@
 # You need to run 'sysctl -w vm.max_map_count=262144' on the host machine
 
   elasticsearch77:
-    image: docker.elastic.co/elasticsearch/elasticsearch:7.13.2
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.7.1
     command: elasticsearch
     environment:
       - "discovery.type=single-node"
