@@ -12,7 +12,16 @@ interface LogsPanelProps extends PanelProps<Options> {}
 export const LogsPanel: React.FunctionComponent<LogsPanelProps> = ({
   data,
   timeZone,
-  options: { showLabels, showTime, wrapLogMessage, prettifyLogMessage, sortOrder, dedupStrategy, enableLogDetails },
+  options: {
+    showLabels,
+    showTime,
+    wrapLogMessage,
+    showCommonLabels,
+    prettifyLogMessage,
+    sortOrder,
+    dedupStrategy,
+    enableLogDetails,
+  },
   title,
 }) => {
   const style = useStyles2(getStyles(title));
