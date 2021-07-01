@@ -158,7 +158,7 @@ func (s *SocialGenericOAuth) UserInfo(client *http.Client, token *oauth2.Token) 
 		if err != nil {
 			s.log.Error("Failed to extract groups", "error", err)
 		} else if len(groups) > 0 {
-			s.log.Debug("Setting user info role from extracted groups")
+			s.log.Debug("Setting user info groups from extracted groups")
 			userInfo.Groups = groups
 		}
 	}
