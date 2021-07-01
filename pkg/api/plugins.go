@@ -286,7 +286,6 @@ func (hs *HTTPServer) GetPluginAssets(c *models.ReqContext) response.Response {
 	fi, err := f.Stat()
 	if err != nil {
 		return response.Error(500, "Plugin file exists but could not open", err)
-
 	}
 
 	if shouldExclude(fi) {
