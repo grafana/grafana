@@ -57,10 +57,13 @@ export const PlotLegend: React.FC<PlotLegendProps> = ({
             reducers: calcs,
           });
 
-          return calcs.map<DisplayValue>((reducer) => {
+          return calcs.map<DisplayValue>((reducerId) => {
+            const fieldReducer = fieldReducers.get(reducerId);
+
             return {
-              ...fmt(fieldCalcs[reducer]),
-              title: fieldReducers.get(reducer).name,
+              ...fmt(fieldCalcs[reducerId]),
+              title: fieldReducer.name,
+              description: fieldReducer.description,
             };
           });
         },

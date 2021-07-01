@@ -436,6 +436,10 @@ const tokenizer: Grammar = {
       },
     },
   ],
+  idList: {
+    pattern: /\d+(\|\d+)+/,
+    alias: 'number',
+  },
   number: /\b-?\d+((\.\d*)?([eE][+-]?\d+)?)?\b/,
   operator: new RegExp(`/[-+*/=%^~]|&&?|\\|?\\||!=?|<(?:=>?|<|>)?|>[>=]?|\\b(?:${OPERATORS.join('|')})\\b`, 'i'),
   punctuation: /[{};()`,.]/,
