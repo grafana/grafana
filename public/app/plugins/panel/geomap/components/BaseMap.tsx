@@ -19,19 +19,23 @@ interface BaseMapProps {
 import 'ol/ol.css';
 
 import { ControlsOptions, GeomapPanelOptions } from '../types';
-import { defaultFrameConfig, newDynamicLayerHandler } from '../layers/overlay/dynamic';
 import { defaultGrafanaThemedMap } from '../layers/basemaps/theme';
 import { InfoControl } from './InfoControl';
 
 // TODO:
 // https://openlayers.org/en/latest/examples/select-hover-features.html
 
+interface MapLayerState {
+  config: MapLayerConfig;
+  handler: MapLayerHandler;
+  layer: BaseLayer; // used to add|remove
+}
+
 export class BaseMap extends Component<BaseMapProps> {
   map: GeoMap;
-  handlers = new Map<MapLayerConfig, MapLayerHandler>();
 
-  // The basemap
   basemap: BaseLayer;
+  layers: MapLayerState[] = [];
 
   constructor(props: BaseMapProps) {
     super(props);
@@ -64,16 +68,22 @@ export class BaseMap extends Component<BaseMapProps> {
    */
   optionsChanged(oldOptions: GeomapPanelOptions) {
     const { options } = this.props;
-    const controls = options.controls ?? {};
-    const oldControls = oldOptions.controls ?? {};
-    console.log('options changed!', controls, oldControls, controls === oldControls);
+    console.log('options changed!', options);
+
+    // NOTE: the panel options editor currently mutates nested objects
+    // this means we can not easily detect changes to layer settings :(
+    // for now, lets just re-init everything whenever something changes
 
     if (true) {
-      this.initControls(controls);
+      this.initControls(options.controls ?? { showZoom: true, showAttribution: true });
     }
 
     if (true) {
       this.initBasemap(options.basemap);
+    }
+
+    if (true) {
+      this.initLayers(options.layers ?? []);
     }
   }
 
@@ -81,11 +91,9 @@ export class BaseMap extends Component<BaseMapProps> {
    * Called when PanelData changes (query results etc)
    */
   dataChanged(data: PanelData) {
-    console.log('data changed?', data.structureRev, this.props.data.structureRev);
-    // Pass all data to each layer
-    for (const [key, handler] of this.handlers.entries()) {
-      if (handler.update && key) {
-        handler.update(this.map, data);
+    for (const state of this.layers) {
+      if (state.handler.update) {
+        state.handler.update(this.map, data);
       }
     }
   }
@@ -112,14 +120,7 @@ export class BaseMap extends Component<BaseMapProps> {
     // init the controls
     this.initControls(this.props.options.controls);
     this.initBasemap(this.props.options.basemap);
-
-    if (true) {
-      const handler = newDynamicLayerHandler(this.map, defaultFrameConfig, config.theme2);
-      const layer = handler.init();
-      this.map.addLayer(layer);
-
-      this.handlers.set(defaultFrameConfig, handler);
-    }
+    this.initLayers(this.props.options.layers);
   };
 
   initBasemap(cfg: MapLayerConfig) {
@@ -134,6 +135,36 @@ export class BaseMap extends Component<BaseMapProps> {
     }
     this.basemap = layer;
     this.map.getLayers().insertAt(0, this.basemap);
+  }
+
+  initLayers(layers: MapLayerConfig[]) {
+    // 1st remove existing layers
+    for (const state of this.layers) {
+      this.map.removeLayer(state.layer);
+      state.layer.dispose();
+    }
+
+    if (!layers) {
+      layers = [];
+    }
+
+    this.layers = [];
+    for (const overlay of layers) {
+      const item = geomapLayerRegistry.getIfExists(overlay.type);
+      if (!item) {
+        console.warn('unknown layer type: ', overlay);
+        continue; // TODO -- panel warning?
+      }
+
+      const handler = item.create(this.map, overlay, config.theme2);
+      const layer = handler.init();
+      this.map.addLayer(layer);
+      this.layers.push({
+        config: overlay,
+        layer,
+        handler,
+      });
+    }
   }
 
   initControls(options: ControlsOptions) {

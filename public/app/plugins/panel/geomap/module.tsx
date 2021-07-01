@@ -1,5 +1,6 @@
 import { PanelPlugin } from '@grafana/data';
-import { BaseLayerEditor } from './BaseLayerEditor';
+import { BaseLayerEditor } from './editor/BaseLayerEditor';
+import { DataLayersEditor } from './editor/DataLayersEditor';
 import { GeomapPanel } from './GeomapPanel';
 import { MapViewEditor } from './MapViewEditor';
 import { GeomapPanelOptions } from './types';
@@ -8,6 +9,15 @@ export const plugin = new PanelPlugin<GeomapPanelOptions>(GeomapPanel)
   .setNoPadding()
   .useFieldConfig()
   .setPanelOptions((builder) => {
+    // Nested
+    builder.addCustomEditor({
+      category: ['Map View'],
+      id: 'view',
+      path: 'view',
+      name: 'Map View',
+      editor: MapViewEditor,
+    });
+
     builder.addCustomEditor({
       category: ['Base Layer'],
       id: 'basemap',
@@ -16,13 +26,12 @@ export const plugin = new PanelPlugin<GeomapPanelOptions>(GeomapPanel)
       editor: BaseLayerEditor,
     });
 
-    // Nested
     builder.addCustomEditor({
-      category: ['Map View'],
-      id: 'view',
-      path: 'view',
-      name: 'Map View',
-      editor: MapViewEditor,
+      category: ['Data Layer'],
+      id: 'layers',
+      path: 'layers',
+      name: 'Data Layer',
+      editor: DataLayersEditor,
     });
 
     // The controls section
@@ -57,18 +66,3 @@ export const plugin = new PanelPlugin<GeomapPanelOptions>(GeomapPanel)
         defaultValue: false,
       });
   });
-
-// // Zoom (upper left)
-// hideZoom?: boolean;
-
-// // Lower right
-// hideAttribution?: boolean;
-
-// // Scale options
-// ?: boolean;
-// scaleUnits?: Units;
-// scaleMinWidth?: number;
-// scaleShowBar?: boolean;
-
-// // Overview (same map for now)
-// showOverview?: boolean;

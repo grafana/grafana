@@ -7,6 +7,7 @@ import { stylesFactory } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
 import { css } from '@emotion/css';
 import { config } from 'app/core/config';
+import tinycolor from 'tinycolor2';
 
 export class InfoControl extends Control {
   styles = getStyles(config.theme);
@@ -16,7 +17,7 @@ export class InfoControl extends Control {
       element: document.createElement('div'),
     });
 
-    this.element.className = 'ol-control ' + this.styles.infoWrap;
+    this.element.className = this.styles.infoWrap;
     console.log('New INFO control');
   }
 
@@ -72,10 +73,12 @@ export class InfoControl extends Control {
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => ({
   infoWrap: css`
+    position: absolute;
     top: 8px;
     right: 8px;
     color: ${theme.colors.text};
-    background: ${theme.colors.panelBg};
-    padding: 4px;
+    background: ${tinycolor(theme.colors.panelBg).setAlpha(0.7).toString()};
+    border-radius: 2px;
+    padding: 8px;
   `,
 }));

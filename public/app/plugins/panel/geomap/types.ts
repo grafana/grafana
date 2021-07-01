@@ -28,5 +28,5 @@ export interface GeomapPanelOptions {
   view: MapViewConfig;
   controls: ControlsOptions;
   basemap: MapLayerConfig; // auto
-  // layers: MapLayerConfig[]; // empty == auto
+  layers: MapLayerConfig[]; // empty == auto
 }
