@@ -77,7 +77,7 @@ func (e *executor) QueryData(ctx context.Context, req *backend.QueryDataRequest)
 		return &backend.QueryDataResponse{}, err
 	}
 
-	client, err := es.NewClient(ctx, e.httpClientProvider, dsInfo, &req.Queries[0])
+	client, err := es.NewClient(ctx, e.httpClientProvider, dsInfo, req.Queries[0].TimeRange)
 	if err != nil {
 		return &backend.QueryDataResponse{}, err
 	}

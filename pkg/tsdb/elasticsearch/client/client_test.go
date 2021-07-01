@@ -24,7 +24,7 @@ func TestNewClient(t *testing.T) {
 			JsonData: simplejson.NewFromAny(make(map[string]interface{})),
 		}
 
-		_, err := NewClient(context.Background(), httpclient.NewProvider(), ds, &backend.DataQuery{})
+		_, err := NewClient(context.Background(), httpclient.NewProvider(), ds, backend.TimeRange{})
 		require.Error(t, err)
 	})
 
@@ -35,7 +35,7 @@ func TestNewClient(t *testing.T) {
 			}),
 		}
 
-		_, err := NewClient(context.Background(), httpclient.NewProvider(), ds, &backend.DataQuery{})
+		_, err := NewClient(context.Background(), httpclient.NewProvider(), ds, backend.TimeRange{})
 		require.Error(t, err)
 	})
 
@@ -48,7 +48,7 @@ func TestNewClient(t *testing.T) {
 				}),
 			}
 
-			_, err := NewClient(context.Background(), httpclient.NewProvider(), ds, &backend.DataQuery{})
+			_, err := NewClient(context.Background(), httpclient.NewProvider(), ds, backend.TimeRange{})
 			require.Error(t, err)
 		})
 
@@ -60,7 +60,7 @@ func TestNewClient(t *testing.T) {
 				}),
 			}
 
-			c, err := NewClient(context.Background(), httpclient.NewProvider(), ds, &backend.DataQuery{})
+			c, err := NewClient(context.Background(), httpclient.NewProvider(), ds, backend.TimeRange{})
 			require.NoError(t, err)
 			assert.Equal(t, "2.0.0", c.GetVersion().String())
 		})
@@ -73,7 +73,7 @@ func TestNewClient(t *testing.T) {
 				}),
 			}
 
-			c, err := NewClient(context.Background(), httpclient.NewProvider(), ds, &backend.DataQuery{})
+			c, err := NewClient(context.Background(), httpclient.NewProvider(), ds, backend.TimeRange{})
 			require.NoError(t, err)
 			assert.Equal(t, "5.0.0", c.GetVersion().String())
 		})
@@ -86,7 +86,7 @@ func TestNewClient(t *testing.T) {
 				}),
 			}
 
-			c, err := NewClient(context.Background(), httpclient.NewProvider(), ds, &backend.DataQuery{})
+			c, err := NewClient(context.Background(), httpclient.NewProvider(), ds, backend.TimeRange{})
 			require.NoError(t, err)
 			assert.Equal(t, "5.6.0", c.GetVersion().String())
 		})
@@ -99,7 +99,7 @@ func TestNewClient(t *testing.T) {
 				}),
 			}
 
-			c, err := NewClient(context.Background(), httpclient.NewProvider(), ds, &backend.DataQuery{})
+			c, err := NewClient(context.Background(), httpclient.NewProvider(), ds, backend.TimeRange{})
 			require.NoError(t, err)
 			assert.Equal(t, "6.0.0", c.GetVersion().String())
 		})
@@ -112,7 +112,7 @@ func TestNewClient(t *testing.T) {
 				}),
 			}
 
-			c, err := NewClient(context.Background(), httpclient.NewProvider(), ds, &backend.DataQuery{})
+			c, err := NewClient(context.Background(), httpclient.NewProvider(), ds, backend.TimeRange{})
 			require.NoError(t, err)
 			assert.Equal(t, "7.0.0", c.GetVersion().String())
 		})
@@ -127,7 +127,7 @@ func TestNewClient(t *testing.T) {
 			}),
 		}
 
-		c, err := NewClient(context.Background(), httpclient.NewProvider(), ds, &backend.DataQuery{})
+		c, err := NewClient(context.Background(), httpclient.NewProvider(), ds, backend.TimeRange{})
 		require.NoError(t, err)
 		assert.Equal(t, version, c.GetVersion().String())
 	})
@@ -141,7 +141,7 @@ func TestNewClient(t *testing.T) {
 			}),
 		}
 
-		_, err := NewClient(context.Background(), httpclient.NewProvider(), ds, &backend.DataQuery{})
+		_, err := NewClient(context.Background(), httpclient.NewProvider(), ds, backend.TimeRange{})
 		require.Error(t, err)
 	})
 }
@@ -408,11 +408,8 @@ func httpClientScenario(t *testing.T, desc string, ds *models.DataSource, fn sce
 			From: from,
 			To:   to,
 		}
-		dataQuery := backend.DataQuery{
-			TimeRange: timeRange,
-		}
 
-		c, err := NewClient(context.Background(), httpclient.NewProvider(), ds, &dataQuery)
+		c, err := NewClient(context.Background(), httpclient.NewProvider(), ds, timeRange)
 		require.NoError(t, err)
 		require.NotNil(t, c)
 		sc.client = c

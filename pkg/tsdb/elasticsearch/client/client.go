@@ -75,7 +75,7 @@ func coerceVersion(v *simplejson.Json) (*semver.Version, error) {
 }
 
 // NewClient creates a new elasticsearch client
-var NewClient = func(ctx context.Context, httpClientProvider httpclient.Provider, ds *models.DataSource, dataQuery *backend.DataQuery) (Client, error) {
+var NewClient = func(ctx context.Context, httpClientProvider httpclient.Provider, ds *models.DataSource, timeRange backend.TimeRange) (Client, error) {
 	version, err := coerceVersion(ds.JsonData.Get("esVersion"))
 
 	if err != nil {
@@ -93,7 +93,7 @@ var NewClient = func(ctx context.Context, httpClientProvider httpclient.Provider
 		return nil, err
 	}
 
-	indices, err := ip.GetIndices(dataQuery.TimeRange)
+	indices, err := ip.GetIndices(timeRange)
 	if err != nil {
 		return nil, err
 	}
@@ -107,7 +107,7 @@ var NewClient = func(ctx context.Context, httpClientProvider httpclient.Provider
 		version:            version,
 		timeField:          timeField,
 		indices:            indices,
-		timeRange:          dataQuery.TimeRange,
+		timeRange:          timeRange,
 	}, nil
 }
 
