@@ -106,7 +106,70 @@ func TestSearchJSONForEmail(t *testing.T) {
 		for _, test := range tests {
 			provider.emailAttributePath = test.EmailAttributePath
 			t.Run(test.Name, func(t *testing.T) {
-				actualResult, err := provider.searchJSONForAttr(test.EmailAttributePath, test.UserInfoJSONResponse)
+				actualResult, err := provider.searchJSONForStringAttr(test.EmailAttributePath, test.UserInfoJSONResponse)
+				if test.ExpectedError == "" {
+					require.NoError(t, err, "Testing case %q", test.Name)
+				} else {
+					require.EqualError(t, err, test.ExpectedError, "Testing case %q", test.Name)
+				}
+				require.Equal(t, test.ExpectedResult, actualResult)
+			})
+		}
+	})
+}
+
+func TestSearchJSONForGroups(t *testing.T) {
+	t.Run("Given a generic OAuth provider", func(t *testing.T) {
+		provider := SocialGenericOAuth{
+			SocialBase: &SocialBase{
+				log: newLogger("generic_oauth_test", log15.LvlDebug),
+			},
+		}
+
+		tests := []struct {
+			Name                 string
+			UserInfoJSONResponse []byte
+			GroupsAttributePath  string
+			ExpectedResult       []string
+			ExpectedError        string
+		}{
+			{
+				Name:                 "Given an invalid user info JSON response",
+				UserInfoJSONResponse: []byte("{"),
+				GroupsAttributePath:  "attributes.groups",
+				ExpectedResult:       []string{},
+				ExpectedError:        "failed to unmarshal user info JSON response: unexpected end of JSON input",
+			},
+			{
+				Name:                 "Given an empty user info JSON response and empty JMES path",
+				UserInfoJSONResponse: []byte{},
+				GroupsAttributePath:  "",
+				ExpectedResult:       []string{},
+				ExpectedError:        "no attribute path specified",
+			},
+			{
+				Name:                 "Given an empty user info JSON response and valid JMES path",
+				UserInfoJSONResponse: []byte{},
+				GroupsAttributePath:  "attributes.groups",
+				ExpectedResult:       []string{},
+				ExpectedError:        "empty user info JSON response provided",
+			},
+			{
+				Name: "Given a simple user info JSON response and valid JMES path",
+				UserInfoJSONResponse: []byte(`{
+		"attributes": {
+			"groups": ["foo", "bar"]
+		}
+}`),
+				GroupsAttributePath: "attributes.groups[]",
+				ExpectedResult:      []string{"foo", "bar"},
+			},
+		}
+
+		for _, test := range tests {
+			provider.groupsAttributePath = test.GroupsAttributePath
+			t.Run(test.Name, func(t *testing.T) {
+				actualResult, err := provider.searchJSONForStringArrayAttr(test.GroupsAttributePath, test.UserInfoJSONResponse)
 				if test.ExpectedError == "" {
 					require.NoError(t, err, "Testing case %q", test.Name)
 				} else {
@@ -169,7 +232,7 @@ func TestSearchJSONForRole(t *testing.T) {
 		for _, test := range tests {
 			provider.roleAttributePath = test.RoleAttributePath
 			t.Run(test.Name, func(t *testing.T) {
-				actualResult, err := provider.searchJSONForAttr(test.RoleAttributePath, test.UserInfoJSONResponse)
+				actualResult, err := provider.searchJSONForStringAttr(test.RoleAttributePath, test.UserInfoJSONResponse)
 				if test.ExpectedError == "" {
 					require.NoError(t, err, "Testing case %q", test.Name)
 				} else {
