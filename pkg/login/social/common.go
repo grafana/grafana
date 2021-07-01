@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/jmespath/go-jmespath"
@@ -116,8 +115,6 @@ func (s *SocialBase) searchJSONForStringArrayAttr(attributePath string, data []b
 	if err != nil {
 		return []string{}, err
 	}
-
-	spew.Dump(val)
 
 	ifArr, ok := val.([]interface{})
 	if !ok {
