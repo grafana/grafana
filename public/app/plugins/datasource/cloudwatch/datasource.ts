@@ -64,6 +64,7 @@ import { CloudWatchLanguageProvider } from './language_provider';
 import { VariableWithMultiSupport } from 'app/features/variables/types';
 import { AwsUrl, encodeUrl } from './aws_url';
 import { increasingInterval } from './utils/rxjs/increasingInterval';
+import config from 'app/core/config';
 
 const DS_QUERY_ENDPOINT = '/api/ds/query';
 
