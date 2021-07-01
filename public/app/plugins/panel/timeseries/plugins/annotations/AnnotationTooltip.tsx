@@ -51,8 +51,8 @@ export const AnnotationTooltip: React.FC<AnnotationTooltipProps> = ({
   if (editable) {
     editControls = (
       <div className={styles.editControls}>
-        <IconButton name={'pen'} onClick={onEdit} />
-        <IconButton name={'trash-alt'} onClick={onDelete} />
+        <IconButton name={'pen'} size={'sm'} onClick={onEdit} />
+        <IconButton name={'trash-alt'} size={'sm'} onClick={onDelete} />
       </div>
     );
   }
