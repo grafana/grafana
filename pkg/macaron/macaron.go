@@ -24,10 +24,20 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
-	"sync"
 )
 
 const _VERSION = "1.3.4.0805"
+
+const (
+	DEV  = "development"
+	PROD = "production"
+)
+
+var (
+	// Env is the environment that Macaron is executing in.
+	// The MACARON_ENV is read on initialization to set this variable.
+	Env = DEV
+)
 
 func Version() string {
 	return _VERSION
@@ -194,88 +204,8 @@ func getDefaultListenInfo() (string, int) {
 	return host, port
 }
 
-// Run the http server. Listening on os.GetEnv("PORT") or 4000 by default.
-func (m *Macaron) Run(args ...interface{}) {
-	host, port := getDefaultListenInfo()
-	if len(args) == 1 {
-		switch arg := args[0].(type) {
-		case string:
-			host = arg
-		case int:
-			port = arg
-		}
-	} else if len(args) >= 2 {
-		if arg, ok := args[0].(string); ok {
-			host = arg
-		}
-		if arg, ok := args[1].(int); ok {
-			port = arg
-		}
-	}
-
-	addr := host + ":" + strconv.Itoa(port)
-	logger := m.GetVal(reflect.TypeOf(m.logger)).Interface().(*log.Logger)
-	logger.Printf("listening on %s (%s)\n", addr, safeEnv())
-	logger.Fatalln(http.ListenAndServe(addr, m))
-}
-
 // SetURLPrefix sets URL prefix of router layer, so that it support suburl.
 func (m *Macaron) SetURLPrefix(prefix string) {
 	m.urlPrefix = prefix
 	m.hasURLPrefix = len(m.urlPrefix) > 0
-}
-
-// ____   ____            .__      ___.   .__
-// \   \ /   /____ _______|__|____ \_ |__ |  |   ____   ______
-//  \   Y   /\__  \\_  __ \  \__  \ | __ \|  | _/ __ \ /  ___/
-//   \     /  / __ \|  | \/  |/ __ \| \_\ \  |_\  ___/ \___ \
-//    \___/  (____  /__|  |__(____  /___  /____/\___  >____  >
-//                \/              \/    \/          \/     \/
-
-const (
-	DEV  = "development"
-	PROD = "production"
-	TEST = "test"
-)
-
-var (
-	// Env is the environment that Macaron is executing in.
-	// The MACARON_ENV is read on initialization to set this variable.
-	Env     = DEV
-	envLock sync.Mutex
-
-	// Path of work directory.
-	Root string
-
-	// Flash applies to current request.
-	FlashNow bool
-
-	// Configuration convention object.
-	//cfg *ini.File
-)
-
-func setENV(e string) {
-	envLock.Lock()
-	defer envLock.Unlock()
-
-	if len(e) > 0 {
-		Env = e
-	}
-}
-
-func safeEnv() string {
-	envLock.Lock()
-	defer envLock.Unlock()
-
-	return Env
-}
-
-func init() {
-	setENV(os.Getenv("MACARON_ENV"))
-
-	var err error
-	Root, err = os.Getwd()
-	if err != nil {
-		panic("error getting work directory: " + err.Error())
-	}
 }
