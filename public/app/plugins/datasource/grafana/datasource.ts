@@ -1,5 +1,7 @@
+import { from, merge, Observable, of } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
+import { getBackendSrv, getGrafanaLiveSrv, getTemplateSrv, toDataQueryResponse } from '@grafana/runtime';
 import {
-  AnnotationEvent,
   AnnotationQueryRequest,
   DataQueryRequest,
   DataQueryResponse,
@@ -8,13 +10,12 @@ import {
   isValidLiveChannelAddress,
   parseLiveChannelAddress,
   StreamingFrameOptions,
+  toDataFrame,
 } from '@grafana/data';
 
-import { GrafanaQuery, GrafanaAnnotationQuery, GrafanaAnnotationType, GrafanaQueryType } from './types';
-import { getBackendSrv, getGrafanaLiveSrv, getTemplateSrv, toDataQueryResponse } from '@grafana/runtime';
-import { Observable, of, merge } from 'rxjs';
-import { map, catchError } from 'rxjs/operators';
+import { GrafanaAnnotationQuery, GrafanaAnnotationType, GrafanaQuery, GrafanaQueryType } from './types';
 import AnnotationQueryEditor from './components/AnnotationQueryEditor';
+import { getDashboardSrv } from '../../../features/dashboard/services/DashboardSrv';
 
 let counter = 100;
 
@@ -23,6 +24,18 @@ export class GrafanaDatasource extends DataSourceApi<GrafanaQuery> {
     super(instanceSettings);
     this.annotations = {
       QueryEditor: AnnotationQueryEditor,
+      prepareAnnotation(json: any): GrafanaAnnotationQuery {
+        json.target = json.target ?? {
+          type: json.type,
+          limit: json.limit,
+          tags: json.tags,
+          matchAny: json.matchAny,
+        }; // using spread syntax caused an infinite loop in StandardAnnotationQueryEditor
+        return json;
+      },
+      prepareQuery(anno: GrafanaAnnotationQuery): GrafanaQuery {
+        return { ...anno, refId: anno.name, queryType: GrafanaQueryType.Annotations };
+      },
     };
   }
 
@@ -32,6 +45,16 @@ export class GrafanaDatasource extends DataSourceApi<GrafanaQuery> {
     for (const target of request.targets) {
       if (target.hide) {
         continue;
+      }
+      if (target.queryType === GrafanaQueryType.Annotations) {
+        return from(
+          this.getAnnotations({
+            range: request.range,
+            rangeRaw: request.rangeRaw!,
+            annotation: target as any,
+            dashboard: getDashboardSrv().getCurrent(),
+          })
+        );
       }
       if (target.queryType === GrafanaQueryType.LiveMeasurements) {
         let channel = templateSrv.replace(target.channel, request.scopedVars);
@@ -84,7 +107,7 @@ export class GrafanaDatasource extends DataSourceApi<GrafanaQuery> {
     return Promise.resolve([]);
   }
 
-  annotationQuery(options: AnnotationQueryRequest<GrafanaQuery>): Promise<AnnotationEvent[]> {
+  async getAnnotations(options: AnnotationQueryRequest<GrafanaQuery>): Promise<DataQueryResponse> {
     const templateSrv = getTemplateSrv();
     const annotation = (options.annotation as unknown) as GrafanaAnnotationQuery;
     const params: any = {
@@ -98,7 +121,7 @@ export class GrafanaDatasource extends DataSourceApi<GrafanaQuery> {
     if (annotation.type === GrafanaAnnotationType.Dashboard) {
       // if no dashboard id yet return
       if (!options.dashboard.id) {
-        return Promise.resolve([]);
+        return Promise.resolve({ data: [] });
       }
       // filter by dashboard id
       params.dashboardId = options.dashboard.id;
@@ -107,7 +130,7 @@ export class GrafanaDatasource extends DataSourceApi<GrafanaQuery> {
     } else {
       // require at least one tag
       if (!Array.isArray(annotation.tags) || annotation.tags.length === 0) {
-        return Promise.resolve([]);
+        return Promise.resolve({ data: [] });
       }
       const delimiter = '__delimiter__';
       const tags = [];
@@ -126,11 +149,12 @@ export class GrafanaDatasource extends DataSourceApi<GrafanaQuery> {
       params.tags = tags;
     }
 
-    return getBackendSrv().get(
+    const annotations = await getBackendSrv().get(
       '/api/annotations',
       params,
       `grafana-data-source-annotations-${annotation.name}-${options.dashboard?.id}`
     );
+    return { data: [toDataFrame(annotations)] };
   }
 
   testDatasource() {

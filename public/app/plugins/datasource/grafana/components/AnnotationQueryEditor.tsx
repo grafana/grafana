@@ -1,7 +1,8 @@
 import React from 'react';
-import { FieldSet, InlineField, InlineFieldRow, InlineSwitch, Select } from '@grafana/ui';
-import { TagFilter } from 'app/core/components/TagFilter/TagFilter';
 import { SelectableValue } from '@grafana/data';
+import { FieldSet, InlineField, InlineFieldRow, InlineSwitch, Select } from '@grafana/ui';
+
+import { TagFilter } from 'app/core/components/TagFilter/TagFilter';
 import { GrafanaAnnotationQuery, GrafanaAnnotationType } from '../types';
 import { getAnnotationTags } from 'app/features/annotations/api';
 
@@ -48,7 +49,7 @@ interface Props {
 }
 
 export default function AnnotationQueryEditor({ query, onChange }: Props) {
-  const { limit = 100, matchAny = false, tags = [], type = GrafanaAnnotationType.Tags } = query;
+  const { limit = 100, matchAny = false, tags = [], type = GrafanaAnnotationType.Dashboard } = query;
 
   const onFilterByChange = (newValue: SelectableValue<GrafanaAnnotationType>) =>
     onChange({

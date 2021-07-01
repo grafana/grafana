@@ -1,6 +1,7 @@
-import { render, screen } from '@testing-library/react';
 import React from 'react';
-import { GrafanaAnnotationType, GrafanaAnnotationQuery } from '../types';
+import { render, screen } from '@testing-library/react';
+
+import { GrafanaAnnotationQuery, GrafanaAnnotationType } from '../types';
 import AnnotationQueryEditor from './AnnotationQueryEditor';
 
 describe('AnnotationQueryEditor', () => {
@@ -12,6 +13,9 @@ describe('AnnotationQueryEditor', () => {
       refId: 'Anno',
       type: GrafanaAnnotationType.Tags,
       limit: 100,
+      enable: true,
+      name: 'a name',
+      iconColor: 'a color',
     };
   });
 
