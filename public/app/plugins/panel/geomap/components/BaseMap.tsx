@@ -22,9 +22,6 @@ import { ControlsOptions, GeomapPanelOptions } from '../types';
 import { defaultGrafanaThemedMap } from '../layers/basemaps/theme';
 import { InfoControl } from './InfoControl';
 
-// TODO:
-// https://openlayers.org/en/latest/examples/select-hover-features.html
-
 interface MapLayerState {
   config: MapLayerConfig;
   handler: MapLayerHandler;
@@ -158,6 +155,9 @@ export class BaseMap extends Component<BaseMapProps> {
 
       const handler = item.create(this.map, overlay, config.theme2);
       const layer = handler.init();
+      if (handler.update) {
+        handler.update(this.map, this.props.data);
+      }
       this.map.addLayer(layer);
       this.layers.push({
         config: overlay,

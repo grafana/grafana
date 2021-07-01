@@ -41,14 +41,15 @@ export const geojsonMapper: MapLayerRegistryItem<GeoJSONMapperConfig> = {
       source,
     });
 
-    // ?? has it loaded yet?
-    const ids = source.getFeatures().map( f => f.getId() );
-    console.log( "Feature IDs", ids );
-
     return {
       init: () => vectorLayer,
       update: (map: Map, data: PanelData) => {
         console.log( "todo... find values matching the ID and update");
+
+        // Update each feature
+        source.getFeatures().forEach( f => {
+          console.log( "Find: ", f.getId(), f.getProperties() );
+        });
       },
     };
   },
