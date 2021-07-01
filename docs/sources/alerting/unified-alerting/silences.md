@@ -11,7 +11,9 @@ Grafana allows to you to prevent notifications from one or more alert rules by c
 
 Silences do not prevent alert rules from being evaluated. They also do not stop alert instances being shown in the user interface. Silences only prevent notifications from being created.
 
-> **Note:** Currently the Alertmanager configuration is shared across organisations. Therefore users are advised to use the new Grafana 8 Alerts only if they have one organisation otherwise silences will be visible by all organizations.
+Grafana alerting UI allows you to configure silences for the Grafana managed alerts (handled by the embedded Alertmanager) as well as silences for an [external Alertmanager if one is configured]({{< relref "../../datasources/alertmanager.md" >}}), using the Alertmanager dropdown.
+
+> **Note:** Currently the configuration of the embedded Alertmanager is shared across organisations. Therefore users are advised to use the new Grafana 8 Alerts only if they have one organisation otherwise silences for the Grafana managed alerts will be visible by all organizations.
 
 ## Add a silence
 
