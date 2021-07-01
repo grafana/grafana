@@ -210,9 +210,12 @@ func AddDataSource(cmd *models.AddDataSourceCommand) error {
 		if err := updateIsDefaultFlag(ds, sess); err != nil {
 			return err
 		}
-
 		cmd.Result = ds
-		return nil
+		return SaveOutboxEvent(sess, "datasource_changes", models.OutboxPayload{
+			Op:     models.OutboxPayloadOpCreate,
+			Entity: "datasource",
+			ID:     ds.Id,
+		})
 	})
 }
 
