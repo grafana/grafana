@@ -46,17 +46,10 @@ type Service struct {
 }
 
 type azureMonitorSettings struct {
+	SubscriptionId               string `json:"subscriptionId"`
+	LogAnalyticsDefaultWorkspace string `json:"logAnalyticsDefaultWorkspace"`
 	AppInsightsAppId             string `json:"appInsightsAppId"`
 	AzureLogAnalyticsSameAs      bool   `json:"azureLogAnalyticsSameAs"`
-	ClientId                     string `json:"clientId"`
-	CloudName                    string `json:"cloudName"`
-	LogAnalyticsClientId         string `json:"logAnalyticsClientId"`
-	LogAnalyticsDefaultWorkspace string `json:"logAnalyticsDefaultWorkspace"`
-	LogAnalyticsSubscriptionId   string `json:"logAnalyticsSubscriptionId"`
-	LogAnalyticsTenantId         string `json:"logAnalyticsTenantId"`
-	SubscriptionId               string `json:"subscriptionId"`
-	TenantId                     string `json:"tenantId"`
-	AzureAuthType                string `json:"azureAuthType,omitempty"`
 }
 
 type datasourceInfo struct {
