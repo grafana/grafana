@@ -31,7 +31,7 @@ const mapDispatchToProps = {
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
 
-type Props = OwnProps & ConnectedProps<typeof connector>;
+export type Props = OwnProps & ConnectedProps<typeof connector>;
 
 export function ChangePasswordPage({ navModel, loadUser, isUpdating, user, changePassword }: Props) {
   useMount(() => loadUser());

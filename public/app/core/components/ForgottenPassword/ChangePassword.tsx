@@ -23,14 +23,16 @@ export const ChangePassword: FC<Props> = ({ onSubmit, onSkip }) => {
           <Field label="New password" invalid={!!errors.newPassword} error={errors?.newPassword?.message}>
             <Input
               autoFocus
+              id="new-password"
               type="password"
               {...register('newPassword', {
-                required: 'New password required',
+                required: 'New password is required',
               })}
             />
           </Field>
           <Field label="Confirm new password" invalid={!!errors.confirmNew} error={errors?.confirmNew?.message}>
             <Input
+              id="confirm-new-password"
               type="password"
               {...register('confirmNew', {
                 required: 'Confirmed password is required',

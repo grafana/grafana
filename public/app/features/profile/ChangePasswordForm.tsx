@@ -34,11 +34,16 @@ export const ChangePasswordForm: FC<Props> = ({ user, onChangePassword, isSaving
           return (
             <>
               <Field label="Old password" invalid={!!errors.oldPassword} error={errors?.oldPassword?.message}>
-                <Input type="password" {...register('oldPassword', { required: 'Old password is required' })} />
+                <Input
+                  id="old-password"
+                  type="password"
+                  {...register('oldPassword', { required: 'Old password is required' })}
+                />
               </Field>
 
               <Field label="New password" invalid={!!errors.newPassword} error={errors?.newPassword?.message}>
                 <Input
+                  id="new-password"
                   type="password"
                   {...register('newPassword', {
                     required: 'New password is required',
@@ -52,6 +57,7 @@ export const ChangePasswordForm: FC<Props> = ({ user, onChangePassword, isSaving
 
               <Field label="Confirm password" invalid={!!errors.confirmNew} error={errors?.confirmNew?.message}>
                 <Input
+                  id="confirm-new-password"
                   type="password"
                   {...register('confirmNew', {
                     required: 'New password confirmation is required',
