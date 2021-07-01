@@ -339,8 +339,6 @@ export function GorillaSettings(props: GorillaSettingsProps): ReactElement | nul
     { value: 'dashNav.title', label: 'Title' },
     { value: 'dashNav.tvToggle', label: 'Kiosk mode button' },
     { value: 'dashNav.addPanelToggle', label: 'Add panel button' },
-    { value: 'dashNav.dashboardSettingsToggle', label: 'Settings button' },
-    { value: 'dashNav.saveDashboardToggle', label: 'Save button' },
     { value: 'dashNav.snapshotToggle', label: 'Snapshot Button' },
     { value: 'dashNav.starToggle', label: 'Star button' },
     { value: 'dashNav.sharePanelToggle', label: 'Share Dashboard or Panel Button' },
