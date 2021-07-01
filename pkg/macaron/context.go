@@ -203,6 +203,11 @@ func (ctx *Context) AllParams() Params {
 	return ctx.params
 }
 
+// ReplaceAllParams replace all current params with given params
+func (ctx *Context) ReplaceAllParams(params Params) {
+	ctx.params = params
+}
+
 // ParamsInt64 returns params result in int64 type.
 // e.g. ctx.ParamsInt64(":uid")
 func (ctx *Context) ParamsInt64(name string) int64 {
