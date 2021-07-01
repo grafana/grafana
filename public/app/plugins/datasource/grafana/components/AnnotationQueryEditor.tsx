@@ -49,7 +49,7 @@ interface Props {
 }
 
 export default function AnnotationQueryEditor({ query, onChange }: Props) {
-  const { limit = 100, matchAny = false, tags = [], type = GrafanaAnnotationType.Dashboard } = query;
+  const { limit, matchAny, tags, type } = query;
 
   const onFilterByChange = (newValue: SelectableValue<GrafanaAnnotationType>) =>
     onChange({

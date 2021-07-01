@@ -25,11 +25,13 @@ export class GrafanaDatasource extends DataSourceApi<GrafanaQuery> {
     this.annotations = {
       QueryEditor: AnnotationQueryEditor,
       prepareAnnotation(json: any): GrafanaAnnotationQuery {
+        // Previously, these properties lived outside of target
+        // This should handle migrating them
         json.target = json.target ?? {
-          type: json.type,
-          limit: json.limit,
-          tags: json.tags,
-          matchAny: json.matchAny,
+          type: json.type ?? GrafanaAnnotationType.Dashboard,
+          limit: json.limit ?? 100,
+          tags: json.tags ?? [],
+          matchAny: json.matchAny ?? false,
         }; // using spread syntax caused an infinite loop in StandardAnnotationQueryEditor
         return json;
       },
@@ -50,8 +52,8 @@ export class GrafanaDatasource extends DataSourceApi<GrafanaQuery> {
         return from(
           this.getAnnotations({
             range: request.range,
-            rangeRaw: request.rangeRaw!,
-            annotation: target as any,
+            rangeRaw: request.range.raw,
+            annotation: target.target as any,
             dashboard: getDashboardSrv().getCurrent(),
           })
         );
