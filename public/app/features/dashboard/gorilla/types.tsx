@@ -18,6 +18,7 @@ import { DashNavTimeControls, Props as DashNavTimeControlsProps } from '../compo
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { css } from '@emotion/css';
 import { DashNavButton, DashNavButtonProps } from '../components/DashNav/DashNavButton';
+import { SideMenu } from 'app/core/components/sidemenu/SideMenu';
 
 export enum GorillaProfile {
   standard = 'standard',
@@ -62,6 +63,9 @@ const standardProfile = {
     sharePanelToggle: {
       mode: GorillaMode.editable,
     },
+    sideNav: {
+      mode: GorillaMode.editable,
+    },
   },
 };
 
@@ -94,6 +98,9 @@ const tvProfile = {
       mode: GorillaMode.editable,
     },
     sharePanelToggle: {
+      mode: GorillaMode.editable,
+    },
+    sideNav: {
       mode: GorillaMode.editable,
     },
   },
@@ -130,6 +137,9 @@ const customProfile = {
     sharePanelToggle: {
       mode: GorillaMode.editable,
     },
+    sideNav: {
+      mode: GorillaMode.editable,
+    },
   },
 };
 
@@ -145,6 +155,7 @@ export interface GorillaContextItem {
 export interface GorillaDashNavItem extends GorillaContextItem {
   timePicker: GorillaContextItem;
   title: GorillaContextItem;
+  sideNav: GorillaContextItem;
   tvToggle: GorillaContextItem;
   addPanelToggle: GorillaContextItem;
   dashboardSettingsToggle: GorillaContextItem;
@@ -291,6 +302,26 @@ export function GorillaDashNavButton(props: DashNavButtonProps & { configPath: s
   }
 }
 
+export function GorillaSideNav(): ReactElement | null {
+  const {
+    dashNav: { sideNav },
+  } = useGorillaConfig();
+
+  if (!getConfig().featureToggles.customKiosk) {
+    return <SideMenu />;
+  }
+
+  switch (sideNav.mode) {
+    case GorillaMode.hidden: {
+      return null;
+    }
+
+    default: {
+      return <SideMenu />;
+    }
+  }
+}
+
 type GorillaSettingsProps = {};
 
 export function GorillaSettings(props: GorillaSettingsProps): ReactElement | null {
@@ -337,6 +368,7 @@ export function GorillaSettings(props: GorillaSettingsProps): ReactElement | nul
   const configurableOptions: Array<SelectableValue<string>> = [
     { value: 'dashNav.timePicker', label: 'Time picker' },
     { value: 'dashNav.title', label: 'Title' },
+    { value: 'dashNav.sideNav', label: 'sideNav' },
     { value: 'dashNav.tvToggle', label: 'Kiosk mode button' },
     { value: 'dashNav.addPanelToggle', label: 'Add panel button' },
     { value: 'dashNav.snapshotToggle', label: 'Snapshot Button' },
