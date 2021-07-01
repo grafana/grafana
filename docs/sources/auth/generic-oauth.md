@@ -14,8 +14,8 @@ You can configure many different OAuth2 authentication services with Grafana usi
   - [Set up OAuth2 with Centrify](#set-up-oauth2-with-centrify)
   - [Set up OAuth2 with OneLogin](#set-up-oauth2-with-onelogin)
   - [JMESPath examples](#jmespath-examples)
-  - [Role mapping](#role-mapping)
-  - [Groups mapping](#groups-mapping)
+    - [Role mapping](#role-mapping)
+    - [Groups mapping](#groups-mapping)
 
 This callback URL must match the full HTTP address that you use in your browser to access Grafana, but with the suffixed path of `/login/generic_oauth`.
 
@@ -68,7 +68,7 @@ Check for the presence of a role using the [JMESPath](http://jmespath.org/exampl
 
 Grafana also attempts to map teams through OAuth as described below.
 
-Check for the presence of groups using the [JMESPath](http://jmespath.org/examples.html) specified via the `groups_attribute_path` configuration option. The JSON used for the path lookup is the HTTP response obtained from querying the UserInfo endpoint specified via the `api_url` configuration option. After evaluating the `groups_attribute_path` JMESPath expression, the result needs to return a comma delimited string with group_id's.
+Check for the presence of groups using the [JMESPath](http://jmespath.org/examples.html) specified via the `groups_attribute_path` configuration option. The JSON used for the path lookup is the HTTP response obtained from querying the UserInfo endpoint specified via the `api_url` configuration option. After evaluating the `groups_attribute_path` JMESPath expression, the result should be a string array of groups.
 
 See [JMESPath examples](#jmespath-examples) for more information.
 
@@ -257,7 +257,7 @@ Generic OAuth groups can be referenced by group ID, like `8bab1c86-8fba-33e5-208
 Config:
 
 ```bash
-groups_attribute_path = info.groups.join(',',[*])  
+groups_attribute_path = info.groups
 ```
 
 Payload:
