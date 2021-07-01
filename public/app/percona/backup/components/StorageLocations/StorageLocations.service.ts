@@ -18,7 +18,6 @@ export const StorageLocationsService = {
     return api.post(`${BASE_URL}/TestConfig`, payload, false, token);
   },
   async delete(locationID: string, force: boolean, token?: CancelToken): Promise<void> {
-    // TODO remove force: true after adding checkbox to deletion modal
-    api.post(`${BASE_URL}/Remove`, { location_id: locationID, force });
+    return api.post(`${BASE_URL}/Remove`, { location_id: locationID, force });
   },
 };

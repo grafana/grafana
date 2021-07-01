@@ -121,12 +121,12 @@ export const StorageLocations: FC = () => {
     try {
       await StorageLocationsService.delete(location.locationID, force);
       setDeleteModalVisible(false);
+      setSelectedLocation(null);
       appEvents.emit(AppEvents.alertSuccess, [Messages.storageLocations.getDeleteSuccess(location.name)]);
       getData();
     } catch (e) {
       logger.error(e);
     } finally {
-      setSelectedLocation(null);
       setDeletePending(false);
     }
   };
