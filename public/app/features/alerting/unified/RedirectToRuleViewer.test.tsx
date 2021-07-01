@@ -52,7 +52,7 @@ describe('Redirect to Rule viewer', () => {
     });
     mockRuleSourceByName();
     renderRedirectToRuleViewer();
-    expect(screen.getByText('Alerting / Find rule')).toBeInTheDocument();
+    expect(screen.getAllByText('Cloud test alert')).toHaveLength(2);
   });
 
   it('should redirect to view rule page if only one match', () => {
