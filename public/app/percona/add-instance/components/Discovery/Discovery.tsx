@@ -34,7 +34,10 @@ const Discovery: FC<DiscoverySearchPanelProps> = ({ selectInstance }) => {
       startLoading(false);
     };
 
-    if (credentials.aws_secret_key && credentials.aws_access_key) {
+    if (
+      (credentials.aws_secret_key && credentials.aws_access_key) ||
+      (!credentials.aws_secret_key && !credentials.aws_access_key)
+    ) {
       startLoading(true);
       updateInstances();
     }
