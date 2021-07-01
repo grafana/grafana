@@ -63,7 +63,7 @@ const standardProfile = {
     sharePanelToggle: {
       mode: GorillaMode.editable,
     },
-    sideNav: {
+    sideMenu: {
       mode: GorillaMode.editable,
     },
   },
@@ -100,7 +100,7 @@ const tvProfile = {
     sharePanelToggle: {
       mode: GorillaMode.editable,
     },
-    sideNav: {
+    sideMenu: {
       mode: GorillaMode.editable,
     },
   },
@@ -137,7 +137,7 @@ const customProfile = {
     sharePanelToggle: {
       mode: GorillaMode.editable,
     },
-    sideNav: {
+    sideMenu: {
       mode: GorillaMode.editable,
     },
   },
@@ -155,7 +155,7 @@ export interface GorillaContextItem {
 export interface GorillaDashNavItem extends GorillaContextItem {
   timePicker: GorillaContextItem;
   title: GorillaContextItem;
-  sideNav: GorillaContextItem;
+  sideMenu: GorillaContextItem;
   tvToggle: GorillaContextItem;
   addPanelToggle: GorillaContextItem;
   dashboardSettingsToggle: GorillaContextItem;
@@ -302,16 +302,16 @@ export function GorillaDashNavButton(props: DashNavButtonProps & { configPath: s
   }
 }
 
-export function GorillaSideNav(): ReactElement | null {
+export function GorillaSideMenu(): ReactElement | null {
   const {
-    dashNav: { sideNav },
+    dashNav: { sideMenu },
   } = useGorillaConfig();
 
   if (!getConfig().featureToggles.customKiosk) {
     return <SideMenu />;
   }
 
-  switch (sideNav.mode) {
+  switch (sideMenu.mode) {
     case GorillaMode.hidden: {
       return null;
     }
@@ -368,7 +368,7 @@ export function GorillaSettings(props: GorillaSettingsProps): ReactElement | nul
   const configurableOptions: Array<SelectableValue<string>> = [
     { value: 'dashNav.timePicker', label: 'Time picker' },
     { value: 'dashNav.title', label: 'Title' },
-    { value: 'dashNav.sideNav', label: 'sideNav' },
+    { value: 'dashNav.sideMenu', label: 'Side Menu' },
     { value: 'dashNav.tvToggle', label: 'Kiosk mode button' },
     { value: 'dashNav.addPanelToggle', label: 'Add panel button' },
     { value: 'dashNav.snapshotToggle', label: 'Snapshot Button' },

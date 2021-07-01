@@ -13,7 +13,7 @@ import { GrafanaRoute } from './core/navigation/GrafanaRoute';
 import { AppNotificationList } from './core/components/AppNotifications/AppNotificationList';
 import { SearchWrapper } from 'app/features/search';
 import { LiveConnectionWarning } from './features/live/LiveConnectionWarning';
-import { GorillaProvider, GorillaSideNav } from './features/dashboard/gorilla/types';
+import { GorillaProvider, GorillaSideMenu } from './features/dashboard/gorilla/types';
 
 interface AppWrapperProps {
   app: GrafanaApp;
@@ -97,7 +97,7 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
                   <GlobalStyles />
                   <div className="grafana-app">
                     <Router history={locationService.getHistory()}>
-                      <GorillaSideNav />
+                      <GorillaSideMenu />
                       <div className="main-view">
                         <div
                           ref={this.container}
