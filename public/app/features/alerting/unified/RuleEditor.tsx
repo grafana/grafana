@@ -11,8 +11,8 @@ import { useDispatch } from 'react-redux';
 import { AlertRuleForm } from './components/rule-editor/AlertRuleForm';
 import { useIsRuleEditable } from './hooks/useIsRuleEditable';
 import { useUnifiedAlertingSelector } from './hooks/useUnifiedAlertingSelector';
-import { fetchExistingRuleAction } from './state/actions';
-import { parseRuleIdentifier } from './utils/rules';
+import { fetchEditableRuleAction } from './state/actions';
+import * as ruleId from './utils/rule-id';
 
 interface ExistingRuleEditorProps {
   identifier: RuleIdentifier;
@@ -26,7 +26,7 @@ const ExistingRuleEditor: FC<ExistingRuleEditorProps> = ({ identifier }) => {
 
   useEffect(() => {
     if (!dispatched) {
-      dispatch(fetchExistingRuleAction(identifier));
+      dispatch(fetchEditableRuleAction(identifier));
     }
   }, [dispatched, dispatch, identifier]);
 
@@ -58,9 +58,10 @@ const ExistingRuleEditor: FC<ExistingRuleEditorProps> = ({ identifier }) => {
 type RuleEditorProps = GrafanaRouteComponentProps<{ id?: string }>;
 
 const RuleEditor: FC<RuleEditorProps> = ({ match }) => {
-  const id = match.params.id;
-  if (id) {
-    const identifier = parseRuleIdentifier(decodeURIComponent(id));
+  const { id } = match.params;
+  const identifier = ruleId.tryParse(id, true);
+
+  if (identifier) {
     return <ExistingRuleEditor key={id} identifier={identifier} />;
   }
   if (!(contextSrv.hasEditPermissionInFolders || contextSrv.isEditor)) {

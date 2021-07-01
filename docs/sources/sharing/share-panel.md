@@ -59,7 +59,9 @@ If you created a snapshot by mistake, click **delete snapshot** to remove the sn
 
 ## Embed panel
 
-You can embed a panel using an iframe on another web site. Unless anonymous access permission is enabled, the viewer must be signed into Grafana to view the graph.
+You can embed a panel using an iframe on another web site. A viewer must be signed into Grafana to view the graph. 
+
+**> Note:** As of Grafana 8.0, anonymous access permission is no available for Grafana Cloud.
 
 ![Panel share embed](/static/img/docs/sharing/share-panel-embedded-link-8-0.png)
 
