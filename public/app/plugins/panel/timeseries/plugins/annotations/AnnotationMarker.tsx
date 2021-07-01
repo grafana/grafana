@@ -49,8 +49,8 @@ export function AnnotationMarker({ annotation, timeZone }: Props) {
   }, [setIsEditing, setIsOpen]);
 
   const onAnnotationDelete = useCallback(() => {
-    if (panelCtx.deleteAnnotation) {
-      panelCtx.deleteAnnotation(annotation.id);
+    if (panelCtx.onAnnotationDelete) {
+      panelCtx.onAnnotationDelete(annotation.id);
     }
   }, [annotation, panelCtx]);
 

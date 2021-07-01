@@ -38,7 +38,7 @@ export const AnnotationEditorForm = React.forwardRef<HTMLDivElement, AnnotationE
     });
 
     const [createAnnotationState, createAnnotation] = useAsyncFn(async (event: AnnotationEventUIModel) => {
-      const result = await panelContext.createAnnotation!(event);
+      const result = await panelContext.onAnnotationCreate!(event);
       if (onSave) {
         onSave();
       }
@@ -46,7 +46,7 @@ export const AnnotationEditorForm = React.forwardRef<HTMLDivElement, AnnotationE
     });
 
     const [updateAnnotationState, updateAnnotation] = useAsyncFn(async (event: AnnotationEventUIModel) => {
-      const result = await panelContext.updateAnnotation!(event);
+      const result = await panelContext.onAnnotationUpdate!(event);
       if (onSave) {
         onSave();
       }
