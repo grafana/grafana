@@ -41,6 +41,7 @@ type ItemQuery struct {
 	Limit int64 `json:"limit"`
 }
 
+// TagsQuery is the query for a tags search.
 type TagsQuery struct {
 	OrgID int64  `json:"orgId"`
 	Tag   string `json:"tag"`
@@ -48,19 +49,27 @@ type TagsQuery struct {
 	Limit int64 `json:"limit"`
 }
 
-type Tags struct {
+// Tag is the DB result of a tags search.
+type Tag struct {
 	Key   string
 	Value string
 	Count int64
 }
 
+// TagsDTO is the frontend DTO for Tag.
 type TagsDTO struct {
 	Tag   string `json:"tag"`
 	Count int64  `json:"count"`
 }
 
+// FindTagsResult is the result of a tags search.
 type FindTagsResult struct {
 	Tags []*TagsDTO `json:"tags"`
+}
+
+// GetAnnotationTagsResponse is a response struct for FindTagsResult.
+type GetAnnotationTagsResponse struct {
+	Result FindTagsResult `json:"result"`
 }
 
 type DeleteParams struct {
