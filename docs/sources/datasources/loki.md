@@ -154,7 +154,7 @@ provides the following functions you can use in the `Query` input field.
 | `label_values(label)`                      | Returns a list of label values for the `label`.                                      |
 | `label_values(log stream selector, label)` | Returns a list of label values for the `label` in the specified `log stream selector`.|
 
-#### Using interval and range variables
+### Using interval and range variables
 
 You can use some global built-in variables in query variables; `$__interval`, `$__interval_ms`, `$__range`, `$__range_s` and `$__range_ms`. For more information, refer to [Global built-in variables]({{< relref "../variables/variable-types/global-variables.md" >}}).
 ## Annotations
