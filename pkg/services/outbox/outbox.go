@@ -21,7 +21,8 @@ func init() {
 	registry.RegisterService(&Outbox{})
 }
 
-// Outbox service,
+// Outbox service provides a transactional outbox pattern for Grafana - i.e. a way
+// to make database query and send an event into message bus atomically.
 type Outbox struct {
 	Cfg       *setting.Cfg         `inject:""`
 	SQLStore  *sqlstore.SQLStore   `inject:""`
@@ -47,7 +48,9 @@ loop:
 			}
 			err := g.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 				var event models.OutboxEvent
-				ok, err := sess.Where("status = 0").OrderBy("id ASC").ForUpdate().Get(&event)
+				// Note: For Update does not work for SQLite. For local setup we currently avoid sending
+				// duplicate events by checking Grafanats.IsLeader().
+				ok, err := sess.NoAutoCondition(true).Where("status = 0").OrderBy("id ASC").ForUpdate().Get(&event)
 				if err != nil {
 					return err
 				}
@@ -58,21 +61,22 @@ loop:
 				if err != nil {
 					return err
 				}
-				logger.Info("published to a stream", "stream", pubAck.Stream, "sequence", pubAck.Sequence)
+				logger.Info("published to a stream", "stream", pubAck.Stream, "sequence", pubAck.Sequence, "data", string(event.Payload))
 				event.Status = 1
 				_, err = sess.Update(&event)
 				return err
 			})
 			if err != nil {
 				logger.Error(err.Error())
-			} else {
-				err = g.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-					_, err := sess.Exec("DELETE FROM outbox_event WHERE status=1")
-					return err
-				})
-				if err != nil {
-					logger.Error(err.Error())
-				}
+				continue
+			}
+			// Cleanup processed entries.
+			err = g.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+				_, err := sess.Exec("DELETE FROM outbox_event WHERE status=1")
+				return err
+			})
+			if err != nil {
+				logger.Error(err.Error())
 			}
 		}
 	}

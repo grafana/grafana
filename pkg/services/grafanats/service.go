@@ -151,7 +151,7 @@ func (g *Grafanats) createStream(s EventStream) error {
 
 func (g *Grafanats) subscribeStream(s EventStream) error {
 	_, err := g.client.Subscribe(s.Subject, func(msg *nats.Msg) {
-		fmt.Printf("received message: %s %v\n", string(msg.Data), msg.Reply)
+		logger.Info("received message", "data", string(msg.Data), "reply", msg.Reply)
 		_ = msg.Ack()
 	}, nats.DeliverNew(), nats.Durable("consumer-"+os.Getenv("GF_SERVER_ID")))
 	if err != nil {

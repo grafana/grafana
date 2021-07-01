@@ -1,6 +1,7 @@
 package sqlstore
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -145,7 +146,14 @@ func DeleteDataSource(cmd *models.DeleteDataSourceCommand) error {
 	return inTransaction(func(sess *DBSession) error {
 		result, err := sess.Exec(params...)
 		cmd.DeletedDatasourcesCount, _ = result.RowsAffected()
-		return err
+		if err != nil {
+			return err
+		}
+		return SaveOutboxEvent(sess, "datasource_changes", models.OutboxPayload{
+			Op:     models.OutboxPayloadOpDelete,
+			Entity: "datasource",
+			ID:     cmd.ID,
+		})
 	})
 }
 
@@ -283,10 +291,23 @@ func UpdateDataSource(cmd *models.UpdateDataSourceCommand) error {
 		}
 		cmd.Result = ds
 
-		event := &models.OutboxEvent{Subject: "datasource_changes", Payload: []byte(ds.Uid)}
-		_, err = sess.Insert(event)
+		err = SaveOutboxEvent(sess, "datasource_changes", models.OutboxPayload{
+			Op:     models.OutboxPayloadOpUpdate,
+			Entity: "datasource",
+			ID:     ds.Id,
+		})
 		return err
 	})
+}
+
+func SaveOutboxEvent(sess *DBSession, subject string, payload models.OutboxPayload) error {
+	p, err := json.Marshal(payload)
+	if err != nil {
+		return err
+	}
+	event := &models.OutboxEvent{Subject: subject, Payload: p}
+	_, err = sess.Insert(event)
+	return err
 }
 
 func generateNewDatasourceUid(sess *DBSession, orgId int64) (string, error) {
