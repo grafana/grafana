@@ -48,7 +48,7 @@ export const LogsPanel: React.FunctionComponent<LogsPanelProps> = ({
           <div className={style.labelContainer}>
             <span className={style.label}>Common labels:</span>
             <LogLabels
-              labels={commonLabels ? (commonLabels.value as Labels) : ({ labels: '(no common labels)' } as Labels)}
+              labels={commonLabels ? (commonLabels.value as Labels) : ({ labels: '(no common labels)' })}
             />
           </div>
         )}
