@@ -21,6 +21,7 @@ import { LiveTailControls } from './useLiveTailControls';
 import { cancelQueries, clearQueries, runQueries } from './state/query';
 import ReturnToDashboardButton from './ReturnToDashboardButton';
 import { isSplit } from './state/selectors';
+import SonifierControls from 'app/core/components/SonifierControls/SonifierControls';
 
 interface OwnProps {
   exploreId: ExploreId;
@@ -131,6 +132,7 @@ export class UnConnectedExploreToolbar extends PureComponent<Props> {
             ) : null}
             <ToolbarButtonRow>
               <ReturnToDashboardButton exploreId={exploreId} />
+              <SonifierControls />
 
               {exploreId === 'left' && !splitted ? (
                 <ToolbarButton
