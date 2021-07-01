@@ -15,54 +15,16 @@
 package macaron
 
 import (
-	"html/template"
-	"io"
-	"io/ioutil"
-	"mime/multipart"
 	"net/http"
 	"net/url"
-	"os"
 	"reflect"
 	"strconv"
 	"strings"
-	"time"
 )
-
-// Locale reprents a localization interface.
-type Locale interface {
-	Language() string
-	Tr(string, ...interface{}) string
-}
-
-// RequestBody represents a request body.
-type RequestBody struct {
-	reader io.ReadCloser
-}
-
-// Bytes reads and returns content of request body in bytes.
-func (rb *RequestBody) Bytes() ([]byte, error) {
-	return ioutil.ReadAll(rb.reader)
-}
-
-// String reads and returns content of request body in string.
-func (rb *RequestBody) String() (string, error) {
-	data, err := rb.Bytes()
-	return string(data), err
-}
-
-// ReadCloser returns a ReadCloser for request body.
-func (rb *RequestBody) ReadCloser() io.ReadCloser {
-	return rb.reader
-}
 
 // Request represents an HTTP request received by a server or to be sent by a client.
 type Request struct {
 	*http.Request
-}
-
-// Body returns a RequestBody for the request
-func (r *Request) Body() *RequestBody {
-	return &RequestBody{r.Request.Body}
 }
 
 // ContextInvoker is an inject.FastInvoker wrapper of func(ctx *Context).
@@ -87,7 +49,6 @@ type Context struct {
 	Resp   ResponseWriter
 	params Params
 	Render
-	Locale
 	Data map[string]interface{}
 }
 
@@ -163,11 +124,6 @@ func (ctx *Context) HTML(status int, name string, data ...interface{}) {
 	ctx.renderHTML(status, DEFAULT_TPL_SET_NAME, name, data...)
 }
 
-// HTMLSet renders the HTML with given template set name.
-func (ctx *Context) HTMLSet(status int, setName, tplName string, data ...interface{}) {
-	ctx.renderHTML(status, setName, tplName, data...)
-}
-
 // Redirect sends a redirect response
 func (ctx *Context) Redirect(location string, status ...int) {
 	code := http.StatusFound
@@ -202,11 +158,6 @@ func (ctx *Context) Query(name string) string {
 	return ctx.Req.Form.Get(name)
 }
 
-// QueryTrim querys and trims spaces form parameter.
-func (ctx *Context) QueryTrim(name string) string {
-	return strings.TrimSpace(ctx.Query(name))
-}
-
 // QueryStrings returns a list of results by given query name.
 func (ctx *Context) QueryStrings(name string) []string {
 	ctx.parseForm()
@@ -216,11 +167,6 @@ func (ctx *Context) QueryStrings(name string) []string {
 		return []string{}
 	}
 	return vals
-}
-
-// QueryEscape returns escapred query result.
-func (ctx *Context) QueryEscape(name string) string {
-	return template.HTMLEscapeString(ctx.Query(name))
 }
 
 // QueryBool returns query result in bool type.
@@ -241,12 +187,6 @@ func (ctx *Context) QueryInt64(name string) int64 {
 	return n
 }
 
-// QueryFloat64 returns query result in float64 type.
-func (ctx *Context) QueryFloat64(name string) float64 {
-	v, _ := strconv.ParseFloat(ctx.Query(name), 64)
-	return v
-}
-
 // Params returns value of given param name.
 // e.g. ctx.Params(":uid") or ctx.Params("uid")
 func (ctx *Context) Params(name string) string {
@@ -264,145 +204,11 @@ func (ctx *Context) AllParams() Params {
 	return ctx.params
 }
 
-// SetParams sets value of param with given name.
-func (ctx *Context) SetParams(name, val string) {
-	if name != "*" && !strings.HasPrefix(name, ":") {
-		name = ":" + name
-	}
-	ctx.params[name] = val
-}
-
-// ReplaceAllParams replace all current params with given params
-func (ctx *Context) ReplaceAllParams(params Params) {
-	ctx.params = params
-}
-
-// ParamsEscape returns escapred params result.
-// e.g. ctx.ParamsEscape(":uname")
-func (ctx *Context) ParamsEscape(name string) string {
-	return template.HTMLEscapeString(ctx.Params(name))
-}
-
-// ParamsInt returns params result in int type.
-// e.g. ctx.ParamsInt(":uid")
-func (ctx *Context) ParamsInt(name string) int {
-	n, _ := strconv.Atoi(ctx.Params(name))
-	return n
-}
-
 // ParamsInt64 returns params result in int64 type.
 // e.g. ctx.ParamsInt64(":uid")
 func (ctx *Context) ParamsInt64(name string) int64 {
 	n, _ := strconv.ParseInt(ctx.Params(name), 10, 64)
 	return n
-}
-
-// ParamsFloat64 returns params result in int64 type.
-// e.g. ctx.ParamsFloat64(":uid")
-func (ctx *Context) ParamsFloat64(name string) float64 {
-	v, _ := strconv.ParseFloat(ctx.Params(name), 64)
-	return v
-}
-
-// GetFile returns information about user upload file by given form field name.
-func (ctx *Context) GetFile(name string) (multipart.File, *multipart.FileHeader, error) {
-	return ctx.Req.FormFile(name)
-}
-
-// SaveToFile reads a file from request by field name and saves to given path.
-func (ctx *Context) SaveToFile(name, savePath string) error {
-	fr, _, err := ctx.GetFile(name)
-	if err != nil {
-		return err
-	}
-	defer fr.Close()
-
-	fw, err := os.OpenFile(savePath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0666)
-	if err != nil {
-		return err
-	}
-	defer fw.Close()
-
-	_, err = io.Copy(fw, fr)
-	return err
-}
-
-// SetCookie sets given cookie value to response header.
-// FIXME: IE support? http://golanghome.com/post/620#reply2
-func (ctx *Context) SetCookie(name string, value string, others ...interface{}) {
-	cookie := http.Cookie{}
-	cookie.Name = name
-	cookie.Value = url.QueryEscape(value)
-
-	if len(others) > 0 {
-		switch v := others[0].(type) {
-		case int:
-			cookie.MaxAge = v
-		case int64:
-			cookie.MaxAge = int(v)
-		case int32:
-			cookie.MaxAge = int(v)
-		case func(*http.Cookie):
-			v(&cookie)
-		}
-	}
-
-	cookie.Path = "/"
-	if len(others) > 1 {
-		if v, ok := others[1].(string); ok && len(v) > 0 {
-			cookie.Path = v
-		} else if v, ok := others[1].(func(*http.Cookie)); ok {
-			v(&cookie)
-		}
-	}
-
-	if len(others) > 2 {
-		if v, ok := others[2].(string); ok && len(v) > 0 {
-			cookie.Domain = v
-		} else if v, ok := others[1].(func(*http.Cookie)); ok {
-			v(&cookie)
-		}
-	}
-
-	if len(others) > 3 {
-		switch v := others[3].(type) {
-		case bool:
-			cookie.Secure = v
-		case func(*http.Cookie):
-			v(&cookie)
-		default:
-			if others[3] != nil {
-				cookie.Secure = true
-			}
-		}
-	}
-
-	if len(others) > 4 {
-		if v, ok := others[4].(bool); ok && v {
-			cookie.HttpOnly = true
-		} else if v, ok := others[1].(func(*http.Cookie)); ok {
-			v(&cookie)
-		}
-	}
-
-	if len(others) > 5 {
-		if v, ok := others[5].(time.Time); ok {
-			cookie.Expires = v
-			cookie.RawExpires = v.Format(time.UnixDate)
-		} else if v, ok := others[1].(func(*http.Cookie)); ok {
-			v(&cookie)
-		}
-	}
-
-	if len(others) > 6 {
-		for _, other := range others[6:] {
-			if v, ok := other.(func(*http.Cookie)); ok {
-				v(&cookie)
-			}
-		}
-	}
-
-	ctx.Resp.Header().Add("Set-Cookie", cookie.String())
 }
 
 // GetCookie returns given cookie value from request header.
@@ -413,29 +219,4 @@ func (ctx *Context) GetCookie(name string) string {
 	}
 	val, _ := url.QueryUnescape(cookie.Value)
 	return val
-}
-
-// GetCookieInt returns cookie result in int type.
-func (ctx *Context) GetCookieInt(name string) int {
-	n, _ := strconv.Atoi(ctx.GetCookie(name))
-	return n
-}
-
-// GetCookieInt64 returns cookie result in int64 type.
-func (ctx *Context) GetCookieInt64(name string) int64 {
-	n, _ := strconv.ParseInt(ctx.GetCookie(name), 10, 64)
-	return n
-}
-
-// GetCookieFloat64 returns cookie result in float64 type.
-func (ctx *Context) GetCookieFloat64(name string) float64 {
-	v, _ := strconv.ParseFloat(ctx.GetCookie(name), 64)
-	return v
-}
-
-var defaultCookieSecret string
-
-// SetDefaultCookieSecret sets global default secure cookie secret.
-func (m *Macaron) SetDefaultCookieSecret(secret string) {
-	defaultCookieSecret = secret
 }
