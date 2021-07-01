@@ -75,7 +75,7 @@ export class GrafanaApp {
     setLocale(config.bootData.user.locale);
     setPanelRenderer(PanelRenderer);
     setTimeZoneResolver(() => config.bootData.user.timezone);
-    // Important that extensions are initialized before store
+    // Important that extensions are initialized before store.
     initExtensions();
     configureStore();
 
