@@ -2,10 +2,10 @@ import React from 'react';
 import { css, cx } from '@emotion/css';
 import { VizLegendTableProps } from './types';
 import { Icon } from '../Icon/Icon';
-import { useStyles } from '../../themes/ThemeContext';
-import { union, sortBy } from 'lodash';
+import { useStyles2 } from '../../themes/ThemeContext';
+import { sortBy } from 'lodash';
 import { LegendTableItem } from './VizLegendTableItem';
-import { GrafanaTheme } from '@grafana/data';
+import { DisplayValue, GrafanaTheme2 } from '@grafana/data';
 
 /**
  * @internal
@@ -22,24 +22,16 @@ export const VizLegendTable = <T extends unknown>({
   onLabelMouseOut,
   readonly,
 }: VizLegendTableProps<T>): JSX.Element => {
-  const styles = useStyles(getStyles);
+  const styles = useStyles2(getStyles);
+  const stats: Record<string, DisplayValue> = {};
 
-  const columns = items
-    .map((item) => {
-      if (item.getDisplayValues) {
-        return item.getDisplayValues().map((i) => i.title);
+  for (const item of items) {
+    if (item.getDisplayValues) {
+      for (const displayValue of item.getDisplayValues()) {
+        stats[displayValue.title ?? '?'] = displayValue;
       }
-      return [];
-    })
-    .reduce(
-      (acc, current) => {
-        return union(
-          acc,
-          current.filter((item) => !!item)
-        );
-      },
-      ['']
-    ) as string[];
+    }
+  }
 
   const sortedItems = sortKey
     ? sortBy(items, (item) => {
@@ -69,19 +61,22 @@ export const VizLegendTable = <T extends unknown>({
     <table className={cx(styles.table, className)}>
       <thead>
         <tr>
-          {columns.map((columnHeader) => {
+          <th></th>
+          {Object.keys(stats).map((columnTitle) => {
+            const displayValue = stats[columnTitle];
             return (
               <th
-                key={columnHeader}
+                title={displayValue.description}
+                key={columnTitle}
                 className={cx(styles.header, onToggleSort && styles.headerSortable)}
                 onClick={() => {
                   if (onToggleSort) {
-                    onToggleSort(columnHeader);
+                    onToggleSort(columnTitle);
                   }
                 }}
               >
-                {columnHeader}
-                {sortKey === columnHeader && (
+                {columnTitle}
+                {sortKey === columnTitle && (
                   <Icon className={styles.sortIcon} name={sortDesc ? 'angle-down' : 'angle-up'} />
                 )}
               </th>
@@ -94,7 +89,7 @@ export const VizLegendTable = <T extends unknown>({
   );
 };
 
-const getStyles = (theme: GrafanaTheme) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   table: css`
     width: 100%;
     th:first-child {
@@ -102,10 +97,11 @@ const getStyles = (theme: GrafanaTheme) => ({
     }
   `,
   header: css`
-    color: ${theme.colors.textBlue};
-    font-weight: ${theme.typography.weight.semibold};
-    border-bottom: 1px solid ${theme.colors.border1};
-    padding: ${theme.spacing.xxs} ${theme.spacing.sm};
+    color: ${theme.colors.primary.text};
+    font-weight: ${theme.typography.fontWeightMedium};
+    border-bottom: 1px solid ${theme.colors.border.weak};
+    padding: ${theme.spacing(0.25, 1)};
+    font-size: ${theme.typography.bodySmall.fontSize};
     text-align: right;
     white-space: nowrap;
   `,
@@ -113,6 +109,6 @@ const getStyles = (theme: GrafanaTheme) => ({
     cursor: pointer;
   `,
   sortIcon: css`
-    margin-left: ${theme.spacing.sm};
+    margin-left: ${theme.spacing(1)};
   `,
 });
