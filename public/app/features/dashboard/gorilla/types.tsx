@@ -306,7 +306,7 @@ export function GorillaSideMenu(): ReactElement | null {
 type GorillaSettingsProps = {};
 
 export function GorillaSettings(props: GorillaSettingsProps): ReactElement | null {
-  const onChangeConfig = useGorillaConfigChanger();
+  const { config, onChangeConfig } = useContext(GorillaContext);
   const styles = useStyles2(getStyles);
 
   const onChangeProfile = useCallback(
@@ -325,16 +325,15 @@ export function GorillaSettings(props: GorillaSettingsProps): ReactElement | nul
   const onChangeOption = useCallback(
     (path: string) => {
       const current = get(customProfile, path) as GorillaContextItem;
-      const copy = { ...customProfile };
 
       if (current?.mode === GorillaMode.default) {
-        set(copy, path, { mode: GorillaMode.hidden });
-        onChangeConfig(copy);
+        set(customProfile, path, { mode: GorillaMode.hidden });
+        onChangeConfig({ ...customProfile });
         return;
       }
 
-      set(copy, path, { mode: GorillaMode.default });
-      onChangeConfig(copy);
+      set(customProfile, path, { mode: GorillaMode.default });
+      onChangeConfig({ ...customProfile });
     },
     [onChangeConfig]
   );
@@ -343,12 +342,10 @@ export function GorillaSettings(props: GorillaSettingsProps): ReactElement | nul
     return null;
   }
 
-  const configuration = profileRegistry[currentProfile];
-
   const configurableOptions: Array<SelectableValue<string>> = [
+    { value: 'sideMenu', label: 'Side Menu' },
     { value: 'dashNav.timePicker', label: 'Time picker' },
     { value: 'dashNav.title', label: 'Title' },
-    { value: 'dashNav.sideMenu', label: 'Side Menu' },
     { value: 'dashNav.tvToggle', label: 'Kiosk mode button' },
     { value: 'dashNav.addPanelToggle', label: 'Add panel button' },
     { value: 'dashNav.snapshotToggle', label: 'Snapshot Button' },
@@ -364,29 +361,34 @@ export function GorillaSettings(props: GorillaSettingsProps): ReactElement | nul
             onChange={onChangeProfile}
             options={[
               { value: GorillaProfile.standard, label: 'Standard' },
-              { value: GorillaProfile.tv, label: 'TV' },
+              { value: GorillaProfile.tv, label: 'Zen' },
               { value: GorillaProfile.custom, label: 'Custom' },
             ]}
             value={currentProfile}
           />
           <div className={styles.options}>
-            {configurableOptions.map((option) => {
-              if (!option.value) {
-                return;
-              }
+            {currentProfile === GorillaProfile.tv &&
+              'The zen mode will hide everything except the dashboard panels to remove all distractions. This mode used to be called TV mode.'}
+            {currentProfile === GorillaProfile.standard &&
+              'The standard kiosk mode will hide the side menu and all the controls from the dashboard top navigation except the title and time controls.'}
+            {currentProfile === GorillaProfile.custom &&
+              configurableOptions.map((option) => {
+                if (!option.value) {
+                  return;
+                }
 
-              const value = get(configuration, option.value) as GorillaContextItem;
+                const value = get(config, option.value) as GorillaContextItem;
 
-              return (
-                <div key={option.value}>
-                  <Checkbox
-                    value={value?.mode === GorillaMode.default}
-                    label={option.label}
-                    onChange={() => onChangeOption(option.value!)}
-                  />
-                </div>
-              );
-            })}
+                return (
+                  <div key={option.value}>
+                    <Checkbox
+                      value={value?.mode === GorillaMode.default}
+                      label={option.label}
+                      onChange={() => onChangeOption(option.value!)}
+                    />
+                  </div>
+                );
+              })}
           </div>
         </>
       </Field>
