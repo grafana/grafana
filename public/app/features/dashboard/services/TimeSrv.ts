@@ -1,5 +1,6 @@
 import { cloneDeep, extend, isString } from 'lodash';
 import {
+  AppEvents,
   dateMath,
   dateTime,
   getDefaultTimeRange,
@@ -57,11 +58,57 @@ export class TimeSrv {
     this.initTimeFromUrl();
     this.parseTime();
 
+    if (this.dashboard.timepicker.maxTimeRange || this.dashboard.timepicker.oldestFrom) {
+      this.checkTimeAtLoad();
+    }
+
     // remember time at load so we can go back to it
     this.timeAtLoad = cloneDeep(this.time);
 
     if (this.refresh) {
       this.setAutoRefresh(this.refresh);
+    }
+  }
+
+  checkTimeAtLoad() {
+    let maxTimeRangeInMillis = 0,
+      oldestFromInMillis = 0;
+    if (this.dashboard.timepicker.maxTimeRange) {
+      maxTimeRangeInMillis = rangeUtil.intervalToMs(this.dashboard.timepicker.maxTimeRange);
+    }
+    if (this.dashboard.timepicker.oldestFrom) {
+      oldestFromInMillis = rangeUtil.intervalToMs(this.dashboard.timepicker.oldestFrom);
+    }
+    let min = 0;
+    if (maxTimeRangeInMillis !== 0 && oldestFromInMillis !== 0) {
+      min = Math.min(maxTimeRangeInMillis, oldestFromInMillis);
+    } else if (maxTimeRangeInMillis !== 0) {
+      min = maxTimeRangeInMillis;
+    } else if (oldestFromInMillis !== 0) {
+      min = oldestFromInMillis;
+    }
+    let str;
+    if (min !== 0) {
+      str = rangeUtil.secondsToHms(min / 1000);
+    }
+    const timezone = this.dashboard ? this.dashboard.getTimezone() : undefined;
+    let from: any = this.time.from;
+    let to: any = this.time.to;
+    if (dateMath.isMathString(from)) {
+      from = dateMath.parse(from, false, timezone);
+    }
+    if (dateMath.isMathString(to)) {
+      to = dateMath.parse(to, false, timezone);
+    }
+
+    if (
+      min !== 0 &&
+      ((maxTimeRangeInMillis !== 0 && to.valueOf() - from.valueOf() > maxTimeRangeInMillis) ||
+        (oldestFromInMillis !== 0 && Date.now() - from.valueOf() > oldestFromInMillis))
+    ) {
+      this.time.from = 'now-' + str;
+      this.time.to = 'now';
+      this.setTime(this.time);
     }
   }
 
@@ -249,6 +296,48 @@ export class TimeSrv {
   }
 
   setTime(time: RawTimeRange, fromRouteUpdate?: boolean) {
+    let isSetTime = true;
+    let maxTimeRangeInMillis = 0,
+      oldestFromInMillis = 0;
+
+    if (this.dashboard.timepicker.maxTimeRange) {
+      maxTimeRangeInMillis = rangeUtil.intervalToMs(this.dashboard.timepicker.maxTimeRange);
+    }
+
+    if (this.dashboard.timepicker.oldestFrom) {
+      oldestFromInMillis = rangeUtil.intervalToMs(this.dashboard.timepicker.oldestFrom);
+    }
+
+    const timezone = this.dashboard ? this.dashboard.getTimezone() : undefined;
+    let from: any = time.from;
+    let to: any = time.to;
+
+    if (dateMath.isMathString(from)) {
+      from = dateMath.parse(from, false, timezone);
+    }
+
+    if (dateMath.isMathString(to)) {
+      to = dateMath.parse(to, false, timezone);
+    }
+
+    if (maxTimeRangeInMillis !== 0 && to.valueOf() - from.valueOf() > maxTimeRangeInMillis) {
+      appEvents.emit(AppEvents.alertWarning, [
+        'Timerange can not be more than ' + this.dashboard.timepicker.maxTimeRange,
+      ]);
+      isSetTime = false;
+    }
+
+    if (oldestFromInMillis !== 0 && Date.now() - from.valueOf() > oldestFromInMillis) {
+      appEvents.emit(AppEvents.alertWarning, [
+        'The start of the timerange can not be more than ' + this.dashboard.timepicker.oldestFrom + ' old from now',
+      ]);
+      isSetTime = false;
+    }
+
+    if (!isSetTime) {
+      return;
+    }
+
     extend(this.time, time);
 
     // disable refresh if zoom in or zoom out
