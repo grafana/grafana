@@ -2,8 +2,7 @@ import React, { PureComponent } from 'react';
 import { isEqual } from 'lodash';
 import tinycolor from 'tinycolor2';
 import { css, cx } from '@emotion/css';
-import { LogRowModel, findHighlightChunksInText, GrafanaTheme, LogsParser } from '@grafana/data';
-import { getParser } from '../../../../grafana-data/src/utils/logs';
+import { LogRowModel, findHighlightChunksInText, GrafanaTheme, LogsParser, getParser } from '@grafana/data';
 
 // @ts-ignore
 import Highlighter from 'react-highlight-words';
