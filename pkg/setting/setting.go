@@ -17,6 +17,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gobwas/glob"
+
 	"github.com/prometheus/common/model"
 	ini "gopkg.in/ini.v1"
 
@@ -391,6 +393,9 @@ type Cfg struct {
 	LiveHAEngine string
 	// LiveHAEngineAddress is a connection address for Live HA engine.
 	LiveHAEngineAddress string
+	// LiveAllowedOrigins is a set of origins accepted by Live. If not provided
+	// then Live uses AppURL as the only allowed origin.
+	LiveAllowedOrigins []string
 
 	// Grafana.com URL
 	GrafanaComURL string
@@ -1446,6 +1451,19 @@ func (cfg *Cfg) readDataSourcesSettings() {
 	cfg.DataSourceLimit = datasources.Key("datasource_limit").MustInt(5000)
 }
 
+func GetAllowedOriginGlobs(originPatterns []string) ([]glob.Glob, error) {
+	var originGlobs []glob.Glob
+	allowedOrigins := originPatterns
+	for _, originPattern := range allowedOrigins {
+		g, err := glob.Compile(originPattern)
+		if err != nil {
+			return nil, fmt.Errorf("error parsing origin pattern: %v", err)
+		}
+		originGlobs = append(originGlobs, g)
+	}
+	return originGlobs, nil
+}
+
 func (cfg *Cfg) readLiveSettings(iniFile *ini.File) error {
 	section := iniFile.Section("live")
 	cfg.LiveMaxConnections = section.Key("max_connections").MustInt(100)
@@ -1459,5 +1477,20 @@ func (cfg *Cfg) readLiveSettings(iniFile *ini.File) error {
 		return fmt.Errorf("unsupported live HA engine type: %s", cfg.LiveHAEngine)
 	}
 	cfg.LiveHAEngineAddress = section.Key("ha_engine_address").MustString("127.0.0.1:6379")
+
+	var originPatterns []string
+	allowedOrigins := section.Key("allowed_origins").MustString("")
+	for _, originPattern := range strings.Split(allowedOrigins, ",") {
+		originPattern = strings.TrimSpace(originPattern)
+		if originPattern == "" {
+			continue
+		}
+		originPatterns = append(originPatterns, originPattern)
+	}
+	_, err := GetAllowedOriginGlobs(originPatterns)
+	if err != nil {
+		return err
+	}
+	cfg.LiveAllowedOrigins = originPatterns
 	return nil
 }
