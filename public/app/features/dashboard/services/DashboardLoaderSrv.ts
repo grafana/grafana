@@ -30,6 +30,7 @@ export class DashboardLoaderSrv {
 
   loadDashboard(type: UrlQueryValue, slug: any, uid: any) {
     let promise;
+
     if (type === 'script') {
       promise = this._loadScriptedDashboard(slug);
     } else if (type === 'snapshot') {
@@ -37,7 +38,7 @@ export class DashboardLoaderSrv {
         return this._dashboardLoadFailed('Snapshot not found', true);
       });
     } else if (type === 'ds') {
-      promise = this._loadFromDatasource(slug);
+      promise = this._loadFromDatasource(slug); // explore dashboards as code
     } else {
       promise = backendSrv
         .getDashboardByUid(uid)
