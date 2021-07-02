@@ -2,6 +2,7 @@ import { from, merge, Observable, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { getBackendSrv, getGrafanaLiveSrv, getTemplateSrv, toDataQueryResponse } from '@grafana/runtime';
 import {
+  AnnotationQuery,
   AnnotationQueryRequest,
   DataQueryRequest,
   DataQueryResponse,
@@ -24,7 +25,7 @@ export class GrafanaDatasource extends DataSourceApi<GrafanaQuery> {
     super(instanceSettings);
     this.annotations = {
       QueryEditor: AnnotationQueryEditor,
-      prepareAnnotation(json: any): GrafanaAnnotationQuery {
+      prepareAnnotation(json: any): AnnotationQuery<GrafanaAnnotationQuery> {
         // Previously, these properties lived outside of target
         // This should handle migrating them
         json.target = json.target ?? {
@@ -35,7 +36,7 @@ export class GrafanaDatasource extends DataSourceApi<GrafanaQuery> {
         }; // using spread syntax caused an infinite loop in StandardAnnotationQueryEditor
         return json;
       },
-      prepareQuery(anno: GrafanaAnnotationQuery): GrafanaQuery {
+      prepareQuery(anno: AnnotationQuery<GrafanaAnnotationQuery>): GrafanaQuery {
         return { ...anno, refId: anno.name, queryType: GrafanaQueryType.Annotations };
       },
     };
@@ -53,7 +54,7 @@ export class GrafanaDatasource extends DataSourceApi<GrafanaQuery> {
           this.getAnnotations({
             range: request.range,
             rangeRaw: request.range.raw,
-            annotation: target.target as any,
+            annotation: (target as unknown) as AnnotationQuery<GrafanaAnnotationQuery>,
             dashboard: getDashboardSrv().getCurrent(),
           })
         );
@@ -111,16 +112,17 @@ export class GrafanaDatasource extends DataSourceApi<GrafanaQuery> {
 
   async getAnnotations(options: AnnotationQueryRequest<GrafanaQuery>): Promise<DataQueryResponse> {
     const templateSrv = getTemplateSrv();
-    const annotation = (options.annotation as unknown) as GrafanaAnnotationQuery;
+    const annotation = (options.annotation as unknown) as AnnotationQuery<GrafanaAnnotationQuery>;
+    const target = annotation.target!;
     const params: any = {
       from: options.range.from.valueOf(),
       to: options.range.to.valueOf(),
-      limit: annotation.limit,
-      tags: annotation.tags,
-      matchAny: annotation.matchAny,
+      limit: target.limit,
+      tags: target.tags,
+      matchAny: target.matchAny,
     };
 
-    if (annotation.type === GrafanaAnnotationType.Dashboard) {
+    if (target.type === GrafanaAnnotationType.Dashboard) {
       // if no dashboard id yet return
       if (!options.dashboard.id) {
         return Promise.resolve({ data: [] });
@@ -131,7 +133,7 @@ export class GrafanaDatasource extends DataSourceApi<GrafanaQuery> {
       delete params.tags;
     } else {
       // require at least one tag
-      if (!Array.isArray(annotation.tags) || annotation.tags.length === 0) {
+      if (!Array.isArray(target.tags) || target.tags.length === 0) {
         return Promise.resolve({ data: [] });
       }
       const delimiter = '__delimiter__';

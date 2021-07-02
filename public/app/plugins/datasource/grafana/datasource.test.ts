@@ -80,7 +80,9 @@ describe('grafana data source', () => {
 
 function setupAnnotationQueryOptions(annotation: Partial<GrafanaAnnotationQuery>, dashboard?: { id: number }) {
   return ({
-    annotation,
+    annotation: {
+      target: annotation,
+    },
     dashboard,
     range: {
       from: dateTime(1432288354),
