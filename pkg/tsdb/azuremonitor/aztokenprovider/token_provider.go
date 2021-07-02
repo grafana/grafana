@@ -24,6 +24,15 @@ type tokenProviderImpl struct {
 }
 
 func NewAzureAccessTokenProvider(cfg *setting.Cfg, credentials azcredentials.AzureCredentials) (AzureTokenProvider, error) {
+	if cfg == nil {
+		err := fmt.Errorf("parameter 'cfg' cannot be nil")
+		return nil, err
+	}
+	if credentials == nil {
+		err := fmt.Errorf("parameter 'credentials' cannot be nil")
+		return nil, err
+	}
+
 	var tokenCredential TokenCredential
 
 	switch c := credentials.(type) {
@@ -49,6 +58,15 @@ func NewAzureAccessTokenProvider(cfg *setting.Cfg, credentials azcredentials.Azu
 }
 
 func (provider *tokenProviderImpl) GetAccessToken(ctx context.Context, scopes []string) (string, error) {
+	if ctx == nil {
+		err := fmt.Errorf("parameter 'ctx' cannot be nil")
+		return "", err
+	}
+	if scopes == nil {
+		err := fmt.Errorf("parameter 'scopes' cannot be nil")
+		return "", err
+	}
+
 	accessToken, err := azureTokenCache.GetAccessToken(ctx, provider.credential, scopes)
 	if err != nil {
 		return "", err

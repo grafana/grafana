@@ -4,14 +4,14 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/azcredentials"
 	"github.com/stretchr/testify/require"
 )
 
 func Test_httpCliProvider(t *testing.T) {
 	cfg := &setting.Cfg{}
 	model := datasourceInfo{
-		Settings:                azureMonitorSettings{},
-		DecryptedSecureJSONData: map[string]string{"clientSecret": "content"},
+		Credentials: &azcredentials.AzureClientSecretCredentials{},
 	}
 	tests := []struct {
 		name                string
