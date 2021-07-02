@@ -180,34 +180,14 @@ class DashNav extends PureComponent<Props> {
   }
 
   renderRightActionsButton() {
-    const { dashboard, onAddPanel, isFullscreen, kioskMode } = this.props;
+    const { dashboard, onAddPanel, isFullscreen } = this.props;
     const { canEdit, showSettings } = dashboard.meta;
     const { snapshot } = dashboard;
     const snapshotUrl = snapshot && snapshot.originalUrl;
     const buttons: ReactNode[] = [];
-    const tvButton = (
-      <GorillaToolbarButton
-        configPath="dashNav.tvToggle"
-        tooltip="Cycle view mode"
-        icon="monitor"
-        onClick={this.onToggleTVMode}
-        key="tv-button"
-      />
-    );
 
     if (this.isPlaylistRunning()) {
       return [this.renderPlaylistControls(), this.renderTimeControls()];
-    }
-
-    if (kioskMode === KioskMode.TV) {
-      return [
-        <GorillaDashNavTimeControls
-          dashboard={dashboard}
-          onChangeTimeZone={updateTimeZoneForSession}
-          key="time-controls"
-        />,
-        tvButton,
-      ];
     }
 
     if (canEdit && !isFullscreen) {
@@ -265,8 +245,22 @@ class DashNav extends PureComponent<Props> {
 
     this.addCustomContent(customRightActions, buttons);
 
-    buttons.push(this.renderTimeControls());
-    buttons.push(tvButton);
+    buttons.push(
+      <GorillaDashNavTimeControls
+        dashboard={dashboard}
+        onChangeTimeZone={updateTimeZoneForSession}
+        key="time-controls"
+      />
+    );
+    buttons.push(
+      <GorillaToolbarButton
+        configPath="dashNav.tvToggle"
+        tooltip="Cycle view mode"
+        icon="monitor"
+        onClick={this.onToggleTVMode}
+        key="tv-button"
+      />
+    );
     return buttons;
   }
 
