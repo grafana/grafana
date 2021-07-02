@@ -41,13 +41,15 @@ func (g *Grafanats) IsLeader() bool {
 	return g.server.JetStreamIsLeader()
 }
 
-// GF_SERVER_ID=1 GF_SERVER_HTTP_PORT=3000 GF_NATS_PORT=4222 GF_NATS_CLUSTER_PORT=10000 GF_NATS_CLUSTER_ROUTES='nats-route://localhost:10001,nats-route://localhost:10002' make run
-// GF_SERVER_ID=2 GF_SERVER_HTTP_PORT=3001 GF_NATS_PORT=4223 GF_NATS_CLUSTER_PORT=10001 GF_NATS_CLUSTER_ROUTES='nats-route://localhost:10000,nats-route://localhost:10002' make run
-// GF_SERVER_ID=3 GF_SERVER_HTTP_PORT=3002 GF_NATS_PORT=4224 GF_NATS_CLUSTER_PORT=10002 GF_NATS_CLUSTER_ROUTES='nats-route://localhost:10000,nats-route://localhost:10001' make run
+// GF_SERVER_ID=1 GF_SERVER_HTTP_PORT=3000 GF_NATS_PORT=4222 GF_NATS_CLUSTER_PORT=10000 GF_NATS_MQTT_PORT=1883 GF_NATS_CLUSTER_ROUTES='nats-route://localhost:10001,nats-route://localhost:10002' make run
+// GF_SERVER_ID=2 GF_SERVER_HTTP_PORT=3001 GF_NATS_PORT=4223 GF_NATS_CLUSTER_PORT=10001 GF_NATS_MQTT_PORT=1884 GF_NATS_CLUSTER_ROUTES='nats-route://localhost:10000,nats-route://localhost:10002' make run
+// GF_SERVER_ID=3 GF_SERVER_HTTP_PORT=3002 GF_NATS_PORT=4224 GF_NATS_CLUSTER_PORT=10002 GF_NATS_MQTT_PORT=1885 GF_NATS_CLUSTER_ROUTES='nats-route://localhost:10000,nats-route://localhost:10001' make run
+// GF_SERVER_ID=4 GF_SERVER_HTTP_PORT=3003 GF_NATS_PORT=4225 GF_NATS_CLUSTER_PORT=10003 GF_NATS_MQTT_PORT=1886 GF_NATS_CLUSTER_ROUTES='nats-route://localhost:10000,nats-route://localhost:10001' make run
+// GF_SERVER_ID=5 GF_SERVER_HTTP_PORT=3004 GF_NATS_PORT=4226 GF_NATS_CLUSTER_PORT=10004 GF_NATS_MQTT_PORT=1887 GF_NATS_CLUSTER_ROUTES='nats-route://localhost:10000,nats-route://localhost:10001' make run
 //
 // Possible use cases:
 // * Synchronize Grafana server instances (datasource config changes, plugin installation), avoid periodic db checks
-// * Asynchronous event passing for external integrations - like dashboard changed (could be much better with transactional outbox)
+// * Asynchronous event passing for external integrations - like dashboard changed, with transactional outbox
 // * Point MQTT device to Grafana itself instead of MQTT broker, on plugin side push data to panels reading from Grafana MQTT topic
 // * Live PUB/SUB without external dependencies (like Redis), question: how to handle schema updates?
 // * Communication with remote plugins – just issue a request and wait for a reply.
@@ -59,6 +61,7 @@ func (g *Grafanats) Init() error {
 	if err != nil {
 		return fmt.Errorf("failed to parse embedded NATS server config")
 	}
+	opts.Cluster.Host = "0.0.0.0"
 	opts.Port, err = strconv.Atoi(os.Getenv("GF_NATS_PORT"))
 	if err != nil {
 		return err
@@ -66,11 +69,17 @@ func (g *Grafanats) Init() error {
 	if os.Getenv("GF_SERVER_ID") != "" {
 		opts.StoreDir = "data/grafanats/server-" + os.Getenv("GF_SERVER_ID")
 		opts.ServerName = os.Getenv("GF_SERVER_ID")
+		opts.Cluster.Host = "0.0.0.0"
 		opts.Cluster.Port, err = strconv.Atoi(os.Getenv("GF_NATS_CLUSTER_PORT"))
 		if err != nil {
 			return err
 		}
 		opts.Routes = server.RoutesFromStr(os.Getenv("GF_NATS_CLUSTER_ROUTES"))
+		opts.MQTT.Host = "0.0.0.0"
+		opts.MQTT.Port, err = strconv.Atoi(os.Getenv("GF_NATS_MQTT_PORT"))
+		if err != nil {
+			return err
+		}
 	}
 
 	opts.JetStream = true
@@ -79,7 +88,9 @@ func (g *Grafanats) Init() error {
 	if err != nil {
 		return fmt.Errorf("failed to initialize embedded NATS server")
 	}
-	natsServer.ConfigureLogger()
+	//natsServer.ConfigureLogger()
+	natsServer.SetLoggerV2(&LogAdapter{}, false, false, false)
+
 	go func() {
 		natsServer.Start()
 	}()
@@ -138,12 +149,14 @@ func (g *Grafanats) createStream(s EventStream) error {
 		})
 		if err != nil {
 			if strings.Contains(err.Error(), "stream name already in use") {
+				logger.Info("Stream already exists", "name", s.Name)
 				return nil
 			}
 			logger.Error("Error creating stream", "error", err.Error())
 			time.Sleep(3 * time.Second)
 			continue
 		}
+		logger.Info("Created new stream", "name", s.Name)
 		return nil
 	}
 	return fmt.Errorf("error creating stream %s", s.Name)
@@ -157,27 +170,13 @@ func (g *Grafanats) subscribeStream(s EventStream) error {
 	if err != nil {
 		return fmt.Errorf("error subscribing: %v", s.Name)
 	}
+	logger.Info("Subscribed to a stream", "name", s.Name)
 	return nil
 }
 
 // Run Grafanats.
 func (g *Grafanats) Run(ctx context.Context) error {
-	//count := 0
-loop:
-	for {
-		select {
-		case <-ctx.Done():
-			break loop
-		case <-time.After(time.Second):
-			//ack, err := g.client.Publish("datasource_changes", []byte(strconv.Itoa(count)))
-			//if err != nil {
-			//	logger.Error("error publishing to event stream", "error", err.Error())
-			//	continue
-			//}
-			//count++
-			//logger.Info("published to a stream", "stream", ack.Stream, "sequence", ack.Sequence)
-		}
-	}
+	<-ctx.Done()
 	_ = g.conn.Close
 	return ctx.Err()
 }
