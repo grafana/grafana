@@ -59,14 +59,16 @@ export function getScaleGradientFn(
 
   return (plot: uPlot, seriesIdx: number) => {
     // A uplot bug (I think) where this is called before there is bbox
+    // Color used for cursor highlight, not sure what to do here as this is called before we have bbox
+    // and only once so same color is used for all points
     if (plot.bbox.top == null) {
-      return '#FFFFFF';
+      return theme.colors.text.primary;
     }
 
     const ctx = getCanvasContext();
     const gradient = ctx.createLinearGradient(0, plot.bbox.top, 0, plot.bbox.top + plot.bbox.height);
-    const series = plot.series[seriesIdx];
     const range = plot.bbox.height;
+    const series = plot.series[seriesIdx];
     const scale = plot.scales[series.scale!];
 
     const addColorStop = (value: number, color: string) => {
