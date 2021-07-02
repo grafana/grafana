@@ -29,7 +29,11 @@ describe('AnnotationQueryEditor', () => {
     expect(maxLimit).toBeInTheDocument();
   });
 
-  describe('when the query type is "Tags"', () => {
+  describe('when the query type is "Tags" and the tags array is present', () => {
+    beforeEach(() => {
+      mockQuery.tags = [];
+    });
+
     it('has a "Match any" toggle', () => {
       render(<AnnotationQueryEditor query={mockQuery} onChange={mockOnChange} />);
       const matchAny = screen.getByLabelText('Match any');
