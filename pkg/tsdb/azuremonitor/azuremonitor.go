@@ -60,7 +60,7 @@ type datasourceInfo struct {
 	Routes      map[string]azRoute
 	HTTPCliOpts httpclient.Options
 
-	JSONData                *simplejson.Json
+	JSONData                map[string]interface{}
 	DecryptedSecureJSONData map[string]string
 	DatasourceID            int64
 	OrgID                   int64
@@ -74,6 +74,12 @@ type datasourceService struct {
 func NewInstanceSettings(cfg *setting.Cfg) datasource.InstanceFactoryFunc {
 	return func(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		jsonData, err := simplejson.NewJson(settings.JSONData)
+		if err != nil {
+			return nil, fmt.Errorf("error reading settings: %w", err)
+		}
+
+		jsonDataObj := map[string]interface{}{}
+		err = json.Unmarshal(settings.JSONData, &jsonDataObj)
 		if err != nil {
 			return nil, fmt.Errorf("error reading settings: %w", err)
 		}
@@ -103,7 +109,7 @@ func NewInstanceSettings(cfg *setting.Cfg) datasource.InstanceFactoryFunc {
 			Cloud:                   cloud,
 			Credentials:             credentials,
 			Settings:                azMonitorSettings,
-			JSONData:                jsonData,
+			JSONData:                jsonDataObj,
 			DecryptedSecureJSONData: settings.DecryptedSecureJSONData,
 			DatasourceID:            settings.ID,
 			Services:                map[string]datasourceService{},

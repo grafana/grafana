@@ -2,11 +2,13 @@ package azuremonitor
 
 import (
 	"context"
+	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/azcredentials"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/require"
 )
@@ -21,14 +23,16 @@ func TestNewInstanceSettings(t *testing.T) {
 		{
 			name: "creates an instance",
 			settings: backend.DataSourceInstanceSettings{
-				JSONData:                []byte(`{"cloudName":"azuremonitor"}`),
+				JSONData:                []byte(`{"azureAuthType":"msi"}`),
 				DecryptedSecureJSONData: map[string]string{"key": "value"},
 				ID:                      40,
 			},
 			expectedModel: datasourceInfo{
-				Settings:                azureMonitorSettings{CloudName: "azuremonitor"},
-				Routes:                  routes["azuremonitor"],
-				JSONData:                simplejson.NewFromAny(map[string]interface{}{"cloudName": string("azuremonitor")}),
+				Cloud:                   setting.AzurePublic,
+				Credentials:             &azcredentials.AzureManagedIdentityCredentials{},
+				Settings:                azureMonitorSettings{},
+				Routes:                  routes[setting.AzurePublic],
+				JSONData:                map[string]interface{}{"azureAuthType": "msi"},
 				DatasourceID:            40,
 				DecryptedSecureJSONData: map[string]string{"key": "value"},
 			},
@@ -36,17 +40,20 @@ func TestNewInstanceSettings(t *testing.T) {
 		},
 	}
 
-	cfg := &setting.Cfg{}
+	cfg := &setting.Cfg{
+		Azure: setting.AzureSettings{
+			Cloud: setting.AzurePublic,
+		},
+	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			factory := NewInstanceSettings(cfg)
-			_, err := factory(tt.settings)
+			instance, err := factory(tt.settings)
 			tt.Err(t, err)
-			// TODO: Fix comparison
-			//if !cmp.Equal(instance, tt.expectedModel, cmpopts.IgnoreFields(datasourceInfo{}, "Services", "HTTPCliOpts")) {
-			//	t.Errorf("Unexpected instance: %v", cmp.Diff(instance, tt.expectedModel))
-			//}
+			if !cmp.Equal(instance, tt.expectedModel, cmpopts.IgnoreFields(datasourceInfo{}, "Services", "HTTPCliOpts")) {
+				t.Errorf("Unexpected instance: %v", cmp.Diff(instance, tt.expectedModel))
+			}
 		})
 	}
 }
