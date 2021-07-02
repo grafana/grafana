@@ -20,6 +20,7 @@ require (
 	github.com/Masterminds/semver v1.5.0
 	github.com/VividCortex/mysqlerr v0.0.0-20170204212430-6c6b55f8796f
 	github.com/aws/aws-sdk-go v1.38.34
+	github.com/aws/smithy-go v1.3.1
 	github.com/beevik/etree v1.1.0
 	github.com/benbjohnson/clock v1.1.0
 	github.com/bradfitz/gomemcache v0.0.0-20190913173617-a41fca850d0b
@@ -52,6 +53,7 @@ require (
 	github.com/gosimple/slug v1.9.0
 	github.com/grafana/grafana-aws-sdk v0.4.0
 	github.com/grafana/grafana-plugin-sdk-go v0.105.0
+	github.com/grafana/grafana/smithy/build/go/grafana v0.0.0-20210630135115-e45e0bd0c7ca
 	github.com/grafana/loki v1.6.2-0.20210520072447-15d417efe103
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/hashicorp/go-hclog v0.16.0
@@ -121,3 +123,7 @@ require (
 )
 
 replace github.com/apache/thrift => github.com/apache/thrift v0.14.1
+
+replace github.com/grafana/grafana/smithy/build/go/grafana => ./smithy/build/go/grafana
+
+replace github.com/aws/smithy-go => ../smithy-go

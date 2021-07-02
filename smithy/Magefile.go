@@ -22,6 +22,9 @@ func Smithy() error {
 	if err := sh.RunV("./gradlew", "build"); err != nil {
 		return err
 	}
+	if err := os.RemoveAll("build/go"); err != nil {
+		return err
+	}
 	if err := os.MkdirAll("build/go", 0755); err != nil {
 		return err
 	}
