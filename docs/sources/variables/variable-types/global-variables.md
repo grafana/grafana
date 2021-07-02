@@ -74,7 +74,7 @@ Currently only supported for Prometheus data sources. This variable represents t
 
 ## $__rate_interval
 
-Currently only supported for Prometheus data sources. The `$__rate_interval` variable is meant to be used in the rate function. For detailed information, refer to [Prometheus query variables]({{< relref "../datasources/prometheus.md">}}).
+Currently only supported for Prometheus data sources. The `$__rate_interval` variable is meant to be used in the rate function. Refer to [Prometheus query variables]({{< relref "../datasources/prometheus.md">}}) for details. 
 
 ## $timeFilter or $__timeFilter
 
