@@ -61,7 +61,9 @@ const processSelectors = <S extends Selectors>(e2eObjects: E2EFunctions<S>, sele
       // @ts-ignore
       e2eObjects[key] = (options?: CypressOptions) => {
         logOutput(value);
-        return e2e().get(Selector.fromAriaLabel(value), options);
+        const selector = value.startsWith('test-id') ? Selector.fromDataTestId(value) : Selector.fromAriaLabel(value);
+
+        return e2e().get(selector, options);
       };
 
       continue;
@@ -81,8 +83,10 @@ const processSelectors = <S extends Selectors>(e2eObjects: E2EFunctions<S>, sele
         // the input can be (text) or (options)
         if (arguments.length === 1) {
           if (typeof textOrOptions === 'string') {
-            const ariaText = value(textOrOptions);
-            const selector = Selector.fromAriaLabel(ariaText);
+            const selectorText = value(textOrOptions);
+            const selector = textOrOptions.startsWith('test-id')
+              ? Selector.fromDataTestId(selectorText)
+              : Selector.fromAriaLabel(selectorText);
 
             logOutput(selector);
             return e2e().get(selector);
@@ -95,8 +99,11 @@ const processSelectors = <S extends Selectors>(e2eObjects: E2EFunctions<S>, sele
 
         // the input can only be (text, options)
         if (arguments.length === 2) {
-          const ariaText = value(textOrOptions as string);
-          const selector = Selector.fromAriaLabel(ariaText);
+          const text = textOrOptions as string;
+          const selectorText = value(text);
+          const selector = text.startsWith('test-id')
+            ? Selector.fromDataTestId(selectorText)
+            : Selector.fromAriaLabel(selectorText);
 
           logOutput(selector);
           return e2e().get(selector, options);

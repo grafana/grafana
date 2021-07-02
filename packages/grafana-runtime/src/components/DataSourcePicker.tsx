@@ -142,7 +142,7 @@ export class DataSourcePicker extends PureComponent<DataSourcePickerProps, DataS
     const styles = getStyles();
 
     return (
-      <div aria-label={selectors.components.DataSourcePicker.container}>
+      <div data-test-id={selectors.components.DataSourcePicker.container}>
         <Select
           className={styles.select}
           isMulti={false}

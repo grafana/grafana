@@ -188,7 +188,7 @@ export const Components = {
     container: 'Folder picker select container',
   },
   DataSourcePicker: {
-    container: 'Data source picker select container',
+    container: 'test-id-data-source-picker-container',
   },
   TimeZonePicker: {
     container: 'Time zone picker select container',
