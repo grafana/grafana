@@ -8,7 +8,7 @@ weight = 300
 
 # Azure Monitor data source
 
-Grafana includes built-in support for Azure Monitor, the Azure service to maximise availability and performance of your applications and services in the Azure Cloud. The Azure Monitor data source supports visualising data from three Azure services:
+Grafana includes built-in support for Azure Monitor, the Azure service to maximize the availability and performance of your applications and services in the Azure Cloud. The Azure Monitor data source supports visualizing data from three Azure services:
 
 - **Azure Monitor Metrics** to collect numeric data from resources in your Azure account
 - **Azure Monitor Logs** to collect log and performance data from your Azure account, and query using the powerful Kusto Language
@@ -18,7 +18,7 @@ This topic explains configuring, querying, and other options specific to the Azu
 
 ## Azure Monitor configuration
 
-To access Azure Monitor configuration, hover your mouse over the **Configuration** (gear) icon, click **Data Sources**, and then click the Azure Monitor data source. If you haven't already, you'll need to [add the Azure Monitor data source]({{< relref "add-a-data-source.md" >}}).
+To access Azure Monitor configuration, hover your mouse over the **Configuration** (gear) icon, click **Data Sources**, and then select the Azure Monitor data source. If you haven't already, you'll need to [add the Azure Monitor data source]({{< relref "add-a-data-source.md" >}}).
 
 You must create an app registration and service principal in Azure AD to authenticate the data source. See the [Azure documentation](https://docs.microsoft.com/en-us/azure/active-directory/develop/howto-create-service-principal-portal#get-tenant-and-app-id-values-for-signing-in) for configuration details. Alternatively, if you are hosting Grafana in Azure (e.g. App Service, or Azure Virtual Machines) you can configure the Azure Monitor data source to use Managed Identity to securely authenticate without entering credentials into Grafana. Refer to [Configuring using Managed Identity](#configuring-using-managed-identity) for more details.
 
