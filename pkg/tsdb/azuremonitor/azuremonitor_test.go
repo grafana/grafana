@@ -2,7 +2,6 @@ package azuremonitor
 
 import (
 	"context"
-	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/azcredentials"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -10,6 +9,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/azcredentials"
 	"github.com/stretchr/testify/require"
 )
 
