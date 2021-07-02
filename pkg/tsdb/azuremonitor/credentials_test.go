@@ -109,7 +109,6 @@ func TestCredentials_getAzureCloud(t *testing.T) {
 	})
 
 	t.Run("when auth type is client secret", func(t *testing.T) {
-
 		t.Run("should be from datasource value normalized to known cloud name", func(t *testing.T) {
 			jsonData := simplejson.NewFromAny(map[string]interface{}{
 				"azureAuthType": azcredentials.AzureAuthClientSecret,
@@ -156,7 +155,6 @@ func TestCredentials_getAzureCredentials(t *testing.T) {
 		})
 
 		t.Run("should return managed identity credentials", func(t *testing.T) {
-
 			credentials, err := getAzureCredentials(cfg, jsonData, secureJsonData)
 			require.NoError(t, err)
 			require.IsType(t, &azcredentials.AzureManagedIdentityCredentials{}, credentials)
