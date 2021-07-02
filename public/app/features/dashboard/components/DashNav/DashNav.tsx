@@ -22,6 +22,7 @@ import {
   GorillaPageToolbar,
   GorillaToolbarButton,
   GorillaDashNavButton,
+  GorillaConfigToggler,
 } from '../../gorilla/types';
 
 export interface OwnProps {
@@ -186,13 +187,19 @@ class DashNav extends PureComponent<Props> {
     const snapshotUrl = snapshot && snapshot.originalUrl;
     const buttons: ReactNode[] = [];
     const tvButton = (
-      <GorillaToolbarButton
-        configPath="dashNav.tvToggle"
-        tooltip="Cycle view mode"
-        icon="monitor"
-        onClick={this.onToggleTVMode}
-        key="tv-button"
-      />
+      <GorillaConfigToggler>
+        {(onToggle) => {
+          return (
+            <GorillaToolbarButton
+              configPath="dashNav.tvToggle"
+              tooltip="Cycle view mode"
+              icon="monitor"
+              onClick={onToggle}
+              key="tv-button"
+            />
+          );
+        }}
+      </GorillaConfigToggler>
     );
 
     if (this.isPlaylistRunning()) {

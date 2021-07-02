@@ -24,6 +24,7 @@ export enum GorillaProfile {
   standard = 'standard',
   tv = 'tv',
   custom = 'custom',
+  disabled = 'disabled',
 }
 
 export enum GorillaMode {
@@ -106,6 +107,43 @@ const tvProfile = {
   },
 };
 
+const disabledProfile = {
+  profile: GorillaProfile.disabled,
+  dashNav: {
+    mode: GorillaMode.editable,
+    timePicker: {
+      mode: GorillaMode.editable,
+    },
+    title: {
+      mode: GorillaMode.editable,
+    },
+    tvToggle: {
+      mode: GorillaMode.editable,
+    },
+    addPanelToggle: {
+      mode: GorillaMode.editable,
+    },
+    dashboardSettingsToggle: {
+      mode: GorillaMode.editable,
+    },
+    saveDashboardToggle: {
+      mode: GorillaMode.editable,
+    },
+    snapshotToggle: {
+      mode: GorillaMode.editable,
+    },
+    starToggle: {
+      mode: GorillaMode.editable,
+    },
+    sharePanelToggle: {
+      mode: GorillaMode.editable,
+    },
+    sideMenu: {
+      mode: GorillaMode.editable,
+    },
+  },
+};
+
 const customProfile = {
   profile: GorillaProfile.custom,
   dashNav: {
@@ -144,6 +182,7 @@ const customProfile = {
 };
 
 const profileRegistry: Record<GorillaProfile, GorillaContextConfiguration> = {
+  [GorillaProfile.disabled]: disabledProfile,
   [GorillaProfile.standard]: standardProfile,
   [GorillaProfile.tv]: tvProfile,
   [GorillaProfile.custom]: customProfile,
@@ -166,8 +205,10 @@ export interface GorillaDashNavItem extends GorillaContextItem {
 }
 
 export interface GorillaContextType {
+  enabled: boolean;
   onChangeConfig: GorillaChangeConfigCallback;
   config: GorillaContextConfiguration;
+  onToggleEnabled: () => void;
 }
 
 export type GorillaChangeConfigCallback = (config: GorillaContextConfiguration) => void;
@@ -180,11 +221,23 @@ export interface GorillaContextConfiguration {
 export const GorillaContext = React.createContext<GorillaContextType>({
   config: standardProfile,
   onChangeConfig: () => {},
+  enabled: false,
+  onToggleEnabled: () => {},
 });
 
 export function GorillaProvider({ children }: React.PropsWithChildren<any>): JSX.Element {
   const [config, setConfig] = useState(standardProfile);
-  const value = useMemo(() => ({ config, onChangeConfig: setConfig }), [config]);
+  const [enabled, setEnabled] = useState(false);
+
+  const value = useMemo(
+    () => ({
+      config,
+      onChangeConfig: setConfig,
+      enabled,
+      onToggleEnabled: () => setEnabled(!enabled),
+    }),
+    [config, enabled]
+  );
 
   return <GorillaContext.Provider value={value}>{children}</GorillaContext.Provider>;
 }
@@ -436,6 +489,21 @@ export function useGorillaConfigChanger(): GorillaChangeConfigCallback {
 }
 
 export function useGorillaConfig(): GorillaContextConfiguration {
-  const { config } = useContext(GorillaContext);
+  const { config, enabled } = useContext(GorillaContext);
+
+  if (!enabled) {
+    return disabledProfile;
+  }
+
   return config;
+}
+
+export function useGorillaToggler(): () => void {
+  const { onToggleEnabled } = useContext(GorillaContext);
+  return onToggleEnabled;
+}
+
+export function GorillaConfigToggler({ children }: { children: (toggler: () => void) => ReactElement }): JSX.Element {
+  const toggler = useGorillaToggler();
+  return children(toggler);
 }
