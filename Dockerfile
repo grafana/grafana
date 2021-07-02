@@ -25,6 +25,8 @@ WORKDIR $GOPATH/src/github.com/grafana/grafana
 
 COPY go.mod go.sum embed.go ./
 
+RUN go mod download
+
 RUN go mod verify
 
 COPY cue cue

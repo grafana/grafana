@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -57,7 +58,7 @@ func (g *Grafanats) IsLeader() bool {
 // Init Grafanats.
 func (g *Grafanats) Init() error {
 	logger.Info("Grafanats initialization")
-	opts, err := server.ProcessConfigFile("conf/nats.conf")
+	opts, err := server.ProcessConfigFile(filepath.Join(setting.HomePath, "conf", "nats.conf"))
 	if err != nil {
 		return fmt.Errorf("failed to parse embedded NATS server config")
 	}
@@ -67,7 +68,7 @@ func (g *Grafanats) Init() error {
 		return err
 	}
 	if os.Getenv("GF_SERVER_ID") != "" {
-		opts.StoreDir = "data/grafanats/server-" + os.Getenv("GF_SERVER_ID")
+		opts.StoreDir = filepath.Join(g.Cfg.DataPath, "grafanats", "server-"+os.Getenv("GF_SERVER_ID"))
 		opts.ServerName = os.Getenv("GF_SERVER_ID")
 		opts.Cluster.Host = "0.0.0.0"
 		opts.Cluster.Port, err = strconv.Atoi(os.Getenv("GF_NATS_CLUSTER_PORT"))
@@ -163,15 +164,20 @@ func (g *Grafanats) createStream(s EventStream) error {
 }
 
 func (g *Grafanats) subscribeStream(s EventStream) error {
-	_, err := g.client.Subscribe(s.Subject, func(msg *nats.Msg) {
-		logger.Info("received message", "data", string(msg.Data), "reply", msg.Reply)
-		_ = msg.Ack()
-	}, nats.DeliverNew(), nats.Durable("consumer-"+os.Getenv("GF_SERVER_ID")))
-	if err != nil {
-		return fmt.Errorf("error subscribing: %v", s.Name)
+	for i := 0; i < 5; i++ {
+		_, err := g.client.Subscribe(s.Subject, func(msg *nats.Msg) {
+			logger.Info("received message", "data", string(msg.Data), "reply", msg.Reply)
+			_ = msg.Ack()
+		}, nats.DeliverNew(), nats.Durable("consumer-"+os.Getenv("GF_SERVER_ID")))
+		if err != nil {
+			logger.Error("Error subscribing stream", "error", err.Error())
+			time.Sleep(3 * time.Second)
+			continue
+		}
+		logger.Info("Subscribed to a stream", "name", s.Name)
+		return nil
 	}
-	logger.Info("Subscribed to a stream", "name", s.Name)
-	return nil
+	return fmt.Errorf("error subscribing stream %s", s.Name)
 }
 
 // Run Grafanats.

@@ -1,0 +1,56 @@
+version: '3.5'
+services:
+  grafana01:
+    build: .
+    container_name: grafana01
+    hostname: grafana01
+    ports:
+      - "127.0.0.1:3000:3000"
+      - "127.0.0.1:4222:4222"
+      - "127.0.0.1:10000:10000"
+      - "127.0.0.1:1883:1883"
+    environment:
+      GF_SERVER_ID: "1"
+      GF_SERVER_HTTP_PORT: 3000
+      GF_NATS_PORT: 4222
+      GF_NATS_CLUSTER_PORT: 10000
+      GF_NATS_MQTT_PORT: 1883
+      GF_NATS_CLUSTER_ROUTES: "nats-route://grafana02:10001,nats-route://grafana03:10002"
+    volumes:
+      - ${PWD}/data:/var/lib/grafana
+  grafana02:
+    build: .
+    container_name: grafana02
+    hostname: grafana02
+    ports:
+      - "127.0.0.1:3001:3001"
+      - "127.0.0.1:4223:4223"
+      - "127.0.0.1:10001:10001"
+      - "127.0.0.1:1884:1884"
+    environment:
+      GF_SERVER_ID: "2"
+      GF_SERVER_HTTP_PORT: 3001
+      GF_NATS_PORT: 4223
+      GF_NATS_CLUSTER_PORT: 10001
+      GF_NATS_MQTT_PORT: 1884
+      GF_NATS_CLUSTER_ROUTES: "nats-route://grafana01:10000,nats-route://grafana03:10002"
+    volumes:
+      - ${PWD}/data:/var/lib/grafana
+  grafana03:
+    build: .
+    container_name: grafana03
+    hostname: grafana03
+    ports:
+      - "127.0.0.1:3002:3002"
+      - "127.0.0.1:4224:4224"
+      - "127.0.0.1:10002:10002"
+      - "127.0.0.1:1885:1885"
+    environment:
+      GF_SERVER_ID: "3"
+      GF_SERVER_HTTP_PORT: 3002
+      GF_NATS_PORT: 4224
+      GF_NATS_CLUSTER_PORT: 10002
+      GF_NATS_MQTT_PORT: 1885
+      GF_NATS_CLUSTER_ROUTES: "nats-route://grafana01:10000,nats-route://grafana02:10001"
+    volumes:
+      - ${PWD}/data:/var/lib/grafana
