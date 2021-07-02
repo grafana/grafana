@@ -46,25 +46,25 @@ const standardProfile = {
       mode: GorillaMode.editable,
     },
     addPanelToggle: {
-      mode: GorillaMode.editable,
+      mode: GorillaMode.hidden,
     },
     dashboardSettingsToggle: {
-      mode: GorillaMode.editable,
+      mode: GorillaMode.hidden,
     },
     saveDashboardToggle: {
-      mode: GorillaMode.editable,
+      mode: GorillaMode.hidden,
     },
     snapshotToggle: {
-      mode: GorillaMode.editable,
+      mode: GorillaMode.hidden,
     },
     starToggle: {
-      mode: GorillaMode.editable,
+      mode: GorillaMode.hidden,
     },
     sharePanelToggle: {
-      mode: GorillaMode.editable,
+      mode: GorillaMode.hidden,
     },
     sideMenu: {
-      mode: GorillaMode.editable,
+      mode: GorillaMode.hidden,
     },
   },
 };
@@ -74,34 +74,34 @@ const tvProfile = {
   dashNav: {
     mode: GorillaMode.editable,
     timePicker: {
-      mode: GorillaMode.editable,
+      mode: GorillaMode.hidden,
     },
     title: {
-      mode: GorillaMode.editable,
+      mode: GorillaMode.hidden,
     },
     tvToggle: {
-      mode: GorillaMode.editable,
+      mode: GorillaMode.hidden,
     },
     addPanelToggle: {
-      mode: GorillaMode.editable,
+      mode: GorillaMode.hidden,
     },
     dashboardSettingsToggle: {
-      mode: GorillaMode.editable,
+      mode: GorillaMode.hidden,
     },
     saveDashboardToggle: {
-      mode: GorillaMode.editable,
+      mode: GorillaMode.hidden,
     },
     snapshotToggle: {
-      mode: GorillaMode.editable,
+      mode: GorillaMode.hidden,
     },
     starToggle: {
-      mode: GorillaMode.editable,
+      mode: GorillaMode.hidden,
     },
     sharePanelToggle: {
-      mode: GorillaMode.editable,
+      mode: GorillaMode.hidden,
     },
     sideMenu: {
-      mode: GorillaMode.editable,
+      mode: GorillaMode.hidden,
     },
   },
 };
