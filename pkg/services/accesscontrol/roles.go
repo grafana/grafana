@@ -2,9 +2,9 @@ package accesscontrol
 
 import "github.com/grafana/grafana/pkg/models"
 
-var datasourceEditorReadRole = RoleDTO{
+var datasourcesEditorReadRole = RoleDTO{
 	Version: 1,
-	Name:    datasourceEditorRead,
+	Name:    datasourcesEditorRead,
 	Permissions: []Permission{
 		{
 			Action: ActionDatasourcesExplore,
@@ -176,8 +176,8 @@ var provisioningAdminRole = RoleDTO{
 // resource. FixedRoleGrants lists which built-in roles are
 // assigned which fixed roles in this list.
 var FixedRoles = map[string]RoleDTO{
-	datasourceEditorRead: datasourceEditorReadRole,
-	serverAdminRead:      serverAdminReadRole,
+	datasourcesEditorRead: datasourcesEditorReadRole,
+	serverAdminRead:       serverAdminReadRole,
 
 	settingsAdminRead: settingsAdminReadRole,
 
@@ -194,7 +194,7 @@ var FixedRoles = map[string]RoleDTO{
 }
 
 const (
-	datasourceEditorRead = "fixed:datasource:editor:read"
+	datasourcesEditorRead = "fixed:datasources:editor:read"
 
 	serverAdminRead = "fixed:server:admin:read"
 
@@ -231,7 +231,7 @@ var FixedRoleGrants = map[string][]string{
 		usersOrgRead,
 	},
 	string(models.ROLE_EDITOR): {
-		datasourceEditorRead,
+		datasourcesEditorRead,
 	},
 }
 
