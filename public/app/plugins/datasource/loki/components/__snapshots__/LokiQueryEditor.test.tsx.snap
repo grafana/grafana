@@ -15,6 +15,7 @@ exports[`Render LokiQueryEditor with legend should render 1`] = `
             "refId": "A",
           }
         }
+        queryDirection="BACKWARD"
         queryType="range"
         runOnBlur={true}
       />
@@ -74,6 +75,7 @@ exports[`Render LokiQueryEditor with legend should update timerange 1`] = `
             "refId": "A",
           }
         }
+        queryDirection="BACKWARD"
         queryType="range"
         runOnBlur={true}
       />
