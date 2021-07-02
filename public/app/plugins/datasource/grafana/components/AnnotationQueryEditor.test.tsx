@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 
-import { GrafanaAnnotationQuery, GrafanaAnnotationType, GrafanaQueryType } from '../types';
+import { GrafanaAnnotationQuery, GrafanaAnnotationType } from '../types';
 import AnnotationQueryEditor from './AnnotationQueryEditor';
 
 describe('AnnotationQueryEditor', () => {
@@ -11,9 +11,11 @@ describe('AnnotationQueryEditor', () => {
   beforeEach(() => {
     mockQuery = {
       refId: 'Anno',
-      queryType: GrafanaQueryType.Annotations,
       type: GrafanaAnnotationType.Tags,
       limit: 100,
+      enable: true,
+      name: 'a name',
+      iconColor: 'a color',
     };
   });
 
@@ -29,11 +31,7 @@ describe('AnnotationQueryEditor', () => {
     expect(maxLimit).toBeInTheDocument();
   });
 
-  describe('when the query type is "Tags" and the tags array exists', () => {
-    beforeEach(() => {
-      mockQuery.tags = [];
-    });
-
+  describe('when the query type is "Tags"', () => {
     it('has a "Match any" toggle', () => {
       render(<AnnotationQueryEditor query={mockQuery} onChange={mockOnChange} />);
       const matchAny = screen.getByLabelText('Match any');
