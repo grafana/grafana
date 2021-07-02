@@ -2,7 +2,7 @@ import { DataQuery, DataQueryRequest, DataQueryResponse, DataSourceInstanceSetti
 import { BackendSrvRequest, DataSourceWithBackend, getBackendSrv } from '@grafana/runtime';
 import { TraceToLogsData, TraceToLogsOptions } from 'app/core/components/TraceToLogsSettings';
 import { serializeParams } from 'app/core/utils/fetch';
-import { identity, pick, pickBy } from 'lodash';
+import { compact, identity, pick, pickBy } from 'lodash';
 import { merge, Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import TempoLanguageProvider from './language_provider';
@@ -12,8 +12,6 @@ export type TempoQueryType = 'search' | 'traceId';
 
 export type TempoQuery = {
   query: string;
-  // Query to find list of traces, e.g., via Loki
-  // linkedQuery?: DataQuery;
   search: string;
   queryType: TempoQueryType;
   minDuration?: string;
@@ -39,41 +37,13 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TraceToLo
       (target) => target.queryType === 'traceId' || target.queryType === undefined
     );
 
-    // Run search queries on linked datasource
-    // if (this.tracesToLogs?.datasourceUid && searchTargets.length > 0) {
-    //   const dsSrv = getDatasourceSrv();
-    //   subQueries.push(
-    //     from(dsSrv.get(this.tracesToLogs.datasourceUid)).pipe(
-    //       mergeMap((linkedDatasource: DataSourceApi) => {
-    //         // Wrap linked query into a data request based on original request
-    //         const linkedRequest: DataQueryRequest = { ...options, targets: searchTargets.map((t) => t.linkedQuery!) };
-    //         // Find trace matchers in derived fields of the linked datasource that's identical to this datasource
-    //         const settings: DataSourceInstanceSettings<LokiOptions> = (linkedDatasource as any).instanceSettings;
-    //         const traceLinkMatcher: string[] =
-    //           settings.jsonData.derivedFields
-    //             ?.filter((field) => field.datasourceUid === this.uid && field.matcherRegex)
-    //             .map((field) => field.matcherRegex) || [];
-    //         if (!traceLinkMatcher || traceLinkMatcher.length === 0) {
-    //           return throwError(
-    //             'No Loki datasource configured for search. Set up Derived Fields for traces in a Loki datasource settings and link it to this Tempo datasource.'
-    //           );
-    //         } else {
-    //           return (linkedDatasource.query(linkedRequest) as Observable<DataQueryResponse>).pipe(
-    //             map((response) =>
-    //               response.error ? response : transformTraceList(response, this.uid, this.name, traceLinkMatcher)
-    //             )
-    //           );
-    //         }
-    //       })
-    //     )
-    //   );
-    // }
-
     if (searchTargets.length) {
-      const tags = searchTargets[0].search.split(' ');
-      const tagsQuery = tags.map((tag) => {
+      const tags = searchTargets[0].search.split(/\s+(?=([^"]*"[^"]*")*[^"]*$)/g);
+      // compact to remove empty values from array
+      const tagsQuery = compact(tags).map((tag) => {
         const parts = tag.split('=');
-        return { [parts[0]]: parts[1] };
+        const extractedString = parts[1].replace(/^"(.*)"$/, '$1');
+        return { [parts[0]]: extractedString };
       });
       let tempoQuery = pick(searchTargets[0], ['minDuration', 'maxDuration', 'limit']);
       // remove empty properties

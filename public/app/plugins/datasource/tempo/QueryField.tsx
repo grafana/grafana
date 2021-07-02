@@ -50,18 +50,6 @@ export class TempoQueryField extends React.PureComponent<Props, State> {
     this.setState({ syntaxLoaded: true });
   }
 
-  // onChangeLinkedQuery = (value: DataQuery) => {
-  //   const { query, onChange } = this.props;
-  //   onChange({
-  //     ...query,
-  //     linkedQuery: { ...value, refId: 'linked' },
-  //   });
-  // };
-
-  // onRunLinkedQuery = () => {
-  //   this.props.onRunQuery();
-  // };
-
   onTypeahead = async (typeahead: TypeaheadInput): Promise<TypeaheadOutput> => {
     const { datasource } = this.props;
 
@@ -70,9 +58,17 @@ export class TempoQueryField extends React.PureComponent<Props, State> {
     return await languageProvider.provideCompletionItems(typeahead);
   };
 
+  // get the last text after a space delimiter
+  cleanText = (text: string) => {
+    const splittedText = text.split(/\s+(?=([^"]*"[^"]*")*[^"]*$)/g);
+    if (splittedText.length > 1) {
+      return splittedText[splittedText.length - 1];
+    }
+    return text;
+  };
+
   render() {
     const { query, onChange } = this.props;
-    // const { linkedDatasource } = this.state;
 
     return (
       <>
@@ -94,26 +90,8 @@ export class TempoQueryField extends React.PureComponent<Props, State> {
             />
           </InlineField>
         </InlineFieldRow>
-        {/* {query.queryType === 'search' && linkedDatasource && (
-          <>
-            <InlineLabel>
-              Tempo uses {((linkedDatasource as unknown) as DataSourceApi).name} to find traces.
-            </InlineLabel>
-
-            <LokiQueryField
-              datasource={linkedDatasource!}
-              onChange={this.onChangeLinkedQuery}
-              onRunQuery={this.onRunLinkedQuery}
-              query={this.props.query.linkedQuery ?? ({ refId: 'linked' } as any)}
-              history={[]}
-            />
-          </>
-        )}
-        {query.queryType === 'search' && !linkedDatasource && (
-          <div className="text-warning">Please set up a Traces-to-logs datasource in the datasource settings.</div>
-        )} */}
         {query.queryType === 'search' && (
-          <div className={css({ width: '50%' })}>
+          <>
             <InlineFieldRow>
               <InlineField label="Query" labelWidth={21} grow>
                 <QueryField
@@ -127,14 +105,17 @@ export class TempoQueryField extends React.PureComponent<Props, State> {
                       search: value,
                     });
                   }}
+                  cleanText={this.cleanText}
                   onRunQuery={this.props.onRunQuery}
                   syntaxLoaded={this.state.syntaxLoaded}
                   portalOrigin="tempo"
                 />
               </InlineField>
             </InlineFieldRow>
-            <AdvancedOptions query={query} onChange={onChange} />
-          </div>
+            <div className={css({ width: '50%' })}>
+              <AdvancedOptions query={query} onChange={onChange} />
+            </div>
+          </>
         )}
         {query.queryType !== 'search' && (
           <LegacyForms.FormField
