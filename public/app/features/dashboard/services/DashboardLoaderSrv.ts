@@ -30,13 +30,14 @@ export class DashboardLoaderSrv {
 
   loadDashboard(type: UrlQueryValue, slug: any, uid: any) {
     let promise;
-
     if (type === 'script') {
       promise = this._loadScriptedDashboard(slug);
     } else if (type === 'snapshot') {
       promise = backendSrv.get('/api/snapshots/' + slug).catch(() => {
         return this._dashboardLoadFailed('Snapshot not found', true);
       });
+    } else if (type === 'dynamic') {
+      promise = this._loadDynamicDashboard(slug);
     } else {
       promise = backendSrv
         .getDashboardByUid(uid)
@@ -90,6 +91,33 @@ export class DashboardLoaderSrv {
           return this._dashboardLoadFailed('Scripted dashboard');
         }
       );
+  }
+
+  async _loadDynamicDashboard(slug: string) {
+    const ds = await getDatasourceSrv().get(slug);
+    if (!ds) {
+      return Promise.reject('can not find datasource: ' + slug);
+    }
+
+    const params = new URLSearchParams(window.location.search);
+    const path = params.get('path');
+    if (!path) {
+      return Promise.reject('expecting path parameter');
+    }
+
+    return getBackendSrv()
+      .get(`/api/datasources/${ds.id}/resources/${path}`, {})
+      .then((data) => {
+        return {
+          meta: {
+            fromScript: true,
+            canDelete: false,
+            canSave: false,
+            canStar: false,
+          },
+          dashboard: data,
+        };
+      });
   }
 
   _executeScript(result: any) {
