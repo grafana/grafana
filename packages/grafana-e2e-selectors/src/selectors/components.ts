@@ -222,4 +222,12 @@ export const Components = {
   CodeEditor: {
     container: 'Code editor container',
   },
+  DashboardImportPage: {
+    textarea: 'test-id-import-dashboard-textarea',
+    submit: 'test-id-load-dashboard',
+  },
+  ImportDashboardForm: {
+    name: 'test-id-import-dashboard-title',
+    submit: 'test-id-import-dashboard-submit',
+  },
 };
