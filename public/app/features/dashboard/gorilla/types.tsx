@@ -24,8 +24,9 @@ export enum GorillaProfile {
   standard = 'standard',
   tv = 'tv',
   custom = 'custom',
-  disabled = 'disabled',
 }
+
+let currentProfile = GorillaProfile.standard;
 
 export enum GorillaMode {
   hidden = 'hidden',
@@ -34,9 +35,7 @@ export enum GorillaMode {
 }
 
 const standardProfile = {
-  profile: GorillaProfile.standard,
   dashNav: {
-    mode: GorillaMode.editable,
     timePicker: {
       mode: GorillaMode.editable,
     },
@@ -71,9 +70,7 @@ const standardProfile = {
 };
 
 const tvProfile = {
-  profile: GorillaProfile.tv,
   dashNav: {
-    mode: GorillaMode.editable,
     timePicker: {
       mode: GorillaMode.hidden,
     },
@@ -103,51 +100,12 @@ const tvProfile = {
     },
     sideMenu: {
       mode: GorillaMode.hidden,
-    },
-  },
-};
-
-const disabledProfile = {
-  profile: GorillaProfile.disabled,
-  dashNav: {
-    mode: GorillaMode.editable,
-    timePicker: {
-      mode: GorillaMode.editable,
-    },
-    title: {
-      mode: GorillaMode.editable,
-    },
-    tvToggle: {
-      mode: GorillaMode.editable,
-    },
-    addPanelToggle: {
-      mode: GorillaMode.editable,
-    },
-    dashboardSettingsToggle: {
-      mode: GorillaMode.editable,
-    },
-    saveDashboardToggle: {
-      mode: GorillaMode.editable,
-    },
-    snapshotToggle: {
-      mode: GorillaMode.editable,
-    },
-    starToggle: {
-      mode: GorillaMode.editable,
-    },
-    sharePanelToggle: {
-      mode: GorillaMode.editable,
-    },
-    sideMenu: {
-      mode: GorillaMode.editable,
     },
   },
 };
 
 const customProfile = {
-  profile: GorillaProfile.custom,
   dashNav: {
-    mode: GorillaMode.editable,
     timePicker: {
       mode: GorillaMode.editable,
     },
@@ -182,7 +140,6 @@ const customProfile = {
 };
 
 const profileRegistry: Record<GorillaProfile, GorillaContextConfiguration> = {
-  [GorillaProfile.disabled]: disabledProfile,
   [GorillaProfile.standard]: standardProfile,
   [GorillaProfile.tv]: tvProfile,
   [GorillaProfile.custom]: customProfile,
@@ -191,19 +148,6 @@ const profileRegistry: Record<GorillaProfile, GorillaContextConfiguration> = {
 export interface GorillaContextItem {
   mode: GorillaMode;
 }
-export interface GorillaDashNavItem extends GorillaContextItem {
-  timePicker: GorillaContextItem;
-  title: GorillaContextItem;
-  sideMenu: GorillaContextItem;
-  tvToggle: GorillaContextItem;
-  addPanelToggle: GorillaContextItem;
-  dashboardSettingsToggle: GorillaContextItem;
-  saveDashboardToggle: GorillaContextItem;
-  snapshotToggle: GorillaContextItem;
-  starToggle: GorillaContextItem;
-  sharePanelToggle: GorillaContextItem;
-}
-
 export interface GorillaContextType {
   enabled: boolean;
   onChangeConfig: GorillaChangeConfigCallback;
@@ -214,8 +158,18 @@ export interface GorillaContextType {
 export type GorillaChangeConfigCallback = (config: GorillaContextConfiguration) => void;
 
 export interface GorillaContextConfiguration {
-  profile: GorillaProfile;
-  dashNav: GorillaDashNavItem;
+  dashNav: {
+    timePicker: GorillaContextItem;
+    title: GorillaContextItem;
+    sideMenu: GorillaContextItem;
+    tvToggle: GorillaContextItem;
+    addPanelToggle: GorillaContextItem;
+    dashboardSettingsToggle: GorillaContextItem;
+    saveDashboardToggle: GorillaContextItem;
+    snapshotToggle: GorillaContextItem;
+    starToggle: GorillaContextItem;
+    sharePanelToggle: GorillaContextItem;
+  };
 }
 
 export const GorillaContext = React.createContext<GorillaContextType>({
@@ -378,7 +332,6 @@ export function GorillaSideMenu(): ReactElement | null {
 type GorillaSettingsProps = {};
 
 export function GorillaSettings(props: GorillaSettingsProps): ReactElement | null {
-  const { profile } = useGorillaConfig();
   const onChangeConfig = useGorillaConfigChanger();
   const styles = useStyles2(getStyles);
 
@@ -389,7 +342,7 @@ export function GorillaSettings(props: GorillaSettingsProps): ReactElement | nul
       if (!configuration) {
         return;
       }
-
+      currentProfile = profile;
       onChangeConfig(configuration);
     },
     [onChangeConfig]
@@ -416,7 +369,7 @@ export function GorillaSettings(props: GorillaSettingsProps): ReactElement | nul
     return null;
   }
 
-  const currentProfile = profileRegistry[profile];
+  const configuration = profileRegistry[currentProfile];
 
   const configurableOptions: Array<SelectableValue<string>> = [
     { value: 'dashNav.timePicker', label: 'Time picker' },
@@ -440,7 +393,7 @@ export function GorillaSettings(props: GorillaSettingsProps): ReactElement | nul
               { value: GorillaProfile.tv, label: 'TV' },
               { value: GorillaProfile.custom, label: 'Custom' },
             ]}
-            value={profile}
+            value={currentProfile}
           />
           <div className={styles.options}>
             {configurableOptions.map((option) => {
@@ -448,7 +401,8 @@ export function GorillaSettings(props: GorillaSettingsProps): ReactElement | nul
                 return;
               }
 
-              const value = get(currentProfile, option.value) as GorillaContextItem;
+              const value = get(configuration, option.value) as GorillaContextItem;
+
               return (
                 <div key={option.value}>
                   <Checkbox
@@ -492,7 +446,41 @@ export function useGorillaConfig(): GorillaContextConfiguration {
   const { config, enabled } = useContext(GorillaContext);
 
   if (!enabled) {
-    return disabledProfile;
+    return {
+      dashNav: {
+        mode: GorillaMode.editable,
+        timePicker: {
+          mode: GorillaMode.editable,
+        },
+        title: {
+          mode: GorillaMode.editable,
+        },
+        tvToggle: {
+          mode: GorillaMode.editable,
+        },
+        addPanelToggle: {
+          mode: GorillaMode.editable,
+        },
+        dashboardSettingsToggle: {
+          mode: GorillaMode.editable,
+        },
+        saveDashboardToggle: {
+          mode: GorillaMode.editable,
+        },
+        snapshotToggle: {
+          mode: GorillaMode.editable,
+        },
+        starToggle: {
+          mode: GorillaMode.editable,
+        },
+        sharePanelToggle: {
+          mode: GorillaMode.editable,
+        },
+        sideMenu: {
+          mode: GorillaMode.editable,
+        },
+      },
+    };
   }
 
   return config;
