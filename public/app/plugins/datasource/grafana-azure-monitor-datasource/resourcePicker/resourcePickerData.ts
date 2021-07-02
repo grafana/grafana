@@ -82,8 +82,6 @@ export default class ResourcePickerData {
   async getResourceURIDisplayProperties(resourceURI: string): Promise<AzureResourceSummaryItem> {
     const { subscriptionID, resourceGroup } = parseResourceURI(resourceURI) ?? {};
 
-    console.log('getResourceURIDisplayProperties', { resourceURI, subscriptionID, resourceGroup });
-
     if (!subscriptionID) {
       throw new Error('Invalid resource URI passed');
     }
@@ -115,11 +113,7 @@ export default class ResourcePickerData {
         | project subscriptionName, resourceGroupName, resourceName
     `;
 
-    console.log({ query });
-
     const { ok, data: response } = await this.makeResourceGraphRequest<AzureResourceSummaryItem[]>(query);
-
-    console.log({ response });
 
     if (!ok || !response.data[0]) {
       throw new Error('unable to fetch resource details');
