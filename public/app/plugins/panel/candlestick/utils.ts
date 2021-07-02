@@ -1,36 +1,21 @@
-import { DataFrame, Field, FieldType, getFieldDisplayName, GrafanaTheme2 } from '@grafana/data';
-import { PanelOptions } from './models.gen';
-import { CandlestickFieldMapper, CandlestickFieldMappings, candlestickFields, CandlestickFields } from './types';
-import { prepareGraphableFields } from '../timeseries/utils';
+import { DataFrame, Field, FieldType, getFieldDisplayName } from '@grafana/data';
+import { SemanticFieldsMappings } from '../../../../../packages/grafana-ui/src';
+import { SemanticFieldsMapper, semanticFields } from './types';
 
-// This will return a set of frames with only graphable values included
-export function prepareCandlestickFields(
-  series: DataFrame[] | undefined,
-  theme: GrafanaTheme2,
-  options: PanelOptions
-): { frames?: DataFrame[]; warn?: string } {
-  // do regular time-series prep
-  let prepped = prepareGraphableFields(series, theme);
+// this will set field.state.semanticType for any mapped known fields
+export function tagSemanticFields(frames: DataFrame[], mappings: SemanticFieldsMappings): void {
+  const mapper = getSemanticFieldMapper(mappings ?? {});
 
-  if (prepped.warn) {
-    return prepped;
-  }
-
-  // tag fields with state.semanticKind
-  const mapper = getCandlestickFieldMapper(options?.names ?? {});
-
-  for (let frame of prepped.frames!) {
+  for (let frame of frames) {
     for (const field of frame.fields) {
-      field.state!.semanticKind = field.type === FieldType.time ? 'time' : mapper(field, frame);
+      field.state!.semanticType = field.type === FieldType.time ? 'time' : mapper(field, frame);
     }
   }
-
-  return prepped;
 }
 
 // Get a field mapper from the configuraiton
-export function getCandlestickFieldMapper(mappings: CandlestickFieldMappings): CandlestickFieldMapper {
-  const mappers = candlestickFields.map((f) => {
+export function getSemanticFieldMapper(mappings: SemanticFieldsMappings): SemanticFieldsMapper {
+  const mappers = semanticFields.map((f) => {
     const name = mappings[f] ?? f;
     return (fname: string, disp: string) => {
       if (name === fname || disp === name) {

@@ -9,6 +9,8 @@ import { ExemplarsPlugin } from './plugins/ExemplarsPlugin';
 import { TimeSeriesOptions } from './types';
 import { prepareGraphableFields } from './utils';
 
+import { tagSemanticFields } from '../candlestick/utils';
+
 interface TimeSeriesPanelProps extends PanelProps<TimeSeriesOptions> {}
 
 export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
@@ -27,7 +29,17 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
     return getFieldLinksForExplore({ field, rowIndex, range: timeRange });
   };
 
-  const { frames, warn } = useMemo(() => prepareGraphableFields(data?.series, config.theme2), [data]);
+  const { semanticFields } = options;
+
+  const { frames, warn } = useMemo(() => {
+    const prepped = prepareGraphableFields(data?.series, config.theme2);
+
+    if (prepped.frames && semanticFields) {
+      tagSemanticFields(prepped.frames, semanticFields);
+    }
+
+    return prepped;
+  }, [data, semanticFields]);
 
   if (!frames || warn) {
     return (
@@ -36,6 +48,20 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
       </div>
     );
   }
+
+  /*
+  // Candlesticks require some space between values
+  if (frames[0].length > width / 2) {
+    return (
+      <div className="panel-empty">
+        <p>
+          Too many points to visualize properly. <br />
+          Update the query to return fewer points. <br />({frames[0].length} points received)
+        </p>
+      </div>
+    );
+  }
+  */
 
   return (
     <TimeSeries
@@ -46,6 +72,7 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
       width={width}
       height={height}
       legend={options.legend}
+      semanticFields={options.semanticFields}
     >
       {(config, alignedDataFrame) => {
         return (

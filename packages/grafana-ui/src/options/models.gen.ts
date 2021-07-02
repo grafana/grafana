@@ -1,5 +1,6 @@
 // TODO: this should be generated with cue
 import { VizLegendOptions, VizTooltipOptions } from '../components';
+import { CandlestickFieldMappings } from '../../../../public/app/plugins/panel/candlestick/types';
 
 /**
  * Explicit control for visualization text settings
@@ -15,8 +16,20 @@ export interface VizTextDisplayOptions {
 /**
  * @public
  */
+export interface SemanticFieldsMappings extends CandlestickFieldMappings {}
+
+/**
+ * @public
+ */
 export interface OptionsWithLegend {
   legend: VizLegendOptions;
+}
+
+/**
+ * @public
+ */
+export interface OptionsWithSemanticFields {
+  semanticFields: SemanticFieldsMappings;
 }
 
 /**

@@ -16,22 +16,8 @@ export const candlestickFields = [
   CandlestickFieldID.Volume,
 ];
 
+export const semanticFields = [...candlestickFields];
+
 export type CandlestickFieldMappings = Partial<Record<CandlestickFieldID, string>>;
-export type CandlestickFieldMapper = (field: Field, frame: DataFrame) => CandlestickFieldID | undefined;
 
-export interface CandlestickFields {
-  warning?: string;
-
-  // Everythign shares a time field
-  time: Field;
-
-  // OHLC all share same units
-  [CandlestickFieldID.Open]?: Field;
-  [CandlestickFieldID.High]?: Field;
-  [CandlestickFieldID.Low]?: Field;
-  [CandlestickFieldID.Close]?: Field;
-  [CandlestickFieldID.Volume]?: Field;
-
-  // Additional fields
-  series: Field[];
-}
+export type SemanticFieldsMapper = (field: Field, frame: DataFrame) => CandlestickFieldID | undefined;

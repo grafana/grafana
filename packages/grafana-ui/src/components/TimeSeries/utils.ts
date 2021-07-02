@@ -35,6 +35,11 @@ const defaultConfig: GraphFieldConfig = {
   axisPlacement: AxisPlacement.Auto,
 };
 
+// candlestick & volume renderer
+function renderOHLCV(u: uPlot, frame: DataFrame) {
+  console.log('draw composite markers!');
+}
+
 export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursorSync }> = ({
   frame,
   theme,
@@ -100,6 +105,24 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
   const stackingGroups: Map<string, number[]> = new Map();
 
   let indexByName: Map<string, number> | undefined;
+
+  // populate any composite renderers which can be used (where all required semanticType fields exist)
+  const compositeRenderers = new Set<Function>();
+
+  // TODO: actually make this robust
+  for (let i = 1; i < frame.fields.length; i++) {
+    let semType = frame.fields[i].state!.semanticType;
+
+    if (semType) {
+      compositeRenderers.add(renderOHLCV);
+    }
+  }
+
+  if (compositeRenderers.size > 0) {
+    builder.addHook('draw', (u) => {
+      compositeRenderers.forEach((r) => r(u, frame));
+    });
+  }
 
   for (let i = 1; i < frame.fields.length; i++) {
     const field = frame.fields[i];
@@ -217,6 +240,11 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
       colorMode,
       fillOpacity,
       theme,
+
+      // semantic-mapped fields usually indicate a composite rendering method which is not rendered per-series,
+      // e.g. candlesticks, box/whisker. set a noop pathBuilder here and rely on a 'draw' hook to handle rendering
+      pathBuilder: field.state?.semanticType ? () => null : undefined,
+
       drawStyle: customConfig.drawStyle!,
       lineColor: customConfig.lineColor ?? seriesColor,
       lineWidth: customConfig.lineWidth,
