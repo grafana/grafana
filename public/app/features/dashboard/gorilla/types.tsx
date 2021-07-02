@@ -31,19 +31,19 @@ let currentProfile = GorillaProfile.standard;
 export enum GorillaMode {
   hidden = 'hidden',
   readOnly = 'readOnly',
-  editable = 'editable',
+  default = 'default',
 }
 
 const standardProfile = {
   dashNav: {
     timePicker: {
-      mode: GorillaMode.editable,
+      mode: GorillaMode.default,
     },
     title: {
-      mode: GorillaMode.editable,
+      mode: GorillaMode.default,
     },
     tvToggle: {
-      mode: GorillaMode.editable,
+      mode: GorillaMode.default,
     },
     addPanelToggle: {
       mode: GorillaMode.hidden,
@@ -107,34 +107,34 @@ const tvProfile = {
 const customProfile = {
   dashNav: {
     timePicker: {
-      mode: GorillaMode.editable,
+      mode: GorillaMode.default,
     },
     title: {
-      mode: GorillaMode.editable,
+      mode: GorillaMode.default,
     },
     tvToggle: {
-      mode: GorillaMode.editable,
+      mode: GorillaMode.default,
     },
     addPanelToggle: {
-      mode: GorillaMode.editable,
+      mode: GorillaMode.default,
     },
     dashboardSettingsToggle: {
-      mode: GorillaMode.editable,
+      mode: GorillaMode.default,
     },
     saveDashboardToggle: {
-      mode: GorillaMode.editable,
+      mode: GorillaMode.default,
     },
     snapshotToggle: {
-      mode: GorillaMode.editable,
+      mode: GorillaMode.default,
     },
     starToggle: {
-      mode: GorillaMode.editable,
+      mode: GorillaMode.default,
     },
     sharePanelToggle: {
-      mode: GorillaMode.editable,
+      mode: GorillaMode.default,
     },
     sideMenu: {
-      mode: GorillaMode.editable,
+      mode: GorillaMode.default,
     },
   },
 };
@@ -353,13 +353,13 @@ export function GorillaSettings(props: GorillaSettingsProps): ReactElement | nul
       const current = get(customProfile, path) as GorillaContextItem;
       const copy = { ...customProfile };
 
-      if (current?.mode === GorillaMode.editable) {
+      if (current?.mode === GorillaMode.default) {
         set(copy, path, { mode: GorillaMode.hidden });
         onChangeConfig(copy);
         return;
       }
 
-      set(copy, path, { mode: GorillaMode.editable });
+      set(copy, path, { mode: GorillaMode.default });
       onChangeConfig(copy);
     },
     [onChangeConfig]
@@ -406,7 +406,7 @@ export function GorillaSettings(props: GorillaSettingsProps): ReactElement | nul
               return (
                 <div key={option.value}>
                   <Checkbox
-                    value={value?.mode === GorillaMode.editable}
+                    value={value?.mode === GorillaMode.default}
                     label={option.label}
                     onChange={() => onChangeOption(option.value!)}
                   />
@@ -448,36 +448,36 @@ export function useGorillaConfig(): GorillaContextConfiguration {
   if (!enabled) {
     return {
       dashNav: {
-        mode: GorillaMode.editable,
+        mode: GorillaMode.default,
         timePicker: {
-          mode: GorillaMode.editable,
+          mode: GorillaMode.default,
         },
         title: {
-          mode: GorillaMode.editable,
+          mode: GorillaMode.default,
         },
         tvToggle: {
-          mode: GorillaMode.editable,
+          mode: GorillaMode.default,
         },
         addPanelToggle: {
-          mode: GorillaMode.editable,
+          mode: GorillaMode.default,
         },
         dashboardSettingsToggle: {
-          mode: GorillaMode.editable,
+          mode: GorillaMode.default,
         },
         saveDashboardToggle: {
-          mode: GorillaMode.editable,
+          mode: GorillaMode.default,
         },
         snapshotToggle: {
-          mode: GorillaMode.editable,
+          mode: GorillaMode.default,
         },
         starToggle: {
-          mode: GorillaMode.editable,
+          mode: GorillaMode.default,
         },
         sharePanelToggle: {
-          mode: GorillaMode.editable,
+          mode: GorillaMode.default,
         },
         sideMenu: {
-          mode: GorillaMode.editable,
+          mode: GorillaMode.default,
         },
       },
     };
