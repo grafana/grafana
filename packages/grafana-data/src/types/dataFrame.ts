@@ -168,6 +168,12 @@ export interface FieldState {
   seriesIndex?: number;
 
   /**
+   * Any additional type info that is needed by purpose-specific panels when field name and data type are insufficiant
+   * For instance, an OHLC panel may expect this to be "open_price" to render the top of a candlestick marker
+   */
+  semanticKind?: string | null;
+
+  /**
    * Location of this field within the context frames results
    *
    * @internal -- we will try to make this unnecessary

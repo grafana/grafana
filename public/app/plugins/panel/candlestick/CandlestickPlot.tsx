@@ -22,7 +22,7 @@ const prepConfig = (fields: CandlestickFields, theme: GrafanaTheme2) => {
 
   builder.addScale({
     scaleKey: 'x', // bukkits
-    isTime: false,
+    isTime: true,
     distribution: ScaleDistribution.Linear,
     orientation: ScaleOrientation.Horizontal,
     direction: ScaleDirection.Right,
@@ -44,9 +44,19 @@ const preparePlotData = (fields: CandlestickFields) => {
 
   // HACK!
   data.push(fields.time.values.toArray());
+  data.push(fields.open!.values.toArray());
+  data.push(fields.high!.values.toArray());
+  data.push(fields.low!.values.toArray());
+  data.push(fields.close!.values.toArray());
+  data.push(fields.volume!.values.toArray());
+
+  /*
   for (const s of fields.series) {
     data.push(s.values.toArray());
   }
+  */
+
+  console.log(data);
 
   return data;
 };

@@ -1,53 +1,31 @@
-import { DataFrame, Field, FieldType, getFieldDisplayName } from '@grafana/data';
+import { DataFrame, Field, FieldType, getFieldDisplayName, GrafanaTheme2 } from '@grafana/data';
 import { PanelOptions } from './models.gen';
 import { CandlestickFieldMapper, CandlestickFieldMappings, candlestickFields, CandlestickFields } from './types';
+import { prepareGraphableFields } from '../timeseries/utils';
 
 // This will return a set of frames with only graphable values included
-export function prepareCandlestickFields(series: DataFrame[] | undefined, options: PanelOptions): CandlestickFields {
-  const fields: CandlestickFields = ({ series: [] } as unknown) as CandlestickFields;
-  if (!series?.length) {
-    fields.warning = 'No data in response';
-    return fields;
-  }
-  if (series.length > 1) {
-    fields.warning = 'Currently we only support a single frame';
-    return fields;
+export function prepareCandlestickFields(
+  series: DataFrame[] | undefined,
+  theme: GrafanaTheme2,
+  options: PanelOptions
+): { frames?: DataFrame[]; warn?: string } {
+  // do regular time-series prep
+  let prepped = prepareGraphableFields(series, theme);
+
+  if (prepped.warn) {
+    return prepped;
   }
 
-  // Setup the name picker
+  // tag fields with state.semanticKind
   const mapper = getCandlestickFieldMapper(options?.names ?? {});
 
-  for (let frame of series) {
+  for (let frame of prepped.frames!) {
     for (const field of frame.fields) {
-      switch (field.type) {
-        case FieldType.time:
-          if (fields.time) {
-            fields.warning = 'duplicate time fields found';
-            return fields;
-          }
-          fields.time = field;
-          break;
-
-        case FieldType.number:
-          const f = mapper(field, frame);
-          if (f != null) {
-            if (fields[f]) {
-              fields.warning = 'duplicate fields found for: ' + f;
-            }
-            fields[f] = field;
-            break;
-          }
-
-        default:
-          fields.series.push(field);
-      }
+      field.state!.semanticKind = field.type === FieldType.time ? 'time' : mapper(field, frame);
     }
   }
 
-  if (!fields.time) {
-    fields.warning = 'Data does not have a time field';
-  }
-  return fields;
+  return prepped;
 }
 
 // Get a field mapper from the configuraiton
