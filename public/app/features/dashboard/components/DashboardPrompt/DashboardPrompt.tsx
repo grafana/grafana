@@ -11,7 +11,7 @@ import * as H from 'history';
 import { SaveLibraryPanelModal } from 'app/features/library-panels/components/SaveLibraryPanelModal/SaveLibraryPanelModal';
 import { PanelModelWithLibraryPanel } from 'app/features/library-panels/types';
 import { useDispatch } from 'react-redux';
-import { discardPanelChanges } from '../PanelEditor/state/actions';
+import { discardPanelChanges, panelEditorCleanUp } from '../PanelEditor/state/actions';
 import { DashboardSavedEvent } from 'app/types/events';
 
 export interface Props {
@@ -77,6 +77,9 @@ export const DashboardPrompt = React.memo(({ dashboard }: Props) => {
 
     // Are we still on the same dashboard?
     if (originalPath === location.pathname || !original) {
+      if (panelInEdit) {
+        dispatch(panelEditorCleanUp());
+      }
       return true;
     }
 
