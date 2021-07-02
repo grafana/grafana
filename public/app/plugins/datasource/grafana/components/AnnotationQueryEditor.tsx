@@ -97,7 +97,7 @@ export default function AnnotationQueryEditor({ query, onChange }: Props) {
           />
         </InlineField>
       </InlineFieldRow>
-      {type === GrafanaAnnotationType.Tags && (
+      {type === GrafanaAnnotationType.Tags && tags && (
         <InlineFieldRow>
           <InlineField label="Match any" labelWidth={18} tooltip={matchTooltipContent}>
             <InlineSwitch id="grafana-annotations__match-any" value={matchAny} onChange={onMatchAnyChange} />
@@ -105,7 +105,6 @@ export default function AnnotationQueryEditor({ query, onChange }: Props) {
           <InlineField label="Tags" labelWidth="auto" tooltip={tagsTooltipContent}>
             <TagFilter
               inputId="grafana-annotations__tags"
-              allowCustomValue
               onChange={onTagsChange}
               tagOptions={getAnnotationTags}
               tags={tags}

@@ -2,29 +2,31 @@ import { from, merge, Observable, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { getBackendSrv, getGrafanaLiveSrv, getTemplateSrv, toDataQueryResponse } from '@grafana/runtime';
 import {
-  AnnotationQueryRequest,
+  AnnotationQuery,
   DataQueryRequest,
   DataQueryResponse,
   DataSourceApi,
   DataSourceInstanceSettings,
   isValidLiveChannelAddress,
   parseLiveChannelAddress,
+  RawTimeRange,
   StreamingFrameOptions,
+  TimeRange,
   toDataFrame,
 } from '@grafana/data';
 
-import { GrafanaAnnotationQuery, GrafanaAnnotationType, GrafanaQuery, GrafanaQueryType } from './types';
+import { GrafanaAnnotationQuery, GrafanaAnnotationType, GrafanaQueryType } from './types';
 import AnnotationQueryEditor from './components/AnnotationQueryEditor';
 import { getDashboardSrv } from '../../../features/dashboard/services/DashboardSrv';
 
 let counter = 100;
 
-export class GrafanaDatasource extends DataSourceApi<GrafanaQuery> {
+export class GrafanaDatasource extends DataSourceApi<GrafanaAnnotationQuery> {
   constructor(instanceSettings: DataSourceInstanceSettings) {
     super(instanceSettings);
     this.annotations = {
       QueryEditor: AnnotationQueryEditor,
-      prepareAnnotation(json: any): GrafanaAnnotationQuery {
+      prepareAnnotation(json: any): AnnotationQuery<GrafanaAnnotationQuery> {
         // Previously, these properties lived outside of target
         // This should handle migrating them
         json.target = json.target ?? {
@@ -35,13 +37,13 @@ export class GrafanaDatasource extends DataSourceApi<GrafanaQuery> {
         }; // using spread syntax caused an infinite loop in StandardAnnotationQueryEditor
         return json;
       },
-      prepareQuery(anno: GrafanaAnnotationQuery): GrafanaQuery {
-        return { ...anno, refId: anno.name, queryType: GrafanaQueryType.Annotations };
+      prepareQuery(anno: AnnotationQuery<GrafanaAnnotationQuery>): GrafanaAnnotationQuery {
+        return { ...anno.target!, refId: anno.name, queryType: GrafanaQueryType.Annotations };
       },
     };
   }
 
-  query(request: DataQueryRequest<GrafanaQuery>): Observable<DataQueryResponse> {
+  query(request: DataQueryRequest<GrafanaAnnotationQuery>): Observable<DataQueryResponse> {
     const queries: Array<Observable<DataQueryResponse>> = [];
     const templateSrv = getTemplateSrv();
     for (const target of request.targets) {
@@ -53,7 +55,7 @@ export class GrafanaDatasource extends DataSourceApi<GrafanaQuery> {
           this.getAnnotations({
             range: request.range,
             rangeRaw: request.range.raw,
-            annotation: target.target as any,
+            annotation: target,
             dashboard: getDashboardSrv().getCurrent(),
           })
         );
@@ -109,7 +111,12 @@ export class GrafanaDatasource extends DataSourceApi<GrafanaQuery> {
     return Promise.resolve([]);
   }
 
-  async getAnnotations(options: AnnotationQueryRequest<GrafanaQuery>): Promise<DataQueryResponse> {
+  async getAnnotations(options: {
+    range: TimeRange;
+    rangeRaw: RawTimeRange;
+    annotation: GrafanaAnnotationQuery;
+    dashboard: any;
+  }): Promise<DataQueryResponse> {
     const templateSrv = getTemplateSrv();
     const annotation = (options.annotation as unknown) as GrafanaAnnotationQuery;
     const params: any = {
@@ -154,7 +161,7 @@ export class GrafanaDatasource extends DataSourceApi<GrafanaQuery> {
     const annotations = await getBackendSrv().get(
       '/api/annotations',
       params,
-      `grafana-data-source-annotations-${annotation.name}-${options.dashboard?.id}`
+      `grafana-data-source-annotations-${annotation.refId}-${options.dashboard?.id}`
     );
     return { data: [toDataFrame(annotations)] };
   }

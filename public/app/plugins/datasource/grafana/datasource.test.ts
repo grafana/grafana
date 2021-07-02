@@ -1,8 +1,8 @@
-import { AnnotationQueryRequest, DataSourceInstanceSettings, dateTime } from '@grafana/data';
+import { DataSourceInstanceSettings, dateTime, RawTimeRange, TimeRange } from '@grafana/data';
 
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
 import { GrafanaDatasource } from './datasource';
-import { GrafanaAnnotationQuery, GrafanaAnnotationType, GrafanaQuery } from './types';
+import { GrafanaAnnotationQuery, GrafanaAnnotationType } from './types';
 
 jest.mock('@grafana/runtime', () => ({
   ...((jest.requireActual('@grafana/runtime') as unknown) as object),
@@ -79,7 +79,7 @@ describe('grafana data source', () => {
 });
 
 function setupAnnotationQueryOptions(annotation: Partial<GrafanaAnnotationQuery>, dashboard?: { id: number }) {
-  return ({
+  return {
     annotation,
     dashboard,
     range: {
@@ -87,5 +87,10 @@ function setupAnnotationQueryOptions(annotation: Partial<GrafanaAnnotationQuery>
       to: dateTime(1432288401),
     },
     rangeRaw: { from: 'now-24h', to: 'now' },
-  } as unknown) as AnnotationQueryRequest<GrafanaQuery>;
+  } as {
+    range: TimeRange;
+    rangeRaw: RawTimeRange;
+    annotation: GrafanaAnnotationQuery;
+    dashboard: any;
+  };
 }
