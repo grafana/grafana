@@ -68,6 +68,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
   private streams = new LiveStreams();
   languageProvider: LanguageProvider;
   maxLines: number;
+  direction: 'BACKWARD' | 'FORWARD';
 
   constructor(
     private instanceSettings: DataSourceInstanceSettings<LokiOptions>,
@@ -79,6 +80,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     this.languageProvider = new LanguageProvider(this);
     const settingsData = instanceSettings.jsonData || {};
     this.maxLines = parseInt(settingsData.maxLines ?? '0', 10) || DEFAULT_MAX_LINES;
+    this.direction = settingsData.direction ?? 'BACKWARD';
   }
 
   _request(apiUrl: string, data?: any, options?: Partial<BackendSrvRequest>): Observable<Record<string, any>> {
@@ -130,6 +132,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     const queryLimit = isMetricsQuery(target.expr) ? options.maxDataPoints : target.maxLines;
     const query = {
       query: target.expr,
+      direction: target.direction,
       time: `${timeNs + (1e9 - (timeNs % 1e9))}`,
       limit: Math.min(queryLimit || Infinity, this.maxLines),
     };
@@ -166,6 +169,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
 
   createRangeQuery(target: LokiQuery, options: RangeQueryOptions, limit: number): LokiRangeQueryRequest {
     const query = target.expr;
+    let direction = target.direction ?? DEFAULT_QUERY_PARAMS.direction;
     let range: { start?: number; end?: number; step?: number } = {};
     if (options.range) {
       const startNs = this.getTime(options.range.from, false);
@@ -190,6 +194,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     return {
       ...DEFAULT_QUERY_PARAMS,
       ...range,
+      direction: direction,
       query,
       limit,
     };
