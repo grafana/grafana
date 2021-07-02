@@ -2,6 +2,7 @@ package azuremonitor
 
 import (
 	"bytes"
+	"strings"
 	"time"
 
 	"context"
@@ -178,7 +179,9 @@ func (e *AzureResourceGraphDatasource) executeQuery(ctx context.Context, query *
 	if err != nil {
 		return dataResponseErrorWithExecuted(err)
 	}
-	url := azurePortalUrl + "/#blade/HubsExtension/ArgQueryBlade/query/" + query.InterpolatedQuery
+	frameLink := strings.ReplaceAll(query.InterpolatedQuery, "/", "%2F")
+	frameLink = strings.ReplaceAll(frameLink, "\n", "%0A")
+	url := azurePortalUrl + "/#blade/HubsExtension/ArgQueryBlade/query/" + frameLink
 	frameWithLink := addConfigData(*frame, url)
 	if frameWithLink.Meta == nil {
 		frameWithLink.Meta = &data.FrameMeta{}
