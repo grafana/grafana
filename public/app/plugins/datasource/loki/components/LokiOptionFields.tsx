@@ -130,7 +130,19 @@ export function LokiOptionFields(props: LokiOptionFieldsProps) {
           />
         </InlineField>
         <InlineField label="Min step">
-          <Input className="width-4" placeholder="" min={0} onChange={onStepChange} value={stepInterval} />
+          <Input
+            className="width-4"
+            placeholder=""
+            min={0}
+            onChange={onStepChange}
+            onKeyDown={onReturnKeyDown}
+            value={stepInterval}
+            onBlur={() => {
+              if (runOnBlur) {
+                onRunQuery();
+              }
+            }}
+          />
         </InlineField>
       </div>
     </div>
