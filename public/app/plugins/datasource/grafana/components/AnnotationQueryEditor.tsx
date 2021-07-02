@@ -1,6 +1,7 @@
 import React from 'react';
 import { SelectableValue } from '@grafana/data';
 import { FieldSet, InlineField, InlineFieldRow, InlineSwitch, Select } from '@grafana/ui';
+import { css } from '@emotion/css';
 
 import { TagFilter } from 'app/core/components/TagFilter/TagFilter';
 import { GrafanaAnnotationQuery, GrafanaAnnotationType, GrafanaQuery } from '../types';
@@ -51,6 +52,7 @@ interface Props {
 export default function AnnotationQueryEditor({ query, onChange }: Props) {
   const annotationQuery = query as GrafanaAnnotationQuery;
   const { limit, matchAny, tags, type } = annotationQuery;
+  const styles = getStyles();
 
   const onFilterByChange = (newValue: SelectableValue<GrafanaAnnotationType>) =>
     onChange({
@@ -103,7 +105,12 @@ export default function AnnotationQueryEditor({ query, onChange }: Props) {
           <InlineField label="Match any" labelWidth={18} tooltip={matchTooltipContent}>
             <InlineSwitch id="grafana-annotations__match-any" value={matchAny} onChange={onMatchAnyChange} />
           </InlineField>
-          <InlineField label="Tags" labelWidth="auto" tooltip={tagsTooltipContent}>
+          <InlineField
+            className={styles.tagFilterContainer}
+            label="Tags"
+            labelWidth="auto"
+            tooltip={tagsTooltipContent}
+          >
             <TagFilter
               inputId="grafana-annotations__tags"
               onChange={onTagsChange}
@@ -116,3 +123,11 @@ export default function AnnotationQueryEditor({ query, onChange }: Props) {
     </FieldSet>
   );
 }
+
+const getStyles = () => {
+  return {
+    tagFilterContainer: css`
+      max-width: 100%;
+    `,
+  };
+};
