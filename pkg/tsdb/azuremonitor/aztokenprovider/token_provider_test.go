@@ -10,11 +10,11 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var getAccessTokenFunc func(credential TokenCredential, scopes []string)
+var getAccessTokenFunc func(credential TokenRetriever, scopes []string)
 
 type tokenCacheFake struct{}
 
-func (c *tokenCacheFake) GetAccessToken(_ context.Context, credential TokenCredential, scopes []string) (string, error) {
+func (c *tokenCacheFake) GetAccessToken(_ context.Context, credential TokenRetriever, scopes []string) (string, error) {
 	getAccessTokenFunc(credential, scopes)
 	return "4cb83b87-0ffb-4abd-82f6-48a8c08afc53", nil
 }
@@ -35,28 +35,28 @@ func TestAzureTokenProvider_GetAccessToken(t *testing.T) {
 	t.Run("when managed identities enabled", func(t *testing.T) {
 		cfg.Azure.ManagedIdentityEnabled = true
 
-		t.Run("should resolve managed identity credential if auth type is managed identity", func(t *testing.T) {
+		t.Run("should resolve managed identity retriever if auth type is managed identity", func(t *testing.T) {
 			credentials := &azcredentials.AzureManagedIdentityCredentials{}
 
 			provider, err := NewAzureAccessTokenProvider(cfg, credentials)
 			require.NoError(t, err)
 
-			getAccessTokenFunc = func(credential TokenCredential, scopes []string) {
-				assert.IsType(t, &managedIdentityCredential{}, credential)
+			getAccessTokenFunc = func(credential TokenRetriever, scopes []string) {
+				assert.IsType(t, &managedIdentityTokenRetriever{}, credential)
 			}
 
 			_, err = provider.GetAccessToken(ctx, scopes)
 			require.NoError(t, err)
 		})
 
-		t.Run("should resolve client secret credential if auth type is client secret", func(t *testing.T) {
+		t.Run("should resolve client secret retriever if auth type is client secret", func(t *testing.T) {
 			credentials := &azcredentials.AzureClientSecretCredentials{}
 
 			provider, err := NewAzureAccessTokenProvider(cfg, credentials)
 			require.NoError(t, err)
 
-			getAccessTokenFunc = func(credential TokenCredential, scopes []string) {
-				assert.IsType(t, &clientSecretCredential{}, credential)
+			getAccessTokenFunc = func(credential TokenRetriever, scopes []string) {
+				assert.IsType(t, &clientSecretTokenRetriever{}, credential)
 			}
 
 			_, err = provider.GetAccessToken(ctx, scopes)
@@ -85,11 +85,11 @@ func TestAzureTokenProvider_getClientSecretCredential(t *testing.T) {
 		ClientSecret: "0416d95e-8af8-472c-aaa3-15c93c46080a",
 	}
 
-	t.Run("should return clientSecretCredential with values", func(t *testing.T) {
-		result := getClientSecretCredential(credentials)
-		assert.IsType(t, &clientSecretCredential{}, result)
+	t.Run("should return clientSecretTokenRetriever with values", func(t *testing.T) {
+		result := getClientSecretTokenRetriever(credentials)
+		assert.IsType(t, &clientSecretTokenRetriever{}, result)
 
-		credential := (result).(*clientSecretCredential)
+		credential := (result).(*clientSecretTokenRetriever)
 
 		assert.Equal(t, "https://login.microsoftonline.com/", credential.authority)
 		assert.Equal(t, "7dcf1d1a-4ec0-41f2-ac29-c1538a698bc4", credential.tenantId)
@@ -103,10 +103,10 @@ func TestAzureTokenProvider_getClientSecretCredential(t *testing.T) {
 
 		credentials.AzureCloud = setting.AzureChina
 
-		result := getClientSecretCredential(credentials)
-		assert.IsType(t, &clientSecretCredential{}, result)
+		result := getClientSecretTokenRetriever(credentials)
+		assert.IsType(t, &clientSecretTokenRetriever{}, result)
 
-		credential := (result).(*clientSecretCredential)
+		credential := (result).(*clientSecretTokenRetriever)
 
 		assert.Equal(t, "https://login.chinacloudapi.cn/", credential.authority)
 	})
@@ -118,10 +118,10 @@ func TestAzureTokenProvider_getClientSecretCredential(t *testing.T) {
 		credentials.AzureCloud = setting.AzureChina
 		credentials.Authority = "https://another.com/"
 
-		result := getClientSecretCredential(credentials)
-		assert.IsType(t, &clientSecretCredential{}, result)
+		result := getClientSecretTokenRetriever(credentials)
+		assert.IsType(t, &clientSecretTokenRetriever{}, result)
 
-		credential := (result).(*clientSecretCredential)
+		credential := (result).(*clientSecretTokenRetriever)
 
 		assert.Equal(t, "https://another.com/", credential.authority)
 	})
