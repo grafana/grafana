@@ -46,9 +46,6 @@ export class GrafanaDatasource extends DataSourceApi<GrafanaQuery> {
     const queries: Array<Observable<DataQueryResponse>> = [];
     const templateSrv = getTemplateSrv();
     for (const target of request.targets) {
-      if (target.hide) {
-        continue;
-      }
       if (target.queryType === GrafanaQueryType.Annotations) {
         return from(
           this.getAnnotations({
@@ -58,6 +55,9 @@ export class GrafanaDatasource extends DataSourceApi<GrafanaQuery> {
             dashboard: getDashboardSrv().getCurrent(),
           })
         );
+      }
+      if (target.hide) {
+        continue;
       }
       if (target.queryType === GrafanaQueryType.LiveMeasurements) {
         let channel = templateSrv.replace(target.channel, request.scopedVars);
