@@ -116,6 +116,7 @@ export function SelectBase<T>({
   minMenuHeight,
   maxVisibleValues,
   menuPlacement = 'bottom',
+  menuPortalTarget,
   menuPosition,
   noOptionsMessage = 'No options found',
   onBlur,
@@ -197,6 +198,7 @@ export function SelectBase<T>({
     maxVisibleValues,
     menuIsOpen: isOpen,
     menuPlacement,
+    menuPortalTarget,
     menuPosition,
     menuShouldScrollIntoView: false,
     onBlur,
@@ -329,10 +331,9 @@ export function SelectBase<T>({
         }}
         styles={{
           ...resetSelectStyles(),
-          menuPortal: ({ position, width }: any) => ({
-            position,
-            width,
-            zIndex: theme.zIndex.dropdown,
+          menuPortal: (base: any) => ({
+            ...base,
+            zIndex: theme.zIndex.modal,
           }),
           //These are required for the menu positioning to function
           menu: ({ top, bottom, position }: any) => ({
