@@ -10,9 +10,9 @@ weight = 300
 
 Grafana includes built-in support for Azure Monitor, the Azure service to maximize the availability and performance of your applications and services in the Azure Cloud. The Azure Monitor data source supports visualizing data from three Azure services:
 
-- **Azure Monitor Metrics** to collect numeric data from resources in your Azure account
-- **Azure Monitor Logs** to collect log and performance data from your Azure account, and query using the powerful Kusto Language
-- **Azure Resource Graph** to quickly query your Azure resources across subscriptions
+- **Azure Monitor Metrics** to collect numeric data from resources in your Azure account.
+- **Azure Monitor Logs** to collect log and performance data from your Azure account, and query using the powerful Kusto Language.
+- **Azure Resource Graph** to quickly query your Azure resources across subscriptions.
 
 This topic explains configuring, querying, and other options specific to the Azure Monitor data source. Refer to [Add a data source]({{< relref "add-a-data-source.md" >}}) for instructions on how to add a data source to Grafana.
 
@@ -36,9 +36,9 @@ You must create an app registration and service principal in Azure AD to authent
 
 The Azure Monitor data source has three different modes depending on which Azure service you wish to query:
 
-- **Metrics** for [Azure Monitor Metrics](https://docs.microsoft.com/en-us/azure/azure-monitor/essentials/data-platform-metrics)
-- **Logs** for [Azure Monitor Logs](https://docs.microsoft.com/en-us/azure/azure-monitor/logs/data-platform-logs)
-- [**Azure Resource Graph**](https://docs.microsoft.com/en-gb/azure/governance/resource-graph/overview)
+- **Metrics** for [Azure Monitor Metrics](#querying-azure-monitor-metrics)
+- **Logs** for [Azure Monitor Logs](#querying-azure-monitor-logs)
+- [**Azure Resource Graph**](#querying-azure-resource-graph)
 
 ### Querying Azure Monitor Metrics
 
@@ -165,7 +165,7 @@ To make writing queries easier there are several Grafana macros that can be used
 
 Additionally, Grafana has the built-in `$__interval` macro
 
-### Querying with Azure Resource Graph
+### Querying Azure Resource Graph
 
 Azure Resource Graph (ARG) is a service in Azure that is designed to extend Azure Resource Management by providing efficient and performant resource exploration, with the ability to query at scale across a given set of subscriptions so that you can effectively govern your environment. By querying ARG, you can query resources with complex filtering, iteratively explore resources based on governance requirements, and assess the impact of applying policies in a vast cloud environment.
 
