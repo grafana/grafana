@@ -17,7 +17,7 @@ const startTaskRunner: TaskRunner<StartTaskOptions> = async ({ watchThemes, noTs
     },
     hot
       ? {
-          command: 'webpack-dev-server --progress --color --config scripts/webpack/webpack.hot.js',
+          command: 'webpack serve --progress --color --config scripts/webpack/webpack.hot.js',
           name: 'Dev server',
         }
       : {

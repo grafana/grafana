@@ -1,12 +1,11 @@
 'use strict';
 
-const merge = require('webpack-merge');
+const { merge } = require('webpack-merge');
 const common = require('./webpack.common.js');
 const path = require('path');
-const webpack = require('webpack');
+const { HotModuleReplacementPlugin, DefinePlugin } = require('webpack');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const HtmlWebpackHarddiskPlugin = require('html-webpack-harddisk-plugin');
-const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 const getBabelConfig = require('./babel.config');
 
 module.exports = merge(common, {
@@ -52,13 +51,12 @@ module.exports = merge(common, {
     rules: [
       {
         test: /\.tsx?$/,
+        use: {
+          loader: 'babel-loader',
+          options: getBabelConfig({ BABEL_ENV: 'dev' }),
+        },
         exclude: /node_modules/,
-        use: [
-          {
-            loader: 'babel-loader',
-            options: getBabelConfig(),
-          },
-        ],
+        include: [path.resolve(__dirname, '../../public/'), path.resolve(__dirname, '../../packages/')],
       },
       {
         test: /\.scss$/,
@@ -86,7 +84,6 @@ module.exports = merge(common, {
   },
 
   plugins: [
-    new CleanWebpackPlugin(),
     new HtmlWebpackPlugin({
       filename: path.resolve(__dirname, '../../public/views/index.html'),
       template: path.resolve(__dirname, '../../public/views/index-template.html'),
@@ -95,9 +92,8 @@ module.exports = merge(common, {
       chunksSortMode: 'none',
     }),
     new HtmlWebpackHarddiskPlugin(),
-    new webpack.NamedModulesPlugin(),
-    new webpack.HotModuleReplacementPlugin(),
-    new webpack.DefinePlugin({
+    new HotModuleReplacementPlugin(),
+    new DefinePlugin({
       GRAFANA_THEME: JSON.stringify(process.env.GRAFANA_THEME || 'dark'),
       'process.env': {
         NODE_ENV: JSON.stringify('development'),
