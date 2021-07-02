@@ -3,8 +3,8 @@
   "plugins": {
     "go-codegen": {
       "service": "grafana#Grafana",
-      "module": "grafana",
-      "moduleVersion": "0.0.1"
+      "module": "github.com/grafana/grafana/smithy/build/go/grafana",
+      "moduleVersion": "0.1.0"
     },
     "openapi": {
       "service": "grafana#Grafana",

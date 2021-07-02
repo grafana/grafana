@@ -3,6 +3,8 @@
 package main
 
 import (
+	"os"
+
 	"github.com/magefile/mage/mg"
 	"github.com/magefile/mage/sh"
 )
@@ -20,6 +22,13 @@ func Smithy() error {
 	if err := sh.RunV("./gradlew", "build"); err != nil {
 		return err
 	}
+	if err := os.MkdirAll("build/go", 0755); err != nil {
+		return err
+	}
+	if err := sh.RunV("cp", "-r", "build/smithyprojections/smithy/source/go-codegen", "build/go/grafana"); err != nil {
+		return err
+	}
+
 	return nil
 }
 
