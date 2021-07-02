@@ -50,6 +50,7 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor"
 	"github.com/grafana/grafana/pkg/tsdb/cloudmonitoring"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch"
+	"github.com/grafana/grafana/pkg/tsdb/opentsdb"
 	"github.com/grafana/grafana/pkg/tsdb/postgres"
 	"github.com/grafana/grafana/pkg/tsdb/testdatasource"
 )
@@ -112,6 +113,7 @@ var wireBasicSet = wire.NewSet(
 	tracing.ProvideService,
 	metrics.ProvideService,
 	testdatasource.ProvideService,
+	opentsdb.ProvideService,
 )
 
 var wireSet = wire.NewSet(

@@ -10,12 +10,15 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestOpenTsdbExecutor(t *testing.T) {
-	service := &Service{}
+	service := &Service{
+		logger: log.New("test"),
+	}
 
 	t.Run("create request", func(t *testing.T) {
 		req, err := service.createRequest(&datasourceInfo{}, OpenTsdbQuery{})

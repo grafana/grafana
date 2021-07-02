@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/loki"
 	"github.com/grafana/grafana/pkg/tsdb/mssql"
 	"github.com/grafana/grafana/pkg/tsdb/mysql"
+	"github.com/grafana/grafana/pkg/tsdb/opentsdb"
 	"github.com/grafana/grafana/pkg/tsdb/postgres"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus"
 	"github.com/grafana/grafana/pkg/tsdb/tempo"
@@ -29,13 +30,12 @@ func NewService(cfg *setting.Cfg, _ *cloudwatch.CloudWatchService,
 	cloudMonitoringService *cloudmonitoring.Service, _ *azuremonitor.Service,
 	pluginManager plugins.Manager, postgresService *postgres.PostgresService,
 	httpClientProvider httpclient.Provider, _ *testdatasource.TestDataPlugin,
-	backendPluginManager backendplugin.Manager) *Service {
+	backendPluginManager backendplugin.Manager, _ *opentsdb.Service) *Service {
 	s := newService(cfg, pluginManager, backendPluginManager)
 
 	// register backend data sources using legacy plugin
 	// contracts/non-SDK contracts
 	s.registry["graphite"] = graphite.New(httpClientProvider)
-	s.registry["opentsdb"] = opentsdb.New(httpClientProvider)
 	s.registry["prometheus"] = prometheus.New(httpClientProvider)
 	s.registry["influxdb"] = influxdb.New(httpClientProvider)
 	s.registry["mssql"] = mssql.NewExecutor
