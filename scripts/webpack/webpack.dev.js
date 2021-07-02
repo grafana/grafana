@@ -13,7 +13,8 @@ const getBabelConfig = require('./babel.config');
 
 module.exports = (env = {}) =>
   merge(common, {
-    devtool: 'inline-source-map',
+    // https://webpack.js.org/guides/build-performance/#devtool
+    devtool: 'eval-source-map',
     mode: 'development',
 
     entry: {
@@ -37,6 +38,7 @@ module.exports = (env = {}) =>
             options: getBabelConfig({ BABEL_ENV: 'dev' }),
           },
           exclude: /node_modules/,
+          include: [path.resolve(__dirname, '../../public/'), path.resolve(__dirname, '../../packages/')],
         },
         require('./sass.rule.js')({
           sourceMap: false,
@@ -45,28 +47,36 @@ module.exports = (env = {}) =>
       ],
     },
 
-    cache: {
-      type: 'filesystem',
-      buildDependencies: {
-        config: [__filename],
-      },
+    // https://webpack.js.org/guides/build-performance/#output-without-path-info
+    output: {
+      pathinfo: false,
+      filename: '[name].js',
+    },
+
+    // https://webpack.js.org/guides/build-performance/#avoid-extra-optimization-steps
+    optimization: {
+      runtimeChunk: true,
+      removeAvailableModules: false,
+      removeEmptyChunks: false,
+      splitChunks: false,
     },
 
     plugins: [
       parseInt(env.noTsCheck, 10)
         ? new DefinePlugin({}) // bogus plugin to satisfy webpack API
         : new ForkTsCheckerWebpackPlugin({
+            // don't block webpack emit
+            async: true,
             typescript: {
               mode: 'write-references',
               memoryLimit: 4096,
               diagnosticOptions: {
-                semantic: false,
+                semantic: true,
                 syntactic: true,
               },
             },
           }),
-      // enabling eslint blocks type checking which results in slow dev builds
-      // https://github.com/TypeStrong/fork-ts-checker-webpack-plugin/issues/612
+      // next major version of ForkTsChecker is dropping support for ESLint
       new ESLintPlugin({
         lintDirtyModulesOnly: true, // don't lint on start, only lint changed files
         extensions: ['.ts', '.tsx'],
