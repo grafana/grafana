@@ -90,7 +90,6 @@ class UnThemedLogRowMessage extends PureComponent<Props> {
 
     const style = getLogRowStyles(theme, row.logLevel);
     const { entry, hasAnsi, raw } = row;
-    //const jsonEntry = prettifyLogMessage ? safeStringifyValue(safeParseJson(entry), 2) : entry;
     const restructuredEntry = restructureLog(entry, prettifyLogMessage);
 
     const previewHighlights = highlighterExpressions?.length && !isEqual(highlighterExpressions, row.searchWords);
