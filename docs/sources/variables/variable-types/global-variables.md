@@ -72,6 +72,10 @@ This variable is the ID of the current organization.
 
 Currently only supported for Prometheus data sources. This variable represents the range for the current dashboard. It is calculated by `to - from`. It has a millisecond and a second representation called `$__range_ms` and `$__range_s`.
 
+## $__rate_interval
+
+Currently only supported for Prometheus data sources. The `$__rate_interval` variable is meant to be used in the rate function. Refer to [Prometheus query variables]({{< relref "../datasources/prometheus.md">}}) for details. 
+
 ## $timeFilter or $__timeFilter
 
 The `$timeFilter` variable returns the currently selected time range as an expression. For example, the time range interval `Last 7 days` expression is `time > now() - 7d`.
