@@ -1,7 +1,5 @@
 import React, { ReactElement, useContext, useMemo, useState, useCallback } from 'react';
 import { get, set } from 'lodash';
-import { DashNav, OwnProps as DashNavProps } from '../components/DashNav';
-import { selectors } from '@grafana/e2e-selectors';
 import { getConfig } from '../../../core/config';
 import {
   CollapsableSection,
@@ -63,9 +61,9 @@ const standardProfile = {
     sharePanelToggle: {
       mode: GorillaMode.hidden,
     },
-    sideMenu: {
-      mode: GorillaMode.hidden,
-    },
+  },
+  sideMenu: {
+    mode: GorillaMode.hidden,
   },
 };
 
@@ -98,9 +96,9 @@ const tvProfile = {
     sharePanelToggle: {
       mode: GorillaMode.hidden,
     },
-    sideMenu: {
-      mode: GorillaMode.hidden,
-    },
+  },
+  sideMenu: {
+    mode: GorillaMode.hidden,
   },
 };
 
@@ -133,9 +131,9 @@ const customProfile = {
     sharePanelToggle: {
       mode: GorillaMode.default,
     },
-    sideMenu: {
-      mode: GorillaMode.default,
-    },
+  },
+  sideMenu: {
+    mode: GorillaMode.default,
   },
 };
 
@@ -161,7 +159,6 @@ export interface GorillaContextConfiguration {
   dashNav: {
     timePicker: GorillaContextItem;
     title: GorillaContextItem;
-    sideMenu: GorillaContextItem;
     tvToggle: GorillaContextItem;
     addPanelToggle: GorillaContextItem;
     dashboardSettingsToggle: GorillaContextItem;
@@ -170,6 +167,7 @@ export interface GorillaContextConfiguration {
     starToggle: GorillaContextItem;
     sharePanelToggle: GorillaContextItem;
   };
+  sideMenu: GorillaContextItem;
 }
 
 export const GorillaContext = React.createContext<GorillaContextType>({
@@ -196,40 +194,18 @@ export function GorillaProvider({ children }: React.PropsWithChildren<any>): JSX
   return <GorillaContext.Provider value={value}>{children}</GorillaContext.Provider>;
 }
 
-export function GorillaDashNav(props: DashNavProps): JSX.Element | null {
-  const {
-    config: { dashNav },
-  } = useContext(GorillaContext);
-
-  if (!getConfig().featureToggles.customKiosk) {
-    return (
-      <div aria-label={selectors.pages.Dashboard.DashNav.nav}>
-        <DashNav {...props} />
-      </div>
-    );
-  }
-
-  switch (dashNav.mode) {
-    case GorillaMode.hidden: {
-      return null;
-    }
-
-    default:
-      return (
-        <div aria-label={selectors.pages.Dashboard.DashNav.nav}>
-          <DashNav {...props} />
-        </div>
-      );
-  }
-}
-
 export function GorillaPageToolbar(props: PageToolbarProps): ReactElement {
-  const {
-    dashNav: { title },
-  } = useGorillaConfig();
+  const { dashNav } = useGorillaConfig();
+  const { title } = dashNav;
 
   if (!getConfig().featureToggles.customKiosk) {
     return <PageToolbar {...props} />;
+  }
+
+  const hideToolbar = !Object.values(dashNav).find((value) => value.mode !== GorillaMode.hidden);
+
+  if (hideToolbar) {
+    return <div style={{ marginTop: '16px' }} />;
   }
 
   switch (title.mode) {
@@ -310,9 +286,7 @@ export function GorillaDashNavButton(props: DashNavButtonProps & { configPath: s
 }
 
 export function GorillaSideMenu(): ReactElement | null {
-  const {
-    dashNav: { sideMenu },
-  } = useGorillaConfig();
+  const { sideMenu } = useGorillaConfig();
 
   if (!getConfig().featureToggles.customKiosk) {
     return <SideMenu />;
@@ -448,7 +422,6 @@ export function useGorillaConfig(): GorillaContextConfiguration {
   if (!enabled) {
     return {
       dashNav: {
-        mode: GorillaMode.default,
         timePicker: {
           mode: GorillaMode.default,
         },
@@ -476,9 +449,9 @@ export function useGorillaConfig(): GorillaContextConfiguration {
         sharePanelToggle: {
           mode: GorillaMode.default,
         },
-        sideMenu: {
-          mode: GorillaMode.default,
-        },
+      },
+      sideMenu: {
+        mode: GorillaMode.default,
       },
     };
   }

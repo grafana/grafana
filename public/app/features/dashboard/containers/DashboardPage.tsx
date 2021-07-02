@@ -29,7 +29,7 @@ import { GrafanaTheme2, UrlQueryValue } from '@grafana/data';
 import { DashboardLoading } from '../components/DashboardLoading/DashboardLoading';
 import { DashboardFailed } from '../components/DashboardLoading/DashboardFailed';
 import { DashboardPrompt } from '../components/DashboardPrompt/DashboardPrompt';
-import { GorillaDashNav } from '../gorilla/types';
+import { DashNav } from '../components/DashNav';
 
 export interface DashboardPageRouteParams {
   uid?: string;
@@ -307,15 +307,17 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
 
     return (
       <div className={styles.dashboardContainer}>
-        <GorillaDashNav
-          dashboard={dashboard}
-          title={dashboard.title}
-          folderTitle={dashboard.meta.folderTitle}
-          isFullscreen={!!viewPanel}
-          onAddPanel={this.onAddPanel}
-          kioskMode={kioskMode}
-          hideTimePicker={dashboard.timepicker.hidden}
-        />
+        <div aria-label={selectors.pages.Dashboard.DashNav.nav}>
+          <DashNav
+            dashboard={dashboard}
+            title={dashboard.title}
+            folderTitle={dashboard.meta.folderTitle}
+            isFullscreen={!!viewPanel}
+            onAddPanel={this.onAddPanel}
+            kioskMode={kioskMode}
+            hideTimePicker={dashboard.timepicker.hidden}
+          />
+        </div>
 
         <DashboardPrompt dashboard={dashboard} />
 
