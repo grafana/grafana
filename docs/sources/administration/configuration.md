@@ -911,7 +911,7 @@ Enter a comma-separated list of template patterns. Default is `emails/*.html, em
 
 ### content_types
 
-Enter a comma-separated list of content types that should be included in the emails that are sent. List the content types according descending preference. Default is `text/html`.
+Enter a comma-separated list of content types that should be included in the emails that are sent. List the content types according descending preference. The order of the parts is significant as the mail clients will use the content type that is supported and most preferred by the sender. Supported content types are `text/html` and `text/plain`. Default is `text/html`.
 
 <hr>
 

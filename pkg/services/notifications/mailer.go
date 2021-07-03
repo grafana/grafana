@@ -67,26 +67,7 @@ func (ns *NotificationService) dialAndSend(messages ...*Message) (int, error) {
 	}
 
 	for _, msg := range messages {
-		m := gomail.NewMessage()
-		m.SetHeader("From", msg.From)
-		m.SetHeader("To", msg.To...)
-		m.SetHeader("Subject", msg.Subject)
-
-		ns.setFiles(m, msg)
-
-		for _, replyTo := range msg.ReplyTo {
-			m.SetAddressHeader("Reply-To", replyTo, "")
-		}
-
-		// loop over content types from settings in reverse order as they are ordered in according to descending
-		// preference while the alternatives should be ordered according to ascending preference
-		for i := len(ns.Cfg.Smtp.ContentTypes) - 1; i >= 0; i-- {
-			if i == len(ns.Cfg.Smtp.ContentTypes)-1 {
-				m.SetBody(ns.Cfg.Smtp.ContentTypes[i], msg.Body[ns.Cfg.Smtp.ContentTypes[i]])
-			} else {
-				m.AddAlternative(ns.Cfg.Smtp.ContentTypes[i], msg.Body[ns.Cfg.Smtp.ContentTypes[i]])
-			}
-		}
+		m := ns.buildEmail(msg)
 
 		innerError := dialer.DialAndSend(m)
 		emailsSentTotal.Inc()
@@ -106,6 +87,28 @@ func (ns *NotificationService) dialAndSend(messages ...*Message) (int, error) {
 	}
 
 	return sentEmailsCount, err
+}
+
+func (ns *NotificationService) buildEmail(msg *Message) *gomail.Message {
+	m := gomail.NewMessage()
+	m.SetHeader("From", msg.From)
+	m.SetHeader("To", msg.To...)
+	m.SetHeader("Subject", msg.Subject)
+	ns.setFiles(m, msg)
+	for _, replyTo := range msg.ReplyTo {
+		m.SetAddressHeader("Reply-To", replyTo, "")
+	}
+	// loop over content types from settings in reverse order as they are ordered in according to descending
+	// preference while the alternatives should be ordered according to ascending preference
+	for i := len(ns.Cfg.Smtp.ContentTypes) - 1; i >= 0; i-- {
+		if i == len(ns.Cfg.Smtp.ContentTypes)-1 {
+			m.SetBody(ns.Cfg.Smtp.ContentTypes[i], msg.Body[ns.Cfg.Smtp.ContentTypes[i]])
+		} else {
+			m.AddAlternative(ns.Cfg.Smtp.ContentTypes[i], msg.Body[ns.Cfg.Smtp.ContentTypes[i]])
+		}
+	}
+	
+	return m
 }
 
 // setFiles attaches files in various forms
@@ -186,9 +189,12 @@ func (ns *NotificationService) buildEmailMessage(cmd *models.SendEmailCommand) (
 
 	body := make(map[string]string)
 	for _, contentType := range ns.Cfg.Smtp.ContentTypes {
-		fileExtension := getFileExtensionByContentType(contentType)
+		fileExtension, err := getFileExtensionByContentType(contentType)
+		if err != nil {
+			return nil, err
+		}
 		var buffer bytes.Buffer
-		err := mailTemplates.ExecuteTemplate(&buffer, cmd.Template+fileExtension, data)
+		err = mailTemplates.ExecuteTemplate(&buffer, cmd.Template+fileExtension, data)
 		if err != nil {
 			return nil, err
 		}
@@ -249,13 +255,13 @@ func buildAttachedFiles(
 	return result
 }
 
-func getFileExtensionByContentType(contentType string) string {
+func getFileExtensionByContentType(contentType string) (string, error) {
 	switch contentType {
 	case "text/html":
-		return ".html"
+		return ".html", nil
 	case "text/plain":
-		return ".txt"
+		return ".txt", nil
 	default:
-		panic(fmt.Sprintf("Unrecognized content type %q", contentType))
+		return "", fmt.Errorf("Unrecognized content type %q", contentType)
 	}
 }
