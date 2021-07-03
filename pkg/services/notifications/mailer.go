@@ -262,6 +262,6 @@ func getFileExtensionByContentType(contentType string) (string, error) {
 	case "text/plain":
 		return ".txt", nil
 	default:
-		return "", fmt.Errorf("Unrecognized content type %q", contentType)
+		return "", fmt.Errorf("unrecognized content type %q", contentType)
 	}
 }
