@@ -35,10 +35,7 @@ const defaultConfig: GraphFieldConfig = {
   axisPlacement: AxisPlacement.Auto,
 };
 
-// candlestick & volume renderer
-function renderOHLCV(u: uPlot, frame: DataFrame) {
-  console.log('draw composite markers!');
-}
+import { renderOHLCV } from '../../../../../public/app/plugins/panel/candlestick/renderOHLCV';
 
 export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursorSync }> = ({
   frame,
@@ -119,7 +116,8 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
   }
 
   if (compositeRenderers.size > 0) {
-    builder.addHook('draw', (u) => {
+    // drawAxes fires after the grid is drawn but before any other series are rendered
+    builder.addHook('drawAxes', (u) => {
       compositeRenderers.forEach((r) => r(u, frame));
     });
   }
