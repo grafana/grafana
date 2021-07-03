@@ -107,7 +107,7 @@ func (ns *NotificationService) buildEmail(msg *Message) *gomail.Message {
 			m.AddAlternative(ns.Cfg.Smtp.ContentTypes[i], msg.Body[ns.Cfg.Smtp.ContentTypes[i]])
 		}
 	}
-	
+
 	return m
 }
 
