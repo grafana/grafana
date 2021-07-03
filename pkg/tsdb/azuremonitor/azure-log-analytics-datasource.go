@@ -163,6 +163,9 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *A
 	azlog.Debug("AzureLogAnalytics", "Request ApiURL", req.URL.String())
 	res, err := ctxhttp.Do(ctx, dsInfo.Services[azureLogAnalytics].HTTPClient, req)
 	if err != nil {
+		if !dsInfo.Settings.AzureLogAnalyticsSameAs {
+			return dataResponseErrorWithExecuted(fmt.Errorf("Log Analytics credentials are no longer supported. Go to the data source configuration to update Azure Monitor credentials")) //nolint:golint,stylecheck
+		}
 		return dataResponseErrorWithExecuted(err)
 	}
 
@@ -206,6 +209,11 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *A
 			}
 		}
 	}
+
+	if !dsInfo.Settings.AzureLogAnalyticsSameAs {
+		frame.AppendNotices(data.Notice{Severity: data.NoticeSeverityWarning, Text: "Log Analytics credentials are no longer supported. Go to the data source configuration to update Azure Monitor credentials"})
+	}
+
 	dataResponse.Frames = data.Frames{frame}
 	return dataResponse
 }

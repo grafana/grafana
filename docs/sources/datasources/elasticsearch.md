@@ -57,7 +57,7 @@ a time pattern for the index name or a wildcard.
 ### Elasticsearch version
 
 Select the version of your Elasticsearch data source from the version selection dropdown. Different query compositions and functionalities are available in the query editor for different versions.
-Available Elasticsearch versions are `2.x`, `5.x`, `5.6+`, `6.0+`, `7.0+` and `7.7+`. Select the option that best matches your data source version.
+Available Elasticsearch versions are `2.x`, `5.x`, `5.6+`, `6.0+`, `7.0+`, `7.7+` and `7.10+`. Select the option that best matches your data source version.
 
 Grafana assumes that you are running the lowest possible version for a specified range. This ensures that new features or breaking changes in a future Elasticsearch release will not affect your configuration.
 
@@ -176,7 +176,7 @@ In the above example, we have a lucene query that filters documents based on the
 a variable in the *Terms* group by field input box. This allows you to use a variable to quickly change how the data is grouped.
 
 Example dashboard:
-[Elasticsearch Templated Dashboard](https://play.grafana.org/dashboard/db/elasticsearch-templated)
+[Elasticsearch Templated Dashboard](https://play.grafana.org/d/CknOEXDMk/elasticsearch-templated?orgId=1d)
 
 ## Annotations
 
