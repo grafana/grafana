@@ -19,6 +19,25 @@ export function parseLabels(labels: string): Labels {
   return labelsByKey;
 }
 
+type LabelsWithOperator = {
+  [key: string]: {
+    value: string;
+    operator: string;
+  };
+};
+
+/**
+ * Returns a map of label keys with the value and operator
+ */
+export function parseLabelsWithOperator(labels: string): LabelsWithOperator {
+  const labelsByKey: LabelsWithOperator = {};
+  labels.replace(labelRegexp, (_, key, operator, value) => {
+    labelsByKey[key] = { value, operator };
+    return '';
+  });
+  return labelsByKey;
+}
+
 /**
  * Returns a map labels that are common to the given label sets.
  */
