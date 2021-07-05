@@ -68,10 +68,21 @@ export default function AnnotationQueryEditor({ query, onChange }: Props) {
   return (
     <FieldSet className={styles.container}>
       <Field label="Filter by">
-        <Select options={annotationTypes} value={type} onChange={onFilterByChange} />
+        <Select
+          inputId="grafana-annotations__filter-by"
+          options={annotationTypes}
+          value={type}
+          onChange={onFilterByChange}
+        />
       </Field>
       <Field label="Max limit">
-        <Select width={16} options={limitOptions} value={limit} onChange={onMaxLimitChange} />
+        <Select
+          inputId="grafana-annotations__limit"
+          width={16}
+          options={limitOptions}
+          value={limit}
+          onChange={onMaxLimitChange}
+        />
       </Field>
       {type === GrafanaAnnotationType.Tags && tags && (
         <>

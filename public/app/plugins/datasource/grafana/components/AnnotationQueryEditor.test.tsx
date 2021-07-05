@@ -36,13 +36,13 @@ describe('AnnotationQueryEditor', () => {
 
     it('has a "Match any" toggle', () => {
       render(<AnnotationQueryEditor query={mockQuery} onChange={mockOnChange} />);
-      const matchAny = screen.getByLabelText('Match any');
+      const matchAny = screen.getByLabelText(/Match any/);
       expect(matchAny).toBeInTheDocument();
     });
 
     it('has a "Tags" input', () => {
       render(<AnnotationQueryEditor query={mockQuery} onChange={mockOnChange} />);
-      const tags = screen.getByLabelText('Tags');
+      const tags = screen.getByLabelText(/Tags/);
       expect(tags).toBeInTheDocument();
     });
   });
