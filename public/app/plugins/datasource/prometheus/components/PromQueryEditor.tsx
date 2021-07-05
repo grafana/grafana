@@ -173,11 +173,17 @@ export class PromQueryEditor extends PureComponent<PromQueryEditorProps, State> 
               >
                 Step
               </InlineFormLabel>
-              <Select isSearchable={false} options={STEP_OPTIONS} onChange={this.onStepChange} value={stepOption} />
+              <Select
+                width={16}
+                isSearchable={false}
+                options={STEP_OPTIONS}
+                onChange={this.onStepChange}
+                value={stepOption}
+              />
               <input
                 type="text"
                 className="gf-form-input width-8"
-                placeholder={interval}
+                placeholder="step interval"
                 onChange={this.onIntervalChange}
                 onBlur={this.onRunQuery}
                 value={interval}
