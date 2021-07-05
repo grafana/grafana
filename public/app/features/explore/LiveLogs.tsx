@@ -89,6 +89,7 @@ interface State {
   sonifyValueExpression: string;
   sonifyValueMatcher?: RegExp;
   sonifyValueMax: string;
+  sonifyValueMaxParsed: number;
   sonifyLevelMin: string;
 }
 
@@ -107,6 +108,7 @@ class LiveLogs extends PureComponent<Props, State> {
       sonifyValue: false,
       sonifyValueExpression: '',
       sonifyValueMax: '',
+      sonifyValueMaxParsed: 0,
       sonifyLevelMin: LogLevel.error,
     };
     this.sonifier = getSonifier();
@@ -126,7 +128,14 @@ class LiveLogs extends PureComponent<Props, State> {
   }
 
   componentDidUpdate() {
-    const { sonify, sonifyValue, sonifyLevelMin, sonifyValueMatcher, logRowsToRender = [] } = this.state;
+    const {
+      sonify,
+      sonifyValue,
+      sonifyLevelMin,
+      sonifyValueMatcher,
+      logRowsToRender = [],
+      sonifyValueMaxParsed,
+    } = this.state;
     if ((sonify || sonifyValue) && !this.props.isPaused) {
       // HACK to not run out of memory
       if (Object.keys(this.rowsCheckedForSonification).length > 1e6) {
@@ -134,6 +143,7 @@ class LiveLogs extends PureComponent<Props, State> {
         this.rowsSonified = {};
       }
       const series: any[] = [];
+      let maxValue = 0;
       for (const row of logRowsToRender) {
         if (!this.rowsCheckedForSonification[row.uid]) {
           if (sonify && LevelMapper[row.logLevel] >= LevelMapper[sonifyLevelMin as LogLevel]) {
@@ -143,8 +153,9 @@ class LiveLogs extends PureComponent<Props, State> {
             const match = row.entry.match(sonifyValueMatcher);
             if (match) {
               try {
-                const value = parseFloat(match[0]);
+                const value = parseFloat(match[1]);
                 series.push([row.timeEpochMs, value]);
+                maxValue = Math.max(maxValue, value);
                 this.rowsSonified[row.uid] = true;
               } catch (error) {}
             }
@@ -152,7 +163,10 @@ class LiveLogs extends PureComponent<Props, State> {
         }
         this.rowsCheckedForSonification[row.uid] = true;
       }
-      this.sonifier.playSeries(series);
+      if (sonifyValueMaxParsed) {
+        maxValue = sonifyValueMaxParsed;
+      }
+      this.sonifier.playSeries(series, { max: maxValue });
     }
   }
 
@@ -161,8 +175,7 @@ class LiveLogs extends PureComponent<Props, State> {
     try {
       const max = parseFloat(sonifyValueMax);
       if (max && max > 0) {
-        // TODO reset scale
-        console.log('reset scale, new max value', max);
+        this.setState({ sonifyValueMaxParsed: max });
       }
     } catch (error) {}
     this.setState({ sonifyValueMax });
