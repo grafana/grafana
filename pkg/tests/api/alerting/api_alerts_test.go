@@ -7,10 +7,13 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strconv"
 	"testing"
+	"time"
 
 	"github.com/aws/smithy-go/middleware"
 	smithyhttp "github.com/aws/smithy-go/transport/http"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/smithy/build/go/grafana"
@@ -51,7 +54,7 @@ func TestGetAlert(t *testing.T) {
 				}, middleware.After); err != nil {
 					return err
 				}
-				return stack.Deserialize.Add(&deserializeResponse{}, middleware.After)
+				return stack.Deserialize.Add(&deserializeResponse{t: t}, middleware.After)
 			},
 		},
 	})
@@ -65,12 +68,26 @@ func TestGetAlert(t *testing.T) {
 			"operation error grafana#Grafana: GetAlert, HTTP request failed with status code 404: Alert not found")
 	})
 
-	/*
-		t.Run("Existing alert", func(t *testing.T) {
-			// TODO: Insert alert into database
-			// TODO: Get alert via API client
+	t.Run("Existing alert", func(t *testing.T) {
+		now := time.Now().UTC()
+		alert := models.Alert{
+			Updated:      now,
+			Created:      now,
+			State:        models.AlertStateUnknown,
+			NewStateDate: now,
+			// Create with the same org ID as we'll be querying with
+			OrgId: 2,
+		}
+		sqlStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+			_, err := sess.Insert(&alert)
+			return err
 		})
-	*/
+		alertID := strconv.FormatInt(alert.Id, 10)
+		_, err := client.GetAlert(ctx, &grafana.GetAlertInput{
+			Id: &alertID,
+		})
+		require.NoError(t, err)
+	})
 }
 
 type buildRequest struct {
@@ -93,6 +110,7 @@ func (br *buildRequest) HandleBuild(ctx context.Context, in middleware.BuildInpu
 }
 
 type deserializeResponse struct {
+	t *testing.T
 }
 
 func (dr *deserializeResponse) ID() string {
@@ -125,7 +143,16 @@ func (dr *deserializeResponse) HandleDeserialize(ctx context.Context, in middlew
 		return out, metadata, fmt.Errorf("HTTP request failed with status code %d: %s", resp.StatusCode, msg)
 	}
 
-	return out, metadata, err
+	dr.t.Logf("Deserializing %s", string(body))
+
+	out.RawResponse = body
+	var alert grafana.GetAlertOutput
+	if err := json.Unmarshal(body, &alert); err != nil {
+		return out, metadata, err
+	}
+	out.Result = &alert
+
+	return out, metadata, nil
 }
 
 func setUpDatabase(t *testing.T, grafDir string) *sqlstore.SQLStore {
