@@ -31,7 +31,7 @@ exports[`Render PromQueryEditor with basic options should render 1`] = `
         <FormLabel
           tooltip={
             <React.Fragment>
-              An additional lower limit for the step parameter of the Prometheus query and for the
+              An additional limit for the step parameter of the Prometheus query and for the
                
               <code>
                 $__interval
@@ -40,7 +40,7 @@ exports[`Render PromQueryEditor with basic options should render 1`] = `
               <code>
                 $__rate_interval
               </code>
-               variables. The limit is absolute and not modified by the "Resolution" setting.
+               variables. Both the "minimum" and "maximum" option act as limits while the "exact" option is used to specify the exact step interval. The limit is absolute and not modified by the "Resolution" setting.
             </React.Fragment>
           }
           width={5}
@@ -53,11 +53,11 @@ exports[`Render PromQueryEditor with basic options should render 1`] = `
           options={
             Array [
               Object {
-                "label": "min",
+                "label": "minimum",
                 "value": "min",
               },
               Object {
-                "label": "max",
+                "label": "maximum",
                 "value": "max",
               },
               Object {
@@ -68,16 +68,17 @@ exports[`Render PromQueryEditor with basic options should render 1`] = `
           }
           value={
             Object {
-              "label": "min",
+              "label": "minimum",
               "value": "min",
             }
           }
+          width={16}
         />
         <input
           className="gf-form-input width-8"
           onBlur={[Function]}
           onChange={[Function]}
-          placeholder=""
+          placeholder="step interval"
           type="text"
           value=""
         />
