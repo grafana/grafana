@@ -12,7 +12,7 @@ An event is something that happened in the past. Since an event has already happ
 
 ### Subscribe to an event
 
-In order to react to an event, you first need to _subscribe_ to it. 
+In order to react to an event, you first need to _subscribe_ to it.
 
 To subscribe to an event, register an _event listener_ in the service's `Init` method:
 
@@ -51,14 +51,16 @@ A command is a request for an action to be taken. Unlike an event's fire-and-for
 
 ### Dispatch a command
 
-To dispatch a command, pass the object to the `Dispatch` method:
+To dispatch a command, pass the `context.Context` and object to the `DispatchCtx` method:
 
 ```go
+// context.Context from caller
+ctx := req.Request.Context()
 cmd := &models.SendStickersCommand {
     UserID: "taylor",
     Count: 1,
 }
-if err := s.bus.Dispatch(cmd); err != nil {
+if err := s.bus.DispatchCtx(ctx, cmd); err != nil {
   if err == bus.ErrHandlerNotFound {
     return nil
   }
@@ -66,7 +68,9 @@ if err := s.bus.Dispatch(cmd); err != nil {
 }
 ```
 
-> **Note:** `Dispatch` will return an error if no handler is registered for that command.
+> **Note:** `DispatchCtx` will return an error if no handler is registered for that command.
+
+> **Note:** `Dispatch` currently exists and requires no `context.Context` to be provided, but it's strongly suggested to not use this since there's an ongoing refactoring to remove usage of non-context-aware functions/methods and use context.Context everywhere.
 
 **Tip:** Browse the available commands in the `models` package.
 
@@ -78,16 +82,18 @@ To handle a command, register a command handler in the `Init` function.
 
 ```go
 func (s *MyService) Init() error {
-    s.bus.AddHandler(s.SendStickers)
+    s.bus.AddHandlerCtx(s.SendStickers)
     return nil
 }
 
-func (s *MyService) SendStickers(cmd *models.SendStickersCommand) error {
+func (s *MyService) SendStickers(ctx context.Context, cmd *models.SendStickersCommand) error {
     // ...
 }
 ```
 
 > **Note:** The handler method may return an error if unable to complete the command.
+
+> **Note:** `AddHandler` currently exists and requires no `context.Context` to be provided, but it's strongly suggested to not use this since there's an ongoing refactoring to remove usage of non-context-aware functions/methods and use context.Context everywhere.
 
 ## Queries
 
@@ -95,13 +101,15 @@ A command handler can optionally populate the command sent to it. This pattern i
 
 ### Making a query
 
-To make a query, dispatch the query instance just like you would a command. When the `Dispatch` method returns, the `Results` field contains the result of the query.
+To make a query, dispatch the query instance just like you would a command. When the `DispatchCtx` method returns, the `Results` field contains the result of the query.
 
 ```go
+// context.Context from caller
+ctx := req.Request.Context()
 query := &models.FindDashboardQuery{
     ID: "foo",
 }
-if err := bus.Dispatch(query); err != nil {
+if err := bus.DispatchCtx(ctx, query); err != nil {
     return err
 }
 // The query now contains a result.
@@ -110,12 +118,14 @@ for _, item := range query.Results {
 }
 ```
 
+> **Note:** `Dispatch` currently exists and requires no `context.Context` to be provided, but it's strongly suggested to not use this since there's an ongoing refactoring to remove usage of non-context-aware functions/methods and use context.Context everywhere.
+
 ### Return query results
 
 To return results for a query, set any of the fields on the query argument before returning:
 
 ```go
-func (s *MyService) FindDashboard(query *models.FindDashboardQuery) error {
+func (s *MyService) FindDashboard(ctx context.Context, query *models.FindDashboardQuery) error {
     // ...
     query.Result = dashboard
     return nil

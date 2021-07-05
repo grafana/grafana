@@ -9,6 +9,7 @@ type OAuthInfo struct {
 	EmailAttributePath     string
 	RoleAttributePath      string
 	RoleAttributeStrict    bool
+	GroupsAttributePath    string
 	AllowedDomains         []string
 	HostedDomain           string
 	ApiUrl                 string
