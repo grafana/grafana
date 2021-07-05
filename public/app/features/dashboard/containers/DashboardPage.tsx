@@ -14,7 +14,7 @@ import { DashboardSettings } from '../components/DashboardSettings';
 import { PanelEditor } from '../components/PanelEditor/PanelEditor';
 import { initDashboard } from '../state/initDashboard';
 import { notifyApp } from 'app/core/actions';
-import { DashboardInitError, DashboardInitPhase, KioskMode, StoreState } from 'app/types';
+import { DashboardInitError, DashboardInitPhase, StoreState } from 'app/types';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { PanelInspector } from '../components/Inspector/PanelInspector';
 import { SubMenu } from '../components/SubMenu/SubMenu';
@@ -24,12 +24,12 @@ import { findTemplateVarChanges } from '../../variables/utils';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { getTimeSrv } from '../services/TimeSrv';
-import { getKioskMode } from 'app/core/navigation/kiosk';
 import { GrafanaTheme2, UrlQueryValue } from '@grafana/data';
 import { DashboardLoading } from '../components/DashboardLoading/DashboardLoading';
 import { DashboardFailed } from '../components/DashboardLoading/DashboardFailed';
 import { DashboardPrompt } from '../components/DashboardPrompt/DashboardPrompt';
 import { DashNav } from '../components/DashNav';
+import { HidableInDisplayProfile } from '../displayProfiles/components';
 
 export interface DashboardPageRouteParams {
   uid?: string;
@@ -290,7 +290,6 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
   render() {
     const { dashboard, isInitSlow, initError, isPanelEditorOpen, queryParams, theme } = this.props;
     const { editPanel, viewPanel, scrollTop, updateScrollTop } = this.state;
-    const kioskMode = getKioskMode(queryParams.kiosk);
     const styles = getStyles(theme);
 
     if (!dashboard) {
@@ -330,10 +329,12 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
           >
             <div className={styles.dashboardContent}>
               {initError && <DashboardFailed />}
-              {!editPanel && kioskMode === KioskMode.Off && (
-                <div aria-label={selectors.pages.Dashboard.SubMenu.submenu}>
-                  <SubMenu dashboard={dashboard} annotations={dashboard.annotations.list} links={dashboard.links} />
-                </div>
+              {!editPanel && (
+                <HidableInDisplayProfile pathInProfile="subMenu">
+                  <div aria-label={selectors.pages.Dashboard.SubMenu.submenu}>
+                    <SubMenu dashboard={dashboard} annotations={dashboard.annotations.list} links={dashboard.links} />
+                  </div>
+                </HidableInDisplayProfile>
               )}
 
               <DashboardGrid

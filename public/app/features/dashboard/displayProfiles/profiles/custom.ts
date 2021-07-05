@@ -11,6 +11,8 @@ export const customProfile: DashboardDisplayProfile = {
     snapshotToggle: DisplayProfileMode.default,
     starToggle: DisplayProfileMode.default,
     sharePanelToggle: DisplayProfileMode.default,
+    customButtons: DisplayProfileMode.default,
   },
+  subMenu: DisplayProfileMode.default,
   sideMenu: DisplayProfileMode.default,
 };

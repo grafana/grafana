@@ -11,6 +11,8 @@ export const playlistProfile: DashboardDisplayProfile = {
     snapshotToggle: DisplayProfileMode.hidden,
     starToggle: DisplayProfileMode.hidden,
     sharePanelToggle: DisplayProfileMode.hidden,
+    customButtons: DisplayProfileMode.hidden,
   },
+  subMenu: DisplayProfileMode.hidden,
   sideMenu: DisplayProfileMode.hidden,
 };

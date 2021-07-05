@@ -1,31 +1,33 @@
-import React, { ReactElement, useCallback, useContext } from 'react';
+import React, { ReactElement, useCallback } from 'react';
 import { css } from '@emotion/css';
 import { Checkbox, CollapsableSection, Field, RadioButtonGroup, useStyles2 } from '@grafana/ui';
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { DisplayProfileId, getProfile } from '../profiles';
+import { DisplayProfileId, getDisplayProfile } from '../profiles';
 import { customProfile } from '../profiles/custom';
 import { get, set } from 'lodash';
 import { DisplayProfileMode } from '../types';
 import { getConfig } from 'app/core/config';
-import { DisplayProfileContext } from '../state/context';
-
-let currentProfile: DisplayProfileId = DisplayProfileId.tv;
+import { useDisplayProfileId, useOnChangeDisplayProfile } from '../state/hooks';
 
 type DisplayProfileSettingsProps = {};
 
 export function DisplayProfileSettings(props: DisplayProfileSettingsProps): ReactElement | null {
   const styles = useStyles2(getStyles);
-  const { profile, onChangeProfile } = useContext(DisplayProfileContext);
+  const currentProfile = useDisplayProfileId();
+  const profile = getDisplayProfile(currentProfile);
+  const onChangeProfile = useOnChangeDisplayProfile();
+
+  console.log('currentProfile', currentProfile);
 
   const onChange = useCallback(
     (id: DisplayProfileId) => {
-      const profileFromId = getProfile(id);
+      const profileConfig = getDisplayProfile(id);
 
-      if (!profileFromId) {
+      if (!profileConfig) {
         return;
       }
-      currentProfile = id;
-      onChangeProfile(profileFromId);
+
+      onChangeProfile(id);
     },
     [onChangeProfile]
   );
@@ -36,12 +38,12 @@ export function DisplayProfileSettings(props: DisplayProfileSettingsProps): Reac
 
       if (mode === DisplayProfileMode.default) {
         set(customProfile, path, DisplayProfileMode.hidden);
-        onChangeProfile({ ...customProfile });
+        onChangeProfile(DisplayProfileId.custom);
         return;
       }
 
       set(customProfile, path, DisplayProfileMode.default);
-      onChangeProfile({ ...customProfile });
+      onChangeProfile(DisplayProfileId.custom);
     },
     [onChangeProfile]
   );

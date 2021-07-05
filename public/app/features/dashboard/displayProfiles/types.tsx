@@ -15,6 +15,8 @@ export interface DashboardDisplayProfile {
     snapshotToggle: DisplayProfileMode;
     starToggle: DisplayProfileMode;
     sharePanelToggle: DisplayProfileMode;
+    customButtons: DisplayProfileMode;
   };
+  subMenu: DisplayProfileMode;
   sideMenu: DisplayProfileMode;
 }

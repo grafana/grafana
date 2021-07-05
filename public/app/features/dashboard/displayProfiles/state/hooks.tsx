@@ -1,29 +1,71 @@
-import React, { useContext, useCallback } from 'react';
+import { getConfig } from 'app/core/config';
+import React, { useCallback } from 'react';
+import { locationService } from '@grafana/runtime';
 import { standardProfile } from '../profiles/standard';
 import { DashboardDisplayProfile } from '../types';
-import { OnChangeDisplayProfile, DisplayProfileContext } from './context';
+import { DisplayProfileId, getDisplayProfile } from '../profiles';
+import { toggleKioskMode } from 'app/core/navigation/kiosk';
+import { useQueryParams } from 'app/core/hooks/useQueryParams';
+import { UrlQueryMap } from '@grafana/data';
 
 export function useDisplayProfile(): DashboardDisplayProfile {
-  const { profile, enabled } = useContext(DisplayProfileContext);
+  const [params] = useQueryParams();
+  const profileId = getCurrentDisplayProfileId(params);
+  const enabled = isEnabled();
+  const profile = getDisplayProfile(profileId);
 
-  if (!enabled) {
+  if (!profile || !enabled) {
     return standardProfile;
   }
 
   return profile;
 }
 
-export function useOnToggleDisplayProfile(): () => void {
-  const { onChangeEnabled, enabled } = useContext(DisplayProfileContext);
+export function useDisplayProfileId(): DisplayProfileId {
+  const [params] = useQueryParams();
 
-  return useCallback(() => {
-    return onChangeEnabled(!enabled);
-  }, [enabled, onChangeEnabled]);
+  if (getConfig().featureToggles.customKiosk) {
+    switch (params['profile']) {
+      case DisplayProfileId.custom:
+        return DisplayProfileId.custom;
+      case DisplayProfileId.kiosk:
+        return DisplayProfileId.kiosk;
+      case DisplayProfileId.tv:
+        return DisplayProfileId.tv;
+      default:
+        return DisplayProfileId.standard;
+    }
+  }
+
+  switch (params['kiosk']) {
+    case 'custom':
+      return DisplayProfileId.custom;
+    case '1':
+    case true:
+      return DisplayProfileId.kiosk;
+    case 'tv':
+    default:
+      return DisplayProfileId.tv;
+  }
 }
 
+export function useOnToggleDisplayProfile(): () => void {
+  return useCallback(() => {
+    if (!getConfig().featureToggles.customKiosk) {
+      return toggleKioskMode();
+    }
+
+    if (isEnabled()) {
+      return locationService.partial({ kiosk: null });
+    }
+    return locationService.partial({ kiosk: true });
+  }, []);
+}
+
+type OnChangeDisplayProfile = (profileId: DisplayProfileId) => void;
+
 export function useOnChangeDisplayProfile(): OnChangeDisplayProfile {
-  const { onChangeProfile } = useContext(DisplayProfileContext);
-  return onChangeProfile;
+  return changeDisplayProfileId;
 }
 
 /** HOC for the non-functional components */
@@ -41,6 +83,79 @@ type ChangeDashboardProfileProps = {
 };
 
 export function ChangeDisplayProfile({ children }: ChangeDashboardProfileProps): React.ReactElement {
-  const onChangeConfig = useOnChangeDisplayProfile();
-  return children(onChangeConfig);
+  return children(changeDisplayProfileId);
+}
+
+function changeDisplayProfileId(id: DisplayProfileId): void {
+  if (!getConfig().featureToggles.customKiosk) {
+    return;
+  }
+
+  switch (id) {
+    case DisplayProfileId.tv:
+      return locationService.partial({
+        kiosk: isEnabled() ? 'tv' : null,
+        profile: DisplayProfileId.tv,
+      });
+
+    case DisplayProfileId.kiosk:
+      return locationService.partial({
+        kiosk: isEnabled() ? true : null,
+        profile: DisplayProfileId.kiosk,
+      });
+
+    case DisplayProfileId.custom:
+      return locationService.partial({
+        kiosk: isEnabled() ? true : null,
+        profile: DisplayProfileId.custom,
+      });
+
+    default:
+      return locationService.partial({
+        kiosk: null,
+        profile: null,
+      });
+  }
+}
+
+export function getCurrentDisplayProfileId(queryParams: UrlQueryMap): DisplayProfileId {
+  const kiosk = queryParams['kiosk'];
+  const profile = queryParams['profile'];
+  const isCustomEnabled = getConfig().featureToggles.customKiosk;
+
+  if (isCustomEnabled && profile) {
+    switch (profile) {
+      case DisplayProfileId.kiosk:
+        return DisplayProfileId.kiosk;
+      case DisplayProfileId.tv:
+        return DisplayProfileId.tv;
+      case DisplayProfileId.custom:
+        return DisplayProfileId.custom;
+      default:
+        return DisplayProfileId.standard;
+    }
+  }
+
+  switch (kiosk) {
+    case 'tv':
+      return DisplayProfileId.tv;
+    case '1':
+    case true:
+      return DisplayProfileId.kiosk;
+    default:
+      return DisplayProfileId.standard;
+  }
+}
+
+function isEnabled(): boolean {
+  const kiosk = locationService.getSearchObject().kiosk;
+
+  switch (kiosk) {
+    case 'tv':
+    case '1':
+    case true:
+      return true;
+    default:
+      return false;
+  }
 }

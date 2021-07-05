@@ -14,7 +14,6 @@ import { AppNotificationList } from './core/components/AppNotifications/AppNotif
 import { SearchWrapper } from 'app/features/search';
 import { LiveConnectionWarning } from './features/live/LiveConnectionWarning';
 import { HidableInDisplayProfile } from './features/dashboard/displayProfiles/components';
-import { DisplayProfileProvider } from './features/dashboard/displayProfiles/state/provider';
 import { SideMenu } from './core/components/sidemenu/SideMenu';
 
 interface AppWrapperProps {
@@ -95,32 +94,30 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
           <ConfigContext.Provider value={config}>
             <ThemeProvider>
               <ModalsProvider>
-                <DisplayProfileProvider>
-                  <GlobalStyles />
-                  <div className="grafana-app">
-                    <Router history={locationService.getHistory()}>
-                      <HidableInDisplayProfile pathInProfile="sideMenu">
-                        <SideMenu />
-                      </HidableInDisplayProfile>
-                      <div className="main-view">
-                        <div
-                          ref={this.container}
-                          dangerouslySetInnerHTML={{
-                            __html: appSeed,
-                          }}
-                        />
-                        <AppNotificationList />
-                        <SearchWrapper />
-                        {this.state.ngInjector && this.container && this.renderRoutes()}
-                        {bodyRenderHooks.map((Hook, index) => (
-                          <Hook key={index.toString()} />
-                        ))}
-                      </div>
-                    </Router>
-                  </div>
-                  <LiveConnectionWarning />
-                  <ModalRoot />
-                </DisplayProfileProvider>
+                <GlobalStyles />
+                <div className="grafana-app">
+                  <Router history={locationService.getHistory()}>
+                    <HidableInDisplayProfile pathInProfile="sideMenu">
+                      <SideMenu />
+                    </HidableInDisplayProfile>
+                    <div className="main-view">
+                      <div
+                        ref={this.container}
+                        dangerouslySetInnerHTML={{
+                          __html: appSeed,
+                        }}
+                      />
+                      <AppNotificationList />
+                      <SearchWrapper />
+                      {this.state.ngInjector && this.container && this.renderRoutes()}
+                      {bodyRenderHooks.map((Hook, index) => (
+                        <Hook key={index.toString()} />
+                      ))}
+                    </div>
+                  </Router>
+                </div>
+                <LiveConnectionWarning />
+                <ModalRoot />
               </ModalsProvider>
             </ThemeProvider>
           </ConfigContext.Provider>
