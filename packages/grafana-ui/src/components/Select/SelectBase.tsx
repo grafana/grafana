@@ -342,6 +342,7 @@ export function SelectBase<T>({
           }),
           container: () => ({
             position: 'relative',
+            paddingRight: '4px',
             width: width ? `${8 * width}px` : '100%',
           }),
           option: (provided: any, state: any) => ({
