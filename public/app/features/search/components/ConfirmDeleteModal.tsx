@@ -2,7 +2,7 @@ import React, { FC } from 'react';
 import { css } from '@emotion/css';
 import { GrafanaTheme } from '@grafana/data';
 import { ConfirmModal, stylesFactory, useTheme } from '@grafana/ui';
-import { getLocationSrv } from '@grafana/runtime';
+import { config, getLocationSrv } from '@grafana/runtime';
 import { DashboardSection, OnDeleteItems } from '../types';
 import { getCheckedUids } from '../utils';
 import { deleteFoldersAndDashboards } from 'app/features/manage-dashboards/state/actions';
@@ -32,7 +32,11 @@ export const ConfirmDeleteModal: FC<Props> = ({ results, onDeleteItems, isOpen, 
     text += `selected folder${folderEnding} and dashboard${dashEnding}?\n`;
     subtitle = `All dashboards of the selected folder${folderEnding} will also be deleted`;
   } else if (folderCount > 0) {
-    text += `selected folder${folderEnding} and all its dashboards?`;
+    let ngalertText = '';
+    if (config.featureToggles.ngalert) {
+      ngalertText = ' and its Grafana 8 Alerts';
+    }
+    text += `selected folder${folderEnding} and all its dashboards (with their alerts)${ngalertText}?`;
   } else {
     text += `selected dashboard${dashEnding}?`;
   }
