@@ -183,7 +183,7 @@ export class PromQueryEditor extends PureComponent<PromQueryEditorProps, State> 
               <input
                 type="text"
                 className="gf-form-input width-8"
-                placeholder="step interval"
+                placeholder="Example: 15s"
                 onChange={this.onIntervalChange}
                 onBlur={this.onRunQuery}
                 value={interval}
