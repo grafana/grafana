@@ -150,11 +150,6 @@ func (e *cloudWatchExecutor) sendLiveQueriesToChannel(req *backend.QueryDataRequ
 
 	if err := eg.Wait(); err != nil {
 		plog.Error(err.Error())
-		responseChannel <- &backend.QueryDataResponse{
-			Responses: backend.Responses{
-				"A": {Error: err},
-			},
-		}
 	}
 }
 
@@ -246,6 +241,11 @@ func (e *cloudWatchExecutor) startLiveQuery(ctx context.Context, responseChannel
 
 	startQueryOutput, err := e.executeStartQuery(ctx, logsClient, model, timeRange)
 	if err != nil {
+		responseChannel <- &backend.QueryDataResponse{
+			Responses: backend.Responses{
+				query.RefID: {Error: err},
+			},
+		}
 		return err
 	}
 
