@@ -320,7 +320,7 @@ export class UnthemedLogs extends PureComponent<Props, State> {
             <InlineField label="Wrap lines" transparent>
               <InlineSwitch value={wrapLogMessage} onChange={this.onChangewrapLogMessage} transparent />
             </InlineField>
-            <InlineField label="Prettify" transparent>
+            <InlineField label="Restructure" transparent>
               <InlineSwitch value={prettifyLogMessage} onChange={this.onChangePrettifyLogMessage} transparent />
             </InlineField>
             <InlineField label="Dedup" transparent>
