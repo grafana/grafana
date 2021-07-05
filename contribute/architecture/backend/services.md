@@ -129,3 +129,7 @@ Grafana OSS and Grafana Enterprise shares code and dependencies. Grafana Enterpr
 There's a [wireexts_oss.go](/pkg/server/wireexts_oss.go) that has the `wireinject` and `oss` build tags as requirements. Here services that might have other implementations, e.g. Grafana Enterprise, can be registered.
 
 Similarly, there's a wireexts_enterprise.go file in the Enterprise source code repository where other service implementations can be overridden/be registered.
+
+## Methods
+
+Any public method of a service should take `context.Context` as its first argument. If the method calls the bus, other services or the database the context should be propagated, if possible.
