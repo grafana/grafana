@@ -493,7 +493,7 @@ func deleteDashboard(cmd *models.DeleteDashboardCommand, sess *DBSession) error 
 				return err
 			}
 			if exists {
-				return fmt.Errorf("folder cannot be delete: %w", models.ErrFolderContainsAlertRules)
+				return fmt.Errorf("folder cannot be deleted: %w", models.ErrFolderContainsAlertRules)
 			}
 		}
 	}
