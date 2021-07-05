@@ -55,6 +55,27 @@ export const AnnotationEditorPlugin: React.FC<AnnotationEditorPluginProps> = ({ 
       }
     };
 
+    config.addHook('setSelect', setSelect);
+
+    config.addHook('init', (u) => {
+      // Wrap all setSelect hooks to prevent them from firing if user is annotating
+      const setSelectHooks = u.hooks['setSelect'];
+      if (setSelectHooks) {
+        for (let i = 0; i < setSelectHooks.length; i++) {
+          const hook = setSelectHooks[i];
+          if (hook === setSelect) {
+            continue;
+          }
+
+          setSelectHooks[i] = (...args) => {
+            if (!annotating) {
+              hook!(...args);
+            }
+          };
+        }
+      }
+    });
+
     config.setCursor({
       bind: {
         mousedown: (u, targ, handler) => (e) => {
@@ -66,30 +87,6 @@ export const AnnotationEditorPlugin: React.FC<AnnotationEditorPluginProps> = ({ 
           }
 
           return null;
-        },
-        mouseup: (u, targ, handler) => {
-          return (e) => {
-            if (e.button === 0) {
-              if (annotating) {
-                let _setSelectHooks;
-
-                // Monkey patch existing setSelect hooks (ZoomPlugin for instance)
-                if (u.hooks['setSelect']) {
-                  _setSelectHooks = u.hooks['setSelect'];
-                  u.hooks['setSelect'] = [setSelect];
-                }
-                // fire original handler
-                handler(e);
-
-                // Bring back setSelect hooks
-                u.hooks['setSelect'] = _setSelectHooks;
-              } else {
-                handler(e);
-              }
-            }
-
-            return null;
-          };
         },
       },
     });
