@@ -15,6 +15,7 @@ var (
 	ErrFolderSameNameExists          = errors.New("a folder or dashboard in the general folder with the same name already exists")
 	ErrFolderFailedGenerateUniqueUid = errors.New("failed to generate unique folder ID")
 	ErrFolderAccessDenied            = errors.New("access denied to folder")
+	ErrFolderContainsAlertRules      = errors.New("folder contains alert rules")
 )
 
 type Folder struct {

@@ -473,16 +473,27 @@ func deleteDashboard(cmd *models.DeleteDashboardCommand, sess *DBSession) error 
 			}
 		}
 
-		// clean ngalert tables
-		ngalertDeletes := []string{
-			"DELETE FROM alert_rule WHERE namespace_uid = (SELECT uid FROM dashboard WHERE id = ?)",
-			"DELETE FROM alert_rule_version WHERE rule_namespace_uid = (SELECT uid FROM dashboard WHERE id = ?)",
-		}
+		if cmd.ForceDeleteFolderRules {
+			// clean ngalert tables
+			ngalertDeletes := []string{
+				"DELETE FROM alert_rule WHERE namespace_uid = (SELECT uid FROM dashboard WHERE id = ?)",
+				"DELETE FROM alert_rule_version WHERE rule_namespace_uid = (SELECT uid FROM dashboard WHERE id = ?)",
+			}
 
-		for _, sql := range ngalertDeletes {
-			_, err := sess.Exec(sql, dashboard.Id)
+			for _, sql := range ngalertDeletes {
+				_, err := sess.Exec(sql, dashboard.Id)
+				if err != nil {
+					return err
+				}
+			}
+		} else {
+			var existingRuleID int64
+			exists, err := sess.Table("alert_rule").Where("namespace_uid = (SELECT uid FROM dashboard WHERE id = ?)", dashboard.Id).Cols("id").Get(&existingRuleID)
 			if err != nil {
 				return err
+			}
+			if exists {
+				return fmt.Errorf("folder cannot be delete: %w", models.ErrFolderContainsAlertRules)
 			}
 		}
 	}
