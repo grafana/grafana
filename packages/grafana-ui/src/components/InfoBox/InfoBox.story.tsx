@@ -14,16 +14,16 @@ export default {
     docs: {
       page: mdx,
     },
+    knobs: {
+      disable: true,
+    },
+    controls: {
+      exclude: ['onDismiss', 'children'],
+    },
   },
   argTypes: {
-    onDismiss: { action: 'Dismissed' },
     featureState: {
       control: { type: 'select', options: ['alpha', 'beta', undefined] },
-    },
-    children: {
-      table: {
-        disable: true,
-      },
     },
   },
 };

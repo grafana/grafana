@@ -40,7 +40,16 @@ export default {
       page: mdx,
     },
     controls: {
-      exclude: ['placeholder', 'initialValue', 'changeOnSelect'],
+      exclude: [
+        'placeholder',
+        'initialValue',
+        'changeOnSelect',
+        'onSelect',
+        'loadData',
+        'onChange',
+        'onPopupVisibleChange',
+        'formatCreateLabel',
+      ],
     },
   },
   args: {
