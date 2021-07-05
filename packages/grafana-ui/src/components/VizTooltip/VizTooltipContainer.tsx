@@ -64,23 +64,40 @@ export const VizTooltipContainer: React.FC<VizTooltipContainerProps> = ({
 
   // Make sure tooltip does not overflow window
   useLayoutEffect(() => {
-    let xO = 0,
-      yO = 0;
+    let x = 0;
+    let y = 0;
+
     if (tooltipRef && tooltipRef.current) {
-      const xOverflow = width - (positionX + tooltipMeasurement.width);
-      const yOverflow = height - (positionY + tooltipMeasurement.height);
-      if (xOverflow < 0) {
-        xO = tooltipMeasurement.width;
+      const overflowRight = Math.max(positionX + offsetX + tooltipMeasurement.width - width, 0);
+      const overflowLeft = Math.abs(Math.min(positionX - offsetX - tooltipMeasurement.width, 0));
+      const wouldOverflowRight = overflowRight > 0;
+      const wouldOverflowLeft = overflowLeft > 0;
+
+      const overflowBelow = Math.max(positionY + offsetY + tooltipMeasurement.height - height, 0);
+      const overflowAbove = Math.abs(Math.min(positionY - offsetY - tooltipMeasurement.height, 0));
+      const wouldOverflowBelow = overflowBelow > 0;
+      const wouldOverflowAbove = overflowAbove > 0;
+
+      if (wouldOverflowRight && wouldOverflowLeft) {
+        x = overflowRight > overflowLeft ? offsetX : width - offsetX - tooltipMeasurement.width;
+      } else if (wouldOverflowRight) {
+        x = positionX - offsetX - tooltipMeasurement.width;
+      } else {
+        x = positionX + offsetX;
       }
 
-      if (yOverflow < 0) {
-        yO = tooltipMeasurement.height;
+      if (wouldOverflowBelow && wouldOverflowAbove) {
+        y = overflowBelow > overflowAbove ? offsetY : height - offsetY - tooltipMeasurement.height;
+      } else if (wouldOverflowBelow) {
+        y = positionY - offsetY - tooltipMeasurement.height;
+      } else {
+        y = positionY + offsetY;
       }
     }
 
     setPlacement({
-      x: positionX + offsetX - xO,
-      y: positionY + offsetY - yO,
+      x,
+      y,
     });
   }, [width, height, positionX, offsetX, positionY, offsetY, tooltipMeasurement.width, tooltipMeasurement.height]);
 
