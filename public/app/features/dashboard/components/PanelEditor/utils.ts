@@ -70,10 +70,8 @@ export function setOptionImmutably<T extends object>(options: T, path: string, v
   let result = { ...options };
 
   if (splat.length === 1) {
-    return {
-      ...result,
-      [path]: value,
-    };
+    (result as Record<string, any>)[path] = value;
+    return result;
   }
 
   let current = (result as Record<string, any>)[splat[0]];
