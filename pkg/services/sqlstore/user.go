@@ -18,7 +18,7 @@ import (
 func (ss *SQLStore) addUserQueryAndCommandHandlers() {
 	ss.Bus.AddHandlerCtx(ss.GetSignedInUserWithCacheCtx)
 
-	bus.AddHandler("sql", GetUserById)
+	bus.AddHandlerCtx("sql", GetUserById)
 	bus.AddHandler("sql", UpdateUser)
 	bus.AddHandler("sql", ChangeUserPassword)
 	bus.AddHandler("sql", GetUserByLogin)
@@ -280,19 +280,21 @@ func (ss *SQLStore) CreateUser(ctx context.Context, cmd models.CreateUserCommand
 	return user, err
 }
 
-func GetUserById(query *models.GetUserByIdQuery) error {
-	user := new(models.User)
-	has, err := x.Id(query.Id).Get(user)
+func GetUserById(ctx context.Context, query *models.GetUserByIdQuery) error {
+	return withDbSession(ctx, x, func(sess *DBSession) error {
+		user := new(models.User)
+		has, err := sess.ID(query.Id).Get(user)
 
-	if err != nil {
-		return err
-	} else if !has {
-		return models.ErrUserNotFound
-	}
+		if err != nil {
+			return err
+		} else if !has {
+			return models.ErrUserNotFound
+		}
 
-	query.Result = user
+		query.Result = user
 
-	return nil
+		return nil
+	})
 }
 
 func GetUserByLogin(query *models.GetUserByLoginQuery) error {
