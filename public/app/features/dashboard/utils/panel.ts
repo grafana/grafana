@@ -4,7 +4,17 @@ import store from 'app/core/store';
 // Models
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
-import { TimeRange, AppEvents, rangeUtil, dateMath, LoadingState, FieldType } from '@grafana/data';
+import {
+  TimeRange,
+  AppEvents,
+  rangeUtil,
+  dateMath,
+  LoadingState,
+  FieldType,
+  FieldCache,
+  ReducerID,
+  reduceField,
+} from '@grafana/data';
 
 // Utils
 import { isString as _isString } from 'lodash';
@@ -67,16 +77,31 @@ export const sonifyPanel = async (dashboard: DashboardModel, panel: PanelModel) 
   const panelData = panel.getQueryRunner().getLastResult();
   if (panelData && panelData.state === LoadingState.Done) {
     let count = 1;
+    const maxSonified = 5;
+    const statPrecision = 3;
     for (const frame of panelData.series) {
       const name = frame.name || `Series ${count}`;
-      const timestamps = (frame.fields.find((f) => f.type === FieldType.time)?.values || []) as number[];
-      const values = (frame.fields.find((f) => f.type === FieldType.number)?.values.toArray() || []) as number[];
-      const series: any[] = timestamps.map((ts, i) => [ts, values[i]]);
-      const sonifier = getSonifier();
-      await sonifier.speak(name);
-      await sonifier.playSeries(series);
-      count++;
-      if (count > 5) {
+      const fieldCache = new FieldCache(frame);
+      const timeField = fieldCache.getFirstFieldOfType(FieldType.time);
+      const valueField = fieldCache.getFirstFieldOfType(FieldType.number);
+      if (timeField && valueField) {
+        const series: any[] = [];
+        for (let j = 0; j < frame.length; j++) {
+          series.push([timeField?.values.get(j), valueField?.values.get(j)]);
+        }
+        const reducers = [ReducerID.min, ReducerID.max, ReducerID.mean];
+        const calcs = reduceField({ field: valueField, reducers });
+        const maxValue = (calcs[ReducerID.max] as number).toPrecision(statPrecision);
+        const minValue = (calcs[ReducerID.min] as number).toPrecision(statPrecision);
+        const meanValue = (calcs[ReducerID.mean] as number).toPrecision(statPrecision);
+        const stats = `${name}. Minimum ${minValue}, maximum ${maxValue}, average ${meanValue}`;
+        const sonifier = getSonifier();
+        await sonifier.speak(stats);
+        await sonifier.playSeries(series);
+        console.log(stats);
+        count++;
+      }
+      if (count > maxSonified) {
         break;
       }
     }
