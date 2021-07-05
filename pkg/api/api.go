@@ -278,14 +278,16 @@ func (hs *HTTPServer) registerRoutes() {
 		}, reqOrgAdmin)
 
 		// Live channels.
-		channelRule := &channelRuleAPI{storage: hs.Live.ChannelRuleStorage()}
-		apiRoute.Group("/channel-rules", func(channelsRoute routing.RouteRegister) {
-			channelsRoute.Get("/", routing.Wrap(channelRule.ListChannelRules))
-			channelsRoute.Post("/", bind(models.CreateLiveChannelRuleCommand{}), routing.Wrap(channelRule.CreateChannelRule))
-			channelsRoute.Put("/:id", bind(models.UpdateLiveChannelRuleCommand{}), routing.Wrap(channelRule.UpdateChannelRule))
-			channelsRoute.Delete("/:id", routing.Wrap(channelRule.DeleteChannelRuleById))
-			channelsRoute.Get("/:id", routing.Wrap(channelRule.GetChannelRuleById))
-		}, reqOrgAdmin)
+		if hs.Live != nil && hs.Live.ChannelRuleStorage() != nil {
+			channelRule := &channelRuleAPI{storage: hs.Live.ChannelRuleStorage()}
+			apiRoute.Group("/channel-rules", func(channelsRoute routing.RouteRegister) {
+				channelsRoute.Get("/", routing.Wrap(channelRule.ListChannelRules))
+				channelsRoute.Post("/", bind(models.CreateLiveChannelRuleCommand{}), routing.Wrap(channelRule.CreateChannelRule))
+				channelsRoute.Put("/:id", bind(models.UpdateLiveChannelRuleCommand{}), routing.Wrap(channelRule.UpdateChannelRule))
+				channelsRoute.Delete("/:id", routing.Wrap(channelRule.DeleteChannelRuleById))
+				channelsRoute.Get("/:id", routing.Wrap(channelRule.GetChannelRuleById))
+			}, reqOrgAdmin)
+		}
 
 		apiRoute.Get("/datasources/id/:name", routing.Wrap(GetDataSourceIdByName), reqSignedIn)
 

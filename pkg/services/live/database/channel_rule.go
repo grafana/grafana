@@ -33,8 +33,8 @@ type ChannelRuleStorage struct {
 
 func NewChannelRuleStorage(store *sqlstore.SQLStore) (*ChannelRuleStorage, error) {
 	s := &ChannelRuleStorage{store: store}
-	err := s.loadFixtures()
-	return s, err
+	//err := s.loadFixtures()
+	return s, nil
 }
 
 func (s *ChannelRuleStorage) loadFixtures() error {

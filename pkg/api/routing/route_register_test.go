@@ -3,6 +3,7 @@ package routing
 import (
 	"net/http"
 	"strconv"
+	"strings"
 	"testing"
 
 	"gopkg.in/macaron.v1"
@@ -192,7 +193,15 @@ func TestRouteGroupInserting(t *testing.T) {
 
 func TestDuplicateRoutShouldPanic(t *testing.T) {
 	defer func() {
-		if recover() != "cannot add duplicate route" {
+		if r := recover(); r != nil {
+			msg, ok := r.(string)
+			if !ok {
+				t.Errorf("expected string message")
+			}
+			if !strings.HasPrefix(msg, "cannot add duplicate route") {
+				t.Errorf("Should cause panic if duplicate routes are added")
+			}
+		} else {
 			t.Errorf("Should cause panic if duplicate routes are added ")
 		}
 	}()
