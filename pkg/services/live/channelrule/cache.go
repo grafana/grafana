@@ -62,7 +62,7 @@ func (s *Cache) fillOrg(orgID int64) error {
 
 func (s *Cache) Get(orgID int64, channel string) (*models.LiveChannelRule, bool, error) {
 	s.radixMu.RLock()
-	t, ok := s.radix[orgID]
+	_, ok := s.radix[orgID]
 	s.radixMu.RUnlock()
 	if !ok {
 		err := s.fillOrg(orgID)
@@ -72,7 +72,7 @@ func (s *Cache) Get(orgID int64, channel string) (*models.LiveChannelRule, bool,
 	}
 	s.radixMu.RLock()
 	defer s.radixMu.RUnlock()
-	t, ok = s.radix[orgID]
+	t, ok := s.radix[orgID]
 	if !ok {
 		return nil, false, nil
 	}

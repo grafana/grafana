@@ -2,14 +2,13 @@ package database
 
 import (
 	"context"
+	"errors"
 	"os"
 	"time"
 
 	"github.com/grafana/grafana/pkg/components/securejsondata"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
-
-	"xorm.io/xorm"
 )
 
 var Fixtures = []models.LiveChannelRule{
@@ -33,8 +32,11 @@ type ChannelRuleStorage struct {
 
 func NewChannelRuleStorage(store *sqlstore.SQLStore) (*ChannelRuleStorage, error) {
 	s := &ChannelRuleStorage{store: store}
-	//err := s.loadFixtures()
-	return s, nil
+	var err error
+	if os.Getenv("GF_LIVE_LOAD_FIXTURES") != "" {
+		err = s.loadFixtures()
+	}
+	return s, err
 }
 
 func (s *ChannelRuleStorage) loadFixtures() error {
@@ -45,7 +47,7 @@ func (s *ChannelRuleStorage) loadFixtures() error {
 			Config:  ch.Config,
 			Secure:  ch.Secure.Decrypt(),
 		})
-		if err != nil && err != models.ErrLiveChannelRuleExists {
+		if err != nil && !errors.Is(err, models.ErrLiveChannelRuleExists) {
 			return err
 		}
 	}
@@ -97,8 +99,7 @@ func (s *ChannelRuleStorage) UpdateChannelRule(cmd models.UpdateLiveChannelRuleC
 			Updated: time.Now(),
 		}
 
-		var updateSession *xorm.Session
-		updateSession = sess.Where("id=? and org_id=? and version < ?", cmd.Id, cmd.OrgId, cmd.Version)
+		updateSession := sess.Where("id=? and org_id=? and version < ?", cmd.Id, cmd.OrgId, cmd.Version)
 
 		affected, err := updateSession.Update(ch)
 		if err != nil {
