@@ -481,7 +481,7 @@ export interface DataQueryError {
      */
     message?: string;
     /**
-     * Detailed information about the error
+     * Detailed information about the error. Only returned when app_mode is development.
      */
     error?: string;
   };
