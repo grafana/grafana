@@ -13,10 +13,13 @@ import (
 
 	"github.com/aws/smithy-go/middleware"
 	smithyhttp "github.com/aws/smithy-go/transport/http"
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/smithy/build/go/grafana"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -38,11 +41,6 @@ func TestGetAlert(t *testing.T) {
 	t.Logf("Server running at %s", addr)
 
 	ctx := context.Background()
-	// The Go Smithy plugin seems unfinished - might want to have APIOptions to modify the stack in order to just hack
-	// the implementation, so it:
-	//   * Picks the right endpoint based on the opID
-	//   * Serializes the body correctly
-	//   * Deserializes the response correctly
 	client := grafana.New(grafana.Options{
 		HTTPClient: &httpClient{
 			t: t,
@@ -83,10 +81,29 @@ func TestGetAlert(t *testing.T) {
 			return err
 		})
 		alertID := strconv.FormatInt(alert.Id, 10)
-		_, err := client.GetAlert(ctx, &grafana.GetAlertInput{
+		out, err := client.GetAlert(ctx, &grafana.GetAlertInput{
 			Id: &alertID,
 		})
 		require.NoError(t, err)
+
+		panelID := strconv.FormatInt(alert.PanelId, 10)
+		state := string(alert.State)
+		created := alert.Created.Truncate(time.Second)
+		updated := alert.Updated.Truncate(time.Second)
+		exp := grafana.GetAlertOutput{
+			Id:          &alertID,
+			Version:     alert.Version,
+			OrgId:       alert.OrgId,
+			DashboardId: alert.DashboardId,
+			PanelId:     &panelID,
+			Name:        &alert.Name,
+			Message:     &alert.Message,
+			State:       &state,
+			Created:     &created,
+			Updated:     &updated,
+		}
+		diff := cmp.Diff(exp, *out, cmpopts.IgnoreUnexported(middleware.Metadata{}))
+		assert.Empty(t, diff)
 	})
 }
 
