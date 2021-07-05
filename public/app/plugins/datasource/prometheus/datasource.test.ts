@@ -1696,10 +1696,10 @@ describe('PrometheusDatasource', () => {
       });
     });
     describe('when exact step option is used', () => {
-      it('should return the stepInterval', () => {
+      it('should return the stepInterval * intervalFactor', () => {
         let intervalFactor = 3;
         let interval = ds.adjustInterval(dynamicInterval, stepInterval, range, intervalFactor, 'exact');
-        expect(interval).toBe(stepInterval);
+        expect(interval).toBe(stepInterval * intervalFactor);
       });
     });
   });

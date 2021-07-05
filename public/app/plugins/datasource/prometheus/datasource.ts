@@ -506,7 +506,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
         adjustedInterval = safeInterval;
       }
     } else if (stepOption === 'exact') {
-      adjustedInterval = Math.max(stepInterval, safeInterval);
+      adjustedInterval = Math.max(stepInterval * intervalFactor, safeInterval);
     }
     return adjustedInterval;
   }
