@@ -314,16 +314,27 @@ export class UnthemedLogs extends PureComponent<Props, State> {
             <InlineField label="Time" transparent>
               <InlineSwitch value={showTime} onChange={this.onChangeTime} transparent />
             </InlineField>
+            <span
+              style={{ borderLeftStyle: 'solid', borderLeftWidth: '1px', borderLeftColor: 'rgba(204, 204, 220, 0.15)' }}
+            ></span>
             <InlineField label="Unique labels" transparent>
               <InlineSwitch value={showLabels} onChange={this.onChangeLabels} transparent />
             </InlineField>
+            <span
+              style={{ borderLeftStyle: 'solid', borderLeftWidth: '1px', borderLeftColor: 'rgba(204, 204, 220, 0.15)' }}
+            ></span>
             <InlineField label="Wrap lines" transparent>
               <InlineSwitch value={wrapLogMessage} onChange={this.onChangewrapLogMessage} transparent />
             </InlineField>
-            <span style={{ borderLeftStyle: 'solid', borderLeftWidth: '1px', borderLeftColor: '#CBC7C7' }}></span>
+            <span
+              style={{ borderLeftStyle: 'solid', borderLeftWidth: '1px', borderLeftColor: 'rgba(204, 204, 220, 0.15)' }}
+            ></span>
             <InlineField label="Restructure" transparent>
               <InlineSwitch value={prettifyLogMessage} onChange={this.onChangePrettifyLogMessage} transparent />
             </InlineField>
+            <span
+              style={{ borderLeftStyle: 'solid', borderLeftWidth: '1px', borderLeftColor: 'rgba(204, 204, 220, 0.15)' }}
+            ></span>
             <InlineField label="Dedup" transparent>
               <RadioButtonGroup
                 options={Object.keys(LogsDedupStrategy).map((dedupType: LogsDedupStrategy) => ({
