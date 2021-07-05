@@ -7,6 +7,7 @@ import React, { useMemo } from 'react';
 import { AnnotationsPlugin } from './plugins/AnnotationsPlugin';
 import { ContextMenuPlugin } from './plugins/ContextMenuPlugin';
 import { ExemplarsPlugin } from './plugins/ExemplarsPlugin';
+import { AudiblePlugin } from './plugins/AudiblePlugin';
 import { TimeSeriesOptions } from './types';
 import { prepareGraphableFields } from './utils';
 import { AnnotationEditorPlugin } from './plugins/AnnotationEditorPlugin';
@@ -67,6 +68,7 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
               />
             )}
             {/* Renders annotation markers*/}
+            <AudiblePlugin config={config} frames={data.series} />
             {data.annotations && (
               <AnnotationsPlugin annotations={data.annotations} config={config} timeZone={timeZone} />
             )}

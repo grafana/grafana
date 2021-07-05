@@ -28,7 +28,7 @@ import { getTemplateSrv } from '@grafana/runtime';
 import { LS_PANEL_COPY_KEY, PANEL_BORDER } from 'app/core/constants';
 
 import { ShareModal } from 'app/features/dashboard/components/ShareModal';
-import { ShowConfirmModalEvent, ShowModalReactEvent } from '../../../types/events';
+import { ShowConfirmModalEvent, ShowModalReactEvent, AudiblePanelEvent } from '../../../types/events';
 import { AddLibraryPanelModal } from 'app/features/library-panels/components/AddLibraryPanelModal/AddLibraryPanelModal';
 import { UnlinkModal } from 'app/features/library-panels/components/UnlinkModal/UnlinkModal';
 import getSonifier from 'app/core/services/Sonifier';
@@ -79,7 +79,13 @@ export const sonifyPanel = async (dashboard: DashboardModel, panel: PanelModel) 
     let count = 1;
     const maxSonified = 5;
     const statPrecision = 3;
-    for (const frame of panelData.series) {
+
+    const seriesToSonify = [];
+    let maxOfMax = 0;
+    let minOfMin = 0;
+
+    for (let i = 0; i < panelData.series.length; i++) {
+      const frame = panelData.series[i];
       const name = frame.name || `Series ${count}`;
       const fieldCache = new FieldCache(frame);
       const timeField = fieldCache.getFirstFieldOfType(FieldType.time);
@@ -91,19 +97,35 @@ export const sonifyPanel = async (dashboard: DashboardModel, panel: PanelModel) 
         }
         const reducers = [ReducerID.min, ReducerID.max, ReducerID.mean];
         const calcs = reduceField({ field: valueField, reducers });
-        const maxValue = (calcs[ReducerID.max] as number).toPrecision(statPrecision);
-        const minValue = (calcs[ReducerID.min] as number).toPrecision(statPrecision);
-        const meanValue = (calcs[ReducerID.mean] as number).toPrecision(statPrecision);
-        const stats = `${name}. Minimum ${minValue}, maximum ${maxValue}, average ${meanValue}`;
-        const sonifier = getSonifier();
-        await sonifier.speak(stats);
-        await sonifier.playSeries(series);
-        console.log(stats);
+        const maxValue = calcs[ReducerID.max] as number;
+        const minValue = calcs[ReducerID.min] as number;
+        const meanValue = calcs[ReducerID.mean] as number;
+        const stats = `${name}. Minimum ${minValue.toPrecision(statPrecision)}, maximum ${maxValue.toPrecision(
+          statPrecision
+        )}, average ${meanValue.toPrecision(statPrecision)}`;
+        const onPointProcess = (pointIndex: number) => {
+          appEvents.publish(new AudiblePanelEvent({ pointIndex, panelId: panel.id, seriesIndex: i }));
+        };
+        seriesToSonify.push({
+          stats,
+          series,
+          maxValue,
+          minValue,
+          onPointProcess,
+        });
         count++;
+        minOfMin = Math.min(minOfMin, minValue);
+        maxOfMax = Math.max(maxOfMax, maxValue);
       }
       if (count > maxSonified) {
         break;
       }
+    }
+
+    const sonifier = getSonifier();
+    for (const s of seriesToSonify) {
+      await sonifier.speak(s.stats);
+      await sonifier.playSeries(s.series, { max: maxOfMax, min: minOfMin, onPointProcess: s.onPointProcess });
     }
   }
 };
