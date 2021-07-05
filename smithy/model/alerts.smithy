@@ -86,7 +86,7 @@ structure AlertSummary {
   dashboardId: Long,
   dashboardUid: String,
   dashboardSlug: String,
-  panelId: Long,
+  panelId: PanelId,
   name: String,
   state: String,
   newStateDate: Timestamp,

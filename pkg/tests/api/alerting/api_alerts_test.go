@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/smithy/build/go/grafana"
+	"github.com/grafana/grafana/smithy/build/go/grafana/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -175,11 +176,51 @@ func TestPauseAlert(t *testing.T) {
 	})
 }
 
+func TestListAlerts(t *testing.T) {
+	grafDir, cfgPath := testinfra.CreateGrafDir(t)
+	sqlStore := setUpDatabase(t, grafDir)
+	addr := testinfra.StartGrafana(t, grafDir, cfgPath, sqlStore)
+	t.Logf("Server running at %s", addr)
+
+	ctx := context.Background()
+	client := grafana.New(grafana.Options{
+		HTTPClient: &httpClient{
+			t: t,
+		},
+		APIOptions: []func(*middleware.Stack) error{
+			func(stack *middleware.Stack) error {
+				if err := stack.Build.Add(&buildRequest{
+					addr: addr,
+					op:   listAlertsOp,
+				}, middleware.After); err != nil {
+					return err
+				}
+				return stack.Deserialize.Add(&deserializeResponse{
+					t:  t,
+					op: listAlertsOp,
+				}, middleware.After)
+			},
+		},
+	})
+
+	t.Run("No alerts", func(t *testing.T) {
+		out, err := client.ListAlerts(ctx, &grafana.ListAlertsInput{})
+		require.NoError(t, err)
+
+		exp := grafana.ListAlertsOutput{
+			Items: []types.AlertSummary{},
+		}
+		diff := cmp.Diff(exp, *out, cmpopts.IgnoreUnexported(middleware.Metadata{}))
+		assert.Empty(t, diff)
+	})
+}
+
 type apiOp int
 
 const (
 	getAlertOp apiOp = iota
 	pauseAlertOp
+	listAlertsOp
 )
 
 type buildRequest struct {
@@ -202,6 +243,8 @@ func (br *buildRequest) HandleBuild(ctx context.Context, in middleware.BuildInpu
 	case pauseAlertOp:
 		path = "/alerts/1/pause"
 		method = "POST"
+	case listAlertsOp:
+		path = "/alerts"
 	default:
 		panic(fmt.Sprintf("Unrecognized op %d", br.op))
 	}
@@ -252,11 +295,23 @@ func (dr *deserializeResponse) HandleDeserialize(ctx context.Context, in middlew
 	dr.t.Logf("Deserializing %s", string(body))
 
 	out.RawResponse = body
-	var alert grafana.GetAlertOutput
-	if err := json.Unmarshal(body, &alert); err != nil {
-		return out, metadata, err
+
+	switch dr.op {
+	case getAlertOp:
+		var alert grafana.GetAlertOutput
+		if err := json.Unmarshal(body, &alert); err != nil {
+			return out, metadata, err
+		}
+		out.Result = &alert
+	case listAlertsOp:
+		var alerts grafana.ListAlertsOutput
+		if err := json.Unmarshal(body, &alerts); err != nil {
+			return out, metadata, err
+		}
+		out.Result = &alerts
+	default:
+		panic(fmt.Sprintf("unrecognized op %d", dr.op))
 	}
-	out.Result = &alert
 
 	return out, metadata, nil
 }

@@ -43,7 +43,7 @@ type AlertSummary struct {
 
 	NewStateDate *time.Time
 
-	PanelId int64
+	PanelId *string
 
 	State *string
 
