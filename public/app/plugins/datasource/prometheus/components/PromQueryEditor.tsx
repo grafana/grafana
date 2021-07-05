@@ -39,6 +39,8 @@ const STEP_OPTIONS: Array<SelectableValue<StepType>> = [
   },
 ];
 
+const DEFAULT_STEP_OPTION = STEP_OPTIONS[0];
+
 interface State {
   legendFormat?: string;
   formatOption: SelectableValue<string>;
@@ -69,7 +71,7 @@ export class PromQueryEditor extends PureComponent<PromQueryEditorProps, State> 
       intervalFactorOption:
         INTERVAL_FACTOR_OPTIONS.find((option) => option.value === query.intervalFactor) || INTERVAL_FACTOR_OPTIONS[0],
       // Step option
-      stepOption: STEP_OPTIONS.find((option) => option.value === query.stepOption) || STEP_OPTIONS[0],
+      stepOption: STEP_OPTIONS.find((option) => option.value === query.stepOption) || DEFAULT_STEP_OPTION,
       // Switch options
       instant: Boolean(query.instant),
       exemplar: Boolean(query.exemplar),
