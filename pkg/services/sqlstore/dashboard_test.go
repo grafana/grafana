@@ -4,6 +4,7 @@ package sqlstore
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"testing"
@@ -485,6 +486,12 @@ func insertTestDashboard(t *testing.T, sqlStore *SQLStore, title string, orgId i
 func insertTestRule(t *testing.T, sqlStore *SQLStore, foderOrgID int64, folderUID string) {
 	sqlStore.WithDbSession(context.Background(), func(sess *DBSession) error {
 
+		type alertQuery struct {
+			RefID         string
+			DatasourceUID string
+			Model         json.RawMessage
+		}
+
 		type alertRule struct {
 			ID           int64 `xorm:"pk autoincr 'id'"`
 			OrgID        int64 `xorm:"org_id"`
@@ -493,6 +500,8 @@ func insertTestRule(t *testing.T, sqlStore *SQLStore, foderOrgID int64, folderUI
 			UID          string `xorm:"uid"`
 			NamespaceUID string `xorm:"namespace_uid"`
 			RuleGroup    string
+			Condition    string
+			Data         []alertQuery
 		}
 
 		rule := alertRule{
@@ -501,6 +510,17 @@ func insertTestRule(t *testing.T, sqlStore *SQLStore, foderOrgID int64, folderUI
 			UID:          "rule",
 			RuleGroup:    "rulegroup",
 			Updated:      time.Now(),
+			Condition:    "A",
+			Data: []alertQuery{
+				{
+					RefID:         "A",
+					DatasourceUID: "-100",
+					Model: json.RawMessage(`{
+						"type": "math",
+						"expression": "2 + 3 > 1"
+						}`),
+				},
+			},
 		}
 		_, err := sess.Insert(&rule)
 		require.NoError(t, err)
@@ -511,8 +531,14 @@ func insertTestRule(t *testing.T, sqlStore *SQLStore, foderOrgID int64, folderUI
 			RuleUID          string `xorm:"rule_uid"`
 			RuleNamespaceUID string `xorm:"rule_namespace_uid"`
 			RuleGroup        string
+			ParentVersion    int64
+			RestoredFrom     int64
+			Version          int64
 			Created          time.Time
 			Title            string
+			Condition        string
+			Data             []alertQuery
+			IntervalSeconds  int64
 		}
 
 		ruleVersion := alertRuleVersion{
@@ -521,6 +547,12 @@ func insertTestRule(t *testing.T, sqlStore *SQLStore, foderOrgID int64, folderUI
 			RuleNamespaceUID: rule.NamespaceUID,
 			RuleGroup:        rule.RuleGroup,
 			Created:          rule.Updated,
+			Condition:        rule.Condition,
+			Data:             rule.Data,
+			ParentVersion:    0,
+			RestoredFrom:     0,
+			Version:          1,
+			IntervalSeconds:  60,
 		}
 		_, err = sess.Insert(&ruleVersion)
 		require.NoError(t, err)
