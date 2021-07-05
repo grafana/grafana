@@ -96,7 +96,7 @@ func (hs *HTTPServer) DeleteFolder(c *models.ReqContext) response.Response { // 
 		return ToFolderErrorResponse(err)
 	}
 
-	f, err := s.DeleteFolder(c.Params(":uid"), c.QueryBool(":forceDeleteRules"))
+	f, err := s.DeleteFolder(c.Params(":uid"), c.QueryBool("forceDeleteRules"))
 	if err != nil {
 		return ToFolderErrorResponse(err)
 	}

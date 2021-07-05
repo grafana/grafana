@@ -677,7 +677,7 @@ func TestDeleteFolderWithRules(t *testing.T) {
 		assert.JSONEq(t, expectedGetRulesResponseBody, string(b))
 	}
 
-	// Next, the editor can delete the folder.
+	// Next, the editor can not delete the folder because it contains Grafana 8 alerts.
 	{
 		u := fmt.Sprintf("http://editor:editor@%s/api/folders/%s", grafanaListedAddr, namespaceUID)
 		req, err := http.NewRequest(http.MethodDelete, u, nil)
@@ -691,6 +691,25 @@ func TestDeleteFolderWithRules(t *testing.T) {
 		})
 		b, err := ioutil.ReadAll(resp.Body)
 		require.NoError(t, err)
+		require.Equal(t, http.StatusBadRequest, resp.StatusCode)
+		require.JSONEq(t, `{"message":"folder cannot be deleted: folder contains alert rules"}`, string(b))
+	}
+
+	// Next, the editor can delete the folder if forceDeleteRules is true.
+	{
+		u := fmt.Sprintf("http://editor:editor@%s/api/folders/%s?forceDeleteRules=true", grafanaListedAddr, namespaceUID)
+		req, err := http.NewRequest(http.MethodDelete, u, nil)
+		require.NoError(t, err)
+		client := &http.Client{}
+		resp, err := client.Do(req)
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			err := resp.Body.Close()
+			require.NoError(t, err)
+		})
+		b, err := ioutil.ReadAll(resp.Body)
+		require.NoError(t, err)
+		fmt.Println(">>>>", string(b))
 		require.Equal(t, 200, resp.StatusCode)
 		require.JSONEq(t, `{"id":1,"message":"Folder default deleted","title":"default"}`, string(b))
 	}
