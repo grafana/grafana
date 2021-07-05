@@ -12,6 +12,7 @@ export interface Props {
   onCredentialsChange?: (updatedCredentials: AzureCredentials) => void;
   getSubscriptions?: () => Promise<SelectableValue[]>;
   disabled?: boolean;
+  children?: JSX.Element;
 }
 
 const authTypeOptions: Array<SelectableValue<AzureAuthType>> = [
@@ -282,6 +283,7 @@ export const AzureCredentialsForm: FunctionComponent<Props> = (props: Props) => 
           )}
         </>
       )}
+      {props.children}
     </div>
   );
 };
