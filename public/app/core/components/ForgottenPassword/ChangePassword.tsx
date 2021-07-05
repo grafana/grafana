@@ -26,7 +26,7 @@ export const ChangePassword: FC<Props> = ({ onSubmit, onSkip }) => {
               id="new-password"
               autoFocus
               autoComplete="new-password"
-              {...register('newPassword', { required: 'Password is required' })}
+              {...register('newPassword', { required: 'New Password is required' })}
             />
           </Field>
           <Field label="Confirm new password" invalid={!!errors.confirmNew} error={errors?.confirmNew?.message}>
@@ -34,7 +34,7 @@ export const ChangePassword: FC<Props> = ({ onSubmit, onSkip }) => {
               id="confirm-new-password"
               autoComplete="new-password"
               {...register('confirmNew', {
-                required: 'Confirmed password is required',
+                required: 'Confirmed Password is required',
                 validate: (v: string) => v === getValues().newPassword || 'Passwords must match!',
               })}
             />
