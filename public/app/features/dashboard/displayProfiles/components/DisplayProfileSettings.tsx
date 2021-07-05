@@ -1,32 +1,31 @@
-import React, { ReactElement, useCallback } from 'react';
+import React, { ReactElement, useCallback, useContext } from 'react';
 import { css } from '@emotion/css';
 import { Checkbox, CollapsableSection, Field, RadioButtonGroup, useStyles2 } from '@grafana/ui';
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { useDisplayProfile, useOnChangeDisplayProfile } from '../state/hooks';
 import { DisplayProfileId, getProfile } from '../profiles';
 import { customProfile } from '../profiles/custom';
 import { get, set } from 'lodash';
 import { DisplayProfileMode } from '../types';
 import { getConfig } from 'app/core/config';
+import { DisplayProfileContext } from '../state/context';
 
 let currentProfile: DisplayProfileId = DisplayProfileId.tv;
 
 type DisplayProfileSettingsProps = {};
 
 export function DisplayProfileSettings(props: DisplayProfileSettingsProps): ReactElement | null {
-  const profile = useDisplayProfile();
-  const onChangeProfile = useOnChangeDisplayProfile();
   const styles = useStyles2(getStyles);
+  const { profile, onChangeProfile } = useContext(DisplayProfileContext);
 
   const onChange = useCallback(
     (id: DisplayProfileId) => {
-      const profile = getProfile(id);
+      const profileFromId = getProfile(id);
 
-      if (!profile) {
+      if (!profileFromId) {
         return;
       }
       currentProfile = id;
-      onChangeProfile(profile);
+      onChangeProfile(profileFromId);
     },
     [onChangeProfile]
   );

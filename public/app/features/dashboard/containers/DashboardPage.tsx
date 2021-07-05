@@ -314,7 +314,6 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
             folderTitle={dashboard.meta.folderTitle}
             isFullscreen={!!viewPanel}
             onAddPanel={this.onAddPanel}
-            kioskMode={kioskMode}
             hideTimePicker={dashboard.timepicker.hidden}
           />
         </div>

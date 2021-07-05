@@ -4,7 +4,7 @@ import { useDisplayProfile } from '../state/hooks';
 import { getConfig } from 'app/core/config';
 import { DisplayProfileMode } from '../types';
 
-export function PageToolbarWithDisplayProfile(props: PageToolbarProps): ReactElement {
+export function PageToolbarHidableInDisplayProfile(props: PageToolbarProps): ReactElement {
   const { dashNav } = useDisplayProfile();
   const { title } = dashNav;
 

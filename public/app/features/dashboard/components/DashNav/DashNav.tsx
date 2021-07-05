@@ -11,24 +11,18 @@ import { locationUtil, textUtil } from '@grafana/data';
 import { updateTimeZoneForSession } from 'app/features/profile/state/reducers';
 // Types
 import { DashboardModel } from '../../state';
-import { KioskMode, StoreState } from 'app/types';
+import { StoreState } from 'app/types';
 import { ShareModal } from 'app/features/dashboard/components/ShareModal';
 import { SaveDashboardModalProxy } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardModalProxy';
 import { locationService } from '@grafana/runtime';
-import { toggleKioskMode } from 'app/core/navigation/kiosk';
 import { getDashboardSrv } from '../../services/DashboardSrv';
-import {
-  DashNavTimeControlsWithDisplayProfile,
-  PageToolbarWithDisplayProfile,
-  ToolbarButtonWithDisplayProfile,
-  DashNavButtonWithDisplayProfile,
-} from '../../displayProfiles/components';
+import { PageToolbarHidableInDisplayProfile, HidableInDisplayProfile } from '../../displayProfiles/components';
 import { ToggleDisplayProfile } from '../../displayProfiles/state/hooks';
+import { DashNavButton } from './DashNavButton';
 
 export interface OwnProps {
   dashboard: DashboardModel;
   isFullscreen: boolean;
-  kioskMode: KioskMode;
   hideTimePicker: boolean;
   folderTitle?: string;
   title: string;
@@ -65,10 +59,6 @@ class DashNav extends PureComponent<Props> {
 
   onClose = () => {
     locationService.partial({ viewPanel: null });
-  };
-
-  onToggleTVMode = () => {
-    toggleKioskMode();
   };
 
   onOpenSettings = () => {
@@ -111,46 +101,47 @@ class DashNav extends PureComponent<Props> {
   }
 
   renderLeftActionsButton() {
-    const { dashboard, kioskMode } = this.props;
+    const { dashboard } = this.props;
     const { canStar, canShare, isStarred } = dashboard.meta;
     const buttons: ReactNode[] = [];
 
-    if (kioskMode !== KioskMode.Off || this.isPlaylistRunning()) {
+    if (this.isPlaylistRunning()) {
       return [];
     }
 
     if (canStar) {
       buttons.push(
-        <DashNavButtonWithDisplayProfile
-          configPath="dashNav.starToggle"
-          tooltip="Mark as favorite"
-          icon={isStarred ? 'favorite' : 'star'}
-          iconType={isStarred ? 'mono' : 'default'}
-          iconSize="lg"
-          onClick={this.onStarDashboard}
-          key="button-star"
-        />
+        <HidableInDisplayProfile pathInProfile="dashNav.starToggle" key="button-star">
+          <DashNavButton
+            tooltip="Mark as favorite"
+            icon={isStarred ? 'favorite' : 'star'}
+            iconType={isStarred ? 'mono' : 'default'}
+            iconSize="lg"
+            onClick={this.onStarDashboard}
+          />
+        </HidableInDisplayProfile>
       );
     }
 
     if (canShare) {
       buttons.push(
-        <ModalsController key="button-share">
-          {({ showModal, hideModal }) => (
-            <DashNavButtonWithDisplayProfile
-              configPath="dashNav.sharePanelToggle"
-              tooltip="Share dashboard or panel"
-              icon="share-alt"
-              iconSize="lg"
-              onClick={() => {
-                showModal(ShareModal, {
-                  dashboard,
-                  onDismiss: hideModal,
-                });
-              }}
-            />
-          )}
-        </ModalsController>
+        <HidableInDisplayProfile pathInProfile="dashNav.sharePanelToggle" key="button-share">
+          <ModalsController>
+            {({ showModal, hideModal }) => (
+              <DashNavButton
+                tooltip="Share dashboard or panel"
+                icon="share-alt"
+                iconSize="lg"
+                onClick={() => {
+                  showModal(ShareModal, {
+                    dashboard,
+                    onDismiss: hideModal,
+                  });
+                }}
+              />
+            )}
+          </ModalsController>
+        </HidableInDisplayProfile>
       );
     }
 
@@ -176,7 +167,9 @@ class DashNav extends PureComponent<Props> {
     }
 
     return (
-      <DashNavTimeControls dashboard={dashboard} onChangeTimeZone={updateTimeZoneForSession} key="time-controls" />
+      <HidableInDisplayProfile pathInProfile="dashNav.timePicker" key="time-controls">
+        <DashNavTimeControls dashboard={dashboard} onChangeTimeZone={updateTimeZoneForSession} />
+      </HidableInDisplayProfile>
     );
   }
 
@@ -193,80 +186,59 @@ class DashNav extends PureComponent<Props> {
 
     if (canEdit && !isFullscreen) {
       buttons.push(
-        <ToolbarButtonWithDisplayProfile
-          configPath="dashNav.addPanelToggle"
-          tooltip="Add panel"
-          icon="panel-add"
-          onClick={onAddPanel}
-          key="button-panel-add"
-        />
+        <HidableInDisplayProfile pathInProfile="dashNav.addPanelToggle" key="button-panel-add">
+          <ToolbarButton tooltip="Add panel" icon="panel-add" onClick={onAddPanel} />
+        </HidableInDisplayProfile>
       );
       buttons.push(
-        <ModalsController key="button-save">
-          {({ showModal, hideModal }) => (
-            <ToolbarButtonWithDisplayProfile
-              configPath="dashNav.saveDashboardToggle"
-              tooltip="Save dashboard"
-              icon="save"
-              onClick={() => {
-                showModal(SaveDashboardModalProxy, {
-                  dashboard,
-                  onDismiss: hideModal,
-                });
-              }}
-            />
-          )}
-        </ModalsController>
+        <HidableInDisplayProfile pathInProfile="dashNav.saveDashboardToggle" key="button-save">
+          <ModalsController>
+            {({ showModal, hideModal }) => (
+              <ToolbarButton
+                tooltip="Save dashboard"
+                icon="save"
+                onClick={() => {
+                  showModal(SaveDashboardModalProxy, {
+                    dashboard,
+                    onDismiss: hideModal,
+                  });
+                }}
+              />
+            )}
+          </ModalsController>
+        </HidableInDisplayProfile>
       );
     }
 
     if (snapshotUrl) {
       buttons.push(
-        <ToolbarButtonWithDisplayProfile
-          configPath="dashNav.snapshotToggle"
-          tooltip="Open original dashboard"
-          onClick={() => this.gotoSnapshotOrigin(snapshotUrl)}
-          icon="link"
-          key="button-snapshot"
-        />
+        <HidableInDisplayProfile pathInProfile="dashNav.snapshotToggle" key="button-snapshot">
+          <ToolbarButton
+            tooltip="Open original dashboard"
+            onClick={() => this.gotoSnapshotOrigin(snapshotUrl)}
+            icon="link"
+          />
+        </HidableInDisplayProfile>
       );
     }
 
     if (showSettings) {
       buttons.push(
-        <ToolbarButtonWithDisplayProfile
-          configPath="dashNav.dashboardSettingsToggle"
-          tooltip="Dashboard settings"
-          icon="cog"
-          onClick={this.onOpenSettings}
-          key="button-settings"
-        />
+        <HidableInDisplayProfile pathInProfile="dashNav.dashboardSettingsToggle" key="button-settings">
+          <ToolbarButton tooltip="Dashboard settings" icon="cog" onClick={this.onOpenSettings} />
+        </HidableInDisplayProfile>
       );
     }
 
     this.addCustomContent(customRightActions, buttons);
 
+    buttons.push(this.renderTimeControls());
     buttons.push(
-      <DashNavTimeControlsWithDisplayProfile
-        dashboard={dashboard}
-        onChangeTimeZone={updateTimeZoneForSession}
-        key="time-controls"
-      />
-    );
-    buttons.push(
-      <ToggleDisplayProfile>
-        {(onToggle) => {
-          return (
-            <ToolbarButtonWithDisplayProfile
-              configPath="dashNav.tvToggle"
-              tooltip="Cycle view mode"
-              icon="monitor"
-              onClick={onToggle}
-              key="tv-button"
-            />
-          );
-        }}
-      </ToggleDisplayProfile>
+      <HidableInDisplayProfile pathInProfile="dashNav.tvToggle" key="tv-button">
+        <ToggleDisplayProfile>
+          {(onToggle) => <ToolbarButton tooltip="Cycle view mode" icon="monitor" onClick={onToggle} />}
+        </ToggleDisplayProfile>
+      </HidableInDisplayProfile>
     );
     return buttons;
   }
@@ -283,7 +255,7 @@ class DashNav extends PureComponent<Props> {
     const parentHref = locationUtil.updateSearchParams(window.location.href, '?search=open&folder=current');
 
     return (
-      <PageToolbarWithDisplayProfile
+      <PageToolbarHidableInDisplayProfile
         pageIcon={isFullscreen ? undefined : 'apps'}
         title={title}
         parent={folderTitle}
@@ -293,7 +265,7 @@ class DashNav extends PureComponent<Props> {
         leftItems={this.renderLeftActionsButton()}
       >
         {this.renderRightActionsButton()}
-      </PageToolbarWithDisplayProfile>
+      </PageToolbarHidableInDisplayProfile>
     );
   }
 }
