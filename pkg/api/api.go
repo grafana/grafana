@@ -80,6 +80,7 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/plugins/:id/edit", reqSignedIn, hs.Index) // deprecated
 	r.Get("/plugins/:id/page/:page", reqSignedIn, hs.Index)
 	r.Get("/a/:id/*", reqSignedIn, hs.Index) // App Root Page
+	r.Get("/a/:id", reqSignedIn, hs.Index)
 
 	r.Get("/d/:uid/:slug", reqSignedIn, redirectFromLegacyPanelEditURL, hs.Index)
 	r.Get("/d/:uid", reqSignedIn, redirectFromLegacyPanelEditURL, hs.Index)
