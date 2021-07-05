@@ -361,7 +361,15 @@ describe('Query Response parser', () => {
     });
     test('unknown errors', () => {
       expect(() => {
-        toTestingStatus({ status: 503, data: { message: 'message' } } as FetchError);
+        toTestingStatus({ status: 503, data: 'Fatal Error' } as FetchError);
+      }).toThrow();
+
+      expect(() => {
+        toTestingStatus({ status: 503, data: {} } as FetchError);
+      }).toThrow();
+
+      expect(() => {
+        toTestingStatus({ status: 503 } as FetchError);
       }).toThrow();
     });
   });

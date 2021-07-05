@@ -134,16 +134,18 @@ export function toDataQueryResponse(
  * If possible, this should be avoided in favor of implementing /health endpoint
  * and testing data source with DataSourceWithBackend.testDataSource()
  *
+ * Re-thrown errors are handled by testDataSource() in public/app/features/datasources/state/actions.ts
+ *
  * @returns {TestingStatus}
  */
 export function toTestingStatus(err: FetchError): any {
   const queryResponse = toDataQueryResponse(err);
   // POST api/ds/query errors returned as { message: string, error: string } objects
-  if (queryResponse.error?.data?.message && queryResponse.error?.data?.error) {
+  if (queryResponse.error?.data?.message) {
     return {
       status: 'error',
       message: queryResponse.error.data.message,
-      details: { message: queryResponse.error.data.error },
+      details: queryResponse.error?.data?.error ? { message: queryResponse.error.data.error } : undefined,
     };
   }
   // POST api/ds/query errors returned in results object
