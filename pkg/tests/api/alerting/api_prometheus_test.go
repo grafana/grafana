@@ -258,3 +258,150 @@ func TestPrometheusRules(t *testing.T) {
 		}, 18*time.Second, 2*time.Second)
 	}
 }
+
+func TestPrometheusRulesPermissions(t *testing.T) {
+	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
+		EnableFeatureToggles: []string{"ngalert"},
+		DisableAnonymous:     true,
+	})
+	store := testinfra.SetUpDatabase(t, dir)
+	// override bus to get the GetSignedInUserQuery handler
+	store.Bus = bus.GetBus()
+	grafanaListedAddr := testinfra.StartGrafana(t, dir, path, store)
+
+	// Create a user to make authenticated requests
+	require.NoError(t, createUser(t, store, models.ROLE_EDITOR, "grafana", "password"))
+
+	// Create a namespace under default organisation (orgID = 1) where we'll save some alerts.
+	_, err := createFolder(t, store, 0, "folder1")
+	require.NoError(t, err)
+
+	// Create another namespace under default organisation (orgID = 1) where we'll save some alerts.
+	_, err = createFolder(t, store, 0, "folder2")
+	require.NoError(t, err)
+
+	// Create rule under folder1
+	createRule(t, grafanaListedAddr, "folder1", "grafana", "password")
+
+	// Create rule under folder2
+	createRule(t, grafanaListedAddr, "folder2", "grafana", "password")
+
+	// Now, let's see how this looks like.
+	{
+		promRulesURL := fmt.Sprintf("http://grafana:password@%s/api/prometheus/grafana/api/v1/rules", grafanaListedAddr)
+		// nolint:gosec
+		resp, err := http.Get(promRulesURL)
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			err := resp.Body.Close()
+			require.NoError(t, err)
+		})
+		b, err := ioutil.ReadAll(resp.Body)
+		require.NoError(t, err)
+		require.Equal(t, 200, resp.StatusCode)
+
+		require.JSONEq(t, `
+{
+	"status": "success",
+	"data": {
+		"groups": [{
+			"name": "arulegroup",
+			"file": "folder1",
+			"rules": [{
+				"state": "inactive",
+				"name": "rule under folder folder1",
+				"query": "[{\"refId\":\"A\",\"queryType\":\"\",\"relativeTimeRange\":{\"from\":18000,\"to\":10800},\"datasourceUid\":\"-100\",\"model\":{\"expression\":\"2 + 3 \\u003e 1\",\"intervalMs\":1000,\"maxDataPoints\":43200,\"type\":\"math\"}}]",
+				"duration": 120,
+				"annotations": {
+					"annotation1": "val1"
+				},
+				"labels": {
+					"label1": "val1"
+				},
+				"health": "ok",
+				"lastError": "",
+				"type": "alerting",
+				"lastEvaluation": "0001-01-01T00:00:00Z",
+				"evaluationTime": 0
+			}],
+			"interval": 60,
+			"lastEvaluation": "0001-01-01T00:00:00Z",
+			"evaluationTime": 0
+		},
+		{
+			"name": "arulegroup",
+			"file": "folder2",
+			"rules": [{
+				"state": "inactive",
+				"name": "rule under folder folder2",
+				"query": "[{\"refId\":\"A\",\"queryType\":\"\",\"relativeTimeRange\":{\"from\":18000,\"to\":10800},\"datasourceUid\":\"-100\",\"model\":{\"expression\":\"2 + 3 \\u003e 1\",\"intervalMs\":1000,\"maxDataPoints\":43200,\"type\":\"math\"}}]",
+				"duration": 120,
+				"annotations": {
+					"annotation1": "val1"
+				},
+				"labels": {
+					"label1": "val1"
+				},
+				"health": "ok",
+				"lastError": "",
+				"type": "alerting",
+				"lastEvaluation": "0001-01-01T00:00:00Z",
+				"evaluationTime": 0
+			}],
+			"interval": 60,
+			"lastEvaluation": "0001-01-01T00:00:00Z",
+			"evaluationTime": 0
+		}]
+	}
+}`, string(b))
+	}
+
+	// remove permissions from folder2
+	require.NoError(t, store.UpdateDashboardACL(2, nil))
+
+	// make sure that folder2 is not included in the response
+	{
+		promRulesURL := fmt.Sprintf("http://grafana:password@%s/api/prometheus/grafana/api/v1/rules", grafanaListedAddr)
+		// nolint:gosec
+		resp, err := http.Get(promRulesURL)
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			err := resp.Body.Close()
+			require.NoError(t, err)
+		})
+		b, err := ioutil.ReadAll(resp.Body)
+		require.NoError(t, err)
+		require.Equal(t, 200, resp.StatusCode)
+
+		require.JSONEq(t, `
+{
+	"status": "success",
+	"data": {
+		"groups": [{
+			"name": "arulegroup",
+			"file": "folder1",
+			"rules": [{
+				"state": "inactive",
+				"name": "rule under folder folder1",
+				"query": "[{\"refId\":\"A\",\"queryType\":\"\",\"relativeTimeRange\":{\"from\":18000,\"to\":10800},\"datasourceUid\":\"-100\",\"model\":{\"expression\":\"2 + 3 \\u003e 1\",\"intervalMs\":1000,\"maxDataPoints\":43200,\"type\":\"math\"}}]",
+				"duration": 120,
+				"annotations": {
+					"annotation1": "val1"
+				},
+				"labels": {
+					"label1": "val1"
+				},
+				"health": "ok",
+				"lastError": "",
+				"type": "alerting",
+				"lastEvaluation": "0001-01-01T00:00:00Z",
+				"evaluationTime": 0
+			}],
+			"interval": 60,
+			"lastEvaluation": "0001-01-01T00:00:00Z",
+			"evaluationTime": 0
+		}]
+	}
+}`, string(b))
+	}
+}
