@@ -89,7 +89,9 @@ class UnThemedLogRowMessage extends PureComponent<Props> {
 
     const style = getLogRowStyles(theme, row.logLevel);
     const { entry, hasAnsi, raw } = row;
-    const restructuredEntry = restructureLog(entry, prettifyLogMessage);
+    const restructuredEntry = hasAnsi
+      ? restructureLog(raw, prettifyLogMessage)
+      : restructureLog(entry, prettifyLogMessage);
 
     const previewHighlights = highlighterExpressions?.length && !isEqual(highlighterExpressions, row.searchWords);
     const highlights = previewHighlights ? highlighterExpressions : row.searchWords;
@@ -125,12 +127,12 @@ class UnThemedLogRowMessage extends PureComponent<Props> {
                 findChunks={findHighlightChunksInText}
                 highlightClassName={highlightClassName}
               />
-            ) : hasAnsi ? (
+            ) : hasAnsi && !prettifyLogMessage ? (
               <LogMessageAnsi value={raw} />
-            ) : restructuredEntry.length > 1 ? (
-              restructuredEntry.map((line) => line + '\n')
+            ) : hasAnsi && prettifyLogMessage ? (
+              <LogMessageAnsi value={restructuredEntry.join('\n')} />
             ) : (
-              restructuredEntry[0]
+              restructuredEntry.join('\n')
             )}
           </span>
           {showContextToggle?.(row) && (
