@@ -6,6 +6,7 @@ import (
 	"database/sql/driver"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/grafana/grafana/pkg/components/securejsondata"
@@ -131,11 +132,14 @@ func (a LiveChannelRulePlainConfig) Value() (driver.Value, error) {
 }
 
 func (a *LiveChannelRulePlainConfig) Scan(value interface{}) error {
-	b, ok := value.(string)
-	if !ok {
-		return errors.New("type assertion to string failed")
+	switch v := value.(type) {
+	case string:
+		return json.Unmarshal([]byte(v), &a)
+	case []uint8:
+		return json.Unmarshal(v, &a)
+	default:
+		return fmt.Errorf("type assertion on scan failed: got %T", value)
 	}
-	return json.Unmarshal([]byte(b), &a)
 }
 
 // LiveChannelRule represents channel rules saved in database.

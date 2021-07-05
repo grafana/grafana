@@ -3,6 +3,7 @@ package database
 import (
 	"context"
 	"errors"
+	"fmt"
 	"os"
 	"time"
 
@@ -110,7 +111,7 @@ func (s *ChannelRuleStorage) UpdateChannelRule(cmd models.UpdateLiveChannelRuleC
 			var getCh models.LiveChannelRule
 			ok, err := sess.NoAutoCondition(true).Where("id=? AND org_id=?", cmd.Id, cmd.OrgId).Get(&getCh)
 			if err != nil {
-				return err
+				return fmt.Errorf("error getting rule: %w", err)
 			}
 			if !ok {
 				return models.ErrLiveChannelRuleNotFound
