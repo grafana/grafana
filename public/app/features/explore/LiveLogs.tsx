@@ -284,8 +284,8 @@ class LiveLogs extends PureComponent<Props, State> {
             &nbsp; Exit live mode
           </Button>
           <Button variant="secondary" onClick={this.onClickSonify} className={styles.button}>
-            <Icon name="bell" />
-            &nbsp; {sonify ? 'Stop level sound' : 'Sonify log level'}
+            <Icon name="headphones" />
+            &nbsp; {sonify ? 'Stop audible level' : 'Audible log level'}
           </Button>
           {sonify && (
             <Select
@@ -297,8 +297,8 @@ class LiveLogs extends PureComponent<Props, State> {
             />
           )}
           <Button variant="secondary" onClick={this.onClickSonifyValue} className={styles.button}>
-            <Icon name="bell" />
-            &nbsp; {sonifyValue ? 'Stop value sound' : 'Sonify value'}
+            <Icon name="headphones" />
+            &nbsp; {sonifyValue ? 'Stop value sound' : 'Audible values'}
           </Button>
           {sonifyValue && (
             <>
