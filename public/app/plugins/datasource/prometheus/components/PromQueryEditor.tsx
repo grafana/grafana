@@ -165,11 +165,9 @@ export class PromQueryEditor extends PureComponent<PromQueryEditorProps, State> 
                 width={5}
                 tooltip={
                   <>
-                    An additional limit for the step parameter of the Prometheus query and for the{' '}
-                    <code>$__interval</code> and <code>$__rate_interval</code> variables. Both the &quot;minimum&quot;
-                    and &quot;maximum&quot; option act as limits while the &quot;exact&quot; option is used to specify
-                    the exact step interval. The limit is absolute and not modified by the &quot;Resolution&quot;
-                    setting.
+                    Optionally set lower or upper bounds on the interval between datapoints, e.g., set &quot;minimum
+                    1h&quot; to hint that the measurements were not taken more frequently. <code>$__interval</code> and{' '}
+                    <code>$__rate_interval</code> are supported.
                   </>
                 }
               >
@@ -191,7 +189,6 @@ export class PromQueryEditor extends PureComponent<PromQueryEditorProps, State> 
                 value={interval}
               />
             </div>
-
             <div className="gf-form">
               <div className="gf-form-label">Resolution</div>
               <Select
@@ -201,7 +198,6 @@ export class PromQueryEditor extends PureComponent<PromQueryEditorProps, State> 
                 value={intervalFactorOption}
               />
             </div>
-
             <div className="gf-form">
               <div className="gf-form-label width-7">Format</div>
               <Select
@@ -221,7 +217,6 @@ export class PromQueryEditor extends PureComponent<PromQueryEditorProps, State> 
                 />
               </InlineFormLabel>
             </div>
-
             <PromExemplarField isEnabled={exemplar} onChange={this.onExemplarChange} datasource={datasource} />
           </div>
         }
