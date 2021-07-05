@@ -9,7 +9,7 @@ import { DeleteDashboardButton } from '../DeleteDashboard/DeleteDashboardButton'
 import { TimePickerSettings } from './TimePickerSettings';
 
 import { updateTimeZoneDashboard } from 'app/features/dashboard/state/actions';
-import { GorillaSettings } from '../../gorilla/types';
+import { DisplayProfileSettings } from '../../displayProfiles/components';
 
 interface OwnProps {
   dashboard: DashboardModel;
@@ -128,7 +128,7 @@ export function GeneralSettingsUnconnected({ dashboard, updateTimeZone }: Props)
         </Field>
       </CollapsableSection>
 
-      <GorillaSettings />
+      <DisplayProfileSettings />
 
       <div className="gf-form-button-row">
         {dashboard.meta.canSave && <DeleteDashboardButton dashboard={dashboard} />}

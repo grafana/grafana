@@ -18,12 +18,12 @@ import { locationService } from '@grafana/runtime';
 import { toggleKioskMode } from 'app/core/navigation/kiosk';
 import { getDashboardSrv } from '../../services/DashboardSrv';
 import {
-  GorillaDashNavTimeControls,
-  GorillaPageToolbar,
-  GorillaToolbarButton,
-  GorillaDashNavButton,
-  GorillaConfigToggler,
-} from '../../gorilla/types';
+  DashNavTimeControlsWithDisplayProfile,
+  PageToolbarWithDisplayProfile,
+  ToolbarButtonWithDisplayProfile,
+  DashNavButtonWithDisplayProfile,
+} from '../../displayProfiles/components';
+import { ToggleDisplayProfile } from '../../displayProfiles/state/hooks';
 
 export interface OwnProps {
   dashboard: DashboardModel;
@@ -121,7 +121,7 @@ class DashNav extends PureComponent<Props> {
 
     if (canStar) {
       buttons.push(
-        <GorillaDashNavButton
+        <DashNavButtonWithDisplayProfile
           configPath="dashNav.starToggle"
           tooltip="Mark as favorite"
           icon={isStarred ? 'favorite' : 'star'}
@@ -137,7 +137,7 @@ class DashNav extends PureComponent<Props> {
       buttons.push(
         <ModalsController key="button-share">
           {({ showModal, hideModal }) => (
-            <GorillaDashNavButton
+            <DashNavButtonWithDisplayProfile
               configPath="dashNav.sharePanelToggle"
               tooltip="Share dashboard or panel"
               icon="share-alt"
@@ -193,7 +193,7 @@ class DashNav extends PureComponent<Props> {
 
     if (canEdit && !isFullscreen) {
       buttons.push(
-        <GorillaToolbarButton
+        <ToolbarButtonWithDisplayProfile
           configPath="dashNav.addPanelToggle"
           tooltip="Add panel"
           icon="panel-add"
@@ -204,7 +204,7 @@ class DashNav extends PureComponent<Props> {
       buttons.push(
         <ModalsController key="button-save">
           {({ showModal, hideModal }) => (
-            <GorillaToolbarButton
+            <ToolbarButtonWithDisplayProfile
               configPath="dashNav.saveDashboardToggle"
               tooltip="Save dashboard"
               icon="save"
@@ -222,7 +222,7 @@ class DashNav extends PureComponent<Props> {
 
     if (snapshotUrl) {
       buttons.push(
-        <GorillaToolbarButton
+        <ToolbarButtonWithDisplayProfile
           configPath="dashNav.snapshotToggle"
           tooltip="Open original dashboard"
           onClick={() => this.gotoSnapshotOrigin(snapshotUrl)}
@@ -234,7 +234,7 @@ class DashNav extends PureComponent<Props> {
 
     if (showSettings) {
       buttons.push(
-        <GorillaToolbarButton
+        <ToolbarButtonWithDisplayProfile
           configPath="dashNav.dashboardSettingsToggle"
           tooltip="Dashboard settings"
           icon="cog"
@@ -247,17 +247,17 @@ class DashNav extends PureComponent<Props> {
     this.addCustomContent(customRightActions, buttons);
 
     buttons.push(
-      <GorillaDashNavTimeControls
+      <DashNavTimeControlsWithDisplayProfile
         dashboard={dashboard}
         onChangeTimeZone={updateTimeZoneForSession}
         key="time-controls"
       />
     );
     buttons.push(
-      <GorillaConfigToggler>
+      <ToggleDisplayProfile>
         {(onToggle) => {
           return (
-            <GorillaToolbarButton
+            <ToolbarButtonWithDisplayProfile
               configPath="dashNav.tvToggle"
               tooltip="Cycle view mode"
               icon="monitor"
@@ -266,7 +266,7 @@ class DashNav extends PureComponent<Props> {
             />
           );
         }}
-      </GorillaConfigToggler>
+      </ToggleDisplayProfile>
     );
     return buttons;
   }
@@ -283,7 +283,7 @@ class DashNav extends PureComponent<Props> {
     const parentHref = locationUtil.updateSearchParams(window.location.href, '?search=open&folder=current');
 
     return (
-      <GorillaPageToolbar
+      <PageToolbarWithDisplayProfile
         pageIcon={isFullscreen ? undefined : 'apps'}
         title={title}
         parent={folderTitle}
@@ -293,7 +293,7 @@ class DashNav extends PureComponent<Props> {
         leftItems={this.renderLeftActionsButton()}
       >
         {this.renderRightActionsButton()}
-      </GorillaPageToolbar>
+      </PageToolbarWithDisplayProfile>
     );
   }
 }

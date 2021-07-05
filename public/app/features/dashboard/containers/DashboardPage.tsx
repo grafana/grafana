@@ -291,7 +291,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
     const { dashboard, isInitSlow, initError, isPanelEditorOpen, queryParams, theme } = this.props;
     const { editPanel, viewPanel, scrollTop, updateScrollTop } = this.state;
     const kioskMode = getKioskMode(queryParams.kiosk);
-    const styles = getStyles(theme, kioskMode);
+    const styles = getStyles(theme);
 
     if (!dashboard) {
       if (isInitSlow) {
@@ -375,8 +375,7 @@ const mapDispatchToProps = {
 /*
  * Styles
  */
-export const getStyles = stylesFactory((theme: GrafanaTheme2, kioskMode) => {
-  const contentPadding = kioskMode !== KioskMode.Full ? theme.spacing(0, 2, 2) : theme.spacing(2);
+export const getStyles = stylesFactory((theme: GrafanaTheme2) => {
   return {
     dashboardContainer: css`
       position: absolute;
@@ -395,7 +394,7 @@ export const getStyles = stylesFactory((theme: GrafanaTheme2, kioskMode) => {
       display: flex;
     `,
     dashboardContent: css`
-      padding: ${contentPadding};
+      padding: ${theme.spacing(0, 2, 2)};
       flex-basis: 100%;
       flex-grow: 1;
     `,
