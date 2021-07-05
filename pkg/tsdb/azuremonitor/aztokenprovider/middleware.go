@@ -9,10 +9,10 @@ import (
 
 const authenticationMiddlewareName = "AzureAuthentication"
 
-func AuthMiddleware(tokenProvider AzureTokenProvider) httpclient.Middleware {
+func AuthMiddleware(tokenProvider AzureTokenProvider, scopes []string) httpclient.Middleware {
 	return httpclient.NamedMiddlewareFunc(authenticationMiddlewareName, func(opts httpclient.Options, next http.RoundTripper) http.RoundTripper {
 		return httpclient.RoundTripperFunc(func(req *http.Request) (*http.Response, error) {
-			token, err := tokenProvider.GetAccessToken(req.Context())
+			token, err := tokenProvider.GetAccessToken(req.Context(), scopes)
 			if err != nil {
 				return nil, fmt.Errorf("failed to retrieve Azure access token: %w", err)
 			}

@@ -92,8 +92,7 @@ func getTokenProvider(ctx context.Context, cfg *setting.Cfg, ds *models.DataSour
 		if tokenAuth == nil {
 			return nil, fmt.Errorf("'tokenAuth' not configured for authentication type '%s'", authType)
 		}
-		provider := newAzureAccessTokenProvider(ctx, cfg, tokenAuth)
-		return provider, nil
+		return newAzureAccessTokenProvider(ctx, cfg, tokenAuth)
 
 	case "gce":
 		if jwtTokenAuth == nil {

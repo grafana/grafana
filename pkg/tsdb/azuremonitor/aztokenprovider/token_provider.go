@@ -4,12 +4,11 @@ import (
 	"context"
 	"crypto/sha256"
 	"fmt"
-	"strings"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
-	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/azcredentials"
 )
 
 var (
@@ -17,72 +16,92 @@ var (
 )
 
 type AzureTokenProvider interface {
-	GetAccessToken(ctx context.Context) (string, error)
+	GetAccessToken(ctx context.Context, scopes []string) (string, error)
 }
 
 type tokenProviderImpl struct {
-	cfg        *setting.Cfg
-	authParams *plugins.JwtTokenAuth
+	tokenRetriever TokenRetriever
 }
 
-func NewAzureAccessTokenProvider(cfg *setting.Cfg, authParams *plugins.JwtTokenAuth) *tokenProviderImpl {
-	return &tokenProviderImpl{
-		cfg:        cfg,
-		authParams: authParams,
+func NewAzureAccessTokenProvider(cfg *setting.Cfg, credentials azcredentials.AzureCredentials) (AzureTokenProvider, error) {
+	if cfg == nil {
+		err := fmt.Errorf("parameter 'cfg' cannot be nil")
+		return nil, err
 	}
-}
+	if credentials == nil {
+		err := fmt.Errorf("parameter 'credentials' cannot be nil")
+		return nil, err
+	}
 
-func (provider *tokenProviderImpl) GetAccessToken(ctx context.Context) (string, error) {
-	var credential TokenCredential
+	var tokenRetriever TokenRetriever
 
-	if provider.isManagedIdentityCredential() {
-		if !provider.cfg.Azure.ManagedIdentityEnabled {
+	switch c := credentials.(type) {
+	case *azcredentials.AzureManagedIdentityCredentials:
+		if !cfg.Azure.ManagedIdentityEnabled {
 			err := fmt.Errorf("managed identity authentication is not enabled in Grafana config")
-			return "", err
+			return nil, err
 		} else {
-			credential = provider.getManagedIdentityCredential()
+			tokenRetriever = getManagedIdentityTokenRetriever(cfg, c)
 		}
-	} else {
-		credential = provider.getClientSecretCredential()
+	case *azcredentials.AzureClientSecretCredentials:
+		tokenRetriever = getClientSecretTokenRetriever(c)
+	default:
+		err := fmt.Errorf("credentials of type '%s' not supported by authentication provider", c.AzureAuthType())
+		return nil, err
 	}
 
-	accessToken, err := azureTokenCache.GetAccessToken(ctx, credential, provider.authParams.Scopes)
-	if err != nil {
+	tokenProvider := &tokenProviderImpl{
+		tokenRetriever: tokenRetriever,
+	}
+
+	return tokenProvider, nil
+}
+
+func (provider *tokenProviderImpl) GetAccessToken(ctx context.Context, scopes []string) (string, error) {
+	if ctx == nil {
+		err := fmt.Errorf("parameter 'ctx' cannot be nil")
+		return "", err
+	}
+	if scopes == nil {
+		err := fmt.Errorf("parameter 'scopes' cannot be nil")
 		return "", err
 	}
 
+	accessToken, err := azureTokenCache.GetAccessToken(ctx, provider.tokenRetriever, scopes)
+	if err != nil {
+		return "", err
+	}
 	return accessToken, nil
 }
 
-func (provider *tokenProviderImpl) isManagedIdentityCredential() bool {
-	authType := strings.ToLower(provider.authParams.Params["azure_auth_type"])
-	clientId := provider.authParams.Params["client_id"]
-
-	// Type of authentication being determined by the following logic:
-	// * If authType is set to 'msi' then user explicitly selected the managed identity authentication
-	// * If authType isn't set but other fields are configured then it's a datasource which was configured
-	//   before managed identities where introduced, therefore use client secret authentication
-	// * If authType and other fields aren't set then it means the datasource never been configured
-	//   and managed identity is the default authentication choice as long as managed identities are enabled
-	return authType == "msi" || (authType == "" && clientId == "" && provider.cfg.Azure.ManagedIdentityEnabled)
+func getManagedIdentityTokenRetriever(cfg *setting.Cfg, credentials *azcredentials.AzureManagedIdentityCredentials) TokenRetriever {
+	var clientId string
+	if credentials.ClientId != "" {
+		clientId = credentials.ClientId
+	} else {
+		clientId = cfg.Azure.ManagedIdentityClientId
+	}
+	return &managedIdentityTokenRetriever{
+		clientId: clientId,
+	}
 }
 
-func (provider *tokenProviderImpl) getManagedIdentityCredential() TokenCredential {
-	clientId := provider.cfg.Azure.ManagedIdentityClientId
-
-	return &managedIdentityCredential{clientId: clientId}
+func getClientSecretTokenRetriever(credentials *azcredentials.AzureClientSecretCredentials) TokenRetriever {
+	var authority string
+	if credentials.Authority != "" {
+		authority = credentials.Authority
+	} else {
+		authority = resolveAuthorityForCloud(credentials.AzureCloud)
+	}
+	return &clientSecretTokenRetriever{
+		authority:    authority,
+		tenantId:     credentials.TenantId,
+		clientId:     credentials.ClientId,
+		clientSecret: credentials.ClientSecret,
+	}
 }
 
-func (provider *tokenProviderImpl) getClientSecretCredential() TokenCredential {
-	authority := provider.resolveAuthorityHost(provider.authParams.Params["azure_cloud"])
-	tenantId := provider.authParams.Params["tenant_id"]
-	clientId := provider.authParams.Params["client_id"]
-	clientSecret := provider.authParams.Params["client_secret"]
-
-	return &clientSecretCredential{authority: authority, tenantId: tenantId, clientId: clientId, clientSecret: clientSecret}
-}
-
-func (provider *tokenProviderImpl) resolveAuthorityHost(cloudName string) string {
+func resolveAuthorityForCloud(cloudName string) string {
 	// Known Azure clouds
 	switch cloudName {
 	case setting.AzurePublic:
@@ -93,17 +112,17 @@ func (provider *tokenProviderImpl) resolveAuthorityHost(cloudName string) string
 		return azidentity.AzureGovernment
 	case setting.AzureGermany:
 		return azidentity.AzureGermany
+	default:
+		return ""
 	}
-	// Fallback to direct URL
-	return provider.authParams.Url
 }
 
-type managedIdentityCredential struct {
+type managedIdentityTokenRetriever struct {
 	clientId   string
 	credential azcore.TokenCredential
 }
 
-func (c *managedIdentityCredential) GetCacheKey() string {
+func (c *managedIdentityTokenRetriever) GetCacheKey() string {
 	clientId := c.clientId
 	if clientId == "" {
 		clientId = "system"
@@ -111,7 +130,7 @@ func (c *managedIdentityCredential) GetCacheKey() string {
 	return fmt.Sprintf("azure|msi|%s", clientId)
 }
 
-func (c *managedIdentityCredential) Init() error {
+func (c *managedIdentityTokenRetriever) Init() error {
 	if credential, err := azidentity.NewManagedIdentityCredential(c.clientId, nil); err != nil {
 		return err
 	} else {
@@ -120,7 +139,7 @@ func (c *managedIdentityCredential) Init() error {
 	}
 }
 
-func (c *managedIdentityCredential) GetAccessToken(ctx context.Context, scopes []string) (*AccessToken, error) {
+func (c *managedIdentityTokenRetriever) GetAccessToken(ctx context.Context, scopes []string) (*AccessToken, error) {
 	accessToken, err := c.credential.GetToken(ctx, azcore.TokenRequestOptions{Scopes: scopes})
 	if err != nil {
 		return nil, err
@@ -129,7 +148,7 @@ func (c *managedIdentityCredential) GetAccessToken(ctx context.Context, scopes [
 	return &AccessToken{Token: accessToken.Token, ExpiresOn: accessToken.ExpiresOn}, nil
 }
 
-type clientSecretCredential struct {
+type clientSecretTokenRetriever struct {
 	authority    string
 	tenantId     string
 	clientId     string
@@ -137,11 +156,11 @@ type clientSecretCredential struct {
 	credential   azcore.TokenCredential
 }
 
-func (c *clientSecretCredential) GetCacheKey() string {
+func (c *clientSecretTokenRetriever) GetCacheKey() string {
 	return fmt.Sprintf("azure|clientsecret|%s|%s|%s|%s", c.authority, c.tenantId, c.clientId, hashSecret(c.clientSecret))
 }
 
-func (c *clientSecretCredential) Init() error {
+func (c *clientSecretTokenRetriever) Init() error {
 	options := &azidentity.ClientSecretCredentialOptions{AuthorityHost: c.authority}
 	if credential, err := azidentity.NewClientSecretCredential(c.tenantId, c.clientId, c.clientSecret, options); err != nil {
 		return err
@@ -151,7 +170,7 @@ func (c *clientSecretCredential) Init() error {
 	}
 }
 
-func (c *clientSecretCredential) GetAccessToken(ctx context.Context, scopes []string) (*AccessToken, error) {
+func (c *clientSecretTokenRetriever) GetAccessToken(ctx context.Context, scopes []string) (*AccessToken, error) {
 	accessToken, err := c.credential.GetToken(ctx, azcore.TokenRequestOptions{Scopes: scopes})
 	if err != nil {
 		return nil, err
