@@ -1,12 +1,11 @@
 package azuremonitor
 
 import (
-	"net/http"
+	"fmt"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
-	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/aztokenprovider"
+	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/azcredentials"
 )
 
 // Azure cloud names specific to Azure Monitor
@@ -17,40 +16,107 @@ const (
 	azureMonitorGermany      = "germanyazuremonitor"
 )
 
-// Azure cloud query types
-const (
-	azureMonitor       = "Azure Monitor"
-	appInsights        = "Application Insights"
-	azureLogAnalytics  = "Azure Log Analytics"
-	insightsAnalytics  = "Insights Analytics"
-	azureResourceGraph = "Azure Resource Graph"
-)
-
-func httpClientProvider(route azRoute, model datasourceInfo, cfg *setting.Cfg) *httpclient.Provider {
-	if len(route.Scopes) > 0 {
-		tokenAuth := &plugins.JwtTokenAuth{
-			Url:    route.URL,
-			Scopes: route.Scopes,
-			Params: map[string]string{
-				"azure_auth_type": model.Settings.AzureAuthType,
-				"azure_cloud":     cfg.Azure.Cloud,
-				"tenant_id":       model.Settings.TenantId,
-				"client_id":       model.Settings.ClientId,
-				"client_secret":   model.DecryptedSecureJSONData["clientSecret"],
-			},
-		}
-		tokenProvider := aztokenprovider.NewAzureAccessTokenProvider(cfg, tokenAuth)
-		return httpclient.NewProvider(httpclient.ProviderOptions{
-			Middlewares: []httpclient.Middleware{
-				aztokenprovider.AuthMiddleware(tokenProvider),
-			},
-		})
+func getAuthType(cfg *setting.Cfg, jsonData *simplejson.Json) string {
+	if azureAuthType := jsonData.Get("azureAuthType").MustString(); azureAuthType != "" {
+		return azureAuthType
 	} else {
-		return httpclient.NewProvider()
+		tenantId := jsonData.Get("tenantId").MustString()
+		clientId := jsonData.Get("clientId").MustString()
+
+		// If authentication type isn't explicitly specified and datasource has client credentials,
+		// then this is existing datasource which is configured for app registration (client secret)
+		if tenantId != "" && clientId != "" {
+			return azcredentials.AzureAuthClientSecret
+		}
+
+		// For newly created datasource with no configuration, managed identity is the default authentication type
+		// if they are enabled in Grafana config
+		if cfg.Azure.ManagedIdentityEnabled {
+			return azcredentials.AzureAuthManagedIdentity
+		} else {
+			return azcredentials.AzureAuthClientSecret
+		}
 	}
 }
 
-func newHTTPClient(route azRoute, model datasourceInfo, cfg *setting.Cfg) (*http.Client, error) {
-	model.HTTPCliOpts.Headers = route.Headers
-	return httpClientProvider(route, model, cfg).New(model.HTTPCliOpts)
+func getDefaultAzureCloud(cfg *setting.Cfg) (string, error) {
+	// Allow only known cloud names
+	cloudName := cfg.Azure.Cloud
+	switch cloudName {
+	case setting.AzurePublic:
+		return setting.AzurePublic, nil
+	case setting.AzureChina:
+		return setting.AzureChina, nil
+	case setting.AzureUSGovernment:
+		return setting.AzureUSGovernment, nil
+	case setting.AzureGermany:
+		return setting.AzureGermany, nil
+	case "":
+		// Not set cloud defaults to public
+		return setting.AzurePublic, nil
+	default:
+		err := fmt.Errorf("the cloud '%s' not supported", cloudName)
+		return "", err
+	}
+}
+
+func normalizeAzureCloud(cloudName string) (string, error) {
+	switch cloudName {
+	case azureMonitorPublic:
+		return setting.AzurePublic, nil
+	case azureMonitorChina:
+		return setting.AzureChina, nil
+	case azureMonitorUSGovernment:
+		return setting.AzureUSGovernment, nil
+	case azureMonitorGermany:
+		return setting.AzureGermany, nil
+	default:
+		err := fmt.Errorf("the cloud '%s' not supported", cloudName)
+		return "", err
+	}
+}
+
+func getAzureCloud(cfg *setting.Cfg, jsonData *simplejson.Json) (string, error) {
+	authType := getAuthType(cfg, jsonData)
+	switch authType {
+	case azcredentials.AzureAuthManagedIdentity:
+		// In case of managed identity, the cloud is always same as where Grafana is hosted
+		return getDefaultAzureCloud(cfg)
+	case azcredentials.AzureAuthClientSecret:
+		if cloud := jsonData.Get("cloudName").MustString(); cloud != "" {
+			return normalizeAzureCloud(cloud)
+		} else {
+			return getDefaultAzureCloud(cfg)
+		}
+	default:
+		err := fmt.Errorf("the authentication type '%s' not supported", authType)
+		return "", err
+	}
+}
+
+func getAzureCredentials(cfg *setting.Cfg, jsonData *simplejson.Json, secureJsonData map[string]string) (azcredentials.AzureCredentials, error) {
+	authType := getAuthType(cfg, jsonData)
+
+	switch authType {
+	case azcredentials.AzureAuthManagedIdentity:
+		credentials := &azcredentials.AzureManagedIdentityCredentials{}
+		return credentials, nil
+
+	case azcredentials.AzureAuthClientSecret:
+		cloud, err := getAzureCloud(cfg, jsonData)
+		if err != nil {
+			return nil, err
+		}
+		credentials := &azcredentials.AzureClientSecretCredentials{
+			AzureCloud:   cloud,
+			TenantId:     jsonData.Get("tenantId").MustString(),
+			ClientId:     jsonData.Get("clientId").MustString(),
+			ClientSecret: secureJsonData["clientSecret"],
+		}
+		return credentials, nil
+
+	default:
+		err := fmt.Errorf("the authentication type '%s' not supported", authType)
+		return nil, err
+	}
 }
