@@ -68,7 +68,7 @@ func TestGetAlert(t *testing.T) {
 			Id: &alertID,
 		})
 		require.EqualError(t, err,
-			"operation error grafana#Grafana: PauseAlert, HTTP request failed with status code 404: Alert not found")
+			"operation error grafana#Grafana: GetAlert, HTTP request failed with status code 404: Alert not found")
 	})
 
 	t.Run("Existing alert", func(t *testing.T) {
