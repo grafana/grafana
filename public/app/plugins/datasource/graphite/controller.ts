@@ -6,14 +6,7 @@ import { GraphiteQueryEditorAngularDependencies, GraphiteTagOperator } from './t
 import { handleMetricsAutoCompleteError, TAG_PREFIX } from './common';
 
 /**
- * XXX: Work in progress.
- *
- * All methods are made async and as close to original QueryCtrl methods. This was done on purpose to simplify migration
- * from QueryCtrl and will be reviewed after the migration is over.
- *
- * TODO:
- * [ ] - simplify implementation once the editor is migrated to React
- * [ ] - split methods into: metrics/tags/functions
+ * All methods moved from Graphite's QueryCtrl
  */
 
 export async function init(state: GraphiteQueryEditorState, deps: GraphiteQueryEditorAngularDependencies) {

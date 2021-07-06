@@ -1,112 +1,37 @@
 import { GraphiteQueryEditorAngularDependencies, GraphiteSegment, GraphiteTag } from './types';
+import { createAction } from '@reduxjs/toolkit';
 
-const init = (deps: GraphiteQueryEditorAngularDependencies) => ({
-  type: 'INIT',
-  payload: deps,
-});
+/**
+ * List of possible actions changing the state of QueryEditor
+ */
 
-const getAltSegments = (segmentIndex: number, text: string) => ({
-  type: 'GET_ALT_SEGMENTS',
-  payload: {
-    segmentIndex,
-    text,
-  },
-});
+/**
+ * This is used only during the transition to react. It will be removed after migrating all components.
+ */
+const init = createAction<GraphiteQueryEditorAngularDependencies>('init');
 
-const segmentValueChanged = (segment: GraphiteSegment, index: number) => ({
-  type: 'SEGMENT_VALUE_CHANGED',
-  payload: {
-    segment,
-    index,
-  },
-});
+const segmentValueChanged = createAction<{ segment: GraphiteSegment; index: number }>('segment-value-changed');
 
-const getTags = (index: number, query: string) => ({
-  type: 'GET_TAGS',
-  payload: {
-    index,
-    query,
-  },
-});
+const tagChanged = createAction<{ tag: GraphiteTag; index: number }>('tag-changed');
 
-const tagChanged = (tag: GraphiteTag, index: number) => ({
-  type: 'TAG_CHANGED',
-  payload: {
-    tag,
-    index,
-  },
-});
+const addNewTag = createAction<{ segment: GraphiteSegment }>('add-new-tag');
 
-const getTagValues = (tag: GraphiteTag, index: number, query: string) => ({
-  type: 'GET_TAG_VALUES',
-  payload: {
-    tag,
-    index,
-    query,
-  },
-});
+const unpause = createAction('unpause');
 
-const getTagOperators = () => ({
-  type: 'GET_TAG_OPERATORS',
-});
+const addFunction = createAction<{ name: string }>('add-function');
 
-const getTagsAsSegments = (query: string) => ({
-  type: 'GET_TAGS_AS_SEGMENTS',
-  payload: {
-    query,
-  },
-});
+const removeFunction = createAction<{ funcDef: object }>('remove-function');
 
-const addNewTag = (segment: GraphiteSegment) => ({
-  type: 'ADD_NEW_TAG',
-  payload: {
-    segment,
-  },
-});
+const moveFunction = createAction<{ funcDef: object; offset: number }>('move-function');
 
-const unpause = () => ({
-  type: 'UNPAUSE',
-});
+const targetChanged = createAction('target-changed');
 
-const addFunction = (name: string) => ({
-  type: 'ADD_FUNCTION',
-  payload: {
-    name,
-  },
-});
-
-const removeFunction = (funcDef: object) => ({
-  type: 'REMOVE_FUNCTION',
-  payload: {
-    funcDef,
-  },
-});
-
-const moveFunction = (funcDef: object, offset: number) => ({
-  type: 'MOVE_FUNCTION',
-  payload: {
-    funcDef,
-    offset,
-  },
-});
-
-const targetChanged = () => ({
-  type: 'TARGET_CHANGED',
-});
-
-const toggleEditorMode = () => ({
-  type: 'TOGGLE_EDITOR',
-});
+const toggleEditorMode = createAction('toggle-editor');
 
 export const actions = {
   init,
-  getAltSegments,
   segmentValueChanged,
-  getTags,
   tagChanged,
-  getTagValues,
-  getTagOperators,
-  getTagsAsSegments,
   addNewTag,
   unpause,
   addFunction,
