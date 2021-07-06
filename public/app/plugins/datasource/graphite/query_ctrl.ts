@@ -7,7 +7,7 @@ import { auto } from 'angular';
 import { TemplateSrv } from '@grafana/runtime';
 import { actions } from './state/actions';
 import { getAltSegments, getTagOperators, getTags, getTagsAsSegments, getTagValues } from './state/providers';
-import { createStore, GraphiteQueryEditorState } from './state/state';
+import { createStore, GraphiteQueryEditorState } from './state/store';
 import {
   AngularDropdownOptions,
   GraphiteActionDispatcher,
@@ -42,8 +42,8 @@ export class GraphiteQueryCtrl extends QueryCtrl {
     super($scope, $injector);
 
     // This controller will be removed once it's root partial (query.editor.html) renders only React components.
-    // All component will be wrapped in ReactQueryEditor reciving DataSourceApi in QueryRow.renderQueryEditor
-    // The init() action will be removed and the state will be created in ReactQueryEditor. Note that properties
+    // All component will be wrapped in ReactQueryEditor receiving DataSourceApi in QueryRow.renderQueryEditor
+    // The init() action will be removed and the store will be created in ReactQueryEditor. Note that properties
     // passed to React component in QueryRow.renderQueryEditor are different than properties passed to Angular editor
     // and will be mapped/provided in a way described below:
     const deps = {
@@ -156,12 +156,12 @@ export class GraphiteQueryCtrl extends QueryCtrl {
   }
 
   removeFunction(func: any) {
-    // WIP: converted to "removeFunction" action  and handled in state/state.ts reducer
+    // WIP: converted to "removeFunction" action  and handled in state/store reducer
     // It's now dispatched in func_editor
   }
 
   moveFunction(func: any, offset: any) {
-    // WIP: converted to "moveFunction" action and handled in state/state.ts reducer
+    // WIP: converted to "moveFunction" action and handled in state/store reducer
     // It's now dispatched in func_editor
   }
 
