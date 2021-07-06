@@ -114,6 +114,9 @@ export function emptySegments(state: GraphiteQueryEditorState): void {
   state.segments = [];
 }
 
+/**
+ * When seriesByTag function is added the UI changes it's state and only tags can be added from now.
+ */
 export async function addSeriesByTagFunc(state: GraphiteQueryEditorState, tag: string): Promise<void> {
   const newFunc = state.datasource.createFuncInstance('seriesByTag', {
     withDefaultParams: false,

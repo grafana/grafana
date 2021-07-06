@@ -18,6 +18,9 @@ import {
 
 /**
  * @deprecated Moved to state/store
+ *
+ * Note: methods marked with WIP are kept for easier diffing with previous changes. They will be removed when
+ * GraphiteQueryCtrl is replaced with a react component.
  */
 export class GraphiteQueryCtrl extends QueryCtrl {
   static templateUrl = 'partials/query.editor.html';
