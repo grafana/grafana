@@ -7,6 +7,10 @@ export const MergeTransformerEditor: React.FC<TransformerUIProps<MergeTransforme
   options,
   onChange,
 }) => {
+  if (input.length <= 1) {
+    // Show warning that merge is useless only apply on a single frame
+    return <div>Merge has no effect when applied on a single frame.</div>;
+  }
   return null;
 };
 
