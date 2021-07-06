@@ -1,8 +1,8 @@
-import GraphiteQuery from './graphite_query';
-import { GraphiteActionDispatcher, GraphiteSegment, GraphiteTagOperator } from './types';
-import { GraphiteDatasource } from './datasource';
-import { TemplateSrv } from '../../../features/templating/template_srv';
-import { actions } from './actions';
+import GraphiteQuery from '../graphite_query';
+import { GraphiteActionDispatcher, GraphiteSegment, GraphiteTagOperator } from '../types';
+import { GraphiteDatasource } from '../datasource';
+import { TemplateSrv } from '../../../../features/templating/template_srv';
+import { actions } from '../actions';
 import { getTemplateSrv } from '@grafana/runtime';
 import {
   addSeriesByTagFunc,

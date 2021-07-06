@@ -1,12 +1,12 @@
 import { GraphiteQueryEditorState } from './state';
 import { eachRight, map, remove } from 'lodash';
 import {
+  TAG_PREFIX,
   GRAPHITE_TAG_OPERATORS,
   handleMetricsAutoCompleteError,
   handleTagsAutoCompleteError,
-  TAG_PREFIX,
-} from './common';
-import { AngularDropdownOptions, GraphiteSegment } from './types';
+} from './helpers';
+import { AngularDropdownOptions, GraphiteSegment } from '../types';
 
 /**
  * Return list of available options for a segment with given index

@@ -6,8 +6,8 @@ import { QueryCtrl } from 'app/plugins/sdk';
 import { auto } from 'angular';
 import { TemplateSrv } from '@grafana/runtime';
 import { actions } from './actions';
-import { getAltSegments, getTagOperators, getTags, getTagsAsSegments, getTagValues } from './providers';
-import { createStore, GraphiteQueryEditorState } from './state';
+import { getAltSegments, getTagOperators, getTags, getTagsAsSegments, getTagValues } from './state/providers';
+import { createStore, GraphiteQueryEditorState } from './state/state';
 import {
   AngularDropdownOptions,
   GraphiteActionDispatcher,
