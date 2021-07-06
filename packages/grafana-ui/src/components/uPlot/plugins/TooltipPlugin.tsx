@@ -135,6 +135,10 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
     if (mode === TooltipDisplayMode.Single && focusedSeriesIdx !== null) {
       const field = otherProps.data.fields[focusedSeriesIdx];
 
+      if (!field) {
+        return null;
+      }
+
       const fieldFmt = field.display || getDisplayProcessor({ field, timeZone, theme });
       const display = fieldFmt(field.values.get(focusedPointIdx));
 
@@ -160,6 +164,7 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({
         const frame = otherProps.data;
         const field = frame.fields[i];
         if (
+          !field ||
           field === xField ||
           field.type === FieldType.time ||
           field.type !== FieldType.number ||
