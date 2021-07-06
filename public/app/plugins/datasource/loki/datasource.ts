@@ -383,6 +383,15 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     return Array.from(streams);
   }
 
+  // By implementing getTagKeys and getTagValues we add ad-hoc filtters functionality
+  async getTagKeys() {
+    return await this.labelNamesQuery();
+  }
+
+  async getTagValues(options: any = {}) {
+    return await this.labelValuesQuery(options.key);
+  }
+
   interpolateQueryExpr(value: any, variable: any) {
     // if no multi or include all do not regexEscape
     if (!variable.multi && !variable.includeAll) {
@@ -434,19 +443,6 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     }
 
     return Math.ceil(date.valueOf() * 1e6);
-  }
-
-  // By implementing getTagKeys and getTagValues we add ad-hoc filtters functionality
-  async getTagKeys() {
-    const params = this.getTimeRangeParams();
-    const result = await this.metadataRequest(`${LOKI_ENDPOINT}/label`, params);
-    return result?.map((value: string) => ({ text: value })) ?? [];
-  }
-
-  async getTagValues(options: any = {}) {
-    const params = this.getTimeRangeParams();
-    const result = await this.metadataRequest(`${LOKI_ENDPOINT}/label/${options.key}/values`, params);
-    return result?.map((value: string) => ({ text: value })) ?? [];
   }
 
   getLogRowContext = (row: LogRowModel, options?: RowContextOptions): Promise<{ data: DataFrame[] }> => {
