@@ -63,7 +63,7 @@ const reduceGroups = (filters: RuleFilterState) => {
           rule.promRule.alerts &&
           rule.promRule.alerts.some((alert) => stringMatchesSomeLabels(filters.queryString || '', alert.labels));
 
-        if (!(doesNameContainsQueryString || doRuleLabelsMatchQuery || !doAlertsContainMatchingLabels)) {
+        if (!(doesNameContainsQueryString || doRuleLabelsMatchQuery || doAlertsContainMatchingLabels)) {
           return false;
         }
       }

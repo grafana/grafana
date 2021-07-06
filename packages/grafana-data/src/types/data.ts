@@ -24,8 +24,8 @@ export enum DataTopic {
 export enum LabelOperators {
   Equals = '=',
   NotEquals = '!=',
-  Regex = '=~',
-  NotRegex = '!=~',
+  RegexMatch = '=~',
+  NotRegexMatch = '!=~',
 }
 
 // Should be kept in sync with grafana-plugin-sdk-go/data/frame_meta.go

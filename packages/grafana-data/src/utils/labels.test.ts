@@ -6,7 +6,7 @@ import {
   findUniqueLabels,
   matchAllLabels,
 } from './labels';
-import { Labels } from '../types/data';
+import { Labels, LabelOperators } from '../types/data';
 
 describe('parseLabels()', () => {
   it('returns no labels on empty labels string', () => {
@@ -28,10 +28,10 @@ describe('parseLabelsWithOperator()', () => {
   it('returns labels with correct operators', () => {
     expect(parseLabelsWithOperator('{foo="bar", baz!="buzz", region=~"cluster-.*", email!=~".+@grafana.com"}')).toEqual(
       {
-        foo: { value: 'bar', operator: '=' },
-        baz: { value: 'buzz', operator: '!=' },
-        region: { value: 'cluster-.*', operator: '=~' },
-        email: { value: '.+@grafana.com', operator: '!=~' },
+        foo: { value: 'bar', operator: LabelOperators.Equals },
+        baz: { value: 'buzz', operator: LabelOperators.NotEquals },
+        region: { value: 'cluster-.*', operator: LabelOperators.RegexMatch },
+        email: { value: '.+@grafana.com', operator: LabelOperators.NotRegexMatch },
       }
     );
   });
