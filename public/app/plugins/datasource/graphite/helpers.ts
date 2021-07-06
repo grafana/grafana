@@ -1,7 +1,6 @@
 import { GraphiteQueryEditorState } from './state';
 import { each, map } from 'lodash';
 import { handleMetricsAutoCompleteError, TAG_PREFIX } from './common';
-import { targetChanged } from './controller';
 
 /**
  * Create new AST based on new query.
@@ -111,7 +110,7 @@ export async function addSeriesByTagFunc(state: GraphiteQueryEditorState, tag: s
   newFunc.added = true;
 
   emptySegments(state);
-  targetChanged(state);
+  handleTargetChanged(state);
   await parseTarget(state);
 }
 
@@ -127,7 +126,7 @@ export function smartlyHandleNewAliasByNode(
     if (state.segments[i].value.indexOf('*') >= 0) {
       func.params[0] = i;
       func.added = false;
-      state = targetChanged(state);
+      handleTargetChanged(state);
       return;
     }
   }

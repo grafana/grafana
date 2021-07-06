@@ -1,20 +1,23 @@
 import GraphiteQuery from './graphite_query';
-import {
-  addFunction,
-  addNewTag,
-  init,
-  moveFunction,
-  removeFunction,
-  segmentValueChanged,
-  tagChanged,
-  targetChanged,
-  toggleEditorMode,
-  unpause,
-} from './controller';
-import { GraphiteActionDispatcher, GraphiteSegment } from './types';
+import { GraphiteActionDispatcher, GraphiteSegment, GraphiteTagOperator } from './types';
 import { GraphiteDatasource } from './datasource';
 import { TemplateSrv } from '../../../features/templating/template_srv';
 import { actions } from './actions';
+import { getTemplateSrv } from '@grafana/runtime';
+import {
+  addSeriesByTagFunc,
+  buildSegments,
+  checkOtherSegments,
+  emptySegments,
+  fixTagSegments,
+  handleTargetChanged,
+  parseTarget,
+  pause,
+  removeTagPrefix,
+  setSegmentFocus,
+  smartlyHandleNewAliasByNode,
+  spliceSegments,
+} from './helpers';
 
 /**
  * XXX: Work in progress.
@@ -55,35 +58,107 @@ type Action = {
 };
 
 const reducer = async (action: Action, state: GraphiteQueryEditorState): Promise<GraphiteQueryEditorState> => {
+  state = { ...state };
+
   if (actions.init.match(action)) {
-    state = await init(state, action.payload);
+    const deps = action.payload;
+    deps.target.target = deps.target.target || '';
+
+    state = {
+      ...state,
+      ...deps,
+      queryModel: new GraphiteQuery(deps.datasource, deps.target, getTemplateSrv()),
+      supportsTags: deps.datasource.supportsTags,
+      paused: false,
+      removeTagValue: '-- remove tag --',
+    };
+
+    await state.datasource.waitForFuncDefsLoaded();
+    await buildSegments(state, false);
   }
   if (actions.segmentValueChanged.match(action)) {
-    state = await segmentValueChanged(state, action.payload.segment, action.payload.index);
+    const { segment, index: segmentIndex } = action.payload;
+
+    state.error = null;
+    state.queryModel.updateSegmentValue(segment, segmentIndex);
+
+    // If segment changes and first function is fake then remove all functions
+    // TODO: fake function is created when the first argument is not seriesList, for
+    // example constantLine(number) - which seems to be broken now.
+    if (state.queryModel.functions.length > 0 && state.queryModel.functions[0].def.fake) {
+      state.queryModel.functions = [];
+    }
+
+    if (segment.type === 'tag') {
+      const tag = removeTagPrefix(segment.value);
+      pause(state);
+      await addSeriesByTagFunc(state, tag);
+      return state;
+    }
+
+    if (segment.expandable) {
+      await checkOtherSegments(state, segmentIndex + 1);
+      setSegmentFocus(state, segmentIndex + 1);
+      handleTargetChanged(state);
+    } else {
+      spliceSegments(state, segmentIndex + 1);
+    }
+
+    setSegmentFocus(state, segmentIndex + 1);
+    handleTargetChanged(state);
   }
   if (actions.tagChanged.match(action)) {
-    state = await tagChanged(state, action.payload.tag, action.payload.index);
+    const { tag, index: tagIndex } = action.payload;
+    state.queryModel.updateTag(tag, tagIndex);
+    handleTargetChanged(state);
   }
   if (actions.addNewTag.match(action)) {
-    state = await addNewTag(state, action.payload.segment);
+    const segment = action.payload.segment;
+    const newTagKey = segment.value;
+    const newTag = { key: newTagKey, operator: '=' as GraphiteTagOperator, value: '' };
+    state.queryModel.addTag(newTag);
+    handleTargetChanged(state);
+    fixTagSegments(state);
   }
   if (actions.unpause.match(action)) {
-    state = await unpause(state);
+    state.paused = false;
+    state.panelCtrl.refresh();
   }
   if (actions.addFunction.match(action)) {
-    state = await addFunction(state, action.payload.name);
+    const newFunc = state.datasource.createFuncInstance(action.payload.name, {
+      withDefaultParams: true,
+    });
+    newFunc.added = true;
+    state.queryModel.addFunction(newFunc);
+    smartlyHandleNewAliasByNode(state, newFunc);
+
+    if (state.segments.length === 1 && state.segments[0].fake) {
+      emptySegments(state);
+    }
+
+    if (!newFunc.params.length && newFunc.added) {
+      handleTargetChanged(state);
+    }
+
+    if (newFunc.def.name === 'seriesByTag') {
+      await parseTarget(state);
+    }
   }
   if (actions.removeFunction.match(action)) {
-    state = await removeFunction(state, action.payload.funcDef);
+    state.queryModel.removeFunction(action.payload.funcDef);
+    handleTargetChanged(state);
   }
   if (actions.moveFunction.match(action)) {
-    state = await moveFunction(state, action.payload.funcDef, action.payload.offset);
+    const { funcDef, offset } = action.payload;
+    state.queryModel.moveFunction(funcDef, offset);
+    handleTargetChanged(state);
   }
   if (actions.targetChanged.match(action)) {
-    state = await targetChanged(state);
+    handleTargetChanged(state);
   }
   if (actions.toggleEditorMode.match(action)) {
-    state = await toggleEditorMode(state);
+    state.target.textEditor = !state.target.textEditor;
+    await parseTarget(state);
   }
 
   return { ...state };
