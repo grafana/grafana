@@ -11,23 +11,19 @@ import { createAction } from '@reduxjs/toolkit';
 const init = createAction<GraphiteQueryEditorAngularDependencies>('init');
 
 // Metrics & Tags
-
 const segmentValueChanged = createAction<{ segment: GraphiteSegment; index: number }>('segment-value-changed');
 
 // Tags
-
 const addNewTag = createAction<{ segment: GraphiteSegment }>('add-new-tag');
 const tagChanged = createAction<{ tag: GraphiteTag; index: number }>('tag-changed');
 const unpause = createAction('unpause');
 
 // Functions
-
 const addFunction = createAction<{ name: string }>('add-function');
 const removeFunction = createAction<{ funcDef: object }>('remove-function');
 const moveFunction = createAction<{ funcDef: object; offset: number }>('move-function');
 
-// Editor
-
+// Text editor
 const targetChanged = createAction('target-changed');
 const toggleEditorMode = createAction('toggle-editor');
 

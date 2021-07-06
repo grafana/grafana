@@ -4,6 +4,10 @@ import { dispatch } from '../../../../store/store';
 import { notifyApp } from '../../../../core/reducers/appNotification';
 import { createErrorNotification } from '../../../../core/copy/appNotification';
 
+/**
+ * Helpers used by reducers and providers. They modify state object directly so should operate on a copy of the state.
+ */
+
 export const GRAPHITE_TAG_OPERATORS = ['=', '!=', '=~', '!=~'];
 
 /**

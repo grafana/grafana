@@ -9,6 +9,10 @@ import {
 import { AngularDropdownOptions, GraphiteSegment } from '../types';
 
 /**
+ * Providers are hooks for view to provide temporal data like autocomplete. They don't modify the state.
+ */
+
+/**
  * Return list of available options for a segment with given index
  *
  * It may be:
