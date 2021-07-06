@@ -92,6 +92,7 @@ export default function AnnotationQueryEditor({ query, onChange }: Props) {
           </Field>
           <Field label="Tags" description={tagsTooltipContent}>
             <TagFilter
+              allowCustomValue
               inputId="grafana-annotations__tags"
               onChange={onTagsChange}
               tagOptions={getAnnotationTags}
