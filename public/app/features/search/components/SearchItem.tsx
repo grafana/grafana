@@ -35,8 +35,9 @@ export const SearchItem: FC<Props> = ({ item, editable, onToggleChecked, onTagSe
   );
 
   const toggleItem = useCallback(
-    (event: React.MouseEvent) => {
-      event.preventDefault();
+    (ev: React.MouseEvent) => {
+      ev.stopPropagation();
+
       if (onToggleChecked) {
         onToggleChecked(item);
       }

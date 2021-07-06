@@ -30,9 +30,9 @@ export const SectionHeader: FC<SectionHeaderProps> = ({
   };
 
   const onSectionChecked = useCallback(
-    (e: React.MouseEvent) => {
-      e.preventDefault();
-      e.stopPropagation();
+    (ev: React.MouseEvent) => {
+      ev.stopPropagation();
+
       if (onToggleChecked) {
         onToggleChecked(section);
       }

@@ -28,7 +28,7 @@ export const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
         <input
           type="checkbox"
           className={styles.input}
-          checked={value}
+          checked={value ?? false}
           disabled={disabled}
           onChange={handleOnChange}
           {...inputProps}
@@ -116,6 +116,7 @@ export const getCheckboxStyles = stylesFactory((theme: GrafanaTheme2) => {
       border-radius: ${theme.shape.borderRadius()};
       background: ${theme.components.input.background};
       border: 1px solid ${theme.components.input.borderColor};
+      pointer-events: none;
 
       &:hover {
         cursor: pointer;
