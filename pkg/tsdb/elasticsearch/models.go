@@ -52,6 +52,7 @@ var metricAggType = map[string]string{
 	"serial_diff":    "Serial Difference",
 	"bucket_script":  "Bucket Script",
 	"raw_document":   "Raw Document",
+	"rate":           "Rate",
 }
 
 var extendedStats = map[string]string{

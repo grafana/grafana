@@ -155,6 +155,60 @@ Object {
 }
 `;
 
+exports[`Graph Migrations preserves series overrides using a regex alias 1`] = `
+Object {
+  "fieldConfig": Object {
+    "defaults": Object {
+      "custom": Object {
+        "axisPlacement": "hidden",
+        "drawStyle": "line",
+        "fillOpacity": 60,
+        "gradientMode": "opacity",
+        "lineInterpolation": "stepAfter",
+        "lineWidth": 1,
+        "showPoints": "never",
+        "spanNulls": true,
+      },
+      "nullValueMode": "null",
+      "unit": "short",
+    },
+    "overrides": Array [
+      Object {
+        "matcher": Object {
+          "id": "byRegexp",
+          "options": "/^A-/",
+        },
+        "properties": Array [
+          Object {
+            "id": "color",
+            "value": Object {
+              "fixedColor": "rgba(165, 72, 170, 0.77)",
+              "mode": "fixed",
+            },
+          },
+        ],
+      },
+    ],
+  },
+  "options": Object {
+    "legend": Object {
+      "calcs": Array [
+        "mean",
+        "lastNotNull",
+        "max",
+        "min",
+        "sum",
+      ],
+      "displayMode": "table",
+      "placement": "bottom",
+    },
+    "tooltip": Object {
+      "mode": "single",
+    },
+  },
+}
+`;
+
 exports[`Graph Migrations simple bars 1`] = `
 Object {
   "fieldConfig": Object {
