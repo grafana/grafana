@@ -2,22 +2,42 @@ import { PanelPlugin } from '@grafana/data';
 import { BaseLayerEditor } from './editor/BaseLayerEditor';
 import { DataLayersEditor } from './editor/DataLayersEditor';
 import { GeomapPanel } from './GeomapPanel';
-import { MapViewEditor } from './MapViewEditor';
-import { GeomapPanelOptions } from './types';
+import { MapCenterEditor } from './editor/MapCenterEditor';
+import { defaultView, GeomapPanelOptions } from './types';
+import { MapZoomEditor } from './editor/MapZoomEditor';
 
 export const plugin = new PanelPlugin<GeomapPanelOptions>(GeomapPanel)
   .setNoPadding()
   .useFieldConfig()
   .setPanelOptions((builder) => {
-    // Nested
+    let category = ['Map View'];
     builder.addCustomEditor({
-      category: ['Map View'],
-      id: 'view',
-      path: 'view',
-      name: 'Map View',
-      editor: MapViewEditor,
+      category,
+      id: 'view.center',
+      path: 'view.center',
+      name: 'Center',
+      editor: MapCenterEditor,
+      defaultValue: defaultView.center,
     });
 
+    builder.addCustomEditor({
+      category,
+      id: 'view.zoom',
+      path: 'view.zoom',
+      name: 'Initial zoom',
+      editor: MapZoomEditor,
+      defaultValue: defaultView.zoom,
+    });
+
+    builder.addBooleanSwitch({
+      category,
+      path: 'view.shared',
+      description: 'Use the same view across multiple panels.  Note: this may require a dashboard reload.',
+      name: 'Share view',
+      defaultValue: defaultView.shared,
+    });
+
+    // Nested
     builder.addCustomEditor({
       category: ['Base Layer'],
       id: 'basemap',
@@ -35,7 +55,7 @@ export const plugin = new PanelPlugin<GeomapPanelOptions>(GeomapPanel)
     });
 
     // The controls section
-    let category = ['Map Controls'];
+    category = ['Map Controls'];
     builder
       .addBooleanSwitch({
         category,

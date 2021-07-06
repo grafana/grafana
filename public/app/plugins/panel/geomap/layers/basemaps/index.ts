@@ -7,7 +7,7 @@ import { stamenLayers } from './stamen';
 export const defaultGrafanaThemedMap = {
   ...carto,
   id: 'grafana',
-  name: 'Default grafana basemap',
+  name: 'Default base layer',
 };
 
 /**

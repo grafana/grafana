@@ -18,15 +18,21 @@ interface BaseMapProps {
 
 import 'ol/ol.css';
 
-import { ControlsOptions, GeomapPanelOptions } from '../types';
+import { ControlsOptions, GeomapPanelOptions, MapViewConfig } from '../types';
 import { defaultGrafanaThemedMap } from '../layers/basemaps';
 import { InfoControl } from './InfoControl';
+import { centerPointRegistry, MapCenterID } from '../view';
+import { fromLonLat } from 'ol/proj';
+import { Coordinate } from 'ol/coordinate';
 
 interface MapLayerState {
   config: MapLayerConfig;
   handler: MapLayerHandler;
   layer: BaseLayer; // used to add|remove
 }
+
+// The firs one will be reused
+let sharedView: View | undefined = undefined;
 
 export class BaseMap extends Component<BaseMapProps> {
   map: GeoMap;
@@ -67,6 +73,11 @@ export class BaseMap extends Component<BaseMapProps> {
     const { options } = this.props;
     console.log('options changed!', options);
 
+    if (options.view !== oldOptions.view) {
+      console.log('View changed');
+      this.map.setView(this.initMapView(options.view));
+    }
+
     if (options.controls !== oldOptions.controls) {
       console.log('Crontrols changed');
       this.initControls(options.controls ?? { showZoom: true, showAttribution: true });
@@ -103,20 +114,17 @@ export class BaseMap extends Component<BaseMapProps> {
       this.map = (undefined as unknown) as GeoMap;
       return;
     }
+    const { options } = this.props;
     this.map = new GeoMap({
-      view: new View({
-        center: [0, 0],
-        zoom: 1,
-      }),
+      view: this.initMapView(options.view),
       pixelRatio: 1, // or zoom?
       layers: [], // delay...
       controls: [], // empty
       target: div,
     });
-    // init the controls
-    this.initControls(this.props.options.controls);
-    this.initBasemap(this.props.options.basemap);
-    this.initLayers(this.props.options.layers);
+    this.initControls(options.controls);
+    this.initBasemap(options.basemap);
+    this.initLayers(options.layers);
   };
 
   initBasemap(cfg: MapLayerConfig) {
@@ -164,6 +172,49 @@ export class BaseMap extends Component<BaseMapProps> {
         handler,
       });
     }
+  }
+
+  initMapView(config: MapViewConfig): View {
+    let view = new View({
+      center: [0, 0],
+      zoom: 1,
+    });
+    if (config.shared) {
+      if (!sharedView) {
+        sharedView = view;
+      } else {
+        view = sharedView;
+      }
+    }
+
+    const v = centerPointRegistry.getIfExists(config.center.id);
+    if (v) {
+      let coord: Coordinate | undefined = undefined;
+      if (v.specialHandling) {
+        if (v.id === MapCenterID.Coordinates) {
+          const center = config.center ?? {};
+          coord = [center.lon ?? 0, center.lat ?? 0];
+        } else {
+          console.log('TODO, view requires special handling', v);
+        }
+      } else {
+        coord = [v.lon ?? 0, v.lat ?? 0];
+      }
+      if (coord) {
+        view.setCenter(fromLonLat(coord));
+      }
+    }
+
+    if (config.maxZoom) {
+      view.setMaxZoom(config.maxZoom);
+    }
+    if (config.minZoom) {
+      view.setMaxZoom(config.minZoom);
+    }
+    if (config.zoom) {
+      view.setZoom(config.zoom);
+    }
+    return view;
   }
 
   initControls(options: ControlsOptions) {
