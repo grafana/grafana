@@ -1514,11 +1514,11 @@ Refer to [Grafana Live configuration documentation]({{< relref "../live/configur
 
 The `allowed_origins` option is a comma-separated list of additional origins (`Origin` header of HTTP Upgrade request during WebSocket connection establishment) that will be accepted by Grafana Live.
 
-If not set (default) then origin is matched over [root_url]({{< relref "#root_url" >}}) which should be sufficient for most scenarios.
+If not set (default), then the origin is matched over [root_url]({{< relref "#root_url" >}}) which should be sufficient for most scenarios.
 
 Origin patterns support wildcard symbol "*".
 
-Example:
+For example:
 
 ```ini
 [live]
