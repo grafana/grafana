@@ -26,7 +26,7 @@ export const VizTooltipContainer: React.FC<VizTooltipContainerProps> = ({
   className,
   ...otherProps
 }) => {
-  const popperRef = useRef<HTMLDivElement>(null);
+  const tooltipRef = useRef<HTMLDivElement>(null);
   const [tooltipMeasurement, setTooltipMeasurement] = useState<Dimensions2D>({ width: 0, height: 0 });
   const [virtualElement, setVirtualElement] = useState({
     getBoundingClientRect() {
@@ -41,7 +41,7 @@ export const VizTooltipContainer: React.FC<VizTooltipContainerProps> = ({
     },
   });
   const { width, height } = useWindowSize();
-  const { styles: popperStyles, attributes } = usePopper(virtualElement, popperRef.current);
+  const { styles: popperStyles, attributes } = usePopper(virtualElement, tooltipRef.current);
 
   const resizeObserver = useMemo(
     () =>
@@ -64,18 +64,18 @@ export const VizTooltipContainer: React.FC<VizTooltipContainerProps> = ({
   );
 
   useLayoutEffect(() => {
-    if (popperRef.current) {
-      resizeObserver.observe(popperRef.current);
+    if (tooltipRef.current) {
+      resizeObserver.observe(tooltipRef.current);
     }
 
     return () => {
       resizeObserver.disconnect();
     };
-  }, [resizeObserver, popperRef]);
+  }, [resizeObserver, tooltipRef]);
 
   // Make sure tooltip does not overflow window
   useLayoutEffect(() => {
-    if (popperRef.current) {
+    if (tooltipRef.current) {
       const { x, y } = calculateTooltipPosition(
         positionX,
         positionY,
@@ -108,14 +108,14 @@ export const VizTooltipContainer: React.FC<VizTooltipContainerProps> = ({
     offsetY,
     tooltipMeasurement.width,
     tooltipMeasurement.height,
-    popperRef,
+    tooltipRef,
   ]);
 
   const styles = useStyles2(getStyles);
 
   return (
     <div
-      ref={popperRef}
+      ref={tooltipRef}
       style={{
         transition: 'all ease-out 0.1s',
         ...popperStyles.popper,
