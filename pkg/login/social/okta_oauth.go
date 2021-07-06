@@ -125,7 +125,7 @@ func (s *SocialOkta) extractRole(data *OktaUserInfoJson) (string, error) {
 		return "", nil
 	}
 
-	role, err := s.searchJSONForAttr(s.roleAttributePath, data.rawJSON)
+	role, err := s.searchJSONForStringAttr(s.roleAttributePath, data.rawJSON)
 	if err != nil {
 		return "", err
 	}

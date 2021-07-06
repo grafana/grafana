@@ -33,18 +33,18 @@ To register a handler:
 
 ```go
 func init() {
-    bus.AddHandler("sql", DeleteDashboard)
+    bus.AddHandlerCtx("sql", DeleteDashboard)
 }
 
-func DeleteDashboard(cmd *models.DeleteDashboardCommand) error {
-    return inTransaction(func(sess *DBSession) error {
+func DeleteDashboard(ctx context.Context, cmd *models.DeleteDashboardCommand) error {
+    return inTransactionCtx(ctx, func(sess *DBSession) error {
         _, err := sess.Exec("DELETE FROM dashboards WHERE dashboard_id=?", cmd.DashboardID)
         return err
     })
 }
 ```
 
-Here, `inTransaction` is a helper function in the `sqlstore` package that provides a session, that lets you execute SQL statements.
+Here, `inTransactionCtx` is a helper function in the `sqlstore` package that provides a session, that lets you execute SQL statements.
 
 ## `SQLStore`
 
@@ -61,7 +61,7 @@ type MyService struct {
 You can now make SQL queries in any of your [command handlers](communication.md#handle-commands) or [event listeners](communication.md#subscribe-to-an-event):
 
 ```go
-func (s *MyService) DeleteDashboard(cmd *models.DeleteDashboardCommand) error {
+func (s *MyService) DeleteDashboard(ctx context.Context, cmd *models.DeleteDashboardCommand) error {
     if err := s.SQLStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
         _, err := sess.Exec("DELETE FROM dashboards WHERE dashboard_id=?", cmd.DashboardID)
         return err
