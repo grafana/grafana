@@ -114,7 +114,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
   }
 
   componentWillUnmount() {
-    // redux action panelEditorCleanUp is called on location change from DashboardPrompt
+    // redux action exitPanelEditor is called on location change from DashboardPrompt
     this.eventSubs?.unsubscribe();
   }
 
