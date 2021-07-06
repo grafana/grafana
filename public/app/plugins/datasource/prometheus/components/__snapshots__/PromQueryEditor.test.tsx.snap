@@ -53,22 +53,22 @@ exports[`Render PromQueryEditor with basic options should render 1`] = `
           options={
             Array [
               Object {
-                "label": "minimum",
+                "label": "Minimum",
                 "value": "min",
               },
               Object {
-                "label": "maximum",
+                "label": "Maximum",
                 "value": "max",
               },
               Object {
-                "label": "exact",
+                "label": "Exact",
                 "value": "exact",
               },
             ]
           }
           value={
             Object {
-              "label": "minimum",
+              "label": "Minimum",
               "value": "min",
             }
           }
