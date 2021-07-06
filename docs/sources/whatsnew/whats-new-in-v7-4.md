@@ -142,7 +142,7 @@ For more information, refer to the [Elasticsearch docs]({{<relref "../datasource
 
 The Azure Monitor query type was renamed to Metrics and Azure Logs Analytics was renamed to Logs to match the service names in Azure and align the concepts with the rest of Grafana.
 
-[Azure Monitor]({{< relref "../datasources/azuremonitor.md" >}}) was updated to reflect this change.
+[Azure Monitor]({{< relref "../datasources/azuremonitor/_index.md" >}}) was updated to reflect this change.
 
 ### MQL support added for Google Cloud Monitoring
 
