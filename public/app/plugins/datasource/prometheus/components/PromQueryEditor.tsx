@@ -24,11 +24,13 @@ const INTERVAL_FACTOR_OPTIONS: Array<SelectableValue<number>> = map([1, 2, 3, 4,
   label: '1/' + value,
 }));
 
+const DEFAULT_STEP_OPTION: SelectableValue<StepType> = {
+  value: 'min',
+  label: 'Minimum',
+};
+
 const STEP_OPTIONS: Array<SelectableValue<StepType>> = [
-  {
-    value: 'min',
-    label: 'Minimum',
-  },
+  DEFAULT_STEP_OPTION,
   {
     value: 'max',
     label: 'Maximum',
@@ -38,8 +40,6 @@ const STEP_OPTIONS: Array<SelectableValue<StepType>> = [
     label: 'Exact',
   },
 ];
-
-const DEFAULT_STEP_OPTION = STEP_OPTIONS[0];
 
 interface State {
   legendFormat?: string;
