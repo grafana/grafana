@@ -23,6 +23,7 @@ import {
   LogRowModel,
   QueryResultMeta,
   ScopedVars,
+  TimeRange,
 } from '@grafana/data';
 import { getTemplateSrv, TemplateSrv, BackendSrvRequest, FetchError, getBackendSrv } from '@grafana/runtime';
 import { addLabelToQuery } from 'app/plugins/datasource/prometheus/add_label_to_query';
@@ -95,11 +96,15 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
 
   query(options: DataQueryRequest<LokiQuery>): Observable<DataQueryResponse> {
     const subQueries: Array<Observable<DataQueryResponse>> = [];
+    const scopedVars = {
+      ...options.scopedVars,
+      ...this.getRangeScopedVars(options.range),
+    };
     const filteredTargets = options.targets
       .filter((target) => target.expr && !target.hide)
       .map((target) => ({
         ...target,
-        expr: this.templateSrv.replace(target.expr, options.scopedVars, this.interpolateQueryExpr),
+        expr: this.templateSrv.replace(target.expr, scopedVars, this.interpolateQueryExpr),
       }));
 
     for (const target of filteredTargets) {
@@ -219,6 +224,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
       return this.runLiveQuery(target, maxDataPoints);
     }
     const query = this.createRangeQuery(target, options, maxDataPoints);
+
     return this._request(RANGE_QUERY_ENDPOINT, query).pipe(
       catchError((err: any) => this.throwUnless(err, err.status === 404, target)),
       switchMap((response: { data: LokiResponse; status: number }) =>
@@ -270,6 +276,16 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     );
   };
 
+  getRangeScopedVars(range: TimeRange = this.timeSrv.timeRange()) {
+    const msRange = range.to.diff(range.from);
+    const sRange = Math.round(msRange / 1000);
+    return {
+      __range_ms: { text: msRange, value: msRange },
+      __range_s: { text: sRange, value: sRange },
+      __range: { text: sRange + 's', value: sRange + 's' },
+    };
+  }
+
   interpolateVariablesInQueries(queries: LokiQuery[], scopedVars: ScopedVars): LokiQuery[] {
     let expandedQueries = queries;
     if (queries && queries.length) {
@@ -305,6 +321,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     if (!query) {
       return Promise.resolve([]);
     }
+
     const interpolated = this.templateSrv.replace(query, {}, this.interpolateQueryExpr);
     return await this.processMetricFindQuery(interpolated);
   }

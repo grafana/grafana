@@ -1,12 +1,13 @@
 import { of, throwError } from 'rxjs';
 import { take } from 'rxjs/operators';
-import { AnnotationQueryRequest, CoreApp, DataFrame, dateTime, FieldCache, TimeSeries } from '@grafana/data';
+import { AnnotationQueryRequest, CoreApp, DataFrame, dateTime, FieldCache, TimeSeries, toUtc } from '@grafana/data';
 import { BackendSrvRequest, FetchResponse } from '@grafana/runtime';
 
 import LokiDatasource from './datasource';
 import { LokiQuery, LokiResponse, LokiResultType } from './types';
 import { getQueryOptions } from 'test/helpers/getQueryOptions';
 import { TemplateSrv } from 'app/features/templating/template_srv';
+import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { CustomVariableModel } from '../../../features/variables/types';
 import { initialCustomVariableModelState } from '../../../features/variables/custom/reducer';
@@ -19,11 +20,21 @@ jest.mock('@grafana/runtime', () => ({
   getBackendSrv: () => backendSrv,
 }));
 
-const timeSrvStub = {
+const rawRange = {
+  from: toUtc('2018-04-25 10:00'),
+  to: toUtc('2018-04-25 11:00'),
+};
+
+const timeSrvStub = ({
   timeRange: () => ({
-    from: new Date(0),
-    to: new Date(1),
+    from: rawRange.from,
+    to: rawRange.to,
+    raw: rawRange,
   }),
+} as unknown) as TimeSrv;
+
+const templateSrvStub = {
+  replace: jest.fn((a: string, ...rest: any) => a),
 };
 
 const testLogsResponse: FetchResponse<LokiResponse> = {
@@ -320,6 +331,33 @@ describe('LokiDatasource', () => {
         expect(err.data.message).toBe(
           'Error: parse error at line 1, col 6: invalid char escape. Make sure that all special characters are escaped with \\. For more information on escaping of special characters visit LogQL documentation at https://grafana.com/docs/loki/latest/logql/.'
         );
+      });
+    });
+
+    describe('__range, __range_s and __range_ms variables', () => {
+      const options = {
+        targets: [{ expr: 'rate(process_cpu_seconds_total[$__range])', refId: 'A' }],
+        range: {
+          from: rawRange.from,
+          to: rawRange.to,
+          raw: rawRange,
+        },
+      };
+
+      const ds = new LokiDatasource({} as any, templateSrvStub as any, timeSrvStub as any);
+
+      beforeEach(() => {
+        templateSrvStub.replace.mockClear();
+      });
+
+      it('should be correctly interpolated', () => {
+        ds.query(options as any);
+        const range = templateSrvStub.replace.mock.calls[0][1].__range;
+        const rangeMs = templateSrvStub.replace.mock.calls[0][1].__range_ms;
+        const rangeS = templateSrvStub.replace.mock.calls[0][1].__range_s;
+        expect(range).toEqual({ text: '3600s', value: '3600s' });
+        expect(rangeMs).toEqual({ text: 3600000, value: 3600000 });
+        expect(rangeS).toEqual({ text: 3600, value: 3600 });
       });
     });
   });
