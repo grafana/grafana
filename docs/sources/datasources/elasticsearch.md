@@ -86,7 +86,7 @@ Enables `X-Pack` specific features and options, providing the query editor with 
 
 #### Include frozen indices
 
-When `X-Pack enabled` is active and the configured Elasticsearch version is `>=6.6.0`, you can configure Grafana to not ignore [frozen indices](https://www.elastic.co/guide/en/elasticsearch/reference/7.13/frozen-indices.html) when performing search requests.
+When `X-Pack enabled` is active and the configured Elasticsearch version is higher than `6.6.0`, you can configure Grafana to not ignore [frozen indices](https://www.elastic.co/guide/en/elasticsearch/reference/7.13/frozen-indices.html) when performing search requests.
 ### Logs
 
 There are two parameters, `Message field name` and `Level field name`, that can optionally be configured from the data source settings page that determine
