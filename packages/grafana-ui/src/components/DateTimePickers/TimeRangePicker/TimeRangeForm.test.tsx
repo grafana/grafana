@@ -96,4 +96,56 @@ describe('TimeRangeForm', () => {
     expect(from).toHaveClass('react-calendar__tile--rangeStart');
     expect(to).toHaveClass('react-calendar__tile--rangeEnd');
   });
+
+  describe('dates error handling', () => {
+    it('should show error on invalid dates', () => {
+      const invalidTimeRange: TimeRange = {
+        from: dateTimeParse('foo', { timeZone: 'utc' }),
+        to: dateTimeParse('2021-06-19 23:59:00', { timeZone: 'utc' }),
+        raw: {
+          from: 'foo',
+          to: '2021-06-19 23:59:00',
+        },
+      };
+      const { getAllByRole } = setup(invalidTimeRange, 'Asia/Tokyo');
+      const error = getAllByRole('alert');
+
+      expect(error).toHaveLength(1);
+      expect(error[0]).toBeVisible();
+      expect(error[0]).toHaveTextContent('Please enter a past date or "now"');
+    });
+
+    it('should show error on invalid range', () => {
+      const invalidTimeRange: TimeRange = {
+        from: dateTimeParse('2021-06-19 00:00:00', { timeZone: 'utc' }),
+        to: dateTimeParse('2021-06-17 23:59:00', { timeZone: 'utc' }),
+        raw: {
+          from: '2021-06-19 00:00:00',
+          to: '2021-06-17 23:59:00',
+        },
+      };
+      const { getAllByRole } = setup(invalidTimeRange, 'Asia/Tokyo');
+      const error = getAllByRole('alert');
+
+      expect(error[0]).toBeVisible();
+      expect(error[0]).toHaveTextContent('"From" can\'t be after "To"');
+    });
+
+    it('should not show range error when "to" is invalid', () => {
+      const invalidTimeRange: TimeRange = {
+        from: dateTimeParse('2021-06-19 00:00:00', { timeZone: 'utc' }),
+        to: dateTimeParse('foo', { timeZone: 'utc' }),
+        raw: {
+          from: '2021-06-19 00:00:00',
+          to: 'foo',
+        },
+      };
+      const { getAllByRole } = setup(invalidTimeRange, 'Asia/Tokyo');
+      const error = getAllByRole('alert');
+
+      expect(error).toHaveLength(1);
+      expect(error[0]).toBeVisible();
+      expect(error[0]).toHaveTextContent('Please enter a past date or "now"');
+    });
+  });
 });
