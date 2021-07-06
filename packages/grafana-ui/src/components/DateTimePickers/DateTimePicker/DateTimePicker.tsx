@@ -45,7 +45,7 @@ export const DateTimePicker: FC<Props> = ({ date, label, onChange }) => {
   );
 
   return (
-    <div>
+    <div data-testid="date-time-picker">
       <DateTimeInput date={date} onChange={onChange} isFullscreen={isFullscreen} onOpen={onOpen} label={label} />
       {isOpen ? (
         isFullscreen ? (
