@@ -27,15 +27,15 @@ const INTERVAL_FACTOR_OPTIONS: Array<SelectableValue<number>> = map([1, 2, 3, 4,
 const STEP_OPTIONS: Array<SelectableValue<StepType>> = [
   {
     value: 'min',
-    label: 'minimum',
+    label: 'Minimum',
   },
   {
     value: 'max',
-    label: 'maximum',
+    label: 'Maximum',
   },
   {
     value: 'exact',
-    label: 'exact',
+    label: 'Exact',
   },
 ];
 
