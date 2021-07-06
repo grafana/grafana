@@ -19,12 +19,6 @@ import {
   spliceSegments,
 } from './helpers';
 
-/**
- * XXX: Work in progress.
- *
- * The state is the result of migrating properties from QueryCtrl + adding some properties that in angular where
- * internally received and processed by directives without modifying the state.
- */
 export type GraphiteQueryEditorState = {
   /**
    * Extra segment with plus button when tags are rendered

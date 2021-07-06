@@ -1,4 +1,4 @@
-import { GraphiteQueryEditorState } from './state';
+import { GraphiteQueryEditorState } from './store';
 import { eachRight, map, remove } from 'lodash';
 import {
   TAG_PREFIX,
@@ -9,7 +9,7 @@ import {
 import { AngularDropdownOptions, GraphiteSegment } from '../types';
 
 /**
- * Providers are hooks for view to provide temporal data like autocomplete. They don't modify the state.
+ * Providers are hooks for views to provide temporal data for autocomplete. They don't modify the state.
  */
 
 /**

@@ -682,7 +682,6 @@ export class GraphiteDatasource extends DataSourceApi<
           } else {
             this.funcDefs = gfunc.parseFuncDefs(results.data);
           }
-          // this.funcDefs = gfunc.getFuncDefs(this.graphiteVersion);
           return this.funcDefs;
         }),
         catchError((error: any) => {

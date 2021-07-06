@@ -1,4 +1,4 @@
-import { GraphiteQueryEditorState } from './state';
+import { GraphiteQueryEditorState } from './store';
 import { each, map } from 'lodash';
 import { dispatch } from '../../../../store/store';
 import { notifyApp } from '../../../../core/reducers/appNotification';

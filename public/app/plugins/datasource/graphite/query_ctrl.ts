@@ -17,7 +17,7 @@ import {
 } from './types';
 
 /**
- * @deprecated Moving to React/Flux in progress.
+ * @deprecated Moved to state/store
  */
 export class GraphiteQueryCtrl extends QueryCtrl {
   static templateUrl = 'partials/query.editor.html';

@@ -25,7 +25,7 @@ export function graphiteAddFunc($compile: any) {
       $input.appendTo(elem);
       $button.appendTo(elem);
 
-      // TODO: ctrl.state is not ready yet when link is called. This can be moved to an action.
+      // TODO: ctrl.state is not ready yet when link() is called. This will be moved to a separate provider.
       ctrl.datasource.getFuncDefs().then((funcDefs: FuncDef[]) => {
         const allFunctions = map(funcDefs, 'name').sort();
 

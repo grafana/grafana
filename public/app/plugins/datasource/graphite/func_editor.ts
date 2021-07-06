@@ -103,7 +103,7 @@ export function graphiteFuncEditor($compile: any, templateSrv: TemplateSrv) {
         scheduledRelinkIfNeeded();
 
         $scope.$apply(() => {
-          // HACK: without it, a typed parameter is rendered but not updated in the model
+          // HACK: without it, a function parameter is rendered but not updated in the model
           // When it's migrated to React the component should not modify the state directly
           // but dispatch an action to modify it.
           ctrl.targetChanged();
