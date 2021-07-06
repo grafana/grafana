@@ -1,4 +1,4 @@
-import { Labels } from '../types/data';
+import { Labels, LabelsWithOperator, LabelOperators } from '../types/data';
 
 /**
  * Regexp to extract Prometheus-style labels
@@ -18,13 +18,6 @@ export function parseLabels(labels: string): Labels {
   });
   return labelsByKey;
 }
-
-type LabelsWithOperator = {
-  [key: string]: {
-    value: string;
-    operator: string;
-  };
-};
 
 /**
  * Returns a map of label keys with the value and operator
@@ -106,4 +99,30 @@ export function formatLabels(labels: Labels, defaultValue = '', withoutBraces?: 
     return cleanSelector;
   }
   return ['{', cleanSelector, '}'].join('');
+}
+
+export function stringMatchesSomeLabels(queryString: string, labels: Labels): boolean {
+  const parsedLabels = parseLabelsWithOperator(queryString);
+
+  return Object.entries(parsedLabels).some(([key, { value, operator }]) => {
+    return Object.entries(labels).some(([labelKey, labelValue]) => {
+      const labelMatches = key === labelKey;
+      let valueMatches;
+      switch (operator) {
+        case LabelOperators.Equals:
+          valueMatches = value === labelValue;
+          break;
+        case LabelOperators.NotEquals:
+          valueMatches = value !== labelValue;
+          break;
+        case LabelOperators.Regex:
+          valueMatches = new RegExp(value).test(labelValue);
+          break;
+        case LabelOperators.NotRegex:
+          valueMatches = !new RegExp(value).test(labelValue);
+          break;
+      }
+      return labelMatches && valueMatches;
+    });
+  });
 }
