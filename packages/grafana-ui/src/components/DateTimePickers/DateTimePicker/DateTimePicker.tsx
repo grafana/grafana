@@ -1,4 +1,4 @@
-import React, { FC, FormEvent, ReactNode, useCallback, useState } from 'react';
+import React, { FC, FormEvent, ReactNode, useCallback, useEffect, useState } from 'react';
 import { useMedia } from 'react-use';
 import Calendar from 'react-calendar/dist/entry.nostyle';
 import { css } from '@emotion/css';
@@ -20,9 +20,7 @@ const stopPropagation = (event: React.MouseEvent<HTMLDivElement>) => event.stopP
 
 export const DateTimePicker: FC<Props> = ({ date, label, onChange }) => {
   const [isOpen, setOpen] = useState(false);
-  const [internalDate, setInternalDate] = useState<InputState>(() => {
-    return { value: dateTimeFormat(date), invalid: false };
-  });
+
   const theme = useTheme2();
   const isFullscreen = useMedia(`(min-width: ${theme.breakpoints.values.lg}px)`);
   const containerStyles = useStyles2(getCalendarStyles);
@@ -43,38 +41,9 @@ export const DateTimePicker: FC<Props> = ({ date, label, onChange }) => {
     [setOpen]
   );
 
-  const onFocus = useCallback(
-    (event: FormEvent<HTMLElement>) => {
-      if (!isFullscreen) {
-        return;
-      }
-      onOpen(event);
-    },
-    [isFullscreen, onOpen]
-  );
-
-  const onChangeDate = useCallback((event: FormEvent<HTMLInputElement>) => {
-    const isInvalid = !isValid(event.currentTarget.value);
-    setInternalDate({
-      value: event.currentTarget.value,
-      invalid: isInvalid,
-    });
-  }, []);
-
-  const icon = <Button icon="calendar-alt" variant="secondary" onClick={onOpen} />;
-
   return (
     <div>
-      <Field label={label} onClick={stopPropagation} invalid={internalDate.invalid} error="Incorrect date format">
-        <Input
-          onClick={stopPropagation}
-          onChange={onChangeDate}
-          addonAfter={icon}
-          value={internalDate.value}
-          onFocus={onFocus}
-          onBlur={() => onChange(dateTime(internalDate.value))}
-        />
-      </Field>
+      <DateTimeInput date={date} onChange={onChange} isFullscreen={isFullscreen} onOpen={onOpen} />
       {isOpen ? (
         isFullscreen ? (
           <ClickOutsideWrapper onClick={() => setOpen(false)}>
@@ -101,8 +70,8 @@ interface DateTimeCalendarProps {
 interface InputProps {
   label?: ReactNode;
   date: DateTime;
+  isFullscreen: boolean;
   onChange: (date: DateTime) => void;
-  onFocus: (event: FormEvent<HTMLElement>) => void;
   onOpen: (event: FormEvent<HTMLElement>) => void;
 }
 
@@ -111,9 +80,37 @@ type InputState = {
   invalid: boolean;
 };
 
-const DateTimeInput: FC<InputProps> = ({ date, label, onChange, onFocus, onOpen }) => {
-  console.log('DateTimeInput', date);
+const DateTimeInput: FC<InputProps> = ({ date, label, onChange, isFullscreen, onOpen }) => {
+  const [internalDate, setInternalDate] = useState<InputState>(() => {
+    return { value: dateTimeFormat(date), invalid: false };
+  });
 
+  useEffect(() => {
+    setInternalDate((prevState) => ({
+      ...prevState,
+      value: dateTimeFormat(date),
+    }));
+  }, [date]);
+
+  const onChangeDate = useCallback((event: FormEvent<HTMLInputElement>) => {
+    const isInvalid = !isValid(event.currentTarget.value);
+    setInternalDate({
+      value: event.currentTarget.value,
+      invalid: isInvalid,
+    });
+  }, []);
+
+  const onFocus = useCallback(
+    (event: FormEvent<HTMLElement>) => {
+      if (!isFullscreen) {
+        return;
+      }
+      onOpen(event);
+    },
+    [isFullscreen, onOpen]
+  );
+
+  const icon = <Button icon="calendar-alt" variant="secondary" onClick={onOpen} />;
   return (
     <Field label={label} onClick={stopPropagation} invalid={internalDate.invalid} error="Incorrect date format">
       <Input
@@ -135,7 +132,15 @@ const DateTimeCalendar: FC<DateTimeCalendarProps> = ({ date, onChange }) => {
 
   const onChangeDate = useCallback((date: Date | Date[]) => {
     if (!Array.isArray(date)) {
-      setInternalDate(date);
+      setInternalDate((prevState) => {
+        // If we don't use time from prevState
+        // the time will be reset to 00:00:00
+        date.setHours(prevState.getHours());
+        date.setMinutes(prevState.getMinutes());
+        date.setSeconds(prevState.getSeconds());
+
+        return date;
+      });
     }
   }, []);
 
