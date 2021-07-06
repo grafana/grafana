@@ -22,6 +22,7 @@ import {
   LoadingState,
   LogRowModel,
   QueryResultMeta,
+  rangeUtil,
   ScopedVars,
 } from '@grafana/data';
 import { getTemplateSrv, TemplateSrv, BackendSrvRequest, FetchError, getBackendSrv } from '@grafana/runtime';
@@ -171,8 +172,14 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
       const startNs = this.getTime(options.range.from, false);
       const endNs = this.getTime(options.range.to, true);
       const rangeMs = Math.ceil((endNs - startNs) / 1e6);
+      let minInterval = rangeUtil.intervalToMs(
+        this.templateSrv.replace(
+          target.interval || (options as DataQueryRequest<LokiQuery>).interval,
+          (options as DataQueryRequest<LokiQuery>).scopedVars
+        )
+      );
       const adjustedInterval =
-        this.adjustInterval((options as DataQueryRequest<LokiQuery>).intervalMs || 1000, rangeMs) / 1000;
+        this.adjustInterval((options as DataQueryRequest<LokiQuery>).intervalMs || 1000, minInterval, rangeMs) / 1000;
       // We want to ceil to 3 decimal places
       const step = Math.ceil(adjustedInterval * 1000) / 1000;
       const alignedTimes = {
@@ -602,14 +609,14 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     return error;
   }
 
-  adjustInterval(interval: number, range: number) {
+  adjustInterval(interval: number, minInterval: number, range: number) {
     // Loki will drop queries that might return more than 11000 data points.
     // Calibrate interval if it is too small.
     if (interval !== 0 && range / interval > 11000) {
       interval = Math.ceil(range / 11000);
     }
     // The min interval is set to 1ms
-    return Math.max(interval, 1);
+    return Math.max(interval, minInterval);
   }
 }
 
