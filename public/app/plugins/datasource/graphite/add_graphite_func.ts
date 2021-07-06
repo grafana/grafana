@@ -51,7 +51,7 @@ export function graphiteAddFunc($compile: any) {
             }
 
             $scope.$apply(() => {
-              ctrl.dispatchAddFunction(funcDef);
+              ctrl.addFunction(funcDef);
             });
 
             $input.trigger('blur');
@@ -148,7 +148,7 @@ function createFunctionDropDownMenu(funcDefs: FuncDef[]) {
     }
     categories[funcDef.category].push({
       text: funcDef.name,
-      click: "ctrl.dispatchAddFunction('" + funcDef.name + "')",
+      click: "ctrl.addFunction('" + funcDef.name + "')",
     });
   });
 

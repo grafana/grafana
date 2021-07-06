@@ -106,7 +106,7 @@ export function graphiteFuncEditor($compile: any, templateSrv: TemplateSrv) {
           // HACK: without it, a typed parameter is rendered but not updated in the model
           // When it's migrated to React the component should not modify the state directly
           // but dispatch an action to modify it.
-          ctrl.dispatchTargetChanged();
+          ctrl.targetChanged();
         });
 
         if ($link.hasClass('query-part__last') && newValue === '') {

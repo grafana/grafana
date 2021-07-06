@@ -103,7 +103,7 @@ export class GraphiteQueryCtrl extends QueryCtrl {
   /**
    * Apply changes to a given metric segment
    */
-  async dispatchSegmentValueChanged(segment: GraphiteSegment, index: number) {
+  async segmentValueChanged(segment: GraphiteSegment, index: number) {
     await this.dispatch(actions.segmentValueChanged(segment, index));
   }
 
@@ -117,7 +117,7 @@ export class GraphiteQueryCtrl extends QueryCtrl {
   /**
    * Apply changes when a tag is changed
    */
-  async dispatchTagChanged(tag: GraphiteTag, index: number) {
+  async tagChanged(tag: GraphiteTag, index: number) {
     await this.dispatch(actions.tagChanged(tag, index));
   }
 
@@ -142,19 +142,19 @@ export class GraphiteQueryCtrl extends QueryCtrl {
     return await getTagsAsSegments(this.state, query);
   }
 
-  async dispatchAddNewTag(segment: GraphiteSegment) {
+  async addNewTag(segment: GraphiteSegment) {
     await this.dispatch(actions.addNewTag(segment));
   }
 
-  async dispatchUnpause() {
+  async unpause() {
     await this.dispatch(actions.unpause());
   }
 
-  async dispatchAddFunction(name: string) {
+  async addFunction(name: string) {
     await this.dispatch(actions.addFunction(name));
   }
 
-  async dispatchTargetChanged() {
+  async targetChanged() {
     await this.dispatch(actions.targetChanged());
   }
 

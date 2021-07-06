@@ -1,7 +1,7 @@
 <query-editor-row query-ctrl="ctrl" has-text-edit-mode="true">
 
   <div class="gf-form" ng-show="ctrl.state.target.textEditor">
-    <input type="text" class="gf-form-input" style="font-family: monospace;" ng-model="ctrl.state.target.target" spellcheck="false" ng-blur="ctrl.dispatchTargetChanged()"></input>
+    <input type="text" class="gf-form-input" style="font-family: monospace;" ng-model="ctrl.state.target.target" spellcheck="false" ng-blur="ctrl.targetChanged()"></input>
   </div>
 
   <div ng-hide="ctrl.target.textEditor">
@@ -19,7 +19,7 @@
           placeholder="Tag key"
           css-class="query-segment-key"
           get-options="ctrl.getTags($index, $query)"
-          on-change="ctrl.dispatchTagChanged(tag, $index)"
+          on-change="ctrl.tagChanged(tag, $index)"
         ></gf-form-dropdown>
 
         <gf-form-dropdown
@@ -27,7 +27,7 @@
           label-mode="true"
           css-class="query-segment-operator"
           get-options="ctrl.getTagOperators()"
-          on-change="ctrl.dispatchTagChanged(tag, $index)"
+          on-change="ctrl.tagChanged(tag, $index)"
           min-input-width="30"
         ></gf-form-dropdown>
         <gf-form-dropdown
@@ -38,21 +38,21 @@
           css-class="query-segment-value"
           placeholder="Tag value"
           get-options="ctrl.getTagValues(tag, $index, $query)"
-          on-change="ctrl.dispatchTagChanged(tag, $index)"
+          on-change="ctrl.tagChanged(tag, $index)"
         ></gf-form-dropdown>
         <label class="gf-form-label query-keyword" ng-if="$index !== ctrl.state.queryModel.tags.length - 1">AND</label>
       </div>
 
       <div ng-if="ctrl.state.queryModel.seriesByTagUsed" ng-repeat="segment in ctrl.state.addTagSegments" role="menuitem" class="gf-form">
-        <metric-segment segment="segment" get-options="ctrl.getTagsAsSegments($query)" on-change="ctrl.dispatchAddNewTag(segment)" debounce="true" />
+        <metric-segment segment="segment" get-options="ctrl.getTagsAsSegments($query)" on-change="ctrl.addNewTag(segment)" debounce="true" />
       </div>
 
       <div ng-if="!ctrl.state.queryModel.seriesByTagUsed" ng-repeat="segment in ctrl.state.segments" role="menuitem" class="gf-form">
-        <metric-segment segment="segment" get-options="ctrl.getAltSegments($index, $query)" on-change="ctrl.dispatchSegmentValueChanged(segment, $index)" />
+        <metric-segment segment="segment" get-options="ctrl.getAltSegments($index, $query)" on-change="ctrl.segmentValueChanged(segment, $index)" />
       </div>
 
       <div ng-if="ctrl.state.paused" class="gf-form">
-        <a ng-click="ctrl.dispatchUnpause()" class="gf-form-label query-part"><icon name="'play'"></icon></a>
+        <a ng-click="ctrl.unpause()" class="gf-form-label query-part"><icon name="'play'"></icon></a>
       </div>
 
       <div class="gf-form gf-form--grow">
