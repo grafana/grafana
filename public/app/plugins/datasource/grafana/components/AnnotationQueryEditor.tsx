@@ -17,8 +17,7 @@ const annotationTypes = [
   {
     label: 'Dashboard',
     value: GrafanaAnnotationType.Dashboard,
-    description:
-      'This will fetch annotation and alert state changes for whole dashboard and show them only on the events originating panel',
+    description: 'Query for events created on this dashboard and show them in the panels where they where created',
   },
   {
     label: 'Tags',
