@@ -67,19 +67,18 @@ export class BaseMap extends Component<BaseMapProps> {
     const { options } = this.props;
     console.log('options changed!', options);
 
-    // NOTE: the panel options editor currently mutates nested objects
-    // this means we can not easily detect changes to layer settings :(
-    // for now, lets just re-init everything whenever something changes
-
-    if (true) {
+    if (options.controls !== oldOptions.controls) {
+      console.log('Crontrols changed');
       this.initControls(options.controls ?? { showZoom: true, showAttribution: true });
     }
 
-    if (true) {
+    if (options.basemap !== oldOptions.basemap) {
+      console.log('Basemap changed');
       this.initBasemap(options.basemap);
     }
 
-    if (true) {
+    if (options.layers !== oldOptions.layers) {
+      console.log('layers changed');
       this.initLayers(options.layers ?? []);
     }
   }
