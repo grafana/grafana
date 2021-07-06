@@ -25,7 +25,7 @@ export enum LabelOperators {
   Equals = '=',
   NotEquals = '!=',
   RegexMatch = '=~',
-  NotRegexMatch = '!=~',
+  NotRegexMatch = '!~',
 }
 
 // Should be kept in sync with grafana-plugin-sdk-go/data/frame_meta.go

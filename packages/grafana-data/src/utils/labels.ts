@@ -3,7 +3,7 @@ import { Labels, LabelsWithOperator, LabelOperators } from '../types/data';
 /**
  * Regexp to extract Prometheus-style labels
  */
-const labelRegexp = /\b(\w+)(!?=~?)"([^"\n]*?)"/g;
+const labelRegexp = /\b(\w+)(!?=?~?)"([^"\n]*?)"/g;
 
 /**
  * Returns a map of label keys to value from an input selector string.
