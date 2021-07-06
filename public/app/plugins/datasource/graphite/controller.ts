@@ -8,13 +8,13 @@ import {
   checkOtherSegments,
   emptySegments,
   fixTagSegments,
+  handleTargetChanged,
   parseTarget,
   pause,
   removeTagPrefix,
   setSegmentFocus,
   smartlyHandleNewAliasByNode,
   spliceSegments,
-  updateModelTarget,
 } from './helpers';
 
 /**
@@ -34,7 +34,7 @@ export async function init(state: GraphiteQueryEditorState, deps: GraphiteQueryE
   };
 
   await state.datasource.waitForFuncDefsLoaded();
-  state = await buildSegments(state, false);
+  await buildSegments(state, false);
 
   return state;
 }
@@ -45,7 +45,7 @@ export async function init(state: GraphiteQueryEditorState, deps: GraphiteQueryE
 export async function toggleEditorMode(state: GraphiteQueryEditorState): Promise<GraphiteQueryEditorState> {
   state = { ...state };
   state.target.textEditor = !state.target.textEditor;
-  state = await parseTarget(state);
+  await parseTarget(state);
   return state;
 }
 
@@ -72,41 +72,28 @@ export async function segmentValueChanged(
 
   if (segment.type === 'tag') {
     const tag = removeTagPrefix(segment.value);
-    state = pause(state);
-    state = await addSeriesByTagFunc(state, tag);
+    pause(state);
+    await addSeriesByTagFunc(state, tag);
     return state;
   }
 
   if (segment.expandable) {
-    // TODO: return promiseToDigest(this.$scope)(
-    state = await checkOtherSegments(state, segmentIndex + 1);
-    state = setSegmentFocus(state, segmentIndex + 1);
-    state = targetChanged(state);
-    // );
+    await checkOtherSegments(state, segmentIndex + 1);
+    setSegmentFocus(state, segmentIndex + 1);
+    handleTargetChanged(state);
   } else {
-    state = spliceSegments(state, segmentIndex + 1);
+    spliceSegments(state, segmentIndex + 1);
   }
 
-  state = setSegmentFocus(state, segmentIndex + 1);
-  state = targetChanged(state);
+  setSegmentFocus(state, segmentIndex + 1);
+  handleTargetChanged(state);
 
   return state;
 }
 
 export function targetChanged(state: GraphiteQueryEditorState): GraphiteQueryEditorState {
   state = { ...state };
-
-  if (state.queryModel.error) {
-    return state;
-  }
-
-  const oldTarget = state.queryModel.target.target;
-  state = updateModelTarget(state);
-
-  if (state.queryModel.target !== oldTarget && !state.paused) {
-    state.panelCtrl.refresh();
-  }
-
+  handleTargetChanged(state);
   return state;
 }
 
@@ -118,18 +105,18 @@ export async function addFunction(state: GraphiteQueryEditorState, funcDef: any)
   });
   newFunc.added = true;
   state.queryModel.addFunction(newFunc);
-  state = smartlyHandleNewAliasByNode(state, newFunc);
+  smartlyHandleNewAliasByNode(state, newFunc);
 
   if (state.segments.length === 1 && state.segments[0].fake) {
-    state = emptySegments(state);
+    emptySegments(state);
   }
 
   if (!newFunc.params.length && newFunc.added) {
-    state = targetChanged(state);
+    handleTargetChanged(state);
   }
 
   if (newFunc.def.name === 'seriesByTag') {
-    state = await parseTarget(state);
+    await parseTarget(state);
   }
 
   return state;
@@ -139,7 +126,7 @@ export function removeFunction(state: GraphiteQueryEditorState, func: any): Grap
   state = { ...state };
 
   state.queryModel.removeFunction(func);
-  state = targetChanged(state);
+  handleTargetChanged(state);
 
   return state;
 }
@@ -148,7 +135,7 @@ export function moveFunction(state: GraphiteQueryEditorState, func: any, offset:
   state = { ...state };
 
   state.queryModel.moveFunction(func, offset);
-  state = targetChanged(state);
+  handleTargetChanged(state);
 
   return state;
 }
@@ -157,7 +144,7 @@ export function tagChanged(state: GraphiteQueryEditorState, tag: any, tagIndex: 
   state = { ...state };
 
   state.queryModel.updateTag(tag, tagIndex);
-  state = targetChanged(state);
+  handleTargetChanged(state);
 
   return state;
 }
@@ -168,8 +155,8 @@ export function addNewTag(state: GraphiteQueryEditorState, segment: { value: any
   const newTagKey = segment.value;
   const newTag = { key: newTagKey, operator: '=' as GraphiteTagOperator, value: '' };
   state.queryModel.addTag(newTag);
-  state = targetChanged(state);
-  state = fixTagSegments(state);
+  handleTargetChanged(state);
+  fixTagSegments(state);
 
   return state;
 }

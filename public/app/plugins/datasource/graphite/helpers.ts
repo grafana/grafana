@@ -7,42 +7,34 @@ import { targetChanged } from './controller';
  * Create new AST based on new query.
  * Build segments from parsed metric name and functions.
  */
-export async function parseTarget(state: GraphiteQueryEditorState): Promise<GraphiteQueryEditorState> {
-  state = { ...state };
+export async function parseTarget(state: GraphiteQueryEditorState): Promise<void> {
   state.queryModel.parseTarget();
-  state = await buildSegments(state);
-  return state;
+  await buildSegments(state);
 }
 
 /**
  * Create segments out of the current metric path + add "select metrics" if it's possible to add more to the path
  */
-export async function buildSegments(state: GraphiteQueryEditorState, modifyLastSegment = true) {
-  state = { ...state };
-
+export async function buildSegments(state: GraphiteQueryEditorState, modifyLastSegment = true): Promise<void> {
   state.segments = map(state.queryModel.segments, (segment) => {
     return state.uiSegmentSrv.newSegment(segment);
   });
 
   const checkOtherSegmentsIndex = state.queryModel.checkOtherSegmentsIndex || 0;
 
-  state = await checkOtherSegments(state, checkOtherSegmentsIndex, modifyLastSegment);
+  await checkOtherSegments(state, checkOtherSegmentsIndex, modifyLastSegment);
 
   if (state.queryModel.seriesByTagUsed) {
-    state = fixTagSegments(state);
+    fixTagSegments(state);
   }
-
-  return state;
 }
 
 /**
  * Add "select metric" segment at the end
  */
-export function addSelectMetricSegment(state: GraphiteQueryEditorState): GraphiteQueryEditorState {
-  state = { ...state };
+export function addSelectMetricSegment(state: GraphiteQueryEditorState): void {
   state.queryModel.addSelectMetricSegment();
   state.segments.push(state.uiSegmentSrv.newSelectMetric());
-  return state;
 }
 
 /**
@@ -52,21 +44,19 @@ export async function checkOtherSegments(
   state: GraphiteQueryEditorState,
   fromIndex: number,
   modifyLastSegment = true
-): Promise<GraphiteQueryEditorState> {
-  state = { ...state };
-
+): Promise<void> {
   if (state.queryModel.segments.length === 1 && state.queryModel.segments[0].type === 'series-ref') {
-    return state;
+    return;
   }
 
   if (fromIndex === 0) {
-    state = addSelectMetricSegment(state);
-    return state;
+    addSelectMetricSegment(state);
+    return;
   }
 
   const path = state.queryModel.getSegmentPathUpTo(fromIndex + 1);
   if (path === '') {
-    return state;
+    return;
   }
 
   try {
@@ -75,20 +65,18 @@ export async function checkOtherSegments(
       if (path !== '' && modifyLastSegment) {
         state.queryModel.segments = state.queryModel.segments.splice(0, fromIndex);
         state.segments = state.segments.splice(0, fromIndex);
-        state = addSelectMetricSegment(state);
+        addSelectMetricSegment(state);
       }
     } else if (segments[0].expandable) {
       if (state.segments.length === fromIndex) {
-        state = addSelectMetricSegment(state);
+        addSelectMetricSegment(state);
       } else {
-        state = await checkOtherSegments(state, fromIndex + 1);
+        await checkOtherSegments(state, fromIndex + 1);
       }
     }
   } catch (err) {
-    state = handleMetricsAutoCompleteError(state, err);
+    handleMetricsAutoCompleteError(state, err);
   }
-
-  return state;
 }
 
 /**
@@ -97,46 +85,23 @@ export async function checkOtherSegments(
  * Note: It's a bit hidden feature. After selecting one metric, and pressing down arrow the dropdown can be expanded.
  * But there's nothing indicating what's in focus and how to expand the dropdown;
  */
-export function setSegmentFocus(state: GraphiteQueryEditorState, segmentIndex: any): GraphiteQueryEditorState {
-  state = { ...state };
+export function setSegmentFocus(state: GraphiteQueryEditorState, segmentIndex: any): void {
   each(state.segments, (segment, index) => {
     segment.focus = segmentIndex === index;
   });
-  return state;
 }
 
-export function spliceSegments(state: GraphiteQueryEditorState, index: any): GraphiteQueryEditorState {
-  state = { ...state };
-
+export function spliceSegments(state: GraphiteQueryEditorState, index: any): void {
   state.segments = state.segments.splice(0, index);
   state.queryModel.segments = state.queryModel.segments.splice(0, index);
-
-  return state;
 }
 
-export function emptySegments(state: GraphiteQueryEditorState): GraphiteQueryEditorState {
-  state = { ...state };
-
+export function emptySegments(state: GraphiteQueryEditorState): void {
   state.queryModel.segments = [];
   state.segments = [];
-
-  return state;
 }
 
-export function updateModelTarget(state: GraphiteQueryEditorState): GraphiteQueryEditorState {
-  state = { ...state };
-
-  state.queryModel.updateModelTarget(state.panelCtrl.panel.targets);
-
-  return state;
-}
-
-export async function addSeriesByTagFunc(
-  state: GraphiteQueryEditorState,
-  tag: string
-): Promise<GraphiteQueryEditorState> {
-  state = { ...state };
-
+export async function addSeriesByTagFunc(state: GraphiteQueryEditorState, tag: string): Promise<void> {
   const newFunc = state.datasource.createFuncInstance('seriesByTag', {
     withDefaultParams: false,
   });
@@ -145,21 +110,17 @@ export async function addSeriesByTagFunc(
   state.queryModel.addFunction(newFunc);
   newFunc.added = true;
 
-  state = emptySegments(state);
-  state = targetChanged(state);
-  state = await parseTarget(state);
-
-  return state;
+  emptySegments(state);
+  targetChanged(state);
+  await parseTarget(state);
 }
 
 export function smartlyHandleNewAliasByNode(
   state: GraphiteQueryEditorState,
   func: { def: { name: string }; params: number[]; added: boolean }
-): GraphiteQueryEditorState {
-  state = { ...state };
-
+): void {
   if (func.def.name !== 'aliasByNode') {
-    return state;
+    return;
   }
 
   for (let i = 0; i < state.segments.length; i++) {
@@ -167,29 +128,33 @@ export function smartlyHandleNewAliasByNode(
       func.params[0] = i;
       func.added = false;
       state = targetChanged(state);
-      return state;
+      return;
     }
   }
-
-  return state;
 }
 
-export function fixTagSegments(state: GraphiteQueryEditorState): GraphiteQueryEditorState {
-  state = { ...state };
-
+export function fixTagSegments(state: GraphiteQueryEditorState): void {
   // Adding tag with the same name as just removed works incorrectly if single segment is used (instead of array)
   state.addTagSegments = [state.uiSegmentSrv.newPlusButton()];
-
-  return state;
 }
 
-export function pause(state: GraphiteQueryEditorState): GraphiteQueryEditorState {
-  return {
-    ...state,
-    paused: true,
-  };
+export function pause(state: GraphiteQueryEditorState): void {
+  state.paused = true;
 }
 
 export function removeTagPrefix(value: string): string {
   return value.replace(TAG_PREFIX, '');
+}
+
+export function handleTargetChanged(state: GraphiteQueryEditorState): void {
+  if (state.queryModel.error) {
+    return;
+  }
+
+  const oldTarget = state.queryModel.target.target;
+  state.queryModel.updateModelTarget(state.panelCtrl.panel.targets);
+
+  if (state.queryModel.target !== oldTarget && !state.paused) {
+    state.panelCtrl.refresh();
+  }
 }
