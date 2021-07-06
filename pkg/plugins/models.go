@@ -16,6 +16,7 @@ const (
 
 var (
 	ErrInstallCorePlugin           = errors.New("cannot install a Core plugin")
+	ErrUpdatePluginDependency      = errors.New("cannot update a plugin which is a dependency of another plugin")
 	ErrUninstallPluginDependency   = errors.New("cannot uninstall a plugin which is a dependency of another plugin")
 	ErrUninstallCorePlugin         = errors.New("cannot uninstall a Core plugin")
 	ErrUninstallOutsideOfPluginDir = errors.New("cannot uninstall a plugin outside")
@@ -43,6 +44,22 @@ func (e DuplicatePluginError) Is(err error) bool {
 	// nolint:errorlint
 	_, ok := err.(DuplicatePluginError)
 	return ok
+}
+
+type PluginAction string
+
+const (
+	Update    PluginAction = "update"
+	Uninstall PluginAction = "uninstall"
+)
+
+type PluginDependencyError struct {
+	PluginID string
+	Action   PluginAction
+}
+
+func (e PluginDependencyError) Error() string {
+	return fmt.Sprintf("cannot %s a plugin which is a dependency of plugin %s", e.Action, e.PluginID)
 }
 
 // PluginLoader can load a plugin.
@@ -78,7 +95,13 @@ type PluginBase struct {
 	GrafanaNetVersion   string `json:"-"`
 	GrafanaNetHasUpdate bool   `json:"-"`
 
+	// is set if plugin is located within another plugin's directory
+	// or if plugin was listed as an dependency from another plugin's plugin.json
 	Root *PluginBase
+}
+
+func (b PluginBase) IsDependency() bool {
+	return b.Root != nil
 }
 
 type PluginDependencies struct {

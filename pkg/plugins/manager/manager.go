@@ -354,7 +354,7 @@ func (pm *PluginManager) scan(pluginDir string, requireSigned bool) error {
 
 	pm.log.Debug("Initial plugin loading done")
 
-	pluginsByID := make(map[string]struct{})
+	pluginsByID := make(map[string]*plugins.PluginBase)
 	for scannedPluginPath, scannedPlugin := range scanner.plugins {
 		// Check if scanning found duplicate plugins
 		if _, dupe := pluginsByID[scannedPlugin.Id]; dupe {
@@ -364,12 +364,18 @@ func (pm *PluginManager) scan(pluginDir string, requireSigned bool) error {
 			delete(scanner.plugins, scannedPluginPath)
 			continue
 		}
-		pluginsByID[scannedPlugin.Id] = struct{}{}
+		pluginsByID[scannedPlugin.Id] = scannedPlugin
 
 		// Check if scanning found plugins that are already installed
 		if existing := pm.GetPlugin(scannedPlugin.Id); existing != nil {
 			pm.log.Debug("Skipping plugin as it's already installed", "plugin", existing.Id, "version", existing.Info.Version)
 			delete(scanner.plugins, scannedPluginPath)
+		}
+
+		for _, p := range scannedPlugin.Dependencies.Plugins {
+			if dep, existing := pluginsByID[p.Id]; existing {
+				dep.Root = scannedPlugin
+			}
 		}
 	}
 
@@ -731,9 +737,11 @@ func (pm *PluginManager) Install(ctx context.Context, pluginID, version string) 
 			return plugins.ErrInstallCorePlugin
 		}
 
-		// if plugin is a dependency of another plugin
-		if plugin.Root != nil {
-			return plugins.ErrUninstallPluginDependency
+		if plugin.IsDependency() {
+			return plugins.PluginDependencyError{
+				PluginID: pluginID,
+				Action:   plugins.Update,
+			}
 		}
 
 		if plugin.Info.Version == version {
@@ -771,6 +779,13 @@ func (pm *PluginManager) Uninstall(ctx context.Context, pluginID string) error {
 
 	if plugin.IsCorePlugin {
 		return plugins.ErrUninstallCorePlugin
+	}
+
+	if plugin.IsDependency() {
+		return plugins.PluginDependencyError{
+			PluginID: pluginID,
+			Action:   plugins.Uninstall,
+		}
 	}
 
 	// extra security check to ensure we only remove plugins that are located in the configured plugins directory
