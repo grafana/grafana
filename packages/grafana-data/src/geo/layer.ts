@@ -3,6 +3,7 @@ import BaseLayer from 'ol/layer/Base';
 import Map from 'ol/Map';
 import { PanelData } from '../types';
 import { GrafanaTheme2 } from '../themes';
+import { PanelOptionsEditorBuilder } from '../utils';
 
 /**
  * This gets saved in panel json
@@ -17,7 +18,6 @@ import { GrafanaTheme2 } from '../themes';
 export interface MapLayerConfig<TCustom = any> {
   type: string;
   name?: string; // configured display name
-  hidden?: boolean; // in TOC, but not shown
 
   // Layer transparency
   transparency?: number;
@@ -40,12 +40,19 @@ export interface MapLayerHandler {
  * @alpha
  */
 export interface MapLayerRegistryItem<TConfig = MapLayerConfig> extends RegistryItemWithOptions {
-  // Single basemap in a map
-  isBaseMap: boolean;
+  /**
+   * This layer can be used as a background
+   */
+  isBaseMap?: boolean;
 
   /**
    * Function that configures transformation and returns a transformer
    * @param options
    */
   create: (map: Map, options: MapLayerConfig<TConfig>, theme: GrafanaTheme2) => MapLayerHandler;
+
+  /**
+   * Show custom elements in the panel edit UI
+   */
+  registerOptionsUI?: (builder: PanelOptionsEditorBuilder<TConfig>) => void;
 }

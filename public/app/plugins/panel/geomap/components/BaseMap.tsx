@@ -19,7 +19,7 @@ interface BaseMapProps {
 import 'ol/ol.css';
 
 import { ControlsOptions, GeomapPanelOptions } from '../types';
-import { defaultGrafanaThemedMap } from '../layers/basemaps/theme';
+import { defaultGrafanaThemedMap } from '../layers/basemaps';
 import { InfoControl } from './InfoControl';
 
 interface MapLayerState {

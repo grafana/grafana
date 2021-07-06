@@ -1,8 +1,14 @@
-import { cartoLayers } from './carto';
+import { cartoLayers, carto } from './carto';
 import { esriLayers } from './esri';
 import { osmLayers } from './osm';
 import { stamenLayers } from './stamen';
-import { defaultGrafanaThemedMap } from './theme';
+
+// For now just use carto
+export const defaultGrafanaThemedMap = {
+  ...carto,
+  id: 'grafana',
+  name: 'Default grafana basemap',
+};
 
 /**
  * Registry for layer handlers
