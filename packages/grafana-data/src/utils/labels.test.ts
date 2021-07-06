@@ -21,19 +21,18 @@ describe('parseLabels()', () => {
 
 describe('parseLabelsWithOperator()', () => {
   it('returns no labels on empty labels string', () => {
-    expect(parseLabels('')).toEqual({});
-    expect(parseLabels('{}')).toEqual({});
+    expect(parseLabelsWithOperator('')).toEqual({});
+    expect(parseLabelsWithOperator('{}')).toEqual({});
+    expect(parseLabelsWithOperator('{test string}')).toEqual({});
   });
 
   it('returns labels with correct operators', () => {
-    expect(parseLabelsWithOperator('{foo="bar", baz!="buzz", region=~"cluster-.*", email!=~".+@grafana.com"}')).toEqual(
-      {
-        foo: { value: 'bar', operator: LabelOperators.Equals },
-        baz: { value: 'buzz', operator: LabelOperators.NotEquals },
-        region: { value: 'cluster-.*', operator: LabelOperators.RegexMatch },
-        email: { value: '.+@grafana.com', operator: LabelOperators.NotRegexMatch },
-      }
-    );
+    expect(parseLabelsWithOperator('{foo="bar", baz!="buzz", region=~"cluster-.*", email!~".+@grafana.com"}')).toEqual({
+      foo: { value: 'bar', operator: LabelOperators.Equals },
+      baz: { value: 'buzz', operator: LabelOperators.NotEquals },
+      region: { value: 'cluster-.*', operator: LabelOperators.RegexMatch },
+      email: { value: '.+@grafana.com', operator: LabelOperators.NotRegexMatch },
+    });
   });
 });
 
