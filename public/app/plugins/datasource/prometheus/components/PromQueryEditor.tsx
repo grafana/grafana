@@ -24,7 +24,7 @@ const INTERVAL_FACTOR_OPTIONS: Array<SelectableValue<number>> = map([1, 2, 3, 4,
   label: '1/' + value,
 }));
 
-const DEFAULT_STEP_OPTION: SelectableValue<StepType> = {
+export const DEFAULT_STEP_OPTION: SelectableValue<StepType> = {
   value: 'min',
   label: 'Minimum',
 };
