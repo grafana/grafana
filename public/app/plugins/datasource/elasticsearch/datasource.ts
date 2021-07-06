@@ -766,14 +766,14 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
     const searchParams = new URLSearchParams();
 
     if (gte(this.esVersion, '7.0.0') && this.maxConcurrentShardRequests) {
-      searchParams.append('max_concurrent_shard_requests', '' + this.maxConcurrentShardRequests);
+      searchParams.append('max_concurrent_shard_requests', `${this.maxConcurrentShardRequests}`);
     }
 
     if (gte(this.esVersion, '6.6.0') && this.xpack && this.includeFrozen) {
       searchParams.append('ignore_throttled', 'false');
     }
 
-    return (`_msearch?` + searchParams.toString()).replace(/\?+$/, '');
+    return ('_msearch?' + searchParams.toString()).replace(/\?$/, '');
   }
 
   metricFindQuery(query: string, options?: any): Promise<MetricFindValue[]> {
