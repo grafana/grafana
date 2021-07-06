@@ -8,19 +8,17 @@ import (
 	"time"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestOpenTsdbExecutor(t *testing.T) {
-	exec := &OpenTsdbExecutor{}
+	service := &Service{}
 
 	t.Run("create request", func(t *testing.T) {
-		req, err := exec.createRequest(&models.DataSource{}, OpenTsdbQuery{})
+		req, err := service.createRequest(&datasourceInfo{}, OpenTsdbQuery{})
 		require.NoError(t, err)
 
 		assert.Equal(t, "POST", req.Method)
@@ -34,10 +32,8 @@ func TestOpenTsdbExecutor(t *testing.T) {
 	t.Run("Parse response should handle invalid JSON", func(t *testing.T) {
 		response := `{ invalid }`
 
-		query := OpenTsdbQuery{}
-
-		result, err := exec.parseResponse(query, &http.Response{Body: ioutil.NopCloser(strings.NewReader(response))})
-		require.Nil(t, result["A"].Dataframes)
+		result, err := service.parseResponse(&http.Response{Body: ioutil.NopCloser(strings.NewReader(response))})
+		require.Nil(t, result)
 		require.Error(t, err)
 	})
 
@@ -60,37 +56,33 @@ func TestOpenTsdbExecutor(t *testing.T) {
 				50}),
 		)
 
-		query := OpenTsdbQuery{}
-
 		resp := http.Response{Body: ioutil.NopCloser(strings.NewReader(response))}
 		resp.StatusCode = 200
-		result, err := exec.parseResponse(query, &resp)
+		result, err := service.parseResponse(&resp)
 		require.NoError(t, err)
 
-		decoded, err := result["A"].Dataframes.Decoded()
-		require.NoError(t, err)
-		require.Len(t, decoded, 1)
+		frame := result.Responses["A"]
 
-		frame := decoded[0]
-
-		if diff := cmp.Diff(testFrame, frame, data.FrameTestCompareOptions()...); diff != "" {
+		if diff := cmp.Diff(testFrame, frame.Frames[0], data.FrameTestCompareOptions()...); diff != "" {
 			t.Errorf("Result mismatch (-want +got):\n%s", diff)
 		}
 	})
 
 	t.Run("Build metric with downsampling enabled", func(t *testing.T) {
-		query := plugins.DataSubQuery{
-			Model: simplejson.New(),
+		query := backend.DataQuery{
+			JSON: []byte(`
+					{
+						"metric": "cpu.average.percent",
+						"aggregator": "avg",
+						"disableDownsampling": false,
+						"downsampleInterval": "",
+						"downsampleAggregator": "avg",
+						"downsampleFillPolicy": "none"
+					}`,
+			),
 		}
 
-		query.Model.Set("metric", "cpu.average.percent")
-		query.Model.Set("aggregator", "avg")
-		query.Model.Set("disableDownsampling", false)
-		query.Model.Set("downsampleInterval", "")
-		query.Model.Set("downsampleAggregator", "avg")
-		query.Model.Set("downsampleFillPolicy", "none")
-
-		metric := exec.buildMetric(query)
+		metric := service.buildMetric(query)
 
 		require.Len(t, metric, 3)
 		require.Equal(t, "cpu.average.percent", metric["metric"])
@@ -99,18 +91,20 @@ func TestOpenTsdbExecutor(t *testing.T) {
 	})
 
 	t.Run("Build metric with downsampling disabled", func(t *testing.T) {
-		query := plugins.DataSubQuery{
-			Model: simplejson.New(),
+		query := backend.DataQuery{
+			JSON: []byte(`
+					{
+						"metric": "cpu.average.percent",
+						"aggregator": "avg",
+						"disableDownsampling": true,
+						"downsampleInterval": "",
+						"downsampleAggregator": "avg",
+						"downsampleFillPolicy": "none"
+					}`,
+			),
 		}
 
-		query.Model.Set("metric", "cpu.average.percent")
-		query.Model.Set("aggregator", "avg")
-		query.Model.Set("disableDownsampling", true)
-		query.Model.Set("downsampleInterval", "")
-		query.Model.Set("downsampleAggregator", "avg")
-		query.Model.Set("downsampleFillPolicy", "none")
-
-		metric := exec.buildMetric(query)
+		metric := service.buildMetric(query)
 
 		require.Len(t, metric, 2)
 		require.Equal(t, "cpu.average.percent", metric["metric"])
@@ -118,18 +112,20 @@ func TestOpenTsdbExecutor(t *testing.T) {
 	})
 
 	t.Run("Build metric with downsampling enabled with params", func(t *testing.T) {
-		query := plugins.DataSubQuery{
-			Model: simplejson.New(),
+		query := backend.DataQuery{
+			JSON: []byte(`
+					{
+						"metric": "cpu.average.percent",
+						"aggregator": "avg",
+						"disableDownsampling": false,
+						"downsampleInterval": "5m",
+						"downsampleAggregator": "sum",
+						"downsampleFillPolicy": "null"
+					}`,
+			),
 		}
 
-		query.Model.Set("metric", "cpu.average.percent")
-		query.Model.Set("aggregator", "avg")
-		query.Model.Set("disableDownsampling", false)
-		query.Model.Set("downsampleInterval", "5m")
-		query.Model.Set("downsampleAggregator", "sum")
-		query.Model.Set("downsampleFillPolicy", "null")
-
-		metric := exec.buildMetric(query)
+		metric := service.buildMetric(query)
 
 		require.Len(t, metric, 3)
 		require.Equal(t, "cpu.average.percent", metric["metric"])
@@ -138,23 +134,24 @@ func TestOpenTsdbExecutor(t *testing.T) {
 	})
 
 	t.Run("Build metric with tags with downsampling disabled", func(t *testing.T) {
-		query := plugins.DataSubQuery{
-			Model: simplejson.New(),
+		query := backend.DataQuery{
+			JSON: []byte(`
+					{
+						"metric": "cpu.average.percent",
+						"aggregator": "avg",
+						"disableDownsampling": true,
+						"downsampleInterval": "5m",
+						"downsampleAggregator": "sum",
+						"downsampleFillPolicy": "null",
+						"tags": {
+							"env": "prod",
+							"app": "grafana"
+						}
+					}`,
+			),
 		}
 
-		query.Model.Set("metric", "cpu.average.percent")
-		query.Model.Set("aggregator", "avg")
-		query.Model.Set("disableDownsampling", true)
-		query.Model.Set("downsampleInterval", "5m")
-		query.Model.Set("downsampleAggregator", "sum")
-		query.Model.Set("downsampleFillPolicy", "null")
-
-		tags := simplejson.New()
-		tags.Set("env", "prod")
-		tags.Set("app", "grafana")
-		query.Model.Set("tags", tags.MustMap())
-
-		metric := exec.buildMetric(query)
+		metric := service.buildMetric(query)
 
 		require.Len(t, metric, 3)
 		require.Equal(t, "cpu.average.percent", metric["metric"])
@@ -169,22 +166,23 @@ func TestOpenTsdbExecutor(t *testing.T) {
 	})
 
 	t.Run("Build metric with rate enabled but counter disabled", func(t *testing.T) {
-		query := plugins.DataSubQuery{
-			Model: simplejson.New(),
+		query := backend.DataQuery{
+			JSON: []byte(`
+					{
+						"metric": "cpu.average.percent",
+						"aggregator": "avg",
+						"disableDownsampling": true,
+						"shouldComputeRate": true,
+						"isCounter": false,
+						"tags": {
+							"env": "prod",
+							"app": "grafana"
+						}
+					}`,
+			),
 		}
 
-		query.Model.Set("metric", "cpu.average.percent")
-		query.Model.Set("aggregator", "avg")
-		query.Model.Set("disableDownsampling", true)
-		query.Model.Set("shouldComputeRate", true)
-		query.Model.Set("isCounter", false)
-
-		tags := simplejson.New()
-		tags.Set("env", "prod")
-		tags.Set("app", "grafana")
-		query.Model.Set("tags", tags.MustMap())
-
-		metric := exec.buildMetric(query)
+		metric := service.buildMetric(query)
 
 		require.Len(t, metric, 5)
 		require.Equal(t, "cpu.average.percent", metric["metric"])
@@ -201,24 +199,25 @@ func TestOpenTsdbExecutor(t *testing.T) {
 	})
 
 	t.Run("Build metric with rate and counter enabled", func(t *testing.T) {
-		query := plugins.DataSubQuery{
-			Model: simplejson.New(),
+		query := backend.DataQuery{
+			JSON: []byte(`
+					{
+						"metric": "cpu.average.percent",
+						"aggregator": "avg",
+						"disableDownsampling": true,
+						"shouldComputeRate": true,
+						"isCounter": true,
+						"counterMax": 45,
+						"counterResetValue": 60,
+						"tags": {
+							"env": "prod",
+							"app": "grafana"
+						}
+					}`,
+			),
 		}
 
-		query.Model.Set("metric", "cpu.average.percent")
-		query.Model.Set("aggregator", "avg")
-		query.Model.Set("disableDownsampling", true)
-		query.Model.Set("shouldComputeRate", true)
-		query.Model.Set("isCounter", true)
-		query.Model.Set("counterMax", 45)
-		query.Model.Set("counterResetValue", 60)
-
-		tags := simplejson.New()
-		tags.Set("env", "prod")
-		tags.Set("app", "grafana")
-		query.Model.Set("tags", tags.MustMap())
-
-		metric := exec.buildMetric(query)
+		metric := service.buildMetric(query)
 
 		require.Len(t, metric, 5)
 		require.Equal(t, "cpu.average.percent", metric["metric"])
