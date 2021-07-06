@@ -5,9 +5,9 @@ import { isCloudRulesSource } from '../utils/datasource';
 import { isAlertingRule, isGrafanaRulerRule } from '../utils/rules';
 import { getFiltersFromUrlParams } from '../utils/misc';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
-import { RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';
+import { PromRuleType, RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';
 import { getDataSourceSrv } from '@grafana/runtime';
-import { parseLabelsWithOperator } from '@grafana/data';
+import { stringMatchesSomeLabels } from '@grafana/data';
 
 export const useFilteredRules = (namespaces: CombinedRuleNamespace[]) => {
   const [queryParams] = useQueryParams();
@@ -55,31 +55,15 @@ const reduceGroups = (filters: RuleFilterState) => {
       if (filters.queryString) {
         const normalizedQueryString = filters.queryString.toLocaleLowerCase();
         const doesNameContainsQueryString = rule.name?.toLocaleLowerCase().includes(normalizedQueryString);
-        const parsedLabels = parseLabelsWithOperator(filters.queryString);
 
-        const doLabelsContainQueryString = Object.entries(parsedLabels).some(([key, { value, operator }]) => {
-          return Object.entries(rule.labels).some(([ruleLabelKey, ruleLabelValue]) => {
-            const labelMatches = key === ruleLabelKey;
-            let valueMatches;
-            switch (operator) {
-              case '=':
-                valueMatches = value === ruleLabelValue;
-                break;
-              case '!=':
-                valueMatches = value !== ruleLabelValue;
-                break;
-              case '=~':
-                valueMatches = new RegExp(value).test(ruleLabelValue);
-                break;
-              case '!=~':
-                valueMatches = !new RegExp(value).test(ruleLabelValue);
-                break;
-            }
-            return labelMatches && valueMatches;
-          });
-        });
+        const doRuleLabelsMatchQuery = stringMatchesSomeLabels(filters.queryString, rule.labels);
+        const doAlertsContainMatchingLabels =
+          rule.promRule &&
+          rule.promRule.type === PromRuleType.Alerting &&
+          rule.promRule.alerts &&
+          rule.promRule.alerts.some((alert) => stringMatchesSomeLabels(filters.queryString || '', alert.labels));
 
-        if (!(doesNameContainsQueryString || doLabelsContainQueryString)) {
+        if (!(doesNameContainsQueryString || doRuleLabelsMatchQuery || !doAlertsContainMatchingLabels)) {
           return false;
         }
       }

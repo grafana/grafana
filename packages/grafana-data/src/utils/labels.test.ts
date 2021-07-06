@@ -1,4 +1,11 @@
-import { parseLabels, formatLabels, findCommonLabels, findUniqueLabels, matchAllLabels } from './labels';
+import {
+  parseLabels,
+  parseLabelsWithOperator,
+  formatLabels,
+  findCommonLabels,
+  findUniqueLabels,
+  matchAllLabels,
+} from './labels';
 import { Labels } from '../types/data';
 
 describe('parseLabels()', () => {
@@ -9,6 +16,24 @@ describe('parseLabels()', () => {
 
   it('returns labels on labels string', () => {
     expect(parseLabels('{foo="bar", baz="42"}')).toEqual({ foo: 'bar', baz: '42' });
+  });
+});
+
+describe('parseLabelsWithOperator()', () => {
+  it('returns no labels on empty labels string', () => {
+    expect(parseLabels('')).toEqual({});
+    expect(parseLabels('{}')).toEqual({});
+  });
+
+  it('returns labels with correct operators', () => {
+    expect(parseLabelsWithOperator('{foo="bar", baz!="buzz", region=~"cluster-.*", email!=~".+@grafana.com"}')).toEqual(
+      {
+        foo: { value: 'bar', operator: '=' },
+        baz: { value: 'buzz', operator: '!=' },
+        region: { value: 'cluster-.*', operator: '=~' },
+        email: { value: '.+@grafana.com', operator: '!=~' },
+      }
+    );
   });
 });
 
