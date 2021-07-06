@@ -72,7 +72,7 @@ export function LokiOptionFields(props: LokiOptionFieldsProps) {
   }
 
   function onStepChange(e: React.KeyboardEvent<HTMLInputElement>) {
-    const nextQuery = { ...query, interval: e.currentTarget.value };
+    const nextQuery = { ...query, step: e.currentTarget.value };
     onChange(nextQuery);
   }
 

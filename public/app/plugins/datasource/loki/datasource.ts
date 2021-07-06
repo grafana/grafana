@@ -174,7 +174,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
       const rangeMs = Math.ceil((endNs - startNs) / 1e6);
       let minInterval = rangeUtil.intervalToMs(
         this.templateSrv.replace(
-          target.interval || (options as DataQueryRequest<LokiQuery>).interval,
+          target.step || (options as DataQueryRequest<LokiQuery>).interval,
           (options as DataQueryRequest<LokiQuery>).scopedVars
         )
       );
@@ -226,6 +226,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
       return this.runLiveQuery(target, maxDataPoints);
     }
     const query = this.createRangeQuery(target, options, maxDataPoints);
+    console.log(query);
     return this._request(RANGE_QUERY_ENDPOINT, query).pipe(
       catchError((err: any) => this.throwUnless(err, err.status === 404, target)),
       switchMap((response: { data: LokiResponse; status: number }) =>
