@@ -222,6 +222,8 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
         return { ...state, panelNotFound: urlEditPanelId };
       }
 
+      // This mutable state feels wrong to have in getDerivedStateFromProps
+      // Should move this state out of dashboard in the future
       dashboard.initViewPanel(panel);
 
       return {
@@ -233,7 +235,10 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
     }
     // Leaving view mode
     else if (state.viewPanel && !urlViewPanelId) {
+      // This mutable state feels wrong to have in getDerivedStateFromProps
+      // Should move this state out of dashboard in the future
       dashboard.exitViewPanel(state.viewPanel);
+
       return { ...state, viewPanel: null, updateScrollTop: state.rememberScrollTop };
     }
 
@@ -243,15 +248,6 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
     }
 
     return state;
-  }
-
-  triggerPanelsRendering() {
-    try {
-      this.props.dashboard!.render();
-    } catch (err) {
-      console.error(err);
-      this.props.notifyApp(createErrorNotification(`Panel rendering error`, err));
-    }
   }
 
   setScrollTop = ({ scrollTop }: ScrollbarPosition): void => {

@@ -19,7 +19,7 @@ export interface Logger {
 
 /** @internal */
 export const createLogger = (name: string): Logger => {
-  let LOGGIN_ENABLED = true;
+  let LOGGIN_ENABLED = false;
   return {
     logger: (id: string, throttle = false, ...t: any[]) => {
       if (process.env.NODE_ENV === 'production' || process.env.NODE_ENV === 'test' || !LOGGIN_ENABLED) {
