@@ -19,8 +19,8 @@ export function handleMetricsAutoCompleteError(
   error: Error
 ): GraphiteQueryEditorState {
   console.error(error);
-  if (!state._metricAutoCompleteErrorShown) {
-    state._metricAutoCompleteErrorShown = true;
+  if (!state.metricAutoCompleteErrorShown) {
+    state.metricAutoCompleteErrorShown = true;
     dispatch(notifyApp(createErrorNotification(`Fetching metrics failed: ${error.message}.`)));
   }
   return state;
@@ -31,8 +31,8 @@ export function handleMetricsAutoCompleteError(
  */
 export function handleTagsAutoCompleteError(state: GraphiteQueryEditorState, error: Error): GraphiteQueryEditorState {
   console.error(error);
-  if (!state._tagsAutoCompleteErrorShown) {
-    state._tagsAutoCompleteErrorShown = true;
+  if (!state.tagsAutoCompleteErrorShown) {
+    state.tagsAutoCompleteErrorShown = true;
     dispatch(notifyApp(createErrorNotification(`Fetching tags failed: ${error.message}.`)));
   }
   return state;

@@ -45,8 +45,8 @@ export type GraphiteQueryEditorState = {
 
   error: Error | null;
 
-  _tagsAutoCompleteErrorShown: boolean;
-  _metricAutoCompleteErrorShown: boolean;
+  tagsAutoCompleteErrorShown: boolean;
+  metricAutoCompleteErrorShown: boolean;
 };
 
 type Action = {
