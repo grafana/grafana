@@ -29,4 +29,13 @@ export interface GeomapPanelOptions {
   controls: ControlsOptions;
   basemap: MapLayerConfig; // auto
   layers: MapLayerConfig[]; // empty == auto
+  fieldMapping: FieldMappingOptions;
+}
+
+export interface FieldMappingOptions {
+  queryFormat: string;
+  metricField: string;
+  geohashField: string;
+  latitudeField: string;
+  longitudeField: string;
 }

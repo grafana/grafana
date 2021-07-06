@@ -26,16 +26,72 @@ export const plugin = new PanelPlugin<GeomapPanelOptions>(GeomapPanel)
       editor: BaseLayerEditor,
     });
 
-    builder.addCustomEditor({
-      category: ['Data Layer'],
-      id: 'layers',
-      path: 'layers',
-      name: 'Data Layer',
-      editor: DataLayersEditor,
-    });
+    // Data layer section
+    let category = ['Data Layer'];
+    builder
+      .addCustomEditor({
+        category: ['Data Layer'],
+        id: 'layers',
+        path: 'layers',
+        name: 'Data Layer',
+        editor: DataLayersEditor,
+      })
+      .addSelect({
+        category,
+        path: 'layers[0].config.fieldMapping.queryFormat',
+        name: 'Query Format',
+        defaultValue: 'coordinates',
+        settings: {
+          options: [
+            {
+              value: 'coordinates',
+              label: 'Coordinates',
+            },
+            {
+              value: 'geohash',
+              label: 'Geohash',
+            },
+          ],
+        },
+        showIf: (config) => config.layers[0].type === 'worldmap-behavior',
+      })
+      .addTextInput({
+        category,
+        path: 'layers[0].config.fieldMapping.metricField',
+        name: 'Metric Field',
+        defaultValue: '',
+        showIf: (config) => config.layers[0].type === 'worldmap-behavior',
+      })
+      .addTextInput({
+        category,
+        path: 'layers[0].config.fieldMapping.latitudeField',
+        name: 'Latitude Field',
+        defaultValue: '',
+        showIf: (config) =>
+          config.layers[0].config?.fieldMapping.queryFormat === 'coordinates' &&
+          config.layers[0].type === 'worldmap-behavior',
+      })
+      .addTextInput({
+        category,
+        path: 'layers[0].config.fieldMapping.longitudeField',
+        name: 'Longitude Field',
+        defaultValue: '',
+        showIf: (config) =>
+          config.layers[0].config?.fieldMapping.queryFormat === 'coordinates' &&
+          config.layers[0].type === 'worldmap-behavior',
+      })
+      .addTextInput({
+        category,
+        path: 'layers[0].config.fieldMapping.geohashField',
+        name: 'Geohash Field',
+        defaultValue: '',
+        showIf: (config) =>
+          config.layers[0].config?.fieldMapping.queryFormat === 'geohash' &&
+          config.layers[0].type === 'worldmap-behavior',
+      });
 
     // The controls section
-    let category = ['Map Controls'];
+    category = ['Map Controls'];
     builder
       .addBooleanSwitch({
         category,

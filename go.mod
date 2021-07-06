@@ -121,3 +121,4 @@ require (
 )
 
 replace github.com/apache/thrift => github.com/apache/thrift v0.14.1
+replace golang.zx2c4.com/wireguard v0.0.20200121 => golang.zx2c4.com/wireguard v0.0.0-20200121152719-05b03c675090
