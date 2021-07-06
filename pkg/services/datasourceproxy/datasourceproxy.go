@@ -46,6 +46,10 @@ func (p *DatasourceProxyService) ProxyDatasourceRequestWithID(c *models.ReqConte
 			c.JsonApiErr(http.StatusForbidden, "Access denied to datasource", err)
 			return
 		}
+		if errors.Is(err, models.ErrDataSourceNotFound) {
+			c.JsonApiErr(http.StatusNotFound, "Unable to find datasource", err)
+			return
+		}
 		c.JsonApiErr(http.StatusInternalServerError, "Unable to load datasource meta data", err)
 		return
 	}
@@ -59,7 +63,7 @@ func (p *DatasourceProxyService) ProxyDatasourceRequestWithID(c *models.ReqConte
 	// find plugin
 	plugin := p.PluginManager.GetDataSource(ds.Type)
 	if plugin == nil {
-		c.JsonApiErr(http.StatusInternalServerError, "Unable to find datasource plugin", err)
+		c.JsonApiErr(http.StatusNotFound, "Unable to find datasource plugin", err)
 		return
 	}
 
