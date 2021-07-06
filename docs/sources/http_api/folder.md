@@ -154,6 +154,7 @@ Status Codes:
 - **400** – Errors (invalid json, missing or invalid fields, etc)
 - **401** – Unauthorized
 - **403** – Access Denied
+- **409** - Folder already exists
 
 ## Update folder
 
