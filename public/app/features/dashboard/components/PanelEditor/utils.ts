@@ -1,5 +1,5 @@
 import { CSSProperties } from 'react';
-import { set as lodashSet, omit } from 'lodash';
+import { omit } from 'lodash';
 import { FieldConfigSource, PanelPlugin } from '@grafana/data';
 import { PanelModel } from '../../state/PanelModel';
 import { DisplayMode } from './types';
@@ -48,15 +48,15 @@ export const updateDefaultFieldConfigValue = (
       if (remove) {
         defaults.custom = omit(defaults.custom, name);
       } else {
-        defaults.custom = lodashSet({ ...defaults.custom }, name, value);
+        defaults.custom = setOptionImmutably({ ...defaults.custom }, name, value);
       }
     } else if (!remove) {
-      defaults.custom = lodashSet({ ...defaults.custom }, name, value);
+      defaults.custom = setOptionImmutably({ ...defaults.custom }, name, value);
     }
   } else if (remove) {
     defaults = omit(defaults, name);
   } else {
-    defaults = lodashSet({ ...defaults }, name, value);
+    defaults = setOptionImmutably({ ...defaults }, name, value);
   }
 
   return {
@@ -64,3 +64,22 @@ export const updateDefaultFieldConfigValue = (
     defaults,
   };
 };
+
+export function setOptionImmutably<T extends object>(options: T, path: string, value: any): T {
+  const splat = path.split('.');
+  let result = { ...options };
+
+  if (splat.length === 1) {
+    (result as Record<string, any>)[path] = value;
+    return result;
+  }
+
+  let current = (result as Record<string, any>)[splat[0]];
+  if (current === undefined || current === null) {
+    current = {} as object;
+  }
+  return {
+    ...result,
+    [splat[0]]: setOptionImmutably({ ...current }, splat.slice(1).join('.'), value),
+  };
+}
