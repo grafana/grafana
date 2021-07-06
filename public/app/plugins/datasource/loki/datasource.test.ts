@@ -34,6 +34,7 @@ const timeSrvStub = ({
 } as unknown) as TimeSrv;
 
 const templateSrvStub = {
+  getAdhocFilters: jest.fn(() => [] as any[]),
   replace: jest.fn((a: string, ...rest: any) => a),
 };
 
@@ -330,6 +331,68 @@ describe('LokiDatasource', () => {
         const err: any = received[0];
         expect(err.data.message).toBe(
           'Error: parse error at line 1, col 6: invalid char escape. Make sure that all special characters are escaped with \\. For more information on escaping of special characters visit LogQL documentation at https://grafana.com/docs/loki/latest/logql/.'
+        );
+      });
+    });
+
+    describe('When using adhoc filters', () => {
+      const DEFAULT_EXPR = 'rate({bar="baz", job="foo"} |= "bar" [5m])';
+      const options = {
+        targets: [{ expr: DEFAULT_EXPR }],
+      };
+      const originalAdhocFiltersMock = templateSrvStub.getAdhocFilters();
+      const ds = new LokiDatasource({} as any, templateSrvStub as any, timeSrvStub as any);
+      ds.runRangeQuery = jest.fn(() => of({ data: [] }));
+
+      afterAll(() => {
+        templateSrvStub.getAdhocFilters.mockReturnValue(originalAdhocFiltersMock);
+      });
+
+      it('should not modify expression with no filters', async () => {
+        await ds.query(options as any).toPromise();
+        expect(ds.runRangeQuery).toBeCalledWith({ expr: DEFAULT_EXPR }, expect.anything(), expect.anything());
+      });
+
+      it('should add filters to expression', async () => {
+        templateSrvStub.getAdhocFilters.mockReturnValue([
+          {
+            key: 'k1',
+            operator: '=',
+            value: 'v1',
+          },
+          {
+            key: 'k2',
+            operator: '!=',
+            value: 'v2',
+          },
+        ]);
+
+        await ds.query(options as any).toPromise();
+        expect(ds.runRangeQuery).toBeCalledWith(
+          { expr: 'rate({bar="baz",job="foo",k1="v1",k2!="v2"} |= "bar" [5m])' },
+          expect.anything(),
+          expect.anything()
+        );
+      });
+
+      it('should add escaping if needed to regex filter expressions', async () => {
+        templateSrvStub.getAdhocFilters.mockReturnValue([
+          {
+            key: 'k1',
+            operator: '=~',
+            value: 'v.*',
+          },
+          {
+            key: 'k2',
+            operator: '=~',
+            value: `v'.*`,
+          },
+        ]);
+        await ds.query(options as any).toPromise();
+        expect(ds.runRangeQuery).toBeCalledWith(
+          { expr: 'rate({bar="baz",job="foo",k1=~"v.*",k2=~"v\\\\\'.*"} |= "bar" [5m])' },
+          expect.anything(),
+          expect.anything()
         );
       });
     });
