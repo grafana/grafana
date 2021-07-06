@@ -1,4 +1,4 @@
-import { FieldColorMode, FieldColorModeId, GrafanaTheme2, ThresholdsConfig } from '@grafana/data';
+import { FieldColorMode, FieldColorModeId, GrafanaTheme2, ThresholdsConfig, ThresholdsMode } from '@grafana/data';
 import tinycolor from 'tinycolor2';
 import uPlot from 'uplot';
 import { getCanvasContext } from '../../../utils/measureText';
@@ -67,9 +67,12 @@ export function getScaleGradientFn(
 
     const ctx = getCanvasContext();
     const gradient = ctx.createLinearGradient(0, plot.bbox.top, 0, plot.bbox.top + plot.bbox.height);
-    const range = plot.bbox.height;
+    const canvasHeight = plot.bbox.height;
     const series = plot.series[seriesIdx];
     const scale = plot.scales[series.scale!];
+    const scaleMin = scale.min ?? 0;
+    const scaleMax = scale.max ?? 100;
+    const scaleRange = scaleMax - scaleMin;
 
     const addColorStop = (value: number, color: string) => {
       const pos = plot.valToPos(value, series.scale!, true);
@@ -78,33 +81,44 @@ export function getScaleGradientFn(
         return;
       }
 
-      const percent = Math.max(pos / range, 0);
+      const percent = Math.max(pos / canvasHeight, 0);
       const realColor = tinycolor(theme.visualization.getColorByName(color)).setAlpha(opacity).toString();
       const colorStopPos = Math.min(percent, 1);
-      console.log(`addColorStop(value = ${value}, xPos=${pos})`);
+
       gradient.addColorStop(colorStopPos, realColor);
     };
 
     if (colorMode.id === FieldColorModeId.Thresholds) {
-      // TODO Add support for percentage based thresholds
       for (let idx = 0; idx < thresholds.steps.length; idx++) {
         const step = thresholds.steps[idx];
-        const value = step.value === -Infinity ? 0 : step.value;
-        addColorStop(value, step.color);
 
-        // to make the gradient discrete
-        if (thresholds.steps.length > idx + 1) {
-          addColorStop(thresholds.steps[idx + 1].value - 0.0000001, step.color);
+        if (thresholds.mode === ThresholdsMode.Absolute) {
+          const value = step.value === -Infinity ? scaleMin : step.value;
+          addColorStop(value, step.color);
+
+          if (thresholds.steps.length > idx + 1) {
+            // to make the gradient discrete
+            addColorStop(thresholds.steps[idx + 1].value - 0.00000001, step.color);
+          }
+        } else {
+          const percent = step.value === -Infinity ? 0 : step.value;
+          const realValue = (percent / 100) * scaleRange;
+          addColorStop(realValue, step.color);
+
+          // to make the gradient discrete
+          if (thresholds.steps.length > idx + 1) {
+            // to make the gradient discrete
+            const nextValue = (thresholds.steps[idx + 1].value / 100) * scaleRange - 0.0000001;
+            addColorStop(nextValue, step.color);
+          }
         }
       }
     } else if (colorMode.getColors) {
       const colors = colorMode.getColors(theme);
-      const min = scale.min ?? 0;
-      const max = scale.max ?? 100;
-      const stepValue = (max - min) / colors.length;
+      const stepValue = (scaleMax - scaleMin) / colors.length;
 
       for (let idx = 0; idx < colors.length; idx++) {
-        addColorStop(idx * stepValue, colors[idx]);
+        addColorStop(scaleMin + stepValue * idx, colors[idx]);
       }
     }
 
