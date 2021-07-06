@@ -21,6 +21,9 @@ export function parseLabels(labels: string): Labels {
 
 /**
  * Returns a map of label keys with the value and operator
+ *
+ * Example: `parseLabelsWithOperator('{job="foo", instance!="bar"})
+ * returns: {job: { value: "foo", operator: '='}, instance: {value: "bar", operator: "!="}}`
  */
 export function parseLabelsWithOperator(labels: string): LabelsWithOperator {
   const labelsByKey: LabelsWithOperator = {};
