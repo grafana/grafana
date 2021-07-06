@@ -2,9 +2,10 @@ import React, { FC, FormEvent, ReactNode, useCallback, useState } from 'react';
 import { useMedia } from 'react-use';
 import Calendar from 'react-calendar/dist/entry.nostyle';
 import { css } from '@emotion/css';
-import { dateTimeFormat, DateTime, dateTime, GrafanaTheme2, isDateTime } from '@grafana/data';
+import { dateTimeFormat, DateTime, dateTime, GrafanaTheme2 } from '@grafana/data';
 import { Button, Field, Icon, Input, Portal } from '../..';
 import { ClickOutsideWrapper } from '../../ClickOutsideWrapper/ClickOutsideWrapper';
+import { isValid } from '../utils';
 import { getBodyStyles, getStyles as getCalendarStyles } from '../TimeRangePicker/TimePickerCalendar';
 import { useStyles2, useTheme2 } from '../../../themes';
 import { TimeOfDayPicker } from '../TimeOfDayPicker';
@@ -19,14 +20,20 @@ const stopPropagation = (event: React.MouseEvent<HTMLDivElement>) => event.stopP
 
 export const DateTimePicker: FC<Props> = ({ date, label, onChange }) => {
   const [isOpen, setOpen] = useState(false);
+  const [internalDate, setInternalDate] = useState<InputState>(() => {
+    return { value: dateTimeFormat(date), invalid: false };
+  });
   const theme = useTheme2();
   const isFullscreen = useMedia(`(min-width: ${theme.breakpoints.values.lg}px)`);
   const containerStyles = useStyles2(getCalendarStyles);
 
-  const onApply = (date: DateTime) => {
-    setOpen(false);
-    onChange(date);
-  };
+  const onApply = useCallback(
+    (date: DateTime) => {
+      setOpen(false);
+      onChange(date);
+    },
+    [onChange]
+  );
 
   const onOpen = useCallback(
     (event: FormEvent<HTMLElement>) => {
@@ -46,9 +53,28 @@ export const DateTimePicker: FC<Props> = ({ date, label, onChange }) => {
     [isFullscreen, onOpen]
   );
 
+  const onChangeDate = useCallback((event: FormEvent<HTMLInputElement>) => {
+    const isInvalid = !isValid(event.currentTarget.value);
+    setInternalDate({
+      value: event.currentTarget.value,
+      invalid: isInvalid,
+    });
+  }, []);
+
+  const icon = <Button icon="calendar-alt" variant="secondary" onClick={onOpen} />;
+
   return (
     <div>
-      <DateTimeInput date={date} onChange={onChange} onOpen={onOpen} onFocus={onFocus} />
+      <Field label={label} onClick={stopPropagation} invalid={internalDate.invalid} error="Incorrect date format">
+        <Input
+          onClick={stopPropagation}
+          onChange={onChangeDate}
+          addonAfter={icon}
+          value={internalDate.value}
+          onFocus={onFocus}
+          onBlur={() => onChange(dateTime(internalDate.value))}
+        />
+      </Field>
       {isOpen ? (
         isFullscreen ? (
           <ClickOutsideWrapper onClick={() => setOpen(false)}>
@@ -73,7 +99,7 @@ interface DateTimeCalendarProps {
 }
 
 interface InputProps {
-  label?: string;
+  label?: ReactNode;
   date: DateTime;
   onChange: (date: DateTime) => void;
   onFocus: (event: FormEvent<HTMLElement>) => void;
@@ -86,22 +112,17 @@ type InputState = {
 };
 
 const DateTimeInput: FC<InputProps> = ({ date, label, onChange, onFocus, onOpen }) => {
-  const icon = <Button icon="calendar-alt" variant="secondary" onClick={onOpen} />;
-  const [internalDate, setInternalDate] = useState<InputState>({ value: dateTimeFormat(date), invalid: false });
+  console.log('DateTimeInput', date);
 
   return (
     <Field label={label} onClick={stopPropagation} invalid={internalDate.invalid} error="Incorrect date format">
       <Input
         onClick={stopPropagation}
-        onChange={(event) => {
-          setInternalDate({
-            value: event.currentTarget.value,
-            invalid: isDateTime(event.currentTarget.value),
-          });
-        }}
+        onChange={onChangeDate}
         addonAfter={icon}
         value={internalDate.value}
         onFocus={onFocus}
+        onBlur={() => onChange(dateTime(internalDate.value))}
       />
     </Field>
   );
@@ -112,6 +133,16 @@ const DateTimeCalendar: FC<DateTimeCalendarProps> = ({ date, onChange }) => {
   const styles = useStyles2(getStyles);
   const [internalDate, setInternalDate] = useState<Date>(date.toDate() || Date.now());
 
+  const onChangeDate = useCallback((date: Date | Date[]) => {
+    if (!Array.isArray(date)) {
+      setInternalDate(date);
+    }
+  }, []);
+
+  const onChangeTime = useCallback((date: DateTime) => {
+    setInternalDate(date.toDate());
+  }, []);
+
   return (
     <div className={styles.container} onClick={stopPropagation}>
       <Calendar
@@ -120,24 +151,18 @@ const DateTimeCalendar: FC<DateTimeCalendarProps> = ({ date, onChange }) => {
         value={internalDate}
         nextLabel={<Icon name="angle-right" />}
         prevLabel={<Icon name="angle-left" />}
-        onChange={(date) => {
-          if (!Array.isArray(date)) {
-            setInternalDate(date);
-          }
-        }}
+        onChange={onChangeDate}
         locale="en"
         className={calendarStyles.body}
         tileClassName={calendarStyles.title}
       />
       <div className={styles.time}>
-        <TimeOfDayPicker
-          showSeconds={true}
-          onChange={(date) => setInternalDate(date.toDate())}
-          value={dateTime(internalDate)}
-        />
+        <TimeOfDayPicker showSeconds={true} onChange={onChangeTime} value={dateTime(internalDate)} />
       </div>
       <div>
-        <Button onClick={() => onChange(dateTime(internalDate))}>Apply</Button>
+        <Button type="button" onClick={() => onChange(dateTime(internalDate))}>
+          Apply
+        </Button>
       </div>
     </div>
   );
