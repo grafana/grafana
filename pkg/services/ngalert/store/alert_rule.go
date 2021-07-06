@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/grafana/grafana/pkg/services/guardian"
@@ -452,6 +453,18 @@ func (st DBstore) validateAlertRule(alertRule ngmodels.AlertRule) error {
 
 	if alertRule.OrgID == 0 {
 		return fmt.Errorf("%w: no organisation is found", ngmodels.ErrAlertRuleFailedValidation)
+	}
+
+	for key := range alertRule.Labels {
+		if strings.Contains(key, " ") {
+			return fmt.Errorf("%w %s: invalid label: %s; label keys should not contain spaces", ngmodels.ErrAlertRuleFailedValidation, alertRule.Title, key)
+		}
+	}
+
+	for key := range alertRule.Annotations {
+		if strings.Contains(key, " ") {
+			return fmt.Errorf("%w %s: invalid annotation: %s; annotation keys should not contain spaces", ngmodels.ErrAlertRuleFailedValidation, alertRule.Title, key)
+		}
 	}
 
 	return nil

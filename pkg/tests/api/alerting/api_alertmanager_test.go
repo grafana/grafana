@@ -946,6 +946,66 @@ func TestAlertRuleCRUD(t *testing.T) {
 				},
 				expectedResponse: `{"message":"failed to validate alert rule AlwaysFiring: condition B not found in any query or expression: it should be one of: [A]"}`,
 			},
+			{
+				desc:      "alert rule with invalid label key",
+				rulegroup: "arulegroup",
+				rule: apimodels.PostableExtendedRuleNode{
+					ApiRuleNode: &apimodels.ApiRuleNode{
+						For:         interval,
+						Labels:      map[string]string{"label 1": "val1"},
+						Annotations: map[string]string{"annotation1": "val1"},
+					},
+					GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
+						Title:     "AlwaysFiring",
+						Condition: "A",
+						Data: []ngmodels.AlertQuery{
+							{
+								RefID: "A",
+								RelativeTimeRange: ngmodels.RelativeTimeRange{
+									From: ngmodels.Duration(time.Duration(5) * time.Hour),
+									To:   ngmodels.Duration(time.Duration(3) * time.Hour),
+								},
+								DatasourceUID: "-100",
+								Model: json.RawMessage(`{
+									"type": "math",
+									"expression": "2 + 3 > 1"
+									}`),
+							},
+						},
+					},
+				},
+				expectedResponse: `{"message":"failed to update rule group: invalid alert rule AlwaysFiring: invalid label: label 1; label keys should not contain spaces"}`,
+			},
+			{
+				desc:      "alert rule with invalid annotation key",
+				rulegroup: "arulegroup",
+				rule: apimodels.PostableExtendedRuleNode{
+					ApiRuleNode: &apimodels.ApiRuleNode{
+						For:         interval,
+						Labels:      map[string]string{"label1": "val1"},
+						Annotations: map[string]string{"annotation 1": "val1"},
+					},
+					GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
+						Title:     "AlwaysFiring",
+						Condition: "A",
+						Data: []ngmodels.AlertQuery{
+							{
+								RefID: "A",
+								RelativeTimeRange: ngmodels.RelativeTimeRange{
+									From: ngmodels.Duration(time.Duration(5) * time.Hour),
+									To:   ngmodels.Duration(time.Duration(3) * time.Hour),
+								},
+								DatasourceUID: "-100",
+								Model: json.RawMessage(`{
+									"type": "math",
+									"expression": "2 + 3 > 1"
+									}`),
+							},
+						},
+					},
+				},
+				expectedResponse: `{"message":"failed to update rule group: invalid alert rule AlwaysFiring: invalid annotation: annotation 1; annotation keys should not contain spaces"}`,
+			},
 		}
 
 		for _, tc := range testCases {
