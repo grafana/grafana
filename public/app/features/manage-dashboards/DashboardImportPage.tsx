@@ -122,11 +122,11 @@ class UnthemedDashboardImport extends PureComponent<Props> {
                       required: 'Need a dashboard JSON model',
                       validate: validateDashboardJson,
                     })}
-                    data-test-id={selectors.components.ImportDashboard.textarea}
+                    data-test-id={selectors.components.DashboardImportPage.textarea}
                     rows={10}
                   />
                 </Field>
-                <Button type="submit" data-test-id={selectors.components.ImportDashboard.submit}>
+                <Button type="submit" data-test-id={selectors.components.DashboardImportPage.submit}>
                   Load
                 </Button>
               </>
