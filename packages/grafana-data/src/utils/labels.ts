@@ -115,10 +115,10 @@ export function stringMatchesSomeLabels(queryString: string, labels: Labels): bo
         case LabelOperators.NotEquals:
           valueMatches = value !== labelValue;
           break;
-        case LabelOperators.Regex:
+        case LabelOperators.RegexMatch:
           valueMatches = new RegExp(value).test(labelValue);
           break;
-        case LabelOperators.NotRegex:
+        case LabelOperators.NotRegexMatch:
           valueMatches = !new RegExp(value).test(labelValue);
           break;
       }
