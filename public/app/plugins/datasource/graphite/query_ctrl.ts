@@ -5,7 +5,7 @@ import GraphiteQuery from './graphite_query';
 import { QueryCtrl } from 'app/plugins/sdk';
 import { auto } from 'angular';
 import { TemplateSrv } from '@grafana/runtime';
-import { actions } from './actions';
+import { actions } from './state/actions';
 import { getAltSegments, getTagOperators, getTags, getTagsAsSegments, getTagValues } from './state/providers';
 import { createStore, GraphiteQueryEditorState } from './state/state';
 import {

@@ -2,7 +2,7 @@ import { assign, clone, each, last, map, partial } from 'lodash';
 import $ from 'jquery';
 import coreModule from 'app/core/core_module';
 import { TemplateSrv } from 'app/features/templating/template_srv';
-import { actions } from './actions';
+import { actions } from './state/actions';
 
 /** @ngInject */
 export function graphiteFuncEditor($compile: any, templateSrv: TemplateSrv) {

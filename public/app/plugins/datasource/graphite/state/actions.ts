@@ -1,4 +1,4 @@
-import { GraphiteQueryEditorAngularDependencies, GraphiteSegment, GraphiteTag } from './types';
+import { GraphiteQueryEditorAngularDependencies, GraphiteSegment, GraphiteTag } from '../types';
 import { createAction } from '@reduxjs/toolkit';
 
 /**
