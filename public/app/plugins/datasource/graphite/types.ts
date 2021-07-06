@@ -78,8 +78,6 @@ export type GraphiteQueryEditorAngularDependencies = {
   panelCtrl: any;
   target: any;
   datasource: GraphiteDatasource;
-  panel: any;
-  isLastQuery: boolean;
   uiSegmentSrv: any;
   templateSrv: TemplateSrv;
 };

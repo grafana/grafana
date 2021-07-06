@@ -82,9 +82,6 @@ const reducer = async (action: Action, state: GraphiteQueryEditorState): Promise
     state.error = null;
     state.queryModel.updateSegmentValue(segment, segmentIndex);
 
-    // If segment changes and first function is fake then remove all functions
-    // TODO: fake function is created when the first argument is not seriesList, for
-    // example constantLine(number) - which seems to be broken now.
     if (state.queryModel.functions.length > 0 && state.queryModel.functions[0].def.fake) {
       state.queryModel.functions = [];
     }

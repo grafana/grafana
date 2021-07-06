@@ -41,22 +41,29 @@ export class GraphiteQueryCtrl extends QueryCtrl {
   ) {
     super($scope, $injector);
 
-    // TODO: dependencies passed by Angular. It will be removed when editor is moved to React.
-    // The React component will receive different properties - see QueryRow.renderQueryEditor
+    // This controller will be removed once it's root partial (query.editor.html) renders only React components.
+    // All component will be wrapped in ReactQueryEditor reciving DataSourceApi in QueryRow.renderQueryEditor
+    // The init() action will be removed and the state will be created in ReactQueryEditor. Note that properties
+    // passed to React component in QueryRow.renderQueryEditor are different than properties passed to Angular editor
+    // and will be mapped/provided in a way described below:
     const deps = {
-      // TODO:  Not passed to ReactQueryEditor. Will onChange take care of it?
+      // WIP: to be removed. It's not passed to ReactQueryEditor but it's used only to:
+      // - get refId of the query (refId be passed in query property),
+      // - and to refresh changes (this will be handled by onChange passed to ReactQueryEditor)
       panelCtrl: this.panelCtrl,
-      // TODO: Passed to ReactQueryEditor as "query".
+
+      // WIP: to be replaced with query property passed to ReactQueryEditor
       target: this.target,
-      // TODO: Passed to ReactQueryEditor.
+
+      // WIP: same object will be passed to ReactQueryEditor
       datasource: this.datasource,
-      // TODO:  Not passed to ReactQueryEditor. Will onChange take care of it?
-      panel: this.panel,
-      // TODO: Not passed to ReactQueryEditor. Is it needed?
-      isLastQuery: this.isLastQuery,
-      // TODO: Not passed to ReactQueryEditor. Should be converted to a singleton.
+
+      // This is used to create view models for Angular <metric-segment> component (view models are MetricSegment objects)
+      // It will be simplified to produce data needed by React <SegmentAsync/> component
       uiSegmentSrv: this.uiSegmentSrv,
-      // TODO: Not passed to ReactQueryEditor, but available as as singleton.
+
+      // WIP: will be replaced with:
+      // import { getTemplateSrv } from 'app/features/templating/template_srv';
       templateSrv: this.templateSrv,
     };
 
