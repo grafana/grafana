@@ -909,7 +909,7 @@ Default is `false`.
 
 ### templates_pattern
 
-Enter a comma-separated list of template patterns. Default is `emails/*.html, emails/*.txt`.
+Enter a comma separated list of template patterns. Default is `emails/*.html, emails/*.txt`.
 
 ### content_types
 
