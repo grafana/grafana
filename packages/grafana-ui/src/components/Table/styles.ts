@@ -44,7 +44,7 @@ export const getTableStyles = (theme: GrafanaTheme2) => {
         }
       }
       a {
-        ${color ? `color: ${color};` : ''};
+        color: inherit;
       }
     `;
   };
