@@ -166,13 +166,11 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
 
     // entering edit mode
     if (this.state.editPanel && !prevState.editPanel) {
-      console.log('componentDidUpdate:entering edit');
       dashboardWatcher.setEditingState(true);
     }
 
     // leaving edit mode
     if (!this.state.editPanel && prevState.editPanel) {
-      console.log('leaving panel edit');
       dashboardWatcher.setEditingState(false);
     }
 
