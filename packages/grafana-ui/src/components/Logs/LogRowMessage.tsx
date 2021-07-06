@@ -127,9 +127,7 @@ class UnThemedLogRowMessage extends PureComponent<Props> {
                 findChunks={findHighlightChunksInText}
                 highlightClassName={highlightClassName}
               />
-            ) : hasAnsi && !prettifyLogMessage ? (
-              <LogMessageAnsi value={raw} />
-            ) : hasAnsi && prettifyLogMessage ? (
+            ) : hasAnsi ? (
               <LogMessageAnsi value={restructuredEntry.join('\n')} />
             ) : (
               restructuredEntry.join('\n')
