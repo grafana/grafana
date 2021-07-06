@@ -1,7 +1,7 @@
 import React from 'react';
 import { Provider } from 'react-redux';
-import { prettyDOM, render, screen } from '@testing-library/react';
-import { UnthemedDashboardPage, mapStateToProps, Props } from './DashboardPage';
+import { render, screen } from '@testing-library/react';
+import { UnthemedDashboardPage, Props } from './DashboardPage';
 import { Router } from 'react-router-dom';
 import { locationService } from '@grafana/runtime';
 import { DashboardModel } from '../state';
@@ -9,7 +9,6 @@ import { configureStore } from '../../../store/configureStore';
 import { mockToolkitActionCreator } from 'test/core/redux/mocks';
 import { DashboardInitPhase, DashboardRoutes } from 'app/types';
 import { notifyApp } from 'app/core/actions';
-import { cleanUpDashboardAndVariables } from '../state/actions';
 import { selectors } from '@grafana/e2e-selectors';
 import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
 import { createTheme } from '@grafana/data';
