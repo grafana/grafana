@@ -23,4 +23,5 @@ export enum DataTransformerID {
   groupBy = 'groupBy',
   sortBy = 'sortBy',
   histogram = 'histogram',
+  configFromData = 'configFromData',
 }
