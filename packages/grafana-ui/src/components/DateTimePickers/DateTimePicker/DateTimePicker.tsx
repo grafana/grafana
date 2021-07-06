@@ -11,9 +11,12 @@ import { useStyles2, useTheme2 } from '../../../themes';
 import { TimeOfDayPicker } from '../TimeOfDayPicker';
 
 export interface Props {
-  label: ReactNode;
+  /** Input date for the component */
   date: DateTime;
+  /** Callback for returning the selected date */
   onChange: (date: DateTime) => void;
+  /** label for the input field */
+  label?: ReactNode;
 }
 
 const stopPropagation = (event: React.MouseEvent<HTMLDivElement>) => event.stopPropagation();
@@ -43,7 +46,7 @@ export const DateTimePicker: FC<Props> = ({ date, label, onChange }) => {
 
   return (
     <div>
-      <DateTimeInput date={date} onChange={onChange} isFullscreen={isFullscreen} onOpen={onOpen} />
+      <DateTimeInput date={date} onChange={onChange} isFullscreen={isFullscreen} onOpen={onOpen} label={label} />
       {isOpen ? (
         isFullscreen ? (
           <ClickOutsideWrapper onClick={() => setOpen(false)}>
