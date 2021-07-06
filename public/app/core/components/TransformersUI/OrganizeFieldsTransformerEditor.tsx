@@ -10,7 +10,7 @@ import {
   TransformerUIProps,
   getFieldDisplayName,
 } from '@grafana/data';
-import { stylesFactory, useTheme, Input, IconButton, Icon } from '@grafana/ui';
+import { stylesFactory, useTheme, Input, IconButton, Icon, FieldValidationMessage } from '@grafana/ui';
 
 import { OrganizeFieldsTransformerOptions } from '@grafana/data/src/transformations/transformers/organize';
 import { createOrderFieldsComparer } from '@grafana/data/src/transformations/transformers/order';
@@ -73,7 +73,11 @@ const OrganizeFieldsTransformerEditor: React.FC<OrganizeFieldsTransformerEditorP
 
   // Show warning that we only apply the first frame
   if (input.length > 1) {
-    return <div>Organize fields only works with a single frame. Consider applying a join transformation first.</div>;
+    return (
+      <FieldValidationMessage>
+        Organize fields only works with a single frame. Consider applying a join transformation first.
+      </FieldValidationMessage>
+    );
   }
 
   return (
