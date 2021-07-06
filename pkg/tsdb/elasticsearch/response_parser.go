@@ -67,7 +67,8 @@ func (rp *responseParser) getTimeSeries() (plugins.DataResponse, error) {
 		}
 
 		queryRes := plugins.DataQueryResult{
-			Meta: debugInfo,
+			Meta:       debugInfo,
+			Dataframes: plugins.NewDecodedDataFrames(data.Frames{}),
 		}
 		props := make(map[string]string)
 		err := rp.processBuckets(res.Aggregations, target, &queryRes, props, 0)
