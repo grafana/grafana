@@ -19,7 +19,6 @@ require (
 	github.com/BurntSushi/toml v0.3.1
 	github.com/Masterminds/semver v1.5.0
 	github.com/VividCortex/mysqlerr v0.0.0-20170204212430-6c6b55f8796f
-	github.com/afiskon/promtail-client v0.0.0-20190305142237-506f3f921e9c // indirect
 	github.com/aws/aws-sdk-go v1.38.34
 	github.com/beevik/etree v1.1.0
 	github.com/benbjohnson/clock v1.1.0
