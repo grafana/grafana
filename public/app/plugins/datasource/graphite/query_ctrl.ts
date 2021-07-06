@@ -18,23 +18,6 @@ import {
 
 /**
  * @deprecated Moving to React/Flux in progress.
- *
- * State of this controller has been encapsulated in a single "state" object and all methods have been converted
- * to pure function that modify this state.
- *
- * Methods that have not been moved to controller but removed:
- * - targetTextChanged()
- *   targetChanged is used instead - it avoid double requests and checks for errors
- * - getAllTags()
- *   not used
- * - getAllTagValues()
- *   not used
- * - removeTag()
- *   not used (tags are removed by selecting the segment -- remove tag --)
- * - getCollapsedText()
- *   not used
- * - showDelimiter()
- *   it was not used because of broken syntax in the template. moved directly to the template
  */
 export class GraphiteQueryCtrl extends QueryCtrl {
   static templateUrl = 'partials/query.editor.html';
@@ -91,6 +74,30 @@ export class GraphiteQueryCtrl extends QueryCtrl {
     this.dispatch(actions.init(deps as GraphiteQueryEditorAngularDependencies));
   }
 
+  parseTarget() {
+    // WIP: moved to state/helpers (the same name)
+  }
+
+  async toggleEditorMode() {
+    await this.dispatch(actions.toggleEditorMode());
+  }
+
+  buildSegments(modifyLastSegment = true) {
+    // WIP: moved to state/helpers (the same name)
+  }
+
+  addSelectMetricSegment() {
+    // WIP: moved to state/helpers (the same name)
+  }
+
+  checkOtherSegments(fromIndex: number, modifyLastSegment = true) {
+    // WIP: moved to state/helpers (the same name)
+  }
+
+  setSegmentFocus(segmentIndex: any) {
+    // WIP: moved to state/helpers (the same name)
+  }
+
   /**
    * Get list of options for an empty segment or a segment with metric when it's clicked/opened.
    *
@@ -100,11 +107,68 @@ export class GraphiteQueryCtrl extends QueryCtrl {
     return await getAltSegments(this.state, index, text);
   }
 
+  addAltTagSegments(prefix: string, altSegments: any[]) {
+    // WIP: moved to state/providers (the same name)
+  }
+
+  removeTaggedEntry(altSegments: any[]) {
+    // WIP: moved to state/providers (the same name)
+  }
+
   /**
    * Apply changes to a given metric segment
    */
   async segmentValueChanged(segment: GraphiteSegment, index: number) {
     await this.dispatch(actions.segmentValueChanged({ segment, index }));
+  }
+
+  spliceSegments(index: any) {
+    // WIP: moved to state/helpers (the same name)
+  }
+
+  emptySegments() {
+    // WIP: moved to state/helpers (the same name)
+  }
+
+  targetTextChanged() {
+    // WIP: targetChanged() is used instead - it avoid double requests and checks for errors
+  }
+
+  updateModelTarget() {
+    // WIP: removed. It was used in two places:
+    // - handleTargetChanged() -> the logic was moved directly there
+    // - targetTextChanged() -> this method was removed
+  }
+
+  async targetChanged() {
+    await this.dispatch(actions.targetChanged());
+  }
+
+  async addFunction(name: string) {
+    await this.dispatch(actions.addFunction({ name }));
+  }
+
+  removeFunction(func: any) {
+    // WIP: converted to "removeFunction" action  and handled in state/state.ts reducer
+    // It's now dispatched in func_editor
+  }
+
+  moveFunction(func: any, offset: any) {
+    // WIP: converted to "moveFunction" action and handled in state/state.ts reducer
+    // It's now dispatched in func_editor
+  }
+
+  addSeriesByTagFunc(tag: string) {
+    // WIP: moved to state/helpers (the same name)
+    // It's now dispatched in func_editor
+  }
+
+  smartlyHandleNewAliasByNode(func: { def: { name: string }; params: number[]; added: boolean }) {
+    // WIP: moved to state/helpers (the same name)
+  }
+
+  getAllTags() {
+    // WIP: removed. It was not used.
   }
 
   /**
@@ -115,10 +179,21 @@ export class GraphiteQueryCtrl extends QueryCtrl {
   }
 
   /**
-   * Apply changes when a tag is changed
+   * Get tag list when a new tag is added
    */
-  async tagChanged(tag: GraphiteTag, index: number) {
-    await this.dispatch(actions.tagChanged({ tag, index }));
+  async getTagsAsSegments(query: string): Promise<GraphiteSegment[]> {
+    return await getTagsAsSegments(this.state, query);
+  }
+
+  /**
+   * Get list of available tag operators
+   */
+  getTagOperators(): AngularDropdownOptions[] {
+    return getTagOperators();
+  }
+
+  getAllTagValues(tag: { key: any }) {
+    // WIP: removed. It was not used.
   }
 
   /**
@@ -129,36 +204,50 @@ export class GraphiteQueryCtrl extends QueryCtrl {
   }
 
   /**
-   * Get list of available tag operators
+   * Apply changes when a tag is changed
    */
-  getTagOperators(): AngularDropdownOptions[] {
-    return getTagOperators();
-  }
-
-  /**
-   * Get tag list when a new tag is added
-   */
-  async getTagsAsSegments(query: string): Promise<GraphiteSegment[]> {
-    return await getTagsAsSegments(this.state, query);
+  async tagChanged(tag: GraphiteTag, index: number) {
+    await this.dispatch(actions.tagChanged({ tag, index }));
   }
 
   async addNewTag(segment: GraphiteSegment) {
     await this.dispatch(actions.addNewTag({ segment }));
   }
 
+  removeTag(index: any) {
+    // WIP: removed. It was not used.
+    // Tags are removed by selecting the segment called "-- remove tag --"
+  }
+
+  fixTagSegments() {
+    // WIP: moved to state/helpers (the same name)
+  }
+
+  showDelimiter(index: number) {
+    // WIP: removed. It was not used because of broken syntax in the template. The logic has been moved directly to the template
+  }
+
+  pause() {
+    // WIP: moved to state/helpers (the same name)
+  }
+
   async unpause() {
     await this.dispatch(actions.unpause());
   }
 
-  async addFunction(name: string) {
-    await this.dispatch(actions.addFunction({ name }));
+  getCollapsedText() {
+    // WIP: removed. It was not used.
   }
 
-  async targetChanged() {
-    await this.dispatch(actions.targetChanged());
+  handleTagsAutoCompleteError(error: Error): void {
+    // WIP: moved to state/helpers (the same name)
   }
 
-  async toggleEditorMode() {
-    await this.dispatch(actions.toggleEditorMode());
+  handleMetricsAutoCompleteError(error: Error): void {
+    // WIP: moved to state/helpers (the same name)
   }
 }
+
+// WIP: moved to state/providers (the same names)
+// function mapToDropdownOptions(results: any[]) {}
+// function removeTagPrefix(value: string): string {}
