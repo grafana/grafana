@@ -8,7 +8,7 @@ import BaseLayer from 'ol/layer/Base';
 import { defaults as interactionDefaults } from 'ol/interaction';
 import MouseWheelZoom from 'ol/interaction/MouseWheelZoom';
 
-import { PanelData, MapLayerHandler, MapLayerConfig, PanelProps } from '@grafana/data';
+import { PanelData, MapLayerHandler, MapLayerConfig, PanelProps, GrafanaTheme } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
 import 'ol/ol.css';
@@ -20,6 +20,9 @@ import { centerPointRegistry, MapCenterID } from './view';
 import { fromLonLat } from 'ol/proj';
 import { Coordinate } from 'ol/coordinate';
 import { LegendControl } from './components/LegendControl';
+import { css } from '@emotion/css';
+import { stylesFactory } from '../../../../../packages/grafana-ui/src';
+import { GeomapOverlay } from './GeomapOverlay';
 
 interface MapLayerState {
   config: MapLayerConfig;
@@ -38,6 +41,7 @@ export class GeomapPanel extends Component<Props> {
   basemap: BaseLayer;
   layers: MapLayerState[] = [];
   mouseWheelZoom: MouseWheelZoom;
+  style = getStyles(config.theme);
 
   constructor(props: Props) {
     super(props);
@@ -252,7 +256,25 @@ export class GeomapPanel extends Component<Props> {
   }
 
   render() {
-    const { width, height } = this.props;
-    return <div style={{ width, height }} ref={this.initMapRef}></div>;
+    return (
+      <div className={this.style.wrap}>
+        <div className={this.style.map} ref={this.initMapRef}></div>
+        <GeomapOverlay map={this.map} />
+      </div>
+    );
   }
 }
+
+const getStyles = stylesFactory((theme: GrafanaTheme) => ({
+  wrap: css`
+    position: relative;
+    width: 100%;
+    height: 100%;
+  `,
+  map: css`
+    position: absolute;
+    z-index: 0;
+    width: 100%;
+    height: 100%;
+  `,
+}));

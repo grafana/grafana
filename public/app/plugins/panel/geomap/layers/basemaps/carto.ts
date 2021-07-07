@@ -45,7 +45,7 @@ export const carto: MapLayerRegistryItem<CartoConfig> = {
       }
       return new TileLayer({
         source: new XYZ({
-          attributions: `<a href="https://carto.com/about-carto/">CARTO</a>`,
+          attributions: `<a href="https://carto.com/attribution/">© CARTO</a>`,
           url: `https://{1-4}.basemaps.cartocdn.com/${style}/{z}/{x}/{y}.png`,
         }),
       });
