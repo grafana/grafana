@@ -1,9 +1,20 @@
-import { DataTransformerID } from './ids';
-import { DataTransformerInfo } from '../../types/transformations';
 import { map } from 'rxjs/operators';
-import { DataFrame } from '../../types';
+import { DataFrame, DataTransformerID, DataTransformerInfo, MatcherConfig, ReducerID } from '@grafana/data';
 
-export interface ConfigFromDataTransformerOptions {}
+export interface ConfigFromDataTransformerOptions {
+  sources: ConfigFromDataTransformerOptionsSourceDef[];
+  applyTo: MatcherConfig;
+  keepSources?: boolean;
+}
+
+export interface ConfigFromDataTransformerOptionsSourceDef {
+  /** Field name to use as config source */
+  fieldName: string;
+  /** If field has multiple values which value to use */
+  reducerId: ReducerID;
+  /** Config property to set */
+  configProperty: string;
+}
 
 export const configFromDataTransformer: DataTransformerInfo<ConfigFromDataTransformerOptions> = {
   id: DataTransformerID.configFromData,
