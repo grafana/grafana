@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental"
-	"github.com/grafana/grafana/pkg/components/securejsondata"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/datasource"
@@ -225,9 +224,6 @@ func TestRealQuery(t *testing.T) {
 
 		dsInfo := &datasource.Info{
 			Url: "http://localhost:9999", // NOTE! no api/v2
-			SecureJsonData: securejsondata.GetEncryptedJsonData(map[string]string{
-				"token": "PjSEcM5oWhqg2eI6IXcqYJFe5UbMM_xt-UNlAL0BRYJqLeVpcdMWidiPfWxGhu4Xrh6wioRR-CiadCg-ady68Q==",
-			}),
 		}
 
 		runner, err := runnerFromDataSource(httpclient.NewProvider(), dsInfo)

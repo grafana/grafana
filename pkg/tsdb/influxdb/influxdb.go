@@ -45,7 +45,7 @@ func init() {
 
 func (s *Service) Init() error {
 	glog = log.New("tsdb.influxdb")
-	s.im = datasource.NewInstanceManager(NewInstanceSettings(s.httpClientProvider))
+	s.im = datasource.NewInstanceManager(newInstanceSettings(s.httpClientProvider))
 
 	factory := coreplugin.New(backend.ServeOpts{
 		QueryDataHandler: s,
@@ -58,7 +58,7 @@ func (s *Service) Init() error {
 	return nil
 }
 
-func NewInstanceSettings(httpClientProvider httpclient.Provider) datasource.InstanceFactoryFunc {
+func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.InstanceFactoryFunc {
 	return func(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		opts, err := settings.HTTPClientOptions()
 		if err != nil {
@@ -84,21 +84,19 @@ func NewInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 			maxSeries = 1000
 		}
 		model := ds.Info{
-			HTTPClient:        client,
-			Url:               jsonData.Url,
-			BasicAuth:         jsonData.BasicAuth,
-			BasicAuthUser:     jsonData.BasicAuthUser,
-			User:              jsonData.User,
-			Database:          jsonData.Database,
-			Version:           jsonData.Version,
-			HTTPMode:          httpMode,
-			TimeInterval:      jsonData.TimeInterval,
-			DefaultBucket:     jsonData.DefaultBucket,
-			Organization:      jsonData.Organization,
-			MaxSeries:         maxSeries,
-			BasicAuthPassword: settings.DecryptedSecureJSONData["basicAuthPassword"],
-			Password:          settings.DecryptedSecureJSONData["password"],
-			Token:             settings.DecryptedSecureJSONData["token"],
+			HTTPClient:    client,
+			Url:           jsonData.Url,
+			BasicAuth:     jsonData.BasicAuth,
+			User:          jsonData.User,
+			Database:      jsonData.Database,
+			Version:       jsonData.Version,
+			HTTPMode:      httpMode,
+			TimeInterval:  jsonData.TimeInterval,
+			DefaultBucket: jsonData.DefaultBucket,
+			Organization:  jsonData.Organization,
+			MaxSeries:     maxSeries,
+			Password:      settings.DecryptedSecureJSONData["password"],
+			Token:         settings.DecryptedSecureJSONData["token"],
 		}
 		return model, nil
 	}
@@ -214,10 +212,6 @@ func (s *Service) createRequest(ctx context.Context, dsInfo *ds.Info, query stri
 
 	req.URL.RawQuery = params.Encode()
 
-	if dsInfo.BasicAuth {
-		req.SetBasicAuth(dsInfo.BasicAuthUser, dsInfo.BasicAuthPassword)
-	}
-
 	if !dsInfo.BasicAuth && dsInfo.User != "" {
 		req.SetBasicAuth(dsInfo.User, dsInfo.Password)
 	}
@@ -232,7 +226,10 @@ func (s *Service) getDSInfo(pluginCtx backend.PluginContext) (*ds.Info, error) {
 		return nil, err
 	}
 
-	instance := i.(ds.Info)
+	instance, ok := i.(*ds.Info)
+	if !ok {
+		return nil, fmt.Errorf("failed to cast datsource info")
+	}
 
-	return &instance, nil
+	return instance, nil
 }

@@ -27,7 +27,6 @@ func TestInfluxdbQueryPart(t *testing.T) {
 		{mode: "non_negative_difference", params: []string{}, input: "max(value)", expected: `non_negative_difference(max(value))`},
 	}
 
-	// timeRange := plugins.NewDataTimeRange("5m", "now")
 	queryContext := &backend.QueryDataRequest{}
 	query := &Query{}
 
