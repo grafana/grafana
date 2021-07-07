@@ -47,12 +47,9 @@ func init() {
 }
 
 type datasourceInfo struct {
-	HTTPClient        *http.Client
-	URL               string
-	BasicAuthPassword string
-	BasicAuthEnabled  bool
-	BasicAuthUser     string
-	Id                int64
+	HTTPClient *http.Client
+	URL        string
+	Id         int64
 }
 
 func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.InstanceFactoryFunc {
@@ -68,12 +65,9 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 		}
 
 		model := datasourceInfo{
-			BasicAuthEnabled:  settings.BasicAuthEnabled,
-			HTTPClient:        client,
-			URL:               settings.URL,
-			BasicAuthPassword: settings.DecryptedSecureJSONData["basicAuthPassword"],
-			BasicAuthUser:     settings.BasicAuthUser,
-			Id:                settings.ID,
+			HTTPClient: client,
+			URL:        settings.URL,
+			Id:         settings.ID,
 		}
 
 		return model, nil
@@ -279,10 +273,6 @@ func (s *Service) createRequest(dsInfo *datasourceInfo, data url.Values) (*http.
 	}
 
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	if dsInfo.BasicAuthEnabled {
-		req.SetBasicAuth(dsInfo.BasicAuthUser, dsInfo.BasicAuthPassword)
-	}
-
 	return req, err
 }
 

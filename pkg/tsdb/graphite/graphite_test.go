@@ -50,7 +50,7 @@ func TestFixIntervalFormat(t *testing.T) {
 		})
 	}
 
-	executor := &Service{logger: log.New("tsdb.graphite")}
+	service := &Service{logger: log.New("tsdb.graphite")}
 
 	t.Run("Converts response to data frames", func(*testing.T) {
 		body := `
@@ -73,7 +73,7 @@ func TestFixIntervalFormat(t *testing.T) {
 		expectedFrames := data.Frames{expectedFrame}
 
 		httpResponse := &http.Response{StatusCode: 200, Body: ioutil.NopCloser(strings.NewReader(body))}
-		dataFrames, err := executor.toDataFrames(httpResponse)
+		dataFrames, err := service.toDataFrames(httpResponse)
 
 		require.NoError(t, err)
 		if !reflect.DeepEqual(expectedFrames, dataFrames) {
