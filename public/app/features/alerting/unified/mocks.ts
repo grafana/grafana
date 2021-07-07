@@ -144,6 +144,7 @@ export const mockAlertGroup = (partial: Partial<AlertmanagerGroup> = {}): Alertm
 };
 
 export class MockDataSourceSrv implements DataSourceSrv {
+  private datasources: Record<string, DataSourceApi> = {};
   // @ts-ignore
   private settingsMapByName: Record<string, DataSourceInstanceSettings> = {};
   private settingsMapByUid: Record<string, DataSourceInstanceSettings> = {};
@@ -153,6 +154,7 @@ export class MockDataSourceSrv implements DataSourceSrv {
     getVariables: () => [],
     replace: (name: any) => name,
   };
+  private defaultName = '';
 
   constructor(datasources: Record<string, DataSourceInstanceSettings>) {
     this.settingsMapByName = Object.values(datasources).reduce<Record<string, DataSourceInstanceSettings>>(
@@ -165,11 +167,15 @@ export class MockDataSourceSrv implements DataSourceSrv {
     for (const dsSettings of Object.values(this.settingsMapByName)) {
       this.settingsMapByUid[dsSettings.uid] = dsSettings;
       this.settingsMapById[dsSettings.id] = dsSettings;
+      if (dsSettings.isDefault) {
+        this.defaultName = dsSettings.name;
+      }
     }
   }
 
   get(name?: string | null, scopedVars?: ScopedVars): Promise<DataSourceApi> {
-    return Promise.reject(new Error('not implemented'));
+    return DatasourceSrv.prototype.get.call(this, name, scopedVars);
+    //return Promise.reject(new Error('not implemented'));
   }
 
   /**
@@ -187,6 +193,10 @@ export class MockDataSourceSrv implements DataSourceSrv {
       DatasourceSrv.prototype.getInstanceSettings.call(this, nameOrUid) ||
       (({ meta: { info: { logos: {} } } } as unknown) as DataSourceInstanceSettings)
     );
+  }
+
+  async loadDatasource(name: string): Promise<DataSourceApi<any, any>> {
+    return DatasourceSrv.prototype.loadDatasource.call(this, name);
   }
 }
 

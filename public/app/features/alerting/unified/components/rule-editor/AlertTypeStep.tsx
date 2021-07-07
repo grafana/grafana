@@ -119,6 +119,7 @@ export const AlertTypeStep: FC<Props> = ({ editingExistingRule }) => {
           className={styles.formInput}
           error={errors.folder?.message}
           invalid={!!errors.folder?.message}
+          data-testid="folder-picker"
         >
           <InputControl
             render={({ field: { ref, ...field } }) => (
