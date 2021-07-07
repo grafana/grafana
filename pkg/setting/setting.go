@@ -54,12 +54,6 @@ const (
 // zoneInfo names environment variable for setting the path to look for the timezone database in go
 const zoneInfo = "ZONEINFO"
 
-// These constants are responsible for storing the default values for the deprecated config variables DataProxyMaxIdleConns
-// and DataProxyMaxIdleConnsPerHost
-const (
-	MaxIdleConnsPerHost = 2
-)
-
 var (
 	// App settings.
 	Env              = Dev
@@ -857,12 +851,12 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	DataProxyExpectContinueTimeout = dataproxy.Key("expect_continue_timeout_seconds").MustInt(1)
 	DataProxyMaxConnsPerHost = dataproxy.Key("max_conns_per_host").MustInt(0)
 	DataProxyMaxIdleConns = dataproxy.Key("max_idle_connections").MustInt()
-	DataProxyMaxIdleConnsPerHost = dataproxy.Key("max_idle_connections_per_host").MustInt(MaxIdleConnsPerHost)
 	DataProxyIdleConnTimeout = dataproxy.Key("idle_conn_timeout_seconds").MustInt(90)
 	cfg.SendUserHeader = dataproxy.Key("send_user_header").MustBool(false)
 
-	if DataProxyMaxConnsPerHost != MaxIdleConnsPerHost {
+	if val, err := dataproxy.Key("max_idle_connections_per_host").Int(); err == nil {
 		cfg.Logger.Warn("[Deprecated] the configuration setting 'max_idle_connections_per_host' is deprecated, please use 'max_idle_connections' instead")
+		DataProxyMaxIdleConns = val
 	}
 
 	if err := readSecuritySettings(iniFile, cfg); err != nil {

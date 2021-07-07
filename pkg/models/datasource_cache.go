@@ -95,9 +95,6 @@ func (ds *DataSource) HTTPClientOptions() sdkhttpclient.Options {
 		MaxIdleConnsPerHost:   setting.DataProxyMaxIdleConns,
 		IdleConnTimeout:       time.Duration(setting.DataProxyIdleConnTimeout) * time.Second,
 	}
-	if setting.DataProxyMaxConnsPerHost != setting.MaxIdleConnsPerHost {
-		timeouts.MaxIdleConnsPerHost = setting.DataProxyMaxIdleConnsPerHost
-	}
 	opts := sdkhttpclient.Options{
 		Timeouts: timeouts,
 		Headers:  getCustomHeaders(ds.JsonData, ds.DecryptedValues()),
