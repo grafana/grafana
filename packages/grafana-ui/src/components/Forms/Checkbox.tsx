@@ -55,6 +55,7 @@ export const getCheckboxStyles = stylesFactory((theme: GrafanaTheme2) => {
     `,
     input: css`
       position: absolute;
+      z-index: 1;
       top: 0;
       left: 0;
       width: 100% !important; // global styles unset this
@@ -87,6 +88,7 @@ export const getCheckboxStyles = stylesFactory((theme: GrafanaTheme2) => {
         &:after {
           content: '';
           position: absolute;
+          z-index: 2;
           left: 5px;
           top: 1px;
           width: 6px;
@@ -110,13 +112,14 @@ export const getCheckboxStyles = stylesFactory((theme: GrafanaTheme2) => {
       }
     `,
     checkmark: css`
+      position: relative; /* Checkbox should be layered on top of the invisible input so it recieves :hover */
+      z-index: 2;
       display: inline-block;
       width: ${theme.spacing(checkboxSize)};
       height: ${theme.spacing(checkboxSize)};
       border-radius: ${theme.shape.borderRadius()};
       background: ${theme.components.input.background};
       border: 1px solid ${theme.components.input.borderColor};
-      pointer-events: none;
 
       &:hover {
         cursor: pointer;

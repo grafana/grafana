@@ -34,9 +34,10 @@ export const SearchItem: FC<Props> = ({ item, editable, onToggleChecked, onTagSe
     [onTagSelected]
   );
 
-  const toggleItem = useCallback(
+  const handleCheckboxClick = useCallback(
     (ev: React.MouseEvent) => {
       ev.stopPropagation();
+      ev.preventDefault();
 
       if (onToggleChecked) {
         onToggleChecked(item);
@@ -55,7 +56,7 @@ export const SearchItem: FC<Props> = ({ item, editable, onToggleChecked, onTagSe
       className={styles.container}
     >
       <Card.Figure align={'center'} className={styles.checkbox}>
-        <SearchCheckbox editable={editable} checked={item.checked} onClick={toggleItem} />
+        <SearchCheckbox editable={editable} checked={item.checked} onClick={handleCheckboxClick} />
       </Card.Figure>
       <Card.Meta separator={''}>
         <span className={styles.metaContainer}>

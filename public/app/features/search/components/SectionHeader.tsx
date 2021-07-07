@@ -29,9 +29,11 @@ export const SectionHeader: FC<SectionHeaderProps> = ({
     onSectionClick(section);
   };
 
-  const onSectionChecked = useCallback(
+  const handleCheckboxClick = useCallback(
     (ev: React.MouseEvent) => {
+      console.log('section header handleCheckboxClick');
       ev.stopPropagation();
+      ev.preventDefault();
 
       if (onToggleChecked) {
         onToggleChecked(section);
@@ -50,7 +52,7 @@ export const SectionHeader: FC<SectionHeaderProps> = ({
         className={styles.checkbox}
         editable={editable}
         checked={section.checked}
-        onClick={onSectionChecked}
+        onClick={handleCheckboxClick}
       />
 
       <div className={styles.icon}>
