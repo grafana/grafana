@@ -3,13 +3,12 @@ package api
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"os"
 	"path/filepath"
 	"sort"
 	"strings"
-
-	"gopkg.in/macaron.v1"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -258,12 +257,11 @@ func (hs *HTTPServer) CollectPluginMetrics(c *models.ReqContext) response.Respon
 // GetPluginAssets returns public plugin assets (images, JS, etc.)
 //
 // /public/plugins/:pluginId/*
-func (hs *HTTPServer) GetPluginAssets(c *models.ReqContext) {
+func (hs *HTTPServer) GetPluginAssets(c *models.ReqContext) response.Response {
 	pluginID := c.Params("pluginId")
 	plugin := hs.PluginManager.GetPlugin(pluginID)
 	if plugin == nil {
-		c.Handle(hs.Cfg, 404, "Plugin not found", nil)
-		return
+		return response.Error(404, "Plugin not found", nil)
 	}
 
 	requestedFile := filepath.Clean(c.Params("*"))
@@ -275,11 +273,9 @@ func (hs *HTTPServer) GetPluginAssets(c *models.ReqContext) {
 	f, err := os.Open(pluginFilePath)
 	if err != nil {
 		if os.IsNotExist(err) {
-			c.Handle(hs.Cfg, 404, "Could not find plugin file", err)
-			return
+			return response.Error(404, "Plugin file not found", err)
 		}
-		c.Handle(hs.Cfg, 500, "Could not open plugin file", err)
-		return
+		return response.Error(500, "Could not open plugin file", err)
 	}
 	defer func() {
 		if err := f.Close(); err != nil {
@@ -289,28 +285,28 @@ func (hs *HTTPServer) GetPluginAssets(c *models.ReqContext) {
 
 	fi, err := f.Stat()
 	if err != nil {
-		c.Handle(hs.Cfg, 500, "Plugin file exists but could not open", err)
-		return
+		return response.Error(500, "Plugin file exists but could not open", err)
 	}
 
 	if shouldExclude(fi) {
-		c.Handle(hs.Cfg, 404, "Plugin file not found", nil)
-		return
+		return response.Error(403, "Plugin file access forbidden",
+			fmt.Errorf("access is forbidden to executable plugin file %s", pluginFilePath))
 	}
 
-	headers := func(c *macaron.Context) {
-		c.Resp.Header().Set("Cache-Control", "public, max-age=3600")
-	}
+	resp := response.CreateNormalResponse(
+		http.Header{"Content-Type": []string{"text/plain", "charset=utf-8"}},
+		[]byte{},
+		200)
 
 	if hs.Cfg.Env == setting.Dev {
-		headers = func(c *macaron.Context) {
-			c.Resp.Header().Set("Cache-Control", "max-age=0, must-revalidate, no-cache")
-		}
+		resp.SetHeader("Cache-Control", "max-age=0, must-revalidate, no-cache")
+	} else {
+		resp.SetHeader("Cache-Control", "public, max-age=3600")
 	}
 
-	headers(c.Context)
+	http.ServeContent(resp, c.Req.Request, pluginFilePath, fi.ModTime(), f)
 
-	http.ServeContent(c.Resp, c.Req.Request, pluginFilePath, fi.ModTime(), f)
+	return resp
 }
 
 // CheckHealth returns the health of a plugin.
