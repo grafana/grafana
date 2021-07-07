@@ -31,7 +31,7 @@ async function getPluginVersions(id: string): Promise<any[]> {
 }
 
 async function getInstalledPlugins(): Promise<any> {
-  const installed = await getBackendSrv().get(`${API_ROOT}?core=0`);
+  const installed = await getBackendSrv().get(`${API_ROOT}`);
   return installed;
 }
 

@@ -18,7 +18,6 @@ export const PluginList = ({ plugins }: Props) => {
     <Grid>
       {plugins.map((plugin) => {
         const { name, slug, version, orgName, typeCode } = plugin;
-
         return (
           <Card
             key={`${orgName}-${name}-${typeCode}`}
