@@ -22,7 +22,6 @@ export interface Props {
   editPanel: PanelModel | null;
   viewPanel: PanelModel | null;
   scrollTop: number;
-  isPanelEditorOpen?: boolean;
 }
 
 export interface State {

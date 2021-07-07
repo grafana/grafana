@@ -211,21 +211,29 @@ export class TimeSrv {
 
     this.stopAutoRefresh();
 
-    if (interval) {
-      const validInterval = this.contextSrv.getValidInterval(interval);
-      const intervalMs = rangeUtil.intervalToMs(validInterval);
+    const currentUrlState = locationService.getSearchObject();
 
-      this.refreshTimer = setTimeout(() => {
-        this.startNextRefreshTimer(intervalMs);
-        this.refreshDashboard();
-      }, intervalMs);
+    if (!interval) {
+      // Clear URL state
+      if (currentUrlState.refresh) {
+        locationService.partial({ refresh: null }, true);
+      }
+
+      return;
     }
 
-    if (interval) {
-      const refresh = this.contextSrv.getValidInterval(interval);
+    const validInterval = this.contextSrv.getValidInterval(interval);
+    const intervalMs = rangeUtil.intervalToMs(validInterval);
+
+    this.refreshTimer = setTimeout(() => {
+      this.startNextRefreshTimer(intervalMs);
+      this.refreshDashboard();
+    }, intervalMs);
+
+    const refresh = this.contextSrv.getValidInterval(interval);
+
+    if (currentUrlState.refresh !== refresh) {
       locationService.partial({ refresh }, true);
-    } else {
-      locationService.partial({ refresh: null }, true);
     }
   }
 
