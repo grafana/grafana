@@ -14,6 +14,16 @@ import {
 } from './reducers';
 
 describe('userReducer', () => {
+  let dateNow: any;
+
+  beforeAll(() => {
+    dateNow = jest.spyOn(Date, 'now').mockImplementation(() => 1609470000000); // 2021-01-01 04:00:00
+  });
+
+  afterAll(() => {
+    dateNow.mockRestore();
+  });
+
   describe('when updateTimeZone is dispatched', () => {
     it('then state should be correct', () => {
       reducerTester<UserState>()

@@ -10,6 +10,7 @@ import {
   DataFrame,
   parseLiveChannelAddress,
   StreamingFrameOptions,
+  StreamingFrameAction,
 } from '@grafana/data';
 import { merge, Observable, of } from 'rxjs';
 import { catchError, switchMap } from 'rxjs/operators';
@@ -140,7 +141,7 @@ class DataSourceWithBackend<
           const rsp = toDataQueryResponse(raw, queries as DataQuery[]);
           // Check if any response should subscribe to a live stream
           if (rsp.data?.length && rsp.data.find((f: DataFrame) => f.meta?.channel)) {
-            return toStreamingDataResponse(request, rsp);
+            return toStreamingDataResponse(rsp, request, this.streamOptionsProvider);
           }
           return of(rsp);
         }),
@@ -171,6 +172,11 @@ class DataSourceWithBackend<
   applyTemplateVariables(query: TQuery, scopedVars: ScopedVars): Record<string, any> {
     return query;
   }
+
+  /**
+   * Optionally override the streaming behavior
+   */
+  streamOptionsProvider: StreamOptionsProvider<TQuery> = standardStreamOptionsProvider;
 
   /**
    * Make a GET request to the datasource resource path
@@ -218,38 +224,34 @@ class DataSourceWithBackend<
   }
 }
 
-export function toStreamingDataResponse(
-  request: DataQueryRequest,
-  rsp: DataQueryResponse
+/**
+ * @internal exported for tests
+ */
+export function toStreamingDataResponse<TQuery extends DataQuery = DataQuery>(
+  rsp: DataQueryResponse,
+  req: DataQueryRequest<TQuery>,
+  getter: (req: DataQueryRequest<TQuery>, frame: DataFrame) => StreamingFrameOptions
 ): Observable<DataQueryResponse> {
   const live = getGrafanaLiveSrv();
   if (!live) {
     return of(rsp); // add warning?
   }
 
-  const buffer: StreamingFrameOptions = {
-    maxLength: request.maxDataPoints ?? 500,
-  };
-
-  // For recent queries, clamp to the current time range
-  if (request.rangeRaw?.to === 'now') {
-    buffer.maxDelta = request.range.to.valueOf() - request.range.from.valueOf();
-  }
-
   const staticdata: DataFrame[] = [];
   const streams: Array<Observable<DataQueryResponse>> = [];
-  for (const frame of rsp.data) {
-    const addr = parseLiveChannelAddress(frame.meta?.channel);
+  for (const f of rsp.data) {
+    const addr = parseLiveChannelAddress(f.meta?.channel);
     if (addr) {
+      const frame = f as DataFrame;
       streams.push(
         live.getDataStream({
           addr,
-          buffer,
-          frame: frame as DataFrame,
+          buffer: getter(req, frame),
+          frame,
         })
       );
     } else {
-      staticdata.push(frame);
+      staticdata.push(f);
     }
   }
   if (staticdata.length) {
@@ -260,6 +262,32 @@ export function toStreamingDataResponse(
   }
   return merge(...streams);
 }
+
+/**
+ * This allows data sources to customize the streaming connection query
+ *
+ * @public
+ */
+export type StreamOptionsProvider<TQuery extends DataQuery = DataQuery> = (
+  request: DataQueryRequest<TQuery>,
+  frame: DataFrame
+) => StreamingFrameOptions;
+
+/**
+ * @public
+ */
+export const standardStreamOptionsProvider: StreamOptionsProvider = (request: DataQueryRequest, frame: DataFrame) => {
+  const buffer: StreamingFrameOptions = {
+    maxLength: request.maxDataPoints ?? 500,
+    action: StreamingFrameAction.Append,
+  };
+
+  // For recent queries, clamp to the current time range
+  if (request.rangeRaw?.to === 'now') {
+    buffer.maxDelta = request.range.to.valueOf() - request.range.from.valueOf();
+  }
+  return buffer;
+};
 
 //@ts-ignore
 DataSourceWithBackend = makeClassES5Compatible(DataSourceWithBackend);

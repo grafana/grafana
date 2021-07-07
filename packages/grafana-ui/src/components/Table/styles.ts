@@ -43,6 +43,9 @@ export const getTableStyles = (theme: GrafanaTheme2) => {
           display: inline-flex;
         }
       }
+      a {
+        color: inherit;
+      }
     `;
   };
 
