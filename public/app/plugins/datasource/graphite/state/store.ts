@@ -147,6 +147,10 @@ const reducer = async (action: Action, state: GraphiteQueryEditorState): Promise
   if (actions.targetChanged.match(action)) {
     handleTargetChanged(state);
   }
+  if (actions.updateQuery.match(action)) {
+    state.target.target = action.payload.query;
+    handleTargetChanged(state);
+  }
   if (actions.toggleEditorMode.match(action)) {
     state.target.textEditor = !state.target.textEditor;
     await parseTarget(state);
