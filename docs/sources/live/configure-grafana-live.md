@@ -19,6 +19,15 @@ The number of maximum WebSocket connections users can establish with Grafana is 
 
 In case you want to increase this limit, ensure that your server and infrastructure allow handling more connections. The following sections discuss several common problems which could happen when managing persistent connections, in particular WebSocket connections.
 
+## Request origin check
+
+To avoid hijacking of WebSocket connection Grafana Live checks the Origin request header sent by a client in an HTTP Upgrade request. Requests without Origin header pass through without any origin check.
+		
+
+By default, Live accepts connections with Origin header that matches configured [root_url]({{< relref "../administration/configuration.md#root_url" >}}) (which is a public Grafana URL).
+
+It is possible to provide a list of additional origin patterns to allow WebSocket connections from. This can be achieved using the [allowed_origins]({{< relref "../administration/configuration.md#allowed_origins" >}}) option of Grafana Live configuration.
+
 ### Resource usage
 
 Each persistent connection costs some memory on a server. Typically, this should be about 50 KB per connection at this moment. Thus a server with 1 GB RAM is expected to handle about 20k connections max. Each active connection consumes additional CPU resources since the client and server send PING/PONG frames to each other to maintain a connection.

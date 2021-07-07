@@ -1508,6 +1508,23 @@ Refer to [Grafana Live configuration documentation]({{< relref "../live/configur
 
 0 disables Grafana Live, -1 means unlimited connections.
 
+### allowed_origins
+
+> **Note**: Available in Grafana v8.0.4 and later versions.
+
+The `allowed_origins` option is a comma-separated list of additional origins (`Origin` header of HTTP Upgrade request during WebSocket connection establishment) that will be accepted by Grafana Live.
+
+If not set (default), then the origin is matched over [root_url]({{< relref "#root_url" >}}) which should be sufficient for most scenarios.
+
+Origin patterns support wildcard symbol "*".
+
+For example:
+
+```ini
+[live]
+allowed_origins = "https://*.example.com"
+```
+
 <hr>
 
 ## [plugin.grafana-image-renderer]
