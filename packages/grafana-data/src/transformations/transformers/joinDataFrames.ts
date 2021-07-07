@@ -133,14 +133,6 @@ export function outerJoinDataFrames(options: JoinOptions): DataFrame | undefined
       }
     }
 
-    // do we want the single frame case to do NULL_REMOVE instead of relying on the vis renderer
-    // to be capable of only gapping null values but still interpolating across undefined values?
-    //frameCopy.fields.forEach((f, fieldIndex) => {
-    //  if (f.config.custom?.spanNulls === true) {
-    //    f.values = new ArrayVector(f.values.toArray().map((v) => (v === null ? undefined : v)));
-    //  }
-    //});
-
     return frameCopy;
   }
 
