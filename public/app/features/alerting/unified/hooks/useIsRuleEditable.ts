@@ -37,7 +37,7 @@ export function useIsRuleEditable(rulesSourceName: string, rule?: RulerRuleDTO):
       );
     }
     return {
-      isEditable: folder?.canSave && !!checkEditingRequests[rulesSourceName].result,
+      isEditable: folder?.canSave,
       loading,
     };
   }
