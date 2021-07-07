@@ -23,7 +23,7 @@ export const defaultCartoConfig: CartoConfig = {
 
 export const carto: MapLayerRegistryItem<CartoConfig> = {
   id: 'carto',
-  name: 'Carto basemaps',
+  name: 'CARTO reference map',
   isBaseMap: true,
   defaultOptions: defaultCartoConfig,
 
