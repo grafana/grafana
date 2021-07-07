@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/registry"
 	"golang.org/x/oauth2"
 )
 
@@ -15,8 +16,25 @@ var (
 	logger = log.New("oauthtoken")
 )
 
+func init() {
+	registry.RegisterService(&Service{})
+}
+
+type Service struct {
+	SocialService social.Service `inject:""`
+}
+
+type OAuthTokenService interface {
+	GetCurrentOAuthToken(context.Context, *models.SignedInUser) *oauth2.Token
+	IsOAuthPassThruEnabled(*models.DataSource) bool
+}
+
+func (o *Service) Init() error {
+	return nil
+}
+
 // GetCurrentOAuthToken returns the OAuth token, if any, for the authenticated user. Will try to refresh the token if it has expired.
-func GetCurrentOAuthToken(ctx context.Context, user *models.SignedInUser) *oauth2.Token {
+func (o *Service) GetCurrentOAuthToken(ctx context.Context, user *models.SignedInUser) *oauth2.Token {
 	if user == nil {
 		// No user, therefore no token
 		return nil
@@ -34,13 +52,13 @@ func GetCurrentOAuthToken(ctx context.Context, user *models.SignedInUser) *oauth
 	}
 
 	authProvider := authInfoQuery.Result.AuthModule
-	connect, err := social.GetConnector(authProvider)
+	connect, err := o.SocialService.GetConnector(authProvider)
 	if err != nil {
 		logger.Error("failed to get OAuth connector", "provider", authProvider, "error", err)
 		return nil
 	}
 
-	client, err := social.GetOAuthHttpClient(authProvider)
+	client, err := o.SocialService.GetOAuthHttpClient(authProvider)
 	if err != nil {
 		logger.Error("failed to get OAuth http client", "provider", authProvider, "error", err)
 		return nil
@@ -78,7 +96,7 @@ func GetCurrentOAuthToken(ctx context.Context, user *models.SignedInUser) *oauth
 }
 
 // IsOAuthPassThruEnabled returns true if Forward OAuth Identity (oauthPassThru) is enabled for the provided data source.
-func IsOAuthPassThruEnabled(ds *models.DataSource) bool {
+func (o *Service) IsOAuthPassThruEnabled(ds *models.DataSource) bool {
 	return ds.JsonData != nil && ds.JsonData.Get("oauthPassThru").MustBool()
 }
 
