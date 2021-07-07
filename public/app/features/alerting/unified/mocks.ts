@@ -14,7 +14,10 @@ import {
 
 let nextDataSourceId = 1;
 
-export const mockDataSource = (partial: Partial<DataSourceInstanceSettings> = {}): DataSourceInstanceSettings => {
+export const mockDataSource = (
+  partial: Partial<DataSourceInstanceSettings> = {},
+  meta: Partial<DataSourcePluginMeta> = {}
+): DataSourceInstanceSettings => {
   const id = partial.id ?? nextDataSourceId++;
 
   return {
@@ -30,6 +33,7 @@ export const mockDataSource = (partial: Partial<DataSourceInstanceSettings> = {}
           large: 'https://prometheus.io/assets/prometheus_logo_grey.svg',
         },
       },
+      ...meta,
     } as any) as DataSourcePluginMeta,
     ...partial,
   };

@@ -554,9 +554,10 @@ export const checkIfLotexSupportsEditingRulesAction = createAsyncThunk(
           return true;
         } catch (e) {
           if (
-            isFetchError(e) &&
-            (e.data.message?.includes('GetRuleGroup unsupported in rule local store') || // "local" rule storage
-              e.data.message?.includes('page not found')) // ruler api disabled
+            (isFetchError(e) &&
+              (e.data.message?.includes('GetRuleGroup unsupported in rule local store') || // "local" rule storage
+                e.data.message?.includes('page not found'))) || // ruler api disabled
+            e.message?.includes('404 from rules config endpoint') // ruler api disabled
           ) {
             return false;
           }
