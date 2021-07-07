@@ -122,7 +122,7 @@ class UnThemedLogRowMessage extends PureComponent<Props> {
           <span className={cx(styles.positionRelative, { [styles.rowWithContext]: contextIsOpen })}>
             {needsHighlighter ? (
               <Highlighter
-                textToHighlight={entry}
+                textToHighlight={restructuredEntry.join('\n')}
                 searchWords={highlights ?? []}
                 findChunks={findHighlightChunksInText}
                 highlightClassName={highlightClassName}
