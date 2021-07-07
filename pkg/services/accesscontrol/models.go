@@ -48,9 +48,6 @@ func (p RoleDTO) Role() Role {
 
 const (
 	// Permission actions
-  
-	// Provisioning actions
-	ActionProvisioningReload = "provisioning:reload"
 
 	// Users actions
 	ActionUsersRead     = "users:read"

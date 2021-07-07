@@ -3,6 +3,7 @@ package accesscontrol
 import (
 	"fmt"
 	"strings"
+
 	"github.com/grafana/grafana/pkg/models"
 )
 
@@ -192,14 +193,14 @@ var (
 	// assigned which fixed roles in this list.
 	FixedRoles = map[string]RoleDTO{
 		datasourcesEditorRead: datasourcesEditorReadRole,
-		usersAdminEdit:    usersAdminEditRole,
-		usersAdminRead:    usersAdminReadRole,
-		usersOrgEdit:      usersOrgEditRole,
-		usersOrgRead:      usersOrgReadRole,
-		ldapAdminEdit:     ldapAdminEditRole,
-		ldapAdminRead:     ldapAdminReadRole,
-		serverAdminRead:   serverAdminReadRole,
-		settingsAdminRead: settingsAdminReadRole,
+		usersAdminEdit:        usersAdminEditRole,
+		usersAdminRead:        usersAdminReadRole,
+		usersOrgEdit:          usersOrgEditRole,
+		usersOrgRead:          usersOrgReadRole,
+		ldapAdminEdit:         ldapAdminEditRole,
+		ldapAdminRead:         ldapAdminReadRole,
+		serverAdminRead:       serverAdminReadRole,
+		settingsAdminRead:     settingsAdminReadRole,
 	}
 
 	// FixedRoleGrants specifies which built-in roles are assigned
