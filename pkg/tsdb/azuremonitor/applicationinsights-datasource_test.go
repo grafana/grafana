@@ -1,15 +1,14 @@
 package azuremonitor
 
 import (
+	"context"
 	"encoding/json"
+	"net/http"
 	"testing"
 	"time"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/require"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -159,92 +158,6 @@ func TestApplicationInsightsDatasource(t *testing.T) {
 	})
 }
 
-func TestAppInsightsPluginRoutes(t *testing.T) {
-	cfg := &setting.Cfg{
-		Azure: setting.AzureSettings{
-			Cloud:                  setting.AzurePublic,
-			ManagedIdentityEnabled: true,
-		},
-	}
-
-	plugin := &plugins.DataSourcePlugin{
-		Routes: []*plugins.AppPluginRoute{
-			{
-				Path:   "appinsights",
-				Method: "GET",
-				URL:    "https://api.applicationinsights.io",
-				Headers: []plugins.AppPluginRouteHeader{
-					{Name: "X-API-Key", Content: "{{.SecureJsonData.appInsightsApiKey}}"},
-					{Name: "x-ms-app", Content: "Grafana"},
-				},
-			},
-			{
-				Path:   "chinaappinsights",
-				Method: "GET",
-				URL:    "https://api.applicationinsights.azure.cn",
-				Headers: []plugins.AppPluginRouteHeader{
-					{Name: "X-API-Key", Content: "{{.SecureJsonData.appInsightsApiKey}}"},
-					{Name: "x-ms-app", Content: "Grafana"},
-				},
-			},
-		},
-	}
-
-	tests := []struct {
-		name              string
-		datasource        *ApplicationInsightsDatasource
-		dsInfo            datasourceInfo
-		expectedRouteName string
-		expectedRouteURL  string
-		Err               require.ErrorAssertionFunc
-	}{
-		{
-			name: "plugin proxy route for the Azure public cloud",
-			dsInfo: datasourceInfo{
-				Settings: azureMonitorSettings{
-					AzureAuthType: AzureAuthClientSecret,
-					CloudName:     "azuremonitor",
-				},
-			},
-			datasource: &ApplicationInsightsDatasource{
-				cfg: cfg,
-			},
-			expectedRouteName: "appinsights",
-			expectedRouteURL:  "https://api.applicationinsights.io",
-			Err:               require.NoError,
-		},
-		{
-			name: "plugin proxy route for the Azure China cloud",
-			dsInfo: datasourceInfo{
-				Settings: azureMonitorSettings{
-					AzureAuthType: AzureAuthClientSecret,
-					CloudName:     "chinaazuremonitor",
-				},
-			},
-			datasource: &ApplicationInsightsDatasource{
-				cfg: cfg,
-			},
-			expectedRouteName: "chinaappinsights",
-			expectedRouteURL:  "https://api.applicationinsights.azure.cn",
-			Err:               require.NoError,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			route, routeName, err := tt.datasource.getPluginRoute(plugin, tt.dsInfo)
-			tt.Err(t, err)
-
-			if diff := cmp.Diff(tt.expectedRouteURL, route.URL, cmpopts.EquateNaNs()); diff != "" {
-				t.Errorf("Result mismatch (-want +got):\n%s", diff)
-			}
-
-			if diff := cmp.Diff(tt.expectedRouteName, routeName, cmpopts.EquateNaNs()); diff != "" {
-				t.Errorf("Result mismatch (-want +got):\n%s", diff)
-			}
-		})
-	}
-}
 func TestInsightsDimensionsUnmarshalJSON(t *testing.T) {
 	a := []byte(`"foo"`)
 	b := []byte(`["foo"]`)
@@ -290,4 +203,47 @@ func TestInsightsDimensionsUnmarshalJSON(t *testing.T) {
 	err = json.Unmarshal(g, &gs)
 	require.NoError(t, err)
 	require.Empty(t, gs)
+}
+
+func TestAppInsightsCreateRequest(t *testing.T) {
+	ctx := context.Background()
+	dsInfo := datasourceInfo{
+		Settings: azureMonitorSettings{AppInsightsAppId: "foo"},
+		Services: map[string]datasourceService{
+			appInsights: {URL: "http://ds"},
+		},
+		DecryptedSecureJSONData: map[string]string{
+			"appInsightsApiKey": "key",
+		},
+	}
+
+	tests := []struct {
+		name            string
+		expectedURL     string
+		expectedHeaders http.Header
+		Err             require.ErrorAssertionFunc
+	}{
+		{
+			name:        "creates a request",
+			expectedURL: "http://ds/v1/apps/foo",
+			expectedHeaders: http.Header{
+				"X-Api-Key": []string{"key"},
+			},
+			Err: require.NoError,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ds := ApplicationInsightsDatasource{}
+			req, err := ds.createRequest(ctx, dsInfo)
+			tt.Err(t, err)
+			if req.URL.String() != tt.expectedURL {
+				t.Errorf("Expecting %s, got %s", tt.expectedURL, req.URL.String())
+			}
+			if !cmp.Equal(req.Header, tt.expectedHeaders) {
+				t.Errorf("Unexpected HTTP headers: %v", cmp.Diff(req.Header, tt.expectedHeaders))
+			}
+		})
+	}
 }

@@ -1,4 +1,4 @@
-load('scripts/vault.star', 'from_secret', 'github_token', 'pull_secret')
+load('scripts/vault.star', 'from_secret', 'github_token', 'pull_secret', 'drone_token')
 
 grabpl_version = '2.0.0'
 build_image = 'grafana/build-container:1.4.1'
@@ -193,7 +193,7 @@ def enterprise_downstream_step(edition):
         'image': 'grafana/drone-downstream',
         'settings': {
             'server': 'https://drone.grafana.net',
-            'token': from_secret('drone_token'),
+            'token': from_secret(drone_token),
             'repositories': [
                 'grafana/grafana-enterprise@main',
             ],
@@ -480,7 +480,7 @@ def frontend_metrics_step(edition):
         'name': 'publish-frontend-metrics',
         'image': build_image,
         'depends_on': [
-            'initialize',
+            'build-frontend',
         ],
         'environment': {
             'GRAFANA_MISC_STATS_API_KEY': from_secret('grafana_misc_stats_api_key'),

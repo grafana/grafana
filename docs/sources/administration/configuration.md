@@ -414,6 +414,11 @@ The length of time that Grafana will wait for a successful TLS handshake with th
 
 The length of time that Grafana will wait for a datasource’s first response headers after fully writing the request headers, if the request has an “Expect: 100-continue” header. A value of `0` will result in the body being sent immediately. Default is `1` second. For more details check the [Transport.ExpectContinueTimeout](https://golang.org/pkg/net/http/#Transport.ExpectContinueTimeout) documentation.
 
+### max_conns_per_host
+
+Optionally limits the total number of connections per host, including connections in the dialing, active, and idle states. On limit violation, dials are blocked. A value of `0` means that there are no limits. Default is `0`.
+For more details check the [Transport.MaxConnsPerHost](https://golang.org/pkg/net/http/#Transport.MaxConnsPerHost) documentation.
+
 ### max_idle_connections
 
 The maximum number of idle connections that Grafana will maintain. Default is `100`. For more details check the [Transport.MaxIdleConns](https://golang.org/pkg/net/http/#Transport.MaxIdleConns) documentation.
@@ -581,7 +586,9 @@ As of Grafana v7.3, this also limits the refresh interval options in Explore.
 
 ### default_home_dashboard_path
 
-Path to the default home dashboard. If this value is empty, then Grafana uses StaticRootPath + "dashboards/home.json"
+Path to the default home dashboard. If this value is empty, then Grafana uses StaticRootPath + "dashboards/home.json".
+
+>**Note:** On Linux, Grafana uses `/usr/share/grafana/public/dashboards/home.json` as the default home dashboard location.
 
 <hr />
 
@@ -1382,7 +1389,7 @@ Basic auth password.
 
 ### public_url
 
-Optional URL to send to users in notifications. If the string contains the sequence \${file}, it is replaced with the uploaded filename. Otherwise, the file name is appended to the path part of the URL, leaving any query string unchanged.
+Optional URL to send to users in notifications. If the string contains the sequence `${file}`, it is replaced with the uploaded filename. Otherwise, the file name is appended to the path part of the URL, leaving any query string unchanged.
 
 <hr>
 
@@ -1469,7 +1476,9 @@ Set to `true` if you want to test alpha plugins that are not yet ready for gener
 
 ### allow_loading_unsigned_plugins
 
-Enter a comma-separated list of plugin identifiers to identify plugins that are allowed to be loaded even if they lack a valid signature.
+Enter a comma-separated list of plugin identifiers to identify plugins to load even if they are unsigned. Plugins with modified signatures are never loaded.
+
+We do _not_ recommend using this option. For more information, refer to [Plugin signatures]({{< relref "../plugins/plugin-signatures.md" >}}).
 
 ### plugin_admin_enabled
 
@@ -1498,6 +1507,23 @@ The `max_connections` option specifies the maximum number of connections to the 
 Refer to [Grafana Live configuration documentation]({{< relref "../live/configure-grafana-live.md" >}}) if you specify a number higher than default since this can require some operating system and infrastructure tuning.
 
 0 disables Grafana Live, -1 means unlimited connections.
+
+### allowed_origins
+
+> **Note**: Available in Grafana v8.0.4 and later versions.
+
+The `allowed_origins` option is a comma-separated list of additional origins (`Origin` header of HTTP Upgrade request during WebSocket connection establishment) that will be accepted by Grafana Live.
+
+If not set (default), then the origin is matched over [root_url]({{< relref "#root_url" >}}) which should be sufficient for most scenarios.
+
+Origin patterns support wildcard symbol "*".
+
+For example:
+
+```ini
+[live]
+allowed_origins = "https://*.example.com"
+```
 
 <hr>
 

@@ -9,8 +9,8 @@ import {
   FieldType,
   formattedValueToString,
   getFieldColorModeForField,
-  getFieldDisplayName,
   getFieldSeriesColor,
+  getFieldDisplayName,
 } from '@grafana/data';
 
 import { UPlotConfigBuilder, UPlotConfigPrepFn } from '../uPlot/config/UPlotConfigBuilder';
@@ -42,6 +42,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
   getTimeRange,
   eventBus,
   sync,
+  allFrames,
 }) => {
   const builder = new UPlotConfigBuilder(timeZone);
 
@@ -98,7 +99,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
 
   const stackingGroups: Map<string, number[]> = new Map();
 
-  let indexByName: Map<string, number> | undefined = undefined;
+  let indexByName: Map<string, number> | undefined;
 
   for (let i = 1; i < frame.fields.length; i++) {
     const field = frame.fields[i];
@@ -149,13 +150,54 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
 
     const showPoints = customConfig.drawStyle === DrawStyle.Points ? PointVisibility.Always : customConfig.showPoints;
 
+    let pointsFilter: uPlot.Series.Points.Filter = () => null;
+
+    if (customConfig.spanNulls !== true) {
+      pointsFilter = (u, seriesIdx, show, gaps) => {
+        let filtered = [];
+
+        let series = u.series[seriesIdx];
+
+        if (!show && gaps && gaps.length) {
+          const [firstIdx, lastIdx] = series.idxs!;
+          const xData = u.data[0];
+          const firstPos = Math.round(u.valToPos(xData[firstIdx], 'x', true));
+          const lastPos = Math.round(u.valToPos(xData[lastIdx], 'x', true));
+
+          if (gaps[0][0] === firstPos) {
+            filtered.push(firstIdx);
+          }
+
+          // show single points between consecutive gaps that share end/start
+          for (let i = 0; i < gaps.length; i++) {
+            let thisGap = gaps[i];
+            let nextGap = gaps[i + 1];
+
+            if (nextGap && thisGap[1] === nextGap[0]) {
+              filtered.push(u.posToIdx(thisGap[1], true));
+            }
+          }
+
+          if (gaps[gaps.length - 1][1] === lastPos) {
+            filtered.push(lastIdx);
+          }
+        }
+
+        return filtered.length ? filtered : null;
+      };
+    }
+
     let { fillOpacity } = customConfig;
 
-    if (customConfig.fillBelowTo) {
+    if (customConfig.fillBelowTo && field.state?.origin) {
       if (!indexByName) {
-        indexByName = getNamesToFieldIndex(frame);
+        indexByName = getNamesToFieldIndex(frame, allFrames);
       }
-      const t = indexByName.get(getFieldDisplayName(field, frame));
+
+      const originFrame = allFrames[field.state.origin.frameIndex];
+      const originField = originFrame.fields[field.state.origin.fieldIndex];
+
+      const t = indexByName.get(getFieldDisplayName(originField, originFrame, allFrames));
       const b = indexByName.get(customConfig.fillBelowTo);
       if (isNumber(b) && isNumber(t)) {
         builder.addBand({
@@ -171,6 +213,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
     builder.addSeries({
       scaleKey,
       showPoints,
+      pointsFilter,
       colorMode,
       fillOpacity,
       theme,
@@ -312,10 +355,20 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
   return builder;
 };
 
-export function getNamesToFieldIndex(frame: DataFrame): Map<string, number> {
-  const names = new Map<string, number>();
+export function getNamesToFieldIndex(frame: DataFrame, allFrames: DataFrame[]): Map<string, number> {
+  const originNames = new Map<string, number>();
   for (let i = 0; i < frame.fields.length; i++) {
-    names.set(getFieldDisplayName(frame.fields[i], frame), i);
+    const origin = frame.fields[i].state?.origin;
+    if (origin) {
+      originNames.set(
+        getFieldDisplayName(
+          allFrames[origin.frameIndex].fields[origin.fieldIndex],
+          allFrames[origin.frameIndex],
+          allFrames
+        ),
+        i
+      );
+    }
   }
-  return names;
+  return originNames;
 }

@@ -58,7 +58,7 @@ func (rn *rawNode) GetCommandType() (c CommandType, err error) {
 }
 
 // String returns a string representation of the node. In particular for
-// %v formating in error messages.
+// %v formatting in error messages.
 func (b *baseNode) String() string {
 	return b.refID
 }

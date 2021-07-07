@@ -6,7 +6,7 @@
 
 .PHONY: all deps-go deps-js deps build-go build-server build-cli build-js build build-docker-dev build-docker-full lint-go golangci-lint test-go test-js test run run-frontend clean devenv devenv-down protobuf help
 
-GO = GO111MODULE=on go
+GO = go
 GO_FILES ?= ./pkg/...
 SH_FILES ?= $(shell find ./scripts -name *.sh)
 
@@ -51,7 +51,7 @@ scripts/go/bin/bra: scripts/go/go.mod
 	$(GO) build -o ./bin/bra github.com/unknwon/bra
 
 run: scripts/go/bin/bra ## Build and run web server on filesystem changes.
-	@GO111MODULE=on scripts/go/bin/bra run
+	@scripts/go/bin/bra run
 
 run-frontend: deps-js ## Fetch js dependencies and watch frontend for rebuild
 	yarn start

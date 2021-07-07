@@ -21,6 +21,8 @@ import (
 	"gopkg.in/ini.v1"
 )
 
+const defaultAppURL = "http://localhost:3000/"
+
 func TestPluginManager_Init(t *testing.T) {
 	t.Run("Base case (core + bundled plugins)", func(t *testing.T) {
 		staticRootPath, err := filepath.Abs("../../../public")
@@ -289,7 +291,7 @@ func TestPluginManager_Init(t *testing.T) {
 			setting.AppUrl = origAppURL
 			setting.AppSubUrl = origAppSubURL
 		})
-		setting.AppUrl = "http://localhost:3000/"
+		setting.AppUrl = defaultAppURL
 		setting.AppSubUrl = "/grafana"
 
 		pm := createManager(t, func(pm *PluginManager) {
@@ -316,7 +318,7 @@ func TestPluginManager_Init(t *testing.T) {
 		t.Cleanup(func() {
 			setting.AppUrl = origAppURL
 		})
-		setting.AppUrl = "http://localhost:3000/"
+		setting.AppUrl = defaultAppURL
 
 		pm := createManager(t, func(pm *PluginManager) {
 			pm.Cfg.PluginsPath = "testdata/valid-v2-pvt-signature"
@@ -342,7 +344,7 @@ func TestPluginManager_Init(t *testing.T) {
 		t.Cleanup(func() {
 			setting.AppUrl = origAppURL
 		})
-		setting.AppUrl = "http://localhost:3000/"
+		setting.AppUrl = defaultAppURL
 
 		pm := createManager(t, func(pm *PluginManager) {
 			pm.Cfg.PluginsPath = "testdata/invalid-v2-signature"
@@ -358,7 +360,7 @@ func TestPluginManager_Init(t *testing.T) {
 		t.Cleanup(func() {
 			setting.AppUrl = origAppURL
 		})
-		setting.AppUrl = "http://localhost:3000/"
+		setting.AppUrl = defaultAppURL
 
 		pm := createManager(t, func(pm *PluginManager) {
 			pm.Cfg.PluginsPath = "testdata/invalid-v2-signature-2"
@@ -367,6 +369,53 @@ func TestPluginManager_Init(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, []error{fmt.Errorf(`plugin 'test' has a modified signature`)}, pm.scanningErrors)
 		assert.Nil(t, pm.plugins[("test")])
+	})
+
+	t.Run("With plugin that contains symlink file + directory", func(t *testing.T) {
+		origAppURL := setting.AppUrl
+		t.Cleanup(func() {
+			setting.AppUrl = origAppURL
+		})
+		setting.AppUrl = defaultAppURL
+
+		pm := createManager(t, func(pm *PluginManager) {
+			pm.Cfg.PluginsPath = "testdata/includes-symlinks"
+		})
+		err := pm.Init()
+		require.NoError(t, err)
+		require.Empty(t, pm.scanningErrors)
+
+		const pluginID = "test-app"
+		p := pm.GetPlugin(pluginID)
+
+		assert.NotNil(t, p)
+		assert.NotNil(t, pm.GetApp(pluginID))
+		assert.Equal(t, pluginID, p.Id)
+		assert.Equal(t, "app", p.Type)
+		assert.Equal(t, "Test App", p.Name)
+		assert.Equal(t, "1.0.0", p.Info.Version)
+		assert.Equal(t, plugins.PluginSignatureValid, p.Signature)
+		assert.Equal(t, plugins.GrafanaType, p.SignatureType)
+		assert.Equal(t, "Grafana Labs", p.SignatureOrg)
+		assert.False(t, p.IsCorePlugin)
+	})
+
+	t.Run("With back-end plugin that is symlinked to plugins dir", func(t *testing.T) {
+		origAppURL := setting.AppUrl
+		t.Cleanup(func() {
+			setting.AppUrl = origAppURL
+		})
+		setting.AppUrl = defaultAppURL
+
+		pm := createManager(t, func(pm *PluginManager) {
+			pm.Cfg.PluginsPath = "testdata/symbolic-plugin-dirs"
+		})
+		err := pm.Init()
+		require.NoError(t, err)
+		// This plugin should be properly registered, even though it is symlinked to plugins dir
+		require.Empty(t, pm.scanningErrors)
+		const pluginID = "test-app"
+		assert.NotNil(t, pm.plugins[pluginID])
 	})
 }
 

@@ -186,7 +186,11 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 		Children:   dashboardChildNavs,
 	})
 
-	if setting.ExploreEnabled && (c.OrgRole == models.ROLE_ADMIN || c.OrgRole == models.ROLE_EDITOR || setting.ViewersCanEdit) {
+	canExplore := func(context *models.ReqContext) bool {
+		return c.OrgRole == models.ROLE_ADMIN || c.OrgRole == models.ROLE_EDITOR || setting.ViewersCanEdit
+	}
+
+	if setting.ExploreEnabled && hasAccess(canExplore, ac.ActionDatasourcesExplore) {
 		navTree = append(navTree, &dtos.NavLink{
 			Text:       "Explore",
 			Id:         "explore",
@@ -357,12 +361,21 @@ func (hs *HTTPServer) buildAdminNavLinks(c *models.ReqContext) []*dtos.NavLink {
 		adminNavLinks = append(adminNavLinks, &dtos.NavLink{
 			Text: "Orgs", Id: "global-orgs", Url: hs.Cfg.AppSubURL + "/admin/orgs", Icon: "building",
 		})
+	}
+
+	if hasAccess(ac.ReqGrafanaAdmin, ac.ActionSettingsRead) {
 		adminNavLinks = append(adminNavLinks, &dtos.NavLink{
 			Text: "Settings", Id: "server-settings", Url: hs.Cfg.AppSubURL + "/admin/settings", Icon: "sliders-v-alt",
 		})
+	}
+
+	if hasAccess(ac.ReqGrafanaAdmin, ac.ActionServerStatsRead) {
 		adminNavLinks = append(adminNavLinks, &dtos.NavLink{
 			Text: "Stats", Id: "server-stats", Url: hs.Cfg.AppSubURL + "/admin/stats", Icon: "graph-bar",
 		})
+	}
+
+	if c.IsGrafanaAdmin {
 		if hs.Cfg.PluginAdminEnabled {
 			adminNavLinks = append(adminNavLinks, &dtos.NavLink{
 				Text: "Plugin catalog", Id: "plugin-catalog", Url: hs.Cfg.AppSubURL + "/a/grafana-plugin-admin-app", Icon: "plug",
@@ -461,6 +474,7 @@ func (hs *HTTPServer) setIndexViewData(c *models.ReqContext) (*dtos.IndexViewDat
 		Sentry:                  &hs.Cfg.Sentry,
 		Nonce:                   c.RequestNonce,
 		ContentDeliveryURL:      hs.Cfg.GetContentDeliveryURL(hs.License.ContentDeliveryPrefix()),
+		LoadingLogo:             "public/img/grafana_icon.svg",
 	}
 
 	if hs.Cfg.FeatureToggles["accesscontrol"] {

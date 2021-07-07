@@ -1,6 +1,7 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import AnalyticsConfig, { Props } from './AnalyticsConfig';
+import userEvent from '@testing-library/user-event';
 
 const setup = (propsFunc?: (props: Props) => Props) => {
   let props: Props = {
@@ -22,18 +23,11 @@ const setup = (propsFunc?: (props: Props) => Props) => {
       basicAuthPassword: '',
       withCredentials: false,
       isDefault: false,
-      secureJsonFields: {
-        logAnalyticsClientSecret: false,
-      },
+      secureJsonFields: {},
       jsonData: {
         cloudName: '',
         subscriptionId: '',
-        azureLogAnalyticsSameAs: false,
         logAnalyticsDefaultWorkspace: '',
-        logAnalyticsTenantId: '',
-      },
-      secureJsonData: {
-        logAnalyticsClientSecret: '',
       },
       version: 1,
       readOnly: false,
@@ -80,10 +74,10 @@ describe('Render', () => {
           ...props.options.jsonData,
           azureLogAnalyticsSameAs: false,
           logAnalyticsDefaultWorkspace: '',
-          logAnalyticsTenantId: 'e7f3f661-a933-4b3f-8176-51c4f982ec48',
-          logAnalyticsClientId: '44693801-6ee6-49de-9b2d-9106972f9572',
-          logAnalyticsSubscriptionId: 'e3fe4fde-ad5e-4d60-9974-e2f3562ffdf2',
-          logAnalyticsClientSecret: 'cddcc020-2c94-460a-a3d0-df3147ffa792',
+          tenantId: 'e7f3f661-a933-4b3f-8176-51c4f982ec48',
+          clientId: '44693801-6ee6-49de-9b2d-9106972f9572',
+          subscriptionId: 'e3fe4fde-ad5e-4d60-9974-e2f3562ffdf2',
+          clientSecret: 'cddcc020-2c94-460a-a3d0-df3147ffa792',
         },
       },
     }));
@@ -91,18 +85,8 @@ describe('Render', () => {
   });
 
   it('should not render the Switch to use different creds for log analytics by default', () => {
-    setup((props) => ({
-      ...props,
-      options: {
-        ...props.options,
-        jsonData: {
-          ...props.options.jsonData,
-          azureLogAnalyticsSameAs: undefined,
-        },
-      },
-    }));
-    expect(screen.queryByLabelText('Same details as Azure Monitor API')).not.toBeInTheDocument();
-    expect(screen.queryByText('is deprecated', { exact: false })).not.toBeInTheDocument();
+    setup();
+    expect(screen.queryByText('is no longer supported', { exact: false })).not.toBeInTheDocument();
   });
 
   // Remove this test with deprecated code
@@ -117,7 +101,37 @@ describe('Render', () => {
         },
       },
     }));
-    expect(screen.queryByLabelText('Same details as Azure Monitor API')).toBeInTheDocument();
-    expect(screen.queryByText('is deprecated', { exact: false })).toBeInTheDocument();
+    expect(screen.queryByText('is no longer supported', { exact: false })).toBeInTheDocument();
+  });
+
+  it('should clean up the error when reseting the credentials', async () => {
+    const onUpdate = jest.fn();
+    setup((props) => ({
+      ...props,
+      options: {
+        ...props.options,
+        jsonData: {
+          ...props.options.jsonData,
+          azureLogAnalyticsSameAs: false,
+        },
+      },
+      updateOptions: onUpdate,
+    }));
+    expect(screen.queryByText('is no longer supported', { exact: false })).toBeInTheDocument();
+    userEvent.click(screen.getByText('Clear Azure Monitor Logs Credentials'));
+    expect(onUpdate).toHaveBeenCalled();
+    const newOpts = onUpdate.mock.calls[0][0]({});
+    expect(newOpts).toEqual({ jsonData: { azureLogAnalyticsSameAs: true } });
+  });
+
+  it('should disable inputs', () => {
+    setup((props) => ({
+      ...props,
+      options: {
+        ...props.options,
+        readOnly: true,
+      },
+    }));
+    expect(screen.queryByText('Load Workspaces')?.closest('button')).toBeDisabled();
   });
 });

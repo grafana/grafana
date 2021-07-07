@@ -1,9 +1,6 @@
-import { asyncScheduler, Observable, of, scheduled } from 'rxjs';
 import { AlertState, getDefaultTimeRange, LoadingState, PanelData, toDataFrame } from '@grafana/data';
-
-import { DashboardQueryRunnerResult } from './DashboardQueryRunner/types';
 import { mergePanelAndDashData } from './mergePanelAndDashData';
-import { delay } from 'rxjs/operators';
+import { TestScheduler } from 'rxjs/testing';
 
 function getTestContext() {
   const timeRange = getDefaultTimeRange();
@@ -13,108 +10,93 @@ function getTestContext() {
     annotations: [toDataFrame([{ id: 'panelData' }])],
     timeRange,
   };
-  const dashData: DashboardQueryRunnerResult = {
-    annotations: [{ id: 'dashData' }],
-    alertState: { id: 1, state: AlertState.OK, dashboardId: 1, panelId: 1, newStateDate: '' },
-  };
-  const panelObservable: Observable<PanelData> = scheduled(of(panelData), asyncScheduler);
-  const dashObservable: Observable<DashboardQueryRunnerResult> = scheduled(of(dashData), asyncScheduler);
+  const scheduler: TestScheduler = new TestScheduler((actual, expected) => {
+    expect(actual).toEqual(expected);
+  });
 
-  return { timeRange, panelObservable, dashObservable };
+  return { timeRange, scheduler, panelData };
 }
 
 describe('mergePanelAndDashboardData', () => {
-  describe('when both results are fast', () => {
-    it('then just combine the results', async () => {
-      const { dashObservable, panelObservable, timeRange } = getTestContext();
+  describe('when called and dashboard data contains annotations', () => {
+    it('then the annotations should be combined', () => {
+      const { panelData, timeRange, scheduler } = getTestContext();
 
-      await expect(mergePanelAndDashData(panelObservable, dashObservable)).toEmitValuesWith((received) => {
-        expect(received).toHaveLength(1);
-        const results = received[0];
-        expect(results).toEqual({
-          state: LoadingState.Done,
-          series: [],
-          annotations: [toDataFrame([{ id: 'panelData' }]), toDataFrame([{ id: 'dashData' }])],
-          alertState: { id: 1, state: AlertState.OK, dashboardId: 1, panelId: 1, newStateDate: '' },
-          timeRange,
+      scheduler.run(({ cold, expectObservable }) => {
+        const panelObservable = cold('a', { a: panelData });
+        const dashObservable = cold('a', { a: { annotations: [{ id: 'dashData' }] } });
+
+        const result = mergePanelAndDashData(panelObservable, dashObservable);
+
+        expectObservable(result).toBe('a', {
+          a: {
+            state: LoadingState.Done,
+            series: [],
+            annotations: [toDataFrame([{ id: 'panelData' }]), toDataFrame([{ id: 'dashData' }])],
+            timeRange,
+          },
         });
       });
+
+      scheduler.flush();
     });
   });
 
-  describe('when dashboard results are slow', () => {
-    it('then flush panel data first', async () => {
-      const { dashObservable, panelObservable, timeRange } = getTestContext();
+  describe('when called and dashboard data contains alert states', () => {
+    it('then the alert states should be added', () => {
+      const { panelData, timeRange, scheduler } = getTestContext();
 
-      await expect(mergePanelAndDashData(panelObservable, dashObservable.pipe(delay(250)))).toEmitValuesWith(
-        (received) => {
-          expect(received).toHaveLength(2);
-          const fastResults = received[0];
-          const slowResults = received[1];
-          expect(fastResults).toEqual({
+      scheduler.run(({ cold, expectObservable }) => {
+        const panelObservable = cold('a', { a: panelData });
+        const dashObservable = cold('a', {
+          a: {
+            annotations: [],
+            alertState: { id: 1, state: AlertState.OK, dashboardId: 1, panelId: 1, newStateDate: '' },
+          },
+        });
+
+        const result = mergePanelAndDashData(panelObservable, dashObservable);
+
+        expectObservable(result).toBe('a', {
+          a: {
+            state: LoadingState.Done,
+            series: [],
+            annotations: [toDataFrame([{ id: 'panelData' }]), toDataFrame([])],
+            alertState: { id: 1, state: AlertState.OK, dashboardId: 1, panelId: 1, newStateDate: '' },
+            timeRange,
+          },
+        });
+      });
+
+      scheduler.flush();
+    });
+  });
+
+  describe('when called and dashboard data does not contain annotations or alertState', () => {
+    it('then the panelData is unchanged', () => {
+      const { panelData, timeRange, scheduler } = getTestContext();
+
+      scheduler.run(({ cold, expectObservable }) => {
+        const panelObservable = cold('a', { a: panelData });
+        const dashObservable = cold('a', {
+          a: {
+            annotations: [],
+          },
+        });
+
+        const result = mergePanelAndDashData(panelObservable, dashObservable);
+
+        expectObservable(result).toBe('a', {
+          a: {
             state: LoadingState.Done,
             series: [],
             annotations: [toDataFrame([{ id: 'panelData' }])],
-            alertState: undefined,
             timeRange,
-          });
-          expect(slowResults).toEqual({
-            state: LoadingState.Done,
-            series: [],
-            annotations: [toDataFrame([{ id: 'panelData' }]), toDataFrame([{ id: 'dashData' }])],
-            alertState: { id: 1, state: AlertState.OK, dashboardId: 1, panelId: 1, newStateDate: '' },
-            timeRange,
-          });
-        }
-      );
-    });
-  });
-
-  describe('when panel results are slow', () => {
-    it('then just combine the results', async () => {
-      const { dashObservable, panelObservable, timeRange } = getTestContext();
-
-      await expect(mergePanelAndDashData(panelObservable.pipe(delay(250)), dashObservable)).toEmitValuesWith(
-        (received) => {
-          expect(received).toHaveLength(1);
-          const results = received[0];
-          expect(results).toEqual({
-            state: LoadingState.Done,
-            series: [],
-            annotations: [toDataFrame([{ id: 'panelData' }]), toDataFrame([{ id: 'dashData' }])],
-            alertState: { id: 1, state: AlertState.OK, dashboardId: 1, panelId: 1, newStateDate: '' },
-            timeRange,
-          });
-        }
-      );
-    });
-  });
-
-  describe('when both results are slow', () => {
-    it('then flush panel data first', async () => {
-      const { dashObservable, panelObservable, timeRange } = getTestContext();
-
-      await expect(
-        mergePanelAndDashData(panelObservable.pipe(delay(250)), dashObservable.pipe(delay(250)))
-      ).toEmitValuesWith((received) => {
-        expect(received).toHaveLength(2);
-        const fastResults = received[0];
-        const slowResults = received[1];
-        expect(fastResults).toEqual({
-          state: LoadingState.Done,
-          series: [],
-          annotations: [toDataFrame([{ id: 'panelData' }])],
-          alertState: undefined,
-          timeRange,
-        });
-        expect(slowResults).toEqual({
-          state: LoadingState.Done,
-          series: [],
-          annotations: [toDataFrame([{ id: 'panelData' }]), toDataFrame([{ id: 'dashData' }])],
-          alertState: { id: 1, state: AlertState.OK, dashboardId: 1, panelId: 1, newStateDate: '' },
-          timeRange,
+          },
         });
       });
+
+      scheduler.flush();
     });
   });
 });
