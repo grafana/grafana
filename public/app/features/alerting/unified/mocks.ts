@@ -4,8 +4,11 @@ import { AlertingRule, Alert, RecordingRule, RuleGroup, RuleNamespace } from 'ap
 import DatasourceSrv from 'app/features/plugins/datasource_srv';
 import { DataSourceSrv, GetDataSourceListFilters } from '@grafana/runtime';
 import {
+  AlertmanagerAlert,
   AlertManagerCortexConfig,
+  AlertmanagerGroup,
   AlertmanagerStatus,
+  AlertState,
   GrafanaManagedReceiverConfig,
 } from 'app/plugins/datasource/alertmanager/types';
 
@@ -95,6 +98,43 @@ export const mockPromRuleNamespace = (partial: Partial<RuleNamespace> = {}): Rul
     dataSourceName: 'Prometheus-1',
     name: 'default',
     groups: [mockPromRuleGroup()],
+    ...partial,
+  };
+};
+
+export const mockAlertmanagerAlert = (partial: Partial<AlertmanagerAlert> = {}): AlertmanagerAlert => {
+  return {
+    annotations: {
+      summary: 'US-Central region is on fire',
+    },
+    endsAt: '2021-06-22T21:49:28.562Z',
+    fingerprint: '88e013643c3df34ac3',
+    receivers: [{ name: 'pagerduty' }],
+    startsAt: '2021-06-21T17:25:28.562Z',
+    status: { inhibitedBy: [], silencedBy: [], state: AlertState.Active },
+    updatedAt: '2021-06-22T21:45:28.564Z',
+    generatorURL: 'https://play.grafana.com/explore',
+    labels: { severity: 'warning', region: 'US-Central' },
+    ...partial,
+  };
+};
+
+export const mockAlertGroup = (partial: Partial<AlertmanagerGroup> = {}): AlertmanagerGroup => {
+  return {
+    labels: {
+      severity: 'warning',
+      region: 'US-Central',
+    },
+    receiver: {
+      name: 'pagerduty',
+    },
+    alerts: [
+      mockAlertmanagerAlert(),
+      mockAlertmanagerAlert({
+        status: { state: AlertState.Suppressed, silencedBy: ['123456abcdef'], inhibitedBy: [] },
+        labels: { severity: 'warning', region: 'US-Central', foo: 'bar' },
+      }),
+    ],
     ...partial,
   };
 };
