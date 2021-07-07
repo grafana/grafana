@@ -399,6 +399,12 @@ type Cfg struct {
 
 	// Grafana.com URL
 	GrafanaComURL string
+
+	// Alerting
+	AlertingMaxAttempts       int
+	AlertingMinInterval       int64
+	AlertingEvaluationTimeout time.Duration
+	ExecuteAlerts             bool
 }
 
 // IsLiveConfigEnabled returns true if live should be able to save configs to SQL tables
@@ -900,7 +906,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 		cfg.ReportingDistributor = cfg.ReportingDistributor[:100]
 	}
 
-	if err := readAlertingSettings(iniFile); err != nil {
+	if err := cfg.readAlertingSettings(iniFile); err != nil {
 		return err
 	}
 
@@ -1342,10 +1348,11 @@ func readRenderingSettings(iniFile *ini.File, cfg *Cfg) error {
 	return nil
 }
 
-func readAlertingSettings(iniFile *ini.File) error {
+func (cfg *Cfg) readAlertingSettings(iniFile *ini.File) error {
 	alerting := iniFile.Section("alerting")
 	AlertingEnabled = alerting.Key("enabled").MustBool(true)
 	ExecuteAlerts = alerting.Key("execute_alerts").MustBool(true)
+	cfg.ExecuteAlerts = ExecuteAlerts
 	AlertingRenderLimit = alerting.Key("concurrent_render_limit").MustInt(5)
 
 	AlertingErrorOrTimeout = valueAsString(alerting, "error_or_timeout", "alerting")
@@ -1353,10 +1360,16 @@ func readAlertingSettings(iniFile *ini.File) error {
 
 	evaluationTimeoutSeconds := alerting.Key("evaluation_timeout_seconds").MustInt64(30)
 	AlertingEvaluationTimeout = time.Second * time.Duration(evaluationTimeoutSeconds)
+	cfg.AlertingEvaluationTimeout = AlertingEvaluationTimeout
 	notificationTimeoutSeconds := alerting.Key("notification_timeout_seconds").MustInt64(30)
 	AlertingNotificationTimeout = time.Second * time.Duration(notificationTimeoutSeconds)
 	AlertingMaxAttempts = alerting.Key("max_attempts").MustInt(3)
-	AlertingMinInterval = alerting.Key("min_interval_seconds").MustInt64(1)
+	cfg.AlertingMaxAttempts = AlertingMaxAttempts
+	AlertingMinInterval = alerting.Key("min_interval_seconds").MustInt64(int64(1))
+	if cfg.IsNgAlertEnabled() && AlertingMinInterval < 10 {
+		AlertingMinInterval = 10
+	}
+	cfg.AlertingMinInterval = AlertingMinInterval
 
 	return nil
 }

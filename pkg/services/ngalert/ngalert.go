@@ -28,7 +28,6 @@ import (
 )
 
 const (
-	maxAttempts int64 = 3
 	// scheduler interval
 	// changing this value is discouraged
 	// because this could cause existing alert definition
@@ -67,7 +66,7 @@ func (ng *AlertNG) Init() error {
 
 	store := &store.DBstore{
 		BaseInterval:           baseInterval,
-		DefaultIntervalSeconds: defaultIntervalSeconds,
+		DefaultIntervalSeconds: ng.getRuleDefaultIntervalSeconds(),
 		SQLStore:               ng.SQLStore,
 		Logger:                 ng.Log,
 	}
@@ -79,15 +78,16 @@ func (ng *AlertNG) Init() error {
 	}
 
 	schedCfg := schedule.SchedulerCfg{
-		C:             clock.New(),
-		BaseInterval:  baseInterval,
-		Logger:        ng.Log,
-		MaxAttempts:   maxAttempts,
-		Evaluator:     eval.Evaluator{Cfg: ng.Cfg, Log: ng.Log},
-		InstanceStore: store,
-		RuleStore:     store,
-		Notifier:      ng.Alertmanager,
-		Metrics:       ng.Metrics,
+		C:                      clock.New(),
+		BaseInterval:           baseInterval,
+		Logger:                 ng.Log,
+		MaxAttempts:            int64(ng.Cfg.AlertingMaxAttempts),
+		Evaluator:              eval.Evaluator{Cfg: ng.Cfg, Log: ng.Log},
+		InstanceStore:          store,
+		RuleStore:              store,
+		Notifier:               ng.Alertmanager,
+		Metrics:                ng.Metrics,
+		MinRuleIntervalSeconds: ng.getRuleMinIntervalSeconds(),
 	}
 	ng.schedule = schedule.NewScheduler(schedCfg, ng.DataService, ng.Cfg.AppURL)
 
@@ -116,9 +116,12 @@ func (ng *AlertNG) Run(ctx context.Context) error {
 	ng.schedule.WarmStateCache(ng.stateManager)
 
 	children, subCtx := errgroup.WithContext(ctx)
-	children.Go(func() error {
-		return ng.schedule.Ticker(subCtx, ng.stateManager)
-	})
+
+	if ng.Cfg.ExecuteAlerts {
+		children.Go(func() error {
+			return ng.schedule.Ticker(subCtx, ng.stateManager)
+		})
+	}
 	children.Go(func() error {
 		return ng.Alertmanager.Run(subCtx)
 	})
@@ -131,4 +134,31 @@ func (ng *AlertNG) IsDisabled() bool {
 		return true
 	}
 	return !ng.Cfg.IsNgAlertEnabled()
+}
+
+// getRuleDefaultIntervalSeconds returns the default rule interval if the interval is not set.
+// If this constant (1 minute) is lower than the configured minimum evaluation interval then
+// this configuration is returned.
+func (ng *AlertNG) getRuleDefaultIntervalSeconds() int64 {
+	ruleMinIntervalSeconds := ng.getRuleMinIntervalSeconds()
+	if defaultIntervalSeconds < ruleMinIntervalSeconds {
+		return ruleMinIntervalSeconds
+	}
+	return defaultIntervalSeconds
+}
+
+// getRuleMinIntervalSeconds returns the configured minimum rule interval.
+// If this value is less or equal to zero or not divided exactly by the scheduler interval
+// the scheduler interval (10 seconds) is returned.
+func (ng *AlertNG) getRuleMinIntervalSeconds() int64 {
+	if ng.Cfg.AlertingMinInterval <= 0 {
+		return baseIntervalSeconds // if it's not configured; apply default
+	}
+
+	if ng.Cfg.AlertingMinInterval%baseIntervalSeconds != 0 {
+		ng.Log.Error("Configured minimum evaluation interval is not divided exactly by the scheduler interval and it will fallback to default", "alertingMinInterval", ng.Cfg.AlertingMinInterval, "baseIntervalSeconds", baseIntervalSeconds, "defaultIntervalSeconds", defaultIntervalSeconds)
+		return baseIntervalSeconds // if it's invalid; apply default
+	}
+
+	return ng.Cfg.AlertingMinInterval
 }
