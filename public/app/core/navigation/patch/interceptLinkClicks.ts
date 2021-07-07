@@ -18,20 +18,18 @@ export function interceptLinkClicks(e: MouseEvent) {
       e.preventDefault();
 
       href = locationUtil.stripBaseFromUrl(href);
+
       // Ensure old angular urls with no starting '/' are handled the same as before
       // Make sure external links are handled correctly
       // That is they where seen as being absolute from app root
       if (href[0] !== '/') {
-        try {
-          const external = new URL(href);
-          if (external.origin !== window.location.origin) {
-            window.location.href = external.toString();
-            return;
-          }
-        } catch (e) {
-          console.warn(e);
+        // if still contains protocol it's an absolute link to another domain or web application
+        if (href.indexOf('://')) {
+          window.location.href = href;
+          return;
+        } else {
+          href = `/${href}`;
         }
-        href = `/${href}`;
       }
       locationService.push(href);
     }
