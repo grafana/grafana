@@ -182,14 +182,14 @@ export class GraphiteQueryCtrl extends QueryCtrl {
   }
 
   /**
-   * Get list of tags for a tag segment
+   * Get list of tags for editing exiting tag with <gf-form-dropdown>
    */
   async getTags(index: number, query: string): Promise<AngularDropdownOptions[]> {
     return await getTags(this.state, index, query);
   }
 
   /**
-   * Get tag list when a new tag is added
+   * Get tag list when adding a new tag with <metric-segment>
    */
   async getTagsAsSegments(query: string): Promise<GraphiteSegment[]> {
     return await getTagsAsSegments(this.state, query);

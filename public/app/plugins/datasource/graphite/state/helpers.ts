@@ -51,7 +51,10 @@ export function addSelectMetricSegment(state: GraphiteQueryEditorState): void {
 }
 
 /**
- * Check if it's possible to add more metrics at the end of the metric name and add it.
+ * Validates the state after adding or changing a segment:
+ * - adds "select metric" only when more segments can be added to the metric name
+ * - check if subsequent segments are still valid if in-between segment changes and
+ *   removes invalid segments.
  */
 export async function checkOtherSegments(
   state: GraphiteQueryEditorState,
@@ -96,7 +99,7 @@ export async function checkOtherSegments(
  * Changes segment being in focus. After changing the value, next segment gets focus.
  *
  * Note: It's a bit hidden feature. After selecting one metric, and pressing down arrow the dropdown can be expanded.
- * But there's nothing indicating what's in focus and how to expand the dropdown;
+ * But there's nothing indicating what's in focus and how to expand the dropdown.
  */
 export function setSegmentFocus(state: GraphiteQueryEditorState, segmentIndex: any): void {
   each(state.segments, (segment, index) => {
@@ -149,11 +152,18 @@ export function smartlyHandleNewAliasByNode(
   }
 }
 
+/**
+ * Add "+" button for adding tags once at least one tag is selected
+ */
 export function fixTagSegments(state: GraphiteQueryEditorState): void {
   // Adding tag with the same name as just removed works incorrectly if single segment is used (instead of array)
   state.addTagSegments = [state.uiSegmentSrv.newPlusButton()];
 }
 
+/**
+ * Pauses running the query to allow selecting tag value. This is to prevent getting errors if the query is run
+ * for a tag with no selected value.
+ */
 export function pause(state: GraphiteQueryEditorState): void {
   state.paused = true;
 }
