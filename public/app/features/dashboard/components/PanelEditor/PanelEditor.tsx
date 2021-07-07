@@ -28,7 +28,7 @@ import { SplitPaneWrapper } from 'app/core/components/SplitPaneWrapper/SplitPane
 import { SaveDashboardModalProxy } from '../SaveDashboard/SaveDashboardModalProxy';
 import { DashboardPanel } from '../../dashgrid/DashboardPanel';
 
-import { discardPanelChanges, initPanelEditor, panelEditorCleanUp, updatePanelEditorUIState } from './state/actions';
+import { discardPanelChanges, initPanelEditor, updatePanelEditorUIState } from './state/actions';
 
 import { updateTimeZoneForSession } from 'app/features/profile/state/reducers';
 import { toggleTableView } from './state/reducers';
@@ -78,7 +78,6 @@ const mapStateToProps = (state: StoreState) => {
 
 const mapDispatchToProps = {
   initPanelEditor,
-  panelEditorCleanUp,
   discardPanelChanges,
   updatePanelEditorUIState,
   updateTimeZoneForSession,
@@ -115,7 +114,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
   }
 
   componentWillUnmount() {
-    this.props.panelEditorCleanUp();
+    // redux action exitPanelEditor is called on location change from DashboardPrompt
     this.eventSubs?.unsubscribe();
   }
 
