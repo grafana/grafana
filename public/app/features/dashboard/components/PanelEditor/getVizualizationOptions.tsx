@@ -1,9 +1,9 @@
 import React from 'react';
 import { StandardEditorContext, VariableSuggestionsScope } from '@grafana/data';
-import { get as lodashGet, set as lodashSet } from 'lodash';
+import { get as lodashGet } from 'lodash';
 import { getDataLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
 import { OptionPaneRenderProps } from './types';
-import { updateDefaultFieldConfigValue } from './utils';
+import { updateDefaultFieldConfigValue, setOptionImmutably } from './utils';
 import { OptionsPaneItemDescriptor } from './OptionsPaneItemDescriptor';
 import { OptionsPaneCategoryDescriptor } from './OptionsPaneCategoryDescriptor';
 
@@ -54,7 +54,7 @@ export function getVizualizationOptions(props: OptionPaneRenderProps): OptionsPa
         description: pluginOption.description,
         render: function renderEditor() {
           const onChange = (value: any) => {
-            const newOptions = lodashSet({ ...currentOptions }, pluginOption.path, value);
+            const newOptions = setOptionImmutably(currentOptions, pluginOption.path, value);
             onPanelOptionsChanged(newOptions);
           };
 
