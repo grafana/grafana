@@ -172,8 +172,7 @@ func TestAMConfigAccess(t *testing.T) {
 
 		for _, tc := range testCases {
 			t.Run(tc.desc, func(t *testing.T) {
-				url := fmt.Sprintf(tc.url, grafanaListedAddr)
-				resp, err := http.Get(url)
+				resp, err := http.Get(fmt.Sprintf(tc.url, grafanaListedAddr))
 				t.Cleanup(func() {
 					require.NoError(t, resp.Body.Close())
 				})
