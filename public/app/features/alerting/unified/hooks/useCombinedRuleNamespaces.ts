@@ -24,7 +24,7 @@ interface CacheValue {
   result: CombinedRuleNamespace[];
 }
 
-// this little monster combines prometheus rules and ruler rules to produce a unfied data structure
+// this little monster combines prometheus rules and ruler rules to produce a unified data structure
 // can limit to a single rules source
 export function useCombinedRuleNamespaces(rulesSourceName?: string): CombinedRuleNamespace[] {
   const promRulesResponses = useUnifiedAlertingSelector((state) => state.promRules);
