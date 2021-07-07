@@ -12,6 +12,7 @@ import {
 import { getTemplateSrv } from '@grafana/runtime';
 import { SplitOpen } from 'app/types/explore';
 import { getLinkSrv } from '../../panel/panellinks/link_srv';
+import { contextSrv } from 'app/core/services/context_srv';
 
 /**
  * Get links from the field of a dataframe and in addition check if there is associated
@@ -52,30 +53,40 @@ export const getFieldLinksForExplore = (options: {
     };
   }
 
-  return field.config.links
-    ? field.config.links.map((link) => {
-        if (!link.internal) {
-          const replace: InterpolateFunction = (value, vars) =>
-            getTemplateSrv().replace(value, { ...vars, ...scopedVars });
+  if (field.config.links) {
+    const links = [];
 
-          const linkModel = getLinkSrv().getDataLinkUIModel(link, replace, field);
-          if (!linkModel.title) {
-            linkModel.title = getTitleFromHref(linkModel.href);
-          }
-          return linkModel;
-        } else {
-          return mapInternalLinkToExplore({
-            link,
-            internalLink: link.internal,
-            scopedVars: scopedVars,
-            range,
-            field,
-            onClickFn: splitOpenFn,
-            replaceVariables: getTemplateSrv().replace.bind(getTemplateSrv()),
-          });
+    if (!contextSrv.hasAccessToExplore()) {
+      links.push(...field.config.links.filter((l) => !l.internal));
+    } else {
+      links.push(...field.config.links);
+    }
+
+    return links.map((link) => {
+      if (!link.internal) {
+        const replace: InterpolateFunction = (value, vars) =>
+          getTemplateSrv().replace(value, { ...vars, ...scopedVars });
+
+        const linkModel = getLinkSrv().getDataLinkUIModel(link, replace, field);
+        if (!linkModel.title) {
+          linkModel.title = getTitleFromHref(linkModel.href);
         }
-      })
-    : [];
+        return linkModel;
+      } else {
+        return mapInternalLinkToExplore({
+          link,
+          internalLink: link.internal,
+          scopedVars: scopedVars,
+          range,
+          field,
+          onClickFn: splitOpenFn,
+          replaceVariables: getTemplateSrv().replace.bind(getTemplateSrv()),
+        });
+      }
+    });
+  }
+
+  return [];
 };
 
 function getTitleFromHref(href: string): string {

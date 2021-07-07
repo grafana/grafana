@@ -273,7 +273,7 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
                       Transformations allow you to join, calculate, re-order, hide, and rename your query results before
                       they are visualized. <br />
                       Many transforms are not suitable if you&apos;re using the Graph visualization, as it currently
-                      only only supports time series data. <br />
+                      only supports time series data. <br />
                       It can help to switch to the Table visualization to understand what a transformation is doing.{' '}
                     </p>
                     <a
