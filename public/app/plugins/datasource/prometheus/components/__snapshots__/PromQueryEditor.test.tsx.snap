@@ -31,12 +31,12 @@ exports[`Render PromQueryEditor with basic options should render 1`] = `
         <FormLabel
           tooltip={
             <React.Fragment>
-              Optionally set lower or upper bounds on the interval between datapoints, e.g., set "minimum 1h" to hint that the measurements were not taken more frequently. 
+              Optionally, set the lower or upper bounds on the interval between data points, for example, set "minimum 1h" to hint that the measurements were not taken more frequently.
+               
               <code>
                 $__interval
               </code>
-               and
-               
+               and 
               <code>
                 $__rate_interval
               </code>
