@@ -50,7 +50,7 @@ export { ModalHeader } from './Modal/ModalHeader';
 export { ModalTabsHeader } from './Modal/ModalTabsHeader';
 export { ModalTabContent } from './Modal/ModalTabContent';
 export { ModalsProvider, ModalRoot, ModalsController } from './Modal/ModalsContext';
-export { PageToolbar } from './PageLayout/PageToolbar';
+export { PageToolbar, PageToolbarProps } from './PageLayout/PageToolbar';
 
 // Renderless
 export { SetInterval } from './SetInterval/SetInterval';
@@ -168,7 +168,15 @@ export { MultiSelectValueEditor } from './OptionsUI/multiSelect';
 // Next-gen forms
 export { Form } from './Forms/Form';
 export { InputControl } from './InputControl';
-export { Button, LinkButton, ButtonVariant, ToolbarButton, ButtonGroup, ToolbarButtonRow } from './Button';
+export {
+  Button,
+  LinkButton,
+  ButtonVariant,
+  ToolbarButton,
+  ToolbarButtonProps,
+  ButtonGroup,
+  ToolbarButtonRow,
+} from './Button';
 export { ValuePicker } from './ValuePicker/ValuePicker';
 export { fieldMatchersUI } from './MatchersUI/fieldMatchersUI';
 export { getFormStyles } from './Forms/getFormStyles';

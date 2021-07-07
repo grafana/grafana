@@ -3,25 +3,16 @@ import appEvents from '../../app_events';
 import TopSection from './TopSection';
 import BottomSection from './BottomSection';
 import config from 'app/core/config';
-import { CoreEvents, KioskMode } from 'app/types';
+import { CoreEvents } from 'app/types';
 import { Branding } from 'app/core/components/Branding/Branding';
 import { Icon } from '@grafana/ui';
-import { useLocation } from 'react-router-dom';
 
 const homeUrl = config.appSubUrl || '/';
 
 export const SideMenu: FC = React.memo(() => {
-  const location = useLocation();
-  const query = new URLSearchParams(location.search);
-  const kiosk = query.get('kiosk') as KioskMode;
-
   const toggleSideMenuSmallBreakpoint = useCallback(() => {
     appEvents.emit(CoreEvents.toggleSidemenuMobile);
   }, []);
-
-  if (kiosk !== null) {
-    return null;
-  }
 
   return (
     <div className="sidemenu" data-testid="sidemenu">

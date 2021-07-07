@@ -10,12 +10,11 @@ import { CustomScrollbar, ScrollbarPosition, stylesFactory, Themeable2, withThem
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { Branding } from 'app/core/components/Branding/Branding';
 import { DashboardGrid } from '../dashgrid/DashboardGrid';
-import { DashNav } from '../components/DashNav';
 import { DashboardSettings } from '../components/DashboardSettings';
 import { PanelEditor } from '../components/PanelEditor/PanelEditor';
 import { initDashboard } from '../state/initDashboard';
 import { notifyApp } from 'app/core/actions';
-import { DashboardInitError, DashboardInitPhase, KioskMode, StoreState } from 'app/types';
+import { DashboardInitError, DashboardInitPhase, StoreState } from 'app/types';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { PanelInspector } from '../components/Inspector/PanelInspector';
 import { SubMenu } from '../components/SubMenu/SubMenu';
@@ -25,11 +24,12 @@ import { findTemplateVarChanges } from '../../variables/utils';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { getTimeSrv } from '../services/TimeSrv';
-import { getKioskMode } from 'app/core/navigation/kiosk';
 import { GrafanaTheme2, UrlQueryValue } from '@grafana/data';
 import { DashboardLoading } from '../components/DashboardLoading/DashboardLoading';
 import { DashboardFailed } from '../components/DashboardLoading/DashboardFailed';
 import { DashboardPrompt } from '../components/DashboardPrompt/DashboardPrompt';
+import { DashNav } from '../components/DashNav';
+import { HidableInDisplayProfile } from '../displayProfiles/components';
 
 export interface DashboardPageRouteParams {
   uid?: string;
@@ -290,8 +290,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
   render() {
     const { dashboard, isInitSlow, initError, isPanelEditorOpen, queryParams, theme } = this.props;
     const { editPanel, viewPanel, scrollTop, updateScrollTop } = this.state;
-    const kioskMode = getKioskMode(queryParams.kiosk);
-    const styles = getStyles(theme, kioskMode);
+    const styles = getStyles(theme);
 
     if (!dashboard) {
       if (isInitSlow) {
@@ -307,19 +306,16 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
 
     return (
       <div className={styles.dashboardContainer}>
-        {kioskMode !== KioskMode.Full && (
-          <div aria-label={selectors.pages.Dashboard.DashNav.nav}>
-            <DashNav
-              dashboard={dashboard}
-              title={dashboard.title}
-              folderTitle={dashboard.meta.folderTitle}
-              isFullscreen={!!viewPanel}
-              onAddPanel={this.onAddPanel}
-              kioskMode={kioskMode}
-              hideTimePicker={dashboard.timepicker.hidden}
-            />
-          </div>
-        )}
+        <div aria-label={selectors.pages.Dashboard.DashNav.nav}>
+          <DashNav
+            dashboard={dashboard}
+            title={dashboard.title}
+            folderTitle={dashboard.meta.folderTitle}
+            isFullscreen={!!viewPanel}
+            onAddPanel={this.onAddPanel}
+            hideTimePicker={dashboard.timepicker.hidden}
+          />
+        </div>
 
         <DashboardPrompt dashboard={dashboard} />
 
@@ -333,10 +329,12 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
           >
             <div className={styles.dashboardContent}>
               {initError && <DashboardFailed />}
-              {!editPanel && kioskMode === KioskMode.Off && (
-                <div aria-label={selectors.pages.Dashboard.SubMenu.submenu}>
-                  <SubMenu dashboard={dashboard} annotations={dashboard.annotations.list} links={dashboard.links} />
-                </div>
+              {!editPanel && (
+                <HidableInDisplayProfile pathInProfile="subMenu">
+                  <div aria-label={selectors.pages.Dashboard.SubMenu.submenu}>
+                    <SubMenu dashboard={dashboard} annotations={dashboard.annotations.list} links={dashboard.links} />
+                  </div>
+                </HidableInDisplayProfile>
               )}
 
               <DashboardGrid
@@ -377,8 +375,7 @@ const mapDispatchToProps = {
 /*
  * Styles
  */
-export const getStyles = stylesFactory((theme: GrafanaTheme2, kioskMode) => {
-  const contentPadding = kioskMode !== KioskMode.Full ? theme.spacing(0, 2, 2) : theme.spacing(2);
+export const getStyles = stylesFactory((theme: GrafanaTheme2) => {
   return {
     dashboardContainer: css`
       position: absolute;
@@ -397,7 +394,7 @@ export const getStyles = stylesFactory((theme: GrafanaTheme2, kioskMode) => {
       display: flex;
     `,
     dashboardContent: css`
-      padding: ${contentPadding};
+      padding: ${theme.spacing(0, 2, 2)};
       flex-basis: 100%;
       flex-grow: 1;
     `,

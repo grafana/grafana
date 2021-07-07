@@ -10,7 +10,7 @@ import { isString } from 'lodash';
 import { selectors } from '@grafana/e2e-selectors';
 import { getFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
 
-export interface Props extends ButtonHTMLAttributes<HTMLButtonElement> {
+export interface ToolbarButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   /** Icon name */
   icon?: IconName | React.ReactNode;
   /** Tooltip */
@@ -31,7 +31,7 @@ export interface Props extends ButtonHTMLAttributes<HTMLButtonElement> {
 
 export type ToolbarButtonVariant = 'default' | 'primary' | 'destructive' | 'active';
 
-export const ToolbarButton = forwardRef<HTMLButtonElement, Props>(
+export const ToolbarButton = forwardRef<HTMLButtonElement, ToolbarButtonProps>(
   (
     {
       tooltip,
