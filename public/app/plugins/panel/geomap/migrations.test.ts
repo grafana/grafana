@@ -51,6 +51,8 @@ describe('Worldmap Migrations', () => {
             "type": "default",
           },
           "controls": Object {
+            "mouseWheelZoom": true,
+            "showLegend": true,
             "showZoom": true,
           },
           "layers": Array [],
