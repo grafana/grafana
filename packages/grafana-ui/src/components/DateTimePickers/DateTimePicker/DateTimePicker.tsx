@@ -12,7 +12,7 @@ import { TimeOfDayPicker } from '../TimeOfDayPicker';
 
 export interface Props {
   /** Input date for the component */
-  date: DateTime;
+  date?: DateTime;
   /** Callback for returning the selected date */
   onChange: (date: DateTime) => void;
   /** label for the input field */
@@ -67,14 +67,14 @@ export const DateTimePicker: FC<Props> = ({ date, label, onChange }) => {
 };
 
 interface DateTimeCalendarProps {
-  date: DateTime;
+  date?: DateTime;
   onChange: (date: DateTime) => void;
   isFullscreen: boolean;
 }
 
 interface InputProps {
   label?: ReactNode;
-  date: DateTime;
+  date?: DateTime;
   isFullscreen: boolean;
   onChange: (date: DateTime) => void;
   onOpen: (event: FormEvent<HTMLElement>) => void;
@@ -87,14 +87,16 @@ type InputState = {
 
 const DateTimeInput: FC<InputProps> = ({ date, label, onChange, isFullscreen, onOpen }) => {
   const [internalDate, setInternalDate] = useState<InputState>(() => {
-    return { value: dateTimeFormat(date), invalid: false };
+    return { value: date ? dateTimeFormat(date) : dateTimeFormat(dateTime()), invalid: false };
   });
 
   useEffect(() => {
-    setInternalDate((prevState) => ({
-      ...prevState,
-      value: dateTimeFormat(date),
-    }));
+    if (date) {
+      setInternalDate((prevState) => ({
+        ...prevState,
+        value: dateTimeFormat(date),
+      }));
+    }
   }, [date]);
 
   const onChangeDate = useCallback((event: FormEvent<HTMLInputElement>) => {
@@ -133,7 +135,9 @@ const DateTimeInput: FC<InputProps> = ({ date, label, onChange, isFullscreen, on
 const DateTimeCalendar: FC<DateTimeCalendarProps> = ({ date, onChange, isFullscreen }) => {
   const calendarStyles = useStyles2(getBodyStyles);
   const styles = useStyles2(getStyles);
-  const [internalDate, setInternalDate] = useState<Date>(date.toDate() || Date.now());
+  const [internalDate, setInternalDate] = useState<Date>(() => {
+    return date ? date.toDate() : new Date();
+  });
 
   const onChangeDate = useCallback((date: Date | Date[]) => {
     if (!Array.isArray(date)) {
