@@ -1,7 +1,7 @@
 import React, { FC, FormEvent, ReactNode, useCallback, useEffect, useState } from 'react';
 import { useMedia } from 'react-use';
 import Calendar from 'react-calendar/dist/entry.nostyle';
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { dateTimeFormat, DateTime, dateTime, GrafanaTheme2 } from '@grafana/data';
 import { Button, Field, Icon, Input, Portal } from '../..';
 import { ClickOutsideWrapper } from '../../ClickOutsideWrapper/ClickOutsideWrapper';
@@ -27,6 +27,7 @@ export const DateTimePicker: FC<Props> = ({ date, label, onChange }) => {
   const theme = useTheme2();
   const isFullscreen = useMedia(`(min-width: ${theme.breakpoints.values.lg}px)`);
   const containerStyles = useStyles2(getCalendarStyles);
+  const styles = useStyles2(getStyles);
 
   const onApply = useCallback(
     (date: DateTime) => {
@@ -50,12 +51,12 @@ export const DateTimePicker: FC<Props> = ({ date, label, onChange }) => {
       {isOpen ? (
         isFullscreen ? (
           <ClickOutsideWrapper onClick={() => setOpen(false)}>
-            <DateTimeCalendar date={date} onChange={onApply} />
+            <DateTimeCalendar date={date} onChange={onApply} isFullscreen={true} />
           </ClickOutsideWrapper>
         ) : (
           <Portal>
-            <div className={containerStyles.modal} onClick={stopPropagation}>
-              <DateTimeCalendar date={date} onChange={onApply} />
+            <div className={styles.modal} onClick={stopPropagation}>
+              <DateTimeCalendar date={date} onChange={onApply} isFullscreen={false} />
             </div>
             <div className={containerStyles.backdrop} onClick={stopPropagation} />
           </Portal>
@@ -68,6 +69,7 @@ export const DateTimePicker: FC<Props> = ({ date, label, onChange }) => {
 interface DateTimeCalendarProps {
   date: DateTime;
   onChange: (date: DateTime) => void;
+  isFullscreen: boolean;
 }
 
 interface InputProps {
@@ -128,7 +130,7 @@ const DateTimeInput: FC<InputProps> = ({ date, label, onChange, isFullscreen, on
   );
 };
 
-const DateTimeCalendar: FC<DateTimeCalendarProps> = ({ date, onChange }) => {
+const DateTimeCalendar: FC<DateTimeCalendarProps> = ({ date, onChange, isFullscreen }) => {
   const calendarStyles = useStyles2(getBodyStyles);
   const styles = useStyles2(getStyles);
   const [internalDate, setInternalDate] = useState<Date>(date.toDate() || Date.now());
@@ -152,7 +154,7 @@ const DateTimeCalendar: FC<DateTimeCalendarProps> = ({ date, onChange }) => {
   }, []);
 
   return (
-    <div className={styles.container} onClick={stopPropagation}>
+    <div className={cx(styles.container, { [styles.fullScreen]: isFullscreen })} onClick={stopPropagation}>
       <Calendar
         next2Label={null}
         prev2Label={null}
@@ -178,14 +180,25 @@ const DateTimeCalendar: FC<DateTimeCalendarProps> = ({ date, onChange }) => {
 
 const getStyles = (theme: GrafanaTheme2) => ({
   container: css`
-    position: absolute;
-    right: 510px;
-    bottom: 435px;
     padding: ${theme.spacing(1)};
     border: 1px ${theme.colors.border.weak} solid;
     border-radius: ${theme.shape.borderRadius(1)};
+    background-color: ${theme.colors.background.primary};
+  `,
+  fullScreen: css`
+    position: absolute;
+    right: 500px;
+    bottom: 400px;
   `,
   time: css`
     margin-bottom: ${theme.spacing(2)};
+  `,
+  modal: css`
+    position: fixed;
+    top: 20%;
+    left: 10%;
+    width: 100%;
+    z-index: ${theme.zIndex.modal};
+    max-width: 280px;
   `,
 });
