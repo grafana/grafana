@@ -106,7 +106,9 @@ func TestChannelRuleCreate(t *testing.T) {
 		OrgId:   testOrgID,
 		Pattern: "x/y/*",
 		Config: models.LiveChannelRulePlainConfig{
-			RemoteWriteEndpoint: "test",
+			RemoteWrite: &models.RemoteWriteConfig{
+				Endpoint: "test",
+			},
 		},
 		Secure: map[string]string{
 			"remoteWritePassword": "test",
@@ -149,7 +151,9 @@ func TestChannelRuleUpdate(t *testing.T) {
 		OrgId:   testOrgID,
 		Pattern: "x/y/*",
 		Config: models.LiveChannelRulePlainConfig{
-			RemoteWriteEndpoint: "test",
+			RemoteWrite: &models.RemoteWriteConfig{
+				Endpoint: "test",
+			},
 		},
 		Secure: map[string]string{
 			"remoteWritePassword": "test",

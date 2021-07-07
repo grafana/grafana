@@ -9,6 +9,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/live/orgchannel"
+
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/remotewrite"
@@ -111,12 +113,14 @@ func (r *Runner) GetOrCreateStream(orgID int64, streamID string) (*ManagedStream
 
 // ManagedStream holds the state of a managed stream.
 type ManagedStream struct {
-	id              string
-	start           time.Time
-	publisher       models.ChannelPublisher
-	frameCache      FrameCache
-	remoteWriteData chan *remoteWriteRequest
-	ruleCache       RuleCacheGetter
+	id                string
+	start             time.Time
+	publisher         models.ChannelPublisher
+	frameCache        FrameCache
+	ruleCache         RuleCacheGetter
+	remoteWrite       chan *remoteWriteRequest
+	remoteWriteTime   map[string]time.Time
+	remoteWriteTimeMu sync.Mutex
 }
 
 // NewManagedStream creates new ManagedStream.
@@ -127,7 +131,8 @@ func NewManagedStream(id string, publisher models.ChannelPublisher, frameCache F
 		publisher:       publisher,
 		frameCache:      frameCache,
 		ruleCache:       ruleCache,
-		remoteWriteData: make(chan *remoteWriteRequest, 128),
+		remoteWrite:     make(chan *remoteWriteRequest, 128),
+		remoteWriteTime: map[string]time.Time{},
 	}
 	go s.processRemoteWrite()
 	return s
@@ -151,7 +156,7 @@ func (s *ManagedStream) processRemoteWrite() {
 	}
 
 	for {
-		r := <-s.remoteWriteData
+		r := <-s.remoteWrite
 		if r.config.Endpoint == "" {
 			logger.Debug("Skip sending to remote write: no url")
 			continue
@@ -229,29 +234,50 @@ func (s *ManagedStream) Push(orgID int64, path string, frame *data.Frame) error 
 		return fmt.Errorf("error getting channel rule from cache: %w", err)
 	}
 	if ok && rule.Config.RemoteWrite != nil && rule.Config.RemoteWrite.Enabled {
-		// Use remote write for a stream.
-		remoteWriteData, err := remotewrite.SerializeLabelsColumn(frame)
+		err := s.remoteWriteFrame(orgID, channel, *rule, frame)
 		if err != nil {
-			logger.Error("Error serializing to remote write format", "error", err)
-		} else {
-			password, ok := rule.Secure.DecryptedValue("remoteWritePassword")
-			if !ok {
-				logger.Warn("No password set for channel remote write", "orgId", orgID, "channel", channel)
-			}
-			select {
-			case s.remoteWriteData <- &remoteWriteRequest{
-				data:     remoteWriteData,
-				config:   *rule.Config.RemoteWrite,
-				password: password,
-			}:
-			default:
-				logger.Warn("Remote write is slow, dropping frame")
-			}
+			return fmt.Errorf("error during remote write: %w", err)
 		}
 	}
 
 	logger.Debug("Publish data to channel", "channel", channel, "dataLength", len(frameJSON))
 	return s.publisher(orgID, channel, frameJSON)
+}
+
+func (s *ManagedStream) remoteWriteFrame(orgID int64, channel string, rule models.LiveChannelRule, frame *data.Frame) error {
+	remoteWriteConfig := *rule.Config.RemoteWrite
+	s.remoteWriteTimeMu.Lock()
+	orgChannel := orgchannel.PrependOrgID(orgID, channel)
+	if t, ok := s.remoteWriteTime[orgChannel]; ok && remoteWriteConfig.SampleMilliseconds > 0 {
+		if time.Now().Before(t.Add(time.Duration(remoteWriteConfig.SampleMilliseconds) * time.Millisecond)) {
+			s.remoteWriteTimeMu.Unlock()
+			return nil
+		}
+		// Save current time as time of remote write for a channel.
+		s.remoteWriteTime[orgChannel] = time.Now()
+	}
+	s.remoteWriteTimeMu.Unlock()
+
+	// Use remote write for a stream.
+	remoteWriteData, err := remotewrite.SerializeLabelsColumn(frame)
+	if err != nil {
+		logger.Error("Error serializing to remote write format", "error", err)
+	} else {
+		password, ok := rule.Secure.DecryptedValue("remoteWritePassword")
+		if !ok {
+			logger.Warn("No password set for channel remote write", "orgId", orgID, "channel", channel)
+		}
+		select {
+		case s.remoteWrite <- &remoteWriteRequest{
+			data:     remoteWriteData,
+			config:   remoteWriteConfig,
+			password: password,
+		}:
+		default:
+			logger.Warn("Remote write is slow, dropping frame")
+		}
+	}
+	return nil
 }
 
 func (s *ManagedStream) GetHandlerForPath(_ string) (models.ChannelHandler, error) {
