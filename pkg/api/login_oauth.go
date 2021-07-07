@@ -278,7 +278,7 @@ func buildExternalUserInfo(token *oauth2.Token, userInfo *social.BasicUserInfo, 
 		Groups:     userInfo.Groups,
 	}
 
-	if userInfo.Role != "" {
+	if userInfo.Role != "" && !setting.SkipOrgRoleUpdateSync {
 		rt := models.RoleType(userInfo.Role)
 		if rt.IsValid() {
 			// The user will be assigned a role in either the auto-assigned organization or in the default one

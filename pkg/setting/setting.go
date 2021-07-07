@@ -105,6 +105,7 @@ var (
 	AllowUserOrgCreate      bool
 	AutoAssignOrg           bool
 	AutoAssignOrgId         int
+	SkipOrgRoleUpdateSync   bool
 	AutoAssignOrgRole       string
 	VerifyEmailEnabled      bool
 	LoginHint               string
@@ -394,9 +395,10 @@ type Cfg struct {
 	DefaultTheme string
 	HomePage     string
 
-	AutoAssignOrg     bool
-	AutoAssignOrgId   int
-	AutoAssignOrgRole string
+	AutoAssignOrg         bool
+	AutoAssignOrgId       int
+	AutoAssignOrgRole     string
+	SkipOrgRoleUpdateSync bool
 
 	// ExpressionsEnabled specifies whether expressions are enabled.
 	ExpressionsEnabled bool
@@ -1326,6 +1328,8 @@ func readUserSettings(iniFile *ini.File, cfg *Cfg) error {
 	AutoAssignOrg = cfg.AutoAssignOrg
 	cfg.AutoAssignOrgId = users.Key("auto_assign_org_id").MustInt(1)
 	AutoAssignOrgId = cfg.AutoAssignOrgId
+	cfg.SkipOrgRoleUpdateSync = users.Key("skip_org_role_update_sync").MustBool(false)
+	SkipOrgRoleUpdateSync = cfg.SkipOrgRoleUpdateSync
 	cfg.AutoAssignOrgRole = users.Key("auto_assign_org_role").In("Editor", []string{"Editor", "Admin", "Viewer"})
 	AutoAssignOrgRole = cfg.AutoAssignOrgRole
 	VerifyEmailEnabled = users.Key("verify_email_enabled").MustBool(false)
