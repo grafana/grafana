@@ -54,8 +54,10 @@ func (s *SocialAzureAD) UserInfo(_ *http.Client, token *oauth2.Token) (*BasicUse
 	}
 
 	role := extractRole(claims, s.autoAssignOrgRole)
+	logger.Debug("AzureAD OAuth: extracted role", "email", email, "role", role)
 
 	groups := extractGroups(claims)
+	logger.Debug("AzureAD OAuth: extracted groups", "email", email, "groups", groups)
 	if !s.IsGroupMember(groups) {
 		return nil, errMissingGroupMembership
 	}

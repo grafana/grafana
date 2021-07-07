@@ -20,11 +20,12 @@ import { PanelQueryRunner } from '../query/state/PanelQueryRunner';
 
 class MetricsPanelCtrl extends PanelCtrl {
   declare datasource: DataSourceApi;
+  declare range: TimeRange;
+
   contextSrv: ContextSrv;
   datasourceSrv: any;
   timeSrv: any;
   templateSrv: any;
-  declare range: TimeRange;
   interval: any;
   intervalMs: any;
   resolution: any;
@@ -98,7 +99,6 @@ class MetricsPanelCtrl extends PanelCtrl {
     // load datasource service
     return this.datasourceSrv
       .get(this.panel.datasource, this.panel.scopedVars)
-      .then(this.updateTimeRange.bind(this))
       .then(this.issueQueries.bind(this))
       .catch((err: any) => {
         this.processDataError(err);
@@ -178,11 +178,11 @@ class MetricsPanelCtrl extends PanelCtrl {
     const newTimeData = applyPanelTimeOverrides(this.panel, this.range);
     this.timeInfo = newTimeData.timeInfo;
     this.range = newTimeData.timeRange;
-
-    return this.datasource;
   }
 
   issueQueries(datasource: DataSourceApi) {
+    this.updateTimeRange(datasource);
+
     this.datasource = datasource;
 
     const panel = this.panel as PanelModel;

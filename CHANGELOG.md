@@ -1,4 +1,53 @@
 
+<!-- 8.0.4 START -->
+
+# 8.0.4 (2021-07-01)
+
+### Features and enhancements
+
+* **Live:** Rely on app url for origin check. [#35983](https://github.com/grafana/grafana/pull/35983), [@FZambia](https://github.com/FZambia)
+* **PieChart:** Sort legend descending, update placeholder to show default …. [#36062](https://github.com/grafana/grafana/pull/36062), [@ashharrison90](https://github.com/ashharrison90)
+* **TimeSeries panel:** Do not reinitialize plot when thresholds mode change. [#35952](https://github.com/grafana/grafana/pull/35952), [@dprokop](https://github.com/dprokop)
+
+### Bug fixes
+
+* **Elasticsearch:** Allow case sensitive custom options in date_histogram interval. [#36168](https://github.com/grafana/grafana/pull/36168), [@Elfo404](https://github.com/Elfo404)
+* **Elasticsearch:** Restore previous field naming strategy when using variables. [#35624](https://github.com/grafana/grafana/pull/35624), [@Elfo404](https://github.com/Elfo404)
+* **Explore:** Fix import of queries between SQL data sources. [#36210](https://github.com/grafana/grafana/pull/36210), [@ivanahuckova](https://github.com/ivanahuckova)
+* **InfluxDB:** InfluxQL query editor: fix retention policy handling. [#36022](https://github.com/grafana/grafana/pull/36022), [@gabor](https://github.com/gabor)
+* **Loki:** Send correct time range in template variable queries. [#36268](https://github.com/grafana/grafana/pull/36268), [@ivanahuckova](https://github.com/ivanahuckova)
+* **TimeSeries:** Preserve RegExp series overrides when migrating from old graph panel. [#36134](https://github.com/grafana/grafana/pull/36134), [@ashharrison90](https://github.com/ashharrison90)
+
+<!-- 8.0.4 END -->
+
+<!-- 8.0.3 START -->
+
+# 8.0.3 (2021-06-18)
+
+### Features and enhancements
+
+* **Alerting:** Increase alertmanager_conf column if MySQL. [#35657](https://github.com/grafana/grafana/pull/35657), [@kylebrandt](https://github.com/kylebrandt)
+* **Time series/Bar chart panel:** Handle infinite numbers as nulls when converting to plot array. [#35638](https://github.com/grafana/grafana/pull/35638), [@dprokop](https://github.com/dprokop)
+* **TimeSeries:** Ensure series overrides that contain color are migrated, and migrate the previous `fieldConfig` when changing the panel type. [#35676](https://github.com/grafana/grafana/pull/35676), [@ashharrison90](https://github.com/ashharrison90)
+* **ValueMappings:** Improve singlestat value mappings migration. [#35578](https://github.com/grafana/grafana/pull/35578), [@dprokop](https://github.com/dprokop)
+
+### Bug fixes
+
+* **Annotations:** Fix annotation line and marker colors. [#35608](https://github.com/grafana/grafana/pull/35608), [@torkelo](https://github.com/torkelo)
+* **AzureMonitor:** Fix KQL template variable queries without default workspace. [#35836](https://github.com/grafana/grafana/pull/35836), [@joshhunt](https://github.com/joshhunt)
+* **CloudWatch/Logs:** Fix missing response data for log queries. [#35724](https://github.com/grafana/grafana/pull/35724), [@aocenas](https://github.com/aocenas)
+* **Elasticsearch:** Restore previous field naming strategy when using variables. [#35624](https://github.com/grafana/grafana/pull/35624), [@Elfo404](https://github.com/Elfo404)
+* **LibraryPanels:** Fix crash in library panels list when panel plugin is not found. [#35907](https://github.com/grafana/grafana/pull/35907), [@torkelo](https://github.com/torkelo)
+* **LogsPanel:** Fix performance drop when moving logs panel in dashboard. [#35379](https://github.com/grafana/grafana/pull/35379), [@aocenas](https://github.com/aocenas)
+* **Loki:** Parse log levels when ANSI coloring is enabled. [#35607](https://github.com/grafana/grafana/pull/35607), [@olbo98](https://github.com/olbo98)
+* **MSSQL:** Fix issue with hidden queries still being executed. [#35787](https://github.com/grafana/grafana/pull/35787), [@torkelo](https://github.com/torkelo)
+* **PanelEdit:** Display the VisualizationPicker that was not displayed if a panel has an unknown panel plugin. [#35831](https://github.com/grafana/grafana/pull/35831), [@jackw](https://github.com/jackw)
+* **Plugins:** Fix loading symbolically linked plugins. [#35635](https://github.com/grafana/grafana/pull/35635), [@domasx2](https://github.com/domasx2)
+* **Prometheus:** Fix issue where legend name was replaced with name Value in stat and gauge panels. [#35863](https://github.com/grafana/grafana/pull/35863), [@torkelo](https://github.com/torkelo)
+* **State Timeline:** Fix crash when hovering over panel. [#35692](https://github.com/grafana/grafana/pull/35692), [@hugohaggmark](https://github.com/hugohaggmark)
+
+<!-- 8.0.3 END -->
+
 <!-- 8.0.2 START -->
 
 # 8.0.2 (2021-06-14)
@@ -326,6 +375,16 @@ The InfoBox & FeatureInfoBox are now deprecated please use the Alert component i
 * **VizLegend**: Move onSeriesColorChanged to PanelContext (breaking change). [#33611](https://github.com/grafana/grafana/pull/33611), [@ryantxu](https://github.com/ryantxu)
 
 <!-- 8.0.0-beta1 END -->
+
+<!-- 7.5.9 START -->
+
+# 7.5.9 (2021-06-23)
+
+### Bug fixes
+
+* **Login:** Fix Unauthorized message that is displayed on sign-in or snapshot page. [#35880](https://github.com/grafana/grafana/pull/35880), [@torkelo](https://github.com/torkelo)
+
+<!-- 7.5.9 END -->
 
 <!-- 7.5.8 START -->
 

@@ -8,6 +8,7 @@ import { Button } from '../../Button';
 import { Icon } from '../../Icon/Icon';
 import { Portal } from '../../Portal/Portal';
 import { ClickOutsideWrapper } from '../../ClickOutsideWrapper/ClickOutsideWrapper';
+import { selectors } from '@grafana/e2e-selectors';
 
 export const getStyles = stylesFactory((theme: GrafanaTheme2, isReversed = false) => {
   return {
@@ -208,7 +209,11 @@ export const TimePickerCalendar = memo<Props>((props) => {
   if (isFullscreen) {
     return (
       <ClickOutsideWrapper onClick={props.onClose}>
-        <div className={styles.container} onClick={stopPropagation}>
+        <div
+          className={styles.container}
+          onClick={stopPropagation}
+          aria-label={selectors.components.TimePicker.calendar}
+        >
           <Body {...props} />
         </div>
       </ClickOutsideWrapper>
@@ -218,7 +223,7 @@ export const TimePickerCalendar = memo<Props>((props) => {
   return (
     <Portal>
       <div className={styles.modal} onClick={stopPropagation}>
-        <div className={styles.content}>
+        <div className={styles.content} aria-label={selectors.components.TimePicker.calendar}>
           <Header {...props} />
           <Body {...props} />
           <Footer {...props} />

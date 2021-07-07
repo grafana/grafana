@@ -542,7 +542,7 @@ func (st DBstore) UpdateRuleGroup(cmd UpdateRuleGroupCmd) error {
 func (st DBstore) GetOrgRuleGroups(query *ngmodels.ListOrgRuleGroupsQuery) error {
 	return st.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		var ruleGroups [][]string
-		q := "SELECT DISTINCT rule_group, namespace_uid, (select title from dashboard where org_id = alert_rule.org_id and uid = alert_rule.namespace_uid) FROM alert_rule WHERE org_id = ?"
+		q := "SELECT DISTINCT rule_group, namespace_uid, (select title from dashboard where org_id = alert_rule.org_id and uid = alert_rule.namespace_uid) AS namespace_title FROM alert_rule WHERE org_id = ? ORDER BY namespace_title"
 		if err := sess.SQL(q, query.OrgID).Find(&ruleGroups); err != nil {
 			return err
 		}
