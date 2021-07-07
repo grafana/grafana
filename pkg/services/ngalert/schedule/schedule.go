@@ -361,21 +361,6 @@ func (sch *schedule) saveAlertStates(states []*state.State) {
 	}
 }
 
-func (sch *schedule) WarmStateCache(st *state.Manager) {
-
-}
-
-func translateInstanceState(state models.InstanceStateType) eval.State {
-	switch {
-	case state == models.InstanceStateFiring:
-		return eval.Alerting
-	case state == models.InstanceStateNormal:
-		return eval.Normal
-	default:
-		return eval.Error
-	}
-}
-
 type alertRuleRegistry struct {
 	mu            sync.Mutex
 	alertRuleInfo map[models.AlertRuleKey]alertRuleInfo
