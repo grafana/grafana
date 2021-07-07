@@ -178,8 +178,16 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
           (options as DataQueryRequest<LokiQuery>).scopedVars
         )
       );
+
+      const resolution = target.resolution || 1;
+
       const adjustedInterval =
-        this.adjustInterval((options as DataQueryRequest<LokiQuery>).intervalMs || 1000, minInterval, rangeMs) / 1000;
+        this.adjustInterval(
+          (options as DataQueryRequest<LokiQuery>).intervalMs || 1000,
+          minInterval,
+          rangeMs,
+          resolution
+        ) / 1000;
       // We want to ceil to 3 decimal places
       const step = Math.ceil(adjustedInterval * 1000) / 1000;
       const alignedTimes = {
@@ -226,7 +234,6 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
       return this.runLiveQuery(target, maxDataPoints);
     }
     const query = this.createRangeQuery(target, options, maxDataPoints);
-    console.log(query);
     return this._request(RANGE_QUERY_ENDPOINT, query).pipe(
       catchError((err: any) => this.throwUnless(err, err.status === 404, target)),
       switchMap((response: { data: LokiResponse; status: number }) =>
@@ -610,14 +617,20 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     return error;
   }
 
-  adjustInterval(interval: number, minInterval: number, range: number) {
+  adjustInterval(interval: number, minInterval: number, range: number, resolution: number) {
     // Loki will drop queries that might return more than 11000 data points.
     // Calibrate interval if it is too small.
-    if (interval !== 0 && range / interval > 11000) {
-      interval = Math.ceil(range / 11000);
+
+    let safeInterval = range / 11000;
+    if (safeInterval > 1) {
+      safeInterval = Math.ceil(safeInterval);
     }
+    /*if (interval !== 0 && range / interval > 11000) {
+      interval = Math.ceil(range / 11000);
+    }*/
     // The min interval is set to 1ms
-    return Math.max(interval, minInterval);
+    console.log(interval * resolution, minInterval);
+    return Math.max(interval * resolution, minInterval, safeInterval);
   }
 }
 

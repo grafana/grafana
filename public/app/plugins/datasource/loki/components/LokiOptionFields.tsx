@@ -2,13 +2,16 @@
 import React, { memo } from 'react';
 import { css, cx } from '@emotion/css';
 import { LokiQuery } from '../types';
+import { map } from 'lodash';
 
 // Types
-import { InlineFormLabel, RadioButtonGroup, InlineField, Input } from '@grafana/ui';
+import { InlineFormLabel, RadioButtonGroup, InlineField, Input, Select } from '@grafana/ui';
+import { SelectableValue } from '@grafana/data';
 
 export interface LokiOptionFieldsProps {
   lineLimitValue: string;
   stepInterval: string;
+  resolution: number;
   queryType: LokiQueryType;
   query: LokiQuery;
   onChange: (value: LokiQuery) => void;
@@ -27,8 +30,13 @@ const queryTypeOptions = [
   },
 ];
 
+const INTERVAL_FACTOR_OPTIONS: Array<SelectableValue<number>> = map([1, 2, 3, 4, 5, 10], (value: number) => ({
+  value,
+  label: '1/' + value,
+}));
+
 export function LokiOptionFields(props: LokiOptionFieldsProps) {
-  const { lineLimitValue, stepInterval, queryType, query, onRunQuery, runOnBlur, onChange } = props;
+  const { lineLimitValue, stepInterval, resolution, queryType, query, onRunQuery, runOnBlur, onChange } = props;
 
   function onChangeQueryLimit(value: string) {
     const nextQuery = { ...query, maxLines: preprocessMaxLines(value) };
@@ -73,6 +81,11 @@ export function LokiOptionFields(props: LokiOptionFieldsProps) {
 
   function onStepChange(e: React.KeyboardEvent<HTMLInputElement>) {
     const nextQuery = { ...query, step: e.currentTarget.value };
+    onChange(nextQuery);
+  }
+
+  function onResolutionChange(option: SelectableValue<number>) {
+    const nextQuery = { ...query, resolution: option.value };
     onChange(nextQuery);
   }
 
@@ -142,6 +155,14 @@ export function LokiOptionFields(props: LokiOptionFieldsProps) {
                 onRunQuery();
               }
             }}
+          />
+        </InlineField>
+        <InlineField label="Resolution">
+          <Select
+            isSearchable={false}
+            options={INTERVAL_FACTOR_OPTIONS}
+            onChange={onResolutionChange}
+            value={resolution}
           />
         </InlineField>
       </div>

@@ -31,6 +31,7 @@ export interface LokiQuery extends DataQuery {
   valueWithRefId?: boolean;
   maxLines?: number;
   step?: string;
+  resolution?: number;
   range?: boolean;
   instant?: boolean;
 }
