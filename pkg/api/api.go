@@ -80,6 +80,7 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/plugins/:id/edit", reqSignedIn, hs.Index) // deprecated
 	r.Get("/plugins/:id/page/:page", reqSignedIn, hs.Index)
 	r.Get("/a/:id/*", reqSignedIn, hs.Index) // App Root Page
+	r.Get("/a/:id", reqSignedIn, hs.Index)
 
 	r.Get("/d/:uid/:slug", reqSignedIn, redirectFromLegacyPanelEditURL, hs.Index)
 	r.Get("/d/:uid", reqSignedIn, redirectFromLegacyPanelEditURL, hs.Index)
@@ -94,7 +95,12 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/dashboards/*", reqSignedIn, hs.Index)
 	r.Get("/goto/:uid", reqSignedIn, hs.redirectFromShortURL, hs.Index)
 
-	r.Get("/explore", reqSignedIn, middleware.EnsureEditorOrViewerCanEdit, hs.Index)
+	r.Get("/explore", authorize(func(c *models.ReqContext) {
+		if f, ok := reqSignedIn.(func(c *models.ReqContext)); ok {
+			f(c)
+		}
+		middleware.EnsureEditorOrViewerCanEdit(c)
+	}, accesscontrol.ActionDatasourcesExplore), hs.Index)
 
 	r.Get("/playlists/", reqSignedIn, hs.Index)
 	r.Get("/playlists/*", reqSignedIn, hs.Index)
@@ -127,7 +133,7 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/api/login/ping", quota("session"), routing.Wrap(hs.LoginAPIPing))
 
 	// expose plugin file system assets
-	r.Get("/public/plugins/:pluginId/*", hs.GetPluginAssets)
+	r.Get("/public/plugins/:pluginId/*", routing.Wrap(hs.GetPluginAssets))
 
 	// authed api
 	r.Group("/api", func(apiRoute routing.RouteRegister) {
