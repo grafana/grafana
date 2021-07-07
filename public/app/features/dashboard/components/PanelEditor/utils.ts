@@ -41,22 +41,22 @@ export const updateDefaultFieldConfigValue = (
   isCustom?: boolean
 ) => {
   let defaults = { ...config.defaults };
-  const remove = value === undefined || value === null || '';
+  const remove = value == null || value === '';
 
   if (isCustom) {
     if (defaults.custom) {
       if (remove) {
         defaults.custom = omit(defaults.custom, name);
       } else {
-        defaults.custom = setOptionImmutably({ ...defaults.custom }, name, value);
+        defaults.custom = setOptionImmutably(defaults.custom, name, value);
       }
     } else if (!remove) {
-      defaults.custom = setOptionImmutably({ ...defaults.custom }, name, value);
+      defaults.custom = setOptionImmutably(defaults.custom, name, value);
     }
   } else if (remove) {
     defaults = omit(defaults, name);
   } else {
-    defaults = setOptionImmutably({ ...defaults }, name, value);
+    defaults = setOptionImmutably(defaults, name, value);
   }
 
   return {
@@ -65,21 +65,20 @@ export const updateDefaultFieldConfigValue = (
   };
 };
 
-export function setOptionImmutably<T extends object>(options: T, path: string, value: any): T {
-  const splat = path.split('.');
-  let result = { ...options };
+export function setOptionImmutably<T extends object>(options: T, path: string | string[], value: any): T {
+  const splat = !Array.isArray(path) ? path.split('.') : path;
 
-  if (splat.length === 1) {
-    (result as Record<string, any>)[path] = value;
-    return result;
+  const key = splat.shift()!;
+
+  if (!splat.length) {
+    return { ...options, [key]: value };
   }
 
-  let current = (result as Record<string, any>)[splat[0]];
-  if (current === undefined || current === null) {
-    current = {} as object;
+  let current = (options as Record<string, any>)[key];
+
+  if (current == null || typeof current !== 'object') {
+    current = {};
   }
-  return {
-    ...result,
-    [splat[0]]: setOptionImmutably({ ...current }, splat.slice(1).join('.'), value),
-  };
+
+  return { ...options, [key]: setOptionImmutably(current, splat, value) };
 }
