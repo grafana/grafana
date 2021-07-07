@@ -175,6 +175,7 @@ func (hs *HTTPServer) OAuthLogin(ctx *models.ReqContext) {
 
 	loginInfo.ExternalUser = *buildExternalUserInfo(token, userInfo, name)
 	loginInfo.User, err = syncUser(ctx, &loginInfo.ExternalUser, connect)
+
 	if err != nil {
 		hs.handleOAuthLoginErrorWithRedirect(ctx, loginInfo, err)
 		return

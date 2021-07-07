@@ -49,7 +49,7 @@ func (s *AuthService) Init() error {
 	}
 	if s.Cfg.JWTAuthKeyFile == "" && s.Cfg.JWTAuthJWKSetFile == "" && s.Cfg.JWTAuthJWKSetURL == "" {
 		if err := s.detectJWKSUri(); err != nil {
-			s.log.Debug("JWKS uri not detected due to", "err", err)
+			s.log.Error("JWKS uri not detected due to", "err", err)
 		}
 	}
 	if err := s.initKeySet(); err != nil {
@@ -63,8 +63,8 @@ func (s *AuthService) Init() error {
 // This can't work if you don't trust any issuers in JWTAuthExpectClaims
 func (s *AuthService) detectJWKSUri() error {
 	if s.expectRegistered.Issuer != "" {
-		oidcConfigURL := strings.TrimSuffix(s.expect["iss"].(string), "/") + OidcWellKnowConfigUri
-		var httpClient = &http.Client{Timeout: 10 * time.Second}
+		oidcConfigURL := strings.TrimSuffix(s.expectRegistered.Issuer, "/") + OidcWellKnowConfigUri
+		var httpClient = &http.Client{Timeout: 5 * time.Second}
 		r, err := httpClient.Get(oidcConfigURL)
 		if err != nil {
 			return err
