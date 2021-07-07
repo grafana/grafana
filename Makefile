@@ -137,7 +137,7 @@ protobuf: ## Compile protobuf definitions
 
 apidocs: ## Generate OpenAPI spec
 # pull docker image: docker pull quay.io/goswagger/swagger
-	docker run --rm -it -e GOPATH=${HOME}/go:/go -v ${HOME}:${HOME} -w $(PWD) -e SWAGGER_GENERATE_EXTENSION=false quay.io/goswagger/swagger generate spec -w ./pkg/cmd/grafana-server -o public/swagger.json -m
+	docker run --rm -it -e GOPATH=${HOME}/go:/go -v ${HOME}:${HOME} -w $(PWD) -e SWAGGER_GENERATE_EXTENSION=false quay.io/goswagger/swagger generate spec -w ./pkg/cmd/grafana-server -o public/swagger.json -m -x "grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 
 clean: ## Clean up intermediate build artifacts.
 	@echo "cleaning"
