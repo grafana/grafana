@@ -104,7 +104,7 @@ describe('Render', () => {
     expect(screen.queryByText('is no longer supported', { exact: false })).toBeInTheDocument();
   });
 
-  it('should clean up the error when reseting the credentials', async () => {
+  it('should clean up the error when resetting the credentials', async () => {
     const onUpdate = jest.fn();
     setup((props) => ({
       ...props,
