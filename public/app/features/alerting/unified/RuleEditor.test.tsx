@@ -1,4 +1,4 @@
-import { Matcher, render, waitFor, act } from '@testing-library/react';
+import { Matcher, render, waitFor } from '@testing-library/react';
 import { Provider } from 'react-redux';
 import { locationService, setDataSourceSrv, setBackendSrv, BackendSrv } from '@grafana/runtime';
 import { configureStore } from 'app/store/configureStore';
