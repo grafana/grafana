@@ -1,18 +1,23 @@
 package managedstream
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"sync"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental/remotewrite"
 	"github.com/grafana/grafana-plugin-sdk-go/live"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 )
+
+//go:generate mockgen -destination=runner_mock.go -package=managedstream github.com/grafana/grafana/pkg/services/live/managedstream RuleCacheGetter
 
 var (
 	logger = log.New("live.managed_stream")
@@ -24,14 +29,20 @@ type Runner struct {
 	streams    map[int64]map[string]*ManagedStream
 	publisher  models.ChannelPublisher
 	frameCache FrameCache
+	ruleCache  RuleCacheGetter
+}
+
+type RuleCacheGetter interface {
+	Get(orgID int64, channel string) (*models.LiveChannelRule, bool, error)
 }
 
 // NewRunner creates new Runner.
-func NewRunner(publisher models.ChannelPublisher, frameCache FrameCache) *Runner {
+func NewRunner(publisher models.ChannelPublisher, frameCache FrameCache, ruleCache RuleCacheGetter) *Runner {
 	return &Runner{
 		publisher:  publisher,
 		streams:    map[int64]map[string]*ManagedStream{},
 		frameCache: frameCache,
+		ruleCache:  ruleCache,
 	}
 }
 
@@ -92,7 +103,7 @@ func (r *Runner) GetOrCreateStream(orgID int64, streamID string) (*ManagedStream
 	}
 	s, ok := r.streams[orgID][streamID]
 	if !ok {
-		s = NewManagedStream(streamID, r.publisher, r.frameCache)
+		s = NewManagedStream(streamID, r.publisher, r.frameCache, r.ruleCache)
 		r.streams[orgID][streamID] = s
 	}
 	return s, nil
@@ -100,26 +111,75 @@ func (r *Runner) GetOrCreateStream(orgID int64, streamID string) (*ManagedStream
 
 // ManagedStream holds the state of a managed stream.
 type ManagedStream struct {
-	id         string
-	start      time.Time
-	publisher  models.ChannelPublisher
-	frameCache FrameCache
+	id              string
+	start           time.Time
+	publisher       models.ChannelPublisher
+	frameCache      FrameCache
+	remoteWriteData chan *remoteWriteRequest
+	ruleCache       RuleCacheGetter
 }
 
 // NewManagedStream creates new ManagedStream.
-func NewManagedStream(id string, publisher models.ChannelPublisher, schemaUpdater FrameCache) *ManagedStream {
-	return &ManagedStream{
-		id:         id,
-		start:      time.Now(),
-		publisher:  publisher,
-		frameCache: schemaUpdater,
+func NewManagedStream(id string, publisher models.ChannelPublisher, frameCache FrameCache, ruleCache RuleCacheGetter) *ManagedStream {
+	s := &ManagedStream{
+		id:              id,
+		start:           time.Now(),
+		publisher:       publisher,
+		frameCache:      frameCache,
+		ruleCache:       ruleCache,
+		remoteWriteData: make(chan *remoteWriteRequest, 128),
 	}
+	go s.processRemoteWrite()
+	return s
+}
+
+type remoteWriteRequest struct {
+	data     []byte
+	config   models.RemoteWriteConfig
+	password string
 }
 
 // ManagedChannel represents a managed stream.
 type ManagedChannel struct {
 	Channel string          `json:"channel"`
 	Data    json.RawMessage `json:"data"`
+}
+
+func (s *ManagedStream) processRemoteWrite() {
+	httpClient := &http.Client{
+		Timeout: 500 * time.Millisecond,
+	}
+
+	for {
+		r := <-s.remoteWriteData
+		if r.config.Endpoint == "" {
+			logger.Debug("Skip sending to remote write: no url")
+			continue
+		}
+		logger.Debug("Sending to remote write endpoint", "url", r.config.Endpoint, "bodyLength", len(r.data))
+		req, err := http.NewRequest(http.MethodPost, r.config.Endpoint, bytes.NewReader(r.data))
+		if err != nil {
+			logger.Error("Error constructing remote write request", "error", err)
+			continue
+		}
+		req.Header.Set("Content-Type", "application/x-protobuf")
+		req.Header.Set("Content-Encoding", "snappy")
+		req.Header.Set("X-Prometheus-Remote-Write-Version", "0.1.0")
+		req.SetBasicAuth(r.config.User, r.password)
+
+		started := time.Now()
+		resp, err := httpClient.Do(req)
+		if err != nil {
+			logger.Error("Error sending remote write request", "error", err)
+			continue
+		}
+		_ = resp.Body.Close()
+		if resp.StatusCode != http.StatusOK {
+			logger.Error("Unexpected response code from remote write endpoint", "code", resp.StatusCode)
+			continue
+		}
+		logger.Debug("Successfully sent to remote write endpoint", "url", r.config.Endpoint, "elapsed", time.Since(started))
+	}
 }
 
 // ListChannels returns info for the UI about this stream.
@@ -163,6 +223,32 @@ func (s *ManagedStream) Push(orgID int64, path string, frame *data.Frame) error 
 		include = data.IncludeAll
 	}
 	frameJSON := jsonFrameCache.Bytes(include)
+
+	rule, ok, err := s.ruleCache.Get(orgID, channel)
+	if err != nil {
+		return fmt.Errorf("error getting channel rule from cache: %w", err)
+	}
+	if ok && rule.Config.RemoteWrite != nil && rule.Config.RemoteWrite.Enabled {
+		// Use remote write for a stream.
+		remoteWriteData, err := remotewrite.SerializeLabelsColumn(frame)
+		if err != nil {
+			logger.Error("Error serializing to remote write format", "error", err)
+		} else {
+			password, ok := rule.Secure.DecryptedValue("remoteWritePassword")
+			if !ok {
+				logger.Warn("No password set for channel remote write", "orgId", orgID, "channel", channel)
+			}
+			select {
+			case s.remoteWriteData <- &remoteWriteRequest{
+				data:     remoteWriteData,
+				config:   *rule.Config.RemoteWrite,
+				password: password,
+			}:
+			default:
+				logger.Warn("Remote write is slow, dropping frame")
+			}
+		}
+	}
 
 	logger.Debug("Publish data to channel", "channel", channel, "dataLength", len(frameJSON))
 	return s.publisher(orgID, channel, frameJSON)

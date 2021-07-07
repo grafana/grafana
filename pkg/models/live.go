@@ -105,17 +105,21 @@ type GetLiveMessageQuery struct {
 	Channel string
 }
 
+type RemoteWriteConfig struct {
+	// Enabled to enable remote write for a channel.
+	Enabled bool `json:"enabled,omitempty"`
+	// Endpoint to send streaming frames to.
+	Endpoint string `json:"endpoint,omitempty"`
+	// User is a user for remote write request.
+	User string `json:"user,omitempty"`
+	// SampleMilliseconds allow setting minimal time before
+	// different remote writes for a channel. 0 means no sampling interval.
+	SampleMilliseconds int64 `json:"sampleMilliseconds,omitempty"`
+}
+
 // LiveChannelRulePlainConfig contains various channel configuration options.
 type LiveChannelRulePlainConfig struct {
-	// RemoteWriteEnabled to enable remote write for a channel.
-	RemoteWriteEnabled bool `json:"remoteWriteEnabled,omitempty"`
-	// RemoteWriteEndpoint to send streaming frames to.
-	RemoteWriteEndpoint string `json:"remoteWriteEndpoint,omitempty"`
-	// RemoteWriteUser is a user for remote write request.
-	RemoteWriteUser string `json:"remoteWriteUser,omitempty"`
-	// RemoteWriteSampleMilliseconds allow setting minimal time before
-	// different remote writes for a channel. 0 means no sampling interval.
-	RemoteWriteSampleMilliseconds int64 `json:"remoteWriteSampleMilliseconds,omitempty"`
+	RemoteWrite *RemoteWriteConfig `json:"remoteWrite,omitempty"`
 }
 
 var (

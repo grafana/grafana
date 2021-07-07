@@ -17,9 +17,11 @@ func (t testStorage) ListChannelRules(_ models.ListLiveChannelRuleCommand) ([]*m
 			OrgId:   1,
 			Pattern: "stream/telegraf/*",
 			Config: models.LiveChannelRulePlainConfig{
-				RemoteWriteEndpoint:           "test_endpoint",
-				RemoteWriteUser:               "test_user",
-				RemoteWriteSampleMilliseconds: 1000, // Write no frequently than once in a second.
+				RemoteWrite: &models.RemoteWriteConfig{
+					Endpoint:           "test_endpoint",
+					User:               "test_user",
+					SampleMilliseconds: 1000, // Write no frequently than once in a second.
+				},
 			},
 			Secure: securejsondata.GetEncryptedJsonData(map[string]string{
 				"remoteWritePassword": "test_password",
@@ -29,9 +31,11 @@ func (t testStorage) ListChannelRules(_ models.ListLiveChannelRuleCommand) ([]*m
 			OrgId:   2,
 			Pattern: "stream/*/cpu",
 			Config: models.LiveChannelRulePlainConfig{
-				RemoteWriteEndpoint:           "test_endpoint",
-				RemoteWriteUser:               "test_user",
-				RemoteWriteSampleMilliseconds: 1000, // Write no frequently than once in a second.
+				RemoteWrite: &models.RemoteWriteConfig{
+					Endpoint:           "test_endpoint",
+					User:               "test_user",
+					SampleMilliseconds: 1000, // Write no frequently than once in a second.
+				},
 			},
 			Secure: securejsondata.GetEncryptedJsonData(map[string]string{
 				"remoteWritePassword": "test_password",

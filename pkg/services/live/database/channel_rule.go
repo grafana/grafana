@@ -17,9 +17,11 @@ var Fixtures = []models.LiveChannelRule{
 		OrgId:   1,
 		Pattern: "stream/telegraf/*",
 		Config: models.LiveChannelRulePlainConfig{
-			RemoteWriteEndpoint:           os.Getenv("GF_LIVE_REMOTE_WRITE_ENDPOINT"),
-			RemoteWriteUser:               os.Getenv("GF_LIVE_REMOTE_WRITE_USER"),
-			RemoteWriteSampleMilliseconds: 1000, // Write no frequently than once in a second.
+			RemoteWrite: &models.RemoteWriteConfig{
+				Endpoint:           os.Getenv("GF_LIVE_REMOTE_WRITE_ENDPOINT"),
+				User:               os.Getenv("GF_LIVE_REMOTE_WRITE_USER"),
+				SampleMilliseconds: 1000, // Write no frequently than once in a second.
+			},
 		},
 		Secure: securejsondata.GetEncryptedJsonData(map[string]string{
 			"remoteWritePassword": os.Getenv("GF_LIVE_REMOTE_WRITE_PASSWORD"),
