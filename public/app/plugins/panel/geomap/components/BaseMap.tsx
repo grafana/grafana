@@ -5,6 +5,8 @@ import Attribution from 'ol/control/Attribution';
 import Zoom from 'ol/control/Zoom';
 import ScaleLine from 'ol/control/ScaleLine';
 import BaseLayer from 'ol/layer/Base';
+import { defaults as interactionDefaults } from 'ol/interaction';
+import MouseWheelZoom from 'ol/interaction/MouseWheelZoom';
 
 import { PanelData, MapLayerHandler, MapLayerConfig } from '@grafana/data';
 import { config } from '@grafana/runtime';
@@ -24,6 +26,7 @@ import { InfoControl } from './InfoControl';
 import { centerPointRegistry, MapCenterID } from '../view';
 import { fromLonLat } from 'ol/proj';
 import { Coordinate } from 'ol/coordinate';
+import { LegendControl } from './LegendControl';
 
 interface MapLayerState {
   config: MapLayerConfig;
@@ -39,6 +42,7 @@ export class BaseMap extends Component<BaseMapProps> {
 
   basemap: BaseLayer;
   layers: MapLayerState[] = [];
+  mouseWheelZoom: MouseWheelZoom;
 
   constructor(props: BaseMapProps) {
     super(props);
@@ -121,7 +125,12 @@ export class BaseMap extends Component<BaseMapProps> {
       layers: [], // delay...
       controls: [], // empty
       target: div,
+      interactions: interactionDefaults({
+        mouseWheelZoom: false, // handled explicilty in controls
+      }),
     });
+    this.mouseWheelZoom = new MouseWheelZoom();
+    this.map.addInteraction(this.mouseWheelZoom);
     this.initControls(options.controls);
     this.initBasemap(options.basemap);
     this.initLayers(options.layers);
@@ -233,12 +242,18 @@ export class BaseMap extends Component<BaseMapProps> {
       );
     }
 
+    this.mouseWheelZoom.setActive(Boolean(options.mouseWheelZoom));
+
     if (options.showAttribution) {
       this.map.addControl(new Attribution({ collapsed: true, collapsible: true }));
     }
 
     if (options.showDebug) {
       this.map.addControl(new InfoControl());
+    }
+
+    if (options.showLegend) {
+      this.map.addControl(new LegendControl());
     }
   }
 

@@ -6,7 +6,7 @@ import { stamenLayers } from './stamen';
 // For now just use carto
 export const defaultGrafanaThemedMap = {
   ...carto,
-  id: 'grafana',
+  id: 'default',
   name: 'Default base layer',
 };
 

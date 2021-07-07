@@ -5,9 +5,11 @@ import { GeomapPanel } from './GeomapPanel';
 import { MapCenterEditor } from './editor/MapCenterEditor';
 import { defaultView, GeomapPanelOptions } from './types';
 import { MapZoomEditor } from './editor/MapZoomEditor';
+import { mapPanelChangedHandler } from './migrations';
 
 export const plugin = new PanelPlugin<GeomapPanelOptions>(GeomapPanel)
   .setNoPadding()
+  .setPanelChangeHandler(mapPanelChangedHandler)
   .useFieldConfig()
   .setPanelOptions((builder) => {
     let category = ['Map View'];
@@ -62,6 +64,19 @@ export const plugin = new PanelPlugin<GeomapPanelOptions>(GeomapPanel)
         path: 'controls.showZoom',
         description: 'show buttons in the upper left',
         name: 'Show zoom control',
+        defaultValue: true,
+      })
+      .addBooleanSwitch({
+        category,
+        path: 'controls.mouseWheelZoom',
+        name: 'Mouse wheel zoom',
+        defaultValue: true,
+      })
+      .addBooleanSwitch({
+        category,
+        path: 'controls.showLegend',
+        name: 'Show legend',
+        description: 'Show legend',
         defaultValue: true,
       })
       .addBooleanSwitch({

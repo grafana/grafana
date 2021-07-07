@@ -6,6 +6,12 @@ export interface ControlsOptions {
   // Zoom (upper left)
   showZoom?: boolean;
 
+  // let the mouse wheel zoom
+  mouseWheelZoom?: boolean;
+
+  // Add legend control
+  showLegend?: boolean;
+
   // Lower right
   showAttribution?: boolean;
 
