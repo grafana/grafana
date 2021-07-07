@@ -153,16 +153,20 @@ func (st *Manager) setNextState(alertRule *ngModels.AlertRule, result eval.Resul
 	currentState.TrimResults(alertRule)
 
 	st.log.Debug("setting alert state", "uid", alertRule.UID)
+	var err error
 	switch result.State {
 	case eval.Normal:
-		currentState.resultNormal(alertRule, result)
+		err = currentState.resultNormal(alertRule, result)
 	case eval.Alerting:
-		currentState.resultAlerting(alertRule, result)
+		err = currentState.resultAlerting(alertRule, result)
 	case eval.Error:
-		currentState.resultError(alertRule, result)
+		err = currentState.resultError(alertRule, result)
 	case eval.NoData:
-		currentState.resultNoData(alertRule, result)
+		err = currentState.resultNoData(alertRule, result)
 	case eval.Pending: // we do not emit results with this state
+	}
+	if err != nil {
+		st.log.Error("error setting next alert state", "ruleUID", alertRule.UID, "error", err.Error())
 	}
 
 	st.set(currentState)
