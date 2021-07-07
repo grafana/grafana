@@ -1,11 +1,8 @@
 import { Registry, RegistryItem } from '@grafana/data';
 
 interface MapCenterItems extends RegistryItem {
-  lon?: number;
   lat?: number;
-
-  // Not just a simple point
-  specialHandling?: boolean;
+  lon?: number;
 }
 
 export enum MapCenterID {
@@ -48,11 +45,9 @@ export const centerPointRegistry = new Registry<MapCenterItems>(() => [
   {
     id: MapCenterID.Coordinates as string,
     name: 'Coordinates',
-    specialHandling: true,
   },
   {
     id: MapCenterID.LastPoint as string,
     name: 'Last value',
-    specialHandling: true,
   },
 ]);
