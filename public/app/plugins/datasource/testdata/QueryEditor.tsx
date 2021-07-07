@@ -103,7 +103,7 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
       case 'predictable_csv_wave':
         update.csvWave = defaultCSVWaveQuery;
         break;
-      case 'usa_stats':
+      case 'usa':
         update.usa = {
           mode: usaQueryModes[0].value,
         };
@@ -252,7 +252,7 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
         </InlineFieldRow>
       )}
 
-      {scenarioId === 'usa_stats' && <USAQueryEditor onChange={onUSAStatsChange} query={query.usa ?? {}} />}
+      {scenarioId === 'usa' && <USAQueryEditor onChange={onUSAStatsChange} query={query.usa ?? {}} />}
       {scenarioId === 'grafana_api' && (
         <InlineField labelWidth={14} label="Endpoint">
           <Select
