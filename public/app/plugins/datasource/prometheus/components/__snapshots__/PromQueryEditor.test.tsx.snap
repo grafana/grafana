@@ -48,6 +48,7 @@ exports[`Render PromQueryEditor with basic options should render 1`] = `
           Step
         </FormLabel>
         <Select
+          className="select-container"
           isSearchable={false}
           onChange={[Function]}
           options={
@@ -139,6 +140,7 @@ exports[`Render PromQueryEditor with basic options should render 1`] = `
           Format
         </div>
         <Select
+          className="select-container"
           isSearchable={false}
           onChange={[Function]}
           options={
