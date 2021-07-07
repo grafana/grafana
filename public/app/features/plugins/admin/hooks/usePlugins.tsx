@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { Plugin, Metadata } from '../types';
 import { api } from '../api';
@@ -33,6 +33,59 @@ export const usePlugins = () => {
 
   return state;
 };
+
+type FilteredPluginsState = {
+  isLoading: boolean;
+  items: Plugin[];
+};
+
+export const usePluginsByFilter = (searchBy: string, filterBy: string): FilteredPluginsState => {
+  const plugins = usePlugins();
+  const all = useMemo(() => {
+    const combined: Plugin[] = [];
+    Array.prototype.push.apply(combined, plugins.items);
+    Array.prototype.push.apply(combined, plugins.installedPlugins);
+
+    const bySlug = combined.reduce((unique: Record<string, Plugin>, plugin) => {
+      unique[plugin.slug] = plugin;
+      return unique;
+    }, {});
+
+    return Object.values(bySlug);
+  }, [plugins.items, plugins.installedPlugins]);
+
+  if (filterBy === 'installed') {
+    return {
+      isLoading: plugins.isLoading,
+      items: applySearchFilter(searchBy, plugins.installedPlugins ?? []),
+    };
+  }
+
+  return {
+    isLoading: plugins.isLoading,
+    items: applySearchFilter(searchBy, all),
+  };
+};
+
+function applySearchFilter(searchBy: string | undefined, plugins: Plugin[]): Plugin[] {
+  if (!searchBy) {
+    return plugins;
+  }
+
+  return plugins.filter((plugin) => {
+    const fields: String[] = [];
+
+    if (plugin.name) {
+      fields.push(plugin.name.toLowerCase());
+    }
+
+    if (plugin.orgName) {
+      fields.push(plugin.orgName.toLowerCase());
+    }
+
+    return fields.some((f) => f.includes(searchBy.toLowerCase()));
+  });
+}
 
 type PluginState = {
   isLoading: boolean;

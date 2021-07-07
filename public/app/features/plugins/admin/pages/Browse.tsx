@@ -8,22 +8,26 @@ import { locationSearchToObject } from '@grafana/runtime';
 import { PluginList } from '../components/PluginList';
 import { SearchField } from '../components/SearchField';
 import { HorizontalGroup } from '../components/HorizontalGroup';
-import { usePlugins } from '../hooks/usePlugins';
 import { useHistory } from '../hooks/useHistory';
 import { Plugin } from '../types';
 import { Page as PluginPage } from '../components/Page';
-import { CatalogTab, getCatalogNavModel } from './nav';
 import { Page } from 'app/core/components/Page/Page';
+import { usePluginsByFilter } from '../hooks/usePlugins';
+import { useSelector } from 'react-redux';
+import { StoreState } from 'app/types/store';
+import { getNavModel } from 'app/core/selectors/navModel';
 
 export default function Browse(): ReactElement {
   const location = useLocation();
   const query = locationSearchToObject(location.search);
+  const navModel = useSelector((state: StoreState) => getNavModel(state.navIndex, 'plugins'));
 
   const q = query.q as string;
-  const filterBy = query.filterBy as string;
-  const sortBy = query.sortBy as string;
+  const filterBy = (query.filterBy as string) ?? 'installed';
+  const sortBy = (query.sortBy as string) ?? 'name';
 
-  const plugins = usePlugins();
+  const plugins = usePluginsByFilter(q, filterBy);
+  const sortedPlugins = plugins.items.sort(sorters[sortBy]);
   const history = useHistory();
 
   const onSortByChange = (value: SelectableValue<string>) => {
@@ -38,19 +42,8 @@ export default function Browse(): ReactElement {
     history.push({ query: { filterBy: null, q } });
   };
 
-  const filteredPlugins = plugins.items
-    // Filter by plugin type
-    .filter((_) => !filterBy || _.typeCode === filterBy || filterBy === 'all')
-    // Naïve search by checking if any of the properties contains the query string
-    .filter((plugin) => {
-      const fields = [plugin.name.toLowerCase(), plugin.orgName.toLowerCase()];
-      return !q || fields.some((f) => f.includes(q.toLowerCase()));
-    });
-
-  filteredPlugins.sort(sorters[sortBy || 'name']);
-
   return (
-    <Page navModel={getCatalogNavModel(CatalogTab.Browse, '/plugins')}>
+    <Page navModel={navModel}>
       <Page.Contents>
         <PluginPage>
           <SearchField value={q} onSearch={onSearch} />
@@ -64,26 +57,24 @@ export default function Browse(): ReactElement {
                   text="Loading results"
                 />
               ) : (
-                `${filteredPlugins.length} ${filteredPlugins.length > 1 ? 'results' : 'result'}`
+                `${sortedPlugins.length} ${sortedPlugins.length > 1 ? 'results' : 'result'}`
               )}
             </div>
             <Field label="Show">
               <Select
                 width={15}
-                value={filterBy || 'all'}
+                value={filterBy}
                 onChange={onFilterByChange}
                 options={[
                   { value: 'all', label: 'All' },
-                  { value: 'panel', label: 'Panels' },
-                  { value: 'datasource', label: 'Data sources' },
-                  { value: 'app', label: 'Apps' },
+                  { value: 'installed', label: 'Installed' },
                 ]}
               />
             </Field>
             <Field label="Sort by">
               <Select
                 width={20}
-                value={sortBy || 'name'}
+                value={sortBy}
                 onChange={onSortByChange}
                 options={[
                   { value: 'name', label: 'Name' },
@@ -96,7 +87,7 @@ export default function Browse(): ReactElement {
             </Field>
           </HorizontalGroup>
 
-          {!plugins.isLoading && <PluginList plugins={filteredPlugins} />}
+          {!plugins.isLoading && <PluginList plugins={sortedPlugins} />}
         </PluginPage>
       </Page.Contents>
     </Page>

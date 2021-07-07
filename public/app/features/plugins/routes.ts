@@ -16,18 +16,6 @@ export function getPluginsAdminRoutes(cfg = config): RouteDescriptor[] {
         ),
       },
       {
-        path: '/plugins/discover',
-        component: SafeDynamicImport(
-          () => import(/* webpackChunkName: "PluginAdminNotEnabled" */ './admin/pages/NotEnabed')
-        ),
-      },
-      {
-        path: '/plugins/library',
-        component: SafeDynamicImport(
-          () => import(/* webpackChunkName: "PluginAdminNotEnabled" */ './admin/pages/NotEnabed')
-        ),
-      },
-      {
         path: '/plugins/:pluginId/',
         component: SafeDynamicImport(() => import(/* webpackChunkName: "PluginPage" */ './PluginPage')),
       },
@@ -37,19 +25,11 @@ export function getPluginsAdminRoutes(cfg = config): RouteDescriptor[] {
   return [
     {
       path: '/plugins',
-      component: SafeDynamicImport(() => import(/* webpackChunkName: "PluginLibraryPage" */ './admin/pages/Library')),
+      component: SafeDynamicImport(() => import(/* webpackChunkName: "PluginListPage" */ './admin/pages/Browse')),
     },
     {
       path: '/plugins/browse',
       component: SafeDynamicImport(() => import(/* webpackChunkName: "PluginListPage" */ './admin/pages/Browse')),
-    },
-    {
-      path: '/plugins/discover',
-      component: SafeDynamicImport(() => import(/* webpackChunkName: "PluginDiscoverPage" */ './admin/pages/Discover')),
-    },
-    {
-      path: '/plugins/library',
-      component: SafeDynamicImport(() => import(/* webpackChunkName: "PluginLibraryPage" */ './admin/pages/Library')),
     },
     {
       path: '/plugins/:pluginId/',
