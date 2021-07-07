@@ -26,6 +26,7 @@ import { SearchField, SearchResults, SearchResultsFilter } from '../features/sea
 import { TimePickerSettings } from 'app/features/dashboard/components/DashboardSettings/TimePickerSettings';
 import QueryEditor from 'app/plugins/datasource/grafana-azure-monitor-datasource/components/QueryEditor/QueryEditor';
 import { GraphiteTextEditor } from '../plugins/datasource/graphite/components/GraphiteTextEditor';
+import { PlayButton } from '../plugins/datasource/graphite/components/PlayButton';
 
 const { SecretFormField } = LegacyForms;
 
@@ -205,4 +206,5 @@ export function registerAngularDirectives() {
   // Temporal wrappers for Graphite migration
   react2AngularDirective('functionEditor', FunctionEditor, ['func', 'onRemove', 'onMoveLeft', 'onMoveRight']);
   react2AngularDirective('graphiteTextEditor', GraphiteTextEditor, ['rawQuery', 'dispatch']);
+  react2AngularDirective('playButton', PlayButton, ['dispatch']);
 }

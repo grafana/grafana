@@ -52,7 +52,7 @@
       </div>
 
       <div ng-if="ctrl.state.paused" class="gf-form">
-        <a ng-click="ctrl.unpause()" class="gf-form-label query-part"><icon name="'play'"></icon></a>
+        <play-button dispatch="ctrl.dispatch" />
       </div>
 
       <div class="gf-form gf-form--grow">
