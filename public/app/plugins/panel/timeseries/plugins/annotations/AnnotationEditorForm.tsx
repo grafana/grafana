@@ -1,19 +1,11 @@
 import React, { HTMLAttributes, useRef } from 'react';
 import { css, cx } from '@emotion/css';
-import {
-  Button,
-  Field,
-  Form,
-  HorizontalGroup,
-  InputControl,
-  TagsInput,
-  TextArea,
-  usePanelContext,
-  useStyles2,
-} from '@grafana/ui';
+import { Button, Field, Form, HorizontalGroup, InputControl, TextArea, usePanelContext, useStyles2 } from '@grafana/ui';
 import { AnnotationEventUIModel, GrafanaTheme2 } from '@grafana/data';
 import useClickAway from 'react-use/lib/useClickAway';
 import useAsyncFn from 'react-use/lib/useAsyncFn';
+import { TagFilter } from 'app/core/components/TagFilter/TagFilter';
+import { getAnnotationTags } from 'app/features/annotations/api';
 
 interface AnnotationEditFormDTO {
   description: string;
@@ -86,7 +78,7 @@ export const AnnotationEditorForm = React.forwardRef<HTMLDivElement, AnnotationE
         <div className={styles.editorForm}>
           <Form<AnnotationEditFormDTO>
             onSubmit={onSubmit}
-            defaultValues={{ description: annotation?.text, tags: annotation?.tags }}
+            defaultValues={{ description: annotation?.text, tags: annotation?.tags || [] }}
           >
             {({ register, errors, control }) => {
               return (
@@ -103,7 +95,15 @@ export const AnnotationEditorForm = React.forwardRef<HTMLDivElement, AnnotationE
                       control={control}
                       name="tags"
                       render={({ field: { ref, onChange, ...field } }) => {
-                        return <TagsInput {...field} tags={field.value} onChange={onChange} />;
+                        return (
+                          <TagFilter
+                            allowCustomValue
+                            placeholder="Add tags"
+                            onChange={onChange}
+                            tagOptions={getAnnotationTags}
+                            tags={field.value}
+                          />
+                        );
                       }}
                     />
                   </Field>
