@@ -54,6 +54,7 @@ export const TimeZonePicker: React.FC<Props> = (props) => {
       onBlur={onBlur}
       components={{ Option: TimeZoneOption, Group: TimeZoneGroup }}
       disabled={disabled}
+      aria-label={'Time zone picker'}
     />
   );
 };
