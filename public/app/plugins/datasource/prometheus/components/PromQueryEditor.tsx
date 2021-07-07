@@ -176,6 +176,7 @@ export class PromQueryEditor extends PureComponent<PromQueryEditorProps, State> 
                 Step
               </InlineFormLabel>
               <Select
+                className={'select-container'}
                 width={16}
                 isSearchable={false}
                 options={STEP_OPTIONS}
@@ -203,6 +204,7 @@ export class PromQueryEditor extends PureComponent<PromQueryEditorProps, State> 
             <div className="gf-form">
               <div className="gf-form-label width-7">Format</div>
               <Select
+                className={'select-container'}
                 width={16}
                 isSearchable={false}
                 options={FORMAT_OPTIONS}
