@@ -66,7 +66,7 @@ have the same sub colors that have different use cases.
 Example use cases:
 
 - Want a `red` background? Use `theme.colors.error.main`
-- Want a `green` text? Use `theme.colors.success.text`
+- Want `green` text? Use `theme.colors.success.text`
 - Want text to be visible when placed inside a background that uses `theme.colors.error.main` then use `theme.colors.error.contrastText`.
 
 ### Text colors
