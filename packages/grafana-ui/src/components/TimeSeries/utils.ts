@@ -226,7 +226,6 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{ sync: DashboardCursor
       barWidthFactor: customConfig.barWidthFactor,
       barMaxWidth: customConfig.barMaxWidth,
       pointSize: customConfig.pointSize,
-      pointColor: customConfig.pointColor ?? seriesColor,
       spanNulls: customConfig.spanNulls || false,
       show: !customConfig.hideFrom?.viz,
       gradientMode: customConfig.gradientMode,

@@ -137,7 +137,6 @@ export enum GraphGradientMode {
 export interface PointsConfig {
   showPoints?: PointVisibility;
   pointSize?: number;
-  pointColor?: string;
   pointSymbol?: string; // eventually dot,star, etc
 }
 
@@ -274,9 +273,13 @@ export const graphFieldOptions = {
 
   fillGradient: [
     { label: 'None', value: GraphGradientMode.None },
-    { label: 'Opacity', value: GraphGradientMode.Opacity },
-    { label: 'Hue', value: GraphGradientMode.Hue },
-    //  { label: 'Color scheme', value: GraphGradientMode.Scheme },
+    { label: 'Opacity', value: GraphGradientMode.Opacity, description: 'Enable fill opacity gradient' },
+    { label: 'Hue', value: GraphGradientMode.Hue, description: 'Small color hue gradient' },
+    {
+      label: 'Scheme',
+      value: GraphGradientMode.Scheme,
+      description: 'Use color scheme to define gradient',
+    },
   ] as Array<SelectableValue<GraphGradientMode>>,
 
   stacking: [
