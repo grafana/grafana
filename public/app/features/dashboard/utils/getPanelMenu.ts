@@ -4,6 +4,7 @@ import { PanelMenuItem } from '@grafana/data';
 import {
   addLibraryPanel,
   copyPanel,
+  sonifyPanel,
   duplicatePanel,
   removePanel,
   sharePanel,
@@ -74,6 +75,11 @@ export function getPanelMenu(
     copyPanel(panel);
   };
 
+  const onSonifyPanel = (event: React.MouseEvent<any>) => {
+    event.preventDefault();
+    sonifyPanel(dashboard, panel);
+  };
+
   const onRemovePanel = (event: React.MouseEvent<any>) => {
     event.preventDefault();
     removePanel(dashboard, panel, true);
@@ -111,6 +117,13 @@ export function getPanelMenu(
     iconClassName: 'share-alt',
     onClick: onSharePanel,
     shortcut: 'p s',
+  });
+
+  menu.push({
+    text: 'Audible',
+    iconClassName: 'headphones',
+    onClick: onSonifyPanel,
+    shortcut: 'p a',
   });
 
   if (contextSrv.hasAccessToExplore() && !(panel.plugin && panel.plugin.meta.skipDataQuery)) {

@@ -18,6 +18,7 @@ import { SaveDashboardModalProxy } from 'app/features/dashboard/components/SaveD
 import { locationService } from '@grafana/runtime';
 import { toggleKioskMode } from 'app/core/navigation/kiosk';
 import { getDashboardSrv } from '../../services/DashboardSrv';
+import SonifierControls from 'app/core/components/SonifierControls/SonifierControls';
 
 export interface OwnProps {
   dashboard: DashboardModel;
@@ -228,6 +229,8 @@ class DashNav extends PureComponent<Props> {
     }
 
     this.addCustomContent(customRightActions, buttons);
+
+    buttons.push(<SonifierControls />);
 
     buttons.push(this.renderTimeControls());
     buttons.push(tvButton);

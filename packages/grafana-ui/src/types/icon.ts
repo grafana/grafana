@@ -83,6 +83,7 @@ export const getAvailableIcons = () =>
     'gf-portrait',
     'grafana',
     'graph-bar',
+    'headphones',
     'heart',
     'heart-break',
     'history',
