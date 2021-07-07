@@ -57,7 +57,7 @@ describe('locationUtil', () => {
     });
     test('absolute url with subdirectory subUrl', () => {
       const urlWithoutMaster = locationUtil.stripBaseFromUrl('http://www.domain.com:9877/thisShouldRemain/subUrl/');
-      expect(urlWithoutMaster).toBe('/thisShouldRemain/subUrl/');
+      expect(urlWithoutMaster).toBe('http://www.domain.com:9877/thisShouldRemain/subUrl/');
     });
   });
 
