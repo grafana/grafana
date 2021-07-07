@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { dateTime } from '@grafana/data';
 import { DateTimePicker, Props } from './DateTimePicker';
 
@@ -28,5 +28,12 @@ describe('Date time picker', () => {
     expect(screen.queryByDisplayValue('2021-05-05 12:00:00')).toBeInTheDocument();
   });
 
-  it('should ');
+  it('should update date onblur', () => {
+    renderDatetimePicker();
+    const dateTimeInput = screen.getByTestId('date-time-input');
+    fireEvent.change(dateTimeInput, { target: { value: '2021-07-31 12:30:30' } });
+    fireEvent.blur(dateTimeInput);
+
+    expect(dateTimeInput).toHaveDisplayValue('2021-07-31 12:30:30');
+  });
 });

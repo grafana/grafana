@@ -127,6 +127,7 @@ const DateTimeInput: FC<InputProps> = ({ date, label, onChange, isFullscreen, on
         value={internalDate.value}
         onFocus={onFocus}
         onBlur={() => onChange(dateTime(internalDate.value))}
+        data-testid="date-time-input"
       />
     </Field>
   );
