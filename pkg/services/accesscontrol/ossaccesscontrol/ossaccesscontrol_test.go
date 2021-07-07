@@ -53,6 +53,10 @@ func (usm *usageStatsMock) GetUsageReport(_ context.Context) (usagestats.UsageRe
 	return usagestats.UsageReport{Metrics: all}, nil
 }
 
+func (usm *usageStatsMock) ShouldBeReported(_ string) bool {
+	return true
+}
+
 type evaluatingPermissionsTestCase struct {
 	desc       string
 	user       userTestCase
