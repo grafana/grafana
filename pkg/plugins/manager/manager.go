@@ -690,8 +690,8 @@ func (pm *PluginManager) ScanningErrors() []plugins.PluginError {
 }
 
 func (pm *PluginManager) GetPluginMarkdown(pluginId string, name string) ([]byte, error) {
-	plug, exists := pm.plugins[pluginId]
-	if !exists {
+	plug := pm.GetPlugin(pluginId)
+	if plug == nil {
 		return nil, plugins.PluginNotFoundError{PluginID: pluginId}
 	}
 

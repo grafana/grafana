@@ -54,6 +54,10 @@ func init() {
 }
 
 func (m *PluginManagerV2) Init() error {
+	if !m.IsEnabled() {
+		return nil
+	}
+
 	m.plugins = map[string]*plugins.PluginV2{}
 	m.log = log.New("plugin.managerv2")
 	m.pluginInstaller = installer.New(false, m.Cfg.BuildVersion, NewInstallerLogger("plugin.installer", true))
@@ -173,7 +177,7 @@ func (m *PluginManagerV2) filterOutDuplicates(loadedPlugins []*plugins.PluginV2)
 		}
 		pluginsByID[scannedPlugin.ID] = struct{}{}
 
-		if existing := m.GetPlugin(scannedPlugin.ID); existing != nil {
+		if existing := m.Plugin(scannedPlugin.ID); existing != nil {
 			m.log.Debug("Skipping plugin as it's already installed", "plugin", existing.ID, "version", existing.Info.Version)
 			continue
 		}
@@ -184,7 +188,7 @@ func (m *PluginManagerV2) filterOutDuplicates(loadedPlugins []*plugins.PluginV2)
 }
 
 func (m *PluginManagerV2) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	plugin := m.GetPlugin(req.PluginContext.PluginID)
+	plugin := m.Plugin(req.PluginContext.PluginID)
 	if plugin == nil {
 		return &backend.QueryDataResponse{}, nil
 	}
@@ -210,7 +214,7 @@ func (m *PluginManagerV2) QueryData(ctx context.Context, req *backend.QueryDataR
 	return resp, err
 }
 
-func (m *PluginManagerV2) GetPlugin(pluginID string) *plugins.PluginV2 {
+func (m *PluginManagerV2) Plugin(pluginID string) *plugins.PluginV2 {
 	m.pluginsMu.RLock()
 	p, ok := m.plugins[pluginID]
 	m.pluginsMu.RUnlock()
@@ -222,16 +226,46 @@ func (m *PluginManagerV2) GetPlugin(pluginID string) *plugins.PluginV2 {
 	return p
 }
 
-func (m *PluginManagerV2) DataSource(pluginID string) {
+func (m *PluginManagerV2) DataSource(pluginID string) *plugins.PluginV2 {
+	p := m.Plugin(pluginID)
 
+	if p == nil {
+		return nil
+	}
+
+	if p.IsDataSource() {
+		return p
+	}
+
+	return nil
 }
 
-func (m *PluginManagerV2) Panel(pluginID string) {
+func (m *PluginManagerV2) Panel(pluginID string) *plugins.PluginV2 {
+	p := m.Plugin(pluginID)
 
+	if p == nil {
+		return nil
+	}
+
+	if p.IsPanel() {
+		return p
+	}
+
+	return nil
 }
 
-func (m *PluginManagerV2) App(pluginID string) {
+func (m *PluginManagerV2) App(pluginID string) *plugins.PluginV2 {
+	p := m.Plugin(pluginID)
 
+	if p == nil {
+		return nil
+	}
+
+	if p.IsApp() {
+		return p
+	}
+
+	return nil
 }
 
 func (m *PluginManagerV2) Renderer() *plugins.PluginV2 {
@@ -243,20 +277,42 @@ func (m *PluginManagerV2) Renderer() *plugins.PluginV2 {
 	return nil
 }
 
-func (m *PluginManagerV2) DataSources() {
-
+func (m *PluginManagerV2) DataSources() []*plugins.PluginV2 {
+	var dataSources []*plugins.PluginV2
+	for _, p := range m.plugins {
+		if p.IsDataSource() {
+			dataSources = append(dataSources, p)
+		}
+	}
+	return dataSources
 }
 
-func (m *PluginManagerV2) Apps() {
-
+func (m *PluginManagerV2) Apps() []*plugins.PluginV2 {
+	var apps []*plugins.PluginV2
+	for _, p := range m.plugins {
+		if p.IsApp() {
+			apps = append(apps, p)
+		}
+	}
+	return apps
 }
 
-func (m *PluginManagerV2) Panels() {
-
+func (m *PluginManagerV2) Panels() []*plugins.PluginV2 {
+	var panels []*plugins.PluginV2
+	for _, p := range m.plugins {
+		if p.IsPanel() {
+			panels = append(panels, p)
+		}
+	}
+	return panels
 }
 
-func (m *PluginManagerV2) Plugins() {
-
+func (m *PluginManagerV2) Plugins() []*plugins.PluginV2 {
+	var pluginsList []*plugins.PluginV2
+	for _, p := range m.plugins {
+		pluginsList = append(pluginsList, p)
+	}
+	return pluginsList
 }
 
 func (m *PluginManagerV2) Errors(pluginID string) {
@@ -302,7 +358,7 @@ func (m *PluginManagerV2) CallResource(pCtx backend.PluginContext, reqCtx *model
 }
 
 func (m *PluginManagerV2) callResourceInternal(w http.ResponseWriter, req *http.Request, pCtx backend.PluginContext) error {
-	p := m.GetPlugin(pCtx.PluginID)
+	p := m.Plugin(pCtx.PluginID)
 	if p == nil {
 		return backendplugin.ErrPluginNotRegistered
 	}
@@ -430,7 +486,7 @@ func flushStream(plugin backendplugin.Plugin, stream callResourceClientResponseS
 }
 
 func (m *PluginManagerV2) CollectMetrics(ctx context.Context, pluginID string) (*backend.CollectMetricsResult, error) {
-	p := m.GetPlugin(pluginID)
+	p := m.Plugin(pluginID)
 	if p == nil {
 		return nil, backendplugin.ErrPluginNotRegistered
 	}
@@ -461,7 +517,7 @@ func (m *PluginManagerV2) CheckHealth(ctx context.Context, pluginContext backend
 		}, nil
 	}
 
-	p := m.GetPlugin(pluginContext.PluginID)
+	p := m.Plugin(pluginContext.PluginID)
 	if p == nil {
 		return nil, backendplugin.ErrPluginNotRegistered
 	}
@@ -522,7 +578,7 @@ func (m *PluginManagerV2) UnregisterAndStop(ctx context.Context, pluginID string
 	m.pluginsMu.Lock()
 	defer m.pluginsMu.Unlock()
 
-	p := m.GetPlugin(pluginID)
+	p := m.Plugin(pluginID)
 	if p == nil {
 		return fmt.Errorf("plugin %s is not registered", pluginID)
 	}
@@ -547,7 +603,7 @@ func (m *PluginManagerV2) IsEnabled() bool {
 }
 
 func (m *PluginManagerV2) IsRegistered(pluginID string) bool {
-	p := m.GetPlugin(pluginID)
+	p := m.Plugin(pluginID)
 	if p == nil {
 		return false
 	}
@@ -565,7 +621,7 @@ func (m *PluginManagerV2) IsSupported(pluginID string) bool {
 }
 
 func (m *PluginManagerV2) Install(ctx context.Context, pluginID, version string) error {
-	plugin := m.GetPlugin(pluginID)
+	plugin := m.Plugin(pluginID)
 	if plugin != nil {
 		if !plugin.IsExternalPlugin() {
 			return plugins.ErrInstallCorePlugin
@@ -599,7 +655,7 @@ func (m *PluginManagerV2) Install(ctx context.Context, pluginID, version string)
 }
 
 func (m *PluginManagerV2) Uninstall(ctx context.Context, pluginID string) error {
-	plugin := m.GetPlugin(pluginID)
+	plugin := m.Plugin(pluginID)
 	if plugin == nil {
 		return plugins.ErrPluginNotInstalled
 	}

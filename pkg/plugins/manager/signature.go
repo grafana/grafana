@@ -51,7 +51,7 @@ func (s *PluginSignatureValidator) validate(plugin *plugins.PluginV2) error {
 			"state", plugin.Signature)
 	}
 
-	if plugin.IsCorePlugin() || plugin.IsExternalPlugin() {
+	if plugin.IsCorePlugin() || plugin.IsBundledPlugin() {
 		return nil
 	}
 

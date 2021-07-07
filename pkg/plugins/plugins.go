@@ -52,6 +52,9 @@ type JSONData struct {
 	Signature    PluginSignatureStatus `json:"signature"`
 	Backend      bool                  `json:"backend"`
 
+	// Panel settings
+	SkipDataQuery bool `json:"skipDataQuery"`
+
 	// App settings
 	AutoEnabled bool `json:"autoEnabled"`
 
@@ -199,8 +202,24 @@ func (p *PluginV2) IsRenderer() bool {
 	return p.Type == "renderer"
 }
 
+func (p *PluginV2) IsDataSource() bool {
+	return p.Type == "datasource"
+}
+
+func (p *PluginV2) IsPanel() bool {
+	return p.Type == "panel"
+}
+
+func (p *PluginV2) IsApp() bool {
+	return p.Type == "app"
+}
+
 func (p *PluginV2) IsCorePlugin() bool {
 	return p.Class == Core
+}
+
+func (p *PluginV2) IsBundledPlugin() bool {
+	return p.Class == Bundled
 }
 
 func (p *PluginV2) IsExternalPlugin() bool {

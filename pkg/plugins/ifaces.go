@@ -116,15 +116,16 @@ type PluginInitializerV2 interface {
 
 type PluginManagerV2 interface {
 	// Fetch plugin info
-	DataSource(pluginID string)
-	Panel(pluginID string)
-	App(pluginID string)
+	Plugin(pluginID string) *PluginV2
+	DataSource(pluginID string) *PluginV2
+	Panel(pluginID string) *PluginV2
+	App(pluginID string) *PluginV2
 	Renderer() *PluginV2
 
-	Plugins()
-	DataSources()
-	Panels()
-	Apps()
+	Plugins() []*PluginV2
+	DataSources() []*PluginV2
+	Panels() []*PluginV2
+	Apps() []*PluginV2
 
 	StaticRoutes() []*PluginStaticRoute
 
