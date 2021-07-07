@@ -37,14 +37,14 @@ export function useIsRuleEditable(rulesSourceName: string, rule?: RulerRuleDTO):
       );
     }
     return {
-      isEditable: folder?.canSave && !!checkEditingRequests[rulesSourceName].result,
+      isEditable: folder?.canSave,
       loading,
     };
   }
 
-  // prom rules are only editable by users with Editor role
+  // prom rules are only editable by users with Editor role and only if rules source supports editing
   return {
-    isEditable: contextSrv.isEditor,
+    isEditable: contextSrv.isEditor && !!checkEditingRequests[rulesSourceName].result,
     loading: false,
   };
 }
