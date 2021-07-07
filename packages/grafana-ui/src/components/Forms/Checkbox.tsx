@@ -28,7 +28,7 @@ export const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
         <input
           type="checkbox"
           className={styles.input}
-          checked={value ?? false}
+          checked={value}
           disabled={disabled}
           onChange={handleOnChange}
           {...inputProps}
@@ -102,6 +102,7 @@ export const getCheckboxStyles = stylesFactory((theme: GrafanaTheme2) => {
       &:disabled + span {
         background-color: ${theme.colors.action.disabledBackground};
         cursor: not-allowed;
+
         &:hover {
           background-color: ${theme.colors.action.disabledBackground};
         }
@@ -132,6 +133,8 @@ export const getCheckboxStyles = stylesFactory((theme: GrafanaTheme2) => {
         padding-left: ${theme.spacing(labelPadding)};
         white-space: nowrap;
         cursor: pointer;
+        position: relative;
+        top: -2px;
       `
     ),
     description: cx(
@@ -139,6 +142,7 @@ export const getCheckboxStyles = stylesFactory((theme: GrafanaTheme2) => {
       css`
         line-height: ${theme.typography.bodySmall.lineHeight};
         padding-left: ${theme.spacing(checkboxSize + labelPadding)};
+        margin-top: 0; /* The margin effectively comes from the top: -2px on the label above it */
       `
     ),
   };
