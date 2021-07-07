@@ -13,12 +13,14 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/services/cleanup"
 	"github.com/grafana/grafana/pkg/services/ngalert"
 	"github.com/grafana/grafana/pkg/services/notifications"
 
 	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/services/librarypanels"
+	"github.com/grafana/grafana/pkg/services/oauthtoken"
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	httpstatic "github.com/grafana/grafana/pkg/api/static"
@@ -104,6 +106,8 @@ type HTTPServer struct {
 	LibraryPanelService    librarypanels.Service
 	LibraryElementService  libraryelements.Service
 	notificationService    *notifications.NotificationService
+	SocialService          social.Service
+	OAuthTokenService      oauthtoken.OAuthTokenService
 	Listener               net.Listener
 	cleanUpService         *cleanup.CleanUpService
 	tracingService         *tracing.TracingService
@@ -130,7 +134,8 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	schemaService *schemaloader.SchemaLoaderService, alertNG *ngalert.AlertNG,
 	libraryPanelService librarypanels.Service, libraryElementService libraryelements.Service,
 	notificationService *notifications.NotificationService, tracingService *tracing.TracingService,
-	internalMetricsSvc *metrics.InternalMetricsService, quotaService *quota.QuotaService) *HTTPServer {
+	internalMetricsSvc *metrics.InternalMetricsService, quotaService *quota.QuotaService,
+	socialService social.Service, oauthTokenService oauthtoken.OAuthTokenService) *HTTPServer {
 	macaron.Env = cfg.Env
 	m := macaron.New()
 	// automatically set HEAD for every GET
@@ -178,6 +183,8 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		log:                    log.New("http.server"),
 		macaron:                m,
 		Listener:               opts.Listener,
+		SocialService:          socialService,
+		OAuthTokenService:      oauthTokenService,
 	}
 	if hs.Listener != nil {
 		hs.log.Debug("Using provided listener")

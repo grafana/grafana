@@ -13,17 +13,20 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 func ProvideService(dataSourceCache datasources.CacheService, plugReqValidator models.PluginRequestValidator,
-	pm plugins.Manager, cfg *setting.Cfg, httpClientProvider httpclient.Provider) *DataSourceProxyService {
+	pm plugins.Manager, cfg *setting.Cfg, httpClientProvider httpclient.Provider,
+	oauthTokenService *oauthtoken.Service) *DataSourceProxyService {
 	return &DataSourceProxyService{
 		DataSourceCache:        dataSourceCache,
 		PluginRequestValidator: plugReqValidator,
 		PluginManager:          pm,
 		Cfg:                    cfg,
 		HTTPClientProvider:     httpClientProvider,
+		OAuthTokenService:      oauthTokenService,
 	}
 }
 
@@ -33,6 +36,7 @@ type DataSourceProxyService struct {
 	PluginManager          plugins.Manager
 	Cfg                    *setting.Cfg
 	HTTPClientProvider     httpclient.Provider
+	OAuthTokenService      *oauthtoken.Service
 }
 
 func (p *DataSourceProxyService) ProxyDataSourceRequest(c *models.ReqContext) {
@@ -70,7 +74,7 @@ func (p *DataSourceProxyService) ProxyDatasourceRequestWithID(c *models.ReqConte
 	}
 
 	proxyPath := getProxyPath(c)
-	proxy, err := pluginproxy.NewDataSourceProxy(ds, plugin, c, proxyPath, p.Cfg, p.HTTPClientProvider)
+	proxy, err := pluginproxy.NewDataSourceProxy(ds, plugin, c, proxyPath, p.Cfg, p.HTTPClientProvider, p.OAuthTokenService)
 	if err != nil {
 		if errors.Is(err, datasource.URLValidationError{}) {
 			c.JsonApiErr(http.StatusBadRequest, fmt.Sprintf("Invalid data source URL: %q", ds.Url), err)

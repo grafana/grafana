@@ -31,6 +31,7 @@ type UsageStatsService struct {
 	AlertingUsageStats alerting.UsageStatsQuerier
 	License            models.Licensing
 	PluginManager      plugins.Manager
+	SocialService      social.Service
 
 	log log.Logger
 
@@ -40,15 +41,15 @@ type UsageStatsService struct {
 }
 
 func ProvideService(cfg *setting.Cfg, bus bus.Bus, sqlStore *sqlstore.SQLStore,
-	alertingStats alerting.UsageStatsQuerier, licensing models.Licensing, pluginManager plugins.Manager) *UsageStatsService {
-	oauthProviders := social.GetOAuthProviders(cfg)
+	alertingStats alerting.UsageStatsQuerier, licensing models.Licensing, pluginManager plugins.Manager,
+	socialService social.Service) *UsageStatsService {
 	s := &UsageStatsService{
 		Cfg:                cfg,
 		Bus:                bus,
 		SQLStore:           sqlStore,
 		AlertingUsageStats: alertingStats,
 		License:            licensing,
-		oauthProviders:     oauthProviders,
+		oauthProviders:     socialService.GetOAuthProviders(),
 		PluginManager:      pluginManager,
 		log:                log.New("infra.usagestats"),
 	}
