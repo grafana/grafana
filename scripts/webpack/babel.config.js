@@ -1,6 +1,7 @@
 module.exports = function getBabelConfig(options = {}) {
   return {
     cacheDirectory: true,
+    cacheCompression: false,
     babelrc: false,
     // Note: order is top-to-bottom and/or left-to-right
     // Note: order is bottom-to-top and/or right-to-left
