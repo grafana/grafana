@@ -7,6 +7,7 @@ import {
   handleTagsAutoCompleteError,
 } from './helpers';
 import { AngularDropdownOptions, GraphiteSegment } from '../types';
+import { FuncDef } from '../gfunc';
 
 /**
  * Providers are hooks for views to provide temporal data for autocomplete. They don't modify the state.
@@ -159,6 +160,10 @@ export async function getTagValues(
   });
 
   return mapToDropdownOptions(altValues);
+}
+
+export async function getFunctionsDefinitions(state: GraphiteQueryEditorState): Promise<FuncDef[]> {
+  return await state.datasource.getFuncDefs();
 }
 
 /**
