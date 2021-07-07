@@ -11,6 +11,7 @@ import {
   EventBusSrv,
 } from '@grafana/data';
 import { DashboardModel } from '../dashboard/state';
+import { AngularLocationWrapper } from 'app/angular/AngularLocationWrapper';
 
 export class PanelCtrl {
   panel: any;
@@ -21,7 +22,6 @@ export class PanelCtrl {
   editorTabs: any;
   $scope: any;
   $injector: auto.IInjectorService;
-  $location: any;
   $timeout: any;
   editModeInitiated = false;
   height: number;
@@ -30,15 +30,16 @@ export class PanelCtrl {
   events: EventBusExtended;
   loading = false;
   timing: any;
+  $location: AngularLocationWrapper;
 
   constructor($scope: any, $injector: auto.IInjectorService) {
     this.panel = this.panel ?? $scope.$parent.panel;
     this.dashboard = this.dashboard ?? $scope.$parent.dashboard;
     this.$injector = $injector;
-    this.$location = $injector.get('$location');
     this.$scope = $scope;
     this.$timeout = $injector.get('$timeout');
     this.editorTabs = [];
+    this.$location = new AngularLocationWrapper();
     this.events = new EventBusSrv();
     this.timing = {}; // not used but here to not break plugins
 
