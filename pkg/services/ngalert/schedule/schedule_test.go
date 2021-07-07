@@ -107,9 +107,8 @@ func TestWarmStateCache(t *testing.T) {
 		InstanceStore: dbstore,
 		Metrics:       metrics.NewMetrics(prometheus.NewRegistry()),
 	}
-	sched := schedule.NewScheduler(schedCfg, nil, "http://localhost")
-	st := state.NewManager(schedCfg.Logger, nilMetrics)
-	sched.WarmStateCache(st)
+	st := state.NewManager(schedCfg.Logger, nilMetrics, dbstore, dbstore)
+	st.Warm()
 
 	t.Run("instance cache has expected entries", func(t *testing.T) {
 		for _, entry := range expectedEntries {
@@ -153,13 +152,13 @@ func TestAlertingTicker(t *testing.T) {
 		Logger:        log.New("ngalert schedule test"),
 		Metrics:       metrics.NewMetrics(prometheus.NewRegistry()),
 	}
-	sched := schedule.NewScheduler(schedCfg, nil, "http://localhost")
+	st := state.NewManager(schedCfg.Logger, nilMetrics, dbstore, dbstore)
+	sched := schedule.NewScheduler(schedCfg, nil, "http://localhost", st)
 
 	ctx := context.Background()
 
-	st := state.NewManager(schedCfg.Logger, nilMetrics)
 	go func() {
-		err := sched.Ticker(ctx, st)
+		err := sched.Ticker(ctx)
 		require.NoError(t, err)
 	}()
 	runtime.Gosched()

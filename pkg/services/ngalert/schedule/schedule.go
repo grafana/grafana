@@ -25,10 +25,9 @@ var timeNow = time.Now
 
 // ScheduleService handles scheduling
 type ScheduleService interface {
-	Ticker(context.Context, *state.Manager) error
+	Ticker(context.Context) error
 	Pause() error
 	Unpause() error
-	WarmStateCache(*state.Manager)
 
 	// the following are used by tests only used for tests
 	evalApplied(models.AlertRuleKey, time.Time)
@@ -36,7 +35,134 @@ type ScheduleService interface {
 	overrideCfg(cfg SchedulerCfg)
 }
 
-func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRuleKey, evalCh <-chan *evalContext, stopCh <-chan struct{}, stateManager *state.Manager) error {
+// Notifier handles the delivery of alert notifications to the end user
+type Notifier interface {
+	PutAlerts(alerts apimodels.PostableAlerts) error
+}
+
+type schedule struct {
+	// base tick rate (fastest possible configured check)
+	baseInterval time.Duration
+
+	// each alert rule gets its own channel and routine
+	registry alertRuleRegistry
+
+	maxAttempts int64
+
+	clock clock.Clock
+
+	heartbeat *alerting.Ticker
+
+	// evalApplied is only used for tests: test code can set it to non-nil
+	// function, and then it'll be called from the event loop whenever the
+	// message from evalApplied is handled.
+	evalAppliedFunc func(models.AlertRuleKey, time.Time)
+
+	// stopApplied is only used for tests: test code can set it to non-nil
+	// function, and then it'll be called from the event loop whenever the
+	// message from stopApplied is handled.
+	stopAppliedFunc func(models.AlertRuleKey)
+
+	log log.Logger
+
+	evaluator eval.Evaluator
+
+	ruleStore store.RuleStore
+
+	instanceStore store.InstanceStore
+
+	dataService *tsdb.Service
+
+	stateManager *state.Manager
+
+	appURL string
+
+	notifier Notifier
+	metrics  *metrics.Metrics
+}
+
+// SchedulerCfg is the scheduler configuration.
+type SchedulerCfg struct {
+	C               clock.Clock
+	BaseInterval    time.Duration
+	Logger          log.Logger
+	EvalAppliedFunc func(models.AlertRuleKey, time.Time)
+	MaxAttempts     int64
+	StopAppliedFunc func(models.AlertRuleKey)
+	Evaluator       eval.Evaluator
+	RuleStore       store.RuleStore
+	InstanceStore   store.InstanceStore
+	Notifier        Notifier
+	Metrics         *metrics.Metrics
+}
+
+// NewScheduler returns a new schedule.
+func NewScheduler(cfg SchedulerCfg, dataService *tsdb.Service, appURL string, stateManager *state.Manager) *schedule {
+	ticker := alerting.NewTicker(cfg.C.Now(), time.Second*0, cfg.C, int64(cfg.BaseInterval.Seconds()))
+	sch := schedule{
+		registry:        alertRuleRegistry{alertRuleInfo: make(map[models.AlertRuleKey]alertRuleInfo)},
+		maxAttempts:     cfg.MaxAttempts,
+		clock:           cfg.C,
+		baseInterval:    cfg.BaseInterval,
+		log:             cfg.Logger,
+		heartbeat:       ticker,
+		evalAppliedFunc: cfg.EvalAppliedFunc,
+		stopAppliedFunc: cfg.StopAppliedFunc,
+		evaluator:       cfg.Evaluator,
+		ruleStore:       cfg.RuleStore,
+		instanceStore:   cfg.InstanceStore,
+		dataService:     dataService,
+		notifier:        cfg.Notifier,
+		metrics:         cfg.Metrics,
+		appURL:          appURL,
+		stateManager:    stateManager,
+	}
+	return &sch
+}
+
+func (sch *schedule) overrideCfg(cfg SchedulerCfg) {
+	sch.clock = cfg.C
+	sch.baseInterval = cfg.BaseInterval
+	sch.heartbeat = alerting.NewTicker(cfg.C.Now(), time.Second*0, cfg.C, int64(cfg.BaseInterval.Seconds()))
+	sch.evalAppliedFunc = cfg.EvalAppliedFunc
+	sch.stopAppliedFunc = cfg.StopAppliedFunc
+}
+
+func (sch *schedule) evalApplied(alertDefKey models.AlertRuleKey, now time.Time) {
+	if sch.evalAppliedFunc == nil {
+		return
+	}
+
+	sch.evalAppliedFunc(alertDefKey, now)
+}
+
+func (sch *schedule) stopApplied(alertDefKey models.AlertRuleKey) {
+	if sch.stopAppliedFunc == nil {
+		return
+	}
+
+	sch.stopAppliedFunc(alertDefKey)
+}
+
+func (sch *schedule) Pause() error {
+	if sch == nil {
+		return fmt.Errorf("scheduler is not initialised")
+	}
+	sch.heartbeat.Pause()
+	sch.log.Info("alert rule scheduler paused", "now", sch.clock.Now())
+	return nil
+}
+
+func (sch *schedule) Unpause() error {
+	if sch == nil {
+		return fmt.Errorf("scheduler is not initialised")
+	}
+	sch.heartbeat.Unpause()
+	sch.log.Info("alert rule scheduler unpaused", "now", sch.clock.Now())
+	return nil
+}
+
+func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRuleKey, evalCh <-chan *evalContext, stopCh <-chan struct{}) error {
 	sch.log.Debug("alert rule routine started", "key", key)
 
 	evalRunning := false
@@ -86,9 +212,9 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRul
 					return err
 				}
 
-				processedStates := stateManager.ProcessEvalResults(alertRule, results)
+				processedStates := sch.stateManager.ProcessEvalResults(alertRule, results)
 				sch.saveAlertStates(processedStates)
-				alerts := FromAlertStateToPostableAlerts(sch.log, processedStates, stateManager, sch.appURL)
+				alerts := FromAlertStateToPostableAlerts(sch.log, processedStates, sch.stateManager, sch.appURL)
 				sch.log.Debug("sending alerts to notifier", "count", len(alerts.PostableAlerts), "alerts", alerts.PostableAlerts)
 				err = sch.sendAlerts(alerts)
 				if err != nil {
@@ -122,131 +248,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRul
 	}
 }
 
-// Notifier handles the delivery of alert notifications to the end user
-type Notifier interface {
-	PutAlerts(alerts apimodels.PostableAlerts) error
-}
-
-type schedule struct {
-	// base tick rate (fastest possible configured check)
-	baseInterval time.Duration
-
-	// each alert rule gets its own channel and routine
-	registry alertRuleRegistry
-
-	maxAttempts int64
-
-	clock clock.Clock
-
-	heartbeat *alerting.Ticker
-
-	// evalApplied is only used for tests: test code can set it to non-nil
-	// function, and then it'll be called from the event loop whenever the
-	// message from evalApplied is handled.
-	evalAppliedFunc func(models.AlertRuleKey, time.Time)
-
-	// stopApplied is only used for tests: test code can set it to non-nil
-	// function, and then it'll be called from the event loop whenever the
-	// message from stopApplied is handled.
-	stopAppliedFunc func(models.AlertRuleKey)
-
-	log log.Logger
-
-	evaluator eval.Evaluator
-
-	ruleStore store.RuleStore
-
-	instanceStore store.InstanceStore
-
-	dataService *tsdb.Service
-
-	appURL string
-
-	notifier Notifier
-	metrics  *metrics.Metrics
-}
-
-// SchedulerCfg is the scheduler configuration.
-type SchedulerCfg struct {
-	C               clock.Clock
-	BaseInterval    time.Duration
-	Logger          log.Logger
-	EvalAppliedFunc func(models.AlertRuleKey, time.Time)
-	MaxAttempts     int64
-	StopAppliedFunc func(models.AlertRuleKey)
-	Evaluator       eval.Evaluator
-	RuleStore       store.RuleStore
-	InstanceStore   store.InstanceStore
-	Notifier        Notifier
-	Metrics         *metrics.Metrics
-}
-
-// NewScheduler returns a new schedule.
-func NewScheduler(cfg SchedulerCfg, dataService *tsdb.Service, appURL string) *schedule {
-	ticker := alerting.NewTicker(cfg.C.Now(), time.Second*0, cfg.C, int64(cfg.BaseInterval.Seconds()))
-	sch := schedule{
-		registry:        alertRuleRegistry{alertRuleInfo: make(map[models.AlertRuleKey]alertRuleInfo)},
-		maxAttempts:     cfg.MaxAttempts,
-		clock:           cfg.C,
-		baseInterval:    cfg.BaseInterval,
-		log:             cfg.Logger,
-		heartbeat:       ticker,
-		evalAppliedFunc: cfg.EvalAppliedFunc,
-		stopAppliedFunc: cfg.StopAppliedFunc,
-		evaluator:       cfg.Evaluator,
-		ruleStore:       cfg.RuleStore,
-		instanceStore:   cfg.InstanceStore,
-		dataService:     dataService,
-		notifier:        cfg.Notifier,
-		metrics:         cfg.Metrics,
-		appURL:          appURL,
-	}
-	return &sch
-}
-
-func (sch *schedule) overrideCfg(cfg SchedulerCfg) {
-	sch.clock = cfg.C
-	sch.baseInterval = cfg.BaseInterval
-	sch.heartbeat = alerting.NewTicker(cfg.C.Now(), time.Second*0, cfg.C, int64(cfg.BaseInterval.Seconds()))
-	sch.evalAppliedFunc = cfg.EvalAppliedFunc
-	sch.stopAppliedFunc = cfg.StopAppliedFunc
-}
-
-func (sch *schedule) evalApplied(alertDefKey models.AlertRuleKey, now time.Time) {
-	if sch.evalAppliedFunc == nil {
-		return
-	}
-
-	sch.evalAppliedFunc(alertDefKey, now)
-}
-
-func (sch *schedule) stopApplied(alertDefKey models.AlertRuleKey) {
-	if sch.stopAppliedFunc == nil {
-		return
-	}
-
-	sch.stopAppliedFunc(alertDefKey)
-}
-
-func (sch *schedule) Pause() error {
-	if sch == nil {
-		return fmt.Errorf("scheduler is not initialised")
-	}
-	sch.heartbeat.Pause()
-	sch.log.Info("alert rule scheduler paused", "now", sch.clock.Now())
-	return nil
-}
-
-func (sch *schedule) Unpause() error {
-	if sch == nil {
-		return fmt.Errorf("scheduler is not initialised")
-	}
-	sch.heartbeat.Unpause()
-	sch.log.Info("alert rule scheduler unpaused", "now", sch.clock.Now())
-	return nil
-}
-
-func (sch *schedule) Ticker(grafanaCtx context.Context, stateManager *state.Manager) error {
+func (sch *schedule) Ticker(grafanaCtx context.Context) error {
 	dispatcherGroup, ctx := errgroup.WithContext(grafanaCtx)
 	for {
 		select {
@@ -275,7 +277,7 @@ func (sch *schedule) Ticker(grafanaCtx context.Context, stateManager *state.Mana
 
 				if newRoutine && !invalidInterval {
 					dispatcherGroup.Go(func() error {
-						return sch.ruleRoutine(ctx, key, ruleInfo.evalCh, ruleInfo.stopCh, stateManager)
+						return sch.ruleRoutine(ctx, key, ruleInfo.evalCh, ruleInfo.stopCh)
 					})
 				}
 
@@ -327,10 +329,10 @@ func (sch *schedule) Ticker(grafanaCtx context.Context, stateManager *state.Mana
 			}
 
 			for _, v := range orgIds {
-				sch.saveAlertStates(stateManager.GetAll(v))
+				sch.saveAlertStates(sch.stateManager.GetAll(v))
 			}
 
-			stateManager.Close()
+			sch.stateManager.Close()
 			return waitErr
 		}
 	}
@@ -356,79 +358,6 @@ func (sch *schedule) saveAlertStates(states []*state.State) {
 		if err != nil {
 			sch.log.Error("failed to save alert state", "uid", s.AlertRuleUID, "orgId", s.OrgID, "labels", s.Labels.String(), "state", s.State.String(), "msg", err.Error())
 		}
-	}
-}
-
-func (sch *schedule) WarmStateCache(st *state.Manager) {
-	sch.log.Info("warming cache for startup")
-	st.ResetCache()
-
-	orgIds, err := sch.instanceStore.FetchOrgIds()
-	if err != nil {
-		sch.log.Error("unable to fetch orgIds", "msg", err.Error())
-	}
-
-	var states []*state.State
-	for _, orgId := range orgIds {
-		// Get Rules
-		ruleCmd := models.ListAlertRulesQuery{
-			OrgID: orgId,
-		}
-		if err := sch.ruleStore.GetOrgAlertRules(&ruleCmd); err != nil {
-			sch.log.Error("unable to fetch previous state", "msg", err.Error())
-		}
-
-		ruleByUID := make(map[string]*models.AlertRule, len(ruleCmd.Result))
-		for _, rule := range ruleCmd.Result {
-			ruleByUID[rule.UID] = rule
-		}
-
-		// Get Instances
-		cmd := models.ListAlertInstancesQuery{
-			RuleOrgID: orgId,
-		}
-		if err := sch.instanceStore.ListAlertInstances(&cmd); err != nil {
-			sch.log.Error("unable to fetch previous state", "msg", err.Error())
-		}
-
-		for _, entry := range cmd.Result {
-			ruleForEntry, ok := ruleByUID[entry.RuleUID]
-			if !ok {
-				sch.log.Error("rule not found for instance, ignoring", "rule", entry.RuleUID)
-				continue
-			}
-
-			lbs := map[string]string(entry.Labels)
-			cacheId, err := entry.Labels.StringKey()
-			if err != nil {
-				sch.log.Error("error getting cacheId for entry", "msg", err.Error())
-			}
-			stateForEntry := &state.State{
-				AlertRuleUID:       entry.RuleUID,
-				OrgID:              entry.RuleOrgID,
-				CacheId:            cacheId,
-				Labels:             lbs,
-				State:              translateInstanceState(entry.CurrentState),
-				Results:            []state.Evaluation{},
-				StartsAt:           entry.CurrentStateSince,
-				EndsAt:             entry.CurrentStateEnd,
-				LastEvaluationTime: entry.LastEvalTime,
-				Annotations:        ruleForEntry.Annotations,
-			}
-			states = append(states, stateForEntry)
-		}
-	}
-	st.Put(states)
-}
-
-func translateInstanceState(state models.InstanceStateType) eval.State {
-	switch {
-	case state == models.InstanceStateFiring:
-		return eval.Alerting
-	case state == models.InstanceStateNormal:
-		return eval.Normal
-	default:
-		return eval.Error
 	}
 }
 
