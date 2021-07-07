@@ -118,6 +118,28 @@ func (i *Initializer) Initialize(p *plugins.PluginV2) error {
 	return nil
 }
 
+func (i *Initializer) InitializeCorePluginWithBackend(p *plugins.PluginV2, factory backendplugin.PluginFactoryFunc) error {
+	err := i.Initialize(p)
+	if err != nil {
+		return err
+	}
+
+	if p.IsCorePlugin() {
+		if factory != nil {
+			var err error
+
+			p.Client, err = factory(p.ID, log.New("pluginID", p.ID), []string{})
+			if err != nil {
+				return err
+			}
+		} else {
+			i.log.Warn("Could not initialize core plugin process", "pluginID", p.ID)
+		}
+	}
+
+	return nil
+}
+
 func (i *Initializer) handleModuleDefaults(p *plugins.PluginV2) {
 	if p.IsExternalPlugin() {
 		metrics.SetPluginBuildInformation(p.ID, p.Type, p.Info.Version, string(p.Signature))

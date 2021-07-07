@@ -31,6 +31,11 @@ import (
 
 var _ plugins.PluginManagerV2 = (*PluginManagerV2)(nil)
 
+var externalManagedCorePlugins = map[string]struct{}{
+	"cloudwatch": {},
+	"testdata":   {},
+}
+
 type PluginManagerV2 struct {
 	Cfg                    *setting.Cfg                  `inject:""`
 	License                models.Licensing              `inject:""`
@@ -63,13 +68,13 @@ func (m *PluginManagerV2) Init() error {
 	m.pluginInstaller = installer.New(false, m.Cfg.BuildVersion, NewInstallerLogger("plugin.installer", true))
 
 	// install Core plugins
-	//err := m.installPlugins(filepath.Join(m.Cfg.StaticRootPath, "app/plugins"), plugins.Core)
-	//if err != nil {
-	//	return err
-	//}
+	err := m.installPlugins(filepath.Join(m.Cfg.StaticRootPath, "app/plugins"), plugins.Core)
+	if err != nil {
+		return err
+	}
 
 	// install Bundled plugins
-	err := m.installPlugins(m.Cfg.BundledPluginsPath, plugins.Bundled)
+	err = m.installPlugins(m.Cfg.BundledPluginsPath, plugins.Bundled)
 	if err != nil {
 		return err
 	}
@@ -113,12 +118,7 @@ func (m *PluginManagerV2) RegisterCorePlugin(ctx context.Context, pluginJSONPath
 		return err
 	}
 
-	plugin.Client, err = factory(plugin.ID, m.log.New("pluginID", plugin.ID), []string{})
-	if err != nil {
-		return err
-	}
-
-	err = m.PluginInitializer.Initialize(plugin)
+	err = m.PluginInitializer.InitializeCorePluginWithBackend(plugin, factory)
 	if err != nil {
 		return err
 	}
@@ -181,6 +181,12 @@ func (m *PluginManagerV2) filterOutDuplicates(loadedPlugins []*plugins.PluginV2)
 			m.log.Debug("Skipping plugin as it's already installed", "plugin", existing.ID, "version", existing.Info.Version)
 			continue
 		}
+
+		// temporary check to ignore Core plugins that are programmatically managed
+		if _, canIgnore := externalManagedCorePlugins[scannedPlugin.ID]; canIgnore {
+			continue
+		}
+
 		result = append(result, scannedPlugin)
 	}
 
