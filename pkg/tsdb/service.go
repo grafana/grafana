@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor"
 	"github.com/grafana/grafana/pkg/tsdb/cloudmonitoring"
@@ -48,6 +49,7 @@ type Service struct {
 	PluginManager          plugins.Manager           `inject:""`
 	BackendPluginManager   backendplugin.Manager     `inject:""`
 	HTTPClientProvider     httpclient.Provider       `inject:""`
+	OAuthTokenService      *oauthtoken.Service       `inject:""`
 
 	//nolint: staticcheck // plugins.DataPlugin deprecated
 	registry map[string]func(*models.DataSource) (plugins.DataPlugin, error)
@@ -81,7 +83,7 @@ func (s *Service) HandleRequest(ctx context.Context, ds *models.DataSource, quer
 		return plugin.DataQuery(ctx, ds, query)
 	}
 
-	return dataPluginQueryAdapter(ds.Type, s.BackendPluginManager).DataQuery(ctx, ds, query)
+	return dataPluginQueryAdapter(ds.Type, s.BackendPluginManager, s.OAuthTokenService).DataQuery(ctx, ds, query)
 }
 
 // RegisterQueryHandler registers a query handler factory.
