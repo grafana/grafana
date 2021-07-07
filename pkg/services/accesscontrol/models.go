@@ -48,8 +48,10 @@ func (p RoleDTO) Role() Role {
 
 const (
 	// Permission actions
+  
+	// Provisioning actions
+	ActionProvisioningReload = "provisioning:reload"
 
-	// Actions
 	// Users actions
 	ActionUsersRead     = "users:read"
 	ActionUsersWrite    = "users:write"
@@ -89,6 +91,9 @@ const (
 
 	// Settings actions
 	ActionSettingsRead = "settings:read"
+
+	// Datasources actions
+	ActionDatasourcesExplore = "datasources:explore"
 
 	// Global Scopes
 	ScopeGlobalUsersAll = "global:users:*"

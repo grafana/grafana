@@ -40,7 +40,7 @@ const fieldNameMatcher: FieldMatcherInfo<string> = {
 
   get: (name: string): FieldMatcher => {
     return (field: Field, frame: DataFrame, allFrames: DataFrame[]) => {
-      return getFieldDisplayName(field, frame, allFrames) === name;
+      return name === field.name || getFieldDisplayName(field, frame, allFrames) === name;
     };
   },
 
@@ -62,12 +62,16 @@ const multipleFieldNamesMatcher: FieldMatcherInfo<ByNamesMatcherOptions> = {
     const { names, mode = ByNamesMatcherMode.include } = options;
     const uniqueNames = new Set<string>(names ?? []);
 
-    return (field: Field, frame: DataFrame, allFrames: DataFrame[]) => {
-      if (mode === ByNamesMatcherMode.exclude) {
-        return !uniqueNames.has(getFieldDisplayName(field, frame, allFrames));
-      }
-      return uniqueNames.has(getFieldDisplayName(field, frame, allFrames));
+    const matcher = (field: Field, frame: DataFrame, frames: DataFrame[]) => {
+      return uniqueNames.has(field.name) || uniqueNames.has(getFieldDisplayName(field, frame, frames));
     };
+
+    if (mode === ByNamesMatcherMode.exclude) {
+      return (field: Field, frame: DataFrame, frames: DataFrame[]) => {
+        return !matcher(field, frame, frames);
+      };
+    }
+    return matcher;
   },
 
   getOptionsDisplayText: (options: ByNamesMatcherOptions): string => {

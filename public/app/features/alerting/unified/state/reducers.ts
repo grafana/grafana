@@ -3,7 +3,7 @@ import { createAsyncMapSlice, createAsyncSlice } from '../utils/redux';
 import {
   fetchAlertManagerConfigAction,
   fetchAmAlertsAction,
-  fetchExistingRuleAction,
+  fetchEditableRuleAction,
   fetchGrafanaNotifiersAction,
   fetchPromRulesAction,
   fetchRulerRulesAction,
@@ -26,7 +26,7 @@ export const reducer = combineReducers({
     .reducer,
   ruleForm: combineReducers({
     saveRule: createAsyncSlice('saveRule', saveRuleFormAction).reducer,
-    existingRule: createAsyncSlice('existingRule', fetchExistingRuleAction).reducer,
+    existingRule: createAsyncSlice('existingRule', fetchEditableRuleAction).reducer,
   }),
   grafanaNotifiers: createAsyncSlice('grafanaNotifiers', fetchGrafanaNotifiersAction).reducer,
   saveAMConfig: createAsyncSlice('saveAMConfig', updateAlertManagerConfigAction).reducer,

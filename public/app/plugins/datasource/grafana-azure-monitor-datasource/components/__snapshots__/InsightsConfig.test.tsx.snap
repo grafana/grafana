@@ -169,6 +169,7 @@ exports[`Render should render component 1`] = `
         >
           <Input
             className="width-30"
+            disabled={false}
             placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
             value=""
           />
@@ -191,6 +192,7 @@ exports[`Render should render component 1`] = `
         >
           <Input
             className="width-30"
+            disabled={false}
             value=""
           />
         </div>
