@@ -88,8 +88,8 @@ func (ng *AlertNG) Init() error {
 		Notifier:      ng.Alertmanager,
 		Metrics:       ng.Metrics,
 	}
-	ng.schedule = schedule.NewScheduler(schedCfg, ng.DataService, ng.Cfg.AppURL, ng.stateManager)
 	ng.stateManager = state.NewManager(ng.Log, ng.Metrics, store, store)
+	ng.schedule = schedule.NewScheduler(schedCfg, ng.DataService, ng.Cfg.AppURL, ng.stateManager)
 
 	api := api.API{
 		Cfg:             ng.Cfg,
