@@ -553,7 +553,7 @@ func GetDashboardVersion(c *models.ReqContext) response.Response {
 	query := models.GetDashboardVersionQuery{
 		OrgId:       c.OrgId,
 		DashboardId: dashID,
-		Version:     c.ParamsInt(":id"),
+		Version:     int(c.ParamsInt64(":id")),
 	}
 
 	if err := bus.Dispatch(&query); err != nil {

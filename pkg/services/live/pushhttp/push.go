@@ -3,6 +3,7 @@ package pushhttp
 import (
 	"context"
 	"errors"
+	"io"
 	"net/http"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -58,7 +59,7 @@ func (g *Gateway) Handle(ctx *models.ReqContext) {
 	urlValues := ctx.Req.URL.Query()
 	frameFormat := pushurl.FrameFormatFromValues(urlValues)
 
-	body, err := ctx.Req.Body().Bytes()
+	body, err := io.ReadAll(ctx.Req.Request.Body)
 	if err != nil {
 		logger.Error("Error reading body", "error", err)
 		ctx.Resp.WriteHeader(http.StatusInternalServerError)
