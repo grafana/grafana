@@ -12,7 +12,6 @@ import { setPluginsSearchQuery } from './state/reducers';
 import { useAsync } from 'react-use';
 import { selectors } from '@grafana/e2e-selectors';
 import { PluginsErrorsInfo } from './PluginsErrorsInfo';
-import { config } from '@grafana/runtime';
 
 const mapStateToProps = (state: StoreState) => ({
   navModel: getNavModel(state.navIndex, 'plugins'),
@@ -46,12 +45,6 @@ export const PluginListPage: React.FC<Props> = ({
     href: 'https://grafana.com/plugins?utm_source=grafana_plugin_list',
     title: 'Find more plugins on Grafana.com',
   };
-
-  if (config.pluginAdminEnabled) {
-    linkButton.href = '/a/grafana-plugin-admin-app/';
-    linkButton.title = 'Install & manage plugins';
-    actionTarget = undefined;
-  }
 
   return (
     <Page navModel={navModel} aria-label={selectors.pages.PluginsList.page}>
