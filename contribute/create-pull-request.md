@@ -52,7 +52,7 @@ Pull requests that create new UI components must adhere to the following accessi
 
 - Use semantic HTML.
 - Use ARIA roles, labels and other accessibility attributes correctly. Accessibility attributes should only be used when semantic HTML doesn't satisfy your use case.
-- Use the Grafana theme palette for styling. It contains colors with good contrast which aids accessibility.
+- Use the [Grafana theme palette](/contribute/style-guides/themes.md) for styling. It contains colors with good contrast which aids accessibility.
 - Use [RTL](https://testing-library.com/docs/dom-testing-library/api-accessibility/) for writing unit tests. It helps to create accessible components.
 
 ### Backend-specific guidelines
