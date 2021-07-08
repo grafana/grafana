@@ -48,7 +48,7 @@ Pull requests that add or modify unit tests that are written in Jest must adhere
 - Don't add snapshots tests. We are incrementally removing existing snapshot tests, we don't want more.
 - If an existing unit test is written in Enzyme, migrate it to RTL (React Testing Library), unless you’re fixing a bug. Bug fixes usually shouldn't include any bigger refactoring, so it’s ok to skip migrating the test to RTL.
 
-Pull requests that create new UI components must adhere to the following accessibility guidelines:
+Pull requests that create new UI components or modify existing ones must adhere to the following accessibility guidelines:
 
 - Use semantic HTML.
 - Use ARIA roles, labels and other accessibility attributes correctly. Accessibility attributes should only be used when semantic HTML doesn't satisfy your use case.
