@@ -46,9 +46,9 @@ export const SignupPage: FC<Props> = (props) => {
       });
 
     if (response.code === 'redirect-to-select-org') {
-      window.location.href = getConfig().appSubUrl + '/profile/select-org?signup=1';
+      window.location.assign(getConfig().appSubUrl + '/profile/select-org?signup=1');
     }
-    window.location.href = getConfig().appSubUrl + '/';
+    window.location.assign(getConfig().appSubUrl + '/');
   };
 
   const defaultValues = {
@@ -63,10 +63,11 @@ export const SignupPage: FC<Props> = (props) => {
           {({ errors, register, getValues }: FormAPI<SignupDTO>) => (
             <>
               <Field label="Your name">
-                <Input {...register('name')} placeholder="(optional)" />
+                <Input id="user-name" {...register('name')} placeholder="(optional)" />
               </Field>
               <Field label="Email" invalid={!!errors.email} error={errors.email?.message}>
                 <Input
+                  id="email"
                   {...register('email', {
                     required: 'Email is required',
                     pattern: {
@@ -80,16 +81,17 @@ export const SignupPage: FC<Props> = (props) => {
               </Field>
               {!getConfig().autoAssignOrg && (
                 <Field label="Org. name">
-                  <Input {...register('orgName')} placeholder="Org. name" />
+                  <Input id="org-name" {...register('orgName')} placeholder="Org. name" />
                 </Field>
               )}
               {getConfig().verifyEmailEnabled && (
                 <Field label="Email verification code (sent to your email)">
-                  <Input {...register('code')} placeholder="Code" />
+                  <Input id="verification-code" {...register('code')} placeholder="Code" />
                 </Field>
               )}
               <Field label="Password" invalid={!!errors.password} error={errors?.password?.message}>
                 <Input
+                  id="new-password"
                   {...register('password', {
                     required: 'Password is required',
                   })}
@@ -99,6 +101,7 @@ export const SignupPage: FC<Props> = (props) => {
               </Field>
               <Field label="Confirm password" invalid={!!errors.confirm} error={errors?.confirm?.message}>
                 <Input
+                  id="confirm-new-password"
                   {...register('confirm', {
                     required: 'Confirmed password is required',
                     validate: (v) => v === getValues().password || 'Passwords must match!',

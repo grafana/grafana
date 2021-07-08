@@ -3,13 +3,13 @@ import LdapPage from 'app/features/admin/ldap/LdapPage';
 import UserAdminPage from 'app/features/admin/UserAdminPage';
 import { LoginPage } from 'app/core/components/Login/LoginPage';
 import config from 'app/core/config';
-import { DashboardRoutes } from 'app/types';
+import { AccessControlAction, DashboardRoutes } from 'app/types';
 import { SafeDynamicImport } from '../core/components/DynamicImports/SafeDynamicImport';
 import { RouteDescriptor } from '../core/navigation/types';
-import { SignupPage } from 'app/core/components/Signup/SignupPage';
 import { Redirect } from 'react-router-dom';
 import ErrorPage from 'app/core/components/ErrorPage/ErrorPage';
 import { getPluginsAdminRoutes } from 'app/features/plugins/routes';
+import { contextSrv } from 'app/core/services/context_srv';
 
 export const extraRoutes: RouteDescriptor[] = [];
 
@@ -137,7 +137,11 @@ export function getAppRoutes(): RouteDescriptor[] {
     {
       path: '/explore',
       pageClass: 'page-explore',
-      roles: () => (config.viewersCanEdit ? [] : ['Editor', 'Admin']),
+      roles: () =>
+        evaluatePermission(
+          () => (config.viewersCanEdit ? [] : ['Editor', 'Admin']),
+          AccessControlAction.DataSourcesExplore
+        ),
       component: SafeDynamicImport(() => import(/* webpackChunkName: "explore" */ 'app/features/explore/Wrapper')),
     },
     {
@@ -280,8 +284,19 @@ export function getAppRoutes(): RouteDescriptor[] {
       pageClass: 'sidemenu-hidden',
     },
     {
+      path: '/verify',
+      component: !config.verifyEmailEnabled
+        ? () => <Redirect to="/signup" />
+        : SafeDynamicImport(
+            () => import(/* webpackChunkName "VerifyEmailPage"*/ 'app/core/components/Signup/VerifyEmailPage')
+          ),
+      pageClass: 'login-page sidemenu-hidden',
+    },
+    {
       path: '/signup',
-      component: SignupPage,
+      component: config.disableUserSignUp
+        ? () => <Redirect to="/login" />
+        : SafeDynamicImport(() => import(/* webpackChunkName "SignupPage"*/ 'app/core/components/Signup/SignupPage')),
       pageClass: 'sidemenu-hidden login-page',
     },
     {
@@ -416,6 +431,13 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
+      path: '/alerting/alertmanager/',
+      component: SafeDynamicImport(
+        () =>
+          import(/* webpackChunkName: "AlertManagerNotifications" */ 'app/features/alerting/unified/AmNotifications')
+      ),
+    },
+    {
       path: '/alerting/new',
       pageClass: 'page-alerting',
       component: SafeDynamicImport(
@@ -427,6 +449,21 @@ export function getAppRoutes(): RouteDescriptor[] {
       pageClass: 'page-alerting',
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "AlertingRuleForm"*/ 'app/features/alerting/unified/RuleEditor')
+      ),
+    },
+    {
+      path: '/alerting/:sourceName/:id/view',
+      pageClass: 'page-alerting',
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "AlertingRule"*/ 'app/features/alerting/unified/RuleViewer')
+      ),
+    },
+    {
+      path: '/alerting/:sourceName/:name/find',
+      pageClass: 'page-alerting',
+      component: SafeDynamicImport(
+        () =>
+          import(/* webpackChunkName: "AlertingRedirectToRule"*/ 'app/features/alerting/unified/RedirectToRuleViewer')
       ),
     },
     {
@@ -481,3 +518,16 @@ export function getAppRoutes(): RouteDescriptor[] {
     // ...playlistRoutes,
   ];
 }
+
+// evaluates access control permission, using fallback if access control is disabled
+const evaluatePermission = (fallback: () => string[], action: AccessControlAction): string[] => {
+  if (!config.featureToggles['accesscontrol']) {
+    return fallback();
+  }
+  if (contextSrv.hasPermission(action)) {
+    return [];
+  } else {
+    // Hack to reject when user does not have permission
+    return ['Reject'];
+  }
+};

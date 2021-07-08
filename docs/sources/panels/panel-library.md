@@ -1,6 +1,6 @@
 +++
 title = "Library panels"
-weight = 400
+weight = 410
 +++
 
 # Library panels
