@@ -4,7 +4,7 @@ import Drop from 'tether-drop';
 import { GrafanaRouteComponentProps } from './types';
 import { locationSearchToObject, navigationLogger } from '@grafana/runtime';
 import { keybindingSrv } from '../services/keybindingSrv';
-import { analyticsService } from '../services/analytics';
+import { reportPageview } from '../services/echo/EchoSrv';
 
 export interface Props extends Omit<GrafanaRouteComponentProps, 'queryParams'> {}
 
@@ -15,13 +15,13 @@ export class GrafanaRoute extends React.Component<Props> {
     // unbinds all and re-bind global keybindins
     keybindingSrv.reset();
     keybindingSrv.initGlobals();
-    analyticsService.track();
+    reportPageview();
     navigationLogger('GrafanaRoute', false, 'Mounted', this.props.match);
   }
 
   componentDidUpdate(prevProps: Props) {
     this.cleanupDOM();
-    analyticsService.track();
+    reportPageview();
     navigationLogger('GrafanaRoute', false, 'Updated', this.props, prevProps);
   }
 
