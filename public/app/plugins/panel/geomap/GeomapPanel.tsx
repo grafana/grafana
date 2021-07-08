@@ -11,8 +11,6 @@ import MouseWheelZoom from 'ol/interaction/MouseWheelZoom';
 import { PanelData, MapLayerHandler, MapLayerConfig, PanelProps, GrafanaTheme } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
-import 'ol/ol.css';
-
 import { ControlsOptions, GeomapPanelOptions, MapViewConfig } from './types';
 import { defaultGrafanaThemedMap } from './layers/basemaps';
 import { centerPointRegistry, MapCenterID } from './view';
@@ -22,6 +20,8 @@ import { css } from '@emotion/css';
 import { stylesFactory } from '@grafana/ui';
 import { GeomapOverlay, OverlayProps } from './GeomapOverlay';
 import { DebugOverlay } from './components/DebugOverlay';
+import { getGlobalStyles } from './globalStyles';
+import { Global } from '@emotion/react';
 
 interface MapLayerState {
   config: MapLayerConfig;
@@ -35,6 +35,8 @@ let sharedView: View | undefined = undefined;
 type Props = PanelProps<GeomapPanelOptions>;
 
 export class GeomapPanel extends Component<Props> {
+  globalCSS = getGlobalStyles(config.theme2);
+
   map: GeoMap;
 
   basemap: BaseLayer;
@@ -270,10 +272,13 @@ export class GeomapPanel extends Component<Props> {
 
   render() {
     return (
-      <div className={this.style.wrap}>
-        <div className={this.style.map} ref={this.initMapRef}></div>
-        <GeomapOverlay {...this.overlayProps} />
-      </div>
+      <>
+        <Global styles={this.globalCSS} />
+        <div className={this.style.wrap}>
+          <div className={this.style.map} ref={this.initMapRef}></div>
+          <GeomapOverlay {...this.overlayProps} />
+        </div>
+      </>
     );
   }
 }

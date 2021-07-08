@@ -15,6 +15,9 @@ interface State {
   text: string;
 }
 
+/**
+ * This is an Input field that will call `onChange` for blur and enter
+ */
 export class NumberInput extends PureComponent<Props, State> {
   state: State = { text: '' };
 
