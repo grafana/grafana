@@ -1,7 +1,7 @@
 import { getBackendSrv } from '@grafana/runtime';
 import { PluginMeta } from '@grafana/data';
 import { API_ROOT, GRAFANA_API_ROOT } from './constants';
-import { Plugin, PluginDetails, Org } from './types';
+import { Plugin, PluginDetails, Org, LocalPlugin } from './types';
 
 async function getRemotePlugins(): Promise<Plugin[]> {
   const res = await getBackendSrv().get(`${GRAFANA_API_ROOT}/plugins`);
@@ -9,29 +9,42 @@ async function getRemotePlugins(): Promise<Plugin[]> {
 }
 
 async function getPlugin(slug: string): Promise<PluginDetails> {
-  const res = await getBackendSrv().get(`${GRAFANA_API_ROOT}/plugins/${slug}`);
-
-  const versions = await getPluginVersions(slug);
   const installed = await getInstalledPlugins();
 
-  const plugin = installed?.find((_: any) => {
-    return _.id === slug;
+  const localPlugin = installed?.find((plugin: LocalPlugin) => {
+    return plugin.id === slug;
   });
 
+  const [remote, versions] = await Promise.all([getRemotePlugin(slug, localPlugin), getPluginVersions(slug)]);
+
   return {
-    remote: res,
+    remote: remote,
     remoteVersions: versions,
-    local: plugin,
+    local: localPlugin,
   };
 }
 
+async function getRemotePlugin(slug: string, local: LocalPlugin | undefined): Promise<Plugin | undefined> {
+  try {
+    return await getBackendSrv().get(`${GRAFANA_API_ROOT}/plugins/${slug}`);
+  } catch (error) {
+    // this might be a plugin that doesn't exist on gcom.
+    error.isHandled = !!local;
+    return;
+  }
+}
+
 async function getPluginVersions(id: string): Promise<any[]> {
-  const versions = await getBackendSrv().get(`${GRAFANA_API_ROOT}/plugins/${id}/versions`);
-  return versions.items;
+  try {
+    const versions = await getBackendSrv().get(`${GRAFANA_API_ROOT}/plugins/${id}/versions`);
+    return versions.items;
+  } catch (error) {
+    return [];
+  }
 }
 
 async function getInstalledPlugins(): Promise<any> {
-  const installed = await getBackendSrv().get(`${API_ROOT}?core=0`);
+  const installed = await getBackendSrv().get(`${API_ROOT}`);
   return installed;
 }
 

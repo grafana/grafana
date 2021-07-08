@@ -1,6 +1,6 @@
 import React from 'react';
 import { css } from '@emotion/css';
-import { PluginTypeCode } from 'types';
+import { PluginTypeCode } from '../types';
 
 interface PluginTypeIconProps {
   typeCode: PluginTypeCode;
