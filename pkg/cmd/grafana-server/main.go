@@ -99,7 +99,7 @@ func main() {
 		fmt.Println("diagnostics: pprof profiling enabled", "port", profileDiagnostics.port)
 		runtime.SetBlockProfileRate(1)
 		go func() {
-			err := http.ListenAndServe(fmt.Sprintf("localhost:%d", profileDiagnostics.port), nil)
+			err := http.ListenAndServe(fmt.Sprintf(":%d", profileDiagnostics.port), nil)
 			if err != nil {
 				panic(err)
 			}
