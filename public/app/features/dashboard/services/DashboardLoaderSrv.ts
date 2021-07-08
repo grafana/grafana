@@ -111,8 +111,14 @@ export class DashboardLoaderSrv {
       return Promise.reject('expecting path parameter');
     }
 
+    const queryParams: { [key: string]: any } = {};
+
+    params.forEach((value, key) => {
+      queryParams[key] = value;
+    });
+
     return getBackendSrv()
-      .get(`/api/datasources/${ds.id}/resources/${path}`, {})
+      .get(`/api/datasources/${ds.id}/resources/${path}`, queryParams)
       .then((data) => {
         return {
           meta: {

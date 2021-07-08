@@ -208,5 +208,5 @@ instead of the pre-packaged version of Chromium.
 To override the path to the Chrome/Chromium executable, set an environment variable and make sure that it's available for the Grafana process. For example:
 
 ```bash
-export GF_RENDERER_PLUGIN_CHROME_BIN="/usr/bin/chromium-browser"
+export GF_PLUGIN_RENDERING_CHROME_BIN="/usr/bin/chromium-browser"
 ```
