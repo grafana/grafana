@@ -44,12 +44,14 @@ import {
   LokiResponse,
   LokiResultType,
   LokiStreamResponse,
+  StepType,
 } from './types';
 import { LiveStreams, LokiLiveTarget } from './live_streams';
 import LanguageProvider from './language_provider';
 import { serializeParams } from '../../../core/utils/fetch';
 import { RowContextOptions } from '@grafana/ui/src/components/Logs/LogRowContextProvider';
 import syntax from './syntax';
+import { DEFAULT_STEP_OPTION } from './components/LokiOptionFields';
 
 export type RangeQueryOptions = DataQueryRequest<LokiQuery> | AnnotationQueryRequest<LokiQuery>;
 export const DEFAULT_MAX_LINES = 1000;
@@ -172,19 +174,21 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
       const startNs = this.getTime(options.range.from, false);
       const endNs = this.getTime(options.range.to, true);
       const rangeMs = Math.ceil((endNs - startNs) / 1e6);
-      let minInterval = rangeUtil.intervalToMs(
+      let stepInterval = rangeUtil.intervalToMs(
         this.templateSrv.replace(
-          target.step || (options as DataQueryRequest<LokiQuery>).interval,
+          target.stepMode || (options as DataQueryRequest<LokiQuery>).interval,
           (options as DataQueryRequest<LokiQuery>).scopedVars
         )
       );
+      const stepMode = target.stepMode || (DEFAULT_STEP_OPTION.value as StepType);
 
       const resolution = target.resolution || 1;
 
       const adjustedInterval =
         this.adjustInterval(
           (options as DataQueryRequest<LokiQuery>).intervalMs || 1000,
-          minInterval,
+          stepInterval,
+          stepMode,
           rangeMs,
           resolution
         ) / 1000;
@@ -617,7 +621,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     return error;
   }
 
-  adjustInterval(interval: number, minInterval: number, range: number, resolution: number) {
+  adjustInterval(interval: number, stepInterval: number, stepMode: StepType, range: number, resolution: number) {
     // Loki will drop queries that might return more than 11000 data points.
     // Calibrate interval if it is too small.
 
@@ -625,12 +629,16 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     if (safeInterval > 1) {
       safeInterval = Math.ceil(safeInterval);
     }
-    /*if (interval !== 0 && range / interval > 11000) {
-      interval = Math.ceil(range / 11000);
-    }*/
     // The min interval is set to 1ms
-    console.log(interval * resolution, minInterval);
-    return Math.max(interval * resolution, minInterval, safeInterval);
+    let adjustedInterval = safeInterval;
+    if (stepMode === 'min') {
+      adjustedInterval = Math.max(interval * resolution, stepInterval, safeInterval);
+    } else if (stepMode === 'max') {
+      adjustedInterval = Math.min(interval * resolution, stepInterval, safeInterval);
+    } else if (stepMode === 'exact') {
+      adjustedInterval = Math.min(stepInterval * resolution, safeInterval);
+    }
+    return adjustedInterval;
   }
 }
 

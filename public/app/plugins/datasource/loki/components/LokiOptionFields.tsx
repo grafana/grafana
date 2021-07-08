@@ -108,7 +108,7 @@ export function LokiOptionFields(props: LokiOptionFieldsProps) {
   }
 
   function onStepIntervalChange(e: React.KeyboardEvent<HTMLInputElement>) {
-    const nextQuery = { ...query, step: e.currentTarget.value };
+    const nextQuery = { ...query, stepInterval: e.currentTarget.value };
     onChange(nextQuery);
   }
 
@@ -176,12 +176,13 @@ export function LokiOptionFields(props: LokiOptionFieldsProps) {
           />
         </InlineField>
         <InlineField label="Step">
-          <Select isSearchable={false} onChange={onStepModeChange} options={STEP_OPTIONS} value={stepMode} />
+          <Select isSearchable={false} width={16} onChange={onStepModeChange} options={STEP_OPTIONS} value={stepMode} />
         </InlineField>
         <InlineField>
           <Input
             className="width-4"
-            placeholder=""
+            width={12}
+            placeholder="Example 15s"
             min={0}
             onChange={onStepIntervalChange}
             onKeyDown={onReturnKeyDown}
