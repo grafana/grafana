@@ -16,6 +16,7 @@ import (
 
 var (
 	ErrGetAlertsInternal        = fmt.Errorf("unable to retrieve alerts(s) due to an internal error")
+	ErrGetAlertsUnavailable     = fmt.Errorf("unable to retrieve alerts(s) as alertmanager is not initialised yet")
 	ErrGetAlertsBadPayload      = fmt.Errorf("unable to retrieve alerts")
 	ErrGetAlertGroupsBadPayload = fmt.Errorf("unable to retrieve alerts groups")
 )
@@ -28,7 +29,7 @@ func (am *Alertmanager) GetAlerts(active, silenced, inhibited bool, filter []str
 	)
 
 	if !am.initialised {
-		return res, nil
+		return res, ErrGetAlertsUnavailable
 	}
 
 	matchers, err := parseFilter(filter)
