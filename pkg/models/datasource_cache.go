@@ -84,19 +84,20 @@ func (ds *DataSource) GetHTTPTransport(provider httpclient.Provider, customMiddl
 
 func (ds *DataSource) HTTPClientOptions() sdkhttpclient.Options {
 	tlsOptions := ds.TLSOptions()
+	timeouts := &sdkhttpclient.TimeoutOptions{
+		Timeout:               ds.getTimeout(),
+		DialTimeout:           time.Duration(setting.DataProxyDialTimeout) * time.Second,
+		KeepAlive:             time.Duration(setting.DataProxyKeepAlive) * time.Second,
+		TLSHandshakeTimeout:   time.Duration(setting.DataProxyTLSHandshakeTimeout) * time.Second,
+		ExpectContinueTimeout: time.Duration(setting.DataProxyExpectContinueTimeout) * time.Second,
+		MaxConnsPerHost:       setting.DataProxyMaxConnsPerHost,
+		MaxIdleConns:          setting.DataProxyMaxIdleConns,
+		MaxIdleConnsPerHost:   setting.DataProxyMaxIdleConns,
+		IdleConnTimeout:       time.Duration(setting.DataProxyIdleConnTimeout) * time.Second,
+	}
 	opts := sdkhttpclient.Options{
-		Timeouts: &sdkhttpclient.TimeoutOptions{
-			Timeout:               ds.getTimeout(),
-			DialTimeout:           time.Duration(setting.DataProxyDialTimeout) * time.Second,
-			KeepAlive:             time.Duration(setting.DataProxyKeepAlive) * time.Second,
-			TLSHandshakeTimeout:   time.Duration(setting.DataProxyTLSHandshakeTimeout) * time.Second,
-			ExpectContinueTimeout: time.Duration(setting.DataProxyExpectContinueTimeout) * time.Second,
-			MaxConnsPerHost:       setting.DataProxyMaxConnsPerHost,
-			MaxIdleConns:          setting.DataProxyMaxIdleConns,
-			MaxIdleConnsPerHost:   setting.DataProxyMaxIdleConnsPerHost,
-			IdleConnTimeout:       time.Duration(setting.DataProxyIdleConnTimeout) * time.Second,
-		},
-		Headers: getCustomHeaders(ds.JsonData, ds.DecryptedValues()),
+		Timeouts: timeouts,
+		Headers:  getCustomHeaders(ds.JsonData, ds.DecryptedValues()),
 		Labels: map[string]string{
 			"datasource_name": ds.Name,
 			"datasource_uid":  ds.Uid,

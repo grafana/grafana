@@ -46,9 +46,9 @@ func TestFoldersAPIEndpoint(t *testing.T) {
 			Error              error
 			ExpectedStatusCode int
 		}{
-			{Error: models.ErrFolderWithSameUIDExists, ExpectedStatusCode: 400},
+			{Error: models.ErrFolderWithSameUIDExists, ExpectedStatusCode: 409},
 			{Error: models.ErrFolderTitleEmpty, ExpectedStatusCode: 400},
-			{Error: models.ErrFolderSameNameExists, ExpectedStatusCode: 400},
+			{Error: models.ErrFolderSameNameExists, ExpectedStatusCode: 409},
 			{Error: models.ErrDashboardInvalidUid, ExpectedStatusCode: 400},
 			{Error: models.ErrDashboardUidTooLong, ExpectedStatusCode: 400},
 			{Error: models.ErrFolderAccessDenied, ExpectedStatusCode: 403},
@@ -102,9 +102,9 @@ func TestFoldersAPIEndpoint(t *testing.T) {
 			Error              error
 			ExpectedStatusCode int
 		}{
-			{Error: models.ErrFolderWithSameUIDExists, ExpectedStatusCode: 400},
+			{Error: models.ErrFolderWithSameUIDExists, ExpectedStatusCode: 409},
 			{Error: models.ErrFolderTitleEmpty, ExpectedStatusCode: 400},
-			{Error: models.ErrFolderSameNameExists, ExpectedStatusCode: 400},
+			{Error: models.ErrFolderSameNameExists, ExpectedStatusCode: 409},
 			{Error: models.ErrDashboardInvalidUid, ExpectedStatusCode: 400},
 			{Error: models.ErrDashboardUidTooLong, ExpectedStatusCode: 400},
 			{Error: models.ErrFolderAccessDenied, ExpectedStatusCode: 403},

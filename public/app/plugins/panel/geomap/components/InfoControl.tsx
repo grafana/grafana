@@ -54,16 +54,18 @@ export class InfoControl extends Control {
     ReactDOM.render(
       <div>
         <table>
-          <tr>
-            <th>Zoom:</th>
-            <td>{zoom?.toFixed(1)}</td>
-          </tr>
-          <tr>
-            <th>Center:&nbsp;</th>
-            <td>
-              {center[0].toFixed(5)}, {center[1].toFixed(5)}
-            </td>
-          </tr>
+          <tbody>
+            <tr>
+              <th>Zoom:</th>
+              <td>{zoom?.toFixed(1)}</td>
+            </tr>
+            <tr>
+              <th>Center:&nbsp;</th>
+              <td>
+                {center[0].toFixed(5)}, {center[1].toFixed(5)}
+              </td>
+            </tr>
+          </tbody>
         </table>
       </div>,
       this.element

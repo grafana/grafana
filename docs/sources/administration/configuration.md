@@ -424,6 +424,7 @@ For more details check the [Transport.MaxConnsPerHost](https://golang.org/pkg/ne
 The maximum number of idle connections that Grafana will maintain. Default is `100`. For more details check the [Transport.MaxIdleConns](https://golang.org/pkg/net/http/#Transport.MaxIdleConns) documentation.
 
 ### max_idle_connections_per_host
+[Deprecated - use max_idle_connections instead]
 
 The maximum number of idle connections per host that Grafana will maintain. Default is `2`. For more details check the [Transport.MaxIdleConnsPerHost](https://golang.org/pkg/net/http/#Transport.MaxIdleConnsPerHost) documentation.
 
@@ -1507,6 +1508,23 @@ The `max_connections` option specifies the maximum number of connections to the 
 Refer to [Grafana Live configuration documentation]({{< relref "../live/configure-grafana-live.md" >}}) if you specify a number higher than default since this can require some operating system and infrastructure tuning.
 
 0 disables Grafana Live, -1 means unlimited connections.
+
+### allowed_origins
+
+> **Note**: Available in Grafana v8.0.4 and later versions.
+
+The `allowed_origins` option is a comma-separated list of additional origins (`Origin` header of HTTP Upgrade request during WebSocket connection establishment) that will be accepted by Grafana Live.
+
+If not set (default), then the origin is matched over [root_url]({{< relref "#root_url" >}}) which should be sufficient for most scenarios.
+
+Origin patterns support wildcard symbol "*".
+
+For example:
+
+```ini
+[live]
+allowed_origins = "https://*.example.com"
+```
 
 <hr>
 

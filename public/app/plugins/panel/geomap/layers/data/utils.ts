@@ -1,26 +1,5 @@
 import { DataFrame, DataFrameView } from '@grafana/data';
 
-/**
- *
- */
-
-/*
-import Feature from 'ol/Feature';
-
-function dataFrameToFeatures(frame: DataFrame): Feature[] {
-  const features: Feature[] = [];
-
-  return features;
-}
-*/
-
-/*
-
-function getDataFrameFields(frame: DataFrame) {
-  return;
-}
-*/
-
 interface locations {
   lowestValue: number;
   highestValue: number;
