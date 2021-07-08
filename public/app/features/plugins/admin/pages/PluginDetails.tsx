@@ -24,9 +24,6 @@ export default function PluginDetails(): JSX.Element | null {
   const { isLoading, local, remote, remoteVersions } = usePlugin(pluginId);
   const styles = useStyles2(getStyles);
 
-  console.log('local', local);
-  console.log('remote', remote);
-
   const description = remote?.description ?? local?.info?.description;
   const readme = remote?.readme;
   const version = local?.info?.version || remote?.version;
