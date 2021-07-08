@@ -128,11 +128,11 @@ Regex:
 
 > **Note:** Available in Grafana 7.2 and above
 
-The `$__rate_interval` variable is meant to be a good interval for the `rate` and `increase` functions. It is designed to work well in most cases and avoid most of the pitfalls that can occur when using a fixed interval or `$__interval`.
+The `$__rate_interval` variable is a good interval for the `rate` and `increase` functions. It works well in most cases and avoids most of the pitfalls that can occur when using a fixed interval or `$__interval`.
 
 For example: `rate(http_requests_total[$__rate_interval])`
 
-It is defined as max( `$__interval` + _Scrape interval_, 4 \* _Scrape interval_), where _Scrape interval_ is the Min step setting (AKA query\*interval, a setting per PromQL query), if any is set, and otherwise the _Scrape interval_ as set in the Prometheus data source (but ignoring any Min interval setting in the panel, because the latter is modified by the resolution setting).
+It is defined as max( `$__interval` + _Scrape interval_, 4 \* _Scrape interval_), where _Scrape interval_ is the Min step setting (AKA query\*interval, a setting per PromQL query) if any is set. Otherwise, the _Scrape interval_ is set in the Prometheus data source (but ignoring any Min interval setting in the panel, because the latter is modified by the resolution setting).
 
 ### Using variables in queries
 
