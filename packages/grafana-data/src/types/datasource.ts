@@ -228,7 +228,11 @@ abstract class DataSourceApi<
   abstract query(request: DataQueryRequest<TQuery>): Promise<DataQueryResponse> | Observable<DataQueryResponse>;
 
   /**
-   * Test & verify datasource settings & connection details
+   * Test & verify datasource settings & connection details (returning TestingStatus)
+   *
+   * When verification fails - errors specific to the data source should be handled here and converted to
+   * a TestingStatus object. Unknown errors and HTTP errors can be re-thrown and will be handled here:
+   * public/app/features/datasources/state/actions.ts
    */
   abstract testDatasource(): Promise<any>;
 
@@ -472,7 +476,13 @@ export enum DataQueryErrorType {
 
 export interface DataQueryError {
   data?: {
+    /**
+     * Short information about the error
+     */
     message?: string;
+    /**
+     * Detailed information about the error. Only returned when app_mode is development.
+     */
     error?: string;
   };
   message?: string;

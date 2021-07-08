@@ -1,5 +1,4 @@
 import { map as _map } from 'lodash';
-import { of } from 'rxjs';
 import { catchError, map, mapTo } from 'rxjs/operators';
 import { getBackendSrv, DataSourceWithBackend, FetchResponse, BackendDataSourceResponse } from '@grafana/runtime';
 import { DataSourceInstanceSettings, ScopedVars, MetricFindValue, AnnotationEvent } from '@grafana/data';
@@ -9,6 +8,8 @@ import { MysqlQueryForInterpolation, MySQLOptions, MySQLQuery } from './types';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 import { getSearchFilterScopedVar } from '../../../features/variables/utils';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { of } from 'rxjs';
+import { toTestingStatus } from '@grafana/runtime/src/utils/queryResponse';
 
 export class MysqlDatasource extends DataSourceWithBackend<MySQLQuery, MySQLOptions> {
   id: any;
@@ -181,12 +182,7 @@ export class MysqlDatasource extends DataSourceWithBackend<MySQLQuery, MySQLOpti
       .pipe(
         mapTo({ status: 'success', message: 'Database Connection OK' }),
         catchError((err) => {
-          console.error(err);
-          if (err.data && err.data.message) {
-            return of({ status: 'error', message: err.data.message });
-          } else {
-            return of({ status: 'error', message: err.status });
-          }
+          return of(toTestingStatus(err));
         })
       )
       .toPromise();

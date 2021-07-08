@@ -29,6 +29,31 @@ const getBackendSrvMock = () =>
     withNoBackendCache: jest.fn().mockImplementationOnce((cb) => cb()),
   } as any);
 
+const failDataSourceTest = async (error: object) => {
+  const dependencies: TestDataSourceDependencies = {
+    getDatasourceSrv: () =>
+      ({
+        get: jest.fn().mockReturnValue({
+          testDatasource: jest.fn().mockImplementation(() => {
+            throw error;
+          }),
+        }),
+      } as any),
+    getBackendSrv: getBackendSrvMock,
+  };
+  const state = {
+    testingStatus: {
+      message: '',
+      status: '',
+    },
+  };
+  const dispatchedActions = await thunkTester(state)
+    .givenThunk(testDataSource)
+    .whenThunkIsDispatched('Azure Monitor', dependencies);
+
+  return dispatchedActions;
+};
+
 describe('Name exists', () => {
   const plugins = getMockPlugins(5);
 
@@ -192,6 +217,37 @@ describe('testDataSource', () => {
         .givenThunk(testDataSource)
         .whenThunkIsDispatched('Azure Monitor', dependencies);
 
+      expect(dispatchedActions).toEqual([testDataSourceStarting(), testDataSourceFailed(result)]);
+    });
+
+    it('then testDataSourceFailed should be dispatched with response error message', async () => {
+      const result = {
+        message: 'Error testing datasource',
+      };
+      const dispatchedActions = await failDataSourceTest({
+        message: 'Error testing datasource',
+        data: { message: 'Response error message' },
+        statusText: 'Bad Request',
+      });
+      expect(dispatchedActions).toEqual([testDataSourceStarting(), testDataSourceFailed(result)]);
+    });
+
+    it('then testDataSourceFailed should be dispatched with response data message', async () => {
+      const result = {
+        message: 'Response error message',
+      };
+      const dispatchedActions = await failDataSourceTest({
+        data: { message: 'Response error message' },
+        statusText: 'Bad Request',
+      });
+      expect(dispatchedActions).toEqual([testDataSourceStarting(), testDataSourceFailed(result)]);
+    });
+
+    it('then testDataSourceFailed should be dispatched with response statusText', async () => {
+      const result = {
+        message: 'HTTP error Bad Request',
+      };
+      const dispatchedActions = await failDataSourceTest({ data: {}, statusText: 'Bad Request' });
       expect(dispatchedActions).toEqual([testDataSourceStarting(), testDataSourceFailed(result)]);
     });
   });

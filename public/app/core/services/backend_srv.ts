@@ -299,14 +299,19 @@ export class BackendSrv implements BackendService {
     ]);
   }
 
-  processRequestError(options: BackendSrvRequest, err: FetchError): FetchError {
+  /**
+   * Processes FetchError to ensure "data" property is an object.
+   *
+   * @see DataQueryError.data
+   */
+  processRequestError(options: BackendSrvRequest, err: FetchError): FetchError<{ message: string; error?: string }> {
     err.data = err.data ?? { message: 'Unexpected error' };
 
     if (typeof err.data === 'string') {
       err.data = {
+        message: err.data,
         error: err.statusText,
         response: err.data,
-        message: err.data,
       };
     }
 
