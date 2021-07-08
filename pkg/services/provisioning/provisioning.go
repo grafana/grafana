@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	plugifaces "github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana/pkg/services/provisioning/channelrule"
 	"github.com/grafana/grafana/pkg/services/provisioning/dashboards"
 	"github.com/grafana/grafana/pkg/services/provisioning/datasources"
 	"github.com/grafana/grafana/pkg/services/provisioning/notifiers"
@@ -21,6 +22,7 @@ type ProvisioningService interface {
 	registry.BackgroundService
 	RunInitProvisioners() error
 	ProvisionDatasources() error
+	ProvisionChannelRules(store *sqlstore.SQLStore) error
 	ProvisionPlugins() error
 	ProvisionNotifications() error
 	ProvisionDashboards() error
@@ -43,6 +45,7 @@ func NewProvisioningServiceImpl() *provisioningServiceImpl {
 		newDashboardProvisioner: dashboards.New,
 		provisionNotifiers:      notifiers.Provision,
 		provisionDatasources:    datasources.Provision,
+		provisionChannelRules:   channelrule.Provision,
 		provisionPlugins:        plugins.Provision,
 	}
 }
@@ -52,6 +55,7 @@ func newProvisioningServiceImpl(
 	newDashboardProvisioner dashboards.DashboardProvisionerFactory,
 	provisionNotifiers func(string) error,
 	provisionDatasources func(string) error,
+	provisionChannelRules func(string, *sqlstore.SQLStore) error,
 	provisionPlugins func(string, plugifaces.Manager) error,
 ) *provisioningServiceImpl {
 	return &provisioningServiceImpl{
@@ -59,6 +63,7 @@ func newProvisioningServiceImpl(
 		newDashboardProvisioner: newDashboardProvisioner,
 		provisionNotifiers:      provisionNotifiers,
 		provisionDatasources:    provisionDatasources,
+		provisionChannelRules:   provisionChannelRules,
 		provisionPlugins:        provisionPlugins,
 	}
 }
@@ -73,6 +78,7 @@ type provisioningServiceImpl struct {
 	dashboardProvisioner    dashboards.DashboardProvisioner
 	provisionNotifiers      func(string) error
 	provisionDatasources    func(string) error
+	provisionChannelRules   func(string, *sqlstore.SQLStore) error
 	provisionPlugins        func(string, plugifaces.Manager) error
 	mutex                   sync.Mutex
 }
@@ -83,6 +89,11 @@ func (ps *provisioningServiceImpl) Init() error {
 
 func (ps *provisioningServiceImpl) RunInitProvisioners() error {
 	err := ps.ProvisionDatasources()
+	if err != nil {
+		return err
+	}
+
+	err = ps.ProvisionChannelRules(ps.SQLStore)
 	if err != nil {
 		return err
 	}
@@ -133,6 +144,12 @@ func (ps *provisioningServiceImpl) ProvisionDatasources() error {
 	datasourcePath := filepath.Join(ps.Cfg.ProvisioningPath, "datasources")
 	err := ps.provisionDatasources(datasourcePath)
 	return errutil.Wrap("Datasource provisioning error", err)
+}
+
+func (ps *provisioningServiceImpl) ProvisionChannelRules(store *sqlstore.SQLStore) error {
+	channelRulePath := filepath.Join(ps.Cfg.ProvisioningPath, "channel-rules")
+	err := ps.provisionChannelRules(channelRulePath, store)
+	return errutil.Wrap("Channel rules provisioning error", err)
 }
 
 func (ps *provisioningServiceImpl) ProvisionPlugins() error {

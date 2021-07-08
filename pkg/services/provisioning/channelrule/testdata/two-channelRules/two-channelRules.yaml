@@ -1,0 +1,3 @@
+channelRules:
+  - pattern: Graphite
+  - pattern: Prometheus

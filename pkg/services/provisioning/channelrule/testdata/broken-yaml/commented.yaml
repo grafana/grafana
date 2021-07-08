@@ -1,0 +1,11 @@
+# # list of channel rules that should be deleted from the database
+#deleteChannelRules:
+#   - pattern: Graphite
+#     org_id: 1
+
+# # list of channel rules to insert/update depending
+# # what's available in the database
+#channelRules:
+#   # <string, required> name of the datasource. Required
+# - pattern: Graphite
+#   version: 1
