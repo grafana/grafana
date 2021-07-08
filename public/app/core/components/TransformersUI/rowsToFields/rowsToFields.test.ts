@@ -31,7 +31,11 @@ describe('Rows to fields', () => {
       Object {
         "fields": Array [
           Object {
-            "config": Object {},
+            "config": Object {
+              "max": 15,
+              "min": 3,
+              "unit": "degree",
+            },
             "name": "Temperature",
             "type": "number",
             "values": Array [
@@ -39,7 +43,11 @@ describe('Rows to fields', () => {
             ],
           },
           Object {
-            "config": Object {},
+            "config": Object {
+              "max": 200,
+              "min": 100,
+              "unit": "pressurebar",
+            },
             "name": "Pressure",
             "type": "number",
             "values": Array [
@@ -50,5 +58,33 @@ describe('Rows to fields', () => {
         "length": 1,
       }
     `);
+  });
+
+  it('Can handle colors', () => {
+    const input = toDataFrame({
+      fields: [
+        { name: 'Name', type: FieldType.string, values: ['Temperature'] },
+        { name: 'Value', type: FieldType.number, values: [10] },
+        { name: 'Color', type: FieldType.string, values: ['blue'] },
+      ],
+    });
+
+    const result = rowsToFields({}, input);
+
+    expect(result.fields[0].config.color?.fixedColor).toBe('blue');
+  });
+
+  it('Can handle thresholds', () => {
+    const input = toDataFrame({
+      fields: [
+        { name: 'Name', type: FieldType.string, values: ['Temperature'] },
+        { name: 'Value', type: FieldType.number, values: [10] },
+        { name: 'threshold1', type: FieldType.string, values: [30] },
+        { name: 'threshold2', type: FieldType.string, values: [500] },
+      ],
+    });
+
+    const result = rowsToFields({}, input);
+    expect(result.fields[0].config.thresholds?.steps[1].value).toBe(30);
   });
 });
