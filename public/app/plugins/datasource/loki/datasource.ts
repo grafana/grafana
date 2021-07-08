@@ -176,7 +176,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
       const rangeMs = Math.ceil((endNs - startNs) / 1e6);
       let stepInterval = rangeUtil.intervalToMs(
         this.templateSrv.replace(
-          target.stepMode || (options as DataQueryRequest<LokiQuery>).interval,
+          target.stepInterval || (options as DataQueryRequest<LokiQuery>).interval,
           (options as DataQueryRequest<LokiQuery>).scopedVars
         )
       );
@@ -624,7 +624,6 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
   adjustInterval(interval: number, stepInterval: number, stepMode: StepType, range: number, resolution: number) {
     // Loki will drop queries that might return more than 11000 data points.
     // Calibrate interval if it is too small.
-
     let safeInterval = range / 11000;
     if (safeInterval > 1) {
       safeInterval = Math.ceil(safeInterval);
