@@ -36,12 +36,7 @@ export const rowsToFieldsTransformer: DataTransformerInfo<RowToFieldsTransformOp
   operator: (options) => (source) =>
     source.pipe(
       map((data) => {
-        // Ignore if we have more than one frame
-        if (data.length !== 1) {
-          return data;
-        }
-
-        return [rowsToFields(options, data[0])];
+        return data.map((frame) => rowsToFields(options, frame));
       })
     ),
 };
