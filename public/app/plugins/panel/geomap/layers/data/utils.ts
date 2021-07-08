@@ -41,13 +41,13 @@ export function dataFrameToLocations(frame: DataFrame, config: any): locations {
       let value;
 
       // Coordinate Data
-      if (config.fieldMapping.queryFormat === "coordinates") {
+      if (config.queryFormat.locationType === "coordinates") {
         lat = row[config.fieldMapping.latitudeField];
         lng = row[config.fieldMapping.longitudeField];
       }
 
       // Geohash Data
-      else if (config.fieldMapping.queryFormat === "geohash"){
+      else if (config.queryFormat.locationType === "geohash"){
         const encodedGeohash = row[config.fieldMapping.geohashField];
         const decodedGeohash = decodeGeohash(encodedGeohash);
         lat = decodedGeohash.latitude;
