@@ -30,13 +30,13 @@ You can make a panel retrieve fresh data more frequently by increasing the **Max
 ## Data sources that work with query caching
 
 Query caching works for all [Enterprise data sources](https://grafana.com/grafana/plugins/?type=datasource&enterprise=1), and it works for the following [built-in data sources]({{< relref "../datasources/_index.md" >}}):
+- CloudWatch
+- Google Cloud Monitoring
 - InfluxDB
-- Tempo
+- Microsoft SQL Server
 - MySQL
 - Postgres
-- Microsoft SQL Server
-- Google Cloud Monitoring
-- CloudWatch
+- Tempo
 
 Some data sources, such as Elasticsearch, Prometheus, and Loki, cache queries themselves, so Grafana query caching does not improve performance.
 
