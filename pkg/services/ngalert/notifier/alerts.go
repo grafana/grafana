@@ -27,6 +27,10 @@ func (am *Alertmanager) GetAlerts(active, silenced, inhibited bool, filter []str
 		res = apimodels.GettableAlerts{}
 	)
 
+	if !am.initialised {
+		return res, nil
+	}
+
 	matchers, err := parseFilter(filter)
 	if err != nil {
 		am.logger.Error("failed to parse matchers", "err", err)
