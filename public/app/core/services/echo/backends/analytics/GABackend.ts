@@ -1,6 +1,5 @@
 import $ from 'jquery';
-import { EchoBackend, EchoEventType } from '@grafana/runtime';
-import { PageviewEchoEvent } from './types';
+import { EchoBackend, EchoEventType, PageviewEchoEvent } from '@grafana/runtime';
 
 export interface GAEchoBackendOptions {
   googleAnalyticsId: string;
@@ -8,7 +7,6 @@ export interface GAEchoBackendOptions {
 }
 
 export class GAEchoBackend implements EchoBackend<PageviewEchoEvent, GAEchoBackendOptions> {
-  private ga?: any;
   supportedEvents = [EchoEventType.Pageview];
 
   constructor(public options: GAEchoBackendOptions) {
@@ -29,17 +27,15 @@ export class GAEchoBackend implements EchoBackend<PageviewEchoEvent, GAEchoBacke
     ga.l = +new Date();
     ga('create', options.googleAnalyticsId, 'auto');
     ga('set', 'anonymizeIp', true);
-
-    this.ga = ga;
   }
 
   addEvent = (e: PageviewEchoEvent) => {
-    if (!this.ga) {
+    if (!(window as any).ga) {
       return;
     }
 
-    this.ga('set', { page: e.payload.page });
-    this.ga('send', 'pageview');
+    (window as any).ga('set', { page: e.payload.page });
+    (window as any).ga('send', 'pageview');
   };
 
   // Not using Echo buffering, addEvent above sends events to GA as soon as they appear

@@ -48,6 +48,7 @@ import { getVariablesUrlParams } from './features/variables/getAllVariableValues
 import getDefaultMonacoLanguages from '../lib/monaco-languages';
 import { contextSrv } from './core/services/context_srv';
 import { GAEchoBackend } from './core/services/echo/backends/analytics/GABackend';
+import { RudderstackBackend } from './core/services/echo/backends/analytics/RudderstackBackend';
 
 // add move to lodash for backward compatabilty with plugins
 // @ts-ignore
@@ -167,7 +168,17 @@ function initEchoSrv() {
     registerEchoBackend(
       new GAEchoBackend({
         googleAnalyticsId: (config as any).googleAnalyticsId,
-        debug: process.env.NODE_ENV !== 'production',
+        // debug: process.env.NODE_ENV !== 'production',
+      })
+    );
+  }
+
+  if ((config as any).rudderstackWriteKey && (config as any).rudderstackDataPlaneUrl) {
+    registerEchoBackend(
+      new RudderstackBackend({
+        writeKey: (config as any).rudderstackWriteKey,
+        dataPlaneUrl: (config as any).rudderstackDataPlaneUrl,
+        user: config.bootData.user,
       })
     );
   }
