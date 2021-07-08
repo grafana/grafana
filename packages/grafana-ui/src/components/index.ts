@@ -200,6 +200,7 @@ export { Checkbox } from './Forms/Checkbox';
 
 export { TextArea } from './TextArea/TextArea';
 export { FileUpload } from './FileUpload/FileUpload';
+export { Dropzone } from './DropZone/DropZone';
 export { TimeRangeInput } from './DateTimePickers/TimeRangeInput';
 export { RelativeTimeRangePicker } from './DateTimePickers/RelativeTimeRangePicker/RelativeTimeRangePicker';
 export { Card, Props as CardProps, getCardStyles } from './Card/Card';
