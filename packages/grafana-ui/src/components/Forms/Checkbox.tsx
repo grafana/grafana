@@ -130,11 +130,13 @@ export const getCheckboxStyles = stylesFactory((theme: GrafanaTheme2) => {
     label: cx(
       labelStyles.label,
       css`
+        position: relative;
+        z-index: 2;
         padding-left: ${theme.spacing(labelPadding)};
         white-space: nowrap;
         cursor: pointer;
         position: relative;
-        top: -2px;
+        top: -3px;
       `
     ),
     description: cx(
