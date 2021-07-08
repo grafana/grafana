@@ -55,7 +55,6 @@ export const DateTimePicker: FC<Props> = ({ date, label, onChange }) => {
           </ClickOutsideWrapper>
         ) : (
           <Portal>
-            portal
             <ClickOutsideWrapper onClick={() => setOpen(false)}>
               <div className={styles.modal} onClick={stopPropagation}>
                 <DateTimeCalendar date={date} onChange={onApply} isFullscreen={false} onClose={() => setOpen(false)} />
@@ -96,10 +95,10 @@ const DateTimeInput: FC<InputProps> = ({ date, label, onChange, isFullscreen, on
 
   useEffect(() => {
     if (date) {
-      setInternalDate((prevState) => ({
-        ...prevState,
+      setInternalDate({
+        invalid: !isValid(dateTimeFormat(date)),
         value: dateTimeFormat(date),
-      }));
+      });
     }
   }, [date]);
 
@@ -141,7 +140,11 @@ const DateTimeCalendar: FC<DateTimeCalendarProps> = ({ date, onClose, onChange, 
   const calendarStyles = useStyles2(getBodyStyles);
   const styles = useStyles2(getStyles);
   const [internalDate, setInternalDate] = useState<Date>(() => {
-    return date ? date.toDate() : new Date();
+    if (date && date.isValid()) {
+      return date.toDate();
+    }
+
+    return new Date();
   });
 
   const onChangeDate = useCallback((date: Date | Date[]) => {
