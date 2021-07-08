@@ -1,77 +1,39 @@
 import { DataFrame, DataFrameView } from '@grafana/data';
-
-interface locations {
-  lowestValue: number;
-  highestValue: number;
-  valueRange: number;
-  dataValues: location[];
-};
-
-interface location {
-  latitude: string;
-  longitude: string;
-  value: number;
-}
+import { Point } from 'ol/geom';
+import { fromLonLat } from 'ol/proj';
 
  /**
-   * Function that formats dataframe into locations
+   * Function that formats dataframe into a Point[]
    */
-export function dataFrameToLocations(frame: DataFrame, config: any): locations {
-  let dataValues: location[] = [];
+export function dataFrameToPoints(frame: DataFrame, config: any): Point[] {
 
-  let formattedData: locations = {
-    lowestValue: 0,
-    highestValue: 0,
-    valueRange: 0,
-    dataValues: dataValues,
-  };
+  let points: Point[] = [];
 
   if (frame && frame.length > 0) {
 
-    let lowestValue: number = Number.MAX_VALUE;
-    let highestValue: number = 0;
-
-    // For each data point, create a dataValue
+    // For each data point, create a Point
     const view = new DataFrameView(frame);
-
     view.forEach(row => {
 
-      let lat;
       let lng;
-      let value;
+      let lat;
 
       // Coordinate Data
       if (config.queryFormat.locationType === "coordinates") {
-        lat = row[config.fieldMapping.latitudeField];
-        lng = row[config.fieldMapping.longitudeField];
+        lng = row[config.fieldMapping.latitudeField];
+        lat = row[config.fieldMapping.longitudeField];
       }
-
       // Geohash Data
       else if (config.queryFormat.locationType === "geohash"){
         const encodedGeohash = row[config.fieldMapping.geohashField];
         const decodedGeohash = decodeGeohash(encodedGeohash);
-        lat = decodedGeohash.latitude;
-        lng = decodedGeohash.longitude;
+        lng = decodedGeohash.latitude;
+        lat = decodedGeohash.longitude;
       }
-
-      value = row[config.fieldMapping.metricField];
-
-      // Update highest and lowest value
-      if (value > highestValue) {
-        highestValue = value;
-      }
-      if (value < lowestValue) {
-          lowestValue = value;
-      }
-
-      dataValues.push({latitude: lat, longitude: lng, value: value});
-
+      points.push(new Point(fromLonLat([lng,lat])));
     });
-    formattedData.lowestValue = lowestValue;
-    formattedData.highestValue = highestValue;
-    formattedData.valueRange = highestValue - lowestValue;
   }
-  return formattedData;
+  return points;
 }
 
  /**
