@@ -62,6 +62,7 @@ e2e.scenario({
       });
 
     e2e.components.PanelInspector.Query.content().should('be.visible');
+    e2e().pa11y();
   },
 });
 

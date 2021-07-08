@@ -88,6 +88,7 @@ e2e.scenario({
       expect(resultIds.has('A:')).equals(true);
       expect(resultIds.has('B:')).equals(true);
     });
+    e2e().pa11y();
   },
 });
 

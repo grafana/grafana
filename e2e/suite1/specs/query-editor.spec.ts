@@ -24,5 +24,6 @@ e2e.scenario({
     e2e.components.QueryField.container().type(e2e.typings.undo());
 
     cy.contains(queryText).should('be.visible');
+    e2e().pa11y();
   },
 });

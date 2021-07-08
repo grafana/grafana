@@ -55,5 +55,6 @@ e2e.scenario({
 
     // verify all links, should have p2 value
     verifyLinks('p2');
+    e2e().pa11y();
   },
 });

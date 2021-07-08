@@ -49,5 +49,6 @@ e2e.scenario({
           expect(items[index]).to.equal(expected);
         });
       });
+    e2e().pa11y();
   },
 });

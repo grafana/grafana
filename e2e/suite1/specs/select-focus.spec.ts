@@ -27,5 +27,6 @@ e2e.scenario({
       .within(() => {
         e2e.components.Select.input().should('exist').should('not.have.focus');
       });
+    e2e().pa11y();
   },
 });

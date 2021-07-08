@@ -17,5 +17,6 @@ e2e.scenario({
 
     // check that no panel errors exist
     e2e.components.Panels.Panel.headerCornerInfo('error').should('not.exist');
+    e2e().pa11y();
   },
 });

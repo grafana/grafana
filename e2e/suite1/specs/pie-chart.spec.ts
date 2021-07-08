@@ -14,5 +14,6 @@ e2e.scenario({
     e2e()
       .get(`[data-panelid=11] [aria-label^="${selectors.components.Panels.Visualization.PieChart.svgSlice}"]`)
       .should('have.length', 5);
+    e2e().pa11y();
   },
 });

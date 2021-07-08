@@ -18,5 +18,6 @@ e2e.scenario({
     e2e.components.TransformTab.newTransform('Reduce').should('be.visible').click();
 
     e2e.components.Transforms.Reduce.calculationsLabel().should('be.visible');
+    e2e().pa11y();
   },
 });

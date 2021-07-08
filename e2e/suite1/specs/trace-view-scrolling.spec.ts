@@ -31,5 +31,6 @@ describe('Trace view', () => {
 
     // After scrolling we should load more spans
     e2e.components.TraceViewer.spanBar().should('have.length', 140);
+    e2e().pa11y();
   });
 });
