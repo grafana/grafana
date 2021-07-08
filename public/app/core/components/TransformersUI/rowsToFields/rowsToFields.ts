@@ -26,7 +26,7 @@ export interface RowToFieldsTransformMappings {
 export const rowsToFieldsTransformer: DataTransformerInfo<RowToFieldsTransformOptions> = {
   id: DataTransformerID.rowsToFields,
   name: 'Rows to fields',
-  description: 'Convert rows to fields with dynamic config',
+  description: 'Convert each row into a field with dynamic config',
   defaultOptions: {},
 
   /**
