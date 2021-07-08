@@ -57,7 +57,7 @@ func TestUSAScenario(t *testing.T) {
 			)
 		}
 
-		rsp, err := p.handleUSAStatsScenario(context.Background(), qr)
+		rsp, err := p.handleUSAScenario(context.Background(), qr)
 		require.NoError(t, err)
 		require.NotNil(t, rsp)
 		for k, v := range rsp.Responses {
