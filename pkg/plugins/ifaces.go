@@ -76,8 +76,7 @@ type DataRequestHandler interface {
 }
 
 type PluginInstaller interface {
-	// Install finds the plugin given the provided information
-	// and installs in the provided plugins directory.
+	// Install finds the plugin given the provided information and installs in the provided plugins directory.
 	Install(ctx context.Context, pluginID, version, pluginsDirectory, pluginZipURL, pluginRepoURL string) error
 	// Uninstall removes the specified plugin from the provided plugins directory.
 	Uninstall(ctx context.Context, pluginID, pluginPath string) error
@@ -112,42 +111,51 @@ type PluginLoaderV2 interface {
 type PluginInitializerV2 interface {
 	// Initialize initializes a plugin.
 	Initialize(plugin *PluginV2) error
-	// InitializeWithBackend initializes a plugin and configures its backend process.
+	// InitializeCorePluginWithBackend initializes a plugin and configures its backend process.
 	InitializeCorePluginWithBackend(p *PluginV2, factory backendplugin.PluginFactoryFunc) error
 }
 
 type ManagerV2 interface {
-	// Fetch plugin info
-	Plugin(pluginID string) *PluginV2
-	DataSource(pluginID string) *PluginV2
-	Panel(pluginID string) *PluginV2
-	App(pluginID string) *PluginV2
-	Renderer() *PluginV2
-
-	Plugins() []*PluginV2
-	DataSources() []*PluginV2
-	Panels() []*PluginV2
-	Apps() []*PluginV2
-
-	StaticRoutes() []*PluginStaticRoute
-
-	// Plugin error metadata
-	Errors(pluginID string)
-
-	// Fetch plugin data
-	QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error)
-	CallResource(pluginConfig backend.PluginContext, ctx *models.ReqContext, path string)
-	CollectMetrics(ctx context.Context, pluginID string) (*backend.CollectMetricsResult, error)
-	CheckHealth(ctx context.Context, pCtx backend.PluginContext) (*backend.CheckHealthResult, error)
-	// StreamingHandler
-
-	IsSupported(pluginID string) bool
+	// IsEnabled confirms if the manager service is enabled or not.
 	IsEnabled() bool
 
-	// IsRegistered checks if a plugin is registered with the manager
+	// Plugin returns a plugin.
+	Plugin(pluginID string) *PluginV2
+	// Plugins returns all plugins.
+	Plugins() []*PluginV2
+	// DataSource returns a datasource plugin.
+	DataSource(pluginID string) *PluginV2
+	// DataSources returns all data source plugins.
+	DataSources() []*PluginV2
+	// Panel returns a panel plugin.
+	Panel(pluginID string) *PluginV2
+	// Panels returns all panel plugins.
+	Panels() []*PluginV2
+	// App returns an app plugin.
+	App(pluginID string) *PluginV2
+	// Apps returns all app plugins.
+	Apps() []*PluginV2
+	// Renderer returns a renderer plugin.
+	Renderer() *PluginV2
+
+	// StaticRoutes returns all static plugin routes.
+	StaticRoutes() []*PluginStaticRoute
+
+	// QueryData queries data from a plugin.
+	QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error)
+	// CallResource calls a plugin resource.
+	CallResource(pluginConfig backend.PluginContext, ctx *models.ReqContext, path string)
+	// CollectMetrics collects metrics from a plugin.
+	CollectMetrics(ctx context.Context, pluginID string) (*backend.CollectMetricsResult, error)
+	// CheckHealth performs a health check on a plugin.
+	CheckHealth(ctx context.Context, pCtx backend.PluginContext) (*backend.CheckHealthResult, error)
+
+	// IsSupported determines if a plugin is supported by the manager.
+	IsSupported(pluginID string) bool
+	// IsRegistered checks if a plugin is registered with the manager.
 	IsRegistered(pluginID string) bool
-	// RegisterCorePlugin registers and starts a core plugin
-	RegisterCorePlugin(ctx context.Context, pluginJSONPath string, factory backendplugin.PluginFactoryFunc) error
+	// InitCorePlugin loads and initializes a core plugin.
+	InitCorePlugin(ctx context.Context, pluginJSONPath string, factory backendplugin.PluginFactoryFunc) error
 
 	// Install installs a plugin.
 	Install(ctx context.Context, pluginID, version string) error

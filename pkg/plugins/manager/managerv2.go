@@ -110,7 +110,7 @@ func (m *PluginManagerV2) IsDisabled() bool {
 	return !exists
 }
 
-func (m *PluginManagerV2) RegisterCorePlugin(ctx context.Context, pluginJSONPath string, factory backendplugin.PluginFactoryFunc) error {
+func (m *PluginManagerV2) InitCorePlugin(ctx context.Context, pluginJSONPath string, factory backendplugin.PluginFactoryFunc) error {
 	fullPath := filepath.Join(m.Cfg.StaticRootPath, "app/plugins", pluginJSONPath)
 
 	plugin, err := m.PluginLoader.Load(fullPath, plugins.Core)
@@ -319,10 +319,6 @@ func (m *PluginManagerV2) Plugins() []*plugins.PluginV2 {
 		pluginsList = append(pluginsList, p)
 	}
 	return pluginsList
-}
-
-func (m *PluginManagerV2) Errors(pluginID string) {
-	//m.PluginLoader.errors
 }
 
 func (m *PluginManagerV2) StaticRoutes() []*plugins.PluginStaticRoute {

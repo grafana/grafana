@@ -85,7 +85,7 @@ func (s *CloudWatchService) Init() error {
 	if s.PluginManagerV2.IsEnabled() {
 		pluginJSONPath := "datasource/cloudwatch/plugin.json"
 
-		return s.PluginManagerV2.RegisterCorePlugin(context.Background(), pluginJSONPath, factory)
+		return s.PluginManagerV2.InitCorePlugin(context.Background(), pluginJSONPath, factory)
 	}
 
 	if err := s.BackendPluginManager.RegisterAndStart(context.Background(), "cloudwatch", factory); err != nil {
