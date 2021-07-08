@@ -30,6 +30,8 @@ export default function Browse(): ReactElement {
   const sortedPlugins = plugins.items.sort(sorters[sortBy]);
   const history = useHistory();
 
+  console.log('plugins', plugins);
+
   const onSortByChange = (value: SelectableValue<string>) => {
     history.push({ query: { sortBy: value.value } });
   };
