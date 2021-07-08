@@ -1,7 +1,7 @@
 // Libraries
 import React, { memo } from 'react';
 import { css, cx } from '@emotion/css';
-import { LokiQuery } from '../types';
+import { LokiQuery, StepType } from '../types';
 import { map } from 'lodash';
 
 // Types
@@ -11,6 +11,7 @@ import { SelectableValue } from '@grafana/data';
 export interface LokiOptionFieldsProps {
   lineLimitValue: string;
   stepInterval: string;
+  stepMode: StepType;
   resolution: number;
   queryType: LokiQueryType;
   query: LokiQuery;
@@ -35,8 +36,35 @@ const INTERVAL_FACTOR_OPTIONS: Array<SelectableValue<number>> = map([1, 2, 3, 4,
   label: '1/' + value,
 }));
 
+export const DEFAULT_STEP_OPTION: SelectableValue<StepType> = {
+  value: 'min',
+  label: 'Minimum',
+};
+
+const STEP_OPTIONS: Array<SelectableValue<StepType>> = [
+  DEFAULT_STEP_OPTION,
+  {
+    value: 'max',
+    label: 'Maxmimum',
+  },
+  {
+    value: 'exact',
+    label: 'Exact',
+  },
+];
+
 export function LokiOptionFields(props: LokiOptionFieldsProps) {
-  const { lineLimitValue, stepInterval, resolution, queryType, query, onRunQuery, runOnBlur, onChange } = props;
+  const {
+    lineLimitValue,
+    stepInterval,
+    resolution,
+    stepMode,
+    queryType,
+    query,
+    onRunQuery,
+    runOnBlur,
+    onChange,
+  } = props;
 
   function onChangeQueryLimit(value: string) {
     const nextQuery = { ...query, maxLines: preprocessMaxLines(value) };
@@ -79,8 +107,13 @@ export function LokiOptionFields(props: LokiOptionFieldsProps) {
     }
   }
 
-  function onStepChange(e: React.KeyboardEvent<HTMLInputElement>) {
+  function onStepIntervalChange(e: React.KeyboardEvent<HTMLInputElement>) {
     const nextQuery = { ...query, step: e.currentTarget.value };
+    onChange(nextQuery);
+  }
+
+  function onStepModeChange(option: SelectableValue<StepType>) {
+    const nextQuery = { ...query, stepMode: option.value };
     onChange(nextQuery);
   }
 
@@ -142,12 +175,15 @@ export function LokiOptionFields(props: LokiOptionFieldsProps) {
             }}
           />
         </InlineField>
-        <InlineField label="Min step">
+        <InlineField label="Step">
+          <Select isSearchable={false} onChange={onStepModeChange} options={STEP_OPTIONS} value={stepMode} />
+        </InlineField>
+        <InlineField>
           <Input
             className="width-4"
             placeholder=""
             min={0}
-            onChange={onStepChange}
+            onChange={onStepIntervalChange}
             onKeyDown={onReturnKeyDown}
             value={stepInterval}
             onBlur={() => {

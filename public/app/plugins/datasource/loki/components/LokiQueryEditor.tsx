@@ -4,7 +4,7 @@ import React from 'react';
 // Types
 import { InlineFormLabel } from '@grafana/ui';
 import { LokiQueryField } from './LokiQueryField';
-import { LokiOptionFields } from './LokiOptionFields';
+import { DEFAULT_STEP_OPTION, LokiOptionFields } from './LokiOptionFields';
 import { LokiQueryEditorProps } from './types';
 
 export function LokiQueryEditor(props: LokiQueryEditorProps) {
@@ -52,7 +52,8 @@ export function LokiQueryEditor(props: LokiQueryEditorProps) {
           <LokiOptionFields
             queryType={query.instant ? 'instant' : 'range'}
             lineLimitValue={query?.maxLines?.toString() || ''}
-            stepInterval={query?.step || ''}
+            stepInterval={query?.stepInterval || ''}
+            stepMode={query?.stepMode || DEFAULT_STEP_OPTION.value}
             resolution={query?.resolution || 1}
             query={query}
             onRunQuery={onRunQuery}
