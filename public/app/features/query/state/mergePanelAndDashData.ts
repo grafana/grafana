@@ -1,18 +1,13 @@
-import { combineLatest, merge, Observable, of, timer } from 'rxjs';
+import { combineLatest, Observable, of } from 'rxjs';
 import { ArrayDataFrame, PanelData } from '@grafana/data';
 import { DashboardQueryRunnerResult } from './DashboardQueryRunner/types';
-import { mergeMap, mergeMapTo, takeUntil } from 'rxjs/operators';
+import { mergeMap } from 'rxjs/operators';
 
 export function mergePanelAndDashData(
   panelObservable: Observable<PanelData>,
   dashObservable: Observable<DashboardQueryRunnerResult>
 ): Observable<PanelData> {
-  const slowDashResult: Observable<DashboardQueryRunnerResult> = merge(
-    timer(200).pipe(mergeMapTo(of({ annotations: [], alertState: undefined })), takeUntil(dashObservable)),
-    dashObservable
-  );
-
-  return combineLatest([panelObservable, slowDashResult]).pipe(
+  return combineLatest([panelObservable, dashObservable]).pipe(
     mergeMap((combined) => {
       const [panelData, dashData] = combined;
 
@@ -21,11 +16,9 @@ export function mergePanelAndDashData(
           panelData.annotations = [];
         }
 
-        return of({
-          ...panelData,
-          annotations: panelData.annotations.concat(new ArrayDataFrame(dashData.annotations)),
-          alertState: dashData.alertState,
-        });
+        const annotations = panelData.annotations.concat(new ArrayDataFrame(dashData.annotations));
+        const alertState = dashData.alertState;
+        return of({ ...panelData, annotations, alertState });
       }
 
       return of(panelData);

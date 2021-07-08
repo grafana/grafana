@@ -35,7 +35,7 @@ export class TimelineChart extends React.Component<TimelineProps> {
   static contextType = PanelContextRoot;
   panelContext: PanelContext = {} as PanelContext;
 
-  prepConfig = (alignedFrame: DataFrame, getTimeRange: () => TimeRange) => {
+  prepConfig = (alignedFrame: DataFrame, allFrames: DataFrame[], getTimeRange: () => TimeRange) => {
     this.panelContext = this.context as PanelContext;
     const { eventBus } = this.panelContext;
 
@@ -43,6 +43,7 @@ export class TimelineChart extends React.Component<TimelineProps> {
       frame: alignedFrame,
       getTimeRange,
       eventBus,
+      allFrames: this.props.frames,
       ...this.props,
 
       // When there is only one row, use the full space

@@ -36,27 +36,34 @@ export const AmRootRouteForm: FC<AmRootRouteFormProps> = ({
     <Form defaultValues={routes} onSubmit={onSave}>
       {({ control, errors, setValue }) => (
         <>
-          <Field label="Default contact point">
-            <div className={styles.container}>
-              <InputControl
-                render={({ field: { onChange, ref, ...field } }) => (
-                  <Select
-                    {...field}
-                    className={styles.input}
-                    onChange={(value) => onChange(mapSelectValueToString(value))}
-                    options={receivers}
-                  />
-                )}
-                control={control}
-                name="receiver"
-              />
-              <span>or</span>
-              <Link href={makeAMLink('/alerting/notifications/receivers/new', alertManagerSourceName)}>
-                Create a contact point
-              </Link>
-            </div>
+          <Field label="Default contact point" invalid={!!errors.receiver} error={errors.receiver?.message}>
+            <>
+              <div className={styles.container} data-testid="am-receiver-select">
+                <InputControl
+                  render={({ field: { onChange, ref, ...field } }) => (
+                    <Select
+                      {...field}
+                      className={styles.input}
+                      onChange={(value) => onChange(mapSelectValueToString(value))}
+                      options={receivers}
+                    />
+                  )}
+                  control={control}
+                  name="receiver"
+                  rules={{ required: { value: true, message: 'Required.' } }}
+                />
+                <span>or</span>
+                <Link href={makeAMLink('/alerting/notifications/receivers/new', alertManagerSourceName)}>
+                  Create a contact point
+                </Link>
+              </div>
+            </>
           </Field>
-          <Field label="Group by" description="Group alerts when you receive a notification based on labels.">
+          <Field
+            label="Group by"
+            description="Group alerts when you receive a notification based on labels."
+            data-testid="am-group-select"
+          >
             {/* @ts-ignore-check: react-hook-form made me do this */}
             <InputControl
               render={({ field: { onChange, ref, ...field } }) => (
@@ -86,9 +93,10 @@ export const AmRootRouteForm: FC<AmRootRouteFormProps> = ({
           >
             <Field
               label="Group wait"
-              description="The waiting time until the initial notification is sent for a new group created by an incoming alert."
+              description="The waiting time until the initial notification is sent for a new group created by an incoming alert. Default 30 seconds."
               invalid={!!errors.groupWaitValue}
               error={errors.groupWaitValue?.message}
+              data-testid="am-group-wait"
             >
               <>
                 <div className={cx(styles.container, styles.timingContainer)}>
@@ -119,9 +127,10 @@ export const AmRootRouteForm: FC<AmRootRouteFormProps> = ({
             </Field>
             <Field
               label="Group interval"
-              description="The waiting time to send a batch of new alerts for that group after the first notification was sent."
+              description="The waiting time to send a batch of new alerts for that group after the first notification was sent. Default 5 minutes."
               invalid={!!errors.groupIntervalValue}
               error={errors.groupIntervalValue?.message}
+              data-testid="am-group-interval"
             >
               <>
                 <div className={cx(styles.container, styles.timingContainer)}>
@@ -152,9 +161,10 @@ export const AmRootRouteForm: FC<AmRootRouteFormProps> = ({
             </Field>
             <Field
               label="Repeat interval"
-              description="The waiting time to resend an alert after they have successfully been sent."
+              description="The waiting time to resend an alert after they have successfully been sent. Default 4 hours."
               invalid={!!errors.repeatIntervalValue}
               error={errors.repeatIntervalValue?.message}
+              data-testid="am-repeat-interval"
             >
               <>
                 <div className={cx(styles.container, styles.timingContainer)}>

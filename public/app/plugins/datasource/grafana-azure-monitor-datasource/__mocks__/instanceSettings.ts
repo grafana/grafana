@@ -17,8 +17,5 @@ export const createMockInstanceSetttings = (): AzureDataSourceInstanceSettings =
     tenantId: 'abc-123',
     clientId: 'def-456',
     subscriptionId: 'ghi-789',
-
-    // logs
-    azureLogAnalyticsSameAs: true,
   },
 });

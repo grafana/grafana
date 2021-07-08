@@ -1,12 +1,16 @@
 package load
 
 import (
+	"fmt"
 	"path/filepath"
 
 	"cuelang.org/go/cue"
 	"cuelang.org/go/cue/load"
 	"github.com/grafana/grafana/pkg/schema"
 )
+
+const attrname = "cuetsy"
+const targetname = "targetType"
 
 // getBaseScuemata attempts to load the base scuemata family and schema
 // definitions on which all Grafana scuemata rely.
@@ -89,7 +93,46 @@ func buildGenericScuemata(famval cue.Value) (schema.VersionedCueSchema, error) {
 		major++
 	}
 
+	if lastgvs.actual, err = prepare(lastgvs.actual); err != nil {
+		return nil, err
+	}
 	return first, nil
+}
+
+func prepare(v cue.Value) (cue.Value, error) {
+	iter, err := v.Fields(cue.Definitions(true))
+	if err != nil {
+		return v, err
+	}
+
+	for iter.Next() {
+		var hasTarget bool
+		attributes := iter.Value().Attributes(cue.ValueAttr)
+		for _, attribute := range attributes {
+			if attribute.Name() == attrname {
+				_, found, err := attribute.Lookup(0, targetname)
+				if err == nil && found {
+					hasTarget = true
+					fmt.Println("i should be happy here:   >>>>> ", iter.Label(), len(attributes))
+				}
+			}
+		}
+
+		if !hasTarget && iter.Value().IncompleteKind() == cue.StructKind {
+			inst, err := rt.Compile("intermedia", `{_,@cuetsy(targetType="interface")}`)
+			if err != nil {
+				return v, err
+			}
+			v = v.FillPath(cue.ParsePath(iter.Label()), inst.Value())
+			// b := iter.Value().Unify(inst.Value())
+			// c, _ := v.MarshalJSON()
+			// for _, a := range v.LookupPath(cue.ParsePath(iter.Label())).Attributes(cue.ValueAttr) {
+			// 	label := iter.Label()
+			// 	fmt.Println(label, "the object>>>>>>>>>>", string(c), "attributes>>>>>", a.Name(), a.Contents())
+			// }
+		}
+	}
+	return v, err
 }
 
 type genericVersionedSchema struct {

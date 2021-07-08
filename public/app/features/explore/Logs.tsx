@@ -45,6 +45,7 @@ const SETTINGS_KEYS = {
 };
 
 interface Props {
+  width: number;
   logRows: LogRowModel[];
   logsMeta?: LogsMetaItem[];
   logsSeries?: DataFrame[];
@@ -233,6 +234,7 @@ export class UnthemedLogs extends PureComponent<Props, State> {
 
   render() {
     const {
+      width,
       logRows,
       logsMeta,
       logsSeries,
@@ -284,6 +286,7 @@ export class UnthemedLogs extends PureComponent<Props, State> {
           <ExploreGraphNGPanel
             data={logsSeries}
             height={150}
+            width={width}
             tooltipDisplayMode={TooltipDisplayMode.Multi}
             absoluteRange={visibleRange || absoluteRange}
             timeZone={timeZone}

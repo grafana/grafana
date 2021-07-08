@@ -18,8 +18,8 @@ import {
 import { getBackendSrv, getTemplateSrv, DataSourceWithBackend, FetchResponse } from '@grafana/runtime';
 import { Observable, from } from 'rxjs';
 import { mergeMap } from 'rxjs/operators';
-import { getAuthType, getAzureCloud, isLogAnalyticsSameAs } from '../credentials';
-import { getLogAnalyticsApiRoute, getLogAnalyticsManagementApiRoute } from '../api/routes';
+import { getAuthType, getAzureCloud, getAzurePortalUrl } from '../credentials';
+import { getLogAnalyticsApiRoute, getManagementApiRoute } from '../api/routes';
 import { AzureLogAnalyticsMetadata } from '../types/logAnalyticsMetadata';
 import { isGUIDish } from '../components/ResourcePicker/utils';
 
@@ -35,6 +35,7 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
 > {
   url: string;
   baseUrl: string;
+  azurePortalUrl: string;
   applicationId: string;
 
   defaultSubscriptionId?: string;
@@ -50,18 +51,13 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     const cloud = getAzureCloud(instanceSettings);
     const logAnalyticsRoute = getLogAnalyticsApiRoute(cloud);
     this.baseUrl = `/${logAnalyticsRoute}`;
+    this.azurePortalUrl = getAzurePortalUrl(cloud);
 
-    const managementRoute = getLogAnalyticsManagementApiRoute(cloud);
+    const managementRoute = getManagementApiRoute(cloud);
     this.azureMonitorUrl = `/${managementRoute}/subscriptions`;
 
     this.url = instanceSettings.url || '';
-
-    const sameAsMonitor = isLogAnalyticsSameAs(instanceSettings);
-
-    this.defaultSubscriptionId = sameAsMonitor
-      ? instanceSettings.jsonData.subscriptionId
-      : instanceSettings.jsonData.logAnalyticsSubscriptionId;
-
+    this.defaultSubscriptionId = this.instanceSettings.jsonData.subscriptionId || '';
     this.defaultOrFirstWorkspace = this.instanceSettings.jsonData.logAnalyticsDefaultWorkspace || '';
   }
 
@@ -116,8 +112,11 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     return transformMetadataToKustoSchema(metadata, resourceUri);
   }
 
-  applyTemplateVariables(target: AzureMonitorQuery, scopedVars: ScopedVars): Record<string, any> {
+  applyTemplateVariables(target: AzureMonitorQuery, scopedVars: ScopedVars): AzureMonitorQuery {
     const item = target.azureLogAnalytics;
+    if (!item) {
+      return target;
+    }
 
     const templateSrv = getTemplateSrv();
     const resource = templateSrv.replace(item.resource, scopedVars);
@@ -127,21 +126,19 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
       workspace = this.defaultOrFirstWorkspace;
     }
 
-    const subscriptionId = templateSrv.replace(target.subscription || this.defaultSubscriptionId, scopedVars);
     const query = templateSrv.replace(item.query, scopedVars, this.interpolateVariable);
 
     return {
       refId: target.refId,
-      format: target.format,
       queryType: AzureQueryType.LogAnalytics,
-      subscriptionId: subscriptionId,
+
       azureLogAnalytics: {
         resultFormat: item.resultFormat,
-        query: query,
+        query,
         resource,
 
-        // TODO: Workspace is deprecated and should be migrated to Resources
-        workspace: workspace,
+        // Workspace was removed in Grafana 8, but remains for backwards compat
+        workspace,
       },
     };
   }
@@ -191,7 +188,7 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     }
 
     const url =
-      `https://portal.azure.com/#blade/Microsoft_OperationsManagementSuite_Workspace/` +
+      `${this.azurePortalUrl}/#blade/Microsoft_OperationsManagementSuite_Workspace/` +
       `AnalyticsBlade/initiator/AnalyticsShareLinkToQuery/isQueryEditorVisible/true/scope/` +
       `%7B%22resources%22%3A%5B%7B%22resourceId%22%3A%22%2Fsubscriptions%2F${subscription}` +
       `%2Fresourcegroups%2F${details.resourceGroup}%2Fproviders%2Fmicrosoft.operationalinsights%2Fworkspaces%2F${details.workspace}` +
@@ -291,7 +288,7 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     const querystring = querystringBuilder.generate().uriString;
     const url = isGUIDish(workspace)
       ? `${this.baseUrl}/v1/workspaces/${workspace}/query?${querystring}`
-      : `${this.baseUrl}/v1/${workspace}/query?${querystring}`;
+      : `${this.baseUrl}/v1${workspace}/query?${querystring}`;
 
     const queries = [
       {
@@ -485,14 +482,14 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     const authType = getAuthType(this.instanceSettings);
 
     if (authType === 'clientsecret') {
-      if (!this.isValidConfigField(this.instanceSettings.jsonData.logAnalyticsTenantId)) {
+      if (!this.isValidConfigField(this.instanceSettings.jsonData.tenantId)) {
         return {
           status: 'error',
           message: 'The Tenant Id field is required.',
         };
       }
 
-      if (!this.isValidConfigField(this.instanceSettings.jsonData.logAnalyticsClientId)) {
+      if (!this.isValidConfigField(this.instanceSettings.jsonData.clientId)) {
         return {
           status: 'error',
           message: 'The Client Id field is required.',

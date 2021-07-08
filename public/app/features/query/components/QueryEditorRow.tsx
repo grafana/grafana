@@ -6,7 +6,7 @@ import { has, cloneDeep } from 'lodash';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { AngularComponent, getAngularLoader } from '@grafana/runtime';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { ErrorBoundaryAlert, HorizontalGroup, InfoBox } from '@grafana/ui';
+import { ErrorBoundaryAlert, HorizontalGroup } from '@grafana/ui';
 import {
   DataQuery,
   DataSourceApi,
@@ -28,39 +28,40 @@ import { QueryOperationAction } from 'app/core/components/QueryOperationRow/Quer
 import { DashboardModel } from '../../dashboard/state/DashboardModel';
 import { selectors } from '@grafana/e2e-selectors';
 import { PanelModel } from 'app/features/dashboard/state';
+import { OperationRowHelp } from 'app/core/components/QueryOperationRow/OperationRowHelp';
 
-interface Props {
+interface Props<TQuery extends DataQuery> {
   data: PanelData;
-  query: DataQuery;
-  queries: DataQuery[];
+  query: TQuery;
+  queries: TQuery[];
   id: string;
   index: number;
   dataSource: DataSourceInstanceSettings;
   onChangeDataSource?: (dsSettings: DataSourceInstanceSettings) => void;
   renderHeaderExtras?: () => ReactNode;
-  onAddQuery: (query: DataQuery) => void;
-  onRemoveQuery: (query: DataQuery) => void;
-  onChange: (query: DataQuery) => void;
+  onAddQuery: (query: TQuery) => void;
+  onRemoveQuery: (query: TQuery) => void;
+  onChange: (query: TQuery) => void;
   onRunQuery: () => void;
   visualization?: ReactNode;
   hideDisableQuery?: boolean;
 }
 
-interface State {
+interface State<TQuery extends DataQuery> {
   loadedDataSourceIdentifier?: string | null;
-  datasource: DataSourceApi | null;
+  datasource: DataSourceApi<TQuery> | null;
   hasTextEditMode: boolean;
   data?: PanelData;
   isOpen?: boolean;
   showingHelp: boolean;
 }
 
-export class QueryEditorRow extends PureComponent<Props, State> {
+export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Props<TQuery>, State<TQuery>> {
   element: HTMLElement | null = null;
-  angularScope: AngularQueryComponentScope | null = null;
+  angularScope: AngularQueryComponentScope<TQuery> | null = null;
   angularQueryEditor: AngularComponent | null = null;
 
-  state: State = {
+  state: State<TQuery> = {
     datasource: null,
     hasTextEditMode: false,
     data: undefined,
@@ -78,7 +79,7 @@ export class QueryEditorRow extends PureComponent<Props, State> {
     }
   }
 
-  getAngularQueryComponentScope(): AngularQueryComponentScope {
+  getAngularQueryComponentScope(): AngularQueryComponentScope<TQuery> {
     const { query, queries } = this.props;
     const { datasource } = this.state;
     const panel = new PanelModel({ targets: queries });
@@ -129,13 +130,13 @@ export class QueryEditorRow extends PureComponent<Props, State> {
     }
 
     this.setState({
-      datasource,
+      datasource: (datasource as unknown) as DataSourceApi<TQuery>,
       loadedDataSourceIdentifier: dataSourceIdentifier,
       hasTextEditMode: has(datasource, 'components.QueryCtrl.prototype.toggleEditorMode'),
     });
   }
 
-  componentDidUpdate(prevProps: Props) {
+  componentDidUpdate(prevProps: Props<TQuery>) {
     const { datasource, loadedDataSourceIdentifier } = this.state;
     const { data, query } = this.props;
 
@@ -252,7 +253,7 @@ export class QueryEditorRow extends PureComponent<Props, State> {
     }));
   };
 
-  onClickExample = (query: DataQuery) => {
+  onClickExample = (query: TQuery) => {
     this.props.onChange({
       ...query,
       refId: this.props.query.refId,
@@ -274,7 +275,7 @@ export class QueryEditorRow extends PureComponent<Props, State> {
 
   renderActions = (props: QueryOperationRowRenderProps) => {
     const { query, hideDisableQuery = false } = this.props;
-    const { hasTextEditMode, datasource } = this.state;
+    const { hasTextEditMode, datasource, showingHelp } = this.state;
     const isDisabled = query.hide;
 
     const hasEditorHelp = datasource?.components?.QueryEditorHelp;
@@ -282,7 +283,12 @@ export class QueryEditorRow extends PureComponent<Props, State> {
     return (
       <HorizontalGroup width="auto">
         {hasEditorHelp && (
-          <QueryOperationAction title="Toggle data source help" icon="question-circle" onClick={this.onToggleHelp} />
+          <QueryOperationAction
+            title="Toggle data source help"
+            icon="question-circle"
+            onClick={this.onToggleHelp}
+            active={showingHelp}
+          />
         )}
         {hasTextEditMode && (
           <QueryOperationAction
@@ -298,6 +304,7 @@ export class QueryEditorRow extends PureComponent<Props, State> {
           <QueryOperationAction
             title="Disable/enable query"
             icon={isDisabled ? 'eye-slash' : 'eye'}
+            active={isDisabled}
             onClick={this.onDisableQuery}
           />
         ) : null}
@@ -354,12 +361,12 @@ export class QueryEditorRow extends PureComponent<Props, State> {
           <div className={rowClasses}>
             <ErrorBoundaryAlert>
               {showingHelp && DatasourceCheatsheet && (
-                <InfoBox onDismiss={this.onToggleHelp}>
+                <OperationRowHelp>
                   <DatasourceCheatsheet
                     onClickExample={(query) => this.onClickExample(query)}
                     datasource={datasource}
                   />
-                </InfoBox>
+                </OperationRowHelp>
               )}
               {editor}
             </ErrorBoundaryAlert>
@@ -371,7 +378,11 @@ export class QueryEditorRow extends PureComponent<Props, State> {
   }
 }
 
-function notifyAngularQueryEditorsOfData(scope: AngularQueryComponentScope, data: PanelData, editor: AngularComponent) {
+function notifyAngularQueryEditorsOfData<TQuery extends DataQuery>(
+  scope: AngularQueryComponentScope<TQuery>,
+  data: PanelData,
+  editor: AngularComponent
+) {
   if (data.state === LoadingState.Done) {
     const legacy = data.series.map((v) => toLegacyResponseData(v));
     scope.events.emit(PanelEvents.dataReceived, legacy);
@@ -384,14 +395,14 @@ function notifyAngularQueryEditorsOfData(scope: AngularQueryComponentScope, data
   setTimeout(editor.digest);
 }
 
-export interface AngularQueryComponentScope {
-  target: DataQuery;
+export interface AngularQueryComponentScope<TQuery extends DataQuery> {
+  target: TQuery;
   panel: PanelModel;
   dashboard: DashboardModel;
   events: EventBusExtended;
   refresh: () => void;
   render: () => void;
-  datasource: DataSourceApi | null;
+  datasource: DataSourceApi<TQuery> | null;
   toggleEditorMode?: () => void;
   getCollapsedText?: () => string;
   range: TimeRange;

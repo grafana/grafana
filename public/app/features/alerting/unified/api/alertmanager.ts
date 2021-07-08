@@ -7,6 +7,7 @@ import {
   Silence,
   SilenceCreatePayload,
   Matcher,
+  AlertmanagerStatus,
 } from 'app/plugins/datasource/alertmanager/types';
 import { getDatasourceAPIId, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 
@@ -28,8 +29,7 @@ export async function fetchAlertManagerConfig(alertManagerSourceName: string): P
     // if no config has been uploaded to grafana, it returns error instead of latest config
     if (
       alertManagerSourceName === GRAFANA_RULES_SOURCE_NAME &&
-      (e.data?.message?.includes('failed to get latest configuration') ||
-        e.data?.message?.includes('could not find an Alertmanager configuration'))
+      e.data?.message?.includes('could not find an Alertmanager configuration')
     ) {
       return {
         template_files: {},
@@ -124,6 +124,18 @@ export async function fetchAlertGroups(alertmanagerSourceName: string): Promise<
   const result = await getBackendSrv()
     .fetch<AlertmanagerGroup[]>({
       url: `/api/alertmanager/${getDatasourceAPIId(alertmanagerSourceName)}/api/v2/alerts/groups`,
+      showErrorAlert: false,
+      showSuccessAlert: false,
+    })
+    .toPromise();
+
+  return result.data;
+}
+
+export async function fetchStatus(alertManagerSourceName: string): Promise<AlertmanagerStatus> {
+  const result = await getBackendSrv()
+    .fetch<AlertmanagerStatus>({
+      url: `/api/alertmanager/${getDatasourceAPIId(alertManagerSourceName)}/api/v2/status`,
       showErrorAlert: false,
       showSuccessAlert: false,
     })

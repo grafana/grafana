@@ -34,7 +34,7 @@ export const BarChart: React.FC<BarChartProps> = (props) => {
     return <PlotLegend data={props.frames} config={config} maxHeight="35%" maxWidth="60%" {...props.legend} />;
   };
 
-  const prepConfig = (alignedFrame: DataFrame, getTimeRange: () => TimeRange) => {
+  const prepConfig = (alignedFrame: DataFrame, allFrames: DataFrame[], getTimeRange: () => TimeRange) => {
     const { timeZone, orientation, barWidth, showValue, groupWidth, stacking, legend, tooltip, text } = props;
 
     return preparePlotConfigBuilder({
@@ -51,6 +51,7 @@ export const BarChart: React.FC<BarChartProps> = (props) => {
       legend,
       tooltip,
       text,
+      allFrames: props.frames,
     });
   };
 

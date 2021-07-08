@@ -11,17 +11,17 @@ jest.mock('app/core/core', () => ({
 
 describe('timeSrv', () => {
   let timeSrv: TimeSrv;
-
-  const _dashboard: any = {
-    time: { from: 'now-6h', to: 'now' },
-    getTimezone: jest.fn(() => 'browser'),
-    timeRangeUpdated: jest.fn(() => {}),
-  };
+  let _dashboard: any;
 
   beforeEach(() => {
+    _dashboard = {
+      time: { from: 'now-6h', to: 'now' },
+      getTimezone: jest.fn(() => 'browser'),
+      refresh: false,
+      timeRangeUpdated: jest.fn(() => {}),
+    };
     timeSrv = new TimeSrv(new ContextSrvStub() as any);
     timeSrv.init(_dashboard);
-    _dashboard.refresh = false;
   });
 
   describe('timeRange', () => {
@@ -130,6 +130,17 @@ describe('timeSrv', () => {
       expect(timeSrv.time.to).toEqual('now');
     });
 
+    it('should handle refresh_intervals=null when refresh is enabled', () => {
+      locationService.push('/d/id?refresh=30s');
+
+      timeSrv = new TimeSrv(new ContextSrvStub() as any);
+
+      _dashboard.timepicker = {
+        refresh_intervals: null,
+      };
+      expect(() => timeSrv.init(_dashboard)).not.toThrow();
+    });
+
     describe('data point windowing', () => {
       it('handles time window specfied as interval string', () => {
         locationService.push('/d/id?time=1410337645000&time.window=10s');
@@ -151,6 +162,28 @@ describe('timeSrv', () => {
         const time = timeSrv.timeRange();
         expect(time.from.valueOf()).toEqual(1410337640000);
         expect(time.to.valueOf()).toEqual(1410337650000);
+      });
+
+      it('corrects inverted from/to dates in ms', () => {
+        locationService.push('/d/id?from=1621436828909&to=1621436818909');
+
+        timeSrv = new TimeSrv(new ContextSrvStub() as any);
+
+        timeSrv.init(_dashboard);
+        const time = timeSrv.timeRange();
+        expect(time.from.valueOf()).toEqual(1621436818909);
+        expect(time.to.valueOf()).toEqual(1621436828909);
+      });
+
+      it('corrects inverted from/to dates as relative times', () => {
+        locationService.push('/d/id?from=now&to=now-1h');
+
+        timeSrv = new TimeSrv(new ContextSrvStub() as any);
+
+        timeSrv.init(_dashboard);
+        const time = timeSrv.timeRange();
+        expect(time.raw.from).toBe('now-1h');
+        expect(time.raw.to).toBe('now');
       });
     });
   });

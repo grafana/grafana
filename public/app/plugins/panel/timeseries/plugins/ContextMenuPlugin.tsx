@@ -1,4 +1,4 @@
-import React, { useCallback, useLayoutEffect, useRef, useState } from 'react';
+import React, { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { css as cssCore, Global } from '@emotion/react';
 import {
   ContextMenu,
@@ -9,15 +9,23 @@ import {
   MenuGroup,
   MenuItem,
   UPlotConfigBuilder,
+  usePlotContext,
 } from '@grafana/ui';
 import { CartesianCoords2D, DataFrame, getFieldDisplayName, InterpolateFunction, TimeZone } from '@grafana/data';
 import { useClickAway } from 'react-use';
 import { pluginLog } from '@grafana/ui/src/components/uPlot/utils';
 
+type ContextMenuSelectionCoords = { viewport: CartesianCoords2D; plotCanvas: CartesianCoords2D };
+type ContextMenuSelectionPoint = { seriesIdx: number | null; dataIdx: number | null };
+
+export interface ContextMenuItemClickPayload {
+  coords: ContextMenuSelectionCoords;
+}
+
 interface ContextMenuPluginProps {
   data: DataFrame;
   config: UPlotConfigBuilder;
-  defaultItems?: MenuItemsGroup[];
+  defaultItems?: Array<MenuItemsGroup<ContextMenuItemClickPayload>>;
   timeZone: TimeZone;
   onOpen?: () => void;
   onClose?: () => void;
@@ -27,15 +35,15 @@ interface ContextMenuPluginProps {
 export const ContextMenuPlugin: React.FC<ContextMenuPluginProps> = ({
   data,
   config,
-  defaultItems,
   onClose,
   timeZone,
   replaceVariables,
+  ...otherProps
 }) => {
+  const plotCtx = usePlotContext();
   const plotCanvas = useRef<HTMLDivElement>();
-  const plotCanvasBBox = useRef<any>({ left: 0, top: 0, right: 0, bottom: 0, width: 0, height: 0 });
-  const [coords, setCoords] = useState<{ viewport: CartesianCoords2D; plotCanvas: CartesianCoords2D } | null>(null);
-  const [point, setPoint] = useState<{ seriesIdx: number | null; dataIdx: number | null } | null>();
+  const [coords, setCoords] = useState<ContextMenuSelectionCoords | null>(null);
+  const [point, setPoint] = useState<ContextMenuSelectionPoint | null>(null);
   const [isOpen, setIsOpen] = useState(false);
 
   const openMenu = useCallback(() => {
@@ -54,23 +62,33 @@ export const ContextMenuPlugin: React.FC<ContextMenuPluginProps> = ({
   // Add uPlot hooks to the config, or re-add when the config changed
   useLayoutEffect(() => {
     const onMouseCapture = (e: MouseEvent) => {
-      setCoords({
-        plotCanvas: {
-          x: e.clientX - plotCanvasBBox.current.left,
-          y: e.clientY - plotCanvasBBox.current.top,
-        },
+      const bbox = plotCtx.getCanvasBoundingBox();
+      let update = {
         viewport: {
           x: e.clientX,
           y: e.clientY,
         },
-      });
+        plotCanvas: {
+          x: 0,
+          y: 0,
+        },
+      };
+      if (bbox) {
+        update = {
+          ...update,
+          plotCanvas: {
+            x: e.clientX - bbox.left,
+            y: e.clientY - bbox.top,
+          },
+        };
+      }
+      setCoords(update);
     };
 
     config.addHook('init', (u) => {
       const canvas = u.over;
       plotCanvas.current = canvas || undefined;
       plotCanvas.current?.addEventListener('mousedown', onMouseCapture);
-      plotCanvas.current?.addEventListener('mouseleave', () => {});
 
       pluginLog('ContextMenuPlugin', false, 'init');
       // for naive click&drag check
@@ -79,16 +97,18 @@ export const ContextMenuPlugin: React.FC<ContextMenuPluginProps> = ({
       // REF: https://github.com/leeoniya/uPlot/issues/239
       let pts = Array.from(u.root.querySelectorAll<HTMLDivElement>('.u-cursor-pt'));
 
-      plotCanvas.current?.addEventListener('mousedown', (e: MouseEvent) => {
+      plotCanvas.current?.addEventListener('mousedown', () => {
         isClick = true;
       });
-      plotCanvas.current?.addEventListener('mousemove', (e: MouseEvent) => {
+
+      plotCanvas.current?.addEventListener('mousemove', () => {
         isClick = false;
       });
 
       // TODO: remove listeners on unmount
       plotCanvas.current?.addEventListener('mouseup', (e: MouseEvent) => {
-        if (!isClick) {
+        // ignore cmd+click, this is handled by annotation editor
+        if (!isClick || e.metaKey) {
           setPoint(null);
           return;
         }
@@ -101,22 +121,46 @@ export const ContextMenuPlugin: React.FC<ContextMenuPluginProps> = ({
             setPoint({ seriesIdx: null, dataIdx: null });
           }
         }
+
+        openMenu();
       });
 
       if (pts.length > 0) {
         pts.forEach((pt, i) => {
           // TODO: remove listeners on unmount
-          pt.addEventListener('click', (e) => {
+          pt.addEventListener('click', () => {
             const seriesIdx = i + 1;
             const dataIdx = u.cursor.idx;
             pluginLog('ContextMenuPlugin', false, seriesIdx, dataIdx);
-            openMenu();
             setPoint({ seriesIdx, dataIdx: dataIdx || null });
           });
         });
       }
     });
-  }, [config, openMenu]);
+  }, [config, openMenu, setCoords, setPoint, plotCtx]);
+
+  const defaultItems = useMemo(() => {
+    return otherProps.defaultItems
+      ? otherProps.defaultItems.map((i) => {
+          return {
+            ...i,
+            items: i.items.map((j) => {
+              return {
+                ...j,
+                onClick: (e: React.SyntheticEvent<HTMLElement>) => {
+                  if (!coords) {
+                    return;
+                  }
+                  if (j.onClick) {
+                    j.onClick(e, { coords });
+                  }
+                },
+              };
+            }),
+          };
+        })
+      : [];
+  }, [coords, otherProps.defaultItems]);
 
   return (
     <>

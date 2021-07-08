@@ -1,4 +1,4 @@
-import { FormEvent, useReducer } from 'react';
+import { FormEvent, useCallback, useReducer } from 'react';
 import { debounce } from 'lodash';
 import { SelectableValue } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
@@ -32,10 +32,13 @@ export const useSearchQuery = (defaults: Partial<DashboardQuery>) => {
     updateLocation({ tag: tags });
   };
 
-  const onTagAdd = (tag: string) => {
-    dispatch({ type: ADD_TAG, payload: tag });
-    updateLocation({ tag: [...query.tag, tag] });
-  };
+  const onTagAdd = useCallback(
+    (tag: string) => {
+      dispatch({ type: ADD_TAG, payload: tag });
+      updateLocation({ tag: [...query.tag, tag] });
+    },
+    [query.tag]
+  );
 
   const onClearFilters = () => {
     dispatch({ type: CLEAR_FILTERS });

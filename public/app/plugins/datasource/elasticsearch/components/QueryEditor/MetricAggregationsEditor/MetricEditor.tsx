@@ -1,5 +1,5 @@
 import { SelectableValue } from '@grafana/data';
-import { InlineSegmentGroup, Segment, SegmentAsync, useTheme } from '@grafana/ui';
+import { InlineSegmentGroup, Segment, SegmentAsync, useTheme2 } from '@grafana/ui';
 import { cx } from '@emotion/css';
 import React, { useCallback } from 'react';
 import { useDatasource, useQuery } from '../ElasticsearchQueryContext';
@@ -62,7 +62,7 @@ const getTypeOptions = (
 };
 
 export const MetricEditor = ({ value }: Props) => {
-  const styles = getStyles(useTheme(), !!value.hide);
+  const styles = getStyles(useTheme2(), !!value.hide);
   const datasource = useDatasource();
   const query = useQuery();
   const dispatch = useDispatch<MetricAggregationAction>();

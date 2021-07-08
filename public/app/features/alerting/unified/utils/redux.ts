@@ -126,7 +126,7 @@ export function withAppEvents<T>(
     });
 }
 
-function isFetchError(e: unknown): e is FetchError {
+export function isFetchError(e: unknown): e is FetchError {
   return typeof e === 'object' && e !== null && 'status' in e && 'data' in e;
 }
 
@@ -143,6 +143,8 @@ function messageFromError(e: Error | FetchError | SerializedError): string {
         .map((d) => d?.message)
         .filter((m) => !!m)
         .join(' ');
+    } else if (e.statusText) {
+      return e.statusText;
     }
   }
   return (e as Error)?.message || String(e);

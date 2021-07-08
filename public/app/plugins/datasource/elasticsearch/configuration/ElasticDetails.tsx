@@ -21,6 +21,7 @@ const esVersions = [
   { label: '6.0+', value: '6.0.0' },
   { label: '7.0+', value: '7.0.0' },
   { label: '7.7+', value: '7.7.0' },
+  { label: '7.10+', value: '7.10.0' },
 ];
 
 type Props = {

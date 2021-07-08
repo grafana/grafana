@@ -26,7 +26,7 @@ import { from, Observable } from 'rxjs';
 import { mergeMap } from 'rxjs/operators';
 
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { getAuthType, getAzureCloud } from '../credentials';
+import { getAuthType, getAzureCloud, getAzurePortalUrl } from '../credentials';
 import { getManagementApiRoute } from '../api/routes';
 import { resourceTypeDisplayNames } from '../azureMetadata';
 
@@ -47,6 +47,7 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
   apiPreviewVersion = '2017-12-01-preview';
   defaultSubscriptionId?: string;
   baseUrl: string;
+  azurePortalUrl: string;
   resourceGroup: string;
   resourceName: string;
   url: string;
@@ -62,6 +63,7 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
     const cloud = getAzureCloud(instanceSettings);
     const route = getManagementApiRoute(cloud);
     this.baseUrl = `/${route}/subscriptions`;
+    this.azurePortalUrl = getAzurePortalUrl(cloud);
 
     this.url = instanceSettings.url!;
     this.supportedMetricNamespaces = new SupportedNamespaces(cloud).get();
@@ -75,6 +77,7 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
   filterQuery(item: AzureMonitorQuery): boolean {
     return !!(
       item.hide !== true &&
+      item.azureMonitor &&
       item.azureMonitor.resourceGroup &&
       item.azureMonitor.resourceGroup !== defaultDropdownValue &&
       item.azureMonitor.resourceName &&
@@ -108,22 +111,24 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
     if (res.data) {
       for (const df of res.data) {
         const metricQuery = metricQueries[df.refId];
-        if (metricQuery && metricQuery.azureMonitor) {
-          const url = this.buildAzurePortalUrl(
-            metricQuery.azureMonitor,
-            metricQuery.subscription,
-            this.timeSrv.timeRange()
-          );
+        if (!metricQuery.azureMonitor || !metricQuery.subscription) {
+          continue;
+        }
 
-          for (const field of df.fields) {
-            field.config.links = [
-              {
-                url: url,
-                title: 'View in Azure Portal',
-                targetBlank: true,
-              },
-            ];
-          }
+        const url = this.buildAzurePortalUrl(
+          metricQuery.azureMonitor,
+          metricQuery.subscription,
+          this.timeSrv.timeRange()
+        );
+
+        for (const field of df.fields) {
+          field.config.links = [
+            {
+              url: url,
+              title: 'View in Azure Portal',
+              targetBlank: true,
+            },
+          ];
         }
       }
     }
@@ -167,14 +172,19 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
       },
     });
 
-    return `https://portal.azure.com/#blade/Microsoft_Azure_MonitoringMetrics/Metrics.ReactView/Referer/MetricsExplorer/TimeContext/${timeContext}/ChartDefinition/${chartDef}`;
+    return `${this.azurePortalUrl}/#blade/Microsoft_Azure_MonitoringMetrics/Metrics.ReactView/Referer/MetricsExplorer/TimeContext/${timeContext}/ChartDefinition/${chartDef}`;
   }
 
-  applyTemplateVariables(target: AzureMonitorQuery, scopedVars: ScopedVars): Record<string, any> {
+  applyTemplateVariables(target: AzureMonitorQuery, scopedVars: ScopedVars): AzureMonitorQuery {
     const item = target.azureMonitor;
 
+    if (!item) {
+      // return target;
+      throw new Error('Query is not a valid Azure Monitor Metrics query');
+    }
+
     // fix for timeGrainUnit which is a deprecated/removed field name
-    if (item.timeGrainUnit && item.timeGrain !== 'auto') {
+    if (item.timeGrain && item.timeGrainUnit && item.timeGrain !== 'auto') {
       item.timeGrain = TimegrainConverter.createISO8601Duration(item.timeGrain, item.timeGrainUnit);
     }
 
@@ -189,7 +199,7 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
     const aggregation = templateSrv.replace(item.aggregation, scopedVars);
     const top = templateSrv.replace(item.top || '', scopedVars);
 
-    const dimensionFilters = item.dimensionFilters
+    const dimensionFilters = (item.dimensionFilters ?? [])
       .filter((f) => f.dimension && f.dimension !== 'None')
       .map((f) => {
         const filter = templateSrv.replace(f.filter ?? '', scopedVars);
@@ -217,7 +227,6 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
         dimensionFilters,
         top: top || '10',
         alias: item.alias,
-        format: target.format,
       },
     };
   }
