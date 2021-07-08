@@ -106,6 +106,9 @@ export const annotationEventNames: AnnotationFieldInfo[] = [
     placeholder: 'text, or the first text field',
   },
   { key: 'tags', split: ',', help: 'The results will be split on comma (,)' },
+  {
+    key: 'id',
+  },
   // { key: 'userId' },
   // { key: 'login' },
   // { key: 'email' },
