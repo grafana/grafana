@@ -1,5 +1,4 @@
 import { MapLayerRegistryItem, MapLayerConfig, MapLayerHandler, PanelData, GrafanaTheme2 } from '@grafana/data';
-import { FieldMappingOptions } from '../../types'
 import Map from 'ol/Map';
 import Feature from 'ol/Feature';
 import * as layer from 'ol/layer';
@@ -35,7 +34,6 @@ export const worldmapBehaviorLayer: MapLayerRegistryItem<WorldmapConfig> = {
       init: () => vectorLayer,
       update: (map: Map, data: PanelData) => {
         const features:Feature[] = [];
-
         for( let x=0; x<100; x+=20) {
           for( let y=0; y<40; y+=10) {
             const dot = new Feature({
