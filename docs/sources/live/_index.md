@@ -16,9 +16,9 @@ This could be notifications about dashboard changes, new frames for rendered dat
 
 ## Concepts
 
-Grafana Live sends data to clients over persistent WebSocket connection. Under the hood Grafana frontend subscribes on channels to receive data which was published into that channel – in other words PUB/SUB mechanics is used. All subscriptions on a page multiplexed inside a single WebSocket connection. There are some rules regarding Live channel names – see [Live channel]({{< relref "live-channel.md" >}}).
+Grafana Live sends data to clients over persistent WebSocket connection. Grafana frontend subscribes on channels to receive data which was published into that channel – in other words PUB/SUB mechanics is used. All subscriptions on a page multiplexed inside a single WebSocket connection. There are some rules regarding Live channel names – see [Live channel]({{< relref "./live-channel.md" >}}).
 
-Handling persistent connections like WebSocket in scale may require operating system and infrastructure tuning. That's why by default Grafana Live supports 100 simultaneous connections max, see more details on how to tune this limit in [Live configuration section]({{< relref "configure-grafana-live.md" >}}).
+Handling persistent connections like WebSocket in scale may require operating system and infrastructure tuning. That's why by default Grafana Live supports 100 simultaneous connections max. For more details on how to tune this limit, refer to [Live configuration section]({{< relref "configure-grafana-live.md" >}}).
 
 ## Features
 
@@ -32,7 +32,7 @@ As soon as there is a change to the dashboard layout, it is automatically reflec
 
 With Grafana Live, backend data source plugins can stream updates to frontend panels.
 
-For data source plugin channels Grafana uses `ds` scope. Namespace in the case of data source channels is a data source unique ID (UID) which is issued by Grafana at the moment of data source creation. The path is a custom string that plugin authors free to choose themselves (just make sure it consists of allowed symbols).
+For data source plugin channels, Grafana uses `ds` scope. Namespace in the case of data source channels is a data source unique ID (UID) which is issued by Grafana at the moment of data source creation. The path is a custom string that plugin authors free to choose themselves (just make sure it consists of allowed symbols).
 
 For example, a data source channel looks like this: `ds/<DATASOURCE_UID>/<CUSTOM_PATH>`.
 
