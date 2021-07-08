@@ -229,6 +229,24 @@ describe('getPanelOptionsWithDefaults', () => {
       });
       expect(result.fieldConfig.defaults.color!.mode).toBe(FieldColorModeId.Thresholds);
     });
+
+    it('should change to classic mode when panel supports bySeries', () => {
+      const result = runScenario({
+        defaults: {
+          color: { mode: FieldColorModeId.Thresholds },
+        },
+        standardOptions: {
+          [FieldConfigProperty.Color]: {
+            settings: {
+              byValueSupport: true,
+              bySeriesSupport: true,
+            },
+          },
+        },
+        isAfterPluginChange: true,
+      });
+      expect(result.fieldConfig.defaults.color!.mode).toBe(FieldColorModeId.PaletteClassic);
+    });
   });
 
   describe('when changing panel type to one that does not use standard field config', () => {

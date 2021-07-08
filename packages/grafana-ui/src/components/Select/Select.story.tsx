@@ -45,6 +45,7 @@ export default {
         'aria-label',
         'noOptionsMessage',
         'menuPosition',
+        'isValidNewOption',
         'value',
       ],
     },
