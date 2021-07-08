@@ -95,7 +95,6 @@ func TestAlertRulePermissions(t *testing.T) {
 		                        "datasourceUid":"-100",
 								"model":{
 		                           "expression":"2 + 3 \u003E 1",
-		                           "intervalMs":1000,
 		                           "maxDataPoints":43200,
 		                           "type":"math"
 		                        }
@@ -145,7 +144,6 @@ func TestAlertRulePermissions(t *testing.T) {
 		                        "datasourceUid":"-100",
 								"model":{
 		                           "expression":"2 + 3 \u003E 1",
-		                           "intervalMs":1000,
 		                           "maxDataPoints":43200,
 		                           "type":"math"
 		                        }
@@ -217,7 +215,6 @@ func TestAlertRulePermissions(t *testing.T) {
 		                        "datasourceUid":"-100",
 								"model":{
 		                           "expression":"2 + 3 \u003E 1",
-		                           "intervalMs":1000,
 		                           "maxDataPoints":43200,
 		                           "type":"math"
 		                        }
