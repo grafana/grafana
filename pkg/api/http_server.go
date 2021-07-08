@@ -13,6 +13,11 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/grafana/grafana/pkg/login/social"
+	"github.com/grafana/grafana/pkg/services/libraryelements"
+	"github.com/grafana/grafana/pkg/services/librarypanels"
+	"github.com/grafana/grafana/pkg/services/oauthtoken"
+
 	"github.com/grafana/grafana/pkg/api/routing"
 	httpstatic "github.com/grafana/grafana/pkg/api/static"
 	"github.com/grafana/grafana/pkg/bus"
@@ -49,8 +54,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb"
-	"github.com/grafana/grafana/pkg/util/errutil"
 
+	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	macaron "gopkg.in/macaron.v1"
@@ -91,6 +96,7 @@ type HTTPServer struct {
 	DataProxy              *datasourceproxy.DatasourceProxyService `inject:""`
 	PluginRequestValidator models.PluginRequestValidator           `inject:""`
 	PluginManager          plugins.Manager                         `inject:""`
+	PluginManagerV2        plugins.PluginManagerV2                 `inject:""`
 	SearchService          *search.SearchService                   `inject:""`
 	ShortURLService        shorturls.Service                       `inject:""`
 	Live                   *live.GrafanaLive                       `inject:""`
@@ -104,7 +110,8 @@ type HTTPServer struct {
 	Alertmanager           *notifier.Alertmanager                  `inject:""`
 	LibraryPanelService    librarypanels.Service                   `inject:""`
 	LibraryElementService  libraryelements.Service                 `inject:""`
-	PluginManagerV2        plugins.PluginManagerV2                 `inject:""`
+	SocialService          social.Service                          `inject:""`
+	OAuthTokenService      *oauthtoken.Service                     `inject:""`
 	Listener               net.Listener
 }
 
