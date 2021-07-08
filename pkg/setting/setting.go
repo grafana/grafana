@@ -850,10 +850,14 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	DataProxyTLSHandshakeTimeout = dataproxy.Key("tls_handshake_timeout_seconds").MustInt(10)
 	DataProxyExpectContinueTimeout = dataproxy.Key("expect_continue_timeout_seconds").MustInt(1)
 	DataProxyMaxConnsPerHost = dataproxy.Key("max_conns_per_host").MustInt(0)
-	DataProxyMaxIdleConns = dataproxy.Key("max_idle_connections").MustInt(100)
-	DataProxyMaxIdleConnsPerHost = dataproxy.Key("max_idle_connections_per_host").MustInt(2)
+	DataProxyMaxIdleConns = dataproxy.Key("max_idle_connections").MustInt()
 	DataProxyIdleConnTimeout = dataproxy.Key("idle_conn_timeout_seconds").MustInt(90)
 	cfg.SendUserHeader = dataproxy.Key("send_user_header").MustBool(false)
+
+	if val, err := dataproxy.Key("max_idle_connections_per_host").Int(); err == nil {
+		cfg.Logger.Warn("[Deprecated] the configuration setting 'max_idle_connections_per_host' is deprecated, please use 'max_idle_connections' instead")
+		DataProxyMaxIdleConns = val
+	}
 
 	if err := readSecuritySettings(iniFile, cfg); err != nil {
 		return err

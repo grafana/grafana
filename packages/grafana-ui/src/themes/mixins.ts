@@ -64,7 +64,6 @@ export function getFocusStyles(theme: GrafanaTheme2): CSSObject {
 
 // max-width is set up based on .grafana-tooltip class that's used in dashboard
 export const getTooltipContainerStyles = (theme: GrafanaTheme2) => `
-  pointer-events: none;
   overflow: hidden;
   background: ${theme.colors.background.secondary};
   box-shadow: ${theme.shadows.z2};
