@@ -28,6 +28,7 @@ type Evaluation struct {
 	EvaluationTime   time.Time
 	EvaluationState  eval.State
 	EvaluationString string
+	Values           map[string]*float64
 }
 
 func (a *State) resultNormal(alertRule *ngModels.AlertRule, result eval.Result) {

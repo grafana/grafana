@@ -65,3 +65,24 @@ func extractEvalString(frame *data.Frame) (s string) {
 
 	return ""
 }
+
+// extractValues returns the RefID and value for all reduce and
+// math expressions in the frame. It does not return values for
+// classic conditions as the values in classic conditions do not
+// have a RefID.
+func extractValues(frame *data.Frame) map[string]*float64 {
+	if frame == nil {
+		return nil
+	}
+	if frame.Meta == nil || frame.Meta.Custom == nil {
+		return nil
+	}
+	if caps, ok := frame.Meta.Custom.([]NumberValueCapture); ok {
+		v := make(map[string]*float64)
+		for _, c := range caps {
+			v[c.Var] = c.Value
+		}
+		return v
+	}
+	return nil
+}
