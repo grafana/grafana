@@ -2,6 +2,7 @@
 
 exports[`Graph Migrations legend with multiple values 1`] = `
 Object {
+  "alert": undefined,
   "fieldConfig": Object {
     "defaults": Object {
       "custom": Object {
@@ -53,6 +54,7 @@ Object {
 
 exports[`Graph Migrations legend with single value 1`] = `
 Object {
+  "alert": undefined,
   "fieldConfig": Object {
     "defaults": Object {
       "custom": Object {
@@ -79,6 +81,7 @@ Object {
 
 exports[`Graph Migrations legend without values 1`] = `
 Object {
+  "alert": undefined,
   "fieldConfig": Object {
     "defaults": Object {
       "custom": Object {
@@ -103,6 +106,7 @@ Object {
 
 exports[`Graph Migrations preserves colors from series overrides 1`] = `
 Object {
+  "alert": undefined,
   "fieldConfig": Object {
     "defaults": Object {
       "custom": Object {
@@ -157,6 +161,7 @@ Object {
 
 exports[`Graph Migrations preserves series overrides using a regex alias 1`] = `
 Object {
+  "alert": undefined,
   "fieldConfig": Object {
     "defaults": Object {
       "custom": Object {
@@ -211,6 +216,7 @@ Object {
 
 exports[`Graph Migrations simple bars 1`] = `
 Object {
+  "alert": undefined,
   "fieldConfig": Object {
     "defaults": Object {
       "custom": Object {
@@ -237,6 +243,7 @@ Object {
 
 exports[`Graph Migrations stacking groups 1`] = `
 Object {
+  "alert": undefined,
   "fieldConfig": Object {
     "defaults": Object {
       "custom": Object {
@@ -322,6 +329,7 @@ Object {
 
 exports[`Graph Migrations stacking simple 1`] = `
 Object {
+  "alert": undefined,
   "fieldConfig": Object {
     "defaults": Object {
       "custom": Object {
@@ -377,6 +385,7 @@ Object {
 
 exports[`Graph Migrations stairscase 1`] = `
 Object {
+  "alert": undefined,
   "fieldConfig": Object {
     "defaults": Object {
       "custom": Object {
@@ -416,6 +425,7 @@ Object {
 
 exports[`Graph Migrations stepped line 1`] = `
 Object {
+  "alert": undefined,
   "fieldConfig": Object {
     "defaults": Object {
       "custom": Object {
@@ -463,6 +473,7 @@ Object {
 
 exports[`Graph Migrations twoYAxis 1`] = `
 Object {
+  "alert": undefined,
   "fieldConfig": Object {
     "defaults": Object {
       "custom": Object {
