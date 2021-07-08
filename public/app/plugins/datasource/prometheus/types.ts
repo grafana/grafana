@@ -10,7 +10,7 @@ export interface PromQuery extends DataQuery {
   hinting?: boolean;
   interval?: string;
   intervalFactor?: number;
-  stepOption?: StepType;
+  stepMode?: StepType;
   legendFormat?: string;
   valueWithRefId?: boolean;
   requestId?: string;
